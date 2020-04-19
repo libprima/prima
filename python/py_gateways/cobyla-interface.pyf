@@ -1,0 +1,63 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+!
+! Authors:
+!     Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
+!     and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
+!     Department of Applied Mathematics,
+!     The Hong Kong Polytechnic University.
+!
+! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+
+python module calfun__user__routines
+    interface calfun_user_routines
+        function fun(n,x) result (f)
+            integer :: n
+            double precision, dimension(n) :: x
+            double precision :: f
+            intent(callback,hide) fun
+        end function fun
+        function confun(n,i,x) result (c)
+            integer :: n
+            integer :: i
+            double precision, dimension(n) :: x
+            double precision :: c
+            intent(callback,hide) confun
+        end function confun
+    end interface calfun_user_routines
+end python module calfun__user__routines
+
+python module fcobyla ! in
+    interface  ! in :fcobyla
+        module fcobyla ! in :fcobyla:./cobyla.f90
+            use pdfoconst
+            integer :: nf
+            double precision, allocatable, dimension(:) :: fhist
+            double precision, allocatable, dimension(:) :: chist
+        end module fcobyla
+        subroutine mcobyla(n,m,x,rhobeg,rhoend,iprint,maxfun,w,iact,f,info,funhist,conhist,ftarget,resmax,conval) ! in :fcobyla:./cobyla.f90
+            use fcobyla
+            use calfun__user__routines
+            intent(callback) fun
+            intent(callback) confun
+            external fun
+            external confun
+            integer :: n
+            integer :: m
+            double precision, dimension(n), intent(in,out,copy) :: x
+            double precision :: rhobeg
+            double precision :: rhoend
+            integer :: iprint
+            integer :: maxfun
+            double precision, dimension(n*(3*n+2*m+11)+4*m+6), intent(hide) :: w
+            double precision, intent(out) :: f
+            integer, dimension(m+1), intent(hide) :: iact
+            integer, intent(out) :: info
+            double precision, dimension(maxfun), intent(out) :: funhist
+            double precision, dimension(maxfun), intent(out) :: conhist
+            double precision :: ftarget
+            double precision, intent(out) :: resmax
+            double precision, dimension(m), intent(in,out,copy) :: conval
+        end subroutine mcobyla
+    end interface
+end python module fcobyla

@@ -1,0 +1,23 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+!
+! Authors:
+!     Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
+!     and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
+!     Department of Applied Mathematics,
+!     The Hong Kong Polytechnic University.
+!
+! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+
+python module gethuge ! in 
+    interface  ! in :gethuge
+        subroutine gethuge(data_type,huge_value) ! in :gethuge:gethuge.f90
+            use pdfoconst
+            character*20, intent(in) :: data_type
+            double precision, intent(out) :: huge_value
+        end subroutine gethuge
+    end interface 
+end python module gethuge
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/
