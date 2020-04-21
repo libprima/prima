@@ -286,6 +286,7 @@ return
 %%%%%%%%%%%%%%%%%% Function for verifying the set-up of MEX %%%%%%%%%%%%%%
 function success = mex_well_configured(language)
 
+orig_warning_state = warning;
 warning('off','all'); % We do not want to see warnings when verifying MEX
 
 callstack = dbstack;
@@ -364,5 +365,5 @@ cpwd = fileparts(mfilename('fullpath')); % Current directory
 trash_files = files_with_wildcard(cpwd, 'timestwo.*');
 cellfun(@(filename) delete(filename), trash_files);
 
-warning('on','all'); % Restore the behavior of displaying warnings
+warning(orig_warning_state); % Restore the behavior of displaying warnings
 return
