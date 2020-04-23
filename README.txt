@@ -33,7 +33,7 @@ FOR A PARTICULAR PURPOSE.
 
 The development of this package is funded by the Hong Kong RGC Early Career
 Scheme (PolyU 253012/17P), the Hong Kong Ph.D. Fellowship Scheme (PF18-24698),
-and  the Hong Kong Polytechnic University.
+and the Hong Kong Polytechnic University.
 
 PDFO is dedicated to the memory of late Professor Powell with gratitude for
 his inspiration and for the treasures he left to us. We are also grateful

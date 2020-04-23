@@ -798,10 +798,9 @@ C      Why go to 620 directly without setting X and F? This seems
 C      INCORRECT, because it may lead to a return with X and F that 
 C      are not the best available.
 C      The following code defines X as an "optimal" one among the
-C      following vectors 
-C      the X before executing the folloing code, 
+C      vectors: 
 C      DATSAV(:, 1:NSAV), (when NSAV >= 1),
-C      SIM(:, NP) and SIM(:, 1:min(NP-1, NFVALS-2)) (when NFVALS>=2).
+C      SIM(:, NP), and SIM(:, 1:min(NP-1, NFVALS-2)) (when NFVALS>=2).
 C      Here, X being "optimal" means 
 C      1. the constraint violation of X is at most RESREF
 C      2. no other vector is better than X according to ISBETTER with
@@ -903,7 +902,7 @@ C
 C Note: X dominates Y if and only if the function/constraint of X is
 C better than the function/constraint of Y accoring to the ISBETTER
 C subroutine with PARMU = -1.0D0. Indeed, PARMU can be any negative
-C number. Due to the implementation of of ISBETTER, 
+C number. This is because, due to the implementation of ISBETTER, 
 C X dominates Y (i.e., X is better than Y with PARMU < 0) 
 C ==> X is better than Y with any PARMU >= 0,
 C ==> X is better than Y regardless of PARMU.
