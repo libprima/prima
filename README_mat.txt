@@ -28,8 +28,12 @@ If this completes successfully, then your MEX is ready. Otherwise, it is not.
 
 0.2. To configure MEX for compiling Fortran, see
 https://www.mathworks.com/help/matlab/ref/mex.html .
-It will require you to have a Fortran compiler installed on your system. See
-https://www.mathworks.com/support/requirements/supported-compilers.html .
+It will require you to install a supported Fortran compiler on your system. 
+See https://www.mathworks.com/support/requirements/previous-releases.html .
+Note that Mathworks (rather than PDFO) is quite rigid concerning the version 
+of your compiler, which has to be compatible with the release of your MATLAB; 
+the latest compiler is NOT necessarily supported by your MATLAB; follow the 
+official documentation closely.
 
 
 1. Installation
