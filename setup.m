@@ -73,7 +73,7 @@ wrong_input = false;
 solver = 'ALL'; % The solver to compile specified by the user; by default, it is 'ALL', meaning all solvers
 if nargin == 1
     if isa(varargin{1}, 'char') || isa(varargin{1}, 'string')
-        solver_list = {varargin{1}};
+        solver = varargin{1};
     elseif isa(varargin{1}, 'struct') || isempty(varargin{1})
         options = varargin{1};
     else
@@ -105,6 +105,11 @@ elseif ~strcmpi(solver, 'ALL')
     wrong_input = true;
 end
 
+% Exit if wrong input detected.
+if wrong_input 
+    return;
+end 
+
 % Extract compilation options.
 if isempty(options)
     options = struct();
@@ -113,11 +118,6 @@ opt_option = '-O';  % Optimize the object code; this is the default
 if isfield(options, 'debug') && options.debug
     opt_option = '-g';  % Debug mode; -g disables MEX's behavior of optimizing built object code
 end
-
-% Exit if wrong input detected.
-if wrong_input 
-    return;
-end 
 
 % Detect whether we are running a 32-bit MATLAB, where maxArrayDim = 2^31-1,
 % and then set ad_option accordingly. On a 64-bit MATLAB, maxArrayDim = 2^48-1
