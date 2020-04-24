@@ -1,4 +1,4 @@
-function setup(solver, optFlag)
+function setup(varargin)
 %SETUP compiles the package and try adding the package into the search path.
 %
 %   Since MEX is the standard way of calling Fortran code in MATLAB, you
@@ -50,7 +50,7 @@ function setup(solver, optFlag)
 % However, MATLAB R2015b would complain that it cannot find '*.mod'.
 % Similarly, to compile solver (see the code between 'try' and 'catch'),
 % for MATLAB later than R2016a (but not 2015b), the following code would work:
-% mex(mexOptions, '-output', ['f', solver], fullfile(fsrc, 'pdfoconst.F'), ...
+% mex(mex_options, '-output', ['f', solver], fullfile(fsrc, 'pdfoconst.F'), ...
 %   fullfile(fsrc, solver, '*.f'), fullfile(gateways, [solver, '-interface.F']));
 % However, MATLAB R2015b would run into an error due to the wildcard.
 % The 'files_with_wildcard' function provides a workaround.
@@ -65,6 +65,74 @@ if verLessThan('matlab', '8.3') % MATLAB R2014a = MATLAB 8.3
     fprintf('\nSorry, this package does not support MATLAB R2013b or earlier releases.\n\n');
     return
 end
+
+% Interpret the input. 
+solver_list = {'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla'}; % Solvers to compile; by default, it contains all solvers
+options = struct(); % Compilation options 
+wrong_input = false;
+solver = 'ALL'; % The solver to compile specified by the user; by default, it is 'ALL', meaning all solvers
+if nargin == 1
+    if isa(varargin{1}, 'char') || isa(varargin{1}, 'string')
+        solver_list = {varargin{1}};
+    elseif isa(varargin{1}, 'struct') || isempty(varargin{1})
+        options = varargin{1};
+    else
+        fprintf('\nThe input to setup should be a string and/or a structure.\n\n');
+        wrong_input = true;
+    end
+elseif nargin == 2
+    if (isa(varargin{1}, 'char') || isa(varargin{1}, 'string')) && (isa(varargin{2}, 'struct') || isempty(varargin{2}))
+        solver = varargin{1};
+        options = varargin{2};
+    elseif (isa(varargin{2}, 'char') || isa(varargin{2}, 'string')) && (isa(varargin{1}, 'struct') || isempty(varargin{1}))
+        solver = varargin{2};
+        options = varargin{1};
+    else
+        fprintf('\nThe input to setup should be a string and/or a structure.\n\n');
+        wrong_input = true;
+    end
+elseif nargin > 0
+    fprintf('\nSetup accepts at most two inputs.\n\n');
+    wrong_input = true;
+end
+
+% Decide which solver(s) to compile. 
+solver = char(solver); % Cast solver to a character array; this is necessary if solver is a matlab string
+if ismember(solver, solver_list)
+    solver_list = {solver};
+elseif ~strcmpi(solver, 'ALL')
+    fprintf('Unknown solver ''%s'' to compile.\n\n', solver);
+    wrong_input = true;
+end
+
+% Extract compilation options.
+if isempty(options)
+    options = struct();
+end
+opt_option = '-O';  % Optimize the object code; this is the default
+if isfield(options, 'debug') && options.debug
+    opt_option = '-g';  % Debug mode; -g disables MEX's behavior of optimizing built object code
+end
+
+% Exit if wrong input detected.
+if wrong_input 
+    return;
+end 
+
+% Detect whether we are running a 32-bit MATLAB, where maxArrayDim = 2^31-1,
+% and then set ad_option accordingly. On a 64-bit MATLAB, maxArrayDim = 2^48-1
+% according to the document of MATLAB R2019a.
+% !!! Make sure that eveything is compiled with the SAME ad_option !!!
+% !!! Otherwise, Segmentation Fault may occur !!!
+[Architecture, maxArrayDim] = computer;
+if any(strfind(Architecture, '64')) && log2(maxArrayDim) > 31
+    ad_option = '-largeArrayDims';
+else
+    ad_option = '-compatibleArrayDims'; % This will also work in a 64-bit MATLAB
+end
+
+% Set MEX options.
+mex_options = [{opt_option}, {ad_option}, '-silent'];
 
 % Check whether MEX is properly configured.
 fprintf('\nVerifying the set-up of MEX ... \n\n');
@@ -82,38 +150,7 @@ else
     fprintf('\nMEX is correctly set up.\n\n');
 end
 
-% Detect whether we are running a 32-bit MATLAB, where maxArrayDim = 2^31-1,
-% and then set adOption accordingly. On a 64-bit MATLAB, maxArrayDim = 2^48-1
-% according to the document of MATLAB R2019a.
-% !!! Make sure that eveything is compiled with the SAME adOption !!!
-% !!! Otherwise, Segmentation Fault may occur !!!
-[Architecture, maxArrayDim] = computer;
-if any(strfind(Architecture, '64')) && log2(maxArrayDim) > 31
-    adOption = '-largeArrayDims';
-else
-    adOption = '-compatibleArrayDims';
-end
-
-% Decide which solver to compile
-if nargin == 0 || strcmpi(solver, 'ALL')
-    solver_list = {'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla'};
-else
-    solver_list = {solver};
-end
-
-% Set optOption
-if nargin <= 1
-    optFlag = 1;
-end
-if optFlag == 1 % This is the default
-    optOption = '-O';  % Optimize the object code
-else 
-    optOption = '-g';  % -g disables MEX's behavior of optimizing built object code
-end
-
-% Options for MEX 
-mexOptions = [{adOption}, {optOption}, '-silent'];
-
+% The full path of several directories.
 cpwd = fileparts(mfilename('fullpath')); % Current directory
 fsrc = fullfile(cpwd, 'fsrc'); % Directory of the Fortran source code
 fsrc_classical = fullfile(fsrc, 'classical'); % Directory of the classical Fortran source code
@@ -126,7 +163,7 @@ examples = fullfile(matd, 'examples'); % Directory containing some test examples
 
 % Clean up the directories fsrc and gateways before compilation.
 % This is important especially if there was previously another
-% compilation with a different adOption. Without cleaning-up, the MEX
+% compilation with a different ad_option. Without cleaning-up, the MEX
 % files may be linked with wrong .mod or .o files, which can lead to
 % serious errors including Segmentation Fault!
 dir_list = {fsrc, fsrc_classical, gateways, gateways_classical, interfaces_private};
@@ -145,7 +182,7 @@ try
 % case of an error.
 
     % Compilation of function gethuge
-    mex(mexOptions{:}, '-output', 'gethuge', fullfile(fsrc, 'pdfoconst.F'), fullfile(gateways, 'gethuge.F'));
+    mex(mex_options{:}, '-output', 'gethuge', fullfile(fsrc, 'pdfoconst.F'), fullfile(gateways, 'gethuge.F'));
 
     for isol = 1 : length(solver_list)
         solver = solver_list{isol};
@@ -157,7 +194,7 @@ try
         cellfun(@(filename) delete(filename), modo_files);
         % Compile
         src_files = files_with_wildcard(fullfile(fsrc, solver), '*.f');
-        mex(mexOptions{:}, '-output', ['f', solver], fullfile(fsrc, 'pdfoconst.F'), src_files{:}, fullfile(gateways, [solver, '-interface.F']));
+        mex(mex_options{:}, '-output', ['f', solver], fullfile(fsrc, 'pdfoconst.F'), src_files{:}, fullfile(gateways, [solver, '-interface.F']));
 
         % Compilation of the 'classical' version of solver
         % Clean up the source file directory
@@ -165,7 +202,7 @@ try
         cellfun(@(filename) delete(filename), modo_files);
         % Compile
         src_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.f');
-        mex(mexOptions{:}, '-output', ['f', solver, '_classical'], fullfile(fsrc, 'pdfoconst.F'), src_files{:}, fullfile(gateways_classical, [solver, '-interface.F']));
+        mex(mex_options{:}, '-output', ['f', solver, '_classical'], fullfile(fsrc, 'pdfoconst.F'), src_files{:}, fullfile(gateways_classical, [solver, '-interface.F']));
 
         fprintf('Done.\n');
     end
