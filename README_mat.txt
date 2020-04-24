@@ -22,7 +22,7 @@ configure the MEX of your MATLAB so that it can compile Fortran.
 
 0.1. To see whether your MEX is ready, run the following code in MATLAB:
 
-mex('-setup', 'FORTRAN'); mex(fullfile(matlabroot, 'extern', 'examples', 'refbook', 'timestwo.F'));
+mex('-setup', '-v', 'FORTRAN'); mex(fullfile(matlabroot, 'extern', 'examples', 'refbook', 'timestwo.F'));
 
 If this completes successfully, then your MEX is ready. Otherwise, it is not.
 
