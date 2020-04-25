@@ -112,6 +112,7 @@ if (nargin == 8 && isa(options, 'struct')) % Adopt user-defined options.
 end
 
 if ~Warnings % Suppress the warning about nearly singular matrices
+    orig_warning_state = warning;
     warning('off','MATLAB:nearlySingularMatrix');
 end
 
@@ -308,7 +309,7 @@ if(isempty(x)) % x can be [] if quadprog thinks the problem is infeasible (which
 end
 
 if ~Warnings
-    warning('on','MATLAB:nearlySingularMatrix');
+    warning(orig_warning_state); % Restore the behavior of displaying warnings
 end
 
 % project ends
