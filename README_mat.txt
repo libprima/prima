@@ -12,7 +12,7 @@ March 2020, Hong Kong
 ***********************************************************************
 
 This is the README file for the MATLAB version of PDFO. 
-See https://www.pdfo.co for more information.
+See https://www.pdfo.net for more information.
 
 
 0. Prerequisites

@@ -12,7 +12,7 @@ March 2020, Hong Kong
 ***********************************************************************
 
 This is the README file for the Python version of PDFO on Windows.
-See https://www.pdfo.co for more information.
+See https://www.pdfo.net for more information.
 
 For the moment, F2PY does not work well with 64-bit Python on Windows. If 
 you want to use the package on Windows, make sure to do everything in a 

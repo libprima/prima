@@ -108,7 +108,7 @@ function [x, fx, exitflag, output] = uobyqa(varargin)
 %
 %   See also PDFO, NEWUOA, BOBYQA, LINCOA, COBYLA.
 %
-%   See https://www.pdfo.co for more information.
+%   See https://www.pdfo.net for more information.
 %
 %   ***********************************************************************
 %   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk) 

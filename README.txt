@@ -14,7 +14,7 @@ March 2020, Hong Kong
 PDFO (Powell's Derivative-Free Optimization solvers) is a cross-platform package
 providing interfaces for using late Professor M. J. D. Powell's derivative-free
 optimization solvers, including UOBYQA, NEWUOA, BOBYQA, LINCOA, and COBYLA.
-See https://www.pdfo.co for more information.
+See https://www.pdfo.net for more information.
 
 To use the MATLAB version of PDFO, see README_mat.txt.
 
