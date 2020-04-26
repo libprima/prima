@@ -149,7 +149,7 @@ function [x, fx, exitflag, output] = lincoa(varargin)
 %
 %   See also PDFO, UOBYQA, NEWUOA, BOBYQA, COBYLA.
 %
-%   See https://www.pdfo.co for more information.
+%   See https://www.pdfo.net for more information.
 %
 %   ***********************************************************************
 %   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk) 

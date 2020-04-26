@@ -67,7 +67,7 @@ def newuoa(fun, x0, args=(), options=None):
     The signature of this function is consistent with the `minimize` function available in ``scipy.optimize``, included
     in the SciPy package.
 
-    See https://www.pdfo.co for more information.
+    See https://www.pdfo.net for more information.
 
     See also
     --------
