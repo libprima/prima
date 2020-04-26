@@ -142,3 +142,6 @@ cython_debug/
 
 # Mac files
 .DS_Store
+
+# Compiled MEX files
+*.mex*
