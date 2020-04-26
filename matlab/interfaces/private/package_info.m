@@ -36,6 +36,8 @@ author = 'Tom M. Ragonneau and Zaikun Zhang';
 
 email= 'tom.ragonneau@connect.polyu.hk and zaikun.zhang@polyu.edu.hk';
 
+homepage = 'www.pdfo.net';
+
 maintainer = 'Tom M. Ragonneau and Zaikun Zhang';
 
 credits = {'Tom M. Ragonneau', 'Zaikun Zhang'};
@@ -63,6 +65,8 @@ case 'author'
     information = author;
 case 'email'
     information = email;
+case 'homepage'
+    information = homepage;
 case 'maintainer'
     information = maintainer;
 case 'credits'
@@ -80,7 +84,7 @@ case 'status'
 case 'message'
     information = message;
 case {'info', 'information'}
-    information = struct('about', about, 'author', author, 'email', email, 'maintainer', maintainer, 'credits', [], 'copyright', copyright, 'license', license, 'version', version, 'date', date, 'status', status, 'message', message);
+    information = struct('about', about, 'author', author, 'email', email, 'homepage', homepage, 'maintainer', maintainer, 'credits', [], 'copyright', copyright, 'license', license, 'version', version, 'date', date, 'status', status, 'message', message);
     % information = struct(..., 'credits', credits, ...) will produce
     % a cell array of size 1x2, which is not desired. Thus we fist
     % define information with information.credits = [], and then assgin
