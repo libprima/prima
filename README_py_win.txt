@@ -47,7 +47,7 @@ variables on Windows.
 PDFO can be installed by the setup.py script in the following way.
 
 1.1. Decompress the source code package of PDFO if you have not done so. You
-will obtain a folder containing setup.py. Place this folder to the location
+will obtain a folder containing setup.py. Place this folder at the location
 where you want PDFO to be installed.
 
 1.2. In a command shell, change your directory to the above-mentioned folder, 
