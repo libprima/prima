@@ -41,7 +41,7 @@ official documentation closely.
 PDFO can be installed by the setup.m script in the following way.
 
 1.1. Decompress the source code package of PDFO if you have not done so. You 
-will obtain a folder containing setup.m. Place this folder to the location 
+will obtain a folder containing setup.m. Place this folder at the location 
 where you want PDFO to be installed. 
 
 1.2. In MATLAB, change your directory to the above-mentioned folder, and 
