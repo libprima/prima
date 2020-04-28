@@ -42,7 +42,7 @@ maintainer = 'Tom M. Ragonneau and Zaikun Zhang';
 
 credits = {'Tom M. Ragonneau', 'Zaikun Zhang'};
 
-license = 'GPLv3';
+license = 'LGPLv3+';
 
 version = '0.9';
 
