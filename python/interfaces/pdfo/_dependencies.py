@@ -2,7 +2,6 @@
 
 from __future__ import division, print_function, absolute_import
 
-import platform
 import sys
 import warnings
 from inspect import stack
@@ -11,9 +10,11 @@ import numpy as np
 
 python_version = sys.version_info.major
 if python_version >= 3:
+    # From Python 3, we can check the signature of the function and ensure that the objective and constraint function
+    # are correctly defined.
     from inspect import signature
 
-scalar_types = (int, float, np.generic)
+scalar_types = (int, float, np.generic)  # all the accepted scalar types; np.generic correspond to all NumPy types
 eps = np.finfo(np.float64).eps
 solver_list = ['uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla']
 invoker_list = solver_list[:]
@@ -77,23 +78,25 @@ class OptimizeResult(dict):
     Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
     """
 
-    # get an element of the optimization result structure
+    # Get an element of the optimization result structure.
     def __getattr__(self, name):
         try:
             return self[name]
         except KeyError:
             raise AttributeError('The following attribute does not exist: {}.'.format(name))
 
-    # set an element of the optimization result structure
+    # Set an element of the optimization result structure.
     __setattr__ = dict.__setitem__
 
-    # delete an element of the optimization result structure
+    # Delete an element of the optimization result structure.
     __delattr__ = dict.__delitem__
 
-    # display the optimization result structure
+    # Display the optimization result structure.
     def __repr__(self):
         if self.keys():
             maxlength = max(map(len, self.keys())) + 1
+
+            # The dictionary is returned by sorting the elements according to its keys.
             return '\n'.join([k.rjust(maxlength) + ': ' + repr(self[k]) for k in sorted(self.keys())])
         else:
             return self.__class__.__name__ + '()'
@@ -122,20 +125,33 @@ class Bounds:
     """
 
     def __init__(self, lb=None, ub=None):
+        # The scalars are converted to arrays with one elements, to process a single type.
         if isinstance(lb, scalar_types):
             lb = [lb]
         if isinstance(ub, scalar_types):
             ub = [ub]
-        self.lb = np.asarray(lb if lb is not None else [], dtype=np.float64)
-        self.ub = np.asarray(ub if ub is not None else [], dtype=np.float64)
 
-        # reshape the flat matrices
+        if not ((lb is None or hasattr(lb, '__len__')) and (ub is None or hasattr(ub, '__len__'))):
+            raise AttributeError('The bounds lb and ub should be vectors.')
+
+        # Either lb, ub or both can be set to None or [] not to precise the bound.
+        if (lb is None or len(lb) == 0) and ub is not None and len(ub) > 0:
+            self.lb = np.full(len(ub), -np.inf, dtype=np.float64)
+            self.ub = np.asarray(ub, dtype=np.float64)
+        elif lb is not None and len(lb) > 0 and (ub is None or len(ub) == 0):
+            self.lb = np.asarray(lb, dtype=np.float64)
+            self.ub = np.full(len(lb), np.inf, dtype=np.float64)
+        else:
+            self.lb = np.asarray(lb if lb is not None else [], dtype=np.float64)
+            self.ub = np.asarray(ub if ub is not None else [], dtype=np.float64)
+
+        # Reshape the flat matrices.
         if len(self.lb.shape) > 1 and np.prod(self.lb.shape) == self.lb.size:
             self.lb = self.lb.reshape(self.lb.size)
         if len(self.ub.shape) > 1 and np.prod(self.ub.shape) == self.ub.size:
             self.ub = self.ub.reshape(self.ub.size)
 
-        # check the length of the attributes
+        # Check the length of the attributes.
         if len(self.lb.shape) != 1 or len(self.ub.shape) != 1 or self.lb.size != self.ub.size:
             raise AttributeError('The sizes of the bounds are inconsistent; checks the shapes of the arrays.')
 
@@ -165,17 +181,36 @@ class LinearConstraint:
     """
 
     def __init__(self, a=None, lb=None, ub=None):
+        # The scalars are converted to arrays with one elements, to process a single type.
         if isinstance(a, scalar_types):
             a = [[a]]
         if isinstance(lb, scalar_types):
             lb = [lb]
         if isinstance(ub, scalar_types):
             ub = [ub]
-        self.A = np.asarray(a if a is not None else [[]], dtype=np.float64, order='F')
-        self.lb = np.asarray(lb if lb is not None else [], dtype=np.float64)
-        self.ub = np.asarray(ub if ub is not None else [], dtype=np.float64)
 
-        # reshape the flat matrices
+        if not ((lb is None or hasattr(lb, '__len__')) and (ub is None or hasattr(ub, '__len__'))):
+            raise AttributeError('The bounds lb and ub should be vectors.')
+
+        # Either lb, ub or both can be set to None or [] not to precise the bound.
+        self.A = np.asarray(a if a is not None else [[]], dtype=np.float64, order='F')
+        if (lb is None or len(lb) == 0) and ub is not None and len(ub) > 0:
+            self.lb = np.full(len(ub), -np.inf, dtype=np.float64)
+            self.ub = np.asarray(ub, dtype=np.float64)
+        elif lb is not None and len(lb) > 0 and (ub is None or len(ub) == 0):
+            self.lb = np.asarray(lb, dtype=np.float64)
+            self.ub = np.full(len(lb), np.inf, dtype=np.float64)
+        else:
+            self.lb = np.asarray(lb if lb is not None else [], dtype=np.float64)
+            self.ub = np.asarray(ub if ub is not None else [], dtype=np.float64)
+
+        # If any NaN is detected, the it should not altered the constraint. The NaN will be most likely generated during
+        # the conversion of the type of the arrays to np.float64, since np.float64(None) is NaN.
+        self.A[np.isnan(self.A)] = 0  # not to use those variables as constraints
+        self.lb[np.isnan(self.lb)] = -np.inf
+        self.ub[np.isnan(self.ub)] = np.inf
+
+        # Reshape the flat matrices.
         if len(self.lb.shape) > 1 and np.prod(self.lb.shape) == self.lb.size:
             self.lb = self.lb.reshape(self.lb.size)
         if len(self.ub.shape) > 1 and np.prod(self.ub.shape) == self.ub.size:
@@ -187,7 +222,12 @@ class LinearConstraint:
         if len(self.A.shape) in [0, 1]:
             self.A = self.A.reshape((1, self.A.size))
 
-        # check the length of the attributes
+        # If no bounds have been provided, infinite values should be considered.
+        if self.lb.size == 0 and self.ub.size == 0:
+            self.lb = np.full(self.A.shape[0], -np.inf, dtype=np.float64)
+            self.ub = np.full(self.A.shape[0], np.inf, dtype=np.float64)
+
+        # Check the length of the attributes.
         if not (len(self.lb.shape) == 1 and len(self.A.shape) == 2 and len(self.ub.shape) == 1 and
                 self.lb.size in [0, self.A.shape[0]] and self.ub.size in [0, self.A.shape[0]]) or \
                 (self.lb.size == 0 and self.ub.size == 0 and self.A.size > 0):
@@ -219,13 +259,20 @@ class NonlinearConstraint:
     """
 
     def __init__(self, fun, lb=None, ub=None):
-        if not callable(fun):
+        if not callable(fun) and fun is not None and not (hasattr(fun, '__len__') and len(fun) == 0):
+            # If fun is defined as None or [], the constraint should not be considered
             raise ValueError('The constraint function should be a callable object.')
 
+        # The output of the nonlinear constraint function should be an array containing floating point numbers.
         def float_fun(x):
-            fx = np.asarray(fun(x))
+            if callable(fun):
+                fx = np.asarray(fun(x))
+            else:
+                # If fun is not defined as callable, this function will never be called, except if any bounds is
+                # defined, which should raise an exception.
+                fx = []
 
-            # scalars are converted to one-dimensional array
+            # Scalars are converted to one-dimensional array.
             if isinstance(fx, (int, float, np.generic)):
                 fx = [fx]
 
@@ -234,7 +281,7 @@ class NonlinearConstraint:
 
             fx = np.float64(fx)
 
-            # when this function is called, the lower and upper bounds are well defined
+            # When this function is called, the lower and upper bounds are well defined.
             if fx.size > 0 and (len(self.lb.shape) > 1 or len(self.ub.shape) > 1 or
                                 (self.lb.size == 0 and self.ub.size == 0) or self.lb.size not in [0, fx.size] or
                                 self.ub.size not in [0, fx.size]):
@@ -244,16 +291,33 @@ class NonlinearConstraint:
 
             return fx
 
+        # The scalars are converted to arrays with one elements, to process a single type.
         if isinstance(lb, scalar_types):
             lb = [lb]
         if isinstance(ub, scalar_types):
             ub = [ub]
 
-        self.fun = float_fun
-        self.lb = np.asarray(lb if lb is not None else [], dtype=np.float64)
-        self.ub = np.asarray(ub if ub is not None else [], dtype=np.float64)
+        if not ((lb is None or hasattr(lb, '__len__')) and (ub is None or hasattr(ub, '__len__'))):
+            raise AttributeError('The bounds lb and ub should be vectors.')
 
-        # reshape the flat matrices
+        # Either lb, ub or both can be set to None or [] not to precise the bound.
+        self.fun = float_fun
+        if (lb is None or len(lb) == 0) and ub is not None and len(ub) > 0:
+            self.lb = np.full(len(ub), -np.inf, dtype=np.float64)
+            self.ub = np.asarray(ub, dtype=np.float64)
+        elif lb is not None and len(lb) > 0 and (ub is None or len(ub) == 0):
+            self.lb = np.asarray(lb, dtype=np.float64)
+            self.ub = np.full(len(lb), np.inf, dtype=np.float64)
+        else:
+            self.lb = np.asarray(lb if lb is not None else [], dtype=np.float64)
+            self.ub = np.asarray(ub if ub is not None else [], dtype=np.float64)
+
+        # If any NaN is detected, the it should not altered the constraint. The NaN will be most likely generated during
+        # the conversion of the type of the arrays to np.float64, since np.float64(None) is NaN.
+        self.lb[np.isnan(self.lb)] = -np.inf
+        self.ub[np.isnan(self.ub)] = np.inf
+
+        # Reshape the flat matrices.
         if len(self.lb.shape) > 1 and np.prod(self.lb.shape) == self.lb.size:
             self.lb = self.lb.reshape(self.lb.size)
         if len(self.ub.shape) > 1 and np.prod(self.ub.shape) == self.ub.size:
@@ -359,17 +423,18 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
         raise SystemError('`{}` should only be called by {}'.format(fun_name, ', '.join(invoker_list)))
     invoker = stack()[1][3].lower()
 
-    # saving of the raw data in prob_info before preprocessing
+    # Saving of the raw data in prob_info before preprocessing.
     prob_info = dict()
     prob_info['raw_data'] = \
         {'objective': fun, 'x0': x0, 'args': args, 'bounds': bounds, 'constraints': constraints, 'options': options}
 
     if len(stack()) >= 4 and stack()[2][3].lower() == 'pdfo':
-        # the invoker is a solver called by pdfo, then prepdfo should have been called in pdfo
+        # The invoker is a solver called by pdfo, then prepdfo should have been called in pdfo.
         prob_info['infeasible'] = False
         prob_info['nofreex'] = False
         return fun, x0, bounds, constraints, options, method, prob_info
 
+    # If fun is set to None, it consists in a feasibility problem; the considered objective function is a constant.
     if fun is None:
         def fun(x_loc, *args_loc):
             return np.float64(0)
@@ -378,9 +443,11 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
         warnings.warn(warn_message, Warning)
         list_warnings.append(warn_message)
 
+    # The extra-arguments of the objective function should be given as a list or a tuple.
     if args is not None and not hasattr(args, '__len__'):
         args = [args]
 
+    # The objective function should return a floating-point number.
     def fun_c(x):
         try:
             fun_x = fun(x) if hasattr(args, '__len__') and len(args) == 0 else fun(x, *args)
@@ -392,12 +459,14 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
         elif (hasattr(fun_x, '__len__') or not isinstance(fun_x, scalar_types)) and fun_x is not None:
             raise ValueError('{}: the objective function should return a scalar.'.format(invoker))
 
-        # if the objective function returns None, then we are solving a feasibility problem. The returned value of fun_c
-        # will be interpreted as np.nan by the following statement
+        # If the objective function returns None, then we are solving a feasibility problem. The returned value of fun_c
+        # will be interpreted as np.nan by the following statement.
         return np.float64(fun_x)
 
+    # The objective function is stored before any pre-processing.
     prob_info['raw_data']['objective'] = fun_c
 
+    # The initial guess should be an unidimensional ndarray.
     if isinstance(x0, scalar_types):
         x0 = [x0]
     if not hasattr(x0, '__len__'):
@@ -408,7 +477,7 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
         if x0_c.size == 0:
             raise ValueError('{}: the initial guess should not be empty.'.format(invoker))
 
-        # reshape the initial guess
+        # Reshape the initial guess.
         if len(x0_c.shape) > 1 and np.prod(x0_c.shape) == x0_c.size:
             x0_c = x0_c.reshape(x0_c.size)
     except ValueError:
@@ -416,49 +485,55 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
     if len(x0_c.shape) > 1:
         raise ValueError('{}: the initial guess should be a scalar or a vector.'.format(invoker))
 
-    # to be clear, the length of x0 is denoted lenx0 instead of n
+    # To clarify, the length of x0 is denoted lenx0 instead of n.
     lenx0 = x0_c.size
 
+    # If prepdfo is called by a solver (i.e. uobyqa, newuoa, bobyqa, lincoa, or cobyla), the selected method is the
+    # solver itself.
     if method is None and invoker != 'pdfo':
         method = invoker
     if method is not None and not isinstance(method, str):
         raise ValueError('{}: the method name should be a string.'.format(invoker))
 
+    # Validate the bounds and define its feasibility.
     lb, ub, infeasible, fixed_indices, fixed_values = _bounds_validation(invoker, bounds, lenx0)
     prob_info['raw_data']['bounds'] = (lb, ub)
     prob_info['infeasible_bound'] = infeasible
     prob_info['fixedx'] = fixed_indices
     prob_info['fixedx_value'] = fixed_values
 
+    # Validate the linear and nonlinear constraint, and define its feasibility.
     constraints_c, infeasible, trivial = _constraints_validation(invoker, constraints, lenx0)
     prob_info['raw_data']['constraints'] = constraints_c
     prob_info['infeasible_linear'] = infeasible
     prob_info['trivial_linear'] = trivial
 
-    # after preprocessing the linear/bound constraints, the problem may turn out infeasible, or x may turn out fixed by
-    # the bounds
+    # After pre-processing the linear/bound constraints, the problem may turn out infeasible, or x may turn out fixed by
+    # the bounds.
     prob_info['infeasible'] = any(np.r_[prob_info['infeasible_bound'], prob_info['infeasible_linear']])
     prob_info['nofreex'] = all(prob_info['fixedx'])
     if prob_info['nofreex']:
         prob_info['constrv_fixedx'] = _constr_violation(invoker, prob_info['fixedx_value'], lb, ub, constraints_c)
 
-    # reduce the problem if some variables are fixed by the bound constraints
+    # Reduce the problem if some variables are fixed by the bound constraints.
     prob_info['raw_dim'] = lenx0
     prob_info['raw_type'] = _problem_type(lb, ub, constraints_c)
     prob_info['reduced'] = False
 
+    # If the problem is not trivial or infeasible but contains any fixed variable, it should be reduced.
     if any(fixed_indices) and not (prob_info['nofreex'] or prob_info['infeasible']):
         fun_c, x0_c, lb, ub, constraints_c = _reduce_problem(fun_c, x0_c, lb, ub, constraints_c, fixed_indices)
         lenx0 = x0_c.size
         prob_info['reduced'] = True
 
-    # problem dimension after reduction
+    # Problem dimension after reduction.
     prob_info['refined_dim'] = lenx0
 
-    # problem type after reduction
+    # Problem type after reduction.
     prob_info['refined_type'] = _problem_type(lb, ub, constraints_c)
 
-    # can the invoker handle the given problem? This should be done after the problem type has bee 'refined'
+    # Can the invoker handle the given problem? This should be done after the problem type has been 'refined' (for
+    # example, newuoa can handle a bound-constrained problem if every defined bound is fixed).
     if not _prob_solv_match(prob_info['refined_type'], invoker.lower()):
         if invoker.lower() == 'pdfo':
             raise SystemError(
@@ -469,17 +544,17 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
                 '{}: a {} problem received; {} cannot solve '
                 'it.'.format(fun_name, prob_info['refined_type'].replace('-', ' '), invoker))
 
-    # validate and preprocess options, adopt default options if needed. This should be done after reducing the problem,
-    # because BOBYQA requires rhobeg <= min(ub-lb)/2
+    # Validate and preprocess options, adopt default options if needed. This should be done after reducing the problem,
+    # because BOBYQA requires rhobeg <= min(ub-lb)/2.
     options_c, method = _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings)
 
-    # revise x0 for bound and linearly constrained problems. This is necessary for LINCOA, which accepts only a feasible
+    # rRvise x0 for bound and linearly constrained problems. This is necessary for LINCOA, which accepts only a feasible
     # x0. Should we do this even if there are nonlinear constraints? For now, we do not, because doing so may
-    # dramatically increase the infeasibility of x0 with respect to the nonlinear constraints
+    # dramatically increase the infeasibility of x0 with respect to the nonlinear constraints.
     if prob_info['refined_type'] in ['bound-constrained', 'linearly-constrained'] and not prob_info['nofreex'] and \
             not prob_info['infeasible']:
         x0_old = x0_c
-        # another possibility for bound-constrained problems: xind = (x0 < lb) | (x0 > ub);
+        # Another possibility for bound-constrained problems: xind = (x0 < lb) | (x0 > ub);
         # x0(xind) = (lb(xind) + ub(xind))/2;
         result = _project(x0_c, lb, ub, constraints_c)
         x0_c = result.x
@@ -488,46 +563,47 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
             warnings.warn(warn_message, Warning)
             list_warnings.append(warn_message)
 
-    # scale the problem if necessary and if intended, x_before_scaling = scaling_factor.*x_after_scaling + shift
-    # This should be done after revising x0, which can affect the shift
+    # Scale the problem if necessary and if intended, x_before_scaling = scaling_factor.*x_after_scaling + shift.
+    # This should be done after revising x0, which can affect the shift.
     prob_info['scaled'] = False
     if options_c['scale'] and not prob_info['nofreex'] and not prob_info['infeasible']:
         fun_c, x0_c, lb, ub, constraints_c, scaling_factor, shift, substantially_scaled = \
             _scale_problem(fun_c, x0_c, lb, ub, constraints_c, list_warnings)
 
-        # scale and shift the problem so that
-        #   1. for the variables that have both lower bound and upper bound, the bounds become [-1, 1]
-        #   2. the other variables will be shifted so that the corresponding component of x0 becomes 0
+        # Scale and shift the problem so that:
+        #   1. for the variables that have both lower bound and upper bound, the bounds become [-1, 1].
+        #   2. the other variables will be shifted so that the corresponding component of x0 becomes 0.
         prob_info['scaled'] = True
         prob_info['scaling_factor'] = scaling_factor
         prob_info['shift'] = shift
 
-        # if the problem is substantially scaled, then rhobeg and rhoend may need to be revised
+        # If the problem is substantially scaled, then rhobeg and rhoend may need to be revised to be consistent.
         if substantially_scaled:
             options_c['rhobeg'] = np.float64(1.0)
 
-    # select a solver if invoker == 'pdfo'
+    # Select a solver if the invoker is 'pdfo' and no one is provided.
     if invoker.lower() == 'pdfo':
         if prob_info['refined_type'] == 'bound-constrained':
-            # lb and ub will be used for defining rhobeg if bobyqa is selected
+            # lb and ub will be used for defining rhobeg if bobyqa is selected.
             prob_info['lb'] = lb
             prob_info['ub'] = ub
 
         method = _solver_selection(invoker, method, options_c, prob_info, list_warnings)
 
+    # Store the warnings raised during the pre-processing.
     prob_info['warnings'] = list_warnings
 
-    # the refined data can be useful when debugging. It will be used in _postpdfo even if the debug mode is not enabled
+    # The refined data can be useful when debugging. It will be used in postpdfo even if the debug mode is not enabled.
     prob_info['refined_data'] = \
         {'objective': fun_c, 'x0': x0_c, 'lb': lb, 'ub': ub, 'constraints': constraints_c, 'options': options_c}
 
     if not options_c['debug']:
-        # do not carry the raw data with us unless in debug mode
+        # Do not carry the raw data with us unless in debug mode.
         del prob_info['raw_data']
 
     if prob_info['refined_type'] == 'bound-constrained' and invoker.lower() == 'pdfo':
-        # if the invoker is pdfo, lb and ub may be used for defining rhobeg in case bobyqa is later selected as the
-        # solver
+        # If the invoker is pdfo, lb and ub may be used for defining rhobeg in case bobyqa is later selected as the
+        # solver.
         prob_info['lb'] = lb
         prob_info['ub'] = ub
 
@@ -570,6 +646,8 @@ def _bounds_validation(invoker, bounds, lenx0):
             from scipy.optimize import Bounds as ScipyBounds
 
             if isinstance(bounds, ScipyBounds):
+                # If the bounds are defined with the SciPy Bounds class, they are converted to the local Bounds class so
+                # that some required pre-processing are done.
                 bounds = Bounds(lb=bounds.lb, ub=bounds.ub)
         except ImportError:
             pass
@@ -583,6 +661,7 @@ def _bounds_validation(invoker, bounds, lenx0):
                 '{}: the bounds should be an instance of the `Bounds` class or a sequence of scalar '
                 '2-tuples.'.format(invoker))
 
+        # Extract lower and upper bounds from the bounds arguments.
         try:
             if hasattr(bounds, '__len__'):
                 bounds_c = np.asarray(bounds, order='F')
@@ -594,16 +673,23 @@ def _bounds_validation(invoker, bounds, lenx0):
         except ValueError:
             raise ValueError('{}: the bound elements should be scalars.'.format(invoker))
 
+        # If both lb and ub are empty, the problem should be considered as unbounded.
+        if lb.size == 0 and ub.size == 0:
+            lb = np.full(lenx0, -np.inf, dtype=np.float64)
+            ub = np.full(lenx0, np.inf, dtype=np.float64)
+
         if lb.size != lenx0 or ub.size != lenx0:
             raise ValueError('{}: the bound size should be equal to the number of variables.'.format(invoker))
     else:
         lb = np.full(lenx0, -np.inf, dtype=np.float64)
         ub = np.full(lenx0, np.inf, dtype=np.float64)
 
-    # NaN bounds are set to infinite values not to take them into account
+    # NaN bounds are set to infinite values not to take them into account. The conversion is not made in the class
+    # Bounds since the user may define the bounds as a list of 2-tuples, in which case the class is never called.
     lb[np.isnan(lb)] = -np.inf
     ub[np.isnan(ub)] = np.inf
 
+    # Check the infeasibility of the bounds.
     infeasible = (lb > ub)
     fixed_indices = (np.abs(lb - ub) < 2 * eps)
     fixed_values = (lb[fixed_indices] + ub[fixed_indices]) / 2
@@ -663,40 +749,33 @@ def _constraints_validation(invoker, constraints, lenx0):
         list_nonlinear = []
         for constraint in constraints_c:
             if isinstance(constraint, linear_constraint_types):
-                A = np.asarray(constraint.A, dtype=np.float64, order='F')
-                lb = np.asarray(constraint.lb, dtype=np.float64)
-                ub = np.asarray(constraint.ub, dtype=np.float64)
-                A[np.isnan(A)] = 0  # not to use those variables as constraints
-                lb[np.isnan(lb)] = -np.inf
-                ub[np.isnan(ub)] = np.inf
-                list_linear.append(LinearConstraint(a=A, lb=lb, ub=ub))
+                # If the user provided a linear constraint through the LinearConstraint class of SciPy, it is converted
+                # to the local LinearConstraint so that some pre-processing are done on the matrices.
+                list_linear.append(LinearConstraint(a=constraint.A, lb=constraint.lb, ub=constraint.ub))
             elif isinstance(constraint, nonlinear_constraint_types) or \
                     (isinstance(constraint, dict) and {'type', 'fun'} <= set(constraint.keys()) and
                      isinstance(constraint['type'], str) and constraint['type'] in ['eq', 'ineq'] and
-                     callable(constraint['fun']) and
-                     (python_version == 2 or len(signature(constraint['fun']).parameters) > 0)):
+                     callable(constraint['fun'])):
                 if isinstance(constraint, nonlinear_constraint_types):
-                    fun = constraint.fun
-                    lb = np.asarray(constraint.lb, dtype=np.float64)
-                    ub = np.asarray(constraint.ub, dtype=np.float64)
-                    lb[np.isnan(lb)] = -np.inf
-                    ub[np.isnan(ub)] = np.inf
-                    list_nonlinear.append(NonlinearConstraint(fun=fun, lb=lb, ub=ub))
+                    # If the user provided a nonlinear constraint through the NonlinearConstraint class of SciPy, it is
+                    # converted to the local NonlinearConstraint so that some pre-processing are done on the vectors and
+                    # the constraint function.
+                    list_nonlinear.append(NonlinearConstraint(fun=constraint.fun, lb=constraint.lb, ub=constraint.ub))
                 else:
                     list_nonlinear.append(constraint)
             else:
-                # the constraint is neither linear nor nonlinear
+                # The constraint is neither linear nor nonlinear.
                 raise ValueError(
                     "{}: the constraints should be instances of the `LinearConstraint` or `NonlinearConstraint` "
                     "classes, or a dictionary with field 'type' and 'fun'.".format(invoker))
 
-        # linear constraints build
+        # Build the linear constraints.
         a_linear = np.asarray([[]], dtype=np.float64, order='F').reshape(0, lenx0)
         lb_linear = np.asarray([], dtype=np.float64)
         ub_linear = np.asarray([], dtype=np.float64)
 
         for linear_constraint in list_linear:
-            # the type of linear_constraint is surely LinearConstraint
+            # The type of linear_constraint is necessarily LinearConstraint.
             a_local = linear_constraint.A
             if a_local.size == 0:
                 a_local = a_local.reshape(0, lenx0)
@@ -704,21 +783,22 @@ def _constraints_validation(invoker, constraints, lenx0):
                 raise ValueError(
                     '{}: the number of columns in A is inconsistent with the number of variables'.format(invoker))
 
+            # If no bounds are provided (either lower or upper), an infinite one is defined.
             if linear_constraint.lb.size != 0:
                 lb_local = linear_constraint.lb
             else:
                 lb_local = np.full(a_local.shape[0], -np.inf)
-
             if linear_constraint.ub.size != 0:
                 ub_local = linear_constraint.ub
             else:
                 ub_local = np.full(a_local.shape[0], np.inf)
 
+            # Add the current linear constraint to the global one.
             a_linear = np.concatenate((a_linear, a_local), axis=0)
             lb_linear = np.r_[lb_linear, lb_local]
             ub_linear = np.r_[ub_linear, ub_local]
 
-        # removing of the abnormal constraints and checking infeasibility
+        # Remove the abnormal constraints and check infeasibility.
         if lb_linear.size == 0 and ub_linear.size == 0:
             infeasible = np.asarray([], dtype=bool)
             trivial = np.asarray([], dtype=bool)
@@ -740,25 +820,37 @@ def _constraints_validation(invoker, constraints, lenx0):
             lb_linear = lb_linear[np.logical_not(trivial)]
             ub_linear = ub_linear[np.logical_not(trivial)]
 
-        # nonlinear constraints build
+        # Build the nonlinear constraints.
         try:
             from .gethuge import gethuge
         except ImportError:
+            # If gethuge cannot be imported, the package is most likely not built.
             import_error_so('gethuge')
         hugecon = gethuge('con')
 
+        # If no bounds are provided with some nonlinear constraints, they should not be considered.
+        reduced_list_nonlinear = []
+        for nonlinear_constraint in list_nonlinear:
+            if isinstance(nonlinear_constraint, nonlinear_constraint_types) and \
+                    (nonlinear_constraint.lb.size > 0 or nonlinear_constraint.ub.size > 0):
+                reduced_list_nonlinear.append(nonlinear_constraint)
+
+        list_nonlinear = reduced_list_nonlinear
+
+        # Define the global constraint function.
         def fun_nonlinear(x):
             fun_x = np.asarray([], dtype=np.float64)
 
             for nonlinear_constraint in list_nonlinear:
+                # Get the value of the constraint function.
                 if isinstance(nonlinear_constraint, nonlinear_constraint_types):
                     constraint_x = nonlinear_constraint.fun(x)
                 else:
                     constraint_x = nonlinear_constraint['fun'](x)
 
                 if constraint_x is None:
-                    # if the constraint function returned anything, we convert the default None value to NaN, that can
-                    # be understood by Fortran
+                    # If the constraint function returned anything, we convert the default None value to NaN, that can
+                    # be understood by Fortran.
                     constraint_x = [np.nan]
                 elif isinstance(constraint_x, scalar_types):
                     constraint_x = [constraint_x]
@@ -768,11 +860,11 @@ def _constraints_validation(invoker, constraints, lenx0):
 
                 constraint_x = np.asarray(constraint_x, dtype=np.float64)
 
-                # use extreme barrier to cope with the 'hidden constraints'
+                # Use extreme barrier to cope with the 'hidden constraints'.
                 constraint_x[np.logical_or(np.isnan(constraint_x), constraint_x > hugecon)] = hugecon
 
-                # this part is NOT extreme barrier. We replace extremely negative values of cineq (which leads to no
-                # constraint violation) by -hugecon. Otherwise, NaN or Inf may occur in the interpolation models
+                # This part is NOT extreme barrier. We replace extremely negative values of cineq (which leads to no
+                # constraint violation) by -hugecon. Otherwise, NaN or Inf may occur in the interpolation models.
                 constraint_x[constraint_x < -hugecon] = -hugecon
 
                 if len(constraint_x.shape) != 1:
@@ -786,24 +878,29 @@ def _constraints_validation(invoker, constraints, lenx0):
                         raise ValueError(
                             '{}: the size of the vector returned by the constraint function is inconsistent with the '
                             'constraint bounds; check the shapes of the arrays.'.format(invoker))
+
+                    #  Convert the constraints defined as lb <= c(x) <= ub into c_extended(x) <= 0.
                     if nonlinear_constraint.lb.size > 0 and nonlinear_constraint.ub.size > 0:
                         constraint_x = np.concatenate((nonlinear_constraint.lb - constraint_x,
                                                        constraint_x - nonlinear_constraint.ub))
                     elif nonlinear_constraint.lb.size > 0:
                         constraint_x = nonlinear_constraint.lb - constraint_x
                     else:
-                        # necessarily, nonlinear_constraint.ub is well-defined
+                        # Necessarily, nonlinear_constraint.ub is well-defined.
                         constraint_x = constraint_x - nonlinear_constraint.ub
                 elif nonlinear_constraint['type'] == 'eq':
                     constraint_x = np.concatenate((constraint_x, -constraint_x))
 
+                # Add the current nonlinear constraint evaluation to the general one.
                 fun_x = np.concatenate((fun_x, constraint_x))
 
             return fun_x
 
+        # Define the global linear and nonlinear constraints.
         linear_constraints = None if len(list_linear) == 0 else LinearConstraint(a_linear, lb=lb_linear, ub=ub_linear)
         nonlinear_constraints = None if len(list_nonlinear) == 0 else {'type': 'ineq', 'fun': fun_nonlinear}
     else:
+        # No constraints have been provided.
         linear_constraints = None
         nonlinear_constraints = None
         infeasible = np.asarray([], dtype=bool)
@@ -850,31 +947,31 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
     if options is not None and not isinstance(options, dict):
         raise ValueError('{}: the options should be defined as a dictionary.'.format(invoker))
 
-    # possible solvers
     options = dict() if options is None else options.copy()
     fun_name = stack()[0][3]  # name of the current function
 
     if invoker not in invoker_list:
         raise SystemError('{}: {} serves only {}'.format(fun_name, fun_name, ', '.join(invoker_list)))
 
-    # which fields are specified?
+    # Which options' fields are provided?
     if options is not None:
         option_fields = options.keys()
     else:
         option_fields = []
 
+    # Default values for each options.
     maxfev = 500 * lenx0
-    rhobeg = 1  # the default rhobeg and rhoend will be revised for BOBYQA
+    rhobeg = 1  # The default rhobeg and rhoend will be revised for BOBYQA
     rhoend = 1e-6
     ftarget = -np.inf
-    classical = False  # call the classical Powell code?
-    scale = False  # scale the problem according to bounds or not
+    classical = False  # Call the classical Powell code?
+    scale = False  # Scale the problem according to bounds?
     quiet = True
     debugflag = False
     chkfunval = False
 
-    # what is the solver? We need this information to decide which fields are 'known' (e.g., expected), and also to set
-    # npt and rhobeg, rhoend
+    # What is the solver? We need this information to decide which fields are 'known' (e.g., expected), and also to set
+    # npt and rhobeg, rhoend.
     if invoker == 'pdfo':
         if method is not None and method.lower() not in invoker_list:
             warn_message = '{}: unknown solver specified; {} will select one automatically.'.format(invoker, invoker)
@@ -888,7 +985,7 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
             list_warnings.append(warn_message)
         method = invoker
 
-    # check unknown fields according to solver
+    # Check whether the used provided any unknown option.
     if method is not None and method.lower() in ['bobyqa', 'lincoa', 'newuoa']:
         known_field = ['npt', 'maxfev', 'rhobeg', 'rhoend', 'ftarget', 'classical', 'scale', 'quiet', 'debug',
                        'chkfunval', 'solver']
@@ -900,11 +997,12 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
         warnings.warn(warn_message, Warning)
         list_warnings.append(warn_message)
 
-    # set default npt according to solver
-    # If method == '', then invoker must be pdfo, and a solver will be selected later; when the solver is chosen, a
-    # valid npt will be defined. So we do not need to consider the case with method == '' here. Note we have to take
-    # maxfev into consideration when selecting the solver, because npt is at most maxfev-1!
+    # Set default npt according to solver.
+    # If method == '' or None, then invoker must be pdfo, and a solver will be selected later; when the solver is
+    # chosen, a valid npt will be defined. So we do not need to consider the case with method == '' here. Note we have
+    # to take maxfev into consideration when selecting the solver, because npt is at most maxfev-1!
     if method is None:
+        # npt is set to NaN to be decided later, depending on the selected solver.
         npt = np.nan
     else:
         if method.lower() in ['bobyqa', 'lincoa', 'newuoa']:
@@ -912,23 +1010,23 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
         elif method.lower() == 'uobyqa':
             npt = (lenx0 + 1) * (lenx0 + 2) / 2
         else:
-            # the method is necessarily COBYLA
+            # The method is necessarily COBYLA.
             npt = lenx0 + 1
 
-    # revise default rhobeg and rhoend according to solver
+    # Revise default rhobeg and rhoend if the solver is BOBYQA.
     if method is not None and method.lower() == 'bobyqa':
         rhobeg_bobyqa = min(rhobeg, np.min(ub - lb) / 2)
         if ('scale' in option_fields and isinstance(options['scale'], bool) and not options['scale']) or \
                 (not scale and not ('scale' in option_fields and isinstance(options['scale'], bool))):
-            # if we are going to scale the problem later, then we keep the default value for rhoend; otherwise, we scale
-            # it as follows
+            # If we are going to scale the problem later, then we keep the default value for rhoend; otherwise, we scale
+            # it as follows.
             rhoend = (rhoend / rhobeg) * rhobeg_bobyqa
         rhobeg = rhobeg_bobyqa
 
-    # validate the user-specified options; adopt the default values if needed
+    # Validate the user-specified options; adopt the default values if needed.
     validated = False
     if 'npt' in option_fields and method is not None and method in ['bobyqa', 'lincoa', 'newuoa']:
-        # only newuoa, bobyqa and lincoa accept an npt option
+        # Only newuoa, bobyqa and lincoa accept an npt option.
         if not isinstance(options['npt'], scalar_types) or options['npt'] < lenx0 + 2 or \
                 options['npt'] > (lenx0 + 1) * (lenx0 + 2) / 2:
             warn_message = \
@@ -940,15 +1038,16 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
             validated = True
 
     if not validated:  # options['npt'] has not got a valid value yet
-        # for uobyqa and cobyla or empty solver, we adopt the 'default npt' defined above, although it will NOT be used
-        # by the solver
+        # For uobyqa and cobyla or empty solver, we adopt the 'default npt' defined above, although it will NOT be used
+        # by the solver.
         options['npt'] = npt
-    # if prepdfo is called by pdfo, and if pdfo has been called without precising the method, npt will be set to np.nan.
-    # If we do not check whether this value is np.nan before casting it into np.int32, it will lead to an error
+
+    # If prepdfo is called by pdfo, and if pdfo has been called without precising the method, npt will be set to np.nan.
+    # If we do not check whether this value is np.nan before casting it into np.int32, it will lead to an error.
     if not np.isnan(options['npt']):
         options['npt'] = np.int32(options['npt'])
 
-    # validate options['maxfev']
+    # Validate options['maxfev'].
     validated = False
     if 'maxfev' in option_fields:
         if not isinstance(options['maxfev'], scalar_types) or options['maxfev'] <= 0:
@@ -957,7 +1056,7 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
             warnings.warn(warn_message, Warning)
             list_warnings.append(warn_message)
         elif method is None and options['maxfev'] <= lenx0 + 1:
-            options['maxfev'] = lenx0 + 2  # the smallest possible value
+            options['maxfev'] = lenx0 + 2  # The smallest possible value
             validated = True
             warn_message = \
                 '{}: invalid maxfev; it should be a positive integer at least n+2; it is set to n+2.'.format(invoker)
@@ -975,18 +1074,18 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
                     '(n+1)*(n+2)/2+1.'.format(invoker, method)
                 options['maxfev'] = (lenx0 + 1) * (lenx0 + 2) / 2 + 1
             else:
-                # the method is necessarily COBYLA
+                # The method is necessarily COBYLA.
                 warn_message = '{}: invalid maxfev; {} requires maxfev > n+1; it is set to n+2.'.format(invoker, method)
             warnings.warn(warn_message, Warning)
             list_warnings.append(warn_message)
         else:
             validated = True
 
-    if not validated:  # options['maxfev'] has not got a valid value yet
+    if not validated:  # options['maxfev'] has not got a valid value yet.
         options['maxfev'] = max(maxfev, npt+1)
     options['maxfev'] = np.int32(options['maxfev'])
 
-    # validate options['rhobeg']
+    # Validate options['rhobeg'].
     validated = False
     if 'rhobeg' in option_fields:
         if not isinstance(options['rhobeg'], scalar_types) or options['rhobeg'] <= 0:
@@ -1006,14 +1105,14 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
         else:
             validated = True
 
-    if not validated:  # options['rhobeg'] has not got a valid value yet
+    if not validated:  # options['rhobeg'] has not got a valid value yet.
         if 'rhoend' in option_fields and isinstance(options['rhoend'], scalar_types):
             options['rhobeg'] = max(rhobeg, options['rhoend'])
         else:
             options['rhobeg'] = rhobeg
     options['rhobeg'] = np.float64(max(options['rhobeg'], eps))
 
-    # validate options['rhoend']
+    # Validate options['rhoend'].
     validated = False
     if 'rhoend' in option_fields:
         if not isinstance(options['rhoend'], scalar_types) or options['rhoend'] > options['rhobeg'] or \
@@ -1026,14 +1125,14 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
         else:
             validated = True
 
-    if not validated:  # options['rhoend'] has not got a valid value yet
+    if not validated:  # options['rhoend'] has not got a valid value yet.
         if rhobeg > 0:
             options['rhoend'] = (rhoend / rhobeg) * options['rhobeg']
         else:
             options['rhoend'] = 0
     options['rhoend'] = np.float64(max(options['rhoend'], eps))
 
-    # validate options['ftarget']
+    # Validate options['ftarget'].
     validated = False
     if 'ftarget' in option_fields:
         if not isinstance(options['ftarget'], scalar_types):
@@ -1043,11 +1142,11 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
         else:
             validated = True
 
-    if not validated:  # options['ftarget'] has not got a valid value yet
+    if not validated:  # options['ftarget'] has not got a valid value yet.
         options['ftarget'] = ftarget
     options['ftarget'] = np.float64(options['ftarget'])
 
-    # validate options['classical']
+    # Validate options['classical'].
     validated = False
     if 'classical' in option_fields:
         if not isinstance(options['classical'], bool):
@@ -1058,7 +1157,7 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
         else:
             validated = True
 
-    if not validated:  # options['classical'] has not got a valid value yet
+    if not validated:  # options['classical'] has not got a valid value yet.
         options['classical'] = scale
     options['classical'] = np.bool(options['classical'])
     if options['classical']:
@@ -1068,7 +1167,7 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
         warnings.warn(warn_message, Warning)
         list_warnings.append(warn_message)
 
-    # validate options['scale']
+    # Validate options['scale'].
     validated = False
     if 'scale' in option_fields:
         if not isinstance(options['scale'], bool):
@@ -1078,11 +1177,11 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
         else:
             validated = True
 
-    if not validated:  # options['scale'] has not got a valid value yet
+    if not validated:  # options['scale'] has not got a valid value yet.
         options['scale'] = scale
     options['scale'] = np.bool(options['scale'])
 
-    # validate options['quiet']
+    # Validate options['quiet'].
     validated = False
     if 'quiet' in option_fields:
         if not isinstance(options['quiet'], bool):
@@ -1092,11 +1191,11 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
         else:
             validated = True
 
-    if not validated:  # options['quiet'] has not got a valid value yet
+    if not validated:  # options['quiet'] has not got a valid value yet.
         options['quiet'] = quiet
     options['quiet'] = np.bool(options['quiet'])
 
-    # validate options['debug']
+    # Validate options['debug'].
     validated = False
     if 'debug' in option_fields:
         if not isinstance(options['debug'], bool):
@@ -1107,7 +1206,7 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
         else:
             validated = True
 
-    if not validated:  # options['debug'] has not got a valid value yet
+    if not validated:  # options['debug'] has not got a valid value yet.
         options['debug'] = debugflag
     options['debug'] = np.bool(options['debug'])
     if options['debug']:
@@ -1120,7 +1219,7 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
             warnings.warn(warn_message, Warning)
             list_warnings.append(warn_message)
 
-    # validate options['chkfunval']
+    # Validate options['chkfunval'].
     validated = False
     if 'chkfunval' in option_fields:
         if not isinstance(options['chkfunval'], bool):
@@ -1137,7 +1236,7 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
         else:
             validated = True
 
-    if not validated:  # options['chkfunval'] has not got a valid value yet
+    if not validated:  # options['chkfunval'] has not got a valid value yet.
         options['chkfunval'] = chkfunval
     options['chkfunval'] = np.bool(options['chkfunval'])
     if options['chkfunval']:
@@ -1197,11 +1296,13 @@ def _constr_violation(invoker, x, lb, ub, constraints):
         raise ValueError(
             '{}: UNEXPECTED ERROR: the sizes of the variable vector and the bounds are inconsistent.'.format(invoker))
 
+    # Compute the constraint violation as the relative distance to the bounds.
     constr_violation = max(0, np.max(np.r_[lb - x, x - ub] / max(1, np.max(np.abs(np.r_[lb, ub])))))
 
     if constraints['linear'] is not None:
         a, b = _linear_constraints_constr(constraints['linear'])
 
+        # Compute the constraint violation as the largest relative distance to the bounds and the linear constraints.
         constr_violation = max(constr_violation, (np.dot(a, x) - b) / max(1, np.max(np.abs(b))))
 
     if constraints['nonlinear'] is not None:
@@ -1213,6 +1314,9 @@ def _constr_violation(invoker, x, lb, ub, constraints):
             raise ValueError('{}: UNEXPECTED ERROR: the nonlinear constraints are ill-defined.'.format(invoker))
 
         nlc = np.asarray(nonlinear['fun'](x), dtype=np.float64)
+
+        # Compute the constraint violation as the largest relative distance to the bounds, the linear constraints and
+        # the nonlinear constraints.
         constr_violation = max(constr_violation, np.max(nlc))
 
     return np.float64(constr_violation)
@@ -1266,6 +1370,7 @@ def _problem_type(lb, ub, constraints):
     if lb.size != ub.size:
         raise ValueError('{}: UNEXPECTED ERROR: the bounds are inconsistent'.format(invoker))
 
+    # Define the type of the given problem.
     if constraints['nonlinear'] is not None:
         return 'nonlinearly-constrained'
     elif constraints['linear'] is not None and (constraints['linear'].lb.size > 0 or constraints['linear'].ub.size > 0):
@@ -1332,19 +1437,22 @@ def _reduce_problem(fun, x0, lb, ub, constraints, fixedx):
     if x0.size != lb.size or x0.size != ub.size or x0.size != fixedx.size:
         raise ValueError('{}: UNEXPECTED ERROR: the variable vector and the bounds are inconsistent'.format(invoker))
 
-    # since this function is private and internal, the format of each parameter
-    # has already been verified
+    # Since this function is private and internal, the format of each parameter has already been verified.
     freex = np.logical_not(fixedx)
     fixedx_value = (lb[fixedx] + ub[fixedx]) / 2
 
+    # Define the objective function that takes as input only the reduce variable.
     def fun_c(freex_value):
         return fun(_fullx(freex_value, fixedx_value, freex, fixedx))
 
+    # Build the reduced initial guess and bounds.
     x0_c = x0[freex]
     lb_c = lb[freex]
     ub_c = ub[freex]
 
     constraints_c = {'linear': None, 'nonlinear': None}
+
+    # Build the reduced linear constraints.
     if constraints['linear'] is not None:
         a = constraints['linear'].A[:, freex]
         a_fixedx = np.dot(constraints['linear'].A[:, fixedx], fixedx_value)
@@ -1353,6 +1461,7 @@ def _reduce_problem(fun, x0, lb, ub, constraints, fixedx):
 
         constraints_c['linear'] = LinearConstraint(a, lb=lb_lin, ub=ub_lin)
 
+    # Build the reduced nonlinear constraints.
     if constraints['nonlinear'] is not None:
         def fun_constraints(freex_value):
             return constraints['nonlinear']['fun'](_fullx(freex_value, fixedx_value, freex, fixedx))
@@ -1396,6 +1505,7 @@ def _linear_constraints_constr(linear_constraint):
             '{}: UNEXPECTED ERROR: the sizes of the coefficient matrix and the lower/upper-bound vectors are '
             'inconsistent.'.format(fun_name))
 
+    # Convert {lb_i <= A_i*x <= ub_i}_i into one constraint A*x <= b.
     a = linear_constraint.A
     lb = linear_constraint.lb
     ub = linear_constraint.ub
@@ -1459,6 +1569,7 @@ def _fullx(freex_value, fixedx_value, freex, fixedx):
     if freex.size != fixedx.size or freex_value.size + fixedx_value.size != freex.size:
         raise ValueError('{}: UNEXPECTED ERROR: the variable vector lengths are inconsistent'.format(invoker))
 
+    # Build the complete vector from the fixed and free values.
     x = np.empty(freex_value.size + fixedx_value.size, dtype=np.float64)
     x[freex] = freex_value
     x[fixedx] = fixedx_value
@@ -1506,7 +1617,7 @@ def _prob_solv_match(problem_type, solver):
     match = True
 
     if problem_type == 'unconstrained':
-        # essentially do nothing. DO NOT remove this case. Otherwise, the case would be included in 'else', which is not
+        # Essentially do nothing. DO NOT remove this case. Otherwise, the case would be included in 'else', which is not
         # correct.
         pass
     elif problem_type == 'bound-constrained':
@@ -1590,34 +1701,39 @@ def _scale_problem(fun, x0, lb, ub, constraints, list_warnings):
     if not isinstance(list_warnings, list):
         raise ValueError('{}: UNEXPECTED ERROR: the list of warnings is ill-defined'.format(invoker))
 
-    # x_before_scaling = scaling_factor*x_after_scaling + shift
+    # x_before_scaling = scaling_factor*x_after_scaling + shift.
 
-    # question: What about scaling according to the magnitude of x0, lb, ub, x0-lb, ub-x0?
+    # Question: What about scaling according to the magnitude of x0, lb, ub, x0-lb, ub-x0?
     # This can be useful if lb and ub reflect the nature of the problem well, and x0 is a reasonable approximation to
-    # the optimal solution. Otherwise, it may be a bad idea
+    # the optimal solution. Otherwise, it may be a bad idea.
     substantially_scaled_threshold = 4
 
-    # we consider the problem substantially scaled_threshold if
-    # max(scaling_factor)/min(scaling_factor) > substantially_scaled_threshold
+    # We consider the problem substantially scaled_threshold if
+    # max(scaling_factor)/min(scaling_factor) > substantially_scaled_threshold.
     lenx0 = x0.size
     index_lub = np.logical_and(lb > -np.inf, ub < np.inf)
     scaling_factor = np.ones(lenx0, dtype=np.float64)
     shift = np.zeros(lenx0, dtype=np.float64)
 
+    # Define the scaling factor and the shift according to the bounds.
     scaling_factor[index_lub] = (ub[index_lub] - lb[index_lub]) / 2
     shift[index_lub] = (ub[index_lub] + lb[index_lub]) / 2
 
-    # shift x0 to 0 unless both lower and upper bounds are present
+    # Shift x0 to 0 unless both lower and upper bounds are present.
     shift[np.logical_not(index_lub)] = x0[np.logical_not(index_lub)]
 
+    # Build the scaled objective function.
     def fun_c(x):
         return np.float64(fun(scaling_factor * x + shift))
 
+    # Scale the initial guess and the bounds.
     x0_c = (x0 - shift) / scaling_factor
     lb_c = (lb - shift) / scaling_factor
     ub_c = (ub - shift) / scaling_factor
 
     constraints_c = {'linear': None, 'nonlinear': None}
+
+    # Scale the linear constraints.
     if constraints['linear'] is not None:
         a = constraints['linear'].A
         lb = constraints['linear'].lb
@@ -1625,6 +1741,7 @@ def _scale_problem(fun, x0, lb, ub, constraints, list_warnings):
         constraints_c['linear'] = \
             LinearConstraint(np.dot(a, np.diag(scaling_factor)), lb=lb - np.dot(a, shift), ub=ub - np.dot(a, shift))
 
+    # Scale the nonlinear constraints.
     if constraints['nonlinear'] is not None:
         constraints_c['nonlinear'] = \
             {'type': 'ineq', 'fun': lambda x: constraints['nonlinear']['fun'](scaling_factor * x + shift)}
@@ -1638,6 +1755,8 @@ def _scale_problem(fun, x0, lb, ub, constraints, list_warnings):
 
     substantially_scaled = False
 
+    # Check whether the scaling is substantial. If this is true, the options rhobeg and rhoend may be updated for
+    # BOBYQA.
     # if (max([scaling_factor; 1./scaling_factor]) > substantially_scaled_threshold)
     if np.max(scaling_factor) / np.min(scaling_factor) > substantially_scaled_threshold:
         substantially_scaled = True
@@ -1689,28 +1808,28 @@ def _solver_selection(invoker, method, options, prob_info, list_warnings):
         raise SystemError('`{}` should only be called by {}'.format(fun_name, ', '.join(local_invoker_list)))
     invoker = stack()[1][3].lower()
 
-    # validate invoker
+    # Validate invoker.
     if not isinstance(invoker, str):
         raise ValueError('unknown: UNEXPECTED ERROR: invoker should be a string.')
 
-    # validate invoker
+    # Validate invoker.
     if method is not None and not isinstance(method, str):
         raise ValueError('{}: UNEXPECTED ERROR: method should be a string.'.format(invoker))
 
-    # validate options
+    # Validate options.
     option_fields = {'maxfev', 'rhobeg', 'rhoend'}
     if options is None or not isinstance(options, dict) or not (option_fields <= set(options.keys())) or \
             not isinstance(options['maxfev'], scalar_types) or not isinstance(options['rhobeg'], scalar_types) or \
             not isinstance(options['rhoend'], scalar_types):
         raise ValueError('{}: UNEXPECTED ERROR: options should be a valid dictionary.'.format(invoker))
 
-    # validate prob_info
+    # Validate prob_info.
     prob_info_fields = {'refined_type', 'refined_dim'}
     if prob_info is None or not isinstance(prob_info, dict) or not (prob_info_fields <= set(prob_info.keys())) or \
             not isinstance(prob_info['refined_type'], str) or not isinstance(prob_info['refined_dim'], scalar_types):
         raise ValueError('{}: UNEXPECTED ERROR: prob_info should be a valid dictionary.'.format(invoker))
 
-    # validate list_warnings
+    # Validate list_warnings.
     if not hasattr(list_warnings, '__len__'):
         raise ValueError('{}: UNEXPECTED ERROR: list_warnings should be a list.'.format(invoker))
 
@@ -1720,28 +1839,30 @@ def _solver_selection(invoker, method, options, prob_info, list_warnings):
 
     if solver is None or not _prob_solv_match(ptype, solver):
         if solver is not None:
-            # do not complain if solver is None
+            # Do not complain if solver is None, i.e., if it has not been provided.
             warn_message = \
                 '{}: {} cannot solve a {} problem; {} will select a solver ' \
                 'automatically.'.format(invoker, solver, ptype.replace('-', ' '), invoker)
             warnings.warn(warn_message, Warning)
             list_warnings.append(warn_message)
 
+        # Define the solver depending on the problem characteristics.
         if ptype == 'unconstrained':
             if 2 <= n <= 8 and options['maxfev'] >= (n + 1) * (n + 2) / 2:
                 solver = 'uobyqa'  # does not need options['npt']
             elif options['maxfev'] <= n + 2:  # options['maxfev'] == n + 2
                 solver = 'cobyla'  # does not need options['npt']
             else:
-                # Interestingly, we note in our test that LINCOA outperformed NEWUOA on unconstrained CUTEst problems
-                # when the dimension was not large (i.e., <=50) or the precision requirement was not high (i.e.,
-                # >= 1e-5). Therefore, it is worthwhile to try LINCOA when an unconstrained problem is given.
-                # Nevertheless, for the moment, we set the default solver for unconstrained problems to be newuoa.
+                # Interestingly, we note in our test that LINCOA may outperformed NEWUOA on unconstrained CUTEst
+                # problems when the dimension was not large (i.e., <= 50) or the precision requirement was not high
+                # (i.e., >= 1e-5). Therefore, it is worthwhile to try LINCOA when an unconstrained problem is given.
+                # Nevertheless, for the moment, we set the default solver for unconstrained problems to be newuoa, since
+                # the solver was intended to solve these problems.
                 solver = 'newuoa'
                 options['npt'] = min(2 * n + 1, options['maxfev'] - 1)
         elif ptype == 'bound-constrained':
             if options['maxfev'] <= n + 2:
-                solver = 'cobyla'  # does not need options['npt']
+                solver = 'cobyla'  # Does not need options['npt']
             else:
                 solver = 'bobyqa'
                 options['npt'] = min(2 * n + 1, options['maxfev'] - 1)
@@ -1752,7 +1873,7 @@ def _solver_selection(invoker, method, options, prob_info, list_warnings):
                     options['rhoend'] = max(options['rhoend'], eps)
         elif ptype == 'linearly-constrained':
             if options['maxfev'] <= n + 2:
-                solver = 'cobyla'  # does not need options['npt']
+                solver = 'cobyla'  # Does not need options['npt']
             else:
                 solver = 'lincoa'
                 options['npt'] = min(2 * n + 1, options['maxfev'] - 1)
@@ -1809,7 +1930,7 @@ def _project(x0, lb, ub, constraints, options=None):
         raise SystemError('`{}` should only be called by {}'.format(fun_name, ', '.join(invoker_list)))
     invoker = stack()[1][3].lower()
 
-    # validate x0
+    # Validate x0.
     if isinstance(x0, scalar_types):
         x0_c = [x0]
     elif hasattr(x0, '__len__'):
@@ -1824,7 +1945,7 @@ def _project(x0, lb, ub, constraints, options=None):
         raise ValueError('{}: UNEXPECTED ERROR: x0 should be a vector.'.format(invoker))
     lenx0 = x0_c.size
 
-    # validate lb
+    # Validate lb.
     if isinstance(lb, scalar_types):
         lb_c = [lb]
     elif hasattr(lb, '__len__'):
@@ -1838,7 +1959,7 @@ def _project(x0, lb, ub, constraints, options=None):
     if len(lb_c.shape) != 1 or lb.size != lenx0:
         raise ValueError('{}: UNEXPECTED ERROR: the size of lb is inconsistent with x0.'.format(invoker))
 
-    # validate ub
+    # Validate ub.
     if isinstance(ub, scalar_types):
         ub_c = [ub]
     elif hasattr(ub, '__len__'):
@@ -1852,49 +1973,54 @@ def _project(x0, lb, ub, constraints, options=None):
     if len(ub_c.shape) != 1 or ub.size != lenx0:
         raise ValueError('{}: UNEXPECTED ERROR: the size of ub is inconsistent with x0.'.format(invoker))
 
-    # validate constraints
+    # Validate constraints.
     if not isinstance(constraints, dict) or not ({'linear', 'nonlinear'} <= set(constraints.keys())) or \
             not (isinstance(constraints['linear'], LinearConstraint) or constraints['linear'] is None):
         # the nonlinear constraints will not be taken into account in this function and are, therefore, not validated
         raise ValueError('{}: UNEXPECTED ERROR: The constraints are ill-defined.'.format(invoker))
 
-    # validate options
+    # Validate options
     if options is not None and not isinstance(options, dict):
         raise ValueError('{}: UNEXPECTED ERROR: The options should be a dictionary.'.format(invoker))
 
-    # projection onto the feasible set
-    max_con = 1e20  # decide whether an inequality constraint can be ignored
+    max_con = 1e20  # Decide whether an inequality constraint can be ignored
 
+    # Projecte onto the feasible set.
     if constraints['linear'] is None:
-        # direct projection onto the bound constraints
+        # Direct projection onto the bound constraints
         x_proj = np.min((np.max((x0_c, lb_c), axis=0), ub_c), axis=0)
         return OptimizeResult(x=x_proj)
     elif np.equal(constraints['linear'].lb, constraints['linear'].ub).all() and np.max(lb_c) <= -max_con and \
             np.min(ub_c) >= max_con:
-        # the linear constraints are all equality constraints
+        # The linear constraints are all equality constraints. The projection can therefore be done by solving the
+        # least-square problem: min ||A*x - (b - A*x_0)||.
         try:
             from scipy.linalg import lstsq
 
             a = constraints['linear'].A
             b = constraints['linear'].lb
             xi, _, _, _ = lstsq(a, b - np.dot(a, x0_c))
+
+            # The problem is not bounded. However, if the least-square solver returned values bigger in absolute value
+            # than max_con, they will be reduced to this bound.
             x_proj = np.min((np.max((x0_c + xi, lb_c), axis=0), ub_c), axis=0)
 
             return OptimizeResult(x=x_proj)
         except ImportError:
-            # we can try to project the initial guess onto the feasible set by solving the associated optimization
-            # problem.
+            # We can try to project the initial guess oßnto the feasible set by solving the associated optimization
+            # problem. DO NOT remove not to raise any useless exception.
             pass
 
     if constraints['linear'] is not None:
         try:
+            # Project the initial guess onto the linear constraints via SciPy.
             from scipy.optimize import minimize
             from scipy.optimize import Bounds as ScipyBounds
             from scipy.optimize import LinearConstraint as ScipyLinearConstraint
 
             linear = constraints['linear']
 
-            # to be more efficient, SciPy asks to separate the equality and the inequality constraints into two
+            # To be more efficient, SciPy asks to separate the equality and the inequality constraints into two
             # different LinearConstraint structures
             pc_args_ineq, pc_args_eq = dict(), dict()
             pc_args_ineq['A'], pc_args_eq['A'] = np.asarray([[]], order='F'), np.asarray([[]], order='F')
@@ -1920,6 +2046,7 @@ def _project(x0, lb, ub, constraints, options=None):
             else:
                 project_constraints = ScipyLinearConstraint(**pc_args_eq)
 
+            # Perform the actual projection.
             ax_ineq = np.dot(pc_args_ineq['A'], x0_c)
             ax_eq = np.dot(pc_args_eq['A'], x0_c)
             if np.greater(ax_ineq, pc_args_ineq['ub']).any() or np.greater(pc_args_ineq['lb'], ax_ineq).any() or \
@@ -1928,7 +2055,7 @@ def _project(x0, lb, ub, constraints, options=None):
                 return minimize(lambda x: np.dot(x - x0_c, x - x0_c) / 2, x0_c, jac=lambda x: (x - x0_c),
                                 bounds=ScipyBounds(lb_c, ub_c), constraints=project_constraints)
             else:
-                # do not perform any projection if the initial guess is feasible
+                # Do not perform any projection if the initial guess is feasible.
                 return OptimizeResult(x=x0_c)
 
         except ImportError:
@@ -1995,6 +2122,7 @@ def _augmented_linear_constraint(n, bounds, constraints):
             not (constraints['linear'] is None or isinstance(constraints['linear'], LinearConstraint)):
         raise ValueError('{}: UNEXPECTED ERROR: the constraints are ill-defined.'.format(invoker))
 
+    # Construct the linear constraints that refers to the bounds.
     idmatrix = np.eye(n)
     lb, ub = bounds['lb'], bounds['ub']
     lb_kept_indices = np.logical_not(np.logical_and(np.isinf(lb), lb < 0))
@@ -2002,16 +2130,16 @@ def _augmented_linear_constraint(n, bounds, constraints):
     alb = idmatrix[lb_kept_indices, :]
     aub = idmatrix[ub_kept_indices, :]
 
-    # reshape the empty matrices to avoid concatenate exception
+    # Reshape the empty matrices to avoid concatenate exception.
     if aub.size == 0:
         aub = aub.reshape(0, n)
     if alb.size == 0:
         alb = alb.reshape(0, n)
 
-    # remove infinite bounds
+    # Remove infinite bounds.
     lb, ub = lb[lb_kept_indices], ub[ub_kept_indices]
 
-    # construction of the augmented matrices
+    # Construct of the actual augmented matrices.
     if constraints['linear'] is None:
         aineq = np.array([[]], dtype=np.float64)
         bineq = np.array([], dtype=np.float64)
@@ -2081,14 +2209,13 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
     hugefun = gethuge('fun')
     hugecon = gethuge('con')
 
-    # possible solvers
     fun_name = stack()[0][3]  # name of the current function
 
     if len(stack()) < 3 or stack()[1][3].lower() not in invoker_list:
         raise SystemError('`{}` should only be called by {}'.format(fun_name, ', '.join(invoker_list)))
     invoker = stack()[1][3].lower()
 
-    # validate x
+    # Validate x.
     if not hasattr(x, '__len__') and \
             not isinstance(x, scalar_types):
         raise ValueError('{}: UNEXPECTED ERROR: x should be a scalar or a vector.'.format(invoker))
@@ -2099,7 +2226,7 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
     if len(x_c.shape) > 1:
         raise ValueError('{}: UNEXPECTED ERROR: x should be a vector.'.format(invoker))
 
-    # validate fx
+    # Validate fx.
     if hasattr(fx, '__len__') and len(fx) == 1:
         fx_c = np.float64(fx[0])
     else:
@@ -2107,29 +2234,29 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
     if not isinstance(fx_c, scalar_types):
         raise ValueError('{}: UNEXPECTED ERROR: fx should be a scalar.'.format(invoker))
 
-    # validate exitflag
+    # Validate exitflag.
     if not isinstance(exitflag, scalar_types):
         raise ValueError('{}: UNEXPECTED ERROR: exitflag should be a scalar.'.format(invoker))
     exitflag_c = np.int32(exitflag)
     if exitflag_c != exitflag:
         raise ValueError('{}: UNEXPECTED ERROR: exitflag should not be a floating number.'.format(invoker))
 
-    # validate output
+    # Validate output.
     if output is None or not isinstance(output, dict):
         raise ValueError('{}: UNEXPECTED ERROR: output should be a valid dictionary.'.format(invoker))
 
-    # validate method
+    # Validate method.
     if method is None or not isinstance(method, str):
         raise ValueError('{}: UNEXPECTED ERROR: method should be a string.'.format(invoker))
 
-    # validate nf
+    # Validate nf.
     if not isinstance(nf, scalar_types):
         raise ValueError('{}: UNEXPECTED ERROR: nf should be a scalar.'.format(invoker))
     nf_c = np.int32(nf)
     if nf_c != nf:
         raise ValueError('{}: UNEXPECTED ERROR: nf should not be a floating number.'.format(invoker))
 
-    # validate fhist
+    # Validate fhist.
     if not hasattr(fhist, '__len__') and not isinstance(fhist, scalar_types):
         raise ValueError('{}: UNEXPECTED ERROR: fhist should be a scalar of a vector.'.format(invoker))
     try:
@@ -2139,7 +2266,7 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
     if len(fhist_c.shape) != 1:
         raise ValueError('{}: UNEXPECTED ERROR: fhist should be a vector.'.format(invoker))
 
-    # validate constrviolation
+    # Validate constrviolation.
     if not np.isnan(constrviolation) and not isinstance(constrviolation, scalar_types):
         raise ValueError('{}: UNEXPECTED ERROR: constrviolation should be a scalar.'.format(invoker))
     if np.isnan(constrviolation):
@@ -2147,7 +2274,7 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
     else:
         constrviolation_c = np.float64(constrviolation)
 
-    # validate chist
+    # Validate chist.
     if not (chist is None and (method in ['pdfo', 'newuoa', 'uobyqa'] or nf == 0)) and \
             not hasattr(chist, '__len__') and not isinstance(chist, scalar_types):
         raise ValueError('{}: UNEXPECTED ERROR: chist should be a scalar or a vector.'.format(invoker))
@@ -2161,8 +2288,7 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
     if chist_c is not None and len(chist_c.shape) != 1:
         raise ValueError('{}: UNEXPECTED ERROR: chist should be a vector.'.format(invoker))
 
-    # if the invoker is a solver called by pdfo, then let pdfo do the
-    # postprocessing
+    # If the invoker is a solver called by pdfo, then let pdfo do the post-processing.
     output['x'] = x_c
     output['fun'] = fx_c
     output['status'] = exitflag_c
@@ -2175,8 +2301,7 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
 
         return OptimizeResult(**output)
 
-    # if the solver is not called by pdfo (can be pdfo directly), perform the post-processing
-    # validate options
+    # If the solver is not called by pdfo (can be pdfo directly), perform the post-processing.
     option_fields = {'quiet', 'debug', 'classical', 'chkfunval'}
     if options is None or not isinstance(options, dict) or not (option_fields <= set(options.keys())) or \
             not isinstance(options['quiet'], (bool, np.bool)) or not isinstance(options['debug'], (bool, np.bool)) or \
@@ -2184,7 +2309,7 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
             not isinstance(options['chkfunval'], (bool, np.bool)):
         raise ValueError('{}: UNEXPECTED ERROR: options should be a valid dictionary.'.format(invoker))
 
-    # Manage the extreme barriers
+    # Manage the extreme barriers.
     if not options['classical']:
         if (fhist_c > hugefun).any() or np.isnan(fhist_c).any():
             raise ValueError(
@@ -2208,7 +2333,7 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
             warnings.warn(warn_message, Warning)
             output['warnings'].append(warn_message)
 
-    # validate prob_info
+    # Validate prob_info.
     prob_info_fields = \
         {'infeasible', 'warnings', 'scaled', 'reduced', 'fixedx', 'fixedx_value', 'refined_type', 'raw_type',
          'infeasible_linear', 'infeasible_bound'}
@@ -2241,11 +2366,11 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
                 'scaled.'.format(invoker))
     prob_info_c = prob_info.copy()
 
-    # validate the value of the inputs
+    # Validate the value of the inputs.
     if nf_c < 0 or (nf_c == 0 and not prob_info['infeasible'] and exitflag_c > 0):
         raise ValueError('{}: UNEXPECTED ERROR: {} returns a nf <= 0 unexpectedly'.format(invoker, method))
 
-    # the problem was (possibly) scaled, scale it back
+    # The problem was (possibly) scaled, scale it back.
     # The scaling affects constrviolation when there are bound constraint. Hence constrviolation has to be recalculated
     # so that it equals the constraint violation of the returned x with respect to the original problem.  Ideally, chist
     # should also be recalculated. However, it is impossible because we do not save the history of x. Therefore, when
@@ -2256,7 +2381,7 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
     constrv_returned = constrviolation_c
     if prob_info_c['scaled']:
         # First calculate the residuals of the linear constraints. This must be calculated before x is scaled back.
-        # Otherwise, we would have to scale also the linear constraints back to get the correct residuals
+        # Otherwise, we would have to scale also the linear constraints back to get the correct residuals.
         linear = prob_info_c['refined_data']['constraints']['linear']
         if linear is not None:
             Ax = np.dot(linear.A, x_c)
@@ -2265,11 +2390,11 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
         else:
             r, b = np.asarray([np.nan]), np.asarray([np.nan])
 
-        # scale x back
+        # Scale x back.
         x_c = prob_info_c['scaling_factor'] * x_c + prob_info_c['shift']
         output['x'] = x_c
 
-        # scale the bounds back
+        # Scale the bounds back.
         lb = prob_info_c['scaling_factor'] * prob_info_c['refined_data']['lb']
         lb += prob_info_c['shift']
         ub = prob_info_c['scaling_factor'] * prob_info_c['refined_data']['ub']
@@ -2279,13 +2404,14 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
         # constrained problems, while bobyqa is a feasible method and should return constrviolation = 0 regardless of
         # the scaling unless something goes wrong.
         if method == 'lincoa':
-            # LINCOA returns a relative constraint violation
+            # LINCOA returns a relative constraint violation, it should be converted.
             conv_n = np.concatenate((r, lb - x_c, x_c - ub))
             conv_n = np.nanmax((np.zeros_like(conv_n), conv_n), axis=0)
             conv_d = np.abs(np.concatenate((b, lb, ub)))
             conv_d = np.nanmax((np.ones_like(conv_d), conv_d), axis=0)
             constrviolation_c = np.max(conv_n / conv_d)
         else:
+            # Compute the constraint violation as usual.
             nlc = np.asarray([-np.inf], dtype=np.float64)
             if 'nlc' in output.keys():
                 nlc = np.asarray(output['nlc'], dtype=np.float64)
@@ -2295,18 +2421,18 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
             else:
                 constrviolation_c = np.nanmax(np.append(conv, 0))
 
-    # the problem was (possibly) reduced, get the full x
+    # The problem was (possibly) reduced, get the full x.
     if prob_info_c['reduced']:
         x_c = _fullx(x_c, prob_info_c['fixedx_value'], np.logical_not(prob_info_c['fixedx']), prob_info_c['fixedx'])
 
-    # set output.{nf, constrviolation, fhist, chist, method}
+    # Set output.{nf, constrviolation, fhist, chist, method}.
     output['nfev'] = nf_c
     output['constrviolation'] = constrviolation_c
     output['fhist'] = fhist_c
     output['chist'] = chist_c
     output['method'] = method
 
-    # revise constrviolation and chist according to problem type
+    # Revise constrviolation and chist according to problem type.
     max_c = 0 if chist_c is None or chist_c.size == 0 else np.nanmax(chist_c)
     if prob_info_c['refined_type'] == 'unconstrained' and (constrviolation_c > 0 or max_c > 0):
         raise ValueError(
@@ -2322,7 +2448,7 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
         output['constrviolation'] = np.float64(0)
         output['chist'] = np.zeros(nf_c)
 
-    # record the returned message
+    # Record the returned message.
     if exitflag_c == 0:
         output['message'] = \
             'Return from {} because the lower bound for the trust region radius is reached.'.format(method)
@@ -2378,6 +2504,7 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
     else:
         raise ValueError('{}: UNEXPECTED ERROR: {} returns an invalid exitflag {}.'.format(invoker, method, exitflag_c))
 
+    # Get the warnings memorized in output.
     if 'warnings' in output.keys():
         warning_list_output = output['warnings']
         del output['warnings']
@@ -2387,22 +2514,25 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
     else:
         warning_list_output = []
 
+    # Get the warnings memorized in prob_info.
     if 'warnings' in prob_info_c.keys():
         warning_list = list(prob_info_c['warnings'])
         warning_list.extend(list(warning_list_output))
     else:
         warning_list = []
 
+    # Combine all the warnings into one list.
     if len(warning_list) > 0:
         output['warnings'] = warning_list
 
-    # more careful checks about fx, constrviolation, fhist and chist.
-    # We do this only if the coe is in debug mode but not in classical mode. The classical mode cannot pass these checks
+    # More careful checks about fx, constrviolation, fhist and chist.
+    # We do this only if the coe is in debug mode but not in classical mode. The classical mode cannot pass these
+    # checks.
     if options['debug'] and not options['classical'] and nf_c > 0:
         if 'raw_data' not in prob_info_keys:
             raise ValueError("{}: UNEXPECTED ERROR: 'raw_data' should be a field of prob_info".format(invoker))
 
-        # check whether fx is 'optimal'
+        # Check whether fx is 'optimal'.
         fhistf = fhist_c
         if method in ['bobyqa', 'lincoa', 'cobyla']:
             fhistf = fhistf[chist_c <= max(constrv_returned, 0)]
@@ -2417,7 +2547,7 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
             raise ValueError(
                 '{}: UNEXPECTED ERROR: {} returns an fhist that does not match nf or fx'.format(invoker, method))
 
-        # check whether constrviolation is correct
+        # Check whether constrviolation is correct.
         cobyla_prec = np.float64(1e-12)
         lincoa_prec = np.float64(1e-14)
 
@@ -2435,6 +2565,7 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
             linear = prob_info_c['raw_data']['constraints']['linear']
             lb, ub = prob_info_c['raw_data']['bounds']
 
+            # Compute the linear constraint value.
             if linear is not None:
                 try:
                     Ax = np.dot(linear.A, x_c)
@@ -2447,7 +2578,7 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
                 b, r = np.asarray([np.nan]), np.asarray([np.nan])
 
             if method == 'lincoa':
-                # LINCOA returns a relative constraint violation
+                # LINCOA returns a relative constraint violation, it needs to be converted.
                 conv_n = np.concatenate((r, lb - x_c, x_c - ub))
                 conv_n = np.nanmax((np.zeros_like(conv_n), conv_n), axis=0)
                 conv_d = np.abs(np.concatenate((b, lb, ub)))
@@ -2479,22 +2610,22 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
                     'chist.'.format(invoker, method))
 
         if options['chkfunval']:
-            # check whether fx = fun(x)
+            # Check whether fx = fun(x).
             fun_x = prob_info_c['raw_data']['objective'](x_c)
             if np.isnan(fun_x) or (fun_x > hugefun):
                 fun_x = hugefun
-                # due to extreme barrier (implemented when options['classical']=False), all the function values that are
+                # Due to extreme barrier (implemented when options['classical']=False), all the function values that are
                 # NaN or larger than hugefun are replaced by hugefun.
 
-            # it seems that COBYLA can return fx~=fun(x) due to rounding errors. Therefore, we cannot use "fx != fun_x"
-            # to check COBYLA
+            # It seems that COBYLA can return fx~=fun(x) due to rounding errors. Therefore, we cannot use 'fx != fun_x'
+            # to check COBYLA.
             if not (np.isnan(fx_c) and np.isnan(fun_x)) and \
                     not (fx_c == fun_x or (abs(fun_x - fx_c) <= cobyla_prec * max(1, abs(fx_c))) and
                          method == 'cobyla'):
                 raise ValueError(
                     '{}: UNEXPECTED ERROR: {} returns an fx that does not match x.'.format(invoker, method))
 
-            # check whether nlc = nonlinear(x)
+            # Check whether nlc = nonlinear(x) (true equality).
             nonlinear = prob_info_c['raw_data']['constraints']['nonlinear']
             if nonlinear is not None:
                 if 'nlc' in output.keys():
@@ -2509,7 +2640,7 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
                 nlcx[np.logical_or(np.isnan(nlcx), nlcx > hugecon)] = hugecon
 
                 # This part is NOT extreme barrier. We replace extremely negative values of cineq (which leads to no
-                # constraint violation) by -hugecon. Otherwise, NaN or Inf may occur in the interpolation models
+                # constraint violation) by -hugecon. Otherwise, NaN or Inf may occur in the interpolation models.
                 nlcx[nlcx < -hugecon] = -hugecon
 
                 max_x = 0 if nlcx.size == 0 else np.nanmax(nlcx)
@@ -2522,8 +2653,11 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
     if method == 'lincoa' and 'constr_modified' in output.keys():
         del output['constr_modified']
 
-    if 'nlc' in output.keys():
-        del output['nlc']
+    # output['nlc'] contains the nonlinear constraint at the output iteration without re-evaluation. It was needed in
+    # the original release in the checking part of postpdfo, but it is keeping in the output structure in the latter
+    # releases.
+    # if 'nlc' in output.keys():
+    #     del output['nlc']
 
     if not options['quiet']:
         print(output['message'], end='\n\n')
@@ -2559,7 +2693,10 @@ def import_error_so(missing_file=None):
     if missing_file is None:
         missing_file = invoker
 
+    # The error message is different on each platform (i.e., Windows based or UNIX based system).
+    import platform
     system_os = platform.system()
+
     system_known = True
     if system_os.lower() in ['darwin', 'linux']:
         system_os = 'unix'

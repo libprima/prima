@@ -140,6 +140,8 @@ def cobyla(fun, x0, args=(), bounds=None, constraints=(), options=None):
         from .gethuge import gethuge
     except ImportError:
         from ._dependencies import import_error_so
+
+        # If gethuge cannot be imported, the execution should stop because the package is most likely not built.
         import_error_so('gethuge')
 
     from ._dependencies import prepdfo, _augmented_linear_constraint, postpdfo
@@ -150,19 +152,19 @@ def cobyla(fun, x0, args=(), bounds=None, constraints=(), options=None):
     else:
         invoker = ''
 
-    # a cell that records all the warnings
+    # A cell that records all the warnings.
     # Why do we record the warning message in output['warnings'] instead of prob_info['warnings']? Because, if cobyla is
     # called by pdfo, then prob_info will not be passed to postpdfo, and hence the warning message will be lost. To the
     # contrary, output will be passed to postpdfo anyway.
     output = dict()
     output['warnings'] = []
 
-    # preprocess the inputs
+    # Preprocess the inputs.
     fun_c, x0_c, bounds_c, constraints_c, options_c, _, prob_info = \
         prepdfo(fun, x0, args, bounds=bounds, constraints=constraints, options=options)
 
     if prob_info['infeasible']:
-        # the problem turned out infeasible during prepdfo
+        # The problem turned out infeasible during prepdfo.
         exitflag = -4
         nf = 0
         x = np.full(x0_c.size, np.nan)
@@ -180,7 +182,8 @@ def cobyla(fun, x0, args=(), bounds=None, constraints=(), options=None):
         constrviolation = prob_info['constrv_fixedx']
         chist = np.array([constrviolation], dtype=np.float64)
     else:
-        # the problem turns out 'normal' during prepdfo include all the constraints into one single nonlinear constraint
+        # The problem turns out 'normal' during prepdfo include all the constraints into one single nonlinear
+        # constraint.
         n = x0_c.size
         a_aug, b_aug = _augmented_linear_constraint(n, bounds_c, constraints_c)
 
@@ -214,30 +217,31 @@ def cobyla(fun, x0, args=(), bounds=None, constraints=(), options=None):
         conval_x0 = ctr(x0_c)
         m = conval_x0.size
 
-        # extract the options and parameters
+        # Extract the options and parameters.
         maxfev = options_c['maxfev']
         rhobeg = options_c['rhobeg']
         rhoend = options_c['rhoend']
         ftarget = options_c['ftarget']
 
-        # the largest integer in the fortran functions; the factor 0.99 provides a buffer
+        # The largest integer in the fortran functions; the factor 0.99 provides a buffer.
         max_int = np.floor(0.99 * gethuge('integer'))
 
-        # the smallest nw, i.e., the nw with npt = n + 2
+        # The smallest nw, i.e., the nw with npt = n + 2. If it is larger than a threshold (system dependent), the
+        # problem is too large to be executed on the system.
         min_nw = n * (3 * n + 2 * m + 11) + 4 * m + 6
         if min_nw >= max_int:
             executor = invoker.lower() if invoker == 'pdfo' else fun_name
-            # nw would suffer from overflow in the Fortran code, exit immediately
+            # nw would suffer from overflow in the Fortran code, exit immediately.
             raise SystemError('{}: problem too large for {}. Try other '
                               'solvers.'.format(executor, fun_name))
         if maxfev > max_int:
             maxfev = max_int
-            w_message = '{}: maxfev exceeds the upper limit of Fortran ' \
-                        'integer; it is set to {}'.format(fun_name, maxfev)
+            w_message = '{}: maxfev exceeds the upper limit of Fortran integer; it is set to ' \
+                        '{}'.format(fun_name, maxfev)
             warnings.warn(w_message, Warning)
             output['warnings'].append(w_message)
 
-        # call the Fortran code
+        # Call the Fortran code.
         try:
             if options_c['classical']:
                 from . import fcobyla_classical as fcobyla
@@ -247,7 +251,7 @@ def cobyla(fun, x0, args=(), bounds=None, constraints=(), options=None):
             from ._dependencies import import_error_so
             import_error_so()
 
-        # m should be precised not to raise any error if there is no linear constraints
+        # m should be precised not to raise any error if there is no linear constraints.
         x, fx, exitflag, fhist, chist, constrviolation, conval = \
             fcobyla.mcobyla(x0_c, rhobeg, rhoend, 0, maxfev, ftarget, conval_x0, fun_c,
                             lambda i_c, x_c: ctr_elmt(x_c, i_c - 1))
@@ -256,5 +260,5 @@ def cobyla(fun, x0, args=(), bounds=None, constraints=(), options=None):
         if m > 0:
             output['nlc'] = -conval[b_aug.size:]
 
-    # postprocess the result
+    # Postprocess the result.
     return postpdfo(x, fx, exitflag, output, fun_name, nf, fhist, options_c, prob_info, constrviolation, chist)
