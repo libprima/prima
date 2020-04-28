@@ -22,7 +22,7 @@ To use the Python version of PDFO on Linux or Mac, see README_py_unix.txt.
 
 To use the Python version of PDFO on Windows, see README_py_win.txt.
 
-This package is licensed under the GNU GPLv3 Licence --- see the LICENCE.txt
+This package is released under the GNU LGPLv3 Licence --- see the LICENCE.txt
 file for details. It makes use of a modified version of Powell's Fortran
 code (UOBYQA, NEWUOA, BOBYQA, LINCOA, COBYLA). See folder "original" in
 "fsrc" for Powell's original source files.
