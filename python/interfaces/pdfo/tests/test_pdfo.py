@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Tests pdfo on a few VERY simple problems.
 
@@ -28,6 +28,7 @@ class TestPDFO(unittest.TestCase):
     SOLVERS = ['uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla', 'pdfo']
     RELEASE = True
     PRECISION = np.float64(1e-6)
+    QUIET = False
     NRUN = 1
     EPS = np.finfo(np.float64).eps
 
@@ -58,8 +59,8 @@ class TestPDFO(unittest.TestCase):
         self.PERTURB = 0 if self.NRUN == 1 else 1e-15
         warnings.filterwarnings('ignore')
 
-    def test_pdfo(self):
-        """Launches the pdfo tests.
+    def runTest(self):
+        """PDFO tests on unconstrained and constrained problems.
 
         Authors
         -------
@@ -72,12 +73,13 @@ class TestPDFO(unittest.TestCase):
         default_stdout = sys.stdout  # the default value of stdout (screen)
 
         for irun in range(1, self.NRUN + 1):
-            if self.NRUN > 1:
+            if not self.QUIET and self.NRUN > 1:
                 print('\nTest {}:\n'.format(irun))
             for i_type, p_type in enumerate(self.type_list):
-                print('\nTesting {} problems ...'.format(p_type.replace('-', ' ')))
-                if not self.RELEASE:
-                    print()
+                if not self.QUIET:
+                    print('\nTesting {} problems ...'.format(p_type.replace('-', ' ')))
+                    if not self.RELEASE:
+                        print()
 
                 for solver in self.solver_list[i_type]:
                     for x0, fun, fun_name, fopt in zip(self.x0_list, self.fun_list, self.fun_list_name, self.fopt_list[i_type]):
@@ -126,13 +128,14 @@ class TestPDFO(unittest.TestCase):
                                 # the precision of cobyla is lower
                                 tol = max(1e3 * tol, 1e-2)
 
-                            if not self.RELEASE:
+                            if not self.QUIET and not self.RELEASE:
                                 print('solver = {},\tfun = {}'.format(solver, fun_name), end='\t\t')
                                 print('fx = {0:1.15e},\tfopt={1:1.15e}'.format(fx, fopt))
 
                             self.assertTrue(np.linalg.norm(global_res.x - x) == 0)
                             self.assertTrue((fx - fopt) / max(1, abs(fopt)) <= tol)
-                print('Succeed.')
+                if not self.QUIET:
+                    print('Succeed.')
 
     @staticmethod
     def chrosen(x):

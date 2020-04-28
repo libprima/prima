@@ -1,0 +1,3 @@
+include *.txt
+recursive-include fsrc *
+recursive-include python *

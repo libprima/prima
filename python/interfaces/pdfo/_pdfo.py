@@ -4,8 +4,7 @@ from inspect import stack
 import numpy as np
 
 
-def pdfo(fun, x0, args=(), method=None, bounds=None, constraints=(),
-         options=None):
+def pdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=None):
     """PDFO: Powell's Derivative-Free Optimization solvers
 
     PDFO provides an interface to call Powell's derivatives-free optimization solvers: UOBYQA, NEWUOA, BOBYQA, LINCOA,
@@ -165,20 +164,22 @@ def pdfo(fun, x0, args=(), method=None, bounds=None, constraints=(),
         from .gethuge import gethuge
     except ImportError:
         from ._dependencies import import_error_so
+
+        # If gethuge cannot be imported, the execution should stop because the package is most likely not built.
         import_error_so('gethuge')
 
     from ._dependencies import prepdfo, postpdfo
 
-    # a cell that records all the warnings
+    # A cell that records all the warnings.
     output = dict()
     output['warnings'] = []
 
-    # preprocess the inputs
+    # Preprocess the inputs.
     fun_c, x0_c, bounds_c, constraints_c, options_c, method, prob_info = \
         prepdfo(fun, x0, args, method, bounds, constraints, options)
 
     if prob_info['infeasible']:
-        # the problem turned out infeasible during prepdfo
+        # The problem turned out infeasible during prepdfo.
         exitflag = -4
         nf = 0
         x = np.full(x0_c.size, np.nan)
@@ -187,7 +188,7 @@ def pdfo(fun, x0, args=(), method=None, bounds=None, constraints=(),
         constrviolation = np.nan
         chist = np.array([], dtype=np.float64)
     elif prob_info['nofreex']:
-        # x was fixed by the bound constraints during prepdfo
+        # x was fixed by the bound constraints during prepdfo.
         exitflag = 13
         nf = 1
         x = prob_info['fixedx_value']
@@ -196,6 +197,7 @@ def pdfo(fun, x0, args=(), method=None, bounds=None, constraints=(),
         constrviolation = prob_info['constrv_fixedx']
         chist = np.array([constrviolation], dtype=np.float64)
     else:
+        # The problem turns out 'normal' during prepdfo.
         lower_method = method.lower()
         try:
             if lower_method == 'uobyqa':
@@ -217,6 +219,8 @@ def pdfo(fun, x0, args=(), method=None, bounds=None, constraints=(),
             from ._dependencies import import_error_so
             import_error_so(lower_method)
 
+        # Extract the output from the solvers. The output is extended with the possible outputs returned by some
+        # specific solvers (like the nonlinear constraint nlc for COBYLA).
         x = opti_res.x
         fx = opti_res.fun
         exitflag = opti_res.status
@@ -239,9 +243,9 @@ def pdfo(fun, x0, args=(), method=None, bounds=None, constraints=(),
         except AttributeError:
             pass
 
-        # the warnings that have been raised in the solvers and treated during their own calls to postpdfo should be
-        # transfer to the call to postpdfo of pdfo to appear to the output of pdfo
+        # The warnings that have been raised in the solvers and treated during their own calls to postpdfo should be
+        # transfer to the call to postpdfo of pdfo to appear to the output of pdfo.
         output['warnings'].extend(opti_res.warnings)
 
-    # postprocess the result
+    # Postprocess the result.
     return postpdfo(x, fx, exitflag, output, method, nf, fhist, options_c, prob_info, constrviolation, chist)

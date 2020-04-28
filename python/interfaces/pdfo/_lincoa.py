@@ -129,6 +129,8 @@ def lincoa(fun, x0, args=(), bounds=None, constraints=(), options=None):
         from .gethuge import gethuge
     except ImportError:
         from ._dependencies import import_error_so
+
+        # If gethuge cannot be imported, the execution should stop because the package is most likely not built.
         import_error_so('gethuge')
 
     from ._dependencies import prepdfo, _augmented_linear_constraint, postpdfo
@@ -139,25 +141,25 @@ def lincoa(fun, x0, args=(), bounds=None, constraints=(), options=None):
     else:
         invoker = ''
 
-    # a cell that records all the warnings
+    # A cell that records all the warnings.
     # Why do we record the warning message in output['warnings'] instead of prob_info['warnings']? Because, if lincoa is
     # called by pdfo, then prob_info will not be passed to postpdfo, and hence the warning message will be lost. To the
     # contrary, output will be passed to postpdfo anyway.
     output = dict()
     output['warnings'] = []
 
-    # preprocess the inputs
+    # Preprocess the inputs.
     fun_c, x0_c, bounds_c, constraints_c, options_c, _, prob_info = \
         prepdfo(fun, x0, args, bounds=bounds, constraints=constraints, options=options)
 
-    # check if nonlinear constraints are passed to the function
+    # Check whether nonlinear constraints are passed to the function.
     if constraints_c['nonlinear'] is not None:
         warn_message = '{}: Nonlinear constraints are given as parameter; they will be ignored.'.format(fun_name)
         warnings.warn(warn_message, Warning)
         output['warnings'].append(warn_message)
 
     if prob_info['infeasible']:
-        # the problem turned out infeasible during prepdfo
+        # The problem turned out infeasible during prepdfo.
         exitflag = -4
         nf = 0
         x = np.full(x0_c.size, np.nan)
@@ -166,7 +168,7 @@ def lincoa(fun, x0, args=(), bounds=None, constraints=(), options=None):
         constrviolation = np.nan
         chist = np.array([], dtype=np.float64)
     elif prob_info['nofreex']:
-        # x was fixed by the bound constraints during prepdfo
+        # x was fixed by the bound constraints during prepdfo.
         exitflag = 13
         nf = 1
         x = prob_info['fixedx_value']
@@ -175,31 +177,32 @@ def lincoa(fun, x0, args=(), bounds=None, constraints=(), options=None):
         constrviolation = prob_info['constrv_fixedx']
         chist = np.array([constrviolation], dtype=np.float64)
     else:
-        # the problem turns out 'normal' during prepdfo include all the constraints into one single linear constraint
+        # The problem turns out 'normal' during prepdfo include all the constraints into one single linear constraint
         # (A_aug)'*x <= b_aug; note the TRANSPOSE due to the data structure of the Fortran code.
         n = x0_c.size
         a_aug, b_aug = _augmented_linear_constraint(n, bounds_c, constraints_c)
         a_aug = a_aug.T
 
-        # extract the options and parameters
+        # Extract the options and parameters
         npt = options_c['npt']
         maxfev = options_c['maxfev']
         rhobeg = options_c['rhobeg']
         rhoend = options_c['rhoend']
         ftarget = options_c['ftarget']
 
-        # the largest integer in the fortran functions; the factor 0.99 provides a buffer
+        # The largest integer in the fortran functions; the factor 0.99 provides a buffer.
         max_int = np.floor(0.99 * gethuge('integer'))
         m = b_aug.size  # linear constraints: A_aug.T * x <= b_aug
 
-        # the smallest nw, i.e., the nw with npt = n + 2
+        # The smallest nw, i.e., the nw with npt = n + 2. If it is larger than a threshold (system dependent), the
+        # problem is too large to be executed on the system.
         min_nw = m * (2 + n) + (n + 2) * (2 * n + 6) + n * (9 + 3 * n) + max(m + 3 * n, 2 * m + n, 2 * n + 4)
         if min_nw >= max_int:
             executor = invoker.lower() if invoker == 'pdfo' else fun_name
-            # nw would suffer from overflow in the Fortran code, exit immediately
+            # nw would suffer from overflow in the Fortran code, exit immediately.
             raise SystemError('{}: problem too large for {}. Try other solvers.'.format(executor, fun_name))
 
-        # the largest possible value for npt given that nw <= max_int
+        # The largest possible value for npt given that nw <= max_int.
         alpha = n + 7
         beta = 2 * m + m * (2 + n) + n * (9 + 3 * n) - max_int
         max_npt = max(n + 2, np.floor(0.5 * (-alpha + np.sqrt(alpha * alpha - 4 * beta))))
@@ -216,7 +219,7 @@ def lincoa(fun, x0, args=(), bounds=None, constraints=(), options=None):
             warnings.warn(w_message, Warning)
             output['warnings'].append(w_message)
 
-        # if x0 is not feasible, LINCOA will modify the constraints to make it feasible (which is a bit strange).
+        # If x0 is not feasible, LINCOA will modify the constraints to make it feasible (which is a bit strange).
         # prepdfo has tried to find a feasible x0. Raise a warning is x0 is not 'feasible enough' so that the
         # constraints will be modified.
         if a_aug.size > 0 and any(np.dot(x0_c.T, a_aug) > b_aug + 1e-10 * max(1, np.max(b_aug))):
@@ -230,7 +233,7 @@ def lincoa(fun, x0, args=(), bounds=None, constraints=(), options=None):
         else:
             output['constr_modified'] = False
 
-        # call the Fortran code
+        # Call the Fortran code.
         try:
             if options_c['classical']:
                 from . import flincoa_classical as flincoa
@@ -240,10 +243,10 @@ def lincoa(fun, x0, args=(), bounds=None, constraints=(), options=None):
             from ._dependencies import import_error_so
             import_error_so()
 
-        # m should be precised not to raise any error if there is no linear constraints
+        # m should be precised not to raise any error if there is no linear constraints.
         x, fx, exitflag, fhist, chist, constrviolation = \
             flincoa.mlincoa(npt, m, a_aug, b_aug, x0_c, rhobeg, rhoend, 0, maxfev, ftarget, fun_c)
         nf = int(flincoa.flincoa.nf)
 
-    # postprocess the result
+    # Postprocess the result.
     return postpdfo(x, fx, exitflag, output, fun_name, nf, fhist, options_c, prob_info, constrviolation, chist)

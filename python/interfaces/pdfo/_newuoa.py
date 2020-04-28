@@ -114,6 +114,8 @@ def newuoa(fun, x0, args=(), options=None):
         from .gethuge import gethuge
     except ImportError:
         from ._dependencies import import_error_so
+
+        # If gethuge cannot be imported, the execution should stop because the package is most likely not built.
         import_error_so('gethuge')
 
     from ._dependencies import prepdfo, postpdfo
@@ -124,35 +126,36 @@ def newuoa(fun, x0, args=(), options=None):
     else:
         invoker = ''
 
-    # a cell that records all the warnings
+    # A cell that records all the warnings.
     # Why do we record the warning message in output['warnings'] instead of prob_info['warnings']? Because, if newuoa is
     # called by pdfo, then prob_info will not be passed to postpdfo, and hence the warning message will be lost. To the
     # contrary, output will be passed to postpdfo anyway.
     output = dict()
     output['warnings'] = []
 
-    # preprocess the inputs
+    # Preprocess the inputs.
     fun_c, x0_c, _, _, options_c, _, prob_info = prepdfo(fun, x0, args, options=options)
 
-    # extract the options and parameters
+    # Extract the options and parameters.
     npt = options_c['npt']
     maxfev = options_c['maxfev']
     rhobeg = options_c['rhobeg']
     rhoend = options_c['rhoend']
     ftarget = options_c['ftarget']
 
-    # the largest integer in the fortran functions; the factor 0.99 provides a buffer
+    # The largest integer in the fortran functions; the factor 0.99 provides a buffer.
     max_int = np.floor(0.99 * gethuge('integer'))
     n = x0_c.size
 
-    # the smallest nw, i.e., the nw with npt = n + 2
+    # The smallest nw, i.e., the nw with npt = n + 2. If it is larger than a threshold (system dependent), the problem
+    # is too large to be executed on the system.
     min_nw = (n + 15) * (2 * n + 2) + 3 * n * (n + 3) / 2
     if min_nw + 1 >= max_int:
         executor = invoker.lower() if invoker == 'pdfo' else fun_name
-        # nw would suffer from overflow in the Fortran code, exit immediately
+        # nw would suffer from overflow in the Fortran code, exit immediately.
         raise SystemError('{}: problem too large for {}. Try other solvers.'.format(executor, fun_name))
 
-    # the largest possible value for npt given that nw <= max_int
+    # The largest possible value for npt given that nw <= max_int.
     max_npt = max(n + 2, np.floor(0.5 * (-n - 13 + np.sqrt((n - 13) ** 2 + 4 * (max_int - 3 * n * (n + 3) / 2 - 1)))))
     if npt > max_npt:
         npt = max_npt
@@ -166,7 +169,7 @@ def newuoa(fun, x0, args=(), options=None):
         warnings.warn(w_message, Warning)
         output['warnings'].append(w_message)
 
-    # call the Fortran code
+    # Call the Fortran code.
     try:
         if options_c['classical']:
             from . import fnewuoa_classical as fnewuoa
@@ -179,5 +182,5 @@ def newuoa(fun, x0, args=(), options=None):
     x, fx, exitflag, fhist = fnewuoa.mnewuoa(npt, x0_c, rhobeg, rhoend, 0, maxfev, ftarget, fun_c)
     nf = int(fnewuoa.fnewuoa.nf)
 
-    # postprocess the result
+    # Postprocess the result.
     return postpdfo(x, fx, exitflag, output, fun_name, nf, fhist, options_c, prob_info)

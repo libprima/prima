@@ -3,8 +3,13 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# C extensions
+# C/Fortran extensions
 *.so
+*.pyd
+*.mod
+
+# Compiled MEX files
+ *.mex*
 
 # PyCharm IDE
 .idea/
@@ -142,6 +147,3 @@ cython_debug/
 
 # Mac files
 .DS_Store
-
-# Compiled MEX files
-*.mex*

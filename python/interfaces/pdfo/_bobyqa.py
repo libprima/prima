@@ -127,6 +127,8 @@ def bobyqa(fun, x0, args=(), bounds=None, options=None):
         from .gethuge import gethuge
     except ImportError:
         from ._dependencies import import_error_so
+
+        # If gethuge cannot be imported, the execution should stop because the package is most likely not built.
         import_error_so('gethuge')
 
     from ._dependencies import prepdfo, postpdfo
@@ -137,18 +139,18 @@ def bobyqa(fun, x0, args=(), bounds=None, options=None):
     else:
         invoker = ''
 
-    # a cell that records all the warnings
+    # A cell that records all the warnings.
     # Why do we record the warning message in output['warnings'] instead of prob_info['warnings']? Because, if bobyqa is
     # called by pdfo, then prob_info will not be passed to postpdfo, and hence the warning message will be lost. To the
     # contrary, output will be passed to postpdfo anyway.
     output = dict()
     output['warnings'] = []
 
-    # preprocess the inputs
+    # Preprocess the inputs.
     fun_c, x0_c, bounds_c, _, options_c, _, prob_info = prepdfo(fun, x0, args, bounds=bounds, options=options)
 
     if prob_info['infeasible']:
-        # the problem turned out infeasible during prepdfo
+        # The problem turned out infeasible during prepdfo.
         exitflag = -4
         nf = 0
         x = np.full(x0_c.size, np.nan)
@@ -157,7 +159,7 @@ def bobyqa(fun, x0, args=(), bounds=None, options=None):
         constrviolation = np.nan
         chist = np.array([], dtype=np.float64)
     elif prob_info['nofreex']:
-        # x was fixed by the bound constraints during prepdfo
+        # x was fixed by the bound constraints during prepdfo.
         exitflag = 13
         nf = 1
         x = prob_info['fixedx_value']
@@ -166,25 +168,26 @@ def bobyqa(fun, x0, args=(), bounds=None, options=None):
         constrviolation = prob_info['constrv_fixedx']
         chist = np.array([constrviolation], dtype=np.float64)
     else:
-        # the problem turns out 'normal' during prepdfo extract the options and parameters
+        # The problem turns out 'normal' during prepdfo extract the options and parameters.
         npt = options_c['npt']
         maxfev = options_c['maxfev']
         rhobeg = options_c['rhobeg']
         rhoend = options_c['rhoend']
         ftarget = options_c['ftarget']
 
-        # the largest integer in the fortran functions; the factor 0.99 provides a buffer
+        # The largest integer in the fortran functions; the factor 0.99 provides a buffer.
         max_int = np.floor(0.99 * gethuge('integer'))
         n = x0_c.size
 
-        # the smallest nw, i.e., the nw with npt = n + 2
+        # The smallest nw, i.e., the nw with npt = n + 2. If it is larger than a threshold (system dependent), the
+        # problem is too large to be executed on the system.
         min_nw = (n + 7) * (2 * n + 2) + 3 * n * (n + 5) / 2
         if min_nw + 1 >= max_int:
             executor = invoker.lower() if invoker == 'pdfo' else fun_name
-            # nw would suffer from overflow in the Fortran code, exit immediately
+            # nw would suffer from overflow in the Fortran code, exit immediately.
             raise SystemError('{}: problem too large for {}. Try other solvers.'.format(executor, fun_name))
 
-        # the largest possible value for npt given that nw <= max_int
+        # The largest possible value for npt given that nw <= max_int.
         max_npt = \
             max(n + 2, np.floor(0.5 * (-(n + 5) + np.sqrt((n - 5) ** 2 + 4 * (max_int - 3 * n * (n + 5) / 2 - 1)))))
         if npt > max_npt:
@@ -200,7 +203,7 @@ def bobyqa(fun, x0, args=(), bounds=None, options=None):
             warnings.warn(w_message, Warning)
             output['warnings'].append(w_message)
 
-        # call the Fortran code
+        # Call the Fortran code.
         try:
             if options_c['classical']:
                 from . import fbobyqa_classical as fbobyqa
@@ -214,5 +217,5 @@ def bobyqa(fun, x0, args=(), bounds=None, options=None):
             fbobyqa.mbobyqa(npt, x0_c, bounds_c['lb'], bounds_c['ub'], rhobeg, rhoend, 0, maxfev, ftarget, fun_c)
         nf = int(fbobyqa.fbobyqa.nf)
 
-    # postprocess the result
+    # Postprocess the result.
     return postpdfo(x, fx, exitflag, output, fun_name, nf, fhist, options_c, prob_info, constrviolation, chist)
