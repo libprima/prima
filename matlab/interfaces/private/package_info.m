@@ -44,9 +44,9 @@ credits = {'Tom M. Ragonneau', 'Zaikun Zhang'};
 
 license = 'LGPLv3+';
 
-version = '0.9';
+version = '1.0';
 
-date = 'March, 2020';
+date = 'May, 2020';
 
 status = 'Prototype'; % 'Production';
 
