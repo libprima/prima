@@ -17,12 +17,7 @@ import re
 from os import listdir
 from os.path import dirname, abspath, join, relpath
 
-try:
-    from numpy.distutils.core import setup, Extension
-except ModuleNotFoundError:
-    print('NumPy package is missing.')
-    print('Please install a version greater than or equal to 1.10.0.\n')
-    raise
+from numpy.distutils.core import setup, Extension
 
 # Set the paths to all the folders that will be used to build PDFO
 CURRENT_WD = dirname(abspath(__file__))
