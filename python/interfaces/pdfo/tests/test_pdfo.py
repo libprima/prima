@@ -69,8 +69,8 @@ class TestPDFO(unittest.TestCase):
         Department of Applied Mathematics,
         The Hong Kong Polytechnic University.
         """
-        devnull = open(os.devnull, 'w')  # the empty stdout redirection
-        default_stdout = sys.stdout  # the default value of stdout (screen)
+        devnull = open(os.devnull, 'w')  # The empty stdout redirection
+        default_stdout = sys.stdout  # The default value of stdout (screen)
 
         for irun in range(1, self.NRUN + 1):
             if not self.QUIET and self.NRUN > 1:
@@ -157,10 +157,10 @@ class TestPDFO(unittest.TestCase):
 
         alpha = 4
 
-        f = 0  # function value
-        g = np.zeros_like(x)  # gradient
+        f = 0  # Function value
+        g = np.zeros_like(x)  # Gradient
         n = g.size
-        h = np.zeros((n, n))  # hessian
+        h = np.zeros((n, n))  # Hessian
 
         for i in range(n - 1):
             f += (x[i] - 1) ** 2 + alpha * (x[i] ** 2 - x[i + 1]) ** 2
@@ -295,12 +295,12 @@ class TestPDFO(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    # get the release flag
+    # Get the release flag.
     if len(sys.argv) > 1:
         release = sys.argv.pop(1)
         TestPDFO.RELEASE = False if release == '0' else True
 
-    # get the required precision
+    # Get the required precision.
     if len(sys.argv) > 1:
         precision_str = sys.argv.pop(1)
         try:
@@ -310,7 +310,7 @@ if __name__ == '__main__':
             w_message = 'The precision cannot be read: {} received.'.format(precision_str)
             warnings.warn(w_message, Warning)
 
-    # get the required number of run
+    # Get the required number of run.
     if len(sys.argv) > 1:
         nrun_str = sys.argv.pop(1)
         try:
@@ -320,5 +320,5 @@ if __name__ == '__main__':
             w_message = 'The number of run cannot be read: {} received.'.format(nrun_str)
             warnings.warn(w_message, Warning)
 
-    # launch the main test
+    # Launch the main tests.
     unittest.main()

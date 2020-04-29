@@ -10,7 +10,6 @@ The Hong Kong Polytechnic University.
 
 Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 """
-
 from __future__ import division, print_function, absolute_import
 
 from datetime import datetime
@@ -23,6 +22,8 @@ from ._lincoa import lincoa
 from ._newuoa import newuoa
 from ._uobyqa import uobyqa
 from ._pdfo import pdfo
+from . import tests
+from .tests import test_pdfo as testpdfo
 
 # Definition of the metadata of PDFO for Python. It is accessible via:
 # >>> import pdfo

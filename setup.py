@@ -26,7 +26,7 @@ FSRC_WD = join(dirname(PDFO_WD), 'fsrc')
 FSRC_CLASSICAL_WD = join(FSRC_WD, 'classical')
 GATEWAYS_WD = join(PDFO_WD, 'py_gateways')
 GATEWAYS_CLASSICAL_WD = join(GATEWAYS_WD, 'classical')
-INTERFACES_WD = join(PDFO_WD, 'interfaces')
+INTERFACES_WD = join(PDFO_WD, 'interfaces', 'pdfo')
 
 # Set the options that will be given to F2PY to build PDFO
 OPTIONS = ['--quiet']
@@ -92,12 +92,15 @@ if __name__ == '__main__':
         author='Tom M. Ragonneau and Zaikun Zhang',
         author_email='pdfocode@gmail.com',
         url='https://www.pdfo.net',
-        packages=['pdfo'],
-        package_dir={'': INTERFACES_WD},
+        packages=['pdfo', 'pdfo.tests'],
+        package_dir={
+            'pdfo': INTERFACES_WD,
+            'pdfo.tests': join(INTERFACES_WD, 'tests'),
+        },
         include_package_data=True,
         ext_modules=EXT_MODULES,
         license='GNU Lesser General Public License v3 or later (LGPLv3+)',
-        keywords='DFO, Powell, Fortran, UOBYQA, NEWUOA, BOBYQA, LINCOA, COBYLA',
+        keywords='Powell Derivative-Free Optimization Fortran UOBYQA NEWUOA BOBYQA LINCOA COBYLA',
         classifiers=[
             'Development Status :: 5 - Production/Stable',
             'Environment :: Console',
