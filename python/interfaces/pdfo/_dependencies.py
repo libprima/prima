@@ -1853,7 +1853,7 @@ def _solver_selection(invoker, method, options, prob_info, list_warnings):
             elif options['maxfev'] <= n + 2:  # options['maxfev'] == n + 2
                 solver = 'cobyla'  # does not need options['npt']
             else:
-                # Interestingly, we note in our test that LINCOA may outperformed NEWUOA on unconstrained CUTEst
+                # Interestingly, we note in our tests that LINCOA may outperformed NEWUOA on unconstrained CUTEst
                 # problems when the dimension was not large (i.e., <= 50) or the precision requirement was not high
                 # (i.e., >= 1e-5). Therefore, it is worthwhile to try LINCOA when an unconstrained problem is given.
                 # Nevertheless, for the moment, we set the default solver for unconstrained problems to be newuoa, since
