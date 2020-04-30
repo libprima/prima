@@ -17,14 +17,13 @@ See https://www.pdfo.net for more information.
 
 0. Prerequisites
 
-To use the Python version of PDFO, you need Python, NumPy, F2PY, and 
+To use the Python version of PDFO, you need Python, NumPy, F2PY, and
 gfortran, which can be installed in the following way.
 
 0.1. Install Python (version 2.7 or later) according to https://www.python.org .
 
-0.2. Install NumPy (version 1.10.0 or later) for your Python. NumPy provides 
-F2PY. We recommend to install the latest version of SciPy. Then NumPy will be 
-installed by default. See https://www.scipy.org/install.html .
+0.2. We recommend to install the latest version of SciPy. See
+https://www.scipy.org/install.html .
 
 0.3. Install gfortran using your package manager, e.g., apt on Debian/Ubuntu,
 yum on Fedora/RHEL/CentOS, and Homebrew on Mac.
@@ -32,29 +31,46 @@ yum on Fedora/RHEL/CentOS, and Homebrew on Mac.
 
 1. Installation
 
-PDFO can be installed by the setup.py script in the following way.
+1.1. Recommanded installation via PyPI
 
-1.1. Decompress the source code package of PDFO if you have not done so. You
+PDFO can be installed in the following way. In a command shell, execute the
+following command:
+
+python3 -m pip install pdfo
+
+If this command runs successfully, PDFO is installed. You can now test the
+package by executing the following command:
+
+python3 -m unittest pdfo.testpdfo
+
+1.2. Manual installation (only if 1.1. has not been executing)
+
+Alternatively, you can download the source files at https://www.pdfo.net .
+
+1.2.1. Decompress the source code package of PDFO if you have not done so. You
 will obtain a folder containing setup.py. Place this folder at the location
 where you want PDFO to be installed.
 
-1.2. In a command shell, change your directory to the above-mentioned folder,
+1.2.2. In a command shell, change your directory to the above-mentioned folder,
 and execute the following command:
 
-python setup.py
+python3 -m pip install .
 
-If this command runs successfully, PDFO is installed.
+If this command runs successfully, PDFO is installed. You can now test the
+package by executing the following command:
+
+python3 -m unittest pdfo.testpdfo
 
 
-2. Usage 
+2. Usage
 
 2.1. PDFO provides the following Python functions:
 pdfo, uobyqa, newuoa, bobyqa, lincoa, cobyla.
 
 2.2. The "pdfo" function can automatically identify the type of your problem
-and the call one of Powell's solvers. The other five functions call the solver 
-indicated by their names. It is highly recommended to use "pdfo" instead of 
-"uobyqa", "newuoa", etc. 
+and the call one of Powell's solvers. The other five functions call the solver
+indicated by their names. It is highly recommended to use "pdfo" instead of
+"uobyqa", "newuoa", etc.
 
 2.3. The "pdfo" function is designed to be compatible with the "minimize"
 function available in scipy.optimize. You can call "pdfo" in exactly the same

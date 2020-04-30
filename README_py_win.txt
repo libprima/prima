@@ -14,58 +14,73 @@ March 2020, Hong Kong
 This is the README file for the Python version of PDFO on Windows.
 See https://www.pdfo.net for more information.
 
-For the moment, F2PY does not work well with 64-bit Python on Windows. If 
-you want to use the package on Windows, make sure to do everything in a 
-32-bit version of Python.
+For the moment, F2PY does not work well with Python 2 on Windows. If you want
+to use the package on Windows, make sure to do everything in any version of
+Python 3.
 
 
 0. Prerequisites
 
-To use the Python version of PDFO, you need Python, NumPy, F2PY, and 
-gcc-fortran, which can be installed in the following way.
+To use the Python version of PDFO, you need Python, NumPy, F2PY, C++ Build
+Tools and ifort, which can be installed in the following way.
 
-0.1. Install a 32-bit version of Python (version 2.7 or later) according to 
-https://www.python.org .
+0.1. Install Python (version 3.0 or later) according to https://www.python.org .
 
-0.2. Install NumPy (version 1.10.0 or later) for your Python. NumPy provides 
-F2PY. We recommend to install the latest version of SciPy. Then NumPy will be 
-installed by default. See https://www.scipy.org/install.html .
+0.2. We recommend to install the latest version of SciPy. See
+https://www.scipy.org/install.html .
 
-0.3. Install MinGW according to http://mingw.org/wiki/Getting_Started .
+0.3. Install C++ Build Tools according to
+https://visualstudio.microsoft.com/visual-cpp-build-tools/ . Your installation
+has to include the dependencies "C++ Build Tools".
 
--- Your installation has to include the Fortran compiler "gcc-fortran". 
--- After the installation, configure the PATH environment variable of 
-your system so that it includes the full path of the folder containing 
-gfortran.exe (by default, this folder is C:\MinGW\bin\ ). 
-
-You may ask an expert (or Internet) for how to configure environment 
-variables on Windows. 
+0.4. Install Intel Fortran compiler according to
+https://software.intel.com/en-us/fortran-compilers . Your installation has to
+include Python librairies (true by default).
 
 
 1. Installation
 
-PDFO can be installed by the setup.py script in the following way.
+1.1. Recommanded installation via PyPI
 
-1.1. Decompress the source code package of PDFO if you have not done so. You
+PDFO can be installed in the following way. In an Intel shell environment
+(either 32 of 64bits, depending on your Python version), execute the following
+command:
+
+python -m pip install pdfo
+
+If this command runs successfully, PDFO is installed. You can now test the
+package by executing the following command in any shell:
+
+python -m unittest pdfo.testpdfo
+
+1.2. Manual installation (only if 1.1. has not been executing)
+
+Alternatively, you can download the source files at https://www.pdfo.net .
+
+1.2.1. Decompress the source code package of PDFO if you have not done so. You
 will obtain a folder containing setup.py. Place this folder at the location
 where you want PDFO to be installed.
 
-1.2. In a command shell, change your directory to the above-mentioned folder, 
-and execute the following command:
+1.2.2. In an Intel shell environment (either 32 of 64bits, depending on your
+Python version), change your directory to the above-mentioned folder, and
+execute the following command:
 
-python setup.py
+python -m pip install .
 
-If this command runs successfully, PDFO is installed.
+If this command runs successfully, PDFO is installed. You can now test the
+package by executing the following command in any shell:
+
+python -m unittest pdfo.testpdfo
 
 
-2. Usage 
+2. Usage
 
 2.1. PDFO provides the following Python functions:
 pdfo, uobyqa, newuoa, bobyqa, lincoa, cobyla.
 
 2.2. The "pdfo" function can automatically identify the type of your problem
-and the call one of Powell's solvers. The other five functions call the solver 
-indicated by their names. It is highly recommended to use "pdfo" instead of 
+and the call one of Powell's solvers. The other five functions call the solver
+indicated by their names. It is highly recommended to use "pdfo" instead of
 "uobyqa", "newuoa", etc.
 
 2.3. The "pdfo" function is designed to be compatible with the "minimize"

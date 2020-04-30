@@ -11,7 +11,7 @@ We look forward to your feedback! Thank you very much!
 March 2020, Hong Kong
 ***********************************************************************
 
-This is the README file for the MATLAB version of PDFO. 
+This is the README file for the MATLAB version of PDFO.
 See https://www.pdfo.net for more information.
 
 
@@ -28,11 +28,11 @@ If this completes successfully, then your MEX is ready. Otherwise, it is not.
 
 0.2. To configure MEX for compiling Fortran, see
 https://www.mathworks.com/help/matlab/ref/mex.html .
-It will require you to install a supported Fortran compiler on your system. 
+It will require you to install a supported Fortran compiler on your system.
 See https://www.mathworks.com/support/requirements/previous-releases.html .
-Note that Mathworks (rather than PDFO) is quite rigid concerning the version 
-of your compiler, which has to be compatible with the release of your MATLAB; 
-the latest compiler is NOT necessarily supported by your MATLAB; follow the 
+Note that Mathworks (rather than PDFO) is quite rigid concerning the version
+of your compiler, which has to be compatible with the release of your MATLAB;
+the latest compiler is NOT necessarily supported by your MATLAB; follow the
 official documentation closely.
 
 
@@ -40,16 +40,16 @@ official documentation closely.
 
 PDFO can be installed by the setup.m script in the following way.
 
-1.1. Decompress the source code package of PDFO if you have not done so. You 
-will obtain a folder containing setup.m. Place this folder at the location 
+1.1. Decompress the source code package of PDFO if you have not done so. You
+will obtain a folder containing setup.m. Place this folder at the location
 where you want PDFO to be installed. 
 
-1.2. In MATLAB, change your directory to the above-mentioned folder, and 
+1.2. In MATLAB, change your directory to the above-mentioned folder, and
 execute the following command:
 
 setup
 
-If this command runs successfully, PDFO is installed. 
+If this command runs successfully, PDFO is installed.
 
 
 2. Usage 
@@ -58,16 +58,16 @@ If this command runs successfully, PDFO is installed.
 pdfo, uobyqa, newuoa, bobyqa, lincoa, cobyla.
 
 2.2. The "pdfo" function can automatically identify the type of your problem
-and then call one of Powell's solvers. The other five functions call the solver 
-indicated by their names. It is highly recommended to use "pdfo" instead of 
+and then call one of Powell's solvers. The other five functions call the solver
+indicated by their names. It is highly recommended to use "pdfo" instead of
 "uobyqa", "newuoa", etc. 
 
 2.3. The "pdfo" function is designed to be compatible with the "fmincon"
-function available in the Optimization Toolbox of MATLAB. You can call "pdfo" 
+function available in the Optimization Toolbox of MATLAB. You can call "pdfo"
 in exactly the same way as calling "fmincon". In addition, "pdfo" can be
 called in some flexible ways that are not supported by "fmincon".
 
-2.4. For detailed syntax of these functions, use the standard "help" command 
+2.4. For detailed syntax of these functions, use the standard "help" command
 of MATLAB. For example,
 
 help pdfo
