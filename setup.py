@@ -94,8 +94,8 @@ if __name__ == '__main__':
         url='https://www.pdfo.net',
         packages=['pdfo', 'pdfo.tests'],
         package_dir={
-            'pdfo': INTERFACES_WD,
-            'pdfo.tests': join(INTERFACES_WD, 'tests'),
+            'pdfo': relpath(INTERFACES_WD),
+            'pdfo.tests': relpath(join(INTERFACES_WD, 'tests')),
         },
         include_package_data=True,
         ext_modules=EXT_MODULES,
