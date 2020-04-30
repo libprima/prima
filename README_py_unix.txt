@@ -17,8 +17,8 @@ See https://www.pdfo.net for more information.
 
 0. Prerequisites
 
-To use the Python version of PDFO, you need Python, NumPy, F2PY, and
-gfortran, which can be installed in the following way.
+To use the Python version of PDFO, you need Python, NumPy, F2PY, gfortran, and
+the Python headers, which can be installed in the following way.
 
 0.1. Install Python (version 2.7 or later) according to https://www.python.org .
 
@@ -27,6 +27,10 @@ https://www.scipy.org/install.html .
 
 0.3. Install gfortran using your package manager, e.g., apt on Debian/Ubuntu,
 yum on Fedora/RHEL/CentOS, and Homebrew on Mac.
+
+0.4. On linux, install python3-dev and python-dev using your package manager.
+On Mac, you may need to download and install Xcode, at
+https://developer.apple.com/xcode/ .
 
 
 1. Installation
