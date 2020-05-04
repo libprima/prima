@@ -47,20 +47,12 @@ C that REAL(KIND=8) will be of double precision.
       
       end module pdfoconst
 
-      subroutine use_pdfoconst (x,tx)
-      ! This is a function that does tx=2*x. It is to entertain F2PY,
+      subroutine use_pdfoconst ()
+      ! This is a function that does nothing. It is to entertain F2PY,
       ! which interprets a file only if it contains at least one
-      ! function or subroutine (as of NumPy v1.17). It is also used to
-      ! verify that F2PY is well configured on the machine (see setup.py).
+      ! function or subroutine (as of NumPy v1.17).
 
       use pdfoconst
-
-      implicit none
-
-      real(kind=dp), intent(in) :: x
-      real(kind=dp), intent(out) :: tx
-
-      tx = TWO * x
 
       return
 

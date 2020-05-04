@@ -161,12 +161,13 @@ def lincoa(fun, x0, args=(), bounds=None, constraints=(), options=None):
     if prob_info['infeasible']:
         # The problem turned out infeasible during prepdfo.
         exitflag = -4
-        nf = 0
-        x = np.full(x0_c.size, np.nan)
-        fx = np.nan
-        fhist = np.array([], dtype=np.float64)
-        constrviolation = np.nan
-        chist = np.array([], dtype=np.float64)
+        nf = 1
+        x = x0_c
+        fx = fun_c(x)
+        fhist = np.array([fx], dtype=np.float64)
+        constrviolation = prob_info['constrv_x0']
+        chist = np.array([constrviolation], dtype=np.float64)
+        output['constr_modified'] = False
     elif prob_info['nofreex']:
         # x was fixed by the bound constraints during prepdfo.
         exitflag = 13
@@ -176,6 +177,7 @@ def lincoa(fun, x0, args=(), bounds=None, constraints=(), options=None):
         fhist = np.array([fx], dtype=np.float64)
         constrviolation = prob_info['constrv_fixedx']
         chist = np.array([constrviolation], dtype=np.float64)
+        output['constr_modified'] = False
     else:
         # The problem turns out 'normal' during prepdfo include all the constraints into one single linear constraint
         # (A_aug)'*x <= b_aug; note the TRANSPOSE due to the data structure of the Fortran code.
