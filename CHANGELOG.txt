@@ -10,6 +10,7 @@ Pre-release of PDFO.
 
 ### Changed
 - General: Licence modification, from GNU GPLv3+ to GNU LGPLv3+.
+- General: All constraint violation are computed as absolute distances (in 1-norm).
 - Python: Make PDFO available on PyPI.
 - Python: Test files for PDFO have been added as a subpackage of pdfo.
 
