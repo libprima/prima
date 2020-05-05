@@ -200,7 +200,7 @@ if nf <= 0
     % If prepdfo works properly, then nf<=0 should never happen.
     % Public/unexpcted error
     error(sprintf('%s:InvalidNF', invoker), ...
-    '%s: UNEXPECTED ERROR: %s returns nf=0 unexpectedly.', invoker, solver);
+    '%s: UNEXPECTED ERROR: %s returns nf=0 unexpectedly with exitflag %d.', invoker, solver, exitflag); 
 end
 
 % Read and verify fhist
