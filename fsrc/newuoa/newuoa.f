@@ -93,6 +93,15 @@ C     The above settings provide a partition of W for subroutine NEWUOB.
 C     The partition requires the first NPT*(NPT+N)+5*N*(N+3)/2 elements of
 C     W plus the space that is needed by the last array of NEWUOB.
 C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C Zaikun, 2020-05-05
+C When the data is passed from the interfaces to the Fortran code, RHOBEG, 
+C and RHOEND may change a bit (due to rounding ???). It was oberved in
+C a MATLAB test that MEX passed 1 to Fortran as 0.99999999999999978.
+C If we set RHOEND = RHOBEG in the interfaces, then it may happen
+C that RHOEND > RHOBEG. That is why we do the following. 
+      RHOEND = MIN(RHOBEG, RHOEND)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       CALL NEWUOB (N,NPT,X,RHOBEG,RHOEND,IPRINT,MAXFUN,W(IXB),
      1  W(IXO),W(IXN),W(IXP),W(IFV),W(IGQ),W(IHQ),W(IPQ),W(IBMAT),
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC

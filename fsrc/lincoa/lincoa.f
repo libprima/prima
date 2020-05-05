@@ -182,6 +182,15 @@ C
 C
 C     The above settings provide a partition of W for subroutine LINCOB.
 C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C Zaikun, 2020-05-05
+C When the data is passed from the interfaces to the Fortran code, RHOBEG, 
+C and RHOEND may change a bit (due to rounding ???). It was oberved in
+C a MATLAB test that MEX passed 1 to Fortran as 0.99999999999999978.
+C If we set RHOEND = RHOBEG in the interfaces, then it may happen
+C that RHOEND > RHOBEG. That is why we do the following. 
+      RHOEND = MIN(RHOBEG, RHOEND)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       CALL LINCOB (N,NPT,M,W(IAMAT),W(IB),X,RHOBEG,RHOEND,IPRINT,
      1  MAXFUN,W(IXB),W(IXP),W(IFV),W(IXS),W(IXO),W(IGO),W(IHQ),
      2  W(IPQ),W(IBMAT),W(IZMAT),NDIM,W(ISTP),W(ISP),W(IXN),W(IAC),

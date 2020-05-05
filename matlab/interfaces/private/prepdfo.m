@@ -41,92 +41,142 @@ if (nargin ~= 1) && (nargin ~= 10)
     error(sprintf('%s:InvalidInput', funname), '%s: UNEXPECTED ERROR: 1 or 10 inputs.', funname);
 end
 
+% If invoker is a solver called by pdfo, then prepdfo should have been called in pdfo.
+if (length(callstack) >= 3) && strcmp(callstack(3).name, 'pdfo')
+    if nargin ~= 10 % There should be 10 input arguments 
+        % Private/unexpected error
+        error(sprintf('%s:InvalidInput', funname), ... 
+        '%s: UNEXPECTED ERROR: %d inputs received; this should not happen as prepdfo has been called once in pdfo.', funname, nargin);
+    end
+    % In this case, we set probinfo to empty. 
+    probinfo = [];  
+    return % Return because prepdfo has already been called in pdfo.
+end
+
 % Decode the problem if it is defined by a structure. 
 if (nargin == 1)
     [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, options, warnings] = decode_problem(invoker, fun, warnings);
 end
 
+% Save problem information in probinfo.
+% At return, probinfo has the following fields:
+% 1. raw_data: problem data before preprocessing/validating, including
+%    fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, options
+% 2. refined_data: problem data after preprocessing/validating, including
+%    fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, options
+% 3. fixedx: a true/false vector indicating which variables are fixed by 
+%    bound constraints 
+% 4. fixedx_value: the values of the variables fixed by bound constraints 
+% 5. nofreex: whether all variables are fixed by bound constraints
+% 6. infeasible_bound: a true/false vector indicating which boun constraints 
+%    are infeasible 
+% 7. infeasible_lineq: a true/false vector indicating which linear inequality
+%    constraints are infeasible (up to naive tests)
+% 8. infeasible_leq: a true/false vector indicating which linear equality 
+%    constraints are infeasible (up to naive tests)
+% 9. trivial_lineq
+% 10. trivial_leq: a true/false vector indicating which linea equality
+%     constraints are trivial (up to naive tests)
+% 11. infeasible: whether the problem is infeasible (up to naive tests)
+% 12. scaled: whether the problem is scaled
+% 13. scaling_factor: vector of scaling factors
+% 14. shift: vector of shifts
+% 15. reduced: whether the problem is reduced (due to fixed variables)
+% 16. raw_type: problem type before reduction
+% 17. raw_dim: problem dimension before reduction
+% 18. refined_type: problem type after reduction
+% 19. refiend_dim: problem dimension after reduction
+% 20. warnings: warnings during the preprocessing/validation
+probinfo = struct(); 
+
 % Save the raw data (date before validation/preprocessing) in probinfo.
 % The raw data can be useful when debugging. At the end of prepdfo, if
 % we are not in debug mode, raw_data will be removed from probinfo. 
 % NOTE: Surely, here we are making copies of the data, which may take some
-% time and space, matrices Aineq and Aeq being the major concern here.  
+% time and space, matrices Aineq and Aeq being the major concern.  
 % However, fortunately, this package is not intended for large problems. 
 % It is designed for problems with at most ~1000 variables and several
 % thousands of constriants, tens/hundreds of variables and tens/hundreds 
 % of constriants being typical. Therefore, making several copies (<10) of 
 % the data does not do much harm, especially when we solve problems with 
 % expensive (temporally or monetarily) function evaluations. 
-probinfo = struct(); % Initialize probinfo as an empty structure
 probinfo.raw_data = struct('objective', fun, 'x0', x0, 'Aineq', Aineq, 'bineq', bineq, ...
     'Aeq', Aeq, 'beq', beq, 'lb', lb, 'ub', ub, 'nonlcon', nonlcon, 'options', options);
-
-if (length(callstack) >= 3) && strcmp(callstack(3).name, 'pdfo')
-    % The invoker is a solver called by pdfo. Then prepdfo should have been called in pdfo.
-    if nargin ~= 10 % There should be 10 input arguments 
-        % Private/unexpected error
-        error(sprintf('%s:InvalidInput', funname), ... 
-        '%s: UNEXPECTED ERROR: %d inputs received; this should not happen as prepdfo has been called once in pdfo.', funname, nargin);
-    end
-    probinfo.infeasible = false;
-    probinfo.nofreex= false;
-    return % Return because prepdfo has already been called in pdfo.
-end
 
 % Validate and preprocess fun
 [fun, warnings] = pre_fun(invoker, fun, warnings);
 
 % Validate and preprocess x0 
-x0 = pre_x0(invoker, x0);
-lenx0 = length(x0); 
-% Within this file, for clarity, we denote length(x0) by lenx0 instead of n
+[x0, warnings] = pre_x0(invoker, x0, warnings);
+lenx0 = length(x0); % Within this file, for clarity, we denote length(x0) by lenx0 instead of n
+
+% Validate and preprocess the bound constraints
+% In addition, get the indices of infeasible bounds and 'fixed variables' 
+% such that ub-lb < 2eps (if any) and save the information in probinfo  
+[lb, ub, infeasible_bound, fixedx, fixedx_value, warnings] = pre_bcon(invoker, lb, ub, lenx0, warnings);
+probinfo.infeasible_bound = infeasible_bound; % A vector of true/false
+probinfo.fixedx = fixedx; % A vector of true/false
+probinfo.fixedx_value = fixedx_value; % Value of the fixed x entries
+
+% Problem type before reduction
+% This has to be done after preprocessing the bound constraints (because 
+% min(ub) and % max(lb) are evaluated) and before preprocessing the 
+% linear/nonlinear constraints (because these constraints will be
+% reduced during the preprocessing). Note that Aineq, Aeq, and nonlcon will
+% not be "evaluated" in problem_type, so there is no worry about the
+% validity of them.
+probinfo.raw_type = problem_type(Aineq, Aeq, lb, ub, nonlcon); 
 
 % Validate and preprocess the linear constraints
-% The 'trivial constraints' will be excluded (if any). 
-% In addition, get the indices of infeasible and trivial constraints (if any) 
-% and save the information in probinfo.
-[Aineq, bineq, Aeq, beq, infeasible_lineq, trivial_lineq, infeasible_leq, trivial_leq] = pre_lcon(invoker, Aineq, bineq, Aeq, beq, lenx0);
+% 1. The constraints will be reduced if some but not all variables are 
+%    fixed by the bound constraints. See pre_lcon for why we do not
+%    reduce the problem when all variables are fixed.
+% 2. The 'trivial constraints' will be excluded (if any). 
+% 3. In addition, get the indices of infeasible and trivial constraints (if any)  
+%    and save the information in probinfo.
+[Aineq, bineq, Aeq, beq, infeasible_lineq, trivial_lineq, infeasible_leq, trivial_leq, warnings] = pre_lcon(invoker, Aineq, bineq, Aeq, beq, lenx0, fixedx, fixedx_value, warnings);
 probinfo.infeasible_lineq = infeasible_lineq; % A vector of true/false
 probinfo.trivial_lineq = trivial_lineq; % A vector of true/false
 probinfo.infeasible_leq = infeasible_leq; % A vector of true/false
 probinfo.trivial_leq = trivial_leq; % A vector of true/false
 
-% Validate and preprocess the bound constraints
-% In addition, get the indices of infeasible bounds and 'fixed variables' 
-% such that ub-lb < 2eps (if any) and save the information in probinfo  
-[lb, ub, infeasible_bound, fixedx, fixedx_value] = pre_bcon(invoker, lb, ub, lenx0);
-probinfo.infeasible_bound = infeasible_bound; % A vector of true/false
-probinfo.fixedx = fixedx; % A vector of true/false
-probinfo.fixedx_value = fixedx_value; % Value of the fixed x entries
+% Validate and preprocess the nonlinear constraints 
+% This should be done before evaluating probinfo.constrv_x0 or probinfo.constrv_fixedx. 
+% The constraints will be reduced if some but not all variables are fixed by the bound 
+% constraints. See pre_lcon for why we do not reduce the problem when all variables 
+% are fixed.
+nonlcon = pre_nonlcon(invoker, nonlcon, fixedx, fixedx_value);
 
-% After preprocessing the linear/bound constraints, the problem may
-% turn out infeasible, or x may turn out fixed by the bounds
+% Reduce fun, x0, lb, and ub if some but not all variables are fixed by 
+% the bound constraints. See pre_lcon for why we do not reduce the
+% problem when all variables are fixed.
+probinfo.raw_dim = lenx0; % Problem dimension before reduction
+if any(fixedx) && any(~fixedx) 
+    freex = ~fixedx; % A vector of true/false indicating whether the variable is free or not
+    fun = @(freex_value) fun(fullx(freex_value, fixedx_value, freex, fixedx)); % Objective funp after reduction
+    x0 = x0(freex); % x0 after reduction
+    lenx0 = length(x0);
+    lb = lb(freex); % lb after reduction
+    ub = ub(freex); % ub after reduction
+end
+probinfo.refined_type = problem_type(Aineq, Aeq, lb, ub, nonlcon); % Problem type after reduction
+probinfo.refined_dim = length(x0); % Problem dimension after reduction
+probinfo.reduced = any(fixedx) && any(~fixedx); % Whether the problem has been reduced
+
+% After the preprocessing, the problem may turn out infeasible, or x may 
+% turn out fixed by the bounds
 if ~any([probinfo.infeasible_lineq; probinfo.infeasible_leq; probinfo.infeasible_bound])
     probinfo.infeasible = false;
 else % The problem turns out infeasible 
+    [probinfo.constrv_x0, probinfo.nlcineq_x0, probinfo.nlceq_x0] = constrv(x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
     probinfo.infeasible = true;
 end
 if any(~fixedx)
     probinfo.nofreex = false;
 else % x turns out fixed by the bound constraints 
-    probinfo.constrv_fixedx = constrv(probinfo.fixedx_value, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
+    [probinfo.constrv_fixedx, probinfo.nlcineq_fixedx, probinfo.nlceq_fixedx] = constrv(probinfo.fixedx_value, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
     probinfo.nofreex = true;
 end
-
-% Validate and preprocess the nonlinear constraints 
-nonlcon = pre_nonlcon(invoker, nonlcon);
-
-% Reduce the problem if some variables are fixed by the bound constraints
-probinfo.raw_dim = lenx0; % Problem dimension before reduction
-probinfo.raw_type = problem_type(Aineq, Aeq, lb, ub, nonlcon); % Problem type before reduction
-probinfo.reduced = false;
-if any(fixedx) && ~probinfo.nofreex && ~probinfo.infeasible 
-    [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon] = reduce_problem(fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, fixedx);
-    lenx0 = length(x0); 
-    probinfo.reduced = true;
-end
-probinfo.refined_dim = lenx0; % Problem dimension after reduction
-probinfo.refined_type = problem_type(Aineq, Aeq, lb, ub, nonlcon); % Problem type after reduction
 
 % Can the invoker handle the given problem? 
 % This should be done after the problem type has bee 'refined'.
@@ -170,6 +220,8 @@ end
 % x_before_scaling = scaling_factor.*x_after_scaling + shift
 % This should be done after revising x0, which can affect the shift.
 probinfo.scaled = false;
+probinfo.scaling_factor = ones(size(x0));
+probinfo.shift = zeros(size(0));
 if options.scale && ~probinfo.nofreex && ~probinfo.infeasible
     [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, scaling_factor, shift, substantially_scaled, warnings] = scale_problem(invoker, fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, warnings);
     % Scale and shift the problem so that 
@@ -185,28 +237,35 @@ if options.scale && ~probinfo.nofreex && ~probinfo.infeasible
     end
 end
 
-% Select a solver if invoker='pdfo'. 
+% The refined data after preprocessing.
+% This has to be done before select_solver, because probinfo.refined_data.lb 
+% and probinfo.refined_data.ub will be used for defining rhobeg if bobyqa is selected.
+probinfo.refined_data = struct('objective', fun, 'x0', x0, 'Aineq', Aineq, 'bineq', bineq, ...
+    'Aeq', Aeq, 'beq', beq, 'lb', lb, 'ub', ub, 'nonlcon', nonlcon);
+
+% Select a solver if invoker='pdfo'; record the solver in options.solver. 
 % Some options will be revised accordingly, including npt, rhobeg, rhoend.
 % Of course, if the user-defined options.solver is valid, we accept it.
 if strcmp(invoker, 'pdfo') 
-    if strcmp(probinfo.refined_type, 'bound-constrained')
-        % lb and ub will be used for defining rhobeg if bobyqa is selected.
-        probinfo.lb = lb;
-        probinfo.ub = ub;
-    end
-    [solver, options, warnings] = select_solver(invoker, options, probinfo, warnings);
-    options.solver = solver;
-    % Signature: [solver, options, warnings] = select_solver(options, probinfo, warnings)
+    [options, warnings] = select_solver(invoker, options, probinfo, warnings);
 end
+
+probinfo.refined_data.options = options; % Record the options in probinfo.refined_data
 
 probinfo.warnings = warnings; % Record the warnings in probinfo
 
-% The refined data can be useful when debugging. It will be used in
-% postpdfo even we are not in debug mode. 
-probinfo.refined_data = struct('objective', fun, 'x0', x0, 'Aineq', Aineq, 'bineq', bineq, ...
-    'Aeq', Aeq, 'beq', beq, 'lb', lb, 'ub', ub, 'nonlcon', nonlcon, 'options', options);
 if ~options.debug % Do not carry the raw data with us unless in debug mode.
-    probinfo = rmfield(probinfo, 'raw_data');
+    probinfo.raw_data = []; 
+    % Set this field to empty instead of remove it, because postpdfo
+    % require that this field exists. 
+end
+
+if ~options.debug && ~probinfo.scaled 
+    % The refined data is used only when the problem is scaled. It can
+    % also be useful when debugging. 
+    probinfo.refined_data = [];
+    % Set this field to empty instead of remove it, because postpdfo
+    % require that this field exists. 
 end
 
 % prepdfo ends 
@@ -379,82 +438,25 @@ end
 return
 
 %%%%%%%%%%%%%%%%%%%%%%%% Function for x0 preprocessing %%%%%%%%%%%%%%%%%
-function x0 = pre_x0(invoker, x0)
+function [x0, warnings] = pre_x0(invoker, x0, warnings)
 [isrv, lenx0]  = isrealvector(x0);
 if ~(isrv && (lenx0 > 0))
     % Public/normal error
     error(sprintf('%s:InvalidX0', invoker), '%s: X0 should be a real vector/scalar.', invoker);
 end
 x0 = double(x0(:));
-return
-
-%%%%%%%%%%%%%%%%% Function for linear constraint preprocessing %%%%%%%%%%  
-function [Aineq, bineq, Aeq, beq, infeasible_lineq, trivial_lineq, infeasible_leq, trivial_leq] = pre_lcon(invoker, Aineq, bineq, Aeq, beq, lenx0)
-% inequalities: Aineq*x <= bineq
-[isrm, mA, nA] = isrealmatrix(Aineq);
-[isrc, lenb] = isrealcolumn(bineq);
-if ~(isrm && isrc && (mA == lenb) && (nA == lenx0 || nA == 0))
-    % Public/normal error
-    error(sprintf('%s:InvalidLinIneq', invoker), ...
-    '%s: Aineq should be a real matrix, Bineq should be a real column, and size(Aineq)=[length(Bineq), length(X0)] unless Aineq=Bineq=[].', invoker);
-end
-if (mA == 0)
-    infeasible_lineq = [];
-    trivial_lineq = [];
-else
-    Aineq = double(Aineq);
-    bineq = double(bineq);
-    rownorminf = max(abs(Aineq), [], 2);
-    zero_ineq = (rownorminf == 0);
-    infeasible_zero_ineq = (rownorminf == 0) & (bineq < 0);
-    trivial_zero_ineq = (rownorminf == 0) & (bineq >= 0);
-    rownorminf(zero_ineq) = 1;
-    infeasible_lineq = (bineq./rownorminf == -inf) | infeasible_zero_ineq; % A vector of true/false
-    trivial_lineq = (bineq./rownorminf == inf) | trivial_zero_ineq;
-    Aineq = Aineq(~trivial_lineq, :); % Remove the trivial linear inequalities
-    bineq = bineq(~trivial_lineq);
-end
-if isempty(Aineq) 
-    % We uniformly use [] to represent empty objects; its size is 0x0
-    % Changing this may cause matrix dimension inconsistency 
-    Aineq = [];
-    bineq = [];
-end
-
-% equalities: Aeq*x == beq
-[isrm, mA, nA] = isrealmatrix(Aeq);
-[isrc, lenb] = isrealcolumn(beq);
-if ~(isrm && isrc && (mA == lenb) && (nA == lenx0 || nA == 0))
-    % Public/normal error
-    error(sprintf('%s:InvalidLinEq', invoker), ...
-    '%s: Aeq should be a real matrix, Beq should be a real column, and size(Aeq)=[length(Beq), length(X0)] unless Aeq=Beq=[].', invoker);
-end
-if (mA == 0)
-    infeasible_leq = [];
-    trivial_leq = [];
-else
-    Aeq = double(Aeq);
-    beq = double(beq);
-    rownorminf = max(abs(Aeq), [], 2);
-    zero_eq = (rownorminf == 0);
-    infeasible_zero_eq = (rownorminf == 0) & (beq ~= 0);
-    trivial_zero_eq = (rownorminf == 0) & (beq == 0);
-    rownorminf(zero_eq) = 1;
-    infeasible_leq = (abs(beq./rownorminf) == inf) | infeasible_zero_eq; % A vector of true/false
-    trivial_leq = trivial_zero_eq;
-    Aeq = Aeq(~trivial_leq, :); % Remove trivial linear equalities 
-    beq = beq(~trivial_leq);
-end
-if isempty(Aeq) 
-    % We uniformly use [] to represent empty objects; its size is 0x0
-    % Changing this may cause matrix dimension inconsistency 
-    Aeq = [];
-    beq = [];
+abnormal_x0 = isnan(x0) | (abs(x0) >= inf);
+if any(abnormal_x0)
+    x0(abnormal_x0) = 0;
+    wid = sprintf('%s:AbnormalX0', invoker);
+    wmessage = sprintf('%s: X0 contains NaN or inifinite values; they are replaced by 0.', invoker);
+    warning(wid, '%s', wmessage);
+    warnings = [warnings, wmessage]; 
 end
 return
 
 %%%%%%%%%%%%%%%%% Function for bound constraint preprocessing %%%%%%%%%%
-function [lb, ub, infeasible_bound, fixedx, fixedx_value] = pre_bcon(invoker, lb, ub, lenx0)
+function [lb, ub, infeasible_bound, fixedx, fixedx_value, warnings] = pre_bcon(invoker, lb, ub, lenx0, warnings)
 % Lower bounds (lb)
 [isrvlb, lenlb] = isrealvector(lb);
 if ~(isrvlb && (lenlb == lenx0 || lenlb == 0))
@@ -463,9 +465,16 @@ if ~(isrvlb && (lenlb == lenx0 || lenlb == 0))
     '%s: lb should be a real vector and length(lb)=length(x0) unless lb=[].', invoker);
 end
 if (lenlb == 0) 
-    lb = -inf(lenx0,1); % After pre_bcon, lb nonempty
+    lb = -inf(lenx0,1); % After pre_bcon, length(lb) = length(x0) 
 end
 lb = double(lb(:));
+if any(isnan(lb))
+    lb(isnan(lb)) = -inf; % Replace the NaN in lb by -inf
+    wid = sprintf('%s:NaNInLB', invoker);
+    wmessage = sprintf('%s: LB contains NaN; it is replaced by -inf.', invoker);
+    warning(wid, '%s', wmessage);
+    warnings = [warnings, wmessage]; 
+end
 
 % Upper bounds (ub)
 [isrvub, lenub] = isrealvector(ub);
@@ -475,17 +484,132 @@ if ~(isrvub && (lenub == lenx0 || lenub == 0))
     '%s: ub should be a real vector and length(ub)=length(x0) unless ub=[].', invoker);
 end
 if (lenub == 0)
-    ub = inf(lenx0,1); % After pre_bcon, ub nonempty
+    ub = inf(lenx0,1); % After pre_bcon, length(ub) = length(x0)
 end
 ub = double(ub(:));
+if any(isnan(ub))
+    ub(isnan(ub)) = inf; % Replace the NaN in ub by inf
+    wid = sprintf('%s:NaNInUB', invoker);
+    wmessage = sprintf('%s: UB contains NaN; it is replaced by inf.', invoker);
+    warning(wid, '%s', wmessage);
+    warnings = [warnings, wmessage]; 
+end
 
-infeasible_bound = (lb > ub); % A vector of true/false
+infeasible_bound = (lb > ub) | (lb == inf) | (ub == -inf); % A vector of true/false
 fixedx = (abs(lb - ub) < 2*eps);
 fixedx_value = (lb(fixedx)+ub(fixedx))/2;
 return
 
+%%%%%%%%%%%%%%%%% Function for linear constraint preprocessing %%%%%%%%%%  
+function [Aineq, bineq, Aeq, beq, infeasible_lineq, trivial_lineq, infeasible_leq, trivial_leq, warnings] = pre_lcon(invoker, Aineq, bineq, Aeq, beq, lenx0, fixedx, fixedx_value, warnings)
+
+freex = ~fixedx; % A vector of true/false indicating whether the variable is free or not
+
+% inequalities: Aineq*x <= bineq
+[isrm, mA, nA] = isrealmatrix(Aineq);
+[isrc, lenb] = isrealcolumn(bineq);
+if ~(isrm && isrc && (mA == lenb) && (nA == lenx0 || nA == 0))
+    % Public/normal error
+    error(sprintf('%s:InvalidLinIneq', invoker), ...
+    '%s: Aineq should be a real matrix, bineq should be a real column, and size(Aineq)=[length(bineq), length(X0)] unless Aineq=bineq=[].', invoker);
+end
+if any(isnan(bineq))
+    bineq(isnan(bineq)) = inf; % Replace the NaN in bineq by inf
+    wid = sprintf('%s:NaNInbineq', invoker);
+    wmessage = sprintf('%s: bineq contains NaN; it is replaced by inf.', invoker);
+    warning(wid, '%s', wmessage);
+    warnings = [warnings, wmessage]; 
+end
+if ~isempty(Aineq) && any(fixedx) && any(~fixedx) 
+    % Reduce the linear inequality constraints if some but not all variables 
+    % are fixed by the bound constraints. This has to be done before
+    % detecting the "zero constraints" (i.e., constraints with zero
+    % gradients), because nonzero constraints may become zero after reduction. 
+    bineq = bineq - Aineq(:, fixedx) * fixedx_value;
+    Aineq = Aineq(:, freex);
+    % Note that we should NOT reduced the problem if all variables are
+    % fixed. Otherwise, Aineq would be [], and then bineq will be set to
+    % [] in the lines below. In this way, we lose completely the
+    % information in linear constraints. Consequently, we cannot
+    % evaluate the constraint violation correctly when needed. 
+end
+if isempty(Aineq) 
+    % We uniformly use [] to represent empty objects; its size is 0x0
+    % Changing this may cause matrix dimension inconsistency 
+    Aineq = [];
+    bineq = [];
+    infeasible_lineq = [];
+    trivial_lineq = [];
+else
+    Aineq = double(Aineq);
+    bineq = double(bineq);
+    rownorm1 = sum(abs(Aineq), 2);
+    zero_ineq = (rownorm1 == 0);
+    infeasible_zero_ineq = (rownorm1 == 0) & (bineq < 0);
+    trivial_zero_ineq = (rownorm1 == 0) & (bineq >= 0);
+    rownorm1(zero_ineq) = 1;
+    infeasible_lineq = (bineq./rownorm1 == -inf) | infeasible_zero_ineq | isnan(rownorm1); % A vector of true/false
+    trivial_lineq = (bineq./rownorm1 == inf) | trivial_zero_ineq;
+    Aineq = Aineq(~trivial_lineq, :); % Remove the trivial linear inequalities
+    bineq = bineq(~trivial_lineq);
+end
+
+% equalities: Aeq*x == beq
+[isrm, mA, nA] = isrealmatrix(Aeq);
+[isrc, lenb] = isrealcolumn(beq);
+if ~(isrm && isrc && (mA == lenb) && (nA == lenx0 || nA == 0))
+    % Public/normal error
+    error(sprintf('%s:InvalidLinEq', invoker), ...
+    '%s: Aeq should be a real matrix, beq should be a real column, and size(Aeq)=[length(beq), length(X0)] unless Aeq=beq=[].', invoker);
+end
+% Are there equality constraints whose both sides contain NaN? 
+% This should be detected before reducing the constraints; 
+% when reducing the constraints, the NaN on the left-hand side will lead
+% to NaN on the right-hand side. 
+nan_eq = isnan(sum(abs(Aeq), 2)) & isnan(beq); 
+if any(nan_eq)
+    wid = sprintf('%s:NaNEquality', invoker);
+    wmessage = sprintf('%s: there are equality constraints whose both sides contain NaN; such constraints are removed.', invoker);
+    warning(wid, '%s', wmessage);
+    warnings = [warnings, wmessage]; 
+end
+if ~isempty(Aeq) && any(fixedx) && any(~fixedx)
+    % Reduce the linear equality constraints if some but not all variables 
+    % are fixed by the bound constraints. This has to be done before
+    % detecting the "zero constraints" (i.e., constraints with zero
+    % gradients), because nonzero constraints may become zero after reduction. 
+    beq = beq - Aeq(:, fixedx) * fixedx_value;
+    Aeq = Aeq(:, freex);
+    % Note that we should NOT reduced the problem if all variables are
+    % fixed. Otherwise, Aeq would be [], and then beq will be set to
+    % [] in the lines below. In this way, we lose completely the
+    % information in linear constraints. Consequently, we cannot
+    % evaluate the constraint violation correctly when needed. 
+end
+if isempty(Aeq)
+    % We uniformly use [] to represent empty objects; its size is 0x0
+    % Changing this may cause matrix dimension inconsistency 
+    Aeq = [];
+    beq = [];
+    infeasible_leq = [];
+    trivial_leq = [];
+else
+    Aeq = double(Aeq);
+    beq = double(beq);
+    rownorm1 = sum(abs(Aeq), 2);
+    zero_eq = (rownorm1 == 0);
+    infeasible_zero_eq = (rownorm1 == 0) & (beq ~= 0);
+    trivial_zero_eq = (rownorm1 == 0) & (beq == 0);
+    rownorm1(zero_eq) = 1;
+    infeasible_leq = (abs(beq./rownorm1) == inf) | infeasible_zero_eq | ((isnan(rownorm1) | isnan(beq)) & ~nan_eq); % A vector of true/false
+    trivial_leq = trivial_zero_eq | nan_eq;
+    Aeq = Aeq(~trivial_leq, :); % Remove trivial linear equalities 
+    beq = beq(~trivial_leq);
+end
+return
+
 %%%%%%%%%%%%%%%%% Function for nonlinear constraint preprocessing %%%%%%%%%%
-function nonlcon = pre_nonlcon(invoker, nonlcon)
+function nonlcon = pre_nonlcon(invoker, nonlcon, fixedx, fixedx_value)
 if ~(isempty(nonlcon) || isa(nonlcon, 'function_handle') || isa(nonlcon, 'char') || isa(nonlcon, 'string'))
     % Public/normal error
     error(sprintf('%s:InvalidCon', invoker), ...
@@ -518,6 +642,13 @@ else
             '%s: nonlcon has too few outputs; it should return [cineq, ceq], the constraints being cineq(x)<=0, ceq(x)=0.', invoker);
         end
     end
+    if any(fixedx) && any(~fixedx)
+        % Reduce the nonlinear constraints if some but not all variables are 
+        % fixed by the bound constraints. Note that we do not reduce the
+        % problem when all variables are fixed. See pre_lcon for the reason. 
+        freex = ~fixedx; % A vector of true/false indicating whether the variable is free or not
+        nonlcon = @(freex_value) nonlcon(fullx(freex_value, fixedx_value, freex, fixedx));
+    end
     nonlcon = @(x) evalcon(invoker, nonlcon, x); 
 end
 return
@@ -542,6 +673,13 @@ ceq(ceq ~= ceq) = hugecon;
 % cineq (which leads to no constraint violation) by -hugecon. Otherwise,
 % NaN or Inf may occur in the interpolation models.
 cineq(cineq < -hugecon) = -hugecon;
+return
+
+%%%%%%%%%%%%%%%%% Function fullx used when reducing the problem %%%%%%%%
+function x = fullx(freex_value, fixedx_value, freex, fixedx) 
+x = NaN(length(freex_value)+length(fixedx_value), 1);
+x(freex) = freex_value;
+x(fixedx) = fixedx_value;
 return
 
 %%%%%%%%%%%%%%%%% Function for option preprocessing %%%%%%%%%%
@@ -681,7 +819,7 @@ end
 
 % Revise default rhobeg and rhoend according to solver
 if strcmpi(solver, 'bobyqa')
-    rhobeg_bobyqa = min(rhobeg, min(ub-lb)/2);        
+    rhobeg_bobyqa = min(rhobeg, min(ub-lb)/4);        
     if (isfield(options, 'scale') && islogicalscalar(options.scale) && ~options.scale) || (~(isfield(options, 'scale') && islogicalscalar(options.scale)) && ~scale)
         % If we are going to scale the problem later, then we keep the
         % default value for rhoend; otherwise, we scale it as follows.
@@ -775,10 +913,10 @@ if isfield(options, 'rhobeg')
         warnings = [warnings, wmessage]; 
     elseif strcmpi(solver, 'bobyqa') && options.rhobeg > min(ub-lb)/2 
         wid = sprintf('%s:InvalidRhobeg', invoker);
-        wmessage = sprintf('%s: invalid rhobeg; %s requires rhobeg <= min(ub-lb)/2; it is set to min(ub-lb)/2.', invoker, solver);
+        wmessage = sprintf('%s: invalid rhobeg; %s requires rhobeg <= min(ub-lb)/2; it is set to min(ub-lb)/4.', invoker, solver);
         warning(wid, '%s', wmessage);
         warnings = [warnings, wmessage]; 
-        options.rhobeg = min(ub-lb)/2; % Here we do not take the default rhobeg
+        options.rhobeg = min(ub-lb)/4; % Here we do not take the default rhobeg
         validated = true; %!!! % Set validated=true so that options.rhobeg will not be set to the default value later
     else
         validated = true;
@@ -948,37 +1086,6 @@ end
 % pre_options finished
 return
 
-%%%%%%%%%%%%%%%%%%%%%% Function for reducing the problem %%%%%%%%%%%%%%%%
-function [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon] = reduce_problem(fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, fixedx)
-freex = ~fixedx;
-fixedx_value = (lb(fixedx) + ub(fixedx))/2;
-fun = @(freex_value) fun(fullx(freex_value, fixedx_value, freex, fixedx));
-x0 = x0(freex);
-if ~isempty(Aineq) 
-    bineq = bineq - Aineq(:, fixedx) * fixedx_value;
-    Aineq = Aineq(:, freex);
-end
-if ~isempty(Aeq)
-    beq = beq - Aeq(:, fixedx) * fixedx_value;
-    Aeq = Aeq(:, freex);
-end
-if ~isempty(lb) 
-    lb = lb(freex);
-end
-if ~isempty(ub)
-    ub = ub(freex);
-end
-if ~isempty(nonlcon)
-    nonlcon = @(freex_value) nonlcon(fullx(freex_value, fixedx_value, freex, fixedx));
-end
-return
-
-function x = fullx(freex_value, fixedx_value, freex, fixedx) 
-x = NaN(length(freex_value)+length(fixedx_value), 1);
-x(freex) = freex_value;
-x(fixedx) = fixedx_value;
-return
-
 %%%%%%%%%%%%%%%%%%%%%% Function for scaling the problem %%%%%%%%%%%%%%%%
 function [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, scaling_factor, shift, substantially_scaled, warnings] = scale_problem(invoker, fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, warnings)
 % x_before_scaling = scaling_factor.*x_after_scaling + shift
@@ -1053,7 +1160,7 @@ end
 return
 
 %%%%%%%%%%%%%%%%%%%%%%%% Function for selecting solver %%%%%%%%%%%%%%%%%%%%
-function [solver, options, warnings] = select_solver(invoker, options, probinfo, warnings)
+function [options, warnings] = select_solver(invoker, options, probinfo, warnings)
 
 invoker_list = {'pdfo'};
 % Only pdfo needs select_solver. We may have other invokers in the future!
@@ -1114,7 +1221,7 @@ if ~solver_correct
         else
             solver = 'bobyqa';
             options.npt = min(2*n+1, options.maxfun - 1);
-            rhobeg_bobyqa = min(options.rhobeg, min(probinfo.ub-probinfo.lb)/2);
+            rhobeg_bobyqa = min(options.rhobeg, min(probinfo.refined_data.ub-probinfo.refined_data.lb)/4);
             options.rhoend = (options.rhoend/options.rhobeg)*rhobeg_bobyqa;
             options.rhobeg = max(rhobeg_bobyqa, eps);
             options.rhoend = max(options.rhoend, eps);
@@ -1137,6 +1244,7 @@ if ~ismember(solver, solver_list) || ~prob_solv_match(ptype, solver)
     % Private/unexpected error
     error(sprintf('%s:InvalidSolver', funname), '%s: UNEXPECTED ERROR: invalid solver ''%s'' selected.', funname, solver);
 end
+options.solver = solver; % Record the solver in options.solver
 return
 
 %%%%%%%%%%%%%%%%%%%%%%% Function for checking problem type %%%%%%%%%%%%%% 
@@ -1202,18 +1310,24 @@ end
 return
 
 %%%%%%%%%%%%%%% Function for calculating constraint violation %%%%%%%%%%
-function constrviolation = constrv(x, Aineq, bineq, Aeq, beq, lb, ub, nonlcon)
-constrviolation = max(0, max([lb-x; x-ub]./max(1, abs([lb; ub]))));
+function [constrviolation, nlcineq, nlceq]= constrv(x, Aineq, bineq, Aeq, beq, lb, ub, nonlcon)
+% CONSTRV calculates the absolute constraint violation at x.
+rineq = [];
+req = [];
+nlcineq = [];
+nlceq = [];
 if ~isempty(Aineq)
-    constrviolation = max([constrviolation; (Aineq*x - bineq)./max(1, abs(bineq))]);
+    rineq = Aineq*x-bineq;
 end
 if ~isempty(Aeq)
-    constrviolation = max([constrviolation; abs(Aeq*x - beq)./max(1, abs(beq))]);
+    req = Aeq*x-beq;
 end
-if ~isempty(nonlcon)
+if ~isempty(nonlcon) 
     [nlcineq, nlceq] = nonlcon(x);
-    constrviolation = max([constrviolation; nlcineq; abs(nlceq)]);
 end
+constrviolation = max([0; rineq; abs(req); lb-x; x-ub; nlcineq; abs(nlceq)], [], 'includenan');
+% max(X, [], 'includenan') will return NaN if X contains NaN and the
+% maximum of X otherwise.
 return
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% Auxiliary functions %%%%%%%%%%%%%%%%%%%%%%%%%%

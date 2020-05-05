@@ -26,7 +26,7 @@ function [x, fx, exitflag, output] = pdfo(varargin)
 %   solves the problem formulated above, where
 %
 %   *** fun is the name or function handle of the objective function; if
-%       there is no objective function (i.e., we have a feasibility pronblem), 
+%       there is no objective function (i.e., we have a feasibility problem), 
 %       then set fun = []
 %   *** x0 is the starting point; x0 CANNOT be []
 %   *** Aineq and bineq are the coeffcient matrix and right-hand side of 
@@ -79,7 +79,7 @@ function [x, fx, exitflag, output] = pdfo(varargin)
 %
 %   3. Outputs
 %
-%   *** x is the approximate solution to the optimization pronblem
+%   *** x is the approximate solution to the optimization problem
 %   *** fx is fun(x)
 %   *** exitflag is an integer indicating why PDFO or its backend solver 
 %       returns; the possible values are  
@@ -252,22 +252,35 @@ function [x, fx, exitflag, output] = pdfo(varargin)
 % desigened to be shown to the users.
 % 2.2. Warnings are displayed without the call stack trace. 
 %
+% 3. probinfo and options
+% !!! TREAT probinfo and options AS READONLY VARIABLES AFTER PREPDFO!!!
+% !!! DO NOT MODIFY THE INFORMATION IN probinfo OR options AFTER PREPDFO !!! 
+%
 % TODO:
-% 1. Implicity NONE and variable declaration in the Fortran code
-% 2. Exit if model containts NaN? 
-%    LINCOA (unconstrained chebquad in testpdfo) 
-%    and NEWUOA (BIGGS6) have strange random behavior ...
-%    UPDATE on 19 March 2020: the strange behavior of lincoa seems to be
-%    rectified by the lastest update of its Fortran code;
-%    the strange behavior of newuoa cannot be reproduced anymore. 
-%    Maybe they will come back in the future...
-%    !!! Any change must pass testinfnan (ensure no infinite loop/memory error)!
+% 1. Implicit NONE and variable declaration in the Fortran code
+% 2. Change the interface of prepdfo to 
+%    probinfo = prepdfo(argin{:}, interface_type),
+%    where interface_type is one of 'unconstrained',
+%    'bound-constrained', 'linearly-constrained',
+%    'nonlinearly-constrained'.
+%    All the information needed by the solvers should be included in probinfo.
+% 3. To add a new solver, we only need to call prepdfo, call the solver
+%    using the information in probinfo, update probinfo properly, and
+%    then call postpdfo. 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % pdfo starts
 
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function 
+
+% OUTPUT records the information that is produced by the solver and
+% intended to pass to postpdfo.
+% OUTPUT should contain at least the following fiels:
+% x, fx, exitflag, funcCount, fhist, constrviolation, chist, warnings;
+% For lincoa, it should also contain constr_modified; for nonlinearly 
+% constrained problems, it should also constrain nlcineq and nlceq. 
+output = struct();
 
 warning ('off', 'backtrace'); % Do not display the stack trace of a warning
 output.warnings = {}; % A cell that records all the warnings
@@ -327,23 +340,31 @@ catch exception
 end
 
 if probinfo.infeasible % The problem turned out infeasible during prepdfo
-    options.solver = funname; % Record the current function as options.solver, which will be used in postpdfo
-    exitflag = -4;
-    nf = 0;
-    x = NaN(size(x0));
-    fx = NaN;
-    fhist = [];
-    constrviolation = NaN;
-    chist = [];
+    output.x = x0; 
+    output.fx = fun(output.x);
+    output.exitflag = -4;
+    output.funcCount = 1;
+    output.fhist = output.fx;
+    output.constrviolation = probinfo.constrv_x0;
+    output.chist = output.constrviolation;
+    output.nlcineq = probinfo.nlcineq_x0;
+    output.nlceq = probinfo.nlceq_x0;
+    if strcmp(options.solver, 'lincoa') % LINCOA requires constr_modified to exist in output
+        output.constr_modified = false;
+    end
 elseif probinfo.nofreex % x was fixed by the bound constraints during prepdfo
-    options.solver = funname; % Record the current function as options.solver, which will be used in postpdfo
-    exitflag = 13;
-    nf = 1;
-    x = probinfo.fixedx_value;
-    fx = fun(x);
-    fhist = fx;
-    constrviolation = probinfo.constrv_fixedx;
-    chist = constrviolation;
+    output.x = probinfo.fixedx_value;
+    output.fx = fun(output.x);
+    output.exitflag = 13;
+    output.funcCount = 1;
+    output.fhist = output.fx;
+    output.constrviolation = probinfo.constrv_fixedx;
+    output.chist = output.constrviolation;
+    output.nlcineq = probinfo.nlcineq_fixedx;
+    output.nlceq = probinfo.nlceq_fixedx;
+    if strcmp(options.solver, 'lincoa') % LINCOA requires constr_modified to exist in output
+        output.constr_modified = false;
+    end
 else 
     % The problem turns out 'normal' during prepdfo. Solve it by
     % options.solver, which has been defined in prepdfo.
@@ -367,15 +388,15 @@ else
             rethrow(exception); 
         end
     end
-    nf = output.funcCount;
-    fhist = output.fhist;
-    chist = output.chist;
-    constrviolation = output.constrviolation;
+    % Record the results of the solver in OUTPUT
+    output.x = x;
+    output.fx = fx;
+    output.exitflag = exitflag;
 end
 
 % Postprocess the result 
 try % postpdfo is a private function that may generate public errors; error-handeling needed
-    [x, fx, exitflag, output] = postpdfo(x, fx, exitflag, output, nf, fhist, constrviolation, chist, options, probinfo);
+    [x, fx, exitflag, output] = postpdfo(probinfo, options, output);
 catch exception
     if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly 
         error(exception.identifier, '%s\n(error generated in %s, line %d)', exception.message, exception.stack(1).file, exception.stack(1).line);
