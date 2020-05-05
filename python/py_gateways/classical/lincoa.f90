@@ -56,7 +56,12 @@ do j=1,m
     do i=1,ia
         cval=cval+a(i,j)*x(i)
     enddo
-    resmax=dmax1(resmax,cval)
+    if (cval .ne. cval) then
+        resmax = cval ! Set resmax=NaN if constraint contains NaN
+        exit
+    else
+        resmax=dmax1(resmax,cval)
+    endif
 enddo
 
 deallocate(fhist)
@@ -80,7 +85,12 @@ do j=1,mresmax
     do i=1,iaresmax
         cval=cval+aresmax(i,j)*x(i)
     enddo
-    resmax=dmax1(resmax,cval)
+    if (cval .ne. cval) then
+        resmax = cval ! Set resmax=NaN if constraint contains NaN
+        exit
+    else
+        resmax=dmax1(resmax,cval)
+    endif
 enddo
 
 nf=nf+1
