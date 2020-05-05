@@ -136,7 +136,7 @@ C
           SUM=SUM+A(I,J)*X(I)
    40     TEMP=TEMP+A(I,J)**2
           IF (TEMP .EQ. ZERO) THEN
-              PRINT 50
+              IF (IPRINT .GT. 0) PRINT 50
    50         FORMAT (/4X,'Return from LINCOA because the gradient of',
      1          ' a constraint is zero.')
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
