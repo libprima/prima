@@ -164,7 +164,7 @@ function [x, fx, exitflag, output] = lincoa(varargin)
 % Attribute: public (can  be called directly by users)
 % 
 % Remarks: 
-% !!! TREAT probinfo and options AS READONLY VARIABLES AFTER PREPDFO!!!
+% !!! TREAT probinfo and options AS READONLY VARIABLES AFTER PREPDFO !!!
 % !!! DO NOT MODIFY THE INFORMATION IN probinfo OR options AFTER PREPDFO !!! 
 %
 % TODO: None
@@ -383,7 +383,7 @@ end
 
 % Postprocess the result 
 try % postpdfo is a private function that may generate public errors; error-handeling needed
-    [x, fx, exitflag, output] = postpdfo(probinfo, options, output);
+    [x, fx, exitflag, output] = postpdfo(probinfo, output);
 catch exception
     if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly 
         error(exception.identifier, '%s\n(error generated in %s, line %d)', exception.message, exception.stack(1).file, exception.stack(1).line);

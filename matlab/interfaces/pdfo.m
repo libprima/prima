@@ -265,7 +265,7 @@ function [x, fx, exitflag, output] = pdfo(varargin)
 %    'nonlinearly-constrained'.
 %    All the information needed by the solvers should be included in probinfo.
 % 3. To add a new solver, we only need to call prepdfo, call the solver
-%    using the information in probinfo, update probinfo properly, and
+%    using the information in probinfo, record the results in output, and
 %    then call postpdfo. 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -396,7 +396,7 @@ end
 
 % Postprocess the result 
 try % postpdfo is a private function that may generate public errors; error-handeling needed
-    [x, fx, exitflag, output] = postpdfo(probinfo, options, output);
+    [x, fx, exitflag, output] = postpdfo(probinfo, output);
 catch exception
     if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly 
         error(exception.identifier, '%s\n(error generated in %s, line %d)', exception.message, exception.stack(1).file, exception.stack(1).line);
