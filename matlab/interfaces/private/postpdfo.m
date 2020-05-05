@@ -48,7 +48,7 @@ solver_list = [unconstrained_solver_list, constrained_solver_list];
 internal_solver_list = {'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla'}; 
 
 % Who is calling this function? Is it a correct invoker?
-invoker_list = {'pdfo', 'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla'};
+invoker_list = ['pdfo', solver_list];
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function 
 if (length(callstack) == 1) || ~ismember(callstack(2).name, invoker_list) 
@@ -488,7 +488,7 @@ end
 warning('on', 'backtrace'); 
 
 % At this point, we have completed defining the outputs (i.e., x, fx, 
-% exitflag, and output). They will not (should be) be revised any more. 
+% exitflag, and output). They will NOT (should NOT) be revised any more. 
 % The remaining code is reachable only in debug mode.
 
 
