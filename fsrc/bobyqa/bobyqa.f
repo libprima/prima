@@ -114,9 +114,6 @@ C     bounds on moves from the updated X are set now, in the ISL and ISU
 C     partitions of W, in order to provide useful and exact information about
 C     components of X that become within distance RHOBEG from their bounds.
 C
-      ZERO=0.0D0
-      DO 30 J=1,N
-      TEMP=XU(J)-XL(J)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun, 2020-05-05
 C When the data is passed from the interfaces to the Fortran code, RHOBEG, 
@@ -125,10 +122,13 @@ C a MATLAB test that MEX passed 1 to Fortran as 0.99999999999999978.
 C If we set RHOBEG = MIN(XU-XL)/2 in the interfaces, then it may happen
 C that RHOBEG > MIN(XU-XL)/2. That is why we do the following. After
 C this, INFO=6 should never occur. 
-      RHOBEG = MIN(0.5D0*TEMP, RHOBEG)
-C The same reason as above, we ensure RHOEND <= RHOBEG by the following.
+      RHOBEG = MIN(0.49D0*MINVAL(XU(1:N)-XL(1:N)), RHOBEG)
+C For the same reason, we ensure RHOEND <= RHOBEG by the following.
       RHOEND = MIN(RHOBEG, RHOEND)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ZERO=0.0D0
+      DO 30 J=1,N
+      TEMP=XU(J)-XL(J)
       IF (TEMP .LT. RHOBEG+RHOBEG) THEN
           IF (IPRINT .GT. 0) PRINT 20
    20     FORMAT (/4X,'Return from BOBYQA because one of the',
@@ -136,7 +136,6 @@ C The same reason as above, we ensure RHOEND <= RHOBEG by the following.
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
           INFO=6
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          WRITE(*,*) XU(1:N), XL(1:N), RHOBEG
           GO TO 40
       END IF
       JSL=ISL+J-1
