@@ -41,6 +41,7 @@ if (nargin ~= 1) && (nargin ~= 10)
     error(sprintf('%s:InvalidInput', funname), '%s: UNEXPECTED ERROR: 1 or 10 inputs.', funname);
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % If invoker is a solver called by pdfo, then prepdfo should have been called in pdfo.
 if (length(callstack) >= 3) && strcmp(callstack(3).name, 'pdfo')
     if nargin ~= 10 % There should be 10 input arguments
@@ -52,6 +53,7 @@ if (length(callstack) >= 3) && strcmp(callstack(3).name, 'pdfo')
     probinfo = [];  
     return % Return because prepdfo has already been called in pdfo.
 end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Decode the problem if it is defined by a structure. 
 if (nargin == 1)
@@ -61,9 +63,11 @@ end
 % Save problem information in probinfo.
 % At return, probinfo has the following fields:
 % 1. raw_data: problem data before preprocessing/validating, including
-%    fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, options
+%    fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, options.
+%    raw_data is set to [] unless in debug mode.
 % 2. refined_data: problem data after preprocessing/validating, including
-%    fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, options
+%    fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, options.
+%    refined_data is set to [] unless in debug mode or the problem is scaled.
 % 3. fixedx: a true/false vector indicating which variables are fixed by 
 %    bound constraints 
 % 4. fixedx_value: the values of the variables fixed by bound constraints 
@@ -86,7 +90,8 @@ end
 % 17. raw_dim: problem dimension before reduction
 % 18. refined_type: problem type after reduction
 % 19. refiend_dim: problem dimension after reduction
-% 20. warnings: warnings during the preprocessing/validation
+% 20. options: options for calling the solvers
+% 21. warnings: warnings during the preprocessing/validation
 probinfo = struct(); 
 
 % Save the raw data (date before validation/preprocessing) in probinfo.
@@ -237,7 +242,7 @@ if options.scale && ~probinfo.nofreex && ~probinfo.infeasible
     end
 end
 
-% The refined data after preprocessing.
+% Record the refined data (excluding options) after preprocessing
 % This has to be done before select_solver, because probinfo.refined_data.lb 
 % and probinfo.refined_data.ub will be used for defining rhobeg if bobyqa is selected.
 probinfo.refined_data = struct('objective', fun, 'x0', x0, 'Aineq', Aineq, 'bineq', bineq, ...
@@ -250,10 +255,12 @@ if strcmp(invoker, 'pdfo')
     [options, warnings] = select_solver(invoker, options, probinfo, warnings);
 end
 
-% Record the options in probinfo.refined_data
+% Record the options in probinfo
 % This has to be done after select_solver, because select_solver updates 
 % options.solver, and possibly options.npt and options.rhobeg.
-probinfo.refined_data.options = options; 
+probinfo.options = options; 
+% We do NOT record options in probinfo.refined_data, because we do not
+% carry refined_data with us unless in debug mode or the problem is scaled.  
 
 probinfo.warnings = warnings; % Record the warnings in probinfo
 

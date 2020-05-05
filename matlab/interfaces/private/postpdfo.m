@@ -1,4 +1,4 @@
-function [x, fx, exitflag, output] = postpdfo(probinfo, options, output)
+function [x, fx, exitflag, output] = postpdfo(probinfo, output)
 %POSTPDFO postprocesses the output by pdfo or its solvers and creates the 
 %   output variables.
 %
@@ -35,7 +35,7 @@ obligatory_output_field = {'x', 'fx', 'exitflag', 'funcCount', 'constrviolation'
 obligatory_probinfo_field = {'raw_data', 'refined_data', 'fixedx', 'fixedx_value', ...
     'nofreex', 'infeasible_bound', 'infeasible_lineq', 'infeasible_leq', ...
     'trivial_lineq', 'trivial_leq', 'infeasible', 'scaled', 'scaling_factor', ...
-    'shift', 'reduced', 'raw_type', 'raw_dim', 'refined_type', 'refined_dim', 'warnings'};
+    'shift', 'reduced', 'raw_type', 'raw_dim', 'refined_type', 'refined_dim', 'options', 'warnings'};
 obligatory_options_field = {'classical', 'debug', 'chkfunval', 'quiet'};
 
 % All possible solvers
@@ -88,23 +88,26 @@ else
         error(sprintf('%s:InvalidProbinfo', invoker),...
             '%s: UNEXPECTED ERROR: probinfo misses the %s field(s).', invoker, mystrjoin(missing_field, ', '));
     end
-end
 
-% Verify options 
-if ~isa(options, 'struct')
-    % Public/unexpected error
-    error(sprintf('%s:InvalidOptions', invoker), ...
-        '%s: UNEXPECTED ERROR: options should be a structure.', invoker);
-end
-missing_field = setdiff(obligatory_options_field, fieldnames(options));
-if ~isempty(missing_field)
-    % Public/unexpected error
-    error(sprintf('%s:InvalidOptions', invoker),...
-        '%s: UNEXPECTED ERROR: options misses the %s field(s).', invoker, mystrjoin(missing_field, ', '));
+    % Read and verify options 
+    options = probinfo.options;
+    if ~isa(options, 'struct')
+        % Public/unexpected error
+        error(sprintf('%s:InvalidOptions', invoker), ...
+            '%s: UNEXPECTED ERROR: options should be a structure.', invoker);
+    end
+    missing_field = setdiff(obligatory_options_field, fieldnames(options));
+    if ~isempty(missing_field)
+        % Public/unexpected error
+        error(sprintf('%s:InvalidOptions', invoker),...
+            '%s: UNEXPECTED ERROR: options misses the %s field(s).', invoker, mystrjoin(missing_field, ', '));
+    end
 end
 
 % The solver that did the computation (needed for verifying output below)
-if strcmp(invoker, 'pdfo')
+if strcmp(invoker, 'pdfo') 
+    % In this case, the invoker is pdfo rather than a solver called by pdfo. 
+    % Thus probinfo is nonempty, and options has been read and verified as above.
     solver = options.solver; 
 else
     solver = invoker;
@@ -139,6 +142,7 @@ if ~isempty(missing_field)
         '%s: UNEXPECTED ERROR: %s returns an output that misses the %s field(s).', invoker, solver, mystrjoin(missing_field, ', '));
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % If the invoker is a solver called by pdfo, then let pdfo do the postprecessing
 % Put this after verifying output, because we will use the information in it.
 if (length(callstack) >= 3) && strcmp(callstack(3).name, 'pdfo')
@@ -147,6 +151,7 @@ if (length(callstack) >= 3) && strcmp(callstack(3).name, 'pdfo')
     exitflag = output.exitflag;
     return
 end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Record solver name in output (should be done after verifying that
 % output is a structure.
