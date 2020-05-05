@@ -1044,7 +1044,7 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
         lb_mod, ub_mod = lb.copy(), ub.copy()
         lb_mod[np.logical_and(lb_mod > 0, np.isinf(lb_mod))] = -np.inf
         ub_mod[np.logical_and(ub_mod < 0, np.isinf(ub_mod))] = np.inf
-        rhobeg_bobyqa = min(rhobeg, np.min(ub_mod - lb_mod) / 2)
+        rhobeg_bobyqa = min(rhobeg, np.min(ub_mod - lb_mod) / 4)
         if ('scale' in option_fields and isinstance(options['scale'], bool) and not options['scale']) or \
                 (not scale and not ('scale' in option_fields and isinstance(options['scale'], bool))):
             # If we are going to scale the problem later, then we keep the default value for rhoend; otherwise, we scale
@@ -1126,10 +1126,10 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
         elif method is not None and method.lower() == 'bobyqa' and options['rhobeg'] > np.min(ub - lb) / 2:
             warn_message = \
                 '{}: invalid rhobeg; {} requires rhobeg <= min(ub-lb)/2; it is set to ' \
-                'min(ub-lb)/2.'.format(invoker, method)
+                'min(ub-lb)/4.'.format(invoker, method)
             warnings.warn(warn_message, Warning)
             list_warnings.append(warn_message)
-            options['rhobeg'] = np.min(ub - lb) / 2
+            options['rhobeg'] = np.min(ub - lb) / 4
             validated = True
         else:
             validated = True
@@ -1449,7 +1449,7 @@ def _reduce_problem(fun, x0, lb, ub, constraints, fixedx):
     """
     # possible solvers
     fun_name = stack()[0][3]  # name of the current function
-    local_invoker_list = ['postpdfo']
+    local_invoker_list = ['prepdfo']
     if len(stack()) < 3 or stack()[1][3].lower() not in local_invoker_list:
         raise SystemError('`{}` should only be called by {}'.format(fun_name, ', '.join(local_invoker_list)))
     invoker = stack()[1][3].lower()
@@ -1464,7 +1464,7 @@ def _reduce_problem(fun, x0, lb, ub, constraints, fixedx):
     x0 = np.asarray(x0, dtype=np.float64)
     lb = np.asarray(lb, dtype=np.float64)
     ub = np.asarray(ub, dtype=np.float64)
-    fixedx = np.asarray(fixedx, dtype=np.float64)
+    fixedx = np.asarray(fixedx, dtype=bool)
     if x0.size != lb.size or x0.size != ub.size or x0.size != fixedx.size:
         raise ValueError('{}: UNEXPECTED ERROR: the variable vector and the bounds are inconsistent'.format(invoker))
 
@@ -1582,21 +1582,14 @@ def _fullx(freex_value, fixedx_value, freex, fixedx):
 
     Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
     """
-    # possible solvers
-    fun_name = stack()[0][3]  # name of the current function
-    local_invoker_list = ['prepdfo', 'postpdfo']
-    if len(stack()) < 3 or stack()[1][3].lower() not in local_invoker_list:
-        raise SystemError('`{}` should only be called by {}'.format(fun_name, ', '.join(local_invoker_list)))
-    invoker = stack()[1][3].lower()
-
     if not (hasattr(freex_value, '__len__') and hasattr(fixedx_value, '__len__') and
             hasattr(freex, '__len__') and hasattr(fixedx, '__len__')):
         raise ValueError('{}: UNEXPECTED ERROR: the variable arrays have wrong types.'.format(invoker))
 
     freex_value = np.asarray(freex_value, dtype=np.float64)
     fixedx_value = np.asarray(fixedx_value, dtype=np.float64)
-    freex = np.asarray(freex, dtype=np.float64)
-    fixedx = np.asarray(fixedx, dtype=np.float64)
+    freex = np.asarray(freex, dtype=bool)
+    fixedx = np.asarray(fixedx, dtype=bool)
     if freex.size != fixedx.size or freex_value.size + fixedx_value.size != freex.size:
         raise ValueError('{}: UNEXPECTED ERROR: the variable vector lengths are inconsistent'.format(invoker))
 
@@ -1901,7 +1894,7 @@ def _solver_selection(invoker, method, options, prob_info, list_warnings):
                     lb_mod, ub_mod = prob_info['lb'].copy(), prob_info['ub'].copy()
                     lb_mod[np.logical_and(lb_mod > 0, np.isinf(lb_mod))] = -np.inf
                     ub_mod[np.logical_and(ub_mod < 0, np.isinf(ub_mod))] = np.inf
-                    rhobeg_bobyqa = min(options['rhobeg'], np.min(ub_mod - lb_mod) / 2)
+                    rhobeg_bobyqa = min(options['rhobeg'], np.min(ub_mod - lb_mod) / 4)
                     options['rhoend'] = (options['rhoend'] / options['rhobeg']) * rhobeg_bobyqa
                     options['rhobeg'] = max(rhobeg_bobyqa, eps)
                     options['rhoend'] = max(options['rhoend'], eps)
@@ -2309,7 +2302,7 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
         constrviolation_c = np.float64(constrviolation)
 
     # Validate chist.
-    if not (chist is None and (method in ['pdfo', 'newuoa', 'uobyqa'] or nf == 0)) and \
+    if not (chist is None and method in ['pdfo', 'newuoa', 'uobyqa']) and \
             not hasattr(chist, '__len__') and not isinstance(chist, scalar_types):
         raise ValueError('{}: UNEXPECTED ERROR: chist should be a scalar or a vector.'.format(invoker))
     if chist is None:
@@ -2404,7 +2397,9 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
 
     # Validate the value of the inputs.
     if nf_c <= 0:
-        raise ValueError('{}: UNEXPECTED ERROR: {} returns a nf <= 0 unexpectedly'.format(invoker, method))
+        raise ValueError(
+            '{}: UNEXPECTED ERROR: {} returns a nf <= 0 unexpectedly with exitflag '
+            '{}'.format(invoker, method, exitflag_c))
 
     # The problem was (possibly) scaled, scale it back.
     # The scaling affects constrviolation when there are bound constraint. Hence constrviolation has to be recalculated

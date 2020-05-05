@@ -43,12 +43,12 @@ end
 
 % If invoker is a solver called by pdfo, then prepdfo should have been called in pdfo.
 if (length(callstack) >= 3) && strcmp(callstack(3).name, 'pdfo')
-    if nargin ~= 10 % There should be 10 input arguments 
+    if nargin ~= 10 % There should be 10 input arguments
         % Private/unexpected error
-        error(sprintf('%s:InvalidInput', funname), ... 
+        error(sprintf('%s:InvalidInput', funname), ...
         '%s: UNEXPECTED ERROR: %d inputs received; this should not happen as prepdfo has been called once in pdfo.', funname, nargin);
     end
-    % In this case, we set probinfo to empty. 
+    % In this case, we set probinfo to empty.
     probinfo = [];  
     return % Return because prepdfo has already been called in pdfo.
 end
@@ -68,7 +68,7 @@ end
 %    bound constraints 
 % 4. fixedx_value: the values of the variables fixed by bound constraints 
 % 5. nofreex: whether all variables are fixed by bound constraints
-% 6. infeasible_bound: a true/false vector indicating which boun constraints 
+% 6. infeasible_bound: a true/false vector indicating which bound constraints
 %    are infeasible 
 % 7. infeasible_lineq: a true/false vector indicating which linear inequality
 %    constraints are infeasible (up to naive tests)
