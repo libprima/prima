@@ -187,8 +187,8 @@ function [x, fx, exitflag, output] = cobyla(varargin)
 % Attribute: public (can  be called directly by users)
 % 
 % Remarks: 
-% !!! TREAT probinfo and options AS READONLY VARIABLES AFTER PREPDFO !!!
-% !!! DO NOT MODIFY THE INFORMATION IN probinfo OR options AFTER PREPDFO !!! 
+% !!! TREAT probinfo AS A READONLY VARIABLE AFTER PREPDFO !!!
+% !!! DO NOT CHANGE probinfo AFTER PREPDFO !!! 
 %
 % TODO: None
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -206,20 +206,20 @@ internal_invokers = {'pdfo'}; % Invokers from this package; may have others in t
 
 % OUTPUT records the information that is produced by the solver and
 % intended to pass to postpdfo.
-% OUTPUT should contain at least the following fiels:
-% x, fx, exitflag, funcCount, fhist, constrviolation, chist, warnings;
-% For lincoa, it should also contain constr_modified; for nonlinearly 
-% constrained solvers, it should also contain nlcineq and nlceq. 
+% OUTPUT should contain at least x, fx, exitflag, funcCount, and constrviolation; 
+% for internal solvers (solvers from PDFO), it should also contain fhist, chist, warnings;
+% for lincoa, it should also contain constr_modified; 
+% for nonlinearly constrained internal solvers, it should also contain nlcineq and nlceq. 
 output = struct();
-% N.B.: DO NOT record anything in PROBINFO or OPTIONS. If the solver is 
-% called by pdfo, then postpdfo will do nothing; the real postprocessing 
-% will be done when pdfo calls postpdfo using the OUTPUT returned by solver
-% together with the PROBINFO and OPTIONS in pdfo; that said, in such a senario, 
-% the PROBINFO and OPTIONS of this solver will NOT be passed to the real 
-% postprocessing.
+% N.B.: DO NOT record anything in PROBINFO. If the solver is called by pdfo, 
+% then postpdfo will do nothing; the real postprocessing will be done when 
+% pdfo calls postpdfo using the OUTPUT returned by solver together with the 
+% PROBINFO in pdfo; that said, in such a senario, the PROBINFO of this solver 
+% will NOT be passed to the real postprocessing. Indeed, the PROBINFO of
+% this solver is set to empty in prepdfo.
 
-warning('off', 'backtrace'); % Do not display the stack trace of a warning
 output.warnings = {}; % A cell that records all the warnings
+warning('off', 'backtrace'); % Do not display the stack trace of a warning
 
 maxarg = 10; % Maximal number of inputs
 nvararg = length(varargin); % Number of inputs

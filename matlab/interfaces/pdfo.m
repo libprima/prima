@@ -252,9 +252,9 @@ function [x, fx, exitflag, output] = pdfo(varargin)
 % desigened to be shown to the users.
 % 2.2. Warnings are displayed without the call stack trace. 
 %
-% 3. probinfo and options
-% !!! TREAT probinfo and options AS READONLY VARIABLES AFTER PREPDFO!!!
-% !!! DO NOT MODIFY THE INFORMATION IN probinfo OR options AFTER PREPDFO !!! 
+% 3. probinfo 
+% !!! TREAT probinfo AS A READONLY VARIABLE AFTER PREPDFO !!!
+% !!! DO NOT CHANGE probinfo AFTER PREPDFO !!! 
 %
 % TODO:
 % 1. Implicit NONE and variable declaration in the Fortran code
@@ -276,18 +276,13 @@ funname = callstack(1).name; % Name of the current function
 
 % OUTPUT records the information that is produced by the solver and
 % intended to pass to postpdfo.
-% OUTPUT should contain at least the following fiels:
-% x, fx, exitflag, funcCount, fhist, constrviolation, chist, warnings;
-% For lincoa, it should also contain constr_modified; for nonlinearly 
-% constrained problems, it should also constrain nlcineq and nlceq. 
+% OUTPUT should contain at least x, fx, exitflag, funcCount, and constrviolation; 
+% for internal solvers (solvers from PDFO), it should also contain fhist, chist, warnings;
+% for lincoa, it should also contain constr_modified; 
+% for nonlinearly constrained internal solvers, it should also contain nlcineq and nlceq. 
 output = struct();
 
 warning ('off', 'backtrace'); % Do not display the stack trace of a warning
-output.warnings = {}; % A cell that records all the warnings
-% This version of pdfo.m produces no warning. 
-% However, initializing output and output.warnings is still necessary
-% because output will be an input to postpdfo, and output.warnings will
-% be used there.
 
 maxarg = 10; % Maximal number of inputs
 nvararg = length(varargin); % Number of inputs
