@@ -286,7 +286,7 @@ class NonlinearConstraint:
                                 (self.lb.size == 0 and self.ub.size == 0) or self.lb.size not in [0, fx.size] or
                                 self.ub.size not in [0, fx.size]):
                 raise AttributeError(
-                    'The size of the vector returned by the constraint function is inconsistent with the constraint'
+                    'The size of the vector returned by the constraint function is inconsistent with the constraint '
                     'bounds; check the shapes of the arrays.')
 
             return fx
@@ -488,6 +488,13 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
     # To clarify, the length of x0 is denoted lenx0 instead of n.
     lenx0 = x0_c.size
 
+    abnormal_x0 = np.logical_or(np.isnan(x0_c), np.isinf(x0_c))
+    if abnormal_x0.any():
+        x0_c[abnormal_x0] = 0
+        warn_message = '{}: x0 contains NaN or infinite values; they are replaced by 0.'.format(invoker)
+        warnings.warn(warn_message, Warning)
+        list_warnings.append(warn_message)
+
     # If prepdfo is called by a solver (i.e. uobyqa, newuoa, bobyqa, lincoa, or cobyla), the selected method is the
     # solver itself.
     if method is None and invoker != 'pdfo':
@@ -503,17 +510,23 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
     prob_info['fixedx_value'] = fixed_values
 
     # Validate the linear and nonlinear constraint, and define its feasibility.
-    constraints_c, infeasible, trivial = _constraints_validation(invoker, constraints, lenx0)
+    constraints_c, infeasible_linear, infeasible_nonlinear, trivial = \
+        _constraints_validation(invoker, constraints, lenx0)
     prob_info['raw_data']['constraints'] = constraints_c
-    prob_info['infeasible_linear'] = infeasible
+    prob_info['infeasible_linear'] = infeasible_linear
+    prob_info['infeasible_nonlinear'] = infeasible_nonlinear
     prob_info['trivial_linear'] = trivial
 
     # After pre-processing the linear/bound constraints, the problem may turn out infeasible, or x may turn out fixed by
     # the bounds.
-    prob_info['infeasible'] = any(np.r_[prob_info['infeasible_bound'], prob_info['infeasible_linear']])
+    prob_info['infeasible'] = \
+        any(np.r_[prob_info['infeasible_bound'], prob_info['infeasible_linear'], prob_info['infeasible_nonlinear']])
     prob_info['nofreex'] = all(prob_info['fixedx'])
-    if prob_info['nofreex']:
-        prob_info['constrv_fixedx'] = _constr_violation(invoker, prob_info['fixedx_value'], lb, ub, constraints_c)
+    if prob_info['infeasible']:
+        prob_info['constrv_x0'], prob_info['nlc_x0'] = _constr_violation(invoker, x0_c, lb, ub, constraints_c)
+    elif prob_info['nofreex']:
+        prob_info['constrv_fixedx'], prob_info['nlc_fixedx'] = \
+            _constr_violation(invoker, prob_info['fixedx_value'], lb, ub, constraints_c)
 
     # Reduce the problem if some variables are fixed by the bound constraints.
     prob_info['raw_dim'] = lenx0
@@ -690,9 +703,13 @@ def _bounds_validation(invoker, bounds, lenx0):
     ub[np.isnan(ub)] = np.inf
 
     # Check the infeasibility of the bounds.
-    infeasible = (lb > ub)
-    fixed_indices = (np.abs(lb - ub) < 2 * eps)
-    fixed_values = (lb[fixed_indices] + ub[fixed_indices]) / 2
+    infeasible_lb, lb_mod = np.logical_and(lb > 0, np.isinf(lb)), lb.copy()
+    infeasible_ub, ub_mod = np.logical_and(ub < 0, np.isinf(ub)), ub.copy()
+    lb_mod[infeasible_lb] = -np.inf
+    ub_mod[infeasible_ub] = np.inf
+    infeasible = np.logical_or(infeasible_lb, np.logical_or(infeasible_ub, lb > ub))
+    fixed_indices = (np.abs(lb_mod - ub_mod) < 2 * eps)
+    fixed_values = (lb_mod[fixed_indices] + ub_mod[fixed_indices]) / 2
 
     return lb, ub, infeasible, fixed_indices, fixed_values
 
@@ -800,7 +817,7 @@ def _constraints_validation(invoker, constraints, lenx0):
 
         # Remove the abnormal constraints and check infeasibility.
         if lb_linear.size == 0 and ub_linear.size == 0:
-            infeasible = np.asarray([], dtype=bool)
+            infeasible_linear = np.asarray([], dtype=bool)
             trivial = np.asarray([], dtype=bool)
         else:
             row_norm_inf = np.max(np.abs(a_linear), 1)
@@ -812,7 +829,7 @@ def _constraints_validation(invoker, constraints, lenx0):
             ub_linear_norm = ub_linear / row_norm_inf
             lb_ub_or = np.logical_or(np.logical_and(np.isinf(lb_linear_norm), lb_linear_norm > 0),
                                      np.logical_and(np.isinf(ub_linear_norm), ub_linear_norm < 0))
-            infeasible = np.logical_or(infeasible_zero, lb_ub_or)
+            infeasible_linear = np.logical_or(infeasible_zero, np.logical_or(lb_ub_or, lb_linear > ub_linear))
             lb_ub_and = np.logical_and(np.logical_and(np.isinf(lb_linear_norm), lb_linear_norm < 0),
                                        np.logical_and(np.isinf(ub_linear_norm), ub_linear_norm > 0))
             trivial = np.logical_or(trivial_zero, lb_ub_and)
@@ -828,12 +845,20 @@ def _constraints_validation(invoker, constraints, lenx0):
             import_error_so('gethuge')
         hugecon = gethuge('con')
 
-        # If no bounds are provided with some nonlinear constraints, they should not be considered.
+        # If no bounds are provided with some nonlinear constraints, they should not be considered. Moreover, the bounds
+        # in the nonlinear constraints should be feasible.
         reduced_list_nonlinear = []
+        infeasible_nonlinear = np.asarray([], dtype=bool)
         for nonlinear_constraint in list_nonlinear:
+            lb_nonlinear, ub_nonlinear = nonlinear_constraint.lb, nonlinear_constraint.ub
             if isinstance(nonlinear_constraint, nonlinear_constraint_types) and \
-                    (nonlinear_constraint.lb.size > 0 or nonlinear_constraint.ub.size > 0):
+                    (lb_nonlinear.size > 0 or ub_nonlinear.size > 0):
                 reduced_list_nonlinear.append(nonlinear_constraint)
+                infeasible_lb = np.logical_and(lb_nonlinear > 0, np.isinf(lb_nonlinear))
+                infeasible_ub = np.logical_and(ub_nonlinear < 0, np.isinf(ub_nonlinear))
+                infeasible_nonlinear = \
+                    np.r_[infeasible_nonlinear,
+                          np.logical_or(infeasible_lb, np.logical_or(infeasible_ub, lb_nonlinear > ub_nonlinear))]
 
         list_nonlinear = reduced_list_nonlinear
 
@@ -903,10 +928,11 @@ def _constraints_validation(invoker, constraints, lenx0):
         # No constraints have been provided.
         linear_constraints = None
         nonlinear_constraints = None
-        infeasible = np.asarray([], dtype=bool)
+        infeasible_linear = np.asarray([], dtype=bool)
+        infeasible_nonlinear = np.asarray([], dtype=bool)
         trivial = np.asarray([], dtype=bool)
 
-    return {'linear': linear_constraints, 'nonlinear': nonlinear_constraints}, infeasible, trivial
+    return {'linear': linear_constraints, 'nonlinear': nonlinear_constraints}, infeasible_linear, infeasible_nonlinear, trivial
 
 
 def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
@@ -1015,7 +1041,10 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
 
     # Revise default rhobeg and rhoend if the solver is BOBYQA.
     if method is not None and method.lower() == 'bobyqa':
-        rhobeg_bobyqa = min(rhobeg, np.min(ub - lb) / 2)
+        lb_mod, ub_mod = lb.copy(), ub.copy()
+        lb_mod[np.logical_and(lb_mod > 0, np.isinf(lb_mod))] = -np.inf
+        ub_mod[np.logical_and(ub_mod < 0, np.isinf(ub_mod))] = np.inf
+        rhobeg_bobyqa = min(rhobeg, np.min(ub_mod - lb_mod) / 2)
         if ('scale' in option_fields and isinstance(options['scale'], bool) and not options['scale']) or \
                 (not scale and not ('scale' in option_fields and isinstance(options['scale'], bool))):
             # If we are going to scale the problem later, then we keep the default value for rhoend; otherwise, we scale
@@ -1242,7 +1271,7 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
     if options['chkfunval']:
         warn_message = \
             "{}: checking whether fx = fun(x) and possibly conval = con(x) at exit, which will cost an extra " \
-            "function/constraint evaluation; set options['chkfunval'] = false to disable the check.".format(invoker)
+            "function/constraint evaluation; set options['chkfunval'] = False to disable the check.".format(invoker)
         warnings.warn(warn_message, Warning)
         list_warnings.append(warn_message)
 
@@ -1296,14 +1325,14 @@ def _constr_violation(invoker, x, lb, ub, constraints):
         raise ValueError(
             '{}: UNEXPECTED ERROR: the sizes of the variable vector and the bounds are inconsistent.'.format(invoker))
 
-    # Compute the constraint violation as the relative distance to the bounds.
-    constr_violation = max(0, np.max(np.r_[lb - x, x - ub] / max(1, np.max(np.abs(np.r_[lb, ub])))))
+    # Compute the constraint violation as the absolute distance to the bounds.
+    constr_violation = np.max((0, np.nanmax(np.r_[lb - x, x - ub])))
 
     if constraints['linear'] is not None:
         a, b = _linear_constraints_constr(constraints['linear'])
 
-        # Compute the constraint violation as the largest relative distance to the bounds and the linear constraints.
-        constr_violation = max(constr_violation, (np.dot(a, x) - b) / max(1, np.max(np.abs(b))))
+        # Compute the constraint violation as the largest absolute distance to the bounds and the linear constraints.
+        constr_violation = np.max((constr_violation, np.nanmax(np.dot(a, x) - b)))
 
     if constraints['nonlinear'] is not None:
         nonlinear = constraints['nonlinear']
@@ -1318,8 +1347,10 @@ def _constr_violation(invoker, x, lb, ub, constraints):
         # Compute the constraint violation as the largest relative distance to the bounds, the linear constraints and
         # the nonlinear constraints.
         constr_violation = max(constr_violation, np.max(nlc))
+    else:
+        nlc = np.asarray([], dtype=np.float64)
 
-    return np.float64(constr_violation)
+    return np.float64(constr_violation), nlc
 
 
 def _problem_type(lb, ub, constraints):
@@ -1867,7 +1898,10 @@ def _solver_selection(invoker, method, options, prob_info, list_warnings):
                 solver = 'bobyqa'
                 options['npt'] = min(2 * n + 1, options['maxfev'] - 1)
                 if {'lb', 'ub'} <= set(prob_info.keys()):
-                    rhobeg_bobyqa = min(options['rhobeg'], np.min(prob_info['ub'] - prob_info['lb']) / 2)
+                    lb_mod, ub_mod = prob_info['lb'].copy(), prob_info['ub'].copy()
+                    lb_mod[np.logical_and(lb_mod > 0, np.isinf(lb_mod))] = -np.inf
+                    ub_mod[np.logical_and(ub_mod < 0, np.isinf(ub_mod))] = np.inf
+                    rhobeg_bobyqa = min(options['rhobeg'], np.min(ub_mod - lb_mod) / 2)
                     options['rhoend'] = (options['rhoend'] / options['rhobeg']) * rhobeg_bobyqa
                     options['rhobeg'] = max(rhobeg_bobyqa, eps)
                     options['rhoend'] = max(options['rhoend'], eps)
@@ -1988,7 +2022,7 @@ def _project(x0, lb, ub, constraints, options=None):
     # Projecte onto the feasible set.
     if constraints['linear'] is None:
         # Direct projection onto the bound constraints
-        x_proj = np.min((np.max((x0_c, lb_c), axis=0), ub_c), axis=0)
+        x_proj = np.nanmin((np.nanmax((x0_c, lb_c), axis=0), ub_c), axis=0)
         return OptimizeResult(x=x_proj)
     elif np.equal(constraints['linear'].lb, constraints['linear'].ub).all() and np.max(lb_c) <= -max_con and \
             np.min(ub_c) >= max_con:
@@ -2003,7 +2037,7 @@ def _project(x0, lb, ub, constraints, options=None):
 
             # The problem is not bounded. However, if the least-square solver returned values bigger in absolute value
             # than max_con, they will be reduced to this bound.
-            x_proj = np.min((np.max((x0_c + xi, lb_c), axis=0), ub_c), axis=0)
+            x_proj = np.nanmin((np.nanmax((x0_c + xi, lb_c), axis=0), ub_c), axis=0)
 
             return OptimizeResult(x=x_proj)
         except ImportError:
@@ -2309,30 +2343,6 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
             not isinstance(options['chkfunval'], (bool, np.bool)):
         raise ValueError('{}: UNEXPECTED ERROR: options should be a valid dictionary.'.format(invoker))
 
-    # Manage the extreme barriers.
-    if not options['classical']:
-        if (fhist_c > hugefun).any() or np.isnan(fhist_c).any():
-            raise ValueError(
-                '{}: UNEXPECTED ERROR: {} returns an fhist with NaN or values larger than hugefun={}; this is '
-                'impossible with extreme barrier.'.format(invoker, method, hugefun))
-        elif fhist_c.size > 0 and np.max(fhist_c) == hugecon:
-            warn_message = \
-                '{}: extreme barrier is invoked; function values that are NaN or larger than hugefun={} are replaced ' \
-                'by hugefun.'.format(invoker, hugefun)
-            warnings.warn(warn_message, Warning)
-            output['warnings'].append(warn_message)
-
-        if method == 'cobyla' and chist_c is not None and hasattr(chist_c, '__len__') and \
-                ((chist_c > hugecon).any() or np.isnan(chist_c).any()):
-            raise ValueError(
-                '{}: UNEXPECTED ERROR: {} returns an chist with NaN or values larger than hugecon={}; this is '
-                'impossible with extreme barrier.'.format(invoker, method, hugecon))
-        elif chist_c is not None and chist_c.size > 0 and np.max(chist_c) == hugecon:
-            warn_message = '{}: extreme barrier is invoked; function values that are NaN or larger than hugecon={} ' \
-                           'are replaced by hugecon.'.format(invoker, hugecon)
-            warnings.warn(warn_message, Warning)
-            output['warnings'].append(warn_message)
-
     # Validate prob_info.
     prob_info_fields = \
         {'infeasible', 'warnings', 'scaled', 'reduced', 'fixedx', 'fixedx_value', 'refined_type', 'raw_type',
@@ -2366,8 +2376,34 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
                 'scaled.'.format(invoker))
     prob_info_c = prob_info.copy()
 
+    # Manage the extreme barriers.
+    if not options['classical']:
+        if ((fhist_c > hugefun).any() or np.isnan(fhist_c).any()) and not prob_info_c['infeasible'] and \
+                not prob_info_c['nofreex']:
+            raise ValueError(
+                '{}: UNEXPECTED ERROR: {} returns an fhist with NaN or values larger than hugefun={}; this is '
+                'impossible with extreme barrier.'.format(invoker, method, hugefun))
+        elif fhist_c.size > 0 and np.max(fhist_c) == hugecon:
+            warn_message = \
+                '{}: extreme barrier is invoked; function values that are NaN or larger than hugefun={} are replaced ' \
+                'by hugefun.'.format(invoker, hugefun)
+            warnings.warn(warn_message, Warning)
+            output['warnings'].append(warn_message)
+
+        if method == 'cobyla' and chist_c is not None and hasattr(chist_c, '__len__') and \
+                ((chist_c > hugecon).any() or np.isnan(chist_c).any()) and not prob_info_c['infeasible'] and \
+                not prob_info_c['nofreex']:
+            raise ValueError(
+                '{}: UNEXPECTED ERROR: {} returns an chist with NaN or values larger than hugecon={}; this is '
+                'impossible with extreme barrier.'.format(invoker, method, hugecon))
+        elif chist_c is not None and chist_c.size > 0 and np.max(chist_c) == hugecon:
+            warn_message = '{}: extreme barrier is invoked; function values that are NaN or larger than hugecon={} ' \
+                           'are replaced by hugecon.'.format(invoker, hugecon)
+            warnings.warn(warn_message, Warning)
+            output['warnings'].append(warn_message)
+
     # Validate the value of the inputs.
-    if nf_c < 0 or (nf_c == 0 and not prob_info['infeasible'] and exitflag_c > 0):
+    if nf_c <= 0:
         raise ValueError('{}: UNEXPECTED ERROR: {} returns a nf <= 0 unexpectedly'.format(invoker, method))
 
     # The problem was (possibly) scaled, scale it back.
@@ -2386,9 +2422,8 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
         if linear is not None:
             Ax = np.dot(linear.A, x_c)
             r = np.r_[linear.lb - Ax, Ax - linear.ub]
-            b = np.r_[-linear.lb, linear.ub]
         else:
-            r, b = np.asarray([np.nan]), np.asarray([np.nan])
+            r = np.asarray([np.nan])
 
         # Scale x back.
         x_c = prob_info_c['scaling_factor'] * x_c + prob_info_c['shift']
@@ -2404,12 +2439,9 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
         # constrained problems, while bobyqa is a feasible method and should return constrviolation = 0 regardless of
         # the scaling unless something goes wrong.
         if method == 'lincoa':
-            # LINCOA returns a relative constraint violation, it should be converted.
             conv_n = np.concatenate((r, lb - x_c, x_c - ub))
             conv_n = np.nanmax((np.zeros_like(conv_n), conv_n), axis=0)
-            conv_d = np.abs(np.concatenate((b, lb, ub)))
-            conv_d = np.nanmax((np.ones_like(conv_d), conv_d), axis=0)
-            constrviolation_c = np.max(conv_n / conv_d)
+            constrviolation_c = np.max(conv_n)
         else:
             # Compute the constraint violation as usual.
             nlc = np.asarray([-np.inf], dtype=np.float64)
@@ -2444,9 +2476,18 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
             del output['constrviolation']
         if 'chist' in output.keys():
             del output['chist']
-    elif nf_c > 0 and prob_info_c['refined_type'] == 'unconstrained' and prob_info_c['raw_type'] != 'unconstrained':
+    elif prob_info_c['refined_type'] == 'unconstrained' and prob_info_c['raw_type'] != 'unconstrained':
         output['constrviolation'] = np.float64(0)
         output['chist'] = np.zeros(nf_c)
+
+    # Revise output['nlc'] according to problem type.
+    if prob_info_c['refined_type'] != 'nonlinearly-constrained' and 'nlc' in output.keys() and output['nlc'].size > 0:
+        raise ValueError(
+            '{}: UNEXPECTED ERROR: {} returns values of nonlinear constraints for a problem that does not admit '
+            'such constraints.'.format(invoker, method))
+
+    if prob_info_c['raw_type'] != 'nonlinearly-constrained' and 'nlc' in output.keys():
+        del output['nlc']
 
     # Record the returned message.
     if exitflag_c == 0:
@@ -2528,7 +2569,7 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
     # More careful checks about fx, constrviolation, fhist and chist.
     # We do this only if the coe is in debug mode but not in classical mode. The classical mode cannot pass these
     # checks.
-    if options['debug'] and not options['classical'] and nf_c > 0:
+    if options['debug'] and not options['classical']:
         if 'raw_data' not in prob_info_keys:
             raise ValueError("{}: UNEXPECTED ERROR: 'raw_data' should be a field of prob_info".format(invoker))
 
@@ -2548,15 +2589,17 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
                 '{}: UNEXPECTED ERROR: {} returns an fhist that does not match nf or fx'.format(invoker, method))
 
         # Check whether constrviolation is correct.
-        cobyla_prec = np.float64(1e-12)
-        lincoa_prec = np.float64(1e-14)
+        cobyla_prec = np.float64(1e-10)
+        lincoa_prec = np.float64(1e-12)
 
         # COBYLA cannot ensure fx=fun(x) or conval=con(x) due to rounding errors. Instead of checking the equality, we
-        # check whether the relative error is within cobyla_prec.
+        # check whether the relative error is within cobyla_prec. There can also be a difference between constrviolation
+        # and conv, especially if the problem is scaled.
         constrviolation = np.float64(0)
         if 'constrviolation' in output.keys():
             constrviolation = output['constrviolation']
-        if method == 'bobyqa' and np.nanmax((constrviolation, np.nanmax(chist_c))) > 0:
+        if method == 'bobyqa' and np.nanmax((constrviolation, np.nanmax(chist_c))) > 0 and \
+                not prob_info_c['infeasible'] and not prob_info_c['fixedx']:
             raise ValueError(
                 '{}: UNEXPECTED ERROR: {} is a feasible solver yet it returns positive '
                 'constrviolations.'.format(invoker, method))
@@ -2570,28 +2613,22 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
                 try:
                     Ax = np.dot(linear.A, x_c)
                     r = np.r_[linear.lb - Ax, Ax - linear.ub]
-                    b = np.r_[-linear.lb, linear.ub]
                 except ValueError:
                     raise ValueError(
                         '{}: UNEXPECTED ERROR: the linear constraints are no more consistent'.format(invoker))
             else:
-                b, r = np.asarray([np.nan]), np.asarray([np.nan])
+                r = np.asarray([np.nan])
 
             if method == 'lincoa':
-                # LINCOA returns a relative constraint violation, it needs to be converted.
                 conv_n = np.concatenate((r, lb - x_c, x_c - ub))
                 conv_n = np.nanmax((np.zeros_like(conv_n), conv_n), axis=0)
-                conv_d = np.abs(np.concatenate((b, lb, ub)))
-                conv_d = np.nanmax((np.ones_like(conv_d), conv_d), axis=0)
-                conv = np.max(conv_n / conv_d)
+                conv = np.max(conv_n)
             else:
                 nlc = np.asarray([-np.inf], dtype=np.float64)
                 if 'nlc' in output.keys():
                     nlc = np.asarray(output['nlc'], dtype=np.float64)
                 conv = np.concatenate(([0], r, lb - x_c, x_c - ub, nlc))
                 conv = np.nanmax(conv)
-                # COBYLA returns an absolute constraint violation (there is nothing to compare with, because con is a
-                # black-box)
 
             if not (np.isnan(conv) and np.isnan(constrviolation_c)) and \
                     not (np.isinf(conv) and np.isinf(constrviolation_c)) and \

@@ -51,5 +51,8 @@ C that REAL(KIND=8) will be of double precision.
       ! This is a function that does nothing. It is to entertain F2PY,
       ! which interprets a file only if it contains at least one
       ! function or subroutine (as of NumPy v1.17).
+
+      use pdfoconst
+
       return
       end subroutine use_pdfoconst
