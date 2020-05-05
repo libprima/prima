@@ -250,7 +250,10 @@ if strcmp(invoker, 'pdfo')
     [options, warnings] = select_solver(invoker, options, probinfo, warnings);
 end
 
-probinfo.refined_data.options = options; % Record the options in probinfo.refined_data
+% Record the options in probinfo.refined_data
+% This has to be done after select_solver, because select_solver updates 
+% options.solver, and possibly options.npt and options.rhobeg.
+probinfo.refined_data.options = options; 
 
 probinfo.warnings = warnings; % Record the warnings in probinfo
 
