@@ -39,29 +39,17 @@ C that REAL(KIND=8) will be of double precision.
 
       integer, parameter :: int4 = selected_int_kind(8)
       ! int4 is the kind for integer*4
-      ! SELECTED_INT_KIND(p) returns an INTEGER that  equals the
-      ! processor dependent kind type parameter of the integer type that
-      ! accommodates all values n with -10^p < n < 10^p. Therefore,
+      ! SELECTED_INT_KIND(p) returns an INTEGER that equals the
+      ! processor dependent kind type parameter of the integer type 
+      ! accommodating all values n with -10^p < n < 10^p. Therefore,
       ! SELECTED_INT_KIND(p) should be the kind of integer*4 for p = 7,
       ! 8, 9 (also for p = 5 and 6 unless integer*3 is supportred).
       
       end module pdfoconst
 
-      subroutine use_pdfoconst (x,tx)
-      ! This is a function that does tx=2*x. It is to entertain F2PY,
+      subroutine use_pdfoconst ()
+      ! This is a function that does nothing. It is to entertain F2PY,
       ! which interprets a file only if it contains at least one
-      ! function or subroutine (as of NumPy v1.17). It is also used to
-      ! verify that F2PY is well configured on the machine (see setup.py).
-
-      use pdfoconst
-
-      implicit none
-
-      real(kind=dp), intent(in) :: x
-      real(kind=dp), intent(out) :: tx
-
-      tx = TWO * x
-
+      ! function or subroutine (as of NumPy v1.17).
       return
-
       end subroutine use_pdfoconst

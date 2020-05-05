@@ -29,7 +29,7 @@ function [x, fx, exitflag, output] = cobyla(varargin)
 %
 %   solves the problem formulated above, where
 %   *** fun is the name or function handle of the objective function; if
-%       there is no objective function (i.e., we have a feasibility pronblem), 
+%       there is no objective function (i.e., we have a feasibility problem), 
 %       then set fun = []
 %   *** x0 is the starting point; x0 CANNOT be []
 %   *** Aineq and bineq are the coeffcient matrix and right-hand side of 
@@ -77,7 +77,7 @@ function [x, fx, exitflag, output] = cobyla(varargin)
 %
 %   3. Outputs
 %
-%   *** x is the approximate solution to the optimization pronblem
+%   *** x is the approximate solution to the optimization problem
 %   *** fx is fun(x)
 %   *** exitflag is an integer indicating why COBYLA returns; the
 %       possible values are 
@@ -186,7 +186,9 @@ function [x, fx, exitflag, output] = cobyla(varargin)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Attribute: public (can  be called directly by users)
 % 
-% Remarks: None
+% Remarks: 
+% !!! TREAT probinfo and options AS READONLY VARIABLES AFTER PREPDFO!!!
+% !!! DO NOT MODIFY THE INFORMATION IN probinfo OR options AFTER PREPDFO !!! 
 %
 % TODO: None
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -202,13 +204,22 @@ else
 end
 internal_invokers = {'pdfo'}; % Invokers from this package; may have others in the future
 
+% OUTPUT records the information that is produced by the solver and
+% intended to pass to postpdfo.
+% OUTPUT should contain at least the following fiels:
+% x, fx, exitflag, funcCount, fhist, constrviolation, chist, warnings;
+% For lincoa, it should also contain constr_modified; for nonlinearly 
+% constrained solvers, it should also contain nlcineq and nlceq. 
+output = struct();
+% N.B.: DO NOT record anything in PROBINFO or OPTIONS. If the solver is 
+% called by pdfo, then postpdfo will do nothing; the real postprocessing 
+% will be done when pdfo calls postpdfo using the OUTPUT returned by solver
+% together with the PROBINFO and OPTIONS in pdfo; that said, in such a senario, 
+% the PROBINFO and OPTIONS of this solver will NOT be passed to the real 
+% postprocessing.
+
 warning('off', 'backtrace'); % Do not display the stack trace of a warning
 output.warnings = {}; % A cell that records all the warnings
-% Why do we record the warning message in output.warnings
-% instead of probinfo.warnings? Because, if cobyla is called by
-% pdfo, then probinfo will not be passed to postpdfo, and hence
-% the warning message will be lost. To the contrary, output will
-% be passed to postpdfo anyway. 
 
 maxarg = 10; % Maximal number of inputs
 nvararg = length(varargin); % Number of inputs
@@ -249,6 +260,8 @@ else
 end
 
 % Preprocess the input
+% Even if invoker='pdfo', we still need to call prepdfo, which will assign 
+% values to fun, x0, ..., options.
 try % prepdfo is a private function that may generate public errors; error-handeling needed
     [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, options, probinfo] = prepdfo(args{:});
 catch exception
@@ -259,22 +272,26 @@ catch exception
     end
 end
 
-if probinfo.infeasible % The problem turned out infeasible during prepdfo
-    exitflag = -4;
-    nf = 0;
-    x = NaN(size(x0));
-    fx = NaN;
-    fhist = [];
-    constrviolation = NaN;
-    chist = []; 
-elseif probinfo.nofreex % x was fixed by the bound constraints during prepdfo
-    exitflag = 13;
-    nf = 1;
-    x = probinfo.fixedx_value;
-    fx = fun(x);
-    fhist = fx;
-    constrviolation = probinfo.constrv_fixedx;
-    chist = constrviolation;
+if ~strcmp(invoker, 'pdfo') && probinfo.infeasible % The problem turned out infeasible during prepdfo
+    output.x = x0; 
+    output.fx = fun(output.x);
+    output.exitflag = -4;
+    output.funcCount = 1;
+    output.fhist = output.fx;
+    output.constrviolation = probinfo.constrv_x0;
+    output.chist = output.constrviolation;
+    output.nlcineq = probinfo.nlcineq_x0;
+    output.nlceq = probinfo.nlceq_x0;
+elseif ~strcmp(invoker, 'pdfo') && probinfo.nofreex % x was fixed by the bound constraints during prepdfo
+    output.x = probinfo.fixedx_value;
+    output.fx = fun(output.x);
+    output.exitflag = 13;
+    output.funcCount = 1;
+    output.fhist = output.fx;
+    output.constrviolation = probinfo.constrv_fixedx;
+    output.chist = output.constrviolation;
+    output.nlcineq = probinfo.nlcineq_fixedx;
+    output.nlceq = probinfo.nlceq_fixedx;
 else % The problem turns out 'normal' during prepdfo
     % Include all the constraints into one single 'nonlinear constraint'
     con = @(x) cobyla_con(x, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
@@ -340,6 +357,17 @@ else % The problem turns out 'normal' during prepdfo
             rethrow(exception); 
         end
     end
+    % Record the results of the solver in OUTPUT
+    output.x = x;
+    output.fx = fx;
+    output.exitflag = exitflag;
+    output.funcCount = nf;
+    output.fhist = fhist;
+    output.constrviolation = constrviolation;
+    output.chist = chist;
+    % OUTPUT should also include nonlinear constraint values, if any
+    output.nlcineq = [];
+    output.nlceq = [];
     if ~isempty(nonlcon)
         output.nlcineq = -conval(end-m_nlcineq-2*m_nlceq+1 : end-2*m_nlceq);
         if isempty(output.nlcineq) 
@@ -354,7 +382,7 @@ end
 
 % Postprocess the result 
 try % postdfo is a private function that may generate public errors; error-handeling needed
-    [x, fx, exitflag, output] = postpdfo(x, fx, exitflag, output, nf, fhist, constrviolation, chist, options, probinfo);
+    [x, fx, exitflag, output] = postpdfo(probinfo, options, output);
 catch exception
     if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly 
         error(exception.identifier, '%s\n(error generated in %s, line %d)', exception.message, exception.stack(1).file, exception.stack(1).line);

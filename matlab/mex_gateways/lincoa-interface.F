@@ -369,9 +369,7 @@ C Linear constraints: A'*x <= b (NOTE the transpose)
               resmax = cval ! Set resmax=NaN if constraint contains NaN
               exit
           else
-              !resmax = max(resmax, cval) ! Absolute containt violation
-              resmax = max(resmax, cval/max(ONE, abs(b(j)))) 
-C We use relative constraint violation 
+              resmax = max(resmax, cval) ! Absolute containt violation
           end if
       end do
       plhs(6) = mxCreateDoubleScalar(resmax)
@@ -489,9 +487,7 @@ C Linear constraints: Aresmax'*x <= bresmax (NOTE the transpose)
               resmax = cval ! Set resmax=NaN if constraint contains NaN 
               exit
           else
-              !resmax = max(resmax, cval) !Absolute constraint violation 
-              resmax = max(resmax, cval/max(ONE, abs(bresmax(j)))) 
-C We use relative constraint violation 
+              resmax = max(resmax, cval) !Absolute constraint violation 
           end if
       end do
 

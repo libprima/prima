@@ -94,6 +94,15 @@ C
       ISIGB=IVETA+N
       IDX=ISIGB+N
       IWORK=IDX+N
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C Zaikun, 2020-05-05
+C When the data is passed from the interfaces to the Fortran code, RHOBEG, 
+C and RHOEND may change a bit (due to rounding ???). It was oberved in
+C a MATLAB test that MEX passed 1 to Fortran as 0.99999999999999978.
+C If we set RHOEND = RHOBEG in the interfaces, then it may happen
+C that RHOEND > RHOBEG. That is why we do the following. 
+      RHOEND = MIN(RHOBEG, RHOEND)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       CALL COBYLB (N,M,MPP,X,RHOBEG,RHOEND,IPRINT,MAXFUN,W(ICON),
      1  W(ISIM),W(ISIMI),W(IDATM),W(IA),W(IVSIG),W(IVETA),W(ISIGB),
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC

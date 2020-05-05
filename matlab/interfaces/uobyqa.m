@@ -25,7 +25,7 @@ function [x, fx, exitflag, output] = uobyqa(varargin)
 %
 %   [x, fx, exitflag, output] = uobyqa(INPUTS)
 %
-%   *** x is the approximate solution to the optimization pronblem
+%   *** x is the approximate solution to the optimization problem
 %   *** fx is fun(x)
 %   *** exitflag is an integer indicating why UOBYQA returns; the
 %       possible values are 
@@ -122,7 +122,9 @@ function [x, fx, exitflag, output] = uobyqa(varargin)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Attribute: public (can  be called directly by users)
 % 
-% Remarks: None
+% Remarks: 
+% !!! TREAT probinfo and options AS READONLY VARIABLES AFTER PREPDFO!!!
+% !!! DO NOT MODIFY THE INFORMATION IN probinfo OR options AFTER PREPDFO !!! 
 %
 % TODO: None
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -138,13 +140,22 @@ else
 end
 internal_invokers = {'pdfo'}; % Invokers from this package; may have others in the future
 
+% OUTPUT records the information that is produced by the solver and
+% intended to pass to postpdfo.
+% OUTPUT should contain at least the following fiels:
+% x, fx, exitflag, funcCount, fhist, constrviolation, chist, warnings;
+% For lincoa, it should also contain constr_modified; for nonlinearly 
+% constrained solvers, it should also contain nlcineq and nlceq. 
+output = struct();
+% N.B.: DO NOT record anything in PROBINFO or OPTIONS. If the solver is 
+% called by pdfo, then postpdfo will do nothing; the real postprocessing 
+% will be done when pdfo calls postpdfo using the OUTPUT returned by solver
+% together with the PROBINFO and OPTIONS in pdfo; that said, in such a senario, 
+% the PROBINFO and OPTIONS of this solver will NOT be passed to the real 
+% postprocessing.
+
 warning('off', 'backtrace'); % Do not display the stack trace of a warning
 output.warnings = {}; % A cell that records all the warnings
-% Why do we record the warning message in output.warnings
-% instead of probinfo.warnings? Because, if newuoa is called by
-% pdfo, then probinfo will not be passed to postpdfo, and hence
-% the warning message will be lost. To the contrary, output will
-% be passed to postpdfo anyway. 
 
 maxarg = 3; % Maximal number of inputs
 nvararg = length(varargin); % Number of inputs
@@ -172,6 +183,8 @@ else
 end
 
 % Preprocess the input 
+% Even if invoker='pdfo', we still need to call prepdfo, which will assign 
+% values to fun, x0, ..., options.
 try % prepdfo is a private function that may generate public errors; error-handeling needed
     [fun, x0, ~, ~, ~, ~, ~, ~, ~, options, probinfo] = prepdfo(args{:}); 
 catch exception
@@ -245,10 +258,18 @@ try
     else
         [x, fx, exitflag, nf, fhist] = fuobyqa(fun, x0, rhobeg, rhoend, maxfun, ftarget);
     end
+    % Record the results of the solver in OUTPUT
+    output.x = x;
+    output.fx = fx;
+    output.exitflag = exitflag;
+    output.funcCount = nf;
+    output.fhist = fhist;
+    output.constrviolation = 0; % Unconstrained problem
+    output.chist = [];
 
 % Postprocess the result 
 % postpdfo are private functions that may generate public errors; error-handeling needed
-    [x, fx, exitflag, output] = postpdfo(x, fx, exitflag, output, nf, fhist, 0, [], options, probinfo);
+    [x, fx, exitflag, output] = postpdfo(probinfo, options, output);
 catch exception
     if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly 
         error(exception.identifier, '%s\n(error generated in %s, line %d)', exception.message, exception.stack(1).file, exception.stack(1).line);
