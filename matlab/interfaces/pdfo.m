@@ -282,6 +282,9 @@ funname = callstack(1).name; % Name of the current function
 % for nonlinearly constrained internal solvers, it should also contain nlcineq and nlceq. 
 output = struct();
 
+output.warnings = {}; % A cell that records all the warnings
+% This version of pdfo.m produces no warning. However, initializing output.warnings 
+% is still necessary, as output.warnings is required by postpdfo.
 warning ('off', 'backtrace'); % Do not display the stack trace of a warning
 
 maxarg = 10; % Maximal number of inputs
