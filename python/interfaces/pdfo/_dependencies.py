@@ -876,20 +876,25 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
             ub_linear = np.r_[ub_linear, ub_local]
 
         # Remove the abnormal constraints and check infeasibility.
-        if lb_linear.size == 0 and ub_linear.size == 0:
+        free_indices = np.logical_not(fixed_indices)
+        a_reduced = a_linear[:, free_indices]
+        a_fixed = np.dot(a_linear[:, fixed_indices], fixed_values)
+        lb_reduced = lb_linear - a_fixed
+        ub_reduced = ub_linear - a_fixed
+        if a_reduced.size == 0:
             infeasible_linear = np.asarray([], dtype=bool)
             trivial = np.asarray([], dtype=bool)
         else:
-            row_norm_inf = np.max(np.abs(a_linear), 1)
+            row_norm_inf = np.max(np.abs(a_reduced), 1)
             zero = (row_norm_inf == 0)
-            infeasible_zero = np.logical_or(np.logical_and(zero, lb_linear > 0), np.logical_and(zero, ub_linear < 0))
-            trivial_zero = np.logical_or(np.logical_and(zero, lb_linear <= 0), np.logical_and(zero, ub_linear >= 0))
+            infeasible_zero = np.logical_or(np.logical_and(zero, lb_reduced > 0), np.logical_and(zero, ub_reduced < 0))
+            trivial_zero = np.logical_or(np.logical_and(zero, lb_reduced <= 0), np.logical_and(zero, ub_reduced >= 0))
             row_norm_inf[zero] = 1.0
-            lb_linear_norm = lb_linear / row_norm_inf
-            ub_linear_norm = ub_linear / row_norm_inf
+            lb_linear_norm = lb_reduced / row_norm_inf
+            ub_linear_norm = ub_reduced / row_norm_inf
             lb_ub_or = np.logical_or(np.logical_and(np.isinf(lb_linear_norm), lb_linear_norm > 0),
                                      np.logical_and(np.isinf(ub_linear_norm), ub_linear_norm < 0))
-            infeasible_linear = np.logical_or(infeasible_zero, np.logical_or(lb_ub_or, lb_linear > ub_linear))
+            infeasible_linear = np.logical_or(infeasible_zero, np.logical_or(lb_ub_or, lb_reduced > ub_reduced))
             lb_ub_and = np.logical_and(np.logical_and(np.isinf(lb_linear_norm), lb_linear_norm < 0),
                                        np.logical_and(np.isinf(ub_linear_norm), ub_linear_norm > 0))
             trivial = np.logical_or(trivial_zero, lb_ub_and)
@@ -899,13 +904,11 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
         if infeasible:
             fixed_values = x0[fixed_indices]
             prob_info['fixedx_value'] = fixed_values
+            a_fixed = np.dot(a_linear[:, fixed_indices], fixed_values)
+            lb_reduced = lb_linear - a_fixed
+            ub_reduced = ub_linear - a_fixed
 
         # Reduce the linear constraints according to the fixed variables
-        free_indices = np.logical_not(fixed_indices)
-        a_reduced = a_linear[:, free_indices]
-        a_fixed = np.dot(a_linear[:, fixed_indices], fixed_values)
-        lb_reduced = lb_linear - a_fixed
-        ub_reduced = ub_linear - a_fixed
         if lb_linear.size != 0 or ub_linear.size != 0:
             a_reduced = a_reduced[np.logical_not(trivial), :]
             lb_reduced = lb_reduced[np.logical_not(trivial)]
@@ -1400,7 +1403,8 @@ def _constr_violation(invoker, x, lb, ub, constraints):
         a, b = _linear_constraints_constr(constraints['linear'])
 
         # Compute the constraint violation as the largest absolute distance to the bounds and the linear constraints.
-        constr_violation = np.max((constr_violation, np.nanmax(np.dot(a, x) - b)))
+        if b.size > 0:
+            constr_violation = np.max((constr_violation, np.nanmax(np.dot(a, x) - b)))
 
     if constraints['nonlinear'] is not None:
         nonlinear = constraints['nonlinear']
