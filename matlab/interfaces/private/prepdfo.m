@@ -117,11 +117,17 @@ lenx0 = length(x0); % Within this file, for clarity, we denote length(x0) by len
 
 % Validate and preprocess the bound constraints
 % In addition, get the indices of infeasible bounds and 'fixed variables' 
-% such that ub-lb < 2eps (if any) and save the information in probinfo  
+% such that ub-lb < 2eps (if any) and save the information in probinfo.  
+% If there is any infeasible bound, the problem is infeasible, and we define 
+% that there is no fixed variable.
 [lb, ub, infeasible_bound, fixedx, fixedx_value, warnings] = pre_bcon(invoker, lb, ub, lenx0, warnings);
 probinfo.infeasible_bound = infeasible_bound; % A vector of true/false
 probinfo.fixedx = fixedx; % A vector of true/false
-probinfo.fixedx_value = fixedx_value; % Value of the fixed x entries
+fixedx_value_save = fixedx_value; % Values of fixed variables
+% Since fixedx_value may be revised in pre_lcon, we will record it in
+% probinfo only after that. We save its current value in
+% fixedx_value_save, which will be used when calculating the constriant
+% violation at x0.
 
 % Problem type before reduction
 % This has to be done after preprocessing the bound constraints (because 
@@ -139,7 +145,8 @@ probinfo.raw_type = problem_type(Aineq, Aeq, lb, ub, nonlcon);
 % 2. The 'trivial constraints' will be excluded (if any). 
 % 3. In addition, get the indices of infeasible and trivial constraints (if any)  
 %    and save the information in probinfo.
-[Aineq, bineq, Aeq, beq, infeasible_lineq, trivial_lineq, infeasible_leq, trivial_leq, warnings] = pre_lcon(invoker, Aineq, bineq, Aeq, beq, lenx0, fixedx, fixedx_value, warnings);
+[Aineq, bineq, Aeq, beq, infeasible_lineq, trivial_lineq, infeasible_leq, trivial_leq, fixedx_value, warnings] = pre_lcon(invoker, x0, Aineq, bineq, Aeq, beq, lenx0, fixedx, fixedx_value, warnings);
+probinfo.fixedx_value = fixedx_value; % Value of the fixed x entries; it is revised to the corresponding values of x0 in pre_lcon if infeasibility is detected
 probinfo.infeasible_lineq = infeasible_lineq; % A vector of true/false
 probinfo.trivial_lineq = trivial_lineq; % A vector of true/false
 probinfo.infeasible_leq = infeasible_leq; % A vector of true/false
@@ -174,6 +181,12 @@ if ~any([probinfo.infeasible_lineq; probinfo.infeasible_leq; probinfo.infeasible
     probinfo.infeasible = false;
 else % The problem turns out infeasible 
     [probinfo.constrv_x0, probinfo.nlcineq_x0, probinfo.nlceq_x0] = constrv(x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
+    % The constraint violation calculated by constrv does not include
+    % the violation of x0 for the bounds corresponding to fixedx; the
+    % corresponding values of x0 are in fixedx_value, while the values
+    % of the bounds (lb and ub are the same up to eps) are in
+    % fixedx_value_save. Thus the violation is abs(fixedx_value-fixedx_value_save).
+    probinfo.constrv_x0 = max([probinfo.constrv_x0; abs(fixedx_value - fixedx_value_save)]);
     probinfo.infeasible = true;
 end
 if any(~fixedx)
@@ -506,12 +519,17 @@ if any(isnan(ub))
 end
 
 infeasible_bound = (lb > ub) | (lb == inf) | (ub == -inf); % A vector of true/false
-fixedx = (abs(lb - ub) < 2*eps);
-fixedx_value = (lb(fixedx)+ub(fixedx))/2;
+if any(infeasible_bound)
+    fixedx = false(lenx0, 1);
+    fixedx_value = [];
+else
+    fixedx = (abs(lb - ub) < 2*eps);
+    fixedx_value = (lb(fixedx)+ub(fixedx))/2;
+end
 return
 
 %%%%%%%%%%%%%%%%% Function for linear constraint preprocessing %%%%%%%%%%  
-function [Aineq, bineq, Aeq, beq, infeasible_lineq, trivial_lineq, infeasible_leq, trivial_leq, warnings] = pre_lcon(invoker, Aineq, bineq, Aeq, beq, lenx0, fixedx, fixedx_value, warnings)
+function [Aineq, bineq, Aeq, beq, infeasible_lineq, trivial_lineq, infeasible_leq, trivial_leq, fixedx_value, warnings] = pre_lcon(invoker, x0, Aineq, bineq, Aeq, beq, lenx0, fixedx, fixedx_value, warnings)
 
 freex = ~fixedx; % A vector of true/false indicating whether the variable is free or not
 
@@ -530,24 +548,24 @@ if any(isnan(bineq))
     warning(wid, '%s', wmessage);
     warnings = [warnings, wmessage]; 
 end
+lineq_reduced = false; % Whether linear inequality constraints are reduced
 if ~isempty(Aineq) && any(fixedx) && any(~fixedx) 
     % Reduce the linear inequality constraints if some but not all variables 
     % are fixed by the bound constraints. This has to be done before
     % detecting the "zero constraints" (i.e., constraints with zero
     % gradients), because nonzero constraints may become zero after reduction. 
-    bineq = bineq - Aineq(:, fixedx) * fixedx_value;
+    Aineq_fixed = Aineq(:, fixedx); % Aineq_fixed and bineq_save will be used when revising fixedx_value
+    bineq_save = bineq; 
+    bineq = bineq - Aineq_fixed * fixedx_value;
     Aineq = Aineq(:, freex);
+    lineq_reduced = true;
     % Note that we should NOT reduced the problem if all variables are
     % fixed. Otherwise, Aineq would be [], and then bineq will be set to
-    % [] in the lines below. In this way, we lose completely the
-    % information in linear constraints. Consequently, we cannot
-    % evaluate the constraint violation correctly when needed. 
+    % [] in the end. In this way, we lose completely the information in 
+    % linear constraints. Consequently, we cannot evaluate the constraint 
+    % violation correctly when needed. 
 end
 if isempty(Aineq) 
-    % We uniformly use [] to represent empty objects; its size is 0x0
-    % Changing this may cause matrix dimension inconsistency 
-    Aineq = [];
-    bineq = [];
     infeasible_lineq = [];
     trivial_lineq = [];
 else
@@ -583,24 +601,24 @@ if any(nan_eq)
     warning(wid, '%s', wmessage);
     warnings = [warnings, wmessage]; 
 end
+leq_reduced = false; % Whether linear equality constraints are reduced
 if ~isempty(Aeq) && any(fixedx) && any(~fixedx)
     % Reduce the linear equality constraints if some but not all variables 
     % are fixed by the bound constraints. This has to be done before
     % detecting the "zero constraints" (i.e., constraints with zero
     % gradients), because nonzero constraints may become zero after reduction. 
-    beq = beq - Aeq(:, fixedx) * fixedx_value;
+    Aeq_fixed = Aeq(:, fixedx); % Aeq_fixed and beq_save may be used when revising fixedx_value
+    beq_save = beq; 
+    beq = beq - Aeq_fixed * fixedx_value;
     Aeq = Aeq(:, freex);
+    leq_reduced = true;
     % Note that we should NOT reduced the problem if all variables are
     % fixed. Otherwise, Aeq would be [], and then beq will be set to
-    % [] in the lines below. In this way, we lose completely the
-    % information in linear constraints. Consequently, we cannot
-    % evaluate the constraint violation correctly when needed. 
+    % [] in the end. In this way, we lose completely the information in 
+    % linear constraints. Consequently, we cannot evaluate the constraint 
+    % violation correctly when needed. 
 end
 if isempty(Aeq)
-    % We uniformly use [] to represent empty objects; its size is 0x0
-    % Changing this may cause matrix dimension inconsistency 
-    Aeq = [];
-    beq = [];
     infeasible_leq = [];
     trivial_leq = [];
 else
@@ -615,6 +633,32 @@ else
     trivial_leq = trivial_zero_eq | nan_eq;
     Aeq = Aeq(~trivial_leq, :); % Remove trivial linear equalities 
     beq = beq(~trivial_leq);
+end
+
+% In case of infeasibility, revise fixedx_value so that x0 will be returned
+if (any(infeasible_lineq) || any(infeasible_leq)) && any(fixedx) && any(~fixedx)
+    fixedx_value = x0(fixedx);
+    % We have to revise bineq and beq so that the constraint violation can
+    % be correctly calculated.
+    if lineq_reduced
+        bineq = bineq_save - Aineq_fixed * fixedx_value;
+        bineq = bineq(~trivial_lineq);
+    end
+    if leq_reduced
+        beq = beq_save - Aeq_fixed * fixedx_value;
+        beq = beq(~trivial_leq);
+    end
+end
+
+% We uniformly use [] to represent empty objects; its size is 0x0
+% Changing this may cause matrix dimension inconsistency 
+if isempty(Aeq)
+    Aeq = [];
+    beq = [];
+end
+if isempty(Aineq)
+    Aineq = [];
+    bineq = [];
 end
 return
 
