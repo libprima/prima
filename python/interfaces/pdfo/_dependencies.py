@@ -423,16 +423,36 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
         raise SystemError('`{}` should only be called by {}'.format(fun_name, ', '.join(invoker_list)))
     invoker = stack()[1][3].lower()
 
-    # Saving of the raw data in prob_info before preprocessing.
+    if len(stack()) >= 4 and stack()[2][3].lower() == 'pdfo':
+        # The invoker is a solver called by pdfo, then prepdfo should have been called in pdfo. In this case, we set
+        # prob_info to an empty dictionary.
+        prob_info = dict()
+        return fun, x0, bounds, constraints, options, method, prob_info
+
+    # Save problem information in probinfo.
+    # At return, probinfo has the following fields:
+    # 1. raw_data: problem data before preprocessing/validating, including fun, x0, constraints, lb, ub, options
+    # 2. refined_data: problem data after preprocessing/validating, including fun, x0, constraints, lb, ub, options
+    # 3. fixedx: a bool vector indicating which variables are fixed by bound constraints
+    # 4. fixedx_value: the values of the variables fixed by bound constraints 
+    # 5. nofreex: whether all variables are fixed by bound constraints
+    # 6. infeasible_bound: a bool vector indicating which bound constraints are infeasible
+    # 7. infeasible_linear: a bool vector indicating which linear constraints are infeasible (up to naive tests)
+    # 8. infeasible_nonlinear: a bool vector indicating which nonlinear constraints are infeasible (up to naive tests)
+    # 9. trivial_linear
+    # 10. infeasible: whether the problem is infeasible (up to naive tests)
+    # 11. scaled: whether the problem is scaled
+    # 12. scaling_factor: vector of scaling factors
+    # 13. shift: vector of shifts
+    # 14. reduced: whether the problem is reduced (due to fixed variables)
+    # 15. raw_type: problem type before reduction
+    # 16. raw_dim: problem dimension before reduction
+    # 17. refined_type: problem type after reduction
+    # 18. refined_dim: problem dimension after reduction
+    # 19. warnings: warnings during the preprocessing/validation
     prob_info = dict()
     prob_info['raw_data'] = \
         {'objective': fun, 'x0': x0, 'args': args, 'bounds': bounds, 'constraints': constraints, 'options': options}
-
-    if len(stack()) >= 4 and stack()[2][3].lower() == 'pdfo':
-        # The invoker is a solver called by pdfo, then prepdfo should have been called in pdfo.
-        prob_info['infeasible'] = False
-        prob_info['nofreex'] = False
-        return fun, x0, bounds, constraints, options, method, prob_info
 
     # If fun is set to None, it consists in a feasibility problem; the considered objective function is a constant.
     if fun is None:
@@ -503,47 +523,59 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
         raise ValueError('{}: the method name should be a string.'.format(invoker))
 
     # Validate the bounds and define its feasibility.
-    lb, ub, infeasible, fixed_indices, fixed_values = _bounds_validation(invoker, bounds, lenx0)
+    lb, ub, infeasible_bound, fixed_indices, fixed_values = _bounds_validation(invoker, bounds, lenx0)
     prob_info['raw_data']['bounds'] = (lb, ub)
-    prob_info['infeasible_bound'] = infeasible
+    prob_info['infeasible_bound'] = infeasible_bound
     prob_info['fixedx'] = fixed_indices
     prob_info['fixedx_value'] = fixed_values
 
     # Validate the linear and nonlinear constraint, and define its feasibility.
-    constraints_c, infeasible_linear, infeasible_nonlinear, trivial = \
-        _constraints_validation(invoker, constraints, lenx0)
-    prob_info['raw_data']['constraints'] = constraints_c
+    # 1. The constraints will be reduced if some but not all variables are fixed by the bound constraints. See
+    #    _bounds_validation for why we do not reduce the problem when all variables are fixed.
+    # 2. The 'trivial constraints' will be excluded (if any). 
+    # 3. In addition, get the indices of infeasible and trivial constraints (if any) and save the information in
+    # prob_info.
+    constraints_c, raw_constraints_c, infeasible_linear, infeasible_nonlinear, trivial, infeasible, prob_info = \
+        _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_values, x0_c, prob_info)
+    prob_info['raw_data']['constraints'] = raw_constraints_c
     prob_info['infeasible_linear'] = infeasible_linear
     prob_info['infeasible_nonlinear'] = infeasible_nonlinear
+    prob_info['infeasible'] = infeasible
     prob_info['trivial_linear'] = trivial
+    fixed_values = prob_info['fixedx_value']  # it may be changed if the problem is infeasible
+    
+    # Problem type before reduction
+    prob_info['raw_type'] = _problem_type(lb, ub, constraints_c)
+    prob_info['raw_dim'] = lenx0
+    prob_info['reduced'] = False
+
+    # Reduce fun, x0, lb, and ub if some but not all variables are fixed by the bound constraints.
+    free_indices = np.logical_not(fixed_indices)
+
+    if any(fixed_indices) and any(free_indices):
+        x0_c = x0_c[free_indices]
+        lb = lb[free_indices]
+        ub = ub[free_indices]
+        lenx0 = x0_c.size
+        prob_info['reduced'] = True
+
+        def fun_c_reduced(freex_value):
+            return fun_c(_fullx(freex_value, fixed_values, free_indices, fixed_indices))
+    else:
+        fun_c_reduced = fun_c  # the variable vector is not reduced
+
+    # Problem after reduction.
+    prob_info['refined_type'] = _problem_type(lb, ub, constraints_c)
+    prob_info['refined_dim'] = lenx0
 
     # After pre-processing the linear/bound constraints, the problem may turn out infeasible, or x may turn out fixed by
     # the bounds.
-    prob_info['infeasible'] = \
-        any(np.r_[prob_info['infeasible_bound'], prob_info['infeasible_linear'], prob_info['infeasible_nonlinear']])
     prob_info['nofreex'] = all(prob_info['fixedx'])
     if prob_info['infeasible']:
         prob_info['constrv_x0'], prob_info['nlc_x0'] = _constr_violation(invoker, x0_c, lb, ub, constraints_c)
     elif prob_info['nofreex']:
         prob_info['constrv_fixedx'], prob_info['nlc_fixedx'] = \
             _constr_violation(invoker, prob_info['fixedx_value'], lb, ub, constraints_c)
-
-    # Reduce the problem if some variables are fixed by the bound constraints.
-    prob_info['raw_dim'] = lenx0
-    prob_info['raw_type'] = _problem_type(lb, ub, constraints_c)
-    prob_info['reduced'] = False
-
-    # If the problem is not trivial or infeasible but contains any fixed variable, it should be reduced.
-    if any(fixed_indices) and not (prob_info['nofreex'] or prob_info['infeasible']):
-        fun_c, x0_c, lb, ub, constraints_c = _reduce_problem(fun_c, x0_c, lb, ub, constraints_c, fixed_indices)
-        lenx0 = x0_c.size
-        prob_info['reduced'] = True
-
-    # Problem dimension after reduction.
-    prob_info['refined_dim'] = lenx0
-
-    # Problem type after reduction.
-    prob_info['refined_type'] = _problem_type(lb, ub, constraints_c)
 
     # Can the invoker handle the given problem? This should be done after the problem type has been 'refined' (for
     # example, newuoa can handle a bound-constrained problem if every defined bound is fixed).
@@ -561,7 +593,7 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
     # because BOBYQA requires rhobeg <= min(ub-lb)/2.
     options_c, method = _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings)
 
-    # rRvise x0 for bound and linearly constrained problems. This is necessary for LINCOA, which accepts only a feasible
+    # Revise x0 for bound and linearly constrained problems. This is necessary for LINCOA, which accepts only a feasible
     # x0. Should we do this even if there are nonlinear constraints? For now, we do not, because doing so may
     # dramatically increase the infeasibility of x0 with respect to the nonlinear constraints.
     if prob_info['refined_type'] in ['bound-constrained', 'linearly-constrained'] and not prob_info['nofreex'] and \
@@ -579,9 +611,11 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
     # Scale the problem if necessary and if intended, x_before_scaling = scaling_factor.*x_after_scaling + shift.
     # This should be done after revising x0, which can affect the shift.
     prob_info['scaled'] = False
+    prob_info['scaling_factor'] = np.ones(lenx0)
+    prob_info['shift'] = np.array([0], dtype=np.float64)
     if options_c['scale'] and not prob_info['nofreex'] and not prob_info['infeasible']:
-        fun_c, x0_c, lb, ub, constraints_c, scaling_factor, shift, substantially_scaled = \
-            _scale_problem(fun_c, x0_c, lb, ub, constraints_c, list_warnings)
+        fun_c_reduced, x0_c, lb, ub, constraints_c, scaling_factor, shift, substantially_scaled = \
+            _scale_problem(fun_c_reduced, x0_c, lb, ub, constraints_c, list_warnings)
 
         # Scale and shift the problem so that:
         #   1. for the variables that have both lower bound and upper bound, the bounds become [-1, 1].
@@ -598,8 +632,7 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
     if invoker.lower() == 'pdfo':
         if prob_info['refined_type'] == 'bound-constrained':
             # lb and ub will be used for defining rhobeg if bobyqa is selected.
-            prob_info['lb'] = lb
-            prob_info['ub'] = ub
+            prob_info['refined_data'] = {'lb': lb, 'ub': ub}
 
         method = _solver_selection(invoker, method, options_c, prob_info, list_warnings)
 
@@ -608,19 +641,18 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
 
     # The refined data can be useful when debugging. It will be used in postpdfo even if the debug mode is not enabled.
     prob_info['refined_data'] = \
-        {'objective': fun_c, 'x0': x0_c, 'lb': lb, 'ub': ub, 'constraints': constraints_c, 'options': options_c}
+        {'objective': fun_c_reduced, 'x0': x0_c, 'lb': lb, 'ub': ub, 'constraints': constraints_c, 'options': options_c}
 
     if not options_c['debug']:
         # Do not carry the raw data with us unless in debug mode.
         del prob_info['raw_data']
 
-    if prob_info['refined_type'] == 'bound-constrained' and invoker.lower() == 'pdfo':
-        # If the invoker is pdfo, lb and ub may be used for defining rhobeg in case bobyqa is later selected as the
-        # solver.
-        prob_info['lb'] = lb
-        prob_info['ub'] = ub
+    if not options_c['debug'] and not prob_info['scaled']:
+        # The refined data is used only when the problem is scaled. It can also be useful when debugging.
+        prob_info['refined_data'] = dict()
+        # Set this field to empty instead of remove it, because postpdfo require that this field exists.
 
-    return fun_c, x0_c, {'lb': lb, 'ub': ub}, constraints_c, options_c, method, prob_info
+    return fun_c_reduced, x0_c, {'lb': lb, 'ub': ub}, constraints_c, options_c, method, prob_info
 
 
 def _bounds_validation(invoker, bounds, lenx0):
@@ -714,7 +746,7 @@ def _bounds_validation(invoker, bounds, lenx0):
     return lb, ub, infeasible, fixed_indices, fixed_values
 
 
-def _constraints_validation(invoker, constraints, lenx0):
+def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_values, x0, prob_info):
     """Validation and pre-processing of the constraints.
 
     Parameters
@@ -725,6 +757,14 @@ def _constraints_validation(invoker, constraints, lenx0):
         The same as in prepdfo.
     lenx0: integer
         The size of the problem.
+    fixed_indices: ndarray, shape (n,)
+        The boolean vector indicating whether the variable is fixed or not.
+    fixed_values: ndarray, shape (n,)
+        The values of the fixed variables.
+    x0: ndarray, shape (n,)
+        The same as in prepdfo.
+    prob_info: dict
+        The problem information.
 
     Returns
     -------
@@ -786,6 +826,26 @@ def _constraints_validation(invoker, constraints, lenx0):
                     "{}: the constraints should be instances of the `LinearConstraint` or `NonlinearConstraint` "
                     "classes, or a dictionary with field 'type' and 'fun'.".format(invoker))
 
+        # If no bounds are provided with some nonlinear constraints, they should not be considered. Moreover, the bounds
+        # in the nonlinear constraints should be feasible.
+        reduced_list_nonlinear = []
+        infeasible_nonlinear = np.asarray([], dtype=bool)
+        for nonlinear_constraint in list_nonlinear:
+            if isinstance(nonlinear_constraint, nonlinear_constraint_types):
+                lb_nonlinear, ub_nonlinear = nonlinear_constraint.lb, nonlinear_constraint.ub
+                if lb_nonlinear.size > 0 or ub_nonlinear.size > 0:
+                    reduced_list_nonlinear.append(nonlinear_constraint)
+                    infeasible_lb = np.logical_and(lb_nonlinear > 0, np.isinf(lb_nonlinear))
+                    infeasible_ub = np.logical_and(ub_nonlinear < 0, np.isinf(ub_nonlinear))
+                    infeasible_nonlinear = \
+                        np.r_[infeasible_nonlinear,
+                              np.logical_or(infeasible_lb, np.logical_or(infeasible_ub, lb_nonlinear > ub_nonlinear))]
+            else:
+                # The nonlinear constraint is defined as a dictionary, for which infeasibility cannot be checked
+                reduced_list_nonlinear.append(nonlinear_constraint)
+
+        list_nonlinear = reduced_list_nonlinear
+
         # Build the linear constraints.
         a_linear = np.asarray([[]], dtype=np.float64, order='F').reshape(0, lenx0)
         lb_linear = np.asarray([], dtype=np.float64)
@@ -833,9 +893,23 @@ def _constraints_validation(invoker, constraints, lenx0):
             lb_ub_and = np.logical_and(np.logical_and(np.isinf(lb_linear_norm), lb_linear_norm < 0),
                                        np.logical_and(np.isinf(ub_linear_norm), ub_linear_norm > 0))
             trivial = np.logical_or(trivial_zero, lb_ub_and)
-            a_linear = a_linear[np.logical_not(trivial), :]
-            lb_linear = lb_linear[np.logical_not(trivial)]
-            ub_linear = ub_linear[np.logical_not(trivial)]
+
+        # Check the infeasibility of the problem
+        infeasible = any(np.r_[prob_info['infeasible_bound'], infeasible_linear, infeasible_nonlinear])
+        if infeasible:
+            fixed_values = x0[fixed_indices]
+            prob_info['fixedx_value'] = fixed_values
+
+        # Reduce the linear constraints according to the fixed variables
+        free_indices = np.logical_not(fixed_indices)
+        a_reduced = a_linear[:, free_indices]
+        a_fixed = np.dot(a_linear[:, fixed_indices], fixed_values)
+        lb_reduced = lb_linear - a_fixed
+        ub_reduced = ub_linear - a_fixed
+        if lb_linear.size != 0 or ub_linear.size != 0:
+            a_reduced = a_reduced[np.logical_not(trivial), :]
+            lb_reduced = lb_reduced[np.logical_not(trivial)]
+            ub_reduced = ub_reduced[np.logical_not(trivial)]
 
         # Build the nonlinear constraints.
         try:
@@ -845,33 +919,20 @@ def _constraints_validation(invoker, constraints, lenx0):
             import_error_so('gethuge')
         hugecon = gethuge('con')
 
-        # If no bounds are provided with some nonlinear constraints, they should not be considered. Moreover, the bounds
-        # in the nonlinear constraints should be feasible.
-        reduced_list_nonlinear = []
-        infeasible_nonlinear = np.asarray([], dtype=bool)
-        for nonlinear_constraint in list_nonlinear:
-            lb_nonlinear, ub_nonlinear = nonlinear_constraint.lb, nonlinear_constraint.ub
-            if isinstance(nonlinear_constraint, nonlinear_constraint_types) and \
-                    (lb_nonlinear.size > 0 or ub_nonlinear.size > 0):
-                reduced_list_nonlinear.append(nonlinear_constraint)
-                infeasible_lb = np.logical_and(lb_nonlinear > 0, np.isinf(lb_nonlinear))
-                infeasible_ub = np.logical_and(ub_nonlinear < 0, np.isinf(ub_nonlinear))
-                infeasible_nonlinear = \
-                    np.r_[infeasible_nonlinear,
-                          np.logical_or(infeasible_lb, np.logical_or(infeasible_ub, lb_nonlinear > ub_nonlinear))]
-
-        list_nonlinear = reduced_list_nonlinear
-
         # Define the global constraint function.
-        def fun_nonlinear(x):
+        def fun_nonlinear(x, raw=False):
             fun_x = np.asarray([], dtype=np.float64)
 
             for nonlinear_constraint in list_nonlinear:
                 # Get the value of the constraint function.
-                if isinstance(nonlinear_constraint, nonlinear_constraint_types):
-                    constraint_x = nonlinear_constraint.fun(x)
+                if not raw and any(fixed_indices) and any(free_indices):
+                    x_full = _fullx(x, fixed_values, free_indices, fixed_indices)
                 else:
-                    constraint_x = nonlinear_constraint['fun'](x)
+                    x_full = x
+                if isinstance(nonlinear_constraint, nonlinear_constraint_types):
+                    constraint_x = nonlinear_constraint.fun(x_full)
+                else:
+                    constraint_x = nonlinear_constraint['fun'](x_full)
 
                 if constraint_x is None:
                     # If the constraint function returned anything, we convert the default None value to NaN, that can
@@ -922,17 +983,24 @@ def _constraints_validation(invoker, constraints, lenx0):
             return fun_x
 
         # Define the global linear and nonlinear constraints.
-        linear_constraints = None if len(list_linear) == 0 else LinearConstraint(a_linear, lb=lb_linear, ub=ub_linear)
+        linear_constraints = None if len(list_linear) == 0 else LinearConstraint(a_reduced, lb_reduced, ub_reduced)
         nonlinear_constraints = None if len(list_nonlinear) == 0 else {'type': 'ineq', 'fun': fun_nonlinear}
+        raw_linear_constraints = None if len(list_linear) == 0 else LinearConstraint(a_linear, lb_linear, ub_linear)
+        raw_nonlinear_constraints = None if len(list_nonlinear) == 0 else {'type': 'ineq',
+                                                                           'fun': lambda x: fun_nonlinear(x, raw=True)}
     else:
         # No constraints have been provided.
         linear_constraints = None
         nonlinear_constraints = None
+        raw_linear_constraints = None
+        raw_nonlinear_constraints = None
         infeasible_linear = np.asarray([], dtype=bool)
         infeasible_nonlinear = np.asarray([], dtype=bool)
         trivial = np.asarray([], dtype=bool)
 
-    return {'linear': linear_constraints, 'nonlinear': nonlinear_constraints}, infeasible_linear, infeasible_nonlinear, trivial
+    return {'linear': linear_constraints, 'nonlinear': nonlinear_constraints}, \
+           {'linear': raw_linear_constraints, 'nonlinear': raw_nonlinear_constraints}, infeasible_linear, \
+           infeasible_nonlinear, trivial, infeasible, prob_info
 
 
 def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
@@ -1412,96 +1480,6 @@ def _problem_type(lb, ub, constraints):
         return 'unconstrained'
 
 
-def _reduce_problem(fun, x0, lb, ub, constraints, fixedx):
-    """Reduction of the problem.
-
-    Parameters
-    ----------
-    fun: callable
-        The same as in prepdfo.
-    x0: ndarray, shape (n,)
-        The same as in prepdfo.
-    lb: ndarray, shape (n,)
-        The same as in prepdfo.
-    ub: ndarray, shape (n,)
-        The same as in prepdfo.
-    constraints: dict
-        The general constraints of the problem, defined as a dictionary with fields:
-            linear: LinearConstraint
-                The linear constraints of the problem.
-            nonlinear: NonlinearConstraint
-                The nonlinear constraints of the problem.
-    fixedx: ndarray, shape (n,)
-        A boolean array relating the fixed variables.
-
-    Returns
-    -------
-    The preprocessed `fun`, `x0`, `lb`, `ub`, `constraints`.
-
-    Authors
-    -------
-    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
-    and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
-    Department of Applied Mathematics,
-    The Hong Kong Polytechnic University.
-
-    Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
-    """
-    # possible solvers
-    fun_name = stack()[0][3]  # name of the current function
-    local_invoker_list = ['prepdfo']
-    if len(stack()) < 3 or stack()[1][3].lower() not in local_invoker_list:
-        raise SystemError('`{}` should only be called by {}'.format(fun_name, ', '.join(local_invoker_list)))
-    invoker = stack()[1][3].lower()
-
-    if not (hasattr(x0, '__len__') and hasattr(lb, '__len__') and
-            hasattr(ub, '__len__') and hasattr(fixedx, '__len__')):
-        raise TypeError('{}: UNEXPECTED ERROR: the variable vector and the bounds should be vectors.'.format(invoker))
-
-    if not isinstance(constraints, dict) or not ({'linear', 'nonlinear'} <= set(constraints.keys())):
-        raise ValueError('{}: UNEXPECTED ERROR: the constraint should be defined as internal type.'.format(invoker))
-
-    x0 = np.asarray(x0, dtype=np.float64)
-    lb = np.asarray(lb, dtype=np.float64)
-    ub = np.asarray(ub, dtype=np.float64)
-    fixedx = np.asarray(fixedx, dtype=bool)
-    if x0.size != lb.size or x0.size != ub.size or x0.size != fixedx.size:
-        raise ValueError('{}: UNEXPECTED ERROR: the variable vector and the bounds are inconsistent'.format(invoker))
-
-    # Since this function is private and internal, the format of each parameter has already been verified.
-    freex = np.logical_not(fixedx)
-    fixedx_value = (lb[fixedx] + ub[fixedx]) / 2
-
-    # Define the objective function that takes as input only the reduce variable.
-    def fun_c(freex_value):
-        return fun(_fullx(freex_value, fixedx_value, freex, fixedx))
-
-    # Build the reduced initial guess and bounds.
-    x0_c = x0[freex]
-    lb_c = lb[freex]
-    ub_c = ub[freex]
-
-    constraints_c = {'linear': None, 'nonlinear': None}
-
-    # Build the reduced linear constraints.
-    if constraints['linear'] is not None:
-        a = constraints['linear'].A[:, freex]
-        a_fixedx = np.dot(constraints['linear'].A[:, fixedx], fixedx_value)
-        lb_lin = constraints['linear'].lb - a_fixedx
-        ub_lin = constraints['linear'].ub - a_fixedx
-
-        constraints_c['linear'] = LinearConstraint(a, lb=lb_lin, ub=ub_lin)
-
-    # Build the reduced nonlinear constraints.
-    if constraints['nonlinear'] is not None:
-        def fun_constraints(freex_value):
-            return constraints['nonlinear']['fun'](_fullx(freex_value, fixedx_value, freex, fixedx))
-
-        constraints_c['nonlinear'] = {'type': 'ineq', 'fun': fun_constraints}
-
-    return fun_c, x0_c, lb_c, ub_c, constraints_c
-
-
 def _linear_constraints_constr(linear_constraint):
     """Construction of the matrices A and b such that A.x <= b.
 
@@ -1582,16 +1560,18 @@ def _fullx(freex_value, fixedx_value, freex, fixedx):
 
     Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
     """
+    fun_name = stack()[0][3]  # name of the current function
+
     if not (hasattr(freex_value, '__len__') and hasattr(fixedx_value, '__len__') and
             hasattr(freex, '__len__') and hasattr(fixedx, '__len__')):
-        raise ValueError('{}: UNEXPECTED ERROR: the variable arrays have wrong types.'.format(invoker))
+        raise ValueError('{}: UNEXPECTED ERROR: the variable arrays have wrong types.'.format(fun_name))
 
     freex_value = np.asarray(freex_value, dtype=np.float64)
     fixedx_value = np.asarray(fixedx_value, dtype=np.float64)
     freex = np.asarray(freex, dtype=bool)
     fixedx = np.asarray(fixedx, dtype=bool)
     if freex.size != fixedx.size or freex_value.size + fixedx_value.size != freex.size:
-        raise ValueError('{}: UNEXPECTED ERROR: the variable vector lengths are inconsistent'.format(invoker))
+        raise ValueError('{}: UNEXPECTED ERROR: the variable vector lengths are inconsistent'.format(fun_name))
 
     # Build the complete vector from the fixed and free values.
     x = np.empty(freex_value.size + fixedx_value.size, dtype=np.float64)
@@ -1773,7 +1753,7 @@ def _scale_problem(fun, x0, lb, ub, constraints, list_warnings):
     if any(scaling_factor != 1):
         warn_message = \
             "{}: problem scaled according to bound constraints; do this only if the bounds reflect the scaling of " \
-            "variables; if not, set options['scale']=false to disable scaling.".format(invoker)
+            "variables; if not, set options['scale']=False to disable scaling.".format(invoker)
         warnings.warn(warn_message, Warning)
         list_warnings.append(warn_message)
 
@@ -1891,7 +1871,7 @@ def _solver_selection(invoker, method, options, prob_info, list_warnings):
                 solver = 'bobyqa'
                 options['npt'] = min(2 * n + 1, options['maxfev'] - 1)
                 if {'lb', 'ub'} <= set(prob_info.keys()):
-                    lb_mod, ub_mod = prob_info['lb'].copy(), prob_info['ub'].copy()
+                    lb_mod, ub_mod = prob_info['refined_data']['lb'].copy(), prob_info['refined_data']['ub'].copy()
                     lb_mod[np.logical_and(lb_mod > 0, np.isinf(lb_mod))] = -np.inf
                     ub_mod[np.logical_and(ub_mod < 0, np.isinf(ub_mod))] = np.inf
                     rhobeg_bobyqa = min(options['rhobeg'], np.min(ub_mod - lb_mod) / 4)
@@ -2422,7 +2402,6 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
 
         # Scale x back.
         x_c = prob_info_c['scaling_factor'] * x_c + prob_info_c['shift']
-        output['x'] = x_c
 
         # Scale the bounds back.
         lb = prob_info_c['scaling_factor'] * prob_info_c['refined_data']['lb']
@@ -2451,6 +2430,7 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
     # The problem was (possibly) reduced, get the full x.
     if prob_info_c['reduced']:
         x_c = _fullx(x_c, prob_info_c['fixedx_value'], np.logical_not(prob_info_c['fixedx']), prob_info_c['fixedx'])
+    output['x'] = x_c
 
     # Set output.{nf, constrviolation, fhist, chist, method}.
     output['nfev'] = nf_c
