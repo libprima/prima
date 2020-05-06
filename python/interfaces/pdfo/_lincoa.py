@@ -158,7 +158,7 @@ def lincoa(fun, x0, args=(), bounds=None, constraints=(), options=None):
         warnings.warn(warn_message, Warning)
         output['warnings'].append(warn_message)
 
-    if prob_info['infeasible']:
+    if invoker != 'pdfo' and prob_info['infeasible']:
         # The problem turned out infeasible during prepdfo.
         exitflag = -4
         nf = 1
@@ -168,7 +168,7 @@ def lincoa(fun, x0, args=(), bounds=None, constraints=(), options=None):
         constrviolation = prob_info['constrv_x0']
         chist = np.array([constrviolation], dtype=np.float64)
         output['constr_modified'] = False
-    elif prob_info['nofreex']:
+    elif invoker != 'pdfo' and prob_info['nofreex']:
         # x was fixed by the bound constraints during prepdfo.
         exitflag = 13
         nf = 1

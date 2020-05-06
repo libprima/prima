@@ -163,7 +163,7 @@ def cobyla(fun, x0, args=(), bounds=None, constraints=(), options=None):
     fun_c, x0_c, bounds_c, constraints_c, options_c, _, prob_info = \
         prepdfo(fun, x0, args, bounds=bounds, constraints=constraints, options=options)
 
-    if prob_info['infeasible']:
+    if invoker != 'pdfo' and prob_info['infeasible']:
         # The problem turned out infeasible during prepdfo.
         exitflag = -4
         nf = 1
@@ -173,7 +173,7 @@ def cobyla(fun, x0, args=(), bounds=None, constraints=(), options=None):
         constrviolation = prob_info['constrv_x0']
         chist = np.array([constrviolation], dtype=np.float64)
         output['nlc'] = prob_info['nlc_x0']
-    elif prob_info['nofreex']:
+    elif invoker != 'pdfo' and prob_info['nofreex']:
         # x was fixed by the bound constraints during prepdfo
         exitflag = 13
         nf = 1

@@ -149,7 +149,7 @@ def bobyqa(fun, x0, args=(), bounds=None, options=None):
     # Preprocess the inputs.
     fun_c, x0_c, bounds_c, _, options_c, _, prob_info = prepdfo(fun, x0, args, bounds=bounds, options=options)
 
-    if prob_info['infeasible']:
+    if invoker != 'pdfo' and prob_info['infeasible']:
         # The problem turned out infeasible during prepdfo.
         exitflag = -4
         nf = 1
@@ -158,7 +158,7 @@ def bobyqa(fun, x0, args=(), bounds=None, options=None):
         fhist = np.array([fx], dtype=np.float64)
         constrviolation = prob_info['constrv_x0']
         chist = np.array([constrviolation], dtype=np.float64)
-    elif prob_info['nofreex']:
+    elif invoker != 'pdfo' and prob_info['nofreex']:
         # x was fixed by the bound constraints during prepdfo.
         exitflag = 13
         nf = 1
