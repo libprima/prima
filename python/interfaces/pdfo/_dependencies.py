@@ -2637,7 +2637,10 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
 
         if options['chkfunval']:
             # Check whether fx = fun(x).
-            fun_x = prob_info_c['raw_data']['objective'](x_c)
+            if prob_info_c['raw_data']['objective'] is not None:
+                fun_x = prob_info_c['raw_data']['objective'](x_c)
+            else:
+                fun_x = np.float64(0)
             if np.isnan(fun_x) or (fun_x > hugefun):
                 fun_x = hugefun
                 # Due to extreme barrier (implemented when options['classical']=False), all the function values that are
