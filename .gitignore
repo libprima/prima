@@ -9,7 +9,7 @@ __pycache__/
 *.mod
 
 # Compiled MEX files
- *.mex*
+*.mex*
 
 # PyCharm IDE
 .idea/
