@@ -462,6 +462,8 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
         warn_message = '{}: there is no objective function.'.format(invoker)
         warnings.warn(warn_message, Warning)
         list_warnings.append(warn_message)
+    elif not callable(fun):
+        raise ValueError('{}: the objective function should be callable.'.format(invoker))
 
     # The extra-arguments of the objective function should be given as a list or a tuple.
     if args is not None and not hasattr(args, '__len__'):
