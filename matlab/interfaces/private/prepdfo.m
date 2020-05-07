@@ -191,7 +191,7 @@ else % The problem turns out infeasible
 end
 if any(~fixedx)
     probinfo.nofreex = false;
-else % x turns out fixed by the bound constraints 
+else % x turns out fixed by the bound constraints
     [probinfo.constrv_fixedx, probinfo.nlcineq_fixedx, probinfo.nlceq_fixedx] = constrv(probinfo.fixedx_value, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
     probinfo.nofreex = true;
 end
