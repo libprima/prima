@@ -887,27 +887,41 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
 
         # Remove the abnormal constraints and check infeasibility.
         free_indices = np.logical_not(fixed_indices)
-        a_reduced = a_linear[:, free_indices]
-        a_fixed = np.dot(a_linear[:, fixed_indices], fixed_values)
-        lb_reduced = lb_linear - a_fixed
-        ub_reduced = ub_linear - a_fixed
+        if any(fixed_indices) and any(free_indices):
+            a_reduced = a_linear[:, free_indices]
+            a_fixed = np.dot(a_linear[:, fixed_indices], fixed_values)
+            lb_reduced = lb_linear - a_fixed
+            ub_reduced = ub_linear - a_fixed
+        else:
+            a_reduced = a_linear.copy()
+            lb_reduced = lb_linear.copy()
+            ub_reduced = ub_linear.copy()
+
         if a_reduced.size == 0:
-            infeasible_linear = np.asarray([], dtype=bool)
             trivial = np.asarray([], dtype=bool)
         else:
-            row_norm_inf = np.max(np.abs(a_reduced), 1)
-            zero = (row_norm_inf == 0)
-            infeasible_zero = np.logical_or(np.logical_and(zero, lb_reduced > 0), np.logical_and(zero, ub_reduced < 0))
-            trivial_zero = np.logical_and(np.logical_and(zero, lb_reduced <= 0), np.logical_and(zero, ub_reduced >= 0))
-            row_norm_inf[zero] = 1.0
-            lb_linear_norm = lb_reduced / row_norm_inf
-            ub_linear_norm = ub_reduced / row_norm_inf
-            lb_ub_or = np.logical_or(np.logical_and(np.isinf(lb_linear_norm), lb_linear_norm > 0),
-                                     np.logical_and(np.isinf(ub_linear_norm), ub_linear_norm < 0))
-            infeasible_linear = np.logical_or(infeasible_zero, np.logical_or(lb_ub_or, lb_reduced > ub_reduced))
-            lb_ub_and = np.logical_and(np.logical_and(np.isinf(lb_linear_norm), lb_linear_norm < 0),
-                                       np.logical_and(np.isinf(ub_linear_norm), ub_linear_norm > 0))
+            row_norm_inf_reduced = np.max(np.abs(a_reduced), 1)
+            zero_reduced = (row_norm_inf_reduced == 0)
+            trivial_zero = np.logical_and(np.logical_and(zero_reduced, lb_reduced <= 0),
+                                          np.logical_and(zero_reduced, ub_reduced >= 0))
+            row_norm_inf_reduced[zero_reduced] = 1.0
+            lb_linear_norm_reduced = lb_reduced / row_norm_inf_reduced
+            ub_linear_norm_reduced = ub_reduced / row_norm_inf_reduced
+            lb_ub_and = np.logical_and(np.logical_and(np.isinf(lb_linear_norm_reduced), lb_linear_norm_reduced < 0),
+                                       np.logical_and(np.isinf(ub_linear_norm_reduced), ub_linear_norm_reduced > 0))
             trivial = np.logical_or(trivial_zero, lb_ub_and)
+
+        # The infeasibility should be checked on all constraints.
+        row_norm_inf_linear = np.max(np.abs(a_linear), 1)
+        zero_linear = (row_norm_inf_linear == 0)
+        infeasible_zero = np.logical_or(np.logical_and(zero_linear, lb_linear > 0),
+                                        np.logical_and(zero_linear, ub_linear < 0))
+        row_norm_inf_linear[zero_linear] = 1.0
+        lb_linear_norm_linear = lb_linear / row_norm_inf_linear
+        ub_linear_norm_linear = ub_linear / row_norm_inf_linear
+        lb_ub_or = np.logical_or(np.logical_and(np.isinf(lb_linear_norm_linear), lb_linear_norm_linear > 0),
+                                 np.logical_and(np.isinf(ub_linear_norm_linear), ub_linear_norm_linear < 0))
+        infeasible_linear = np.logical_or(infeasible_zero, np.logical_or(lb_ub_or, lb_linear > ub_linear))
 
         # Check the infeasibility of the problem
         infeasible = any(np.r_[prob_info['infeasible_bound'], infeasible_linear, infeasible_nonlinear])
@@ -2315,7 +2329,7 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
     output['x'] = x_c
     output['fun'] = fx_c
     output['status'] = exitflag_c
-    output['success'] = exitflag_c in [0, 1, 13]
+    output['success'] = (exitflag_c in [0, 1]) or (exitflag_c == 13 and constrviolation_c == 0)
     if len(stack()) >= 4 and stack()[2][3].lower() == 'pdfo':
         output['nfev'] = nf_c
         output['constrviolation'] = constrviolation_c
