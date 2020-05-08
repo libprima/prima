@@ -2315,7 +2315,7 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
     output['x'] = x_c
     output['fun'] = fx_c
     output['status'] = exitflag_c
-    output['success'] = exitflag_c in [0, 1]
+    output['success'] = exitflag_c in [0, 1, 13]
     if len(stack()) >= 4 and stack()[2][3].lower() == 'pdfo':
         output['nfev'] = nf_c
         output['constrviolation'] = constrviolation_c
@@ -2681,7 +2681,7 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
                     raise ValueError(
                         '{}: UNEXPECTED ERROR: {} returns a con(x) that does not match x.'.format(invoker, method))
 
-    if method == 'lincoa' and 'constr_modified' in output.keys():
+    if 'constr_modified' in output.keys():
         del output['constr_modified']
 
     # output['nlc'] contains the nonlinear constraint at the output iteration without re-evaluation. It was needed in
