@@ -538,6 +538,8 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
     # 2. The 'trivial constraints' will be excluded (if any). 
     # 3. In addition, get the indices of infeasible and trivial constraints (if any) and save the information in
     # prob_info.
+    free_indices = np.logical_not(fixed_indices)
+    prob_info['reduced'] = any(fixed_indices) and any(free_indices)
     constraints_c, raw_constraints_c, infeasible_linear, infeasible_nonlinear, trivial, infeasible, prob_info = \
         _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_values, x0_c, prob_info)
     prob_info['raw_data']['constraints'] = raw_constraints_c
@@ -550,12 +552,9 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
     # Problem type before reduction
     prob_info['raw_type'] = _problem_type(lb, ub, constraints_c)
     prob_info['raw_dim'] = lenx0
-    prob_info['reduced'] = False
 
     # Reduce fun, x0, lb, and ub if some but not all variables are fixed by the bound constraints.
-    free_indices = np.logical_not(fixed_indices)
-
-    if any(fixed_indices) and any(free_indices):
+    if prob_info['reduced']:
         x0_c = x0_c[free_indices]
         lb = lb[free_indices]
         ub = ub[free_indices]
@@ -886,8 +885,8 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
             ub_linear = np.r_[ub_linear, ub_local]
 
         # Remove the abnormal constraints and check infeasibility.
-        free_indices = np.logical_not(fixed_indices)
-        if any(fixed_indices) and any(free_indices):
+        if prob_info['reduced']:
+            free_indices = np.logical_not(fixed_indices)
             a_reduced = a_linear[:, free_indices]
             a_fixed = np.dot(a_linear[:, fixed_indices], fixed_values)
             lb_reduced = lb_linear - a_fixed
@@ -952,7 +951,7 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
 
             for nonlinear_constraint in list_nonlinear:
                 # Get the value of the constraint function.
-                if not raw and any(fixed_indices) and any(free_indices):
+                if not raw and prob_info['reduced']:
                     x_full = _fullx(x, fixed_values, free_indices, fixed_indices)
                 else:
                     x_full = x
