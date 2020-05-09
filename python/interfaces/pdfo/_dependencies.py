@@ -462,6 +462,8 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
         warn_message = '{}: there is no objective function.'.format(invoker)
         warnings.warn(warn_message, Warning)
         list_warnings.append(warn_message)
+    elif not callable(fun):
+        raise ValueError('{}: the objective function should be callable.'.format(invoker))
 
     # The extra-arguments of the objective function should be given as a list or a tuple.
     if args is not None and not hasattr(args, '__len__'):
@@ -482,9 +484,6 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
         # If the objective function returns None, then we are solving a feasibility problem. The returned value of fun_c
         # will be interpreted as np.nan by the following statement.
         return np.float64(fun_x)
-
-    # The objective function is stored before any pre-processing.
-    prob_info['raw_data']['objective'] = fun_c
 
     # The initial guess should be an unidimensional ndarray.
     if isinstance(x0, scalar_types):
@@ -528,6 +527,10 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
     prob_info['infeasible_bound'] = infeasible_bound
     prob_info['fixedx'] = fixed_indices
     prob_info['fixedx_value'] = fixed_values
+    
+    # Since fixedx_value may be revised in _constraints_validation, we will record it in prob_info only after that. We
+    # save its current value in fixedx_value_save, which will be used when calculating the constriant violation at x0.
+    fixed_values_save = fixed_values.copy()
 
     # Validate the linear and nonlinear constraint, and define its feasibility.
     # 1. The constraints will be reduced if some but not all variables are fixed by the bound constraints. See
@@ -535,6 +538,8 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
     # 2. The 'trivial constraints' will be excluded (if any). 
     # 3. In addition, get the indices of infeasible and trivial constraints (if any) and save the information in
     # prob_info.
+    free_indices = np.logical_not(fixed_indices)
+    prob_info['reduced'] = any(fixed_indices) and any(free_indices)
     constraints_c, raw_constraints_c, infeasible_linear, infeasible_nonlinear, trivial, infeasible, prob_info = \
         _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_values, x0_c, prob_info)
     prob_info['raw_data']['constraints'] = raw_constraints_c
@@ -547,12 +552,9 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
     # Problem type before reduction
     prob_info['raw_type'] = _problem_type(lb, ub, constraints_c)
     prob_info['raw_dim'] = lenx0
-    prob_info['reduced'] = False
 
     # Reduce fun, x0, lb, and ub if some but not all variables are fixed by the bound constraints.
-    free_indices = np.logical_not(fixed_indices)
-
-    if any(fixed_indices) and any(free_indices):
+    if prob_info['reduced']:
         x0_c = x0_c[free_indices]
         lb = lb[free_indices]
         ub = ub[free_indices]
@@ -573,6 +575,13 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
     prob_info['nofreex'] = all(prob_info['fixedx'])
     if prob_info['infeasible']:
         prob_info['constrv_x0'], prob_info['nlc_x0'] = _constr_violation(invoker, x0_c, lb, ub, constraints_c)
+        
+        # The constraint violation calculated by _constr_violation does not include the violation of x0 for the bounds
+        # corresponding to fixedx; the corresponding values of x0 are in fixedx_value, while the values of the bounds
+        # (lb and ub are the same up to eps) are in fixedx_value_save. Thus the violation is
+        # abs(fixedx_value-fixedx_value_save).
+        max_fixed = np.nanmax(np.abs(fixed_values - fixed_values_save)) if fixed_values.size > 0 else 0
+        prob_info['constrv_x0'] = max(prob_info['constrv_x0'], max_fixed)
     elif prob_info['nofreex']:
         prob_info['constrv_fixedx'], prob_info['nlc_fixedx'] = \
             _constr_violation(invoker, prob_info['fixedx_value'], lb, ub, constraints_c)
@@ -876,27 +885,33 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
             ub_linear = np.r_[ub_linear, ub_local]
 
         # Remove the abnormal constraints and check infeasibility.
-        free_indices = np.logical_not(fixed_indices)
-        a_reduced = a_linear[:, free_indices]
-        a_fixed = np.dot(a_linear[:, fixed_indices], fixed_values)
-        lb_reduced = lb_linear - a_fixed
-        ub_reduced = ub_linear - a_fixed
+        if prob_info['reduced']:
+            free_indices = np.logical_not(fixed_indices)
+            a_reduced = a_linear[:, free_indices]
+            a_fixed = np.dot(a_linear[:, fixed_indices], fixed_values)
+            lb_reduced = lb_linear - a_fixed
+            ub_reduced = ub_linear - a_fixed
+        else:
+            a_reduced = a_linear.copy()
+            lb_reduced = lb_linear.copy()
+            ub_reduced = ub_linear.copy()
+
         if a_reduced.size == 0:
-            infeasible_linear = np.asarray([], dtype=bool)
             trivial = np.asarray([], dtype=bool)
+            infeasible_linear = np.asarray([], dtype=bool)
         else:
             row_norm_inf = np.max(np.abs(a_reduced), 1)
             zero = (row_norm_inf == 0)
             infeasible_zero = np.logical_or(np.logical_and(zero, lb_reduced > 0), np.logical_and(zero, ub_reduced < 0))
-            trivial_zero = np.logical_or(np.logical_and(zero, lb_reduced <= 0), np.logical_and(zero, ub_reduced >= 0))
+            trivial_zero = np.logical_and(np.logical_and(zero, lb_reduced <= 0), np.logical_and(zero, ub_reduced >= 0))
             row_norm_inf[zero] = 1.0
             lb_linear_norm = lb_reduced / row_norm_inf
             ub_linear_norm = ub_reduced / row_norm_inf
+            lb_ub_and = np.logical_and(np.logical_and(np.isinf(lb_linear_norm), lb_linear_norm < 0),
+                                       np.logical_and(np.isinf(ub_linear_norm), ub_linear_norm > 0))
             lb_ub_or = np.logical_or(np.logical_and(np.isinf(lb_linear_norm), lb_linear_norm > 0),
                                      np.logical_and(np.isinf(ub_linear_norm), ub_linear_norm < 0))
             infeasible_linear = np.logical_or(infeasible_zero, np.logical_or(lb_ub_or, lb_reduced > ub_reduced))
-            lb_ub_and = np.logical_and(np.logical_and(np.isinf(lb_linear_norm), lb_linear_norm < 0),
-                                       np.logical_and(np.isinf(ub_linear_norm), ub_linear_norm > 0))
             trivial = np.logical_or(trivial_zero, lb_ub_and)
 
         # Check the infeasibility of the problem
@@ -928,7 +943,7 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
 
             for nonlinear_constraint in list_nonlinear:
                 # Get the value of the constraint function.
-                if not raw and any(fixed_indices) and any(free_indices):
+                if not raw and prob_info['reduced']:
                     x_full = _fullx(x, fixed_values, free_indices, fixed_indices)
                 else:
                     x_full = x
@@ -2050,12 +2065,14 @@ def _project(x0, lb, ub, constraints, options=None):
                     pc_args_eq['lb'] = np.r_[pc_args_eq['lb'], linear.lb[i]]
                     pc_args_eq['ub'] = np.r_[pc_args_eq['ub'], linear.ub[i]]
 
-            if pc_args_ineq['lb'].size > 0 and pc_args_eq['lb'].size > 0:
+            if pc_args_ineq['A'].size > 0 and pc_args_ineq['lb'].size > 0 and pc_args_eq['lb'].size > 0:
                 project_constraints = [ScipyLinearConstraint(**pc_args_ineq), ScipyLinearConstraint(**pc_args_eq)]
-            elif pc_args_ineq['lb'].size > 0:
+            elif pc_args_ineq['A'].size > 0 and pc_args_ineq['lb'].size > 0:
                 project_constraints = ScipyLinearConstraint(**pc_args_ineq)
-            else:
+            elif pc_args_ineq['A'].size > 0:
                 project_constraints = ScipyLinearConstraint(**pc_args_eq)
+            else:
+                project_constraints = ()
 
             # Perform the actual projection.
             ax_ineq = np.dot(pc_args_ineq['A'], x0_c)
@@ -2303,7 +2320,7 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
     output['x'] = x_c
     output['fun'] = fx_c
     output['status'] = exitflag_c
-    output['success'] = exitflag_c in [0, 1]
+    output['success'] = (exitflag_c in [0, 1]) or (exitflag_c == 13 and constrviolation_c == 0)
     if len(stack()) >= 4 and stack()[2][3].lower() == 'pdfo':
         output['nfev'] = nf_c
         output['constrviolation'] = constrviolation_c
@@ -2627,7 +2644,10 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
 
         if options['chkfunval']:
             # Check whether fx = fun(x).
-            fun_x = prob_info_c['raw_data']['objective'](x_c)
+            if prob_info_c['raw_data']['objective'] is not None:
+                fun_x = prob_info_c['raw_data']['objective'](x_c)
+            else:
+                fun_x = np.float64(0)
             if np.isnan(fun_x) or (fun_x > hugefun):
                 fun_x = hugefun
                 # Due to extreme barrier (implemented when options['classical']=False), all the function values that are
@@ -2666,7 +2686,7 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
                     raise ValueError(
                         '{}: UNEXPECTED ERROR: {} returns a con(x) that does not match x.'.format(invoker, method))
 
-    if method == 'lincoa' and 'constr_modified' in output.keys():
+    if 'constr_modified' in output.keys():
         del output['constr_modified']
 
     # output['nlc'] contains the nonlinear constraint at the output iteration without re-evaluation. It was needed in
