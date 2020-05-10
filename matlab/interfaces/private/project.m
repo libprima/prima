@@ -299,7 +299,7 @@ if (output.constrviolation > 10*CTol && TryMatlab) % No feasible ponit was found
         options.ConstraintTolerance = CTol;
         options.MaxIterations = maxit;
         [~, x, ~, exitflag, output] = evalc('fmincon(@(x) dist_sq(x, x0), x0, Ai, bi, Ae, be, lb, ub, [], options)'); % We do not want any message printed by fmincon   
-        fx = dist_sq(x, x0); % We may return fx when calling fmincon. However, without this line, checkcode will complain the dist_sq is unused due to evalc. 
+        fx = dist_sq(x, x0); % We may return fx when calling fmincon. However, without this line, checkcode will complain that dist_sq is unused due to evalc. 
         output.algorithm = 'fmincon (MATLAB)';
     end
 end
