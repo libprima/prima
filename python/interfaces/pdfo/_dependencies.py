@@ -880,9 +880,13 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
                 ub_local = np.full(a_local.shape[0], np.inf)
 
             # Add the current linear constraint to the global one.
-            a_linear = np.concatenate((a_linear, a_local), axis=0)
-            lb_linear = np.r_[lb_linear, lb_local]
-            ub_linear = np.r_[ub_linear, ub_local]
+            if a_local.size > 0:
+                # If an empty matrix A is provided, it would be reshaped to (0, 1) and hence, the vectors lb_local and
+                # ub_local would be set respectively to [-inf] and [+inf]. Thus, it would create an incompatibility if
+                # we try to add them to lb_linear and ub_linear.
+                a_linear = np.concatenate((a_linear, a_local), axis=0)
+                lb_linear = np.r_[lb_linear, lb_local]
+                ub_linear = np.r_[ub_linear, ub_local]
 
         # Remove the abnormal constraints and check infeasibility.
         if prob_info['reduced']:
