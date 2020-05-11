@@ -74,8 +74,9 @@ function [x, fx, exitflag, output] = pdfo(varargin)
 %
 %   information = pdfo(request) returns information about the package
 %       according to the information-requesting string "request", which can 
-%       be 'about', 'author', 'email', 'maintainer', 'credits', 'copyright', 
-%       'license', 'version', 'date', 'status', 'message', or 'information'.
+%       be 'about', 'author', 'email', 'url', 'maintainer', 'credits',
+%       'copyright', 'license', 'version', 'date', 'status', 'message',
+%       or 'information'.
 %
 %   3. Outputs
 %
