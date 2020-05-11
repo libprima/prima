@@ -48,7 +48,7 @@ version = '1.0';
 
 date = 'May, 2020';
 
-status = 'Prototype'; % 'Production';
+status = 'Production';
 
 message = 'Dedicated to late Professor M. J. D. Powell FRS (29 July 1936--19 April 2015).';
 
