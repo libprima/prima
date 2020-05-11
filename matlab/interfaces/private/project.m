@@ -288,7 +288,8 @@ if (output.constrviolation > 10*CTol && TryMatlab) % No feasible ponit was found
         options.Display = 'off'; % No talking 
         options.ConstraintTolerance = CTol;
         options.MaxIterations = maxit;
-        [~, x, fx, exitflag, output] = evalc('quadprog (speye(n,n), -x0, Ai, bi, Ae, be, lb, ub, x0, options)'); % We do not want any message printed by quadprog
+%        [~, x, fx, exitflag, output] = evalc('quadprog (speye(n,n), -x0, Ai, bi, Ae, be, lb, ub, x0, options)'); % We do not want any message printed by quadprog
+        [x, fx, exitflag, output] = quadprog (speye(n,n), -x0, Ai, bi, Ae, be, lb, ub, x0, options); % quadprog is silent with the Display set to 'off'
         fx = fx + 0.5*(x0'*x0);
         output.algorithm = 'quadprog (MATLAB)';
     elseif (exist('fmincon', 'file') || exist('fmincon', 'builtin'))
@@ -298,8 +299,9 @@ if (output.constrviolation > 10*CTol && TryMatlab) % No feasible ponit was found
         options.Algorithm = 'sqp';
         options.ConstraintTolerance = CTol;
         options.MaxIterations = maxit;
-        [~, x, ~, exitflag, output] = evalc('fmincon(@(x) dist_sq(x, x0), x0, Ai, bi, Ae, be, lb, ub, [], options)'); % We do not want any message printed by fmincon   
-        fx = dist_sq(x, x0); % We may return fx when calling fmincon. However, without this line, checkcode will complain that dist_sq is unused due to evalc. 
+%        [~, x, ~, exitflag, output] = evalc('fmincon(@(x) dist_sq(x, x0), x0, Ai, bi, Ae, be, lb, ub, [], options)'); % We do not want any message printed by fmincon   
+%        fx = dist_sq(x, x0); % We may return fx when calling fmincon. However, without this line, checkcode will complain that dist_sq is unused due to evalc. 
+        [x, fx, exitflag, output] = fmincon(@(x) dist_sq(x, x0), x0, Ai, bi, Ae, be, lb, ub, [], options); % fmincon is silent with the Display set to 'off'
         output.algorithm = 'fmincon (MATLAB)';
     end
 end
