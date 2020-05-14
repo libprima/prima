@@ -842,7 +842,8 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
         for nonlinear_constraint in list_nonlinear:
             if isinstance(nonlinear_constraint, nonlinear_constraint_types):
                 lb_nonlinear, ub_nonlinear = nonlinear_constraint.lb, nonlinear_constraint.ub
-                if lb_nonlinear.size > 0 or ub_nonlinear.size > 0:
+                if (lb_nonlinear.size > 0 and not np.logical_and(np.isinf(lb_nonlinear), lb_nonlinear < 0).all()) or \
+                        (ub_nonlinear.size > 0 and not np.logical_and(np.isinf(ub_nonlinear), ub_nonlinear > 0).all()):
                     reduced_list_nonlinear.append(nonlinear_constraint)
                     infeasible_lb = np.logical_and(lb_nonlinear > 0, np.isinf(lb_nonlinear))
                     infeasible_ub = np.logical_and(ub_nonlinear < 0, np.isinf(ub_nonlinear))
@@ -2747,9 +2748,8 @@ def import_error_so(missing_file=None):
 
     if system_known:
         raise ImportError(
-            '{} is missing, please execute `setup.py` and add the interface path to the PYTHONPATH variable (see '
-            '`README_py_{}.txt`).'.format(missing_file, system_os))
+            '{} is missing, please execute `setup.py` (see `README_py_{}.txt`).'.format(missing_file, system_os))
     else:
         raise ImportError(
-            '{} is missing, please execute `setup.py` and add the interface path to the PYTHONPATH variable (see '
-            'the README file corresponding to your system).'.format(missing_file))
+            '{} is missing, please execute `setup.py` (see the README file corresponding to your '
+            'system).'.format(missing_file))
