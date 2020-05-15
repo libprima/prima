@@ -2536,6 +2536,9 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
     elif exitflag_c == -3:
         output['message'] = 'Return from {} because NaN occurs in the models.'.format(method)
     elif exitflag_c == -4:
+        if np.any(prob_info['infeasible_nonlinear']):
+            output['InfeasibleNonlinear'] = np.where(prob_info['infeasible_nonlinear'])[0]
+
         if np.any(prob_info['infeasible_linear']):
             output['InfeasibleLinear'] = np.where(prob_info['infeasible_linear'])[0]
 
