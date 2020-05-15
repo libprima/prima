@@ -122,7 +122,7 @@ C a MATLAB test that MEX passed 1 to Fortran as 0.99999999999999978.
 C If we set RHOBEG = MIN(XU-XL)/2 in the interfaces, then it may happen
 C that RHOBEG > MIN(XU-XL)/2. That is why we do the following. After
 C this, INFO=6 should never occur. 
-      RHOBEG = MIN(0.49D0*MINVAL(XU(1:N)-XL(1:N)), RHOBEG)
+      RHOBEG = MIN(0.5D0*(1.0D0-1.0D-5)*MINVAL(XU(1:N)-XL(1:N)), RHOBEG)
 C For the same reason, we ensure RHOEND <= RHOBEG by the following.
       RHOEND = MIN(RHOBEG, RHOEND)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

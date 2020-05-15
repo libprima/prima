@@ -296,6 +296,31 @@ else % The problem turns out 'normal' during prepdfo
         output.warnings = [output.warnings, wmessage];
     end
 
+    % The Fortran code of BOBYQA will revise x0 so that the distance
+    % between x0 and the inactive bounds is at least rhobeg. We do it
+    % here in order to raise a warning when such a revision occurs.
+    % After this, the Fortran code will not revise x0 again.
+    % The revision scheme here is slightly different from the one by
+    % Powell in the Fortran code, which sets 
+    % x0 (lb < x0 < lb + rhobeg) = lb + rhobeg
+    % x0 (ub > x0 > ub - rhobeg) = ub - rhobeg
+    % Note that lb <= x0 <= ub and rhobeg <= (ub-lb)/2 after prepdfo.
+    x0_old = x0;
+    lbx = (x0 <= lb + 0.5*rhobeg);
+    lbx_plus = (x0 > lb + 0.5*rhobeg) & (x0 < lb + rhobeg);
+    ubx_minus = (x0 < ub - 0.5*rhobeg) & (x0 > ub - rhobeg);
+    ubx = (x0 >= ub - 0.5*rhobeg);
+    x0(lbx) = lb(lbx);
+    x0(lbx_plus) = lb(lbx_plus) + rhobeg;
+    x0(ubx_minus) = ub(ubx_minus) - rhobeg;
+    x0(ubx) = ub(ubx);
+    if norm(x0_old-x0) > eps*max(1, norm(x0_old))
+        wid = sprintf('%s:ReviseX0', invoker);
+        wmessage = sprintf('%s: x0 is revised by %s so that the distance between x0 and the inactive bounds is at least rhobeg.', invoker, funname);
+        warning(wid, '%s', wmessage);
+        output.warnings = [output.warnings, wmessage];
+    end
+
     % Call the Fortran code
     try % The mexified Fortran function is a private function generating only private errors; however, public errors can occur due to, e.g., evalobj; error handeling needed 
         if options.classical 
