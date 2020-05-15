@@ -239,7 +239,7 @@ end
 % This should be done after revising x0, which can affect the shift.
 probinfo.scaled = false;
 probinfo.scaling_factor = ones(size(x0));
-probinfo.shift = zeros(size(0));
+probinfo.shift = zeros(size(x0));
 if options.scale && ~probinfo.nofreex && ~probinfo.infeasible
     [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, scaling_factor, shift, substantially_scaled, warnings] = scale_problem(invoker, fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, warnings);
     % Scale and shift the problem so that 
@@ -252,6 +252,18 @@ if options.scale && ~probinfo.nofreex && ~probinfo.infeasible
     if substantially_scaled
         options.rhobeg = 1;
         options.rhoend = options.rhoend/options.rhobeg;
+    end
+    
+    % BOBYQA requires rhobeg <= min(ub-lb)/2. Even though pre_options
+    % ensures this inequality, it may have been destroyed by scaling,
+    % because lb and ub may have changed. So we ensure the inequality
+    % again. Note that we should not raise any warning here, because
+    % any violation of the inequality is caused by scaling, not the
+    % user's input.
+    if strcmp(invoker, 'bobyqa') || (isfield(options, 'solver') && strcmpi(options.solver, 'bobyqa'))
+        rhobeg_bobyqa = max(min(options.rhobeg, min(ub-lb)/4), eps);
+        options.rhoend = (options.rhoend/options.rhobeg)*rhobeg_bobyqa;
+        options.rhobeg = rhobeg_bobyqa;
     end
 end
 
@@ -1155,7 +1167,7 @@ funname =callstack(1).name; % Name of the current function
 
 substantially_scaled_threshold = 4;
 % We consider the problem substantially scaled_threshold if  
-% max(scaling_factor)/min(scaling_factor) > substantially_scaled_threshold
+% max([1; scaling_factor])/min([1; scaling_factor]) > substantially_scaled_threshold
 
 lenx0 = length(x0);
 index_lub = (lb > -inf) & (ub < inf); % Variables with lower and upper bounds
@@ -1200,7 +1212,7 @@ end
 
 substantially_scaled = false;
 %if (max([scaling_factor; 1./scaling_factor]) > substantially_scaled_threshold)
-if max(scaling_factor)/min(scaling_factor) > substantially_scaled_threshold
+if max([1; scaling_factor])/min([1; scaling_factor]) > substantially_scaled_threshold
     substantially_scaled = true;
     % This will affect the setting of rhobeg and rhoend: If x is substantially
     % scaled, then we 
