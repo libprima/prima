@@ -123,8 +123,10 @@ function [x, fx, exitflag, output] = cobyla(varargin)
 %       positive and not larger than rhobeg; default: 1e-6
 %   *** classical: a boolean value indicating whether to call the classical
 %       Powell code or not; default: false
-%   *** scale: a boolean value that indicating whether to scale the problem
-%       according to bounds or not; default: false
+%   *** scale: a boolean value indicating whether to scale the problem
+%       according to bounds or not; default: false; if the problem is to 
+%       be scaled, then rhobeg and rhoend mentioned above will be used as 
+%       the initial and final trust-region radii for the scaled  problem
 %   *** quiet: a boolean value indicating whether to keep quiet or not;
 %       default: true (if false COBYLA will print the return message of the
 %       Fortran code)

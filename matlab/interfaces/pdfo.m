@@ -124,8 +124,8 @@ function [x, fx, exitflag, output] = pdfo(varargin)
 %   *** rhoend: final trust region radius; rhoend reflects the precision
 %       of the approximate solution obtained by PDFO; rhoend should be
 %       positive and not larger than rhobeg; default: 1e-6
-%   *** npt: number of interpolation points for constructing a model
-%       (only for NEWUOA, BOBYQA, LINCOA); default value: 2*length(x0)+!
+%   *** npt: (only for NEWUOA, BOBYQA, LINCOA) number of interpolation 
+%       points for constructing a model; default: 2*length(x0)+1
 %   *** solver: a string indicating which solver to use; possible values are: 
 %       'uobyqa', 'newuoa' (for unconstrained problems),
 %       'bobyqa' (for bound-constrained or unconstrained problems),
@@ -134,8 +134,13 @@ function [x, fx, exitflag, output] = pdfo(varargin)
 %       'cobyla' (for general constrained or unconstrained problems)
 %   *** classical: a boolean value indicating whether to call the classical 
 %       Powell code or not; default: false
-%   *** scale: a boolean value that indicating whether to scale the problem
-%       according to bounds or not; default: false
+%   *** scale: (only for BOBYQA, LINCOA, and COBYLA) a boolean value 
+%       indicating whether to scale the problem according to bounds or not; 
+%       default: false; if the problem is to be scaled, then rhobeg and rhoend 
+%       mentioned above will be used as the initial and final trust-region 
+%       radii for the scaled  problem
+%   *** honour_x0: (only for BOBYQA) a boolean value indicating whether to 
+%       respect the user-defined x0; default: false
 %   *** quiet: a boolean value indicating whether to keep quiet or not;
 %       default: true (if false PDFO will print the return message of the
 %       Fortran code)

@@ -101,8 +101,10 @@ function [x, fx, exitflag, output] = lincoa(varargin)
 %       default: 2*length(x0)+1
 %   *** classical: a boolean value indicating whether to call the classical 
 %       Powell code or not; default: false
-%   *** scale: a boolean value that indicating whether to scale the problem
-%       according to bounds or not; default: false
+%   *** scale: a boolean value indicating whether to scale the problem
+%       according to bounds or not; default: false; if the problem is to be 
+%       scaled, then rhobeg and rhoend mentioned above will be used as the 
+%       initial and final trust-region radii for the scaled  problem
 %   *** quiet: a boolean value indicating whether to keep quiet or not;
 %       default: true (if false LINCOA will print the return message of
 %       the Fortran code)

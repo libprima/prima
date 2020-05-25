@@ -241,30 +241,12 @@ probinfo.scaled = false;
 probinfo.scaling_factor = ones(size(x0));
 probinfo.shift = zeros(size(x0));
 if options.scale && ~probinfo.nofreex && ~probinfo.infeasible
-    [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, scaling_factor, shift, substantially_scaled, warnings] = scale_problem(invoker, fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, warnings);
-    % Scale and shift the problem so that 
-    % 1. for the variables that have both lower bound and upper bound, the bounds become [-1, 1] 
-    % 2. the other variables will be shifted so that the corresponding component of x0 becomes 0 
+    [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, scaling_factor, shift, ~, warnings] = scale_problem(invoker, fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, warnings);
+    % Scale and shift the problem so that all the bounds become [-1, 1]
+    % It is done only if all variables have both lower and upper bounds
     probinfo.scaled = true;
     probinfo.scaling_factor = scaling_factor;
     probinfo.shift = shift;
-    % If the problem is substantially scaled, then rhobeg and rhoend may need to be revised
-    if substantially_scaled
-        options.rhobeg = 1;
-        options.rhoend = options.rhoend/options.rhobeg;
-    end
-    
-    % BOBYQA requires rhobeg <= min(ub-lb)/2. Even though pre_options
-    % ensures this inequality, it may have been destroyed by scaling,
-    % because lb and ub may have changed. So we ensure the inequality
-    % again. Note that we should not raise any warning here, because
-    % any violation of the inequality is caused by scaling, not the
-    % user's input.
-    if strcmp(invoker, 'bobyqa') || (isfield(options, 'solver') && strcmpi(options.solver, 'bobyqa'))
-        rhobeg_bobyqa = max(min(options.rhobeg, min(ub-lb)/4), eps);
-        options.rhoend = (options.rhoend/options.rhobeg)*rhobeg_bobyqa;
-        options.rhobeg = rhobeg_bobyqa;
-    end
 end
 
 % Record the refined data (excluding options) after preprocessing
@@ -280,9 +262,25 @@ if strcmp(invoker, 'pdfo')
     [options, warnings] = select_solver(invoker, options, probinfo, warnings);
 end
 
+if strcmpi(options.solver, 'bobyqa')
+% The Fortran code of BOBYQA will revise x0 so that the distance between
+% x0 and the inactive bounds is at least rhobeg. We do it here in order
+% to raise a warning when such a revision occurs. After this, the
+% Fortran code will not revise x0 again. If the options.honour_x0 = true, 
+% then we keep x0 unchanged and revise rhobeg if necessary.
+    if isfield(probinfo.raw_data.options, 'rhobeg') && ~isempty(probinfo.raw_data.options.rhobeg)
+        user_defined_rhobeg = true;  % Does the user provide rhobeg?
+    else
+        user_defined_rhobeg = false;  
+    end
+    [x0, options, warnings] = pre_rhobeg_x0(invoker, x0, lb, ub, user_defined_rhobeg, options, warnings);
+    probinfo.refined_data.x0 = x0;  % x0 may have been revised. 
+end
+
 % Record the options in probinfo
 % This has to be done after select_solver, because select_solver updates 
 % options.solver, and possibly options.npt and options.rhobeg.
+% Also, pre_rhobeg_x0 may change options.rhobeg and options.rhoend.
 probinfo.options = options; 
 % We do NOT record options in probinfo.refined_data, because we do not
 % carry refined_data with us unless in debug mode or the problem is scaled.  
@@ -365,6 +363,7 @@ known_field = {'objective', 'x0', 'Aineq', 'bineq', 'Aeq', 'beq', 'lb', 'ub', 'n
 %    (e.g., bineq=inf, lb=-inf), which can change the problem type. 
 
 unknown_field = setdiff(problem_field, known_field);
+problem = rmfield(problem, unknown_field);  % Remove the unknown fields
 
 if ~isempty(unknown_field) 
     wid = sprintf('%s:UnknownProbFiled', invoker);
@@ -784,7 +783,9 @@ rhobeg = 1; % The default rhobeg and rhoend will be revised if solver = 'bobyqa'
 rhoend = 1e-6;
 ftarget = -inf;
 classical = false; % Call the classical Powell code? Classical mode recommended only for research purpose  
-scale = false; % Scale the problem according to bounds? % Scale only if the bounds reflect well the scale of the problem
+scale = false; % Scale the problem according to bounds? Scale only if the bounds reflect well the scale of the problem
+scale = (scale && max(ub-lb)<inf); % ! NEVER remove this ! Scale only if all variables are with finite lower and upper bounds
+honour_x0 = false; % Respect the user-defined x0? Needed by BOBYQA
 quiet = true;
 debugflag = false; % Do not use 'debug' as the name, which is a MATLAB function
 chkfunval = false;
@@ -823,7 +824,7 @@ if strcmp(invoker, 'pdfo')
     solver = [];
     if isfield(options, 'solver') 
         if any(strcmpi(options.solver, solver_list))
-            solver = options.solver;
+            solver = lower(options.solver);
         elseif ~strcmpi(options.solver, 'pdfo') 
         % We should not complain about 'unknown solver' if invoker=options.solver='pdfo'
             wid = sprintf('%s:UnknownSolver', invoker); 
@@ -846,12 +847,23 @@ end
 options.solver = solver; % Record solver in options.solver; will be used in postpdfo
 
 % Check unknown fields according to solver
-if any(strcmpi(solver, {'newuoa', 'bobyqa', 'lincoa'}))
-    known_field = {'npt', 'maxfun', 'rhobeg', 'rhoend', 'ftarget', 'classical', 'scale', 'quiet', 'debug', 'chkfunval', 'solver'};
-else
-    known_field = {'maxfun', 'rhobeg', 'rhoend', 'ftarget', 'classical', 'scale', 'quiet', 'debug', 'chkfunval', 'solver'};
+% solver is [] if it has not been decided yet; in that case, we suppose (for
+% simplicity) that all possible fields are known.
+known_field = {'maxfun', 'rhobeg', 'rhoend', 'ftarget', 'classical', 'quiet', 'debug', 'chkfunval', 'solver'};
+if isempty(solver) || any(strcmpi(solver, {'newuoa', 'bobyqa', 'lincoa'}))
+    known_field = [known_field, 'npt'];
+end
+if isempty(solver) || any(strcmpi(solver, {'bobyqa', 'lincoa', 'cobyla'})) 
+    known_field = [known_field, 'scale'];
+end
+if isempty(solver) || strcmpi(solver, 'bobyqa') 
+    known_field = [known_field, 'honour_x0'];
 end
 unknown_field = setdiff(options_field, known_field);
+options = rmfield(options, unknown_field);  % Remove the unknown fields
+% If we do not removed unknown fields, we may still complain later if an
+% unknown field is not properly set (e.g., options.npt is not a number) 
+% even though we have declared that this field will be ignored.
 if ~isempty(unknown_field) 
     wid = sprintf('%s:UnknownOption', invoker);
     if length(unknown_field) == 1
@@ -883,16 +895,42 @@ else
     end
 end
 
-% Revise default rhobeg and rhoend according to solver
-if strcmpi(solver, 'bobyqa')
-    rhobeg_bobyqa = min(rhobeg, min(ub-lb)/4);        
-    if (isfield(options, 'scale') && islogicalscalar(options.scale) && ~options.scale) || (~(isfield(options, 'scale') && islogicalscalar(options.scale)) && ~scale)
-        % If we are going to scale the problem later, then we keep the
-        % default value for rhoend; otherwise, we scale it as follows.
-        rhoend = (rhoend/rhobeg)*rhobeg_bobyqa;
+% Validate options.scale
+% We need the value of options.scale to set the default rhobeg
+validated = false;
+if isfield(options, 'scale')
+    if ~islogicalscalar(options.scale)
+        wid = sprintf('%s:InvalidScaleFlag', invoker);
+        wmessage = sprintf('%s: invalid scale flag; it should be true(1) or false(0); it is set to %s.', invoker, mat2str(scale));
+        warning(wid, '%s', wmessage);
+        warnings = [warnings, wmessage]; 
+    elseif options.scale && max(ub-lb) >= inf
+        wid = sprintf('%s:ProblemCannotBeScaled', invoker);
+        wmessage = sprintf('%s: problem cannot be scaled because not all variables have both lower and upper bounds.', invoker);
+        warning(wid, '%s', wmessage);
+        warnings = [warnings, wmessage]; 
+        options.scale = false; % options.scale must be set to false in this case
+        validated = true;
+    else
+        validated = true;
     end
+end
+if ~validated % options.scale has not got a valid value yet
+    options.scale = scale; 
+end
+options.scale = logical(options.scale);
+
+% Revise default rhobeg and rhoend according to options.scale and solver
+if options.scale
+    rhobeg = 0.5;  % This value cannot be bigger than 1. Otherwise, BOBYQA will complain.
+    rhoend = 1e-6;
+end
+if strcmpi(solver, 'bobyqa') && ~options.scale
+    rhobeg_bobyqa = min(rhobeg, min(ub-lb)/4);        
+    rhoend = (rhoend/rhobeg)*rhobeg_bobyqa;
     rhobeg = rhobeg_bobyqa;
 end
+
 
 % Validate the user-specified options; adopt the default values if needed 
 
@@ -970,6 +1008,8 @@ options.maxfun = double(options.maxfun); % maxfun will be passed as a double
 % One can check that options.maxfun >= n+2;
 
 % Validate options.rhobeg
+% NOTE: if the problem is to be scaled, then options.rhobeg and options.rhoend 
+% will be used as the intial and final trust-region radii for the scaled problem. 
 validated = false;
 if isfield(options, 'rhobeg')
     if ~isrealscalar(options.rhobeg) || options.rhobeg <= 0
@@ -977,12 +1017,20 @@ if isfield(options, 'rhobeg')
         wmessage = sprintf('%s: invalid rhobeg; it should be a positive number; it is set to max(%f, rhoend).', invoker, rhobeg);
         warning(wid, '%s', wmessage);
         warnings = [warnings, wmessage]; 
-    elseif strcmpi(solver, 'bobyqa') && options.rhobeg > min(ub-lb)/2 
-        wid = sprintf('%s:InvalidRhobeg', invoker);
-        wmessage = sprintf('%s: invalid rhobeg; %s requires rhobeg <= min(ub-lb)/2; it is set to min(ub-lb)/4.', invoker, solver);
-        warning(wid, '%s', wmessage);
-        warnings = [warnings, wmessage]; 
-        options.rhobeg = min(ub-lb)/4; % Here we do not take the default rhobeg
+    elseif strcmpi(solver, 'bobyqa') 
+        if options.scale && options.rhobeg > 1
+            wid = sprintf('%s:InvalidRhobeg', invoker);
+            wmessage = sprintf('%s: invalid rhobeg; %s requires rhobeg <= 1 when the problem is scaled; it is set to 0.5.', invoker, solver);
+            warning(wid, '%s', wmessage);
+            warnings = [warnings, wmessage]; 
+            options.rhobeg = 0.5; 
+        elseif ~options.scale && options.rhobeg > min(ub-lb)/2 
+            wid = sprintf('%s:InvalidRhobeg', invoker);
+            wmessage = sprintf('%s: invalid rhobeg; %s requires rhobeg <= min(ub-lb)/2; it is set to min(ub-lb)/4.', invoker, solver);
+            warning(wid, '%s', wmessage);
+            warnings = [warnings, wmessage]; 
+            options.rhobeg = min(ub-lb)/4; % Here we do not take the default rhobeg
+        end
         validated = true; %!!! % Set validated=true so that options.rhobeg will not be set to the default value later
     else
         validated = true;
@@ -1054,22 +1102,22 @@ if options.classical
     warnings = [warnings, wmessage]; 
 end
 
-% Validate options.scale
+% Validate options.honour_x0
 validated = false;
-if isfield(options, 'scale')
-    if ~islogicalscalar(options.scale)
-        wid = sprintf('%s:InvalidScaleFlag', invoker);
-        wmessage = sprintf('%s: invalid scale flag; it should be true(1) or false(0); it is set to %s.', invoker, mat2str(scale));
+if isfield(options, 'honour_x0')
+    if ~islogicalscalar(options.honour_x0)
+        wid = sprintf('%s:InvalidHonourX0Flag', invoker);
+        wmessage = sprintf('%s: invalid honour_x0 flag; it should be true(1) or false(0); it is set to %s.', invoker, mat2str(honour_x0));
         warning(wid, '%s', wmessage);
         warnings = [warnings, wmessage]; 
     else
         validated = true;
     end
 end
-if ~validated % options.scale has not got a valid value yet
-    options.scale = scale; 
+if ~validated % options.honour_x0 has not got a valid value yet
+    options.honour_x0 = honour_x0;
 end
-options.scale = logical(options.scale);
+options.honour_x0 = logical(options.honour_x0);
 
 % Validate options.quiet
 validated = false;
@@ -1165,17 +1213,28 @@ function [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, scaling_factor, shif
 callstack = dbstack;
 funname =callstack(1).name; % Name of the current function
 
-substantially_scaled_threshold = 4;
+substantially_scaled_threshold = 2;
 % We consider the problem substantially scaled_threshold if  
 % max([1; scaling_factor])/min([1; scaling_factor]) > substantially_scaled_threshold
 
-lenx0 = length(x0);
-index_lub = (lb > -inf) & (ub < inf); % Variables with lower and upper bounds
-scaling_factor = ones(lenx0, 1);
-shift = zeros(lenx0, 1);
-scaling_factor(index_lub) = (ub(index_lub) - lb(index_lub))/2;
-shift(index_lub) = (lb(index_lub) + ub(index_lub))/2;
-shift(~index_lub) = x0(~index_lub); % Shift x0 to 0 unless both lower and upper bounds are present
+% Zaikun 2020-05-24: we change the scaling strategy; do not scale the problem 
+% unless all variables have both lower and upper bounds
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%lenx0 = length(x0);
+%scaling_factor = ones(lenx0, 1);
+%shift = zeros(lenx0, 1);
+%index_lub = (lb > -inf) & (ub < inf); % Variables with lower and upper bounds
+%scaling_factor(index_lub) = (ub(index_lub) - lb(index_lub))/2;
+%shift(index_lub) = (lb(index_lub) + ub(index_lub))/2;
+%shift(~index_lub) = x0(~index_lub); % Shift x0 to 0 unless both lower and upper bounds are present
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+if max(ub-lb) >= inf  % At least one of [-lb; ub] is infinity
+    % Private/unexpcted error
+    error(sprintf('%s:InvalidScaling', funname), '%s: UNEXPECTED ERROR: at least one of [-lb; ub] is infinity. Scaling should not be performed.', funname);
+end
+
+scaling_factor = (ub - lb)/2;
+shift = (lb + ub)/2;
 
 fun = @(x) fun(scaling_factor.*x+shift);
 x0 = (x0-shift)./scaling_factor;
@@ -1203,12 +1262,14 @@ if ~isempty(nonlcon)
     nonlcon = @(x) nonlcon(scaling_factor.*x+shift);
 end
 
-if any(scaling_factor ~= 1)
-    wid = sprintf('%s:ProblemScaled', invoker);
-    wmessage = sprintf('%s: problem scaled according to bound constraints; do this only if the bounds reflect the scaling of variables; if not, set options.scale=false to disable scaling.', invoker);
-    warning(wid, '%s', wmessage);
-    warnings = [warnings, wmessage]; 
-end
+% Zaikun 2020-05-25: We do not warn about scaling anymore. Scaling works
+% well in several real problems. 
+%if any(scaling_factor ~= 1)
+%    wid = sprintf('%s:ProblemScaled', invoker);
+%    wmessage = sprintf('%s: problem scaled according to bound constraints; do this only if the bounds reflect the scaling of variables; if not, set options.scale=false to disable scaling.', invoker);
+%    warning(wid, '%s', wmessage);
+%    warnings = [warnings, wmessage]; 
+%end
 
 substantially_scaled = false;
 %if (max([scaling_factor; 1./scaling_factor]) > substantially_scaled_threshold)
@@ -1221,7 +1282,7 @@ end
 
 if min(scaling_factor) < eps
     % Private/unexpcted error
-    error(sprintf('%s:InvalidScaling', funname), '%s: UNEXPECTED ERROR: invalid scaling factor returned.', funname);
+    error(sprintf('%s:InvalidScaling', funname), '%s: UNEXPECTED ERROR: invalid scaling factor returned when called by %s.', funname, invoker);
 end
 return
 
@@ -1394,6 +1455,59 @@ end
 constrviolation = max([0; rineq; abs(req); lb-x; x-ub; nlcineq; abs(nlceq)], [], 'includenan');
 % max(X, [], 'includenan') will return NaN if X contains NaN and the
 % maximum of X otherwise.
+return
+
+%%%%%% Function for revising x0 or rhobeg when the solver is BOBYQA %%%%
+function [x0, options, warnings] = pre_rhobeg_x0(invoker, x0, lb, ub, user_defined_rhobeg, options, warnings)
+% The Fortran code of BOBYQA will revise x0 so that the distance between x0
+% and the inactive bounds is at least rhobeg. We do the revision here in 
+% order to raise a warning when such a revision occurs. The revision scheme 
+% is slightly different from the one by Powell in his Fortran code, which sets 
+% x0 (lb < x0 < lb + rhobeg) = lb + rhobeg
+% x0 (ub > x0 > ub - rhobeg) = ub - rhobeg
+% Note that lb <= x0 <= ub and rhobeg <= (ub-lb)/2 after pre_options and project.
+callstack = dbstack;
+funname = callstack(1).name; % Name of the current function 
+
+solver_list = {'bobyqa'}; % Only BOBYQA needs pre_rhobeg_x0. May have others in the future.
+
+if ~ismember(lower(options.solver), solver_list)
+    % Private/unexpcted error
+    error(sprintf('%s:InvalidSolver', funname), '%s: UNEXPECTED ERROR: %s serves only %s.', funname, funname, mystrjoin(solver_list, ', '));
+end
+
+if isfield(options, 'honour_x0') && options.honour_x0  % In this case, we respect the user-defiend x0 and revise rhobeg
+    rhobeg_old = options.rhobeg;
+    lbx = (lb > -inf & x0 - lb <= eps*max(abs(lb), 1));  % x0 essentially equals lb
+    ubx = (ub < inf & x0 - ub >= - eps*max(abs(ub), 1));  % x0 essentially equals ub
+    options.rhobeg = min([options.rhobeg; x0(~lbx) - lb(~lbx); ub(~ubx) - x0(~ubx)]);
+    options.rhoend = min(options.rhoend, options.rhobeg);
+    x0(lbx) = lb(lbx);
+    x0(ubx) = ub(ubx);
+    if rhobeg_old - options.rhobeg > eps*max(1, rhobeg_old) && user_defined_rhobeg
+        % If the user does not specify rhobeg, no warning should be raised. 
+        wid = sprintf('%s:ReviseRhobeg', invoker);
+        wmessage = sprintf('%s: rhobeg is revised so that the distance between x0 and the inactive bounds is at least rhobeg.', invoker);
+        warning(wid, '%s', wmessage);
+        warnings = [warnings, wmessage]; 
+    end
+else
+    x0_old = x0;
+    lbx = (x0 <= lb + 0.5*options.rhobeg);
+    lbx_plus = (x0 > lb + 0.5*options.rhobeg) & (x0 < lb + options.rhobeg);
+    ubx_minus = (x0 < ub - 0.5*options.rhobeg) & (x0 > ub - options.rhobeg);
+    ubx = (x0 >= ub - 0.5*options.rhobeg);
+    x0(lbx) = lb(lbx);
+    x0(lbx_plus) = lb(lbx_plus) + options.rhobeg;
+    x0(ubx_minus) = ub(ubx_minus) - options.rhobeg;
+    x0(ubx) = ub(ubx);
+    if norm(x0_old-x0) > eps*max(1, norm(x0_old))
+        wid = sprintf('%s:ReviseX0', invoker);
+        wmessage = sprintf('%s: x0 is revised so that the distance between x0 and the inactive bounds is at least rhobeg.', invoker);
+        warning(wid, '%s', wmessage);
+        warnings = [warnings, wmessage]; 
+    end
+end
 return
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% Auxiliary functions %%%%%%%%%%%%%%%%%%%%%%%%%%
