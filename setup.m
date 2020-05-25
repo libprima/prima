@@ -1,5 +1,12 @@
 function setup(varargin)
 %SETUP compiles the package and try adding the package into the search path.
+%   
+%   Let solvername be a string indicating a solver name, and options be
+%   a structure indicating compilation options.
+%
+%   setup(solvername, options) compiles the solver specified by solvername with options
+%   setup(solvername) compiles the solver specified by solvername
+%   setup(options) compiles all the solvers with options
 %
 %   Since MEX is the standard way of calling Fortran code in MATLAB, you
 %   need to have MEX properly configured for compile Fortran before using
@@ -96,8 +103,21 @@ elseif nargin > 0
     wrong_input = true;
 end
 
-% Decide which solver(s) to compile. 
 solver = char(solver); % Cast solver to a character array; this is necessary if solver is a matlab string
+
+% Remove the compiled MEX files if requested.
+if strcmp(solver, 'clean')
+    clean_mex;
+    return;
+end
+
+% Uninstall the package if requested.
+if strcmp(solver, 'uninstall')
+    uninstall_pdfo;
+    return;
+end
+
+% Decide which solver(s) to compile. 
 if ismember(solver, solver_list)
     solver_list = {solver};
 elseif ~strcmpi(solver, 'ALL')
@@ -226,6 +246,8 @@ addpath(interfaces);
 
 % Try saving path
 path_saved = false;
+orig_warning_state = warning;
+warning('off', 'MATLAB:SavePath:PathNotSaved'); % Maybe we do not have the permission to save path.
 if savepath == 0
     % SAVEPATH saves the current MATLABPATH in the path-defining file,
     % which is by default located at:
@@ -233,6 +255,7 @@ if savepath == 0
     % 0 if the file was saved successfully; 1 otherwise
     path_saved = true;
 end
+warning(orig_warning_state); % Restore the behavior of displaying warnings
 
 % If path not saved, try editing the startup.m of this user
 edit_startup_failed = false;
@@ -252,37 +275,17 @@ if ~path_saved && numel(userpath) > 0
     % We will not use user_startup. Otherwise, we will only get a startup.m 
     % in the current directory, which will not be executed when MATLAB starts
     % from other directories.  
-    try_again = true;
-    niter = 1;
-    fprintf('\nFor you to use the package in other MATLAB sessions, we will add the following line to your startup script:\n\n%s\n\n', add_path_string);
-    user_input = input('Do you want us to do this? ([Y]/n) ', 's');
-    while try_again && niter <= 3
-        niter = niter + 1;
-        if isempty(user_input) || strcmpi(user_input, 'Y') || strcmpi(user_input, 'YES')
-            try_again = false;
-            file_id = fopen(user_startup, 'a');
-            if file_id == -1 % If FOPEN cannot open the file, it returns -1
-                edit_startup_failed = true;
-            else
-                count = fprintf(file_id, '\n%s Added by PDFO (%s) %s\n%s\n', '%%%%%%', datestr(datetime), '%%%%%%', add_path_string);
-                fclose(file_id);
-                if count > 0 % Check whether the writing was successful
-                    path_saved = true;
-                else
-                    edit_startup_failed = true;
-                end
-            end
-        elseif strcmpi(user_input, 'N') || strcmpi(user_input, 'NO')
-            try_again = false;
+    file_id = fopen(user_startup, 'a');
+    if file_id == -1 % If FOPEN cannot open the file, it returns -1
+        edit_startup_failed = true;
+    else
+        full_add_path_string = sprintf('%s\t%s Added by PDFO', add_path_string, '%');
+        count = fprintf(file_id, '\n%s\n', full_add_path_string);
+        fclose(file_id);
+        if count > 0 % Check whether the writing was successful
+            path_saved = true;
         else
-            if niter <= 3
-                try_again = true;
-                user_input = input('Sorry, we did not understand your input. Try again ([Y]/n): ', 's');
-            else
-                try_again = false;
-                edit_startup_failed = true;
-                fprintf('Sorry, we did not understand your inputs.\n');
-            end
+            edit_startup_failed = true;
         end
     end
 end
@@ -310,7 +313,8 @@ return
 
 %%%%%%%%%%%%%%% Function for file names with handling wildcard %%%%%%%%%%%
 function full_files = files_with_wildcard(dir_name, wildcard_string)
-% Returns a cell array of files that match the wildcard_string under dir_name
+%FULL_FILES returns a cell array of files that match the wildcard_string 
+% under dir_name.
 % MATLAB R2015b does not handel commands with wildcards like
 % delete(*.o)
 % or
@@ -322,7 +326,7 @@ return
 
 %%%%%%%%%%%%%%%%%% Function for verifying the set-up of MEX %%%%%%%%%%%%%%
 function success = mex_well_configured(language)
-
+%MEX_WELL_CONFIGURED verifies the set-up of MEX for compiling language
 orig_warning_state = warning;
 warning('off','all'); % We do not want to see warnings when verifying MEX
 
@@ -403,4 +407,86 @@ trash_files = files_with_wildcard(cpwd, 'timestwo.*');
 cellfun(@(filename) delete(filename), trash_files);
 
 warning(orig_warning_state); % Restore the behavior of displaying warnings
+return
+
+%%%%%%%%%%%%% Function for removing the compliled MEX files  %%%%%%%%%%%%
+function clean_mex
+%CLEAN_MEX removes the compliled MEX files.
+
+fprintf('\nRemoving the compliled MEX files (if any) ... ');
+% The full path of several directories.
+cpwd = fileparts(mfilename('fullpath')); % Current directory
+matd = fullfile(cpwd, 'matlab'); % Matlab directory
+interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
+interfaces_private = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
+
+% Remove the compiled MEX files
+mex_files = files_with_wildcard(interfaces_private, '*.mex*');
+cellfun(@(filename) delete(filename), mex_files);
+
+fprintf('Done.\n\n');
+return
+
+%%%%%%%%%%%%%%%%%%%%% Function for uninstalling pdfo %%%%%%%%%%%%%%%%%%%%
+function uninstall_pdfo
+%UNINSTALL_PDFO uninstalls PDFO.
+
+fprintf('\nUninstalling PDFO (if it is installed) ... ');
+
+% The full path of several directories.
+cpwd = fileparts(mfilename('fullpath')); % Current directory
+matd = fullfile(cpwd, 'matlab'); % Matlab directory
+interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
+interfaces_private = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
+examples = fullfile(matd, 'examples'); % Directory containing some test examples
+
+% Remove the compiled MEX files
+mex_files = files_with_wildcard(interfaces_private, '*.mex*');
+cellfun(@(filename) delete(filename), mex_files);
+
+% Try removing the paths possibly added by PDFO
+orig_warning_state = warning;
+warning('off', 'MATLAB:rmpath:DirNotFound'); % Maybe the paths were not added. We do not want to see this warning.
+warning('off', 'MATLAB:SavePath:PathNotSaved'); % Maybe we do not have the permission to save path.
+rmpath(interfaces, examples);
+savepath;
+warning(orig_warning_state); % Restore the behavior of displaying warnings
+
+% Removing the line possibly added to the user startup script
+user_startup = fullfile(userpath,'startup.m');
+if exist(user_startup, 'file')
+    add_path_string = sprintf('addpath(''%s'');', interfaces);
+    full_add_path_string = sprintf('%s\t%s Added by PDFO', add_path_string, '%');
+    try
+        del_str_ln(user_startup, full_add_path_string);
+    catch 
+        % Do nothing.
+    end
+end
+
+fprintf('Done.\nYou may now remove the current directory if it contains nothing you want to keep.\n\n');
+return
+
+%% Function for deleting from a file all the lines containing a string %%
+function del_str_ln(filename, string)
+%DEL_STR_LN deletes from filename all the lines that are identical to string
+fid = fopen(filename, 'r');
+if fid == -1
+    error('Cannot open file %s.', filename);
+end
+
+% Read the file into a cell of strings of strings
+data = textscan(fid, '%s', 'delimiter', '\n', 'whitespace', '');
+fclose(fid);
+cstr = data{1};
+% Remove the rows containing string
+cstr(strcmp(cstr, string)) = [];
+
+% Save the file again
+fid = fopen(filename, 'w');
+if fid == -1
+    error('Cannot open file %s.', filename);
+end
+fprintf(fid, '%s\n', cstr{:});
+fclose(fid);
 return
