@@ -9,6 +9,11 @@ C     1  CON,SIM,SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT)
       PARAMETER (NSMAX = 1000) 
 C NSMAX is the maximal number of "dropped X" to save (see comments below
 C line number 480)
+      PARAMETER (CTOL = EPSILON(1.0D0))
+C CTOL is the tolerance for consraint violation. A point X is considered
+C to be feasible if its constraint violation (RESMAX) is less than CTOL.
+C EPSILON(1.0D0) returns the machine epsilon corresponding to 1.0D0,
+C which is expected to be about 2.0D-16.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DIMENSION X(*),CON(*),SIM(N,*),SIMI(N,*),DATMAT(MPP,*),
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -149,7 +154,8 @@ C     infinite value, the algorithm stops.
       END IF
 C     If the objective function achieves the target value at a feasible
 C     point, then exit.
-      IF (F .LE. FTARGET .AND. RESMAX .LE. 0.0D0) THEN
+C      IF (F .LE. FTARGET .AND. RESMAX .LE. 0.0D0) THEN
+      IF (F .LE. FTARGET .AND. RESMAX .LT. CTOL) THEN
 C         The feasibility is guarantee because RESMAX .LE. 0.0D0 
           INFO = 1
           GOTO 620
@@ -398,7 +404,7 @@ C Zaikun 20190820: See the comments below line number 480
           DATDROP(K) = DATMAT(K, JDROP)
       END DO
       CALL SAVEX (XDROP(1:N), DATDROP(1:MPP), XSAV(1:N, 1:NSMAX),
-     1     DATSAV(1:MPP, 1:NSMAX), N, M, NSAV, NSMAX)
+     1     DATSAV(1:MPP, 1:NSMAX), N, M, NSAV, NSMAX, CTOL)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
 C     Calculate the step to the new vertex and its sign.
@@ -678,7 +684,7 @@ C
           END DO
       END IF
       CALL SAVEX (XDROP(1:N), DATDROP(1:MPP), XSAV(1:N, 1:NSMAX),
-     1     DATSAV(1:MPP, 1:NSMAX), N, M, NSAV, NSMAX)
+     1     DATSAV(1:MPP, 1:NSMAX), N, M, NSAV, NSMAX, CTOL)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       IF (JDROP .EQ. 0) GOTO 550
 C
@@ -823,7 +829,7 @@ C      NFVALS-2 instead of NFVALS-1.
       PARMU = MAX(PARMU, 1.0D2)
       IF (NFVALS .GE. 2) THEN ! See the comments above for why NFVALS>2
           CALL ISBETTER(F, RESMAX, DATMAT(MP, NP), DATMAT(MPP, NP), 
-     1         PARMU, BETTER) 
+     1         PARMU, CTOL, BETTER) 
           IF (BETTER) THEN
               DO I = 1, N 
                   X(I) = SIM(I, NP)
@@ -840,7 +846,7 @@ C      NFVALS-2 instead of NFVALS-1.
 C See the comments above for why to check these J 
               IF (DATMAT(MPP, J) .LE. RESREF) THEN
                   CALL ISBETTER(F, RESMAX, DATMAT(MP, J), 
-     1                 DATMAT(MPP, J), PARMU, BETTER) 
+     1                 DATMAT(MPP, J), PARMU, CTOL, BETTER) 
                   IF (BETTER) THEN
                       DO I = 1, N
                           X(I) = SIM(I, J) + SIM(I, NP)
@@ -859,7 +865,7 @@ C          DO J = 1, NSAV
           DO J = NSAV, 1, -1  ! We start with the most recent point 
               IF (DATSAV(MPP, J) .LE. RESREF) THEN
                   CALL ISBETTER(F, RESMAX, DATSAV(MP, J), 
-     1                 DATSAV(MPP, J), PARMU, BETTER)
+     1                 DATSAV(MPP, J), PARMU, CTOL, BETTER)
                   IF (BETTER) THEN
                       DO I = 1, N
                           X(I) = XSAV(I, J)
@@ -884,7 +890,8 @@ C          DO J = 1, NSAV
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 20190820: See the comments below line number 480
-      SUBROUTINE SAVEX (XDROP, DATDROP, XSAV, DATSAV, N, M, NSAV, NSMAX)
+      SUBROUTINE SAVEX (XDROP, DATDROP, XSAV, DATSAV, N, M, NSAV, NSMAX,
+     1     CTOL)
 C This subroutine saves XDROP in XSAV and DATDROP in DATSAV, unless
 C XDROP is dominated by a vector in XSAV(:, 1:NSAV). If XDROP dominates
 C some vectors in XSAV(:, 1:NSAV), then these vectors will be removed. 
@@ -913,7 +920,7 @@ C
       IMPLICIT NONE
       INTEGER, INTENT(IN) :: N, M, NSMAX
       INTEGER, INTENT(INOUT) :: NSAV
-      REAL(KIND(0.0D0)), INTENT(IN) :: XDROP(N), DATDROP(M+2)
+      REAL(KIND(0.0D0)), INTENT(IN) :: XDROP(N), DATDROP(M+2), CTOL
       REAL(KIND(0.0D0)), INTENT(INOUT) :: XSAV(N, NSMAX)
       REAL(KIND(0.0D0)), INTENT(INOUT) :: DATSAV(M+2, NSMAX)
       REAL(KIND(0.0D0)) :: PARMU
@@ -938,12 +945,12 @@ C incremented by 1 latter, and then IREMOVE(NSAV+1) will be accessed.
 C If XDROP is dominated by XSAV(:, I), then return immediately, 
 C because XDROP should not be inluded into XSAV.
           CALL ISBETTER (DATDROP(MP), DATDROP(MPP), DATSAV(MP, I), 
-     1         DATSAV(MPP, I), PARMU, BETTER)
+     1         DATSAV(MPP, I), PARMU, CTOL, BETTER)
           IF (BETTER) RETURN 
 C If XDROP dominates XSAV(:, I), then increment NREMOVE by 1 and save 
 C I as IREMOVE(NREMOVE).
           CALL ISBETTER (DATSAV(MP, I), DATSAV(MPP, I), DATDROP(MP),
-     1         DATDROP(MPP), PARMU, BETTER)
+     1         DATDROP(MPP), PARMU, CTOL, BETTER)
           IF (BETTER) THEN
               NREMOVE = NREMOVE + 1
               IREMOVE(NREMOVE) = I
@@ -1002,7 +1009,7 @@ C Save XDROP in XSAV(:, NSAV) (with NSAV updated as above)
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 20190820:
-      SUBROUTINE ISBETTER (F0, R0, F, R, PARMU, BETTER)
+      SUBROUTINE ISBETTER (F0, R0, F, R, PARMU, CTOL, BETTER)
 C This subroutine compares whether (F, R) is (strictly) better than 
 C (F0, R0) in the sense of decreasing the merit function PHI = F + PARMU*R. 
 C It takes care of the cases where some of these values are NaN or Inf.
@@ -1014,19 +1021,12 @@ C 3. If A = NaN, then any comparison (except .NE.) with another number B
 C    (can be Inf or NaN) returns false. 
 C
       IMPLICIT NONE
-      REAL(KIND(0.0D0)), INTENT(IN) :: F0, R0, F, R, PARMU
+      REAL(KIND(0.0D0)), INTENT(IN) :: F0, R0, F, R, PARMU, CTOL
       LOGICAL, INTENT(OUT) :: BETTER 
       REAL(KIND(0.0D0)) :: HUGENUM = HUGE(0.0D0)
       LOGICAL :: F0INFNAN, FINFNAN, R0INFNAN, RINFNAN, FLE, FLT,RLE,RLT
 
       BETTER = .FALSE.
-
-C When PARMU >= 0 and F + PARMU*R < F0 + PARMU*R0, (F, R) is better than
-C (F0, R0). Note that we should not set BETTER=FALSE even if this
-C inequlity does not hold, because one or both of the two sides may be NaN.
-      IF (PARMU .GE. 0.0D0 .AND. F + PARMU*R .LT. F0 + PARMU*R0) THEN
-          BETTER = .TRUE. 
-      END IF
 
 C As values of F0, R0, F, and R, we regard Inf and NaN being equivalent
 C values (they are equally bad).
@@ -1034,6 +1034,23 @@ C values (they are equally bad).
       R0INFNAN = (R0 .NE. R0) .OR. (R0 .GT. HUGENUM) ! R0 = Inf or NaN?
       FINFNAN = (F .NE. F) .OR. (F .GT. HUGENUM) ! F = Inf or NaN?
       RINFNAN = (R .NE. R) .OR. (R .GT. HUGENUM) ! R  = Inf or NaN?
+
+C When PARMU >= 0 and F + PARMU*R < F0 + PARMU*R0 and R < CTOL (feasible), 
+C then (F, R) is better than (F0, R0). 
+C Note that we should not set BETTER=FALSE even if this inequlity does not 
+C hold, because one or both of the two sides may be NaN.
+      IF (PARMU .GE. 0.0D0 .AND. F + PARMU*R .LT. F0 + PARMU*R0 
+     1    .AND. R .LT. CTOL) THEN
+          BETTER = .TRUE. 
+      END IF
+
+C If R < CTOL and F is not Inf or NaN while (R0 < CTOL) is false (may
+C be because R0 is NaN), then (F, R) is better than (F0, R0). We prefer
+C feasible points (i.e., constraint violation is less than CTOL) to
+C insfeasible ones.
+      IF (R .LT. CTOL .AND. .NOT.(R0 .LT. CTOL) .AND. .NOT.FINFNAN) THEN
+          BETTER = .TRUE.
+      END IF
 
 C If F0 or R0 is Inf/NaN while neither F nor R is Inf/NaN, then (F, R) 
 C is better than (F0, R0). 

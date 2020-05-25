@@ -77,8 +77,8 @@ function [x, fx, exitflag, output] = bobyqa(varargin)
 %   *** maxfun: maximal number of function evaluations; default: 500*length(x0)
 %   *** ftarget: target function value; default: -Inf
 %   *** rhobeg: initial trust-region radius; typically, rhobeg should 
-%       be about one tenth of the greatest expected change to a variable; 
-%       rhobeg should be positive; default: 1
+%       be about one tenth of the greatest expected change to a variable;
+%       rhobeg should be positive; default: min(1, min(ub-lb)/4)
 %   *** rhoend: final trust region radius; rhoend reflects the precision
 %       of the approximate solution obtained by BOBYQA; rhoend should be
 %       positive and not larger than rhobeg; default: 1e-6
@@ -86,8 +86,12 @@ function [x, fx, exitflag, output] = bobyqa(varargin)
 %       default: 2*length(x0)+1
 %   *** classical: a boolean value indicating whether to call the classical 
 %       Powell code or not; default: false
-%   *** scale: a boolean value that indicating whether to scale the problem
-%       according to bounds or not; default: false
+%   *** scale: a boolean value indicating whether to scale the problem
+%       according to bounds or not; default: false; if the problem is to be 
+%       scaled, then rhobeg and rhoend mentioned above will be used as the 
+%       initial and final trust-region radii for the scaled  problem
+%   *** honour_x0: a boolean value indicating whether to respect the
+%       user-defiend x0 or not; default: false
 %   *** quiet: a boolean value indicating whether to keep quiet or not;
 %       default: true (if false BOBYQA will print the return message of
 %       the Fortran code)
@@ -296,30 +300,6 @@ else % The problem turns out 'normal' during prepdfo
         output.warnings = [output.warnings, wmessage];
     end
 
-    % The Fortran code of BOBYQA will revise x0 so that the distance
-    % between x0 and the inactive bounds is at least rhobeg. We do it
-    % here in order to raise a warning when such a revision occurs.
-    % After this, the Fortran code will not revise x0 again.
-    % The revision scheme here is slightly different from the one by
-    % Powell in the Fortran code, which sets 
-    % x0 (lb < x0 < lb + rhobeg) = lb + rhobeg
-    % x0 (ub > x0 > ub - rhobeg) = ub - rhobeg
-    % Note that lb <= x0 <= ub and rhobeg <= (ub-lb)/2 after prepdfo.
-    x0_old = x0;
-    lbx = (x0 <= lb + 0.5*rhobeg);
-    lbx_plus = (x0 > lb + 0.5*rhobeg) & (x0 < lb + rhobeg);
-    ubx_minus = (x0 < ub - 0.5*rhobeg) & (x0 > ub - rhobeg);
-    ubx = (x0 >= ub - 0.5*rhobeg);
-    x0(lbx) = lb(lbx);
-    x0(lbx_plus) = lb(lbx_plus) + rhobeg;
-    x0(ubx_minus) = ub(ubx_minus) - rhobeg;
-    x0(ubx) = ub(ubx);
-    if norm(x0_old-x0) > eps*max(1, norm(x0_old))
-        wid = sprintf('%s:ReviseX0', invoker);
-        wmessage = sprintf('%s: x0 is revised by %s so that the distance between x0 and the inactive bounds is at least rhobeg.', invoker, funname);
-        warning(wid, '%s', wmessage);
-        output.warnings = [output.warnings, wmessage];
-    end
 
     % Call the Fortran code
     try % The mexified Fortran function is a private function generating only private errors; however, public errors can occur due to, e.g., evalobj; error handeling needed 
