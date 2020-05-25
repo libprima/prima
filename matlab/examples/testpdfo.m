@@ -1,6 +1,10 @@
 function testpdfo(release, precision, nrun) 
 %TESTPDFO tests pdfo on a few VERY simple problems.
 %
+%   Note: Do NOT follow the syntax here when you use pdfo. This file is 
+%   written for testing purpose, and it uses quite atypical syntax. See 
+%   rosenbrock_example.m for an illustration about how to use pdfo. 
+%
 %   ***********************************************************************
 %   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk) 
 %               and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
@@ -11,7 +15,7 @@ function testpdfo(release, precision, nrun)
 %   ***********************************************************************
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Attribute: public (can  be called directly by users)
+% Attribute: public (can be called directly by users)
 % 
 % TODO: None
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
