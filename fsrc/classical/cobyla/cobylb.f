@@ -7,7 +7,7 @@ C     1  CON,SIM,SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT)
       IMPLICIT INTEGER (I-N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DIMENSION X(*),CON(*),SIM(N,*),SIMI(N,*),DATMAT(MPP,*),
-     1  A(N,*),VSIG(*),VETA(*),SIGBAR(*),DX(*),W(*),IACT(*)
+     1  A(N,*),VSIG(*),VETA(*),SIGBAR(*),DX(*),W(*),IACT(*),CONSAV(M)
 C
 C     Set the initial values of some parameters. The last column of SIM holds
 C     the optimal vertex of the current simplex, and the preceding N columns
@@ -91,6 +91,16 @@ C   60     RESMAX=AMAX1(RESMAX,-CON(K))
       END IF
       CON(MP)=F
       CON(MPP)=RESMAX
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C     By Tom 2020/05/15:
+C     The values in CON are revised when the linear models are
+C     calculated. We store, therefore, its values into CONSAV to access
+C     after the execution the true constraint function evaluations.
+      DO K=1,M
+          CONSAV(K)=CON(K)
+      END DO
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
       IF (IBRNCH .EQ. 1) GOTO 440
 C
 C     Set the recently calculated function values in a column of DATMAT. This
@@ -601,6 +611,14 @@ C
           PRINT 70, NFVALS,F,RESMAX,(X(I),I=1,IPTEM)
           IF (IPTEM .LT. N) PRINT 80, (X(I),I=IPTEMP,N)
       END IF
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C     By Tom 2020/05/15:
+C     The true values of the constraint function evaluations, stored in
+C     CONSAV are dumped into CON to be returned by COBYLA.
+      DO K=1,M
+          CON(K)=CONSAV(K)
+      END DO
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       MAXFUN=NFVALS
       RETURN
       END
