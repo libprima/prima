@@ -260,10 +260,7 @@ def cobyla(fun, x0, args=(), bounds=None, constraints=(), options=None):
         nf = int(fcobyla.fcobyla.nf)
 
         if m > 0:
-            if n == 1 and options_c['classical']:
-                output['nlc'] = conval[b_aug.size:]
-            else:
-                output['nlc'] = -conval[b_aug.size:]
+            output['nlc'] = -conval[b_aug.size:]
 
     # Postprocess the result.
     return postpdfo(x, fx, exitflag, output, fun_name, nf, fhist, options_c, prob_info, constrviolation, chist)
