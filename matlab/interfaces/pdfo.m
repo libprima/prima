@@ -120,7 +120,8 @@ function [x, fx, exitflag, output] = pdfo(varargin)
 %   *** ftarget: target function value; default: -Inf
 %   *** rhobeg: initial trust-region radius; typically, rhobeg should 
 %       be about one tenth of the greatest expected change to a variable; 
-%       rhobeg should be positive; default: 1
+%       rhobeg should be positive; default: 1 if problem is not scaled
+%       (min(1, min(ub-lb)/4) if solver is bobyqa), 0.5 if problem is scaled
 %   *** rhoend: final trust region radius; rhoend reflects the precision
 %       of the approximate solution obtained by PDFO; rhoend should be
 %       positive and not larger than rhobeg; default: 1e-6

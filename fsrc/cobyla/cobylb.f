@@ -156,7 +156,7 @@ C     If the objective function achieves the target value at a feasible
 C     point, then exit.
 C      IF (F .LE. FTARGET .AND. RESMAX .LE. 0.0D0) THEN
       IF (F .LE. FTARGET .AND. RESMAX .LT. CTOL) THEN
-C         The feasibility is guarantee because RESMAX .LE. 0.0D0 
+C         The feasibility is guarantee because RESMAX .LE. CTOL 
           INFO = 1
           GOTO 620
       END IF

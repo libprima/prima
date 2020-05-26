@@ -78,7 +78,8 @@ function [x, fx, exitflag, output] = bobyqa(varargin)
 %   *** ftarget: target function value; default: -Inf
 %   *** rhobeg: initial trust-region radius; typically, rhobeg should 
 %       be about one tenth of the greatest expected change to a variable;
-%       rhobeg should be positive; default: min(1, min(ub-lb)/4)
+%       rhobeg should be positive; default: min(1, min(ub-lb)/4) if
+%       problem is not scaled, 0.5 if problem is scaled
 %   *** rhoend: final trust region radius; rhoend reflects the precision
 %       of the approximate solution obtained by BOBYQA; rhoend should be
 %       positive and not larger than rhobeg; default: 1e-6
