@@ -261,10 +261,11 @@ warning(orig_warning_state); % Restore the behavior of displaying warnings
 edit_startup_failed = false;
 user_startup = fullfile(userpath,'startup.m');
 add_path_string = sprintf('addpath(''%s'');', interfaces);
-% First, check whether add_path_string already exists in user_startup or not
+full_add_path_string = sprintf('%s\t%s Added by PDFO', add_path_string, '%');
+% First, check whether full_add_path_string already exists in user_startup or not
 if exist(user_startup, 'file')
     startup_text_cells = regexp(fileread(user_startup), '\n', 'split');
-    if any(strcmp(startup_text_cells, add_path_string))
+    if any(strcmp(startup_text_cells, full_add_path_string))
         path_saved = true;
     end
 end
@@ -275,18 +276,32 @@ if ~path_saved && numel(userpath) > 0
     % We will not use user_startup. Otherwise, we will only get a startup.m 
     % in the current directory, which will not be executed when MATLAB starts
     % from other directories.  
-    file_id = fopen(user_startup, 'a');
-    if file_id == -1 % If FOPEN cannot open the file, it returns -1
-        edit_startup_failed = true;
+
+    % We first check whether the last line of the user startup script is an 
+    % empty line (or the file is empty or even does not exist at all). 
+    % If yes, we do not need to put a line break before the path adding string.
+    if exist(user_startup, 'file')
+        startup_text_cells = regexp(fileread(user_startup), '\n', 'split');
+        last_line_empty = isempty(startup_text_cells) || (isempty(startup_text_cells{end}) && isempty(startup_text_cells{max(1, end-1)}));
     else
-        full_add_path_string = sprintf('%s\t%s Added by PDFO', add_path_string, '%');
-        count = fprintf(file_id, '\n%s\n', full_add_path_string);
-        fclose(file_id);
-        if count > 0 % Check whether the writing was successful
-            path_saved = true;
-        else
-            edit_startup_failed = true;
+        last_line_empty = true;  
+    end
+    file_id = fopen(user_startup, 'a');
+    if file_id ~= -1 % If FOPEN cannot open the file, it returns -1
+        if ~last_line_empty  % The last line of user_startup is not empty
+            fprintf(file_id, '\n');  % Add a new empty line
         end
+        fprintf(file_id, '%s', full_add_path_string);
+        fclose(file_id);
+        if exist(user_startup, 'file')
+            startup_text_cells = regexp(fileread(user_startup), '\n', 'split');
+            if any(strcmp(startup_text_cells, full_add_path_string))
+                path_saved = true;
+            end
+        end
+    end
+    if ~path_saved
+        edit_startup_failed = true;
     end
 end
 
