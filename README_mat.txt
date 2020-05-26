@@ -77,7 +77,14 @@ help pdfo
 will tell you how to use "pdfo".
 
 
-3. References
+3. Uninstall
+
+PDFO can be uninstalled using the setup.m script by executing
+
+setup unistall
+
+
+4. References
 
 [1] M. J. D. Powell, A direct search optimization method that models the
 objective and constraint functions by linear interpolation, In Advances
