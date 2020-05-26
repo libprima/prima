@@ -1017,8 +1017,8 @@ if isfield(options, 'rhobeg')
         wmessage = sprintf('%s: invalid rhobeg; it should be a positive number; it is set to max(%f, rhoend).', invoker, rhobeg);
         warning(wid, '%s', wmessage);
         warnings = [warnings, wmessage]; 
-    elseif strcmpi(solver, 'bobyqa') 
-        if options.scale && options.rhobeg > 1
+    elseif strcmpi(solver, 'bobyqa')  % Validate options.rhobeg for bobyqa
+        if options.scale && options.rhobeg > 1  % This case cannot be combined with the next case, as ub and lb are NOT scaled yet in prepdfo
             wid = sprintf('%s:InvalidRhobeg', invoker);
             wmessage = sprintf('%s: invalid rhobeg; %s requires rhobeg <= 1 when the problem is scaled; it is set to 0.5.', invoker, solver);
             warning(wid, '%s', wmessage);
