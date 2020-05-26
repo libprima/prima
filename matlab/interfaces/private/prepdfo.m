@@ -896,7 +896,7 @@ else
 end
 
 % Validate options.scale
-% We need the value of options.scale to set the default rhobeg
+% We need the value of options.scale to revise the default rhobeg
 validated = false;
 if isfield(options, 'scale')
     if ~islogicalscalar(options.scale)
