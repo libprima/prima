@@ -5,6 +5,7 @@ from __future__ import division, print_function, absolute_import
 import sys
 import warnings
 from inspect import stack
+from typing import Union
 
 import numpy as np
 
@@ -621,9 +622,11 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
     # This should be done after revising x0, which can affect the shift.
     prob_info['scaled'] = False
     prob_info['scaling_factor'] = np.ones(lenx0)
-    prob_info['shift'] = np.array([0], dtype=np.float64)
+    prob_info['shift'] = np.zeros_like(x0_c)
     if options_c['scale'] and not prob_info['nofreex'] and not prob_info['infeasible']:
-        fun_c_reduced, x0_c, lb, ub, constraints_c, scaling_factor, shift, substantially_scaled = \
+        # Scale and shift the problem so that all the bounds become [-1, 1]. It is done only if all variables have both
+        # lower and upper bounds.
+        fun_c_reduced, x0_c, lb, ub, constraints_c, scaling_factor, shift, _ = \
             _scale_problem(fun_c_reduced, x0_c, lb, ub, constraints_c, list_warnings)
 
         # Scale and shift the problem so that:
@@ -633,10 +636,6 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
         prob_info['scaling_factor'] = scaling_factor
         prob_info['shift'] = shift
 
-        # If the problem is substantially scaled, then rhobeg and rhoend may need to be revised to be consistent.
-        if substantially_scaled:
-            options_c['rhobeg'] = np.float64(1.0)
-
     # Select a solver if the invoker is 'pdfo' and no one is provided.
     if invoker.lower() == 'pdfo':
         if prob_info['refined_type'] == 'bound-constrained':
@@ -644,6 +643,18 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
             prob_info['refined_data'] = {'lb': lb, 'ub': ub}
 
         method = _solver_selection(invoker, method, options_c, prob_info, list_warnings)
+
+    if method.lower() == 'bobyqa' and not prob_info['nofreex'] and not prob_info['infeasible']:
+        # The Fortran code of BOBYQA will revise x0 so that the distance between x0 and the inactive bounds is at least
+        # rhobeg. We do it here in order to raise a warning when such a revision occurs. After this, the Fortran code
+        # will not revise x0 again. If the options['honour_x0'] = True, then we keep x0 unchanged and revise rhobeg if
+        # necessary.
+        # Does the user provide rhobeg?
+        user_defined_rhobeg = prob_info['raw_data']['options'] is not None and \
+                              'rhobeg' in prob_info['raw_data']['options'].keys() and \
+                              isinstance(prob_info['raw_data']['options']['rhobeg'], scalar_types)
+        x0_c, options_c = \
+            _rhobeg_x0_distance_to_actives(invoker, x0_c, lb, ub, user_defined_rhobeg, options_c, list_warnings)
 
     # Store the warnings raised during the pre-processing.
     prob_info['warnings'] = list_warnings
@@ -799,8 +810,6 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
             linear_constraint_types = (LinearConstraint, ScipyLinearConstraint)
             nonlinear_constraint_types = (NonlinearConstraint, ScipyNonlinearConstraint)
         except ImportError:
-            ScipyLinearConstraint = type(None)
-            ScipyNonlinearConstraint = type(None)
             linear_constraint_types = LinearConstraint
             nonlinear_constraint_types = NonlinearConstraint
 
@@ -946,16 +955,16 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
         def fun_nonlinear(x, raw=False):
             fun_x = np.asarray([], dtype=np.float64)
 
-            for nonlinear_constraint in list_nonlinear:
+            for nlc_constraint in list_nonlinear:
                 # Get the value of the constraint function.
                 if not raw and prob_info['reduced']:
                     x_full = _fullx(x, fixed_values, free_indices, fixed_indices)
                 else:
                     x_full = x
-                if isinstance(nonlinear_constraint, nonlinear_constraint_types):
-                    constraint_x = nonlinear_constraint.fun(x_full)
+                if isinstance(nlc_constraint, nonlinear_constraint_types):
+                    constraint_x = nlc_constraint.fun(x_full)
                 else:
-                    constraint_x = nonlinear_constraint['fun'](x_full)
+                    constraint_x = nlc_constraint['fun'](x_full)
 
                 if constraint_x is None:
                     # If the constraint function returned anything, we convert the default None value to NaN, that can
@@ -980,24 +989,24 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
                     raise ValueError('{}: the constraint function should return a vector or a scalar.'.format(invoker))
 
                 lenm = constraint_x.size
-                if isinstance(nonlinear_constraint, nonlinear_constraint_types):
-                    if nonlinear_constraint.lb.size not in [0, lenm] or \
-                            nonlinear_constraint.ub.size not in [0, lenm] or \
-                            (nonlinear_constraint.lb.size == 0 and nonlinear_constraint.ub.size == 0):
+                if isinstance(nlc_constraint, nonlinear_constraint_types):
+                    if nlc_constraint.lb.size not in [0, lenm] or \
+                            nlc_constraint.ub.size not in [0, lenm] or \
+                            (nlc_constraint.lb.size == 0 and nlc_constraint.ub.size == 0):
                         raise ValueError(
                             '{}: the size of the vector returned by the constraint function is inconsistent with the '
                             'constraint bounds; check the shapes of the arrays.'.format(invoker))
 
                     #  Convert the constraints defined as lb <= c(x) <= ub into c_extended(x) <= 0.
-                    if nonlinear_constraint.lb.size > 0 and nonlinear_constraint.ub.size > 0:
-                        constraint_x = np.concatenate((nonlinear_constraint.lb - constraint_x,
-                                                       constraint_x - nonlinear_constraint.ub))
-                    elif nonlinear_constraint.lb.size > 0:
-                        constraint_x = nonlinear_constraint.lb - constraint_x
+                    if nlc_constraint.lb.size > 0 and nlc_constraint.ub.size > 0:
+                        constraint_x = np.concatenate((nlc_constraint.lb - constraint_x,
+                                                       constraint_x - nlc_constraint.ub))
+                    elif nlc_constraint.lb.size > 0:
+                        constraint_x = nlc_constraint.lb - constraint_x
                     else:
-                        # Necessarily, nonlinear_constraint.ub is well-defined.
-                        constraint_x = constraint_x - nonlinear_constraint.ub
-                elif nonlinear_constraint['type'] == 'eq':
+                        # Necessarily, nlc_constraint.ub is well-defined.
+                        constraint_x = constraint_x - nlc_constraint.ub
+                elif nlc_constraint['type'] == 'eq':
                     constraint_x = np.concatenate((constraint_x, -constraint_x))
 
                 # Add the current nonlinear constraint evaluation to the general one.
@@ -1020,6 +1029,7 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
         infeasible_linear = np.asarray([], dtype=bool)
         infeasible_nonlinear = np.asarray([], dtype=bool)
         trivial = np.asarray([], dtype=bool)
+        infeasible = prob_info['infeasible_bound']
 
     return {'linear': linear_constraints, 'nonlinear': nonlinear_constraints}, \
            {'linear': raw_linear_constraints, 'nonlinear': raw_nonlinear_constraints}, infeasible_linear, \
@@ -1081,11 +1091,15 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
     rhobeg = 1  # The default rhobeg and rhoend will be revised for BOBYQA
     rhoend = 1e-6
     ftarget = -np.inf
-    classical = False  # Call the classical Powell code?
-    scale = False  # Scale the problem according to bounds?
+    classical = False  # call the classical Powell code?
+    scale = False  # scale the problem according to bounds?
+    honour_x0 = False  # Respect the user-defined x0? Needed by BOBYQA
     quiet = True
     debugflag = False
     chkfunval = False
+
+    # DO NOT REMOVE THE FOLLOWING!! Scale only if all variables are with finite lower and upper bounds.
+    scale = scale and np.all(np.logical_not(np.isinf(np.r_[lb, ub])))
 
     # What is the solver? We need this information to decide which fields are 'known' (e.g., expected), and also to set
     # npt and rhobeg, rhoend.
@@ -1095,6 +1109,8 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
             warnings.warn(warn_message, Warning)
             list_warnings.append(warn_message)
             method = None
+        elif method is not None:
+            method = method.lower()
     else:  # invoker is in {'uobyqa', ..., 'cobyla'}
         if method is not None and method.lower() != invoker:
             warn_message = '{}: a solver different from {} is specified; it is ignored.'.format(invoker, invoker)
@@ -1103,12 +1119,19 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
         method = invoker
 
     # Check whether the used provided any unknown option.
+    known_field = ['maxfev', 'rhobeg', 'rhoend', 'ftarget', 'classical', 'quiet', 'debug', 'chkfunval']
     if method is not None and method.lower() in ['bobyqa', 'lincoa', 'newuoa']:
-        known_field = ['npt', 'maxfev', 'rhobeg', 'rhoend', 'ftarget', 'classical', 'scale', 'quiet', 'debug',
-                       'chkfunval', 'solver']
-    else:
-        known_field = ['maxfev', 'rhobeg', 'rhoend', 'ftarget', 'classical', 'scale', 'quiet', 'debug', 'chkfunval']
+        known_field.append('npt')
+    if method is not None and method.lower() in ['bobyqa', 'cobyla', 'lincoa']:
+        known_field.append('scale')
+    if method is not None and method.lower() == 'bobyqa':
+        known_field.append('honour_x0')
     unknown_field = list(set(option_fields).difference(set(known_field)))
+
+    # Remove the unknown fields. If we do not removed unknown fields, we may still complain later if an unknown field is
+    # not properly set (e.g., options.npt is not a number) even though we have declared that this field will be ignored.
+    for key in unknown_field:
+        options.pop(key)
     if len(unknown_field) > 0:
         warn_message = '{}: unknown option(s): {}; they are ignored.'.format(invoker, ', '.join(unknown_field))
         warnings.warn(warn_message, Warning)
@@ -1130,20 +1153,46 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
             # The method is necessarily COBYLA.
             npt = lenx0 + 1
 
+    # Validate options['scale'] at first. It needs to be done here since the trust-region radii revision required for
+    # BOBYQA asks for the true scaling flag.
+    validated = False
+    if 'scale' in option_fields:
+        if not isinstance(options['scale'], (bool, np.bool)):
+            warn_message = '{}: invalid scale flag; it should be True or False; it is set to {}'.format(invoker, scale)
+            warnings.warn(warn_message, Warning)
+            list_warnings.append(warn_message)
+        elif options['scale'] and np.any(np.isinf(ub - lb)):
+            warn_message = \
+                '{}: problem cannot be scaled because not all variables have both lower and upper ' \
+                'bounds.'.format(invoker)
+            warnings.warn(warn_message, Warning)
+            list_warnings.append(warn_message)
+            options['scale'] = False  # it must be set to False not to be performed
+            validated = True
+        else:
+            validated = True
+
+    if not validated:  # options['scale'] has not got a valid value yet.
+        options['scale'] = scale
+    options['scale'] = np.bool(options['scale'])
+
     # Revise default rhobeg and rhoend if the solver is BOBYQA.
-    if method is not None and method.lower() == 'bobyqa':
+    if options['scale']:
+        rhobeg = .5  # this value cannot be bigger than 1. Otherwise, BOBYQA will complain
+        rhoend = 1e-6
+    if method is not None and method.lower() == 'bobyqa' and not options['scale']:
         lb_mod, ub_mod = lb.copy(), ub.copy()
         lb_mod[np.logical_and(lb_mod > 0, np.isinf(lb_mod))] = -np.inf
         ub_mod[np.logical_and(ub_mod < 0, np.isinf(ub_mod))] = np.inf
         rhobeg_bobyqa = min(rhobeg, np.min(ub_mod - lb_mod) / 4)
-        if ('scale' in option_fields and isinstance(options['scale'], bool) and not options['scale']) or \
-                (not scale and not ('scale' in option_fields and isinstance(options['scale'], bool))):
+        if ('scale' in option_fields and isinstance(options['scale'], (bool, np.bool)) and not options['scale']) or \
+                (not scale and not ('scale' in option_fields and isinstance(options['scale'], (bool, np.bool)))):
             # If we are going to scale the problem later, then we keep the default value for rhoend; otherwise, we scale
             # it as follows.
             rhoend = (rhoend / rhobeg) * rhobeg_bobyqa
         rhobeg = rhobeg_bobyqa
 
-    # Validate the user-specified options; adopt the default values if needed.
+    # Validate the user-specified options (except scale that has already been done); adopt the default values if needed.
     validated = False
     if 'npt' in option_fields and method is not None and method in ['bobyqa', 'lincoa', 'newuoa']:
         # Only newuoa, bobyqa and lincoa accept an npt option.
@@ -1206,6 +1255,8 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
     options['maxfev'] = np.int32(options['maxfev'])
 
     # Validate options['rhobeg'].
+    # NOTE: if the problem is to be scaled, then options['rhobeg'] and options['rhoend'] will be used as the intial and
+    # final trust-region radii for the scaled problem.
     validated = False
     if 'rhobeg' in option_fields:
         if not isinstance(options['rhobeg'], scalar_types) or options['rhobeg'] <= 0:
@@ -1214,14 +1265,22 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
                 'max({}, rhoend).'.format(invoker, rhobeg)
             warnings.warn(warn_message, Warning)
             list_warnings.append(warn_message)
-        elif method is not None and method.lower() == 'bobyqa' and options['rhobeg'] > np.min(ub - lb) / 2:
-            warn_message = \
-                '{}: invalid rhobeg; {} requires rhobeg <= min(ub-lb)/2; it is set to ' \
-                'min(ub-lb)/4.'.format(invoker, method)
-            warnings.warn(warn_message, Warning)
-            list_warnings.append(warn_message)
-            options['rhobeg'] = np.min(ub - lb) / 4
-            validated = True
+        elif method is not None and method.lower() == 'bobyqa':
+            if options['scale'] and options['rhobeg'] > 1:
+                warn_message = \
+                    '{}: invalid rhobeg; {} requires rhobeg <= 1 when the problem is scaled; it is set to ' \
+                    '0.5.'.format(invoker, method)
+                warnings.warn(warn_message, Warning)
+                list_warnings.append(warn_message)
+                options['rhobeg'] = 0.5
+            elif not options['scale'] and options['rhobeg'] > np.min(ub - lb) / 2:
+                warn_message = \
+                    '{}: invalid rhobeg; {} requires rhobeg <= min(ub-lb)/2; it is set to ' \
+                    'min(ub-lb)/4.'.format(invoker, method)
+                warnings.warn(warn_message, Warning)
+                list_warnings.append(warn_message)
+                options['rhobeg'] = np.min(ub - lb) / 4
+            validated = True  # The value in options['rhobeg'] needs to be used.
         else:
             validated = True
 
@@ -1269,7 +1328,7 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
     # Validate options['classical'].
     validated = False
     if 'classical' in option_fields:
-        if not isinstance(options['classical'], bool):
+        if not isinstance(options['classical'], (bool, np.bool)):
             warn_message = \
                 '{}: invalid scale flag; it should be True or False; it is set to {}'.format(invoker, classical)
             warnings.warn(warn_message, Warning)
@@ -1287,24 +1346,25 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
         warnings.warn(warn_message, Warning)
         list_warnings.append(warn_message)
 
-    # Validate options['scale'].
+    # Validate options['honour_x0'].
     validated = False
-    if 'scale' in option_fields:
-        if not isinstance(options['scale'], bool):
-            warn_message = '{}: invalid scale flag; it should be True or False; it is set to {}'.format(invoker, scale)
+    if 'honour_x0' in option_fields:
+        if not isinstance(options['honour_x0'], (bool, np.bool)):
+            warn_message = \
+                '{}: invalid honour_x0 flag; it should be True or False; it is set to {}'.format(invoker, honour_x0)
             warnings.warn(warn_message, Warning)
             list_warnings.append(warn_message)
         else:
             validated = True
 
-    if not validated:  # options['scale'] has not got a valid value yet.
-        options['scale'] = scale
-    options['scale'] = np.bool(options['scale'])
+    if not validated:  # options['honour_x0'] has not got a valid value yet.
+        options['honour_x0'] = honour_x0
+    options['honour_x0'] = np.bool(options['honour_x0'])
 
     # Validate options['quiet'].
     validated = False
     if 'quiet' in option_fields:
-        if not isinstance(options['quiet'], bool):
+        if not isinstance(options['quiet'], (bool, np.bool)):
             warn_message = '{}: invalid quiet flag; it should be True or False; it is set to {}'.format(invoker, quiet)
             warnings.warn(warn_message, Warning)
             list_warnings.append(warn_message)
@@ -1318,7 +1378,7 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
     # Validate options['debug'].
     validated = False
     if 'debug' in option_fields:
-        if not isinstance(options['debug'], bool):
+        if not isinstance(options['debug'], (bool, np.bool)):
             warn_message = \
                 '{}: invalid debug flag; it should be True or False; it is set to {}'.format(invoker, debugflag)
             warnings.warn(warn_message, Warning)
@@ -1342,7 +1402,7 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
     # Validate options['chkfunval'].
     validated = False
     if 'chkfunval' in option_fields:
-        if not isinstance(options['chkfunval'], bool):
+        if not isinstance(options['chkfunval'], (bool, np.bool)):
             warn_message = \
                 '{}: invalid chkfunval flag; it should be True or False; it is set to {}'.format(invoker, chkfunval)
             warnings.warn(warn_message, Warning)
@@ -1724,31 +1784,35 @@ def _scale_problem(fun, x0, lb, ub, constraints, list_warnings):
     ub = np.asarray(ub, dtype=np.float64)
     if x0.size != lb.size or x0.size != ub.size:
         raise ValueError(
-            '{}: UNEXPECTED ERROR: the sizes of the initial guess and the bounds are inconsistent'.format(invoker))
+            '{}: UNEXPECTED ERROR: the sizes of the initial guess and the bounds are inconsistent.'.format(invoker))
 
     if not isinstance(list_warnings, list):
-        raise ValueError('{}: UNEXPECTED ERROR: the list of warnings is ill-defined'.format(invoker))
+        raise ValueError('{}: UNEXPECTED ERROR: the list of warnings is ill-defined.'.format(invoker))
 
     # x_before_scaling = scaling_factor*x_after_scaling + shift.
 
     # Question: What about scaling according to the magnitude of x0, lb, ub, x0-lb, ub-x0?
     # This can be useful if lb and ub reflect the nature of the problem well, and x0 is a reasonable approximation to
     # the optimal solution. Otherwise, it may be a bad idea.
-    substantially_scaled_threshold = 4
+    substantially_scaled_threshold = 2
 
     # We consider the problem substantially scaled_threshold if
-    # max(scaling_factor)/min(scaling_factor) > substantially_scaled_threshold.
-    lenx0 = x0.size
-    index_lub = np.logical_and(lb > -np.inf, ub < np.inf)
-    scaling_factor = np.ones(lenx0, dtype=np.float64)
-    shift = np.zeros(lenx0, dtype=np.float64)
+    # max([1; scaling_factor])/min([1; scaling_factor]) > substantially_scaled_threshold
+
+    # The strategy for scaling has changed with v1.0: do not scale the problem unless all variables have both lower and
+    # upper bounds
+    # lenx0 = x0.size
+    # index_lub = np.logical_and(lb > -np.inf, ub < np.inf)
+    # scaling_factor = np.ones(lenx0, dtype=np.float64)
+    # shift = np.zeros(lenx0, dtype=np.float64)
+    if np.any(np.isinf(ub - lb)):
+        raise ValueError(
+            '{}: UNEXPECTED ERROR: at least one of [-lb; ub] is infinity. Scaling should not be '
+            'performed.'.format(invoker))
 
     # Define the scaling factor and the shift according to the bounds.
-    scaling_factor[index_lub] = (ub[index_lub] - lb[index_lub]) / 2
-    shift[index_lub] = (ub[index_lub] + lb[index_lub]) / 2
-
-    # Shift x0 to 0 unless both lower and upper bounds are present.
-    shift[np.logical_not(index_lub)] = x0[np.logical_not(index_lub)]
+    scaling_factor = (ub - lb) / 2
+    shift = (ub + lb) / 2
 
     # Build the scaled objective function.
     def fun_c(x):
@@ -1774,19 +1838,20 @@ def _scale_problem(fun, x0, lb, ub, constraints, list_warnings):
         constraints_c['nonlinear'] = \
             {'type': 'ineq', 'fun': lambda x: constraints['nonlinear']['fun'](scaling_factor * x + shift)}
 
-    if any(scaling_factor != 1):
-        warn_message = \
-            "{}: problem scaled according to bound constraints; do this only if the bounds reflect the scaling of " \
-            "variables; if not, set options['scale']=False to disable scaling.".format(invoker)
-        warnings.warn(warn_message, Warning)
-        list_warnings.append(warn_message)
+    # From v1.0, we do not warn about scaling anymore. Scaling works well in several real problems.
+    # if any(scaling_factor != 1):
+    #     warn_message = \
+    #         "{}: problem scaled according to bound constraints; do this only if the bounds reflect the scaling of " \
+    #         "variables; if not, set options['scale']=False to disable scaling.".format(invoker)
+    #     warnings.warn(warn_message, Warning)
+    #     list_warnings.append(warn_message)
 
     substantially_scaled = False
 
     # Check whether the scaling is substantial. If this is true, the options rhobeg and rhoend may be updated for
     # BOBYQA.
     # if (max([scaling_factor; 1./scaling_factor]) > substantially_scaled_threshold)
-    if np.max(scaling_factor) / np.min(scaling_factor) > substantially_scaled_threshold:
+    if np.max(np.r_[1, scaling_factor]) / np.min(np.r_[1, scaling_factor]) > substantially_scaled_threshold:
         substantially_scaled = True
         # this will affect the setting of rhobeg and rhoend: If x is substantially scaled, then rhobeg = 1,
         # rhoend = previously_defined_rhoend/previously_defined_rhobeg
@@ -1840,7 +1905,7 @@ def _solver_selection(invoker, method, options, prob_info, list_warnings):
     if not isinstance(invoker, str):
         raise ValueError('unknown: UNEXPECTED ERROR: invoker should be a string.')
 
-    # Validate invoker.
+    # Validate method.
     if method is not None and not isinstance(method, str):
         raise ValueError('{}: UNEXPECTED ERROR: method should be a string.'.format(invoker))
 
@@ -1917,6 +1982,76 @@ def _solver_selection(invoker, method, options, prob_info, list_warnings):
         raise SystemError("{}: UNEXPECTED ERROR: invalid solver '{}' selected.".format(fun_name, solver))
 
     return solver
+
+
+def _rhobeg_x0_distance_to_actives(invoker, x0, lb, ub, user_defined_rhobeg, options, list_warnings):
+    # possible solvers
+    fun_name = stack()[0][3]  # name of the current function
+    local_invoker_list = ['pdfo', 'bobyqa']
+
+    if invoker not in local_invoker_list:
+        raise SystemError('`{}` should only be called by {}'.format(fun_name, ', '.join(local_invoker_list)))
+    invoker = stack()[1][3].lower()
+
+    # Validate invoker.
+    if not isinstance(invoker, str):
+        raise ValueError('unknown: UNEXPECTED ERROR: invoker should be a string.')
+
+    if not (hasattr(x0, '__len__') and hasattr(lb, '__len__') and hasattr(ub, '__len__')):
+        raise TypeError('{}: UNEXPECTED ERROR: the initial guess and the bounds should be vectors.'.format(invoker))
+
+    if not isinstance(user_defined_rhobeg, (bool, np.bool)):
+        raise TypeError('{}: UNEXPECTED ERROR: the user defined rhobeg flag should be a boolean.'.format(invoker))
+
+    # Validate options.
+    option_fields = {'honour_x0', 'rhobeg', 'rhoend'}
+    if options is None or not isinstance(options, dict) or not (option_fields <= set(options.keys())) or \
+            not isinstance(options['honour_x0'], (bool, np.bool)) or \
+            not isinstance(options['rhobeg'], scalar_types) or not isinstance(options['rhoend'], scalar_types):
+        raise ValueError('{}: UNEXPECTED ERROR: options should be a valid dictionary.'.format(invoker))
+
+    # Validate list_warnings.
+    if not hasattr(list_warnings, '__len__'):
+        raise ValueError('{}: UNEXPECTED ERROR: list_warnings should be a list.'.format(invoker))
+
+    if options['honour_x0']:
+        # In this case, we respect the user-defined x0 and revise rhobeg.
+        rhobeg_old = options['rhobeg']
+        lbx = np.logical_and(np.logical_or(np.logical_not(np.isinf(lb)), lb > 0),
+                             x0 - lb <= eps * np.max(np.r_[1, np.abs(lb)]))
+        nlbx = np.logical_not(lbx)
+        ubx = np.logical_and(np.logical_or(np.logical_not(np.isinf(ub)), ub < 0),
+                             x0 - ub >= -eps * np.max(np.r_[1, np.abs(ub)]))
+        nubx = np.logical_not(ubx)
+        options['rhobeg'] = np.min(np.r_[options['rhobeg'], x0[nlbx] - lb[nlbx], ub[nubx] - x0[nubx]])
+        options['rhoend'] = min(options['rhoend'], options['rhobeg'])
+        x0[lbx] = lb[lbx]
+        x0[ubx] = ub[ubx]
+        if rhobeg_old - options['rhobeg'] > eps * max(1, rhobeg_old) and user_defined_rhobeg:
+            # If the user does not specify rhobeg, no warning should be raised.
+            warn_message = \
+                '{}: rhobeg is revised so that the distance between x0 and the inactive bounds is at least ' \
+                'rhobeg.'.format(invoker)
+            warnings.warn(warn_message, Warning)
+            list_warnings.append(warn_message)
+    else:
+        x0_old = x0.copy()
+        lbx = x0 <= lb + options['rhobeg'] / 2
+        lbx_plus = np.logical_and(x0 > lb + options['rhobeg'] / 2, x0 < lb + options['rhobeg'])
+        ubx = x0 >= ub - options['rhobeg'] / 2
+        ubx_minus = np.logical_and(x0 < ub - options['rhobeg'] / 2, x0 > ub - options['rhobeg'])
+        x0[lbx] = lb[lbx]
+        x0[lbx_plus] = lb[lbx_plus] +options['rhobeg']
+        x0[ubx_minus] = ub[ubx_minus] - options['rhobeg']
+        x0[ubx] = ub[ubx]
+        if np.linalg.norm(x0_old - x0) > eps * max(1, np.linalg.norm(x0_old)):
+            warn_message = \
+                "{}: x0 is revised so that the distance between x0 and the inactive bounds is at least rhobeg; set " \
+                "options['honour_x0']=True if you prefer to keep x0.".format(invoker)
+            warnings.warn(warn_message, Warning)
+            list_warnings.append(warn_message)
+
+    return x0, options
 
 
 def _project(x0, lb, ub, constraints, options=None):
@@ -2421,8 +2556,8 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
         # Otherwise, we would have to scale also the linear constraints back to get the correct residuals.
         linear = prob_info_c['refined_data']['constraints']['linear']
         if linear is not None:
-            Ax = np.dot(linear.A, x_c)
-            r = np.r_[linear.lb - Ax, Ax - linear.ub]
+            ax = np.dot(linear.A, x_c)
+            r = np.r_[linear.lb - ax, ax - linear.ub]
         else:
             r = np.asarray([np.nan])
 
@@ -2615,8 +2750,8 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
             # Compute the linear constraint value.
             if linear is not None:
                 try:
-                    Ax = np.dot(linear.A, x_c)
-                    r = np.r_[linear.lb - Ax, Ax - linear.ub]
+                    ax = np.dot(linear.A, x_c)
+                    r = np.r_[linear.lb - ax, ax - linear.ub]
                 except ValueError:
                     raise ValueError(
                         '{}: UNEXPECTED ERROR: the linear constraints are no more consistent'.format(invoker))

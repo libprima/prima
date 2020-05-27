@@ -2,6 +2,11 @@
 # -*- coding: utf-8 -*-
 """Tests pdfo on a few VERY simple problems.
 
+Notes
+-----
+Do NOT follow the syntax here when you use pdfo. This file is written for testing purpose, and it uses quite atypical
+syntax. See rosenbrock_example.py for an illustration about how to use pdfo.
+
 Authors
 -------
 Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
