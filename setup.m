@@ -13,7 +13,7 @@ function setup(varargin)
 %
 %   setup uninstall 
 %
-%   and remove the compiled MEX files by calling
+%   or remove the compiled MEX files by calling
 %
 %   setup clean
 %
