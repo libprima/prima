@@ -47,7 +47,7 @@ def cobyla(fun, x0, args=(), bounds=None, constraints=(), options=None):
             rhobeg: float, optional
                 Initial value of the trust region radius, which should be a positive scalar. `options['rhobeg']` should
                 be typically set roughly to one tenth of the greatest expected change to a variable. By default, it is
-                1.
+                1 if problem is not scaled, 0.5 if problem is scaled.
             rhoend: float, optional
                 Final value of the trust region radius, which should be a positive scalar. `options['rhoend']` should
                 indicate typically the accuracy required in the final values of the variables. Moreover,
@@ -60,7 +60,8 @@ def cobyla(fun, x0, args=(), bounds=None, constraints=(), options=None):
                 or equal to `options['ftarget']`, the algorithm stops immediately. By default, it is -np.inf.
             scale: bool, optional
                 Flag indicating whether to scale the problem. If it is True, the variables will be scaled according to
-                the bounds constraints if any. By default, it is False.
+                the bounds constraints if any. By default, it is False. If the problem is to be scaled, then rhobeg and
+                rhoend mentioned above will be used as the initial and final trust-region radii for the scaled problem.
             quiet: bool, optional
                 Flag of quietness of the interface. If it is set to True, the output message will not be printed. This
                 flag does not interfere with the warning and error printing.

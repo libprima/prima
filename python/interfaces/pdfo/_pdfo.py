@@ -69,7 +69,7 @@ def pdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=Non
             rhobeg: float, optional
                 Initial value of the trust region radius, which should be a positive scalar. `options['rhobeg']` should
                 be typically set roughly to one tenth of the greatest expected change to a variable. By default, it is
-                1.
+                1 if problem is not scaled (min(1, min(ub-lb)/4) if the solver is BOBYQA), 0.5 if problem is scaled.
             rhoend: float, optional
                 Final value of the trust region radius, which should be a positive scalar. `options['rhoend']` should
                 indicate typically the accuracy required in the final values of the variables. Moreover,
@@ -78,13 +78,18 @@ def pdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=Non
                 Upper bound of the number of calls of the objective function `fun`. Its value must be not less than
                 `options['npt']`+1. By default, it is 500*n.
             npt: int, optional
-                Number of interpolation points of each model used in Powell's Fortran code.
+                Number of interpolation points of each model used in Powell's Fortran code. It is used only for NEWUOA,
+                BOBYQA and LINCOA.
             ftarget: float, optional
                 Target value of the objective function. If a feasible iterate achieves an objective function value lower
                 or equal to `options['ftarget']`, the algorithm stops immediately. By default, it is -np.inf.
             scale: bool, optional
                 Flag indicating whether to scale the problem. If it is True, the variables will be scaled according to
-                the bounds constraints if any. By default, it is False.
+                the bounds constraints if any. By default, it is False. If the problem is to be scaled, then rhobeg and
+                rhoend mentioned above will be used as the initial and final trust-region radii for the scaled problem.
+            honour_x0: bool, optional
+                Flag indicating whether to respect the user-defined x0. By default, it is False. Ity is used only for
+                BOBYQA.
             quiet: bool, optional
                 Flag of quietness of the interface. If it is set to True, the output message will not be printed. This
                 flag does not interfere with the warning and error printing.
