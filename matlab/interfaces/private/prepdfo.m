@@ -262,7 +262,7 @@ if strcmp(invoker, 'pdfo')
     [options, warnings] = select_solver(invoker, options, probinfo, warnings);
 end
 
-if strcmpi(options.solver, 'bobyqa')
+if strcmpi(options.solver, 'bobyqa') && ~probinfo.nofreex && ~probinfo.infeasible
 % The Fortran code of BOBYQA will revise x0 so that the distance between
 % x0 and the inactive bounds is at least rhobeg. We do it here in order
 % to raise a warning when such a revision occurs. After this, the
