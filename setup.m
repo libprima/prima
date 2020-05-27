@@ -2,13 +2,24 @@ function setup(varargin)
 %SETUP compiles the package and try adding the package into the search path.
 %   
 %   Let solvername be a string indicating a solver name, and options be
-%   a structure indicating compilation options.
+%   a structure indicating compilation options. Then setup can be called
+%   in the following ways:
 %
 %   setup(solvername, options) compiles the solver specified by solvername with options
 %   setup(solvername) compiles the solver specified by solvername
 %   setup(options) compiles all the solvers with options
 %
-%   Since MEX is the standard way of calling Fortran code in MATLAB, you
+%   In addition, one can uninstall the package by calling
+%
+%   setup uninstall 
+%
+%   and remove the compiled MEX files by calling
+%
+%   setup clean
+%
+%   REMARKS:
+%
+%   1. Since MEX is the standard way of calling Fortran code in MATLAB, you
 %   need to have MEX properly configured for compile Fortran before using
 %   the package. It is out of the scope of this package to help the users
 %   to configure MEX.
@@ -16,7 +27,7 @@ function setup(varargin)
 %   If MEX is correctly configured, then the compilation will be done
 %   automatically by this script.
 %
-%   At the end of this script, we will try saving the path of this package
+%   2. At the end of this script, we will try saving the path of this package
 %   to the search path. This can be done only if you have the permission to
 %   write the following path-defining file:
 %
