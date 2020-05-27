@@ -1275,9 +1275,6 @@ substantially_scaled = false;
 %if (max([scaling_factor; 1./scaling_factor]) > substantially_scaled_threshold)
 if max([1; scaling_factor])/min([1; scaling_factor]) > substantially_scaled_threshold
     substantially_scaled = true;
-    % This will affect the setting of rhobeg and rhoend: If x is substantially
-    % scaled, then we 
-    % rhobeg = 1, rhoend = previously_defiend_rhoend/previously_defined_rhobeg. 
 end
 
 if min(scaling_factor) < eps
