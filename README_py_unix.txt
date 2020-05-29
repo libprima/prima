@@ -35,7 +35,7 @@ https://developer.apple.com/xcode/ .
 
 1. Installation
 
-1.1. Recommanded installation via PyPI
+1.1. Recommended installation via PyPI
 
 PDFO can be installed in the following way. In a command shell, execute the
 following command:
@@ -47,7 +47,7 @@ package by executing the following command:
 
 python3 -m unittest pdfo.testpdfo
 
-1.2. Manual installation (only if 1.1. has not been executing)
+1.2. Manual installation (only if 1.1. has not been executed)
 
 Alternatively, you can download the source files at https://www.pdfo.net .
 
