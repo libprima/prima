@@ -5,7 +5,6 @@ from __future__ import division, print_function, absolute_import
 import sys
 import warnings
 from inspect import stack
-from typing import Union
 
 import numpy as np
 
@@ -1959,14 +1958,13 @@ def _solver_selection(invoker, method, options, prob_info, list_warnings):
             else:
                 solver = 'bobyqa'
                 options['npt'] = min(2 * n + 1, options['maxfev'] - 1)
-                if {'lb', 'ub'} <= set(prob_info.keys()):
-                    lb_mod, ub_mod = prob_info['refined_data']['lb'].copy(), prob_info['refined_data']['ub'].copy()
-                    lb_mod[np.logical_and(lb_mod > 0, np.isinf(lb_mod))] = -np.inf
-                    ub_mod[np.logical_and(ub_mod < 0, np.isinf(ub_mod))] = np.inf
-                    rhobeg_bobyqa = min(options['rhobeg'], np.min(ub_mod - lb_mod) / 4)
-                    options['rhoend'] = (options['rhoend'] / options['rhobeg']) * rhobeg_bobyqa
-                    options['rhobeg'] = max(rhobeg_bobyqa, eps)
-                    options['rhoend'] = max(options['rhoend'], eps)
+                lb_mod, ub_mod = prob_info['refined_data']['lb'].copy(), prob_info['refined_data']['ub'].copy()
+                lb_mod[np.logical_and(lb_mod > 0, np.isinf(lb_mod))] = -np.inf
+                ub_mod[np.logical_and(ub_mod < 0, np.isinf(ub_mod))] = np.inf
+                rhobeg_bobyqa = min(options['rhobeg'], np.min(ub_mod - lb_mod) / 4)
+                options['rhoend'] = (options['rhoend'] / options['rhobeg']) * rhobeg_bobyqa
+                options['rhobeg'] = max(rhobeg_bobyqa, eps)
+                options['rhoend'] = max(options['rhoend'], eps)
         elif ptype == 'linearly-constrained':
             if options['maxfev'] <= n + 2:
                 solver = 'cobyla'  # Does not need options['npt']
