@@ -46,7 +46,7 @@ license = 'LGPLv3+';
 
 version = '1.0';
 
-date = 'May, 2020';
+date = 'June, 2020';
 
 status = 'Production';
 

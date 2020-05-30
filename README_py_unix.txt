@@ -8,7 +8,7 @@ Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 
 We look forward to your feedback! Thank you very much!
 
-March 2020, Hong Kong
+June 2020, Hong Kong
 ***********************************************************************
 
 This is the README file for the Python version of PDFO on Linux or Mac.
@@ -17,53 +17,51 @@ See https://www.pdfo.net for more information.
 
 0. Prerequisites
 
-To use the Python version of PDFO, you need Python, NumPy, F2PY, gfortran, and
-the Python headers, which can be installed in the following way.
+To use the Python version of PDFO, you need Python (including the headers), 
+NumPy, F2PY, and gfortran, which can be installed in the following way.
 
 0.1. Install Python (version 2.7 or later) according to https://www.python.org .
+To include the headers on Linux, python3-dev or python-dev should be installed
+depending on the Python you want to use; on Mac, the headers are included by
+default if you install Python using Homebrew.
 
-0.2. We recommend to install the latest version of SciPy. See
-https://www.scipy.org/install.html .
+0.2. Install the latest version of SciPy. See https://www.scipy.org/install.html .
+SciPy includes NumPy, which provides F2PY.
 
 0.3. Install gfortran using your package manager, e.g., apt on Debian/Ubuntu,
 yum on Fedora/RHEL/CentOS, and Homebrew on Mac.
 
-0.4. On linux, install python3-dev and python-dev using your package manager.
-On Mac, you may need to download and install Xcode, at
-https://developer.apple.com/xcode/ .
+0.4. On Mac, you may need to install Xcode. See https://developer.apple.com/xcode/ .
 
 
 1. Installation
 
-1.1. Recommended installation via PyPI
+1.1. Method 1: Installation via PyPI (recommended)
 
-PDFO can be installed in the following way. In a command shell, execute the
-following command:
+PDFO can be installed using PyPI by the following command in a command shell:
 
-python3 -m pip install pdfo
+python -m pip install pdfo
 
-If this command runs successfully, PDFO is installed. You can now test the
-package by executing the following command:
+You may need to replace 'python' with 'python3' in the command if you use Python3. 
+If this command runs successfully, PDFO is installed. You can then test the 
+installation by the following command:
 
-python3 -m unittest pdfo.testpdfo
+python -m unittest pdfo.testpdfo
 
-1.2. Manual installation (only if 1.1. has not been executed)
+1.2. Method 2: Manual installation 
 
-Alternatively, you can download the source files at https://www.pdfo.net .
-
-1.2.1. Decompress the source code package of PDFO if you have not done so. You
-will obtain a folder containing setup.py. Place this folder at the location
-where you want PDFO to be installed.
+1.2.1. Download the source code package from https://www.pdfo.net . Decompress 
+the package. You will obtain a folder.
 
 1.2.2. In a command shell, change your directory to the above-mentioned folder,
 and execute the following command:
 
-python3 -m pip install .
+python -m pip install ./
 
 If this command runs successfully, PDFO is installed. You can now test the
-package by executing the following command:
+package by the following command:
 
-python3 -m unittest pdfo.testpdfo
+python -m unittest pdfo.testpdfo
 
 
 2. Usage
@@ -90,7 +88,14 @@ Python. For example,
 will tell you how to use "pdfo".
 
 
-3. References
+3. Uninstall
+
+PDFO can be uninstalled by executing the following command in a command shell:
+
+python -m pip unistall pdfo
+
+
+4. References
 
 [1] M. J. D. Powell, A direct search optimization method that models the
 objective and constraint functions by linear interpolation, In Advances

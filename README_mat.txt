@@ -8,7 +8,7 @@ Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 
 We look forward to your feedback! Thank you very much!
 
-March 2020, Hong Kong
+June 2020, Hong Kong
 ***********************************************************************
 
 This is the README file for the MATLAB version of PDFO.
@@ -79,7 +79,8 @@ will tell you how to use "pdfo".
 
 3. Uninstall
 
-PDFO can be uninstalled using the setup.m script by executing
+PDFO can be uninstalled using the setup.m script by executing the following
+command in MATLAB:
 
 setup unistall
 

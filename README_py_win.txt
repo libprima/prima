@@ -8,7 +8,7 @@ Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 
 We look forward to your feedback! Thank you very much!
 
-March 2020, Hong Kong
+June 2020, Hong Kong
 ***********************************************************************
 
 This is the README file for the Python version of PDFO on Windows.
@@ -21,54 +21,53 @@ Python 3.
 
 0. Prerequisites
 
-To use the Python version of PDFO, you need Python, NumPy, F2PY, C++ Build
-Tools and ifort, which can be installed in the following way.
+To use the Python version of PDFO, you need Python, NumPy, F2PY, Microsoft 
+Visual Studio, and Intel Fortran compiler, which can be installed in the 
+following way.
 
 0.1. Install Python (version 3.0 or later) according to https://www.python.org .
 
-0.2. We recommend to install the latest version of SciPy. See
-https://www.scipy.org/install.html .
+0.2. Install the latest version of SciPy. See https://www.scipy.org/install.html .
+SciPy includes NumPy, which provides F2PY.
 
-0.3. Install C++ Build Tools according to
-https://visualstudio.microsoft.com/visual-cpp-build-tools/ . Your installation
-has to include the dependencies "C++ Build Tools".
+0.3. Install Microsoft Visual Studio according to 
+https://visualstudio.microsoft.com . Make sure to include "C++ Build Tools"
+in your installation.
 
 0.4. Install Intel Fortran compiler according to
 https://software.intel.com/en-us/fortran-compilers . Your installation has to
-include Python librairies (true by default).
+include Python libraries (true by default).
 
 
 1. Installation
 
-1.1. Recommanded installation via PyPI
+1.1. Method 1: Installation via PyPI (recommended)
 
-PDFO can be installed in the following way. In an Intel shell environment
-(either 32 of 64bits, depending on your Python version), execute the following
-command:
+PDFO can be installed using PyPI in the following way. In the Intel command 
+shell (either 32 of 64-bit, depending on your Python version), execute the 
+following command:
 
 python -m pip install pdfo
 
-If this command runs successfully, PDFO is installed. You can now test the
-package by executing the following command in any shell:
+You may need to replace 'python' with 'python3' in the command if you use Python3. 
+If this command runs successfully, PDFO is installed. You can then test the 
+installation by the following command:
 
 python -m unittest pdfo.testpdfo
 
-1.2. Manual installation (only if 1.1. has not been executing)
+1.2. Method 2: Manual installation 
 
-Alternatively, you can download the source files at https://www.pdfo.net .
+1.2.1. Download the source code package from https://www.pdfo.net . Decompress 
+the package. You will obtain a folder.
 
-1.2.1. Decompress the source code package of PDFO if you have not done so. You
-will obtain a folder containing setup.py. Place this folder at the location
-where you want PDFO to be installed.
-
-1.2.2. In an Intel shell environment (either 32 of 64bits, depending on your
+1.2.2. In the Intel command shell (either 32 of 64-bit, depending on your
 Python version), change your directory to the above-mentioned folder, and
 execute the following command:
 
-python -m pip install .
+python -m pip install ./
 
-If this command runs successfully, PDFO is installed. You can now test the
-package by executing the following command in any shell:
+If this command runs successfully, PDFO is installed. You can then test the
+package by the following command in any shell:
 
 python -m unittest pdfo.testpdfo
 
@@ -96,8 +95,14 @@ Python. For example,
 
 will tell you how to use "pdfo".
 
+3. Uninstall
 
-3. References
+PDFO can be uninstalled by executing the following command in a command shell:
+
+python -m pip unistall pdfo
+
+
+4. References
 
 [1] M. J. D. Powell, A direct search optimization method that models the
 objective and constraint functions by linear interpolation, In Advances
