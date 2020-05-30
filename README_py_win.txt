@@ -25,7 +25,7 @@ To use the Python version of PDFO, you need Python, NumPy, F2PY, Microsoft
 Visual Studio, and Intel Fortran compiler, which can be installed in the 
 following way.
 
-0.1. Install Python (version 3.0 or later) according to https://www.python.org .
+0.1. Install Python (version 3.0 or above) according to https://www.python.org .
 
 0.2. Install the latest version of SciPy. See https://www.scipy.org/install.html .
 SciPy includes NumPy, which provides F2PY.
@@ -43,8 +43,8 @@ include Python libraries (true by default).
 
 1.1. Method 1: Installation via PyPI (recommended)
 
-PDFO can be installed using PyPI in the following way. In the Intel command 
-shell (either 32 of 64-bit, depending on your Python version), execute the 
+PDFO can be installed via PyPI in the following way. In the Intel command 
+shell (either 32 or 64-bit, depending on your Python version), execute the 
 following command:
 
 python -m pip install pdfo
@@ -60,7 +60,7 @@ python -m unittest pdfo.testpdfo
 1.2.1. Download the source code package from https://www.pdfo.net . Decompress 
 the package. You will obtain a folder.
 
-1.2.2. In the Intel command shell (either 32 of 64-bit, depending on your
+1.2.2. In the Intel command shell (either 32 or 64-bit, depending on your
 Python version), change your directory to the above-mentioned folder, and
 execute the following command:
 
@@ -99,7 +99,7 @@ will tell you how to use "pdfo".
 
 PDFO can be uninstalled by executing the following command in a command shell:
 
-python -m pip unistall pdfo
+python -m pip uninstall pdfo
 
 
 4. References
