@@ -8,7 +8,7 @@ Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 
 We look forward to your feedback! Thank you very much!
 
-March 2020, Hong Kong
+June 2020, Hong Kong
 ***********************************************************************
 
 PDFO (Powell's Derivative-Free Optimization solvers) is a cross-platform package

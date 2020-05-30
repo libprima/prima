@@ -37,7 +37,7 @@ else:
 __credits__ = ['Tom M. Ragonneau', 'Zaikun Zhang']
 __license__ = 'LGPLv3+'
 __version__ = '1.0'
-__date__ = 'May, 2020'
+__date__ = 'June, 2020'
 __maintainer__ = 'Tom M. Ragonneau and Zaikun Zhang'
 __email__ = 'tom.ragonneau@connect.polyu.hk and zaikun.zhang@polyu.edu.hk'
 __status__ = 'Production'
