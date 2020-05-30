@@ -29,9 +29,9 @@ function [x, fx, exitflag, output] = uobyqa(varargin)
 %   *** fx is fun(x)
 %   *** exitflag is an integer indicating why UOBYQA returns; the
 %       possible values are 
-%       0: the lower bound for the trust region radius is reached
+%       0: the lower bound for the trust-region radius is reached
 %       1: the target function value is achieved
-%       2: a trust region step failed to reduce the quadratic model
+%       2: a trust-region step failed to reduce the quadratic model
 %       3: the objective function has been evaluated maxfun times
 %       4, 7, 8, 9: rounding errors become severe in the Fortran code 
 %       -1: NaN occurs in x
@@ -57,22 +57,23 @@ function [x, fx, exitflag, output] = uobyqa(varargin)
 %   The options include
 %   *** maxfun: maximal number of function evaluations; default: 500*length(x0)
 %   *** ftarget: target function value; default: -Inf
-%   *** rhobeg: initial trust-region radius; typically, rhobeg should 
-%       be about one tenth of the greatest expected change to a variable; 
-%       rhobeg should be positive; default: 1
-%   *** rhoend: final trust region radius; rhoend reflects the precision
+%   *** rhobeg: initial trust-region radius; typically, rhobeg should be in
+%       the order of one tenth of the greatest expected change to a variable;
+%       rhobeg should be positive; default: 1 
+%   *** rhoend: final trust-region radius; rhoend reflects the precision
 %       of the approximate solution obtained by UOBYQA; rhoend should be
 %       positive and not larger than rhobeg; default: 1e-6
 %   *** classical: a boolean value indicating whether to call the classical 
 %       Powell code or not; default: false
 %   *** quiet: a boolean value indicating whether to keep quiet or not;
-%       default: true (if false UOBYQA will print the return message of
+%       default: true (if it is false, UOBYQA will print the return message of
 %       the Fortran code)
 %   *** debug: a boolean value indicating whether to debug or not; default: false
 %   *** chkfunval: a boolean value indicating whether to verify the returned 
 %       function value or not; default: false
-%       (if true, UOBYQA will check whether the returned value of fx
-%       matches fun(x) or not, which costs a function evaluation) 
+%       (if it is true, UOBYQA will check whether the returned value of fx
+%       matches fun(x) or not, which costs a function evaluation; designed 
+%       only for debugging) 
 %
 %   For example, the following code 
 %   

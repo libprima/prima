@@ -36,7 +36,7 @@ class OptimizeResult(dict):
           1  The target function value is achieved
           2  A trust region step failed to reduce the quadratic model
           3  The objective function has been evaluated `maxfev` times
- 4, 7, 8, 9  Rounding errors become severe in the Fortran code
+          4, 7, 8, 9  Rounding errors become severe in the Fortran code
          13  All variables are fixed by the constraints
          -1  NaN occurs in `x`
          -2  The objective/constraint function returns NaN or nearly infinite values (only in the classical mode)
@@ -105,14 +105,18 @@ class OptimizeResult(dict):
 class Bounds:
     """Bound structure.
 
-    The Numpy types of the arrays are converted to fit the Fortran backend and their sizes are checked.
+    Bounds(lb, ub) specifies a bound constraint 
+
+    lb <= x <= ub,
+
+    where x is an n-dimensional vector. 
 
     Attributes
     ----------
     lb: ndarray, shape (n,)
-        The lower-bound vector of bound constraints.
+        The lower-bound vector of the constraint.
     ub: ndarray, shape (n,)
-        The upper-bound vector of bound constraints.
+        The upper-bound vector of the constraint.
 
     Authors
     -------
@@ -159,16 +163,20 @@ class Bounds:
 class LinearConstraint:
     """Linear constraint structure.
 
-    The Numpy types of the arrays are converted to fit the Fortran backend and their sizes are checked.
+    LinearConstraint(A, lb, ub) specifies a linear constraint 
+
+    lb <= A*x <= ub,
+
+    where x is an n-dimensional vector.  
 
     Attributes
     ----------
     A: ndarray, shape (m,n)
-        The coefficient matrix of linear constraints.
-    lb: ndarray, shape (n,)
-        The lower-bound vector of linear constraints.
-    ub: ndarray, shape (n,)
-        The upper-bound vector of linear constraints.
+        The coefficient matrix of the constraint.
+    lb: ndarray, shape (m,)
+        The lower-bound vector of the constraint.
+    ub: ndarray, shape (m,)
+        The upper-bound vector of the constraint.
 
     Authors
     -------
@@ -237,16 +245,18 @@ class LinearConstraint:
 class NonlinearConstraint:
     """Nonlinear constraint structure.
 
-    The Numpy types of the arrays are converted to fit the Fortran backend.
+    NonlinearConstraint(fun, lb, ub) specifies a nonlinear constraint 
+
+    lb <= fun(x) <= ub. 
 
     Attributes
     ----------
     fun: callable
-        The constraint function, which accepts a vector `x` at input and returns a vector of shape (n,).
-    lb: ndarray, shape (n,)
-        The lower-bound vector of the nonlinear constraints.
-    ub: ndarray, shape (n,)
-        The upper-bound vector of the nonlinear constraints.
+        The constraint function, which accepts a vector `x` at input and returns a vector of shape (m,).
+    lb: ndarray, shape (m,)
+        The lower-bound vector of the constraint.
+    ub: ndarray, shape (m,)
+        The upper-bound vector of the constraint.
 
     Authors
     -------

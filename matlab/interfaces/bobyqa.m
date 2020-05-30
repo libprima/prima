@@ -76,10 +76,10 @@ function [x, fx, exitflag, output] = bobyqa(varargin)
 %   The options include
 %   *** maxfun: maximal number of function evaluations; default: 500*length(x0)
 %   *** ftarget: target function value; default: -Inf
-%   *** rhobeg: initial trust-region radius; typically, rhobeg should 
-%       be about one tenth of the greatest expected change to a variable;
-%       rhobeg should be positive; default: min(1, min(ub-lb)/4) if
-%       problem is not scaled, 0.5 if problem is scaled
+%   *** rhobeg: initial trust region radius; typically, rhobeg should be
+%       in the order of one tenth of the greatest expected change to a variable;
+%       rhobeg should be positive; default: min(1, min(ub-lb)/4) if the
+%       problem is not scaled, 0.5 if the problem is scaled
 %   *** rhoend: final trust region radius; rhoend reflects the precision
 %       of the approximate solution obtained by BOBYQA; rhoend should be
 %       positive and not larger than rhobeg; default: 1e-6
@@ -90,17 +90,18 @@ function [x, fx, exitflag, output] = bobyqa(varargin)
 %   *** scale: a boolean value indicating whether to scale the problem
 %       according to bounds or not; default: false; if the problem is to be 
 %       scaled, then rhobeg and rhoend mentioned above will be used as the 
-%       initial and final trust-region radii for the scaled  problem
+%       initial and final trust region radii for the scaled  problem
 %   *** honour_x0: a boolean value indicating whether to respect the
 %       user-defiend x0 or not; default: false
 %   *** quiet: a boolean value indicating whether to keep quiet or not;
-%       default: true (if false BOBYQA will print the return message of
+%       default: true (if it is false, BOBYQA will print the return message of
 %       the Fortran code)
 %   *** debug: a boolean value indicating whether to debug or not; default: false
 %   *** chkfunval: a boolean value indicating whether to verify the returned 
 %       function value or not; default: false
-%       (if true, BOBYQA will check whether the returned value of fx
-%       matches fun(x), which costs a function evaluation) 
+%       (if it is true, BOBYQA will check whether the returned value of fx
+%       matches fun(x), which costs a function evaluation; designed only
+%       for debugging) 
 %
 %   For example, the following code 
 %   

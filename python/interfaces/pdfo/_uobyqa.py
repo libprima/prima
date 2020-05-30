@@ -29,19 +29,18 @@ def uobyqa(fun, x0, args=(), options=None):
     options: dict, optional
         The options passed to the solver. It is a structure that contains optionally:
             rhobeg: float, optional
-                Initial value of the trust region radius, which should be a positive scalar. `options['rhobeg']` should
-                be typically set roughly to one tenth of the greatest expected change to a variable. By default, it is
-                1.
+                Initial value of the trust region radius, which should be a positive scalar. Typically, `options['rhobeg']`
+                should in the order of  one tenth of the greatest expected change to a variable. By default, it is 1.
             rhoend: float, optional
                 Final value of the trust region radius, which should be a positive scalar. `options['rhoend']` should
                 indicate typically the accuracy required in the final values of the variables. Moreover,
                 `options['rhoend']` should be no more than `options['rhobeg']` and is by default 1e-6.
             maxfev: int, optional
                 Upper bound of the number of calls of the objective function `fun`. Its value must be not less than
-                (n+1)*(n+2)\2. By default, it is 500*n.
+                (n+1)*(n+2)/2+1. By default, it is 500*n.
             ftarget: float, optional
                 Target value of the objective function. If an iterate achieves an objective function value lower or
-                equal to `options['ftarget']`, the algorithm stops immediately. By default, it is -np.inf.
+                equal to `options['ftarget']`, the algorithm stops immediately. By default, it is -numpy.inf.
             quiet: bool, optional
                 Flag of quietness of the interface. If it is set to True, the output message will not be printed. This
                 flag does not interfere with the warning and error printing.
@@ -51,8 +50,8 @@ def uobyqa(fun, x0, args=(), options=None):
                 Debugging flag. By default, it is False.
             chkfunval: bool, optional
                 Flag used when debugging. If both `options['debug']` and `options['chkfunval']` are True, an extra
-                function evaluation would be performed to check whether the returned objective function value is
-                consistent with the returned x. By default, it is False.
+                function evaluation would be performed to check whether the returned objective function value matches
+                the returned x. By default, it is False.
 
     Returns
     -------
