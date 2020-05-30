@@ -58,7 +58,7 @@ and execute the following command:
 
 python -m pip install ./
 
-If this command runs successfully, PDFO is installed. You can now test the
+If this command runs successfully, PDFO is installed. You can then test the
 package by the following command:
 
 python -m unittest pdfo.testpdfo
