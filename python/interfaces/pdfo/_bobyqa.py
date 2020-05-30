@@ -27,17 +27,18 @@ def bobyqa(fun, x0, args=(), bounds=None, options=None):
 
             ``bobyqa(lambda x: fun(x, args), x0, ...)``
 
-    bounds: either ndarray of tuple with shape(n,2), or Bounds, optional
-        Bound constraints of the problem. The bounds can be specified in two different ways:
-            1. Instance of `Bounds` class.
-            2. Sequence of (lb, ub) pairs for each element in `x`. To specify that `x[i]` is unbounded below, set
-               `bounds[i, 0]` to -np.inf; set `bounds[i, 1]` to np.inf if `x[i]` is unbounded above.
+    bounds: ndarray of tuple with shape(n,2), or Bounds, optional
+        Bound constraints of the problem. It can be one of the two cases below. 
+            1. An ndarray with shape(n,2). If the ndarray is 'bounds', then the bound constraint for x[i] is 
+                bounds[i, 0]<=x[i]<=bounds[i, 1]. Set bounds[i, 0] to -numpy.inf or None if there is no lower bound, and 
+                set bounds[i, 1] to numpy.inf or None if there is no upper bound. 
+            2. An instance of the `Bounds` class. Bounds(lb, ub) specifies a bound constraint lb<=x<=ub.
     options: dict, optional
         The options passed to the solver. It is a structure that contains optionally:
             rhobeg: float, optional
                 Initial value of the trust region radius, which should be a positive scalar. `options['rhobeg']` should
                 be typically set roughly to one tenth of the greatest expected change to a variable. By default, it is
-                min(1, min(ub-lb)/4) if problem is not scaled, 0.5 if problem is scaled.
+                min(1, min(ub-lb)/4) if the problem is not scaled, 0.5 if the problem is scaled.
             rhoend: float, optional
                 Final value of the trust region radius, which should be a positive scalar. `options['rhoend']` should
                 indicate typically the accuracy required in the final values of the variables. Moreover,
@@ -49,11 +50,11 @@ def bobyqa(fun, x0, args=(), bounds=None, options=None):
                 Number of interpolation points of each model used in Powell's Fortran code. By default, it is 2*n+1.
             ftarget: float, optional
                 Target value of the objective function. If a feasible iterate achieves an objective function value lower
-                or equal to `options['ftarget']`, the algorithm stops immediately. By default, it is -np.inf.
+                or equal to `options['ftarget']`, the algorithm stops immediately. By default, it is -numpy.inf.
             scale: bool, optional
-                Flag indicating whether to scale the problem. If it is True, the variables will be scaled according to
-                the bounds constraints if any. By default, it is False. If the problem is to be scaled, then rhobeg and
-                rhoend mentioned above will be used as the initial and final trust-region radii for the scaled problem.
+                Flag indicating whether to scale the problem according to the bound constraints. By default, it is False. 
+                If the problem is to be scaled, then rhobeg and rhoend mentioned above will be used as the initial and final 
+                trust region radii for the scaled problem.
             honour_x0: bool, optional
                 Flag indicating whether to respect the user-defined x0. By default, it is False.
             quiet: bool, optional
@@ -65,8 +66,8 @@ def bobyqa(fun, x0, args=(), bounds=None, options=None):
                 Debugging flag. By default, it is False.
             chkfunval: bool, optional
                 Flag used when debugging. If both `options['debug']` and `options['chkfunval']` are True, an extra
-                function evaluation would be performed to check whether the returned objective function value is
-                consistent with the returned x. By default, it is False.
+                function evaluation would be performed to check whether the returned objective function value matches
+                the returned x. By default, it is False.
 
     Returns
     -------

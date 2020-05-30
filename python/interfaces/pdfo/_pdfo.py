@@ -49,47 +49,51 @@ def pdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=Non
 
     method: str, optional
         The name of the Powell method that will be used.
-    bounds: either ndarray of tuple with shape(n,2), or Bounds, optional
-        Bound constraints of the problem. The bounds can be specified in two different ways:
-            1. Instance of `Bounds` class.
-            2. Sequence of (lb, ub) pairs for each element in `x`. To specify that `x[i]` is unbounded below, set
-               `bounds[i, 0]` to -np.inf; set `bounds[i, 1]` to np.inf if `x[i]` is unbounded above.
-    constraints: dict, LinearConstraint, NonlinearConstraint or list of them, optional
+    bounds: ndarray of tuple with shape(n,2), or Bounds, optional
+        Bound constraints of the problem. It can be one of the two cases below. 
+            1. An ndarray with shape(n,2). If the ndarray is 'bounds', then the bound constraint for x[i] is 
+                bounds[i, 0]<=x[i]<=bounds[i, 1]. Set bounds[i, 0] to -numpy.inf or None if there is no lower bound, and 
+                set bounds[i, 1] to numpy.inf or None if there is no upper bound. 
+            2. An instance of the `Bounds` class. Bounds(lb, ub) specifies a bound constraint lb<=x<=ub.
+    constraints: dict, LinearConstraint, NonlinearConstraint, or a list of them, optional
         Constraints of the problem. It can be one of the three cases below.
             1. A dictionary with fields:
                 type: str
                     Constraint type: 'eq' for equality constraints and 'ineq' for inequality constraints.
                 fun: callable
                     The constraint function.
-            2. Instances of LinearConstraint or NonlinearConstraint.
-            3. A list, each of whose elements can be a dictionary described in 1, an instance of LinearConstraint or an
-               instance of NonlinearConstraint.
+                When type='eq', such a dictionary specifies an equality constraint fun(x)=0; 
+                when type='ineq', it specifies an inequality constraint fun(x)>=0.
+            2. An instance of the `LinearConstraint` class or the `NonlinearConstraint` class.
+                LinearConstraint(A, lb, ub) specifies a linear constraint lb<=A*x<=ub;
+                NonLinearConstraint(fun, lb, ub) specifies a nonlinear constraint lb<=fun(x)<=ub.
+            3. A list, each of whose elements is a dictionary described in 1, a LinearConstraint, or a NonlinearConstraint.
     options: dict, optional
         The options passed to the solver. It is a structure that contains optionally:
             rhobeg: float, optional
-                Initial value of the trust region radius, which should be a positive scalar. `options['rhobeg']` should
-                be typically set roughly to one tenth of the greatest expected change to a variable. By default, it is
-                1 if problem is not scaled (min(1, min(ub-lb)/4) if the solver is BOBYQA), 0.5 if problem is scaled.
+                Initial value of the trust region radius, which should be a positive scalar. Typically, `options['rhobeg']` 
+                should be in the order of one tenth of the greatest expected change to a variable. By default, it is 1 if 
+                the problem is not scaled (but min(1, min(ub-lb)/4) if the solver is BOBYQA), 0.5 if the problem is scaled.
             rhoend: float, optional
-                Final value of the trust region radius, which should be a positive scalar. `options['rhoend']` should
-                indicate typically the accuracy required in the final values of the variables. Moreover,
-                `options['rhoend']` should be no more than `options['rhobeg']` and is by default 1e-6.
+                Final value of the trust region radius, which should be a positive scalar. `options['rhoend']` should indicate 
+                the accuracy required in the final values of the variables. Moreover, `options['rhoend']` should be no more 
+                than `options['rhobeg']` and is by default 1e-6.
             maxfev: int, optional
                 Upper bound of the number of calls of the objective function `fun`. Its value must be not less than
                 `options['npt']`+1. By default, it is 500*n.
             npt: int, optional
-                Number of interpolation points of each model used in Powell's Fortran code. It is used only for NEWUOA,
-                BOBYQA and LINCOA.
+                Number of interpolation points of each model used in Powell's Fortran code. It is used only if the solver is
+                NEWUOA, BOBYQA, or LINCOA.
             ftarget: float, optional
                 Target value of the objective function. If a feasible iterate achieves an objective function value lower
-                or equal to `options['ftarget']`, the algorithm stops immediately. By default, it is -np.inf.
+                or equal to `options['ftarget']`, the algorithm stops immediately. By default, it is -numpy.inf.
             scale: bool, optional
-                Flag indicating whether to scale the problem. If it is True, the variables will be scaled according to
-                the bounds constraints if any. By default, it is False. If the problem is to be scaled, then rhobeg and
-                rhoend mentioned above will be used as the initial and final trust-region radii for the scaled problem.
+                Flag indicating whether to scale the problem according to the bound constraints. By default, it is False. If the
+                problem is to be scaled, then rhobeg and rhoend mentioned above will be used as the initial and final trust region
+                radii for the scaled problem.
             honour_x0: bool, optional
-                Flag indicating whether to respect the user-defined x0. By default, it is False. Ity is used only for
-                BOBYQA.
+                Flag indicating whether to respect the user-defined x0. By default, it is False. It is used only if the 
+                solver is BOBYQA.
             quiet: bool, optional
                 Flag of quietness of the interface. If it is set to True, the output message will not be printed. This
                 flag does not interfere with the warning and error printing.
@@ -98,9 +102,9 @@ def pdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=Non
             debug: bool, optional
                 Debugging flag. By default, it is False.
             chkfunval: bool, optional
-                Flag used when debugging. If both `options['debug']` and `options['chkfunval']` are True, an extra
-                function evaluation would be performed to check whether the returned objective function value is
-                consistent with the returned x. By default, it is False.
+                Flag used when debugging. If both `options['debug']` and `options['chkfunval']` are True, an extra 
+                function/constraint evaluation would be performed to check whether the returned values of objective function and 
+                constraint match the returned x. By default, it is False.
 
     Returns
     -------

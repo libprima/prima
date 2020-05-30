@@ -118,10 +118,11 @@ function [x, fx, exitflag, output] = pdfo(varargin)
 %   The options include
 %   *** maxfun: maximal number of function evaluations; default: 500*length(x0)
 %   *** ftarget: target function value; default: -Inf
-%   *** rhobeg: initial trust-region radius; typically, rhobeg should 
-%       be about one tenth of the greatest expected change to a variable; 
-%       rhobeg should be positive; default: 1 if problem is not scaled
-%       (min(1, min(ub-lb)/4) if solver is bobyqa), 0.5 if problem is scaled
+%   *** rhobeg: initial trust region radius; typically, rhobeg should be in
+%       the order of one tenth of the greatest expected change to a variable;
+%       rhobeg should be positive; default: 1 if the problem is not scaled
+%       (but min(1, min(ub-lb)/4) if the solver is BOBYQA), 0.5 if the problem 
+%       is scaled
 %   *** rhoend: final trust region radius; rhoend reflects the precision
 %       of the approximate solution obtained by PDFO; rhoend should be
 %       positive and not larger than rhobeg; default: 1e-6
@@ -138,19 +139,19 @@ function [x, fx, exitflag, output] = pdfo(varargin)
 %   *** scale: (only for BOBYQA, LINCOA, and COBYLA) a boolean value 
 %       indicating whether to scale the problem according to bounds or not; 
 %       default: false; if the problem is to be scaled, then rhobeg and rhoend 
-%       mentioned above will be used as the initial and final trust-region 
-%       radii for the scaled  problem
+%       mentioned above will be used as the initial and final trust region 
+%       radii for the scaled problem
 %   *** honour_x0: (only for BOBYQA) a boolean value indicating whether to 
 %       respect the user-defined x0; default: false
 %   *** quiet: a boolean value indicating whether to keep quiet or not;
-%       default: true (if false PDFO will print the return message of the
+%       default: true (if it is false, PDFO will print the return message of the
 %       Fortran code)
 %   *** debug: a boolean value indicating whether to debug or not; default: false
 %   *** chkfunval: a boolean value indicating whether to verify the returned 
-%       function and constraint (if applicable) value or not; default: false
-%       (if true, PDFO will check whether the returned value of fun and nonlcon 
-%       matches fun(x) and nonlcon(x) or not, which costs a function/constraint 
-%       evaluation)
+%       function and constraint (if applicable) values or not; default: false
+%       (if it is true, PDFO will check whether the returned values of fun and 
+%       nonlcon matche fun(x) and nonlcon(x), which costs a function/constraint 
+%       evaluation; designed only for debugging)
 %
 %   For example, the following code 
 %
@@ -292,7 +293,7 @@ output = struct();
 output.warnings = {}; % A cell that records all the warnings
 % This version of pdfo.m produces no warning. However, initializing output.warnings 
 % is still necessary, as output.warnings is required by postpdfo.
-warning ('off', 'backtrace'); % Do not display the stack trace of a warning
+warning('off', 'backtrace'); % Do not display the stack trace of a warning
 
 maxarg = 10; % Maximal number of inputs
 nvararg = length(varargin); % Number of inputs
