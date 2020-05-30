@@ -1,21 +1,41 @@
 # Changelog
 All notable changes to the PDFO project will be documented in this file.
 
-## [0.9] - 2020-04-17
-Pre-release of PDFO.
+## [0.9] - 2020-04-29
 
-## [1.0] - 2020-05-01
+Public beta release of PDFO.
+
+## [1.0] - 2020-06-01
+
 ### Added
-- Python: Bounds, LinearConstraint and NonlinearConstraint more flexible with None and [].
+- Add the 'honour_x0' option when the solver is BOBYQA to indicate whether 
+  the user-provided x0 can be changed.
+- Include rosenbrock_example to illustrate the usage.
+- Python version: Bounds, LinearConstraint and NonlinearConstraint more 
+  flexible with None and [].
+- MATLAB version: add 'uninstall' and 'clean' options to setup.m.
 
 ### Changed
-- General: Licence modification, from GNU GPLv3+ to GNU LGPLv3+.
-- General: All constraint violation are computed as absolute distances (in 1-norm).
-- Python: Make PDFO available on PyPI.
-- Python: Test files for PDFO have been added as a subpackage of pdfo.
+- Licence modified from GNU GPLv3+ to GNU LGPLv3+.
+- All constraint violations are computed absolutely (instead of relatively)
+- Modify the scaling behavior. Scaling is performed only if all variables 
+  have both upper and lower bounds. 
+- Change the default rhobeg to 0.5 when the problem is scaled. 
+- Change the default rhobeg to min(ub-lb)/4 when the solver is BOBYQA.
+- Revise x0 or rhobeg for BOBYQA to make sure that the distance between x0 
+  and inactive bounds is at least rhobeg.
+- Python version: make PDFO available on PyPI.
+- Python version: test files for PDFO have been added as a subpackage of pdfo.
+- MATLAB version: improve the interfaces of prepdfo and postpdfo.
 
 ### Removed
-- Python: NumPy set_printoptions.
+- Warning about scaling.
+- Python version: NumPy set_printoptions.
+- MATLAB version: interactions when modifying the user's startup script.
 
 ### Fixed
-- Python: ufunc as nonlinear constraint function, defined as a dictionary.
+- In last version, the linear constraints passed to the Fortran backend can 
+  have zero gradients due to reduction when some variables are fixed by the
+  bound constraints. Constraint validation and reduction are merged in order to 
+  avoid such a situation. 
+- Python version: ufunc as nonlinear constraint function, defined as a dictionary.
