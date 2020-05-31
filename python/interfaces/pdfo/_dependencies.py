@@ -2181,7 +2181,7 @@ def _project(x0, lb, ub, constraints, options=None):
 
             return OptimizeResult(x=x_proj)
         except ImportError:
-            # We can try to project the initial guess oßnto the feasible set by solving the associated optimization
+            # We can try to project the initial guess to the feasible set by solving the associated optimization
             # problem. DO NOT remove not to raise any useless exception.
             pass
 
