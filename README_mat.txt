@@ -51,7 +51,10 @@ execute the following command:
 
 setup
 
-If this command runs successfully, PDFO is installed.
+If this command runs successfully, PDFO is installed. You can then test the 
+installation by executing 
+
+testpdfo
 
 
 2. Usage 

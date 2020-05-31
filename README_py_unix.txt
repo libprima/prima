@@ -17,8 +17,8 @@ See https://www.pdfo.net for more information.
 
 0. Prerequisites
 
-To use the Python version of PDFO, you need Python (including the headers), 
-NumPy, F2PY, and gfortran, which can be installed in the following way.
+To use the Python version of PDFO on Linux or Mac, you need Python (including 
+the headers), NumPy, F2PY, and gfortran, which can be installed in the following way.
 
 0.1. Install Python (version 2.7 or above) according to https://www.python.org .
 To include the headers on Linux, python3-dev or python-dev should be installed
@@ -36,30 +36,30 @@ yum on Fedora/RHEL/CentOS, and Homebrew on Mac.
 
 1. Installation
 
+Note: You may need to replace 'python' with 'python3' in all the commands 
+below if you use Python 3. 
+
 1.1. Method 1: Installation via PyPI (recommended)
 
 PDFO can be installed via PyPI by the following command in a command shell:
 
 python -m pip install pdfo
 
-You may need to replace 'python' with 'python3' in the command if you use Python3. 
 If this command runs successfully, PDFO is installed. You can then test the 
-installation by the following command:
+installation by executing
 
 python -m unittest pdfo.testpdfo
 
 1.2. Method 2: Manual installation 
 
-1.2.1. Download the source code package from https://www.pdfo.net . Decompress 
-the package. You will obtain a folder.
-
-1.2.2. In a command shell, change your directory to the above-mentioned folder,
-and execute the following command:
+Download the source code package from https://www.pdfo.net . Decompressing 
+the package, you will obtain a folder.  In a command shell, change your 
+directory to this folder, and run
 
 python -m pip install ./
 
 If this command runs successfully, PDFO is installed. You can then test the
-package by the following command:
+installation by executing
 
 python -m unittest pdfo.testpdfo
 

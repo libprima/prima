@@ -14,16 +14,12 @@ June 2020, Hong Kong
 This is the README file for the Python version of PDFO on Windows.
 See https://www.pdfo.net for more information.
 
-For the moment, F2PY does not work well with Python 2 on Windows. If you want
-to use the package on Windows, make sure to do everything in any version of
-Python 3.
-
 
 0. Prerequisites
 
-To use the Python version of PDFO, you need Python, NumPy, F2PY, Microsoft 
-Visual Studio, and Intel Fortran compiler, which can be installed in the 
-following way.
+To use the Python version of PDFO on Windows, you need Python 3 (PDFO does 
+not support Python 2 on Windows), NumPy, F2PY, Microsoft Visual Studio, and 
+Intel Fortran compiler (ifort), which can be installed in the following way.
 
 0.1. Install Python (version 3.0 or above) according to https://www.python.org .
 
@@ -36,7 +32,7 @@ in your installation.
 
 0.4. Install Intel Fortran compiler according to
 https://software.intel.com/en-us/fortran-compilers . Your installation has to
-include Python libraries (true by default).
+include the Python libraries (true by default).
 
 
 1. Installation
@@ -49,7 +45,6 @@ following command:
 
 python -m pip install pdfo
 
-You may need to replace 'python' with 'python3' in the command if you use Python3. 
 If this command runs successfully, PDFO is installed. You can then test the 
 installation by the following command:
 
@@ -67,7 +62,7 @@ execute the following command:
 python -m pip install ./
 
 If this command runs successfully, PDFO is installed. You can then test the
-package by the following command in any shell:
+installation by executing
 
 python -m unittest pdfo.testpdfo
 
