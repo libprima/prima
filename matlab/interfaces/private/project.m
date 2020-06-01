@@ -126,7 +126,7 @@ end
 
 if((isempty(Ai) || min(bi) >= norm(Ai, inf)*maxcon) && max(lb) <= -maxcon && min(ub) >= maxcon) % There are only equality constraints
     if(~isempty(Ae))
-        if(exist('lsqminnorm', 'file') || exist('lsqminnorm', 'builtin'))
+        if ~isempty(which('lsqminnorm'))
             x = lsqminnorm(Ae, be-Ae*x0) + x0;
         else
             x = Ae\(be-Ae*x0) + x0; 
@@ -228,7 +228,7 @@ for k = 1 : maxit
     % There should be much better ways to solve the linear equation J*d = -g !
     % We are lazy here. 
     d = -J\Pg;
-    if(norm(J*d+Pg)/norm(Pg) >= 1e-1 && (exist('lsqminnorm', 'file') || exist('lsqminnorm', 'builtin')))
+    if (norm(J*d+Pg)/norm(Pg) >= 1e-1) && ~isempty(which('lsqminnorm'))
         d = lsqminnorm(-J, Pg);
     end
     dPg = d'*Pg;
@@ -282,8 +282,10 @@ fx_save = fx;
 output_save = output;
 exitflag_save = exitflag;
 
-if (output.constrviolation > 10*CTol && TryMatlab) % No feasible ponit was found. Try quadprog or fmincon. 
-    if (exist('quadprog', 'file') || exist('quadprog', 'builtin'))
+MatlabVersion = ver;
+TryMatlab = TryMatlab && any(strcmp({MatlabVersion.Name}, 'Optimization Toolbox')); % Do not try matlab unless Optimization Toolbox is available
+if output.constrviolation > 10*CTol && TryMatlab % No feasible ponit was found. Try quadprog or fmincon. 
+    if ~isempty(which('quadprog'))
         options = optimoptions('quadprog'); 
         options.Display = 'off'; % No talking 
         options.ConstraintTolerance = CTol;
@@ -292,7 +294,7 @@ if (output.constrviolation > 10*CTol && TryMatlab) % No feasible ponit was found
         [x, fx, exitflag, output] = quadprog (speye(n,n), -x0, Ai, bi, Ae, be, lb, ub, x0, options); % quadprog is silent with the Display set to 'off'
         fx = fx + 0.5*(x0'*x0);
         output.algorithm = 'quadprog (MATLAB)';
-    elseif (exist('fmincon', 'file') || exist('fmincon', 'builtin'))
+    elseif ~isempty(which('fmincon'))
         options = optimoptions('fmincon'); 
         options.Display = 'off'; % No talking
         options.SpecifyObjectiveGradient = true;
