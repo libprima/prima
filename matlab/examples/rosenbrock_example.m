@@ -1,3 +1,4 @@
+function rosenbrock_example()
 %ROSENBROCK_EXAMPLE illustrates how to use pdfo.
 %
 %   ***********************************************************************
@@ -52,10 +53,12 @@ ub = [0.5; 0.25; inf];
 fprintf('\n4. No constraints:\n');
 [x, fx, exitflag, output] = pdfo(@chrosen, x0)
 
+return
+
 
 function f = chrosen(x)  % the subroutine defining the objective function
 f = sum((x(1:end-1)-1).^2 + 4*(x(2:end)-x(1:end-1).^2).^2);
-end
+return
 
 
 function [cineq, ceq] = nlc(x)  % the subroutine defining the nonlinear constraints
@@ -63,4 +66,4 @@ function [cineq, ceq] = nlc(x)  % the subroutine defining the nonlinear constrai
 % by a function with two returns, the first being cineq and the second being ceq.
 cineq = x(2:end) - x(1:end-1).^2;
 ceq = x'*x - 1;
-end
+return
