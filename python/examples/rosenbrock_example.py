@@ -32,9 +32,9 @@ def nlc_eq(x):  # the subroutine defining the nonlinear equality constraints
 if __name__ == '__main__':
     print('\nMinimize the chained Rosenbrock function with three variables subject to various constraints:\n')
     np.set_printoptions(precision=4, threshold=7, edgeitems=3)  # printing NumPy arrays
+    x0 = [0, 0, 0]  # starting point
 
     print('\n1. Nonlinear constraints --- ||x||_2^2 = 1, x(i)^2 >= x(i+1) >= 0.5*x(i) >= 0 for i = 1, 2:\n')
-    x0 = [0, 0, 0]  # starting point
     # bound constraints lb <= x <= ub
     lb = [0, 0, 0]
     ub = [np.inf, np.inf, np.inf]  # ub = [None, None, None] works equally well
@@ -59,7 +59,6 @@ if __name__ == '__main__':
     # constraints = NonlinearConstraint(con, con_lb, con_ub)
 
     print('\n2. Linear constraints --- sum(x) = 1, x(i+1) <= x(i) <= 1 for i = 1, 2:\n')
-    x0 = [1, 0, 0]  # starting point
     bounds = Bounds([-np.inf, -np.inf, -np.inf], [1, 1, 1])
     A = [[-1, 1, 0], [0, -1, 1], [1, 1, 1]]
     lin_con = LinearConstraint(A, [-np.inf, -np.inf, 1], [0, 0, 1])
@@ -67,13 +66,11 @@ if __name__ == '__main__':
     print(res)
 
     print('\n3. Bound constraints --- -0.5 <= x(1) <= 0.5, 0 <= x(2) <= 0.25:\n')
-    x0 = [0, 0, 0]  # starting point
     bounds = Bounds([-0.5, 0, -np.inf], [0.5, 0.25, np.inf])
     options = {'rhobeg': 0.1}
     res = pdfo(chrosen, x0, bounds=bounds, options=options)
     print(res)
 
     print('\n4. No constraints:\n')
-    x0 = [0, 0, 0]  # starting point
     res = pdfo(chrosen, x0)
     print(res)

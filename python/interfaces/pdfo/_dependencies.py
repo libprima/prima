@@ -663,7 +663,7 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
                               'rhobeg' in prob_info['raw_data']['options'].keys() and \
                               isinstance(prob_info['raw_data']['options']['rhobeg'], scalar_types)
         x0_c, options_c = \
-            _rhobeg_x0_distance_to_actives(invoker, x0_c, lb, ub, user_defined_rhobeg, options_c, list_warnings)
+            _pre_rhobeg_x0(invoker, x0_c, lb, ub, user_defined_rhobeg, options_c, list_warnings)
 
     # Store the warnings raised during the pre-processing.
     prob_info['warnings'] = list_warnings
@@ -857,12 +857,27 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
         # in the nonlinear constraints should be feasible.
         reduced_list_nonlinear = []
         infeasible_nonlinear = np.asarray([], dtype=bool)
+
+        # The following registered the state of every nonlinear constraints, i.e., whether it should be considered or
+        # not.
+        list_nonlinear_bound_types = []
         for nonlinear_constraint in list_nonlinear:
             if isinstance(nonlinear_constraint, nonlinear_constraint_types):
                 lb_nonlinear, ub_nonlinear = nonlinear_constraint.lb, nonlinear_constraint.ub
                 if (lb_nonlinear.size > 0 and not np.logical_and(np.isinf(lb_nonlinear), lb_nonlinear < 0).all()) or \
                         (ub_nonlinear.size > 0 and not np.logical_and(np.isinf(ub_nonlinear), ub_nonlinear > 0).all()):
                     reduced_list_nonlinear.append(nonlinear_constraint)
+                    lbx = np.logical_not(np.logical_and(np.isinf(lb_nonlinear), lb_nonlinear < 0))
+                    ubx = np.logical_not(np.logical_and(np.isinf(ub_nonlinear), ub_nonlinear > 0))
+                    lb_free = np.all(np.logical_not(lbx))
+                    ub_free = np.all(np.logical_not(ubx))
+                    list_nonlinear_bound_types.append({
+                        'lbx': lbx,
+                        'lb_free': lb_free,
+                        'ubx': ubx,
+                        'ub_free': ub_free
+                    })
+
                     infeasible_lb = np.logical_and(lb_nonlinear > 0, np.isinf(lb_nonlinear))
                     infeasible_ub = np.logical_and(ub_nonlinear < 0, np.isinf(ub_nonlinear))
                     infeasible_nonlinear = \
@@ -871,6 +886,7 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
             else:
                 # The nonlinear constraint is defined as a dictionary, for which infeasibility cannot be checked
                 reduced_list_nonlinear.append(nonlinear_constraint)
+                list_nonlinear_bound_types.append(None)
 
         list_nonlinear = reduced_list_nonlinear
 
@@ -964,7 +980,7 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
         def fun_nonlinear(x, raw=False):
             fun_x = np.asarray([], dtype=np.float64)
 
-            for nlc_constraint in list_nonlinear:
+            for nlc_constraint, b_type in zip(list_nonlinear, list_nonlinear_bound_types):
                 # Get the value of the constraint function.
                 if not raw and prob_info['reduced']:
                     x_full = _fullx(x, fixed_values, free_indices, fixed_indices)
@@ -1006,20 +1022,26 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
                             '{}: the size of the vector returned by the constraint function is inconsistent with the '
                             'constraint bounds; check the shapes of the arrays.'.format(invoker))
 
-                    #  Convert the constraints defined as lb <= c(x) <= ub into c_extended(x) <= 0.
-                    if nlc_constraint.lb.size > 0 and nlc_constraint.ub.size > 0:
-                        constraint_x = np.concatenate((nlc_constraint.lb - constraint_x,
-                                                       constraint_x - nlc_constraint.ub))
-                    elif nlc_constraint.lb.size > 0:
-                        constraint_x = nlc_constraint.lb - constraint_x
-                    else:
-                        # Necessarily, nlc_constraint.ub is well-defined.
-                        constraint_x = constraint_x - nlc_constraint.ub
+                    # Convert the constraints defined as lb <= c(x) <= ub into c_extended(x) <= 0.
+                    constraint_x_tmp = np.array([], dtype=np.float64)
+                    if not b_type['lb_free']:
+                        lbx = b_type['lbx']
+                        constraint_x_tmp = np.r_[constraint_x_tmp, nlc_constraint.lb[lbx] - constraint_x[lbx]]
+                    if not b_type['ub_free']:
+                        ubx = b_type['ubx']
+                        constraint_x_tmp = np.r_[constraint_x_tmp, constraint_x[ubx] - nlc_constraint.ub[ubx]]
+                    constraint_x = constraint_x_tmp
                 elif nlc_constraint['type'] == 'eq':
-                    constraint_x = np.concatenate((constraint_x, -constraint_x))
+                    # Necessarily, nlc_constraint is defined as a dictionary, for which all the constraints have to be
+                    # considered.
+                    constraint_x = np.r_[constraint_x, -constraint_x]
+                else:
+                    # nlc_constraint is defined as a dictionary, for which all the constraints have to be considered.
+                    # Moreover, it consists of an inequality constraint c(x) >= 0, which has to be inversed,
+                    constraint_x *= -1
 
                 # Add the current nonlinear constraint evaluation to the general one.
-                fun_x = np.concatenate((fun_x, constraint_x))
+                fun_x = np.r_[fun_x, constraint_x]
 
             return fun_x
 
@@ -1992,7 +2014,7 @@ def _solver_selection(invoker, method, options, prob_info, list_warnings):
     return solver
 
 
-def _rhobeg_x0_distance_to_actives(invoker, x0, lb, ub, user_defined_rhobeg, options, list_warnings):
+def _pre_rhobeg_x0(invoker, x0, lb, ub, user_defined_rhobeg, options, list_warnings):
     # possible solvers
     fun_name = stack()[0][3]  # name of the current function
     local_invoker_list = ['pdfo', 'bobyqa']
@@ -2874,8 +2896,6 @@ def import_error_so(missing_file=None):
     Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
     """
     invoker = stack()[1][3].lower()
-    if len(stack()) < 3 or invoker not in invoker_list:
-        raise SystemError('The function `{}` should not be called manually'.format(stack()[0][3]))
 
     if missing_file is None:
         missing_file = invoker

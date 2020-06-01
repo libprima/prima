@@ -42,7 +42,7 @@ subroutine calcfc (n,m,x,f,con)
 use fcobyla
 implicit none
 integer :: n,m,i
-double precision :: x(n),f,con(m),fun,confun,resmax
+double precision :: x(n),f,con(m),fun,resmax
 external :: fun,confun
 f=fun(n,x)
 
@@ -52,8 +52,13 @@ if (f .gt. HUGEFUN .or. f .ne. f) then
 endif
 
 resmax=0.0d0
+if (m .gt. 0) then
+    ! The call to the constraint subroutine should be made only if a
+    ! constraint function is supplied in the Python code. If m = 0,
+    ! no such function is defined.
+    call confun(n,m,x,con)
+endif
 do i=1,m
-    con(i)=confun(n,i,x)
     if (con(i) .lt. -HUGECON .or. con(i) .ne. con(i)) then
         con(i) = -HUGECON ! HUGECON is defined in pdfoconst
     endif

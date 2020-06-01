@@ -17,13 +17,13 @@ python module calfun__user__routines
             double precision :: f
             intent(callback,hide) fun
         end function fun
-        function confun(n,i,x) result (c)
+        subroutine confun(n,m,x,c)
             integer :: n
-            integer :: i
+            integer :: m
             double precision, dimension(n) :: x
-            double precision :: c
+            double precision, dimension(m), intent(out) :: c
             intent(callback,hide) confun
-        end function confun
+        end subroutine confun
     end interface calfun_user_routines
 end python module calfun__user__routines
 

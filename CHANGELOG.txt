@@ -8,21 +8,21 @@ Public beta release of PDFO.
 ## [1.0] - 2020-06-01
 
 ### Added
-- Add the 'honour_x0' option when the solver is BOBYQA to indicate whether 
+- Add the 'honour_x0' option when the solver is BOBYQA to indicate whether
   the user-provided x0 can be changed.
 - Include rosenbrock_example to illustrate the usage.
-- Python version: Bounds, LinearConstraint and NonlinearConstraint more 
+- Python version: Bounds, LinearConstraint and NonlinearConstraint more
   flexible with None and [].
 - MATLAB version: add 'uninstall' and 'clean' options to setup.m.
 
 ### Changed
 - Licence modified from GNU GPLv3+ to GNU LGPLv3+.
 - All constraint violations are computed absolutely (instead of relatively)
-- Modify the scaling behavior. Scaling is performed only if all variables 
+- Modify the scaling behavior. Scaling is performed only if all variables
   have both upper and lower bounds. 
 - Change the default rhobeg to 0.5 when the problem is scaled. 
 - Change the default rhobeg to min(ub-lb)/4 when the solver is BOBYQA.
-- Revise x0 or rhobeg for BOBYQA to make sure that the distance between x0 
+- Revise x0 or rhobeg for BOBYQA to make sure that the distance between x0
   and inactive bounds is at least rhobeg.
 - Python version: make PDFO available on PyPI.
 - Python version: test files for PDFO have been added as a subpackage of pdfo.
@@ -30,12 +30,14 @@ Public beta release of PDFO.
 
 ### Removed
 - Warning about scaling.
-- Python version: numpy.set_printoptions statement in __intit__.py.
+- Python version: numpy.set_printoptions statement in __init__.py.
 - MATLAB version: interactions when modifying the user's startup script.
 
 ### Fixed
-- In last version, the linear constraints passed to the Fortran backend can 
+- In last version, the linear constraints passed to the Fortran backend can
   have zero gradients due to reduction when some variables are fixed by the
-  bound constraints. Constraint validation and reduction are merged in order to 
-  avoid such a situation. 
-- Python version: ufunc as nonlinear constraint function, defined as a dictionary.
+  bound constraints. Constraint validation and reduction are merged in order to
+  avoid such a situation.
+- Python version: the NumPy function, that have a special type <ufunc>, were
+  rejected from the nonlinear constraints defined as a dictionary. All the
+  function types are now accepted.

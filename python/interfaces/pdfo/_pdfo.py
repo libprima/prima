@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from inspect import stack
-
 import numpy as np
 
 
@@ -169,14 +167,6 @@ def pdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=Non
 
     Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
     """
-    try:
-        from .gethuge import gethuge
-    except ImportError:
-        from ._dependencies import import_error_so
-
-        # If gethuge cannot be imported, the execution should stop because the package is most likely not built.
-        import_error_so('gethuge')
-
     from ._dependencies import prepdfo, postpdfo
 
     # A cell that records all the warnings.

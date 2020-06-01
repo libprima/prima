@@ -29,6 +29,8 @@ from .tests import test_pdfo as testpdfo
 # >>> import pdfo
 # >>> print(pdfo.__author__)
 # >>> ...
+__all__ = ['OptimizeResult', 'Bounds', 'LinearConstraint', 'NonlinearConstraint', 'bobyqa', 'cobyla', 'lincoa',
+           'newuoa', 'uobyqa', 'pdfo', 'tests', 'testpdfo']
 __author__ = 'Tom M. Ragonneau and Zaikun Zhang'
 if datetime.now().year == 2020:
     __copyright__ = 'Copyright {}, Tom M. Ragonneau and Zaikun Zhang'.format(datetime.now().year)

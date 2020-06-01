@@ -193,6 +193,8 @@ def cobyla(fun, x0, args=(), bounds=None, constraints=(), options=None):
         n = x0_c.size
         a_aug, b_aug = _augmented_linear_constraint(n, bounds_c, constraints_c)
 
+        # The constraint function received by COBYLA can return an array: in fact, the Fortran code interpret this
+        # function as a subroutine from v1.0.
         def ctr(x_aug):
             c = np.array([], dtype=np.float64)
 
@@ -205,20 +207,6 @@ def cobyla(fun, x0, args=(), bounds=None, constraints=(), options=None):
                 c = np.concatenate((c, cx))
 
             return -c
-
-        # The constraint function should be evaluated only one time for each array, not one time for each element of the
-        # array. Since the Python list is a mutable structure, it is used to create a memory, by never changing the
-        # reference to it in the constraint function.
-        x_aug_mem = []
-
-        def ctr_elmt(x_aug, i):
-            if i == 0:
-                con_x = ctr(x_aug)
-                del x_aug_mem[:]  # the old memory is removed without changing the reference to the list
-                x_aug_mem.extend(con_x)
-                return con_x[i]
-            else:
-                return x_aug_mem[i]
 
         conval_x0 = ctr(x0_c)
         m = conval_x0.size
@@ -259,8 +247,7 @@ def cobyla(fun, x0, args=(), bounds=None, constraints=(), options=None):
 
         # m should be precised not to raise any error if there is no linear constraints.
         x, fx, exitflag, fhist, chist, constrviolation, conval = \
-            fcobyla.mcobyla(x0_c, rhobeg, rhoend, 0, maxfev, ftarget, conval_x0, fun_c,
-                            lambda i_c, x_c: ctr_elmt(x_c, i_c - 1))
+            fcobyla.mcobyla(x0_c, rhobeg, rhoend, 0, maxfev, ftarget, conval_x0, fun_c, lambda m, x: ctr(x))
         nf = int(fcobyla.fcobyla.nf)
 
         if m > 0:
