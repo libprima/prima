@@ -13,3 +13,5 @@ Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 from __future__ import division, print_function, absolute_import
 
 from .test_pdfo import TestPDFO
+
+__all__ = ['TestPDFO']

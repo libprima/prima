@@ -25,8 +25,7 @@ import unittest
 import warnings
 
 import numpy as np
-
-from pdfo import *
+from pdfo import LinearConstraint, Bounds, pdfo
 
 
 class TestPDFO(unittest.TestCase):
@@ -47,6 +46,7 @@ class TestPDFO(unittest.TestCase):
         Department of Applied Mathematics,
         The Hong Kong Polytechnic University.
         """
+        self.module_pdfo = __import__('pdfo')
         self.options = {'debug': True, 'chkfunval': True}
         self.type_list = ['unconstrained', 'bound-constrained', 'linearly-constrained', 'nonlinearly-constrained']
         self.solver_list = [['uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla'],
@@ -54,7 +54,8 @@ class TestPDFO(unittest.TestCase):
                             ['lincoa', 'cobyla'],
                             ['cobyla']]
         self.fun_list = [self.goldp, self.mcc, lambda x: self.hmlb(x)[0], lambda x: self.chrosen(x)[0], self.chebquad]
-        self.fun_list_name = [self.goldp.__name__, self.mcc.__name__, self.hmlb.__name__, self.chrosen.__name__, self.chebquad.__name__]
+        self.fun_list_name = \
+            [self.goldp.__name__, self.mcc.__name__, self.hmlb.__name__, self.chrosen.__name__, self.chebquad.__name__]
         self.x0_list = [np.zeros(2), np.zeros(2), np.zeros(2), np.zeros(3), np.zeros(4)]
         self.fopt_list = [[3., -1.913222954981037, 0., 0., 0.],
                           [32.57759829292702, -0.507689349668105, 144.125, 0.7, 0.2127291653880991],
@@ -87,11 +88,14 @@ class TestPDFO(unittest.TestCase):
                         print()
 
                 for solver in self.solver_list[i_type]:
-                    for x0, fun, fun_name, fopt in zip(self.x0_list, self.fun_list, self.fun_list_name, self.fopt_list[i_type]):
+                    for x0, fun, fun_name, fopt in zip(self.x0_list, self.fun_list, self.fun_list_name,
+                                                       self.fopt_list[i_type]):
                         for clflag in self.clflag_list:
                             n = x0.size
                             if solver != 'cobyla' or fun_name != 'chebquad':
-                                r = np.abs(np.sin(1e3 * np.array(solver + fun_name + p_type, 'c').view(np.uint8).sum() * irun * (np.arange(n) + 1)))
+                                r = np.abs(np.sin(
+                                    1e3 * np.array(solver + fun_name + p_type, 'c').view(np.uint8).sum() *
+                                    irun * (np.arange(n) + 1)))
                                 x0r = x0 + self.PERTURB * r
                             else:
                                 x0r = x0
@@ -119,7 +123,8 @@ class TestPDFO(unittest.TestCase):
                             else:
                                 args['bounds'] = Bounds(zeros_n, inf_n)
                                 args['constraints'] = nonlinear_constraints
-                            global_res = globals()[solver](**args)
+                            func_solver = getattr(self.module_pdfo, solver)
+                            global_res = func_solver(**args)
 
                             args['method'] = solver
                             pdfo_res = pdfo(**args)
@@ -158,8 +163,6 @@ class TestPDFO(unittest.TestCase):
         Department of Applied Mathematics,
         The Hong Kong Polytechnic University.
         """
-        assert hasattr(x, '__len__')
-
         alpha = 4
 
         f = 0  # Function value
@@ -194,8 +197,6 @@ class TestPDFO(unittest.TestCase):
         Department of Applied Mathematics,
         The Hong Kong Polytechnic University.
         """
-        assert hasattr(x, '__len__')
-
         n = x.size
         y = np.ones((n + 1, n))
         y[1, :] = 2 * x - 1
@@ -225,8 +226,6 @@ class TestPDFO(unittest.TestCase):
         Department of Applied Mathematics,
         The Hong Kong Polytechnic University.
         """
-        assert hasattr(x, '__len__') and len(x) == 2
-
         f = (x[0] ** 2 + x[1] - 11) ** 2 + (x[0] + x[1] ** 2 - 7) ** 2
         g = np.empty(2, dtype=np.float64)
         g[0] = -7 + x[1] + x[1] ** 2 + 2 * x[0] * (-11 + x[0] ** 2 + x[1])
@@ -250,8 +249,6 @@ class TestPDFO(unittest.TestCase):
         Department of Applied Mathematics,
         The Hong Kong Polytechnic University.
         """
-        assert hasattr(x, '__len__') and len(x) == 2
-
         f1a = (x[0] + x[1] + 1) ** 2
         f1b = 19 - 14 * x[0] + 3 * x[0] ** 2 - 14 * x[1] + 6 * x[0] * x[1] - 3 * x[1] ** 2
         f1 = 1 + f1a * f1b
@@ -273,8 +270,6 @@ class TestPDFO(unittest.TestCase):
         Department of Applied Mathematics,
         The Hong Kong Polytechnic University.
         """
-        assert hasattr(x, '__len__') and len(x) == 2
-
         f1 = np.sin(x[0] + x[1])
         f2 = (x[0] - x[1]) ** 2
         f3 = -1.5 * x[0]
@@ -293,10 +288,7 @@ class TestPDFO(unittest.TestCase):
         Department of Applied Mathematics,
         The Hong Kong Polytechnic University.
         """
-        assert hasattr(x, '__len__') and hasattr(center, '__len__') and len(x) == len(center) and \
-               isinstance(radius, (int, float, np.generic))
-
-        return np.linalg.norm(x - center) ** 2 - radius ** 2
+        return radius ** 2 - np.linalg.norm(x - center) ** 2
 
 
 if __name__ == '__main__':
