@@ -38,6 +38,5 @@ Public beta release of PDFO.
   have zero gradients due to reduction when some variables are fixed by the
   bound constraints. Constraint validation and reduction are merged in order to
   avoid such a situation.
-- Python version: the NumPy function, that have a special type <ufunc>, were
-  rejected from the nonlinear constraints defined as a dictionary. All the
-  function types are now accepted.
+- Python version: previously, the nonlinear constraints defined as a dictionary 
+  cannot include NumPy functions of type <ufunc>. It is fixed now.
