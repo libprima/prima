@@ -605,7 +605,11 @@ end
 % This should be detected before reducing the constraints; 
 % when reducing the constraints, the NaN on the left-hand side will lead
 % to NaN on the right-hand side. 
-nan_eq = isnan(sum(abs(Aeq), 2)) & isnan(beq); 
+if isempty(Aeq)
+    nan_eq = [];
+else
+    nan_eq = isnan(sum(abs(Aeq), 2)) & isnan(beq); % In MATLAB 2014a, this may lead to inconsistent sizes when Aeq is empty; in MATLAB 2018a, it is fine
+end
 if any(nan_eq)
     wid = sprintf('%s:NaNEquality', invoker);
     wmessage = sprintf('%s: there are equality constraints whose both sides contain NaN; such constraints are removed.', invoker);

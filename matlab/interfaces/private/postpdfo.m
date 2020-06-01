@@ -540,9 +540,11 @@ if options.debug && ~options.classical
         lb(isnan(lb)) = -inf; % Replace the NaN in lb with -inf
         ub(isnan(ub)) = inf; % Replace the NaN in ub with inf
         bineq(isnan(bineq)) = inf; % Replace the NaN in bineq with inf
-        nan_eq = isnan(sum(abs(Aeq), 2)) & isnan(beq); % NaN equality constraints
-        Aeq = Aeq(~nan_eq, :); % Remove NaN equality constraints
-        beq = beq(~nan_eq);
+        if ~isempty(Aeq)
+            nan_eq = isnan(sum(abs(Aeq), 2)) & isnan(beq); % NaN equality constraints
+            Aeq = Aeq(~nan_eq, :); % Remove NaN equality constraints
+            beq = beq(~nan_eq);
+        end
         if isempty(lb)
             lb = -inf(size(x));
         end
