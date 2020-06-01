@@ -31,7 +31,8 @@ SciPy includes NumPy, which provides F2PY.
 0.3. Install gfortran using your package manager, e.g., apt on Debian/Ubuntu,
 yum on Fedora/RHEL/CentOS, and Homebrew on Mac.
 
-0.4. On Mac, you may need to install Xcode. See https://developer.apple.com/xcode/ .
+0.4. On Mac, it is necessary to install Xcode. See https://developer.apple.com/xcode/ .
+Xcode provides the libraries needed by F2PY. 
 
 
 1. Installation

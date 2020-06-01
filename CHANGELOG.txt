@@ -30,7 +30,7 @@ Public beta release of PDFO.
 
 ### Removed
 - Warning about scaling.
-- Python version: NumPy set_printoptions.
+- Python version: numpy.set_printoptions statement in __intit__.py.
 - MATLAB version: interactions when modifying the user's startup script.
 
 ### Fixed
