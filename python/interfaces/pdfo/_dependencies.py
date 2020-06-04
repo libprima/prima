@@ -1087,7 +1087,7 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
                         prob_info['constr_meta']['data'][i_meta]['ub'] = np.full_like(constraint_x, np.inf)
 
                 lenm = constraint_x.size
-                if isinstance(nlc_constraint, nonlinear_constraint_types):
+                if isinstance(nlc_constraint, nonlinear_constraint_types) and not infeasible:
                     if nlc_constraint.lb.size not in [0, lenm] or \
                             nlc_constraint.ub.size not in [0, lenm] or \
                             (nlc_constraint.lb.size == 0 and nlc_constraint.ub.size == 0):
@@ -1104,14 +1104,17 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
                         ubx = b_type['ubx']
                         constraint_x_tmp = np.r_[constraint_x_tmp, constraint_x[ubx] - nlc_constraint.ub[ubx]]
                     constraint_x = constraint_x_tmp
-                elif nlc_constraint['type'] == 'eq':
+                elif isinstance(nlc_constraint, dict) and nlc_constraint['type'] == 'eq' and not infeasible:
                     # Necessarily, nlc_constraint is defined as a dictionary, for which all the constraints have to be
                     # considered.
                     constraint_x = np.r_[-constraint_x, constraint_x]
-                else:
+                elif not infeasible:
                     # nlc_constraint is defined as a dictionary, for which all the constraints have to be considered.
                     # Moreover, it consists of an inequality constraint c(x) >= 0, which has to be inversed,
                     constraint_x *= -1
+                else:
+                    # The problem is infeasible, only the constraint evaluation should be stored.
+                    pass
 
                 # Add the current nonlinear constraint evaluation to the general one.
                 fun_x = np.r_[fun_x, constraint_x]
@@ -2941,7 +2944,12 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
         k_nonlinear = 0  # index of the current nonlinear constraint in the output array
         try:
             for i_meta, metadata in enumerate(prob_info['constr_meta']['data']):
-                if not metadata['trivial']:
+                if prob_info['infeasible']:
+                    # If the problem turned infeasible, the raw constraint values have been recorded, they just need to
+                    # be read in order.
+                    constr_value.append(output['constr_value'][k_nonlinear:k_nonlinear + metadata['len']])
+                    k_nonlinear += metadata['len']
+                elif not metadata['trivial']:
                     # The constraint is a non-trivial constraint, which has therefore some components that have been
                     # evaluated.
                     if i_meta in prob_info['constr_meta']['linear_indices']:
