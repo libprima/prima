@@ -9,9 +9,9 @@
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 
-python module pdfoconst ! in 
-    interface  ! in :pdfoconst
-        subroutine use_pdfoconst() ! in :pdfoconst:pdfoconst.F
+python module pdfoconst
+    interface
+        subroutine use_pdfoconst()
             use pdfoconst
         end subroutine use_pdfoconst
     end interface 
