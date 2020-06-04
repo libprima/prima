@@ -20,30 +20,30 @@ python module calfun__user__routines
     end interface calfun_user_routines
 end python module calfun__user__routines
 
-python module fnewuoa ! in
-    interface  ! in :fnewuoa
-        module fnewuoa ! in :fnewuoa:./newuoa.f90
+python module fnewuoa
+    interface
+        module fnewuoa
             use pdfoconst
             integer :: nf
             double precision, allocatable, dimension(:) :: fhist
         end module fnewuoa
-        subroutine mnewuoa(n,npt,x,rhobeg,rhoend,iprint,maxfun,w,f,info,funhist,ftarget) ! in :fnewuoa:./newuoa.f90
+        subroutine mnewuoa(n,npt,x,rhobeg,rhoend,iprint,maxfun,w,f,info,funhist,ftarget)
             use fnewuoa
             use calfun__user__routines
             intent(callback) fun
             external fun
-            integer :: n
-            integer :: npt
+            integer, intent(in) :: n
+            integer, intent(in) :: npt
             double precision, dimension(n), intent(in,out,copy) :: x
-            double precision :: rhobeg
-            double precision :: rhoend
-            integer :: iprint
-            integer :: maxfun
-            double precision, dimension((npt+13)*(npt+n)+3*n*(n+3)/2+1), intent(hide) :: w
+            double precision, intent(in) :: rhobeg
+            double precision, intent(in) :: rhoend
+            integer, intent(in) :: iprint
+            integer, intent(in) :: maxfun
+            double precision, dimension((npt+13)*(npt+n)+3*n*(n+3)/2+1), intent(in,hide) :: w
             double precision, intent(out) :: f
             integer, intent(out) :: info
             double precision, dimension(maxfun), intent(out) :: funhist
-            double precision :: ftarget
+            double precision, intent(in) :: ftarget
         end subroutine mnewuoa
     end interface
 end python module fnewuoa

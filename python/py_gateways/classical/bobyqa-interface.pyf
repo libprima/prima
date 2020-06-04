@@ -20,9 +20,9 @@ python module calfun__user__routines
     end interface calfun_user_routines
 end python module calfun__user__routines
 
-python module fbobyqa_classical ! in
-    interface  ! in :fbobyqa_classical
-        module fbobyqa ! in :fbobyqa_classical:./bobyqa.f90
+python module fbobyqa_classical
+    interface
+        module fbobyqa
             use pdfoconst
             integer :: nf
             double precision, allocatable, dimension(:) :: fhist
@@ -30,26 +30,26 @@ python module fbobyqa_classical ! in
             double precision, allocatable, dimension(:) :: xlresmax
             double precision, allocatable, dimension(:) :: xuresmax
         end module fbobyqa
-        subroutine mbobyqa(n,npt,x,xl,xu,rhobeg,rhoend,iprint,maxfun,w,f,info,funhist,conhist,ftarget,resmax) ! in :fbobyqa_classical:./bobyqa.f90
+        subroutine mbobyqa(n,npt,x,xl,xu,rhobeg,rhoend,iprint,maxfun,w,f,info,funhist,conhist,ftarget,resmax)
             use fbobyqa
             use calfun__user__routines
             intent(callback) fun
             external fun
-            integer :: n
-            integer :: npt
+            integer, intent(in) :: n
+            integer, intent(in) :: npt
             double precision, dimension(n), intent(in,out,copy) :: x
-            double precision, dimension(n) :: xl
-            double precision, dimension(n) :: xu
-            double precision :: rhobeg
-            double precision :: rhoend
-            integer :: iprint
-            integer :: maxfun
-            double precision, dimension((npt+5)*(npt+n)+3*n*(n+5)/2+1), intent(hide) :: w
+            double precision, dimension(n), intent(in) :: xl
+            double precision, dimension(n), intent(in) :: xu
+            double precision, intent(in) :: rhobeg
+            double precision, intent(in) :: rhoend
+            integer, intent(in) :: iprint
+            integer, intent(in) :: maxfun
+            double precision, dimension((npt+5)*(npt+n)+3*n*(n+5)/2+1), intent(in,hide) :: w
             double precision, intent(out) :: f
             integer, intent(out) :: info
             double precision, dimension(maxfun), intent(out) :: funhist
             double precision, dimension(maxfun), intent(out) :: conhist
-            double precision :: ftarget
+            double precision, intent(in) :: ftarget
             double precision, intent(out) :: resmax
         end subroutine mbobyqa
     end interface

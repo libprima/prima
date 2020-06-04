@@ -9,9 +9,9 @@
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 
-python module gethuge ! in
-    interface  ! in :gethuge
-        subroutine gethuge(data_type,huge_value) ! in :gethuge:gethuge.f90
+python module gethuge
+    interface
+        subroutine gethuge(data_type,huge_value)
             use pdfoconst
             character*20, intent(in) :: data_type
             double precision, intent(out) :: huge_value
