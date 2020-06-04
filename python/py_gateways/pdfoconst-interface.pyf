@@ -11,13 +11,8 @@
 
 python module pdfoconst ! in 
     interface  ! in :pdfoconst
-        subroutine use_pdfoconst(x,tx) ! in :pdfoconst:pdfoconst.F
+        subroutine use_pdfoconst() ! in :pdfoconst:pdfoconst.F
             use pdfoconst
-            double precision, intent(in) :: x
-            double precision, intent(out) :: tx
         end subroutine use_pdfoconst
     end interface 
 end python module pdfoconst
-
-! This file was auto-generated with f2py (version:2).
-! See http://cens.ioc.ee/projects/f2py2e/

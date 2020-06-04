@@ -26,10 +26,10 @@ def lincoa(fun, x0, args=(), bounds=None, constraints=(), options=None):
             ``lincoa(lambda x: fun(x, args), x0, ...)``
 
     bounds: ndarray of tuple with shape(n,2), or Bounds, optional
-        Bound constraints of the problem. It can be one of the two cases below. 
-            1. An ndarray with shape(n,2). If the ndarray is 'bounds', then the bound constraint for x[i] is 
-                bounds[i, 0]<=x[i]<=bounds[i, 1]. Set bounds[i, 0] to -numpy.inf or None if there is no lower bound, and 
-                set bounds[i, 1] to numpy.inf or None if there is no upper bound. 
+        Bound constraints of the problem. It can be one of the two cases below.
+            1. An ndarray with shape(n,2). If the ndarray is 'bounds', then the bound constraint for x[i] is
+                bounds[i, 0]<=x[i]<=bounds[i, 1]. Set bounds[i, 0] to -numpy.inf or None if there is no lower bound, and
+                set bounds[i, 1] to numpy.inf or None if there is no upper bound.
             2. An instance of the `Bounds` class. Bounds(lb, ub) specifies a bound constraint lb<=x<=ub.
     constraints: LinearConstraint or a list of them, optional
         Linear constraints of the problem. It can be one of the two cases below.
@@ -39,9 +39,9 @@ def lincoa(fun, x0, args=(), bounds=None, constraints=(), options=None):
     options: dict, optional
         The options passed to the solver. It is a structure that contains optionally:
             rhobeg: float, optional
-                Initial value of the trust region radius, which should be a positive scalar. Typically, `options['rhobeg']`
-                should be typically in the order of one tenth of the greatest expected change to a variable. By default, it
-                is 1 if the problem is not scaled, 0.5 if the problem is scaled.
+                Initial value of the trust region radius, which should be a positive scalar. Typically,
+                `options['rhobeg']` should be typically in the order of one tenth of the greatest expected change to a
+                variable. By default, it is 1 if the problem is not scaled, 0.5 if the problem is scaled.
             rhoend: float, optional
                 Final value of the trust region radius, which should be a positive scalar. `options['rhoend']` should
                 indicate typically the accuracy required in the final values of the variables. Moreover,
@@ -55,9 +55,9 @@ def lincoa(fun, x0, args=(), bounds=None, constraints=(), options=None):
                 Target value of the objective function. If a feasible iterate achieves an objective function value lower
                 or equal to `options['ftarget']`, the algorithm stops immediately. By default, it is -numpy.inf.
             scale: bool, optional
-                Flag indicating whether to scale the problem according to the bound constraints or not. By default, it is 
-                False. If the problem is to be scaled, then rhobeg and rhoend mentioned above will be used as the initial 
-                and final trust region radii for the scaled problem.
+                Flag indicating whether to scale the problem according to the bound constraints or not. By default, it
+                is False. If the problem is to be scaled, then rhobeg and rhoend mentioned above will be used as the
+                initial and final trust region radii for the scaled problem.
             quiet: bool, optional
                 Flag of quietness of the interface. If it is set to True, the output message will not be printed. This
                 flag does not interfere with the warning and error printing.

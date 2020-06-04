@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 from __future__ import division, print_function, absolute_import
 
 import sys
@@ -60,6 +59,12 @@ class OptimizeResult(dict):
     chist: ndarray, shape (nfev,)
         History of the constraint violations computed during the computation. If the problem is unconstrained, `chist`
         is set to None.
+    constr_value: list
+        Values of the constraint functions at the end of the computation. It is available only for
+        nonlinearly-constrained problems. Each component of the list in an ndarray that record the values of the
+        corresponding constraint function in the input (the order is kept). If a component of a nonlinear constraint is
+        trivial, i.e., if this component has -inf for lower bound and +inf for upper bound, the evaluations of it are
+        meaningless and therefore not recorded: the special value NaN in constr_value represents this possibility.
     method: str
         The name of the method that was used to solve the problem.
     constr_modified: bool
@@ -224,9 +229,9 @@ class LinearConstraint:
         if len(self.ub.shape) > 1 and np.prod(self.ub.shape) == self.ub.size:
             self.ub = self.ub.reshape(self.ub.size)
         if len(self.lb.shape) == 0:
-            self.lb = self.lb.reshape(lb.size)
+            self.lb = self.lb.reshape(self.lb.size)
         if len(self.ub.shape) == 0:
-            self.ub = self.ub.reshape(ub.size)
+            self.ub = self.ub.reshape(self.ub.size)
         if len(self.A.shape) in [0, 1]:
             self.A = self.A.reshape((1, self.A.size))
 
@@ -333,9 +338,9 @@ class NonlinearConstraint:
         if len(self.ub.shape) > 1 and np.prod(self.ub.shape) == self.ub.size:
             self.ub = self.ub.reshape(self.ub.size)
         if len(self.lb.shape) == 0:
-            self.lb = self.lb.reshape(lb.size)
+            self.lb = self.lb.reshape(self.lb.size)
         if len(self.ub.shape) == 0:
-            self.ub = self.ub.reshape(ub.size)
+            self.ub = self.ub.reshape(self.ub.size)
 
         if len(self.lb.shape) != 1 or len(self.ub.shape) != 1 or \
                 (self.lb.size != self.ub.size and self.lb.size > 1 and self.ub.size > 1):
@@ -460,6 +465,10 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
     # 17. refined_type: problem type after reduction
     # 18. refined_dim: problem dimension after reduction
     # 19. warnings: warnings during the preprocessing/validation
+    # 20. constr_metadata: metadata of each constraint, that is needed to build the output constr_value. It contains:
+    #         - linear_indices: the indices of the linear constraints in the argument `constraints`.
+    #         - nonlinear_indices: the indices of the nonlinear constraints in the argument `constraints`.
+    #         - data: a list of metadata for each constraint (length, bounds, dropped indices, ...).
     prob_info = dict()
     prob_info['raw_data'] = \
         {'objective': fun, 'x0': x0, 'args': args, 'bounds': bounds, 'constraints': constraints, 'options': options}
@@ -853,6 +862,16 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
                     "{}: the constraints should be instances of the `LinearConstraint` or `NonlinearConstraint` "
                     "classes, or a dictionary with field 'type' and 'fun'.".format(invoker))
 
+        # Create the constraint metadata, so that the list of constraint evaluations can be constructed in the
+        # post-processing.
+        linear_constr_indices = [i for (i, con) in enumerate(constraints_c) if isinstance(con, linear_constraint_types)]
+        nonlinear_constr_indices = list(set(range(len(constraints_c))) - set(linear_constr_indices))
+        prob_info['constr_meta'] = {
+            'linear_indices': linear_constr_indices,
+            'nonlinear_indices': nonlinear_constr_indices,
+            'data': [None] * len(constraints_c)
+        }
+
         # If no bounds are provided with some nonlinear constraints, they should not be considered. Moreover, the bounds
         # in the nonlinear constraints should be feasible.
         reduced_list_nonlinear = []
@@ -861,7 +880,7 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
         # The following registered the state of every nonlinear constraints, i.e., whether it should be considered or
         # not.
         list_nonlinear_bound_types = []
-        for nonlinear_constraint in list_nonlinear:
+        for nonlinear_constraint, i_meta in zip(list_nonlinear, prob_info['constr_meta']['nonlinear_indices']):
             if isinstance(nonlinear_constraint, nonlinear_constraint_types):
                 lb_nonlinear, ub_nonlinear = nonlinear_constraint.lb, nonlinear_constraint.ub
                 if (lb_nonlinear.size > 0 and not np.logical_and(np.isinf(lb_nonlinear), lb_nonlinear < 0).all()) or \
@@ -878,15 +897,46 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
                         'ub_free': ub_free
                     })
 
+                    # Set the metadata of the nonlinear constraints that are now accessible.
+                    prob_info['constr_meta']['data'][i_meta] = {
+                        'trivial': False,
+                        'len': max(lb_nonlinear.size, ub_nonlinear.size),
+                        'dropped_indices_lb': np.logical_not(lbx),
+                        'dropped_indices_ub': np.logical_not(ubx),
+                        'lb': lb_nonlinear,
+                        'ub': ub_nonlinear
+                    }
+
                     infeasible_lb = np.logical_and(lb_nonlinear > 0, np.isinf(lb_nonlinear))
                     infeasible_ub = np.logical_and(ub_nonlinear < 0, np.isinf(ub_nonlinear))
                     infeasible_nonlinear = \
                         np.r_[infeasible_nonlinear,
                               np.logical_or(infeasible_lb, np.logical_or(infeasible_ub, lb_nonlinear > ub_nonlinear))]
+                else:
+                    # The nonlinear constraint, defined as a NonlinearConstraint structure, is considered trivial. It
+                    # means that the lower bound of each component is -inf and the upper bound of each component is
+                    # +inf.
+                    prob_info['constr_meta']['data'][i_meta] = {
+                        'trivial': True,
+                        'len': max(lb_nonlinear.size, ub_nonlinear.size)
+                    }
             else:
                 # The nonlinear constraint is defined as a dictionary, for which infeasibility cannot be checked
                 reduced_list_nonlinear.append(nonlinear_constraint)
                 list_nonlinear_bound_types.append(None)
+
+                # Set the metadata of the nonlinear constraints. Since it is defined as a dictionary, we do not have
+                # access to any meta-information. However, the structure is constructed with default values, so that it
+                # can be modified during the execution of PDFO. In fact, since the dictionary are mutable, the values
+                # archived i prob_info['constr_meta']['data'] can be modified on the fly of the execution of PDFO.
+                prob_info['constr_meta']['data'][i_meta] = {
+                    'trivial': False,
+                    'len': -1,
+                    'dropped_indices_lb': None,
+                    'dropped_indices_ub': None,
+                    'lb': None,
+                    'ub': None
+                }
 
         list_nonlinear = reduced_list_nonlinear
 
@@ -895,7 +945,7 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
         lb_linear = np.asarray([], dtype=np.float64)
         ub_linear = np.asarray([], dtype=np.float64)
 
-        for linear_constraint in list_linear:
+        for linear_constraint, i_meta in zip(list_linear, prob_info['constr_meta']['linear_indices']):
             # The type of linear_constraint is necessarily LinearConstraint.
             a_local = linear_constraint.A
             if a_local.size == 0:
@@ -913,6 +963,10 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
                 ub_local = linear_constraint.ub
             else:
                 ub_local = np.full(a_local.shape[0], np.inf)
+
+            # Set the metadata related to this constraint. Since it a linear constraint, all we need is the complete
+            # left-hand side to perform in the post-processing the product Ax.
+            prob_info['constr_meta']['data'][i_meta] = {'trivial': False, 'A': a_local}
 
             # Add the current linear constraint to the global one.
             if a_local.size > 0:
@@ -976,11 +1030,16 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
             import_error_so('gethuge')
         hugecon = gethuge('con')
 
+        # Define the indices of the nonlinear constraints that are not trivial
+        non_trivial = [i for i in range(len(constraints_c)) if not prob_info['constr_meta']['data'][i]['trivial']]
+        non_linear_non_trivial_indices = [i for i in prob_info['constr_meta']['nonlinear_indices'] if i in non_trivial]
+
         # Define the global constraint function.
         def fun_nonlinear(x, raw=False):
             fun_x = np.asarray([], dtype=np.float64)
 
-            for nlc_constraint, b_type in zip(list_nonlinear, list_nonlinear_bound_types):
+            for nlc_constraint, b_type, i_meta in zip(list_nonlinear, list_nonlinear_bound_types,
+                                                      non_linear_non_trivial_indices):
                 # Get the value of the constraint function.
                 if not raw and prob_info['reduced']:
                     x_full = _fullx(x, fixed_values, free_indices, fixed_indices)
@@ -1013,6 +1072,20 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
                 if len(constraint_x.shape) != 1:
                     raise ValueError('{}: the constraint function should return a vector or a scalar.'.format(invoker))
 
+                # Set the metadata related to this constraint if it has not been done yet.
+                if prob_info['constr_meta']['data'][i_meta]['len'] < 0:
+                    prob_info['constr_meta']['data'][i_meta]['len'] = constraint_x.size
+                    prob_info['constr_meta']['data'][i_meta]['dropped_indices_lb'] = np.full(constraint_x.shape, False)
+                    prob_info['constr_meta']['data'][i_meta]['lb'] = np.zeros_like(constraint_x)
+
+                    # if the metadata has not been set, nlc_constraint is necessarily defined as a dictionary.
+                    prob_info['constr_meta']['data'][i_meta]['dropped_indices_ub'] = \
+                        np.full(constraint_x.shape, not nlc_constraint['type'] == 'eq')
+                    if nlc_constraint['type'] == 'eq':
+                        prob_info['constr_meta']['data'][i_meta]['ub'] = np.zeros_like(constraint_x)
+                    else:
+                        prob_info['constr_meta']['data'][i_meta]['ub'] = np.full_like(constraint_x, np.inf)
+
                 lenm = constraint_x.size
                 if isinstance(nlc_constraint, nonlinear_constraint_types):
                     if nlc_constraint.lb.size not in [0, lenm] or \
@@ -1034,7 +1107,7 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
                 elif nlc_constraint['type'] == 'eq':
                     # Necessarily, nlc_constraint is defined as a dictionary, for which all the constraints have to be
                     # considered.
-                    constraint_x = np.r_[constraint_x, -constraint_x]
+                    constraint_x = np.r_[-constraint_x, constraint_x]
                 else:
                     # nlc_constraint is defined as a dictionary, for which all the constraints have to be considered.
                     # Moreover, it consists of an inequality constraint c(x) >= 0, which has to be inversed,
@@ -1151,11 +1224,11 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
 
     # Check whether the used provided any unknown option.
     known_field = ['maxfev', 'rhobeg', 'rhoend', 'ftarget', 'classical', 'quiet', 'debug', 'chkfunval']
-    if method is not None and method.lower() in ['bobyqa', 'lincoa', 'newuoa']:
+    if method is None or method.lower() in ['bobyqa', 'lincoa', 'newuoa']:
         known_field.append('npt')
-    if method is not None and method.lower() in ['bobyqa', 'cobyla', 'lincoa']:
+    if method is None or method.lower() in ['bobyqa', 'cobyla', 'lincoa']:
         known_field.append('scale')
-    if method is not None and method.lower() == 'bobyqa':
+    if method is None or method.lower() == 'bobyqa':
         known_field.append('honour_x0')
     unknown_field = list(set(option_fields).difference(set(known_field)))
 
@@ -2610,8 +2683,8 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
         else:
             # Compute the constraint violation as usual.
             nlc = np.asarray([-np.inf], dtype=np.float64)
-            if 'nlc' in output.keys():
-                nlc = np.asarray(output['nlc'], dtype=np.float64)
+            if 'constr_value' in output.keys():
+                nlc = np.asarray(output['constr_value'], dtype=np.float64)
             conv = np.concatenate((r, lb - x_c, x_c - ub, nlc))
             if np.isnan(conv).all():
                 constrviolation_c = np.nan
@@ -2646,14 +2719,15 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
         output['constrviolation'] = np.float64(0)
         output['chist'] = np.zeros(nf_c)
 
-    # Revise output['nlc'] according to problem type.
-    if prob_info_c['refined_type'] != 'nonlinearly-constrained' and 'nlc' in output.keys() and output['nlc'].size > 0:
+    # Revise output['constr_value'] according to problem type.
+    if prob_info_c['refined_type'] != 'nonlinearly-constrained' and 'constr_value' in output.keys() and \
+            output['constr_value'].size > 0:
         raise ValueError(
             '{}: UNEXPECTED ERROR: {} returns values of nonlinear constraints for a problem that does not admit '
             'such constraints.'.format(invoker, method))
 
-    if prob_info_c['raw_type'] != 'nonlinearly-constrained' and 'nlc' in output.keys():
-        del output['nlc']
+    if prob_info_c['raw_type'] != 'nonlinearly-constrained' and 'constr_value' in output.keys():
+        del output['constr_value']
 
     # Record the returned message.
     if exitflag_c == 0:
@@ -2731,10 +2805,6 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
     else:
         warning_list = []
 
-    # Combine all the warnings into one list.
-    if len(warning_list) > 0:
-        output['warnings'] = warning_list
-
     # More careful checks about fx, constrviolation, fhist and chist.
     # We do this only if the coe is in debug mode but not in classical mode. The classical mode cannot pass these
     # checks.
@@ -2794,8 +2864,8 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
                 conv = np.max(conv_n)
             else:
                 nlc = np.asarray([-np.inf], dtype=np.float64)
-                if 'nlc' in output.keys():
-                    nlc = np.asarray(output['nlc'], dtype=np.float64)
+                if 'constr_value' in output.keys():
+                    nlc = np.asarray(output['constr_value'], dtype=np.float64)
                 conv = np.concatenate(([0], r, lb - x_c, x_c - ub, nlc))
                 conv = np.nanmax(conv)
 
@@ -2837,8 +2907,8 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
             # Check whether nlc = nonlinear(x) (true equality).
             nonlinear = prob_info_c['raw_data']['constraints']['nonlinear']
             if nonlinear is not None:
-                if 'nlc' in output.keys():
-                    nlc = output['nlc']
+                if 'constr_value' in output.keys():
+                    nlc = output['constr_value']
                 else:
                     nlc = np.array([], dtype=np.float64)
 
@@ -2862,11 +2932,76 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
     if 'constr_modified' in output.keys():
         del output['constr_modified']
 
-    # output['nlc'] contains the nonlinear constraint at the output iteration without re-evaluation. It was needed in
-    # the original release in the checking part of postpdfo, but it is keeping in the output structure in the latter
-    # releases.
-    # if 'nlc' in output.keys():
-    #     del output['nlc']
+    # Create the 'constr_value' field in the output, with respect to the structure of the constraints in input.
+    if 'constr_value' in output.keys():
+        if 'constr_meta' not in prob_info.keys():
+            raise ValueError('{}: UNEXPECTED ERROR: the constraints metadata are not defined.'.format(invoker))
+
+        constr_value = []  # reconstructed list
+        k_nonlinear = 0  # index of the current nonlinear constraint in the output array
+        try:
+            for i_meta, metadata in enumerate(prob_info['constr_meta']['data']):
+                if not metadata['trivial']:
+                    # The constraint is a non-trivial constraint, which has therefore some components that have been
+                    # evaluated.
+                    if i_meta in prob_info['constr_meta']['linear_indices']:
+                        # The constraint is a linear constraint: we just need to compute the product Ax. Since the
+                        # computation of the value of the linear constraint is considered low, we do not built the
+                        # global evaluation by using the computation already done by the Fortran code.
+                        constr_value.append(np.dot(metadata['A'], output['x']))
+                    else:
+                        # The current constraint is a nonlinear constraint: since we should absolutely not re-evaluated
+                        # the nonlinear constraint function, we decode the values contain in the constraint array,
+                        # forwarded by the Fortran code. Note that some evaluations may have been dropped.
+                        n_lb = sum(np.logical_not(metadata['dropped_indices_lb']))
+                        n_ub = sum(np.logical_not(metadata['dropped_indices_ub']))
+                        missing_lb, missing_ub = 0, 0  # the number of missing values so far
+                        values = np.full(metadata['len'], np.nan, dtype=np.float64)
+                        for i in range(metadata['len']):
+                            if not metadata['dropped_indices_lb'][i] and not metadata['dropped_indices_ub'][i]:
+                                # If both upper and lower bound are significative, the considered constraint value is
+                                # the average of both computed values, to increase the precision.
+                                vlb = metadata['lb'][i] - output['constr_value'][k_nonlinear + i - missing_lb]
+                                vub = output['constr_value'][k_nonlinear + i + n_lb - missing_ub] + metadata['ub'][i]
+                                values[i] = (vlb + vub) / 2
+                            elif not metadata['dropped_indices_lb'][i]:
+                                # The upper bound of the current component was set to +inf but the lower bound was a
+                                # true scalar: we can build the constraint value from it.
+                                vlb = metadata['lb'][i] - output['constr_value'][k_nonlinear + i - missing_lb]
+                                values[i] = vlb
+                                missing_ub += 1  # the upper bound was not significative
+                            elif not metadata['dropped_indices_ub'][i]:
+                                # The lower bound of the current component was set to -inf but the upper bound was a
+                                # true scalar: we can build the constraint value from it.
+                                vub = output['constr_value'][k_nonlinear + i + n_lb - missing_ub] + metadata['ub'][i]
+                                values[i] = vub
+                                missing_lb += 1  # the lower bound was not significative
+                            else:
+                                # Both lower and upper bound are missing, the value should be set to NaN.
+                                missing_lb += 1
+                                missing_ub += 1
+                        constr_value.append(values)
+                        k_nonlinear += n_lb + n_ub
+                else:
+                    # The constraint has been considered trivial, which led to no evaluation of it. Moreover, it is
+                    # necessarily defined as a NonlinearConstraint structure, which provides its length.
+                    constr_value.append(np.full(metadata['len'], np.nan, dtype=np.float64))
+        except (KeyError, IndexError):
+            raise ValueError('{}: UNEXPECTED ERROR: the constraints metadata are ill-defined.'.format(invoker))
+
+        if any(map(lambda a: np.any(np.isnan(a)), constr_value)):
+            # The list of constraint values contains some NaN values because some constraints were not considered by the
+            # code: the user should be informed.
+            w_message = \
+                '{}: some trivial nonlinear constraint components have been supplied, that were not evaluated during' \
+                ' the computation. Their values are replaced by NaN.'.format(invoker)
+            warnings.warn(w_message, Warning)
+            warning_list.append(w_message)
+        output['constr_value'] = constr_value
+
+    # Give back all the warning messages to the user.
+    if len(warning_list) > 0:
+        output['warnings'] = warning_list
 
     if not options['quiet']:
         print(output['message'], end='\n\n')
