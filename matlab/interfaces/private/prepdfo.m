@@ -90,8 +90,9 @@ end
 % 17. raw_dim: problem dimension before reduction
 % 18. refined_type: problem type after reduction
 % 19. refiend_dim: problem dimension after reduction
-% 20. options: options for calling the solvers
-% 21. warnings: warnings during the preprocessing/validation
+% 20. feasibility_problem: whether the problem is a feasibility problem
+% 21. options: options for calling the solvers
+% 22. warnings: warnings during the preprocessing/validation
 probinfo = struct(); 
 
 % Save the raw data (date before validation/preprocessing) in probinfo.
@@ -109,7 +110,8 @@ probinfo.raw_data = struct('objective', fun, 'x0', x0, 'Aineq', Aineq, 'bineq', 
     'Aeq', Aeq, 'beq', beq, 'lb', lb, 'ub', ub, 'nonlcon', nonlcon, 'options', options);
 
 % Validate and preprocess fun
-[fun, warnings] = pre_fun(invoker, fun, warnings);
+[fun, feasibility_problem, warnings] = pre_fun(invoker, fun, warnings);
+probinfo.feasibility_problem = true;
 
 % Validate and preprocess x0 
 [x0, warnings] = pre_x0(invoker, x0, warnings);
@@ -418,16 +420,18 @@ end
 return
 
 %%%%%%%%%%%%%%%%%%%%%%%% Function for fun preprocessing %%%%%%%%%%%%%%%%%
-function [fun, warnings] = pre_fun(invoker, fun, warnings)
+function [fun, feasibility_problem, warnings] = pre_fun(invoker, fun, warnings)
 if ~(isempty(fun) || isa(fun, 'char') || isa(fun, 'string') || isa(fun, 'function_handle'))
     % Public/normal error
     error(sprintf('%s:InvalidFun', invoker), ...
         '%s: FUN should be a function handle or a function name.', invoker);
 end
+feasibility_problem = false; % Is this a feasibility problem?
 if isempty(fun)
     fun = @(x) 0; % No objective function
+    feasibility_problem = true; % This is a feasibility problem
     wid = sprintf('%s:NoObjective', invoker);
-    wmessage = sprintf('%s: there is no objective function.', invoker);
+    wmessage = sprintf('%s: there is no objective function. A feasibility problem will be solved.', invoker);
     warning(wid, '%s', wmessage);
     warnings = [warnings, wmessage]; 
 elseif isa(fun, 'char') || isa(fun, 'string')
