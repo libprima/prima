@@ -35,7 +35,7 @@ obligatory_output_field = {'x', 'fx', 'exitflag', 'funcCount', 'constrviolation'
 obligatory_probinfo_field = {'raw_data', 'refined_data', 'fixedx', 'fixedx_value', ...
     'nofreex', 'infeasible_bound', 'infeasible_lineq', 'infeasible_leq', ...
     'trivial_lineq', 'trivial_leq', 'infeasible', 'scaled', 'scaling_factor', ...
-    'shift', 'reduced', 'raw_type', 'raw_dim', 'refined_type', 'refined_dim', 'options', 'warnings'};
+    'shift', 'reduced', 'raw_type', 'raw_dim', 'refined_type', 'refined_dim', 'feasibility_problem', 'options', 'warnings'};
 obligatory_options_field = {'classical', 'debug', 'chkfunval', 'quiet'};
 
 % All possible solvers
@@ -230,6 +230,12 @@ if ~options.classical && ~probinfo.infeasible && ~probinfo.nofreex
         warning(wid, '%s', wmessage);
         output.warnings = [output.warnings, wmessage];
     end
+end
+
+% If the problem is a feasibility problem, set fx to [], and remove fhist from output;
+if probinfo.feasibility_problem
+    fx = [];
+    output = rmfield(output, 'fhist');
 end
 
 % Verify constrviolation
