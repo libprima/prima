@@ -18,14 +18,17 @@ import numpy as np
 
 
 def chrosen(x):  # the subroutine defining the objective function
+    """Chained Rosenbrock function."""
     return sum((1 - x[:-1]) ** 2 + 4 * (x[1:] - x[:-1] ** 2) ** 2)
 
 
 def nlc_ineq(x):  # the subroutine defining the nonlinear inequality constraints
+    """Example of nonlinear inequality constraint function."""
     return -x[:-1] ** 2 + x[1:]
 
 
 def nlc_eq(x):  # the subroutine defining the nonlinear equality constraints
+    """Example of nonlinear equality constraint function (unit sphere)."""
     return sum(x ** 2) - 1
 
 

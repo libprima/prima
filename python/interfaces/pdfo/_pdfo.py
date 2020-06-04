@@ -101,8 +101,8 @@ def pdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=Non
                 Debugging flag. By default, it is False.
             chkfunval: bool, optional
                 Flag used when debugging. If both `options['debug']` and `options['chkfunval']` are True, an extra 
-                function/constraint evaluation would be performed to check whether the returned values of objective function and 
-                constraint match the returned x. By default, it is False.
+                function/constraint evaluation would be performed to check whether the returned values of objective
+                function and constraint match the returned x. By default, it is False.
 
     Returns
     -------
@@ -186,7 +186,7 @@ def pdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=Non
         fhist = np.array([fx], dtype=np.float64)
         constrviolation = prob_info['constrv_x0']
         chist = np.array([constrviolation], dtype=np.float64)
-        output['nlc'] = prob_info['nlc_x0']
+        output['constr_value'] = prob_info['nlc_x0']
         output['constr_modified'] = False
     elif prob_info['nofreex']:
         # x was fixed by the bound constraints during prepdfo.
@@ -197,7 +197,7 @@ def pdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=Non
         fhist = np.array([fx], dtype=np.float64)
         constrviolation = prob_info['constrv_fixedx']
         chist = np.array([constrviolation], dtype=np.float64)
-        output['nlc'] = prob_info['nlc_fixedx']
+        output['constr_value'] = prob_info['nlc_fixedx']
         output['constr_modified'] = False
     else:
         # The problem turns out 'normal' during prepdfo.
@@ -238,7 +238,7 @@ def pdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=Non
         except AttributeError:
             chist = None
         try:
-            output['nlc'] = opti_res.nlc
+            output['constr_value'] = opti_res.constr_value
         except AttributeError:
             pass
         try:

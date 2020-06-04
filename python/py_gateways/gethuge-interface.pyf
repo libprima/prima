@@ -9,7 +9,7 @@
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 
-python module gethuge ! in 
+python module gethuge ! in
     interface  ! in :gethuge
         subroutine gethuge(data_type,huge_value) ! in :gethuge:gethuge.f90
             use pdfoconst
@@ -18,6 +18,3 @@ python module gethuge ! in
         end subroutine gethuge
     end interface 
 end python module gethuge
-
-! This file was auto-generated with f2py (version:2).
-! See http://cens.ioc.ee/projects/f2py2e/

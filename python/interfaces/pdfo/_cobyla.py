@@ -176,7 +176,7 @@ def cobyla(fun, x0, args=(), bounds=None, constraints=(), options=None):
         fhist = np.array([fx], dtype=np.float64)
         constrviolation = prob_info['constrv_x0']
         chist = np.array([constrviolation], dtype=np.float64)
-        output['nlc'] = prob_info['nlc_x0']
+        output['constr_value'] = prob_info['nlc_x0']
     elif invoker != 'pdfo' and prob_info['nofreex']:
         # x was fixed by the bound constraints during prepdfo
         exitflag = 13
@@ -186,7 +186,7 @@ def cobyla(fun, x0, args=(), bounds=None, constraints=(), options=None):
         fhist = np.array([fx], dtype=np.float64)
         constrviolation = prob_info['constrv_fixedx']
         chist = np.array([constrviolation], dtype=np.float64)
-        output['nlc'] = prob_info['nlc_fixedx']
+        output['constr_value'] = prob_info['nlc_fixedx']
     else:
         # The problem turns out 'normal' during prepdfo include all the constraints into one single nonlinear
         # constraint.
@@ -251,7 +251,7 @@ def cobyla(fun, x0, args=(), bounds=None, constraints=(), options=None):
         nf = int(fcobyla.fcobyla.nf)
 
         if m > 0:
-            output['nlc'] = -conval[b_aug.size:]
+            output['constr_value'] = -conval[b_aug.size:]
 
     # Postprocess the result.
     return postpdfo(x, fx, exitflag, output, fun_name, nf, fhist, options_c, prob_info, constrviolation, chist)
