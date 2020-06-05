@@ -266,7 +266,7 @@ elseif ~strcmp(invoker, 'pdfo') && probinfo.nofreex % x was fixed by the bound c
     output.constrviolation = probinfo.constrv_fixedx;
     output.chist = output.constrviolation;
     output.constr_modified = false;
-elseif probinfo.feasibility_problem && ~strcmp(probinfo.refined_type, 'nonlinearly-constrained')
+elseif ~strcmp(invoker, 'pdfo') &&  probinfo.feasibility_problem
     output.x = x0;  % prepdfo has tried to set x0 to a feasible point (but may have failed)
     output.fx = fun(output.x);
     output.funcCount = 1;
