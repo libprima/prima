@@ -1266,7 +1266,7 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
     validated = False
     if 'scale' in option_fields:
         if not isinstance(options['scale'], (bool, np.bool)):
-            warn_message = '{}: invalid scale flag; it should be True or False; it is set to {}'.format(invoker, scale)
+            warn_message = '{}: invalid scale flag; it should be True or False; it is set to {}.'.format(invoker, scale)
             warnings.warn(warn_message, Warning)
             list_warnings.append(warn_message)
         elif options['scale'] and np.any(np.isinf(ub - lb)):
@@ -1438,7 +1438,7 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
     if 'classical' in option_fields:
         if not isinstance(options['classical'], (bool, np.bool)):
             warn_message = \
-                '{}: invalid scale flag; it should be True or False; it is set to {}'.format(invoker, classical)
+                '{}: invalid scale flag; it should be True or False; it is set to {}.'.format(invoker, classical)
             warnings.warn(warn_message, Warning)
             list_warnings.append(warn_message)
         else:
@@ -1459,7 +1459,7 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
     if 'honour_x0' in option_fields:
         if not isinstance(options['honour_x0'], (bool, np.bool)):
             warn_message = \
-                '{}: invalid honour_x0 flag; it should be True or False; it is set to {}'.format(invoker, honour_x0)
+                '{}: invalid honour_x0 flag; it should be True or False; it is set to {}.'.format(invoker, honour_x0)
             warnings.warn(warn_message, Warning)
             list_warnings.append(warn_message)
         else:
@@ -1473,7 +1473,7 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
     validated = False
     if 'quiet' in option_fields:
         if not isinstance(options['quiet'], (bool, np.bool)):
-            warn_message = '{}: invalid quiet flag; it should be True or False; it is set to {}'.format(invoker, quiet)
+            warn_message = '{}: invalid quiet flag; it should be True or False; it is set to {}.'.format(invoker, quiet)
             warnings.warn(warn_message, Warning)
             list_warnings.append(warn_message)
         else:
@@ -1488,7 +1488,7 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
     if 'debug' in option_fields:
         if not isinstance(options['debug'], (bool, np.bool)):
             warn_message = \
-                '{}: invalid debug flag; it should be True or False; it is set to {}'.format(invoker, debugflag)
+                '{}: invalid debug flag; it should be True or False; it is set to {}.'.format(invoker, debugflag)
             warnings.warn(warn_message, Warning)
             list_warnings.append(warn_message)
         else:
@@ -1512,7 +1512,7 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
     if 'chkfunval' in option_fields:
         if not isinstance(options['chkfunval'], (bool, np.bool)):
             warn_message = \
-                '{}: invalid chkfunval flag; it should be True or False; it is set to {}'.format(invoker, chkfunval)
+                '{}: invalid chkfunval flag; it should be True or False; it is set to {}.'.format(invoker, chkfunval)
             warnings.warn(warn_message, Warning)
             list_warnings.append(warn_message)
         elif not options['debug']:
