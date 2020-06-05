@@ -433,7 +433,10 @@ case 9
 %    output.message = sprintf('Return from %s because the gradient of a constraint is zero.', solver);
 case 13
     output.message = sprintf('Return from %s because all the variables are fixed by the bounds.', invoker);
-
+case 14
+    output.message = sprintf('%s receives a linear feasibility problem and finds a feasible point.', invoker);
+case 15
+    output.message = sprintf('%s receives a linear feasibility problem but does not find a feasible point.', invoker);
 case -1
     output.message = sprintf('Return from %s because NaN occurs in x.', solver);
 case -2
