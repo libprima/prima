@@ -66,7 +66,7 @@ function [x, fx, exitflag, output] = lincoa(varargin)
 %       4, 7, 8, 9: rounding errors become severe in the Fortran code 
 %       13: all variables are fixed by the constraints
 %       14: a feasibility problem received and solved
-%       15: a feasibility problem received and not solved
+%       15: a feasibility problem received but not solved
 %       -1: NaN occurs in x
 %       -2: the objective function returns an NaN or nearly infinite
 %       value (only in the classical mode)
@@ -273,12 +273,12 @@ elseif probinfo.feasibility_problem && ~strcmp(probinfo.refined_type, 'nonlinear
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_x0;
     output.chist = output.constrviolation;
-    if output.constrviolation < eps
+    output.constr_modified = false; % LINCOA requires constr_modified to exist in output
+    if output.constrviolation < eps  % Did prepdfo find a feasible point?
         output.exitflag = 14;
     else
         output.exitflag = 15;
     end
-    output.constr_modified = false; % LINCOA requires constr_modified to exist in output
 else % The problem turns out 'normal' during prepdfo
     % Include all the constraints into one single linear constraint
     % (A_aug)'*x <= b_aug; note the TRANSPOSE due to the data structure of
