@@ -49,6 +49,7 @@ function [x, fx, exitflag, output] = bobyqa(varargin)
 %       3: the objective function has been evaluated maxfun times
 %       4, 7, 8, 9: rounding errors become severe in the Fortran code 
 %       13: all variables are fixed by the constraints
+%       14: a feasibility problem received and solved
 %       -1: NaN occurs in x
 %       -2: the objective function returns an NaN or nearly infinite
 %       value (only in the classical mode)
@@ -246,6 +247,16 @@ elseif ~strcmp(invoker, 'pdfo') && probinfo.nofreex % x was fixed by the bound c
     output.funcCount = 1;
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_fixedx;
+    output.chist = output.constrviolation;
+elseif probinfo.feasibility_problem
+    % A "feasibility problem" with only bound constraints is rediculous yet
+    % nothing wrong mathematically
+    output.x = x0;  % prepdfo has set x0 to a feasible point
+    output.fx = fun(output.x);
+    output.exitflag = 14;
+    output.funcCount = 1;
+    output.fhist = output.fx;
+    output.constrviolation = probinfo.constrv_x0;
     output.chist = output.constrviolation;
 else % The problem turns out 'normal' during prepdfo
     % Extract the options

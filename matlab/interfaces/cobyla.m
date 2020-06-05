@@ -295,6 +295,20 @@ elseif ~strcmp(invoker, 'pdfo') && probinfo.nofreex % x was fixed by the bound c
     output.chist = output.constrviolation;
     output.nlcineq = probinfo.nlcineq_fixedx;
     output.nlceq = probinfo.nlceq_fixedx;
+elseif ~strcmp(invoker, 'pdfo') && probinfo.feasibility_problem && ~strcmp(probinfo.refined_type, 'nonlinearly-constrained')
+    output.x = x0;  % prepdfo has tried to set x0 to a feasible point (but may have failed)
+    output.fx = fun(output.x);
+    output.funcCount = 1;
+    output.fhist = output.fx;
+    output.constrviolation = probinfo.constrv_x0;
+    output.chist = output.constrviolation;
+    output.nlcineq = [];
+    output.nlceq = [];
+    if output.constrviolation < eps
+        output.exitflag = 14;
+    else
+        output.exitflag = 15;
+    end
 else % The problem turns out 'normal' during prepdfo
     % Include all the constraints into one single 'nonlinear constraint'
     con = @(x) cobyla_con(x, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
