@@ -59,12 +59,16 @@ class OptimizeResult(dict):
     chist: ndarray, shape (nfev,)
         History of the constraint violations computed during the computation. If the problem is unconstrained, `chist`
         is set to None.
-    constr_value: list
-        Values of the constraint functions at the end of the computation. It is available only for
-        nonlinearly-constrained problems. Each component of the list in an ndarray that record the values of the
-        corresponding constraint function in the input (the order is kept). If a component of a nonlinear constraint is
-        trivial, i.e., if this component has -inf for lower bound and +inf for upper bound, the evaluations of it are
-        meaningless and therefore not recorded: the special value NaN in constr_value represents this possibility.
+    constr_value: ndarray or list of ndarrays
+        Values of the constraint functions at the returned `x`. It can be one of the two cases below depending on how
+        the `constraints` variable is specified at the input.
+        1. If `constraints` is a dictionary or an instance of NonlinearConstraint or LinearConstraint, then `constr_value`
+           is an ndarray, whose value is `constraints['fun'](x)`, `constraints.fun(x)`, or `constraints.A*x`.
+        2. If `constraints` is a list of dictionaries or instances of NonlinearConstraint or LinearConstraint, then 
+           `constr_value` is a list of ndarrays described in 1, each of which is the value of the corresponding component 
+           in `constraints`.
+        If a nonlinear constraint is trivial (i.e., it has -inf as th lower bound and +inf as th upper bound), then its
+        is represented by NaN in constr_value, because such constraints are not evaluated during the computation.
     method: str
         The name of the method that was used to solve the problem.
     constr_modified: bool
@@ -380,7 +384,7 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
                     Constraint type: 'eq' for equality constraints and 'ineq' for inequality constraints.
                 fun: callable
                     The constraint function.
-            2. Instances of LinearConstraint or NonlinearConstraint.
+            2. An instance of LinearConstraint or NonlinearConstraint.
             3. A list, each of whose elements can be a dictionary described in 1, an instance of LinearConstraint or an
                instance of NonlinearConstraint.
     options: dict, optional
@@ -860,8 +864,8 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
             else:
                 # The constraint is neither linear nor nonlinear.
                 raise ValueError(
-                    "{}: the constraints should be instances of the `LinearConstraint` or `NonlinearConstraint` "
-                    "classes, or a dictionary with field 'type' and 'fun'.".format(invoker))
+                    "{}: each constraint should be an instance of the `LinearConstraint` or `NonlinearConstraint` "
+                    "class, or a dictionary with field 'type' and 'fun'.".format(invoker))
 
         # Create the constraint metadata, so that the list of constraint evaluations can be constructed in the
         # post-processing.
@@ -3027,8 +3031,8 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
             # The list of constraint values contains some NaN values because some constraints were not considered by the
             # code: the user should be informed.
             w_message = \
-                '{}: some nonlinear constraints are trivial. They are not evaluated during the computation. Their values' \
-                 ' are replaced by NaN in constr_value.'.format(invoker)
+                '{}: some nonlinear constraints are trivial. They are not evaluated during the computation, and their' \
+                ' values are represented by NaN in constr_value.'.format(invoker)
             warnings.warn(w_message, Warning)
             warning_list.append(w_message)
         output['constr_value'] = constr_value
