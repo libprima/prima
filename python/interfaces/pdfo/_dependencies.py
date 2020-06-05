@@ -593,7 +593,8 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
     # the bounds.
     prob_info['nofreex'] = all(prob_info['fixedx'])
     if prob_info['infeasible']:
-        prob_info['constrv_x0'], prob_info['nlc_x0'] = _constr_violation(invoker, x0_c, lb, ub, constraints_c)
+        prob_info['constrv_x0'], prob_info['nlc_x0'] = \
+            _constr_violation(invoker, x0_c, lb, ub, constraints_c, prob_info)
         
         # The constraint violation calculated by _constr_violation does not include the violation of x0 for the bounds
         # corresponding to fixedx; the corresponding values of x0 are in fixedx_value, while the values of the bounds
@@ -603,7 +604,7 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
         prob_info['constrv_x0'] = max(prob_info['constrv_x0'], max_fixed)
     elif prob_info['nofreex']:
         prob_info['constrv_fixedx'], prob_info['nlc_fixedx'] = \
-            _constr_violation(invoker, prob_info['fixedx_value'], lb, ub, constraints_c)
+            _constr_violation(invoker, prob_info['fixedx_value'], lb, ub, constraints_c, prob_info)
 
     # Can the invoker handle the given problem? This should be done after the problem type has been 'refined' (for
     # example, newuoa can handle a bound-constrained problem if every defined bound is fixed).
@@ -1536,7 +1537,7 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
     return options, method
 
 
-def _constr_violation(invoker, x, lb, ub, constraints):
+def _constr_violation(invoker, x, lb, ub, constraints, prob_info):
     """Constraint violation of the iterate.
 
     Parameters
@@ -1555,6 +1556,8 @@ def _constr_violation(invoker, x, lb, ub, constraints):
                 The linear constraints of the problem.
             nonlinear: NonlinearConstraint
                 The nonlinear constraints of the problem.
+    prob_info: dict
+        The same as in prepdfo.
 
     Returns
     -------
@@ -1602,10 +1605,30 @@ def _constr_violation(invoker, x, lb, ub, constraints):
             raise ValueError('{}: UNEXPECTED ERROR: the nonlinear constraints are ill-defined.'.format(invoker))
 
         nlc = np.asarray(nonlinear['fun'](x), dtype=np.float64)
+        if prob_info['infeasible']:
+            # The variable nlc should be augmented to calculate the true constraint violation, with respect to the
+            # bounds. In this case, the variable nlc_aug contains the evaluations of the constraint functions, in order.
+            k_nonlinear = 0
+            nlc_aug = np.asarray([], dtype=np.float64)
+            try:
+                nonlinear_indices = prob_info['constr_meta']['nonlinear_indices']
+                for metadata in [prob_info['constr_meta']['data'][k] for k in nonlinear_indices]:
+                    # When this section of the code is executed, the nonlinearly-constrained problem turned infeasible
+                    # and the constraint functions have been evaluated. Therefore, all the metadata have been set,
+                    # possibly with the value -inf or +inf with a lower or a upper was not defined. Thus, since we
+                    # compute the constraint violation as the max of all constraint violations, we can augment the
+                    # constraints on every variable.
+                    nlc_current = nlc[k_nonlinear:k_nonlinear + metadata['len']]
+                    nlc_aug = np.r_[nlc_aug, metadata['lb'] - nlc_current, nlc_current - metadata['ub']]
+                    k_nonlinear += metadata['len']
+            except (KeyError, IndexError):
+                raise ValueError('{}: UNEXPECTED ERROR: the constraints metadata are ill-defined.'.format(invoker))
+        else:
+            nlc_aug = nlc
 
         # Compute the constraint violation as the largest relative distance to the bounds, the linear constraints and
         # the nonlinear constraints.
-        constr_violation = max(constr_violation, np.max(nlc))
+        constr_violation = max(constr_violation, np.max(nlc_aug))
     else:
         nlc = np.asarray([], dtype=np.float64)
 
@@ -2872,7 +2895,7 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
                 conv = np.concatenate(([0], r, lb - x_c, x_c - ub, nlc))
                 conv = np.nanmax(conv)
 
-            if not (np.isnan(conv) and np.isnan(constrviolation_c)) and \
+            if not prob_info_c['infeasible'] and not (np.isnan(conv) and np.isnan(constrviolation_c)) and \
                     not (np.isinf(conv) and np.isinf(constrviolation_c)) and \
                     not (abs(constrviolation_c - conv) <= lincoa_prec * max(1, abs(conv)) and method == 'lincoa') and \
                     not (abs(constrviolation_c - conv) <= cobyla_prec * max(1, abs(conv)) and method == 'cobyla'):
@@ -2947,8 +2970,11 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
                 if prob_info['infeasible']:
                     # If the problem turned infeasible, the raw constraint values have been recorded, they just need to
                     # be read in order.
-                    constr_value.append(output['constr_value'][k_nonlinear:k_nonlinear + metadata['len']])
-                    k_nonlinear += metadata['len']
+                    if i_meta in prob_info['constr_meta']['linear_indices']:
+                        constr_value.append(np.dot(metadata['A'], output['x']))
+                    else:
+                        constr_value.append(output['constr_value'][k_nonlinear:k_nonlinear + metadata['len']])
+                        k_nonlinear += metadata['len']
                 elif not metadata['trivial']:
                     # The constraint is a non-trivial constraint, which has therefore some components that have been
                     # evaluated.
