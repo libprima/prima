@@ -87,6 +87,8 @@ function [x, fx, exitflag, output] = cobyla(varargin)
 %       3: the objective function has been evaluated maxfun times
 %       4, 7, 8, 9: rounding errors become severe in the Fortran code
 %       13: all variables are fixed by the constraints
+%       14: a feasibility problem received and solved
+%       15: a feasibility problem received but not solved
 %       -1: NaN occurs in x
 %       -2: the objective/constraint function returns NaN or nearly
 %       infinite values (only in the classical mode)
@@ -302,9 +304,9 @@ elseif ~strcmp(invoker, 'pdfo') && probinfo.feasibility_problem && ~strcmp(probi
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_x0;
     output.chist = output.constrviolation;
-    output.nlcineq = [];
+    output.nlcineq = [];  % No nonlinear constraints
     output.nlceq = [];
-    if output.constrviolation < eps
+    if output.constrviolation < eps  % Did prepdfo find a feasible point?
         output.exitflag = 14;
     else
         output.exitflag = 15;

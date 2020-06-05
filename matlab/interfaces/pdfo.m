@@ -91,7 +91,7 @@ function [x, fx, exitflag, output] = pdfo(varargin)
 %       4, 7, 8, 9: rounding errors become severe in the Fortran code 
 %       13: all variables are fixed by the constraints
 %       14: a feasibility problem received and solved
-%       15: a feasibility problem received and not solved
+%       15: a feasibility problem received but not solved
 %       -1: NaN occurs in x
 %       -2: the objective/constraint function returns NaN or nearly
 %       infinite values (only in the classical mode)
@@ -380,7 +380,9 @@ elseif probinfo.feasibility_problem && ~strcmp(probinfo.refined_type, 'nonlinear
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_x0;
     output.chist = output.constrviolation;
-    if output.constrviolation < eps
+    output.nlcineq = [];  % No nonlinear constraints
+    output.nlceq = [];
+    if output.constrviolation < eps  % Did prepdfo find a feasible point?
         output.exitflag = 14;
     else
         output.exitflag = 15;
