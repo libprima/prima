@@ -473,7 +473,7 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
     prob_info['raw_data'] = \
         {'objective': fun, 'x0': x0, 'args': args, 'bounds': bounds, 'constraints': constraints, 'options': options}
 
-    # If fun is set to None, it consists in a feasibility problem; the considered objective function is a constant.
+    # If fun is None, then we are dealing with a feasibility problem; rest set fun to a fake objective function that returns a constant.
     if fun is None:
         def fun(x_loc, *args_loc):
             return np.float64(0)
