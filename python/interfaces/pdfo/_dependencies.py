@@ -3027,8 +3027,8 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
             # The list of constraint values contains some NaN values because some constraints were not considered by the
             # code: the user should be informed.
             w_message = \
-                '{}: some trivial nonlinear constraint components have been supplied, that were not evaluated during' \
-                ' the computation. Their values are replaced by NaN.'.format(invoker)
+                '{}: some nonlinear constraints are trivial. They are not evaluated during the computation. Their values' \
+                 ' are replaced by NaN in constr_value.'.format(invoker)
             warnings.warn(w_message, Warning)
             warning_list.append(w_message)
         output['constr_value'] = constr_value
