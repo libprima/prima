@@ -110,8 +110,7 @@ probinfo.raw_data = struct('objective', fun, 'x0', x0, 'Aineq', Aineq, 'bineq', 
     'Aeq', Aeq, 'beq', beq, 'lb', lb, 'ub', ub, 'nonlcon', nonlcon, 'options', options);
 
 % Validate and preprocess fun
-[fun, feasibility_problem, warnings] = pre_fun(invoker, fun, warnings);
-probinfo.feasibility_problem = true;
+[fun, probinfo.feasibility_problem, warnings] = pre_fun(invoker, fun, warnings);
 
 % Validate and preprocess x0 
 [x0, warnings] = pre_x0(invoker, x0, warnings);
@@ -228,7 +227,8 @@ if ismember(probinfo.refined_type, {'bound-constrained', 'linearly-constrained'}
     % xind = (x0 < lb) | (x0 > ub);
     % x0(xind) = (lb(xind) + ub(xind))/2; 
     x0 = project(Aineq, bineq, Aeq, beq, lb, ub, x0); 
-    if norm(x0_old-x0) > eps*max(1, norm(x0_old))
+    if norm(x0_old-x0) > eps*max(1, norm(x0_old)) && ~probinfo.feasibility_problem && ~strcmp(probinfo.refined_type, 'nonlinearly-constrained')
+        % No warning about revised x0 if the problem is a linear feasibility problem
         wid = sprintf('%s:ReviseX0', invoker);
         wmessage = sprintf('%s: x0 is revised to satisfy the constraints.', invoker);
         warning(wid, '%s', wmessage);
@@ -264,7 +264,7 @@ if strcmp(invoker, 'pdfo')
     [options, warnings] = select_solver(invoker, options, probinfo, warnings);
 end
 
-if strcmpi(options.solver, 'bobyqa') && ~probinfo.nofreex && ~probinfo.infeasible
+if strcmpi(options.solver, 'bobyqa') && ~probinfo.nofreex && ~probinfo.infeasible && ~probinfo.feasibility_problem
 % The Fortran code of BOBYQA will revise x0 so that the distance between
 % x0 and the inactive bounds is at least rhobeg. We do it here in order
 % to raise a warning when such a revision occurs. After this, the
@@ -277,6 +277,13 @@ if strcmpi(options.solver, 'bobyqa') && ~probinfo.nofreex && ~probinfo.infeasibl
     end
     [x0, options, warnings] = pre_rhobeg_x0(invoker, x0, lb, ub, user_defined_rhobeg, options, warnings);
     probinfo.refined_data.x0 = x0;  % x0 may have been revised. 
+end
+
+if probinfo.feasibility_problem && ~strcmp(probinfo.refined_type, 'nonlinearly-constrained')
+    % When the problem is a linear feasibility problem, PDFO will return
+    % the current x0, which has been revised by project. The constraint
+    % violation at x0 is needed to set the output.
+    [probinfo.constrv_x0] = constrv(x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
 end
 
 % Record the options in probinfo
@@ -292,7 +299,7 @@ probinfo.warnings = warnings; % Record the warnings in probinfo
 if ~options.debug % Do not carry the raw data with us unless in debug mode.
     probinfo.raw_data = []; 
     % Set this field to empty instead of remove it, because postpdfo
-    % require that this field exists. 
+    % requires this field to exist.
 end
 
 if ~options.debug && ~probinfo.scaled 
@@ -300,7 +307,7 @@ if ~options.debug && ~probinfo.scaled
     % also be useful when debugging. 
     probinfo.refined_data = [];
     % Set this field to empty instead of remove it, because postpdfo
-    % require that this field exists. 
+    % requires this field to exist.
 end
 
 % prepdfo ends 
@@ -346,12 +353,8 @@ x0 = problem.x0;
 
 if isfield(problem, 'objective') 
     fun = problem.objective;
-else % There is no objective; put a fake one
-    wid = sprintf('%s:NoObjective', invoker);
-    wmessage = sprintf('%s: there is no objective function.', invoker);
-    warning(wid, '%s', wmessage);
-    warnings = [warnings, wmessage]; 
-    fun = @(x) 0; 
+else % There is no objective; this is a feasibility problem
+    fun = []; % In pre_fun, an empty objective function will be replaced by @(x)0 
 end
 
 % Are there unknown fields?
