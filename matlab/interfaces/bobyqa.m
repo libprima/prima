@@ -248,7 +248,7 @@ elseif ~strcmp(invoker, 'pdfo') && probinfo.nofreex % x was fixed by the bound c
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_fixedx;
     output.chist = output.constrviolation;
-elseif probinfo.feasibility_problem
+elseif ~strcmp(invoker, 'pdfo') && probinfo.feasibility_problem
     % A "feasibility problem" with only bound constraints is rediculous yet
     % nothing wrong mathematically
     output.x = x0;  % prepdfo has set x0 to a feasible point
