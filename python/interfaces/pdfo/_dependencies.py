@@ -838,8 +838,10 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
 
         # convert the constraints as a list
         if isinstance(constraints, dict) or not (hasattr(constraints, '__len__')):
+            is_list = False
             constraints_c = [constraints]
         else:
+            is_list = True
             constraints_c = constraints
 
         # create the linear/nonlinear sub-lists
@@ -853,7 +855,7 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
             elif isinstance(constraint, nonlinear_constraint_types) or \
                     (isinstance(constraint, dict) and {'type', 'fun'} <= set(constraint.keys()) and
                      isinstance(constraint['type'], str) and constraint['type'] in ['eq', 'ineq'] and
-                     callable(constraint['fun'])):
+                     (callable(constraint['fun']) or constraint['fun'] is None)):
                 if isinstance(constraint, nonlinear_constraint_types):
                     # If the user provided a nonlinear constraint through the NonlinearConstraint class of SciPy, it is
                     # converted to the local NonlinearConstraint so that some pre-processing are done on the vectors and
@@ -871,6 +873,7 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
         linear_constr_indices = [i for (i, con) in enumerate(constraints_c) if isinstance(con, linear_constraint_types)]
         nonlinear_constr_indices = list(set(range(len(constraints_c))) - set(linear_constr_indices))
         prob_info['constr_meta'] = {
+            'is_list': is_list,
             'linear_indices': linear_constr_indices,
             'nonlinear_indices': nonlinear_constr_indices,
             'data': [None] * len(constraints_c)
@@ -1051,8 +1054,10 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
                     x_full = x
                 if isinstance(nlc_constraint, nonlinear_constraint_types):
                     constraint_x = nlc_constraint.fun(x_full)
-                else:
+                elif nlc_constraint['fun'] is not None:
                     constraint_x = nlc_constraint['fun'](x_full)
+                else:
+                    constraint_x = np.asarray([], dtype=np.float64)
 
                 if constraint_x is None:
                     # If the constraint function returned anything, we convert the default None value to NaN, which can
@@ -2962,10 +2967,11 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
         del output['constr_modified']
 
     # Create the 'constr_value' field in the output, with respect to the structure of the constraints in input.
-    if 'constr_value' in output.keys():
-        if 'constr_meta' not in prob_info.keys():
-            raise ValueError('{}: UNEXPECTED ERROR: the constraints metadata are not defined.'.format(invoker))
+    if 'constr_meta' not in prob_info.keys():
+        raise ValueError('{}: UNEXPECTED ERROR: the constraints metadata are not defined.'.format(invoker))
 
+    # If any constraint was provided by the user, the structure constr_value should be added in the output
+    if len(prob_info['constr_meta']['linear_indices']) + len(prob_info['constr_meta']['nonlinear_indices']) > 0:
         constr_value = []  # reconstructed list
         k_nonlinear = 0  # index of the current nonlinear constraint in the output array
         try:
@@ -3030,11 +3036,20 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
             # The list of constraint values contains some NaN values because some constraints were not considered by the
             # code: the user should be informed.
             w_message = \
-                '{}: some nonlinear constraints are trivial. They are not evaluated during the computation, and their' \
-                ' values are represented by NaN in constr_value.'.format(invoker)
+                '{}: some nonlinear constraints components are trivial. They are not evaluated during the' \
+                ' computation, and their values are represented by NaN in constr_value.'.format(invoker)
             warnings.warn(w_message, Warning)
             warning_list.append(w_message)
-        output['constr_value'] = constr_value
+        if any(map(lambda a: a.size == 0, constr_value)):
+            w_message = '{}: some nonlinear constraints are trivial. They are not evaluated during the computation,' \
+                        ' and they are represented by empty arrays in constr_value.'.format(invoker)
+            warnings.warn(w_message, Warning)
+            warning_list.append(w_message)
+
+        if prob_info['constr_meta']['is_list']:
+            output['constr_value'] = constr_value
+        else:
+            output['constr_value'] = constr_value[0]
 
     # Give back all the warning messages to the user.
     if len(warning_list) > 0:
