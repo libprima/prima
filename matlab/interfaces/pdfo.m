@@ -330,7 +330,7 @@ else % Public/normal error
 end
 
 % Preprocess the input
-try % prepdfo and package_info are private functions that may generate public errors; error-handeling needed
+try % prepdfo and package_info are private functions that may generate public errors; error-handling needed
     if (nvararg == 1) && (isa(varargin{1}, 'char') || isa(varargin{1}, 'string'))
         % If there is only 1 input and it is a string, then it should be
         % a string requesting information about the pacakge.
@@ -424,7 +424,7 @@ else
 end
 
 % Postprocess the result 
-try % postpdfo is a private function that may generate public errors; error-handeling needed
+try % postpdfo is a private function that may generate public errors; error-handling needed
     [x, fx, exitflag, output] = postpdfo(probinfo, output);
 catch exception
     if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly 
