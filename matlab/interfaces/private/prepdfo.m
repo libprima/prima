@@ -440,7 +440,7 @@ if isempty(fun)
     warnings = [warnings, wmessage]; 
 elseif isa(fun, 'char') || isa(fun, 'string')
     fun = str2func(fun); 
-    % Work with function handels instread of function names to avoid using 'feval'
+    % Work with function handles instread of function names to avoid using 'feval'
 end
 if ~exist('OCTAVE_VERSION', 'builtin') 
     % Check whether fun has at least 1 output.

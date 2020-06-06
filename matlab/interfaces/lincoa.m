@@ -238,7 +238,7 @@ end
 % Preprocess the input
 % Even if invoker='pdfo', we still need to call prepdfo, which will assign 
 % values to fun, x0, ..., options.
-try % prepdfo is a private function that may generate public errors; error-handeling needed
+try % prepdfo is a private function that may generate public errors; error-handling needed
     [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, ~, options, probinfo] = prepdfo(args{:}); 
 catch exception
     if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly 
@@ -381,7 +381,7 @@ else % The problem turns out 'normal' during prepdfo
     end
 
     % Call the Fortran code
-    try % The mexified Fortran function is a private function generating only private errors; however, public errors can occur due to, e.g., evalobj; error handeling needed 
+    try % The mexified Fortran function is a private function generating only private errors; however, public errors can occur due to, e.g., evalobj; error handling needed 
         if options.classical
             [x, fx, exitflag, nf, fhist, constrviolation, chist] = flincoa_classical(fun, x0, A_aug, b_aug, rhobeg, rhoend, maxfun, npt, ftarget);
         else
@@ -405,7 +405,7 @@ else % The problem turns out 'normal' during prepdfo
 end
 
 % Postprocess the result 
-try % postpdfo is a private function that may generate public errors; error-handeling needed
+try % postpdfo is a private function that may generate public errors; error-handling needed
     [x, fx, exitflag, output] = postpdfo(probinfo, output);
 catch exception
     if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly 
