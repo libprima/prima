@@ -53,7 +53,7 @@ if __name__ == '__main__':
     # Nonlinear constraints can also be defined as follows: 
     #nonlin_con_ineq = {'type': 'ineq', 'fun': nlc_ineq}  # inequality constraint: nlc_ineq(x) >= 0
     #nonlin_con_eq = {'type': 'eq', 'fun': nlc_eq}  # inequality constraint: nlc_eq(x) = 0
-    res = pdfo(chrosen, x0, bounds=bounds, constraints=[nonlin_con_eq, nonlin_con_ineq, lin_con])  
+    res = pdfo(chrosen, x0, bounds=bounds, constraints=[lin_con, nonlin_con_ineq, nonlin_con_eq])  
     print(res)
 
     print('\n2. Linear constraints --- sum(x) = 1, x(i+1) <= x(i) <= 1 for i = 1, 2:\n')
