@@ -13,6 +13,8 @@ Public beta release of PDFO.
 - Include rosenbrock_example to illustrate the usage.
 - Python version: Bounds, LinearConstraint and NonlinearConstraint more
   flexible with None and [].
+- Python version: the constr_value output when there are constraints
+  other than bounds.
 - MATLAB version: add 'uninstall' and 'clean' options to setup.m.
 
 ### Changed
@@ -30,6 +32,7 @@ Public beta release of PDFO.
 
 ### Removed
 - Warning about scaling.
+- The fhist output when PDFO receives a feasibility problem.
 - Python version: numpy.set_printoptions statement in __init__.py.
 - MATLAB version: interactions when modifying the user's startup script.
 
