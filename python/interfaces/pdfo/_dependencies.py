@@ -469,7 +469,7 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
     # 17. refined_type: problem type after reduction
     # 18. refined_dim: problem dimension after reduction
     # 19. warnings: warnings during the preprocessing/validation
-    # 20. constr_metadata: metadata of each constraint, that is needed to build the output constr_value. It contains:
+    # 20. constr_metadata: metadata of each constraint, which is needed to build the output constr_value. It contains:
     #         - linear_indices: the indices of the linear constraints in the argument `constraints`.
     #         - nonlinear_indices: the indices of the nonlinear constraints in the argument `constraints`.
     #         - data: a list of metadata for each constraint (length, bounds, dropped indices, ...).
@@ -865,10 +865,9 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
                 # The constraint is neither linear nor nonlinear.
                 raise ValueError(
                     "{}: each constraint should be an instance of the `LinearConstraint` or `NonlinearConstraint` "
-                    "class, or a dictionary with field 'type' and 'fun'.".format(invoker))
+                    "class, or a dictionary with fields 'type' and 'fun'.".format(invoker))
 
-        # Create the constraint metadata, so that the list of constraint evaluations can be constructed in the
-        # post-processing.
+        # Create the constraint metadata so that the list of constraint values can be constructed in the post-processing.
         linear_constr_indices = [i for (i, con) in enumerate(constraints_c) if isinstance(con, linear_constraint_types)]
         nonlinear_constr_indices = list(set(range(len(constraints_c))) - set(linear_constr_indices))
         prob_info['constr_meta'] = {
@@ -1056,7 +1055,7 @@ def _constraints_validation(invoker, constraints, lenx0, fixed_indices, fixed_va
                     constraint_x = nlc_constraint['fun'](x_full)
 
                 if constraint_x is None:
-                    # If the constraint function returned anything, we convert the default None value to NaN, that can
+                    # If the constraint function returned anything, we convert the default None value to NaN, which can
                     # be understood by Fortran.
                     constraint_x = [np.nan]
                 elif isinstance(constraint_x, scalar_types):
