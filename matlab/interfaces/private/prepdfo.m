@@ -228,7 +228,7 @@ if ismember(probinfo.refined_type, {'bound-constrained', 'linearly-constrained'}
     % x0(xind) = (lb(xind) + ub(xind))/2; 
     x0 = project(Aineq, bineq, Aeq, beq, lb, ub, x0); 
     if norm(x0_old-x0) > eps*max(1, norm(x0_old)) && ~probinfo.feasibility_problem && ~strcmp(probinfo.refined_type, 'nonlinearly-constrained')
-        % No warning about revised x0 if the problem is a linear feasibility problem
+        % No warning about revising x0 if the problem is a linear feasibility problem
         wid = sprintf('%s:ReviseX0', invoker);
         wmessage = sprintf('%s: x0 is revised to satisfy the constraints.', invoker);
         warning(wid, '%s', wmessage);
@@ -283,7 +283,8 @@ if probinfo.feasibility_problem && ~strcmp(probinfo.refined_type, 'nonlinearly-c
     % When the problem is a linear feasibility problem, PDFO will return
     % the current x0, which has been revised by project. The constraint
     % violation at x0 is needed to set the output.
-    [probinfo.constrv_x0] = constrv(x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
+    % Note that there is no nonlinear constraint in this case.
+    probinfo.constrv_x0 = constrv(x0, Aineq, bineq, Aeq, beq, lb, ub, []);
 end
 
 % Record the options in probinfo
@@ -339,15 +340,15 @@ end
 
 % Which fields are specified? 
 problem = rmempty(problem); % Remove empty fields
-problem_field = fieldnames(problem); 
+problem_fields = fieldnames(problem); 
 
 % Are the obligatory field(s) present?
-obligatory_field = {'x0'}; % There is only 1 obligatory field
-missing_field = setdiff(obligatory_field, problem_field);
-if ~isempty(missing_field)
+obligatory_fields = {'x0'}; % There is only 1 obligatory field
+missing_fields = setdiff(obligatory_fields, problem_fields);
+if ~isempty(missing_fields)
     % Public/normal error
     error(sprintf('%s:InvalidProb', invoker), ...
-    '%s: PROBLEM misses the %s field(s).', invoker, mystrjoin(missing_field, ', '));
+    '%s: PROBLEM misses the %s field(s).', invoker, mystrjoin(missing_fields, ', '));
 end
 x0 = problem.x0;
 
@@ -358,7 +359,7 @@ else % There is no objective; this is a feasibility problem
 end
 
 % Are there unknown fields?
-known_field = {'objective', 'x0', 'Aineq', 'bineq', 'Aeq', 'beq', 'lb', 'ub', 'nonlcon', 'options', 'solver'};
+known_fields = {'objective', 'x0', 'Aineq', 'bineq', 'Aeq', 'beq', 'lb', 'ub', 'nonlcon', 'options', 'solver'};
 % 1. When invoker is in {uobyqa, ..., cobyla}, we will not complain that
 %    a solver is specified unless invoker~=solver. See function pre_options.
 % 2. When invoker is in {uobyqa, ..., cobyla}, if the problem turns out
@@ -367,15 +368,15 @@ known_field = {'objective', 'x0', 'Aineq', 'bineq', 'Aeq', 'beq', 'lb', 'ub', 'n
 %    yet. Maybe some constraints are trivial and hence can be removed 
 %    (e.g., bineq=inf, lb=-inf), which can change the problem type. 
 
-unknown_field = setdiff(problem_field, known_field);
-problem = rmfield(problem, unknown_field);  % Remove the unknown fields
+unknown_fields = setdiff(problem_fields, known_fields);
+problem = rmfield(problem, unknown_fields);  % Remove the unknown fields
 
-if ~isempty(unknown_field) 
+if ~isempty(unknown_fields) 
     wid = sprintf('%s:UnknownProbFiled', invoker);
-    if length(unknown_field) == 1
-        wmessage = sprintf('%s: problem with an unknown field %s; it is ignored.', invoker, mystrjoin(unknown_field, ', '));  
+    if length(unknown_fields) == 1
+        wmessage = sprintf('%s: problem with an unknown field %s; it is ignored.', invoker, mystrjoin(unknown_fields, ', '));  
     else
-        wmessage = sprintf('%s: problem with unknown fields %s; they are ignored.', invoker, mystrjoin(unknown_field, ', '));  
+        wmessage = sprintf('%s: problem with unknown fields %s; they are ignored.', invoker, mystrjoin(unknown_fields, ', '));  
     end
     warning(wid, '%s', wmessage);
     warnings = [warnings, wmessage]; 
@@ -768,10 +769,10 @@ solver_list = {'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla'};
 % We may add other solvers in the future!
 % If a new solver is included, we should do the following.
 % 0. Include it into the invoker_list (in this and other functions).
-% 1. What options does it expect? Set known_field accoridngly.
+% 1. What options does it expect? Set known_fields accoridngly.
 % 2. Set default options accordingly.
 % 3. Check other functions (especially decode_problem, whose behavior
-%    depends on the invoker/solver. See known_field there).
+%    depends on the invoker/solver. See known_fields there).
 
 % Possible invokers
 invoker_list = ['pdfo', solver_list];
@@ -808,7 +809,7 @@ end
 
 % Which fields are specified?
 options = rmempty(options); % Remove empty fields
-options_field = fieldnames(options);
+options_fields = fieldnames(options);
 
 % Validate options.solver  
 % We need to know what is the solver in order to decide which fields
@@ -860,27 +861,27 @@ options.solver = solver; % Record solver in options.solver; will be used in post
 % Check unknown fields according to solver
 % solver is [] if it has not been decided yet; in that case, we suppose (for
 % simplicity) that all possible fields are known.
-known_field = {'maxfun', 'rhobeg', 'rhoend', 'ftarget', 'classical', 'quiet', 'debug', 'chkfunval', 'solver'};
+known_fields = {'maxfun', 'rhobeg', 'rhoend', 'ftarget', 'classical', 'quiet', 'debug', 'chkfunval', 'solver'};
 if isempty(solver) || any(strcmpi(solver, {'newuoa', 'bobyqa', 'lincoa'}))
-    known_field = [known_field, 'npt'];
+    known_fields = [known_fields, 'npt'];
 end
 if isempty(solver) || any(strcmpi(solver, {'bobyqa', 'lincoa', 'cobyla'})) 
-    known_field = [known_field, 'scale'];
+    known_fields = [known_fields, 'scale'];
 end
 if isempty(solver) || strcmpi(solver, 'bobyqa') 
-    known_field = [known_field, 'honour_x0'];
+    known_fields = [known_fields, 'honour_x0'];
 end
-unknown_field = setdiff(options_field, known_field);
-options = rmfield(options, unknown_field);  % Remove the unknown fields
+unknown_fields = setdiff(options_fields, known_fields);
+options = rmfield(options, unknown_fields);  % Remove the unknown fields
 % If we do not removed unknown fields, we may still complain later if an
 % unknown field is not properly set (e.g., options.npt is not a number) 
 % even though we have declared that this field will be ignored.
-if ~isempty(unknown_field) 
+if ~isempty(unknown_fields) 
     wid = sprintf('%s:UnknownOption', invoker);
-    if length(unknown_field) == 1
-        wmessage = sprintf('%s: unknown option %s; it is ignored.', invoker, mystrjoin(unknown_field, ', '));
+    if length(unknown_fields) == 1
+        wmessage = sprintf('%s: unknown option %s; it is ignored.', invoker, mystrjoin(unknown_fields, ', '));
     else
-        wmessage = sprintf('%s: unknown options %s; they are ignored.', invoker, mystrjoin(unknown_field, ', '));
+        wmessage = sprintf('%s: unknown options %s; they are ignored.', invoker, mystrjoin(unknown_fields, ', '));
     end
     warning(wid, '%s', wmessage);
     warnings = [warnings, wmessage]; 

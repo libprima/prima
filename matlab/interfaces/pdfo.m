@@ -375,7 +375,11 @@ elseif probinfo.nofreex % x was fixed by the bound constraints during prepdfo
     end
 elseif probinfo.feasibility_problem && ~strcmp(probinfo.refined_type, 'nonlinearly-constrained')
     output.x = x0;  % prepdfo has tried to set x0 to a feasible point (but may have failed)
-    output.fx = fun(output.x);
+    % We could set fx=[], funcCount=0, and fhist=[] since no function evaluation 
+    % occured. But then we will have to modify the validation of fx, funcCount, 
+    % and fhist in postpdfo. To avoid such a modification, we set fx, funcCount, 
+    % and fhist as below and then revise them in postpdfo.
+    output.fx = fun(output.x);  % prepdfo has defined a fake objective function
     output.funcCount = 1;
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_x0;

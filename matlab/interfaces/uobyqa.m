@@ -206,7 +206,11 @@ ftarget = options.ftarget;
 if ~strcmp(invoker, 'pdfo') && probinfo.feasibility_problem
     % An "unconstrained feasibility problem" is rediculous, yet nothing wrong mathematically.
     output.x = x0;
-    output.fx = fun(output.x);
+    % We could set fx=[], funcCount=0, and fhist=[] since no function evaluation 
+    % occured. But then we will have to modify the validation of fx, funcCount, 
+    % and fhist in postpdfo. To avoid such a modification, we set fx, funcCount, 
+    % and fhist as below and then revise them in postpdfo.
+    output.fx = fun(output.x);  % prepdfo has defined a fake objective function
     output.exitflag = 14;
     output.funcCount = 1;
     output.fhist = output.fx;

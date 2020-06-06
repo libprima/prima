@@ -28,15 +28,15 @@ function [x, fx, exitflag, output] = postpdfo(probinfo, output)
 % If a new solver is included, it should include at least the following
 % fields in output. For unconstrained problems, put constrviolation = 0.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-obligatory_output_field = {'x', 'fx', 'exitflag', 'funcCount', 'constrviolation'};%
+obligatory_output_fields = {'x', 'fx', 'exitflag', 'funcCount', 'constrviolation'};%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Obligatory fields in probinfo and options 
-obligatory_probinfo_field = {'raw_data', 'refined_data', 'fixedx', 'fixedx_value', ...
+obligatory_probinfo_fields = {'raw_data', 'refined_data', 'fixedx', 'fixedx_value', ...
     'nofreex', 'infeasible_bound', 'infeasible_lineq', 'infeasible_leq', ...
     'trivial_lineq', 'trivial_leq', 'infeasible', 'scaled', 'scaling_factor', ...
     'shift', 'reduced', 'raw_type', 'raw_dim', 'refined_type', 'refined_dim', 'feasibility_problem', 'options', 'warnings'};
-obligatory_options_field = {'classical', 'debug', 'chkfunval', 'quiet'};
+obligatory_options_fields = {'classical', 'debug', 'chkfunval', 'quiet'};
 
 % All possible solvers
 unconstrained_solver_list = {'uobyqa', 'newuoa'};
@@ -82,11 +82,11 @@ else
         error(sprintf('%s:InvalidProbinfo', invoker),...
             '%s: UNEXPECTED ERROR: probinfo should be a structure.', invoker);
     end
-    missing_field = setdiff(obligatory_probinfo_field, fieldnames(probinfo));
-    if ~isempty(missing_field)
+    missing_fields = setdiff(obligatory_probinfo_fields, fieldnames(probinfo));
+    if ~isempty(missing_fields)
         % Public/unexpected error
         error(sprintf('%s:InvalidProbinfo', invoker),...
-            '%s: UNEXPECTED ERROR: probinfo misses the %s field(s).', invoker, mystrjoin(missing_field, ', '));
+            '%s: UNEXPECTED ERROR: probinfo misses the %s field(s).', invoker, mystrjoin(missing_fields, ', '));
     end
 
     % Read and verify options 
@@ -96,11 +96,11 @@ else
         error(sprintf('%s:InvalidOptions', invoker), ...
             '%s: UNEXPECTED ERROR: options should be a structure.', invoker);
     end
-    missing_field = setdiff(obligatory_options_field, fieldnames(options));
-    if ~isempty(missing_field)
+    missing_fields = setdiff(obligatory_options_fields, fieldnames(options));
+    if ~isempty(missing_fields)
         % Public/unexpected error
         error(sprintf('%s:InvalidOptions', invoker),...
-            '%s: UNEXPECTED ERROR: options misses the %s field(s).', invoker, mystrjoin(missing_field, ', '));
+            '%s: UNEXPECTED ERROR: options misses the %s field(s).', invoker, mystrjoin(missing_fields, ', '));
     end
 end
 
@@ -125,21 +125,21 @@ if ~isa(output, 'struct')
 end
 if ismember(solver, internal_solver_list)
     % For internal solvers, output should contain fhist, chist, and warnings
-    obligatory_output_field = [obligatory_output_field, 'fhist', 'chist', 'warnings'];
+    obligatory_output_fields = [obligatory_output_fields, 'fhist', 'chist', 'warnings'];
 end
 if strcmp(solver, 'lincoa')
     % For lincoa, output should contain constr_modified 
-    obligatory_output_field = [obligatory_output_field, 'constr_modified'];
+    obligatory_output_fields = [obligatory_output_fields, 'constr_modified'];
 end
 if ismember(solver, nonlinearly_constrained_solver_list) && ismember(solver, internal_solver_list)
     % For nonlinearly constrained internal solvers, output should contain nlinceq and nlceq
-    obligatory_output_field = [obligatory_output_field, 'nlcineq', 'nlceq'];
+    obligatory_output_fields = [obligatory_output_fields, 'nlcineq', 'nlceq'];
 end
-missing_field = setdiff(obligatory_output_field, fieldnames(output));
-if ~isempty(missing_field)
+missing_fields = setdiff(obligatory_output_fields, fieldnames(output));
+if ~isempty(missing_fields)
     % Public/unexpected error
     error(sprintf('%s:InvalidOutput', invoker),...
-        '%s: UNEXPECTED ERROR: %s returns an output that misses the %s field(s).', invoker, solver, mystrjoin(missing_field, ', '));
+        '%s: UNEXPECTED ERROR: %s returns an output that misses the %s field(s).', invoker, solver, mystrjoin(missing_fields, ', '));
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -236,6 +236,13 @@ end
 if probinfo.feasibility_problem
     fx = [];
     output = rmfield(output, 'fhist');
+    if ~strcmp(probinfo.refined_type, 'nonlinearly-constrained')
+        % No function evaluation involved when solving a linear feasibility problem.
+        % By "function evaluation", we mean the evaluation of the objective function 
+        % and nonlinear constraint functions, which do not exist in this case. 
+        % For nonlinear feasibility problems, funcCount is positive. 
+        output.funcCount = 0;  
+    end
 end
 
 % Verify constrviolation
