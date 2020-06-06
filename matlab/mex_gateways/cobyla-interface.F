@@ -60,6 +60,7 @@ C History of function evaluation
       real(dp), allocatable, save :: chist(:) 
 C History of constraint violation
       real(dp), allocatable, save :: conval_x0(:)
+C Constraint value at x0
       end module fcobyla
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC

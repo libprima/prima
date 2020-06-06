@@ -49,7 +49,6 @@ python module fcobyla
             double precision, intent(in) :: rhoend
             integer, intent(in) :: iprint
             integer, intent(in) :: maxfun
-            integer, intent(in) :: maxfun
             double precision, dimension(n*(3*n+2*m+11)+4*m+6), intent(in,hide) :: w
             integer, dimension(m+1), intent(in,hide) :: iact
             double precision, intent(out) :: f
