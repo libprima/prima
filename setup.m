@@ -341,7 +341,7 @@ return
 function full_files = files_with_wildcard(dir_name, wildcard_string)
 %FULL_FILES returns a cell array of files that match the wildcard_string 
 % under dir_name.
-% MATLAB R2015b does not handel commands with wildcards like
+% MATLAB R2015b does not handle commands with wildcards like
 % delete(*.o)
 % or
 % mex(*.f)
