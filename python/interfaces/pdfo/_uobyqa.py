@@ -133,7 +133,7 @@ def uobyqa(fun, x0, args=(), options=None):
     fun_c, x0_c, _, _, options_c, _, prob_info = prepdfo(fun, x0, args, options=options)
 
     if invoker != 'pdfo' and prob_info['feasibility_problem']:
-        # A "unconstrained feasibility problem" is ridiculous yet nothing wrong mathematically.
+        # An "unconstrained feasibility problem" is ridiculous yet nothing wrong mathematically.
         # We could set fx=[], funcCount=0, and fhist=[] since no function evaluation occurred. But then we will have to
         # modify the validation of fx, funcCount, and fhist in postpdfo. To avoid such a modification, we set fx,
         # funcCount, and fhist as below and then revise them in postpdfo.
