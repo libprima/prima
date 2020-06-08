@@ -51,19 +51,24 @@ C
 C     Replace GL by the gradient of LFUNC at the trust region centre, and
 C       set the elements of RSTAT.
 C
-      DO 20 K=1,NPT
-      TEMP=ZERO
-      DO 10 J=1,N
-   10 TEMP=TEMP+XPT(K,J)*XOPT(J)
-      TEMP=PQW(K)*TEMP
-      DO 20 I=1,N
-   20 GL(I)=GL(I)+TEMP*XPT(K,I)
-      IF (M .GT. 0) THEN
-          DO 30 J=1,M
-          RSTAT(J)=ONE
-   30     IF (DABS(RESCON(J)) .GE. DEL) RSTAT(J)=-ONE
-          DO 40 K=1,NACT
-   40     RSTAT(IACT(K))=ZERO
+      DO K=1,NPT
+          TEMP=ZERO
+          DO J=1,N
+              TEMP=TEMP+XPT(K,J)*XOPT(J)
+          END DO
+          TEMP=PQW(K)*TEMP
+          DO I=1,N
+              GL(I)=GL(I)+TEMP*XPT(K,I)
+          END DO
+      END DO
+      IF (M > 0) THEN
+          DO J=1,M
+              RSTAT(J)=ONE
+              IF (DABS(RESCON(J)) >= DEL) RSTAT(J)=-ONE
+          END DO
+          DO K=1,NACT
+              RSTAT(IACT(K))=ZERO
+          END DO
       END IF
 C
 C     Find the greatest modulus of LFUNC on a line through XOPT and
@@ -74,95 +79,107 @@ C Zaikun 2019-08-15: IFLAG is never used
 C      IFLAG=0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       VBIG=ZERO
-      DO 60 K=1,NPT
-      IF (K .EQ. KOPT) GOTO 60
-      SS=ZERO
-      SP=ZERO
-      DO 50 I=1,N
-      TEMP=XPT(K,I)-XOPT(I)
-      SS=SS+TEMP*TEMP
-   50 SP=SP+GL(I)*TEMP
-      STP=-DEL/DSQRT(SS)
-      IF (K .EQ. KNEW) THEN
-          IF (SP*(SP-ONE) .LT. ZERO) STP=-STP
-          VLAG=DABS(STP*SP)+STP*STP*DABS(SP-ONE)
-      ELSE
-          VLAG=DABS(STP*(ONE-STP)*SP)
-      END IF
+      DO K=1,NPT
+          IF (K == KOPT) CYCLE 
+          SS=ZERO
+          SP=ZERO
+          DO I=1,N
+              TEMP=XPT(K,I)-XOPT(I)
+              SS=SS+TEMP*TEMP
+              SP=SP+GL(I)*TEMP
+          END DO
+          STP=-DEL/DSQRT(SS)
+          IF (K == KNEW) THEN
+              IF (SP*(SP-ONE) < ZERO) STP=-STP
+              VLAG=DABS(STP*SP)+STP*STP*DABS(SP-ONE)
+          ELSE
+              VLAG=DABS(STP*(ONE-STP)*SP)
+          END IF
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 2019-08-29: With the original code, if either VLAG or VBIG is 
 C NaN, KSAV will not get a value. This may cause Segmentation Fault
 C because XPT(KSAV, :) will later be accessed. 
 C      IF (VLAG .GT. VBIG) THEN
-      IF (.NOT. (VLAG .LE. VBIG)) THEN
+          IF (.NOT. (VLAG <= VBIG)) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          KSAV=K
-          STPSAV=STP
-          VBIG=VLAG
-      END IF
-   60 CONTINUE
+              KSAV=K
+              STPSAV=STP
+              VBIG=VLAG
+          END IF
+      END DO
 C
 C     Set STEP to the move that gives the greatest modulus calculated above.
 C       This move may be replaced by a steepest ascent step from XOPT.
 C
       GG=ZERO
-      DO 70 I=1,N
-      GG=GG+GL(I)**2
-   70 STEP(I)=STPSAV*(XPT(KSAV,I)-XOPT(I))
+      DO I=1,N
+          GG=GG+GL(I)**2
+          STEP(I)=STPSAV*(XPT(KSAV,I)-XOPT(I))
+      END DO
       VGRAD=DEL*DSQRT(GG)
-      IF (VGRAD .LE. TENTH*VBIG) GOTO 220
+      IF (VGRAD <= TENTH*VBIG) GOTO 220
 C
 C     Make the replacement if it provides a larger value of VBIG.
 C
       GHG=ZERO
-      DO 90 K=1,NPT
-      TEMP=ZERO
-      DO 80 J=1,N
-   80 TEMP=TEMP+XPT(K,J)*GL(J)
-   90 GHG=GHG+PQW(K)*TEMP*TEMP
+      DO K=1,NPT
+          TEMP=ZERO
+          DO J=1,N
+              TEMP=TEMP+XPT(K,J)*GL(J)
+          END DO
+          GHG=GHG+PQW(K)*TEMP*TEMP
+      END DO
       VNEW=VGRAD+DABS(HALF*DEL*DEL*GHG/GG)
-      IF (VNEW .GT. VBIG) THEN
+      IF (VNEW > VBIG) THEN
           VBIG=VNEW
           STP=DEL/DSQRT(GG)
-          IF (GHG .LT. ZERO) STP=-STP
-          DO 100 I=1,N
-  100     STEP(I)=STP*GL(I)
+          IF (GHG < ZERO) STP=-STP
+          DO I=1,N
+              STEP(I)=STP*GL(I)
+          END DO
       END IF
-      IF (NACT .EQ. 0 .OR. NACT .EQ. N) GOTO 220
+      IF (NACT == 0 .OR. NACT == N) GOTO 220
 C
 C     Overwrite GL by its projection. Then set VNEW to the greatest
 C       value of |LFUNC| on the projected gradient from XOPT subject to
 C       the trust region bound. If VNEW is sufficiently large, then STEP
 C       may be changed to a move along the projected gradient.
 C
-      DO 110 K=NACT+1,N
-      W(K)=ZERO
-      DO 110 I=1,N
-  110 W(K)=W(K)+GL(I)*QFAC(I,K)
+      DO K=NACT+1,N
+          W(K)=ZERO
+          DO I=1,N
+              W(K)=W(K)+GL(I)*QFAC(I,K)
+          END DO
+      END DO
       GG=ZERO
-      DO 130 I=1,N
-      GL(I)=ZERO
-      DO 120 K=NACT+1,N
-  120 GL(I)=GL(I)+QFAC(I,K)*W(K)
-  130 GG=GG+GL(I)**2
+      DO I=1,N
+          GL(I)=ZERO
+          DO K=NACT+1,N
+              GL(I)=GL(I)+QFAC(I,K)*W(K)
+          END DO
+          GG=GG+GL(I)**2
+      END DO
       VGRAD=DEL*DSQRT(GG)
-      IF (VGRAD .LE. TENTH*VBIG) GOTO 220
+      IF (VGRAD <= TENTH*VBIG) GOTO 220
       GHG=ZERO
-      DO 150 K=1,NPT
-      TEMP=ZERO
-      DO 140 J=1,N
-  140 TEMP=TEMP+XPT(K,J)*GL(J)
-  150 GHG=GHG+PQW(K)*TEMP*TEMP
+      DO K=1,NPT
+          TEMP=ZERO
+          DO J=1,N
+              TEMP=TEMP+XPT(K,J)*GL(J)
+          END DO
+          GHG=GHG+PQW(K)*TEMP*TEMP
+      END DO
       VNEW=VGRAD+DABS(HALF*DEL*DEL*GHG/GG)
 C
 C     Set W to the possible move along the projected gradient.
 C
       STP=DEL/DSQRT(GG)
-      IF (GHG .LT. ZERO) STP=-STP
+      IF (GHG < ZERO) STP=-STP
       WW=ZERO
-      DO 160 I=1,N
-      W(I)=STP*GL(I)
-  160 WW=WW+W(I)**2
+      DO I=1,N
+          W(I)=STP*GL(I)
+          WW=WW+W(I)**2
+      END DO
 C
 C     Set STEP to W if W gives a sufficiently large value of the modulus
 C       of the Lagrange function, and if W either preserves feasibility
@@ -170,34 +187,38 @@ C       or gives a constraint violation of at least 0.2*DEL. The purpose
 C       of CTOL below is to provide a check on feasibility that includes
 C       a tolerance for contributions from computer rounding errors.
 C
-      IF (VNEW/VBIG .GE. 0.2D0) THEN
+      IF (VNEW/VBIG >= 0.2D0) THEN
           IFEAS=1
           BIGV=ZERO
           J=0
   170     J=J+1
-          IF (J .LE. M) THEN
-              IF (RSTAT(J) .EQ. ONE) THEN
+          IF (J <= M) THEN
+              IF (RSTAT(J) == ONE) THEN
                   TEMP=-RESCON(J)
-                  DO 180 I=1,N
-  180             TEMP=TEMP+W(I)*AMAT(I,J)
+                  DO I=1,N
+                      TEMP=TEMP+W(I)*AMAT(I,J)
+                  END DO
                   BIGV=DMAX1(BIGV,TEMP)
               END IF
-              IF (BIGV .LT. TEST) GOTO 170
+              IF (BIGV < TEST) GOTO 170
               IFEAS=0
           END IF
           CTOL=ZERO
           TEMP=0.01D0*DSQRT(WW)
-          IF (BIGV .GT. ZERO .AND. BIGV .LT. TEMP) THEN
-              DO 200 K=1,NACT
-              J=IACT(K)
-              SUM=ZERO
-              DO 190 I=1,N
-  190         SUM=SUM+W(I)*AMAT(I,J)
-  200         CTOL=DMAX1(CTOL,DABS(SUM))
+          IF (BIGV > ZERO .AND. BIGV < TEMP) THEN
+              DO K=1,NACT
+                  J=IACT(K)
+                  SUM=ZERO
+                  DO I=1,N
+                      SUM=SUM+W(I)*AMAT(I,J)
+                  END DO
+                  CTOL=DMAX1(CTOL,DABS(SUM))
+              END DO
           END IF
-          IF (BIGV .LE. 10.0D0*CTOL .OR. BIGV .GE. TEST) THEN
-              DO 210 I=1,N
-  210         STEP(I)=W(I)
+          IF (BIGV <= 10.0D0*CTOL .OR. BIGV >= TEST) THEN
+              DO I=1,N
+                  STEP(I)=W(I)
+              END DO
               GOTO 260
           END IF
       END IF
@@ -210,17 +231,18 @@ C
       RESMAX=ZERO
       J=0
   230 J=J+1
-      IF (J .LE. M) THEN
-          IF (RSTAT(J) .LT. ZERO) GOTO 230
+      IF (J <= M) THEN
+          IF (RSTAT(J) < ZERO) GOTO 230
           TEMP=-RESCON(J)
-          DO 240 I=1,N
-  240     TEMP=TEMP+STEP(I)*AMAT(I,J)
+          DO I=1,N
+              TEMP=TEMP+STEP(I)*AMAT(I,J)
+          END DO
           RESMAX=DMAX1(RESMAX,TEMP)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C          IF (TEMP .LT. TEST) THEN
-          IF (.NOT. (TEMP .GE. TEST)) THEN
+          IF (.NOT. (TEMP >= TEST)) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!              
-              IF (TEMP .LE. BIGV) GOTO 230
+              IF (TEMP <= BIGV) GOTO 230
               BIGV=TEMP
               JSAV=J
               IFEAS=-1
@@ -228,9 +250,10 @@ C          IF (TEMP .LT. TEST) THEN
           END IF
           IFEAS=0
       END IF
-      IF (IFEAS .EQ. -1) THEN
-          DO 250 I=1,N
-  250     STEP(I)=STEP(I)+(TEST-BIGV)*AMAT(I,JSAV)
+      IF (IFEAS == -1) THEN
+          DO I=1,N
+              STEP(I)=STEP(I)+(TEST-BIGV)*AMAT(I,JSAV)
+          END DO
           IFEAS=0
       END IF
 C

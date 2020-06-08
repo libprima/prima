@@ -36,18 +36,21 @@ C
       ZERO=0.0D0
       TDEL=0.2D0*SNORM
       DDSAV=ZERO
-      DO 10 I=1,N
-      DDSAV=DDSAV+G(I)**2
-   10 VLAM(I)=ZERO
+      DO I=1,N
+          DDSAV=DDSAV+G(I)**2
+          VLAM(I)=ZERO
+      END DO
       DDSAV=DDSAV+DDSAV
 C
 C     Set the initial QFAC to the identity matrix in the case NACT=0.
 C
-      IF (NACT .EQ. 0) THEN
-          DO 30 I=1,N
-          DO 20 J=1,N
-   20     QFAC(I,J)=ZERO
-   30     QFAC(I,I)=ONE
+      IF (NACT == 0) THEN
+          DO I=1,N
+              DO J=1,N
+                  QFAC(I,J)=ZERO
+              END DO
+              QFAC(I,I)=ONE
+          END DO
           GOTO 100
       END IF
 C
@@ -56,49 +59,55 @@ C       exceed TDEL.
 C
       IFLAG=1
       IC=NACT
-   40 IF (RESACT(IC) .GT. TDEL) GOTO 800
+   40 IF (RESACT(IC) > TDEL) GOTO 800
    50 IC=IC-1
-      IF (IC .GT. 0) GOTO 40
+      IF (IC > 0) GOTO 40
 C
 C     Remove any constraints from the initial active set whose Lagrange
 C       multipliers are nonnegative, and set the surviving multipliers.
 C
       IFLAG=2
-   60 IF (NACT .EQ. 0) GOTO 100
+   60 IF (NACT == 0) GOTO 100
       IC=NACT
    70 TEMP=ZERO
-      DO 80 I=1,N
-   80 TEMP=TEMP+QFAC(I,IC)*G(I)
+      DO I=1,N
+          TEMP=TEMP+QFAC(I,IC)*G(I)
+      END DO
       IDIAG=(IC*IC+IC)/2
-      IF (IC .LT. NACT) THEN
+      IF (IC < NACT) THEN
           JW=IDIAG+IC
-          DO 90 J=IC+1,NACT
-          TEMP=TEMP-RFAC(JW)*VLAM(J)
-   90     JW=JW+J
+          DO J=IC+1,NACT
+              TEMP=TEMP-RFAC(JW)*VLAM(J)
+              JW=JW+J
+          END DO
       END IF
-      IF (TEMP .GE. ZERO) GOTO 800
+      IF (TEMP >= ZERO) GOTO 800
       VLAM(IC)=TEMP/RFAC(IDIAG)
       IC=IC-1
-      IF (IC .GT. 0) GOTO 70
+      IF (IC > 0) GOTO 70
 C
 C     Set the new search direction D. Terminate if the 2-norm of D is zero
 C       or does not decrease, or if NACT=N holds. The situation NACT=N
 C       occurs for sufficiently large SNORM if the origin is in the convex
 C       hull of the constraint gradients.
 C
-  100 IF (NACT .EQ. N) GOTO 290
-      DO 110 J=NACT+1,N
-      W(J)=ZERO
-      DO 110 I=1,N
-  110 W(J)=W(J)+QFAC(I,J)*G(I)
+  100 IF (NACT == N) GOTO 290
+      DO J=NACT+1,N
+          W(J)=ZERO
+          DO I=1,N
+              W(J)=W(J)+QFAC(I,J)*G(I)
+          END DO
+      END DO
       DD=ZERO
-      DO 130 I=1,N
-      DW(I)=ZERO
-      DO 120 J=NACT+1,N
-  120 DW(I)=DW(I)-W(J)*QFAC(I,J)
-  130 DD=DD+DW(I)**2
-      IF (DD .GE. DDSAV) GOTO 290
-      IF (DD .EQ. ZERO) GOTO 300
+      DO I=1,N
+          DW(I)=ZERO
+          DO J=NACT+1,N
+              DW(I)=DW(I)-W(J)*QFAC(I,J)
+          END DO
+          DD=DD+DW(I)**2
+      END DO
+      IF (DD >= DDSAV) GOTO 290
+      IF (DD == ZERO) GOTO 300
       DDSAV=DD
       DNORM=DSQRT(DD)
 C
@@ -108,38 +117,41 @@ C       below is to estimate whether a positive value of VIOLMX may be
 C       due to computer rounding errors.
 C
       L=0
-      IF (M .GT. 0) THEN
+      IF (M > 0) THEN
           TEST=DNORM/SNORM
           VIOLMX=ZERO
-          DO 150 J=1,M
-          IF (RESNEW(J) .GT. ZERO .AND. RESNEW(J) .LE. TDEL) THEN
-              SUM=ZERO
-              DO 140 I=1,N
-  140         SUM=SUM+AMAT(I,J)*DW(I)
-              IF (SUM .GT. TEST*RESNEW(J)) THEN
-                  IF (SUM .GT. VIOLMX) THEN
-                      L=J
-                      VIOLMX=SUM
+          DO J=1,M
+              IF (RESNEW(J) > ZERO .AND. RESNEW(J) <= TDEL) THEN
+                  SUM=ZERO
+                  DO I=1,N
+                      SUM=SUM+AMAT(I,J)*DW(I)
+                  END DO
+                  IF (SUM > TEST*RESNEW(J)) THEN
+                      IF (SUM > VIOLMX) THEN
+                          L=J
+                          VIOLMX=SUM
+                      END IF
                   END IF
               END IF
-          END IF
-  150     CONTINUE
+          END DO
           CTOL=ZERO
           TEMP=0.01D0*DNORM
-          IF (VIOLMX .GT. ZERO .AND. VIOLMX .LT. TEMP) THEN
-              IF (NACT .GT. 0) THEN
-                  DO 170 K=1,NACT
-                  J=IACT(K)
-                  SUM=ZERO
-                  DO 160 I=1,N
-  160             SUM=SUM+DW(I)*AMAT(I,J)
-  170             CTOL=DMAX1(CTOL,DABS(SUM))
+          IF (VIOLMX > ZERO .AND. VIOLMX < TEMP) THEN
+              IF (NACT > 0) THEN
+                  DO K=1,NACT
+                      J=IACT(K)
+                      SUM=ZERO
+                      DO I=1,N
+                          SUM=SUM+DW(I)*AMAT(I,J)
+                      END DO
+                      CTOL=DMAX1(CTOL,DABS(SUM))
+                  END DO
               END IF
           END IF
       END IF
       W(1)=ONE
-      IF (L .EQ. 0) GOTO 300
-      IF (VIOLMX .LE. 10.0D0*CTOL) GOTO 300
+      IF (L == 0) GOTO 300
+      IF (VIOLMX <= 10.0D0*CTOL) GOTO 300
 C
 C     Apply Givens rotations to the last (N-NACT) columns of QFAC so that
 C       the first (NACT+1) columns of QFAC are the ones required for the
@@ -149,30 +161,33 @@ C
       NACTP=NACT+1
       IDIAG=(NACTP*NACTP-NACTP)/2
       RDIAG=ZERO
-      DO 200 J=N,1,-1
-      SPROD=ZERO
-      DO 180 I=1,N
-  180 SPROD=SPROD+QFAC(I,J)*AMAT(I,L)
-      IF (J .LE. NACT) THEN
-          RFAC(IDIAG+J)=SPROD
-      ELSE
-          IF (DABS(RDIAG) .LE. 1.0D-20*DABS(SPROD)) THEN
-              RDIAG=SPROD
+      DO J=N,1,-1
+          SPROD=ZERO
+          DO I=1,N
+              SPROD=SPROD+QFAC(I,J)*AMAT(I,L)
+          END DO
+          IF (J <= NACT) THEN
+              RFAC(IDIAG+J)=SPROD
           ELSE
-              TEMP=DSQRT(SPROD*SPROD+RDIAG*RDIAG)
-              COSV=SPROD/TEMP
-              SINV=RDIAG/TEMP
-              RDIAG=TEMP
-              DO 190 I=1,N
-              TEMP=COSV*QFAC(I,J)+SINV*QFAC(I,J+1)
-              QFAC(I,J+1)=-SINV*QFAC(I,J)+COSV*QFAC(I,J+1)
-  190         QFAC(I,J)=TEMP
+              IF (DABS(RDIAG) <= 1.0D-20*DABS(SPROD)) THEN
+                  RDIAG=SPROD
+              ELSE
+                  TEMP=DSQRT(SPROD*SPROD+RDIAG*RDIAG)
+                  COSV=SPROD/TEMP
+                  SINV=RDIAG/TEMP
+                  RDIAG=TEMP
+                  DO I=1,N
+                      TEMP=COSV*QFAC(I,J)+SINV*QFAC(I,J+1)
+                      QFAC(I,J+1)=-SINV*QFAC(I,J)+COSV*QFAC(I,J+1)
+                      QFAC(I,J)=TEMP
+                  END DO
+              END IF
           END IF
-      END IF
-  200 CONTINUE
-      IF (RDIAG .LT. ZERO) THEN
-          DO 210 I=1,N
-  210     QFAC(I,NACTP)=-QFAC(I,NACTP)
+      END DO
+      IF (RDIAG < ZERO) THEN
+          DO I=1,N
+              QFAC(I,NACTP)=-QFAC(I,NACTP)
+          END DO
       END IF
       RFAC(IDIAG+NACTP)=DABS(RDIAG)
       NACT=NACTP
@@ -184,15 +199,17 @@ C
 C     Set the components of the vector VMU in W.
 C
   220 W(NACT)=ONE/RFAC((NACT*NACT+NACT)/2)**2
-      IF (NACT .GT. 1) THEN
-          DO 240 I=NACT-1,1,-1
-          IDIAG=(I*I+I)/2
-          JW=IDIAG+I
-          SUM=ZERO
-          DO 230 J=I+1,NACT
-          SUM=SUM-RFAC(JW)*W(J)
-  230     JW=JW+J
-  240     W(I)=SUM/RFAC(IDIAG)
+      IF (NACT > 1) THEN
+          DO I=NACT-1,1,-1
+              IDIAG=(I*I+I)/2
+              JW=IDIAG+I
+              SUM=ZERO
+              DO J=I+1,NACT
+                  SUM=SUM-RFAC(JW)*W(J)
+                  JW=JW+J
+              END DO
+              W(I)=SUM/RFAC(IDIAG)
+          END DO
       END IF
 C
 C     Calculate the multiple of VMU to subtract from VLAM, and update VLAM.
@@ -200,19 +217,20 @@ C
       VMULT=VIOLMX
       IC=0
       J=1
-  250 IF (J .LT. NACT) THEN
-          IF (VLAM(J) .GE. VMULT*W(J)) THEN
+  250 IF (J < NACT) THEN
+          IF (VLAM(J) >= VMULT*W(J)) THEN
               IC=J
               VMULT=VLAM(J)/W(J)
           END IF
           J=J+1
           GOTO 250
       END IF
-      DO 260 J=1,NACT
-  260 VLAM(J)=VLAM(J)-VMULT*W(J)
-      IF (IC .GT. 0) VLAM(IC)=ZERO
+      DO J=1,NACT
+          VLAM(J)=VLAM(J)-VMULT*W(J)
+      END DO
+      IF (IC > 0) VLAM(IC)=ZERO
       VIOLMX=DMAX1(VIOLMX-VMULT,ZERO)
-      IF (IC .EQ. 0) VIOLMX=ZERO
+      IF (IC == 0) VIOLMX=ZERO
 C
 C     Reduce the active set if necessary, so that all components of the
 C       new VLAM are negative, with resetting of the residuals of the
@@ -220,18 +238,18 @@ C       constraints that become inactive.
 C
       IFLAG=3
       IC=NACT
-  270 IF (VLAM(IC) .LT. ZERO) GOTO 280
+  270 IF (VLAM(IC) < ZERO) GOTO 280
       RESNEW(IACT(IC))=DMAX1(RESACT(IC),TINY)
       GOTO 800
   280 IC=IC-1
-      IF (IC .GT. 0) GOTO 270
+      IF (IC > 0) GOTO 270
 C
 C     Calculate the next VMU if VIOLMX is positive. Return if NACT=N holds,
 C       as then the active constraints imply D=0. Otherwise, go to label
 C       100, to calculate the new D and to test for termination.
 C
-      IF (VIOLMX .GT. ZERO) GOTO 220
-      IF (NACT .LT. N) GOTO 100
+      IF (VIOLMX > ZERO) GOTO 220
+      IF (NACT < N) GOTO 100
   290 DD=ZERO
   300 W(1)=DD
       RETURN
@@ -243,7 +261,7 @@ C       is reduced by one.
 C
   800 RESNEW(IACT(IC))=DMAX1(RESACT(IC),TINY)
       JC=IC
-  810 IF (JC .LT. NACT) THEN
+  810 IF (JC < NACT) THEN
           JCP=JC+1
           IDIAG=JC*JCP/2
           JW=IDIAG+JCP
@@ -253,23 +271,25 @@ C
           RFAC(JW-1)=SVAL*RFAC(IDIAG)
           RFAC(JW)=CVAL*RFAC(IDIAG)
           RFAC(IDIAG)=TEMP
-          IF (JCP .LT. NACT) THEN
-              DO 820 J=JCP+1,NACT
-              TEMP=SVAL*RFAC(JW+JC)+CVAL*RFAC(JW+JCP)
-              RFAC(JW+JCP)=CVAL*RFAC(JW+JC)-SVAL*RFAC(JW+JCP)
-              RFAC(JW+JC)=TEMP
-  820         JW=JW+J
+          IF (JCP < NACT) THEN
+              DO J=JCP+1,NACT
+                  TEMP=SVAL*RFAC(JW+JC)+CVAL*RFAC(JW+JCP)
+                  RFAC(JW+JCP)=CVAL*RFAC(JW+JC)-SVAL*RFAC(JW+JCP)
+                  RFAC(JW+JC)=TEMP
+                  JW=JW+J
+              END DO
           END IF
           JDIAG=IDIAG-JC
-          DO 830 I=1,N
-          IF (I .LT. JC) THEN
-              TEMP=RFAC(IDIAG+I)
-              RFAC(IDIAG+I)=RFAC(JDIAG+I)
-              RFAC(JDIAG+I)=TEMP
-          END IF
-          TEMP=SVAL*QFAC(I,JC)+CVAL*QFAC(I,JCP)
-          QFAC(I,JCP)=CVAL*QFAC(I,JC)-SVAL*QFAC(I,JCP)
-  830     QFAC(I,JC)=TEMP
+          DO I=1,N
+              IF (I < JC) THEN
+                  TEMP=RFAC(IDIAG+I)
+                  RFAC(IDIAG+I)=RFAC(JDIAG+I)
+                  RFAC(JDIAG+I)=TEMP
+              END IF
+              TEMP=SVAL*QFAC(I,JC)+CVAL*QFAC(I,JCP)
+              QFAC(I,JCP)=CVAL*QFAC(I,JC)-SVAL*QFAC(I,JCP)
+              QFAC(I,JC)=TEMP
+          END DO
           IACT(JC)=IACT(JCP)
           RESACT(JC)=RESACT(JCP)
           VLAM(JC)=VLAM(JCP)

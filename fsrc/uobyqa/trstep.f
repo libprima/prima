@@ -41,70 +41,81 @@ C
       DELSQ=DELTA*DELTA
       EVALUE=ZERO
       NM=N-1
-      DO 10 I=1,N
-      D(I)=ZERO
-      TD(I)=H(I,I)
-      DO 10 J=1,I
-   10 H(I,J)=H(J,I)
+      DO I=1,N
+          D(I)=ZERO
+          TD(I)=H(I,I)
+          DO J=1,I
+              H(I,J)=H(J,I)
+          END DO
+      END DO
 C
 C     Apply Householder transformations to obtain a tridiagonal matrix that
 C     is similar to H, and put the elements of the Householder vectors in
 C     the lower triangular part of H. Further, TD and TN will contain the
 C     diagonal and other nonzero elements of the tridiagonal matrix.
 C
-      DO 80 K=1,NM
-      KP=K+1
-      SUM=ZERO
-      IF (KP .LT. N) THEN
-          KPP=KP+1
-          DO 20 I=KPP,N
-   20     SUM=SUM+H(I,K)**2
-      END IF
-      IF (SUM .EQ. ZERO) THEN
-          TN(K)=H(KP,K)
-          H(KP,K)=ZERO
-      ELSE
-          TEMP=H(KP,K)
-          TN(K)=DSIGN(DSQRT(SUM+TEMP*TEMP),TEMP)
-          H(KP,K)=-SUM/(TEMP+TN(K))
-          TEMP=DSQRT(TWO/(SUM+H(KP,K)**2))
-          DO 30 I=KP,N
-          W(I)=TEMP*H(I,K)
-          H(I,K)=W(I)
-   30     Z(I)=TD(I)*W(I)
-          WZ=ZERO
-          DO 50 J=KP,NM
-          JP=J+1
-          DO 40 I=JP,N
-          Z(I)=Z(I)+H(I,J)*W(J)
-   40     Z(J)=Z(J)+H(I,J)*W(I)
-   50     WZ=WZ+W(J)*Z(J)
-          WZ=WZ+W(N)*Z(N)
-          DO 70 J=KP,N
-          TD(J)=TD(J)+W(J)*(WZ*W(J)-TWO*Z(J))
-          IF (J .LT. N) THEN
-              JP=J+1
-              DO 60 I=JP,N
-   60         H(I,J)=H(I,J)-W(I)*Z(J)-W(J)*(Z(I)-WZ*W(I))
+      DO K=1,NM
+          KP=K+1
+          SUM=ZERO
+          IF (KP < N) THEN
+              KPP=KP+1
+              DO I=KPP,N
+                  SUM=SUM+H(I,K)**2
+              END DO
           END IF
-   70     CONTINUE
-      END IF
-   80 CONTINUE
+          IF (SUM == ZERO) THEN
+              TN(K)=H(KP,K)
+              H(KP,K)=ZERO
+          ELSE
+              TEMP=H(KP,K)
+              TN(K)=DSIGN(DSQRT(SUM+TEMP*TEMP),TEMP)
+              H(KP,K)=-SUM/(TEMP+TN(K))
+              TEMP=DSQRT(TWO/(SUM+H(KP,K)**2))
+              DO I=KP,N
+                  W(I)=TEMP*H(I,K)
+                  H(I,K)=W(I)
+                  Z(I)=TD(I)*W(I)
+              END DO
+              WZ=ZERO
+              DO J=KP,NM
+                  JP=J+1
+                  DO I=JP,N
+                      Z(I)=Z(I)+H(I,J)*W(J)
+                      Z(J)=Z(J)+H(I,J)*W(I)
+                  END DO
+                  WZ=WZ+W(J)*Z(J)
+              END DO
+              WZ=WZ+W(N)*Z(N)
+              DO J=KP,N
+                  TD(J)=TD(J)+W(J)*(WZ*W(J)-TWO*Z(J))
+                  IF (J < N) THEN
+                      JP=J+1
+                      DO I=JP,N
+                          H(I,J)=H(I,J)-W(I)*Z(J)-W(J)*(Z(I)-WZ*W(I))
+                      END DO
+                  END IF
+              END DO
+          END IF
+      END DO
 C
 C     Form GG by applying the similarity transformation to G.
 C
       GSQ=ZERO
-      DO 90 I=1,N
-      GG(I)=G(I)
-   90 GSQ=GSQ+G(I)**2
+      DO I=1,N
+          GG(I)=G(I)
+          GSQ=GSQ+G(I)**2
+      END DO
       GNORM=DSQRT(GSQ)
-      DO 110 K=1,NM
-      KP=K+1
-      SUM=ZERO
-      DO 100 I=KP,N
-  100 SUM=SUM+GG(I)*H(I,K)
-      DO 110 I=KP,N
-  110 GG(I)=GG(I)-SUM*H(I,K)
+      DO K=1,NM
+          KP=K+1
+          SUM=ZERO
+          DO I=KP,N
+              SUM=SUM+GG(I)*H(I,K)
+          END DO
+          DO I=KP,N
+              GG(I)=GG(I)-SUM*H(I,K)
+          END DO
+      END DO
 C
 C     Begin the trust region calculation with a tridiagonal matrix by
 C     calculating the norm of H. Then treat the case when H is zero.
@@ -112,15 +123,17 @@ C
       HNORM=DABS(TD(1))+DABS(TN(1))
       TDMIN=TD(1)
       TN(N)=ZERO
-      DO 120 I=2,N
-      TEMP=DABS(TN(I-1))+DABS(TD(I))+DABS(TN(I))
-      HNORM=DMAX1(HNORM,TEMP)
-  120 TDMIN=DMIN1(TDMIN,TD(I))
-      IF (HNORM .EQ. ZERO) THEN
-          IF (GNORM .EQ. ZERO) GOTO 400
+      DO I=2,N
+          TEMP=DABS(TN(I-1))+DABS(TD(I))+DABS(TN(I))
+          HNORM=DMAX1(HNORM,TEMP)
+          TDMIN=DMIN1(TDMIN,TD(I))
+      END DO
+      IF (HNORM == ZERO) THEN
+          IF (GNORM == ZERO) GOTO 400
           SCALE=DELTA/GNORM
-          DO 130 I=1,N
-  130     D(I)=-SCALE*GG(I)
+          DO I=1,N
+              D(I)=-SCALE*GG(I)
+          END DO
           GOTO 370
       END IF
 C
@@ -155,7 +168,7 @@ C To avoid wasting energy, we do the following
       DO I = 1, N
           SUMD = SUMD + DABS(D(I))
       END DO
-      IF (SUMD .GE. 1.0D100 .OR. SUMD .NE. SUMD) THEN
+      IF (SUMD >= 1.0D100 .OR. SUMD /= SUMD) THEN
           DO I = 1, N
              D(I) = DSAV(I)
           END DO
@@ -165,34 +178,34 @@ C To avoid wasting energy, we do the following
              DSAV(I) = D(I)
           END DO
       END IF
-      IF (ITERC .GT. MIN(10000, 100*N)) THEN
+      IF (ITERC > MIN(10000, 100*N)) THEN
           GOTO 370
       END IF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       KSAV=0
       PIV(1)=TD(1)+PAR
       K=1
-  150 IF (PIV(K) .GT. ZERO) THEN
+  150 IF (PIV(K) > ZERO) THEN
           PIV(K+1)=TD(K+1)+PAR-TN(K)**2/PIV(K)
       ELSE
-          IF (PIV(K) .LT. ZERO .OR. TN(K) .NE. ZERO) GOTO 160
+          IF (PIV(K) < ZERO .OR. TN(K) /= ZERO) GOTO 160
           KSAV=K
           PIV(K+1)=TD(K+1)+PAR
       END IF
       K=K+1
-      IF (K .LT. N) GOTO 150
-      IF (PIV(K) .LT. ZERO) GOTO 160
-      IF (PIV(K) .EQ. ZERO) KSAV=K
+      IF (K < N) GOTO 150
+      IF (PIV(K) < ZERO) GOTO 160
+      IF (PIV(K) == ZERO) KSAV=K
 C
 C     Branch if all the pivots are positive, allowing for the case when
 C     G is zero.
 C
-      IF (KSAV .EQ. 0 .AND. GSQ .GT. ZERO) GOTO 230
-      IF (GSQ .EQ. ZERO) THEN
-          IF (PAR .EQ. ZERO) GOTO 370
+      IF (KSAV == 0 .AND. GSQ > ZERO) GOTO 230
+      IF (GSQ == ZERO) THEN
+          IF (PAR == ZERO) GOTO 370
           PARU=PAR
           PARUEST=PAR
-          IF (KSAV .EQ. 0) GOTO 190
+          IF (KSAV == 0) GOTO 190
       END IF
       K=KSAV
 C
@@ -200,12 +213,12 @@ C     Set D to a direction of nonpositive curvature of the given tridiagonal
 C     matrix, and thus revise PARLEST.
 C
   160 D(K)=ONE
-      IF (DABS(TN(K)) .LE. DABS(PIV(K))) THEN
+      IF (DABS(TN(K)) <= DABS(PIV(K))) THEN
           DSQ=ONE
           DHD=PIV(K)
       ELSE
           TEMP=TD(K+1)+PAR
-          IF (TEMP .LE. DABS(PIV(K))) THEN
+          IF (TEMP <= DABS(PIV(K))) THEN
               D(K+1)=DSIGN(ONE,-TN(K))
               DHD=PIV(K)+TEMP-TWO*DABS(TN(K))
           ELSE
@@ -214,15 +227,16 @@ C
           END IF
           DSQ=ONE+D(K+1)**2
       END IF
-  170 IF (K .GT. 1) THEN
+  170 IF (K > 1) THEN
           K=K-1
-          IF (TN(K) .NE. ZERO) THEN
+          IF (TN(K) /= ZERO) THEN
               D(K)=-TN(K)*D(K+1)/PIV(K)
               DSQ=DSQ+D(K)**2
               GOTO 170
           END IF
-          DO 180 I=1,K
-  180     D(I)=ZERO
+          DO I=1,K
+              D(I)=ZERO
+          END DO
       END IF
       PARL=PAR
       PARLEST=PAR-DHD/DSQ
@@ -231,73 +245,79 @@ C     Terminate with D set to a multiple of the current D if the following
 C     test suggests that it suitable to do so.
 C
   190 TEMP=PARUEST
-      IF (GSQ .EQ. ZERO) TEMP=TEMP*(ONE-TOL)
-      IF (PARUEST .GT. ZERO .AND. PARLEST .GE. TEMP) THEN
+      IF (GSQ == ZERO) TEMP=TEMP*(ONE-TOL)
+      IF (PARUEST > ZERO .AND. PARLEST >= TEMP) THEN
           DTG=ZERO
-          DO 200 I=1,N
-  200     DTG=DTG+D(I)*GG(I)
+          DO I=1,N
+              DTG=DTG+D(I)*GG(I)
+          END DO
           SCALE=-DSIGN(DELTA/DSQRT(DSQ),DTG)
-          DO 210 I=1,N
-  210     D(I)=SCALE*D(I)
+          DO I=1,N
+              D(I)=SCALE*D(I)
+          END DO
           GOTO 370
       END IF
 C
 C     Pick the value of PAR for the next iteration.
 C
-  220 IF (PARU .EQ. ZERO) THEN
+  220 IF (PARU == ZERO) THEN
           PAR=TWO*PARLEST+GNORM/DELTA
       ELSE
           PAR=0.5D0*(PARL+PARU)
           PAR=DMAX1(PAR,PARLEST)
       END IF
-      IF (PARUEST .GT. ZERO) PAR=DMIN1(PAR,PARUEST)
+      IF (PARUEST > ZERO) PAR=DMIN1(PAR,PARUEST)
       GOTO 140
 C
 C     Calculate D for the current PAR in the positive definite case.
 C
   230 W(1)=-GG(1)/PIV(1)
-      DO 240 I=2,N
-  240 W(I)=(-GG(I)-TN(I-1)*W(I-1))/PIV(I)
+      DO I=2,N
+          W(I)=(-GG(I)-TN(I-1)*W(I-1))/PIV(I)
+      END DO
       D(N)=W(N)
-      DO 250 I=NM,1,-1
-  250 D(I)=W(I)-TN(I)*D(I+1)/PIV(I)
+      DO I=NM,1,-1
+          D(I)=W(I)-TN(I)*D(I+1)/PIV(I)
+      END DO
 C
 C     Branch if a Newton-Raphson step is acceptable.
 C
       DSQ=ZERO
       WSQ=ZERO
-      DO 260 I=1,N
-      DSQ=DSQ+D(I)**2
-  260 WSQ=WSQ+PIV(I)*W(I)**2
-      IF (PAR .EQ. ZERO .AND. DSQ .LE. DELSQ) GOTO 320
+      DO I=1,N
+          DSQ=DSQ+D(I)**2
+          WSQ=WSQ+PIV(I)*W(I)**2
+      END DO
+      IF (PAR == ZERO .AND. DSQ <= DELSQ) GOTO 320
 C
 C     Make the usual test for acceptability of a full trust region step.
 C
       DNORM=DSQRT(DSQ)
       PHI=ONE/DNORM-ONE/DELTA
       TEMP=TOL*(ONE+PAR*DSQ/WSQ)-DSQ*PHI*PHI
-      IF (TEMP .GE. ZERO) THEN
+      IF (TEMP >= ZERO) THEN
           SCALE=DELTA/DNORM
-          DO 270 I=1,N
-  270     D(I)=SCALE*D(I)
+          DO I=1,N
+              D(I)=SCALE*D(I)
+          END DO
           GOTO 370
       END IF
-      IF (ITERC .GE. 2 .AND. PAR .LE. PARL) GOTO 370
-      IF (PARU .GT. ZERO .AND. PAR .GE. PARU) GOTO 370
+      IF (ITERC >= 2 .AND. PAR <= PARL) GOTO 370
+      IF (PARU > ZERO .AND. PAR >= PARU) GOTO 370
 C
 C     Complete the iteration when PHI is negative.
 C
-      IF (PHI .LT. ZERO) THEN
+      IF (PHI < ZERO) THEN
           PARLEST=PAR
           IF (POSDEF. EQ. ONE) THEN
-              IF (PHI .LE. PHIL) GOTO 370
+              IF (PHI <= PHIL) GOTO 370
               SLOPE=(PHI-PHIL)/(PAR-PARL)
               PARLEST=PAR-PHI/SLOPE
           END IF
           SLOPE=ONE/GNORM
-          IF (PARU .GT. ZERO) SLOPE=(PHIU-PHI)/(PARU-PAR)
+          IF (PARU > ZERO) SLOPE=(PHIU-PHI)/(PARU-PAR)
           TEMP=PAR-PHI/SLOPE
-          IF (PARUEST .GT. ZERO) TEMP=DMIN1(TEMP,PARUEST)
+          IF (PARUEST > ZERO) TEMP=DMIN1(TEMP,PARUEST)
           PARUEST=TEMP
           POSDEF=ONE
           PARL=PAR
@@ -307,21 +327,24 @@ C
 C
 C     If required, calculate Z for the alternative test for convergence.
 C
-      IF (POSDEF .EQ. ZERO) THEN
+      IF (POSDEF == ZERO) THEN
           W(1)=ONE/PIV(1)
-          DO 280 I=2,N
-          TEMP=-TN(I-1)*W(I-1)
-  280     W(I)=(DSIGN(ONE,TEMP)+TEMP)/PIV(I)
+          DO I=2,N
+              TEMP=-TN(I-1)*W(I-1)
+              W(I)=(DSIGN(ONE,TEMP)+TEMP)/PIV(I)
+          END DO
           Z(N)=W(N)
-          DO 290 I=NM,1,-1
-  290     Z(I)=W(I)-TN(I)*Z(I+1)/PIV(I)
+          DO I=NM,1,-1
+              Z(I)=W(I)-TN(I)*Z(I+1)/PIV(I)
+          END DO
           WWSQ=ZERO
           ZSQ=ZERO
           DTZ=ZERO
-          DO 300 I=1,N
-          WWSQ=WWSQ+PIV(I)*W(I)**2
-          ZSQ=ZSQ+Z(I)**2
-  300     DTZ=DTZ+D(I)*Z(I)
+          DO I=1,N
+              WWSQ=WWSQ+PIV(I)*W(I)**2
+              ZSQ=ZSQ+Z(I)**2
+              DTZ=DTZ+D(I)*Z(I)
+          END DO
 C
 C     Apply the alternative test for convergence.
 C
@@ -329,9 +352,10 @@ C
           TEMPB=DSQRT(DTZ*DTZ+TEMPA*ZSQ)
           GAM=TEMPA/(DSIGN(TEMPB,DTZ)+DTZ)
           TEMP=TOL*(WSQ+PAR*DELSQ)-GAM*GAM*WWSQ
-          IF (TEMP .GE. ZERO) THEN
-              DO 310 I=1,N
-  310         D(I)=D(I)+GAM*Z(I)
+          IF (TEMP >= ZERO) THEN
+              DO I=1,N
+                  D(I)=D(I)+GAM*Z(I)
+              END DO
               GOTO 370
           END IF
           PARLEST=DMAX1(PARLEST,PAR-WWSQ/ZSQ)
@@ -340,13 +364,13 @@ C
 C     Complete the iteration when PHI is positive.
 C
       SLOPE=ONE/GNORM
-      IF (PARU .GT. ZERO) THEN
-          IF (PHI .GE. PHIU) GOTO 370
+      IF (PARU > ZERO) THEN
+          IF (PHI >= PHIU) GOTO 370
           SLOPE=(PHIU-PHI)/(PARU-PAR)
       END IF
       PARLEST=DMAX1(PARLEST,PAR-PHI/SLOPE)
       PARUEST=PAR
-      IF (POSDEF .EQ. ONE) THEN
+      IF (POSDEF == ONE) THEN
           SLOPE=(PHI-PHIL)/(PAR-PARL)
           PARUEST=PAR-PHI/SLOPE
       END IF
@@ -360,9 +384,10 @@ C
   320 SHFMIN=ZERO
       PIVOT=TD(1)
       SHFMAX=PIVOT
-      DO 330 K=2,N
-      PIVOT=TD(K)-TN(K-1)**2/PIVOT
-  330 SHFMAX=DMIN1(SHFMAX,PIVOT)
+      DO K=2,N
+          PIVOT=TD(K)-TN(K-1)**2/PIVOT
+          SHFMAX=DMIN1(SHFMAX,PIVOT)
+      END DO
 C
 C     Find EVALUE by a bisection method, but occasionally SHFMAX may be
 C     adjusted by the rule of false position.
@@ -371,19 +396,19 @@ C
   340 SHIFT=0.5D0*(SHFMIN+SHFMAX)
       K=1
       TEMP=TD(1)-SHIFT
-  350 IF (TEMP .GT. ZERO) THEN
+  350 IF (TEMP > ZERO) THEN
           PIV(K)=TEMP
-          IF (K .LT. N) THEN
+          IF (K < N) THEN
               TEMP=TD(K+1)-SHIFT-TN(K)**2/TEMP
               K=K+1
               GOTO 350
           END IF
           SHFMIN=SHIFT
       ELSE
-          IF (K .LT. KSAVE) GOTO 360
-          IF (K .EQ. KSAVE) THEN
-              IF (PIVKSV .EQ. ZERO) GOTO 360
-              IF (PIV(K)-TEMP .LT. TEMP-PIVKSV) THEN
+          IF (K < KSAVE) GOTO 360
+          IF (K == KSAVE) THEN
+              IF (PIVKSV == ZERO) GOTO 360
+              IF (PIV(K)-TEMP < TEMP-PIVKSV) THEN
                   PIVKSV=TEMP
                   SHFMAX=SHIFT
               ELSE
@@ -396,19 +421,22 @@ C
               SHFMAX=SHIFT
           END IF
       END IF
-      IF (SHFMIN .LE. 0.99D0*SHFMAX) GOTO 340
+      IF (SHFMIN <= 0.99D0*SHFMAX) GOTO 340
   360 EVALUE=SHFMIN
 C
 C     Apply the inverse Householder transformations to D.
 C
   370 NM=N-1
-      DO 390 K=NM,1,-1
-      KP=K+1
-      SUM=ZERO
-      DO 380 I=KP,N
-  380 SUM=SUM+D(I)*H(I,K)
-      DO 390 I=KP,N
-  390 D(I)=D(I)-SUM*H(I,K)
+      DO K=NM,1,-1
+          KP=K+1
+          SUM=ZERO
+          DO I=KP,N
+              SUM=SUM+D(I)*H(I,K)
+          END DO
+          DO I=KP,N
+              D(I)=D(I)-SUM*H(I,K)
+          END DO
+      END DO
 C
 C     Return from the subroutine.
 C
