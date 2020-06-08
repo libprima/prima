@@ -53,18 +53,24 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C
 C     Set the initial elements of XPT, BMAT, HQ, PQ and ZMAT to zero.
 C
-      DO 20 J=1,N
-      XBASE(J)=X(J)
-      DO 10 K=1,NPT
-   10 XPT(K,J)=ZERO
-      DO 20 I=1,NDIM
-   20 BMAT(I,J)=ZERO
-      DO 30 IH=1,NH
-   30 HQ(IH)=ZERO
-      DO 40 K=1,NPT
-      PQ(K)=ZERO
-      DO 40 J=1,NPTM
-   40 ZMAT(K,J)=ZERO
+      DO J=1,N
+          XBASE(J)=X(J)
+          DO K=1,NPT
+              XPT(K,J)=ZERO
+          END DO
+          DO I=1,NDIM
+              BMAT(I,J)=ZERO
+          END DO
+      END DO
+      DO IH=1,NH
+          HQ(IH)=ZERO
+      END DO
+      DO K=1,NPT
+          PQ(K)=ZERO
+          DO J=1,NPTM
+              ZMAT(K,J)=ZERO
+          END DO
+      END DO
 C
 C     Begin the initialization procedure. NF becomes one more than the number
 C     of function values so far. The coordinates of the displacement of the
@@ -77,25 +83,25 @@ C
    50 NFM=NF
       NFMM=NF-N
       NF=NF+1
-      IF (NFM .LE. 2*N) THEN
-          IF (NFM .GE. 1 .AND. NFM .LE. N) THEN
+      IF (NFM <= 2*N) THEN
+          IF (NFM >= 1 .AND. NFM <= N) THEN
               XPT(NF,NFM)=RHOBEG
-          ELSE IF (NFM .GT. N) THEN
+          ELSE IF (NFM > N) THEN
               XPT(NF,NFMM)=-RHOBEG
           END IF
       ELSE
           ITEMP=(NFMM-1)/N
           JPT=NFM-ITEMP*N-N
           IPT=JPT+ITEMP
-          IF (IPT .GT. N) THEN
+          IF (IPT > N) THEN
               ITEMP=JPT
               JPT=IPT-N
               IPT=ITEMP
           END IF
           XIPT=RHOBEG
-          IF (FVAL(IPT+NP) .LT. FVAL(IPT+1)) XIPT=-XIPT
+          IF (FVAL(IPT+NP) < FVAL(IPT+1)) XIPT=-XIPT
           XJPT=RHOBEG
-          IF (FVAL(JPT+NP) .LT. FVAL(JPT+1)) XJPT=-XJPT
+          IF (FVAL(JPT+NP) < FVAL(JPT+1)) XJPT=-XJPT
           XPT(NF,IPT)=XIPT
           XPT(NF,JPT)=XJPT
       END IF
@@ -104,11 +110,12 @@ C     Calculate the next value of F, label 70 being reached immediately
 C     after this calculation. The least function value so far and its index
 C     are required.
 C
-      DO 60 J=1,N
-   60 X(J)=XPT(NF,J)+XBASE(J)
+      DO J=1,N
+          X(J)=XPT(NF,J)+XBASE(J)
+      END DO
       GOTO 310
    70 FVAL(NF)=F
-      IF (NF .EQ. 1) THEN
+      IF (NF == 1) THEN
           FBEG=F
           FOPT=F
           KOPT=1
@@ -123,7 +130,7 @@ C     F occurs.
               XOPT(I)=XPT(1, I)
           END DO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      ELSE IF (F .LT. FOPT) THEN
+      ELSE IF (F < FOPT) THEN
           FOPT=F
           KOPT=NF
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -141,15 +148,15 @@ C
 C     Set the nonzero initial elements of BMAT and the quadratic model in
 C     the cases when NF is at most 2*N+1.
 C
-      IF (NFM .LE. 2*N) THEN
-          IF (NFM .GE. 1 .AND. NFM .LE. N) THEN
+      IF (NFM <= 2*N) THEN
+          IF (NFM >= 1 .AND. NFM <= N) THEN
               GQ(NFM)=(F-FBEG)/RHOBEG
-              IF (NPT .LT. NF+N) THEN
+              IF (NPT < NF+N) THEN
                   BMAT(1,NFM)=-ONE/RHOBEG
                   BMAT(NF,NFM)=ONE/RHOBEG
                   BMAT(NPT+NFM,NFM)=-HALF*RHOSQ
               END IF
-          ELSE IF (NFM .GT. N) THEN
+          ELSE IF (NFM > N) THEN
               BMAT(NF-N,NFMM)=HALF/RHOBEG
               BMAT(NF,NFMM)=-HALF/RHOBEG
               ZMAT(1,NFMM)=-RECIQ-RECIQ
@@ -166,15 +173,15 @@ C     the initial quadratic model.
 C
       ELSE
           IH=(IPT*(IPT-1))/2+JPT
-          IF (XIPT .LT. ZERO) IPT=IPT+N
-          IF (XJPT .LT. ZERO) JPT=JPT+N
+          IF (XIPT < ZERO) IPT=IPT+N
+          IF (XJPT < ZERO) JPT=JPT+N
           ZMAT(1,NFMM)=RECIP
           ZMAT(NF,NFMM)=RECIP
           ZMAT(IPT+1,NFMM)=-RECIP
           ZMAT(JPT+1,NFMM)=-RECIP
           HQ(IH)=(FBEG-FVAL(IPT+1)-FVAL(JPT+1)+F)/(XIPT*XJPT)
       END IF
-      IF (NF .LT. NPT) GOTO 50
+      IF (NF < NPT) GOTO 50
 C
 C     Begin the iterative procedure, because the initial model is complete.
 C
@@ -185,9 +192,10 @@ C
       DIFFB=ZERO
       ITEST=0
       XOPTSQ=ZERO
-      DO 80 I=1,N
-      XOPT(I)=XPT(KOPT,I)
-   80 XOPTSQ=XOPTSQ+XOPT(I)**2
+      DO I=1,N
+          XOPT(I)=XPT(KOPT,I)
+          XOPTSQ=XOPTSQ+XOPT(I)**2
+      END DO
    90 NFSAV=NF
 C
 C     Generate the next trust region step and test its length. Set KNEW
@@ -202,19 +210,19 @@ C or infinite cycling may happen. This is because any equality/inequality
 C comparison involving NaN returns FALSE, which can lead to unintended
 C behavior of the code, including uninitialized indices.
       DO I = 1, N
-          IF (GQ(I) .NE. GQ(I)) THEN
+          IF (GQ(I) /= GQ(I)) THEN
               INFO = -3
               GOTO 530
           END IF 
       END DO
       DO I = 1, NH
-          IF (HQ(I) .NE. HQ(I)) THEN
+          IF (HQ(I) /= HQ(I)) THEN
               INFO = -3
               GOTO 530
           END IF 
       END DO 
       DO I = 1, NPT
-          IF (PQ(I) .NE. PQ(I)) THEN
+          IF (PQ(I) /= PQ(I)) THEN
               INFO = -3
               GOTO 530
           END IF
@@ -223,81 +231,97 @@ C behavior of the code, including uninitialized indices.
       CALL TRSAPP (N,NPT,XOPT,XPT,GQ,HQ,PQ,DELTA,D,W,W(NP),
      1  W(NP+N),W(NP+2*N),CRVMIN)
       DSQ=ZERO
-      DO 110 I=1,N
-  110 DSQ=DSQ+D(I)**2
+      DO I=1,N
+          DSQ=DSQ+D(I)**2
+      END DO
       DNORM=DMIN1(DELTA,DSQRT(DSQ))
-      IF (DNORM .LT. HALF*RHO) THEN
+      IF (DNORM < HALF*RHO) THEN
           KNEW=-1
           DELTA=TENTH*DELTA
           RATIO=-1.0D0
-          IF (DELTA .LE. 1.5D0*RHO) DELTA=RHO
-          IF (NF .LE. NFSAV+2) GOTO 460
+          IF (DELTA <= 1.5D0*RHO) DELTA=RHO
+          IF (NF <= NFSAV+2) GOTO 460
           TEMP=0.125D0*CRVMIN*RHO*RHO
-          IF (TEMP .LE. DMAX1(DIFFA,DIFFB,DIFFC)) GOTO 460
+          IF (TEMP <= DMAX1(DIFFA,DIFFB,DIFFC)) GOTO 460
           GOTO 490
       END IF
 C
 C     Shift XBASE if XOPT may be too far from XBASE. First make the changes
 C     to BMAT that do not depend on ZMAT.
 C
-  120 IF (DSQ .LE. 1.0D-3*XOPTSQ) THEN
+  120 IF (DSQ <= 1.0D-3*XOPTSQ) THEN
           TEMPQ=0.25D0*XOPTSQ
-          DO 140 K=1,NPT
-          SUM=ZERO
-          DO 130 I=1,N
-  130     SUM=SUM+XPT(K,I)*XOPT(I)
-          TEMP=PQ(K)*SUM
-          SUM=SUM-HALF*XOPTSQ
-          W(NPT+K)=SUM
-          DO 140 I=1,N
-          GQ(I)=GQ(I)+TEMP*XPT(K,I)
-          XPT(K,I)=XPT(K,I)-HALF*XOPT(I)
-          VLAG(I)=BMAT(K,I)
-          W(I)=SUM*XPT(K,I)+TEMPQ*XOPT(I)
-          IP=NPT+I
-          DO 140 J=1,I
-  140     BMAT(IP,J)=BMAT(IP,J)+VLAG(I)*W(J)+W(I)*VLAG(J)
+          DO K=1,NPT
+              SUM=ZERO
+              DO I=1,N
+                  SUM=SUM+XPT(K,I)*XOPT(I)
+              END DO
+              TEMP=PQ(K)*SUM
+              SUM=SUM-HALF*XOPTSQ
+              W(NPT+K)=SUM
+              DO I=1,N
+                  GQ(I)=GQ(I)+TEMP*XPT(K,I)
+                  XPT(K,I)=XPT(K,I)-HALF*XOPT(I)
+                  VLAG(I)=BMAT(K,I)
+                  W(I)=SUM*XPT(K,I)+TEMPQ*XOPT(I)
+                  IP=NPT+I
+                  DO J=1,I
+                      BMAT(IP,J)=BMAT(IP,J)+VLAG(I)*W(J)+W(I)*VLAG(J)
+                  END DO
+              END DO
+          END DO
 C
 C     Then the revisions of BMAT that depend on ZMAT are calculated.
 C
-          DO 180 K=1,NPTM
-          SUMZ=ZERO
-          DO 150 I=1,NPT
-          SUMZ=SUMZ+ZMAT(I,K)
-  150     W(I)=W(NPT+I)*ZMAT(I,K)
-          DO 170 J=1,N
-          SUM=TEMPQ*SUMZ*XOPT(J)
-          DO 160 I=1,NPT
-  160     SUM=SUM+W(I)*XPT(I,J)
-          VLAG(J)=SUM
-          IF (K .LT. IDZ) SUM=-SUM
-          DO 170 I=1,NPT
-  170     BMAT(I,J)=BMAT(I,J)+SUM*ZMAT(I,K)
-          DO 180 I=1,N
-          IP=I+NPT
-          TEMP=VLAG(I)
-          IF (K .LT. IDZ) TEMP=-TEMP
-          DO 180 J=1,I
-  180     BMAT(IP,J)=BMAT(IP,J)+TEMP*VLAG(J)
+          DO K=1,NPTM
+              SUMZ=ZERO
+              DO I=1,NPT
+                  SUMZ=SUMZ+ZMAT(I,K)
+                  W(I)=W(NPT+I)*ZMAT(I,K)
+              END DO
+              DO J=1,N
+                  SUM=TEMPQ*SUMZ*XOPT(J)
+                  DO I=1,NPT
+                      SUM=SUM+W(I)*XPT(I,J)
+                  END DO
+                  VLAG(J)=SUM
+                  IF (K < IDZ) SUM=-SUM
+                  DO I=1,NPT
+                      BMAT(I,J)=BMAT(I,J)+SUM*ZMAT(I,K)
+                  END DO
+              END DO
+              DO I=1,N
+                  IP=I+NPT
+                  TEMP=VLAG(I)
+                  IF (K < IDZ) TEMP=-TEMP
+                  DO J=1,I
+                      BMAT(IP,J)=BMAT(IP,J)+TEMP*VLAG(J)
+                  END DO
+              END DO
+          END DO
 C
 C     The following instructions complete the shift of XBASE, including
 C     the changes to the parameters of the quadratic model.
 C
           IH=0
-          DO 200 J=1,N
-          W(J)=ZERO
-          DO 190 K=1,NPT
-          W(J)=W(J)+PQ(K)*XPT(K,J)
-  190     XPT(K,J)=XPT(K,J)-HALF*XOPT(J)
-          DO 200 I=1,J
-          IH=IH+1
-          IF (I .LT. J) GQ(J)=GQ(J)+HQ(IH)*XOPT(I)
-          GQ(I)=GQ(I)+HQ(IH)*XOPT(J)
-          HQ(IH)=HQ(IH)+W(I)*XOPT(J)+XOPT(I)*W(J)
-  200     BMAT(NPT+I,J)=BMAT(NPT+J,I)
-          DO 210 J=1,N
-          XBASE(J)=XBASE(J)+XOPT(J)
-  210     XOPT(J)=ZERO
+          DO J=1,N
+              W(J)=ZERO
+              DO K=1,NPT
+                  W(J)=W(J)+PQ(K)*XPT(K,J)
+                  XPT(K,J)=XPT(K,J)-HALF*XOPT(J)
+              END DO
+              DO I=1,J
+                  IH=IH+1
+                  IF (I < J) GQ(J)=GQ(J)+HQ(IH)*XOPT(I)
+                  GQ(I)=GQ(I)+HQ(IH)*XOPT(J)
+                  HQ(IH)=HQ(IH)+W(I)*XOPT(J)+XOPT(I)*W(J)
+                  BMAT(NPT+I,J)=BMAT(NPT+J,I)
+              END DO
+          END DO
+          DO J=1,N
+              XBASE(J)=XBASE(J)+XOPT(J)
+              XOPT(J)=ZERO
+          END DO
           XOPTSQ=ZERO
       END IF
 C
@@ -309,7 +333,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 2019-08-29: See the comments below line number 100
       DO J = 1, N
           DO I = 1, NDIM
-              IF (BMAT(I,J) .NE. BMAT(I,J)) THEN
+              IF (BMAT(I,J) /= BMAT(I,J)) THEN
                   INFO = -3
                   GOTO 530
               END IF
@@ -317,14 +341,14 @@ C Zaikun 2019-08-29: See the comments below line number 100
       END DO
       DO J = 1, NPTM
           DO I = 1, NPT
-              IF (ZMAT(I,J) .NE. ZMAT(I,J)) THEN
+              IF (ZMAT(I,J) /= ZMAT(I,J)) THEN
                   INFO = -3
                   GOTO 530
               END IF
           END DO
       END DO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      IF (KNEW .GT. 0) THEN
+      IF (KNEW > 0) THEN
           CALL BIGLAG (N,NPT,XOPT,XPT,BMAT,ZMAT,IDZ,NDIM,KNEW,DSTEP,
      1      D,ALPHA,VLAG,VLAG(NPT+1),W,W(NP),W(NP+N))
       END IF
@@ -332,42 +356,50 @@ C
 C     Calculate VLAG and BETA for the current choice of D. The first NPT
 C     components of W_check will be held in W.
 C
-      DO 230 K=1,NPT
-      SUMA=ZERO
-      SUMB=ZERO
-      SUM=ZERO
-      DO 220 J=1,N
-      SUMA=SUMA+XPT(K,J)*D(J)
-      SUMB=SUMB+XPT(K,J)*XOPT(J)
-  220 SUM=SUM+BMAT(K,J)*D(J)
-      W(K)=SUMA*(HALF*SUMA+SUMB)
-  230 VLAG(K)=SUM
+      DO K=1,NPT
+          SUMA=ZERO
+          SUMB=ZERO
+          SUM=ZERO
+          DO J=1,N
+              SUMA=SUMA+XPT(K,J)*D(J)
+              SUMB=SUMB+XPT(K,J)*XOPT(J)
+              SUM=SUM+BMAT(K,J)*D(J)
+          END DO
+          W(K)=SUMA*(HALF*SUMA+SUMB)
+          VLAG(K)=SUM
+      END DO
       BETA=ZERO
-      DO 250 K=1,NPTM
-      SUM=ZERO
-      DO 240 I=1,NPT
-  240 SUM=SUM+ZMAT(I,K)*W(I)
-      IF (K .LT. IDZ) THEN
-          BETA=BETA+SUM*SUM
-          SUM=-SUM
-      ELSE
-          BETA=BETA-SUM*SUM
-      END IF
-      DO 250 I=1,NPT
-  250 VLAG(I)=VLAG(I)+SUM*ZMAT(I,K)
+      DO K=1,NPTM
+          SUM=ZERO
+          DO I=1,NPT
+              SUM=SUM+ZMAT(I,K)*W(I)
+          END DO
+          IF (K < IDZ) THEN
+              BETA=BETA+SUM*SUM
+              SUM=-SUM
+          ELSE
+              BETA=BETA-SUM*SUM
+          END IF
+          DO I=1,NPT
+              VLAG(I)=VLAG(I)+SUM*ZMAT(I,K)
+          END DO
+      END DO
       BSUM=ZERO
       DX=ZERO
-      DO 280 J=1,N
-      SUM=ZERO
-      DO 260 I=1,NPT
-  260 SUM=SUM+W(I)*BMAT(I,J)
-      BSUM=BSUM+SUM*D(J)
-      JP=NPT+J
-      DO 270 K=1,N
-  270 SUM=SUM+BMAT(JP,K)*D(K)
-      VLAG(JP)=SUM
-      BSUM=BSUM+SUM*D(J)
-  280 DX=DX+D(J)*XOPT(J)
+      DO J=1,N
+          SUM=ZERO
+          DO I=1,NPT
+              SUM=SUM+W(I)*BMAT(I,J)
+          END DO
+          BSUM=BSUM+SUM*D(J)
+          JP=NPT+J
+          DO K=1,N
+              SUM=SUM+BMAT(JP,K)*D(K)
+          END DO
+          VLAG(JP)=SUM
+          BSUM=BSUM+SUM*D(J)
+          DX=DX+D(J)*XOPT(J)
+      END DO
       BETA=DX*DX+DSQ*(XOPTSQ+DX+DX+HALF*DSQ)+BETA-BSUM
       VLAG(KOPT)=VLAG(KOPT)+ONE
 C
@@ -375,9 +407,9 @@ C     If KNEW is positive and if the cancellation in DENOM is unacceptable,
 C     then BIGDEN calculates an alternative model step, XNEW being used for
 C     working space.
 C
-      IF (KNEW .GT. 0) THEN
+      IF (KNEW > 0) THEN
           TEMP=ONE+ALPHA*BETA/VLAG(KNEW)**2
-          IF (DABS(TEMP) .LE. 0.8D0) THEN
+          IF (DABS(TEMP) <= 0.8D0) THEN
               CALL BIGDEN (N,NPT,XOPT,XPT,BMAT,ZMAT,IDZ,NDIM,KOPT,
      1          KNEW,D,W,VLAG,BETA,XNEW,W(NDIM+1),W(6*NDIM+1))
           END IF
@@ -385,13 +417,14 @@ C
 C
 C     Calculate the next value of the objective function.
 C
-  290 DO 300 I=1,N
-      XNEW(I)=XOPT(I)+D(I)
-  300 X(I)=XBASE(I)+XNEW(I)
+  290 DO I=1,N
+          XNEW(I)=XOPT(I)+D(I)
+          X(I)=XBASE(I)+XNEW(I)
+      END DO
       NF=NF+1
-  310 IF (NF .GT. NFTEST) THEN
+  310 IF (NF > NFTEST) THEN
           NF=NF-1
-          IF (IPRINT .GT. 0) PRINT 320
+          IF (IPRINT > 0) PRINT 320
   320     FORMAT (/4X,'Return from NEWUOA because CALFUN has been',
      1      ' called MAXFUN times.')
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -410,9 +443,9 @@ C     NF=1), then it is necessary to set FOPT and XOPT before going to
 C     530, because these two variables have not been set yet (line 70
 C     will not be reached.
       DO I=1,N
-          IF (X(I) .NE. X(I)) THEN
+          IF (X(I) /= X(I)) THEN
               F=X(I) ! Set F to NaN
-              IF (NF .EQ. 1) THEN
+              IF (NF == 1) THEN
                   FOPT=F
                   DO J = 1, N
                       XOPT(J) = ZERO
@@ -433,8 +466,8 @@ C     If this happends at the very first function evaluation (i.e.,
 C     NF=1), then it is necessary to set FOPT and XOPT before going to
 C     530, because these two variables have not been set yet (line 70
 C     will not be reached.
-      IF (F .NE. F .OR. F .GT. ALMOST_INFINITY) THEN
-          IF (NF .EQ. 1) THEN
+      IF (F /= F .OR. F > ALMOST_INFINITY) THEN
+          IF (NF == 1) THEN
               FOPT=F
               DO I = 1, N
                   XOPT(I) = ZERO
@@ -445,62 +478,66 @@ C     will not be reached.
       END IF
 C     By Zaikun (commented on 02-06-2019; implemented in 2016):
 C     Exit if F .LE. FTARGET.
-      IF (F .LE. FTARGET) THEN
+      IF (F <= FTARGET) THEN
           INFO=1
           GOTO 546
       END IF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      IF (IPRINT .EQ. 3) THEN
+      IF (IPRINT == 3) THEN
           PRINT 330, NF,F,(X(I),I=1,N)
   330      FORMAT (/4X,'Function number',I6,'    F =',1PD18.10,
      1       '    The corresponding X is:'/(2X,5D15.6))
       END IF
-      IF (NF .LE. NPT) GOTO 70
-      IF (KNEW .EQ. -1) GOTO 530
+      IF (NF <= NPT) GOTO 70
+      IF (KNEW == -1) GOTO 530
 C
 C     Use the quadratic model to predict the change in F due to the step D,
 C     and set DIFF to the error of this prediction.
 C
       VQUAD=ZERO
       IH=0
-      DO 340 J=1,N
-      VQUAD=VQUAD+D(J)*GQ(J)
-      DO 340 I=1,J
-      IH=IH+1
-      TEMP=D(I)*XNEW(J)+D(J)*XOPT(I)
-      IF (I .EQ. J) TEMP=HALF*TEMP
-  340 VQUAD=VQUAD+TEMP*HQ(IH)
-      DO 350 K=1,NPT
-  350 VQUAD=VQUAD+PQ(K)*W(K)
+      DO J=1,N
+          VQUAD=VQUAD+D(J)*GQ(J)
+          DO I=1,J
+              IH=IH+1
+              TEMP=D(I)*XNEW(J)+D(J)*XOPT(I)
+              IF (I == J) TEMP=HALF*TEMP
+              VQUAD=VQUAD+TEMP*HQ(IH)
+          END DO
+      END DO
+      DO K=1,NPT
+          VQUAD=VQUAD+PQ(K)*W(K)
+      END DO
       DIFF=F-FOPT-VQUAD
       DIFFC=DIFFB
       DIFFB=DIFFA
       DIFFA=DABS(DIFF)
-      IF (DNORM .GT. RHO) NFSAV=NF
+      IF (DNORM > RHO) NFSAV=NF
 C
 C     Update FOPT and XOPT if the new F is the least value of the objective
 C     function so far. The branch when KNEW is positive occurs if D is not
 C     a trust region step.
 C
       FSAVE=FOPT
-      IF (F .LT. FOPT) THEN
+      IF (F < FOPT) THEN
           FOPT=F
           XOPTSQ=ZERO
-          DO 360 I=1,N
-          XOPT(I)=XNEW(I)
-  360     XOPTSQ=XOPTSQ+XOPT(I)**2
+          DO I=1,N
+              XOPT(I)=XNEW(I)
+              XOPTSQ=XOPTSQ+XOPT(I)**2
+          END DO
       END IF
       KSAVE=KNEW
-      IF (KNEW .GT. 0) GOTO 410
+      IF (KNEW > 0) GOTO 410
 C
 C     Pick the next value of DELTA after a trust region step.
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IF (VQUAD .GE. ZERO) THEN
-      IF (.NOT. (VQUAD .LT. ZERO)) THEN
+      IF (.NOT. (VQUAD < ZERO)) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          IF (IPRINT .GT. 0) PRINT 370
+          IF (IPRINT > 0) PRINT 370
   370     FORMAT (/4X,'Return from NEWUOA because a trust',
      1      ' region step has failed to reduce Q.')
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -509,41 +546,43 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
           GOTO 530
       END IF
       RATIO=(F-FSAVE)/VQUAD
-      IF (RATIO .LE. TENTH) THEN
+      IF (RATIO <= TENTH) THEN
           DELTA=HALF*DNORM
-      ELSE IF (RATIO .LE. 0.7D0) THEN
+      ELSE IF (RATIO <= 0.7D0) THEN
           DELTA=DMAX1(HALF*DELTA,DNORM)
       ELSE
           DELTA=DMAX1(HALF*DELTA,DNORM+DNORM)
       END IF
-      IF (DELTA .LE. 1.5D0*RHO) DELTA=RHO
+      IF (DELTA <= 1.5D0*RHO) DELTA=RHO
 C
 C     Set KNEW to the index of the next interpolation point to be deleted.
 C
       RHOSQ=DMAX1(TENTH*DELTA,RHO)**2
       KTEMP=0
       DETRAT=ZERO
-      IF (F .GE. FSAVE) THEN
+      IF (F >= FSAVE) THEN
           KTEMP=KOPT
           DETRAT=ONE
       END IF
-      DO 400 K=1,NPT
-      HDIAG=ZERO
-      DO 380 J=1,NPTM
-      TEMP=ONE
-      IF (J .LT. IDZ) TEMP=-ONE
-  380 HDIAG=HDIAG+TEMP*ZMAT(K,J)**2
-      TEMP=DABS(BETA*HDIAG+VLAG(K)**2)
-      DISTSQ=ZERO
-      DO 390 J=1,N
-  390 DISTSQ=DISTSQ+(XPT(K,J)-XOPT(J))**2
-      IF (DISTSQ .GT. RHOSQ) TEMP=TEMP*(DISTSQ/RHOSQ)**3
-      IF (TEMP .GT. DETRAT .AND. K .NE. KTEMP) THEN
-          DETRAT=TEMP
-          KNEW=K
-      END IF
-  400 CONTINUE
-      IF (KNEW .EQ. 0) GOTO 460
+      DO K=1,NPT
+          HDIAG=ZERO
+          DO J=1,NPTM
+              TEMP=ONE
+              IF (J < IDZ) TEMP=-ONE
+              HDIAG=HDIAG+TEMP*ZMAT(K,J)**2
+          END DO
+          TEMP=DABS(BETA*HDIAG+VLAG(K)**2)
+          DISTSQ=ZERO
+          DO J=1,N
+              DISTSQ=DISTSQ+(XPT(K,J)-XOPT(J))**2
+          END DO
+          IF (DISTSQ > RHOSQ) TEMP=TEMP*(DISTSQ/RHOSQ)**3
+          IF (TEMP > DETRAT .AND. K /= KTEMP) THEN
+              DETRAT=TEMP
+              KNEW=K
+          END IF
+      END DO
+      IF (KNEW == 0) GOTO 460
 C
 C     Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point
 C     can be moved. Begin the updating of the quadratic model, starting
@@ -552,125 +591,140 @@ C
   410 CALL UPDATE (N,NPT,BMAT,ZMAT,IDZ,NDIM,VLAG,BETA,KNEW,W)
       FVAL(KNEW)=F
       IH=0
-      DO 420 I=1,N
-      TEMP=PQ(KNEW)*XPT(KNEW,I)
-      DO 420 J=1,I
-      IH=IH+1
-  420 HQ(IH)=HQ(IH)+TEMP*XPT(KNEW,J)
+      DO I=1,N
+          TEMP=PQ(KNEW)*XPT(KNEW,I)
+          DO J=1,I
+              IH=IH+1
+              HQ(IH)=HQ(IH)+TEMP*XPT(KNEW,J)
+          END DO
+      END DO
       PQ(KNEW)=ZERO
 C
 C     Update the other second derivative parameters, and then the gradient
 C     vector of the model. Also include the new interpolation point.
 C
-      DO 440 J=1,NPTM
-      TEMP=DIFF*ZMAT(KNEW,J)
-      IF (J .LT. IDZ) TEMP=-TEMP
-      DO 440 K=1,NPT
-  440 PQ(K)=PQ(K)+TEMP*ZMAT(K,J)
+      DO J=1,NPTM
+          TEMP=DIFF*ZMAT(KNEW,J)
+          IF (J < IDZ) TEMP=-TEMP
+          DO K=1,NPT
+              PQ(K)=PQ(K)+TEMP*ZMAT(K,J)
+          END DO
+      END DO
       GQSQ=ZERO
-      DO 450 I=1,N
-      GQ(I)=GQ(I)+DIFF*BMAT(KNEW,I)
-      GQSQ=GQSQ+GQ(I)**2
-  450 XPT(KNEW,I)=XNEW(I)
+      DO I=1,N
+          GQ(I)=GQ(I)+DIFF*BMAT(KNEW,I)
+          GQSQ=GQSQ+GQ(I)**2
+          XPT(KNEW,I)=XNEW(I)
+      END DO
 C
 C     If a trust region step makes a small change to the objective function,
 C     then calculate the gradient of the least Frobenius norm interpolant at
 C     XBASE, and store it in W, using VLAG for a vector of right hand sides.
 C
-      IF (KSAVE .EQ. 0 .AND. DELTA .EQ. RHO) THEN
+      IF (KSAVE == 0 .AND. DELTA == RHO) THEN
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 2019-08-26: It is observed in Zhang Zaikun's PhD thesis
 C (Section 3.3.2) that it is more reasonable and more efficient to
 C check the value of RATIO instead of DABS(RATIO).
 C          IF (DABS(RATIO) .GT. 1.0D-2) THEN
-          IF (RATIO .GT. 1.0D-2) THEN
+          IF (RATIO > 1.0D-2) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               ITEST=0
           ELSE
-              DO 700 K=1,NPT
-  700         VLAG(K)=FVAL(K)-FVAL(KOPT)
+              DO K=1,NPT
+                  VLAG(K)=FVAL(K)-FVAL(KOPT)
+              END DO
               GISQ=ZERO
-              DO 720 I=1,N
-              SUM=ZERO
-              DO 710 K=1,NPT
-  710         SUM=SUM+BMAT(K,I)*VLAG(K)
-              GISQ=GISQ+SUM*SUM
-  720         W(I)=SUM
+              DO I=1,N
+                  SUM=ZERO
+                  DO K=1,NPT
+                      SUM=SUM+BMAT(K,I)*VLAG(K)
+                  END DO
+                  GISQ=GISQ+SUM*SUM
+                  W(I)=SUM
+              END DO
 C
 C     Test whether to replace the new quadratic model by the least Frobenius
 C     norm interpolant, making the replacement if the test is satisfied.
 C
               ITEST=ITEST+1
-              IF (GQSQ .LT. 1.0D2*GISQ) ITEST=0
-              IF (ITEST .GE. 3) THEN
-                  DO 730 I=1,N
-  730             GQ(I)=W(I)
-                  DO 740 IH=1,NH
-  740             HQ(IH)=ZERO
-                  DO 760 J=1,NPTM
-                  W(J)=ZERO
-                  DO 750 K=1,NPT
-  750             W(J)=W(J)+VLAG(K)*ZMAT(K,J)
-  760             IF (J .LT. IDZ) W(J)=-W(J)
-                  DO 770 K=1,NPT
-                  PQ(K)=ZERO
-                  DO 770 J=1,NPTM
-  770             PQ(K)=PQ(K)+ZMAT(K,J)*W(J)
+              IF (GQSQ < 1.0D2*GISQ) ITEST=0
+              IF (ITEST >= 3) THEN
+                  DO I=1,N
+                      GQ(I)=W(I)
+                  END DO
+                  DO IH=1,NH
+                      HQ(IH)=ZERO
+                  END DO
+                  DO J=1,NPTM
+                      W(J)=ZERO
+                      DO K=1,NPT
+                          W(J)=W(J)+VLAG(K)*ZMAT(K,J)
+                      END DO
+                      IF (J < IDZ) W(J)=-W(J)
+                  END DO
+                  DO K=1,NPT
+                      PQ(K)=ZERO
+                      DO J=1,NPTM
+                          PQ(K)=PQ(K)+ZMAT(K,J)*W(J)
+                      END DO
+                  END DO
                   ITEST=0
               END IF
           END IF
       END IF
-      IF (F .LT. FSAVE) KOPT=KNEW
+      IF (F < FSAVE) KOPT=KNEW
 C
 C     If a trust region step has provided a sufficient decrease in F, then
 C     branch for another trust region calculation. The case KSAVE>0 occurs
 C     when the new function value was calculated by a model step.
 C
-      IF (F .LE. FSAVE+TENTH*VQUAD) GOTO 100
-      IF (KSAVE .GT. 0) GOTO 100
+      IF (F <= FSAVE+TENTH*VQUAD) GOTO 100
+      IF (KSAVE > 0) GOTO 100
 C
 C     Alternatively, find out if the interpolation points are close enough
 C     to the best point so far.
 C
       KNEW=0
   460 DISTSQ=4.0D0*DELTA*DELTA
-      DO 480 K=1,NPT
-      SUM=ZERO
-      DO 470 J=1,N
-  470 SUM=SUM+(XPT(K,J)-XOPT(J))**2
-      IF (SUM .GT. DISTSQ) THEN
-          KNEW=K
-          DISTSQ=SUM
-      END IF
-  480 CONTINUE
+      DO K=1,NPT
+          SUM=ZERO
+          DO J=1,N
+              SUM=SUM+(XPT(K,J)-XOPT(J))**2
+          END DO
+          IF (SUM > DISTSQ) THEN
+              KNEW=K
+              DISTSQ=SUM
+          END IF
+      END DO
 C
 C     If KNEW is positive, then set DSTEP, and branch back for the next
 C     iteration, which will generate a "model step".
 C
-      IF (KNEW .GT. 0) THEN
+      IF (KNEW > 0) THEN
           DSTEP=DMAX1(DMIN1(TENTH*DSQRT(DISTSQ),HALF*DELTA),RHO)
           DSQ=DSTEP*DSTEP
           GOTO 120
       END IF
-      IF (RATIO .GT. ZERO) GOTO 100
-      IF (DMAX1(DELTA,DNORM) .GT. RHO) GOTO 100
+      IF (RATIO > ZERO) GOTO 100
+      IF (DMAX1(DELTA,DNORM) > RHO) GOTO 100
 C
 C     The calculations with the current value of RHO are complete. Pick the
 C     next values of RHO and DELTA.
 C
-  490 IF (RHO .GT. RHOEND) THEN
+  490 IF (RHO > RHOEND) THEN
           DELTA=HALF*RHO
           RATIO=RHO/RHOEND
-          IF (RATIO .LE. 16.0D0) THEN
+          IF (RATIO <= 16.0D0) THEN
               RHO=RHOEND
-          ELSE IF (RATIO .LE. 250.0D0) THEN
+          ELSE IF (RATIO <= 250.0D0) THEN
               RHO=DSQRT(RATIO)*RHOEND
           ELSE
               RHO=TENTH*RHO
           END IF
           DELTA=DMAX1(DELTA,RHO)
-          IF (IPRINT .GE. 2) THEN
-              IF (IPRINT .GE. 3) PRINT 500
+          IF (IPRINT >= 2) THEN
+              IF (IPRINT >= 3) PRINT 500
   500         FORMAT (5X)
               PRINT 510, RHO,NF
   510         FORMAT (/4X,'New RHO =',1PD11.4,5X,'Number of',
@@ -689,21 +743,22 @@ C
 C     Return from the calculation, after another Newton-Raphson step, if
 C     it is too short to have been tried before.
 C
-      IF (KNEW .EQ. -1) GOTO 290
+      IF (KNEW == -1) GOTO 290
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C     By Zaikun (commented on 02-06-2019; implemented in 2016):
 C     Note that (FOPT .LE. F) is FALSE if F is NaN; When F is NaN, it is
 C     also necessary to update X and F.
 C  530 IF (FOPT .LE. F) THEN
-  530 IF (FOPT .LE. F .OR. F .NE. F) THEN
+  530 IF (FOPT <= F .OR. F /= F) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          DO 540 I=1,N
-  540     X(I)=XBASE(I)+XOPT(I)
+          DO I=1,N
+              X(I)=XBASE(I)+XOPT(I)
+          END DO
           F=FOPT
       END IF
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IF (IPRINT .GE. 1) THEN
-  546 IF (IPRINT .GE. 1) THEN
+  546 IF (IPRINT >= 1) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!      
           PRINT 550, NF
   550     FORMAT (/4X,'At the return from NEWUOA',5X,

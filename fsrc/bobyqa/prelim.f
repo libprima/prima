@@ -43,18 +43,24 @@ C
 C     Set XBASE to the initial vector of variables, and set the initial
 C     elements of XPT, BMAT, HQ, PQ and ZMAT to zero.
 C
-      DO 20 J=1,N
-      XBASE(J)=X(J)
-      DO 10 K=1,NPT
-   10 XPT(K,J)=ZERO
-      DO 20 I=1,NDIM
-   20 BMAT(I,J)=ZERO
-      DO 30 IH=1,(N*NP)/2
-   30 HQ(IH)=ZERO
-      DO 40 K=1,NPT
-      PQ(K)=ZERO
-      DO 40 J=1,NPT-NP
-   40 ZMAT(K,J)=ZERO
+      DO J=1,N
+          XBASE(J)=X(J)
+          DO K=1,NPT
+              XPT(K,J)=ZERO
+          END DO
+          DO I=1,NDIM
+              BMAT(I,J)=ZERO
+          END DO
+      END DO
+      DO IH=1,(N*NP)/2
+          HQ(IH)=ZERO
+      END DO
+      DO K=1,NPT
+          PQ(K)=ZERO
+          DO J=1,NPT-NP
+              ZMAT(K,J)=ZERO
+          END DO
+      END DO
 C
 C     Begin the initialization procedure. NF becomes one more than the number
 C     of function values so far. The coordinates of the displacement of the
@@ -64,23 +70,23 @@ C
    50 NFM=NF
       NFX=NF-N
       NF=NF+1
-      IF (NFM .LE. 2*N) THEN
-          IF (NFM .GE. 1 .AND. NFM .LE. N) THEN
+      IF (NFM <= 2*N) THEN
+          IF (NFM >= 1 .AND. NFM <= N) THEN
               STEPA=RHOBEG
-              IF (SU(NFM) .EQ. ZERO) STEPA=-STEPA
+              IF (SU(NFM) == ZERO) STEPA=-STEPA
               XPT(NF,NFM)=STEPA
-          ELSE IF (NFM .GT. N) THEN
+          ELSE IF (NFM > N) THEN
               STEPA=XPT(NF-N,NFX)
               STEPB=-RHOBEG
-              IF (SL(NFX) .EQ. ZERO) STEPB=DMIN1(TWO*RHOBEG,SU(NFX))
-              IF (SU(NFX) .EQ. ZERO) STEPB=DMAX1(-TWO*RHOBEG,SL(NFX))
+              IF (SL(NFX) == ZERO) STEPB=DMIN1(TWO*RHOBEG,SU(NFX))
+              IF (SU(NFX) == ZERO) STEPB=DMAX1(-TWO*RHOBEG,SL(NFX))
               XPT(NF,NFX)=STEPB
           END IF
       ELSE
           ITEMP=(NFM-NP)/N
           JPT=NFM-ITEMP*N-N
           IPT=JPT+ITEMP
-          IF (IPT .GT. N) THEN
+          IF (IPT > N) THEN
               ITEMP=JPT
               JPT=IPT-N
               IPT=ITEMP
@@ -92,22 +98,22 @@ C
 C     Calculate the next value of F. The least function value so far and
 C     its index are required.
 C
-      DO 60 J=1,N
-      X(J)=DMIN1(DMAX1(XL(J),XBASE(J)+XPT(NF,J)),XU(J))
-      IF (XPT(NF,J) .EQ. SL(J)) X(J)=XL(J)
-      IF (XPT(NF,J) .EQ. SU(J)) X(J)=XU(J)
-   60 CONTINUE
+      DO J=1,N
+          X(J)=DMIN1(DMAX1(XL(J),XBASE(J)+XPT(NF,J)),XU(J))
+          IF (XPT(NF,J) == SL(J)) X(J)=XL(J)
+          IF (XPT(NF,J) == SU(J)) X(J)=XU(J)
+      END DO
       CALL CALFUN (N,X,F)
-      IF (IPRINT .EQ. 3) THEN
+      IF (IPRINT == 3) THEN
           PRINT 70, NF,F,(X(I),I=1,N)
    70      FORMAT (/4X,'Function number',I6,'    F =',1PD18.10,
      1       '    The corresponding X is:'/(2X,5D15.6))
       END IF
       FVAL(NF)=F
-      IF (NF .EQ. 1) THEN
+      IF (NF == 1) THEN
           FBEG=F
           KOPT=1
-      ELSE IF (F .LT. FVAL(KOPT)) THEN
+      ELSE IF (F < FVAL(KOPT)) THEN
           KOPT=NF
       END IF
 C
@@ -117,25 +123,25 @@ C     of the NF-th and (NF-N)-th interpolation points may be switched, in
 C     order that the function value at the first of them contributes to the
 C     off-diagonal second derivative terms of the initial quadratic model.
 C
-      IF (NF .LE. 2*N+1) THEN
-          IF (NF .GE. 2 .AND. NF .LE. N+1) THEN
+      IF (NF <= 2*N+1) THEN
+          IF (NF >= 2 .AND. NF <= N+1) THEN
               GOPT(NFM)=(F-FBEG)/STEPA
-              IF (NPT .LT. NF+N) THEN
+              IF (NPT < NF+N) THEN
                   BMAT(1,NFM)=-ONE/STEPA
                   BMAT(NF,NFM)=ONE/STEPA
                   BMAT(NPT+NFM,NFM)=-HALF*RHOSQ
               END IF
-          ELSE IF (NF .GE. N+2) THEN
+          ELSE IF (NF >= N+2) THEN
               IH=(NFX*(NFX+1))/2
               TEMP=(F-FBEG)/STEPB
               DIFF=STEPB-STEPA
               HQ(IH)=TWO*(TEMP-GOPT(NFX))/DIFF
               GOPT(NFX)=(GOPT(NFX)*STEPB-TEMP*STEPA)/DIFF
-              IF (STEPA*STEPB .LT. ZERO) THEN
-                  IF (F .LT. FVAL(NF-N)) THEN
+              IF (STEPA*STEPB < ZERO) THEN
+                  IF (F < FVAL(NF-N)) THEN
                       FVAL(NF)=FVAL(NF-N)
                       FVAL(NF-N)=F
-                      IF (KOPT .EQ. NF) KOPT=NF-N
+                      IF (KOPT == NF) KOPT=NF-N
                       XPT(NF-N,NFX)=STEPB
                       XPT(NF,NFX)=STEPA
                   END IF
@@ -164,12 +170,12 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C     By Tom (on 04-06-2019):
 C     If the evaluation returns an NaN or an infinity value, this
 C     subroutine is stopped.
-      IF (F .NE. F .OR. F .GT. ALMOST_INFINITY) GOTO 80
+      IF (F /= F .OR. F > ALMOST_INFINITY) GOTO 80
 C     By Tom (on 04-06-2019):
 C     If the target value is reached, stop the algorithm.
-      IF (F .LE. FTARGET) GOTO 80
+      IF (F <= FTARGET) GOTO 80
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      IF (NF .LT. NPT .AND. NF .LT. MAXFUN) GOTO 50
+      IF (NF < NPT .AND. NF < MAXFUN) GOTO 50
    80 RETURN
       END

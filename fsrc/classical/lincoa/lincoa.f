@@ -101,8 +101,8 @@ C          INFO=10
 C          GOTO 80
 C      END IF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      IF (NPT .LT. N+2 .OR. NPT .GT. ((N+2)*NP)/2) THEN
-          IF (IPRINT .GT. 0) PRINT 20
+      IF (NPT < N+2 .OR. NPT > ((N+2)*NP)/2) THEN
+          IF (IPRINT > 0) PRINT 20
    20     FORMAT (/4X,'Return from LINCOA because NPT is not in',
      1      ' the required interval.')
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -110,8 +110,8 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           GOTO 80
       END IF
-      IF (MAXFUN .LE. NPT) THEN
-          IF (IPRINT .GT. 0) PRINT 30
+      IF (MAXFUN <= NPT) THEN
+          IF (IPRINT > 0) PRINT 30
    30     FORMAT (/4X,'Return from LINCOA because MAXFUN is less',
      1      ' than NPT+1.')
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -127,32 +127,35 @@ C
       IAMAT=MAX0(M+3*N,2*M+N,2*NPT)+1
       IB=IAMAT+M*N
       IFLAG=0
-      IF (M .GT. 0) THEN
+      IF (M > 0) THEN
           IW=IAMAT-1
-          DO 60 J=1,M
-          SUM=ZERO
-          TEMP=ZERO
-          DO 40 I=1,N
-          SUM=SUM+A(I,J)*X(I)
-   40     TEMP=TEMP+A(I,J)**2
-          IF (TEMP .EQ. ZERO) THEN
-              PRINT 50
-   50         FORMAT (/4X,'Return from LINCOA because the gradient of',
-     1          ' a constraint is zero.')
+          DO J=1,M
+              SUM=ZERO
+              TEMP=ZERO
+              DO I=1,N
+                  SUM=SUM+A(I,J)*X(I)
+                  TEMP=TEMP+A(I,J)**2
+              END DO
+              IF (TEMP == ZERO) THEN
+                  PRINT 50
+   50             FORMAT (/4X,'Return from LINCOA because the gradient',
+     1              ' of a constraint is zero.')
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-              INFO=12
+                  INFO=12
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              GOTO 80
-          END IF
-          TEMP=DSQRT(TEMP)
-          IF (SUM-B(J) .GT. SMALLX*TEMP) IFLAG=1
-          W(IB+J-1)=DMAX1(B(J),SUM)/TEMP
-          DO 60 I=1,N
-          IW=IW+1
-   60     W(IW)=A(I,J)/TEMP
+                  GOTO 80
+              END IF
+              TEMP=DSQRT(TEMP)
+              IF (SUM-B(J) > SMALLX*TEMP) IFLAG=1
+              W(IB+J-1)=DMAX1(B(J),SUM)/TEMP
+              DO I=1,N
+                  IW=IW+1
+                  W(IW)=A(I,J)/TEMP
+              END DO
+          END DO
       END IF
-      IF (IFLAG .EQ. 1) THEN
-          IF (IPRINT .GT. 0) PRINT 70
+      IF (IFLAG == 1) THEN
+          IF (IPRINT > 0) PRINT 70
    70     FORMAT (/4X,'LINCOA has made the initial X feasible by',
      1      ' increasing part(s) of B.')
       END IF
