@@ -471,8 +471,9 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
     # 17. refined_type: problem type after reduction
     # 18. refined_dim: problem dimension after reduction
     # 19. feasibility_problem: whether the problem is a feasibility problem
-    # 20. warnings: warnings during the preprocessing/validation
-    # 21. constr_metadata: metadata of each constraint, which is needed to build the output constr_value. It contains:
+    # 20. user_options_fields: the fields in the user-specified options
+    # 21. warnings: warnings during the preprocessing/validation
+    # 22. constr_metadata: metadata of each constraint, which is needed to build the output constr_value. It contains:
     #         - linear_indices: the indices of the linear constraints in the argument `constraints`.
     #         - nonlinear_indices: the indices of the nonlinear constraints in the argument `constraints`.
     #         - data: a list of metadata for each constraint (length, bounds, dropped indices, ...).
@@ -631,7 +632,13 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
 
     # Validate and preprocess options, adopt default options if needed. This should be done after reducing the problem,
     # because BOBYQA requires rhobeg <= min(ub-lb)/2.
-    options_c, method = _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings)
+    # user_options_fields is a cell array that contains the names of all the user-defined options (even if the options
+    # turns out invalid). It will be needed if the user does not specify a solver or specifies a wrong solver. In such a
+    # scenario, we will select the solver later, and the options may have to be revised accordingly. We will raise a
+    # warning when revising an option that is in user_options_fields. No warning is needed if we are dealing with an
+    # option that is not in user_options_fields.
+    options_c, prob_info['user_options_fields'], method = \
+        _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings)
 
     # Revise x0 for bound and linearly constrained problems. This is necessary for LINCOA, which accepts only a feasible
     # x0. Should we do this even if there are nonlinear constraints? For now, we do not, because doing so may
@@ -669,9 +676,8 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
 
     # Select a solver if the invoker is 'pdfo' and no one is provided.
     if invoker.lower() == 'pdfo':
-        if prob_info['refined_type'] == 'bound-constrained':
-            # lb and ub will be used for defining rhobeg if bobyqa is selected.
-            prob_info['refined_data'] = {'lb': lb, 'ub': ub}
+        # lb and ub will be used for defining rhobeg.
+        prob_info['refined_data'] = {'lb': lb, 'ub': ub}
 
         method = _solver_selection(invoker, method, options_c, prob_info, list_warnings)
 
@@ -681,12 +687,8 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
         # rhobeg. We do it here in order to raise a warning when such a revision occurs. After this, the Fortran code
         # will not revise x0 again. If the options['honour_x0'] = True, then we keep x0 unchanged and revise rhobeg if
         # necessary.
-        # Does the user provide rhobeg?
-        user_defined_rhobeg = prob_info['raw_data']['options'] is not None and \
-                              'rhobeg' in prob_info['raw_data']['options'].keys() and \
-                              isinstance(prob_info['raw_data']['options']['rhobeg'], scalar_types)
         x0_c, options_c = \
-            _pre_rhobeg_x0(invoker, x0_c, lb, ub, user_defined_rhobeg, options_c, list_warnings)
+            _pre_rhobeg_x0(invoker, x0_c, lb, ub, prob_info['user_options_fields'], options_c, list_warnings)
 
     # Store the warnings raised during the pre-processing.
     prob_info['warnings'] = list_warnings
@@ -1190,7 +1192,7 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
 
     Returns
     -------
-    The preprocessed `options` and `method`.
+    The preprocessed `options`, user_options_fields and `method`.
 
     Authors
     -------
@@ -1214,9 +1216,15 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
 
     # Which options' fields are provided?
     if options is not None:
-        option_fields = options.keys()
+        option_fields = list(options.keys())
     else:
         option_fields = []
+    for i in range(len(option_fields)):
+        if option_fields[i].lower() != option_fields[i]:
+            options[option_fields[i].lower()] = options[option_fields[i]]
+            del options[option_fields[i]]
+            option_fields[i] = option_fields[i].lower()
+    user_option_fields = option_fields.copy()
 
     # Default values for each options.
     maxfev = 500 * lenx0
@@ -1268,6 +1276,7 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
         warn_message = '{}: unknown option(s): {}; they are ignored.'.format(invoker, ', '.join(unknown_field))
         warnings.warn(warn_message, Warning)
         list_warnings.append(warn_message)
+    option_fields = list(options.keys())  # The fields may have been revised
 
     # Set default npt according to solver.
     # If method == '' or None, then invoker must be pdfo, and a solver will be selected later; when the solver is
@@ -1317,21 +1326,36 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
         lb_mod[np.logical_and(lb_mod > 0, np.isinf(lb_mod))] = -np.inf
         ub_mod[np.logical_and(ub_mod < 0, np.isinf(ub_mod))] = np.inf
         rhobeg_bobyqa = min(rhobeg, np.min(ub_mod - lb_mod) / 4)
-        if ('scale' in option_fields and isinstance(options['scale'], (bool, np.bool)) and not options['scale']) or \
-                (not scale and not ('scale' in option_fields and isinstance(options['scale'], (bool, np.bool)))):
-            # If we are going to scale the problem later, then we keep the default value for rhoend; otherwise, we scale
-            # it as follows.
-            rhoend = (rhoend / rhobeg) * rhobeg_bobyqa
-        rhobeg = rhobeg_bobyqa
+        rhobeg = max(eps, rhobeg_bobyqa)
+        rhoend = max(eps, min(.1 * rhobeg, rhoend))
 
     # Validate the user-specified options (except scale that has already been done); adopt the default values if needed.
+    # Validate options['npt'].
+    # There are the following possibilities.
+    # 1. The user specifies options['npt']
+    # 1.1. The solver is yet to decide (method=None): we keep options['npt'] if it is a positive integer; otherwise,
+    #      raise a warning and set options['npt'] to NaN;
+    # 1.2. The user has chosen a valid solver: we keep options['npt'] if it is compatible with the solver; otherwise,
+    #      raise a warning and set options['npt'] to the default value according to the solver.
+    # 2. The user does not specify options['npt']
+    # 2.1. The solver is yet to decide (solver=None): we set options['npt'] to NaN;
+    # 2.2. The user has chosen a valid solver: we set options.npt to the default value according to the solver. After
+    #      this process, options['npt'] is either a positive integer (compatible with method if it is specified by the
+    #      user) or NaN (only if the user does not specify a valid solver while options.npt is either unspecified or not
+    #      a positive integer).
     validated = False
-    if 'npt' in option_fields and method is not None and method in ['bobyqa', 'lincoa', 'newuoa']:
-        # Only newuoa, bobyqa and lincoa accept an npt option.
-        if not isinstance(options['npt'], scalar_types) or options['npt'] < lenx0 + 2 or \
-                options['npt'] > (lenx0 + 1) * (lenx0 + 2) / 2:
+    if 'npt' in option_fields:
+        integer_types = (int, np.int, np.int8, np.int16, np.int32, np.int64)
+        if method is not None and \
+                (not isinstance(options['npt'], integer_types) or options['npt'] < 1 or np.isnan(options['npt'])):
+            warn_message = '{}: invalid npt. It should be a positive integer.'.format(invoker)
+            warnings.warn(warn_message, Warning)
+            list_warnings.append(warn_message)
+        elif method is not None and method.lower() in ['bobyqa', 'lincoa', 'newuoa'] and \
+                (not isinstance(options['npt'], integer_types) or np.isnan(options['npt']) or
+                 options['npt'] < lenx0 + 2 or options['npt'] > (lenx0 + 1) * (lenx0 + 2) / 2):
             warn_message = \
-                '{}: invalid npt. for {}, it should be an integer and n+2 <= npt <= (n+1)*(n+2)/2; it is set to ' \
+                '{}: invalid npt. {} requires it to be an integer and n+2 <= npt <= (n+1)*(n+2)/2; it is set to ' \
                 '2n+1.'.format(invoker, method)
             warnings.warn(warn_message, Warning)
             list_warnings.append(warn_message)
@@ -1351,7 +1375,8 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
     # Validate options['maxfev'].
     validated = False
     if 'maxfev' in option_fields:
-        if not isinstance(options['maxfev'], scalar_types) or options['maxfev'] <= 0:
+        if not isinstance(options['maxfev'], scalar_types) or options['maxfev'] <= 0 or np.isnan(options['maxfev']) or \
+                np.isinf(options['maxfev']):
             warn_message = \
                 '{}: invalid maxfev; it should be a positive integer; it is set to {}.'.format(invoker, maxfev)
             warnings.warn(warn_message, Warning)
@@ -1384,14 +1409,16 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
 
     if not validated:  # options['maxfev'] has not got a valid value yet.
         options['maxfev'] = max(maxfev, npt+1)
-    options['maxfev'] = np.int32(options['maxfev'])
+    if not np.isnan(options['maxfev']):
+        options['maxfev'] = np.int32(options['maxfev'])
 
     # Validate options['rhobeg'].
     # NOTE: if the problem is to be scaled, then options['rhobeg'] and options['rhoend'] will be used as the intial and
     # final trust-region radii for the scaled problem.
     validated = False
     if 'rhobeg' in option_fields:
-        if not isinstance(options['rhobeg'], scalar_types) or options['rhobeg'] <= 0:
+        if not isinstance(options['rhobeg'], scalar_types) or options['rhobeg'] <= 0 or np.isnan(options['rhobeg']) or \
+                np.isinf(options['rhobeg']):
             warn_message = \
                 '{}: invalid rhobeg; it should be a positive number; it is set to ' \
                 'max({}, rhoend).'.format(invoker, rhobeg)
@@ -1427,26 +1454,23 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
     validated = False
     if 'rhoend' in option_fields:
         if not isinstance(options['rhoend'], scalar_types) or options['rhoend'] > options['rhobeg'] or \
-                0 >= options['rhoend']:
+                0 >= options['rhoend'] or np.isnan(options['rhobeg']):
             warn_message = \
                 '{}: invalid rhoend; we should have rhobeg >= rhoend > 0; it is set to ' \
-                '{}*rhobeg.'.format(invoker, rhoend / rhobeg)
+                'min(0.1*rhobeg, {}).'.format(invoker, rhoend)
             warnings.warn(warn_message, Warning)
             list_warnings.append(warn_message)
         else:
             validated = True
 
     if not validated:  # options['rhoend'] has not got a valid value yet.
-        if rhobeg > 0:
-            options['rhoend'] = (rhoend / rhobeg) * options['rhobeg']
-        else:
-            options['rhoend'] = 0
-    options['rhoend'] = np.float64(max(options['rhoend'], eps))
+        options['rhoend'] = min(0.1 * options['rhobeg'], rhoend)
+    options['rhoend'] = np.float64(np.nanmax((options['rhoend'], eps)))
 
     # Validate options['ftarget'].
     validated = False
     if 'ftarget' in option_fields:
-        if not isinstance(options['ftarget'], scalar_types):
+        if not isinstance(options['ftarget'], scalar_types) or np.isnan(options['ftarget']):
             warn_message = '{}: invalid ftarget; it should be real number; it is set to {}.'.format(invoker, ftarget)
             warnings.warn(warn_message, Warning)
             list_warnings.append(warn_message)
@@ -1558,7 +1582,7 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
         warnings.warn(warn_message, Warning)
         list_warnings.append(warn_message)
 
-    return options, method
+    return options, user_option_fields, method
 
 
 def _constr_violation(invoker, x, lb, ub, constraints, prob_info):
@@ -2106,30 +2130,48 @@ def _solver_selection(invoker, method, options, prob_info, list_warnings):
                 # Nevertheless, for the moment, we set the default solver for unconstrained problems to be newuoa, since
                 # the solver was intended to solve these problems.
                 solver = 'newuoa'
-                options['npt'] = min(2 * n + 1, options['maxfev'] - 1)
         elif ptype == 'bound-constrained':
             if options['maxfev'] <= n + 2:
                 solver = 'cobyla'  # Does not need options['npt']
             else:
                 solver = 'bobyqa'
-                options['npt'] = min(2 * n + 1, options['maxfev'] - 1)
-                lb_mod, ub_mod = prob_info['refined_data']['lb'].copy(), prob_info['refined_data']['ub'].copy()
-                lb_mod[np.logical_and(lb_mod > 0, np.isinf(lb_mod))] = -np.inf
-                ub_mod[np.logical_and(ub_mod < 0, np.isinf(ub_mod))] = np.inf
-                rhobeg_bobyqa = min(options['rhobeg'], np.min(ub_mod - lb_mod) / 4)
-                options['rhoend'] = (options['rhoend'] / options['rhobeg']) * rhobeg_bobyqa
-                options['rhobeg'] = max(rhobeg_bobyqa, eps)
-                options['rhoend'] = max(options['rhoend'], eps)
         elif ptype == 'linearly-constrained':
             if options['maxfev'] <= n + 2:
                 solver = 'cobyla'  # Does not need options['npt']
             else:
                 solver = 'lincoa'
-                options['npt'] = min(2 * n + 1, options['maxfev'] - 1)
         elif ptype == 'nonlinearly-constrained':
             solver = 'cobyla'  # does not need options['npt']
         else:
             raise SystemError("{}: UNEXPECTED ERROR: unknown problem type '{}' received.".format(fun_name, ptype))
+
+    # Revise options['npt'] according to the selected solver.
+    if solver.lower() in ['bobyqa', 'lincoa', 'newuoa'] and \
+            (np.isnan(options['npt']) or options['npt'] < n + 2 or
+             options['npt'] > min((n + 1)*(n + 2) // 2, options['maxfev'] - 1)):
+        options['npt'] = min(2 * n + 1, options['maxfev'] - 1)
+        if 'npt' in prob_info['user_options_fields']:
+            warn_message = \
+                '{}: npt is set to {} according to the selected solver {}, which requires n+2 <= npt <= ' \
+                '(n+1)*(n+2)/2.'.format(invoker, options['npt'], solver)
+            warnings.warn(warn_message, Warning)
+            list_warnings.append(warn_message)
+
+    # Revise options['rhobeg'] and options['rhoend'] according to the selected solver.
+    # For the moment, only BOBYQA needs such a revision.
+    if solver.lower() == 'bobyqa' and \
+            options['rhobeg'] > np.min(prob_info['refined_data']['ub'] - prob_info['refined_data']['lb']) / 2:
+        lb_mod, ub_mod = prob_info['refined_data']['lb'].copy(), prob_info['refined_data']['ub'].copy()
+        lb_mod[np.logical_and(lb_mod > 0, np.isinf(lb_mod))] = -np.inf
+        ub_mod[np.logical_and(ub_mod < 0, np.isinf(ub_mod))] = np.inf
+        options['rhobeg'] = max(eps, np.min(ub_mod - lb_mod) / 4)
+        options['rhoend'] = max(eps, min(0.1 * options['rhobeg'], options['rhoend']))
+        if 'rhobeg' in prob_info['user_options_fields'] or 'rhoend' in prob_info['user_options_fields']:
+            warn_message = \
+                '{}: rhobeg is set to {} and rhoend to {} acccording to the selected solver bobyqa, which requires ' \
+                'rhoend <= rhobeg <= min(ub-lb)/2.'.format(invoker, options['rhobeg'], options['rhoend'])
+            warnings.warn(warn_message, Warning)
+            list_warnings.append(warn_message)
 
     if solver not in solver_list or not _prob_solv_match(ptype, solver):
         raise SystemError("{}: UNEXPECTED ERROR: invalid solver '{}' selected.".format(fun_name, solver))
@@ -2137,7 +2179,7 @@ def _solver_selection(invoker, method, options, prob_info, list_warnings):
     return solver
 
 
-def _pre_rhobeg_x0(invoker, x0, lb, ub, user_defined_rhobeg, options, list_warnings):
+def _pre_rhobeg_x0(invoker, x0, lb, ub, user_options_fields, options, list_warnings):
     # possible solvers
     fun_name = stack()[0][3]  # name of the current function
     local_invoker_list = ['pdfo', 'bobyqa']
@@ -2153,8 +2195,8 @@ def _pre_rhobeg_x0(invoker, x0, lb, ub, user_defined_rhobeg, options, list_warni
     if not (hasattr(x0, '__len__') and hasattr(lb, '__len__') and hasattr(ub, '__len__')):
         raise TypeError('{}: UNEXPECTED ERROR: the initial guess and the bounds should be vectors.'.format(invoker))
 
-    if not isinstance(user_defined_rhobeg, (bool, np.bool)):
-        raise TypeError('{}: UNEXPECTED ERROR: the user defined rhobeg flag should be a boolean.'.format(invoker))
+    if not hasattr(user_options_fields, '__len__'):
+        raise TypeError('{}: UNEXPECTED ERROR: the user defined option fields should be a list.'.format(invoker))
 
     # Validate options.
     option_fields = {'honour_x0', 'rhobeg', 'rhoend'}
@@ -2176,17 +2218,19 @@ def _pre_rhobeg_x0(invoker, x0, lb, ub, user_defined_rhobeg, options, list_warni
         ubx = np.logical_and(np.logical_or(np.logical_not(np.isinf(ub)), ub < 0),
                              x0 - ub >= -eps * np.max(np.r_[1, np.abs(ub)]))
         nubx = np.logical_not(ubx)
-        options['rhobeg'] = np.min(np.r_[options['rhobeg'], x0[nlbx] - lb[nlbx], ub[nubx] - x0[nubx]])
+        options['rhobeg'] = max(eps, np.min(np.r_[options['rhobeg'], x0[nlbx] - lb[nlbx], ub[nubx] - x0[nubx]]))
         options['rhoend'] = min(options['rhoend'], options['rhobeg'])
         x0[lbx] = lb[lbx]
         x0[ubx] = ub[ubx]
-        if rhobeg_old - options['rhobeg'] > eps * max(1, rhobeg_old) and user_defined_rhobeg:
+        if rhobeg_old - options['rhobeg'] > eps * max(1, rhobeg_old):
             # If the user does not specify rhobeg, no warning should be raised.
-            warn_message = \
-                '{}: rhobeg is revised so that the distance between x0 and the inactive bounds is at least ' \
-                'rhobeg.'.format(invoker)
-            warnings.warn(warn_message, Warning)
-            list_warnings.append(warn_message)
+            options['rhoend'] = max(eps, min(options['rhoend'], .1 * options['rhobeg']))
+            if 'rhobeg' in user_options_fields or 'rhoend' in user_options_fields:
+                warn_message = \
+                    '{}: rhobeg is revised so that the distance between x0 and the inactive bounds is at least ' \
+                    'rhobeg.'.format(invoker)
+                warnings.warn(warn_message, Warning)
+                list_warnings.append(warn_message)
     else:
         x0_old = x0.copy()
         lbx = x0 <= lb + options['rhobeg'] / 2
