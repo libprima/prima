@@ -1219,11 +1219,6 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
         option_fields = list(options.keys())
     else:
         option_fields = []
-    for i in range(len(option_fields)):
-        if option_fields[i].lower() != option_fields[i]:
-            options[option_fields[i].lower()] = options[option_fields[i]]
-            del options[option_fields[i]]
-            option_fields[i] = option_fields[i].lower()
     user_option_fields = option_fields.copy()
 
     # Default values for each options.
