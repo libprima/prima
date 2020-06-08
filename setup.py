@@ -23,7 +23,6 @@ import re
 from os import listdir, remove, walk
 from os.path import dirname, abspath, join, relpath
 
-from numpy.distutils.command.install import install
 from numpy.distutils.core import setup, Extension
 
 # Set the paths to all the folders that will be used to build PDFO
@@ -39,43 +38,32 @@ INTERFACES_WD = join(PDFO_WD, 'interfaces', 'pdfo')
 OPTIONS = ['--quiet']
 
 
-class PDFOInstall(install):
-    """Dedicated installer for PDFO. It is called only when the file `setup.py` is called manually."""
+def clean():
+    """Clean up the arborescence of the package."""
+    folders_to_delete = ['build', 'develop-eggs', 'dist', 'eggs', '.eggs', 'sdist', 'wheels']
+    if platform.system() == 'windows':
+        files_to_delete = glob.glob('**/*.pyd')  # Windows-based binary files
+    else:
+        files_to_delete = glob.glob('**/*.so')  # Unix-based binary files
+    files_to_delete.extend(glob.glob('*.mod') + glob.glob('**/*.mod'))  # Fortran module files
+    files_to_delete.extend(glob.glob('**/*.o'))  # C and Fortran object files
+    for root, dirs, files in walk(CURRENT_WD):
+        for folder in dirs:
+            if fnmatch(folder, '*.egg-info'):
+                folders_to_delete.append(join(root, folder))
+        for file in files:
+            if fnmatch(file, '*.egg'):
+                files_to_delete.append(join(root, file))
 
-    @staticmethod
-    def clean():
-        """Clean up the arborescence of the package."""
-        folders_to_delete = ['build', 'develop-eggs', 'dist', 'eggs', '.eggs', 'sdist', 'wheels']
-        if platform.system() == 'windows':
-            files_to_delete = glob.glob('**/*.pyd')  # Windows-based binary files
-        else:
-            files_to_delete = glob.glob('**/*.so')  # Unix-based binary files
-        files_to_delete.extend(glob.glob('*.mod') + glob.glob('**/*.mod'))  # Fortran module files
-        files_to_delete.extend(glob.glob('**/*.o'))  # C and Fortran object files
-        for root, dirs, files in walk(CURRENT_WD):
-            print(len(dirs) == len(files))
-            for folder in dirs:
-                if fnmatch(folder, '*.egg-info'):
-                    folders_to_delete.append(join(root, folder))
-            for file in files:
-                if fnmatch(file, '*.egg'):
-                    files_to_delete.append(join(root, file))
-
-        for folder in folders_to_delete:
-            shutil.rmtree(folder, ignore_errors=True)
-        for tmp_file in files_to_delete:
-            try:
-                remove(tmp_file)
-            except FileNotFoundError:
-                # This exception should never occur, except if a user delete a file manually after running this script
-                # and before the execution of the remove command. Since it is almost impossible, the exception is just
-                # caught.
-                pass
-
-    def run(self):
-        """Launch the installation."""
-        self.clean()
-        install.run(self)
+    for folder in folders_to_delete:
+        shutil.rmtree(folder, ignore_errors=True)
+    for tmp_file in files_to_delete:
+        try:
+            remove(tmp_file)
+        except FileNotFoundError:
+            # This exception should never occur, except if a user delete a file manually after running this script and
+            # before the execution of the remove command. Since it is almost impossible, the exception is just caught.
+            pass
 
 
 def build_solver(solver):
@@ -129,6 +117,8 @@ for algorithm in ['uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla']:
 
 
 if __name__ == '__main__':
+    clean()
+
     setup(
         name='pdfo',
         version=open('VERSION.txt').read().rstrip(),
@@ -145,7 +135,6 @@ if __name__ == '__main__':
         },
         include_package_data=True,
         ext_modules=EXT_MODULES,
-        cmdclass={'install': PDFOInstall},
         license='GNU Lesser General Public License v3 or later (LGPLv3+)',
         keywords='Powell Derivative-Free Optimization Fortran UOBYQA NEWUOA BOBYQA LINCOA COBYLA',
         classifiers=[
