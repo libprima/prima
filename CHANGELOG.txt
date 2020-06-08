@@ -26,6 +26,10 @@ Public beta release of PDFO.
   have both upper and lower bounds. 
 - Change the default rhobeg to 0.5 when the problem is scaled. 
 - Change the default rhobeg to min(ub-lb)/4 when the solver is BOBYQA.
+- Previously, if rhobeg is revised to be different from the default value, 
+  then rhoend is set to min(rhobeg*rhoend_default/rhobeg_default, rhoend_default),
+  where rhobeg_default = 1 and rhoend_default = 1e-6; now it is set to
+  min(0.1*rhobeg, rhoend_default).
 - Revise x0 or rhobeg for BOBYQA to make sure that the distance between x0
   and inactive bounds is at least rhobeg.
 - Python version: make PDFO available on PyPI.
@@ -43,5 +47,7 @@ Public beta release of PDFO.
   have zero gradients due to reduction when some variables are fixed by the
   bound constraints. Constraint validation and reduction are merged in order to
   avoid such a situation.
+- In last version, the user-specified npt, rhobeg, and rhoend are ignored if
+  the solver selection function is invoked. They are taken into account now.
 - Python version: previously, the nonlinear constraints defined as a dictionary 
   cannot include NumPy functions of type <ufunc>. It is fixed now.
