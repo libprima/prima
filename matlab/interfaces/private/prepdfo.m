@@ -91,8 +91,9 @@ end
 % 18. refined_type: problem type after reduction
 % 19. refiend_dim: problem dimension after reduction
 % 20. feasibility_problem: whether the problem is a feasibility problem
-% 21. options: options for calling the solvers
-% 22. warnings: warnings during the preprocessing/validation
+% 21. user_options_fields: the fields in the user-specified options
+% 22. options: (refined) options for calling the solvers
+% 23. warnings: warnings during the preprocessing/validation
 probinfo = struct(); 
 
 % Save the raw data (date before validation/preprocessing) in probinfo.
