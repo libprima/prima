@@ -18,8 +18,11 @@ end module fnewuoa
 subroutine mnewuoa (n,npt,x,rhobeg,rhoend,iprint,maxfun,w,f,info,funhist,ftarget)
 use fnewuoa
 implicit none
-integer :: n,npt,iprint,maxfun,info
-double precision :: x(n),rhobeg,rhoend,w((npt+13)*(npt+n)+3*n*(n+3)/2+1),f,funhist(maxfun),ftarget
+integer, intent(in) :: n,npt,iprint,maxfun
+integer, intent(out) :: info
+double precision, intent(inout) :: x(n)
+double precision, intent(in) :: rhobeg,rhoend,w((npt+13)*(npt+n)+3*n*(n+3)/2+1),ftarget
+double precision, intent(out) :: f,funhist(maxfun)
 
 nf=0
 if (allocated(fhist)) deallocate (fhist)
@@ -37,8 +40,10 @@ end subroutine mnewuoa
 subroutine calfun (n,x,f)
 use fnewuoa
 implicit none
-integer :: n
-double precision :: x(n),f,fun
+integer, intent(in) :: n
+double precision, intent(in) :: x(n)
+double precision, intent(out) :: f
+double precision :: fun
 external :: fun
 f=fun(n,x)
 

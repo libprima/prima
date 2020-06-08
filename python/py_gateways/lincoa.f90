@@ -18,9 +18,13 @@ end module flincoa
 subroutine mlincoa (n,npt,m,a,ia,b,x,rhobeg,rhoend,iprint,maxfun,w,f,info,funhist,conhist,ftarget,resmax)
 use flincoa
 implicit none
-integer :: n,npt,m,ia,iprint,maxfun,info,i,j
-double precision :: a(ia,m),b(m),x(n),rhobeg,rhoend,w(m*(2+n)+npt*(4+n+npt)+n*(9+3*n)+max(m+3*n,max(2*m+n,2*npt)))
-double precision :: f,funhist(maxfun),conhist(maxfun),ftarget,resmax,cval
+integer, intent(in) :: n,npt,m,ia,iprint,maxfun
+integer, intent(out) :: info
+integer :: i,j
+double precision, intent(inout) :: x(n)
+double precision, intent(in) :: a(ia,m),b(m),rhobeg,rhoend,w(m*(2+n)+npt*(4+n+npt)+n*(9+3*n)+max(m+3*n,max(2*m+n,2*npt))),ftarget
+double precision, intent(out) :: f,funhist(maxfun),conhist(maxfun),resmax
+double precision :: cval
 
 nf=0
 if (allocated(fhist)) deallocate (fhist)
@@ -74,8 +78,11 @@ end subroutine mlincoa
 subroutine calfun (n,x,f)
 use flincoa
 implicit none
-integer :: n,i,j
-double precision :: x(n),f,fun,resmax,cval
+integer, intent(in) :: n
+integer :: i,j
+double precision, intent(in) :: x(n)
+double precision, intent(out) :: f
+double precision :: fun,resmax,cval
 external :: fun
 f=fun(n,x)
 

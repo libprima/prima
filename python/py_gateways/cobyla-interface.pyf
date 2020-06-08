@@ -34,6 +34,7 @@ python module fcobyla
             integer :: nf
             double precision, allocatable, dimension(:) :: fhist
             double precision, allocatable, dimension(:) :: chist
+            double precision, allocatable, dimension(:) :: conval_x0
         end module fcobyla
         subroutine mcobyla(n,m,x,rhobeg,rhoend,iprint,maxfun,w,iact,f,info,funhist,conhist,ftarget,resmax,conval)
             use fcobyla
