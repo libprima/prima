@@ -71,6 +71,8 @@ class OptimizeResult(dict):
            in `constraints`.
         If a nonlinear constraint is trivial (i.e., it has -inf as th lower bound and +inf as th upper bound), then its
         is represented by NaN in constr_value, because such constraints are not evaluated during the computation.
+        Trivial nonlinear constaints with unknown dimensions (for example, {'type': 'eq', 'fun': None} or 
+        NonlinearConstraint(fun, None, None)) are reperesented by empty arrayes in constr_value.
     method: str
         The name of the method that was used to solve the problem.
     constr_modified: bool
