@@ -954,8 +954,8 @@ if options.scale
     rhoend = 1e-6;
 end
 if strcmpi(solver, 'bobyqa') && ~options.scale
-    rhobeg = min(rhobeg, min(ub-lb)/4);        
-    rhoend = min(0.1*rhobeg, rhoend);
+    rhobeg = max(eps, min(rhobeg, min(ub-lb)/4));
+    rhoend = max(eps, min(0.1*rhobeg, rhoend));
 end
 
 
@@ -1549,15 +1549,17 @@ if isfield(options, 'honour_x0') && options.honour_x0  % In this case, we respec
     rhobeg_old = options.rhobeg;
     lbx = (lb > -inf & x0 - lb <= eps*max(abs(lb), 1));  % x0 essentially equals lb
     ubx = (ub < inf & x0 - ub >= - eps*max(abs(ub), 1));  % x0 essentially equals ub
-    options.rhobeg = min([options.rhobeg; x0(~lbx) - lb(~lbx); ub(~ubx) - x0(~ubx)]);
+    options.rhobeg = max(eps, min([options.rhobeg; x0(~lbx) - lb(~lbx); ub(~ubx) - x0(~ubx)]));
     x0(lbx) = lb(lbx);
     x0(ubx) = ub(ubx);
-    if rhobeg_old - options.rhobeg > eps*max(1, rhobeg_old) && (ismember('rhobeg', user_options_fields) || ismember('rhoend', user_options_fields))
-        options.rhoend = min(options.rhoend, 0.1*options.rhobeg);  % We do not revise rhoend unless rhobeg is revised
-        wid = sprintf('%s:ReviseRhobeg', invoker);
-        wmessage = sprintf('%s: rhobeg is revised to %f and rhoend to %f so that the distance between x0 and the inactive bounds is at least rhobeg.', invoker, options.rhobeg, options.rhoend);
-        warning(wid, '%s', wmessage);
-        warnings = [warnings, wmessage]; 
+    if rhobeg_old - options.rhobeg > eps*max(1, rhobeg_old) 
+        options.rhoend = max(eps, min(options.rhoend, 0.1*options.rhobeg));  % We do not revise rhoend unless rhobeg is revised
+        if ismember('rhobeg', user_options_fields) || ismember('rhoend', user_options_fields)
+            wid = sprintf('%s:ReviseRhobeg', invoker);
+            wmessage = sprintf('%s: rhobeg is revised to %f and rhoend to %f so that the distance between x0 and the inactive bounds is at least rhobeg.', invoker, options.rhobeg, options.rhoend);
+            warning(wid, '%s', wmessage);
+            warnings = [warnings, wmessage]; 
+        end
     end
 else
     x0_old = x0;
