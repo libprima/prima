@@ -42,26 +42,33 @@ C
       ONE=1.0D0
       ZERO=0.0D0
       CONST=ONE+DSQRT(2.0D0)
-      DO 10 K=1,NPT
-   10 HCOL(K)=ZERO
-      DO 20 J=1,NPT-N-1
-      TEMP=ZMAT(KNEW,J)
-      DO 20 K=1,NPT
-   20 HCOL(K)=HCOL(K)+TEMP*ZMAT(K,J)
+      DO K=1,NPT
+          HCOL(K)=ZERO
+      END DO
+      DO J=1,NPT-N-1
+          TEMP=ZMAT(KNEW,J)
+          DO K=1,NPT
+              HCOL(K)=HCOL(K)+TEMP*ZMAT(K,J)
+          END DO
+      END DO
       ALPHA=HCOL(KNEW)
       HA=HALF*ALPHA
 C
 C     Calculate the gradient of the KNEW-th Lagrange function at XOPT.
 C
-      DO 30 I=1,N
-   30 GLAG(I)=BMAT(KNEW,I)
-      DO 50 K=1,NPT
-      TEMP=ZERO
-      DO 40 J=1,N
-   40 TEMP=TEMP+XPT(K,J)*XOPT(J)
-      TEMP=HCOL(K)*TEMP
-      DO 50 I=1,N
-   50 GLAG(I)=GLAG(I)+TEMP*XPT(K,I)
+      DO I=1,N
+          GLAG(I)=BMAT(KNEW,I)
+      END DO
+      DO K=1,NPT
+          TEMP=ZERO
+          DO J=1,N
+              TEMP=TEMP+XPT(K,J)*XOPT(J)
+          END DO
+          TEMP=HCOL(K)*TEMP
+          DO I=1,N
+              GLAG(I)=GLAG(I)+TEMP*XPT(K,I)
+          END DO
+      END DO
 C
 C     Search for a large denominator along the straight lines through XOPT
 C     and another interpolation point. SLBD and SUBD will be lower and upper
@@ -70,118 +77,120 @@ C     set to the square of the predicted denominator for each line. PRESAV
 C     will be set to the largest admissible value of PREDSQ that occurs.
 C
       PRESAV=ZERO
-      DO 80 K=1,NPT
-      IF (K .EQ. KOPT) GOTO 80
-      DDERIV=ZERO
-      DISTSQ=ZERO
-      DO 60 I=1,N
-      TEMP=XPT(K,I)-XOPT(I)
-      DDERIV=DDERIV+GLAG(I)*TEMP
-   60 DISTSQ=DISTSQ+TEMP*TEMP
-      SUBD=ADELT/DSQRT(DISTSQ)
-      SLBD=-SUBD
-      ILBD=0
-      IUBD=0
-      SUMIN=DMIN1(ONE,SUBD)
+      DO K=1,NPT
+          IF (K == KOPT) CYCLE 
+          DDERIV=ZERO
+          DISTSQ=ZERO
+          DO I=1,N
+              TEMP=XPT(K,I)-XOPT(I)
+              DDERIV=DDERIV+GLAG(I)*TEMP
+              DISTSQ=DISTSQ+TEMP*TEMP
+          END DO
+          SUBD=ADELT/DSQRT(DISTSQ)
+          SLBD=-SUBD
+          ILBD=0
+          IUBD=0
+          SUMIN=DMIN1(ONE,SUBD)
 C
 C     Revise SLBD and SUBD if necessary because of the bounds in SL and SU.
 C
-      DO 70 I=1,N
-      TEMP=XPT(K,I)-XOPT(I)
-      IF (TEMP .GT. ZERO) THEN
-          IF (SLBD*TEMP .LT. SL(I)-XOPT(I)) THEN
-              SLBD=(SL(I)-XOPT(I))/TEMP
-              ILBD=-I
-          END IF
-          IF (SUBD*TEMP .GT. SU(I)-XOPT(I)) THEN
-              SUBD=DMAX1(SUMIN,(SU(I)-XOPT(I))/TEMP)
-              IUBD=I
-          END IF
-      ELSE IF (TEMP .LT. ZERO) THEN
-          IF (SLBD*TEMP .GT. SU(I)-XOPT(I)) THEN
-              SLBD=(SU(I)-XOPT(I))/TEMP
-              ILBD=I
-          END IF
-          IF (SUBD*TEMP .LT. SL(I)-XOPT(I)) THEN
-              SUBD=DMAX1(SUMIN,(SL(I)-XOPT(I))/TEMP)
-              IUBD=-I
-          END IF
-      END IF
-   70 CONTINUE
+          DO I=1,N
+              TEMP=XPT(K,I)-XOPT(I)
+              IF (TEMP > ZERO) THEN
+                  IF (SLBD*TEMP < SL(I)-XOPT(I)) THEN
+                      SLBD=(SL(I)-XOPT(I))/TEMP
+                      ILBD=-I
+                  END IF
+                  IF (SUBD*TEMP > SU(I)-XOPT(I)) THEN
+                      SUBD=DMAX1(SUMIN,(SU(I)-XOPT(I))/TEMP)
+                      IUBD=I
+                  END IF
+              ELSE IF (TEMP < ZERO) THEN
+                  IF (SLBD*TEMP > SU(I)-XOPT(I)) THEN
+                      SLBD=(SU(I)-XOPT(I))/TEMP
+                      ILBD=I
+                  END IF
+                  IF (SUBD*TEMP < SL(I)-XOPT(I)) THEN
+                      SUBD=DMAX1(SUMIN,(SL(I)-XOPT(I))/TEMP)
+                      IUBD=-I
+                  END IF
+              END IF
+          END DO
 C
 C     Seek a large modulus of the KNEW-th Lagrange function when the index
 C     of the other interpolation point on the line through XOPT is KNEW.
 C
-      IF (K .EQ. KNEW) THEN
-          DIFF=DDERIV-ONE
-          STEP=SLBD
-          VLAG=SLBD*(DDERIV-SLBD*DIFF)
-          ISBD=ILBD
-          TEMP=SUBD*(DDERIV-SUBD*DIFF)
-          IF (DABS(TEMP) .GT. DABS(VLAG)) THEN
-              STEP=SUBD
-              VLAG=TEMP
-              ISBD=IUBD
-          END IF
-          TEMPD=HALF*DDERIV
-          TEMPA=TEMPD-DIFF*SLBD
-          TEMPB=TEMPD-DIFF*SUBD
-          IF (TEMPA*TEMPB .LT. ZERO) THEN
-              TEMP=TEMPD*TEMPD/DIFF
-              IF (DABS(TEMP) .GT. DABS(VLAG)) THEN
-                  STEP=TEMPD/DIFF
+          IF (K == KNEW) THEN
+              DIFF=DDERIV-ONE
+              STEP=SLBD
+              VLAG=SLBD*(DDERIV-SLBD*DIFF)
+              ISBD=ILBD
+              TEMP=SUBD*(DDERIV-SUBD*DIFF)
+              IF (DABS(TEMP) > DABS(VLAG)) THEN
+                  STEP=SUBD
                   VLAG=TEMP
-                  ISBD=0
+                  ISBD=IUBD
               END IF
-          END IF
+              TEMPD=HALF*DDERIV
+              TEMPA=TEMPD-DIFF*SLBD
+              TEMPB=TEMPD-DIFF*SUBD
+              IF (TEMPA*TEMPB < ZERO) THEN
+                  TEMP=TEMPD*TEMPD/DIFF
+                  IF (DABS(TEMP) > DABS(VLAG)) THEN
+                      STEP=TEMPD/DIFF
+                      VLAG=TEMP
+                      ISBD=0
+                  END IF
+              END IF
 C
 C     Search along each of the other lines through XOPT and another point.
 C
-      ELSE
-          STEP=SLBD
-          VLAG=SLBD*(ONE-SLBD)
-          ISBD=ILBD
-          TEMP=SUBD*(ONE-SUBD)
-          IF (DABS(TEMP) .GT. DABS(VLAG)) THEN
-              STEP=SUBD
-              VLAG=TEMP
-              ISBD=IUBD
-          END IF
-          IF (SUBD .GT. HALF) THEN
-              IF (DABS(VLAG) .LT. 0.25D0) THEN
-                  STEP=HALF
-                  VLAG=0.25D0
-                  ISBD=0
+          ELSE
+              STEP=SLBD
+              VLAG=SLBD*(ONE-SLBD)
+              ISBD=ILBD
+              TEMP=SUBD*(ONE-SUBD)
+              IF (DABS(TEMP) > DABS(VLAG)) THEN
+                  STEP=SUBD
+                  VLAG=TEMP
+                  ISBD=IUBD
               END IF
+              IF (SUBD > HALF) THEN
+                  IF (DABS(VLAG) < 0.25D0) THEN
+                      STEP=HALF
+                      VLAG=0.25D0
+                      ISBD=0
+                  END IF
+              END IF
+              VLAG=VLAG*DDERIV
           END IF
-          VLAG=VLAG*DDERIV
-      END IF
 C
 C     Calculate PREDSQ for the current line search and maintain PRESAV.
 C
-      TEMP=STEP*(ONE-STEP)*DISTSQ
-      PREDSQ=VLAG*VLAG*(VLAG*VLAG+HA*TEMP*TEMP)
+          TEMP=STEP*(ONE-STEP)*DISTSQ
+          PREDSQ=VLAG*VLAG*(VLAG*VLAG+HA*TEMP*TEMP)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 2019-08-29: With the original code, if either PREDSQ or PRESAV
 C is NaN, KSAV/STPSAV/IBDSAV will not get a value. This may cause 
 C Segmentation Fault.
 C      IF (PREDSQ .GT. PRESAV) THEN
-      IF (.NOT. (PREDSQ .LE. PRESAV)) THEN
+          IF (.NOT. (PREDSQ <= PRESAV)) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          PRESAV=PREDSQ
-          KSAV=K
-          STPSAV=STEP
-          IBDSAV=ISBD
-      END IF
-   80 CONTINUE
+              PRESAV=PREDSQ
+              KSAV=K
+              STPSAV=STEP
+              IBDSAV=ISBD
+          END IF
+      END DO
 C
 C     Construct XNEW in a way that satisfies the bound constraints exactly.
 C
-      DO 90 I=1,N
-      TEMP=XOPT(I)+STPSAV*(XPT(KSAV,I)-XOPT(I))
-   90 XNEW(I)=DMAX1(SL(I),DMIN1(SU(I),TEMP))
-      IF (IBDSAV .LT. 0) XNEW(-IBDSAV)=SL(-IBDSAV)
-      IF (IBDSAV .GT. 0) XNEW(IBDSAV)=SU(IBDSAV)
+      DO I=1,N
+          TEMP=XOPT(I)+STPSAV*(XPT(KSAV,I)-XOPT(I))
+          XNEW(I)=DMAX1(SL(I),DMIN1(SU(I),TEMP))
+      END DO
+      IF (IBDSAV < 0) XNEW(-IBDSAV)=SL(-IBDSAV)
+      IF (IBDSAV > 0) XNEW(IBDSAV)=SU(IBDSAV)
 C
 C     Prepare for the iterative method that assembles the constrained Cauchy
 C     step in W. The sum of squares of the fixed components of W is formed in
@@ -191,16 +200,16 @@ C
       IFLAG=0
   100 WFIXSQ=ZERO
       GGFREE=ZERO
-      DO 110 I=1,N
-      W(I)=ZERO
-      TEMPA=DMIN1(XOPT(I)-SL(I),GLAG(I))
-      TEMPB=DMAX1(XOPT(I)-SU(I),GLAG(I))
-      IF (TEMPA .GT. ZERO .OR. TEMPB .LT. ZERO) THEN
-          W(I)=BIGSTP
-          GGFREE=GGFREE+GLAG(I)**2
-      END IF
-  110 CONTINUE
-      IF (GGFREE .EQ. ZERO) THEN
+      DO I=1,N
+          W(I)=ZERO
+          TEMPA=DMIN1(XOPT(I)-SL(I),GLAG(I))
+          TEMPB=DMAX1(XOPT(I)-SU(I),GLAG(I))
+          IF (TEMPA > ZERO .OR. TEMPB < ZERO) THEN
+              W(I)=BIGSTP
+              GGFREE=GGFREE+GLAG(I)**2
+          END IF
+      END DO
+      IF (GGFREE == ZERO) THEN
           CAUCHY=ZERO
           GOTO 200
       END IF
@@ -208,43 +217,44 @@ C
 C     Investigate whether more components of W can be fixed.
 C
   120 TEMP=ADELT*ADELT-WFIXSQ
-      IF (TEMP .GT. ZERO) THEN
+      IF (TEMP > ZERO) THEN
           WSQSAV=WFIXSQ
           STEP=DSQRT(TEMP/GGFREE)
           GGFREE=ZERO
-          DO 130 I=1,N
-          IF (W(I) .EQ. BIGSTP) THEN
-              TEMP=XOPT(I)-STEP*GLAG(I)
-              IF (TEMP .LE. SL(I)) THEN
-                  W(I)=SL(I)-XOPT(I)
-                  WFIXSQ=WFIXSQ+W(I)**2
-              ELSE IF (TEMP .GE. SU(I)) THEN
-                  W(I)=SU(I)-XOPT(I)
-                  WFIXSQ=WFIXSQ+W(I)**2
-              ELSE
-                  GGFREE=GGFREE+GLAG(I)**2
+          DO I=1,N
+              IF (W(I) == BIGSTP) THEN
+                  TEMP=XOPT(I)-STEP*GLAG(I)
+                  IF (TEMP <= SL(I)) THEN
+                      W(I)=SL(I)-XOPT(I)
+                      WFIXSQ=WFIXSQ+W(I)**2
+                  ELSE IF (TEMP >= SU(I)) THEN
+                      W(I)=SU(I)-XOPT(I)
+                      WFIXSQ=WFIXSQ+W(I)**2
+                  ELSE
+                      GGFREE=GGFREE+GLAG(I)**2
+                  END IF
               END IF
-          END IF
-  130     CONTINUE
-          IF (WFIXSQ .GT. WSQSAV .AND. GGFREE .GT. ZERO) GOTO 120
+          END DO
+          IF (WFIXSQ > WSQSAV .AND. GGFREE > ZERO) GOTO 120
       END IF
 C
 C     Set the remaining free components of W and all components of XALT,
 C     except that W may be scaled later.
 C
       GW=ZERO
-      DO 140 I=1,N
-      IF (W(I) .EQ. BIGSTP) THEN
-          W(I)=-STEP*GLAG(I)
-          XALT(I)=DMAX1(SL(I),DMIN1(SU(I),XOPT(I)+W(I)))
-      ELSE IF (W(I) .EQ. ZERO) THEN
-          XALT(I)=XOPT(I)
-      ELSE IF (GLAG(I) .GT. ZERO) THEN
-          XALT(I)=SL(I)
-      ELSE
-          XALT(I)=SU(I)
-      END IF
-  140 GW=GW+GLAG(I)*W(I)
+      DO I=1,N
+          IF (W(I) == BIGSTP) THEN
+              W(I)=-STEP*GLAG(I)
+              XALT(I)=DMAX1(SL(I),DMIN1(SU(I),XOPT(I)+W(I)))
+          ELSE IF (W(I) == ZERO) THEN
+              XALT(I)=XOPT(I)
+          ELSE IF (GLAG(I) > ZERO) THEN
+              XALT(I)=SL(I)
+          ELSE
+              XALT(I)=SU(I)
+          END IF
+          GW=GW+GLAG(I)*W(I)
+      END DO
 C
 C     Set CURV to the curvature of the KNEW-th Lagrange function along W.
 C     Scale W by a factor less than one if that can reduce the modulus of
@@ -252,17 +262,20 @@ C     the Lagrange function at XOPT+W. Set CAUCHY to the final value of
 C     the square of this function.
 C
       CURV=ZERO
-      DO 160 K=1,NPT
-      TEMP=ZERO
-      DO 150 J=1,N
-  150 TEMP=TEMP+XPT(K,J)*W(J)
-  160 CURV=CURV+HCOL(K)*TEMP*TEMP
-      IF (IFLAG .EQ. 1) CURV=-CURV
-      IF (CURV .GT. -GW .AND. CURV .LT. -CONST*GW) THEN
+      DO K=1,NPT
+          TEMP=ZERO
+          DO J=1,N
+              TEMP=TEMP+XPT(K,J)*W(J)
+          END DO
+          CURV=CURV+HCOL(K)*TEMP*TEMP
+      END DO
+      IF (IFLAG == 1) CURV=-CURV
+      IF (CURV > -GW .AND. CURV < -CONST*GW) THEN
           SCALE=-GW/CURV
-          DO 170 I=1,N
-          TEMP=XOPT(I)+SCALE*W(I)
-  170     XALT(I)=DMAX1(SL(I),DMIN1(SU(I),TEMP))
+          DO I=1,N
+              TEMP=XOPT(I)+SCALE*W(I)
+              XALT(I)=DMAX1(SL(I),DMIN1(SU(I),TEMP))
+          END DO
           CAUCHY=(HALF*GW*SCALE)**2
       ELSE
           CAUCHY=(GW+HALF*CURV)**2
@@ -272,17 +285,19 @@ C     If IFLAG is zero, then XALT is calculated as before after reversing
 C     the sign of GLAG. Thus two XALT vectors become available. The one that
 C     is chosen is the one that gives the larger value of CAUCHY.
 C
-      IF (IFLAG .EQ. 0) THEN
-          DO 180 I=1,N
-          GLAG(I)=-GLAG(I)
-  180     W(N+I)=XALT(I)
+      IF (IFLAG == 0) THEN
+          DO I=1,N
+              GLAG(I)=-GLAG(I)
+              W(N+I)=XALT(I)
+          END DO
           CSAVE=CAUCHY
           IFLAG=1
           GOTO 100
       END IF
-      IF (CSAVE .GT. CAUCHY) THEN
-          DO 190 I=1,N
-  190     XALT(I)=W(N+I)
+      IF (CSAVE > CAUCHY) THEN
+          DO I=1,N
+              XALT(I)=W(N+I)
+          END DO
           CAUCHY=CSAVE
       END IF
   200 RETURN

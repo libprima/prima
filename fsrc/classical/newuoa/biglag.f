@@ -38,35 +38,42 @@ C     Set the first NPT components of HCOL to the leading elements of the
 C     KNEW-th column of H.
 C
       ITERC=0
-      DO 10 K=1,NPT
-   10 HCOL(K)=ZERO
-      DO 20 J=1,NPTM
-      TEMP=ZMAT(KNEW,J)
-      IF (J .LT. IDZ) TEMP=-TEMP
-      DO 20 K=1,NPT
-   20 HCOL(K)=HCOL(K)+TEMP*ZMAT(K,J)
+      DO K=1,NPT
+          HCOL(K)=ZERO
+      END DO
+      DO J=1,NPTM
+          TEMP=ZMAT(KNEW,J)
+          IF (J < IDZ) TEMP=-TEMP
+          DO K=1,NPT
+              HCOL(K)=HCOL(K)+TEMP*ZMAT(K,J)
+          END DO
+      END DO
       ALPHA=HCOL(KNEW)
 C
 C     Set the unscaled initial direction D. Form the gradient of LFUNC at
 C     XOPT, and multiply D by the second derivative matrix of LFUNC.
 C
       DD=ZERO
-      DO 30 I=1,N
-      D(I)=XPT(KNEW,I)-XOPT(I)
-      GC(I)=BMAT(KNEW,I)
-      GD(I)=ZERO
-   30 DD=DD+D(I)**2
-      DO 50 K=1,NPT
-      TEMP=ZERO
-      SUM=ZERO
-      DO 40 J=1,N
-      TEMP=TEMP+XPT(K,J)*XOPT(J)
-   40 SUM=SUM+XPT(K,J)*D(J)
-      TEMP=HCOL(K)*TEMP
-      SUM=HCOL(K)*SUM
-      DO 50 I=1,N
-      GC(I)=GC(I)+TEMP*XPT(K,I)
-   50 GD(I)=GD(I)+SUM*XPT(K,I)
+      DO I=1,N
+          D(I)=XPT(KNEW,I)-XOPT(I)
+          GC(I)=BMAT(KNEW,I)
+          GD(I)=ZERO
+          DD=DD+D(I)**2
+      END DO
+      DO K=1,NPT
+          TEMP=ZERO
+          SUM=ZERO
+          DO J=1,N
+              TEMP=TEMP+XPT(K,J)*XOPT(J)
+              SUM=SUM+XPT(K,J)*D(J)
+          END DO
+          TEMP=HCOL(K)*TEMP
+          SUM=HCOL(K)*SUM
+          DO I=1,N
+              GC(I)=GC(I)+TEMP*XPT(K,I)
+              GD(I)=GD(I)+SUM*XPT(K,I)
+          END DO
+      END DO
 C
 C     Scale D and GD, with a sign change if required. Set S to another
 C     vector in the initial two dimensional subspace.
@@ -74,20 +81,22 @@ C
       GG=ZERO
       SP=ZERO
       DHD=ZERO
-      DO 60 I=1,N
-      GG=GG+GC(I)**2
-      SP=SP+D(I)*GC(I)
-   60 DHD=DHD+D(I)*GD(I)
+      DO I=1,N
+          GG=GG+GC(I)**2
+          SP=SP+D(I)*GC(I)
+          DHD=DHD+D(I)*GD(I)
+      END DO
       SCALE=DELTA/DSQRT(DD)
-      IF (SP*DHD .LT. ZERO) SCALE=-SCALE
+      IF (SP*DHD < ZERO) SCALE=-SCALE
       TEMP=ZERO
-      IF (SP*SP .GT. 0.99D0*DD*GG) TEMP=ONE
+      IF (SP*SP > 0.99D0*DD*GG) TEMP=ONE
       TAU=SCALE*(DABS(SP)+HALF*SCALE*DABS(DHD))
-      IF (GG*DELSQ .LT. 0.01D0*TAU*TAU) TEMP=ONE
-      DO 70 I=1,N
-      D(I)=SCALE*D(I)
-      GD(I)=SCALE*GD(I)
-   70 S(I)=GC(I)+TEMP*GD(I)
+      IF (GG*DELSQ < 0.01D0*TAU*TAU) TEMP=ONE
+      DO I=1,N
+          D(I)=SCALE*D(I)
+          GD(I)=SCALE*GD(I)
+          S(I)=GC(I)+TEMP*GD(I)
+      END DO
 C
 C     Begin the iteration by overwriting S with a vector that has the
 C     required length and direction, except that termination occurs if
@@ -97,38 +106,44 @@ C
       DD=ZERO
       SP=ZERO
       SS=ZERO
-      DO 90 I=1,N
-      DD=DD+D(I)**2
-      SP=SP+D(I)*S(I)
-   90 SS=SS+S(I)**2
+      DO I=1,N
+          DD=DD+D(I)**2
+          SP=SP+D(I)*S(I)
+          SS=SS+S(I)**2
+      END DO
       TEMP=DD*SS-SP*SP
-      IF (TEMP .LE. 1.0D-8*DD*SS) GOTO 160
+      IF (TEMP <= 1.0D-8*DD*SS) GOTO 160
       DENOM=DSQRT(TEMP)
-      DO 100 I=1,N
-      S(I)=(DD*S(I)-SP*D(I))/DENOM
-  100 W(I)=ZERO
+      DO I=1,N
+          S(I)=(DD*S(I)-SP*D(I))/DENOM
+          W(I)=ZERO
+      END DO
 C
 C     Calculate the coefficients of the objective function on the circle,
 C     beginning with the multiplication of S by the second derivative matrix.
 C
-      DO 120 K=1,NPT
-      SUM=ZERO
-      DO 110 J=1,N
-  110 SUM=SUM+XPT(K,J)*S(J)
-      SUM=HCOL(K)*SUM
-      DO 120 I=1,N
-  120 W(I)=W(I)+SUM*XPT(K,I)
+      DO K=1,NPT
+          SUM=ZERO
+          DO J=1,N
+              SUM=SUM+XPT(K,J)*S(J)
+          END DO
+          SUM=HCOL(K)*SUM
+          DO I=1,N
+              W(I)=W(I)+SUM*XPT(K,I)
+          END DO
+      END DO
       CF1=ZERO
       CF2=ZERO
       CF3=ZERO
       CF4=ZERO
       CF5=ZERO
-      DO 130 I=1,N
-      CF1=CF1+S(I)*W(I)
-      CF2=CF2+D(I)*GC(I)
-      CF3=CF3+S(I)*GC(I)
-      CF4=CF4+D(I)*GD(I)
-  130 CF5=CF5+S(I)*GD(I)
+      DO I=1,N
+          CF1=CF1+S(I)*W(I)
+          CF2=CF2+D(I)*GC(I)
+          CF3=CF3+S(I)*GC(I)
+          CF4=CF4+D(I)*GD(I)
+          CF5=CF5+S(I)*GD(I)
+      END DO
       CF1=HALF*CF1
       CF4=HALF*CF4-CF1
 C
@@ -140,23 +155,24 @@ C
       ISAVE=0
       IU=49
       TEMP=TWOPI/DFLOAT(IU+1)
-      DO 140 I=1,IU
-      ANGLE=DFLOAT(I)*TEMP
-      CTH=DCOS(ANGLE)
-      STH=DSIN(ANGLE)
-      TAU=CF1+(CF2+CF4*CTH)*CTH+(CF3+CF5*CTH)*STH
-      IF (DABS(TAU) .GT. DABS(TAUMAX)) THEN
-          TAUMAX=TAU
-          ISAVE=I
-          TEMPA=TAUOLD
-      ELSE IF (I .EQ. ISAVE+1) THEN
-          TEMPB=TAU
-      END IF
-  140 TAUOLD=TAU
-      IF (ISAVE .EQ. 0) TEMPA=TAU
-      IF (ISAVE .EQ. IU) TEMPB=TAUBEG
+      DO I=1,IU
+          ANGLE=DFLOAT(I)*TEMP
+          CTH=DCOS(ANGLE)
+          STH=DSIN(ANGLE)
+          TAU=CF1+(CF2+CF4*CTH)*CTH+(CF3+CF5*CTH)*STH
+          IF (DABS(TAU) > DABS(TAUMAX)) THEN
+              TAUMAX=TAU
+              ISAVE=I
+              TEMPA=TAUOLD
+          ELSE IF (I == ISAVE+1) THEN
+              TEMPB=TAU
+          END IF
+          TAUOLD=TAU
+      END DO
+      IF (ISAVE == 0) TEMPA=TAU
+      IF (ISAVE == IU) TEMPB=TAUBEG
       STEP=ZERO
-      IF (TEMPA .NE. TEMPB) THEN
+      IF (TEMPA /= TEMPB) THEN
           TEMPA=TEMPA-TAUMAX
           TEMPB=TEMPB-TAUMAX
           STEP=HALF*(TEMPA-TEMPB)/(TEMPA+TEMPB)
@@ -168,11 +184,12 @@ C
       CTH=DCOS(ANGLE)
       STH=DSIN(ANGLE)
       TAU=CF1+(CF2+CF4*CTH)*CTH+(CF3+CF5*CTH)*STH
-      DO 150 I=1,N
-      D(I)=CTH*D(I)+STH*S(I)
-      GD(I)=CTH*GD(I)+STH*W(I)
-  150 S(I)=GC(I)+GD(I)
-      IF (DABS(TAU) .LE. 1.1D0*DABS(TAUBEG)) GOTO 160
-      IF (ITERC .LT. N) GOTO 80
+      DO I=1,N
+          D(I)=CTH*D(I)+STH*S(I)
+          GD(I)=CTH*GD(I)+STH*W(I)
+          S(I)=GC(I)+GD(I)
+      END DO
+      IF (DABS(TAU) <= 1.1D0*DABS(TAUBEG)) GOTO 160
+      IF (ITERC < N) GOTO 80
   160 RETURN
       END

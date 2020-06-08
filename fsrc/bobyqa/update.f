@@ -22,9 +22,11 @@ C
       ZERO=0.0D0
       NPTM=NPT-N-1
       ZTEST=ZERO
-      DO 10 K=1,NPT
-      DO 10 J=1,NPTM
-   10 ZTEST=DMAX1(ZTEST,DABS(ZMAT(K,J)))
+      DO K=1,NPT
+          DO J=1,NPTM
+              ZTEST=DMAX1(ZTEST,DABS(ZMAT(K,J)))
+          END DO
+      END DO
       ZTEST=1.0D-20*ZTEST
 C
 C     Apply the rotations that put zeros in the KNEW-th row of ZMAT.
@@ -33,25 +35,26 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 2019-08-15: JL is never used
 C      JL=1
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DO 30 J=2,NPTM
-      IF (DABS(ZMAT(KNEW,J)) .GT. ZTEST) THEN
-          TEMP=DSQRT(ZMAT(KNEW,1)**2+ZMAT(KNEW,J)**2)
-          TEMPA=ZMAT(KNEW,1)/TEMP
-          TEMPB=ZMAT(KNEW,J)/TEMP
-          DO 20 I=1,NPT
-          TEMP=TEMPA*ZMAT(I,1)+TEMPB*ZMAT(I,J)
-          ZMAT(I,J)=TEMPA*ZMAT(I,J)-TEMPB*ZMAT(I,1)
-   20     ZMAT(I,1)=TEMP
-      END IF
-      ZMAT(KNEW,J)=ZERO
-   30 CONTINUE
+      DO J=2,NPTM
+          IF (DABS(ZMAT(KNEW,J)) > ZTEST) THEN
+              TEMP=DSQRT(ZMAT(KNEW,1)**2+ZMAT(KNEW,J)**2)
+              TEMPA=ZMAT(KNEW,1)/TEMP
+              TEMPB=ZMAT(KNEW,J)/TEMP
+              DO I=1,NPT
+                  TEMP=TEMPA*ZMAT(I,1)+TEMPB*ZMAT(I,J)
+                  ZMAT(I,J)=TEMPA*ZMAT(I,J)-TEMPB*ZMAT(I,1)
+                  ZMAT(I,1)=TEMP
+              END DO
+          END IF
+          ZMAT(KNEW,J)=ZERO
+      END DO
 C
 C     Put the first NPT components of the KNEW-th column of HLAG into W,
 C     and calculate the parameters of the updating formula.
 C
-      DO 40 I=1,NPT
-      W(I)=ZMAT(KNEW,1)*ZMAT(I,1)
-   40 CONTINUE
+      DO I=1,NPT
+          W(I)=ZMAT(KNEW,1)*ZMAT(I,1)
+      END DO
       ALPHA=W(KNEW)
       TAU=VLAG(KNEW)
       VLAG(KNEW)=VLAG(KNEW)-ONE
@@ -61,19 +64,21 @@ C
       TEMP=DSQRT(DENOM)
       TEMPB=ZMAT(KNEW,1)/TEMP
       TEMPA=TAU/TEMP
-      DO 50 I=1,NPT
-   50 ZMAT(I,1)=TEMPA*ZMAT(I,1)-TEMPB*VLAG(I)
+      DO I=1,NPT
+          ZMAT(I,1)=TEMPA*ZMAT(I,1)-TEMPB*VLAG(I)
+      END DO
 C
 C     Finally, update the matrix BMAT.
 C
-      DO 60 J=1,N
-      JP=NPT+J
-      W(JP)=BMAT(KNEW,J)
-      TEMPA=(ALPHA*VLAG(JP)-TAU*W(JP))/DENOM
-      TEMPB=(-BETA*W(JP)-TAU*VLAG(JP))/DENOM
-      DO 60 I=1,JP
-      BMAT(I,J)=BMAT(I,J)+TEMPA*VLAG(I)+TEMPB*W(I)
-      IF (I .GT. NPT) BMAT(JP,I-NPT)=BMAT(I,J)
-   60 CONTINUE
+      DO J=1,N
+          JP=NPT+J
+          W(JP)=BMAT(KNEW,J)
+          TEMPA=(ALPHA*VLAG(JP)-TAU*W(JP))/DENOM
+          TEMPB=(-BETA*W(JP)-TAU*VLAG(JP))/DENOM
+          DO I=1,JP
+              BMAT(I,J)=BMAT(I,J)+TEMPA*VLAG(I)+TEMPB*W(I)
+              IF (I > NPT) BMAT(JP,I-NPT)=BMAT(I,J)
+          END DO
+      END DO
       RETURN
       END
