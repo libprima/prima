@@ -234,7 +234,7 @@ if ismember(probinfo.refined_type, {'bound-constrained', 'linearly-constrained'}
     % xind = (x0 < lb) | (x0 > ub);
     % x0(xind) = (lb(xind) + ub(xind))/2; 
     x0 = project(Aineq, bineq, Aeq, beq, lb, ub, x0); 
-    if norm(x0_old-x0) > eps*max(1, norm(x0_old)) && ~probinfo.feasibility_problem && ~strcmp(probinfo.refined_type, 'nonlinearly-constrained')
+    if norm(x0_old-x0) > eps*max(1, norm(x0_old)) && ~(probinfo.feasibility_problem && strcmp(probinfo.refined_type, 'nonlinearly-constrained'))
         % No warning about revising x0 if the problem is a linear feasibility problem
         wid = sprintf('%s:ReviseX0', invoker);
         wmessage = sprintf('%s: x0 is revised to satisfy the constraints.', invoker);
