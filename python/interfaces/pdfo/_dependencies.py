@@ -37,6 +37,8 @@ class OptimizeResult(dict):
           3  The objective function has been evaluated `maxfev` times
           4, 7, 8, 9  Rounding errors become severe in the Fortran code
          13  All variables are fixed by the constraints
+         14  A feasibility problem has been received and solved
+         15  A feasibility problem has been received but was not solved
          -1  NaN occurs in `x`
          -2  The objective/constraint function returns NaN or nearly infinite values (only in the classical mode)
          -3  NaN occurs in the models
@@ -468,8 +470,9 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
     # 16. raw_dim: problem dimension before reduction
     # 17. refined_type: problem type after reduction
     # 18. refined_dim: problem dimension after reduction
-    # 19. warnings: warnings during the preprocessing/validation
-    # 20. constr_metadata: metadata of each constraint, which is needed to build the output constr_value. It contains:
+    # 19. feasibility_problem: whether the problem is a feasibility problem
+    # 20. warnings: warnings during the preprocessing/validation
+    # 21. constr_metadata: metadata of each constraint, which is needed to build the output constr_value. It contains:
     #         - linear_indices: the indices of the linear constraints in the argument `constraints`.
     #         - nonlinear_indices: the indices of the nonlinear constraints in the argument `constraints`.
     #         - data: a list of metadata for each constraint (length, bounds, dropped indices, ...).
@@ -477,12 +480,16 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
     prob_info['raw_data'] = \
         {'objective': fun, 'x0': x0, 'args': args, 'bounds': bounds, 'constraints': constraints, 'options': options}
 
-    # If fun is None, then we are dealing with a feasibility problem; rest set fun to a fake objective function that returns a constant.
+    # If fun is None, then we are dealing with a feasibility problem; rest set fun to a fake objective function that
+    # returns a constant.
+    prob_info['feasibility_problem'] = False
     if fun is None:
+        prob_info['feasibility_problem'] = True
+
         def fun(x_loc, *args_loc):
             return np.float64(0)
 
-        warn_message = '{}: there is no objective function.'.format(invoker)
+        warn_message = '{}: there is no objective function. A feasibility problem will be solved.'.format(invoker)
         warnings.warn(warn_message, Warning)
         list_warnings.append(warn_message)
     elif not callable(fun):
@@ -636,7 +643,8 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
         # x0(xind) = (lb(xind) + ub(xind))/2;
         result = _project(x0_c, lb, ub, constraints_c)
         x0_c = result.x
-        if np.linalg.norm(x0_old - x0_c) > eps * max(1.0, np.linalg.norm(x0_old)):
+        if np.linalg.norm(x0_old - x0_c) > eps * max(1.0, np.linalg.norm(x0_old)) and \
+                not prob_info['feasibility_problem']:
             warn_message = '{}: x0 is revised to satisfy the constraints.'.format(invoker)
             warnings.warn(warn_message, Warning)
             list_warnings.append(warn_message)
@@ -667,7 +675,8 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
 
         method = _solver_selection(invoker, method, options_c, prob_info, list_warnings)
 
-    if method.lower() == 'bobyqa' and not prob_info['nofreex'] and not prob_info['infeasible']:
+    if method.lower() == 'bobyqa' and not prob_info['nofreex'] and not prob_info['infeasible'] and \
+            not prob_info['feasibility_problem']:
         # The Fortran code of BOBYQA will revise x0 so that the distance between x0 and the inactive bounds is at least
         # rhobeg. We do it here in order to raise a warning when such a revision occurs. After this, the Fortran code
         # will not revise x0 again. If the options['honour_x0'] = True, then we keep x0 unchanged and revise rhobeg if
@@ -685,6 +694,13 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
     # The refined data can be useful when debugging. It will be used in postpdfo even if the debug mode is not enabled.
     prob_info['refined_data'] = \
         {'objective': fun_c_reduced, 'x0': x0_c, 'lb': lb, 'ub': ub, 'constraints': constraints_c, 'options': options_c}
+
+    # When the problem is a linear feasibility problem, PDFO will return the current x0, which has been revised by
+    # project. The constraint violation at x0 is needed to set the output. Note that there is no nonlinear constraint in
+    # this case.
+    if prob_info['feasibility_problem'] and prob_info['refined_type'] != 'nonlinearly-constrained':
+        prob_info['constrv_x0'], prob_info['nlc_x0'] = \
+            _constr_violation(invoker, x0_c, lb, ub, constraints_c, prob_info)
 
     if not options_c['debug']:
         # Do not carry the raw data with us unless in debug mode.
@@ -2597,7 +2613,7 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
     output['x'] = x_c
     output['fun'] = fx_c
     output['status'] = exitflag_c
-    output['success'] = (exitflag_c in [0, 1]) or (exitflag_c == 13 and constrviolation_c == 0)
+    output['success'] = (exitflag_c in [0, 1, 14]) or (exitflag_c == 13 and constrviolation_c == 0)
     if len(stack()) >= 4 and stack()[2][3].lower() == 'pdfo':
         output['nfev'] = nf_c
         output['constrviolation'] = constrviolation_c
@@ -2617,7 +2633,7 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
     # Validate prob_info.
     prob_info_fields = \
         {'infeasible', 'warnings', 'scaled', 'reduced', 'fixedx', 'fixedx_value', 'refined_type', 'raw_type',
-         'infeasible_linear', 'infeasible_bound'}
+         'infeasible_linear', 'infeasible_bound', 'feasibility_problem'}
     if prob_info is None or not isinstance(prob_info, dict) or not (prob_info_fields <= set(prob_info.keys())) or \
             not isinstance(prob_info['infeasible'], (bool, np.bool)) or \
             not hasattr(prob_info['warnings'], '__len__') or \
@@ -2631,7 +2647,8 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
             not all(map(lambda pi: isinstance(pi, (bool, np.bool_)), prob_info['infeasible_linear'])) or \
             not hasattr(prob_info['infeasible_bound'], '__len__') or \
             not all(map(lambda pi: isinstance(pi, (bool, np.bool_)), prob_info['infeasible_bound'])) or \
-            not isinstance(prob_info['refined_type'], str) or not isinstance(prob_info['raw_type'], str):
+            not isinstance(prob_info['refined_type'], str) or not isinstance(prob_info['raw_type'], str) or \
+            not isinstance(prob_info['feasibility_problem'], (bool, np.bool)):
         raise ValueError('{}: UNEXPECTED ERROR: prob_info should be a valid dictionary.'.format(invoker))
 
     prob_info_keys = prob_info.keys()
@@ -2737,6 +2754,17 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
     output['chist'] = chist_c
     output['method'] = method
 
+    # If the problem is a feasibility problem, set fx to an empty array and remove fhist from the output
+    if prob_info['feasibility_problem']:
+        output['fun'] = None
+        del output['fhist']
+
+        if prob_info['refined_type'] != 'nonlinearly-constrained':
+            # No function evaluation involved when solving a linear feasibility problem. By "function evaluation", we
+            # mean the evaluation of the objective function and nonlinear constraint functions, which do not exist in
+            # this case. For nonlinear feasibility problems, funcCount is positive.
+            output['nfev'] = 0
+
     # Revise constrviolation and chist according to problem type.
     max_c = 0 if chist_c is None or chist_c.size == 0 else np.nanmax(chist_c)
     if prob_info_c['refined_type'] == 'unconstrained' and (constrviolation_c > 0 or max_c > 0):
@@ -2796,6 +2824,11 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
         output['message'] = 'Return from {} because the gradient of a constraint is zero.'.format(method)
     elif exitflag_c == 13:
         output['message'] = 'Return from {} because all the variables are fixed by the bounds.'.format(method)
+    elif exitflag_c == 14:
+        output['message'] = '{} receives a linear feasibility problem and finds a feasible point.'.format(method)
+    elif exitflag_c == 15:
+        output['message'] = \
+            '{} receives a linear feasibility problem but does not find a feasible point.'.format(method)
     elif exitflag_c == -1:
         output['message'] = 'Return from {} because NaN occurs in x.'.format(method)
     elif exitflag_c == -2:

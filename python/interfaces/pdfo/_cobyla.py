@@ -187,6 +187,23 @@ def cobyla(fun, x0, args=(), bounds=None, constraints=(), options=None):
         constrviolation = prob_info['constrv_fixedx']
         chist = np.array([constrviolation], dtype=np.float64)
         output['constr_value'] = prob_info['nlc_fixedx']
+    elif invoker != 'pdfo' and prob_info['feasibility_problem'] and \
+            prob_info['refined_type'] != 'nonlinearly-constrained':
+        # We could set fx=[], funcCount=0, and fhist=[] since no function evaluation occurred. But then we will have to
+        # modify the validation of fx, funcCount, and fhist in postpdfo. To avoid such a modification, we set fx,
+        # funcCount, and fhist as below and then revise them in postpdfo.
+        nf = 1
+        x = x0_c  # prepdfo has tried to set x0 to a feasible point (but may have failed)
+        fx = fun_c(x)
+        fhist = np.array([fx], dtype=np.float64)
+        constrviolation = prob_info['constrv_x0']
+        chist = np.array([constrviolation], dtype=np.float64)
+        output['constr_value'] = np.asarray([], dtype=np.float64)
+        if constrviolation < np.finfo(np.float64).eps:
+            # Did prepdfo find a feasible point?
+            exitflag = 14
+        else:
+            exitflag = 15
     else:
         # The problem turns out 'normal' during prepdfo include all the constraints into one single nonlinear
         # constraint.

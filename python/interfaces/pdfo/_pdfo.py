@@ -50,7 +50,7 @@ def pdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=Non
     bounds: ndarray of tuple with shape(n,2), or Bounds, optional
         Bound constraints of the problem. It can be one of the two cases below. 
             1. An ndarray with shape(n,2). If the ndarray is 'bounds', then the bound constraint for x[i] is 
-                bounds[i, 0]<=x[i]<=bounds[i, 1]. Set bounds[i, 0] to -numpy.inf or None if there is no lower bound, and 
+                bounds[i, 0]<=x[i]<=bounds[i, 1]. Set bounds[i, 0] to -numpy.inf or None if there is no lower bound, and
                 set bounds[i, 1] to numpy.inf or None if there is no upper bound. 
             2. An instance of the `Bounds` class. Bounds(lb, ub) specifies a bound constraint lb<=x<=ub.
     constraints: dict, LinearConstraint, NonlinearConstraint, or a list of them, optional
@@ -65,30 +65,32 @@ def pdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=Non
             2. An instance of the `LinearConstraint` class or the `NonlinearConstraint` class.
                 LinearConstraint(A, lb, ub) specifies a linear constraint lb<=A*x<=ub;
                 NonLinearConstraint(fun, lb, ub) specifies a nonlinear constraint lb<=fun(x)<=ub.
-            3. A list, each of whose elements is a dictionary described in 1, a LinearConstraint, or a NonlinearConstraint.
+            3. A list, each of whose elements is a dictionary described in 1, a LinearConstraint, or a
+                NonlinearConstraint.
     options: dict, optional
         The options passed to the solver. It is a structure that contains optionally:
             rhobeg: float, optional
-                Initial value of the trust region radius, which should be a positive scalar. Typically, `options['rhobeg']` 
-                should be in the order of one tenth of the greatest expected change to a variable. By default, it is 1 if 
-                the problem is not scaled (but min(1, min(ub-lb)/4) if the solver is BOBYQA), 0.5 if the problem is scaled.
+                Initial value of the trust region radius, which should be a positive scalar. Typically,
+                `options['rhobeg']` should be in the order of one tenth of the greatest expected change to a variable.
+                By default, it is 1 if the problem is not scaled (but min(1, min(ub-lb)/4) if the solver is BOBYQA), 0.5
+                if the problem is scaled.
             rhoend: float, optional
-                Final value of the trust region radius, which should be a positive scalar. `options['rhoend']` should indicate 
-                the accuracy required in the final values of the variables. Moreover, `options['rhoend']` should be no more 
-                than `options['rhobeg']` and is by default 1e-6.
+                Final value of the trust region radius, which should be a positive scalar. `options['rhoend']` should
+                indicate the accuracy required in the final values of the variables. Moreover, `options['rhoend']`
+                should be no more than `options['rhobeg']` and is by default 1e-6.
             maxfev: int, optional
                 Upper bound of the number of calls of the objective function `fun`. Its value must be not less than
                 `options['npt']`+1. By default, it is 500*n.
             npt: int, optional
-                Number of interpolation points of each model used in Powell's Fortran code. It is used only if the solver is
-                NEWUOA, BOBYQA, or LINCOA.
+                Number of interpolation points of each model used in Powell's Fortran code. It is used only if the
+                solver is NEWUOA, BOBYQA, or LINCOA.
             ftarget: float, optional
                 Target value of the objective function. If a feasible iterate achieves an objective function value lower
                 or equal to `options['ftarget']`, the algorithm stops immediately. By default, it is -numpy.inf.
             scale: bool, optional
-                Flag indicating whether to scale the problem according to the bound constraints. By default, it is False. If the
-                problem is to be scaled, then rhobeg and rhoend mentioned above will be used as the initial and final trust region
-                radii for the scaled problem.
+                Flag indicating whether to scale the problem according to the bound constraints. By default, it is
+                False. If the problem is to be scaled, then rhobeg and rhoend mentioned above will be used as the
+                initial and final trust region radii for the scaled problem.
             honour_x0: bool, optional
                 Flag indicating whether to respect the user-defined x0. By default, it is False. It is used only if the 
                 solver is BOBYQA.
@@ -198,6 +200,23 @@ def pdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=Non
         constrviolation = prob_info['constrv_fixedx']
         chist = np.array([constrviolation], dtype=np.float64)
         output['constr_value'] = prob_info['nlc_fixedx']
+        output['constr_modified'] = False
+    elif prob_info['feasibility_problem'] and prob_info['refined_type'] != 'nonlinearly-constrained':
+        # We could set fx=[], funcCount=0, and fhist=[] since no function evaluation occurred. But then we will have to
+        # modify the validation of fx, funcCount, and fhist in postpdfo. To avoid such a modification, we set fx,
+        # funcCount, and fhist as below and then revise them in postpdfo.
+        nf = 1
+        x = x0_c  # prepdfo has tried to set x0 to a feasible point (but may have failed)
+        fx = fun_c(x)
+        fhist = np.array([fx], dtype=np.float64)
+        constrviolation = prob_info['constrv_x0']
+        chist = np.array([constrviolation], dtype=np.float64)
+        output['constr_value'] = np.asarray([], dtype=np.float64)
+        if constrviolation < np.finfo(np.float64).eps:
+            # Did prepdfo find a feasible point?
+            exitflag = 14
+        else:
+            exitflag = 15
         output['constr_modified'] = False
     else:
         # The problem turns out 'normal' during prepdfo.

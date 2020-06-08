@@ -132,48 +132,59 @@ def uobyqa(fun, x0, args=(), options=None):
     # Preprocess the inputs.
     fun_c, x0_c, _, _, options_c, _, prob_info = prepdfo(fun, x0, args, options=options)
 
-    # Extract the options and parameters.
-    maxfev = options_c['maxfev']
-    rhobeg = options_c['rhobeg']
-    rhoend = options_c['rhoend']
-    ftarget = options_c['ftarget']
+    if invoker != 'pdfo' and prob_info['feasibility_problem']:
+        # A "unconstrained feasibility problem" is ridiculous yet nothing wrong mathematically.
+        # We could set fx=[], funcCount=0, and fhist=[] since no function evaluation occurred. But then we will have to
+        # modify the validation of fx, funcCount, and fhist in postpdfo. To avoid such a modification, we set fx,
+        # funcCount, and fhist as below and then revise them in postpdfo.
+        nf = 1
+        x = x0_c  # prepdfo has tried to set x0 to a feasible point (but may have failed)
+        fx = fun_c(x)
+        fhist = np.array([fx], dtype=np.float64)
+        exitflag = 14
+    else:
+        # Extract the options and parameters.
+        maxfev = options_c['maxfev']
+        rhobeg = options_c['rhobeg']
+        rhoend = options_c['rhoend']
+        ftarget = options_c['ftarget']
 
-    # UOBYQA is not intended to solve univariate problem; most likely, the solver will fail.
-    n = x0_c.size
-    if n <= 1:
-        w_message = '{}: a univariate problem received; {} may fail. Try other solvers.'.format(fun_name, fun_name)
-        warnings.warn(w_message, Warning)
-        output['warnings'].append(w_message)
+        # UOBYQA is not intended to solve univariate problem; most likely, the solver will fail.
+        n = x0_c.size
+        if n <= 1:
+            w_message = '{}: a univariate problem received; {} may fail. Try other solvers.'.format(fun_name, fun_name)
+            warnings.warn(w_message, Warning)
+            output['warnings'].append(w_message)
 
-    # The largest integer in the fortran functions; the factor 0.99 provides a buffer.
-    max_int = np.floor(0.99 * gethuge('integer'))
+        # The largest integer in the fortran functions; the factor 0.99 provides a buffer.
+        max_int = np.floor(0.99 * gethuge('integer'))
 
-    # The smallest nw, i.e., the nw with npt = (n+1)*(n+2)/2. If it is larger than a threshold (system dependent), the
-    # problem is too large to be executed on the system.
-    min_nw = (n * (42 + n * (23 + n * (8 + n))) + max(2 * n**2, 18 * n)) / 4
-    if min_nw + 1 >= max_int:
-        executor = invoker.lower() if invoker == 'pdfo' else fun_name
-        # nw would suffer from overflow in the Fortran code, exit immediately.
-        raise SystemError('{}: problem too large for {}. Try other solvers.'.format(executor, fun_name))
+        # The smallest nw, i.e., the nw with npt = (n+1)*(n+2)/2. If it is larger than a threshold (system dependent),
+        # the problem is too large to be executed on the system.
+        min_nw = (n * (42 + n * (23 + n * (8 + n))) + max(2 * n**2, 18 * n)) / 4
+        if min_nw + 1 >= max_int:
+            executor = invoker.lower() if invoker == 'pdfo' else fun_name
+            # nw would suffer from overflow in the Fortran code, exit immediately.
+            raise SystemError('{}: problem too large for {}. Try other solvers.'.format(executor, fun_name))
 
-    if maxfev > max_int:
-        maxfev = max_int
-        w_message = '{}: maxfev exceeds the upper limit of Fortran integer; it is set to {}'.format(fun_name, maxfev)
-        warnings.warn(w_message, Warning)
-        output['warnings'].append(w_message)
+        if maxfev > max_int:
+            maxfev = max_int
+            w_message = '{}: maxfev exceeds the upper limit of Fortran integer; it is set to {}'.format(fun_name, maxfev)
+            warnings.warn(w_message, Warning)
+            output['warnings'].append(w_message)
 
-    # Call the Fortran code.
-    try:
-        if options_c['classical']:
-            from . import fuobyqa_classical as fuobyqa
-        else:
-            from . import fuobyqa
-    except ImportError:
-        from ._dependencies import import_error_so
-        import_error_so()
+        # Call the Fortran code.
+        try:
+            if options_c['classical']:
+                from . import fuobyqa_classical as fuobyqa
+            else:
+                from . import fuobyqa
+        except ImportError:
+            from ._dependencies import import_error_so
+            import_error_so()
 
-    x, fx, exitflag, fhist = fuobyqa.muobyqa(x0_c, rhobeg, rhoend, 0, maxfev, ftarget, fun_c)
-    nf = int(fuobyqa.fuobyqa.nf)
+        x, fx, exitflag, fhist = fuobyqa.muobyqa(x0_c, rhobeg, rhoend, 0, maxfev, ftarget, fun_c)
+        nf = int(fuobyqa.fuobyqa.nf)
 
     # Postprocess the result.
     return postpdfo(x, fx, exitflag, output, fun_name, nf, fhist, options_c, prob_info)
