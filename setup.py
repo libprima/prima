@@ -60,7 +60,7 @@ def clean():
     for tmp_file in files_to_delete:
         try:
             remove(tmp_file)
-        except FileNotFoundError:
+        except:
             # This exception should never occur, except if a user delete a file manually after running this script and
             # before the execution of the remove command. Since it is almost impossible, the exception is just caught.
             pass
