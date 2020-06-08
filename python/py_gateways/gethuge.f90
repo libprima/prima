@@ -17,8 +17,8 @@ implicit none
 ! The largest length of the input string. It is 20 because the input should be 'integer', 'float', 'single', 'double', 'fun',
 ! 'function', 'con', 'constraint'
 integer, parameter :: maxlen = 20
-character(len=maxlen) :: data_type ! the input string, which specifies the data type
-double precision :: huge_value
+character(len=maxlen), intent(in) :: data_type ! the input string, which specifies the data type
+double precision, intent(out) :: huge_value
 
 integer, parameter :: intZero = 0 ! integer 0 of the default kind
 real, parameter :: floatZero = 0.0 ! floating-point 0 of the default kind

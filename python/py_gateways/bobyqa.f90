@@ -18,8 +18,12 @@ end module fbobyqa
 subroutine mbobyqa (n,npt,x,xl,xu,rhobeg,rhoend,iprint,maxfun,w,f,info,funhist,conhist,ftarget,resmax)
 use fbobyqa
 implicit none
-integer :: n,npt,iprint,maxfun,info,i
-double precision :: x(n),xl(n),xu(n),rhobeg,rhoend,w((npt+5)*(npt+n)+3*n*(n+5)/2+1),f,funhist(maxfun),conhist(maxfun),ftarget,resmax
+integer, intent(in) :: n,npt,iprint,maxfun
+integer, intent(out) :: info
+integer :: i
+double precision, intent(inout) :: x(n)
+double precision, intent(in) :: xl(n),xu(n),rhobeg,rhoend,w((npt+5)*(npt+n)+3*n*(n+5)/2+1),ftarget
+double precision, intent(out) :: f,funhist(maxfun),conhist(maxfun),resmax
 
 nf=0
 if (allocated(fhist)) deallocate (fhist)
@@ -60,8 +64,11 @@ end subroutine mbobyqa
 subroutine calfun (n,x,f)
 use fbobyqa
 implicit none
-integer :: n,i
-double precision :: x(n),f,fun,resmax
+integer, intent(in) :: n
+integer :: i
+double precision, intent(in) :: x(n)
+double precision, intent(out) :: f
+double precision :: fun,resmax
 external :: fun
 f=fun(n,x)
 

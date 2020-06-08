@@ -18,8 +18,11 @@ end module fuobyqa
 subroutine muobyqa (n,x,rhobeg,rhoend,iprint,maxfun,w,f,info,funhist,ftarget)
 use fuobyqa
 implicit none
-integer :: n,iprint,maxfun,info
-double precision :: x(n),rhobeg,rhoend,w((n*(42+n*(23+n*(8+n)))+max(2*n*n+4,18*n))/4+1),f,funhist(maxfun),ftarget
+integer, intent(in) :: n,iprint,maxfun
+integer, intent(out) :: info
+double precision, intent(inout) :: x(n)
+double precision, intent(in) :: rhobeg,rhoend,w((n*(42+n*(23+n*(8+n)))+max(2*n*n+4,18*n))/4+1),ftarget
+double precision, intent(out) :: f,funhist(maxfun)
 
 nf=0
 if (allocated(fhist)) deallocate (fhist)
@@ -37,8 +40,10 @@ end subroutine muobyqa
 subroutine calfun (n,x,f)
 use fuobyqa
 implicit none
-integer :: n
-double precision :: x(n),f,fun
+integer, intent(in) :: n
+double precision, intent(in) :: x(n)
+double precision, intent(out) :: f
+double precision :: fun
 external :: fun
 f=fun(n,x)
 
