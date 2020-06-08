@@ -65,8 +65,8 @@ C     treated separately by the subroutine that performs the main calculation.
 C
       NP=N+1
       NPTM=NPT-NP
-      IF (NPT .LT. N+2 .OR. NPT .GT. ((N+2)*NP)/2) THEN
-          IF (IPRINT .GT. 0) PRINT 10
+      IF (NPT < N+2 .OR. NPT > ((N+2)*NP)/2) THEN
+          IF (IPRINT > 0) PRINT 10
    10     FORMAT (/4X,'Return from NEWUOA because NPT is not in',
      1      ' the required interval')
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC

@@ -48,172 +48,197 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C
 C     Set the initial elements of XPT, BMAT, SP and ZMAT to zero. 
 C
-      DO 20 J=1,N
-      XBASE(J)=X(J)
+      DO J=1,N
+          XBASE(J)=X(J)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      XOPT(J)=ZERO
-      XSAV(J)=XBASE(J)
+          XOPT(J)=ZERO
+          XSAV(J)=XBASE(J)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DO 10 K=1,NPT
-   10 XPT(K,J)=ZERO
-      DO 20 I=1,NDIM
-   20 BMAT(I,J)=ZERO
-      DO 30 K=1,NPT
-      SP(K)=ZERO
-      DO 30 J=1,NPT-N-1
-   30 ZMAT(K,J)=ZERO
+          DO K=1,NPT
+              XPT(K,J)=ZERO
+          END DO
+          DO I=1,NDIM
+              BMAT(I,J)=ZERO
+          END DO
+      END DO
+      DO K=1,NPT
+          SP(K)=ZERO
+          DO J=1,NPT-N-1
+              ZMAT(K,J)=ZERO
+          END DO
+      END DO
 C
 C     Set the nonzero coordinates of XPT(K,.), K=1,2,...,min[2*N+1,NPT],
 C       but they may be altered later to make a constraint violation
 C       sufficiently large. The initial nonzero elements of BMAT and of
 C       the first min[N,NPT-N-1] columns of ZMAT are set also.
 C
-      DO 40 J=1,N
-      XPT(J+1,J)=RHOBEG
-      IF (J .LT. NPT-N) THEN
-          JP=N+J+1
-          XPT(JP,J)=-RHOBEG
-          BMAT(J+1,J)=HALF/RHOBEG
-          BMAT(JP,J)=-HALF/RHOBEG
-          ZMAT(1,J)=-RECIQ-RECIQ
-          ZMAT(J+1,J)=RECIQ
-          ZMAT(JP,J)=RECIQ
-      ELSE
-          BMAT(1,J)=-ONE/RHOBEG
-          BMAT(J+1,J)=ONE/RHOBEG
-          BMAT(NPT+J,J)=-HALF*RHOSQ
-      END IF
-   40 CONTINUE
+      DO J=1,N
+          XPT(J+1,J)=RHOBEG
+          IF (J < NPT-N) THEN
+              JP=N+J+1
+              XPT(JP,J)=-RHOBEG
+              BMAT(J+1,J)=HALF/RHOBEG
+              BMAT(JP,J)=-HALF/RHOBEG
+              ZMAT(1,J)=-RECIQ-RECIQ
+              ZMAT(J+1,J)=RECIQ
+              ZMAT(JP,J)=RECIQ
+          ELSE
+              BMAT(1,J)=-ONE/RHOBEG
+              BMAT(J+1,J)=ONE/RHOBEG
+              BMAT(NPT+J,J)=-HALF*RHOSQ
+          END IF
+      END DO
 C
 C     Set the remaining initial nonzero elements of XPT and ZMAT when the
 C       number of interpolation points exceeds 2*N+1.
 C
-      IF (NPT .GT. 2*N+1) THEN
-          DO 50 K=N+1,NPT-N-1
-          ITEMP=(K-1)/N
-          IPT=K-ITEMP*N
-          JPT=IPT+ITEMP
-          IF (JPT .GT. N) JPT=JPT-N
-          XPT(N+K+1,IPT)=RHOBEG
-          XPT(N+K+1,JPT)=RHOBEG
-          ZMAT(1,K)=RECIP
-          ZMAT(IPT+1,K)=-RECIP
-          ZMAT(JPT+1,K)=-RECIP
-   50     ZMAT(N+K+1,K)=RECIP
+      IF (NPT > 2*N+1) THEN
+          DO K=N+1,NPT-N-1
+              ITEMP=(K-1)/N
+              IPT=K-ITEMP*N
+              JPT=IPT+ITEMP
+              IF (JPT > N) JPT=JPT-N
+              XPT(N+K+1,IPT)=RHOBEG
+              XPT(N+K+1,JPT)=RHOBEG
+              ZMAT(1,K)=RECIP
+              ZMAT(IPT+1,K)=-RECIP
+              ZMAT(JPT+1,K)=-RECIP
+              ZMAT(N+K+1,K)=RECIP
+          END DO
       END IF
 C
 C     Update the constraint right hand sides to allow for the shift XBASE.
 C
-      IF (M .GT. 0) THEN
-          DO 70 J=1,M
-          TEMP=ZERO
-          DO 60 I=1,N
-   60     TEMP=TEMP+AMAT(I,J)*XBASE(I)
-   70     B(J)=B(J)-TEMP
+      IF (M > 0) THEN
+          DO J=1,M
+              TEMP=ZERO
+              DO I=1,N
+                  TEMP=TEMP+AMAT(I,J)*XBASE(I)
+              END DO
+              B(J)=B(J)-TEMP
+          END DO
       END IF
 C
 C     Go through the initial points, shifting every infeasible point if
 C       necessary so that its constraint violation is at least 0.2*RHOBEG.
 C
-      DO 150 NF=1,NPT
-      FEAS=ONE
-      BIGV=ZERO
-      J=0
-   80 J=J+1
-      IF (J .LE. M .AND. NF .GE. 2) THEN
-          RESID=-B(J)
-          DO 90 I=1,N
-   90     RESID=RESID+XPT(NF,I)*AMAT(I,J)
-          IF (RESID .LE. BIGV) GOTO 80
-          BIGV=RESID
-          JSAV=J
-          IF (RESID .LE. TEST) THEN
-              FEAS=-ONE
-              GOTO 80
+      DO NF=1,NPT
+          FEAS=ONE
+          BIGV=ZERO
+          J=0
+   80     J=J+1
+          IF (J <= M .AND. NF >= 2) THEN
+              RESID=-B(J)
+              DO I=1,N
+                  RESID=RESID+XPT(NF,I)*AMAT(I,J)
+              END DO
+              IF (RESID <= BIGV) GOTO 80
+              BIGV=RESID
+              JSAV=J
+              IF (RESID <= TEST) THEN
+                  FEAS=-ONE
+                  GOTO 80
+              END IF
+              FEAS=ZERO
           END IF
-          FEAS=ZERO
-      END IF
-      IF (FEAS .LT. ZERO) THEN
-          DO 100 I=1,N
-  100     STEP(I)=XPT(NF,I)+(TEST-BIGV)*AMAT(I,JSAV)
-          DO 110 K=1,NPT
-          SP(NPT+K)=ZERO
-          DO 110 J=1,N
-  110     SP(NPT+K)=SP(NPT+K)+XPT(K,J)*STEP(J)
-          CALL UPDATE (N,NPT,XPT,BMAT,ZMAT,IDZ,NDIM,SP,STEP,
-     1      KBASE,NF,PQW,W)
-          DO 120 I=1,N
-  120     XPT(NF,I)=STEP(I)
-      END IF
+          IF (FEAS < ZERO) THEN
+              DO I=1,N
+                  STEP(I)=XPT(NF,I)+(TEST-BIGV)*AMAT(I,JSAV)
+              END DO
+              DO K=1,NPT
+                  SP(NPT+K)=ZERO
+                  DO J=1,N
+                      SP(NPT+K)=SP(NPT+K)+XPT(K,J)*STEP(J)
+                  END DO
+              END DO
+              CALL UPDATE (N,NPT,XPT,BMAT,ZMAT,IDZ,NDIM,SP,STEP,
+     1          KBASE,NF,PQW,W)
+              DO I=1,N
+                  XPT(NF,I)=STEP(I)
+              END DO
+          END IF
 C
 C     Calculate the objective function at the current interpolation point,
 C       and set KOPT to the index of the first trust region centre.
 C
-      DO 130 J=1,N
-  130 X(J)=XBASE(J)+XPT(NF,J)
-      F=FEAS
-      CALL CALFUN (N,X,F)
-      IF (IPRINT .EQ. 3) THEN
-          PRINT 140, NF,F,(X(I),I=1,N)
-  140     FORMAT (/4X,'Function number',I6,'    F =',1PD18.10,
-     1      '    The corresponding X is:'/(2X,5D15.6))
-      END IF
-      IF (NF .EQ. 1) THEN
-          KOPT=1
-      ELSE IF (F .LT. FVAL(KOPT) .AND. FEAS .GT. ZERO) THEN
-          KOPT=NF
-      END IF
+          DO J=1,N
+              X(J)=XBASE(J)+XPT(NF,J)
+          END DO
+          F=FEAS
+          CALL CALFUN (N,X,F)
+          IF (IPRINT == 3) THEN
+              PRINT 140, NF,F,(X(I),I=1,N)
+  140         FORMAT (/4X,'Function number',I6,'    F =',1PD18.10,
+     1          '    The corresponding X is:'/(2X,5D15.6))
+          END IF
+          IF (NF == 1) THEN
+              KOPT=1
+          ELSE IF (F < FVAL(KOPT) .AND. FEAS > ZERO) THEN
+              KOPT=NF
+          END IF
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C  150 FVAL(NF)=F
-      FVAL(NF)=F
+          FVAL(NF)=F
 C     By Tom/Zaikun (on 03-06-2019/07-06-2019):
 C     If the objective function reached a NaN or infinite value, or if
 C     the value is under the target value, the algorithm go back to
 C     LINCOB with updated KOPT and XSAV.
 C     Note that we should NOT compare F and FTARGET, because X may not
 C     be feasible. 
-      IF (F .NE. F .OR. F .GT. ALMOST_INFINITY 
-     +    .OR. FVAL(KOPT) .LE. FTARGET) THEN
-          EXIT
-      END IF
-  150 CONTINUE
+          IF (F /= F .OR. F > ALMOST_INFINITY 
+     +        .OR. FVAL(KOPT) <= FTARGET) THEN
+              EXIT
+          END IF
+      END DO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
 C     Set PQ for the first quadratic model.
 C
-      DO 160 J=1,NPTM
-      W(J)=ZERO
-      DO 160 K=1,NPT
-  160 W(J)=W(J)+ZMAT(K,J)*FVAL(K)
-      DO 170 K=1,NPT
-      PQ(K)=ZERO
-      DO 170 J=1,NPTM
-  170 PQ(K)=PQ(K)+ZMAT(K,J)*W(J)
+      DO J=1,NPTM
+          W(J)=ZERO
+          DO K=1,NPT
+              W(J)=W(J)+ZMAT(K,J)*FVAL(K)
+          END DO
+      END DO
+      DO K=1,NPT
+          PQ(K)=ZERO
+          DO J=1,NPTM
+              PQ(K)=PQ(K)+ZMAT(K,J)*W(J)
+          END DO
+      END DO
 C
 C     Set XOPT, SP, GOPT and HQ for the first quadratic model.
 C
-      DO 180 J=1,N
-      XOPT(J)=XPT(KOPT,J)
-      XSAV(J)=XBASE(J)+XOPT(J)
-  180 GOPT(J)=ZERO
-      DO 200 K=1,NPT
-      SP(K)=ZERO
-      DO 190 J=1,N
-  190 SP(K)=SP(K)+XPT(K,J)*XOPT(J)
-      TEMP=PQ(K)*SP(K)
-      DO 200 J=1,N
-  200 GOPT(J)=GOPT(J)+FVAL(K)*BMAT(K,J)+TEMP*XPT(K,J)
-      DO 210 I=1,(N*N+N)/2
-  210 HQ(I)=ZERO
+      DO J=1,N
+          XOPT(J)=XPT(KOPT,J)
+          XSAV(J)=XBASE(J)+XOPT(J)
+          GOPT(J)=ZERO
+      END DO
+      DO K=1,NPT
+          SP(K)=ZERO
+          DO J=1,N
+              SP(K)=SP(K)+XPT(K,J)*XOPT(J)
+          END DO
+          TEMP=PQ(K)*SP(K)
+          DO J=1,N
+              GOPT(J)=GOPT(J)+FVAL(K)*BMAT(K,J)+TEMP*XPT(K,J)
+          END DO
+      END DO
+      DO I=1,(N*N+N)/2
+          HQ(I)=ZERO
+      END DO
 C
 C     Set the initial elements of RESCON.
 C
-      DO 230 J=1,M
-      TEMP=B(J)
-      DO 220 I=1,N
-  220 TEMP=TEMP-XOPT(I)*AMAT(I,J)
-      TEMP=DMAX1(TEMP,ZERO)
-      IF (TEMP .GE. RHOBEG) TEMP=-TEMP
-  230 RESCON(J)=TEMP  
+      DO J=1,M
+          TEMP=B(J)
+          DO I=1,N
+              TEMP=TEMP-XOPT(I)*AMAT(I,J)
+          END DO
+          TEMP=DMAX1(TEMP,ZERO)
+          IF (TEMP >= RHOBEG) TEMP=-TEMP
+          RESCON(J)=TEMP  
+      END DO
       RETURN
       END

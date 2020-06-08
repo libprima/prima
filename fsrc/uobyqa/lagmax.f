@@ -31,18 +31,20 @@ C
 C     Pick V such that ||HV|| / ||V|| is large.
 C
       HMAX=ZERO
-      DO 20 I=1,N
-      SUM=ZERO
-      DO 10 J=1,N
-      H(J,I)=H(I,J)
-   10 SUM=SUM+H(I,J)**2
-      IF (SUM .GT. HMAX) THEN
-          HMAX=SUM
-          K=I
-      END IF
-   20 CONTINUE
-      DO 30 J=1,N
-   30 V(J)=H(K,J)
+      DO I=1,N
+          SUM=ZERO
+          DO J=1,N
+              H(J,I)=H(I,J)
+              SUM=SUM+H(I,J)**2
+          END DO
+          IF (SUM > HMAX) THEN
+              HMAX=SUM
+              K=I
+          END IF
+      END DO
+      DO J=1,N
+          V(J)=H(K,J)
+      END DO
 C
 C     Set D to a vector in the subspace spanned by V and HV that maximizes
 C     |(D,HD)|/(D,D), except that we set D=HV if V and HV are nearly parallel.
@@ -51,33 +53,39 @@ C
       VSQ=ZERO
       VHV=ZERO
       DSQ=ZERO
-      DO 50 I=1,N
-      VSQ=VSQ+V(I)**2
-      D(I)=ZERO
-      DO 40 J=1,N
-   40 D(I)=D(I)+H(I,J)*V(J)
-      VHV=VHV+V(I)*D(I)
-   50 DSQ=DSQ+D(I)**2
-      IF (VHV*VHV .LE. 0.9999D0*DSQ*VSQ) THEN
+      DO I=1,N
+          VSQ=VSQ+V(I)**2
+          D(I)=ZERO
+          DO J=1,N
+              D(I)=D(I)+H(I,J)*V(J)
+          END DO
+          VHV=VHV+V(I)*D(I)
+          DSQ=DSQ+D(I)**2
+      END DO
+      IF (VHV*VHV <= 0.9999D0*DSQ*VSQ) THEN
           TEMP=VHV/VSQ
           WSQ=ZERO
-          DO 60 I=1,N
-          D(I)=D(I)-TEMP*V(I)
-   60     WSQ=WSQ+D(I)**2
+          DO I=1,N
+              D(I)=D(I)-TEMP*V(I)
+              WSQ=WSQ+D(I)**2
+          END DO
           WHW=ZERO
           RATIO=DSQRT(WSQ/VSQ)
-          DO 80 I=1,N
-          TEMP=ZERO
-          DO 70 J=1,N
-   70     TEMP=TEMP+H(I,J)*D(J)
-          WHW=WHW+TEMP*D(I)
-   80     V(I)=RATIO*V(I)
+          DO I=1,N
+              TEMP=ZERO
+              DO J=1,N
+                  TEMP=TEMP+H(I,J)*D(J)
+              END DO
+              WHW=WHW+TEMP*D(I)
+              V(I)=RATIO*V(I)
+          END DO
           VHV=RATIO*RATIO*VHV
           VHW=RATIO*WSQ
           TEMP=HALF*(WHW-VHV)
           TEMP=TEMP+DSIGN(DSQRT(TEMP**2+VHW**2),WHW+VHV)
-          DO 90 I=1,N
-   90     D(I)=VHW*V(I)+TEMP*D(I)
+          DO I=1,N
+              D(I)=VHW*V(I)+TEMP*D(I)
+          END DO
       END IF
 C
 C     We now turn our attention to the subspace spanned by G and D. A multiple
@@ -87,24 +95,27 @@ C
       GD=ZERO
       DD=ZERO
       DHD=ZERO
-      DO 110 I=1,N
-      GG=GG+G(I)**2
-      GD=GD+G(I)*D(I)
-      DD=DD+D(I)**2
-      SUM=ZERO
-      DO 100 J=1,N
-  100 SUM=SUM+H(I,J)*D(J)
-  110 DHD=DHD+SUM*D(I)
+      DO I=1,N
+          GG=GG+G(I)**2
+          GD=GD+G(I)*D(I)
+          DD=DD+D(I)**2
+          SUM=ZERO
+          DO J=1,N
+              SUM=SUM+H(I,J)*D(J)
+          END DO
+          DHD=DHD+SUM*D(I)
+      END DO
       TEMP=GD/GG
       VV=ZERO
       SCALE=DSIGN(RHO/DSQRT(DD),GD*DHD)
-      DO 120 I=1,N
-      V(I)=D(I)-TEMP*G(I)
-      VV=VV+V(I)**2
-  120 D(I)=SCALE*D(I)
+      DO I=1,N
+          V(I)=D(I)-TEMP*G(I)
+          VV=VV+V(I)**2
+          D(I)=SCALE*D(I)
+      END DO
       GNORM=DSQRT(GG)
-      IF (GNORM*DD .LE. 0.5D-2*RHO*DABS(DHD) .OR.
-     1  VV/DD .LE. 1.0D-4) THEN
+      IF (GNORM*DD <= 0.5D-2*RHO*DABS(DHD) .OR.
+     1  VV/DD <= 1.0D-4) THEN
           VMAX=DABS(SCALE*(GD+HALF*SCALE*DHD))
           GOTO 170
       END IF
@@ -116,20 +127,22 @@ C
       GHG=ZERO
       VHG=ZERO
       VHV=ZERO
-      DO 140 I=1,N
-      SUM=ZERO
-      SUMV=ZERO
-      DO 130 J=1,N
-      SUM=SUM+H(I,J)*G(J)
-  130 SUMV=SUMV+H(I,J)*V(J)
-      GHG=GHG+SUM*G(I)
-      VHG=VHG+SUMV*G(I)
-  140 VHV=VHV+SUMV*V(I)
+      DO I=1,N
+          SUM=ZERO
+          SUMV=ZERO
+          DO J=1,N
+              SUM=SUM+H(I,J)*G(J)
+              SUMV=SUMV+H(I,J)*V(J)
+          END DO
+          GHG=GHG+SUM*G(I)
+          VHG=VHG+SUMV*G(I)
+          VHV=VHV+SUMV*V(I)
+      END DO
       VNORM=DSQRT(VV)
       GHG=GHG/GG
       VHG=VHG/(VNORM*GNORM)
       VHV=VHV/VV
-      IF (DABS(VHG) .LE. 0.01D0*DMAX1(DABS(GHG),DABS(VHV))) THEN
+      IF (DABS(VHG) <= 0.01D0*DMAX1(DABS(GHG),DABS(VHV))) THEN
           VMU=GHG-VHV
           WCOS=ONE
           WSIN=ZERO
@@ -144,9 +157,10 @@ C
       TEMPB=WSIN/VNORM
       TEMPC=WCOS/VNORM
       TEMPD=WSIN/GNORM
-      DO 150 I=1,N
-      D(I)=TEMPA*G(I)+TEMPB*V(I)
-  150 V(I)=TEMPC*V(I)-TEMPD*G(I)
+      DO I=1,N
+          D(I)=TEMPA*G(I)+TEMPB*V(I)
+          V(I)=TEMPC*V(I)-TEMPD*G(I)
+      END DO
 C
 C     The final D is a multiple of the current D, V, D+V or D-V. We make the
 C     choice from these possibilities that is optimal.
@@ -156,18 +170,19 @@ C
       TEMPA=DABS(DLIN)+HALF*DABS(VMU+VHV)
       TEMPB=DABS(VLIN)+HALF*DABS(GHG-VMU)
       TEMPC=HALFRT*(DABS(DLIN)+DABS(VLIN))+0.25D0*DABS(GHG+VHV)
-      IF (TEMPA .GE. TEMPB .AND. TEMPA .GE. TEMPC) THEN
+      IF (TEMPA >= TEMPB .AND. TEMPA >= TEMPC) THEN
           TEMPD=DSIGN(RHO,DLIN*(VMU+VHV))
           TEMPV=ZERO
-      ELSE IF (TEMPB .GE. TEMPC) THEN
+      ELSE IF (TEMPB >= TEMPC) THEN
           TEMPD=ZERO
           TEMPV=DSIGN(RHO,VLIN*(GHG-VMU))
       ELSE
           TEMPD=DSIGN(HALFRT*RHO,DLIN*(GHG+VHV))
           TEMPV=DSIGN(HALFRT*RHO,VLIN*(GHG+VHV))
       END IF
-      DO 160 I=1,N
-  160 D(I)=TEMPD*D(I)+TEMPV*V(I)
+      DO I=1,N
+          D(I)=TEMPD*D(I)+TEMPV*V(I)
+      END DO
       VMAX=RHO*RHO*DMAX1(TEMPA,TEMPB,TEMPC)
   170 RETURN
       END

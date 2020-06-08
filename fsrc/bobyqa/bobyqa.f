@@ -74,8 +74,8 @@ C
 C     Return if the value of NPT is unacceptable.
 C
       NP=N+1
-      IF (NPT .LT. N+2 .OR. NPT .GT. ((N+2)*NP)/2) THEN
-          IF (IPRINT .GT. 0) PRINT 10
+      IF (NPT < N+2 .OR. NPT > ((N+2)*NP)/2) THEN
+          IF (IPRINT > 0) PRINT 10
    10     FORMAT (/4X,'Return from BOBYQA because NPT is not in',
      1      ' the required interval')
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -122,48 +122,48 @@ C a MATLAB test that MEX passed 1 to Fortran as 0.99999999999999978.
 C If we set RHOBEG = MIN(XU-XL)/2 in the interfaces, then it may happen
 C that RHOBEG > MIN(XU-XL)/2. That is why we do the following. After
 C this, INFO=6 should never occur. 
-      RHOBEG = MIN(0.5D0*(1.0D0-1.0D-5)*MINVAL(XU(1:N)-XL(1:N)), RHOBEG)
+      RHOBEG = MIN(0.5D0*(1.0D0-1.0D-5)*MINVAL(XU(1:N)-XL(1:N)),RHOBEG)
 C For the same reason, we ensure RHOEND <= RHOBEG by the following.
       RHOEND = MIN(RHOBEG, RHOEND)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ZERO=0.0D0
-      DO 30 J=1,N
-      TEMP=XU(J)-XL(J)
-      IF (TEMP .LT. RHOBEG+RHOBEG) THEN
-          IF (IPRINT .GT. 0) PRINT 20
-   20     FORMAT (/4X,'Return from BOBYQA because one of the',
-     1      ' differences XU(I)-XL(I)'/6X,' is less than 2*RHOBEG.')
+      DO J=1,N
+          TEMP=XU(J)-XL(J)
+          IF (TEMP < RHOBEG+RHOBEG) THEN
+              IF (IPRINT > 0) PRINT 20
+   20         FORMAT (/4X,'Return from BOBYQA because one of the',
+     1         ' differences XU(I)-XL(I)'/6X,' is less than 2*RHOBEG.')
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-          INFO=6
+              INFO=6
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          GO TO 40
-      END IF
-      JSL=ISL+J-1
-      JSU=JSL+N
-      W(JSL)=XL(J)-X(J)
-      W(JSU)=XU(J)-X(J)
-      IF (W(JSL) .GE. -RHOBEG) THEN
-          IF (W(JSL) .GE. ZERO) THEN
-              X(J)=XL(J)
-              W(JSL)=ZERO
-              W(JSU)=TEMP
-          ELSE
-              X(J)=XL(J)+RHOBEG
-              W(JSL)=-RHOBEG
-              W(JSU)=DMAX1(XU(J)-X(J),RHOBEG)
+              GO TO 40
           END IF
-      ELSE IF (W(JSU) .LE. RHOBEG) THEN
-          IF (W(JSU) .LE. ZERO) THEN
-              X(J)=XU(J)
-              W(JSL)=-TEMP
-              W(JSU)=ZERO
-          ELSE
-              X(J)=XU(J)-RHOBEG
-              W(JSL)=DMIN1(XL(J)-X(J),-RHOBEG)
-              W(JSU)=RHOBEG
+          JSL=ISL+J-1
+          JSU=JSL+N
+          W(JSL)=XL(J)-X(J)
+          W(JSU)=XU(J)-X(J)
+          IF (W(JSL) >= -RHOBEG) THEN
+              IF (W(JSL) >= ZERO) THEN
+                  X(J)=XL(J)
+                  W(JSL)=ZERO
+                  W(JSU)=TEMP
+              ELSE
+                  X(J)=XL(J)+RHOBEG
+                  W(JSL)=-RHOBEG
+                  W(JSU)=DMAX1(XU(J)-X(J),RHOBEG)
+              END IF
+          ELSE IF (W(JSU) <= RHOBEG) THEN
+              IF (W(JSU) <= ZERO) THEN
+                  X(J)=XU(J)
+                  W(JSL)=-TEMP
+                  W(JSU)=ZERO
+              ELSE
+                  X(J)=XU(J)-RHOBEG
+                  W(JSL)=DMIN1(XL(J)-X(J),-RHOBEG)
+                  W(JSU)=RHOBEG
+              END IF
           END IF
-      END IF
-   30 CONTINUE
+      END DO
 C
 C     Make the call of BOBYQB.
 C

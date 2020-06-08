@@ -34,7 +34,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      PARMU=0.0
       PARMU=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      IF (IPRINT .GE. 2) PRINT 10, RHO
+      IF (IPRINT >= 2) PRINT 10, RHO
    10 FORMAT (/3X,'The initial value of RHO is',1PE13.6,2X,
      1  'and PARMU is set to zero.')
       NFVALS=0
@@ -42,17 +42,19 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      TEMP=1.0/RHO
       TEMP=1.0D0/RHO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DO 30 I=1,N
-      SIM(I,NP)=X(I)
-      DO 20 J=1,N
+      DO I=1,N
+          SIM(I,NP)=X(I)
+          DO J=1,N
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      SIM(I,J)=0.0
 C   20 SIMI(I,J)=0.0
-      SIM(I,J)=0.0D0
-   20 SIMI(I,J)=0.0D0
+              SIM(I,J)=0.0D0
+              SIMI(I,J)=0.0D0
+          END DO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      SIM(I,I)=RHO
-   30 SIMI(I,I)=TEMP
+          SIM(I,I)=RHO
+          SIMI(I,I)=TEMP
+      END DO
       JDROP=NP
       IBRNCH=0
 C
@@ -60,8 +62,8 @@ C     Make the next call of the user-supplied subroutine CALCFC. These
 C     instructions are also used for calling CALCFC during the iterations of
 C     the algorithm.
 C
-   40 IF (NFVALS .GE. MAXFUN .AND. NFVALS .GT. 0) THEN
-          IF (IPRINT .GE. 1) PRINT 50
+   40 IF (NFVALS >= MAXFUN .AND. NFVALS > 0) THEN
+          IF (IPRINT >= 1) PRINT 50
    50     FORMAT (/3X,'Return from subroutine COBYLA because the ',
      1      'MAXFUN limit has been reached.')
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -75,18 +77,19 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      RESMAX=0.0
       RESMAX=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      IF (M .GT. 0) THEN
-          DO 60 K=1,M
+      IF (M > 0) THEN
+          DO K=1,M
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C   60     RESMAX=AMAX1(RESMAX,-CON(K))
-   60     RESMAX=DMAX1(RESMAX,-CON(K))
+              RESMAX=DMAX1(RESMAX,-CON(K))
+          END DO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       END IF
-      IF (NFVALS .EQ. IPRINT-1 .OR. IPRINT .EQ. 3) THEN
+      IF (NFVALS == IPRINT-1 .OR. IPRINT == 3) THEN
           PRINT 70, NFVALS,F,RESMAX,(X(I),I=1,IPTEM)
    70     FORMAT (/3X,'NFVALS =',I5,3X,'F =',1PE13.6,4X,'MAXCV =',
      1      1PE13.6/3X,'X =',1PE13.6,1P4E15.6)
-          IF (IPTEM .LT. N) PRINT 80, (X(I),I=IPTEMP,N)
+          IF (IPTEM < N) PRINT 80, (X(I),I=IPTEMP,N)
    80     FORMAT (1PE19.6,1P4E15.6)
       END IF
       CON(MP)=F
@@ -101,7 +104,7 @@ C     after the execution the true constraint function evaluations.
       END DO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      IF (IBRNCH .EQ. 1) GOTO 440
+      IF (IBRNCH == 1) GOTO 440
 C
 C     Set the recently calculated function values in a column of DATMAT. This
 C     array has a column for each vertex of the current simplex, the entries of
@@ -109,34 +112,38 @@ C     each column being the values of the constraint functions (if any)
 C     followed by the objective function and the greatest constraint violation
 C     at the vertex.
 C
-      DO 90 K=1,MPP
-   90 DATMAT(K,JDROP)=CON(K)
-      IF (NFVALS .GT. NP) GOTO 130
+      DO K=1,MPP
+          DATMAT(K,JDROP)=CON(K)
+      END DO
+      IF (NFVALS > NP) GOTO 130
 C
 C     Exchange the new vertex of the initial simplex with the optimal vertex if
 C     necessary. Then, if the initial simplex is not complete, pick its next
 C     vertex and calculate the function values there.
 C
-      IF (JDROP .LE. N) THEN
-          IF (DATMAT(MP,NP) .LE. F) THEN
+      IF (JDROP <= N) THEN
+          IF (DATMAT(MP,NP) <= F) THEN
               X(JDROP)=SIM(JDROP,NP)
           ELSE
               SIM(JDROP,NP)=X(JDROP)
-              DO 100 K=1,MPP
-              DATMAT(K,JDROP)=DATMAT(K,NP)
-  100         DATMAT(K,NP)=CON(K)
-              DO 120 K=1,JDROP
-              SIM(JDROP,K)=-RHO
+              DO K=1,MPP
+                  DATMAT(K,JDROP)=DATMAT(K,NP)
+                  DATMAT(K,NP)=CON(K)
+              END DO
+              DO K=1,JDROP
+                  SIM(JDROP,K)=-RHO
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C              TEMP=0.0
-              TEMP=0.0D0
+                  TEMP=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              DO 110 I=K,JDROP
-  110         TEMP=TEMP-SIMI(I,K)
-  120         SIMI(JDROP,K)=TEMP
+                  DO I=K,JDROP
+                      TEMP=TEMP-SIMI(I,K)
+                  END DO
+                  SIMI(JDROP,K)=TEMP
+              END DO
           END IF
       END IF
-      IF (NFVALS .LE. N) THEN
+      IF (NFVALS <= N) THEN
           JDROP=NFVALS
           X(JDROP)=X(JDROP)+RHO
           GOTO 40
@@ -147,42 +154,45 @@ C     Identify the optimal vertex of the current simplex.
 C
   140 PHIMIN=DATMAT(MP,NP)+PARMU*DATMAT(MPP,NP)
       NBEST=NP
-      DO 150 J=1,N
-      TEMP=DATMAT(MP,J)+PARMU*DATMAT(MPP,J)
-      IF (TEMP .LT. PHIMIN) THEN
-          NBEST=J
-          PHIMIN=TEMP
+      DO J=1,N
+          TEMP=DATMAT(MP,J)+PARMU*DATMAT(MPP,J)
+          IF (TEMP < PHIMIN) THEN
+              NBEST=J
+              PHIMIN=TEMP
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      ELSE IF (TEMP .EQ. PHIMIN .AND. PARMU .EQ. 0.0) THEN
-      ELSE IF (TEMP .EQ. PHIMIN .AND. PARMU .EQ. 0.0D0) THEN
+          ELSE IF (TEMP == PHIMIN .AND. PARMU == 0.0D0) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          IF (DATMAT(MPP,J) .LT. DATMAT(MPP,NBEST)) NBEST=J
-      END IF
-  150 CONTINUE
+              IF (DATMAT(MPP,J) < DATMAT(MPP,NBEST)) NBEST=J
+          END IF
+      END DO
 C
 C     Switch the best vertex into pole position if it is not there already,
 C     and also update SIM, SIMI and DATMAT.
 C
-      IF (NBEST .LE. N) THEN
-          DO 160 I=1,MPP
-          TEMP=DATMAT(I,NP)
-          DATMAT(I,NP)=DATMAT(I,NBEST)
-  160     DATMAT(I,NBEST)=TEMP
-          DO 180 I=1,N
-          TEMP=SIM(I,NBEST)
+      IF (NBEST <= N) THEN
+          DO I=1,MPP
+              TEMP=DATMAT(I,NP)
+              DATMAT(I,NP)=DATMAT(I,NBEST)
+              DATMAT(I,NBEST)=TEMP
+          END DO
+          DO I=1,N
+              TEMP=SIM(I,NBEST)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C          SIM(I,NBEST)=0.0
-          SIM(I,NBEST)=0.0D0
+              SIM(I,NBEST)=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          SIM(I,NP)=SIM(I,NP)+TEMP
+              SIM(I,NP)=SIM(I,NP)+TEMP
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C          TEMPA=0.0
-          TEMPA=0.0D0
+              TEMPA=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          DO 170 K=1,N
-          SIM(I,K)=SIM(I,K)-TEMP
-  170     TEMPA=TEMPA-SIMI(K,I)
-  180     SIMI(NBEST,I)=TEMPA
+              DO K=1,N
+                  SIM(I,K)=SIM(I,K)-TEMP
+                  TEMPA=TEMPA-SIMI(K,I)
+              END DO
+              SIMI(NBEST,I)=TEMPA
+          END DO
       END IF
 C
 C     Make an error return if SIGI is a poor approximation to the inverse of
@@ -192,23 +202,26 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      ERROR=0.0
       ERROR=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DO 200 I=1,N
-      DO 200 J=1,N
+      DO I=1,N
+          DO J=1,N
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      TEMP=0.0
 C      IF (I .EQ. J) TEMP=TEMP-1.0
-      TEMP=0.0D0
-      IF (I .EQ. J) TEMP=TEMP-1.0D0
+              TEMP=0.0D0
+              IF (I == J) TEMP=TEMP-1.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DO 190 K=1,N
-  190 TEMP=TEMP+SIMI(I,K)*SIM(K,J)
+              DO K=1,N
+                  TEMP=TEMP+SIMI(I,K)*SIM(K,J)
+              END DO
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C  200 ERROR=AMAX1(ERROR,ABS(TEMP))
 C      IF (ERROR .GT. 0.1) THEN
-  200 ERROR=DMAX1(ERROR,DABS(TEMP))
-      IF (ERROR .GT. 0.1D0) THEN
+              ERROR=DMAX1(ERROR,DABS(TEMP))
+          END DO
+      END DO
+      IF (ERROR > 0.1D0) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          IF (IPRINT .GE. 1) PRINT 210
+          IF (IPRINT >= 1) PRINT 210
   210     FORMAT (/3X,'Return from subroutine COBYLA because ',
      1      'rounding errors are becoming damaging.')
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -222,19 +235,23 @@ C     and constraint functions, placing minus the objective function gradient
 C     after the constraint gradients in the array A. The vector W is used for
 C     working space.
 C
-      DO 240 K=1,MP
-      CON(K)=-DATMAT(K,NP)
-      DO 220 J=1,N
-  220 W(J)=DATMAT(K,J)+CON(K)
-      DO 240 I=1,N
+      DO K=1,MP
+          CON(K)=-DATMAT(K,NP)
+          DO J=1,N
+              W(J)=DATMAT(K,J)+CON(K)
+          END DO
+          DO I=1,N
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      TEMP=0.0
-      TEMP=0.0D0
+              TEMP=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DO 230 J=1,N
-  230 TEMP=TEMP+W(J)*SIMI(J,I)
-      IF (K .EQ. MP) TEMP=-TEMP
-  240 A(I,K)=TEMP
+              DO J=1,N
+                  TEMP=TEMP+W(J)*SIMI(J,I)
+              END DO
+              IF (K == MP) TEMP=-TEMP
+              A(I,K)=TEMP
+          END DO
+      END DO
 C
 C     Calculate the values of sigma and eta, and set IFLAG=0 if the current
 C     simplex is not acceptable.
@@ -242,79 +259,82 @@ C
       IFLAG=1
       PARSIG=ALPHA*RHO
       PARETA=BETA*RHO
-      DO 260 J=1,N
+      DO J=1,N
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      WSIG=0.0
 C      WETA=0.0
-      WSIG=0.0D0
-      WETA=0.0D0
+          WSIG=0.0D0
+          WETA=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DO 250 I=1,N
-      WSIG=WSIG+SIMI(J,I)**2
-  250 WETA=WETA+SIM(I,J)**2
+          DO I=1,N
+              WSIG=WSIG+SIMI(J,I)**2
+              WETA=WETA+SIM(I,J)**2
+          END DO
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      VSIG(J)=1.0/SQRT(WSIG)
 C      VETA(J)=SQRT(WETA)
-      VSIG(J)=1.0D0/DSQRT(WSIG)
-      VETA(J)=DSQRT(WETA)
+          VSIG(J)=1.0D0/DSQRT(WSIG)
+          VETA(J)=DSQRT(WETA)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      IF (VSIG(J) .LT. PARSIG .OR. VETA(J) .GT. PARETA) IFLAG=0
-  260 CONTINUE
+          IF (VSIG(J) < PARSIG .OR. VETA(J) > PARETA) IFLAG=0
+      END DO
 C
 C     If a new vertex is needed to improve acceptability, then decide which
 C     vertex to drop from the simplex.
 C
-      IF (IBRNCH .EQ. 1 .OR. IFLAG .EQ. 1) GOTO 370
+      IF (IBRNCH == 1 .OR. IFLAG == 1) GOTO 370
       JDROP=0
       TEMP=PARETA
-      DO 270 J=1,N
-      IF (VETA(J) .GT. TEMP) THEN
-          JDROP=J
-          TEMP=VETA(J)
-      END IF
-  270 CONTINUE
-      IF (JDROP .EQ. 0) THEN
-          DO 280 J=1,N
-          IF (VSIG(J) .LT. TEMP) THEN
+      DO J=1,N
+          IF (VETA(J) > TEMP) THEN
               JDROP=J
-              TEMP=VSIG(J)
+              TEMP=VETA(J)
           END IF
-  280     CONTINUE
+      END DO
+      IF (JDROP == 0) THEN
+          DO J=1,N
+              IF (VSIG(J) < TEMP) THEN
+                  JDROP=J
+                  TEMP=VSIG(J)
+              END IF
+          END DO
       END IF
 C
 C     Calculate the step to the new vertex and its sign.
 C
       TEMP=GAMMA*RHO*VSIG(JDROP)
-      DO 290 I=1,N
-  290 DX(I)=TEMP*SIMI(JDROP,I)
+      DO I=1,N
+          DX(I)=TEMP*SIMI(JDROP,I)
+      END DO
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      CVMAXP=0.0
 C      CVMAXM=0.0
       CVMAXP=0.0D0
       CVMAXM=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DO 310 K=1,MP
+      DO K=1,MP
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      SUM=0.0
-      SUM=0.0D0
+          SUM=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DO 300 I=1,N
-  300 SUM=SUM+A(I,K)*DX(I)
-      IF (K .LT. MP) THEN
-          TEMP=DATMAT(K,NP)
+          DO I=1,N
+              SUM=SUM+A(I,K)*DX(I)
+          END DO
+          IF (K < MP) THEN
+              TEMP=DATMAT(K,NP)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C          CVMAXP=AMAX1(CVMAXP,-SUM-TEMP)
 C          CVMAXM=AMAX1(CVMAXM,SUM-TEMP)
-          CVMAXP=DMAX1(CVMAXP,-SUM-TEMP)
-          CVMAXM=DMAX1(CVMAXM,SUM-TEMP)
+              CVMAXP=DMAX1(CVMAXP,-SUM-TEMP)
+              CVMAXM=DMAX1(CVMAXM,SUM-TEMP)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!          
-      END IF
-  310 CONTINUE
+          END IF
+      END DO
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      DXSIGN=1.0
 C      IF (PARMU*(CVMAXP-CVMAXM) .GT. SUM+SUM) DXSIGN=-1.0
       DXSIGN=1.0D0
-      IF (PARMU*(CVMAXP-CVMAXM) .GT. SUM+SUM) DXSIGN=-1.0D0
+      IF (PARMU*(CVMAXP-CVMAXM) > SUM+SUM) DXSIGN=-1.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!          
 C
 C     Update the elements of SIM and SIMI, and set the next X.
@@ -323,24 +343,29 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      TEMP=0.0
       TEMP=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DO 320 I=1,N
-      DX(I)=DXSIGN*DX(I)
-      SIM(I,JDROP)=DX(I)
-  320 TEMP=TEMP+SIMI(JDROP,I)*DX(I)
-      DO 330 I=1,N
-  330 SIMI(JDROP,I)=SIMI(JDROP,I)/TEMP
-      DO 360 J=1,N
-      IF (J .NE. JDROP) THEN
+      DO I=1,N
+          DX(I)=DXSIGN*DX(I)
+          SIM(I,JDROP)=DX(I)
+          TEMP=TEMP+SIMI(JDROP,I)*DX(I)
+      END DO
+      DO I=1,N
+          SIMI(JDROP,I)=SIMI(JDROP,I)/TEMP
+      END DO
+      DO J=1,N
+          IF (J /= JDROP) THEN
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C          TEMP=0.0
-          TEMP=0.0D0
+              TEMP=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          DO 340 I=1,N
-  340     TEMP=TEMP+SIMI(J,I)*DX(I)
-          DO 350 I=1,N
-  350     SIMI(J,I)=SIMI(J,I)-TEMP*SIMI(JDROP,I)
-      END IF
-  360 X(J)=SIM(J,NP)+DX(J)
+              DO I=1,N
+                  TEMP=TEMP+SIMI(J,I)*DX(I)
+              END DO
+              DO I=1,N
+                  SIMI(J,I)=SIMI(J,I)-TEMP*SIMI(JDROP,I)
+              END DO
+          END IF
+          X(J)=SIM(J,NP)+DX(J)
+      END DO
       GOTO 40
 C
 C     Calculate DX=x(*)-x(0). Branch if the length of DX is less than 0.5*RHO.
@@ -353,16 +378,17 @@ C
       IVMD=IDXNEW+N
       CALL TRSTLP (N,M,A,CON,RHO,DX,IFULL,IACT,W(IZ),W(IZDOTA),
      1  W(IVMC),W(ISDIRN),W(IDXNEW),W(IVMD))
-      IF (IFULL .EQ. 0) THEN
+      IF (IFULL == 0) THEN
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C          TEMP=0.0
           TEMP=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          DO 380 I=1,N
-  380     TEMP=TEMP+DX(I)**2
+          DO I=1,N
+              TEMP=TEMP+DX(I)**2
+          END DO
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C          IF (TEMP .LT. 0.25*RHO*RHO) THEN
-          IF (TEMP .LT. 0.25D0*RHO*RHO) THEN
+          IF (TEMP < 0.25D0*RHO*RHO) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               IBRNCH=1
               GOTO 550
@@ -378,15 +404,16 @@ C      CON(MP)=0.0
       RESNEW=0.0D0
       CON(MP)=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!      
-      DO 400 K=1,MP
-      SUM=CON(K)
-      DO 390 I=1,N
-  390 SUM=SUM-A(I,K)*DX(I)
+      DO K=1,MP
+          SUM=CON(K)
+          DO I=1,N
+              SUM=SUM-A(I,K)*DX(I)
+          END DO
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IF (K .LT. MP) RESNEW=AMAX1(RESNEW,SUM)
-      IF (K .LT. MP) RESNEW=DMAX1(RESNEW,SUM)
+          IF (K < MP) RESNEW=DMAX1(RESNEW,SUM)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!      
-  400 CONTINUE
+      END DO
 C
 C     Increase PARMU if necessary and branch back if this change alters the
 C     optimal vertex. Otherwise PREREM and PREREC will be set to the predicted
@@ -402,31 +429,32 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IF (PREREC .GT. 0.0) BARMU=SUM/PREREC
 C      IF (PARMU .LT. 1.5*BARMU) THEN
 C          PARMU=2.0*BARMU
-      IF (PREREC .GT. 0.0D0) BARMU=SUM/PREREC
-      IF (PARMU .LT. 1.5D0*BARMU) THEN
+      IF (PREREC > 0.0D0) BARMU=SUM/PREREC
+      IF (PARMU < 1.5D0*BARMU) THEN
           PARMU=2.0D0*BARMU
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          IF (IPRINT .GE. 2) PRINT 410, PARMU
+          IF (IPRINT >= 2) PRINT 410, PARMU
   410     FORMAT (/3X,'Increase in PARMU to',1PE13.6)
           PHI=DATMAT(MP,NP)+PARMU*DATMAT(MPP,NP)
-          DO 420 J=1,N
-          TEMP=DATMAT(MP,J)+PARMU*DATMAT(MPP,J)
-          IF (TEMP .LT. PHI) GOTO 140
+          DO J=1,N
+              TEMP=DATMAT(MP,J)+PARMU*DATMAT(MPP,J)
+              IF (TEMP < PHI) GOTO 140
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C          IF (TEMP .EQ. PHI .AND. PARMU .EQ. 0.0) THEN
-          IF (TEMP .EQ. PHI .AND. PARMU .EQ. 0.0D0) THEN
+              IF (TEMP == PHI .AND. PARMU == 0.0D0) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              IF (DATMAT(MPP,J) .LT. DATMAT(MPP,NP)) GOTO 140
-          END IF
-  420     CONTINUE
+                  IF (DATMAT(MPP,J) < DATMAT(MPP,NP)) GOTO 140
+              END IF
+          END DO
       END IF
       PREREM=PARMU*PREREC-SUM
 C
 C     Calculate the constraint and objective functions at x(*). Then find the
 C     actual reduction in the merit function.
 C
-      DO 430 I=1,N
-  430 X(I)=SIM(I,NP)+DX(I)
+      DO I=1,N
+          X(I)=SIM(I,NP)+DX(I)
+      END DO
       IBRNCH=1
       GOTO 40
   440 VMOLD=DATMAT(MP,NP)+PARMU*DATMAT(MPP,NP)
@@ -434,7 +462,7 @@ C
       TRURED=VMOLD-VMNEW
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IF (PARMU .EQ. 0.0 .AND. F .EQ. DATMAT(MP,NP)) THEN
-      IF (PARMU .EQ. 0.0D0 .AND. F .EQ. DATMAT(MP,NP)) THEN
+      IF (PARMU == 0.0D0 .AND. F == DATMAT(MP,NP)) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           PREREM=PREREC
           TRURED=DATMAT(MPP,NP)-RESMAX
@@ -449,54 +477,57 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      RATIO=0.0
 C      IF (TRURED .LE. 0.0) RATIO=1.0
       RATIO=0.0D0
-      IF (TRURED .LE. 0.0D0) RATIO=1.0D0
+      IF (TRURED <= 0.0D0) RATIO=1.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       JDROP=0
-      DO 460 J=1,N
+      DO J=1,N
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      TEMP=0.0
-      TEMP=0.0D0
+          TEMP=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DO 450 I=1,N
-  450 TEMP=TEMP+SIMI(J,I)*DX(I)
+          DO I=1,N
+              TEMP=TEMP+SIMI(J,I)*DX(I)
+          END DO
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      TEMP=ABS(TEMP)
-      TEMP=DABS(TEMP)
+          TEMP=DABS(TEMP)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      IF (TEMP .GT. RATIO) THEN
-          JDROP=J
-          RATIO=TEMP
-      END IF
-  460 SIGBAR(J)=TEMP*VSIG(J)
+          IF (TEMP > RATIO) THEN
+              JDROP=J
+              RATIO=TEMP
+          END IF
+          SIGBAR(J)=TEMP*VSIG(J)
+      END DO
 C
 C     Calculate the value of ell.
 C
       EDGMAX=DELTA*RHO
       L=0
-      DO 480 J=1,N
-      IF (SIGBAR(J) .GE. PARSIG .OR. SIGBAR(J) .GE. VSIG(J)) THEN
-          TEMP=VETA(J)
+      DO J=1,N
+          IF (SIGBAR(J) >= PARSIG .OR. SIGBAR(J) >= VSIG(J)) THEN
+              TEMP=VETA(J)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C          IF (TRURED .GT. 0.0) THEN
 C              TEMP=0.0
-          IF (TRURED .GT. 0.0D0) THEN
-              TEMP=0.0D0
+              IF (TRURED > 0.0D0) THEN
+                  TEMP=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              DO 470 I=1,N
-  470         TEMP=TEMP+(DX(I)-SIM(I,J))**2
+                  DO I=1,N
+                      TEMP=TEMP+(DX(I)-SIM(I,J))**2
+                  END DO
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C              TEMP=SQRT(TEMP)
-              TEMP=DSQRT(TEMP)
+                  TEMP=DSQRT(TEMP)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+              END IF
+              IF (TEMP > EDGMAX) THEN
+                  L=J
+                  EDGMAX=TEMP
+              END IF
           END IF
-          IF (TEMP .GT. EDGMAX) THEN
-              L=J
-              EDGMAX=TEMP
-          END IF
-      END IF
-  480 CONTINUE
-      IF (L .GT. 0) JDROP=L
-      IF (JDROP .EQ. 0) GOTO 550
+      END DO
+      IF (L > 0) JDROP=L
+      IF (JDROP == 0) GOTO 550
 C
 C     Revise the simplex by updating the elements of SIM, SIMI and DATMAT.
 C
@@ -504,92 +535,98 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      TEMP=0.0
       TEMP=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DO 490 I=1,N
-      SIM(I,JDROP)=DX(I)
-  490 TEMP=TEMP+SIMI(JDROP,I)*DX(I)
-      DO 500 I=1,N
-  500 SIMI(JDROP,I)=SIMI(JDROP,I)/TEMP
-      DO 530 J=1,N
-      IF (J .NE. JDROP) THEN
+      DO I=1,N
+          SIM(I,JDROP)=DX(I)
+          TEMP=TEMP+SIMI(JDROP,I)*DX(I)
+      END DO
+      DO I=1,N
+          SIMI(JDROP,I)=SIMI(JDROP,I)/TEMP
+      END DO
+      DO J=1,N
+          IF (J /= JDROP) THEN
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C          TEMP=0.0
-          TEMP=0.0D0
+              TEMP=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          DO 510 I=1,N
-  510     TEMP=TEMP+SIMI(J,I)*DX(I)
-          DO 520 I=1,N
-  520     SIMI(J,I)=SIMI(J,I)-TEMP*SIMI(JDROP,I)
-      END IF
-  530 CONTINUE
-      DO 540 K=1,MPP
-  540 DATMAT(K,JDROP)=CON(K)
+              DO I=1,N
+                  TEMP=TEMP+SIMI(J,I)*DX(I)
+              END DO
+              DO I=1,N
+                  SIMI(J,I)=SIMI(J,I)-TEMP*SIMI(JDROP,I)
+              END DO
+          END IF
+      END DO
+      DO K=1,MPP
+          DATMAT(K,JDROP)=CON(K)
+      END DO
 C
 C     Branch back for further iterations with the current RHO.
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IF (TRURED .GT. 0.0 .AND. TRURED .GE. 0.1*PREREM) GOTO 140
-      IF (TRURED .GT. 0.0D0 .AND. TRURED .GE. 0.1D0*PREREM) GOTO 140
+      IF (TRURED > 0.0D0 .AND. TRURED >= 0.1D0*PREREM) GOTO 140
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  550 IF (IFLAG .EQ. 0) THEN
+  550 IF (IFLAG == 0) THEN
           IBRNCH=0
           GOTO 140
       END IF
 C
 C     Otherwise reduce RHO if it is not at its least value and reset PARMU.
 C
-      IF (RHO .GT. RHOEND) THEN
+      IF (RHO > RHOEND) THEN
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C          RHO=0.5*RHO
 C          IF (RHO .LE. 1.5*RHOEND) RHO=RHOEND
 C          IF (PARMU .GT. 0.0) THEN
 C              DENOM=0.0
           RHO=0.5D0*RHO
-          IF (RHO .LE. 1.5D0*RHOEND) RHO=RHOEND
-          IF (PARMU .GT. 0.0D0) THEN
+          IF (RHO <= 1.5D0*RHOEND) RHO=RHOEND
+          IF (PARMU > 0.0D0) THEN
               DENOM=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              DO 570 K=1,MP
-              CMIN=DATMAT(K,NP)
-              CMAX=CMIN
-              DO 560 I=1,N
+              DO K=1,MP
+                  CMIN=DATMAT(K,NP)
+                  CMAX=CMIN
+                  DO I=1,N
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C              CMIN=AMIN1(CMIN,DATMAT(K,I))
 C  560         CMAX=AMAX1(CMAX,DATMAT(K,I))
 C              IF (K .LE. M .AND. CMIN .LT. 0.5*CMAX) THEN
 C                  TEMP=AMAX1(CMAX,0.0)-CMIN
 C                  IF (DENOM .LE. 0.0) THEN
-              CMIN=DMIN1(CMIN,DATMAT(K,I))
-  560         CMAX=DMAX1(CMAX,DATMAT(K,I))
-              IF (K .LE. M .AND. CMIN .LT. 0.5D0*CMAX) THEN
-                  TEMP=DMAX1(CMAX,0.0D0)-CMIN
-                  IF (DENOM .LE. 0.0D0) THEN
+                      CMIN=DMIN1(CMIN,DATMAT(K,I))
+                      CMAX=DMAX1(CMAX,DATMAT(K,I))
+                  END DO
+                  IF (K <= M .AND. CMIN < 0.5D0*CMAX) THEN
+                      TEMP=DMAX1(CMAX,0.0D0)-CMIN
+                      IF (DENOM <= 0.0D0) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                      DENOM=TEMP
-                  ELSE
+                          DENOM=TEMP
+                      ELSE
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C                      DENOM=AMIN1(DENOM,TEMP)
-                      DENOM=DMIN1(DENOM,TEMP)
+                          DENOM=DMIN1(DENOM,TEMP)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                      END IF
                   END IF
-              END IF
-  570         CONTINUE
+              END DO
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C              IF (DENOM .EQ. 0.0) THEN
 C                  PARMU=0.0
-              IF (DENOM .EQ. 0.0D0) THEN
+              IF (DENOM == 0.0D0) THEN
                   PARMU=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              ELSE IF (CMAX-CMIN .LT. PARMU*DENOM) THEN
+              ELSE IF (CMAX-CMIN < PARMU*DENOM) THEN
                   PARMU=(CMAX-CMIN)/DENOM
               END IF
           END IF
-          IF (IPRINT .GE. 2) PRINT 580, RHO,PARMU
+          IF (IPRINT >= 2) PRINT 580, RHO,PARMU
   580     FORMAT (/3X,'Reduction in RHO to',1PE13.6,'  and PARMU =',
      1      1PE13.6)
-          IF (IPRINT .EQ. 2) THEN
+          IF (IPRINT == 2) THEN
               PRINT 70, NFVALS,DATMAT(MP,NP),DATMAT(MPP,NP),
      1          (SIM(I,NP),I=1,IPTEM)
-              IF (IPTEM .LT. N) PRINT 80, (X(I),I=IPTEMP,N)
+              IF (IPTEM < N) PRINT 80, (X(I),I=IPTEMP,N)
           END IF
           GOTO 140
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -600,16 +637,17 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C
 C     Return the best calculated values of the variables.
 C
-      IF (IPRINT .GE. 1) PRINT 590
+      IF (IPRINT >= 1) PRINT 590
   590 FORMAT (/3X,'Normal return from subroutine COBYLA')
-      IF (IFULL .EQ. 1) GOTO 620
-  600 DO 610 I=1,N
-  610 X(I)=SIM(I,NP)
+      IF (IFULL == 1) GOTO 620
+  600 DO I=1,N
+          X(I)=SIM(I,NP)
+      END DO
       F=DATMAT(MP,NP)
       RESMAX=DATMAT(MPP,NP)
-  620 IF (IPRINT .GE. 1) THEN
+  620 IF (IPRINT >= 1) THEN
           PRINT 70, NFVALS,F,RESMAX,(X(I),I=1,IPTEM)
-          IF (IPTEM .LT. N) PRINT 80, (X(I),I=IPTEMP,N)
+          IF (IPTEM < N) PRINT 80, (X(I),I=IPTEMP,N)
       END IF
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C     By Tom 2020/05/15:
