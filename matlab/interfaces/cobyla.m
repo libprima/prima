@@ -87,8 +87,8 @@ function [x, fx, exitflag, output] = cobyla(varargin)
 %       3: the objective function has been evaluated maxfun times
 %       4, 7, 8, 9: rounding errors become severe in the Fortran code
 %       13: all variables are fixed by the constraints
-%       14: a feasibility problem received and solved
-%       15: a feasibility problem received but not solved
+%       14: a linear feasibility problem received and solved
+%       15: a linear feasibility problem received but not solved
 %       -1: NaN occurs in x
 %       -2: the objective/constraint function returns NaN or nearly
 %       infinite values (only in the classical mode)
