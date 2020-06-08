@@ -37,8 +37,8 @@ class OptimizeResult(dict):
           3  The objective function has been evaluated `maxfev` times
           4, 7, 8, 9  Rounding errors become severe in the Fortran code
          13  All variables are fixed by the constraints
-         14  A feasibility problem has been received and solved
-         15  A feasibility problem has been received but was not solved
+         14  A linear feasibility problem has been received and solved
+         15  A linear feasibility problem has been received but was not solved
          -1  NaN occurs in `x`
          -2  The objective/constraint function returns NaN or nearly infinite values (only in the classical mode)
          -3  NaN occurs in the models
@@ -480,7 +480,7 @@ def prepdfo(fun, x0, args=(), method=None, bounds=None, constraints=(), options=
     prob_info['raw_data'] = \
         {'objective': fun, 'x0': x0, 'args': args, 'bounds': bounds, 'constraints': constraints, 'options': options}
 
-    # If fun is None, then we are dealing with a feasibility problem; rest set fun to a fake objective function that
+    # If fun is None, then we are dealing with a feasibility problem; set fun to a fake objective function that
     # returns a constant.
     prob_info['feasibility_problem'] = False
     if fun is None:

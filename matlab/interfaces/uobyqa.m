@@ -34,7 +34,7 @@ function [x, fx, exitflag, output] = uobyqa(varargin)
 %       2: a trust-region step failed to reduce the quadratic model
 %       3: the objective function has been evaluated maxfun times
 %       4, 7, 8, 9: rounding errors become severe in the Fortran code 
-%       14: a feasibility problem received and solved
+%       14: a linear feasibility problem received and solved
 %       -1: NaN occurs in x
 %       -2: the objective function returns and NaN or nearly infinite
 %       value (only in the classical mode)
