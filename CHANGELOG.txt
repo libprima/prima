@@ -19,6 +19,8 @@ Public beta release of PDFO.
 
 ### Changed
 - Licence modified from GNU GPLv3+ to GNU LGPLv3+.
+- The Fortran source code is refactored to remove the obsolete non-block
+  DO loops and comparison operators.
 - All constraint violations are computed absolutely (instead of relatively)
 - Modify the scaling behavior. Scaling is performed only if all variables
   have both upper and lower bounds. 
