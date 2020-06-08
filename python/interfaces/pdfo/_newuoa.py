@@ -135,51 +135,62 @@ def newuoa(fun, x0, args=(), options=None):
     # Preprocess the inputs.
     fun_c, x0_c, _, _, options_c, _, prob_info = prepdfo(fun, x0, args, options=options)
 
-    # Extract the options and parameters.
-    npt = options_c['npt']
-    maxfev = options_c['maxfev']
-    rhobeg = options_c['rhobeg']
-    rhoend = options_c['rhoend']
-    ftarget = options_c['ftarget']
+    if invoker != 'pdfo' and prob_info['feasibility_problem']:
+        # A "unconstrained feasibility problem" is ridiculous yet nothing wrong mathematically.
+        # We could set fx=[], funcCount=0, and fhist=[] since no function evaluation occurred. But then we will have to
+        # modify the validation of fx, funcCount, and fhist in postpdfo. To avoid such a modification, we set fx,
+        # funcCount, and fhist as below and then revise them in postpdfo.
+        nf = 1
+        x = x0_c  # prepdfo has tried to set x0 to a feasible point (but may have failed)
+        fx = fun_c(x)
+        fhist = np.array([fx], dtype=np.float64)
+        exitflag = 14
+    else:
+        # Extract the options and parameters.
+        npt = options_c['npt']
+        maxfev = options_c['maxfev']
+        rhobeg = options_c['rhobeg']
+        rhoend = options_c['rhoend']
+        ftarget = options_c['ftarget']
 
-    # The largest integer in the fortran functions; the factor 0.99 provides a buffer.
-    max_int = np.floor(0.99 * gethuge('integer'))
-    n = x0_c.size
+        # The largest integer in the fortran functions; the factor 0.99 provides a buffer.
+        max_int = np.floor(0.99 * gethuge('integer'))
+        n = x0_c.size
 
-    # The smallest nw, i.e., the nw with npt = n + 2. If it is larger than a threshold (system dependent), the problem
-    # is too large to be executed on the system.
-    min_nw = (n + 15) * (2 * n + 2) + 3 * n * (n + 3) / 2
-    if min_nw + 1 >= max_int:
-        executor = invoker.lower() if invoker == 'pdfo' else fun_name
-        # nw would suffer from overflow in the Fortran code, exit immediately.
-        raise SystemError('{}: problem too large for {}. Try other solvers.'.format(executor, fun_name))
+        # The smallest nw, i.e., the nw with npt = n + 2. If it is larger than a threshold (system dependent), the
+        # problem is too large to be executed on the system.
+        min_nw = (n + 15) * (2 * n + 2) + 3 * n * (n + 3) / 2
+        if min_nw + 1 >= max_int:
+            executor = invoker.lower() if invoker == 'pdfo' else fun_name
+            # nw would suffer from overflow in the Fortran code, exit immediately.
+            raise SystemError('{}: problem too large for {}. Try other solvers.'.format(executor, fun_name))
 
-    # The largest possible value for npt given that nw <= max_int.
-    max_npt = max(n + 2, np.floor(0.5 * (-n - 13 + np.sqrt((n - 13) ** 2 + 4 * (max_int - 3 * n * (n + 3) / 2 - 1)))))
-    if npt > max_npt:
-        npt = max_npt
-        w_message = \
-            '{}: npt is so large that it is unable to allocate the workspace; it is set to {}'.format(fun_name, npt)
-        warnings.warn(w_message, Warning)
-        output['warnings'].append(w_message)
-    if maxfev > max_int:
-        maxfev = max_int
-        w_message = '{}: maxfev exceeds the upper limit of Fortran integer; it is set to {}'.format(fun_name, maxfev)
-        warnings.warn(w_message, Warning)
-        output['warnings'].append(w_message)
+        # The largest possible value for npt given that nw <= max_int.
+        max_npt = max(n + 2, np.floor(0.5 * (-n - 13 + np.sqrt((n - 13) ** 2 + 4 * (max_int - 3 * n * (n + 3) / 2 - 1)))))
+        if npt > max_npt:
+            npt = max_npt
+            w_message = \
+                '{}: npt is so large that it is unable to allocate the workspace; it is set to {}'.format(fun_name, npt)
+            warnings.warn(w_message, Warning)
+            output['warnings'].append(w_message)
+        if maxfev > max_int:
+            maxfev = max_int
+            w_message = '{}: maxfev exceeds the upper limit of Fortran integer; it is set to {}'.format(fun_name, maxfev)
+            warnings.warn(w_message, Warning)
+            output['warnings'].append(w_message)
 
-    # Call the Fortran code.
-    try:
-        if options_c['classical']:
-            from . import fnewuoa_classical as fnewuoa
-        else:
-            from . import fnewuoa
-    except ImportError:
-        from ._dependencies import import_error_so
-        import_error_so()
+        # Call the Fortran code.
+        try:
+            if options_c['classical']:
+                from . import fnewuoa_classical as fnewuoa
+            else:
+                from . import fnewuoa
+        except ImportError:
+            from ._dependencies import import_error_so
+            import_error_so()
 
-    x, fx, exitflag, fhist = fnewuoa.mnewuoa(npt, x0_c, rhobeg, rhoend, 0, maxfev, ftarget, fun_c)
-    nf = int(fnewuoa.fnewuoa.nf)
+        x, fx, exitflag, fhist = fnewuoa.mnewuoa(npt, x0_c, rhobeg, rhoend, 0, maxfev, ftarget, fun_c)
+        nf = int(fnewuoa.fnewuoa.nf)
 
     # Postprocess the result.
     return postpdfo(x, fx, exitflag, output, fun_name, nf, fhist, options_c, prob_info)

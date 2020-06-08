@@ -183,6 +183,23 @@ def lincoa(fun, x0, args=(), bounds=None, constraints=(), options=None):
         constrviolation = prob_info['constrv_fixedx']
         chist = np.array([constrviolation], dtype=np.float64)
         output['constr_modified'] = False
+    elif invoker != 'pdfo' and prob_info['feasibility_problem']:
+        # We could set fx=[], funcCount=0, and fhist=[] since no function evaluation occurred. But then we will have to
+        # modify the validation of fx, funcCount, and fhist in postpdfo. To avoid such a modification, we set fx,
+        # funcCount, and fhist as below and then revise them in postpdfo.
+        nf = 1
+        x = x0_c  # prepdfo has tried to set x0 to a feasible point (but may have failed)
+        fx = fun_c(x)
+        fhist = np.array([fx], dtype=np.float64)
+        constrviolation = prob_info['constrv_x0']
+        chist = np.array([constrviolation], dtype=np.float64)
+        output['constr_value'] = np.asarray([], dtype=np.float64)
+        if constrviolation < np.finfo(np.float64).eps:
+            # Did prepdfo find a feasible point?
+            exitflag = 14
+        else:
+            exitflag = 15
+        output['constr_modified'] = False
     else:
         # The problem turns out 'normal' during prepdfo include all the constraints into one single linear constraint
         # (A_aug)'*x <= b_aug; note the TRANSPOSE due to the data structure of the Fortran code.
