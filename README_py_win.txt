@@ -43,9 +43,9 @@ include the Python libraries (included by default).
 
 1.1. Method 1: Installation via PyPI (recommended)
 
-PDFO can be installed via PyPI in the following way. In the Intel command 
-shell (either 32 or 64-bit, depending on your Python version), execute the 
-following command:
+Install pip in your system ( https://pip.pypa.io/en/stable/installing ).
+Then you can install PDFO by executing the following command in the 
+Intel command shell (either 32 or 64-bit, depending on your Python version):
 
 python -m pip install pdfo
 
@@ -65,8 +65,8 @@ execute the following command:
 
 python -m pip install ./
 
-If this command runs successfully, PDFO is installed. You can then test the
-installation by executing
+which needs pip ( https://pip.pypa.io/en/stable/installing ). The installation 
+can be tested by
 
 python -m unittest pdfo.testpdfo
 
