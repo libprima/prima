@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""PDFO: Powell's Derivative-Free Optimization solvers.
+"""PDFO - Powell's Derivative-Free Optimization solvers
 
-Authors
--------
-Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
-and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
-Department of Applied Mathematics,
-The Hong Kong Polytechnic University.
+PDFO (Powell's Derivative-Free Optimization solvers) is a cross-platform package providing interfaces for using late
+Professor M. J. D. Powell's derivative-free optimization solvers, including UOBYQA, NEWUOA, BOBYQA, LINCOA, and COBYLA.
 
-Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+See https://www.pdfo.net for more information.
 """
 import setuptools
 
@@ -23,9 +19,12 @@ import re
 from os import listdir, remove, walk
 from os.path import dirname, abspath, join, relpath
 
-from numpy.distutils.core import setup, Extension
+try:
+    from numpy.distutils.core import setup, Extension
+except:
+    raise Exception('\nPlease install NumPy before installing PDFO.\n')
 
-# Set the paths to all the folders that will be used to build PDFO
+# Set the paths to all the folders that will be used to build PDFO.
 CURRENT_WD = dirname(abspath(__file__))
 PDFO_WD = join(CURRENT_WD, 'python')
 FSRC_WD = join(dirname(PDFO_WD), 'fsrc')
@@ -34,8 +33,11 @@ GATEWAYS_WD = join(PDFO_WD, 'py_gateways')
 GATEWAYS_CLASSICAL_WD = join(GATEWAYS_WD, 'classical')
 INTERFACES_WD = join(PDFO_WD, 'interfaces', 'pdfo')
 
-# Set the options that will be given to F2PY to build PDFO
+# Set the options that will be given to F2PY to build PDFO.
 OPTIONS = ['--quiet']
+
+# Set the descriptions of the package.
+DOCLINES = (__doc__ or '').split('\n')
 
 
 def clean():
@@ -122,12 +124,20 @@ if __name__ == '__main__':
     setup(
         name='pdfo',
         version=open('VERSION.txt').read().rstrip(),
-        description="Powell's Derivative-Free Optimization solvers",
-        long_description=open('README.txt').read(),
+        description=DOCLINES[0],
+        long_description='\n'.join(DOCLINES[2:]),
         long_description_content_type='text/plain',
         author='Tom M. Ragonneau and Zaikun Zhang',
         author_email='pdfocode@gmail.com',
+        maintainer='Tom M. Ragonneau and Zaikun Zhang',
+        maintainer_email='pdfocode@gmail.com',
         url='https://www.pdfo.net',
+        download_url='https://www.pdfo.net/docs.html#releases',
+        project_urls={
+            'Bug Tracker': 'https://github.com/pdfo/pdfo/issues',
+            'Documentation': 'https://www.pdfo.net',
+            'Source Code': 'https://github.com/pdfo/pdfo',
+        },
         packages=['pdfo', 'pdfo.tests'],
         package_dir={
             'pdfo': relpath(INTERFACES_WD),
@@ -136,49 +146,24 @@ if __name__ == '__main__':
         include_package_data=True,
         ext_modules=EXT_MODULES,
         license='GNU Lesser General Public License v3 or later (LGPLv3+)',
-        keywords='Powell Derivative-Free Optimization Fortran UOBYQA NEWUOA BOBYQA LINCOA COBYLA',
+        keywords='Powell Derivative-Free Optimization UOBYQA NEWUOA BOBYQA LINCOA COBYLA',
         classifiers=[
             'Development Status :: 5 - Production/Stable',
-            'Environment :: Console',
-            'Framework :: IDLE',
-            'Framework :: IPython',
-            'Framework :: Jupyter',
-            'Framework :: Pytest',
             'Intended Audience :: Developers',
             'Intended Audience :: Education',
-            'Intended Audience :: End Users/Desktop',
-            'Intended Audience :: Information Technology',
             'Intended Audience :: Science/Research',
-            'Natural Language :: English',
-            'Operating System :: MacOS',
-            'Operating System :: MacOS :: MacOS 9',
-            'Operating System :: MacOS :: MacOS X',
-            'Operating System :: Microsoft',
-            'Operating System :: Microsoft :: Windows',
-            'Operating System :: Microsoft :: Windows :: Windows 10',
-            'Operating System :: POSIX',
-            'Operating System :: POSIX :: Linux',
+            'License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)',
             'Operating System :: Unix',
+            'Operating System :: MacOS',
+            'Operating System :: POSIX :: Linux',
+            'Operating System :: Microsoft :: Windows',
             'Programming Language :: Fortran',
-            'Programming Language :: Python',
-            'Programming Language :: Python :: 2',
             'Programming Language :: Python :: 2.7',
             'Programming Language :: Python :: 3',
-            'Programming Language :: Python :: 3.0',
-            'Programming Language :: Python :: 3.1',
-            'Programming Language :: Python :: 3.2',
-            'Programming Language :: Python :: 3.3',
-            'Programming Language :: Python :: 3.4',
-            'Programming Language :: Python :: 3.5',
-            'Programming Language :: Python :: 3.6',
-            'Programming Language :: Python :: 3.7',
-            'Programming Language :: Python :: 3.8',
-            'Programming Language :: Python :: 3.9',
-            'Programming Language :: Python :: Implementation',
-            'Topic :: Education',
             'Topic :: Scientific/Engineering',
+            'Topic :: Scientific/Engineering :: Mathematics',
             'Topic :: Software Development :: Libraries',
-            'Topic :: Utilities',
+            'Topic :: Software Development :: Libraries :: Python Modules',
         ],
         install_requires=['numpy'],
         setup_requires=['pytest-runner'],
