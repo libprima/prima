@@ -64,15 +64,16 @@ class OptimizeResult(dict):
     constr_value: ndarray or list of ndarrays
         Values of the constraint functions at the returned `x`. It can be one of the two cases below depending on how
         the `constraints` variable is specified at the input.
-        1. If `constraints` is a dictionary or an instance of NonlinearConstraint or LinearConstraint, then `constr_value`
-           is an ndarray, whose value is `constraints['fun'](x)`, `constraints.fun(x)`, or `constraints.A*x`.
+        1. If `constraints` is a dictionary or an instance of NonlinearConstraint or LinearConstraint, then
+           `constr_value` is an ndarray, whose value is `constraints['fun'](x)`, `constraints.fun(x)`, or
+           `constraints.A*x`.
         2. If `constraints` is a list of dictionaries or instances of NonlinearConstraint or LinearConstraint, then 
-           `constr_value` is a list of ndarrays described in 1, each of which is the value of the corresponding component 
-           in `constraints`.
+           `constr_value` is a list of ndarrays described in 1, each of which is the value of the corresponding
+           component in `constraints`.
         If a nonlinear constraint is trivial (i.e., it has -inf as th lower bound and +inf as th upper bound), then its
         is represented by NaN in constr_value, because such constraints are not evaluated during the computation.
-        Trivial nonlinear constaints with unknown dimensions (for example, {'type': 'eq', 'fun': None} or 
-        NonlinearConstraint(fun, None, None)) are reperesented by empty arrayes in constr_value.
+        Trivial nonlinear constraints with unknown dimensions (for example, {'type': 'eq', 'fun': None} or
+        NonlinearConstraint(fun, None, None)) are represented by empty arrays in constr_value.
     method: str
         The name of the method that was used to solve the problem.
     constr_modified: bool
