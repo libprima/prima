@@ -1210,7 +1210,7 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
     if options is not None and not isinstance(options, dict):
         raise ValueError('{}: the options should be defined as a dictionary.'.format(invoker))
 
-    options = dict() if options is None else options.copy()
+    options = dict() if options is None else dict(options)
     fun_name = stack()[0][3]  # name of the current function
 
     if invoker not in invoker_list:
@@ -1221,7 +1221,7 @@ def _options_validation(invoker, options, method, lenx0, lb, ub, list_warnings):
         option_fields = list(options.keys())
     else:
         option_fields = []
-    user_option_fields = option_fields.copy()
+    user_option_fields = list(option_fields)
 
     # Default values for each options.
     maxfev = 500 * lenx0
@@ -2703,7 +2703,7 @@ def postpdfo(x, fx, exitflag, output, method, nf, fhist, options, prob_info, con
             raise ValueError(
                 '{}: UNEXPECTED ERROR: prob_info should contain scaling factors if the problem has been '
                 'scaled.'.format(invoker))
-    prob_info_c = prob_info.copy()
+    prob_info_c = dict(prob_info)
 
     # Manage the extreme barriers.
     if not options['classical']:
