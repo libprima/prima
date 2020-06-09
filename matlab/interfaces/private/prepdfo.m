@@ -1554,7 +1554,7 @@ if isfield(options, 'honour_x0') && options.honour_x0  % In this case, we respec
     x0(lbx) = lb(lbx);
     x0(ubx) = ub(ubx);
     if rhobeg_old - options.rhobeg > eps*max(1, rhobeg_old) 
-        options.rhoend = max(eps, min(options.rhoend, 0.1*options.rhobeg));  % We do not revise rhoend unless rhobeg is revised
+        options.rhoend = max(eps, min(0.1*options.rhobeg, options.rhoend));  % We do not revise rhoend unless rhobeg is revised
         if ismember('rhobeg', user_options_fields) || ismember('rhoend', user_options_fields)
             wid = sprintf('%s:ReviseRhobeg', invoker);
             wmessage = sprintf('%s: rhobeg is revised to %f and rhoend to %f so that the distance between x0 and the inactive bounds is at least rhobeg.', invoker, options.rhobeg, options.rhoend);
