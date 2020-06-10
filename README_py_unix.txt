@@ -17,8 +17,8 @@ See https://www.pdfo.net for more information.
 
 0. Prerequisites
 
-To use the Python version of PDFO on Linux or Mac, you need Python (including
-the headers), NumPy, F2PY, and gfortran, which can be installed in the following way.
+To use the Python version of PDFO on Linux or Mac, you need Python (headers
+included), NumPy, F2PY, and gfortran, which can be installed in the following way.
 
 0.1. Install Python (version 2.7 or above) according to https://www.python.org .
 To include the headers on Linux, python3-dev or python-dev should be installed
@@ -26,7 +26,7 @@ depending on the Python you want to use; on Mac, the headers are included by
 default if you install Python using Homebrew.
 
 0.2. Install the latest version of SciPy. See https://www.scipy.org/install.html .
-SciPy includes NumPy, which provides F2PY.
+Then NumPy will be installed by default. NumPy provides F2PY.
 
 0.3. Install gfortran using your package manager, e.g., apt on Debian/Ubuntu,
 yum on Fedora/RHEL/CentOS, and Homebrew on Mac.
@@ -37,37 +37,24 @@ Xcode provides the libraries needed by F2PY.
 
 1. Installation
 
-Note: You may need to replace 'python' with 'python3' in all the commands 
-below if you use Python 3. 
+PDFO can be installed via PyPI. 
 
-1.1. Method 1: Installation via PyPI (recommended)
-
-Install pip in your system ( https://pip.pypa.io/en/stable/installing ). 
-Then install PDFO by the following command in a command shell (e.g., bash, zsh):
+Install pip in your system ( https://pip.pypa.io/en/stable/installing/ ).
+Then execute
 
 python -m pip install pdfo
 
-If this command runs successfully, PDFO is installed. You can then test the 
-installation by executing
+in a command shell (e.g., bash). If your Python launcher is not python,
+adapt the command accordingly. If this command runs successfully, PDFO
+is installed. You may verify the installation by
 
 python -m unittest pdfo.testpdfo
 
-1.2. Method 2: Manual installation 
-
-Download the source code package from https://www.pdfo.net . Decompressing 
-the package, you will obtain a folder. In a command shell (e.g., bash, zsh),
-change your directory to this folder, and then install PDFO by running
-
-python -m pip install ./
-
-which needs pip ( https://pip.pypa.io/en/stable/installing ); alternatively,
-you can install PDFO using setup.py in the above-mentioned folder by running
-
-python setup.py install --user
-
-The installation can be tested by
-
-python -m unittest pdfo.testpdfo
+Alternatively, PDFO can be installed from the source code: download and
+decompress the source code package; you will obtain a folder containing
+setup.py; in a command shell, change your directory to this folder; then
+run either "python -m pip install ./" or "python setup.py install --user"
+to install PDFO (exclude the quotation marks).
 
 
 2. Usage
