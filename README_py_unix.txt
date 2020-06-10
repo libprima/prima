@@ -37,24 +37,24 @@ Xcode provides the libraries needed by F2PY.
 
 1. Installation
 
-PDFO can be installed via PyPI. 
+It is highly recommended to install PDFO via PyPI. 
 
 Install pip in your system ( https://pip.pypa.io/en/stable/installing/ ).
 Then execute
 
 python -m pip install pdfo
 
-in a command shell (e.g., bash). If your Python launcher is not python,
-adapt the command accordingly. If this command runs successfully, PDFO
-is installed. You may verify the installation by
+in a command shell (e.g., the terminal in Linux or Mac). If your Python
+launcher is not python, adapt the command accordingly. If this command
+runs successfully, PDFO is installed. You may verify the installation by
 
 python -m unittest pdfo.testpdfo
 
 Alternatively, PDFO can be installed from the source code: download and
 decompress the source code package; you will obtain a folder containing
 setup.py; in a command shell, change your directory to this folder; then
-run either "python -m pip install ./" or "python setup.py install --user"
-to install PDFO (exclude the quotation marks).
+install PDFO by executing "python setup.py install --user", excluding the
+quotation marks.
 
 
 2. Usage

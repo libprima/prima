@@ -19,23 +19,21 @@ See https://www.pdfo.net for more information.
 
 To use the Python version of PDFO on Windows, you need Python 3 (PDFO does 
 not support Python 2 on Windows), NumPy, F2PY, Intel Fortran compiler (ifort), 
-Microsoft Visual Studio, and Microsoft Windows SDK, which can be installed
-in the following way.
+Microsoft Visual Studio, which can be installed in the following way.
 
 0.1. Install Python (version 3.0 or above) according to https://www.python.org .
 
 0.2. Install the latest version of SciPy. See https://www.scipy.org/install.html .
 Then NumPy will be installed by default. NumPy provides F2PY.
 
-0.3. Install Intel Fortran compiler according to
+0.3. Install the Intel Fortran compiler according to
 https://software.intel.com/en-us/fortran-compilers . Your installation has to
 include the Python libraries (included by default).
 
 0.4. Install Microsoft Visual Studio according to 
 https://visualstudio.microsoft.com . Make sure to include "C++ Build Tools"
-in your installation.
-
-0.5. Install Microsoft Windows SDK according to 
+and "Microsoft Windows SDK" in your installation. Microsoft Windows SDK
+can also be installed separately according to 
 https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk/
 
 
@@ -49,10 +47,19 @@ version), execute
 
 python -m pip install pdfo
 
-If your Python launcher is not python, adapt the command accordingly. If this
-command runs successfully, PDFO is installed. You may verify the installation by
+Make sure to run the above command in the correct Intel Command shell,
+as it is important to guarantee the compatibility between the compiler
+and your Python. If your Python launcher is not python, adapt the
+command accordingly. If this command runs successfully, PDFO is
+installed. You may verify the installation by
 
 python -m unittest pdfo.testpdfo
+
+Note that an Ubuntu terminal is available in Windows 10:
+https://ubuntu.com/tutorials/tutorial-ubuntu-on-windows
+Within such a terminal, you can use the Linux version of PDFO following
+README_py_unix.txt. The prerequisites are much easier to fulfill and no
+commercial software such as ifort is needed.
 
 
 2. Usage
