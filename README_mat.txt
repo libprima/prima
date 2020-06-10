@@ -40,19 +40,15 @@ documentation of MathWorks closely.
 
 1. Installation
 
-PDFO can be installed by the setup.m script in the following way.
-
-1.1. Decompress the source code package of PDFO if you have not done so. You
-will obtain a folder containing setup.m. Place this folder at the location
-where you want PDFO to be installed. 
-
-1.2. In MATLAB, change your directory to the above-mentioned folder, and
-execute the following command:
+Download and decompress the source code package of PDFO. You will obtain
+a folder containing setup.m. Place this folder at the location where you
+want PDFO to be installed. In MATLAB, change the directory to this folder,
+and execute the following command:
 
 setup
 
-If this command runs successfully, PDFO is installed. You can then test the 
-installation by executing 
+If this command runs successfully, PDFO is installed. You may execute the
+following command in MATLAB to verify the installation:
 
 testpdfo
 

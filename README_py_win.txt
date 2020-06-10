@@ -18,55 +18,39 @@ See https://www.pdfo.net for more information.
 0. Prerequisites
 
 To use the Python version of PDFO on Windows, you need Python 3 (PDFO does 
-not support Python 2 on Windows), NumPy, F2PY, Microsoft Visual Studio, 
-Microsoft Windows SDK, and Intel Fortran compiler (ifort), which can be 
-installed in the following way.
+not support Python 2 on Windows), NumPy, F2PY, Intel Fortran compiler (ifort), 
+Microsoft Visual Studio, and Microsoft Windows SDK, which can be installed
+in the following way.
 
 0.1. Install Python (version 3.0 or above) according to https://www.python.org .
 
 0.2. Install the latest version of SciPy. See https://www.scipy.org/install.html .
-SciPy includes NumPy, which provides F2PY.
+Then NumPy will be installed by default. NumPy provides F2PY.
 
-0.3. Install Microsoft Visual Studio according to 
+0.3. Install Intel Fortran compiler according to
+https://software.intel.com/en-us/fortran-compilers . Your installation has to
+include the Python libraries (included by default).
+
+0.4. Install Microsoft Visual Studio according to 
 https://visualstudio.microsoft.com . Make sure to include "C++ Build Tools"
 in your installation.
 
-0.4. Install Microsoft Windows SDK according to 
+0.5. Install Microsoft Windows SDK according to 
 https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk/
-
-0.5. Install Intel Fortran compiler according to
-https://software.intel.com/en-us/fortran-compilers . Your installation has to
-include the Python libraries (included by default).
 
 
 1. Installation
 
-1.1. Method 1: Installation via PyPI (recommended)
+PDFO can be installed via PyPI. 
 
-Install pip in your system ( https://pip.pypa.io/en/stable/installing ).
-Then you can install PDFO by executing the following command in the 
-Intel command shell (either 32 or 64-bit, depending on your Python version):
+Install pip in your system ( https://pip.pypa.io/en/stable/installing/).
+In the Intel command shell (either 32 or 64-bit, depending on your Python
+version), execute
 
 python -m pip install pdfo
 
-If this command runs successfully, PDFO is installed. You can then test the 
-installation by the following command:
-
-python -m unittest pdfo.testpdfo
-
-1.2. Method 2: Manual installation 
-
-1.2.1. Download the source code package from https://www.pdfo.net . Decompress 
-the package. You will obtain a folder.
-
-1.2.2. In the Intel command shell (either 32 or 64-bit, depending on your
-Python version), change your directory to the above-mentioned folder, and
-execute the following command:
-
-python -m pip install ./
-
-which needs pip ( https://pip.pypa.io/en/stable/installing ). The installation 
-can be tested by
+If your Python launcher is not python, adapt the command accordingly. If this
+command runs successfully, PDFO is installed. You may verify the installation by
 
 python -m unittest pdfo.testpdfo
 
