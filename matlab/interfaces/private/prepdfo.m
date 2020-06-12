@@ -25,7 +25,7 @@ function [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, options, probinfo] =
 warnings = {}; % A cell that records all the warnings, will be recorded in probinfo
 
 % Who is calling this function? Is it a correct invoker?
-invoker_list = {'pdfo', 'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla'};
+invoker_list = {'pdfon', 'uobyqan', 'newuoan', 'bobyqan', 'lincoan', 'cobylan'};
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function 
 if (length(callstack) == 1 || ~ismember(callstack(2).name, invoker_list))
@@ -43,7 +43,7 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % If invoker is a solver called by pdfo, then prepdfo should have been called in pdfo.
-if (length(callstack) >= 3) && strcmp(callstack(3).name, 'pdfo')
+if (length(callstack) >= 3) && strcmp(callstack(3).name, 'pdfon')
     if nargin ~= 10 % There should be 10 input arguments
         % Private/unexpected error
         error(sprintf('%s:InvalidInput', funname), ...
@@ -201,7 +201,7 @@ end
 % Can the invoker handle the given problem? 
 % This should be done after the problem type has bee 'refined'.
 if ~prob_solv_match(probinfo.refined_type, invoker) 
-    if strcmp(invoker, 'pdfo') || (nargin ~= 1) 
+    if strcmp(invoker, 'pdfon') || (nargin ~= 1) 
         % Private/unexpected error
         error(sprintf('%s:InvalidProb', funname), ...
         '%s: UNEXPECTED ERROR: problem and solver do not match; this should not happen when %s is called by %s or the problem is not a structure.', funname, funname, invoker);
@@ -262,18 +262,18 @@ end
 
 % Record the refined data (excluding options) after preprocessing
 % This has to be done before select_solver, because probinfo.refined_data.lb 
-% and probinfo.refined_data.ub will be used for defining rhobeg if bobyqa is selected.
+% and probinfo.refined_data.ub will be used for defining rhobeg if bobyqan is selected.
 probinfo.refined_data = struct('objective', fun, 'x0', x0, 'Aineq', Aineq, 'bineq', bineq, ...
     'Aeq', Aeq, 'beq', beq, 'lb', lb, 'ub', ub, 'nonlcon', nonlcon);
 
-% Select a solver if invoker='pdfo'; record the solver in options.solver. 
+% Select a solver if invoker='pdfon'; record the solver in options.solver. 
 % Some options will be revised accordingly, including npt, rhobeg, rhoend.
 % Of course, if the user-defined options.solver is valid, we accept it.
-if strcmp(invoker, 'pdfo') 
+if strcmp(invoker, 'pdfon') 
     [options, warnings] = select_solver(invoker, options, probinfo, warnings);
 end
 
-if strcmpi(options.solver, 'bobyqa') && ~probinfo.nofreex && ~probinfo.infeasible && ~probinfo.feasibility_problem
+if strcmpi(options.solver, 'bobyqan') && ~probinfo.nofreex && ~probinfo.infeasible && ~probinfo.feasibility_problem
 % The Fortran code of BOBYQA will revise x0 so that the distance between
 % x0 and the inactive bounds is at least rhobeg. We do it here in order
 % to raise a warning when such a revision occurs. After this, the
@@ -325,7 +325,7 @@ function [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, options, warnings] =
 % NOTE: We treat field names case-sensitively.
 
 % Possible invokers
-invoker_list = {'pdfo', 'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla'};
+invoker_list = {'pdfon', 'uobyqan', 'newuoan', 'bobyqan', 'lincoan', 'cobylan'};
 
 callstack = dbstack; 
 funname = callstack(1).name; % Name of the current function
@@ -364,9 +364,9 @@ end
 
 % Are there unknown fields?
 known_fields = {'objective', 'x0', 'Aineq', 'bineq', 'Aeq', 'beq', 'lb', 'ub', 'nonlcon', 'options', 'solver'};
-% 1. When invoker is in {uobyqa, ..., cobyla}, we will not complain that
+% 1. When invoker is in {uobyqan, ..., cobylan}, we will not complain that
 %    a solver is specified unless invoker~=solver. See function pre_options.
-% 2. When invoker is in {uobyqa, ..., cobyla}, if the problem turns out
+% 2. When invoker is in {uobyqan, ..., cobylan}, if the problem turns out
 %    unsolvable for the invoker, then we will raise an error in prepdfo.
 %    We do not do it here because the problem has not been validated/preprocessed 
 %    yet. Maybe some constraints are trivial and hence can be removed 
@@ -769,7 +769,7 @@ function [options, user_options_fields, warnings] = pre_options(invoker, options
 % NOTE: We treat field names case-sensitively.
 
 % Possible solvers 
-solver_list = {'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla'}; 
+solver_list = {'uobyqan', 'newuoan', 'bobyqan', 'lincoan', 'cobylan'}; 
 % We may add other solvers in the future!
 % If a new solver is included, we should do the following.
 % 0. Include it into the invoker_list (in this and other functions).
@@ -779,7 +779,7 @@ solver_list = {'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla'};
 %    depends on the invoker/solver. See known_fields there).
 
 % Possible invokers
-invoker_list = ['pdfo', solver_list];
+invoker_list = ['pdfon', solver_list];
 
 callstack = dbstack;
 funname = callstack(1).name;
@@ -795,7 +795,7 @@ end
 
 % npt = ! LATER ! % The default npt depends on solver and will be set later in this function 
 maxfun = 500*lenx0;
-rhobeg = 1; % The default rhobeg and rhoend will be revised if solver = 'bobyqa'
+rhobeg = 1; % The default rhobeg and rhoend will be revised if solver = 'bobyqan'
 rhoend = 1e-6;
 ftarget = -inf;
 classical = false; % Call the classical Powell code? Classical mode recommended only for research purpose  
@@ -823,8 +823,8 @@ user_options_fields = options_fields;
 % We need to know what is the solver in order to decide which fields
 % are 'known' (e.g., expected), and also to set npt, rhobeg, rhoend.
 % We do the following:
-% 1. If invoker='pdfo':
-% 1.1 If no solver is specified or solver='pdfo', we do not complain
+% 1. If invoker='pdfon':
+% 1.1 If no solver is specified or solver='pdfon', we do not complain
 % and set options.solver=solver='', i.e., an empty char array; 
 % 1.2 Else if solver is not in solver_list, we warn about 'unknown solver' 
 % and set options.solver=solver='', i.e., an empty char array;
@@ -834,7 +834,7 @@ user_options_fields = options_fields;
 % about 'invalid solver' and set options.solver=solver=invoker;
 % 2.2 Else, we do not complain and set options.solver=solver=invoker.
 % In this way, options.solver and solver either end up with a member of
-% solver_list or ''. The second case is possible only if invoker='pdfo',
+% solver_list or ''. The second case is possible only if invoker='pdfon',
 % and solver will be selected later.
 if isfield(options, 'solver') && ~isa(options.solver, 'char') && ~isa(options.solver, 'string')
     options.solver = 'UNKNOWN_SOLVER';
@@ -842,7 +842,7 @@ if isfield(options, 'solver') && ~isa(options.solver, 'char') && ~isa(options.so
     % We do not need to worry about the case where solver is empty, because
     % all the empty fields have been removed from options. 
 end
-if strcmp(invoker, 'pdfo')
+if strcmp(invoker, 'pdfon')
     % We se the default value of solver to '', an empty char array. 
     % 1. DO NOT change this default value! It will affect known_fields 
     % and select_solver.
@@ -852,15 +852,15 @@ if strcmp(invoker, 'pdfo')
     if isfield(options, 'solver') 
         if any(strcmpi(options.solver, solver_list))
             solver = lower(options.solver);
-        elseif ~strcmpi(options.solver, 'pdfo') 
-        % We should not complain about 'unknown solver' if invoker=options.solver='pdfo'
+        elseif ~strcmpi(options.solver, 'pdfon') 
+        % We should not complain about 'unknown solver' if invoker=options.solver='pdfon'
             wid = sprintf('%s:UnknownSolver', invoker); 
             wmessage = sprintf('%s: unknown solver specified; %s will select one automatically.', invoker, invoker);
             warning(wid, '%s', wmessage);
             warnings = [warnings, wmessage]; 
         end
     end
-else % invoker is in {'uobyqa', ..., 'cobyla'}
+else % invoker is in {'uobyqan', ..., 'cobylan'}
     if isfield(options, 'solver') && ~strcmpi(options.solver, invoker)
         wid = sprintf('%s:InvalidSolver', invoker);
         wmessage = sprintf('%s: a solver different from %s is specified; it is ignored.', invoker, invoker); 
@@ -880,13 +880,13 @@ options.solver = solver; % Record solver in options.solver; will be used in post
 % solver is '' if it has not been decided yet; in that case, we suppose (for
 % simplicity) that all possible fields are known.
 known_fields = {'maxfun', 'rhobeg', 'rhoend', 'ftarget', 'classical', 'quiet', 'debug', 'chkfunval', 'solver'};
-if isempty(solver) || any(strcmpi(solver, {'newuoa', 'bobyqa', 'lincoa'}))
+if isempty(solver) || any(strcmpi(solver, {'newuoan', 'bobyqan', 'lincoan'}))
     known_fields = [known_fields, 'npt'];
 end
-if isempty(solver) || any(strcmpi(solver, {'bobyqa', 'lincoa', 'cobyla'})) 
+if isempty(solver) || any(strcmpi(solver, {'bobyqan', 'lincoan', 'cobylan'})) 
     known_fields = [known_fields, 'scale'];
 end
-if isempty(solver) || strcmpi(solver, 'bobyqa') 
+if isempty(solver) || strcmpi(solver, 'bobyqan') 
     known_fields = [known_fields, 'honour_x0'];
 end
 unknown_fields = setdiff(options_fields, known_fields);
@@ -914,13 +914,13 @@ if isempty(solver)
     npt = NaN; % The real npt will be (and should be) set when solver is selected
 else
     switch lower(solver)
-    case {'newuoa', 'bobyqa', 'lincoa'}
+    case {'newuoan', 'bobyqan', 'lincoan'}
         npt = 2*lenx0 + 1;
-    case {'uobyqa'}
+    case {'uobyqan'}
         npt = (lenx0+1)*(lenx0+2)/2;
-    case {'cobyla'}
+    case {'cobylan'}
         npt = lenx0+1;
-		% uobyqa and cobyla do not need npt an option, but we need npt to validate/set maxfun
+		% uobyqan and cobylan do not need npt an option, but we need npt to validate/set maxfun
     end
 end
 
@@ -954,7 +954,7 @@ if options.scale
     rhobeg = 0.5;  % This value cannot be bigger than 1. Otherwise, BOBYQA will complain.
     rhoend = 1e-6;
 end
-if strcmpi(solver, 'bobyqa') && ~options.scale
+if strcmpi(solver, 'bobyqan') && ~options.scale
     rhobeg = max(eps, min(rhobeg, min(ub-lb)/4));
     rhoend = max(eps, min(0.1*rhobeg, rhoend));
 end
@@ -985,9 +985,9 @@ if isfield(options, 'npt')
         wmessage = sprintf('%s: invalid npt. It should be a positive integer.', invoker);
         warning(wid, '%s', wmessage);
         warnings = [warnings, wmessage]; 
-    elseif any(strcmpi(solver, {'newuoa', 'bobyqa', 'lincoa'})) && (~isintegerscalar(options.npt) || isnan(options.npt) || options.npt < lenx0+2 || options.npt > (lenx0+1)*(lenx0+2)/2) 
-        % newuoa, bobyqa and lincoa requires n+2<=npt<=(n+1)*)(n+2)/2;
-        % uobyqa and cobyla do not use npt.
+    elseif any(strcmpi(solver, {'newuoan', 'bobyqan', 'lincoan'})) && (~isintegerscalar(options.npt) || isnan(options.npt) || options.npt < lenx0+2 || options.npt > (lenx0+1)*(lenx0+2)/2) 
+        % newuoan, bobyqan and lincoan requires n+2<=npt<=(n+1)*)(n+2)/2;
+        % uobyqan and cobylan do not use npt.
         wid = sprintf('%s:InvalidNpt', invoker);
         wmessage = sprintf('%s: invalid npt; %s requires it to be an integer and n+2 <= npt <= (n+1)*(n+2)/2; it is set to 2n+1.', invoker, solver);
         warning(wid, '%s', wmessage);
@@ -999,7 +999,7 @@ end
 if ~validated  % options.npt has not got a valid value yet
     options.npt = npt; 
     % When solver='' (empty char array), the default npt is NaN.
-    % For uobyqa and cobyla, we also adopt the 'default npt' defined above,
+    % For uobyqan and cobylan, we also adopt the 'default npt' defined above,
     % although it will NOT be used by the solver
 end
 options.npt = double(options.npt);
@@ -1040,11 +1040,11 @@ if isfield(options, 'maxfun')
         validated = true; %!!! % Set validated=true so that options.maxfun will not be set to the default value later
         wid =  sprintf('%s:InvalidMaxfun', invoker);
         switch lower(solver) % The warning message depends on solver
-        case {'newuoa', 'lincoa', 'bobyqa'}
+        case {'newuoan', 'lincoan', 'bobyqan'}
             wmessage = sprintf('%s: invalid maxfun; %s requires maxfun > npt; it is set to npt+1.', invoker, solver);
-        case 'uobyqa'
+        case 'uobyqan'
             wmessage = sprintf('%s: invalid maxfun; %s requires maxfun > (n+1)*(n+2)/2; it is set to (n+1)*(n+2)/2+1.', invoker, solver);
-        case 'cobyla'
+        case 'cobylan'
             wmessage = sprintf('%s: invalid maxfun; %s requires maxfun > n+1; it is set to n+2.', invoker, solver);
         end
         warning(wid, '%s', wmessage);
@@ -1069,7 +1069,7 @@ if isfield(options, 'rhobeg')
         wmessage = sprintf('%s: invalid rhobeg; it should be a positive number; it is set to max(%f, rhoend).', invoker, rhobeg);
         warning(wid, '%s', wmessage);
         warnings = [warnings, wmessage]; 
-    elseif strcmpi(solver, 'bobyqa')  % Validate options.rhobeg for bobyqa
+    elseif strcmpi(solver, 'bobyqan')  % Validate options.rhobeg for bobyqan
         if options.scale && options.rhobeg > 1  % This case cannot be combined with the next case, as ub and lb are NOT scaled yet in prepdfo
             wid = sprintf('%s:InvalidRhobeg', invoker);
             wmessage = sprintf('%s: invalid rhobeg; %s requires rhobeg <= 1 when the problem is scaled; it is set to 0.5.', invoker, solver);
@@ -1240,7 +1240,7 @@ if ~validated % options.chkfunval has not got a valid value yet
 end
 if options.chkfunval
     wid = sprintf('%s:Chkfunval', invoker);
-    if strcmp(solver, 'cobyla')
+    if strcmp(solver, 'cobylan')
         wmessage = sprintf('%s: checking whether fx=fun(x) and conval=con(x) at exit, which costs an extra function/constraint evaluation; set options.chkfunval=false to disable the check.', invoker);
     else
         wmessage = sprintf('%s: checking whether fx=fun(x) at exit, which costs an extra function evaluation; set options.chkfunval=false to disable the check.', invoker);
@@ -1338,9 +1338,9 @@ return
 %%%%%%%%%%%%%%%%%%%%%%%% Function for selecting solver %%%%%%%%%%%%%%%%%%%%
 function [options, warnings] = select_solver(invoker, options, probinfo, warnings)
 
-invoker_list = {'pdfo'};
+invoker_list = {'pdfon'};
 % Only pdfo needs select_solver. We may have other invokers in the future!
-solver_list = {'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla'}; 
+solver_list = {'uobyqan', 'newuoan', 'bobyqan', 'lincoan', 'cobylan'}; 
 % We may add other solvers in the future! 
 % Note that pdfo is not a possible solver here! 
 callstack = dbstack;
@@ -1379,33 +1379,33 @@ if ~solver_correct
     switch ptype
     case 'unconstrained'
         if (n >= 2 && n <= 8 && options.maxfun >= (n+1)*(n+2)/2 + 1)
-            solver = 'uobyqa'; 
+            solver = 'uobyqan'; 
         elseif (options.maxfun <= n+2) % After prepdfo, options.maxfun>=n+2 is ensured. Thus options.maxfun<=n+2 indeed means options.maxfun=n+2
-            solver = 'cobyla'; 
+            solver = 'cobylan'; 
         else 
-            solver = 'newuoa';  % options.npt will be set later
-            % Interestingly, we note in our test that lincoa outperformed 
-            % newuoa on unconstrained CUTEst problems when the dimension 
+            solver = 'newuoan';  % options.npt will be set later
+            % Interestingly, we note in our test that lincoan outperformed 
+            % newuoan on unconstrained CUTEst problems when the dimension 
             % was not large (i.e., <=50) or the precision requirement
             % was not high (i.e., >=1e-5). Therefore, it is worthwhile to 
-            % try lincoa when an unconstrained problem is given. 
+            % try lincoan when an unconstrained problem is given. 
             % Nevertheless, for the moment, we set the default solver 
-            % for unconstrained problems to be newuoa.
+            % for unconstrained problems to be newuoan.
         end
     case 'bound-constrained'
         if (options.maxfun <= n+2)
-            solver = 'cobyla'; 
+            solver = 'cobylan'; 
         else
-            solver = 'bobyqa';  % options.npt will be set later
+            solver = 'bobyqan';  % options.npt will be set later
         end
     case 'linearly-constrained'
         if (options.maxfun <= n+2)
-            solver = 'cobyla'; 
+            solver = 'cobylan'; 
         else
-            solver = 'lincoa';  % options.npt will be set later
+            solver = 'lincoan';  % options.npt will be set later
         end
     case 'nonlinearly-constrained'
-        solver = 'cobyla'; 
+        solver = 'cobylan'; 
     otherwise
         % Private/unexpected error
         error(sprintf('%s:InvalidProbType', funname), '%s: UNEXPECTED ERROR: unknown problem type ''%s'' received.', funname, ptype);
@@ -1414,7 +1414,7 @@ end
 
 % Revise options.npt according to the selected solver 
 % Note that pre_options has set options.npt to either a positive integer or NaN. 
-if ismember(solver, {'newuoa', 'bobyqa', 'lincoa'}) && (isnan(options.npt) || options.npt < n+2 || options.npt > min((n+1)*(n+2)/2, options.maxfun-1))  
+if ismember(solver, {'newuoan', 'bobyqan', 'lincoan'}) && (isnan(options.npt) || options.npt < n+2 || options.npt > min((n+1)*(n+2)/2, options.maxfun-1))  
     options.npt = min(2*n+1, options.maxfun - 1);
     if ismember('npt', probinfo.user_options_fields)
         wid = sprintf('%s:InvalidNpt', invoker);
@@ -1426,12 +1426,12 @@ end
 
 % Revise options.rhobeg and options.rhoend according to the selected solver.
 % For the moment, only BOBYQA needs such a revision.
-if strcmp(solver, 'bobyqa') && options.rhobeg > min(probinfo.refined_data.ub-probinfo.refined_data.lb)/2
+if strcmp(solver, 'bobyqan') && options.rhobeg > min(probinfo.refined_data.ub-probinfo.refined_data.lb)/2
     options.rhobeg = max(eps, min(probinfo.refined_data.ub-probinfo.refined_data.lb)/4);
     options.rhoend = max(eps, min(0.1*options.rhobeg, options.rhoend));
     if ismember('rhobeg', probinfo.user_options_fields) || ismember('rhoend', probinfo.user_options_fields)
         wid = sprintf('%s:InvalidRhobeg', invoker);
-        wmessage = sprintf('%s: rhobeg is set to %f and rhoend to %f acccording to the selected solver bobyqa, which requires rhoend <= rhobeg <= min(ub-lb)/2.', invoker, options.rhobeg, options.rhoend);
+        wmessage = sprintf('%s: rhobeg is set to %f and rhoend to %f acccording to the selected solver bobyqan, which requires rhoend <= rhobeg <= min(ub-lb)/2.', invoker, options.rhobeg, options.rhoend);
         warning(wid, '%s', wmessage); 
         warnings = [warnings, wmessage];
     end
@@ -1473,7 +1473,7 @@ function match = prob_solv_match(ptype, solver)
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function 
 
-solver_list = {'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla', 'pdfo'}; 
+solver_list = {'uobyqan', 'newuoan', 'bobyqan', 'lincoan', 'cobylan', 'pdfon'}; 
 % Note: pdfo is also a possible solver when prob_solv_match is called in
 % prepdfo to check whether the invoker can handle the problem. 
 if ~ismember(solver, solver_list)
@@ -1489,15 +1489,15 @@ case 'unconstrained'
     % Essentially do nothing. DO NOT remove this case. Otherwise, the
     % case would be included in 'otherwise', which is not correct. 
 case 'bound-constrained'
-    if any(strcmp(solver, {'uobyqa', 'newuoa'}))
+    if any(strcmp(solver, {'uobyqan', 'newuoan'}))
         match = false;
     end
 case 'linearly-constrained'
-    if any(strcmp(solver, {'uobyqa', 'newuoa', 'bobyqa'}))
+    if any(strcmp(solver, {'uobyqan', 'newuoan', 'bobyqan'}))
         match = false;
     end
 case 'nonlinearly-constrained'
-    if any(strcmp(solver, {'uobyqa', 'newuoa', 'bobyqa', 'lincoa'}))
+    if any(strcmp(solver, {'uobyqan', 'newuoan', 'bobyqan', 'lincoan'}))
         match = false;
     end
 otherwise
@@ -1539,7 +1539,7 @@ function [x0, options, warnings] = pre_rhobeg_x0(invoker, x0, lb, ub, user_optio
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function 
 
-solver_list = {'bobyqa'}; % Only BOBYQA needs pre_rhobeg_x0. May have others in the future.
+solver_list = {'bobyqan'}; % Only BOBYQA needs pre_rhobeg_x0. May have others in the future.
 
 if ~ismember(lower(options.solver), solver_list)
     % Private/unexpcted error
