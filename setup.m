@@ -224,16 +224,16 @@ try
         modo_files = [files_with_wildcard(fullfile(fsrc, solver), '*.mod'), files_with_wildcard(fullfile(fsrc, solver), '*.o')];
         cellfun(@(filename) delete(filename), modo_files);
         % Compile
-        src_files = files_with_wildcard(fullfile(fsrc, solver), '*.f');
-        mex(mex_options{:}, '-output', ['f', solver], fullfile(fsrc, 'pdfoconst.F'), src_files{:}, fullfile(gateways, [solver, '-interface.F']));
+        src_files = files_with_wildcard(fullfile(fsrc, solver), '*.f*');
+        mex(mex_options{:}, '-output', ['f', solver, 'n'], fullfile(fsrc, 'pdfoconst.F'), src_files{:}, fullfile(gateways, [solver, '-interface.F']));
 
         % Compilation of the 'classical' version of solver
         % Clean up the source file directory
         modo_files = [files_with_wildcard(fullfile(fsrc_classical, solver), '*.mod'), files_with_wildcard(fullfile(fsrc_classical, solver), '*.o')];
         cellfun(@(filename) delete(filename), modo_files);
         % Compile
-        src_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.f');
-        mex(mex_options{:}, '-output', ['f', solver, '_classical'], fullfile(fsrc, 'pdfoconst.F'), src_files{:}, fullfile(gateways_classical, [solver, '-interface.F']));
+        src_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.f*');
+        mex(mex_options{:}, '-output', ['f', solver, 'n_classical'], fullfile(fsrc, 'pdfoconst.F'), src_files{:}, fullfile(gateways_classical, [solver, '-interface.F']));
 
         fprintf('Done.\n');
     end

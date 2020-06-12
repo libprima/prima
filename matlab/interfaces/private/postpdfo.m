@@ -40,16 +40,16 @@ obligatory_probinfo_fields = {'raw_data', 'refined_data', 'fixedx', 'fixedx_valu
 obligatory_options_fields = {'classical', 'debug', 'chkfunval', 'quiet'};
 
 % All possible solvers
-unconstrained_solver_list = {'uobyqa', 'newuoa'};
-constrained_solver_list = {'bobyqa', 'lincoa', 'cobyla'};
-nonlinearly_constrained_solver_list = {'cobyla'};
+unconstrained_solver_list = {'uobyqan', 'newuoan'};
+constrained_solver_list = {'bobyqan', 'lincoan', 'cobylan'};
+nonlinearly_constrained_solver_list = {'cobylan'};
 solver_list = [unconstrained_solver_list, constrained_solver_list]; 
 
 % Solvers from PDFO; there may be external solvers added later. 
-internal_solver_list = {'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla'}; 
+internal_solver_list = {'uobyqan', 'newuoan', 'bobyqan', 'lincoan', 'cobylan'}; 
 
 % Who is calling this function? Is it a correct invoker?
-invoker_list = ['pdfo', solver_list];
+invoker_list = ['pdfon', solver_list];
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function 
 if (length(callstack) == 1) || ~ismember(callstack(2).name, invoker_list) 
@@ -70,7 +70,7 @@ hugecon = gethuge('con');
 
 % Verify the input before starting the real business
 % Verify probinfo
-if (length(callstack) >= 3) && strcmp(callstack(3).name, 'pdfo')
+if (length(callstack) >= 3) && strcmp(callstack(3).name, 'pdfon')
 % In this case, prepdfo sets probinfo to empty. 
     if ~isempty(probinfo)
         % Public/unexpected error
@@ -106,7 +106,7 @@ else
 end
 
 % The solver that did the computation (needed for verifying output below)
-if strcmp(invoker, 'pdfo') 
+if strcmp(invoker, 'pdfon') 
     % In this case, the invoker is pdfo rather than a solver called by pdfo. 
     % Thus probinfo is nonempty, and options has been read and verified as above.
     solver = options.solver; 
@@ -128,8 +128,8 @@ if ismember(solver, internal_solver_list)
     % For internal solvers, output should contain fhist, chist, and warnings
     obligatory_output_fields = [obligatory_output_fields, 'fhist', 'chist', 'warnings'];
 end
-if strcmp(solver, 'lincoa')
-    % For lincoa, output should contain constr_modified 
+if strcmp(solver, 'lincoan')
+    % For lincoan, output should contain constr_modified 
     obligatory_output_fields = [obligatory_output_fields, 'constr_modified'];
 end
 if ismember(solver, nonlinearly_constrained_solver_list) && ismember(solver, internal_solver_list)
@@ -146,7 +146,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % If the invoker is a solver called by pdfo, then let pdfo do the postprecessing
 % Put this after verifying output, because we will use the information in it.
-if (length(callstack) >= 3) && strcmp(callstack(3).name, 'pdfo')
+if (length(callstack) >= 3) && strcmp(callstack(3).name, 'pdfon')
     x = output.x;
     fx = output.fx;
     exitflag = output.exitflag;
@@ -167,7 +167,7 @@ exitflag = output.exitflag;
 output = rmfield(output, 'exitflag'); % output does not include exitflag at return
 nf = output.funcCount;
 constrviolation = output.constrviolation;
-if strcmp(solver, 'lincoa')
+if strcmp(solver, 'lincoan')
     constr_modified = output.constr_modified;
     output = rmfield(output, 'constr_modified');
 end
@@ -267,7 +267,7 @@ if ~(isempty(chist) && ismember(solver, unconstrained_solver_list)) && (~isnumer
         '%s: UNEXPECTED ERROR: %s returns a chist that is not a real vector of length nf.', invoker, solver);
 end
 if ~options.classical && ~probinfo.infeasible && ~probinfo.nofreex
-    if strcmp(solver, 'cobyla') && (any(chist > hugecon) || any(isnan(chist)))
+    if strcmp(solver, 'cobylan') && (any(chist > hugecon) || any(isnan(chist)))
         % Public/unexpected error
         error(sprintf('%s:InvalidChist', invoker), ...
              '%s: UNEXPECTED ERROR: %s returns a chist with NaN or values larger than hugecon=%1.2e; this is impossible with extreme barrier.', invoker, solver, hugecon);
@@ -354,11 +354,11 @@ if probinfo.scaled
         ub = inf(size(x));
     end
 
-    % We only need to calculate constrviolation for lincoa and cobyla,
-    % because uobyqa and newuoa do not handle constrained problems,
-    % while bobyqa is a feasible method and should return constrviolation=0 
+    % We only need to calculate constrviolation for lincoan and cobylan,
+    % because uobyqan and newuoan do not handle constrained problems,
+    % while bobyqan is a feasible method and should return constrviolation=0 
     % regardless of the scaling unless something goes wrong.
-    if strcmp(solver, 'lincoa')
+    if strcmp(solver, 'lincoan')
         constrviolation = max([0; rineq; abs(req); lb-x; x-ub], [], 'includenan');
         % max(X, [], 'includenan') returns NaN if X contains NaN, and
         % maximum of X otherwise
@@ -448,7 +448,7 @@ case 15
 case -1
     output.message = sprintf('Return from %s because NaN occurs in x.', solver);
 case -2
-    if strcmp(solver, 'cobyla')
+    if strcmp(solver, 'cobylan')
         output.message = sprintf('Return from %s because the objective function returns an NaN or nearly infinite value, or the constraints return a NaN.', solver);
     else
         output.message = sprintf('Return from %s because the objective function returns an NaN or nearly infinite value.', solver);
@@ -524,30 +524,30 @@ if options.debug && ~options.classical
         fhistf = fhistf(chist <= max(constrv_returned, 0));
     end
     minf = min([fhistf,fx]);
-    if (fx ~= minf) && ~(isnan(fx) && isnan(minf)) && ~(strcmp(solver, 'lincoa') && constr_modified)
+    if (fx ~= minf) && ~(isnan(fx) && isnan(minf)) && ~(strcmp(solver, 'lincoan') && constr_modified)
         % Public/unexpected error
         error(sprintf('%s:InvalidFhist', invoker), ...
              '%s: UNEXPECTED ERROR: %s returns an fhist that does not match nf or fx.', invoker, solver);
     end
 
     % Check whether constrviolation is correct
-    cobyla_prec = 1e-10; 
-    lincoa_prec = 1e-12; 
+    cobylan_prec = 1e-10; 
+    lincoan_prec = 1e-12; 
     % COBYLA cannot ensure fx=fun(x) or conval=con(x) due to rounding
     % errors. Instead of checking the equality, we check whether the
-    % relative error is within cobyla_prec. 
+    % relative error is within cobylan_prec. 
     % There can also be a difference between constrviolation and conv due 
     % to rounding errors, especially if the problem is scaled.   
     constrviolation = 0;
     if isfield(output, 'constrviolation')
         constrviolation = output.constrviolation;
     end
-    if strcmp(solver, 'bobyqa') && (max([chist, constrviolation]) > 0) && ~probinfo.infeasible
+    if strcmp(solver, 'bobyqan') && (max([chist, constrviolation]) > 0) && ~probinfo.infeasible
         % Public/unexpected error
         error(sprintf('%s:InvalidChist', invoker), ...
              '%s: UNEXPECTED ERROR: %s is a feasible solver yet it returns positive constrviolations.', invoker, solver);
     end
-    if (strcmp(solver, 'lincoa') && ~constr_modified) || strcmp(solver, 'cobyla')
+    if (strcmp(solver, 'lincoan') && ~constr_modified) || strcmp(solver, 'cobylan')
         Aineq = probinfo.raw_data.Aineq;
         bineq = probinfo.raw_data.bineq;
         Aeq = probinfo.raw_data.Aeq;
@@ -576,7 +576,7 @@ if options.debug && ~options.classical
         if ~isempty(Aeq)
             req = Aeq*x-beq;
         end
-        if strcmp(solver, 'lincoa')
+        if strcmp(solver, 'lincoan')
             conv = max([0; rineq; abs(req); lb-x; x-ub], [], 'includenan');
             % max(X, [], 'includenan') returns NaN if X contains NaN, and
             % maximum of X otherwise
@@ -586,7 +586,7 @@ if options.debug && ~options.classical
             % maximum of X otherwise
         end
 
-        if ~(isnan(conv) && isnan(constrviolation)) && ~(conv == inf && constrviolation == inf) && ~(abs(constrviolation-conv) <= lincoa_prec*max(1,abs(conv)) && strcmp(solver, 'lincoa')) && ~(abs(constrviolation-conv) <= cobyla_prec*max(1,abs(conv)) && strcmp(solver, 'cobyla'))
+        if ~(isnan(conv) && isnan(constrviolation)) && ~(conv == inf && constrviolation == inf) && ~(abs(constrviolation-conv) <= lincoan_prec*max(1,abs(conv)) && strcmp(solver, 'lincoan')) && ~(abs(constrviolation-conv) <= cobylan_prec*max(1,abs(conv)) && strcmp(solver, 'cobylan'))
             % Public/unexpected error
             error(sprintf('%s:InvalidChist', invoker), ...
               '%s: UNEXPECTED ERROR: %s returns a constrviolation that does not match x.', invoker, solver);
@@ -626,7 +626,7 @@ if options.debug && ~options.classical
         %if (funx ~= fx) && ~(isnan(fx) && isnan(funx)) 
         % it seems that COBYLA can return fx~=fun(x) due to rounding
         % errors. Therefore, we cannot use "fx~=funx" to check COBYLA
-        if ~(isnan(fx) && isnan(funx)) && ~((fx==funx) || (abs(funx-fx) <= cobyla_prec*max(1, abs(fx)) && strcmp(solver, 'cobyla'))) 
+        if ~(isnan(fx) && isnan(funx)) && ~((fx==funx) || (abs(funx-fx) <= cobylan_prec*max(1, abs(fx)) && strcmp(solver, 'cobylan'))) 
             % Public/unexpected error
             error(sprintf('%s:InvalidFx', invoker), ...
                 '%s: UNEXPECTED ERROR: %s returns an fx that does not match x.', invoker, solver);
@@ -648,7 +648,7 @@ if options.debug && ~options.classical
                 nlceqx(nlceqx ~= nlceqx | nlceqx > hugecon) = hugecon;
                 nlceqx(nlceqx < -hugecon) = -hugecon;
             end
-            if any(size([nlcineq; nlceq]) ~= size([nlcineqx; nlceqx])) || any(isnan([nlcineq; nlceq]) ~= isnan([nlcineqx; nlceqx])) || (~any(isnan([nlcineq; nlceq; nlcineqx; nlceqx])) && any(abs([0; nlcineq; nlceq] - [0; nlcineqx; nlceqx]) > cobyla_prec*max(1,abs([0; nlcineqx; nlceqx]))))
+            if any(size([nlcineq; nlceq]) ~= size([nlcineqx; nlceqx])) || any(isnan([nlcineq; nlceq]) ~= isnan([nlcineqx; nlceqx])) || (~any(isnan([nlcineq; nlceq; nlcineqx; nlceqx])) && any(abs([0; nlcineq; nlceq] - [0; nlcineqx; nlceqx]) > cobylan_prec*max(1,abs([0; nlcineqx; nlceqx]))))
             % In the last few max of the above line, we put a 0 to avoid an empty result
                 % Public/unexpected error
                 error(sprintf('%s:InvalidConx', invoker), ...
