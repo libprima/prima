@@ -68,7 +68,7 @@ function setup(varargin)
 % However, MATLAB R2015b would complain that it cannot find '*.mod'.
 % Similarly, to compile solver (see the code between 'try' and 'catch'),
 % for MATLAB later than R2016a (but not 2015b), the following code would work:
-% mex(mex_options, '-output', ['f', solver], fullfile(fsrc, 'pdfoconst.F'), ...
+% mex(mex_options, '-output', ['f', solver], fullfile(fsrc, 'pdfoconst.f90'), ...
 %   fullfile(fsrc, solver, '*.f'), fullfile(gateways, [solver, '-interface.F']));
 % However, MATLAB R2015b would run into an error due to the wildcard.
 % The 'files_with_wildcard' function provides a workaround.
@@ -214,7 +214,7 @@ try
 % case of an error.
 
     % Compilation of function gethuge
-    mex(mex_options{:}, '-output', 'gethuge', fullfile(fsrc, 'pdfoconst.F'), fullfile(gateways, 'gethuge.F'));
+    mex(mex_options{:}, '-output', 'gethuge', fullfile(fsrc, 'pdfoconst.f90'), fullfile(gateways, 'gethuge.F'));
 
     for isol = 1 : length(solver_list)
         solver = solver_list{isol};
@@ -226,7 +226,7 @@ try
         cellfun(@(filename) delete(filename), modo_files);
         % Compile
         src_files = files_with_wildcard(fullfile(fsrc, solver), '*.f*');
-        mex(mex_options{:}, '-output', ['f', solver, 'n'], fullfile(fsrc, 'pdfoconst.F'), src_files{:}, fullfile(gateways, [solver, '-interface.F']));
+        mex(mex_options{:}, '-output', ['f', solver, 'n'], fullfile(fsrc, 'pdfoconst.f90'), src_files{:}, fullfile(gateways, [solver, '-interface.F']));
 
         % Compilation of the 'classical' version of solver
         % Clean up the source file directory
@@ -234,7 +234,7 @@ try
         cellfun(@(filename) delete(filename), modo_files);
         % Compile
         src_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.f*');
-        mex(mex_options{:}, '-output', ['f', solver, 'n_classical'], fullfile(fsrc, 'pdfoconst.F'), src_files{:}, fullfile(gateways_classical, [solver, '-interface.F']));
+        mex(mex_options{:}, '-output', ['f', solver, 'n_classical'], fullfile(fsrc, 'pdfoconst.f90'), src_files{:}, fullfile(gateways_classical, [solver, '-interface.F']));
 
         fprintf('Done.\n');
     end
