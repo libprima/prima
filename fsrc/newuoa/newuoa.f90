@@ -101,7 +101,7 @@ iw=ivl+ndim
 rhoend = min(rhobeg, rhoend)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 call newuob (n,npt,x,rhobeg,rhoend,iprint,maxfun,w(ixb), w(ixo),w(ixn),w(ixp),w(ifv),w(igq),w(ihq),w(ipq),w(ibmat), w(izmat),&
-    &ndim,w(id),w(ivl),w(iw),f,info,ftarget)
+    & ndim,w(id),w(ivl),w(iw),f,info,ftarget)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    20 return
 end
