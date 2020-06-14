@@ -376,7 +376,7 @@ unknown_fields = setdiff(problem_fields, known_fields);
 problem = rmfield(problem, unknown_fields);  % Remove the unknown fields
 
 if ~isempty(unknown_fields) 
-    wid = sprintf('%s:UnknownProbFiled', invoker);
+    wid = sprintf('%s:UnknownProbField', invoker);
     if length(unknown_fields) == 1
         wmessage = sprintf('%s: problem with an unknown field %s; it is ignored.', invoker, mystrjoin(unknown_fields, ', '));  
     else
