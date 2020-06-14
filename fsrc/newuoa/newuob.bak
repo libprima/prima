@@ -14,54 +14,45 @@ subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun, xbase, xopt, xnew,
     real(kind = dp), intent(inout) :: bmat(npt + n, n), zmat(npt, npt - n - 1), d(n), vlag(npt + n), w(10*(npt + n))
 
     ! other variables
-    integer :: i, idz, ih, ip, itest, j, jp, k, knew, kopt, ksav, ktemp, nf, nfsav, nftest, np, nh, nptm
+    integer :: i, idz, ih, itest, j, jp, k, knew, kopt, ksav, ktemp, nf, nfsav, nftest
     real(kind = dp) :: alpha, beta, bsummation, crvmin, delta, detrat, diff, diffa, diffb, diffc, distsq, dnorm, dsq, dstep, dx
     real(kind = dp) :: fopt, fsave, gisq, gqsq, hdiag, ratio, rho, rhosq, summation, summationa, summationb
-    real(kind = dp) :: summationz, temp, tempq, vquad, xoptsq
+    real(kind = dp) :: temp, vquad, xoptsq
     logical :: xisnan
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    !dimension x(n), xbase(n), xopt(n), xnew(n), xpt(npt, n), fval(npt), gq(n), hq((n*(n + 1))/2), pq(npt), bmat(npt + n, n), zmat(npt, npt - n - 1), d(n), vlag(npt + n), w(10*(npt + n))
-    !
-    !     The arguments N, NPT, X, RHOBEG, RHOEND, IPRINT and MAXFUN are identical
+
+    ! The arguments N, NPT, X, RHOBEG, RHOEND, IPRINT and MAXFUN are identical
     ! to the corresponding arguments in SUBROUTINE NEWUOA.
-    !     XBASE will hold a shift of origin that should reduce the contributions
+    ! XBASE will hold a shift of origin that should reduce the contributions
     ! from rounding errors to values of the model and Lagrange functions.
-    !     XOPT will be set to the displacement from XBASE of the vector of
+    ! XOPT will be set to the displacement from XBASE of the vector of
     ! variables that provides the least calculated F so far.
-    !     XNEW will be set to the displacement from XBASE of the vector of
+    ! XNEW will be set to the displacement from XBASE of the vector of
     ! variables for the current calculation of F.
-    !     XPT will contain the interpolation point coordinates relative to XBASE.
-    !     FVAL will hold the values of F at the interpolation points.
-    !     GQ will hold the gradient of the quadratic model at XBASE.
-    !     HQ will hold the explicit second derivatives of the quadratic model.
-    !     PQ will contain the parameters of the implicit second derivatives of
+    ! XPT will contain the interpolation point coordinates relative to XBASE.
+    ! FVAL will hold the values of F at the interpolation points.
+    ! GQ will hold the gradient of the quadratic model at XBASE.
+    ! HQ will hold the explicit second derivatives of the quadratic model.
+    ! PQ will contain the parameters of the implicit second derivatives of
     ! the quadratic model.
-    !     BMAT will hold the last N columns of H.
-    !     ZMAT will hold the factorization of the leading NPT by NPT submatrix of
+    ! BMAT will hold the last N columns of H.
+    ! ZMAT will hold the factorization of the leading NPT by NPT submatrix of
     ! H, this factorization being ZMAT times Diag(DZ) times ZMAT^T, where
     ! the elements of DZ are plus or minus one, as specified by IDZ.
-    !     NDIM is the first dimension of BMAT and has the value NPT + N.
-    !     D is reserved for trial steps from XOPT.
-    !     VLAG will contain the values of the Lagrange functions at a new point X.
+    ! NDIM is the first dimension of BMAT and has the value NPT + N.
+    ! D is reserved for trial steps from XOPT.
+    ! VLAG will contain the values of the Lagrange functions at a new point X.
     ! They are part of a product that requires VLAG to be of length NDIM.
-    !     The array W will be used for working space. Its length must be at least
+    ! The array W will be used for working space. Its length must be at least
     ! 10*NDIM = 10*(NPT + N).
-    !
-    !     Set some constants.
-    !
-    np = n + 1
-    nh = (n*np)/2
-    nptm = npt - np
+
+    ! Set some constants.
     nftest = max(maxfun, 1)
 
     call initialize(n, npt, rhobeg, x, xbase, xpt, f, fval, xopt, fopt, kopt, bmat, zmat, gq, hq, pq, nf, info, ftarget)
     if (info == -1 .or. info == -2) goto 530
     if (info == 1) goto 546
 
-    !
-    !     Begin the iterative procedure, because the initial model is complete.
-    !
-    !
+    ! Begin the iterative procedure, because the initial model is complete.
     rho = rhobeg
     delta = rho
     idz = 1
@@ -74,10 +65,8 @@ subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun, xbase, xopt, xnew,
         xoptsq = xoptsq + xopt(i)**2
     end do
     90 nfsav = nf
-    !
-    !     Generate the next trust region step and test its length. Set KNEW
-    !     to -1 if the purpose of the next F will be to improve the model.
-    !
+
+    ! Generate the next trust region step and test its length. Set KNEW to -1 if the purpose of the next F will be to improve the model.
     100 knew = 0
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ! Zaikun 2019-08-29: For ill-conditioned problems, NaN may occur in the
@@ -92,7 +81,7 @@ subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun, xbase, xopt, xnew,
             goto 530
         end if 
     end do
-    do i = 1, nh
+    do i = 1, (n*(n+1))/2 
         if (hq(i) /= hq(i)) then
             info = -3
             goto 530
@@ -104,12 +93,8 @@ subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun, xbase, xopt, xnew,
             goto 530
         end if
     end do
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    call trsapp (n, npt, xopt, xpt, gq, hq, pq, delta, d, w, w(np), w(np + n), w(np + 2*n), crvmin)
-    dsq = zero
-    do i = 1, n
-        dsq = dsq + d(i)**2
-    end do
+    call trsapp (n, npt, xopt, xpt, gq, hq, pq, delta, d, w, w(n+1), w(2*n+1), w(3*n+1), crvmin)
+    dsq = dot_product(d, d)
     dnorm = dmin1(delta, sqrt(dsq))
     if (dnorm < half*rho) then
         knew = -1
@@ -121,93 +106,23 @@ subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun, xbase, xopt, xnew,
         if (temp <= dmax1(diffa, diffb, diffc)) goto 460
         goto 490
     end if
-    !
-    !     Shift XBASE if XOPT may be too far from XBASE. First make the changes
-    !     to BMAT that do not depend on ZMAT.
-    !
-    120 if (dsq <= 1.0d-3*xoptsq) then
-        tempq = 0.25d0*xoptsq
-        do k = 1, npt
-            summation = zero
-            do i = 1, n
-                summation = summation + xpt(k, i)*xopt(i)
-            end do
-            temp = pq(k)*summation
-            summation = summation - half*xoptsq
-            w(npt + k) = summation
-            do i = 1, n
-                gq(i) = gq(i) + temp*xpt(k, i)
-                xpt(k, i) = xpt(k, i) - half*xopt(i)
-                vlag(i) = bmat(k, i)
-                w(i) = summation*xpt(k, i) + tempq*xopt(i)
-                ip = npt + i
-                do j = 1, i
-                    bmat(ip, j) = bmat(ip, j) + vlag(i)*w(j) + w(i)*vlag(j)
-                end do
-            end do
-        end do
-        !
-        !     Then the revisions of BMAT that depend on ZMAT are calculated.
-        !
-        do k = 1, nptm
-            summationz = zero
-            do i = 1, npt
-                summationz = summationz + zmat(i, k)
-                w(i) = w(npt + i)*zmat(i, k)
-            end do
-            do j = 1, n
-                summation = tempq*summationz*xopt(j)
-                do i = 1, npt
-                    summation = summation + w(i)*xpt(i, j)
-                end do
-                vlag(j) = summation
-                if (k < idz) summation = -summation
-                do i = 1, npt
-                    bmat(i, j) = bmat(i, j) + summation*zmat(i, k)
-                end do
-            end do
-            do i = 1, n
-                ip = i + npt
-                temp = vlag(i)
-                if (k < idz) temp = -temp
-                do j = 1, i
-                    bmat(ip, j) = bmat(ip, j) + temp*vlag(j)
-                end do
-            end do
-        end do
-        !
-        !     The following instructions complete the shift of XBASE, including
-        !     the changes to the parameters of the quadratic model.
-        !
-        ih = 0
-        do j = 1, n
-            w(j) = zero
-            do k = 1, npt
-                w(j) = w(j) + pq(k)*xpt(k, j)
-                xpt(k, j) = xpt(k, j) - half*xopt(j)
-            end do
-            do i = 1, j
-                ih = ih + 1
-                if (i < j) gq(j) = gq(j) + hq(ih)*xopt(i)
-                gq(i) = gq(i) + hq(ih)*xopt(j)
-                hq(ih) = hq(ih) + w(i)*xopt(j) + xopt(i)*w(j)
-                bmat(npt + i, j) = bmat(npt + j, i)
-            end do
-        end do
-        do j = 1, n
-            xbase(j) = xbase(j) + xopt(j)
-            xopt(j) = zero
-        end do
+
+    ! Shift XBASE if XOPT may be too far from XBASE. 
+    if (dsq <= 1.0d-3*xoptsq) then
+        write(*,*) nf
+        call shiftbase(n, npt, idz, xopt, pq, bmat, zmat, gq, hq, xpt, info)
+        xbase = xbase + xopt
+        xopt = zero
         xoptsq = zero
     end if
-    !
-    !     Pick the model step if KNEW is positive. A different choice of D
-    !     may be made later, if the choice of D by BIGLAG causes substantial
-    !     cancellation in DENOM.
-    !
+    
+    ! Pick the model step if KNEW is positive. A different choice of D
+    ! may be made later, if the choice of D by BIGLAG causes substantial
+    ! cancellation in DENOM.
+    ! 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ! Zaikun 2019-08-29: See the comments below line number 100
-    do j = 1, n
+    120 do j = 1, n
         do i = 1, ndim
             if (bmat(i, j) /= bmat(i, j)) then
                 info = -3
@@ -215,7 +130,7 @@ subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun, xbase, xopt, xnew,
             end if
         end do
     end do
-    do j = 1, nptm
+    do j = 1, npt - n - 1
         do i = 1, npt
             if (zmat(i, j) /= zmat(i, j)) then
                 info = -3
@@ -225,12 +140,12 @@ subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun, xbase, xopt, xnew,
     end do
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     if (knew > 0) then
-        call biglag (n, npt, xopt, xpt, bmat, zmat, idz, ndim, knew, dstep, d, alpha, vlag, vlag(npt + 1), w, w(np), w(np + n))
+        call biglag (n, npt, xopt, xpt, bmat, zmat, idz, ndim, knew, dstep, d, alpha, vlag, vlag(npt + 1), w, w(n+1), w(2*n+1))
     end if
-    !
-    !     Calculate VLAG and BETA for the current choice of D. The first NPT
-    !     components of W_check will be held in W.
-    !
+    ! 
+    ! Calculate VLAG and BETA for the current choice of D. The first NPT
+    ! components of W_check will be held in W.
+    ! 
     do k = 1, npt
         summationa = zero
         summationb = zero
@@ -244,7 +159,7 @@ subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun, xbase, xopt, xnew,
         vlag(k) = summation
     end do
     beta = zero
-    do k = 1, nptm
+    do k = 1, npt - n - 1
         summation = zero
         do i = 1, npt
             summation = summation + zmat(i, k)*w(i)
@@ -277,20 +192,20 @@ subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun, xbase, xopt, xnew,
     end do
     beta = dx*dx + dsq*(xoptsq + dx + dx + half*dsq) + beta - bsummation
     vlag(kopt) = vlag(kopt) + one
-    !
-    !     If KNEW is positive and if the cancellation in DENOM is unacceptable, 
-    !     then BIGDEN calculates an alternative model step, XNEW being used for
-    !     working space.
-    !
+    ! 
+    ! If KNEW is positive and if the cancellation in DENOM is unacceptable, 
+    ! then BIGDEN calculates an alternative model step, XNEW being used for
+    ! working space.
+    ! 
     if (knew > 0) then
         temp = one + alpha*beta/vlag(knew)**2
         if (abs(temp) <= 0.8d0) then
             call bigden (n, npt, xopt, xpt, bmat, zmat, idz, ndim, kopt, knew, d, w, vlag, beta, xnew, w(ndim + 1), w(6*ndim + 1))
         end if
     end if
-    !
-    !     Calculate the next value of the objective function.
-    !
+    ! 
+    ! Calculate the next value of the objective function.
+    ! 
     290 do i = 1, n
         xnew(i) = xopt(i) + d(i)
         x(i) = xbase(i) + xnew(i)
@@ -315,12 +230,12 @@ subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun, xbase, xopt, xnew,
         goto 530
     end if
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    !     By Zaikun (commented on 02-06-2019; implemented in 2016):
-    !     Exit if F has an NaN or almost infinite value.
-    !     If this happends at the very first function evaluation (i.e., 
-    !     NF = 1), then it is necessary to set FOPT and XOPT before going to
-    !     530, because these two variables have not been set yet (line 70
-    !     will not be reached.
+    ! By Zaikun (commented on 02-06-2019; implemented in 2016):
+    ! Exit if F has an NaN or almost infinite value.
+    ! If this happends at the very first function evaluation (i.e., 
+    ! NF = 1), then it is necessary to set FOPT and XOPT before going to
+    ! 530, because these two variables have not been set yet (line 70
+    ! will not be reached.
     if (f /= f .or. f > almost_infinity) then
         if (nf == 1) then
             fopt = f
@@ -331,8 +246,8 @@ subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun, xbase, xopt, xnew,
         info = -2
         goto 530
     end if
-    !     By Zaikun (commented on 02-06-2019; implemented in 2016):
-    !     Exit if F .LE. FTARGET.
+    ! By Zaikun (commented on 02-06-2019; implemented in 2016):
+    ! Exit if F .LE. FTARGET.
     if (f <= ftarget) then
         info = 1
         goto 546
@@ -344,10 +259,10 @@ subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun, xbase, xopt, xnew,
         330 FORMAT (/4X, 'Function number', I6, '    F = ', 1PD18.10, '    The corresponding X is:'/(2X, 5D15.6))
     end if
     if (knew == -1) goto 530
-    !
-    !     Use the quadratic model to predict the change in F due to the step D, 
-    !     and set DIFF to the error of this prediction.
-    !
+    ! 
+    ! Use the quadratic model to predict the change in F due to the step D, 
+    ! and set DIFF to the error of this prediction.
+    ! 
     vquad = zero
     ih = 0
     do j = 1, n
@@ -367,11 +282,11 @@ subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun, xbase, xopt, xnew,
     diffb = diffa
     diffa = abs(diff)
     if (dnorm > rho) nfsav = nf
-    !
-    !     Update FOPT and XOPT if the new F is the least value of the objective
-    !     function so far. The branch when KNEW is positive occurs if D is not
-    !     a trust region step.
-    !
+    ! 
+    ! Update FOPT and XOPT if the new F is the least value of the objective
+    ! function so far. The branch when KNEW is positive occurs if D is not
+    ! a trust region step.
+    ! 
     fsave = fopt
     if (f < fopt) then
         fopt = f
@@ -383,11 +298,11 @@ subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun, xbase, xopt, xnew,
     end if
     ksav = knew
     if (knew > 0) goto 410
-    !
-    !     Pick the next value of DELTA after a trust region step.
-    !
+    ! 
+    ! Pick the next value of DELTA after a trust region step.
+    ! 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    !IF (VQUAD .GE. ZERO) THEN
+    ! IF (VQUAD .GE. ZERO) THEN
     if (.not. (vquad < zero)) then
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         if (iprint > 0) print 370
@@ -406,9 +321,9 @@ subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun, xbase, xopt, xnew,
         delta = dmax1(half*delta, dnorm + dnorm)
     end if
     if (delta <= 1.5d0*rho) delta = rho
-    !
-    !     Set KNEW to the index of the next interpolation point to be deleted.
-    !
+    ! 
+    ! Set KNEW to the index of the next interpolation point to be deleted.
+    ! 
     rhosq = dmax1(tenth*delta, rho)**2
     ktemp = 0
     detrat = zero
@@ -418,7 +333,7 @@ subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun, xbase, xopt, xnew,
     end if
     do k = 1, npt
         hdiag = zero
-        do j = 1, nptm
+        do j = 1, npt - n - 1
             temp = one
             if (j < idz) temp = -one
             hdiag = hdiag + temp*zmat(k, j)**2
@@ -435,11 +350,11 @@ subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun, xbase, xopt, xnew,
         end if
     end do
     if (knew == 0) goto 460
-    !
-    !     Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point
-    !     can be moved. Begin the updating of the quadratic model, starting
-    !     with the explicit second derivative term.
-    !
+    ! 
+    ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point
+    ! can be moved. Begin the updating of the quadratic model, starting
+    ! with the explicit second derivative term.
+    ! 
     410 call update (n, npt, bmat, zmat, idz, ndim, vlag, beta, knew, w)
     fval(knew) = f
     ih = 0
@@ -451,11 +366,11 @@ subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun, xbase, xopt, xnew,
         end do
     end do
     pq(knew) = zero
-    !
-    !     Update the other second derivative parameters, and then the gradient
-    !     vector of the model. Also include the new interpolation point.
-    !
-    do j = 1, nptm
+    ! 
+    ! Update the other second derivative parameters, and then the gradient
+    ! vector of the model. Also include the new interpolation point.
+    ! 
+    do j = 1, npt - n - 1
         temp = diff*zmat(knew, j)
         if (j < idz) temp = -temp
         do k = 1, npt
@@ -468,17 +383,17 @@ subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun, xbase, xopt, xnew,
         gqsq = gqsq + gq(i)**2
         xpt(knew, i) = xnew(i)
     end do
-    !
-    !     If a trust region step makes a small change to the objective function, 
-    !     then calculate the gradient of the least Frobenius norm interpolant at
-    !     XBASE, and store it in W, using VLAG for a vector of right hand sides.
-    !
+    ! 
+    ! If a trust region step makes a small change to the objective function, 
+    ! then calculate the gradient of the least Frobenius norm interpolant at
+    ! XBASE, and store it in W, using VLAG for a vector of right hand sides.
+    ! 
     if (ksav == 0 .and. delta == rho) then
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         ! Zaikun 2019-08-26: It is observed in Zhang Zaikun's PhD thesis
         ! (Section 3.3.2) that it is more reasonable and more efficient to
         ! check the value of RATIO instead of DABS(RATIO).
-        !    IF (DABS(RATIO) .GT. 1.0D-2) THEN
+        ! IF (DABS(RATIO) .GT. 1.0D-2) THEN
         if (ratio > 1.0d-2) then
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             itest = 0
@@ -495,20 +410,20 @@ subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun, xbase, xopt, xnew,
                 gisq = gisq + summation*summation
                 w(i) = summation
             end do
-            !
-            !     Test whether to replace the new quadratic model by the least Frobenius
-            !     norm interpolant, making the replacement if the test is satisfied.
-            !
+            ! 
+            ! Test whether to replace the new quadratic model by the least Frobenius
+            ! norm interpolant, making the replacement if the test is satisfied.
+            ! 
             itest = itest + 1
             if (gqsq < 1.0d2*gisq) itest = 0
             if (itest >= 3) then
                 do i = 1, n
                     gq(i) = w(i)
                 end do
-                do ih = 1, nh
+                do ih = 1, (n*(n+1))/2 
                     hq(ih) = zero
                 end do
-                do j = 1, nptm
+                do j = 1, npt - n - 1
                     w(j) = zero
                     do k = 1, npt
                         w(j) = w(j) + vlag(k)*zmat(k, j)
@@ -517,7 +432,7 @@ subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun, xbase, xopt, xnew,
                 end do
                 do k = 1, npt
                     pq(k) = zero
-                    do j = 1, nptm
+                    do j = 1, npt - n - 1
                         pq(k) = pq(k) + zmat(k, j)*w(j)
                     end do
                 end do
@@ -526,17 +441,17 @@ subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun, xbase, xopt, xnew,
         end if
     end if
     if (f < fsave) kopt = knew
-    !
-    !     If a trust region step has provided a sufficient decrease in F, then
-    !     branch for another trust region calculation. The case KSAVE>0 occurs
-    !     when the new function value was calculated by a model step.
-    !
+    ! 
+    ! If a trust region step has provided a sufficient decrease in F, then
+    ! branch for another trust region calculation. The case KSAVE>0 occurs
+    ! when the new function value was calculated by a model step.
+    ! 
     if (f <= fsave + tenth*vquad) goto 100
     if (ksav > 0) goto 100
-    !
-    !     Alternatively, find out if the interpolation points are close enough
-    !     to the best point so far.
-    !
+    ! 
+    ! Alternatively, find out if the interpolation points are close enough
+    ! to the best point so far.
+    ! 
     knew = 0
     460 distsq = 4.0d0*delta*delta
     do k = 1, npt
@@ -549,21 +464,27 @@ subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun, xbase, xopt, xnew,
             distsq = summation
         end if
     end do
-    !
-    !     If KNEW is positive, then set DSTEP, and branch back for the next
-    !     iteration, which will generate a "model step".
-    !
+    ! 
+    ! If KNEW is positive, then set DSTEP, and branch back for the next
+    ! iteration, which will generate a "model step".
+    ! 
     if (knew > 0) then
         dstep = dmax1(dmin1(tenth*sqrt(distsq), half*delta), rho)
         dsq = dstep*dstep
-        goto 120
+        if (dsq <= 1.0d-3*xoptsq) then
+            write(*,*) nf
+            call shiftbase(n, npt, idz, xopt, pq, bmat, zmat, gq, hq, xpt, info)
+            xbase = xbase + xopt
+            xopt = zero
+            xoptsq = zero
+        end if
     end if
     if (ratio > zero) goto 100
     if (dmax1(delta, dnorm) > rho) goto 100
-    !
-    !     The calculations with the current value of RHO are complete. Pick the
-    !     next values of RHO and DELTA.
-    !
+    ! 
+    ! The calculations with the current value of RHO are complete. Pick the
+    ! next values of RHO and DELTA.
+    ! 
     490 if (rho > rhoend) then
         delta = half*rho
         ratio = rho/rhoend
@@ -589,16 +510,16 @@ subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun, xbase, xopt, xnew,
         info = 0
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     end if
-    !
-    !     Return from the calculation, after another Newton-Raphson step, if
-    !     it is too short to have been tried before.
-    !
+    ! 
+    ! Return from the calculation, after another Newton-Raphson step, if
+    ! it is too short to have been tried before.
+    ! 
     if (knew == -1) goto 290
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    !     By Zaikun (commented on 02-06-2019; implemented in 2016):
-    !     Note that (FOPT .LE. F) is FALSE if F is NaN; When F is NaN, it is
-    !     also necessary to update X and F.
-    !  530 IF (FOPT .LE. F) THEN
+    ! By Zaikun (commented on 02-06-2019; implemented in 2016):
+    ! Note that (FOPT .LE. F) is FALSE if F is NaN; When F is NaN, it is
+    ! also necessary to update X and F.
+    ! 530 IF (FOPT .LE. F) THEN
     530 if (fopt <= f .or. f /= f) then
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         do i = 1, n
@@ -607,7 +528,7 @@ subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun, xbase, xopt, xnew,
         f = fopt
     end if
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    !IF (IPRINT .GE. 1) THEN
+    ! IF (IPRINT .GE. 1) THEN
     546 if (iprint >= 1) then
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         print 550, nf

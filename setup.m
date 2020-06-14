@@ -129,6 +129,7 @@ if strcmp(solver, 'uninstall')
 end
 
 % Decide which solver(s) to compile. 
+solver = solver(1:end-1);  % We expect to receive 'uobyqan', 'newuoan', ...; here we remove the 'n'
 if ismember(solver, solver_list)
     solver_list = {solver};
 elseif ~strcmpi(solver, 'ALL')

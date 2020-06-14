@@ -21,6 +21,11 @@ if isfield(options, 'prec')
 else
     prec = 0;
 end
+if isfield(options, 'nr')
+    nr = options.nr;
+else
+    nr = 10;
+end
 
 test_options = struct();
 test_options.debug = true;
@@ -68,28 +73,61 @@ plist = secup(requirements);
 fprintf('\n')
 for ip = 1 : length(plist)
     pname = plist{ip};
-    prob = macup(pname);
     fprintf('%3d. \t%16s:\t', ip, pname);
-    prob.options = test_options;
-    [x1, fx1, exitflag1, output1] = feval(solvers{1}, prob);
-    [x2, fx2, exitflag2, output2] = feval(solvers{1}, prob);
-    decup(pname);
-    if ~iseq(x1, fx1, exitflag1, output1, x2, fx2, exitflag2, output2, prec)
-        fprintf('The solvers produce different results on %s.\n', pname);
-        warning(orig_warning_state); % Restore the behavior of displaying warnings
-        return
-    else
-        fprintf('Success\n');
+    prob = macup(pname);
+    x0 = prob.x0;
+    n = length(x0);
+    for ir = 0 : nr + 4 
+        % Some randomization
+        rng(ceil(1e5*abs(sin(1e10*nr))));
+        prob.x0 = x0 + 0.5*randn(size(x0));
+        test_options = struct();
+        test_options.rhobeg = 1 + 0.5*(2*rand-1);
+        test_options.rhoend = 1e-3*(1 + 0.5*(2*rand-1));
+        test_options.npt = max(min(ceil(10*rand*n + 2), (n+2)*(n+1)/2), n+2);
+        test_options.maxfun = max(ceil(20*n*(1+rand)), n+3);
+        test_options.ftarget = -inf;
+        if ir == 0
+            test_options.npt = (n+2)*(n+1)/2;
+        end
+        if ir == 1 
+            test_options.npt = n + 2;
+        end
+        if ir == 2 
+            test_options.maxfun = test_options.npt + 1;
+        end
+        if ir == 3
+            test_options.rhoend = test_options.rhobeg;
+        end 
+        if ir == 4
+            test_options.ftarget = inf;
+        end 
+        prob.options = test_options;
+        [x1, fx1, exitflag1, output1] = feval(solvers{1}, prob);
+        [x2, fx2, exitflag2, output2] = feval(solvers{2}, prob);
+        if ~iseq(x1, fx1, exitflag1, output1, x2, fx2, exitflag2, output2, prec)
+            fprintf('The solvers produce different results on %s at the %dth run.\n', pname, ir);
+            keyboard
+            warning(orig_warning_state); % Restore the behavior of displaying warnings
+            return
+        end
     end
+    decup(pname);
+    fprintf('Success\n');
 end
 
 success = true;
+warning(orig_warning_state); % Restore the behavior of displaying warnings
 
 return
 
 
 function eq = iseq(x, f, exitflag, output, xx, ff, ee, oo, prec) 
-eq = 1;
+eq = true;
+
+if ~isempty(setdiff(fieldnames(output), fieldnames(oo))) || ~isempty(setdiff(fieldnames(oo), fieldnames(output)))
+    eq = false;
+end
 
 if ~isfield(output,'constrviolation')
     output.constrviolation = 0;
@@ -98,13 +136,29 @@ if ~isfield(oo,'constrviolation')
     oo.constrviolation = 0;
 end
 
-if (norm(xx-x)/(1+norm(x)) > prec || abs(ff-f)/(1+abs(f)) > prec || abs(oo.constrviolation-output.constrviolation)/(1+abs(output.constrviolation)) > prec)
-    eq = 0;
+if ~isfield(output, 'chist')
+    output.chist = zeros(output.funcCount);
 end
-if (prec == 0 && (exitflag ~= ee|| oo.funcCount ~= output.funcCount))
-    eq = 0;
+if ~isfield(oo, 'chist')
+    oo.chist = zeros(oo.funcCount);
 end
 
-%diff = max([abs(ff-f)/(1+abs(f)), norm(xx-x)/(1+norm(x)), abs(oo.constrviolation-output.constrviolation)/(1+abs(output.constrviolation))]) 
+if (norm(xx-x)/(1+norm(x)) > prec || abs(ff-f)/(1+abs(f)) > prec || abs(oo.constrviolation-output.constrviolation)/(1+abs(output.constrviolation)) > prec)
+    eq = false;
+end
+
+if length(output.fhist) ~= length(oo.fhist) || norm(output.fhist-oo.fhist)/(1+norm(output.fhist)) > prec
+    eq = false;
+end
+
+if length(output.chist) ~= length(oo.chist) || norm(output.chist-oo.chist)/(1+norm(output.chist)) > prec
+    eq = false;
+end
+
+if (prec == 0 && (exitflag ~= ee|| oo.funcCount ~= output.funcCount))
+    eq = false;
+end
+
+diff = max([abs(ff-f)/(1+abs(f)), norm(xx-x)/(1+norm(x)), abs(oo.constrviolation-output.constrviolation)/(1+abs(output.constrviolation))]); 
 
 return
