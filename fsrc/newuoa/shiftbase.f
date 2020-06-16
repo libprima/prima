@@ -1,20 +1,18 @@
       subroutine shiftbase(n, npt, idz, xopt, pq, bmat, zmat, gq, hq,
      & xpt, info)
 
+      use pdfomod, only : rp, zero, half
       implicit none
-      integer, parameter :: dp = kind(0.0d0)
-      real(kind = dp), parameter :: almost_infinity = huge(0.0d0)/2.0d0,
-     & half = 0.5d0, zero = 0.0d0
 
       integer, intent(in) :: idz, n, npt
       integer, intent(out) :: info
 
-      real(kind = dp), intent(in) :: xopt(n), pq(npt)
-      real(kind = dp), intent(inout) :: bmat(npt + n, n),
+      real(kind = rp), intent(in) :: xopt(n), pq(npt)
+      real(kind = rp), intent(inout) :: bmat(npt + n, n),
      & zmat(npt, npt - n - 1), gq(n), hq((n*(n + 1))/2), xpt(npt, n)
 
       integer :: i, ih, j, k
-      real(kind = dp) :: summation, summationz, temp, tempq, vlag(n),
+      real(kind = rp) :: summation, summationz, temp, tempq, vlag(n),
      & w(2*npt), xoptsq
 
       ! First make the changes to BMAT that do not depend on ZMAT.
@@ -23,7 +21,7 @@
       do i = 1, n
           xoptsq = xoptsq + xopt(i)**2
       end do
-      tempq = 0.25d0 * xoptsq
+      tempq = 0.25_rp * xoptsq
       do k = 1, npt
           !summation = dot_product(xpt(k, :), xopt)
           summation = zero

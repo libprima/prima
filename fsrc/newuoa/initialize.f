@@ -1,21 +1,19 @@
       subroutine initialize(n, npt, rhobeg, x, xbase, xpt, f, fval,
      & xopt, fopt, kopt, bmat, zmat, gq, hq, pq, nf, info, ftarget)
 
+      use pdfomod, only : rp, zero, one, half, is_finite
       implicit none
-      integer, parameter :: dp = kind(0.0d0)
-      real(kind = dp), parameter :: almost_infinity = huge(0.0d0)/2.0d0,
-     & half = 0.5d0, one = 1.0d0, zero = 0.0d0
 
       integer, intent(in) :: n, npt
       integer, intent(out) :: info, kopt, nf
-      real(kind = dp), intent(in) :: rhobeg, ftarget
-      real(kind = dp), intent(out) :: xbase(n), xpt(npt, n), f,
+      real(kind = rp), intent(in) :: rhobeg, ftarget
+      real(kind = rp), intent(out) :: xbase(n), xpt(npt, n), f,
      & fval(npt), xopt(n), fopt, bmat(npt + n, n), zmat(npt, npt-n-1)
-      real(kind = dp), intent(inout) :: x(n)
-      real(kind = dp), intent(out) :: gq(n), hq((n*(n + 1))/2), pq(npt)
+      real(kind = rp), intent(inout) :: x(n)
+      real(kind = rp), intent(out) :: gq(n), hq((n*(n + 1))/2), pq(npt)
 
       integer :: ih, ipt, itemp, jpt
-      real(kind = dp) :: fbeg, rhosq, reciq, recip, temp, xipt, xjpt
+      real(kind = rp) :: fbeg, rhosq, reciq, recip, temp, xipt, xjpt
       logical :: evaluated(npt), xisnan
 
       ! Set the initial elements of XPT, BMAT, HQ, PQ and ZMAT to zero.
@@ -88,7 +86,7 @@
           if (xisnan) then
               info = -1
               exit
-          elseif (f /= f .or. f > almost_infinity) then
+          elseif (.not. is_finite(f)) then
               info = -2
               exit
           elseif (f <= ftarget) then

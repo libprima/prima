@@ -37,7 +37,8 @@ C defined in it. MX_GET_DBLE gets the pointer pointing to a real array.
 C Fortran code starts 
 
       module fuobyqa  
-      use pdfoconst ! See pdfoconst.F, which defines dp, int4, HUGENUM
+      use pdfomod, only : rp, hugenum, int4, zero
+      ! See pdfomod.F
       implicit none
 
       integer(int4), parameter :: notComplex = 0
@@ -54,7 +55,7 @@ C Some global variables
       mwSize, save :: nf ! Number of function evaluations 
 C nf should be of type mwSize, because it will be later used as an
 C argument of mxCreateDoubleMatrix
-      real(dp), allocatable, save :: fhist(:) 
+      real(rp), allocatable, save :: fhist(:) 
 C History of function evaluation
       end module fuobyqa
 
@@ -68,7 +69,7 @@ C extension depends on the platform), then the following function is
 C callable in matlab: 
 C [xopt, fopt, info, nf, fhist] = uobyqa(fun, x0, rhobeg, rhoend, maxfun, ftarget)
 
-      use fuobyqa ! module 'pdfoconst' is used by 'fuobyqa'
+      use fuobyqa ! module 'pdfomod' is used by 'fuobyqa'
       implicit none
 
 C mexFunction arguments (dummy variables):
@@ -98,8 +99,8 @@ C obtained by mxGetM
       integer :: n_int
 C n_int is the INTEGER cast of n, i.e., n_int = int(n); used when a 
 C variable of type INTEGER is needed (e.g., when calling UOBYQA).
-      real(dp), allocatable :: x(:), w(:)
-      real(dp) :: f, rhobeg, rhoend, maxfun_r, ftarget
+      real(rp), allocatable :: x(:), w(:)
+      real(rp) :: f, rhobeg, rhoend, maxfun_r, ftarget
       integer :: info, iprint, allocate_status
 C info and iprint are inputs to UOBYQA, which requires them to be
 C INTEGERs (not necessarily the same as mwSize) 
@@ -208,8 +209,8 @@ C NEVER use literal constants in Fortran mex.
 
 C Check the values of rhobeg and rhoend. We do not check the values of
 C other inputs (e.g., n, maxfun, npt) because the Fortran code does it 
-      if (rhobeg .le. ZERO .or. rhobeg .lt. rhoend .or. 
-     &rhoend .lt. ZERO) then
+      if (rhobeg .le. zero .or. rhobeg .lt. rhoend .or. 
+     &rhoend .lt. zero) then
           call mexErrMsgIdAndTxt('fuobyqa:InvalidRhobegRhoend',
      &'fuobyqa: rhobeg and rhoend do not satisfy rhobeg >= rhobeg > 0.')
       end if
@@ -240,7 +241,7 @@ C Initialize global variables
           call mexErrMsgIdAndTxt('fuobyqa:InsufficientMemory',
      &    'fuobyqa: allocate(fhist) failed.')
       end if
-      fhist = HUGENUM
+      fhist = hugenum
       
 C Call UOBYQA
       iprint = 0
@@ -254,8 +255,8 @@ C Write outputs
       call mxCopyReal8ToPtr(x(1:n), MX_GET_DBLE(plhs(1)), n)
       plhs(2) = mxCreateDoubleScalar(f)
 C Although info and nf are integers logically, they are passed as double
-      plhs(3) = mxCreateDoubleScalar(real(info, dp))
-      plhs(4) = mxCreateDoubleScalar(real(nf, dp))
+      plhs(3) = mxCreateDoubleScalar(real(info, rp))
+      plhs(4) = mxCreateDoubleScalar(real(nf, rp))
       plhs(5) = mxCreateDoubleMatrix(mwOne, nf, notComplex)
       call mxCopyReal8ToPtr(fhist(1:nf), 
      &     MX_GET_DBLE(plhs(5)), nf)
@@ -272,15 +273,15 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
 C The Fortran subroutine that evaluates the objective function
       subroutine calfun(n, x, funval)
-      use fuobyqa ! module 'pdfoconst' is used by 'fuobyqa'
+      use fuobyqa ! module 'pdfomod' is used by 'fuobyqa'
       implicit none
 
 C Dummy variables
       integer, intent(in) :: n
 C The type of n is derived from the code of UOBYQA. Thus n should 
 C be of type INTEGER instead of mwSize
-      real(dp), intent(in) :: x(n)
-      real(dp), intent(out) :: funval
+      real(rp), intent(in) :: x(n)
+      real(rp), intent(out) :: funval
 
 C Function declarations 
       integer(int4), external :: mexCallMATLAB
@@ -308,7 +309,7 @@ C Start the real business
      &    'fuobyqa: n does not equal n_mw.')
       end if
 
-      plhs(1) = mxCreateDoubleScalar(HUGENUM) 
+      plhs(1) = mxCreateDoubleScalar(hugenum) 
 C Output of f_value = feval(fun, x); see below
       prhs(1) = fun_ptr 
 C First input of f_value = feval(fun, x); see below; fun_ptr is a global variable

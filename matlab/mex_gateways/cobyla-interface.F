@@ -37,7 +37,9 @@ C defined in it. MX_GET_DBLE gets the pointer pointing to a real array.
 C Fortran code starts 
 
       module fcobyla ! Some global variables
-      use pdfoconst ! See pdfoconst.F, which defines dp, int4, HUGENUM
+      use pdfomod, only : rp, hugecon, hugefun, hugenum, int4, zero, 
+     & is_nan
+      ! See pdfomod.F
       implicit none
 
       integer(int4), parameter :: notComplex = 0
@@ -55,11 +57,11 @@ C Objective function and constraints (pointers)
       mwSize, save :: nf ! Number of function evaluations 
 C nf should be of type mwSize, because it will be later used as an
 C argument of mxCreateDoubleMatrix
-      real(dp), allocatable, save :: fhist(:) 
+      real(rp), allocatable, save :: fhist(:) 
 C History of function evaluation
-      real(dp), allocatable, save :: chist(:) 
+      real(rp), allocatable, save :: chist(:) 
 C History of constraint violation
-      real(dp), allocatable, save :: conval_x0(:)
+      real(rp), allocatable, save :: conval_x0(:)
 C Constraint value at x0
       end module fcobyla
 
@@ -73,7 +75,7 @@ C extension depends on the platform), then the following function is
 C callable in matlab: 
 C [xopt, fopt, info, nf, fhist, convalopt, constrviolation, chist] = FUNCTION_NAME(fun, con, x0, rhobeg, rhoend, maxfun, m, ftarget, conval_x0)
 
-      use fcobyla ! module 'pdfoconst' is used by 'fcobyla'
+      use fcobyla ! module 'pdfomod' is used by 'fcobyla'
       implicit none
 
 C mexFunction arguments (dummy variables):
@@ -105,9 +107,9 @@ C mwSize because it will be used in mxCopyPtrToReal8.
 C n_int and m_int are the INTEGER cast of n and m, i.e., n_int = int(n),
 C m_int = int(m), which will be used when variables of type INTEGER are
 C needed (e.g., when calling COBYLA).
-      real(dp), allocatable :: x(:), conval(:), w(:)
+      real(rp), allocatable :: x(:), conval(:), w(:)
       integer, allocatable :: iact(:)
-      real(dp) :: f, rhobeg, rhoend, maxfun_r, m_r, ftarget, resmax
+      real(rp) :: f, rhobeg, rhoend, maxfun_r, m_r, ftarget, resmax
       integer :: info, iprint, allocate_status
 C info and iprint are inputs to COBYLA, which requires them to be
 C INTEGERs (not necessarily the same as mwSize) 
@@ -231,8 +233,8 @@ C NEVER use literal constants in Fortran mex.
 
 C Check the values of rhobeg and rhoend. We do not check the values of
 C other inputs (e.g., n, maxfun, npt) because the Fortran code does it 
-      if (rhobeg .le. ZERO .or. rhobeg .lt. rhoend .or. 
-     &rhoend .lt. ZERO) then
+      if (rhobeg .le. zero .or. rhobeg .lt. rhoend .or. 
+     &rhoend .lt. zero) then
           call mexErrMsgIdAndTxt('fcobyla:InvalidRhobegRhoend',
      &'fcobyla: rhobeg and rhoend do not satisfy rhobeg >= rhobeg > 0.')
       end if
@@ -301,7 +303,7 @@ C     Initialize global variables
           call mexErrMsgIdAndTxt('fcobyla:InsufficientMemory',
      &    'fcobyla: allocate(fhist) failed.')
       end if
-      fhist = HUGENUM
+      fhist = hugenum
 
       if (allocated(chist)) deallocate (chist)
       allocate (chist(maxfun), stat=allocate_status)
@@ -309,7 +311,7 @@ C     Initialize global variables
           call mexErrMsgIdAndTxt('fcobyla:InsufficientMemory',
      &    'fcobyla: allocate(chist) failed.')
       end if
-      chist = HUGENUM
+      chist = hugenum
 
 C     Call COBYLA      
       iprint = 0
@@ -324,8 +326,8 @@ C Write outputs
       call mxCopyReal8ToPtr(x(1:n), MX_GET_DBLE(plhs(1)), n)
       plhs(2) = mxCreateDoubleScalar(f)
 C Although info and nf are integers logically, they are passed as double
-      plhs(3) = mxCreateDoubleScalar(real(info, dp))
-      plhs(4) = mxCreateDoubleScalar(real(nf, dp))
+      plhs(3) = mxCreateDoubleScalar(real(info, rp))
+      plhs(4) = mxCreateDoubleScalar(real(nf, rp))
       plhs(5) = mxCreateDoubleMatrix(mwOne, nf, notComplex)
       call mxCopyReal8ToPtr(fhist(1:nf), 
      &     MX_GET_DBLE(plhs(5)), nf)
@@ -353,15 +355,15 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
 C The Fortran subroutine that evaluates the objective function
       subroutine calcfc(n, m, x, funval, conval)
-      use fcobyla ! module 'pdfoconst' is used by 'fcobyla'
+      use fcobyla ! module 'pdfomod' is used by 'fcobyla'
       implicit none
 
 C dummy variables
       integer, intent(in) :: n, m
 C The types of n and m are derived from the code of COBYLA. Thus n and m
 C should be of type INTEGER instead of mwSize
-      real(dp), intent(in) :: x(n)
-      real(dp), intent(out) :: funval, conval(m)
+      real(rp), intent(in) :: x(n)
+      real(rp), intent(out) :: funval, conval(m)
 
 C function declarations 
       integer(int4), external :: mexCallMATLAB, mxIsDouble
@@ -387,7 +389,7 @@ C k is of the same type; see the (unique) do lopp below
       integer(int4), parameter :: intOne=1, intTwo=2 
       character(5), parameter :: funFeval = 'feval' 
 C intOne, intTwo, and funFeval are used when calling mexCallMATLAB 
-      real(dp) :: resmax ! constraint violation
+      real(rp) :: resmax ! constraint violation
 
 C Start the real business 
       n_mw = int(n, kind(n_mw)) ! cast n to type mwSize
@@ -402,7 +404,7 @@ C Start the real business
       end if
 
 C Evaluate the objective function (fun_ptr) at x
-      plhs(1) = mxCreateDoubleScalar(HUGENUM) 
+      plhs(1) = mxCreateDoubleScalar(hugenum) 
 C Output of f_value = feval(fun, x); see below 
       prhs(1) = fun_ptr 
 C First input of f_value = feval(fun, x); see below; fun_ptr is a global variable
@@ -433,8 +435,8 @@ C integer*4 mexCallMATLAB(integer*4 nlhs, mwPointer plhs, integer*4 nrhs, mwPoin
 C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
 
 C Use extreme barrier to cope with 'hidden constraints' 
-      if (funval .gt. HUGEFUN .or. funval .ne. funval) then
-          funval = HUGEFUN ! HUGEFUN is defined in pdfoconst
+      if (funval .gt. hugefun .or. is_nan(funval)) then
+          funval = hugefun ! hugefun is defined in pdfomod
       end if
 
 C Free memory; note that plhs and prhs are just temporary variables in
@@ -477,7 +479,7 @@ C Execute matlab command: c_value = feval(con, x)
 C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
       end if
 C Calculate the constraint violation (named 'RESMAX' in Powell's COBYLA code)
-      resmax = ZERO ! ZERO is defined in module 'pdfoconst'.
+      resmax = zero ! zero is defined in module 'pdfomod'.
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Code without extreme barrier:
 C Constraint: con(x) >= 0
@@ -493,15 +495,15 @@ C      end do
 C Use extreme barrier to cope with 'hidden constraints' 
 C Constraint: con(x) >= 0
       do k = 1, m
-          if (conval(k) .lt. -HUGECON .or. conval(k).ne.conval(k)) then
-              conval(k) = -HUGECON ! HUGECON is defined in pdfoconst
+          if (conval(k) .lt. -hugecon .or. is_nan(conval(k))) then
+              conval(k) = -hugecon ! hugecon is defined in pdfomod
           end if
 
 C This part is NOT extreme barrier. We replace extremely negative values 
 C of cineq (which leads to no constraint violation) by -hugecon. Otherwise,
 C NaN or Inf may occur in the interpolation models.
-          if (conval(k) .gt. HUGECON) then
-              conval(k) = HUGECON ! HUGECON is defined in pdfoconst
+          if (conval(k) .gt. hugecon) then
+              conval(k) = hugecon ! hugecon is defined in pdfomod
           end if
 
           resmax = max(resmax, -conval(k))

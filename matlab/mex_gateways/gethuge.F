@@ -28,7 +28,7 @@ C     current platform, the possible values of data_type being
 C     'integer', 'float', 'real', 'single', 'double', 'mwSize', 
 C     'mwIndex', 'fun', 'function', 'con', 'constraint'.
 
-      use pdfoconst ! See pdfoconst.F. It defines sp, dp, and int4
+      use pdfomod, only : sp, dp, rp, hugefun, hugecon, int4 
       implicit none
 
 C     mexFunction arguments:
@@ -57,9 +57,11 @@ C The input string, which specifies the data type
 C Integer zero of the default kind on the current platform  
       real, parameter :: floatZero = 0.0 
 C Floating-point zero of the default real kind on the current platform
-      real(sp), parameter :: singleZero = 0.0 
+      real(sp), parameter :: singleZero = 0.0_sp
 C Single-precision floating-point zero
-      real(dp), parameter :: doubleZero = 0.0D0 
+      real(dp), parameter :: doubleZero = 0.0_dp 
+C Floating-point zero of the default real precision (rp) in pdfomod
+      real(rp), parameter :: realZero = 0.0_rp 
 C Double-precision floating-point zero
       mwSize, parameter :: msZero = 0 
 C Integer zero of type mwSize on the current platform
@@ -69,6 +71,7 @@ C Integer zero of type mwIndex on the current platform
       real, parameter :: floatHuge = huge(floatZero)
       real(sp), parameter :: singleHuge = huge(singleZero)
       real(dp), parameter :: doubleHuge = huge(doubleZero)
+      real(rp), parameter :: realHuge = huge(realZero)
       mwSize, parameter :: msHuge = huge(msZero)
       mwIndex, parameter :: miHuge = huge(miZero)
       real(dp) :: hugeValue
@@ -103,16 +106,18 @@ C     Define hugeValue.
       if (data_type .eq. 'integer' .or. data_type .eq. 'Integer'
      &    .or. data_type .eq. 'INTEGER') then
           hugeValue = real(intHuge, dp)
-      else if (data_type .eq. 'float' .or. data_type .eq. 'real' 
-     &    .or. data_type .eq. 'Float' .or. data_type .eq. 'Real' 
-     &    .or. data_type .eq. 'FLOAT' .or. data_type .eq. 'REAL') then
+      else if (data_type .eq. 'float' .or. data_type .eq. 'Float' 
+     &    .or. data_type .eq. 'FLOAT') then
           hugeValue = real(floatHuge, dp)
       else if (data_type .eq. 'single' .or. data_type .eq. 'Single'
      &    .or. data_type .eq. 'SINGLE') then
-          hugeValue = singleHuge
+          hugeValue = real(singleHuge, dp)
       else if (data_type .eq. 'double' .or. data_type .eq. 'Double'
      &    .or. data_type .eq. 'DOUBLE') then
-          hugeValue = doubleHuge
+          hugeValue = real(doubleHuge, dp)
+      else if (data_type .eq. 'real' .or. data_type .eq. 'Real' 
+     &    .or. data_type .eq. 'REAL') then
+          hugeValue = real(realHuge, dp)
       else if (data_type .eq. 'mwSize' .or. data_type .eq. 'mwsize' 
      &     .or. data_type .eq. 'MWSIZE') then
           hugeValue = real(msHuge, dp)
@@ -123,12 +128,12 @@ C     Define hugeValue.
      &    data_type .eq. 'FUN' .or. data_type .eq. 'function' .or. 
      &    data_type .eq. 'Function' .or. data_type .eq. 'FUNCTION') 
      &then
-          hugeValue = real(HUGEFUN, dp) ! HUGEFUN defined in pdfoconst
+          hugeValue = real(hugefun, dp) ! HUGEFUN defined in pdfomod
       else if (data_type .eq. 'con' .or. data_type .eq. 'Con' .or. 
      &    data_type .eq. 'CON' .or. data_type .eq. 'constraint' .or. 
      &    data_type .eq. 'Constraint' .or. data_type .eq. 'CONSTRAINT') 
      &then
-          hugeValue = real(HUGECON, dp) ! HUGECON defined in pdfoconst
+          hugeValue = real(hugecon, dp) ! HUGECON defined in pdfomod
       else
           call mexErrMsgIdAndTxt ('gethuge:WrongInput',
      &    'gethuge: Unrecognized input.')

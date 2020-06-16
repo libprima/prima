@@ -2,55 +2,57 @@
      & xbase, xopt, xnew, xpt, fval, gq, hq, pq, bmat, zmat, ndim,
      & d, vlag, w, f, info, ftarget)
 
+      use pdfomod, only : rp, zero, one, half, tenth, is_finite
       implicit none
-      integer, parameter :: dp = kind(0.0d0)
-      real(kind = dp), parameter :: almost_infinity = huge(0.0d0)/2.0d0,
-     & half = 0.5d0, one = 1.0d0, tenth = 0.1d0, zero = 0.0d0
 
       ! inputs
       integer, intent(in) :: n, npt, iprint, maxfun, ndim
       integer, intent(out) :: info
-      real(kind = dp), intent(in) :: rhobeg, rhoend, ftarget
-      real(kind = dp), intent(out) :: f
-      real(kind = dp), intent(inout) :: x(n), xbase(n), xopt(n),
+      real(kind = rp), intent(in) :: rhobeg, rhoend, ftarget
+      real(kind = rp), intent(out) :: f
+      real(kind = rp), intent(inout) :: x(n), xbase(n), xopt(n),
      & xnew(n), xpt(npt, n), fval(npt), gq(n), hq((n*(n+1))/2), pq(npt)
-      real(kind = dp), intent(inout) :: bmat(npt + n, n),
+      real(kind = rp), intent(inout) :: bmat(npt + n, n),
      & zmat(npt, npt - n - 1), d(n), vlag(npt + n), w(10*(npt + n))
 
       ! other variables
       integer :: i, idz, ih, itest, j, jp, k, knew, kopt, ksav, ktemp,
      & nf, nfsav, nftest
-      real(kind = dp) :: alpha, beta, bsummation, crvmin, delta, detrat,
+      real(kind = rp) :: alpha, beta, bsummation, crvmin, delta, detrat,
      & diff, diffa, diffb, diffc, distsq, dnorm, dsq, dstep, dx
-      real(kind = dp) :: fopt, fsave, gisq, gqsq, hdiag, ratio, rho,
+      real(kind = rp) :: fopt, fsave, gisq, gqsq, hdiag, ratio, rho,
      & rhosq, summation, summationa, summationb
-      real(kind = dp) :: temp, vquad, xoptsq
+      real(kind = rp) :: temp, vquad, xoptsq
       logical :: xisnan
 
       ! The arguments N, NPT, X, RHOBEG, RHOEND, IPRINT and MAXFUN are
       ! identical to the corresponding arguments in SUBROUTINE NEWUOA.
       ! XBASE will hold a shift of origin that should reduce the
       ! contributions from rounding errors to values of the model and
-      ! Lagrange functions.  XOPT will be set to the displacement from
-      ! XBASE of the vector of variables that provides the least
-      ! calculated F so far.  XNEW will be set to the displacement from
-      ! XBASE of the vector of variables for the current calculation of
-      ! F.  XPT will contain the interpolation point coordinates
-      ! relative to XBASE.  FVAL will hold the values of F at the
-      ! interpolation points.  GQ will hold the gradient of the
-      ! quadratic model at XBASE.  HQ will hold the explicit second
-      ! derivatives of the quadratic model.  PQ will contain the
-      ! parameters of the implicit second derivatives of the quadratic
-      ! model.  BMAT will hold the last N columns of H.  ZMAT will hold
-      ! the factorization of the leading NPT by NPT submatrix of H, this
+      ! Lagrange functions.
+      ! XOPT will be set to the displacement from XBASE of the vector of
+      ! variables that provides the least calculated F so far.
+      ! XNEW will be set to the displacement from XBASE of the vector of
+      ! variables for the current calculation of F.
+      ! XPT will contain the interpolation point coordinates relative to
+      ! XBASE.
+      ! FVAL will hold the values of F at the interpolation points.
+      ! GQ will hold the gradient of the quadratic model at XBASE.
+      ! HQ will hold the explicit second order derivatives of the
+      ! quadratic model.
+      ! PQ will contain the parameters of the implicit second order
+      ! derivatives of the quadratic model.
+      ! BMAT will hold the last N columns of H. ZMAT will hold the
+      ! factorization of the leading NPT by NPT submatrix of H, this
       ! factorization being ZMAT times Diag(DZ) times ZMAT^T, where the
-      ! elements of DZ are plus or minus one, as specified by IDZ.  NDIM
-      ! is the first dimension of BMAT and has the value NPT + N.  D is
-      ! reserved for trial steps from XOPT.  VLAG will contain the
-      ! values of the Lagrange functions at a new point X.  They are
-      ! part of a product that requires VLAG to be of length NDIM.  The
-      ! array W will be used for working space. Its length must be at
-      ! least 10*NDIM = 10*(NPT + N).
+      ! elements of DZ are plus or minus one, as specified by IDZ.
+      ! NDIM is the first dimension of BMAT and has the value NPT + N.
+      ! D is reserved for trial steps from XOPT.
+      ! VLAG will contain the values of the Lagrange functions at a new
+      ! point X. They are part of a product that requires VLAG to be of
+      ! length NDIM = NPT+N.
+      ! The array W will be used for working space. Its length must be
+      ! at least 10*NDIM = 10*(NPT + N).
 
       ! Set some constants.
       nftest = max(maxfun, 1)
@@ -115,16 +117,16 @@
       if (dnorm < half*rho) then
           knew = -1
           delta = tenth*delta
-          ratio = -1.0d0
-          if (delta <= 1.5d0*rho) delta = rho
+          ratio = -one
+          if (delta <= 1.5_rp*rho) delta = rho
           if (nf <= nfsav + 2) goto 460
-          temp = 0.125d0*crvmin*rho*rho
+          temp = 0.125_rp*crvmin*rho*rho
           if (temp <= dmax1(diffa, diffb, diffc)) goto 460
           goto 490
       end if
 
       ! Shift XBASE if XOPT may be too far from XBASE.
-      if (dsq <= 1.0d-3*xoptsq) then
+      if (dsq <= 1.0e-3_rp*xoptsq) then
           call shiftbase(n, npt, idz, xopt, pq, bmat, zmat, gq, hq, xpt,
      &     info)
           xbase = xbase + xopt
@@ -214,7 +216,7 @@
       !
       if (knew > 0) then
           temp = one + alpha*beta/vlag(knew)**2
-          if (abs(temp) <= 0.8d0) then
+          if (abs(temp) <= 0.8_rp) then
               call bigden (n, npt, xopt, xpt, bmat, zmat, idz, ndim,
      &         kopt, knew, d, w, vlag, beta, xnew,w(ndim+1),w(6*ndim+1))
           end if
@@ -251,7 +253,7 @@
       ! then it is necessary to set FOPT and XOPT before going to 530,
       ! because these two variables have not been set yet (line 70
       ! will not be reached).
-      if (f /= f .or. f > almost_infinity) then
+      if (.not. is_finite(f)) then 
           info = -2
           goto 530
       end if
@@ -326,12 +328,12 @@
       ratio = (f - fsave)/vquad
       if (ratio <= tenth) then
           delta = half*dnorm
-      else if (ratio <= 0.7d0) then
+      else if (ratio <= 0.7_rp) then
           delta = dmax1(half*delta, dnorm)
       else
           delta = dmax1(half*delta, dnorm + dnorm)
       end if
-      if (delta <= 1.5d0*rho) delta = rho
+      if (delta <= 1.5_rp*rho) delta = rho
       !
       ! Set KNEW to the index of the next interpolation point to delete.
       !
@@ -393,7 +395,7 @@
       do i = 1, n
           gqsq = gqsq + gq(i)**2
       end do
-      
+
       ! If a trust region step makes a small change to the objective
       ! function, then calculate the gradient of the least Frobenius
       ! norm interpolant at XBASE, and store it in W, using VLAG for
@@ -404,7 +406,7 @@
           ! thesis (Section 3.3.2) that it is more reasonable and more
           ! efficient to check the value of RATIO instead of ABS(RATIO).
           ! IF (DABS(RATIO) .GT. 1.0D-2) THEN
-          if (ratio > 1.0d-2) then
+          if (ratio > 1.0e-2_rp) then
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               itest = 0
           else
@@ -426,7 +428,7 @@
               ! if the test is satisfied.
               !
               itest = itest + 1
-              if (gqsq < 1.0d2*gisq) itest = 0
+              if (gqsq < 100.0_rp*gisq) itest = 0
               if (itest >= 3) then
                   gq = w(1:n)
                   hq = zero
@@ -461,7 +463,7 @@
       ! enough to the best point so far.
       !
       knew = 0
-  460 distsq = 4.0d0*delta*delta
+  460 distsq = 4.0_rp*delta*delta
       do k = 1, npt
           summation = zero
           do j = 1, n
@@ -472,13 +474,13 @@
               distsq = summation
           end if
       end do
-      
+
       ! If KNEW is positive, then set DSTEP, and branch back for the
       ! next iteration, which will generate a "model step".
       if (knew > 0) then
           dstep = dmax1(dmin1(tenth*sqrt(distsq), half*delta), rho)
           dsq = dstep*dstep
-          if (dsq <= 1.0d-3*xoptsq) then
+          if (dsq <= 1.0e-3_rp*xoptsq) then
               call shiftbase(n, npt, idz, xopt, pq, bmat, zmat, gq, hq,
      &         xpt, info)
               xbase = xbase + xopt
@@ -496,9 +498,9 @@
   490 if (rho > rhoend) then
           delta = half*rho
           ratio = rho/rhoend
-          if (ratio <= 16.0d0) then
+          if (ratio <= 16.0_rp) then
               rho = rhoend
-          else if (ratio <= 250.0d0) then
+          else if (ratio <= 250.0_rp) then
               rho = sqrt(ratio)*rhoend
           else
               rho = tenth*rho
