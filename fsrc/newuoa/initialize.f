@@ -20,9 +20,10 @@
       xbase = x
       xpt = zero
       bmat = zero
+      zmat = zero
+      gq = zero
       hq = zero
       pq = zero
-      zmat = zero
 
       ! Begin the initialization procedure. The coordinates of the
       ! displacement of the next initial interpolation point from XBASE
@@ -105,9 +106,13 @@
               exit
           end if
 
-          ! Set the nonzero initial elements of BMAT and the quadratic
-          ! model in the cases when NF is at most 2*N + 1.
+          ! Set the coefficients of the initial Lagrange functions
+          ! (i.e., bmat and zmat) and the initial quadratic model (i.e.,
+          ! gq, hq, pq). This is reached starting from the second
+          ! function evaluation, namely when NF > 1.
           if (nf <= 2*n + 1) then
+              ! Set the nonzero initial elements of BMAT and the
+              ! quadratic model in the cases when NF <= 2*N + 1.
               if (nf >= 2 .and. nf <= n+1) then
                   gq(nf - 1) = (f - fbeg)/rhobeg
                   if (npt < nf + n) then
@@ -127,8 +132,8 @@
                   gq(nf - n - 1) = half*(gq(nf - n - 1) + temp)
               end if
           else
-              ! Set the off-diagonal second derivatives of the Lagrange
-              ! functions and the initial quadratic model.
+              ! When NF > 2*N+1, set the off-diagonal second derivatives
+              ! of the Lagrange functions and the quadratic model.
               ih = (ipt*(ipt - 1))/2 + jpt
               if (xipt < zero) ipt = ipt + n
               if (xjpt < zero) jpt = jpt + n
@@ -138,8 +143,10 @@
               zmat(jpt + 1, nf - n - 1) = -recip
               hq(ih) = (fbeg-fval(ipt+1)-fval(jpt+1)+f)/(xipt*xjpt)
           end if
-          if (any(is_nan(bmat)) .or. any(is_nan(zmat)) .or.             &
-     &     any(is_nan(gq)) .or. any(is_nan(hq)) .or. any(is_nan(pq)))   &
+          ! Check whether NaN occurs in the coefficients. 
+          ! Do this only when NF > 1.
+          if (nf > 1 .and. (any(is_nan(bmat)) .or. any(is_nan(zmat)).or.
+     &     any(is_nan(gq)) .or. any(is_nan(hq)) .or. any(is_nan(pq))))  &
      &     then
               info = -3
               exit
