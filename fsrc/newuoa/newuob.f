@@ -20,8 +20,8 @@
      & nfsav, nftest, subinfo
       real(kind = rp) :: alpha, beta, crvmin, delta, detrat, diff(3),   &
      & distsq, dnorm, dsq, dstep
-      real(kind = rp) :: fopt, fsave, gisq, gqsq, hdiag, ratio, rho,    &
-     & rhosq, summation, temp, vquad, xoptsq, wcheck(npt + n)
+      real(kind = rp) :: fopt, fsave, galt(n), galtsq, gqsq, hdiag,     &
+     & ratio, rho, rhosq, summation, temp, vquad, xoptsq, wcheck(npt+n)
 
       ! The arguments N, NPT, X, RHOBEG, RHOEND, IPRINT and MAXFUN are
       ! identical to the corresponding arguments in SUBROUTINE NEWUOA.
@@ -324,43 +324,33 @@
           ! efficient to check the value of RATIO instead of ABS(RATIO).
           ! IF (DABS(RATIO) .GT. 1.0D-2) THEN
           if (ratio > 1.0e-2_rp) then
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               itest = 0
           else
+              vlag(1 : npt) = fval - fval(kopt)
+               
+!              galt = matmul(vlag(1 : npt), bmat(1 : npt, 1 : n))
+!              galtsq = dot_product(galt, galt)
+              galt = zero
               do k = 1, npt
-                  vlag(k) = fval(k) - fval(kopt)
+                  galt = galt + vlag(k)*bmat(k, :)
               end do
-              gisq = zero
+              galtsq = zero
               do i = 1, n
-                  summation = zero
-                  do k = 1, npt
-                      summation = summation + bmat(k, i)*vlag(k)
-                  end do
-                  gisq = gisq + summation*summation
-                  w(i) = summation
+                  galtsq = galtsq + galt(i)*galt(i) 
               end do
 
               ! Test whether to replace the new quadratic model by the
               ! least Frobenius norm interpolant, making the replacement
               ! if the test is satisfied.
-              itest = itest + 1
-              if (gqsq < 100.0_rp*gisq) itest = 0
+              if (gqsq < 100.0_rp*galtsq) then
+                  itest = 0
+              else
+                  itest = itest + 1
+              end if
+
               if (itest >= 3) then
-                  gq = w(1:n)
-                  hq = zero
-                  do j = 1, npt - n - 1
-                      w(j) = zero
-                      do k = 1, npt
-                          w(j) = w(j) + vlag(k)*zmat(k, j)
-                      end do
-                      if (j < idz) w(j) = -w(j)
-                  end do
-                  pq = zero
-                  do k = 1, npt
-                      do j = 1, npt - n - 1
-                          pq(k) = pq(k) + zmat(k, j)*w(j)
-                      end do
-                  end do
+                  call qalt(gq, hq, pq, fval, bmat(1 : npt, :), zmat,   &
+     &             n,npt,kopt,idz)
                   itest = 0
               end if
           end if
@@ -474,37 +464,6 @@
 
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCC Auxillary Subroutines CCCCCCCCCCCCCCCCCCCCCC
-C
-      SUBROUTINE QALT(GQ, HQ, PQ, FVAL, SMAT, ZMAT, N, NPT, NPTM, KOPT, &
-     &    IDZ)
-C
-C     QALT calculates the alternative model, namely the model that
-C     minimizes the F-norm of the Hessian subject to the interpolation
-C     conditions. 
-C
-C     Note that SMAT = BMAT(1:NPT, 1:N)
-C
-          IMPLICIT NONE
-          INTEGER, PARAMETER :: DP = KIND(0.0D0) 
-          ! DP IS THE KIND FOR DOUBLE PRECISION
-          INTEGER, INTENT(IN) :: N, NPT, NPTM, KOPT, IDZ
-          REAL(KIND = DP), INTENT(IN) :: FVAL(NPT), SMAT(NPT, N),       &
-     &    ZMAT(NPT, NPTM)
-          REAL(KIND = DP), INTENT(OUT) :: GQ(N), HQ(N*(N+1)/2), PQ(NPT)
-          REAL(KIND = DP) :: VLAG(NPT), W(NPTM)
-
-          VLAG = FVAL - FVAL(KOPT)
-          GQ = MATMUL(VLAG, SMAT)
-          HQ = 0.0D0
-          W = MATMUL(VLAG, ZMAT)
-          W(1:IDZ-1) = - W(1:IDZ-1)
-          PQ = MATMUL(ZMAT, W)
-
-          RETURN
-
-      END SUBROUTINE QALT
-
-
 C      SUBROUTINE TESTINT(EINT, FVAL, XPT, GQ, HQ, PQ, N, NPT, KOPT)
 CC
 CC     TESTINT tests how well Q interpolates F.
@@ -518,7 +477,7 @@ C          REAL(KIND = DP), INTENT(IN) :: FVAL(NPT), XPT(NPT, N), GQ(N),
 C     +    HQ(N*(N+1)/2), PQ(NPT)
 C          REAL(KIND = DP), INTENT(OUT) :: EINT(NPT) 
 C          INTEGER :: K
-C          REAL(KIND = DP) :: FOPT, FREF, XOPT(N), D(N), QDIFF, FDIFF
+C          REAL(KIND = DP) :: FOPT, FREF, XOPT(N), D(N), DIFF, VQUAD 
 C
 C          FOPT = FVAL(KOPT)
 C          FREF = MAX(1.0D0, MAXVAL(ABS(FVAL-FOPT)))
@@ -527,9 +486,9 @@ C          EINT(KOPT) = 0.0D0
 C          DO K = 1, NPT
 C              IF (K .NE. KOPT) THEN
 C                  D = XPT(K, :) - XOPT
-C                  CALL DQ(QDIFF, D, XOPT, XPT, GQ, HQ, PQ, N, NPT)
-C                  FDIFF = FVAL(K) - FOPT
-C                  EINT(K) = ABS(FDIFF - QDIFF)/FREF
+C                  CALL CALQUAD(VQUAD, D, XOPT, XPT, GQ, HQ, PQ, N, NPT)
+C                  DIFF = FVAL(K) - FOPT - VQUAD
+C                  EINT(K) = ABS(DIFF)/FREF
 C              END IF
 C          END DO
 C        
