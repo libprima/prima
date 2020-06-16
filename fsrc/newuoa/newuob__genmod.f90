@@ -1,4 +1,4 @@
-        !COMPILER-GENERATED INTERFACE MODULE: Tue Jun 16 16:15:22 2020
+        !COMPILER-GENERATED INTERFACE MODULE: Tue Jun 16 22:22:46 2020
         ! This source file is for reference only and may not completely
         ! represent the generated interface used by the compiler.
         MODULE NEWUOB__genmod

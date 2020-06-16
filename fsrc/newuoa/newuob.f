@@ -63,24 +63,24 @@
           goto 530
       end if
 
-      ! Begin the iterative procedure.
+      ! Set some more initial values.
       rho = rhobeg
       delta = rho
       idz = 1
       diffa = zero
       diffb = zero
       itest = 0
+      nfsav = nf
       xopt = xpt(kopt, :)
       xoptsq = zero
       do i = 1, n
           xoptsq = xoptsq + xopt(i)**2
       end do
-   90 nfsav = nf
+
+      ! Begin the iterative procedure.
 
       ! Generate the next trust region step and test its length. Set
       ! KNEW to -1 if the purpose of the next F is to improve the model.
-  100 knew = 0
-
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! Zaikun 2019-08-29: For ill-conditioned problems, NaN may occur
       ! in the models. In such a case, we terminate the code. Otherwise,
@@ -89,10 +89,12 @@
       ! because any equality/inequality comparison involving NaN returns
       ! FALSE, which can lead to unintended behavior of the code,
       ! including uninitialized indices.
-      if (any(is_nan(gq)) .or. any(is_nan(hq)) .or. any(is_nan(pq)))then
+  100 if (any(is_nan(gq)) .or. any(is_nan(hq)) .or. any(is_nan(pq)))then
           info = -3
           goto 530
       end if
+
+      knew = 0
 
       call trsapp (n, npt, xopt, xpt, gq, hq, pq, delta, d, w, w(n+1),  &
      & w(2*n+1), w(3*n+1), crvmin)
@@ -107,10 +109,12 @@
           delta = tenth*delta
           ratio = -one
           if (delta <= 1.5_rp*rho) delta = rho
-          if (nf <= nfsav + 2) goto 460
-          temp = 0.125_rp*crvmin*rho*rho
-          if (temp <= dmax1(diffa, diffb, diffc)) goto 460
-          goto 490
+          if (0.125_rp*crvmin*rho*rho <= max(diffa, diffb, diffc) .or.  &
+     &     nf <= nfsav + 2) then 
+              goto 460
+          else
+              goto 490
+          end if
       end if
 
       ! Shift XBASE if XOPT may be too far from XBASE.
@@ -157,8 +161,8 @@
       ! NPT components of W_check will be held in W.
 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      if ((dsq-sum(d**2))/dsq > 1e-15) print *, (dsq-sum(d**2))/dsq 
-      if(knew > 0 .and. dsq /= dstep*dstep) print *, knew, dsq-dstep**2 
+!      if ((dsq-sum(d**2))/dsq > 1e-15) print *, (dsq-sum(d**2))/dsq 
+!      if(knew > 0 .and. dsq /= dstep*dstep) print *, knew, dsq-dstep**2 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! NOTE:
       ! 1. w(1:npt) (i.e., wcheck) may be used later 
@@ -176,23 +180,19 @@
      & beta, wcheck, dsq, xoptsq)
       !w(1:npt) = wcheck  
 
-      !
       ! If KNEW is positive and if the cancellation in DENOM is
       ! unacceptable, then BIGDEN calculates an alternative model step,
       ! XNEW being used for working space.
-      !
       if (knew > 0) then
-          temp = one + alpha*beta/vlag(knew)**2
-          if (abs(temp) <= 0.8_rp) then
+          if (abs(one + alpha*beta/vlag(knew)**2) <= 0.8_rp) then
               call bigden (n, npt, xopt, xpt, bmat, zmat, idz, ndim,    &
      &         kopt, knew, d, wcheck, vlag, beta, xnew,w(ndim+1),       &
      &         w(6*ndim+1))
           end if
       end if
-      !
+      
       ! Calculate the next value of the objective function.
-      !
-  290 xnew = xopt + d
+      xnew = xopt + d
       x = xbase + xnew
       if (any(is_nan(x))) then
           f = sum(x)  ! Set F to NaN. It is necessary.
@@ -208,10 +208,9 @@
   330     FORMAT (/4X, 'Function number', I6, '    F = ', 1PD18.10,     &
      &     '    The corresponding X is:'/(2X, 5D15.6))
       end if
-      !
+      
       ! Use the quadratic model to predict the change in F due to the
       ! step D,  and set DIFF to the error of this prediction.
-      !
       vquad = zero
       ih = 0
       do j = 1, n
@@ -227,15 +226,16 @@
           vquad = vquad + pq(k)*wcheck(k)
       end do
       diff = f - fopt - vquad
+
       diffc = diffb
       diffb = diffa
       diffa = abs(diff)
+
       if (dnorm > rho) nfsav = nf
-      !
+
       ! Update FOPT and XOPT if the new F is the least value of the
       ! objective function so far. The branch when KNEW is positive
       ! occurs if D is not a trust region step.
-      !
       fsave = fopt
       if (f < fopt) then
           fopt = f
@@ -248,7 +248,7 @@
       ksav = knew
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! By Zaikun (commented on 02-06-2019; implemented in 2016):
-      ! Exit if F has an NaN or almost infinite value.
+      ! Return if F has an NaN or almost infinite value.
       ! If this happends at the first function evaluation (i.e., NF=1),
       ! then it is necessary to set FOPT and XOPT before going to 530,
       ! because these two variables have not been set yet (line 70
@@ -273,37 +273,31 @@
           goto 530
       end if
 
-      if (knew == -1) goto 530
+!      if (knew == -1) goto 530  !!!
+
       if (knew > 0) goto 410
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      !
+
       ! Pick the next value of DELTA after a trust region step.
-      !
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! IF (VQUAD .GE. ZERO) THEN
-      if (.not. (vquad < zero)) then
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      if (is_nan(vquad) .or. vquad >= zero) then
           if (iprint > 0) print 370
   370         FORMAT (/4X, 'Return from NEWUOA because a trust          &
      & region step has failed to reduce Q.')
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           info = 2
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           goto 530
       end if
       ratio = (f - fsave)/vquad
       if (ratio <= tenth) then
           delta = half*dnorm
       else if (ratio <= 0.7_rp) then
-          delta = dmax1(half*delta, dnorm)
+          delta = max(half*delta, dnorm)
       else
-          delta = dmax1(half*delta, dnorm + dnorm)
+          delta = max(half*delta, dnorm + dnorm)
       end if
       if (delta <= 1.5_rp*rho) delta = rho
-      !
+      
       ! Set KNEW to the index of the next interpolation point to delete.
-      !
-      rhosq = dmax1(tenth*delta, rho)**2
+      rhosq = max(tenth*delta, rho)**2
       ktemp = 0
       detrat = zero
       if (f >= fsave) then
@@ -388,11 +382,10 @@
                   gisq = gisq + summation*summation
                   w(i) = summation
               end do
-              !
+
               ! Test whether to replace the new quadratic model by the
               ! least Frobenius norm interpolant, making the replacement
               ! if the test is satisfied.
-              !
               itest = itest + 1
               if (gqsq < 100.0_rp*gisq) itest = 0
               if (itest >= 3) then
@@ -416,19 +409,18 @@
           end if
       end if
       if (f < fsave) kopt = knew
-      !
+    
       ! If a trust region step has provided a sufficient decrease in F,
       ! then branch for another trust region calculation. The case
       ! KSAVE>0 occurs when the new function value was calculated by
       ! a model step.
-      !
       if (f <= fsave + tenth*vquad) goto 100
       if (ksav > 0) goto 100
-      !
+      
       ! Alternatively, find out if the interpolation points are close
       ! enough to the best point so far.
-      !
       knew = 0
+
   460 distsq = 4.0_rp*delta*delta
       do k = 1, npt
           summation = zero
@@ -444,7 +436,7 @@
       ! If KNEW is positive, then set DSTEP, and branch back for the
       ! next iteration, which will generate a "model step".
       if (knew > 0) then
-          dstep = dmax1(dmin1(tenth*sqrt(distsq), half*delta), rho)
+          dstep = max(dmin1(tenth*sqrt(distsq), half*delta), rho)
           dsq = dstep*dstep
           if (dsq <= 1.0e-3_rp*xoptsq) then
               call shiftbase(n, npt, idz, xopt, pq, bmat, zmat, gq, hq, &
@@ -455,12 +447,11 @@
           end if
           goto 120
       end if
-      if (ratio > zero) goto 100
-      if (dmax1(delta, dnorm) > rho) goto 100
-      !
+
+      if (ratio > zero .or. max(delta, dnorm) > rho) goto 100
+      
       ! The calculations with the current value of RHO are complete.
       ! Pick the next values of RHO and DELTA.
-      !
   490 if (rho > rhoend) then
           delta = half*rho
           ratio = rho/rhoend
@@ -471,42 +462,49 @@
           else
               rho = tenth*rho
           end if
-          delta = dmax1(delta, rho)
+          delta = max(delta, rho)
           if (iprint >= 2) then
               if (iprint >= 3) print 500
   500             FORMAT (5X)
               print 510, rho, nf
   510         FORMAT (/4X, 'New RHO = ', 1PD11.4, 5X,                   &
      &         'Number of function values = ', I6)
-              print 520, fopt, (xbase(i) + xopt(i), i = 1, n)
+              print 520, fopt, (xbase + xopt)
   520         FORMAT (4X, 'Least value of F = ', 1PD23.15, 9X,          &
      &         'The corresponding X is:'/(2X, 5D15.6))
           end if
-          goto 90
+
+          nfsav = nf
+
+          goto 100 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       else
           info = 0
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       end if
-      !
+      
       ! Return from the calculation, after another Newton-Raphson step,
       ! if it is too short to have been tried before.
-      !
-      if (knew == -1) goto 290
+      if (knew == -1) then
+          x = xbase + (xopt + d)
+          if (any(is_nan(x))) then
+              f = sum(x)  ! Set F to NaN. It is necessary.
+              info = -1
+          else
+              call calfun(n, x, f)
+              nf = nf + 1
+          end if
+      end if
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! By Zaikun (commented on 02-06-2019; implemented in 2016):
       ! Note that (FOPT .LE. F) is FALSE if F is NaN; When F is NaN, it
       ! is also necessary to update X and F.
       ! 530 IF (FOPT .LE. F) THEN
-  530 if (fopt <= f .or. is_nan(f)) then
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  530 if (is_nan(f) .or. fopt <= f) then
           x = xbase + xopt
           f = fopt
       end if
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      ! IF (IPRINT .GE. 1) THEN
       if (iprint >= 1) then
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           print 550, nf
   550     FORMAT (/4X, 'At the return from NEWUOA', 5X,                 &
      &     'Number of function values = ', I6)

@@ -1,10 +1,10 @@
-        !COMPILER-GENERATED INTERFACE MODULE: Tue Jun 16 16:15:23 2020
+        !COMPILER-GENERATED INTERFACE MODULE: Tue Jun 16 22:22:47 2020
         ! This source file is for reference only and may not completely
         ! represent the generated interface used by the compiler.
         MODULE VLAGBETA__genmod
           INTERFACE 
             SUBROUTINE VLAGBETA(N,NPT,IDZ,KOPT,BMAT,ZMAT,XPT,XOPT,D,VLAG&
-     &,BETA)
+     &,BETA,WCHECK,DSQ,XOPTSQ)
               INTEGER(KIND=4), INTENT(IN) :: NPT
               INTEGER(KIND=4), INTENT(IN) :: N
               INTEGER(KIND=4), INTENT(IN) :: IDZ
@@ -16,6 +16,9 @@
               REAL(KIND=8), INTENT(IN) :: D(N)
               REAL(KIND=8), INTENT(OUT) :: VLAG(NPT+N)
               REAL(KIND=8), INTENT(OUT) :: BETA
+              REAL(KIND=8), INTENT(OUT) :: WCHECK(NPT)
+              REAL(KIND=8) :: DSQ
+              REAL(KIND=8) :: XOPTSQ
             END SUBROUTINE VLAGBETA
           END INTERFACE 
         END MODULE VLAGBETA__genmod
