@@ -1,10 +1,114 @@
-../pdfomod.f:80:16:
-
-       is_nan = (x /= x)
-                1
-Warning: Inequality comparison for REAL(8) at (1)
-newuob.f:363:25:
-
-       if (ksav == 0 .and. delta == rho) then
-                         1
-Warning: Equality comparison for REAL(8) at (1)
+calquad.f(12): warning #5194: Source line truncated.
+      real(kind = rp), intent(in) :: d(n), x(n), xpt(npt, n), gq(n),    &
+------------------------------------------------------------------------^
+calquad.f(2): remark #7712: This variable has not been used.   [XPT]
+      subroutine calquad(vquad, d, x, xpt, gq, hq, pq, n, npt, wcheck)
+--------------------------------------^
+initialize.f(1): warning #5194: Source line truncated.
+      subroutine initialize(n, npt, rhobeg, x, xbase, xpt, f, fval,     &
+------------------------------------------------------------------------^
+initialize.f(10): warning #5194: Source line truncated.
+      real(kind = rp), intent(out) :: xbase(n), xpt(npt, n), f,         &
+------------------------------------------------------------------------^
+initialize.f(149): warning #5194: Source line truncated.
+     &     any(is_nan(gq)) .or. any(is_nan(hq)) .or. any(is_nan(pq))))  &
+------------------------------------------------------------------------^
+newuob.f(1): warning #5194: Source line truncated.
+      subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun,     &
+------------------------------------------------------------------------^
+newuob.f(2): warning #5194: Source line truncated.
+     & xbase, xopt, xnew, xpt, fval, gq, hq, pq, bmat, zmat, ndim,      &
+------------------------------------------------------------------------^
+newuob.f(13): warning #5194: Source line truncated.
+      real(kind = rp), intent(inout) :: x(n), xbase(n), xopt(n),        &
+------------------------------------------------------------------------^
+newuob.f(15): warning #5194: Source line truncated.
+      real(kind = rp), intent(inout) :: bmat(npt + n, n),               &
+------------------------------------------------------------------------^
+newuob.f(19): warning #5194: Source line truncated.
+      integer :: i, idz, ih, itest, j, k, knew, kopt, ksav, ktemp, nf,  &
+------------------------------------------------------------------------^
+newuob.f(21): warning #5194: Source line truncated.
+      real(kind = rp) :: alpha, beta, crvmin, delta, detrat, diff,      &
+------------------------------------------------------------------------^
+newuob.f(23): warning #5194: Source line truncated.
+      real(kind = rp) :: fopt, fsave, gisq, gqsq, hdiag, ratio, rho,    &
+------------------------------------------------------------------------^
+newuob.f(58): warning #5194: Source line truncated.
+      call initialize(n, npt, rhobeg, x, xbase, xpt, f, fval, xopt,     &
+------------------------------------------------------------------------^
+newuob.f(60): warning #5194: Source line truncated.
+      if (subinfo == 1 .or. subinfo == -1 .or. subinfo == -2 .or.       &
+------------------------------------------------------------------------^
+newuob.f(99): warning #5194: Source line truncated.
+      call trsapp (n, npt, xopt, xpt, gq, hq, pq, delta, d, w, w(n+1),  &
+------------------------------------------------------------------------^
+newuob.f(112): warning #5194: Source line truncated.
+          if (0.125_rp*crvmin*rho*rho <= max(diffa, diffb, diffc) .or.  &
+------------------------------------------------------------------------^
+newuob.f(130): warning #5194: Source line truncated.
+  120 if (any(is_nan(bmat)) .or. any(is_nan(zmat)) .or. any(is_nan(gq)) &
+------------------------------------------------------------------------^
+newuob.f(141): warning #5194: Source line truncated.
+          call biglag (n, npt, xopt, xpt, bmat, zmat, idz, ndim, knew,  &
+------------------------------------------------------------------------^
+newuob.f(156): warning #5194: Source line truncated.
+      !    is the trust region radius in biglag, where ||d|| should equal
+------------------------------------------------------------------------^
+newuob.f(164): warning #5194: Source line truncated.
+      call vlagbeta(n, npt, idz, kopt, bmat, zmat, xpt, xopt, d, vlag,  &
+------------------------------------------------------------------------^
+newuob.f(172): warning #5194: Source line truncated.
+              call bigden (n, npt, xopt, xpt, bmat, zmat, idz, ndim,    &
+------------------------------------------------------------------------^
+newuob.f(173): warning #5194: Source line truncated.
+     &         kopt, knew, d, wcheck, vlag, beta, xnew,w(ndim+1),       &
+------------------------------------------------------------------------^
+newuob.f(192): warning #5194: Source line truncated.
+  330     FORMAT (/4X, 'Function number', I6, '    F = ', 1PD18.10,     &
+------------------------------------------------------------------------^
+newuob.f(241): warning #5194: Source line truncated.
+  320         FORMAT (/4X, 'Return from NEWUOA because CALFUN has       &
+------------------------------------------------------------------------^
+newuob.f(257): warning #5194: Source line truncated.
+  370         FORMAT (/4X, 'Return from NEWUOA because a trust          &
+------------------------------------------------------------------------^
+newuob.f(415): warning #5194: Source line truncated.
+              call shiftbase(n, npt, idz, xopt, pq, bmat, zmat, gq, hq, &
+------------------------------------------------------------------------^
+newuob.f(443): warning #5194: Source line truncated.
+  510         FORMAT (/4X, 'New RHO = ', 1PD11.4, 5X,                   &
+------------------------------------------------------------------------^
+newuob.f(446): warning #5194: Source line truncated.
+  520         FORMAT (4X, 'Least value of F = ', 1PD23.15, 9X,          &
+------------------------------------------------------------------------^
+newuob.f(482): warning #5194: Source line truncated.
+  550     FORMAT (/4X, 'At the return from NEWUOA', 5X,                 &
+------------------------------------------------------------------------^
+newuob.f(493): warning #5194: Source line truncated.
+      SUBROUTINE QALT(GQ, HQ, PQ, FVAL, SMAT, ZMAT, N, NPT, NPTM, KOPT, &
+------------------------------------------------------------------------^
+newuob.f(506): warning #5194: Source line truncated.
+          REAL(KIND = DP), INTENT(IN) :: FVAL(NPT), SMAT(NPT, N),       &
+------------------------------------------------------------------------^
+shiftbase.f(9): warning #5194: Source line truncated.
+      real(kind = rp), intent(inout) :: bmat(npt + n, n),               &
+------------------------------------------------------------------------^
+shiftbase.f(13): warning #5194: Source line truncated.
+      real(kind = rp) :: summation, summationz, temp, tempq, vlag(n),   &
+------------------------------------------------------------------------^
+shiftbase.f(38): warning #5194: Source line truncated.
+                  bmat(npt + i, j) = bmat(npt + i, j) + vlag(i)*w(j) +  &
+------------------------------------------------------------------------^
+vlagbeta.f(3): warning #5194: Source line truncated.
+      subroutine vlagbeta(n, npt, idz, kopt, bmat, zmat, xpt, xopt, d,  &
+------------------------------------------------------------------------^
+vlagbeta.f(10): warning #5194: Source line truncated.
+      real(kind = rp), intent(in) :: bmat(npt+n, n), zmat(npt, npt-n-1),&
+------------------------------------------------------------------------^
+vlagbeta.f(15): warning #5194: Source line truncated.
+      real(kind = rp) :: summationa, summationb, summation, bsummation, &
+------------------------------------------------------------------------^
+vlagbeta.f(69): warning #5194: Source line truncated.
+      !beta = dot_product(wz(1 : idz-1), wz(1 : idz-1)) -                &
+------------------------------------------------------------------------^

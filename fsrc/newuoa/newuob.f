@@ -18,8 +18,8 @@
       ! other variables
       integer :: i, idz, ih, itest, j, k, knew, kopt, ksav, ktemp, nf,  &
      & nfsav, nftest, subinfo
-      real(kind = rp) :: alpha, beta, crvmin, delta, detrat, diff,      &
-     & diffa, diffb, diffc, distsq, dnorm, dsq, dstep
+      real(kind = rp) :: alpha, beta, crvmin, delta, detrat, diff(3),   &
+     & distsq, dnorm, dsq, dstep
       real(kind = rp) :: fopt, fsave, gisq, gqsq, hdiag, ratio, rho,    &
      & rhosq, summation, temp, vquad, xoptsq, wcheck(npt + n)
 
@@ -67,8 +67,7 @@
       rho = rhobeg
       delta = rho
       idz = 1
-      diffa = zero
-      diffb = zero
+      diff = zero
       itest = 0
       nfsav = nf
       xopt = xpt(kopt, :)
@@ -109,7 +108,7 @@
           delta = tenth*delta
           ratio = -one
           if (delta <= 1.5_rp*rho) delta = rho
-          if (0.125_rp*crvmin*rho*rho <= max(diffa, diffb, diffc) .or.  &
+          if (0.125_rp*crvmin*rho*rho <= maxval(abs(diff)) .or.         &
      &     nf <= nfsav + 2) then 
               goto 460
           else
@@ -132,22 +131,7 @@
           info = -3
           goto 530
       end if
-!  120 do j = 1, n
-!          do i = 1, ndim
-!              if (bmat(i, j) /= bmat(i, j)) then
-!                  info = -3
-!                  goto 530
-!              end if
-!          end do
-!      end do
-!      do j = 1, npt - n - 1
-!          do i = 1, npt
-!              if (zmat(i, j) /= zmat(i, j)) then
-!                  info = -3
-!                  goto 530
-!              end if
-!          end do
-!      end do
+
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! Pick the model step if KNEW is positive. A different choice of
       ! D may be made later, if the choice of D by BIGLAG causes
@@ -178,7 +162,6 @@
 !     & beta, wcheck)
       call vlagbeta(n, npt, idz, kopt, bmat, zmat, xpt, xopt, d, vlag,  &
      & beta, wcheck, dsq, xoptsq)
-      !w(1:npt) = wcheck  
 
       ! If KNEW is positive and if the cancellation in DENOM is
       ! unacceptable, then BIGDEN calculates an alternative model step,
@@ -211,25 +194,12 @@
       
       ! Use the quadratic model to predict the change in F due to the
       ! step D,  and set DIFF to the error of this prediction.
-      vquad = zero
-      ih = 0
-      do j = 1, n
-          vquad = vquad + d(j)*gq(j)
-          do i = 1, j
-              ih = ih + 1
-              temp = d(i)*xnew(j) + d(j)*xopt(i)
-              if (i == j) temp = half*temp
-              vquad = vquad + temp*hq(ih)
-          end do
-      end do
-      do k = 1, npt
-          vquad = vquad + pq(k)*wcheck(k)
-      end do
-      diff = f - fopt - vquad
+      
+      !call calquad(vquad, d, xopt, xpt, gq, hq, pq, n, npt)
+      call calquad(vquad, d, xopt, xpt, gq, hq, pq, n,npt,wcheck(1:npt))
 
-      diffc = diffb
-      diffb = diffa
-      diffa = abs(diff)
+      diff(2 : size(diff)) = diff(1 : size(diff)-1)
+      diff(1) = f - fopt - vquad
 
       if (dnorm > rho) nfsav = nf
 
@@ -257,6 +227,7 @@
           info = -2
           goto 530
       end if
+
       ! By Zaikun (commented on 02-06-2019; implemented in 2016):
       ! Exit if F .LE. FTARGET.
       if (f <= ftarget) then
@@ -330,6 +301,7 @@
       !
   410 call update (n, npt, bmat, zmat, idz, ndim, vlag, beta,knew,w)
       fval(knew) = f
+
       ih = 0
       do i = 1, n
           temp = pq(knew)*xpt(knew, i)
@@ -351,6 +323,7 @@
       end do
       xpt(knew, :) = xnew
       gq = gq + diff*bmat(knew, :)
+
       gqsq = zero
       do i = 1, n
           gqsq = gqsq + gq(i)**2
@@ -517,8 +490,8 @@
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCC Auxillary Subroutines CCCCCCCCCCCCCCCCCCCCCC
 C
-      SUBROUTINE QALT(GQ, HQ, PQ, FVAL, SMAT, ZMAT, N, NPT, NPTM, KOPT, 
-     +    IDZ)
+      SUBROUTINE QALT(GQ, HQ, PQ, FVAL, SMAT, ZMAT, N, NPT, NPTM, KOPT, &
+     &    IDZ)
 C
 C     QALT calculates the alternative model, namely the model that
 C     minimizes the F-norm of the Hessian subject to the interpolation
@@ -530,8 +503,8 @@ C
           INTEGER, PARAMETER :: DP = KIND(0.0D0) 
           ! DP IS THE KIND FOR DOUBLE PRECISION
           INTEGER, INTENT(IN) :: N, NPT, NPTM, KOPT, IDZ
-          REAL(KIND = DP), INTENT(IN) :: FVAL(NPT), SMAT(NPT, N), 
-     +    ZMAT(NPT, NPTM)
+          REAL(KIND = DP), INTENT(IN) :: FVAL(NPT), SMAT(NPT, N),       &
+     &    ZMAT(NPT, NPTM)
           REAL(KIND = DP), INTENT(OUT) :: GQ(N), HQ(N*(N+1)/2), PQ(NPT)
           REAL(KIND = DP) :: VLAG(NPT), W(NPTM)
 
@@ -545,46 +518,6 @@ C
           RETURN
 
       END SUBROUTINE QALT
-
-
-      SUBROUTINE DQ(QDIFF, D, X, XPT, GQ, HQ, PQ, N, NPT)
-C
-C     DQ calculates QDIFF = Q(Y) - Q(X), where Y = X + D
-C
-          IMPLICIT NONE
-          INTEGER, PARAMETER :: DP = KIND(0.0D0) 
-          ! DP IS THE KIND FOR DOUBLE PRECISION
-          INTEGER, INTENT(IN) :: N, NPT
-          REAL(KIND = DP), INTENT(IN) :: D(N), X(N), XPT(NPT, N), 
-     +    GQ(N), HQ(N*(N+1)/2), PQ(NPT)
-          REAL(KIND = DP), INTENT(OUT) :: QDIFF
-          INTEGER :: I, J, IH
-          REAL(KIND = DP) :: S(N), SD
-
-          ! S = X + Y 
-          S = D + X + X 
-
-          ! 1st order term plus explicit 2nd-order term
-          QDIFF = DOT_PRODUCT(D, GQ) + 
-     +            0.5D0*SUM(PQ*MATMUL(XPT,S)*MATMUL(XPT,D)) 
-
-          ! Implicit 2nd-order term
-          IH = 0 
-          DO I = 1, N
-              DO J = 1, I 
-                  IF (I .EQ. J) THEN
-                      SD = S(I)*D(I)
-                  ELSE
-                      SD = S(I)*D(J) + S(J)*D(I)
-                  END IF
-                  IH = IH + 1
-                  QDIFF = QDIFF + 0.5D0 * HQ(IH) * SD 
-              END DO
-          END DO
-
-          RETURN
-
-      END SUBROUTINE DQ
 
 
 C      SUBROUTINE TESTINT(EINT, FVAL, XPT, GQ, HQ, PQ, N, NPT, KOPT)
