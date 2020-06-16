@@ -19,9 +19,9 @@
       integer :: i, idz, itest, j, k, knew, kopt, ksav, ktemp, nf,      &
      & nfsav, nftest, subinfo
       real(kind = rp) :: alpha, beta, crvmin, delta, detrat, diff(3),   &
-     & distsq, dnorm, dsq, dstep
+     & distsq, dnorm, dsq, dstep, xdiff(n), xdsq(npt)
       real(kind = rp) :: fopt, fsave, galt(n), galtsq, gqsq, hdiag,     &
-     & ratio, rho, rhosq, summation, temp, vquad, xoptsq, wcheck(npt+n)
+     & ratio, rho, rhosq, temp, vquad, xoptsq, wcheck(npt+n)
 
       ! The arguments N, NPT, X, RHOBEG, RHOEND, IPRINT and MAXFUN are
       ! identical to the corresponding arguments in SUBROUTINE NEWUOA.
@@ -294,23 +294,17 @@
           end if
       end do
       if (knew == 0) goto 460
-      !
+      
       ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation
       ! point can be moved. Begin the updating of the quadratic model,
       ! starting with the explicit second derivative term.
-      !
   410 call update (n, npt, bmat, zmat, idz, ndim, vlag, beta,knew,w)
-      fval(knew) = f
-
       call updateq(n, npt, idz, knew, diff(1), xpt(knew, :),            &
      & bmat(knew, :), zmat, gq, hq, pq)
 
-      gqsq = zero
-      do i = 1, n
-          gqsq = gqsq + gq(i)**2
-      end do
-
-      ! Include the new interpolation point.
+      ! Include the new interpolation point. This should be done after
+      ! BMAT, ZMAT, and the model are updated.
+      fval(knew) = f
       xpt(knew, :) = xnew
 
       ! If a trust region step makes a small change to the objective
@@ -326,6 +320,10 @@
           if (ratio > 1.0e-2_rp) then
               itest = 0
           else
+              gqsq = zero
+              do i = 1, n
+                  gqsq = gqsq + gq(i)**2
+              end do
               vlag(1 : npt) = fval - fval(kopt)
                
 !              galt = matmul(vlag(1 : npt), bmat(1 : npt, 1 : n))
@@ -362,24 +360,20 @@
       ! then branch for another trust region calculation. The case
       ! KSAVE>0 occurs when the new function value was calculated by
       ! a model step.
-      if (f <= fsave + tenth*vquad) goto 100
-      if (ksav > 0) goto 100
+      if (f <= fsave + tenth*vquad .or. ksav > 0) goto 100
       
       ! Alternatively, find out if the interpolation points are close
       ! enough to the best point so far.
       knew = 0
-
   460 distsq = 4.0_rp*delta*delta
       do k = 1, npt
-          summation = zero
-          do j = 1, n
-              summation = summation + (xpt(k, j) - xopt(j))**2
-          end do
-          if (summation > distsq) then
-              knew = k
-              distsq = summation
-          end if
+          xdiff = xpt(k, :) - xopt
+          xdsq(k) = dot_product(xdiff, xdiff)
       end do
+      if (maxval(xdsq) > distsq) then
+          knew = maxloc(xdsq, 1)
+          distsq = maxval(xdsq)
+      end if
 
       ! If KNEW is positive, then set DSTEP, and branch back for the
       ! next iteration, which will generate a "model step".
@@ -411,6 +405,8 @@
               rho = tenth*rho
           end if
           delta = max(delta, rho)
+          nfsav = nf
+          
           if (iprint >= 2) then
               if (iprint >= 3) print 500
   500             FORMAT (5X)
@@ -421,9 +417,6 @@
   520         FORMAT (4X, 'Least value of F = ', 1PD23.15, 9X,          &
      &         'The corresponding X is:'/(2X, 5D15.6))
           end if
-
-          nfsav = nf
-
           goto 100 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       else
