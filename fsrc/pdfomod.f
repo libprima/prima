@@ -56,10 +56,22 @@
       ! infinite, nan, or finite. Starting from Fortran 2003, the
       ! intrincic ieee_arithmetic module provides ieee_is_nan() and
       ! ieee_is_finite(); gfortran provides isnan() as an extension.
+      pure elemental logical function is_posinf(x)
+      implicit none
+      real(kind = rp), intent(in) :: x
+      is_posinf = (x > hugenum)
+      end function is_posinf
+
+      pure elemental logical function is_neginf(x)
+      implicit none
+      real(kind = rp), intent(in) :: x
+      is_neginf = (-x > hugenum)
+      end function is_neginf
+
       pure elemental logical function is_inf(x)
       implicit none
       real(kind = rp), intent(in) :: x
-      is_inf = (x > hugenum)
+      is_inf = (abs(x) > hugenum)
       end function is_inf
 
       pure elemental logical function is_nan(x)

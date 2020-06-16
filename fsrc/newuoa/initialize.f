@@ -1,20 +1,20 @@
-      subroutine initialize(n, npt, rhobeg, x, xbase, xpt, f, fval,
+      subroutine initialize(n, npt, rhobeg, x, xbase, xpt, f, fval,     &
      & xopt, fopt, kopt, bmat, zmat, gq, hq, pq, nf, info, ftarget)
 
-      use pdfomod, only : rp, zero, one, half, is_finite
+      use pdfomod, only : rp, zero, one, half, is_nan, is_posinf
       implicit none
 
       integer, intent(in) :: n, npt
       integer, intent(out) :: info, kopt, nf
       real(kind = rp), intent(in) :: rhobeg, ftarget
-      real(kind = rp), intent(out) :: xbase(n), xpt(npt, n), f,
+      real(kind = rp), intent(out) :: xbase(n), xpt(npt, n), f,         &
      & fval(npt), xopt(n), fopt, bmat(npt + n, n), zmat(npt, npt-n-1)
       real(kind = rp), intent(inout) :: x(n)
       real(kind = rp), intent(out) :: gq(n), hq((n*(n + 1))/2), pq(npt)
 
       integer :: ih, ipt, itemp, jpt
       real(kind = rp) :: fbeg, rhosq, reciq, recip, temp, xipt, xjpt
-      logical :: evaluated(npt), xisnan
+      logical :: evaluated(npt)
 
       ! Set the initial elements of XPT, BMAT, HQ, PQ and ZMAT to zero.
       xbase = x
@@ -30,6 +30,14 @@
       rhosq = rhobeg*rhobeg
       recip = one/rhosq
       reciq = sqrt(half)/rhosq
+
+      ! At return,
+      ! INFO = 0: initialization finishes normally
+      ! INFO = 1: return because f <= ftarget
+      ! INFO = -1: return because x contains NaN
+      ! INFO = -2: return because f is either NaN or positive infinity
+      ! INFO = -3: return because the model contains NaN
+      info = 0
 
       ! EVALUATED is a boolean array indicating whether the function
       ! value of the i-th interpolation point has been evaluated.
@@ -65,8 +73,12 @@
 
           ! Function evaluation at XPT(NF, :)
           x = xpt(nf, :) + xbase
-          call evalfun(n, x, f, xisnan)
-          evaluated(nf) = .true.
+          if (any(is_nan(x))) then
+              f = sum(x)  ! Set F to NaN. It is necessary.
+          else
+              call calfun(n, x, f)
+              evaluated(nf) = .true.
+          end if
           fval(nf) = f
 
           ! Set FOPT, KOPT, and XOPT
@@ -81,16 +93,15 @@
           xopt = xpt(kopt, :)
 
           ! Set INFO.
-          info = -100
           ! The following should be done after setting fopt and xopt.
-          if (xisnan) then
+          if (any(is_nan(x))) then
               info = -1
-              exit
-          elseif (.not. is_finite(f)) then
-              info = -2
               exit
           elseif (f <= ftarget) then
               info = 1
+              exit
+          elseif (is_posinf(f) .or. is_nan(f)) then
+              info = -2
               exit
           end if
 
@@ -127,6 +138,12 @@
               zmat(jpt + 1, nf - n - 1) = -recip
               hq(ih) = (fbeg-fval(ipt+1)-fval(jpt+1)+f)/(xipt*xjpt)
           end if
+          if (any(is_nan(bmat)) .or. any(is_nan(zmat)) .or.             &
+     &     any(is_nan(gq)) .or. any(is_nan(hq)) .or. any(is_nan(pq)))   &
+     &     then
+              info = -3
+              exit
+          end if
       end do
 
       ! If the do loop is conducted seqentially, then the exit value of
@@ -134,10 +151,5 @@
       ! But this value is NOT portable: it depends on how the do loop
       ! is coducted (seqentially or an parallel) at the backend.
       nf = count(evaluated)
-
-      if (info == -1) then
-          ! If INFO=-1, the last call of EVALFUN did not invoke CALFUN
-          nf = nf - 1
-      end if
 
       end subroutine initialize
