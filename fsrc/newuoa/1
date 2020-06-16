@@ -73,22 +73,22 @@ newuob.f(239): warning #5194: Source line truncated.
 newuob.f(255): warning #5194: Source line truncated.
   370         FORMAT (/4X, 'Return from NEWUOA because a trust          &
 ------------------------------------------------------------------------^
-newuob.f(305): warning #5194: Source line truncated.
+newuob.f(302): warning #5194: Source line truncated.
       call updateq(n, npt, idz, knew, diff(1), xpt(knew, :),            &
 ------------------------------------------------------------------------^
-newuob.f(353): warning #5194: Source line truncated.
+newuob.f(350): warning #5194: Source line truncated.
                   call qalt(gq, hq, pq, fval, bmat(1 : npt, :), zmat,   &
 ------------------------------------------------------------------------^
-newuob.f(391): warning #5194: Source line truncated.
+newuob.f(384): warning #5194: Source line truncated.
               call shiftbase(n, npt, idz, xopt, pq, bmat, zmat, gq, hq, &
 ------------------------------------------------------------------------^
-newuob.f(419): warning #5194: Source line truncated.
+newuob.f(414): warning #5194: Source line truncated.
   510         FORMAT (/4X, 'New RHO = ', 1PD11.4, 5X,                   &
 ------------------------------------------------------------------------^
-newuob.f(422): warning #5194: Source line truncated.
+newuob.f(417): warning #5194: Source line truncated.
   520         FORMAT (4X, 'Least value of F = ', 1PD23.15, 9X,          &
 ------------------------------------------------------------------------^
-newuob.f(458): warning #5194: Source line truncated.
+newuob.f(450): warning #5194: Source line truncated.
   550     FORMAT (/4X, 'At the return from NEWUOA', 5X,                 &
 ------------------------------------------------------------------------^
 qalt.f(12): warning #5194: Source line truncated.

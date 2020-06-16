@@ -1,4 +1,4 @@
-        !COMPILER-GENERATED INTERFACE MODULE: Wed Jun 17 01:59:20 2020
+        !COMPILER-GENERATED INTERFACE MODULE: Wed Jun 17 02:59:41 2020
         ! This source file is for reference only and may not completely
         ! represent the generated interface used by the compiler.
         MODULE CALQUAD__genmod
