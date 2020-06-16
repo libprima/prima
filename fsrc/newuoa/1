@@ -1,0 +1,10 @@
+../pdfomod.f:80:16:
+
+       is_nan = (x /= x)
+                1
+Warning: Inequality comparison for REAL(8) at (1)
+newuob.f:351:25:
+
+       if (ksav == 0 .and. delta == rho) then
+                         1
+Warning: Equality comparison for REAL(8) at (1)

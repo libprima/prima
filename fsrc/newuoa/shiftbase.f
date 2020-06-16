@@ -1,11 +1,9 @@
-      subroutine shiftbase(n, npt, idz, xopt, pq, bmat, zmat, gq, hq,   &
-     & xpt, info)
+      subroutine shiftbase(n, npt, idz, xopt, pq, bmat, zmat, gq,hq,xpt)
 
       use pdfomod, only : rp, zero, half
       implicit none
 
       integer, intent(in) :: idz, n, npt
-      integer, intent(out) :: info
 
       real(kind = rp), intent(in) :: xopt(n), pq(npt)
       real(kind = rp), intent(inout) :: bmat(npt + n, n),               &
@@ -92,7 +90,5 @@
               hq(ih) = hq(ih) + w(i)*xopt(j) + xopt(i)*w(j)
           end do
       end do
-
-      info = -100
 
       end subroutine shiftbase

@@ -16,12 +16,13 @@
      & zmat(npt, npt - n - 1), d(n), vlag(npt + n), w(10*(npt + n))
 
       ! other variables
-      integer :: i, idz, ih, itest, j, k, knew, kopt, ksav, ktemp, nf,  &
-     & nfsav, nftest, subinfo
-      real(kind = rp) :: alpha, beta, crvmin, delta, detrat, diff,      &
-     & diffa, diffb, diffc, distsq, dnorm, dsq, dstep
+      integer :: i, idz, ih, itest, j, jp, k, knew, kopt, ksav, ktemp,  &
+     & nf, nfsav, nftest, subinfo
+      real(kind = rp) :: alpha, beta, bsummation, crvmin, delta, detrat,&
+     & diff, diffa, diffb, diffc, distsq, dnorm, dsq, dstep, dx
       real(kind = rp) :: fopt, fsave, gisq, gqsq, hdiag, ratio, rho,    &
-     & rhosq, summation, temp, vquad, xoptsq, wcheck(npt + n)
+     & rhosq, summation, summationa, summationb
+      real(kind = rp) :: temp, vquad, xoptsq
 
       ! The arguments N, NPT, X, RHOBEG, RHOEND, IPRINT and MAXFUN are
       ! identical to the corresponding arguments in SUBROUTINE NEWUOA.
@@ -93,7 +94,24 @@
           info = -3
           goto 530
       end if
-
+!      do i = 1, n
+!          if (gq(i) /= gq(i)) then
+!              info = -3
+!              goto 530
+!          end if
+!      end do
+!      do i = 1, (n*(n+1))/2
+!          if (hq(i) /= hq(i)) then
+!              info = -3
+!              goto 530
+!          end if
+!      end do
+!      do i = 1, npt
+!          if (pq(i) /= pq(i)) then
+!              info = -3
+!              goto 530
+!          end if
+!      end do
       call trsapp (n, npt, xopt, xpt, gq, hq, pq, delta, d, w, w(n+1),  &
      & w(2*n+1), w(3*n+1), crvmin)
       !dsq = dot_product(d, d)
@@ -115,16 +133,19 @@
 
       ! Shift XBASE if XOPT may be too far from XBASE.
       if (dsq <= 1.0e-3_rp*xoptsq) then
-          call shiftbase(n, npt, idz, xopt, pq, bmat, zmat, gq, hq, xpt)
+          call shiftbase(n, npt, idz, xopt, pq, bmat, zmat, gq, hq, xpt,&
+     &     info)
           xbase = xbase + xopt
           xopt = zero
           xoptsq = zero
       end if
 
+      ! Pick the model step if KNEW is positive. A different choice of
+      ! D may be made later, if the choice of D by BIGLAG causes
+      ! substantial cancellation in DENOM.
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! Zaikun 2019-08-29: See the comments below line number 100
-  120 if (any(is_nan(bmat)) .or. any(is_nan(zmat)) .or. any(is_nan(gq)) &
-     & .or. any(is_nan(hq)) .or. any(is_nan(pq))) then
+  120 if (any(is_nan(bmat)) .or. any(is_nan(zmat))) then
           info = -3
           goto 530
       end if
@@ -145,9 +166,6 @@
 !          end do
 !      end do
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      ! Pick the model step if KNEW is positive. A different choice of
-      ! D may be made later, if the choice of D by BIGLAG causes
-      ! substantial cancellation in DENOM.
       if (knew > 0) then
           call biglag (n, npt, xopt, xpt, bmat, zmat, idz, ndim, knew,  &
      &     dstep, d, alpha, vlag, vlag(npt + 1), w, w(n+1), w(2*n+1))
@@ -155,27 +173,52 @@
 
       ! Calculate VLAG and BETA for the current choice of D. The first
       ! NPT components of W_check will be held in W.
-
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      if ((dsq-sum(d**2))/dsq > 1e-15) print *, (dsq-sum(d**2))/dsq 
-      if(knew > 0 .and. dsq /= dstep*dstep) print *, knew, dsq-dstep**2 
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      ! NOTE:
-      ! 1. w(1:npt) (i.e., wcheck) may be used later 
-      ! 2. dsq is supposed to be ||d||^2, but it is calculated by
-      !    dstep^2 when knew > 0. This is exact in theory, because dstep
-      !    is the trust region radius in biglag, where ||d|| should equal
-      !    this radius at return. However, in computation, there may be
-      !    a slight difference between the two due to rounding errors.
-      !    On the other hand, xoptsq is always equal to ||xopt||^2. 
-
-      !dsq = dot_product(d, d)
-!      call vlagbeta(n, npt, idz, kopt, bmat, zmat, xpt, xopt, d, vlag,  &
-!     & beta, wcheck)
-      call vlagbeta(n, npt, idz, kopt, bmat, zmat, xpt, xopt, d, vlag,  &
-     & beta, wcheck, dsq, xoptsq)
-      !w(1:npt) = wcheck  
-
+      do k = 1, npt
+          summationa = zero
+          summationb = zero
+          summation = zero
+          do j = 1, n
+              summationa = summationa + xpt(k, j)*d(j)
+              summationb = summationb + xpt(k, j)*xopt(j)
+              summation = summation + bmat(k, j)*d(j)
+          end do
+          w(k) = summationa*(half*summationa + summationb)
+          vlag(k) = summation
+      end do
+      beta = zero
+      do k = 1, npt - n - 1
+          summation = zero
+          do i = 1, npt
+              summation = summation + zmat(i, k)*w(i)
+          end do
+          if (k < idz) then
+              beta = beta + summation*summation
+              summation = -summation
+          else
+              beta = beta - summation*summation
+          end if
+          do i = 1, npt
+              vlag(i) = vlag(i) + summation*zmat(i, k)
+          end do
+      end do
+      bsummation = zero
+      dx = zero
+      do j = 1, n
+          summation = zero
+          do i = 1, npt
+              summation = summation + w(i)*bmat(i, j)
+          end do
+          bsummation = bsummation + summation*d(j)
+          jp = npt + j
+          do k = 1, n
+              summation = summation + bmat(jp, k)*d(k)
+          end do
+          vlag(jp) = summation
+          bsummation = bsummation + summation*d(j)
+          dx = dx + d(j)*xopt(j)
+      end do
+      beta = dx*dx + dsq*(xoptsq + dx + dx + half*dsq) + beta-bsummation
+      vlag(kopt) = vlag(kopt) + one
       !
       ! If KNEW is positive and if the cancellation in DENOM is
       ! unacceptable, then BIGDEN calculates an alternative model step,
@@ -185,8 +228,7 @@
           temp = one + alpha*beta/vlag(knew)**2
           if (abs(temp) <= 0.8_rp) then
               call bigden (n, npt, xopt, xpt, bmat, zmat, idz, ndim,    &
-     &         kopt, knew, d, wcheck, vlag, beta, xnew,w(ndim+1),       &
-     &         w(6*ndim+1))
+     &         kopt, knew, d, w, vlag, beta, xnew,w(ndim+1),w(6*ndim+1))
           end if
       end if
       !
@@ -224,7 +266,7 @@
           end do
       end do
       do k = 1, npt
-          vquad = vquad + pq(k)*wcheck(k)
+          vquad = vquad + pq(k)*w(k)
       end do
       diff = f - fopt - vquad
       diffc = diffb
@@ -448,7 +490,7 @@
           dsq = dstep*dstep
           if (dsq <= 1.0e-3_rp*xoptsq) then
               call shiftbase(n, npt, idz, xopt, pq, bmat, zmat, gq, hq, &
-     &         xpt)
+     &         xpt, info)
               xbase = xbase + xopt
               xopt = zero
               xoptsq = zero
@@ -515,108 +557,3 @@
       return
 
       end subroutine newuob
-
-
-CCCCCCCCCCCCCCCCCCCCCCCCCCC Auxillary Subroutines CCCCCCCCCCCCCCCCCCCCCC
-C
-      SUBROUTINE QALT(GQ, HQ, PQ, FVAL, SMAT, ZMAT, N, NPT, NPTM, KOPT, 
-     +    IDZ)
-C
-C     QALT calculates the alternative model, namely the model that
-C     minimizes the F-norm of the Hessian subject to the interpolation
-C     conditions. 
-C
-C     Note that SMAT = BMAT(1:NPT, 1:N)
-C
-          IMPLICIT NONE
-          INTEGER, PARAMETER :: DP = KIND(0.0D0) 
-          ! DP IS THE KIND FOR DOUBLE PRECISION
-          INTEGER, INTENT(IN) :: N, NPT, NPTM, KOPT, IDZ
-          REAL(KIND = DP), INTENT(IN) :: FVAL(NPT), SMAT(NPT, N), 
-     +    ZMAT(NPT, NPTM)
-          REAL(KIND = DP), INTENT(OUT) :: GQ(N), HQ(N*(N+1)/2), PQ(NPT)
-          REAL(KIND = DP) :: VLAG(NPT), W(NPTM)
-
-          VLAG = FVAL - FVAL(KOPT)
-          GQ = MATMUL(VLAG, SMAT)
-          HQ = 0.0D0
-          W = MATMUL(VLAG, ZMAT)
-          W(1:IDZ-1) = - W(1:IDZ-1)
-          PQ = MATMUL(ZMAT, W)
-
-          RETURN
-
-      END SUBROUTINE QALT
-
-
-      SUBROUTINE DQ(QDIFF, D, X, XPT, GQ, HQ, PQ, N, NPT)
-C
-C     DQ calculates QDIFF = Q(Y) - Q(X), where Y = X + D
-C
-          IMPLICIT NONE
-          INTEGER, PARAMETER :: DP = KIND(0.0D0) 
-          ! DP IS THE KIND FOR DOUBLE PRECISION
-          INTEGER, INTENT(IN) :: N, NPT
-          REAL(KIND = DP), INTENT(IN) :: D(N), X(N), XPT(NPT, N), 
-     +    GQ(N), HQ(N*(N+1)/2), PQ(NPT)
-          REAL(KIND = DP), INTENT(OUT) :: QDIFF
-          INTEGER :: I, J, IH
-          REAL(KIND = DP) :: S(N), SD
-
-          ! S = X + Y 
-          S = D + X + X 
-
-          ! 1st order term plus explicit 2nd-order term
-          QDIFF = DOT_PRODUCT(D, GQ) + 
-     +            0.5D0*SUM(PQ*MATMUL(XPT,S)*MATMUL(XPT,D)) 
-
-          ! Implicit 2nd-order term
-          IH = 0 
-          DO I = 1, N
-              DO J = 1, I 
-                  IF (I .EQ. J) THEN
-                      SD = S(I)*D(I)
-                  ELSE
-                      SD = S(I)*D(J) + S(J)*D(I)
-                  END IF
-                  IH = IH + 1
-                  QDIFF = QDIFF + 0.5D0 * HQ(IH) * SD 
-              END DO
-          END DO
-
-          RETURN
-
-      END SUBROUTINE DQ
-
-
-C      SUBROUTINE TESTINT(EINT, FVAL, XPT, GQ, HQ, PQ, N, NPT, KOPT)
-CC
-CC     TESTINT tests how well Q interpolates F.
-CC     At return, EINT(K) is the interpolation error at XPT(K, :)
-CC
-C          IMPLICIT NONE
-C          INTEGER, PARAMETER :: DP = KIND(0.0D0) 
-C          ! DP IS THE KIND FOR DOUBLE PRECISION
-C          INTEGER, INTENT(IN) :: N, NPT, KOPT
-C          REAL(KIND = DP), INTENT(IN) :: FVAL(NPT), XPT(NPT, N), GQ(N), 
-C     +    HQ(N*(N+1)/2), PQ(NPT)
-C          REAL(KIND = DP), INTENT(OUT) :: EINT(NPT) 
-C          INTEGER :: K
-C          REAL(KIND = DP) :: FOPT, FREF, XOPT(N), D(N), QDIFF, FDIFF
-C
-C          FOPT = FVAL(KOPT)
-C          FREF = MAX(1.0D0, MAXVAL(ABS(FVAL-FOPT)))
-C          XOPT = XPT(KOPT, :)
-C          EINT(KOPT) = 0.0D0
-C          DO K = 1, NPT
-C              IF (K .NE. KOPT) THEN
-C                  D = XPT(K, :) - XOPT
-C                  CALL DQ(QDIFF, D, XOPT, XPT, GQ, HQ, PQ, N, NPT)
-C                  FDIFF = FVAL(K) - FOPT
-C                  EINT(K) = ABS(FDIFF - QDIFF)/FREF
-C              END IF
-C          END DO
-C        
-C          RETURN
-C
-C      END SUBROUTINE

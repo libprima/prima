@@ -1,6 +1,6 @@
 function success = verify(solvers, options)
 
-success = false;
+success = true;
 
 if nargin < 1
     fprintf('\nSolvers must be specified.\n');
@@ -79,7 +79,7 @@ for ip = 1 : length(plist)
     n = length(x0);
     for ir = 0 : nr + 4 
         % Some randomization
-        rng(ceil(1e5*abs(sin(1e10*nr))));
+        rng(ceil(1e5*abs(sin(1e10*(ir+nr)))));
         prob.x0 = x0 + 0.5*randn(size(x0));
         test_options = struct();
         test_options.rhobeg = 1 + 0.5*(2*rand-1);
@@ -104,19 +104,26 @@ for ip = 1 : length(plist)
         end 
         prob.options = test_options;
         [x1, fx1, exitflag1, output1] = feval(solvers{1}, prob);
+        if output1.funcCount == test_options.maxfun && exitflag1 == 0
+            exitflag1 = 3;
+            display('exitflag1 changed from 0 to 3.')
+        end
+        display('++++++++')
         [x2, fx2, exitflag2, output2] = feval(solvers{2}, prob);
         if ~iseq(x1, fx1, exitflag1, output1, x2, fx2, exitflag2, output2, prec)
             fprintf('The solvers produce different results on %s at the %dth run.\n', pname, ir);
+            success = false;
             keyboard
-            warning(orig_warning_state); % Restore the behavior of displaying warnings
-            return
         end
     end
     decup(pname);
-    fprintf('Success\n');
+    if success
+        fprintf('Success\n');
+    else
+        fprintf('FAIL!\n')
+    end
 end
 
-success = true;
 warning(orig_warning_state); % Restore the behavior of displaying warnings
 
 return
