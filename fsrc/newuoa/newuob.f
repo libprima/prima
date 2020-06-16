@@ -16,7 +16,7 @@
      & zmat(npt, npt - n - 1), d(n), vlag(npt + n), w(10*(npt + n))
 
       ! other variables
-      integer :: i, idz, ih, itest, j, k, knew, kopt, ksav, ktemp, nf,  &
+      integer :: i, idz, itest, j, k, knew, kopt, ksav, ktemp, nf,      &
      & nfsav, nftest, subinfo
       real(kind = rp) :: alpha, beta, crvmin, delta, detrat, diff(3),   &
      & distsq, dnorm, dsq, dstep
@@ -302,32 +302,16 @@
   410 call update (n, npt, bmat, zmat, idz, ndim, vlag, beta,knew,w)
       fval(knew) = f
 
-      ih = 0
-      do i = 1, n
-          temp = pq(knew)*xpt(knew, i)
-          do j = 1, i
-              ih = ih + 1
-              hq(ih) = hq(ih) + temp*xpt(knew, j)
-          end do
-      end do
-      pq(knew) = zero
-      !
-      ! Update the other second derivative parameters, and then the
-      ! gradient of the model. Also include the new interpolation point.
-      do j = 1, npt - n - 1
-          temp = diff*zmat(knew, j)
-          if (j < idz) temp = -temp
-          do k = 1, npt
-              pq(k) = pq(k) + temp*zmat(k, j)
-          end do
-      end do
-      xpt(knew, :) = xnew
-      gq = gq + diff*bmat(knew, :)
+      call updateq(n, npt, idz, knew, diff(1), xpt(knew, :),            &
+     & bmat(knew, :), zmat, gq, hq, pq)
 
       gqsq = zero
       do i = 1, n
           gqsq = gqsq + gq(i)**2
       end do
+
+      ! Include the new interpolation point.
+      xpt(knew, :) = xnew
 
       ! If a trust region step makes a small change to the objective
       ! function, then calculate the gradient of the least Frobenius
@@ -381,6 +365,7 @@
               end if
           end if
       end if
+
       if (f < fsave) kopt = knew
     
       ! If a trust region step has provided a sufficient decrease in F,
