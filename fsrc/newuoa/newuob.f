@@ -1,8 +1,8 @@
-      subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun,
-     & xbase, xopt, xnew, xpt, fval, gq, hq, pq, bmat, zmat, ndim,
+      subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun,     &
+     & xbase, xopt, xnew, xpt, fval, gq, hq, pq, bmat, zmat, ndim,      &
      & d, vlag, w, f, info, ftarget)
 
-      use pdfomod, only : rp, zero, one, half, tenth, is_finite
+      use pdfomod, only : rp, zero, one, half, tenth, is_nan, is_posinf
       implicit none
 
       ! inputs
@@ -10,20 +10,19 @@
       integer, intent(out) :: info
       real(kind = rp), intent(in) :: rhobeg, rhoend, ftarget
       real(kind = rp), intent(out) :: f
-      real(kind = rp), intent(inout) :: x(n), xbase(n), xopt(n),
+      real(kind = rp), intent(inout) :: x(n), xbase(n), xopt(n),        &
      & xnew(n), xpt(npt, n), fval(npt), gq(n), hq((n*(n+1))/2), pq(npt)
-      real(kind = rp), intent(inout) :: bmat(npt + n, n),
+      real(kind = rp), intent(inout) :: bmat(npt + n, n),               &
      & zmat(npt, npt - n - 1), d(n), vlag(npt + n), w(10*(npt + n))
 
       ! other variables
-      integer :: i, idz, ih, itest, j, jp, k, knew, kopt, ksav, ktemp,
-     & nf, nfsav, nftest
-      real(kind = rp) :: alpha, beta, bsummation, crvmin, delta, detrat,
+      integer :: i, idz, ih, itest, j, jp, k, knew, kopt, ksav, ktemp,  &
+     & nf, nfsav, nftest, subinfo
+      real(kind = rp) :: alpha, beta, bsummation, crvmin, delta, detrat,&
      & diff, diffa, diffb, diffc, distsq, dnorm, dsq, dstep, dx
-      real(kind = rp) :: fopt, fsave, gisq, gqsq, hdiag, ratio, rho,
+      real(kind = rp) :: fopt, fsave, gisq, gqsq, hdiag, ratio, rho,    &
      & rhosq, summation, summationa, summationb
       real(kind = rp) :: temp, vquad, xoptsq
-      logical :: xisnan
 
       ! The arguments N, NPT, X, RHOBEG, RHOEND, IPRINT and MAXFUN are
       ! identical to the corresponding arguments in SUBROUTINE NEWUOA.
@@ -57,10 +56,13 @@
       ! Set some constants.
       nftest = max(maxfun, 1)
 
-      call initialize(n, npt, rhobeg, x, xbase, xpt, f, fval, xopt,
-     & fopt, kopt, bmat, zmat, gq, hq, pq, nf, info, ftarget)
-      if (info == -1 .or. info == -2) goto 530
-      if (info == 1) goto 546
+      call initialize(n, npt, rhobeg, x, xbase, xpt, f, fval, xopt,     &
+     & fopt, kopt, bmat, zmat, gq, hq, pq, nf, subinfo, ftarget)
+      if (subinfo == 1 .or. subinfo == -1 .or. subinfo == -2 .or.       &
+     & subinfo == -3) then
+          info = subinfo
+          goto 530
+      end if
 
       ! Begin the iterative procedure.
       rho = rhobeg
@@ -88,25 +90,29 @@
       ! because any equality/inequality comparison involving NaN returns
       ! FALSE, which can lead to unintended behavior of the code,
       ! including uninitialized indices.
-      do i = 1, n
-          if (gq(i) /= gq(i)) then
-              info = -3
-              goto 530
-          end if
-      end do
-      do i = 1, (n*(n+1))/2
-          if (hq(i) /= hq(i)) then
-              info = -3
-              goto 530
-          end if
-      end do
-      do i = 1, npt
-          if (pq(i) /= pq(i)) then
-              info = -3
-              goto 530
-          end if
-      end do
-      call trsapp (n, npt, xopt, xpt, gq, hq, pq, delta, d, w, w(n+1),
+      if (any(is_nan(gq)) .or. any(is_nan(hq)) .or. any(is_nan(pq)))then
+          info = -3
+          goto 530
+      end if
+!      do i = 1, n
+!          if (gq(i) /= gq(i)) then
+!              info = -3
+!              goto 530
+!          end if
+!      end do
+!      do i = 1, (n*(n+1))/2
+!          if (hq(i) /= hq(i)) then
+!              info = -3
+!              goto 530
+!          end if
+!      end do
+!      do i = 1, npt
+!          if (pq(i) /= pq(i)) then
+!              info = -3
+!              goto 530
+!          end if
+!      end do
+      call trsapp (n, npt, xopt, xpt, gq, hq, pq, delta, d, w, w(n+1),  &
      & w(2*n+1), w(3*n+1), crvmin)
       !dsq = dot_product(d, d)
       dsq = zero
@@ -127,7 +133,7 @@
 
       ! Shift XBASE if XOPT may be too far from XBASE.
       if (dsq <= 1.0e-3_rp*xoptsq) then
-          call shiftbase(n, npt, idz, xopt, pq, bmat, zmat, gq, hq, xpt,
+          call shiftbase(n, npt, idz, xopt, pq, bmat, zmat, gq, hq, xpt,&
      &     info)
           xbase = xbase + xopt
           xopt = zero
@@ -139,25 +145,29 @@
       ! substantial cancellation in DENOM.
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! Zaikun 2019-08-29: See the comments below line number 100
-  120 do j = 1, n
-          do i = 1, ndim
-              if (bmat(i, j) /= bmat(i, j)) then
-                  info = -3
-                  goto 530
-              end if
-          end do
-      end do
-      do j = 1, npt - n - 1
-          do i = 1, npt
-              if (zmat(i, j) /= zmat(i, j)) then
-                  info = -3
-                  goto 530
-              end if
-          end do
-      end do
+  120 if (any(is_nan(bmat)) .or. any(is_nan(zmat))) then
+          info = -3
+          goto 530
+      end if
+!  120 do j = 1, n
+!          do i = 1, ndim
+!              if (bmat(i, j) /= bmat(i, j)) then
+!                  info = -3
+!                  goto 530
+!              end if
+!          end do
+!      end do
+!      do j = 1, npt - n - 1
+!          do i = 1, npt
+!              if (zmat(i, j) /= zmat(i, j)) then
+!                  info = -3
+!                  goto 530
+!              end if
+!          end do
+!      end do
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       if (knew > 0) then
-          call biglag (n, npt, xopt, xpt, bmat, zmat, idz, ndim, knew,
+          call biglag (n, npt, xopt, xpt, bmat, zmat, idz, ndim, knew,  &
      &     dstep, d, alpha, vlag, vlag(npt + 1), w, w(n+1), w(2*n+1))
       end if
 
@@ -217,7 +227,7 @@
       if (knew > 0) then
           temp = one + alpha*beta/vlag(knew)**2
           if (abs(temp) <= 0.8_rp) then
-              call bigden (n, npt, xopt, xpt, bmat, zmat, idz, ndim,
+              call bigden (n, npt, xopt, xpt, bmat, zmat, idz, ndim,    &
      &         kopt, knew, d, w, vlag, beta, xnew,w(ndim+1),w(6*ndim+1))
           end if
       end if
@@ -226,51 +236,20 @@
       !
   290 xnew = xopt + d
       x = xbase + xnew
-      nf = nf + 1
-
-      if (nf > nftest) then
-          nf = nf - 1
-          if (iprint > 0) print 320
-  320         FORMAT (/4X, 'Return from NEWUOA because CALFUN has
-     & been called MAXFUN times.')
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          info = 3
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          goto 530
-      end if
-
-      call evalfun(n, x, f, xisnan)
-
-      if (xisnan) then
-          nf = nf - 1  ! calfun is not ed
+      if (any(is_nan(x))) then
+          f = sum(x)  ! Set F to NaN. It is necessary.
           info = -1
           goto 530
+      else
+          call calfun(n, x, f)
+          nf = nf + 1
       end if
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      ! By Zaikun (commented on 02-06-2019; implemented in 2016):
-      ! Exit if F has an NaN or almost infinite value.
-      ! If this happends at the first function evaluation (i.e., NF=1),
-      ! then it is necessary to set FOPT and XOPT before going to 530,
-      ! because these two variables have not been set yet (line 70
-      ! will not be reached).
-      if (.not. is_finite(f)) then 
-          info = -2
-          goto 530
-      end if
-      ! By Zaikun (commented on 02-06-2019; implemented in 2016):
-      ! Exit if F .LE. FTARGET.
-      if (f <= ftarget) then
-          info = 1
-          goto 546
-      end if
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       if (iprint == 3) then
           print 330, nf, f, (x(i), i = 1, n)
-  330     FORMAT (/4X, 'Function number', I6, '    F = ', 1PD18.10,
+  330     FORMAT (/4X, 'Function number', I6, '    F = ', 1PD18.10,     &
      &     '    The corresponding X is:'/(2X, 5D15.6))
       end if
-      if (knew == -1) goto 530
       !
       ! Use the quadratic model to predict the change in F due to the
       ! step D,  and set DIFF to the error of this prediction.
@@ -309,7 +288,36 @@
           end do
       end if
       ksav = knew
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! By Zaikun (commented on 02-06-2019; implemented in 2016):
+      ! Exit if F has an NaN or almost infinite value.
+      ! If this happends at the first function evaluation (i.e., NF=1),
+      ! then it is necessary to set FOPT and XOPT before going to 530,
+      ! because these two variables have not been set yet (line 70
+      ! will not be reached).
+      if (is_nan(f) .or. is_posinf(f)) then 
+          info = -2
+          goto 530
+      end if
+      ! By Zaikun (commented on 02-06-2019; implemented in 2016):
+      ! Exit if F .LE. FTARGET.
+      if (f <= ftarget) then
+          info = 1
+          goto 530
+      end if
+      if (nf >= nftest) then
+          if (iprint > 0) print 320
+  320         FORMAT (/4X, 'Return from NEWUOA because CALFUN has       &
+     & been called MAXFUN times.')
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          info = 3
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          goto 530
+      end if
+
+      if (knew == -1) goto 530
       if (knew > 0) goto 410
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !
       ! Pick the next value of DELTA after a trust region step.
       !
@@ -318,7 +326,7 @@
       if (.not. (vquad < zero)) then
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           if (iprint > 0) print 370
-  370         FORMAT (/4X, 'Return from NEWUOA because a trust
+  370         FORMAT (/4X, 'Return from NEWUOA because a trust          &
      & region step has failed to reduce Q.')
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           info = 2
@@ -481,7 +489,7 @@
           dstep = dmax1(dmin1(tenth*sqrt(distsq), half*delta), rho)
           dsq = dstep*dstep
           if (dsq <= 1.0e-3_rp*xoptsq) then
-              call shiftbase(n, npt, idz, xopt, pq, bmat, zmat, gq, hq,
+              call shiftbase(n, npt, idz, xopt, pq, bmat, zmat, gq, hq, &
      &         xpt, info)
               xbase = xbase + xopt
               xopt = zero
@@ -510,10 +518,10 @@
               if (iprint >= 3) print 500
   500             FORMAT (5X)
               print 510, rho, nf
-  510         FORMAT (/4X, 'New RHO = ', 1PD11.4, 5X,
+  510         FORMAT (/4X, 'New RHO = ', 1PD11.4, 5X,                   &
      &         'Number of function values = ', I6)
               print 520, fopt, (xbase(i) + xopt(i), i = 1, n)
-  520         FORMAT (4X, 'Least value of F = ', 1PD23.15, 9X,
+  520         FORMAT (4X, 'Least value of F = ', 1PD23.15, 9X,          &
      &         'The corresponding X is:'/(2X, 5D15.6))
           end if
           goto 90
@@ -532,17 +540,17 @@
       ! Note that (FOPT .LE. F) is FALSE if F is NaN; When F is NaN, it
       ! is also necessary to update X and F.
       ! 530 IF (FOPT .LE. F) THEN
-  530 if (fopt <= f .or. f /= f) then
+  530 if (fopt <= f .or. is_nan(f)) then
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           x = xbase + xopt
           f = fopt
       end if
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! IF (IPRINT .GE. 1) THEN
-  546 if (iprint >= 1) then
+      if (iprint >= 1) then
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           print 550, nf
-  550     FORMAT (/4X, 'At the return from NEWUOA', 5X,
+  550     FORMAT (/4X, 'At the return from NEWUOA', 5X,                 &
      &     'Number of function values = ', I6)
           print 520, f, (x(i), i = 1, n)
       end if

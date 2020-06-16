@@ -52,8 +52,8 @@ dimension x(*),w(*)
 !       11: MAXFUN is less than NPT+1.
 !       12: the gradient of constraint is zero.
 !       -1: NaN occurs in x.
-!       -2: the objective function returns a NaN or nearly infinite
-!           value.
+!       -2: the objective function returns a NaN or nearly infinite value.
+!       -3: NaN occurs in the models 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     SUBROUTINE CALFUN (N,X,F) must be provided by the user. It must set F to
