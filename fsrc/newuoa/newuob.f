@@ -269,11 +269,15 @@
       
       ! Set KNEW to the index of the next interpolation point to delete.
       rhosq = max(tenth*delta, rho)**2
-      ktemp = 0
-      detrat = zero
-      if (f >= fsave) then
+      if (f >= fsave) then  
+          ! Trial step does not reduce function value. KNEW should not
+          ! be KOPT, and TEMP calculated below has to be at leat 1.
           ktemp = kopt
           detrat = one
+      else  
+          ! Trial step reduces function value. No restriction on KNEW
+          ktemp = 0
+          detrat = zero
       end if
       do k = 1, npt
           hdiag = zero
@@ -282,17 +286,41 @@
               if (j < idz) temp = -one
               hdiag = hdiag + temp*zmat(k, j)**2
           end do
+
           temp = abs(beta*hdiag + vlag(k)**2)
+
           distsq = zero
           do j = 1, n
               distsq = distsq + (xpt(k, j) - xopt(j))**2
           end do
+
           if (distsq > rhosq) temp = temp*(distsq/rhosq)**3
+
           if (temp > detrat .and. k /= ktemp) then
               detrat = temp
               knew = k
           end if
       end do
+
+!      ! knew not initialized?
+!      real(kind = rp) :: atemp(npt), hdiag(npt), zk(npt - n - 1)
+!      do k = 1, npt
+!          zk = zmat(k, :)
+!          hdiag(k) = -dot_product(zk(1 : idz - 1), zk(1 : idz - 1)) +   &
+!     &     dot_product(zk(idz : npt - n - 1), zk(idz : npt - n - 1))
+!          xdiff = xpt(k, :) - xopt
+!          xdsq(k) = dot_product(xdiff, xdiff) 
+!      end do
+!      atemp = abs(beta*hdiag + vlag**2)
+!      atemp = atemp * max(distsq/rhosq, one)**3
+!      if (ktemp > 0) then
+!          atemp(ktemp) = detrat - 1
+!      end if
+!      if (maxval(atemp) > detrat) then
+!          detrat = maxval(atemp)
+!          knew = maxloc(atemp, 1)
+!      end if
+
       if (knew == 0) goto 460
       
       ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation
