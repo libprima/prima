@@ -23,6 +23,8 @@
       real(kind = rp) :: fopt, fsave, galt(n), galtsq, gqsq, hdiag(npt),&
      & ratio, rho, rhosq, vquad, xoptsq, wcheck(npt+n), sigma(npt) 
 
+      logical :: shortd
+
       ! The arguments N, NPT, X, RHOBEG, RHOEND, IPRINT and MAXFUN are
       ! identical to the corresponding arguments in SUBROUTINE NEWUOA.
       ! XBASE will hold a shift of origin that should reduce the
@@ -93,7 +95,7 @@
           goto 530
       end if
 
-      knew = 0
+      knew = 0  !!! This seems necessary; otherwise, SF will occur! Why?!
 
       call trsapp (n, npt, xopt, xpt, gq, hq, pq, delta, d, w, w(n+1),  &
      & w(2*n+1), w(3*n+1), crvmin)
@@ -103,8 +105,10 @@
           dsq = dsq + d(i)**2
       end do
       dnorm = dmin1(delta, sqrt(dsq))
-      if (dnorm < half*rho) then
-          knew = -1
+      if (dnorm >= half*rho) then
+          shortd = .false.
+      else
+          shortd = .true.
           delta = tenth*delta
           ratio = -one
           if (delta <= 1.5_rp*rho) delta = rho
@@ -241,8 +245,6 @@
           goto 530
       end if
 
-!      if (knew == -1) goto 530  !!!
-
       if (knew > 0) goto 410
 
       ! Pick the next value of DELTA after a trust region step.
@@ -356,7 +358,6 @@
       
       ! Alternatively, find out if the interpolation points are close
       ! enough to the best point so far.
-      knew = 0
   460 distsq = 4.0_rp*delta*delta
       do k = 1, npt
           xdiff = xpt(k, :) - xopt
@@ -365,6 +366,8 @@
       if (maxval(xdsq) > distsq) then
           knew = maxloc(xdsq, 1)
           distsq = maxval(xdsq)
+      else
+          knew = 0
       end if
 
       ! If KNEW is positive, then set DSTEP, and branch back for the
@@ -418,7 +421,7 @@
       
       ! Return from the calculation, after another Newton-Raphson step,
       ! if it is too short to have been tried before.
-      if (knew == -1) then
+      if (shortd) then
           x = xbase + (xopt + d)
           if (any(is_nan(x))) then
               f = sum(x)  ! Set F to NaN. It is necessary.
