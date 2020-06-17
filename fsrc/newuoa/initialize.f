@@ -145,7 +145,7 @@
           end if
           ! Check whether NaN occurs in the coefficients. 
           ! Do this only when NF > 1.
-          if (nf > 1 .and. (any(is_nan(bmat)) .or. any(is_nan(zmat)).or.
+          if (nf > 1 .and. (any(is_nan(bmat)) .or. any(is_nan(zmat)).or.&
      &     any(is_nan(gq)) .or. any(is_nan(hq)) .or. any(is_nan(pq))))  &
      &     then
               info = -3

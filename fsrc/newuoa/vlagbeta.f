@@ -66,14 +66,14 @@
       !wcheck = matmul(bmat, d)*(half*matmul(xpt, d)+matmul(xpt, xopt))
       !vlag(1 : npt) = matmul(bmat(1 : npt, :), d)
       !wz = matmul(wcheck, zmat)
-      !beta = dot_product(wz(1 : idz-1), wz(1 : idz-1)) -                &
-      !& dot_product(wz(idz : npt-n-1), wz(idz : npt-n-1))
-      !wz(1 : npt-n-1) = -wz(1 : npt-n-1)
-      !vlag(1 : npt) = vlag(1 : npt) + matmul(zmat, wz(1:npt-n-1))
+      !beta = dot_product(wz(1 : idz - 1), wz(1 : idz - 1)) -            &
+      !& dot_product(wz(idz : npt -n -1), wz(idz : npt -n -1))
+      !wz(1 : npt - n - 1) = -wz(1 : npt - n - 1)
+      !vlag(1 : npt) = vlag(1 : npt) + matmul(zmat, wz(1:npt - n - 1))
       !wb = matmul(wcheck, bmat(1 : npt, :)
       !bsummation = dot_product(wb, d)
-      !bd = matmul(bmat(npt+1 : npt+n, :), d)
-      !summation = summation + matmul(bmat(npt+1 : npt+n, :), d)
+      !bd = matmul(bmat(npt + 1 : npt + n, :), d)
+      !summation = summation + matmul(bmat(npt + 1 : npt + n, :), d)
       !vlag(npt+1 : npt+n) = wb + bd 
       !bsummation = dot_product(2*wb + bd, d) !????
       !dx = dot_product(d, xopt)
