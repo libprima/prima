@@ -1,0 +1,66 @@
+      subroutine testint(eint, fval, xpt, gq, hq, pq, n, npt, kopt)
+!     TESTINT tests how well Q interpolates F.
+!     At return, EINT(K) is the interpolation error at XPT(K, :)
+
+      use pdfomod, only : rp, one, zero
+      implicit none
+
+      integer, intent(in) :: n, npt, kopt
+      real(kind = rp), intent(in) :: fval(npt), xpt(npt, n), gq(n),     &
+     & hq((n*(n+1))/2), pq(npt)
+      real(kind = rp), intent(out) :: eint(npt) 
+
+      integer :: k
+      real(kind = rp) :: fopt, fref, xopt(n)
+
+      fopt = fval(kopt)
+      fref = max(one, maxval(abs(fval-fopt)))
+      xopt = xpt(kopt, :)
+      do k = 1, npt
+          call calquad(eint(k), xpt(k,:) - xopt, xopt, xpt, gq, hq, pq, &
+     &     n, npt)
+          eint(k) = abs(fval(k) - fopt - eint(k)) / fref
+      end do
+      eint(kopt) = zero 
+    
+      end subroutine
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+      subroutine calquad(vquad, d, x, xpt, gq, hq, pq, n, npt)
+
+      ! CALQUAD calculates VQUAD = Q(X + D) - Q(X), where Q is the
+      ! quadratic function defined by (GQ, HQ, PQ).
+
+      use pdfomod, only : rp, half
+      implicit none
+
+      integer, intent(in) :: n, npt
+
+      real(kind = rp), intent(in) :: d(n), x(n), xpt(npt, n), gq(n),    &
+     & hq((n*(n+1))/2), pq(npt)
+      real(kind = rp), intent(out) :: vquad 
+
+      integer :: i, ih, j 
+      real(kind = rp) :: s(n), sd
+
+      s = d + x + x 
+
+      ! 1st order term plus implicit 2nd-order term
+      vquad = dot_product(d,gq)+half*sum(pq*matmul(xpt,s)*matmul(xpt,d)) 
+
+      ! Explicit 2nd-order term
+      ih = 0 
+      do i = 1, n
+          do j = 1, i 
+              if (i == j) then
+                  sd = s(i)*d(i)
+              else
+                  sd = s(i)*d(j) + s(j)*d(i)
+              end if
+              ih = ih + 1
+              vquad = vquad + half * hq(ih) * sd 
+          end do
+      end do
+
+      end subroutine calquad

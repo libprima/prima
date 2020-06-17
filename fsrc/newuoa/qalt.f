@@ -1,9 +1,8 @@
-CCCCCCCCCCCCCCCCCCCCCCCCCCC Auxillary Subroutines CCCCCCCCCCCCCCCCCCCCCC
       subroutine qalt(gq, hq, pq, fval, smat, zmat, n, npt, kopt, idz)
-C     QALT calculates the alternative model, namely the model that
-C     minimizes the F-norm of the Hessian subject to the interpolation
-C     conditions. 
-C     Note that SMAT = BMAT(1:NPT, 1:N)
+!     QALT calculates the alternative model, namely the model that
+!     minimizes the F-norm of the Hessian subject to the interpolation
+!     conditions. 
+!     Note that SMAT = BMAT(1:NPT, 1:N)
 
           use pdfomod, only : rp, zero
           implicit none

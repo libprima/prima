@@ -16,12 +16,12 @@
      & zmat(npt, npt - n - 1), d(n), vlag(npt + n), w(10*(npt + n))
 
       ! other variables
-      integer :: i, idz, itest, j, k, knew, kopt, ksav, ktemp, nf,      &
+      integer :: i, idz, itest, k, knew, kopt, ksav, nf,                &
      & nfsav, nftest, subinfo
-      real(kind = rp) :: alpha, beta, crvmin, delta, detrat, diff(3),   &
+      real(kind = rp) :: alpha, beta, crvmin, delta, prederr(3),        &
      & distsq, dnorm, dsq, dstep, xdiff(n), xdsq(npt)
-      real(kind = rp) :: fopt, fsave, galt(n), galtsq, gqsq, hdiag,     &
-     & ratio, rho, rhosq, temp, vquad, xoptsq, wcheck(npt+n)
+      real(kind = rp) :: fopt, fsave, galt(n), galtsq, gqsq, hdiag(npt),&
+     & ratio, rho, rhosq, vquad, xoptsq, wcheck(npt+n), sigma(npt) 
 
       ! The arguments N, NPT, X, RHOBEG, RHOEND, IPRINT and MAXFUN are
       ! identical to the corresponding arguments in SUBROUTINE NEWUOA.
@@ -67,7 +67,7 @@
       rho = rhobeg
       delta = rho
       idz = 1
-      diff = zero
+      prederr = zero
       itest = 0
       nfsav = nf
       xopt = xpt(kopt, :)
@@ -108,7 +108,7 @@
           delta = tenth*delta
           ratio = -one
           if (delta <= 1.5_rp*rho) delta = rho
-          if (0.125_rp*crvmin*rho*rho <= maxval(abs(diff)) .or.         &
+          if (0.125_rp*crvmin*rho*rho <= maxval(abs(prederr)) .or.      &
      &     nf <= nfsav + 2) then 
               goto 460
           else
@@ -144,9 +144,6 @@
       ! Calculate VLAG and BETA for the current choice of D. The first
       ! NPT components of W_check will be held in W.
 
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!      if ((dsq-sum(d**2))/dsq > 1e-15) print *, (dsq-sum(d**2))/dsq 
-!      if(knew > 0 .and. dsq /= dstep*dstep) print *, knew, dsq-dstep**2 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! NOTE:
       ! 1. w(1:npt) (i.e., wcheck) may be used later 
@@ -193,13 +190,13 @@
       end if
       
       ! Use the quadratic model to predict the change in F due to the
-      ! step D,  and set DIFF to the error of this prediction.
+      ! step D,  and set PREDERR to the error of this prediction.
       
       !call calquad(vquad, d, xopt, xpt, gq, hq, pq, n, npt)
       call calquad(vquad, d, xopt, xpt, gq, hq, pq, n,npt,wcheck(1:npt))
 
-      diff(2 : size(diff)) = diff(1 : size(diff)-1)
-      diff(1) = f - fopt - vquad
+      prederr(2 : size(prederr)) = prederr(1 : size(prederr)-1)
+      prederr(1) = f - fopt - vquad
 
       if (dnorm > rho) nfsav = nf
 
@@ -269,57 +266,24 @@
       
       ! Set KNEW to the index of the next interpolation point to delete.
       rhosq = max(tenth*delta, rho)**2
-      if (f >= fsave) then  
-          ! Trial step does not reduce function value. KNEW should not
-          ! be KOPT, and TEMP calculated below has to be at leat 1.
-          ktemp = kopt
-          detrat = one
-      else  
-          ! Trial step reduces function value. No restriction on KNEW
-          ktemp = 0
-          detrat = zero
-      end if
       do k = 1, npt
-          hdiag = zero
-          do j = 1, npt - n - 1
-              temp = one
-              if (j < idz) temp = -one
-              hdiag = hdiag + temp*zmat(k, j)**2
-          end do
-
-          temp = abs(beta*hdiag + vlag(k)**2)
-
-          distsq = zero
-          do j = 1, n
-              distsq = distsq + (xpt(k, j) - xopt(j))**2
-          end do
-
-          if (distsq > rhosq) temp = temp*(distsq/rhosq)**3
-
-          if (temp > detrat .and. k /= ktemp) then
-              detrat = temp
-              knew = k
-          end if
+          hdiag(k) = -sum(zmat(k, 1 : idz - 1)**2) +                    &
+     &     sum(zmat(k, idz : npt - n - 1)**2)
+          xdiff = xpt(k, :) - xopt
+          xdsq(k) = dot_product(xdiff, xdiff) 
       end do
-
-!      ! knew not initialized?
-!      real(kind = rp) :: atemp(npt), hdiag(npt), zk(npt - n - 1)
-!      do k = 1, npt
-!          zk = zmat(k, :)
-!          hdiag(k) = -dot_product(zk(1 : idz - 1), zk(1 : idz - 1)) +   &
-!     &     dot_product(zk(idz : npt - n - 1), zk(idz : npt - n - 1))
-!          xdiff = xpt(k, :) - xopt
-!          xdsq(k) = dot_product(xdiff, xdiff) 
-!      end do
-!      atemp = abs(beta*hdiag + vlag**2)
-!      atemp = atemp * max(distsq/rhosq, one)**3
-!      if (ktemp > 0) then
-!          atemp(ktemp) = detrat - 1
-!      end if
-!      if (maxval(atemp) > detrat) then
-!          detrat = maxval(atemp)
-!          knew = maxloc(atemp, 1)
-!      end if
+      sigma = abs(beta*hdiag + vlag(1 : npt)**2)
+      sigma = sigma * max(xdsq/rhosq, one)**3
+      if (f >= fsave) then
+      ! Set SIGMA(KOPT) = -1 to prevent KNEW from being KOPT 
+          sigma(kopt) = -one  
+      end if 
+      if (maxval(sigma) > one .or. f < fsave) then
+      ! KNEW > 0 unless maxval(sigma) <= 1 and f >= fsave
+          knew = maxloc(sigma, 1)
+      else
+          knew = 0
+      end if
 
       if (knew == 0) goto 460
       
@@ -327,7 +291,7 @@
       ! point can be moved. Begin the updating of the quadratic model,
       ! starting with the explicit second derivative term.
   410 call update (n, npt, bmat, zmat, idz, ndim, vlag, beta,knew,w)
-      call updateq(n, npt, idz, knew, diff(1), xpt(knew, :),            &
+      call updateq(n, npt, idz, knew, prederr(1), xpt(knew, :),         &
      & bmat(knew, :), zmat, gq, hq, pq)
 
       ! Include the new interpolation point. This should be done after
@@ -482,37 +446,3 @@
       return
 
       end subroutine newuob
-
-
-CCCCCCCCCCCCCCCCCCCCCCCCCCC Auxillary Subroutines CCCCCCCCCCCCCCCCCCCCCC
-C      SUBROUTINE TESTINT(EINT, FVAL, XPT, GQ, HQ, PQ, N, NPT, KOPT)
-CC
-CC     TESTINT tests how well Q interpolates F.
-CC     At return, EINT(K) is the interpolation error at XPT(K, :)
-CC
-C          IMPLICIT NONE
-C          INTEGER, PARAMETER :: DP = KIND(0.0D0) 
-C          ! DP IS THE KIND FOR DOUBLE PRECISION
-C          INTEGER, INTENT(IN) :: N, NPT, KOPT
-C          REAL(KIND = DP), INTENT(IN) :: FVAL(NPT), XPT(NPT, N), GQ(N), 
-C     +    HQ(N*(N+1)/2), PQ(NPT)
-C          REAL(KIND = DP), INTENT(OUT) :: EINT(NPT) 
-C          INTEGER :: K
-C          REAL(KIND = DP) :: FOPT, FREF, XOPT(N), D(N), DIFF, VQUAD 
-C
-C          FOPT = FVAL(KOPT)
-C          FREF = MAX(1.0D0, MAXVAL(ABS(FVAL-FOPT)))
-C          XOPT = XPT(KOPT, :)
-C          EINT(KOPT) = 0.0D0
-C          DO K = 1, NPT
-C              IF (K .NE. KOPT) THEN
-C                  D = XPT(K, :) - XOPT
-C                  CALL CALQUAD(VQUAD, D, XOPT, XPT, GQ, HQ, PQ, N, NPT)
-C                  DIFF = FVAL(K) - FOPT - VQUAD
-C                  EINT(K) = ABS(DIFF)/FREF
-C              END IF
-C          END DO
-C        
-C          RETURN
-C
-C      END SUBROUTINE
