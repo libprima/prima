@@ -36,4 +36,6 @@
       ! Update the gradient.
       gq = gq + fqdiff*bmatknew
 
+      return 
+
       end subroutine updateq

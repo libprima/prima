@@ -82,4 +82,6 @@
       beta = dx*dx + dsq*(xoptsq + dx + dx + half*dsq) + beta-bsummation
       vlag(kopt) = vlag(kopt) + one
 
+      return 
+
       end subroutine vlagbeta

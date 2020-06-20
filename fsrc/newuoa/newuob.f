@@ -16,8 +16,7 @@
      & zmat(npt, npt - n - 1), d(n), vlag(npt + n), w(10*(npt + n))
 
       ! other variables
-      integer :: i, idz, itest, k, knew, kopt, nf,                      &
-     & nfsave, nftest, subinfo
+      integer :: i, idz, itest, k, knew, kopt, nf, nfsave, subinfo
       integer :: tr, maxtr
       real(kind = rp) :: alpha, beta, crvmin, delta, prederr(3),        &
      & distsq, dnorm, dsq, dstep, xdiff(n), xdsq(npt)
@@ -55,10 +54,6 @@
       ! The array W will be used for working space. Its length must be
       ! at least 10*NDIM = 10*(NPT + N).
 
-      ! Set some constants.
-      nftest = max(maxfun, 1)
-
-
       call initialize(n, npt, rhobeg, x, xbase, xpt, f, fval, xopt,     &
      & fopt, kopt, bmat, zmat, gq, hq, pq, nf, subinfo, ftarget)
       if (subinfo == 1 .or. subinfo == -1 .or. subinfo == -2 .or.       &
@@ -76,7 +71,6 @@
       prederr = zero
       itest = 0
       nfsave = nf
-      xopt = xpt(kopt, :)
       xoptsq = zero
       do i = 1, n
           xoptsq = xoptsq + xopt(i)**2
@@ -202,7 +196,7 @@
                   exit
               end if
               ! Exit if NF >= NFTEST
-              if (nf >= nftest) then
+              if (nf >= maxfun) then
                   info = 3
                   exit
               end if
@@ -466,7 +460,7 @@
                   info = 1
                   exit
               end if
-              if (nf >= nftest) then
+              if (nf >= maxfun) then
                   info = 3
                   exit
               end if
@@ -492,7 +486,7 @@
 
       ! Return from the calculation, after another Newton-Raphson step,
       ! if it is too short to have been tried before.
-      if (shortd .and. nf < nftest) then
+      if (shortd .and. nf < maxfun) then
           x = xbase + (xopt + d)
           if (any(is_nan(x))) then
               f = sum(x)  ! Set F to NaN. It is necessary.
