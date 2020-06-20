@@ -58,6 +58,7 @@
       ! Set some constants.
       nftest = max(maxfun, 1)
 
+
       call initialize(n, npt, rhobeg, x, xbase, xpt, f, fval, xopt,     &
      & fopt, kopt, bmat, zmat, gq, hq, pq, nf, subinfo, ftarget)
       if (subinfo == 1 .or. subinfo == -1 .or. subinfo == -2 .or.       &
@@ -106,6 +107,7 @@
           ! Solve the trust region subproblem
           call trsapp (n, npt, xopt, xpt, gq, hq, pq, delta, d, w,      &
      &     w(n+1), w(2*n+1), w(3*n+1), crvmin)
+          
 
           ! Calculate the length of the trial step D.
           !dsq = dot_product(d, d)
@@ -115,23 +117,20 @@
           end do
           dnorm = min(delta, sqrt(dsq))
 
-          ! NFSAVE is counter of the latest function evaluation with 
-          ! ||D|| > RHO
-          if (dnorm > rho) then 
-              nfsave = nf
-          end if
-
           ! Is the trial step long enough to invoke a function evaluation?
           if (dnorm >= half*rho) then
               shortd = .false.
           else
               shortd = .true.
-              if (0.125_rp*crvmin*rho*rho <= maxval(abs(prederr)) .or.  &
-     &         nf <= nfsave + 2) then 
+              if (0.125_rp*crvmin*rho*rho > maxval(abs(prederr)) .and.  &
+     &         nf > nfsave + 2) then 
                   ! The first possibility (out of two) that reduce_rho is true
                   reduce_rho = .true.  
               else ! Three recent values of ||d_k|| and |F−Q| are small.
                   delta = tenth*delta  ! Reduce DELTA by a factor of 10
+                  if (delta <= 1.5_rp*rho) then
+                      delta = rho
+                  end if
                   ! After this, DELTA < DNORM may happen, explaining why 
                   ! we sometimes write MAX(DELTA, DNORM).
               end if
@@ -168,9 +167,13 @@
                   f = sum(x)  ! Set F to NaN. It is necessary.
                   info = -1
                   exit
-              else
-                  call calfun(n, x, f)
-                  nf = nf + 1
+              end if
+              call calfun(n, x, f)
+              nf = nf + 1
+              ! NFSAVE is counter of the latest function evaluation with 
+              ! ||D|| > RHO
+              if (dnorm > rho) then 
+                  nfsave = nf
               end if
 
               ! PREDERR saves the error of this prediction for 3 most
@@ -240,12 +243,14 @@
                   sigma(kopt) = -one  
               end if 
               if (maxval(sigma) > one .or. f < fsave) then
-              ! KNEW > 0 unless MAXVAL(SIGMA) <= 1 and F >= FSAVE
+              ! KNEW > 0 unless MAXVAL(SIGMA) <= 1 and F >= FSAVE.
+              ! If F < FSAVE, then KNEW > 0, ensuring that XNEW 
+              ! will be included into XPT.
                   knew = maxloc(sigma, 1)
               else
                   knew = 0
               end if
-        
+
               if (knew > 0) then
                   ! Update BMAT, ZMAT and IDZ, so that the KNEW-th 
                   ! interpolation point can be moved. 
@@ -433,9 +438,14 @@
                   f = sum(x)  ! Set F to NaN. It is necessary.
                   info = -1
                   exit
-              else
-                  call calfun(n, x, f)
-                  nf = nf + 1
+              end if
+              call calfun(n, x, f)
+              nf = nf + 1
+              ! The following seems different from what is introduced in 
+              ! Section 7 (around (7.7)) of the NEUOA paper. Seemingly we 
+              ! should keep dnorm=||d||.
+              if (dnorm > rho) then 
+                  nfsave = nf  !? dnorm is from last TR? 
               end if
              
               ! PREDERR saves the error of this prediction for 3 most 
@@ -476,6 +486,7 @@
               call updateq(n, npt, idz, knew, prederr(1), xpt(knew, :), &
      &         bmat(knew, :), zmat, gq, hq, pq)
     
+
               ! Include the new interpolation point. This should be done
               ! after updating BMAT, ZMAT, and the model.
               fval(knew) = f
@@ -483,19 +494,12 @@
               if (f < fsave) then
                   kopt = knew
               end if
-
-              ! The following seems different from what is introduced in 
-              ! Section 7 (around (7.7)) of the NEUOA paper. Seemingly we 
-              ! should keep dnorm=||d||.
-              if (dnorm > rho) then 
-                  nfsave = nf  !? dnorm is from last TR? 
-              end if
           end if
       end do
 
       ! Return from the calculation, after another Newton-Raphson step,
       ! if it is too short to have been tried before.
-      if (shortd) then
+      if (shortd .and. nf < nftest) then
           x = xbase + (xopt + d)
           if (any(is_nan(x))) then
               f = sum(x)  ! Set F to NaN. It is necessary.

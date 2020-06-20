@@ -73,7 +73,8 @@ plist = secup(requirements);
 fprintf('\n')
 for ip = 1 : length(plist)
     pname = plist{ip};
-    fprintf('%3d. \t%16s:\t', ip, pname);
+%    fprintf('%3d. \t%16s:\t', ip, pname);
+    fprintf('%3d. \t%16s:\t\n', ip, pname);
     prob = macup(pname);
     x0 = prob.x0;
     n = length(x0);
