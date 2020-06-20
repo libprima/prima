@@ -6,14 +6,14 @@
 
       integer, intent(in) :: n, npt
       integer, intent(out) :: info, kopt, nf
-      real(kind = rp), intent(in) :: rhobeg, ftarget
+      real(kind = rp), intent(in) :: rhobeg, x(n), ftarget
       real(kind = rp), intent(out) :: xbase(n), xpt(npt, n), f,         &
      & fval(npt), xopt(n), fopt, bmat(npt + n, n), zmat(npt, npt-n-1)
-      real(kind = rp), intent(inout) :: x(n)
       real(kind = rp), intent(out) :: gq(n), hq((n*(n + 1))/2), pq(npt)
 
-      integer :: ih, ipt, itemp, jpt
-      real(kind = rp) :: fbeg, rhosq, reciq, recip, temp, xipt, xjpt
+      integer :: ih, ipt, itemp, jpt, npt_temp
+      real(kind = rp) :: fbeg, rhosq, reciq, recip, temp, xipt, xjpt,   &
+     & xtemp(n)
       logical :: evaluated(npt)
 
       ! Set the initial elements of XPT, BMAT, HQ, PQ and ZMAT to zero.
@@ -25,13 +25,6 @@
       hq = zero
       pq = zero
 
-      ! Begin the initialization procedure. The coordinates of the
-      ! displacement of the next initial interpolation point from XBASE
-      ! are set in XPT(NF, .).
-      rhosq = rhobeg*rhobeg
-      recip = one/rhosq
-      reciq = sqrt(half)/rhosq
-
       ! At return,
       ! INFO = 0: initialization finishes normally
       ! INFO = 1: return because f <= ftarget
@@ -40,6 +33,13 @@
       ! INFO = -3: return because the model contains NaN
       info = 0
 
+      ! Begin the initialization procedure. The coordinates of the
+      ! displacement of the next initial interpolation point from XBASE
+      ! are set in XPT(NF, .).
+      rhosq = rhobeg*rhobeg
+      recip = one/rhosq
+      reciq = sqrt(half)/rhosq
+
       ! EVALUATED is a boolean array indicating whether the function
       ! value of the i-th interpolation point has been evaluated.
       ! We need it for a portable counting of the number of function
@@ -47,12 +47,38 @@
       ! However, the loop here is not fully parallelizable if NPT>2N+1,
       ! because the definition XPT(2N+2:end, :) depends on FVAL(1:2N+1).
       evaluated = .false.
-      do nf = 1, npt
+
+      ! NPT_TMP is identical to NPT, unless it turns out necessary to
+      ! return after evaluating F at the starting point X, when we 
+      ! set NPT_TMP = 1.
+      npt_temp = npt
+
+      ! Evaluate F at the starting point X.
+      if (any(is_nan(x))) then  ! X contains NaN. Return immediately.
+          f = sum(x)  ! Set F to NaN. It is necessary.
+          info = -1
+          return
+      end if
+      call calfun(n, x, f)
+      evaluated(1) = .true.
+      fval(1) = f
+      fbeg = f
+      ! Check whether to exit.
+      if (f <= ftarget) then
+          info = 1
+          npt_temp = 1
+      end if
+      if (is_posinf(f) .or. is_nan(f)) then
+          info = -2
+          npt_temp = 1
+      end if
+      
+      do nf = 2, npt_temp
           ! Set XPT(NF, :)
           if (nf <= 2*n + 1) then
-              if (nf >= 2 .and. nf <= n + 1) then
+              if (nf <= n + 1) then
                   xpt(nf, nf - 1) = rhobeg
-              else if (nf > n + 1) then
+              else
                   xpt(nf, nf - n - 1) = -rhobeg
               end if
           else
@@ -64,47 +90,35 @@
                   jpt = ipt - n
                   ipt = itemp
               end if
-              xipt = rhobeg
-              if (fval(ipt + n + 1) < fval(ipt + 1)) xipt = -xipt
-              xjpt = rhobeg
-              if (fval(jpt + n + 1) < fval(jpt + 1)) xjpt = -xjpt
+              ! SIGN(A, B) = |A| if B > 0 and -|A| if B < 0. Note that:
+              ! 1. When B = 0, the result depends on the compiler, but 
+              !    it is normally |A|. 
+              ! 2. SIGN(A, B) is defined in terms of |A| but not
+              !    directly in terms of A; use with caution when A is
+              !    possibly negative.
+              xipt = sign(rhobeg, (fval(ipt + n + 1) - fval(ipt + 1)))
+              xjpt = sign(rhobeg, (fval(jpt + n + 1) - fval(jpt + 1)))
               xpt(nf, ipt) = xipt
               xpt(nf, jpt) = xjpt
           end if
 
           ! Function evaluation at XPT(NF, :)
-          x = xpt(nf, :) + xbase
-          if (any(is_nan(x))) then
-              f = sum(x)  ! Set F to NaN. It is necessary.
-              ! DO NOT EXIT here!!! 
-              ! Otherwise, if NF = 1, then FOPT, KOPT, and XOPT has not
-              ! been set, which would lead to a bug. 
-          else
-              call calfun(n, x, f)
-              evaluated(nf) = .true.
-          end if
-          fval(nf) = f
-
-          ! Set FOPT, KOPT, and XOPT
-          if (nf == 1) then
-              fbeg = f
-              fopt = f
-              kopt = 1
-          else if (f < fopt) then
-              fopt = f
-              kopt = nf
-          end if
-          xopt = xpt(kopt, :)
-
-          ! Set INFO and check whether to exit due to abnormal values.
-          ! The following should be done after setting fopt and xopt.
-          if (any(is_nan(x))) then
+          xtemp = xpt(nf, :) + xbase
+          if (any(is_nan(xtemp))) then
+              f = sum(xtemp)  ! Set F to NaN. It is necessary.
               info = -1
               exit
-          elseif (f <= ftarget) then
+          end if
+          call calfun(n, xtemp, f)
+          evaluated(nf) = .true.
+          fval(nf) = f
+
+          ! Check whether to exit.
+          if (f <= ftarget) then
               info = 1
               exit
-          elseif (is_posinf(f) .or. is_nan(f)) then
+          end if
+          if (is_posinf(f) .or. is_nan(f)) then
               info = -2
               exit
           end if
@@ -116,14 +130,14 @@
           if (nf <= 2*n + 1) then
               ! Set the nonzero initial elements of BMAT and the
               ! quadratic model in the cases when NF <= 2*N + 1.
-              if (nf >= 2 .and. nf <= n+1) then
+              if (nf <= n+1) then
                   gq(nf - 1) = (f - fbeg)/rhobeg
                   if (npt < nf + n) then
                       bmat(1, nf - 1) = -one/rhobeg
                       bmat(nf, nf - 1) = one/rhobeg
                       bmat(npt + nf - 1, nf - 1) = -half*rhosq
                   end if
-              else if (nf > n + 1) then
+              else 
                   bmat(nf - n, nf - n - 1) = half/rhobeg
                   bmat(nf, nf - n - 1) = -half/rhobeg
                   zmat(1, nf - n - 1) = -reciq - reciq
@@ -138,17 +152,22 @@
               ! When NF > 2*N+1, set the off-diagonal second derivatives
               ! of the Lagrange functions and the quadratic model.
               ih = (ipt*(ipt - 1))/2 + jpt
-              if (xipt < zero) ipt = ipt + n
-              if (xjpt < zero) jpt = jpt + n
+              if (xipt < zero) then 
+                  ipt = ipt + n
+              end if
+              if (xjpt < zero) then 
+                  jpt = jpt + n
+              end if
               zmat(1, nf - n - 1) = recip
               zmat(nf, nf - n - 1) = recip
               zmat(ipt + 1, nf - n - 1) = -recip
               zmat(jpt + 1, nf - n - 1) = -recip
               hq(ih) = (fbeg-fval(ipt+1)-fval(jpt+1)+f)/(xipt*xjpt)
           end if
+
           ! Check whether NaN occurs in the coefficients. 
           ! Do this only when NF > 1.
-          if (nf > 1 .and. (any(is_nan(bmat)) .or. any(is_nan(zmat)).or.&
+          if ((any(is_nan(bmat)) .or. any(is_nan(zmat)).or.             &
      &     any(is_nan(gq)) .or. any(is_nan(hq)) .or. any(is_nan(pq))))  &
      &     then
               info = -3
@@ -161,5 +180,17 @@
       ! But this value is NOT portable: it depends on how the do loop
       ! is coducted (seqentially or an parallel) at the backend.
       nf = count(evaluated)
+
+      if (nf == 0) then
+          kopt = 1
+          fopt = f
+          xopt = zero
+      else
+          kopt = minloc(fval, 1, evaluated)
+          fopt = fval(kopt)
+          xopt = xpt(kopt, :)
+      end if
+
+      return
 
       end subroutine initialize
