@@ -64,7 +64,9 @@
       if (subinfo == 1 .or. subinfo == -1 .or. subinfo == -2 .or.       &
      & subinfo == -3) then
           info = subinfo
-          goto 530
+          x = xbase + xopt
+          f = fopt
+          return
       end if
 
       ! Set some more initial values.
@@ -83,12 +85,12 @@
       ! Begin the iterative procedure.
 
       maxtr = 1000*n  ! Maximal numer of trust region iterations
-      info = 0
-      prederr = zero
-      nfsave = nf
+      info = 0  ! Exit status
 
       do tr = 1, maxtr
 
+          ! Is the trust region trial step short?
+          shortd = .false.
           ! Will we improve the model after the trust region iteration?
           model_step = .false.
           ! Will we reduce rho after the trust region iteration?
@@ -104,11 +106,10 @@
               exit
           end if
 
-          ! Solve the trust region subproblem
+          ! Solve the trust region subproblem.
           call trsapp (n, npt, xopt, xpt, gq, hq, pq, delta, d, w,      &
      &     w(n+1), w(2*n+1), w(3*n+1), crvmin)
           
-
           ! Calculate the length of the trial step D.
           !dsq = dot_product(d, d)
           dsq = zero
@@ -117,19 +118,17 @@
           end do
           dnorm = min(delta, sqrt(dsq))
 
-          ! Is the trial step long enough to invoke a function evaluation?
-          if (dnorm >= half*rho) then
-              shortd = .false.
-          else
+          ! Is the step long enough to invoke a function evaluation?
+          if (dnorm < half*rho) then
               shortd = .true.
               if (0.125_rp*crvmin*rho*rho > maxval(abs(prederr)) .and.  &
      &         nf > nfsave + 2) then 
-                  ! The first possibility (out of two) that reduce_rho is true
+                  ! The 1st possibility (out of 2) that reduce_rho=true
                   reduce_rho = .true.  
-              else ! Three recent values of ||d_k|| and |F−Q| are small.
+              else ! 3 recent values of ||D_k|| and |F−Q| are small.
                   delta = tenth*delta  ! Reduce DELTA by a factor of 10
                   if (delta <= 1.5_rp*rho) then
-                      delta = rho
+                      delta = rho  ! Set DELTA to RHO when it is close.
                   end if
                   ! After this, DELTA < DNORM may happen, explaining why 
                   ! we sometimes write MAX(DELTA, DNORM).
@@ -153,7 +152,8 @@
               call vlagbeta(n, npt, idz, kopt, bmat, zmat, xpt, xopt, d,&
      &         vlag, beta, wcheck, dsq, xoptsq)
 
-!----------------------------------------------------------------------------!
+      !----------------------------------------------------------------!
+      
               ! Use the quadratic model to predict the change in F due
               ! to the step D.
               !call calquad(vquad, d, xopt, xpt, gq, hq, pq, n, npt)
@@ -170,14 +170,12 @@
               end if
               call calfun(n, x, f)
               nf = nf + 1
-              ! NFSAVE is counter of the latest function evaluation with 
-              ! ||D|| > RHO
+              ! Record the latest function evaluation with ||D|| > RHO. 
               if (dnorm > rho) then 
-                  nfsave = nf
+                  nfsave = nf 
               end if
 
-              ! PREDERR saves the error of this prediction for 3 most
-              ! recent three models.
+              ! PREDERR is the prediction errors of the latest 3 models.
               prederr(2 : size(prederr)) = prederr(1 : size(prederr)-1)
               prederr(1) = f - fopt - vquad
         
@@ -211,6 +209,7 @@
 
       !----------------------------------------------------------------!
     
+              ! Update DELTA according to RATIO.
               if (is_nan(vquad) .or. vquad >= zero) then
                   info = 2
                   exit
@@ -227,8 +226,8 @@
                   delta = rho
               end if
               
-              ! Set KNEW to the index of the next interpolation point
-              ! to delete.
+              ! Set KNEW to the index of the interpolation point that
+              ! will be deleted.
               rhosq = max(tenth*delta, rho)**2
               do k = 1, npt
                   hdiag(k) = -sum(zmat(k, 1 : idz - 1)**2) +            &
@@ -253,7 +252,7 @@
 
               if (knew > 0) then
                   ! Update BMAT, ZMAT and IDZ, so that the KNEW-th 
-                  ! interpolation point can be moved. 
+                  ! interpolation point can be removed. 
                   call update(n, npt, bmat, zmat, idz, ndim, vlag, beta,&
      &             knew, w)
                   ! Update the quadratic model
@@ -265,15 +264,19 @@
                   fval(knew) = f
                   xpt(knew, :) = xnew
     
-                  ! If a trust region step makes a small change to the 
-                  ! objective function, then calculate the gradient of 
-                  ! the least Frobenius norm interpolant at XBASE,
-                  ! using VLAG for a vector of right hand sides.
-                  if (delta == rho) then
-                  ! Zaikun 2019-08-26: It is observed in Zhang Zaikun's PhD
-                  ! thesis (Section 3.3.2) that it is more reasonable and more
-                  ! efficient to check the value of RATIO instead of ABS(RATIO).
-                      ! IF (DABS(RATIO) .GT. 1.0D-2) THEN
+                  ! Test whether to replace the new quadratic model Q by
+                  ! the least Frobenius norm interpolant Q_alt, making
+                  ! the replacement if the test is satisfied.
+                  ! In the NEWUOA paper, Powell replaces Q with Q_alt
+                  ! when RATIO <= 0.01 and ||G_alt|| <= 0.1||GQ||
+                  ! hold for 3 consecutive times (equation (8.4)) But
+                  ! the original NEWUOA compares ABS(RATIO) with 0.01
+                  ! instead of RATIO. Here we use RATIO. It is observed
+                  ! in Zhang Zaikun's PhD thesis (Section 3.3.2) that
+                  ! it is indeed more efficient to check RATIO rather
+                  ! than ABS(RATIO).
+                  if (delta <= rho) then  ! Indeed, DELTA == RHO.
+                      ! if (abs(ratio) > 1.0e-2_rp) then
                       if (ratio > 1.0e-2_rp) then
                           itest = 0
                       else
@@ -294,9 +297,6 @@
                               galtsq = galtsq + galt(i)*galt(i) 
                           end do
             
-                          ! Test whether to replace the new quadratic model by the
-                          ! least Frobenius norm interpolant, making the replacement
-                          ! if the test is satisfied.
                           if (gqsq < 100.0_rp*galtsq) then
                               itest = 0
                           else
@@ -311,16 +311,10 @@
                       itest = 0
                   end if
         
-!                  update kopt = knew if f<fsave
-!                  update kopt = knew if ratio > zero 
+                  ! Update KOPT to KNEW if RATIO > ZERO 
                   if (f < fsave) then 
                       kopt = knew
                   end if
-!                  if (f <= fsave + tenth*vquad) then  ! (ratio < tenth)
-!                       model_step = .false.
-!                       ! When f > fsave + tenth*vquad, model_step is not
-!                       ! necessarily true.
-!                  end if 
               end if
           end if
     
@@ -343,25 +337,25 @@
                   knew = 0
               end if
             
-              ! If KNEW is positive, then set DSTEP, and branch back for
-              ! the  next iteration, which will generate a "model step".
-!              model_step = (knew > 0)
-!              reduce_rho = (knew == 0 .and. ratio <= 0 .and.            &
-!     &         max(delta, dnorm) <= rho)
+              ! If KNEW is positive, then a model step will be taken to
+              ! improve the geometry of the interpolation set and hence
+              ! ameliorate them model.
               if (knew > 0) then
-                  ! The only possibility that model_step is true
+                  ! The only possibility that model_step=true
                   model_step = .true. 
-              elseif(max(delta,dnorm)<=rho .and. (ratio<=0 .or. shortd))&
-     &         then
-                  ! The second possibility (out of two) that reduce_rho is true
+              else if (max(delta, dnorm) <= rho .and. (ratio <= 0 .or.  &
+     &         shortd)) then
+                  ! The 2nd possibility (out of 2) that reduce_rho=true
                   reduce_rho = .true.
               end if
           end if 
 
           if (reduce_rho) then
-              ! The calculations with the current value of RHO are complete.
+              ! The calculations with the current RHO are complete.
               ! Pick the next values of RHO and DELTA.
-              if (rho > rhoend) then
+              if (rho <= rhoend) then
+                  exit
+              else
                   delta = half*rho
                   ratio = rho/rhoend
                   if (ratio <= 16.0_rp) then
@@ -372,10 +366,7 @@
                       rho = tenth*rho
                   end if
                   delta = max(delta, rho)
-                  nfsave = nf
-              else
-                  info = 0
-                  exit
+                  nfsave = nf  ! Set NFSAVE to NF
               end if
           end if
 
@@ -414,8 +405,8 @@
      &         vlag, beta, wcheck, dsq, xoptsq)
 
               ! If KNEW is positive and if the cancellation in DENOM is
-              ! unacceptable, then BIGDEN calculates an alternative model
-              ! step, XNEW being used for working space.
+              ! unacceptable, then BIGDEN calculates an alternative 
+              ! model step, XNEW being used for working space.
               ! No need to check whether BMAT and ZMAT contain NaN as no
               ! change has been made to them.
               if (abs(one + alpha*beta/vlag(knew)**2) <= 0.8_rp) then
@@ -425,8 +416,9 @@
               end if
  
       !----------------------------------------------------------------!
-              ! Use the quadratic model to predict the change in F due 
-              ! to the step D. 
+
+              ! Use the current quadratic model to predict the change in
+              ! F due to the step D. 
               !call calquad(vquad, d, xopt, xpt, gq, hq, pq, n, npt)
               call calquad(vquad, d, xopt, xpt, gq, hq, pq, n, npt,     &
      &         wcheck(1:npt))
@@ -441,15 +433,15 @@
               end if
               call calfun(n, x, f)
               nf = nf + 1
+
               ! The following seems different from what is introduced in 
-              ! Section 7 (around (7.7)) of the NEUOA paper. Seemingly we 
-              ! should keep dnorm=||d||.
+              ! Section 7 (around (7.7)) of the NEUOA paper. Seemingly
+              ! we should keep dnorm=||d||.
               if (dnorm > rho) then 
                   nfsave = nf  !? dnorm is from last TR? 
               end if
              
-              ! PREDERR saves the error of this prediction for 3 most 
-              ! recent three models.
+              ! PREDERR is the prediction errors of the latest 3 models.
               prederr(2 : size(prederr)) = prederr(1 : size(prederr)-1)
               prederr(1) = f - fopt - vquad
         
@@ -465,6 +457,7 @@
                   end do
               end if
 
+              ! Check whether to exit.
               if (is_nan(f) .or. is_posinf(f)) then 
                   info = -2
                   exit
@@ -477,16 +470,16 @@
                   info = 3
                   exit
               end if
-!----------------------------------------------------------------------------!
+
+      !----------------------------------------------------------------!
     
-              ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation
-              ! point can be moved. 
+              ! Update BMAT, ZMAT and IDZ, so that the KNEW-th
+              ! interpolation point can be moved. 
               call update(n, npt, bmat, zmat, idz,ndim,vlag,beta,knew,w)
               ! Update the quadratic model.
               call updateq(n, npt, idz, knew, prederr(1), xpt(knew, :), &
      &         bmat(knew, :), zmat, gq, hq, pq)
     
-
               ! Include the new interpolation point. This should be done
               ! after updating BMAT, ZMAT, and the model.
               fval(knew) = f
@@ -513,8 +506,7 @@
       ! By Zaikun (commented on 02-06-2019; implemented in 2016):
       ! Note that (FOPT .LE. F) is FALSE if F is NaN; When F is NaN, it
       ! is also necessary to update X and F.
-      ! 530 IF (FOPT .LE. F) THEN
-  530 if (is_nan(f) .or. fopt <= f) then
+      if (is_nan(f) .or. fopt <= f) then
           x = xbase + xopt
           f = fopt
       end if
