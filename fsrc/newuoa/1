@@ -1,127 +1,15 @@
-Warning (115): Line 12 of calquad.f is being truncated
-In file calquad.f:2
+calquad.f:2:41:
 
-      subroutine calquad(vquad, d, x, xpt, gq, hq, pq, n, npt, wcheck)
-                                                               1
-Warning (163): Actual argument 'wcheck' at (1) does not have an INTENT
-Warning (115): Line 1 of initialize.f is being truncated
-Warning (115): Line 10 of initialize.f is being truncated
-Warning (115): Line 148 of initialize.f is being truncated
-Warning (115): Line 149 of initialize.f is being truncated
-In file initialize.f:80
+       subroutine calquad(vquad, d, x, xpt, gq, hq, pq, n, npt, wcheck)
+                                         1
+Warning: Unused dummy argument ‘xpt’ at (1) [-Wunused-dummy-argument]
+newuob.f:267:22:
 
-              call calfun(n, x, f)
-                   1
-Warning (165): Implicit interface 'calfun' called at (1)
-Warning (115): Line 1 of newuob.f is being truncated
-Warning (115): Line 2 of newuob.f is being truncated
-Warning (115): Line 1 of newuob.f is being truncated
-Warning (115): Line 2 of newuob.f is being truncated
-Warning (115): Line 13 of newuob.f is being truncated
-Warning (115): Line 15 of newuob.f is being truncated
-Warning (115): Line 19 of newuob.f is being truncated
-Warning (115): Line 21 of newuob.f is being truncated
-Warning (115): Line 23 of newuob.f is being truncated
-Warning (115): Line 58 of newuob.f is being truncated
-Warning (115): Line 60 of newuob.f is being truncated
-Warning (115): Line 98 of newuob.f is being truncated
-Warning (115): Line 111 of newuob.f is being truncated
-Warning (115): Line 129 of newuob.f is being truncated
-Warning (115): Line 140 of newuob.f is being truncated
-Warning (115): Line 160 of newuob.f is being truncated
-Warning (115): Line 168 of newuob.f is being truncated
-Warning (115): Line 169 of newuob.f is being truncated
-Warning (115): Line 188 of newuob.f is being truncated
-Warning (115): Line 236 of newuob.f is being truncated
-Warning (115): Line 252 of newuob.f is being truncated
-Warning (115): Line 270 of newuob.f is being truncated
-Warning (115): Line 294 of newuob.f is being truncated
-Warning (115): Line 342 of newuob.f is being truncated
-Warning (115): Line 376 of newuob.f is being truncated
-Warning (115): Line 406 of newuob.f is being truncated
-Warning (115): Line 409 of newuob.f is being truncated
-Warning (115): Line 442 of newuob.f is being truncated
-In file newuob.f:58
+                   if (delta == rho) then
+                      1
+Warning: Equality comparison for REAL(8) at (1)
+newuob.f:1:58:
 
-      call initialize(n, npt, rhobeg, x, xbase, xpt, f, fval, xopt,     &
-           1
-Warning (165): Implicit interface 'initialize' called at (1)
-In file newuob.f:98
-
-      call trsapp (n, npt, xopt, xpt, gq, hq, pq, delta, d, w, w(n+1),  &
-           1
-Warning (165): Implicit interface 'trsapp' called at (1)
-In file newuob.f:121
-
-          call shiftbase(n, npt, idz, xopt, pq, bmat, zmat, gq, hq, xpt)
-               1
-Warning (165): Implicit interface 'shiftbase' called at (1)
-In file newuob.f:140
-
-          call biglag (n, npt, xopt, xpt, bmat, zmat, idz, ndim, knew,  &
-               1
-Warning (165): Implicit interface 'biglag' called at (1)
-In file newuob.f:160
-
-      call vlagbeta(n, npt, idz, kopt, bmat, zmat, xpt, xopt, d, vlag,  &
-           1
-Warning (165): Implicit interface 'vlagbeta' called at (1)
-In file newuob.f:168
-
-              call bigden (n, npt, xopt, xpt, bmat, zmat, idz, ndim,    &
-                   1
-Warning (165): Implicit interface 'bigden' called at (1)
-In file newuob.f:182
-
-          call calfun(n, x, f)
-               1
-Warning (165): Implicit interface 'calfun' called at (1)
-In file newuob.f:196
-
-      call calquad(vquad, d, xopt, xpt, gq, hq, pq, n,npt,wcheck(1:npt))
-           1
-Warning (165): Implicit interface 'calquad' called at (1)
-In file newuob.f:293
-
-  410 call update (n, npt, bmat, zmat, idz, ndim, vlag, beta,knew,w)
-           1
-Warning (165): Implicit interface 'update' called at (1)
-In file newuob.f:294
-
-      call updateq(n, npt, idz, knew, prederr(1), xpt(knew, :),         &
-           1
-Warning (165): Implicit interface 'updateq' called at (1)
-In file newuob.f:342
-
-                  call qalt(gq, hq, pq, fval, bmat(1 : npt, :), zmat,   &
-                       1
-Warning (165): Implicit interface 'qalt' called at (1)
-In file newuob.f:376
-
-              call shiftbase(n, npt, idz, xopt, pq, bmat, zmat, gq, hq, &
-                   1
-Warning (165): Implicit interface 'shiftbase' called at (1)
-In file newuob.f:427
-
-              call calfun(n, x, f)
-                   1
-Warning (165): Implicit interface 'calfun' called at (1)
-Warning (115): Line 11 of qalt.f is being truncated
-Warning (115): Line 9 of shiftbase.f is being truncated
-Warning (115): Line 13 of shiftbase.f is being truncated
-Warning (115): Line 38 of shiftbase.f is being truncated
-Warning (115): Line 1 of updateq.f is being truncated
-Warning (115): Line 9 of updateq.f is being truncated
-Warning (115): Line 3 of vlagbeta.f is being truncated
-Warning (115): Line 10 of vlagbeta.f is being truncated
-Warning (115): Line 15 of vlagbeta.f is being truncated
-In file vlagbeta.f:4
-
-     & vlag, beta, wcheck, dsq, xoptsq)
-                           1
-Warning (163): Actual argument 'dsq' at (1) does not have an INTENT
-In file vlagbeta.f:4
-
-     & vlag, beta, wcheck, dsq, xoptsq)
-                                1
-Warning (163): Actual argument 'xoptsq' at (1) does not have an INTENT
+       subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun,     &
+                                                          1
+Warning: Unused dummy argument ‘iprint’ at (1) [-Wunused-dummy-argument]
