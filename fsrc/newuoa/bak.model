@@ -1,85 +1,5 @@
-      subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun,     &
-     & xbase, xopt, xnew, xpt, fval, gq, hq, pq, bmat, zmat, ndim,      &
-     & d, vlag, w, f, info, ftarget)
-
-      use pdfomod, only : rp, zero, one, half, tenth, is_nan, is_posinf
-      implicit none
-
-      ! inputs
-      integer, intent(in) :: n, npt, iprint, maxfun, ndim
-      integer, intent(out) :: info
-      real(kind = rp), intent(in) :: rhobeg, rhoend, ftarget
-      real(kind = rp), intent(out) :: f
-      real(kind = rp), intent(inout) :: x(n), xbase(n), xopt(n),        &
-     & xnew(n), xpt(npt, n), fval(npt), gq(n), hq((n*(n+1))/2), pq(npt)
-      real(kind = rp), intent(inout) :: bmat(npt + n, n),               &
-     & zmat(npt, npt - n - 1), d(n), vlag(npt + n), w(10*(npt + n))
-
-      ! other variables
-      integer :: i, idz, itest, k, knew, kopt, nf,                      &
-     & nfsave, nftest, subinfo
       integer :: tr, maxtr
-      real(kind = rp) :: alpha, beta, crvmin, delta, prederr(3),        &
-     & distsq, dnorm, dsq, dstep, xdiff(n), xdsq(npt)
-      real(kind = rp) :: fopt, fsave, galt(n), galtsq, gqsq, hdiag(npt),&
-     & ratio, rho, rhosq, vquad, xoptsq, wcheck(npt+n), sigma(npt) 
-
       logical :: model_step, reduce_rho, shortd 
-
-      ! The arguments N, NPT, X, RHOBEG, RHOEND, IPRINT and MAXFUN are
-      ! identical to the corresponding arguments in SUBROUTINE NEWUOA.
-      ! XBASE will hold a shift of origin that should reduce the
-      ! contributions from rounding errors to values of the model and
-      ! Lagrange functions.
-      ! XOPT will be set to the displacement from XBASE of the vector of
-      ! variables that provides the least calculated F so far.
-      ! XNEW will be set to the displacement from XBASE of the vector of
-      ! variables for the current calculation of F.
-      ! XPT will contain the interpolation point coordinates relative to
-      ! XBASE.
-      ! FVAL will hold the values of F at the interpolation points.
-      ! GQ will hold the gradient of the quadratic model at XBASE.
-      ! HQ will hold the explicit second order derivatives of the
-      ! quadratic model.
-      ! PQ will contain the parameters of the implicit second order
-      ! derivatives of the quadratic model.
-      ! BMAT will hold the last N columns of H. ZMAT will hold the
-      ! factorization of the leading NPT by NPT submatrix of H, this
-      ! factorization being ZMAT times Diag(DZ) times ZMAT^T, where the
-      ! elements of DZ are plus or minus one, as specified by IDZ.
-      ! NDIM is the first dimension of BMAT and has the value NPT + N.
-      ! D is reserved for trial steps from XOPT.
-      ! VLAG will contain the values of the Lagrange functions at a new
-      ! point X. They are part of a product that requires VLAG to be of
-      ! length NDIM = NPT+N.
-      ! The array W will be used for working space. Its length must be
-      ! at least 10*NDIM = 10*(NPT + N).
-
-      ! Set some constants.
-      nftest = max(maxfun, 1)
-
-      call initialize(n, npt, rhobeg, x, xbase, xpt, f, fval, xopt,     &
-     & fopt, kopt, bmat, zmat, gq, hq, pq, nf, subinfo, ftarget)
-      if (subinfo == 1 .or. subinfo == -1 .or. subinfo == -2 .or.       &
-     & subinfo == -3) then
-          info = subinfo
-          goto 530
-      end if
-
-      ! Set some more initial values.
-      rho = rhobeg
-      delta = rho
-      idz = 1
-      prederr = zero
-      itest = 0
-      nfsave = nf
-      xopt = xpt(kopt, :)
-      xoptsq = zero
-      do i = 1, n
-          xoptsq = xoptsq + xopt(i)**2
-      end do
-
-      ! Begin the iterative procedure.
 
       maxtr = 1000*n  ! Maximal numer of trust region iterations
       info = 0
@@ -89,14 +9,14 @@
       do tr = 1, maxtr
 
           ! Will we improve the model after the trust region iteration?
-          model_step = .false.
+          model_step = false  
           ! Will we reduce rho after the trust region iteration?
-          reduce_rho = .false.
+          reduce_rho = false  
           ! NEWUOA never sets MODEL_STEP = REDUCE_RHO = .TRUE.
 
           ! Exit if the model contains NaN. Otherwise, the behaviour of
           ! TRSAPP is unpredictable, and Segmentation Fault may occur.
-          ! In the future, we may build a new model instead of exiting.
+          ! We may build a new model instead of exiting.
           if (any(is_nan(gq)) .or. any(is_nan(hq)) .or. any(is_nan(pq)))&
      &     then
               info = -3
@@ -117,6 +37,7 @@
 
           ! NFSAVE is counter of the latest function evaluation with 
           ! ||D|| > RHO
+          r
           if (dnorm > rho) then 
               nfsave = nf
           end if
@@ -137,7 +58,7 @@
               end if
           end if
     
-          if (.not. shortd) then
+          if (.not. shortd)
               ! Shift XBASE if XOPT may be too far from XBASE.
               if (dsq <= 1.0e-3_rp*xoptsq) then
                   call shiftbase(n, npt, idz, xopt, pq, bmat, zmat, gq, &
@@ -150,7 +71,7 @@
               ! Calculate VLAG and BETA for D. The first NPT components
               ! of W_check will be held in WCHECK.
               !call vlagbeta(n, npt, idz, kopt, bmat, zmat, xpt, xopt, d,&
-!     &         vlag, beta, wcheck)
+     !&         vlag, beta, wcheck)
               call vlagbeta(n, npt, idz, kopt, bmat, zmat, xpt, xopt, d,&
      &         vlag, beta, wcheck, dsq, xoptsq)
 
@@ -492,29 +413,3 @@
               end if
           end if
       end do
-
-      ! Return from the calculation, after another Newton-Raphson step,
-      ! if it is too short to have been tried before.
-      if (shortd) then
-          x = xbase + (xopt + d)
-          if (any(is_nan(x))) then
-              f = sum(x)  ! Set F to NaN. It is necessary.
-              info = -1
-          else
-              call calfun(n, x, f)
-              nf = nf + 1
-          end if
-      end if
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      ! By Zaikun (commented on 02-06-2019; implemented in 2016):
-      ! Note that (FOPT .LE. F) is FALSE if F is NaN; When F is NaN, it
-      ! is also necessary to update X and F.
-      ! 530 IF (FOPT .LE. F) THEN
-  530 if (is_nan(f) .or. fopt <= f) then
-          x = xbase + xopt
-          f = fopt
-      end if
-
-      return
-
-      end subroutine newuob
