@@ -76,6 +76,9 @@
           x = xpt(nf, :) + xbase
           if (any(is_nan(x))) then
               f = sum(x)  ! Set F to NaN. It is necessary.
+              ! DO NOT EXIT here!!! 
+              ! Otherwise, if NF = 1, then FOPT, KOPT, and XOPT has not
+              ! been set, which would lead to a bug. 
           else
               call calfun(n, x, f)
               evaluated(nf) = .true.
@@ -93,7 +96,7 @@
           end if
           xopt = xpt(kopt, :)
 
-          ! Set INFO.
+          ! Set INFO and check whether to exit due to abnormal values.
           ! The following should be done after setting fopt and xopt.
           if (any(is_nan(x))) then
               info = -1

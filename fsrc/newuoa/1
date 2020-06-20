@@ -3,11 +3,6 @@ calquad.f:2:41:
        subroutine calquad(vquad, d, x, xpt, gq, hq, pq, n, npt, wcheck)
                                          1
 Warning: Unused dummy argument ‘xpt’ at (1) [-Wunused-dummy-argument]
-newuob.f:267:22:
-
-                   if (delta == rho) then
-                      1
-Warning: Equality comparison for REAL(8) at (1)
 newuob.f:1:58:
 
        subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun,     &
