@@ -101,8 +101,11 @@
           end if
 
           ! Solve the trust region subproblem.
-          call trsapp (n, npt, xopt, xpt, gq, hq, pq, delta, d, w,      &
-     &     w(n+1), w(2*n+1), w(3*n+1), crvmin)
+          ! In Powell's NEWUOA code, VQUAD is not an output of TRSAPP. 
+          ! Here we output it but do not use it to align with Powell's
+          ! code. VQUAD is later calculated by CALQUAD.
+          call trsapp(n, npt, 1.0e-2_rp, xopt, xpt, gq, hq, pq, delta,  &
+     &     d, crvmin, vquad, subinfo)
           
           ! Calculate the length of the trial step D.
           !dsq = dot_product(d, d)

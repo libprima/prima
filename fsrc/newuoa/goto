@@ -1,6 +1,0 @@
-100 solve tr subp
-120 biglag, bigden 
-410 update model
-460, model step??? then next tr
-490 update rho and delta, then next tr
-530 return

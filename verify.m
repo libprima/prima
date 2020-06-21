@@ -32,6 +32,11 @@ test_options.debug = true;
 test_options.chkfunval = true;
 
 requirements = struct();
+if isfield(options, 'list')
+    requirements.list = options.list;  % Only test problems in this list
+else
+    requirements.list = {};  % No restriction
+end
 if (isfield(options, 'mindim'))
     requirements.mindim = options.mindim;
 else
@@ -67,18 +72,20 @@ cellfun(@(solver) warning('off', [solver, ':Classical']), solvers);
 cellfun(@(solver) warning('off', [solver, ':ReviseX0']), solvers);
 cellfun(@(solver) warning('off', [solver, ':UnknownProbField']), solvers);
 cellfun(@(solver) warning('off', [solver, ':UnknownOption']), solvers);
+cellfun(@(solver) warning('off', [solver, ':InvalidMaxfun']), solvers);
+cellfun(@(solver) warning('off', [solver, ':ExtremeBarrier']), solvers);
 
 plist = secup(requirements);
 
 fprintf('\n')
 for ip = 1 : length(plist)
     pname = plist{ip};
-%    fprintf('%3d. \t%16s:\t', ip, pname);
-    fprintf('%3d. \t%16s:\t\n', ip, pname);
+    fprintf('%3d. \t%16s:\t', ip, pname);
+%    fprintf('%3d. \t%16s:\t\n', ip, pname);
     prob = macup(pname);
     x0 = prob.x0;
     n = length(x0);
-    for ir = 0 : nr + 4 
+    for ir = 0 : nr + 5 
         % Some randomization
         rng(ceil(1e5*abs(sin(1e10*(ir+nr+requirements.maxdim)))));
         prob.x0 = x0 + 0.5*randn(size(x0));
@@ -98,11 +105,14 @@ for ip = 1 : length(plist)
             test_options.maxfun = test_options.npt + 1;
         end
         if ir == 3
-            test_options.rhoend = test_options.rhobeg;
+            test_options.maxfun = 1000*n;
         end 
         if ir == 4
             test_options.ftarget = inf;
         end 
+        if ir == 5
+            test_options.rhoend = test_options.rhobeg;
+        end
         prob.options = test_options;
         [x1, fx1, exitflag1, output1] = feval(solvers{1}, prob);
         [x2, fx2, exitflag2, output2] = feval(solvers{2}, prob);
