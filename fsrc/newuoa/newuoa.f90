@@ -100,8 +100,8 @@ iw=ivl+ndim
 ! that RHOEND > RHOBEG. That is why we do the following. 
 rhoend = min(rhobeg, rhoend)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-call newuob (n,npt,x,rhobeg,rhoend,iprint,maxfun,w(ixb), w(ixo),w(ixn),w(ixp),w(ifv),w(igq),w(ihq),w(ipq),w(ibmat), w(izmat),&
-    & ndim,w(id),w(ivl),w(iw),f,info,ftarget)
+call newuob (n,npt,x,rhobeg,rhoend,iprint,maxfun, w(ixb), w(ixo),w(ixn),w(ixp),w(ifv),w(igq),w(ihq),w(ipq),w(ibmat), w(izmat),&
+    & w(id),w(ivl),w(iw),f,info,ftarget)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    20 return
 end

@@ -1,10 +1,10 @@
-subroutine bigden (n,npt,xopt,xpt,bmat,zmat,idz,ndim,kopt, knew,d,wcheck,vlag,beta,s,wvec,prod)
+subroutine bigden (n,npt,xopt,xpt,bmat,zmat,idz,kopt, knew,d,wcheck,vlag,beta,s,wvec,prod)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !      IMPLICIT REAL*8 (A-H,O-Z)
 implicit real(kind(0.0d0)) (a-h,o-z)
 implicit integer (i-n)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-dimension xopt(*),xpt(npt,*),bmat(ndim,*),zmat(npt,*),d(*), wcheck(npt+n),vlag(*),s(*),wvec(ndim,*),prod(ndim,*)
+dimension xopt(*),xpt(npt,*),bmat(npt+n,*),zmat(npt,*),d(*), wcheck(npt+n),vlag(*),s(*),wvec(npt+n,*),prod(npt+n,*)
 dimension den(9),denex(9),par(9)
 !
 !     N is the number of variables.
@@ -165,7 +165,7 @@ end do
 !
 do jc=1,5
     nw=npt
-    if (jc == 2 .or. jc == 3) nw=ndim
+    if (jc == 2 .or. jc == 3) nw=npt+n
     do k=1,npt
         prod(k,jc)=zero
     end do
@@ -179,7 +179,7 @@ do jc=1,5
             prod(k,jc)=prod(k,jc)+sum*zmat(k,j)
         end do
     end do
-    if (nw == ndim) then
+    if (nw == npt+n) then
         do k=1,npt
             sum=zero
             do j=1,n
@@ -199,7 +199,7 @@ end do
 !
 !     Include in DEN the part of BETA that depends on THETA.
 !
-do k=1,ndim
+do k=1,npt+n
     sum=zero
     do i=1,5
         par(i)=half*prod(k,i)*wvec(k,i)
@@ -306,7 +306,7 @@ do j=1,9
     beta=beta+den(j)*par(j)
     denmax=denmax+denex(j)*par(j)
 end do
-do k=1,ndim
+do k=1,npt+n
     vlag(k)=zero
     do j=1,5
         vlag(k)=vlag(k)+prod(k,j)*par(j)
@@ -356,7 +356,7 @@ if (ssden >= 1.0d-8*dd*ss) goto 70
 !
 !     Set the vector WCHECK before the RETURN from the subroutine.
 !
-340 do k=1,ndim
+340 do k=1,npt+n
     wcheck(k)=zero
     do j=1,5
         wcheck(k)=wcheck(k)+wvec(k,j)*par(j)
