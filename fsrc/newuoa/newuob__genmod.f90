@@ -1,11 +1,10 @@
-        !COMPILER-GENERATED INTERFACE MODULE: Sat Jun 20 19:12:38 2020
+        !COMPILER-GENERATED INTERFACE MODULE: Mon Jun 22 01:39:09 2020
         ! This source file is for reference only and may not completely
         ! represent the generated interface used by the compiler.
         MODULE NEWUOB__genmod
           INTERFACE 
             SUBROUTINE NEWUOB(N,NPT,X,RHOBEG,RHOEND,IPRINT,MAXFUN,XBASE,&
-     &XOPT,XNEW,XPT,FVAL,GQ,HQ,PQ,BMAT,ZMAT,NDIM,D,VLAG,W,F,INFO,FTARGET&
-     &)
+     &XOPT,XNEW,XPT,FVAL,GQ,HQ,PQ,BMAT,ZMAT,D,VLAG,W,F,INFO,FTARGET)
               INTEGER(KIND=4), INTENT(IN) :: NPT
               INTEGER(KIND=4), INTENT(IN) :: N
               REAL(KIND=8), INTENT(INOUT) :: X(N)
@@ -23,7 +22,6 @@
               REAL(KIND=8), INTENT(INOUT) :: PQ(NPT)
               REAL(KIND=8), INTENT(INOUT) :: BMAT(NPT+N,N)
               REAL(KIND=8), INTENT(INOUT) :: ZMAT(NPT,NPT-N-1)
-              INTEGER(KIND=4), INTENT(IN) :: NDIM
               REAL(KIND=8), INTENT(INOUT) :: D(N)
               REAL(KIND=8), INTENT(INOUT) :: VLAG(NPT+N)
               REAL(KIND=8), INTENT(INOUT) :: W(10*(NPT+N))
