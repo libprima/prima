@@ -1,10 +1,10 @@
-subroutine biglag (n,npt,xopt,xpt,bmat,zmat,idz,ndim,knew, delta,d,alpha,hcol,gc,gd,s,w)
+subroutine biglag (n,npt,xopt,xpt,bmat,zmat,idz,knew, delta,d,alpha,hcol,gc,gd,s,w)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !      IMPLICIT REAL*8 (A-H,O-Z)
 implicit real(kind(0.0d0)) (a-h,o-z)
 implicit integer (i-n)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-dimension xopt(*),xpt(npt,*),bmat(ndim,*),zmat(npt,*),d(*), hcol(*),gc(*),gd(*),s(*),w(*)
+dimension xopt(*),xpt(npt,*),bmat(npt+n,*),zmat(npt,*),d(*), hcol(*),gc(*),gd(*),s(*),w(*)
 !
 !     N is the number of variables.
 !     NPT is the number of interpolation equations.

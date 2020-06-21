@@ -1,10 +1,10 @@
-subroutine update (n,npt,bmat,zmat,idz,ndim,vlag,beta,knew,w)
+subroutine update (n,npt,bmat,zmat,idz,vlag,beta,knew,w)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !      IMPLICIT REAL*8 (A-H,O-Z)
 implicit real(kind(0.0d0)) (a-h,o-z)
 implicit integer (i-n)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-dimension bmat(ndim,*),zmat(npt,*),vlag(*),w(*)
+dimension bmat(npt+n,*),zmat(npt,*),vlag(*),w(*)
 !
 !     The arrays BMAT and ZMAT with IDZ are updated, in order to shift the
 !     interpolation point that has index KNEW. On entry, VLAG contains the

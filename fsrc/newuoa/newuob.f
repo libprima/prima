@@ -1,12 +1,12 @@
       subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun,     &
-     & xbase, xopt, xnew, xpt, fval, gq, hq, pq, bmat, zmat, ndim,      &
+     & xbase, xopt, xnew, xpt, fval, gq, hq, pq, bmat, zmat,            &
      & d, vlag, w, f, info, ftarget)
 
       use pdfomod, only : rp, zero, one, half, tenth, is_nan, is_posinf
       implicit none
 
       ! inputs
-      integer, intent(in) :: n, npt, iprint, maxfun, ndim
+      integer, intent(in) :: n, npt, iprint, maxfun
       integer, intent(out) :: info
       real(kind = rp), intent(in) :: rhobeg, rhoend, ftarget
       real(kind = rp), intent(out) :: f
@@ -78,7 +78,7 @@
 
       ! Begin the iterative procedure.
 
-      maxtr = 1000*n  ! Maximal numer of trust region iterations
+      maxtr = maxfun  ! Maximal numer of trust region iterations
       info = 0  ! Exit status
 
       do tr = 1, maxtr
@@ -247,7 +247,7 @@
               if (knew > 0) then
                   ! Update BMAT, ZMAT and IDZ, so that the KNEW-th 
                   ! interpolation point can be removed. 
-                  call update(n, npt, bmat, zmat, idz, ndim, vlag, beta,&
+                  call update(n, npt, bmat, zmat, idz, vlag, beta,      &
      &             knew, w)
                   ! Update the quadratic model
                   call updateq(n, npt, idz, knew, prederr(1),           &
@@ -388,7 +388,7 @@
                   exit
               end if
 
-              call biglag(n, npt, xopt, xpt, bmat, zmat, idz, ndim,     &
+              call biglag(n, npt, xopt, xpt, bmat, zmat, idz,           &
      &         knew, dstep, d, alpha, vlag, vlag(npt + 1), w, w(n+1),   &
      &         w(2*n+1))
 
@@ -404,9 +404,9 @@
               ! No need to check whether BMAT and ZMAT contain NaN as no
               ! change has been made to them.
               if (abs(one + alpha*beta/vlag(knew)**2) <= 0.8_rp) then
-                  call bigden (n, npt, xopt, xpt, bmat, zmat, idz, ndim,&
-     &             kopt, knew, d, wcheck, vlag, beta, xnew, w(ndim+1),  &
-     &             w(6*ndim+1))
+                  call bigden (n, npt, xopt, xpt, bmat, zmat, idz,      &
+     &             kopt, knew, d, wcheck, vlag, beta, xnew, w(npt+n+1), &
+     &             w(6*(npt+n)+1))
               end if
  
       !----------------------------------------------------------------!
@@ -469,7 +469,7 @@
     
               ! Update BMAT, ZMAT and IDZ, so that the KNEW-th
               ! interpolation point can be moved. 
-              call update(n, npt, bmat, zmat, idz,ndim,vlag,beta,knew,w)
+              call update(n, npt, bmat, zmat, idz,vlag,beta,knew,w)
               ! Update the quadratic model.
               call updateq(n, npt, idz, knew, prederr(1), xpt(knew, :), &
      &         bmat(knew, :), zmat, gq, hq, pq)
