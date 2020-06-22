@@ -36,8 +36,9 @@ C defined in it. MX_GET_DBLE gets the pointer pointing to a real array.
 C Fortran code starts 
 
       module fnewuoa 
-      use pdfomod, only : rp, hugefun, hugenum, int4, zero, is_nan 
-      ! See pdfomod.F
+
+      use consts, only : rp, hugefun, hugenum, int4, zero
+      use infnan
       implicit none
 
       integer(int4), parameter :: notComplex = 0
@@ -68,7 +69,7 @@ C extension depends on the platform), then the following function is
 C callable in matlab: 
 C [xopt, fopt, info, nf, fhist] = FUNCTION_NAME(fun, x0, rhobeg, rhoend, maxfun, npt, ftarget)
 
-      use fnewuoa ! module 'pdfomod' is used by 'fnewuoa'
+      use fnewuoa 
       implicit none
 
 C mexFunction arguments (dummy variables):
@@ -277,7 +278,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
 C The Fortran subroutine that evaluates the objective function
       subroutine calfun(n, x, funval)
-      use fnewuoa ! module 'pdfomod' is used by 'fnewuoa'
+      use fnewuoa 
       implicit none
 
 C Dummy variables
@@ -349,7 +350,7 @@ C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
 
 C Use extreme barrier to cope with 'hidden constraints' 
       if (funval .gt. hugefun .or. is_nan(funval)) then
-          funval = hugefun ! hugefun is defined in pdfomod
+          funval = hugefun ! hugefun is defined in consts
       end if
 
 C Free memory; note that plhs and prhs are just temporary variables in

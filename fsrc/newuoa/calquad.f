@@ -4,7 +4,7 @@
       ! CALQUAD calculates VQUAD = Q(X + D) - Q(X), where Q is the
       ! quadratic function defined by (GQ, HQ, PQ).
 
-      use pdfomod, only : rp, half, zero
+      use consts, only : rp, half, zero
       implicit none
 
       integer, intent(in) :: n, npt

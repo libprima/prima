@@ -28,7 +28,7 @@ C     current platform, the possible values of data_type being
 C     'integer', 'float', 'real', 'single', 'double', 'mwSize', 
 C     'mwIndex', 'fun', 'function', 'con', 'constraint'.
 
-      use pdfomod, only : sp, dp, rp, hugefun, hugecon, int4 
+      use consts, only : sp, dp, rp, hugefun, hugecon, int4 
       implicit none
 
 C     mexFunction arguments:
@@ -60,7 +60,7 @@ C Floating-point zero of the default real kind on the current platform
       real(sp), parameter :: singleZero = 0.0_sp
 C Single-precision floating-point zero
       real(dp), parameter :: doubleZero = 0.0_dp 
-C Floating-point zero of the default real precision (rp) in pdfomod
+C Floating-point zero of the default real precision (rp) in consts 
       real(rp), parameter :: realZero = 0.0_rp 
 C Double-precision floating-point zero
       mwSize, parameter :: msZero = 0 
@@ -128,12 +128,12 @@ C     Define hugeValue.
      &    data_type .eq. 'FUN' .or. data_type .eq. 'function' .or. 
      &    data_type .eq. 'Function' .or. data_type .eq. 'FUNCTION') 
      &then
-          hugeValue = real(hugefun, dp) ! HUGEFUN defined in pdfomod
+          hugeValue = real(hugefun, dp) ! HUGEFUN defined in consts 
       else if (data_type .eq. 'con' .or. data_type .eq. 'Con' .or. 
      &    data_type .eq. 'CON' .or. data_type .eq. 'constraint' .or. 
      &    data_type .eq. 'Constraint' .or. data_type .eq. 'CONSTRAINT') 
      &then
-          hugeValue = real(hugecon, dp) ! HUGECON defined in pdfomod
+          hugeValue = real(hugecon, dp) ! HUGECON defined in consts 
       else
           call mexErrMsgIdAndTxt ('gethuge:WrongInput',
      &    'gethuge: Unrecognized input.')

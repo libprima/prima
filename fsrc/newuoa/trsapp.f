@@ -35,7 +35,9 @@
       ! Q. Thus S should provide a substantial reduction to Q within the
       ! trust region.
       
-      use pdfomod, only : rp, one, two, half, zero, pi, is_nan
+      use consts, only : rp, one, two, half, zero, pi
+      use infnan
+      use lina
       implicit none
       
       integer, intent(in) :: n, npt
@@ -59,7 +61,7 @@
       ! Prepare for the first line search.
       call hessmul(n, npt, xpt, hq, pq, x, hd)  ! HD = HESSIAN*X
       g = gq + hd
-      gg = sum(g**2) 
+      gg = dot_product(g, g)
       ggbeg = gg
       d = -g
       dd = gg 
@@ -95,11 +97,7 @@
           ! Set BSTEP to the step length such that ||S+BSTEP*D|| = DELTA
           bstep = (delsq-ss)/(ds + sqrt(ds*ds + dd*(delsq-ss)))  
           call hessmul(n, npt, xpt, hq, pq, d, hd)  ! HD = HESSIAN*D
-          !dhd = dot_product(d, hd)
-          dhd = zero
-          do j = 1,n
-             dhd = dhd + d(j)*hd(j)
-          end do
+          dhd = dot_product(d, hd)
 
           ! Set the step-length ALPHA and update CRVMIN and 
           if (dhd <= zero) then
@@ -120,11 +118,10 @@
 
           ! Update S, HS, and GG.
           s = s + alpha*d 
-          !ss = dot_product(s, s)
-          ss = sum(s**2)
+          ss = dot_product(s, s)
           hs = hs + alpha*hd
           ggsave = gg  ! Gradient norm square before this iteration 
-          gg = sum((g+hs)**2)  ! Current gradient norm square
+          gg = dot_product(g+hs, g+hs)  ! Current gradient norm square
              
           ! Check whether to exit. This should be done after updating HS
           ! and GG, which will be used for the 2D minimization if any. 
@@ -144,14 +141,8 @@
 
           ! Prepare for the next CG iteration.
           d = (gg/ggsave)*d - g - hs  ! CG direction
-          !dd = dot_product(d, d)
-          !ds = dot_product(d, s)
-          dd = zero
-          ds = zero
-          do i = 1,n
-              dd = dd + d(i)**2
-              ds = ds + d(i)*s(i)
-          end do
+          dd = dot_product(d, d)
+          ds = dot_product(d, s)
           if (ds <= zero) then 
               ! DS is positive in theory.
               info = -1 
@@ -178,14 +169,8 @@
               info = 0
               exit
           end if
-          !sg = dot_product(s, g)
-          !shs = dot_product(s, hs)
-          sg = zero
-          shs = zero
-          do i = 1, n
-             sg = sg + s(i)*g(i)
-             shs = shs + s(i)*hs(i)
-          end do
+          sg = dot_product(s, g)
+          shs = dot_product(s, hs)
           sgk = sg + shs
           if (sgk/sqrt(gg*delsq) <= tol - one) then 
               info = 0
@@ -197,17 +182,9 @@
           temp = sqrt(delsq*gg - sgk*sgk)
           d = (delsq/temp)*(g + hs) - (sgk/temp)*s
           call hessmul(n, npt, xpt, hq, pq, d, hd)  ! HD = HESSIAN*D
-          !dg = dot_product(d, g)
-          !dhd = dot_product(hd, d)
-          !dhs = dot_product(hd, s)
-          dg = zero
-          dhd = zero
-          dhs = zero
-          do i = 1, n
-              dg = dg + d(i)*g(i)
-              dhd = dhd + hd(i)*d(i)
-              dhs = dhs + hd(i)*s(i)
-          end do
+          dg = dot_product(d, g)
+          dhd = dot_product(hd, d)
+          dhs = dot_product(hd, s)
 
           ! Seek the value of the angle that minimizes Q.
           cf = half*(shs - dhd)
@@ -252,11 +229,7 @@
           reduc = qbeg - (sg + cf*cth)*cth - (dg + dhs*cth)*sth
           s = cth*s + sth*d
           hs = cth*hs + sth*hd
-          !gg = sum((g+hs)**2)
-          gg = zero
-          do i = 1, n
-              gg = gg + (g(i) + hs(i))**2
-          end do
+          gg = dot_product(g+hs, g+hs)
           qred = qred + reduc
           if (reduc/qred <= tol) then 
               info = 1
@@ -282,7 +255,7 @@
       ! triangular entries, PQ is an NPT-dimensional vector, and XPT is
       ! an NPT*N matrix.
       
-      use pdfomod, only : rp, zero
+      use consts, only : rp, zero
 
       integer, intent(in) :: n, npt
       real(kind = rp), intent(in) :: xpt(npt, n), hq((n*(n + 1))/2),    &

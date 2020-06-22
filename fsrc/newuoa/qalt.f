@@ -4,7 +4,7 @@
       ! conditions. 
       ! Note that SMAT = BMAT(1:NPT, 1:N)
 
-      use pdfomod, only : rp, zero
+      use consts, only : rp, zero
       implicit none
 
       integer, intent(in) :: n, npt, kopt, idz

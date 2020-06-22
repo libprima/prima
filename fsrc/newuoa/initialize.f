@@ -1,7 +1,8 @@
       subroutine initialize(n, npt, rhobeg, x, xbase, xpt, f, fval,     &
      & xopt, fopt, kopt, bmat, zmat, gq, hq, pq, nf, info, ftarget)
 
-      use pdfomod, only : rp, zero, one, half, is_nan, is_posinf
+      use consts, only : rp, zero, one, half
+      use infnan
       implicit none
 
       integer, intent(in) :: n, npt
@@ -186,7 +187,7 @@
           fopt = f
           xopt = zero
       else
-          kopt = minloc(fval, 1, evaluated)
+          kopt = minloc(fval, dim = 1, mask = evaluated)
           fopt = fval(kopt)
           xopt = xpt(kopt, :)
       end if
