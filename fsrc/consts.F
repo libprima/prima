@@ -1,5 +1,5 @@
 ! CONSTS is a module defining some constants 
-!
+
 !*****************************************************************
 !   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
 !               and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
@@ -8,12 +8,6 @@
 !
 !   Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !****************************************************************
-
-! Which Fortran standard to follow?
-#ifdef __FORTRAN_STANDARD__
-#undef __FORTRAN_STANDARD__
-#endif
-#define __FORTRAN_STANDARD__ 2003 
 
 ! Remarks:
 !
@@ -43,16 +37,14 @@
       real(kind=rp), parameter :: half = 0.5_rp
       real(kind=rp), parameter :: ten = 10.0_rp
       real(kind=rp), parameter :: tenth = 0.1_rp
+      real(kind=rp), parameter :: pi = 3.141592653589793238462643383_rp
 
+      real(kind=rp), parameter :: eps = epsilon(zero)
       real(kind=rp), parameter :: hugenum = huge(zero)
       real(kind=rp), parameter :: almost_infinity = half*hugenum
-#if __FORTRAN_STANDARD__ >= 2003
-      real(kind=rp), parameter :: pi = real(acos(-1.0_rp), rp)
-      real(kind=rp), parameter :: hugefun = min(1.0e42_rp,sqrt(hugenum))
-#else
-      real(kind=rp), parameter :: pi = 3.1415926535897932384626433833_rp
-      real(kind=rp), parameter :: hugefun = 10e20_rp 
-#endif
+      
+      integer, parameter :: maxe = maxexponent(zero)
+      real(kind=rp), parameter :: hugefun = 2.0_rp**min(100, maxe/2)
       real(kind=rp), parameter :: hugecon = hugefun
 
       integer, parameter :: int4 = selected_int_kind(8)
