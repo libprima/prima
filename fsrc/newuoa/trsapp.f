@@ -1,6 +1,5 @@
       subroutine trsapp(n, npt, tol, x, xpt, gq, hq, pq, delta, s,      &
      & crvmin, qred, info)
-
       ! TRSAPP finds an approximate solution to the N-dimensional trust
       ! region subproblem
       !
@@ -36,7 +35,7 @@
       ! Q. Thus S should provide a substantial reduction to Q within the
       ! trust region.
       
-      use pdfomod, only : rp, one, two, half, zero, pi
+      use pdfomod, only : rp, one, two, half, zero, pi, is_nan
       implicit none
       
       integer, intent(in) :: n, npt
@@ -85,8 +84,8 @@
       ! 4. ||S|| = DELTA, i.e., CG path cuts the trust region boundary.
       ! 
       ! In the 4th case, twod_search will be set to true, meaning that S
-      ! will be further improved by a sequencial two-dimensional search,
-      ! the two-dimensional subspace at each iteration being span(S,-G).
+      ! will be improved by a sequence of two-dimensional search, the
+      ! two-dimensional subspace at each iteration being span(S,-G).
       do iterc = 1, itermax
           ! Check whether to exit due to small GG 
           if (gg <= (tol**2)*ggbeg) then
@@ -160,7 +159,7 @@
           end if
       end do 
 
-      if (.not. (ss > 0)) then 
+      if (ss <= 0 .or. is_nan(ss)) then 
           ! This may occur for ill-conditioned problems due to rounding.
           info = -1
           twod_search = .false.
@@ -173,7 +172,7 @@
           itermax = 0
       end if
       
-      ! Test whether an alternative iteration is required.
+      ! The 2D minimization 
       do iterc = 1, itermax
           if (gg <= (tol**2)*ggbeg) then 
               info = 0
@@ -269,7 +268,19 @@
 
       end subroutine trsapp
       
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
       subroutine hessmul(n, npt, xpt, hq, pq, d, hd)
+      ! HESSMUL calculates HD = HESSIAN*D for the NEWUOA-form HESSIAN,
+      ! which is the sum of an explicit part HQ and an implicit 
+      ! part (PQ, XPT). Specifically, 
+      !
+      ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*XPT(K, :)'*XPT(K, :),
+      !
+      ! where HQ is represented as a vector of its N*(N+1)/2 upper
+      ! triangular entries, PQ is an NPT-dimensional vector, and XPT is
+      ! an NPT*N matrix.
       
       use pdfomod, only : rp, zero
 
