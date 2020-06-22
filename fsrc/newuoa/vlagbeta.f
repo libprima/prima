@@ -3,7 +3,7 @@
       subroutine vlagbeta(n, npt, idz, kopt, bmat, zmat, xpt, xopt, d,  &
      & vlag, beta, wcheck, dsq, xoptsq)
 
-      use pdfomod, only : rp, one, half, zero
+      use consts, only : rp, one, half, zero
       implicit none
       
       integer, intent(in) :: n, npt, idz, kopt

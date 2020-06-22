@@ -2,7 +2,7 @@
 !     TESTINT tests how well Q interpolates F.
 !     At return, EINT(K) is the interpolation error at XPT(K, :)
 
-      use pdfomod, only : rp, one, zero
+      use consts, only : rp, one, zero
       implicit none
 
       integer, intent(in) :: n, npt, kopt
@@ -32,7 +32,7 @@
       ! CALQUAD calculates VQUAD = Q(X + D) - Q(X), where Q is the
       ! quadratic function defined by (GQ, HQ, PQ).
 
-      use pdfomod, only : rp, half
+      use consts, only : rp, half
       implicit none
 
       integer, intent(in) :: n, npt

@@ -2,7 +2,8 @@
      & xbase, xopt, xnew, xpt, fval, gq, hq, pq, bmat, zmat,            &
      & d, vlag, w, f, info, ftarget)
 
-      use pdfomod, only : rp, zero, one, half, tenth, is_nan, is_posinf
+      use consts, only : rp, zero, one, half, tenth
+      use infnan
       implicit none
 
       ! inputs
@@ -242,7 +243,7 @@
               ! KNEW > 0 unless MAXVAL(SIGMA) <= 1 and F >= FSAVE.
               ! If F < FSAVE, then KNEW > 0, ensuring that XNEW 
               ! will be included into XPT.
-                  knew = maxloc(sigma, 1)
+                  knew = maxloc(sigma, dim = 1)
               else
                   knew = 0
               end if
@@ -328,7 +329,7 @@
                   xdsq(k) = dot_product(xdiff, xdiff)
               end do
               if (maxval(xdsq) > distsq) then
-                  knew = maxloc(xdsq, 1)
+                  knew = maxloc(xdsq, dim = 1)
                   distsq = maxval(xdsq)
               else
                   knew = 0

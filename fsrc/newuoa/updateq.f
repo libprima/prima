@@ -1,7 +1,7 @@
       subroutine updateq(n, npt, idz, knew, fqdiff, xptknew, bmatknew,  &
      & zmat, gq, hq, pq)
 
-      use pdfomod, only : rp, zero
+      use consts, only : rp, zero
       implicit none
 
       integer, intent(in) :: n, npt, idz, knew

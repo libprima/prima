@@ -66,11 +66,6 @@ function setup(varargin)
 % by dirname, then the following would workd for MATLAB later than R2016a:
 % delete(fullfile(dirname, '*.mod'));
 % However, MATLAB R2015b would complain that it cannot find '*.mod'.
-% Similarly, to compile solver (see the code between 'try' and 'catch'),
-% for MATLAB later than R2016a (but not 2015b), the following code would work:
-% mex(mex_options, '-output', ['f', solver], fullfile(fsrc, 'pdfomod.F'), ...
-%   fullfile(fsrc, solver, '*.f'), fullfile(gateways, [solver, '-interface.F']));
-% However, MATLAB R2015b would run into an error due to the wildcard.
 % The 'files_with_wildcard' function provides a workaround.
 %
 % TODO: None
@@ -213,8 +208,9 @@ try
 % We use try ... catch so that we can change directory back to cpwd in
 % case of an error.
 
+    infrastructure_files = files_with_wildcard(fsrc, '*.F'); 
     % Compilation of function gethuge
-    mex(mex_options{:}, '-output', 'gethuge', fullfile(fsrc, 'pdfomod.F'), fullfile(gateways, 'gethuge.F'));
+    mex(mex_options{:}, '-output', 'gethuge', infrastructure_files{:}, fullfile(gateways, 'gethuge.F'));
 
     for isol = 1 : length(solver_list)
         solver = solver_list{isol};
@@ -226,7 +222,7 @@ try
         cellfun(@(filename) delete(filename), modo_files);
         % Compile
         src_files = files_with_wildcard(fullfile(fsrc, solver), '*.f*');
-        mex(mex_options{:}, '-output', ['f', solver, 'n'], fullfile(fsrc, 'pdfomod.F'), src_files{:}, fullfile(gateways, [solver, '-interface.F']));
+        mex(mex_options{:}, '-output', ['f', solver, 'n'], infrastructure_files{:}, src_files{:}, fullfile(gateways, [solver, '-interface.F']));
 
         % Compilation of the 'classical' version of solver
         % Clean up the source file directory
@@ -234,7 +230,7 @@ try
         cellfun(@(filename) delete(filename), modo_files);
         % Compile
         src_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.f*');
-        mex(mex_options{:}, '-output', ['f', solver, 'n_classical'], fullfile(fsrc, 'pdfomod.F'), src_files{:}, fullfile(gateways_classical, [solver, '-interface.F']));
+        mex(mex_options{:}, '-output', ['f', solver, 'n_classical'], infrastructure_files{:}, src_files{:}, fullfile(gateways_classical, [solver, '-interface.F']));
 
         fprintf('Done.\n');
     end

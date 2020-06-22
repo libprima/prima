@@ -1,6 +1,6 @@
       subroutine shiftbase(n, npt, idz, xopt, pq, bmat, zmat, gq,hq,xpt)
 
-      use pdfomod, only : rp, zero, half
+      use consts, only : rp, zero, half
       implicit none
 
       integer, intent(in) :: idz, n, npt

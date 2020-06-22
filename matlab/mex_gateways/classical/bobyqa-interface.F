@@ -37,7 +37,7 @@ C defined in it. MX_GET_DBLE gets the pointer pointing to a real array.
 C Fortran code starts 
 
       module fbobyqa 
-      use pdfomod, only : rp, hugenum, int4, zero  ! See pdfomod.F
+      use consts, only : rp, hugenum, int4, zero  
       implicit none
 
       integer(int4), parameter :: notComplex = 0
@@ -73,7 +73,7 @@ C extension depends on the platform), then the following function is
 C callable in matlab: 
 C [xopt, fopt, info, nf, fhist, constrviolation, chist] = FUNCTION_NAME(fun, x0, xl, xu, rhobeg, rhoend, maxfun, npt, ftarget)
 
-      use fbobyqa ! module 'pdfomod' is used by 'fbobyqa'
+      use fbobyqa 
       implicit none
 
 C mexFunction arguments (dummy variables):
@@ -331,7 +331,7 @@ C Although info and nf are integers logically, they are passed as double
 
       resmax = zero 
 C Constraint violation (named 'RESMAX' in Powell's COBYLA code).
-C zero is defined in module 'pdfomod'.
+C zero is defined in module 'consts'.
 C Since BOBYQA is a feasible method, resmax should
 C turn out to be zero after the calculations below.
       do i = 1, n
@@ -360,7 +360,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
 C The Fortran subroutine that evaluates the objective function
       subroutine calfun(n, x, funval)
-      use fbobyqa ! module 'pdfomod' is used by 'fbobyqa'
+      use fbobyqa 
       implicit none
 
 C dummy variables
@@ -428,7 +428,7 @@ C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
 
       resmax = zero 
 C Constraint violation (named 'RESMAX' in Powell's COBYLA code).
-C zero is defined in module 'pdfomod'.
+C zero is defined in module 'consts'.
 C BOBYQA is a feasible method. If everything runs correctly, resmax
 C should always be zero. 
       do i = 1, n

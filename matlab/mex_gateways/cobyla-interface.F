@@ -37,9 +37,9 @@ C defined in it. MX_GET_DBLE gets the pointer pointing to a real array.
 C Fortran code starts 
 
       module fcobyla ! Some global variables
-      use pdfomod, only : rp, hugecon, hugefun, hugenum, int4, zero, 
-     & is_nan
-      ! See pdfomod.F
+
+      use consts, only : rp, hugecon, hugefun, hugenum, int4, zero
+      use infnan
       implicit none
 
       integer(int4), parameter :: notComplex = 0
@@ -75,7 +75,7 @@ C extension depends on the platform), then the following function is
 C callable in matlab: 
 C [xopt, fopt, info, nf, fhist, convalopt, constrviolation, chist] = FUNCTION_NAME(fun, con, x0, rhobeg, rhoend, maxfun, m, ftarget, conval_x0)
 
-      use fcobyla ! module 'pdfomod' is used by 'fcobyla'
+      use fcobyla 
       implicit none
 
 C mexFunction arguments (dummy variables):
@@ -355,7 +355,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
 C The Fortran subroutine that evaluates the objective function
       subroutine calcfc(n, m, x, funval, conval)
-      use fcobyla ! module 'pdfomod' is used by 'fcobyla'
+      use fcobyla 
       implicit none
 
 C dummy variables
@@ -436,7 +436,7 @@ C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
 
 C Use extreme barrier to cope with 'hidden constraints' 
       if (funval .gt. hugefun .or. is_nan(funval)) then
-          funval = hugefun ! hugefun is defined in pdfomod
+          funval = hugefun ! hugefun is defined in consts 
       end if
 
 C Free memory; note that plhs and prhs are just temporary variables in
@@ -479,7 +479,7 @@ C Execute matlab command: c_value = feval(con, x)
 C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
       end if
 C Calculate the constraint violation (named 'RESMAX' in Powell's COBYLA code)
-      resmax = zero ! zero is defined in module 'pdfomod'.
+      resmax = zero ! zero is defined in module 'consts'.
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Code without extreme barrier:
 C Constraint: con(x) >= 0
@@ -496,14 +496,14 @@ C Use extreme barrier to cope with 'hidden constraints'
 C Constraint: con(x) >= 0
       do k = 1, m
           if (conval(k) .lt. -hugecon .or. is_nan(conval(k))) then
-              conval(k) = -hugecon ! hugecon is defined in pdfomod
+              conval(k) = -hugecon ! hugecon is defined in consts 
           end if
 
 C This part is NOT extreme barrier. We replace extremely negative values 
 C of cineq (which leads to no constraint violation) by -hugecon. Otherwise,
 C NaN or Inf may occur in the interpolation models.
           if (conval(k) .gt. hugecon) then
-              conval(k) = hugecon ! hugecon is defined in pdfomod
+              conval(k) = hugecon ! hugecon is defined in consts 
           end if
 
           resmax = max(resmax, -conval(k))

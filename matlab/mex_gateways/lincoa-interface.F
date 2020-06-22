@@ -37,8 +37,9 @@ C defined in it. MX_GET_DBLE gets the pointer pointing to a real array.
 C Fortran code starts 
 
       module flincoa ! Some global variables
-      use pdfomod, only : rp, hugenum, hugefun, int4, zero, is_nan 
-      ! See pdfomod.F
+
+      use consts, only : rp, hugenum, hugefun, int4, zero
+      use infnan 
       implicit none
 
       integer(int4), parameter :: notComplex = 0
@@ -77,7 +78,7 @@ C extension depends on the platform), then the following function is
 C callable in matlab: 
 C [xopt, fopt, info, nf, fhist, constrviolation, chist] = FUNCTION_NAME(fun, x0, A, b, rhobeg, rhoend, maxfun, npt, ftarget)
 
-      use flincoa ! module 'pdfomod' is used by 'flincoa'
+      use flincoa ! module 'consts' is used by 'flincoa'
       implicit none
 
 C mexFunction arguments (dummy variables):
@@ -359,7 +360,7 @@ C Although info and nf are integers logically, they are passed as double
 
       resmax = zero 
 C Constraint violation (named 'RESMAX' in Powell's COBYLA code)
-C zero is defined in module 'pdfomod'.
+C zero is defined in module 'consts'.
 C Linear constraints: A'*x <= b (NOTE the transpose)
       do j = 1, m
           cval = -b(j)
@@ -395,7 +396,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
 C The Fortran subroutine that evaluates the objective function
       subroutine calfun(n, x, funval)
-      use flincoa ! module 'pdfomod' is used by 'flincoa'
+      use flincoa ! module 'consts' is used by 'flincoa'
       implicit none
 
 C dummy variables
@@ -472,12 +473,12 @@ C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
 
 C Use extreme barrier to cope with 'hidden constraints' 
       if (funval .gt. hugefun .or. is_nan(funval)) then
-          funval = hugefun ! hugefun is defined in pdfomod
+          funval = hugefun ! hugefun is defined in consts 
       end if
 
       resmax = zero 
 C Constraint violation (named 'RESMAX' in Powell's COBYLA code)
-C zero is defined in module 'pdfomod'.
+C zero is defined in module 'consts'.
 C Linear constraints: Aresmax'*x <= bresmax (NOTE the transpose)
       do j = 1, mresmax
           cval = -bresmax(j)

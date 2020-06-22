@@ -26,6 +26,11 @@ if isfield(options, 'nr')
 else
     nr = 10;
 end
+if isfield(options, 'ir')
+    ir = options.ir;
+else
+    ir = -1;
+end
 
 test_options = struct();
 test_options.debug = true;
@@ -77,6 +82,14 @@ cellfun(@(solver) warning('off', [solver, ':ExtremeBarrier']), solvers);
 
 plist = secup(requirements);
 
+if ir < 0 
+    minir = 0;
+    maxir = nr + 5;
+else
+    minir = ir;
+    maxir = ir;
+end
+
 fprintf('\n')
 for ip = 1 : length(plist)
     pname = plist{ip};
@@ -85,7 +98,7 @@ for ip = 1 : length(plist)
     prob = macup(pname);
     x0 = prob.x0;
     n = length(x0);
-    for ir = 0 : nr + 5 
+    for ir = minir : maxir
         % Some randomization
         rng(ceil(1e5*abs(sin(1e10*(ir+nr+requirements.maxdim)))));
         prob.x0 = x0 + 0.5*randn(size(x0));
@@ -116,9 +129,9 @@ for ip = 1 : length(plist)
         prob.options = test_options;
         [x1, fx1, exitflag1, output1] = feval(solvers{1}, prob);
         [x2, fx2, exitflag2, output2] = feval(solvers{2}, prob);
-        if output1.funcCount == test_options.maxfun && exitflag1 == 0 && exitflag2 == 3
+        if output1.funcCount == test_options.maxfun && (exitflag1 == 0 || exitflag1 == 2) && exitflag2 == 3
             exitflag1 = 3;
-            display('exitflag1 changed from 0 to 3.')
+            display('exitflag1 changed to 3.')
         end
         if ~iseq(x1, fx1, exitflag1, output1, x2, fx2, exitflag2, output2, prec)
             fprintf('The solvers produce different results on %s at the %dth run.\n', pname, ir);
