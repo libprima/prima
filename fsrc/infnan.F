@@ -6,7 +6,7 @@
 #endif
 #define __FORTRAN_STANDARD__ 2003 
 
-! Decide whether ieee_arithmetic is available by checking the version of
+! Decide whether IEEE_ARITHMETIC is available by checking the version of
 ! the compiler. 
 #ifdef __USE_IEEE_ARITHMETIC__      
 #undef __USE_IEEE_ARITHMETIC__
