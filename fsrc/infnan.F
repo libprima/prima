@@ -4,7 +4,7 @@
 #ifdef __FORTRAN_STANDARD__
 #undef __FORTRAN_STANDARD__
 #endif
-#define __FORTRAN_STANDARD__ 2003 
+#define __FORTRAN_STANDARD__ 95 
 
 ! Decide whether IEEE_ARITHMETIC is available by checking the version of
 ! the compiler. 
@@ -85,7 +85,7 @@
 #if __USE_IEEE_ARITHMETIC__ == 1
       is_nan = ieee_is_nan(x)
 #else
-      is_nan = (x /= x)
+      is_nan = (.not. (abs(x) >= 0))
 #endif
       end function is_nan
 
@@ -95,7 +95,7 @@
 #if __USE_IEEE_ARITHMETIC__ == 1
       is_finite = ieee_is_finite(x)
 #else
-      is_finite = .not. (is_inf(x) .or. is_nan(x))
+      is_finite = (abs(x) <= hugenum)
 #endif
       end function is_finite
 
