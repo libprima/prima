@@ -315,6 +315,7 @@
                   end if
               end if
           end if
+
     
 !          if (((.not. shortd) .and. (ratio < tenth .or. knew == 0))     &
 !     &        .or. (shortd .and. .not. reduce_rho)) then

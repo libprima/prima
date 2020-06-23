@@ -1,3 +1,4 @@
+!!! TODO: Replace the DO LOOP in the update of S with MATMUL.
       subroutine bigden (n, npt, xopt, xpt, bmat, zmat, idz, kopt, knew,&
      & d, wcheck, vlag, beta)
       ! BIGDEN calculates a D by approximately solving
@@ -125,7 +126,7 @@
 
       ssden = dd*ss - ds*ds
       densav = zero
-      
+
       ! Begin the iteration by overwriting S with a vector that has the
       ! required length and direction.
       do iterc = 1, n
@@ -139,7 +140,7 @@
       s = (one/sqrt(ssden))*(dd*s - ds*d)
       xoptd = dot_product(xopt, d)
       xopts = dot_product(xopt, s)
-      
+
       ! Set the coefficients of the first two terms of BETA.
       tempa = half*xoptd*xoptd
       tempb = half*xopts*xopts
@@ -232,7 +233,6 @@
           prod(npt + 1 : npt + n, jc) = matmul(wvec(1 : nw, jc),        &
      &     bmat(1 : nw, 1 : n))
       end do
-      
 
       ! Include in DEN the part of BETA that depends on THETA.
       do k = 1, npt + n
@@ -390,7 +390,6 @@
       end if
       densav = denmax
 
-
       ! Set S to half the gradient of the denominator with respect to D.
       ! Then branch for the next iteration.
 !      do i = 1, n
@@ -398,9 +397,14 @@
 !          s(i) = tau*bmat(knew, i) + alpha*temp
 !      end do
 
-      s = tau*bmat(knew, :) + alpha*(tempa*xopt + tempb*d -             &
-     & vlag(npt + 1 : npt + n))
-      
+!!----------------------------------------------------------------------!
+!      tempv(1 : n) = tempa*xopt + tempb*d - vlag(npt + 1 : npt + n)
+!      s = tau*bmat(knew, :) + alpha*tempv(1 : n)
+    
+      s = tau*bmat(knew,:)+alpha*(tempa*xopt+tempb*d-vlag(npt+1:npt+n))
+!!----------------------------------------------------------------------!
+
+!      
 !      do k = 1, npt
 !          summation = zero
 !          do j = 1, n
@@ -410,13 +414,26 @@
 !          do i = 1, n
 !              s(i) = s(i) + temp*xpt(k, i)
 !          end do
-!          tempv(k) = (tau*wcheck(n + k) - alpha*vlag(k))*dot_product(xpt(k, :), wcheck(1 : n))
-!          s = s + tempv(k)*xpt(k, :)
 !      end do
 
-      tempv = (tau*wcheck(n + 1 : n + npt) - alpha*vlag(1 : npt))*      &
-     & matmul(xpt, wcheck(1 : n))
-      s = s + matmul(tempv, xpt)
+!----------------------------------------------------------------------!
+      tempv = matmul(xpt, wcheck(1 : n))
+      tempv = (tau*wcheck(n + 1 : n + npt) - alpha*vlag(1 : npt))*tempv
+      !!! In later versiions, the following DO LOOP should be replaced
+      !!! by MATMUL as follows:
+!-----!s = s + matmul(tempv, xpt) !------------------------------------!
+      !!! For the moment, we use a DO LOOP instead of MATMUL to ensure
+      !!! that the result is identical to that of Powell's code. If we
+      !!! use MATMUL, the result is not always the same, because floating
+      !!! point addition (and multiplication) is not associative,
+      !!! although it is commutative. The following LOOP calculates 
+      !!! s + tempv(1)*xpt(1, :) + tempv(2)*xpt(2, :) + ...
+      !!! while s + matmul(tempv, xpt) calculates
+      !!! s + ( tempv(1)*xpt(1, :) + tempv(2)*xpt(2, :) + ... )
+      do k = 1, npt
+          s = s + tempv(k)*xpt(k, :)
+      end do 
+!----------------------------------------------------------------------!
 
 !      ss = zero
 !      ds = zero
