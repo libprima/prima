@@ -216,7 +216,7 @@
           end if
           tempa = tempa - qmin
           tempb = tempb - qmin
-          if (abs(tempa - tempb) > 0) then
+          if (abs(tempa - tempb) > zero) then
               angle = half*(tempa - tempb)/(tempa + tempb)
           else
               angle = zero
