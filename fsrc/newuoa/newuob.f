@@ -392,9 +392,11 @@
                   exit
               end if
 
-              call biglag(n, npt, xopt, xpt, bmat, zmat, idz,           &
-     &         knew, dstep, d, alpha, vlag, vlag(npt + 1), w, w(n+1),   &
-     &         w(2*n+1))
+              call biglag(n, npt, xopt, xpt, bmat, zmat, idz, knew,     &
+     &         dstep, d, alpha)
+!              call biglag(n, npt, xopt, xpt, bmat, zmat, idz,           &
+!     &         knew, dstep, d, alpha, vlag, vlag(npt + 1), w, w(n+1),   &
+!     &         w(2*n+1))
 
               ! Calculate VLAG, BETA, and WCHECK for D.
 !              call vlagbeta(n, npt, idz, kopt, bmat, zmat, xpt, xopt, d,&
