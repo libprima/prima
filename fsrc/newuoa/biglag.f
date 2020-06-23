@@ -17,9 +17,10 @@
       real(kind=rp), intent(out) :: alpha, d(n)
 
       integer :: i, isave, iterc, iu, k
-      real(kind=rp) :: hcol(npt), gc(n), gd(n), s(n), w(n), zk(npt-n-1),&
-     & angle, cf(5), cth, dd, denom, dhd, gg, scaling, sp, ss, step,    &
-     & sth, tau, taubeg, tauold, taumax, temp, tempa, tempb
+      real(kind=rp) :: hcol(npt), gc(n), gd(n), s(n), w(n),             &
+     & zknew(npt - n - 1), angle, cf(5), cth, dd, denom, dhd, gg,       &
+     & scaling, sp, ss, step, sth, tau, taubeg, tauold, taumax, temp,   &
+     & tempa, tempb
 
        
       ! N is the number of variables.
@@ -37,9 +38,9 @@
 
       
       ! Set HCOL to the leading NPT elements of the KNEW-th column of H.
-      zk = zmat(knew, :)
-      zk(1 : idz - 1) = -zk(1 : idz - 1)
-      hcol = matmul(zmat, zk)
+      zknew = zmat(knew, :)
+      zknew(1 : idz - 1) = -zknew(1 : idz - 1)
+      hcol = matmul(zmat, zknew)
       alpha = hcol(knew)
 
       ! Set the unscaled initial direction D. Form the gradient of LFUNC
@@ -82,11 +83,10 @@
           dd = dot_product(d, d)
           sp = dot_product(d, s)
           ss = dot_product(s, s)
-          temp = dd*ss - sp*sp
-          if (temp <= 1.0e-8_rp*dd*ss) then 
+          if (dd*ss - sp*sp <= 1.0e-8_rp*dd*ss) then 
               exit
           end if
-          denom = sqrt(temp)
+          denom = sqrt(dd*ss - sp*sp)
           s = (dd*s - sp*d)/denom
           w = zero
           

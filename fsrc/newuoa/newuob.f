@@ -394,9 +394,6 @@
 
               call biglag(n, npt, xopt, xpt, bmat, zmat, idz, knew,     &
      &         dstep, d, alpha)
-!              call biglag(n, npt, xopt, xpt, bmat, zmat, idz,           &
-!     &         knew, dstep, d, alpha, vlag, vlag(npt + 1), w, w(n+1),   &
-!     &         w(2*n+1))
 
               ! Calculate VLAG, BETA, and WCHECK for D.
 !              call vlagbeta(n, npt, idz, kopt, bmat, zmat, xpt, xopt, d,&
@@ -410,9 +407,11 @@
               ! No need to check whether BMAT and ZMAT contain NaN as no
               ! change has been made to them.
               if (abs(one + alpha*beta/vlag(knew)**2) <= 0.8_rp) then
-                  call bigden (n, npt, xopt, xpt, bmat, zmat, idz,      &
-     &             kopt, knew, d, wcheck, vlag, beta, xnew, w(npt+n+1), &
-     &             w(6*(npt+n)+1))
+                  call bigden (n, npt, xopt, xpt, bmat, zmat, idz, kopt,&
+     &             knew, d, wcheck, vlag, beta)
+!                  call bigden (n, npt, xopt, xpt, bmat, zmat, idz,      &
+!     &             kopt, knew, d, wcheck, vlag, beta, xnew, w(npt+n+1), &
+!     &             w(6*(npt+n)+1))
               end if
  
       !----------------------------------------------------------------!
