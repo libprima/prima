@@ -1,30 +1,28 @@
-      subroutine newuob (n, npt, x, rhobeg, rhoend, iprint, maxfun,     &
-     & xbase, xopt, xnew, xpt, fval, gq, hq, pq, bmat, zmat,            &
-     & d, vlag, w, f, info, ftarget)
+      subroutine newuob(n, npt, rhobeg, rhoend, iprint, maxfun, ftarget,&
+     &  x, f, nf, info)
 
       use consts, only : rp, zero, one, half, tenth
       use infnan
       implicit none
 
-      ! inputs
+      ! Inputs
       integer, intent(in) :: n, npt, iprint, maxfun
-      integer, intent(out) :: info
+      integer, intent(out) :: nf, info
       real(kind = rp), intent(in) :: rhobeg, rhoend, ftarget
-      real(kind = rp), intent(out) :: f
-      real(kind = rp), intent(inout) :: x(n), xbase(n), xopt(n),        &
-     & xnew(n), xpt(npt, n), fval(npt), gq(n), hq((n*(n+1))/2), pq(npt)
-      real(kind = rp), intent(inout) :: bmat(npt + n, n),               &
-     & zmat(npt, npt - n - 1), d(n), vlag(npt + n), w(10*(npt + n))
+      real(kind = rp), intent(out) :: f 
+      real(kind = rp), intent(inout) :: x(n)
 
-      ! other variables
-      integer :: i, idz, itest, k, knew, kopt, nf, nfsave, subinfo
+      ! Other variables
+      integer :: i, idz, itest, k, knew, kopt, nfsave, subinfo
       integer :: tr, maxtr
-      real(kind = rp) :: alpha, beta, crvmin, delta, prederr(3),        &
-     & distsq, dnorm, dsq, dstep, xdiff(n), xdsq(npt)
-      real(kind = rp) :: fopt, fsave, galt(n), galtsq, gqsq, hdiag(npt),&
-     & ratio, rho, rhosq, vquad, xoptsq, wcheck(npt+n), sigma(npt) 
+      real(kind = rp) :: alpha, beta, crvmin, delta, prederr(3), distsq,&
+     & dnorm, dsq, dstep, xdiff(n), xdsq(npt), xbase(n), xopt(n),       &
+     & xnew(n), xpt(npt, n), fval(npt), gq(n), hq((n*(n+1))/2), pq(npt),&
+     & bmat(npt + n, n), zmat(npt, npt - n - 1), d(n), vlag(npt + n),   &
+     & fopt, fsave, galt(n), galtsq, gqsq, hdiag(npt), ratio, rho,      &
+     & rhosq, vquad, xoptsq, wcheck(npt+n), sigma(npt)
 
-      logical :: model_step, reduce_rho, shortd 
+      logical :: model_step, reduce_rho, shortd
 
       ! The arguments N, NPT, X, RHOBEG, RHOEND, IPRINT and MAXFUN are
       ! identical to the corresponding arguments in SUBROUTINE NEWUOA.
@@ -52,8 +50,7 @@
       ! VLAG will contain the values of the Lagrange functions at a new
       ! point X. They are part of a product that requires VLAG to be of
       ! length NDIM = NPT+N.
-      ! The array W will be used for working space. Its length must be
-      ! at least 10*NDIM = 10*(NPT + N).
+
 
       call initialize(n, npt, rhobeg, x, xbase, xpt, f, fval, xopt,     &
      & fopt, kopt, bmat, zmat, gq, hq, pq, nf, subinfo, ftarget)
@@ -102,12 +99,12 @@
           end if
 
           ! Solve the trust region subproblem.
-          ! In Powell's NEWUOA code, VQUAD is not an output of TRSAPP. 
+          ! In Powell's NEWUOA code, VQUAD is not an output of TRSAPP.
           ! Here we output it but do not use it to align with Powell's
           ! code. VQUAD is later calculated by CALQUAD.
           call trsapp(n, npt, 1.0e-2_rp, xopt, xpt, gq, hq, pq, delta,  &
      &     d, crvmin, vquad, subinfo)
-          
+
           ! Calculate the length of the trial step D.
           !dsq = dot_product(d, d)
           dsq = zero
@@ -120,19 +117,19 @@
           if (dnorm < half*rho) then
               shortd = .true.
               if (0.125_rp*crvmin*rho*rho > maxval(abs(prederr)) .and.  &
-     &         nf > nfsave + 2) then 
+     &         nf > nfsave + 2) then
                   ! The 1st possibility (out of 2) that reduce_rho=true
-                  reduce_rho = .true.  
+                  reduce_rho = .true.
               else ! 3 recent values of ||D_k|| and |F−Q| are small.
                   delta = tenth*delta  ! Reduce DELTA by a factor of 10
                   if (delta <= 1.5_rp*rho) then
                       delta = rho  ! Set DELTA to RHO when it is close.
                   end if
-                  ! After this, DELTA < DNORM may happen, explaining why 
+                  ! After this, DELTA < DNORM may happen, explaining why
                   ! we sometimes write MAX(DELTA, DNORM).
               end if
           end if
-    
+
           if (.not. shortd) then
               ! Shift XBASE if XOPT may be too far from XBASE.
               if (dsq <= 1.0e-3_rp*xoptsq) then
@@ -142,7 +139,7 @@
                   xopt = zero
                   xoptsq = zero
               end if
-    
+
               ! Calculate VLAG and BETA for D. The first NPT components
               ! of W_check will be held in WCHECK.
               !call vlagbeta(n, npt, idz, kopt, bmat, zmat, xpt, xopt, d,&
@@ -151,7 +148,7 @@
      &         vlag, beta, wcheck, dsq, xoptsq)
 
       !----------------------------------------------------------------!
-      
+
               ! Use the quadratic model to predict the change in F due
               ! to the step D.
               !call calquad(vquad, d, xopt, xpt, gq, hq, pq, n, npt)
@@ -168,19 +165,19 @@
               end if
               call calfun(n, x, f)
               nf = nf + 1
-              ! Record the latest function evaluation with ||D|| > RHO. 
-              if (dnorm > rho) then 
-                  nfsave = nf 
+              ! Record the latest function evaluation with ||D|| > RHO.
+              if (dnorm > rho) then
+                  nfsave = nf
               end if
 
               ! PREDERR is the prediction errors of the latest 3 models.
               prederr(2 : size(prederr)) = prederr(1 : size(prederr)-1)
               prederr(1) = f - fopt - vquad
-        
+
               ! Update FOPT and XOPT
-              ! FSAVE is needed later when setting MODEL_STEP 
+              ! FSAVE is needed later when setting MODEL_STEP
               ! and REDUCE_RHO.
-              fsave = fopt  
+              fsave = fopt
               if (f < fopt) then
                   fopt = f
                   xopt = xnew
@@ -189,8 +186,8 @@
                       xoptsq = xoptsq + xopt(i)**2
                   end do
               end if
-              ! Exit if F is NaN or INF. 
-              if (is_nan(f) .or. is_posinf(f)) then 
+              ! Exit if F is NaN or INF.
+              if (is_nan(f) .or. is_posinf(f)) then
                   info = -2
                   exit
               end if
@@ -206,7 +203,7 @@
               end if
 
       !----------------------------------------------------------------!
-    
+
               ! Update DELTA according to RATIO.
               if (is_nan(vquad) .or. vquad >= zero) then
                   info = 2
@@ -223,7 +220,7 @@
               if (delta <= 1.5_rp*rho) then
                   delta = rho
               end if
-              
+
               ! Set KNEW to the index of the interpolation point that
               ! will be deleted.
               rhosq = max(tenth*delta, rho)**2
@@ -231,17 +228,17 @@
                   hdiag(k) = -sum(zmat(k, 1 : idz - 1)**2) +            &
      &             sum(zmat(k, idz : npt - n - 1)**2)
                   xdiff = xpt(k, :) - xopt
-                  xdsq(k) = dot_product(xdiff, xdiff) 
+                  xdsq(k) = dot_product(xdiff, xdiff)
               end do
               sigma = abs(beta*hdiag + vlag(1 : npt)**2)
               sigma = sigma * max(xdsq/rhosq, one)**3
               if (f >= fsave) then
-              ! Set SIGMA(KOPT) = -1 to prevent KNEW from being KOPT 
-                  sigma(kopt) = -one  
-              end if 
+              ! Set SIGMA(KOPT) = -1 to prevent KNEW from being KOPT
+                  sigma(kopt) = -one
+              end if
               if (maxval(sigma) > one .or. f < fsave) then
               ! KNEW > 0 unless MAXVAL(SIGMA) <= 1 and F >= FSAVE.
-              ! If F < FSAVE, then KNEW > 0, ensuring that XNEW 
+              ! If F < FSAVE, then KNEW > 0, ensuring that XNEW
               ! will be included into XPT.
                   knew = maxloc(sigma, dim = 1)
               else
@@ -249,18 +246,18 @@
               end if
 
               if (knew > 0) then
-                  ! Update BMAT, ZMAT and IDZ, so that the KNEW-th 
-                  ! interpolation point can be removed. 
+                  ! Update BMAT, ZMAT and IDZ, so that the KNEW-th
+                  ! interpolation point can be removed.
                   call update(n, npt, bmat, zmat, idz, vlag, beta, knew)
                   ! Update the quadratic model
                   call updateq(n, npt, idz, knew, prederr(1),           &
      &             xpt(knew, :), bmat(knew, :), zmat, gq, hq, pq)
-    
-                  ! Include the new interpolation point. This should be 
+
+                  ! Include the new interpolation point. This should be
                   ! done after updating BMAT, ZMAT, and the model.
                   fval(knew) = f
                   xpt(knew, :) = xnew
-    
+
                   ! Test whether to replace the new quadratic model Q by
                   ! the least Frobenius norm interpolant Q_alt, making
                   ! the replacement if the test is satisfied.
@@ -282,7 +279,7 @@
                               gqsq = gqsq + gq(i)**2
                           end do
                           vlag(1 : npt) = fval - fval(kopt)
-                           
+
                           !galt = matmul(vlag(1 : npt), bmat(1 : npt, 1 : n))
                           !galtsq = dot_product(galt, galt)
                           galt = zero
@@ -291,9 +288,9 @@
                           end do
                           galtsq = zero
                           do i = 1, n
-                              galtsq = galtsq + galt(i)*galt(i) 
+                              galtsq = galtsq + galt(i)*galt(i)
                           end do
-            
+
                           if (gqsq < 100.0_rp*galtsq) then
                               itest = 0
                           else
@@ -307,20 +304,20 @@
      &                 zmat, n, npt, kopt, idz)
                       itest = 0
                   end if
-        
-                  ! Update KOPT to KNEW if RATIO > ZERO 
-                  if (f < fsave) then 
+
+                  ! Update KOPT to KNEW if RATIO > ZERO
+                  if (f < fsave) then
                       kopt = knew
                   end if
               end if
           end if
 
-    
+
 !          if (((.not. shortd) .and. (ratio < tenth .or. knew == 0))     &
 !     &        .or. (shortd .and. .not. reduce_rho)) then
           if (((.not. shortd) .and. (f>fsave+tenth*vquad .or. knew==0)) &
      &     .or. (shortd .and. .not. reduce_rho)) then
-              
+
               ! Find out if the interpolation points are close enough to
               ! the best point so far.
               distsq = 4.0_rp*delta*delta
@@ -334,19 +331,19 @@
               else
                   knew = 0
               end if
-            
+
               ! If KNEW is positive, then a model step will be taken to
               ! improve the geometry of the interpolation set and hence
               ! ameliorate them model.
               if (knew > 0) then
                   ! The only possibility that model_step=true
-                  model_step = .true. 
+                  model_step = .true.
               else if (max(delta, dnorm) <= rho .and. (ratio <= 0 .or.  &
      &         shortd)) then
                   ! The 2nd possibility (out of 2) that reduce_rho=true
                   reduce_rho = .true.
               end if
-          end if 
+          end if
 
           if (reduce_rho) then
               ! The calculations with the current RHO are complete.
@@ -370,7 +367,7 @@
 
           if (model_step) then
               ! Set DSTEP, which will be used as the trust region radius
-              ! for the model-improving schemes BIGLAG and BIGDEN. We 
+              ! for the model-improving schemes BIGLAG and BIGDEN. We
               ! also need it to decide whether to shift XBASE or not.
               dstep = max(min(tenth*sqrt(distsq), half*delta), rho)
               dsq = dstep*dstep
@@ -384,8 +381,8 @@
                   xoptsq = zero
               end if
 
-              ! Exit if BMAT or ZMAT contains NaN. Otherwise, the 
-              ! behaviour of BIGLAG and BIGDEN is unpredictable. 
+              ! Exit if BMAT or ZMAT contains NaN. Otherwise, the
+              ! behaviour of BIGLAG and BIGDEN is unpredictable.
               ! Segmentation Fault may occur.
               if (any(is_nan(bmat)) .or. any(is_nan(zmat))) then
                   info = -3
@@ -402,7 +399,7 @@
      &         vlag, beta, wcheck, dsq, xoptsq)
 
               ! If KNEW is positive and if the cancellation in DENOM is
-              ! unacceptable, then BIGDEN calculates an alternative 
+              ! unacceptable, then BIGDEN calculates an alternative
               ! model step, XNEW being used for working space.
               ! No need to check whether BMAT and ZMAT contain NaN as no
               ! change has been made to them.
@@ -413,11 +410,11 @@
 !     &             kopt, knew, d, wcheck, vlag, beta, xnew, w(npt+n+1), &
 !     &             w(6*(npt+n)+1))
               end if
- 
+
       !----------------------------------------------------------------!
 
               ! Use the current quadratic model to predict the change in
-              ! F due to the step D. 
+              ! F due to the step D.
               !call calquad(vquad, d, xopt, xpt, gq, hq, pq, n, npt)
               call calquad(vquad, d, xopt, xpt, gq, hq, pq, n, npt,     &
      &         wcheck(1:npt))
@@ -433,19 +430,19 @@
               call calfun(n, x, f)
               nf = nf + 1
 
-              ! The following seems different from what is introduced in 
+              ! The following seems different from what is introduced in
               ! Section 7 (around (7.7)) of the NEUOA paper. Seemingly
               ! we should keep dnorm=||d||.
-              if (dnorm > rho) then 
-                  nfsave = nf  !? dnorm is from last TR? 
+              if (dnorm > rho) then
+                  nfsave = nf  !? dnorm is from last TR?
               end if
-             
+
               ! PREDERR is the prediction errors of the latest 3 models.
               prederr(2 : size(prederr)) = prederr(1 : size(prederr)-1)
               prederr(1) = f - fopt - vquad
-        
-              ! Update FOPT and XOPT if the new F is the least value of 
-              ! the objective function so far. 
+
+              ! Update FOPT and XOPT if the new F is the least value of
+              ! the objective function so far.
               fsave = fopt
               if (f < fopt) then
                   fopt = f
@@ -457,7 +454,7 @@
               end if
 
               ! Check whether to exit.
-              if (is_nan(f) .or. is_posinf(f)) then 
+              if (is_nan(f) .or. is_posinf(f)) then
                   info = -2
                   exit
               end if
@@ -471,14 +468,14 @@
               end if
 
       !----------------------------------------------------------------!
-    
+
               ! Update BMAT, ZMAT and IDZ, so that the KNEW-th
-              ! interpolation point can be moved. 
+              ! interpolation point can be moved.
               call update(n, npt, bmat, zmat, idz, vlag, beta, knew)
               ! Update the quadratic model.
               call updateq(n, npt, idz, knew, prederr(1), xpt(knew, :), &
      &         bmat(knew, :), zmat, gq, hq, pq)
-    
+
               ! Include the new interpolation point. This should be done
               ! after updating BMAT, ZMAT, and the model.
               fval(knew) = f
