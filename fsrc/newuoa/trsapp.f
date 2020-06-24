@@ -46,7 +46,7 @@
      & gq(n), hq((n*(n + 1))/2), pq(npt)
       real(kind = rp), intent(out) :: s(n), crvmin, qred
       
-      integer :: i, isave, iterc, itermax, iu, j
+      integer :: i, isave, iterc, itermax, iu
       real(kind = rp) :: alpha, angle, bstep, cf, cth, dd, delsq, dg,   &
      & dhd, dhs, ds, gg, ggbeg, ggsave, qadd, qbeg, qmin, qnew, qsave,  &
      & reduc, sg, sgk, shs, ss, sth, temp, tempa, tempb, d(n), g(n),    &
