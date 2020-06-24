@@ -251,8 +251,7 @@
               if (knew > 0) then
                   ! Update BMAT, ZMAT and IDZ, so that the KNEW-th 
                   ! interpolation point can be removed. 
-                  call update(n, npt, bmat, zmat, idz, vlag, beta,      &
-     &             knew, w)
+                  call update(n, npt, bmat, zmat, idz, vlag, beta, knew)
                   ! Update the quadratic model
                   call updateq(n, npt, idz, knew, prederr(1),           &
      &             xpt(knew, :), bmat(knew, :), zmat, gq, hq, pq)
@@ -475,7 +474,7 @@
     
               ! Update BMAT, ZMAT and IDZ, so that the KNEW-th
               ! interpolation point can be moved. 
-              call update(n, npt, bmat, zmat, idz,vlag,beta,knew,w)
+              call update(n, npt, bmat, zmat, idz, vlag, beta, knew)
               ! Update the quadratic model.
               call updateq(n, npt, idz, knew, prederr(1), xpt(knew, :), &
      &         bmat(knew, :), zmat, gq, hq, pq)
