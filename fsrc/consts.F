@@ -35,6 +35,7 @@
       real(kind=rp), parameter :: one = 1.0_rp
       real(kind=rp), parameter :: two = 2.0_rp
       real(kind=rp), parameter :: half = 0.5_rp
+      real(kind=rp), parameter :: quart = 0.25_rp
       real(kind=rp), parameter :: ten = 10.0_rp
       real(kind=rp), parameter :: tenth = 0.1_rp
       real(kind=rp), parameter :: pi = 3.141592653589793238462643383_rp

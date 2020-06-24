@@ -214,9 +214,9 @@
           if (isave == iu) then 
               tempb = qbeg
           end if
-          tempa = tempa - qmin
-          tempb = tempb - qmin
           if (abs(tempa - tempb) > zero) then
+              tempa = tempa - qmin
+              tempb = tempb - qmin
               angle = half*(tempa - tempb)/(tempa + tempb)
           else
               angle = zero

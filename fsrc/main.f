@@ -3,8 +3,9 @@
       use lina
       implicit none
       
+      integer :: ind(2), jnd(2)
       real(kind = rp) :: A(2,3), B(3,2), C(3,1), D(1, 3), E(3), F(2, 1),&
-     & G(1, 2), H(2), I(3), J(2)
+     & G(1, 2), H(2), I(3), J(2), s, co, r
       data A(1, :) /1, 2, 3/
       data A(2, :) /4, 5, 6/
       data B(1, :) /1, 2/
@@ -21,19 +22,33 @@
       H = [1, 2]
       I = [4, 5, 6]
       J = [3, 4]
-!      print *, shape(matp(A,B)), size(matp(A,B))
-!      print *, matp(A, B)
-!      print *, shape(matp(A,C)), size(matp(A,C))
-!      print *, matp(A, C)
-      print *, matmul(A, B)
-      print *, matmul(A, C)
-      print *, matmul(G, A)
-      print *, matmul(A, E)
-      print *, matmul(H, A)
-      print *, dot_product(E, I), dot_product(I, E)
-      print *, dot_product(H, J), dot_product(J, H)
-      print *, shape(outprod(E, I)), outprod(E, I)
-      print *, shape(outprod(I,E)), outprod(I, E)
-      print *, shape(outprod(H,E)), outprod(H, E)
-      print *, shape(outprod(E,H)), outprod(E, H)
+      ind = [1,3]
+      jnd = [1,2]
+      !print *, shape(A(jnd, ind)), A(jnd, ind) 
+      call givens(0.0d0, 0.0d0, s, co, r)
+      print *, s, co, r
+      call givens(1.0d0, 0.0d0, s, co, r)
+      print *, s, co, r
+      call givens(-1.0d0, 0.0d0, s, co, r)
+      print *, s, co, r
+      call givens(0.0d0, -1.0d0, s, co, r)
+      print *, s, co, r
+      call givens(0.0d0, 1.0d0, s, co, r)
+      print *, s, co, r
+      call givens(1.0d0, 1.0d0, s, co, r)
+      print *, s, co, r
+      call givens(-1.0d0, 2.0d0, s, co, r)
+      print *, s, co, r
+      call givens(-1.0d0, -2.0d0, s, co, r)
+      print *, s, co, r
+      call givens(1.0d0, -2.0d0, s, co, r)
+      print *, s, co, r
+      call givens(1.0d0, 2.0d0, s, co, r)
+      print *, s, co, r
+      call givens(2.0d0, 1.0d0, s, co, r)
+      print *, s, co, r
+      call givens(-2.0d0, -1.0d0, s, co, r)
+      print *, s, co, r
+      call givens(2.0d0, -1.0d0, s, co, r)
+      print *, s, co, r
       end program testmod

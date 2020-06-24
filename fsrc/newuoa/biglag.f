@@ -132,9 +132,9 @@
           if (isave == iu) then 
               tempb = taubeg
           end if
-          tempa = tempa - taumax
-          tempb = tempb - taumax
           if (abs(tempa - tempb) > zero) then
+              tempa = tempa - taumax
+              tempb = tempb - taumax
               step = half*(tempa - tempb)/(tempa + tempb)
           else
               step = zero
