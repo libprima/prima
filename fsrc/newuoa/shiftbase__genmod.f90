@@ -1,4 +1,4 @@
-        !COMPILER-GENERATED INTERFACE MODULE: Thu Jun 25 01:03:18 2020
+        !COMPILER-GENERATED INTERFACE MODULE: Thu Jun 25 01:48:18 2020
         ! This source file is for reference only and may not completely
         ! represent the generated interface used by the compiler.
         MODULE SHIFTBASE__genmod

@@ -86,6 +86,9 @@
       is_nan = ieee_is_nan(x)
 #else
       is_nan = (.not. (abs(x) >= 0))
+      ! Do NOT use is_nan = (x /= x), which will cause gfortran to
+      ! complain about equality/inequality comparison between floating
+      ! point numbers.
 #endif
       end function is_nan
 
