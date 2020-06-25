@@ -6,6 +6,11 @@
 #endif
 #define __USE_POWELL_ALGEBRA__ 1 
 
+! Which Fortran standard to follow?
+#ifdef __FORTRAN_STANDARD__
+#undef __FORTRAN_STANDARD__
+#endif
+#define __FORTRAN_STANDARD__ 95 
 
       module lina
 
@@ -26,77 +31,77 @@
       contains
 
 #if __USE_POWELL_ALGEBRA__ == 1 
-      function matmul12(x, y)
+      function matmul12(x, y) result(z)
       implicit none
       real(kind = rp), dimension(:), intent(in) :: x
       real(kind = rp), dimension(:, :), intent(in) :: y
-      real(kind = rp), dimension(size(y, 2)) :: matmul12
+      real(kind = rp), dimension(size(y, 2)) :: z 
       integer :: i, j
       if (size(x) /= size(y, 1)) then
           stop 'Error in MATMUL: RANK(X) = 1 and SIZE(X) /= SIZE(Y, 1).'
       end if
-      matmul12 = zero
+      z = zero
       do j = 1, size(y, 2)
           do i = 1, size(x)
-              matmul12(j) = matmul12(j) + x(i)*y(i, j)
+              z(j) = z(j) + x(i)*y(i, j)
           end do
       end do
       end function matmul12
 
-      function matmul21(x, y)
+      function matmul21(x, y) result(z)
       implicit none
       real(kind = rp), dimension(:, :), intent(in) :: x
       real(kind = rp), dimension(:), intent(in) :: y
-      real(kind = rp), dimension(size(x, 1)) :: matmul21 
+      real(kind = rp), dimension(size(x, 1)) :: z
       integer :: i
       if (size(x, 2) /= size(y)) then
           stop 'Error in MATMUL: RANK(Y) = 1 and SIZE(X, 2) /= SIZE(Y).'
       end if
-      matmul21 = zero
+      z = zero
       do i = 1, size(x, 2)
-          matmul21 = matmul21 + x(:, i)*y(i) 
+          z = z + x(:, i)*y(i) 
       end do
       end function matmul21
 
-      function matmul22(x, y)
+      function matmul22(x, y) result(z)
       implicit none
       real(kind = rp), dimension(:, :), intent(in) :: x, y
-      real(kind = rp), dimension(size(x, 1), size(y, 2)) :: matmul22 
+      real(kind = rp), dimension(size(x, 1), size(y, 2)) :: z
       integer :: i, j
       if (size(x, 2) /= size(y, 1)) then
           stop 'Error in MATMUL: SIZE(X, 2) /= SIZE(Y, 1).'
       end if
-      matmul22 = zero
+      z = zero
       do j = 1, size(y, 2)
           do i = 1, size(x, 2)
-              matmul22(:, j) = matmul22(:, j) + x(:, i)*y(i, j) 
+              z(:, j) = z(:, j) + x(:, i)*y(i, j) 
           end do
       end do
       end function matmul22
 
-      function inprod(x, y)
+      function inprod(x, y) result(z)
       implicit none
       real(kind = rp), dimension(:), intent(in) :: x, y
-      real(kind = rp) :: inprod 
-      !inprod = sum(x*y)
+      real(kind = rp) :: z
+      !z = sum(x*y)
       integer :: i
       if (size(x) /= size(y)) then
           stop 'Error in INPROD: SIZE(X) /= SIZE(Y).'
       end if
-      inprod = zero
+      z = zero
       do i = 1, size(x)
-          inprod = inprod + x(i)*y(i)
+          z = z + x(i)*y(i)
       end do
       end function inprod
 #endif
 
-      function outprod(x, y)
+      function outprod(x, y) result(z)
       implicit none
       real(kind = rp), dimension(:), intent(in) :: x, y
-      real(kind = rp), dimension(size(x), size(y)) :: outprod 
+      real(kind = rp), dimension(size(x), size(y)) :: z 
       integer :: i
       do i = 1, size(y)
-          outprod(:, i) = x*y(i)
+          z(:, i) = x*y(i)
       end do
       end function outprod
 
@@ -105,16 +110,29 @@
       ! [ c s] [x y]' = [r, 0]'
       ! [-s c] 
       ! Explicitly,
-      ! c = x/sqrt(x^2+y^2)
-      ! s = y/sqrt(x^2+y^2)
-      ! r = sqrt(x^2+y^2)
+      ! c = x/sqrt(x^2+y^2)     (COS)
+      ! s = y/sqrt(x^2+y^2)     (SIN)
+      ! r = sqrt(x^2+y^2)       (RADIUS)
       implicit none
       real(kind = rp), intent(in) :: x, y
       real(kind = rp), intent(out) :: c, s, r 
 #if __USE_POWELL_ALGEBRA__ == 1
       ! Powell uses the following implementation.
       r = sqrt(x**2 + y**2)
-      if (r > 0) then
+      if (r > zero) then
+          c = x/r
+          s = y/r
+      else
+          c = sqrt(two)/two
+          s = sqrt(two)/two
+      end if
+#elif __FORTRAN_STANDARD__ >= 2008
+      ! If calculated directly, r may suffer from over/underflow due to
+      ! the squres. The HYPOT function calculates r with proper scaling
+      ! and avoids over/underflow when possible. HYPOT is available
+      ! starting from Fortran 2008 (in MATLAB, starting from R2006).
+      r = hypot(x, y)
+      if (r > zero) then
           c = x/r
           s = y/r
       else
@@ -122,8 +140,7 @@
           s = sqrt(two)/two
       end if
 #else
-      ! If calculated directly, r may suffer from over/underflow due to
-      ! the squres. That's why we use the folloing scheme.  
+      ! If HYPOT is not available, we implement it ourselves.
       real(kind = rp) :: t, u
       if (abs(x) > abs(y)) then
           t = y/x
@@ -148,7 +165,7 @@
           s = sign(sqrt(two)/two, y)
           r = abs(x)*sqrt(two)
       else 
-      ! This case may be combined with the last case. Here we implement
+      ! This case may be combined with the last one. Here we implement
       ! it separately to avoid using SIGN(., 0), whose behaviour 
       ! depends on the compiler.
           c = sqrt(two)/two
@@ -156,6 +173,6 @@
           r = zero
       end if
 #endif
-      end subroutine 
+      end subroutine givens
 
       end module lina

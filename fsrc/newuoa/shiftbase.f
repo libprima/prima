@@ -172,8 +172,6 @@
           end if
       end do
 
-!      print *, 'error = ', (norm2(bmat(npt+1:npt+n, :) -                &
-!     &transpose(bmat(npt+1:npt+n,:))))/(half+norm2(bmat(npt+1:npt+n,:)))
 !!!!!!!!!!!!!!!!!!!!!COMPACT SCHEME ENDS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       ! Set the upper triangular part of BMAT(NPT+1:NPT+N,:) by symmetry 
