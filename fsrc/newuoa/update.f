@@ -125,7 +125,7 @@
           jp = npt + j
           w(jp) = bmat(knew, j)
           tempa = (alpha*vlag(jp) - tau*w(jp))/denom
-          tempb = ( - beta*w(jp) - tau*vlag(jp))/denom
+          tempb = (-beta*w(jp) - tau*vlag(jp))/denom
           do i = 1, jp
               bmat(i, j) = bmat(i, j) + tempa*vlag(i) + tempb*w(i)
               if (i > npt) then 
