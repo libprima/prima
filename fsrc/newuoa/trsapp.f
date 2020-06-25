@@ -50,7 +50,7 @@
       real(kind = rp) :: alpha, angle, bstep, cf, cth, dd, delsq, dg,   &
      & dhd, dhs, ds, gg, ggbeg, ggsave, qadd, qbeg, qmin, qnew, qsave,  &
      & reduc, sg, sgk, shs, ss, sth, temp, tempa, tempb, d(n), g(n),    &
-     & hd(n), hs(n) 
+     & hd(n), hs(n), hx(n) 
       logical :: twod_search
       
       s = zero
@@ -59,8 +59,8 @@
       info = 2  ! Default exit flag is 2, i.e., itermax is attained 
 
       ! Prepare for the first line search.
-      call hessmul(n, npt, xpt, hq, pq, x, hd)  ! HD = HESSIAN*X
-      g = gq + hd
+      call hessmul(n, npt, xpt, hq, pq, x, hx)  ! HX = HESSIAN*X
+      g = gq + hx
       gg = dot_product(g, g)
       ggbeg = gg
       d = -g
@@ -265,10 +265,11 @@
 
       integer :: i, ih, j, k
 
-      hd = zero
-      do k = 1, npt
-          hd = hd + dot_product(xpt(k, :), d)*pq(k)*xpt(k, :)
-      end do
+!      hd = zero
+!      do k = 1, npt
+!          hd = hd + dot_product(xpt(k, :), d)*pq(k)*xpt(k, :)
+!      end do
+      hd = matmul(pq*matmul(xpt, d), xpt)
 
       ih = 0
       do j = 1, n
