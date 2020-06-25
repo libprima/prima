@@ -3,7 +3,7 @@
       ! HQ, and BMAT accordingly. PQ and ZMAT remain the same after the
       ! shifting. See Section 7 of the NEWUOA paper.
 
-      use consts, only : rp, zero, half, quart
+      use consts, only : rp, half, quart
       use lina
       implicit none
 
@@ -14,8 +14,8 @@
      & hq((n*(n + 1))/2), xpt(npt, n)
 
       integer :: i, ih, j, k
-      real(kind = rp) :: sumz(npt-n-1), temp, vlag(n), qxoptq, xoptsq,  &
-     & w1(npt), w2(n), w3(npt), pqx(n), bmatk(n)
+      real(kind = rp) :: sumz(npt-n-1), vlag(n), qxoptq, xoptsq, pqx(n),&
+     & bmatk(n), w1(npt), w2(n), w3(npt) 
 
 
       xoptsq = dot_product(xopt, xopt)
