@@ -1,4 +1,4 @@
-        !COMPILER-GENERATED INTERFACE MODULE: Thu Jun 25 01:48:18 2020
+        !COMPILER-GENERATED INTERFACE MODULE: Fri Jun 26 02:05:24 2020
         ! This source file is for reference only and may not completely
         ! represent the generated interface used by the compiler.
         MODULE UPDATEQ__genmod
@@ -14,8 +14,8 @@
               REAL(KIND=8), INTENT(IN) :: BMATKNEW(N)
               REAL(KIND=8), INTENT(IN) :: ZMAT(NPT,NPT-N-1)
               REAL(KIND=8), INTENT(INOUT) :: GQ(N)
-              REAL(KIND=8), INTENT(INOUT) :: HQ(N)
-              REAL(KIND=8), INTENT(INOUT) :: PQ(N)
+              REAL(KIND=8), INTENT(INOUT) :: HQ((N*(N+1))/2)
+              REAL(KIND=8), INTENT(INOUT) :: PQ(NPT)
             END SUBROUTINE UPDATEQ
           END INTERFACE 
         END MODULE UPDATEQ__genmod

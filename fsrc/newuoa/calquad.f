@@ -1,6 +1,10 @@
       !subroutine calquad(vquad, d, x, xpt, gq, hq, pq, n, npt)
-      subroutine calquad(vquad, d, x, xpt, gq, hq, pq, n, npt, wcheck)
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! CALQUAD can be implemented without WCHECK. For the moment, to 
+      ! produce exactly the same result as Powell's code, we use WCHECK.
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+      subroutine calquad(vquad, d, x, xpt, gq, hq, pq, n, npt, wcheck)
       ! CALQUAD calculates VQUAD = Q(X + D) - Q(X), where Q is the
       ! quadratic function defined by (GQ, HQ, PQ).
 
@@ -27,7 +31,9 @@
           do i = 1, j
               ih = ih + 1
               temp = d(i)*s(j) + d(j)*x(i)
-              if (i == j) temp = half*temp
+              if (i == j) then 
+                  temp = half*temp
+              end if
               vquad = vquad + temp*hq(ih)
           end do
       end do
@@ -36,6 +42,7 @@
           vquad = vquad + pq(k)*wcheck(k)
       end do
 
+      !!!!!!!!!!!!!!!!!!IMPLEMENTATON WITHOUT WCHECK!!!!!!!!!!!!!!!!!!!!
 !      s = d + x + x  ! Different from the above version.
 !
 !      ! 1st order term plus implicit 2nd-order term
@@ -54,7 +61,7 @@
 !              vquad = vquad + half * hq(ih) * sd 
 !          end do
 !      end do
-!
+      !!!!!!!!!!!!!!IMPLEMENTATON WITHOUT WCHECK ENDS!!!!!!!!!!!!!!!!!!!
       return
 
       end subroutine calquad
