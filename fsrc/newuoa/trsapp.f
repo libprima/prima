@@ -255,7 +255,7 @@
       ! triangular entries, PQ is an NPT-dimensional vector, and XPT is
       ! an NPT*N matrix.
       
-      use consts, only : rp, zero
+      use consts, only : rp
 
       integer, intent(in) :: n, npt
       real(kind = rp), intent(in) :: xpt(npt, n), hq((n*(n + 1))/2),    &
@@ -263,12 +263,9 @@
       
       real(kind = rp), intent(out) :: hd(n)
 
-      integer :: i, ih, j, k
+      integer :: i, ih, j
 
-!      hd = zero
-!      do k = 1, npt
-!          hd = hd + dot_product(xpt(k, :), d)*pq(k)*xpt(k, :)
-!      end do
+      ! Multiply d by the explicit part of HESSIAN
       hd = matmul(pq*matmul(xpt, d), xpt)
 
       ih = 0
