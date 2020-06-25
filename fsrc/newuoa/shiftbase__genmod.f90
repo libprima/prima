@@ -1,4 +1,4 @@
-        !COMPILER-GENERATED INTERFACE MODULE: Thu Jun 25 01:48:18 2020
+        !COMPILER-GENERATED INTERFACE MODULE: Thu Jun 25 22:48:13 2020
         ! This source file is for reference only and may not completely
         ! represent the generated interface used by the compiler.
         MODULE SHIFTBASE__genmod
@@ -10,7 +10,7 @@
               REAL(KIND=8), INTENT(IN) :: XOPT(N)
               REAL(KIND=8), INTENT(IN) :: PQ(NPT)
               REAL(KIND=8), INTENT(INOUT) :: BMAT(NPT+N,N)
-              REAL(KIND=8), INTENT(INOUT) :: ZMAT(NPT,NPT-N-1)
+              REAL(KIND=8), INTENT(IN) :: ZMAT(NPT,NPT-N-1)
               REAL(KIND=8), INTENT(INOUT) :: GQ(N)
               REAL(KIND=8), INTENT(INOUT) :: HQ((N*(N+1))/2)
               REAL(KIND=8), INTENT(INOUT) :: XPT(NPT,N)

@@ -14,6 +14,7 @@
 #define __USE_IEEE_ARITHMETIC__ 0
 
 #if __FORTRAN_STANDARD__ >= 2003 
+! Note thant IEEE_ARITHMETIC is available starting from Fortran 2003.
 
 #ifdef __GFORTRAN__
 #if __GNUC__ > 4
@@ -61,44 +62,49 @@
       ! intrincic ieee_arithmetic module provides ieee_is_nan() and
       ! ieee_is_finite().
 
-      pure elemental logical function is_posinf(x)
+      pure elemental function is_posinf(x) result(y)
       implicit none
       real(kind = rp), intent(in) :: x
-      is_posinf = (x > hugenum)
+      logical :: y
+      y = (x > hugenum)
       end function is_posinf
 
-      pure elemental logical function is_neginf(x)
+      pure elemental function is_neginf(x) result(y)
       implicit none
       real(kind = rp), intent(in) :: x
-      is_neginf = (-x > hugenum)
+      logical :: y
+      y = (-x > hugenum)
       end function is_neginf
 
-      pure elemental logical function is_inf(x)
+      pure elemental function is_inf(x) result(y)
       implicit none
       real(kind = rp), intent(in) :: x
-      is_inf = (abs(x) > hugenum)
+      logical :: y
+      y = (abs(x) > hugenum)
       end function is_inf
 
-      pure elemental logical function is_nan(x)
+      pure elemental function is_nan(x) result(y)
       implicit none
       real(kind = rp), intent(in) :: x
+      logical :: y
 #if __USE_IEEE_ARITHMETIC__ == 1
-      is_nan = ieee_is_nan(x)
+      y = ieee_is_nan(x)
 #else
-      is_nan = (.not. (abs(x) >= 0))
+      y = (.not. (abs(x) >= 0))
       ! Do NOT use is_nan = (x /= x), which will cause gfortran to
       ! complain about equality/inequality comparison between floating
       ! point numbers.
 #endif
       end function is_nan
 
-      pure elemental logical function is_finite(x)
+      pure elemental function is_finite(x) result(y)
       implicit none
       real(kind = rp), intent(in) :: x
+      logical :: y
 #if __USE_IEEE_ARITHMETIC__ == 1
-      is_finite = ieee_is_finite(x)
+      y = ieee_is_finite(x)
 #else
-      is_finite = (abs(x) <= hugenum)
+      y = (abs(x) <= hugenum)
 #endif
       end function is_finite
 
