@@ -280,6 +280,12 @@
              end if
              hd(i) = hd(i) + hq(ih)*d(j)
          end do
+         ! The I-DO LOOP can be replaced by the following 3 lines. The
+         ! result will NOT be identically the same because floating
+         ! point addition is not associative.
+         !hd(j) = hd(j) + dot_product(hq(ih+1 : ih+j-1), d(1 : j-1))
+         !hd(1 : j) = hd(1 : j) + hq((ih+1 : ih+j))*d(j)
+         !ih = ih + j
       end do
 
       end subroutine

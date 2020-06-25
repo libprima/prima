@@ -90,15 +90,15 @@
       end function inprod
 #endif
 
-!      function outprod(x, y)
-!      implicit none
-!      real(kind = rp), dimension(:), intent(in) :: x, y
-!      real(kind = rp), dimension(size(x), size(y)) :: outprod 
-!      integer :: i
-!      do i = 1, size(y)
-!          outprod(:, i) = x*y(i)
-!      end do
-!      end function outprod
+      function outprod(x, y)
+      implicit none
+      real(kind = rp), dimension(:), intent(in) :: x, y
+      real(kind = rp), dimension(size(x), size(y)) :: outprod 
+      integer :: i
+      do i = 1, size(y)
+          outprod(:, i) = x*y(i)
+      end do
+      end function outprod
 
       subroutine givens(x, y, c, s, r)
       ! GIVENS calculates the parameters for the Givens rotation that
