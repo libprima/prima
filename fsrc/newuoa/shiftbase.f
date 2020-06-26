@@ -171,7 +171,6 @@
      &         outprod(vlag, vlag)
           end if
       end do
-
 !!!!!!!!!!!!!!!!!!!!!COMPACT SCHEME ENDS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       ! Set the upper triangular part of BMAT(NPT+1:NPT+N,:) by symmetry 
