@@ -23,7 +23,8 @@
      & denex(9), par(9), zknew(npt - n - 1), stemp(n), dstemp(npt),     &
      & sstemp(npt), wz(npt - n - 1), angle, dd, denmax, denold, densav, &
      & ds, dtest, ss, ssden, summation, sumold, step, tau, temp, tempa, &
-     & tempb, tempc, tempv(npt), xoptd, xopts, xoptsq, alpha
+     & tempb, tempc, tempv(npt), xoptd, xopts, xoptsq, alpha,           &
+     & w1(npt), w2(n)
 
       ! N is the number of variables.
       ! NPT is the number of interpolation equations.
@@ -54,8 +55,8 @@
       ! WCHECK(N + 1) to WCHECK(N + NPT).
       zknew = zmat(knew, :)
       zknew(1 : idz - 1) = -zknew(1 : idz - 1)
-      wcheck(n + 1 : n + npt) = matmul(zmat, zknew)
-      alpha = wcheck(n + knew)
+      w1 = matmul(zmat, zknew)
+      alpha = w1(knew)
       
       ! The initial search direction D is taken from the last call of
       ! BIGLAG, and the initial S is set below, usually to the direction
@@ -243,9 +244,10 @@
     
     
           dd = dot_product(d, d)
-          wcheck(1 : n) = xopt + d
-          tempa = dot_product(d, wcheck(1 : n))
-          tempb = dot_product(wcheck(1 : n), wcheck(1 : n))
+          w2 = xopt + d
+          tempa = dot_product(d, w2)
+          tempb = dot_product(w2, w2)
+          
     
           if (iterc > 1) then
               densav = max(densav, denold)
@@ -259,8 +261,8 @@
           ! to D. Then branch for the next iteration.
           s = tau*bmat(knew, :) + alpha*(tempa*xopt + tempb*d -         &
      &     vlag(npt+1:npt+n))
-          tempv = matmul(xpt, wcheck(1 : n))
-          tempv = (tau*wcheck(n+1 : n+npt) - alpha*vlag(1 : npt))*tempv
+          tempv = matmul(xpt, w2)
+          tempv = (tau*w1 - alpha*vlag(1 : npt))*tempv
 !----------------------------------------------------------------------!
           !!! In later versions, the following DO LOOP should be
           !!! replaced by MATMUL as follows:
