@@ -69,10 +69,7 @@
       prederr = zero
       itest = 0
       nfsave = nf
-      xoptsq = zero
-      do i = 1, n
-          xoptsq = xoptsq + xopt(i)**2
-      end do
+      xoptsq = dot_product(xopt, xopt)
 
       ! Begin the iterative procedure.
 
@@ -106,11 +103,7 @@
      &     d, crvmin, vquad, subinfo)
 
           ! Calculate the length of the trial step D.
-          !dsq = dot_product(d, d)
-          dsq = zero
-          do i = 1, n
-              dsq = dsq + d(i)**2
-          end do
+          dsq = dot_product(d, d)
           dnorm = min(delta, sqrt(dsq))
 
           ! Is the step long enough to invoke a function evaluation?
@@ -181,10 +174,7 @@
               if (f < fopt) then
                   fopt = f
                   xopt = xnew
-                  xoptsq = zero
-                  do i = 1, n
-                      xoptsq = xoptsq + xopt(i)**2
-                  end do
+                  xoptsq = dot_product(xopt, xopt)
               end if
               ! Exit if F is NaN or INF.
               if (is_nan(f) .or. is_posinf(f)) then
@@ -274,22 +264,11 @@
                       if (ratio > 1.0e-2_rp) then
                           itest = 0
                       else
-                          gqsq = zero
-                          do i = 1, n
-                              gqsq = gqsq + gq(i)**2
-                          end do
+                          gqsq = dot_product(gq, gq)
                           vlag(1 : npt) = fval - fval(kopt)
 
-                          !galt = matmul(vlag(1 : npt), bmat(1 : npt, 1 : n))
-                          !galtsq = dot_product(galt, galt)
-                          galt = zero
-                          do k = 1, npt
-                              galt = galt + vlag(k)*bmat(k, :)
-                          end do
-                          galtsq = zero
-                          do i = 1, n
-                              galtsq = galtsq + galt(i)*galt(i)
-                          end do
+                          galt = matmul(vlag(1 : npt), bmat(1:npt, 1:n))
+                          galtsq = dot_product(galt, galt)
 
                           if (gqsq < 100.0_rp*galtsq) then
                               itest = 0
@@ -448,10 +427,7 @@
               if (f < fopt) then
                   fopt = f
                   xopt = xnew
-                  xoptsq = zero
-                  do i = 1, n
-                      xoptsq = xoptsq + xopt(i)**2
-                  end do
+                  xoptsq = dot_product(xopt, xopt)
               end if
 
               ! Check whether to exit.
