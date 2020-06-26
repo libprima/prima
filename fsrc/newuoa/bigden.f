@@ -262,7 +262,7 @@
           tempv = matmul(xpt, wcheck(1 : n))
           tempv = (tau*wcheck(n+1 : n+npt) - alpha*vlag(1 : npt))*tempv
 !----------------------------------------------------------------------!
-          !!! In later versiions, the following DO LOOP should be
+          !!! In later versions, the following DO LOOP should be
           !!! replaced by MATMUL as follows:
 !---------!s = s + matmul(tempv, xpt) !--------------------------------!
           !!! For the moment, we use a DO LOOP instead of MATMUL to
