@@ -98,7 +98,13 @@ for ip = 1 : length(plist)
     prob = macup(pname);
     x0 = prob.x0;
     n = length(x0);
+    if n > 30
+        fprintf('\n');
+    end
     for ir = minir : maxir
+        if n > 30
+            fprintf('Run No. %3d: \t', ir);
+        end
         % Some randomization
         rng(ceil(1e5*abs(sin(1e10*(ir+nr+requirements.maxdim)))));
         prob.x0 = x0 + 0.5*randn(size(x0));
@@ -127,13 +133,26 @@ for ip = 1 : length(plist)
             test_options.rhoend = test_options.rhobeg;
         end
         prob.options = test_options;
+        
+        tic;
         [x1, fx1, exitflag1, output1] = feval(solvers{1}, prob);
+        T = toc;
+        fprintf('\nRunning time for %s:\t %f\n', solvers{1}, T);
+
+        tic;
         [x2, fx2, exitflag2, output2] = feval(solvers{2}, prob);
+        T = toc;
+        fprintf('\nRunning time for %s:\t %f\n', solvers{2}, T);
+
         if output1.funcCount == test_options.maxfun && (exitflag1 == 0 || exitflag1 == 2) && exitflag2 == 3
             exitflag1 = 3;
-            display('exitflag1 changed to 3.')
+            %display('exitflag1 changed to 3.')
         end
-        if ~iseq(x1, fx1, exitflag1, output1, x2, fx2, exitflag2, output2, prec)
+        if iseq(x1, fx1, exitflag1, output1, x2, fx2, exitflag2, output2, prec)
+            if n > 30
+                fprintf('Succeed\n');
+            end
+        else
             fprintf('The solvers produce different results on %s at the %dth run.\n', pname, ir);
             success = false;
             keyboard
@@ -141,7 +160,7 @@ for ip = 1 : length(plist)
     end
     decup(pname);
     if success
-        fprintf('Success\n');
+        fprintf('Succeed\n');
     else
         fprintf('FAIL!\n')
     end
@@ -177,11 +196,13 @@ if (norm(xx-x)/(1+norm(x)) > prec || abs(ff-f)/(1+abs(f)) > prec || abs(oo.const
     eq = false;
 end
 
-if length(output.fhist) ~= length(oo.fhist) || norm(output.fhist-oo.fhist)/(1+norm(output.fhist)) > prec
+nf = min(output.funcCount, oo.funcCount);
+
+if norm(output.fhist(1:nf)-oo.fhist(1:nf))/(1+norm(output.fhist(1:nf))) > prec
     eq = false;
 end
 
-if length(output.chist) ~= length(oo.chist) || norm(output.chist-oo.chist)/(1+norm(output.chist)) > prec
+if norm(output.chist(1:nf)-oo.chist(1:nf))/(1+norm(output.chist(1:nf))) > prec
     eq = false;
 end
 

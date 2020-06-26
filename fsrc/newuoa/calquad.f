@@ -38,6 +38,9 @@
           end do
       end do
 
+      !wcheck = matmul(xpt, d)
+      !wcheck = wcheck*(half*wcheck + matmul(xpt, x))
+
       do k = 1, npt
           vquad = vquad + pq(k)*wcheck(k)
       end do

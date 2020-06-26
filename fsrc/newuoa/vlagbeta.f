@@ -4,84 +4,69 @@
      & vlag, beta, wcheck, dsq, xoptsq)
 
       use consts, only : rp, one, half, zero
+      use lina
       implicit none
-      
+
       integer, intent(in) :: n, npt, idz, kopt
       real(kind = rp), intent(in) :: bmat(npt+n, n), zmat(npt, npt-n-1),&
      & xpt(npt, n), xopt(n), d(n)
       real(kind = rp), intent(out) :: vlag(npt+n), beta, wcheck(npt)
 
-      integer :: i, j, jp, k
-      real(kind = rp) :: summationa, summationb, summation, bsummation, &
-     & dx, dsq, xoptsq
+      integer :: k, j
+      real(kind = rp) :: wb(n), wbvd, wz(npt-n-1), wzsave(npt-n-1), dx, &
+     & dsq, xoptsq
 
-      do k = 1, npt
-          summationa = zero
-          summationb = zero
-          summation = zero
-          do j = 1, n
-              summationa = summationa + xpt(k, j)*d(j)
-              summationb = summationb + xpt(k, j)*xopt(j)
-              summation = summation + bmat(k, j)*d(j)
-          end do
-          wcheck(k) = summationa*(half*summationa + summationb)
-          vlag(k) = summation
-      end do
 
-      beta = zero
+      wcheck = matmul(xpt, d)
+      wcheck = wcheck*(half*wcheck + matmul(xpt, xopt))
+      vlag(1 : npt) = matmul(bmat(1 : npt, :), d)
+
+      wz = matmul(wcheck, zmat)
+      wzsave = wz
+      wz(1 : idz - 1) = -wz(1 : idz - 1)
+      beta = -dot_product(wzsave, wz)
+!----------------------------------------------------------------------!
+      ! The following DO LOOP implements the update below. The results
+      ! will not be identical due to the non-associativity of
+      ! floating point arithmetic addition.
+!-----!vlag(1 : npt) = vlag(1 : npt) + matmul(zmat, wz) !--------------!
       do k = 1, npt - n - 1
-          summation = zero
-          do i = 1, npt
-              summation = summation + zmat(i, k)*wcheck(i)
-          end do
-          if (k < idz) then
-              beta = beta + summation*summation
-              summation = -summation
-          else
-              beta = beta - summation*summation
-          end if
-          do i = 1, npt
-              vlag(i) = vlag(i) + summation*zmat(i, k)
-          end do
+          vlag(1 : npt) = vlag(1 : npt) + wz(k)*zmat(:, k)
       end do
+!----------------------------------------------------------------------!
 
-      bsummation = zero
-      dx = zero
-      do j = 1, n
-          summation = zero
-          do i = 1, npt
-              summation = summation + wcheck(i)*bmat(i, j)
-          end do
-          bsummation = bsummation + summation*d(j)
-          jp = npt + j
-          do k = 1, n
-              summation = summation + bmat(jp, k)*d(k)
-          end do
-          vlag(jp) = summation
-          bsummation = bsummation + summation*d(j)
-          dx = dx + d(j)*xopt(j)
+      wb = matmul(wcheck, bmat(1 : npt, :))
+!----------------------------------------------------------------------!
+      ! The following DO LOOP implements the update below. The results
+      ! will not be identical due to the non-associativity of
+      ! floating point arithmetic addition.
+!-----!vlag(npt + 1: npt + n) = wb + matmul(bmat(npt + 1, npt + n, :), d)
+      vlag(npt + 1 : npt + n) = wb
+      do k = 1, n
+          vlag(npt + 1 : npt + n) = vlag(npt + 1 : npt + n) +           &
+     &     bmat(npt + 1 : npt + n, k)*d(k)
       end do
-       
-      !real(kind = rp) :: wz(npt - n - 1), wb(n), bd(n)
-      !wcheck = matmul(bmat, d)*(half*matmul(xpt, d)+matmul(xpt, xopt))
-      !vlag(1 : npt) = matmul(bmat(1 : npt, :), d)
-      !wz = matmul(wcheck, zmat)
-      !beta = sum(wz(1 : idz - 1)**2) - sum(wz(idz : npt -n -1)**2)
-      !wz(1 : idz - 1) = -wz(1 : idz - 1)
-      !vlag(1 : npt) = vlag(1 : npt) + matmul(zmat, wz(1:npt - n - 1))
-      !wb = matmul(wcheck, bmat(1 : npt, :)
-      !bsummation = dot_product(wb, d)
-      !bd = matmul(bmat(npt + 1 : npt + n, :), d)
-      !summation = summation + matmul(bmat(npt + 1 : npt + n, :), d)
-      !vlag(npt+1 : npt+n) = wb + bd 
-      !bsummation = dot_product(2*wb + bd, d) !????
-      !dx = dot_product(d, xopt)
+!----------------------------------------------------------------------!
+
+!----------------------------------------------------------------------!
+      ! The following DO LOOP implements the dot product below. The
+      ! results will not be identical due to the non-associativity of
+      ! floating point arithmetic addition.
+!-----!wbvd = dot_product(wb + vlag(npt+1 : npt+n), d) !---------------!
+      wbvd = zero
+      do j = 1, n
+          wbvd = wbvd + wb(j)*d(j) + vlag(npt + j)*d(j)
+      end do
+!----------------------------------------------------------------------!
+
+      dx = dot_product(d, xopt)
+
       !dsq = dot_product(d, d)
       !xoptsq = dot_product(xopt, xopt)
-        
-      beta = dx*dx + dsq*(xoptsq + dx + dx + half*dsq) + beta-bsummation
+
+      beta = dx*dx + dsq*(xoptsq + dx + dx + half*dsq) + beta - wbvd
       vlag(kopt) = vlag(kopt) + one
 
-      return 
+      return
 
       end subroutine vlagbeta
