@@ -18,13 +18,13 @@
       implicit none
 
 #if __USE_POWELL_ALGEBRA__ == 1 
-      interface matmul
-          module procedure matmul12, matmul21, matmul22
-      end interface matmul
-
-      interface dot_product
-          module procedure inprod
-      end interface dot_product
+!      interface matmul
+!          module procedure matmul12, matmul21, matmul22
+!      end interface matmul
+!
+!      interface dot_product
+!          module procedure inprod
+!      end interface dot_product
 #endif
 
 

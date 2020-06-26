@@ -3,6 +3,7 @@
 
       use consts, only : rp, zero, one, half, tenth
       use infnan
+      use lina
       implicit none
 
       ! Inputs
@@ -13,11 +14,11 @@
       real(kind = rp), intent(inout) :: x(n)
 
       ! Other variables
-      integer :: idz, itest, k, knew, kopt, nfsave, subinfo
+      integer :: idz, itest, knew, kopt, nfsave, subinfo
       integer :: tr, maxtr
       real(kind = rp) :: alpha, beta, crvmin, delta, prederr(3), distsq,&
-     & dnorm, dsq, dstep, xdiff(n), xdsq(npt), xbase(n), xopt(n),       &
-     & xnew(n), xpt(npt, n), fval(npt), gq(n), hq((n*(n+1))/2), pq(npt),&
+     & dnorm, dsq, dstep, xdsq(npt), xbase(n), xopt(n), xnew(n),        &
+     & xpt(npt, n), fval(npt), gq(n), hq((n*(n+1))/2), pq(npt),         &
      & bmat(npt + n, n), zmat(npt, npt - n - 1), d(n), vlag(npt + n),   &
      & fopt, fsave, galt(n), galtsq, gqsq, hdiag(npt), ratio, rho,      &
      & rhosq, vquad, xoptsq, wcheck(npt+n), sigma(npt)
@@ -214,12 +215,15 @@
               ! Set KNEW to the index of the interpolation point that
               ! will be deleted.
               rhosq = max(tenth*delta, rho)**2
-              do k = 1, npt
-                  hdiag(k) = -sum(zmat(k, 1 : idz - 1)**2) +            &
-     &             sum(zmat(k, idz : npt - n - 1)**2)
-                  xdiff = xpt(k, :) - xopt
-                  xdsq(k) = dot_product(xdiff, xdiff)
-              end do
+              hdiag = -sum(zmat(:, 1 : idz - 1)**2, dim = 2) +          &
+     &         sum(zmat(:, idz : npt - n - 1)**2, dim = 2)             
+              xdsq = sum((xpt-spread(xopt,dim=1,ncopies=npt))**2, dim=2)
+!              do k = 1, npt
+!                  hdiag(k) = -sum(zmat(k, 1 : idz - 1)**2) +            &
+!     &             sum(zmat(k, idz : npt - n - 1)**2)
+!                  xdiff = xpt(k, :) - xopt
+!                  xdsq(k) = dot_product(xdiff, xdiff)
+!              end do
               sigma = abs(beta*hdiag + vlag(1 : npt)**2)
               sigma = sigma * max(xdsq/rhosq, one)**3
               if (f >= fsave) then
@@ -300,10 +304,11 @@
               ! Find out if the interpolation points are close enough to
               ! the best point so far.
               distsq = 4.0_rp*delta*delta
-              do k = 1, npt
-                  xdiff = xpt(k, :) - xopt
-                  xdsq(k) = dot_product(xdiff, xdiff)
-              end do
+              xdsq = sum((xpt-spread(xopt,dim=1,ncopies=npt))**2, dim=2)
+!              do k = 1, npt
+!                  xdiff = xpt(k, :) - xopt
+!                  xdsq(k) = dot_product(xdiff, xdiff)
+!              end do
               if (maxval(xdsq) > distsq) then
                   knew = maxloc(xdsq, dim = 1)
                   distsq = maxval(xdsq)

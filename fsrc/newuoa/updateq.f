@@ -2,6 +2,7 @@
      & zmat, gq, hq, pq)
 
       use consts, only : rp, zero
+      use lina
       implicit none
 
       integer, intent(in) :: n, npt, idz, knew

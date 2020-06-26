@@ -1,4 +1,4 @@
-      subroutine newuoa (n, npt, x, rhobeg, rhoend, iprint, maxfun, w,  &
+      subroutine newuoa (n, npt, x, rhobeg, rhoend, iprint, maxfun,     &
      & f, info, ftarget)
       ! NEWUOA seeks the least value of a function of many variables,
       ! by a trust region method that forms quadratic models by
@@ -58,7 +58,7 @@
       integer, intent(out) :: info
       real(kind = rp), intent(in) :: rhobeg, rhoend, ftarget
       real(kind = rp), intent(out) :: f
-      real(kind = rp), intent(inout) :: x(n), w(:)
+      real(kind = rp), intent(inout) :: x(n)
 
       integer :: nf
 

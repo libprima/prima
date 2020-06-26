@@ -99,23 +99,14 @@ C obtained by mxGetM
       integer :: n_int
 C n_int is the INTEGER cast of n, i.e., n_int = int(n); used when a 
 C variable of type INTEGER is needed (e.g., when calling NEWUOA).
-      real(rp), allocatable :: x(:), w(:)
+      real(rp), allocatable :: x(:) 
       real(rp) :: f, rhobeg, rhoend, maxfun_r, npt_r, ftarget
       integer :: info, iprint, allocate_status
 C info and iprint are inputs to NEWUOA, which requires them to be
 C INTEGERs (not necessarily the same as mwSize) 
-      integer :: npt, maxfun, nw 
+      integer :: npt, maxfun 
 C maxfun and npt  will also be inputs to NEWUOA, which requires them 
 C to be INTEGERs (not necessarily the same as mwSize).
-C nw is the size of workspace. nw = (npt+13)*(npt+n)+3*n*(n+3)/2 + 1 (see below).
-C nw is the largest size of memory allocated by this code. If the
-C value assigned  to nw is so large that overflow occurs, then there
-C will be a Segmentation Fault!!! 
-C The largest value of nw depends on the storage size of nw (~2E9 for
-C kind 4, and ~9E18 for kind 8). This imposes an upper limit on the size
-C of problem solvable by this code. If nw is INTEGER*4, assuming that
-C npt=2n+1, the largest value of n is ~16000. NEWUOA is not designed for
-C so large problems.
 
 C Validate number of arguments
       if (nrhs .ne. 7) then
@@ -228,16 +219,6 @@ C maxfun and npt will be inputs to NEWUOA, which requires them to be
 C INTEGERs (not necessary the same as mwSize)
       call mxCopyPtrToReal8(MX_GET_DBLE(prhs(7)), ftarget, mwOne)
 
-C Allocate workspace
-      if (allocated(w)) deallocate (w)
-C      nw = (npt+13)*(npt+n)+3*n*(n+3)/2 + 1
-      nw = (npt+13)*(npt+n_int)+3*n_int*(n_int+3)/2 + 1
-      allocate (w(nw), stat=allocate_status)
-      if (allocate_status .ne. 0) then
-          call mexErrMsgIdAndTxt('fnewuoa:InsufficientMemory',
-     &    'fnewuoa: allocate(w) failed.')
-      end if
-
 C Initialize global variables
       nf = 0
       if (allocated(fhist)) deallocate (fhist)
@@ -250,7 +231,7 @@ C Initialize global variables
       
 C Call NEWUOA 
       iprint = 0
-      call NEWUOA(n_int, npt, x, rhobeg, rhoend, iprint, maxfun, w, f, 
+      call NEWUOA(n_int, npt, x, rhobeg, rhoend, iprint, maxfun, f, 
      &     info, ftarget)
 C Note that n is of type mwSize, yet NEWUOA expects input 1 to be 
 C of type INTEGER. Therefore, we should use n_int instead of n.  
@@ -268,7 +249,6 @@ C Although info and nf are integers logically, they are passed as double
 
 C Free memory
       deallocate (x)
-      deallocate (w)
       deallocate (fhist)
 
       return
