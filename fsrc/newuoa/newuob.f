@@ -13,7 +13,7 @@
       real(kind = rp), intent(inout) :: x(n)
 
       ! Other variables
-      integer :: i, idz, itest, k, knew, kopt, nfsave, subinfo
+      integer :: idz, itest, k, knew, kopt, nfsave, subinfo
       integer :: tr, maxtr
       real(kind = rp) :: alpha, beta, crvmin, delta, prederr(3), distsq,&
      & dnorm, dsq, dstep, xdiff(n), xdsq(npt), xbase(n), xopt(n),       &
