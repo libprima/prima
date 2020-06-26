@@ -17,7 +17,7 @@
 
       integer :: i, iflag, j, ja, jb, jl, jp
       real(kind=rp) :: c, s, r, alpha, denom, scala, scalb, tau, tausq, &
-     & temp, tempa, tempb, ztemp(npt), w(npt + n)
+     & temp, tempa, tempb, ztemp(npt), w(npt + n), v1(n), v2(n)
 
       ! Apply the rotations that put zeros in the KNEW-th row of ZMAT.
       do j = 1, npt - n - 1
@@ -121,19 +121,30 @@
       end if
       
       ! Finally,  update the matrix BMAT.
+      w(npt + 1 : npt + n) = bmat(knew, :)
+
+      v1 = (alpha*vlag(npt+1 : npt+n) - tau*w(npt+1 : npt+n))/denom
+      v2 = (-beta*w(npt+1 : npt+n) - tau*vlag(npt+1 : npt+n))/denom
+
       do j = 1, n
-          jp = npt + j
-          w(jp) = bmat(knew, j)
-          tempa = (alpha*vlag(jp) - tau*w(jp))/denom
-          tempb = (-beta*w(jp) - tau*vlag(jp))/denom
-          do i = 1, jp
-              bmat(i, j) = bmat(i, j) + tempa*vlag(i) + tempb*w(i)
+!          tempa = (alpha*vlag(jp) - tau*w(jp))/denom
+!          tempb = (-beta*w(jp) - tau*vlag(jp))/denom
+          do i = 1, npt + j
+              bmat(i, j) = bmat(i, j) + v1(j)*vlag(i) + v2(j)*w(i)
               if (i > npt) then 
-                  bmat(jp, i - npt) = bmat(i, j)
+                  bmat(npt + j, i - npt) = bmat(i, j)
               end if
           end do
       end do
 
+      !bmat = bmat + outprod(vlag, v1) + outprod(w, v2)
+      ! Set the upper triangular part of BMAT(NPT+1:NPT+N,:) by symmetry
+      do j = 1, n
+          do i = 1, j
+              bmat(npt + i, j) = bmat(npt + j, i)
+          end do
+      end do
+      
       return
 
       end subroutine update
