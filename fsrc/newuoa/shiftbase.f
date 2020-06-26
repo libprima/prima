@@ -182,9 +182,6 @@
       ! probably an ad-hoc decision that Powell made when coding. 
       do j = 1, n
           bmat(npt + 1 : npt + j - 1, j) = bmat(npt + j, 1 : j - 1)
-          !do i = 1, j
-          !    bmat(npt + i, j) = bmat(npt + j, i)
-          !end do
       end do
       
       ! The following instructions complete the shift of XBASE.
