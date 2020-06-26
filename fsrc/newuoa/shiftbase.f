@@ -135,10 +135,12 @@
           ! non-associtivity of floating point arithmetic addition. To
           ! make BMAT(NPT+1:NPT+N,:) symmetric, use the following two
           ! lines to replace the code below. The only difference is the
-          ! parenthsis aounr the two outter products.
+          ! parenthsis around the two outter products. It is probably 
+          ! a BETTERE implementation so we should take it in future
+          ! versions. 
 !----------------------------------------------------------------------!
 !          bmat(npt + 1 : npt + n, :) = bmat(npt + 1 : npt + n, :) +     &
-!     &     (outprod(bmatk, w2) + outprod(w2, bmatk))
+!     &     ( outprod(bmatk, w2) + outprod(w2, bmatk) )
 !----------------------------------------------------------------------!
           bmat(npt + 1 : npt + n, :) = bmat(npt + 1 : npt + n, :) +     &
      &     outprod(bmatk, w2) + outprod(w2, bmatk)
@@ -174,10 +176,15 @@
 !!!!!!!!!!!!!!!!!!!!!COMPACT SCHEME ENDS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       ! Set the upper triangular part of BMAT(NPT+1:NPT+N,:) by symmetry 
+      ! Note that UPDATE sets the lower triangular part by copying
+      ! the upper triangular part, but here it does the opposite. There
+      ! seems not any particular reason to keep them different. It was
+      ! probably an ad-hoc decision that Powell made when coding. 
       do j = 1, n
-          do i = 1, j
-              bmat(npt + i, j) = bmat(npt + j, i)
-          end do
+          bmat(npt + 1 : npt + j - 1, j) = bmat(npt + j, 1 : j - 1)
+          !do i = 1, j
+          !    bmat(npt + i, j) = bmat(npt + j, i)
+          !end do
       end do
       
       ! The following instructions complete the shift of XBASE.

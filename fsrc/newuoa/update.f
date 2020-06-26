@@ -122,28 +122,43 @@
       
       ! Finally,  update the matrix BMAT.
       w(npt + 1 : npt + n) = bmat(knew, :)
-
       v1 = (alpha*vlag(npt+1 : npt+n) - tau*w(npt+1 : npt+n))/denom
       v2 = (-beta*w(npt+1 : npt+n) - tau*vlag(npt+1 : npt+n))/denom
 
-      do j = 1, n
-!          tempa = (alpha*vlag(jp) - tau*w(jp))/denom
-!          tempb = (-beta*w(jp) - tau*vlag(jp))/denom
-          do i = 1, npt + j
-              bmat(i, j) = bmat(i, j) + v1(j)*vlag(i) + v2(j)*w(i)
-              if (i > npt) then 
-                  bmat(npt + j, i - npt) = bmat(i, j)
-              end if
-          end do
-      end do
+!      !-------------------POWELL'S IMPLEMENTATION----------------------!
+!      do j = 1, n
+!          bmat(1 : npt + j, j) = bmat(1 : npt + j, j) +                 &
+!     &     v1(j)*vlag(1 : npt + j) + v2(j)*w(1 : npt + j)
+!      ! Set the lower triangular part of BMAT(NPT+1:NPT+N,:) by symmetry
+!      ! Note that SHIFTBASE sets the upper triangular part by copying
+!      ! the lower triangular part, but here it does the opposite. There 
+!      ! seems not any particular reason to keep them different. It was
+!      ! probably an ad-hoc decision that Powell made when coding. 
+!          bmat(npt + j, 1 : j - 1) = bmat(npt + 1 : npt + j - 1, j)
+!      end do 
+!      !---------------POWELL'S IMPLEMENTATION ENDS---------------------!
 
-      !bmat = bmat + outprod(vlag, v1) + outprod(w, v2)
-      ! Set the upper triangular part of BMAT(NPT+1:NPT+N,:) by symmetry
+      !-----------------MATRIX-VECTOR IMPLEMENTATION-------------------!
+      bmat = bmat + outprod(vlag, v1) + outprod(w, v2)
+      ! Set the lower triangular part of BMAT(NPT+1:NPT+N,:) by symmetry
+      ! Note that SHIFTBASE sets the upper triangular part by copying
+      ! the lower triangular part, but here it does the opposite. There 
+      ! seems not any particular reason to keep them different. It was
+      ! probably an ad-hoc decision that Powell made when coding. 
       do j = 1, n
-          do i = 1, j
-              bmat(npt + i, j) = bmat(npt + j, i)
-          end do
-      end do
+          bmat(npt + j, 1 : j - 1) = bmat(npt + 1 : npt + j - 1, j)
+      end do 
+      !--------------MATRIX-VECTOR IMPLEMENTATION ENDS-----------------!
+
+!---------------------A PROBABLY BETTER IMPLEMENTATION-----------------!
+!-----!bmat = bmat + ( outprod(vlag, v1) + outprod(w, v2) ) !----------!
+      ! The only difference from the previous matrix-vector 
+      ! implementation is the parentheses.
+      ! Note that the update is naturally symmetric thanks to the
+      ! commutativity of floating point addition. We do not take this
+      ! implementation for the moment to produce the same results as
+      ! Powell's code, but we should take it in future versions.
+!---------------------A PROBABLY BETTER IMPLEMENTATION ENDS------------!
       
       return
 
