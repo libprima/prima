@@ -46,9 +46,10 @@
       
       w1 = matmul(xpt, xopt) - half*xoptsq
       ! W1 equals MATMUL(XPT, XOPT) after XPT is updated as follows.
-      do k = 1, npt
-          xpt(k, :) = xpt(k, :) - half*xopt
-      end do
+      xpt = xpt - half*spread(xopt, dim = 1, ncopies = npt)
+      !do k = 1, npt
+      !    xpt(k, :) = xpt(k, :) - half*xopt
+      !end do
 
       ! Update HQ. It has to be done after the above revision to XPT!!!
       pqx = matmul(pq, xpt)
@@ -180,6 +181,8 @@
       ! the upper triangular part, but here it does the opposite. There
       ! seems not any particular reason to keep them different. It was
       ! probably an ad-hoc decision that Powell made when coding. 
+      ! As mentioned above, this part can be spared if we put a pair of
+      ! parenthsis around the two outter products.
       do j = 1, n
           bmat(npt + 1 : npt + j - 1, j) = bmat(npt + j, 1 : j - 1)
       end do
@@ -187,9 +190,10 @@
       ! The following instructions complete the shift of XBASE.
       ! Recall the we have already subtracted HALF*XOPT from XPT. 
       ! Therefore, overall, the new XPT is XPT - XOPT.
-      do k = 1, npt
-          xpt(k, :) = xpt(k, :) - half*xopt
-      end do
+      xpt = xpt - half*spread(xopt, dim = 1, ncopies = npt)
+      !do k = 1, npt
+      !    xpt(k, :) = xpt(k, :) - half*xopt
+      !end do
 
       return 
 

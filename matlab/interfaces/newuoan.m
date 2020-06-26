@@ -220,44 +220,7 @@ if ~strcmp(invoker, 'pdfon') && probinfo.feasibility_problem
     output.constrviolation = 0; % Unconstrained problem; set output.constrviolation to 0
     output.chist = []; % Unconstrained problem; set output.chist to []
 else
-    % Check whether the problem is too large for the Fortran code
-    % In the mex gateway, a workspace of size 
-    % nw = (npt+13)*(npt+n)+3*n*(n+3)/2 + 1 (see below).
-    % will be allocated, which is the largest memory allocated by
-    % NEWUOA. If the value assigned to nw is so large that overflow
-    % occurs, then there will be a Segmentation Fault!!! 
-    % The largest possible value of nw depends on the type of nw in the
-    % mex file, which is the default INTEGER type (~2E9 for integer*4, 
-    % and ~9E18 for integer*8). This imposes an upper limit on the size the
-    % size of problem solvable by this code. If nw is INTEGER*4, assuming
-    % that npt=2n+1, the largest value of n is ~16000. NEWUOA is not
-    % designed for so large problems.
-    % In the following code, gethuge returns the largest possible value of
-    % the given data type in the mex environment.
-    
-    % The largest integer in the mex functions; the factor 0.99 provides a buffer
     maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSize'), gethuge('mwIndex')]));
-    n = length(x0);
-    minnw = (n+15)*(2*n+2)+3*n*(n+3)/2 + 1;
-    % minnw is the smallest possible nw, i.e., nw with the smallest npt, i.e., npt=n+2 
-    if minnw >= maxint  
-        % nw would suffer from overflow in the Fortran code; exit immediately 
-        % Public/normal error
-        if strcmp(invoker, 'pdfon')
-            error(sprintf('%s:ProblemTooLarge', invoker), '%s: problem too large for %s. Try other solvers.', invoker, funname);
-        else
-            error(sprintf('%s:ProblemTooLarge', funname), '%s: problem too large for %s. Try other solvers.', funname, funname);
-        end
-    end
-    maxnpt = max(n+2, floor(0.5*(-(n+13)+sqrt((n-13)^2+4*(maxint-3*n*(n+3)/2-1)))));
-    % maxnpt is the largest possible value of npt given that nw <= maxint
-    if npt > maxnpt
-        npt = maxnpt;
-        wid = sprintf('%s:NptTooLarge', funname);
-        wmessage = sprintf('%s: npt is so large that it is unable to allocate the workspace; it is set to %d.', funname, npt);
-        warning(wid, '%s', wmessage);
-        output.warnings = [output.warnings, wmessage];
-    end
     if maxfun > maxint
         % maxfun would suffer from overflow in the Fortran code 
         maxfun = maxint;

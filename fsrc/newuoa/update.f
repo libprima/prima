@@ -146,6 +146,8 @@
       ! the lower triangular part, but here it does the opposite. There 
       ! seems not any particular reason to keep them different. It was
       ! probably an ad-hoc decision that Powell made when coding. 
+      ! This part can be spared if we put a pair of parenthsis around 
+      ! the two outter products as elaborated below.
       do j = 1, n
           bmat(npt + j, 1 : j - 1) = bmat(npt + 1 : npt + j - 1, j)
       end do 

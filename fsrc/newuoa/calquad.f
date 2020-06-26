@@ -9,6 +9,7 @@
       ! quadratic function defined by (GQ, HQ, PQ).
 
       use consts, only : rp, half, zero
+      use lina
       implicit none
 
       integer, intent(in) :: n, npt
