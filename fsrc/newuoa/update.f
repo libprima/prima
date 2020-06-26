@@ -77,6 +77,7 @@
           zmat(:, 1) = tempa*zmat(:, 1) - tempb*vlag(1 : npt)
           if (idz == 1 .and. temp < zero) then
               ! TEMP < ZERO?!! Powell wrote this but it is STRANGE!!!!!!
+              !!! It is possibly a BUG !!!
               idz = 2
           end if
           if (idz >=  2 .and. temp >=  zero) then 
@@ -151,6 +152,7 @@
       !--------------MATRIX-VECTOR IMPLEMENTATION ENDS-----------------!
 
 !---------------------A PROBABLY BETTER IMPLEMENTATION-----------------!
+!-----!bmat = bmat + ( outprod(vlag, v1) + outprod(w, v2) ) !----------!
 !-----!bmat = bmat + ( outprod(vlag, v1) + outprod(w, v2) ) !----------!
       ! The only difference from the previous matrix-vector 
       ! implementation is the parentheses.
