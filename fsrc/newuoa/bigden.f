@@ -290,6 +290,14 @@
       end do
       
       ! Set the vector WCHECK before the RETURN from the subroutine.
+!----------------------------------------------------------------------!
+      ! WCHECK is the following vector in theory. 
+!-----!wcheck = matmul(xpt, d) !---------------------------------------!
+!-----!wcheck = wcheck*(half*wcheck + matmul(xpt, x)) !----------------!
+      ! This is the one of the two places where WCHECK is calculated,
+      ! the other being VLAGBETA. 
+      ! The result here likely different from the theoretical value.
+!----------------------------------------------------------------------!
       wcheck = matmul(wvec(:, 1 : 5), par(1 : 5))
       vlag(kopt) = vlag(kopt) + one
 

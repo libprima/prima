@@ -17,8 +17,15 @@
      & dsq, xoptsq
 
 
+!----------------------------------------------------------------------!
+      ! This is the one of the two places where WCHECK is calculated,
+      ! the other being BIGDEN. 
+      ! WCHECK is used ONLY in CALQUAD, which evaluates the qudratic
+      ! model. Indeed, we may calculate WCHECK internally in CALQUAD.
       wcheck = matmul(xpt, d)
       wcheck = wcheck*(half*wcheck + matmul(xpt, xopt))
+!----------------------------------------------------------------------!
+
       vlag(1 : npt) = matmul(bmat(1 : npt, :), d)
 
       wz = matmul(wcheck, zmat)

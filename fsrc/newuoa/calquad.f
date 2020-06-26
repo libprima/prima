@@ -38,8 +38,14 @@
           end do
       end do
 
-      !wcheck = matmul(xpt, d)
-      !wcheck = wcheck*(half*wcheck + matmul(xpt, x))
+!----------------------------------------------------------------------!
+      ! WCHECK is the following vector in theory. We really do not need
+      ! to pass it as an input. The only place that can make WCHECK
+      ! different from this value is in BIGDEN, where WCHECK is
+      ! calculated in another way (that is mathematically equivalent). 
+!-----!wcheck = matmul(xpt, d) !---------------------------------------!
+!-----!wcheck = wcheck*(half*wcheck + matmul(xpt, x)) !----------------!
+!----------------------------------------------------------------------!
 
       do k = 1, npt
           vquad = vquad + pq(k)*wcheck(k)
