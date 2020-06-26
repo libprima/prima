@@ -432,9 +432,10 @@
 
               ! The following seems different from what is introduced in
               ! Section 7 (around (7.7)) of the NEUOA paper. Seemingly
-              ! we should keep dnorm=||d||.
+              ! we should keep dnorm=||d||. 
+              !!! It is possibly a BUG !!!
               if (dnorm > rho) then
-                  nfsave = nf  !? dnorm is from last TR?
+                  nfsave = nf  !? DNORM is from last TR?
               end if
 
               ! PREDERR is the prediction errors of the latest 3 models.

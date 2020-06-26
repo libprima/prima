@@ -44,16 +44,20 @@
       alpha = hcol(knew)
 
       ! Set the unscaled initial direction D. Form the gradient of LFUNC
-      ! atXOPT, and multiply D by the second derivative matrix of LFUNC.
+      ! at XOPT, and multiply D by the Hessian of LFUNC.
       d = xpt(knew, :) - xopt
       dd = dot_product(d, d)
+
+      gd = matmul(hcol*matmul(xpt, d), xpt)
+
+      !----------------------------------------------------------------!
+      ! The following DO LOOP calculates the GC below
+!-----!gc = bmat(knew, :) + matmul(hcol*matmul(xpt, xopt), xpt) !------!
       gc = bmat(knew, :)
-      gd = zero
-           
       do k = 1, npt
           gc = gc + (hcol(k)*dot_product(xpt(k, :), xopt))*xpt(k, :)
-          gd = gd + (hcol(k)*dot_product(xpt(k, :), d))*xpt(k, :)
       end do
+      !----------------------------------------------------------------!
 
       ! Scale D and GD, with a sign change if required. Set S to another
       ! vector in the initial two dimensional subspace.
@@ -88,15 +92,16 @@
           end if
           denom = sqrt(dd*ss - sp*sp)
           s = (dd*s - sp*d)/denom
-          w = zero
+
+          w = matmul(hcol*matmul(xpt, s), xpt)
+!          w = zero
+!          do k = 1, npt
+!             w = w + (hcol(k)*dot_product(xpt(k, :), s))*xpt(k, :)
+!          end do
           
           ! Calculate the coefficients of the objective function on the
           ! circle, beginning with the multiplication of S by the second
           ! derivative matrix.
-          do k = 1, npt
-             w = w + (hcol(k)*dot_product(xpt(k, :), s))*xpt(k, :)
-          end do
-    
           cf(1) = dot_product(s, w)
           cf(2) = dot_product(d, gc)
           cf(3) = dot_product(s, gc)

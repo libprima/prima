@@ -6,6 +6,7 @@
       ! max |LFUNC(XOPT + D)|, subject to ||D|| <= DELTA, 
       !
       ! where LFUNC is the KNEW-th Lagrange function.
+      ! In addition, it sets VLAG, BETA, and WCHECK for the selected D.
 
       use consts, only : rp, one, two, half, quart, pi, zero
       use lina
