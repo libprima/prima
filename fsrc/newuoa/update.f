@@ -15,7 +15,7 @@
       real(kind=rp), intent(inout) :: bmat(npt+n, n), zmat(npt,npt-n-1),&
      & vlag(npt + n)
 
-      integer :: i, iflag, j, ja, jb, jl, jp
+      integer :: iflag, j, ja, jb, jl
       real(kind=rp) :: c, s, r, alpha, denom, scala, scalb, tau, tausq, &
      & temp, tempa, tempb, ztemp(npt), w(npt + n), v1(n), v2(n)
 
