@@ -149,7 +149,7 @@
 
       ! Then the revisions of BMAT that depend on ZMAT are calculated.
       sumz = sum(zmat, dim = 1)
-      do k = 1, npt - n - 1
+      do k = 1, idz - 1
           ! The following W3 and DO LOOP indeed defines the VLAG below.
           ! The results are not identical due to the non-associtivity 
           ! of floating point arithmetic addition.
@@ -163,16 +163,25 @@
                   vlag(j) = vlag(j) + w3(i)*xpt(i, j)
               end do
           end do
-
-          if (k < idz) then
-               bmat(1:npt, :) = bmat(1:npt, :) - outprod(zmat(:,k),vlag)
-              bmat(npt + 1 : npt + n, :) = bmat(npt + 1 : npt + n, :) - &
-     &         outprod(vlag, vlag)
-          else
-               bmat(1:npt, :) = bmat(1:npt, :) + outprod(zmat(:,k),vlag)
-              bmat(npt + 1 : npt + n, :) = bmat(npt + 1 : npt + n, :) + &
-     &         outprod(vlag, vlag)
-          end if
+          bmat(1:npt, :) = bmat(1:npt, :) - outprod(zmat(:,k),vlag)
+          bmat(npt+1:npt+n,:) = bmat(npt+1:npt+n,:) - outprod(vlag,vlag)
+      end do
+      do k = idz, npt - n - 1
+          ! The following W3 and DO LOOP indeed defines the VLAG below.
+          ! The results are not identical due to the non-associtivity 
+          ! of floating point arithmetic addition.
+!----------------------------------------------------------------------!
+          !vlag = qxoptq*sumz(k)*xopt(j) + matmul(w1*zmat(:, k), xpt)
+!----------------------------------------------------------------------!
+          w3 = w1*zmat(:, k)
+          do j = 1, n
+              vlag(j) = qxoptq*sumz(k)*xopt(j)
+              do i = 1, npt
+                  vlag(j) = vlag(j) + w3(i)*xpt(i, j)
+              end do
+          end do
+          bmat(1:npt, :) = bmat(1:npt, :) + outprod(zmat(:,k),vlag)
+          bmat(npt+1:npt+n,:) = bmat(npt+1:npt+n,:) + outprod(vlag,vlag)
       end do
 !!!!!!!!!!!!!!!!!!!!!COMPACT SCHEME ENDS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

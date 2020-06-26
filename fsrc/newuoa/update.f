@@ -21,12 +21,9 @@
 
       ! Apply the rotations that put zeros in the KNEW-th row of ZMAT.
       do j = 1, npt - n - 1
-          if (j < idz) then
-              jl = 1
-          else 
-              jl = idz
-          end if
-          if (j /= 1 .and. j/= idz .and. abs(zmat(knew,j)) >  zero) then
+          if (j == 1 .or. j == idz) then
+              jl = j
+          else if (abs(zmat(knew, j)) >  zero) then
               call givens(zmat(knew,jl), zmat(knew,j), c, s, r)
               ztemp = zmat(:, j)
               zmat(:, j) = c*zmat(:, j) - s*zmat(:, jl)

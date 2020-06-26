@@ -239,11 +239,10 @@
 
       return
 
-      end subroutine trsapp
-      
 
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+      contains 
+ 
+      !----------------------------------------------------------------!
       subroutine hessmul(n, npt, xpt, hq, pq, d, hd)
       ! HESSMUL calculates HD = HESSIAN*D for the NEWUOA-form HESSIAN,
       ! which is the sum of an explicit part HQ and an implicit 
@@ -284,5 +283,8 @@
          !hd(1 : j) = hd(1 : j) + hq((ih+1 : ih+j))*d(j)
          !ih = ih + j
       end do
+      return
+      end subroutine hessmul
+      !----------------------------------------------------------------!
 
-      end subroutine
+      end subroutine trsapp
