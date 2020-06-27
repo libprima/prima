@@ -1,0 +1,87 @@
+Intel(R) Advisor can now assist with vectorization and show optimization
+  report messages with your source code.
+See "https://software.intel.com/en-us/intel-advisor-xe" for details.
+
+
+Begin optimization report for: UPDATEQ
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at updateq.f(21,11)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at updateq.f(21,11)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at updateq.f(21,11)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at updateq.f(21,11)
+   <Alternate Alignment Vectorized Loop>
+   LOOP END
+
+   LOOP BEGIN at updateq.f(21,11)
+   <Remainder loop for vectorization>
+      remark #15301: REMAINDER LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at updateq.f(21,11)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at updateq.f(26,7)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at updateq.f(26,7)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at updateq.f(27,7)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at updateq.f(27,7)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at updateq.f(36,7)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at updateq.f(37,11)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at updateq.f(37,11)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at updateq.f(37,11)
+   <Alternate Alignment Vectorized Loop>
+   LOOP END
+
+   LOOP BEGIN at updateq.f(37,11)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at updateq.f(41,7)
+<Peeled loop for vectorization>
+LOOP END
+
+LOOP BEGIN at updateq.f(41,7)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at updateq.f(41,7)
+<Alternate Alignment Vectorized Loop>
+LOOP END
+
+LOOP BEGIN at updateq.f(41,7)
+<Remainder loop for vectorization>
+LOOP END
+===========================================================================

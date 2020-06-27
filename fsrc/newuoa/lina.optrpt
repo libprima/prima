@@ -1,0 +1,240 @@
+Intel(R) Advisor can now assist with vectorization and show optimization
+  report messages with your source code.
+See "https://software.intel.com/en-us/intel-advisor-xe" for details.
+
+
+Begin optimization report for: LINA::MATMUL12
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at lina.F(43,7)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at lina.F(43,7)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at lina.F(43,7)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at lina.F(44,7)
+<Multiversioned v1>
+
+   LOOP BEGIN at lina.F(45,11)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at lina.F(45,11)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at lina.F(45,11)
+   <Alternate Alignment Vectorized Loop>
+   LOOP END
+
+   LOOP BEGIN at lina.F(45,11)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at lina.F(44,7)
+<Multiversioned v2>
+
+   LOOP BEGIN at lina.F(45,11)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at lina.F(45,11)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+===========================================================================
+
+Begin optimization report for: LINA::MATMUL21
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at lina.F(60,7)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at lina.F(60,7)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at lina.F(60,7)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at lina.F(61,7)
+<Multiversioned v1>
+
+   LOOP BEGIN at lina.F(62,11)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at lina.F(62,11)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at lina.F(62,11)
+   <Alternate Alignment Vectorized Loop>
+   LOOP END
+
+   LOOP BEGIN at lina.F(62,11)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at lina.F(61,7)
+<Multiversioned v2>
+
+   LOOP BEGIN at lina.F(62,11)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at lina.F(62,11)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at lina.F(62,11)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+===========================================================================
+
+Begin optimization report for: LINA::MATMUL22
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at lina.F(74,7)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at lina.F(74,7)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at lina.F(74,7)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at lina.F(75,7)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at lina.F(76,11)
+   <Multiversioned v1>
+
+      LOOP BEGIN at lina.F(77,15)
+      <Peeled loop for vectorization>
+      LOOP END
+
+      LOOP BEGIN at lina.F(77,15)
+         remark #15300: LOOP WAS VECTORIZED
+      LOOP END
+
+      LOOP BEGIN at lina.F(77,15)
+      <Alternate Alignment Vectorized Loop>
+      LOOP END
+
+      LOOP BEGIN at lina.F(77,15)
+      <Remainder loop for vectorization>
+      LOOP END
+   LOOP END
+
+   LOOP BEGIN at lina.F(76,11)
+   <Multiversioned v2>
+
+      LOOP BEGIN at lina.F(77,15)
+      <Peeled loop for vectorization>
+      LOOP END
+
+      LOOP BEGIN at lina.F(77,15)
+         remark #15300: LOOP WAS VECTORIZED
+      LOOP END
+
+      LOOP BEGIN at lina.F(77,15)
+      <Remainder loop for vectorization>
+      LOOP END
+   LOOP END
+LOOP END
+===========================================================================
+
+Begin optimization report for: LINA::INPROD
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at lina.F(92,7)
+<Peeled loop for vectorization, Multiversioned v1>
+LOOP END
+
+LOOP BEGIN at lina.F(92,7)
+<Multiversioned v1>
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at lina.F(92,7)
+<Alternate Alignment Vectorized Loop, Multiversioned v1>
+LOOP END
+
+LOOP BEGIN at lina.F(92,7)
+<Remainder loop for vectorization, Multiversioned v1>
+LOOP END
+
+LOOP BEGIN at lina.F(92,7)
+<Multiversioned v2>
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at lina.F(92,7)
+<Remainder loop for vectorization, Multiversioned v2>
+LOOP END
+===========================================================================
+
+Begin optimization report for: LINA::OUTPROD
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at lina.F(103,7)
+<Multiversioned v1>
+
+   LOOP BEGIN at lina.F(104,11)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at lina.F(104,11)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at lina.F(104,11)
+   <Alternate Alignment Vectorized Loop>
+   LOOP END
+
+   LOOP BEGIN at lina.F(104,11)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at lina.F(103,7)
+<Multiversioned v2>
+
+   LOOP BEGIN at lina.F(104,11)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at lina.F(104,11)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at lina.F(104,11)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+===========================================================================

@@ -1,0 +1,58 @@
+Intel(R) Advisor can now assist with vectorization and show optimization
+  report messages with your source code.
+See "https://software.intel.com/en-us/intel-advisor-xe" for details.
+
+
+Begin optimization report for: CALQUAD
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at calquad.f(25,7)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at calquad.f(25,7)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at calquad.f(30,7)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at calquad.f(32,11)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at calquad.f(32,11)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at calquad.f(32,11)
+   <Alternate Alignment Vectorized Loop>
+   LOOP END
+
+   LOOP BEGIN at calquad.f(32,11)
+   <Remainder loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at calquad.f(32,11)
+      remark #25460: No loop optimizations reported
+   LOOP END
+LOOP END
+
+LOOP BEGIN at calquad.f(51,7)
+<Peeled loop for vectorization>
+LOOP END
+
+LOOP BEGIN at calquad.f(51,7)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at calquad.f(51,7)
+<Alternate Alignment Vectorized Loop>
+LOOP END
+
+LOOP BEGIN at calquad.f(51,7)
+<Remainder loop for vectorization>
+LOOP END
+===========================================================================

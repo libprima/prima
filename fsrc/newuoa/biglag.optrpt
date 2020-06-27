@@ -1,0 +1,144 @@
+Intel(R) Advisor can now assist with vectorization and show optimization
+  report messages with your source code.
+See "https://software.intel.com/en-us/intel-advisor-xe" for details.
+
+
+Begin optimization report for: BIGLAG
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at biglag.f(41,7)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at biglag.f(41,7)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at biglag.f(42,7)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at biglag.f(42,7)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at biglag.f(48,7)
+<Peeled loop for vectorization>
+LOOP END
+
+LOOP BEGIN at biglag.f(48,7)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at biglag.f(48,7)
+<Alternate Alignment Vectorized Loop>
+LOOP END
+
+LOOP BEGIN at biglag.f(48,7)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at biglag.f(51,12)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at biglag.f(51,12)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at biglag.f(56,7)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at biglag.f(56,7)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at biglag.f(58,11)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at biglag.f(58,11)
+<Remainder loop for vectorization>
+   remark #15301: REMAINDER LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at biglag.f(58,11)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at biglag.f(79,7)
+<Peeled loop for vectorization>
+LOOP END
+
+LOOP BEGIN at biglag.f(79,7)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at biglag.f(79,7)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at biglag.f(80,7)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at biglag.f(80,7)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at biglag.f(81,7)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at biglag.f(81,7)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at biglag.f(94,11)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at biglag.f(94,11)
+<Remainder loop for vectorization>
+   remark #15301: REMAINDER LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at biglag.f(94,11)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at biglag.f(96,15)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at biglag.f(96,15)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at biglag.f(153,11)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at biglag.f(153,11)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at biglag.f(154,11)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at biglag.f(154,11)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at biglag.f(155,11)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at biglag.f(155,11)
+<Remainder loop for vectorization>
+LOOP END
+===========================================================================
