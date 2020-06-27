@@ -9,7 +9,7 @@
 
       integer, intent(in) :: n, npt, idz, kopt
       real(kind = rp), intent(in) :: bmat(npt+n, n), zmat(npt, npt-n-1),&
-     & xpt(npt, n), xopt(n), d(n)
+     & xpt(n, npt), xopt(n), d(n)
       real(kind = rp), intent(out) :: vlag(npt+n), beta, wcheck(npt)
 
       integer :: k, j
@@ -30,8 +30,8 @@
       !
       ! WCHECK is used ONLY in CALQUAD, which evaluates the qudratic
       ! model. Indeed, we may calculate WCHECK internally in CALQUAD.
-      wcheck = matmul(xpt, d)
-      wcheck = wcheck*(half*wcheck + matmul(xpt, xopt))
+      wcheck = matmul(d, xpt)
+      wcheck = wcheck*(half*wcheck + matmul(xopt, xpt))
 !----------------------------------------------------------------------!
 
       vlag(1 : npt) = matmul(bmat(1 : npt, :), d)
@@ -55,7 +55,7 @@
       ! The following DO LOOP implements the update below. The results
       ! will not be identical due to the non-associativity of
       ! floating point arithmetic addition.
-!-----!vlag(npt + 1: npt + n) = wb + matmul(bmat(npt + 1, npt + n, :), d)
+!-----!vlag(npt + 1: npt + n) = wb + matmul(bmat(npt + 1 : npt + n, :), d)
       vlag(npt + 1 : npt + n) = wb
       do k = 1, n
           vlag(npt + 1 : npt + n) = vlag(npt + 1 : npt + n) +           &

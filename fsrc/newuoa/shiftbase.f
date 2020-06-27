@@ -10,7 +10,7 @@
       integer, intent(in) :: idz, n, npt
 
       real(kind = rp), intent(in) :: xopt(n), pq(npt), zmat(npt,npt-n-1)
-      real(kind = rp), intent(inout) :: bmat(npt + n, n), gq(n),        &
+      real(kind = rp), intent(inout) :: bmat(n, npt + n), gq(n),        &
      & hq((n*(n + 1))/2), xpt(n, npt)
 
       integer :: i, ih, j, k
@@ -62,16 +62,16 @@
 !==============================POWELL'S SCHEME=========================!
 !      ! Make the changes to BMAT that do not depend on ZMAT.
 !      do k = 1, npt
-!          bmatk = bmat(k, :)
+!          bmatk = bmat(:, k)
 !          w2 = w1(k)*xpt(:, k) + qxoptq*xopt
 !          ! The following DO LOOP performs the update below, but only
-!          ! calculates the lower triangular part since it is symmetric.
+!          ! calculates the upper triangular part since it is symmetric.
 !!----------------------------------------------------------------------!
-!!          bmat(npt + 1 : npt + n, :) = bmat(npt + 1 : npt + n, :) +     &
-!!     &     outprod(bmatk, w2) + outprod(w2, bmatk)
+!!          bmat(:, npt + 1 : npt + n) = bmat(:, npt + 1 : npt + n) +     &
+!!     &     outprod(w2, bmatk) + outprod(bmatk, w2)
 !!----------------------------------------------------------------------!
 !          do i = 1, n
-!              bmat(npt + i, 1 : i) = bmat(npt + i, 1 : i) +             &
+!              bmat(1 : i, npt + i) = bmat(1 : i, npt + i) +             &
 !     &         bmatk(i)*w2(1 : i) + w2(i)*bmatk(1 : i)
 !          end do
 !      end do
@@ -94,30 +94,30 @@
 !          end do
 !
 !          if (k < idz) then
-!               bmat(1:npt, :) = bmat(1:npt, :) - outprod(zmat(:,k),vlag)
+!               bmat(:, 1:npt) = bmat(:, 1:npt) - outprod(vlag, zmat(:,k))
 !          else
-!               bmat(1:npt, :) = bmat(1:npt, :) + outprod(zmat(:,k),vlag)
+!               bmat(:, 1:npt) = bmat(:, 1:npt) + outprod(vlag, zmat(:,k))
 !          end if
 !
 !          if (k < idz) then 
 !          ! The following DO LOOP performs the update below, but only
-!          ! calculates the lower triangular part since it is symmetric.
+!          ! calculates the upper triangular part since it is symmetric.
 !!----------------------------------------------------------------------!          
-!!              bmat(npt + 1 : npt + n, :) = bmat(npt + 1 : npt + n, :) - &
+!!              bmat(:, npt + 1 : npt + n) = bmat(:, npt + 1 : npt + n) - &
 !!     &         outprod(vlag, vlag)
 !!----------------------------------------------------------------------!          
 !              do i = 1, n
-!                  bmat(npt+i, 1:i) = bmat(npt+i,1:i) - vlag(i)*vlag(1:i)
+!                  bmat(1:i, npt+i) = bmat(1:i, npt+i) - vlag(i)*vlag(1:i)
 !              end do
 !          else
 !          ! The following DO LOOP performs the update below, but only
-!          ! calculates the lower triangular part since it is symmetric.
+!          ! calculates the upper triangular part since it is symmetric.
 !!----------------------------------------------------------------------!
-!!              bmat(npt + 1 : npt + n, :) = bmat(npt + 1 : npt + n, :) + &
+!!              bmat(:, npt + 1 : npt + n) = bmat(:, npt + 1 : npt + n) + &
 !!     &         outprod(vlag, vlag)
 !!----------------------------------------------------------------------!
 !              do i = 1, n
-!                  bmat(npt+i, 1:i) = bmat(npt+i,1:i) + vlag(i)*vlag(1:i)
+!                  bmat(1:i, npt+i) = bmat(1:i, npt+i) + vlag(i)*vlag(1:i)
 !              end do
 !          end if
 !      end do
@@ -127,7 +127,7 @@
 !!!!!!!!!!!!!!!!!!!!!A COMPACTER YET NOT SO ECONOMIC SCHEME!!!!!!!!!!!!!
       ! Make the changes to BMAT that do not depend on ZMAT.
       do k = 1, npt
-          bmatk = bmat(k, :)
+          bmatk = bmat(:, k)
           w2 = w1(k)*xpt(:, k) + qxoptq*xopt
           ! This is the only place where non-symmetry of
           ! BMAT(NPT+1:NPT+N, :) can come from. It is because of the
@@ -138,11 +138,11 @@
           ! a BETTERE implementation so we should take it in future
           ! versions. 
 !----------------------------------------------------------------------!
-!          bmat(npt + 1 : npt + n, :) = bmat(npt + 1 : npt + n, :) +     &
-!     &     ( outprod(bmatk, w2) + outprod(w2, bmatk) )
+!          bmat(:, npt + 1 : npt + n) = bmat(:, npt + 1 : npt + n) +     &
+!     &     ( outprod(w2, bmatk) + outprod(bmatk, w2) )
 !----------------------------------------------------------------------!
-          bmat(npt + 1 : npt + n, :) = bmat(npt + 1 : npt + n, :) +     &
-     &     outprod(bmatk, w2) + outprod(w2, bmatk)
+          bmat(:, npt + 1 : npt + n) = bmat(:, npt + 1 : npt + n) +     &
+     &     outprod(w2, bmatk) + outprod(bmatk, w2)
       end do
 
       ! Then the revisions of BMAT that depend on ZMAT are calculated.
@@ -159,8 +159,8 @@
           do i = 1, npt
               vlag = vlag + w3(i)*xpt(:, i)
           end do
-          bmat(1:npt, :) = bmat(1:npt, :) - outprod(zmat(:,k),vlag)
-          bmat(npt+1:npt+n,:) = bmat(npt+1:npt+n,:) - outprod(vlag,vlag)
+          bmat(:, 1:npt) = bmat(:, 1:npt) - outprod(vlag, zmat(:,k))
+          bmat(:,npt+1:npt+n) = bmat(:,npt+1:npt+n) - outprod(vlag,vlag)
       end do
       do k = idz, npt - n - 1
           ! The following W3 and DO LOOP indeed defines the VLAG below.
@@ -174,20 +174,20 @@
           do i = 1, npt
               vlag = vlag + w3(i)*xpt(:, i)
           end do
-          bmat(1:npt, :) = bmat(1:npt, :) + outprod(zmat(:,k),vlag)
-          bmat(npt+1:npt+n,:) = bmat(npt+1:npt+n,:) + outprod(vlag,vlag)
+          bmat(:, 1:npt) = bmat(:, 1:npt) + outprod(vlag, zmat(:,k))
+          bmat(:,npt+1:npt+n) = bmat(:,npt+1:npt+n) + outprod(vlag,vlag)
       end do
 !!!!!!!!!!!!!!!!!!!!!COMPACT SCHEME ENDS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       ! Set the upper triangular part of BMAT(NPT+1:NPT+N,:) by symmetry 
-      ! Note that UPDATE sets the lower triangular part by copying
-      ! the upper triangular part, but here it does the opposite. There
+      ! Note that UPDATE sets the upper triangular part by copying
+      ! the lower triangular part, but here it does the opposite. There
       ! seems not any particular reason to keep them different. It was
       ! probably an ad-hoc decision that Powell made when coding. 
       ! As mentioned above, this part can be spared if we put a pair of
       ! parenthsis around the two outter products.
       do j = 1, n
-          bmat(npt + 1 : npt + j - 1, j) = bmat(npt + j, 1 : j - 1)
+          bmat(j, npt + 1 : npt + j - 1) = bmat(1 : j - 1, npt + j)
       end do
       
       ! The following instructions complete the shift of XBASE.

@@ -8,12 +8,12 @@
       implicit none
 
       integer, intent(in) :: n, npt, idz, kopt
-      real(kind = rp), intent(in) :: bmat(npt+n, n), zmat(npt, npt-n-1),&
+      real(kind = rp), intent(in) :: bmat(n, npt+n), zmat(npt, npt-n-1),&
      & xpt(n, npt), xopt(n), d(n)
       real(kind = rp), intent(out) :: vlag(npt+n), beta, wcheck(npt)
 
       integer :: k, j
-      real(kind = rp) :: wb(n), wbvd, wz(npt-n-1), wzsave(npt-n-1), dx, &
+      real(kind = rp) :: bw(n), bwvd, wz(npt-n-1), wzsave(npt-n-1), dx, &
      & dsq, xoptsq
 
 
@@ -34,7 +34,7 @@
       wcheck = wcheck*(half*wcheck + matmul(xopt, xpt))
 !----------------------------------------------------------------------!
 
-      vlag(1 : npt) = matmul(bmat(1 : npt, :), d)
+      vlag(1 : npt) = matmul(d, bmat(:, 1 : npt))
 
       wz = matmul(wcheck, zmat)
       wzsave = wz
@@ -50,16 +50,16 @@
       end do
 !----------------------------------------------------------------------!
 
-      wb = matmul(wcheck, bmat(1 : npt, :))
+      bw = matmul(bmat(:, 1 : npt), wcheck)
 !----------------------------------------------------------------------!
       ! The following DO LOOP implements the update below. The results
       ! will not be identical due to the non-associativity of
       ! floating point arithmetic addition.
-!-----!vlag(npt + 1: npt + n) = wb + matmul(bmat(npt + 1, npt + n, :), d)
-      vlag(npt + 1 : npt + n) = wb
+!-----!vlag(npt + 1: npt + n) = bw + matmul(d, bmat(:, npt + 1 : npt + n))
+      vlag(npt + 1 : npt + n) = bw
       do k = 1, n
           vlag(npt + 1 : npt + n) = vlag(npt + 1 : npt + n) +           &
-     &     bmat(npt + 1 : npt + n, k)*d(k)
+     &     bmat(k, npt + 1 : npt + n)*d(k)
       end do
 !----------------------------------------------------------------------!
 
@@ -67,10 +67,10 @@
       ! The following DO LOOP implements the dot product below. The
       ! results will not be identical due to the non-associativity of
       ! floating point arithmetic addition.
-!-----!wbvd = dot_product(wb + vlag(npt+1 : npt+n), d) !---------------!
-      wbvd = zero
+!-----!bwvd = dot_product(bw + vlag(npt+1 : npt+n), d) !---------------!
+      bwvd = zero
       do j = 1, n
-          wbvd = wbvd + wb(j)*d(j) + vlag(npt + j)*d(j)
+          bwvd = bwvd + bw(j)*d(j) + vlag(npt + j)*d(j)
       end do
 !----------------------------------------------------------------------!
 
@@ -79,7 +79,7 @@
       !dsq = dot_product(d, d)
       !xoptsq = dot_product(xopt, xopt)
 
-      beta = dx*dx + dsq*(xoptsq + dx + dx + half*dsq) + beta - wbvd
+      beta = dx*dx + dsq*(xoptsq + dx + dx + half*dsq) + beta - bwvd
       vlag(kopt) = vlag(kopt) + one
 
       return

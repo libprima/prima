@@ -1,4 +1,4 @@
-        !COMPILER-GENERATED INTERFACE MODULE: Sat Jun 27 16:43:59 2020
+        !COMPILER-GENERATED INTERFACE MODULE: Sun Jun 28 00:20:12 2020
         ! This source file is for reference only and may not completely
         ! represent the generated interface used by the compiler.
         MODULE INITIALIZE__genmod
@@ -10,13 +10,13 @@
               REAL(KIND=8), INTENT(IN) :: RHOBEG
               REAL(KIND=8), INTENT(IN) :: X(N)
               REAL(KIND=8), INTENT(OUT) :: XBASE(N)
-              REAL(KIND=8), INTENT(OUT) :: XPT(NPT,N)
+              REAL(KIND=8), INTENT(OUT) :: XPT(N,NPT)
               REAL(KIND=8), INTENT(OUT) :: F
               REAL(KIND=8), INTENT(OUT) :: FVAL(NPT)
               REAL(KIND=8), INTENT(OUT) :: XOPT(N)
               REAL(KIND=8), INTENT(OUT) :: FOPT
               INTEGER(KIND=4), INTENT(OUT) :: KOPT
-              REAL(KIND=8), INTENT(OUT) :: BMAT(NPT+N,N)
+              REAL(KIND=8), INTENT(OUT) :: BMAT(N,NPT+N)
               REAL(KIND=8), INTENT(OUT) :: ZMAT(NPT,NPT-N-1)
               REAL(KIND=8), INTENT(OUT) :: GQ(N)
               REAL(KIND=8), INTENT(OUT) :: HQ((N*(N+1))/2)

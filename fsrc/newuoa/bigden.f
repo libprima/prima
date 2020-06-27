@@ -14,7 +14,7 @@
 
       integer, intent(in) :: n, npt, knew, kopt, idz
 
-      real(kind=rp), intent(in) :: xopt(n), xpt(n, npt), bmat(npt+n, n),&
+      real(kind=rp), intent(in) :: xopt(n), xpt(n, npt), bmat(n, npt+n),&
      & zmat(npt, npt - n - 1)
       real(kind=rp), intent(out) :: beta, vlag(npt + n), wcheck(npt + n) 
       real(kind=rp), intent(inout) :: d(n)
@@ -32,7 +32,7 @@
       ! NPT is the number of interpolation equations.
       ! XOPT is the best interpolation point so far.
       ! XPT contains the current interpolation points.
-      ! BMAT provides the last N columns of H.
+      ! BMAT provides the last N ROWs of H.
       ! ZMAT and IDZ give a factorization of the first NPT by NPT
       ! sub-matrix of H.
       ! NDIM is the first dimension of BMAT and has the value NPT + N.
@@ -138,11 +138,11 @@
               nw = npt
               if (jc == 2 .or. jc == 3) then
                   prod(1 : npt, jc) = prod(1 : npt, jc) +               &
-     &             matmul(bmat(1 : npt, :), wvec(npt + 1 : npt + n, jc))
+     &             matmul(wvec(npt + 1 : npt + n, jc), bmat(:, 1 : npt))
                   nw = npt + n
               end if
-              prod(npt + 1 : npt + n, jc) = matmul(wvec(1 : nw, jc),    &
-     &         bmat(1 : nw, 1 : n))
+              prod(npt + 1 : npt + n, jc) = matmul(bmat(:, 1 : nw),     &
+     &         wvec(1 : nw, jc))
           end do
     
           ! Include in DEN the part of BETA that depends on THETA.
@@ -264,7 +264,7 @@
     
           ! Set S to half the gradient of the denominator with respect 
           ! to D. Then branch for the next iteration.
-          s = tau*bmat(knew, :) + alpha*(tempa*xopt + tempb*d -         &
+          s = tau*bmat(:, knew) + alpha*(tempa*xopt + tempb*d -         &
      &     vlag(npt+1:npt+n))
           tempv = matmul(w2, xpt)
           tempv = (tau*w1 - alpha*vlag(1 : npt))*tempv

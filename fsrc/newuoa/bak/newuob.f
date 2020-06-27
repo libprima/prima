@@ -18,12 +18,13 @@
       integer :: tr, maxtr
       real(kind = rp) :: alpha, beta, crvmin, delta, prederr(3), distsq,&
      & dnorm, dsq, dstep, xdsq(npt), xbase(n), xopt(n), xnew(n),        &
-     & xpt(npt, n), fval(npt), gq(n), hq((n*(n+1))/2), pq(npt),         &
+     & xpt(n, npt), fval(npt), gq(n), hq((n*(n+1))/2), pq(npt),         &
      & bmat(npt + n, n), zmat(npt, npt - n - 1), d(n), vlag(npt + n),   &
      & fopt, fsave, galt(n), galtsq, gqsq, hdiag(npt), ratio, rho,      &
      & rhosq, vquad, xoptsq, wcheck(npt+n), sigma(npt)
 
       logical :: model_step, reduce_rho, shortd
+
 
       ! The arguments N, NPT, X, RHOBEG, RHOEND, IPRINT and MAXFUN are
       ! identical to the corresponding arguments in SUBROUTINE NEWUOA.
@@ -35,15 +36,15 @@
       ! XNEW will be set to the displacement from XBASE of the vector of
       ! variables for the current calculation of F.
       ! XPT will contain the interpolation point coordinates relative to
-      ! XBASE.
+      ! XBASE, each COLUMN corresponding to a point.
       ! FVAL will hold the values of F at the interpolation points.
       ! GQ will hold the gradient of the quadratic model at XBASE.
       ! HQ will hold the explicit second order derivatives of the
       ! quadratic model.
       ! PQ will contain the parameters of the implicit second order
       ! derivatives of the quadratic model.
-      ! BMAT will hold the last N columns of H. ZMAT will hold the
-      ! factorization of the leading NPT by NPT submatrix of H, this
+      ! BMAT will hold the last N ROWs of H. ZMAT will hold the
+      ! factorization of the leading NPT by NPT sub-matrix of H, this
       ! factorization being ZMAT times Diag(DZ) times ZMAT^T, where the
       ! elements of DZ are plus or minus one, as specified by IDZ.
       ! NDIM is the first dimension of BMAT and has the value NPT + N.
@@ -217,11 +218,11 @@
               rhosq = max(tenth*delta, rho)**2
               hdiag = -sum(zmat(:, 1 : idz - 1)**2, dim = 2) +          &
      &         sum(zmat(:, idz : npt - n - 1)**2, dim = 2)             
-              xdsq = sum((xpt-spread(xopt,dim=1,ncopies=npt))**2, dim=2)
+              xdsq = sum((xpt-spread(xopt,dim=2,ncopies=npt))**2, dim=1)
 !              do k = 1, npt
 !                  hdiag(k) = -sum(zmat(k, 1 : idz - 1)**2) +            &
 !     &             sum(zmat(k, idz : npt - n - 1)**2)
-!                  xdiff = xpt(k, :) - xopt
+!                  xdiff = xpt(:, k) - xopt
 !                  xdsq(k) = dot_product(xdiff, xdiff)
 !              end do
               sigma = abs(beta*hdiag + vlag(1 : npt)**2)
@@ -245,12 +246,12 @@
                   call update(n, npt, bmat, zmat, idz, vlag, beta, knew)
                   ! Update the quadratic model
                   call updateq(n, npt, idz, knew, prederr(1),           &
-     &             xpt(knew, :), bmat(knew, :), zmat, gq, hq, pq)
+     &             xpt(:, knew), bmat(knew, :), zmat, gq, hq, pq)
 
                   ! Include the new interpolation point. This should be
                   ! done after updating BMAT, ZMAT, and the model.
                   fval(knew) = f
-                  xpt(knew, :) = xnew
+                  xpt(:, knew) = xnew
 
                   ! Test whether to replace the new quadratic model Q by
                   ! the least Frobenius norm interpolant Q_alt, making
@@ -304,9 +305,9 @@
               ! Find out if the interpolation points are close enough to
               ! the best point so far.
               distsq = 4.0_rp*delta*delta
-              xdsq = sum((xpt-spread(xopt,dim=1,ncopies=npt))**2, dim=2)
+              xdsq = sum((xpt-spread(xopt,dim=2,ncopies=npt))**2, dim=1)
 !              do k = 1, npt
-!                  xdiff = xpt(k, :) - xopt
+!                  xdiff = xpt(:, k) - xopt
 !                  xdsq(k) = dot_product(xdiff, xdiff)
 !              end do
               if (maxval(xdsq) > distsq) then
@@ -455,13 +456,13 @@
               ! interpolation point can be moved.
               call update(n, npt, bmat, zmat, idz, vlag, beta, knew)
               ! Update the quadratic model.
-              call updateq(n, npt, idz, knew, prederr(1), xpt(knew, :), &
+              call updateq(n, npt, idz, knew, prederr(1), xpt(:, knew), &
      &         bmat(knew, :), zmat, gq, hq, pq)
 
               ! Include the new interpolation point. This should be done
               ! after updating BMAT, ZMAT, and the model.
               fval(knew) = f
-              xpt(knew, :) = xnew
+              xpt(:, knew) = xnew
               if (f < fsave) then
                   kopt = knew
               end if

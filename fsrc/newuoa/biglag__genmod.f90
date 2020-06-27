@@ -1,4 +1,4 @@
-        !COMPILER-GENERATED INTERFACE MODULE: Sat Jun 27 00:16:39 2020
+        !COMPILER-GENERATED INTERFACE MODULE: Sun Jun 28 00:20:12 2020
         ! This source file is for reference only and may not completely
         ! represent the generated interface used by the compiler.
         MODULE BIGLAG__genmod
@@ -8,8 +8,8 @@
               INTEGER(KIND=4), INTENT(IN) :: NPT
               INTEGER(KIND=4), INTENT(IN) :: N
               REAL(KIND=8), INTENT(IN) :: XOPT(N)
-              REAL(KIND=8), INTENT(IN) :: XPT(NPT,N)
-              REAL(KIND=8), INTENT(IN) :: BMAT(NPT+N,N)
+              REAL(KIND=8), INTENT(IN) :: XPT(N,NPT)
+              REAL(KIND=8), INTENT(IN) :: BMAT(N,NPT+N)
               REAL(KIND=8), INTENT(IN) :: ZMAT(NPT,NPT-N-1)
               INTEGER(KIND=4), INTENT(IN) :: IDZ
               INTEGER(KIND=4), INTENT(IN) :: KNEW

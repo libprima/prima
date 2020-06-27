@@ -12,7 +12,7 @@
 
       integer, intent(in) :: n, npt, knew, idz
 
-      real(kind=rp), intent(in) :: xopt(n), xpt(n, npt), bmat(npt+n, n),&
+      real(kind=rp), intent(in) :: xopt(n), xpt(n, npt), bmat(n, npt+n),&
      & zmat(npt, npt-n-1), delta 
       real(kind=rp), intent(out) :: alpha, d(n)
 
@@ -52,8 +52,8 @@
 
       !----------------------------------------------------------------!
       ! The following DO LOOP calculates the GC below
-!-----!gc = bmat(knew, :) + matmul(xpt, hcol*matmul(xopt, xpt)) !------!
-      gc = bmat(knew, :)
+!-----!gc = bmat(:, knew) + matmul(xpt, hcol*matmul(xopt, xpt)) !------!
+      gc = bmat(:, knew)
       do k = 1, npt
           gc = gc + (hcol(k)*dot_product(xpt(:, k), xopt))*xpt(:, k)
       end do

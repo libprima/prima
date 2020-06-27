@@ -9,7 +9,7 @@
       integer, intent(out) :: info, kopt, nf
       real(kind = rp), intent(in) :: rhobeg, x(n), ftarget
       real(kind = rp), intent(out) :: xbase(n), xpt(n, npt), f,         &
-     & fval(npt), xopt(n), fopt, bmat(npt + n, n), zmat(npt, npt-n-1)
+     & fval(npt), xopt(n), fopt, bmat(n, npt + n), zmat(npt, npt-n-1)
       real(kind = rp), intent(out) :: gq(n), hq((n*(n + 1))/2), pq(npt)
 
       integer :: ih, ip, ipt(npt), itemp, jp, jpt(npt), npt_fun, npt_mod
@@ -150,13 +150,13 @@
               if (nf <= n + 1) then
                   gq(nf - 1) = (f - fbeg)/rhobeg
                   if (npt < nf + n) then
-                      bmat(1, nf - 1) = -one/rhobeg
-                      bmat(nf, nf - 1) = one/rhobeg
-                      bmat(npt + nf - 1, nf - 1) = -half*rhosq
+                      bmat(nf - 1, 1) = -one/rhobeg
+                      bmat(nf - 1, nf) = one/rhobeg
+                      bmat(nf - 1, npt + nf - 1) = -half*rhosq
                   end if
               else 
-                  bmat(nf - n, nf - n - 1) = half/rhobeg
-                  bmat(nf, nf - n - 1) = -half/rhobeg
+                  bmat(nf - n - 1, nf - n) = half/rhobeg
+                  bmat(nf - n - 1, nf) = -half/rhobeg
                   zmat(1, nf - n - 1) = -reciq - reciq
                   zmat(nf - n, nf - n - 1) = reciq
                   zmat(nf, nf - n - 1) = reciq

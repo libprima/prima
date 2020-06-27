@@ -1,4 +1,4 @@
-        !COMPILER-GENERATED INTERFACE MODULE: Sat Jun 27 00:16:40 2020
+        !COMPILER-GENERATED INTERFACE MODULE: Sun Jun 28 00:20:13 2020
         ! This source file is for reference only and may not completely
         ! represent the generated interface used by the compiler.
         MODULE QALT__genmod
@@ -10,7 +10,7 @@
               REAL(KIND=8), INTENT(OUT) :: HQ((N*(N+1))/2)
               REAL(KIND=8), INTENT(OUT) :: PQ(NPT)
               REAL(KIND=8), INTENT(IN) :: FVAL(NPT)
-              REAL(KIND=8), INTENT(IN) :: SMAT(NPT,N)
+              REAL(KIND=8), INTENT(IN) :: SMAT(N,NPT)
               REAL(KIND=8), INTENT(IN) :: ZMAT(NPT,NPT-N-1)
               INTEGER(KIND=4), INTENT(IN) :: KOPT
               INTEGER(KIND=4), INTENT(IN) :: IDZ

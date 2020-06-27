@@ -152,7 +152,6 @@
 
 !---------------------A PROBABLY BETTER IMPLEMENTATION-----------------!
 !-----!bmat = bmat + ( outprod(vlag, v1) + outprod(w, v2) ) !----------!
-!-----!bmat = bmat + ( outprod(vlag, v1) + outprod(w, v2) ) !----------!
       ! The only difference from the previous matrix-vector 
       ! implementation is the parentheses.
       ! Note that the update is naturally symmetric thanks to the

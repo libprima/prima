@@ -15,8 +15,11 @@
 
       real(kind = rp) :: vlag(npt), vz(npt - n - 1)
 
+      real(kind = rp) :: SMAR(n, npt)
+      SMAR = transpose(smat)
+
       vlag = fval - fval(kopt)
-      gq = matmul(vlag, smat)
+      gq = matmul(vlag, SMAR)
       hq = zero
       vz = matmul(vlag, zmat)
       vz(1 : idz - 1) = - vz(1 : idz - 1)
