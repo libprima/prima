@@ -24,7 +24,7 @@
       zmat = zero
       gq = zero
       hq = zero
-      pq = zero
+      pq = zero  ! We will not update PQ. It is ZERO at return.
 
       ! At return,
       ! INFO = 0: initialization finishes normally
@@ -167,10 +167,13 @@
           else
               ! When NF > 2*N+1, set the off-diagonal second derivatives
               ! of the Lagrange functions and the quadratic model.
+
+              ! IP, JP, XIP, and XJP will be used below.
               ip = ipt(nf)
               jp = jpt(nf)
               xip = xpt(nf, ip)
               xjp = xpt(nf, jp)
+
               ih = (ip*(ip - 1))/2 + jp
               if (xip < zero) then 
                   ip = ip + n
@@ -186,10 +189,10 @@
           end if
 
           ! Check whether NaN occurs in the coefficients. 
-          ! Do this only when NF > 1.
+          ! Note that PQ is always ZERO --- the initial HESSIAN only has
+          ! the explicit part.
           if ((any(is_nan(bmat)) .or. any(is_nan(zmat)).or.             &
-     &     any(is_nan(gq)) .or. any(is_nan(hq)) .or. any(is_nan(pq))))  &
-     &     then
+     &     any(is_nan(gq)) .or. any(is_nan(hq))) then
               info = -3
               exit
           end if
