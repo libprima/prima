@@ -1,0 +1,127 @@
+In NEWUOA, BOBYQA, and LINCOA, Powell defined XPT as an NPTxN matrix,
+each row containing the coordinates of an interpolation point, and BMAT
+as an (NPT+N)xN matrix containing the last N columns of H. However, in
+calculation, we access more often the rows of XPT and BMAT than the
+columns. For XPT, this is quite natural as each of its rows corresponds
+to an interpolation point; BMAT can indeed be written as [B1; B2] using
+a MATLAB-style notation, where B1 has a size of NPTxN, each row
+corresponding to an interpolation point, while B2 is an NxN symmetric matrix.  
+
+To improve the efficiency of accessing XPT and BMAT, we decided to
+revise the code by transposing them. XPT and BMAT in the revised code
+are respectively the transposes of the matrices with the same names in
+the original code. 
+
+To this end, here are the major changes.
+
+0. XPT(i, j) ==> XPT(j, i)
+   BMAT(i, j) = BMAT(j, i)
+1. matmul(XPT, v) ==> matmul(v, XPT)
+   matmul(BMAT, v) ==> matmul(v, BMAT)
+2. BMAT = BMAT + outprod(u, v) ==> BMAT = BMAT + outprod(v, u)
+3. XPT = XPT + spread(x, dim = 1, ncopies) ==> XPT = XPT + spread(x, dim = 2, ncopies)
+4. sum(XPT, dim = 2) ==> sum(XPT, dim = 1)
+
+An important thing to note is that QALT takes only part of BMAT (indeed,
+the first NPT columns in the new code; QALT calls it SMAT) as the input.
+So it is not enough to search for BMAT and change only the related parts. 
+SMAT should also be revised.
+
+It is unrealistic to finish all the changes at one time. We have to
+revise the files one by one, and verify the revision before continuing
+with another file. To this end, we implemented the changes in the
+following way. We take XPT as an example.
+
+Step 1. Revising all the subroutine other than newuob.f and initialize.f
+
+1.1. In each subroutine except for newuob.f and initialize.f, define
+a new variable XPR of size NxNPT. At the very beginning of each
+subroutine, after declaring the variables, define 
+
+XPR = transpose(XPT) 
+
+If XPT is an output of this subroutine, then put also 
+
+XPT = transpose(XPR)
+
+right before the subroutine returns.
+
+1.2. Replace all the XPT below the above line by XPR except for the XPT
+     that are passed to other subroutines.  
+
+1.3. If XPT is passed to another subroutine, put
+
+XPT = transpose(XPR)
+
+right above the line that invokes the subroutine. The idea is indeed the
+same same as putting the same instruction before the return.
+
+1.4. For each XPR, change XPR(i, j) to XPR(j, i), matmul(XPR, v) to
+   matmul(x, XPR), matmul(v, XPR) to matmul(XPR, v), spread(XPR dim = 1)
+   to spread(XPR, dim =2), sum(XPR, dim = 2) to sum(XPR, dim = 1) ...
+
+1.5. After finishing the above changes in a subroutine, compile it and
+   verify whether the changes are correctly made by checking whether the
+   code produce EXACTLY the same results as before.
+
+The reason for introducing XPR is to keep the changes local --- we do
+not need to change how the subroutine interfaces with others.
+
+Step 2. Revise newuob.f
+
+2.1. In newuob.f, define a new variable XPR of size NxNPT. Right after the
+initialization finishes (i.e., after calling initialize()), put 
+
+XPR = transpose(XPT)
+
+2.2. Then replace all the XPT below the above line by XPR.
+
+2.3. For each XPR, change XPR(i, j) to XPR(j, i), matmul(XPR, v) to
+   matmul(x, XPR), matmul(v, XPR) to matmul(XPR, v), spread(XPR dim = 1)
+   to spread(XPR, dim =2), sum(XPR, dim = 2) to sum(XPR, dim = 1) ...
+
+2.4. For each subroutine called by newuob, change the declaration of XPT
+    to 
+
+real (kind=??), intent(??) :: XPT(N, NPT)
+
+If the subroutine contains 
+
+XPR = transpose(XPT)
+or
+XPT = transpose(XPR)
+
+remove the transpose.
+
+
+2.5. After finishing the above changes in newuob.f and the subroutines
+   called by newuob, compile and verify whether the changes are
+   correctly made by checking whether the code produce EXACTLY the same
+   results as before.
+
+Step 3. Revise initialize.f
+
+3.1. For each XPT, change XPT(i, j) to XPT(j, i), matmul(XPT, v) to
+   matmul(x, XPT), matmul(v, XPT) to matmul(XPT, v), spread(XPT dim = 1)
+   to spread(XPT, dim =2), sum(XPT, dim = 2) to sum(XPT, dim = 1) ...
+
+3.2. In newuob.f, remove the transpose in
+
+XPR = transpose(XPT)
+
+3.3. After finishing the above changes, compile and verify whether the
+   changes are correctly made by checking whether the code produce
+   EXACTLY the same results as before.
+
+4. Finish the revision.
+
+4.1. In all the subroutines, remove the declaration of XPR, and the
+   replace all the XPR by XPT, and remove all the lines that are 
+
+   XPT = XPT
+
+4.2. Compile and verify that the changes are correctly made. 
+
+
+The revision for BMAT is similar. One has to pay particular attention to
+the outer products in the update of BMAT. 

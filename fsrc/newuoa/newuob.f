@@ -19,7 +19,7 @@
       real(kind = rp) :: alpha, beta, crvmin, delta, prederr(3), distsq,&
      & dnorm, dsq, dstep, xdsq(npt), xbase(n), xopt(n), xnew(n),        &
      & xpt(n, npt), fval(npt), gq(n), hq((n*(n+1))/2), pq(npt),         &
-     & bmat(npt + n, n), zmat(npt, npt - n - 1), d(n), vlag(npt + n),   &
+     & bmat(n, npt + n), zmat(npt, npt - n - 1), d(n), vlag(npt + n),   &
      & fopt, fsave, galt(n), galtsq, gqsq, hdiag(npt), ratio, rho,      &
      & rhosq, vquad, xoptsq, wcheck(npt+n), sigma(npt)
 
@@ -54,14 +54,17 @@
       ! length NDIM = NPT+N.
 
 
+      maxtr = maxfun  ! Maximal numer of trust region iterations.
+      info = 0  ! Exit status. The default value is 0.
+
       call initialize(n, npt, rhobeg, x, xbase, xpt, f, fval, xopt,     &
      & fopt, kopt, bmat, zmat, gq, hq, pq, nf, subinfo, ftarget)
       if (subinfo == 1 .or. subinfo == -1 .or. subinfo == -2 .or.       &
      & subinfo == -3) then
-          info = subinfo
-          x = xbase + xopt
-          f = fopt
-          return
+          maxtr = 0  ! No trust region in this case. Return immediately.
+          info = subinfo  ! Set the exit status.
+          x = xbase + xopt  ! Set X.
+          f = fopt  ! Set F.
       end if
 
       ! Set some more initial values.
@@ -74,10 +77,6 @@
       xoptsq = dot_product(xopt, xopt)
 
       ! Begin the iterative procedure.
-
-      maxtr = maxfun  ! Maximal numer of trust region iterations
-      info = 0  ! Exit status
-
       do tr = 1, maxtr
 
           ! Is the trust region trial step short?
@@ -246,7 +245,7 @@
                   call update(n, npt, bmat, zmat, idz, vlag, beta, knew)
                   ! Update the quadratic model
                   call updateq(n, npt, idz, knew, prederr(1),           &
-     &             xpt(:, knew), bmat(knew, :), zmat, gq, hq, pq)
+     &             xpt(:, knew), bmat(:, knew), zmat, gq, hq, pq)
 
                   ! Include the new interpolation point. This should be
                   ! done after updating BMAT, ZMAT, and the model.
@@ -272,7 +271,7 @@
                           gqsq = dot_product(gq, gq)
                           vlag(1 : npt) = fval - fval(kopt)
 
-                          galt = matmul(vlag(1 : npt), bmat(1:npt, 1:n))
+                          galt = matmul(bmat(:, 1:npt), vlag(1 : npt))
                           galtsq = dot_product(galt, galt)
 
                           if (gqsq < 100.0_rp*galtsq) then
@@ -284,7 +283,7 @@
                   end if
 
                   if (itest >= 3) then
-                      call qalt(gq, hq, pq, fval, bmat(1 : npt, :),     &
+                      call qalt(gq, hq, pq, fval, bmat(:, 1 : npt),     &
      &                 zmat, n, npt, kopt, idz)
                       itest = 0
                   end if
@@ -457,7 +456,7 @@
               call update(n, npt, bmat, zmat, idz, vlag, beta, knew)
               ! Update the quadratic model.
               call updateq(n, npt, idz, knew, prederr(1), xpt(:, knew), &
-     &         bmat(knew, :), zmat, gq, hq, pq)
+     &         bmat(:, knew), zmat, gq, hq, pq)
 
               ! Include the new interpolation point. This should be done
               ! after updating BMAT, ZMAT, and the model.
@@ -470,8 +469,11 @@
       end do
 
       ! Return from the calculation, after another Newton-Raphson step,
-      ! if it is too short to have been tried before.
-      if (shortd .and. nf < maxfun) then
+      ! if it is too short to have been tried before. 
+      ! Note that no trust region iteration has been done if maxtr = 0,
+      ! and hence we should not check whether shortd = true but return
+      ! immediately. 
+      if (maxtr > 0 .and. shortd .and. nf < maxfun) then
           x = xbase + (xopt + d)
           if (any(is_nan(x))) then
               f = sum(x)  ! Set F to NaN. It is necessary.
@@ -481,6 +483,7 @@
               nf = nf + 1
           end if
       end if
+
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! By Zaikun (commented on 02-06-2019; implemented in 2016):
       ! Note that (FOPT .LE. F) is FALSE if F is NaN; When F is NaN, it

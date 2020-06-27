@@ -12,13 +12,14 @@
       integer, intent(in) :: n, npt, knew
       integer, intent(inout) :: idz
       real(kind=rp), intent(in) :: beta
-      real(kind=rp), intent(inout) :: bmat(npt+n, n), zmat(npt,npt-n-1),&
+      real(kind=rp), intent(inout) :: bmat(n, npt+n), zmat(npt,npt-n-1),&
      & vlag(npt + n)
 
       integer :: iflag, j, ja, jb, jl
       real(kind=rp) :: c, s, r, alpha, denom, scala, scalb, tau, tausq, &
      & temp, tempa, tempb, ztemp(npt), w(npt + n), v1(n), v2(n)
 
+          
       ! Apply the rotations that put zeros in the KNEW-th row of ZMAT.
       do j = 1, npt - n - 1
           if (j == 1 .or. j == idz) then
@@ -119,40 +120,39 @@
       end if
       
       ! Finally,  update the matrix BMAT.
-      w(npt + 1 : npt + n) = bmat(knew, :)
+      w(npt + 1 : npt + n) = bmat(:, knew)
       v1 = (alpha*vlag(npt+1 : npt+n) - tau*w(npt+1 : npt+n))/denom
       v2 = (-beta*w(npt+1 : npt+n) - tau*vlag(npt+1 : npt+n))/denom
 
 !      !-------------------POWELL'S IMPLEMENTATION----------------------!
 !      do j = 1, n
-!          bmat(1 : npt + j, j) = bmat(1 : npt + j, j) +                 &
+!          bmat(j, 1 : npt + j) = bmat(j, 1 : npt + j) +                 &
 !     &     v1(j)*vlag(1 : npt + j) + v2(j)*w(1 : npt + j)
-!      ! Set the lower triangular part of BMAT(NPT+1:NPT+N,:) by symmetry
-!      ! Note that SHIFTBASE sets the upper triangular part by copying
-!      ! the lower triangular part, but here it does the opposite. There 
+!      ! Set the upper triangular part of BMAT(NPT+1:NPT+N,:) by symmetry
+!      ! Note that SHIFTBASE sets the lower triangular part by copying
+!      ! the upper triangular part, but here it does the opposite. There 
 !      ! seems not any particular reason to keep them different. It was
 !      ! probably an ad-hoc decision that Powell made when coding. 
-!          bmat(npt + j, 1 : j - 1) = bmat(npt + 1 : npt + j - 1, j)
+!          bmat(1 : j - 1, npt + j) = bmat(j, npt + 1 : npt + j - 1)
 !      end do 
 !      !---------------POWELL'S IMPLEMENTATION ENDS---------------------!
 
       !-----------------MATRIX-VECTOR IMPLEMENTATION-------------------!
-      bmat = bmat + outprod(vlag, v1) + outprod(w, v2)
-      ! Set the lower triangular part of BMAT(NPT+1:NPT+N,:) by symmetry
-      ! Note that SHIFTBASE sets the upper triangular part by copying
-      ! the lower triangular part, but here it does the opposite. There 
+      bmat = bmat + outprod(v1, vlag) + outprod(v2, w)
+      ! Set the upper triangular part of BMAT(NPT+1:NPT+N,:) by symmetry
+      ! Note that SHIFTBASE sets the lower triangular part by copying
+      ! the upper triangular part, but here it does the opposite. There 
       ! seems not any particular reason to keep them different. It was
       ! probably an ad-hoc decision that Powell made when coding. 
       ! This part can be spared if we put a pair of parenthsis around 
       ! the two outter products as elaborated below.
       do j = 1, n
-          bmat(npt + j, 1 : j - 1) = bmat(npt + 1 : npt + j - 1, j)
+          bmat(1 : j - 1, npt + j) = bmat(j, npt + 1 : npt + j - 1)
       end do 
       !--------------MATRIX-VECTOR IMPLEMENTATION ENDS-----------------!
 
 !---------------------A PROBABLY BETTER IMPLEMENTATION-----------------!
-!-----!bmat = bmat + ( outprod(vlag, v1) + outprod(w, v2) ) !----------!
-!-----!bmat = bmat + ( outprod(vlag, v1) + outprod(w, v2) ) !----------!
+!-----!bmat = bmat + ( outprod(v1, vlag) + outprod(v2, w) ) !----------!
       ! The only difference from the previous matrix-vector 
       ! implementation is the parentheses.
       ! Note that the update is naturally symmetric thanks to the
