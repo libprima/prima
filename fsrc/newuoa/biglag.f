@@ -12,7 +12,7 @@
 
       integer, intent(in) :: n, npt, knew, idz
 
-      real(kind=rp), intent(in) :: xopt(n), xpt(npt, n), bmat(npt+n, n),&
+      real(kind=rp), intent(in) :: xopt(n), xpt(n, npt), bmat(npt+n, n),&
      & zmat(npt, npt-n-1), delta 
       real(kind=rp), intent(out) :: alpha, d(n)
 
@@ -29,7 +29,7 @@
       ! XPT contains the current interpolation points.
       ! BMAT provides the last N columns of H.
       ! ZMAT and IDZ give a factorization of the first NPT by NPT
-      ! submatrix of H.
+      ! sub-matrix of H.
       ! KNEW is the index of the interpolation point to be removed.
       ! DELTA is the current trust region bound.
       ! D will be set to the step from XOPT to the new point.
@@ -45,17 +45,17 @@
 
       ! Set the unscaled initial direction D. Form the gradient of LFUNC
       ! at XOPT, and multiply D by the Hessian of LFUNC.
-      d = xpt(knew, :) - xopt
+      d = xpt(:, knew) - xopt
       dd = dot_product(d, d)
 
-      gd = matmul(hcol*matmul(xpt, d), xpt)
+      gd = matmul(xpt, hcol*matmul(d, xpt))
 
       !----------------------------------------------------------------!
       ! The following DO LOOP calculates the GC below
-!-----!gc = bmat(knew, :) + matmul(hcol*matmul(xpt, xopt), xpt) !------!
+!-----!gc = bmat(knew, :) + matmul(xpt, hcol*matmul(xopt, xpt)) !------!
       gc = bmat(knew, :)
       do k = 1, npt
-          gc = gc + (hcol(k)*dot_product(xpt(k, :), xopt))*xpt(k, :)
+          gc = gc + (hcol(k)*dot_product(xpt(:, k), xopt))*xpt(:, k)
       end do
       !----------------------------------------------------------------!
 
@@ -93,10 +93,10 @@
           denom = sqrt(dd*ss - sp*sp)
           s = (dd*s - sp*d)/denom
 
-          w = matmul(hcol*matmul(xpt, s), xpt)
+          w = matmul(xpt, hcol*matmul(s, xpt))
 !          w = zero
 !          do k = 1, npt
-!             w = w + (hcol(k)*dot_product(xpt(k, :), s))*xpt(k, :)
+!             w = w + (hcol(k)*dot_product(xpt(:, k), s))*xpt(:, k)
 !          end do
           
           ! Calculate the coefficients of the objective function on the

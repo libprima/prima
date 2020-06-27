@@ -42,7 +42,7 @@
       
       integer, intent(in) :: n, npt
       integer, intent(out) :: info
-      real(kind = rp), intent(in) :: tol, delta, x(n), xpt(npt, n),     &
+      real(kind = rp), intent(in) :: tol, delta, x(n), xpt(n, npt),     &
      & gq(n), hq((n*(n + 1))/2), pq(npt)
       real(kind = rp), intent(out) :: s(n), crvmin, qred
       
@@ -52,6 +52,7 @@
      & reduc, sg, sgk, shs, ss, sth, temp, tempa, tempb, d(n), g(n),    &
      & hd(n), hs(n), hx(n) 
       logical :: twod_search
+            
       
       s = zero
       crvmin = zero
@@ -257,15 +258,16 @@
       use consts, only : rp
 
       integer, intent(in) :: n, npt
-      real(kind = rp), intent(in) :: xpt(npt, n), hq((n*(n + 1))/2),    &
+      real(kind = rp), intent(in) :: xpt(n, npt), hq((n*(n + 1))/2),    &
      & pq(npt), d(n)
       
       real(kind = rp), intent(out) :: hd(n)
 
       integer :: i, ih, j
+            
 
       ! Multiply d by the explicit part of HESSIAN
-      hd = matmul(pq*matmul(xpt, d), xpt)
+      hd = matmul(xpt, pq*matmul(d, xpt))
 
       ih = 0
       do j = 1, n
