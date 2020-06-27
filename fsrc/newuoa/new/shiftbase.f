@@ -11,13 +11,13 @@
 
       real(kind = rp), intent(in) :: xopt(n), pq(npt), zmat(npt,npt-n-1)
       real(kind = rp), intent(inout) :: bmat(npt + n, n), gq(n),        &
-     & hq((n*(n + 1))/2), xpt(npt, n)
+     & hq((n*(n + 1))/2), xpt(n, npt)
 
       integer :: i, ih, j, k
-      real(kind = rp) :: sumz(npt-n-1), vlag(n), qxoptq, xoptsq, pqx(n),&
+      real(kind = rp) :: sumz(npt-n-1), vlag(n), qxoptq, xoptsq, xpq(n),&
      & bmatk(n), w1(npt), w2(n), w3(npt) 
 
-
+            
       xoptsq = dot_product(xopt, xopt)
       qxoptq = quart * xoptsq
 
@@ -29,8 +29,8 @@
       !----------------------------------------------------------------!
       do k = 1, npt
       ! Update of GQ due to the implicit part of the HESSIAN:
-      ! GQ = GQ + (\sum_{K=1}^NPT PQ(K)*XPT(K, :)'*XPT(K, :)) * XOPT
-          gq = gq + pq(k)*dot_product(xpt(k, :), xopt)*xpt(k, :)
+      ! GQ = GQ + (\sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)') * XOPT
+          gq = gq + pq(k)*dot_product(xpt(:, k), xopt)*xpt(:, k)
       end do
       ih = 0
       do j = 1, n
@@ -42,20 +42,20 @@
          end do
       end do
       
-      w1 = matmul(xpt, xopt) - half*xoptsq
+      w1 = matmul(xopt, xpt) - half*xoptsq
       ! W1 equals MATMUL(XPT, XOPT) after XPT is updated as follows.
-      xpt = xpt - half*spread(xopt, dim = 1, ncopies = npt)
+      xpt = xpt - half*spread(xopt, dim = 2, ncopies = npt)
       !do k = 1, npt
-      !    xpt(k, :) = xpt(k, :) - half*xopt
+      !    xpt(:, k) = xpt(:, k) - half*xopt
       !end do
 
       ! Update HQ. It has to be done after the above revision to XPT!!!
-      pqx = matmul(pq, xpt)
-      ! The followind DO LOOP indeed adds (pqx*xopt' + xopt*pqx') to the 
+      xpq = matmul(xpt, pq)
+      ! The followind DO LOOP indeed adds (xpq*xopt' + xopt*xpq') to the 
       ! explicit part of the HESSIAN
       ih = 0
       do j = 1, n
-          hq(ih+1:ih+j)=hq(ih+1:ih+j)+pqx(1:j)*xopt(j)+xopt(1:j)*pqx(j)
+          hq(ih+1:ih+j)=hq(ih+1:ih+j)+xpq(1:j)*xopt(j)+xopt(1:j)*xpq(j)
           ih = ih + j
       end do
 
@@ -63,7 +63,7 @@
 !      ! Make the changes to BMAT that do not depend on ZMAT.
 !      do k = 1, npt
 !          bmatk = bmat(k, :)
-!          w2 = w1(k)*xpt(k, :) + qxoptq*xopt
+!          w2 = w1(k)*xpt(:, k) + qxoptq*xopt
 !          ! The following DO LOOP performs the update below, but only
 !          ! calculates the lower triangular part since it is symmetric.
 !!----------------------------------------------------------------------!
@@ -83,13 +83,13 @@
 !          ! The results are not identical due to the non-associtivity 
 !          ! of floating point arithmetic addition.
 !!----------------------------------------------------------------------!
-!!          vlag = qxoptq*sumz(k)*xopt + matmul(w1*zmat(:, k), xpt)
+!!          vlag = qxoptq*sumz(k)*xopt + matmul(xpt, w1*zmat(:, k))
 !!----------------------------------------------------------------------!
 !          w3 = w1*zmat(:, k)
 !          do j = 1, n
 !              vlag(j) = qxoptq*sumz(k)*xopt(j)
 !              do i = 1, npt
-!                  vlag(j) = vlag(j) + w3(i)*xpt(i, j)
+!                  vlag(j) = vlag(j) + w3(i)*xpt(j, i)
 !              end do
 !          end do
 !
@@ -128,7 +128,7 @@
       ! Make the changes to BMAT that do not depend on ZMAT.
       do k = 1, npt
           bmatk = bmat(k, :)
-          w2 = w1(k)*xpt(k, :) + qxoptq*xopt
+          w2 = w1(k)*xpt(:, k) + qxoptq*xopt
           ! This is the only place where non-symmetry of
           ! BMAT(NPT+1:NPT+N, :) can come from. It is because of the
           ! non-associtivity of floating point arithmetic addition. To
@@ -152,14 +152,12 @@
           ! The results are not identical due to the non-associtivity 
           ! of floating point arithmetic addition.
 !----------------------------------------------------------------------!
-          !vlag = qxoptq*sumz(k)*xopt + matmul(w1*zmat(:, k), xpt)
+          !vlag = qxoptq*sumz(k)*xopt + matmul(xpt, w1*zmat(:, k))
 !----------------------------------------------------------------------!
           w3 = w1*zmat(:, k)
-          do j = 1, n
-              vlag(j) = qxoptq*sumz(k)*xopt(j)
-              do i = 1, npt
-                  vlag(j) = vlag(j) + w3(i)*xpt(i, j)
-              end do
+          vlag = qxoptq*sumz(k)*xopt
+          do i = 1, npt
+              vlag = vlag + w3(i)*xpt(:, i)
           end do
           bmat(1:npt, :) = bmat(1:npt, :) - outprod(zmat(:,k),vlag)
           bmat(npt+1:npt+n,:) = bmat(npt+1:npt+n,:) - outprod(vlag,vlag)
@@ -169,14 +167,12 @@
           ! The results are not identical due to the non-associtivity 
           ! of floating point arithmetic addition.
 !----------------------------------------------------------------------!
-          !vlag = qxoptq*sumz(k)*xopt(j) + matmul(w1*zmat(:, k), xpt)
+          !vlag = qxoptq*sumz(k)*xopt + matmul(xpt, w1*zmat(:, k))
 !----------------------------------------------------------------------!
           w3 = w1*zmat(:, k)
-          do j = 1, n
-              vlag(j) = qxoptq*sumz(k)*xopt(j)
-              do i = 1, npt
-                  vlag(j) = vlag(j) + w3(i)*xpt(i, j)
-              end do
+          vlag = qxoptq*sumz(k)*xopt
+          do i = 1, npt
+              vlag = vlag + w3(i)*xpt(:, i)
           end do
           bmat(1:npt, :) = bmat(1:npt, :) + outprod(zmat(:,k),vlag)
           bmat(npt+1:npt+n,:) = bmat(npt+1:npt+n,:) + outprod(vlag,vlag)
@@ -197,9 +193,9 @@
       ! The following instructions complete the shift of XBASE.
       ! Recall the we have already subtracted HALF*XOPT from XPT. 
       ! Therefore, overall, the new XPT is XPT - XOPT.
-      xpt = xpt - half*spread(xopt, dim = 1, ncopies = npt)
+      xpt = xpt - half*spread(xopt, dim = 2, ncopies = npt)
       !do k = 1, npt
-      !    xpt(k, :) = xpt(k, :) - half*xopt
+      !    xpt(:, k) = xpt(:, k) - half*xopt
       !end do
 
       return 

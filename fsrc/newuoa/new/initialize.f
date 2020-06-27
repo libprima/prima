@@ -8,7 +8,7 @@
       integer, intent(in) :: n, npt
       integer, intent(out) :: info, kopt, nf
       real(kind = rp), intent(in) :: rhobeg, x(n), ftarget
-      real(kind = rp), intent(out) :: xbase(n), xpt(npt, n), f,         &
+      real(kind = rp), intent(out) :: xbase(n), xpt(n, npt), f,         &
      & fval(npt), xopt(n), fopt, bmat(npt + n, n), zmat(npt, npt-n-1)
       real(kind = rp), intent(out) :: gq(n), hq((n*(n + 1))/2), pq(npt)
 
@@ -16,6 +16,7 @@
       real(kind = rp) :: fbeg, rhosq, reciq, recip, temp, xip, xjp,     &
      & xtemp(n)
       logical :: evaluated(npt)
+
 
       ! Set the initial elements of XPT, BMAT, HQ, PQ and ZMAT to zero.
       xbase = x
@@ -84,9 +85,9 @@
           ! Set XPT(NF, :)
           if (nf <= 2*n + 1) then
               if (nf <= n + 1) then
-                  xpt(nf, nf - 1) = rhobeg
+                  xpt(nf - 1, nf) = rhobeg
               else
-                  xpt(nf, nf - n - 1) = -rhobeg
+                  xpt(nf - n - 1, nf) = -rhobeg
               end if
           else
               itemp = (nf - n - 2)/n
@@ -107,12 +108,12 @@
               !    possibly negative.
               xip = sign(rhobeg, (fval(ip + n + 1) - fval(ip + 1)))
               xjp = sign(rhobeg, (fval(jp + n + 1) - fval(jp + 1)))
-              xpt(nf, ip) = xip
-              xpt(nf, jp) = xjp
+              xpt(ip, nf) = xip
+              xpt(jp, nf) = xjp
           end if
 
           ! Function evaluation at XPT(NF, :)
-          xtemp = xpt(nf, :) + xbase
+          xtemp = xpt(:, nf) + xbase
           if (any(is_nan(xtemp))) then
               f = sum(xtemp)  ! Set F to NaN. It is necessary.
               info = -1
@@ -171,8 +172,8 @@
               ! IP, JP, XIP, and XJP will be used below.
               ip = ipt(nf)
               jp = jpt(nf)
-              xip = xpt(nf, ip)
-              xjp = xpt(nf, jp)
+              xip = xpt(ip, nf)
+              xjp = xpt(jp, nf)
 
               ih = (ip*(ip - 1))/2 + jp
               if (xip < zero) then 
@@ -212,7 +213,7 @@
       else
           kopt = minloc(fval, dim = 1, mask = evaluated)
           fopt = fval(kopt)
-          xopt = xpt(kopt, :)
+          xopt = xpt(:, kopt)
       end if
 
       return
