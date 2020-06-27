@@ -14,7 +14,7 @@
 
       integer, intent(in) :: n, npt
 
-      real(kind = rp), intent(in) :: d(n), x(n), xpt(npt, n), gq(n),    &
+      real(kind = rp), intent(in) :: d(n), x(n), xpt(n, npt), gq(n),    &
      & hq((n*(n+1))/2), pq(npt)
       real(kind = rp), intent(out) :: vquad 
 
@@ -44,8 +44,8 @@
       ! to pass it as an input. The only place that can make WCHECK
       ! different from this value is in BIGDEN, where WCHECK is
       ! calculated in another way (that is mathematically equivalent). 
-!-----!wcheck = matmul(xpt, d) !---------------------------------------!
-!-----!wcheck = wcheck*(half*wcheck + matmul(xpt, x)) !----------------!
+!-----!wcheck = matmul(d, xpt) !---------------------------------------!
+!-----!wcheck = wcheck*(half*wcheck + matmul(x, xpt)) !----------------!
 !----------------------------------------------------------------------!
 
       do k = 1, npt
@@ -56,7 +56,7 @@
 !      s = d + x + x  ! Different from the above version.
 !
 !      ! 1st order term plus implicit 2nd-order term
-!      vquad = dot_product(d,gq)+half*sum(pq*matmul(xpt,s)*matmul(xpt,d)) 
+!      vquad = dot_product(d,gq)+half*sum(pq*matmul(s,xpt)*matmul(d,xpt)) 
 !
 !      ! explicit 2nd-order term
 !      ih = 0 

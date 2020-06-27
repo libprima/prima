@@ -14,7 +14,7 @@
 
       integer, intent(in) :: n, npt, knew, kopt, idz
 
-      real(kind=rp), intent(in) :: xopt(n), xpt(npt, n), bmat(npt+n, n),&
+      real(kind=rp), intent(in) :: xopt(n), xpt(n, npt), bmat(npt+n, n),&
      & zmat(npt, npt - n - 1)
       real(kind=rp), intent(out) :: beta, vlag(npt + n), wcheck(npt + n) 
       real(kind=rp), intent(inout) :: d(n)
@@ -26,6 +26,7 @@
      & ds, dtest, ss, ssden, summation, sumold, step, tau, temp, tempa, &
      & tempb, tempc, tempv(npt), xoptd, xopts, xoptsq, alpha,           &
      & w1(npt), w2(n)
+            
 
       ! N is the number of variables.
       ! NPT is the number of interpolation equations.
@@ -33,7 +34,7 @@
       ! XPT contains the current interpolation points.
       ! BMAT provides the last N columns of H.
       ! ZMAT and IDZ give a factorization of the first NPT by NPT
-      ! submatrix of H.
+      ! sub-matrix of H.
       ! NDIM is the first dimension of BMAT and has the value NPT + N.
       ! KOPT is the index of the optimal interpolation point.
       ! KNEW is the index of the interpolation point to be removed.
@@ -65,7 +66,7 @@
       ! interpolation point may be chosen, in order to prevent S from
       ! being nearly parallel to D.
       dd = dot_product(d, d)
-      s = xpt(knew, :) - xopt
+      s = xpt(:, knew) - xopt
       ds = dot_product(d, s)
       ss = dot_product(s, s)
       xoptsq = dot_product(xopt, xopt)
@@ -73,10 +74,10 @@
       if (.not. (ds*ds <= 0.99_rp*dd*ss)) then
           dtest = ds*ds/ss
           ! The following DO LOOP implements the code below.
-          !dstemp = matmul(xpt, d) - dot_product(xopt, d)
-          !sstemp = sum((xpt - spread(xopt, dim = 1, ncopies = npt))**2, dim = 2) 
+          !dstemp = matmul(d, xpt) - dot_product(xopt, d)
+          !sstemp = sum((xpt - spread(xopt, dim = 2, ncopies = npt))**2, dim = 1) 
           do k = 1, npt
-              stemp = xpt(k, :) - xopt
+              stemp = xpt(:, k) - xopt
               dstemp(k) = dot_product(d, stemp)
               sstemp(k) = dot_product(stemp, stemp)
           end do
@@ -87,7 +88,7 @@
           if ((.not. (dstemp(k)*dstemp(k)/sstemp(k) >= dtest)) .and.    &
      &     k /= kopt) then
           ! Althoguh unlikely, if NaN occurs, it may happen that k=kopt.
-              s = xpt(k, :) - xopt
+              s = xpt(:, k) - xopt
               ds = dstemp(k)
               ss = sstemp(k)
           end if
@@ -115,9 +116,9 @@
           
           ! Put the coefficients of WCHECK in WVEC.
           do k = 1, npt
-              tempa = dot_product(xpt(k, :), d)
-              tempb = dot_product(xpt(k, :), s)
-              tempc = dot_product(xpt(k, :), xopt)
+              tempa = dot_product(xpt(:, k), d)
+              tempb = dot_product(xpt(:, k), s)
+              tempc = dot_product(xpt(:, k), xopt)
               wvec(k, 1) = quart*(tempa*tempa + tempb*tempb)
               wvec(k, 2) = tempa*tempc
               wvec(k, 3) = tempb*tempc
@@ -265,23 +266,23 @@
           ! to D. Then branch for the next iteration.
           s = tau*bmat(knew, :) + alpha*(tempa*xopt + tempb*d -         &
      &     vlag(npt+1:npt+n))
-          tempv = matmul(xpt, w2)
+          tempv = matmul(w2, xpt)
           tempv = (tau*w1 - alpha*vlag(1 : npt))*tempv
 !----------------------------------------------------------------------!
           !!! In later versions, the following DO LOOP should be
           !!! replaced by MATMUL as follows:
-!---------!s = s + matmul(tempv, xpt) !--------------------------------!
+!---------!s = s + matmul(xpt, tempv) !--------------------------------!
           !!! For the moment, we use a DO LOOP instead of MATMUL to
           !!! ensure that the result is identical to that of Powell's
           !!! code. If we use MATMUL, the result is not always the same,
           !!! since floating point addition (and multiplication) is not
           !!! associative, although it is commutative. The following 
           !!! LOOP calculates 
-          !!! s + tempv(1)*xpt(1, :) + tempv(2)*xpt(2, :) + ...
-          !!! while s + matmul(tempv, xpt) calculates
-          !!! s + ( tempv(1)*xpt(1, :) + tempv(2)*xpt(2, :) + ... )
+          !!! s + tempv(1)*xpt(:, 1) + tempv(2)*xpt(:, 2) + ...
+          !!! while s + matmul(xpt, tempv) calculates
+          !!! s + ( tempv(1)*xpt(:, 1) + tempv(2)*xpt(:, 2) + ... )
           do k = 1, npt
-              s = s + tempv(k)*xpt(k, :)
+              s = s + tempv(k)*xpt(:, k)
           end do 
 !----------------------------------------------------------------------!
     
@@ -309,8 +310,8 @@
       ! model. Indeed, we may calculate WCHECK internally in CALQUAD.
       !
       ! WCHECK is the following vector in theory. 
-!-----!wcheck = matmul(xpt, d) !---------------------------------------!
-!-----!wcheck = wcheck*(half*wcheck + matmul(xpt, xopt)) !----------------!
+!-----!wcheck = matmul(d, xpt) !---------------------------------------!
+!-----!wcheck = wcheck*(half*wcheck + matmul(xopt, xpt)) !----------------!
       ! The result here is likely different from the theoretical value.
 !----------------------------------------------------------------------!
       wcheck = matmul(wvec(:, 1 : 5), par(1 : 5))
