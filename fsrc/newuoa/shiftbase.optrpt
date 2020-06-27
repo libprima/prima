@@ -1,0 +1,374 @@
+Intel(R) Advisor can now assist with vectorization and show optimization
+  report messages with your source code.
+See "https://software.intel.com/en-us/intel-advisor-xe" for details.
+
+
+Begin optimization report for: SHIFTBASE
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at shiftbase.f(33,11)
+<Peeled loop for vectorization>
+LOOP END
+
+LOOP BEGIN at shiftbase.f(33,11)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at shiftbase.f(33,11)
+<Remainder loop for vectorization>
+   remark #15301: REMAINDER LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at shiftbase.f(33,11)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at shiftbase.f(36,7)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at shiftbase.f(38,10)
+      remark #25460: No loop optimizations reported
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(38,10)
+   <Remainder>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at shiftbase.f(47,7)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at shiftbase.f(47,7)
+<Remainder loop for vectorization>
+   remark #15301: REMAINDER LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at shiftbase.f(47,7)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at shiftbase.f(49,7)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at shiftbase.f(49,7)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(49,7)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(49,7)
+   <Alternate Alignment Vectorized Loop>
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(49,7)
+   <Remainder loop for vectorization>
+      remark #15301: REMAINDER LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(49,7)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at shiftbase.f(49,7)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at shiftbase.f(49,7)
+      remark #25460: No loop optimizations reported
+
+      LOOP BEGIN at shiftbase.f(49,7)
+      <Peeled loop for vectorization>
+      LOOP END
+
+      LOOP BEGIN at shiftbase.f(49,7)
+         remark #15300: LOOP WAS VECTORIZED
+      LOOP END
+
+      LOOP BEGIN at shiftbase.f(49,7)
+      <Alternate Alignment Vectorized Loop>
+      LOOP END
+
+      LOOP BEGIN at shiftbase.f(49,7)
+      <Remainder loop for vectorization>
+      LOOP END
+   LOOP END
+LOOP END
+
+LOOP BEGIN at shiftbase.f(59,7)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at shiftbase.f(60,11)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(60,11)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at shiftbase.f(132,11)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at shiftbase.f(132,11)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at shiftbase.f(133,11)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at shiftbase.f(133,11)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at shiftbase.f(146,11)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at shiftbase.f(146,11)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(146,11)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(146,11)
+   <Alternate Alignment Vectorized Loop>
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(146,11)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at shiftbase.f(151,14)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at shiftbase.f(151,14)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(151,14)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at shiftbase.f(151,14)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at shiftbase.f(151,14)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(151,14)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(151,14)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at shiftbase.f(159,11)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at shiftbase.f(159,11)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at shiftbase.f(160,11)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at shiftbase.f(162,15)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(162,15)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at shiftbase.f(166,11)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at shiftbase.f(166,11)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(166,11)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(166,11)
+   <Alternate Alignment Vectorized Loop>
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(166,11)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at shiftbase.f(167,11)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at shiftbase.f(167,11)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(167,11)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(167,11)
+   <Alternate Alignment Vectorized Loop>
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(167,11)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at shiftbase.f(176,11)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at shiftbase.f(176,11)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at shiftbase.f(177,11)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at shiftbase.f(179,15)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(179,15)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at shiftbase.f(183,11)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at shiftbase.f(183,11)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(183,11)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(183,11)
+   <Alternate Alignment Vectorized Loop>
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(183,11)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at shiftbase.f(184,11)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at shiftbase.f(184,11)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(184,11)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(184,11)
+   <Alternate Alignment Vectorized Loop>
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(184,11)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at shiftbase.f(195,7)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at shiftbase.f(196,11)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(196,11)
+   <Remainder loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(196,11)
+      remark #25460: No loop optimizations reported
+
+      LOOP BEGIN at shiftbase.f(196,11)
+         remark #15300: LOOP WAS VECTORIZED
+      LOOP END
+
+      LOOP BEGIN at shiftbase.f(196,11)
+      <Alternate Alignment Vectorized Loop>
+      LOOP END
+
+      LOOP BEGIN at shiftbase.f(196,11)
+      <Remainder loop for vectorization>
+      LOOP END
+   LOOP END
+LOOP END
+
+LOOP BEGIN at shiftbase.f(202,7)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at shiftbase.f(202,7)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(202,7)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(202,7)
+   <Alternate Alignment Vectorized Loop>
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(202,7)
+   <Remainder loop for vectorization>
+      remark #15301: REMAINDER LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at shiftbase.f(202,7)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at shiftbase.f(202,7)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at shiftbase.f(202,7)
+      remark #25460: No loop optimizations reported
+
+      LOOP BEGIN at shiftbase.f(202,7)
+      <Peeled loop for vectorization>
+      LOOP END
+
+      LOOP BEGIN at shiftbase.f(202,7)
+         remark #15300: LOOP WAS VECTORIZED
+      LOOP END
+
+      LOOP BEGIN at shiftbase.f(202,7)
+      <Alternate Alignment Vectorized Loop>
+      LOOP END
+
+      LOOP BEGIN at shiftbase.f(202,7)
+      <Remainder loop for vectorization>
+      LOOP END
+   LOOP END
+LOOP END
+===========================================================================

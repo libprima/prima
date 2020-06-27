@@ -269,18 +269,15 @@
 
       ih = 0
       do j = 1, n
+         hd(1 : j-1) = hd(1 : j-1) + hq(ih+1 : ih+j-1)*d(j)
          do i = 1, j
              ih = ih + 1
-             if (i < j) then 
-                 hd(j) = hd(j) + hq(ih)*d(i)
-             end if
-             hd(i) = hd(i) + hq(ih)*d(j)
+             hd(j) = hd(j) + hq(ih)*d(i)
          end do
-         ! The I-DO LOOP can be replaced by the following 3 lines. The
+         ! The I-DO LOOP can be replaced by the following 2 lines. The
          ! result will NOT be identically the same because floating
          ! point addition is not associative.
-         !hd(j) = hd(j) + dot_product(hq(ih+1 : ih+j-1), d(1 : j-1))
-         !hd(1 : j) = hd(1 : j) + hq((ih+1 : ih+j))*d(j)
+         !hd(j) = hd(j) + dot_product(hq(ih+1 : ih+j), d(1 : j))
          !ih = ih + j
       end do
       return

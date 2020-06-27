@@ -21,7 +21,7 @@
 
       integer :: i, isave, iterc, iu, j, jc, k, nw
       real(kind=rp) :: s(n), wvec(npt + n, 5), prod(npt + n, 5), den(9),&
-     & denex(9), par(9), zknew(npt - n - 1), stemp(npt, n), dstemp(npt),&
+     & denex(9), par(9), zknew(npt - n - 1), stemp(n), dstemp(npt),     &
      & sstemp(npt), wz(npt - n - 1), angle, dd, denmax, denold, densav, &
      & ds, dtest, ss, ssden, summation, sumold, step, tau, temp, tempa, &
      & tempb, tempc, tempv(npt), xoptd, xopts, xoptsq, alpha,           &
@@ -73,14 +73,13 @@
       if (.not. (ds*ds <= 0.99_rp*dd*ss)) then
           dtest = ds*ds/ss
           ! The following DO LOOP implements the code below.
-          stemp = xpt - spread(xopt, dim = 1, ncopies = npt)
-          dstemp = matmul(stemp, d)
-          sstemp = sum(stemp**2, dim = 2) 
-!          do k = 1, npt
-!              stemp = xpt(k, :) - xopt
-!              dstemp(k) = dot_product(d, stemp)
-!              sstemp(k) = dot_product(stemp, stemp)
-!          end do
+          !dstemp = matmul(xpt, d) - dot_product(xopt, d)
+          !sstemp = sum((xpt - spread(xopt, dim = 1, ncopies = npt))**2, dim = 2) 
+          do k = 1, npt
+              stemp = xpt(k, :) - xopt
+              dstemp(k) = dot_product(d, stemp)
+              sstemp(k) = dot_product(stemp, stemp)
+          end do
           
           dstemp(kopt) = two*ds + one  
           sstemp(kopt) = ss     

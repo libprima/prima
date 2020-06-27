@@ -1,0 +1,199 @@
+Intel(R) Advisor can now assist with vectorization and show optimization
+  report messages with your source code.
+See "https://software.intel.com/en-us/intel-advisor-xe" for details.
+
+
+Begin optimization report for: INITIALIZE
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at initialize.f(21,7)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at initialize.f(21,7)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at initialize.f(21,7)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at initialize.f(21,7)
+   <Alternate Alignment Vectorized Loop>
+   LOOP END
+
+   LOOP BEGIN at initialize.f(21,7)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at initialize.f(22,7)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at initialize.f(22,7)
+      remark #25460: No loop optimizations reported
+
+      LOOP BEGIN at initialize.f(22,7)
+         remark #15300: LOOP WAS VECTORIZED
+      LOOP END
+
+      LOOP BEGIN at initialize.f(22,7)
+      <Remainder loop for vectorization>
+      LOOP END
+   LOOP END
+LOOP END
+
+LOOP BEGIN at initialize.f(23,7)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at initialize.f(23,7)
+      remark #25460: No loop optimizations reported
+
+      LOOP BEGIN at initialize.f(23,7)
+         remark #15300: LOOP WAS VECTORIZED
+      LOOP END
+
+      LOOP BEGIN at initialize.f(23,7)
+      <Remainder loop for vectorization>
+      LOOP END
+   LOOP END
+LOOP END
+
+LOOP BEGIN at initialize.f(24,7)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at initialize.f(24,7)
+      remark #25460: No loop optimizations reported
+
+      LOOP BEGIN at initialize.f(24,7)
+         remark #15300: LOOP WAS VECTORIZED
+      LOOP END
+
+      LOOP BEGIN at initialize.f(24,7)
+      <Remainder loop for vectorization>
+      LOOP END
+   LOOP END
+LOOP END
+
+LOOP BEGIN at initialize.f(25,7)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at initialize.f(25,7)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at initialize.f(25,7)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at initialize.f(26,7)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at initialize.f(26,7)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at initialize.f(26,7)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at initialize.f(27,7)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at initialize.f(27,7)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at initialize.f(27,7)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at initialize.f(50,7)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at initialize.f(50,7)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at initialize.f(50,7)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at initialize.f(59,15)
+<Peeled loop for vectorization>
+LOOP END
+
+LOOP BEGIN at initialize.f(59,15)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at initialize.f(59,15)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at initialize.f(107,11)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at initialize.f(107,11)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at initialize.f(109,19)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at initialize.f(109,19)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at initialize.f(183,12)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at initialize.f(183,12)
+<Remainder loop for vectorization>
+   remark #15301: REMAINDER LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at initialize.f(183,12)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at initialize.f(188,11)
+   remark #25460: No loop optimizations reported
+
+   LOOP BEGIN at initialize.f(188,11)
+      remark #15300: LOOP WAS VECTORIZED
+   LOOP END
+
+   LOOP BEGIN at initialize.f(188,11)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at initialize.f(190,18)
+   remark #25460: No loop optimizations reported
+LOOP END
+
+LOOP BEGIN at initialize.f(190,18)
+<Remainder>
+LOOP END
+
+LOOP BEGIN at initialize.f(192,11)
+<Peeled loop for vectorization>
+LOOP END
+
+LOOP BEGIN at initialize.f(192,11)
+   remark #15300: LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at initialize.f(192,11)
+<Remainder loop for vectorization>
+LOOP END
+===========================================================================
