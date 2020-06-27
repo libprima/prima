@@ -22,7 +22,7 @@
       real(kind = rp) :: s(n), temp!,sd
       real(kind = rp) :: wcheck(npt)
 
-      s = x + d  ! Does NOT apply to the version below
+      s = x + d  ! It is NOT applicable to the version below.
 
       vquad = zero
 

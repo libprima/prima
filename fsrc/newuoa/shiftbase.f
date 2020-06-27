@@ -35,12 +35,10 @@
       ih = 0
       do j = 1, n
       ! Update of GQ due to the explicit part of the HESSIAN    
+         gq(1 : j-1) = gq(1 : j-1) + hq(ih+1 : ih+j-1)*xopt(j)
          do i = 1, j
              ih = ih + 1
-             if (i < j) then 
-                 gq(j) = gq(j) + hq(ih)*xopt(i)
-             end if
-             gq(i) = gq(i) + hq(ih)*xopt(j)
+             gq(j) = gq(j) + hq(ih)*xopt(i)
          end do
       end do
       

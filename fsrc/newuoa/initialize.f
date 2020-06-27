@@ -12,8 +12,8 @@
      & fval(npt), xopt(n), fopt, bmat(npt + n, n), zmat(npt, npt-n-1)
       real(kind = rp), intent(out) :: gq(n), hq((n*(n + 1))/2), pq(npt)
 
-      integer :: ih, ipt, itemp, jpt, npt_temp
-      real(kind = rp) :: fbeg, rhosq, reciq, recip, temp, xipt, xjpt,   &
+      integer :: ih, ip, ipt(npt), itemp, jp, jpt(npt), npt_fun, npt_mod
+      real(kind = rp) :: fbeg, rhosq, reciq, recip, temp, xip, xjp,     &
      & xtemp(n)
       logical :: evaluated(npt)
 
@@ -49,32 +49,38 @@
       ! because the definition XPT(2N+2:end, :) depends on FVAL(1:2N+1).
       evaluated = .false.
 
-      ! NPT_TMP is identical to NPT, unless it turns out necessary to
-      ! return after evaluating F at the starting point X, when we 
-      ! set NPT_TMP = 1.
-      npt_temp = npt
+      ! NPT_FUN and NPT_MOD equal NPT, unless it turns out necessary to
+      ! return due to abnormality (NaN or Inf occurs, or F < FTARGET).
+      npt_fun = npt
+      npt_mod = npt
+      
 
       ! Evaluate F at the starting point X.
       if (any(is_nan(x))) then  ! X contains NaN. Return immediately.
           f = sum(x)  ! Set F to NaN. It is necessary.
           info = -1
-          return
-      end if
-      call calfun(n, x, f)
-      evaluated(1) = .true.
-      fval(1) = f
-      fbeg = f
-      ! Check whether to exit.
-      if (f <= ftarget) then
-          info = 1
-          npt_temp = 1
-      end if
-      if (is_posinf(f) .or. is_nan(f)) then
-          info = -2
-          npt_temp = 1
+          npt_fun = 0 
+          npt_mod = 0 
+      else
+          call calfun(n, x, f)
+          evaluated(1) = .true.
+          fval(1) = f
+          fbeg = f
+          ! Check whether to exit.
+          if (f <= ftarget) then
+              info = 1
+              npt_fun = 0 
+              npt_mod = 0 
+          end if
+          if (is_posinf(f) .or. is_nan(f)) then
+              info = -2
+              npt_fun = 0 
+              npt_mod = 0 
+          end if
       end if
       
-      do nf = 2, npt_temp
+      ! Set XPT, FVAL, KOPT, FOPT, and XOPT.
+      do nf = 2, npt_fun
           ! Set XPT(NF, :)
           if (nf <= 2*n + 1) then
               if (nf <= n + 1) then
@@ -84,23 +90,25 @@
               end if
           else
               itemp = (nf - n - 2)/n
-              jpt = nf - (itemp + 1)*n - 1
-              ipt = jpt + itemp
-              if (ipt > n) then
-                  itemp = jpt
-                  jpt = ipt - n
-                  ipt = itemp
+              jp = nf - (itemp + 1)*n - 1
+              ip = jp + itemp
+              if (ip > n) then
+                  itemp = jp
+                  jp = ip - n
+                  ip = itemp
               end if
+              ipt(nf) = ip
+              jpt(nf) = jp
               ! SIGN(A, B) = |A| if B > 0 and -|A| if B < 0. Note that:
               ! 1. When B = 0, the result depends on the compiler, but 
               !    it is normally |A|. 
               ! 2. SIGN(A, B) is defined in terms of |A| but not
               !    directly in terms of A; use with caution when A is
               !    possibly negative.
-              xipt = sign(rhobeg, (fval(ipt + n + 1) - fval(ipt + 1)))
-              xjpt = sign(rhobeg, (fval(jpt + n + 1) - fval(jpt + 1)))
-              xpt(nf, ipt) = xipt
-              xpt(nf, jpt) = xjpt
+              xip = sign(rhobeg, (fval(ip + n + 1) - fval(ip + 1)))
+              xjp = sign(rhobeg, (fval(jp + n + 1) - fval(jp + 1)))
+              xpt(nf, ip) = xip
+              xpt(nf, jp) = xjp
           end if
 
           ! Function evaluation at XPT(NF, :)
@@ -108,6 +116,7 @@
           if (any(is_nan(xtemp))) then
               f = sum(xtemp)  ! Set F to NaN. It is necessary.
               info = -1
+              npt_mod = 0 
               exit
           end if
           call calfun(n, xtemp, f)
@@ -117,21 +126,27 @@
           ! Check whether to exit.
           if (f <= ftarget) then
               info = 1
+              npt_mod = 0 
               exit
           end if
           if (is_posinf(f) .or. is_nan(f)) then
               info = -2
+              npt_mod = 0 
               exit
           end if
+      end do
 
+      ! Set GQ, HQ, BMAT, and ZMAT.
+      do nf = 2, npt_mod
           ! Set the coefficients of the initial Lagrange functions
           ! (i.e., bmat and zmat) and the initial quadratic model (i.e.,
           ! gq, hq, pq). This is reached starting from the second
           ! function evaluation, namely when NF > 1.
+          f = fval(nf)
           if (nf <= 2*n + 1) then
               ! Set the nonzero initial elements of BMAT and the
               ! quadratic model in the cases when NF <= 2*N + 1.
-              if (nf <= n+1) then
+              if (nf <= n + 1) then
                   gq(nf - 1) = (f - fbeg)/rhobeg
                   if (npt < nf + n) then
                       bmat(1, nf - 1) = -one/rhobeg
@@ -152,18 +167,22 @@
           else
               ! When NF > 2*N+1, set the off-diagonal second derivatives
               ! of the Lagrange functions and the quadratic model.
-              ih = (ipt*(ipt - 1))/2 + jpt
-              if (xipt < zero) then 
-                  ipt = ipt + n
+              ip = ipt(nf)
+              jp = jpt(nf)
+              xip = xpt(nf, ip)
+              xjp = xpt(nf, jp)
+              ih = (ip*(ip - 1))/2 + jp
+              if (xip < zero) then 
+                  ip = ip + n
               end if
-              if (xjpt < zero) then 
-                  jpt = jpt + n
+              if (xjp < zero) then
+                  jp = jp + n
               end if
               zmat(1, nf - n - 1) = recip
               zmat(nf, nf - n - 1) = recip
-              zmat(ipt + 1, nf - n - 1) = -recip
-              zmat(jpt + 1, nf - n - 1) = -recip
-              hq(ih) = (fbeg-fval(ipt+1)-fval(jpt+1)+f)/(xipt*xjpt)
+              zmat(ip + 1, nf - n - 1) = -recip
+              zmat(jp + 1, nf - n - 1) = -recip
+              hq(ih) = (fbeg - fval(ip+1) - fval(jp+1) + f)/(xip*xjp)
           end if
 
           ! Check whether NaN occurs in the coefficients. 
@@ -183,6 +202,7 @@
       nf = count(evaluated)
 
       if (nf == 0) then
+      ! In this case, the starting X contains NaN. F was set to NaN.
           kopt = 1
           fopt = f
           xopt = zero
