@@ -35,7 +35,7 @@
       ! BMAT provides the last N ROWs of H.
       ! ZMAT and IDZ give a factorization of the first NPT by NPT
       ! sub-matrix of H.
-      ! NDIM is the first dimension of BMAT and has the value NPT + N.
+      ! NDIM is the second dimension of BMAT and has the value NPT + N.
       ! KOPT is the index of the optimal interpolation point.
       ! KNEW is the index of the interpolation point to be removed.
       ! D will be set to the step from XOPT to the new point, and on 
@@ -75,7 +75,7 @@
           dtest = ds*ds/ss
           ! The following DO LOOP implements the code below.
           !dstemp = matmul(d, xpt) - dot_product(xopt, d)
-          !sstemp = sum((xpt - spread(xopt, dim = 2, ncopies = npt))**2, dim = 1) 
+          !sstemp = sum((xpt-spread(xopt, dim=2, ncopies=npt))**2,dim=1) 
           do k = 1, npt
               stemp = xpt(:, k) - xopt
               dstemp(k) = dot_product(d, stemp)

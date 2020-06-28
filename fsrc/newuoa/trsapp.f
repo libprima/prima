@@ -8,11 +8,11 @@
       ! Note that the HESSIAN here is the sum of an explicit part HQ and
       ! an implicit part (PQ, XPT):
       !
-      ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*XPT(K, :)'*XPT(K, :),
+      ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*XPT(:, K)*XPT(:, K)',
       !
       ! where HQ is represented as a vector of its N*(N+1)/2 upper
       ! triangular entries, PQ is an NPT-dimensional vector, and XPT is
-      ! an NPT*N matrix.
+      ! an N*NPT matrix.
 
       ! At return, S will be the approximate solution. CRVMIN will be 
       ! set to the least curvature of HESSIAN along the conjugate 
@@ -21,8 +21,8 @@
       ! of Q achieved by S. INFO is an exit flag:
       ! INFO = 0: an approximate solution satisfying one of the 
       ! following conditions is found: 
-      ! 1. ||G||/||GBEG|| <= TOL, 
-      ! 2. ||S|| = DELTA and <S, -G> >= (1 - TOL)*||S||*||G||,
+      ! 1. ||G+HS||/||GBEG|| <= TOL, 
+      ! 2. ||S|| = DELTA and <S, -(G+HS)> >= (1 - TOL)*||S||*||G+HS||,
       ! where TOL is a tolerance that is set to 1e-2 in NEWUOA.  
       ! INFO = 1: the iteration is reducing Q only slightly;
       ! INFO = 2: the maximal number of iterations is attained;
@@ -123,6 +123,10 @@
           hs = hs + alpha*hd
           ggsave = gg  ! Gradient norm square before this iteration 
           gg = dot_product(g+hs, g+hs)  ! Current gradient norm square
+          ! We may save g+hs for latter usage:
+          ! gnew = g + hs
+          ! Note that we should NOT set g = g + hs, because g contains
+          ! the gradient of Q at x.
              
           ! Check whether to exit. This should be done after updating HS
           ! and GG, which will be used for the 2D minimization if any. 
@@ -249,11 +253,11 @@
       ! which is the sum of an explicit part HQ and an implicit 
       ! part (PQ, XPT). Specifically, 
       !
-      ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*XPT(K, :)'*XPT(K, :),
+      ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*XPT(:, K)'*XPT(:, K),
       !
       ! where HQ is represented as a vector of its N*(N+1)/2 upper
       ! triangular entries, PQ is an NPT-dimensional vector, and XPT is
-      ! an NPT*N matrix.
+      ! an N*NPT matrix.
       
       use consts, only : rp
 

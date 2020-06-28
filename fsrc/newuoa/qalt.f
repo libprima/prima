@@ -2,7 +2,7 @@
       ! QALT calculates the alternative model, namely the model that
       ! minimizes the F-norm of the Hessian subject to the interpolation
       ! conditions. 
-      ! Note that SMAT = BMAT(: 1:NPT)
+      ! Note that SMAT = BMAT(:, 1:NPT)
 
       use consts, only : rp, zero
       use lina

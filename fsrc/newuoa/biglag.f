@@ -27,7 +27,7 @@
       ! NPT is the number of interpolation equations.
       ! XOPT is the best interpolation point so far.
       ! XPT contains the current interpolation points.
-      ! BMAT provides the last N columns of H.
+      ! BMAT provides the last N ROWs of H.
       ! ZMAT and IDZ give a factorization of the first NPT by NPT
       ! sub-matrix of H.
       ! KNEW is the index of the interpolation point to be removed.
