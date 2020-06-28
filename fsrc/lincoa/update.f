@@ -201,11 +201,12 @@ C       the first and IDZ-th columns of ZMAT.
 C
       IF (IFLAG == 1) THEN
 ! Zaikun 2020-06-28: I came here when reading the corresponding part of
-! the NEWUOA code. In NEWUOA, IDZ is redued only if IDZ >= 2, which is
-! reasonable. Here there seems no such restriction. Why? Did Powell use
-! a different definition for IDZ? In NEWUOA, IDZ is an intger used to 
-! represent the leading NPT sub-matrix of H, which is called OMEGA in
-! the paper and represented in the code as 
+! the NEWUOA code, which seems to have a bug. In NEWUOA, IDZ is redued
+! only if IDZ >= 2, which is reasonable. Here there seems no such
+! restriction. Why? Did Powell use a different definition for IDZ? In
+! NEWUOA, IDZ is an intger used to represent the leading NPT sub-matrix
+! of H, which is called OMEGA in the paper and represented in the code
+! as 
 ! 
 ! OMEGA = \sum_{K = 1}^{NPT-N-1} S_K*ZMAT(:, K)*ZMAT(:, K)', 
 ! where S(1:IDZ-1) = -1 and S(IDZ:NPT-N-1) = 1. 
@@ -218,6 +219,9 @@ C
 ! NEWUOA code. Is it different in the LINCOA code??? To be studied.
 ! Unfortunately, Powell did not write a LINCOA paper!!!  
 !
+! The BOBYQA code does not have this part --- it does not use IDZ at
+! all. Why?
+
           IDZ=IDZ-1  
           DO I=1,NPT
               TEMP=ZMAT(I,1)
