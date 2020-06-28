@@ -114,27 +114,27 @@
 
           ! Function evaluation at XPT(:, NF)
           xtemp = xpt(:, nf) + xbase
-          if (any(is_nan(xtemp))) then
-              f = sum(xtemp)  ! Set F to NaN. It is necessary.
-              info = -1
-              npt_mod = 0 
-              exit
-          end if
+!          if (any(is_nan(xtemp))) then
+!              f = sum(xtemp)  ! Set F to NaN. It is necessary.
+!              info = -1
+!              npt_mod = 0 
+!              exit
+!          end if
           call calfun(n, xtemp, f)
           evaluated(nf) = .true.
           fval(nf) = f
-
-          ! Check whether to exit.
-          if (f <= ftarget) then
-              info = 1
-              npt_mod = 0 
-              exit
-          end if
-          if (is_posinf(f) .or. is_nan(f)) then
-              info = -2
-              npt_mod = 0 
-              exit
-          end if
+!
+!          ! Check whether to exit.
+!          if (f <= ftarget) then
+!              info = 1
+!              npt_mod = 0 
+!              exit
+!          end if
+!          if (is_posinf(f) .or. is_nan(f)) then
+!              info = -2
+!              npt_mod = 0 
+!              exit
+!          end if
       end do
 
       ! Set GQ, HQ, BMAT, and ZMAT.
@@ -192,11 +192,11 @@
           ! Check whether NaN occurs in the coefficients. 
           ! Note that PQ is always ZERO --- the initial HESSIAN only has
           ! the explicit part.
-          if ((any(is_nan(bmat)) .or. any(is_nan(zmat)).or.             &
-     &     any(is_nan(gq)) .or. any(is_nan(hq)))) then
-              info = -3
-              exit
-          end if
+!          if ((any(is_nan(bmat)) .or. any(is_nan(zmat)).or.             &
+!     &     any(is_nan(gq)) .or. any(is_nan(hq)))) then
+!              info = -3
+!              exit
+!          end if
       end do
 
       ! If the do loop is conducted seqentially, then the exit value of

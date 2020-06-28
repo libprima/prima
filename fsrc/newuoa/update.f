@@ -32,7 +32,15 @@
       jl = 1  ! For J = 2, ..., IDZ - 1, set JL = 1.
       do j = 2, idz - 1
           if (abs(zmat(knew, j)) >  zero) then
-              call givens(zmat(knew, jl), zmat(knew, j), c, s, r)
+              !call givens(zmat(knew, jl), zmat(knew, j), c, s, r)
+              c = zmat(knew, jl)
+              s = zmat(knew, j)
+              r = sqrt(c**2 + s**2)  
+              ! Fortran 2008 can calculate r by the HYPOT intrinsic,
+              ! which can avoid over/underflow due to the squres.
+              ! r = hypot(c, s) 
+              c = c/r
+              s = s/r
               ztemp = zmat(:, j)
               zmat(:, j) = c*ztemp - s*zmat(:, jl)
               zmat(:, jl) = c*zmat(:, jl) + s*ztemp
@@ -51,7 +59,15 @@
       end if
       do j = idz + 1, npt - n - 1
           if (abs(zmat(knew, j)) >  zero) then
-              call givens(zmat(knew, jl), zmat(knew, j), c, s, r)
+              !call givens(zmat(knew, jl), zmat(knew, j), c, s, r)
+              c = zmat(knew, jl)
+              s = zmat(knew, j)
+              r = sqrt(c**2 + s**2)  
+              ! Fortran 2008 can calculate r by the HYPOT intrinsic,
+              ! which can avoid over/underflow due to the squres.
+              !r = hypot(c, s) 
+              c = c/r
+              s = s/r
               ztemp = zmat(:, j)
               zmat(:, j) = c*ztemp - s*zmat(:, jl)
               zmat(:, jl) = c*zmat(:, jl) + s*ztemp
