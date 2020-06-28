@@ -90,11 +90,11 @@
           ! Exit if the model contains NaN. Otherwise, the behaviour of
           ! TRSAPP is unpredictable, and Segmentation Fault may occur.
           ! In the future, we may build a new model instead of exiting.
-          if (any(is_nan(gq)) .or. any(is_nan(hq)) .or. any(is_nan(pq)))&
-     &     then
-              info = -3
-              exit
-          end if
+!          if (any(is_nan(gq)) .or. any(is_nan(hq)) .or. any(is_nan(pq)))&
+!     &     then
+!              info = -3
+!              exit
+!          end if
 
           ! Solve the trust region subproblem.
           ! In Powell's NEWUOA code, VQUAD is not an output of TRSAPP.
@@ -368,10 +368,10 @@
               ! Exit if BMAT or ZMAT contains NaN. Otherwise, the
               ! behaviour of BIGLAG and BIGDEN is unpredictable.
               ! Segmentation Fault may occur.
-              if (any(is_nan(bmat)) .or. any(is_nan(zmat))) then
-                  info = -3
-                  exit
-              end if
+!              if (any(is_nan(bmat)) .or. any(is_nan(zmat))) then
+!                  info = -3
+!                  exit
+!              end if
 
               call biglag(n, npt, xopt, xpt, bmat, zmat, idz, knew,     &
      &         dstep, d, alpha)
