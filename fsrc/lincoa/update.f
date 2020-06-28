@@ -200,7 +200,25 @@ C       ZMAT^T factorization gains another positive element. Then exchange
 C       the first and IDZ-th columns of ZMAT.
 C
       IF (IFLAG == 1) THEN
-          IDZ=IDZ-1
+! Zaikun 2020-06-28: I came here when reading the corresponding part of
+! the NEWUOA code. In NEWUOA, IDZ is redued only if IDZ >= 2, which is
+! reasonable. Here there seems no such restriction. Why? Did Powell use
+! a different definition for IDZ? In NEWUOA, IDZ is an intger used to 
+! represent the leading NPT sub-matrix of H, which is called OMEGA in
+! the paper and represented in the code as 
+! 
+! OMEGA = \sum_{K = 1}^{NPT-N-1} S_K*ZMAT(:, K)*ZMAT(:, K)', 
+! where S(1:IDZ-1) = -1 and S(IDZ:NPT-N-1) = 1. 
+!
+! Indeed, theoretically, OMEGA is positive semidefinite, and S should be
+! all positive. The negative entries of S result the rounding errors
+! that cause OMEGA to lose the postive semidefiniteness. Therefore, in
+! most cases, IDZ is small (e.g., IDZ=1, meaning that OMEGA has not lost
+! the positive semidefiniteness), but it cannot be nonpositive in the
+! NEWUOA code. Is it different in the LINCOA code??? To be studied.
+! Unfortunately, Powell did not write a LINCOA paper!!!  
+!
+          IDZ=IDZ-1  
           DO I=1,NPT
               TEMP=ZMAT(I,1)
               ZMAT(I,1)=ZMAT(I,IDZ)
