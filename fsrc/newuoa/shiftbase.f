@@ -130,9 +130,9 @@
           bmatk = bmat(:, k)
           w2 = w1(k)*xpt(:, k) + qxoptq*xopt
           ! This is the only place where non-symmetry of
-          ! BMAT(NPT+1:NPT+N, :) can come from. It is because of the
+          ! BMAT(:, NPT+1:NPT+N) can come from. It is because of the
           ! non-associtivity of floating point arithmetic addition. To
-          ! make BMAT(NPT+1:NPT+N,:) symmetric, use the following two
+          ! make BMAT(:, NPT+1:NPT+N) symmetric, use the following two
           ! lines to replace the code below. The only difference is the
           ! parenthsis around the two outter products. It is probably 
           ! a BETTERE implementation so we should take it in future
@@ -179,7 +179,7 @@
       end do
 !!!!!!!!!!!!!!!!!!!!!COMPACT SCHEME ENDS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      ! Set the upper triangular part of BMAT(NPT+1:NPT+N,:) by symmetry 
+      ! Set the upper triangular part of BMAT(:,NPT+1:NPT+N) by symmetry 
       ! Note that UPDATE sets the upper triangular part by copying
       ! the lower triangular part, but here it does the opposite. There
       ! seems not any particular reason to keep them different. It was

@@ -37,7 +37,7 @@
 
       ! Begin the initialization procedure. The coordinates of the
       ! displacement of the next initial interpolation point from XBASE
-      ! are set in XPT(NF, .).
+      ! are set in XPT(:, .).
       rhosq = rhobeg*rhobeg
       recip = one/rhosq
       reciq = sqrt(half)/rhosq
@@ -47,7 +47,7 @@
       ! We need it for a portable counting of the number of function
       ! evaluations, especially if the loop is conducted asynchronously.
       ! However, the loop here is not fully parallelizable if NPT>2N+1,
-      ! because the definition XPT(2N+2:end, :) depends on FVAL(1:2N+1).
+      ! because the definition XPT(;, 2N+2:end) depends on FVAL(1:2N+1).
       evaluated = .false.
 
       ! NPT_FUN and NPT_MOD equal NPT, unless it turns out necessary to
@@ -82,7 +82,7 @@
       
       ! Set XPT, FVAL, KOPT, FOPT, and XOPT.
       do nf = 2, npt_fun
-          ! Set XPT(NF, :)
+          ! Set XPT(:, NF)
           if (nf <= 2*n + 1) then
               if (nf <= n + 1) then
                   xpt(nf - 1, nf) = rhobeg
@@ -112,7 +112,7 @@
               xpt(jp, nf) = xjp
           end if
 
-          ! Function evaluation at XPT(NF, :)
+          ! Function evaluation at XPT(:, NF)
           xtemp = xpt(:, nf) + xbase
           if (any(is_nan(xtemp))) then
               f = sum(xtemp)  ! Set F to NaN. It is necessary.

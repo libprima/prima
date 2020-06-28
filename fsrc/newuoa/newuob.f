@@ -47,7 +47,7 @@
       ! factorization of the leading NPT by NPT sub-matrix of H, this
       ! factorization being ZMAT times Diag(DZ) times ZMAT^T, where the
       ! elements of DZ are plus or minus one, as specified by IDZ.
-      ! NDIM is the first dimension of BMAT and has the value NPT + N.
+      ! NDIM is the second dimension of BMAT and has the value NPT + N.
       ! D is reserved for trial steps from XOPT.
       ! VLAG will contain the values of the Lagrange functions at a new
       ! point X. They are part of a product that requires VLAG to be of
