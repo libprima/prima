@@ -1,23 +1,23 @@
 ! LINA is a module providing some basic linear algebra procedures.
 
 ! Do we use the same linear algebra procedures as Powell did?
-#ifdef __USE_POWELL_ALGEBRA__
-#undef __USE_POWELL_ALGEBRA__
+#ifdef __USE_INTRINSIC_ALGEBRA__
+#undef __USE_INTRINSIC_ALGEBRA__
 #endif
-#define __USE_POWELL_ALGEBRA__ 1
+#define __USE_INTRINSIC_ALGEBRA__ 0 
 
 ! Which Fortran standard to follow?
 #ifdef __FORTRAN_STANDARD__
 #undef __FORTRAN_STANDARD__
 #endif
-#define __FORTRAN_STANDARD__ 95
+#define __FORTRAN_STANDARD__ 95 
 
       module lina
 
       use consts, only : rp, one, two, zero
       implicit none
 
-#if __USE_POWELL_ALGEBRA__ == 1
+#if __USE_INTRINSIC_ALGEBRA__ == 0 
       interface matmul
           module procedure matmul12, matmul21, matmul22
       end interface matmul
@@ -30,21 +30,22 @@
 
       contains
 
-#if __USE_POWELL_ALGEBRA__ == 1
+#if __USE_INTRINSIC_ALGEBRA__ == 0 
       function matmul12(x, y) result(z)
       implicit none
       real(kind = rp), dimension(:), intent(in) :: x
       real(kind = rp), dimension(:, :), intent(in) :: y
       real(kind = rp), dimension(size(y, 2)) :: z
-      integer :: i, j
+      integer :: j
       if (size(x) /= size(y, 1)) then
           stop 'Error in MATMUL: RANK(X) = 1 and SIZE(X) /= SIZE(Y, 1).'
       end if
       z = zero
       do j = 1, size(y, 2)
-          do i = 1, size(x)
-              z(j) = z(j) + x(i)*y(i, j)
-          end do
+          z(j) = dot_product(x, y(:, j))
+          !do i = 1, size(x)
+          !    z(j) = z(j) + x(i)*y(i, j)
+          !end do
       end do
       end function matmul12
 
@@ -116,7 +117,7 @@
       implicit none
       real(kind = rp), intent(in) :: x, y
       real(kind = rp), intent(out) :: c, s, r
-#if __USE_POWELL_ALGEBRA__ == 1
+#if __USE_INTRINSIC_ALGEBRA__ == 0 
       ! Powell uses the following implementation.
       r = sqrt(x**2 + y**2)
       if (r > zero) then

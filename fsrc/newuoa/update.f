@@ -6,7 +6,7 @@
       ! holds the value of the parameter that has this name. 
       
       ! Although VLAG will be modified below, its value will NOT be used 
-      ! by other parts of NEWUOA after returning from update. Its value 
+      ! by other parts of NEWUOA after returning from UPDATE. Its value 
       ! will be overwritten when trying the alternative model or by
       ! VLAGBETA.
 
@@ -49,6 +49,8 @@
               !!! In later vesions, we will include the following line.
               !!! For the moment, we exclude it to align with Powell's 
               !!! version.
+              !!! Preliminary tests show that including this line can
+              !!! improve the performance.
 !-------------!zmat(knew, jl) = r  !-----------------------------------! 
       !----------------------------------------------------------------!
           end if
@@ -76,6 +78,8 @@
               !!! In later vesions, we will include the following line.
               !!! For the moment, we exclude it to align with Powell's 
               !!! version.
+              !!! Preliminary tests show that including this line can
+              !!! improve the performance.
 !-------------!zmat(knew, jl) = r  !-----------------------------------! 
       !----------------------------------------------------------------!
           end if
@@ -219,7 +223,7 @@
       ! implementation for the moment to produce the same results as
       ! Powell's code, but we should take it in future versions.
 !---------------------A PROBABLY BETTER IMPLEMENTATION ENDS------------!
-       
+
       return
 
       end subroutine update
