@@ -10,10 +10,11 @@
       real(kind = rp), intent(in) :: rhobeg, x(n), ftarget
       real(kind = rp), intent(out) :: xbase(n), xpt(n, npt), f,         &
      & fval(npt), xopt(n), fopt, bmat(n, npt + n), zmat(npt, npt-n-1)
-      real(kind = rp), intent(out) :: gq(n), hq((n*(n + 1))/2), pq(npt)
+      real(kind = rp), intent(out) :: gq(n), hq(n, n), pq(npt)
 
       integer :: k, ih, ip, ipt(npt), itemp, jp, jpt(npt), npt1, npt2
-      real(kind = rp) :: fbeg, rhosq, reciq, recip, xip, xjp, xtemp(n)
+      real(kind = rp) :: fbeg, fip, fjp, rhosq, reciq, recip, xip, xjp, &
+     & xtemp(n)
       logical :: evaluated(npt)
 
 
@@ -192,7 +193,7 @@
           return
       end if
 
-      ! Set GQ, and HQ.
+      ! Set GQ and HQ.
 
       ! Set GQ by forward difference.
       gq(1 : n) = (fval(2 : n + 1) - fbeg)/rhobeg
@@ -200,12 +201,12 @@
       k = min(npt - n - 1, n)
       gq(1 : k) = half*(gq(1 : k) + (fbeg - fval(n+2 : n+1+k))/rhobeg)
 
-      ! Set the Hessian diagonal by 2nd-order central finite difference.
-      do k = n + 2, min(npt, 2*n + 1) 
-          ih = ((k - n - 1)*(k - n))/2
-          hq(ih)=((fval(k-n)-fbeg)/rhobeg-(fbeg-fval(k))/rhobeg)/rhobeg
+      ! Set the diagonal of HQ  by 2nd-order central finite difference.
+      do k = 1, min(npt - n - 1, n) 
+          hq(k, k) = ((fval(k + 1) - fbeg)/rhobeg -                     &
+     &     (fbeg - fval(k + n + 1))/rhobeg)/rhobeg
       end do
-      ! When NPT > 2*N + 1, set the off-diagonal entries of the Hessian.
+      ! When NPT > 2*N + 1, set the off-diagonal entries of HQ.
       do k = 2*n + 2, npt 
           ! IP, JP, XIP, and XJP will be used below.
           ip = ipt(k)
@@ -214,12 +215,17 @@
           xjp = xpt(jp, k)
           ih = (ip*(ip - 1))/2 + jp
           if (xip < zero) then 
-              ip = ip + n
+              fip = fval(ip + n + 1)
+          else
+              fip = fval(ip + 1)
           end if
           if (xjp < zero) then
-              jp = jp + n
+              fjp = fval(jp + n + 1)
+          else
+              fjp = fval(jp + 1)
           end if
-          hq(ih) = (fbeg - fval(ip+1) - fval(jp+1) + fval(k))/(xip*xjp)
+          hq(ip, jp) = (fbeg - fip - fjp + fval(k))/(xip*xjp)
+          hq(jp, ip) = hq(ip, jp)
       end do
 
       ! Set BMAT and ZMAT. They depend on XPT but not FVAL.

@@ -15,12 +15,13 @@
       integer, intent(in) :: n, npt
 
       real(kind = rp), intent(in) :: d(n), x(n), xpt(n, npt), gq(n),    &
-     & hq((n*(n+1))/2), pq(npt)
+     & hq(n, n), pq(npt)
       real(kind = rp), intent(out) :: vquad 
 
       integer :: i, ih, j, k 
       real(kind = rp) :: s(n), temp!,sd
       real(kind = rp) :: wcheck(npt)
+
 
       s = x + d  ! It is NOT applicable to the version below.
 
@@ -35,7 +36,7 @@
               if (i == j) then 
                   temp = half*temp
               end if
-              vquad = vquad + temp*hq(ih)
+              vquad = vquad + temp*hq(i, j)
           end do
       end do
 
@@ -68,7 +69,7 @@
 !                  sd = s(i)*d(j) + s(j)*d(i)
 !              end if
 !              ih = ih + 1
-!              vquad = vquad + half * hq(ih) * sd 
+!              vquad = vquad + half * hq(j, i) * sd 
 !          end do
 !      end do
       !!!!!!!!!!!!!!IMPLEMENTATON WITHOUT WCHECK ENDS!!!!!!!!!!!!!!!!!!!

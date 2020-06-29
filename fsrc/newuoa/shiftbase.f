@@ -11,7 +11,7 @@
 
       real(kind = rp), intent(in) :: xopt(n), pq(npt), zmat(npt,npt-n-1)
       real(kind = rp), intent(inout) :: bmat(n, npt + n), gq(n),        &
-     & hq((n*(n + 1))/2), xpt(n, npt)
+     & hq(n, n), xpt(n, npt)
 
       integer :: i, ih, j, k
       real(kind = rp) :: sumz(npt-n-1), vlag(n), qxoptq, xoptsq, xpq(n),&
@@ -32,14 +32,8 @@
       ! GQ = GQ + (\sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)') * XOPT
           gq = gq + pq(k)*dot_product(xpt(:, k), xopt)*xpt(:, k)
       end do
-      ih = 0
       do j = 1, n
-      ! Update of GQ due to the explicit part of the HESSIAN    
-         gq(1 : j-1) = gq(1 : j-1) + hq(ih+1 : ih+j-1)*xopt(j)
-         do i = 1, j
-             ih = ih + 1
-             gq(j) = gq(j) + hq(ih)*xopt(i)
-         end do
+          gq = gq + hq(:, j)*xopt(j)
       end do
       
       w1 = matmul(xopt, xpt) - half*xoptsq
@@ -51,13 +45,18 @@
 
       ! Update HQ. It has to be done after the above revision to XPT!!!
       xpq = matmul(xpt, pq)
-      ! The followind DO LOOP indeed adds (xpq*xopt' + xopt*xpq') to the 
-      ! explicit part of the HESSIAN
-      ih = 0
-      do j = 1, n
-          hq(ih+1:ih+j)=hq(ih+1:ih+j)+xpq(1:j)*xopt(j)+xopt(1:j)*xpq(j)
-          ih = ih + j
+      
+      !----------------------------------------------------------------!
+      ! This update does NOT preserve symmetry. Symmetrization needed! 
+      hq = hq + outprod(xpq, xopt) + outprod(xopt, xpq)
+      do i = 1, n
+          hq(i, 1:i-1) = hq(1:i-1, i)
       end do
+      !---------- A probably better implementation: -------------------!
+      ! This is better because it preserves symmetry even with floating
+      ! point arithmetic.
+!-----!hq = hq + ( outprod(xpq, xopt) + outprod(xopt, xpq) ) !---------!
+      !----------------------------------------------------------------!
 
 !==============================POWELL'S SCHEME=========================!
 !      ! Make the changes to BMAT that do not depend on ZMAT.

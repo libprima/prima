@@ -8,12 +8,8 @@
       ! Note that the HESSIAN here is the sum of an explicit part HQ and
       ! an implicit part (PQ, XPT):
       !
-      ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*XPT(:, K)*XPT(:, K)',
+      ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*XPT(:, K)*XPT(:, K)' .
       !
-      ! where HQ is represented as a vector of its N*(N+1)/2 upper
-      ! triangular entries, PQ is an NPT-dimensional vector, and XPT is
-      ! an N*NPT matrix.
-
       ! At return, S will be the approximate solution. CRVMIN will be 
       ! set to the least curvature of HESSIAN along the conjugate 
       ! directions that occur, except that it is set to zero if S goes
@@ -43,16 +39,16 @@
       integer, intent(in) :: n, npt
       integer, intent(out) :: info
       real(kind = rp), intent(in) :: tol, delta, x(n), xpt(n, npt),     &
-     & gq(n), hq((n*(n + 1))/2), pq(npt)
+     & gq(n), hq(n, n), pq(npt)
       real(kind = rp), intent(out) :: s(n), crvmin, qred
       
-      integer :: i, isave, iterc, itermax, iu
+      integer :: i, isave, iterc, itermax, iu, j
       real(kind = rp) :: alpha, angle, bstep, cf, cth, dd, delsq, dg,   &
      & dhd, dhs, ds, gg, ggbeg, ggsave, qadd, qbeg, qmin, qnew, qsave,  &
      & reduc, sg, sgk, shs, ss, sth, temp, tempa, tempb, d(n), g(n),    &
      & hd(n), hs(n), hx(n) 
       logical :: twod_search
-            
+
       
       s = zero
       crvmin = zero
@@ -60,7 +56,14 @@
       info = 2  ! Default exit flag is 2, i.e., itermax is attained 
 
       ! Prepare for the first line search.
-      call hessmul(n, npt, xpt, hq, pq, x, hx)  ! HX = HESSIAN*X
+      !----------------------------------------------------------------!
+      ! HX can indeed be calculated by the following line. 
+!-----!hx = matmul(xpt, pq*matmul(x, xpt)) + matmul(hq, x) !-----------1
+      hx = matmul(xpt, pq*matmul(x, xpt))
+      do j = 1, n
+          hx = hx + hq(:, j)*x(j)
+      end do
+      !----------------------------------------------------------------!
       g = gq + hx
       gg = dot_product(g, g)
       ggbeg = gg
@@ -97,7 +100,14 @@
           end if
           ! Set BSTEP to the step length such that ||S+BSTEP*D|| = DELTA
           bstep = (delsq-ss)/(ds + sqrt(ds*ds + dd*(delsq-ss)))  
-          call hessmul(n, npt, xpt, hq, pq, d, hd)  ! HD = HESSIAN*D
+      !----------------------------------------------------------------!
+      ! HD can indeed be calculated by the following line. 
+!-----!hd = matmul(xpt, pq*matmul(d, xpt)) + matmul(hq, d) !-----------!
+          hd = matmul(xpt, pq*matmul(d, xpt))
+          do j = 1, n
+              hd = hd + hq(:, j)*d(j)
+          end do
+      !----------------------------------------------------------------!
           dhd = dot_product(d, hd)
 
           ! Set the step-length ALPHA and update CRVMIN and 
@@ -186,7 +196,14 @@
           ! scalar products.
           temp = sqrt(delsq*gg - sgk*sgk)
           d = (delsq/temp)*(g + hs) - (sgk/temp)*s
-          call hessmul(n, npt, xpt, hq, pq, d, hd)  ! HD = HESSIAN*D
+      !----------------------------------------------------------------!
+      ! HD can indeed be calculated by the following line. 
+!-----!hd = matmul(xpt, pq*matmul(d, xpt)) + matmul(hq, d) !-----------!
+          hd = matmul(xpt, pq*matmul(d, xpt))
+          do j = 1, n
+              hd = hd + hq(:, j)*d(j)
+          end do
+      !----------------------------------------------------------------!
           dg = dot_product(d, g)
           dhd = dot_product(hd, d)
           dhs = dot_product(hd, s)
@@ -244,50 +261,5 @@
 
       return
 
-
-      contains 
  
-      !----------------------------------------------------------------!
-      subroutine hessmul(n, npt, xpt, hq, pq, d, hd)
-      ! HESSMUL calculates HD = HESSIAN*D for the NEWUOA-form HESSIAN,
-      ! which is the sum of an explicit part HQ and an implicit 
-      ! part (PQ, XPT). Specifically, 
-      !
-      ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*XPT(:, K)'*XPT(:, K),
-      !
-      ! where HQ is represented as a vector of its N*(N+1)/2 upper
-      ! triangular entries, PQ is an NPT-dimensional vector, and XPT is
-      ! an N*NPT matrix.
-      
-      use consts, only : rp
-
-      integer, intent(in) :: n, npt
-      real(kind = rp), intent(in) :: xpt(n, npt), hq((n*(n + 1))/2),    &
-     & pq(npt), d(n)
-      
-      real(kind = rp), intent(out) :: hd(n)
-
-      integer :: i, ih, j
-            
-
-      ! Multiply d by the explicit part of HESSIAN
-      hd = matmul(xpt, pq*matmul(d, xpt))
-
-      ih = 0
-      do j = 1, n
-         hd(1 : j-1) = hd(1 : j-1) + hq(ih+1 : ih+j-1)*d(j)
-         do i = 1, j
-             ih = ih + 1
-             hd(j) = hd(j) + hq(ih)*d(i)
-         end do
-         ! The I-DO LOOP can be replaced by the following 2 lines. The
-         ! result will NOT be identically the same because floating
-         ! point addition is not associative.
-         !hd(j) = hd(j) + dot_product(hq(ih+1 : ih+j), d(1 : j))
-         !ih = ih + j
-      end do
-      return
-      end subroutine hessmul
-      !----------------------------------------------------------------!
-
       end subroutine trsapp
