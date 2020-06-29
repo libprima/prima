@@ -13,7 +13,7 @@
       real(kind = rp), intent(inout) :: bmat(n, npt + n), gq(n),        &
      & hq(n, n), xpt(n, npt)
 
-      integer :: i, ih, j, k
+      integer :: i, j, k
       real(kind = rp) :: sumz(npt-n-1), vlag(n), qxoptq, xoptsq, xpq(n),&
      & bmatk(n), w1(npt), w2(n), w3(npt) 
 
