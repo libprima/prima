@@ -9,19 +9,24 @@
 
       real(kind = rp), intent(in) :: fqdiff, xptknew(n), bmatknew(n),   &
      & zmat(npt, npt - n - 1)
-      real(kind = rp), intent(inout) :: gq(n), hq((n*(n+1))/2), pq(npt) 
+      real(kind = rp), intent(inout) :: gq(n), hq(n, n), pq(npt) 
 
       integer :: i, ih, j
       real(kind = rp) :: fqdz(npt - n - 1)
 
-      ! Update the explicit part of second derivatives. It adds 
-      ! PQKNEW*outprod(XPTKNEW, XPTKNEW) to the explicit HESSIAN.
-      ih = 0
+
+      !----------------------------------------------------------------!
+      ! This update does NOT preserve symmetry. Symmetrization needed! 
+      hq = hq + outprod(xptknew, pq(knew)*xptknew)
       do i = 1, n
-          hq(ih+1:ih+i)=hq(ih+1:ih+i)+(pq(knew)*xptknew(i))*xptknew(1:i)
-          ih = ih + i
+          hq(i, 1:i-1) = hq(1:i-1, i)
       end do
-      
+      !---------- A probably better implementation: -------------------!
+      ! This is better because it preserves symmetry even with floating
+      ! point arithmetic.
+!-----!hq = hq + pq(knew)*outprod(xptknew, xptknew) !------------------!
+      !----------------------------------------------------------------!
+
       ! Update the implicit part of second derivatives.
       fqdz = fqdiff*zmat(knew, :)
       fqdz(1 : idz - 1) = -fqdz(1 : idz - 1)

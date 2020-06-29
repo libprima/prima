@@ -18,7 +18,7 @@
       integer :: tr, maxtr
       real(kind = rp) :: alpha, beta, crvmin, delta, prederr(3), distsq,&
      & dnorm, dsq, dstep, xdsq(npt), xbase(n), xopt(n), xnew(n),        &
-     & xpt(n, npt), fval(npt), gq(n), hq((n*(n+1))/2), pq(npt),         &
+     & xpt(n, npt), fval(npt), gq(n), hq(n, n), pq(npt),                &
      & bmat(n, npt + n), zmat(npt, npt - n - 1), d(n), vlag(npt + n),   &
      & fopt, fsave, galt(n), galtsq, gqsq, hdiag(npt), ratio, rho,      &
      & rhosq, vquad, xoptsq, wcheck(npt+n), sigma(npt)
