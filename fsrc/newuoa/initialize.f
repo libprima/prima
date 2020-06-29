@@ -12,9 +12,8 @@
      & fval(npt), xopt(n), fopt, bmat(n, npt + n), zmat(npt, npt-n-1)
       real(kind = rp), intent(out) :: gq(n), hq((n*(n + 1))/2), pq(npt)
 
-      integer :: ih, ip, ipt(npt), itemp, jp, jpt(npt), npt_fun, npt_mod
-      real(kind = rp) :: fbeg, rhosq, reciq, recip, temp, xip, xjp,     &
-     & xtemp(n)
+      integer :: k, ih, ip, ipt(npt), itemp, jp, jpt(npt), npt1, npt2
+      real(kind = rp) :: fbeg, rhosq, reciq, recip, xip, xjp, xtemp(n)
       logical :: evaluated(npt)
 
 
@@ -50,18 +49,26 @@
       ! because the definition XPT(;, 2N+2:end) depends on FVAL(1:2N+1).
       evaluated = .false.
 
-      ! NPT_FUN and NPT_MOD equal NPT, unless it turns out necessary to
+      ! NPT1 and NPT2 equal NPT, unless it turns out necessary to
       ! return due to abnormality (NaN or Inf occurs, or F < FTARGET).
-      npt_fun = npt
-      npt_mod = npt
+      npt1 = npt
+      npt2 = npt
       
+      ! When K > 2*N + 1, the IPT(K) and JPT(K) entries of XPT(:, K)
+      ! will be RHOBEG or -RHOBEG, depending on the values of F(IPT(K))
+      ! and F(JPT(K)). Consequently, the Hessian of the quadratic model
+      ! will get a possibly nonzero (IPT(K), JPT(K)) entry.
+      ! We initilize IPT and JPT to 1 in case the initialization of XPT
+      ! aborts before finishing, which will leave IPT and JPT undefined.
+      ipt = 1
+      jpt = 1
 
       ! Evaluate F at the starting point X.
       if (any(is_nan(x))) then  ! X contains NaN. Return immediately.
           f = sum(x)  ! Set F to NaN. It is necessary.
           info = -1
-          npt_fun = 0 
-          npt_mod = 0 
+          npt1 = 0 
+          npt2 = 0
       else
           call calfun(n, x, f)
           evaluated(1) = .true.
@@ -70,139 +77,101 @@
           ! Check whether to exit.
           if (f <= ftarget) then
               info = 1
-              npt_fun = 0 
-              npt_mod = 0 
+              npt1 = 0 
+              npt2 = 0
           end if
           if (is_posinf(f) .or. is_nan(f)) then
               info = -2
-              npt_fun = 0 
-              npt_mod = 0 
+              npt1 = 0 
+              npt2 = 0
           end if
       end if
       
       ! Set XPT, FVAL, KOPT, FOPT, and XOPT.
-      do nf = 2, npt_fun
-          ! Set XPT(:, NF)
-          if (nf <= 2*n + 1) then
-              if (nf <= n + 1) then
-                  xpt(nf - 1, nf) = rhobeg
-              else
-                  xpt(nf - n - 1, nf) = -rhobeg
-              end if
-          else
-              itemp = (nf - n - 2)/n
-              jp = nf - (itemp + 1)*n - 1
-              ip = jp + itemp
-              if (ip > n) then
-                  itemp = jp
-                  jp = ip - n
-                  ip = itemp
-              end if
-              ipt(nf) = ip
-              jpt(nf) = jp
-              ! SIGN(A, B) = |A| if B > 0 and -|A| if B < 0. Note that:
-              ! 1. When B = 0, the result depends on the compiler, but 
-              !    it is normally |A|. 
-              ! 2. SIGN(A, B) is defined in terms of |A| but not
-              !    directly in terms of A; use with caution when A is
-              !    possibly negative.
-              xip = sign(rhobeg, (fval(ip + n + 1) - fval(ip + 1)))
-              xjp = sign(rhobeg, (fval(jp + n + 1) - fval(jp + 1)))
-              xpt(ip, nf) = xip
-              xpt(jp, nf) = xjp
+      
+      ! Set XPT(:, 2 : 2*N + 1). 
+      do k = 2, min(npt1, n + 1)
+          xpt(k - 1, k) = rhobeg
+      end do
+      do k = n+2, min(npt1, 2*n + 1)
+          xpt(k - n - 1, k) = -rhobeg
+      end do
+       
+      ! Set FVAL(2 : 2*N + 1) by evaluating F. Totally parallelizable.
+      do k = 2, min(npt1, 2*n + 1)
+          xtemp = xpt(:, k) + xbase
+          if (any(is_nan(xtemp))) then
+              f = sum(xtemp)  ! Set F to NaN. It is necessary.
+              info = -1
+              npt2 = 0 
+              exit
           end if
-
-          ! Function evaluation at XPT(:, NF)
-          xtemp = xpt(:, nf) + xbase
-!          if (any(is_nan(xtemp))) then
-!              f = sum(xtemp)  ! Set F to NaN. It is necessary.
-!              info = -1
-!              npt_mod = 0 
-!              exit
-!          end if
           call calfun(n, xtemp, f)
-          evaluated(nf) = .true.
-          fval(nf) = f
-!
-!          ! Check whether to exit.
-!          if (f <= ftarget) then
-!              info = 1
-!              npt_mod = 0 
-!              exit
-!          end if
-!          if (is_posinf(f) .or. is_nan(f)) then
-!              info = -2
-!              npt_mod = 0 
-!              exit
-!          end if
-      end do
+          evaluated(k) = .true.
+          fval(k) = f
 
-      ! Set GQ, HQ, BMAT, and ZMAT.
-      do nf = 2, npt_mod
-          ! Set the coefficients of the initial Lagrange functions
-          ! (i.e., bmat and zmat) and the initial quadratic model (i.e.,
-          ! gq, hq, pq). This is reached starting from the second
-          ! function evaluation, namely when NF > 1.
-          f = fval(nf)
-          if (nf <= 2*n + 1) then
-              ! Set the nonzero initial elements of BMAT and the
-              ! quadratic model in the cases when NF <= 2*N + 1.
-              if (nf <= n + 1) then
-                  gq(nf - 1) = (f - fbeg)/rhobeg
-                  if (npt < nf + n) then
-                      bmat(nf - 1, 1) = -one/rhobeg
-                      bmat(nf - 1, nf) = one/rhobeg
-                      bmat(nf - 1, npt + nf - 1) = -half*rhosq
-                  end if
-              else 
-                  bmat(nf - n - 1, nf - n) = half/rhobeg
-                  bmat(nf - n - 1, nf) = -half/rhobeg
-                  zmat(1, nf - n - 1) = -reciq - reciq
-                  zmat(nf - n, nf - n - 1) = reciq
-                  zmat(nf, nf - n - 1) = reciq
-                  ih = ((nf - n - 1)*(nf - n))/2
-                  temp = (fbeg - f)/rhobeg
-                  hq(ih) = (gq(nf - n - 1) - temp)/rhobeg
-                  gq(nf - n - 1) = half*(gq(nf - n - 1) + temp)
-              end if
-          else
-              ! When NF > 2*N+1, set the off-diagonal second derivatives
-              ! of the Lagrange functions and the quadratic model.
-
-              ! IP, JP, XIP, and XJP will be used below.
-              ip = ipt(nf)
-              jp = jpt(nf)
-              xip = xpt(ip, nf)
-              xjp = xpt(jp, nf)
-
-              ih = (ip*(ip - 1))/2 + jp
-              if (xip < zero) then 
-                  ip = ip + n
-              end if
-              if (xjp < zero) then
-                  jp = jp + n
-              end if
-              zmat(1, nf - n - 1) = recip
-              zmat(nf, nf - n - 1) = recip
-              zmat(ip + 1, nf - n - 1) = -recip
-              zmat(jp + 1, nf - n - 1) = -recip
-              hq(ih) = (fbeg - fval(ip+1) - fval(jp+1) + f)/(xip*xjp)
+          ! Check whether to exit.
+          if (f <= ftarget) then
+              info = 1
+              npt2 = 0 
+              exit
           end if
-
-          ! Check whether NaN occurs in the coefficients. 
-          ! Note that PQ is always ZERO --- the initial HESSIAN only has
-          ! the explicit part.
-!          if ((any(is_nan(bmat)) .or. any(is_nan(zmat)).or.             &
-!     &     any(is_nan(gq)) .or. any(is_nan(hq)))) then
-!              info = -3
-!              exit
-!          end if
+          if (is_posinf(f) .or. is_nan(f)) then
+              info = -2
+              npt2 = 0 
+              exit
+          end if
       end do
 
-      ! If the do loop is conducted seqentially, then the exit value of
-      ! NF is UPPER_BOUND + 1.
-      ! But this value is NOT portable: it depends on how the do loop
-      ! is coducted (seqentially or an parallel) at the backend.
+      ! Set XPT(:, 2*N + 2 : NPT). It depends on FVAL(2 : 2*N + 1).
+      do k = 2*n + 2, npt2
+          itemp = (k - n - 2)/n
+          jp = k - (itemp + 1)*n - 1
+          ip = jp + itemp
+          if (ip > n) then
+              itemp = jp
+              jp = ip - n
+              ip = itemp
+          end if
+          ipt(k) = ip
+          jpt(k) = jp
+          ! XIP and XJP are the only places that depend on FVAL(2:2*N+1)
+          ! SIGN(A, B) = |A| if B > 0 and -|A| if B < 0. Note that:
+          ! 1. When B = 0, the result depends on the compiler, but 
+          !    it is normally |A|. 
+          ! 2. SIGN(A, B) is defined in terms of |A| but not
+          !    directly in terms of A; use with caution when A is
+          !    possibly negative.
+          ! 3. MATLAB has also a SIGN function, but the definition is
+          !    SIGN(A) = 1 if A > 0, 0 if A = 0, and -1 if A < 0.
+          xpt(ip, k) = sign(rhobeg, fval(ip + n + 1) - fval(ip + 1)) 
+          xpt(jp, k) = sign(rhobeg, fval(jp + n + 1) - fval(jp + 1))
+      end do
+
+      ! Set FVAL(2*N + 2 : NPT) by evaluating F. Totally parallelizable.
+      do k = 2*n + 2, npt2
+          xtemp = xpt(:, k) + xbase
+          if (any(is_nan(xtemp))) then
+              f = sum(xtemp)  ! Set F to NaN. It is necessary.
+              info = -1
+              exit
+          end if
+          call calfun(n, xtemp, f)
+          evaluated(k) = .true.
+          fval(k) = f
+
+          ! Check whether to exit.
+          if (f <= ftarget) then
+              info = 1
+              exit
+          end if
+          if (is_posinf(f) .or. is_nan(f)) then
+              info = -2
+              exit
+          end if
+      end do
+
+      ! Set NF, KOPT, FOPT, and XOPT.
       nf = count(evaluated)
 
       if (nf == 0) then
@@ -215,6 +184,94 @@
           fopt = fval(kopt)
           xopt = xpt(:, kopt)
       end if
+
+      ! We return immediately if NF < NPT, because it indicates that 
+      ! something abnormality ocurred during the initialization of XPT
+      ! and FVAL, causing the initialization to abort.  
+      if (nf < npt) then
+          return
+      end if
+
+      ! Set GQ, and HQ.
+
+      ! Set GQ by forward difference.
+      gq(1 : n) = (fval(2 : n + 1) - fbeg)/rhobeg
+      ! If possible, revise GQ to central difference. 
+      k = min(npt - n - 1, n)
+      gq(1 : k) = half*(gq(1 : k) + (fbeg - fval(n+2 : n+1+k))/rhobeg)
+
+      ! Set the Hessian diagonal by 2nd-order central finite difference.
+      do k = n + 2, min(npt, 2*n + 1) 
+          ih = ((k - n - 1)*(k - n))/2
+          hq(ih)=((fval(k-n)-fbeg)/rhobeg-(fbeg-fval(k))/rhobeg)/rhobeg
+      end do
+      ! When NPT > 2*N + 1, set the off-diagonal entries of the Hessian.
+      do k = 2*n + 2, npt 
+          ! IP, JP, XIP, and XJP will be used below.
+          ip = ipt(k)
+          jp = jpt(k)
+          xip = xpt(ip, k)
+          xjp = xpt(jp, k)
+          ih = (ip*(ip - 1))/2 + jp
+          if (xip < zero) then 
+              ip = ip + n
+          end if
+          if (xjp < zero) then
+              jp = jp + n
+          end if
+          hq(ih) = (fbeg - fval(ip+1) - fval(jp+1) + fval(k))/(xip*xjp)
+      end do
+
+      ! Set BMAT and ZMAT. They depend on XPT but not FVAL.
+
+      ! Set the nonzero initial elements of BMAT. 
+      ! When NPT >= 2*N + 1, this defines BMAT completely; 
+      ! When NPT <= 2*N, this defines the first NPT-N-1 rows of BMAT.
+      do k = 1, min(npt - n - 1, n)
+          bmat(k, k + 1) = half/rhobeg
+          bmat(k, n + k + 1) = -half/rhobeg
+      end do
+
+      ! When NPT <= 2*N, set the NPT - N to N rows of BMAT. 
+      do k = npt - n, n 
+          bmat(k, 1) = -one/rhobeg
+          bmat(k, k + 1) = one/rhobeg
+          bmat(k, npt + k) = -half*rhosq
+      end do
+                
+      ! Set the nonzero initial elements of ZMAT. 
+      ! When NPT <= 2*N + 1, this defines ZMAT completely; 
+      ! When NPT > 2*N + 1, this defines the first N columns of ZMAT.
+      do k = 1, min(npt - n - 1, n) 
+          zmat(1, k) = - reciq - reciq
+          zmat(k + 1, k) = reciq
+          zmat(k + n + 1, k) = reciq
+      end do
+
+      ! When NPT > 2*N+1, set the N + 1 to NPT - N - 1 columns of ZMAT.
+      do k = n + 1, npt - n - 1
+          ! IP, JP, XIP, and XJP will be used below.
+          ip = ipt(k + n + 1)
+          jp = jpt(k + n + 1)
+          xip = xpt(ip, k + n + 1)
+          xjp = xpt(jp, k + n + 1)
+          if (xip < zero) then 
+              ip = ip + n
+          end if
+          if (xjp < zero) then
+              jp = jp + n
+          end if
+          zmat(1, k) = recip
+          zmat(k + n + 1, k) = recip
+          zmat(ip + 1, k) = -recip
+          zmat(jp + 1, k) = -recip
+      end do
+
+!      ! Check whether NaN occurs in the coefficients. 
+!      if ((any(is_nan(bmat)) .or. any(is_nan(zmat)).or.                 &
+!     &     any(is_nan(gq)) .or. any(is_nan(hq)))) then
+!          info = -3
+!      end if
 
       return
 
