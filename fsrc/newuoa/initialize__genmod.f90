@@ -1,4 +1,4 @@
-        !COMPILER-GENERATED INTERFACE MODULE: Mon Jun 29 19:20:45 2020
+        !COMPILER-GENERATED INTERFACE MODULE: Tue Jun 30 00:56:18 2020
         ! This source file is for reference only and may not completely
         ! represent the generated interface used by the compiler.
         MODULE INITIALIZE__genmod
@@ -19,7 +19,7 @@
               REAL(KIND=8), INTENT(OUT) :: BMAT(N,NPT+N)
               REAL(KIND=8), INTENT(OUT) :: ZMAT(NPT,NPT-N-1)
               REAL(KIND=8), INTENT(OUT) :: GQ(N)
-              REAL(KIND=8), INTENT(OUT) :: HQ((N*(N+1))/2)
+              REAL(KIND=8), INTENT(OUT) :: HQ(N,N)
               REAL(KIND=8), INTENT(OUT) :: PQ(NPT)
               INTEGER(KIND=4), INTENT(OUT) :: NF
               INTEGER(KIND=4), INTENT(OUT) :: INFO

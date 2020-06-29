@@ -11,7 +11,7 @@
      & zmat(npt, npt - n - 1)
       real(kind = rp), intent(inout) :: gq(n), hq(n, n), pq(npt) 
 
-      integer :: i, ih, j
+      integer :: i, j
       real(kind = rp) :: fqdz(npt - n - 1)
 
 
