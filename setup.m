@@ -195,8 +195,9 @@ examples = fullfile(matd, 'examples'); % Directory containing some test examples
 % serious errors including Segmentation Fault!
 dir_list = {fsrc, fsrc_classical, gateways, gateways_classical, interfaces_private};
 for idir = 1 : length(dir_list)
-    modo_files = [files_with_wildcard(dir_list{idir}, '*.mod'), files_with_wildcard(dir_list{idir}, '*.o')];
-    cellfun(@(filename) delete(filename), modo_files);
+    mod_files = files_with_wildcard(dir_list{idir}, '*.mod');
+    obj_files = [files_with_wildcard(dir_list{idir}, '*.o'), files_with_wildcard(dir_list{idir}, '*.obj')];
+    cellfun(@(filename) delete(filename), [mod_files, obj_files]);
 end
 
 % Compilation starts
@@ -208,9 +209,13 @@ try
 % We use try ... catch so that we can change directory back to cpwd in
 % case of an error.
 
-    infrastructure_files = files_with_wildcard(fsrc, '*.F'); 
+    infrastructure_files = regexp(fileread(fullfile(fsrc, 'file_list')), '\n', 'split');
+    infrastructure_files = strtrim(infrastructure_files(~cellfun(@isempty, infrastructure_files))); 
+    infrastructure_files = fullfile(fsrc, infrastructure_files);
+    mex(mex_options{:}, '-c', infrastructure_files{:});
+
     % Compilation of function gethuge
-    mex(mex_options{:}, '-output', 'gethuge', infrastructure_files{:}, fullfile(gateways, 'gethuge.F'));
+    mex(mex_options{:}, '-output', 'gethuge', fullfile(gateways, 'gethuge.F'));
 
     for isol = 1 : length(solver_list)
         solver = solver_list{isol};
@@ -218,16 +223,22 @@ try
         % Compilation of solver
         fprintf('Compiling %s ... ', solver);
         % Clean up the source file directory
-        modo_files = [files_with_wildcard(fullfile(fsrc, solver), '*.mod'), files_with_wildcard(fullfile(fsrc, solver), '*.o')];
-        cellfun(@(filename) delete(filename), modo_files);
+        mod_files = files_with_wildcard(fullfile(fsrc, solver), '*.mod');
+        obj_files = [files_with_wildcard(fullfile(fsrc, solver), '*.o'), files_with_wildcard(fullfile(fsrc, solver), '*.obj')];
+        cellfun(@(filename) delete(filename), [mod_files, obj_files]);
         % Compile
-        src_files = files_with_wildcard(fullfile(fsrc, solver), '*.f*');
-        mex(mex_options{:}, '-output', ['f', solver, 'n'], infrastructure_files{:}, src_files{:}, fullfile(gateways, [solver, '-interface.F']));
+        src_files = regexp(fileread(fullfile(fsrc, solver, 'file_list')), '\n', 'split');
+        src_files = strtrim(src_files(~cellfun(@isempty, src_files))); 
+        src_files = fullfile(fsrc, solver, src_files);
+        mex(mex_options{:}, '-c', src_files{:});
+        obj_files = [files_with_wildcard(interfaces_private, '*.o'), files_with_wildcard(interfaces_private, '*.obj')];
+        mex(mex_options{:}, '-output', ['f', solver, 'n'], obj_files{:}, fullfile(gateways, [solver, '-interface.F']));
 
         % Compilation of the 'classical' version of solver
         % Clean up the source file directory
-        modo_files = [files_with_wildcard(fullfile(fsrc_classical, solver), '*.mod'), files_with_wildcard(fullfile(fsrc_classical, solver), '*.o')];
-        cellfun(@(filename) delete(filename), modo_files);
+        mod_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.mod');
+        obj_files = [files_with_wildcard(fullfile(fsrc_classical, solver), '*.o'), files_with_wildcard(fullfile(fsrc_classical, solver), '*.obj')];
+        cellfun(@(filename) delete(filename), [mod_files, obj_files]);
         % Compile
         src_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.f*');
         mex(mex_options{:}, '-output', ['f', solver, 'n_classical'], infrastructure_files{:}, src_files{:}, fullfile(gateways_classical, [solver, '-interface.F']));
@@ -236,8 +247,9 @@ try
     end
 
     % Clean up the .mod and .o files
-    modo_files = [files_with_wildcard(fullfile(interfaces_private), '*.mod'), files_with_wildcard(fullfile(interfaces_private), '*.o')];
-    cellfun(@(filename) delete(filename), modo_files);
+    mod_files = files_with_wildcard(fullfile(interfaces_private), '*.mod');
+    obj_files = [files_with_wildcard(fullfile(interfaces_private), '*.o'), files_with_wildcard(fullfile(interfaces_private), '*.obj')];;
+    cellfun(@(filename) delete(filename), [mod_files, obj_files]);
 
 catch exception % NOTE: Everything above 'catch' is conducted in interfaces_private.
     cd(cpwd); % In case of an error, change directory back to cpwd

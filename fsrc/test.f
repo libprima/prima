@@ -1,7 +1,5 @@
           program exponents
-            real(kind=4) :: x
-            real(kind=8) :: y
-          
-            print *, minexponent(x), maxexponent(x)
-            print *, minexponent(y), maxexponent(y)
+              use warnerror
+
+              call errmssg('BIGDEN', 'SIZE(X) /= SIZE(XPT, 1)')
           end program exponents
