@@ -2,8 +2,12 @@
      &  x, f, nf, info)
 
       use consts, only : rp, zero, one, half, tenth
+      use warnerror, only : errmssg
+      use infos, only : INVALID_INPUT
       use infnan
       use lina
+      use trsubp
+      use geometry
       implicit none
 
       ! Inputs
@@ -26,6 +30,7 @@
       logical :: model_step, reduce_rho, shortd
 
 
+      
       ! The arguments N, NPT, X, RHOBEG, RHOEND, IPRINT and MAXFUN are
       ! identical to the corresponding arguments in SUBROUTINE NEWUOA.
       ! XBASE will hold a shift of origin that should reduce the
@@ -100,8 +105,10 @@
           ! In Powell's NEWUOA code, VQUAD is not an output of TRSAPP.
           ! Here we output it but do not use it to align with Powell's
           ! code. VQUAD is later calculated by CALQUAD.
-          call trsapp(n, npt, 1.0e-2_rp, xopt, xpt, gq, hq, pq, delta,  &
-     &     d, crvmin, vquad, subinfo)
+           call trsapp(xopt, xpt, gq, hq, pq, delta, 1.0e-2_rp, d,      &
+     &      crvmin, vquad, subinfo)
+!          call trsapp(n, npt, 1.0e-2_rp, xopt, xpt, gq, hq, pq, delta,  &
+!     &     d, crvmin, vquad, subinfo)
 
           ! Calculate the length of the trial step D.
           dsq = dot_product(d, d)
@@ -373,8 +380,11 @@
 !                  exit
 !              end if
 
-              call biglag(n, npt, xopt, xpt, bmat, zmat, idz, knew,     &
-     &         dstep, d, alpha)
+              call biglag(xopt, xpt, bmat, zmat, idz, knew, dstep, d,   &
+     &         alpha, subinfo)
+              if (subinfo == INVALID_INPUT) then
+                  return
+              end if
 
               ! Calculate VLAG, BETA, and WCHECK for D.
 !              call vlagbeta(n, npt, idz, kopt, bmat, zmat, xpt, xopt, d,&
@@ -388,11 +398,11 @@
               ! No need to check whether BMAT and ZMAT contain NaN as no
               ! change has been made to them.
               if (abs(one + alpha*beta/vlag(knew)**2) <= 0.8_rp) then
-                  call bigden (n, npt, xopt, xpt, bmat, zmat, idz, kopt,&
-     &             knew, d, wcheck, vlag, beta)
-!                  call bigden (n, npt, xopt, xpt, bmat, zmat, idz,      &
-!     &             kopt, knew, d, wcheck, vlag, beta, xnew, w(npt+n+1), &
-!     &             w(6*(npt+n)+1))
+                  call bigden (xopt, xpt, bmat, zmat, idz, kopt, knew,  &
+     &             d, wcheck, vlag, beta, subinfo)
+                  if (subinfo == INVALID_INPUT) then
+                      return
+                  end if
               end if
 
       !----------------------------------------------------------------!

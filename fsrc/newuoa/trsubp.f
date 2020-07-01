@@ -1,5 +1,8 @@
-      subroutine trsapp(n, npt, tol, x, xpt, gq, hq, pq, delta, s,      &
-     & crvmin, qred, info)
+      module trsubp
+
+      contains
+
+      subroutine trsapp(x, xpt, gq, hq, pq,delta,tol,s,crvmin,qred,info)
       ! TRSAPP finds an approximate solution to the N-dimensional trust
       ! region subproblem
       !
@@ -32,24 +35,66 @@
       ! trust region.
       
       use consts, only : rp, one, two, half, zero, pi
+      use infos, only : INVALID_INPUT
+      use warnerror
       use infnan
       use lina
       implicit none
       
-      integer, intent(in) :: n, npt
-      integer, intent(out) :: info
-      real(kind = rp), intent(in) :: tol, delta, x(n), xpt(n, npt),     &
-     & gq(n), hq(n, n), pq(npt)
-      real(kind = rp), intent(out) :: s(n), crvmin, qred
-      
-      integer :: i, isave, iterc, itermax, iu, j
-      real(kind = rp) :: alpha, angle, bstep, cf, cth, dd, delsq, dg,   &
-     & dhd, dhs, ds, gg, ggbeg, ggsave, qadd, qbeg, qmin, qnew, qsave,  &
-     & reduc, sg, sgk, shs, ss, sth, temp, tempa, tempb, d(n), g(n),    &
-     & hd(n), hs(n), hx(n) 
-      logical :: twod_search
+      integer, intent(out) ::   info
+      real(rp), intent(in) ::   tol, delta 
+      real(rp), intent(in) ::   xpt(:, :)   ! XPT(N, NPT)
 
+      real(rp), intent(in) ::   x(:)        ! X(N)
+      real(rp), intent(in) ::   gq(:)       ! GQ(N)
+      real(rp), intent(in) ::   hq(:, :)    ! HQ(N, N)
+      real(rp), intent(in) ::   pq(:)       ! PQ(NPT)
+      real(rp), intent(out) ::  s(:)        ! S(N)
+      real(rp), intent(out) ::  crvmin
+      real(rp), intent(out) ::  qred
       
+      integer :: i, isave, iterc, itermax, iu, j, n, npt
+      real(rp) :: d(size(x)), g(size(x)), hd(size(x)), hs(size(x)),     &
+     & hx(size(x)) 
+      real(rp) :: alpha, angle, bstep, cf, cth, dd, delsq, dg, dhd, dhs,&
+     & ds, gg, ggbeg, ggsave, qadd, qbeg, qmin, qnew, qsave, reduc, sg, &
+     & sgk, shs, ss, sth, temp, tempa, tempb
+      logical :: twod_search
+      character(len = 100) :: srname
+
+      srname = 'TRSAPP'  ! Name of the current subroutine.
+      info = 0
+      
+      ! Get and verify the sizes.
+      n = size(xpt, 1)
+      npt = size(xpt, 2)
+
+      if (n == 0 .or. npt < n + 2) then
+          info = INVALID_INPUT
+          call errmssg(srname, 'SIZE(XPT, 2) < SIZE(XPT, 1) + 2')
+      end if
+      if (size(gq) /= n) then
+          info = INVALID_INPUT
+          call errmssg(srname, 'SIZE(GQ) /= SIZE(X)')
+          return
+      end if
+      if (size(hq, 1) /= n .or. size(hq, 2) /= n) then
+          info = INVALID_INPUT
+          call errmssg(srname, 'SIZE(HQ) /= (SIZE(X), SIZE(X))')
+          return
+      end if
+      if (size(pq, 1) /= npt) then
+          info = INVALID_INPUT
+          call errmssg(srname, 'SIZE(PQ) /= (SIZE(XPT))')
+          return
+      end if
+      if (size(s) /= n) then
+          info = INVALID_INPUT
+          call errmssg(srname, 'SIZE(S) /= SIZE(X)')
+          return
+      end if
+      
+
       s = zero
       crvmin = zero
       qred = zero
@@ -263,3 +308,5 @@
 
  
       end subroutine trsapp
+
+      end module trsubp

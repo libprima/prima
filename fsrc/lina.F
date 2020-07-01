@@ -32,13 +32,16 @@
 
 #if __USE_INTRINSIC_ALGEBRA__ == 0 
       function matmul12(x, y) result(z)
+      use warnerror, only : errmssg 
+      use infos, only : INVALID_INPUT
       implicit none
       real(kind = rp), dimension(:), intent(in) :: x
       real(kind = rp), dimension(:, :), intent(in) :: y
       real(kind = rp), dimension(size(y, 2)) :: z
       integer :: j
       if (size(x) /= size(y, 1)) then
-          stop 'Error in MATMUL: RANK(X) = 1 and SIZE(X) /= SIZE(Y, 1).'
+          call errmssg('MATMUL12', 'SIZE(X) /= SIZE(Y, 1)')
+          stop INVALID_INPUT
       end if
       z = zero
       do j = 1, size(y, 2)
@@ -50,13 +53,16 @@
       end function matmul12
 
       function matmul21(x, y) result(z)
+      use infos, only : INVALID_INPUT
+      use warnerror, only : errmssg
       implicit none
       real(kind = rp), dimension(:, :), intent(in) :: x
       real(kind = rp), dimension(:), intent(in) :: y
       real(kind = rp), dimension(size(x, 1)) :: z
       integer :: i
       if (size(x, 2) /= size(y)) then
-          stop 'Error in MATMUL: RANK(Y) = 1 and SIZE(X, 2) /= SIZE(Y).'
+          call errmssg('MATMUL21', 'SIZE(X, 2) /= SIZE(Y)')
+          stop INVALID_INPUT
       end if
       z = zero
       do i = 1, size(x, 2)
@@ -65,12 +71,15 @@
       end function matmul21
 
       function matmul22(x, y) result(z)
+      use infos, only : INVALID_INPUT
+      use warnerror, only : errmssg 
       implicit none
       real(kind = rp), dimension(:, :), intent(in) :: x, y
       real(kind = rp), dimension(size(x, 1), size(y, 2)) :: z
       integer :: i, j
       if (size(x, 2) /= size(y, 1)) then
-          stop 'Error in MATMUL: SIZE(X, 2) /= SIZE(Y, 1).'
+          call errmssg('MATMUL22', 'SIZE(X, 2) /= SIZE(Y, 1)')
+          stop INVALID_INPUT
       end if
       z = zero
       do j = 1, size(y, 2)
@@ -81,13 +90,16 @@
       end function matmul22
 
       function inprod(x, y) result(z)
+      use infos, only : INVALID_INPUT
+      use warnerror, only : errmssg 
       implicit none
       real(kind = rp), dimension(:), intent(in) :: x, y
       real(kind = rp) :: z
       !z = sum(x*y)
       integer :: i
       if (size(x) /= size(y)) then
-          stop 'Error in INPROD: SIZE(X) /= SIZE(Y).'
+          call errmssg('INPROD', 'SIZE(X) /= SIZE(Y)')
+          stop INVALID_INPUT 
       end if
       z = zero
       do i = 1, size(x)
