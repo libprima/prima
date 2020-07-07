@@ -1,4 +1,8 @@
-      subroutine update(n, npt, bmat, zmat, idz, vlag, beta, knew)
+      module update 
+
+      contains
+
+      subroutine updateh(bmat, zmat, idz, vlag, beta, knew, info)
       ! UPDATE updates arrays BMAT and ZMAT together with IDZ, in order
       ! to shift the interpolation point that has index KNEW. On entry, 
       ! VLAG contains the components of the vector THETA*WCHECK + e_b 
@@ -11,19 +15,48 @@
       ! VLAGBETA.
 
       use consts, only : one, zero
+      use infos, only : INVALID_INPUT
+      use warnerror, only : errmssg
       use lina
       implicit none
 
-      integer, intent(in) :: n, npt, knew
-      integer, intent(inout) :: idz
-      real(kind=rp), intent(in) :: beta
-      real(kind=rp), intent(inout) :: bmat(n, npt+n), zmat(npt,npt-n-1),&
-     & vlag(npt + n)
+      integer, intent(in) ::        knew
+      integer, intent(out) ::       info 
+      integer, intent(inout) ::     idz
+      real(rp), intent(in) ::       beta
+      real(rp), intent(inout) ::    bmat(:, :)  ! BMAT(N, NPT + N)
+      real(rp), intent(inout) ::    zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
+      real(rp), intent(inout) ::    vlag(:)     ! VLAG(NPT + N)
 
-      integer :: iflag, j, ja, jb, jl
-      real(kind=rp) :: c, s, r, alpha, denom, scala, scalb, tau, tausq, &
-     & temp, tempa, tempb, ztemp(npt), w(npt + n), v1(n), v2(n)
+      integer :: iflag, j, ja, jb, jl, n, npt
+      real(rp) :: c, s, r, alpha, denom, scala, scalb, tau, tausq, temp,&
+     & tempa, tempb, ztemp(size(zmat, 1)), w(size(vlag)),               &
+     & v1(size(bmat, 1)), v2(size(bmat, 1))
+      character(len = 100) :: srname
 
+      srname = 'UPDATEH'  ! Name of the current subroutine.
+      info = 0
+      
+      ! Get and verify the sizes.
+      n = size(bmat, 1)
+      npt = size(bmat, 2) - n
+
+      if (n == 0 .or. npt < n + 2) then
+          info = INVALID_INPUT
+          call errmssg(srname, 'SIZE(BMAT) is invalid')
+          return
+      end if
+      if (size(zmat, 1) /= npt .or. size(zmat, 2) /= npt - n - 1) then
+          info = INVALID_INPUT
+          call errmssg(srname, 'SIZE(ZMAT) is invalid')
+          return
+      end if
+      if (size(vlag) /= npt + n) then
+          info = INVALID_INPUT
+          call errmssg(srname, 'SIZE(VLAG) is invalid')
+          return
+      end if
+      
           
       ! Apply the rotations that put zeros in the KNEW-th row of ZMAT.
       ! A Givens rotation will be multiplied to ZMAT from the left so
@@ -226,4 +259,99 @@
 
       return
 
-      end subroutine update
+      end subroutine updateh
+
+
+      subroutine updateq(idz, knew, fqdiff, xptknew, bmatknew, zmat, gq,&
+     & hq, pq, info)
+      use infos, only : INVALID_INPUT
+      use warnerror, only : errmssg
+
+      use consts, only : rp, zero
+      use lina
+      implicit none
+
+      integer, intent(in) ::        idz
+      integer, intent(in) ::        knew
+      integer, intent(out) ::       info 
+
+      real(rp), intent(in) ::       fqdiff
+      real(rp), intent(in) ::       xptknew(:)  ! XPTKNEW(N)
+      real(rp), intent(in) ::       bmatknew(:) ! BMATKNEW(N)
+      real(rp), intent(in) ::       zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
+      real(rp), intent(inout) ::    gq(:)   ! GQ(N)
+      real(rp), intent(inout) ::    hq(:, :)! HQ(N, N)
+      real(rp), intent(inout) ::    pq(:)   ! PQ(NPT) 
+
+      integer :: i, j, n, npt
+      real(kind = rp) :: fqdz(size(zmat, 2))
+      character(len = 100) :: srname
+
+      srname = 'UPDATEQ'  ! Name of the current subroutine.
+      info = 0
+      
+      ! Get and verify the sizes.
+      n = size(gq)
+      npt = size(pq)
+
+      if (n == 0 .or. npt < n + 2) then
+          info = INVALID_INPUT
+          call errmssg(srname, 'SIZE(GQ) or SIZE(PQ) is invalid')
+          return
+      end if
+      if (size(zmat, 1) /= npt .or. size(zmat, 2) /= npt - n - 1) then
+          info = INVALID_INPUT
+          call errmssg(srname, 'SIZE(ZMAT) is invalid')
+          return
+      end if
+      if (size(xptknew) /= n) then
+          info = INVALID_INPUT
+          call errmssg(srname, 'SIZE(XPTKNEW) is invalid')
+          return
+      end if
+      if (size(bmatknew) /= n) then
+          info = INVALID_INPUT
+          call errmssg(srname, 'SIZE(BMATKNEW) is invalid')
+          return
+      end if
+      if (size(hq, 1) /= n .or. size(hq, 2) /= n) then
+          info = INVALID_INPUT
+          call errmssg(srname, 'SIZE(HQ) is invalid')
+          return
+      end if
+
+      !----------------------------------------------------------------!
+      ! This update does NOT preserve symmetry. Symmetrization needed! 
+      hq = hq + outprod(xptknew, pq(knew)*xptknew)
+      do i = 1, n
+          hq(i, 1:i-1) = hq(1:i-1, i)
+      end do
+      !---------- A probably better implementation: -------------------!
+      ! This is better because it preserves symmetry even with floating
+      ! point arithmetic.
+!-----!hq = hq + pq(knew)*outprod(xptknew, xptknew) !------------------!
+      !----------------------------------------------------------------!
+
+      ! Update the implicit part of second derivatives.
+      fqdz = fqdiff*zmat(knew, :)
+      fqdz(1 : idz - 1) = -fqdz(1 : idz - 1)
+      pq(knew) = zero
+      !----------------------------------------------------------------!
+      !!! The following DO LOOP implements the update given below, yet
+      !!! the result will not be exactly the same due to the
+      !!! non-associativity of floating point arithmetic addition.
+      !!! In future versions, we will use MATMUL instead of DO LOOP.
+!----!pq = pq + matmul(zmat, fqdz) !-----------------------------------!
+      !----------------------------------------------------------------!
+      do j = 1, npt - n - 1
+          pq = pq + fqdz(j)*zmat(:, j)
+      end do
+
+      ! Update the gradient.
+      gq = gq + fqdiff*bmatknew
+
+      return 
+
+      end subroutine updateq
+
+      end module update

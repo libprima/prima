@@ -59,7 +59,8 @@
 
       if (n == 0 .or. npt < n + 2) then
           info = INVALID_INPUT
-          call errmssg(srname, 'SIZE(XPT, 2) < SIZE(XPT, 1) + 2')
+          call errmssg(srname, 'SIZE(XPT) is invalid')
+          return
       end if
       if (size(x) /= n) then
           info = INVALID_INPUT
@@ -203,14 +204,19 @@
       end subroutine biglag
 
 
-!!! TODO: Replace the DO LOOP in the update of S with MATMUL.
+
       subroutine bigden (x, xpt, bmat, zmat, idz, kopt, knew, d, wcheck,&
      & vlag, beta, info)
+!!! TODO: Replace the DO LOOP in the update of S with MATMUL.
       ! BIGDEN calculates a D by approximately solving
       !
-      ! max |LFUNC(X + D)|, subject to ||D|| <= DELTA, 
+      ! max |SIGMA(X + D)|, subject to ||D|| <= DELTA, 
       !
-      ! where LFUNC is the KNEW-th Lagrange function.
+      ! where SIGMA is the denominator \sigma in the updating formula
+      ! (4.11)--(4.12) for H, which is the inverse of the coefficient
+      ! matrix for the interplolation system (see (3.12)). Indeed, each
+      ! column of H corresponds to a Lagrange basis function of the
+      ! interpolation problem. 
       ! In addition, it sets VLAG, BETA, and WCHECK for the selected D.
 
       use consts, only : rp, one, two, half, quart, pi, zero
@@ -276,7 +282,8 @@
 
       if (n == 0 .or. npt < n + 2) then
           info = INVALID_INPUT
-          call errmssg(srname, 'SIZE(XPT, 2) < SIZE(XPT, 1) + 2')
+          call errmssg(srname, 'SIZE(XPT) is invalid')
+          return
       end if
       if (size(x) /= n) then
           info = INVALID_INPUT
