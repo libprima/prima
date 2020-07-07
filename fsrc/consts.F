@@ -20,10 +20,17 @@
 !    There is NO guarantee that REAL(KIND=8) will be of double
 !    precision.
 
+#include "ppflags.h"
 
       module consts 
 
       implicit none
+
+#if __DEBUG_MODE__ == 1
+      logical, parameter :: DEBUG_MODE = .true.
+#else
+      logical, parameter :: DEBUG_MODE = .false.
+#endif
 
       integer, parameter :: dp = kind(0.0d0), sp = kind(0.0)
       ! dp is the kind for double precision
@@ -48,8 +55,8 @@
       real(kind=rp), parameter :: hugefun = 2.0_rp**min(100, maxe/2)
       real(kind=rp), parameter :: hugecon = hugefun
 
-      integer, parameter :: int4 = selected_int_kind(8)
-      ! int4 is the kind for integer*4
+      integer, parameter :: int32 = selected_int_kind(8)
+      ! int32 is the kind for 32-bit integer, i.e., integer*4.
       ! SELECTED_INT_KIND(p) returns an INTEGER that equals the
       ! processor dependent kind type parameter of the integer type
       ! accommodating all values n with -10^p < n < 10^p. Therefore,

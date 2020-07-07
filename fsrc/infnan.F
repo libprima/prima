@@ -1,51 +1,5 @@
 ! INFNAN is a module defining some procedures concerning INF or NAN.
-
-! Which Fortran standard to follow?
-#ifdef __FORTRAN_STANDARD__
-#undef __FORTRAN_STANDARD__
-#endif
-#define __FORTRAN_STANDARD__ 95 
-
-! Decide whether IEEE_ARITHMETIC is available by checking the version of
-! the compiler. 
-#ifdef __USE_IEEE_ARITHMETIC__      
-#undef __USE_IEEE_ARITHMETIC__
-#endif
-#define __USE_IEEE_ARITHMETIC__ 0
-
-#if __FORTRAN_STANDARD__ >= 2003 
-! Note thant IEEE_ARITHMETIC is available starting from Fortran 2003.
-
-#ifdef __GFORTRAN__
-#if __GNUC__ > 4
-#undef __USE_IEEE_ARITHMETIC__
-#define __USE_IEEE_ARITHMETIC__ 1
-#endif
-#endif
-
-#ifdef __INTEL_COMPILER
-#if __INTEL_COMPILER > 1100
-#undef __USE_IEEE_ARITHMETIC__
-#define __USE_IEEE_ARITHMETIC__ 1
-#endif
-#endif
-
-#ifdef __NAG_COMPILER_RELEASE
-#if __NAG_COMPILER_RELEASE > 40
-#undef __USE_IEEE_ARITHMETIC__
-#define __USE_IEEE_ARITHMETIC__ 1
-#endif
-#endif
-
-#ifdef __G95__
-#if __G95_MINOR__ > 90
-#undef __USE_IEEE_ARITHMETIC__
-#define __USE_IEEE_ARITHMETIC__ 1
-#endif
-#endif
-
-#endif
-
+#include "ppflags.h"
 
       module infnan
 
