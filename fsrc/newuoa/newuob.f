@@ -8,6 +8,7 @@
       use lina
       use trsubp
       use geometry
+      use update
       implicit none
 
       ! Inputs
@@ -107,8 +108,10 @@
           ! code. VQUAD is later calculated by CALQUAD.
            call trsapp(xopt, xpt, gq, hq, pq, delta, 1.0e-2_rp, d,      &
      &      crvmin, vquad, subinfo)
-!          call trsapp(n, npt, 1.0e-2_rp, xopt, xpt, gq, hq, pq, delta,  &
-!     &     d, crvmin, vquad, subinfo)
+           if (subinfo == INVALID_INPUT) then
+               info = subinfo
+               return
+           end if
 
           ! Calculate the length of the trial step D.
           dsq = dot_product(d, d)
@@ -150,8 +153,8 @@
 
       !----------------------------------------------------------------!
 
-              ! Use the quadratic model to predict the change in F due
-              ! to the step D.
+              ! Use the current quadratic model to predict the change in
+              ! F due to the step D.
               !call calquad(vquad, d, xopt, xpt, gq, hq, pq, n, npt)
               call calquad(vquad, d, xopt, xpt, gq, hq, pq, n, npt,     &
      &         wcheck(1:npt))
@@ -249,10 +252,20 @@
               if (knew > 0) then
                   ! Update BMAT, ZMAT and IDZ, so that the KNEW-th
                   ! interpolation point can be removed.
-                  call update(n, npt, bmat, zmat, idz, vlag, beta, knew)
+                  call updateh(bmat, zmat, idz, vlag, beta,knew,subinfo)
+                  if (subinfo == INVALID_INPUT) then
+                      info = subinfo
+                      return
+                  end if
+
+
                   ! Update the quadratic model
-                  call updateq(n, npt, idz, knew, prederr(1),           &
-     &             xpt(:, knew), bmat(:, knew), zmat, gq, hq, pq)
+                  call updateq(idz, knew, prederr(1), xpt(:, knew),     &
+     &             bmat(:, knew), zmat, gq, hq, pq, subinfo)
+                  if (subinfo == INVALID_INPUT) then
+                      info = INVALID_INPUT
+                      return
+                  end if
 
                   ! Include the new interpolation point. This should be
                   ! done after updating BMAT, ZMAT, and the model.
@@ -383,6 +396,7 @@
               call biglag(xopt, xpt, bmat, zmat, idz, knew, dstep, d,   &
      &         alpha, subinfo)
               if (subinfo == INVALID_INPUT) then
+                  info = subinfo
                   return
               end if
 
@@ -394,13 +408,16 @@
 
               ! If KNEW is positive and if the cancellation in DENOM is
               ! unacceptable, then BIGDEN calculates an alternative
-              ! model step, XNEW being used for working space.
+              ! model step D.
+              ! Why don't we call vlagbeta for this D? Because they are
+              ! calculated within BIGDEN. 
               ! No need to check whether BMAT and ZMAT contain NaN as no
               ! change has been made to them.
               if (abs(one + alpha*beta/vlag(knew)**2) <= 0.8_rp) then
                   call bigden (xopt, xpt, bmat, zmat, idz, kopt, knew,  &
      &             d, wcheck, vlag, beta, subinfo)
                   if (subinfo == INVALID_INPUT) then
+                      info = subinfo
                       return
                   end if
               end if
@@ -463,10 +480,20 @@
 
               ! Update BMAT, ZMAT and IDZ, so that the KNEW-th
               ! interpolation point can be moved.
-              call update(n, npt, bmat, zmat, idz, vlag, beta, knew)
+              call updateh(bmat, zmat, idz, vlag, beta, knew, subinfo)
+              if (subinfo == INVALID_INPUT) then
+                  info = INVALID_INPUT
+                  return
+              end if
+                  
+
               ! Update the quadratic model.
-              call updateq(n, npt, idz, knew, prederr(1), xpt(:, knew), &
-     &         bmat(:, knew), zmat, gq, hq, pq)
+              call updateq(idz, knew, prederr(1), xpt(:, knew),         &
+     &         bmat(:, knew), zmat, gq, hq, pq, subinfo)
+              if (subinfo == INVALID_INPUT) then
+                  info = INVALID_INPUT
+                  return
+              end if
 
               ! Include the new interpolation point. This should be done
               ! after updating BMAT, ZMAT, and the model.

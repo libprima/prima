@@ -36,19 +36,20 @@
       
       use consts, only : rp, one, two, half, zero, pi
       use infos, only : INVALID_INPUT
-      use warnerror
+      use warnerror, only : errmssg
       use infnan
       use lina
       implicit none
       
       integer, intent(out) ::   info
-      real(rp), intent(in) ::   tol, delta 
-      real(rp), intent(in) ::   xpt(:, :)   ! XPT(N, NPT)
 
+      real(rp), intent(in) ::   xpt(:, :)   ! XPT(N, NPT)
       real(rp), intent(in) ::   x(:)        ! X(N)
       real(rp), intent(in) ::   gq(:)       ! GQ(N)
       real(rp), intent(in) ::   hq(:, :)    ! HQ(N, N)
       real(rp), intent(in) ::   pq(:)       ! PQ(NPT)
+      real(rp), intent(in) ::   tol
+      real(rp), intent(in) ::   delta 
       real(rp), intent(out) ::  s(:)        ! S(N)
       real(rp), intent(out) ::  crvmin
       real(rp), intent(out) ::  qred
@@ -71,7 +72,8 @@
 
       if (n == 0 .or. npt < n + 2) then
           info = INVALID_INPUT
-          call errmssg(srname, 'SIZE(XPT, 2) < SIZE(XPT, 1) + 2')
+          call errmssg(srname, 'SIZE(XPT) is invalid')
+          return
       end if
       if (size(gq) /= n) then
           info = INVALID_INPUT

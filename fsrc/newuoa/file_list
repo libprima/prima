@@ -5,7 +5,6 @@ initialize.f
 qalt.f
 shiftbase.f
 update.f
-updateq.f
 vlagbeta.f
 newuob.f
 newuoa.f 
