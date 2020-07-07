@@ -1,16 +1,5 @@
 ! LINA is a module providing some basic linear algebra procedures.
-
-! Do we use the same linear algebra procedures as Powell did?
-#ifdef __USE_INTRINSIC_ALGEBRA__
-#undef __USE_INTRINSIC_ALGEBRA__
-#endif
-#define __USE_INTRINSIC_ALGEBRA__ 0 
-
-! Which Fortran standard to follow?
-#ifdef __FORTRAN_STANDARD__
-#undef __FORTRAN_STANDARD__
-#endif
-#define __FORTRAN_STANDARD__ 95 
+#include "ppflags.h"
 
       module lina
 
@@ -27,13 +16,18 @@
       end interface dot_product
 #endif
 
+#if __IMPROVE_POWELL_CODE__ == 0 || __FORTRAN_STANDARD__ < 2008
+      interface hypot
+          module procedure hypotenuse
+      end interface hypot
+#endif
+
 
       contains
 
 #if __USE_INTRINSIC_ALGEBRA__ == 0 
       function matmul12(x, y) result(z)
       use warnerror, only : errmssg 
-      use infos, only : INVALID_INPUT
       implicit none
       real(kind = rp), dimension(:), intent(in) :: x
       real(kind = rp), dimension(:, :), intent(in) :: y
@@ -41,7 +35,7 @@
       integer :: j
       if (size(x) /= size(y, 1)) then
           call errmssg('MATMUL12', 'SIZE(X) /= SIZE(Y, 1)')
-          stop INVALID_INPUT
+          stop
       end if
       z = zero
       do j = 1, size(y, 2)
@@ -53,7 +47,6 @@
       end function matmul12
 
       function matmul21(x, y) result(z)
-      use infos, only : INVALID_INPUT
       use warnerror, only : errmssg
       implicit none
       real(kind = rp), dimension(:, :), intent(in) :: x
@@ -62,7 +55,7 @@
       integer :: i
       if (size(x, 2) /= size(y)) then
           call errmssg('MATMUL21', 'SIZE(X, 2) /= SIZE(Y)')
-          stop INVALID_INPUT
+          stop 
       end if
       z = zero
       do i = 1, size(x, 2)
@@ -71,7 +64,6 @@
       end function matmul21
 
       function matmul22(x, y) result(z)
-      use infos, only : INVALID_INPUT
       use warnerror, only : errmssg 
       implicit none
       real(kind = rp), dimension(:, :), intent(in) :: x, y
@@ -79,7 +71,7 @@
       integer :: i, j
       if (size(x, 2) /= size(y, 1)) then
           call errmssg('MATMUL22', 'SIZE(X, 2) /= SIZE(Y, 1)')
-          stop INVALID_INPUT
+          stop 
       end if
       z = zero
       do j = 1, size(y, 2)
@@ -90,7 +82,6 @@
       end function matmul22
 
       function inprod(x, y) result(z)
-      use infos, only : INVALID_INPUT
       use warnerror, only : errmssg 
       implicit none
       real(kind = rp), dimension(:), intent(in) :: x, y
@@ -99,7 +90,7 @@
       integer :: i
       if (size(x) /= size(y)) then
           call errmssg('INPROD', 'SIZE(X) /= SIZE(Y)')
-          stop INVALID_INPUT 
+          stop 
       end if
       z = zero
       do i = 1, size(x)
@@ -107,6 +98,33 @@
       end do
       end function inprod
 #endif
+
+      function hypotenuse(x, y) result(r)
+      ! HYPOTENUSE calculate sqrt(x^2+y^2) if __IMPROVE_POWELL_CODE__ 
+      ! is 0 or the Fortran standard is lower than 2008.
+#if __IMPROVE_POWELL_CODE__ != 0
+      use consts, only : rp, one, two, zero
+#endif
+      implicit none
+      real(rp), intent(in) :: x, y
+      real(rp) :: r  
+#if __IMPROVE_POWELL_CODE__ == 0
+      r = sqrt(x**2 + y**2)  ! May encounter over/under flow
+#else
+      real(rp) :: ax, ay
+      ax = abs(x)
+      ay = abs(y)
+      if (ax > ay) then  ! AX > AY ensures AX > 0.
+          r = ax*sqrt(one + (ay/ax)**2)
+      else if (ax < ay) then  ! AX < AY ensures AY > 0.
+          r = ay*sqrt(one + (ax/ay)**2)
+      else if (ax > zero) then
+          r = ax*sqrt(two)
+      else 
+          r = zero
+      end if
+#endif
+      end function hypotenuse
 
       function outprod(x, y) result(z)
       implicit none
@@ -118,74 +136,5 @@
       end do
       end function outprod
 
-      subroutine givens(x, y, c, s, r)
-      ! GIVENS calculates the parameters for the Givens rotation that
-      ! [ c s] [x y]' = [r, 0]'
-      ! [-s c]
-      ! Explicitly,
-      ! c = x/sqrt(x^2+y^2)     (COS)
-      ! s = y/sqrt(x^2+y^2)     (SIN)
-      ! r = sqrt(x^2+y^2)       (RADIUS)
-      implicit none
-      real(kind = rp), intent(in) :: x, y
-      real(kind = rp), intent(out) :: c, s, r
-#if __USE_INTRINSIC_ALGEBRA__ == 0 
-      ! Powell uses the following implementation.
-      r = sqrt(x**2 + y**2)
-      if (r > zero) then
-          c = x/r
-          s = y/r
-      else
-          c = sqrt(two)/two
-          s = sqrt(two)/two
-      end if
-#elif __FORTRAN_STANDARD__ >= 2008
-      ! If calculated directly, r may suffer from over/underflow due to
-      ! the squres. The HYPOT function calculates r with proper scaling
-      ! and avoids over/underflow when possible. HYPOT is available
-      ! starting from Fortran 2008 (in MATLAB, starting from R2006).
-      r = hypot(x, y)
-      if (r > zero) then
-          c = x/r
-          s = y/r
-      else
-          c = sqrt(two)/two
-          s = sqrt(two)/two
-      end if
-#else
-      ! If HYPOT is not available, we implement it ourselves.
-      real(kind = rp) :: t, u
-      if (abs(x) > abs(y)) then
-          t = y/x
-          u = sign(sqrt(one + t*t), x)
-          ! SIGN is the sign copying funtion:
-          ! SIGN(a, b) = (sign of b)*|a|,
-          ! where 'sign of b' is 1 if b > 0 and -1 if b < 0.
-          ! The behaviour of SIGN(., 0) depends on the compiler.
-          ! NOTE: MATLAB has also a SIGN function, but the definition is
-          ! SIGN(a) = 1 if a > 0, 0 if a = 0, and -1 if a < 0.
-          c = one/u
-          s = c*t
-          r = x*u
-      else if (abs(x) < abs(y)) then
-          t = x/y
-          u = sign(sqrt(one + t*t), y)
-          s = one/u
-          c = s*t
-          r = y*u
-      else if (abs(x) > zero) then
-          c = sign(sqrt(two)/two, x)
-          s = sign(sqrt(two)/two, y)
-          r = abs(x)*sqrt(two)
-      else
-      ! This case may be combined with the last one. Here we implement
-      ! it separately to avoid using SIGN(., 0), whose behaviour
-      ! depends on the compiler.
-          c = sqrt(two)/two
-          s = sqrt(two)/two
-          r = zero
-      end if
-#endif
-      end subroutine givens
 
       end module lina
