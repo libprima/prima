@@ -51,14 +51,15 @@
       ! set F to the value of the objective function for the variables
       ! X(1 : N).
 
-      use consts, only : rp 
+      use consts, only : RP 
+      use newuob_mod, only : newuob
       implicit none
       
       integer, intent(in) :: n, npt, iprint, maxfun
       integer, intent(out) :: info
-      real(kind = rp), intent(in) :: rhobeg, rhoend, ftarget
-      real(kind = rp), intent(out) :: f
-      real(kind = rp), intent(inout) :: x(n)
+      real(RP), intent(in) :: rhobeg, rhoend, ftarget
+      real(RP), intent(out) :: f
+      real(RP), intent(inout) :: x(n)
 
       integer :: nf
 
@@ -78,7 +79,7 @@
           return
       end if
       
-      call newuob(n, npt, rhobeg, min(rhobeg, rhoend), iprint, maxfun,  &
+      call newuob(npt, rhobeg, min(rhobeg, rhoend), iprint, maxfun,     &
      & ftarget, x, f, nf, info)
       return
       end

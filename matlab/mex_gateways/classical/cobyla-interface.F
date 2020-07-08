@@ -38,11 +38,11 @@ C Fortran code starts
 
       module fcobyla ! Some global variables
 
-      use consts, only : rp, hugenum, int4, zero
+      use consts, only : rp, hugenum, int32, zero
       use infnan
       implicit none
 
-      integer(int4), parameter :: notComplex = 0
+      integer(int32), parameter :: notComplex = 0
 C notComplex is used in mxCreateDoubleMatrix, whose signature is
 C mwPointer mxCreateDoubleMatrix(mwSize m, mwSize n, integer*4 ComplexFlag)
       mwSize, parameter :: mwOne = 1 ! Integer 1 with type mwSize
@@ -94,7 +94,7 @@ C mwPointer MX_GET_DBLE(mwPointer pm);
 C can be replaced by mxGetDoubles since MATLAB R2018b
       mwSize, external :: mxGetM, mxGetN
 C mwPointer mxGetM(mwPointer pm), mxGetN(mwPointer pm)
-      integer(int4), external :: mxIsDouble, mxIsClass
+      integer(int32), external :: mxIsDouble, mxIsClass
 C integer*4 mxIsDouble(mwPointer pm); 
 C integer*4 mxIsClass(mwPointer pm, character*(*) classname)
 
@@ -365,7 +365,7 @@ C should be of type INTEGER instead of mwSize
       real(rp), intent(out) :: funval, conval(m)
 
 C function declarations 
-      integer(int4), external :: mexCallMATLAB
+      integer(int32), external :: mexCallMATLAB
 C integer*4 mexCallMATLAB(integer*4 nlhs, mwPointer plhs, integer*4 nrhs, mwPointer prhs, character*(*) functionName)
       mwPointer, external :: mxCreateDoubleMatrix
 C mwPointer mxCreateDoubleMatrix(mwSize m, mwSize n, integer*4 ComplexFlag)
@@ -382,7 +382,7 @@ C used when a variable of type mwSize is needed
 C k is the index for the constraints; since m is of type INTEGER, 
 C k is of the same type; see the (unique) do lopp below
       mwPointer :: plhs(1), prhs(2) ! used in mexCallMATLAB 
-      integer(int4), parameter :: intOne=1, intTwo=2 
+      integer(int32), parameter :: intOne=1, intTwo=2 
       character(5), parameter :: funFeval = 'feval' 
 C intOne, intTwo, and funFeval are used when calling mexCallMATLAB 
       real(rp) :: resmax ! constraint violation

@@ -8,13 +8,13 @@
       implicit none
 
       integer, intent(in) :: n, npt, idz, kopt
-      real(kind = rp), intent(in) :: bmat(n, npt+n), zmat(npt, npt-n-1),&
-     & xpt(n, npt), xopt(n), d(n)
-      real(kind = rp), intent(out) :: vlag(npt+n), beta, wcheck(npt)
+      real(RP), intent(in) :: bmat(n, npt+n), zmat(npt, npt - n - 1)
+      real(RP), intent(in) :: xpt(n, npt), xopt(n), d(n)
+      real(RP), intent(out) :: vlag(npt+n), beta, wcheck(npt)
 
       integer :: k, j
-      real(kind = rp) :: bw(n), bwvd, wz(npt-n-1), wzsave(npt-n-1), dx, &
-     & dsq, xoptsq
+      real(RP) :: bw(n), bwvd, wz(npt - n - 1), wzsave(npt - n - 1) 
+      real(RP) :: dx, dsq, xoptsq
 
 
 !----------------------------------------------------------------------!

@@ -1,36 +1,47 @@
-      subroutine newuob(n, npt, rhobeg, rhoend, iprint, maxfun, ftarget,&
+      module newuob_mod
+
+      contains
+
+      subroutine newuob (npt, rhobeg, rhoend, iprint, maxfun, ftarget,  &
      &  x, f, nf, info)
 
-      use consts, only : rp, zero, one, half, tenth
+      use consts, only : RP, ZERO, ONE, HALF, TENTH
       use warnerror, only : errmssg
-      use infos, only : INVALID_INPUT
-      use infnan
+      use infnan, only : is_nan, is_posinf
       use lina
-      use trsubp
-      use geometry
-      use update
+      use trsubp, only : trsapp
+      use geometry, only : biglag, bigden
+      use update, only : updateh, updateq
       implicit none
 
       ! Inputs
-      integer, intent(in) :: n, npt, iprint, maxfun
-      integer, intent(out) :: nf, info
-      real(kind = rp), intent(in) :: rhobeg, rhoend, ftarget
-      real(kind = rp), intent(out) :: f 
-      real(kind = rp), intent(inout) :: x(n)
+      integer, intent(in) :: npt
+      integer, intent(in) :: iprint
+      integer, intent(in) :: maxfun
+      integer, intent(out) :: nf
+      integer, intent(out) :: info
+      real(RP), intent(in) :: rhobeg
+      real(RP), intent(in) :: rhoend
+      real(RP), intent(in) :: ftarget
+      real(RP), intent(out) :: f 
+      real(RP), intent(inout) :: x(:)  ! SIZE(X) = N
 
       ! Other variables
-      integer :: idz, itest, knew, kopt, nfsave, subinfo
+      integer :: n, idz, itest, knew, kopt, nfsave, subinfo
       integer :: tr, maxtr
-      real(kind = rp) :: alpha, beta, crvmin, delta, prederr(3), distsq,&
-     & dnorm, dsq, dstep, xdsq(npt), xbase(n), xopt(n), xnew(n),        &
-     & xpt(n, npt), fval(npt), gq(n), hq(n, n), pq(npt),                &
-     & bmat(n, npt + n), zmat(npt, npt - n - 1), d(n), vlag(npt + n),   &
-     & fopt, fsave, galt(n), galtsq, gqsq, hdiag(npt), ratio, rho,      &
-     & rhosq, vquad, xoptsq, wcheck(npt+n), sigma(npt)
-
+      real(RP) :: alpha, beta, crvmin, delta, prederr(3) 
+      real(RP) :: distsq, dnorm, dsq, dstep, xdsq(npt), d(size(x))
+      real(RP) :: xbase(size(x)), xopt(size(x)), xnew(size(x))
+      real(RP) :: xpt(size(x), npt), fval(npt)
+      real(RP) :: gq(size(x)), hq(size(x), size(x)), pq(npt)
+      real(RP) :: bmat(size(x), npt + size(x)), zmat(npt, npt-size(x)-1)
+      real(RP) :: vlag(npt + size(x)), wcheck(npt + size(x)) 
+      real(RP) :: fopt, fsave, galt(size(x)), galtsq, gqsq, hdiag(npt)
+      real(RP) :: ratio, rho, rhosq, vquad, xoptsq, sigma(npt)
       logical :: model_step, reduce_rho, shortd
 
-
+      ! Get size.
+      n = size(x)
       
       ! The arguments N, NPT, X, RHOBEG, RHOEND, IPRINT and MAXFUN are
       ! identical to the corresponding arguments in SUBROUTINE NEWUOA.
@@ -77,7 +88,7 @@
       rho = rhobeg
       delta = rho
       idz = 1
-      prederr = zero
+      prederr = ZERO
       itest = 0
       nfsave = nf
       xoptsq = dot_product(xopt, xopt)
@@ -106,27 +117,23 @@
           ! In Powell's NEWUOA code, VQUAD is not an output of TRSAPP.
           ! Here we output it but do not use it to align with Powell's
           ! code. VQUAD is later calculated by CALQUAD.
-           call trsapp(xopt, xpt, gq, hq, pq, delta, 1.0e-2_rp, d,      &
+           call trsapp(xopt, xpt, gq, hq, pq, delta, 1.0e-2_RP, d,      &
      &      crvmin, vquad, subinfo)
-           if (subinfo == INVALID_INPUT) then
-               info = subinfo
-               return
-           end if
 
           ! Calculate the length of the trial step D.
           dsq = dot_product(d, d)
           dnorm = min(delta, sqrt(dsq))
 
           ! Is the step long enough to invoke a function evaluation?
-          if (dnorm < half*rho) then
+          if (dnorm < HALF*rho) then
               shortd = .true.
-              if (0.125_rp*crvmin*rho*rho > maxval(abs(prederr)) .and.  &
+              if (0.125_RP*crvmin*rho*rho > maxval(abs(prederr)) .and.  &
      &         nf > nfsave + 2) then
                   ! The 1st possibility (out of 2) that reduce_rho=true
                   reduce_rho = .true.
               else ! 3 recent values of ||D_k|| and |F−Q| are small.
-                  delta = tenth*delta  ! Reduce DELTA by a factor of 10
-                  if (delta <= 1.5_rp*rho) then
+                  delta = TENTH*delta  ! Reduce DELTA by a factor of 10
+                  if (delta <= 1.5_RP*rho) then
                       delta = rho  ! Set DELTA to RHO when it is close.
                   end if
                   ! After this, DELTA < DNORM may happen, explaining why
@@ -136,12 +143,12 @@
 
           if (.not. shortd) then
               ! Shift XBASE if XOPT may be too far from XBASE.
-              if (dsq <= 1.0e-3_rp*xoptsq) then
+              if (dsq <= 1.0e-3_RP*xoptsq) then
                   call shiftbase(n, npt, idz, xopt, pq, bmat, zmat, gq, &
      &             hq, xpt)
                   xbase = xbase + xopt
-                  xopt = zero
-                  xoptsq = zero
+                  xopt = ZERO
+                  xoptsq = ZERO
               end if
 
               ! Calculate VLAG and BETA for D. The first NPT components
@@ -157,7 +164,7 @@
               ! F due to the step D.
               !call calquad(vquad, d, xopt, xpt, gq, hq, pq, n, npt)
               call calquad(vquad, d, xopt, xpt, gq, hq, pq, n, npt,     &
-     &         wcheck(1:npt))
+     &         wcheck(1 : npt))
 
               ! Calculate the next value of the objective function.
               xnew = xopt + d
@@ -206,25 +213,25 @@
       !----------------------------------------------------------------!
 
               ! Update DELTA according to RATIO.
-              if (is_nan(vquad) .or. vquad >= zero) then
+              if (is_nan(vquad) .or. vquad >= ZERO) then
                   info = 2
                   exit
               end if
               ratio = (f - fsave)/vquad
-              if (ratio <= tenth) then
-                  delta = half*dnorm
-              else if (ratio <= 0.7_rp) then
-                  delta = max(half*delta, dnorm)
+              if (ratio <= TENTH) then
+                  delta = HALF*dnorm
+              else if (ratio <= 0.7_RP) then
+                  delta = max(HALF*delta, dnorm)
               else
-                  delta = max(half*delta, dnorm + dnorm)
+                  delta = max(HALF*delta, dnorm + dnorm)
               end if
-              if (delta <= 1.5_rp*rho) then
+              if (delta <= 1.5_RP*rho) then
                   delta = rho
               end if
 
               ! Set KNEW to the index of the interpolation point that
               ! will be deleted.
-              rhosq = max(tenth*delta, rho)**2
+              rhosq = max(TENTH*delta, rho)**2
               hdiag = -sum(zmat(:, 1 : idz - 1)**2, dim = 2) +          &
      &         sum(zmat(:, idz : npt - n - 1)**2, dim = 2)             
               xdsq = sum((xpt-spread(xopt,dim=2,ncopies=npt))**2, dim=1)
@@ -240,7 +247,7 @@
               ! Set SIGMA(KOPT) = -1 to prevent KNEW from being KOPT
                   sigma(kopt) = -one
               end if
-              if (maxval(sigma) > one .or. f < fsave) then
+              if (maxval(sigma) > ONE .or. f < fsave) then
               ! KNEW > 0 unless MAXVAL(SIGMA) <= 1 and F >= FSAVE.
               ! If F < FSAVE, then KNEW > 0, ensuring that XNEW
               ! will be included into XPT.
@@ -252,20 +259,11 @@
               if (knew > 0) then
                   ! Update BMAT, ZMAT and IDZ, so that the KNEW-th
                   ! interpolation point can be removed.
-                  call updateh(bmat, zmat, idz, vlag, beta,knew,subinfo)
-                  if (subinfo == INVALID_INPUT) then
-                      info = subinfo
-                      return
-                  end if
-
+                  call updateh(bmat, zmat, idz, vlag, beta, knew)
 
                   ! Update the quadratic model
                   call updateq(idz, knew, prederr(1), xpt(:, knew),     &
-     &             bmat(:, knew), zmat, gq, hq, pq, subinfo)
-                  if (subinfo == INVALID_INPUT) then
-                      info = INVALID_INPUT
-                      return
-                  end if
+     &             bmat(:, knew), zmat, gq, hq, pq)
 
                   ! Include the new interpolation point. This should be
                   ! done after updating BMAT, ZMAT, and the model.
@@ -284,8 +282,8 @@
                   ! it is indeed more efficient to check RATIO rather
                   ! than ABS(RATIO).
                   if (delta <= rho) then  ! Indeed, DELTA == RHO.
-                      ! if (abs(ratio) > 1.0e-2_rp) then
-                      if (ratio > 1.0e-2_rp) then
+                      ! if (abs(ratio) > 1.0e-2_RP) then
+                      if (ratio > 1.0e-2_RP) then
                           itest = 0
                       else
                           gqsq = dot_product(gq, gq)
@@ -294,7 +292,7 @@
                           galt = matmul(bmat(:, 1:npt), vlag(1 : npt))
                           galtsq = dot_product(galt, galt)
 
-                          if (gqsq < 100.0_rp*galtsq) then
+                          if (gqsq < 100.0_RP*galtsq) then
                               itest = 0
                           else
                               itest = itest + 1
@@ -316,14 +314,14 @@
           end if
 
 
-!          if (((.not. shortd) .and. (ratio < tenth .or. knew == 0))     &
+!          if (((.not. shortd) .and. (ratio < TENTH .or. knew == 0))     &
 !     &        .or. (shortd .and. .not. reduce_rho)) then
-          if (((.not. shortd) .and. (f>fsave+tenth*vquad .or. knew==0)) &
+          if (((.not. shortd) .and. (f>fsave+TENTH*vquad .or. knew==0)) &
      &     .or. (shortd .and. .not. reduce_rho)) then
 
               ! Find out if the interpolation points are close enough to
               ! the best point so far.
-              distsq = 4.0_rp*delta*delta
+              distsq = 4.0_RP*delta*delta
               xdsq = sum((xpt-spread(xopt,dim=2,ncopies=npt))**2, dim=1)
 !              do k = 1, npt
 !                  xdiff = xpt(:, k) - xopt
@@ -355,14 +353,14 @@
               if (rho <= rhoend) then
                   exit
               else
-                  delta = half*rho
+                  delta = HALF*rho
                   ratio = rho/rhoend
-                  if (ratio <= 16.0_rp) then
+                  if (ratio <= 16.0_RP) then
                       rho = rhoend
-                  else if (ratio <= 250.0_rp) then
+                  else if (ratio <= 250.0_RP) then
                       rho = sqrt(ratio)*rhoend
                   else
-                      rho = tenth*rho
+                      rho = TENTH*rho
                   end if
                   delta = max(delta, rho)
                   nfsave = nf  ! Set NFSAVE to NF
@@ -373,16 +371,16 @@
               ! Set DSTEP, which will be used as the trust region radius
               ! for the model-improving schemes BIGLAG and BIGDEN. We
               ! also need it to decide whether to shift XBASE or not.
-              dstep = max(min(tenth*sqrt(distsq), half*delta), rho)
+              dstep = max(min(TENTH*sqrt(distsq), HALF*delta), rho)
               dsq = dstep*dstep
 
               ! Shift XBASE if XOPT may be too far from XBASE.
-              if (dsq <= 1.0e-3_rp*xoptsq) then
+              if (dsq <= 1.0e-3_RP*xoptsq) then
                   call shiftbase(n, npt, idz, xopt, pq, bmat, zmat, gq, &
      &             hq, xpt)
                   xbase = xbase + xopt
-                  xopt = zero
-                  xoptsq = zero
+                  xopt = ZERO
+                  xoptsq = ZERO
               end if
 
               ! Exit if BMAT or ZMAT contains NaN. Otherwise, the
@@ -393,12 +391,7 @@
 !                  exit
 !              end if
 
-              call biglag(xopt, xpt, bmat, zmat, idz, knew, dstep, d,   &
-     &         alpha, subinfo)
-              if (subinfo == INVALID_INPUT) then
-                  info = subinfo
-                  return
-              end if
+              call biglag(xopt, xpt, bmat, zmat, idz,knew,dstep,d,alpha)
 
               ! Calculate VLAG, BETA, and WCHECK for D.
 !              call vlagbeta(n, npt, idz, kopt, bmat, zmat, xpt, xopt, d,&
@@ -413,13 +406,9 @@
               ! calculated within BIGDEN. 
               ! No need to check whether BMAT and ZMAT contain NaN as no
               ! change has been made to them.
-              if (abs(one + alpha*beta/vlag(knew)**2) <= 0.8_rp) then
+              if (abs(ONE + alpha*beta/vlag(knew)**2) <= 0.8_RP) then
                   call bigden (xopt, xpt, bmat, zmat, idz, kopt, knew,  &
-     &             d, wcheck, vlag, beta, subinfo)
-                  if (subinfo == INVALID_INPUT) then
-                      info = subinfo
-                      return
-                  end if
+     &             d, wcheck, vlag, beta)
               end if
 
       !----------------------------------------------------------------!
@@ -480,20 +469,11 @@
 
               ! Update BMAT, ZMAT and IDZ, so that the KNEW-th
               ! interpolation point can be moved.
-              call updateh(bmat, zmat, idz, vlag, beta, knew, subinfo)
-              if (subinfo == INVALID_INPUT) then
-                  info = INVALID_INPUT
-                  return
-              end if
-                  
+              call updateh(bmat, zmat, idz, vlag, beta, knew)
 
               ! Update the quadratic model.
               call updateq(idz, knew, prederr(1), xpt(:, knew),         &
-     &         bmat(:, knew), zmat, gq, hq, pq, subinfo)
-              if (subinfo == INVALID_INPUT) then
-                  info = INVALID_INPUT
-                  return
-              end if
+     &         bmat(:, knew), zmat, gq, hq, pq)
 
               ! Include the new interpolation point. This should be done
               ! after updating BMAT, ZMAT, and the model.
@@ -533,3 +513,5 @@
       return
 
       end subroutine newuob
+
+      end module newuob_mod

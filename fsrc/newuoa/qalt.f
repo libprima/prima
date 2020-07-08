@@ -9,11 +9,10 @@
       implicit none
 
       integer, intent(in) :: n, npt, kopt, idz
-      real(kind = rp), intent(in) :: fval(npt), smat(n, npt),           &
-     & zmat(npt, npt - n - 1)
-      real(kind = rp), intent(out) :: gq(n), hq(n, n), pq(npt)
+      real(RP), intent(in) :: fval(npt), smat(n, npt), zmat(npt,npt-n-1)
+      real(RP), intent(out) :: gq(n), hq(n, n), pq(npt)
 
-      real(kind = rp) :: vlag(npt), vz(npt - n - 1)
+      real(RP) :: vlag(npt), vz(npt - n - 1)
 
 
       vlag = fval - fval(kopt)

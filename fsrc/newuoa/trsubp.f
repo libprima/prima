@@ -15,7 +15,7 @@
       !
       ! At return, S will be the approximate solution. CRVMIN will be 
       ! set to the least curvature of HESSIAN along the conjugate 
-      ! directions that occur, except that it is set to zero if S goes
+      ! directions that occur, except that it is set to ZERO if S goes
       ! all the way to the trust region boundary. QRED is the reduction
       ! of Q achieved by S. INFO is an exit flag:
       ! INFO = 0: an approximate solution satisfying one of the 
@@ -34,30 +34,30 @@
       ! Q. Thus S should provide a substantial reduction to Q within the
       ! trust region.
       
-      use consts, only : rp, one, two, half, zero, pi
+      use consts, only : RP, ONE, TWO, HALF, ZERO, PI, DEBUG_MODE
       use infos, only : INVALID_INPUT
       use warnerror, only : errmssg
-      use infnan
+      use infnan, only : is_nan
       use lina
       implicit none
       
       integer, intent(out) ::   info
 
-      real(rp), intent(in) ::   xpt(:, :)   ! XPT(N, NPT)
-      real(rp), intent(in) ::   x(:)        ! X(N)
-      real(rp), intent(in) ::   gq(:)       ! GQ(N)
-      real(rp), intent(in) ::   hq(:, :)    ! HQ(N, N)
-      real(rp), intent(in) ::   pq(:)       ! PQ(NPT)
-      real(rp), intent(in) ::   tol
-      real(rp), intent(in) ::   delta 
-      real(rp), intent(out) ::  s(:)        ! S(N)
-      real(rp), intent(out) ::  crvmin
-      real(rp), intent(out) ::  qred
+      real(RP), intent(in) ::   xpt(:, :)   ! XPT(N, NPT)
+      real(RP), intent(in) ::   x(:)        ! X(N)
+      real(RP), intent(in) ::   gq(:)       ! GQ(N)
+      real(RP), intent(in) ::   hq(:, :)    ! HQ(N, N)
+      real(RP), intent(in) ::   pq(:)       ! PQ(NPT)
+      real(RP), intent(in) ::   tol
+      real(RP), intent(in) ::   delta 
+      real(RP), intent(out) ::  s(:)        ! S(N)
+      real(RP), intent(out) ::  crvmin
+      real(RP), intent(out) ::  qred
       
       integer :: i, isave, iterc, itermax, iu, j, n, npt
-      real(rp) :: d(size(x)), g(size(x)), hd(size(x)), hs(size(x)),     &
+      real(RP) :: d(size(x)), g(size(x)), hd(size(x)), hs(size(x)),     &
      & hx(size(x)) 
-      real(rp) :: alpha, angle, bstep, cf, cth, dd, delsq, dg, dhd, dhs,&
+      real(RP) :: alpha, angle, bstep, cf, cth, dd, delsq, dg, dhd, dhs,&
      & ds, gg, ggbeg, ggsave, qadd, qbeg, qmin, qnew, qsave, reduc, sg, &
      & sgk, shs, ss, sth, temp, tempa, tempb
       logical :: twod_search
@@ -70,36 +70,38 @@
       n = size(xpt, 1)
       npt = size(xpt, 2)
 
-      if (n == 0 .or. npt < n + 2) then
-          info = INVALID_INPUT
-          call errmssg(srname, 'SIZE(XPT) is invalid')
-          return
-      end if
-      if (size(gq) /= n) then
-          info = INVALID_INPUT
-          call errmssg(srname, 'SIZE(GQ) /= SIZE(X)')
-          return
-      end if
-      if (size(hq, 1) /= n .or. size(hq, 2) /= n) then
-          info = INVALID_INPUT
-          call errmssg(srname, 'SIZE(HQ) /= (SIZE(X), SIZE(X))')
-          return
-      end if
-      if (size(pq, 1) /= npt) then
-          info = INVALID_INPUT
-          call errmssg(srname, 'SIZE(PQ) /= (SIZE(XPT))')
-          return
-      end if
-      if (size(s) /= n) then
-          info = INVALID_INPUT
-          call errmssg(srname, 'SIZE(S) /= SIZE(X)')
-          return
+      if (DEBUG_MODE) then
+          if (n == 0 .or. npt < n + 2) then
+              info = INVALID_INPUT
+              call errmssg(srname, 'SIZE(XPT) is invalid')
+              return
+          end if
+          if (size(gq) /= n) then
+              info = INVALID_INPUT
+              call errmssg(srname, 'SIZE(GQ) /= SIZE(X)')
+              return
+          end if
+          if (size(hq, 1) /= n .or. size(hq, 2) /= n) then
+              info = INVALID_INPUT
+              call errmssg(srname, 'SIZE(HQ) /= (SIZE(X), SIZE(X))')
+              return
+          end if
+          if (size(pq, 1) /= npt) then
+              info = INVALID_INPUT
+              call errmssg(srname, 'SIZE(PQ) /= (SIZE(XPT))')
+              return
+          end if
+          if (size(s) /= n) then
+              info = INVALID_INPUT
+              call errmssg(srname, 'SIZE(S) /= SIZE(X)')
+              return
+          end if
       end if
       
 
-      s = zero
-      crvmin = zero
-      qred = zero
+      s = ZERO
+      crvmin = ZERO
+      qred = ZERO
       info = 2  ! Default exit flag is 2, i.e., itermax is attained 
 
       ! Prepare for the first line search.
@@ -116,9 +118,9 @@
       ggbeg = gg
       d = -g
       dd = gg 
-      ds = zero
-      ss = zero
-      hs = zero
+      ds = ZERO
+      ss = ZERO
+      hs = ZERO
       delsq = delta*delta
       itermax = n
 
@@ -158,7 +160,7 @@
           dhd = dot_product(d, hd)
 
           ! Set the step-length ALPHA and update CRVMIN and 
-          if (dhd <= zero) then
+          if (dhd <= ZERO) then
               alpha = bstep
           else
               alpha = min(bstep, gg/dhd)
@@ -169,7 +171,7 @@
               end if
           end if
           ! QADD is the reduction of Q due to the new CG step.
-          qadd = alpha*(gg - half*alpha*dhd)  
+          qadd = alpha*(gg - HALF*alpha*dhd)  
           ! QRED is the reduction of Q up to now.
           qred = qred + qadd
           ! QADD and QRED will be used in the 2D minimization if any.
@@ -189,7 +191,7 @@
           ! and GG, which will be used for the 2D minimization if any. 
           if (alpha >= bstep .or. ss >= delsq) then
               ! CG path cuts the boundary. Set CRVMIN to 0.
-              crvmin = zero
+              crvmin = ZERO
               ! The only possibility that twod_search is true.
               twod_search = .true.
               exit
@@ -205,7 +207,7 @@
           d = (gg/ggsave)*d - g - hs  ! CG direction
           dd = dot_product(d, d)
           ds = dot_product(d, s)
-          if (ds <= zero) then 
+          if (ds <= ZERO) then 
               ! DS is positive in theory.
               info = -1 
               exit 
@@ -234,7 +236,7 @@
           sg = dot_product(s, g)
           shs = dot_product(s, hs)
           sgk = sg + shs
-          if (sgk/sqrt(gg*delsq) <= tol - one) then 
+          if (sgk/sqrt(gg*delsq) <= tol - ONE) then 
               info = 0
               exit
           end if
@@ -256,15 +258,15 @@
           dhs = dot_product(hd, s)
 
           ! Seek the value of the angle that minimizes Q.
-          cf = half*(shs - dhd)
+          cf = HALF*(shs - dhd)
           qbeg = sg + cf
           qsave = qbeg
           qmin = qbeg
           isave = 0
           iu = 49
-          temp = two*pi/real(iu + 1, rp)
+          temp = (TWO*PI)/real(iu + 1, RP)
           do i = 1, iu
-              angle = real(i, rp)*temp
+              angle = real(i, RP)*temp
               cth = cos(angle)
               sth = sin(angle)
               qnew = (sg + cf*cth)*cth + (dg + dhs*cth)*sth
@@ -283,14 +285,14 @@
           if (isave == iu) then 
               tempb = qbeg
           end if
-          if (abs(tempa - tempb) > zero) then
+          if (abs(tempa - tempb) > ZERO) then
               tempa = tempa - qmin
               tempb = tempb - qmin
-              angle = half*(tempa - tempb)/(tempa + tempb)
+              angle = HALF*(tempa - tempb)/(tempa + tempb)
           else
-              angle = zero
+              angle = ZERO
           end if
-          angle = temp*(real(isave, rp) + angle)
+          angle = temp*(real(isave, RP) + angle)
 
           ! Calculate the new S and HS. Then test for convergence.
           cth = cos(angle)

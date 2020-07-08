@@ -17,6 +17,7 @@ C any two of them to be the same.
 C If ever a Segmentation Fault occurs, check these variables first.
 C
 C 2. Be careful with the line width limit. After preprocessing (macro
+C substitution), some lines may become too long and hence get truncated
 
 #include "fintrf.h"
 
@@ -37,11 +38,13 @@ C Fortran code starts
 
       module fnewuoa 
 
-      use consts, only : rp, hugefun, hugenum, int4, zero
-      use infnan
+      use consts, only : RP, INT32
       implicit none
+      private
+      public :: notComplex, mwOne
+      public :: fun_ptr, nf, fhist
 
-      integer(int4), parameter :: notComplex = 0
+      integer(INT32), parameter :: notComplex = 0
 C notComplex is used in mxCreateDoubleMatrix, whose signature is
 C mwPointer mxCreateDoubleMatrix(mwSize m, mwSize n, integer*4 ComplexFlag)
       mwSize, parameter :: mwOne = 1 ! Integer 1 with type mwSize
@@ -55,7 +58,7 @@ C Some global variables
       mwSize, save :: nf ! Number of function evaluations 
 C nf should be of type mwSize, because it will be later used as an
 C argument of mxCreateDoubleMatrix
-      real(rp), allocatable, save :: fhist(:) 
+      real(RP), allocatable, save :: fhist(:) 
 C History of function evaluation
       end module fnewuoa
 
@@ -69,6 +72,7 @@ C extension depends on the platform), then the following function is
 C callable in matlab: 
 C [xopt, fopt, info, nf, fhist] = FUNCTION_NAME(fun, x0, rhobeg, rhoend, maxfun, npt, ftarget)
 
+      use consts, only : RP, HUGENUM, INT32, ZERO
       use fnewuoa 
       implicit none
 
@@ -88,7 +92,7 @@ C mwPointer MX_GET_DBLE(mwPointer pm);
 C can be replaced by mxGetDoubles since MATLAB R2018b
       mwSize, external :: mxGetM, mxGetN
 C mwPointer mxGetM(mwPointer pm), mxGetN(mwPointer pm)
-      integer(int4), external :: mxIsDouble, mxIsClass
+      integer(INT32), external :: mxIsDouble, mxIsClass
 C integer*4 mxIsDouble(mwPointer pm); 
 C integer*4 mxIsClass(mwPointer pm, character*(*) classname)
 
@@ -99,8 +103,8 @@ C obtained by mxGetM
       integer :: n_int
 C n_int is the INTEGER cast of n, i.e., n_int = int(n); used when a 
 C variable of type INTEGER is needed (e.g., when calling NEWUOA).
-      real(rp), allocatable :: x(:) 
-      real(rp) :: f, rhobeg, rhoend, maxfun_r, npt_r, ftarget
+      real(RP), allocatable :: x(:)
+      real(RP) :: f, rhobeg, rhoend, maxfun_r, npt_r, ftarget
       integer :: info, iprint, allocate_status
 C info and iprint are inputs to NEWUOA, which requires them to be
 C INTEGERs (not necessarily the same as mwSize) 
@@ -167,7 +171,7 @@ C unless we know the kind of the integer. Therefore, in general, it
 C is recommended to pass integers as double variables and then cast
 C them back to integers when needed. Indeed, in MATLAB, even if we
 C define maxfun = 1000, the class of maxfun is double! To get an
-C integer maxfun, we would have to define maxfun = int32(1000) or
+C integer maxfun, we would have to define maxfun = INT32(1000) or
 C maxfun = int64(1000)! 
 
 C Input 7: ftarget (double scalar)
@@ -204,8 +208,8 @@ C NEVER use literal constants in Fortran mex.
 
 C Check the values of rhobeg and rhoend. We do not check the values of
 C other inputs (e.g., n, maxfun, npt) because the Fortran code does it 
-      if (rhobeg .le. zero .or. rhobeg .lt. rhoend .or. 
-     &rhoend .lt. zero) then
+      if (rhobeg .le. ZERO .or. rhobeg .lt. rhoend .or. 
+     &rhoend .lt. ZERO) then
           call mexErrMsgIdAndTxt('fnewuoa:InvalidRhobegRhoend',
      &'fnewuoa: rhobeg and rhoend do not satisfy rhobeg >= rhobeg > 0.')
       end if
@@ -227,7 +231,7 @@ C Initialize global variables
           call mexErrMsgIdAndTxt('fnewuoa:InsufficientMemory',
      &    'fnewuoa: allocate(fhist) failed.')
       end if
-      fhist = hugenum
+      fhist = HUGENUM
       
 C Call NEWUOA 
       iprint = 0
@@ -241,8 +245,8 @@ C Write outputs
       call mxCopyReal8ToPtr(x(1:n), MX_GET_DBLE(plhs(1)), n)
       plhs(2) = mxCreateDoubleScalar(f)
 C Although info and nf are integers logically, they are passed as double
-      plhs(3) = mxCreateDoubleScalar(real(info, rp))
-      plhs(4) = mxCreateDoubleScalar(real(nf, rp))
+      plhs(3) = mxCreateDoubleScalar(real(info, RP))
+      plhs(4) = mxCreateDoubleScalar(real(nf, RP))
       plhs(5) = mxCreateDoubleMatrix(mwOne, nf, notComplex)
       call mxCopyReal8ToPtr(fhist(1:nf), 
      &     MX_GET_DBLE(plhs(5)), nf)
@@ -259,17 +263,19 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C The Fortran subroutine that evaluates the objective function
       subroutine calfun(n, x, funval)
       use fnewuoa 
+      use consts, only : RP, HUGEFUN, HUGENUM, INT32
+      use infnan, only : is_nan
       implicit none
 
 C Dummy variables
       integer, intent(in) :: n
 C The type of n is derived from the code of NEWUOA. Thus n should 
 C be of type INTEGER instead of mwSize
-      real(rp), intent(in) :: x(n)
-      real(rp), intent(out) :: funval
+      real(RP), intent(in) :: x(n)
+      real(RP), intent(out) :: funval
 
 C Function declarations 
-      integer(int4), external :: mexCallMATLAB, mxIsDouble
+      integer(INT32), external :: mexCallMATLAB, mxIsDouble
 C integer*4 mexCallMATLAB(integer*4 nlhs, mwPointer plhs, integer*4 nrhs, mwPointer prhs, character*(*) functionName)
 C integer*4 mxIsDouble(mwPointer pm); 
       mwSize, external :: mxGetM, mxGetN
@@ -286,7 +292,7 @@ C intermediate variables
 C n_mw is the mwSize cast of n: n_mw = int(n, kind(n_mw));
 C used when a variable of type mwSize is needed
       mwPointer :: plhs(1), prhs(2) ! used in mexCallMATLAB
-      integer(int4), parameter :: intOne=1, intTwo=2 
+      integer(INT32), parameter :: intOne=1, intTwo=2 
       character(5), parameter :: funFeval = 'feval' 
 C intOne, intTwo, funFeval are  used when calling mexCallMATLAB 
 
@@ -297,7 +303,7 @@ C Start the real business
      &    'fnewuoa: n does not equal n_mw.')
       end if
 
-      plhs(1) = mxCreateDoubleScalar(hugenum) 
+      plhs(1) = mxCreateDoubleScalar(HUGENUM) 
 C Output of f_value = feval(fun, x); see below
       prhs(1) = fun_ptr 
 C First input of f_value = feval(fun, x); see below; fun_ptr is a global variable
@@ -329,8 +335,8 @@ C integer*4 mexCallMATLAB(integer*4 nlhs, mwPointer plhs, integer*4 nrhs, mwPoin
 C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
 
 C Use extreme barrier to cope with 'hidden constraints' 
-      if (funval .gt. hugefun .or. is_nan(funval)) then
-          funval = hugefun ! hugefun is defined in consts
+      if (funval .gt. HUGEFUN .or. is_nan(funval)) then
+          funval = HUGEFUN ! HUGEFUN is defined in consts
       end if
 
 C Free memory; note that plhs and prhs are just temporary variables in

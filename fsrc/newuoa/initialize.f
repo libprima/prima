@@ -7,14 +7,13 @@
 
       integer, intent(in) :: n, npt
       integer, intent(out) :: info, kopt, nf
-      real(kind = rp), intent(in) :: rhobeg, x(n), ftarget
-      real(kind = rp), intent(out) :: xbase(n), xpt(n, npt), f,         &
-     & fval(npt), xopt(n), fopt, bmat(n, npt + n), zmat(npt, npt-n-1)
-      real(kind = rp), intent(out) :: gq(n), hq(n, n), pq(npt)
+      real(RP), intent(in) :: rhobeg, x(n), ftarget
+      real(RP), intent(out) :: xbase(n), xpt(n, npt), f, fval(npt),     &
+     & xopt(n), fopt, bmat(n, npt + n), zmat(npt, npt-n-1)
+      real(RP), intent(out) :: gq(n), hq(n, n), pq(npt)
 
       integer :: k, ih, ip, ipt(npt), itemp, jp, jpt(npt), npt1, npt2
-      real(kind = rp) :: fbeg, fip, fjp, rhosq, reciq, recip, xip, xjp, &
-     & xtemp(n)
+      real(RP) :: fbeg, fip, fjp, rhosq, reciq, recip, xip, xjp,xtemp(n)
       logical :: evaluated(npt)
 
 
