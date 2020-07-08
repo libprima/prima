@@ -2,7 +2,7 @@
 
       contains
 
-      subroutine updateh(bmat, zmat, idz, vlag, beta, knew, info)
+      subroutine updateh(bmat, zmat, idz, vlag, beta, knew)
       ! UPDATE updates arrays BMAT and ZMAT together with IDZ, in order
       ! to shift the interpolation point that has index KNEW. On entry, 
       ! VLAG contains the components of the vector THETA*WCHECK + e_b 
@@ -14,47 +14,43 @@
       ! will be overwritten when trying the alternative model or by
       ! VLAGBETA.
 
-      use consts, only : one, zero
-      use infos, only : INVALID_INPUT
+      use consts, only : RP, ONE, ZERO, DEBUG_MODE
       use warnerror, only : errmssg
       use lina
       implicit none
 
       integer, intent(in) ::        knew
-      integer, intent(out) ::       info 
       integer, intent(inout) ::     idz
-      real(rp), intent(in) ::       beta
-      real(rp), intent(inout) ::    bmat(:, :)  ! BMAT(N, NPT + N)
-      real(rp), intent(inout) ::    zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
-      real(rp), intent(inout) ::    vlag(:)     ! VLAG(NPT + N)
+      real(RP), intent(in) ::       beta
+      real(RP), intent(inout) ::    bmat(:, :)  ! BMAT(N, NPT + N)
+      real(RP), intent(inout) ::    zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
+      real(RP), intent(inout) ::    vlag(:)     ! VLAG(NPT + N)
 
       integer :: iflag, j, ja, jb, jl, n, npt
-      real(rp) :: c, s, r, alpha, denom, scala, scalb, tau, tausq, temp,&
+      real(RP) :: c, s, r, alpha, denom, scala, scalb, tau, tausq, temp,&
      & tempa, tempb, ztemp(size(zmat, 1)), w(size(vlag)),               &
      & v1(size(bmat, 1)), v2(size(bmat, 1))
       character(len = 100) :: srname
 
       srname = 'UPDATEH'  ! Name of the current subroutine.
-      info = 0
       
       ! Get and verify the sizes.
       n = size(bmat, 1)
       npt = size(bmat, 2) - n
 
-      if (n == 0 .or. npt < n + 2) then
-          info = INVALID_INPUT
-          call errmssg(srname, 'SIZE(BMAT) is invalid')
-          return
-      end if
-      if (size(zmat, 1) /= npt .or. size(zmat, 2) /= npt - n - 1) then
-          info = INVALID_INPUT
-          call errmssg(srname, 'SIZE(ZMAT) is invalid')
-          return
-      end if
-      if (size(vlag) /= npt + n) then
-          info = INVALID_INPUT
-          call errmssg(srname, 'SIZE(VLAG) is invalid')
-          return
+      if (DEBUG_MODE) then
+          if (n == 0 .or. npt < n + 2) then
+              call errmssg(srname, 'SIZE(BMAT) is invalid')
+              stop
+          end if
+          if (size(zmat, 1) /= npt .or. size(zmat, 2) /= npt-n-1) then
+              call errmssg(srname, 'SIZE(ZMAT) is invalid')
+              stop
+          end if
+          if (size(vlag) /= npt + n) then
+              call errmssg(srname, 'SIZE(VLAG) is invalid')
+              stop
+          end if
       end if
       
           
@@ -64,20 +60,17 @@
       ! ZMAT(KNEW, J) becomes 0. 
       jl = 1  ! For J = 2, ..., IDZ - 1, set JL = 1.
       do j = 2, idz - 1
-          if (abs(zmat(knew, j)) >  zero) then
+          if (abs(zmat(knew, j)) >  ZERO) then
               !call givens(zmat(knew, jl), zmat(knew, j), c, s, r)
               c = zmat(knew, jl)
               s = zmat(knew, j)
-              r = sqrt(c**2 + s**2)  
-              ! Fortran 2008 can calculate r by the HYPOT intrinsic,
-              ! which can avoid over/underflow due to the squres.
-              ! r = hypot(c, s) 
+              r = hypot(c, s) 
               c = c/r
               s = s/r
               ztemp = zmat(:, j)
               zmat(:, j) = c*ztemp - s*zmat(:, jl)
               zmat(:, jl) = c*zmat(:, jl) + s*ztemp
-              zmat(knew, j) = zero
+              zmat(knew, j) = ZERO
       !----------------------------------------------------------------!
               !!! In later vesions, we will include the following line.
               !!! For the moment, we exclude it to align with Powell's 
@@ -93,20 +86,17 @@
           jl = idz  ! For J = IDZ + 1, ..., NPT - N - 1, set JL = IDZ.
       end if
       do j = idz + 1, npt - n - 1
-          if (abs(zmat(knew, j)) >  zero) then
+          if (abs(zmat(knew, j)) >  ZERO) then
               !call givens(zmat(knew, jl), zmat(knew, j), c, s, r)
               c = zmat(knew, jl)
               s = zmat(knew, j)
-              r = sqrt(c**2 + s**2)  
-              ! Fortran 2008 can calculate r by the HYPOT intrinsic,
-              ! which can avoid over/underflow due to the squres.
-              !r = hypot(c, s) 
+              r = hypot(c, s) 
               c = c/r
               s = s/r
               ztemp = zmat(:, j)
               zmat(:, j) = c*ztemp - s*zmat(:, jl)
               zmat(:, jl) = c*zmat(:, jl) + s*ztemp
-              zmat(knew, j) = zero
+              zmat(knew, j) = ZERO
       !----------------------------------------------------------------!
               !!! In later vesions, we will include the following line.
               !!! For the moment, we exclude it to align with Powell's 
@@ -139,7 +129,7 @@
       tau = vlag(knew)
       tausq = tau*tau
       denom = alpha*beta + tausq
-      vlag(knew) = vlag(knew) - one
+      vlag(knew) = vlag(knew) - ONE
       
       ! Complete the updating of ZMAT when there is only one nonzero
       ! element in the KNEW-th row of the new matrix ZMAT, but, if
@@ -155,8 +145,8 @@
           tempa = tau/temp
           zmat(:, 1) = tempa*zmat(:, 1) - tempb*vlag(1 : npt)
       !----------------------------------------------------------------!
-          if (idz == 1 .and. temp < zero) then
-!---------!if (idz == 1 .and. denom < zero) then !---------------------!
+          if (idz == 1 .and. temp < ZERO) then
+!---------!if (idz == 1 .and. denom < ZERO) then !---------------------!
       !----------------------------------------------------------------!
               ! TEMP < ZERO?!! Powell wrote this but it is STRANGE!!!!!!
               !!! It is probably a BUG !!!
@@ -170,8 +160,8 @@
               idz = 2
           end if
       !----------------------------------------------------------------!
-          if (idz >= 2 .and. temp >= zero) then 
-!---------!if (idz >= 2 .and. denom >= zero) then !--------------------!
+          if (idz >= 2 .and. temp >= ZERO) then 
+!---------!if (idz >= 2 .and. denom >= ZERO) then !--------------------!
       !----------------------------------------------------------------!
               ! JL = 1 and IDZ >= 2??? Seems not possible either!!!
               iflag = 1
@@ -180,7 +170,7 @@
           ! Complete the updating of ZMAT in the alternative case.
           ! There are two nonzeros in ZMAT(KNEW, :) after the rotation.
           ja = 1
-          if (beta >=  zero) then 
+          if (beta >=  ZERO) then 
               ja = jl
           end if
           jb = jl + 1 - ja
@@ -188,17 +178,17 @@
           tempa = temp*beta
           tempb = temp*tau
           temp = zmat(knew, ja)
-          scala = one/sqrt(abs(beta)*temp*temp + tausq)
+          scala = ONE/sqrt(abs(beta)*temp*temp + tausq)
           scalb = scala*sqrt(abs(denom))
           zmat(:, ja) = scala*(tau*zmat(:, ja) - temp*vlag(1 : npt))
           zmat(:, jb) = scalb*(zmat(:, jb) - tempa*w(1 : npt) -         &
      &     tempb*vlag(1 : npt))
           
-          if (denom <=  zero) then
-              if (beta < zero) then 
+          if (denom <=  ZERO) then
+              if (beta < ZERO) then 
                   idz = idz + 1  ! Is it possible to get IDZ > NPT-N-1?
               end if
-              if (beta >=  zero) then 
+              if (beta >=  ZERO) then 
                   iflag = 1
               end if
           end if
@@ -263,61 +253,54 @@
 
 
       subroutine updateq(idz, knew, fqdiff, xptknew, bmatknew, zmat, gq,&
-     & hq, pq, info)
-      use infos, only : INVALID_INPUT
-      use warnerror, only : errmssg
+     & hq, pq)
 
-      use consts, only : rp, zero
+      use warnerror, only : errmssg
+      use consts, only : RP, ZERO, DEBUG_MODE
       use lina
       implicit none
 
       integer, intent(in) ::        idz
       integer, intent(in) ::        knew
-      integer, intent(out) ::       info 
-
-      real(rp), intent(in) ::       fqdiff
-      real(rp), intent(in) ::       xptknew(:)  ! XPTKNEW(N)
-      real(rp), intent(in) ::       bmatknew(:) ! BMATKNEW(N)
-      real(rp), intent(in) ::       zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
-      real(rp), intent(inout) ::    gq(:)   ! GQ(N)
-      real(rp), intent(inout) ::    hq(:, :)! HQ(N, N)
-      real(rp), intent(inout) ::    pq(:)   ! PQ(NPT) 
+      real(RP), intent(in) ::       fqdiff
+      real(RP), intent(in) ::       xptknew(:)  ! XPTKNEW(N)
+      real(RP), intent(in) ::       bmatknew(:) ! BMATKNEW(N)
+      real(RP), intent(in) ::       zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
+      real(RP), intent(inout) ::    gq(:)   ! GQ(N)
+      real(RP), intent(inout) ::    hq(:, :)! HQ(N, N)
+      real(RP), intent(inout) ::    pq(:)   ! PQ(NPT) 
 
       integer :: i, j, n, npt
-      real(kind = rp) :: fqdz(size(zmat, 2))
+      real(RP) :: fqdz(size(zmat, 2))
       character(len = 100) :: srname
 
       srname = 'UPDATEQ'  ! Name of the current subroutine.
-      info = 0
       
       ! Get and verify the sizes.
       n = size(gq)
       npt = size(pq)
 
-      if (n == 0 .or. npt < n + 2) then
-          info = INVALID_INPUT
-          call errmssg(srname, 'SIZE(GQ) or SIZE(PQ) is invalid')
-          return
-      end if
-      if (size(zmat, 1) /= npt .or. size(zmat, 2) /= npt - n - 1) then
-          info = INVALID_INPUT
-          call errmssg(srname, 'SIZE(ZMAT) is invalid')
-          return
-      end if
-      if (size(xptknew) /= n) then
-          info = INVALID_INPUT
-          call errmssg(srname, 'SIZE(XPTKNEW) is invalid')
-          return
-      end if
-      if (size(bmatknew) /= n) then
-          info = INVALID_INPUT
-          call errmssg(srname, 'SIZE(BMATKNEW) is invalid')
-          return
-      end if
-      if (size(hq, 1) /= n .or. size(hq, 2) /= n) then
-          info = INVALID_INPUT
-          call errmssg(srname, 'SIZE(HQ) is invalid')
-          return
+      if (DEBUG_MODE) then
+          if (n == 0 .or. npt < n + 2) then
+              call errmssg(srname, 'SIZE(GQ) or SIZE(PQ) is invalid')
+              stop
+          end if
+          if (size(zmat, 1) /= npt .or. size(zmat, 2) /= npt-n-1) then
+              call errmssg(srname, 'SIZE(ZMAT) is invalid')
+              stop
+          end if
+          if (size(xptknew) /= n) then
+              call errmssg(srname, 'SIZE(XPTKNEW) is invalid')
+              stop
+          end if
+          if (size(bmatknew) /= n) then
+              call errmssg(srname, 'SIZE(BMATKNEW) is invalid')
+              stop
+          end if
+          if (size(hq, 1) /= n .or. size(hq, 2) /= n) then
+              call errmssg(srname, 'SIZE(HQ) is invalid')
+              stop
+          end if
       end if
 
       !----------------------------------------------------------------!
@@ -335,7 +318,7 @@
       ! Update the implicit part of second derivatives.
       fqdz = fqdiff*zmat(knew, :)
       fqdz(1 : idz - 1) = -fqdz(1 : idz - 1)
-      pq(knew) = zero
+      pq(knew) = ZERO
       !----------------------------------------------------------------!
       !!! The following DO LOOP implements the update given below, yet
       !!! the result will not be exactly the same due to the

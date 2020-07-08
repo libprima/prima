@@ -25,6 +25,11 @@
       module consts 
 
       implicit none
+      private
+      public :: DEBUG_MODE
+      public :: DP, SP, RP, INT32
+      public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
+      public :: EPS, HUGENUM, ALMOST_INFINITY, HUGEFUN, HUGECON 
 
 #if __DEBUG_MODE__ == 1
       logical, parameter :: DEBUG_MODE = .true.
@@ -32,31 +37,31 @@
       logical, parameter :: DEBUG_MODE = .false.
 #endif
 
-      integer, parameter :: dp = kind(0.0d0), sp = kind(0.0)
-      ! dp is the kind for double precision
-      ! sp is the kind for single precision
-      integer, parameter :: rp = dp
-      ! rp is the kind for the real precision that will be used
+      integer, parameter :: DP = kind(0.0d0), SP = kind(0.0)
+      ! DP is the kind for double precision
+      ! SP is the kind for single precision
+      integer, parameter :: RP = DP
+      ! RP is the kind for the real precision that will be used
 
-      real(kind=rp), parameter :: zero = 0.0_rp
-      real(kind=rp), parameter :: one = 1.0_rp
-      real(kind=rp), parameter :: two = 2.0_rp
-      real(kind=rp), parameter :: half = 0.5_rp
-      real(kind=rp), parameter :: quart = 0.25_rp
-      real(kind=rp), parameter :: ten = 10.0_rp
-      real(kind=rp), parameter :: tenth = 0.1_rp
-      real(kind=rp), parameter :: pi = 3.141592653589793238462643383_rp
+      real(RP), parameter :: ZERO = 0.0_RP
+      real(RP), parameter :: ONE = 1.0_RP
+      real(RP), parameter :: TWO = 2.0_RP
+      real(RP), parameter :: HALF = 0.5_RP
+      real(RP), parameter :: QUART = 0.25_RP
+      real(RP), parameter :: TEN = 10.0_RP
+      real(RP), parameter :: TENTH = 0.1_RP
+      real(RP), parameter :: PI = 3.141592653589793238462643383_RP
 
-      real(kind=rp), parameter :: eps = epsilon(zero)
-      real(kind=rp), parameter :: hugenum = huge(zero)
-      real(kind=rp), parameter :: almost_infinity = half*hugenum
+      real(RP), parameter :: EPS = epsilon(ZERO)
+      real(RP), parameter :: HUGENUM = huge(ZERO)
+      real(RP), parameter :: ALMOST_INFINITY = HALF*HUGENUM
       
-      integer, parameter :: maxe = maxexponent(zero)
-      real(kind=rp), parameter :: hugefun = 2.0_rp**min(100, maxe/2)
-      real(kind=rp), parameter :: hugecon = hugefun
+      integer, parameter :: MAXE = maxexponent(ZERO)
+      real(RP), parameter :: HUGEFUN = TWO**min(100, MAXE/2)
+      real(RP), parameter :: HUGECON = HUGEFUN
 
-      integer, parameter :: int32 = selected_int_kind(8)
-      ! int32 is the kind for 32-bit integer, i.e., integer*4.
+      integer, parameter :: INT32 = selected_int_kind(8)
+      ! INT32 is the kind for 32-bit integer, i.e., integer*4.
       ! SELECTED_INT_KIND(p) returns an INTEGER that equals the
       ! processor dependent kind type parameter of the integer type
       ! accommodating all values n with -10^p < n < 10^p. Therefore,

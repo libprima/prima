@@ -9,13 +9,13 @@
 
       integer, intent(in) :: idz, n, npt
 
-      real(kind = rp), intent(in) :: xopt(n), pq(npt), zmat(npt,npt-n-1)
-      real(kind = rp), intent(inout) :: bmat(n, npt + n), gq(n),        &
-     & hq(n, n), xpt(n, npt)
+      real(RP), intent(in) :: xopt(n), pq(npt), zmat(npt,npt-n-1)
+      real(RP), intent(inout) :: bmat(n, npt + n), gq(n), hq(n, n),     &
+     & xpt(n, npt)
 
       integer :: i, j, k
-      real(kind = rp) :: sumz(npt-n-1), vlag(n), qxoptq, xoptsq, xpq(n),&
-     & bmatk(n), w1(npt), w2(n), w3(npt) 
+      real(RP) :: sumz(npt-n-1), vlag(n), qxoptq, xoptsq, xpq(n)
+      real(RP) :: bmatk(n), w1(npt), w2(n), w3(npt) 
 
             
       xoptsq = dot_product(xopt, xopt)
@@ -23,7 +23,7 @@
 
       !----------------------------------------------------------------!   
       ! The update for gq can indeed be done by the following 3 lines:
-      !real(kind = rp) :: hxopt(n)
+      !real(RP) :: hxopt(n)
       !call hessmul(n, npt, xpt, hq, pq, xopt, hxopt)
       !gq = gq + hxopt 
       !----------------------------------------------------------------!

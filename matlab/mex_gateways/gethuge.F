@@ -28,7 +28,7 @@ C     current platform, the possible values of data_type being
 C     'integer', 'float', 'real', 'single', 'double', 'mwSize', 
 C     'mwIndex', 'fun', 'function', 'con', 'constraint'.
 
-      use consts, only : sp, dp, rp, hugefun, hugecon, int4 
+      use consts, only : SP, DP, RP, HUGEFUN, HUGECON, INT32 
       implicit none
 
 C     mexFunction arguments:
@@ -41,9 +41,9 @@ C     Function declarations:
 C mwPointer mxCreateDoubleScalar(real*8 value)
       mwSize, external :: mxGetM, mxGetN 
 C mwPointer mxGetM(mwPointer pm)
-      integer(int4), external :: mxGetString  
+      integer(INT32), external :: mxGetString  
 C integer*4 mxGetString(mwPointer pm, character*(*) str, mwSize strlen)
-      integer(int4), external :: mxIsChar 
+      integer(INT32), external :: mxIsChar 
 C integer*4 mxIsChar(mwPointer pm)
 
 C     Variables
@@ -57,24 +57,24 @@ C The input string, which specifies the data type
 C Integer zero of the default kind on the current platform  
       real, parameter :: floatZero = 0.0 
 C Floating-point zero of the default real kind on the current platform
-      real(sp), parameter :: singleZero = 0.0_sp
+      real(SP), parameter :: singleZero = 0.0_SP
 C Single-precision floating-point zero
-      real(dp), parameter :: doubleZero = 0.0_dp 
-C Floating-point zero of the default real precision (rp) in consts 
-      real(rp), parameter :: realZero = 0.0_rp 
+      real(DP), parameter :: doubleZero = 0.0_DP 
 C Double-precision floating-point zero
+      real(RP), parameter :: realZero = 0.0_RP 
+C Floating-point zero of the default real precision (RP) in consts 
       mwSize, parameter :: msZero = 0 
 C Integer zero of type mwSize on the current platform
       mwIndex, parameter :: miZero = 0 
 C Integer zero of type mwIndex on the current platform
       integer, parameter :: intHuge = huge(intZero)
       real, parameter :: floatHuge = huge(floatZero)
-      real(sp), parameter :: singleHuge = huge(singleZero)
-      real(dp), parameter :: doubleHuge = huge(doubleZero)
-      real(rp), parameter :: realHuge = huge(realZero)
+      real(SP), parameter :: singleHuge = huge(singleZero)
+      real(DP), parameter :: doubleHuge = huge(doubleZero)
+      real(RP), parameter :: realHuge = huge(realZero)
       mwSize, parameter :: msHuge = huge(msZero)
       mwIndex, parameter :: miHuge = huge(miZero)
-      real(dp) :: hugeValue
+      real(DP) :: hugeValue
 
 C     Validate the number of arguments.
       if (nrhs .ne. 1) then
@@ -128,12 +128,12 @@ C     Define hugeValue.
      &    data_type .eq. 'FUN' .or. data_type .eq. 'function' .or. 
      &    data_type .eq. 'Function' .or. data_type .eq. 'FUNCTION') 
      &then
-          hugeValue = real(hugefun, dp) ! HUGEFUN defined in consts 
+          hugeValue = real(HUGEFUN, dp) ! HUGEFUN defined in consts 
       else if (data_type .eq. 'con' .or. data_type .eq. 'Con' .or. 
      &    data_type .eq. 'CON' .or. data_type .eq. 'constraint' .or. 
      &    data_type .eq. 'Constraint' .or. data_type .eq. 'CONSTRAINT') 
      &then
-          hugeValue = real(hugecon, dp) ! HUGECON defined in consts 
+          hugeValue = real(HUGECON, dp) ! HUGECON defined in consts 
       else
           call mexErrMsgIdAndTxt ('gethuge:WrongInput',
      &    'gethuge: Unrecognized input.')

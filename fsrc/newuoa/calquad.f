@@ -14,13 +14,13 @@
 
       integer, intent(in) :: n, npt
 
-      real(kind = rp), intent(in) :: d(n), x(n), xpt(n, npt), gq(n),    &
-     & hq(n, n), pq(npt)
-      real(kind = rp), intent(out) :: vquad 
+      real(RP), intent(in) :: d(n), x(n), xpt(n, npt), gq(n), hq(n, n), &
+     & pq(npt)
+      real(RP), intent(out) :: vquad 
 
       integer :: i, ih, j, k 
-      real(kind = rp) :: s(n), temp!,sd
-      real(kind = rp) :: wcheck(npt)
+      real(RP) :: s(n), temp!,sd
+      real(RP) :: wcheck(npt)
 
 
       s = x + d  ! It is NOT applicable to the version below.
