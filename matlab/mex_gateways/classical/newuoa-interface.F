@@ -38,7 +38,7 @@ C Fortran code starts
 
       module fnewuoa 
 
-      use consts, only : RP, INT32
+      use consts, only : DP, INT32
       implicit none
       private
       public :: notComplex, mwOne
@@ -58,7 +58,7 @@ C Some global variables
       mwSize, save :: nf ! Number of function evaluations 
 C nf should be of type mwSize, because it will be later used as an
 C argument of mxCreateDoubleMatrix
-      real(RP), allocatable, save :: fhist(:) 
+      real(DP), allocatable, save :: fhist(:) 
 C History of function evaluation
       end module fnewuoa
 
@@ -72,7 +72,7 @@ C extension depends on the platform), then the following function is
 C callable in matlab: 
 C [xopt, fopt, info, nf, fhist] = FUNCTION_NAME(fun, x0, rhobeg, rhoend, maxfun, npt, ftarget)
 
-      use consts, only : RP, HUGENUM, INT32, ZERO
+      use consts, only : DP, HUGENUM, INT32, ZERO
       use fnewuoa 
       implicit none
 
@@ -103,8 +103,8 @@ C obtained by mxGetM
       integer :: n_int
 C n_int is the INTEGER cast of n, i.e., n_int = int(n); used when a 
 C variable of type INTEGER is needed (e.g., when calling NEWUOA).
-      real(RP), allocatable :: x(:), w(:)
-      real(RP) :: f, rhobeg, rhoend, maxfun_r, npt_r, ftarget
+      real(DP), allocatable :: x(:), w(:)
+      real(DP) :: f, rhobeg, rhoend, maxfun_r, npt_r, ftarget
       integer :: info, iprint, allocate_status
 C info and iprint are inputs to NEWUOA, which requires them to be
 C INTEGERs (not necessarily the same as mwSize) 
@@ -264,8 +264,8 @@ C Write outputs
       call mxCopyReal8ToPtr(x(1:n), MX_GET_DBLE(plhs(1)), n)
       plhs(2) = mxCreateDoubleScalar(f)
 C Although info and nf are integers logically, they are passed as double
-      plhs(3) = mxCreateDoubleScalar(real(info, RP))
-      plhs(4) = mxCreateDoubleScalar(real(nf, RP))
+      plhs(3) = mxCreateDoubleScalar(real(info, DP))
+      plhs(4) = mxCreateDoubleScalar(real(nf, DP))
       plhs(5) = mxCreateDoubleMatrix(mwOne, nf, notComplex)
       call mxCopyReal8ToPtr(fhist(1:nf), 
      &     MX_GET_DBLE(plhs(5)), nf)
@@ -283,15 +283,15 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C The Fortran subroutine that evaluates the objective function
       subroutine calfun(n, x, funval)
       use fnewuoa 
-      use consts, only : RP, INT32, HUGENUM
+      use consts, only : DP, INT32, HUGENUM
       implicit none
 
 C Dummy variables
       integer, intent(in) :: n
 C The type of n is derived from the code of NEWUOA. Thus n should 
 C be of type INTEGER instead of mwSize
-      real(RP), intent(in) :: x(n)
-      real(RP), intent(out) :: funval
+      real(DP), intent(in) :: x(n)
+      real(DP), intent(out) :: funval
 
 C Function declarations 
       integer(INT32), external :: mexCallMATLAB

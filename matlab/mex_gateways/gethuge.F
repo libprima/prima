@@ -62,7 +62,7 @@ C Single-precision floating-point zero
       real(DP), parameter :: doubleZero = 0.0_DP 
 C Double-precision floating-point zero
       real(RP), parameter :: realZero = 0.0_RP 
-C Floating-point zero of the default real precision (RP) in consts 
+C Floating-point zero of the real precision in use (RP)
       mwSize, parameter :: msZero = 0 
 C Integer zero of type mwSize on the current platform
       mwIndex, parameter :: miZero = 0 
@@ -105,35 +105,35 @@ C     Get the input string.
 C     Define hugeValue.
       if (data_type .eq. 'integer' .or. data_type .eq. 'Integer'
      &    .or. data_type .eq. 'INTEGER') then
-          hugeValue = real(intHuge, dp)
+          hugeValue = real(intHuge, DP)
       else if (data_type .eq. 'float' .or. data_type .eq. 'Float' 
      &    .or. data_type .eq. 'FLOAT') then
-          hugeValue = real(floatHuge, dp)
+          hugeValue = real(floatHuge, DP)
       else if (data_type .eq. 'single' .or. data_type .eq. 'Single'
      &    .or. data_type .eq. 'SINGLE') then
-          hugeValue = real(singleHuge, dp)
+          hugeValue = real(singleHuge, DP)
       else if (data_type .eq. 'double' .or. data_type .eq. 'Double'
      &    .or. data_type .eq. 'DOUBLE') then
-          hugeValue = real(doubleHuge, dp)
+          hugeValue = real(doubleHuge, DP)
       else if (data_type .eq. 'real' .or. data_type .eq. 'Real' 
      &    .or. data_type .eq. 'REAL') then
-          hugeValue = real(realHuge, dp)
+          hugeValue = real(realHuge, DP)
       else if (data_type .eq. 'mwSize' .or. data_type .eq. 'mwsize' 
      &     .or. data_type .eq. 'MWSIZE') then
-          hugeValue = real(msHuge, dp)
+          hugeValue = real(msHuge, DP)
       else if (data_type .eq. 'mwIndex' .or. data_type .eq. 'mwindex' 
      &     .or. data_type .eq. 'MWINDEX') then
-          hugeValue = real(miHuge, dp)
+          hugeValue = real(miHuge, DP)
       else if (data_type .eq. 'fun' .or. data_type .eq. 'Fun' .or. 
      &    data_type .eq. 'FUN' .or. data_type .eq. 'function' .or. 
      &    data_type .eq. 'Function' .or. data_type .eq. 'FUNCTION') 
      &then
-          hugeValue = real(HUGEFUN, dp) ! HUGEFUN defined in consts 
+          hugeValue = real(HUGEFUN, DP) ! HUGEFUN defined in consts 
       else if (data_type .eq. 'con' .or. data_type .eq. 'Con' .or. 
      &    data_type .eq. 'CON' .or. data_type .eq. 'constraint' .or. 
      &    data_type .eq. 'Constraint' .or. data_type .eq. 'CONSTRAINT') 
      &then
-          hugeValue = real(HUGECON, dp) ! HUGECON defined in consts 
+          hugeValue = real(HUGECON, DP) ! HUGECON defined in consts 
       else
           call mexErrMsgIdAndTxt ('gethuge:WrongInput',
      &    'gethuge: Unrecognized input.')

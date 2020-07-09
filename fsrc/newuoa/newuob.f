@@ -1,11 +1,16 @@
       module newuob_mod
 
+      implicit none
+      private
+      public :: newuob
+
+
       contains
 
       subroutine newuob (npt, rhobeg, rhoend, iprint, maxfun, ftarget,  &
      &  x, f, nf, info)
 
-      use consts, only : RP, ZERO, ONE, HALF, TENTH
+      use consts, only : RP, IK, ZERO, ONE, HALF, TENTH
       use warnerror, only : errmssg
       use infnan, only : is_nan, is_posinf
       use lina
@@ -15,11 +20,11 @@
       implicit none
 
       ! Inputs
-      integer, intent(in) :: npt
-      integer, intent(in) :: iprint
-      integer, intent(in) :: maxfun
-      integer, intent(out) :: nf
-      integer, intent(out) :: info
+      integer(IK), intent(in) :: npt
+      integer(IK), intent(in) :: iprint
+      integer(IK), intent(in) :: maxfun
+      integer(IK), intent(out) :: nf
+      integer(IK), intent(out) :: info
       real(RP), intent(in) :: rhobeg
       real(RP), intent(in) :: rhoend
       real(RP), intent(in) :: ftarget
@@ -27,8 +32,8 @@
       real(RP), intent(inout) :: x(:)  ! SIZE(X) = N
 
       ! Other variables
-      integer :: n, idz, itest, knew, kopt, nfsave, subinfo
-      integer :: tr, maxtr
+      integer(IK) :: n, idz, itest, knew, kopt, nfsave, subinfo
+      integer(IK) :: tr, maxtr
       real(RP) :: alpha, beta, crvmin, delta, prederr(3) 
       real(RP) :: distsq, dnorm, dsq, dstep, xdsq(npt), d(size(x))
       real(RP) :: xbase(size(x)), xopt(size(x)), xnew(size(x))

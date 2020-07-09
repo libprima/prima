@@ -214,6 +214,9 @@ try
     infrastructure_files = fullfile(fsrc, infrastructure_files);
     mex(mex_options{:}, '-c', infrastructure_files{:});
 
+    mex(mex_options{:}, '-c', fullfile(gateways, 'mex_mod.F'));
+
+
     % Compilation of function gethuge
     mex(mex_options{:}, '-output', 'gethuge', fullfile(gateways, 'gethuge.F'));
 

@@ -1,5 +1,10 @@
       module trsubp
 
+      implicit none
+      private 
+      public :: trsapp
+     
+
       contains
 
       subroutine trsapp(x, xpt, gq, hq, pq,delta,tol,s,crvmin,qred,info)
@@ -34,14 +39,14 @@
       ! Q. Thus S should provide a substantial reduction to Q within the
       ! trust region.
       
-      use consts, only : RP, ONE, TWO, HALF, ZERO, PI, DEBUG_MODE
+      use consts, only : RP, IK, ONE, TWO, HALF, ZERO, PI, DEBUG_MODE
       use infos, only : INVALID_INPUT
       use warnerror, only : errmssg
       use infnan, only : is_nan
       use lina
       implicit none
       
-      integer, intent(out) ::   info
+      integer(IK), intent(out) ::   info
 
       real(RP), intent(in) ::   xpt(:, :)   ! XPT(N, NPT)
       real(RP), intent(in) ::   x(:)        ! X(N)
@@ -54,7 +59,7 @@
       real(RP), intent(out) ::  crvmin
       real(RP), intent(out) ::  qred
       
-      integer :: i, isave, iterc, itermax, iu, j, n, npt
+      integer(IK) :: i, isave, iterc, itermax, iu, j, n, npt
       real(RP) :: d(size(x)), g(size(x)), hd(size(x)), hs(size(x)),     &
      & hx(size(x)) 
       real(RP) :: alpha, angle, bstep, cf, cth, dd, delsq, dg, dhd, dhs,&

@@ -1,5 +1,9 @@
       module geometry
 
+      implicit none
+      private
+      public :: biglag, bigden
+
       contains
 
       subroutine biglag(x, xpt, bmat, zmat, idz, knew, delta, d, alpha)
@@ -10,13 +14,13 @@
       ! where LFUNC is the KNEW-th Lagrange function.
       ! In addition, it sets ALPHA for the selected D.
 
-      use consts, only : RP, ONE, TWO, HALF, PI, ZERO, DEBUG_MODE
+      use consts, only : RP, IK, ONE, TWO, HALF, PI, ZERO, DEBUG_MODE
       use lina
       use warnerror, only : errmssg
       implicit none
 
-      integer, intent(in) ::    idz
-      integer, intent(in) ::    knew
+      integer(IK), intent(in) ::    idz
+      integer(IK), intent(in) ::    knew
       real(RP), intent(in) ::   x(:)        ! X(N)
       real(RP), intent(in) ::   xpt(:, :)   ! XPT(N, NPT)
       real(RP), intent(in) ::   bmat(:, :)  ! BMAT(N, NPT + N)
@@ -25,7 +29,7 @@
       real(RP), intent(out) ::  alpha
       real(RP), intent(out) ::  d(:)        ! D(N)
 
-      integer :: i, isave, iterc, iu, k, n, npt
+      integer(IK) :: i, isave, iterc, iu, k, n, npt
       real(RP) :: hcol(size(xpt, 2)), gc(size(x)), gd(size(x)),         &
      & s(size(x)), w(size(x)), zknew(size(zmat, 2)), angle, cf(5), cth, &
      & dd, denom, dhd, gg, scaling, sp, ss, step, sth, tau, taubeg,     &
@@ -212,15 +216,15 @@
       ! interpolation problem. 
       ! In addition, it sets VLAG, BETA, and WCHECK for the selected D.
 
-      use consts, only : RP, ONE, TWO, HALF, QUART, PI, ZERO,           &
+      use consts, only : RP, IK, ONE, TWO, HALF, QUART, PI, ZERO,       &
      & DEBUG_MODE
       use warnerror, only : errmssg
       use lina
       implicit none
 
-      integer, intent(in) ::        knew
-      integer, intent(in) ::        kopt
-      integer, intent(in) ::        idz
+      integer(IK), intent(in) ::        knew
+      integer(IK), intent(in) ::        kopt
+      integer(IK), intent(in) ::        idz
       real(RP), intent(in) ::       x(:)        ! X(N)
       real(RP), intent(in) ::       xpt(:, :)   ! XPT(N, NPT)
       real(RP), intent(in) ::       bmat(:, :)  ! BMAT(N, NPT+N)
@@ -230,7 +234,7 @@
       real(RP), intent(out) ::      wcheck(:)   ! WCHECK(NPT + N) 
       real(RP), intent(inout) ::    d(:)        ! D(N)
 
-      integer :: i, isave, iterc, iu, j, jc, k, nw, n, npt
+      integer(IK) :: i, isave, iterc, iu, j, jc, k, nw, n, npt
       real(RP) :: s(size(x)), wvec(size(xpt, 2) + size(x), 5),          &
      & prod(size(xpt, 2) + size(x), 5), den(9), denex(9), par(9),       
      & zknew(size(zmat, 2)), stemp(size(x)), dstemp(size(xpt, 2)),      &
