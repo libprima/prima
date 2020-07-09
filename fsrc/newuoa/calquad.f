@@ -8,24 +8,24 @@
       ! CALQUAD calculates VQUAD = Q(X + D) - Q(X), where Q is the
       ! quadratic function defined by (GQ, HQ, PQ).
 
-      use consts, only : rp, half, zero
+      use consts, only : RP, IK, HALF, ZERO
       use lina
       implicit none
 
-      integer, intent(in) :: n, npt
+      integer(IK), intent(in) :: n, npt
 
       real(RP), intent(in) :: d(n), x(n), xpt(n, npt), gq(n), hq(n, n), &
      & pq(npt)
       real(RP), intent(out) :: vquad 
 
-      integer :: i, ih, j, k 
+      integer(IK) :: i, ih, j, k 
       real(RP) :: s(n), temp!,sd
       real(RP) :: wcheck(npt)
 
 
       s = x + d  ! It is NOT applicable to the version below.
 
-      vquad = zero
+      vquad = ZERO
 
       ih = 0
       do j = 1, n
@@ -34,7 +34,7 @@
               ih = ih + 1
               temp = d(i)*s(j) + d(j)*x(i)
               if (i == j) then 
-                  temp = half*temp
+                  temp = HALF*temp
               end if
               vquad = vquad + temp*hq(i, j)
           end do

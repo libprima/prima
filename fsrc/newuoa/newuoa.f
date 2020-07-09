@@ -1,5 +1,5 @@
-      subroutine newuoa (n, npt, x, rhobeg, rhoend, iprint, maxfun,     &
-     & f, info, ftarget)
+      subroutine newuoa (npt, x, rhobeg, rhoend, iprint, maxfun, f,     &
+     & info, ftarget)
       ! NEWUOA seeks the least value of a function of many variables,
       ! by a trust region method that forms quadratic models by
       ! interpolation. There can be some freedom in the interpolation
@@ -51,17 +51,19 @@
       ! set F to the value of the objective function for the variables
       ! X(1 : N).
 
-      use consts, only : RP 
+      use consts, only : RP, IK
       use newuob_mod, only : newuob
       implicit none
       
-      integer, intent(in) :: n, npt, iprint, maxfun
-      integer, intent(out) :: info
+      integer(IK), intent(in) :: npt, iprint, maxfun
+      integer(IK), intent(out) :: info
       real(RP), intent(in) :: rhobeg, rhoend, ftarget
       real(RP), intent(out) :: f
-      real(RP), intent(inout) :: x(n)
+      real(RP), intent(inout) :: x(:)
 
-      integer :: nf
+      integer(IK) :: n, nf
+
+      n = size(x)
 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! Zaikun, 2020-05-05
@@ -73,6 +75,7 @@
       ! we do the following.
       !rhoend = min(rhobeg, rhoend)
 
+      ! Other checkings should be done as well !!!!
       if (npt < n + 2 .or. npt > ((n + 2)*(n + 1))/2) then
           call calfun(n, x, f)
           info=5

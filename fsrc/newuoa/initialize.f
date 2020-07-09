@@ -1,30 +1,30 @@
       subroutine initialize(n, npt, rhobeg, x, xbase, xpt, f, fval,     &
      & xopt, fopt, kopt, bmat, zmat, gq, hq, pq, nf, info, ftarget)
 
-      use consts, only : rp, zero, one, half
+      use consts, only : RP, IK, ZERO, ONE, HALF
       use infnan
       implicit none
 
-      integer, intent(in) :: n, npt
-      integer, intent(out) :: info, kopt, nf
+      integer(IK), intent(in) :: n, npt
+      integer(IK), intent(out) :: info, kopt, nf
       real(RP), intent(in) :: rhobeg, x(n), ftarget
       real(RP), intent(out) :: xbase(n), xpt(n, npt), f, fval(npt),     &
      & xopt(n), fopt, bmat(n, npt + n), zmat(npt, npt-n-1)
       real(RP), intent(out) :: gq(n), hq(n, n), pq(npt)
 
-      integer :: k, ih, ip, ipt(npt), itemp, jp, jpt(npt), npt1, npt2
+      integer(IK) :: k, ih, ip, ipt(npt), itemp, jp, jpt(npt), npt1,npt2
       real(RP) :: fbeg, fip, fjp, rhosq, reciq, recip, xip, xjp,xtemp(n)
       logical :: evaluated(npt)
 
 
-      ! Set the initial elements of XPT, BMAT, HQ, PQ and ZMAT to zero.
+      ! Set the initial elements of XPT, BMAT, HQ, PQ and ZMAT to ZERO.
       xbase = x
-      xpt = zero
-      bmat = zero
-      zmat = zero
-      gq = zero
-      hq = zero
-      pq = zero  ! We will not update PQ. It is ZERO at return.
+      xpt = ZERO
+      bmat = ZERO
+      zmat = ZERO
+      gq = ZERO
+      hq = ZERO
+      pq = ZERO  ! We will not update PQ. It is ZERO at return.
 
       ! At return,
       ! INFO = 0: initialization finishes normally
@@ -38,8 +38,8 @@
       ! displacement of the next initial interpolation point from XBASE
       ! are set in XPT(:, .).
       rhosq = rhobeg*rhobeg
-      recip = one/rhosq
-      reciq = sqrt(half)/rhosq
+      recip = ONE/rhosq
+      reciq = sqrt(HALF)/rhosq
 
       ! EVALUATED is a boolean array indicating whether the function
       ! value of the i-th interpolation point has been evaluated.
@@ -178,7 +178,7 @@
       ! In this case, the starting X contains NaN. F was set to NaN.
           kopt = 1
           fopt = f
-          xopt = zero
+          xopt = ZERO
       else
           kopt = minloc(fval, dim = 1, mask = evaluated)
           fopt = fval(kopt)
@@ -198,7 +198,7 @@
       gq(1 : n) = (fval(2 : n + 1) - fbeg)/rhobeg
       ! If possible, revise GQ to central difference. 
       k = min(npt - n - 1, n)
-      gq(1 : k) = half*(gq(1 : k) + (fbeg - fval(n+2 : n+1+k))/rhobeg)
+      gq(1 : k) = HALF*(gq(1 : k) + (fbeg - fval(n+2 : n+1+k))/rhobeg)
 
       ! Set the diagonal of HQ  by 2nd-order central finite difference.
       do k = 1, min(npt - n - 1, n) 
@@ -213,12 +213,12 @@
           xip = xpt(ip, k)
           xjp = xpt(jp, k)
           ih = (ip*(ip - 1))/2 + jp
-          if (xip < zero) then 
+          if (xip < ZERO) then 
               fip = fval(ip + n + 1)
           else
               fip = fval(ip + 1)
           end if
-          if (xjp < zero) then
+          if (xjp < ZERO) then
               fjp = fval(jp + n + 1)
           else
               fjp = fval(jp + 1)
@@ -233,15 +233,15 @@
       ! When NPT >= 2*N + 1, this defines BMAT completely; 
       ! When NPT <= 2*N, this defines the first NPT-N-1 rows of BMAT.
       do k = 1, min(npt - n - 1, n)
-          bmat(k, k + 1) = half/rhobeg
-          bmat(k, n + k + 1) = -half/rhobeg
+          bmat(k, k + 1) = HALF/rhobeg
+          bmat(k, n + k + 1) = -HALF/rhobeg
       end do
 
       ! When NPT <= 2*N, set the NPT - N to N rows of BMAT. 
       do k = npt - n, n 
-          bmat(k, 1) = -one/rhobeg
-          bmat(k, k + 1) = one/rhobeg
-          bmat(k, npt + k) = -half*rhosq
+          bmat(k, 1) = -ONE/rhobeg
+          bmat(k, k + 1) = ONE/rhobeg
+          bmat(k, npt + k) = -HALF*rhosq
       end do
                 
       ! Set the nonzero initial elements of ZMAT. 
@@ -260,10 +260,10 @@
           jp = jpt(k + n + 1)
           xip = xpt(ip, k + n + 1)
           xjp = xpt(jp, k + n + 1)
-          if (xip < zero) then 
+          if (xip < ZERO) then 
               ip = ip + n
           end if
-          if (xjp < zero) then
+          if (xjp < ZERO) then
               jp = jp + n
           end if
           zmat(1, k) = recip

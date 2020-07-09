@@ -3,23 +3,23 @@
       ! HQ, and BMAT accordingly. PQ and ZMAT remain the same after the
       ! shifting. See Section 7 of the NEWUOA paper.
 
-      use consts, only : rp, half, quart
+      use consts, only : RP, IK, HALF, QUART
       use lina
       implicit none
 
-      integer, intent(in) :: idz, n, npt
+      integer(IK), intent(in) :: idz, n, npt
 
       real(RP), intent(in) :: xopt(n), pq(npt), zmat(npt,npt-n-1)
       real(RP), intent(inout) :: bmat(n, npt + n), gq(n), hq(n, n),     &
      & xpt(n, npt)
 
-      integer :: i, j, k
+      integer(IK) :: i, j, k
       real(RP) :: sumz(npt-n-1), vlag(n), qxoptq, xoptsq, xpq(n)
       real(RP) :: bmatk(n), w1(npt), w2(n), w3(npt) 
 
             
       xoptsq = dot_product(xopt, xopt)
-      qxoptq = quart * xoptsq
+      qxoptq = QUART * xoptsq
 
       !----------------------------------------------------------------!   
       ! The update for gq can indeed be done by the following 3 lines:
@@ -36,11 +36,11 @@
           gq = gq + hq(:, j)*xopt(j)
       end do
       
-      w1 = matmul(xopt, xpt) - half*xoptsq
+      w1 = matmul(xopt, xpt) - HALF*xoptsq
       ! W1 equals MATMUL(XPT, XOPT) after XPT is updated as follows.
-      xpt = xpt - half*spread(xopt, dim = 2, ncopies = npt)
+      xpt = xpt - HALF*spread(xopt, dim = 2, ncopies = npt)
       !do k = 1, npt
-      !    xpt(:, k) = xpt(:, k) - half*xopt
+      !    xpt(:, k) = xpt(:, k) - HALF*xopt
       !end do
 
       ! Update HQ. It has to be done after the above revision to XPT!!!
@@ -192,9 +192,9 @@
       ! The following instructions complete the shift of XBASE.
       ! Recall the we have already subtracted HALF*XOPT from XPT. 
       ! Therefore, overall, the new XPT is XPT - XOPT.
-      xpt = xpt - half*spread(xopt, dim = 2, ncopies = npt)
+      xpt = xpt - HALF*spread(xopt, dim = 2, ncopies = npt)
       !do k = 1, npt
-      !    xpt(:, k) = xpt(:, k) - half*xopt
+      !    xpt(:, k) = xpt(:, k) - HALF*xopt
       !end do
 
       return 

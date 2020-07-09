@@ -9,6 +9,7 @@
       private
       public :: r1update, r2update, outprod
 
+
       interface r1update
           module procedure r1_with_scalar, r1_without_scalar
       end interface r1update
@@ -19,7 +20,6 @@
 
 #if __USE_INTRINSIC_ALGEBRA__ == 0 
       public :: matmul, dot_product
-
       interface matmul
           module procedure matmul12, matmul21, matmul22
       end interface matmul
@@ -49,14 +49,14 @@
       ! rather than ALPHA*X*Y^T. Because, when X = Y, ALPHA*( X*Y^T ) 
       ! is a symmetric matrix while ALPHA*X*Y^T is asymmetric due to 
       ! the non-associativity of floating-point multiplication.
-      use consts, only : RP, DEBUG_MODE
+      use consts, only : RP, IK, DEBUG_MODE
       use warnerror, only : errmssg
       implicit none
       real(RP), intent(in) :: alpha
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
       real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
-      integer :: j 
+      integer(IK) :: j 
 
       if (DEBUG_MODE) then
           if (size(A, 1) /= size(y) .or. size(A, 2) /= size(y)) then
@@ -78,13 +78,13 @@
       ! A = A + X*Y^T, 
       ! where A is an MxN matrix, X is an M-dimenional vector, and Y is
       ! an N-dimenional vector.
-      use consts, only : RP, DEBUG_MODE
+      use consts, only : RP, IK, DEBUG_MODE
       use warnerror, only : errmssg
       implicit none
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
       real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
-      integer :: j 
+      integer(IK) :: j 
 
       if (DEBUG_MODE) then
           if (size(A, 1) /= size(y) .or. size(A, 2) /= size(y)) then
@@ -114,7 +114,7 @@
       ! rather than 
       ! A + ALPHA*( X*Y^T ) + BETA*( U*V^T )
       ! to ensure the semmetry when ALPHA = BETA, X = V, and Y = U.
-      use consts, only : RP, DEBUG_MODE
+      use consts, only : RP, IK, DEBUG_MODE
       use warnerror, only : errmssg
       implicit none
       real(RP), intent(in) :: alpha
@@ -124,7 +124,7 @@
       real(RP), intent(in) :: u(:)  ! U(SIZE(X))
       real(RP), intent(in) :: v(:)  ! V(SIZE(Y))
       real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
-      integer :: j 
+      integer(IK) :: j 
 
       if (DEBUG_MODE) then
           if (size(u) /= size(x)) then
@@ -156,7 +156,7 @@
       ! rather than 
       ! A + X*Y^T +  U*V^T 
       ! to ensure the semmetry when X = V and Y = U.
-      use consts, only : RP, DEBUG_MODE
+      use consts, only : RP, IK, DEBUG_MODE
       use warnerror, only : errmssg
       implicit none
       real(RP), intent(in) :: x(:)
@@ -164,7 +164,7 @@
       real(RP), intent(in) :: u(:)  ! U(SIZE(X))
       real(RP), intent(in) :: v(:)  ! V(SIZE(Y))
       real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
-      integer :: j 
+      integer(IK) :: j 
 
       if (DEBUG_MODE) then
           if (size(u) /= size(x)) then
@@ -190,13 +190,13 @@
 #if __USE_INTRINSIC_ALGEBRA__ == 0 
 
       function matmul12(x, y) result(z)
-      use consts, only : RP, DEBUG_MODE
+      use consts, only : RP, IK, DEBUG_MODE
       use warnerror, only : errmssg 
       implicit none
       real(RP), dimension(:), intent(in) :: x
       real(RP), dimension(:, :), intent(in) :: y
       real(RP), dimension(size(y, 2)) :: z
-      integer :: j
+      integer(IK) :: j
       
       if (DEBUG_MODE) then
           if (size(x) /= size(y, 1)) then
@@ -211,13 +211,13 @@
       end function matmul12
 
       function matmul21(x, y) result(z)
-      use consts, only : RP, ZERO, DEBUG_MODE
+      use consts, only : RP, IK, ZERO, DEBUG_MODE
       use warnerror, only : errmssg
       implicit none
       real(RP), dimension(:, :), intent(in) :: x
       real(RP), dimension(:), intent(in) :: y
       real(RP), dimension(size(x, 1)) :: z
-      integer :: j 
+      integer(IK) :: j 
 
       if (DEBUG_MODE) then
           if (size(x, 2) /= size(y)) then
@@ -233,12 +233,12 @@
       end function matmul21
 
       function matmul22(x, y) result(z)
-      use consts, only : RP, ZERO, DEBUG_MODE
+      use consts, only : RP, IK, ZERO, DEBUG_MODE
       use warnerror, only : errmssg 
       implicit none
       real(RP), dimension(:, :), intent(in) :: x, y
       real(RP), dimension(size(x, 1), size(y, 2)) :: z
-      integer :: i, j
+      integer(IK) :: i, j
 
       if (DEBUG_MODE) then
           if (size(x, 2) /= size(y, 1)) then
@@ -256,12 +256,12 @@
       end function matmul22
 
       function inprod(x, y) result(z)
-      use consts, only : RP, ZERO, DEBUG_MODE
+      use consts, only : RP, IK, ZERO, DEBUG_MODE
       use warnerror, only : errmssg 
       implicit none
       real(RP), dimension(:), intent(in) :: x, y
       real(RP) :: z
-      integer :: i
+      integer(IK) :: i
 
       if (DEBUG_MODE) then
           if (size(x) /= size(y)) then
@@ -312,15 +312,14 @@
       end function hypotenuse
 
       function outprod(x, y) result(z)
-      use consts, only : RP
+      use consts, only : RP, IK
       implicit none
       real(RP), dimension(:), intent(in) :: x, y
       real(RP), dimension(size(x), size(y)) :: z
-      integer :: i
+      integer(IK) :: i
       do i = 1, size(y)
           z(:, i) = x*y(i)
       end do
       end function outprod
-
 
       end module lina

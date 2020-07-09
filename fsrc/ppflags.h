@@ -1,10 +1,11 @@
 /*************************************************************************/
 /* 
-PPFLAGS defines the following preprocessing flags (default: the first value). 
+PPFLAGS defines the following preprocessing flags (the first value is default). 
 
 __DEBUG_MODE__              debug or not: 0, 1
+__INTEGER_KIND__            the integer kind to be used: 0, 32, 16, 64
+__REAL_PRECISION__          the real precision to be used: 64, 32, 128, 0 
 __FORTRAN_STANDARD__        Fortran standard to follow: 95, 2003, 2008
-__INTERFACE_WITH_MATLAB__    interface with MATLAB or not: 1, 0
 __IMPROVE_POWELL_CODE__     improve Powell's code or not: 1, 0
 __USE_IEEE_ARITHMETIC__     use the IEEE_ARITHMETIC intrinsic or not: 1, 0
 __USE_INTRINSIC_ALGEBRA__   use intrinsic procedures like matmul or not: 1, 0
@@ -29,6 +30,26 @@ depend on the compiler, for example, __FORTRAN_STANDARD__.
 
 
 /*************************************************************************/
+/* The integer kind to be used: 
+ * 0 = default INtEGER, 16 = INTEGER*2, 32 = INTEGER*4, 64 = INTEGER*8 */
+#ifdef __INTEGER_KIND__
+#undef __INTEGER_KIND__
+#endif
+#define __INTEGER_KIND__ 32 
+/*************************************************************************/
+
+
+/*************************************************************************/
+/* The real kind to be used: 
+ * 0 = default REAL, 32 = REAL*4, 64 = REAL*8, 128 = REAL*16 */
+#ifdef __REAL_PRECISION__
+#undef __REAL_PRECISION__
+#endif
+#define __REAL_PRECISION__ 64 
+/*************************************************************************/
+
+
+/*************************************************************************/
 /* Which Fortran standard do we follow? */
 /* We aim to be compatible with Fortran 95, 2003 and 2008. 
  * Make sure that your compiler supports the selected standard. Otherwiswe, 
@@ -37,8 +58,8 @@ depend on the compiler, for example, __FORTRAN_STANDARD__.
 #undef __FORTRAN_STANDARD__
 #endif
 /*#define __FORTRAN_STANDARD__ 95 */
-/*#define __FORTRAN_STANDARD__ 2003 */
-#define __FORTRAN_STANDARD__ 2008 
+#define __FORTRAN_STANDARD__ 2003 
+/*#define __FORTRAN_STANDARD__ 2008 */
 
 /* Revise __FORTRAN_STANDARD__ according to the version of the compiler. */
 /* Of course, we cannot exhaust all the compilers. */
@@ -120,20 +141,6 @@ depend on the compiler, for example, __FORTRAN_STANDARD__.
 
 #endif
 /*******************************************************/
-/*************************************************************************/
-
-
-/*************************************************************************/
-/* Do we intend to interface the code with MATLAB via MEX? */
-/* If yes, then we should note that MATLAB MEX expects the real type
- * in the Fortran code to be the 64-bit real (i.e., REAL*8), and the 
- * integer type to be the default integer (i.e., INTEGER). If MEX is
- * interfaced with a subroutine useing other real or integer types,
- * errors will occur. */
-#ifdef __INTERFACE_WITH_MATLAB__
-#undef __INTERFACE_WITH_MATLAB__
-#endif
-#define __INTERFACE_WITH_MATLAB__ 1
 /*************************************************************************/
 
 

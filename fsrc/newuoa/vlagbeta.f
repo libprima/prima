@@ -3,16 +3,16 @@
       subroutine vlagbeta(n, npt, idz, kopt, bmat, zmat, xpt, xopt, d,  &
      & vlag, beta, wcheck, dsq, xoptsq)
 
-      use consts, only : rp, one, half, zero
+      use consts, only : RP, IK, ONE, HALF, ZERO
       use lina
       implicit none
 
-      integer, intent(in) :: n, npt, idz, kopt
+      integer(IK), intent(in) :: n, npt, idz, kopt
       real(RP), intent(in) :: bmat(n, npt+n), zmat(npt, npt - n - 1)
       real(RP), intent(in) :: xpt(n, npt), xopt(n), d(n)
       real(RP), intent(out) :: vlag(npt+n), beta, wcheck(npt)
 
-      integer :: k, j
+      integer(IK) :: k, j
       real(RP) :: bw(n), bwvd, wz(npt - n - 1), wzsave(npt - n - 1) 
       real(RP) :: dx, dsq, xoptsq
 
@@ -31,7 +31,7 @@
       ! WCHECK is used ONLY in CALQUAD, which evaluates the qudratic
       ! model. Indeed, we may calculate WCHECK internally in CALQUAD.
       wcheck = matmul(d, xpt)
-      wcheck = wcheck*(half*wcheck + matmul(xopt, xpt))
+      wcheck = wcheck*(HALF*wcheck + matmul(xopt, xpt))
 !----------------------------------------------------------------------!
 
       vlag(1 : npt) = matmul(d, bmat(:, 1 : npt))
@@ -68,7 +68,7 @@
       ! results will not be identical due to the non-associativity of
       ! floating point arithmetic addition.
 !-----!bwvd = dot_product(bw + vlag(npt+1 : npt+n), d) !---------------!
-      bwvd = zero
+      bwvd = ZERO
       do j = 1, n
           bwvd = bwvd + bw(j)*d(j) + vlag(npt + j)*d(j)
       end do
@@ -79,8 +79,8 @@
       !dsq = dot_product(d, d)
       !xoptsq = dot_product(xopt, xopt)
 
-      beta = dx*dx + dsq*(xoptsq + dx + dx + half*dsq) + beta - bwvd
-      vlag(kopt) = vlag(kopt) + one
+      beta = dx*dx + dsq*(xoptsq + dx + dx + HALF*dsq) + beta - bwvd
+      vlag(kopt) = vlag(kopt) + ONE
 
       return
 

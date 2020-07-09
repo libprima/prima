@@ -1,5 +1,10 @@
       module update 
 
+      implicit none
+      private
+      public :: updateh, updateq
+
+
       contains
 
       subroutine updateh(bmat, zmat, idz, vlag, beta, knew)
@@ -14,19 +19,19 @@
       ! will be overwritten when trying the alternative model or by
       ! VLAGBETA.
 
-      use consts, only : RP, ONE, ZERO, DEBUG_MODE
+      use consts, only : RP, IK, ONE, ZERO, DEBUG_MODE
       use warnerror, only : errmssg
       use lina
       implicit none
 
-      integer, intent(in) ::        knew
-      integer, intent(inout) ::     idz
+      integer(IK), intent(in) ::        knew
+      integer(IK), intent(inout) ::     idz
       real(RP), intent(in) ::       beta
       real(RP), intent(inout) ::    bmat(:, :)  ! BMAT(N, NPT + N)
       real(RP), intent(inout) ::    zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
       real(RP), intent(inout) ::    vlag(:)     ! VLAG(NPT + N)
 
-      integer :: iflag, j, ja, jb, jl, n, npt
+      integer(IK) :: iflag, j, ja, jb, jl, n, npt
       real(RP) :: c, s, r, alpha, denom, scala, scalb, tau, tausq, temp,&
      & tempa, tempb, ztemp(size(zmat, 1)), w(size(vlag)),               &
      & v1(size(bmat, 1)), v2(size(bmat, 1))
@@ -256,12 +261,12 @@
      & hq, pq)
 
       use warnerror, only : errmssg
-      use consts, only : RP, ZERO, DEBUG_MODE
+      use consts, only : RP, IK, ZERO, DEBUG_MODE
       use lina
       implicit none
 
-      integer, intent(in) ::        idz
-      integer, intent(in) ::        knew
+      integer(IK), intent(in) ::        idz
+      integer(IK), intent(in) ::        knew
       real(RP), intent(in) ::       fqdiff
       real(RP), intent(in) ::       xptknew(:)  ! XPTKNEW(N)
       real(RP), intent(in) ::       bmatknew(:) ! BMATKNEW(N)
@@ -270,7 +275,7 @@
       real(RP), intent(inout) ::    hq(:, :)! HQ(N, N)
       real(RP), intent(inout) ::    pq(:)   ! PQ(NPT) 
 
-      integer :: i, j, n, npt
+      integer(IK) :: i, j, n, npt
       real(RP) :: fqdz(size(zmat, 2))
       character(len = 100) :: srname
 

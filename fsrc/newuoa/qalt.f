@@ -4,11 +4,11 @@
       ! conditions. 
       ! Note that SMAT = BMAT(:, 1:NPT)
 
-      use consts, only : rp, zero
+      use consts, only : RP, IK, ZERO
       use lina
       implicit none
 
-      integer, intent(in) :: n, npt, kopt, idz
+      integer(IK), intent(in) :: n, npt, kopt, idz
       real(RP), intent(in) :: fval(npt), smat(n, npt), zmat(npt,npt-n-1)
       real(RP), intent(out) :: gq(n), hq(n, n), pq(npt)
 
@@ -17,7 +17,7 @@
 
       vlag = fval - fval(kopt)
       gq = matmul(smat, vlag)
-      hq = zero
+      hq = ZERO
       vz = matmul(vlag, zmat)
       vz(1 : idz - 1) = - vz(1 : idz - 1)
       pq = matmul(zmat, vz)

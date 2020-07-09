@@ -24,10 +24,14 @@
 
       module consts 
 
+#if __FORTRAN_STANDARD__ >= 2008
+      use iso_fortran_env, only :INT16,INT32,INT64,REAL32,REAL64,REAL128
+#endif
+
       implicit none
       private
       public :: DEBUG_MODE
-      public :: DP, SP, RP, INT32
+      public :: IK, INT32, DP, SP, RP, REAL32, REAL64, REAL128 
       public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
       public :: EPS, HUGENUM, ALMOST_INFINITY, HUGEFUN, HUGECON 
 
@@ -37,12 +41,43 @@
       logical, parameter :: DEBUG_MODE = .false.
 #endif
 
-      integer, parameter :: DP = kind(0.0d0), SP = kind(0.0)
-      ! DP is the kind for double precision
-      ! SP is the kind for single precision
-      integer, parameter :: RP = DP
-      ! RP is the kind for the real precision that will be used
+#if __FORTRAN_STANDARD__ < 2008
+      integer, parameter :: INT16 = selected_int_kind(4)
+      integer, parameter :: INT32 = selected_int_kind(8)
+      integer, parameter :: INT64 = selected_int_kind(16)
+      integer, parameter :: REAL32 = selected_real_kind(6, 37)
+      integer, parameter :: REAL64 = selected_real_kind(15, 307)
+      integer, parameter :: REAL128 = selected_real_kind(33, 4931)
+#endif      
+      integer, parameter :: IK_DEFAULT = kind(0)  ! Default integer kind
+      integer, parameter :: RP_DEFAULT = kind(0.0)  ! Default real kind
+      integer, parameter :: SP = REAL32  ! Kind for single precision
+      integer, parameter :: DP = REAL64  ! Kind for double precision
+      integer, parameter :: QP = REAL128  ! Kind for quadruple precision
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Define the integer kind to be used in the Fortran code.
+#if __INTEGER_KIND__ == 16
+      integer, parameter :: IK = INT16
+#elif __INTEGER_KIND__ == 32 
+      integer, parameter :: IK = INT32
+#elif __INTEGER_KIND__ == 64 
+      integer, parameter :: IK = INT64
+#else
+      integer, parameter :: IK = IK_DEFAULT
+#endif
+! Define the real kind to be used in the Fortran code.
+#if __REAL_PRECISION__ == 32
+      integer, parameter :: RP = REAL32  
+#elif __REAL_PRECISION__ == 64 
+      integer, parameter :: RP = REAL64  
+#elif __REAL_PRECISION__ == 128 
+      integer, parameter :: RP = REAL128
+#else 
+      integer, parameter :: RP = RP_DEFAULT
+#endif
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      
       real(RP), parameter :: ZERO = 0.0_RP
       real(RP), parameter :: ONE = 1.0_RP
       real(RP), parameter :: TWO = 2.0_RP
@@ -60,12 +95,5 @@
       real(RP), parameter :: HUGEFUN = TWO**min(100, MAXE/2)
       real(RP), parameter :: HUGECON = HUGEFUN
 
-      integer, parameter :: INT32 = selected_int_kind(8)
-      ! INT32 is the kind for 32-bit integer, i.e., integer*4.
-      ! SELECTED_INT_KIND(p) returns an INTEGER that equals the
-      ! processor dependent kind type parameter of the integer type
-      ! accommodating all values n with -10^p < n < 10^p. Therefore,
-      ! SELECTED_INT_KIND(p) should be the kind of integer*4 for p = 7,
-      ! 8, 9 (also for p = 5 and 6 unless integer*3 is supportred).
 
       end module consts 

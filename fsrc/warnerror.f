@@ -1,5 +1,10 @@
       module warnerror
 
+      implicit none
+      private
+      public :: errmssg
+
+
       contains
           
       subroutine errmssg(srname, message)
