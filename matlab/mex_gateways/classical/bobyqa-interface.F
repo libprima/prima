@@ -37,7 +37,7 @@ C defined in it. MX_GET_DBLE gets the pointer pointing to a real array.
 C Fortran code starts 
 
       module fbobyqa 
-      use consts, only : rp, hugenum, int32, zero  
+      use consts, only : DP, rp, int32, zero  
       implicit none
 
       integer(int32), parameter :: notComplex = 0
@@ -285,7 +285,7 @@ C Initialize global variables
           call mexErrMsgIdAndTxt('fbobyqa:InsufficientMemory',
      &    'fbobyqa: allocate(fhist) failed.')
       end if
-      fhist = hugenum
+      fhist = huge(0.0_DP)
 
       if (allocated(chist)) deallocate (chist)
       allocate (chist(maxfun), stat=allocate_status)
@@ -293,7 +293,7 @@ C Initialize global variables
           call mexErrMsgIdAndTxt('fbobyqa:InsufficientMemory',
      &    'fbobyqa: allocate(chist) failed.')
       end if
-      chist = hugenum
+      chist = huge(0.0_DP)
 
       if (allocated(xlresmax)) deallocate (xlresmax)
       allocate (xlresmax(n_int), stat=allocate_status)
@@ -400,7 +400,7 @@ C Start the real business
      &    'fbobyqa: n does not equal n_mw.')
       end if
 
-      plhs(1) = mxCreateDoubleScalar(hugenum) 
+      plhs(1) = mxCreateDoubleScalar(huge(0.0_DP)) 
 C Output of f_value = feval(fun, x); see below
       prhs(1) = fun_ptr 
 C First input of f_value = feval(fun, x); see below; fun_ptr is a global variable

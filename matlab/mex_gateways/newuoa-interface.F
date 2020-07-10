@@ -61,7 +61,7 @@ C History of function evaluation
           integer(IK), intent(out) :: info
           real(RP), intent(in) :: rhobeg, rhoend, ftarget
           real(RP), intent(out) :: f
-          real(RP), intent(inout) :: x(:)
+          real(RP), intent(inout) :: x(:)  ! x(*) does not work !!!
           end subroutine NEWUOA
       end interface
 
@@ -69,6 +69,15 @@ C History of function evaluation
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
+!      interface
+!          subroutine mexFunction(nlhs, plhs, nrhs, prhs)
+!              integer, intent(in) :: nlhs, nrhs
+!              ! N.B.: Do NOT write the following line as 
+!              !mwPointer, intent(in) :: plhs(:), prhs(:) 
+!              mwPointer, intent(in) :: plhs(*), prhs(*)
+!          end subroutine mexFunction
+!      end interface 
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine mexFunction(nlhs, plhs, nrhs, prhs)
 C subroutine mexFunction(integer nlhs, mwPointer plhs, integer nrhs, mwPointer prhs)
 C Entry point to Fortran MEX function
@@ -220,7 +229,7 @@ C Initialize global variables
           call mexErrMsgIdAndTxt('fnewuoa:InsufficientMemory',
      &    'fnewuoa: allocate(fhist) failed.')
       end if
-      fhist = huge(0.0D0)
+      fhist = huge(0.0_DP)
 
 C Cast the inputs to the types expected by the Fortran code.
       n = int(n_mw, kind(n))
@@ -287,7 +296,17 @@ C Free memory
       end subroutine mexFunction
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!      interface
+!          subroutine calfun(n, x, funval)
+!          use consts, only : RP, IK
+!          implicit none
+!          integer(IK), intent(in) :: n
+!          real(RP), intent(in) :: x(n)
+!          real(RP), intent(out) :: funval
+!          end subroutine calfun
+!      end interface     
 
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C The Fortran subroutine that evaluates the objective function
       subroutine calfun(n, x, funval)
       use fnewuoa, only : fun_ptr, nf, fhist
@@ -329,7 +348,7 @@ C Start the real business
       end if
 
 
-      plhs(1) = mxCreateDoubleScalar(huge(0.0D0))
+      plhs(1) = mxCreateDoubleScalar(huge(0.0_DP))
 C Output of f_value = feval(fun, x); see below
       prhs(1) = fun_ptr
 C First input of f_value = feval(fun, x); see below
@@ -360,16 +379,15 @@ C integer*4 mexCallMATLAB(integer*4 nlhs, mwPointer plhs, integer*4 nrhs, mwPoin
       call mxCopyPtrToReal8(MX_GET_DBLE(plhs(1)), funval_dp, mwOne)
 C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
 
+C Use extreme barrier to cope with 'hidden constraints'
+      if (funval_dp(1) > HUGEFUN .or. is_nan(funval_dp(1))) then
+          funval_dp(1) = HUGEFUN 
+      end if
+
       funval = real(funval_dp(1), RP)  ! cast funval_dp to REAL(RP)
       if (abs(funval-funval_dp(1)) > convTol*max(abs(funval), ONE)) then
           call mexErrMsgIdAndTxt('fnewuoa:RealError',
      &    'fnewuoa: funval does not equal funval_dp.')
-      end if
-
-
-C Use extreme barrier to cope with 'hidden constraints'
-      if (funval > HUGEFUN .or. is_nan(funval)) then
-          funval = HUGEFUN ! HUGEFUN is defined in consts
       end if
 
 C Free memory; note that plhs and prhs are just temporary variables in

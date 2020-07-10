@@ -40,7 +40,7 @@ C Fortran code starts
 
       module fuobyqa  
 
-      use consts, only : rp, hugefun, hugenum, int32, zero
+      use consts, only : DP, rp, hugefun, int32, zero
       use infnan
       implicit none
 
@@ -244,7 +244,7 @@ C Initialize global variables
           call mexErrMsgIdAndTxt('fuobyqa:InsufficientMemory',
      &    'fuobyqa: allocate(fhist) failed.')
       end if
-      fhist = hugenum
+      fhist = huge(0.0_DP)
       
 C Call UOBYQA
       iprint = 0
@@ -315,7 +315,7 @@ C Start the real business
      &    'fuobyqa: n does not equal n_mw.')
       end if
 
-      plhs(1) = mxCreateDoubleScalar(hugenum) 
+      plhs(1) = mxCreateDoubleScalar(huge(0.0_DP)) 
 C Output of f_value = feval(fun, x); see below
       prhs(1) = fun_ptr 
 C First input of f_value = feval(fun, x); see below; fun_ptr is a global variable

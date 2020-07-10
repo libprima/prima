@@ -5,20 +5,27 @@
       use consts, only : INT32, DP, RP
       implicit none
       private
+
       public :: notComplex, mwOne, intOne, intTwo, convTol
+
+      ! MEX subroutines
       public :: mexErrMsgIdAndTxt
-      public :: mxCopyReal8ToPtr
       public :: mxCopyPtrToReal8
+      public :: mxCopyReal8ToPtr
       public :: mxDestroyArray
+
+      ! MEX functions 
       public :: mexCallMATLAB
       public :: mxCreateDoubleMatrix
       public :: mxCreateDoubleScalar
       public :: mxGetDoubles
-      public :: mxGetPr
       public :: mxGetM
       public :: mxGetN
-      public :: mxIsDouble
+      public :: mxGetPr
+      public :: mxGetString
+      public :: mxIsChar
       public :: mxIsClass
+      public :: mxIsDouble
 
       
       integer(INT32), parameter :: notComplex = 0
@@ -52,7 +59,7 @@ C convTol is the tolerance of difference due to real type conversion
               implicit none
               mwPointer, intent(in) :: px
               mwSize, intent(in) :: n
-              real(DP), intent(out) :: y(n)
+              real(DP), intent(in) :: y(n)
           end subroutine mxCopyReal8ToPtr
     
           subroutine mxDestroyArray(pm)
@@ -66,7 +73,9 @@ C convTol is the tolerance of difference due to real type conversion
               implicit none
               integer(INT32) :: mexCallMATLAB
               integer(INT32), intent(in) :: nlhs, nrhs
-              mwPointer, intent(in) :: plhs(*), prhs(*)
+              ! N.B.: Segmentation Fault will occur if we write 
+              !mwPointer, intent(in) :: plhs(:), prhs(:) 
+              mwPointer, intent(in) :: plhs(*), prhs(*) 
               character*(*), intent(in) :: functionName
           end function mexCallMATLAB
     
@@ -91,12 +100,6 @@ C convTol is the tolerance of difference due to real type conversion
               mwPointer, intent(in) :: pa
           end function mxGetDoubles
     
-          function mxGetPr(pa)
-              implicit none
-              mwPointer :: mxGetPr                  
-              mwPointer, intent(in) :: pa
-          end function mxGetPr
-    
           function mxGetM(pm)
               implicit none
               mwPointer :: mxGetM
@@ -108,14 +111,22 @@ C convTol is the tolerance of difference due to real type conversion
               mwPointer :: mxGetN
               mwPointer, intent(in) :: pm
           end function mxGetN
-    
-          function mxIsDouble(pm)
+
+          function mxGetPr(pa)
+              implicit none
+              mwPointer :: mxGetPr                  
+              mwPointer, intent(in) :: pa
+          end function mxGetPr
+
+          function mxGetString(pm, str, strlen)
               use consts, only : INT32
               implicit none
-              integer(INT32) :: mxIsDouble
+              integer(INT32) :: mxGetString
               mwPointer, intent(in) :: pm
-          end function mxIsDouble
-    
+              character*(*), intent(in) :: str
+              mwSize, intent(in) :: strlen
+          end function mxGetString
+
           function mxIsClass(pm, classname)
               use consts, only : INT32
               implicit none
@@ -124,6 +135,28 @@ C convTol is the tolerance of difference due to real type conversion
               character*(*), intent(in) :: classname
           end function mxIsClass
 
+          function mxIsChar(pm)
+              use consts, only : INT32
+              implicit none
+              integer(INT32) :: mxIsChar
+              mwPointer, intent(in) :: pm
+          end function mxIsChar
+
+          function mxIsDouble(pm)
+              use consts, only : INT32
+              implicit none
+              integer(INT32) :: mxIsDouble
+              mwPointer, intent(in) :: pm
+          end function mxIsDouble
+    
       end interface
 
       end module mex_mod
+
+      ! Remark: What is the distinction between mx and mex prefixes?
+      ! According to 
+      ! matlab.izmiran.ru/help/techdoc/matlab_external/ch03cre5.html
+      ! "Routines in the API that are prefixed with mx allow you to 
+      ! create, access, manipulate, and destroy mxArrays. Routines 
+      ! prefixed with mex perform operations back in the MATLAB 
+      ! environment."

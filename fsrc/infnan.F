@@ -1,5 +1,12 @@
 ! INFNAN is a module defining some procedures concerning INF or NAN.
 
+! Here we implement the procedures for single, double, and quadruple
+! precisions, because when we interface the Fortran code with other
+! languages (e.g., MATLAB), the procedures may be invoked in both the 
+! Fortran code and the gateway (e.g., MEX gateway), which may use
+! different real precisions (e.g., the Fortran code may use single 
+! precision, but MEX gateway uses double precision by default).
+
 #include "ppflags.h"
 
       module infnan
@@ -15,9 +22,23 @@
 
 #if __USE_IEEE_ARITHMETIC__ == 0
       interface is_nan
-          module procedure is_nan_32, is_nan_64, is_nan_128
+          module procedure is_nan_sp, is_nan_dp, is_nan_qp
       end interface is_nan
+      interface is_finite
+          module procedure is_finite_sp, is_finite_dp, is_finite_qp
+      end interface is_finite
 #endif
+
+      interface is_posinf
+          module procedure is_posinf_sp, is_posinf_dp, is_posinf_qp
+      end interface is_posinf
+      interface is_neginf
+          module procedure is_neginf_sp, is_neginf_dp, is_neginf_qp
+      end interface is_neginf
+      interface is_inf
+          module procedure is_inf_sp, is_inf_dp, is_inf_qp
+      end interface is_inf
+
 
       contains
       ! The following functions check whether a real number x is
@@ -26,67 +47,128 @@
       ! ieee_is_finite().
 
 #if __USE_IEEE_ARITHMETIC__ == 0 
-      pure elemental function is_nan_32(x) result(y)
-      use consts, only : REAL32 
+      pure elemental function is_nan_sp(x) result(y)
+      use consts, only : SP 
       implicit none
-      real(REAL32), intent(in) :: x
+      real(SP), intent(in) :: x
       logical :: y
-      y = (.not. (abs(x) >= 0.0_REAL32))
-      ! If we defined is_nan = (x /= x), then gfortran will complain 
+      y = (.not. (x >= x))
+      ! This implementation may be more costly than y = (x /= x).
+      ! However, if we defined is_nan = (x /= x), gfortran will complain
       ! about inequality comparison between floating-point numbers.
-      end function is_nan_32
+      end function is_nan_sp
 
-      pure elemental function is_nan_64(x) result(y)
-      use consts, only : REAL64 
+      pure elemental function is_nan_dp(x) result(y)
+      use consts, only : DP 
       implicit none
-      real(REAL64), intent(in) :: x
+      real(DP), intent(in) :: x
       logical :: y
-      y = (.not. (abs(x) >= 0.0_REAL64))
-      ! If we defined is_nan = (x /= x), then gfortran will complain 
-      ! about inequality comparison between floating-point numbers.
-      end function is_nan_64
+      y = (.not. (x >= x))
+      end function is_nan_dp
 
-      pure elemental function is_nan_128(x) result(y)
-      use consts, only : REAL128 
+      pure elemental function is_nan_qp(x) result(y)
+      use consts, only : QP 
       implicit none
-      real(REAL128), intent(in) :: x
+      real(QP), intent(in) :: x
       logical :: y
-      y = (.not. (abs(x) >= 0.0_REAL128))
-      ! If we defined is_nan = (x /= x), then gfortran will complain 
-      ! about inequality comparison between floating-point numbers.
-      end function is_nan_128
+      y = (.not. (x >= x))
+      end function is_nan_qp
 
-      pure elemental function is_finite(x) result(y)
-      use consts, only : RP, HUGENUM
+      pure elemental function is_finite_sp(x) result(y)
+      use consts, only : SP
       implicit none
-      real(RP), intent(in) :: x
+      real(SP), intent(in) :: x
       logical :: y
-      y = (abs(x) <= HUGENUM)
-      end function is_finite
+      y = (abs(x) <= huge(x))
+      end function is_finite_sp
+
+      pure elemental function is_finite_dp(x) result(y)
+      use consts, only : DP
+      implicit none
+      real(DP), intent(in) :: x
+      logical :: y
+      y = (abs(x) <= huge(x))
+      end function is_finite_dp
+
+      pure elemental function is_finite_qp(x) result(y)
+      use consts, only : QP
+      implicit none
+      real(QP), intent(in) :: x
+      logical :: y
+      y = (abs(x) <= huge(x))
+      end function is_finite_qp
 #endif
 
-      pure elemental function is_posinf(x) result(y)
-      use consts, only : RP, HUGENUM
+      pure elemental function is_posinf_sp(x) result(y)
+      use consts, only : SP
       implicit none
-      real(RP), intent(in) :: x
+      real(SP), intent(in) :: x
       logical :: y
-      y = (x > HUGENUM)
-      end function is_posinf
+      y = (x > huge(x))
+      end function is_posinf_sp
 
-      pure elemental function is_neginf(x) result(y)
-      use consts, only : RP, HUGENUM
+      pure elemental function is_posinf_dp(x) result(y)
+      use consts, only : DP
       implicit none
-      real(RP), intent(in) :: x
+      real(DP), intent(in) :: x
       logical :: y
-      y = (-x > HUGENUM)
-      end function is_neginf
+      y = (x > huge(x))
+      end function is_posinf_dp
 
-      pure elemental function is_inf(x) result(y)
-      use consts, only : RP, HUGENUM
+      pure elemental function is_posinf_qp(x) result(y)
+      use consts, only : QP
       implicit none
-      real(RP), intent(in) :: x
+      real(QP), intent(in) :: x
       logical :: y
-      y = (abs(x) > HUGENUM)
-      end function is_inf
+      y = (x > huge(x))
+      end function is_posinf_qp
+
+      pure elemental function is_neginf_sp(x) result(y)
+      use consts, only : SP 
+      implicit none
+      real(SP), intent(in) :: x
+      logical :: y
+      y = (-x > huge(x))
+      end function is_neginf_sp
+
+      pure elemental function is_neginf_dp(x) result(y)
+      use consts, only : DP 
+      implicit none
+      real(DP), intent(in) :: x
+      logical :: y
+      y = (-x > huge(x))
+      end function is_neginf_dp
+
+      pure elemental function is_neginf_qp(x) result(y)
+      use consts, only : QP 
+      implicit none
+      real(QP), intent(in) :: x
+      logical :: y
+      y = (-x > huge(x))
+      end function is_neginf_qp
+
+      pure elemental function is_inf_sp(x) result(y)
+      use consts, only : SP
+      implicit none
+      real(SP), intent(in) :: x
+      logical :: y
+      y = (abs(x) > huge(x))
+      end function is_inf_sp
+
+      pure elemental function is_inf_dp(x) result(y)
+      use consts, only : DP
+      implicit none
+      real(DP), intent(in) :: x
+      logical :: y
+      y = (abs(x) > huge(x))
+      end function is_inf_dp
+
+      pure elemental function is_inf_qp(x) result(y)
+      use consts, only : QP
+      implicit none
+      real(QP), intent(in) :: x
+      logical :: y
+      y = (abs(x) > huge(x))
+      end function is_inf_qp
 
       end module infnan
