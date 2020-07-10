@@ -35,7 +35,7 @@ depend on the compiler, for example, __FORTRAN_STANDARD__.
 #ifdef __INTEGER_KIND__
 #undef __INTEGER_KIND__
 #endif
-#define __INTEGER_KIND__ 32 
+#define __INTEGER_KIND__ 0 
 /*************************************************************************/
 
 
@@ -45,7 +45,7 @@ depend on the compiler, for example, __FORTRAN_STANDARD__.
 #ifdef __REAL_PRECISION__
 #undef __REAL_PRECISION__
 #endif
-#define __REAL_PRECISION__ 64 
+#define __REAL_PRECISION__ 128 
 /*************************************************************************/
 
 
@@ -58,7 +58,7 @@ depend on the compiler, for example, __FORTRAN_STANDARD__.
 #undef __FORTRAN_STANDARD__
 #endif
 /*#define __FORTRAN_STANDARD__ 95 */
-#define __FORTRAN_STANDARD__ 2003 
+#define __FORTRAN_STANDARD__ 2003
 /*#define __FORTRAN_STANDARD__ 2008 */
 
 /* Revise __FORTRAN_STANDARD__ according to the version of the compiler. */
@@ -185,5 +185,13 @@ depend on the compiler, for example, __FORTRAN_STANDARD__.
 #define __USE_IEEE_ARITHMETIC__ 1 
 #else
 #define __USE_IEEE_ARITHMETIC__ 0 
+#endif
+/* As of July 2020, it seems that the IEEE_ARITHMETIC of gfortran does not 
+ * support REAL128. */
+#if __REAL_PRECISION__ > 64
+#ifdef __GNUC__
+#undef __USE_IEEE_ARITHMETIC__ 
+#define __USE_IEEE_ARITHMETIC__ 0
+#endif
 #endif
 /*************************************************************************/

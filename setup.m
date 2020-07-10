@@ -212,13 +212,13 @@ try
     infrastructure_files = regexp(fileread(fullfile(fsrc, 'file_list')), '\n', 'split');
     infrastructure_files = strtrim(infrastructure_files(~cellfun(@isempty, infrastructure_files))); 
     infrastructure_files = fullfile(fsrc, infrastructure_files);
+    infrastructure_files = [infrastructure_files, fullfile(gateways, 'mex_mod.F')];
     mex(mex_options{:}, '-c', infrastructure_files{:});
-
-    mex(mex_options{:}, '-c', fullfile(gateways, 'mex_mod.F'));
 
 
     % Compilation of function gethuge
-    mex(mex_options{:}, '-output', 'gethuge', fullfile(gateways, 'gethuge.F'));
+    obj_files = [files_with_wildcard(gateways, '*.o'), files_with_wildcard(gateways, '*.obj')];
+    mex(mex_options{:}, '-output', 'gethuge', obj_files{:}, fullfile(gateways, 'gethuge.F'));
 
     for isol = 1 : length(solver_list)
         solver = solver_list{isol};

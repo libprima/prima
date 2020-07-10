@@ -31,7 +31,8 @@
       implicit none
       private
       public :: DEBUG_MODE
-      public :: IK, INT32, DP, SP, RP, REAL32, REAL64, REAL128 
+      public :: IK, INT16, INT32, INT64, IK_DEFAULT
+      public :: RP, DP, SP, QP, REAL32, REAL64, REAL128, RP_DEFAULT 
       public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
       public :: EPS, HUGENUM, ALMOST_INFINITY, HUGEFUN, HUGECON 
 

@@ -73,7 +73,6 @@ end
 orig_warning_state = warning;
 cellfun(@(solver) warning('off', [solver, ':Debug']), solvers);
 cellfun(@(solver) warning('off', [solver, ':ChkFunval']), solvers);
-cellfun(@(solver) warning('off', [solver, ':Classical']), solvers);
 cellfun(@(solver) warning('off', [solver, ':ReviseX0']), solvers);
 cellfun(@(solver) warning('off', [solver, ':UnknownProbField']), solvers);
 cellfun(@(solver) warning('off', [solver, ':UnknownOption']), solvers);

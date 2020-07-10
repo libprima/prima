@@ -38,7 +38,7 @@ C Fortran code starts
 
       module flincoa ! Some global variables
 
-      use consts, only : rp, hugenum, hugefun, int32, zero
+      use consts, only : DP, rp, hugefun, int32, zero
       use infnan 
       implicit none
 
@@ -311,7 +311,7 @@ C Initialize global variables
           call mexErrMsgIdAndTxt('flincoa:InsufficientMemory',
      &    'flincoa: allocate(fhist) failed.')
       end if
-      fhist = hugenum
+      fhist = huge(0.0_DP)
 
       if (allocated(chist)) deallocate (chist)
       allocate (chist(maxfun), stat=allocate_status)
@@ -319,7 +319,7 @@ C Initialize global variables
           call mexErrMsgIdAndTxt('flincoa:InsufficientMemory',
      &    'flincoa: allocate(chist) failed.')
       end if
-      chist = hugenum
+      chist = huge(0.0_DP)
 
       mresmax = m_int 
       iaresmax = ia_int 
@@ -440,7 +440,7 @@ C Start the real business
      &    'flincoa: n does not equal n_mw.')
       end if
 
-      plhs(1) = mxCreateDoubleScalar(hugenum) 
+      plhs(1) = mxCreateDoubleScalar(huge(0.0_DP)) 
 C First output of f_value = feval(fun, x); see below
       prhs(1) = fun_ptr 
 C First input of f_value = feval(fun, x); see below; fun_ptr is a global variable

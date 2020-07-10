@@ -28,23 +28,14 @@ C     current platform, the possible values of data_type being
 C     'integer', 'float', 'real', 'single', 'double', 'mwSize', 
 C     'mwIndex', 'fun', 'function', 'con', 'constraint'.
 
-      use consts, only : SP, DP, RP, HUGEFUN, HUGECON, INT32 
+      use consts, only : SP, DP, RP, QP, HUGEFUN, HUGECON
+      use mex_mod
       implicit none
 
 C     mexFunction arguments:
       integer, intent(in) :: nlhs, nrhs
       mwPointer, intent(in) :: prhs(nrhs)
       mwPointer, intent(out) :: plhs(nlhs)
-
-C     Function declarations:
-      mwPointer, external :: mxCreateDoubleScalar 
-C mwPointer mxCreateDoubleScalar(real*8 value)
-      mwSize, external :: mxGetM, mxGetN 
-C mwPointer mxGetM(mwPointer pm)
-      integer(INT32), external :: mxGetString  
-C integer*4 mxGetString(mwPointer pm, character*(*) str, mwSize strlen)
-      integer(INT32), external :: mxIsChar 
-C integer*4 mxIsChar(mwPointer pm)
 
 C     Variables
       mwSize :: rows, cols ! Size of the input
@@ -67,14 +58,10 @@ C Floating-point zero of the real precision in use (RP)
 C Integer zero of type mwSize on the current platform
       mwIndex, parameter :: miZero = 0 
 C Integer zero of type mwIndex on the current platform
-      integer, parameter :: intHuge = huge(intZero)
-      real, parameter :: floatHuge = huge(floatZero)
-      real(SP), parameter :: singleHuge = huge(singleZero)
-      real(DP), parameter :: doubleHuge = huge(doubleZero)
-      real(RP), parameter :: realHuge = huge(realZero)
-      mwSize, parameter :: msHuge = huge(msZero)
-      mwIndex, parameter :: miHuge = huge(miZero)
       real(DP) :: hugeValue
+      real(DP) :: intHuge, msHuge, miHuge
+      real(DP) :: floatHuge, singleHuge, doubleHuge, realHuge
+      real(QP) :: doubleHuge_qp
 
 C     Validate the number of arguments.
       if (nrhs .ne. 1) then
@@ -96,44 +83,55 @@ C     The input must be a string.
      &   'gethuge: The input can only be a string.')
       end if
 
+      data_type = ''  ! Initialize data_type; otherwise, g95 complains
 C     Get the input string.
       if (mxGetString(prhs(1), data_type, cols) .ne. 0) then
           call mexErrMsgIdAndTxt ('gethuge:GetInputFail',
      &    'gethuge: Fail to get the input.')
       end if
 
+C     Get the huge values.
+      doubleHuge = huge(doubleZero)
+      doubleHuge_qp = real(doubleHuge, QP)
+      floatHuge = real(min(real(huge(floatZero),QP), doubleHuge_qp), DP)
+      singleHuge = real(min(real(huge(singleZero),QP),doubleHuge_qp),DP)
+      realHuge = real(min(real(huge(realZero), QP), doubleHuge_qp), DP)
+      intHuge = real(min(real(huge(intZero), QP), doubleHuge_qp), DP)
+      msHuge = real(min(real(huge(msZero), QP), doubleHuge_qp), DP)
+      miHuge = real(min(real(huge(miZero), QP), doubleHuge_qp), DP)
+
 C     Define hugeValue.
-      if (data_type .eq. 'integer' .or. data_type .eq. 'Integer'
-     &    .or. data_type .eq. 'INTEGER') then
-          hugeValue = real(intHuge, DP)
-      else if (data_type .eq. 'float' .or. data_type .eq. 'Float' 
+      if (data_type .eq. 'float' .or. data_type .eq. 'Float' 
      &    .or. data_type .eq. 'FLOAT') then
-          hugeValue = real(floatHuge, DP)
+          hugeValue= floatHuge
       else if (data_type .eq. 'single' .or. data_type .eq. 'Single'
      &    .or. data_type .eq. 'SINGLE') then
-          hugeValue = real(singleHuge, DP)
+          hugeValue = singleHuge
       else if (data_type .eq. 'double' .or. data_type .eq. 'Double'
      &    .or. data_type .eq. 'DOUBLE') then
-          hugeValue = real(doubleHuge, DP)
+          hugeValue = doubleHuge
       else if (data_type .eq. 'real' .or. data_type .eq. 'Real' 
      &    .or. data_type .eq. 'REAL') then
-          hugeValue = real(realHuge, DP)
+          hugeValue= realHuge
+      else if (data_type .eq. 'integer' .or. data_type .eq. 'Integer'
+     &    .or. data_type .eq. 'INTEGER') then
+          hugeValue = intHuge
       else if (data_type .eq. 'mwSize' .or. data_type .eq. 'mwsize' 
      &     .or. data_type .eq. 'MWSIZE') then
-          hugeValue = real(msHuge, DP)
+          hugeValue = msHuge
       else if (data_type .eq. 'mwIndex' .or. data_type .eq. 'mwindex' 
      &     .or. data_type .eq. 'MWINDEX') then
-          hugeValue = real(miHuge, DP)
+          hugeValue = miHuge
       else if (data_type .eq. 'fun' .or. data_type .eq. 'Fun' .or. 
      &    data_type .eq. 'FUN' .or. data_type .eq. 'function' .or. 
      &    data_type .eq. 'Function' .or. data_type .eq. 'FUNCTION') 
      &then
-          hugeValue = real(HUGEFUN, DP) ! HUGEFUN defined in consts 
+          hugeValue = real(min(real(HUGEFUN,QP),real(doubleHuge,QP)),DP)
       else if (data_type .eq. 'con' .or. data_type .eq. 'Con' .or. 
      &    data_type .eq. 'CON' .or. data_type .eq. 'constraint' .or. 
      &    data_type .eq. 'Constraint' .or. data_type .eq. 'CONSTRAINT') 
      &then
-          hugeValue = real(HUGECON, DP) ! HUGECON defined in consts 
+          hugeValue = real(min(real(HUGECON,QP),real(doubleHuge,QP)),DP)
       else
           call mexErrMsgIdAndTxt ('gethuge:WrongInput',
      &    'gethuge: Unrecognized input.')

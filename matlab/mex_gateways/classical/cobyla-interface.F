@@ -38,7 +38,7 @@ C Fortran code starts
 
       module fcobyla ! Some global variables
 
-      use consts, only : rp, hugenum, int32, zero
+      use consts, only : DP, rp, int32, zero
       use infnan
       implicit none
 
@@ -302,7 +302,7 @@ C     Initialize global variables
           call mexErrMsgIdAndTxt('fcobyla:InsufficientMemory',
      &    'fcobyla: allocate(fhist) failed.')
       end if
-      fhist = hugenum
+      fhist = huge(0.0_DP)
 
       if (allocated(chist)) deallocate (chist)
       allocate (chist(maxfun), stat=allocate_status)
@@ -310,7 +310,7 @@ C     Initialize global variables
           call mexErrMsgIdAndTxt('fcobyla:InsufficientMemory',
      &    'fcobyla: allocate(chist) failed.')
       end if
-      chist = hugenum
+      chist = huge(0.0_DP)
 
 C     Call COBYLA      
       iprint = 0
@@ -400,7 +400,7 @@ C Start the real business
       end if
 
 C Evaluate the objective function (fun_ptr) at x
-      plhs(1) = mxCreateDoubleScalar(hugenum) 
+      plhs(1) = mxCreateDoubleScalar(huge(0.0_DP)) 
 C Output of f_value = feval(fun, x); see below 
       prhs(1) = fun_ptr 
 C First input of f_value = feval(fun, x); see below; fun_ptr is a global variable
