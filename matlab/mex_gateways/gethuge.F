@@ -83,7 +83,6 @@ C     The input must be a string.
      &   'gethuge: The input can only be a string.')
       end if
 
-      data_type = ''  ! Initialize data_type; otherwise, g95 complains
 C     Get the input string.
       if (mxGetString(prhs(1), data_type, cols) .ne. 0) then
           call mexErrMsgIdAndTxt ('gethuge:GetInputFail',
