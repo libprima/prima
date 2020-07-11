@@ -1,19 +1,19 @@
 C GETHUGE subroutine
 C
 C **********************************************************************
-C   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk) 
+C   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
 C               and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
 C               Department of Applied Mathematics,
 C               The Hong Kong Polytechnic University
 C **********************************************************************
 
-C Remarks: 
+C Remarks:
 C
 C 1. Be careful with the "kind" and storage size for integer-type
 C (integer, mwSize, mwIndex) variables/functions. Some of them may be
 C 32bit, while they others may be 64bit, depending on the machine, the
 C version of matlab, and the compilation option of mex. Do NOT assume
-C any two of them to be the same. 
+C any two of them to be the same.
 C If ever a Segmentation Fault occurs, check these variables first.
 C
 C 2. Be careful with the line width limit. After preprocessing (macro
@@ -25,10 +25,10 @@ C substitution), some lines may become too long and hence get truncated
 C     data_huge = gethuge(data_type)
 C     This function returns the largest value of data_type on the
 C     current platform, the possible values of data_type being
-C     'integer', 'float', 'real', 'single', 'double', 'mwSize', 
+C     'integer', 'float', 'real', 'single', 'double', 'mwSize',
 C     'mwIndex', 'fun', 'function', 'con', 'constraint'.
 
-      use consts_mod, only : SP, DP, RP, QP, HUGEFUN, HUGECON
+      use consts_mod, only : IK, SP, DP, RP, QP, HUGEFUN, HUGECON
       use mex_mod
       implicit none
 
@@ -39,29 +39,18 @@ C     mexFunction arguments:
 
 C     Variables
       mwSize :: rows, cols ! Size of the input
-      integer, parameter :: maxlen = 20 
+      integer, parameter :: maxlen = 20
 C The largest length of the input string. It cannot be larger than 20
-C given the possible inputs. 
-      character(len=maxlen) :: data_type 
+C given the possible inputs.
+      character(len=maxlen) :: data_type
 C The input string, which specifies the data type
-      integer, parameter :: intZero = 0 
-C Integer zero of the default kind on the current platform  
-      real, parameter :: floatZero = 0.0 
-C Floating-point zero of the default real kind on the current platform
-      real(SP), parameter :: singleZero = 0.0_SP
-C Single-precision floating-point zero
-      real(DP), parameter :: doubleZero = 0.0_DP 
-C Double-precision floating-point zero
-      real(RP), parameter :: realZero = 0.0_RP 
-C Floating-point zero of the real precision in use (RP)
-      mwSize, parameter :: msZero = 0 
+      integer(IK), parameter :: intZero = 0
+C Integer zero used by the Fortran code
+      mwSize, parameter :: msZero = 0
 C Integer zero of type mwSize on the current platform
-      mwIndex, parameter :: miZero = 0 
+      mwIndex, parameter :: miZero = 0
 C Integer zero of type mwIndex on the current platform
       real(DP) :: hugeValue
-      real(DP) :: intHuge, msHuge, miHuge
-      real(DP) :: floatHuge, singleHuge, doubleHuge, realHuge
-      real(QP) :: doubleHuge_qp
 
 C     Validate the number of arguments.
       if (nrhs .ne. 1) then
@@ -89,48 +78,42 @@ C     Get the input string.
      &    'gethuge: Fail to get the input.')
       end if
 
-C     Get the huge values.
-      doubleHuge = huge(doubleZero)
-      doubleHuge_qp = real(doubleHuge, QP)
-      floatHuge = real(min(real(huge(floatZero),QP), doubleHuge_qp), DP)
-      singleHuge = real(min(real(huge(singleZero),QP),doubleHuge_qp),DP)
-      realHuge = real(min(real(huge(realZero), QP), doubleHuge_qp), DP)
-      intHuge = real(min(real(huge(intZero), QP), doubleHuge_qp), DP)
-      msHuge = real(min(real(huge(msZero), QP), doubleHuge_qp), DP)
-      miHuge = real(min(real(huge(miZero), QP), doubleHuge_qp), DP)
-
 C     Define hugeValue.
-      if (data_type .eq. 'float' .or. data_type .eq. 'Float' 
+C     Note that the REAL values passed to MATLAB via MEX can only be
+C     doubles. Therefore, we may need to cap the huge values by taking
+C     min to ensure that they will not overflow when cast to doubles.
+      if (data_type .eq. 'float' .or. data_type .eq. 'Float'
      &    .or. data_type .eq. 'FLOAT') then
-          hugeValue= floatHuge
+          hugeValue = real(huge(0.0), DP)
       else if (data_type .eq. 'single' .or. data_type .eq. 'Single'
      &    .or. data_type .eq. 'SINGLE') then
-          hugeValue = singleHuge
+          hugeValue = real(huge(0.0_SP), DP)
       else if (data_type .eq. 'double' .or. data_type .eq. 'Double'
      &    .or. data_type .eq. 'DOUBLE') then
-          hugeValue = doubleHuge
-      else if (data_type .eq. 'real' .or. data_type .eq. 'Real' 
+          hugeValue = huge(0.0_DP)
+      else if (data_type .eq. 'real' .or. data_type .eq. 'Real'
      &    .or. data_type .eq. 'REAL') then
-          hugeValue= realHuge
+          hugeValue = real(min(real(huge(0.0_RP), QP),
+     &                real(huge(0.0_DP), QP)), DP)
       else if (data_type .eq. 'integer' .or. data_type .eq. 'Integer'
      &    .or. data_type .eq. 'INTEGER') then
-          hugeValue = intHuge
-      else if (data_type .eq. 'mwSize' .or. data_type .eq. 'mwsize' 
+          hugeValue = real(huge(intZero), DP)
+      else if (data_type .eq. 'mwSize' .or. data_type .eq. 'mwsize'
      &     .or. data_type .eq. 'MWSIZE') then
-          hugeValue = msHuge
-      else if (data_type .eq. 'mwIndex' .or. data_type .eq. 'mwindex' 
+          hugeValue = real(huge(msZero), DP)
+      else if (data_type .eq. 'mwIndex' .or. data_type .eq. 'mwindex'
      &     .or. data_type .eq. 'MWINDEX') then
-          hugeValue = miHuge
-      else if (data_type .eq. 'fun' .or. data_type .eq. 'Fun' .or. 
-     &    data_type .eq. 'FUN' .or. data_type .eq. 'function' .or. 
-     &    data_type .eq. 'Function' .or. data_type .eq. 'FUNCTION') 
+          hugeValue = real(huge(miZero), DP)
+      else if (data_type .eq. 'fun' .or. data_type .eq. 'Fun' .or.
+     &    data_type .eq. 'FUN' .or. data_type .eq. 'function' .or.
+     &    data_type .eq. 'Function' .or. data_type .eq. 'FUNCTION')
      &then
-          hugeValue = real(min(real(HUGEFUN,QP),real(doubleHuge,QP)),DP)
-      else if (data_type .eq. 'con' .or. data_type .eq. 'Con' .or. 
-     &    data_type .eq. 'CON' .or. data_type .eq. 'constraint' .or. 
-     &    data_type .eq. 'Constraint' .or. data_type .eq. 'CONSTRAINT') 
+          hugeValue=real(min(real(HUGEFUN,QP),real(huge(0.0_DP),QP)),DP)
+      else if (data_type .eq. 'con' .or. data_type .eq. 'Con' .or.
+     &    data_type .eq. 'CON' .or. data_type .eq. 'constraint' .or.
+     &    data_type .eq. 'Constraint' .or. data_type .eq. 'CONSTRAINT')
      &then
-          hugeValue = real(min(real(HUGECON,QP),real(doubleHuge,QP)),DP)
+          hugeValue=real(min(real(HUGECON,QP),real(huge(0.0_DP),QP)),DP)
       else
           call mexErrMsgIdAndTxt ('gethuge:WrongInput',
      &    'gethuge: Unrecognized input.')

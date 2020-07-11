@@ -36,7 +36,8 @@ C intOne, intTwo, funFeval are  used when calling mexCallMATLAB
 C mwOne is used in mxCreateDoubleMatrix and mxCopyPtrToReal8
       real(DP), parameter :: convTol = 1.0e1_DP*max(epsilon(0.0_DP),
      &    real(epsilon(0.0_RP), DP))
-C convTol is the tolerance of difference due to real type conversion
+C convTol is the tolerance of difference due to conversion between 
+C REAL(RP) and REAL(DP)
 
 
       interface 

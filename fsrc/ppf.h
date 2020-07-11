@@ -45,9 +45,10 @@ depend on the compiler, for example, __FORTRAN_STANDARD__.
 
 
 /*************************************************************************/
-/* Which real kind to use? Note that the default REAL is single precision. 
+/* Which real kind to use? 
  * 0 = default REAL, 32 = REAL*4, 64 = REAL*8, 128 = REAL*16.
- * Make sure that your compiler supports the selected kind. */
+ * Make sure that your compiler supports the selected kind. 
+ * Note that the default REAL (i.e., 0) is the single-precision REAL. */
 #ifdef __REAL_PRECISION__
 #undef __REAL_PRECISION__
 #endif
