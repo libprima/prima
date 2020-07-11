@@ -36,9 +36,9 @@ C defined in it. MX_GET_DBLE gets the pointer pointing to a real array.
 
 C Fortran code starts
 
-      module fnewuoa
+      module fnewuoa_mod
 
-      use consts, only : DP
+      use consts_mod, only : DP
       implicit none
       private
       public :: fun_ptr, nf, fhist
@@ -55,7 +55,7 @@ C History of function evaluation
       interface
           subroutine NEWUOA(n, npt, x, rhobeg, rhoend, iprint, maxfun,  
      &        w, f, info, ftarget)
-          use consts, only : DP
+          use consts_mod, only : DP
           implicit none
           integer, intent(in) :: n, npt, iprint, maxfun
           integer, intent(out) :: info
@@ -65,7 +65,7 @@ C History of function evaluation
           end subroutine NEWUOA
       end interface
 
-      end module fnewuoa
+      end module fnewuoa_mod
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
@@ -77,8 +77,8 @@ C extension depends on the platform), then the following function is
 C callable in matlab:
 C [xopt, fopt, info, nf, fhist] = FUNCTION_NAME(fun, x0, rhobeg, rhoend, maxfun, npt, ftarget)
 
-      use consts, only : DP
-      use fnewuoa, only : fun_ptr, nf, fhist, NEWUOA
+      use consts_mod, only : DP
+      use fnewuoa_mod, only : fun_ptr, nf, fhist, NEWUOA
       use mex_mod
       implicit none
 
@@ -265,8 +265,8 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
 C The Fortran subroutine that evaluates the objective function
       subroutine calfun(n, x, funval)
-      use fnewuoa, only : fun_ptr, nf, fhist
-      use consts, only : DP
+      use fnewuoa_mod, only : fun_ptr, nf, fhist
+      use consts_mod, only : DP
       use mex_mod
       implicit none
 

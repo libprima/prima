@@ -3,8 +3,8 @@
       subroutine vlagbeta(n, npt, idz, kopt, bmat, zmat, xpt, xopt, d,  &
      & vlag, beta, wcheck, dsq, xoptsq)
 
-      use consts, only : RP, IK, ONE, HALF, ZERO
-      use lina
+      use consts_mod, only : RP, IK, ONE, HALF, ZERO
+      use lina_mod
       implicit none
 
       integer(IK), intent(in) :: n, npt, idz, kopt

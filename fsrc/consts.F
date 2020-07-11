@@ -20,9 +20,9 @@
 !    There is NO guarantee that REAL(KIND=8) will be of double
 !    precision.
 
-#include "ppflags.h"
+#include "ppf.h"
 
-      module consts 
+      module consts_mod 
 
 #if __FORTRAN_STANDARD__ >= 2008
       use iso_fortran_env, only :INT16,INT32,INT64,REAL32,REAL64,REAL128
@@ -97,4 +97,4 @@
       real(RP), parameter :: HUGECON = HUGEFUN
 
 
-      end module consts 
+      end module consts_mod 

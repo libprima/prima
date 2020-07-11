@@ -38,7 +38,7 @@ C Fortran code starts
 
       module fuobyqa  
 
-      use consts, only : DP, rp, int32, zero
+      use consts_mod, only : DP, rp, int32, zero
       implicit none
 
       integer(int32), parameter :: notComplex = 0

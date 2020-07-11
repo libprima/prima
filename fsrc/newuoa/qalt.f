@@ -4,8 +4,8 @@
       ! conditions. 
       ! Note that SMAT = BMAT(:, 1:NPT)
 
-      use consts, only : RP, IK, ZERO
-      use lina
+      use consts_mod, only : RP, IK, ZERO
+      use lina_mod
       implicit none
 
       integer(IK), intent(in) :: n, npt, kopt, idz

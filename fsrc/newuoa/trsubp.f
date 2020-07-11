@@ -39,11 +39,11 @@
       ! Q. Thus S should provide a substantial reduction to Q within the
       ! trust region.
       
-      use consts, only : RP, IK, ONE, TWO, HALF, ZERO, PI, DEBUG_MODE
-      use infos, only : INVALID_INPUT
-      use warnerror, only : errmssg
-      use infnan, only : is_nan
-      use lina
+      use consts_mod, only : RP, IK, ONE, TWO, HALF, ZERO, PI,DEBUG_MODE
+      use infos_mod, only : INVALID_INPUT
+      use warnerror_mod, only : errmssg
+      use infnan_mod, only : is_nan
+      use lina_mod
       implicit none
       
       integer(IK), intent(out) ::   info

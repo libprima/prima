@@ -19,9 +19,9 @@
       ! will be overwritten when trying the alternative model or by
       ! VLAGBETA.
 
-      use consts, only : RP, IK, ONE, ZERO, DEBUG_MODE
-      use warnerror, only : errmssg
-      use lina
+      use consts_mod, only : RP, IK, ONE, ZERO, DEBUG_MODE
+      use warnerror_mod, only : errmssg
+      use lina_mod
       implicit none
 
       integer(IK), intent(in) ::        knew
@@ -260,9 +260,9 @@
       subroutine updateq(idz, knew, fqdiff, xptknew, bmatknew, zmat, gq,&
      & hq, pq)
 
-      use warnerror, only : errmssg
-      use consts, only : RP, IK, ZERO, DEBUG_MODE
-      use lina
+      use warnerror_mod, only : errmssg
+      use consts_mod, only : RP, IK, ZERO, DEBUG_MODE
+      use lina_mod
       implicit none
 
       integer(IK), intent(in) ::        idz

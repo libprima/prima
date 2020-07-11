@@ -1,6 +1,6 @@
 /*************************************************************************/
 /* 
-PPFLAGS defines the following preprocessing flags (the first value is default). 
+ppf.h defines the following preprocessing flags (the first value is default). 
 
 __DEBUG_MODE__              debug or not: 0, 1
 __INTEGER_KIND__            the integer kind to be used: 0, 32, 16, 64
@@ -45,7 +45,7 @@ depend on the compiler, for example, __FORTRAN_STANDARD__.
 #ifdef __REAL_PRECISION__
 #undef __REAL_PRECISION__
 #endif
-#define __REAL_PRECISION__ 128 
+#define __REAL_PRECISION__ 64 
 /*************************************************************************/
 
 

@@ -2,7 +2,7 @@
 
       module mex_mod
 
-      use consts, only : INT32, DP, RP
+      use consts_mod, only : INT32, DP, RP
       implicit none
       private
 
@@ -47,7 +47,7 @@ C convTol is the tolerance of difference due to real type conversion
           end subroutine mexErrMsgIdAndTxt
     
           subroutine  mxCopyPtrToReal8(px, y, n)
-              use consts, only : DP
+              use consts_mod, only : DP
               implicit none
               mwPointer, intent(in) :: px
               mwSize, intent(in) :: n
@@ -55,7 +55,7 @@ C convTol is the tolerance of difference due to real type conversion
           end subroutine mxCopyPtrToReal8
     
           subroutine mxCopyReal8ToPtr(y, px, n)
-              use consts, only : DP
+              use consts_mod, only : DP
               implicit none
               mwPointer, intent(in) :: px
               mwSize, intent(in) :: n
@@ -69,7 +69,7 @@ C convTol is the tolerance of difference due to real type conversion
     
     
           function mexCallMATLAB(nlhs, plhs, nrhs, prhs, functionName)
-              use consts, only : INT32
+              use consts_mod, only : INT32
               implicit none
               integer(INT32) :: mexCallMATLAB
               integer(INT32), intent(in) :: nlhs, nrhs
@@ -80,7 +80,7 @@ C convTol is the tolerance of difference due to real type conversion
           end function mexCallMATLAB
     
           function mxCreateDoubleMatrix(m, n, ComplexFlag)
-              use consts, only : INT32
+              use consts_mod, only : INT32
               implicit none
               mwPointer :: mxCreateDoubleMatrix
               mwSize, intent(in) :: m, n
@@ -88,7 +88,7 @@ C convTol is the tolerance of difference due to real type conversion
           end function mxCreateDoubleMatrix
     
           function mxCreateDoubleScalar(x)
-              use consts, only : DP
+              use consts_mod, only : DP
               implicit none
               mwPointer :: mxCreateDoubleScalar
               real(DP), intent(in) :: x
@@ -119,7 +119,7 @@ C convTol is the tolerance of difference due to real type conversion
           end function mxGetPr
 
           function mxGetString(pm, str, strlen)
-              use consts, only : INT32
+              use consts_mod, only : INT32
               implicit none
               integer(INT32) :: mxGetString
               mwPointer, intent(in) :: pm
@@ -128,7 +128,7 @@ C convTol is the tolerance of difference due to real type conversion
           end function mxGetString
 
           function mxIsClass(pm, classname)
-              use consts, only : INT32
+              use consts_mod, only : INT32
               implicit none
               integer(INT32) :: mxIsClass
               mwPointer, intent(in) :: pm
@@ -136,14 +136,14 @@ C convTol is the tolerance of difference due to real type conversion
           end function mxIsClass
 
           function mxIsChar(pm)
-              use consts, only : INT32
+              use consts_mod, only : INT32
               implicit none
               integer(INT32) :: mxIsChar
               mwPointer, intent(in) :: pm
           end function mxIsChar
 
           function mxIsDouble(pm)
-              use consts, only : INT32
+              use consts_mod, only : INT32
               implicit none
               integer(INT32) :: mxIsDouble
               mwPointer, intent(in) :: pm
