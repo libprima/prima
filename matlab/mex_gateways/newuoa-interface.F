@@ -16,8 +16,14 @@ C version of matlab, and the compilation option of mex. Do NOT assume
 C any two of them to be the same.
 C If ever a Segmentation Fault occurs, check these variables first.
 C
-C 2. Be careful with the line width limit. After preprocessing (macro
-C substitution), some lines may become too long and hence get truncated
+C 2. Note that MEX generally use double precesion for real values. It
+C is not necessarily the case in the Fortran code. Therefore, explicit
+C type conversion is necessary whenever real values are exchanged
+C between Fortran and MATLAB. Type mismatch will lead to errors like
+C Segmentation Fault.
+C
+C 3. Be careful with the line width limit. After preprocessing (macro
+C substitution), some lines may become too long and hence get truncated.
 
 #include "fintrf.h"
 
@@ -72,9 +78,9 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      interface
 !          subroutine mexFunction(nlhs, plhs, nrhs, prhs)
 !              integer, intent(in) :: nlhs, nrhs
-!              ! N.B.: Do NOT write the following line as 
-!              !mwPointer, intent(in) :: plhs(:), prhs(:) 
-!              mwPointer, intent(in) :: plhs(*), prhs(*)
+!              ! N.B.: Do NOT write plhs(:) or prhs(:) 
+!              mwPointer, intent(in) :: prhs(*)
+!              mwPointer, intent(out) :: plhs(*)
 !          end subroutine mexFunction
 !      end interface 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -95,7 +101,7 @@ C mexFunction arguments (dummy variables):
       integer, intent(in) :: nlhs, nrhs
 C nlhs and nrhs are of type INTEGER according to the documents of MATLAB R2019a
       mwPointer, intent(in) :: prhs(nrhs)
-      mwPointer, intent(inout) :: plhs(nlhs)
+      mwPointer, intent(out) :: plhs(nlhs)
 
 C workspace and intermediate variables
       mwSize :: n_mw
@@ -104,9 +110,6 @@ C obtained by mxGetM
       integer(IK) :: n
 C n is the INTEGER(IK) cast of n_mw, i.e., n = int(n_mw, IK); used when
 C calling the Fortran code
-      integer :: n_int
-C n_int is the INTEGER cast of n_mw, i.e., n_int = int(n_mw); used when
-C a variable of type INTEGER is needed
       real(RP), allocatable :: x(:)
 C x is the variable vector in the Fortran code
       real(DP), allocatable :: x_dp(:)
@@ -116,12 +119,14 @@ C x_dp is the REAL(DP) cast of x; used in the MEX subroutines
 C f, rhobeg, rhoend, and ftarget are inputs to the Fortran code, which
 C expects them to be REAL(RP), not necessarily the same as REAL(DP).
 C f_dp, rhobeg_dp, rhoend_dp, and ftarget_dp are REAL(DP) the versions.
+C rhoend_dp, rhoend_dp, and ftarget_dp need to be arrays as required by
+C mxCopyPtrToReal8.
       integer(IK) :: info, iprint, npt, maxfun
       real(DP) :: maxfun_dp(1), npt_dp(1)
 C info, iprint, npt, and maxfun are inputs to the Fortran code, which
 C expects them to be INTEGER(IK), not necessarily the same as INTEGER
 C or mwSize. maxfun_dp and npt_dp are the values of maxfun and npt
-C received from MATLAB, which are doubles.
+C received from MATLAB, which are double arrays.
       integer :: allocate_status
 
 C Validate number of arguments
@@ -196,13 +201,13 @@ C Input 7: ftarget (double scalar)
 C Read inputs (there are 7)
       fun_ptr = prhs(1)
       n_mw = mxGetM(prhs(2))
-      n_int = int(n_mw, kind(n_int))
-      if (n_int /= n_mw) then
+      n = int(n_mw, kind(n))
+      if (n /= n_mw) then
           call mexErrMsgIdAndTxt('fnewuoa:IntError',
-     &    'fnewuoa: n_int does not equal n_mw.')
+     &    'fnewuoa: n does not equal n_mw.')
       end if
       if (allocated(x_dp)) deallocate (x_dp)
-      allocate (x_dp(n_int), stat=allocate_status)
+      allocate (x_dp(n), stat=allocate_status)
       if (allocate_status /= 0) then
           call mexErrMsgIdAndTxt('fnewuoa:InsufficientMemory',
      &    'fnewuoa: allocate(x_dp) failed.')
@@ -232,11 +237,6 @@ C Initialize global variables
       fhist = huge(0.0_DP)
 
 C Cast the inputs to the types expected by the Fortran code.
-      n = int(n_mw, kind(n))
-      if (n /= n_mw) then
-          call mexErrMsgIdAndTxt('fnewuoa:IntError',
-     &    'fnewuoa: n does not equal n_mw.')
-      end if
       maxfun = int(maxfun_dp(1), kind(maxfun))
       npt = int(npt_dp(1), kind(npt))
       if (abs(real(maxfun, DP) - maxfun_dp(1)) >= 0.5_DP .or.
@@ -246,7 +246,7 @@ C Cast the inputs to the types expected by the Fortran code.
       end if
 
       if (allocated(x)) deallocate (x)
-      allocate (x(n_int), stat=allocate_status)
+      allocate (x(n), stat=allocate_status)
       if (allocate_status /= 0) then
           call mexErrMsgIdAndTxt('fnewuoa:InsufficientMemory',
      &    'fnewuoa: allocate(x) failed.')
@@ -266,7 +266,7 @@ C Cast the inputs to the types expected by the Fortran code.
 
 C Call the Fortran code.
       iprint = 0
-      call NEWUOA(npt, x, rhobeg, rhoend,iprint,maxfun,f,info,ftarget)
+      call NEWUOA(npt, x, rhobeg, rhoend, iprint, maxfun,f,info,ftarget)
 
 C Cast the outputs to the types expected by the MEX subroutines.
       x_dp = real(x, DP)

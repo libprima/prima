@@ -41,6 +41,7 @@ C convTol is the tolerance of difference due to real type conversion
 
       interface 
 
+          ! MEX subroutines
           subroutine mexErrMsgIdAndTxt(errorid, errormsg)
               implicit none
               character*(*), intent(in) ::  errorid, errormsg
@@ -68,14 +69,16 @@ C convTol is the tolerance of difference due to real type conversion
           end subroutine mxDestroyArray
     
     
+          ! MEX functions
           function mexCallMATLAB(nlhs, plhs, nrhs, prhs, functionName)
               use consts_mod, only : INT32
               implicit none
               integer(INT32) :: mexCallMATLAB
               integer(INT32), intent(in) :: nlhs, nrhs
-              ! N.B.: Segmentation Fault will occur if we write 
-              !mwPointer, intent(in) :: plhs(:), prhs(:) 
-              mwPointer, intent(in) :: plhs(*), prhs(*) 
+              ! N.B.: Segmentation Fault will occur if we write plhs(:)
+              ! or prhs(:) 
+              mwPointer, intent(in) :: prhs(*)
+              mwPointer, intent(out) ::  plhs(*) 
               character*(*), intent(in) :: functionName
           end function mexCallMATLAB
     
@@ -123,7 +126,7 @@ C convTol is the tolerance of difference due to real type conversion
               implicit none
               integer(INT32) :: mxGetString
               mwPointer, intent(in) :: pm
-              character*(*), intent(in) :: str
+              character*(*), intent(out) :: str
               mwSize, intent(in) :: strlen
           end function mxGetString
 
