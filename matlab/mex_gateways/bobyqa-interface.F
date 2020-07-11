@@ -38,8 +38,8 @@ C Fortran code starts
 
       module fbobyqa 
 
-      use consts, only : DP, rp, hugefun, int32, zero
-      use infnan
+      use consts_mod, only : DP, rp, hugefun, int32, zero
+      use infnan_mod
       implicit none
 
       integer(int32), parameter :: notComplex = 0

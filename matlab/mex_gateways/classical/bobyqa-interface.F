@@ -37,7 +37,7 @@ C defined in it. MX_GET_DBLE gets the pointer pointing to a real array.
 C Fortran code starts 
 
       module fbobyqa 
-      use consts, only : DP, rp, int32, zero  
+      use consts_mod, only : DP, rp, int32, zero  
       implicit none
 
       integer(int32), parameter :: notComplex = 0

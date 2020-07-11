@@ -3,8 +3,8 @@
       ! HQ, and BMAT accordingly. PQ and ZMAT remain the same after the
       ! shifting. See Section 7 of the NEWUOA paper.
 
-      use consts, only : RP, IK, HALF, QUART
-      use lina
+      use consts_mod, only : RP, IK, HALF, QUART
+      use lina_mod
       implicit none
 
       integer(IK), intent(in) :: idz, n, npt

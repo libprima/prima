@@ -14,9 +14,9 @@
       ! where LFUNC is the KNEW-th Lagrange function.
       ! In addition, it sets ALPHA for the selected D.
 
-      use consts, only : RP, IK, ONE, TWO, HALF, PI, ZERO, DEBUG_MODE
-      use lina
-      use warnerror, only : errmssg
+      use consts_mod, only : RP, IK, ONE, TWO, HALF, PI, ZERO,DEBUG_MODE
+      use lina_mod
+      use warnerror_mod, only : errmssg
       implicit none
 
       integer(IK), intent(in) ::    idz
@@ -216,10 +216,10 @@
       ! interpolation problem. 
       ! In addition, it sets VLAG, BETA, and WCHECK for the selected D.
 
-      use consts, only : RP, IK, ONE, TWO, HALF, QUART, PI, ZERO,       &
+      use consts_mod, only : RP, IK, ONE, TWO, HALF, QUART, PI, ZERO,       &
      & DEBUG_MODE
-      use warnerror, only : errmssg
-      use lina
+      use warnerror_mod, only : errmssg
+      use lina_mod
       implicit none
 
       integer(IK), intent(in) ::        knew

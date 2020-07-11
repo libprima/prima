@@ -10,10 +10,10 @@
       subroutine newuob (npt, rhobeg, rhoend, iprint, maxfun, ftarget,  &
      &  x, f, nf, info)
 
-      use consts, only : RP, IK, ZERO, ONE, HALF, TENTH
-      use warnerror, only : errmssg
-      use infnan, only : is_nan, is_posinf
-      use lina
+      use consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH
+      use warnerror_mod, only : errmssg
+      use infnan_mod, only : is_nan, is_posinf
+      use lina_mod
       use trsubp, only : trsapp
       use geometry, only : biglag, bigden
       use update, only : updateh, updateq

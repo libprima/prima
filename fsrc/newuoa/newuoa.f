@@ -51,7 +51,7 @@
       ! set F to the value of the objective function for the variables
       ! X(1 : N).
 
-      use consts, only : RP, IK
+      use consts_mod, only : RP, IK
       use newuob_mod, only : newuob
       implicit none
       

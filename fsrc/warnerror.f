@@ -1,4 +1,4 @@
-      module warnerror
+      module warnerror_mod
 
       implicit none
       private
@@ -18,4 +18,4 @@
 
       end subroutine
 
-      end module warnerror
+      end module warnerror_mod

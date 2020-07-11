@@ -1,8 +1,8 @@
       subroutine initialize(n, npt, rhobeg, x, xbase, xpt, f, fval,     &
      & xopt, fopt, kopt, bmat, zmat, gq, hq, pq, nf, info, ftarget)
 
-      use consts, only : RP, IK, ZERO, ONE, HALF
-      use infnan
+      use consts_mod, only : RP, IK, ZERO, ONE, HALF
+      use infnan_mod
       implicit none
 
       integer(IK), intent(in) :: n, npt

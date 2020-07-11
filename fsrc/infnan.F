@@ -7,9 +7,9 @@
 ! different real precisions (e.g., the Fortran code may use single 
 ! precision, but MEX gateway uses double precision by default).
 
-#include "ppflags.h"
+#include "ppf.h"
 
-      module infnan
+      module infnan_mod
 
 #if __USE_IEEE_ARITHMETIC__ != 0 
       use ieee_arithmetic, only : is_nan => ieee_is_nan,                &
@@ -48,7 +48,7 @@
 
 #if __USE_IEEE_ARITHMETIC__ == 0 
       pure elemental function is_nan_sp(x) result(y)
-      use consts, only : SP 
+      use consts_mod, only : SP 
       implicit none
       real(SP), intent(in) :: x
       logical :: y
@@ -59,7 +59,7 @@
       end function is_nan_sp
 
       pure elemental function is_nan_dp(x) result(y)
-      use consts, only : DP 
+      use consts_mod, only : DP 
       implicit none
       real(DP), intent(in) :: x
       logical :: y
@@ -67,7 +67,7 @@
       end function is_nan_dp
 
       pure elemental function is_nan_qp(x) result(y)
-      use consts, only : QP 
+      use consts_mod, only : QP 
       implicit none
       real(QP), intent(in) :: x
       logical :: y
@@ -75,7 +75,7 @@
       end function is_nan_qp
 
       pure elemental function is_finite_sp(x) result(y)
-      use consts, only : SP
+      use consts_mod, only : SP
       implicit none
       real(SP), intent(in) :: x
       logical :: y
@@ -83,7 +83,7 @@
       end function is_finite_sp
 
       pure elemental function is_finite_dp(x) result(y)
-      use consts, only : DP
+      use consts_mod, only : DP
       implicit none
       real(DP), intent(in) :: x
       logical :: y
@@ -91,7 +91,7 @@
       end function is_finite_dp
 
       pure elemental function is_finite_qp(x) result(y)
-      use consts, only : QP
+      use consts_mod, only : QP
       implicit none
       real(QP), intent(in) :: x
       logical :: y
@@ -100,7 +100,7 @@
 #endif
 
       pure elemental function is_posinf_sp(x) result(y)
-      use consts, only : SP
+      use consts_mod, only : SP
       implicit none
       real(SP), intent(in) :: x
       logical :: y
@@ -108,7 +108,7 @@
       end function is_posinf_sp
 
       pure elemental function is_posinf_dp(x) result(y)
-      use consts, only : DP
+      use consts_mod, only : DP
       implicit none
       real(DP), intent(in) :: x
       logical :: y
@@ -116,7 +116,7 @@
       end function is_posinf_dp
 
       pure elemental function is_posinf_qp(x) result(y)
-      use consts, only : QP
+      use consts_mod, only : QP
       implicit none
       real(QP), intent(in) :: x
       logical :: y
@@ -124,7 +124,7 @@
       end function is_posinf_qp
 
       pure elemental function is_neginf_sp(x) result(y)
-      use consts, only : SP 
+      use consts_mod, only : SP 
       implicit none
       real(SP), intent(in) :: x
       logical :: y
@@ -132,7 +132,7 @@
       end function is_neginf_sp
 
       pure elemental function is_neginf_dp(x) result(y)
-      use consts, only : DP 
+      use consts_mod, only : DP 
       implicit none
       real(DP), intent(in) :: x
       logical :: y
@@ -140,7 +140,7 @@
       end function is_neginf_dp
 
       pure elemental function is_neginf_qp(x) result(y)
-      use consts, only : QP 
+      use consts_mod, only : QP 
       implicit none
       real(QP), intent(in) :: x
       logical :: y
@@ -148,7 +148,7 @@
       end function is_neginf_qp
 
       pure elemental function is_inf_sp(x) result(y)
-      use consts, only : SP
+      use consts_mod, only : SP
       implicit none
       real(SP), intent(in) :: x
       logical :: y
@@ -156,7 +156,7 @@
       end function is_inf_sp
 
       pure elemental function is_inf_dp(x) result(y)
-      use consts, only : DP
+      use consts_mod, only : DP
       implicit none
       real(DP), intent(in) :: x
       logical :: y
@@ -164,11 +164,11 @@
       end function is_inf_dp
 
       pure elemental function is_inf_qp(x) result(y)
-      use consts, only : QP
+      use consts_mod, only : QP
       implicit none
       real(QP), intent(in) :: x
       logical :: y
       y = (abs(x) > huge(x))
       end function is_inf_qp
 
-      end module infnan
+      end module infnan_mod

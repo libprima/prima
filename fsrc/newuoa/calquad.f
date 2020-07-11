@@ -8,8 +8,8 @@
       ! CALQUAD calculates VQUAD = Q(X + D) - Q(X), where Q is the
       ! quadratic function defined by (GQ, HQ, PQ).
 
-      use consts, only : RP, IK, HALF, ZERO
-      use lina
+      use consts_mod, only : RP, IK, HALF, ZERO
+      use lina_mod
       implicit none
 
       integer(IK), intent(in) :: n, npt

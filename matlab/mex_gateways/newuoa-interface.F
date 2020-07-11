@@ -36,9 +36,9 @@ C defined in it. MX_GET_DBLE gets the pointer pointing to a real array.
 
 C Fortran code starts
 
-      module fnewuoa
+      module fnewuoa_mod
 
-      use consts, only : DP
+      use consts_mod, only : DP
       implicit none
       private
       public :: fun_ptr, nf, fhist
@@ -55,7 +55,7 @@ C History of function evaluation
       interface
           subroutine NEWUOA(npt, x, rhobeg, rhoend, iprint, maxfun,
      &        f, info, ftarget)
-          use consts, only : RP, IK
+          use consts_mod, only : RP, IK
           implicit none
           integer(IK), intent(in) :: npt, iprint, maxfun
           integer(IK), intent(out) :: info
@@ -65,7 +65,7 @@ C History of function evaluation
           end subroutine NEWUOA
       end interface
 
-      end module fnewuoa
+      end module fnewuoa_mod
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
@@ -86,8 +86,8 @@ C extension depends on the platform), then the following function is
 C callable in matlab:
 C [xopt, fopt, info, nf, fhist] = FUNCTION_NAME(fun, x0, rhobeg, rhoend, maxfun, npt, ftarget)
 
-      use consts, only : DP, RP, IK, ONE
-      use fnewuoa, only : fun_ptr, nf, fhist, NEWUOA
+      use consts_mod, only : DP, RP, IK, ONE
+      use fnewuoa_mod, only : fun_ptr, nf, fhist, NEWUOA
       use mex_mod
       implicit none
 
@@ -298,7 +298,7 @@ C Free memory
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      interface
 !          subroutine calfun(n, x, funval)
-!          use consts, only : RP, IK
+!          use consts_mod, only : RP, IK
 !          implicit none
 !          integer(IK), intent(in) :: n
 !          real(RP), intent(in) :: x(n)
@@ -309,9 +309,9 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C The Fortran subroutine that evaluates the objective function
       subroutine calfun(n, x, funval)
-      use fnewuoa, only : fun_ptr, nf, fhist
-      use consts, only : DP, RP, IK, HUGEFUN, ONE
-      use infnan, only : is_nan
+      use fnewuoa_mod, only : fun_ptr, nf, fhist
+      use consts_mod, only : DP, RP, IK, HUGEFUN, ONE
+      use infnan_mod, only : is_nan
       use mex_mod
       implicit none
 

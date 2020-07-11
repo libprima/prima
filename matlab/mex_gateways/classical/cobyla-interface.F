@@ -38,8 +38,8 @@ C Fortran code starts
 
       module fcobyla ! Some global variables
 
-      use consts, only : DP, rp, int32, zero
-      use infnan
+      use consts_mod, only : DP, rp, int32, zero
+      use infnan_mod
       implicit none
 
       integer(int32), parameter :: notComplex = 0

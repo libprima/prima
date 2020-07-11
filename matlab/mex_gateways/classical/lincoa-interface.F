@@ -37,8 +37,8 @@ C defined in it. MX_GET_DBLE gets the pointer pointing to a real array.
 C Fortran code starts 
 
       module flincoa ! Some global variables
-      use consts, only : DP, rp, int32, zero
-      use infnan
+      use consts_mod, only : DP, rp, int32, zero
+      use infnan_mod
       implicit none
 
       integer(int32), parameter :: notComplex = 0

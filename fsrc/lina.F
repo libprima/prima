@@ -1,9 +1,9 @@
 ! LINA is a module providing some basic linear algebra procedures.
 
 
-#include "ppflags.h"
+#include "ppf.h"
 
-      module lina
+      module lina_mod
 
       implicit none
       private
@@ -49,8 +49,8 @@
       ! rather than ALPHA*X*Y^T. Because, when X = Y, ALPHA*( X*Y^T ) 
       ! is a symmetric matrix while ALPHA*X*Y^T is asymmetric due to 
       ! the non-associativity of floating-point multiplication.
-      use consts, only : RP, IK, DEBUG_MODE
-      use warnerror, only : errmssg
+      use consts_mod, only : RP, IK, DEBUG_MODE
+      use warnerror_mod, only : errmssg
       implicit none
       real(RP), intent(in) :: alpha
       real(RP), intent(in) :: x(:)
@@ -78,8 +78,8 @@
       ! A = A + X*Y^T, 
       ! where A is an MxN matrix, X is an M-dimenional vector, and Y is
       ! an N-dimenional vector.
-      use consts, only : RP, IK, DEBUG_MODE
-      use warnerror, only : errmssg
+      use consts_mod, only : RP, IK, DEBUG_MODE
+      use warnerror_mod, only : errmssg
       implicit none
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
@@ -114,8 +114,8 @@
       ! rather than 
       ! A + ALPHA*( X*Y^T ) + BETA*( U*V^T )
       ! to ensure the semmetry when ALPHA = BETA, X = V, and Y = U.
-      use consts, only : RP, IK, DEBUG_MODE
-      use warnerror, only : errmssg
+      use consts_mod, only : RP, IK, DEBUG_MODE
+      use warnerror_mod, only : errmssg
       implicit none
       real(RP), intent(in) :: alpha
       real(RP), intent(in) :: beta 
@@ -156,8 +156,8 @@
       ! rather than 
       ! A + X*Y^T +  U*V^T 
       ! to ensure the semmetry when X = V and Y = U.
-      use consts, only : RP, IK, DEBUG_MODE
-      use warnerror, only : errmssg
+      use consts_mod, only : RP, IK, DEBUG_MODE
+      use warnerror_mod, only : errmssg
       implicit none
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
@@ -190,8 +190,8 @@
 #if __USE_INTRINSIC_ALGEBRA__ == 0 
 
       function matmul12(x, y) result(z)
-      use consts, only : RP, IK, DEBUG_MODE
-      use warnerror, only : errmssg 
+      use consts_mod, only : RP, IK, DEBUG_MODE
+      use warnerror_mod, only : errmssg 
       implicit none
       real(RP), dimension(:), intent(in) :: x
       real(RP), dimension(:, :), intent(in) :: y
@@ -211,8 +211,8 @@
       end function matmul12
 
       function matmul21(x, y) result(z)
-      use consts, only : RP, IK, ZERO, DEBUG_MODE
-      use warnerror, only : errmssg
+      use consts_mod, only : RP, IK, ZERO, DEBUG_MODE
+      use warnerror_mod, only : errmssg
       implicit none
       real(RP), dimension(:, :), intent(in) :: x
       real(RP), dimension(:), intent(in) :: y
@@ -233,8 +233,8 @@
       end function matmul21
 
       function matmul22(x, y) result(z)
-      use consts, only : RP, IK, ZERO, DEBUG_MODE
-      use warnerror, only : errmssg 
+      use consts_mod, only : RP, IK, ZERO, DEBUG_MODE
+      use warnerror_mod, only : errmssg 
       implicit none
       real(RP), dimension(:, :), intent(in) :: x, y
       real(RP), dimension(size(x, 1), size(y, 2)) :: z
@@ -256,8 +256,8 @@
       end function matmul22
 
       function inprod(x, y) result(z)
-      use consts, only : RP, IK, ZERO, DEBUG_MODE
-      use warnerror, only : errmssg 
+      use consts_mod, only : RP, IK, ZERO, DEBUG_MODE
+      use warnerror_mod, only : errmssg 
       implicit none
       real(RP), dimension(:), intent(in) :: x, y
       real(RP) :: z
@@ -284,9 +284,9 @@
       ! is 0 or the Fortran standard is lower than 2008.
 
 #if __IMPROVE_POWELL_CODE__ == 0
-      use consts, only : RP
+      use consts_mod, only : RP
 #else
-      use consts, only : RP, ONE, TWO, ZERO
+      use consts_mod, only : RP, ONE, TWO, ZERO
 #endif
 
       implicit none
@@ -312,7 +312,7 @@
       end function hypotenuse
 
       function outprod(x, y) result(z)
-      use consts, only : RP, IK
+      use consts_mod, only : RP, IK
       implicit none
       real(RP), dimension(:), intent(in) :: x, y
       real(RP), dimension(size(x), size(y)) :: z
@@ -322,4 +322,4 @@
       end do
       end function outprod
 
-      end module lina
+      end module lina_mod

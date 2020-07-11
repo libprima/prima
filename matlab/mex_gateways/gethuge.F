@@ -28,7 +28,7 @@ C     current platform, the possible values of data_type being
 C     'integer', 'float', 'real', 'single', 'double', 'mwSize', 
 C     'mwIndex', 'fun', 'function', 'con', 'constraint'.
 
-      use consts, only : SP, DP, RP, QP, HUGEFUN, HUGECON
+      use consts_mod, only : SP, DP, RP, QP, HUGEFUN, HUGECON
       use mex_mod
       implicit none
 
