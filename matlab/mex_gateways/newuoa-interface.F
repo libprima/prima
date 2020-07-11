@@ -24,6 +24,8 @@ C Segmentation Fault.
 C
 C 3. Be careful with the line width limit. After preprocessing (macro
 C substitution), some lines may become too long and hence get truncated.
+C This is also why we can NOT put a continuation character & at the 73rd
+C column --- it may not be the 73rd column after preprocessing!
 
 #include "fintrf.h"
 
@@ -127,7 +129,7 @@ C info, iprint, npt, and maxfun are inputs to the Fortran code, which
 C expects them to be INTEGER(IK), not necessarily the same as INTEGER
 C or mwSize. maxfun_dp and npt_dp are the values of maxfun and npt
 C received from MATLAB, which are double arrays.
-      integer :: allocate_status
+      integer(IK) :: allocate_status
 
 C Validate number of arguments
       if (nrhs /= 7) then
@@ -296,6 +298,7 @@ C Free memory
       end subroutine mexFunction
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+
 !      interface
 !          subroutine calfun(n, x, funval)
 !          use consts_mod, only : RP, IK
@@ -304,8 +307,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          real(RP), intent(in) :: x(n)
 !          real(RP), intent(out) :: funval
 !          end subroutine calfun
-!      end interface     
-
+!      end interface
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C The Fortran subroutine that evaluates the objective function
       subroutine calfun(n, x, funval)
