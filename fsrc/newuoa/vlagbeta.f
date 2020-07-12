@@ -12,7 +12,7 @@
       subroutine vlagbeta(idz, kopt, bmat, zmat, xpt, xopt, d, vlag,    &
      & beta, wcheck, dsq, xoptsq)
 
-      use consts_mod, only : RP, IK, ONE, HALF, ZERO, DEBUG_MODE
+      use consts_mod, only : RP, IK, ONE, HALF, ZERO, DEBUG_MODE, SRNLEN
       use warnerror_mod, only : errstop
       use lina_mod
       implicit none
@@ -31,9 +31,7 @@
       real(RP) :: bw(size(bmat, 1)), bwvd
       real(RP) :: wz(size(zmat, 2)), wzsave(size(wz))
       real(RP) :: dx, dsq, xoptsq
-      character(len = 100) :: srname
-
-      srname = 'VLAGBETA'  ! Name of the current subroutine
+      character(len = SRNLEN), parameter :: srname = 'VLAGBETA'
       
 
       ! Get and verify the sizes

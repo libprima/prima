@@ -19,7 +19,7 @@
       ! will be overwritten when trying the alternative model or by
       ! VLAGBETA.
 
-      use consts_mod, only : RP, IK, ONE, ZERO, DEBUG_MODE
+      use consts_mod, only : RP, IK, ONE, ZERO, DEBUG_MODE, SRNLEN
       use warnerror_mod, only : errstop
       use lina_mod
       implicit none
@@ -35,9 +35,8 @@
       real(RP) :: c, s, r, alpha, denom, scala, scalb, tau, tausq, temp,&
      & tempa, tempb, ztemp(size(zmat, 1)), w(size(vlag)),               &
      & v1(size(bmat, 1)), v2(size(bmat, 1))
-      character(len = 100) :: srname
+      character(len = SRNLEN), parameter :: srname = 'UPDATEH'
 
-      srname = 'UPDATEH'  ! Name of the current subroutine.
       
       ! Get and verify the sizes.
       n = size(bmat, 1)
@@ -258,7 +257,7 @@
      & hq, pq)
 
       use warnerror_mod, only : errstop
-      use consts_mod, only : RP, IK, ZERO, DEBUG_MODE
+      use consts_mod, only : RP, IK, ZERO, DEBUG_MODE, SRNLEN
       use lina_mod
       implicit none
 
@@ -274,9 +273,8 @@
 
       integer(IK) :: i, j, n, npt
       real(RP) :: fqdz(size(zmat, 2))
-      character(len = 100) :: srname
+      character(len = SRNLEN), parameter :: srname = 'UPDATEQ'
 
-      srname = 'UPDATEQ'  ! Name of the current subroutine.
       
       ! Get and verify the sizes.
       n = size(gq)
@@ -341,7 +339,7 @@
       ! conditions. 
       ! Note that SMAT = BMAT(:, 1:NPT)
 
-      use consts_mod, only : RP, IK, ZERO, DEBUG_MODE
+      use consts_mod, only : RP, IK, ZERO, DEBUG_MODE, SRNLEN
       use warnerror_mod
       use lina_mod
       implicit none
@@ -357,9 +355,8 @@
 
       real(RP) :: vlag(size(pq)), vz(size(zmat, 2))
       integer(IK) :: n, npt
-      character(len = 100) :: srname
+      character(len = SRNLEN), parameter :: srname = 'QALT'
 
-      srname = 'QALT'  ! Name of the current subroutine.
 
       ! Get and verify the sizes.
       n = size(gq)

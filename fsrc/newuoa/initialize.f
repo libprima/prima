@@ -10,7 +10,7 @@
       subroutine initialize(rhobeg, x, xbase, xpt, f, fval, xopt, fopt, &
      & kopt, bmat, zmat, gq, hq, pq, nf, info, ftarget)
 
-      use consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUG_MODE
+      use consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUG_MODE, SRNLEN
       use warnerror_mod, only : errstop
       use infnan_mod
       implicit none
@@ -41,9 +41,8 @@
       real(RP) :: fbeg, fip, fjp, rhosq, reciq, recip
       real(RP) :: xip, xjp,xtemp(size(x))
       logical :: evaluated(size(fval))
-      character(len = 100) :: srname
+      character(len = SRNLEN), parameter :: srname = 'INITIALIZE'
 
-      srname = 'INITIALIZE'  ! Name of the current subroutine
 
       ! Get and verify the sizes
       n = size(x)

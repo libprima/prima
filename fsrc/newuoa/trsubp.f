@@ -39,8 +39,8 @@
       ! Q. Thus S should provide a substantial reduction to Q within the
       ! trust region.
       
-      use consts_mod, only : RP, IK, ONE, TWO, HALF, ZERO, PI,DEBUG_MODE
-      use infos_mod, only : INVALID_INPUT
+      use consts_mod, only : RP, IK, ONE, TWO, HALF, ZERO, PI
+      use consts_mod, only : DEBUG_MODE, SRNLEN
       use warnerror_mod, only : errstop
       use infnan_mod, only : is_nan
       use lina_mod
@@ -66,10 +66,8 @@
      & ds, gg, ggbeg, ggsave, qadd, qbeg, qmin, qnew, qsave, reduc, sg, &
      & sgk, shs, ss, sth, temp, tempa, tempb
       logical :: twod_search
-      character(len = 100) :: srname
+      character(len = SRNLEN), parameter :: srname = 'TRSAPP'
 
-      srname = 'TRSAPP'  ! Name of the current subroutine.
-      info = 0
       
       ! Get and verify the sizes.
       n = size(xpt, 1)
@@ -77,23 +75,18 @@
 
       if (DEBUG_MODE) then
           if (n == 0 .or. npt < n + 2) then
-              info = INVALID_INPUT
               call errstop(srname, 'SIZE(XPT) is invalid')
           end if
           if (size(gq) /= n) then
-              info = INVALID_INPUT
               call errstop(srname, 'SIZE(GQ) /= SIZE(X)')
           end if
           if (size(hq, 1) /= n .or. size(hq, 2) /= n) then
-              info = INVALID_INPUT
               call errstop(srname, 'SIZE(HQ) /= (SIZE(X), SIZE(X))')
           end if
           if (size(pq, 1) /= npt) then
-              info = INVALID_INPUT
               call errstop(srname, 'SIZE(PQ) /= (SIZE(XPT))')
           end if
           if (size(s) /= n) then
-              info = INVALID_INPUT
               call errstop(srname, 'SIZE(S) /= SIZE(X)')
           end if
       end if
