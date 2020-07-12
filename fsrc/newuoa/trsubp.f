@@ -1,4 +1,4 @@
-      module trsubp
+      module trsubp_mod
 
       implicit none
       private 
@@ -41,23 +41,23 @@
       
       use consts_mod, only : RP, IK, ONE, TWO, HALF, ZERO, PI,DEBUG_MODE
       use infos_mod, only : INVALID_INPUT
-      use warnerror_mod, only : errmssg
+      use warnerror_mod, only : errstop
       use infnan_mod, only : is_nan
       use lina_mod
       implicit none
       
-      integer(IK), intent(out) ::   info
+      integer(IK), intent(out) :: info
 
-      real(RP), intent(in) ::   xpt(:, :)   ! XPT(N, NPT)
-      real(RP), intent(in) ::   x(:)        ! X(N)
-      real(RP), intent(in) ::   gq(:)       ! GQ(N)
-      real(RP), intent(in) ::   hq(:, :)    ! HQ(N, N)
-      real(RP), intent(in) ::   pq(:)       ! PQ(NPT)
-      real(RP), intent(in) ::   tol
-      real(RP), intent(in) ::   delta 
-      real(RP), intent(out) ::  s(:)        ! S(N)
-      real(RP), intent(out) ::  crvmin
-      real(RP), intent(out) ::  qred
+      real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
+      real(RP), intent(in) :: x(:)        ! X(N)
+      real(RP), intent(in) :: gq(:)       ! GQ(N)
+      real(RP), intent(in) :: hq(:, :)    ! HQ(N, N)
+      real(RP), intent(in) :: pq(:)       ! PQ(NPT)
+      real(RP), intent(in) :: tol
+      real(RP), intent(in) :: delta 
+      real(RP), intent(out) :: s(:)        ! S(N)
+      real(RP), intent(out) :: crvmin
+      real(RP), intent(out) :: qred
       
       integer(IK) :: i, isave, iterc, itermax, iu, j, n, npt
       real(RP) :: d(size(x)), g(size(x)), hd(size(x)), hs(size(x)),     &
@@ -78,28 +78,23 @@
       if (DEBUG_MODE) then
           if (n == 0 .or. npt < n + 2) then
               info = INVALID_INPUT
-              call errmssg(srname, 'SIZE(XPT) is invalid')
-              return
+              call errstop(srname, 'SIZE(XPT) is invalid')
           end if
           if (size(gq) /= n) then
               info = INVALID_INPUT
-              call errmssg(srname, 'SIZE(GQ) /= SIZE(X)')
-              return
+              call errstop(srname, 'SIZE(GQ) /= SIZE(X)')
           end if
           if (size(hq, 1) /= n .or. size(hq, 2) /= n) then
               info = INVALID_INPUT
-              call errmssg(srname, 'SIZE(HQ) /= (SIZE(X), SIZE(X))')
-              return
+              call errstop(srname, 'SIZE(HQ) /= (SIZE(X), SIZE(X))')
           end if
           if (size(pq, 1) /= npt) then
               info = INVALID_INPUT
-              call errmssg(srname, 'SIZE(PQ) /= (SIZE(XPT))')
-              return
+              call errstop(srname, 'SIZE(PQ) /= (SIZE(XPT))')
           end if
           if (size(s) /= n) then
               info = INVALID_INPUT
-              call errmssg(srname, 'SIZE(S) /= SIZE(X)')
-              return
+              call errstop(srname, 'SIZE(S) /= SIZE(X)')
           end if
       end if
       
@@ -318,4 +313,4 @@
  
       end subroutine trsapp
 
-      end module trsubp
+      end module trsubp_mod

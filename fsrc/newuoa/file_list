@@ -2,7 +2,6 @@ trsubp.f
 geometry.f
 calquad.f
 initialize.f
-qalt.f
 shiftbase.f
 update.f
 vlagbeta.f

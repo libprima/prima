@@ -11,14 +11,19 @@
      &  x, f, nf, info)
 
       use consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH
-      use warnerror_mod, only : errmssg
+      use warnerror_mod, only : errstop
       use infnan_mod, only : is_nan, is_posinf
       use lina_mod
-      use trsubp, only : trsapp
-      use geometry, only : biglag, bigden
-      use update, only : updateh, updateq
+      use initialize_mod, only : initialize
+      use calquad_mod, only : calquad
+      use trsubp_mod, only : trsapp
+      use geometry_mod, only : biglag, bigden
+      use shiftbase_mod, only : shiftbase
+      use vlagbeta_mod, only : vlagbeta
+      use update_mod, only : updateh, updateq, qalt
       implicit none
-
+      
+            
       ! Inputs
       integer(IK), intent(in) :: npt
       integer(IK), intent(in) :: iprint
@@ -40,7 +45,7 @@
       real(RP) :: xpt(size(x), npt), fval(npt)
       real(RP) :: gq(size(x)), hq(size(x), size(x)), pq(npt)
       real(RP) :: bmat(size(x), npt + size(x)), zmat(npt, npt-size(x)-1)
-      real(RP) :: vlag(npt + size(x)), wcheck(npt + size(x)) 
+      real(RP) :: vlag(npt + size(x)), wcheck(npt) 
       real(RP) :: fopt, fsave, galt(size(x)), galtsq, gqsq, hdiag(npt)
       real(RP) :: ratio, rho, rhosq, vquad, xoptsq, sigma(npt)
       logical :: model_step, reduce_rho, shortd
@@ -79,8 +84,8 @@
       maxtr = maxfun  ! Maximal numer of trust region iterations.
       info = 0  ! Exit status. The default value is 0.
 
-      call initialize(n, npt, rhobeg, x, xbase, xpt, f, fval, xopt,     &
-     & fopt, kopt, bmat, zmat, gq, hq, pq, nf, subinfo, ftarget)
+      call initialize(rhobeg, x, xbase, xpt, f, fval, xopt, fopt, kopt, &
+     & bmat, zmat, gq, hq, pq, nf, subinfo, ftarget)
       if (subinfo == 1 .or. subinfo == -1 .or. subinfo == -2 .or.       &
      & subinfo == -3) then
           maxtr = 0  ! No trust region in this case. Return immediately.
@@ -149,8 +154,7 @@
           if (.not. shortd) then
               ! Shift XBASE if XOPT may be too far from XBASE.
               if (dsq <= 1.0e-3_RP*xoptsq) then
-                  call shiftbase(n, npt, idz, xopt, pq, bmat, zmat, gq, &
-     &             hq, xpt)
+                  call shiftbase(idz, xopt, pq, bmat, zmat, gq, hq, xpt)
                   xbase = xbase + xopt
                   xopt = ZERO
                   xoptsq = ZERO
@@ -158,18 +162,17 @@
 
               ! Calculate VLAG and BETA for D. The first NPT components
               ! of W_check will be held in WCHECK.
-              !call vlagbeta(n, npt, idz, kopt, bmat, zmat, xpt, xopt, d,&
-!     &         vlag, beta, wcheck)
-              call vlagbeta(n, npt, idz, kopt, bmat, zmat, xpt, xopt, d,&
-     &         vlag, beta, wcheck, dsq, xoptsq)
+              !call vlagbeta(idz, kopt, bmat, zmat, xpt, xopt, d, vlag, &
+!     &         beta, wcheck)
+              call vlagbeta(idz, kopt, bmat, zmat, xpt, xopt, d, vlag,  &
+     &         beta, wcheck, dsq, xoptsq)
 
       !----------------------------------------------------------------!
 
               ! Use the current quadratic model to predict the change in
               ! F due to the step D.
               !call calquad(vquad, d, xopt, xpt, gq, hq, pq, n, npt)
-              call calquad(vquad, d, xopt, xpt, gq, hq, pq, n, npt,     &
-     &         wcheck(1 : npt))
+              call calquad(vquad, d, xopt, xpt, gq, hq, pq, wcheck)
 
               ! Calculate the next value of the objective function.
               xnew = xopt + d
@@ -292,9 +295,7 @@
                           itest = 0
                       else
                           gqsq = dot_product(gq, gq)
-                          vlag(1 : npt) = fval - fval(kopt)
-
-                          galt = matmul(bmat(:, 1:npt), vlag(1 : npt))
+                          galt = matmul(bmat(:, 1:npt), fval-fval(kopt))
                           galtsq = dot_product(galt, galt)
 
                           if (gqsq < 100.0_RP*galtsq) then
@@ -307,7 +308,7 @@
 
                   if (itest >= 3) then
                       call qalt(gq, hq, pq, fval, bmat(:, 1 : npt),     &
-     &                 zmat, n, npt, kopt, idz)
+     &                 zmat, kopt, idz)
                       itest = 0
                   end if
 
@@ -381,8 +382,7 @@
 
               ! Shift XBASE if XOPT may be too far from XBASE.
               if (dsq <= 1.0e-3_RP*xoptsq) then
-                  call shiftbase(n, npt, idz, xopt, pq, bmat, zmat, gq, &
-     &             hq, xpt)
+                  call shiftbase(idz, xopt, pq, bmat, zmat, gq, hq, xpt)
                   xbase = xbase + xopt
                   xopt = ZERO
                   xoptsq = ZERO
@@ -399,10 +399,10 @@
               call biglag(xopt, xpt, bmat, zmat, idz,knew,dstep,d,alpha)
 
               ! Calculate VLAG, BETA, and WCHECK for D.
-!              call vlagbeta(n, npt, idz, kopt, bmat, zmat, xpt, xopt, d,&
-!     &         vlag, beta, wcheck)
-              call vlagbeta(n, npt, idz, kopt, bmat, zmat, xpt, xopt, d,&
-     &         vlag, beta, wcheck, dsq, xoptsq)
+!              call vlagbeta(idz, kopt, bmat, zmat, xpt, xopt, d, vlag, &
+!     &         beta, wcheck)
+              call vlagbeta(idz, kopt, bmat, zmat, xpt, xopt, d, vlag,  &
+     &         beta, wcheck, dsq, xoptsq)
 
               ! If KNEW is positive and if the cancellation in DENOM is
               ! unacceptable, then BIGDEN calculates an alternative
@@ -421,8 +421,7 @@
               ! Use the current quadratic model to predict the change in
               ! F due to the step D.
               !call calquad(vquad, d, xopt, xpt, gq, hq, pq, n, npt)
-              call calquad(vquad, d, xopt, xpt, gq, hq, pq, n, npt,     &
-     &         wcheck(1:npt))
+              call calquad(vquad, d, xopt, xpt, gq, hq, pq, wcheck)
 
               ! Calculate the next value of the objective function.
               xnew = xopt + d

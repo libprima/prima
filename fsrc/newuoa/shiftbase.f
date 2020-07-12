@@ -1,21 +1,67 @@
-      subroutine shiftbase(n, npt, idz, xopt, pq, bmat, zmat, gq,hq,xpt)
+      module shiftbase_mod
+
+      implicit none
+      private
+      public :: shiftbase
+
+
+      contains 
+
+      subroutine shiftbase(idz, xopt, pq, bmat, zmat, gq, hq, xpt)
       ! SHIFTBASE shifts the base point to XBASE + XOPT and updates GQ,
       ! HQ, and BMAT accordingly. PQ and ZMAT remain the same after the
       ! shifting. See Section 7 of the NEWUOA paper.
 
-      use consts_mod, only : RP, IK, HALF, QUART
+      use consts_mod, only : RP, IK, HALF, QUART, DEBUG_MODE
+      use warnerror_mod, only : errstop
       use lina_mod
       implicit none
 
-      integer(IK), intent(in) :: idz, n, npt
+      integer(IK), intent(in) :: idz
 
-      real(RP), intent(in) :: xopt(n), pq(npt), zmat(npt,npt-n-1)
-      real(RP), intent(inout) :: bmat(n, npt + n), gq(n), hq(n, n),     &
-     & xpt(n, npt)
+      real(RP), intent(in) :: xopt(:)  ! XOPT(N)
+      real(RP), intent(in) :: pq(:)  ! PQ(NPT)
+      real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
+      real(RP), intent(inout) :: bmat(:, :)  ! BMAT(N, NPT + N)
+      real(RP), intent(inout) :: gq(:)  ! GQ(N)
+      real(RP), intent(inout) :: hq(:, :)  ! HQ(N, N)
+      real(RP), intent(inout) :: xpt(:, :)  ! XPT(N, NPT)
 
-      integer(IK) :: i, j, k
-      real(RP) :: sumz(npt-n-1), vlag(n), qxoptq, xoptsq, xpq(n)
-      real(RP) :: bmatk(n), w1(npt), w2(n), w3(npt) 
+      integer(IK) :: i, j, k, n, npt
+      real(RP) :: sumz(size(zmat, 2)), vlag(size(xopt))
+      real(RP) :: qxoptq, xoptsq, xpq(size(xopt)), bmatk(size(bmat, 1)) 
+      REAL(RP) :: w1(size(pq)), w2(size(xopt)), w3(size(pq)) 
+      character(len = 100) :: srname
+
+      srname = 'SHIFTBASE'  ! Name of the current subroutine
+
+      ! Get and verify the sizes
+      n = size(xpt, 1)
+      npt = size(xpt, 2)
+      
+      if (DEBUG_MODE) then
+          if (n == 0 .or. npt < n + 2) then
+              call errstop(srname, 'SIZE(XPT) is invalid')
+          end if
+          if (size(xopt) /= n) then
+              call errstop(srname, 'SIZE(XOPT) /= N')
+          end if
+          if (size(pq) /= npt) then
+              call errstop(srname, 'SIZE(PQ) /= NPT')
+          end if
+          if (size(zmat, 1) /= npt .or. size(zmat, 2) /= npt-n-1) then
+              call errstop(srname, 'SIZE(ZMAT) is invalid')
+          end if
+          if (size(bmat, 1) /= n .or. size(bmat, 2) /= npt + n) then
+              call errstop(srname, 'SIZE(BMAT) is invalid')
+          end if
+          if (size(gq) /= n) then
+              call errstop(srname, 'SIZE(GQ) /= N')
+          end if
+          if (size(hq, 1) /= n .or. size(hq, 2) /= n) then
+              call errstop(srname, 'SIZE(HQ) is invalid')
+          end if
+      end if
 
             
       xoptsq = dot_product(xopt, xopt)
@@ -48,7 +94,7 @@
       
       !----------------------------------------------------------------!
       ! This update does NOT preserve symmetry. Symmetrization needed! 
-      hq = hq + outprod(xpq, xopt) + outprod(xopt, xpq)
+      call r2update(hq, xpq, xopt, xopt, xpq)
       do i = 1, n
           hq(i, 1:i-1) = hq(1:i-1, i)
       end do
@@ -140,8 +186,7 @@
 !          bmat(:, npt + 1 : npt + n) = bmat(:, npt + 1 : npt + n) +     &
 !     &     ( outprod(w2, bmatk) + outprod(bmatk, w2) )
 !----------------------------------------------------------------------!
-          bmat(:, npt + 1 : npt + n) = bmat(:, npt + 1 : npt + n) +     &
-     &     outprod(w2, bmatk) + outprod(bmatk, w2)
+          call r2update(bmat(:, npt+1 : npt+n), w2, bmatk, bmatk, w2)
       end do
 
       ! Then the revisions of BMAT that depend on ZMAT are calculated.
@@ -158,8 +203,8 @@
           do i = 1, npt
               vlag = vlag + w3(i)*xpt(:, i)
           end do
-          bmat(:, 1:npt) = bmat(:, 1:npt) - outprod(vlag, zmat(:,k))
-          bmat(:,npt+1:npt+n) = bmat(:,npt+1:npt+n) - outprod(vlag,vlag)
+          call r1update(bmat(:, 1:npt), -vlag, zmat(:, k))
+          call r1update(bmat(:, npt+1 : npt+n), -vlag, vlag)
       end do
       do k = idz, npt - n - 1
           ! The following W3 and DO LOOP indeed defines the VLAG below.
@@ -173,8 +218,8 @@
           do i = 1, npt
               vlag = vlag + w3(i)*xpt(:, i)
           end do
-          bmat(:, 1:npt) = bmat(:, 1:npt) + outprod(vlag, zmat(:,k))
-          bmat(:,npt+1:npt+n) = bmat(:,npt+1:npt+n) + outprod(vlag,vlag)
+          call r1update(bmat(:, 1:npt), vlag, zmat(:, k))
+          call r1update(bmat(:, npt+1 : npt+n), vlag, vlag)
       end do
 !!!!!!!!!!!!!!!!!!!!!COMPACT SCHEME ENDS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -200,3 +245,5 @@
       return 
 
       end subroutine shiftbase
+
+      end module shiftbase_mod

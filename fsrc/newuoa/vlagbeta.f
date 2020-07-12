@@ -1,21 +1,69 @@
+      module vlagbeta_mod
+
+      implicit none
+      private
+      public :: vlagbeta
+
+
+      contains
+
 !      subroutine vlagbeta(n, npt, idz, kopt, bmat, zmat, xpt, xopt, d,  &
 !     & vlag, beta, wcheck)
-      subroutine vlagbeta(n, npt, idz, kopt, bmat, zmat, xpt, xopt, d,  &
-     & vlag, beta, wcheck, dsq, xoptsq)
+      subroutine vlagbeta(idz, kopt, bmat, zmat, xpt, xopt, d, vlag,    &
+     & beta, wcheck, dsq, xoptsq)
 
-      use consts_mod, only : RP, IK, ONE, HALF, ZERO
+      use consts_mod, only : RP, IK, ONE, HALF, ZERO, DEBUG_MODE
+      use warnerror_mod, only : errstop
       use lina_mod
       implicit none
 
-      integer(IK), intent(in) :: n, npt, idz, kopt
-      real(RP), intent(in) :: bmat(n, npt+n), zmat(npt, npt - n - 1)
-      real(RP), intent(in) :: xpt(n, npt), xopt(n), d(n)
-      real(RP), intent(out) :: vlag(npt+n), beta, wcheck(npt)
+      integer(IK), intent(in) :: idz, kopt
+      real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT+N)
+      real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
+      real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
+      real(RP), intent(in) :: xopt(:)  ! XOPT(N)
+      real(RP), intent(in) :: d(:)  ! D(N)
+      real(RP), intent(out) :: vlag(:)  ! VLAG(NPT+N)
+      real(RP), intent(out) :: beta
+      real(RP), intent(out) :: wcheck(:)  ! WCHECK(NPT)
 
-      integer(IK) :: k, j
-      real(RP) :: bw(n), bwvd, wz(npt - n - 1), wzsave(npt - n - 1) 
+      integer(IK) :: k, j, n, npt
+      real(RP) :: bw(size(bmat, 1)), bwvd
+      real(RP) :: wz(size(zmat, 2)), wzsave(size(wz))
       real(RP) :: dx, dsq, xoptsq
+      character(len = 100) :: srname
 
+      srname = 'VLAGBETA'  ! Name of the current subroutine
+      
+
+      ! Get and verify the sizes
+      n = size(xpt, 1)
+      npt = size(xpt, 2)
+
+      if (DEBUG_MODE) then
+          if (n == 0 .or. npt < n + 2) then
+              call errstop(srname, 'SIZE(XPT) is invalid')
+          end if
+          if (size(bmat, 1) /= n .or. size(bmat, 2) /= npt + n) then
+              call errstop(srname, 'SIZE(BMAT) is invalid')
+          end if
+          if (size(zmat, 1) /= npt .or. size(zmat, 2) /= npt-n-1) then
+              call errstop(srname, 'SIZE(ZMAT) is invalid')
+          end if
+          if (size(xopt) /= n) then
+              call errstop(srname, 'SIZE(XOPT) /= N')
+          end if
+          if (size(d) /= n) then
+              call errstop(srname, 'SIZE(D) /= N')
+          end if
+          if (size(vlag) /= n + npt) then
+              call errstop(srname, 'SIZE(VLAG) /= N + NPT')
+          end if
+          if (size(wcheck) /= npt) then
+              call errstop(srname, 'SIZE(WCHECK) /= NPT')
+          end if
+      end if
+      
 
 !----------------------------------------------------------------------!
       ! This is the one of the two places where WCHECK is calculated,
@@ -29,7 +77,7 @@
       ! 100:183--215, 2004
       !
       ! WCHECK is used ONLY in CALQUAD, which evaluates the qudratic
-      ! model. Indeed, we may calculate WCHECK internally in CALQUAD.
+      ! model. Indeed, CALQUAD can be implemented without WCHECK.
       wcheck = matmul(d, xpt)
       wcheck = wcheck*(HALF*wcheck + matmul(xopt, xpt))
 !----------------------------------------------------------------------!
@@ -85,3 +133,5 @@
       return
 
       end subroutine vlagbeta
+
+      end module vlagbeta_mod

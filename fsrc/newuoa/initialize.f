@@ -1,21 +1,83 @@
-      subroutine initialize(n, npt, rhobeg, x, xbase, xpt, f, fval,     &
-     & xopt, fopt, kopt, bmat, zmat, gq, hq, pq, nf, info, ftarget)
+      module initialize_mod
 
-      use consts_mod, only : RP, IK, ZERO, ONE, HALF
+      implicit none
+      private
+      public :: initialize
+
+
+      contains
+
+      subroutine initialize(rhobeg, x, xbase, xpt, f, fval, xopt, fopt, &
+     & kopt, bmat, zmat, gq, hq, pq, nf, info, ftarget)
+
+      use consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUG_MODE
+      use warnerror_mod, only : errstop
       use infnan_mod
       implicit none
 
-      integer(IK), intent(in) :: n, npt
-      integer(IK), intent(out) :: info, kopt, nf
-      real(RP), intent(in) :: rhobeg, x(n), ftarget
-      real(RP), intent(out) :: xbase(n), xpt(n, npt), f, fval(npt),     &
-     & xopt(n), fopt, bmat(n, npt + n), zmat(npt, npt-n-1)
-      real(RP), intent(out) :: gq(n), hq(n, n), pq(npt)
+      ! Inputs
+      integer(IK), intent(out) :: info 
+      integer(IK), intent(out) :: kopt
+      integer(IK), intent(out) :: nf
+      real(RP), intent(in) :: rhobeg
+      real(RP), intent(in) :: x(:)  ! X(N)
+      real(RP), intent(in) :: ftarget
+      real(RP), intent(out) :: xbase(:)  ! XBASE(N)
+      real(RP), intent(out) :: xpt(:, :)  ! XPT(N, NPT)
+      real(RP), intent(out) :: f
+      real(RP), intent(out) :: fval(:)  ! FVAL(NPT)
+      real(RP), intent(out) :: xopt(:)  ! XOPT(N)
+      real(RP), intent(out) :: fopt
+      real(RP), intent(out) :: bmat(:, :)  ! BMAT(N, NPT + N)
+      real(RP), intent(out) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
+      real(RP), intent(out) :: gq(:)  ! GQ(N)
+      real(RP), intent(out) :: hq(:, :)  ! HQ(N, N)
+      real(RP), intent(out) :: pq(:)  ! PQ(NPT)
 
-      integer(IK) :: k, ih, ip, ipt(npt), itemp, jp, jpt(npt), npt1,npt2
-      real(RP) :: fbeg, fip, fjp, rhosq, reciq, recip, xip, xjp,xtemp(n)
-      logical :: evaluated(npt)
+      ! Intermediate variables
+      integer(IK) :: n, npt
+      integer(IK) :: k, ih, ip, ipt(size(fval)), itemp 
+      integer(IK) :: jp, jpt(size(fval)), npt1,npt2
+      real(RP) :: fbeg, fip, fjp, rhosq, reciq, recip
+      real(RP) :: xip, xjp,xtemp(size(x))
+      logical :: evaluated(size(fval))
+      character(len = 100) :: srname
 
+      srname = 'INITIALIZE'  ! Name of the current subroutine
+
+      ! Get and verify the sizes
+      n = size(x)
+      npt = size(fval)
+
+      if (DEBUG_MODE) then
+          if (n == 0 .or. npt < n + 2) then
+              call errstop(srname, 'SIZE(X) or SIZE(FVAL) is invalid')
+          end if
+          if (size(xbase) /= n) then
+              call errstop(srname, 'SIZE(XBASE) /= N')
+          end if
+          if (size(xopt) /= n) then
+              call errstop(srname, 'SIZE(XOPT) /= N')
+          end if
+          if (size(xpt, 1) /= n .or. size(xpt, 2) /= npt) then
+              call errstop(srname, 'SIZE(XPT) is invalid')
+          end if
+          if (size(bmat, 1) /= n .or. size(bmat, 2) /= npt + n) then
+              call errstop(srname, 'SIZE(BMAT) is invalid')
+          end if
+          if (size(zmat, 1) /= npt .or. size(zmat, 2) /= npt-n-1) then
+              call errstop(srname, 'SIZE(ZMAT) is invalid')
+          end if
+          if (size(gq) /= n) then
+              call errstop(srname, 'SIZE(GQ) /= N')
+          end if
+          if (size(hq, 1) /= n .or. size(hq, 2) /= n) then
+              call errstop(srname, 'SIZE(HQ) is invalid')
+          end if
+          if (size(pq) /= npt) then
+              call errstop(srname, 'SIZE(PQ) /= NPT')
+          end if
+      end if
 
       ! Set the initial elements of XPT, BMAT, HQ, PQ and ZMAT to ZERO.
       xbase = x
@@ -281,3 +343,5 @@
       return
 
       end subroutine initialize
+
+      end module initialize_mod

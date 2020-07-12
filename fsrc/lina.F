@@ -7,7 +7,7 @@
 
       implicit none
       private
-      public :: r1update, r2update, outprod
+      public :: r1update, r2update
 
 
       interface r1update
@@ -30,7 +30,27 @@
 #endif
 
 
-#if __IMPROVE_POWELL_CODE__ == 0 || __FORTRAN_STANDARD__ < 2008
+! Check whether HYPOT is available as an intrinsic.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#ifdef __HYPOT_AVAILABLE__
+#undef __HYPOT_AVAILABLE__
+#endif
+#define __HYPOT_AVAILABLE__ 0 
+! HYPOT is included in F2008.
+#if __FORTRAN_STANDARD__ >= 2008 
+#undef __HYPOT_AVAILABLE__
+#define __HYPOT_AVAILABLE__ 1
+#endif
+! HYPOT is included in gfortran since 4.4.7 
+#ifdef __GFORTRAN__
+#if __GNUC__ >= 5
+#undef __HYPOT_AVAILABLE__
+#define __HYPOT_AVAILABLE__ 1
+#endif
+#endif
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+#if __IMPROVE_POWELL_CODE__ == 0 || __HYPOT_AVAILABLE__ == 0
       public :: hypot
       interface hypot
           module procedure hypotenuse
@@ -50,18 +70,18 @@
       ! is a symmetric matrix while ALPHA*X*Y^T is asymmetric due to 
       ! the non-associativity of floating-point multiplication.
       use consts_mod, only : RP, IK, DEBUG_MODE
-      use warnerror_mod, only : errmssg
+      use warnerror_mod, only : errstop
       implicit none
       real(RP), intent(in) :: alpha
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
       real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
       integer(IK) :: j 
+      character(len = 100), parameter :: srname = 'R1_WITH_SCALAR'
 
       if (DEBUG_MODE) then
-          if (size(A, 1) /= size(y) .or. size(A, 2) /= size(y)) then
-              call errmssg('R1UPDATE', 'SIZE(A) is invalid')
-              stop
+          if (size(A, 1) /= size(x) .or. size(A, 2) /= size(y)) then
+              call errstop(srname, 'SIZE(A) is invalid')
           end if
       end if
 
@@ -79,17 +99,17 @@
       ! where A is an MxN matrix, X is an M-dimenional vector, and Y is
       ! an N-dimenional vector.
       use consts_mod, only : RP, IK, DEBUG_MODE
-      use warnerror_mod, only : errmssg
+      use warnerror_mod, only : errstop
       implicit none
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
       real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
       integer(IK) :: j 
+      character(len = 100), parameter :: srname = 'R1_WITHOUT_SCALAR'
 
       if (DEBUG_MODE) then
-          if (size(A, 1) /= size(y) .or. size(A, 2) /= size(y)) then
-              call errmssg('R1UPDATE', 'SIZE(A) is invalid')
-              stop
+          if (size(A, 1) /= size(x) .or. size(A, 2) /= size(y)) then
+              call errstop(srname, 'SIZE(A) is invalid')
           end if
       end if
 
@@ -115,7 +135,7 @@
       ! A + ALPHA*( X*Y^T ) + BETA*( U*V^T )
       ! to ensure the semmetry when ALPHA = BETA, X = V, and Y = U.
       use consts_mod, only : RP, IK, DEBUG_MODE
-      use warnerror_mod, only : errmssg
+      use warnerror_mod, only : errstop
       implicit none
       real(RP), intent(in) :: alpha
       real(RP), intent(in) :: beta 
@@ -125,19 +145,17 @@
       real(RP), intent(in) :: v(:)  ! V(SIZE(Y))
       real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
       integer(IK) :: j 
+      character(len = 100), parameter :: srname = 'R2_WITH_SCALAR'
 
       if (DEBUG_MODE) then
           if (size(u) /= size(x)) then
-              call errmssg('R2_WITH_SCALAR', 'SIZE(U) /= SIZE(X)')
-              stop
+              call errstop(srname, 'SIZE(U) /= SIZE(X)')
           end if
           if (size(v) /= size(y)) then
-              call errmssg('R2_WITH_SCALAR', 'SIZE(V) /= SIZE(Y)')
-              stop
+              call errstop(srname, 'SIZE(V) /= SIZE(Y)')
           end if
-          if (size(A, 1) /= size(y) .or. size(A, 2) /= size(y)) then
-              call errmssg('R2_WITH_SCALAR', 'SIZE(A) is invalid')
-              stop
+          if (size(A, 1) /= size(x) .or. size(A, 2) /= size(y)) then
+              call errstop(srname, 'SIZE(A) is invalid')
           end if
       end if
 
@@ -157,7 +175,7 @@
       ! A + X*Y^T +  U*V^T 
       ! to ensure the semmetry when X = V and Y = U.
       use consts_mod, only : RP, IK, DEBUG_MODE
-      use warnerror_mod, only : errmssg
+      use warnerror_mod, only : errstop
       implicit none
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
@@ -165,24 +183,23 @@
       real(RP), intent(in) :: v(:)  ! V(SIZE(Y))
       real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
       integer(IK) :: j 
+      character(len = 100), parameter :: srname = 'R2_WITHOUT_SCALAR'
 
       if (DEBUG_MODE) then
           if (size(u) /= size(x)) then
-              call errmssg('R2_WITH_SCALAR', 'SIZE(U) /= SIZE(X)')
-              stop
+              call errstop(srname, 'SIZE(U) /= SIZE(X)')
           end if
           if (size(v) /= size(y)) then
-              call errmssg('R2_WITH_SCALAR', 'SIZE(V) /= SIZE(Y)')
-              stop
+              call errstop(srname, 'SIZE(V) /= SIZE(Y)')
           end if
-          if (size(A, 1) /= size(y) .or. size(A, 2) /= size(y)) then
-              call errmssg('R2_WITH_SCALAR', 'SIZE(A) is invalid')
-              stop
+          if (size(A, 1) /= size(x) .or. size(A, 2) /= size(y)) then
+              call errstop(srname, 'SIZE(A) is invalid')
           end if
       end if
 
       do j = 1, size(y)
-          A(:, j) = A(:, j) + ( x*y(j) + u*v(j) )
+          !A(:, j) = A(:, j) + ( x*y(j) + u*v(j) )
+          A(:, j) = A(:, j) + x*y(j) + u*v(j)
       end do
       end subroutine r2_without_scalar
 
@@ -191,17 +208,17 @@
 
       function matmul12(x, y) result(z)
       use consts_mod, only : RP, IK, DEBUG_MODE
-      use warnerror_mod, only : errmssg 
+      use warnerror_mod, only : errstop
       implicit none
       real(RP), dimension(:), intent(in) :: x
       real(RP), dimension(:, :), intent(in) :: y
       real(RP), dimension(size(y, 2)) :: z
       integer(IK) :: j
+      character(len = 100), parameter :: srname = 'MATMUL12' 
       
       if (DEBUG_MODE) then
           if (size(x) /= size(y, 1)) then
-              call errmssg('MATMUL12', 'SIZE(X) /= SIZE(Y, 1)')
-              stop
+              call errstop(srname, 'SIZE(X) /= SIZE(Y, 1)')
           end if
       end if
 
@@ -212,17 +229,17 @@
 
       function matmul21(x, y) result(z)
       use consts_mod, only : RP, IK, ZERO, DEBUG_MODE
-      use warnerror_mod, only : errmssg
+      use warnerror_mod, only : errstop
       implicit none
       real(RP), dimension(:, :), intent(in) :: x
       real(RP), dimension(:), intent(in) :: y
       real(RP), dimension(size(x, 1)) :: z
       integer(IK) :: j 
+      character(len = 100), parameter :: srname = 'MATMUL21' 
 
       if (DEBUG_MODE) then
           if (size(x, 2) /= size(y)) then
-              call errmssg('MATMUL21', 'SIZE(X, 2) /= SIZE(Y)')
-              stop 
+              call errstop(srname, 'SIZE(X, 2) /= SIZE(Y)')
           end if
       end if
 
@@ -234,16 +251,16 @@
 
       function matmul22(x, y) result(z)
       use consts_mod, only : RP, IK, ZERO, DEBUG_MODE
-      use warnerror_mod, only : errmssg 
+      use warnerror_mod, only : errstop
       implicit none
       real(RP), dimension(:, :), intent(in) :: x, y
       real(RP), dimension(size(x, 1), size(y, 2)) :: z
       integer(IK) :: i, j
+      character(len = 100), parameter :: srname = 'MATMUL22'
 
       if (DEBUG_MODE) then
           if (size(x, 2) /= size(y, 1)) then
-              call errmssg('MATMUL22', 'SIZE(X, 2) /= SIZE(Y, 1)')
-              stop 
+              call errstop(srname, 'SIZE(X, 2) /= SIZE(Y, 1)')
           end if
       end if
 
@@ -257,16 +274,16 @@
 
       function inprod(x, y) result(z)
       use consts_mod, only : RP, IK, ZERO, DEBUG_MODE
-      use warnerror_mod, only : errmssg 
+      use warnerror_mod, only : errstop 
       implicit none
       real(RP), dimension(:), intent(in) :: x, y
       real(RP) :: z
       integer(IK) :: i
+      character(len = 100), parameter :: srname = 'INPROD'
 
       if (DEBUG_MODE) then
           if (size(x) /= size(y)) then
-              call errmssg('INPROD', 'SIZE(X) /= SIZE(Y)')
-              stop 
+              call errstop(srname, 'SIZE(X) /= SIZE(Y)')
           end if
       end if
 
