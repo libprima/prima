@@ -15,7 +15,8 @@
       ! where LFUNC is the KNEW-th Lagrange function.
       ! In addition, it sets ALPHA for the selected D.
 
-      use consts_mod, only : RP, IK, ONE, TWO, HALF, PI, ZERO,DEBUG_MODE
+      use consts_mod, only : RP, IK, ONE, TWO, HALF, PI, ZERO
+      use consts_mod, only : DEBUG_MODE, SRNLEN
       use lina_mod
       use warnerror_mod, only : errstop
       implicit none
@@ -35,7 +36,7 @@
      & s(size(x)), w(size(x)), zknew(size(zmat, 2)), angle, cf(5), cth, &
      & dd, denom, dhd, gg, scaling, sp, ss, step, sth, tau, taubeg,     &
      & tauold, taumax, temp, tempa, tempb
-      character(len = 100) :: srname
+      character(len = SRNLEN), parameter :: srname = 'BIGLAG'
 
        
       ! N is the number of variables.
@@ -51,8 +52,6 @@
       ! HCOL, GC, GD, S and W will be used for working space.
 
 
-      srname = 'BIGLAG'  ! Name of the current subroutine.
-       
       ! Get and verify the sizes.
       n = size(xpt, 1)
       npt = size(xpt, 2)
@@ -213,8 +212,8 @@
       ! interpolation problem. 
       ! In addition, it sets VLAG, BETA, and WCHECK for the selected D.
 
-      use consts_mod, only : RP, IK, ONE, TWO, HALF, QUART, PI, ZERO,   &
-     & DEBUG_MODE
+      use consts_mod, only : RP, IK, ONE, TWO, HALF, QUART, PI, ZERO
+      use consts_mod, only : DEBUG_MODE, SRNLEN
       use warnerror_mod, only : errstop
       use lina_mod
       implicit none
@@ -239,7 +238,7 @@
      & w2(size(x)), angle, dd, denmax, denold, densav, ds, dtest, ss,   &
      & ssden, summation, sumold, step, tau, temp, tempa, tempb, tempc,  &
      & tempv(size(xpt, 2)), xd, xs, xsq, alpha
-      character(len = 100) :: srname
+      character(len = SRNLEN), parameter :: srname = 'BIGDEN'
 
       ! N is the number of variables.
       ! NPT is the number of interpolation equations.
@@ -265,7 +264,6 @@
       ! a large modulus in the updating formula when the KNEW-th
       ! interpolation point is shifted to the new position X + D.
 
-      srname = 'BIGDEN'  ! Name of the current subroutine.
        
       ! Get and verify the sizes.
       n = size(xpt, 1)

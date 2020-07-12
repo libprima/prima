@@ -18,7 +18,7 @@
       ! CALQUAD calculates VQUAD = Q(X + D) - Q(X), where Q is the
       ! quadratic function defined by (GQ, HQ, PQ).
 
-      use consts_mod, only : RP, IK, HALF, ZERO, DEBUG_MODE
+      use consts_mod, only : RP, IK, HALF, ZERO, DEBUG_MODE, SRNLEN
       use warnerror_mod, only : errstop
       use lina_mod
       implicit none
@@ -35,9 +35,7 @@
       integer(IK) :: i, ih, j, k, n, npt
       real(RP) :: s(size(x)), temp!,sd
       real(RP) :: wcheck(size(pq))
-      character(len = 100) :: srname
-
-      srname = 'INITIALIZE'  ! Name of the current subroutine
+      character(len = SRNLEN), parameter :: srname = 'CALQUAD'
 
 
       ! Get and verify the sizes

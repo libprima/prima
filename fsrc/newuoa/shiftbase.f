@@ -12,7 +12,7 @@
       ! HQ, and BMAT accordingly. PQ and ZMAT remain the same after the
       ! shifting. See Section 7 of the NEWUOA paper.
 
-      use consts_mod, only : RP, IK, HALF, QUART, DEBUG_MODE
+      use consts_mod, only : RP, IK, HALF, QUART, DEBUG_MODE, SRNLEN
       use warnerror_mod, only : errstop
       use lina_mod
       implicit none
@@ -31,9 +31,8 @@
       real(RP) :: sumz(size(zmat, 2)), vlag(size(xopt))
       real(RP) :: qxoptq, xoptsq, xpq(size(xopt)), bmatk(size(bmat, 1)) 
       REAL(RP) :: w1(size(pq)), w2(size(xopt)), w3(size(pq)) 
-      character(len = 100) :: srname
+      character(len = SRNLEN), parameter :: srname = 'SHIFTBASE' 
 
-      srname = 'SHIFTBASE'  ! Name of the current subroutine
 
       ! Get and verify the sizes
       n = size(xpt, 1)

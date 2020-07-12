@@ -35,6 +35,7 @@
       public :: RP, DP, SP, QP, REAL32, REAL64, REAL128, RP_DEFAULT 
       public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
       public :: EPS, HUGENUM, ALMOST_INFINITY, HUGEFUN, HUGECON 
+      public :: SRNLEN
 
 #if __DEBUG_MODE__ == 1
       logical, parameter :: DEBUG_MODE = .true.
@@ -98,6 +99,9 @@
       integer, parameter :: MAXE = maxexponent(ZERO)
       real(RP), parameter :: HUGEFUN = TWO**min(100, MAXE/2)
       real(RP), parameter :: HUGECON = HUGEFUN
+
+      ! The maximal length of subroutine/function names
+      integer, parameter :: SRNLEN = 30
 
 
       end module consts_mod 
