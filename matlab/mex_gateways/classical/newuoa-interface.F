@@ -61,7 +61,8 @@ C History of function evaluation
           integer, intent(out) :: info
           real(DP), intent(in) :: rhobeg, rhoend, ftarget
           real(DP), intent(out) :: f
-          real(DP), intent(inout) :: x(n), w(*)  ! x(:) or w(:) does not  work !!!
+          real(DP), intent(inout) :: x(n), w(*)  
+                                    ! x(:) or w(:) does not  work !!!
           end subroutine NEWUOA
       end interface
 

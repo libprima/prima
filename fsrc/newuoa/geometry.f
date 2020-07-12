@@ -1,8 +1,9 @@
-      module geometry
+      module geometry_mod
 
       implicit none
       private
       public :: biglag, bigden
+
 
       contains
 
@@ -16,18 +17,18 @@
 
       use consts_mod, only : RP, IK, ONE, TWO, HALF, PI, ZERO,DEBUG_MODE
       use lina_mod
-      use warnerror_mod, only : errmssg
+      use warnerror_mod, only : errstop
       implicit none
 
-      integer(IK), intent(in) ::    idz
-      integer(IK), intent(in) ::    knew
-      real(RP), intent(in) ::   x(:)        ! X(N)
-      real(RP), intent(in) ::   xpt(:, :)   ! XPT(N, NPT)
-      real(RP), intent(in) ::   bmat(:, :)  ! BMAT(N, NPT + N)
-      real(RP), intent(in) ::   zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
-      real(RP), intent(in) ::   delta 
-      real(RP), intent(out) ::  alpha
-      real(RP), intent(out) ::  d(:)        ! D(N)
+      integer(IK), intent(in) :: idz
+      integer(IK), intent(in) :: knew
+      real(RP), intent(in) :: x(:)        ! X(N)
+      real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
+      real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT + N)
+      real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
+      real(RP), intent(in) :: delta 
+      real(RP), intent(out) :: alpha
+      real(RP), intent(out) :: d(:)        ! D(N)
 
       integer(IK) :: i, isave, iterc, iu, k, n, npt
       real(RP) :: hcol(size(xpt, 2)), gc(size(x)), gd(size(x)),         &
@@ -58,20 +59,16 @@
 
       if (DEBUG_MODE) then
           if (n == 0 .or. npt < n + 2) then
-              call errmssg(srname, 'SIZE(XPT) is invalid')
-              stop
+              call errstop(srname, 'SIZE(XPT) is invalid')
           end if
           if (size(x) /= n) then
-              call errmssg(srname, 'SIZE(X) /= SIZE(XPT, 1)')
-              stop
+              call errstop(srname, 'SIZE(X) /= SIZE(XPT, 1)')
           end if
           if (size(bmat, 1) /= n .or. size(bmat, 2) /= npt + n) then
-              call errmssg(srname, 'SIZE(BMAT) is invalid')
-              stop
+              call errstop(srname, 'SIZE(BMAT) is invalid')
           end if
           if (size(zmat, 1) /= npt .or. size(zmat, 2) /= npt-n-1) then
-              call errmssg(srname, 'SIZE(ZMAT) is invalid')
-              stop
+              call errstop(srname, 'SIZE(ZMAT) is invalid')
           end if
       end if
 
@@ -216,23 +213,23 @@
       ! interpolation problem. 
       ! In addition, it sets VLAG, BETA, and WCHECK for the selected D.
 
-      use consts_mod, only : RP, IK, ONE, TWO, HALF, QUART, PI, ZERO,       &
+      use consts_mod, only : RP, IK, ONE, TWO, HALF, QUART, PI, ZERO,   &
      & DEBUG_MODE
-      use warnerror_mod, only : errmssg
+      use warnerror_mod, only : errstop
       use lina_mod
       implicit none
 
-      integer(IK), intent(in) ::        knew
-      integer(IK), intent(in) ::        kopt
-      integer(IK), intent(in) ::        idz
-      real(RP), intent(in) ::       x(:)        ! X(N)
-      real(RP), intent(in) ::       xpt(:, :)   ! XPT(N, NPT)
-      real(RP), intent(in) ::       bmat(:, :)  ! BMAT(N, NPT+N)
-      real(RP), intent(in) ::       zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
-      real(RP), intent(out) ::      beta
-      real(RP), intent(out) ::      vlag(:)     ! VLAG(NPT + N)
-      real(RP), intent(out) ::      wcheck(:)   ! WCHECK(NPT + N) 
-      real(RP), intent(inout) ::    d(:)        ! D(N)
+      integer(IK), intent(in) :: knew
+      integer(IK), intent(in) :: kopt
+      integer(IK), intent(in) :: idz
+      real(RP), intent(in) :: x(:)        ! X(N)
+      real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
+      real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT+N)
+      real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
+      real(RP), intent(out) :: beta
+      real(RP), intent(out) :: vlag(:)     ! VLAG(NPT + N)
+      real(RP), intent(out) :: wcheck(:)   ! WCHECK(NPT) 
+      real(RP), intent(inout) :: d(:)        ! D(N)
 
       integer(IK) :: i, isave, iterc, iu, j, jc, k, nw, n, npt
       real(RP) :: s(size(x)), wvec(size(xpt, 2) + size(x), 5),          &
@@ -276,37 +273,29 @@
 
       if (DEBUG_MODE) then
           if (n == 0 .or. npt < n + 2) then
-              call errmssg(srname, 'SIZE(XPT) is invalid')
-              stop
+              call errstop(srname, 'SIZE(XPT) is invalid')
           end if
           if (size(x) /= n) then
-              call errmssg(srname, 'SIZE(X) /= SIZE(XPT, 1)')
-              stop
+              call errstop(srname, 'SIZE(X) /= SIZE(XPT, 1)')
           end if
           if (size(bmat, 1) /= n .or. size(bmat, 2) /= npt + n) then
-              call errmssg(srname, 'SIZE(BMAT) is invalid')
-              stop
+              call errstop(srname, 'SIZE(BMAT) is invalid')
           end if
           if (size(zmat, 1) /= npt .or. size(zmat, 2) /= npt-n-1) then
-              call errmssg(srname, 'SIZE(ZMAT) is invalid')
-              stop
+              call errstop(srname, 'SIZE(ZMAT) is invalid')
           end if
           if (size(vlag) /= npt + n) then
-              call errmssg(srname, 'SIZE(VLAG) is invalid')
-              stop
+              call errstop(srname, 'SIZE(VLAG) /= NPT + N')
           end if
-          if (size(wcheck) /= npt + n) then
-              call errmssg(srname, 'SIZE(WCHECK) is invalid')
-              stop
+          if (size(wcheck) /= npt) then
+              call errstop(srname, 'SIZE(WCHECK) /= NPT')
           end if
           if (size(d) /= n) then
-              call errmssg(srname, 'SIZE(D) /= SIZE(X)')
-              stop
+              call errstop(srname, 'SIZE(D) /= N')
           end if
       end if    
 
-      ! Store the first NPT elements of the KNEW-th column of H in 
-      ! WCHECK(N + 1) to WCHECK(N + NPT).
+      ! Store the first NPT elements of the KNEW-th column of H in W1.
       zknew = zmat(knew, :)
       zknew(1 : idz - 1) = -zknew(1 : idz - 1)
       w1 = matmul(zmat, zknew)
@@ -558,18 +547,18 @@
       ! 100:183--215, 2004
       !
       ! WCHECK is used ONLY in CALQUAD, which evaluates the qudratic
-      ! model. Indeed, we may calculate WCHECK internally in CALQUAD.
+      ! model. CALQUAD can be implemented without WCHECK.
       !
       ! WCHECK is the following vector in theory. 
 !-----!wcheck = matmul(d, xpt) !---------------------------------------!
 !-----!wcheck = wcheck*(HALF*wcheck + matmul(x, xpt)) !----------------!
       ! The result here is likely different from the theoretical value.
 !----------------------------------------------------------------------!
-      wcheck = matmul(wvec(:, 1 : 5), par(1 : 5))
+      wcheck = matmul(wvec(1 : npt, 1 : 5), par(1 : 5))
       vlag(kopt) = vlag(kopt) + ONE
 
       return
 
       end subroutine bigden
 
-      end module geometry
+      end module geometry_mod

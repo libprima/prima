@@ -1,8 +1,8 @@
-      module update 
+      module update_mod
 
       implicit none
       private
-      public :: updateh, updateq
+      public :: updateh, updateq, qalt
 
 
       contains
@@ -20,16 +20,16 @@
       ! VLAGBETA.
 
       use consts_mod, only : RP, IK, ONE, ZERO, DEBUG_MODE
-      use warnerror_mod, only : errmssg
+      use warnerror_mod, only : errstop
       use lina_mod
       implicit none
 
-      integer(IK), intent(in) ::        knew
-      integer(IK), intent(inout) ::     idz
-      real(RP), intent(in) ::       beta
-      real(RP), intent(inout) ::    bmat(:, :)  ! BMAT(N, NPT + N)
-      real(RP), intent(inout) ::    zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
-      real(RP), intent(inout) ::    vlag(:)     ! VLAG(NPT + N)
+      integer(IK), intent(in) :: knew
+      integer(IK), intent(inout) :: idz
+      real(RP), intent(in) :: beta
+      real(RP), intent(inout) :: bmat(:, :)  ! BMAT(N, NPT + N)
+      real(RP), intent(inout) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
+      real(RP), intent(inout) :: vlag(:)     ! VLAG(NPT + N)
 
       integer(IK) :: iflag, j, ja, jb, jl, n, npt
       real(RP) :: c, s, r, alpha, denom, scala, scalb, tau, tausq, temp,&
@@ -45,16 +45,13 @@
 
       if (DEBUG_MODE) then
           if (n == 0 .or. npt < n + 2) then
-              call errmssg(srname, 'SIZE(BMAT) is invalid')
-              stop
+              call errstop(srname, 'SIZE(BMAT) is invalid')
           end if
           if (size(zmat, 1) /= npt .or. size(zmat, 2) /= npt-n-1) then
-              call errmssg(srname, 'SIZE(ZMAT) is invalid')
-              stop
+              call errstop(srname, 'SIZE(ZMAT) is invalid')
           end if
           if (size(vlag) /= npt + n) then
-              call errmssg(srname, 'SIZE(VLAG) is invalid')
-              stop
+              call errstop(srname, 'SIZE(VLAG) is invalid')
           end if
       end if
       
@@ -229,7 +226,7 @@
 !      !---------------POWELL'S IMPLEMENTATION ENDS---------------------!
 
       !-----------------MATRIX-VECTOR IMPLEMENTATION-------------------!
-      bmat = bmat + outprod(v1, vlag) + outprod(v2, w)
+      call r2update(bmat, v1, vlag, v2, w)
       ! Set the upper triangular part of BMAT(:,NPT+1:NPT+N) by symmetry
       ! Note that SHIFTBASE sets the lower triangular part by copying
       ! the upper triangular part, but here it does the opposite. There 
@@ -260,20 +257,20 @@
       subroutine updateq(idz, knew, fqdiff, xptknew, bmatknew, zmat, gq,&
      & hq, pq)
 
-      use warnerror_mod, only : errmssg
+      use warnerror_mod, only : errstop
       use consts_mod, only : RP, IK, ZERO, DEBUG_MODE
       use lina_mod
       implicit none
 
-      integer(IK), intent(in) ::        idz
-      integer(IK), intent(in) ::        knew
-      real(RP), intent(in) ::       fqdiff
-      real(RP), intent(in) ::       xptknew(:)  ! XPTKNEW(N)
-      real(RP), intent(in) ::       bmatknew(:) ! BMATKNEW(N)
-      real(RP), intent(in) ::       zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
-      real(RP), intent(inout) ::    gq(:)   ! GQ(N)
-      real(RP), intent(inout) ::    hq(:, :)! HQ(N, N)
-      real(RP), intent(inout) ::    pq(:)   ! PQ(NPT) 
+      integer(IK), intent(in) :: idz
+      integer(IK), intent(in) :: knew
+      real(RP), intent(in) :: fqdiff
+      real(RP), intent(in) :: xptknew(:)  ! XPTKNEW(N)
+      real(RP), intent(in) :: bmatknew(:) ! BMATKNEW(N)
+      real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
+      real(RP), intent(inout) :: gq(:)   ! GQ(N)
+      real(RP), intent(inout) :: hq(:, :)! HQ(N, N)
+      real(RP), intent(inout) :: pq(:)   ! PQ(NPT) 
 
       integer(IK) :: i, j, n, npt
       real(RP) :: fqdz(size(zmat, 2))
@@ -287,37 +284,32 @@
 
       if (DEBUG_MODE) then
           if (n == 0 .or. npt < n + 2) then
-              call errmssg(srname, 'SIZE(GQ) or SIZE(PQ) is invalid')
-              stop
+              call errstop(srname, 'SIZE(GQ) or SIZE(PQ) is invalid')
           end if
           if (size(zmat, 1) /= npt .or. size(zmat, 2) /= npt-n-1) then
-              call errmssg(srname, 'SIZE(ZMAT) is invalid')
-              stop
+              call errstop(srname, 'SIZE(ZMAT) is invalid')
           end if
           if (size(xptknew) /= n) then
-              call errmssg(srname, 'SIZE(XPTKNEW) is invalid')
-              stop
+              call errstop(srname, 'SIZE(XPTKNEW) is invalid')
           end if
           if (size(bmatknew) /= n) then
-              call errmssg(srname, 'SIZE(BMATKNEW) is invalid')
-              stop
+              call errstop(srname, 'SIZE(BMATKNEW) is invalid')
           end if
           if (size(hq, 1) /= n .or. size(hq, 2) /= n) then
-              call errmssg(srname, 'SIZE(HQ) is invalid')
-              stop
+              call errstop(srname, 'SIZE(HQ) is invalid')
           end if
       end if
 
       !----------------------------------------------------------------!
       ! This update does NOT preserve symmetry. Symmetrization needed! 
-      hq = hq + outprod(xptknew, pq(knew)*xptknew)
+      call r1update(hq, xptknew, pq(knew)*xptknew)
       do i = 1, n
           hq(i, 1:i-1) = hq(1:i-1, i)
       end do
       !---------- A probably better implementation: -------------------!
       ! This is better because it preserves symmetry even with floating
       ! point arithmetic.
-!-----!hq = hq + pq(knew)*outprod(xptknew, xptknew) !------------------!
+!-----!call r1update(hq, pq(knew), xptknew, xptknew) !-----------------!
       !----------------------------------------------------------------!
 
       ! Update the implicit part of second derivatives.
@@ -342,4 +334,64 @@
 
       end subroutine updateq
 
-      end module update
+
+      subroutine qalt(gq, hq, pq, fval, smat, zmat, kopt, idz)
+      ! QALT calculates the alternative model, namely the model that
+      ! minimizes the F-norm of the Hessian subject to the interpolation
+      ! conditions. 
+      ! Note that SMAT = BMAT(:, 1:NPT)
+
+      use consts_mod, only : RP, IK, ZERO, DEBUG_MODE
+      use warnerror_mod
+      use lina_mod
+      implicit none
+
+      integer(IK), intent(in) :: kopt
+      integer(IK), intent(in) :: idz
+      real(RP), intent(in) :: fval(:)       ! FVAL(NPT)
+      real(RP), intent(in) :: smat(:, :)    ! SMAT(N, NPT)
+      real(RP), intent(in) :: zmat(:, :)    ! ZMAT(NPT, NPT-N-!)
+      real(RP), intent(out) :: gq(:)        ! GQ(N)
+      real(RP), intent(out) :: hq(:, :)     ! HQ(N, N)
+      real(RP), intent(out) :: pq(:)        ! PQ(NPT)
+
+      real(RP) :: vlag(size(pq)), vz(size(zmat, 2))
+      integer(IK) :: n, npt
+      character(len = 100) :: srname
+
+      srname = 'QALT'  ! Name of the current subroutine.
+
+      ! Get and verify the sizes.
+      n = size(gq)
+      npt = size(pq)
+
+      if (DEBUG_MODE) then
+          if (n == 0 .or. npt < n + 2) then
+              call errstop(srname, 'SIZE(GQ) or SIZE(PQ) is invalid')
+          end if
+          if (size(fval) /= npt) then
+              call errstop(srname, 'SIZE(FVAL) /= NPT')
+          end if
+          if (size(smat, 1) /= n .or. size(smat, 2) /= npt) then
+              call errstop(srname, 'SIZE(SMAT) is invalid')
+          end if
+          if (size(zmat, 1) /= npt .or. size(zmat, 2) /= npt-n-1) then
+              call errstop(srname, 'SIZE(ZMAT) is invalid')
+          end if
+          if (size(hq, 1) /= n .or. size(hq, 2) /= n) then
+              call errstop(srname, 'SIZE(HQ) is invalid')
+          end if
+      end if
+
+      vlag = fval - fval(kopt)
+      gq = matmul(smat, vlag)
+      hq = ZERO
+      vz = matmul(vlag, zmat)
+      vz(1 : idz - 1) = - vz(1 : idz - 1)
+      pq = matmul(zmat, vz)
+
+      return
+
+      end subroutine qalt
+
+      end module update_mod

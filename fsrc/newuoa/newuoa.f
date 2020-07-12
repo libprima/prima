@@ -1,3 +1,12 @@
+      module newuoa_mod
+
+      implicit none
+      private
+      public :: newuoa
+
+
+      contains
+
       subroutine newuoa (npt, x, rhobeg, rhoend, iprint, maxfun, f,     &
      & info, ftarget)
       ! NEWUOA seeks the least value of a function of many variables,
@@ -85,4 +94,6 @@
       call newuob(npt, rhobeg, min(rhobeg, rhoend), iprint, maxfun,     &
      & ftarget, x, f, nf, info)
       return
-      end
+      end subroutine newuoa
+
+      end module newuoa_mod

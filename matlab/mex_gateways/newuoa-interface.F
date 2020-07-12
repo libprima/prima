@@ -50,7 +50,6 @@ C Fortran code starts
       implicit none
       private
       public :: fun_ptr, nf, fhist
-      public :: NEWUOA
 
 C Some global variables
       mwPointer, save :: fun_ptr ! Objective function
@@ -59,19 +58,6 @@ C nf should be of type mwSize, because it will be later used as an
 C argument of mxCreateDoubleMatrix
       real(DP), allocatable, save :: fhist(:)
 C History of function evaluation
-
-      interface
-          subroutine NEWUOA(npt, x, rhobeg, rhoend, iprint, maxfun,
-     &        f, info, ftarget)
-          use consts_mod, only : RP, IK
-          implicit none
-          integer(IK), intent(in) :: npt, iprint, maxfun
-          integer(IK), intent(out) :: info
-          real(RP), intent(in) :: rhobeg, rhoend, ftarget
-          real(RP), intent(out) :: f
-          real(RP), intent(inout) :: x(:)  ! x(*) does not work !!!
-          end subroutine NEWUOA
-      end interface
 
       end module fnewuoa_mod
 
@@ -95,8 +81,9 @@ C callable in matlab:
 C [xopt, fopt, info, nf, fhist] = FUNCTION_NAME(fun, x0, rhobeg, rhoend, maxfun, npt, ftarget)
 
       use consts_mod, only : DP, RP, IK, ONE
-      use fnewuoa_mod, only : fun_ptr, nf, fhist, NEWUOA
       use mex_mod
+      use fnewuoa_mod, only : fun_ptr, nf, fhist
+      use newuoa_mod, only : newuoa
       implicit none
 
 C mexFunction arguments (dummy variables):
@@ -268,7 +255,7 @@ C Cast the inputs to the types expected by the Fortran code.
 
 C Call the Fortran code.
       iprint = 0
-      call NEWUOA(npt, x, rhobeg, rhoend, iprint, maxfun,f,info,ftarget)
+      call newuoa(npt, x, rhobeg, rhoend, iprint, maxfun,f,info,ftarget)
 
 C Cast the outputs to the types expected by the MEX subroutines.
       x_dp = real(x, DP)
