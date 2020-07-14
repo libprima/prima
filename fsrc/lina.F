@@ -243,6 +243,8 @@
           ! machine (e.g., cache size), compiler, compiling options,
           ! and MATLAB version.
           z(j) = inprod(x, y(:, j))
+          ! Here we can also write dot_prod(x, y(:, j)), it will still
+          ! call inprod according to the generic interface in lina_mod.
       end do
       end function matmul12
 
@@ -320,8 +322,8 @@
 
       pure elemental function hypotenuse(x, y) result(r)
       ! HYPOTENUSE calculate sqrt(x^2+y^2) if __IMPROVE_POWELL_CODE__ 
-      ! is 0 or the Fortran standard is lower than 2008.
-      ! F2008 provides the intrinsic HYPOT; MATLAB, Python, Julia, R,
+      ! is 0 or if the compiler does not provide HYPOT as an intrinsic.
+      ! F2008 includes the intrinsic HYPOT; MATLAB, Python, Julia, R,
       ! etc., contain built-in functions corresponding to HYPOT.
 
 #if __IMPROVE_POWELL_CODE__ == 0
@@ -352,15 +354,15 @@
 #endif
       end function hypotenuse
 
-      function outprod(x, y) result(z)
-      use consts_mod, only : RP, IK
-      implicit none
-      real(RP), dimension(:), intent(in) :: x, y
-      real(RP), dimension(size(x), size(y)) :: z
-      integer(IK) :: i
-      do i = 1, size(y)
-          z(:, i) = x*y(i)
-      end do
-      end function outprod
+!      function outprod(x, y) result(z)
+!      use consts_mod, only : RP, IK
+!      implicit none
+!      real(RP), dimension(:), intent(in) :: x, y
+!      real(RP), dimension(size(x), size(y)) :: z
+!      integer(IK) :: i
+!      do i = 1, size(y)
+!          z(:, i) = x*y(i)
+!      end do
+!      end function outprod
 
       end module lina_mod
