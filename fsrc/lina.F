@@ -18,8 +18,13 @@
           module procedure r2_with_scalar, r2_without_scalar
       end interface r2update
 
+! When interfaced with MATLAB, the intrinsic matmul and dot_product seem
+! not as efficient as the implementations below (mostly by loops). This
+! may well depend on the machine (e.g., cache size), compiler, compiling
+! options, and MATLAB version.
 #if __USE_INTRINSIC_ALGEBRA__ == 0 
       public :: matmul, dot_product
+
       interface matmul
           module procedure matmul12, matmul21, matmul22
       end interface matmul
@@ -225,7 +230,7 @@
       end if
 
       do j = 1, size(y, 2)
-          ! When interfacing with MATLAB, the following seems more
+          ! When interfaced with MATLAB, the following seems more
           ! efficient than a loop, which is strange because inprod
           ! itself is implemented by a loop. This may well depend on the
           ! machine (e.g., cache size), compiler, compiling options,
@@ -295,7 +300,7 @@
       end if
 
       !z = sum(x*y)  
-      ! Using sum seems not as efficient as loop when interfaced with 
+      ! Using sum seems not as efficient as a loop when interfaced with 
       ! MATLAB, but this may well depend on the machine (e.g., cache 
       ! size), compiler, compiling options, and MATLAB version.  
       z = ZERO
