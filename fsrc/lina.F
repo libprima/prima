@@ -31,8 +31,8 @@
 
 
 ! Check whether HYPOT is available as an intrinsic.
-! F2008 provides the intrinsic HYPOT; both MATLAB and Python
-! contains built-in functions corresponding to HYPOT.
+! F2008 provides the intrinsic HYPOT; MATLAB, Python, Julia, R, etc.,
+! contain built-in functions corresponding to HYPOT.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #ifdef __HYPOT_AVAILABLE__
 #undef __HYPOT_AVAILABLE__
@@ -228,7 +228,8 @@
           ! When interfacing with MATLAB, the following seems more
           ! efficient than a loop, which is strange because inprod
           ! itself is implemented by a loop. This may well depend on the
-          ! machine (e.g., cache size), compiler, and MATLAB version.
+          ! machine (e.g., cache size), compiler, compiling options,
+          ! and MATLAB version.
           z(j) = inprod(x, y(:, j))
       end do
       end function matmul12
@@ -296,7 +297,7 @@
       !z = sum(x*y)  
       ! Using sum seems not as efficient as loop when interfaced with 
       ! MATLAB, but this may well depend on the machine (e.g., cache 
-      ! size), compiler, and MATLAB version.  
+      ! size), compiler, compiling options, and MATLAB version.  
       z = ZERO
       do i = 1, size(x)
           z = z + x(i)*y(i)
@@ -308,8 +309,8 @@
       pure elemental function hypotenuse(x, y) result(r)
       ! HYPOTENUSE calculate sqrt(x^2+y^2) if __IMPROVE_POWELL_CODE__ 
       ! is 0 or the Fortran standard is lower than 2008.
-      ! F2008 provides the intrinsic HYPOT; both MATLAB and Python
-      ! contains built-in functions corresponding to HYPOT.
+      ! F2008 provides the intrinsic HYPOT; MATLAB, Python, Julia, R,
+      ! etc., contain built-in functions corresponding to HYPOT.
 
 #if __IMPROVE_POWELL_CODE__ == 0
       use consts_mod, only : RP
