@@ -19,7 +19,7 @@ Why not define these flags as parameters in the Fortran code, e.g.,
 logical, parameter :: __DEBUG_MODE__ = .false. ?
 
 Such a definition will work for __DEBUG_MODE__, but not for the flags that
-depend on the compiler, for example, __FORTRAN_STANDARD__.
+depend on the compiler, for instance, __FORTRAN_STANDARD__.
 */
 /*************************************************************************/
 
