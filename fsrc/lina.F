@@ -1,4 +1,7 @@
 ! LINA is a module providing some basic linear algebra procedures.
+! One may customize the implementations, especially those of matmul and
+! dot_product, according to the resources (hardware and libraries)
+! available and the problem dimension. 
 
 
 #include "ppf.h"
@@ -85,6 +88,10 @@
       real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
       integer(IK) :: j 
       character(len = SRNLEN), parameter :: srname = 'R1_WITH_SCALAR'
+      ! Be careful with initialization! 
+      ! In Fortran >=90, the initialization in the declaration implies
+      ! the "save" attribute. If the variable is not a parameter, it may
+      ! casue unwanted behavior.
 
       if (DEBUG_MODE) then
           if (size(A, 1) /= size(x) .or. size(A, 2) /= size(y)) then
