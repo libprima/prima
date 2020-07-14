@@ -31,11 +31,13 @@
       implicit none
       private
       public :: DEBUG_MODE
-      public :: IK, INT16, INT32, INT64, IK_DEFAULT
-      public :: RP, DP, SP, QP, REAL32, REAL64, REAL128, RP_DEFAULT 
+      public :: IK, INT16, INT32, INT64, IK_DEF
+      public :: RP, DP, SP, QP, REAL32, REAL64, REAL128, RP_DEF
       public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
       public :: EPS, HUGENUM, ALMOST_INFINITY, HUGEFUN, HUGECON 
       public :: SRNLEN
+      public :: RHOBEG_DEF, RHOEND_DEF, FTARGET_DEF
+      public :: MAXFUN_DIM_DEF, IPRINT_DEF
 
 #if __DEBUG_MODE__ == 1
       logical, parameter :: DEBUG_MODE = .true.
@@ -51,8 +53,8 @@
       integer, parameter :: REAL64 = selected_real_kind(15, 307)
       integer, parameter :: REAL128 = selected_real_kind(33, 4931)
 #endif      
-      integer, parameter :: IK_DEFAULT = kind(0)  ! Default integer kind
-      integer, parameter :: RP_DEFAULT = kind(0.0)  ! Default real kind
+      integer, parameter :: IK_DEF = kind(0)  ! Default integer kind
+      integer, parameter :: RP_DEF = kind(0.0)  ! Default real kind
       integer, parameter :: SP = REAL32  ! Kind for single precision
       integer, parameter :: DP = REAL64  ! Kind for double precision
       integer, parameter :: QP = REAL128  ! Kind for quadruple precision
@@ -66,7 +68,7 @@
 #elif __INTEGER_KIND__ == 64 
       integer, parameter :: IK = INT64
 #else
-      integer, parameter :: IK = IK_DEFAULT
+      integer, parameter :: IK = IK_DEF
 #endif
 ! Define the real kind to be used in the Fortran code.
 #if __REAL_PRECISION__ == 32
@@ -76,7 +78,7 @@
 #elif __REAL_PRECISION__ == 128 
       integer, parameter :: RP = REAL128
 #else 
-      integer, parameter :: RP = RP_DEFAULT
+      integer, parameter :: RP = RP_DEF
 #endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       
@@ -103,5 +105,11 @@
       ! The maximal length of subroutine/function names
       integer, parameter :: SRNLEN = 30
 
+      ! Some default values
+      real(RP), parameter :: RHOBEG_DEF = ONE
+      real(RP), parameter :: RHOEND_DEF = 1.0E-6_RP 
+      real(RP), parameter :: FTARGET_DEF = -HUGENUM
+      integer(IK), parameter :: MAXFUN_DIM_DEF = 500
+      integer(IK), parameter :: IPRINT_DEF = 0
 
       end module consts_mod 

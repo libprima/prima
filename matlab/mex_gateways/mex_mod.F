@@ -1,3 +1,13 @@
+! MEX_MOD is a module that does the following. 
+! 1. Define some constants to be used in MEX gateways.
+! 2. Declares the interfaces of some MEX API subroutine/functions 
+!    provided by MathWorks.
+! NOTE: 
+! 1. MathWorks may change its APIs in the future!!!
+! 2. Make sure that everything is identical to the description in the
+!    official documentation of MathWorks. Otherwise, failure or 
+!    unexpected behavior may occur!!! 
+
 #include "fintrf.h"
 
       module mex_mod
@@ -8,13 +18,13 @@
 
       public :: notComplex, mwOne, intOne, intTwo, convTol
 
-      ! MEX subroutines
+      ! MEX API subroutines
       public :: mexErrMsgIdAndTxt
       public :: mxCopyPtrToReal8
       public :: mxCopyReal8ToPtr
       public :: mxDestroyArray
 
-      ! MEX functions 
+      ! MEX API functions 
       public :: mexCallMATLAB
       public :: mxCreateDoubleMatrix
       public :: mxCreateDoubleScalar
@@ -41,6 +51,21 @@ C REAL(RP) and REAL(DP)
 
 
       interface 
+      ! Here we declare the interfaces of MEX API subroutines/functions
+      ! provided by MathWorks. MathWorks may change the interfaces in 
+      ! the future!!! 
+      ! Make sure that the interfaces are identical to those described
+      ! in the official documentation of MathWorks!!!
+      ! In particular, pay attention to the following.
+      ! 1. What is the type of an array? Is it automatic (like y(n)),
+      !    asumed shape (like y(:)), or assumed size (like y(*))?
+      ! 2. What is the kind of an integer argument? Is it INT32, INT64,
+      !    or default INTEGER?
+      ! 3. What is the kind of a real argument? Is it REAL32, REAL64, or
+      !    default REAL?
+      ! 4. The return values of IsClass, IsChar, and IsDouble, etc., 
+      !    are INT32. MathWorks may change them in the future to, e.g.,
+      !    logical or default INTEGER.
 
           ! MEX subroutines
           subroutine mexErrMsgIdAndTxt(errorid, errormsg)
