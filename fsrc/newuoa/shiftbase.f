@@ -12,7 +12,8 @@
       ! HQ, and BMAT accordingly. PQ and ZMAT remain the same after the
       ! shifting. See Section 7 of the NEWUOA paper.
 
-      use consts_mod, only : RP, IK, HALF, QUART, DEBUG_MODE, SRNLEN
+      use consts_mod, only : RP, IK, ONE, HALF, QUART 
+      use consts_mod, only : DEBUG_MODE, SRNLEN
       use warnerror_mod, only : errstop
       use lina_mod
       implicit none
@@ -92,15 +93,8 @@
       xpq = matmul(xpt, pq)
       
       !----------------------------------------------------------------!
-      ! This update does NOT preserve symmetry. Symmetrization needed! 
-      call r2update(hq, xpq, xopt, xopt, xpq)
-      do i = 1, n
-          hq(i, 1:i-1) = hq(1:i-1, i)
-      end do
-      !---------- A probably better implementation: -------------------!
-      ! This is better because it preserves symmetry even with floating
-      ! point arithmetic.
-!-----!hq = hq + ( outprod(xpq, xopt) + outprod(xopt, xpq) ) !---------!
+      ! Implement R2UPDATE properly so that it ensures HQ is symmetric.
+      call r2update(hq, ONE, xopt, xpq)
       !----------------------------------------------------------------!
 
 !==============================POWELL'S SCHEME=========================!
@@ -173,21 +167,11 @@
       do k = 1, npt
           bmatk = bmat(:, k)
           w2 = w1(k)*xpt(:, k) + qxoptq*xopt
-          ! This is the only place where non-symmetry of
-          ! BMAT(:, NPT+1:NPT+N) can come from. It is because of the
-          ! non-associtivity of floating point arithmetic addition. To
-          ! make BMAT(:, NPT+1:NPT+N) symmetric, use the following two
-          ! lines to replace the code below. The only difference is the
-          ! parenthsis around the two outter products. It is probably 
-          ! a BETTERE implementation so we should take it in future
-          ! versions. 
-!----------------------------------------------------------------------!
-!          bmat(:, npt + 1 : npt + n) = bmat(:, npt + 1 : npt + n) +     &
-!     &     ( outprod(w2, bmatk) + outprod(bmatk, w2) )
-!----------------------------------------------------------------------!
-          call r2update(bmat(:, npt+1 : npt+n), w2, bmatk, bmatk, w2)
+          ! Implement R2UPDATE properly so that it ensures 
+          ! bmat(:, npt+1:npt+n) is symmetric.
+          call r2update(bmat(:, npt+1 : npt+n), ONE, bmatk, w2)
       end do
-
+      
       ! Then the revisions of BMAT that depend on ZMAT are calculated.
       sumz = sum(zmat, dim = 1)
       do k = 1, idz - 1
@@ -202,8 +186,10 @@
           do i = 1, npt
               vlag = vlag + w3(i)*xpt(:, i)
           end do
-          call r1update(bmat(:, 1:npt), -vlag, zmat(:, k))
-          call r1update(bmat(:, npt+1 : npt+n), -vlag, vlag)
+          call r1update(bmat(:, 1:npt), -ONE, vlag, zmat(:, k))
+          ! Implement R1UPDATE properly so that it ensures 
+          ! bmat(:, npt+1:npt+n) is symmetric.
+          call r1update(bmat(:, npt+1 : npt+n), -ONE, vlag)
       end do
       do k = idz, npt - n - 1
           ! The following W3 and DO LOOP indeed defines the VLAG below.
@@ -217,22 +203,14 @@
           do i = 1, npt
               vlag = vlag + w3(i)*xpt(:, i)
           end do
-          call r1update(bmat(:, 1:npt), vlag, zmat(:, k))
-          call r1update(bmat(:, npt+1 : npt+n), vlag, vlag)
+          call r1update(bmat(:, 1:npt), ONE, vlag, zmat(:, k))
+          ! Implement R1UPDATE properly so that it ensures 
+          ! bmat(:, npt+1:npt+n) is symmetric.
+          call r1update(bmat(:, npt+1 : npt+n), ONE, vlag)
       end do
 !!!!!!!!!!!!!!!!!!!!!COMPACT SCHEME ENDS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      ! Set the upper triangular part of BMAT(:,NPT+1:NPT+N) by symmetry 
-      ! Note that UPDATE sets the upper triangular part by copying
-      ! the lower triangular part, but here it does the opposite. There
-      ! seems not any particular reason to keep them different. It was
-      ! probably an ad-hoc decision that Powell made when coding. 
-      ! As mentioned above, this part can be spared if we put a pair of
-      ! parenthsis around the two outter products.
-      do j = 1, n
-          bmat(j, npt + 1 : npt + j - 1) = bmat(1 : j - 1, npt + j)
-      end do
-      
+      !----------------------------------------------------------------!
       ! The following instructions complete the shift of XBASE.
       ! Recall the we have already subtracted HALF*XOPT from XPT. 
       ! Therefore, overall, the new XPT is XPT - XOPT.

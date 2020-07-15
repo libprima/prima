@@ -243,12 +243,6 @@
               hdiag = -sum(zmat(:, 1 : idz - 1)**2, dim = 2) +          &
      &         sum(zmat(:, idz : npt - n - 1)**2, dim = 2)             
               xdsq = sum((xpt-spread(xopt,dim=2,ncopies=npt))**2, dim=1)
-!              do k = 1, npt
-!                  hdiag(k) = -sum(zmat(k, 1 : idz - 1)**2) +            &
-!     &             sum(zmat(k, idz : npt - n - 1)**2)
-!                  xdiff = xpt(:, k) - xopt
-!                  xdsq(k) = dot_product(xdiff, xdiff)
-!              end do
               sigma = abs(beta*hdiag + vlag(1 : npt)**2)
               sigma = sigma * max(xdsq/rhosq, one)**3
               if (f >= fsave) then
@@ -329,10 +323,6 @@
               ! the best point so far.
               distsq = 4.0_RP*delta*delta
               xdsq = sum((xpt-spread(xopt,dim=2,ncopies=npt))**2, dim=1)
-!              do k = 1, npt
-!                  xdiff = xpt(:, k) - xopt
-!                  xdsq(k) = dot_product(xdiff, xdiff)
-!              end do
               if (maxval(xdsq) > distsq) then
                   knew = maxloc(xdsq, dim = 1)
                   distsq = maxval(xdsq)

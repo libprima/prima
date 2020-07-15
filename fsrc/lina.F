@@ -1,7 +1,8 @@
 ! LINA is a module providing some basic linear algebra procedures.
-! One may customize the implementations, especially those of matmul and
-! dot_product, according to the resources (hardware and libraries)
-! available and the problem dimension. 
+! To improve the performance of these procedures, especially matmul, one
+! can customize their implementations, according to the resources 
+! (hardware, e.g., cache, and libraries, e.g., BLAS) available and the
+! sizes of the matrices/vectors. 
 
 
 #include "ppf.h"
@@ -11,14 +12,15 @@
       implicit none
       private
       public :: r1update, r2update
+      public :: symmetrize
 
 
       interface r1update
-          module procedure r1_with_scalar, r1_without_scalar
+          module procedure r1_sym, r1
       end interface r1update
 
       interface r2update
-          module procedure r2_with_scalar, r2_without_scalar
+          module procedure r2_sym, r2
       end interface r2update
 
 ! When interfaced with MATLAB, the intrinsic matmul and dot_product seem
@@ -70,16 +72,71 @@
 
       contains
 
-      subroutine r1_with_scalar(A, alpha, x, y)
-      ! R1_WITH_SCALAR sets 
+      subroutine r1_sym(A, alpha, x)
+      ! R1_SYM sets 
+      ! A = A + ALPHA*( X*X^T ), 
+      ! where A is an NxN matrix, ALPHA is a scalar, and X is an
+      ! N-dimenional vector.
+      use consts_mod, only : RP, IK, ONE, ZERO, DEBUG_MODE, SRNLEN
+      use warnerror_mod, only : errstop
+      implicit none
+      real(RP), intent(in) :: alpha
+      real(RP), intent(in) :: x(:)
+      real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(X))
+      integer(IK) :: n, j 
+      character(len = SRNLEN), parameter :: srname ='R1_SYM'
+      ! Be careful with initialization! 
+      ! In Fortran >=90, the initialization in the declaration implies
+      ! the "save" attribute. If the variable is not a parameter, it may
+      ! casue unwanted behavior.
+
+      if (DEBUG_MODE) then
+          if (size(A, 1) /= size(x) .or. size(A, 2) /= size(x)) then
+              call errstop(srname, 'SIZE(A) is invalid')
+          end if
+      end if
+
+      n = size(x)
+
+#if __IMPROVE_POWELL_CODE__ == 0
+      ! Only update the LOWER TRIANGULAR part of A.
+      ! Both of the following cases are invoked in NEWUOA.
+      if (abs(alpha - ONE) > ZERO) then
+          do j = 1, n
+              A(j : n, j) = A(j : n, j) + alpha*x(j : n)*x(j)
+          end do
+      else
+          do j = 1, n
+              A(j : n, j) = A(j : n, j) + x(j : n)*x(j)
+          end do
+      end if
+      ! Set A(UPPER_TRIANGULAR) = A(LOWER_TRIANGULAR).
+      call symmetrize(A) 
+#else
+      ! Here we calculate the increment as ALPHA*( X*X^T ), which 
+      ! is guaranteed symmetric even in floating-point arithmetic.
+      ! Both of the following cases are invoked in NEWUOA.
+      if (abs(alpha - ONE) > ZERO) then
+          do j = 1, n
+              A(:, j) = A(:, j) + alpha*( x*x(j) )
+          end do
+      else
+          do j = 1, n
+              A(:, j) = A(:, j) + x*x(j)
+          end do
+      end if
+#endif          
+      if (DEBUG_MODE) then
+          call verisym(A, ZERO)
+      end if
+      end subroutine r1_sym
+
+      subroutine r1(A, alpha, x, y)
+      ! R1 sets 
       ! A = A + ALPHA*( X*Y^T ), 
       ! where A is an MxN matrix, ALPHA is a real scalar, X is an
       ! M-dimenional vector, and Y is an N-dimenional vector.
-      ! Note that we should calculate the increment as ALPHA*( X*Y^T )
-      ! rather than ALPHA*X*Y^T. Because, when X = Y, ALPHA*( X*Y^T ) 
-      ! is a symmetric matrix while ALPHA*X*Y^T is asymmetric due to 
-      ! the non-associativity of floating-point multiplication.
-      use consts_mod, only : RP, IK, DEBUG_MODE, SRNLEN
+      use consts_mod, only : RP, IK, ONE, ZERO, DEBUG_MODE, SRNLEN
       use warnerror_mod, only : errstop
       implicit none
       real(RP), intent(in) :: alpha
@@ -87,7 +144,7 @@
       real(RP), intent(in) :: y(:)
       real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
       integer(IK) :: j 
-      character(len = SRNLEN), parameter :: srname = 'R1_WITH_SCALAR'
+      character(len = SRNLEN), parameter :: srname = 'R1'
       ! Be careful with initialization! 
       ! In Fortran >=90, the initialization in the declaration implies
       ! the "save" attribute. If the variable is not a parameter, it may
@@ -99,56 +156,99 @@
           end if
       end if
 
-      do j = 1, size(y)
-          A(:, j) = A(:, j) + alpha*( x*y(j) )
-          ! Here we should calculate the increment as ALPHA*( X*Y(J) )
-          ! rather than ALPHA*X*Y(J). See the comments above.
-      end do
-      end subroutine r1_with_scalar
+#if __IMPROVE_POWELL_CODE__ == 0
+      ! Both of the following cases are invoked in NEWUOA.
+      if (abs(alpha - ONE) > ZERO) then
+          do j = 1, size(y)
+              A(:, j) = A(:, j) + alpha*x*y(j)
+          end do
+      else
+          do j = 1, size(y)
+              A(:, j) = A(:, j) + x*y(j)
+          end do
+      end if
+#else
+      ! Here we calculate the increment as ALPHA*( X*Y^T ) rather than 
+      ! ALPHA*X*Y^T to ensure that, when X = Y, the increment is 
+      ! symmetric even in floating-point arithmetic. 
+      ! Both of the following cases are invoked in NEWUOA.
+      if (abs(alpha - ONE) > ZERO) then
+          do j = 1, size(y)
+              A(:, j) = A(:, j) + alpha*( x*y(j) )
+          end do
+      else
+          do j = 1, size(y)
+              A(:, j) = A(:, j) + x*y(j)
+          end do
+      end if
+#endif
+      end subroutine r1
 
 
-      subroutine r1_without_scalar(A, x, y)
-      ! R1_WITHOUT_SCALAR sets
-      ! A = A + X*Y^T, 
-      ! where A is an MxN matrix, X is an M-dimenional vector, and Y is
-      ! an N-dimenional vector.
-      use consts_mod, only : RP, IK, DEBUG_MODE, SRNLEN
+      subroutine r2_sym(A, alpha, x, y)
+      ! R2_SYM sets 
+      ! A = A + ALPHA*( X*Y^T + Y*X^T ), 
+      ! where A is an NxN matrix, X and Y are N-dimenional vectors, and
+      ! alpha is a sclalar.
+      use consts_mod, only : RP, IK, ONE, ZERO, DEBUG_MODE, SRNLEN
       use warnerror_mod, only : errstop
       implicit none
+      real(RP), intent(in) :: alpha
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
-      real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
-      integer(IK) :: j 
-      character(len = SRNLEN), parameter :: srname = 'R1_WITHOUT_SCALAR'
+      real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(X))
+      integer(IK) :: n, j 
+      character(len = SRNLEN), parameter :: srname = 'R2_SYM'
 
       if (DEBUG_MODE) then
-          if (size(A, 1) /= size(x) .or. size(A, 2) /= size(y)) then
+          if (size(x) /= size(y)) then
+              call errstop(srname, 'SIZE(X) /= SIZE(Y)')
+          end if
+          if (size(A, 1) /= size(x) .or. size(A, 2) /= size(x)) then
               call errstop(srname, 'SIZE(A) is invalid')
           end if
       end if
 
-      do j = 1, size(y)
-          A(:, j) = A(:, j) + x*y(j)
-      end do
-      end subroutine r1_without_scalar
+      n = size(x)
 
-      subroutine r2_with_scalar(A, alpha, x, y, beta, u, v)
-      ! R2_WITH_SCALAR sets 
+#if __IMPROVE_POWELL_CODE__ == 0
+      ! Only update the LOWER TRIANGULAR part of A.
+      if (abs(alpha - ONE) > ZERO) then  ! NOT invoked in NEWUOA.
+          do j = 1, n
+              A(j : n, j) = A(j : n, j) + alpha*x(j : n)*y(j) +         &
+     &         alpha*y(j : n)*x(j)
+          end do
+      else  ! This case is invoked in NEWUOA.
+          do j = 1, n
+              A(j : n, j) = A(j : n, j) + x(j : n)*y(j) + y(j : n)*x(j)
+          end do
+      end if
+      ! Set A(UPPER_TRIANGULAR) = A(LOWER_TRIANGULAR).
+      call symmetrize(A)
+#else
+      ! Here we calculate the increment as ALPHA*( X*Y^T + Y*X^T), which
+      ! is guaranteed symmetric even in floating-point arithmetic. 
+      if (abs(alpha - ONE) > ZERO) then  ! NOT invoked in NEWUOA.
+          do j = 1, n
+              A(:, j) = A(:, j) + alpha*( x*y(j) + y*x(j) )
+          end do
+      else  ! This case is invoked in NEWUOA.
+          do j = 1, n
+              A(:, j) = A(:, j) + ( x*y(j) + y*x(j) )
+          end do
+      end if
+#endif
+      if (DEBUG_MODE) then
+          call verisym(A, ZERO)
+      end if
+      end subroutine r2_sym
+
+      subroutine r2(A, alpha, x, y, beta, u, v)
+      ! R2 sets 
       ! A = A + ( ALPHA*( X*Y^T ) + BETA*( U*V^T ) ), 
       ! where A is an MxN matrix, ALPHA and BETA are real scalars, X and 
       ! U are M-dimenional vectors, Y and V are N-dimenional vectors.
-      ! Note:
-      ! 1. We should calculate the increment as 
-      ! ALPHA*( X*Y^T ) + BETA*( U*V^T )
-      ! rather than 
-      ! ALPHA*X*Y^T + BETA*U*V^T
-      ! to ensure the symmetry when X = Y and U = V.
-      ! 2. We should set A to 
-      ! A + ( ALPHA*( X*Y^T ) + BETA*( U*V^T ) )
-      ! rather than 
-      ! A + ALPHA*( X*Y^T ) + BETA*( U*V^T )
-      ! to ensure the semmetry when ALPHA = BETA, X = V, and Y = U.
-      use consts_mod, only : RP, IK, DEBUG_MODE, SRNLEN
+      use consts_mod, only : RP, IK, ONE, ZERO, DEBUG_MODE, SRNLEN
       use warnerror_mod, only : errstop
       implicit none
       real(RP), intent(in) :: alpha
@@ -159,7 +259,7 @@
       real(RP), intent(in) :: v(:)  ! V(SIZE(Y))
       real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
       integer(IK) :: j 
-      character(len = SRNLEN), parameter :: srname = 'R2_WITH_SCALAR'
+      character(len = SRNLEN), parameter :: srname = 'R2'
 
       if (DEBUG_MODE) then
           if (size(u) /= size(x)) then
@@ -173,49 +273,37 @@
           end if
       end if
 
-      do j = 1, size(y)
-          A(:, j) = A(:, j) + ( alpha*( x*y(j) ) + beta*(u*v(j)) )
-      end do
-      end subroutine r2_with_scalar
-
-      subroutine r2_without_scalar(A, x, y, u, v)
-      ! R2_WITHOUT_SCALAR sets 
-      ! A = A + ( X*Y^T + U*V^T ), 
-      ! where A is an MxN matrix, X and U are M-dimenional vectors, 
-      ! Y and V are N-dimenional vectors.
-      ! Note that we should set A to 
-      ! A + ( X*Y^T +  U*V^T )
-      ! rather than 
-      ! A + X*Y^T +  U*V^T 
-      ! to ensure the semmetry when X = V and Y = U.
-      use consts_mod, only : RP, IK, DEBUG_MODE, SRNLEN
-      use warnerror_mod, only : errstop
-      implicit none
-      real(RP), intent(in) :: x(:)
-      real(RP), intent(in) :: y(:)
-      real(RP), intent(in) :: u(:)  ! U(SIZE(X))
-      real(RP), intent(in) :: v(:)  ! V(SIZE(Y))
-      real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
-      integer(IK) :: j 
-      character(len = SRNLEN), parameter :: srname = 'R2_WITHOUT_SCALAR'
-
-      if (DEBUG_MODE) then
-          if (size(u) /= size(x)) then
-              call errstop(srname, 'SIZE(U) /= SIZE(X)')
-          end if
-          if (size(v) /= size(y)) then
-              call errstop(srname, 'SIZE(V) /= SIZE(Y)')
-          end if
-          if (size(A, 1) /= size(x) .or. size(A, 2) /= size(y)) then
-              call errstop(srname, 'SIZE(A) is invalid')
-          end if
+#if __IMPROVE_POWELL_CODE__ == 0 
+      if (abs(alpha - ONE) > ZERO .or. abs(beta - ONE) > ZERO) then
+          ! This case is NOT invoked in NEWUOA.
+          do j = 1, size(y)
+              A(:, j) = A(:, j) + alpha*x*y(j) + beta*u*v(j)
+          end do
+      else  ! This case is invoked in NEWUOA.
+          do j = 1, size(y)
+              A(:, j) = A(:, j) + x*y(j) + u*v(j)
+          end do
       end if
-
-      do j = 1, size(y)
-          !A(:, j) = A(:, j) + ( x*y(j) + u*v(j) )
-          A(:, j) = A(:, j) + x*y(j) + u*v(j)
-      end do
-      end subroutine r2_without_scalar
+#else
+      if (abs(alpha - beta) > ZERO) then  ! NOT invoked in NEWUOA.
+          do j = 1, size(y)
+              A(:, j) = A(:, j) + (alpha*(x*y(j)) + beta*(u*v(j)))
+          end do
+      else if (abs(alpha - ONE) > ZERO) then  ! NOT invoked in NEWUOA.
+      ! Here update A to A + ALPHA*( X*Y^T + U*V^T ), a semmetric update
+      ! when X = V and Y = U, even in floating-point arithmetic.
+          do j = 1, size(y)
+              A(:, j) = A(:, j) + alpha*( x*y(j)  + u*v(j) )
+          end do
+      else  ! This case is invoked in NEWUOA.
+      ! Here update A to A + ( X*Y^T + U*V^T ), a semmetric update 
+      ! when X = V and Y = U, even in floating-point arithmetic.
+          do j = 1, size(y)
+              A(:, j) = A(:, j) + ( x*y(j) + u*v(j) )
+          end do
+      end if
+#endif
+      end subroutine r2
 
 
 #if __USE_INTRINSIC_ALGEBRA__ == 0 
@@ -354,15 +442,70 @@
 #endif
       end function hypotenuse
 
-!      function outprod(x, y) result(z)
-!      use consts_mod, only : RP, IK
-!      implicit none
-!      real(RP), dimension(:), intent(in) :: x, y
-!      real(RP), dimension(size(x), size(y)) :: z
-!      integer(IK) :: i
-!      do i = 1, size(y)
-!          z(:, i) = x*y(i)
-!      end do
-!      end function outprod
+      !subroutine grot(Z, i, j, k)
+      !end subroutine grot
+      
+      subroutine symmetrize(A)
+#if __IMPROVE_POWELL_CODE__ == 0
+      use consts_mod, only : RP, IK, ZERO, DEBUG_MODE, SRNLEN
+      use warnerror_mod, only : errstop
+      implicit none
+      real(RP), intent(inout) :: A(:, :)
+      integer(IK) :: j
+#else
+      use consts_mod, only : RP, HALF, ZERO, DEBUG_MODE, SRNLEN
+      use warnerror_mod, only : errstop
+      implicit none
+      real(RP), intent(inout) :: A(:, :)
+#endif
+
+      character(len = SRNLEN), parameter :: srname = 'SYMMETRIZE'
+
+      if (DEBUG_MODE) then
+          if (size(A, 1) /= size(A, 2)) then
+              call errstop(srname, 'A is not square')
+          end if
+      end if
+
+#if __IMPROVE_POWELL_CODE__ == 0
+      ! A is symmetrized by setting 
+      ! A(UPPER_TRIANGULAR) = A(LOWER_TRIANGULAR).
+      do j = 1, size(A, 1) 
+          A(1 : j - 1, j) = A(j, 1 : j - 1)  
+      end do
+#else
+      A = A + transpose(A)
+      A = A*HALF
+#endif
+      if (DEBUG_MODE) then
+          call verisym(A, ZERO)
+      end if
+      end subroutine symmetrize
+
+      subroutine verisym(A, tol)
+      ! VERISYM verifies whether a matrix A is symmetric up to TOL.
+      use consts_mod, only : RP, ONE, ZERO, SRNLEN
+      use warnerror_mod, only : errstop
+      implicit none
+
+      real(RP), intent(in) :: A(:, :)
+      real(RP), intent(in) :: tol
+
+      character(len = SRNLEN), parameter :: srname = 'VERISYM'
+
+      if (size(A, 1) /= size(A, 2)) then
+          call errstop(srname, 'A is not square')
+      end if
+      if (tol > ZERO) then
+          if (maxval(abs((A - transpose(A)))) >                         &
+     &     tol*max(maxval(abs(A)), ONE)) then
+               call errstop(srname, 'A is not symmetric up to TOL')
+          end if
+      else
+          if (maxval(abs((A - transpose(A)))) > ZERO) then
+               call errstop(srname, 'A is not symmetric up to TOL')
+          end if
+      end if
+      end subroutine verisym
 
       end module lina_mod
