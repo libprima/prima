@@ -128,10 +128,6 @@
           s = (dd*s - sp*d)/denom
 
           w = matmul(xpt, hcol*matmul(s, xpt))
-!          w = ZERO
-!          do k = 1, npt
-!             w = w + (hcol(k)*dot_product(xpt(:, k), s))*xpt(:, k)
-!          end do
           
           ! Calculate the coefficients of the objective function on the
           ! circle, beginning with the multiplication of S by the second

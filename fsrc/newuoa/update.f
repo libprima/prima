@@ -225,28 +225,11 @@
 !      !---------------POWELL'S IMPLEMENTATION ENDS---------------------!
 
       !-----------------MATRIX-VECTOR IMPLEMENTATION-------------------!
-      call r2update(bmat, v1, vlag, v2, w)
-      ! Set the upper triangular part of BMAT(:,NPT+1:NPT+N) by symmetry
-      ! Note that SHIFTBASE sets the lower triangular part by copying
-      ! the upper triangular part, but here it does the opposite. There 
-      ! seems not any particular reason to keep them different. It was
-      ! probably an ad-hoc decision that Powell made when coding. 
-      ! This part can be spared if we put a pair of parenthsis around 
-      ! the two outter products as elaborated below.
-      do j = 1, n
-          bmat(1 : j - 1, npt + j) = bmat(j, npt + 1 : npt + j - 1)
-      end do 
-      !--------------MATRIX-VECTOR IMPLEMENTATION ENDS-----------------!
-
-!---------------------A PROBABLY BETTER IMPLEMENTATION-----------------!
-!-----!bmat = bmat + ( outprod(v1, vlag) + outprod(v2, w) ) !----------!
-      ! The only difference from the previous matrix-vector 
-      ! implementation is the parentheses.
-      ! Note that the update is naturally symmetric thanks to the
-      ! commutativity of floating point addition. We do not take this
-      ! implementation for the moment to produce the same results as
-      ! Powell's code, but we should take it in future versions.
-!---------------------A PROBABLY BETTER IMPLEMENTATION ENDS------------!
+      call r2update(bmat, ONE, v1, vlag, ONE, v2, w)
+      ! In floating-point arithmetic, the update above does not guarante
+      ! BMAT(:, NPT+1 : NPT+N) to be symmetric. Symmetrization needed.
+      call symmetrize(bmat(:, npt + 1 : npt + n))
+      !----------------------------------------------------------------!
 
       return
 
@@ -271,7 +254,7 @@
       real(RP), intent(inout) :: hq(:, :)! HQ(N, N)
       real(RP), intent(inout) :: pq(:)   ! PQ(NPT) 
 
-      integer(IK) :: i, j, n, npt
+      integer(IK) :: j, n, npt
       real(RP) :: fqdz(size(zmat, 2))
       character(len = SRNLEN), parameter :: srname = 'UPDATEQ'
 
@@ -299,15 +282,8 @@
       end if
 
       !----------------------------------------------------------------!
-      ! This update does NOT preserve symmetry. Symmetrization needed! 
-      call r1update(hq, xptknew, pq(knew)*xptknew)
-      do i = 1, n
-          hq(i, 1:i-1) = hq(1:i-1, i)
-      end do
-      !---------- A probably better implementation: -------------------!
-      ! This is better because it preserves symmetry even with floating
-      ! point arithmetic.
-!-----!call r1update(hq, pq(knew), xptknew, xptknew) !-----------------!
+      ! Implement R1UPDATE properly so that it ensures HQ is symmetric.
+      call r1update(hq, pq(knew), xptknew)
       !----------------------------------------------------------------!
 
       ! Update the implicit part of second derivatives.
