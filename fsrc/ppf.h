@@ -40,7 +40,7 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 #ifdef __INTEGER_KIND__
 #undef __INTEGER_KIND__
 #endif
-#define __INTEGER_KIND__ 0 
+#define __INTEGER_KIND__ 16 
 /*************************************************************************/
 
 
@@ -48,11 +48,30 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 /* Which real kind to use? 
  * 0 = default REAL, 32 = REAL*4, 64 = REAL*8, 128 = REAL*16.
  * Make sure that your compiler supports the selected kind. 
- * Note that the default REAL (i.e., 0) is the single-precision REAL. */
+ * Note: The default REAL (i.e., 0) is the single-precision REAL. */
 #ifdef __REAL_PRECISION__
 #undef __REAL_PRECISION__
 #endif
 #define __REAL_PRECISION__ 64 
+
+/* Is quad precision available on this platform (compiler, hardware ...)? */
+/* Note:
+ * 1. Not all platforms support REAL128. For example, pgfortran 19 does not.
+ * 2. It is not guaranteed that REAL128 has a wider range than REAL64. For
+ *    example, REAL128 of nagfor 7.0 has a range of 291, while REAL64
+ *    has a range of 307. 
+ * 3. It is rarely a good idea to use REAL128 as the working precision,
+ *    which is probably inefficient and unnecessary. */
+#ifdef __QP_AVAILABLE__
+#undef __QP_AVAILABLE__
+#endif
+#define __QP_AVAILABLE__ 0
+
+/* Revise __REAL_PRECISION__ according to __QP_AVAILABLE__ . */
+#if __QP_AVAILABLE__ != 1 && __REAL_PRECISION__ > 64
+#undef __REAL_PRECISION__
+#define __REAL_PRECISION__ 64
+#endif
 /*************************************************************************/
 
 

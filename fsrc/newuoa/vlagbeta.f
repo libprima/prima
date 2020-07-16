@@ -35,31 +35,19 @@
       
 
       ! Get and verify the sizes
-      n = size(xpt, 1)
-      npt = size(xpt, 2)
+      n = int(size(xpt, 1), kind(n))
+      npt = int(size(xpt, 2), kind(npt))
 
       if (DEBUG_MODE) then
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(XPT) is invalid')
           end if
-          if (size(bmat, 1) /= n .or. size(bmat, 2) /= npt + n) then
-              call errstop(srname, 'SIZE(BMAT) is invalid')
-          end if
-          if (size(zmat, 1) /= npt .or. size(zmat, 2) /= npt-n-1) then
-              call errstop(srname, 'SIZE(ZMAT) is invalid')
-          end if
-          if (size(xopt) /= n) then
-              call errstop(srname, 'SIZE(XOPT) /= N')
-          end if
-          if (size(d) /= n) then
-              call errstop(srname, 'SIZE(D) /= N')
-          end if
-          if (size(vlag) /= n + npt) then
-              call errstop(srname, 'SIZE(VLAG) /= N + NPT')
-          end if
-          if (size(wcheck) /= npt) then
-              call errstop(srname, 'SIZE(WCHECK) /= NPT')
-          end if
+          call verisize(bmat, n, npt + n)
+          call verisize(zmat, npt, int(npt - n - 1, kind(n)))
+          call verisize(xopt, n)
+          call verisize(d, n)
+          call verisize(vlag, n + npt)
+          call verisize(wcheck, npt)
       end if
       
 
@@ -91,7 +79,7 @@
       ! will not be identical due to the non-associativity of
       ! floating point arithmetic addition.
 !-----!vlag(1 : npt) = vlag(1 : npt) + matmul(zmat, wz) !--------------!
-      do k = 1, npt - n - 1
+      do k = 1, int(npt - n - 1, kind(k))
           vlag(1 : npt) = vlag(1 : npt) + wz(k)*zmat(:, k)
       end do
 !----------------------------------------------------------------------!

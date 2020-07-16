@@ -76,7 +76,7 @@
       real(RP) :: rhobeg_v, rhoend_v, ftarget_v
       integer(IK) :: n, nf, maxfun_v, npt_v, iprint_v
 
-      n = size(x)
+      n = int(size(x), kind(n))
 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! Zaikun, 2020-05-05
@@ -115,10 +115,11 @@
       end if
       rhoend_v = max(EPS, rhoend_v)
 
-      maxfun_v = max(n + 3, maxfun_v)
+      maxfun_v = max(int(n + 3, kind(maxfun_v)), maxfun_v)
 
-      if (npt_v < n + 2 .or. npt > min(maxfun_v-1,((n+2)*(n+1))/2)) then 
-          npt_v = min(maxfun_v - 1, 2*n + 1)
+      if (npt_v < n + 2 .or.                                            &
+     & npt > min(maxfun_v - 1, ((n + 2)*(n + 1))/2)) then 
+          npt_v = int(min(maxfun_v - 1, 2*n + 1), kind(npt_v))
       end if
 
       if (iprint_v /= 0 .and. iprint_v /= 1 .and. iprint_v /= 2         &

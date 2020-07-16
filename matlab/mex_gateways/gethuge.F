@@ -28,7 +28,7 @@ C     current platform, the possible values of data_type being
 C     'integer', 'float', 'real', 'single', 'double', 'mwSize',
 C     'mwIndex', 'fun', 'function', 'con', 'constraint'.
 
-      use consts_mod, only : IK, SP, DP, RP, QP, HUGEFUN, HUGECON
+      use consts_mod, only : IK, SP, DP, RP, HUGEFUN, HUGECON
       use mex_mod
       implicit none
 
@@ -93,8 +93,10 @@ C     min to ensure that they will not overflow when cast to doubles.
           hugeValue = huge(0.0_DP)
       else if (data_type .eq. 'real' .or. data_type .eq. 'Real'
      &    .or. data_type .eq. 'REAL') then
-          hugeValue = real(min(real(huge(0.0_RP), QP),
-     &                real(huge(0.0_DP), QP)), DP)
+          hugeValue = huge(0.0_DP)
+          if (huge(0.0_RP) < hugeValue) then
+              hugeValue = real(huge(0.0_RP), DP)
+          end if
       else if (data_type .eq. 'integer' .or. data_type .eq. 'Integer'
      &    .or. data_type .eq. 'INTEGER') then
           hugeValue = real(huge(intZero), DP)
@@ -108,12 +110,18 @@ C     min to ensure that they will not overflow when cast to doubles.
      &    data_type .eq. 'FUN' .or. data_type .eq. 'function' .or.
      &    data_type .eq. 'Function' .or. data_type .eq. 'FUNCTION')
      &then
-          hugeValue=real(min(real(HUGEFUN,QP),real(huge(0.0_DP),QP)),DP)
+          hugeValue = huge(0.0_DP)
+          if (HUGEFUN < hugeValue) then
+              hugeValue = real(HUGEFUN, DP)
+          end if
       else if (data_type .eq. 'con' .or. data_type .eq. 'Con' .or.
      &    data_type .eq. 'CON' .or. data_type .eq. 'constraint' .or.
      &    data_type .eq. 'Constraint' .or. data_type .eq. 'CONSTRAINT')
      &then
-          hugeValue=real(min(real(HUGECON,QP),real(huge(0.0_DP),QP)),DP)
+          hugeValue = huge(0.0_DP)
+          if (HUGECON < hugeValue) then
+              hugeValue = real(HUGECON, DP)
+          end if
       else
           call mexErrMsgIdAndTxt ('gethuge:WrongInput',
      &    'gethuge: Unrecognized input.')

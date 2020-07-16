@@ -46,12 +46,12 @@
 #endif
 
 #if __FORTRAN_STANDARD__ < 2008
-      integer, parameter :: INT16 = selected_int_kind(4)
-      integer, parameter :: INT32 = selected_int_kind(8)
-      integer, parameter :: INT64 = selected_int_kind(16)
-      integer, parameter :: REAL32 = selected_real_kind(6, 37)
-      integer, parameter :: REAL64 = selected_real_kind(15, 307)
-      integer, parameter :: REAL128 = selected_real_kind(33, 4931)
+      integer, parameter :: INT16 = selected_int_kind(4) ! gfortran: 3,4
+      integer, parameter :: INT32 = selected_int_kind(7) ! gfortran: 5-9
+      integer, parameter :: INT64 = selected_int_kind(14)!gfortran:10-18
+      integer, parameter :: REAL32 = kind(0.0) 
+      integer, parameter :: REAL64 = kind(0.0D0)
+      integer, parameter :: REAL128 = selected_real_kind(p = 30)
 #endif      
       integer, parameter :: IK_DEF = kind(0)  ! Default integer kind
       integer, parameter :: RP_DEF = kind(0.0)  ! Default real kind
@@ -78,7 +78,7 @@
 #elif __REAL_PRECISION__ == 128 
       integer, parameter :: RP = REAL128
 #else 
-      integer, parameter :: RP = RP_DEF
+      integer, parameter :: RP = REAL32  ! double precision
 #endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       

@@ -20,6 +20,7 @@
       private
       public :: is_nan, is_finite, is_posinf, is_neginf, is_inf
 
+#if __QP_AVAILABLE__ == 1
 #if __USE_IEEE_ARITHMETIC__ == 0
       interface is_nan
           module procedure is_nan_sp, is_nan_dp, is_nan_qp
@@ -28,7 +29,6 @@
           module procedure is_finite_sp, is_finite_dp, is_finite_qp
       end interface is_finite
 #endif
-
       interface is_posinf
           module procedure is_posinf_sp, is_posinf_dp, is_posinf_qp
       end interface is_posinf
@@ -38,6 +38,25 @@
       interface is_inf
           module procedure is_inf_sp, is_inf_dp, is_inf_qp
       end interface is_inf
+#else
+#if __USE_IEEE_ARITHMETIC__ == 0
+      interface is_nan
+          module procedure is_nan_sp, is_nan_dp
+      end interface is_nan
+      interface is_finite
+          module procedure is_finite_sp, is_finite_dp
+      end interface is_finite
+#endif
+      interface is_posinf
+          module procedure is_posinf_sp, is_posinf_dp
+      end interface is_posinf
+      interface is_neginf
+          module procedure is_neginf_sp, is_neginf_dp
+      end interface is_neginf
+      interface is_inf
+          module procedure is_inf_sp, is_inf_dp
+      end interface is_inf
+#endif
 
 
       contains
@@ -66,14 +85,6 @@
       y = (.not. (x >= x))
       end function is_nan_dp
 
-      pure elemental function is_nan_qp(x) result(y)
-      use consts_mod, only : QP 
-      implicit none
-      real(QP), intent(in) :: x
-      logical :: y
-      y = (.not. (x >= x))
-      end function is_nan_qp
-
       pure elemental function is_finite_sp(x) result(y)
       use consts_mod, only : SP
       implicit none
@@ -90,13 +101,6 @@
       y = (abs(x) <= huge(x))
       end function is_finite_dp
 
-      pure elemental function is_finite_qp(x) result(y)
-      use consts_mod, only : QP
-      implicit none
-      real(QP), intent(in) :: x
-      logical :: y
-      y = (abs(x) <= huge(x))
-      end function is_finite_qp
 #endif
 
       pure elemental function is_posinf_sp(x) result(y)
@@ -115,14 +119,6 @@
       y = (x > huge(x))
       end function is_posinf_dp
 
-      pure elemental function is_posinf_qp(x) result(y)
-      use consts_mod, only : QP
-      implicit none
-      real(QP), intent(in) :: x
-      logical :: y
-      y = (x > huge(x))
-      end function is_posinf_qp
-
       pure elemental function is_neginf_sp(x) result(y)
       use consts_mod, only : SP 
       implicit none
@@ -138,14 +134,6 @@
       logical :: y
       y = (-x > huge(x))
       end function is_neginf_dp
-
-      pure elemental function is_neginf_qp(x) result(y)
-      use consts_mod, only : QP 
-      implicit none
-      real(QP), intent(in) :: x
-      logical :: y
-      y = (-x > huge(x))
-      end function is_neginf_qp
 
       pure elemental function is_inf_sp(x) result(y)
       use consts_mod, only : SP
@@ -163,6 +151,41 @@
       y = (abs(x) > huge(x))
       end function is_inf_dp
 
+#if __QP_AVAILABLE__ == 1
+#if __USE_IEEE_ARITHMETIC__ == 0
+      pure elemental function is_nan_qp(x) result(y)
+      use consts_mod, only : QP 
+      implicit none
+      real(QP), intent(in) :: x
+      logical :: y
+      y = (.not. (x >= x))
+      end function is_nan_qp
+
+      pure elemental function is_finite_qp(x) result(y)
+      use consts_mod, only : QP
+      implicit none
+      real(QP), intent(in) :: x
+      logical :: y
+      y = (abs(x) <= huge(x))
+      end function is_finite_qp
+#endif
+
+      pure elemental function is_neginf_qp(x) result(y)
+      use consts_mod, only : QP 
+      implicit none
+      real(QP), intent(in) :: x
+      logical :: y
+      y = (-x > huge(x))
+      end function is_neginf_qp
+
+      pure elemental function is_posinf_qp(x) result(y)
+      use consts_mod, only : QP
+      implicit none
+      real(QP), intent(in) :: x
+      logical :: y
+      y = (x > huge(x))
+      end function is_posinf_qp
+
       pure elemental function is_inf_qp(x) result(y)
       use consts_mod, only : QP
       implicit none
@@ -170,5 +193,6 @@
       logical :: y
       y = (abs(x) > huge(x))
       end function is_inf_qp
+#endif
 
       end module infnan_mod

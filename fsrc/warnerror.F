@@ -15,7 +15,9 @@
       character(len=*), intent(in) :: srname
       character(len=*), intent(in) :: message 
 
+#if __DEBUG_MODE__ == 1
       call backtr()
+#endif
 
       print *
       print '(1x, 5A)', 'Error: ',  srname(1 : len_trim(srname)),       &

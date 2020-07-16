@@ -36,31 +36,19 @@
 
 
       ! Get and verify the sizes
-      n = size(xpt, 1)
-      npt = size(xpt, 2)
+      n = int(size(xpt, 1), kind(n))
+      npt = int(size(xpt, 2), kind(npt))
       
       if (DEBUG_MODE) then
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(XPT) is invalid')
           end if
-          if (size(xopt) /= n) then
-              call errstop(srname, 'SIZE(XOPT) /= N')
-          end if
-          if (size(pq) /= npt) then
-              call errstop(srname, 'SIZE(PQ) /= NPT')
-          end if
-          if (size(zmat, 1) /= npt .or. size(zmat, 2) /= npt-n-1) then
-              call errstop(srname, 'SIZE(ZMAT) is invalid')
-          end if
-          if (size(bmat, 1) /= n .or. size(bmat, 2) /= npt + n) then
-              call errstop(srname, 'SIZE(BMAT) is invalid')
-          end if
-          if (size(gq) /= n) then
-              call errstop(srname, 'SIZE(GQ) /= N')
-          end if
-          if (size(hq, 1) /= n .or. size(hq, 2) /= n) then
-              call errstop(srname, 'SIZE(HQ) is invalid')
-          end if
+          call verisize(xopt, n)
+          call verisize(pq, npt)
+          call verisize(zmat, npt, int(npt - n - 1, kind(n)))
+          call verisize(bmat, n, npt + n)
+          call verisize(gq, n)
+          call verisize(hq, n, n)
       end if
 
             
@@ -174,7 +162,7 @@
       
       ! Then the revisions of BMAT that depend on ZMAT are calculated.
       sumz = sum(zmat, dim = 1)
-      do k = 1, idz - 1
+      do k = 1, int(idz - 1, kind(k))
           ! The following W3 and DO LOOP indeed defines the VLAG below.
           ! The results are not identical due to the non-associtivity 
           ! of floating point arithmetic addition.
@@ -191,7 +179,7 @@
           ! bmat(:, npt+1:npt+n) is symmetric.
           call r1update(bmat(:, npt+1 : npt+n), -ONE, vlag)
       end do
-      do k = idz, npt - n - 1
+      do k = idz, int(npt - n - 1, kind(k))
           ! The following W3 and DO LOOP indeed defines the VLAG below.
           ! The results are not identical due to the non-associtivity 
           ! of floating point arithmetic addition.

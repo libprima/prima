@@ -70,25 +70,17 @@
 
       
       ! Get and verify the sizes.
-      n = size(xpt, 1)
-      npt = size(xpt, 2)
+      n = int(size(xpt, 1), kind(n))
+      npt = int(size(xpt, 2), kind(npt))
 
       if (DEBUG_MODE) then
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(XPT) is invalid')
           end if
-          if (size(gq) /= n) then
-              call errstop(srname, 'SIZE(GQ) /= SIZE(X)')
-          end if
-          if (size(hq, 1) /= n .or. size(hq, 2) /= n) then
-              call errstop(srname, 'SIZE(HQ) /= (SIZE(X), SIZE(X))')
-          end if
-          if (size(pq, 1) /= npt) then
-              call errstop(srname, 'SIZE(PQ) /= (SIZE(XPT))')
-          end if
-          if (size(s) /= n) then
-              call errstop(srname, 'SIZE(S) /= SIZE(X)')
-          end if
+          call verisize(gq, n)
+          call verisize(hq, n, n)
+          call verisize(pq, npt)
+          call verisize(s, n)
       end if
       
 
@@ -215,7 +207,7 @@
 
       if (twod_search) then
           ! At least 1 iteration of 2D minimization
-          itermax = max(1, itermax - iterc)  
+          itermax = max(int(1, kind(itermax)), itermax - iterc)  
       else
           itermax = 0
       end if

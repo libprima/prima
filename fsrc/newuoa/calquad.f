@@ -39,28 +39,18 @@
 
 
       ! Get and verify the sizes
-      n = size(xpt, 1)
-      npt = size(xpt, 2)
+      n = int(size(xpt, 1), kind(n))
+      npt = int(size(xpt, 2), kind(npt))
 
       if (DEBUG_MODE) then
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(XPT) is invalid')
           end if
-          if (size(d) /= n) then
-              call errstop(srname, 'SIZE(d) /= N')
-          end if
-          if (size(x) /= n) then
-              call errstop(srname, 'SIZE(X) /= N')
-          end if
-          if (size(gq) /= n) then
-              call errstop(srname, 'SIZE(GQ) /= N')
-          end if
-          if (size(hq, 1) /= n .or. size(hq, 2) /= n) then
-              call errstop(srname, 'SIZE(HQ) is invalid')
-          end if
-          if (size(pq) /= npt) then
-              call errstop(srname, 'SIZE(PQ) /= NPT')
-          end if
+          call verisize(d, n)
+          call verisize(x, n)
+          call verisize(gq, n)
+          call verisize(hq, n, n)
+          call verisize(pq, npt)
       end if
 
 
@@ -72,7 +62,7 @@
       do j = 1, n
           vquad = vquad + d(j)*gq(j)
           do i = 1, j
-              ih = ih + 1
+              ih = int(ih + 1, kind(ih))
               temp = d(i)*s(j) + d(j)*x(i)
               if (i == j) then 
                   temp = HALF*temp
