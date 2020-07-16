@@ -13,6 +13,7 @@
       private
       public :: r1update, r2update
       public :: symmetrize
+      public :: verisize
 
 
       interface r1update
@@ -22,6 +23,11 @@
       interface r2update
           module procedure r2_sym, r2
       end interface r2update
+
+      interface verisize
+          module procedure verisize_real_1, verisize_real_2
+          module procedure verisize_int_1, verisize_int_2
+      end interface verisize
 
 ! When interfaced with MATLAB, the intrinsic matmul and dot_product seem
 ! not as efficient as the implementations below (mostly by loops). This
@@ -77,8 +83,10 @@
       ! A = A + ALPHA*( X*X^T ), 
       ! where A is an NxN matrix, ALPHA is a scalar, and X is an
       ! N-dimenional vector.
-      use consts_mod, only : RP, IK, ONE, ZERO, DEBUG_MODE, SRNLEN
+      use consts_mod, only : RP, IK, ONE, ZERO, SRNLEN
+#if __DEBUG_MODE__ == 1
       use warnerror_mod, only : errstop
+#endif
       implicit none
       real(RP), intent(in) :: alpha
       real(RP), intent(in) :: x(:)
@@ -90,13 +98,13 @@
       ! the "save" attribute. If the variable is not a parameter, it may
       ! casue unwanted behavior.
 
-      if (DEBUG_MODE) then
-          if (size(A, 1) /= size(x) .or. size(A, 2) /= size(x)) then
-              call errstop(srname, 'SIZE(A) is invalid')
-          end if
+#if __DEBUG_MODE__ == 1
+      if (size(A, 1) /= size(x) .or. size(A, 2) /= size(x)) then
+          call errstop(srname, 'SIZE(A) is invalid')
       end if
+#endif
 
-      n = size(x)
+      n = int(size(x), kind(n))
 
 #if __IMPROVE_POWELL_CODE__ == 0
       ! Only update the LOWER TRIANGULAR part of A.
@@ -126,9 +134,10 @@
           end do
       end if
 #endif          
-      if (DEBUG_MODE) then
-          call verisym(A, ZERO)
-      end if
+
+#if __DEBUG_MODE__ == 1
+      call verisym(A, ZERO)
+#endif
       end subroutine r1_sym
 
       subroutine r1(A, alpha, x, y)
@@ -136,34 +145,38 @@
       ! A = A + ALPHA*( X*Y^T ), 
       ! where A is an MxN matrix, ALPHA is a real scalar, X is an
       ! M-dimenional vector, and Y is an N-dimenional vector.
-      use consts_mod, only : RP, IK, ONE, ZERO, DEBUG_MODE, SRNLEN
+      use consts_mod, only : RP, IK, ONE, ZERO, SRNLEN
+#if __DEBUG_MODE__ == 1
       use warnerror_mod, only : errstop
+#endif
       implicit none
       real(RP), intent(in) :: alpha
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
       real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
-      integer(IK) :: j 
+      integer(IK) :: n, j 
       character(len = SRNLEN), parameter :: srname = 'R1'
       ! Be careful with initialization! 
       ! In Fortran >=90, the initialization in the declaration implies
       ! the "save" attribute. If the variable is not a parameter, it may
       ! casue unwanted behavior.
 
-      if (DEBUG_MODE) then
-          if (size(A, 1) /= size(x) .or. size(A, 2) /= size(y)) then
-              call errstop(srname, 'SIZE(A) is invalid')
-          end if
+#if __DEBUG_MODE__ == 1
+      if (size(A, 1) /= size(x) .or. size(A, 2) /= size(y)) then
+          call errstop(srname, 'SIZE(A) is invalid')
       end if
+#endif
+
+      n = int(size(y), kind(n))
 
 #if __IMPROVE_POWELL_CODE__ == 0
       ! Both of the following cases are invoked in NEWUOA.
       if (abs(alpha - ONE) > ZERO) then
-          do j = 1, size(y)
+          do j = 1, n
               A(:, j) = A(:, j) + alpha*x*y(j)
           end do
       else
-          do j = 1, size(y)
+          do j = 1, n
               A(:, j) = A(:, j) + x*y(j)
           end do
       end if
@@ -173,11 +186,11 @@
       ! symmetric even in floating-point arithmetic. 
       ! Both of the following cases are invoked in NEWUOA.
       if (abs(alpha - ONE) > ZERO) then
-          do j = 1, size(y)
+          do j = 1, n
               A(:, j) = A(:, j) + alpha*( x*y(j) )
           end do
       else
-          do j = 1, size(y)
+          do j = 1, n
               A(:, j) = A(:, j) + x*y(j)
           end do
       end if
@@ -190,8 +203,10 @@
       ! A = A + ALPHA*( X*Y^T + Y*X^T ), 
       ! where A is an NxN matrix, X and Y are N-dimenional vectors, and
       ! alpha is a sclalar.
-      use consts_mod, only : RP, IK, ONE, ZERO, DEBUG_MODE, SRNLEN
+      use consts_mod, only : RP, IK, ONE, ZERO, SRNLEN
+#if __DEBUG_MODE__ == 1
       use warnerror_mod, only : errstop
+#endif
       implicit none
       real(RP), intent(in) :: alpha
       real(RP), intent(in) :: x(:)
@@ -200,16 +215,16 @@
       integer(IK) :: n, j 
       character(len = SRNLEN), parameter :: srname = 'R2_SYM'
 
-      if (DEBUG_MODE) then
-          if (size(x) /= size(y)) then
-              call errstop(srname, 'SIZE(X) /= SIZE(Y)')
-          end if
-          if (size(A, 1) /= size(x) .or. size(A, 2) /= size(x)) then
-              call errstop(srname, 'SIZE(A) is invalid')
-          end if
+#if __DEBUG_MODE__ == 1
+      if (size(x) /= size(y)) then
+          call errstop(srname, 'SIZE(X) /= SIZE(Y)')
       end if
+      if (size(A, 1) /= size(x) .or. size(A, 2) /= size(x)) then
+          call errstop(srname, 'SIZE(A) is invalid')
+      end if
+#endif
 
-      n = size(x)
+      n = int(size(x), kind(n))
 
 #if __IMPROVE_POWELL_CODE__ == 0
       ! Only update the LOWER TRIANGULAR part of A.
@@ -238,9 +253,10 @@
           end do
       end if
 #endif
-      if (DEBUG_MODE) then
-          call verisym(A, ZERO)
-      end if
+
+#if __DEBUG_MODE__ == 1
+      call verisym(A, ZERO)
+#endif
       end subroutine r2_sym
 
       subroutine r2(A, alpha, x, y, beta, u, v)
@@ -248,8 +264,10 @@
       ! A = A + ( ALPHA*( X*Y^T ) + BETA*( U*V^T ) ), 
       ! where A is an MxN matrix, ALPHA and BETA are real scalars, X and 
       ! U are M-dimenional vectors, Y and V are N-dimenional vectors.
-      use consts_mod, only : RP, IK, ONE, ZERO, DEBUG_MODE, SRNLEN
+      use consts_mod, only : RP, IK, ONE, ZERO, SRNLEN
+#if __DEBUG_MODE__ == 1
       use warnerror_mod, only : errstop
+#endif
       implicit none
       real(RP), intent(in) :: alpha
       real(RP), intent(in) :: beta 
@@ -258,47 +276,49 @@
       real(RP), intent(in) :: u(:)  ! U(SIZE(X))
       real(RP), intent(in) :: v(:)  ! V(SIZE(Y))
       real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
-      integer(IK) :: j 
+      integer(IK) :: n, j 
       character(len = SRNLEN), parameter :: srname = 'R2'
 
-      if (DEBUG_MODE) then
-          if (size(u) /= size(x)) then
-              call errstop(srname, 'SIZE(U) /= SIZE(X)')
-          end if
-          if (size(v) /= size(y)) then
-              call errstop(srname, 'SIZE(V) /= SIZE(Y)')
-          end if
-          if (size(A, 1) /= size(x) .or. size(A, 2) /= size(y)) then
-              call errstop(srname, 'SIZE(A) is invalid')
-          end if
+#if __DEBUG_MODE__ == 1
+      if (size(u) /= size(x)) then
+          call errstop(srname, 'SIZE(U) /= SIZE(X)')
       end if
+      if (size(v) /= size(y)) then
+          call errstop(srname, 'SIZE(V) /= SIZE(Y)')
+      end if
+      if (size(A, 1) /= size(x) .or. size(A, 2) /= size(y)) then
+          call errstop(srname, 'SIZE(A) is invalid')
+      end if
+#endif
+
+      n = int(size(y), kind(n))
 
 #if __IMPROVE_POWELL_CODE__ == 0 
       if (abs(alpha - ONE) > ZERO .or. abs(beta - ONE) > ZERO) then
           ! This case is NOT invoked in NEWUOA.
-          do j = 1, size(y)
+          do j = 1, n
               A(:, j) = A(:, j) + alpha*x*y(j) + beta*u*v(j)
           end do
       else  ! This case is invoked in NEWUOA.
-          do j = 1, size(y)
+          do j = 1, n
               A(:, j) = A(:, j) + x*y(j) + u*v(j)
           end do
       end if
 #else
       if (abs(alpha - beta) > ZERO) then  ! NOT invoked in NEWUOA.
-          do j = 1, size(y)
+          do j = 1, n
               A(:, j) = A(:, j) + (alpha*(x*y(j)) + beta*(u*v(j)))
           end do
       else if (abs(alpha - ONE) > ZERO) then  ! NOT invoked in NEWUOA.
       ! Here update A to A + ALPHA*( X*Y^T + U*V^T ), a semmetric update
       ! when X = V and Y = U, even in floating-point arithmetic.
-          do j = 1, size(y)
+          do j = 1, n 
               A(:, j) = A(:, j) + alpha*( x*y(j)  + u*v(j) )
           end do
       else  ! This case is invoked in NEWUOA.
       ! Here update A to A + ( X*Y^T + U*V^T ), a semmetric update 
       ! when X = V and Y = U, even in floating-point arithmetic.
-          do j = 1, size(y)
+          do j = 1, n
               A(:, j) = A(:, j) + ( x*y(j) + u*v(j) )
           end do
       end if
@@ -309,8 +329,10 @@
 #if __USE_INTRINSIC_ALGEBRA__ == 0 
 
       function matmul12(x, y) result(z)
-      use consts_mod, only : RP, IK, DEBUG_MODE, SRNLEN
+      use consts_mod, only : RP, IK, SRNLEN
+#if __DEBUG_MODE__ == 1
       use warnerror_mod, only : errstop
+#endif
       implicit none
       real(RP), dimension(:), intent(in) :: x
       real(RP), dimension(:, :), intent(in) :: y
@@ -318,13 +340,13 @@
       integer(IK) :: j
       character(len = SRNLEN), parameter :: srname = 'MATMUL12' 
       
-      if (DEBUG_MODE) then
-          if (size(x) /= size(y, 1)) then
-              call errstop(srname, 'SIZE(X) /= SIZE(Y, 1)')
-          end if
+#if __DEBUG_MODE__ == 1
+      if (size(x) /= size(y, 1)) then
+          call errstop(srname, 'SIZE(X) /= SIZE(Y, 1)')
       end if
+#endif
 
-      do j = 1, size(y, 2)
+      do j = 1, int(size(y, 2), kind(j))
           ! When interfaced with MATLAB, the following seems more
           ! efficient than a loop, which is strange because inprod
           ! itself is implemented by a loop. This may well depend on the
@@ -337,8 +359,10 @@
       end function matmul12
 
       function matmul21(x, y) result(z)
-      use consts_mod, only : RP, IK, ZERO, DEBUG_MODE, SRNLEN
+      use consts_mod, only : RP, IK, ZERO, SRNLEN
+#if __DEBUG_MODE__ == 1
       use warnerror_mod, only : errstop
+#endif
       implicit none
       real(RP), dimension(:, :), intent(in) :: x
       real(RP), dimension(:), intent(in) :: y
@@ -346,62 +370,66 @@
       integer(IK) :: j 
       character(len = SRNLEN), parameter :: srname = 'MATMUL21' 
 
-      if (DEBUG_MODE) then
-          if (size(x, 2) /= size(y)) then
-              call errstop(srname, 'SIZE(X, 2) /= SIZE(Y)')
-          end if
+#if __DEBUG_MODE__ == 1
+      if (size(x, 2) /= size(y)) then
+          call errstop(srname, 'SIZE(X, 2) /= SIZE(Y)')
       end if
+#endif
 
       z = ZERO
-      do j = 1, size(x, 2)
+      do j = 1, int(size(x, 2), kind(j))
           z = z + x(:, j)*y(j)
       end do
       end function matmul21
 
       function matmul22(x, y) result(z)
-      use consts_mod, only : RP, IK, ZERO, DEBUG_MODE, SRNLEN
+      use consts_mod, only : RP, IK, ZERO, SRNLEN
+#if __DEBUG_MODE__ == 1
       use warnerror_mod, only : errstop
+#endif
       implicit none
       real(RP), dimension(:, :), intent(in) :: x, y
       real(RP), dimension(size(x, 1), size(y, 2)) :: z
       integer(IK) :: i, j
       character(len = SRNLEN), parameter :: srname = 'MATMUL22'
 
-      if (DEBUG_MODE) then
-          if (size(x, 2) /= size(y, 1)) then
-              call errstop(srname, 'SIZE(X, 2) /= SIZE(Y, 1)')
-          end if
+#if __DEBUG_MODE__ == 1
+      if (size(x, 2) /= size(y, 1)) then
+          call errstop(srname, 'SIZE(X, 2) /= SIZE(Y, 1)')
       end if
+#endif
 
       z = ZERO
-      do j = 1, size(y, 2)
-          do i = 1, size(x, 2)
+      do j = 1, int(size(y, 2), kind(j))
+          do i = 1, int(size(x, 2), kind(i))
               z(:, j) = z(:, j) + x(:, i)*y(i, j)
           end do
       end do
       end function matmul22
 
       function inprod(x, y) result(z)
-      use consts_mod, only : RP, IK, ZERO, DEBUG_MODE, SRNLEN
+      use consts_mod, only : RP, IK, ZERO, SRNLEN
+#if __DEBUG_MODE__ == 1
       use warnerror_mod, only : errstop 
+#endif
       implicit none
       real(RP), dimension(:), intent(in) :: x, y
       real(RP) :: z
       integer(IK) :: i
       character(len = SRNLEN), parameter :: srname = 'INPROD'
 
-      if (DEBUG_MODE) then
-          if (size(x) /= size(y)) then
-              call errstop(srname, 'SIZE(X) /= SIZE(Y)')
-          end if
+#if __DEBUG_MODE__ == 1
+      if (size(x) /= size(y)) then
+          call errstop(srname, 'SIZE(X) /= SIZE(Y)')
       end if
+#endif
 
       !z = sum(x*y)  
       ! Using sum seems not as efficient as a loop when interfaced with 
       ! MATLAB, but this may well depend on the machine (e.g., cache 
       ! size), compiler, compiling options, and MATLAB version.  
       z = ZERO
-      do i = 1, size(x)
+      do i = 1, int(size(x), kind(i))
           z = z + x(i)*y(i)
       end do
       end function inprod
@@ -447,39 +475,44 @@
       
       subroutine symmetrize(A)
 #if __IMPROVE_POWELL_CODE__ == 0
-      use consts_mod, only : RP, IK, ZERO, DEBUG_MODE, SRNLEN
-      use warnerror_mod, only : errstop
-      implicit none
-      real(RP), intent(inout) :: A(:, :)
-      integer(IK) :: j
+      use consts_mod, only : RP, IK, ZERO, SRNLEN
 #else
-      use consts_mod, only : RP, HALF, ZERO, DEBUG_MODE, SRNLEN
+      use consts_mod, only : RP, HALF, ZERO, SRNLEN
+#endif
+
+#if __DEBUG_MODE__ == 1
       use warnerror_mod, only : errstop
+#endif
+
       implicit none
       real(RP), intent(inout) :: A(:, :)
+
+#if __IMPROVE_POWELL_CODE__ == 0
+      integer(IK) :: j
 #endif
 
       character(len = SRNLEN), parameter :: srname = 'SYMMETRIZE'
 
-      if (DEBUG_MODE) then
-          if (size(A, 1) /= size(A, 2)) then
-              call errstop(srname, 'A is not square')
-          end if
+#if __DEBUG_MODE__ == 1
+      if (size(A, 1) /= size(A, 2)) then
+          call errstop(srname, 'A is not square')
       end if
+#endif
 
 #if __IMPROVE_POWELL_CODE__ == 0
       ! A is symmetrized by setting 
       ! A(UPPER_TRIANGULAR) = A(LOWER_TRIANGULAR).
-      do j = 1, size(A, 1) 
-          A(1 : j - 1, j) = A(j, 1 : j - 1)  
+      do j = 1, int(size(A, 1), kind(j)) 
+          A(1 : j - 1, j) = A(j, 1 : j - 1)
       end do
 #else
       A = A + transpose(A)
       A = A*HALF
 #endif
-      if (DEBUG_MODE) then
-          call verisym(A, ZERO)
-      end if
+
+#if __DEBUG_MODE__ == 1
+      call verisym(A, ZERO)
+#endif
       end subroutine symmetrize
 
       subroutine verisym(A, tol)
@@ -507,5 +540,63 @@
           end if
       end if
       end subroutine verisym
+
+      subroutine verisize_real_1(x, n)
+      use consts_mod, only : RP, IK, SRNLEN
+      use warnerror_mod, only : errstop
+      real(RP), intent(in) :: x(:)
+      integer(IK), intent(in) :: n
+
+      character(len = SRNLEN), parameter :: srname = 'VERISIZE_REAL_1'
+
+      if (size(x) /= n) then
+          call errstop(srname, 'SIZE(X) /= N')
+      end if
+      end subroutine verisize_real_1
+
+      subroutine verisize_real_2(x, m, n)
+      use consts_mod, only : RP, IK, SRNLEN
+      use warnerror_mod, only : errstop
+      real(RP), intent(in) :: x(:, :)
+      integer(IK), intent(in) :: m, n
+
+      character(len = SRNLEN), parameter :: srname = 'VERISIZE_REAL_2'
+
+      if (size(x, 1) /= m) then
+          call errstop(srname, 'SIZE(X, 1) /= M')
+      end if
+      if (size(x, 2) /= n) then
+          call errstop(srname, 'SIZE(X, 2) /= N')
+      end if
+      end subroutine verisize_real_2
+
+      subroutine verisize_int_1(x, n)
+      use consts_mod, only : IK, SRNLEN
+      use warnerror_mod, only : errstop
+      integer(IK), intent(in) :: x(:)
+      integer(IK), intent(in) :: n
+
+      character(len = SRNLEN), parameter :: srname = 'VERISIZE_INT_1'
+
+      if (size(x) /= n) then
+          call errstop(srname, 'SIZE(X) /= N')
+      end if
+      end subroutine verisize_int_1
+
+      subroutine verisize_int_2(x, m, n)
+      use consts_mod, only : IK, SRNLEN
+      use warnerror_mod, only : errstop
+      integer(IK), intent(in) :: x(:, :)
+      integer(IK), intent(in) :: m, n
+
+      character(len = SRNLEN), parameter :: srname = 'VERISIZE_INT_2'
+
+      if (size(x, 1) /= m) then
+          call errstop(srname, 'SIZE(X, 1) /= M')
+      end if
+      if (size(x, 2) /= n) then
+          call errstop(srname, 'SIZE(X, 2) /= N')
+      end if
+      end subroutine verisize_int_2
 
       end module lina_mod

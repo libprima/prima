@@ -53,22 +53,16 @@
 
 
       ! Get and verify the sizes.
-      n = size(xpt, 1)
-      npt = size(xpt, 2)
+      n = int(size(xpt, 1), kind(n))
+      npt = int(size(xpt, 2), kind(npt))
 
       if (DEBUG_MODE) then
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(XPT) is invalid')
           end if
-          if (size(x) /= n) then
-              call errstop(srname, 'SIZE(X) /= SIZE(XPT, 1)')
-          end if
-          if (size(bmat, 1) /= n .or. size(bmat, 2) /= npt + n) then
-              call errstop(srname, 'SIZE(BMAT) is invalid')
-          end if
-          if (size(zmat, 1) /= npt .or. size(zmat, 2) /= npt-n-1) then
-              call errstop(srname, 'SIZE(ZMAT) is invalid')
-          end if
+          call verisize(x, n)
+          call verisize(bmat, n, npt + n)
+          call verisize(zmat, npt, int(npt - n - 1, kind(n)))
       end if
 
       ! Set HCOL to the leading NPT elements of the KNEW-th column of H.
@@ -262,31 +256,19 @@
 
        
       ! Get and verify the sizes.
-      n = size(xpt, 1)
-      npt = size(xpt, 2)
+      n = int(size(xpt, 1), kind(n))
+      npt = int(size(xpt, 2), kind(npt))
 
       if (DEBUG_MODE) then
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(XPT) is invalid')
           end if
-          if (size(x) /= n) then
-              call errstop(srname, 'SIZE(X) /= SIZE(XPT, 1)')
-          end if
-          if (size(bmat, 1) /= n .or. size(bmat, 2) /= npt + n) then
-              call errstop(srname, 'SIZE(BMAT) is invalid')
-          end if
-          if (size(zmat, 1) /= npt .or. size(zmat, 2) /= npt-n-1) then
-              call errstop(srname, 'SIZE(ZMAT) is invalid')
-          end if
-          if (size(vlag) /= npt + n) then
-              call errstop(srname, 'SIZE(VLAG) /= NPT + N')
-          end if
-          if (size(wcheck) /= npt) then
-              call errstop(srname, 'SIZE(WCHECK) /= NPT')
-          end if
-          if (size(d) /= n) then
-              call errstop(srname, 'SIZE(D) /= N')
-          end if
+          call verisize(x, n)
+          call verisize(bmat, n, npt + n)
+          call verisize(zmat, npt, int(npt - n - 1, kind(n)))
+          call verisize(vlag, npt + n)
+          call verisize(wcheck, npt)
+          call verisize(d, n)
       end if    
 
       ! Store the first NPT elements of the KNEW-th column of H in W1.
@@ -319,7 +301,7 @@
           
           dstemp(kopt) = TWO*ds + ONE  
           sstemp(kopt) = ss     
-          k = minloc(dstemp*dstemp/sstemp, dim = 1)
+          k = int(minloc(dstemp*dstemp/sstemp, dim = 1), kind(k))
           if ((.not. (dstemp(k)*dstemp(k)/sstemp(k) >= dtest)) .and.    &
      &     k /= kopt) then
           ! Althoguh unlikely, if NaN occurs, it may happen that k=kopt.

@@ -39,19 +39,15 @@
 
       
       ! Get and verify the sizes.
-      n = size(bmat, 1)
-      npt = size(bmat, 2) - n
+      n = int(size(bmat, 1), kind(n))
+      npt = int(size(bmat, 2), kind(npt)) - n
 
       if (DEBUG_MODE) then
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(BMAT) is invalid')
           end if
-          if (size(zmat, 1) /= npt .or. size(zmat, 2) /= npt-n-1) then
-              call errstop(srname, 'SIZE(ZMAT) is invalid')
-          end if
-          if (size(vlag) /= npt + n) then
-              call errstop(srname, 'SIZE(VLAG) is invalid')
-          end if
+          call verisize(zmat, npt, int(npt - n - 1, kind(n)))
+          call verisize(vlag, npt + n)
       end if
       
           
@@ -60,7 +56,7 @@
       ! ZMAT(KNEW, JL) becomes SQRT(ZMAT(KNEW, JL)^2+ZMAT(KNEW,J)) and
       ! ZMAT(KNEW, J) becomes 0. 
       jl = 1  ! For J = 2, ..., IDZ - 1, set JL = 1.
-      do j = 2, idz - 1
+      do j = 2, int(idz - 1, kind(j))
           if (abs(zmat(knew, j)) >  ZERO) then
               !call givens(zmat(knew, jl), zmat(knew, j), c, s, r)
               c = zmat(knew, jl)
@@ -86,7 +82,7 @@
       if (idz <= npt - n - 1) then
           jl = idz  ! For J = IDZ + 1, ..., NPT - N - 1, set JL = IDZ.
       end if
-      do j = idz + 1, npt - n - 1
+      do j = int(idz + 1, kind(j)), int(npt - n - 1, kind(j))
           if (abs(zmat(knew, j)) >  ZERO) then
               !call givens(zmat(knew, jl), zmat(knew, j), c, s, r)
               c = zmat(knew, jl)
@@ -147,7 +143,7 @@
           zmat(:, 1) = tempa*zmat(:, 1) - tempb*vlag(1 : npt)
       !----------------------------------------------------------------!
           if (idz == 1 .and. temp < ZERO) then
-!---------!if (idz == 1 .and. denom < ZERO) then !---------------------!
+!---------!if (idz == 1 .and. denom < ZERO) then !------------------!
       !----------------------------------------------------------------!
               ! TEMP < ZERO?!! Powell wrote this but it is STRANGE!!!!!!
               !!! It is probably a BUG !!!
@@ -174,7 +170,7 @@
           if (beta >=  ZERO) then 
               ja = jl
           end if
-          jb = jl + 1 - ja
+          jb = int(jl + 1 - ja, kind(jb))
           temp = zmat(knew, jb)/denom
           tempa = temp*beta
           tempb = temp*tau
@@ -187,7 +183,8 @@
           
           if (denom <=  ZERO) then
               if (beta < ZERO) then 
-                  idz = idz + 1  ! Is it possible to get IDZ > NPT-N-1?
+                  idz = int(idz + 1, kind(idz))  
+                  ! Is it possible to get IDZ>NPT-N-1?
               end if
               if (beta >=  ZERO) then 
                   iflag = 1
@@ -198,7 +195,7 @@
       ! IDZ is reduced in the following case,  and usually the first
       ! column of ZMAT is exchanged with a later one.
       if (iflag == 1) then
-          idz = idz - 1
+          idz = int(idz - 1, kind(idz))
           if (idz > 1) then
               ztemp = zmat(:, 1)
               zmat(:, 1) = zmat(:, idz)
@@ -260,25 +257,17 @@
 
       
       ! Get and verify the sizes.
-      n = size(gq)
-      npt = size(pq)
+      n = int(size(gq), kind(n))
+      npt = int(size(pq), kind(npt))
 
       if (DEBUG_MODE) then
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(GQ) or SIZE(PQ) is invalid')
           end if
-          if (size(zmat, 1) /= npt .or. size(zmat, 2) /= npt-n-1) then
-              call errstop(srname, 'SIZE(ZMAT) is invalid')
-          end if
-          if (size(xptknew) /= n) then
-              call errstop(srname, 'SIZE(XPTKNEW) is invalid')
-          end if
-          if (size(bmatknew) /= n) then
-              call errstop(srname, 'SIZE(BMATKNEW) is invalid')
-          end if
-          if (size(hq, 1) /= n .or. size(hq, 2) /= n) then
-              call errstop(srname, 'SIZE(HQ) is invalid')
-          end if
+          call verisize(zmat, npt, int(npt - n - 1, kind(n)))
+          call verisize(xptknew, n)
+          call verisize(bmatknew, n)
+          call verisize(hq, n, n)
       end if
 
       !----------------------------------------------------------------!
@@ -297,7 +286,7 @@
       !!! In future versions, we will use MATMUL instead of DO LOOP.
 !----!pq = pq + matmul(zmat, fqdz) !-----------------------------------!
       !----------------------------------------------------------------!
-      do j = 1, npt - n - 1
+      do j = 1, int(npt - n - 1, kind(j))
           pq = pq + fqdz(j)*zmat(:, j)
       end do
 
@@ -316,7 +305,7 @@
       ! Note that SMAT = BMAT(:, 1:NPT)
 
       use consts_mod, only : RP, IK, ZERO, DEBUG_MODE, SRNLEN
-      use warnerror_mod
+      use warnerror_mod, only : errstop
       use lina_mod
       implicit none
 
@@ -335,25 +324,17 @@
 
 
       ! Get and verify the sizes.
-      n = size(gq)
-      npt = size(pq)
+      n = int(size(gq), kind(n))
+      npt = int(size(pq), kind(npt))
 
       if (DEBUG_MODE) then
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(GQ) or SIZE(PQ) is invalid')
           end if
-          if (size(fval) /= npt) then
-              call errstop(srname, 'SIZE(FVAL) /= NPT')
-          end if
-          if (size(smat, 1) /= n .or. size(smat, 2) /= npt) then
-              call errstop(srname, 'SIZE(SMAT) is invalid')
-          end if
-          if (size(zmat, 1) /= npt .or. size(zmat, 2) /= npt-n-1) then
-              call errstop(srname, 'SIZE(ZMAT) is invalid')
-          end if
-          if (size(hq, 1) /= n .or. size(hq, 2) /= n) then
-              call errstop(srname, 'SIZE(HQ) is invalid')
-          end if
+          call verisize(fval, npt)
+          call verisize(smat, n, npt)
+          call verisize(zmat, npt, int(npt - n - 1, kind(n)))
+          call verisize(hq, n, n)
       end if
 
       vlag = fval - fval(kopt)

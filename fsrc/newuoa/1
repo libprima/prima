@@ -1,0 +1,11 @@
+gfortran -c -g -Wall -Wextra -Wconversion -fimplicit-none -fbacktrace -ffree-line-length-0 -fcheck=all -ffpe-trap=invalid,zero,overflow,underflow   ../consts.F ../warnerror.F ../infos.f ../infnan.F ../lina.F initialize.f trsubp.f geometry.f update.f calquad.f vlagbeta.f shiftbase.f newuob.f newuoa.f  ../consts.F ../warnerror.F ../infnan.F ../infos.f ../lina.F ../../matlab/mex_gateways/mex_mod.F ../../matlab/mex_gateways/gethuge.F ../../matlab/mex_gateways/newuoa-interface.F ../../matlab/mex_gateways/classical/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/ 
+newuob.f:10:52:
+
+       subroutine newuob (npt, rhobeg, rhoend, iprint, maxfun, ftarget,  &
+                                                    1
+Warning: Unused dummy argument ‘iprint’ at (1) [-Wunused-dummy-argument]
+newuoa.f:63:9:
+
+       use consts_mod, only : RP, IK,ZERO, ONE, TENTH, EPS
+         1
+Warning: Unused parameter ‘maxfun_dim_def’ which has been explicitly imported at (1) [-Wunused-parameter]

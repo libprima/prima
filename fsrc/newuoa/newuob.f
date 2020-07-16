@@ -11,7 +11,6 @@
      &  x, f, nf, info)
 
       use consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH
-      use warnerror_mod, only : errstop
       use infnan_mod, only : is_nan, is_posinf
       use lina_mod
       use initialize_mod, only : initialize
@@ -51,7 +50,7 @@
       logical :: model_step, reduce_rho, shortd
 
       ! Get size.
-      n = size(x)
+      n = int(size(x), kind(n))
       
       ! The arguments N, NPT, X, RHOBEG, RHOEND, IPRINT and MAXFUN are
       ! identical to the corresponding arguments in SUBROUTINE NEWUOA.
@@ -183,7 +182,7 @@
                   exit
               end if
               call calfun(n, x, f)
-              nf = nf + 1
+              nf = int(nf + 1, kind(nf))
               ! Record the latest function evaluation with ||D|| > RHO.
               if (dnorm > rho) then
                   nfsave = nf
@@ -253,7 +252,7 @@
               ! KNEW > 0 unless MAXVAL(SIGMA) <= 1 and F >= FSAVE.
               ! If F < FSAVE, then KNEW > 0, ensuring that XNEW
               ! will be included into XPT.
-                  knew = maxloc(sigma, dim = 1)
+                  knew = int(maxloc(sigma, dim = 1), kind(knew))
               else
                   knew = 0
               end if
@@ -295,7 +294,7 @@
                           if (gqsq < 100.0_RP*galtsq) then
                               itest = 0
                           else
-                              itest = itest + 1
+                              itest = int(itest + 1, kind(itest))
                           end if
                       end if
                   end if
@@ -324,7 +323,7 @@
               distsq = 4.0_RP*delta*delta
               xdsq = sum((xpt-spread(xopt,dim=2,ncopies=npt))**2, dim=1)
               if (maxval(xdsq) > distsq) then
-                  knew = maxloc(xdsq, dim = 1)
+                  knew = int(maxloc(xdsq, dim = 1), kind(knew))
                   distsq = maxval(xdsq)
               else
                   knew = 0
@@ -422,7 +421,7 @@
                   exit
               end if
               call calfun(n, x, f)
-              nf = nf + 1
+              nf = int(nf + 1, kind(nf))
 
               ! The following seems different from what is introduced in
               ! Section 7 (around (7.7)) of the NEUOA paper. Seemingly
@@ -491,7 +490,7 @@
               info = -1
           else
               call calfun(n, x, f)
-              nf = nf + 1
+              nf = int(nf + 1, kind(nf))
           end if
       end if
 

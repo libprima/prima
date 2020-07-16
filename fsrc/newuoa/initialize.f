@@ -13,6 +13,7 @@
       use consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUG_MODE, SRNLEN
       use warnerror_mod, only : errstop
       use infnan_mod
+      use lina_mod
       implicit none
 
       ! Inputs
@@ -36,7 +37,7 @@
 
       ! Intermediate variables
       integer(IK) :: n, npt
-      integer(IK) :: k, ih, ip, ipt(size(fval)), itemp 
+      integer(IK) :: k, ip, ipt(size(fval)), itemp 
       integer(IK) :: jp, jpt(size(fval)), npt1,npt2
       real(RP) :: fbeg, fip, fjp, rhosq, reciq, recip
       real(RP) :: xip, xjp,xtemp(size(x))
@@ -45,37 +46,21 @@
 
 
       ! Get and verify the sizes
-      n = size(x)
-      npt = size(fval)
+      n = int(size(x), kind(n))
+      npt = int(size(fval), kind(npt))
 
       if (DEBUG_MODE) then
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(X) or SIZE(FVAL) is invalid')
           end if
-          if (size(xbase) /= n) then
-              call errstop(srname, 'SIZE(XBASE) /= N')
-          end if
-          if (size(xopt) /= n) then
-              call errstop(srname, 'SIZE(XOPT) /= N')
-          end if
-          if (size(xpt, 1) /= n .or. size(xpt, 2) /= npt) then
-              call errstop(srname, 'SIZE(XPT) is invalid')
-          end if
-          if (size(bmat, 1) /= n .or. size(bmat, 2) /= npt + n) then
-              call errstop(srname, 'SIZE(BMAT) is invalid')
-          end if
-          if (size(zmat, 1) /= npt .or. size(zmat, 2) /= npt-n-1) then
-              call errstop(srname, 'SIZE(ZMAT) is invalid')
-          end if
-          if (size(gq) /= n) then
-              call errstop(srname, 'SIZE(GQ) /= N')
-          end if
-          if (size(hq, 1) /= n .or. size(hq, 2) /= n) then
-              call errstop(srname, 'SIZE(HQ) is invalid')
-          end if
-          if (size(pq) /= npt) then
-              call errstop(srname, 'SIZE(PQ) /= NPT')
-          end if
+          call verisize(xbase, n)
+          call verisize(xopt, n)
+          call verisize(xpt, n, npt)
+          call verisize(bmat, n, npt + n)
+          call verisize(zmat, npt, int(npt - n - 1, kind(n)))
+          call verisize(gq, n)
+          call verisize(hq, n, n)
+          call verisize(pq, npt)
       end if
 
       ! Set the initial elements of XPT, BMAT, HQ, PQ and ZMAT to ZERO.
@@ -151,15 +136,15 @@
       ! Set XPT, FVAL, KOPT, FOPT, and XOPT.
       
       ! Set XPT(:, 2 : 2*N + 1). 
-      do k = 2, min(npt1, n + 1)
+      do k = 2, min(npt1, int(n + 1, kind(npt1)))
           xpt(k - 1, k) = rhobeg
       end do
-      do k = n+2, min(npt1, 2*n + 1)
+      do k = int(n + 2, kind(k)), min(npt1, int(2*n + 1, kind(npt1)))
           xpt(k - n - 1, k) = -rhobeg
       end do
        
       ! Set FVAL(2 : 2*N + 1) by evaluating F. Totally parallelizable.
-      do k = 2, min(npt1, 2*n + 1)
+      do k = 2, min(npt1, int(2*n + 1, kind(npt1)))
           xtemp = xpt(:, k) + xbase
           if (any(is_nan(xtemp))) then
               f = sum(xtemp)  ! Set F to NaN. It is necessary.
@@ -185,9 +170,9 @@
       end do
 
       ! Set XPT(:, 2*N + 2 : NPT). It depends on FVAL(2 : 2*N + 1).
-      do k = 2*n + 2, npt2
-          itemp = (k - n - 2)/n
-          jp = k - (itemp + 1)*n - 1
+      do k = int(2*n + 2, kind(k)), npt2
+          itemp = int((k - n - 2)/n, kind(itemp))
+          jp = int(k - (itemp + 1)*n - 1, kind(jp))
           ip = jp + itemp
           if (ip > n) then
               itemp = jp
@@ -205,12 +190,12 @@
           !    possibly negative.
           ! 3. MATLAB has also a SIGN function, but the definition is
           !    SIGN(A) = 1 if A > 0, 0 if A = 0, and -1 if A < 0.
-          xpt(ip, k) = sign(rhobeg, fval(ip + n + 1) - fval(ip + 1)) 
-          xpt(jp, k) = sign(rhobeg, fval(jp + n + 1) - fval(jp + 1))
+          xpt(ip, k) = sign(rhobeg, fval(ip + n + 1) - fval(ip+1)) 
+          xpt(jp, k) = sign(rhobeg, fval(jp + n + 1) - fval(jp+1))
       end do
 
       ! Set FVAL(2*N + 2 : NPT) by evaluating F. Totally parallelizable.
-      do k = 2*n + 2, npt2
+      do k = int(2*n + 2, kind(k)), npt2
           xtemp = xpt(:, k) + xbase
           if (any(is_nan(xtemp))) then
               f = sum(xtemp)  ! Set F to NaN. It is necessary.
@@ -233,7 +218,7 @@
       end do
 
       ! Set NF, KOPT, FOPT, and XOPT.
-      nf = count(evaluated)
+      nf = int(count(evaluated), kind(nf))
 
       if (nf == 0) then
       ! In this case, the starting X contains NaN. F was set to NaN.
@@ -241,7 +226,7 @@
           fopt = f
           xopt = ZERO
       else
-          kopt = minloc(fval, dim = 1, mask = evaluated)
+          kopt = int(minloc(fval, dim = 1, mask=evaluated), kind(kopt))
           fopt = fval(kopt)
           xopt = xpt(:, kopt)
       end if
@@ -258,22 +243,21 @@
       ! Set GQ by forward difference.
       gq(1 : n) = (fval(2 : n + 1) - fbeg)/rhobeg
       ! If possible, revise GQ to central difference. 
-      k = min(npt - n - 1, n)
-      gq(1 : k) = HALF*(gq(1 : k) + (fbeg - fval(n+2 : n+1+k))/rhobeg)
+      k = min(int(npt - n - 1, kind(n)), n)
+      gq(1 : k) = HALF*(gq(1:k) + (fbeg - fval(n+2:n+1+k))/rhobeg)
 
       ! Set the diagonal of HQ  by 2nd-order central finite difference.
-      do k = 1, min(npt - n - 1, n) 
+      do k = 1, min(int(npt - n - 1, kind(n)), n) 
           hq(k, k) = ((fval(k + 1) - fbeg)/rhobeg -                     &
      &     (fbeg - fval(k + n + 1))/rhobeg)/rhobeg
       end do
       ! When NPT > 2*N + 1, set the off-diagonal entries of HQ.
-      do k = 2*n + 2, npt 
+      do k = int(2*n + 2, kind(k)), npt 
           ! IP, JP, XIP, and XJP will be used below.
           ip = ipt(k)
           jp = jpt(k)
           xip = xpt(ip, k)
           xjp = xpt(jp, k)
-          ih = (ip*(ip - 1))/2 + jp
           if (xip < ZERO) then 
               fip = fval(ip + n + 1)
           else
@@ -293,7 +277,7 @@
       ! Set the nonzero initial elements of BMAT. 
       ! When NPT >= 2*N + 1, this defines BMAT completely; 
       ! When NPT <= 2*N, this defines the first NPT-N-1 rows of BMAT.
-      do k = 1, min(npt - n - 1, n)
+      do k = 1, min(int(npt - n - 1, kind(n)), n)
           bmat(k, k + 1) = HALF/rhobeg
           bmat(k, n + k + 1) = -HALF/rhobeg
       end do
@@ -308,14 +292,14 @@
       ! Set the nonzero initial elements of ZMAT. 
       ! When NPT <= 2*N + 1, this defines ZMAT completely; 
       ! When NPT > 2*N + 1, this defines the first N columns of ZMAT.
-      do k = 1, min(npt - n - 1, n) 
+      do k = 1, min(int(npt - n - 1, kind(n)), n) 
           zmat(1, k) = - reciq - reciq
           zmat(k + 1, k) = reciq
           zmat(k + n + 1, k) = reciq
       end do
 
       ! When NPT > 2*N+1, set the N + 1 to NPT - N - 1 columns of ZMAT.
-      do k = n + 1, npt - n - 1
+      do k = int(n + 1, kind(k)), int(npt - n - 1, kind(k))
           ! IP, JP, XIP, and XJP will be used below.
           ip = ipt(k + n + 1)
           jp = jpt(k + n + 1)
