@@ -703,7 +703,7 @@
           t = t + x(i)*y(i)
       end do
 #else
-      t = a + dot_product(x, y)
+      t = dot_product(x, y) + a
 #endif
       end function xdy_plus_a
 
