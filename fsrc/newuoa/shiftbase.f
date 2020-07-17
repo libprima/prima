@@ -60,16 +60,11 @@
       !real(RP) :: hxopt(n)
       !call hessmul(n, npt, xpt, hq, pq, xopt, hxopt)
       !gq = gq + hxopt 
+      gq = Ax_plus_y(xpt, pq*matmul(xopt, xpt), gq)
+      gq = Ax_plus_y(hq, xopt, gq)
       !----------------------------------------------------------------!
-      do k = 1, npt
-      ! Update of GQ due to the implicit part of the HESSIAN:
-      ! GQ = GQ + (\sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)') * XOPT
-          gq = gq + pq(k)*dot_product(xpt(:, k), xopt)*xpt(:, k)
-      end do
-      do j = 1, n
-          gq = gq + hq(:, j)*xopt(j)
-      end do
       
+
       w1 = matmul(xopt, xpt) - HALF*xoptsq
       ! W1 equals MATMUL(XPT, XOPT) after XPT is updated as follows.
       xpt = xpt - HALF*spread(xopt, dim = 2, ncopies = npt)

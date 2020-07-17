@@ -91,12 +91,8 @@
 
       ! Prepare for the first line search.
       !----------------------------------------------------------------!
-      ! HX can indeed be calculated by the following line. 
 !-----!hx = matmul(xpt, pq*matmul(x, xpt)) + matmul(hq, x) !-----------1
-      hx = matmul(xpt, pq*matmul(x, xpt))
-      do j = 1, n
-          hx = hx + hq(:, j)*x(j)
-      end do
+      hx = Ax_plus_y(hq, x, matmul(xpt, pq*matmul(x, xpt)))
       !----------------------------------------------------------------!
       g = gq + hx
       gg = dot_product(g, g)
@@ -135,12 +131,8 @@
           ! Set BSTEP to the step length such that ||S+BSTEP*D|| = DELTA
           bstep = (delsq-ss)/(ds + sqrt(ds*ds + dd*(delsq-ss)))  
       !----------------------------------------------------------------!
-      ! HD can indeed be calculated by the following line. 
 !-----!hd = matmul(xpt, pq*matmul(d, xpt)) + matmul(hq, d) !-----------!
-          hd = matmul(xpt, pq*matmul(d, xpt))
-          do j = 1, n
-              hd = hd + hq(:, j)*d(j)
-          end do
+      hd = Ax_plus_y(hq, d, matmul(xpt, pq*matmul(d, xpt)))
       !----------------------------------------------------------------!
           dhd = dot_product(d, hd)
 
@@ -231,12 +223,8 @@
           temp = sqrt(delsq*gg - sgk*sgk)
           d = (delsq/temp)*(g + hs) - (sgk/temp)*s
       !----------------------------------------------------------------!
-      ! HD can indeed be calculated by the following line. 
 !-----!hd = matmul(xpt, pq*matmul(d, xpt)) + matmul(hq, d) !-----------!
-          hd = matmul(xpt, pq*matmul(d, xpt))
-          do j = 1, n
-              hd = hd + hq(:, j)*d(j)
-          end do
+          hd = Ax_plus_y(hq, d, matmul(xpt, pq*matmul(d, xpt)))
       !----------------------------------------------------------------!
           dg = dot_product(d, g)
           dhd = dot_product(hd, d)
