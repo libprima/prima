@@ -11,7 +11,7 @@
 
       implicit none
       private
-      public :: r1update, r2update
+      public :: r1update, r2update, grota
       public :: symmetrize
       public :: verisize
 
@@ -46,36 +46,6 @@
 #endif
 
 
-! Check whether HYPOT is available as an intrinsic.
-! F2008 provides the intrinsic HYPOT; MATLAB, Python, Julia, R, etc.,
-! contain built-in functions corresponding to HYPOT.
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#ifdef __HYPOT_AVAILABLE__
-#undef __HYPOT_AVAILABLE__
-#endif
-#define __HYPOT_AVAILABLE__ 0 
-! HYPOT is included in F2008.
-#if __FORTRAN_STANDARD__ >= 2008 
-#undef __HYPOT_AVAILABLE__
-#define __HYPOT_AVAILABLE__ 1
-#endif
-! HYPOT is included in gfortran since 4.4.7 
-#ifdef __GFORTRAN__
-#if __GNUC__ >= 5
-#undef __HYPOT_AVAILABLE__
-#define __HYPOT_AVAILABLE__ 1
-#endif
-#endif
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-#if __IMPROVE_POWELL_CODE__ == 0 || __HYPOT_AVAILABLE__ == 0
-      public :: hypot
-      interface hypot
-          module procedure hypotenuse
-      end interface hypot
-#endif
-
-
       contains
 
       subroutine r1_sym(A, alpha, x)
@@ -83,8 +53,9 @@
       ! A = A + ALPHA*( X*X^T ), 
       ! where A is an NxN matrix, ALPHA is a scalar, and X is an
       ! N-dimenional vector.
-      use consts_mod, only : RP, IK, ONE, ZERO, SRNLEN
+      use consts_mod, only : RP, IK, ONE, ZERO
 #if __DEBUG_MODE__ == 1
+      use consts_mod, only : SRNLEN
       use warnerror_mod, only : errstop
 #endif
       implicit none
@@ -92,13 +63,13 @@
       real(RP), intent(in) :: x(:)
       real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(X))
       integer(IK) :: n, j 
+
+#if __DEBUG_MODE__ == 1
       character(len = SRNLEN), parameter :: srname ='R1_SYM'
       ! Be careful with initialization! 
       ! In Fortran >=90, the initialization in the declaration implies
       ! the "save" attribute. If the variable is not a parameter, it may
       ! casue unwanted behavior.
-
-#if __DEBUG_MODE__ == 1
       if (size(A, 1) /= size(x) .or. size(A, 2) /= size(x)) then
           call errstop(srname, 'SIZE(A) is invalid')
       end if
@@ -118,7 +89,7 @@
               A(j : n, j) = A(j : n, j) + x(j : n)*x(j)
           end do
       end if
-      ! Set A(UPPER_TRIANGULAR) = A(LOWER_TRIANGULAR).
+      ! Set A(UPPER_TRI) = A(LOWER_TRI).
       call symmetrize(A) 
 #else
       ! Here we calculate the increment as ALPHA*( X*X^T ), which 
@@ -145,8 +116,9 @@
       ! A = A + ALPHA*( X*Y^T ), 
       ! where A is an MxN matrix, ALPHA is a real scalar, X is an
       ! M-dimenional vector, and Y is an N-dimenional vector.
-      use consts_mod, only : RP, IK, ONE, ZERO, SRNLEN
+      use consts_mod, only : RP, IK, ONE, ZERO
 #if __DEBUG_MODE__ == 1
+      use consts_mod, only : SRNLEN
       use warnerror_mod, only : errstop
 #endif
       implicit none
@@ -155,13 +127,13 @@
       real(RP), intent(in) :: y(:)
       real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
       integer(IK) :: n, j 
+
+#if __DEBUG_MODE__ == 1
       character(len = SRNLEN), parameter :: srname = 'R1'
       ! Be careful with initialization! 
       ! In Fortran >=90, the initialization in the declaration implies
       ! the "save" attribute. If the variable is not a parameter, it may
       ! casue unwanted behavior.
-
-#if __DEBUG_MODE__ == 1
       if (size(A, 1) /= size(x) .or. size(A, 2) /= size(y)) then
           call errstop(srname, 'SIZE(A) is invalid')
       end if
@@ -203,8 +175,9 @@
       ! A = A + ALPHA*( X*Y^T + Y*X^T ), 
       ! where A is an NxN matrix, X and Y are N-dimenional vectors, and
       ! alpha is a sclalar.
-      use consts_mod, only : RP, IK, ONE, ZERO, SRNLEN
+      use consts_mod, only : RP, IK, ONE, ZERO
 #if __DEBUG_MODE__ == 1
+      use consts_mod, only : SRNLEN
       use warnerror_mod, only : errstop
 #endif
       implicit none
@@ -213,9 +186,9 @@
       real(RP), intent(in) :: y(:)
       real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(X))
       integer(IK) :: n, j 
-      character(len = SRNLEN), parameter :: srname = 'R2_SYM'
 
 #if __DEBUG_MODE__ == 1
+      character(len = SRNLEN), parameter :: srname = 'R2_SYM'
       if (size(x) /= size(y)) then
           call errstop(srname, 'SIZE(X) /= SIZE(Y)')
       end if
@@ -238,7 +211,7 @@
               A(j : n, j) = A(j : n, j) + x(j : n)*y(j) + y(j : n)*x(j)
           end do
       end if
-      ! Set A(UPPER_TRIANGULAR) = A(LOWER_TRIANGULAR).
+      ! Set A(UPPER_TRI) = A(LOWER_TRI).
       call symmetrize(A)
 #else
       ! Here we calculate the increment as ALPHA*( X*Y^T + Y*X^T), which
@@ -264,8 +237,9 @@
       ! A = A + ( ALPHA*( X*Y^T ) + BETA*( U*V^T ) ), 
       ! where A is an MxN matrix, ALPHA and BETA are real scalars, X and 
       ! U are M-dimenional vectors, Y and V are N-dimenional vectors.
-      use consts_mod, only : RP, IK, ONE, ZERO, SRNLEN
+      use consts_mod, only : RP, IK, ONE, ZERO
 #if __DEBUG_MODE__ == 1
+      use consts_mod, only : SRNLEN
       use warnerror_mod, only : errstop
 #endif
       implicit none
@@ -277,9 +251,9 @@
       real(RP), intent(in) :: v(:)  ! V(SIZE(Y))
       real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
       integer(IK) :: n, j 
-      character(len = SRNLEN), parameter :: srname = 'R2'
 
 #if __DEBUG_MODE__ == 1
+      character(len = SRNLEN), parameter :: srname = 'R2'
       if (size(u) /= size(x)) then
           call errstop(srname, 'SIZE(U) /= SIZE(X)')
       end if
@@ -329,8 +303,9 @@
 #if __USE_INTRINSIC_ALGEBRA__ == 0 
 
       function matmul12(x, y) result(z)
-      use consts_mod, only : RP, IK, SRNLEN
+      use consts_mod, only : RP, IK
 #if __DEBUG_MODE__ == 1
+      use consts_mod, only : SRNLEN
       use warnerror_mod, only : errstop
 #endif
       implicit none
@@ -338,9 +313,9 @@
       real(RP), dimension(:, :), intent(in) :: y
       real(RP), dimension(size(y, 2)) :: z
       integer(IK) :: j
-      character(len = SRNLEN), parameter :: srname = 'MATMUL12' 
       
 #if __DEBUG_MODE__ == 1
+      character(len = SRNLEN), parameter :: srname = 'MATMUL12' 
       if (size(x) /= size(y, 1)) then
           call errstop(srname, 'SIZE(X) /= SIZE(Y, 1)')
       end if
@@ -359,8 +334,9 @@
       end function matmul12
 
       function matmul21(x, y) result(z)
-      use consts_mod, only : RP, IK, ZERO, SRNLEN
+      use consts_mod, only : RP, IK, ZERO
 #if __DEBUG_MODE__ == 1
+      use consts_mod, only : SRNLEN
       use warnerror_mod, only : errstop
 #endif
       implicit none
@@ -368,9 +344,9 @@
       real(RP), dimension(:), intent(in) :: y
       real(RP), dimension(size(x, 1)) :: z
       integer(IK) :: j 
-      character(len = SRNLEN), parameter :: srname = 'MATMUL21' 
 
 #if __DEBUG_MODE__ == 1
+      character(len = SRNLEN), parameter :: srname = 'MATMUL21' 
       if (size(x, 2) /= size(y)) then
           call errstop(srname, 'SIZE(X, 2) /= SIZE(Y)')
       end if
@@ -383,17 +359,18 @@
       end function matmul21
 
       function matmul22(x, y) result(z)
-      use consts_mod, only : RP, IK, ZERO, SRNLEN
+      use consts_mod, only : RP, IK, ZERO
 #if __DEBUG_MODE__ == 1
+      use consts_mod, only : SRNLEN
       use warnerror_mod, only : errstop
 #endif
       implicit none
       real(RP), dimension(:, :), intent(in) :: x, y
       real(RP), dimension(size(x, 1), size(y, 2)) :: z
       integer(IK) :: i, j
-      character(len = SRNLEN), parameter :: srname = 'MATMUL22'
 
 #if __DEBUG_MODE__ == 1
+      character(len = SRNLEN), parameter :: srname = 'MATMUL22'
       if (size(x, 2) /= size(y, 1)) then
           call errstop(srname, 'SIZE(X, 2) /= SIZE(Y, 1)')
       end if
@@ -408,17 +385,18 @@
       end function matmul22
 
       function inprod(x, y) result(z)
-      use consts_mod, only : RP, IK, ZERO, SRNLEN
+      use consts_mod, only : RP, IK, ZERO
 #if __DEBUG_MODE__ == 1
+      use consts_mod, only : SRNLEN
       use warnerror_mod, only : errstop 
 #endif
       implicit none
       real(RP), dimension(:), intent(in) :: x, y
       real(RP) :: z
       integer(IK) :: i
-      character(len = SRNLEN), parameter :: srname = 'INPROD'
 
 #if __DEBUG_MODE__ == 1
+      character(len = SRNLEN), parameter :: srname = 'INPROD'
       if (size(x) /= size(y)) then
           call errstop(srname, 'SIZE(X) /= SIZE(Y)')
       end if
@@ -436,51 +414,98 @@
 
 #endif
 
-      pure elemental function hypotenuse(x, y) result(r)
-      ! HYPOTENUSE calculate sqrt(x^2+y^2) if __IMPROVE_POWELL_CODE__ 
-      ! is 0 or if the compiler does not provide HYPOT as an intrinsic.
-      ! F2008 includes the intrinsic HYPOT; MATLAB, Python, Julia, R,
-      ! etc., contain built-in functions corresponding to HYPOT.
 
-#if __IMPROVE_POWELL_CODE__ == 0
-      use consts_mod, only : RP
-#else
-      use consts_mod, only : RP, ONE, TWO, ZERO
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Check whether HYPOT is available as an intrinsic.
+! F2008 provides the intrinsic HYPOT; MATLAB, Python, Julia, R, etc.,
+! contain built-in functions corresponding to HYPOT.
+#ifdef __HYPOT_AVAILABLE__
+#undef __HYPOT_AVAILABLE__
 #endif
+#define __HYPOT_AVAILABLE__ 0 
+! HYPOT is included in F2008.
+#if __FORTRAN_STANDARD__ >= 2008 
+#undef __HYPOT_AVAILABLE__
+#define __HYPOT_AVAILABLE__ 1
+#endif
+!! HYPOT is included in gfortran since 4.4.7 
+!#ifdef __GFORTRAN__
+!#if __GNUC__ >= 5
+!#undef __HYPOT_AVAILABLE__
+!#define __HYPOT_AVAILABLE__ 1
+!#endif
+!#endif
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+      subroutine grota(A, i, j, k)
+      ! GROTA sets A = A*G, 
+      ! where G is the Givens rotation that 
+      !    [A(K, 1), ..., A(K, I), ..., A(K, J), ..., A(K, N)] * G
+      !  = [A(K, 1), ...,    R   , ...,    0   , ..., A(K, N)]
+      ! with R = SQRT(A(K, I)^2 + A(K, J)^2).
+      ! Indeed, the [(I, I), (I, J); (J, I), (J, J)] block of G is 
+      ! [C, -S; S, C], where C = A(K, I)/R, S = A(K, J)/R, and the other
+      ! entries are 1 (diagonal) or 0. Therefore, A*G is identical to A
+      ! except for columns I and J:
+      ! new colum I =  C*A(:, I) + S*A(:, J)
+      ! new colum J = -S*A(:, I) + C*A(:, J)
+
+      use consts_mod, only : IK, RP, ZERO
+#if __DEBUG_MODE__ == 1
+      use consts_mod, only : SRNLEN
+      use warnerror_mod, only : errstop
+#endif      
       implicit none
-      real(RP), intent(in) :: x, y
-      real(RP) :: r  
+      integer(IK), intent(in) :: i, j, k
+      real(RP), intent(inout) :: A(:, :)
 
-#if __IMPROVE_POWELL_CODE__ == 0
-      r = sqrt(x**2 + y**2)  ! May encounter over/under flow
-#else
-      real(RP) :: ax, ay
-      ax = abs(x)
-      ay = abs(y)
-      if (ax > ay) then  ! AX > AY ensures AX > 0.
-          r = ax*sqrt(ONE + (ay/ax)**2)
-      else if (ax < ay) then  ! AX < AY ensures AY > 0.
-          r = ay*sqrt(ONE + (ax/ay)**2)
-      else if (ax > ZERO) then
-          r = ax*sqrt(TWO)
-      else 
-          r = ZERO
+      real(RP) :: c, s, r, Atemp(size(A, 1))
+
+#if __DEBUG_MODE__ == 1
+      character(len = SRNLEN), parameter :: srname = 'GROTA'
+      if (i == j .or. min(i, j) < 1 .or. max(i, j) > size(A, 2)) then
+          call errstop(srname, 'I or J is invalid')
+      end if
+      if (k < 1 .or. k > size(A, 1)) then
+          call errstop(srname, 'K is invalid')
       end if
 #endif
-      end function hypotenuse
 
-      !subroutine grot(Z, i, j, k)
-      !end subroutine grot
+      if (abs(A(k, j)) >  ZERO) then
+          c = A(k, i)
+          s = A(k, j)
+#if __IMPROVE_POWELL_CODE__ == 0 || __HYPOT_AVAILABLE__ == 0 
+          r = sqrt(c**2 + s**2)
+#else
+          r = hypot(c, s) 
+#endif
+          c = c/r
+          s = s/r
+          Atemp = A(:, i)
+          A(:, i) =  c*Atemp + s*A(:, j)
+          A(:, j) = -s*Atemp + c*A(:, j) 
+          A(k, j) = ZERO
+#if __IMPROVE_POWELL_CODE__ == 1
+          A(k, i) = r  
+      else
+          if (A(k, i) < ZERO) then
+          ! In this case, C = -1, S = 0. Thus it is reasonbale to set:
+              A(:, i) = -A(:, i)  
+              A(:, j) = -A(:, j)  
+          end if
+#endif
+      end if
+      end subroutine grota
       
       subroutine symmetrize(A)
 #if __IMPROVE_POWELL_CODE__ == 0
-      use consts_mod, only : RP, IK, ZERO, SRNLEN
+      use consts_mod, only : RP, IK
 #else
-      use consts_mod, only : RP, HALF, ZERO, SRNLEN
+      use consts_mod, only : RP, HALF
 #endif
 
 #if __DEBUG_MODE__ == 1
+      use consts_mod, only : ZERO, SRNLEN
       use warnerror_mod, only : errstop
 #endif
 
@@ -491,17 +516,15 @@
       integer(IK) :: j
 #endif
 
-      character(len = SRNLEN), parameter :: srname = 'SYMMETRIZE'
-
 #if __DEBUG_MODE__ == 1
+      character(len = SRNLEN), parameter :: srname = 'SYMMETRIZE'
       if (size(A, 1) /= size(A, 2)) then
           call errstop(srname, 'A is not square')
       end if
 #endif
 
 #if __IMPROVE_POWELL_CODE__ == 0
-      ! A is symmetrized by setting 
-      ! A(UPPER_TRIANGULAR) = A(LOWER_TRIANGULAR).
+      ! A is symmetrized by setting A(UPPER_TRI) = A(LOWER_TRI).
       do j = 1, int(size(A, 1), kind(j)) 
           A(1 : j - 1, j) = A(j, 1 : j - 1)
       end do
@@ -515,6 +538,7 @@
 #endif
       end subroutine symmetrize
 
+#if __DEBUG_MODE__ == 1
       subroutine verisym(A, tol)
       ! VERISYM verifies whether a matrix A is symmetric up to TOL.
       use consts_mod, only : RP, ONE, ZERO, SRNLEN
@@ -540,6 +564,7 @@
           end if
       end if
       end subroutine verisym
+#endif
 
       subroutine verisize_real_1(x, n)
       use consts_mod, only : RP, IK, SRNLEN

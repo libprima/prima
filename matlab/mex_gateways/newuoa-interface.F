@@ -324,6 +324,7 @@ C used when a variable of type REAL(DP) is needed
       mwPointer :: plhs(1), prhs(2) ! used in mexCallMATLAB
       character(5), parameter :: funFeval = 'feval'
 
+
 C Start the real business
       n_mw = int(n, kind(n_mw)) ! cast n to type mwSize
       if (n_mw /= n) then
@@ -386,7 +387,7 @@ C this subroutine. We are NOT in mexFunction!
 C subroutine mxDestroyArray(mwPointer pm)
 
 C Update global variables
-      nf = nf + int(1, kind(nf))
+      nf = int(nf + 1, kind(nf))
 C Some compiler (e.g., g95) may complain about implicit conversion if
 C written as nf = nf+1
       fhist(nf) = funval_dp(1)  ! Note that fhist is REAL(DP)
