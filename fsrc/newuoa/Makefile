@@ -14,6 +14,7 @@ FSTD=2003
 
 gverify:
 	$(GFORT)  $(FILES) -std=f$(FSTD) -pedantic
+#	$(GFORT)  $(FILES) -pedantic
 
 9verify:
 	$(G95)  $(FILES) -std=f$(FSTD) -pedantic

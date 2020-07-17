@@ -32,7 +32,7 @@
       real(RP), intent(inout) :: vlag(:)     ! VLAG(NPT + N)
 
       integer(IK) :: iflag, j, ja, jb, jl, n, npt
-      real(RP) :: c, s, r, alpha, denom, scala, scalb, tau, tausq, temp,&
+      real(RP) :: alpha, denom, scala, scalb, tau, tausq, temp,         &
      & tempa, tempb, ztemp(size(zmat, 1)), w(size(vlag)),               &
      & v1(size(bmat, 1)), v2(size(bmat, 1))
       character(len = SRNLEN), parameter :: srname = 'UPDATEH'
@@ -57,52 +57,14 @@
       ! ZMAT(KNEW, J) becomes 0. 
       jl = 1  ! For J = 2, ..., IDZ - 1, set JL = 1.
       do j = 2, int(idz - 1, kind(j))
-          if (abs(zmat(knew, j)) >  ZERO) then
-              !call givens(zmat(knew, jl), zmat(knew, j), c, s, r)
-              c = zmat(knew, jl)
-              s = zmat(knew, j)
-              r = hypot(c, s) 
-              c = c/r
-              s = s/r
-              ztemp = zmat(:, j)
-              zmat(:, j) = c*ztemp - s*zmat(:, jl)
-              zmat(:, jl) = c*zmat(:, jl) + s*ztemp
-              zmat(knew, j) = ZERO
-      !----------------------------------------------------------------!
-              !!! In later vesions, we will include the following line.
-              !!! For the moment, we exclude it to align with Powell's 
-              !!! version.
-              !!! Preliminary tests show that including this line can
-              !!! improve the performance.
-!-------------!zmat(knew, jl) = r  !-----------------------------------! 
-      !----------------------------------------------------------------!
-          end if
+          call grota(zmat, jl, j, knew)
       end do
 
       if (idz <= npt - n - 1) then
           jl = idz  ! For J = IDZ + 1, ..., NPT - N - 1, set JL = IDZ.
       end if
       do j = int(idz + 1, kind(j)), int(npt - n - 1, kind(j))
-          if (abs(zmat(knew, j)) >  ZERO) then
-              !call givens(zmat(knew, jl), zmat(knew, j), c, s, r)
-              c = zmat(knew, jl)
-              s = zmat(knew, j)
-              r = hypot(c, s) 
-              c = c/r
-              s = s/r
-              ztemp = zmat(:, j)
-              zmat(:, j) = c*ztemp - s*zmat(:, jl)
-              zmat(:, jl) = c*zmat(:, jl) + s*ztemp
-              zmat(knew, j) = ZERO
-      !----------------------------------------------------------------!
-              !!! In later vesions, we will include the following line.
-              !!! For the moment, we exclude it to align with Powell's 
-              !!! version.
-              !!! Preliminary tests show that including this line can
-              !!! improve the performance.
-!-------------!zmat(knew, jl) = r  !-----------------------------------! 
-      !----------------------------------------------------------------!
-          end if
+          call grota(zmat, jl, j, knew)
       end do
       
       ! JL plays an important role below. There are two possibilities:
