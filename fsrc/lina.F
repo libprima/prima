@@ -78,7 +78,7 @@
 
       n = int(size(x), kind(n))
 
-#if __IMPROVE_POWELL_CODE__ == 0
+#if __USE_POWELL_ALGEBRA__ == 1
       ! Only update the LOWER TRIANGULAR part of A.
       ! Both of the following cases are invoked in NEWUOA.
       if (abs(alpha - ONE) > ZERO) then
@@ -142,7 +142,7 @@
 
       n = int(size(y), kind(n))
 
-#if __IMPROVE_POWELL_CODE__ == 0
+#if __USE_POWELL_ALGEBRA__ == 1
       ! Both of the following cases are invoked in NEWUOA.
       if (abs(alpha - ONE) > ZERO) then
           do j = 1, n
@@ -200,7 +200,7 @@
 
       n = int(size(x), kind(n))
 
-#if __IMPROVE_POWELL_CODE__ == 0
+#if __USE_POWELL_ALGEBRA__ == 1
       ! Only update the LOWER TRIANGULAR part of A.
       if (abs(alpha - ONE) > ZERO) then  ! NOT invoked in NEWUOA.
           do j = 1, n
@@ -268,7 +268,7 @@
 
       n = int(size(y), kind(n))
 
-#if __IMPROVE_POWELL_CODE__ == 0 
+#if __USE_POWELL_ALGEBRA__ == 1 
       if (abs(alpha - ONE) > ZERO .or. abs(beta - ONE) > ZERO) then
           ! This case is NOT invoked in NEWUOA.
           do j = 1, n
@@ -479,7 +479,7 @@
       if (abs(A(k, j)) >  ZERO) then
           c = A(k, i)
           s = A(k, j)
-#if __IMPROVE_POWELL_CODE__ == 0 || __HYPOT_AVAILABLE__ == 0 
+#if __USE_POWELL_ALGEBRA__ == 1 || __HYPOT_AVAILABLE__ == 0 
           r = sqrt(c**2 + s**2)
 #else
           r = hypot(c, s) 
@@ -490,7 +490,7 @@
           A(:, i) =  c*Atemp + s*A(:, j)
           A(:, j) = -s*Atemp + c*A(:, j) 
           A(k, j) = ZERO
-#if __IMPROVE_POWELL_CODE__ == 1
+#if __USE_POWELL_ALGEBRA__ == 0
           A(k, i) = r  
       else if (A(k, i) < ZERO) then
           ! In this case, C = -1, S = 0. Thus it is reasonbale to set
@@ -503,7 +503,7 @@
       end subroutine grota
       
       subroutine symmetrize(A)
-#if __IMPROVE_POWELL_CODE__ == 0
+#if __USE_POWELL_ALGEBRA__ == 1
       use consts_mod, only : RP, IK
 #else
       use consts_mod, only : RP, HALF
@@ -517,7 +517,7 @@
       implicit none
       real(RP), intent(inout) :: A(:, :)
 
-#if __IMPROVE_POWELL_CODE__ == 0
+#if __USE_POWELL_ALGEBRA__ == 1
       integer(IK) :: j
 #endif
 
@@ -528,7 +528,7 @@
       end if
 #endif
 
-#if __IMPROVE_POWELL_CODE__ == 0
+#if __USE_POWELL_ALGEBRA__ == 1
       ! A is symmetrized by setting A(UPPER_TRI) = A(LOWER_TRI).
       do j = 1, int(size(A, 1), kind(j)) 
           A(1 : j - 1, j) = A(j, 1 : j - 1)
@@ -635,7 +635,7 @@
       function xpy_dot_z (x, y, z) result(t)
 
       use consts_mod, only : RP
-#if __IMPROVE_POWELL_CODE__ == 0
+#if __USE_POWELL_ALGEBRA__ == 1
       use consts_mod, only : IK, ZERO
 #endif
 #if __DEBUG_MODE__ == 1
@@ -648,7 +648,7 @@
       real(RP), intent(in) :: y(:)
       real(RP), intent(in) :: z(:) 
       real(RP) :: t
-#if __IMPROVE_POWELL_CODE__ == 0
+#if __USE_POWELL_ALGEBRA__ == 1
       integer(IK) :: i
 #endif
 
@@ -659,7 +659,7 @@
       end if
 #endif
 
-#if __IMPROVE_POWELL_CODE__ == 0
+#if __USE_POWELL_ALGEBRA__ == 1
       t = ZERO
       do i = 1, size(z)
           t = t + x(i)*z(i) + y(i)*z(i)
@@ -673,7 +673,7 @@
       function xdy_plus_a(x, y, a) result(t)
 
       use consts_mod, only : RP
-#if __IMPROVE_POWELL_CODE__ == 0
+#if __USE_POWELL_ALGEBRA__ == 1
       use consts_mod, only : IK
 #endif
 #if __DEBUG_MODE__ == 1
@@ -686,7 +686,7 @@
       real(RP), intent(in) :: y(:)
       real(RP), intent(in) :: a 
       real(RP) :: t
-#if __IMPROVE_POWELL_CODE__ == 0
+#if __USE_POWELL_ALGEBRA__ == 1
       integer(IK) :: i
 #endif
 
@@ -697,7 +697,7 @@
       end if
 #endif
 
-#if __IMPROVE_POWELL_CODE__ == 0
+#if __USE_POWELL_ALGEBRA__ == 1
       t = a
       do i = 1, size(x)
           t = t + x(i)*y(i)
@@ -711,7 +711,7 @@
       function Ax_plus_y(A, x, y) result(z)
 
       use consts_mod, only : RP
-#if __IMPROVE_POWELL_CODE__ == 0
+#if __USE_POWELL_ALGEBRA__ == 1
       use consts_mod, only : IK
 #endif
 #if __DEBUG_MODE__ == 1
@@ -724,7 +724,7 @@
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
       real(RP) :: z(size(y)) 
-#if __IMPROVE_POWELL_CODE__ == 0
+#if __USE_POWELL_ALGEBRA__ == 1
       integer(IK) :: j 
 #endif
 
@@ -735,7 +735,7 @@
       end if
 #endif
 
-#if __IMPROVE_POWELL_CODE__ == 0
+#if __USE_POWELL_ALGEBRA__ == 1
       z = y
       do j = 1, size(A, 2)
           z = z + A(:, j)*x(j)
@@ -749,7 +749,7 @@
       function xA_plus_y(A, x, y) result(z)
 
       use consts_mod, only : RP
-#if __IMPROVE_POWELL_CODE__ == 0
+#if __USE_POWELL_ALGEBRA__ == 1
       use consts_mod, only : IK
 #endif
 #if __DEBUG_MODE__ == 1
@@ -762,7 +762,7 @@
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
       real(RP) :: z(size(y)) 
-#if __IMPROVE_POWELL_CODE__ == 0
+#if __USE_POWELL_ALGEBRA__ == 1
       integer(IK) :: i 
 #endif
 
@@ -773,7 +773,7 @@
       end if
 #endif
 
-#if __IMPROVE_POWELL_CODE__ == 0
+#if __USE_POWELL_ALGEBRA__ == 1
       z = y
       do i = 1, size(A, 2)
           z = z + x(i)*A(i, :)

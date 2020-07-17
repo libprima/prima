@@ -6,7 +6,7 @@ __DEBUG_MODE__              debug or not: 0, 1
 __INTEGER_KIND__            the integer kind to be used: 0, 32, 16, 64
 __REAL_PRECISION__          the real precision to be used: 64, 32, 128, 0 
 __FORTRAN_STANDARD__        Fortran standard to follow: 95, 2003, 2008
-__IMPROVE_POWELL_CODE__     improve Powell's code or not: 1, 0
+__USE_POWELL_ALGEBRA__      use Powell's linear algebra procedures or not: 0, 1 
 __USE_IEEE_ARITHMETIC__     use the IEEE_ARITHMETIC intrinsic or not: 1, 0
 __USE_INTRINSIC_ALGEBRA__   use intrinsic procedures like matmul or not: 1, 0
 
@@ -170,17 +170,17 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 
 
 /*************************************************************************/
-/* Do we improve Powell's code? */
+/* Do we use Powell's line algebra procedures? */
 /* The improvements do not change Powell's algorithms but modify the 
  * implementation of some algebraic calculations. The improved code may
  * not produce exactly the same results as Powell's code due to properties
  * of floating-point arithmetic, e.g., the non-associativity of
  * floating-point addition and multiplication. The improvements remove
  * some bugs. */
-#ifdef __IMPROVE_POWELL_CODE__
-#undef __IMPROVE_POWELL_CODE__
+#ifdef __USE_POWELL_ALGEBRA__
+#undef __USE_POWELL_ALGEBRA__
 #endif
-#define __IMPROVE_POWELL_CODE__ 0 
+#define __USE_POWELL_ALGEBRA__ 1 
 /*************************************************************************/
 
 
