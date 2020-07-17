@@ -14,6 +14,7 @@
       public :: r1update, r2update, grota
       public :: symmetrize
       public :: verisize
+      public :: xpy_dot_z, xdy_plus_a, Ax_plus_y, xA_plus_y
 
 
       interface r1update
@@ -309,9 +310,9 @@
       use warnerror_mod, only : errstop
 #endif
       implicit none
-      real(RP), dimension(:), intent(in) :: x
-      real(RP), dimension(:, :), intent(in) :: y
-      real(RP), dimension(size(y, 2)) :: z
+      real(RP), intent(in) :: x(:)
+      real(RP), intent(in) :: y(:, :)
+      real(RP) :: z(size(y, 2))
       integer(IK) :: j
       
 #if __DEBUG_MODE__ == 1
@@ -340,9 +341,9 @@
       use warnerror_mod, only : errstop
 #endif
       implicit none
-      real(RP), dimension(:, :), intent(in) :: x
-      real(RP), dimension(:), intent(in) :: y
-      real(RP), dimension(size(x, 1)) :: z
+      real(RP), intent(in) :: x(:, :)
+      real(RP), intent(in) :: y(:)
+      real(RP) :: z(size(x, 1))
       integer(IK) :: j 
 
 #if __DEBUG_MODE__ == 1
@@ -365,8 +366,9 @@
       use warnerror_mod, only : errstop
 #endif
       implicit none
-      real(RP), dimension(:, :), intent(in) :: x, y
-      real(RP), dimension(size(x, 1), size(y, 2)) :: z
+      real(RP), intent(in) :: x(:, :)
+      real(RP), intent(in) :: y(:, :)
+      real(RP) :: z(size(x, 1), size(y, 2))
       integer(IK) :: i, j
 
 #if __DEBUG_MODE__ == 1
@@ -391,7 +393,8 @@
       use warnerror_mod, only : errstop 
 #endif
       implicit none
-      real(RP), dimension(:), intent(in) :: x, y
+      real(RP), intent(in) :: x(:)
+      real(RP), intent(in) :: y(:)
       real(RP) :: z
       integer(IK) :: i
 
@@ -456,7 +459,9 @@
       use warnerror_mod, only : errstop
 #endif      
       implicit none
-      integer(IK), intent(in) :: i, j, k
+      integer(IK), intent(in) :: i
+      integer(IK), intent(in) :: j
+      integer(IK), intent(in) :: k
       real(RP), intent(inout) :: A(:, :)
 
       real(RP) :: c, s, r, Atemp(size(A, 1))
@@ -487,12 +492,12 @@
           A(k, j) = ZERO
 #if __IMPROVE_POWELL_CODE__ == 1
           A(k, i) = r  
-      else
-          if (A(k, i) < ZERO) then
-          ! In this case, C = -1, S = 0. Thus it is reasonbale to set:
+      else if (A(k, i) < ZERO) then
+          ! In this case, C = -1, S = 0. Thus it is reasonbale to set
+          ! the following. Doing this will ensure the continuity of this
+          ! subroutine as an operator.
               A(:, i) = -A(:, i)  
               A(:, j) = -A(:, j)  
-          end if
 #endif
       end if
       end subroutine grota
@@ -583,7 +588,8 @@
       use consts_mod, only : RP, IK, SRNLEN
       use warnerror_mod, only : errstop
       real(RP), intent(in) :: x(:, :)
-      integer(IK), intent(in) :: m, n
+      integer(IK), intent(in) :: m
+      integer(IK), intent(in) :: n
 
       character(len = SRNLEN), parameter :: srname = 'VERISIZE_REAL_2'
 
@@ -612,7 +618,8 @@
       use consts_mod, only : IK, SRNLEN
       use warnerror_mod, only : errstop
       integer(IK), intent(in) :: x(:, :)
-      integer(IK), intent(in) :: m, n
+      integer(IK), intent(in) :: m
+      integer(IK), intent(in) :: n
 
       character(len = SRNLEN), parameter :: srname = 'VERISIZE_INT_2'
 
@@ -623,5 +630,157 @@
           call errstop(srname, 'SIZE(X, 2) /= N')
       end if
       end subroutine verisize_int_2
+
+
+      function xpy_dot_z (x, y, z) result(t)
+
+      use consts_mod, only : RP
+#if __IMPROVE_POWELL_CODE__ == 0
+      use consts_mod, only : IK, ZERO
+#endif
+#if __DEBUG_MODE__ == 1
+      use consts_mod, only : SRNLEN 
+      use warnerror_mod, only : errstop
+#endif
+      implicit none
+
+      real(RP), intent(in) :: x(:)
+      real(RP), intent(in) :: y(:)
+      real(RP), intent(in) :: z(:) 
+      real(RP) :: t
+#if __IMPROVE_POWELL_CODE__ == 0
+      integer(IK) :: i
+#endif
+
+#if __DEBUG_MODE__ == 1
+      character(len = SRNLEN), parameter :: srname = 'XPY_DOT_Z'
+      if (size(x) /= size(z) .or. size(y) /= size(z)) then
+          call errstop(srname, 'SIZE(X) or SIZE(Y) /= SIZE(Z)')
+      end if
+#endif
+
+#if __IMPROVE_POWELL_CODE__ == 0
+      t = ZERO
+      do i = 1, size(z)
+          t = t + x(i)*z(i) + y(i)*z(i)
+      end do
+#else
+      t = dot_product(x + y, z)
+#endif
+      end function xpy_dot_z
+
+
+      function xdy_plus_a(x, y, a) result(t)
+
+      use consts_mod, only : RP
+#if __IMPROVE_POWELL_CODE__ == 0
+      use consts_mod, only : IK
+#endif
+#if __DEBUG_MODE__ == 1
+      use consts_mod, only : SRNLEN 
+      use warnerror_mod, only : errstop
+#endif
+      implicit none
+
+      real(RP), intent(in) :: x(:)
+      real(RP), intent(in) :: y(:)
+      real(RP), intent(in) :: a 
+      real(RP) :: t
+#if __IMPROVE_POWELL_CODE__ == 0
+      integer(IK) :: i
+#endif
+
+#if __DEBUG_MODE__ == 1
+      character(len = SRNLEN), parameter :: srname = 'XDY_PLUS_A'
+      if (size(x) /= size(y)) then
+          call errstop(srname, 'SIZE(X) /= SIZE(Y)')
+      end if
+#endif
+
+#if __IMPROVE_POWELL_CODE__ == 0
+      t = a
+      do i = 1, size(x)
+          t = t + x(i)*y(i)
+      end do
+#else
+      t = a + dot_product(x, y)
+#endif
+      end function xdy_plus_a
+
+
+      function Ax_plus_y(A, x, y) result(z)
+
+      use consts_mod, only : RP
+#if __IMPROVE_POWELL_CODE__ == 0
+      use consts_mod, only : IK
+#endif
+#if __DEBUG_MODE__ == 1
+      use consts_mod, only : SRNLEN 
+      use warnerror_mod, only : errstop
+#endif
+      implicit none
+
+      real(RP), intent(in) :: A(:, :)
+      real(RP), intent(in) :: x(:)
+      real(RP), intent(in) :: y(:)
+      real(RP) :: z(size(y)) 
+#if __IMPROVE_POWELL_CODE__ == 0
+      integer(IK) :: j 
+#endif
+
+#if __DEBUG_MODE__ == 1
+      character(len = SRNLEN), parameter :: srname = 'AX_PLUS_Y'
+      if (size(x) /= size(A, 2) .or. size(y) /= size(A, 1)) then
+          call errstop(srname, 'SIZE(A) /= (SIZE(Y), SIZE(X))')
+      end if
+#endif
+
+#if __IMPROVE_POWELL_CODE__ == 0
+      z = y
+      do j = 1, size(A, 2)
+          z = z + A(:, j)*x(j)
+      end do
+#else
+      z = matmul(A, x) + y
+#endif
+      end function Ax_plus_y
+
+
+      function xA_plus_y(A, x, y) result(z)
+
+      use consts_mod, only : RP
+#if __IMPROVE_POWELL_CODE__ == 0
+      use consts_mod, only : IK
+#endif
+#if __DEBUG_MODE__ == 1
+      use consts_mod, only : SRNLEN 
+      use warnerror_mod, only : errstop
+#endif
+      implicit none
+
+      real(RP), intent(in) :: A(:, :)
+      real(RP), intent(in) :: x(:)
+      real(RP), intent(in) :: y(:)
+      real(RP) :: z(size(y)) 
+#if __IMPROVE_POWELL_CODE__ == 0
+      integer(IK) :: i 
+#endif
+
+#if __DEBUG_MODE__ == 1
+      character(len = SRNLEN), parameter :: srname = 'XA_PLUS_Y'
+      if (size(x) /= size(A, 1) .or. size(y) /= size(A, 2)) then
+          call errstop(srname, 'SIZE(A) /= (SIZE(X), SIZE(Y))')
+      end if
+#endif
+
+#if __IMPROVE_POWELL_CODE__ == 0
+      z = y
+      do i = 1, size(A, 2)
+          z = z + x(i)*A(i, :)
+      end do
+#else
+      z = matmul(x, A) + y
+#endif
+      end function xA_plus_y
 
       end module lina_mod

@@ -29,7 +29,7 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 #ifdef __DEBUG_MODE__
 #undef __DEBUG_MODE__
 #endif
-#define __DEBUG_MODE__ 0 
+#define __DEBUG_MODE__ 1 
 /*************************************************************************/
 
 
@@ -180,7 +180,7 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 #ifdef __IMPROVE_POWELL_CODE__
 #undef __IMPROVE_POWELL_CODE__
 #endif
-#define __IMPROVE_POWELL_CODE__ 1 
+#define __IMPROVE_POWELL_CODE__ 0 
 /*************************************************************************/
 
 

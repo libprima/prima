@@ -12,7 +12,7 @@
       subroutine vlagbeta(idz, kopt, bmat, zmat, xpt, xopt, d, vlag,    &
      & beta, wcheck, dsq, xoptsq)
 
-      use consts_mod, only : RP, IK, ONE, HALF, ZERO, DEBUG_MODE, SRNLEN
+      use consts_mod, only : RP, IK, ONE, HALF, DEBUG_MODE, SRNLEN
       use warnerror_mod, only : errstop
       use lina_mod
       implicit none
@@ -27,7 +27,7 @@
       real(RP), intent(out) :: beta
       real(RP), intent(out) :: wcheck(:)  ! WCHECK(NPT)
 
-      integer(IK) :: k, j, n, npt
+      integer(IK) :: n, npt
       real(RP) :: bw(size(bmat, 1)), bwvd
       real(RP) :: wz(size(zmat, 2)), wzsave(size(wz))
       real(RP) :: dx, dsq, xoptsq
@@ -75,37 +75,19 @@
       wz(1 : idz - 1) = -wz(1 : idz - 1)
       beta = -dot_product(wzsave, wz)
 !----------------------------------------------------------------------!
-      ! The following DO LOOP implements the update below. The results
-      ! will not be identical due to the non-associativity of
-      ! floating point arithmetic addition.
 !-----!vlag(1 : npt) = vlag(1 : npt) + matmul(zmat, wz) !--------------!
-      do k = 1, int(npt - n - 1, kind(k))
-          vlag(1 : npt) = vlag(1 : npt) + wz(k)*zmat(:, k)
-      end do
+       vlag(1 : npt) = Ax_plus_y(zmat, wz, vlag(1 : npt))
 !----------------------------------------------------------------------!
 
       bw = matmul(bmat(:, 1 : npt), wcheck)
 !----------------------------------------------------------------------!
-      ! The following DO LOOP implements the update below. The results
-      ! will not be identical due to the non-associativity of
-      ! floating point arithmetic addition.
 !-----!vlag(npt + 1: npt + n) = bw + matmul(d, bmat(:, npt + 1 : npt + n))
-      vlag(npt + 1 : npt + n) = bw
-      do k = 1, n
-          vlag(npt + 1 : npt + n) = vlag(npt + 1 : npt + n) +           &
-     &     bmat(k, npt + 1 : npt + n)*d(k)
-      end do
+      vlag(npt+1: npt+n) = xA_plus_y(bmat(:, npt+1 : npt+n), d, bw)
 !----------------------------------------------------------------------!
 
 !----------------------------------------------------------------------!
-      ! The following DO LOOP implements the dot product below. The
-      ! results will not be identical due to the non-associativity of
-      ! floating point arithmetic addition.
 !-----!bwvd = dot_product(bw + vlag(npt+1 : npt+n), d) !---------------!
-      bwvd = ZERO
-      do j = 1, n
-          bwvd = bwvd + bw(j)*d(j) + vlag(npt + j)*d(j)
-      end do
+      bwvd = xpy_dot_z(bw, vlag(npt+1 : npt+n), d)
 !----------------------------------------------------------------------!
 
       dx = dot_product(d, xopt)

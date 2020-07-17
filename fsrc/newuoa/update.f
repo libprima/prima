@@ -170,25 +170,10 @@
       v1 = (alpha*vlag(npt+1 : npt+n) - tau*w(npt+1 : npt+n))/denom
       v2 = (-beta*w(npt+1 : npt+n) - tau*vlag(npt+1 : npt+n))/denom
 
-!      !-------------------POWELL'S IMPLEMENTATION----------------------!
-!      do j = 1, n
-!          bmat(j, 1 : npt + j) = bmat(j, 1 : npt + j) +                 &
-!     &     v1(j)*vlag(1 : npt + j) + v2(j)*w(1 : npt + j)
-!      ! Set the upper triangular part of BMAT(:,NPT+1:NPT+N) by symmetry
-!      ! Note that SHIFTBASE sets the lower triangular part by copying
-!      ! the upper triangular part, but here it does the opposite. There 
-!      ! seems not any particular reason to keep them different. It was
-!      ! probably an ad-hoc decision that Powell made when coding. 
-!          bmat(1 : j - 1, npt + j) = bmat(j, npt + 1 : npt + j - 1)
-!      end do 
-!      !---------------POWELL'S IMPLEMENTATION ENDS---------------------!
-
-      !-----------------MATRIX-VECTOR IMPLEMENTATION-------------------!
       call r2update(bmat, ONE, v1, vlag, ONE, v2, w)
       ! In floating-point arithmetic, the update above does not guarante
       ! BMAT(:, NPT+1 : NPT+N) to be symmetric. Symmetrization needed.
       call symmetrize(bmat(:, npt + 1 : npt + n))
-      !----------------------------------------------------------------!
 
       return
 
@@ -213,7 +198,7 @@
       real(RP), intent(inout) :: hq(:, :)! HQ(N, N)
       real(RP), intent(inout) :: pq(:)   ! PQ(NPT) 
 
-      integer(IK) :: j, n, npt
+      integer(IK) :: n, npt
       real(RP) :: fqdz(size(zmat, 2))
       character(len = SRNLEN), parameter :: srname = 'UPDATEQ'
 
@@ -242,15 +227,9 @@
       fqdz(1 : idz - 1) = -fqdz(1 : idz - 1)
       pq(knew) = ZERO
       !----------------------------------------------------------------!
-      !!! The following DO LOOP implements the update given below, yet
-      !!! the result will not be exactly the same due to the
-      !!! non-associativity of floating point arithmetic addition.
-      !!! In future versions, we will use MATMUL instead of DO LOOP.
 !----!pq = pq + matmul(zmat, fqdz) !-----------------------------------!
+      pq = Ax_plus_y(zmat, fqdz, pq)
       !----------------------------------------------------------------!
-      do j = 1, int(npt - n - 1, kind(j))
-          pq = pq + fqdz(j)*zmat(:, j)
-      end do
 
       ! Update the gradient.
       gq = gq + fqdiff*bmatknew

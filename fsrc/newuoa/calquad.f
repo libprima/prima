@@ -7,7 +7,7 @@
 
       contains
 
-      !subroutine calquad(vquad, d, x, xpt, gq, hq, pq, n, npt)
+      !subroutine calquad(vquad, d, x, xpt, gq, hq, pq)
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! CALQUAD is the only place where WCHECK is used.
       ! CALQUAD can be implemented without WCHECK. For the moment, to 
