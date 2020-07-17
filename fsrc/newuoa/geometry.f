@@ -31,7 +31,7 @@
       real(RP), intent(out) :: alpha
       real(RP), intent(out) :: d(:)        ! D(N)
 
-      integer(IK) :: i, isave, iterc, iu, k, n, npt
+      integer(IK) :: i, isave, iterc, iu, n, npt
       real(RP) :: hcol(size(xpt, 2)), gc(size(x)), gd(size(x)),         &
      & s(size(x)), w(size(x)), zknew(size(zmat, 2)), angle, cf(5), cth, &
      & dd, denom, dhd, gg, scaling, sp, ss, step, sth, tau, taubeg,     &
@@ -79,12 +79,8 @@
       gd = matmul(xpt, hcol*matmul(d, xpt))
 
       !----------------------------------------------------------------!
-      ! The following DO LOOP calculates the GC below
 !-----!gc = bmat(:, knew) + matmul(xpt, hcol*matmul(x, xpt)) !---------!
-      gc = bmat(:, knew)
-      do k = 1, npt
-          gc = gc + (hcol(k)*dot_product(xpt(:, k), x))*xpt(:, k)
-      end do
+      gc = Ax_plus_y(xpt, hcol*matmul(x, xpt), bmat(:, knew))
       !----------------------------------------------------------------!
 
       ! Scale D and GD, with a sign change if required. Set S to another
@@ -190,7 +186,6 @@
 
       subroutine bigden (x, xpt, bmat, zmat, idz, kopt, knew, d, wcheck,&
      & vlag, beta)
-!!! TODO: Replace the DO LOOP in the update of S with MATMUL.
       ! BIGDEN calculates a D by approximately solving
       !
       ! max |SIGMA(X + D)|, subject to ||D|| <= DELTA, 
@@ -223,11 +218,12 @@
       integer(IK) :: i, isave, iterc, iu, j, jc, k, nw, n, npt
       real(RP) :: s(size(x)), wvec(size(xpt, 2) + size(x), 5),          &
      & prod(size(xpt, 2) + size(x), 5), den(9), denex(9), par(9),       
-     & zknew(size(zmat, 2)), stemp(size(x)), dstemp(size(xpt, 2)),      &
+     & zknew(size(zmat, 2)), dstemp(size(xpt, 2)),                      &
      & sstemp(size(xpt, 2)), wz(size(zmat, 2)), w1(size(xpt, 2)),       &
      & w2(size(x)), angle, dd, denmax, denold, densav, ds, dtest, ss,   &
      & ssden, summation, sumold, step, tau, temp, tempa, tempb, tempc,  &
      & tempv(size(xpt, 2)), xd, xs, xsq, alpha
+      real(RP) :: xptemp(size(xpt, 1), size(xpt, 2))
       character(len = SRNLEN), parameter :: srname = 'BIGDEN'
 
       ! N is the number of variables.
@@ -290,14 +286,12 @@
 
       if (.not. (ds*ds <= 0.99_RP*dd*ss)) then
           dtest = ds*ds/ss
-          ! The following DO LOOP implements the code below.
-          !dstemp = matmul(d, xpt) - dot_product(x, d)
-          !sstemp = sum((xpt-spread(x, dim=2, ncopies=npt))**2,dim=1) 
-          do k = 1, npt
-              stemp = xpt(:, k) - x
-              dstemp(k) = dot_product(d, stemp)
-              sstemp(k) = dot_product(stemp, stemp)
-          end do
+          xptemp = xpt - spread(x, dim = 2, ncopies = npt)
+!----------------------------------------------------------------------!
+!---------!dstemp = matmul(d, xpt) - dot_product(x, d) !---------------!
+          dstemp = matmul(d, xptemp)
+!----------------------------------------------------------------------!
+          sstemp = sum((xptemp)**2, dim = 1) 
           
           dstemp(kopt) = TWO*ds + ONE  
           sstemp(kopt) = ss     
@@ -336,10 +330,10 @@
               tempa = dot_product(xpt(:, k), d)
               tempb = dot_product(xpt(:, k), s)
               tempc = dot_product(xpt(:, k), x)
-              wvec(k, 1) = quart*(tempa*tempa + tempb*tempb)
+              wvec(k, 1) = QUART*(tempa*tempa + tempb*tempb)
               wvec(k, 2) = tempa*tempc
               wvec(k, 3) = tempb*tempc
-              wvec(k, 4) = quart*(tempa*tempa - tempb*tempb)
+              wvec(k, 4) = QUART*(tempa*tempa - tempb*tempb)
               wvec(k, 5) = HALF*tempa*tempb
           end do
           wvec(npt + 1 : npt + n, 1 : 5) = ZERO
@@ -485,21 +479,8 @@
           tempv = matmul(w2, xpt)
           tempv = (tau*w1 - alpha*vlag(1 : npt))*tempv
 !----------------------------------------------------------------------!
-          !!! In later versions, the following DO LOOP should be
-          !!! replaced by MATMUL as follows:
 !---------!s = s + matmul(xpt, tempv) !--------------------------------!
-          !!! For the moment, we use a DO LOOP instead of MATMUL to
-          !!! ensure that the result is identical to that of Powell's
-          !!! code. If we use MATMUL, the result is not always the same,
-          !!! since floating point addition (and multiplication) is not
-          !!! associative, although it is commutative. The following 
-          !!! LOOP calculates 
-          !!! s + tempv(1)*xpt(:, 1) + tempv(2)*xpt(:, 2) + ...
-          !!! while s + matmul(xpt, tempv) calculates
-          !!! s + ( tempv(1)*xpt(:, 1) + tempv(2)*xpt(:, 2) + ... )
-          do k = 1, npt
-              s = s + tempv(k)*xpt(:, k)
-          end do 
+          s = Ax_plus_y(xpt, tempv, s)
 !----------------------------------------------------------------------!
     
           ss = dot_product(s, s)
