@@ -28,7 +28,7 @@
       real(RP), intent(inout) :: hq(:, :)  ! HQ(N, N)
       real(RP), intent(inout) :: xpt(:, :)  ! XPT(N, NPT)
 
-      integer(IK) :: j, k, n, npt
+      integer(IK) :: k, n, npt
       real(RP) :: sumz(size(zmat, 2)), vlag(size(xopt))
       real(RP) :: qxoptq, xoptsq, xpq(size(xopt)), bmatk(size(bmat, 1)) 
       REAL(RP) :: w1(size(pq)), w2(size(xopt))

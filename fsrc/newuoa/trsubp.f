@@ -59,7 +59,7 @@
       real(RP), intent(out) :: crvmin
       real(RP), intent(out) :: qred
       
-      integer(IK) :: i, isave, iterc, itermax, iu, j, n, npt
+      integer(IK) :: i, isave, iterc, itermax, iu, n, npt
       real(RP) :: d(size(x)), g(size(x)), hd(size(x)), hs(size(x)),     &
      & hx(size(x)) 
       real(RP) :: alpha, angle, bstep, cf, cth, dd, delsq, dg, dhd, dhs,&

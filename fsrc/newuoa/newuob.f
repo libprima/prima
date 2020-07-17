@@ -162,7 +162,7 @@
               ! Calculate VLAG and BETA for D. The first NPT components
               ! of W_check will be held in WCHECK.
               !call vlagbeta(idz, kopt, bmat, zmat, xpt, xopt, d, vlag, &
-!     &         beta, wcheck)
+!     &         beta)
               call vlagbeta(idz, kopt, bmat, zmat, xpt, xopt, d, vlag,  &
      &         beta, wcheck, dsq, xoptsq)
 
@@ -170,7 +170,7 @@
 
               ! Use the current quadratic model to predict the change in
               ! F due to the step D.
-              !call calquad(vquad, d, xopt, xpt, gq, hq, pq, n, npt)
+              !call calquad(vquad, d, xopt, xpt, gq, hq, pq)
               call calquad(vquad, d, xopt, xpt, gq, hq, pq, wcheck)
 
               ! Calculate the next value of the objective function.
@@ -389,18 +389,20 @@
 
               ! Calculate VLAG, BETA, and WCHECK for D.
 !              call vlagbeta(idz, kopt, bmat, zmat, xpt, xopt, d, vlag, &
-!     &         beta, wcheck)
+!     &         beta)
               call vlagbeta(idz, kopt, bmat, zmat, xpt, xopt, d, vlag,  &
      &         beta, wcheck, dsq, xoptsq)
 
               ! If KNEW is positive and if the cancellation in DENOM is
               ! unacceptable, then BIGDEN calculates an alternative
               ! model step D.
-              ! Why don't we call vlagbeta for this D? Because they are
-              ! calculated within BIGDEN. 
+              ! Why don't we call vlagbeta for this D? Because vlag and 
+              ! beta are calculated within BIGDEN. 
               ! No need to check whether BMAT and ZMAT contain NaN as no
               ! change has been made to them.
               if (abs(ONE + alpha*beta/vlag(knew)**2) <= 0.8_RP) then
+!                  call bigden (xopt, xpt, bmat, zmat, idz, kopt, knew,  &
+!     &             d, vlag, beta)
                   call bigden (xopt, xpt, bmat, zmat, idz, kopt, knew,  &
      &             d, wcheck, vlag, beta)
               end if
@@ -409,7 +411,7 @@
 
               ! Use the current quadratic model to predict the change in
               ! F due to the step D.
-              !call calquad(vquad, d, xopt, xpt, gq, hq, pq, n, npt)
+              !call calquad(vquad, d, xopt, xpt, gq, hq, pq)
               call calquad(vquad, d, xopt, xpt, gq, hq, pq, wcheck)
 
               ! Calculate the next value of the objective function.
@@ -494,8 +496,6 @@
           end if
       end if
 
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      ! By Zaikun (commented on 02-06-2019; implemented in 2016):
       ! Note that (FOPT .LE. F) is FALSE if F is NaN; When F is NaN, it
       ! is also necessary to update X and F.
       if (is_nan(f) .or. fopt <= f) then
