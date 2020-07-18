@@ -1,6 +1,5 @@
 trsubp.f
 geometry.f
-calquad.f
 initialize.f
 shiftbase.f
 update.f

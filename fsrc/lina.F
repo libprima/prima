@@ -11,10 +11,11 @@
 
       implicit none
       private
-      public :: r1update, r2update, grota
-      public :: symmetrize
-      public :: verisize
+      public :: r1update, r2update, symmetrize
+      public :: grota
       public :: xpy_dot_z, xdy_plus_a, Ax_plus_y, xA_plus_y
+      public :: calquad
+      public :: verisize, verisym
 
 
       interface r1update
@@ -450,8 +451,8 @@
       ! [C, -S; S, C], where C = A(K, I)/R, S = A(K, J)/R, and the other
       ! entries are 1 (diagonal) or 0. Therefore, A*G is identical to A
       ! except for columns I and J:
-      ! new colum I =  C*A(:, I) + S*A(:, J)
-      ! new colum J = -S*A(:, I) + C*A(:, J)
+      ! new column I =  C*A(:, I) + S*A(:, J)
+      ! new column J = -S*A(:, I) + C*A(:, J)
 
       use consts_mod, only : IK, RP, ZERO
 #if __DEBUG_MODE__ == 1
@@ -503,6 +504,9 @@
       end subroutine grota
       
       subroutine symmetrize(A)
+      ! SYMMETRIZE(A) symmetrizes A.
+      ! Here, we assume that A is a matrix that is symmetric in precise
+      ! arithmetic, and its asymetry comes only from rounding errors.
 #if __USE_POWELL_ALGEBRA__ == 1
       use consts_mod, only : RP, IK
 #else
@@ -543,96 +547,9 @@
 #endif
       end subroutine symmetrize
 
-#if __DEBUG_MODE__ == 1
-      subroutine verisym(A, tol)
-      ! VERISYM verifies whether a matrix A is symmetric up to TOL.
-      use consts_mod, only : RP, ONE, ZERO, SRNLEN
-      use warnerror_mod, only : errstop
-      implicit none
-
-      real(RP), intent(in) :: A(:, :)
-      real(RP), intent(in) :: tol
-
-      character(len = SRNLEN), parameter :: srname = 'VERISYM'
-
-      if (size(A, 1) /= size(A, 2)) then
-          call errstop(srname, 'A is not square')
-      end if
-      if (tol > ZERO) then
-          if (maxval(abs((A - transpose(A)))) >                         &
-     &     tol*max(maxval(abs(A)), ONE)) then
-               call errstop(srname, 'A is not symmetric up to TOL')
-          end if
-      else
-          if (maxval(abs((A - transpose(A)))) > ZERO) then
-               call errstop(srname, 'A is not symmetric up to TOL')
-          end if
-      end if
-      end subroutine verisym
-#endif
-
-      subroutine verisize_real_1(x, n)
-      use consts_mod, only : RP, IK, SRNLEN
-      use warnerror_mod, only : errstop
-      real(RP), intent(in) :: x(:)
-      integer(IK), intent(in) :: n
-
-      character(len = SRNLEN), parameter :: srname = 'VERISIZE_REAL_1'
-
-      if (size(x) /= n) then
-          call errstop(srname, 'SIZE(X) /= N')
-      end if
-      end subroutine verisize_real_1
-
-      subroutine verisize_real_2(x, m, n)
-      use consts_mod, only : RP, IK, SRNLEN
-      use warnerror_mod, only : errstop
-      real(RP), intent(in) :: x(:, :)
-      integer(IK), intent(in) :: m
-      integer(IK), intent(in) :: n
-
-      character(len = SRNLEN), parameter :: srname = 'VERISIZE_REAL_2'
-
-      if (size(x, 1) /= m) then
-          call errstop(srname, 'SIZE(X, 1) /= M')
-      end if
-      if (size(x, 2) /= n) then
-          call errstop(srname, 'SIZE(X, 2) /= N')
-      end if
-      end subroutine verisize_real_2
-
-      subroutine verisize_int_1(x, n)
-      use consts_mod, only : IK, SRNLEN
-      use warnerror_mod, only : errstop
-      integer(IK), intent(in) :: x(:)
-      integer(IK), intent(in) :: n
-
-      character(len = SRNLEN), parameter :: srname = 'VERISIZE_INT_1'
-
-      if (size(x) /= n) then
-          call errstop(srname, 'SIZE(X) /= N')
-      end if
-      end subroutine verisize_int_1
-
-      subroutine verisize_int_2(x, m, n)
-      use consts_mod, only : IK, SRNLEN
-      use warnerror_mod, only : errstop
-      integer(IK), intent(in) :: x(:, :)
-      integer(IK), intent(in) :: m
-      integer(IK), intent(in) :: n
-
-      character(len = SRNLEN), parameter :: srname = 'VERISIZE_INT_2'
-
-      if (size(x, 1) /= m) then
-          call errstop(srname, 'SIZE(X, 1) /= M')
-      end if
-      if (size(x, 2) /= n) then
-          call errstop(srname, 'SIZE(X, 2) /= N')
-      end if
-      end subroutine verisize_int_2
-
 
       function xpy_dot_z (x, y, z) result(t)
+      ! t = (x+y)'*z
 
       use consts_mod, only : RP
 #if __USE_POWELL_ALGEBRA__ == 1
@@ -671,6 +588,7 @@
 
 
       function xdy_plus_a(x, y, a) result(t)
+      ! t = x'*y + a
 
       use consts_mod, only : RP
 #if __USE_POWELL_ALGEBRA__ == 1
@@ -709,7 +627,8 @@
 
 
       function Ax_plus_y(A, x, y) result(z)
-
+      ! z = A*x + y
+      
       use consts_mod, only : RP
 #if __USE_POWELL_ALGEBRA__ == 1
       use consts_mod, only : IK
@@ -747,6 +666,10 @@
 
 
       function xA_plus_y(A, x, y) result(z)
+      ! z = x*A + y  
+      ! If implemented in MATLAB, pay attention to the sizes of the
+      ! vectors/matrices; if x and y are columns, then z should be
+      ! z = (x'*A)' + y
 
       use consts_mod, only : RP
 #if __USE_POWELL_ALGEBRA__ == 1
@@ -780,7 +703,198 @@
       end do
 #else
       z = matmul(x, A) + y
+      ! If implemented in MATLAB, pay attention to the sizes of the
+      ! vectors/matrices; if x and y are columns, then z should be
+      ! z = (x'*A)' + y
 #endif
       end function xA_plus_y
+      
+
+      subroutine calquad(vquad, d, x, xpt, gq, hq, pq)
+      ! CALQUAD calculates 
+      ! VQUAD = Q(X + D) - Q(X)
+      ! with Q being the quadratic function defined via (GQ, HQ, PQ) by 
+      ! Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
+      ! where HESSIAN is the following sum of th explicit part HQ and 
+      ! the implicit part PQ
+      ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*XPT(:, K)*XPT(:, K)' .
+
+      use consts_mod, only : RP, HALF
+
+#if __USE_POWELL_ALGEBRA__ == 1 || __DEBUG_MODE__ == 1
+      use consts_mod, only : IK
+#endif
+
+#if __USE_POWELL_ALGEBRA__ == 1
+      use consts_mod, only : ZERO
+#endif
+
+#if __DEBUG_MODE__ == 1
+      use consts_mod, only : SRNLEN
+      use warnerror_mod, only : errstop
+#endif
+
+      implicit none
+
+      real(RP), intent(in) :: d(:)  ! D(N)
+      real(RP), intent(in) :: x(:)  ! X(N)
+      real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
+      real(RP), intent(in) :: gq(:)  ! GQ(N)
+      real(RP), intent(in) :: hq(:, :)  ! HQ(N, N)
+      real(RP), intent(in) :: pq(:)  ! PQ(NPT)
+      real(RP), intent(out) :: vquad 
+
+      real(RP) :: s(size(x))
+#if __USE_POWELL_ALGEBRA__ == 1
+      real(RP) :: w(size(pq)), temp
+      integer(IK) :: i, ih, j, k
+#endif
+
+#if __DEBUG_MODE__ == 1
+      integer(IK) :: n, npt
+      character(len = SRNLEN), parameter :: srname = 'CALQUAD'
+      n = int(size(xpt, 1), kind(n))
+      npt = int(size(xpt, 2), kind(npt))
+      if (n == 0 .or. npt < n + 2) then
+          call errstop(srname, 'SIZE(XPT) is invalid')
+      end if
+      call verisize(d, n)
+      call verisize(x, n)
+      call verisize(gq, n)
+      call verisize(hq, n, n)
+      call verisize(pq, npt)
+#endif
+
+
+#if __USE_POWELL_ALGEBRA__ == 1
+      s = x + d  
+      ! First order term and explicit second order term
+      vquad = ZERO
+      ih = 0
+      do j = 1, size(d) 
+          vquad = vquad + d(j)*gq(j)
+          do i = 1, j
+              ih = int(ih + 1, kind(ih))
+              temp = d(i)*s(j) + d(j)*x(i)
+              if (i == j) then 
+                  temp = HALF*temp
+              end if
+              vquad = vquad + temp*hq(i, j)
+          end do
+      end do
+
+!----------------------------------------------------------------------!
+      w = matmul(d, xpt) !---------------------------------------------!
+      w = w*(half*w + matmul(x, xpt)) !--------------------------------!
+!----------------------------------------------------------------------!
+      ! Implicit second order term
+      do k = 1, size(pq)
+          vquad = vquad + pq(k)*w(k)
+      end do
+
+#else
+      s = d + x + x  ! Different from the above version.
+      ! 1st order term 
+      vquad = dot_product(d, gq)
+      ! implicit 2nd-order term
+      vquad = vquad + half*sum(pq*(matmul(s, xpt)*matmul(d, xpt)))
+      ! explicit 2nd-order term
+      vquad = vquad + half*dot_product(s, matmul(hq, d))
+#endif
+
+      end subroutine calquad
+
+
+      subroutine verisize_real_1(x, n)
+      ! VERISIZE_REAL_1 verifies whether SIZE(X) = N.
+      use consts_mod, only : RP, IK, SRNLEN
+      use warnerror_mod, only : errstop
+      real(RP), intent(in) :: x(:)
+      integer(IK), intent(in) :: n
+
+      character(len = SRNLEN), parameter :: srname = 'VERISIZE_REAL_1'
+
+      if (size(x) /= n) then
+          call errstop(srname, 'SIZE(X) /= N')
+      end if
+      end subroutine verisize_real_1
+
+      subroutine verisize_real_2(x, m, n)
+      ! VERISIZE_REAL_2 verifies whether SIZE(X, 1) = M, SIZE(X, 2)=N.
+      use consts_mod, only : RP, IK, SRNLEN
+      use warnerror_mod, only : errstop
+      real(RP), intent(in) :: x(:, :)
+      integer(IK), intent(in) :: m
+      integer(IK), intent(in) :: n
+
+      character(len = SRNLEN), parameter :: srname = 'VERISIZE_REAL_2'
+
+      if (size(x, 1) /= m) then
+          call errstop(srname, 'SIZE(X, 1) /= M')
+      end if
+      if (size(x, 2) /= n) then
+          call errstop(srname, 'SIZE(X, 2) /= N')
+      end if
+      end subroutine verisize_real_2
+
+      subroutine verisize_int_1(x, n)
+      ! VERISIZE_INT_1 verifies whether SIZE(X) = N.
+      use consts_mod, only : IK, SRNLEN
+      use warnerror_mod, only : errstop
+      integer(IK), intent(in) :: x(:)
+      integer(IK), intent(in) :: n
+
+      character(len = SRNLEN), parameter :: srname = 'VERISIZE_INT_1'
+
+      if (size(x) /= n) then
+          call errstop(srname, 'SIZE(X) /= N')
+      end if
+      end subroutine verisize_int_1
+
+      subroutine verisize_int_2(x, m, n)
+      ! VERISIZE_INT_2 verifies whether SIZE(X, 1) = M, SIZE(X, 2)=N.
+      use consts_mod, only : IK, SRNLEN
+      use warnerror_mod, only : errstop
+      integer(IK), intent(in) :: x(:, :)
+      integer(IK), intent(in) :: m
+      integer(IK), intent(in) :: n
+
+      character(len = SRNLEN), parameter :: srname = 'VERISIZE_INT_2'
+
+      if (size(x, 1) /= m) then
+          call errstop(srname, 'SIZE(X, 1) /= M')
+      end if
+      if (size(x, 2) /= n) then
+          call errstop(srname, 'SIZE(X, 2) /= N')
+      end if
+      end subroutine verisize_int_2
+
+
+      subroutine verisym(A, tol)
+      ! VERISYM verifies whether a matrix A is symmetric up to TOL.
+      use consts_mod, only : RP, ONE, ZERO, SRNLEN
+      use warnerror_mod, only : errstop
+      implicit none
+
+      real(RP), intent(in) :: A(:, :)
+      real(RP), intent(in) :: tol
+
+      character(len = SRNLEN), parameter :: srname = 'VERISYM'
+
+      if (size(A, 1) /= size(A, 2)) then
+          call errstop(srname, 'A is not square')
+      end if
+      if (tol > ZERO) then
+          if (maxval(abs((A - transpose(A)))) >                         &
+     &     tol*max(maxval(abs(A)), ONE)) then
+               call errstop(srname, 'A is not symmetric up to TOL')
+          end if
+      else
+          if (maxval(abs((A - transpose(A)))) > ZERO) then
+               call errstop(srname, 'A is not symmetric up to TOL')
+          end if
+      end if
+      end subroutine verisym
+
 
       end module lina_mod

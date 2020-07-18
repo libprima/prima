@@ -170,13 +170,13 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 
 
 /*************************************************************************/
-/* Do we use Powell's line algebra procedures? */
-/* The improvements do not change Powell's algorithms but modify the 
- * implementation of some algebraic calculations. The improved code may
- * not produce exactly the same results as Powell's code due to properties
- * of floating-point arithmetic, e.g., the non-associativity of
- * floating-point addition and multiplication. The improvements remove
- * some bugs. */
+/* Do we use Powell's linear algebra procedures? */
+/* If not, the implementation of some algebraic calculations will be
+ * modified, mainly by replacing loops with matrix-vector operations.
+ * This does not change Powell's algorithms, but it may not produce
+ * exactly the same results as Powell's code due to properties of 
+ * floating-point arithmetic, e.g., the non-associativity of floating-point
+ * addition and multiplication. */
 #ifdef __USE_POWELL_ALGEBRA__
 #undef __USE_POWELL_ALGEBRA__
 #endif
