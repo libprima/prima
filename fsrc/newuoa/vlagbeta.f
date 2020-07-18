@@ -49,7 +49,7 @@
 
 !----------------------------------------------------------------------!
       ! This is the one of the two places where WCHECK is calculated,
-      ! the other being BIGDEN. 
+      ! the other being BIGDEN (now removed). 
       ! WCHECK contains the first NPT entries of (w-v) for the vectors 
       ! w and v defined in eq(4.10) and eq(4.24) of the NEWUOA paper,
       ! and also \hat{w} in eq(6.5) of 
@@ -58,8 +58,6 @@
       ! models that satisfy interpolation conditions. Math. Program.,
       ! 100:183--215, 2004
       !
-      ! WCHECK is used ONLY in CALQUAD, which evaluates the qudratic
-      ! model. Indeed, CALQUAD can be implemented without WCHECK.
       wcheck = matmul(d, xpt)
       wcheck = wcheck*(HALF*wcheck + matmul(xopt, xpt))
 !----------------------------------------------------------------------!

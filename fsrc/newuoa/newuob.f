@@ -158,8 +158,7 @@
                   xoptsq = ZERO
               end if
 
-              ! Calculate VLAG and BETA for D. The first NPT components
-              ! of W_check will be held in WCHECK.
+              ! Calculate VLAG and BETA for D. 
                call vlagbeta(idz, kopt, bmat, zmat,xpt,xopt,d,vlag,beta)
 
       !----------------------------------------------------------------!
@@ -382,7 +381,7 @@
 
               call biglag(xopt, xpt, bmat, zmat, idz,knew,dstep,d,alpha)
 
-              ! Calculate VLAG, BETA, and WCHECK for D.
+              ! Calculate VLAG and BETA for D.
               call vlagbeta(idz, kopt, bmat, zmat, xpt,xopt,d,vlag,beta)
 
               ! If KNEW is positive and if the cancellation in DENOM is

@@ -195,7 +195,7 @@
       ! matrix for the interplolation system (see (3.12)). Indeed, each
       ! column of H corresponds to a Lagrange basis function of the
       ! interpolation problem. 
-      ! In addition, it sets VLAG, BETA, and WCHECK for the selected D.
+      ! In addition, it sets VLAG and BETA for the selected D.
 
       use consts_mod, only : RP, IK, ONE, TWO, HALF, QUART, PI, ZERO
       use consts_mod, only : DEBUG_MODE, SRNLEN
@@ -239,7 +239,6 @@
       ! entry it should be the D that was calculated by the last call
       ! of BIGLAG. The length of the initial D provides a trust region
       ! bound on the final D.
-      ! WCHECK will be set to wcheck for the final choice of D.
       ! VLAG will be set to Theta*WCHECK+e_b for the final choice of D.
       ! BETA will be set to the value that will occur in the updating
       ! formula when the KNEW-th interpolation point is moved to its new
@@ -489,29 +488,7 @@
           end if
       end do
       
-      ! Set the vector WCHECK before the RETURN from the subroutine.
-!----------------------------------------------------------------------!
-      ! This is the one of the two places where WCHECK is calculated,
-      ! the other being VLAGBETA. 
-      ! WCHECK contains the first NPT entries of (w-v) for the vectors 
-      ! w and v defined in eq(4.10) and eq(4.24) of the NEWUOA paper,
-      ! and also \hat{w} in eq(6.5) of 
-      !
-      ! M. J. D. Powell, Least Frobenius norm updating of quadratic
-      ! models that satisfy interpolation conditions. Math. Program.,
-      ! 100:183--215, 2004
-      !
-      ! WCHECK is used ONLY in CALQUAD, which evaluates the qudratic
-      ! model. CALQUAD can be implemented without WCHECK.
-      !
-      ! WCHECK is the following vector in theory. 
-      !wcheck = matmul(d, xpt) !---------------------------------------!
-      !wcheck = wcheck*(HALF*wcheck + matmul(x, xpt)) !----------------!
-      ! Powell's code calculates wcheck as follows, which is not
-      ! necessarily the same as the theoretical value due to the
-      ! floating-point arithmetic.
-!      wcheck = matmul(wvec(1 : npt, 1 : 5), par(1 : 5))
-!----------------------------------------------------------------------!
+
       vlag(kopt) = vlag(kopt) + ONE
 
       return
