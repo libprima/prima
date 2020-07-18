@@ -785,7 +785,7 @@
 
 !----------------------------------------------------------------------!
       w = matmul(d, xpt) !---------------------------------------------!
-      w = w*(half*w + matmul(x, xpt)) !--------------------------------!
+      w = w*(HALF*w + matmul(x, xpt)) !--------------------------------!
 !----------------------------------------------------------------------!
       ! Implicit second order term
       do k = 1, size(pq)
@@ -797,9 +797,9 @@
       ! 1st order term 
       vquad = dot_product(d, gq)
       ! implicit 2nd-order term
-      vquad = vquad + half*sum(pq*(matmul(s, xpt)*matmul(d, xpt)))
+      vquad = vquad + HALF*sum(pq*(matmul(s, xpt)*matmul(d, xpt)))
       ! explicit 2nd-order term
-      vquad = vquad + half*dot_product(s, matmul(hq, d))
+      vquad = vquad + HALF*dot_product(s, matmul(hq, d))
 #endif
 
       end subroutine calquad
