@@ -5,7 +5,7 @@ G95=g95 -c -g -Wall -Wextra -fbounds-check -fimplicit-none
 NFORT=nagfor -c -g
 PFORT=pgfortran -c -g
 
-FILES=../consts.F ../warnerror.F ../infos.f ../infnan.F ../lina.F initialize.f trsubp.f geometry.f update.f calquad.f vlagbeta.f shiftbase.f newuob.f newuoa.f 
+FILES=../consts.F ../warnerror.F ../infos.f ../infnan.F ../lina.F initialize.f trsubp.f geometry.f update.f vlagbeta.f shiftbase.f newuob.f newuoa.f 
 MFILES= ../consts.F ../warnerror.F ../infnan.F ../infos.f ../lina.F ../../matlab/mex_gateways/mex_mod.F ../../matlab/mex_gateways/gethuge.F ../../matlab/mex_gateways/newuoa-interface.F ../../matlab/mex_gateways/classical/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/
 
 

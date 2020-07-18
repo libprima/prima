@@ -137,6 +137,7 @@
           isave = 0
           iu = 49
           temp = (TWO*PI)/real(iu + 1, RP)
+
           do i = 1, iu
               angle = real(i, RP)*temp
               cth = cos(angle)
@@ -151,6 +152,7 @@
               end if
               tauold = tau
           end do
+
           if (isave == 0) then 
               tempa = tau
           end if
@@ -183,9 +185,7 @@
       end subroutine biglag
 
 
-
-      subroutine bigden (x, xpt, bmat, zmat, idz, kopt, knew, d, wcheck,&
-     & vlag, beta)
+      subroutine bigden(x, xpt, bmat, zmat, idz, kopt, knew,d,vlag,beta)
       ! BIGDEN calculates a D by approximately solving
       !
       ! max |SIGMA(X + D)|, subject to ||D|| <= DELTA, 
@@ -212,7 +212,6 @@
       real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
       real(RP), intent(out) :: beta
       real(RP), intent(out) :: vlag(:)     ! VLAG(NPT + N)
-      real(RP), intent(out) :: wcheck(:)   ! WCHECK(NPT) 
       real(RP), intent(inout) :: d(:)        ! D(N)
 
       integer(IK) :: i, isave, iterc, iu, j, jc, k, nw, n, npt
@@ -263,7 +262,6 @@
           call verisize(bmat, n, npt + n)
           call verisize(zmat, npt, int(npt - n - 1, kind(n)))
           call verisize(vlag, npt + n)
-          call verisize(wcheck, npt)
           call verisize(d, n)
       end if    
 
@@ -507,11 +505,13 @@
       ! model. CALQUAD can be implemented without WCHECK.
       !
       ! WCHECK is the following vector in theory. 
-!-----!wcheck = matmul(d, xpt) !---------------------------------------!
-!-----!wcheck = wcheck*(HALF*wcheck + matmul(x, xpt)) !----------------!
-      ! The result here is likely different from the theoretical value.
+      !wcheck = matmul(d, xpt) !---------------------------------------!
+      !wcheck = wcheck*(HALF*wcheck + matmul(x, xpt)) !----------------!
+      ! Powell's code calculates wcheck as follows, which is not
+      ! necessarily the same as the theoretical value due to the
+      ! floating-point arithmetic.
+!      wcheck = matmul(wvec(1 : npt, 1 : 5), par(1 : 5))
 !----------------------------------------------------------------------!
-      wcheck = matmul(wvec(1 : npt, 1 : 5), par(1 : 5))
       vlag(kopt) = vlag(kopt) + ONE
 
       return

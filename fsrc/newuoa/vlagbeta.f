@@ -7,10 +7,7 @@
 
       contains
 
-!      subroutine vlagbeta(n, npt, idz, kopt, bmat, zmat, xpt, xopt, d,  &
-!     & vlag, beta, wcheck)
-      subroutine vlagbeta(idz, kopt, bmat, zmat, xpt, xopt, d, vlag,    &
-     & beta, wcheck, dsq, xoptsq)
+      subroutine vlagbeta(idz, kopt, bmat, zmat, xpt, xopt, d,vlag,beta)
 
       use consts_mod, only : RP, IK, ONE, HALF, DEBUG_MODE, SRNLEN
       use warnerror_mod, only : errstop
@@ -25,10 +22,10 @@
       real(RP), intent(in) :: d(:)  ! D(N)
       real(RP), intent(out) :: vlag(:)  ! VLAG(NPT+N)
       real(RP), intent(out) :: beta
-      real(RP), intent(out) :: wcheck(:)  ! WCHECK(NPT)
 
       integer(IK) :: n, npt
       real(RP) :: bw(size(bmat, 1)), bwvd
+      real(RP) :: wcheck(size(zmat, 1)) 
       real(RP) :: wz(size(zmat, 2)), wzsave(size(wz))
       real(RP) :: dx, dsq, xoptsq
       character(len = SRNLEN), parameter :: srname = 'VLAGBETA'
@@ -47,7 +44,6 @@
           call verisize(xopt, n)
           call verisize(d, n)
           call verisize(vlag, n + npt)
-          call verisize(wcheck, npt)
       end if
       
 
@@ -92,8 +88,8 @@
 
       dx = dot_product(d, xopt)
 
-      !dsq = dot_product(d, d)
-      !xoptsq = dot_product(xopt, xopt)
+      dsq = dot_product(d, d)
+      xoptsq = dot_product(xopt, xopt)
 
       beta = dx*dx + dsq*(xoptsq + dx + dx + HALF*dsq) + beta - bwvd
       vlag(kopt) = vlag(kopt) + ONE

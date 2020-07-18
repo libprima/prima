@@ -14,7 +14,6 @@
       use infnan_mod, only : is_nan, is_posinf
       use lina_mod
       use initialize_mod, only : initialize
-      use calquad_mod, only : calquad
       use trsubp_mod, only : trsapp
       use geometry_mod, only : biglag, bigden
       use shiftbase_mod, only : shiftbase
@@ -44,7 +43,7 @@
       real(RP) :: xpt(size(x), npt), fval(npt)
       real(RP) :: gq(size(x)), hq(size(x), size(x)), pq(npt)
       real(RP) :: bmat(size(x), npt + size(x)), zmat(npt, npt-size(x)-1)
-      real(RP) :: vlag(npt + size(x)), wcheck(npt) 
+      real(RP) :: vlag(npt + size(x))
       real(RP) :: fopt, fsave, galt(size(x)), galtsq, gqsq, hdiag(npt)
       real(RP) :: ratio, rho, rhosq, vquad, xoptsq, sigma(npt)
       logical :: model_step, reduce_rho, shortd
@@ -161,17 +160,13 @@
 
               ! Calculate VLAG and BETA for D. The first NPT components
               ! of W_check will be held in WCHECK.
-              !call vlagbeta(idz, kopt, bmat, zmat, xpt, xopt, d, vlag, &
-!     &         beta)
-              call vlagbeta(idz, kopt, bmat, zmat, xpt, xopt, d, vlag,  &
-     &         beta, wcheck, dsq, xoptsq)
+               call vlagbeta(idz, kopt, bmat, zmat,xpt,xopt,d,vlag,beta)
 
       !----------------------------------------------------------------!
 
               ! Use the current quadratic model to predict the change in
               ! F due to the step D.
-              !call calquad(vquad, d, xopt, xpt, gq, hq, pq)
-              call calquad(vquad, d, xopt, xpt, gq, hq, pq, wcheck)
+              call calquad(vquad, d, xopt, xpt, gq, hq, pq)
 
               ! Calculate the next value of the objective function.
               xnew = xopt + d
@@ -388,10 +383,7 @@
               call biglag(xopt, xpt, bmat, zmat, idz,knew,dstep,d,alpha)
 
               ! Calculate VLAG, BETA, and WCHECK for D.
-!              call vlagbeta(idz, kopt, bmat, zmat, xpt, xopt, d, vlag, &
-!     &         beta)
-              call vlagbeta(idz, kopt, bmat, zmat, xpt, xopt, d, vlag,  &
-     &         beta, wcheck, dsq, xoptsq)
+              call vlagbeta(idz, kopt, bmat, zmat, xpt,xopt,d,vlag,beta)
 
               ! If KNEW is positive and if the cancellation in DENOM is
               ! unacceptable, then BIGDEN calculates an alternative
@@ -401,18 +393,18 @@
               ! No need to check whether BMAT and ZMAT contain NaN as no
               ! change has been made to them.
               if (abs(ONE + alpha*beta/vlag(knew)**2) <= 0.8_RP) then
-!                  call bigden (xopt, xpt, bmat, zmat, idz, kopt, knew,  &
-!     &             d, vlag, beta)
                   call bigden (xopt, xpt, bmat, zmat, idz, kopt, knew,  &
-     &             d, wcheck, vlag, beta)
+     &             d, vlag, beta)
               end if
+
+              !!!??? Update dnorm, for the sake of nfsave ???!!!
+              !dnorm = sqrt(dot_product(d, d))  ! In theory, dnorm=dstep
 
       !----------------------------------------------------------------!
 
               ! Use the current quadratic model to predict the change in
               ! F due to the step D.
-              !call calquad(vquad, d, xopt, xpt, gq, hq, pq)
-              call calquad(vquad, d, xopt, xpt, gq, hq, pq, wcheck)
+              call calquad(vquad, d, xopt, xpt, gq, hq, pq)
 
               ! Calculate the next value of the objective function.
               xnew = xopt + d

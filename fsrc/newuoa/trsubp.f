@@ -238,6 +238,7 @@
           isave = 0
           iu = 49
           temp = (TWO*PI)/real(iu + 1, RP)
+
           do i = 1, iu
               angle = real(i, RP)*temp
               cth = cos(angle)
@@ -252,6 +253,7 @@
               end if
               qsave = qnew
           end do
+
           if (isave == 0) then
               tempa = qnew
           end if
