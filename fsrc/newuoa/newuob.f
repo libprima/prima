@@ -20,7 +20,6 @@
       use vlagbeta_mod, only : vlagbeta
       use update_mod, only : updateh, updateq, qalt
       implicit none
-      
             
       ! Inputs
       integer(IK), intent(in) :: npt
@@ -45,7 +44,7 @@
       real(RP) :: bmat(size(x), npt + size(x)), zmat(npt, npt-size(x)-1)
       real(RP) :: vlag(npt + size(x))
       real(RP) :: fopt, fsave, galt(size(x)), galtsq, gqsq, hdiag(npt)
-      real(RP) :: ratio, rho, rhosq, vquad, xoptsq, sigma(npt)
+      real(RP) :: ratio, rho, rhosq, vquad, xoptsq, sigma(npt), trtol
       logical :: model_step, reduce_rho, shortd
 
       ! Get size.
@@ -78,7 +77,6 @@
       ! point X. They are part of a product that requires VLAG to be of
       ! length NDIM = NPT+N.
 
-
       maxtr = maxfun  ! Maximal numer of trust region iterations.
       info = 0  ! Exit status. The default value is 0.
 
@@ -110,7 +108,8 @@
           model_step = .false.
           ! Will we reduce rho after the trust region iteration?
           reduce_rho = .false.
-          ! NEWUOA never sets MODEL_STEP = REDUCE_RHO = .TRUE.
+          ! NEWUOA never sets both MODEL_STEP and REDUCE_RHO to .TRUE. 
+          ! at the same time.
 
           ! Exit if the model contains NaN. Otherwise, the behaviour of
           ! TRSAPP is unpredictable, and Segmentation Fault may occur.
@@ -123,10 +122,12 @@
 
           ! Solve the trust region subproblem.
           ! In Powell's NEWUOA code, VQUAD is not an output of TRSAPP.
-          ! Here we output it but do not use it to align with Powell's
-          ! code. VQUAD is later calculated by CALQUAD.
-           call trsapp(xopt, xpt, gq, hq, pq, delta, 1.0e-2_RP, d,      &
-     &      crvmin, vquad, subinfo)
+          ! Here we output it. However, we will not use it; it will sill
+          ! be calculated latter by CALQUAD in order to produce the same
+          ! results Powell's code. 
+          trtol = 1.0e-2_RP  ! Tolerance used in trsapp.
+          call trsapp(xopt, xpt, gq, hq, pq, delta, trtol, d, crvmin,   &
+     &      vquad, subinfo)
 
           ! Calculate the length of the trial step D.
           dsq = dot_product(d, d)
@@ -307,9 +308,8 @@
           end if
 
 
-!          if (((.not. shortd) .and. (ratio < TENTH .or. knew == 0))     &
-!     &        .or. (shortd .and. .not. reduce_rho)) then
-          if (((.not. shortd) .and. (f>fsave+TENTH*vquad .or. knew==0)) &
+          if (((.not. shortd) .and. (ratio < TENTH .or. knew == 0))     &
+!          if (((.not. shortd) .and. (f>fsave+TENTH*vquad .or. knew==0)) &
      &     .or. (shortd .and. .not. reduce_rho)) then
 
               ! Find out if the interpolation points are close enough to
@@ -397,7 +397,7 @@
               end if
 
               !!!??? Update dnorm, for the sake of nfsave ???!!!
-              !dnorm = sqrt(dot_product(d, d))  ! In theory, dnorm=dstep
+              dnorm = sqrt(dot_product(d, d))  ! In theory, dnorm=dstep
 
       !----------------------------------------------------------------!
 
