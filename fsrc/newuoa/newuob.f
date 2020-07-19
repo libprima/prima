@@ -396,9 +396,6 @@
      &             d, vlag, beta)
               end if
 
-              !!!??? Update dnorm, for the sake of nfsave ???!!!
-              dnorm = sqrt(dot_product(d, d))  ! In theory, dnorm=dstep
-
       !----------------------------------------------------------------!
 
               ! Use the current quadratic model to predict the change in
@@ -416,10 +413,16 @@
               call calfun(n, x, f)
               nf = int(nf + 1, kind(nf))
 
-              ! The following seems different from what is introduced in
+              !--------------------------------------------------------!
+              !!!??? Powell's code does not update DNORM. Therefore,
+              ! DNORM is the length of last trust-region trial step.
+              ! which seems inconsistent with what is introduced in
               ! Section 7 (around (7.7)) of the NEUOA paper. Seemingly
-              ! we should keep dnorm=||d||. 
-              !!! It is possibly a BUG !!!
+              ! we should keep dnorm=||d|| as we do here. 
+              dnorm = min(dstep, sqrt(dot_product(d, d)))
+              ! In theory, dnorm=dstep
+              !--------------------------------------------------------!
+
               if (dnorm > rho) then
                   nfsave = nf  !? DNORM is from last TR?
               end if

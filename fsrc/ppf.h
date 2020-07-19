@@ -180,8 +180,8 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 #ifdef __USE_POWELL_ALGEBRA__
 #undef __USE_POWELL_ALGEBRA__
 #endif
-#define __USE_POWELL_ALGEBRA__ 0 
-#define __TEST__ 0 
+#define __USE_POWELL_ALGEBRA__ 1 
+#define __TEST__ 0
 /*************************************************************************/
 
 
