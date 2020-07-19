@@ -4,6 +4,15 @@
 ! (hardware, e.g., cache, and libraries, e.g., BLAS) available and the
 ! sizes of the matrices/vectors. 
 
+! N.B. 
+! When implementing the code by MATLAB, Python, ..., not the following. 
+! 1. one should following the implementation with 
+!    __USE_POWELL_ALGEBRA__ == 0, which uses matrix/vector operations 
+!    instead of loops. 
+! 2. We should not implement the code in subroutines/functions but 
+!    write it inline, because the code is short using matrix/vector 
+!    operations, and because the overhead of subroutine/function calling
+!    can be high in these languages.
 
 #include "ppf.h"
 
@@ -419,28 +428,6 @@
 #endif
 
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Check whether HYPOT is available as an intrinsic.
-! F2008 provides the intrinsic HYPOT; MATLAB, Python, Julia, R, etc.,
-! contain built-in functions corresponding to HYPOT.
-#ifdef __HYPOT_AVAILABLE__
-#undef __HYPOT_AVAILABLE__
-#endif
-#define __HYPOT_AVAILABLE__ 0 
-! HYPOT is included in F2008.
-#if __FORTRAN_STANDARD__ >= 2008 
-#undef __HYPOT_AVAILABLE__
-#define __HYPOT_AVAILABLE__ 1
-#endif
-!! HYPOT is included in gfortran since 4.4.7 
-!#ifdef __GFORTRAN__
-!#if __GNUC__ >= 5
-!#undef __HYPOT_AVAILABLE__
-!#define __HYPOT_AVAILABLE__ 1
-!#endif
-!#endif
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
       subroutine grota(A, i, j, k)
       ! GROTA sets A = A*G, 
       ! where G is the Givens rotation that 
@@ -480,19 +467,17 @@
       if (abs(A(k, j)) >  ZERO) then
           c = A(k, i)
           s = A(k, j)
-#if __USE_POWELL_ALGEBRA__ == 1 || __HYPOT_AVAILABLE__ == 0 || __TEST__== 0
-          r = sqrt(c**2 + s**2)
-#else
-          r = hypot(c, s) 
-#endif
+          ! One may use R = HYPOT(C, s), but it did not work better 
+          ! in our experiments on CUTEst problems.
+          r = sqrt(c**2+s**2) 
           c = c/r
           s = s/r
           Atemp = A(:, i)
           A(:, i) =  c*Atemp + s*A(:, j)
           A(:, j) = -s*Atemp + c*A(:, j) 
           A(k, j) = ZERO
-#if __USE_POWELL_ALGEBRA__ == 0 && __TEST__ == 1  
-          A(k, i) = r  
+#if __USE_POWELL_ALGEBRA__ == 0 
+          A(k, i) = r  ! A(K, I) = R in precise arithmetic
       else if (A(k, i) < ZERO) then
           ! In this case, C = -1, S = 0. Thus it is reasonbale to set
           ! the following. Doing this will ensure the continuity of this
@@ -903,15 +888,15 @@
       end if
       end subroutine verisym
 
-      function outprod(x, y) result(z)
-      use consts_mod, only : RP, IK
-      implicit none
-      real(RP), dimension(:), intent(in) :: x, y
-      real(RP), dimension(size(x), size(y)) :: z
-      integer(IK) :: i
-      do i = 1, size(y)
-          z(:, i) = x*y(i)
-      end do
-      end function outprod
+!      function outprod(x, y) result(z)
+!      use consts_mod, only : RP, IK
+!      implicit none
+!      real(RP), dimension(:), intent(in) :: x, y
+!      real(RP), dimension(size(x), size(y)) :: z
+!      integer(IK) :: i
+!      do i = 1, size(y)
+!          z(:, i) = x*y(i)
+!      end do
+!      end function outprod
 
       end module lina_mod
