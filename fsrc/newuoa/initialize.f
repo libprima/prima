@@ -132,6 +132,7 @@
               npt2 = 0
           end if
       end if
+
       
       ! Set XPT, FVAL, KOPT, FOPT, and XOPT.
       
@@ -195,6 +196,11 @@
       end do
 
       ! Set FVAL(2*N + 2 : NPT) by evaluating F. Totally parallelizable.
+      !
+      ! If we set both XPT(IP, K) and XPT(JP, K) to RHOBEG regardless of
+      ! FVAL, then the evaluations of FVAL(1 : NPT) can be combined, and
+      ! they are totally parallelizable, which can be benificial if the
+      ! function evaluations are expensive.
       do k = int(2*n + 2, kind(k)), npt2
           xtemp = xpt(:, k) + xbase
           if (any(is_nan(xtemp))) then
@@ -238,6 +244,7 @@
           return
       end if
 
+
       ! Set GQ and HQ.
 
       ! Set GQ by forward difference.
@@ -271,6 +278,7 @@
           hq(ip, jp) = (fbeg - fip - fjp + fval(k))/(xip*xjp)
           hq(jp, ip) = hq(ip, jp)
       end do
+
 
       ! Set BMAT and ZMAT. They depend on XPT but not FVAL.
 

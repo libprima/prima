@@ -79,7 +79,7 @@
 
       n = int(size(x), kind(n))
 
-#if __USE_POWELL_ALGEBRA__ == 1
+#if __USE_POWELL_ALGEBRA__ == 1 
       ! Only update the LOWER TRIANGULAR part of A.
       ! Both of the following cases are invoked in NEWUOA.
       if (abs(alpha - ONE) > ZERO) then
@@ -480,7 +480,7 @@
       if (abs(A(k, j)) >  ZERO) then
           c = A(k, i)
           s = A(k, j)
-#if __USE_POWELL_ALGEBRA__ == 1 || __HYPOT_AVAILABLE__ == 0 
+#if __USE_POWELL_ALGEBRA__ == 1 || __HYPOT_AVAILABLE__ == 0 || __TEST__== 0
           r = sqrt(c**2 + s**2)
 #else
           r = hypot(c, s) 
@@ -491,7 +491,7 @@
           A(:, i) =  c*Atemp + s*A(:, j)
           A(:, j) = -s*Atemp + c*A(:, j) 
           A(k, j) = ZERO
-#if __USE_POWELL_ALGEBRA__ == 0
+#if __USE_POWELL_ALGEBRA__ == 0 && __TEST__ == 1  
           A(k, i) = r  
       else if (A(k, i) < ZERO) then
           ! In this case, C = -1, S = 0. Thus it is reasonbale to set
@@ -582,7 +582,8 @@
           t = t + x(i)*z(i) + y(i)*z(i)
       end do
 #else
-      t = dot_product(x + y, z)
+      !t = dot_product(x + y, z)
+      t = dot_product(x, z) + dot_product(y, z)
 #endif
       end function xpy_dot_z
 
@@ -698,7 +699,7 @@
 
 #if __USE_POWELL_ALGEBRA__ == 1
       z = y
-      do i = 1, size(A, 2)
+      do i = 1, size(A, 1)
           z = z + x(i)*A(i, :)
       end do
 #else
@@ -716,7 +717,7 @@
       ! with Q being the quadratic function defined via (GQ, HQ, PQ) by 
       ! Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
       ! where HESSIAN is the following sum of th explicit part HQ and 
-      ! the implicit part PQ
+      ! the implicit part PQ:
       ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*XPT(:, K)*XPT(:, K)' .
 
       use consts_mod, only : RP, HALF
@@ -725,7 +726,7 @@
       use consts_mod, only : IK
 #endif
 
-#if __USE_POWELL_ALGEBRA__ == 1
+#if __USE_POWELL_ALGEBRA__ == 1 
       use consts_mod, only : ZERO
 #endif
 
@@ -765,7 +766,6 @@
       call verisize(pq, npt)
 #endif
 
-
 #if __USE_POWELL_ALGEBRA__ == 1
       s = x + d  
       ! First order term and explicit second order term
@@ -782,8 +782,9 @@
               vquad = vquad + temp*hq(i, j)
           end do
       end do
-
 !----------------------------------------------------------------------!
+      ! Powell's original code calculates W externally and pass it as an
+      ! input to CALQUAD. Here it is calculated internally.
       w = matmul(d, xpt) !---------------------------------------------!
       w = w*(HALF*w + matmul(x, xpt)) !--------------------------------!
 !----------------------------------------------------------------------!
@@ -791,17 +792,23 @@
       do k = 1, size(pq)
           vquad = vquad + pq(k)*w(k)
       end do
-
 #else
-      s = d + x + x  ! Different from the above version.
+      ! The order of calculation seems quite important. The following
+      ! order seems to work well.
       ! 1st order term 
       vquad = dot_product(d, gq)
+      s = HALF*d + x  ! Different from the above version.
       ! implicit 2nd-order term
-      vquad = vquad + HALF*sum(pq*(matmul(s, xpt)*matmul(d, xpt)))
+      vquad = vquad + sum(pq*((matmul(s, xpt)*matmul(d, xpt))))
       ! explicit 2nd-order term
-      vquad = vquad + HALF*dot_product(s, matmul(hq, d))
+      ! The following implementations do not work as well as the above 
+      ! one.
+      vquad = vquad + dot_product(s, matmul(hq, d))
+      !vquad = vquad + dot_product(d, matmul(hq, s))
+      !vquad = vquad + sum(hq*outprod(s,d)) 
+      !vquad = vquad + HALF*(dot_product(d, matmul(hq, s))               &
+      !&     + dot_product(s, matmul(hq, d)))
 #endif
-
       end subroutine calquad
 
 
@@ -896,5 +903,15 @@
       end if
       end subroutine verisym
 
+      function outprod(x, y) result(z)
+      use consts_mod, only : RP, IK
+      implicit none
+      real(RP), dimension(:), intent(in) :: x, y
+      real(RP), dimension(size(x), size(y)) :: z
+      integer(IK) :: i
+      do i = 1, size(y)
+          z(:, i) = x*y(i)
+      end do
+      end function outprod
 
       end module lina_mod
