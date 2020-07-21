@@ -31,10 +31,11 @@
       real(RP), intent(inout) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
       real(RP), intent(inout) :: vlag(:)     ! VLAG(NPT + N)
 
-      integer(IK) :: iflag, j, ja, jb, jl, n, npt
-      real(RP) :: alpha, denom, scala, scalb, tau, tausq, temp,         &
+      integer(IK) :: j, ja, jb, jl, n, npt
+      real(RP) :: alpha, denom, scala, scalb, tau, tausq, sqrtdn, temp, &
      & tempa, tempb, ztemp(size(zmat, 1)), w(size(vlag)),               &
      & v1(size(bmat, 1)), v2(size(bmat, 1))
+      logical :: reduce_idz
       character(len = SRNLEN), parameter :: srname = 'UPDATEH'
 
      
@@ -59,7 +60,6 @@
       do j = 2, int(idz - 1, kind(j))
           call grota(zmat, jl, j, knew)
       end do
-
       if (idz <= npt - n - 1) then
           jl = idz  ! For J = IDZ + 1, ..., NPT - N - 1, set JL = IDZ.
       end if
@@ -67,9 +67,19 @@
           call grota(zmat, jl, j, knew)
       end do
      
-      ! JL plays an important role below. There are two possibilities:
-      ! JL = 1 < IDZ iff IDZ = 1
-      ! JL = IDZ > 1 iff 2 <= IDZ <= NPT - N - 1
+      ! JL plays an important role below. Its value is determined by the
+      ! current (i.e., unpdated) value of IDZ. IDZ is an integer in 
+      ! {1, ..., NPT-N} such that s_j = -1 for j < IDZ while s_j = 1 
+      ! for j >= IDZ in the factorization of Omega. See (3.17), (4.16) 
+      ! of the NEWUOA paper.
+      !
+      ! For the value of JL, there are two possibilities:
+      ! 1. JL = 1 iff IDZ = 1 or IDZ = NPT - N.
+      ! 1.1. IDZ = 1 means that 
+      ! Omega = \sum_{J=1}^{NPT-N-1} ZMAT(:, J)*ZMAT(:, J)' ;
+      ! 1.2. IDZ = NPT - N means that 
+      ! Omega = - \sum_{J=1}^{NPT-N-1} ZMAT(:, J)*ZMAT(:, J)' ;
+      ! 2. JL = IDZ > 1 iff 2 <= IDZ <= NPT - N - 1.
 
       ! Put the first NPT components of the KNEW-th column of HLAG into
       ! W, and calculate the parameters of the updating formula.
@@ -88,47 +98,74 @@
       tau = vlag(knew)
       tausq = tau*tau
       denom = alpha*beta + tausq
-      vlag(knew) = vlag(knew) - ONE
+      vlag(knew) = vlag(knew) - ONE ! VLAG is Hw-e_t in the NEWUOA paper.
+      sqrtdn = sqrt(abs(denom))
      
       ! Complete the updating of ZMAT when there is only one nonzero
       ! element in the KNEW-th row of the new matrix ZMAT, but, if
       ! IFLAG is set to one, then the first column of ZMAT will be
       ! exchanged with another one later.
-      iflag = 0
+      reduce_idz = .false.
       if (jl == 1) then
           ! There is only one nonzero in ZMAT(KNEW, :) after the
           ! rotation. This is the normal case, because IDZ is 1 in
           ! precise arithmetic.
-          temp = sqrt(abs(denom))
-          tempb = tempa/temp
-          tempa = tau/temp
+          !------------------------------------------------------------!
+          ! Up to now, TEMPA = ZMAT(KNEW, 1) if IDZ = 1 and  
+          ! TEMPA = -ZMAT(KNEW, 1) if IDZ >= 2. However, according to 
+          ! (4.18) of the NEWUOA paper, TEMPB should always be
+          ! ZMAT(KNEW,1)/sqrtdn regardless of IDZ. Therefore, the 
+          ! following definition of TEMPB is inconsist with (4.18). This
+          ! is probably a BUG. See also Lemma 4 and (5.13) of Powell's
+          ! paper "On updating the inverse of a KKT matrix". However,
+          ! the inconsistency is hardly observable in practice, because
+          ! JL = 1 implies IDZ = 1 in precise arithmetic.
+          !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
+          !tempb = tempa/sqrtdn 
+          !tempa = tau/sqrtdn  
+          !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
+          ! Here is the corrected version (only TEMPB is changed).
+          tempa = tau/sqrtdn
+          tempb = zmat(knew, 1)/sqrtdn
+          !------------------------------------------------------------!
+
           zmat(:, 1) = tempa*zmat(:, 1) - tempb*vlag(1 : npt)
-      !----------------------------------------------------------------!
-          !if (idz == 1 .and. temp < ZERO) then
-          if (idz == 1 .and. denom < ZERO) then
-          ! TEMP < ZERO?!! Powell wrote this but it is STRANGE!!!!!!
-          ! It is probably a BUG!!!
-          ! According to (4.18) of the NEWUOA paper, the
-          ! "TEMP < ZERO" here and "TEMP >= ZERO" below should be
-          ! revised by replacing "TEMP" with DENOM, which is denoted
-          ! by sigma in the paper. See also the corresponding part
-          ! of the LINCOA code (which has also some strangeness).
+
+          !------------------------------------------------------------!
+          ! The following six lines are obviously problematic --- TEMP
+          ! is always nonnegative.  According to (4.18) of the NEWUOA
+          ! paper, the "TEMP < ZERO" and "TEMP >= ZERO" below should be
+          ! both revised to "DENOM < ZERO". See also the corresponding
+          ! part of the LINCOA code. Note that the NEAUOA paper uses
+          ! SIGMA to denote DENOM. Check also Lemma 4 and (5.13) of
+          ! Powell's paper "On updating the inverse of a KKT matrix". 
           ! It seems that the BOBYQA code does not have this part
           ! --- it does not have IDZ at all (why?).
-          ! Anyway, this is invoked very often in practice, because
-          ! IDZ should always be 1 in precise arithmetic.
-      !----------------------------------------------------------------!
-              idz = 2
-          end if
-      !----------------------------------------------------------------!
-          ! In the following code, TEMP seems to be DENOM as well. In
-          ! addition, the condition seems unattainable. Thus we remove
-          ! this part of the code.
-          !!if (idz >= 2 .and. temp >= ZERO) then
-          !if (idz >= 2 .and. denom >= ZERO) then
-          !    iflag = 1
+          ! Anyway, these lines are not invoked very often in practice,
+          ! because IDZ should always be 1 in precise arithmetic.
+          !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
+          !if (idz == 1 .and. sqrtdn < ZERO) then
+          !    idz = 2
           !end if
-      ! ---------------------------------------------------------------!
+          !if (idz >= 2 .and. sqrtdn >= ZERO) then
+          !    reduce_idz = .true. 
+          !end if
+          !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
+          ! This is the corrected version. It copies precisely the
+          ! corresponding part of the LINCOA code.
+          if (denom < zero) then
+              if (idz == 1) then
+              ! This is the first place (out of two) where IDZ is
+              ! increased. Note that IDZ = 2 <= NPT-N after the update. 
+                  idz = 2
+              else
+              ! This is the first place (out of two) where IDZ is
+              ! decreased (by 1). Since IDZ >= 2 in this case, we have
+              ! IDZ >= 1 after the update.
+                  reduce_idz = .true. 
+              end if
+          end if
+          !------------------------------------------------------------!
       else
           ! Complete the updating of ZMAT in the alternative case.
           ! There are two nonzeros in ZMAT(KNEW, :) after the rotation.
@@ -142,25 +179,31 @@
           tempb = temp*tau
           temp = zmat(knew, ja)
           scala = ONE/sqrt(abs(beta)*temp*temp + tausq)
-          scalb = scala*sqrt(abs(denom))
+          scalb = scala*sqrtdn
           zmat(:, ja) = scala*(tau*zmat(:, ja) - temp*vlag(1 : npt))
           zmat(:, jb) = scalb*(zmat(:, jb) - tempa*w(1 : npt) -         &
      &     tempb*vlag(1 : npt))
-         
+          ! If and only if DENOM <= 0, IDZ will be revised according 
+          ! to the sign of BETA. See (4.19)--(4.20) of the NEWUOA paper.
           if (denom <=  ZERO) then
               if (beta < ZERO) then
+              ! This is the second place (out of two) where IDZ is
+              ! increased. Since JL = IDZ <= NPT-N-1 in this case,
+              ! we have IDZ <= NPT-N after the update. 
                   idz = int(idz + 1, kind(idz)) 
-                  ! Is it possible to get IDZ>NPT-N-1?
               end if
               if (beta >=  ZERO) then
-                  iflag = 1
+              ! This is the second place (out of two) where IDZ is
+              ! decreased (by 1). Since IDZ >= 2 in this case, we have
+              ! IDZ >= 1 after the update.
+                  reduce_idz = .true. 
               end if
           end if
       end if
      
       ! IDZ is reduced in the following case,  and usually the first
       ! column of ZMAT is exchanged with a later one.
-      if (iflag == 1) then
+      if (reduce_idz) then
           idz = int(idz - 1, kind(idz))
           if (idz > 1) then
               ztemp = zmat(:, 1)
