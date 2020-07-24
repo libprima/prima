@@ -26,7 +26,6 @@
       public :: calquad
       public :: verisize, verisym
 
-
       interface r1update
           module procedure r1_sym, r1
       end interface r1update
@@ -71,8 +70,9 @@
 #endif
       implicit none
       real(RP), intent(in) :: alpha
-      real(RP), intent(in) :: x(:)
+      real(RP), intent(in) :: x(:)          
       real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(X))
+
       integer(IK) :: n, j 
 
 #if __DEBUG_MODE__ == 1
@@ -137,6 +137,7 @@
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
       real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
+
       integer(IK) :: n, j 
 
 #if __DEBUG_MODE__ == 1
@@ -196,6 +197,7 @@
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
       real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(X))
+
       integer(IK) :: n, j 
 
 #if __DEBUG_MODE__ == 1
@@ -258,9 +260,10 @@
       real(RP), intent(in) :: beta 
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
-      real(RP), intent(in) :: u(:)  ! U(SIZE(X))
-      real(RP), intent(in) :: v(:)  ! V(SIZE(Y))
-      real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
+      real(RP), intent(in) :: u(:)          ! U(SIZE(X))
+      real(RP), intent(in) :: v(:)          ! V(SIZE(Y))
+      real(RP), intent(inout) :: A(:, :)    ! A(SIZE(X), SIZE(Y))
+
       integer(IK) :: n, j 
 
 #if __DEBUG_MODE__ == 1
@@ -323,6 +326,7 @@
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:, :)
       real(RP) :: z(size(y, 2))
+
       integer(IK) :: j
       
 #if __DEBUG_MODE__ == 1
@@ -354,6 +358,7 @@
       real(RP), intent(in) :: x(:, :)
       real(RP), intent(in) :: y(:)
       real(RP) :: z(size(x, 1))
+
       integer(IK) :: j 
 
 #if __DEBUG_MODE__ == 1
@@ -379,6 +384,7 @@
       real(RP), intent(in) :: x(:, :)
       real(RP), intent(in) :: y(:, :)
       real(RP) :: z(size(x, 1), size(y, 2))
+
       integer(IK) :: i, j
 
 #if __DEBUG_MODE__ == 1
@@ -406,6 +412,7 @@
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
       real(RP) :: z
+
       integer(IK) :: i
 
 #if __DEBUG_MODE__ == 1
@@ -452,7 +459,7 @@
       integer(IK), intent(in) :: k
       real(RP), intent(inout) :: A(:, :)
 
-      real(RP) :: c, s, r, Atemp(size(A, 1))
+      real(RP) :: c, s, r, Ai(size(A, 1))
 
 #if __DEBUG_MODE__ == 1
       character(len = SRNLEN), parameter :: srname = 'GROTA'
@@ -472,9 +479,9 @@
           r = sqrt(c**2+s**2) 
           c = c/r
           s = s/r
-          Atemp = A(:, i)
-          A(:, i) =  c*Atemp + s*A(:, j)
-          A(:, j) = -s*Atemp + c*A(:, j) 
+          Ai = A(:, i)
+          A(:, i) =  c*Ai + s*A(:, j)
+          A(:, j) = -s*Ai + c*A(:, j) 
           A(k, j) = ZERO
 #if __USE_POWELL_ALGEBRA__ == 0 
           A(k, i) = r  ! A(K, I) = R in precise arithmetic
@@ -550,6 +557,7 @@
       real(RP), intent(in) :: y(:)
       real(RP), intent(in) :: z(:) 
       real(RP) :: t
+
 #if __USE_POWELL_ALGEBRA__ == 1
       integer(IK) :: i
 #endif
@@ -563,7 +571,7 @@
 
 #if __USE_POWELL_ALGEBRA__ == 1
       t = ZERO
-      do i = 1, size(z)
+      do i = 1, int(size(z), kind(i))
           t = t + x(i)*z(i) + y(i)*z(i)
       end do
 #else
@@ -590,6 +598,7 @@
       real(RP), intent(in) :: y(:)
       real(RP), intent(in) :: a 
       real(RP) :: t
+
 #if __USE_POWELL_ALGEBRA__ == 1
       integer(IK) :: i
 #endif
@@ -603,7 +612,7 @@
 
 #if __USE_POWELL_ALGEBRA__ == 1
       t = a
-      do i = 1, size(x)
+      do i = 1, int(size(x), kind(i))
           t = t + x(i)*y(i)
       end do
 #else
@@ -629,6 +638,7 @@
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
       real(RP) :: z(size(y)) 
+
 #if __USE_POWELL_ALGEBRA__ == 1
       integer(IK) :: j 
 #endif
@@ -642,7 +652,7 @@
 
 #if __USE_POWELL_ALGEBRA__ == 1
       z = y
-      do j = 1, size(A, 2)
+      do j = 1, int(size(A, 2), kind(j))
           z = z + A(:, j)*x(j)
       end do
 #else
@@ -671,6 +681,7 @@
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
       real(RP) :: z(size(y)) 
+
 #if __USE_POWELL_ALGEBRA__ == 1
       integer(IK) :: i 
 #endif
@@ -684,7 +695,7 @@
 
 #if __USE_POWELL_ALGEBRA__ == 1
       z = y
-      do i = 1, size(A, 1)
+      do i = 1, int(size(A, 1), kind(i))
           z = z + x(i)*A(i, :)
       end do
 #else
@@ -722,18 +733,21 @@
 
       implicit none
 
-      real(RP), intent(in) :: d(:)  ! D(N)
-      real(RP), intent(in) :: x(:)  ! X(N)
-      real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
-      real(RP), intent(in) :: gq(:)  ! GQ(N)
+      ! Inputs
+      real(RP), intent(in) :: d(:)      ! D(N)
+      real(RP), intent(in) :: x(:)      ! X(N)
+      real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
+      real(RP), intent(in) :: gq(:)     ! GQ(N)
       real(RP), intent(in) :: hq(:, :)  ! HQ(N, N)
-      real(RP), intent(in) :: pq(:)  ! PQ(NPT)
+      real(RP), intent(in) :: pq(:)     ! PQ(NPT)
+
+      ! Output
       real(RP), intent(out) :: vquad 
 
       real(RP) :: s(size(x))
 #if __USE_POWELL_ALGEBRA__ == 1
       real(RP) :: w(size(pq)), temp
-      integer(IK) :: i, ih, j, k
+      integer(IK) :: i, ih, j 
 #endif
 
 #if __DEBUG_MODE__ == 1
@@ -756,7 +770,7 @@
       ! First order term and explicit second order term
       vquad = ZERO
       ih = 0
-      do j = 1, size(d) 
+      do j = 1, int(size(d), kind(j)) 
           vquad = vquad + d(j)*gq(j)
           do i = 1, j
               ih = int(ih + 1, kind(ih))
@@ -774,8 +788,8 @@
       w = w*(HALF*w + matmul(x, xpt)) !--------------------------------!
 !----------------------------------------------------------------------!
       ! Implicit second order term
-      do k = 1, size(pq)
-          vquad = vquad + pq(k)*w(k)
+      do i = 1, int(size(pq), kind(i))
+          vquad = vquad + pq(i)*w(i)
       end do
 #else
       ! The order of calculation seems quite important. The following
@@ -891,10 +905,12 @@
 !      function outprod(x, y) result(z)
 !      use consts_mod, only : RP, IK
 !      implicit none
-!      real(RP), dimension(:), intent(in) :: x, y
+!      real(RP), intent(in) :: x(:)
+!      real(RP), intent(in) :: x(:)
 !      real(RP), dimension(size(x), size(y)) :: z
+!
 !      integer(IK) :: i
-!      do i = 1, size(y)
+!      do i = 1, int(size(y), kind(i))
 !          z(:, i) = x*y(i)
 !      end do
 !      end function outprod

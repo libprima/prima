@@ -1,51 +1,54 @@
+      ! INITIALIZE_MOD is a module containing subroutines for
+      ! initializing FVAL, XBASE, XPT, GQ, HQ, PQ, ZMAT, and BMAT.
       module initialize_mod
 
       implicit none
       private
-      public :: initialize
+      public :: initxf, initq, inith
 
 
       contains
 
-      subroutine initialize(rhobeg, x, xbase, xpt, f, fval, xopt, fopt, &
-     & kopt, bmat, zmat, gq, hq, pq, nf, info, ftarget)
+      subroutine initxf(x, rhobeg, ftarget, ij, kopt, nf, fval, xbase,  &
+     & xpt, info)
+      ! INITXF performs the initialization regarding the interpolation 
+      ! points and corresponding function values. 
 
-      use consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUG_MODE, SRNLEN
+      use consts_mod, only : RP, IK, ZERO, DEBUG_MODE, SRNLEN
       use warnerror_mod, only : errstop
       use infnan_mod
       use lina_mod
       implicit none
 
       ! Inputs
+      real(RP), intent(in) :: x(:)  ! X(N)
+      real(RP), intent(in) :: rhobeg
+      real(RP), intent(in) :: ftarget
+
+      ! Outputs
       integer(IK), intent(out) :: info 
+      integer(IK), intent(out) :: ij(:, :)  ! IJ(2, NPT)
       integer(IK), intent(out) :: kopt
       integer(IK), intent(out) :: nf
-      real(RP), intent(in) :: rhobeg
-      real(RP), intent(in) :: x(:)  ! X(N)
-      real(RP), intent(in) :: ftarget
+      real(RP), intent(out) :: fval(:)  ! FVAL(NPT)
       real(RP), intent(out) :: xbase(:)  ! XBASE(N)
       real(RP), intent(out) :: xpt(:, :)  ! XPT(N, NPT)
-      real(RP), intent(out) :: f
-      real(RP), intent(out) :: fval(:)  ! FVAL(NPT)
-      real(RP), intent(out) :: xopt(:)  ! XOPT(N)
-      real(RP), intent(out) :: fopt
-      real(RP), intent(out) :: bmat(:, :)  ! BMAT(N, NPT + N)
-      real(RP), intent(out) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
-      real(RP), intent(out) :: gq(:)  ! GQ(N)
-      real(RP), intent(out) :: hq(:, :)  ! HQ(N, N)
-      real(RP), intent(out) :: pq(:)  ! PQ(NPT)
+      ! Remark on IJ:
+      ! When K > 2*N + 1, all the entries of XPT(:, K) will be zero
+      ! except that the IJ(1, K) and IJ(2, K) entries will be set to
+      ! RHOBEG or -RHOBEG. Consequently, the Hessian of the quadratic
+      ! model will get a possibly nonzero (IJ(1, K), IJ(2, K)) entry. 
+      ! Indeed, IJ(:, 1 : 2*N + 1) is never used.
 
       ! Intermediate variables
       integer(IK) :: n, npt
-      integer(IK) :: k, ip, ipt(size(fval)), itemp 
-      integer(IK) :: jp, jpt(size(fval)), npt1,npt2
-      real(RP) :: fbeg, fip, fjp, rhosq, reciq, recip
-      real(RP) :: xip, xjp,xtemp(size(x))
+      integer(IK) :: i, j, k, itemp, npt_r
+      real(RP) :: f, xtemp(size(x))
       logical :: evaluated(size(fval))
-      character(len = SRNLEN), parameter :: srname = 'INITIALIZE'
+      character(len = SRNLEN), parameter :: srname = 'INITXF'
 
 
-      ! Get and verify the sizes
+      ! Get and verify the sizes.
       n = int(size(x), kind(n))
       npt = int(size(fval), kind(npt))
 
@@ -53,39 +56,32 @@
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(X) or SIZE(FVAL) is invalid')
           end if
+          call verisize(ij, 2_IK, npt)
           call verisize(xbase, n)
-          call verisize(xopt, n)
           call verisize(xpt, n, npt)
-          call verisize(bmat, n, npt + n)
-          call verisize(zmat, npt, int(npt - n - 1, kind(n)))
-          call verisize(gq, n)
-          call verisize(hq, n, n)
-          call verisize(pq, npt)
       end if
-
-      ! Set the initial elements of XPT, BMAT, HQ, PQ and ZMAT to ZERO.
-      xbase = x
-      xpt = ZERO
-      bmat = ZERO
-      zmat = ZERO
-      gq = ZERO
-      hq = ZERO
-      pq = ZERO  ! We will not update PQ. It is ZERO at return.
 
       ! At return,
       ! INFO = 0: initialization finishes normally
       ! INFO = 1: return because f <= ftarget
       ! INFO = -1: return because x contains NaN
       ! INFO = -2: return because f is either NaN or positive infinity
-      ! INFO = -3: return because the model contains NaN
       info = 0
+
+      ! We set ij = 1 in case the initialization aborts due to
+      ! abnormality. If we do not do this, ij will be undefined if the
+      ! initialization aborts.
+      ij = 1
+
+      ! Set XBASE to X.
+      xbase = x
+
+      ! Initialize XPT to ZERO.
+      xpt = ZERO
 
       ! Begin the initialization procedure. The coordinates of the
       ! displacement of the next initial interpolation point from XBASE
       ! are set in XPT(:, .).
-      rhosq = rhobeg*rhobeg
-      recip = ONE/rhosq
-      reciq = sqrt(HALF)/rhosq
 
       ! EVALUATED is a boolean array indicating whether the function
       ! value of the i-th interpolation point has been evaluated.
@@ -95,113 +91,94 @@
       ! because the definition XPT(;, 2N+2:end) depends on FVAL(1:2N+1).
       evaluated = .false.
 
-      ! NPT1 and NPT2 equal NPT, unless it turns out necessary to
-      ! return due to abnormality (NaN or Inf occurs, or F < FTARGET).
-      npt1 = npt
-      npt2 = npt
+      ! NPT_R equals NPT, unless it turns out necessary to return due 
+      ! to abnormality (NaN or Inf occurs, or F < FTARGET).
+      npt_r = npt
       
-      ! When K > 2*N + 1, the IPT(K) and JPT(K) entries of XPT(:, K)
-      ! will be RHOBEG or -RHOBEG, depending on the values of F(IPT(K))
-      ! and F(JPT(K)). Consequently, the Hessian of the quadratic model
-      ! will get a possibly nonzero (IPT(K), JPT(K)) entry.
-      ! We initilize IPT and JPT to 1 in case the initialization of XPT
-      ! aborts before finishing, which will leave IPT and JPT undefined.
-      ipt = 1
-      jpt = 1
 
-      ! Evaluate F at the starting point X.
-      if (any(is_nan(x))) then  ! X contains NaN. Return immediately.
-          f = sum(x)  ! Set F to NaN. It is necessary.
-          info = -1
-          npt1 = 0 
-          npt2 = 0
-      else
-          call calfun(n, x, f)
-          evaluated(1) = .true.
-          fval(1) = f
-          fbeg = f
-          ! Check whether to exit.
-          if (f <= ftarget) then
-              info = 1
-              npt1 = 0 
-              npt2 = 0
-          end if
-          if (is_posinf(f) .or. is_nan(f)) then
-              info = -2
-              npt1 = 0 
-              npt2 = 0
-          end if
-      end if
-
-      
       ! Set XPT, FVAL, KOPT, FOPT, and XOPT.
       
-      ! Set XPT(:, 2 : 2*N + 1). 
-      do k = 2, min(npt1, int(n + 1, kind(npt1)))
+      ! Set XPT(:, 2 : N + 1). 
+      do k = 2, min(npt, int(n + 1, kind(npt)))
           xpt(k - 1, k) = rhobeg
       end do
-      do k = int(n + 2, kind(k)), min(npt1, int(2*n + 1, kind(npt1)))
+      ! Set XPT(:, N+2 : NPT)
+      do k = int(n + 2, kind(k)), min(npt, int(2*n + 1, kind(npt)))
           xpt(k - n - 1, k) = -rhobeg
       end do
        
-      ! Set FVAL(2 : 2*N + 1) by evaluating F. Totally parallelizable.
-      do k = 2, min(npt1, int(2*n + 1, kind(npt1)))
+      ! Set FVAL(1 : NPT) by evaluating F. Totally parallelizable.
+      do k = 1, min(npt, int(2*n + 1, kind(npt)))
           xtemp = xpt(:, k) + xbase
           if (any(is_nan(xtemp))) then
               f = sum(xtemp)  ! Set F to NaN. It is necessary.
               info = -1
-              npt2 = 0 
+              npt_r = 0 
               exit
           end if
           call calfun(n, xtemp, f)
           evaluated(k) = .true.
           fval(k) = f
-
           ! Check whether to exit.
           if (f <= ftarget) then
               info = 1
-              npt2 = 0 
+              npt_r = 0 
               exit
           end if
           if (is_posinf(f) .or. is_nan(f)) then
               info = -2
-              npt2 = 0 
+              npt_r = 0 
               exit
           end if
       end do
 
       ! Set XPT(:, 2*N + 2 : NPT). It depends on FVAL(2 : 2*N + 1).
-      do k = int(2*n + 2, kind(k)), npt2
+      do k = int(2*n + 2, kind(k)), npt_r
+          ! Decide IJ(:, K).  In general, when NPT = (N+1)*(N+2)/2, we
+          ! can set IJ(1 : NPT - (2*N + 1)) to ANY permutation of 
+          ! {(I, J) : 1 <= I > J <= N};
+          ! when NPT < (N+1)*(N+2)/2, IJ(1 : NPT - (2*N + 1)) is the 
+          ! first NPT - (2*N - 1) elements of such a permutation.
+          ! Powell took the following permutation:
           itemp = int((k - n - 2)/n, kind(itemp))
-          jp = int(k - (itemp + 1)*n - 1, kind(jp))
-          ip = jp + itemp
-          if (ip > n) then
-              itemp = jp
-              jp = ip - n
-              ip = itemp
+          j = int(k - (itemp + 1)*n - 1, kind(j))
+          i = j + itemp
+          if (i > n) then
+              itemp = j
+              j = i - n
+              i = itemp
           end if
-          ipt(k) = ip
-          jpt(k) = jp
-          ! XIP and XJP are the only places that depend on FVAL(2:2*N+1)
-          ! SIGN(A, B) = |A| if B > 0 and -|A| if B < 0. Note that:
-          ! 1. When B = 0, the result depends on the compiler, but 
-          !    it is normally |A|. 
-          ! 2. SIGN(A, B) is defined in terms of |A| but not
-          !    directly in terms of A; use with caution when A is
-          !    possibly negative.
-          ! 3. MATLAB has also a SIGN function, but the definition is
-          !    SIGN(A) = 1 if A > 0, 0 if A = 0, and -1 if A < 0.
-          xpt(ip, k) = sign(rhobeg, fval(ip + n + 1) - fval(ip+1)) 
-          xpt(jp, k) = sign(rhobeg, fval(jp + n + 1) - fval(jp+1))
+          ij(1, k) = i
+          ij(2, k) = j
+
+          ! The following lines set XPT(;, K) to 
+          ! XPT(:, I + 1) or XPT(:, I + N + 1) 
+          ! +
+          ! XPT(:, J + 1) or XPT(:, J + N + 1),
+          ! depending on the values of FVAL(I + 1), FVAL(I + N + 1),
+          ! FVAL(J + 1), and FVAL(J + N + 1). 
+          !
+          ! This is the only places where the definition
+          ! of XPT(:, 2*N + 2 : NPT) depends on F(2 : 2*N + 1).
+          ! If we set XPT(:, K) to XPT(:, I + 1) + XPT(:, J + 1)
+          ! regardless of FVAL, then the evaluations of FVAL(1 : NPT)
+          ! can be merged, and they are totally parallelizable; this can
+          ! be benificial if the function evaluations are expensive, 
+          ! which is likely the case.
+          if (fval(i + 1) <= fval(i + n + 1)) then
+              xpt(i, k) = xpt(i, i + 1)
+          else
+              xpt(i, k) = xpt(i, i + n + 1)
+          end if
+          if (fval(j + 1) <= fval(j + n + 1)) then
+              xpt(j, k) = xpt(j, j + 1)
+          else
+              xpt(j, k) = xpt(j, j + n + 1)
+          end if
       end do
 
       ! Set FVAL(2*N + 2 : NPT) by evaluating F. Totally parallelizable.
-      !
-      ! If we set both XPT(IP, K) and XPT(JP, K) to RHOBEG regardless of
-      ! FVAL, then the evaluations of FVAL(1 : NPT) can be combined, and
-      ! they are totally parallelizable, which can be benificial if the
-      ! function evaluations are expensive.
-      do k = int(2*n + 2, kind(k)), npt2
+      do k = int(2*n + 2, kind(k)), npt_r
           xtemp = xpt(:, k) + xbase
           if (any(is_nan(xtemp))) then
               f = sum(xtemp)  ! Set F to NaN. It is necessary.
@@ -211,7 +188,6 @@
           call calfun(n, xtemp, f)
           evaluated(k) = .true.
           fval(k) = f
-
           ! Check whether to exit.
           if (f <= ftarget) then
               info = 1
@@ -223,74 +199,169 @@
           end if
       end do
 
-      ! Set NF, KOPT, FOPT, and XOPT.
+      ! Set NF, KOPT
       nf = int(count(evaluated), kind(nf))
+      kopt = int(minloc(fval, dim = 1, mask=evaluated), kind(kopt))
 
-      if (nf == 0) then
-      ! In this case, the starting X contains NaN. F was set to NaN.
-          kopt = 1
-          fopt = f
-          xopt = ZERO
-      else
-          kopt = int(minloc(fval, dim = 1, mask=evaluated), kind(kopt))
-          fopt = fval(kopt)
-          xopt = xpt(:, kopt)
+      end subroutine initxf
+
+
+      subroutine initq(ij, fval, xpt, gq, hq, pq, info)
+      ! INITQ initializes the quadratic model, which is represented by 
+      ! (GQ, HQ, PQ) in the following way:
+      ! the gradient of the model at XBASE is GQ;
+      ! the Hessian of the model is 
+      ! HQ + \sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
+
+      use consts_mod, only : RP, IK, ZERO, HALF, DEBUG_MODE, SRNLEN
+      use warnerror_mod, only : errstop
+      use infnan_mod
+      use lina_mod
+      implicit none
+
+      ! Inputs
+      integer(IK), intent(in) :: ij(:, :)  ! IJ(2, NPT)
+      real(RP), intent(in) :: fval(:)  ! FVAL(NPT)
+      real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
+
+      ! Outputs
+      integer(IK), intent(out) :: info 
+      real(RP), intent(out) :: gq(:)  ! GQ(N)
+      real(RP), intent(out) :: hq(:, :)  ! HQ(N, N)
+      real(RP), intent(out) :: pq(:)  ! PQ(NPT)
+
+      ! Intermediate variables
+      integer(IK) :: n, npt
+      integer(IK) :: i, j, k
+      real(RP) :: rhobeg, xi, xj, fi, fj, fbeg
+      character(len = SRNLEN), parameter :: srname = 'INITQ'
+
+
+      ! Get and verify the sizes.
+      n = int(size(xpt, 1), kind(n))
+      npt = int(size(xpt, 2), kind(npt))
+
+      if (DEBUG_MODE) then
+          if (n == 0 .or. npt < n + 2) then
+              call errstop(srname, 'SIZE(XPT) is invalid')
+          end if
+          call verisize(fval, npt)
+          call verisize(ij, 2_IK, npt)
+          call verisize(gq, n)
+          call verisize(hq, n, n)
+          call verisize(pq, npt)
       end if
 
-      ! We return immediately if NF < NPT, because it indicates that 
-      ! something abnormality ocurred during the initialization of XPT
-      ! and FVAL, causing the initialization to abort.  
-      if (nf < npt) then
-          return
-      end if
+      gq = ZERO
+      hq = ZERO
+      pq = ZERO  ! We will not update PQ. It is ZERO at return.
 
-
-      ! Set GQ and HQ.
+      rhobeg = maxval(abs(xpt(:, 2)))
+      fbeg = fval(1)
 
       ! Set GQ by forward difference.
       gq(1 : n) = (fval(2 : n + 1) - fbeg)/rhobeg
       ! If possible, revise GQ to central difference. 
       k = min(int(npt - n - 1, kind(n)), n)
-      gq(1 : k) = HALF*(gq(1:k) + (fbeg - fval(n+2:n+1+k))/rhobeg)
+      gq(1 : k) = HALF*(gq(1 : k) + (fbeg - fval(n+2 : n+1+k))/rhobeg)
 
-      ! Set the diagonal of HQ  by 2nd-order central finite difference.
+      ! Set the diagonal of HQ by 2nd-order central finite difference.
       do k = 1, min(int(npt - n - 1, kind(n)), n) 
           hq(k, k) = ((fval(k + 1) - fbeg)/rhobeg -                     &
      &     (fbeg - fval(k + n + 1))/rhobeg)/rhobeg
       end do
       ! When NPT > 2*N + 1, set the off-diagonal entries of HQ.
       do k = int(2*n + 2, kind(k)), npt 
-          ! IP, JP, XIP, and XJP will be used below.
-          ip = ipt(k)
-          jp = jpt(k)
-          xip = xpt(ip, k)
-          xjp = xpt(jp, k)
-          if (xip < ZERO) then 
-              fip = fval(ip + n + 1)
+          ! I, J, XI, and XJ will be used below.
+          i = ij(1, k)
+          j = ij(2, k)
+          xi = xpt(i, k)
+          xj = xpt(j, k)
+          if (xi*xpt(i, i + 1) > ZERO) then 
+              fi = fval(i + 1)
           else
-              fip = fval(ip + 1)
+              fi = fval(i + n + 1)
           end if
-          if (xjp < ZERO) then
-              fjp = fval(jp + n + 1)
+          if (xj*xpt(j, j + 1) > ZERO) then
+              fj = fval(j + 1)
           else
-              fjp = fval(jp + 1)
+              fj = fval(j + n + 1)
           end if
-          hq(ip, jp) = (fbeg - fip - fjp + fval(k))/(xip*xjp)
-          hq(jp, ip) = hq(ip, jp)
+          ! With the XI, XJ, FI, and FJ found above, we have
+          ! FVAL(K) = F(XBASE + XI + XJ),
+          ! FI = F(XBASE + XI),
+          ! FJ = F(XBASE + XJ).
+          ! Thus the HQ(I, J) defined below approximates 
+          ! \frac{\partial^2}{\partial X_I \partial X_J} F(XBASE)
+          hq(i, j) = (fbeg - fi - fj + fval(k))/(xi*xj)
+          hq(j, i) = hq(i, j)
       end do
 
+      if (any(is_nan(gq)) .or. any(is_nan(hq)) .or. any(is_nan(pq)))then
+          info = -3
+      else
+          info = 0
+      end if
 
+      end subroutine initq
+
+
+      subroutine inith(ij, xpt, bmat, zmat, info)
+      ! INITH initializes BMAT and ZMAT.
+
+      use consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUG_MODE, SRNLEN
+      use warnerror_mod, only : errstop
+      use infnan_mod
+      use lina_mod
+      implicit none
+
+      ! Inputs
+      integer(IK), intent(in) :: ij(:, :)  ! IJ(2, NPT)
+      real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
+
+      ! Outputs
+      integer(IK), intent(out) :: info
+      real(RP), intent(out) :: bmat(:, :)  ! BMAT(N, NPT + N)
+      real(RP), intent(out) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
+
+      ! Intermediate variables
+      integer(IK) :: n, npt
+      integer(IK) :: i, j, k
+      real(RP) :: rhobeg, rhosq, recip, reciq, xi, xj
+      character(len = SRNLEN), parameter :: srname = 'INITH'
+
+      
+      ! Get and verify the sizes.
+      n = int(size(xpt, 1), kind(n))
+      npt = int(size(xpt, 2), kind(npt))
+
+      if (DEBUG_MODE) then
+          if (n == 0 .or. npt < n + 2) then
+              call errstop(srname, 'SIZE(XPT) is invalid')
+          end if
+          call verisize(ij, 2_IK, npt)
+          call verisize(bmat, n, npt + n)
+          call verisize(zmat, npt, int(npt - n - 1, kind(n)))
+      end if
+      
       ! Set BMAT and ZMAT. They depend on XPT but not FVAL.
+      bmat = ZERO
+      zmat = ZERO
+
+      rhobeg = maxval(abs(xpt(:, 2)))
+      rhosq = rhobeg*rhobeg
+      recip = ONE/rhosq
+      reciq = sqrt(HALF)/rhosq
 
       ! Set the nonzero initial elements of BMAT. 
       ! When NPT >= 2*N + 1, this defines BMAT completely; 
-      ! When NPT <= 2*N, this defines the first NPT-N-1 rows of BMAT.
+      ! When NPT <= 2*N, this defines BMAT(1 : NPT - N - 1, :).
       do k = 1, min(int(npt - n - 1, kind(n)), n)
           bmat(k, k + 1) = HALF/rhobeg
           bmat(k, n + k + 1) = -HALF/rhobeg
       end do
 
-      ! When NPT <= 2*N, set the NPT - N to N rows of BMAT. 
+      ! When NPT <= 2*N, set BMAT(NPT - N : N, :)
       do k = npt - n, n 
           bmat(k, 1) = -ONE/rhobeg
           bmat(k, k + 1) = ONE/rhobeg
@@ -299,40 +370,38 @@
                 
       ! Set the nonzero initial elements of ZMAT. 
       ! When NPT <= 2*N + 1, this defines ZMAT completely; 
-      ! When NPT > 2*N + 1, this defines the first N columns of ZMAT.
+      ! When NPT > 2*N + 1, this defines ZMAT(:, 1 : N).
       do k = 1, min(int(npt - n - 1, kind(n)), n) 
           zmat(1, k) = - reciq - reciq
           zmat(k + 1, k) = reciq
           zmat(k + n + 1, k) = reciq
       end do
 
-      ! When NPT > 2*N+1, set the N + 1 to NPT - N - 1 columns of ZMAT.
+      ! When NPT > 2*N+1, set ZMAT(:, N + 1 : NPT - N - 1).
       do k = int(n + 1, kind(k)), int(npt - n - 1, kind(k))
-          ! IP, JP, XIP, and XJP will be used below.
-          ip = ipt(k + n + 1)
-          jp = jpt(k + n + 1)
-          xip = xpt(ip, k + n + 1)
-          xjp = xpt(jp, k + n + 1)
-          if (xip < ZERO) then 
-              ip = ip + n
+          ! I, J, XI, and XJ will be used below.
+          i = ij(1, k + n + 1)
+          j = ij(2, k + n + 1)
+          xi = xpt(i, k + n + 1)
+          xj = xpt(j, k + n + 1)
+          if (xi < ZERO) then 
+              i = i + n
           end if
-          if (xjp < ZERO) then
-              jp = jp + n
+          if (xj < ZERO) then
+              j = j + n
           end if
           zmat(1, k) = recip
           zmat(k + n + 1, k) = recip
-          zmat(ip + 1, k) = -recip
-          zmat(jp + 1, k) = -recip
+          zmat(i + 1, k) = -recip
+          zmat(j + 1, k) = -recip
       end do
 
-!      ! Check whether NaN occurs in the coefficients. 
-!      if ((any(is_nan(bmat)) .or. any(is_nan(zmat)).or.                 &
-!     &     any(is_nan(gq)) .or. any(is_nan(hq)))) then
-!          info = -3
-!      end if
+      if (any(is_nan(bmat)) .or. any(is_nan(zmat))) then
+          info = -3
+      else
+          info = 0
+      end if
 
-      return
-
-      end subroutine initialize
+      end subroutine inith
 
       end module initialize_mod

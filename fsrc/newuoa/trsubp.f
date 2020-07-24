@@ -7,7 +7,7 @@
 
       contains
 
-      subroutine trsapp(x, xpt, gq, hq, pq,delta,tol,s,crvmin,qred,info)
+      subroutine trsapp(delta, gq, hq, pq, tol,x,xpt,crvmin,qred,s,info)
       ! TRSAPP finds an approximate solution to the N-dimensional trust
       ! region subproblem
       !
@@ -46,25 +46,29 @@
       use lina_mod
       implicit none
       
-      integer(IK), intent(out) :: info
-
-      real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
-      real(RP), intent(in) :: x(:)        ! X(N)
+      ! Inputs
+      real(RP), intent(in) :: delta 
       real(RP), intent(in) :: gq(:)       ! GQ(N)
       real(RP), intent(in) :: hq(:, :)    ! HQ(N, N)
       real(RP), intent(in) :: pq(:)       ! PQ(NPT)
       real(RP), intent(in) :: tol
-      real(RP), intent(in) :: delta 
-      real(RP), intent(out) :: s(:)        ! S(N)
+      real(RP), intent(in) :: x(:)        ! X(N)
+      real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
+
+      ! Outputs
+      integer(IK), intent(out) :: info
       real(RP), intent(out) :: crvmin
       real(RP), intent(out) :: qred
+      real(RP), intent(out) :: s(:)        ! S(N)
       
+      ! Intermediate variables
       integer(IK) :: i, isave, iterc, itermax, iu, n, npt
-      real(RP) :: d(size(x)), g(size(x)), hd(size(x)), hs(size(x)),     &
-     & hx(size(x)) 
-      real(RP) :: alpha, angle, bstep, cf, cth, dd, delsq, dg, dhd, dhs,&
-     & ds, gg, ggbeg, ggsave, qadd, qbeg, qmin, qnew, qsave, reduc, sg, &
-     & sgk, shs, ss, sth, temp, tempa, tempb
+      real(RP) :: d(size(x)), g(size(x))
+      real(RP) :: hd(size(x)), hs(size(x)), hx(size(x)) 
+      real(RP) :: alpha, angle, bstep, cf, cth, dd, delsq, dg
+      real(RP) :: dhd, dhs, ds, gg, ggbeg, ggsave
+      real(RP) :: qadd, qbeg, qmin, qnew, qsave, reduc, sg
+      real(RP) :: sgk, shs, ss, sth, t, unitang, quada, quadb
       logical :: twod_search
       character(len = SRNLEN), parameter :: srname = 'TRSAPP'
 
@@ -83,7 +87,6 @@
           call verisize(s, n)
       end if
       
-
       s = ZERO
       crvmin = ZERO
       qred = ZERO
@@ -220,8 +223,8 @@
           
           ! Begin the 2D minimization by calculating D and HD and some
           ! scalar products.
-          temp = sqrt(delsq*gg - sgk*sgk)
-          d = (delsq/temp)*(g + hs) - (sgk/temp)*s
+          t = sqrt(delsq*gg - sgk*sgk)
+          d = (delsq/t)*(g + hs) - (sgk/t)*s
       !----------------------------------------------------------------!
 !-----!hd = matmul(xpt, pq*matmul(d, xpt)) + matmul(hq, d) !-----------!
           hd = Ax_plus_y(hq, d, matmul(xpt, pq*matmul(d, xpt)))
@@ -237,37 +240,37 @@
           qmin = qbeg
           isave = 0
           iu = 49
-          temp = (TWO*PI)/real(iu + 1, RP)
+          unitang = (TWO*PI)/real(iu + 1, RP)
 
           do i = 1, iu
-              angle = real(i, RP)*temp
+              angle = real(i, RP)*unitang
               cth = cos(angle)
               sth = sin(angle)
               qnew = (sg + cf*cth)*cth + (dg + dhs*cth)*sth
               if (qnew < qmin) then
                   qmin = qnew
                   isave = i
-                  tempa = qsave
+                  quada = qsave
               else if (i == isave + 1) then
-                  tempb = qnew
+                  quadb = qnew
               end if
               qsave = qnew
           end do
 
           if (isave == 0) then
-              tempa = qnew
+              quada = qnew
           end if
           if (isave == iu) then 
-              tempb = qbeg
+              quadb = qbeg
           end if
-          if (abs(tempa - tempb) > ZERO) then
-              tempa = tempa - qmin
-              tempb = tempb - qmin
-              angle = HALF*(tempa - tempb)/(tempa + tempb)
+          if (abs(quada - quadb) > ZERO) then
+              quada = quada - qmin
+              quadb = quadb - qmin
+              angle = HALF*(quada - quadb)/(quada + quadb)
           else
               angle = ZERO
           end if
-          angle = temp*(real(isave, RP) + angle)
+          angle = unitang*(real(isave, RP) + angle)
 
           ! Calculate the new S and HS. Then test for convergence.
           cth = cos(angle)

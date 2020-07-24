@@ -7,7 +7,7 @@
 
       contains 
 
-      subroutine shiftbase(idz, xopt, pq, bmat, zmat, gq, hq, xpt)
+      subroutine shiftbase(idz, pq, xopt, zmat, bmat, gq, hq, xpt)
       ! SHIFTBASE shifts the base point to XBASE + XOPT and updates GQ,
       ! HQ, and BMAT accordingly. PQ and ZMAT remain the same after the
       ! shifting. See Section 7 of the NEWUOA paper.
@@ -18,16 +18,19 @@
       use lina_mod
       implicit none
 
+      ! Inputs
       integer(IK), intent(in) :: idz
-
-      real(RP), intent(in) :: xopt(:)  ! XOPT(N)
       real(RP), intent(in) :: pq(:)  ! PQ(NPT)
+      real(RP), intent(in) :: xopt(:)  ! XOPT(N)
       real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
+
+      ! In-outputs
       real(RP), intent(inout) :: bmat(:, :)  ! BMAT(N, NPT + N)
       real(RP), intent(inout) :: gq(:)  ! GQ(N)
       real(RP), intent(inout) :: hq(:, :)  ! HQ(N, N)
       real(RP), intent(inout) :: xpt(:, :)  ! XPT(N, NPT)
 
+      ! Intermediate variables
       integer(IK) :: k, n, npt
       real(RP) :: sumz(size(zmat, 2)), vlag(size(xopt))
       real(RP) :: qxoptq, xoptsq, xpq(size(xopt)), bmatk(size(bmat, 1)) 
