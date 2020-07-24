@@ -24,9 +24,10 @@
      & ': ', message(1 : len_trim(message)), '.'
       print *
 
-      stop
+      stop  ! This means to stop the whole program.
 
       end subroutine errstop
+
 
       subroutine backtr()
       ! BACKTR calls a compiler-dependent intrinsic to show a backtrace

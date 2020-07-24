@@ -7,8 +7,8 @@
 
       contains
 
-      subroutine newuoa (npt, x, rhobeg, rhoend, iprint, maxfun, f,     &
-     & info, ftarget)
+      subroutine newuoa (x, f, rhobeg, rhoend, ftarget, npt, maxfun,    &
+     & iprint, info)
       ! NEWUOA seeks the least value of a function of many variables,
       ! by a trust region method that forms quadratic models by
       ! interpolation. There can be some freedom in the interpolation
@@ -67,20 +67,27 @@
       use infnan_mod, only : is_nan, is_inf
       implicit none
       
-      integer(IK), intent(in) :: npt, iprint, maxfun
-      integer(IK), intent(out) :: info
-      real(RP), intent(in) :: rhobeg, rhoend, ftarget
-      real(RP), intent(out) :: f
+      ! Inputs
+      integer(IK), intent(in) :: iprint
+      integer(IK), intent(in) :: maxfun
+      integer(IK), intent(in) :: npt
+      real(RP), intent(in) :: ftarget
+      real(RP), intent(in) :: rhobeg
+      real(RP), intent(in) :: rhoend
+
+      ! In-outputs
       real(RP), intent(inout) :: x(:)
 
+      ! Outputs
+      integer(IK), intent(out) :: info
+      real(RP), intent(out) :: f
+
+      ! Intermediate variables
       real(RP) :: rhobeg_v, rhoend_v, ftarget_v
       integer(IK) :: n, nf, maxfun_v, npt_v, iprint_v
 
+      ! Get size
       n = int(size(x), kind(n))
-
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      ! Zaikun, 2020-05-05
-      !rhoend = min(rhobeg, rhoend)
 
       rhobeg_v = rhobeg
       rhoend_v = rhoend
@@ -131,9 +138,9 @@
           ftarget_v = FTARGET_DEF
       end if
 
-      call newuob(npt_v, rhobeg_v, rhoend_v, iprint_v, maxfun_v,        &
-     & ftarget_v, x, f, nf, info)
-      return
+      call newuob (iprint_v, maxfun_v, npt_v, ftarget_v, rhobeg_v,      &
+     & rhoend_v, x, nf, f, info)
+
       end subroutine newuoa
 
       end module newuoa_mod

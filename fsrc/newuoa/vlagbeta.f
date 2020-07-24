@@ -7,22 +7,27 @@
 
       contains
 
-      subroutine vlagbeta(idz, kopt, bmat, zmat, xpt, xopt, d,vlag,beta)
+      subroutine vlagbeta(idz, kopt, bmat, d, xopt, xpt, zmat,beta,vlag)
 
       use consts_mod, only : RP, IK, ONE, HALF, DEBUG_MODE, SRNLEN
       use warnerror_mod, only : errstop
       use lina_mod
       implicit none
 
-      integer(IK), intent(in) :: idz, kopt
+      ! Inputs
+      integer(IK), intent(in) :: idz
+      integer(IK), intent(in) :: kopt
       real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT+N)
-      real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
-      real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
-      real(RP), intent(in) :: xopt(:)  ! XOPT(N)
       real(RP), intent(in) :: d(:)  ! D(N)
-      real(RP), intent(out) :: vlag(:)  ! VLAG(NPT+N)
-      real(RP), intent(out) :: beta
+      real(RP), intent(in) :: xopt(:)  ! XOPT(N)
+      real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
+      real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 
+      ! Outputs
+      real(RP), intent(out) :: beta
+      real(RP), intent(out) :: vlag(:)  ! VLAG(NPT+N)
+
+      ! Intermediate variables
       integer(IK) :: n, npt
       real(RP) :: bw(size(bmat, 1)), bwvd
       real(RP) :: wcheck(size(zmat, 1)) 

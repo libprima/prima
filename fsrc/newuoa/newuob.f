@@ -7,13 +7,13 @@
 
       contains
 
-      subroutine newuob (npt, rhobeg, rhoend, iprint, maxfun, ftarget,  &
-     &  x, f, nf, info)
+      subroutine newuob (iprint, maxfun, npt, ftarget, rhobeg, rhoend,  &
+     & x, nf, f, info)
 
       use consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH
       use infnan_mod, only : is_nan, is_posinf
       use lina_mod
-      use initialize_mod, only : initialize
+      use initialize_mod, only : initxf, initq, inith
       use trsubp_mod, only : trsapp
       use geometry_mod, only : biglag, bigden
       use shiftbase_mod, only : shiftbase
@@ -22,34 +22,35 @@
       implicit none
             
       ! Inputs
-      integer(IK), intent(in) :: npt
       integer(IK), intent(in) :: iprint
       integer(IK), intent(in) :: maxfun
-      integer(IK), intent(out) :: nf
-      integer(IK), intent(out) :: info
+      integer(IK), intent(in) :: npt
+      real(RP), intent(in) :: ftarget
       real(RP), intent(in) :: rhobeg
       real(RP), intent(in) :: rhoend
-      real(RP), intent(in) :: ftarget
-      real(RP), intent(out) :: f 
+
+      ! In-output
       real(RP), intent(inout) :: x(:)  ! SIZE(X) = N
 
-      ! Other variables
-      integer(IK) :: n, idz, itest, knew, kopt, nfsave, subinfo
-      integer(IK) :: tr, maxtr
+      ! Outputs 
+      integer(IK), intent(out) :: info
+      integer(IK), intent(out) :: nf
+      real(RP), intent(out) :: f 
+
+      ! Intermediate variables
+      integer(IK) :: n, ij(2, npt), idz, itest, knew, kopt, nfsave
+      integer(IK) :: tr, maxtr, subinfo
       real(RP) :: alpha, beta, crvmin, delta, prederr(3) 
       real(RP) :: distsq, dnorm, dsq, dstep, xdsq(npt), d(size(x))
       real(RP) :: xbase(size(x)), xopt(size(x)), xnew(size(x))
       real(RP) :: xpt(size(x), npt), fval(npt)
       real(RP) :: gq(size(x)), hq(size(x), size(x)), pq(npt)
-      real(RP) :: bmat(size(x), npt + size(x)), zmat(npt, npt-size(x)-1)
-      real(RP) :: vlag(npt + size(x))
+      real(RP) :: bmat(size(x), npt+size(x)), zmat(npt, npt-size(x)-1)
+      real(RP) :: vlag(npt + size(x)), zknew(npt-size(x)-1)
       real(RP) :: fopt, fsave, galt(size(x)), galtsq, gqsq, hdiag(npt)
       real(RP) :: ratio, rho, rhosq, vquad, xoptsq, sigma(npt), trtol
-      logical :: model_step, reduce_rho, shortd
+      logical :: improve_geometry, reduce_rho, shortd
 
-      ! Get size.
-      n = int(size(x), kind(n))
-      
       ! The arguments N, NPT, X, RHOBEG, RHOEND, IPRINT and MAXFUN are
       ! identical to the corresponding arguments in SUBROUTINE NEWUOA.
       ! XBASE will hold a shift of origin that should reduce the
@@ -77,18 +78,29 @@
       ! point X. They are part of a product that requires VLAG to be of
       ! length NDIM = NPT+N.
 
+      ! Get size.
+      n = int(size(x), kind(n))
+      
       maxtr = maxfun  ! Maximal numer of trust region iterations.
       info = 0  ! Exit status. The default value is 0.
 
-      call initialize(rhobeg, x, xbase, xpt, f, fval, xopt, fopt, kopt, &
-     & bmat, zmat, gq, hq, pq, nf, subinfo, ftarget)
-      if (subinfo == 1 .or. subinfo == -1 .or. subinfo == -2 .or.       &
-     & subinfo == -3) then
-          maxtr = 0  ! No trust region in this case. Return immediately.
+      ! Initialize FVAL, XBASE, and XPT
+      call initxf(x, rhobeg, ftarget, ij, kopt, nf, fval, xbase, xpt,   &
+     & subinfo)
+      xopt = xpt(:, kopt)
+      fopt = fval(kopt)
+      x = xbase + xopt  ! Set X.
+      f = fopt  ! Set F.
+      if (subinfo == 1 .or. subinfo == -1 .or. subinfo == -2) then
           info = subinfo  ! Set the exit status.
-          x = xbase + xopt  ! Set X.
-          f = fopt  ! Set F.
+          return
       end if
+
+      ! Initialize GQ, HQ, and PQ
+      call initq(ij, fval, xpt, gq, hq, pq, subinfo)
+
+      ! Initialize BMAT and ZMAT
+      call inith(ij, xpt, bmat, zmat, subinfo)
 
       ! Set some more initial values.
       rho = rhobeg
@@ -105,20 +117,11 @@
           ! Is the trust region trial step short?
           shortd = .false.
           ! Will we improve the model after the trust region iteration?
-          model_step = .false.
+          improve_geometry = .false.
           ! Will we reduce rho after the trust region iteration?
           reduce_rho = .false.
           ! NEWUOA never sets both MODEL_STEP and REDUCE_RHO to .TRUE. 
           ! at the same time.
-
-          ! Exit if the model contains NaN. Otherwise, the behaviour of
-          ! TRSAPP is unpredictable, and Segmentation Fault may occur.
-          ! In the future, we may build a new model instead of exiting.
-!          if (any(is_nan(gq)) .or. any(is_nan(hq)) .or. any(is_nan(pq)))&
-!     &     then
-!              info = -3
-!              exit
-!          end if
 
           ! Solve the trust region subproblem.
           ! In Powell's NEWUOA code, VQUAD is not an output of TRSAPP.
@@ -126,8 +129,8 @@
           ! be calculated latter by CALQUAD in order to produce the same
           ! results Powell's code. 
           trtol = 1.0e-2_RP  ! Tolerance used in trsapp.
-          call trsapp(xopt, xpt, gq, hq, pq, delta, trtol, d, crvmin,   &
-     &      vquad, subinfo)
+          call trsapp(delta, gq, hq, pq, trtol, xopt, xpt, crvmin,      &
+     &     vquad, d, subinfo)
 
           ! Calculate the length of the trial step D.
           dsq = dot_product(d, d)
@@ -153,14 +156,14 @@
           if (.not. shortd) then
               ! Shift XBASE if XOPT may be too far from XBASE.
               if (dsq <= 1.0e-3_RP*xoptsq) then
-                  call shiftbase(idz, xopt, pq, bmat, zmat, gq, hq, xpt)
+                  call shiftbase(idz, pq, xopt, zmat, bmat, gq, hq, xpt)
                   xbase = xbase + xopt
                   xopt = ZERO
                   xoptsq = ZERO
               end if
 
               ! Calculate VLAG and BETA for D. 
-               call vlagbeta(idz, kopt, bmat, zmat,xpt,xopt,d,vlag,beta)
+              call vlagbeta(idz, kopt, bmat, d, xopt,xpt,zmat,beta,vlag)
 
       !----------------------------------------------------------------!
 
@@ -255,11 +258,11 @@
               if (knew > 0) then
                   ! Update BMAT, ZMAT and IDZ, so that the KNEW-th
                   ! interpolation point can be removed.
-                  call updateh(bmat, zmat, idz, vlag, beta, knew)
+                  call updateh(knew, beta, vlag, idz, bmat, zmat)
 
                   ! Update the quadratic model
-                  call updateq(idz, knew, prederr(1), xpt(:, knew),     &
-     &             bmat(:, knew), zmat, gq, hq, pq)
+                  call updateq(idz, knew, bmat(:, knew), prederr(1),    &
+     &             zmat, xpt(:, knew), gq, hq, pq)
 
                   ! Include the new interpolation point. This should be
                   ! done after updating BMAT, ZMAT, and the model.
@@ -267,17 +270,16 @@
                   xpt(:, knew) = xnew
 
                   ! Test whether to replace the new quadratic model Q by
-                  ! the least Frobenius norm interpolant Q_alt, making
-                  ! the replacement if the test is satisfied.
+                  ! the least Frobenius norm interpolant Q_alt.
                   ! In the NEWUOA paper, Powell replaces Q with Q_alt
                   ! when RATIO <= 0.01 and ||G_alt|| <= 0.1||GQ||
-                  ! hold for 3 consecutive times (equation (8.4)) But
+                  ! hold for 3 consecutive times (equation (8.4)). But
                   ! the original NEWUOA compares ABS(RATIO) with 0.01
                   ! instead of RATIO. Here we use RATIO. It is observed
                   ! in Zhang Zaikun's PhD thesis (Section 3.3.2) that
                   ! it is indeed more efficient to check RATIO rather
                   ! than ABS(RATIO).
-                  if (delta <= rho) then  ! Indeed, DELTA == RHO.
+                  if (delta <= rho) then  ! Equivalent to  DELTA == RHO.
                       ! if (abs(ratio) > 1.0e-2_RP) then
                       if (ratio > 1.0e-2_RP) then
                           itest = 0
@@ -294,9 +296,10 @@
                       end if
                   end if
 
+                  ! Replace Q with Q_alt when ITEST >= 3.
                   if (itest >= 3) then
-                      call qalt(gq, hq, pq, fval, bmat(:, 1 : npt),     &
-     &                 zmat, kopt, idz)
+                      call qalt(idz, kopt, fval, bmat(:, 1:npt), zmat,  &
+     &                 gq, hq, pq)
                       itest = 0
                   end if
 
@@ -327,8 +330,8 @@
               ! improve the geometry of the interpolation set and hence
               ! ameliorate them model.
               if (knew > 0) then
-                  ! The only possibility that model_step=true
-                  model_step = .true.
+                  ! The only possibility that improve_geometry=true
+                  improve_geometry = .true.
               else if (max(delta, dnorm) <= rho .and. (ratio <= 0 .or.  &
      &         shortd)) then
                   ! The 2nd possibility (out of 2) that reduce_rho=true
@@ -356,7 +359,7 @@
               end if
           end if
 
-          if (model_step) then
+          if (improve_geometry) then
               ! Set DSTEP, which will be used as the trust region radius
               ! for the model-improving schemes BIGLAG and BIGDEN. We
               ! also need it to decide whether to shift XBASE or not.
@@ -365,24 +368,21 @@
 
               ! Shift XBASE if XOPT may be too far from XBASE.
               if (dsq <= 1.0e-3_RP*xoptsq) then
-                  call shiftbase(idz, xopt, pq, bmat, zmat, gq, hq, xpt)
+                  call shiftbase(idz, pq, xopt, zmat, bmat, gq, hq, xpt)
                   xbase = xbase + xopt
                   xopt = ZERO
                   xoptsq = ZERO
               end if
 
-              ! Exit if BMAT or ZMAT contains NaN. Otherwise, the
-              ! behaviour of BIGLAG and BIGDEN is unpredictable.
-              ! Segmentation Fault may occur.
-!              if (any(is_nan(bmat)) .or. any(is_nan(zmat))) then
-!                  info = -3
-!                  exit
-!              end if
+              call biglag(idz, knew, dstep, bmat, xopt, xpt, zmat, d)
 
-              call biglag(xopt, xpt, bmat, zmat, idz,knew,dstep,d,alpha)
+              ! ALPHA is the KNEW-th diagonal entry of H
+              zknew = zmat(knew, :)
+              zknew(1 : idz - 1) = -zknew(1 : idz - 1)
+              alpha = dot_product(zmat(knew, :), zknew)
 
               ! Calculate VLAG and BETA for D.
-              call vlagbeta(idz, kopt, bmat, zmat, xpt,xopt,d,vlag,beta)
+              call vlagbeta(idz, kopt, bmat, d, xopt,xpt,zmat,beta,vlag)
 
               ! If KNEW is positive and if the cancellation in DENOM is
               ! unacceptable, then BIGDEN calculates an alternative
@@ -392,8 +392,8 @@
               ! No need to check whether BMAT and ZMAT contain NaN as no
               ! change has been made to them.
               if (abs(ONE + alpha*beta/vlag(knew)**2) <= 0.8_RP) then
-                  call bigden (xopt, xpt, bmat, zmat, idz, kopt, knew,  &
-     &             d, vlag, beta)
+                  call bigden(idz, knew, kopt, bmat, xopt, xpt, zmat, d,&
+     &             beta, vlag)
               end if
 
       !----------------------------------------------------------------!
@@ -458,11 +458,11 @@
 
               ! Update BMAT, ZMAT and IDZ, so that the KNEW-th
               ! interpolation point can be moved.
-              call updateh(bmat, zmat, idz, vlag, beta, knew)
+              call updateh(knew, beta, vlag, idz, bmat, zmat)
 
               ! Update the quadratic model.
-              call updateq(idz, knew, prederr(1), xpt(:, knew),         &
-     &         bmat(:, knew), zmat, gq, hq, pq)
+              call updateq(idz, knew, bmat(:, knew), prederr(1), zmat,  &
+     &         xpt(:, knew), gq, hq, pq)
 
               ! Include the new interpolation point. This should be done
               ! after updating BMAT, ZMAT, and the model.

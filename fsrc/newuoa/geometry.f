@@ -7,13 +7,12 @@
 
       contains
 
-      subroutine biglag(x, xpt, bmat, zmat, idz, knew, delta, d, alpha)
+      subroutine biglag(idz, knew, delta, bmat, x, xpt, zmat, d)
       ! BIGLAG calculates a D by approximately solving
       !
       ! max |LFUNC(X + D)|, subject to ||D|| <= DELTA, 
       !
       ! where LFUNC is the KNEW-th Lagrange function.
-      ! In addition, it sets ALPHA for the selected D.
 
       use consts_mod, only : RP, IK, ONE, TWO, HALF, PI, ZERO
       use consts_mod, only : DEBUG_MODE, SRNLEN
@@ -21,21 +20,25 @@
       use warnerror_mod, only : errstop
       implicit none
 
+      ! Inputs
       integer(IK), intent(in) :: idz
       integer(IK), intent(in) :: knew
+      real(RP), intent(in) :: delta 
+      real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT + N)
       real(RP), intent(in) :: x(:)        ! X(N)
       real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
-      real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT + N)
       real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
-      real(RP), intent(in) :: delta 
-      real(RP), intent(out) :: alpha
-      real(RP), intent(out) :: d(:)        ! D(N)
 
+      ! Output
+      real(RP), intent(out) :: d(:)       ! D(N)
+
+      ! Intermediate variables
       integer(IK) :: i, isave, iterc, iu, n, npt
-      real(RP) :: hcol(size(xpt, 2)), gc(size(x)), gd(size(x)),         &
-     & s(size(x)), w(size(x)), zknew(size(zmat, 2)), angle, cf(5), cth, &
-     & dd, denom, dhd, gg, scaling, sp, ss, step, sth, tau, taubeg,     &
-     & tauold, taumax, temp, tempa, tempb
+      real(RP) :: hcol(size(xpt, 2)), gc(size(x)), gd(size(x))
+      real(RP) :: s(size(x)), w(size(x)), zknew(size(zmat, 2))
+      real(RP) :: angle, cf(5), cth, dd, denom, dhd, gg, scaling
+      real(RP) :: sp, ss, step, sth, tau, taubeg, tauold, taumax
+      real(RP) :: unitang, taua, taub, t
       character(len = SRNLEN), parameter :: srname = 'BIGLAG'
 
        
@@ -46,9 +49,8 @@
       ! ZMAT and IDZ give a factorization of the first NPT by NPT
       ! sub-matrix of H.
       ! KNEW is the index of the interpolation point to be removed.
-      ! DELTA is the current trust region bound.
+      ! DELTA is the trust region bound.
       ! D will be set to the step from X to the new point.
-      ! ALPHA will be set to the KNEW-th diagonal element of matrix H.
       ! HCOL, GC, GD, S and W will be used for working space.
 
 
@@ -69,7 +71,6 @@
       zknew = zmat(knew, :)
       zknew(1 : idz - 1) = -zknew(1 : idz - 1)
       hcol = matmul(zmat, zknew)
-      alpha = hcol(knew)
 
       ! Set the unscaled initial direction D. Form the gradient of LFUNC
       ! at X, and multiply D by the Hessian of LFUNC.
@@ -92,17 +93,17 @@
       if (sp*dhd < ZERO) then 
           scaling = - scaling
       end if
-      temp = ZERO
+      t = ZERO
       if (sp*sp > 0.99_RP*dd*gg) then 
-          temp = ONE 
+          t = ONE 
       end if
       tau = scaling*(abs(sp) + HALF*scaling*abs(dhd))
       if (gg*(delta*delta) < 1.0e-2_RP*tau*tau) then 
-          temp = ONE
+          t = ONE
       end if
       d = scaling*d
       gd = scaling*gd
-      s = gc + temp*gd
+      s = gc + t*gd
       
       ! Begin the iteration by overwriting S with a vector that has the
       ! required length and direction, except that termination occurs if
@@ -136,37 +137,37 @@
           tauold = taubeg
           isave = 0
           iu = 49
-          temp = (TWO*PI)/real(iu + 1, RP)
+          unitang = (TWO*PI)/real(iu + 1, RP)
 
           do i = 1, iu
-              angle = real(i, RP)*temp
+              angle = real(i, RP)*unitang
               cth = cos(angle)
               sth = sin(angle)
               tau = cf(1) + (cf(2)+cf(4)*cth)*cth+(cf(3)+cf(5)*cth)*sth
               if (abs(tau) > abs(taumax)) then
                   taumax = tau
                   isave = i
-                  tempa = tauold
+                  taua = tauold
               else if (i == isave + 1) then
-                  tempb = tau
+                  taub = tau
               end if
               tauold = tau
           end do
 
           if (isave == 0) then 
-              tempa = tau
+              taua = tau
           end if
           if (isave == iu) then 
-              tempb = taubeg
+              taub = taubeg
           end if
-          if (abs(tempa - tempb) > ZERO) then
-              tempa = tempa - taumax
-              tempb = tempb - taumax
-              step = HALF*(tempa - tempb)/(tempa + tempb)
+          if (abs(taua - taub) > ZERO) then
+              taua = taua - taumax
+              taub = taub - taumax
+              step = HALF*(taua - taub)/(taua + taub)
           else
               step = ZERO
           end if
-          angle = temp*(real(isave, RP) + step)
+          angle = unitang*(real(isave, RP) + step)
           
           ! Calculate the new D and GD. Then test for convergence.
           cth = cos(angle)
@@ -185,7 +186,7 @@
       end subroutine biglag
 
 
-      subroutine bigden(x, xpt, bmat, zmat, idz, kopt, knew,d,vlag,beta)
+      subroutine bigden(idz, knew, kopt, bmat, x, xpt, zmat,d,beta,vlag)
       ! BIGDEN calculates a D by approximately solving
       !
       ! max |SIGMA(X + D)|, subject to ||D|| <= DELTA, 
@@ -203,25 +204,35 @@
       use lina_mod
       implicit none
 
+      ! Inputs
+      integer(IK), intent(in) :: idz
       integer(IK), intent(in) :: knew
       integer(IK), intent(in) :: kopt
-      integer(IK), intent(in) :: idz
+      real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT+N)
       real(RP), intent(in) :: x(:)        ! X(N)
       real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
-      real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT+N)
       real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
-      real(RP), intent(out) :: beta
-      real(RP), intent(out) :: vlag(:)     ! VLAG(NPT + N)
-      real(RP), intent(inout) :: d(:)        ! D(N)
 
+      ! In-output
+      real(RP), intent(inout) :: d(:)     ! D(N)
+
+      ! Outputs
+      real(RP), intent(out) :: beta
+      real(RP), intent(out) :: vlag(:)    ! VLAG(NPT + N)
+
+      ! Intermediate variable
       integer(IK) :: i, isave, iterc, iu, j, jc, k, nw, n, npt
-      real(RP) :: s(size(x)), wvec(size(xpt, 2) + size(x), 5),          &
-     & prod(size(xpt, 2) + size(x), 5), den(9), denex(9), par(9),       
-     & zknew(size(zmat, 2)), dstemp(size(xpt, 2)),                      &
-     & sstemp(size(xpt, 2)), wz(size(zmat, 2)), w1(size(xpt, 2)),       &
-     & w2(size(x)), angle, dd, denmax, denold, densav, ds, dtest, ss,   &
-     & ssden, summation, sumold, step, tau, temp, tempa, tempb, tempc,  &
-     & tempv(size(xpt, 2)), xd, xs, xsq, alpha
+      real(RP) :: s(size(x)) 
+      real(RP) :: w(size(xpt, 2) + size(x), 5)
+      real(RP) :: prod(size(xpt, 2) + size(x), 5)
+      real(RP) :: den(9), denex(9), par(9)       
+      real(RP) :: zknew(size(zmat, 2)), dstemp(size(xpt, 2))
+      real(RP) :: sstemp(size(xpt, 2)), wz(size(zmat, 2))
+      real(RP) :: hcol(size(xpt, 2)), xnew(size(x))
+      real(RP) :: alpha, angle, unitang, dd, denmax, denold, densav
+      real(RP) :: ds, dtest, ss, ssden, denom, denomold, dena, denb
+      real(RP) :: step, tau, tempa, tempb, tempc, v(size(xpt, 2))
+      real(RP) :: xd, xs, xsq, dxn, xnsq
       real(RP) :: xptemp(size(xpt, 1), size(xpt, 2))
       character(len = SRNLEN), parameter :: srname = 'BIGDEN'
 
@@ -264,11 +275,11 @@
           call verisize(d, n)
       end if    
 
-      ! Store the first NPT elements of the KNEW-th column of H in W1.
+      ! Store the first NPT elements of the KNEW-th column of H in HCOL.
       zknew = zmat(knew, :)
       zknew(1 : idz - 1) = -zknew(1 : idz - 1)
-      w1 = matmul(zmat, zknew)
-      alpha = w1(knew)
+      hcol = matmul(zmat, zknew)
+      alpha = hcol(knew)
       
       ! The initial search direction D is taken from the last call of
       ! BIGLAG, and the initial S is set below, usually to the direction
@@ -322,58 +333,58 @@
           den(5) = xd*xs
           den(6 : 9) = ZERO
           
-          ! Put the coefficients of WCHECK in WVEC.
+          ! Put the coefficients of WCHECK in W.
           do k = 1, npt
               tempa = dot_product(xpt(:, k), d)
               tempb = dot_product(xpt(:, k), s)
               tempc = dot_product(xpt(:, k), x)
-              wvec(k, 1) = QUART*(tempa*tempa + tempb*tempb)
-              wvec(k, 2) = tempa*tempc
-              wvec(k, 3) = tempb*tempc
-              wvec(k, 4) = QUART*(tempa*tempa - tempb*tempb)
-              wvec(k, 5) = HALF*tempa*tempb
+              w(k, 1) = QUART*(tempa*tempa + tempb*tempb)
+              w(k, 2) = tempa*tempc
+              w(k, 3) = tempb*tempc
+              w(k, 4) = QUART*(tempa*tempa - tempb*tempb)
+              w(k, 5) = HALF*tempa*tempb
           end do
-          wvec(npt + 1 : npt + n, 1 : 5) = ZERO
-          wvec(npt + 1 : npt + n, 2) = d
-          wvec(npt + 1 : npt + n, 3) = s
+          w(npt + 1 : npt + n, 1 : 5) = ZERO
+          w(npt + 1 : npt + n, 2) = d
+          w(npt + 1 : npt + n, 3) = s
     
           ! Put the coefficents of THETA*WCHECK in PROD.
           do jc = 1, 5
-              wz = matmul(wvec(1 : npt, jc), zmat)
+              wz = matmul(w(1 : npt, jc), zmat)
               wz(1 : idz - 1) = -wz(1 : idz - 1)
               prod(1 : npt, jc) = matmul(zmat, wz)
               
               nw = npt
               if (jc == 2 .or. jc == 3) then
                   prod(1 : npt, jc) = prod(1 : npt, jc) +               &
-     &             matmul(wvec(npt + 1 : npt + n, jc), bmat(:, 1 : npt))
+     &             matmul(w(npt + 1 : npt + n, jc), bmat(:, 1 : npt))
                   nw = npt + n
               end if
               prod(npt + 1 : npt + n, jc) = matmul(bmat(:, 1 : nw),     &
-     &         wvec(1 : nw, jc))
+     &         w(1 : nw, jc))
           end do
     
           ! Include in DEN the part of BETA that depends on THETA.
           do k = 1, npt + n
-              par(1 : 5) = HALF*prod(k, 1 : 5)*wvec(k, 1 : 5)
+              par(1 : 5) = HALF*prod(k, 1 : 5)*w(k, 1 : 5)
               den(1) = den(1) - par(1) - sum(par(1 : 5)) 
-              tempa = prod(k, 1)*wvec(k, 2) + prod(k, 2)*wvec(k, 1)
-              tempb = prod(k, 2)*wvec(k, 4) + prod(k, 4)*wvec(k, 2)
-              tempc = prod(k, 3)*wvec(k, 5) + prod(k, 5)*wvec(k, 3)
-              den(2) = den(2) - tempa-HALF*(tempb + tempc)
+              tempa = prod(k, 1)*w(k, 2) + prod(k, 2)*w(k, 1)
+              tempb = prod(k, 2)*w(k, 4) + prod(k, 4)*w(k, 2)
+              tempc = prod(k, 3)*w(k, 5) + prod(k, 5)*w(k, 3)
+              den(2) = den(2) - tempa - HALF*(tempb + tempc)
               den(6) = den(6) - HALF*(tempb-tempc)
-              tempa = prod(k, 1)*wvec(k, 3) + prod(k, 3)*wvec(k, 1)
-              tempb = prod(k, 2)*wvec(k, 5) + prod(k, 5)*wvec(k, 2)
-              tempc = prod(k, 3)*wvec(k, 4) + prod(k, 4)*wvec(k, 3)
-              den(3) = den(3) - tempa-HALF*(tempb-tempc)
+              tempa = prod(k, 1)*w(k, 3) + prod(k, 3)*w(k, 1)
+              tempb = prod(k, 2)*w(k, 5) + prod(k, 5)*w(k, 2)
+              tempc = prod(k, 3)*w(k, 4) + prod(k, 4)*w(k, 3)
+              den(3) = den(3) - tempa - HALF*(tempb - tempc)
               den(7) = den(7) - HALF*(tempb + tempc)
-              tempa = prod(k, 1)*wvec(k, 4) + prod(k, 4)*wvec(k, 1)
-              den(4) = den(4) - tempa-par(2) + par(3)
-              tempa = prod(k, 1)*wvec(k, 5) + prod(k, 5)*wvec(k, 1)
-              tempb = prod(k, 2)*wvec(k, 3) + prod(k, 3)*wvec(k, 2)
-              den(5) = den(5) - tempa-HALF*tempb
+              tempa = prod(k, 1)*w(k, 4) + prod(k, 4)*w(k, 1)
+              den(4) = den(4) - tempa - par(2) + par(3)
+              tempa = prod(k, 1)*w(k, 5) + prod(k, 5)*w(k, 1)
+              tempb = prod(k, 2)*w(k, 3) + prod(k, 3)*w(k, 2)
+              den(5) = den(5) - tempa - HALF*tempb
               den(8) = den(8) - par(4) + par(5)
-              tempa = prod(k, 4)*wvec(k, 5) + prod(k, 5)*wvec(k, 4)
+              tempa = prod(k, 4)*w(k, 5) + prod(k, 5)*w(k, 4)
               den(9) = den(9) - HALF*tempa
           end do
           
@@ -397,45 +408,45 @@
           denex(9) = alpha*den(9) + prod(knew, 4)*prod(knew, 5)
           
           ! Seek the value of the angle that maximizes the |DENOM|.
-          summation = denex(1) + denex(2) + denex(4) + denex(6)+denex(8)
-          denold = summation
-          denmax = summation
+          denom = denex(1) + denex(2) + denex(4) + denex(6) + denex(8)
+          denold = denom
+          denmax = denom
           isave = 0
           iu = 49
-          temp = (TWO*PI)/real(iu + 1, RP)
+          unitang = (TWO*PI)/real(iu + 1, RP)
           par(1) = ONE
           do i = 1, iu
-              angle = real(i, RP)*temp
+              angle = real(i, RP)*unitang
               par(2) = cos(angle)
               par(3) = sin(angle)
               do j = 4, 8, 2
                   par(j) = par(2)*par(j - 2) - par(3)*par(j - 1)
                   par(j + 1) = par(2)*par(j - 1) + par(3)*par(j - 2)
               end do
-              sumold = summation
-              summation = dot_product(denex(1 : 9), par(1 : 9))
-              if (abs(summation) > abs(denmax)) then
-                  denmax = summation
+              denomold = denom
+              denom = dot_product(denex(1 : 9), par(1 : 9))
+              if (abs(denom) > abs(denmax)) then
+                  denmax = denom
                   isave = i
-                  tempa = sumold
+                  dena = denomold
               else if (i == isave + 1) then
-                  tempb = summation
+                  denb = denom
               end if
           end do
           if (isave == 0) then
-              tempa = summation
+              dena = denom
           end if
           if (isave == iu) then 
-              tempb = denold
+              denb = denold
           end if
-          if (abs(tempa - tempb) > 0) then
-              tempa = tempa - denmax
-              tempb = tempb - denmax
-              step = HALF*(tempa - tempb)/(tempa + tempb)
+          if (abs(dena - denb) > 0) then
+              dena = dena - denmax
+              denb = denb - denmax
+              step = HALF*(dena - denb)/(dena + denb)
           else
               step = ZERO
           end if
-          angle = temp*(real(isave, RP) + step)
+          angle = unitang*(real(isave, RP) + step)
           
           ! Calculate the new parameters of the denominator, the new
           ! VLAG vector and the new D. Then test for convergence.
@@ -454,13 +465,10 @@
           tau = vlag(knew)
     
           d = par(2)*d + par(3)*s
-    
-    
           dd = dot_product(d, d)
-          w2 = x + d
-          tempa = dot_product(d, w2)
-          tempb = dot_product(w2, w2)
-          
+          xnew = x + d
+          dxn = dot_product(d, xnew)
+          xnsq = dot_product(xnew, xnew)
     
           if (iterc > 1) then
               densav = max(densav, denold)
@@ -471,13 +479,13 @@
           densav = denmax
     
           ! Set S to HALF the gradient of the denominator with respect 
-          ! to D. Then branch for the next iteration.
-          s = tau*bmat(:,knew)+alpha*(tempa*x+tempb*d-vlag(npt+1:npt+n))
-          tempv = matmul(w2, xpt)
-          tempv = (tau*w1 - alpha*vlag(1 : npt))*tempv
+          ! to D. 
+          s = tau*bmat(:,knew) + alpha*(dxn*x+xnsq*d-vlag(npt+1:npt+n))
+          v = matmul(xnew, xpt)
+          v = (tau*hcol - alpha*vlag(1 : npt))*v
 !----------------------------------------------------------------------!
-!---------!s = s + matmul(xpt, tempv) !--------------------------------!
-          s = Ax_plus_y(xpt, tempv, s)
+!---------!s = s + matmul(xpt, v) !--------------------------------!
+          s = Ax_plus_y(xpt, v, s)
 !----------------------------------------------------------------------!
     
           ss = dot_product(s, s)
@@ -488,7 +496,6 @@
           end if
       end do
       
-
       vlag(kopt) = vlag(kopt) + ONE
 
       return

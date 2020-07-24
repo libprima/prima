@@ -29,7 +29,7 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 #ifdef __DEBUG_MODE__
 #undef __DEBUG_MODE__
 #endif
-#define __DEBUG_MODE__ 1 
+#define __DEBUG_MODE__ 0 
 /*************************************************************************/
 
 

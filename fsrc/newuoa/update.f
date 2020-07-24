@@ -7,7 +7,7 @@
 
       contains
 
-      subroutine updateh(bmat, zmat, idz, vlag, beta, knew)
+      subroutine updateh(knew, beta, vlag_in, idz, bmat, zmat)
       ! UPDATE updates arrays BMAT and ZMAT together with IDZ, in order
       ! to shift the interpolation point that has index KNEW. On entry,
       ! VLAG contains the components of the vector THETA*WCHECK + e_b
@@ -24,17 +24,23 @@
       use lina_mod
       implicit none
 
+      ! Inputs
       integer(IK), intent(in) :: knew
-      integer(IK), intent(inout) :: idz
       real(RP), intent(in) :: beta
+      real(RP), intent(in) :: vlag_in(:)     ! VLAG(NPT + N)
+
+      ! In-outputs
+      integer(IK), intent(inout) :: idz
       real(RP), intent(inout) :: bmat(:, :)  ! BMAT(N, NPT + N)
       real(RP), intent(inout) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
-      real(RP), intent(inout) :: vlag(:)     ! VLAG(NPT + N)
 
+      ! Intermediate variables
       integer(IK) :: j, ja, jb, jl, n, npt
-      real(RP) :: alpha, denom, scala, scalb, tau, tausq, sqrtdn, temp, &
-     & tempa, tempb, ztemp(size(zmat, 1)), w(size(vlag)),               &
-     & v1(size(bmat, 1)), v2(size(bmat, 1))
+      real(RP) :: alpha, denom, scala, scalb, tau, tausq, sqrtdn      
+      real(RP) :: temp, tempa, tempb
+      real(RP) :: vlag(size(vlag_in))  ! Copy of VLAG_IN
+      real(RP) :: ztemp(size(zmat, 1)), w(size(vlag))
+      real(RP) :: v1(size(bmat, 1)), v2(size(bmat, 1))
       logical :: reduce_idz
       character(len = SRNLEN), parameter :: srname = 'UPDATEH'
 
@@ -50,7 +56,8 @@
           call verisize(zmat, npt, int(npt - n - 1, kind(n)))
           call verisize(vlag, npt + n)
       end if
-     
+
+      vlag = vlag_in  ! VLAG_IN is INTENT(IN) and cannot be revised. 
          
       ! Apply the rotations that put zeros in the KNEW-th row of ZMAT.
       ! A Givens rotation will be multiplied to ZMAT from the left so
@@ -98,7 +105,7 @@
       tau = vlag(knew)
       tausq = tau*tau
       denom = alpha*beta + tausq
-      vlag(knew) = vlag(knew) - ONE ! VLAG is Hw-e_t in the NEWUOA paper.
+      vlag(knew) = vlag(knew) - ONE ! VLAG = Hw-e_t in the NEWUOA paper.
       sqrtdn = sqrt(abs(denom))
      
       ! Complete the updating of ZMAT when there is only one nonzero
@@ -227,24 +234,28 @@
       end subroutine updateh
 
 
-      subroutine updateq(idz, knew, fqdiff, xptknew, bmatknew, zmat, gq,&
-     & hq, pq)
+      subroutine updateq(idz, knew, bmatknew, fqdiff, zmat, xptknew,    &
+     & gq, hq, pq)
 
       use warnerror_mod, only : errstop
       use consts_mod, only : RP, IK, ZERO, DEBUG_MODE, SRNLEN
       use lina_mod
       implicit none
 
+      ! Inputs
       integer(IK), intent(in) :: idz
       integer(IK), intent(in) :: knew
-      real(RP), intent(in) :: fqdiff
-      real(RP), intent(in) :: xptknew(:)  ! XPTKNEW(N)
       real(RP), intent(in) :: bmatknew(:) ! BMATKNEW(N)
+      real(RP), intent(in) :: fqdiff
       real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
+      real(RP), intent(in) :: xptknew(:)  ! XPTKNEW(N)
+      
+      ! In-outputs
       real(RP), intent(inout) :: gq(:)   ! GQ(N)
       real(RP), intent(inout) :: hq(:, :)! HQ(N, N)
       real(RP), intent(inout) :: pq(:)   ! PQ(NPT)
 
+      ! Intermediate variables
       integer(IK) :: n, npt
       real(RP) :: fqdz(size(zmat, 2))
       character(len = SRNLEN), parameter :: srname = 'UPDATEQ'
@@ -286,7 +297,7 @@
       end subroutine updateq
 
 
-      subroutine qalt(gq, hq, pq, fval, smat, zmat, kopt, idz)
+      subroutine qalt(idz, kopt, fval, smat, zmat, gq, hq, pq)
       ! QALT calculates the alternative model, namely the model that
       ! minimizes the F-norm of the Hessian subject to the interpolation
       ! conditions.
@@ -297,15 +308,19 @@
       use lina_mod
       implicit none
 
-      integer(IK), intent(in) :: kopt
+      ! Inputs
       integer(IK), intent(in) :: idz
+      integer(IK), intent(in) :: kopt
       real(RP), intent(in) :: fval(:)       ! FVAL(NPT)
       real(RP), intent(in) :: smat(:, :)    ! SMAT(N, NPT)
       real(RP), intent(in) :: zmat(:, :)    ! ZMAT(NPT, NPT-N-!)
+
+      ! Outputs
       real(RP), intent(out) :: gq(:)        ! GQ(N)
       real(RP), intent(out) :: hq(:, :)     ! HQ(N, N)
       real(RP), intent(out) :: pq(:)        ! PQ(NPT)
 
+      ! Intermediate variables
       real(RP) :: vlag(size(pq)), vz(size(zmat, 2))
       integer(IK) :: n, npt
       character(len = SRNLEN), parameter :: srname = 'QALT'
