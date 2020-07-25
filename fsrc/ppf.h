@@ -29,7 +29,7 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 #ifdef __DEBUG_MODE__
 #undef __DEBUG_MODE__
 #endif
-#define __DEBUG_MODE__ 0 
+#define __DEBUG_MODE__ 1 
 /*************************************************************************/
 
 
@@ -65,7 +65,7 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 #ifdef __QP_AVAILABLE__
 #undef __QP_AVAILABLE__
 #endif
-#define __QP_AVAILABLE__ 0
+#define __QP_AVAILABLE__ 0  /* Set this to 1 if REAL128 is available. */
 
 /* Revise __REAL_PRECISION__ according to __QP_AVAILABLE__ . */
 #if __QP_AVAILABLE__ != 1 && __REAL_PRECISION__ > 64
@@ -99,7 +99,7 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 #endif
 
 #ifdef __INTEL_COMPILER
-#if __INTEL_COMPILER < 1800 /* ifort 18.0 fully supports F2008 */
+#if __INTEL_COMPILER < 1800  /* ifort 18.0 fully supports F2008 */
 #undef __FORTRAN_STANDARD__
 #define __FORTRAN_STANDARD__ 2003 
 #endif

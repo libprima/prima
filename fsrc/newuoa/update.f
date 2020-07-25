@@ -2,7 +2,7 @@
 
       implicit none
       private
-      public :: updateh, updateq, qalt
+      public :: updateh, updateq, tryqalt
 
 
       contains
@@ -297,10 +297,11 @@
       end subroutine updateq
 
 
-      subroutine qalt(idz, kopt, fval, smat, zmat, gq, hq, pq)
-      ! QALT calculates the alternative model, namely the model that
-      ! minimizes the F-norm of the Hessian subject to the interpolation
-      ! conditions.
+      subroutine tryqalt(idz, fval, ratio, smat, zmat, itest, gq, hq,pq)
+      ! TRYQALT tests whether to replace Q by the alternative model, 
+      ! namely the model that minimizes the F-norm of the Hessian
+      ! subject to the interpolation conditions. It does the replacement
+      ! when certain criteria are satisfied (i.e., when ITEST = 3).
       ! Note that SMAT = BMAT(:, 1:NPT)
 
       use consts_mod, only : RP, IK, ZERO, DEBUG_MODE, SRNLEN
@@ -310,18 +311,27 @@
 
       ! Inputs
       integer(IK), intent(in) :: idz
-      integer(IK), intent(in) :: kopt
       real(RP), intent(in) :: fval(:)       ! FVAL(NPT)
+      real(RP), intent(in) :: ratio
       real(RP), intent(in) :: smat(:, :)    ! SMAT(N, NPT)
       real(RP), intent(in) :: zmat(:, :)    ! ZMAT(NPT, NPT-N-!)
 
-      ! Outputs
-      real(RP), intent(out) :: gq(:)        ! GQ(N)
-      real(RP), intent(out) :: hq(:, :)     ! HQ(N, N)
-      real(RP), intent(out) :: pq(:)        ! PQ(NPT)
+      ! In-output
+      integer(IK), intent(inout) :: itest
+      ! N.B.:
+      ! GQ, HQ, and PQ should be INTENT(INOUT) instead of INTENT(OUT). 
+      ! According to the Fortran 2018 standard, an INTENT(OUT) dummy
+      ! argument becomes undefined on invocation of the procedure. 
+      ! Therefore, if the procedure does not define such an argument, 
+      ! its value becomes undefined, which is the case for HQ and PQ
+      ! when ITEST < 3 at exit. In addition, the information in GQ is
+      ! needed for definining ITEST, so it must be INTENT(INOUT).
+      real(RP), intent(inout) :: gq(:)      ! GQ(N)
+      real(RP), intent(inout) :: hq(:, :)   ! HQ(N, N)
+      real(RP), intent(inout) :: pq(:)      ! PQ(NPT)
 
       ! Intermediate variables
-      real(RP) :: vlag(size(pq)), vz(size(zmat, 2))
+      real(RP) :: galt(size(gq)), fz(size(zmat, 2))
       integer(IK) :: n, npt
       character(len = SRNLEN), parameter :: srname = 'QALT'
 
@@ -340,15 +350,35 @@
           call verisize(hq, n, n)
       end if
 
-      vlag = fval - fval(kopt)
-      gq = matmul(smat, vlag)
-      hq = ZERO
-      vz = matmul(vlag, zmat)
-      vz(1 : idz - 1) = - vz(1 : idz - 1)
-      pq = matmul(zmat, vz)
+      ! In the NEWUOA paper, Powell replaces Q with Q_alt when
+      ! RATIO <= 0.01 and ||G_alt|| <= 0.1||GQ|| hold for 3 consecutive 
+      ! times (eq(8.4)). But Powell's code compares ABS(RATIO) instead
+      ! of RATIO with 0.01. Here we use RATIO, which is more efficient
+      ! as observed in in Zhang Zaikun's PhD thesis (Section 3.3.2).
+      !if (abs(ratio) > 1.0e-2_RP) then
+      if (ratio > 1.0e-2_RP) then
+          itest = 0
+      else
+          galt = matmul(smat, fval)
+          if (dot_product(gq,gq) < 1.0e2_RP*dot_product(galt,galt)) then
+              itest = 0
+          else
+              itest = int(itest + 1, kind(itest))
+          end if
+      end if
+
+      ! Replace Q with Q_alt when ITEST >= 3.
+      if (itest >= 3) then
+          gq = galt
+          hq = ZERO
+          fz = matmul(fval, zmat)
+          fz(1 : idz - 1) = -fz(1 : idz - 1)
+          pq = matmul(zmat, fz)
+          itest = 0
+      end if
 
       return
 
-      end subroutine qalt
+      end subroutine tryqalt
 
       end module update_mod
