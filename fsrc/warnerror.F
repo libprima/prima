@@ -32,8 +32,8 @@
       subroutine backtr()
       ! BACKTR calls a compiler-dependent intrinsic to show a backtrace
       ! if we are in the debuge mode, i.e., __DEBUG_MODE__ == 1.
-      ! N.B.: The intrisic depends on compiler and does not exist in all
-      ! compilers. Indeed, it is not standard-conforming. Therefore,
+      ! N.B.: The intrisic is compiler-dependent and does not exist in
+      ! all compilers. Indeed, it is not standard-conforming. Therefore,
       ! compilers may warn that a non-standard intrinsic is in use.
       implicit none
 #if __DEBUG_MODE__ == 1 

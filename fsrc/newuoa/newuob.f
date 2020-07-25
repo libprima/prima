@@ -18,7 +18,7 @@
       use geometry_mod, only : biglag, bigden
       use shiftbase_mod, only : shiftbase
       use vlagbeta_mod, only : vlagbeta
-      use update_mod, only : updateh, updateq, qalt
+      use update_mod, only : updateh, updateq, tryqalt
       implicit none
             
       ! Inputs
@@ -41,14 +41,14 @@
       integer(IK) :: n, ij(2, npt), idz, itest, knew, kopt, nfsave
       integer(IK) :: tr, maxtr, subinfo
       real(RP) :: alpha, beta, crvmin, delta, prederr(3) 
-      real(RP) :: distsq, dnorm, dsq, dstep, xdsq(npt), d(size(x))
+      real(RP) :: distsq, dnorm, delbar, xdsq(npt), d(size(x))
       real(RP) :: xbase(size(x)), xopt(size(x)), xnew(size(x))
       real(RP) :: xpt(size(x), npt), fval(npt)
       real(RP) :: gq(size(x)), hq(size(x), size(x)), pq(npt)
       real(RP) :: bmat(size(x), npt+size(x)), zmat(npt, npt-size(x)-1)
-      real(RP) :: vlag(npt + size(x)), zknew(npt-size(x)-1)
-      real(RP) :: fopt, fsave, galt(size(x)), galtsq, gqsq, hdiag(npt)
-      real(RP) :: ratio, rho, rhosq, vquad, xoptsq, sigma(npt), trtol
+      real(RP) :: vlag(npt + size(x)), zknew(npt-size(x)-1), hdiag(npt)
+      real(RP) :: fopt, fsave, ratio, rho, rhosq
+      real(RP) :: vquad, xoptsq, sigma(npt), trtol
       logical :: improve_geometry, reduce_rho, shortd
 
       ! The arguments N, NPT, X, RHOBEG, RHOEND, IPRINT and MAXFUN are
@@ -120,8 +120,8 @@
           improve_geometry = .false.
           ! Will we reduce rho after the trust region iteration?
           reduce_rho = .false.
-          ! NEWUOA never sets both MODEL_STEP and REDUCE_RHO to .TRUE. 
-          ! at the same time.
+          ! NEWUOA never sets both IMPROVE_GEOMETRY and REDUCE_RHO to
+          ! .TRUE. at the same time.
 
           ! Solve the trust region subproblem.
           ! In Powell's NEWUOA code, VQUAD is not an output of TRSAPP.
@@ -133,8 +133,7 @@
      &     vquad, d, subinfo)
 
           ! Calculate the length of the trial step D.
-          dsq = dot_product(d, d)
-          dnorm = min(delta, sqrt(dsq))
+          dnorm = min(delta, sqrt(dot_product(d, d)))
 
           ! Is the step long enough to invoke a function evaluation?
           if (dnorm < HALF*rho) then
@@ -155,7 +154,8 @@
 
           if (.not. shortd) then
               ! Shift XBASE if XOPT may be too far from XBASE.
-              if (dsq <= 1.0e-3_RP*xoptsq) then
+              !if (dot_product(d, d) <= 1.0e-3_RP*xoptsq) then  ! Powell
+              if (dnorm*dnorm <= 1.0e-3_RP*xoptsq) then
                   call shiftbase(idz, pq, xopt, zmat, bmat, gq, hq, xpt)
                   xbase = xbase + xopt
                   xopt = ZERO
@@ -171,6 +171,10 @@
               ! F due to the step D.
               call calquad(vquad, d, xopt, xpt, gq, hq, pq)
 
+              ! Save the current FOPT in FSAVE. It is needed later when
+              ! setting RATIO, KNEW, and KOPT.
+              fsave = fopt
+
               ! Calculate the next value of the objective function.
               xnew = xopt + d
               x = xbase + xnew
@@ -181,6 +185,7 @@
               end if
               call calfun(n, x, f)
               nf = int(nf + 1, kind(nf))
+
               ! Record the latest function evaluation with ||D|| > RHO.
               if (dnorm > rho) then
                   nfsave = nf
@@ -191,9 +196,6 @@
               prederr(1) = f - fopt - vquad
 
               ! Update FOPT and XOPT
-              ! FSAVE is needed later when setting MODEL_STEP
-              ! and REDUCE_RHO.
-              fsave = fopt
               if (f < fopt) then
                   fopt = f
                   xopt = xnew
@@ -243,7 +245,8 @@
               sigma = abs(beta*hdiag + vlag(1 : npt)**2)
               sigma = sigma * max(xdsq/rhosq, one)**3
               if (f >= fsave) then
-              ! Set SIGMA(KOPT) = -1 to prevent KNEW from being KOPT
+              ! When the new F is not better than FSAVE (i.e., FOPT),
+              ! we set SIGMA(KOPT) = -1 to prevent KNEW from being KOPT
                   sigma(kopt) = -one
               end if
               if (maxval(sigma) > ONE .or. f < fsave) then
@@ -269,50 +272,28 @@
                   fval(knew) = f
                   xpt(:, knew) = xnew
 
-                  ! Test whether to replace the new quadratic model Q by
-                  ! the least Frobenius norm interpolant Q_alt.
-                  ! In the NEWUOA paper, Powell replaces Q with Q_alt
-                  ! when RATIO <= 0.01 and ||G_alt|| <= 0.1||GQ||
-                  ! hold for 3 consecutive times (equation (8.4)). But
-                  ! the original NEWUOA compares ABS(RATIO) with 0.01
-                  ! instead of RATIO. Here we use RATIO. It is observed
-                  ! in Zhang Zaikun's PhD thesis (Section 3.3.2) that
-                  ! it is indeed more efficient to check RATIO rather
-                  ! than ABS(RATIO).
-                  if (delta <= rho) then  ! Equivalent to  DELTA == RHO.
-                      ! if (abs(ratio) > 1.0e-2_RP) then
-                      if (ratio > 1.0e-2_RP) then
-                          itest = 0
-                      else
-                          gqsq = dot_product(gq, gq)
-                          galt = matmul(bmat(:, 1:npt), fval-fval(kopt))
-                          galtsq = dot_product(galt, galt)
-
-                          if (gqsq < 100.0_RP*galtsq) then
-                              itest = 0
-                          else
-                              itest = int(itest + 1, kind(itest))
-                          end if
-                      end if
-                  end if
-
-                  ! Replace Q with Q_alt when ITEST >= 3.
-                  if (itest >= 3) then
-                      call qalt(idz, kopt, fval, bmat(:, 1:npt), zmat,  &
-     &                 gq, hq, pq)
-                      itest = 0
-                  end if
-
-                  ! Update KOPT to KNEW if RATIO > ZERO
+                  ! Update KOPT to KNEW if F < FSAVE (i.e., last FOPT)
                   if (f < fsave) then
                       kopt = knew
                   end if
+
+                  if (delta <= rho) then  ! Equivalent to  DELTA == RHO.
+                  ! Test whether to replace the new quadratic model Q by
+                  ! the least Frobenius norm interpolant Q_alt. Perform
+                  ! the replace ment if certain ceriteria is satisfied.
+                  ! In theory, the FVAL-FSAVE in the following line can
+                  ! be replaced by FVAL + C with any constant C. This
+                  ! constant will not affect the result in precise 
+                  ! arithmetic. Powell chose C = -FSAVE.
+                      call tryqalt(idz, fval - fsave, ratio,            &
+     &                 bmat(:, 1 : npt), zmat, itest, gq, hq, pq)
+                  end if
+
               end if
           end if
 
 
           if (((.not. shortd) .and. (ratio < TENTH .or. knew == 0))     &
-!          if (((.not. shortd) .and. (f>fsave+TENTH*vquad .or. knew==0)) &
      &     .or. (shortd .and. .not. reduce_rho)) then
 
               ! Find out if the interpolation points are close enough to
@@ -360,21 +341,21 @@
           end if
 
           if (improve_geometry) then
-              ! Set DSTEP, which will be used as the trust region radius
-              ! for the model-improving schemes BIGLAG and BIGDEN. We
-              ! also need it to decide whether to shift XBASE or not.
-              dstep = max(min(TENTH*sqrt(distsq), HALF*delta), rho)
-              dsq = dstep*dstep
+              ! Set DELBAR, which will be used as the trust region 
+              ! radius for the geometry-improving schemes BIGLAG and 
+              ! BIGDEN. We also need it to decide whether to shift 
+              ! XBASE or not.
+              delbar = max(min(TENTH*sqrt(distsq), HALF*delta), rho)
 
               ! Shift XBASE if XOPT may be too far from XBASE.
-              if (dsq <= 1.0e-3_RP*xoptsq) then
+              if (delbar*delbar <= 1.0e-3_RP*xoptsq) then
                   call shiftbase(idz, pq, xopt, zmat, bmat, gq, hq, xpt)
                   xbase = xbase + xopt
                   xopt = ZERO
                   xoptsq = ZERO
               end if
 
-              call biglag(idz, knew, dstep, bmat, xopt, xpt, zmat, d)
+              call biglag(idz, knew, delbar, bmat, xopt, xpt, zmat, d)
 
               ! ALPHA is the KNEW-th diagonal entry of H
               zknew = zmat(knew, :)
@@ -396,11 +377,26 @@
      &             beta, vlag)
               end if
 
+              !--------------------------------------------------------!
+              !!!??? Powell's code does not update DNORM. Therefore,
+              ! DNORM is the length of last trust-region trial step.
+              ! which seems inconsistent with what is introduced in
+              ! Section 7 (around (7.7)) of the NEUOA paper. Seemingly
+              ! we should keep DNORM=||D|| as we do here. Otherwise,
+              ! DNORM is from last TR.
+              dnorm = min(delbar, sqrt(dot_product(d, d)))
+              ! In theory, dnorm=delbar in this case.
+              !--------------------------------------------------------!
+
       !----------------------------------------------------------------!
 
               ! Use the current quadratic model to predict the change in
               ! F due to the step D.
               call calquad(vquad, d, xopt, xpt, gq, hq, pq)
+
+              ! Save the current FOPT in fsave. It is needed later when
+              ! updating KOPT.
+              fsave = fopt
 
               ! Calculate the next value of the objective function.
               xnew = xopt + d
@@ -413,18 +409,9 @@
               call calfun(n, x, f)
               nf = int(nf + 1, kind(nf))
 
-              !--------------------------------------------------------!
-              !!!??? Powell's code does not update DNORM. Therefore,
-              ! DNORM is the length of last trust-region trial step.
-              ! which seems inconsistent with what is introduced in
-              ! Section 7 (around (7.7)) of the NEUOA paper. Seemingly
-              ! we should keep dnorm=||d|| as we do here. 
-              dnorm = min(dstep, sqrt(dot_product(d, d)))
-              ! In theory, dnorm=dstep
-              !--------------------------------------------------------!
-
+              ! Record the latest function evaluation with ||D|| > RHO.
               if (dnorm > rho) then
-                  nfsave = nf  !? DNORM is from last TR?
+                  nfsave = nf  
               end if
 
               ! PREDERR is the prediction errors of the latest 3 models.
@@ -433,7 +420,6 @@
 
               ! Update FOPT and XOPT if the new F is the least value of
               ! the objective function so far.
-              fsave = fopt
               if (f < fopt) then
                   fopt = f
                   xopt = xnew
@@ -472,6 +458,7 @@
                   kopt = knew
               end if
           end if
+
       end do
 
       ! Return from the calculation, after another Newton-Raphson step,

@@ -7,7 +7,7 @@
 
       contains
 
-      subroutine newuoa (x, f, rhobeg, rhoend, ftarget, npt, maxfun,    &
+      subroutine newuoa(x, f, rhobeg, rhoend, ftarget, npt, maxfun,     &
      & iprint, info)
       ! NEWUOA seeks the least value of a function of many variables,
       ! by a trust region method that forms quadratic models by
@@ -43,15 +43,6 @@
       ! 1: the target function value is reached.
       ! 2: a trust region step has failed to reduce the quadratic model.
       ! 3: the objective function has been evaluated MAXFUN times.
-      ! 4: much cancellation in a denominator.
-      ! 5: NPT is not in the required interval.
-      ! 6: one of the difference XU(I)-XL(I) is less than 2*RHOBEG.
-      ! 7: rounding errors are becoming damaging.
-      ! 8: rounding errors prevent reasonable changes to X.
-      ! 9: the denominator of the updating formule is zero.
-      ! 10: N should not be less than 2.
-      ! 11: MAXFUN is less than NPT+1.
-      ! 12: the gradient of constraint is zero.
       ! -1: NaN occurs in x.
       ! -2: the objective function returns NaN or nearly infinite value.
       ! -3: NaN occurs in the models

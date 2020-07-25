@@ -122,6 +122,7 @@
 #endif
       end subroutine r1_sym
 
+
       subroutine r1(A, alpha, x, y)
       ! R1 sets 
       ! A = A + ALPHA*( X*Y^T ), 
@@ -245,6 +246,7 @@
 #endif
       end subroutine r2_sym
 
+
       subroutine r2(A, alpha, x, y, beta, u, v)
       ! R2 sets 
       ! A = A + ( ALPHA*( X*Y^T ) + BETA*( U*V^T ) ), 
@@ -348,6 +350,7 @@
       end do
       end function matmul12
 
+
       function matmul21(x, y) result(z)
       use consts_mod, only : RP, IK, ZERO
 #if __DEBUG_MODE__ == 1
@@ -373,6 +376,7 @@
           z = z + x(:, j)*y(j)
       end do
       end function matmul21
+
 
       function matmul22(x, y) result(z)
       use consts_mod, only : RP, IK, ZERO
@@ -401,6 +405,7 @@
           end do
       end do
       end function matmul22
+
 
       function inprod(x, y) result(z)
       use consts_mod, only : RP, IK, ZERO
@@ -494,6 +499,7 @@
 #endif
       end if
       end subroutine grota
+
       
       subroutine symmetrize(A)
       ! SYMMETRIZE(A) symmetrizes A.
@@ -712,9 +718,9 @@
       ! VQUAD = Q(X + D) - Q(X)
       ! with Q being the quadratic function defined via (GQ, HQ, PQ) by 
       ! Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
-      ! where HESSIAN is the following sum of th explicit part HQ and 
-      ! the implicit part PQ:
-      ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*XPT(:, K)*XPT(:, K)' .
+      ! where HESSIAN consists of an explicit part HQ and an implicit
+      ! part PQ in the following way:
+      ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
 
       use consts_mod, only : RP, HALF
 
@@ -798,11 +804,11 @@
       vquad = dot_product(d, gq)
       s = HALF*d + x  ! Different from the above version.
       ! implicit 2nd-order term
-      vquad = vquad + sum(pq*((matmul(s, xpt)*matmul(d, xpt))))
+      vquad = vquad + sum(pq*(matmul(s, xpt)*matmul(d, xpt)))
       ! explicit 2nd-order term
+      vquad = vquad + dot_product(s, matmul(hq, d))
       ! The following implementations do not work as well as the above 
       ! one.
-      vquad = vquad + dot_product(s, matmul(hq, d))
       !vquad = vquad + dot_product(d, matmul(hq, s))
       !vquad = vquad + sum(hq*outprod(s,d)) 
       !vquad = vquad + HALF*(dot_product(d, matmul(hq, s))               &
@@ -825,6 +831,7 @@
       end if
       end subroutine verisize_real_1
 
+
       subroutine verisize_real_2(x, m, n)
       ! VERISIZE_REAL_2 verifies whether SIZE(X, 1) = M, SIZE(X, 2)=N.
       use consts_mod, only : RP, IK, SRNLEN
@@ -843,6 +850,7 @@
       end if
       end subroutine verisize_real_2
 
+
       subroutine verisize_int_1(x, n)
       ! VERISIZE_INT_1 verifies whether SIZE(X) = N.
       use consts_mod, only : IK, SRNLEN
@@ -856,6 +864,7 @@
           call errstop(srname, 'SIZE(X) /= N')
       end if
       end subroutine verisize_int_1
+
 
       subroutine verisize_int_2(x, m, n)
       ! VERISIZE_INT_2 verifies whether SIZE(X, 1) = M, SIZE(X, 2)=N.
@@ -902,7 +911,9 @@
       end if
       end subroutine verisym
 
+
 !      function outprod(x, y) result(z)
+!      ! OUTPROD calculates the outer product of X and Y, i.e., Z = XY^T
 !      use consts_mod, only : RP, IK
 !      implicit none
 !      real(RP), intent(in) :: x(:)
