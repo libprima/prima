@@ -318,6 +318,9 @@
 
       ! In-output
       integer(IK), intent(inout) :: itest
+      real(RP), intent(inout) :: gq(:)      ! GQ(N)
+      real(RP), intent(inout) :: hq(:, :)   ! HQ(N, N)
+      real(RP), intent(inout) :: pq(:)      ! PQ(NPT)
       ! N.B.:
       ! GQ, HQ, and PQ should be INTENT(INOUT) instead of INTENT(OUT). 
       ! According to the Fortran 2018 standard, an INTENT(OUT) dummy
@@ -326,14 +329,11 @@
       ! its value becomes undefined, which is the case for HQ and PQ
       ! when ITEST < 3 at exit. In addition, the information in GQ is
       ! needed for definining ITEST, so it must be INTENT(INOUT).
-      real(RP), intent(inout) :: gq(:)      ! GQ(N)
-      real(RP), intent(inout) :: hq(:, :)   ! HQ(N, N)
-      real(RP), intent(inout) :: pq(:)      ! PQ(NPT)
 
       ! Intermediate variables
       real(RP) :: galt(size(gq)), fz(size(zmat, 2))
       integer(IK) :: n, npt
-      character(len = SRNLEN), parameter :: srname = 'QALT'
+      character(len = SRNLEN), parameter :: srname = 'TRYQALT'
 
 
       ! Get and verify the sizes.

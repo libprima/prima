@@ -1,11 +1,11 @@
-      module trsubp_mod
+      module trustregion_mod
 
       implicit none
       private 
-      public :: trsapp
+      public :: trsapp, trrad
      
-
       contains
+
 
       subroutine trsapp(delta, gq, hq, pq, tol,x,xpt,crvmin,qred,s,info)
       ! TRSAPP finds an approximate solution to the N-dimensional trust
@@ -287,8 +287,41 @@
       end do
 
       return
-
- 
       end subroutine trsapp
 
-      end module trsubp_mod
+
+      function trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
+      use consts_mod, only : RP, HALF
+      implicit none
+
+      real(RP) :: trrad
+      real(RP), intent(in) :: delta  ! Current trust region radius
+      real(RP), intent(in) :: dnorm  ! Norm of current trust region step
+      real(RP), intent(in) :: eta1  ! Ratio threshold for contraction
+      real(RP), intent(in) :: eta2  ! Ratio threshold for expansion
+      real(RP), intent(in) :: gamma1 ! Contraction factor
+      real(RP), intent(in) :: gamma2 ! Expansion factor
+      real(RP), intent(in) :: ratio  ! Reduction ratio
+
+      if (ratio <= eta1) then
+          trrad = gamma1*dnorm
+      else if (ratio <= eta2) then
+          trrad = max(HALF*delta, dnorm)
+      else
+          trrad = max(HALF*delta, gamma2*dnorm)
+      end if
+
+      ! For noisy problems, the following may work better.
+      !if (ratio <= eta1) then
+      !trrad = gamma1*dnorm
+      !else if (ratio <= eta2) then  ! Ensure TRRAD >= DELTA
+      !trrad = delta  
+      !else  ! Ensure TRRAD > DELTA with a constant factor
+      !trrad = max(delta*(1.0_RP+gamma2)/2.0_RP, gamma2*dnorm)
+      !end if
+
+      return
+      end function trrad
+
+
+      end module trustregion_mod

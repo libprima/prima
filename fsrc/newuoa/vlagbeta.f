@@ -54,7 +54,7 @@
 
 !----------------------------------------------------------------------!
       ! This is the one of the two places where WCHECK is calculated,
-      ! the other being BIGDEN (now removed). 
+      ! the other one being BIGDEN (now removed). 
       ! WCHECK contains the first NPT entries of (w-v) for the vectors 
       ! w and v defined in eq(4.10) and eq(4.24) of the NEWUOA paper,
       ! and also \hat{w} in eq(6.5) of 

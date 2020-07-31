@@ -19,10 +19,8 @@
       call backtr()
 #endif
 
-      print *
-      print '(1x, 5A)', 'Error: ',  srname(1 : len_trim(srname)),       &
+      print '(/1X, 5A/)', 'Error: ',  srname(1 : len_trim(srname)),     &
      & ': ', message(1 : len_trim(message)), '.'
-      print *
 
       stop  ! This means to stop the whole program.
 

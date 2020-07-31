@@ -195,6 +195,8 @@ if (norm(xx-x)/(1+norm(x)) > prec || abs(ff-f)/(1+abs(f)) > prec || abs(oo.const
     eq = false;
 end
 
+output.fhist = output.fhist(:);
+oo.fhist = oo.fhist(:);
 nf = min(output.funcCount, oo.funcCount);
 
 if norm(output.fhist(1:nf)-oo.fhist(1:nf))/(1+norm(output.fhist(1:nf))) > prec

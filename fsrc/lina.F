@@ -14,6 +14,8 @@
 !    operations, and because the overhead of subroutine/function calling
 !    can be high in these languages.
 
+! Coded by Zaikun ZHANG, July 2020
+
 #include "ppf.h"
 
       module lina_mod
@@ -76,7 +78,7 @@
       integer(IK) :: n, j 
 
 #if __DEBUG_MODE__ == 1
-      character(len = SRNLEN), parameter :: srname ='R1_SYM'
+      character(len = SRNLEN), parameter :: srname = 'R1_SYM'
       ! Be careful with initialization! 
       ! In Fortran >=90, the initialization in the declaration implies
       ! the "save" attribute. If the variable is not a parameter, it may
@@ -713,7 +715,7 @@
       end function xA_plus_y
       
 
-      subroutine calquad(vquad, d, x, xpt, gq, hq, pq)
+      subroutine calquad(d, gq, hq, pq, x, xpt, vquad)
       ! CALQUAD calculates 
       ! VQUAD = Q(X + D) - Q(X)
       ! with Q being the quadratic function defined via (GQ, HQ, PQ) by 
@@ -741,18 +743,19 @@
 
       ! Inputs
       real(RP), intent(in) :: d(:)      ! D(N)
-      real(RP), intent(in) :: x(:)      ! X(N)
-      real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
       real(RP), intent(in) :: gq(:)     ! GQ(N)
       real(RP), intent(in) :: hq(:, :)  ! HQ(N, N)
       real(RP), intent(in) :: pq(:)     ! PQ(NPT)
+      real(RP), intent(in) :: x(:)      ! X(N)
+      real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
 
       ! Output
       real(RP), intent(out) :: vquad 
 
+      ! Intermediate variable
       real(RP) :: s(size(x))
 #if __USE_POWELL_ALGEBRA__ == 1
-      real(RP) :: w(size(pq)), temp
+      real(RP) :: w(size(pq)), t
       integer(IK) :: i, ih, j 
 #endif
 
@@ -780,16 +783,16 @@
           vquad = vquad + d(j)*gq(j)
           do i = 1, j
               ih = int(ih + 1, kind(ih))
-              temp = d(i)*s(j) + d(j)*x(i)
+              t = d(i)*s(j) + d(j)*x(i)
               if (i == j) then 
-                  temp = HALF*temp
+                  t = HALF*t
               end if
-              vquad = vquad + temp*hq(i, j)
+              vquad = vquad + t*hq(i, j)
           end do
       end do
 !----------------------------------------------------------------------!
       ! Powell's original code calculates W externally and pass it as an
-      ! input to CALQUAD. Here it is calculated internally.
+      ! input to CALQUAD. Here W is calculated internally.
       w = matmul(d, xpt) !---------------------------------------------!
       w = w*(HALF*w + matmul(x, xpt)) !--------------------------------!
 !----------------------------------------------------------------------!
