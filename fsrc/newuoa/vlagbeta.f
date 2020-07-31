@@ -13,7 +13,7 @@
       use consts_mod, only : RP, IK, ONE, HALF, DEBUGGING, SRNLEN
       use debug_mod, only : errstop, verisize
       use lina_mod, only : Ax_plus_y, xA_plus_y, xpy_dot_z
-      use lina_mod, only : dot_product, matmul
+      use lina_mod, only : inprod, matprod
 
       implicit none
 
@@ -66,36 +66,36 @@
       ! models that satisfy interpolation conditions. Math. Program.,
       ! 100:183--215, 2004
       !
-      wcheck = matmul(d, xpt)
-      wcheck = wcheck*(HALF*wcheck + matmul(xopt, xpt))
+      wcheck = matprod(d, xpt)
+      wcheck = wcheck*(HALF*wcheck + matprod(xopt, xpt))
 !----------------------------------------------------------------------!
 
-      vlag(1 : npt) = matmul(d, bmat(:, 1 : npt))
+      vlag(1 : npt) = matprod(d, bmat(:, 1 : npt))
 
-      wz = matmul(wcheck, zmat)
+      wz = matprod(wcheck, zmat)
       wzsave = wz
       wz(1 : idz - 1) = -wz(1 : idz - 1)
-      beta = -dot_product(wzsave, wz)
+      beta = -inprod(wzsave, wz)
 !----------------------------------------------------------------------!
-!-----!vlag(1 : npt) = vlag(1 : npt) + matmul(zmat, wz) !--------------!
+!-----!vlag(1 : npt) = vlag(1 : npt) + matprod(zmat, wz) !-------------!
        vlag(1 : npt) = Ax_plus_y(zmat, wz, vlag(1 : npt))
 !----------------------------------------------------------------------!
 
-      bw = matmul(bmat(:, 1 : npt), wcheck)
+      bw = matprod(bmat(:, 1 : npt), wcheck)
 !----------------------------------------------------------------------!
-!-----!vlag(npt + 1: npt + n) = bw + matmul(d, bmat(:, npt + 1 : npt + n))
+!-----!vlag(npt+1 : npt+n) = bw + matprod(d, bmat(:, npt+1 : npt+n)) !-!
       vlag(npt+1: npt+n) = xA_plus_y(bmat(:, npt+1 : npt+n), d, bw)
 !----------------------------------------------------------------------!
 
 !----------------------------------------------------------------------!
-!-----!bwvd = dot_product(bw + vlag(npt+1 : npt+n), d) !---------------!
+!-----!bwvd = inprod(bw + vlag(npt+1 : npt+n), d) !--------------------!
       bwvd = xpy_dot_z(bw, vlag(npt+1 : npt+n), d)
 !----------------------------------------------------------------------!
 
-      dx = dot_product(d, xopt)
+      dx = inprod(d, xopt)
 
-      dsq = dot_product(d, d)
-      xoptsq = dot_product(xopt, xopt)
+      dsq = inprod(d, d)
+      xoptsq = inprod(xopt, xopt)
 
       beta = dx*dx + dsq*(xoptsq + dx + dx + HALF*dsq) + beta - bwvd
       vlag(kopt) = vlag(kopt) + ONE

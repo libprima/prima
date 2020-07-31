@@ -1,16 +1,16 @@
 ! LINA is a module providing some basic linear algebra procedures.
-! To improve the performance of these procedures, especially matmul, one
-! can customize their implementations, according to the resources 
+! To improve the performance of these procedures, especially matprod, one
+! can customize their implementations, according to the resources
 ! (hardware, e.g., cache, and libraries, e.g., BLAS) available and the
-! sizes of the matrices/vectors. 
+! sizes of the matrices/vectors.
 
-! N.B. 
-! When implementing the code by MATLAB, Python, ..., not the following. 
-! 1. one should following the implementation with 
-!    __USE_POWELL_ALGEBRA__ == 0, which uses matrix/vector operations 
-!    instead of loops. 
-! 2. We should not implement the code in subroutines/functions but 
-!    write it inline, because the code is short using matrix/vector 
+! N.B.
+! When implementing the code by MATLAB, Python, ..., not the following.
+! 1. one should following the implementation with
+!    __USE_POWELL_ALGEBRA__ == 0, which uses matrix/vector operations
+!    instead of loops.
+! 2. We should not implement the code in subroutines/functions but
+!    write it inline, because the code is short using matrix/vector
 !    operations, and because the overhead of subroutine/function calling
 !    can be high in these languages.
 
@@ -22,11 +22,20 @@
 
       implicit none
       private
+      ! Mathematically, inprod = dot_product, matprod = matmul
+      public :: inprod, matprod
       public :: r1update, r2update, symmetrize
-      public :: grota
       public :: xpy_dot_z, xdy_plus_a, Ax_plus_y, xA_plus_y
+      public :: grota
       public :: calquad
-      public :: matmul, dot_product
+
+! When interfaced with MATLAB, the intrinsic matmul and dot_product seem
+! not as efficient as the implementations below (mostly by loops). This
+! may well depend on the machine (e.g., cache size), compiler, compiling
+! options, and MATLAB version.
+      interface matprod
+          module procedure matprod12, matprod21, matprod22
+      end interface matprod
 
       interface r1update
           module procedure r1_sym, r1
@@ -36,34 +45,12 @@
           module procedure r2_sym, r2
       end interface r2update
 
-! When interfaced with MATLAB, the intrinsic matmul and dot_product seem
-! not as efficient as the implementations below (mostly by loops). This
-! may well depend on the machine (e.g., cache size), compiler, compiling
-! options, and MATLAB version.
-      interface matmul
-      ! Here we overload the intrinsic procedure matmul.
-#if __USE_INTRINSIC_ALGEBRA__ == 0 
-          module procedure matmul12, matmul21, matmul22
-#else
-      ! If the interface contains no function, compilers may complain.
-          module procedure fake_function
-#endif
-      end interface matmul
-
-      interface dot_product
-#if __USE_INTRINSIC_ALGEBRA__ == 0 
-          module procedure inprod
-#else
-          module procedure fake_function
-#endif
-      end interface dot_product
-
 
       contains
 
       subroutine r1_sym(A, alpha, x)
-      ! R1_SYM sets 
-      ! A = A + ALPHA*( X*X^T ), 
+      ! R1_SYM sets
+      ! A = A + ALPHA*( X*X^T ),
       ! where A is an NxN matrix, ALPHA is a scalar, and X is an
       ! N-dimenional vector.
       use consts_mod, only : RP, IK, ONE, ZERO
@@ -73,14 +60,14 @@
 #endif
       implicit none
       real(RP), intent(in) :: alpha
-      real(RP), intent(in) :: x(:)          
+      real(RP), intent(in) :: x(:)
       real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(X))
 
-      integer(IK) :: n, j 
+      integer(IK) :: n, j
 
 #if __DEBUGGING__ == 1
       character(len = SRNLEN), parameter :: srname = 'R1_SYM'
-      ! Be careful with initialization! 
+      ! Be careful with initialization!
       ! In Fortran >=90, the initialization in the declaration implies
       ! the "save" attribute. If the variable is not a parameter, it may
       ! casue unwanted behavior.
@@ -91,7 +78,7 @@
 
       n = int(size(x), kind(n))
 
-#if __USE_POWELL_ALGEBRA__ == 1 
+#if __USE_POWELL_ALGEBRA__ == 1
       ! Only update the LOWER TRIANGULAR part of A.
       ! Both of the following cases are invoked in NEWUOA.
       if (abs(alpha - ONE) > ZERO) then
@@ -104,9 +91,9 @@
           end do
       end if
       ! Set A(UPPER_TRI) = A(LOWER_TRI).
-      call symmetrize(A) 
+      call symmetrize(A)
 #else
-      ! Here we calculate the increment as ALPHA*( X*X^T ), which 
+      ! Here we calculate the increment as ALPHA*( X*X^T ), which
       ! is guaranteed symmetric even in floating-point arithmetic.
       ! Both of the following cases are invoked in NEWUOA.
       if (abs(alpha - ONE) > ZERO) then
@@ -118,7 +105,7 @@
               A(:, j) = A(:, j) + x*x(j)
           end do
       end if
-#endif          
+#endif
 
 #if __DEBUGGING__ == 1
       call verisym(A, ZERO)
@@ -127,8 +114,8 @@
 
 
       subroutine r1(A, alpha, x, y)
-      ! R1 sets 
-      ! A = A + ALPHA*( X*Y^T ), 
+      ! R1 sets
+      ! A = A + ALPHA*( X*Y^T ),
       ! where A is an MxN matrix, ALPHA is a real scalar, X is an
       ! M-dimenional vector, and Y is an N-dimenional vector.
       use consts_mod, only : RP, IK, ONE, ZERO
@@ -142,11 +129,11 @@
       real(RP), intent(in) :: y(:)
       real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
 
-      integer(IK) :: n, j 
+      integer(IK) :: n, j
 
 #if __DEBUGGING__ == 1
       character(len = SRNLEN), parameter :: srname = 'R1'
-      ! Be careful with initialization! 
+      ! Be careful with initialization!
       ! In Fortran >=90, the initialization in the declaration implies
       ! the "save" attribute. If the variable is not a parameter, it may
       ! casue unwanted behavior.
@@ -169,9 +156,9 @@
           end do
       end if
 #else
-      ! Here we calculate the increment as ALPHA*( X*Y^T ) rather than 
-      ! ALPHA*X*Y^T to ensure that, when X = Y, the increment is 
-      ! symmetric even in floating-point arithmetic. 
+      ! Here we calculate the increment as ALPHA*( X*Y^T ) rather than
+      ! ALPHA*X*Y^T to ensure that, when X = Y, the increment is
+      ! symmetric even in floating-point arithmetic.
       ! Both of the following cases are invoked in NEWUOA.
       if (abs(alpha - ONE) > ZERO) then
           do j = 1, n
@@ -187,8 +174,8 @@
 
 
       subroutine r2_sym(A, alpha, x, y)
-      ! R2_SYM sets 
-      ! A = A + ALPHA*( X*Y^T + Y*X^T ), 
+      ! R2_SYM sets
+      ! A = A + ALPHA*( X*Y^T + Y*X^T ),
       ! where A is an NxN matrix, X and Y are N-dimenional vectors, and
       ! alpha is a sclalar.
       use consts_mod, only : RP, IK, ONE, ZERO
@@ -202,7 +189,7 @@
       real(RP), intent(in) :: y(:)
       real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(X))
 
-      integer(IK) :: n, j 
+      integer(IK) :: n, j
 
 #if __DEBUGGING__ == 1
       character(len = SRNLEN), parameter :: srname = 'R2_SYM'
@@ -232,7 +219,7 @@
       call symmetrize(A)
 #else
       ! Here we calculate the increment as ALPHA*( X*Y^T + Y*X^T), which
-      ! is guaranteed symmetric even in floating-point arithmetic. 
+      ! is guaranteed symmetric even in floating-point arithmetic.
       if (abs(alpha - ONE) > ZERO) then  ! NOT invoked in NEWUOA.
           do j = 1, n
               A(:, j) = A(:, j) + alpha*( x*y(j) + y*x(j) )
@@ -251,9 +238,9 @@
 
 
       subroutine r2(A, alpha, x, y, beta, u, v)
-      ! R2 sets 
-      ! A = A + ( ALPHA*( X*Y^T ) + BETA*( U*V^T ) ), 
-      ! where A is an MxN matrix, ALPHA and BETA are real scalars, X and 
+      ! R2 sets
+      ! A = A + ( ALPHA*( X*Y^T ) + BETA*( U*V^T ) ),
+      ! where A is an MxN matrix, ALPHA and BETA are real scalars, X and
       ! U are M-dimenional vectors, Y and V are N-dimenional vectors.
       use consts_mod, only : RP, IK, ONE, ZERO
 #if __DEBUGGING__ == 1
@@ -262,14 +249,14 @@
 #endif
       implicit none
       real(RP), intent(in) :: alpha
-      real(RP), intent(in) :: beta 
+      real(RP), intent(in) :: beta
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
       real(RP), intent(in) :: u(:)          ! U(SIZE(X))
       real(RP), intent(in) :: v(:)          ! V(SIZE(Y))
       real(RP), intent(inout) :: A(:, :)    ! A(SIZE(X), SIZE(Y))
 
-      integer(IK) :: n, j 
+      integer(IK) :: n, j
 
 #if __DEBUGGING__ == 1
       character(len = SRNLEN), parameter :: srname = 'R2'
@@ -286,7 +273,7 @@
 
       n = int(size(y), kind(n))
 
-#if __USE_POWELL_ALGEBRA__ == 1 
+#if __USE_POWELL_ALGEBRA__ == 1
       if (abs(alpha - ONE) > ZERO .or. abs(beta - ONE) > ZERO) then
           ! This case is NOT invoked in NEWUOA.
           do j = 1, n
@@ -305,11 +292,11 @@
       else if (abs(alpha - ONE) > ZERO) then  ! NOT invoked in NEWUOA.
       ! Here update A to A + ALPHA*( X*Y^T + U*V^T ), a semmetric update
       ! when X = V and Y = U, even in floating-point arithmetic.
-          do j = 1, n 
+          do j = 1, n
               A(:, j) = A(:, j) + alpha*( x*y(j)  + u*v(j) )
           end do
       else  ! This case is invoked in NEWUOA.
-      ! Here update A to A + ( X*Y^T + U*V^T ), a semmetric update 
+      ! Here update A to A + ( X*Y^T + U*V^T ), a semmetric update
       ! when X = V and Y = U, even in floating-point arithmetic.
           do j = 1, n
               A(:, j) = A(:, j) + ( x*y(j) + u*v(j) )
@@ -319,28 +306,36 @@
       end subroutine r2
 
 
-#if __USE_INTRINSIC_ALGEBRA__ == 0 
-
-      function matmul12(x, y) result(z)
+      function matprod12(x, y) result(z)
+#if __USE_INTRINSIC_ALGEBRA__ == 1
+      use consts_mod, only : RP
+#else
       use consts_mod, only : RP, IK
+#endif
+
 #if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
       use debug_mod, only : errstop
 #endif
+
       implicit none
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:, :)
       real(RP) :: z(size(y, 2))
-
+#if __USE_INTRINSIC_ALGEBRA__ == 0
       integer(IK) :: j
-      
+#endif
+
 #if __DEBUGGING__ == 1
-      character(len = SRNLEN), parameter :: srname = 'MATMUL12' 
+      character(len = SRNLEN), parameter :: srname = 'MATPROD12'
       if (size(x) /= size(y, 1)) then
           call errstop(srname, 'SIZE(X) /= SIZE(Y, 1)')
       end if
 #endif
 
+#if __USE_INTRINSIC_ALGEBRA__ == 1
+      z = matmul(x, y)
+#else
       do j = 1, int(size(y, 2), kind(j))
           ! When interfaced with MATLAB, the following seems more
           ! efficient than a loop, which is strange because inprod
@@ -348,41 +343,54 @@
           ! machine (e.g., cache size), compiler, compiling options,
           ! and MATLAB version.
           z(j) = inprod(x, y(:, j))
-          ! Here we can also write dot_prod(x, y(:, j)), it will still
-          ! call inprod according to the generic interface in lina_mod.
       end do
-      end function matmul12
+#endif
+      end function matprod12
 
 
-      function matmul21(x, y) result(z)
+      function matprod21(x, y) result(z)
+#if __USE_INTRINSIC_ALGEBRA__ == 1
+      use consts_mod, only : RP
+#else
       use consts_mod, only : RP, IK, ZERO
+#endif
 #if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
       use debug_mod, only : errstop
 #endif
+
       implicit none
       real(RP), intent(in) :: x(:, :)
       real(RP), intent(in) :: y(:)
       real(RP) :: z(size(x, 1))
 
-      integer(IK) :: j 
-
+#if __USE_INTRINSIC_ALGEBRA__ == 0
+      integer(IK) :: j
+#endif
 #if __DEBUGGING__ == 1
-      character(len = SRNLEN), parameter :: srname = 'MATMUL21' 
+      character(len = SRNLEN), parameter :: srname = 'MATPROD21'
       if (size(x, 2) /= size(y)) then
           call errstop(srname, 'SIZE(X, 2) /= SIZE(Y)')
       end if
 #endif
 
+#if __USE_INTRINSIC_ALGEBRA__ == 1
+      z = matmul(x, y)
+#else
       z = ZERO
       do j = 1, int(size(x, 2), kind(j))
           z = z + x(:, j)*y(j)
       end do
-      end function matmul21
+#endif
+      end function matprod21
 
 
-      function matmul22(x, y) result(z)
+      function matprod22(x, y) result(z)
+#if __USE_INTRINSIC_ALGEBRA__ == 1
+      use consts_mod, only : RP
+#else
       use consts_mod, only : RP, IK, ZERO
+#endif
 #if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
       use debug_mod, only : errstop
@@ -392,37 +400,49 @@
       real(RP), intent(in) :: y(:, :)
       real(RP) :: z(size(x, 1), size(y, 2))
 
+#if __USE_INTRINSIC_ALGEBRA__ == 0
       integer(IK) :: i, j
-
+#endif
 #if __DEBUGGING__ == 1
-      character(len = SRNLEN), parameter :: srname = 'MATMUL22'
+      character(len = SRNLEN), parameter :: srname = 'MATPROD22'
       if (size(x, 2) /= size(y, 1)) then
           call errstop(srname, 'SIZE(X, 2) /= SIZE(Y, 1)')
       end if
 #endif
 
+#if __USE_INTRINSIC_ALGEBRA__ == 1
+      z = matmul(x, y)
+#else
       z = ZERO
       do j = 1, int(size(y, 2), kind(j))
           do i = 1, int(size(x, 2), kind(i))
               z(:, j) = z(:, j) + x(:, i)*y(i, j)
           end do
       end do
-      end function matmul22
+#endif
+      end function matprod22
 
 
       function inprod(x, y) result(z)
+#if __USE_INTRINSIC_ALGEBRA__ == 1
+      use consts_mod, only : RP
+#else
       use consts_mod, only : RP, IK, ZERO
+#endif
+
 #if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
-      use debug_mod, only : errstop 
+      use debug_mod, only : errstop
 #endif
+
       implicit none
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
       real(RP) :: z
 
+#if __USE_INTRINSIC_ALGEBRA__ == 0
       integer(IK) :: i
-
+#endif
 #if __DEBUGGING__ == 1
       character(len = SRNLEN), parameter :: srname = 'INPROD'
       if (size(x) /= size(y)) then
@@ -430,26 +450,28 @@
       end if
 #endif
 
-      !z = sum(x*y)  
-      ! Using sum seems not as efficient as a loop when interfaced with 
-      ! MATLAB, but this may well depend on the machine (e.g., cache 
-      ! size), compiler, compiling options, and MATLAB version.  
+#if __USE_INTRINSIC_ALGEBRA__ == 1
+      z = dot_product(x, y)
+#else
+      !z = sum(x*y)
+      ! Using sum seems not as efficient as a loop when interfaced with
+      ! MATLAB, but this may well depend on the machine (e.g., cache
+      ! size), compiler, compiling options, and MATLAB version.
       z = ZERO
       do i = 1, int(size(x), kind(i))
           z = z + x(i)*y(i)
       end do
-      end function inprod
-
 #endif
+      end function inprod
 
 
       subroutine grota(A, i, j, k)
-      ! GROTA sets A = A*G, 
-      ! where G is the Givens rotation that 
+      ! GROTA sets A = A*G,
+      ! where G is the Givens rotation that
       !    [A(K, 1), ..., A(K, I), ..., A(K, J), ..., A(K, N)] * G
       !  = [A(K, 1), ...,    R   , ...,    0   , ..., A(K, N)]
       ! with R = SQRT(A(K, I)^2 + A(K, J)^2).
-      ! Indeed, the [(I, I), (I, J); (J, I), (J, J)] block of G is 
+      ! Indeed, the [(I, I), (I, J); (J, I), (J, J)] block of G is
       ! [C, -S; S, C], where C = A(K, I)/R, S = A(K, J)/R, and the other
       ! entries are 1 (diagonal) or 0. Therefore, A*G is identical to A
       ! except for columns I and J:
@@ -460,7 +482,7 @@
 #if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
       use debug_mod, only : errstop
-#endif      
+#endif
       implicit none
       integer(IK), intent(in) :: i
       integer(IK), intent(in) :: j
@@ -482,28 +504,28 @@
       if (abs(A(k, j)) >  ZERO) then
           c = A(k, i)
           s = A(k, j)
-          ! One may use R = HYPOT(C, s), but it did not work better 
+          ! One may use R = HYPOT(C, s), but it did not work better
           ! in our experiments on CUTEst problems.
-          r = sqrt(c**2+s**2) 
+          r = sqrt(c**2+s**2)
           c = c/r
           s = s/r
           Ai = A(:, i)
           A(:, i) =  c*Ai + s*A(:, j)
-          A(:, j) = -s*Ai + c*A(:, j) 
+          A(:, j) = -s*Ai + c*A(:, j)
           A(k, j) = ZERO
-#if __USE_POWELL_ALGEBRA__ == 0 
+#if __USE_POWELL_ALGEBRA__ == 0
           A(k, i) = r  ! A(K, I) = R in precise arithmetic
       else if (A(k, i) < ZERO) then
           ! In this case, C = -1, S = 0. Thus it is reasonbale to set
           ! the following. Doing this will ensure the continuity of this
           ! subroutine as an operator.
-              A(:, i) = -A(:, i)  
-              A(:, j) = -A(:, j)  
+              A(:, i) = -A(:, i)
+              A(:, j) = -A(:, j)
 #endif
       end if
       end subroutine grota
 
-      
+
       subroutine symmetrize(A)
       ! SYMMETRIZE(A) symmetrizes A.
       ! Here, we assume that A is a matrix that is symmetric in precise
@@ -535,7 +557,7 @@
 
 #if __USE_POWELL_ALGEBRA__ == 1
       ! A is symmetrized by setting A(UPPER_TRI) = A(LOWER_TRI).
-      do j = 1, int(size(A, 1), kind(j)) 
+      do j = 1, int(size(A, 1), kind(j))
           A(1 : j - 1, j) = A(j, 1 : j - 1)
       end do
 #else
@@ -557,14 +579,14 @@
       use consts_mod, only : IK, ZERO
 #endif
 #if __DEBUGGING__ == 1
-      use consts_mod, only : SRNLEN 
+      use consts_mod, only : SRNLEN
       use debug_mod, only : errstop
 #endif
       implicit none
 
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
-      real(RP), intent(in) :: z(:) 
+      real(RP), intent(in) :: z(:)
       real(RP) :: t
 
 #if __USE_POWELL_ALGEBRA__ == 1
@@ -584,8 +606,8 @@
           t = t + x(i)*z(i) + y(i)*z(i)
       end do
 #else
-      !t = dot_product(x + y, z)
-      t = dot_product(x, z) + dot_product(y, z)
+      !t = inprod(x + y, z)
+      t = inprod(x, z) + inprod(y, z)
 #endif
       end function xpy_dot_z
 
@@ -598,14 +620,14 @@
       use consts_mod, only : IK
 #endif
 #if __DEBUGGING__ == 1
-      use consts_mod, only : SRNLEN 
+      use consts_mod, only : SRNLEN
       use debug_mod, only : errstop
 #endif
       implicit none
 
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
-      real(RP), intent(in) :: a 
+      real(RP), intent(in) :: a
       real(RP) :: t
 
 #if __USE_POWELL_ALGEBRA__ == 1
@@ -625,20 +647,20 @@
           t = t + x(i)*y(i)
       end do
 #else
-      t = dot_product(x, y) + a
+      t = inprod(x, y) + a
 #endif
       end function xdy_plus_a
 
 
       function Ax_plus_y(A, x, y) result(z)
       ! z = A*x + y
-      
+
       use consts_mod, only : RP
 #if __USE_POWELL_ALGEBRA__ == 1
       use consts_mod, only : IK
 #endif
 #if __DEBUGGING__ == 1
-      use consts_mod, only : SRNLEN 
+      use consts_mod, only : SRNLEN
       use debug_mod, only : errstop
 #endif
       implicit none
@@ -646,10 +668,10 @@
       real(RP), intent(in) :: A(:, :)
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
-      real(RP) :: z(size(y)) 
+      real(RP) :: z(size(y))
 
 #if __USE_POWELL_ALGEBRA__ == 1
-      integer(IK) :: j 
+      integer(IK) :: j
 #endif
 
 #if __DEBUGGING__ == 1
@@ -665,13 +687,13 @@
           z = z + A(:, j)*x(j)
       end do
 #else
-      z = matmul(A, x) + y
+      z = matprod(A, x) + y
 #endif
       end function Ax_plus_y
 
 
       function xA_plus_y(A, x, y) result(z)
-      ! z = x*A + y  
+      ! z = x*A + y
       ! If implemented in MATLAB, pay attention to the sizes of the
       ! vectors/matrices; if x and y are columns, then z should be
       ! z = (x'*A)' + y
@@ -681,7 +703,7 @@
       use consts_mod, only : IK
 #endif
 #if __DEBUGGING__ == 1
-      use consts_mod, only : SRNLEN 
+      use consts_mod, only : SRNLEN
       use debug_mod, only : errstop
 #endif
       implicit none
@@ -689,10 +711,10 @@
       real(RP), intent(in) :: A(:, :)
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
-      real(RP) :: z(size(y)) 
+      real(RP) :: z(size(y))
 
 #if __USE_POWELL_ALGEBRA__ == 1
-      integer(IK) :: i 
+      integer(IK) :: i
 #endif
 
 #if __DEBUGGING__ == 1
@@ -708,18 +730,18 @@
           z = z + x(i)*A(i, :)
       end do
 #else
-      z = matmul(x, A) + y
+      z = matprod(x, A) + y
       ! If implemented in MATLAB, pay attention to the sizes of the
       ! vectors/matrices; if x and y are columns, then z should be
       ! z = (x'*A)' + y
 #endif
       end function xA_plus_y
-      
+
 
       subroutine calquad(d, gq, hq, pq, x, xpt, vquad)
-      ! CALQUAD calculates 
+      ! CALQUAD calculates
       ! VQUAD = Q(X + D) - Q(X)
-      ! with Q being the quadratic function defined via (GQ, HQ, PQ) by 
+      ! with Q being the quadratic function defined via (GQ, HQ, PQ) by
       ! Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
       ! where HESSIAN consists of an explicit part HQ and an implicit
       ! part PQ in the following way:
@@ -731,7 +753,7 @@
       use consts_mod, only : IK
 #endif
 
-#if __USE_POWELL_ALGEBRA__ == 1 
+#if __USE_POWELL_ALGEBRA__ == 1
       use consts_mod, only : ZERO
 #endif
 
@@ -751,13 +773,13 @@
       real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
 
       ! Output
-      real(RP), intent(out) :: vquad 
+      real(RP), intent(out) :: vquad
 
       ! Intermediate variable
       real(RP) :: s(size(x))
 #if __USE_POWELL_ALGEBRA__ == 1
       real(RP) :: w(size(pq)), t
-      integer(IK) :: i, ih, j 
+      integer(IK) :: i, ih, j
 #endif
 
 #if __DEBUGGING__ == 1
@@ -776,16 +798,16 @@
 #endif
 
 #if __USE_POWELL_ALGEBRA__ == 1
-      s = x + d  
+      s = x + d
       ! First order term and explicit second order term
       vquad = ZERO
       ih = 0
-      do j = 1, int(size(d), kind(j)) 
+      do j = 1, int(size(d), kind(j))
           vquad = vquad + d(j)*gq(j)
           do i = 1, j
               ih = int(ih + 1, kind(ih))
               t = d(i)*s(j) + d(j)*x(i)
-              if (i == j) then 
+              if (i == j) then
                   t = HALF*t
               end if
               vquad = vquad + t*hq(i, j)
@@ -794,8 +816,8 @@
 !----------------------------------------------------------------------!
       ! Powell's original code calculates W externally and pass it as an
       ! input to CALQUAD. Here W is calculated internally.
-      w = matmul(d, xpt) !---------------------------------------------!
-      w = w*(HALF*w + matmul(x, xpt)) !--------------------------------!
+      w = matprod(d, xpt) !--------------------------------------------!
+      w = w*(HALF*w + matprod(x, xpt)) !-------------------------------!
 !----------------------------------------------------------------------!
       ! Implicit second order term
       do i = 1, int(size(pq), kind(i))
@@ -804,29 +826,22 @@
 #else
       ! The order of calculation seems quite important. The following
       ! order seems to work well.
-      ! 1st order term 
-      vquad = dot_product(d, gq)
+      ! 1st order term
+      vquad = inprod(d, gq)
       s = HALF*d + x  ! Different from the above version.
       ! implicit 2nd-order term
-      vquad = vquad + sum(pq*(matmul(s, xpt)*matmul(d, xpt)))
+      vquad = vquad + sum(pq * (matprod(s, xpt) * matprod(d, xpt)))
       ! explicit 2nd-order term
-      vquad = vquad + dot_product(s, matmul(hq, d))
-      ! The following implementations do not work as well as the above 
+      vquad = vquad + inprod(s, matprod(hq, d))
+      ! The following implementations do not work as well as the above
       ! one.
-      !vquad = vquad + dot_product(d, matmul(hq, s))
-      !vquad = vquad + sum(hq*outprod(s,d)) 
-      !vquad = vquad + HALF*(dot_product(d, matmul(hq, s))               &
-      !&     + dot_product(s, matmul(hq, d)))
+      !vquad = vquad + inprod(d, matprod(hq, s))
+      !vquad = vquad + sum(hq * outprod(s,d))
+      !vquad = vquad + HALF*(inprod(d, matprod(hq, s))                   &
+      !&     + inprod(s, matprod(hq, d)))
 #endif
       end subroutine calquad
 
-
-#if __USE_INTRINSIC_ALGEBRA__ == 1 
-      function fake_function() result(y)
-      integer :: y
-      y = 0
-      end function fake_function
-#endif
 
 !      function outprod(x, y) result(z)
 !      ! OUTPROD calculates the outer product of X and Y, i.e., Z = XY^T

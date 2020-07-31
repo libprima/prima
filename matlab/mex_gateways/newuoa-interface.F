@@ -29,10 +29,16 @@
       ! following function is callable in matlab:
       ! [xopt, fopt, info, nf, fhist] = FUNCTION_NAME(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, iprint)
 
-      use mexapi_mod
+      ! General modules
       use consts_mod, only : DP, RP, IK
-      use fnewuoa_mod, only : fun_ptr, nf, fhist
       use newuoa_mod, only : newuoa
+      use mexapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
+      use mexapi_mod, only : fmxVerifyClassShape
+      use mexapi_mod, only : fmxAllocate, fmxReadMPtr, fmxWriteMPtr
+
+      ! Solver-specific module
+      use fnewuoa_mod, only : fun_ptr, nf, fhist
+
       implicit none
 
       ! mexFunction arguments (dummy variables)
@@ -99,10 +105,17 @@
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! The Fortran subroutine that evaluates the objective function
       subroutine calfun(n, x, funval)
-      use fnewuoa_mod, only : fun_ptr, nf, fhist
+
+      ! General modules
       use consts_mod, only : RP, IK, HUGEFUN
       use infnan_mod, only : is_nan
-      use mexapi_mod
+      use mexapi_mod, only : mxGetM, mxGetN, mxIsDouble
+      use mexapi_mod, only : mxDestroyArray
+      use mexapi_mod, only : fmxReadMPtr, fmxWriteMPtr, fmxCallMATLAB
+
+      ! Solver-specific module
+      use fnewuoa_mod, only : fun_ptr, nf, fhist
+
       implicit none
 
       ! Inputs

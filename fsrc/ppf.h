@@ -3,12 +3,12 @@
 ppf.h defines the following preprocessing flags (the first value is default). 
 
 __DEBUGGING__               debug or not: 0, 1
+__USE_INTRINSIC_ALGEBRA__   use intrinsic procedures like matmul or not: 1, 0
+__USE_POWELL_ALGEBRA__      use Powell's linear algebra procedures or not: 0, 1 
 __INTEGER_KIND__            the integer kind to be used: 0, 32, 16, 64
 __REAL_PRECISION__          the real precision to be used: 64, 32, 128, 0 
 __FORTRAN_STANDARD__        Fortran standard to follow: 95, 2003, 2008
-__USE_POWELL_ALGEBRA__      use Powell's linear algebra procedures or not: 0, 1 
 __USE_IEEE_ARITHMETIC__     use the IEEE_ARITHMETIC intrinsic or not: 1, 0
-__USE_INTRINSIC_ALGEBRA__   use intrinsic procedures like matmul or not: 1, 0
 
 You may change these flags, but make sure that your compiler is supportive
 when changing __INTEGER_KIND__, __REAL_PRECISION__, __FORTRAN_STANDARD__,
@@ -30,6 +30,31 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 #undef __DEBUGGING__
 #endif
 #define __DEBUGGING__ 1 
+/*************************************************************************/
+
+
+/*************************************************************************/
+/* Do we use the intrinsic algebra procedures (e.g., matmul)? */
+/* If no, we use the procedures implemented in lina.F. */
+#ifdef __USE_INTRINSIC_ALGEBRA__
+#undef __USE_INTRINSIC_ALGEBRA__
+#endif
+#define __USE_INTRINSIC_ALGEBRA__ 0 
+/*************************************************************************/
+
+
+/*************************************************************************/
+/* Do we use Powell's linear algebra procedures? */
+/* If not, the implementation of some algebraic calculations will be
+ * modified, mainly by replacing loops with matrix-vector operations.
+ * This does not change Powell's algorithms, but it may not produce
+ * exactly the same results as Powell's code due to properties of 
+ * floating-point arithmetic, e.g., the non-associativity of floating-point
+ * addition and multiplication. */
+#ifdef __USE_POWELL_ALGEBRA__
+#undef __USE_POWELL_ALGEBRA__
+#endif
+#define __USE_POWELL_ALGEBRA__ 1 
 /*************************************************************************/
 
 
@@ -170,21 +195,6 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 
 
 /*************************************************************************/
-/* Do we use Powell's linear algebra procedures? */
-/* If not, the implementation of some algebraic calculations will be
- * modified, mainly by replacing loops with matrix-vector operations.
- * This does not change Powell's algorithms, but it may not produce
- * exactly the same results as Powell's code due to properties of 
- * floating-point arithmetic, e.g., the non-associativity of floating-point
- * addition and multiplication. */
-#ifdef __USE_POWELL_ALGEBRA__
-#undef __USE_POWELL_ALGEBRA__
-#endif
-#define __USE_POWELL_ALGEBRA__ 1 
-/*************************************************************************/
-
-
-/*************************************************************************/
 /* Do we use IEEE_ARITHMETIC? */
 /* Make sure that your compiler supports IEEE_ARITHMETIC if you set this
  * value to 1. */
@@ -204,21 +214,5 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 #undef __USE_IEEE_ARITHMETIC__ 
 #define __USE_IEEE_ARITHMETIC__ 0
 #endif
-#endif
-/*************************************************************************/
-
-
-/*************************************************************************/
-/* Do we use the intrinsic algebra procedures (e.g., matmul)? */
-/* If no, we use the procedures implemented in lina.F. */
-#ifdef __USE_INTRINSIC_ALGEBRA__
-#undef __USE_INTRINSIC_ALGEBRA__
-#endif
-#define __USE_INTRINSIC_ALGEBRA__ 0 
-/* We do not use intrinsic algebra procedures in debug mode. Instead, we
- * use our own implementation of these procedures in lina.F. */
-#if __DEBUGGING__ == 1
-#undef __USE_INTRINSIC_ALGEBRA__
-#define __USE_INTRINSIC_ALGEBRA__ 0
 #endif
 /*************************************************************************/

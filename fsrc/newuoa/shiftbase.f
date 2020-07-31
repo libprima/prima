@@ -17,7 +17,7 @@
       use consts_mod, only : DEBUGGING, SRNLEN
       use debug_mod, only : errstop, verisize
       use lina_mod, only : Ax_plus_y, r1update, r2update
-      use lina_mod, only : dot_product, matmul
+      use lina_mod, only : inprod, matprod
 
       implicit none
 
@@ -60,7 +60,7 @@
       end if
 
             
-      xoptsq = dot_product(xopt, xopt)
+      xoptsq = inprod(xopt, xopt)
       qxoptq = QUART * xoptsq
 
       !----------------------------------------------------------------!   
@@ -68,19 +68,19 @@
       !real(RP) :: hxopt(n)
       !call hessmul(n, npt, xpt, hq, pq, xopt, hxopt)
       !gq = gq + hxopt 
-      gq = Ax_plus_y(xpt, pq*matmul(xopt, xpt), gq)
+      gq = Ax_plus_y(xpt, pq*matprod(xopt, xpt), gq)
       gq = Ax_plus_y(hq, xopt, gq)
       !----------------------------------------------------------------!
       
-      w1 = matmul(xopt, xpt) - HALF*xoptsq
-      ! W1 equals MATMUL(XPT, XOPT) after XPT is updated as follows.
+      w1 = matprod(xopt, xpt) - HALF*xoptsq
+      ! W1 equals MATPROD(XPT, XOPT) after XPT is updated as follows.
       xpt = xpt - HALF*spread(xopt, dim = 2, ncopies = npt)
       !do k = 1, npt
       !    xpt(:, k) = xpt(:, k) - HALF*xopt
       !end do
 
       ! Update HQ. It has to be done after the above revision to XPT!!!
-      xpq = matmul(xpt, pq)
+      xpq = matprod(xpt, pq)
       
       !----------------------------------------------------------------!
       ! Implement R2UPDATE properly so that it ensures HQ is symmetric.
@@ -101,7 +101,7 @@
       sumz = sum(zmat, dim = 1)
       do k = 1, int(idz - 1, kind(k))
 !----------------------------------------------------------------------!
-!---------!vlag = qxoptq*sumz(k)*xopt + matmul(xpt, w1*zmat(:, k)) !---!
+!---------!vlag = qxoptq*sumz(k)*xopt + matprod(xpt, w1*zmat(:, k)) !--!
           vlag = Ax_plus_y(xpt, w1*zmat(:, k), qxoptq*sumz(k)*xopt)
 !----------------------------------------------------------------------!
           call r1update(bmat(:, 1:npt), -ONE, vlag, zmat(:, k))
@@ -111,7 +111,7 @@
       end do
       do k = idz, int(npt - n - 1, kind(k))
 !----------------------------------------------------------------------!
-!---------!vlag = qxoptq*sumz(k)*xopt + matmul(xpt, w1*zmat(:, k)) !---!
+!---------!vlag = qxoptq*sumz(k)*xopt + matprod(xpt, w1*zmat(:, k)) !--!
           vlag = Ax_plus_y(xpt, w1*zmat(:, k), qxoptq*sumz(k)*xopt)
 !----------------------------------------------------------------------!
           call r1update(bmat(:, 1:npt), ONE, vlag, zmat(:, k))

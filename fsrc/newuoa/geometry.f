@@ -88,7 +88,7 @@
       use consts_mod, only : RP, IK, ONE
       use consts_mod, only : DEBUGGING, SRNLEN
       use debug_mod, only : errstop, verisize
-      use lina_mod, only : dot_product
+      use lina_mod, only : inprod
       
       ! Solver-spcific modules
       use vlagbeta_mod, only : vlagbeta
@@ -138,7 +138,7 @@
       ! ALPHA is the KNEW-th diagonal entry of H
       zknew = zmat(knew, :)
       zknew(1 : idz - 1) = -zknew(1 : idz - 1)
-      alpha = dot_product(zmat(knew, :), zknew)
+      alpha = inprod(zmat(knew, :), zknew)
 
       ! Calculate VLAG and BETA for D.
       call vlagbeta(idz, kopt, bmat, d, xopt,xpt,zmat,beta,vlag)
@@ -166,7 +166,7 @@
       use consts_mod, only : DEBUGGING, SRNLEN
       use debug_mod, only : errstop, verisize
       use lina_mod, only : Ax_plus_y
-      use lina_mod, only : dot_product, matmul
+      use lina_mod, only : inprod, matprod
 
       implicit none
 
@@ -220,25 +220,25 @@
       ! Set HCOL to the leading NPT elements of the KNEW-th column of H.
       zknew = zmat(knew, :)
       zknew(1 : idz - 1) = -zknew(1 : idz - 1)
-      hcol = matmul(zmat, zknew)
+      hcol = matprod(zmat, zknew)
 
       ! Set the unscaled initial direction D. Form the gradient of LFUNC
       ! at X, and multiply D by the Hessian of LFUNC.
       d = xpt(:, knew) - x
-      dd = dot_product(d, d)
+      dd = inprod(d, d)
 
-      gd = matmul(xpt, hcol*matmul(d, xpt))
+      gd = matprod(xpt, hcol*matprod(d, xpt))
 
       !----------------------------------------------------------------!
-!-----!gc = bmat(:, knew) + matmul(xpt, hcol*matmul(x, xpt)) !---------!
-      gc = Ax_plus_y(xpt, hcol*matmul(x, xpt), bmat(:, knew))
+!-----!gc = bmat(:, knew) + matprod(xpt, hcol*matprod(x, xpt)) !------ !
+      gc = Ax_plus_y(xpt, hcol*matprod(x, xpt), bmat(:, knew))
       !----------------------------------------------------------------!
 
       ! Scale D and GD, with a sign change if required. Set S to another
       ! vector in the initial two dimensional subspace.
-      gg = dot_product(gc, gc)
-      sp = dot_product(d, gc)
-      dhd = dot_product(d, gd)
+      gg = inprod(gc, gc)
+      sp = inprod(d, gc)
+      dhd = inprod(d, gd)
       scaling = delbar/sqrt(dd)
       if (sp*dhd < ZERO) then 
           scaling = - scaling
@@ -259,25 +259,25 @@
       ! required length and direction, except that termination occurs if
       ! the given D and S are nearly parallel.
       do iterc = 1, n
-          dd = dot_product(d, d)
-          sp = dot_product(d, s)
-          ss = dot_product(s, s)
+          dd = inprod(d, d)
+          sp = inprod(d, s)
+          ss = inprod(s, s)
           if (dd*ss - sp*sp <= 1.0e-8_RP*dd*ss) then 
               exit
           end if
           denom = sqrt(dd*ss - sp*sp)
           s = (dd*s - sp*d)/denom
 
-          w = matmul(xpt, hcol*matmul(s, xpt))
+          w = matprod(xpt, hcol*matprod(s, xpt))
           
           ! Calculate the coefficients of the objective function on the
           ! circle, beginning with the multiplication of S by the second
           ! derivative matrix.
-          cf(1) = dot_product(s, w)
-          cf(2) = dot_product(d, gc)
-          cf(3) = dot_product(s, gc)
-          cf(4) = dot_product(d, gd)
-          cf(5) = dot_product(s, gd)
+          cf(1) = inprod(s, w)
+          cf(2) = inprod(d, gc)
+          cf(3) = inprod(s, gc)
+          cf(4) = inprod(d, gd)
+          cf(5) = inprod(s, gd)
           cf(1) = HALF*cf(1)
           cf(4) = HALF*cf(4) - cf(1)
           
@@ -353,7 +353,7 @@
       use consts_mod, only : DEBUGGING, SRNLEN
       use debug_mod, only : errstop, verisize
       use lina_mod, only : Ax_plus_y
-      use lina_mod, only : dot_product, matmul
+      use lina_mod, only : inprod, matprod
 
       implicit none
 
@@ -431,7 +431,7 @@
       ! Store the first NPT elements of the KNEW-th column of H in HCOL.
       zknew = zmat(knew, :)
       zknew(1 : idz - 1) = -zknew(1 : idz - 1)
-      hcol = matmul(zmat, zknew)
+      hcol = matprod(zmat, zknew)
       alpha = hcol(knew)
       
       ! The initial search direction D is taken from the last call of
@@ -439,18 +439,18 @@
       ! from X to X_KNEW, but a different direction to an 
       ! interpolation point may be chosen, in order to prevent S from
       ! being nearly parallel to D.
-      dd = dot_product(d, d)
+      dd = inprod(d, d)
       s = xpt(:, knew) - x
-      ds = dot_product(d, s)
-      ss = dot_product(s, s)
-      xsq = dot_product(x, x)
+      ds = inprod(d, s)
+      ss = inprod(s, s)
+      xsq = inprod(x, x)
 
       if (.not. (ds*ds <= 0.99_RP*dd*ss)) then
           dtest = ds*ds/ss
           xptemp = xpt - spread(x, dim = 2, ncopies = npt)
 !----------------------------------------------------------------------!
-!---------!dstemp = matmul(d, xpt) - dot_product(x, d) !---------------!
-          dstemp = matmul(d, xptemp)
+!---------!dstemp = matprod(d, xpt) - inprod(x, d) !-------------------!
+          dstemp = matprod(d, xptemp)
 !----------------------------------------------------------------------!
           sstemp = sum((xptemp)**2, dim = 1) 
           
@@ -473,8 +473,8 @@
       ! required length and direction.
       do iterc = 1, n
           s = (ONE/sqrt(ssden))*(dd*s - ds*d)
-          xd = dot_product(x, d)
-          xs = dot_product(x, s)
+          xd = inprod(x, d)
+          xs = inprod(x, s)
     
           ! Set the coefficients of the first two terms of BETA.
           tempa = HALF*xd*xd
@@ -488,9 +488,9 @@
           
           ! Put the coefficients of WCHECK in W.
           do k = 1, npt
-              tempa = dot_product(xpt(:, k), d)
-              tempb = dot_product(xpt(:, k), s)
-              tempc = dot_product(xpt(:, k), x)
+              tempa = inprod(xpt(:, k), d)
+              tempb = inprod(xpt(:, k), s)
+              tempc = inprod(xpt(:, k), x)
               w(k, 1) = QUART*(tempa*tempa + tempb*tempb)
               w(k, 2) = tempa*tempc
               w(k, 3) = tempb*tempc
@@ -503,17 +503,17 @@
     
           ! Put the coefficents of THETA*WCHECK in PROD.
           do jc = 1, 5
-              wz = matmul(w(1 : npt, jc), zmat)
+              wz = matprod(w(1 : npt, jc), zmat)
               wz(1 : idz - 1) = -wz(1 : idz - 1)
-              prod(1 : npt, jc) = matmul(zmat, wz)
+              prod(1 : npt, jc) = matprod(zmat, wz)
               
               nw = npt
               if (jc == 2 .or. jc == 3) then
                   prod(1 : npt, jc) = prod(1 : npt, jc) +               &
-     &             matmul(w(npt + 1 : npt + n, jc), bmat(:, 1 : npt))
+     &             matprod(w(npt + 1 : npt + n, jc), bmat(:, 1 : npt))
                   nw = npt + n
               end if
-              prod(npt + 1 : npt + n, jc) = matmul(bmat(:, 1 : nw),     &
+              prod(npt + 1 : npt + n, jc) = matprod(bmat(:, 1 : nw),    &
      &         w(1 : nw, jc))
           end do
     
@@ -577,7 +577,7 @@
                   par(j + 1) = par(2)*par(j - 1) + par(3)*par(j - 2)
               end do
               denomold = denom
-              denom = dot_product(denex(1 : 9), par(1 : 9))
+              denom = inprod(denex(1 : 9), par(1 : 9))
               if (abs(denom) > abs(denmax)) then
                   denmax = denom
                   isave = i
@@ -610,18 +610,18 @@
               par(j + 1) = par(2)*par(j - 1) + par(3)*par(j - 2)
           end do
     
-          beta = dot_product(den(1 : 9), par(1 : 9))
-          denmax = dot_product(denex(1 : 9), par(1 : 9))
+          beta = inprod(den(1 : 9), par(1 : 9))
+          denmax = inprod(denex(1 : 9), par(1 : 9))
     
-          vlag = matmul(prod(:, 1 : 5), par(1 : 5))
+          vlag = matprod(prod(:, 1 : 5), par(1 : 5))
     
           tau = vlag(knew)
     
           d = par(2)*d + par(3)*s
-          dd = dot_product(d, d)
+          dd = inprod(d, d)
           xnew = x + d
-          dxn = dot_product(d, xnew)
-          xnsq = dot_product(xnew, xnew)
+          dxn = inprod(d, xnew)
+          xnsq = inprod(xnew, xnew)
     
           if (iterc > 1) then
               densav = max(densav, denold)
@@ -634,15 +634,15 @@
           ! Set S to HALF the gradient of the denominator with respect 
           ! to D. 
           s = tau*bmat(:,knew) + alpha*(dxn*x+xnsq*d-vlag(npt+1:npt+n))
-          v = matmul(xnew, xpt)
+          v = matprod(xnew, xpt)
           v = (tau*hcol - alpha*vlag(1 : npt))*v
 !----------------------------------------------------------------------!
-!---------!s = s + matmul(xpt, v) !--------------------------------!
+!---------!s = s + matprod(xpt, v) !-----------------------------------!
           s = Ax_plus_y(xpt, v, s)
 !----------------------------------------------------------------------!
     
-          ss = dot_product(s, s)
-          ds = dot_product(d, s)
+          ss = inprod(s, s)
+          ds = inprod(d, s)
           ssden = dd*ss - ds*ds
           if (ssden < 1.0e-8_RP*dd*ss) then 
               exit

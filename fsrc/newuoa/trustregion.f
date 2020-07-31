@@ -45,7 +45,7 @@
       use debug_mod, only : errstop, verisize
       use infnan_mod, only : is_nan
       use lina_mod, only : Ax_plus_y 
-      use lina_mod, only : dot_product, matmul
+      use lina_mod, only : inprod, matprod
 
       implicit none
       
@@ -97,11 +97,11 @@
 
       ! Prepare for the first line search.
       !----------------------------------------------------------------!
-!-----!hx = matmul(xpt, pq*matmul(x, xpt)) + matmul(hq, x) !-----------1
-      hx = Ax_plus_y(hq, x, matmul(xpt, pq*matmul(x, xpt)))
+!-----!hx = matprod(xpt, pq*matprod(x, xpt)) + matprod(hq, x) ! -------!
+      hx = Ax_plus_y(hq, x, matprod(xpt, pq*matprod(x, xpt)))
       !----------------------------------------------------------------!
       g = gq + hx
-      gg = dot_product(g, g)
+      gg = inprod(g, g)
       ggbeg = gg
       d = -g
       dd = gg 
@@ -137,10 +137,10 @@
           ! Set BSTEP to the step length such that ||S+BSTEP*D|| = DELTA
           bstep = (delsq-ss)/(ds + sqrt(ds*ds + dd*(delsq-ss)))  
       !----------------------------------------------------------------!
-!-----!hd = matmul(xpt, pq*matmul(d, xpt)) + matmul(hq, d) !-----------!
-      hd = Ax_plus_y(hq, d, matmul(xpt, pq*matmul(d, xpt)))
+!-----!hd = matprod(xpt, pq*matprod(d, xpt)) + matprod(hq, d) !--------!
+      hd = Ax_plus_y(hq, d, matprod(xpt, pq*matprod(d, xpt)))
       !----------------------------------------------------------------!
-          dhd = dot_product(d, hd)
+          dhd = inprod(d, hd)
 
           ! Set the step-length ALPHA and update CRVMIN and 
           if (dhd <= ZERO) then
@@ -161,10 +161,10 @@
 
           ! Update S, HS, and GG.
           s = s + alpha*d 
-          ss = dot_product(s, s)
+          ss = inprod(s, s)
           hs = hs + alpha*hd
           ggsave = gg  ! Gradient norm square before this iteration 
-          gg = dot_product(g+hs, g+hs)  ! Current gradient norm square
+          gg = inprod(g+hs, g+hs)  ! Current gradient norm square
           ! We may save g+hs for latter usage:
           ! gnew = g + hs
           ! Note that we should NOT set g = g + hs, because g contains
@@ -188,8 +188,8 @@
 
           ! Prepare for the next CG iteration.
           d = (gg/ggsave)*d - g - hs  ! CG direction
-          dd = dot_product(d, d)
-          ds = dot_product(d, s)
+          dd = inprod(d, d)
+          ds = inprod(d, s)
           if (ds <= ZERO) then 
               ! DS is positive in theory.
               info = -1 
@@ -216,8 +216,8 @@
               info = 0
               exit
           end if
-          sg = dot_product(s, g)
-          shs = dot_product(s, hs)
+          sg = inprod(s, g)
+          shs = inprod(s, hs)
           sgk = sg + shs
           if (sgk/sqrt(gg*delsq) <= tol - ONE) then 
               info = 0
@@ -229,12 +229,12 @@
           t = sqrt(delsq*gg - sgk*sgk)
           d = (delsq/t)*(g + hs) - (sgk/t)*s
       !----------------------------------------------------------------!
-!-----!hd = matmul(xpt, pq*matmul(d, xpt)) + matmul(hq, d) !-----------!
-          hd = Ax_plus_y(hq, d, matmul(xpt, pq*matmul(d, xpt)))
+!-----!hd = matprod(xpt, pq*matprod(d, xpt)) + matprod(hq, d) !--------!
+          hd = Ax_plus_y(hq, d, matprod(xpt, pq*matprod(d, xpt)))
       !----------------------------------------------------------------!
-          dg = dot_product(d, g)
-          dhd = dot_product(hd, d)
-          dhs = dot_product(hd, s)
+          dg = inprod(d, g)
+          dhd = inprod(hd, d)
+          dhs = inprod(hd, s)
 
           ! Seek the value of the angle that minimizes Q.
           cf = HALF*(shs - dhd)
@@ -281,7 +281,7 @@
           reduc = qbeg - (sg + cf*cth)*cth - (dg + dhs*cth)*sth
           s = cth*s + sth*d
           hs = cth*hs + sth*hd
-          gg = dot_product(g+hs, g+hs)
+          gg = inprod(g+hs, g+hs)
           qred = qred + reduc
           if (reduc/qred <= tol) then 
               info = 1
