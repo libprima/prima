@@ -2,15 +2,155 @@
 
       implicit none
       private
-      public :: biglag, bigden
+      public :: setremove, ameliorgeo
 
 
       contains
 
-      subroutine biglag(idz, knew, delta, bmat, x, xpt, zmat, d)
+      subroutine setremove(idz, kopt, beta, delta, ratio, rho, vlag,    &
+     & xopt, xpt, zmat, knew)
+      ! SETREMOVE sets KNEW to the index of the interpolation point that
+      ! will be deleted AFTER A TRUST REGION STEP.
+      ! KNEW will be set in a way ensuring that the geometry of XPT is
+      ! "optimal" after XPT(:, KNEW) is replaced by XNEW = XOPT + D,
+      ! where D is the trust-region step.  Note that the information of
+      ! XNEW is included in VLAG and BETA, which are calculated 
+      ! according to D.
+
+      use consts_mod, only : RP, IK, ONE, ZERO, TENTH
+      use consts_mod, only : SRNLEN, DEBUG_MODE
+      use warnerror_mod, only : errstop
+      use lina_mod
+      implicit none
+
+      ! Inputs
+      integer(IK), intent(in) :: idz
+      integer(IK), intent(in) :: kopt
+      real(RP), intent(in) :: beta
+      real(RP), intent(in) :: delta 
+      real(RP), intent(in) :: ratio 
+      real(RP), intent(in) :: rho 
+      real(RP), intent(in) :: vlag(:)  ! VLAG(NPT)
+      real(RP), intent(in) :: xopt(:)  ! XOPT(N)
+      real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
+      real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
+
+      ! Output
+      integer(IK), intent(out) :: knew
+
+      ! Intermediate variables
+      integer(IK) :: n, npt
+      real(RP) :: hdiag(size(zmat, 1)), xdsq(size(xpt, 2))
+      real(RP) :: sigma(size(xpt, 2)), rhosq 
+      character(len = SRNLEN), parameter :: srname = 'SETREMOVE'
+     
+
+      ! Get and verify the sizes
+      n = int(size(xpt, 1), kind(n))
+      npt = int(size(xpt, 2), kind(npt))
+
+      if (DEBUG_MODE) then
+          if (n == 0 .or. npt < n + 2) then
+              call errstop(srname, 'SIZE(XPT) is invalid')
+          end if
+          call verisize(vlag, npt)
+          call verisize(xopt, n)
+          call verisize(zmat, npt, int(npt - n - 1, kind(n)))
+      end if
+
+      rhosq = max(TENTH*delta, rho)**2
+      hdiag = -sum(zmat(:, 1 : idz - 1)**2, dim = 2) +                  &
+     & sum(zmat(:, idz : npt - n - 1)**2, dim = 2)             
+      xdsq = sum((xpt - spread(xopt, dim = 2, ncopies = npt))**2, dim=1)
+      sigma = abs(beta*hdiag + vlag(1 : npt)**2)
+      sigma = sigma * max(xdsq/rhosq, ONE)**3
+      if (ratio <= ZERO) then
+      ! When the new F is not better than the current FOPT,
+      ! we set SIGMA(KOPT) = -1 to prevent KNEW from being KOPT.
+          sigma(kopt) = -ONE
+      end if
+      if (maxval(sigma) > ONE .or. ratio > ZERO) then
+      ! KNEW > 0 unless MAXVAL(SIGMA) <= 1 and RATIO <= ZERO.
+      ! If RATIO > ZERO (i.e., the new F is smaller than the current
+      ! FOPT), then KNEW > 0, ensuring XNEW to be included into XPT.
+          knew = int(maxloc(sigma, dim = 1), kind(knew))
+      else
+          knew = 0
+      end if
+      end subroutine setremove
+
+      
+      subroutine ameliorgeo(idz, knew, kopt, bmat, delbar, xopt, xpt,   &
+     & zmat, d, beta, vlag)
+      use consts_mod, only : RP, IK, ONE
+      use consts_mod, only : DEBUG_MODE, SRNLEN
+      use warnerror_mod, only : errstop
+      use lina_mod
+      use vlagbeta_mod, only : vlagbeta
+
+      ! Inputs
+      integer(IK), intent(in) :: idz
+      integer(IK), intent(in) :: knew
+      integer(IK), intent(in) :: kopt
+      real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT+N)
+      real(RP), intent(in) :: delbar
+      real(RP), intent(in) :: xopt(:)     ! XOPT(N)
+      real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
+      real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
+
+      ! In-output
+      real(RP), intent(inout) :: d(:)     ! D(N)
+
+      ! Outputs
+      real(RP), intent(out) :: beta
+      real(RP), intent(out) :: vlag(:)    ! VLAG(NPT + N)
+
+      ! Intermediate variables
+      integer(IK) :: n, npt
+      real(RP) :: alpha, zknew(size(zmat, 2))
+      character(len = SRNLEN), parameter :: srname = 'AMELIORGEO'
+
+
+      ! Get and verify the sizes.
+      n = int(size(xpt, 1), kind(n))
+      npt = int(size(xpt, 2), kind(npt))
+
+      if (DEBUG_MODE) then
+          if (n == 0 .or. npt < n + 2) then
+              call errstop(srname, 'SIZE(XPT) is invalid')
+          end if
+          call verisize(xopt, n)
+          call verisize(bmat, n, npt + n)
+          call verisize(zmat, npt, int(npt - n - 1, kind(n)))
+          call verisize(vlag, npt + n)
+          call verisize(d, n)
+      end if    
+
+      call biglag(idz, knew, delbar, bmat, xopt, xpt, zmat, d)
+
+      ! ALPHA is the KNEW-th diagonal entry of H
+      zknew = zmat(knew, :)
+      zknew(1 : idz - 1) = -zknew(1 : idz - 1)
+      alpha = dot_product(zmat(knew, :), zknew)
+
+      ! Calculate VLAG and BETA for D.
+      call vlagbeta(idz, kopt, bmat, d, xopt,xpt,zmat,beta,vlag)
+
+      ! If the cancellation in DENOM is unacceptable, then BIGDEN
+      ! calculates an alternative model step D. 
+      ! VLAG and BETA for this D are calculated within BIGDEN. 
+      if (abs(ONE + alpha*beta/vlag(knew)**2) <= 0.8_RP) then
+          call bigden(idz, knew, kopt, bmat, xopt, xpt,zmat,d,beta,vlag)
+      end if
+
+      return
+      end subroutine ameliorgeo
+
+
+      subroutine biglag(idz, knew, delbar, bmat, x, xpt, zmat, d)
       ! BIGLAG calculates a D by approximately solving
       !
-      ! max |LFUNC(X + D)|, subject to ||D|| <= DELTA, 
+      ! max |LFUNC(X + D)|, subject to ||D|| <= DELBAR, 
       !
       ! where LFUNC is the KNEW-th Lagrange function.
 
@@ -23,7 +163,7 @@
       ! Inputs
       integer(IK), intent(in) :: idz
       integer(IK), intent(in) :: knew
-      real(RP), intent(in) :: delta 
+      real(RP), intent(in) :: delbar 
       real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT + N)
       real(RP), intent(in) :: x(:)        ! X(N)
       real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
@@ -49,7 +189,7 @@
       ! ZMAT and IDZ give a factorization of the first NPT by NPT
       ! sub-matrix of H.
       ! KNEW is the index of the interpolation point to be removed.
-      ! DELTA is the trust region bound.
+      ! DELBAR is the trust region bound.
       ! D will be set to the step from X to the new point.
       ! HCOL, GC, GD, S and W will be used for working space.
 
@@ -89,7 +229,7 @@
       gg = dot_product(gc, gc)
       sp = dot_product(d, gc)
       dhd = dot_product(d, gd)
-      scaling = delta/sqrt(dd)
+      scaling = delbar/sqrt(dd)
       if (sp*dhd < ZERO) then 
           scaling = - scaling
       end if
@@ -98,7 +238,7 @@
           t = ONE 
       end if
       tau = scaling*(abs(sp) + HALF*scaling*abs(dhd))
-      if (gg*(delta*delta) < 1.0e-2_RP*tau*tau) then 
+      if (gg*(delbar*delbar) < 1.0e-2_RP*tau*tau) then 
           t = ONE
       end if
       d = scaling*d
@@ -189,7 +329,7 @@
       subroutine bigden(idz, knew, kopt, bmat, x, xpt, zmat,d,beta,vlag)
       ! BIGDEN calculates a D by approximately solving
       !
-      ! max |SIGMA(X + D)|, subject to ||D|| <= DELTA, 
+      ! max |SIGMA(X + D)|, subject to ||D|| <= DELBAR, 
       !
       ! where SIGMA is the denominator \sigma in the updating formula
       ! (4.11)--(4.12) for H, which is the inverse of the coefficient

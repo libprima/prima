@@ -7,12 +7,12 @@
 
       contains 
 
-      subroutine shiftbase(idz, pq, xopt, zmat, bmat, gq, hq, xpt)
+      subroutine shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt,xpt)
       ! SHIFTBASE shifts the base point to XBASE + XOPT and updates GQ,
       ! HQ, and BMAT accordingly. PQ and ZMAT remain the same after the
       ! shifting. See Section 7 of the NEWUOA paper.
 
-      use consts_mod, only : RP, IK, ONE, HALF, QUART 
+      use consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART 
       use consts_mod, only : DEBUG_MODE, SRNLEN
       use warnerror_mod, only : errstop
       use lina_mod
@@ -21,13 +21,14 @@
       ! Inputs
       integer(IK), intent(in) :: idz
       real(RP), intent(in) :: pq(:)  ! PQ(NPT)
-      real(RP), intent(in) :: xopt(:)  ! XOPT(N)
       real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 
       ! In-outputs
       real(RP), intent(inout) :: bmat(:, :)  ! BMAT(N, NPT + N)
       real(RP), intent(inout) :: gq(:)  ! GQ(N)
       real(RP), intent(inout) :: hq(:, :)  ! HQ(N, N)
+      real(RP), intent(inout) :: xbase(:)  ! XBASE(N)
+      real(RP), intent(inout) :: xopt(:)  ! XOPT(N)
       real(RP), intent(inout) :: xpt(:, :)  ! XPT(N, NPT)
 
       ! Intermediate variables
@@ -46,12 +47,13 @@
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(XPT) is invalid')
           end if
-          call verisize(xopt, n)
           call verisize(pq, npt)
           call verisize(zmat, npt, int(npt - n - 1, kind(n)))
           call verisize(bmat, n, npt + n)
           call verisize(gq, n)
           call verisize(hq, n, n)
+          call verisize(xopt, n)
+          call verisize(xbase, n)
       end if
 
             
@@ -125,8 +127,10 @@
       !    xpt(:, k) = xpt(:, k) - HALF*xopt
       !end do
 
-      return 
+      xbase = xbase + xopt
+      xopt = ZERO
 
+      return 
       end subroutine shiftbase
 
       end module shiftbase_mod

@@ -37,7 +37,8 @@
       public :: EPS, HUGENUM, ALMOST_INFINITY, HUGEFUN, HUGECON 
       public :: SRNLEN
       public :: RHOBEG_DEF, RHOEND_DEF, FTARGET_DEF
-      public :: MAXFUN_DIM_DEF, IPRINT_DEF
+      public :: IPRINT_DEF
+      public :: OUTUNIT
 
 #if __DEBUG_MODE__ == 1
       logical, parameter :: DEBUG_MODE = .true.
@@ -109,7 +110,8 @@
       real(RP), parameter :: RHOBEG_DEF = ONE
       real(RP), parameter :: RHOEND_DEF = 1.0E-6_RP 
       real(RP), parameter :: FTARGET_DEF = -HUGENUM
-      integer(IK), parameter :: MAXFUN_DIM_DEF = 500
-      integer(IK), parameter :: IPRINT_DEF = 0
+      integer(IK), parameter :: IPRINT_DEF = 1 
 
+      ! Output unit, can be any integer between 9 and 99
+      integer(IK), parameter :: OUTUNIT = 9 
       end module consts_mod 

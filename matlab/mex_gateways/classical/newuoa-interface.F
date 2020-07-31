@@ -80,7 +80,7 @@ C [xopt, fopt, info, nf, fhist] = FUNCTION_NAME(fun, x0, rhobeg, rhoend, maxfun,
 
       use consts_mod, only : DP
       use fnewuoa_mod, only : fun_ptr, nf, fhist, NEWUOA
-      use mex_mod
+      use mexapi_mod
       implicit none
 
 C mexFunction arguments (dummy variables):
@@ -268,7 +268,7 @@ C The Fortran subroutine that evaluates the objective function
       subroutine calfun(n, x, funval)
       use fnewuoa_mod, only : fun_ptr, nf, fhist
       use consts_mod, only : DP
-      use mex_mod
+      use mexapi_mod
       implicit none
 
 C Dummy variables

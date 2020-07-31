@@ -9,18 +9,21 @@
 
       contains
 
-      subroutine initxf(x, rhobeg, ftarget, ij, kopt, nf, fval, xbase,  &
-     & xpt, info)
+      subroutine initxf(iprint, x, rhobeg, ftarget, ij, kopt, nf, fval, &
+     & xbase,  xpt, info)
       ! INITXF performs the initialization regarding the interpolation 
       ! points and corresponding function values. 
 
       use consts_mod, only : RP, IK, ZERO, DEBUG_MODE, SRNLEN
       use warnerror_mod, only : errstop
+      use infos_mod
       use infnan_mod
       use lina_mod
+      use output_mod
       implicit none
 
       ! Inputs
+      integer(IK), intent(in) :: iprint
       real(RP), intent(in) :: x(:)  ! X(N)
       real(RP), intent(in) :: rhobeg
       real(RP), intent(in) :: ftarget
@@ -45,6 +48,7 @@
       integer(IK) :: i, j, k, itemp, npt_r
       real(RP) :: f, xtemp(size(x))
       logical :: evaluated(size(fval))
+      character(len = 6), parameter :: solver= 'NEWUOA'
       character(len = SRNLEN), parameter :: srname = 'INITXF'
 
 
@@ -63,9 +67,9 @@
 
       ! At return,
       ! INFO = 0: initialization finishes normally
-      ! INFO = 1: return because f <= ftarget
-      ! INFO = -1: return because x contains NaN
-      ! INFO = -2: return because f is either NaN or positive infinity
+      ! INFO = FTARGET_ACHIEVED: return because f <= ftarget
+      ! INFO = NAN_X: return because x contains NaN
+      ! INFO = NAN_INF_F: return because f is either NaN or +infinity
       info = 0
 
       ! We set ij = 1 in case the initialization aborts due to
@@ -107,26 +111,32 @@
           xpt(k - n - 1, k) = -rhobeg
       end do
        
-      ! Set FVAL(1 : NPT) by evaluating F. Totally parallelizable.
+      ! Set FVAL(1 : NPT) by evaluating F. Totally parallelizable
+      ! except fmssg, which outputs messages to the console or files.
       do k = 1, min(npt, int(2*n + 1, kind(npt)))
           xtemp = xpt(:, k) + xbase
           if (any(is_nan(xtemp))) then
               f = sum(xtemp)  ! Set F to NaN. It is necessary.
-              info = -1
+              info = NAN_X 
               npt_r = 0 
               exit
           end if
           call calfun(n, xtemp, f)
           evaluated(k) = .true.
           fval(k) = f
+
+          if (iprint >= 3) then
+              call fmssg(iprint, k, f, xtemp, solver) 
+          end if
+          
           ! Check whether to exit.
           if (f <= ftarget) then
-              info = 1
+              info = FTARGET_ACHIEVED 
               npt_r = 0 
               exit
           end if
           if (is_posinf(f) .or. is_nan(f)) then
-              info = -2
+              info = NAN_INF_F 
               npt_r = 0 
               exit
           end if
@@ -177,24 +187,30 @@
           end if
       end do
 
-      ! Set FVAL(2*N + 2 : NPT) by evaluating F. Totally parallelizable.
+      ! Set FVAL(2*N + 2 : NPT) by evaluating F. Totally parallelizable
+      ! except fmssg, which outputs messages to the console or files.
       do k = int(2*n + 2, kind(k)), npt_r
           xtemp = xpt(:, k) + xbase
           if (any(is_nan(xtemp))) then
               f = sum(xtemp)  ! Set F to NaN. It is necessary.
-              info = -1
+              info = NaN_X
               exit
           end if
           call calfun(n, xtemp, f)
           evaluated(k) = .true.
           fval(k) = f
+
+          if (iprint >= 3) then
+              call fmssg(iprint, k, f, xtemp, solver) 
+          end if
+          
           ! Check whether to exit.
           if (f <= ftarget) then
-              info = 1
+              info = FTARGET_ACHIEVED 
               exit
           end if
           if (is_posinf(f) .or. is_nan(f)) then
-              info = -2
+              info = NAN_INF_F 
               exit
           end if
       end do
@@ -214,6 +230,7 @@
       ! HQ + \sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
 
       use consts_mod, only : RP, IK, ZERO, HALF, DEBUG_MODE, SRNLEN
+      use infos_mod
       use warnerror_mod, only : errstop
       use infnan_mod
       use lina_mod
@@ -298,7 +315,7 @@
       end do
 
       if (any(is_nan(gq)) .or. any(is_nan(hq)) .or. any(is_nan(pq)))then
-          info = -3
+          info = NAN_MODEL 
       else
           info = 0
       end if
@@ -310,6 +327,7 @@
       ! INITH initializes BMAT and ZMAT.
 
       use consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUG_MODE, SRNLEN
+      use infos_mod
       use warnerror_mod, only : errstop
       use infnan_mod
       use lina_mod
@@ -397,7 +415,7 @@
       end do
 
       if (any(is_nan(bmat)) .or. any(is_nan(zmat))) then
-          info = -3
+          info = NAN_MODEL 
       else
           info = 0
       end if

@@ -200,11 +200,23 @@ catch exception
 end
 
 % Extract the options
-npt = options.npt;
-maxfun = options.maxfun;
 rhobeg = options.rhobeg;
 rhoend = options.rhoend;
+%eta1 = options.eta1;
+%eta2 = options.eta2;
+%gamma1 = options.gamma1;
+%gamma2 = options.gamma2;
 ftarget = options.ftarget;
+maxfun = options.maxfun;
+npt = options.npt;
+%iprint = options.iprint;
+% Here are the values of eta1, eta2, gamma1, and gamma2 used in Powell's
+% code. They should be included in options later.
+eta1 = 0.1;
+eta2 = 0.7;
+gamma1 = 0.5;
+gamma2 = 2;
+iprint = 0;
 
 if ~strcmp(invoker, 'pdfon') && probinfo.feasibility_problem
     % An "unconstrained feasibility problem" is rediculous, yet nothing wrong mathematically.
@@ -236,7 +248,7 @@ else
         if options.classical
             [x, fx, exitflag, nf, fhist] = fnewuoan_classical(fun, x0, rhobeg, rhoend, maxfun, npt, ftarget);
         else
-            [x, fx, exitflag, nf, fhist] = fnewuoan(fun, x0, rhobeg, rhoend, maxfun, npt, ftarget);
+            [x, fx, exitflag, nf, fhist] = fnewuoan(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, iprint);
         end
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly 

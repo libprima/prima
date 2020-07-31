@@ -21,7 +21,7 @@ C substitution), some lines may become too long and hence get truncated
 
 #include "fintrf.h"
 
-      subroutine mexFunction(nlhs, plhs, nrhs, prhs)
+      subroutine mexFunction(nargout, output, nargin, input)
 C     data_huge = gethuge(data_type)
 C     This function returns the largest value of data_type on the
 C     current platform, the possible values of data_type being
@@ -29,13 +29,13 @@ C     'integer', 'float', 'real', 'single', 'double', 'mwSize',
 C     'mwIndex', 'fun', 'function', 'con', 'constraint'.
 
       use consts_mod, only : IK, SP, DP, RP, HUGEFUN, HUGECON
-      use mex_mod
+      use mexapi_mod
       implicit none
 
 C     mexFunction arguments:
-      integer, intent(in) :: nlhs, nrhs
-      mwPointer, intent(in) :: prhs(nrhs)
-      mwPointer, intent(out) :: plhs(nlhs)
+      integer, intent(in) :: nargout, nargin
+      mwPointer, intent(in) :: input(nargin)
+      mwPointer, intent(out) :: output(nargout)
 
 C     Variables
       mwSize :: rows, cols ! Size of the input
@@ -53,27 +53,27 @@ C Integer zero of type mwIndex on the current platform
       real(DP) :: hugeValue
 
 C     Validate the number of arguments.
-      if (nrhs .ne. 1) then
+      if (nargin .ne. 1) then
           call mexErrMsgIdAndTxt ('gethuge:nInput',
      &    'gethuge: There should be 1 input argument.')
       end if
 
-      if (nlhs .gt. 1) then
+      if (nargout .gt. 1) then
           call mexErrMsgIdAndTxt ('gethuge:nOutput',
      &    'gethuge: At most 1 output argument allowed.')
       end if
 
 C     The input must be a string.
-      rows = mxGetM(prhs(1))
-      cols = mxGetN(prhs(1))
-      if (mxIsChar(prhs(1)) .ne. 1
+      rows = int(mxGetM(input(1)), kind(rows))
+      cols = int(mxGetN(input(1)), kind(cols))
+      if (mxIsChar(input(1)) .ne. 1
      &   .or. rows .gt. 1 .or. cols .gt. maxlen) then
           call mexErrMsgIdAndTxt ('gethuge:WrongInput',
      &   'gethuge: The input can only be a string.')
       end if
 
 C     Get the input string.
-      if (mxGetString(prhs(1), data_type, cols) .ne. 0) then
+      if (mxGetString(input(1), data_type, cols) .ne. 0) then
           call mexErrMsgIdAndTxt ('gethuge:GetInputFail',
      &    'gethuge: Fail to get the input.')
       end if
@@ -128,7 +128,7 @@ C     min to ensure that they will not overflow when cast to doubles.
       end if
 
 C     Write output.
-      plhs(1) = mxCreateDoubleScalar(hugeValue)
+      output(1) = mxCreateDoubleScalar(hugeValue)
 
       return
       end subroutine mexFunction
