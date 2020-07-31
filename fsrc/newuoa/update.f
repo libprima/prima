@@ -289,7 +289,7 @@
       fqdz(1 : idz - 1) = -fqdz(1 : idz - 1)
       pq(knew) = ZERO
       !----------------------------------------------------------------!
-!----!pq = pq + matmul(zmat, fqdz) !-----------------------------------!
+!----!pq = pq + matprod(zmat, fqdz) !----------------------------------!
       pq = Ax_plus_y(zmat, fqdz, pq)
       !----------------------------------------------------------------!
 
@@ -311,7 +311,7 @@
       ! General modules
       use consts_mod, only : RP, IK, ZERO, DEBUGGING, SRNLEN
       use debug_mod, only : errstop, verisize
-      use lina_mod, only : dot_product, matmul
+      use lina_mod, only : inprod, matprod
 
       implicit none
 
@@ -365,8 +365,8 @@
       if (ratio > 1.0e-2_RP) then
           itest = 0
       else
-          galt = matmul(smat, fval)
-          if (dot_product(gq,gq) < 1.0e2_RP*dot_product(galt,galt)) then
+          galt = matprod(smat, fval)
+          if (inprod(gq,gq) < 1.0e2_RP*inprod(galt,galt)) then
               itest = 0
           else
               itest = int(itest + 1, kind(itest))
@@ -377,9 +377,9 @@
       if (itest >= 3) then
           gq = galt
           hq = ZERO
-          fz = matmul(fval, zmat)
+          fz = matprod(fval, zmat)
           fz(1 : idz - 1) = -fz(1 : idz - 1)
-          pq = matmul(zmat, fz)
+          pq = matprod(zmat, fz)
           itest = 0
       end if
 

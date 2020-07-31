@@ -18,7 +18,7 @@
       use infnan_mod, only : is_nan, is_posinf
       use output_mod, only : retmssg, rhomssg, fmssg
       use lina_mod, only : calquad
-      use lina_mod, only : dot_product
+      use lina_mod, only : inprod
 
       ! Solver-specific modules
       use initialize_mod, only : initxf, initq, inith
@@ -167,7 +167,7 @@
      &     vquad, d, subinfo)
 
           ! Calculate the length of the trial step D.
-          dnorm = min(delta, sqrt(dot_product(d, d)))
+          dnorm = min(delta, sqrt(inprod(d, d)))
 
           ! Is the step long enough to invoke a function evaluation?
           if (dnorm < HALF*rho) then
@@ -191,8 +191,8 @@
               fsave = fopt
 
               ! Shift XBASE if XOPT may be too far from XBASE.
-              !if (dot_product(d, d) <= 1.0e-3_RP*xoptsq) then  ! Powell
-              if (dnorm*dnorm <= 1.0e-3_RP*dot_product(xopt, xopt)) then
+              !if (inprod(d, d) <= 1.0e-3_RP*xoptsq) then  ! Powell
+              if (dnorm*dnorm <= 1.0e-3_RP*inprod(xopt, xopt)) then
                   call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase,    &
      &             xopt, xpt)
               end if
@@ -390,7 +390,7 @@
               delbar = max(min(TENTH*sqrt(distsq), HALF*delta), rho)
 
               ! Shift XBASE if XOPT may be too far from XBASE.
-              if (delbar*delbar<=1.0e-3_RP*dot_product(xopt,xopt)) then
+              if (delbar*delbar<=1.0e-3_RP*inprod(xopt,xopt)) then
                   call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase,    &
      &             xopt, xpt)
               end if
@@ -470,7 +470,7 @@
               ! Section 7 (around (7.7)) of the NEWUOA paper. Seemingly
               ! we should keep DNORM = ||D|| as we do here. The value of
               ! DNORM will be used when defining NFSAVE.
-              dnorm = min(delbar, sqrt(dot_product(d, d)))
+              dnorm = min(delbar, sqrt(inprod(d, d)))
               ! In theory, DNORM = DELBAR in this case.
               !--------------------------------------------------------!
               dnormsave = (/ dnorm, dnormsave(1 : size(dnormsave)-1) /)
