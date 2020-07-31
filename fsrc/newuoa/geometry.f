@@ -17,10 +17,11 @@
       ! XNEW is included in VLAG and BETA, which are calculated 
       ! according to D.
 
+      ! General modules
       use consts_mod, only : RP, IK, ONE, ZERO, TENTH
-      use consts_mod, only : SRNLEN, DEBUG_MODE
-      use warnerror_mod, only : errstop
-      use lina_mod
+      use consts_mod, only : SRNLEN, DEBUGGING
+      use debug_mod, only : errstop, verisize
+
       implicit none
 
       ! Inputs
@@ -49,7 +50,7 @@
       n = int(size(xpt, 1), kind(n))
       npt = int(size(xpt, 2), kind(npt))
 
-      if (DEBUG_MODE) then
+      if (DEBUGGING) then
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(XPT) is invalid')
           end if
@@ -82,11 +83,17 @@
       
       subroutine ameliorgeo(idz, knew, kopt, bmat, delbar, xopt, xpt,   &
      & zmat, d, beta, vlag)
+
+      ! General modules
       use consts_mod, only : RP, IK, ONE
-      use consts_mod, only : DEBUG_MODE, SRNLEN
-      use warnerror_mod, only : errstop
-      use lina_mod
+      use consts_mod, only : DEBUGGING, SRNLEN
+      use debug_mod, only : errstop, verisize
+      use lina_mod, only : dot_product
+      
+      ! Solver-spcific modules
       use vlagbeta_mod, only : vlagbeta
+
+      implicit none
 
       ! Inputs
       integer(IK), intent(in) :: idz
@@ -115,7 +122,7 @@
       n = int(size(xpt, 1), kind(n))
       npt = int(size(xpt, 2), kind(npt))
 
-      if (DEBUG_MODE) then
+      if (DEBUGGING) then
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(XPT) is invalid')
           end if
@@ -154,10 +161,13 @@
       !
       ! where LFUNC is the KNEW-th Lagrange function.
 
+      ! General modules
       use consts_mod, only : RP, IK, ONE, TWO, HALF, PI, ZERO
-      use consts_mod, only : DEBUG_MODE, SRNLEN
-      use lina_mod
-      use warnerror_mod, only : errstop
+      use consts_mod, only : DEBUGGING, SRNLEN
+      use debug_mod, only : errstop, verisize
+      use lina_mod, only : Ax_plus_y
+      use lina_mod, only : dot_product, matmul
+
       implicit none
 
       ! Inputs
@@ -198,7 +208,7 @@
       n = int(size(xpt, 1), kind(n))
       npt = int(size(xpt, 2), kind(npt))
 
-      if (DEBUG_MODE) then
+      if (DEBUGGING) then
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(XPT) is invalid')
           end if
@@ -338,10 +348,13 @@
       ! interpolation problem. 
       ! In addition, it sets VLAG and BETA for the selected D.
 
+      ! General modules
       use consts_mod, only : RP, IK, ONE, TWO, HALF, QUART, PI, ZERO
-      use consts_mod, only : DEBUG_MODE, SRNLEN
-      use warnerror_mod, only : errstop
-      use lina_mod
+      use consts_mod, only : DEBUGGING, SRNLEN
+      use debug_mod, only : errstop, verisize
+      use lina_mod, only : Ax_plus_y
+      use lina_mod, only : dot_product, matmul
+
       implicit none
 
       ! Inputs
@@ -404,7 +417,7 @@
       n = int(size(xpt, 1), kind(n))
       npt = int(size(xpt, 2), kind(npt))
 
-      if (DEBUG_MODE) then
+      if (DEBUGGING) then
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(XPT) is invalid')
           end if

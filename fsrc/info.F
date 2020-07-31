@@ -1,4 +1,4 @@
-      module infos_mod
+      module info_mod
 
       implicit none
       private
@@ -20,4 +20,4 @@
       integer, parameter :: NAN_INF_F = -2
       integer, parameter :: NAN_MODEL = -3
 
-      end module infos_mod
+      end module info_mod

@@ -1,6 +1,6 @@
 consts.F
-infos.F
-warnerror.F
+info.F
+debug.F
 infnan.F
 lina.F
 output.F

@@ -10,17 +10,24 @@
       subroutine newuob(iprint, maxfun, npt, eta1, eta2, ftarget,       &
      & gamma1, gamma2, rhobeg, rhoend, x, nf, f, info)
 
+      ! General modules
       use consts_mod, only : RP, IK, ZERO, HALF, TENTH, HUGENUM
-      use infos_mod
+      use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED
+      use info_mod, only : TRSUBP_FAILED, SMALL_TR_RADIUS
+      use info_mod, only : NAN_X, NAN_INF_F
       use infnan_mod, only : is_nan, is_posinf
-      use lina_mod
+      use output_mod, only : retmssg, rhomssg, fmssg
+      use lina_mod, only : calquad
+      use lina_mod, only : dot_product
+
+      ! Solver-specific modules
       use initialize_mod, only : initxf, initq, inith
       use trustregion_mod, only : trsapp, trrad
       use geometry_mod, only : setremove, ameliorgeo
       use shiftbase_mod, only : shiftbase
       use vlagbeta_mod, only : vlagbeta
       use update_mod, only : updateh, updateq, tryqalt
-      use output_mod, only : retmssg, rhomssg, fmssg
+
       implicit none
 
       ! Inputs

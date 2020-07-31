@@ -39,11 +39,14 @@
       ! Q. Thus S should provide a substantial reduction to Q within the
       ! trust region.
       
+      ! General modules
       use consts_mod, only : RP, IK, ONE, TWO, HALF, ZERO, PI
-      use consts_mod, only : DEBUG_MODE, SRNLEN
-      use warnerror_mod, only : errstop
+      use consts_mod, only : DEBUGGING, SRNLEN
+      use debug_mod, only : errstop, verisize
       use infnan_mod, only : is_nan
-      use lina_mod
+      use lina_mod, only : Ax_plus_y 
+      use lina_mod, only : dot_product, matmul
+
       implicit none
       
       ! Inputs
@@ -77,7 +80,7 @@
       n = int(size(xpt, 1), kind(n))
       npt = int(size(xpt, 2), kind(npt))
 
-      if (DEBUG_MODE) then
+      if (DEBUGGING) then
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(XPT) is invalid')
           end if
@@ -291,7 +294,10 @@
 
 
       function trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
+
+      ! General module
       use consts_mod, only : RP, HALF
+
       implicit none
 
       real(RP) :: trrad

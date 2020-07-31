@@ -19,9 +19,11 @@
       ! will be overwritten when trying the alternative model or by
       ! VLAGBETA.
 
-      use consts_mod, only : RP, IK, ONE, ZERO, DEBUG_MODE, SRNLEN
-      use warnerror_mod, only : errstop
-      use lina_mod
+      ! General modules
+      use consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING, SRNLEN
+      use debug_mod, only : errstop, verisize
+      use lina_mod, only : grota, r2update, symmetrize
+
       implicit none
 
       ! Inputs
@@ -49,7 +51,7 @@
       n = int(size(bmat, 1), kind(n))
       npt = int(size(bmat, 2), kind(npt)) - n
 
-      if (DEBUG_MODE) then
+      if (DEBUGGING) then
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(BMAT) is invalid')
           end if
@@ -237,9 +239,11 @@
       subroutine updateq(idz, knew, bmatknew, fqdiff, zmat, xptknew,    &
      & gq, hq, pq)
 
-      use warnerror_mod, only : errstop
-      use consts_mod, only : RP, IK, ZERO, DEBUG_MODE, SRNLEN
-      use lina_mod
+      ! General modules
+      use consts_mod, only : RP, IK, ZERO, DEBUGGING, SRNLEN
+      use debug_mod, only : errstop, verisize
+      use lina_mod, only : r1update, Ax_plus_y
+
       implicit none
 
       ! Inputs
@@ -265,7 +269,7 @@
       n = int(size(gq), kind(n))
       npt = int(size(pq), kind(npt))
 
-      if (DEBUG_MODE) then
+      if (DEBUGGING) then
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(GQ) or SIZE(PQ) is invalid')
           end if
@@ -304,9 +308,11 @@
       ! when certain criteria are satisfied (i.e., when ITEST = 3).
       ! Note that SMAT = BMAT(:, 1:NPT)
 
-      use consts_mod, only : RP, IK, ZERO, DEBUG_MODE, SRNLEN
-      use warnerror_mod, only : errstop
-      use lina_mod
+      ! General modules
+      use consts_mod, only : RP, IK, ZERO, DEBUGGING, SRNLEN
+      use debug_mod, only : errstop, verisize
+      use lina_mod, only : dot_product, matmul
+
       implicit none
 
       ! Inputs
@@ -340,7 +346,7 @@
       n = int(size(gq), kind(n))
       npt = int(size(pq), kind(npt))
 
-      if (DEBUG_MODE) then
+      if (DEBUGGING) then
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(GQ) or SIZE(PQ) is invalid')
           end if
