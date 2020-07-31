@@ -15,7 +15,9 @@
       
       subroutine retmssg(info, iprint, nf, f, x, solver)
       use consts_mod, only : RP, IK, OUTUNIT
-      use infos_mod
+      use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED
+      use info_mod, only : SMALL_TR_RADIUS, TRSUBP_FAILED
+      use info_mod, only : NAN_X, NAN_INF_F, NAN_MODEL
       implicit none
 
       ! Inputs

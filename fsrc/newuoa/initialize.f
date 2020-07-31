@@ -14,12 +14,13 @@
       ! INITXF performs the initialization regarding the interpolation 
       ! points and corresponding function values. 
 
-      use consts_mod, only : RP, IK, ZERO, DEBUG_MODE, SRNLEN
-      use warnerror_mod, only : errstop
-      use infos_mod
-      use infnan_mod
-      use lina_mod
-      use output_mod
+      ! General modules
+      use consts_mod, only : RP, IK, ZERO, DEBUGGING, SRNLEN
+      use debug_mod, only : errstop, verisize
+      use info_mod, only : FTARGET_ACHIEVED, NAN_X, NAN_INF_F
+      use infnan_mod, only : is_nan, is_posinf
+      use output_mod, only : fmssg
+
       implicit none
 
       ! Inputs
@@ -56,7 +57,7 @@
       n = int(size(x), kind(n))
       npt = int(size(fval), kind(npt))
 
-      if (DEBUG_MODE) then
+      if (DEBUGGING) then
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(X) or SIZE(FVAL) is invalid')
           end if
@@ -229,11 +230,12 @@
       ! the Hessian of the model is 
       ! HQ + \sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
 
-      use consts_mod, only : RP, IK, ZERO, HALF, DEBUG_MODE, SRNLEN
-      use infos_mod
-      use warnerror_mod, only : errstop
-      use infnan_mod
-      use lina_mod
+      ! General modules
+      use consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING, SRNLEN
+      use info_mod, only : NAN_MODEL
+      use debug_mod, only : errstop, verisize
+      use infnan_mod, only : is_nan
+
       implicit none
 
       ! Inputs
@@ -258,7 +260,7 @@
       n = int(size(xpt, 1), kind(n))
       npt = int(size(xpt, 2), kind(npt))
 
-      if (DEBUG_MODE) then
+      if (DEBUGGING) then
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(XPT) is invalid')
           end if
@@ -326,11 +328,12 @@
       subroutine inith(ij, xpt, bmat, zmat, info)
       ! INITH initializes BMAT and ZMAT.
 
-      use consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUG_MODE, SRNLEN
-      use infos_mod
-      use warnerror_mod, only : errstop
-      use infnan_mod
-      use lina_mod
+      ! General modules
+      use consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING, SRNLEN
+      use info_mod, only : NAN_MODEL
+      use debug_mod, only : errstop, verisize
+      use infnan_mod, only : is_nan
+
       implicit none
 
       ! Inputs
@@ -353,7 +356,7 @@
       n = int(size(xpt, 1), kind(n))
       npt = int(size(xpt, 2), kind(npt))
 
-      if (DEBUG_MODE) then
+      if (DEBUGGING) then
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(XPT) is invalid')
           end if

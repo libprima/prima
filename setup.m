@@ -212,7 +212,7 @@ try
     infrastructure_files = regexp(fileread(fullfile(fsrc, 'file_list')), '\n', 'split');
     infrastructure_files = strtrim(infrastructure_files(~cellfun(@isempty, infrastructure_files))); 
     infrastructure_files = fullfile(fsrc, infrastructure_files);
-    infrastructure_files = [infrastructure_files, fullfile(gateways, 'mex_mod.F')];
+    infrastructure_files = [infrastructure_files, fullfile(gateways, 'mexapi.F')];
     mex(mex_options{:}, '-c', infrastructure_files{:});
 
 

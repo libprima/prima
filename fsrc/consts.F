@@ -30,7 +30,7 @@
 
       implicit none
       private
-      public :: DEBUG_MODE
+      public :: DEBUGGING
       public :: IK, INT16, INT32, INT64, IK_DEF
       public :: RP, DP, SP, QP, REAL32, REAL64, REAL128, RP_DEF
       public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
@@ -40,10 +40,10 @@
       public :: IPRINT_DEF
       public :: OUTUNIT
 
-#if __DEBUG_MODE__ == 1
-      logical, parameter :: DEBUG_MODE = .true.
+#if __DEBUGGING__ == 1
+      logical, parameter :: DEBUGGING = .true.
 #else
-      logical, parameter :: DEBUG_MODE = .false.
+      logical, parameter :: DEBUGGING = .false.
 #endif
 
 #if __FORTRAN_STANDARD__ < 2008

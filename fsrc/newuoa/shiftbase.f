@@ -12,10 +12,13 @@
       ! HQ, and BMAT accordingly. PQ and ZMAT remain the same after the
       ! shifting. See Section 7 of the NEWUOA paper.
 
+      ! General modules
       use consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART 
-      use consts_mod, only : DEBUG_MODE, SRNLEN
-      use warnerror_mod, only : errstop
-      use lina_mod
+      use consts_mod, only : DEBUGGING, SRNLEN
+      use debug_mod, only : errstop, verisize
+      use lina_mod, only : Ax_plus_y, r1update, r2update
+      use lina_mod, only : dot_product, matmul
+
       implicit none
 
       ! Inputs
@@ -43,7 +46,7 @@
       n = int(size(xpt, 1), kind(n))
       npt = int(size(xpt, 2), kind(npt))
       
-      if (DEBUG_MODE) then
+      if (DEBUGGING) then
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(XPT) is invalid')
           end if
@@ -69,7 +72,6 @@
       gq = Ax_plus_y(hq, xopt, gq)
       !----------------------------------------------------------------!
       
-
       w1 = matmul(xopt, xpt) - HALF*xoptsq
       ! W1 equals MATMUL(XPT, XOPT) after XPT is updated as follows.
       xpt = xpt - HALF*spread(xopt, dim = 2, ncopies = npt)

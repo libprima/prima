@@ -2,7 +2,7 @@
 /* 
 ppf.h defines the following preprocessing flags (the first value is default). 
 
-__DEBUG_MODE__              debug or not: 0, 1
+__DEBUGGING__               debug or not: 0, 1
 __INTEGER_KIND__            the integer kind to be used: 0, 32, 16, 64
 __REAL_PRECISION__          the real precision to be used: 64, 32, 128, 0 
 __FORTRAN_STANDARD__        Fortran standard to follow: 95, 2003, 2008
@@ -16,9 +16,9 @@ and __USE_INTRINSIC_ALGEBRA__.
 
 Why not define these flags as parameters in the Fortran code, e.g.,
 
-logical, parameter :: __DEBUG_MODE__ = .false. ?
+logical, parameter :: __DEBUGGING__ = .false. ?
 
-Such a definition will work for __DEBUG_MODE__, but not for the flags that
+Such a definition will work for __DEBUGGING__, but not for the flags that
 depend on the compiler, for instance, __FORTRAN_STANDARD__.
 */
 /*************************************************************************/
@@ -26,10 +26,10 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 
 /*************************************************************************/
 /* Are we debugging? */
-#ifdef __DEBUG_MODE__
-#undef __DEBUG_MODE__
+#ifdef __DEBUGGING__
+#undef __DEBUGGING__
 #endif
-#define __DEBUG_MODE__ 1 
+#define __DEBUGGING__ 1 
 /*************************************************************************/
 
 
@@ -181,7 +181,6 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 #undef __USE_POWELL_ALGEBRA__
 #endif
 #define __USE_POWELL_ALGEBRA__ 1 
-#define __TEST__ 0
 /*************************************************************************/
 
 
@@ -218,7 +217,7 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 #define __USE_INTRINSIC_ALGEBRA__ 0 
 /* We do not use intrinsic algebra procedures in debug mode. Instead, we
  * use our own implementation of these procedures in lina.F. */
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
 #undef __USE_INTRINSIC_ALGEBRA__
 #define __USE_INTRINSIC_ALGEBRA__ 0
 #endif

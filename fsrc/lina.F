@@ -26,7 +26,7 @@
       public :: grota
       public :: xpy_dot_z, xdy_plus_a, Ax_plus_y, xA_plus_y
       public :: calquad
-      public :: verisize, verisym
+      public :: matmul, dot_product
 
       interface r1update
           module procedure r1_sym, r1
@@ -36,26 +36,27 @@
           module procedure r2_sym, r2
       end interface r2update
 
-      interface verisize
-          module procedure verisize_real_1, verisize_real_2
-          module procedure verisize_int_1, verisize_int_2
-      end interface verisize
-
 ! When interfaced with MATLAB, the intrinsic matmul and dot_product seem
 ! not as efficient as the implementations below (mostly by loops). This
 ! may well depend on the machine (e.g., cache size), compiler, compiling
 ! options, and MATLAB version.
-#if __USE_INTRINSIC_ALGEBRA__ == 0 
-      public :: matmul, dot_product
-
       interface matmul
+      ! Here we overload the intrinsic procedure matmul.
+#if __USE_INTRINSIC_ALGEBRA__ == 0 
           module procedure matmul12, matmul21, matmul22
+#else
+      ! If the interface contains no function, compilers may complain.
+          module procedure fake_function
+#endif
       end interface matmul
 
       interface dot_product
+#if __USE_INTRINSIC_ALGEBRA__ == 0 
           module procedure inprod
-      end interface dot_product
+#else
+          module procedure fake_function
 #endif
+      end interface dot_product
 
 
       contains
@@ -66,9 +67,9 @@
       ! where A is an NxN matrix, ALPHA is a scalar, and X is an
       ! N-dimenional vector.
       use consts_mod, only : RP, IK, ONE, ZERO
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
-      use warnerror_mod, only : errstop
+      use debug_mod, only : errstop, verisym
 #endif
       implicit none
       real(RP), intent(in) :: alpha
@@ -77,7 +78,7 @@
 
       integer(IK) :: n, j 
 
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       character(len = SRNLEN), parameter :: srname = 'R1_SYM'
       ! Be careful with initialization! 
       ! In Fortran >=90, the initialization in the declaration implies
@@ -119,7 +120,7 @@
       end if
 #endif          
 
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       call verisym(A, ZERO)
 #endif
       end subroutine r1_sym
@@ -131,9 +132,9 @@
       ! where A is an MxN matrix, ALPHA is a real scalar, X is an
       ! M-dimenional vector, and Y is an N-dimenional vector.
       use consts_mod, only : RP, IK, ONE, ZERO
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
-      use warnerror_mod, only : errstop
+      use debug_mod, only : errstop
 #endif
       implicit none
       real(RP), intent(in) :: alpha
@@ -143,7 +144,7 @@
 
       integer(IK) :: n, j 
 
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       character(len = SRNLEN), parameter :: srname = 'R1'
       ! Be careful with initialization! 
       ! In Fortran >=90, the initialization in the declaration implies
@@ -191,9 +192,9 @@
       ! where A is an NxN matrix, X and Y are N-dimenional vectors, and
       ! alpha is a sclalar.
       use consts_mod, only : RP, IK, ONE, ZERO
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
-      use warnerror_mod, only : errstop
+      use debug_mod, only : errstop, verisym
 #endif
       implicit none
       real(RP), intent(in) :: alpha
@@ -203,7 +204,7 @@
 
       integer(IK) :: n, j 
 
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       character(len = SRNLEN), parameter :: srname = 'R2_SYM'
       if (size(x) /= size(y)) then
           call errstop(srname, 'SIZE(X) /= SIZE(Y)')
@@ -243,7 +244,7 @@
       end if
 #endif
 
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       call verisym(A, ZERO)
 #endif
       end subroutine r2_sym
@@ -255,9 +256,9 @@
       ! where A is an MxN matrix, ALPHA and BETA are real scalars, X and 
       ! U are M-dimenional vectors, Y and V are N-dimenional vectors.
       use consts_mod, only : RP, IK, ONE, ZERO
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
-      use warnerror_mod, only : errstop
+      use debug_mod, only : errstop
 #endif
       implicit none
       real(RP), intent(in) :: alpha
@@ -270,7 +271,7 @@
 
       integer(IK) :: n, j 
 
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       character(len = SRNLEN), parameter :: srname = 'R2'
       if (size(u) /= size(x)) then
           call errstop(srname, 'SIZE(U) /= SIZE(X)')
@@ -322,9 +323,9 @@
 
       function matmul12(x, y) result(z)
       use consts_mod, only : RP, IK
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
-      use warnerror_mod, only : errstop
+      use debug_mod, only : errstop
 #endif
       implicit none
       real(RP), intent(in) :: x(:)
@@ -333,7 +334,7 @@
 
       integer(IK) :: j
       
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       character(len = SRNLEN), parameter :: srname = 'MATMUL12' 
       if (size(x) /= size(y, 1)) then
           call errstop(srname, 'SIZE(X) /= SIZE(Y, 1)')
@@ -355,9 +356,9 @@
 
       function matmul21(x, y) result(z)
       use consts_mod, only : RP, IK, ZERO
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
-      use warnerror_mod, only : errstop
+      use debug_mod, only : errstop
 #endif
       implicit none
       real(RP), intent(in) :: x(:, :)
@@ -366,7 +367,7 @@
 
       integer(IK) :: j 
 
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       character(len = SRNLEN), parameter :: srname = 'MATMUL21' 
       if (size(x, 2) /= size(y)) then
           call errstop(srname, 'SIZE(X, 2) /= SIZE(Y)')
@@ -382,9 +383,9 @@
 
       function matmul22(x, y) result(z)
       use consts_mod, only : RP, IK, ZERO
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
-      use warnerror_mod, only : errstop
+      use debug_mod, only : errstop
 #endif
       implicit none
       real(RP), intent(in) :: x(:, :)
@@ -393,7 +394,7 @@
 
       integer(IK) :: i, j
 
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       character(len = SRNLEN), parameter :: srname = 'MATMUL22'
       if (size(x, 2) /= size(y, 1)) then
           call errstop(srname, 'SIZE(X, 2) /= SIZE(Y, 1)')
@@ -411,9 +412,9 @@
 
       function inprod(x, y) result(z)
       use consts_mod, only : RP, IK, ZERO
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
-      use warnerror_mod, only : errstop 
+      use debug_mod, only : errstop 
 #endif
       implicit none
       real(RP), intent(in) :: x(:)
@@ -422,7 +423,7 @@
 
       integer(IK) :: i
 
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       character(len = SRNLEN), parameter :: srname = 'INPROD'
       if (size(x) /= size(y)) then
           call errstop(srname, 'SIZE(X) /= SIZE(Y)')
@@ -456,9 +457,9 @@
       ! new column J = -S*A(:, I) + C*A(:, J)
 
       use consts_mod, only : IK, RP, ZERO
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
-      use warnerror_mod, only : errstop
+      use debug_mod, only : errstop
 #endif      
       implicit none
       integer(IK), intent(in) :: i
@@ -468,7 +469,7 @@
 
       real(RP) :: c, s, r, Ai(size(A, 1))
 
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       character(len = SRNLEN), parameter :: srname = 'GROTA'
       if (i == j .or. min(i, j) < 1 .or. max(i, j) > size(A, 2)) then
           call errstop(srname, 'I or J is invalid')
@@ -513,9 +514,9 @@
       use consts_mod, only : RP, HALF
 #endif
 
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       use consts_mod, only : ZERO, SRNLEN
-      use warnerror_mod, only : errstop
+      use debug_mod, only : errstop, verisym
 #endif
 
       implicit none
@@ -525,7 +526,7 @@
       integer(IK) :: j
 #endif
 
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       character(len = SRNLEN), parameter :: srname = 'SYMMETRIZE'
       if (size(A, 1) /= size(A, 2)) then
           call errstop(srname, 'A is not square')
@@ -542,7 +543,7 @@
       A = A*HALF
 #endif
 
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       call verisym(A, ZERO)
 #endif
       end subroutine symmetrize
@@ -555,9 +556,9 @@
 #if __USE_POWELL_ALGEBRA__ == 1
       use consts_mod, only : IK, ZERO
 #endif
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN 
-      use warnerror_mod, only : errstop
+      use debug_mod, only : errstop
 #endif
       implicit none
 
@@ -570,7 +571,7 @@
       integer(IK) :: i
 #endif
 
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       character(len = SRNLEN), parameter :: srname = 'XPY_DOT_Z'
       if (size(x) /= size(z) .or. size(y) /= size(z)) then
           call errstop(srname, 'SIZE(X) or SIZE(Y) /= SIZE(Z)')
@@ -596,9 +597,9 @@
 #if __USE_POWELL_ALGEBRA__ == 1
       use consts_mod, only : IK
 #endif
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN 
-      use warnerror_mod, only : errstop
+      use debug_mod, only : errstop
 #endif
       implicit none
 
@@ -611,7 +612,7 @@
       integer(IK) :: i
 #endif
 
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       character(len = SRNLEN), parameter :: srname = 'XDY_PLUS_A'
       if (size(x) /= size(y)) then
           call errstop(srname, 'SIZE(X) /= SIZE(Y)')
@@ -636,9 +637,9 @@
 #if __USE_POWELL_ALGEBRA__ == 1
       use consts_mod, only : IK
 #endif
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN 
-      use warnerror_mod, only : errstop
+      use debug_mod, only : errstop
 #endif
       implicit none
 
@@ -651,7 +652,7 @@
       integer(IK) :: j 
 #endif
 
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       character(len = SRNLEN), parameter :: srname = 'AX_PLUS_Y'
       if (size(x) /= size(A, 2) .or. size(y) /= size(A, 1)) then
           call errstop(srname, 'SIZE(A) /= (SIZE(Y), SIZE(X))')
@@ -679,9 +680,9 @@
 #if __USE_POWELL_ALGEBRA__ == 1
       use consts_mod, only : IK
 #endif
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN 
-      use warnerror_mod, only : errstop
+      use debug_mod, only : errstop
 #endif
       implicit none
 
@@ -694,7 +695,7 @@
       integer(IK) :: i 
 #endif
 
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       character(len = SRNLEN), parameter :: srname = 'XA_PLUS_Y'
       if (size(x) /= size(A, 1) .or. size(y) /= size(A, 2)) then
           call errstop(srname, 'SIZE(A) /= (SIZE(X), SIZE(Y))')
@@ -726,7 +727,7 @@
 
       use consts_mod, only : RP, HALF
 
-#if __USE_POWELL_ALGEBRA__ == 1 || __DEBUG_MODE__ == 1
+#if __USE_POWELL_ALGEBRA__ == 1 || __DEBUGGING__ == 1
       use consts_mod, only : IK
 #endif
 
@@ -734,9 +735,9 @@
       use consts_mod, only : ZERO
 #endif
 
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
-      use warnerror_mod, only : errstop
+      use debug_mod, only : errstop, verisize
 #endif
 
       implicit none
@@ -759,7 +760,7 @@
       integer(IK) :: i, ih, j 
 #endif
 
-#if __DEBUG_MODE__ == 1
+#if __DEBUGGING__ == 1
       integer(IK) :: n, npt
       character(len = SRNLEN), parameter :: srname = 'CALQUAD'
       n = int(size(xpt, 1), kind(n))
@@ -820,100 +821,12 @@
       end subroutine calquad
 
 
-      subroutine verisize_real_1(x, n)
-      ! VERISIZE_REAL_1 verifies whether SIZE(X) = N.
-      use consts_mod, only : RP, IK, SRNLEN
-      use warnerror_mod, only : errstop
-      real(RP), intent(in) :: x(:)
-      integer(IK), intent(in) :: n
-
-      character(len = SRNLEN), parameter :: srname = 'VERISIZE_REAL_1'
-
-      if (size(x) /= n) then
-          call errstop(srname, 'SIZE(X) /= N')
-      end if
-      end subroutine verisize_real_1
-
-
-      subroutine verisize_real_2(x, m, n)
-      ! VERISIZE_REAL_2 verifies whether SIZE(X, 1) = M, SIZE(X, 2)=N.
-      use consts_mod, only : RP, IK, SRNLEN
-      use warnerror_mod, only : errstop
-      real(RP), intent(in) :: x(:, :)
-      integer(IK), intent(in) :: m
-      integer(IK), intent(in) :: n
-
-      character(len = SRNLEN), parameter :: srname = 'VERISIZE_REAL_2'
-
-      if (size(x, 1) /= m) then
-          call errstop(srname, 'SIZE(X, 1) /= M')
-      end if
-      if (size(x, 2) /= n) then
-          call errstop(srname, 'SIZE(X, 2) /= N')
-      end if
-      end subroutine verisize_real_2
-
-
-      subroutine verisize_int_1(x, n)
-      ! VERISIZE_INT_1 verifies whether SIZE(X) = N.
-      use consts_mod, only : IK, SRNLEN
-      use warnerror_mod, only : errstop
-      integer(IK), intent(in) :: x(:)
-      integer(IK), intent(in) :: n
-
-      character(len = SRNLEN), parameter :: srname = 'VERISIZE_INT_1'
-
-      if (size(x) /= n) then
-          call errstop(srname, 'SIZE(X) /= N')
-      end if
-      end subroutine verisize_int_1
-
-
-      subroutine verisize_int_2(x, m, n)
-      ! VERISIZE_INT_2 verifies whether SIZE(X, 1) = M, SIZE(X, 2)=N.
-      use consts_mod, only : IK, SRNLEN
-      use warnerror_mod, only : errstop
-      integer(IK), intent(in) :: x(:, :)
-      integer(IK), intent(in) :: m
-      integer(IK), intent(in) :: n
-
-      character(len = SRNLEN), parameter :: srname = 'VERISIZE_INT_2'
-
-      if (size(x, 1) /= m) then
-          call errstop(srname, 'SIZE(X, 1) /= M')
-      end if
-      if (size(x, 2) /= n) then
-          call errstop(srname, 'SIZE(X, 2) /= N')
-      end if
-      end subroutine verisize_int_2
-
-
-      subroutine verisym(A, tol)
-      ! VERISYM verifies whether a matrix A is symmetric up to TOL.
-      use consts_mod, only : RP, ONE, ZERO, SRNLEN
-      use warnerror_mod, only : errstop
-      implicit none
-
-      real(RP), intent(in) :: A(:, :)
-      real(RP), intent(in) :: tol
-
-      character(len = SRNLEN), parameter :: srname = 'VERISYM'
-
-      if (size(A, 1) /= size(A, 2)) then
-          call errstop(srname, 'A is not square')
-      end if
-      if (tol > ZERO) then
-          if (maxval(abs((A - transpose(A)))) >                         &
-     &     tol*max(maxval(abs(A)), ONE)) then
-               call errstop(srname, 'A is not symmetric up to TOL')
-          end if
-      else
-          if (maxval(abs((A - transpose(A)))) > ZERO) then
-               call errstop(srname, 'A is not symmetric up to TOL')
-          end if
-      end if
-      end subroutine verisym
-
+#if __USE_INTRINSIC_ALGEBRA__ == 1 
+      function fake_function() result(y)
+      integer :: y
+      y = 0
+      end function fake_function
+#endif
 
 !      function outprod(x, y) result(z)
 !      ! OUTPROD calculates the outer product of X and Y, i.e., Z = XY^T

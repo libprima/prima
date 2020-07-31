@@ -55,7 +55,7 @@
       ! F is the objective function value when the algorithm exit.
       !
       ! INFO is the exit flag, which can be set to the following values
-      ! defined in infos.F:
+      ! defined in info.F:
       !
       ! SMALL_TR_RADIUS: the lower bound for the trust region radius 
       ! is reached.
@@ -78,6 +78,7 @@
       use consts_mod, only : IPRINT_DEF
       use newuob_mod, only : newuob
       use infnan_mod, only : is_nan, is_inf
+
       implicit none
       
       ! Inputs
@@ -183,8 +184,6 @@
      & .and. iprint_v /=3 .and. iprint_v /= 4) then
           iprint_v = IPRINT_DEF
       end if
-
-      iprint_v = 4
 
       call newuob (iprint_v, maxfun_v, npt_v, eta1_v, eta2_v, ftarget_v,&
      & gamma1_v, gamma2_v, rhobeg_v, rhoend_v, x, nf, f, info)

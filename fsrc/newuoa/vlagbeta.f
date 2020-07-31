@@ -9,9 +9,12 @@
 
       subroutine vlagbeta(idz, kopt, bmat, d, xopt, xpt, zmat,beta,vlag)
 
-      use consts_mod, only : RP, IK, ONE, HALF, DEBUG_MODE, SRNLEN
-      use warnerror_mod, only : errstop
-      use lina_mod
+      ! General modules
+      use consts_mod, only : RP, IK, ONE, HALF, DEBUGGING, SRNLEN
+      use debug_mod, only : errstop, verisize
+      use lina_mod, only : Ax_plus_y, xA_plus_y, xpy_dot_z
+      use lina_mod, only : dot_product, matmul
+
       implicit none
 
       ! Inputs
@@ -40,7 +43,7 @@
       n = int(size(xpt, 1), kind(n))
       npt = int(size(xpt, 2), kind(npt))
 
-      if (DEBUG_MODE) then
+      if (DEBUGGING) then
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(XPT) is invalid')
           end if
