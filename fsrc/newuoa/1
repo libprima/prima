@@ -1,54 +1,338 @@
-g95 -c -g -Wall -Wextra -fbounds-check -fimplicit-none   ../consts.F ../debug.F ../info.F ../infnan.F ../lina.F ../output.F ../prob.F initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f  ../../matlab/mex_gateways/mexapi.F ../../matlab/mex_gateways/gethuge.F ../../matlab/mex_gateways/newuoa-interface.F ../../matlab/mex_gateways/classical/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/ -pedantic
-Warning (115): Line 29 of ../debug.F is being truncated
-Warning (115): Line 72 of ../debug.F is being truncated
-Warning (115): Line 210 of ../lina.F is being truncated
-Warning (115): Line 42 of ../output.F is being truncated
-Warning (115): Line 45 of ../output.F is being truncated
-Warning (115): Line 48 of ../output.F is being truncated
-Warning (115): Line 59 of ../output.F is being truncated
-Warning (115): Line 74 of ../output.F is being truncated
-Warning (115): Line 79 of ../output.F is being truncated
-Warning (115): Line 81 of ../output.F is being truncated
-Warning (115): Line 83 of ../output.F is being truncated
-Warning (115): Line 85 of ../output.F is being truncated
-Warning (115): Line 128 of ../output.F is being truncated
-Warning (115): Line 134 of ../output.F is being truncated
-Warning (115): Line 136 of ../output.F is being truncated
-Warning (115): Line 138 of ../output.F is being truncated
-Warning (115): Line 179 of ../output.F is being truncated
-Warning (115): Line 186 of ../output.F is being truncated
-Warning (115): Line 12 of initialize.f is being truncated
-Warning (115): Line 290 of initialize.f is being truncated
-Warning (115): Line 10 of geometry.f is being truncated
-Warning (115): Line 63 of geometry.f is being truncated
-Warning (115): Line 84 of geometry.f is being truncated
-Warning (115): Line 460 of geometry.f is being truncated
-Warning (115): Line 512 of geometry.f is being truncated
-Warning (115): Line 516 of geometry.f is being truncated
-Warning (115): Line 193 of update.f is being truncated
-Warning (115): Line 239 of update.f is being truncated
-Warning (115): Line 10 of newuob.f is being truncated
-Warning (115): Line 105 of newuob.f is being truncated
-Warning (115): Line 168 of newuob.f is being truncated
-Warning (115): Line 177 of newuob.f is being truncated
-Warning (115): Line 198 of newuob.f is being truncated
-Warning (115): Line 253 of newuob.f is being truncated
-Warning (115): Line 264 of newuob.f is being truncated
-Warning (115): Line 273 of newuob.f is being truncated
-Warning (115): Line 297 of newuob.f is being truncated
-Warning (115): Line 320 of newuob.f is being truncated
-Warning (115): Line 345 of newuob.f is being truncated
-Warning (115): Line 378 of newuob.f is being truncated
-Warning (115): Line 396 of newuob.f is being truncated
-Warning (115): Line 405 of newuob.f is being truncated
-Warning (115): Line 455 of newuob.f is being truncated
-Warning (115): Line 10 of newuoa.f is being truncated
-Warning (115): Line 148 of newuoa.f is being truncated
-Warning (115): Line 162 of newuoa.f is being truncated
-Warning (115): Line 167 of newuoa.f is being truncated
-Warning (115): Line 178 of newuoa.f is being truncated
-Warning (115): Line 183 of newuoa.f is being truncated
-Warning (115): Line 188 of newuoa.f is being truncated
-Warning (115): Line 816 of ../../matlab/mex_gateways/mexapi.F is being truncated
-Warning (115): Line 821 of ../../matlab/mex_gateways/mexapi.F is being truncated
-Warning (115): Line 87 of ../../matlab/mex_gateways/newuoa-interface.F is being truncated
+af95 -c -g -m0 ../consts.F ../debug.F ../info.F ../infnan.F ../lina.F ../output.F ../prob.F initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f  ../../matlab/mex_gateways/mexapi.F ../../matlab/mex_gateways/gethuge.F ../../matlab/mex_gateways/newuoa-interface.F ../../matlab/mex_gateways/classical/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/
+Absoft COMMENT 399: CALQUAD: ../lina.F: 825, 12 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: CALQUAD: ../lina.F: 826, 12 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: CALQUAD: ../lina.F: 827, 12 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: CALQUAD: ../lina.F: 828, 12 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_2".
+Absoft COMMENT 399: CALQUAD: ../lina.F: 829, 12 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: CALQUAD: ../lina.F: 851, 11 
+  Generic interface call "MATPROD" resolved to "MATPROD12".
+Absoft COMMENT 399: CALQUAD: ../lina.F: 852, 23 
+  Generic interface call "MATPROD" resolved to "MATPROD12".
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 7 Other messages, 0 ANSI
+Absoft COMMENT 399: INITXF: initialize.f: 65, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_INT_2".
+Absoft COMMENT 399: INITXF: initialize.f: 66, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: INITXF: initialize.f: 67, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_2".
+Absoft COMMENT 399: INITXF: initialize.f: 120, 19 
+  Generic interface call "IS_NAN" resolved to "DP_IEEE_IS_NAN".
+Absoft COMMENT 399: INITXF: initialize.f: 140, 15 
+  Generic interface call "IS_POSINF" resolved to "IS_POSINF_DP".
+Absoft COMMENT 399: INITXF: initialize.f: 140, 33 
+  Generic interface call "IS_NAN" resolved to "DP_IEEE_IS_NAN".
+Absoft COMMENT 399: INITXF: initialize.f: 196, 19 
+  Generic interface call "IS_NAN" resolved to "DP_IEEE_IS_NAN".
+Absoft COMMENT 399: INITXF: initialize.f: 214, 15 
+  Generic interface call "IS_POSINF" resolved to "IS_POSINF_DP".
+Absoft COMMENT 399: INITXF: initialize.f: 214, 33 
+  Generic interface call "IS_NAN" resolved to "DP_IEEE_IS_NAN".
+Absoft COMMENT 399: INITQ: initialize.f: 268, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: INITQ: initialize.f: 269, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_INT_2".
+Absoft COMMENT 399: INITQ: initialize.f: 270, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: INITQ: initialize.f: 271, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_2".
+Absoft COMMENT 399: INITQ: initialize.f: 272, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: INITQ: initialize.f: 320, 15 
+  Generic interface call "IS_NAN" resolved to "DP_IEEE_IS_NAN".
+Absoft COMMENT 399: INITQ: initialize.f: 320, 36 
+  Generic interface call "IS_NAN" resolved to "DP_IEEE_IS_NAN".
+Absoft COMMENT 399: INITQ: initialize.f: 320, 57 
+  Generic interface call "IS_NAN" resolved to "DP_IEEE_IS_NAN".
+Absoft COMMENT 399: INITH: initialize.f: 364, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_INT_2".
+Absoft COMMENT 399: INITH: initialize.f: 365, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_2".
+Absoft COMMENT 399: INITH: initialize.f: 366, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_2".
+Absoft COMMENT 399: INITH: initialize.f: 421, 15 
+  Generic interface call "IS_NAN" resolved to "DP_IEEE_IS_NAN".
+Absoft COMMENT 399: INITH: initialize.f: 421, 38 
+  Generic interface call "IS_NAN" resolved to "DP_IEEE_IS_NAN".
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 22 Other messages, 0 ANSI
+Absoft COMMENT 399: TRSAPP: trustregion.f: 87, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: TRSAPP: trustregion.f: 88, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_2".
+Absoft COMMENT 399: TRSAPP: trustregion.f: 89, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: TRSAPP: trustregion.f: 90, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: TRSAPP: trustregion.f: 101, 29 
+  Generic interface call "MATPROD" resolved to "MATPROD21".
+Absoft COMMENT 399: TRSAPP: trustregion.f: 101, 45 
+  Generic interface call "MATPROD" resolved to "MATPROD12".
+Absoft COMMENT 399: TRSAPP: trustregion.f: 141, 29 
+  Generic interface call "MATPROD" resolved to "MATPROD21".
+Absoft COMMENT 399: TRSAPP: trustregion.f: 141, 45 
+  Generic interface call "MATPROD" resolved to "MATPROD12".
+Absoft COMMENT 399: TRSAPP: trustregion.f: 200, 24 
+  Generic interface call "IS_NAN" resolved to "DP_IEEE_IS_NAN".
+Absoft COMMENT 399: TRSAPP: trustregion.f: 233, 33 
+  Generic interface call "MATPROD" resolved to "MATPROD21".
+Absoft COMMENT 399: TRSAPP: trustregion.f: 233, 49 
+  Generic interface call "MATPROD" resolved to "MATPROD12".
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 11 Other messages, 0 ANSI
+Absoft COMMENT 399: VLAGBETA: vlagbeta.f: 50, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_2".
+Absoft COMMENT 399: VLAGBETA: vlagbeta.f: 51, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_2".
+Absoft COMMENT 399: VLAGBETA: vlagbeta.f: 52, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: VLAGBETA: vlagbeta.f: 53, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: VLAGBETA: vlagbeta.f: 54, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: VLAGBETA: vlagbeta.f: 69, 16 
+  Generic interface call "MATPROD" resolved to "MATPROD12".
+Absoft COMMENT 399: VLAGBETA: vlagbeta.f: 70, 38 
+  Generic interface call "MATPROD" resolved to "MATPROD12".
+Absoft COMMENT 399: VLAGBETA: vlagbeta.f: 73, 23 
+  Generic interface call "MATPROD" resolved to "MATPROD12".
+Absoft COMMENT 399: VLAGBETA: vlagbeta.f: 75, 12 
+  Generic interface call "MATPROD" resolved to "MATPROD12".
+Absoft COMMENT 399: VLAGBETA: vlagbeta.f: 84, 12 
+  Generic interface call "MATPROD" resolved to "MATPROD21".
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 10 Other messages, 0 ANSI
+Absoft COMMENT 399: SETREMOVE: geometry.f: 57, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: SETREMOVE: geometry.f: 58, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: SETREMOVE: geometry.f: 59, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_2".
+Absoft COMMENT 399: AMELIORGEO: geometry.f: 129, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: AMELIORGEO: geometry.f: 130, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_2".
+Absoft COMMENT 399: AMELIORGEO: geometry.f: 131, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_2".
+Absoft COMMENT 399: AMELIORGEO: geometry.f: 132, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: AMELIORGEO: geometry.f: 133, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: BIGLAG: geometry.f: 215, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: BIGLAG: geometry.f: 216, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_2".
+Absoft COMMENT 399: BIGLAG: geometry.f: 217, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_2".
+Absoft COMMENT 399: BIGLAG: geometry.f: 223, 14 
+  Generic interface call "MATPROD" resolved to "MATPROD21".
+Absoft COMMENT 399: BIGLAG: geometry.f: 230, 12 
+  Generic interface call "MATPROD" resolved to "MATPROD21".
+Absoft COMMENT 399: BIGLAG: geometry.f: 230, 30 
+  Generic interface call "MATPROD" resolved to "MATPROD12".
+Absoft COMMENT 399: BIGLAG: geometry.f: 234, 32 
+  Generic interface call "MATPROD" resolved to "MATPROD12".
+Absoft COMMENT 399: BIGLAG: geometry.f: 271, 15 
+  Generic interface call "MATPROD" resolved to "MATPROD21".
+Absoft COMMENT 399: BIGLAG: geometry.f: 271, 33 
+  Generic interface call "MATPROD" resolved to "MATPROD12".
+Absoft COMMENT 399: BIGDEN: geometry.f: 424, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: BIGDEN: geometry.f: 425, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_2".
+Absoft COMMENT 399: BIGDEN: geometry.f: 426, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_2".
+Absoft COMMENT 399: BIGDEN: geometry.f: 427, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: BIGDEN: geometry.f: 428, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: BIGDEN: geometry.f: 434, 14 
+  Generic interface call "MATPROD" resolved to "MATPROD21".
+Absoft COMMENT 399: BIGDEN: geometry.f: 453, 20 
+  Generic interface call "MATPROD" resolved to "MATPROD12".
+Absoft COMMENT 399: BIGDEN: geometry.f: 506, 20 
+  Generic interface call "MATPROD" resolved to "MATPROD12".
+Absoft COMMENT 399: BIGDEN: geometry.f: 508, 35 
+  Generic interface call "MATPROD" resolved to "MATPROD21".
+Absoft COMMENT 399: BIGDEN: geometry.f: 513, 20 
+  Generic interface call "MATPROD" resolved to "MATPROD12".
+Absoft COMMENT 399: BIGDEN: geometry.f: 516, 45 
+  Generic interface call "MATPROD" resolved to "MATPROD21".
+Absoft COMMENT 399: BIGDEN: geometry.f: 616, 18 
+  Generic interface call "MATPROD" resolved to "MATPROD21".
+Absoft COMMENT 399: BIGDEN: geometry.f: 637, 15 
+  Generic interface call "MATPROD" resolved to "MATPROD12".
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 30 Other messages, 0 ANSI
+Absoft COMMENT 399: UPDATEH: update.f: 58, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_2".
+Absoft COMMENT 399: UPDATEH: update.f: 59, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: UPDATEH: update.f: 229, 12 
+  Generic interface call "R2UPDATE" resolved to "R2".
+Absoft COMMENT 399: UPDATEQ: update.f: 276, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_2".
+Absoft COMMENT 399: UPDATEQ: update.f: 277, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: UPDATEQ: update.f: 278, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: UPDATEQ: update.f: 279, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_2".
+Absoft COMMENT 399: UPDATEQ: update.f: 284, 12 
+  Generic interface call "R1UPDATE" resolved to "R1_SYM".
+Absoft COMMENT 399: TRYQALT: update.f: 353, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: TRYQALT: update.f: 354, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_2".
+Absoft COMMENT 399: TRYQALT: update.f: 355, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_2".
+Absoft COMMENT 399: TRYQALT: update.f: 356, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_2".
+Absoft COMMENT 399: TRYQALT: update.f: 368, 18 
+  Generic interface call "MATPROD" resolved to "MATPROD21".
+Absoft COMMENT 399: TRYQALT: update.f: 380, 16 
+  Generic interface call "MATPROD" resolved to "MATPROD12".
+Absoft COMMENT 399: TRYQALT: update.f: 382, 16 
+  Generic interface call "MATPROD" resolved to "MATPROD21".
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 15 Other messages, 0 ANSI
+Absoft COMMENT 399: SHIFTBASE: shiftbase.f: 53, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: SHIFTBASE: shiftbase.f: 54, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_2".
+Absoft COMMENT 399: SHIFTBASE: shiftbase.f: 55, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_2".
+Absoft COMMENT 399: SHIFTBASE: shiftbase.f: 56, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: SHIFTBASE: shiftbase.f: 57, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_2".
+Absoft COMMENT 399: SHIFTBASE: shiftbase.f: 58, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: SHIFTBASE: shiftbase.f: 59, 16 
+  Generic interface call "VERISIZE" resolved to "VERISIZE_REAL_1".
+Absoft COMMENT 399: SHIFTBASE: shiftbase.f: 71, 30 
+  Generic interface call "MATPROD" resolved to "MATPROD12".
+Absoft COMMENT 399: SHIFTBASE: shiftbase.f: 75, 12 
+  Generic interface call "MATPROD" resolved to "MATPROD12".
+Absoft COMMENT 399: SHIFTBASE: shiftbase.f: 83, 13 
+  Generic interface call "MATPROD" resolved to "MATPROD21".
+Absoft COMMENT 399: SHIFTBASE: shiftbase.f: 87, 12 
+  Generic interface call "R2UPDATE" resolved to "R2_SYM".
+Absoft COMMENT 399: SHIFTBASE: shiftbase.f: 97, 16 
+  Generic interface call "R2UPDATE" resolved to "R2_SYM".
+Absoft COMMENT 399: SHIFTBASE: shiftbase.f: 107, 16 
+  Generic interface call "R1UPDATE" resolved to "R1".
+Absoft COMMENT 399: SHIFTBASE: shiftbase.f: 110, 16 
+  Generic interface call "R1UPDATE" resolved to "R1_SYM".
+Absoft COMMENT 399: SHIFTBASE: shiftbase.f: 117, 16 
+  Generic interface call "R1UPDATE" resolved to "R1".
+Absoft COMMENT 399: SHIFTBASE: shiftbase.f: 120, 16 
+  Generic interface call "R1UPDATE" resolved to "R1_SYM".
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 16 Other messages, 0 ANSI
+Absoft COMMENT 399: NEWUOB: newuob.f: 212, 23 
+  Generic interface call "IS_NAN" resolved to "DP_IEEE_IS_NAN".
+Absoft COMMENT 399: NEWUOB: newuob.f: 234, 19 
+  Generic interface call "IS_NAN" resolved to "DP_IEEE_IS_NAN".
+Absoft COMMENT 399: NEWUOB: newuob.f: 234, 34 
+  Generic interface call "IS_POSINF" resolved to "IS_POSINF_DP".
+Absoft COMMENT 399: NEWUOB: newuob.f: 248, 19 
+  Generic interface call "IS_NAN" resolved to "DP_IEEE_IS_NAN".
+Absoft COMMENT 399: NEWUOB: newuob.f: 415, 23 
+  Generic interface call "IS_NAN" resolved to "DP_IEEE_IS_NAN".
+Absoft COMMENT 399: NEWUOB: newuob.f: 437, 19 
+  Generic interface call "IS_NAN" resolved to "DP_IEEE_IS_NAN".
+Absoft COMMENT 399: NEWUOB: newuob.f: 437, 34 
+  Generic interface call "IS_POSINF" resolved to "IS_POSINF_DP".
+Absoft COMMENT 399: NEWUOB: newuob.f: 492, 19 
+  Generic interface call "IS_NAN" resolved to "DP_IEEE_IS_NAN".
+Absoft COMMENT 399: NEWUOB: newuob.f: 506, 11 
+  Generic interface call "IS_NAN" resolved to "DP_IEEE_IS_NAN".
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 9 Other messages, 0 ANSI
+Absoft COMMENT 399: NEWUOA: newuoa.f: 115, 14 
+  Generic interface call "IS_NAN" resolved to "DP_IEEE_IS_NAN".
+Absoft COMMENT 399: NEWUOA: newuoa.f: 143, 30 
+  Generic interface call "IS_NAN" resolved to "DP_IEEE_IS_NAN".
+Absoft COMMENT 399: NEWUOA: newuoa.f: 143, 52 
+  Generic interface call "IS_INF" resolved to "IS_INF_DP".
+Absoft COMMENT 399: NEWUOA: newuoa.f: 148, 53 
+  Generic interface call "IS_NAN" resolved to "DP_IEEE_IS_NAN".
+Absoft COMMENT 399: NEWUOA: newuoa.f: 149, 13 
+  Generic interface call "IS_INF" resolved to "IS_INF_DP".
+Absoft COMMENT 399: NEWUOA: newuoa.f: 154, 51 
+  Generic interface call "IS_NAN" resolved to "DP_IEEE_IS_NAN".
+Absoft COMMENT 399: NEWUOA: newuoa.f: 158, 53 
+  Generic interface call "IS_NAN" resolved to "DP_IEEE_IS_NAN".
+Absoft COMMENT 399: NEWUOA: newuoa.f: 163, 8 
+  Generic interface call "IS_NAN" resolved to "DP_IEEE_IS_NAN".
+Absoft COMMENT 399: NEWUOA: newuoa.f: 167, 35 
+  Generic interface call "IS_NAN" resolved to "DP_IEEE_IS_NAN".
+Absoft COMMENT 399: NEWUOA: newuoa.f: 168, 8 
+  Generic interface call "IS_INF" resolved to "IS_INF_DP".
+Absoft COMMENT 399: NEWUOA: newuoa.f: 172, 11 
+  Generic interface call "IS_NAN" resolved to "DP_IEEE_IS_NAN".
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 11 Other messages, 0 ANSI
+Absoft COMMENT 399: READ_RVECTOR: ../../matlab/mex_gateways/mexapi.F: 539, 12 
+  Generic interface call "FMXALLOCATE" resolved to "ALLOC_RVECTOR_DP".
+Absoft COMMENT 399: READ_RVECTOR: ../../matlab/mex_gateways/mexapi.F: 540, 12 
+  Generic interface call "FMXALLOCATE" resolved to "ALLOC_RVECTOR_DP".
+Absoft COMMENT 399: READ_RMATRIX: ../../matlab/mex_gateways/mexapi.F: 588, 12 
+  Generic interface call "FMXALLOCATE" resolved to "ALLOC_RMATRIX_DP".
+Absoft COMMENT 399: READ_RMATRIX: ../../matlab/mex_gateways/mexapi.F: 589, 12 
+  Generic interface call "FMXALLOCATE" resolved to "ALLOC_RMATRIX_DP".
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 4 Other messages, 0 ANSI
+Absoft COMMENT 399: MEXFUNCTION: ../../matlab/mex_gateways/gethuge.F: 128, 12 
+  Generic interface call "FMXWRITEMPTR" resolved to "WRITE_RSCALAR".
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 1 Other messages, 0 ANSI
+Absoft COMMENT 399: MEXFUNCTION: ../../matlab/mex_gateways/newuoa-interface.F: 69, 12 
+  Generic interface call "FMXREADMPTR" resolved to "READ_RVECTOR".
+Absoft COMMENT 399: MEXFUNCTION: ../../matlab/mex_gateways/newuoa-interface.F: 70, 12 
+  Generic interface call "FMXREADMPTR" resolved to "READ_RSCALAR".
+Absoft COMMENT 399: MEXFUNCTION: ../../matlab/mex_gateways/newuoa-interface.F: 71, 12 
+  Generic interface call "FMXREADMPTR" resolved to "READ_RSCALAR".
+Absoft COMMENT 399: MEXFUNCTION: ../../matlab/mex_gateways/newuoa-interface.F: 72, 12 
+  Generic interface call "FMXREADMPTR" resolved to "READ_RSCALAR".
+Absoft COMMENT 399: MEXFUNCTION: ../../matlab/mex_gateways/newuoa-interface.F: 73, 12 
+  Generic interface call "FMXREADMPTR" resolved to "READ_RSCALAR".
+Absoft COMMENT 399: MEXFUNCTION: ../../matlab/mex_gateways/newuoa-interface.F: 74, 12 
+  Generic interface call "FMXREADMPTR" resolved to "READ_RSCALAR".
+Absoft COMMENT 399: MEXFUNCTION: ../../matlab/mex_gateways/newuoa-interface.F: 75, 12 
+  Generic interface call "FMXREADMPTR" resolved to "READ_RSCALAR".
+Absoft COMMENT 399: MEXFUNCTION: ../../matlab/mex_gateways/newuoa-interface.F: 76, 12 
+  Generic interface call "FMXREADMPTR" resolved to "READ_RSCALAR".
+Absoft COMMENT 399: MEXFUNCTION: ../../matlab/mex_gateways/newuoa-interface.F: 77, 12 
+  Generic interface call "FMXREADMPTR" resolved to "READ_ISCALAR".
+Absoft COMMENT 399: MEXFUNCTION: ../../matlab/mex_gateways/newuoa-interface.F: 78, 12 
+  Generic interface call "FMXREADMPTR" resolved to "READ_ISCALAR".
+Absoft COMMENT 399: MEXFUNCTION: ../../matlab/mex_gateways/newuoa-interface.F: 79, 12 
+  Generic interface call "FMXREADMPTR" resolved to "READ_ISCALAR".
+Absoft COMMENT 399: MEXFUNCTION: ../../matlab/mex_gateways/newuoa-interface.F: 83, 12 
+  Generic interface call "FMXALLOCATE" resolved to "ALLOC_RVECTOR_DP".
+Absoft COMMENT 399: MEXFUNCTION: ../../matlab/mex_gateways/newuoa-interface.F: 91, 12 
+  Generic interface call "FMXWRITEMPTR" resolved to "WRITE_RVECTOR".
+Absoft COMMENT 399: MEXFUNCTION: ../../matlab/mex_gateways/newuoa-interface.F: 92, 12 
+  Generic interface call "FMXWRITEMPTR" resolved to "WRITE_RSCALAR".
+Absoft COMMENT 399: MEXFUNCTION: ../../matlab/mex_gateways/newuoa-interface.F: 93, 12 
+  Generic interface call "FMXWRITEMPTR" resolved to "WRITE_ISCALAR".
+Absoft COMMENT 399: MEXFUNCTION: ../../matlab/mex_gateways/newuoa-interface.F: 94, 12 
+  Generic interface call "FMXWRITEMPTR" resolved to "WRITE_ISCALAR".
+Absoft COMMENT 399: MEXFUNCTION: ../../matlab/mex_gateways/newuoa-interface.F: 95, 12 
+  Generic interface call "FMXWRITEMPTR" resolved to "WRITE_RVECTOR".
+Absoft COMMENT 399: CALFUN: ../../matlab/mex_gateways/newuoa-interface.F: 132, 12 
+  Generic interface call "FMXWRITEMPTR" resolved to "WRITE_RVECTOR".
+Absoft COMMENT 399: CALFUN: ../../matlab/mex_gateways/newuoa-interface.F: 147, 12 
+  Generic interface call "FMXREADMPTR" resolved to "READ_RSCALAR".
+Absoft COMMENT 399: CALFUN: ../../matlab/mex_gateways/newuoa-interface.F: 150, 33 
+  Generic interface call "IS_NAN" resolved to "DP_IEEE_IS_NAN".
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 20 Other messages, 0 ANSI
+This demonstration copy of Absoft Pro Fortran expires 08/28/20.

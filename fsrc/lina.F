@@ -5,8 +5,8 @@
 ! sizes of the matrices/vectors.
 
 ! N.B.
-! When implementing the code by MATLAB, Python, ..., not the following.
-! 1. one should following the implementation with
+! When implementing the code by MATLAB, Python, ..., note the following.
+! 1. We should following the implementation with
 !    __USE_POWELL_ALGEBRA__ == 0, which uses matrix/vector operations
 !    instead of loops.
 ! 2. We should not implement the code in subroutines/functions but
@@ -54,10 +54,12 @@
       ! where A is an NxN matrix, ALPHA is a scalar, and X is an
       ! N-dimenional vector.
       use consts_mod, only : RP, IK, ONE, ZERO
+
 #if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
       use debug_mod, only : errstop, verisym
 #endif
+
       implicit none
       real(RP), intent(in) :: alpha
       real(RP), intent(in) :: x(:)
@@ -119,10 +121,12 @@
       ! where A is an MxN matrix, ALPHA is a real scalar, X is an
       ! M-dimenional vector, and Y is an N-dimenional vector.
       use consts_mod, only : RP, IK, ONE, ZERO
+
 #if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
       use debug_mod, only : errstop
 #endif
+
       implicit none
       real(RP), intent(in) :: alpha
       real(RP), intent(in) :: x(:)
@@ -179,10 +183,12 @@
       ! where A is an NxN matrix, X and Y are N-dimenional vectors, and
       ! alpha is a sclalar.
       use consts_mod, only : RP, IK, ONE, ZERO
+
 #if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
       use debug_mod, only : errstop, verisym
 #endif
+
       implicit none
       real(RP), intent(in) :: alpha
       real(RP), intent(in) :: x(:)
@@ -243,10 +249,12 @@
       ! where A is an MxN matrix, ALPHA and BETA are real scalars, X and
       ! U are M-dimenional vectors, Y and V are N-dimenional vectors.
       use consts_mod, only : RP, IK, ONE, ZERO
+
 #if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
       use debug_mod, only : errstop
 #endif
+
       implicit none
       real(RP), intent(in) :: alpha
       real(RP), intent(in) :: beta
@@ -307,6 +315,7 @@
 
 
       function matprod12(x, y) result(z)
+
 #if __USE_INTRINSIC_ALGEBRA__ == 1
       use consts_mod, only : RP
 #else
@@ -322,6 +331,7 @@
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:, :)
       real(RP) :: z(size(y, 2))
+
 #if __USE_INTRINSIC_ALGEBRA__ == 0
       integer(IK) :: j
 #endif
@@ -349,11 +359,13 @@
 
 
       function matprod21(x, y) result(z)
+
 #if __USE_INTRINSIC_ALGEBRA__ == 1
       use consts_mod, only : RP
 #else
       use consts_mod, only : RP, IK, ZERO
 #endif
+
 #if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
       use debug_mod, only : errstop
@@ -367,6 +379,7 @@
 #if __USE_INTRINSIC_ALGEBRA__ == 0
       integer(IK) :: j
 #endif
+
 #if __DEBUGGING__ == 1
       character(len = SRNLEN), parameter :: srname = 'MATPROD21'
       if (size(x, 2) /= size(y)) then
@@ -386,15 +399,18 @@
 
 
       function matprod22(x, y) result(z)
+
 #if __USE_INTRINSIC_ALGEBRA__ == 1
       use consts_mod, only : RP
 #else
       use consts_mod, only : RP, IK, ZERO
 #endif
+
 #if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
       use debug_mod, only : errstop
 #endif
+
       implicit none
       real(RP), intent(in) :: x(:, :)
       real(RP), intent(in) :: y(:, :)
@@ -403,6 +419,7 @@
 #if __USE_INTRINSIC_ALGEBRA__ == 0
       integer(IK) :: i, j
 #endif
+
 #if __DEBUGGING__ == 1
       character(len = SRNLEN), parameter :: srname = 'MATPROD22'
       if (size(x, 2) /= size(y, 1)) then
@@ -424,6 +441,7 @@
 
 
       function inprod(x, y) result(z)
+
 #if __USE_INTRINSIC_ALGEBRA__ == 1
       use consts_mod, only : RP
 #else
@@ -443,6 +461,7 @@
 #if __USE_INTRINSIC_ALGEBRA__ == 0
       integer(IK) :: i
 #endif
+
 #if __DEBUGGING__ == 1
       character(len = SRNLEN), parameter :: srname = 'INPROD'
       if (size(x) /= size(y)) then
@@ -479,10 +498,12 @@
       ! new column J = -S*A(:, I) + C*A(:, J)
 
       use consts_mod, only : IK, RP, ZERO
+
 #if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
       use debug_mod, only : errstop
 #endif
+
       implicit none
       integer(IK), intent(in) :: i
       integer(IK), intent(in) :: j
@@ -513,6 +534,7 @@
           A(:, i) =  c*Ai + s*A(:, j)
           A(:, j) = -s*Ai + c*A(:, j)
           A(k, j) = ZERO
+
 #if __USE_POWELL_ALGEBRA__ == 0
           A(k, i) = r  ! A(K, I) = R in precise arithmetic
       else if (A(k, i) < ZERO) then
@@ -530,6 +552,7 @@
       ! SYMMETRIZE(A) symmetrizes A.
       ! Here, we assume that A is a matrix that is symmetric in precise
       ! arithmetic, and its asymetry comes only from rounding errors.
+
 #if __USE_POWELL_ALGEBRA__ == 1
       use consts_mod, only : RP, IK
 #else
@@ -575,9 +598,11 @@
       ! t = (x+y)'*z
 
       use consts_mod, only : RP
+
 #if __USE_POWELL_ALGEBRA__ == 1
       use consts_mod, only : IK, ZERO
 #endif
+
 #if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
       use debug_mod, only : errstop
@@ -616,9 +641,11 @@
       ! t = x'*y + a
 
       use consts_mod, only : RP
+
 #if __USE_POWELL_ALGEBRA__ == 1
       use consts_mod, only : IK
 #endif
+
 #if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
       use debug_mod, only : errstop
@@ -656,9 +683,11 @@
       ! z = A*x + y
 
       use consts_mod, only : RP
+
 #if __USE_POWELL_ALGEBRA__ == 1
       use consts_mod, only : IK
 #endif
+
 #if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
       use debug_mod, only : errstop
@@ -699,9 +728,11 @@
       ! z = (x'*A)' + y
 
       use consts_mod, only : RP
+
 #if __USE_POWELL_ALGEBRA__ == 1
       use consts_mod, only : IK
 #endif
+
 #if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
       use debug_mod, only : errstop
@@ -777,6 +808,7 @@
 
       ! Intermediate variable
       real(RP) :: s(size(x))
+
 #if __USE_POWELL_ALGEBRA__ == 1
       real(RP) :: w(size(pq)), t
       integer(IK) :: i, ih, j

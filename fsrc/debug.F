@@ -43,11 +43,9 @@
       implicit none
 #if __DEBUGGING__ == 1 
 
-#ifdef __GFORTRAN__
+#if defined __GFORTRAN__
       call backtrace()
-#endif
-
-#ifdef __INTEL_COMPILER
+#elif defined __INTEL_COMPILER
       call tracebackqq()
 #endif
 
