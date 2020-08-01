@@ -1,6 +1,6 @@
 ! LINA is a module providing some basic linear algebra procedures.
-! To improve the performance of these procedures, especially matprod, one
-! can customize their implementations, according to the resources
+! To improve the performance of these procedures, especially matprod, 
+! one can customize their implementations, according to the resources
 ! (hardware, e.g., cache, and libraries, e.g., BLAS) available and the
 ! sizes of the matrices/vectors.
 

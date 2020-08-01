@@ -1,22 +1,31 @@
+      
+      program test
 
-        module overload
+      use act_mod
+      implicit none
 
-        interface sqrt
-            module procedure char_sqrt
-        end interface
+      interface 
+        subroutine calfun(f, x, y)
 
-        contains
+      integer, intent(in) :: x
+      integer, intent(in) ::y 
+      integer, intent(out) :: f
+        end subroutine
 
-        function char_sqrt (x)
-        real :: char_sqrt
-        character(*), intent(in) :: x
-        real :: xr
-        read (x,*) xr
-        char_sqrt = sqrt(xr)
-        end function char_sqrt
-        end module overload
+      end interface 
 
-        program test
-        use overload, only : sqrt
-        print *, sqrt('2.0'), sqrt(2.0)
-        end program test 
+       
+
+      call act(calfun, 10)
+      
+
+      end program
+
+      subroutine calfun(f, x, y)
+      integer, intent(in) :: x
+      integer, intent(in) ::y 
+      integer, intent(out) :: f
+
+      f = x-y
+
+      end subroutine

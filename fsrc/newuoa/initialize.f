@@ -20,6 +20,7 @@
       use info_mod, only : FTARGET_ACHIEVED, NAN_X, NAN_INF_F
       use infnan_mod, only : is_nan, is_posinf
       use output_mod, only : fmssg
+      use prob_mod, only : calfun
 
       implicit none
 
@@ -122,7 +123,7 @@
               npt_r = 0 
               exit
           end if
-          call calfun(n, xtemp, f)
+          call calfun(xtemp, f)
           evaluated(k) = .true.
           fval(k) = f
 
@@ -197,7 +198,7 @@
               info = NaN_X
               exit
           end if
-          call calfun(n, xtemp, f)
+          call calfun(xtemp, f)
           evaluated(k) = .true.
           fval(k) = f
 
