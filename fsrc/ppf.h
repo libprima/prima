@@ -29,7 +29,7 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 #ifdef __DEBUGGING__
 #undef __DEBUGGING__
 #endif
-#define __DEBUGGING__ 1 
+#define __DEBUGGING__ 0 
 /*************************************************************************/
 
 
@@ -39,7 +39,7 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 #ifdef __USE_INTRINSIC_ALGEBRA__
 #undef __USE_INTRINSIC_ALGEBRA__
 #endif
-#define __USE_INTRINSIC_ALGEBRA__ 0 
+#define __USE_INTRINSIC_ALGEBRA__ 1 
 /*************************************************************************/
 
 
@@ -65,7 +65,7 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 #ifdef __INTEGER_KIND__
 #undef __INTEGER_KIND__
 #endif
-#define __INTEGER_KIND__ 0 
+#define __INTEGER_KIND__ 16 
 /*************************************************************************/
 
 
