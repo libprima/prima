@@ -29,7 +29,7 @@
       character(len = *), intent(in) :: solver
 
       ! Intermediate variables
-      integer(IK) :: ios
+      integer :: ios  ! Should be an integer of default kind
       character(len = 200) :: mssg
       character(len = 100) :: fout
       character(len = 3) :: fstat
@@ -104,7 +104,7 @@
       character(len = *), intent(in) :: solver
 
       ! Intermediate variables
-      integer(IK) :: ios
+      integer :: ios  ! Should be an integer of default kind
       character(len = 100) :: fout
       character(len = 3) :: fstat
       logical :: fexist
@@ -156,7 +156,7 @@
       character(len = *), intent(in) :: solver
 
       ! Intermediate variables
-      integer(IK) :: ios
+      integer :: ios  ! Should be an integer of default kind
       character(len = 100) :: fout
       character(len = 3) :: fstat
       logical :: fexist

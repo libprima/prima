@@ -363,7 +363,7 @@
       real(SP), allocatable, intent(out) :: x(:)
 
       ! Intermediate variable
-      integer(IK) :: alloc_status
+      integer :: alloc_status
       
       ! Deallocate X if X is allocated. This is necessary. 
       if (allocated(x)) then
@@ -395,7 +395,7 @@
       real(SP), allocatable, intent(out) :: x(:, :)
 
       ! Intermediate variable
-      integer(IK) :: alloc_status
+      integer :: alloc_status
       
       ! Deallocate X if X is allocated. This is necessary. 
       if (allocated(x)) then
@@ -426,7 +426,7 @@
       real(DP), allocatable, intent(out) :: x(:)
 
       ! Intermediate variable
-      integer(IK) :: alloc_status
+      integer :: alloc_status
       
       ! Deallocate X if X is allocated. This is necessary. 
       if (allocated(x)) then
@@ -458,7 +458,7 @@
       real(DP), allocatable, intent(out) :: x(:, :)
 
       ! Intermediate variable
-      integer(IK) :: alloc_status
+      integer :: alloc_status
       
       ! Deallocate X if X is allocated. This is necessary. 
       if (allocated(x)) then
