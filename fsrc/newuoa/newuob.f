@@ -10,6 +10,33 @@
       subroutine newuob(iprint, maxfun, npt, eta1, eta2, ftarget,       &
      & gamma1, gamma2, rhobeg, rhoend, x, nf, f, info)
 
+      ! The arguments N, NPT, X, RHOBEG, RHOEND, IPRINT and MAXFUN are
+      ! identical to the corresponding arguments in SUBROUTINE NEWUOA.
+      ! XBASE will hold a shift of origin that should reduce the
+      ! contributions from rounding errors to values of the model and
+      ! Lagrange functions.
+      ! XOPT will be set to the displacement from XBASE of the vector of
+      ! variables that provides the least calculated F so far.
+      ! XNEW will be set to the displacement from XBASE of the vector of
+      ! variables for the current calculation of F.
+      ! XPT will contain the interpolation point coordinates relative to
+      ! XBASE, each COLUMN corresponding to a point.
+      ! FVAL will hold the values of F at the interpolation points.
+      ! GQ will hold the gradient of the quadratic model at XBASE.
+      ! HQ will hold the explicit second order derivatives of the
+      ! quadratic model.
+      ! PQ will contain the parameters of the implicit second order
+      ! derivatives of the quadratic model.
+      ! BMAT will hold the last N ROWs of H. ZMAT will hold the
+      ! factorization of the leading NPT by NPT sub-matrix of H, this
+      ! factorization being ZMAT times Diag(DZ) times ZMAT^T, where the
+      ! elements of DZ are plus or minus one, as specified by IDZ.
+      ! NDIM is the second dimension of BMAT and has the value NPT + N.
+      ! D is reserved for trial steps from XOPT.
+      ! VLAG will contain the values of the Lagrange functions at a new
+      ! point X. They are part of a product that requires VLAG to be of
+      ! length NDIM = NPT+N.
+
       ! General modules
       use consts_mod, only : RP, IK, ZERO, HALF, TENTH, HUGENUM
       use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED
@@ -19,6 +46,7 @@
       use output_mod, only : retmssg, rhomssg, fmssg
       use lina_mod, only : calquad
       use lina_mod, only : inprod
+      use prob_mod, only : calfun
 
       ! Solver-specific modules
       use initialize_mod, only : initxf, initq, inith
@@ -66,32 +94,6 @@
       logical :: terminate, improve_geometry, reduce_rho, shortd
       character(len = 6), parameter :: solver= 'NEWUOA'
 
-      ! The arguments N, NPT, X, RHOBEG, RHOEND, IPRINT and MAXFUN are
-      ! identical to the corresponding arguments in SUBROUTINE NEWUOA.
-      ! XBASE will hold a shift of origin that should reduce the
-      ! contributions from rounding errors to values of the model and
-      ! Lagrange functions.
-      ! XOPT will be set to the displacement from XBASE of the vector of
-      ! variables that provides the least calculated F so far.
-      ! XNEW will be set to the displacement from XBASE of the vector of
-      ! variables for the current calculation of F.
-      ! XPT will contain the interpolation point coordinates relative to
-      ! XBASE, each COLUMN corresponding to a point.
-      ! FVAL will hold the values of F at the interpolation points.
-      ! GQ will hold the gradient of the quadratic model at XBASE.
-      ! HQ will hold the explicit second order derivatives of the
-      ! quadratic model.
-      ! PQ will contain the parameters of the implicit second order
-      ! derivatives of the quadratic model.
-      ! BMAT will hold the last N ROWs of H. ZMAT will hold the
-      ! factorization of the leading NPT by NPT sub-matrix of H, this
-      ! factorization being ZMAT times Diag(DZ) times ZMAT^T, where the
-      ! elements of DZ are plus or minus one, as specified by IDZ.
-      ! NDIM is the second dimension of BMAT and has the value NPT + N.
-      ! D is reserved for trial steps from XOPT.
-      ! VLAG will contain the values of the Lagrange functions at a new
-      ! point X. They are part of a product that requires VLAG to be of
-      ! length NDIM = NPT+N.
 
       ! Get size.
       n = int(size(x), kind(n))
@@ -212,7 +214,7 @@
                   info = NAN_X
                   exit
               end if
-              call calfun(n, x, f)
+              call calfun(x, f)
               nf = int(nf + 1, kind(nf))
               if (iprint >= 3) then
                   call fmssg(iprint, nf, f, x, solver)
@@ -415,7 +417,7 @@
                   info = NAN_X
                   exit
               end if
-              call calfun(n, x, f)
+              call calfun(x, f)
               nf = int(nf + 1, kind(nf))
               if (iprint >= 3) then
                   call fmssg(iprint, nf, f, x, solver)
@@ -491,7 +493,7 @@
               f = sum(x)  ! Set F to NaN. It is necessary.
               info = NAN_X
           else
-              call calfun(n, x, f)
+              call calfun(x, f)
               nf = int(nf + 1, kind(nf))
               if (iprint >= 3) then
                   call fmssg(iprint, nf, f, x, solver)

@@ -21,10 +21,10 @@ C substitution), some lines may become too long and hence get truncated
 
 #include "fintrf.h"
 
-C Use mxGetDoubles instead of mxGetPr if possible, the former being
-C available since MATLAB R2018b. The following macros should be put
-C after the header "fintrf.h" is included, because mxGetDoubles is
-C defined in it. MX_GET_DBLE gets the pointer pointing to a real array.
+! Use mxGetDoubles instead of mxGetPr if possible, the former being
+! available since MATLAB R2018b. The following macros should be put
+! after the header "fintrf.h" is included, because mxGetDoubles is
+! defined in it. MX_GET_DBLE gets the pointer pointing to a real array.
 #ifdef MX_GET_DBLE
 #undef MX_GET_DBLE
 #endif
@@ -80,7 +80,14 @@ C [xopt, fopt, info, nf, fhist] = FUNCTION_NAME(fun, x0, rhobeg, rhoend, maxfun,
 
       use consts_mod, only : DP
       use fnewuoa_mod, only : fun_ptr, nf, fhist, NEWUOA
-      use mexapi_mod
+      use mexapi_mod, only : mwOne, notComplex
+      use mexapi_mod, only : mxGetM, mxGetN, MX_GET_DBLE
+      use mexapi_mod, only : mxIsDouble, mxIsClass
+      use mexapi_mod, only : mexErrMsgIdAndTxt
+      use mexapi_mod, only : mxCopyReal8ToPtr, mxCopyPtrToReal8
+      use mexapi_mod, only : mxCreateDoubleScalar
+      use mexapi_mod, only : mxCreateDoubleMatrix
+
       implicit none
 
 C mexFunction arguments (dummy variables):
@@ -268,7 +275,14 @@ C The Fortran subroutine that evaluates the objective function
       subroutine calfun(n, x, funval)
       use fnewuoa_mod, only : fun_ptr, nf, fhist
       use consts_mod, only : DP
-      use mexapi_mod
+      use mexapi_mod, only : mwOne, intOne, intTwo, notComplex
+      use mexapi_mod, only : MX_GET_DBLE
+      use mexapi_mod, only : mexErrMsgIdAndTxt, mexCallMATLAB
+      use mexapi_mod, only : mxCopyReal8ToPtr, mxCopyPtrToReal8
+      use mexapi_mod, only : mxCreateDoubleScalar
+      use mexapi_mod, only : mxCreateDoubleMatrix
+      use mexapi_mod, only : mxDestroyArray
+
       implicit none
 
 C Dummy variables

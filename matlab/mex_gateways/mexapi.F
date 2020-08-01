@@ -137,117 +137,117 @@
 
           ! MEX subroutines
           subroutine mexErrMsgIdAndTxt(errorid, errormsg)
-              implicit none
-              character*(*), intent(in) ::  errorid, errormsg
+          implicit none
+          character*(*), intent(in) ::  errorid, errormsg
           end subroutine mexErrMsgIdAndTxt
-    
+
           subroutine  mxCopyPtrToReal8(px, y, n)
-              use consts_mod, only : DP
-              implicit none
-              mwPointer, intent(in) :: px
-              mwSize, intent(in) :: n
-              real(DP), intent(out) :: y(n)
+          use consts_mod, only : DP
+          implicit none
+          mwPointer, intent(in) :: px
+          mwSize, intent(in) :: n
+          real(DP), intent(out) :: y(n)
           end subroutine mxCopyPtrToReal8
-    
+
           subroutine mxCopyReal8ToPtr(y, px, n)
-              use consts_mod, only : DP
-              implicit none
-              mwPointer, intent(in) :: px
-              mwSize, intent(in) :: n
-              real(DP), intent(in) :: y(n)
+          use consts_mod, only : DP
+          implicit none
+          mwPointer, intent(in) :: px
+          mwSize, intent(in) :: n
+          real(DP), intent(in) :: y(n)
           end subroutine mxCopyReal8ToPtr
-    
+
           subroutine mxDestroyArray(pm)
-              implicit none
-              mwPointer, intent(in) :: pm
+          implicit none
+          mwPointer, intent(in) :: pm
           end subroutine mxDestroyArray
-    
-    
-          ! MEX functions
+
+
+      ! MEX functions
           function mexCallMATLAB(nargout, poutput, nargin,              &
      &     pinput, functionName)
-              use consts_mod, only : INT32
-              implicit none
-              integer(INT32) :: mexCallMATLAB
-              integer(INT32), intent(in) :: nargout, nargin
-              ! N.B.: 
-              ! Segmentation Fault will occur if we write poutput(:)
-              ! or pinput(:) 
-              mwPointer, intent(in) :: pinput(*)
-              mwPointer, intent(out) ::  poutput(*) 
-              character*(*), intent(in) :: functionName
+          use consts_mod, only : INT32
+          implicit none
+          integer(INT32) :: mexCallMATLAB
+          integer(INT32), intent(in) :: nargout, nargin
+          ! N.B.: 
+          ! Segmentation Fault will occur if we write poutput(:)
+          ! or pinput(:) 
+          mwPointer, intent(in) :: pinput(*)
+          mwPointer, intent(out) ::  poutput(*) 
+          character*(*), intent(in) :: functionName
           end function mexCallMATLAB
 
           function mxCreateDoubleMatrix(m, n, ComplexFlag)
-              use consts_mod, only : INT32
-              implicit none
-              mwPointer :: mxCreateDoubleMatrix
-              mwSize, intent(in) :: m, n
-              integer(INT32), intent(in) :: ComplexFlag
+          use consts_mod, only : INT32
+          implicit none
+          mwPointer :: mxCreateDoubleMatrix
+          mwSize, intent(in) :: m, n
+          integer(INT32), intent(in) :: ComplexFlag
           end function mxCreateDoubleMatrix
-    
+
           function mxCreateDoubleScalar(x)
-              use consts_mod, only : DP
-              implicit none
-              mwPointer :: mxCreateDoubleScalar
-              real(DP), intent(in) :: x
+          use consts_mod, only : DP
+          implicit none
+          mwPointer :: mxCreateDoubleScalar
+          real(DP), intent(in) :: x
           end function mxCreateDoubleScalar
-    
+
           function mxGetDoubles(pa)
-              implicit none
-              mwPointer :: mxGetDoubles                  
-              mwPointer, intent(in) :: pa
+          implicit none
+          mwPointer :: mxGetDoubles                  
+          mwPointer, intent(in) :: pa
           end function mxGetDoubles
-    
+
           function mxGetM(pm)
-              implicit none
-              ! The type of mxGetM/N is mwPointer according to MATLAB
-              ! R2020a documentation. Shouldn't it be mwSize?
-              mwPointer :: mxGetM  
-              mwPointer, intent(in) :: pm
+          implicit none
+          ! The type of mxGetM/N is mwPointer according to MATLAB
+          ! R2020a documentation. Shouldn't it be mwSize?
+          mwPointer :: mxGetM  
+          mwPointer, intent(in) :: pm
           end function mxGetM
-    
+
           function mxGetN(pm)
-              implicit none
-              mwPointer :: mxGetN
-              mwPointer, intent(in) :: pm
+          implicit none
+          mwPointer :: mxGetN
+          mwPointer, intent(in) :: pm
           end function mxGetN
 
           function mxGetPr(pa)
-              implicit none
-              mwPointer :: mxGetPr                  
-              mwPointer, intent(in) :: pa
+          implicit none
+          mwPointer :: mxGetPr                  
+          mwPointer, intent(in) :: pa
           end function mxGetPr
 
           function mxGetString(pm, str, strlen)
-              use consts_mod, only : INT32
-              implicit none
-              integer(INT32) :: mxGetString
-              mwPointer, intent(in) :: pm
-              character*(*), intent(out) :: str
-              mwSize, intent(in) :: strlen
+          use consts_mod, only : INT32
+          implicit none
+          integer(INT32) :: mxGetString
+          mwPointer, intent(in) :: pm
+          character*(*), intent(out) :: str
+          mwSize, intent(in) :: strlen
           end function mxGetString
 
           function mxIsClass(pm, classname)
-              use consts_mod, only : INT32
-              implicit none
-              integer(INT32) :: mxIsClass
-              mwPointer, intent(in) :: pm
-              character*(*), intent(in) :: classname
+          use consts_mod, only : INT32
+          implicit none
+          integer(INT32) :: mxIsClass
+          mwPointer, intent(in) :: pm
+          character*(*), intent(in) :: classname
           end function mxIsClass
 
           function mxIsChar(pm)
-              use consts_mod, only : INT32
-              implicit none
-              integer(INT32) :: mxIsChar
-              mwPointer, intent(in) :: pm
+          use consts_mod, only : INT32
+          implicit none
+          integer(INT32) :: mxIsChar
+          mwPointer, intent(in) :: pm
           end function mxIsChar
 
           function mxIsDouble(pm)
-              use consts_mod, only : INT32
-              implicit none
-              integer(INT32) :: mxIsDouble
-              mwPointer, intent(in) :: pm
+          use consts_mod, only : INT32
+          implicit none
+          integer(INT32) :: mxIsDouble
+          mwPointer, intent(in) :: pm
           end function mxIsDouble
     
       end interface

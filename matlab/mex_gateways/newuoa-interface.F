@@ -104,13 +104,14 @@
 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! The Fortran subroutine that evaluates the objective function
-      subroutine calfun(n, x, funval)
+      subroutine calfun(x, funval)
 
       ! General modules
-      use consts_mod, only : RP, IK, HUGEFUN
+      use consts_mod, only : RP, HUGEFUN
       use infnan_mod, only : is_nan
       use mexapi_mod, only : mxGetM, mxGetN, mxIsDouble
       use mexapi_mod, only : mxDestroyArray
+      use mexapi_mod, only : mexErrMsgIdAndTxt
       use mexapi_mod, only : fmxReadMPtr, fmxWriteMPtr, fmxCallMATLAB
 
       ! Solver-specific module
@@ -119,8 +120,7 @@
       implicit none
 
       ! Inputs
-      integer(IK), intent(in) :: n
-      real(RP), intent(in) :: x(n)
+      real(RP), intent(in) :: x(:)
 
       ! Output
       real(RP), intent(out) :: funval

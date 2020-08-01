@@ -217,7 +217,7 @@ try
 
 
     % Compilation of function gethuge
-    obj_files = [files_with_wildcard(gateways, '*.o'), files_with_wildcard(gateways, '*.obj')];
+    obj_files = [files_with_wildcard(interfaces_private, '*.o'), files_with_wildcard(interfaces_private, '*.obj')];
     mex(mex_options{:}, '-output', 'gethuge', obj_files{:}, fullfile(gateways, 'gethuge.F'));
 
     for isol = 1 : length(solver_list)

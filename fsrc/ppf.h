@@ -3,7 +3,7 @@
 ppf.h defines the following preprocessing flags (the first value is default). 
 
 __DEBUGGING__               debug or not: 0, 1
-__USE_INTRINSIC_ALGEBRA__   use intrinsic procedures like matmul or not: 1, 0
+__USE_INTRINSIC_ALGEBRA__   use intrinsic procedures like matmul or not: 0, 1 
 __USE_POWELL_ALGEBRA__      use Powell's linear algebra procedures or not: 0, 1 
 __INTEGER_KIND__            the integer kind to be used: 0, 32, 16, 64
 __REAL_PRECISION__          the real precision to be used: 64, 32, 128, 0 
@@ -60,7 +60,7 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 
 /*************************************************************************/
 /* Which integer kind to use? 
- * 0 = default INtEGER, 16 = INTEGER*2, 32 = INTEGER*4, 64 = INTEGER*8. 
+ * 0 = default INTEGER, 16 = INTEGER*2, 32 = INTEGER*4, 64 = INTEGER*8. 
  * Make sure that your compiler supports the selected kind. */
 #ifdef __INTEGER_KIND__
 #undef __INTEGER_KIND__
