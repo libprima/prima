@@ -137,9 +137,9 @@
       ! Verify the class and shape of outputs. Indeed, fmxReadMPtr
       ! does also the verification. We do it here in order to print a 
       ! more informative error message when the verification fails.
-      if (mxGetM(poutput(1))*mxGetN(poutput(1)) /= 1
+      if (mxGetM(poutput(1))*mxGetN(poutput(1)) /= 1                    &
      &    .or. mxIsDouble(poutput(1)) /= 1) then
-           call mexErrMsgIdAndTxt('fnewuoa:ObjectiveNotScalar',
+           call mexErrMsgIdAndTxt('fnewuoa:ObjectiveNotScalar',         &
      & 'fnewuoa: The objective function should return a scalar value.')
       end if
 

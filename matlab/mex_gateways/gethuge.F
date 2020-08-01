@@ -44,7 +44,7 @@
       ! Variables
       mwSize :: cols ! Size of the input
       ! The largest length of the input string. 
-      integer, parameter :: maxlen = 100 
+      integer, parameter :: maxlen = 50 
       ! The input string, which specifies the data type
       character(len=maxlen) :: data_type
       ! Integer zero used by the Fortran code
@@ -66,8 +66,12 @@
 
       ! Get the input string.
       cols = int(mxGetN(pinput(1)), kind(cols))
+      if (cols > maxlen) then
+          call mexErrMsgIdAndTxt ('gethuge:InvalidInput',               &
+     &    'gethuge: The input is too long.')
+      end if
       if (mxGetString(pinput(1), data_type, cols) /= 0) then
-          call mexErrMsgIdAndTxt ('gethuge:GetInputFail',
+          call mexErrMsgIdAndTxt ('gethuge:GetInputFail',               &
      &    'gethuge: Fail to get the input.')
       end if
 
@@ -75,48 +79,48 @@
       ! Note that the REAL values passed to MATLAB via MEX can only be
       ! doubles. Therefore, we may need to cap the huge values by taking
       ! min to ensure that they will not overflow when cast to doubles.
-      if (data_type == 'float' .or. data_type == 'Float'
+      if (data_type == 'float' .or. data_type == 'Float'                &
      &    .or. data_type == 'FLOAT') then
           hugeValue = real(huge(0.0), DP)
-      else if (data_type == 'single' .or. data_type == 'Single'
+      else if (data_type == 'single' .or. data_type == 'Single'         &
      &    .or. data_type == 'SINGLE') then
           hugeValue = real(huge(0.0_SP), DP)
-      else if (data_type == 'double' .or. data_type == 'Double'
+      else if (data_type == 'double' .or. data_type == 'Double'         &
      &    .or. data_type == 'DOUBLE') then
           hugeValue = huge(0.0_DP)
-      else if (data_type == 'real' .or. data_type == 'Real'
+      else if (data_type == 'real' .or. data_type == 'Real'             &
      &    .or. data_type == 'REAL') then
           hugeValue = huge(0.0_DP)
           if (huge(0.0_RP) < hugeValue) then
               hugeValue = real(huge(0.0_RP), DP)
           end if
-      else if (data_type == 'integer' .or. data_type == 'Integer'
+      else if (data_type == 'integer' .or. data_type == 'Integer'       &
      &    .or. data_type == 'INTEGER') then
           hugeValue = real(huge(intZero), DP)
-      else if (data_type == 'mwSize' .or. data_type == 'mwsize'
+      else if (data_type == 'mwSize' .or. data_type == 'mwsize'         &
      &     .or. data_type == 'MWSIZE') then
           hugeValue = real(huge(msZero), DP)
-      else if (data_type == 'mwIndex' .or. data_type == 'mwindex'
+      else if (data_type == 'mwIndex' .or. data_type == 'mwindex'       &
      &     .or. data_type == 'MWINDEX') then
           hugeValue = real(huge(miZero), DP)
-      else if (data_type == 'fun' .or. data_type == 'Fun' .or.
-     &    data_type == 'FUN' .or. data_type == 'function' .or.
-     &    data_type == 'Function' .or. data_type == 'FUNCTION')
+      else if (data_type == 'fun' .or. data_type == 'Fun' .or.          &
+     &    data_type == 'FUN' .or. data_type == 'function' .or.          &
+     &    data_type == 'Function' .or. data_type == 'FUNCTION')         &
      &then
           hugeValue = huge(0.0_DP)
           if (HUGEFUN < hugeValue) then
               hugeValue = real(HUGEFUN, DP)
           end if
-      else if (data_type == 'con' .or. data_type == 'Con' .or.
-     &    data_type == 'CON' .or. data_type == 'constraint' .or.
-     &    data_type == 'Constraint' .or. data_type == 'CONSTRAINT')
+      else if (data_type == 'con' .or. data_type == 'Con' .or.          &
+     &    data_type == 'CON' .or. data_type == 'constraint' .or.        &
+     &    data_type == 'Constraint' .or. data_type == 'CONSTRAINT')     &
      &then
           hugeValue = huge(0.0_DP)
           if (HUGECON < hugeValue) then
               hugeValue = real(HUGECON, DP)
           end if
       else
-          call mexErrMsgIdAndTxt ('gethuge:WrongInput',
+          call mexErrMsgIdAndTxt ('gethuge:WrongInput',                 &
      &    'gethuge: Unrecognized input.')
       end if
 
