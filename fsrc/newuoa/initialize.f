@@ -229,7 +229,7 @@
       ! (GQ, HQ, PQ) in the following way:
       ! the gradient of the model at XBASE is GQ;
       ! the Hessian of the model is 
-      ! HQ + \sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
+      ! HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
 
       ! General modules
       use consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING, SRNLEN
@@ -276,7 +276,7 @@
       hq = ZERO
       pq = ZERO  ! We will not update PQ. It is ZERO at return.
 
-      rhobeg = maxval(abs(xpt(:, 2)))
+      rhobeg = maxval(abs(xpt(:, 2)))  ! Read RHOBEG from XPT.
       fbeg = fval(1)
 
       ! Set GQ by forward difference.
@@ -312,7 +312,7 @@
           ! FI = F(XBASE + XI),
           ! FJ = F(XBASE + XJ).
           ! Thus the HQ(I, J) defined below approximates 
-          ! \frac{\partial^2}{\partial X_I \partial X_J} F(XBASE)
+          ! frac{partial^2}{partial X_I partial X_J} F(XBASE)
           hq(i, j) = (fbeg - fi - fj + fval(k))/(xi*xj)
           hq(j, i) = hq(i, j)
       end do
@@ -326,7 +326,7 @@
       end subroutine initq
 
 
-      subroutine inith(ij, xpt, bmat, zmat, info)
+      subroutine inith(ij, xpt, idz, bmat, zmat, info)
       ! INITH initializes BMAT and ZMAT.
 
       ! General modules
@@ -342,6 +342,7 @@
       real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
 
       ! Outputs
+      integer(IK), intent(out) :: idz
       integer(IK), intent(out) :: info
       real(RP), intent(out) :: bmat(:, :)  ! BMAT(N, NPT + N)
       real(RP), intent(out) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
@@ -366,14 +367,18 @@
           call verisize(zmat, npt, int(npt - n - 1, kind(n)))
       end if
       
-      ! Set BMAT and ZMAT. They depend on XPT but not FVAL.
-      bmat = ZERO
-      zmat = ZERO
+      ! Set IDZ = 1. It will not be changed in the following.
+      idz = 1
 
-      rhobeg = maxval(abs(xpt(:, 2)))
+      ! Some values to be used for setting BMAT and ZMAT.
+      rhobeg = maxval(abs(xpt(:, 2)))  ! Read RHOBEG from XPT.
       rhosq = rhobeg*rhobeg
       recip = ONE/rhosq
       reciq = sqrt(HALF)/rhosq
+
+      ! Initialize BMAT and ZMAT to ZERO. 
+      bmat = ZERO
+      zmat = ZERO
 
       ! Set the nonzero initial elements of BMAT. 
       ! When NPT >= 2*N + 1, this defines BMAT completely; 
