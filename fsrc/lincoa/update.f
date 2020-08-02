@@ -208,7 +208,7 @@ C
 ! of H, which is called OMEGA in the paper and represented in the code
 ! as 
 ! 
-! OMEGA = \sum_{K = 1}^{NPT-N-1} S_K*ZMAT(:, K)*ZMAT(:, K)', 
+! OMEGA = sum_{K = 1}^{NPT-N-1} S_K*ZMAT(:, K)*ZMAT(:, K)', 
 ! where S(1:IDZ-1) = -1 and S(IDZ:NPT-N-1) = 1. 
 !
 ! Indeed, theoretically, OMEGA is positive semidefinite, and S should be

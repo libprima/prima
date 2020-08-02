@@ -1,0 +1,165 @@
+! This is the intersection-format version of /home/zaikunzhang/Work/neupdfo/fsrc/intersection_format/debug.F.
+! The file is generated automatically and is NOT intended to be readable.
+!
+! In the intersection format, each continued line has an ampersand at
+! column 73, and each continuation line has an ampersand at column 6.
+! A Fortran file in such a format can be compiled both as a fixed-format
+! file and as a free-format file.
+! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
+!
+! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
+! on 03-Aug-2020.
+
+
+! DEBUG_MOD is a module defining some procedures concerning debugging,
+! errors, and warnings.
+
+      #include "ppf.h"
+
+
+            module debug_mod
+
+            implicit none
+            private
+            public :: errstop, backtr, verisym, verisize
+
+            interface verisize
+                module procedure verisize_real_1, verisize_real_2
+                module procedure verisize_int_1, verisize_int_2
+            end interface verisize
+
+
+            contains
+
+            subroutine errstop(srname, message)
+            character(len=*), intent(in) :: srname
+            character(len=*), intent(in) :: message
+
+      #if __DEBUGGING__ == 1
+            call backtr()
+      #endif
+
+            print '(/1X, 5A/)', 'Error: ', srname(1 : len_trim(srname)),&
+     &': ', message(1 : len_trim(message)), '.'
+
+            stop ! This means to stop the whole program.
+
+            end subroutine errstop
+
+
+            subroutine backtr()
+! BACKTR calls a compiler-dependent intrinsic to show a backtrace
+! if we are in the debuge mode, i.e., __DEBUGGING__ == 1.
+! N.B.: The intrisic is compiler-dependent and does not exist in
+! all compilers. Indeed, it is not standard-conforming. Therefore,
+! compilers may warn that a non-standard intrinsic is in use.
+            implicit none
+      #if __DEBUGGING__ == 1
+
+      #if defined __GFORTRAN__
+            call backtrace()
+      #elif defined __INTEL_COMPILER
+            call tracebackqq()
+      #endif
+
+      #endif
+            end subroutine backtr
+
+
+            subroutine verisym(A, tol)
+! VERISYM verifies whether a matrix A is symmetric up to TOL.
+            use consts_mod, only : RP, ONE, ZERO, SRNLEN
+            implicit none
+
+            real(RP), intent(in) :: A(:, :)
+            real(RP), intent(in) :: tol
+
+            character(len = SRNLEN), parameter :: srname = 'VERISYM'
+
+            if (size(A, 1) /= size(A, 2)) then
+                call errstop(srname, 'A is not square')
+            end if
+            if (tol > ZERO) then
+                if (maxval(abs((A - transpose(A)))) > tol*max(maxval(abs&
+     &(A)), ONE)) then
+                     call errstop(srname, 'A is not symmetric up to TOL'&
+     &)
+                end if
+            else
+                if (maxval(abs((A - transpose(A)))) > ZERO) then
+                     call errstop(srname, 'A is not symmetric up to TOL'&
+     &)
+                end if
+            end if
+            end subroutine verisym
+
+
+            subroutine verisize_real_1(x, n)
+! VERISIZE_REAL_1 verifies whether SIZE(X) = N.
+            use consts_mod, only : RP, IK, SRNLEN
+            real(RP), intent(in) :: x(:)
+            integer(IK), intent(in) :: n
+
+            character(len = SRNLEN), parameter :: srname = 'VERISIZE_REA&
+     &L_1'
+
+            if (size(x) /= n) then
+                call errstop(srname, 'SIZE(X) /= N')
+            end if
+            end subroutine verisize_real_1
+
+
+            subroutine verisize_real_2(x, m, n)
+! VERISIZE_REAL_2 verifies whether SIZE(X, 1) = M, SIZE(X, 2)=N.
+            use consts_mod, only : RP, IK, SRNLEN
+            real(RP), intent(in) :: x(:, :)
+            integer(IK), intent(in) :: m
+            integer(IK), intent(in) :: n
+
+            character(len = SRNLEN), parameter :: srname = 'VERISIZE_REA&
+     &L_2'
+
+            if (size(x, 1) /= m) then
+                call errstop(srname, 'SIZE(X, 1) /= M')
+            end if
+            if (size(x, 2) /= n) then
+                call errstop(srname, 'SIZE(X, 2) /= N')
+            end if
+            end subroutine verisize_real_2
+
+
+            subroutine verisize_int_1(x, n)
+! VERISIZE_INT_1 verifies whether SIZE(X) = N.
+            use consts_mod, only : IK, SRNLEN
+            integer(IK), intent(in) :: x(:)
+            integer(IK), intent(in) :: n
+
+            character(len = SRNLEN), parameter :: srname = 'VERISIZE_INT&
+     &_1'
+
+            if (size(x) /= n) then
+                call errstop(srname, 'SIZE(X) /= N')
+            end if
+            end subroutine verisize_int_1
+
+
+            subroutine verisize_int_2(x, m, n)
+! VERISIZE_INT_2 verifies whether SIZE(X, 1) = M, SIZE(X, 2)=N.
+            use consts_mod, only : IK, SRNLEN
+            integer(IK), intent(in) :: x(:, :)
+            integer(IK), intent(in) :: m
+            integer(IK), intent(in) :: n
+
+            character(len = SRNLEN), parameter :: srname = 'VERISIZE_INT&
+     &_2'
+
+            if (size(x, 1) /= m) then
+                call errstop(srname, 'SIZE(X, 1) /= M')
+            end if
+            if (size(x, 2) /= n) then
+                call errstop(srname, 'SIZE(X, 2) /= N')
+            end if
+            end subroutine verisize_int_2
+
+
+            end module debug_mod

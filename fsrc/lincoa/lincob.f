@@ -402,7 +402,7 @@ C Although very rarely, with the original code, an infinite loop can occur
 C in the following scenario.
 C Suppose that, at an certain iteration,
 C KNEW = 0, SNORM > 0.5*DELTA > RHO, VQUAD >= 0, and
-C \sum_{K=1}^NPT ||XPT(K,:)-XOPT(:)||^2 < DELTA^2
+C sum_{K=1}^NPT ||XPT(K,:)-XOPT(:)||^2 < DELTA^2
 C (i.e., DELTA is large and SNORM is not small, yet VQUAD >= 0 due to
 C rounding errors and XPT are not far from XOPT).
 C Then the program will goto 530 and then goto 20, where XBASE may be
