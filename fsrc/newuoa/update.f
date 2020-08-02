@@ -77,7 +77,7 @@
       end do
      
       ! JL plays an important role below. Its value is determined by the
-      ! current (i.e., unpdated) value of IDZ. IDZ is an integer in 
+      ! current (i.e., unupdated) value of IDZ. IDZ is an integer in 
       ! {1, ..., NPT-N} such that s_j = -1 for j < IDZ while s_j = 1 
       ! for j >= IDZ in the factorization of Omega. See (3.17), (4.16) 
       ! of the NEWUOA paper.
@@ -85,9 +85,9 @@
       ! For the value of JL, there are two possibilities:
       ! 1. JL = 1 iff IDZ = 1 or IDZ = NPT - N.
       ! 1.1. IDZ = 1 means that 
-      ! Omega = \sum_{J=1}^{NPT-N-1} ZMAT(:, J)*ZMAT(:, J)' ;
+      ! Omega = sum_{J=1}^{NPT-N-1} ZMAT(:, J)*ZMAT(:, J)' ;
       ! 1.2. IDZ = NPT - N means that 
-      ! Omega = - \sum_{J=1}^{NPT-N-1} ZMAT(:, J)*ZMAT(:, J)' ;
+      ! Omega = - sum_{J=1}^{NPT-N-1} ZMAT(:, J)*ZMAT(:, J)' ;
       ! 2. JL = IDZ > 1 iff 2 <= IDZ <= NPT - N - 1.
 
       ! Put the first NPT components of the KNEW-th column of HLAG into

@@ -341,7 +341,7 @@
       !
       ! max |SIGMA(X + D)|, subject to ||D|| <= DELBAR, 
       !
-      ! where SIGMA is the denominator \sigma in the updating formula
+      ! where SIGMA is the denominator sigma in the updating formula
       ! (4.11)--(4.12) for H, which is the inverse of the coefficient
       ! matrix for the interplolation system (see (3.12)). Indeed, each
       ! column of H corresponds to a Lagrange basis function of the
