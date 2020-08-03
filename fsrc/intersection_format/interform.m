@@ -7,8 +7,6 @@ function interform(directory)
 
 outputdir = 'intersection_format';
 
-origdir = cd();  % Full path of the current directory. We will come back to here after finishing everything.
-
 if nargin < 1
     directory = cd();
 end
@@ -41,97 +39,82 @@ fprintf(fid, 'A Fortran file in such a format can be compiled both as a fixed-fo
 fprintf(fid, 'file and as a free-format file.\n');
 fprintf(fid, 'See http://fortranwiki.org/fortran/show/Continuation+lines for details.\n');
 fprintf(fid, '\n');
-fprintf(fid, 'Zaikun Zhang (www.zhangzk.net), %s.', date);
+fprintf(fid, 'Zaikun Zhang (www.zhangzk.net), %s', date);
 fclose(fid);
 
 % Do not perform refactoring in these subdirectories (if exist)
 ignoredir = {'original', 'classical', 'backup', 'intersection_format', 'trash', 'test'};  
 
 % Ignore the following files
-ignorefile = {'calfun__genmod.f90', 'mexfunction__genmod.f90'};
+ignorefile = {'calfun__genmod.f90', 'mexfunction__genmod.f90', 'test.f'};
+
 
 % The following lines perform the refactoring in the current directory
 ffiles = [dir(fullfile(givendir, '*.f90')); dir(fullfile(givendir, '*.F90')); dir(fullfile(givendir, '*.f')); dir(fullfile(givendir, '*.F'))];
 ffiles = setdiff({ffiles.name}, ignorefile);
 for j = 1 : length(ffiles)
     copyfile(fullfile(givendir, ffiles{j}), outputdir);   
-end
-
-for j = 1 : length(ffiles)
-    refactor_file(fullfile(outputdir, ffiles{j}));
+    [~, ~, ext] = fileparts(ffiles{j});
+    if strcmpi(ext, '.f90')
+        refactor_file(fullfile(outputdir, ffiles{j}));
+    end
 end
 delete(fullfile(outputdir, '*.bak'));
 delete(fullfile(outputdir, '*.f90'));
 delete(fullfile(outputdir, '*.F90'));
 
-cd(givendir);
-% Copy the header files to the output directory.
-hfiles = dir('*.h'); 
-hfiles = {hfiles.name};
-for j = 1 : length(hfiles)
-    copyfile(hfiles{j}, outputdir);
-end
-
 % Copy the filelist to the output directory.
 if exist(fullfile(givendir, 'filelist'), 'file')
-    copyfile('filelist', outputdir);
-    cd(outputdir);
-    refactor_filelist('filelist');
-    cd(origdir);
+    copyfile(fullfile(givendir, 'filelist'), outputdir);
+    refactor_filelist(fullfile(outputdir, 'filelist'));
 end
 
+% Copy the header files to the output directory.
+hfiles = dir(fullfile(givendir, '*.h')); 
+hfiles = {hfiles.name};
+for j = 1 : length(hfiles)
+    copyfile(fullfile(givendir, hfiles{j}), outputdir);
+end
 
-% The following lines get a cell array containing all the subdirectories
-% of the current directory.
+% The following lines get a cell array containing the names (but not
+% full path) of all the subdirectories of the given directory.
 d = dir(givendir);
-isub = [d(:).isdir];  % returns a logical vector
+isub = [d(:).isdir]; 
 subdir = {d(isub).name};
 subdir = setdiff(subdir, [{'.','..'}, ignoredir]);
 
 % The following lines perform the refactoring in the subdirectories of
 % the current directory.
 for i = 1 : length(subdir)
-    cd(subdir{i});
-    ffiles = [dir('*.f90'); dir('*.F90'); dir('*.f'); dir('*.F')];
+    ffiles = [dir(fullfile(givendir, subdir{i},'*.f90')); dir(fullfile(givendir, subdir{i}, '*.F90')); dir(fullfile(givendir, subdir{i}, '*.f')); dir(fullfile(givendir, subdir{i}, '*.F'))];
     ffiles = setdiff({ffiles.name}, ignorefile);
     
-    if ~exist(fullfile(outputdir, subdir{i}), 'dir')
-        mkdir(fullfile(outputdir, subdir{i}));
-    end
+    mkdir(fullfile(outputdir, subdir{i}));
     for j = 1 : length(ffiles)
-        copyfile(ffiles{j}, fullfile(outputdir, subdir{i}));   
+        copyfile(fullfile(givendir, subdir{i}, ffiles{j}), fullfile(outputdir, subdir{i}));   
+        [~, ~, ext] = fileparts(ffiles{j});
+        if strcmpi(ext, '.f90')
+            refactor_file(fullfile(outputdir, subdir{i}, ffiles{j}));
+        end
     end
+    delete(fullfile(outputdir, subdir{i}, '*.bak'));
+    delete(fullfile(outputdir, subdir{i}, '*.f90'));
+    delete(fullfile(outputdir, subdir{i}, '*.F90'));
               
     % Copy the header files to the output directory.
-    hfiles = dir('*.h'); 
+    hfiles = dir(fullfile(givendir, subdir{i}, '*.h')); 
     hfiles = {hfiles.name};
     for j = 1 : length(hfiles)
-        copyfile(hfiles{j}, fullfile(outputdir, subdir{i}));
+        copyfile(fullfile(givendir, subdir{i}, hfiles{j}), fullfile(outputdir, subdir{i}));
     end
 
     % Copy the filelist to the output directory.
-    if exist(fullfile(subdir{i}, 'filelist'), 'file')
-        copyfile('filelist', outputdir);
+    if exist(fullfile(givendir, subdir{i}, 'filelist'), 'file')
+        copyfile(fullfile(givendir, subdir{i}, 'filelist'), fullfile(outputdir, subdir{i}));
+        refactor_filelist(fullfile(outputdir, subdir{i}, 'filelist'));
     end
     
-    cd(fullfile(outputdir, subdir{i}))
-    for j = 1 : length(ffiles)
-        refactor_file(ffiles{j});
-    end
-    delete('*.bak');
-    delete('*.f90');
-    delete('*.F90');
-
-
-    % Copy the filelist to the output directory.
-    if exist(fullfile(subdir{i}, 'filelist'), 'file')
-        refactor_filelist('filelist');
-    end
-    cd(givendir);
 end
-
-% Go back to the original directory
-cd(origdir);
 
 
 function refactor_file(filename)
@@ -161,7 +144,7 @@ while(j <= length(cstr))
     strtmp = cstr{j};
     strtmp_trimed = strtrim(strtmp);
     
-    if isempty(strtmp_trimed) || strcmp(strtmp_trimed(1), '!')
+    if isempty(strtmp_trimed) || strcmp(strtmp_trimed(1), '!') || strcmp(strtmp_trimed(1), '#')
         strs{k} = strtmp_trimed;
         k = k + 1;
         i = j + 1;
@@ -194,7 +177,9 @@ if fid == -1
     error('Cannot open file %s.', refactored_filename);
 end
 
-fprintf(fid, '! This is the intersection-format version of %s.\n', filename);
+[~, fname, ext] = fileparts(filename);
+fprintf(fid, '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n');
+fprintf(fid, '! This is the intersection-format version of %s.\n', [fname, ext]);
 fprintf(fid, '! The file is generated automatically and is NOT intended to be readable.\n');
 fprintf(fid, '!\n');
 fprintf(fid, '! In the intersection format, each continued line has an ampersand at\n'); 
@@ -203,7 +188,8 @@ fprintf(fid, '! A Fortran file in such a format can be compiled both as a fixed-
 fprintf(fid, '! file and as a free-format file.\n');
 fprintf(fid, '! See http://fortranwiki.org/fortran/show/Continuation+lines for details.\n');
 fprintf(fid, '!\n');
-fprintf(fid, '! Generated using the %s.m script by Zaikun Zhang (www.zhangzk.net)\n! on %s.\n\n\n', mfilename, date);
+fprintf(fid, '! Generated using the %s.m script by Zaikun Zhang (www.zhangzk.net)\n! on %s.\n', mfilename, date);
+fprintf(fid, '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n\n');
 
 for i = 1 : length(strs)
     fprintf(fid, strs{i});
