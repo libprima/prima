@@ -330,7 +330,7 @@ else % The problem turns out 'normal' during prepdfo
     % of the given data type in the mex environment.
 
     % The largest integer in the mex functions; the factor 0.99 provides a buffer
-    maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSize'), gethuge('mwIndex')]));
+    maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSI')]));
     m = length(b_aug); % Linear constraints: (A_aug)'*x <= b_aug;
     minnw = m*(2+n)+(n+2)*(2*n+6)+n*(9+3*n)+max([m+3*n, 2*m+n, 2*n+4]);
     % minnw is the smallest possible velue of nw, i.e., nw with the smallest npt, i.e., npt=n+2

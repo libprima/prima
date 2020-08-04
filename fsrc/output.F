@@ -14,7 +14,7 @@
       contains
       
       subroutine retmssg(info, iprint, nf, f, x, solver)
-      use consts_mod, only : RP, IK, OUTUNIT
+      use consts_mod, only : RP, IK, MSSGLEN, OUTUNIT
       use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED
       use info_mod, only : SMALL_TR_RADIUS, TRSUBP_FAILED
       use info_mod, only : NAN_X, NAN_INF_F, NAN_MODEL
@@ -30,7 +30,7 @@
 
       ! Intermediate variables
       integer :: ios  ! Should be an integer of default kind
-      character(len = 200) :: mssg
+      character(len = MSSGLEN) :: mssg
       character(len = 100) :: fout
       character(len = 3) :: fstat
       logical :: fexist

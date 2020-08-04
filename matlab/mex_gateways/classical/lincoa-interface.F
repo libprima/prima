@@ -24,14 +24,14 @@ C substitution), some lines may become too long and hence get truncated
 C Use mxGetDoubles instead of mxGetPr if possible, the former being
 C available since MATLAB R2018b. The following macros should be put
 C after the header "fintrf.h" is included, because mxGetDoubles is
-C defined in it. MX_GET_DBLE gets the pointer pointing to a real array.
-#ifdef MX_GET_DBLE
-#undef MX_GET_DBLE
+C defined in it. _MGETDB gets the pointer pointing to a real array.
+#if defined _MGETDB
+#undef _MGETDB
 #endif
-#ifdef mxGetDoubles 
-#define MX_GET_DBLE mxGetDoubles
+#if defined mxGetDoubles 
+#define _MGETDB mxGetDoubles
 #else
-#define MX_GET_DBLE mxGetPr 
+#define _MGETDB mxGetPr 
 #endif
 
 C Fortran code starts 
@@ -91,8 +91,8 @@ C function declarations:
 C mwPointer mxCreateDoubleMatrix(mwSize m, mwSize n, integer*4 ComplexFlag)
       mwPointer, external :: mxCreateDoubleScalar
 C mwPointer mxCreateDoubleScalar(real*8 value)
-      mwPointer, external :: MX_GET_DBLE
-C mwPointer MX_GET_DBLE(mwPointer pm); 
+      mwPointer, external :: _MGETDB
+C mwPointer _MGETDB(mwPointer pm); 
 C can be replaced by mxGetDoubles since MATLAB R2018b
       mwSize, external :: mxGetM, mxGetN
 C mwPointer mxGetM(mwPointer pm), mxGetN(mwPointer pm)
@@ -245,7 +245,7 @@ C ia_int is used when a variable of type INTEGER is needed
           call mexErrMsgIdAndTxt('flincoa:InsufficientMemory',
      &    'flincoa: allocate(x) failed.')
       end if
-      call mxCopyPtrToReal8(MX_GET_DBLE(prhs(2)), x(1:n), n)
+      call mxCopyPtrToReal8(_MGETDB(prhs(2)), x(1:n), n)
 C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
 
       if (allocated(A)) deallocate (A)
@@ -254,7 +254,7 @@ C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
           call mexErrMsgIdAndTxt('flincoa:InsufficientMemory',
      &    'flincoa: allocate(A) failed.')
       end if
-      call mxCopyPtrToReal8(MX_GET_DBLE(prhs(3)),
+      call mxCopyPtrToReal8(_MGETDB(prhs(3)),
      &     A(1:ia,1:m), ia*m)
 
       if (allocated(b)) deallocate (b)
@@ -263,10 +263,10 @@ C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
           call mexErrMsgIdAndTxt('flincoa:InsufficientMemory',
      &    'flincoa: allocate(b) failed.')
       end if
-      call mxCopyPtrToReal8(MX_GET_DBLE(prhs(4)), b(1:m), m)
+      call mxCopyPtrToReal8(_MGETDB(prhs(4)), b(1:m), m)
 
-      call mxCopyPtrToReal8(MX_GET_DBLE(prhs(5)), rhobeg, mwOne)
-      call mxCopyPtrToReal8(MX_GET_DBLE(prhs(6)), rhoend, mwOne)
+      call mxCopyPtrToReal8(_MGETDB(prhs(5)), rhobeg, mwOne)
+      call mxCopyPtrToReal8(_MGETDB(prhs(6)), rhoend, mwOne)
 C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
 C Note the mwOne is of type mwSize; should not use literal constant 1
 C NEVER use literal constants in Fortran mex. 
@@ -279,17 +279,17 @@ C other inputs (e.g., n, maxfun, npt) because the Fortran code does it
      &'flincoa: rhobeg and rhoend do not satisfy rhobeg >= rhobeg > 0.')
       end if
 
-      call mxCopyPtrToReal8(MX_GET_DBLE(prhs(7)), 
+      call mxCopyPtrToReal8(_MGETDB(prhs(7)), 
      &     maxfun_r, mwOne)
       maxfun = int(maxfun_r, kind(maxfun)) 
 C maxfun will be an input to LINCOA, which requires maxfun to be
 C an INTEGER (not necessary the same as mwSize)
-      call mxCopyPtrToReal8(MX_GET_DBLE(prhs(8)), 
+      call mxCopyPtrToReal8(_MGETDB(prhs(8)), 
      &     npt_r, mwOne)
       npt = int(npt_r, kind(npt))
 C npt will be an input to LINCOA, which requires maxfun to be
 C an INTEGER (not necessary the same as mwSize)
-      call mxCopyPtrToReal8(MX_GET_DBLE(prhs(9)), 
+      call mxCopyPtrToReal8(_MGETDB(prhs(9)), 
      &     ftarget, mwOne)
 
 C Allocate workspace
@@ -350,14 +350,14 @@ C and ia_int instead.
 
 C Write outputs
       plhs(1) = mxCreateDoubleMatrix(n, mwOne, notComplex)
-      call mxCopyReal8ToPtr(x(1:n), MX_GET_DBLE(plhs(1)), n)
+      call mxCopyReal8ToPtr(x(1:n), _MGETDB(plhs(1)), n)
       plhs(2) = mxCreateDoubleScalar(f)
 C Although info and nf are integers logically, they are passed as double
       plhs(3) = mxCreateDoubleScalar(real(info, rp))
       plhs(4) = mxCreateDoubleScalar(real(nf, rp))
       plhs(5) = mxCreateDoubleMatrix(mwOne, nf, notComplex)
       call mxCopyReal8ToPtr(fhist(1:nf), 
-     &     MX_GET_DBLE(plhs(5)), nf)
+     &     _MGETDB(plhs(5)), nf)
 
       resmax = zero 
 C Constraint violation (named 'RESMAX' in Powell's COBYLA code)
@@ -378,7 +378,7 @@ C Linear constraints: A'*x <= b (NOTE the transpose)
       plhs(6) = mxCreateDoubleScalar(resmax)
       plhs(7) = mxCreateDoubleMatrix(mwOne, nf, notComplex)
       call mxCopyReal8ToPtr(chist(1:nf), 
-     &     MX_GET_DBLE(plhs(7)), nf)
+     &     _MGETDB(plhs(7)), nf)
 
 C Free memory
       deallocate (x)
@@ -414,8 +414,8 @@ C integer*4 mexCallMATLAB(integer*4 nlhs, mwPointer plhs, integer*4 nrhs, mwPoin
 C mwPointer mxCreateDoubleMatrix(mwSize m, mwSize n, integer*4 ComplexFlag)
       mwPointer, external :: mxCreateDoubleScalar
 C mwPointer mxCreateDoubleScalar(real*8 value)
-      mwPointer, external :: MX_GET_DBLE
-C mwPointer MX_GET_DBLE(mwPointer pm)
+      mwPointer, external :: _MGETDB
+C mwPointer _MGETDB(mwPointer pm)
 
 C intermediate variables
       mwSize :: n_mw 
@@ -444,7 +444,7 @@ C First output of f_value = feval(fun, x); see below
 C First input of f_value = feval(fun, x); see below; fun_ptr is a global variable
       prhs(2) = mxCreateDoubleMatrix(n_mw, mwOne, notComplex) 
 C Second input of f_value = feval(fun, x); see below
-      call mxCopyReal8ToPtr(x(1:n), MX_GET_DBLE(prhs(2)), n_mw)
+      call mxCopyReal8ToPtr(x(1:n), _MGETDB(prhs(2)), n_mw)
 C subroutine mxCopyReal8ToPtr(real*8 y(n), mwPointer px, mwSize n)
 
       if (0 .ne. mexCallMATLAB(intOne, plhs, intTwo,
@@ -455,11 +455,11 @@ C integer*4 mexCallMATLAB(integer*4 nlhs, mwPointer plhs, integer*4 nrhs, mwPoin
      &    'flincoa: mex fails to call fun.')
       end if
 
-      if (plhs(1) .eq. 0 .or. MX_GET_DBLE(plhs(1)) .eq. 0) then
+      if (plhs(1) .eq. 0 .or. _MGETDB(plhs(1)) .eq. 0) then
           call mexErrMsgIdAndTxt('flincoa:UnsuccessfulCall',
      &    'flincoa: NULL pointer returned when mex calls fun.')
       else
-          call mxCopyPtrToReal8(MX_GET_DBLE(plhs(1)), 
+          call mxCopyPtrToReal8(_MGETDB(plhs(1)), 
      &         funval, mwOne)
 C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
       end if

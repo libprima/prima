@@ -242,7 +242,7 @@ else
     % the given data type in the mex environment.
     
     % The largest integer in the mex functions; the factor 0.99 provides a buffer
-    maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSize'), gethuge('mwIndex')]));
+    maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSI')]));
     nw = (n*(42+n*(23+n*(8+n)))+max(2*n*n+4,18*n))/4 + 1;
     if nw >= maxint 
         % nw would suffer from overflow in the Fortran code; exit immediately 
