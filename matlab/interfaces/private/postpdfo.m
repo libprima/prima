@@ -64,7 +64,7 @@ end
 % the function values that are NaN or larger than hugefun are replaced
 % by hugefun; all the constraint values that are NaN or larger than
 % hugecon are replaced by hugecon. hugefun and hugecon are defined in
-% pdfoconst.F, and can be obtained by gethuge. 
+% const.F, and can be obtained by gethuge. 
 hugefun = gethuge('fun'); 
 hugecon = gethuge('con');
 

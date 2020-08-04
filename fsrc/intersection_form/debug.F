@@ -18,16 +18,15 @@
 
       contains
           
-      subroutine errstop(srname, message)
+      subroutine errstop(srname, mssg)
       character(len=*), intent(in) :: srname
-      character(len=*), intent(in) :: message 
+      character(len=*), intent(in) :: mssg 
 
 #if __DEBUGGING__ == 1
       call backtr()
 #endif
 
-      print '(/1X, 5A/)', 'Error: ',  srname(1 : len_trim(srname)),     &
-     & ': ', message(1 : len_trim(message)), '.'
+      print '(/1X,1A/)', 'Error: '//trim(srname)//': '// trim(mssg)//'.'
 
       stop  ! This means to stop the whole program.
 

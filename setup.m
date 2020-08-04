@@ -179,8 +179,8 @@ end
 
 % The full path of several directories.
 cpwd = fileparts(mfilename('fullpath')); % Current directory
-fsrc = fullfile(cpwd, 'fsrc'); % Directory of the Fortran source code
-fsrc_classical = fullfile(fsrc, 'classical'); % Directory of the classical Fortran source code
+fsrc = fullfile(cpwd, 'fsrc/intersection_form'); % Directory of the Fortran source code
+fsrc_classical = fullfile(cpwd, 'fsrc/classical'); % Directory of the classical Fortran source code
 matd = fullfile(cpwd, 'matlab'); % Matlab directory
 gateways = fullfile(matd, 'mex_gateways'); % Directory of the MEX gateway files
 gateways_classical = fullfile(gateways, 'classical'); % Directory of the MEX gateways for the classical Fortran source code
@@ -209,7 +209,7 @@ try
 % We use try ... catch so that we can change directory back to cpwd in
 % case of an error.
 
-    infrastructure_files = regexp(fileread(fullfile(fsrc, 'file_list')), '\n', 'split');
+    infrastructure_files = regexp(fileread(fullfile(fsrc, 'filelist')), '\n', 'split');
     infrastructure_files = strtrim(infrastructure_files(~cellfun(@isempty, infrastructure_files))); 
     infrastructure_files = fullfile(fsrc, infrastructure_files);
     infrastructure_files = [infrastructure_files, fullfile(gateways, 'mexapi.F')];
@@ -230,7 +230,7 @@ try
         obj_files = [files_with_wildcard(fullfile(fsrc, solver), '*.o'), files_with_wildcard(fullfile(fsrc, solver), '*.obj')];
         cellfun(@(filename) delete(filename), [mod_files, obj_files]);
         % Compile
-        src_files = regexp(fileread(fullfile(fsrc, solver, 'file_list')), '\n', 'split');
+        src_files = regexp(fileread(fullfile(fsrc, solver, 'filelist')), '\n', 'split');
         src_files = strtrim(src_files(~cellfun(@isempty, src_files))); 
         src_files = fullfile(fsrc, solver, src_files);
         mex(mex_options{:}, '-c', src_files{:});

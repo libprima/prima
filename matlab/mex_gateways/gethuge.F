@@ -25,10 +25,17 @@
       ! Usage: data_huge = gethuge(data_type)
       ! This function returns the largest value of data_type on the
       ! current platform, the possible values of data_type being
-      ! 'integer', 'float', 'real', 'single', 'double', 'mwSize',
-      ! 'mwIndex', 'fun', 'function', 'con', 'constraint'.
+      ! 'integer', 'float', 'real', 'single', 'double', 'mwSI',
+      ! 'fun', 'function', 'con', 'constraint'.
+      !
+      ! In previous versions, GETHUGE accepted 'mwSize' or 'mwIndex' as
+      ! inputs, but it is not the case anymore. This is because mwSize
+      ! and mwIndex are macros defined in fintrf.h, and they will be
+      ! replaced by other strings after preprocessing.
+      ! Instead of 'mwSize' and 'mwIndex', we now use 'mwSI' to get the
+      ! smaller value between huge(msZero) and huge(miZero).
 
-      use consts_mod, only : IK, SP, DP, RP, HUGEFUN, HUGECON
+      use consts_mod, only : IK, SP, DP, RP, HUGEFUN, HUGECON, MSSGLEN
       use mexapi_mod, only : mxGetN, mxGetString
       use mexapi_mod, only : mexErrMsgIdAndTxt
       use mexapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
@@ -55,24 +62,24 @@
       mwIndex, parameter :: miZero = 0
       ! The huge value that will be returned
       real(DP) :: hugeValue
+      character(len = MSSGLEN) :: eid, mssg
 
-      ! Validate the number of arguments.
+      ! Check inputs
       call fmxVerifyNArgin(nargin, 1)
       call fmxVerifyNArgout(nargout, 1)
-
-      ! Validate the class and shape of input.
       call fmxVerifyClassShape(pinput(1), 'char', 'row')
-
 
       ! Get the input string.
       cols = int(mxGetN(pinput(1)), kind(cols))
       if (cols > maxlen) then
-          call mexErrMsgIdAndTxt ('gethuge:InvalidInput',               &
-     &    'gethuge: The input is too long.')
+          eid = 'gethuge:InvalidInput'
+          mssg = 'gethuge: The input is too long.'
+          call mexErrMsgIdAndTxt (eid, mssg)
       end if
       if (mxGetString(pinput(1), data_type, cols) /= 0) then
-          call mexErrMsgIdAndTxt ('gethuge:GetInputFail',               &
-     &    'gethuge: Fail to get the input.')
+          eid = 'gethuge:GetInputFail' 
+          mssg = 'Fail to get the input.'
+          call mexErrMsgIdAndTxt (eid, mssg)
       end if
 
       ! Define hugeValue.
@@ -97,12 +104,9 @@
       else if (data_type == 'integer' .or. data_type == 'Integer'       &
      &    .or. data_type == 'INTEGER') then
           hugeValue = real(huge(intZero), DP)
-      else if (data_type == 'mwSize' .or. data_type == 'mwsize'         &
-     &     .or. data_type == 'MWSIZE') then
-          hugeValue = real(huge(msZero), DP)
-      else if (data_type == 'mwIndex' .or. data_type == 'mwindex'       &
-     &     .or. data_type == 'MWINDEX') then
-          hugeValue = real(huge(miZero), DP)
+      else if (data_type == 'mwSI' .or. data_type == 'mwsi'             &
+     &     .or. data_type == 'MWSI') then
+          hugeValue = min(real(huge(msZero),DP), real(huge(miZero),DP))
       else if (data_type == 'fun' .or. data_type == 'Fun' .or.          &
      &    data_type == 'FUN' .or. data_type == 'function' .or.          &
      &    data_type == 'Function' .or. data_type == 'FUNCTION')         &

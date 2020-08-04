@@ -31,14 +31,14 @@
       implicit none
       private
       public :: DEBUGGING
-      public :: IK, INT16, INT32, INT64, IK_DEF
-      public :: RP, DP, SP, QP, REAL32, REAL64, REAL128, RP_DEF
+      public :: IK, INT16, INT32, INT64, IK_DFT
+      public :: RP, DP, SP, QP, REAL32, REAL64, REAL128, RP_DFT
       public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
       public :: EPS, HUGENUM, ALMOST_INFINITY, HUGEFUN, HUGECON 
-      public :: SRNLEN
-      public :: RHOBEG_DEF, RHOEND_DEF, FTARGET_DEF
-      public :: IPRINT_DEF
+      public :: SRNLEN, MSSGLEN
       public :: OUTUNIT
+      public :: RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT
+      public :: IPRINT_DFT
 
 #if __DEBUGGING__ == 1
       logical, parameter :: DEBUGGING = .true.
@@ -54,8 +54,8 @@
       integer, parameter :: REAL64 = kind(0.0D0)
       integer, parameter :: REAL128 = selected_real_kind(p = 30)
 #endif      
-      integer, parameter :: IK_DEF = kind(0)  ! Default integer kind
-      integer, parameter :: RP_DEF = kind(0.0)  ! Default real kind
+      integer, parameter :: IK_DFT = kind(0)  ! Default integer kind
+      integer, parameter :: RP_DFT = kind(0.0)  ! Default real kind
       integer, parameter :: SP = REAL32  ! Kind for single precision
       integer, parameter :: DP = REAL64  ! Kind for double precision
       integer, parameter :: QP = REAL128  ! Kind for quadruple precision
@@ -69,7 +69,7 @@
 #elif __INTEGER_KIND__ == 64 
       integer, parameter :: IK = INT64
 #else
-      integer, parameter :: IK = IK_DEF
+      integer, parameter :: IK = IK_DFT
 #endif
 ! Define the real kind to be used in the Fortran code.
 #if __REAL_PRECISION__ == 32
@@ -106,12 +106,16 @@
       ! The maximal length of subroutine/function names
       integer, parameter :: SRNLEN = 30
 
-      ! Some default values
-      real(RP), parameter :: RHOBEG_DEF = ONE
-      real(RP), parameter :: RHOEND_DEF = 1.0E-6_RP 
-      real(RP), parameter :: FTARGET_DEF = -HUGENUM
-      integer(IK), parameter :: IPRINT_DEF = 1 
+      ! The maximal length of messages; used in output.F and mexapi.F
+      integer, parameter :: MSSGLEN = 300 
 
       ! Output unit, can be any integer between 9 and 99
       integer(IK), parameter :: OUTUNIT = 9 
+
+      ! Some default values
+      real(RP), parameter :: RHOBEG_DFT = ONE
+      real(RP), parameter :: RHOEND_DFT = 1.0E-6_RP 
+      real(RP), parameter :: FTARGET_DFT = -HUGENUM
+      integer(IK), parameter :: IPRINT_DFT = 1 
+
       end module consts_mod 

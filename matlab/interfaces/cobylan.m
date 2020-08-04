@@ -345,7 +345,7 @@ else % The problem turns out 'normal' during prepdfo
     % of the given data type in the mex environment.
 
     % The largest integer in the mex functions; the factor 0.99 provides a buffer
-    maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSize'), gethuge('mwIndex')]));
+    maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSI')]));
     n = length(x0);
     nw = n*(3*n+2*m+11)+4*m+6;
     if nw >= maxint

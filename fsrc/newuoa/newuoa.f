@@ -84,8 +84,8 @@
       ! X(1 : N).
 
       use consts_mod, only : RP, IK,ZERO, ONE, TWO, HALF, TENTH, EPS
-      use consts_mod, only : RHOBEG_DEF, RHOEND_DEF, FTARGET_DEF
-      use consts_mod, only : IPRINT_DEF
+      use consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT
+      use consts_mod, only : IPRINT_DFT
       use newuob_mod, only : newuob
       use infnan_mod, only : is_nan, is_inf
 
@@ -151,13 +151,13 @@
       end if
 
       if (rhobeg_v <= 0 .or. is_nan(rhobeg_v) .or. is_inf(rhobeg_v))then
-          rhobeg_v = RHOBEG_DEF
+          rhobeg_v = RHOBEG_DFT
       end if
       rhobeg_v = max(EPS, rhobeg_v)
 
       if (rhoend_v < 0 .or.  rhobeg_v < rhoend .or. is_nan(rhoend_v)    &
      & .or. is_inf(rhoend_v)) then
-          rhoend_v = min(TENTH*rhobeg_v, RHOEND_DEF)
+          rhoend_v = min(TENTH*rhobeg_v, RHOEND_DFT)
       end if
       rhoend_v = max(EPS, rhoend_v)
 
@@ -180,7 +180,7 @@
       end if
 
       if (is_nan(ftarget_v)) then
-          ftarget_v = FTARGET_DEF
+          ftarget_v = FTARGET_DFT
       end if
 
       maxfun_v = max(int(n + 3, kind(maxfun_v)), maxfun_v)
@@ -192,7 +192,7 @@
 
       if (iprint_v /= 0 .and. iprint_v /= 1 .and. iprint_v /= 2         &
      & .and. iprint_v /=3 .and. iprint_v /= 4) then
-          iprint_v = IPRINT_DEF
+          iprint_v = IPRINT_DFT
       end if
 
       call newuob (iprint_v, maxfun_v, npt_v, eta1_v, eta2_v, ftarget_v,&

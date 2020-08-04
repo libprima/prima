@@ -232,7 +232,7 @@ if ~strcmp(invoker, 'pdfon') && probinfo.feasibility_problem
     output.constrviolation = 0; % Unconstrained problem; set output.constrviolation to 0
     output.chist = []; % Unconstrained problem; set output.chist to []
 else
-    maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSize'), gethuge('mwIndex')]));
+    maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSI')]));
     if maxfun > maxint
         % maxfun would suffer from overflow in the Fortran code 
         maxfun = maxint;
@@ -246,7 +246,7 @@ else
     % Call the Fortran code
     % The mexified Fortran Function is a private function generating only private errors; however, public errors can occur due to, e.g., evalobj; error handling needed 
         if options.classical
-            [x, fx, exitflag, nf, fhist] = fnewuoan_classical(fun, x0, rhobeg, rhoend, maxfun, npt, ftarget);
+            [x, fx, exitflag, nf, fhist] = fnewuoan_classical(fun, x0, rhobeg, rhoend, ftarget, maxfun, npt, iprint);
         else
             [x, fx, exitflag, nf, fhist] = fnewuoan(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, iprint);
         end

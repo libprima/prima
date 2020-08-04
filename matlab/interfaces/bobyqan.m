@@ -285,7 +285,7 @@ else % The problem turns out 'normal' during prepdfo
     % of the given data type in the mex environment.
     
     % The largest integer in the mex functions; the factor 0.99 provides a buffer
-    maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSize'), gethuge('mwIndex')]));
+    maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSI')]));
     n = length(x0);
     minnw = (n+7)*(2*n+2)+3*n*(n+5)/2+1;
     % minnw is the smallest possible nw, i.e., nw with the smallest npt, i.e., npt=n+2

@@ -24,14 +24,14 @@ C substitution), some lines may become too long and hence get truncated
 C Use mxGetDoubles instead of mxGetPr if possible, the former being
 C available since MATLAB R2018b. The following macros should be put
 C after the header "fintrf.h" is included, because mxGetDoubles is
-C defined in it. MX_GET_DBLE gets the pointer pointing to a real array.
-#ifdef MX_GET_DBLE
-#undef MX_GET_DBLE
+C defined in it. _MGETDB gets the pointer pointing to a real array.
+#if defined _MGETDB
+#undef _MGETDB
 #endif
-#ifdef mxGetDoubles 
-#define MX_GET_DBLE mxGetDoubles
+#if defined mxGetDoubles 
+#define _MGETDB mxGetDoubles
 #else
-#define MX_GET_DBLE mxGetPr 
+#define _MGETDB mxGetPr 
 #endif
 
 C Fortran code starts 
@@ -89,8 +89,8 @@ C function declarations:
 C mwPointer mxCreateDoubleMatrix(mwSize m, mwSize n, integer*4 ComplexFlag)
       mwPointer, external :: mxCreateDoubleScalar
 C mwPointer mxCreateDoubleScalar(real*8 value)
-      mwPointer, external :: MX_GET_DBLE
-C mwPointer MX_GET_DBLE(mwPointer pm); 
+      mwPointer, external :: _MGETDB
+C mwPointer _MGETDB(mwPointer pm); 
 C can be replaced by mxGetDoubles since MATLAB R2018b
       mwSize, external :: mxGetM, mxGetN
 C mwPointer mxGetM(mwPointer pm), mxGetN(mwPointer pm)
@@ -222,11 +222,11 @@ C n_int is used when a variable of type INTEGER is needed
           call mexErrMsgIdAndTxt('fcobyla:InsufficientMemory',
      &    'fcobyla: allocate(x) failed.')
       end if
-      call mxCopyPtrToReal8(MX_GET_DBLE(prhs(3)), x(1:n), n)
+      call mxCopyPtrToReal8(_MGETDB(prhs(3)), x(1:n), n)
 C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
 
-      call mxCopyPtrToReal8(MX_GET_DBLE(prhs(4)), rhobeg, mwOne)
-      call mxCopyPtrToReal8(MX_GET_DBLE(prhs(5)), rhoend, mwOne)
+      call mxCopyPtrToReal8(_MGETDB(prhs(4)), rhobeg, mwOne)
+      call mxCopyPtrToReal8(_MGETDB(prhs(5)), rhoend, mwOne)
 C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
 C Note the mwOne is of type mwSize; should not use literal constant 1
 C NEVER use literal constants in Fortran mex. 
@@ -239,12 +239,12 @@ C other inputs (e.g., n, maxfun, npt) because the Fortran code does it
      &'fcobyla: rhobeg and rhoend do not satisfy rhobeg >= rhobeg > 0.')
       end if
 
-      call mxCopyPtrToReal8(MX_GET_DBLE(prhs(6)), 
+      call mxCopyPtrToReal8(_MGETDB(prhs(6)), 
      &     maxfun_r, mwOne)
       maxfun = int(maxfun_r, kind(maxfun)) 
 C maxfun will be an input to COBYLA, which requires maxfun to be
 C an INTEGER (not necessary the same as mwSize)
-      call mxCopyPtrToReal8(MX_GET_DBLE(prhs(7)), m_r, mwOne)
+      call mxCopyPtrToReal8(_MGETDB(prhs(7)), m_r, mwOne)
       m = int(m_r, kind(m))
       m_int = int(m_r, kind(m_int))
       if (m .ne. m_int) then 
@@ -254,7 +254,7 @@ C an INTEGER (not necessary the same as mwSize)
 C m will be used in mxCopyPtrToReal8, requiring it to be of type mwSize
 C m_int will be an input to COBYLA, which requires it to be
 C an INTEGER (not necessary the same as mwSize)
-      call mxCopyPtrToReal8(MX_GET_DBLE(prhs(8)), ftarget, mwOne)
+      call mxCopyPtrToReal8(_MGETDB(prhs(8)), ftarget, mwOne)
 
       if (m .ne. mxGetM(prhs(9))) then ! m is number of constraints 
           call mexErrMsgIdAndTxt('fcobyla:WrongInput',
@@ -266,7 +266,7 @@ C an INTEGER (not necessary the same as mwSize)
           call mexErrMsgIdAndTxt('fcobyla:InsufficientMemory',
      &    'fcobyla: allocate(conval_x0) failed.')
       end if
-      call mxCopyPtrToReal8(MX_GET_DBLE(prhs(9)), 
+      call mxCopyPtrToReal8(_MGETDB(prhs(9)), 
      &     conval_x0(1:m), m)
 C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
 
@@ -322,21 +322,21 @@ C fo m/m_int.
 
 C Write outputs
       plhs(1) = mxCreateDoubleMatrix(n, mwOne, notComplex)
-      call mxCopyReal8ToPtr(x(1:n), MX_GET_DBLE(plhs(1)), n)
+      call mxCopyReal8ToPtr(x(1:n), _MGETDB(plhs(1)), n)
       plhs(2) = mxCreateDoubleScalar(f)
 C Although info and nf are integers logically, they are passed as double
       plhs(3) = mxCreateDoubleScalar(real(info, rp))
       plhs(4) = mxCreateDoubleScalar(real(nf, rp))
       plhs(5) = mxCreateDoubleMatrix(mwOne, nf, notComplex)
       call mxCopyReal8ToPtr(fhist(1:nf), 
-     &     MX_GET_DBLE(plhs(5)), nf)
+     &     _MGETDB(plhs(5)), nf)
 C Set conval to the value of con(x)
       plhs(6) = mxCreateDoubleMatrix(m, mwOne, notComplex)
-      call mxCopyReal8ToPtr(conval(1:m), MX_GET_DBLE(plhs(6)), m)
+      call mxCopyReal8ToPtr(conval(1:m), _MGETDB(plhs(6)), m)
       plhs(7) = mxCreateDoubleScalar(resmax)
       plhs(8) = mxCreateDoubleMatrix(mwOne, nf, notComplex)
       call mxCopyReal8ToPtr(chist(1:nf), 
-     &     MX_GET_DBLE(plhs(8)), nf)
+     &     _MGETDB(plhs(8)), nf)
 
 C     Free memory
       deallocate (x)
@@ -371,8 +371,8 @@ C integer*4 mexCallMATLAB(integer*4 nlhs, mwPointer plhs, integer*4 nrhs, mwPoin
 C mwPointer mxCreateDoubleMatrix(mwSize m, mwSize n, integer*4 ComplexFlag)
       mwPointer, external :: mxCreateDoubleScalar
 C mwPointer mxCreateDoubleScalar(real*8 value)
-      mwPointer, external :: MX_GET_DBLE
-C mwPointer MX_GET_DBLE(mwPointer pm)
+      mwPointer, external :: _MGETDB
+C mwPointer _MGETDB(mwPointer pm)
 
 C intermediate variables
       mwSize :: n_mw, m_mw 
@@ -406,7 +406,7 @@ C Output of f_value = feval(fun, x); see below
 C First input of f_value = feval(fun, x); see below; fun_ptr is a global variable
       prhs(2) = mxCreateDoubleMatrix(n_mw, mwOne, notComplex) 
 C Second input of f_value = feval(fun, x); see below
-      call mxCopyReal8ToPtr(x(1:n), MX_GET_DBLE(prhs(2)), n_mw)
+      call mxCopyReal8ToPtr(x(1:n), _MGETDB(prhs(2)), n_mw)
 C subroutine mxCopyReal8ToPtr(real*8 y(n), mwPointer px, mwSize n)
       if (0 .ne. mexCallMATLAB(intOne, plhs, 
      &   intTwo, prhs, funFeval)) then
@@ -415,11 +415,11 @@ C integer*4 mexCallMATLAB(integer*4 nlhs, mwPointer plhs, integer*4 nrhs, mwPoin
           call mexErrMsgIdAndTxt('fcobyla:UnsuccessfulCall',
      &    'fcobyla: mex fails to call fun.')
       end if
-      if (plhs(1) .eq. 0 .or. MX_GET_DBLE(plhs(1)) .eq. 0) then
+      if (plhs(1) .eq. 0 .or. _MGETDB(plhs(1)) .eq. 0) then
           call mexErrMsgIdAndTxt('fcobyla:UnsuccessfulCall',
      &    'fcobyla: NULL pointer returned when mex calls fun.')
       else
-          call mxCopyPtrToReal8(MX_GET_DBLE(plhs(1)), 
+          call mxCopyPtrToReal8(_MGETDB(plhs(1)), 
      &         funval, mwOne)
 C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
       end if
@@ -448,11 +448,11 @@ C Execute matlab command: c_value = feval(con, x)
      &        'fcobyla: mex fails to call con.')
           end if
           if (plhs(1) .eq. 0 .or. (m .gt. 0 .and. 
-     &        MX_GET_DBLE(plhs(1)) .eq. 0)) then
+     &        _MGETDB(plhs(1)) .eq. 0)) then
               call mexErrMsgIdAndTxt('fcobyla:UnsuccessfulCall',
      &        'fcobyla: NULL pointer returned when mex calls con.')
           else
-              call mxCopyPtrToReal8(MX_GET_DBLE(plhs(1)),
+              call mxCopyPtrToReal8(_MGETDB(plhs(1)),
      &             conval(1:m), m_mw)
 C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
           end if

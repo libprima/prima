@@ -107,7 +107,7 @@
       subroutine calfun(x, funval)
 
       ! General modules
-      use consts_mod, only : RP, HUGEFUN
+      use consts_mod, only : RP, HUGEFUN, INT32, MSSGLEN
       use infnan_mod, only : is_nan
       use mexapi_mod, only : mxGetM, mxGetN, mxIsDouble
       use mexapi_mod, only : mxDestroyArray
@@ -127,6 +127,9 @@
 
       ! Intermediate variables
       mwPointer :: pinput(1), poutput(1) 
+      mwSize :: row, col
+      integer(INT32) :: isdble
+      character(len = MSSGLEN) :: eid, mssg
 
       ! Associate X with INPUT(1)
       call fmxWriteMPtr(x, pinput(1))
@@ -137,10 +140,13 @@
       ! Verify the class and shape of outputs. Indeed, fmxReadMPtr
       ! does also the verification. We do it here in order to print a 
       ! more informative error message when the verification fails.
-      if (mxGetM(poutput(1))*mxGetN(poutput(1)) /= 1                    &
-     &    .or. mxIsDouble(poutput(1)) /= 1) then
-           call mexErrMsgIdAndTxt('fnewuoa:ObjectiveNotScalar',         &
-     & 'fnewuoa: The objective function should return a scalar value.')
+      row = mxGetM(poutput(1)) 
+      col = mxGetN(poutput(1))
+      isdble = mxIsDouble(poutput(1))
+      if (row*col /= 1 .or. isdble /= 1) then
+          eid = 'fnewuoa:ObjectiveNotScalar'
+          mssg = 'fnewuoa: Objective function does not return a scalar.'
+          call mexErrMsgIdAndTxt(eid, mssg)
       end if
 
       ! Read the data in OUTPUT

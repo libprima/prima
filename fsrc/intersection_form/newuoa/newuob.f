@@ -1,15 +1,15 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! This is the intersection-format version of newuob.f90.
+! This is the intersection-form version of newuob.f90.
 ! The file is generated automatically and is NOT intended to be readable.
 !
-! In the intersection format, each continued line has an ampersand at
-! column 73, and each continuation line has an ampersand at column 6.
-! A Fortran file in such a format can be compiled both as a fixed-format
-! file and as a free-format file.
+! In the intersection form, each continued line has an ampersand at column
+! 73, and each continuation line has an ampersand at column 6. A Fortran
+! file in such a form can be compiled both as fixed form and as free form.
+!
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 03-Aug-2020.
+! on 04-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
