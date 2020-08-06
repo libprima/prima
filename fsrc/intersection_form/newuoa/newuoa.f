@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 06-Aug-2020.
+! on 07-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -42,20 +42,33 @@
 ! taken up by minimizing the Frobenius norm of the change to the second
 ! derivative of the quadratic model, beginning with a zero matrix. The
 ! arguments of the subroutine are as follows.
-
-! N must be set to the number of variables.
 !
-! NPT is the number of interpolation conditions. Its value must be in
-! the interval [N+2, (N+1)(N+2)/2].
-!
-! Initial values of the variables must be set in X(1 : N). They will be
-! changed to the values that give the least calculated F.
+! Initial values of the variables must be set in X(1 : N), where N is
+! the dimension of the problem. They will be changed to the values that
+! give the least calculated F.
 !
 ! RHOBEG and RHOEND must be set to the initial and final values of a
 ! trust region radius, so both must be positive with RHOEND<=RHOBEG.
 ! Typically RHOBEG should be about one tenth of the greatest expected
 ! change to a variable, and RHOEND should indicate the accuracy that is
 ! required in the final values of the variables.
+!
+! MAXFUN must be set to the maximal number of calls of CALFUN.
+!
+! NPT is the number of interpolation conditions. Its value must be in
+! the interval [N+2, (N+1)(N+2)/2].
+!
+! XHIST and FHIST will save the history of iterates and function values.
+! At entry, XHIST must be an ALLOCATABLE rank 2 array, and FHIST must
+! be an ALLOCATABLE rank 1 array. In addition,  MAXHIST should be an
+! integer in the inerval [0, MAXFUN], and we save only the last MAXHIST
+! iterates and the corresponding function values. Therefore, MAXHIST = 0
+! means no history will be saved, while MAXHIST = MAXFUN means all
+! history will be saved. Note that setting MAXHIST to a large value may
+! be costly in terms of memory. For instance, if N = 1000 and
+! MAXHIST = 100, 000, XHIST will take about 1 GB if we use double-
+! precision floating point numbers. When MAXHIST is too large, memory
+! allocation may fail; in that case, one should try a smaller MAXHIST.
 !
 ! The value of IPRINT should be set to 0, 1, 2, 3, or 4, which controls
 ! the amount of printing. Specifically, there is no output if IPRINT = 0
@@ -67,8 +80,6 @@
 ! NEWUOA.output, which can be costly in terms of time and space (the
 ! file will be created if it does not exist; the new output will be
 ! appended to the end of this file if it already exists).
-!
-! MAXFUN must be set to the maximal number of calls of CALFUN.
 !
 ! FTARGET is the target function value. The minimization will terminate
 ! when a point with function value <= FTARGET is found.

@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 06-Aug-2020.
+! on 07-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -32,8 +32,9 @@
       subroutine newuob(iprint, maxfun, maxhist, npt, eta1, eta2, ftarge&
      &t, gamma1, gamma2, rhobeg, rhoend, x, nf, f, fhist, xhist, info)
 ! NEWUOB performs the actual calculations of NEWUOA. The arguments IPRINT,
-! MAXFUN, NPT, ETA1, ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG, RHOEND, X, NF,
-! F, and INFO are identical to the corresponding arguments in subroutine NEWUOA.
+! MAXFUN, MAXHIST, NPT, ETA1, ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG,
+! RHOEND, X, NF, F, FHIST, XHIST, and INFO are identical to the corresponding
+! arguments in subroutine NEWUOA.
 
 ! XBASE will hold a shift of origin that should reduce the contributions
 ! from rounding errors to values of the model and Lagrange functions.
@@ -172,7 +173,9 @@
       if (terminate) then
           info = subinfo
           if (maxhist >= 1 .and. maxhist < nf) then
-              khist = mod(nf - 1, maxhist) + 1
+! In this case, we rearrange FHIST and XHIST so that they are
+! in the chronological order.
+              khist = mod(nf - 1_IK, maxhist) + 1_IK
               fhist = (/ fhist(khist + 1 : maxhist), fhist(1 : khist) /)
               xhist = reshape((/ xhist(:, khist + 1 : maxhist), xhist(:,&
      &1 : khist) /), shape(xhist))
@@ -274,7 +277,7 @@
                   call fmssg(iprint, nf, f, x, solver)
               end if
               if (maxhist >= 1) then
-                  khist = mod(nf - 1, maxhist) + 1
+                  khist = mod(nf - 1_IK, maxhist) + 1_IK
                   fhist(khist) = f
                   xhist(:, khist) = x
               end if
@@ -482,7 +485,7 @@
                   call fmssg(iprint, nf, f, x, solver)
               end if
               if (maxhist >= 1) then
-                  khist = mod(nf - 1, maxhist) + 1
+                  khist = mod(nf - 1_IK, maxhist) + 1_IK
                   fhist(khist) = f
                   xhist(:, khist) = x
               end if
@@ -563,7 +566,7 @@
                   call fmssg(iprint, nf, f, x, solver)
               end if
               if (maxhist >= 1) then
-                  khist = mod(nf - 1, maxhist) + 1
+                  khist = mod(nf - 1_IK, maxhist) + 1_IK
                   fhist(khist) = f
                   xhist(:, khist) = x
               end if
@@ -578,7 +581,9 @@
       end if
 
       if (maxhist >= 1 .and. maxhist < nf) then
-          khist = mod(nf - 1, maxhist) + 1
+! In this case, we rearrange FHIST and XHIST so that they are in the
+! chronological order.
+          khist = mod(nf - 1_IK, maxhist) + 1_IK
           fhist = (/ fhist(khist + 1 : maxhist), fhist(1 : khist) /)
           xhist = reshape((/ xhist(:, khist + 1 : maxhist), xhist(:, 1 :&
      &khist) /), shape(xhist))

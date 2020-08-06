@@ -13,7 +13,6 @@
       private
       public :: fun_ptr
 
-      ! Some global variables
       mwPointer, save :: fun_ptr ! Objective function
 
       end module fnewuoa_mod
@@ -90,9 +89,18 @@
       call fmxWriteMPtr(fhist(1: min(nf, maxhist)), poutput(6), 'row')
 
       ! Free memory
-      deallocate (x)
-      deallocate (fhist)
-      deallocate (xhist)
+      ! X is allocated by fmxReadMPtr.
+      if (allocated(x)) then
+          deallocate(x)
+      end if
+      ! The Fortran code performs ALLOCATE(FHIST) and ALLOCATE(XHIST).
+      ! Here we deallocate them. It is the case even if MAXHIST = 0.
+      if (allocated(fhist)) then
+          deallocate(fhist)
+      end if
+      if (allocated(xhist)) then
+          deallocate(xhist)
+      end if
 
       return
       end subroutine mexFunction

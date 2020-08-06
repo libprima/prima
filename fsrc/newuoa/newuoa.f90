@@ -51,7 +51,8 @@ subroutine newuoa(x, f, nf, xhist, fhist, rhobeg, rhoend, eta1, eta2, gamma1, ga
 ! history will be saved. Note that setting MAXHIST to a large value may
 ! be costly in terms of memory. For instance, if N = 1000 and 
 ! MAXHIST = 100, 000, XHIST will take about 1 GB if we use double-
-! precision floating point numbers.
+! precision floating point numbers. When MAXHIST is too large, memory
+! allocation may fail; in that case, one should try a smaller MAXHIST.
 !
 ! The value of IPRINT should be set to 0, 1, 2, 3, or 4, which controls 
 ! the amount of printing. Specifically, there is no output if IPRINT = 0

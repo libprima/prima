@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 06-Aug-2020.
+! on 07-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -179,7 +179,7 @@
               call fmssg(iprint, k, f, xtemp, solver)
           end if
           if (maxhist >= 1) then
-              khist = mod(k - 1, maxhist) + 1
+              khist = mod(k - 1_IK, maxhist) + 1_IK
               fhist(khist) = f
               xhist(:, khist) = xtemp
           end if
@@ -259,7 +259,7 @@
               call fmssg(iprint, k, f, xtemp, solver)
           end if
           if (maxhist >= 1) then
-              khist = mod(k - 1, maxhist) + 1
+              khist = mod(k - 1_IK, maxhist) + 1_IK
               fhist(khist) = f
               xhist(:, khist) = xtemp
           end if
