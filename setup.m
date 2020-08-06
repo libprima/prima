@@ -134,7 +134,7 @@ end
 
 % Exit if wrong input detected.
 if wrong_input 
-    return;
+    return
 end 
 
 % Extract compilation options.
@@ -179,6 +179,7 @@ end
 
 % The full path of several directories.
 cpwd = fileparts(mfilename('fullpath')); % Current directory
+fsrc_free = fullfile(cpwd, 'fsrc'); % Directory of the free-form Fortran source code
 fsrc = fullfile(cpwd, 'fsrc/intersection_form'); % Directory of the Fortran source code
 fsrc_classical = fullfile(cpwd, 'fsrc/classical'); % Directory of the classical Fortran source code
 matd = fullfile(cpwd, 'matlab'); % Matlab directory
@@ -187,6 +188,14 @@ gateways_classical = fullfile(gateways, 'classical'); % Directory of the MEX gat
 interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
 interfaces_private = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
 examples = fullfile(matd, 'examples'); % Directory containing some test examples
+tools = fullfile(matd, 'tools'); % Directory containing some tools, e.g., interform.m
+
+% Generate the intersection-form Fortrance source code
+fprintf('Refactoring the Fortran code ... ');
+addpath(tools);
+interform(fsrc_free);
+%rmpath(tools);
+fprintf('Done.\n\n');
 
 % Clean up the directories fsrc and gateways before compilation.
 % This is important especially if there was previously another
@@ -251,7 +260,7 @@ try
 
     % Clean up the .mod and .o files
     mod_files = files_with_wildcard(fullfile(interfaces_private), '*.mod');
-    obj_files = [files_with_wildcard(fullfile(interfaces_private), '*.o'), files_with_wildcard(fullfile(interfaces_private), '*.obj')];;
+    obj_files = [files_with_wildcard(fullfile(interfaces_private), '*.o'), files_with_wildcard(fullfile(interfaces_private), '*.obj')];
     cellfun(@(filename) delete(filename), [mod_files, obj_files]);
 
 catch exception % NOTE: Everything above 'catch' is conducted in interfaces_private.

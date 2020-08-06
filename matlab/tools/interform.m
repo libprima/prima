@@ -9,7 +9,7 @@ function interform(directory)
 outputdir = 'intersection_form';
 
 % Do not perform refactoring in these subdirectories (if exist)
-ignoredir = {'original', 'classical', 'backup', 'intersection_form', 'trash', 'test'};  
+ignoredir = {'original', 'classical', 'backup', 'intersection_form', 'trash', 'test', 'results', 'test_data'};  
 
 % Ignore the following files
 ignorefiles = {'calfun__genmod.f90', 'mexfunction__genmod.f90', 'test.f'};
