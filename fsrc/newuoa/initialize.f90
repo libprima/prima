@@ -161,7 +161,7 @@ do k = 1, min(npt, int(2*n + 1, kind(npt)))
         call fmssg(iprint, k, f, xtemp, solver) 
     end if
     if (maxhist >= 1) then
-        khist = mod(k - 1, maxhist) + 1
+        khist = mod(k - 1_IK, maxhist) + 1_IK
         fhist(khist) = f
         xhist(:, khist) = xtemp
     end if
@@ -241,7 +241,7 @@ do k = int(2*n + 2, kind(k)), npt_revised
         call fmssg(iprint, k, f, xtemp, solver) 
     end if
     if (maxhist >= 1) then
-        khist = mod(k - 1, maxhist) + 1
+        khist = mod(k - 1_IK, maxhist) + 1_IK
         fhist(khist) = f
         xhist(:, khist) = xtemp
     end if

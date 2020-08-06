@@ -155,7 +155,9 @@ end if
 if (terminate) then
     info = subinfo
     if (maxhist >= 1 .and. maxhist < nf) then
-        khist = mod(nf - 1, maxhist) + 1
+        ! In this case, we rearrange FHIST and XHIST so that they are
+        ! in the chronological order.
+        khist = mod(nf - 1_IK, maxhist) + 1_IK
         fhist = (/ fhist(khist + 1 : maxhist), fhist(1 : khist) /)
         xhist = reshape((/ xhist(:, khist + 1 : maxhist), xhist(:, 1 : khist) /), shape(xhist))
     end if
@@ -252,7 +254,7 @@ do tr = 1, maxtr
             call fmssg(iprint, nf, f, x, solver)
         end if
         if (maxhist >= 1) then
-            khist = mod(nf - 1, maxhist) + 1
+            khist = mod(nf - 1_IK, maxhist) + 1_IK
             fhist(khist) = f
             xhist(:, khist) = x
         end if
@@ -448,7 +450,7 @@ do tr = 1, maxtr
             call fmssg(iprint, nf, f, x, solver)
         end if
         if (maxhist >= 1) then
-            khist = mod(nf - 1, maxhist) + 1
+            khist = mod(nf - 1_IK, maxhist) + 1_IK
             fhist(khist) = f
             xhist(:, khist) = x
         end if
@@ -526,7 +528,7 @@ if (maxtr > 0 .and. shortd .and. nf < maxfun) then
             call fmssg(iprint, nf, f, x, solver)
         end if
         if (maxhist >= 1) then
-            khist = mod(nf - 1, maxhist) + 1
+            khist = mod(nf - 1_IK, maxhist) + 1_IK
             fhist(khist) = f
             xhist(:, khist) = x
         end if
@@ -541,7 +543,9 @@ if (is_nan(f) .or. fopt <= f) then
 end if
 
 if (maxhist >= 1 .and. maxhist < nf) then
-    khist = mod(nf - 1, maxhist) + 1
+    ! In this case, we rearrange FHIST and XHIST so that they are in the
+    ! chronological order.
+    khist = mod(nf - 1_IK, maxhist) + 1_IK
     fhist = (/ fhist(khist + 1 : maxhist), fhist(1 : khist) /)
     xhist = reshape((/ xhist(:, khist + 1 : maxhist), xhist(:, 1 : khist) /), shape(xhist))
 end if
