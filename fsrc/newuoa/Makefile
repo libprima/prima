@@ -19,6 +19,9 @@ MFILES= ../consts.F ../debug.F ../info.F ../infnan.F ../lina.F ../output.F ../pr
 
 FSTD=2003
 
+verify: gverify iverify 9verify nverify pverify averify
+verifym: gverifym iverifym 9verifym nverifym pverifym averifym
+
 gverify:
 	$(GFORT)  $(FILES) -std=f$(FSTD) -pedantic -ffree-form
 

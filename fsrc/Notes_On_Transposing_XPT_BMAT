@@ -1,10 +1,10 @@
 In NEWUOA, BOBYQA, and LINCOA, Powell defined XPT as an NPTxN matrix,
 each row containing the coordinates of an interpolation point, and BMAT
-as an (NPT+N)xN matrix containing the last N columns of H. However, in
-calculation, we access more often the rows of XPT and BMAT than the
-columns. For XPT, this is quite natural as each of its rows corresponds
-to an interpolation point; BMAT can indeed be written as [B1; B2] using
-a MATLAB-style notation, where B1 has a size of NPTxN, each row
+as an (NPT+N)xN matrix containing the last N columns of H. As
+a consequence, in calculation, we access more often the rows of XPT and 
+BMAT than their columns. For XPT, this is quite natural as each of its 
+rows corresponds to an interpolation point; BMAT can indeed be written 
+as [B1; B2] using a MATLAB-style notation, where B1 has a size of NPTxN, each row
 corresponding to an interpolation point, while B2 is an NxN symmetric matrix.  
 
 To improve the efficiency of accessing XPT and BMAT, we decided to

@@ -19,27 +19,39 @@ public :: newuoa
 contains
 
 
-subroutine newuoa(x, f, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, npt, maxfun, iprint, info)
+subroutine newuoa(x, f, nf, xhist, fhist, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, npt, maxfun, maxhist, iprint, info)
 ! NEWUOA seeks the least value of a function of many variables, by a 
 ! trust region method that forms quadratic models by interpolation. 
 ! There can be some freedom in the interpolation conditions, which is 
 ! taken up by minimizing the Frobenius norm of the change to the second
 ! derivative of the quadratic model, beginning with a zero matrix. The
 ! arguments of the subroutine are as follows.
-
-! N must be set to the number of variables.
 !
-! NPT is the number of interpolation conditions. Its value must be in 
-! the interval [N+2, (N+1)(N+2)/2].
-!
-! Initial values of the variables must be set in X(1 : N). They will be 
-! changed to the values that give the least calculated F.
+! Initial values of the variables must be set in X(1 : N), where N is
+! the dimension of the problem. They will be changed to the values that
+! give the least calculated F.
 !
 ! RHOBEG and RHOEND must be set to the initial and final values of a 
 ! trust region radius, so both must be positive with RHOEND<=RHOBEG.
 ! Typically RHOBEG should be about one tenth of the greatest expected
 ! change to a variable, and RHOEND should indicate the accuracy that is
 ! required in the final values of the variables.
+!
+! MAXFUN must be set to the maximal number of calls of CALFUN.
+!
+! NPT is the number of interpolation conditions. Its value must be in 
+! the interval [N+2, (N+1)(N+2)/2].
+!
+! XHIST and FHIST will save the history of iterates and function values.
+! At entry, XHIST must be an ALLOCATABLE rank 2 array, and FHIST must 
+! be an ALLOCATABLE rank 1 array. In addition,  MAXHIST should be an 
+! integer in the inerval [0, MAXFUN], and we save only the last MAXHIST
+! iterates and the corresponding function values. Therefore, MAXHIST = 0
+! means no history will be saved, while MAXHIST = MAXFUN means all 
+! history will be saved. Note that setting MAXHIST to a large value may
+! be costly in terms of memory. For instance, if N = 1000 and 
+! MAXHIST = 100, 000, XHIST will take about 1 GB if we use double-
+! precision floating point numbers.
 !
 ! The value of IPRINT should be set to 0, 1, 2, 3, or 4, which controls 
 ! the amount of printing. Specifically, there is no output if IPRINT = 0
@@ -51,8 +63,6 @@ subroutine newuoa(x, f, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, npt
 ! NEWUOA.output, which can be costly in terms of time and space (the 
 ! file will be created if it does not exist; the new output will be
 ! appended to the end of this file if it already exists).
-!
-! MAXFUN must be set to the maximal number of calls of CALFUN.
 !
 ! FTARGET is the target function value. The minimization will terminate
 ! when a point with function value <= FTARGET is found. 
@@ -88,6 +98,7 @@ implicit none
 ! Inputs
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
+integer(IK), intent(in) :: maxhist
 integer(IK), intent(in) :: npt
 real(RP), intent(in) :: eta1  ! Threshold for reducing DELTA
 real(RP), intent(in) :: eta2  ! Threshold for increasing DELTA
@@ -102,13 +113,16 @@ real(RP), intent(inout) :: x(:)
 
 ! Outputs
 integer(IK), intent(out) :: info
+integer(IK), intent(out) :: nf 
 real(RP), intent(out) :: f
+real(RP), allocatable, intent(out) :: fhist(:)
+real(RP), allocatable, intent(out) :: xhist(:, :)
 
 ! Intermediate variables
 integer(IK) :: iprint_v
 integer(IK) :: maxfun_v
+integer(IK) :: maxhist_v
 integer(IK) :: n
-integer(IK) :: nf
 integer(IK) :: npt_v
 real(RP) :: eta1_v
 real(RP) :: eta2_v 
@@ -136,6 +150,7 @@ gamma1_v = gamma1
 gamma2_v = gamma2
 ftarget_v = ftarget
 maxfun_v = maxfun
+maxhist_v = maxhist
 npt_v = npt
 iprint_v = iprint
 
@@ -181,6 +196,8 @@ end if
 
 maxfun_v = max(int(n + 3, kind(maxfun_v)), maxfun_v)
 
+maxhist_v = min(max(0_IK, maxhist_v), maxfun_v)
+
 if (npt_v < n + 2 .or. npt > min(maxfun_v - 1, ((n + 2)*(n + 1))/2)) then 
     npt_v = int(min(maxfun_v - 1, 2*n + 1), kind(npt_v))
 end if
@@ -189,7 +206,8 @@ if (iprint_v /= 0 .and. iprint_v /= 1 .and. iprint_v /= 2 .and. iprint_v /= 3 .a
     iprint_v = IPRINT_DFT
 end if
 
-call newuob(iprint_v, maxfun_v, npt_v, eta1_v, eta2_v, ftarget_v, gamma1_v, gamma2_v, rhobeg_v, rhoend_v, x, nf, f, info)
+call newuob(iprint_v, maxfun_v, maxhist_v, npt_v, eta1_v, eta2_v, ftarget_v, gamma1_v, gamma2_v, &
+    & rhobeg_v, rhoend_v, x, nf, f, fhist, xhist, info)
 
 end subroutine newuoa
 

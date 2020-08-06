@@ -32,10 +32,6 @@ else
     ir = -1;
 end
 
-test_options = struct();
-test_options.debug = true;
-test_options.chkfunval = true;
-
 requirements = struct();
 if isfield(options, 'list')
     requirements.list = options.list;  % Only test problems in this list
@@ -108,6 +104,8 @@ for ip = 1 : length(plist)
         rng(ceil(1e5*abs(sin(1e10*(ir+nr+requirements.maxdim)))));
         prob.x0 = x0 + 0.5*randn(size(x0));
         test_options = struct();
+        test_options.debug = true;
+        test_options.chkfunval = true;
         test_options.rhobeg = 1 + 0.5*(2*rand-1);
         test_options.rhoend = 1e-3*(1 + 0.5*(2*rand-1));
         test_options.npt = max(min(ceil(10*rand*n + 2), (n+2)*(n+1)/2), n+2);
@@ -173,7 +171,7 @@ return
 function eq = iseq(x, f, exitflag, output, xx, ff, ee, oo, prec) 
 eq = true;
 
-if ~isempty(setdiff(fieldnames(output), fieldnames(oo))) || ~isempty(setdiff(fieldnames(oo), fieldnames(output)))
+if ~isempty(setdiff(fieldnames(output), [fieldnames(oo); 'xhist'])) || ~isempty(setdiff(fieldnames(oo), [fieldnames(output); 'xhist']))
     eq = false;
 end
 
@@ -197,13 +195,15 @@ end
 
 output.fhist = output.fhist(:);
 oo.fhist = oo.fhist(:);
-nf = min(output.funcCount, oo.funcCount);
+nhist = min(length(output.fhist), length(oo.fhist));
+output.fhist = output.fhist(end - nhist + 1: end);
+oo.fhist = oo.fhist(end - nhist + 1: end);
 
-if norm(output.fhist(1:nf)-oo.fhist(1:nf))/(1+norm(output.fhist(1:nf))) > prec
+if norm(output.fhist(1:nhist)-oo.fhist(1:nhist))/(1+norm(output.fhist(1:nhist))) > prec
     eq = false;
 end
 
-if norm(output.chist(1:nf)-oo.chist(1:nf))/(1+norm(output.chist(1:nf))) > prec
+if norm(output.chist(1:nhist)-oo.chist(1:nhist))/(1+norm(output.chist(1:nhist))) > prec
     eq = false;
 end
 

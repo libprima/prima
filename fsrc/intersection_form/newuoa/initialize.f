@@ -30,8 +30,8 @@
       contains
 
 
-      subroutine initxf(iprint, x, rhobeg, ftarget, ij, kopt, nf, fval, &
-     &xbase, xpt, info)
+      subroutine initxf(iprint, maxhist, x, rhobeg, ftarget, ij, kopt, n&
+     &f, fhist, fval, xbase, xhist, xpt, info)
 ! INITXF performs the initialization regarding the interpolation
 ! points and corresponding function values.
 
@@ -47,6 +47,7 @@
 
 ! Inputs
       integer(IK), intent(in) :: iprint
+      integer(IK), intent(in) :: maxhist
       real(RP), intent(in) :: x(:) ! X(N)
       real(RP), intent(in) :: rhobeg
       real(RP), intent(in) :: ftarget
@@ -57,7 +58,9 @@
       integer(IK), intent(out) :: kopt
       integer(IK), intent(out) :: nf
       real(RP), intent(out) :: fval(:) ! FVAL(NPT)
+      real(RP), allocatable, intent(out) :: fhist(:)
       real(RP), intent(out) :: xbase(:) ! XBASE(N)
+      real(RP), allocatable, intent(out) :: xhist(:, :)
       real(RP), intent(out) :: xpt(:, :) ! XPT(N, NPT)
 ! Remark on IJ:
 ! When K > 2*N + 1, all the entries of XPT(:, K) will be zero except
@@ -67,10 +70,12 @@
 ! Indeed, IJ(:, 1 : 2*N + 1) is never used.
 
 ! Intermediate variables
+      integer :: alloc_stat
       integer(IK) :: i
       integer(IK) :: itemp
       integer(IK) :: j
       integer(IK) :: k
+      integer(IK) :: khist
       integer(IK) :: n
       integer(IK) :: npt
       integer(IK) :: npt_revised
@@ -138,6 +143,23 @@
       do k = int(n + 2, kind(k)), min(npt, int(2*n + 1, kind(npt)))
           xpt(k - n - 1, k) = -rhobeg
       end do
+! Allocate memory for FHIST and XHIST
+      if (allocated(fhist)) then
+          deallocate(fhist)
+      end if
+      allocate(fhist(maxhist), stat = alloc_stat)
+      if (alloc_stat /= 0) then
+          call errstop(SRNAME, 'Memory allocation fails for FHIST. Set M&
+     &AXHIST to a smaller value.')
+      end if
+      if (allocated(xhist)) then
+          deallocate(xhist)
+      end if
+      allocate(xhist(n, maxhist), stat = alloc_stat)
+      if (alloc_stat /= 0) then
+          call errstop(SRNAME, 'Memory allocation fails for XHIST. Set M&
+     &AXHIST to a smaller value.')
+      end if
 
 ! Set FVAL(1 : NPT) by evaluating F. Totally parallelizable except for
 ! FMSSG, which outputs messages to the console or files.
@@ -155,6 +177,11 @@
 
           if (iprint >= 3) then
               call fmssg(iprint, k, f, xtemp, solver)
+          end if
+          if (maxhist >= 1) then
+              khist = mod(k - 1, maxhist) + 1
+              fhist(khist) = f
+              xhist(:, khist) = xtemp
           end if
 
 ! Check whether to exit.
@@ -230,6 +257,11 @@
 
           if (iprint >= 3) then
               call fmssg(iprint, k, f, xtemp, solver)
+          end if
+          if (maxhist >= 1) then
+              khist = mod(k - 1, maxhist) + 1
+              fhist(khist) = f
+              xhist(:, khist) = xtemp
           end if
 
 ! Check whether to exit.

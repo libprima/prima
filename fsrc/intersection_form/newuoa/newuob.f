@@ -29,8 +29,8 @@
       contains
 
 
-      subroutine newuob(iprint, maxfun, npt, eta1, eta2, ftarget, gamma1&
-     &, gamma2, rhobeg, rhoend, x, nf, f, info)
+      subroutine newuob(iprint, maxfun, maxhist, npt, eta1, eta2, ftarge&
+     &t, gamma1, gamma2, rhobeg, rhoend, x, nf, f, fhist, xhist, info)
 ! NEWUOB performs the actual calculations of NEWUOA. The arguments IPRINT,
 ! MAXFUN, NPT, ETA1, ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG, RHOEND, X, NF,
 ! F, and INFO are identical to the corresponding arguments in subroutine NEWUOA.
@@ -80,6 +80,7 @@
 ! Inputs
       integer(IK), intent(in) :: iprint
       integer(IK), intent(in) :: maxfun
+      integer(IK), intent(in) :: maxhist
       integer(IK), intent(in) :: npt
       real(RP), intent(in) :: eta1
       real(RP), intent(in) :: eta2
@@ -96,11 +97,14 @@
       integer(IK), intent(out) :: info
       integer(IK), intent(out) :: nf
       real(RP), intent(out) :: f
+      real(RP), allocatable, intent(out) :: fhist(:)
+      real(RP), allocatable, intent(out) :: xhist(:, :)
 
 ! Intermediate variables
       integer(IK) :: idz
       integer(IK) :: ij(2, npt)
       integer(IK) :: itest
+      integer(IK) :: khist
       integer(IK) :: knew
       integer(IK) :: kopt
       integer(IK) :: maxtr
@@ -149,8 +153,8 @@
       terminate = .false. ! Whether to terminate after initialization.
 
 ! Initialize FVAL, XBASE, and XPT.
-      call initxf(iprint, x, rhobeg, ftarget, ij, kopt, nf, fval, xbase,&
-     &xpt, subinfo)
+      call initxf(iprint, maxhist, x, rhobeg, ftarget, ij, kopt, nf, fhi&
+     &st, fval, xbase, xhist, xpt, subinfo)
       xopt = xpt(:, kopt)
       fopt = fval(kopt)
       x = xbase + xopt ! Set X.
@@ -167,6 +171,12 @@
 
       if (terminate) then
           info = subinfo
+          if (maxhist >= 1 .and. maxhist < nf) then
+              khist = mod(nf - 1, maxhist) + 1
+              fhist = (/ fhist(khist + 1 : maxhist), fhist(1 : khist) /)
+              xhist = reshape((/ xhist(:, khist + 1 : maxhist), xhist(:,&
+     &1 : khist) /), shape(xhist))
+          end if
           if (iprint >= 1) then
               call retmssg(info, iprint, nf, f, x, solver)
           end if
@@ -262,6 +272,11 @@
               nf = int(nf + 1, kind(nf))
               if (iprint >= 3) then
                   call fmssg(iprint, nf, f, x, solver)
+              end if
+              if (maxhist >= 1) then
+                  khist = mod(nf - 1, maxhist) + 1
+                  fhist(khist) = f
+                  xhist(:, khist) = x
               end if
 
 ! FQDIFF is the error of the current model in predicting the change
@@ -466,6 +481,11 @@
               if (iprint >= 3) then
                   call fmssg(iprint, nf, f, x, solver)
               end if
+              if (maxhist >= 1) then
+                  khist = mod(nf - 1, maxhist) + 1
+                  fhist(khist) = f
+                  xhist(:, khist) = x
+              end if
 
 ! FQDIFF is the error of the current model in predicting the
 ! change in F due to D.
@@ -542,6 +562,11 @@
               if (iprint >= 3) then
                   call fmssg(iprint, nf, f, x, solver)
               end if
+              if (maxhist >= 1) then
+                  khist = mod(nf - 1, maxhist) + 1
+                  fhist(khist) = f
+                  xhist(:, khist) = x
+              end if
           end if
       end if
 
@@ -550,6 +575,13 @@
       if (is_nan(f) .or. fopt <= f) then
           x = xbase + xopt
           f = fopt
+      end if
+
+      if (maxhist >= 1 .and. maxhist < nf) then
+          khist = mod(nf - 1, maxhist) + 1
+          fhist = (/ fhist(khist + 1 : maxhist), fhist(1 : khist) /)
+          xhist = reshape((/ xhist(:, khist + 1 : maxhist), xhist(:, 1 :&
+     &khist) /), shape(xhist))
       end if
 
       if (iprint >= 1) then

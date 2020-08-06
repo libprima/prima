@@ -14,7 +14,7 @@
 !    operations, and because the overhead of subroutine/function calling
 !    can be high in these languages.
 
-! Coded by Zaikun ZHANG in July 2020
+! Coded by Zaikun ZHANG in July 2020.
 
 
 #include "ppf.h"
@@ -866,8 +866,7 @@ s = HALF*d + x  ! Different from the above version.
 vquad = vquad + sum(pq * (matprod(s, xpt) * matprod(d, xpt)))
 ! explicit 2nd-order term
 vquad = vquad + inprod(s, matprod(hq, d))
-! The following implementations do not work as well as the above
-! one.
+! The following implementations do not work as well as the above one.
 !vquad = vquad + inprod(d, matprod(hq, s))
 !vquad = vquad + sum(hq * outprod(s, d))
 !vquad = vquad + HALF*(inprod(d, matprod(hq, s)) + inprod(s, matprod(hq, d)))
