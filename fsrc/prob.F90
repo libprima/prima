@@ -3,6 +3,8 @@
 ! constrained, and linearly constrained problems; CALCFC evaluates the
 ! objective function and constraint for nonlinearly constrained prolems.
 !
+! Coded by Zaikun Zhang in July 2020.
+!
 ! Users must provide the implementation of CALFUN or CALCFC.
 
 module prob_mod

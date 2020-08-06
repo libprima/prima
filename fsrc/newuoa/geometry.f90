@@ -1,5 +1,8 @@
 ! GEOMETRY_MOD is a module containing subroutines that are concerned
 ! with geometry-improving of the interpolation set XPT.
+!
+! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code 
+! and the NEWUOA paper.
 
 
 module geometry_mod
@@ -11,6 +14,7 @@ public :: setremove, ameliorgeo
 
 contains
 
+
 subroutine setremove(idz, kopt, beta, delta, ratio, rho, vlag, xopt, xpt, zmat, knew)
 ! SETREMOVE sets KNEW to the index of the interpolation point that will 
 ! be deleted AFTER A TRUST REGION STEP. KNEW will be set in a way
@@ -20,8 +24,7 @@ subroutine setremove(idz, kopt, beta, delta, ratio, rho, vlag, xopt, xpt, zmat, 
 ! calculated according to D.
 
 ! General modules
-use consts_mod, only : RP, IK, ONE, ZERO, TENTH
-use consts_mod, only : SRNLEN, DEBUGGING
+use consts_mod, only : RP, IK, ONE, ZERO, TENTH, SRNLEN, DEBUGGING
 use debug_mod, only : errstop, verisize
 
 implicit none
@@ -88,8 +91,7 @@ end subroutine setremove
 subroutine ameliorgeo(idz, knew, kopt, bmat, delbar, xopt, xpt, zmat, d, beta, vlag)
 
 ! General modules
-use consts_mod, only : RP, IK, ONE
-use consts_mod, only : DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ONE, DEBUGGING, SRNLEN
 use debug_mod, only : errstop, verisize
 use lina_mod, only : inprod
 
@@ -155,7 +157,6 @@ if (abs(ONE + alpha*beta/vlag(knew)**2) <= 0.8_RP) then
     call bigden(idz, knew, kopt, bmat, xopt, xpt, zmat, d, beta, vlag)
 end if
 
-return
 end subroutine ameliorgeo
 
 
@@ -165,13 +166,12 @@ subroutine biglag(idz, knew, delbar, bmat, x, xpt, zmat, d)
 ! max |LFUNC(X + D)|, subject to ||D|| <= DELBAR, 
 !
 ! where LFUNC is the KNEW-th Lagrange function.
+! See Setion 6 of the NEWUOA paper.
 
 ! General modules
-use consts_mod, only : RP, IK, ONE, TWO, HALF, PI, ZERO
-use consts_mod, only : DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ONE, TWO, HALF, PI, ZERO, DEBUGGING, SRNLEN
 use debug_mod, only : errstop, verisize
-use lina_mod, only : Ax_plus_y
-use lina_mod, only : inprod, matprod
+use lina_mod, only : Ax_plus_y, inprod, matprod
 
 implicit none
 
@@ -362,8 +362,6 @@ do iterc = 1, n
     end if
 end do
 
-return
-
 end subroutine biglag
 
 
@@ -378,13 +376,12 @@ subroutine bigden(idz, knew, kopt, bmat, x, xpt, zmat, d, beta, vlag)
 ! column of H corresponds to a Lagrange basis function of the
 ! interpolation problem. 
 ! In addition, it sets VLAG and BETA for the selected D.
+! See Setion 6 of the NEWUOA paper.
 
 ! General modules
-use consts_mod, only : RP, IK, ONE, TWO, HALF, QUART, PI, ZERO
-use consts_mod, only : DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ONE, TWO, HALF, QUART, PI, ZERO, DEBUGGING, SRNLEN
 use debug_mod, only : errstop, verisize
-use lina_mod, only : Ax_plus_y
-use lina_mod, only : inprod, matprod
+use lina_mod, only : Ax_plus_y, inprod, matprod
 
 implicit none
 
@@ -715,8 +712,7 @@ end do
 
 vlag(kopt) = vlag(kopt) + ONE
 
-return
-
 end subroutine bigden
+
 
 end module geometry_mod

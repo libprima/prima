@@ -2,7 +2,9 @@
 ! terminla/files. Note that these output operations are sequential in
 ! nature. In case parallelisum is desirable (especially during
 ! initializaton), the subroutines may have to be modified or disabled.
-
+!
+! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code 
+! and the NEWUOA paper.
 
 module output_mod
 
@@ -12,6 +14,7 @@ public :: retmssg, rhomssg, fmssg
 
 
 contains
+
 
 subroutine retmssg(info, iprint, nf, f, x, solver)
 use consts_mod, only : RP, IK, MSSGLEN, OUTUNIT
@@ -175,5 +178,6 @@ if (iprint >= 4) then
 end if
 
 end subroutine fmssg
+
 
 end module output_mod

@@ -1,3 +1,10 @@
+! UPDATE_MOD is a module providing subroutines concerning the update of
+! IDZ, BMAT, ZMAT, GQ, HQ, and PQ when XPT(:, KNEW) is replaced by XNEW.
+!
+! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code 
+! and the NEWUOA paper.
+
+
 module update_mod
 
 implicit none
@@ -7,17 +14,17 @@ public :: updateh, updateq, tryqalt
 
 contains
 
+
 subroutine updateh(knew, beta, vlag_in, idz, bmat, zmat)
 ! UPDATE updates arrays BMAT and ZMAT together with IDZ, in order
-! to shift the interpolation point that has index KNEW. On entry,
-! VLAG contains the components of the vector THETA*WCHECK + e_b
+! to replace the interpolation point XPT(:, KNEW) by XNEW. On entry,
+! VLAG_IN contains the components of the vector THETA*WCHECK + e_b
 ! of the updating formula (6.11) in the NEWUOA paper, and BETA
-! holds the value of the parameter that has this name.
-
-! Although VLAG will be modified below, its value will NOT be used
-! by other parts of NEWUOA after returning from UPDATE. Its value
-! will be overwritten when trying the alternative model or by
-! VLAGBETA.
+! holds the value of the parameter that has this name. VLAG_IN and BETA
+! contains information about XNEW, because they are calculated according
+! to D = XNEW - XOPT.
+!
+! See Section 4 of the NEWUOA paper.
 
 ! General modules
 use consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING, SRNLEN
@@ -29,7 +36,7 @@ implicit none
 ! Inputs
 integer(IK), intent(in) :: knew
 real(RP), intent(in) :: beta
-real(RP), intent(in) :: vlag_in(:)     ! VLAG(NPT + N)
+real(RP), intent(in) :: vlag_in(:)     ! VLAG_IN(NPT + N)
 
 ! In-outputs
 integer(IK), intent(inout) :: idz
@@ -122,7 +129,7 @@ alpha = w(knew)
 tau = vlag(knew)
 tausq = tau*tau
 denom = alpha*beta + tausq
-! VLAG = Hw - e_t in the NEWUOA paper.
+! After the following line, VLAG = Hw - e_t in the NEWUOA paper.
 vlag(knew) = vlag(knew) - ONE
 sqrtdn = sqrt(abs(denom))
 
@@ -246,12 +253,12 @@ call r2update(bmat, ONE, v1, vlag, ONE, v2, w)
 ! BMAT(:, NPT+1 : NPT+N) to be symmetric. Symmetrization needed.
 call symmetrize(bmat(:, npt + 1 : npt + n))
 
-return
-
 end subroutine updateh
 
 
 subroutine updateq(idz, knew, bmatknew, fqdiff, zmat, xptknew, gq, hq, pq)
+! UPDATEQ updates GQ, HQ, and PQ when XPT(:, KNEW) is replaced by XNEW.
+! See Section 4 of the NEWUOA paper.
 
 ! General modules
 use consts_mod, only : RP, IK, ZERO, DEBUGGING, SRNLEN
@@ -264,7 +271,8 @@ implicit none
 integer(IK), intent(in) :: idz
 integer(IK), intent(in) :: knew
 real(RP), intent(in) :: bmatknew(:) ! BMATKNEW(N)
-real(RP), intent(in) :: fqdiff
+! fqdiff = [f(xnew) - f(xopt)] - [q(xnew) - q(xopt)] = moderr
+real(RP), intent(in) :: fqdiff 
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 real(RP), intent(in) :: xptknew(:)  ! XPTKNEW(N)
 
@@ -311,8 +319,6 @@ pq = Ax_plus_y(zmat, fqdz, pq)
 ! Update the gradient.
 gq = gq + fqdiff*bmatknew
 
-return
-
 end subroutine updateq
 
 
@@ -322,6 +328,8 @@ subroutine tryqalt(idz, fval, ratio, smat, zmat, itest, gq, hq, pq)
 ! subject to the interpolation conditions. It does the replacement
 ! when certain criteria are satisfied (i.e., when ITEST = 3).
 ! Note that SMAT = BMAT(:, 1:NPT)
+!
+! See Section 8 of the NEWUOA paper.
 
 ! General modules
 use consts_mod, only : RP, IK, ZERO, DEBUGGING, SRNLEN
@@ -400,8 +408,7 @@ if (itest >= 3) then
     itest = 0
 end if
 
-return
-
 end subroutine tryqalt
+
 
 end module update_mod

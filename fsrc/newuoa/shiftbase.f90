@@ -1,5 +1,8 @@
 ! SHIFTBASE_MOD is a module contaning a subroutine that shifts the base
 ! point from XBASE to XBASE + XPT.
+!
+! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code 
+! and the NEWUOA paper.
 
 
 module shiftbase_mod
@@ -11,17 +14,16 @@ public :: shiftbase
 
 contains 
 
+
 subroutine shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
 ! SHIFTBASE shifts the base point for XBASE to XBASE + XOPT and updates 
 ! GQ, HQ, and BMAT accordingly. PQ and ZMAT remain the same after the
 ! shifting. See Section 7 of the NEWUOA paper.
 
 ! General modules
-use consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART 
-use consts_mod, only : DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, DEBUGGING, SRNLEN
 use debug_mod, only : errstop, verisize
-use lina_mod, only : Ax_plus_y, r1update, r2update
-use lina_mod, only : inprod, matprod
+use lina_mod, only : Ax_plus_y, r1update, r2update, inprod, matprod
 
 implicit none
 
@@ -143,7 +145,7 @@ xpt = xpt - HALF*spread(xopt, dim = 2, ncopies = npt)
 xbase = xbase + xopt
 xopt = ZERO
 
-return 
 end subroutine shiftbase
+
 
 end module shiftbase_mod
