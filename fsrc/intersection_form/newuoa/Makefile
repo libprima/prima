@@ -10,9 +10,9 @@ CURRENTDIR=$(PWD)
 INTERFORMDIR=../intersection_form/newuoa
 MEXDIR= $(PWD)/../../matlab/mex_gateways/
 
-FILES= ../consts.F ../debug.F ../info.F ../infnan.F ../lina.F ../output.F ../prob.F initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f90 newuoa.f 
+FILES= ../consts.F90 ../debug.F90 ../info.F90 ../infnan.F90 ../lina.F90 ../output.F90 ../prob.F90 initialize.f90 trustregion.f90 vlagbeta.f90 geometry.f90 update.f90 shiftbase.f90 newuob.f90 newuoa.f90 
  
-M90FILES= ../consts.F ../debug.F ../info.F ../infnan.F ../lina.F ../output.F ../prob.F initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f90 newuoa.f $(MEXDIR)/mexapi.F $(MEXDIR)/gethuge.F $(MEXDIR)/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/
+M90FILES= ../consts.F90 ../debug.F90 ../info.F90 ../infnan.F90 ../lina.F90 ../output.F90 ../prob.F90 initialize.f90 trustregion.f90 vlagbeta.f90 geometry.f90 update.f90 shiftbase.f90 newuob.f90 newuoa.f90 $(MEXDIR)/mexapi.F $(MEXDIR)/gethuge.F $(MEXDIR)/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/
 
 MFILES= ../consts.F ../debug.F ../info.F ../infnan.F ../lina.F ../output.F ../prob.F initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f $(MEXDIR)/mexapi.F $(MEXDIR)/gethuge.F $(MEXDIR)/newuoa-interface.F $(MEXDIR)/classical/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/
 

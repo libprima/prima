@@ -1,4 +1,19 @@
-! DEBUG_MOD is a module defining some procedures concerning debugging, 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! This is the intersection-form version of debug.F90.
+! The file is generated automatically and is NOT intended to be readable.
+!
+! In the intersection form, each continued line has an ampersand at column
+! 73, and each continuation line has an ampersand at column 6. A Fortran
+! file in such a form can be compiled both as fixed form and as free form.
+!
+! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
+!
+! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
+! on 06-Aug-2020.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+! DEBUG_MOD is a module defining some procedures concerning debugging,
 ! errors, and warnings.
 
 #include "ppf.h"
@@ -17,30 +32,31 @@
 
 
       contains
-          
+
       subroutine errstop(srname, mssg)
-      character(len=*), intent(in) :: srname
-      character(len=*), intent(in) :: mssg 
+      character(len = *), intent(in) :: srname
+      character(len = *), intent(in) :: mssg
 
 #if __DEBUGGING__ == 1
       call backtr()
 #endif
 
-      print '(/1X,1A/)', 'Error: '//trim(srname)//': '// trim(mssg)//'.'
+      print '(/1X, 1A/)', 'Error: ' // trim(srname) // ': ' // trim(mssg&
+     &) // '.'
 
-      stop  ! This means to stop the whole program.
+      stop ! This means to stop the whole program.
 
       end subroutine errstop
 
 
       subroutine backtr()
-      ! BACKTR calls a compiler-dependent intrinsic to show a backtrace
-      ! if we are in the debuge mode, i.e., __DEBUGGING__ == 1.
-      ! N.B.: The intrisic is compiler-dependent and does not exist in
-      ! all compilers. Indeed, it is not standard-conforming. Therefore,
-      ! compilers may warn that a non-standard intrinsic is in use.
+! BACKTR calls a compiler-dependent intrinsic to show a backtrace
+! if we are in the debuge mode, i.e., __DEBUGGING__ == 1.
+! N.B.: The intrisic is compiler-dependent and does not exist in
+! all compilers. Indeed, it is not standard-conforming. Therefore,
+! compilers may warn that a non-standard intrinsic is in use.
       implicit none
-#if __DEBUGGING__ == 1 
+#if __DEBUGGING__ == 1
 
 #if defined __GFORTRAN__
       call backtrace()
@@ -53,7 +69,7 @@
 
 
       subroutine verisym(A, tol)
-      ! VERISYM verifies whether a matrix A is symmetric up to TOL.
+! VERISYM verifies whether a matrix A is symmetric up to TOL.
       use consts_mod, only : RP, ONE, ZERO, SRNLEN
       implicit none
 
@@ -66,8 +82,8 @@
           call errstop(srname, 'A is not square')
       end if
       if (tol > ZERO) then
-          if (maxval(abs((A - transpose(A)))) >                         &
-     &     tol*max(maxval(abs(A)), ONE)) then
+          if (maxval(abs((A - transpose(A)))) > tol*max(maxval(abs(A)), &
+     &ONE)) then
                call errstop(srname, 'A is not symmetric up to TOL')
           end if
       else
@@ -79,7 +95,7 @@
 
 
       subroutine verisize_real_1(x, n)
-      ! VERISIZE_REAL_1 verifies whether SIZE(X) = N.
+! VERISIZE_REAL_1 verifies whether SIZE(X) = N.
       use consts_mod, only : RP, IK, SRNLEN
       real(RP), intent(in) :: x(:)
       integer(IK), intent(in) :: n
@@ -93,7 +109,7 @@
 
 
       subroutine verisize_real_2(x, m, n)
-      ! VERISIZE_REAL_2 verifies whether SIZE(X, 1) = M, SIZE(X, 2)=N.
+! VERISIZE_REAL_2 verifies whether SIZE(X, 1) = M, SIZE(X, 2) = N.
       use consts_mod, only : RP, IK, SRNLEN
       real(RP), intent(in) :: x(:, :)
       integer(IK), intent(in) :: m
@@ -111,7 +127,7 @@
 
 
       subroutine verisize_int_1(x, n)
-      ! VERISIZE_INT_1 verifies whether SIZE(X) = N.
+! VERISIZE_INT_1 verifies whether SIZE(X) = N.
       use consts_mod, only : IK, SRNLEN
       integer(IK), intent(in) :: x(:)
       integer(IK), intent(in) :: n
@@ -125,7 +141,7 @@
 
 
       subroutine verisize_int_2(x, m, n)
-      ! VERISIZE_INT_2 verifies whether SIZE(X, 1) = M, SIZE(X, 2)=N.
+! VERISIZE_INT_2 verifies whether SIZE(X, 1) = M, SIZE(X, 2) = N.
       use consts_mod, only : IK, SRNLEN
       integer(IK), intent(in) :: x(:, :)
       integer(IK), intent(in) :: m

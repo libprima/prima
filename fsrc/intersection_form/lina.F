@@ -1,5 +1,20 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! This is the intersection-form version of lina.F90.
+! The file is generated automatically and is NOT intended to be readable.
+!
+! In the intersection form, each continued line has an ampersand at column
+! 73, and each continuation line has an ampersand at column 6. A Fortran
+! file in such a form can be compiled both as fixed form and as free form.
+!
+! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
+!
+! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
+! on 06-Aug-2020.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
 ! LINA is a module providing some basic linear algebra procedures.
-! To improve the performance of these procedures, especially matprod, 
+! To improve the performance of these procedures, especially matprod,
 ! one can customize their implementations, according to the resources
 ! (hardware, e.g., cache, and libraries, e.g., BLAS) available and the
 ! sizes of the matrices/vectors.
@@ -16,13 +31,14 @@
 
 ! Coded by Zaikun ZHANG, July 2020
 
+
 #include "ppf.h"
 
       module lina_mod
 
       implicit none
       private
-      ! Mathematically, inprod = dot_product, matprod = matmul
+! Mathematically, inprod = dot_product, matprod = matmul
       public :: inprod, matprod
       public :: r1update, r2update, symmetrize
       public :: xpy_dot_z, xdy_plus_a, Ax_plus_y, xA_plus_y
@@ -49,10 +65,10 @@
       contains
 
       subroutine r1_sym(A, alpha, x)
-      ! R1_SYM sets
-      ! A = A + ALPHA*( X*X^T ),
-      ! where A is an NxN matrix, ALPHA is a scalar, and X is an
-      ! N-dimenional vector.
+! R1_SYM sets
+! A = A + ALPHA*( X*X^T ),
+! where A is an NxN matrix, ALPHA is a scalar, and X is an
+! N-dimenional vector.
       use consts_mod, only : RP, IK, ONE, ZERO
 
 #if __DEBUGGING__ == 1
@@ -63,16 +79,16 @@
       implicit none
       real(RP), intent(in) :: alpha
       real(RP), intent(in) :: x(:)
-      real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(X))
+      real(RP), intent(inout) :: A(:, :) ! A(SIZE(X), SIZE(X))
 
       integer(IK) :: n, j
 
 #if __DEBUGGING__ == 1
       character(len = SRNLEN), parameter :: srname = 'R1_SYM'
-      ! Be careful with initialization!
-      ! In Fortran >=90, the initialization in the declaration implies
-      ! the "save" attribute. If the variable is not a parameter, it may
-      ! casue unwanted behavior.
+! Be careful with initialization!
+! In Fortran >=90, the initialization in the declaration implies
+! the "save" attribute. If the variable is not a parameter, it may
+! casue unwanted behavior.
       if (size(A, 1) /= size(x) .or. size(A, 2) /= size(x)) then
           call errstop(srname, 'SIZE(A) is invalid')
       end if
@@ -81,8 +97,8 @@
       n = int(size(x), kind(n))
 
 #if __USE_POWELL_ALGEBRA__ == 1
-      ! Only update the LOWER TRIANGULAR part of A.
-      ! Both of the following cases are invoked in NEWUOA.
+! Only update the LOWER TRIANGULAR part of A.
+! Both of the following cases are invoked in NEWUOA.
       if (abs(alpha - ONE) > ZERO) then
           do j = 1, n
               A(j : n, j) = A(j : n, j) + alpha*x(j : n)*x(j)
@@ -92,12 +108,12 @@
               A(j : n, j) = A(j : n, j) + x(j : n)*x(j)
           end do
       end if
-      ! Set A(UPPER_TRI) = A(LOWER_TRI).
+! Set A(UPPER_TRI) = A(LOWER_TRI).
       call symmetrize(A)
 #else
-      ! Here we calculate the increment as ALPHA*( X*X^T ), which
-      ! is guaranteed symmetric even in floating-point arithmetic.
-      ! Both of the following cases are invoked in NEWUOA.
+! Here we calculate the increment as ALPHA*( X*X^T ), which
+! is guaranteed symmetric even in floating-point arithmetic.
+! Both of the following cases are invoked in NEWUOA.
       if (abs(alpha - ONE) > ZERO) then
           do j = 1, n
               A(:, j) = A(:, j) + alpha*( x*x(j) )
@@ -116,10 +132,10 @@
 
 
       subroutine r1(A, alpha, x, y)
-      ! R1 sets
-      ! A = A + ALPHA*( X*Y^T ),
-      ! where A is an MxN matrix, ALPHA is a real scalar, X is an
-      ! M-dimenional vector, and Y is an N-dimenional vector.
+! R1 sets
+! A = A + ALPHA*( X*Y^T ),
+! where A is an MxN matrix, ALPHA is a real scalar, X is an
+! M-dimenional vector, and Y is an N-dimenional vector.
       use consts_mod, only : RP, IK, ONE, ZERO
 
 #if __DEBUGGING__ == 1
@@ -131,16 +147,16 @@
       real(RP), intent(in) :: alpha
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
-      real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
+      real(RP), intent(inout) :: A(:, :) ! A(SIZE(X), SIZE(Y))
 
       integer(IK) :: n, j
 
 #if __DEBUGGING__ == 1
       character(len = SRNLEN), parameter :: srname = 'R1'
-      ! Be careful with initialization!
-      ! In Fortran >=90, the initialization in the declaration implies
-      ! the "save" attribute. If the variable is not a parameter, it may
-      ! casue unwanted behavior.
+! Be careful with initialization!
+! In Fortran >=90, the initialization in the declaration implies
+! the "save" attribute. If the variable is not a parameter, it may
+! casue unwanted behavior.
       if (size(A, 1) /= size(x) .or. size(A, 2) /= size(y)) then
           call errstop(srname, 'SIZE(A) is invalid')
       end if
@@ -149,7 +165,7 @@
       n = int(size(y), kind(n))
 
 #if __USE_POWELL_ALGEBRA__ == 1
-      ! Both of the following cases are invoked in NEWUOA.
+! Both of the following cases are invoked in NEWUOA.
       if (abs(alpha - ONE) > ZERO) then
           do j = 1, n
               A(:, j) = A(:, j) + alpha*x*y(j)
@@ -160,10 +176,10 @@
           end do
       end if
 #else
-      ! Here we calculate the increment as ALPHA*( X*Y^T ) rather than
-      ! ALPHA*X*Y^T to ensure that, when X = Y, the increment is
-      ! symmetric even in floating-point arithmetic.
-      ! Both of the following cases are invoked in NEWUOA.
+! Here we calculate the increment as ALPHA*( X*Y^T ) rather than
+! ALPHA*X*Y^T to ensure that, when X = Y, the increment is
+! symmetric even in floating-point arithmetic.
+! Both of the following cases are invoked in NEWUOA.
       if (abs(alpha - ONE) > ZERO) then
           do j = 1, n
               A(:, j) = A(:, j) + alpha*( x*y(j) )
@@ -178,10 +194,10 @@
 
 
       subroutine r2_sym(A, alpha, x, y)
-      ! R2_SYM sets
-      ! A = A + ALPHA*( X*Y^T + Y*X^T ),
-      ! where A is an NxN matrix, X and Y are N-dimenional vectors, and
-      ! alpha is a sclalar.
+! R2_SYM sets
+! A = A + ALPHA*( X*Y^T + Y*X^T ),
+! where A is an NxN matrix, X and Y are N-dimenional vectors, and
+! alpha is a sclalar.
       use consts_mod, only : RP, IK, ONE, ZERO
 
 #if __DEBUGGING__ == 1
@@ -193,7 +209,7 @@
       real(RP), intent(in) :: alpha
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
-      real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(X))
+      real(RP), intent(inout) :: A(:, :) ! A(SIZE(X), SIZE(X))
 
       integer(IK) :: n, j
 
@@ -210,27 +226,27 @@
       n = int(size(x), kind(n))
 
 #if __USE_POWELL_ALGEBRA__ == 1
-      ! Only update the LOWER TRIANGULAR part of A.
-      if (abs(alpha - ONE) > ZERO) then  ! NOT invoked in NEWUOA.
+! Only update the LOWER TRIANGULAR part of A.
+      if (abs(alpha - ONE) > ZERO) then ! NOT invoked in NEWUOA.
           do j = 1, n
-              A(j : n, j) = A(j : n, j) + alpha*x(j : n)*y(j) +         &
-     &         alpha*y(j : n)*x(j)
+              A(j : n, j) = A(j : n, j) + alpha*x(j : n)*y(j) + alpha*y(&
+     &j : n)*x(j)
           end do
-      else  ! This case is invoked in NEWUOA.
+      else ! This case is invoked in NEWUOA.
           do j = 1, n
               A(j : n, j) = A(j : n, j) + x(j : n)*y(j) + y(j : n)*x(j)
           end do
       end if
-      ! Set A(UPPER_TRI) = A(LOWER_TRI).
+! Set A(UPPER_TRI) = A(LOWER_TRI).
       call symmetrize(A)
 #else
-      ! Here we calculate the increment as ALPHA*( X*Y^T + Y*X^T), which
-      ! is guaranteed symmetric even in floating-point arithmetic.
-      if (abs(alpha - ONE) > ZERO) then  ! NOT invoked in NEWUOA.
+! Here we calculate the increment as ALPHA*( X*Y^T + Y*X^T), which
+! is guaranteed symmetric even in floating-point arithmetic.
+      if (abs(alpha - ONE) > ZERO) then ! NOT invoked in NEWUOA.
           do j = 1, n
               A(:, j) = A(:, j) + alpha*( x*y(j) + y*x(j) )
           end do
-      else  ! This case is invoked in NEWUOA.
+      else ! This case is invoked in NEWUOA.
           do j = 1, n
               A(:, j) = A(:, j) + ( x*y(j) + y*x(j) )
           end do
@@ -244,10 +260,10 @@
 
 
       subroutine r2(A, alpha, x, y, beta, u, v)
-      ! R2 sets
-      ! A = A + ( ALPHA*( X*Y^T ) + BETA*( U*V^T ) ),
-      ! where A is an MxN matrix, ALPHA and BETA are real scalars, X and
-      ! U are M-dimenional vectors, Y and V are N-dimenional vectors.
+! R2 sets
+! A = A + ( ALPHA*( X*Y^T ) + BETA*( U*V^T ) ),
+! where A is an MxN matrix, ALPHA and BETA are real scalars, X and
+! U are M-dimenional vectors, Y and V are N-dimenional vectors.
       use consts_mod, only : RP, IK, ONE, ZERO
 
 #if __DEBUGGING__ == 1
@@ -260,9 +276,9 @@
       real(RP), intent(in) :: beta
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
-      real(RP), intent(in) :: u(:)          ! U(SIZE(X))
-      real(RP), intent(in) :: v(:)          ! V(SIZE(Y))
-      real(RP), intent(inout) :: A(:, :)    ! A(SIZE(X), SIZE(Y))
+      real(RP), intent(in) :: u(:) ! U(SIZE(X))
+      real(RP), intent(in) :: v(:) ! V(SIZE(Y))
+      real(RP), intent(inout) :: A(:, :) ! A(SIZE(X), SIZE(Y))
 
       integer(IK) :: n, j
 
@@ -283,29 +299,29 @@
 
 #if __USE_POWELL_ALGEBRA__ == 1
       if (abs(alpha - ONE) > ZERO .or. abs(beta - ONE) > ZERO) then
-          ! This case is NOT invoked in NEWUOA.
+! This case is NOT invoked in NEWUOA.
           do j = 1, n
               A(:, j) = A(:, j) + alpha*x*y(j) + beta*u*v(j)
           end do
-      else  ! This case is invoked in NEWUOA.
+      else ! This case is invoked in NEWUOA.
           do j = 1, n
               A(:, j) = A(:, j) + x*y(j) + u*v(j)
           end do
       end if
 #else
-      if (abs(alpha - beta) > ZERO) then  ! NOT invoked in NEWUOA.
+      if (abs(alpha - beta) > ZERO) then ! NOT invoked in NEWUOA.
           do j = 1, n
               A(:, j) = A(:, j) + (alpha*(x*y(j)) + beta*(u*v(j)))
           end do
-      else if (abs(alpha - ONE) > ZERO) then  ! NOT invoked in NEWUOA.
-      ! Here update A to A + ALPHA*( X*Y^T + U*V^T ), a semmetric update
-      ! when X = V and Y = U, even in floating-point arithmetic.
+      else if (abs(alpha - ONE) > ZERO) then ! NOT invoked in NEWUOA.
+! Here update A to A + ALPHA*( X*Y^T + U*V^T ), a semmetric update
+! when X = V and Y = U, even in floating-point arithmetic.
           do j = 1, n
-              A(:, j) = A(:, j) + alpha*( x*y(j)  + u*v(j) )
+              A(:, j) = A(:, j) + alpha*( x*y(j) + u*v(j) )
           end do
-      else  ! This case is invoked in NEWUOA.
-      ! Here update A to A + ( X*Y^T + U*V^T ), a semmetric update
-      ! when X = V and Y = U, even in floating-point arithmetic.
+      else ! This case is invoked in NEWUOA.
+! Here update A to A + ( X*Y^T + U*V^T ), a semmetric update
+! when X = V and Y = U, even in floating-point arithmetic.
           do j = 1, n
               A(:, j) = A(:, j) + ( x*y(j) + u*v(j) )
           end do
@@ -347,11 +363,11 @@
       z = matmul(x, y)
 #else
       do j = 1, int(size(y, 2), kind(j))
-          ! When interfaced with MATLAB, the following seems more
-          ! efficient than a loop, which is strange because inprod
-          ! itself is implemented by a loop. This may well depend on the
-          ! machine (e.g., cache size), compiler, compiling options,
-          ! and MATLAB version.
+! When interfaced with MATLAB, the following seems more
+! efficient than a loop, which is strange because inprod
+! itself is implemented by a loop. This may well depend on the
+! machine (e.g., cache size), compiler, compiling options,
+! and MATLAB version.
           z(j) = inprod(x, y(:, j))
       end do
 #endif
@@ -472,10 +488,10 @@
 #if __USE_INTRINSIC_ALGEBRA__ == 1
       z = dot_product(x, y)
 #else
-      !z = sum(x*y)
-      ! Using sum seems not as efficient as a loop when interfaced with
-      ! MATLAB, but this may well depend on the machine (e.g., cache
-      ! size), compiler, compiling options, and MATLAB version.
+!z = sum(x*y)
+! Using sum seems not as efficient as a loop when interfaced with
+! MATLAB, but this may well depend on the machine (e.g., cache
+! size), compiler, compiling options, and MATLAB version.
       z = ZERO
       do i = 1, int(size(x), kind(i))
           z = z + x(i)*y(i)
@@ -485,17 +501,17 @@
 
 
       subroutine grota(A, i, j, k)
-      ! GROTA sets A = A*G,
-      ! where G is the Givens rotation that
-      !    [A(K, 1), ..., A(K, I), ..., A(K, J), ..., A(K, N)] * G
-      !  = [A(K, 1), ...,    R   , ...,    0   , ..., A(K, N)]
-      ! with R = SQRT(A(K, I)^2 + A(K, J)^2).
-      ! Indeed, the [(I, I), (I, J); (J, I), (J, J)] block of G is
-      ! [C, -S; S, C], where C = A(K, I)/R, S = A(K, J)/R, and the other
-      ! entries are 1 (diagonal) or 0. Therefore, A*G is identical to A
-      ! except for columns I and J:
-      ! new column I =  C*A(:, I) + S*A(:, J)
-      ! new column J = -S*A(:, I) + C*A(:, J)
+! GROTA sets A = A*G,
+! where G is the Givens rotation that
+!    [A(K, 1), ..., A(K, I), ..., A(K, J), ..., A(K, N)] * G
+!  = [A(K, 1), ..., R   , ..., 0   , ..., A(K, N)]
+! with R = SQRT(A(K, I)^2 + A(K, J)^2).
+! Indeed, the [(I, I), (I, J); (J, I), (J, J)] block of G is
+! [C, -S; S, C], where C = A(K, I)/R, S = A(K, J)/R, and the other
+! entries are 1 (diagonal) or 0. Therefore, A*G is identical to A
+! except for columns I and J:
+! new column I =  C*A(:, I) + S*A(:, J)
+! new column J = -S*A(:, I) + C*A(:, J)
 
       use consts_mod, only : IK, RP, ZERO
 
@@ -522,25 +538,25 @@
       end if
 #endif
 
-      if (abs(A(k, j)) >  ZERO) then
+      if (abs(A(k, j)) > ZERO) then
           c = A(k, i)
           s = A(k, j)
-          ! One may use R = HYPOT(C, s), but it did not work better
-          ! in our experiments on CUTEst problems.
-          r = sqrt(c**2+s**2)
+! One may use R = HYPOT(C, s), but it did not work better
+! in our experiments on CUTEst problems.
+          r = sqrt(c**2 + s**2)
           c = c/r
           s = s/r
           Ai = A(:, i)
-          A(:, i) =  c*Ai + s*A(:, j)
+          A(:, i) = c*Ai + s*A(:, j)
           A(:, j) = -s*Ai + c*A(:, j)
           A(k, j) = ZERO
 
 #if __USE_POWELL_ALGEBRA__ == 0
-          A(k, i) = r  ! A(K, I) = R in precise arithmetic
+          A(k, i) = r ! A(K, I) = R in precise arithmetic
       else if (A(k, i) < ZERO) then
-          ! In this case, C = -1, S = 0. Thus it is reasonbale to set
-          ! the following. Doing this will ensure the continuity of this
-          ! subroutine as an operator.
+! In this case, C = -1, S = 0. Thus it is reasonbale to set
+! the following. Doing this will ensure the continuity of this
+! subroutine as an operator.
               A(:, i) = -A(:, i)
               A(:, j) = -A(:, j)
 #endif
@@ -549,9 +565,9 @@
 
 
       subroutine symmetrize(A)
-      ! SYMMETRIZE(A) symmetrizes A.
-      ! Here, we assume that A is a matrix that is symmetric in precise
-      ! arithmetic, and its asymetry comes only from rounding errors.
+! SYMMETRIZE(A) symmetrizes A.
+! Here, we assume that A is a matrix that is symmetric in precise
+! arithmetic, and its asymetry comes only from rounding errors.
 
 #if __USE_POWELL_ALGEBRA__ == 1
       use consts_mod, only : RP, IK
@@ -579,7 +595,7 @@
 #endif
 
 #if __USE_POWELL_ALGEBRA__ == 1
-      ! A is symmetrized by setting A(UPPER_TRI) = A(LOWER_TRI).
+! A is symmetrized by setting A(UPPER_TRI) = A(LOWER_TRI).
       do j = 1, int(size(A, 1), kind(j))
           A(1 : j - 1, j) = A(j, 1 : j - 1)
       end do
@@ -595,7 +611,7 @@
 
 
       function xpy_dot_z (x, y, z) result(t)
-      ! t = (x+y)'*z
+! t = (x + y)'*z
 
       use consts_mod, only : RP
 
@@ -631,14 +647,14 @@
           t = t + x(i)*z(i) + y(i)*z(i)
       end do
 #else
-      !t = inprod(x + y, z)
+!t = inprod(x + y, z)
       t = inprod(x, z) + inprod(y, z)
 #endif
       end function xpy_dot_z
 
 
       function xdy_plus_a(x, y, a) result(t)
-      ! t = x'*y + a
+! t = x'*y + a
 
       use consts_mod, only : RP
 
@@ -680,7 +696,7 @@
 
 
       function Ax_plus_y(A, x, y) result(z)
-      ! z = A*x + y
+! z = A*x + y
 
       use consts_mod, only : RP
 
@@ -722,10 +738,10 @@
 
 
       function xA_plus_y(A, x, y) result(z)
-      ! z = x*A + y
-      ! If implemented in MATLAB, pay attention to the sizes of the
-      ! vectors/matrices; if x and y are columns, then z should be
-      ! z = (x'*A)' + y
+! z = x*A + y
+! If implemented in MATLAB, pay attention to the sizes of the
+! vectors/matrices; if x and y are columns, then z should be
+! z = (x'*A)' + y
 
       use consts_mod, only : RP
 
@@ -762,21 +778,21 @@
       end do
 #else
       z = matprod(x, A) + y
-      ! If implemented in MATLAB, pay attention to the sizes of the
-      ! vectors/matrices; if x and y are columns, then z should be
-      ! z = (x'*A)' + y
+! If implemented in MATLAB, pay attention to the sizes of the
+! vectors/matrices; if x and y are columns, then z should be
+! z = (x'*A)' + y
 #endif
       end function xA_plus_y
 
 
       subroutine calquad(d, gq, hq, pq, x, xpt, vquad)
-      ! CALQUAD calculates
-      ! VQUAD = Q(X + D) - Q(X)
-      ! with Q being the quadratic function defined via (GQ, HQ, PQ) by
-      ! Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
-      ! where HESSIAN consists of an explicit part HQ and an implicit
-      ! part PQ in the following way:
-      ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
+! CALQUAD calculates
+! VQUAD = Q(X + D) - Q(X)
+! with Q being the quadratic function defined via (GQ, HQ, PQ) by
+! Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
+! where HESSIAN consists of an explicit part HQ and an implicit
+! part PQ in the following way:
+! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
 
       use consts_mod, only : RP, HALF
 
@@ -795,18 +811,18 @@
 
       implicit none
 
-      ! Inputs
-      real(RP), intent(in) :: d(:)      ! D(N)
-      real(RP), intent(in) :: gq(:)     ! GQ(N)
-      real(RP), intent(in) :: hq(:, :)  ! HQ(N, N)
-      real(RP), intent(in) :: pq(:)     ! PQ(NPT)
-      real(RP), intent(in) :: x(:)      ! X(N)
+! Inputs
+      real(RP), intent(in) :: d(:) ! D(N)
+      real(RP), intent(in) :: gq(:) ! GQ(N)
+      real(RP), intent(in) :: hq(:, :) ! HQ(N, N)
+      real(RP), intent(in) :: pq(:) ! PQ(NPT)
+      real(RP), intent(in) :: x(:) ! X(N)
       real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
 
-      ! Output
+! Output
       real(RP), intent(out) :: vquad
 
-      ! Intermediate variable
+! Intermediate variable
       real(RP) :: s(size(x))
 
 #if __USE_POWELL_ALGEBRA__ == 1
@@ -831,7 +847,7 @@
 
 #if __USE_POWELL_ALGEBRA__ == 1
       s = x + d
-      ! First order term and explicit second order term
+! First order term and explicit second order term
       vquad = ZERO
       ih = 0
       do j = 1, int(size(d), kind(j))
@@ -846,47 +862,46 @@
           end do
       end do
 !----------------------------------------------------------------------!
-      ! Powell's original code calculates W externally and pass it as an
-      ! input to CALQUAD. Here W is calculated internally.
+! Powell's original code calculates W externally and pass it as an
+! input to CALQUAD. Here W is calculated internally.
       w = matprod(d, xpt) !--------------------------------------------!
       w = w*(HALF*w + matprod(x, xpt)) !-------------------------------!
 !----------------------------------------------------------------------!
-      ! Implicit second order term
+! Implicit second order term
       do i = 1, int(size(pq), kind(i))
           vquad = vquad + pq(i)*w(i)
       end do
 #else
-      ! The order of calculation seems quite important. The following
-      ! order seems to work well.
-      ! 1st order term
+! The order of calculation seems quite important. The following
+! order seems to work well.
+! 1st order term
       vquad = inprod(d, gq)
-      s = HALF*d + x  ! Different from the above version.
-      ! implicit 2nd-order term
+      s = HALF*d + x ! Different from the above version.
+! implicit 2nd-order term
       vquad = vquad + sum(pq * (matprod(s, xpt) * matprod(d, xpt)))
-      ! explicit 2nd-order term
+! explicit 2nd-order term
       vquad = vquad + inprod(s, matprod(hq, d))
-      ! The following implementations do not work as well as the above
-      ! one.
-      !vquad = vquad + inprod(d, matprod(hq, s))
-      !vquad = vquad + sum(hq * outprod(s,d))
-      !vquad = vquad + HALF*(inprod(d, matprod(hq, s))                   &
-      !&     + inprod(s, matprod(hq, d)))
+! The following implementations do not work as well as the above
+! one.
+!vquad = vquad + inprod(d, matprod(hq, s))
+!vquad = vquad + sum(hq * outprod(s, d))
+!vquad = vquad + HALF*(inprod(d, matprod(hq, s)) + inprod(s, matprod(hq, d)))
 #endif
       end subroutine calquad
 
 
-!      function outprod(x, y) result(z)
-!      ! OUTPROD calculates the outer product of X and Y, i.e., Z = XY^T
-!      use consts_mod, only : RP, IK
-!      implicit none
-!      real(RP), intent(in) :: x(:)
-!      real(RP), intent(in) :: x(:)
-!      real(RP), dimension(size(x), size(y)) :: z
+! function outprod(x, y) result(z)
+! ! OUTPROD calculates the outer product of X and Y, i.e., Z = XY^T
+! use consts_mod, only : RP, IK
+! implicit none
+! real(RP), intent(in) :: x(:)
+! real(RP), intent(in) :: x(:)
+! real(RP), dimension(size(x), size(y)) :: z
 !
-!      integer(IK) :: i
-!      do i = 1, int(size(y), kind(i))
-!          z(:, i) = x*y(i)
-!      end do
-!      end function outprod
+! integer(IK) :: i
+! do i = 1, int(size(y), kind(i))
+!     z(:, i) = x*y(i)
+! end do
+! end function outprod
 
       end module lina_mod

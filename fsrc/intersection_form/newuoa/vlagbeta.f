@@ -1,3 +1,25 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! This is the intersection-form version of vlagbeta.f90.
+! The file is generated automatically and is NOT intended to be readable.
+!
+! In the intersection form, each continued line has an ampersand at column
+! 73, and each continuation line has an ampersand at column 6. A Fortran
+! file in such a form can be compiled both as fixed form and as free form.
+!
+! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
+!
+! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
+! on 06-Aug-2020.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+! VLAGBETA_MOD is a module providing a suroutine that calculates VLAG
+! and BETA for a given step D.
+! Both VLAG and BETA are critical for the updating procedure of H, which
+! is detailed formula (4.11) of the NEWUOA paper. See (4.12) for the
+! definition of BETA, and VLAG is indeed Hw - e_t.
+
+
       module vlagbeta_mod
 
       implicit none
@@ -7,9 +29,12 @@
 
       contains
 
-      subroutine vlagbeta(idz, kopt, bmat, d, xopt, xpt, zmat,beta,vlag)
+      subroutine vlagbeta(idz, kopt, bmat, d, xopt, xpt, zmat, beta, vla&
+     &g)
+! VLAGBETA is calculates VLAG = Hw - e_t and BETA for a given step D.
+! See (4.11)--(4.12) of the NEWUOA paper.
 
-      ! General modules
+! General modules
       use consts_mod, only : RP, IK, ONE, HALF, DEBUGGING, SRNLEN
       use debug_mod, only : errstop, verisize
       use lina_mod, only : Ax_plus_y, xA_plus_y, xpy_dot_z
@@ -17,29 +42,34 @@
 
       implicit none
 
-      ! Inputs
+! Inputs
       integer(IK), intent(in) :: idz
       integer(IK), intent(in) :: kopt
-      real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT+N)
-      real(RP), intent(in) :: d(:)  ! D(N)
-      real(RP), intent(in) :: xopt(:)  ! XOPT(N)
-      real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
-      real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
+      real(RP), intent(in) :: bmat(:, :) ! BMAT(N, NPT + N)
+      real(RP), intent(in) :: d(:) ! D(N)
+      real(RP), intent(in) :: xopt(:) ! XOPT(N)
+      real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
+      real(RP), intent(in) :: zmat(:, :) ! ZMAT(NPT, NPT - N - 1)
 
-      ! Outputs
+! Outputs
       real(RP), intent(out) :: beta
-      real(RP), intent(out) :: vlag(:)  ! VLAG(NPT+N)
+      real(RP), intent(out) :: vlag(:) ! VLAG(NPT + N)
 
-      ! Intermediate variables
-      integer(IK) :: n, npt
-      real(RP) :: bw(size(bmat, 1)), bwvd
-      real(RP) :: wcheck(size(zmat, 1)) 
-      real(RP) :: wz(size(zmat, 2)), wzsave(size(wz))
-      real(RP) :: dx, dsq, xoptsq
+! Intermediate variables
+      integer(IK) :: n
+      integer(IK) :: npt
+      real(RP) :: bw(size(bmat, 1))
+      real(RP) :: bwvd
+      real(RP) :: dsq
+      real(RP) :: dx
+      real(RP) :: wcheck(size(zmat, 1))
+      real(RP) :: wz(size(zmat, 2))
+      real(RP) :: wzsave(size(wz))
+      real(RP) :: xoptsq
       character(len = SRNLEN), parameter :: srname = 'VLAGBETA'
-      
 
-      ! Get and verify the sizes
+
+! Get and verify the sizes
       n = int(size(xpt, 1), kind(n))
       npt = int(size(xpt, 2), kind(npt))
 
@@ -53,19 +83,19 @@
           call verisize(d, n)
           call verisize(vlag, n + npt)
       end if
-      
+
 
 !----------------------------------------------------------------------!
-      ! This is the one of the two places where WCHECK is calculated,
-      ! the other one being BIGDEN (now removed). 
-      ! WCHECK contains the first NPT entries of (w-v) for the vectors 
-      ! w and v defined in eq(4.10) and eq(4.24) of the NEWUOA paper,
-      ! and also hat{w} in eq(6.5) of 
-      !
-      ! M. J. D. Powell, Least Frobenius norm updating of quadratic
-      ! models that satisfy interpolation conditions. Math. Program.,
-      ! 100:183--215, 2004
-      !
+! This is the one of the two places where WCHECK is calculated,
+! the other one being BIGDEN (now removed).
+! WCHECK contains the first NPT entries of (w-v) for the vectors
+! w and v defined in eq(4.10) and eq(4.24) of the NEWUOA paper,
+! and also hat{w} in eq(6.5) of
+!
+! M. J. D. Powell, Least Frobenius norm updating of quadratic
+! models that satisfy interpolation conditions. Math. Program.,
+! 100:183--215, 2004
+!
       wcheck = matprod(d, xpt)
       wcheck = wcheck*(HALF*wcheck + matprod(xopt, xpt))
 !----------------------------------------------------------------------!
@@ -83,13 +113,14 @@
 
       bw = matprod(bmat(:, 1 : npt), wcheck)
 !----------------------------------------------------------------------!
-!-----!vlag(npt+1 : npt+n) = bw + matprod(d, bmat(:, npt+1 : npt+n)) !-!
-      vlag(npt+1: npt+n) = xA_plus_y(bmat(:, npt+1 : npt+n), d, bw)
+!vlag(npt + 1 : npt + n) = bw + matprod(d, bmat(:, npt + 1 : npt + n)) !
+      vlag(npt + 1: npt + n) = xA_plus_y(bmat(:, npt + 1 : npt + n), d, &
+     &bw)
 !----------------------------------------------------------------------!
 
 !----------------------------------------------------------------------!
-!-----!bwvd = inprod(bw + vlag(npt+1 : npt+n), d) !--------------------!
-      bwvd = xpy_dot_z(bw, vlag(npt+1 : npt+n), d)
+!-----!bwvd = inprod(bw + vlag(npt + 1 : npt + n), d) !----------------!
+      bwvd = xpy_dot_z(bw, vlag(npt + 1 : npt + n), d)
 !----------------------------------------------------------------------!
 
       dx = inprod(d, xopt)

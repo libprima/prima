@@ -92,12 +92,12 @@ real(RP) :: distsq
 real(RP) :: dnorm
 real(RP) :: dnormsave(3)
 real(RP) :: fopt
-real(RP) :: fqdiff
+real(RP) :: moderr
 real(RP) :: fsave
 real(RP) :: fval(npt)
 real(RP) :: gq(size(x))
 real(RP) :: hq(size(x), size(x))
-real(RP) :: moderr(size(dnormsave))
+real(RP) :: moderrsave(size(dnormsave))
 real(RP) :: pq(npt)
 real(RP) :: ratio
 real(RP) :: rho
@@ -162,7 +162,7 @@ call inith(ij, xpt, idz, bmat, zmat, subinfo)
 ! Set some more initial values.
 rho = rhobeg
 delta = rho
-moderr = HUGENUM
+moderrsave = HUGENUM
 dnormsave = HUGENUM
 itest = 0
 
@@ -189,7 +189,7 @@ do tr = 1, maxtr
     ! Is the step long enough to invoke a function evaluation?
     if (dnorm < HALF*rho) then
         shortd = .true.
-        if (maxval(abs(moderr)) <= 0.125_RP*crvmin*rho*rho .and. maxval(dnormsave) <= rho) then
+        if (maxval(abs(moderrsave)) <= 0.125_RP*crvmin*rho*rho .and. maxval(dnormsave) <= rho) then
             ! Three recent values of ||D|| and |F−Q| are small.
             ! The 1st possibility (out of 2) that REDUCE_RHO = TRUE.
             reduce_rho = .true.
@@ -236,7 +236,7 @@ do tr = 1, maxtr
 
         ! FQDIFF is the error of the current model in predicting the change
         ! in F due to D.
-        fqdiff = f - fsave - vquad
+        moderr = f - fsave - vquad
 
         ! Update FOPT and XOPT
         if (f < fopt) then
@@ -284,7 +284,7 @@ do tr = 1, maxtr
             call updateh(knew, beta, vlag, idz, bmat, zmat)
 
             ! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
-            call updateq(idz, knew, bmat(:, knew), fqdiff, zmat, xpt(:, knew), gq, hq, pq)
+            call updateq(idz, knew, bmat(:, knew), moderr, zmat, xpt(:, knew), gq, hq, pq)
 
             ! Include the new interpolation point. This should be done 
             ! after updating the model.
@@ -316,7 +316,7 @@ do tr = 1, maxtr
         ! function evaluations with the current RHO.
         dnormsave = (/ dnorm, dnormsave(1 : size(dnormsave) - 1) /)
         ! MODERR is the prediction errors of the latest 3 models.
-        moderr = (/ fqdiff, moderr(1 : size(moderr) - 1) /)
+        moderrsave = (/ moderr, moderrsave(1 : size(moderrsave) - 1) /)
     end if
 
     ! The geometry of XPT probably needs improvement if
@@ -380,7 +380,7 @@ do tr = 1, maxtr
             ! DNORMSAVE constains the DNORM corresponding to the
             ! latest 3 function evaluations with the current RHO.
             dnormsave = HUGENUM
-            moderr = HUGENUM
+            moderrsave = HUGENUM
             if (iprint >= 2) then
                 call rhomssg(iprint, nf, fopt, rho, xbase + xopt, solver)
            end if
@@ -427,7 +427,7 @@ do tr = 1, maxtr
 
         ! FQDIFF is the error of the current model in predicting the 
         ! change in F due to D.
-        fqdiff = f - fsave - vquad
+        moderr = f - fsave - vquad
 
         ! Update FOPT and XOPT
         if (f < fopt) then
@@ -454,7 +454,7 @@ do tr = 1, maxtr
         call updateh(knew, beta, vlag, idz, bmat, zmat)
 
         ! Update the quadratic model.
-        call updateq(idz, knew, bmat(:, knew), fqdiff, zmat, xpt(:, knew), gq, hq, pq)
+        call updateq(idz, knew, bmat(:, knew), moderr, zmat, xpt(:, knew), gq, hq, pq)
 
         ! Include the new interpolation point. This should be done after
         ! updating BMAT, ZMAT, and the model.
@@ -477,7 +477,7 @@ do tr = 1, maxtr
         !--------------------------------------------------------------!
         dnormsave = (/ dnorm, dnormsave(1 : size(dnormsave) - 1) /)
         ! MODERR is the prediction errors of the latest 3 models.
-        moderr = (/ fqdiff, moderr(1 : size(moderr) - 1) /)
+        moderrsave = (/ moderr, moderrsave(1 : size(moderrsave) - 1) /)
     end if  ! The procedure of improving geometry ends.
 
 end do

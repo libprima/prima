@@ -47,7 +47,7 @@
 #if defined __USE_QP__
 #undef __USE_QP__
 #endif
-#define __USE_QP__ 1  
+#define __USE_QP__ 0  
 
 
 #include "fintrf.h"

@@ -1,7 +1,7 @@
-consts.F
-info.F
-debug.F
-infnan.F
-lina.F
-output.F
-prob.F
+consts.F90
+info.F90
+debug.F90
+infnan.F90
+lina.F90
+output.F90
+prob.F90

@@ -1,10 +1,25 @@
-! CONSTS is a module defining some constants 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! This is the intersection-form version of consts.F90.
+! The file is generated automatically and is NOT intended to be readable.
+!
+! In the intersection form, each continued line has an ampersand at column
+! 73, and each continuation line has an ampersand at column 6. A Fortran
+! file in such a form can be compiled both as fixed form and as free form.
+!
+! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
+!
+! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
+! on 06-Aug-2020.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+! CONSTS_MOD is a module defining some constants.
 
 !*****************************************************************
 !   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
-!               and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
-!               Department of Applied Mathematics,
-!               The Hong Kong Polytechnic University
+!         and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
+!         Department of Applied Mathematics,
+!         The Hong Kong Polytechnic University
 !
 !   Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !****************************************************************
@@ -22,10 +37,11 @@
 
 #include "ppf.h"
 
-      module consts_mod 
+      module consts_mod
 
 #if __FORTRAN_STANDARD__ >= 2008
-      use iso_fortran_env, only :INT16,INT32,INT64,REAL32,REAL64,REAL128
+      use iso_fortran_env, only : INT16, INT32, INT64, REAL32, REAL64, R&
+     &EAL128
 #endif
 
       implicit none
@@ -34,7 +50,7 @@
       public :: IK, INT16, INT32, INT64, IK_DFT
       public :: RP, DP, SP, QP, REAL32, REAL64, REAL128, RP_DFT
       public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
-      public :: EPS, HUGENUM, ALMOST_INFINITY, HUGEFUN, HUGECON 
+      public :: EPS, HUGENUM, ALMOST_INFINITY, HUGEFUN, HUGECON
       public :: SRNLEN, MSSGLEN
       public :: OUTUNIT
       public :: RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT
@@ -47,42 +63,44 @@
 #endif
 
 #if __FORTRAN_STANDARD__ < 2008
-      integer, parameter :: INT16 = selected_int_kind(4) ! gfortran: 3,4
-      integer, parameter :: INT32 = selected_int_kind(7) ! gfortran: 5-9
-      integer, parameter :: INT64 = selected_int_kind(14)!gfortran:10-18
-      integer, parameter :: REAL32 = kind(0.0) 
+! With gfortran: selected_real_kind(k) will return INT16 with k = 3 and
+! 4, return INT32 with k = 5--9, and return INT64 with k = 10--18.
+      integer, parameter :: INT16 = selected_int_kind(4)
+      integer, parameter :: INT32 = selected_int_kind(7)
+      integer, parameter :: INT64 = selected_int_kind(14)
+      integer, parameter :: REAL32 = kind(0.0)
       integer, parameter :: REAL64 = kind(0.0D0)
       integer, parameter :: REAL128 = selected_real_kind(p = 30)
-#endif      
-      integer, parameter :: IK_DFT = kind(0)  ! Default integer kind
-      integer, parameter :: RP_DFT = kind(0.0)  ! Default real kind
-      integer, parameter :: SP = REAL32  ! Kind for single precision
-      integer, parameter :: DP = REAL64  ! Kind for double precision
-      integer, parameter :: QP = REAL128  ! Kind for quadruple precision
+#endif
+      integer, parameter :: IK_DFT = kind(0) ! Default integer kind
+      integer, parameter :: RP_DFT = kind(0.0) ! Default real kind
+      integer, parameter :: SP = REAL32 ! Kind for single precision
+      integer, parameter :: DP = REAL64 ! Kind for double precision
+      integer, parameter :: QP = REAL128 ! Kind for quadruple precision
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Define the integer kind to be used in the Fortran code.
 #if __INTEGER_KIND__ == 16
       integer, parameter :: IK = INT16
-#elif __INTEGER_KIND__ == 32 
+#elif __INTEGER_KIND__ == 32
       integer, parameter :: IK = INT32
-#elif __INTEGER_KIND__ == 64 
+#elif __INTEGER_KIND__ == 64
       integer, parameter :: IK = INT64
 #else
       integer, parameter :: IK = IK_DFT
 #endif
 ! Define the real kind to be used in the Fortran code.
 #if __REAL_PRECISION__ == 32
-      integer, parameter :: RP = REAL32  
-#elif __REAL_PRECISION__ == 64 
-      integer, parameter :: RP = REAL64  
-#elif __REAL_PRECISION__ == 128 
+      integer, parameter :: RP = REAL32
+#elif __REAL_PRECISION__ == 64
+      integer, parameter :: RP = REAL64
+#elif __REAL_PRECISION__ == 128
       integer, parameter :: RP = REAL128
-#else 
-      integer, parameter :: RP = REAL64  ! double precision
+#else
+      integer, parameter :: RP = REAL64 ! double precision
 #endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      
+
       real(RP), parameter :: ZERO = 0.0_RP
       real(RP), parameter :: ONE = 1.0_RP
       real(RP), parameter :: TWO = 2.0_RP
@@ -90,32 +108,33 @@
       real(RP), parameter :: QUART = 0.25_RP
       real(RP), parameter :: TEN = 10.0_RP
       real(RP), parameter :: TENTH = 0.1_RP
-      real(RP), parameter ::PI=3.141592653589793238462643383279502884_RP
-      ! We may set PI to acos(-1.0_RP), but F95 will complain about 
-      ! "Elemental function as initialization expression with
-      ! non-integer/non-character arguments".
+      real(RP), parameter ::PI = 3.141592653589793238462643383279502884_&
+     &RP
+! We may set PI to acos(-1.0_RP), but F95 will complain about
+! "Elemental function as initialization expression with
+! non-integer/non-character arguments".
 
       real(RP), parameter :: EPS = epsilon(ZERO)
       real(RP), parameter :: HUGENUM = huge(ZERO)
       real(RP), parameter :: ALMOST_INFINITY = HALF*HUGENUM
-      
+
       integer, parameter :: MAXE = maxexponent(ZERO)
       real(RP), parameter :: HUGEFUN = TWO**min(100, MAXE/2)
       real(RP), parameter :: HUGECON = HUGEFUN
 
-      ! The maximal length of subroutine/function names
+! The maximal length of subroutine/function names
       integer, parameter :: SRNLEN = 30
 
-      ! The maximal length of messages; used in output.F and mexapi.F
-      integer, parameter :: MSSGLEN = 300 
+! The maximal length of messages; used in output.F and mexapi.F
+      integer, parameter :: MSSGLEN = 300
 
-      ! Output unit, can be any integer between 9 and 99
-      integer(IK), parameter :: OUTUNIT = 9 
+! Output unit, can be any integer between 9 and 99
+      integer(IK), parameter :: OUTUNIT = 9
 
-      ! Some default values
+! Some default values
       real(RP), parameter :: RHOBEG_DFT = ONE
-      real(RP), parameter :: RHOEND_DFT = 1.0E-6_RP 
+      real(RP), parameter :: RHOEND_DFT = 1.0E-6_RP
       real(RP), parameter :: FTARGET_DFT = -HUGENUM
-      integer(IK), parameter :: IPRINT_DFT = 1 
+      integer(IK), parameter :: IPRINT_DFT = 1
 
-      end module consts_mod 
+      end module consts_mod
