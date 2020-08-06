@@ -125,7 +125,8 @@
           ! data is a vector or matrix. Therefore, it is necessary to
           ! call mxDestroyArray when the usage of the vector/matrix
           ! terminates.
-          module procedure write_rscalar, write_rvector, write_rmatrix
+          module procedure write_rscalar, write_rmatrix
+          module procedure write_rvector, write_rvector_rowcol
           module procedure write_iscalar
       end interface fmxWriteMPtr
       
@@ -866,6 +867,54 @@
       call mxCopyReal8ToPtr(x_dp, fmxGetDble(px), n_mw)
 
       end subroutine write_rvector
+
+
+      subroutine write_rvector_rowcol(x, px, rowcol)
+      ! WRITE_RVECTOR_ROWCOL associates a REAL(RP) vector X with an 
+      ! mwPointer PX, after which X can be passed to MATLAB either as an
+      ! output of mexFunction or an input of mexCallMATLAB.
+      ! If ROWCOL = 'row', then the vector is passed as a row vector,
+      ! otherwise, it will be a column vector.
+      use consts_mod, only : RP, IK, ONE, MSSGLEN
+      implicit none
+
+      ! Input
+      real(RP), intent(in) :: x(:)
+      character(len = *), intent(in) :: rowcol
+
+      ! Output
+      mwPointer, intent(out) :: px
+      
+      ! Intermediate variable
+      real(DP) :: x_dp(size(x))
+      integer(IK) :: n
+      mwSize :: n_mw
+      character(len = MSSGLEN) :: eid, mssg
+
+      ! Get size of X
+      n_mw = int(size(x), kind(n_mw))
+      n = int(n_mw, kind(n))
+
+      ! Convert X to REAL(DP), which is expected by mxCopyReal8ToPtr
+      x_dp = real(x, kind(x_dp))
+      
+      ! Check whether the type conversion is proper
+      if (maxval(abs(x-x_dp)) > convTol*max(maxval(abs(x)), ONE)) then
+          eid = 'MEXAPI:ConversionError'
+          mssg = 'WRITE_RVECTOR: Large error occurs when converting ' //&
+     &     'REAL(RP) to REAL(DP).'
+          call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+      end if
+
+      ! Create a MATLAB matrix using the data in X_DP
+      if (rowcol == 'row' .or. rowcol == 'ROW' .or. rowcol =='Row') then
+          px = mxCreateDoubleMatrix(mwOne, n_mw, notComplex)
+      else
+          px = mxCreateDoubleMatrix(n_mw, mwOne, notComplex)
+      end if
+      call mxCopyReal8ToPtr(x_dp, fmxGetDble(px), n_mw)
+
+      end subroutine write_rvector_rowcol
 
 
       subroutine write_rmatrix(x, px)

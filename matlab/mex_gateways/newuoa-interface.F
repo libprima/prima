@@ -9,15 +9,12 @@
 
       module fnewuoa_mod
 
-      use consts_mod, only : RP, IK
       implicit none
       private
-      public :: fun_ptr, nf, fhist
+      public :: fun_ptr
 
       ! Some global variables
       mwPointer, save :: fun_ptr ! Objective function
-      integer(IK), save :: nf ! Number of function evaluations
-      real(RP), allocatable, save :: fhist(:) ! Func. evaluation history
 
       end module fnewuoa_mod
 
@@ -27,17 +24,17 @@
       ! If the binary MEX file is named as FUNCTION_NAME.mex*** 
       ! (file-name extension depends on the platform), then the 
       ! following function is callable in matlab:
-      ! [xopt, fopt, info, nf, fhist] = FUNCTION_NAME(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, iprint)
+      ! [xopt, fopt, info, nf, xhist, fhist] = FUNCTION_NAME(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, maxhist, npt, iprint)
 
       ! General modules
-      use consts_mod, only : RP, IK, HUGEFUN
+      use consts_mod, only : RP, IK
       use newuoa_mod, only : newuoa
       use mexapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
       use mexapi_mod, only : fmxVerifyClassShape
-      use mexapi_mod, only : fmxAllocate, fmxReadMPtr, fmxWriteMPtr
+      use mexapi_mod, only : fmxReadMPtr, fmxWriteMPtr
 
       ! Solver-specific module
-      use fnewuoa_mod, only : fun_ptr, nf, fhist
+      use fnewuoa_mod, only : fun_ptr
 
       implicit none
 
@@ -48,23 +45,24 @@
       mwPointer, intent(out) :: poutput(nargout)
 
       ! Intermediate variables
+      integer(IK) :: maxfun, maxhist, nf, npt, iprint, info
       real(RP), allocatable :: x(:)
       real(RP) :: f
+      real(RP), allocatable :: xhist(:, :), fhist(:)
       real(RP) :: rhobeg, rhoend
       real(RP) :: eta1, eta2
       real(RP) :: gamma1, gamma2
       real(RP) :: ftarget
-      integer(IK) :: maxfun, npt, iprint, info
 
       ! Validate number of arguments
-      call fmxVerifyNArgin(nargin, 12)
-      call fmxVerifyNArgout(nargout, 5)
+      call fmxVerifyNArgin(nargin, 13)
+      call fmxVerifyNArgout(nargout, 6)
 
       ! Verify that input 1 is a function handle; the other inputs will
       ! be verified when read.
       call fmxVerifyClassShape(pinput(1), 'function_handle', 'rank0')
       
-      ! Read inputs (there are 12)
+      ! Read inputs (there are 13)
       fun_ptr = pinput(1)  ! FUN_PTR is a pointer to the function handle
       call fmxReadMPtr(pinput(2), x)
       call fmxReadMPtr(pinput(3), rhobeg)
@@ -75,28 +73,26 @@
       call fmxReadMPtr(pinput(8), gamma2)
       call fmxReadMPtr(pinput(9), ftarget)
       call fmxReadMPtr(pinput(10), maxfun)
-      call fmxReadMPtr(pinput(11), npt)
-      call fmxReadMPtr(pinput(12), iprint)
-
-      ! Initialize global variables
-      nf = 0
-      call fmxAllocate(fhist, maxfun)
-      fhist = HUGEFUN
+      call fmxReadMPtr(pinput(11), maxhist)
+      call fmxReadMPtr(pinput(12), npt)
+      call fmxReadMPtr(pinput(13), iprint)
 
       ! Call the Fortran code.
-      call newuoa(x, f, rhobeg, rhoend, eta1, eta2, gamma1, gamma2,     &
-     & ftarget, npt, maxfun, iprint, info)
+      call newuoa(x, f, nf, xhist, fhist, rhobeg, rhoend, eta1, eta2,   &
+     & gamma1, gamma2, ftarget, npt, maxfun, maxhist, iprint, info)
 
       ! Write outputs
       call fmxWriteMPtr(x, poutput(1))
       call fmxWriteMPtr(f, poutput(2))
       call fmxWriteMPtr(info, poutput(3))
       call fmxWriteMPtr(nf, poutput(4))
-      call fmxWriteMPtr(fhist(1:nf), poutput(5))
+      call fmxWriteMPtr(xhist(:, 1 : min(nf, maxhist)), poutput(5))
+      call fmxWriteMPtr(fhist(1: min(nf, maxhist)), poutput(6), 'row')
 
       ! Free memory
       deallocate (x)
       deallocate (fhist)
+      deallocate (xhist)
 
       return
       end subroutine mexFunction
@@ -115,7 +111,7 @@
       use mexapi_mod, only : fmxReadMPtr, fmxWriteMPtr, fmxCallMATLAB
 
       ! Solver-specific module
-      use fnewuoa_mod, only : fun_ptr, nf, fhist
+      use fnewuoa_mod, only : fun_ptr
 
       implicit none
 
@@ -163,8 +159,5 @@
       ! be called maybe thousands of times before that.
       call mxDestroyArray(pinput(1))  
 
-      ! Update global variables
-      nf = int(nf + 1, kind(nf))
-      fhist(nf) = funval
       return
       end subroutine calfun

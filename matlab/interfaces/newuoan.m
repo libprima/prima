@@ -208,10 +208,11 @@ rhoend = options.rhoend;
 %gamma2 = options.gamma2;
 ftarget = options.ftarget;
 maxfun = options.maxfun;
+%mxhist = options.maxhist;
 npt = options.npt;
 %iprint = options.iprint;
-% Here are the values of eta1, eta2, gamma1, and gamma2 used in Powell's
-% code. They should be included in options later.
+% Here are the values of eta1, eta2, gamma1, gamma2, and iprint used in Powell's
+% code. They should be included in options later. Also the maxhist below.
 eta1 = 0.1;
 eta2 = 0.7;
 gamma1 = 0.5;
@@ -241,6 +242,10 @@ else
         warning(wid, '%s', wmessage);
         output.warnings = [output.warnings, wmessage];
     end
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Should be included into the options latter.
+    maxhist = maxfun;
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     try
     % Call the Fortran code
@@ -248,7 +253,7 @@ else
         if options.classical
             [x, fx, exitflag, nf, fhist] = fnewuoan_classical(fun, x0, rhobeg, rhoend, ftarget, maxfun, npt, iprint);
         else
-            [x, fx, exitflag, nf, fhist] = fnewuoan(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, iprint);
+            [x, fx, exitflag, nf, xhist, fhist] = fnewuoan(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, maxhist, npt, iprint);
         end
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly 
@@ -262,6 +267,8 @@ else
     output.fx = fx;
     output.exitflag = exitflag;
     output.funcCount = nf;
+    output.maxhist = maxhist; 
+    output.xhist = xhist;
     output.fhist = fhist;
     output.constrviolation = 0; % Unconstrained problem; set output.constrviolation to 0
     output.chist = []; % Unconstrained problem; set output.chist to []

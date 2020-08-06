@@ -126,7 +126,7 @@ if ~isa(output, 'struct')
 end
 if ismember(solver, internal_solver_list)
     % For internal solvers, output should contain fhist, chist, and warnings
-    obligatory_output_fields = [obligatory_output_fields, 'fhist', 'chist', 'warnings'];
+    obligatory_output_fields = [obligatory_output_fields, 'xhist', 'fhist', 'chist', 'warnings'];
 end
 if strcmp(solver, 'lincoan')
     % For lincoan, output should contain constr_modified 
@@ -209,16 +209,30 @@ if nf <= 0
     '%s: UNEXPECTED ERROR: %s returns nf=0 unexpectedly with exitflag %d.', invoker, solver, exitflag); 
 end
 
+nhist = min(nf, output.maxhist);
+output = rmfield(output, 'maxhist');
+% Read and verify xhist
+if isfield(output, 'xhist')
+    xhist = output.xhist;
+else
+    xhist = x + zeros(size(x), nhist);
+end
+if ~isempty(xhist) && (~isnumeric(xhist) || ~isreal(xhist) || ~ismatrix(xhist) || length(x) ~= size(xhist, 1) || nhist ~= size(xhist, 2))
+    % Public/unexpected error
+    error(sprintf('%s:InvalidXhist', invoker), ...
+        '%s: UNEXPECTED ERROR: %s returns an xhist that is not a real matrix of size (n, min(nf, maxhist)).', invoker, solver);
+end
+
 % Read and verify fhist
 if isfield(output, 'fhist') 
     fhist = output.fhist;
 else % External solvers may not return fhist
-    fhist = fx + zeros(1, nf);
+    fhist = fx + zeros(1, nhist);
 end
-if ~isempty(fhist) && (~isnumeric(fhist) || ~isreal(fhist) || ~isvector(fhist) || (nf ~= length(fhist)))
+if ~isempty(fhist) && (~isnumeric(fhist) || ~isreal(fhist) || ~isvector(fhist) || (nhist ~= length(fhist)))
     % Public/unexpected error
     error(sprintf('%s:InvalidFhist', invoker), ...
-        '%s: UNEXPECTED ERROR: %s returns an fhist that is not a real vector of length nf.', invoker, solver);
+        '%s: UNEXPECTED ERROR: %s returns an fhist that is not a real vector of length min(nf, maxhist).', invoker, solver);
 end
 if ~options.classical && ~probinfo.infeasible && ~probinfo.nofreex
     if any(fhist > hugefun) || any(isnan(fhist))
@@ -259,12 +273,12 @@ if isfield(output, 'chist')
     chist = output.chist;
 else % External solvers may not return chist
     output_has_chist = false;
-    chist = constrviolation + zeros(1, nf);
+    chist = constrviolation + zeros(1, nhist);
 end
-if ~(isempty(chist) && ismember(solver, unconstrained_solver_list)) && (~isnumeric(chist) || ~isreal(chist) || ~isvector(chist) || (nf ~= length(chist)))
+if ~(isempty(chist) && ismember(solver, unconstrained_solver_list)) && (~isnumeric(chist) || ~isreal(chist) || ~isvector(chist) || (nhist ~= length(chist)))
     % Public/unexpected error
     error(sprintf('%s:InvalidChist', invoker), ...
-        '%s: UNEXPECTED ERROR: %s returns a chist that is not a real vector of length nf.', invoker, solver);
+        '%s: UNEXPECTED ERROR: %s returns a chist that is not a real vector of length min(nf, maxfhist).', invoker, solver);
 end
 if ~options.classical && ~probinfo.infeasible && ~probinfo.nofreex
     if strcmp(solver, 'cobylan') && (any(chist > hugecon) || any(isnan(chist)))
@@ -630,6 +644,20 @@ if options.debug && ~options.classical
             % Public/unexpected error
             error(sprintf('%s:InvalidFx', invoker), ...
                 '%s: UNEXPECTED ERROR: %s returns an fx that does not match x.', invoker, solver);
+        end
+
+        % Check whether fhist = fun(xhist)
+        funhist = zeros(1, nhist);
+        if ~isempty(objective)
+            for k = 1 : nhist
+                funhist(k) = objective(xhist(:, k));
+            end
+        end
+        funhist(funhist ~= funhist | funhist > hugefun) = hugefun;
+        if any(~(isnan(fhist) & isnan(funhist)) & ~((fhist==funhist) | (abs(funhist-fhist) <= cobylan_prec*max(1, abs(fhist)) & strcmp(solver, 'cobylan')))) 
+            % Public/unexpected error
+            error(sprintf('%s:InvalidFx', invoker), ...
+                '%s: UNEXPECTED ERROR: %s returns an fhist that does not match xhist.', invoker, solver);
         end
 
         % Check whether [output.nlcineq,  output.nlceq] = nonlcon(x)
