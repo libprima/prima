@@ -40,27 +40,27 @@ averify:
 
 gverifym:
 	$(GFORT)  $(M90FILES) -pedantic  -ffree-form
-	cd $(INTERFORMDIR) && $(GFORT)  $(MFILES) -pedantic -ffixed-form && cd $(CURRENTDIR)
+	cd $(INTERFORMDIR) && $(GFORT)  $(MFILES) -pedantic -ffixed-form && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 9verifym:
 	$(G95)  $(M90FILES) -pedantic -ffree-form
-	cd $(INTERFORMDIR) && $(G95)  $(MFILES) -pedantic -ffixed-form && cd $(CURRENTDIR)
+	cd $(INTERFORMDIR) && $(G95)  $(MFILES) -pedantic -ffixed-form && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 iverifym:
 	$(IFORT) $(M90FILES) -std=f$(FSTD) -pedantic -ffree-form
-	cd $(INTERFORMDIR) && $(IFORT)  $(MFILES) -pedantic -ffixed-form && cd $(CURRENTDIR)
+	cd $(INTERFORMDIR) && $(IFORT)  $(MFILES) -pedantic -ffixed-form && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 nverifym:
 	$(NFORT) $(M90FILES) -f$(FSTD) -free
-	cd $(INTERFORMDIR) && $(NFORT)  $(MFILES) -fixed && cd $(CURRENTDIR)
+	cd $(INTERFORMDIR) && $(NFORT)  $(MFILES) -fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 pverifym:
 	$(PFORT) $(M90FILES) -Mfreeform
-	cd $(INTERFORMDIR) && $(PFORT)  $(MFILES) -Mfixed && cd $(CURRENTDIR)
+	cd $(INTERFORMDIR) && $(PFORT)  $(MFILES) -Mfixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 averifym:
 	$(ABSOFT) $(M90FILES) -f free
-	cd $(INTERFORMDIR) && $(ABSOFT)  $(MFILES) -f fixed && cd $(CURRENTDIR)
+	cd $(INTERFORMDIR) && $(ABSOFT)  $(MFILES) -f fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 clean:
 	rm -f *.o *.mod a.out *__genmod.f90

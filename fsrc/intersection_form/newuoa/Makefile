@@ -12,7 +12,7 @@ MEXDIR= $(PWD)/../../matlab/mex_gateways/
 
 FILES= ../consts.F ../debug.F ../info.F ../infnan.F ../lina.F ../output.F ../prob.F initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f90 newuoa.f 
  
-M90FILES= ../consts.F ../debug.F ../info.F ../infnan.F ../lina.F ../output.F ../prob.F initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f90 newuoa.f $(MEXDIR)/mexapi.F $(MEXDIR)/gethuge.F $(MEXDIR)/newuoa-interface.F $(MEXDIR)/classical/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/
+M90FILES= ../consts.F ../debug.F ../info.F ../infnan.F ../lina.F ../output.F ../prob.F initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f90 newuoa.f $(MEXDIR)/mexapi.F $(MEXDIR)/gethuge.F $(MEXDIR)/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/
 
 MFILES= ../consts.F ../debug.F ../info.F ../infnan.F ../lina.F ../output.F ../prob.F initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f $(MEXDIR)/mexapi.F $(MEXDIR)/gethuge.F $(MEXDIR)/newuoa-interface.F $(MEXDIR)/classical/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/
 
@@ -26,25 +26,41 @@ gverify:
 	$(G95)  $(FILES) -std=f$(FSTD) -pedantic -ffree-form
 
 iverify:
-	$(IFORT) $(FILES) $(MFILES) -std=f$(FSTD) -pedantic
+	$(IFORT) $(FILES) -std=f$(FSTD) -pedantic -ffree-form
 
 nverify:
-	$(NFORT) $(FILES) $(MFILES) -f$(FSTD) 
+	$(NFORT) $(FILES) -f$(FSTD) -free
 
 pverify:
-	$(PFORT) $(FILES) $(MFILES)
+	$(PFORT) $(FILES) -Mfreeform
 
 averify:
-	$(ABSOFT) $(FILES) $(MFILES)
+	$(ABSOFT) $(FILES) -f free
 
 
 gverifym:
-	$(GFORT)  $(M90FILES) -pedantic 
-	cd $(INTERFORMDIR) && $(GFORT)  $(MFILES) -pedantic -ffixed-form && cd $(CURRENTDIR)
+	$(GFORT)  $(M90FILES) -pedantic  -ffree-form
+	cd $(INTERFORMDIR) && $(GFORT)  $(MFILES) -pedantic -ffixed-form && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 9verifym:
-	$(G95)  $(M90FILES) -pedantic 
-	cd $(INTERFORMDIR) && $(G95)  $(MFILES) -pedantic -ffixed-form && cd $(CURRENTDIR)
+	$(G95)  $(M90FILES) -pedantic -ffree-form
+	cd $(INTERFORMDIR) && $(G95)  $(MFILES) -pedantic -ffixed-form && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+
+iverifym:
+	$(IFORT) $(M90FILES) -std=f$(FSTD) -pedantic -ffree-form
+	cd $(INTERFORMDIR) && $(IFORT)  $(MFILES) -pedantic -ffixed-form && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+
+nverifym:
+	$(NFORT) $(M90FILES) -f$(FSTD) -free
+	cd $(INTERFORMDIR) && $(NFORT)  $(MFILES) -fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+
+pverifym:
+	$(PFORT) $(M90FILES) -Mfreeform
+	cd $(INTERFORMDIR) && $(PFORT)  $(MFILES) -Mfixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+
+averifym:
+	$(ABSOFT) $(M90FILES) -f free
+	cd $(INTERFORMDIR) && $(ABSOFT)  $(MFILES) -f fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 clean:
 	rm -f *.o *.mod a.out *__genmod.f90

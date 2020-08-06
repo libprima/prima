@@ -9,7 +9,7 @@
 
       module fnewuoa_mod
 
-      use consts_mod, only : DP, IK
+      use consts_mod, only : RP, IK
       implicit none
       private
       public :: fun_ptr, nf, fhist
@@ -17,7 +17,7 @@
       ! Some global variables
       mwPointer, save :: fun_ptr ! Objective function
       integer(IK), save :: nf ! Number of function evaluations
-      real(DP), allocatable, save :: fhist(:) ! Func. evaluation history
+      real(RP), allocatable, save :: fhist(:) ! Func. evaluation history
 
       end module fnewuoa_mod
 
@@ -30,7 +30,7 @@
       ! [xopt, fopt, info, nf, fhist] = FUNCTION_NAME(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, iprint)
 
       ! General modules
-      use consts_mod, only : DP, RP, IK
+      use consts_mod, only : RP, IK, HUGEFUN
       use newuoa_mod, only : newuoa
       use mexapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
       use mexapi_mod, only : fmxVerifyClassShape
@@ -81,7 +81,7 @@
       ! Initialize global variables
       nf = 0
       call fmxAllocate(fhist, maxfun)
-      fhist = huge(0.0_DP)
+      fhist = HUGEFUN
 
       ! Call the Fortran code.
       call newuoa(x, f, rhobeg, rhoend, eta1, eta2, gamma1, gamma2,     &
@@ -165,6 +165,6 @@
 
       ! Update global variables
       nf = int(nf + 1, kind(nf))
-      fhist(nf) = real(funval, kind(fhist))  ! FHIST is REAL(DP)
+      fhist(nf) = funval
       return
       end subroutine calfun

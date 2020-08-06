@@ -71,7 +71,6 @@
       use fnewuoa_mod, only : fun_ptr, nf, fhist, NEWUOA
       use mexapi_mod, only : mwOne, notComplex
       use mexapi_mod, only : mxGetM, mxGetN 
-      use mexapi_mod, only : mxIsDouble, mxIsClass
       use mexapi_mod, only : mexErrMsgIdAndTxt
       use mexapi_mod, only : mxCopyReal8ToPtr, mxCopyPtrToReal8
       use mexapi_mod, only : mxCreateDoubleScalar
@@ -128,7 +127,7 @@
 
       ! Read inputs (there are 8)
       fun_ptr = prhs(1)
-      n = mxGetM(prhs(2)) ! This is why n should be of type mwSize
+      n = mxGetM((prhs(2)))*mxGetN(prhs(2)) ! n is of type mwSize
       n_int = int(n, kind(n_int))
       ! n_int is uUsed when a variable of type INTEGER is needed
       if (n .ne. n_int) then

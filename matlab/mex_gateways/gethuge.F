@@ -61,7 +61,7 @@
       ! Integer zero of type mwIndex on the current platform
       mwIndex, parameter :: miZero = 0
       ! The huge value that will be returned
-      real(DP) :: hugeValue
+      real(RP) :: hugeValue
       character(len = MSSGLEN) :: eid, mssg
 
       ! Check inputs
@@ -88,40 +88,40 @@
       ! min to ensure that they will not overflow when cast to doubles.
       if (data_type == 'float' .or. data_type == 'Float'                &
      &    .or. data_type == 'FLOAT') then
-          hugeValue = real(huge(0.0), DP)
+          hugeValue = real(huge(0.0), RP)
       else if (data_type == 'single' .or. data_type == 'Single'         &
      &    .or. data_type == 'SINGLE') then
-          hugeValue = real(huge(0.0_SP), DP)
+          hugeValue = real(huge(0.0_SP), RP)
       else if (data_type == 'double' .or. data_type == 'Double'         &
      &    .or. data_type == 'DOUBLE') then
-          hugeValue = huge(0.0_DP)
+          hugeValue = real(huge(0.0_DP), RP)
       else if (data_type == 'real' .or. data_type == 'Real'             &
      &    .or. data_type == 'REAL') then
-          hugeValue = huge(0.0_DP)
+          hugeValue = real(huge(0.0_DP), RP)
           if (huge(0.0_RP) < hugeValue) then
-              hugeValue = real(huge(0.0_RP), DP)
+              hugeValue = huge(0.0_RP)
           end if
       else if (data_type == 'integer' .or. data_type == 'Integer'       &
      &    .or. data_type == 'INTEGER') then
-          hugeValue = real(huge(intZero), DP)
+          hugeValue = real(huge(intZero), RP)
       else if (data_type == 'mwSI' .or. data_type == 'mwsi'             &
      &     .or. data_type == 'MWSI') then
-          hugeValue = min(real(huge(msZero),DP), real(huge(miZero),DP))
+          hugeValue = min(real(huge(msZero),RP), real(huge(miZero),RP))
       else if (data_type == 'fun' .or. data_type == 'Fun' .or.          &
      &    data_type == 'FUN' .or. data_type == 'function' .or.          &
      &    data_type == 'Function' .or. data_type == 'FUNCTION')         &
      &then
-          hugeValue = huge(0.0_DP)
+          hugeValue = real(huge(0.0_DP), RP)
           if (HUGEFUN < hugeValue) then
-              hugeValue = real(HUGEFUN, DP)
+              hugeValue = real(HUGEFUN, RP)
           end if
       else if (data_type == 'con' .or. data_type == 'Con' .or.          &
      &    data_type == 'CON' .or. data_type == 'constraint' .or.        &
      &    data_type == 'Constraint' .or. data_type == 'CONSTRAINT')     &
      &then
-          hugeValue = huge(0.0_DP)
+          hugeValue = real(huge(0.0_DP), RP)
           if (HUGECON < hugeValue) then
-              hugeValue = real(HUGECON, DP)
+              hugeValue = real(HUGECON, RP)
           end if
       else
           call mexErrMsgIdAndTxt ('gethuge:WrongInput',                 &

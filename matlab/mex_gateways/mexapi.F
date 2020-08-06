@@ -23,10 +23,31 @@
 !    between Fortran and MATLAB. Type mismatch will lead to errors like
 !    Segmentation Fault.
 ! 5. Be careful with the line width limit. After preprocessing (macro
-!    substitution), some lines may become too long and hence get
-!    truncated. 
+!    expansion), some lines may become too long and hence get
+!    truncated. For the same reason, do NOT have any continued line
+!    involving macros, because the & may not appear at the correct
+!    position after macro expansion. This is why, for example, we define
+!    EID and MSSG in the following subroutines to avoid line
+!    continuatuion involving mexErrMsgIdAndTxt.
 
 ! Coded by Zaikun ZHANG, July 2020
+
+
+! Do we intend to use quad precision in the Fortran code (1) or not (0)? 
+! 1. It is rarely a good idea to use REAL128 as the working precision,
+!     which is probably inefficient and unnecessary. 
+! 2. Do NOT change __USE_QP__ to 1 unless you are sure that you intend
+!    to use quad precision and such a precision is available on the 
+!    current platform.
+! 3. To use quad precision, you also need to modify ppf.h to set 
+!    __QP_AVAILABLE__ to 1 and __REAL_PRECISION__ to 128. Otherwise, it
+!    will not work.  
+! 4. __USE_QP__ affects only subroutines alloc_rvector_qp and
+!    alloc_rmatrix_qp. 
+#if defined __USE_QP__
+#undef __USE_QP__
+#endif
+#define __USE_QP__ 1  
 
 
 #include "fintrf.h"
@@ -85,6 +106,9 @@
           ! fmxAllocate allocates the space for a vector/matrix
           module procedure alloc_rvector_sp, alloc_rmatrix_sp
           module procedure alloc_rvector_dp, alloc_rmatrix_dp
+#if __USE_QP__
+          module procedure alloc_rvector_qp, alloc_rmatrix_qp
+#endif
       end interface fmxAllocate 
 
       interface fmxReadMPtr
@@ -447,12 +471,12 @@
       
       x = 0.0_SP  ! Set X = 0; otherwise, compilers may complain.
       end subroutine alloc_rmatrix_sp
-      
+
 
       subroutine alloc_rvector_dp(x, n)
       ! ALLOC_RVECTOR_DP allocates the space for an allocatable
       ! double-precision vector X, whose size is N after allocation. 
-      use consts_mod, only : SP, IK, MSSGLEN
+      use consts_mod, only : DP, IK, MSSGLEN
       implicit none
       
       ! Input
@@ -486,7 +510,7 @@
       subroutine alloc_rmatrix_dp(x, m, n)
       ! ALLOC_RMATRIX_DP allocates the space for a double-precision
       ! matrix X, whose size is (M, N) after allocation.
-      use consts_mod, only : SP, IK, MSSGLEN
+      use consts_mod, only : DP, IK, MSSGLEN
       implicit none
       
       ! Input
@@ -516,12 +540,82 @@
 
       end subroutine alloc_rmatrix_dp
 
+
+#if __USE_QP__ == 1
+      subroutine alloc_rvector_qp(x, n)
+      ! ALLOC_RVECTOR_QP allocates the space for an allocatable
+      ! double-precision vector X, whose size is N after allocation. 
+      use consts_mod, only : QP, IK, MSSGLEN
+      implicit none
+      
+      ! Input
+      integer(IK), intent(in) :: n
+
+      ! Output
+      real(QP), allocatable, intent(out) :: x(:)
+
+      ! Intermediate variable
+      integer :: alloc_status
+      character(len = MSSGLEN) :: eid, mssg
+      
+      ! Deallocate X if X is allocated. This is necessary. 
+      if (allocated(x)) then
+          deallocate (x)
+      end if
+
+      ! Allocate memory for X
+      allocate (x(n), stat = alloc_status)
+      if (alloc_status /= 0) then
+          eid = 'MEXAPI:AllocateFailed'
+          mssg = 'ALLOC_RVECTOR_QP: Memory allocation fails.'
+          call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+      end if
+
+      x = 0.0_QP  ! Set = 0; otherieise, compilers may complain.
+
+      end subroutine alloc_rvector_qp
+
+
+      subroutine alloc_rmatrix_qp(x, m, n)
+      ! ALLOC_RMATRIX_DP allocates the space for a double-precision
+      ! matrix X, whose size is (M, N) after allocation.
+      use consts_mod, only : QP, IK, MSSGLEN
+      implicit none
+      
+      ! Input
+      integer(IK), intent(in) :: m, n
+
+      ! Output
+      real(QP), allocatable, intent(out) :: x(:, :)
+
+      ! Intermediate variable
+      integer :: alloc_status
+      character(len = MSSGLEN) :: eid, mssg
+      
+      ! Deallocate X if X is allocated. This is necessary. 
+      if (allocated(x)) then
+          deallocate (x)
+      end if
+
+      ! Allocate memory for X
+      allocate (x(m, n), stat = alloc_status)
+      if (alloc_status /= 0) then
+          eid = 'MEXAPI:AllocateFailed'
+          mssg = 'ALLOC_RMATRIX_QP: Memory allocation fails.'
+          call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+      end if
+
+      x = 0.0_QP  ! Set = 0; otherieise, compilers may complain.
+
+      end subroutine alloc_rmatrix_qp
+#endif
+
       
       subroutine read_rscalar(px, x) 
       ! READ_RSCALAR reads the double scalar associated with an
       ! mwPointer PX and saves the data in X, which is a REAL(RP)
       ! scalar.
-      use consts_mod, only : SP, IK, ONE, MSSGLEN
+      use consts_mod, only : RP, ONE, MSSGLEN
       implicit none
 
       ! Input

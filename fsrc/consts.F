@@ -79,7 +79,7 @@
 #elif __REAL_PRECISION__ == 128 
       integer, parameter :: RP = REAL128
 #else 
-      integer, parameter :: RP = REAL32  ! double precision
+      integer, parameter :: RP = REAL64  ! double precision
 #endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       

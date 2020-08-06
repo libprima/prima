@@ -90,7 +90,13 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 #if defined __QP_AVAILABLE__
 #undef __QP_AVAILABLE__
 #endif
-#define __QP_AVAILABLE__ 0  /* Set this to 1 if REAL128 is available. */
+/* Change the following line to set __QP_AVAILABLE__ to 1 if REAL128 is
+ * available and if you intend to use it. 
+ * Note:
+ * 1. Do NOT change is unless you are really sure.
+ * 2. If the code is terfaced with MATLAB, then you still need to modify
+ *    mexapi.F to set __USE_QP__ to 1. */
+#define __QP_AVAILABLE__ 0  
 
 /* Revise __REAL_PRECISION__ according to __QP_AVAILABLE__ . */
 #if __QP_AVAILABLE__ != 1 && __REAL_PRECISION__ > 64
