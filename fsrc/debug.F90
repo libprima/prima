@@ -1,5 +1,8 @@
 ! DEBUG_MOD is a module defining some procedures concerning debugging, 
 ! errors, and warnings.
+!
+! Coded by Zaikun Zhang in July 2020.
+
 
 #include "ppf.h"
 
@@ -17,6 +20,7 @@ end interface verisize
 
 
 contains
+
     
 subroutine errstop(srname, mssg)
 character(len = *), intent(in) :: srname

@@ -1,13 +1,6 @@
 ! CONSTS_MOD is a module defining some constants. 
-
-!*****************************************************************
-!   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
-!         and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
-!         Department of Applied Mathematics, 
-!         The Hong Kong Polytechnic University
 !
-!   Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
-!****************************************************************
+! Coded by Zaikun Zhang in July 2020.
 
 ! Remarks:
 !
@@ -119,5 +112,6 @@ real(RP), parameter :: RHOBEG_DFT = ONE
 real(RP), parameter :: RHOEND_DFT = 1.0E-6_RP 
 real(RP), parameter :: FTARGET_DFT = -HUGENUM
 integer(IK), parameter :: IPRINT_DFT = 1 
+
 
 end module consts_mod 

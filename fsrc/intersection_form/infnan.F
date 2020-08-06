@@ -14,13 +14,16 @@
 
 
 ! INFNAN is a module defining some procedures concerning INF or NAN.
-
+!
 ! Here we implement the procedures for single, double, and quadruple
 ! precisions, because when we interface the Fortran code with other
 ! languages (e.g., MATLAB), the procedures may be invoked in both the
 ! Fortran code and the gateway (e.g., MEX gateway), which may use
 ! different real precisions (e.g., the Fortran code may use single
 ! precision, but MEX gateway uses double precision by default).
+!
+! Coded by Zaikun Zhang in July 2020.
+
 
 #include "ppf.h"
 
@@ -84,6 +87,7 @@
 ! infinite, nan, or finite. Starting from Fortran 2003, the
 ! intrincic ieee_arithmetic module provides ieee_is_nan() and
 ! ieee_is_finite().
+
 
 #if __USE_IEEE_ARITHMETIC__ == 0
       pure elemental function is_nan_sp(x) result(y)
@@ -214,5 +218,6 @@
       y = (abs(x) > huge(x))
       end function is_inf_qp
 #endif
+
 
       end module infnan_mod

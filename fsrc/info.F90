@@ -1,7 +1,10 @@
 ! INFO_MOD is a module defining exit flags.
+!
+! Coded by Zaikun Zhang in July 2020.
 
 
 module info_mod
+
 
 implicit none
 private
@@ -22,5 +25,6 @@ integer, parameter :: MAXFUN_REACHED = 3
 integer, parameter :: NAN_X = -1
 integer, parameter :: NAN_INF_F = -2
 integer, parameter :: NAN_MODEL = -3
+
 
 end module info_mod

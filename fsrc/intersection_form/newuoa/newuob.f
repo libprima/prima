@@ -13,8 +13,13 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
-      module newuob_mod
+! NEWUOB_MOD is a module that performs the major calculations of NEWUOA.
+!
+! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
+! and the NEWUOA paper.
 
+
+      module newuob_mod
 
       implicit none
       private
@@ -23,9 +28,10 @@
 
       contains
 
+
       subroutine newuob(iprint, maxfun, npt, eta1, eta2, ftarget, gamma1&
      &, gamma2, rhobeg, rhoend, x, nf, f, info)
-! NEWUOB performs the actual calculations for NEWUOA. The arguments IPRINT,
+! NEWUOB performs the actual calculations of NEWUOA. The arguments IPRINT,
 ! MAXFUN, NPT, ETA1, ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG, RHOEND, X, NF,
 ! F, and INFO are identical to the corresponding arguments in subroutine NEWUOA.
 
@@ -49,6 +55,8 @@
 ! D is reserved for trial steps from XOPT.
 ! VLAG will contain the values of the Lagrange functions at a new point
 ! X. They are part of a product that requires VLAG to be of length NPT + N.
+!
+! See Section 2 of the NEWUOA paper.
 
 ! General modules
       use consts_mod, only : RP, IK, ZERO, HALF, TENTH, HUGENUM

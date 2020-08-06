@@ -1,4 +1,4 @@
-! NEWUOA_MOD is a module providing an modern Fortran implementation of 
+! NEWUOA_MOD is a module providing a modern Fortran implementation of 
 ! M. J. D. Powell's NEWUOA algorithm described in 
 !
 ! M. J. D. Powell, The NEWUOA software for unconstrained optimization
@@ -8,6 +8,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code 
 ! and the NEWUOA paper.
 
+
 module newuoa_mod
 
 implicit none
@@ -16,6 +17,7 @@ public :: newuoa
 
 
 contains
+
 
 subroutine newuoa(x, f, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, npt, maxfun, iprint, info)
 ! NEWUOA seeks the least value of a function of many variables, by a 
@@ -77,9 +79,7 @@ subroutine newuoa(x, f, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, npt
 ! Subroutine CALFUN (X, F) must be provided by the user. It must set F
 ! to the value of the objective function for the variables X(1 : N).
 
-use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, EPS
-use consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT
-use consts_mod, only : IPRINT_DFT
+use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, EPS, RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT
 use newuob_mod, only : newuob
 use infnan_mod, only : is_nan, is_inf
 
@@ -192,5 +192,6 @@ end if
 call newuob(iprint_v, maxfun_v, npt_v, eta1_v, eta2_v, ftarget_v, gamma1_v, gamma2_v, rhobeg_v, rhoend_v, x, nf, f, info)
 
 end subroutine newuoa
+
 
 end module newuoa_mod

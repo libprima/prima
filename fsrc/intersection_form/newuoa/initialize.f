@@ -15,6 +15,11 @@
 
 ! INITIALIZE_MOD is a module containing subroutines for initializing
 ! FVAL, XBASE, XPT, GQ, HQ, PQ, IDZ, ZMAT, and BMAT.
+!
+! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
+! and the NEWUOA paper.
+
+
       module initialize_mod
 
       implicit none
@@ -23,6 +28,7 @@
 
 
       contains
+
 
       subroutine initxf(iprint, x, rhobeg, ftarget, ij, kopt, nf, fval, &
      &xbase, xpt, info)
@@ -466,5 +472,6 @@
       end if
 
       end subroutine inith
+
 
       end module initialize_mod

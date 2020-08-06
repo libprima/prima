@@ -14,7 +14,7 @@
 !    operations, and because the overhead of subroutine/function calling
 !    can be high in these languages.
 
-! Coded by Zaikun ZHANG, July 2020
+! Coded by Zaikun ZHANG in July 2020
 
 
 #include "ppf.h"
@@ -48,6 +48,7 @@ end interface r2update
 
 
 contains
+
 
 subroutine r1_sym(A, alpha, x)
 ! R1_SYM sets
@@ -887,5 +888,6 @@ end subroutine calquad
 !     z(:, i) = x*y(i)
 ! end do
 ! end function outprod
+
 
 end module lina_mod

@@ -1,5 +1,8 @@
 ! TRUSTREGION_MOD is a module providing subroutines concerning the 
 ! trust-region iterations.
+!
+! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code 
+! and the NEWUOA paper.
 
 
 module trustregion_mod
@@ -42,14 +45,14 @@ subroutine trsapp(delta, gq, hq, pq, tol, x, xpt, crvmin, qred, s, info)
 ! space spanned by the current S and the corresponding gradient of
 ! Q. Thus S should provide a substantial reduction to Q within the
 ! trust region.
+!
+! See Section 5 of the NEWUOA paper.
 
 ! General modules
-use consts_mod, only : RP, IK, ONE, TWO, HALF, ZERO, PI
-use consts_mod, only : DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ONE, TWO, HALF, ZERO, PI, DEBUGGING, SRNLEN
 use debug_mod, only : errstop, verisize
 use infnan_mod, only : is_nan
-use lina_mod, only : Ax_plus_y 
-use lina_mod, only : inprod, matprod
+use lina_mod, only : Ax_plus_y, inprod, matprod
 
 implicit none
 
@@ -327,7 +330,6 @@ do iterc = 1, itermax
     end if
 end do
 
-return
 end subroutine trsapp
 
 
@@ -364,7 +366,6 @@ end if
 !trrad = max(delta*(1.0_RP + gamma2)/2.0_RP, gamma2*dnorm)
 !end if
 
-return
 end function trrad
 
 

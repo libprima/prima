@@ -29,7 +29,7 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 #if defined __DEBUGGING__
 #undef __DEBUGGING__
 #endif
-#define __DEBUGGING__ 1 
+#define __DEBUGGING__ 0 
 /*************************************************************************/
 
 
@@ -65,7 +65,7 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 #if defined __INTEGER_KIND__
 #undef __INTEGER_KIND__
 #endif
-#define __INTEGER_KIND__ 16 
+#define __INTEGER_KIND__ 0 
 /*************************************************************************/
 
 

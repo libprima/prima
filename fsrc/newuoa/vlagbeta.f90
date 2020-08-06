@@ -2,7 +2,10 @@
 ! and BETA for a given step D. 
 ! Both VLAG and BETA are critical for the updating procedure of H, which
 ! is detailed formula (4.11) of the NEWUOA paper. See (4.12) for the
-! definition of BETA, and VLAG is indeed Hw - e_t. 
+! definition of BETA, and VLAG is indeed Hw. 
+!
+! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code 
+! and the NEWUOA paper.
 
 
 module vlagbeta_mod
@@ -14,15 +17,15 @@ public :: vlagbeta
 
 contains
 
+
 subroutine vlagbeta(idz, kopt, bmat, d, xopt, xpt, zmat, beta, vlag)
-! VLAGBETA is calculates VLAG = Hw - e_t and BETA for a given step D. 
+! VLAGBETA is calculates VLAG = Hw and BETA for a given step D. 
 ! See (4.11)--(4.12) of the NEWUOA paper.
 
 ! General modules
 use consts_mod, only : RP, IK, ONE, HALF, DEBUGGING, SRNLEN
 use debug_mod, only : errstop, verisize
-use lina_mod, only : Ax_plus_y, xA_plus_y, xpy_dot_z
-use lina_mod, only : inprod, matprod
+use lina_mod, only : Ax_plus_y, xA_plus_y, xpy_dot_z, inprod, matprod
 
 implicit none
 
@@ -79,7 +82,6 @@ end if
 ! M. J. D. Powell, Least Frobenius norm updating of quadratic
 ! models that satisfy interpolation conditions. Math. Program., 
 ! 100:183--215, 2004
-!
 wcheck = matprod(d, xpt)
 wcheck = wcheck*(HALF*wcheck + matprod(xopt, xpt))
 !----------------------------------------------------------------------!
@@ -114,8 +116,7 @@ xoptsq = inprod(xopt, xopt)
 beta = dx*dx + dsq*(xoptsq + dx + dx + HALF*dsq) + beta - bwvd
 vlag(kopt) = vlag(kopt) + ONE
 
-return
-
 end subroutine vlagbeta
+
 
 end module vlagbeta_mod
