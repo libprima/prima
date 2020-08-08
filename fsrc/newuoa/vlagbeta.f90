@@ -22,7 +22,7 @@ subroutine vlagbeta(idz, kopt, bmat, d, xopt, xpt, zmat, beta, vlag)
 ! VLAGBETA is calculates VLAG = Hw and BETA for a given step D. 
 ! See (4.11)--(4.12) of the NEWUOA paper.
 
-! General modules
+! Generic modules
 use consts_mod, only : RP, IK, ONE, HALF, DEBUGGING, SRNLEN
 use debug_mod, only : errstop, verisize
 use lina_mod, only : Ax_plus_y, xA_plus_y, xpy_dot_z, inprod, matprod

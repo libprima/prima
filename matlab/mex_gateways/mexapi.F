@@ -503,7 +503,7 @@
           call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
       end if
 
-      x = 0.0_DP  ! Set = 0; otherieise, compilers may complain.
+      x = 0.0_DP  ! Set X = 0; otherieise, compilers may complain.
 
       end subroutine alloc_rvector_dp
 
@@ -537,7 +537,7 @@
           call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
       end if
 
-      x = 0.0_DP  ! Set = 0; otherieise, compilers may complain.
+      x = 0.0_DP  ! Set X = 0; otherieise, compilers may complain.
 
       end subroutine alloc_rmatrix_dp
 
@@ -545,7 +545,7 @@
 #if __USE_QP__ == 1
       subroutine alloc_rvector_qp(x, n)
       ! ALLOC_RVECTOR_QP allocates the space for an allocatable
-      ! double-precision vector X, whose size is N after allocation. 
+      ! quad-precision vector X, whose size is N after allocation. 
       use consts_mod, only : QP, IK, MSSGLEN
       implicit none
       
@@ -572,13 +572,13 @@
           call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
       end if
 
-      x = 0.0_QP  ! Set = 0; otherieise, compilers may complain.
+      x = 0.0_QP  ! Set X = 0; otherieise, compilers may complain.
 
       end subroutine alloc_rvector_qp
 
 
       subroutine alloc_rmatrix_qp(x, m, n)
-      ! ALLOC_RMATRIX_DP allocates the space for a double-precision
+      ! ALLOC_RMATRIX_DP allocates the space for a quad-precision
       ! matrix X, whose size is (M, N) after allocation.
       use consts_mod, only : QP, IK, MSSGLEN
       implicit none
@@ -606,7 +606,7 @@
           call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
       end if
 
-      x = 0.0_QP  ! Set = 0; otherieise, compilers may complain.
+      x = 0.0_QP  ! Set X = 0; otherieise, compilers may complain.
 
       end subroutine alloc_rmatrix_qp
 #endif

@@ -26,7 +26,7 @@ subroutine updateh(knew, beta, vlag_in, idz, bmat, zmat)
 !
 ! See Section 4 of the NEWUOA paper.
 
-! General modules
+! Generic modules
 use consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING, SRNLEN
 use debug_mod, only : errstop, verisize
 use lina_mod, only : grota, r2update, symmetrize
@@ -260,7 +260,7 @@ subroutine updateq(idz, knew, bmatknew, fqdiff, zmat, xptknew, gq, hq, pq)
 ! UPDATEQ updates GQ, HQ, and PQ when XPT(:, KNEW) is replaced by XNEW.
 ! See Section 4 of the NEWUOA paper.
 
-! General modules
+! Generic modules
 use consts_mod, only : RP, IK, ZERO, DEBUGGING, SRNLEN
 use debug_mod, only : errstop, verisize
 use lina_mod, only : r1update, Ax_plus_y
@@ -331,7 +331,7 @@ subroutine tryqalt(idz, fval, ratio, smat, zmat, itest, gq, hq, pq)
 !
 ! See Section 8 of the NEWUOA paper.
 
-! General modules
+! Generic modules
 use consts_mod, only : RP, IK, ZERO, DEBUGGING, SRNLEN
 use debug_mod, only : errstop, verisize
 use lina_mod, only : inprod, matprod

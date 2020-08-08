@@ -1,6 +1,7 @@
 consts.F90
 info.F90
 debug.F90
+memory.F90
 infnan.F90
 lina.F90
 output.F90

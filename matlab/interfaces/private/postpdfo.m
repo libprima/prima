@@ -209,25 +209,33 @@ if nf <= 0
     '%s: UNEXPECTED ERROR: %s returns nf=0 unexpectedly with exitflag %d.', invoker, solver, exitflag); 
 end
 
+% xhist is either empty or containing the last nhist iterates of the solver;
+% fhist is either empty or containing the function values of the last nhist iterates of the solver;
+% chist is either empty or containing the constraint values of the last nhist iterates of the solver;
 nhist = min(nf, output.maxhist);
-output = rmfield(output, 'maxhist');
+output = rmfield(output, 'maxhist'); 
+
 % Read and verify xhist
 if isfield(output, 'xhist')
     xhist = output.xhist;
 else
-    xhist = x + zeros(size(x), nhist);
+    xhist = []; 
 end
 if ~isempty(xhist) && (~isnumeric(xhist) || ~isreal(xhist) || ~ismatrix(xhist) || length(x) ~= size(xhist, 1) || nhist ~= size(xhist, 2))
     % Public/unexpected error
     error(sprintf('%s:InvalidXhist', invoker), ...
         '%s: UNEXPECTED ERROR: %s returns an xhist that is not a real matrix of size (n, min(nf, maxhist)).', invoker, solver);
 end
+% Remove xhist from output if it is empty
+if isfield(output, 'xhist') && isempty(output.xhist)
+    output = rmfield(output, 'xhist');
+end 
 
 % Read and verify fhist
 if isfield(output, 'fhist') 
     fhist = output.fhist;
 else % External solvers may not return fhist
-    fhist = fx + zeros(1, nhist);
+    fhist = []; 
 end
 if ~isempty(fhist) && (~isnumeric(fhist) || ~isreal(fhist) || ~isvector(fhist) || (nhist ~= length(fhist)))
     % Public/unexpected error
@@ -247,7 +255,7 @@ if ~options.classical && ~probinfo.infeasible && ~probinfo.nofreex
     end
 end
 
-% If the problem is a feasibility problem, set fx to [], and remove fhist from output;
+% If the problem is a feasibility problem, set fx to [], and remove fhist from output.
 if probinfo.feasibility_problem
     fx = [];
     output = rmfield(output, 'fhist');
@@ -259,6 +267,10 @@ if probinfo.feasibility_problem
         output.funcCount = 0;  
     end
 end
+% Remove fhist from output if it is empty
+if isfield(output, 'fhist') && isempty(output.fhist)
+    output = rmfield(output, 'fhist');
+end 
 
 % Verify constrviolation
 if ~isnumeric(constrviolation) || ~isscalar(constrviolation) || ~isreal(constrviolation)
@@ -647,17 +659,19 @@ if options.debug && ~options.classical
         end
 
         % Check whether fhist = fun(xhist)
-        funhist = zeros(1, nhist);
-        if ~isempty(objective)
-            for k = 1 : nhist
-                funhist(k) = objective(xhist(:, k));
+        if ~isempty(fhist) && ~isempty(xhist)
+            funhist = zeros(1, nhist);
+            if ~isempty(objective)
+                for k = 1 : nhist
+                    funhist(k) = objective(xhist(:, k));
+                end
             end
-        end
-        funhist(funhist ~= funhist | funhist > hugefun) = hugefun;
-        if any(~(isnan(fhist) & isnan(funhist)) & ~((fhist==funhist) | (abs(funhist-fhist) <= cobylan_prec*max(1, abs(fhist)) & strcmp(solver, 'cobylan')))) 
-            % Public/unexpected error
-            error(sprintf('%s:InvalidFx', invoker), ...
-                '%s: UNEXPECTED ERROR: %s returns an fhist that does not match xhist.', invoker, solver);
+            funhist(funhist ~= funhist | funhist > hugefun) = hugefun;
+            if any(~(isnan(fhist) & isnan(funhist)) & ~((fhist==funhist) | (abs(funhist-fhist) <= cobylan_prec*max(1, abs(fhist)) & strcmp(solver, 'cobylan')))) 
+                % Public/unexpected error
+                error(sprintf('%s:InvalidFx', invoker), ...
+                    '%s: UNEXPECTED ERROR: %s returns an fhist that does not match xhist.', invoker, solver);
+            end
         end
 
         % Check whether [output.nlcineq,  output.nlceq] = nonlcon(x)

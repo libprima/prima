@@ -20,7 +20,7 @@ subroutine shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
 ! GQ, HQ, and BMAT accordingly. PQ and ZMAT remain the same after the
 ! shifting. See Section 7 of the NEWUOA paper.
 
-! General modules
+! Generic modules
 use consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, DEBUGGING, SRNLEN
 use debug_mod, only : errstop, verisize
 use lina_mod, only : Ax_plus_y, r1update, r2update, inprod, matprod
