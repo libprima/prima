@@ -1,25 +1,12 @@
 ! The mex gateway for NEWUOA
 !
-! Coded by Zaikun ZHANG, July 2020
+! Coded by Zaikun Zhang in July 2020.
 
 
 #include "fintrf.h"
 
-! Fortran code starts
-
-      module fnewuoa_mod
-
-      implicit none
-      private
-      public :: fun_ptr
-
-      mwPointer, save :: fun_ptr ! Objective function
-
-      end module fnewuoa_mod
-
-
-      subroutine mexFunction(nargout, poutput, nargin, pinput)
       ! Entry point to Fortran MEX function
+      subroutine mexFunction(nargout, poutput, nargin, pinput)
       ! If the binary MEX file is named as FUNCTION_NAME.mex*** 
       ! (file-name extension depends on the platform), then the 
       ! following function is callable in matlab:
@@ -34,7 +21,7 @@
       use mexapi_mod, only : fmxReadMPtr, fmxWriteMPtr
 
       ! Solver-specific module
-      use fnewuoa_mod, only : fun_ptr
+      use problem_mod, only : fun_ptr, calfun
 
       implicit none
 
@@ -89,22 +76,21 @@
       call fmxReadMPtr(pinput(14), iprint)
 
       ! Call the Fortran code.
-      
       if (maxxhist > 0 .and. maxfhist > 0) then
-          call newuoa(x, f, nf, rhobeg, rhoend, eta1, eta2, gamma1,     &
-     &     gamma2, ftarget, npt, maxfun, iprint, info, xhist, fhist,    &
-     &     maxxhist)
+          call newuoa(calfun, x, f, nf, rhobeg, rhoend, eta1, eta2,     &
+     &     gamma1, gamma2, ftarget, npt, maxfun, iprint, info, xhist,   &
+     &     fhist, maxxhist)
       else if (maxxhist > 0 .and. maxfhist == 0) then
-          call newuoa(x, f, nf, rhobeg, rhoend, eta1, eta2, gamma1,     &
-     &     gamma2, ftarget, npt, maxfun, iprint, info, xhist = xhist,   &
-     &     maxhist = maxxhist)
+          call newuoa(calfun, x, f, nf, rhobeg, rhoend, eta1, eta2,     &
+     &     gamma1, gamma2, ftarget, npt, maxfun, iprint, info,          &
+     &     xhist = xhist, maxhist = maxxhist)
       else if (maxxhist == 0 .and. maxfhist > 0) then
-          call newuoa(x, f, nf, rhobeg, rhoend, eta1, eta2, gamma1,     &
-     &     gamma2, ftarget, npt, maxfun, iprint, info, fhist = fhist,   &
-     &     maxhist = maxfhist)
+          call newuoa(calfun, x, f, nf, rhobeg, rhoend, eta1, eta2,     &
+     &     gamma1, gamma2, ftarget, npt, maxfun, iprint, info,          &
+     &     fhist = fhist, maxhist = maxfhist)
       else
-          call newuoa(x, f, nf, rhobeg, rhoend, eta1, eta2, gamma1,     &
-     &     gamma2, ftarget, npt, maxfun, iprint, info)
+          call newuoa(calfun, x, f, nf, rhobeg, rhoend, eta1, eta2,     &
+     &     gamma1, gamma2, ftarget, npt, maxfun, iprint, info)
       end if
 
       ! After the Fortran code, XHIST or FHIST may not be allocated. We
@@ -130,7 +116,7 @@
           deallocate(x)
       end if
       ! The Fortran code performs ALLOCATE(FHIST) and ALLOCATE(XHIST).
-      ! Here we deallocate them. It is the case even if MAXHIST = 0.
+      ! It is the case even if MAXHIST = 0. Here we deallocate them. 
       if (allocated(fhist)) then
           deallocate(fhist)
       end if
@@ -140,68 +126,3 @@
 
       return
       end subroutine mexFunction
-
-
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      ! The Fortran subroutine that evaluates the objective function
-      subroutine calfun(x, funval)
-
-      ! Generic modules
-      use consts_mod, only : RP, HUGEFUN, INT32, MSSGLEN
-      use infnan_mod, only : is_nan
-      use mexapi_mod, only : mxGetM, mxGetN, mxIsDouble
-      use mexapi_mod, only : mxDestroyArray
-      use mexapi_mod, only : mexErrMsgIdAndTxt
-      use mexapi_mod, only : fmxReadMPtr, fmxWriteMPtr, fmxCallMATLAB
-
-      ! Solver-specific module
-      use fnewuoa_mod, only : fun_ptr
-
-      implicit none
-
-      ! Inputs
-      real(RP), intent(in) :: x(:)
-
-      ! Output
-      real(RP), intent(out) :: funval
-
-      ! Intermediate variables
-      mwPointer :: pinput(1), poutput(1) 
-      mwSize :: row, col
-      integer(INT32) :: isdble
-      character(len = MSSGLEN) :: eid, mssg
-
-      ! Associate X with INPUT(1)
-      call fmxWriteMPtr(x, pinput(1))
-
-      ! Call the MATLAB function that evaluates the objective function
-      call fmxCallMATLAB(fun_ptr, pinput, poutput)
-
-      ! Verify the class and shape of outputs. Indeed, fmxReadMPtr
-      ! does also the verification. We do it here in order to print a 
-      ! more informative error message when the verification fails.
-      row = mxGetM(poutput(1)) 
-      col = mxGetN(poutput(1))
-      isdble = mxIsDouble(poutput(1))
-      if (row*col /= 1 .or. isdble /= 1) then
-          eid = 'fnewuoa:ObjectiveNotScalar'
-          mssg = 'fnewuoa: Objective function does not return a scalar.'
-          call mexErrMsgIdAndTxt(eid, mssg)
-      end if
-
-      ! Read the data in OUTPUT
-      call fmxReadMPtr(poutput(1), funval)
-      
-      ! Use extreme barrier to cope with 'hidden constraints'
-      if (funval > HUGEFUN .or. is_nan(funval)) then
-          funval = HUGEFUN 
-      end if
-
-      ! Destroy the matrix created by fmxWriteMPtr for X. 
-      ! This must be done. Otherwise, the matrix will be destroyed only
-      ! when the MEX function terminates. However, this subroutine will
-      ! be called maybe thousands of times before that.
-      call mxDestroyArray(pinput(1))  
-
-      return
-      end subroutine calfun

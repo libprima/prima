@@ -12,26 +12,26 @@ module prob_mod
 implicit none
 private
 
-public :: calfun, calcfc
+public :: funeval, fceval 
 
-interface 
-    subroutine calfun(x, f)
+abstract interface 
+    subroutine funeval(x, f)
     use consts_mod, only : RP
     implicit none
     real(RP), intent(in) :: x(:)
     real(RP), intent(out) :: f
-    end subroutine calfun
+    end subroutine funeval
 end interface
 
 
-interface
-    subroutine calcfc(x, f, con)
+abstract interface
+    subroutine fceval(x, f, con)
     use consts_mod, only : RP
     implicit none
     real(RP), intent(in) :: x(:)
     real(RP), intent(out) :: f
     real(RP), intent(out) :: con(:)
-    end subroutine calcfc
+    end subroutine fceval 
 end interface
 
 end module prob_mod

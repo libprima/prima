@@ -161,7 +161,7 @@
 
       ! Allocate workspace
       if (allocated(w)) deallocate (w)
-      !      nw = (npt+13)*(npt+n)+3*n*(n+3)/2 + 1
+      ! nw = (npt+13)*(npt+n)+3*n*(n+3)/2 + 1
       nw = (npt+13)*(npt+n_int)+3*n_int*(n_int+3)/2 + 1
       allocate (w(nw), stat=allocate_status)
       if (allocate_status .ne. 0) then

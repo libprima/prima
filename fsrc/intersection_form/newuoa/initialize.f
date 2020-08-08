@@ -30,8 +30,8 @@
       contains
 
 
-      subroutine initxf(iprint, x, rhobeg, ftarget, ij, kopt, nf, fhist,&
-     & fval, xbase, xhist, xpt, info)
+      subroutine initxf(calfun, iprint, x, rhobeg, ftarget, ij, kopt, nf&
+     &, fhist, fval, xbase, xhist, xpt, info)
 ! INITXF performs the initialization regarding the interpolation
 ! points and corresponding function values.
 
@@ -41,11 +41,14 @@
       use info_mod, only : FTARGET_ACHIEVED, NAN_X, NAN_INF_F
       use infnan_mod, only : is_nan, is_posinf
       use output_mod, only : fmssg
-      use prob_mod, only : calfun
+
+! Solver-specific module
+      use prob_mod, only : funeval
 
       implicit none
 
 ! Inputs
+      procedure(funeval) :: calfun
       integer(IK), intent(in) :: iprint
       real(RP), intent(in) :: x(:) ! X(N)
       real(RP), intent(in) :: rhobeg

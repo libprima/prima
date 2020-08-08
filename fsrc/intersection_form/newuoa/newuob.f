@@ -29,8 +29,8 @@
       contains
 
 
-      subroutine newuob(iprint, maxfun, npt, eta1, eta2, ftarget, gamma1&
-     &, gamma2, rhobeg, rhoend, x, nf, f, fhist, xhist, info)
+      subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget&
+     &, gamma1, gamma2, rhobeg, rhoend, x, nf, f, fhist, xhist, info)
 ! NEWUOB performs the actual calculations of NEWUOA. The arguments IPRINT,
 ! MAXFUN, MAXHIST, NPT, ETA1, ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG,
 ! RHOEND, X, NF, F, FHIST, XHIST, and INFO are identical to the corresponding
@@ -68,9 +68,9 @@
       use debug_mod, only : errstop
       use output_mod, only : retmssg, rhomssg, fmssg
       use lina_mod, only : calquad, inprod
-      use prob_mod, only : calfun
 
 ! Solver-specific modules
+      use prob_mod, only : funeval
       use initialize_mod, only : initxf, initq, inith
       use trustregion_mod, only : trsapp, trrad
       use geometry_mod, only : setremove, ameliorgeo
@@ -81,6 +81,7 @@
       implicit none
 
 ! Inputs
+      procedure(funeval) :: calfun
       integer(IK), intent(in) :: iprint
       integer(IK), intent(in) :: maxfun
       integer(IK), intent(in) :: npt
@@ -174,8 +175,8 @@
       terminate = .false. ! Whether to terminate after initialization.
 
 ! Initialize FVAL, XBASE, and XPT.
-      call initxf(iprint, x, rhobeg, ftarget, ij, kopt, nf, fhist, fval,&
-     & xbase, xhist, xpt, subinfo)
+      call initxf(calfun, iprint, x, rhobeg, ftarget, ij, kopt, nf, fhis&
+     &t, fval, xbase, xhist, xpt, subinfo)
       xopt = xpt(:, kopt)
       fopt = fval(kopt)
       x = xbase + xopt ! Set X.
