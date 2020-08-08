@@ -7,7 +7,7 @@ __USE_INTRINSIC_ALGEBRA__   use intrinsic procedures like matmul or not: 0, 1
 __USE_POWELL_ALGEBRA__      use Powell's linear algebra procedures or not: 0, 1 
 __INTEGER_KIND__            the integer kind to be used: 0, 32, 16, 64
 __REAL_PRECISION__          the real precision to be used: 64, 32, 128, 0 
-__FORTRAN_STANDARD__        Fortran standard to follow: 95, 2003, 2008
+__FORTRAN_STANDARD__        Fortran standard to follow: 2003, 2008, 2018
 __USE_IEEE_ARITHMETIC__     use the IEEE_ARITHMETIC intrinsic or not: 1, 0
 
 You may change these flags, but make sure that your compiler is supportive
@@ -108,14 +108,14 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 
 /*************************************************************************/
 /* Which Fortran standard do we follow? */
-/* We aim to be compatible with Fortran 95, 2003 and 2008. 
+/* We aim to be compatible with Fortran 2003, 2008, and 2018. 
  * Make sure that your compiler supports the selected standard. */
 #if defined __FORTRAN_STANDARD__
 #undef __FORTRAN_STANDARD__
 #endif
-/*#define __FORTRAN_STANDARD__ 95 */
 #define __FORTRAN_STANDARD__ 2003
 /*#define __FORTRAN_STANDARD__ 2008 */
+/*#define __FORTRAN_STANDARD__ 2018 */
 
 /* Revise __FORTRAN_STANDARD__ according to the version of the compiler. */
 /* Of course, we cannot exhaust all the compilers. */
@@ -123,9 +123,9 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 #if __FORTRAN_STANDARD__ > 2003
 
 #if defined __GFORTRAN__
-#if __GNUC__ < 5  /* gfortran 5.0 supports most features of F2003/08 */
+#if __GNUC__ <= 5  /* gfortran 5.0 supports most features of F2003/08 */
 #undef __FORTRAN_STANDARD__
-#define __FORTRAN_STANDARD__ 95
+#define __FORTRAN_STANDARD__ 2003 
 #endif
 #endif
 
@@ -145,54 +145,15 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 
 #if defined __PGI
 /* pgifortran 11 fully supports F2003; support for F2008 is increasing */
-#if __PGIC__ < 11  
+#if __PGIC__ <= 11  
 #undef __FORTRAN_STANDARD__
-#define __FORTRAN_STANDARD__ 95 
+#define __FORTRAN_STANDARD__ 2003 
 #endif
 #endif
 
 #if defined __G95__
 #undef __FORTRAN_STANDARD__
-#define __FORTRAN_STANDARD__ 95  /* g95 only supports F2003/08 partially */
-#endif
-
-#endif
-/*******************************************************/
-
-/*******************************************************/
-#if __FORTRAN_STANDARD__ > 95
-
-#if defined __GFORTRAN__
-#if __GNUC__ < 5  /* gfortran 5.0 supports most of F2003/08 */
-#undef __FORTRAN_STANDARD__
-#define __FORTRAN_STANDARD__ 95 
-#endif
-#endif
-
-#if defined __INTEL_COMPILER
-#if __INTEL_COMPILER < 1600  /* ifort 16.0 fully supports F2003 */
-#undef __FORTRAN_STANDARD__
-#define __FORTRAN_STANDARD__ 95 
-#endif
-#endif
-
-#if defined __NAG_COMPILER_RELEASE
-#if __NAG_COMPILER_RELEASE < 61  /* nagfor 6.1 fully supports F2003 */
-#undef __FORTRAN_STANDARD__
-#define __FORTRAN_STANDARD__ 95 
-#endif
-#endif
-
-#if defined __PGI
-#if __PGIC__ < 11  /* pgifortran 11 fully supports F2003 */
-#undef __FORTRAN_STANDARD__
-#define __FORTRAN_STANDARD__ 95 
-#endif
-#endif
-
-#if defined __G95__
-#undef __FORTRAN_STANDARD__
-#define __FORTRAN_STANDARD__ 95 /* g95 only supports F2003/08 partially */
+#define __FORTRAN_STANDARD__ 2003  /* g95 only supports F2003/08 partially */
 #endif
 
 #endif
@@ -207,12 +168,9 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 #if defined __USE_IEEE_ARITHMETIC__      
 #undef __USE_IEEE_ARITHMETIC__
 #endif
-#if __FORTRAN_STANDARD__ >= 2003 
 /* IEEE_ARITHMETIC is available starting from Fortran 2003. */
 #define __USE_IEEE_ARITHMETIC__ 1 
-#else
-#define __USE_IEEE_ARITHMETIC__ 0 
-#endif
+
 /* As of gfortran 5.5, it seems that the IEEE_ARITHMETIC of gfortran does 
  * not support REAL128. */
 #if __REAL_PRECISION__ > 64
@@ -220,5 +178,12 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 #undef __USE_IEEE_ARITHMETIC__ 
 #define __USE_IEEE_ARITHMETIC__ 0
 #endif
+#endif
+
+/* The code concerning IEEE_ARITHMETIC does not work well with g95. Not
+ * clear why. */
+#if defined __G95__
+#undef __USE_IEEE_ARITHMETIC__
+#define __USE_IEEE_ARITHMETIC__ 0  
 #endif
 /*************************************************************************/

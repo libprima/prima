@@ -86,9 +86,9 @@ real(RP), parameter :: QUART = 0.25_RP
 real(RP), parameter :: TEN = 10.0_RP
 real(RP), parameter :: TENTH = 0.1_RP
 real(RP), parameter ::PI = 3.141592653589793238462643383279502884_RP
-! We may set PI to acos(-1.0_RP), but F95 will complain about 
-! "Elemental function as initialization expression with
-! non-integer/non-character arguments".
+! We may set PI to acos(-1.0_RP), but some compilers may complain about 
+! "Elemental function as initialization expression with non-integer or
+! non-character arguments".
 
 real(RP), parameter :: EPS = epsilon(ZERO)
 real(RP), parameter :: HUGENUM = huge(ZERO)
