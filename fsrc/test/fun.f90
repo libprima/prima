@@ -1,4 +1,4 @@
-modul fun_mod
+module fun_mod
 
 implicit none
 private 

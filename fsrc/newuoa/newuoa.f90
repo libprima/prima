@@ -19,8 +19,8 @@ public :: newuoa
 contains
 
 
-subroutine newuoa(x, f, nf, rhobeg, rhoend, eta1, eta2, gamma1, gamma2,  ftarget, npt, maxfun, &
-    & iprint, info, xhist, fhist, maxhist)
+subroutine newuoa(calfun, x, f, nf, rhobeg, rhoend, eta1, eta2, gamma1, gamma2,  ftarget, npt, &
+    & maxfun, iprint, info, xhist, fhist, maxhist)
 ! NEWUOA seeks the least value of a function of many variables, by a 
 ! trust region method that forms quadratic models by interpolation. 
 ! There can be some freedom in the interpolation conditions, which is 
@@ -98,11 +98,13 @@ use infnan_mod, only : is_nan, is_inf
 use memory_mod, only : safealloc
 
 ! Solver-specific module
+use prob_mod, only : funeval
 use newuob_mod, only : newuob
 
 implicit none
 
 ! Inputs
+procedure(funeval) :: calfun
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
 integer(IK), optional, intent(in) :: maxhist
@@ -122,8 +124,8 @@ real(RP), intent(inout) :: x(:)
 integer(IK), intent(out) :: info
 integer(IK), intent(out) :: nf 
 real(RP), intent(out) :: f
-real(RP), allocatable, optional, intent(out) :: fhist(:)
-real(RP), allocatable, optional, intent(out) :: xhist(:, :)
+real(RP), intent(out), allocatable, optional :: fhist(:)
+real(RP), intent(out), allocatable, optional :: xhist(:, :)
 
 ! Intermediate variables
 integer(IK) :: iprint_v
@@ -237,8 +239,8 @@ else
 end if
 call safealloc(fh, maxfhist)
 
-call newuob(iprint_v, maxfun_v, npt_v, eta1_v, eta2_v, ftarget_v, gamma1_v, gamma2_v, rhobeg_v, &
-    & rhoend_v, x, nf, f, fh, xh, info)
+call newuob(calfun, iprint_v, maxfun_v, npt_v, eta1_v, eta2_v, ftarget_v, gamma1_v, gamma2_v, &
+    & rhobeg_v, rhoend_v, x, nf, f, fh, xh, info)
 
 ! Copy XH to XHIST and FH to FHIST if needed.
 ! N. B.: Fortran 2003 supports "automatic (re)allocation of allocatable
