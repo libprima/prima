@@ -64,7 +64,7 @@
       mwPointer, intent(out) :: poutput(nargout)
 
 ! Variables
-      mwSize :: cols ! Size of the input
+       mwSize :: cols ! Size of the input
 ! The largest length of the input string.
       integer, parameter :: maxlen = 50
 ! The input string, which specifies the data type
@@ -72,9 +72,9 @@
 ! Integer zero used by the Fortran code
       integer(IK), parameter :: intZero = 0
 ! Integer zero of type mwSize on the current platform
-      mwSize, parameter :: msZero = 0
+       mwSize, parameter :: msZero = 0
 ! Integer zero of type mwIndex on the current platform
-      mwIndex, parameter :: miZero = 0
+       mwIndex, parameter :: miZero = 0
 ! The huge value that will be returned
       real(RP) :: hugeValue
       character(len = MSSGLEN) :: eid, mssg
