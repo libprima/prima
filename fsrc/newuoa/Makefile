@@ -7,15 +7,16 @@ PFORT=pgfortran -c -g
 ABSOFT=af95 -c -g -m1 -en
 
 CURRENTDIR=$(PWD)
-INTERFORMDIR=../intersection_form/newuoa
+INTERFORMDIR=../intersection_form/newuoa/
 MEXDIR= $(PWD)/../../matlab/mex_gateways/
+INTERSECTIONMEXDIR= $(PWD)/../../matlab/mex_gateways/intersection_form/
 
 COMFILES=../common/consts.F90 ../common/debug.F90 ../common/memory.F90 ../common/info.F90 ../common/infnan.F90 ../common/lina.F90 ../common/output.F90 ../common/prob.F90 
 FILES= $(COMFILES) initialize.f90 trustregion.f90 vlagbeta.f90 geometry.f90 update.f90 shiftbase.f90 newuob.f90 newuoa.f90 
  
-M90FILES= $(FILES) $(MEXDIR)/mexapi.F $(MEXDIR)/problem.F $(MEXDIR)/gethuge.F $(MEXDIR)/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/
+M90FILES= $(FILES) $(MEXDIR)/mexapi.F90 $(MEXDIR)/problem.F90 $(MEXDIR)/gethuge.F90 $(MEXDIR)/newuoa-interface.F90 $(MEXDIR)/classical-newuoa-interface.F90 -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/
 
-MFILES= ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F ../common/infnan.F ../common/lina.F ../common/output.F ../common/prob.F initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f $(MEXDIR)/mexapi.F $(MEXDIR)/problem.F $(MEXDIR)/gethuge.F $(MEXDIR)/newuoa-interface.F $(MEXDIR)/classical/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/
+MFILES= ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F ../common/infnan.F ../common/lina.F ../common/output.F ../common/prob.F initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f $(INTERSECTIONMEXDIR)/mexapi.F $(INTERSECTIONMEXDIR)/problem.F $(INTERSECTIONMEXDIR)/gethuge.F $(INTERSECTIONMEXDIR)/newuoa-interface.F $(INTERSECTIONMEXDIR)/classical-newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/
 
 
 FSTD=2003
