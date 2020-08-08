@@ -83,10 +83,9 @@
 
 
       contains
-! The following functions check whether a real number x is
-! infinite, nan, or finite. Starting from Fortran 2003, the
-! intrincic ieee_arithmetic module provides ieee_is_nan() and
-! ieee_is_finite().
+! The following functions check whether a real number x is infinite,
+! nan, or finite. Starting from Fortran 2003, the intrincic
+! ieee_arithmetic module provides ieee_is_nan() and ieee_is_finite().
 
 
 #if __USE_IEEE_ARITHMETIC__ == 0
