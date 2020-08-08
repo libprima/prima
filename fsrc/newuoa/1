@@ -1,0 +1,85 @@
+gfortran -c -g -Wall -Wextra -Wconversion -Wuninitialized -Wmaybe-uninitialized -fimplicit-none -fbacktrace -ffree-line-length-0 -fcheck=all -ffpe-trap=invalid,zero,overflow,underflow   ../common/consts.F90 ../common/debug.F90 ../common/info.F90 ../common/infnan.F90 ../common/lina.F90 ../common/output.F90 ../common/prob.F90 initialize.f90 trustregion.f90 vlagbeta.f90 geometry.f90 update.f90 shiftbase.f90 newuob.f90 newuoa.f90  -std=f2003 -pedantic -ffree-form
+../common/debug.F90:50:14:
+
+ call backtrace()
+              1
+Warning: The intrinsic ‘backtrace’ at (1) is not included in the selected standard but a GNU Fortran extension and ‘backtrace’ will be treated as if declared EXTERNAL.  Use an appropriate -std=* option or define -fall-intrinsics to allow this intrinsic. [-Wintrinsics-std]
+../common/debug.F90:50:14: Warning: The intrinsic ‘backtrace’ at (1) is not included in the selected standard but a GNU Fortran extension and ‘backtrace’ will be treated as if declared EXTERNAL.  Use an appropriate -std=* option or define -fall-intrinsics to allow this intrinsic. [-Wintrinsics-std]
+../common/debug.F90:50:16:
+
+ call backtrace()
+                1
+Warning: The intrinsic ‘backtrace’ at (1) is not included in the selected standard but a GNU Fortran extension and ‘backtrace’ will be treated as if declared EXTERNAL.  Use an appropriate -std=* option or define -fall-intrinsics to allow this intrinsic. [-Wintrinsics-std]
+ifort -c -g -warn all -check all  -fpe0 -debug extended -fimplicit-none ../common/consts.F90 ../common/debug.F90 ../common/info.F90 ../common/infnan.F90 ../common/lina.F90 ../common/output.F90 ../common/prob.F90 initialize.f90 trustregion.f90 vlagbeta.f90 geometry.f90 update.f90 shiftbase.f90 newuob.f90 newuoa.f90  -std=f2003 -pedantic -ffree-form
+g95 -c -g -Wall -Wextra -fbounds-check -fimplicit-none   ../common/consts.F90 ../common/debug.F90 ../common/info.F90 ../common/infnan.F90 ../common/lina.F90 ../common/output.F90 ../common/prob.F90 initialize.f90 trustregion.f90 vlagbeta.f90 geometry.f90 update.f90 shiftbase.f90 newuob.f90 newuoa.f90  -std=f2003 -pedantic -ffree-form
+nagfor -c -g ../common/consts.F90 ../common/debug.F90 ../common/info.F90 ../common/infnan.F90 ../common/lina.F90 ../common/output.F90 ../common/prob.F90 initialize.f90 trustregion.f90 vlagbeta.f90 geometry.f90 update.f90 shiftbase.f90 newuob.f90 newuoa.f90  -f2003 -free
+NAG Fortran Compiler Release 7.0(Yurakucho) Build 7020
+Evaluation trial version of NAG Fortran Compiler Release 7.0(Yurakucho) Build 7020
+../common/consts.F90:
+[NAG Fortran Compiler normal termination]
+../common/debug.F90:
+[NAG Fortran Compiler normal termination]
+../common/info.F90:
+[NAG Fortran Compiler normal termination]
+../common/infnan.F90:
+[NAG Fortran Compiler normal termination]
+../common/lina.F90:
+[NAG Fortran Compiler normal termination]
+../common/output.F90:
+[NAG Fortran Compiler normal termination]
+../common/prob.F90:
+[NAG Fortran Compiler normal termination]
+initialize.f90:
+[NAG Fortran Compiler normal termination]
+trustregion.f90:
+[NAG Fortran Compiler normal termination]
+vlagbeta.f90:
+[NAG Fortran Compiler normal termination]
+geometry.f90:
+[NAG Fortran Compiler normal termination]
+update.f90:
+[NAG Fortran Compiler normal termination]
+shiftbase.f90:
+[NAG Fortran Compiler normal termination]
+newuob.f90:
+[NAG Fortran Compiler normal termination]
+newuoa.f90:
+[NAG Fortran Compiler normal termination]
+pgfortran -c -g ../common/consts.F90 ../common/debug.F90 ../common/info.F90 ../common/infnan.F90 ../common/lina.F90 ../common/output.F90 ../common/prob.F90 initialize.f90 trustregion.f90 vlagbeta.f90 geometry.f90 update.f90 shiftbase.f90 newuob.f90 newuoa.f90  -Mfreeform
+../common/consts.F90:
+../common/debug.F90:
+../common/info.F90:
+../common/infnan.F90:
+../common/lina.F90:
+../common/output.F90:
+../common/prob.F90:
+initialize.f90:
+trustregion.f90:
+vlagbeta.f90:
+geometry.f90:
+update.f90:
+shiftbase.f90:
+newuob.f90:
+newuoa.f90:
+af95 -c -g -m1 -en ../common/consts.F90 ../common/debug.F90 ../common/info.F90 ../common/infnan.F90 ../common/lina.F90 ../common/output.F90 ../common/prob.F90 initialize.f90 trustregion.f90 vlagbeta.f90 geometry.f90 update.f90 shiftbase.f90 newuob.f90 newuoa.f90  -f free
+Absoft ANSI 1610: DEBUG_MOD: ../common/debug.F90: 19, 15 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 0 Other messages, 1 ANSI
+Absoft ANSI 1610: INFNAN_MOD: ../common/infnan.F90: 59, 15 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+Absoft ANSI 1610: INFNAN_MOD: ../common/infnan.F90: 62, 15 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+Absoft ANSI 1610: INFNAN_MOD: ../common/infnan.F90: 65, 15 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 0 Other messages, 3 ANSI
+Absoft ANSI 1610: LINA_MOD: ../common/lina.F90: 39, 15 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+Absoft ANSI 1610: LINA_MOD: ../common/lina.F90: 43, 15 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+Absoft ANSI 1610: LINA_MOD: ../common/lina.F90: 47, 15 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 0 Other messages, 3 ANSI
+This demonstration copy of Absoft Pro Fortran expires 08/28/20.

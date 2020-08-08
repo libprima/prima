@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 07-Aug-2020.
+! on 08-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -39,7 +39,7 @@
 ! that the information of XNEW is included in VLAG and BETA, which are
 ! calculated according to D.
 
-! General modules
+! Generic modules
       use consts_mod, only : RP, IK, ONE, ZERO, TENTH, SRNLEN, DEBUGGING
       use debug_mod, only : errstop, verisize
 
@@ -85,7 +85,7 @@
 
       rhosq = max(TENTH*delta, rho)**2
       hdiag = -sum(zmat(:, 1 : idz - 1)**2, dim = 2) + sum(zmat(:, idz :&
-     &npt - n - 1)**2, dim = 2)
+     & npt - n - 1)**2, dim = 2)
       xdsq = sum((xpt - spread(xopt, dim = 2, ncopies = npt))**2, dim = &
      &1)
       sigma = abs(beta*hdiag + vlag(1 : npt)**2)
@@ -109,7 +109,7 @@
       subroutine ameliorgeo(idz, knew, kopt, bmat, delbar, xopt, xpt, zm&
      &at, d, beta, vlag)
 
-! General modules
+! Generic modules
       use consts_mod, only : RP, IK, ONE, DEBUGGING, SRNLEN
       use debug_mod, only : errstop, verisize
       use lina_mod, only : inprod
@@ -188,7 +188,7 @@
 ! where LFUNC is the KNEW-th Lagrange function.
 ! See Setion 6 of the NEWUOA paper.
 
-! General modules
+! Generic modules
       use consts_mod, only : RP, IK, ONE, TWO, HALF, PI, ZERO, DEBUGGING&
      &, SRNLEN
       use debug_mod, only : errstop, verisize
@@ -402,7 +402,7 @@
 ! In addition, it sets VLAG and BETA for the selected D.
 ! See Setion 6 of the NEWUOA paper.
 
-! General modules
+! Generic modules
       use consts_mod, only : RP, IK, ONE, TWO, HALF, QUART, PI, ZERO, DE&
      &BUGGING, SRNLEN
       use debug_mod, only : errstop, verisize
@@ -603,7 +603,7 @@
                   nw = npt + n
               end if
               prod(npt + 1 : npt + n, jc) = matprod(bmat(:, 1 : nw), w(1&
-     &: nw, jc))
+     & : nw, jc))
           end do
 
 ! Include in DEN the part of BETA that depends on THETA.
@@ -723,7 +723,7 @@
 ! Set S to HALF the gradient of the denominator with respect
 ! to D.
           s = tau*bmat(:, knew) + alpha*(dxn*x + xnsq*d - vlag(npt + 1 :&
-     &npt + n))
+     & npt + n))
           v = matprod(xnew, xpt)
           v = (tau*hcol - alpha*vlag(1 : npt))*v
 !----------------------------------------------------------------------!

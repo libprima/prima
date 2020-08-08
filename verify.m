@@ -141,6 +141,7 @@ for ip = 1 : length(plist)
         T = toc;
         fprintf('\nRunning time for %s:\t %f\n', solvers{2}, T);
 
+
         if output1.funcCount == test_options.maxfun && (exitflag1 == 0 || exitflag1 == 2) && exitflag2 == 3
             exitflag1 = 3;
             %display('exitflag1 changed to 3.')
@@ -171,7 +172,7 @@ return
 function eq = iseq(x, f, exitflag, output, xx, ff, ee, oo, prec) 
 eq = true;
 
-if ~isempty(setdiff(fieldnames(output), [fieldnames(oo); 'xhist'])) || ~isempty(setdiff(fieldnames(oo), [fieldnames(output); 'xhist']))
+if ~isempty(setdiff(fieldnames(output), [fieldnames(oo); 'fhist'; 'xhist'])) || ~isempty(setdiff(fieldnames(oo), [fieldnames(output); 'fhist'; 'xhist']))
     eq = false;
 end
 
@@ -193,8 +194,16 @@ if (norm(xx-x)/(1+norm(x)) > prec || abs(ff-f)/(1+abs(f)) > prec || abs(oo.const
     eq = false;
 end
 
-output.fhist = output.fhist(:);
-oo.fhist = oo.fhist(:);
+if isfield(output, 'fhist')
+    output.fhist = output.fhist(:);
+else
+    output.fhist = [];
+end
+if isfield(oo, 'fhist')
+    oo.fhist = oo.fhist(:);
+else
+    oo.fhist = [];
+end
 nhist = min(length(output.fhist), length(oo.fhist));
 output.fhist = output.fhist(end - nhist + 1: end);
 oo.fhist = oo.fhist(end - nhist + 1: end);

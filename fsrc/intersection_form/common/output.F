@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 07-Aug-2020.
+! on 08-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -64,7 +64,7 @@
      &.'
       else if (info == TRSUBP_FAILED) then
           mssg = 'a trust region step has failed to reduce the quadratic&
-     &model.'
+     & model.'
       else if (info == NAN_X) then
           mssg = 'NaN occurs in x.'
       else if (info == NAN_INF_F) then
@@ -79,7 +79,7 @@
           print '(1X, 1A, I7)', 'Number of function evaluations = ', nf
           print '(1X, 1A, 1PD23.15)', 'Least function value = ', f
           print '(1X, 1A, /(1X, 1P, 5D15.6))', 'The corresponding X is',&
-     &x
+     & x
       end if
 
       if (iprint >= 4) then
@@ -100,7 +100,7 @@
               write(OUTUNIT, '(1X, 1A, I7)') 'Number of function evaluat&
      &ions = ', nf
               write(OUTUNIT, '(1X, 1A, 1PD23.15)') 'Least function value&
-     &= ', f
+     & = ', f
               write(OUTUNIT, '(1X, 1A, /(1X, 1P, 5D15.6))') 'The corresp&
      &onding X is', x
               close(OUTUNIT)
@@ -134,7 +134,7 @@
           print '(1X, 1A, I7)', 'Number of function evaluations = ', nf
           print '(1X, 1A, 1PD23.15)', 'Least function value = ', f
           print '(1X, 1A, /(1X, 1P, 5D15.6))', 'The corresponding X is',&
-     &x
+     & x
       end if
 
       if (iprint >= 4) then
@@ -154,7 +154,7 @@
               write(OUTUNIT, '(1X, 1A, I7)') 'Number of function evaluat&
      &ions = ', nf
               write(OUTUNIT, '(1X, 1A, 1PD23.15)') 'Least function value&
-     &= ', f
+     & = ', f
               write(OUTUNIT, '(1X, 1A, /(1X, 1P, 5D15.6))') 'The corresp&
      &onding X is', x
               close(OUTUNIT)
@@ -186,7 +186,7 @@
          print '(/1X, 1A, I7)', 'Function number', nf
          print '(1X, 1A, 1PD23.15)', 'Function value = ', f
          print '(1X, 1A, /(1X, 1P, 5D15.6))', 'The corresponding X is:',&
-     &x
+     & x
       end if
 
       if (iprint >= 4) then

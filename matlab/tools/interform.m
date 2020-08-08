@@ -91,10 +91,11 @@ delete(fullfile(outputdir, '*.bak'));
 delete(fullfile(outputdir, '*.f90'));
 delete(fullfile(outputdir, '*.F90'));
 
-% Copy the filelist from inputdir to outputdir and revise it.
-if exist(fullfile(inputdir, 'filelist'), 'file')
-    copyfile(fullfile(inputdir, 'filelist'), outputdir);
-    refactor_filelist(fullfile(outputdir, 'filelist'));
+% Copy the file list from inputdir to outputdir and revise it.
+filelist = 'ffiles.txt'; % Name of the file list.
+if exist(fullfile(inputdir, filelist), 'file')
+    copyfile(fullfile(inputdir, filelist), outputdir);
+    refactor_filelist(fullfile(outputdir, filelist));
 end
 
 % Copy the header files to the output directory.
@@ -221,7 +222,7 @@ strnew = [leading_spaces, str(1 : min(len, width_first_row))];  % The first row 
 
 for i = 2 : row
     strnew = [strnew, '&'];  % Append an '&' at the end of the i-1 th row.
-    strtmp = strtrim(str(width_first_row + (i-2)*width + 1 : min(len, width_first_row + (i-1)*width)));  % Content of the i th row
+    strtmp = str(width_first_row + (i-2)*width + 1 : min(len, width_first_row + (i-1)*width));  % Content of the i th row
     strtmp = [spaces(1:first-2), '&', strtmp];  % Add first - 2 spaces and an '&' at the beginning of the i-th row
     strtmp = ['\n', strtmp];  % Add a '\n' at the beginning of the i-th row
     strnew = [strnew, strtmp];

@@ -23,7 +23,7 @@ subroutine setremove(idz, kopt, beta, delta, ratio, rho, vlag, xopt, xpt, zmat, 
 ! that the information of XNEW is included in VLAG and BETA, which are
 ! calculated according to D.
 
-! General modules
+! Generic modules
 use consts_mod, only : RP, IK, ONE, ZERO, TENTH, SRNLEN, DEBUGGING
 use debug_mod, only : errstop, verisize
 
@@ -90,7 +90,7 @@ end subroutine setremove
 
 subroutine ameliorgeo(idz, knew, kopt, bmat, delbar, xopt, xpt, zmat, d, beta, vlag)
 
-! General modules
+! Generic modules
 use consts_mod, only : RP, IK, ONE, DEBUGGING, SRNLEN
 use debug_mod, only : errstop, verisize
 use lina_mod, only : inprod
@@ -168,7 +168,7 @@ subroutine biglag(idz, knew, delbar, bmat, x, xpt, zmat, d)
 ! where LFUNC is the KNEW-th Lagrange function.
 ! See Setion 6 of the NEWUOA paper.
 
-! General modules
+! Generic modules
 use consts_mod, only : RP, IK, ONE, TWO, HALF, PI, ZERO, DEBUGGING, SRNLEN
 use debug_mod, only : errstop, verisize
 use lina_mod, only : Ax_plus_y, inprod, matprod
@@ -378,7 +378,7 @@ subroutine bigden(idz, knew, kopt, bmat, x, xpt, zmat, d, beta, vlag)
 ! In addition, it sets VLAG and BETA for the selected D.
 ! See Setion 6 of the NEWUOA paper.
 
-! General modules
+! Generic modules
 use consts_mod, only : RP, IK, ONE, TWO, HALF, QUART, PI, ZERO, DEBUGGING, SRNLEN
 use debug_mod, only : errstop, verisize
 use lina_mod, only : Ax_plus_y, inprod, matprod

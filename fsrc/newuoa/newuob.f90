@@ -14,7 +14,7 @@ public :: newuob
 contains
 
 
-subroutine newuob(iprint, maxfun, maxhist, npt, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend, x, nf, f, fhist, xhist, info)
+subroutine newuob(iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend, x, nf, f, fhist, xhist, info)
 ! NEWUOB performs the actual calculations of NEWUOA. The arguments IPRINT,
 ! MAXFUN, MAXHIST, NPT, ETA1, ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG, 
 ! RHOEND, X, NF, F, FHIST, XHIST, and INFO are identical to the corresponding
@@ -43,10 +43,11 @@ subroutine newuob(iprint, maxfun, maxhist, npt, eta1, eta2, ftarget, gamma1, gam
 !
 ! See Section 2 of the NEWUOA paper.
 
-! General modules
-use consts_mod, only : RP, IK, ZERO, HALF, TENTH, HUGENUM
+! Generic modules
+use consts_mod, only : RP, IK, ZERO, HALF, TENTH, HUGENUM, DEBUGGING, SRNLEN
 use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
 use infnan_mod, only : is_nan, is_posinf
+use debug_mod, only : errstop
 use output_mod, only : retmssg, rhomssg, fmssg
 use lina_mod, only : calquad, inprod
 use prob_mod, only : calfun
@@ -64,7 +65,6 @@ implicit none
 ! Inputs
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
-integer(IK), intent(in) :: maxhist 
 integer(IK), intent(in) :: npt
 real(RP), intent(in) :: eta1
 real(RP), intent(in) :: eta2
@@ -81,8 +81,8 @@ real(RP), intent(inout) :: x(:)  ! SIZE(X) = N
 integer(IK), intent(out) :: info
 integer(IK), intent(out) :: nf
 real(RP), intent(out) :: f
-real(RP), allocatable, intent(out) :: fhist(:)
-real(RP), allocatable, intent(out) :: xhist(:, :)
+real(RP), intent(out) :: fhist(:)
+real(RP), intent(out) :: xhist(:, :)
 
 ! Intermediate variables
 integer(IK) :: idz 
@@ -91,7 +91,9 @@ integer(IK) :: itest
 integer(IK) :: khist
 integer(IK) :: knew
 integer(IK) :: kopt
+integer(IK) :: maxfhist
 integer(IK) :: maxtr
+integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: subinfo
 integer(IK) :: tr
@@ -128,16 +130,31 @@ logical :: reduce_rho
 logical :: shortd
 logical :: terminate
 character(len = 6), parameter :: solver = 'NEWUOA'
+character(len = SRNLEN), parameter :: srname = 'NEWUOB'
 
 
 ! Get size.
 n = int(size(x), kind(n))
+maxfhist = int(size(fhist), kind(maxfhist))
+maxxhist = int(size(xhist, 2), kind(maxxhist))
+
+if (DEBUGGING) then
+    if (n == 0) then
+        call errstop(srname, 'SIZE(X) is invalid')
+    end if
+    if (size(xhist, 1) /= n .and. maxxhist > 0) then
+        call errstop(srname, 'XHIST is nonempty but SIZE(XHIST, 1) /= SIZE(X)')
+    end if
+    if (maxfhist*maxxhist > 0 .and. maxfhist /= maxxhist) then
+        call errstop(srname, 'FHIST and XHIST are both nonempty but SIZE(FHIST) /= SIZE(XHIST, 2)')
+    end if
+end if
 
 maxtr = maxfun  ! Maximal number of trust region iterations.
 terminate = .false. ! Whether to terminate after initialization.
 
 ! Initialize FVAL, XBASE, and XPT.
-call initxf(iprint, maxhist, x, rhobeg, ftarget, ij, kopt, nf, fhist, fval, xbase, xhist, xpt, subinfo)
+call initxf(iprint, x, rhobeg, ftarget, ij, kopt, nf, fhist, fval, xbase, xhist, xpt, subinfo)
 xopt = xpt(:, kopt)
 fopt = fval(kopt)
 x = xbase + xopt  ! Set X.
@@ -154,15 +171,17 @@ end if
 
 if (terminate) then
     info = subinfo
-    if (maxhist >= 1 .and. maxhist < nf) then
-        ! In this case, we rearrange FHIST and XHIST so that they are
-        ! in the chronological order.
-        khist = mod(nf - 1_IK, maxhist) + 1_IK
-        fhist = (/ fhist(khist + 1 : maxhist), fhist(1 : khist) /)
-        xhist = reshape((/ xhist(:, khist + 1 : maxhist), xhist(:, 1 : khist) /), shape(xhist))
-    end if
     if (iprint >= 1) then
         call retmssg(info, iprint, nf, f, x, solver)
+    end if
+    ! Rearrange FHIST and XHIST so that they are in the chronological order.
+    if (maxfhist >= 1 .and. maxfhist < nf) then
+        khist = mod(nf - 1_IK, maxfhist) + 1_IK
+        fhist = (/ fhist(khist + 1 : maxfhist), fhist(1 : khist) /)
+    end if
+    if (maxxhist >= 1 .and. maxxhist < nf) then
+        khist = mod(nf - 1_IK, maxxhist) + 1_IK
+        xhist = reshape((/ xhist(:, khist + 1 : maxxhist), xhist(:, 1 : khist) /), shape(xhist))
     end if
     return
 end if
@@ -253,9 +272,12 @@ do tr = 1, maxtr
         if (iprint >= 3) then
             call fmssg(iprint, nf, f, x, solver)
         end if
-        if (maxhist >= 1) then
-            khist = mod(nf - 1_IK, maxhist) + 1_IK
+        if (maxfhist >= 1) then
+            khist = mod(nf - 1_IK, maxfhist) + 1_IK
             fhist(khist) = f
+        end if
+        if (maxxhist >= 1) then
+            khist = mod(nf - 1_IK, maxxhist) + 1_IK
             xhist(:, khist) = x
         end if
 
@@ -449,9 +471,12 @@ do tr = 1, maxtr
         if (iprint >= 3) then
             call fmssg(iprint, nf, f, x, solver)
         end if
-        if (maxhist >= 1) then
-            khist = mod(nf - 1_IK, maxhist) + 1_IK
+        if (maxfhist >= 1) then
+            khist = mod(nf - 1_IK, maxfhist) + 1_IK
             fhist(khist) = f
+        end if
+        if (maxxhist >= 1) then
+            khist = mod(nf - 1_IK, maxxhist) + 1_IK
             xhist(:, khist) = x
         end if
 
@@ -527,9 +552,12 @@ if (maxtr > 0 .and. shortd .and. nf < maxfun) then
         if (iprint >= 3) then
             call fmssg(iprint, nf, f, x, solver)
         end if
-        if (maxhist >= 1) then
-            khist = mod(nf - 1_IK, maxhist) + 1_IK
+        if (maxfhist >= 1) then
+            khist = mod(nf - 1_IK, maxfhist) + 1_IK
             fhist(khist) = f
+        end if
+        if (maxxhist >= 1) then
+            khist = mod(nf - 1_IK, maxxhist) + 1_IK
             xhist(:, khist) = x
         end if
     end if
@@ -542,12 +570,14 @@ if (is_nan(f) .or. fopt <= f) then
     f = fopt
 end if
 
-if (maxhist >= 1 .and. maxhist < nf) then
-    ! In this case, we rearrange FHIST and XHIST so that they are in the
-    ! chronological order.
-    khist = mod(nf - 1_IK, maxhist) + 1_IK
-    fhist = (/ fhist(khist + 1 : maxhist), fhist(1 : khist) /)
-    xhist = reshape((/ xhist(:, khist + 1 : maxhist), xhist(:, 1 : khist) /), shape(xhist))
+! Rearrange FHIST and XHIST so that they are in the chronological order.
+if (maxfhist >= 1 .and. maxfhist < nf) then
+    khist = mod(nf - 1_IK, maxfhist) + 1_IK
+    fhist = (/ fhist(khist + 1 : maxfhist), fhist(1 : khist) /)
+end if
+if (maxxhist >= 1 .and. maxxhist < nf) then
+    khist = mod(nf - 1_IK, maxxhist) + 1_IK
+    xhist = reshape((/ xhist(:, khist + 1 : maxxhist), xhist(:, 1 : khist) /), shape(xhist))
 end if
 
 if (iprint >= 1) then

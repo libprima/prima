@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 07-Aug-2020.
+! on 08-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -36,7 +36,7 @@
 ! GQ, HQ, and BMAT accordingly. PQ and ZMAT remain the same after the
 ! shifting. See Section 7 of the NEWUOA paper.
 
-! General modules
+! Generic modules
       use consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, DEBUGGING, &
      &SRNLEN
       use debug_mod, only : errstop, verisize

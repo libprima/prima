@@ -208,11 +208,12 @@ rhoend = options.rhoend;
 %gamma2 = options.gamma2;
 ftarget = options.ftarget;
 maxfun = options.maxfun;
-%mxhist = options.maxhist;
+%maxfhist = options.maxfhist;
+%maxxhist = options.maxxhist;
 npt = options.npt;
 %iprint = options.iprint;
 % Here are the values of eta1, eta2, gamma1, gamma2, and iprint used in Powell's
-% code. They should be included in options later. Also the maxhist below.
+% code. They should be included in options later. Also the maxf/xhist below.
 eta1 = 0.1;
 eta2 = 0.7;
 gamma1 = 0.5;
@@ -245,6 +246,18 @@ else
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Should be included into the options latter.
     maxhist = maxfun;
+    output_xhist = true;
+    output_fhist = true;
+    if output_xhist
+        maxxhist = maxhist;
+    else
+        maxxhist = 0;
+    end
+    if output_fhist
+        maxfhist = maxhist;
+    else
+        maxfhist = 0;
+    end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     try
@@ -253,7 +266,7 @@ else
         if options.classical
             [x, fx, exitflag, nf, fhist] = fnewuoan_classical(fun, x0, rhobeg, rhoend, ftarget, maxfun, npt, iprint);
         else
-            [x, fx, exitflag, nf, xhist, fhist] = fnewuoan(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, maxhist, npt, iprint);
+            [x, fx, exitflag, nf, xhist, fhist] = fnewuoan(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, maxxhist, maxfhist, npt, iprint);
         end
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly 

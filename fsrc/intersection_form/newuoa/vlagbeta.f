@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 07-Aug-2020.
+! on 08-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -38,7 +38,7 @@
 ! VLAGBETA is calculates VLAG = Hw and BETA for a given step D.
 ! See (4.11)--(4.12) of the NEWUOA paper.
 
-! General modules
+! Generic modules
       use consts_mod, only : RP, IK, ONE, HALF, DEBUGGING, SRNLEN
       use debug_mod, only : errstop, verisize
       use lina_mod, only : Ax_plus_y, xA_plus_y, xpy_dot_z, inprod, matp&

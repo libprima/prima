@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 07-Aug-2020.
+! on 08-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -30,7 +30,7 @@
 
 
       subroutine trsapp(delta, gq, hq, pq, tol, x, xpt, crvmin, qred, s,&
-     &info)
+     & info)
 ! TRSAPP finds an approximate solution to the N-dimensional trust
 ! region subproblem
 !
@@ -64,7 +64,7 @@
 !
 ! See Section 5 of the NEWUOA paper.
 
-! General modules
+! Generic modules
       use consts_mod, only : RP, IK, ONE, TWO, HALF, ZERO, PI, DEBUGGING&
      &, SRNLEN
       use debug_mod, only : errstop, verisize
@@ -352,7 +352,7 @@
 
       function trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
 
-! General module
+! Generic module
       use consts_mod, only : RP, HALF
 
       implicit none

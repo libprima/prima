@@ -25,11 +25,12 @@
       ! following function is callable in matlab:
       ! [xopt, fopt, info, nf, xhist, fhist] = FUNCTION_NAME(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, maxhist, npt, iprint)
 
-      ! General modules
+      ! Generic modules
       use consts_mod, only : RP, IK
       use newuoa_mod, only : newuoa
       use mexapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
       use mexapi_mod, only : fmxVerifyClassShape
+      use mexapi_mod, only : fmxAllocate
       use mexapi_mod, only : fmxReadMPtr, fmxWriteMPtr
 
       ! Solver-specific module
@@ -44,24 +45,34 @@
       mwPointer, intent(out) :: poutput(nargout)
 
       ! Intermediate variables
-      integer(IK) :: maxfun, maxhist, nf, npt, iprint, info
-      real(RP), allocatable :: x(:)
+      integer(IK) :: info
+      integer(IK) :: iprint
+      integer(IK) :: maxfun
+      integer(IK) :: maxfhist
+      integer(IK) :: maxxhist
+      integer(IK) :: nf
+      integer(IK) :: npt
+      real(RP) :: eta1
+      real(RP) :: eta2
       real(RP) :: f
-      real(RP), allocatable :: xhist(:, :), fhist(:)
-      real(RP) :: rhobeg, rhoend
-      real(RP) :: eta1, eta2
-      real(RP) :: gamma1, gamma2
       real(RP) :: ftarget
+      real(RP) :: gamma1
+      real(RP) :: gamma2
+      real(RP) :: rhobeg
+      real(RP) :: rhoend
+      real(RP), allocatable ::  fhist(:)
+      real(RP), allocatable :: x(:)
+      real(RP), allocatable :: xhist(:, :)
 
       ! Validate number of arguments
-      call fmxVerifyNArgin(nargin, 13)
+      call fmxVerifyNArgin(nargin, 14)
       call fmxVerifyNArgout(nargout, 6)
 
       ! Verify that input 1 is a function handle; the other inputs will
       ! be verified when read.
       call fmxVerifyClassShape(pinput(1), 'function_handle', 'rank0')
       
-      ! Read inputs (there are 13)
+      ! Read inputs (there are 14)
       fun_ptr = pinput(1)  ! FUN_PTR is a pointer to the function handle
       call fmxReadMPtr(pinput(2), x)
       call fmxReadMPtr(pinput(3), rhobeg)
@@ -72,21 +83,46 @@
       call fmxReadMPtr(pinput(8), gamma2)
       call fmxReadMPtr(pinput(9), ftarget)
       call fmxReadMPtr(pinput(10), maxfun)
-      call fmxReadMPtr(pinput(11), maxhist)
-      call fmxReadMPtr(pinput(12), npt)
-      call fmxReadMPtr(pinput(13), iprint)
+      call fmxReadMPtr(pinput(11), maxxhist)
+      call fmxReadMPtr(pinput(12), maxfhist)
+      call fmxReadMPtr(pinput(13), npt)
+      call fmxReadMPtr(pinput(14), iprint)
 
       ! Call the Fortran code.
-      call newuoa(x, f, nf, xhist, fhist, rhobeg, rhoend, eta1, eta2,   &
-     & gamma1, gamma2, ftarget, npt, maxfun, maxhist, iprint, info)
+      
+      if (maxxhist > 0 .and. maxfhist > 0) then
+          call newuoa(x, f, nf, rhobeg, rhoend, eta1, eta2, gamma1,     &
+     &     gamma2, ftarget, npt, maxfun, iprint, info, xhist, fhist,    &
+     &     maxxhist)
+      else if (maxxhist > 0 .and. maxfhist == 0) then
+          call newuoa(x, f, nf, rhobeg, rhoend, eta1, eta2, gamma1,     &
+     &     gamma2, ftarget, npt, maxfun, iprint, info, xhist = xhist,   &
+     &     maxhist = maxxhist)
+      else if (maxxhist == 0 .and. maxfhist > 0) then
+          call newuoa(x, f, nf, rhobeg, rhoend, eta1, eta2, gamma1,     &
+     &     gamma2, ftarget, npt, maxfun, iprint, info, fhist = fhist,   &
+     &     maxhist = maxfhist)
+      else
+          call newuoa(x, f, nf, rhobeg, rhoend, eta1, eta2, gamma1,     &
+     &     gamma2, ftarget, npt, maxfun, iprint, info)
+      end if
+
+      ! After the Fortran code, XHIST or FHIST may not be allocated. We
+      ! allocate them here. Otherwise, fmxWriteMPtr will fail.
+      if (.not. allocated(xhist)) then
+          call fmxAllocate(xhist, int(size(x), IK), 0_IK)
+      end if
+      if (.not. allocated(fhist)) then
+          call fmxAllocate(fhist, 0_IK)
+      end if
 
       ! Write outputs
       call fmxWriteMPtr(x, poutput(1))
       call fmxWriteMPtr(f, poutput(2))
       call fmxWriteMPtr(info, poutput(3))
       call fmxWriteMPtr(nf, poutput(4))
-      call fmxWriteMPtr(xhist(:, 1 : min(nf, maxhist)), poutput(5))
-      call fmxWriteMPtr(fhist(1: min(nf, maxhist)), poutput(6), 'row')
+      call fmxWriteMPtr(xhist, poutput(5))
+      call fmxWriteMPtr(fhist, poutput(6), 'row')
 
       ! Free memory
       ! X is allocated by fmxReadMPtr.
@@ -110,7 +146,7 @@
       ! The Fortran subroutine that evaluates the objective function
       subroutine calfun(x, funval)
 
-      ! General modules
+      ! Generic modules
       use consts_mod, only : RP, HUGEFUN, INT32, MSSGLEN
       use infnan_mod, only : is_nan
       use mexapi_mod, only : mxGetM, mxGetN, mxIsDouble

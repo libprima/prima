@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 07-Aug-2020.
+! on 08-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -34,8 +34,8 @@
       contains
 
 
-      subroutine newuoa(x, f, nf, xhist, fhist, rhobeg, rhoend, eta1, et&
-     &a2, gamma1, gamma2, ftarget, npt, maxfun, maxhist, iprint, info)
+      subroutine newuoa(x, f, nf, rhobeg, rhoend, eta1, eta2, gamma1, ga&
+     &mma2, ftarget, npt, maxfun, iprint, info, xhist, fhist, maxhist)
 ! NEWUOA seeks the least value of a function of many variables, by a
 ! trust region method that forms quadratic models by interpolation.
 ! There can be some freedom in the interpolation conditions, which is
@@ -44,31 +44,20 @@
 ! arguments of the subroutine are as follows.
 !
 ! Initial values of the variables must be set in X(1 : N), where N is
-! the dimension of the problem. They will be changed to the values that
-! give the least calculated F.
+! the dimension of the problem. At exit, X will be an approximate
+! minimizer, F will be the corresponding objective function value, and
+! NF will be the number of function evaluations used by the algorithm.
 !
 ! RHOBEG and RHOEND must be set to the initial and final values of a
-! trust region radius, so both must be positive with RHOEND<=RHOBEG.
+! trust region radius, so both must be positive with RHOEND <= RHOBEG.
 ! Typically RHOBEG should be about one tenth of the greatest expected
 ! change to a variable, and RHOEND should indicate the accuracy that is
 ! required in the final values of the variables.
 !
-! MAXFUN must be set to the maximal number of calls of CALFUN.
+! MAXFUN must be set to the maximal number of function evaluations.
 !
 ! NPT is the number of interpolation conditions. Its value must be in
 ! the interval [N+2, (N+1)(N+2)/2].
-!
-! XHIST and FHIST will save the history of iterates and function values.
-! At entry, XHIST must be an ALLOCATABLE rank 2 array, and FHIST must
-! be an ALLOCATABLE rank 1 array. In addition,  MAXHIST should be an
-! integer in the inerval [0, MAXFUN], and we save only the last MAXHIST
-! iterates and the corresponding function values. Therefore, MAXHIST = 0
-! means no history will be saved, while MAXHIST = MAXFUN means all
-! history will be saved. Note that setting MAXHIST to a large value may
-! be costly in terms of memory. For instance, if N = 1000 and
-! MAXHIST = 100, 000, XHIST will take about 1 GB if we use double-
-! precision floating point numbers. When MAXHIST is too large, memory
-! allocation may fail; in that case, one should try a smaller MAXHIST.
 !
 ! The value of IPRINT should be set to 0, 1, 2, 3, or 4, which controls
 ! the amount of printing. Specifically, there is no output if IPRINT = 0
@@ -84,14 +73,25 @@
 ! FTARGET is the target function value. The minimization will terminate
 ! when a point with function value <= FTARGET is found.
 !
-! ETA1, ETA2, GAMMA1, and GAMMA2 are parameters not included in Powell's
-! original interface. Roughly speaking, the trust region radius will be
+! ETA1, ETA2, GAMMA1, and GAMMA2 are not included in Powell's original
+! interface. Roughly speaking, the trust region radius will be
 ! contracted by a factor of GAMMA1 when the reduction ratio is below
 ! ETA1, and it will be elarged by a factor of GAMMA2 when the reduction
 ! ratio is above ETA2. Powell set ETA1 = 0.1, ETA2 = 0.7, GAMMA1 = 0.5,
 ! GAMMA2 = 2. See the TRRAD function in trustregion.f for details.
 !
-! F is the objective function value when the algorithm exit.
+! XHIST, FHIST, and MAXHIST are optional.
+! XHIST and FHIST will save the history of iterates and function values.
+! At entry, XHIST must be an ALLOCATABLE rank 2 array, and FHIST must
+! be an ALLOCATABLE rank 1 array. In addition,  MAXHIST should be a
+! nonnegative integer, and we save only the last MAXHIST iterates and
+! the corresponding function values. Therefore, MAXHIST = 0 means no
+! history will be saved, while MAXHIST = MAXFUN means all history will
+! be saved. Note that setting MAXHIST to a large value may be costly in
+! terms of memory. For instance, if N = 1000 and MAXHIST = 100, 000,
+! XHIST will take about 1 GB if we use double precision.
+! If XHIST is present, then its size is (N, min(NF, MAXHIST)) at exit;
+! If FHIST is present, then its size is min(NF, MAXHIST) at exit.
 !
 ! INFO is the exit flag, which can be set to the following values
 ! defined in info.F:
@@ -106,17 +106,22 @@
 ! Subroutine CALFUN (X, F) must be provided by the user. It must set F
 ! to the value of the objective function for the variables X(1 : N).
 
-      use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, EPS, R&
-     &HOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT
-      use newuob_mod, only : newuob
+! Generic modules
+      use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, EPS
+      use consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT&
+     &_DFT, MAXIMAL_HIST
       use infnan_mod, only : is_nan, is_inf
+      use memory_mod, only : safealloc
+
+! Solver-specific module
+      use newuob_mod, only : newuob
 
       implicit none
 
 ! Inputs
       integer(IK), intent(in) :: iprint
       integer(IK), intent(in) :: maxfun
-      integer(IK), intent(in) :: maxhist
+      integer(IK), optional, intent(in) :: maxhist
       integer(IK), intent(in) :: npt
       real(RP), intent(in) :: eta1 ! Threshold for reducing DELTA
       real(RP), intent(in) :: eta2 ! Threshold for increasing DELTA
@@ -133,22 +138,26 @@
       integer(IK), intent(out) :: info
       integer(IK), intent(out) :: nf
       real(RP), intent(out) :: f
-      real(RP), allocatable, intent(out) :: fhist(:)
-      real(RP), allocatable, intent(out) :: xhist(:, :)
+      real(RP), allocatable, optional, intent(out) :: fhist(:)
+      real(RP), allocatable, optional, intent(out) :: xhist(:, :)
 
 ! Intermediate variables
       integer(IK) :: iprint_v
       integer(IK) :: maxfun_v
+      integer(IK) :: maxfhist
       integer(IK) :: maxhist_v
+      integer(IK) :: maxxhist
       integer(IK) :: n
       integer(IK) :: npt_v
       real(RP) :: eta1_v
       real(RP) :: eta2_v
+      real(RP), allocatable :: fh(:)
       real(RP) :: ftarget_v
       real(RP) :: gamma1_v
       real(RP) :: gamma2_v
       real(RP) :: rhobeg_v
       real(RP) :: rhoend_v
+      real(RP), allocatable :: xh(:, :)
 
 ! Get size
       n = int(size(x), kind(n))
@@ -168,7 +177,6 @@
       gamma2_v = gamma2
       ftarget_v = ftarget
       maxfun_v = maxfun
-      maxhist_v = maxhist
       npt_v = npt
       iprint_v = iprint
 
@@ -189,7 +197,7 @@
       rhobeg_v = max(EPS, rhobeg_v)
 
       if (rhoend_v < 0 .or. rhobeg_v < rhoend .or. is_nan(rhoend_v) .or.&
-     &is_inf(rhoend_v)) then
+     & is_inf(rhoend_v)) then
           rhoend_v = min(TENTH*rhobeg_v, RHOEND_DFT)
       end if
       rhoend_v = max(EPS, rhoend_v)
@@ -218,8 +226,6 @@
 
       maxfun_v = max(int(n + 3, kind(maxfun_v)), maxfun_v)
 
-      maxhist_v = min(max(0_IK, maxhist_v), maxfun_v)
-
       if (npt_v < n + 2 .or. npt > min(maxfun_v - 1, ((n + 2)*(n + 1))/2&
      &)) then
           npt_v = int(min(maxfun_v - 1, 2*n + 1), kind(npt_v))
@@ -230,9 +236,49 @@
           iprint_v = IPRINT_DFT
       end if
 
-      call newuob(iprint_v, maxfun_v, maxhist_v, npt_v, eta1_v, eta2_v, &
-     &ftarget_v, gamma1_v, gamma2_v, rhobeg_v, rhoend_v, x, nf, f, fhist&
-     &, xhist, info)
+      if (present(maxhist)) then
+          maxhist_v = max(0_IK, minval((/MAXIMAL_HIST, maxhist, maxfun_v&
+     &/)))
+      else
+          maxhist_v = min(MAXIMAL_HIST, maxfun_v)
+      end if
+
+! Allocate memory for the histroy of X. We use XH instead of XHIST,
+! which may not be present.
+      if (present(xhist)) then
+          maxxhist = maxhist_v
+      else
+          maxxhist = 0
+      end if
+      call safealloc(xh, n, maxxhist)
+! Allocate memory for the histroy of F. We use XH instead of FHIST,
+! which may not be present.
+      if (present(fhist)) then
+          maxfhist = maxhist_v
+      else
+          maxfhist = 0
+      end if
+      call safealloc(fh, maxfhist)
+
+      call newuob(iprint_v, maxfun_v, npt_v, eta1_v, eta2_v, ftarget_v, &
+     &gamma1_v, gamma2_v, rhobeg_v, rhoend_v, x, nf, f, fh, xh, info)
+
+! Copy XH to XHIST and FH to FHIST if needed.
+! N. B.: Fortran 2003 supports "automatic (re)allocation of allocatable
+! arrays upon intrinsic assignment": if an intrinsic assignment is used,
+! an allocatable variable on the left-hand side is automatically
+! allocated (if unallocated) or reallocated (if the shape is different).
+! In that case, the lines of SAFEALLOC in the following can be removed.
+      if (present(xhist)) then
+          call safealloc(xhist, n, min(nf, maxxhist))
+          xhist = xh(:, 1 : min(nf, maxxhist))
+      end if
+      deallocate(xh)
+      if (present(fhist)) then
+          call safealloc(fhist, min(nf, maxfhist))
+          fhist = fh(1 : min(nf, maxfhist))
+      end if
+      deallocate(fh)
 
       end subroutine newuoa
 

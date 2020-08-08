@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 07-Aug-2020.
+! on 08-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -30,12 +30,12 @@
       contains
 
 
-      subroutine initxf(iprint, maxhist, x, rhobeg, ftarget, ij, kopt, n&
-     &f, fhist, fval, xbase, xhist, xpt, info)
+      subroutine initxf(iprint, x, rhobeg, ftarget, ij, kopt, nf, fhist,&
+     & fval, xbase, xhist, xpt, info)
 ! INITXF performs the initialization regarding the interpolation
 ! points and corresponding function values.
 
-! General modules
+! Generic modules
       use consts_mod, only : RP, IK, ZERO, DEBUGGING, SRNLEN
       use debug_mod, only : errstop, verisize
       use info_mod, only : FTARGET_ACHIEVED, NAN_X, NAN_INF_F
@@ -47,7 +47,6 @@
 
 ! Inputs
       integer(IK), intent(in) :: iprint
-      integer(IK), intent(in) :: maxhist
       real(RP), intent(in) :: x(:) ! X(N)
       real(RP), intent(in) :: rhobeg
       real(RP), intent(in) :: ftarget
@@ -58,9 +57,9 @@
       integer(IK), intent(out) :: kopt
       integer(IK), intent(out) :: nf
       real(RP), intent(out) :: fval(:) ! FVAL(NPT)
-      real(RP), allocatable, intent(out) :: fhist(:)
+      real(RP), intent(out) :: fhist(:) ! FHIST(MAXFHIST)
       real(RP), intent(out) :: xbase(:) ! XBASE(N)
-      real(RP), allocatable, intent(out) :: xhist(:, :)
+      real(RP), intent(out) :: xhist(:, :) ! XHIST(MAXXHIST)
       real(RP), intent(out) :: xpt(:, :) ! XPT(N, NPT)
 ! Remark on IJ:
 ! When K > 2*N + 1, all the entries of XPT(:, K) will be zero except
@@ -70,12 +69,13 @@
 ! Indeed, IJ(:, 1 : 2*N + 1) is never used.
 
 ! Intermediate variables
-      integer :: alloc_stat
       integer(IK) :: i
       integer(IK) :: itemp
       integer(IK) :: j
       integer(IK) :: k
       integer(IK) :: khist
+      integer(IK) :: maxfhist
+      integer(IK) :: maxxhist
       integer(IK) :: n
       integer(IK) :: npt
       integer(IK) :: npt_revised
@@ -89,10 +89,20 @@
 ! Get and verify the sizes.
       n = int(size(x), kind(n))
       npt = int(size(fval), kind(npt))
+      maxfhist = int(size(fhist), kind(maxfhist))
+      maxxhist = int(size(xhist, 2), kind(maxxhist))
 
       if (DEBUGGING) then
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(X) or SIZE(FVAL) is invalid')
+          end if
+          if (size(xhist, 1) /= n .and. maxxhist > 0) then
+              call errstop(srname, 'XHIST is nonempty but SIZE(XHIST, 1)&
+     & /= SIZE(X)')
+          end if
+          if (maxfhist*maxxhist > 0 .and. maxfhist /= maxxhist) then
+              call errstop(srname, 'FHIST and XHIST are both nonempty bu&
+     &t SIZE(FHIST) /= SIZE(XHIST, 2)')
           end if
           call verisize(ij, 2_IK, npt)
           call verisize(xbase, n)
@@ -143,23 +153,6 @@
       do k = int(n + 2, kind(k)), min(npt, int(2*n + 1, kind(npt)))
           xpt(k - n - 1, k) = -rhobeg
       end do
-! Allocate memory for FHIST and XHIST
-      if (allocated(fhist)) then
-          deallocate(fhist)
-      end if
-      allocate(fhist(maxhist), stat = alloc_stat)
-      if (alloc_stat /= 0) then
-          call errstop(SRNAME, 'Memory allocation fails for FHIST. Set M&
-     &AXHIST to a smaller value.')
-      end if
-      if (allocated(xhist)) then
-          deallocate(xhist)
-      end if
-      allocate(xhist(n, maxhist), stat = alloc_stat)
-      if (alloc_stat /= 0) then
-          call errstop(SRNAME, 'Memory allocation fails for XHIST. Set M&
-     &AXHIST to a smaller value.')
-      end if
 
 ! Set FVAL(1 : NPT) by evaluating F. Totally parallelizable except for
 ! FMSSG, which outputs messages to the console or files.
@@ -178,9 +171,12 @@
           if (iprint >= 3) then
               call fmssg(iprint, k, f, xtemp, solver)
           end if
-          if (maxhist >= 1) then
-              khist = mod(k - 1_IK, maxhist) + 1_IK
+          if (maxfhist >= 1) then
+              khist = mod(k - 1_IK, maxfhist) + 1_IK
               fhist(khist) = f
+          end if
+          if (maxxhist >= 1) then
+              khist = mod(k - 1_IK, maxxhist) + 1_IK
               xhist(:, khist) = xtemp
           end if
 
@@ -258,9 +254,12 @@
           if (iprint >= 3) then
               call fmssg(iprint, k, f, xtemp, solver)
           end if
-          if (maxhist >= 1) then
-              khist = mod(k - 1_IK, maxhist) + 1_IK
+          if (maxfhist >= 1) then
+              khist = mod(k - 1_IK, maxfhist) + 1_IK
               fhist(khist) = f
+          end if
+          if (maxxhist >= 1) then
+              khist = mod(k - 1_IK, maxxhist) + 1_IK
               xhist(:, khist) = xtemp
           end if
 
@@ -289,7 +288,7 @@
 ! the Hessian of the model is
 ! HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
 
-! General modules
+! Generic modules
       use consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING, SRNLEN
       use info_mod, only : NAN_MODEL
       use debug_mod, only : errstop, verisize
@@ -354,7 +353,7 @@
 ! Set the diagonal of HQ by 2nd-order central finite difference.
       do k = 1, min(int(npt - n - 1, kind(n)), n)
           hq(k, k) = ((fval(k + 1) - fbeg)/rhobeg - (fbeg - fval(k + n +&
-     &1))/rhobeg)/rhobeg
+     & 1))/rhobeg)/rhobeg
       end do
 ! When NPT > 2*N + 1, set the off-diagonal entries of HQ.
       do k = int(2*n + 2, kind(k)), npt
@@ -395,7 +394,7 @@
       subroutine inith(ij, xpt, idz, bmat, zmat, info)
 ! INITH initializes BMAT and ZMAT.
 
-! General modules
+! Generic modules
       use consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING, SRNLEN
       use info_mod, only : NAN_MODEL
       use debug_mod, only : errstop, verisize
