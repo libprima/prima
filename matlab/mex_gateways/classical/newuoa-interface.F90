@@ -202,7 +202,6 @@ call mxDestroyArray(pinput(1))
 
 ! Update global variables
 nf = nf + int(1, kind(nf))
-print *, nf
 
 maxxhist = int(size(xhist, 2), kind(maxxhist))
 if (maxxhist >= 1) then
