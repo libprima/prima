@@ -32,7 +32,7 @@ else
     ir = -1;
 end
 if isfield(options, 'classical')
-    classical = options.classical
+    classical = options.classical;
 else
     classical = false;
 end

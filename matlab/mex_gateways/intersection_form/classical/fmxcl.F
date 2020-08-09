@@ -56,8 +56,8 @@
 
       module fmxcl_mod
 
-      use consts_mod, only : IK_CL => IK_DFT, RP_CL => DP
-      use fmxapi_mod, only : convTol, mwOne, notComplex
+      use consts_mod, only : IK_CL => IK_DFT, RP_CL => DP, DP
+      use fmxapi_mod, only : mwOne, notComplex
       use fmxapi_mod, only : mxGetM, mxGetN, mexErrMsgIdAndTxt
       use fmxapi_mod, only : mxCreateDoubleScalar
       use fmxapi_mod, only : mxCreateDoubleMatrix
@@ -72,6 +72,8 @@
       public :: fmxWriteMPtr
 
       real(RP_CL), parameter :: ONE = 1.0_RP_CL
+      real(DP), parameter :: convTol = 1.0e1_DP*max(epsilon(0.0_DP), rea&
+     &l(epsilon(0.0_RP_CL), DP))
 
       interface fmxAllocate
 ! fmxAllocate allocates the space for a vector/matrix

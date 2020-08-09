@@ -62,7 +62,6 @@
 ! [xopt, fopt, info, nf, xhist, fhist] = FUNCTION_NAME(fun, x0, rhobeg, rhoend, ftarget, maxfun, maxxhist, maxfhist, npt, iprint)
 
 ! Generic modules
-      use consts_mod, only : MAXIMAL_HIST
       use fmxapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
       use fmxapi_mod, only : fmxVerifyClassShape
       use fmxcl_mod, only : IK_CL, RP_CL
@@ -84,6 +83,8 @@
       integer(IK_CL) :: iprint
       integer(IK_CL) :: khist
       integer(IK_CL) :: maxfun
+      integer(IK_CL), parameter :: maxhist = int(10**min(5, int(log10(re&
+     &al(huge(0_IK_CL))))), IK_CL)
       integer(IK_CL) :: maxfhist
       integer(IK_CL) :: maxxhist
       integer(IK_CL) :: n
@@ -123,11 +124,9 @@
 
 ! Initialize global variables
       nf = 0
-      maxxhist = max(0_IK_CL, minval((/MAXIMAL_HIST, maxfun, maxxhist/))&
-     &)
+      maxxhist = max(0_IK_CL, minval((/maxfun, maxhist, maxxhist/)))
       call fmxAllocate(xhist, n, maxxhist)
-      maxfhist = max(0_IK_CL, minval((/MAXIMAL_HIST, maxfun, maxfhist/))&
-     &)
+      maxfhist = max(0_IK_CL, minval((/maxfun, maxhist, maxfhist/)))
       call fmxAllocate(fhist, maxfhist)
 
 ! Call NEWUOA
@@ -223,6 +222,7 @@
 
 ! Update global variables
       nf = nf + int(1, kind(nf))
+      print *, nf
 
       maxxhist = int(size(xhist, 2), kind(maxxhist))
       if (maxxhist >= 1) then
