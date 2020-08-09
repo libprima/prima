@@ -26,10 +26,10 @@ subroutine calfun(x, funval)
 ! Generic modules
 use consts_mod, only : RP, HUGEFUN, INT32, MSSGLEN
 use infnan_mod, only : is_nan
-use mexapi_mod, only : mxGetM, mxGetN, mxIsDouble
-use mexapi_mod, only : mxDestroyArray
-use mexapi_mod, only : mexErrMsgIdAndTxt
-use mexapi_mod, only : fmxReadMPtr, fmxWriteMPtr, fmxCallMATLAB
+use fmxapi_mod, only : mxGetM, mxGetN, mxIsDouble
+use fmxapi_mod, only : mxDestroyArray
+use fmxapi_mod, only : mexErrMsgIdAndTxt
+use fmxapi_mod, only : fmxReadMPtr, fmxWriteMPtr, fmxCallMATLAB
 
 implicit none
 

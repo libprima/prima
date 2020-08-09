@@ -1,4 +1,4 @@
-! MEXAPI_MOD is a module that does the following. 
+! FMXAPI_MOD is a module that does the following. 
 ! 1. Define some constants to be used in MEX gateways.
 ! 2. Declare the interfaces of some MEX API subroutine/functions 
 !    provided by MathWorks.
@@ -53,7 +53,7 @@
 #include "fintrf.h"
 
 
-module mexapi_mod
+module fmxapi_mod
 
 use consts_mod, only : INT32, DP, RP
 implicit none
@@ -111,7 +111,8 @@ end interface fmxAllocate
 
 interface fmxReadMPtr
     ! fmxReadMPtr reads the numeric data associated with an mwPointer. 
-    ! It verifies the class and shape of the data and converts it to REAL(RP).
+    ! It verifies the class and shape of the data and converts it to 
+    ! REAL(RP) or INTEGER(IK).
     module procedure read_rscalar, read_rvector, read_rmatrix
     module procedure read_iscalar
 end interface fmxReadMPtr
@@ -121,8 +122,7 @@ interface fmxWriteMPtr
     ! the data to REAL(DP), and allocates space if the data is a vector 
     ! or matrix. Therefore, it is necessary to call mxDestroyArray when 
     ! the usage of the vector/matrix terminates.
-    module procedure write_rscalar, write_rmatrix
-    module procedure write_rvector, write_rvector_rowcol
+    module procedure write_rscalar, write_rmatrix, write_rvector
     module procedure write_iscalar
 end interface fmxWriteMPtr
 
@@ -292,7 +292,7 @@ integer, intent(in) :: expected_nin
 character(len = MSSGLEN) :: eid, mssg
 
 if (nin /= expected_nin) then
-    eid = 'MEXAPI:nInput'
+    eid = 'FMXAPI:nInput'
     mssg = 'fmxVerifyNArgin: Incorrect number of input arguments.'
     call mexErrMsgIdAndTxt (trim(eid), trim(mssg))
 end if
@@ -308,7 +308,7 @@ integer, intent(in) :: expected_nout
 character(len = MSSGLEN) :: eid, mssg
 
 if (nout > expected_nout) then
-    eid = 'MEXAPI:nOutput'
+    eid = 'FMXAPI:nOutput'
     mssg = 'fmxVerifyNArgout: Too many output arguments.'
     call mexErrMsgIdAndTxt (trim(eid), trim(mssg))
 end if
@@ -328,13 +328,13 @@ mwSize :: m, n
 character(len = MSSGLEN) :: eid, mssg
 
 if (px == 0) then
-    eid = 'MEXAPI:NULLPointer'
+    eid = 'FMXAPI:NULLPointer'
     mssg = 'fmxVerifyClassShape: NULL pointer received.'
     call mexErrMsgIdAndTxt (trim(eid), trim(mssg))
 end if
 
 if (mxIsClass(px, class_name) /= 1) then
-    eid = 'MEXAPI:WrongInput'
+    eid = 'FMXAPI:WrongInput'
     mssg = 'fmxVerifyClassShape: A variable of invalid class received when an argument of class "' // class_name // '" is expected.'
     call mexErrMsgIdAndTxt (trim(eid), trim(mssg))
 end if
@@ -342,7 +342,7 @@ end if
 ! Check fmxGetDble(px) if px is associated with a double
 if (class_name == 'double') then
     if (fmxGetDble(px) == 0) then
-        eid = 'MEXAPI:NULLPointer' 
+        eid = 'FMXAPI:NULLPointer' 
         mssg = 'fmxVerifyClassShape: NULL pointer returned by fmxGetDble.'
         call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
     end if
@@ -353,36 +353,36 @@ n = mxGetN(px)
 
 if (shape_type == 'rank0' .or. shape_type == 'scalar') then
     if (m /= 1 .or. n /= 1) then
-        eid = 'MEXAPI:WrongInput'
+        eid = 'FMXAPI:WrongInput'
         mssg = 'fmxVerifyClassShape: A variable of invalid shape received when an array of rank 0 (scalar) is expected.' 
         call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
     end if
 else if (shape_type == 'rank1' .or. shape_type == 'vector') then
     if ((m /= 1 .or. n < 1) .and. (m < 1 .or. n /= 1)) then
-        eid = 'MEXAPI:WrongInput'
+        eid = 'FMXAPI:WrongInput'
         mssg = 'fmxVerifyClassShape: A variable of invalid shape received when an array of rank 1 (vector) is expected.' 
         call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
     end if
 else if (shape_type == 'rank2' .or. shape_type == 'matrix') then
     if (m < 1 .or. n < 1) then
-        eid = 'MEXAPI:WrongInput'
+        eid = 'FMXAPI:WrongInput'
         mssg = 'fmxVerifyClassShape: A variable of invalid shape received when an array of rank 2 (matrix) is expected.' 
         call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
     end if
 else if (shape_type == 'column') then
     if (m < 1 .or. n /= 1) then
-        eid = 'MEXAPI:WrongInput'
+        eid = 'FMXAPI:WrongInput'
         mssg = 'fmxVerifyClassShape: A variable of invalid shape received when a column vector is expected.' 
         call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
     end if
 else if (shape_type == 'row') then
     if (m /= 1 .or. n < 1) then
-        eid = 'MEXAPI:WrongInput'
+        eid = 'FMXAPI:WrongInput'
         mssg = 'fmxVerifyClassShape: A variable of invalid shape received when a row vector is expected.' 
         call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
     end if
 else
-    eid = 'MEXAPI:WrongShapeType'
+    eid = 'FMXAPI:WrongShapeType'
     mssg = 'fmxVerifyClassShape: An invalid shape type "' // shape_type // '" received.'
     call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
 end if
@@ -413,7 +413,7 @@ end if
 ! Allocate memory for X
 allocate (x(n), stat = alloc_status)
 if (alloc_status /= 0) then
-    eid = 'MEXAPI:AllocateFailed'
+    eid = 'FMXAPI:AllocateFailed'
     mssg = 'ALLOC_RVECTOR_SP: Memory allocation fails.'
     call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
 end if
@@ -448,7 +448,7 @@ end if
 ! Allocate memory for X
 allocate (x(m, n), stat = alloc_status)
 if (alloc_status /= 0) then
-    eid = 'MEXAPI:AllocateFailed'
+    eid = 'FMXAPI:AllocateFailed'
     mssg = 'ALLOC_RMATRIX_SP: Memory allocation fails.'
     call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
 end if
@@ -482,7 +482,7 @@ end if
 ! Allocate memory for X
 allocate (x(n), stat = alloc_status)
 if (alloc_status /= 0) then
-    eid = 'MEXAPI:AllocateFailed'
+    eid = 'FMXAPI:AllocateFailed'
     mssg = 'ALLOC_RVECTOR_DP: Memory allocation fails.'
     call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
 end if
@@ -517,7 +517,7 @@ end if
 ! Allocate memory for X
 allocate (x(m, n), stat = alloc_status)
 if (alloc_status /= 0) then
-    eid = 'MEXAPI:AllocateFailed'
+    eid = 'FMXAPI:AllocateFailed'
     mssg = 'ALLOC_RMATRIX_DP: Memory allocation fails.'
     call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
 end if
@@ -553,7 +553,7 @@ end if
 ! Allocate memory for X
 allocate (x(n), stat = alloc_status)
 if (alloc_status /= 0) then
-    eid = 'MEXAPI:AllocateFailed'
+    eid = 'FMXAPI:AllocateFailed'
     mssg = 'ALLOC_RVECTOR_QP: Memory allocation fails.'
     call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
 end if
@@ -588,7 +588,7 @@ end if
 ! Allocate memory for X
 allocate (x(m, n), stat = alloc_status)
 if (alloc_status /= 0) then
-    eid = 'MEXAPI:AllocateFailed'
+    eid = 'FMXAPI:AllocateFailed'
     mssg = 'ALLOC_RMATRIX_QP: Memory allocation fails.'
     call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
 end if
@@ -603,7 +603,7 @@ end subroutine alloc_rmatrix_qp
 subroutine read_rscalar(px, x) 
 ! READ_RSCALAR reads the double scalar associated with an mwPointer PX 
 ! and saves the data in X, which is a REAL(RP) scalar.
-use consts_mod, only : RP, ONE, MSSGLEN
+use consts_mod, only : RP, DP, ONE, MSSGLEN
 implicit none
 
 ! Input
@@ -624,12 +624,13 @@ call mxCopyPtrToReal8(fmxGetDble(px), x_dp, mwOne)
 
 ! Convert the input to the type expected by the Fortran code
 x = real(x_dp(1), kind(x))
-
 ! Check whether the type conversion is proper
-if (abs(x-x_dp(1)) > convTol*max(abs(x), ONE)) then
-    eid = 'MEXAPI:ConversionError'
-    mssg = 'READ_RSCALAR: Large error occurs when converting REAL(DP) to REAL(RP).'
-    call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+if (kind(x) /= kind(x_dp)) then
+    if (abs(x-x_dp(1)) > convTol*max(abs(x), ONE)) then
+        eid = 'FMXAPI:ConversionError'
+        mssg = 'READ_RSCALAR: Large error occurs when converting REAL(DP) to REAL(RP).'
+        call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+    end if
 end if
 end subroutine read_rscalar 
 
@@ -637,7 +638,7 @@ end subroutine read_rscalar
 subroutine read_rvector(px, x) 
 ! READ_RVECTOR reads the double vector associated with an mwPointer PX 
 ! and saves the data in X, which is a REAL(RP) vector.
-use consts_mod, only : RP, IK, ONE, MSSGLEN
+use consts_mod, only : RP, DP, IK, ONE, MSSGLEN
 implicit none
 
 ! Input
@@ -668,12 +669,13 @@ call mxCopyPtrToReal8(fmxGetDble(px), x_dp, n_mw)
 
 ! Convert X_DP to the type expected by the Fortran code
 x = real(x_dp, kind(x))
-
 ! Check whether the type conversion is proper
-if (maxval(abs(x-x_dp)) > convTol*max(maxval(abs(x)), ONE)) then
-    eid = 'MEXAPI:ConversionError'
-    mssg = 'READ_RVECTOR: Large error occurs when converting REAL(DP) to REAL(RP).'
-    call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+if (kind(x) /= kind(x_dp)) then
+    if (maxval(abs(x-x_dp)) > convTol*max(maxval(abs(x)), ONE)) then
+        eid = 'FMXAPI:ConversionError'
+        mssg = 'READ_RVECTOR: Large error occurs when converting REAL(DP) to REAL(RP).'
+        call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+    end if
 end if
 
 ! Deallocate X_DP
@@ -685,7 +687,7 @@ end subroutine read_rvector
 subroutine read_rmatrix(px, x) 
 ! READ_RMATRIX reads the double matrix associated with an mwPointer PX 
 ! and saves the data in X, which is a REAL(RP) matrix.
-use consts_mod, only : RP, IK, ONE, MSSGLEN
+use consts_mod, only : RP, DP, IK, ONE, MSSGLEN
 implicit none
 
 ! Input
@@ -718,12 +720,13 @@ call mxCopyPtrToReal8(fmxGetDble(px), x_dp, xsize)
 
 ! Convert X_DP to the type expected by the Fortran code
 x = real(x_dp, kind(x))
-
 ! Check whether the type conversion is proper
-if (maxval(abs(x-x_dp)) > convTol*max(maxval(abs(x)), ONE)) then
-    eid = 'MEXAPI:ConversionError'
-    mssg = 'READ_RMATRIX: Large error occurs when converting REAL(DP) to REAL(RP).'
-    call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+if (kind(x) /= kind(x_dp)) then
+    if (maxval(abs(x-x_dp)) > convTol*max(maxval(abs(x)), ONE)) then
+        eid = 'FMXAPI:ConversionError'
+        mssg = 'READ_RMATRIX: Large error occurs when converting REAL(DP) to REAL(RP).'
+        call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+    end if
 end if
 
 ! Deallocate X_DP
@@ -746,7 +749,7 @@ subroutine read_iscalar(px, x)
 ! them in the Fortran code. Indeed, in MATLAB, even if we define X = 1000,
 ! the class of X is double! To get an integer X, we would have to define
 ! X = INT32(1000) or X = INT64(1000)!
-use consts_mod, only : IK, MSSGLEN
+use consts_mod, only : DP, IK, MSSGLEN
 implicit none
 
 ! Input
@@ -770,7 +773,7 @@ x = int(x_dp(1), kind(x))
 
 ! Check whether the type conversion is proper
 if (abs(x-x_dp(1)) > 0.5_DP) then
-    eid = 'MEXAPI:ConversionError'
+    eid = 'FMXAPI:ConversionError'
     mssg = 'READ_ISCALAR: Large error occurs when converting REAL(DP) to INTEGER(IK).'
     call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
 end if
@@ -781,7 +784,7 @@ subroutine write_rscalar(x, px)
 ! WRITE_RSCALAR associates a REAL(RP) scalar X with an mwPointer PX, 
 ! after which X can be passed to MATLAB either as an output of 
 ! mexFunction or an input of mexCallMATLAB.
-use consts_mod, only : RP, ONE, MSSGLEN
+use consts_mod, only : RP, DP, ONE, MSSGLEN
 implicit none
 
 ! Input
@@ -794,12 +797,15 @@ mwPointer, intent(out) :: px
 real(DP) :: x_dp
 character(len = MSSGLEN) :: eid, mssg
 
+! Convert X to REAL(DP), which is expected by mxCopyReal8ToPtr
 x_dp = real(x, kind(x_dp))
-
-if (abs(x-x_dp) > convTol*max(abs(x), ONE)) then
-    eid = 'MEXAPI:ConversionError'
-    mssg = 'WRITE_RSCALAR: Large error occurs when converting REAL(RP) to REAL(DP).'
-    call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+! Check whether the type conversion is proper
+if (kind(x_dp) /= kind(x)) then
+    if (abs(x-x_dp) > convTol*max(abs(x), ONE)) then
+        eid = 'FMXAPI:ConversionError'
+        mssg = 'WRITE_RSCALAR: Large error occurs when converting REAL(RP) to REAL(DP).'
+        call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+    end if
 end if
 
 px = mxCreateDoubleScalar(x_dp)
@@ -807,57 +813,17 @@ px = mxCreateDoubleScalar(x_dp)
 end subroutine write_rscalar
 
 
-subroutine write_rvector(x, px)
-! WRITE_RVECTOR associates a REAL(RP) vector X with an mwPointer PX, 
-! after which X can be passed to MATLAB either as an output of 
-! mexFunction or an input of mexCallMATLAB.
-use consts_mod, only : RP, IK, ONE, MSSGLEN
-implicit none
-
-! Input
-real(RP), intent(in) :: x(:)
-
-! Output
-mwPointer, intent(out) :: px
-
-! Intermediate variable
-real(DP) :: x_dp(size(x))
-integer(IK) :: n
-mwSize :: n_mw
-character(len = MSSGLEN) :: eid, mssg
-
-! Get size of X
-n_mw = int(size(x), kind(n_mw))
-n = int(n_mw, kind(n))
-
-! Convert X to REAL(DP), which is expected by mxCopyReal8ToPtr
-x_dp = real(x, kind(x_dp))
-
-! Check whether the type conversion is proper
-if (maxval(abs(x-x_dp)) > convTol*max(maxval(abs(x)), ONE)) then
-    eid = 'MEXAPI:ConversionError'
-    mssg = 'WRITE_RVECTOR: Large error occurs when converting REAL(RP) to REAL(DP).'
-    call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
-end if
-
-! Create a MATLAB matrix using the data in X_DP
-px = mxCreateDoubleMatrix(n_mw, mwOne, notComplex)
-call mxCopyReal8ToPtr(x_dp, fmxGetDble(px), n_mw)
-
-end subroutine write_rvector
-
-
-subroutine write_rvector_rowcol(x, px, rowcol)
-! WRITE_RVECTOR_ROWCOL associates a REAL(RP) vector X with an mwPointer
+subroutine write_rvector(x, px, rowcol)
+! WRITE_RVECTOR associates a REAL(RP) vector X with an mwPointer
 ! PX, after which X can be passed to MATLAB either as an output of 
 ! mexFunction or an input of mexCallMATLAB. If ROWCOL = 'row', then
 ! the vector is passed as a row vector, otherwise, it will be a column vector.
-use consts_mod, only : RP, IK, ONE, MSSGLEN
+use consts_mod, only : DP, RP, IK, ONE, MSSGLEN
 implicit none
 
 ! Input
 real(RP), intent(in) :: x(:)
-character(len = *), intent(in) :: rowcol
+character(len = *), intent(in), optional :: rowcol
 
 ! Output
 mwPointer, intent(out) :: px
@@ -866,6 +832,7 @@ mwPointer, intent(out) :: px
 real(DP) :: x_dp(size(x))
 integer(IK) :: n
 mwSize :: n_mw
+logical :: row
 character(len = MSSGLEN) :: eid, mssg
 
 ! Get size of X
@@ -874,30 +841,37 @@ n = int(n_mw, kind(n))
 
 ! Convert X to REAL(DP), which is expected by mxCopyReal8ToPtr
 x_dp = real(x, kind(x_dp))
-
 ! Check whether the type conversion is proper
-if (maxval(abs(x-x_dp)) > convTol*max(maxval(abs(x)), ONE)) then
-    eid = 'MEXAPI:ConversionError'
-    mssg = 'WRITE_RVECTOR: Large error occurs when converting REAL(RP) to REAL(DP).'
-    call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+if (kind(x) /= kind(x_dp)) then
+    if (maxval(abs(x-x_dp)) > convTol*max(maxval(abs(x)), ONE)) then
+        eid = 'FMXAPI:ConversionError'
+        mssg = 'WRITE_RVECTOR: Large error occurs when converting REAL(RP) to REAL(DP).'
+        call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+    end if
 end if
 
+row = .false.
+if (present(rowcol)) then
+    if (rowcol == 'row' .or. rowcol == 'ROW' .or. rowcol =='Row') then
+        row = .true.
+    end if
+end if
 ! Create a MATLAB matrix using the data in X_DP
-if (rowcol == 'row' .or. rowcol == 'ROW' .or. rowcol =='Row') then
+if (row) then
     px = mxCreateDoubleMatrix(mwOne, n_mw, notComplex)
 else
     px = mxCreateDoubleMatrix(n_mw, mwOne, notComplex)
 end if
 call mxCopyReal8ToPtr(x_dp, fmxGetDble(px), n_mw)
 
-end subroutine write_rvector_rowcol
+end subroutine write_rvector
 
 
 subroutine write_rmatrix(x, px)
 ! WRITE_RMATRIX associates a REAL(RP) matrix X with an mwPointer PX, 
 ! after which X can be passed to MATLAB either as an output of 
 ! mexFunction or an input of mexCallMATLAB.
-use consts_mod, only : RP, IK, ONE, MSSGLEN
+use consts_mod, only : DP, RP, IK, ONE, MSSGLEN
 implicit none
 
 ! Input
@@ -920,12 +894,13 @@ n_mw = int(n, kind(n_mw))
 
 ! Convert X to REAL(DP), which is expected by mxCopyReal8ToPtr
 x_dp = real(x, kind(x_dp))
-
 ! Check whether the type conversion is proper
-if (maxval(abs(x-x_dp)) > convTol*max(maxval(abs(x)), ONE)) then
-    eid = 'MEXAPI:ConversionError'
-    mssg = 'WRITE_RMATRIX: Large error occurs when converting REAL(RP) to REAL(DP).'
-    call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+if(kind(x) /= kind(x_dp)) then
+    if (maxval(abs(x-x_dp)) > convTol*max(maxval(abs(x)), ONE)) then
+        eid = 'FMXAPI:ConversionError'
+        mssg = 'WRITE_RMATRIX: Large error occurs when converting REAL(RP) to REAL(DP).'
+        call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+    end if
 end if
 
 ! Create a MATLAB matrix using the data in X_DP
@@ -952,10 +927,10 @@ mwPointer, intent(out) :: px
 real(DP) :: x_dp
 character(len = MSSGLEN) :: eid, mssg
 
+! Convert X to REAL(DP), which is expected by mxCopyReal8ToPtr
 x_dp = real(x, kind(x_dp))
-
 if (abs(x - x_dp) > 0.5_DP) then
-    eid = 'MEXAPI:ConversionError'
+    eid = 'FMXAPI:ConversionError'
     mssg = 'WRITE_ISCALAR: Large error occurs when converting INTEGER(IK) to REAL(DP).'
     call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
 end if
@@ -995,20 +970,20 @@ nout = int(size(pout), kind(nout))
 ! If mexCallMATLAB returns 0, the execution is successful.
 r = mexCallMATLAB(nout, pout, nin, aug_pin, FEVAL)
 if (r /= 0) then
-    eid = 'MEXAPI:UnsuccessfulCall'
+    eid = 'FMXAPI:UnsuccessfulCall'
     mssg = 'fmxCallMATLAB: MEX fails to call a MATLAB function.'
     call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
 end if
 
 if (any(pout == 0)) then
-    eid = 'MEXAPI:NULLPointer'
+    eid = 'FMXAPI:NULLPointer'
     mssg = 'fmxCallMATLAB: NULL pointer returned when MEX calls a MATLAB function.'
     call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
 end if
 
 end subroutine fmxCallMATLAB
 
-end module mexapi_mod
+end module fmxapi_mod
 
 ! Remark: What is the distinction between mx and mex prefixes?
 ! 1. According to 

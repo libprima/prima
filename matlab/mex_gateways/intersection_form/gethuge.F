@@ -51,10 +51,10 @@
 ! smaller value between huge(msZero) and huge(miZero).
 
       use consts_mod, only : IK, SP, DP, RP, HUGEFUN, HUGECON, MSSGLEN
-      use mexapi_mod, only : mxGetN, mxGetString
-      use mexapi_mod, only : mexErrMsgIdAndTxt
-      use mexapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
-      use mexapi_mod, only : fmxVerifyClassShape, fmxWriteMPtr
+      use fmxapi_mod, only : mxGetN, mxGetString
+      use fmxapi_mod, only : mexErrMsgIdAndTxt
+      use fmxapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
+      use fmxapi_mod, only : fmxVerifyClassShape, fmxWriteMPtr
 
       implicit none
 
