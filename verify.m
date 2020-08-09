@@ -31,6 +31,12 @@ if isfield(options, 'ir')
 else
     ir = -1;
 end
+if isfield(options, 'classical')
+    classical = options.classical
+else
+    classical = false;
+end
+
 
 requirements = struct();
 if isfield(options, 'list')
@@ -111,6 +117,7 @@ for ip = 1 : length(plist)
         test_options.npt = max(min(ceil(10*rand*n + 2), (n+2)*(n+1)/2), n+2);
         test_options.maxfun = max(ceil(20*n*(1+rand)), n+3);
         test_options.ftarget = -inf;
+        test_options.classical = classical;
         if ir == 0
             test_options.npt = (n+2)*(n+1)/2;
         end

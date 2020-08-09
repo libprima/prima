@@ -9,7 +9,7 @@ function interform(directory)
 outputdir = 'intersection_form';
 
 % Do not perform refactoring in these subdirectories (if exist)
-ignoredir = {'original', 'classical', 'backup', 'intersection_form', 'trash', 'test', 'results', 'test_data'};  
+ignoredir = {'original', 'backup', 'intersection_form', 'trash', 'test', 'results', 'test_data'};  
 
 % Ignore the following files
 ignorefiles = {'calfun__genmod.f90', 'mexfunction__genmod.f90', 'test.f'};
@@ -23,6 +23,11 @@ origdir = cd();
 cd(directory);
 inputdir = cd();  % Full path of the given directory, which is the current directory now.
 cd(origdir);
+% Revise ignoredir accoridng to inputdir
+[~, inputdirname]  = fileparts(inputdir);
+if ~strcmp(inputdirname, 'mex_gateways')
+    ignoredir = [ignoredir, 'classical'];
+end
 
 outputdir = fullfile(inputdir, outputdir);  % Full path of the output directory.
 if exist(outputdir, 'dir')

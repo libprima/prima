@@ -264,7 +264,7 @@ else
     % Call the Fortran code
     % The mexified Fortran Function is a private function generating only private errors; however, public errors can occur due to, e.g., evalobj; error handling needed 
         if options.classical
-            [x, fx, exitflag, nf, fhist] = fnewuoan_classical(fun, x0, rhobeg, rhoend, ftarget, maxfun, npt, iprint);
+            [x, fx, exitflag, nf, xhist, fhist] = fnewuoan_classical(fun, x0, rhobeg, rhoend, ftarget, maxfun, maxxhist, maxfhist, npt, iprint);
         else
             [x, fx, exitflag, nf, xhist, fhist] = fnewuoan(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, maxxhist, maxfhist, npt, iprint);
         end

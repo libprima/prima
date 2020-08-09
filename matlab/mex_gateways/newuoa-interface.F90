@@ -15,10 +15,10 @@ subroutine mexFunction(nargout, poutput, nargin, pinput)
 ! Generic modules
 use consts_mod, only : RP, IK
 use newuoa_mod, only : newuoa
-use mexapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
-use mexapi_mod, only : fmxVerifyClassShape
-use mexapi_mod, only : fmxAllocate
-use mexapi_mod, only : fmxReadMPtr, fmxWriteMPtr
+use fmxapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
+use fmxapi_mod, only : fmxVerifyClassShape
+use fmxapi_mod, only : fmxAllocate
+use fmxapi_mod, only : fmxReadMPtr, fmxWriteMPtr
 
 ! Solver-specific module
 use problem_mod, only : fun_ptr, calfun
@@ -89,8 +89,9 @@ else
     call newuoa(calfun, x, f, nf, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, npt, maxfun, iprint, info)
 end if
 
-! After the Fortran code, XHIST or FHIST may not be allocated. We
-! allocate them here. Otherwise, fmxWriteMPtr will fail.
+! After the Fortran code, XHIST or FHIST may not be allocated, because 
+! they may not have been passed to the Fortran code. We allocate them
+! here. Otherwise, fmxWriteMPtr will fail.
 if (.not. allocated(xhist)) then
     call fmxAllocate(xhist, int(size(x), IK), 0_IK)
 end if
@@ -107,18 +108,12 @@ call fmxWriteMPtr(xhist, poutput(5))
 call fmxWriteMPtr(fhist, poutput(6), 'row')
 
 ! Free memory
-! X is allocated by fmxReadMPtr.
-if (allocated(x)) then
-    deallocate(x)
-end if
-! The Fortran code performs ALLOCATE(FHIST) and ALLOCATE(XHIST).
-! It is the case even if MAXHIST = 0. Here we deallocate them. 
-if (allocated(fhist)) then
-    deallocate(fhist)
-end if
-if (allocated(xhist)) then
-    deallocate(xhist)
-end if
+! X was allocated by fmxReadMPtr.
+deallocate(x)
+! XHIST was allocated by the Fortran code or fmxAllocate.
+deallocate(xhist)
+! FHIST was allocated by the Fortran code or fmxAllocate.
+deallocate(fhist)
 
 return
 end subroutine mexFunction
