@@ -47,7 +47,7 @@ if (maxfun < n + 3) then
 end if
 
 if (maxhist < 0 .or. maxhist > MAXIMAL_HIST) then
-    maxhist = max(0_IK, min(MAXIMAL_HIST, maxfun))
+    maxhist = min(MAXIMAL_HIST, maxfun)
     print '(/1X, 1A, I8, 1A, I8, 1A)', solver // ': invalid MAXHIST; it should be a nonnegative integer not more thant ', &
         & MAXIMAL_HIST, '; it is set to ', maxhist, '.'
 end if
@@ -56,6 +56,12 @@ if (npt < n + 2 .or. npt > min(maxfun - 1, ((n + 2)*(n + 1))/2)) then
     npt = int(min(maxfun - 1, 2*n + 1), kind(npt))
     print '(/1X, 1A, I6, 1A)', solver // ': invalid NPT; it should an integer in the interval [N+2, (N+1)(N+2)/2], ' // &
         & 'and it should be less than MAXFUN; it is set to ', npt, '.'
+end if
+
+! We the difference between ETA1 and ETA2 is tiny, we force them to equal.
+! See the explanation around RHOBEG and RHOEND for the reason.
+if (abs(eta1 - eta2) < 1.0e2_RP*EPS*max(abs(eta1), ONE)) then
+    eta2 = eta1;
 end if
 
 if (eta1 < ZERO .or. eta1 > ONE .or. is_nan(eta1)) then
@@ -84,7 +90,7 @@ if (gamma2 < ONE .or. is_nan(gamma2) .or. is_inf(gamma2)) then
         & gamma2, '.' 
 end if
 
-if ((rhobeg - rhoend) < 1.0e2_RP*EPS*max(abs(rhobeg), ONE))then
+if (abs(rhobeg - rhoend) < 1.0e2_RP*EPS*max(abs(rhobeg), ONE))then
 ! When the data is passed from the interfaces (e.g., MEX) to the Fortran
 ! code, RHOBEG, and RHOEND may change a bit. It was oberved in a MATLAB
 ! test that MEX passed 1 to Fortran as 0.99999999999999978. Therefore,
