@@ -225,6 +225,7 @@
       end where
 
 ! Read the inputs.
+
 ! If RHOBEG is present, then RHOBEG_C is a copy of RHOBEG (_C for "copy");
 ! otherwise, RHOBEG_C takes the default value for RHOBEG, taking the
 ! possibly present RHOEND into account. The other inputs are read in a
@@ -335,7 +336,8 @@
      &rget_c, gamma1_c, gamma2_c, rhobeg_c, rhoend_c, x, nf_c, f, fhist_&
      &c, xhist_c, info_c)
 
-! Write outputs.
+! Write the outputs.
+
       if (present(nf)) then
           nf = nf_c
       end if

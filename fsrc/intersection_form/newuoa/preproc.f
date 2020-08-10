@@ -50,7 +50,7 @@
       real(RP), intent(inout) :: rhobeg
       real(RP), intent(inout) :: rhoend
 
-! Intermediate variables
+! Intermediate variable
       character(len = 6), parameter :: solver = 'NEWUOA'
 
 
@@ -68,10 +68,10 @@
       end if
 
       if (maxhist < 0 .or. maxhist > MAXIMAL_HIST) then
-          maxhist = max(0_IK, min(MAXIMAL_HIST, maxfun))
+          maxhist = min(MAXIMAL_HIST, maxfun)
           print '(/1X, 1A, I8, 1A, I8, 1A)', solver // ': invalid MAXHIS&
      &T; it should be a nonnegative integer not more thant ', MAXIMAL_HI&
-     &ST, ', it is set to ', maxhist, '.'
+     &ST, '; it is set to ', maxhist, '.'
       end if
 
       if (npt < n + 2 .or. npt > min(maxfun - 1, ((n + 2)*(n + 1))/2)) t&
@@ -82,8 +82,14 @@
      &ld be less than MAXFUN; it is set to ', npt, '.'
       end if
 
+! We the difference between ETA1 and ETA2 is tiny, we force them to equal.
+! See the explanation around RHOBEG and RHOEND for the reason.
+      if (abs(eta1 - eta2) < 1.0e2_RP*EPS*max(abs(eta1), ONE)) then
+          eta2 = eta1;
+      end if
+
       if (eta1 < ZERO .or. eta1 > ONE .or. is_nan(eta1)) then
-          eta1 = MAX(EPS, eta2/7.0_RP)
+          eta1 = max(EPS, eta2/7.0_RP)
           print '(/1X, 1A, 1PD15.6, 1A)', solver // ': invalid ETA1; it &
      &should be in the interval (0, 1); it is set to ', eta1, '.'
       end if
@@ -113,7 +119,7 @@
      &'
       end if
 
-      if ((rhobeg - rhoend) < 1.0e2_RP*EPS*max(abs(rhobeg), ONE))then
+      if (abs(rhobeg - rhoend) < 1.0e2_RP*EPS*max(abs(rhobeg), ONE))then
 ! When the data is passed from the interfaces (e.g., MEX) to the Fortran
 ! code, RHOBEG, and RHOEND may change a bit. It was oberved in a MATLAB
 ! test that MEX passed 1 to Fortran as 0.99999999999999978. Therefore,
@@ -124,13 +130,13 @@
       end if
 
       if (rhobeg <= ZERO .or. is_nan(rhobeg) .or. is_inf(rhobeg))then
-          rhobeg = max(TEN*RHOEND, RHOBEG_DFT)
+          rhobeg = max(TEN*rhoend, RHOBEG_DFT)
           print '(/1X, 1A, 1PD15.6, 1A)', solver // ': invalid RHOBEG; i&
      &t should be a positive number; it is set to ', rhobeg, '.'
       end if
 
-      if (rhoend < ZERO .or. rhobeg < rhoend .or. is_nan(rhoend) .or. is&
-     &_inf(rhoend)) then
+      if (rhoend <= ZERO .or. rhobeg < rhoend .or. is_nan(rhoend) .or. i&
+     &s_inf(rhoend)) then
           rhoend = max(EPS, min(TENTH*rhobeg, RHOEND_DFT))
           print '(/1X, 1A, 1PD15.6, 1A)', solver // ': invalid RHOEND; i&
      &t should be a positive number and RHOEND <= RHOBEG; ' // 'it is se&

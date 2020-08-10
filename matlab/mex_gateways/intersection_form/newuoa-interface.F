@@ -95,11 +95,11 @@
           call newuoa(calfun, x, f, nf, rhobeg, rhoend, ftarget, maxfun,&
      & npt, iprint, eta1, eta2, gamma1, gamma2, xhist = xhist, fhist = f&
      &hist, maxhist = maxxhist, info = info)
-      else if (maxxhist > 0 .and. maxfhist == 0) then
+      else if (maxxhist > 0 .and. maxfhist <= 0) then
           call newuoa(calfun, x, f, nf, rhobeg, rhoend, ftarget, maxfun,&
      & npt, iprint, eta1, eta2, gamma1, gamma2, xhist = xhist, maxhist =&
      & maxxhist, info = info)
-      else if (maxxhist == 0 .and. maxfhist > 0) then
+      else if (maxxhist <= 0 .and. maxfhist > 0) then
           call newuoa(calfun, x, f, nf, rhobeg, rhoend, ftarget, maxfun,&
      & npt, iprint, eta1, eta2, gamma1, gamma2, fhist = fhist, maxhist =&
      & maxfhist, info = info)
