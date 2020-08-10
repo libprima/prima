@@ -105,8 +105,8 @@ call fmxWriteMPtr(x, poutput(1))
 call fmxWriteMPtr(f, poutput(2))
 call fmxWriteMPtr(info, poutput(3))
 call fmxWriteMPtr(nf, poutput(4))
-call fmxWriteMPtr(xhist, poutput(5))
-call fmxWriteMPtr(fhist, poutput(6), 'row')
+call fmxWriteMPtr(xhist(:, 1 : min(nf, maxxhist)), poutput(5))
+call fmxWriteMPtr(fhist(1 : min(nf, maxfhist)), poutput(6), 'row')
 
 ! Free memory
 ! X was allocated by fmxReadMPtr.
