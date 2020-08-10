@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 09-Aug-2020.
+! on 10-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -222,7 +222,6 @@
 
 ! Update global variables
       nf = nf + int(1, kind(nf))
-      print *, nf
 
       maxxhist = int(size(xhist, 2), kind(maxxhist))
       if (maxxhist >= 1) then

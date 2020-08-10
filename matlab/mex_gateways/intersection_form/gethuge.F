@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 09-Aug-2020.
+! on 10-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -149,6 +149,8 @@
       end if
 
 ! Write output.
+! Do NOT use fmxWriteMPtr; when DP /= RP, there is no proper
+! implementation of fmxWriteMPtr available in FMXAPI_MOD.
       poutput(1) = mxCreateDoubleScalar(hugeValue)
 
       return

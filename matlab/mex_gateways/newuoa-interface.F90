@@ -77,16 +77,17 @@ call fmxReadMPtr(pinput(14), iprint)
 
 ! Call the Fortran code.
 if (maxxhist > 0 .and. maxfhist > 0) then
-    call newuoa(calfun, x, f, nf, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, npt, maxfun, iprint, info, &
-        & xhist, fhist, maxxhist)
+    call newuoa(calfun, x, f, nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, &
+        & eta1, eta2, gamma1, gamma2, xhist = xhist, fhist = fhist, maxhist = maxxhist, info = info)
 else if (maxxhist > 0 .and. maxfhist == 0) then
-    call newuoa(calfun, x, f, nf, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, npt, maxfun, iprint, info, &
-        & xhist = xhist, maxhist = maxxhist)
+    call newuoa(calfun, x, f, nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, &
+        & eta1, eta2, gamma1, gamma2, xhist = xhist, maxhist = maxxhist, info = info)
 else if (maxxhist == 0 .and. maxfhist > 0) then
-    call newuoa(calfun, x, f, nf, rhobeg, rhoend, eta1, eta2,gamma1, gamma2, ftarget, npt, maxfun, iprint, info, &
-        & fhist = fhist, maxhist = maxfhist)
+    call newuoa(calfun, x, f, nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, &
+        & eta1, eta2, gamma1, gamma2, fhist = fhist, maxhist = maxfhist, info = info)
 else
-    call newuoa(calfun, x, f, nf, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, npt, maxfun, iprint, info)
+    call newuoa(calfun, x, f, nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, &
+        & eta1, eta2, gamma1, gamma2, info = info)
 end if
 
 ! After the Fortran code, XHIST or FHIST may not be allocated, because 

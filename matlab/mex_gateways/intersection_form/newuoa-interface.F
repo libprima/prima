@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 09-Aug-2020.
+! on 10-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -92,20 +92,20 @@
 
 ! Call the Fortran code.
       if (maxxhist > 0 .and. maxfhist > 0) then
-          call newuoa(calfun, x, f, nf, rhobeg, rhoend, eta1, eta2, gamm&
-     &a1, gamma2, ftarget, npt, maxfun, iprint, info, xhist, fhist, maxx&
-     &hist)
+          call newuoa(calfun, x, f, nf, rhobeg, rhoend, ftarget, maxfun,&
+     & npt, iprint, eta1, eta2, gamma1, gamma2, xhist = xhist, fhist = f&
+     &hist, maxhist = maxxhist, info = info)
       else if (maxxhist > 0 .and. maxfhist == 0) then
-          call newuoa(calfun, x, f, nf, rhobeg, rhoend, eta1, eta2, gamm&
-     &a1, gamma2, ftarget, npt, maxfun, iprint, info, xhist = xhist, max&
-     &hist = maxxhist)
+          call newuoa(calfun, x, f, nf, rhobeg, rhoend, ftarget, maxfun,&
+     & npt, iprint, eta1, eta2, gamma1, gamma2, xhist = xhist, maxhist =&
+     & maxxhist, info = info)
       else if (maxxhist == 0 .and. maxfhist > 0) then
-          call newuoa(calfun, x, f, nf, rhobeg, rhoend, eta1, eta2,gamma&
-     &1, gamma2, ftarget, npt, maxfun, iprint, info, fhist = fhist, maxh&
-     &ist = maxfhist)
+          call newuoa(calfun, x, f, nf, rhobeg, rhoend, ftarget, maxfun,&
+     & npt, iprint, eta1, eta2, gamma1, gamma2, fhist = fhist, maxhist =&
+     & maxfhist, info = info)
       else
-          call newuoa(calfun, x, f, nf, rhobeg, rhoend, eta1, eta2, gamm&
-     &a1, gamma2, ftarget, npt, maxfun, iprint, info)
+          call newuoa(calfun, x, f, nf, rhobeg, rhoend, ftarget, maxfun,&
+     & npt, iprint, eta1, eta2, gamma1, gamma2, info = info)
       end if
 
 ! After the Fortran code, XHIST or FHIST may not be allocated, because
