@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 10-Aug-2020.
+! on 11-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -47,7 +47,7 @@
       public :: SRNLEN, MSSGLEN
       public :: OUTUNIT
       public :: RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT
-      public :: MAXIMAL_HIST
+      public :: MAXFUN_DIM_DFT, MAXIMAL_HIST
 
 #if __DEBUGGING__ == 1
       logical, parameter :: DEBUGGING = .true.
@@ -129,6 +129,7 @@
       real(RP), parameter :: RHOEND_DFT = 1.0E-6_RP
       real(RP), parameter :: FTARGET_DFT = -HUGENUM
       integer(IK), parameter :: IPRINT_DFT = 1
+      integer(IK), parameter :: MAXFUN_DIM_DFT = 500
 
 ! Maximal amount of history that XHIST, FHIST, CHIST can return
 #if __INTEGER_KIND__ <= 16
