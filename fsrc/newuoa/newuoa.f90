@@ -39,7 +39,7 @@ subroutine newuoa(calfun, x, f, &
 !
 ! or
 !
-! call newuoa(calfun, x, f, rhobeg = 5.0_RP, rhoend = 1.0_RP, maxfun = 100_IK)
+! call newuoa(calfun, x, f, rhobeg = 0.5_RP, rhoend = 1.0E-3_RP, maxfun = 100_IK)
 !
 ! N.B.: RP and IK are defined in the module CONSTS_MOD. See consts.F90
 ! under the directory name "common". By default, RP = kind(0.0D0) and
@@ -336,7 +336,7 @@ end if
 if (present(xhist)) then
     call safealloc(xhist, n, min(nf, maxxhist))
     xhist = xhist_c(:, 1 : min(nf, maxxhist))
-    ! When MAXXHIST > NF, which the normal case in practice, XHIST_C
+    ! When MAXXHIST > NF, which is the normal case in practice, XHIST_C
     ! contains GARBAGE in XHIST_C(:, NF + 1 : MAXXHIST). Note that users
     ! do not know the value of NF if they do not output it. Therefore, we
     ! We MUST cap XHIST at min(NF, MAXXHIST) to ensure that XHIST cointains
