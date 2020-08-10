@@ -124,6 +124,8 @@ else
 end if
 
 ! Write output.
+! Do NOT use fmxWriteMPtr; when DP /= RP, there is no proper 
+! implementation of fmxWriteMPtr available in FMXAPI_MOD.
 poutput(1) = mxCreateDoubleScalar(hugeValue)
 
 return
