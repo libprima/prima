@@ -440,7 +440,7 @@ end
 % Record the retrun message in output.message according to exitflag 
 switch exitflag % If prepdfo works properly, then 5, 6, 10, 11, 12 should never happen
 case 0
-    output.message = sprintf('Return from %s because the lower bound for the trust region radius is reached.', solver);
+    output.message = sprintf('Return from %s because the trust region radius reaches its lower bound.', solver);
 case 1
     output.message = sprintf('Return from %s because the target function value is achieved.', solver);
 case 2

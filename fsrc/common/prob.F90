@@ -11,7 +11,6 @@ module prob_mod
 
 implicit none
 private
-
 public :: FUNEVAL, FCEVAL 
 
 abstract interface 

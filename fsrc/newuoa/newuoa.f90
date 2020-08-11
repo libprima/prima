@@ -345,23 +345,25 @@ end if
 ! allocated (if unallocated) or reallocated (if the shape is different).
 ! In that case, the lines of SAFEALLOC in the following can be removed.
 if (present(xhist)) then
-    call safealloc(xhist, n, min(nf, maxxhist))
-    xhist = xhist_c(:, 1 : min(nf, maxxhist))
-    ! When MAXXHIST > NF, which is the normal case in practice, XHIST_C
-    ! contains GARBAGE in XHIST_C(:, NF + 1 : MAXXHIST). Note that users
-    ! do not know the value of NF if they do not output it. Therefore, we
-    ! We MUST cap XHIST at min(NF, MAXXHIST) to ensure that XHIST cointains
-    ! only valid history. Otherwise, without knowing NF, they cannot tell
-    ! history from garbage!!!
+    call safealloc(xhist, n, min(nf_c, maxxhist))
+    xhist = xhist_c(:, 1 : min(nf_c, maxxhist))
+    ! N.B.: 
+    ! 1. NF may not be present. Hence we should NOT use NF but NF_C.
+    ! 2. When MAXXHIST > NF_C, which is the normal case in practice, 
+    ! XHIST_C contains GARBAGE in XHIST_C(:, NF_C + 1 : MAXXHIST). Note 
+    ! that users do not know the value of NF_C if they do not output it.
+    ! Therefore, we MUST cap XHIST at min(NF_C, MAXXHIST) so that XHIST 
+    ! cointains only valid history. Otherwise, without knowing NF_C, 
+    ! they cannot tell history from garbage!!!
     ! For this reason, there is no way to avoid allocating two copies of
     ! memory for XHIST unless we declare it to be a POINTER instead of
     ! ALLOCATABLE.
 end if
 deallocate(xhist_c)
 if (present(fhist)) then
-    call safealloc(fhist, min(nf, maxfhist))
-    fhist = fhist_c(1 : min(nf, maxfhist))  
-    ! The same as XHIST, we must cap FHIST at min(NF, MAXFHIST).
+    call safealloc(fhist, min(nf_c, maxfhist))
+    fhist = fhist_c(1 : min(nf_c, maxfhist))  
+    ! The same as XHIST, we must cap FHIST at min(NF_C, MAXFHIST).
 end if
 deallocate(fhist_c)
 

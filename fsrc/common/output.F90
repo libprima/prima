@@ -44,7 +44,7 @@ if (info == FTARGET_ACHIEVED) then
 else if (info == MAXFUN_REACHED) then
     mssg = 'the objective function has been evaluated MAXFUN times.'
 else if (info == SMALL_TR_RADIUS) then
-    mssg = 'the lower bound for the trust region radius is reached.'
+    mssg = 'the trust region radius reaches its lower bound.'
 else if (info == TRSUBP_FAILED) then
     mssg = 'a trust region step has failed to reduce the quadratic model.'
 else if (info == NAN_X) then
@@ -56,10 +56,12 @@ else if (info == NAN_MODEL) then
 end if
 
 if (iprint >= 1) then
+    if (iprint >= 3) then
+        print '(1X)'
+    end if
     print '(/1X, 4A)', 'Return from ', solver, ' because ', trim(mssg)
-    print '(1X, 1A, I7)', 'Number of function evaluations = ', nf
-    print '(1X, 1A, 1PD23.15)', 'Least function value = ', f
-    print '(1X, 1A, /(1X, 1P, 5D15.6))', 'The corresponding X is', x
+    print '(1X, 1A, 6X, 1A, I7)', 'At the return from ' // solver, 'Number of function evaluations = ', nf
+    print '(1X, 1A, 1PD23.15, 6X, 1A, /(1X, 1P, 5D15.6))', 'Least function value = ', f, 'The corresponding X is:', x
 end if
 
 if (iprint >= 4) then
@@ -74,10 +76,9 @@ if (iprint >= 4) then
     if (ios /= 0) then
         print '(1X, 1A)', 'Fail to open file ' // fout // '!'
     else
-        write(OUTUNIT, '(/1X, 4A)') 'Return from ', solver, ' because ', trim(mssg)
-        write(OUTUNIT, '(1X, 1A, I7)') 'Number of function evaluations = ', nf
-        write(OUTUNIT, '(1X, 1A, 1PD23.15)') 'Least function value = ', f
-        write(OUTUNIT, '(1X, 1A, /(1X, 1P, 5D15.6))') 'The corresponding X is', x
+        write(OUTUNIT, '(//1X, 4A)') 'Return from ', solver, ' because ', trim(mssg)
+        write(OUTUNIT, '(1X, 1A, 6X, 1A, I7)') 'At the return from ' // solver, 'Number of function evaluations = ', nf
+        write(OUTUNIT, '(1X, 1A, 1PD23.15, 6X, 1A, /(1X, 1P, 5D15.6))') 'Least function value = ', f, 'The corresponding X is:', x
         close(OUTUNIT)     
     end if
 end if
@@ -105,10 +106,11 @@ logical :: fexist
 
 
 if (iprint >= 2) then
-    print '(/1X, 1A, 1PD11.4)', 'New RHO = ', rho
-    print '(1X, 1A, I7)', 'Number of function evaluations = ', nf
-    print '(1X, 1A, 1PD23.15)', 'Least function value = ', f
-    print '(1X, 1A, /(1X, 1P, 5D15.6))', 'The corresponding X is', x
+    if (iprint >= 3) then
+        print '(1X)'
+    end if
+    print '(/1X, 1A, 1PD11.4, 6X, A, I7)', 'New RHO = ', rho, 'Number of function evaluations = ', nf
+    print '(1X, 1A, 1PD23.15, 6X, 1A, /(1X, 1P, 5D15.6))', 'Least function value = ', f, 'The corresponding X is:', x
 end if
 
 if (iprint >= 4) then
@@ -123,10 +125,8 @@ if (iprint >= 4) then
     if (ios /= 0) then
         print '(1X, 1A)', 'Fail to open file ' // fout // '!'
     else
-        write(OUTUNIT, '(/1X, 1A, 1PD11.4)') 'New RHO = ', rho
-        write(OUTUNIT, '(1X, 1A, I7)') 'Number of function evaluations = ', nf
-        write(OUTUNIT, '(1X, 1A, 1PD23.15)') 'Least function value = ', f
-        write(OUTUNIT, '(1X, 1A, /(1X, 1P, 5D15.6))') 'The corresponding X is', x
+        write(OUTUNIT, '(//1X, 1A, 1PD11.4, 6X, A, I7)') 'New RHO = ', rho, 'Number of function evaluations = ', nf
+        write(OUTUNIT, '(1X, 1A, 1PD23.15, 6X, 1A, /(1X, 1P, 5D15.6))') 'Least function value = ', f, 'The corresponding X is:', x
         close(OUTUNIT)     
     end if
 end if
@@ -151,11 +151,11 @@ character(len = 100) :: fout
 character(len = 3) :: fstat
 logical :: fexist
 
+ !Function number     4    F =  1.1853827160D-01    The corresponding X is:
 
 if (iprint >= 3) then
-   print '(/1X, 1A, I7)', 'Function number', nf
-   print '(1X, 1A, 1PD23.15)', 'Function value = ', f
-   print '(1X, 1A, /(1X, 1P, 5D15.6))', 'The corresponding X is:', x
+   print '(/1X, 1A, I7, 4X, 1A, 1PD18.10, 4X, 1A, /(1X, 1P, 5D15.6))', 'Function number', nf, &
+       & 'F = ', f, 'The corresponding X is:', x
 end if
 
 if (iprint >= 4) then
@@ -170,9 +170,8 @@ if (iprint >= 4) then
     if (ios /= 0) then
         print '(1X, 1A)', 'Fail to open file ' // fout // '!'
     else
-        write(OUTUNIT, '(/1X, 1A, I7)') 'Function number', nf
-        write(OUTUNIT, '(1X, 1A, 1PD23.15)') 'Function value = ', f
-        write(OUTUNIT, '(1X, 1A, /(1X, 1P, 5D15.6))') 'The corresponding X is:', x
+        write(OUTUNIT, '(/1X, 1A, I7, 4X, 1A, 1PD18.10, 4X, 1A, /(1X, 1P, 5D15.6))') 'Function number', nf, &
+            & 'F = ', f, 'The corresponding X is:', x
         close(OUTUNIT)     
     end if
 end if

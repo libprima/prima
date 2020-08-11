@@ -4,7 +4,7 @@ C     with NPT = 2N+1.
 C
       IMPLICIT REAL*8 (A-H,O-Z)
       DIMENSION X(10),W(10000)
-      IPRINT=2
+      IPRINT=3
       MAXFUN=5000
       RHOEND=1.0D-6
       DO 30 N=2,8,2
