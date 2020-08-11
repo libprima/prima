@@ -43,12 +43,12 @@
       use output_mod, only : fmssg
 
 ! Solver-specific module
-      use prob_mod, only : funeval
+      use prob_mod, only : FUNEVAL
 
       implicit none
 
 ! Inputs
-      procedure(funeval) :: calfun
+      procedure(FUNEVAL) :: calfun
       integer(IK), intent(in) :: iprint
       real(RP), intent(in) :: x(:) ! X(N)
       real(RP), intent(in) :: rhobeg
@@ -247,7 +247,7 @@
           xtemp = xpt(:, k) + xbase
           if (any(is_nan(xtemp))) then
               f = sum(xtemp) ! Set F to NaN. It is necessary.
-              info = NaN_X
+              info = NAN_X
               exit
           end if
           call calfun(xtemp, f)

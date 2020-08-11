@@ -248,7 +248,6 @@ else
     maxhist = maxfun;
     output_xhist = true;
     output_fhist = true;
-    display('TESTING HIST')
     maxhist = floor(rand*20)
     output_xhist = mod(floor(rand*10), 2)
     output_fhist = mod(floor(rand*10), 2)

@@ -33,8 +33,8 @@
       module consts_mod
 
 #if __FORTRAN_STANDARD__ >= 2008
-      use iso_fortran_env, only : INT16, INT32, INT64, REAL32, REAL64, R&
-     &EAL128
+      use intrinsic :: iso_fortran_env, only : INT16, INT32, INT64, REAL&
+     &32, REAL64, REAL128
 #endif
 
       implicit none

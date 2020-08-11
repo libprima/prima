@@ -1,10 +1,11 @@
 #GFORT=gfortran -c -g -Wall -Wextra -Wconversion -Warray-temporaries -fimplicit-none -fbacktrace -ffree-line-length-0 -fcheck=all -ffpe-trap=invalid,zero,overflow,underflow -finit-real=nan
 GFORT=gfortran -c -g -Wall -Wextra -Wconversion -Wuninitialized -Wmaybe-uninitialized -fimplicit-none -fbacktrace -ffree-line-length-0 -fcheck=all -ffpe-trap=invalid,zero,overflow,underflow 
-IFORT=ifort -c -g -warn all -check all  -fpe0 -debug extended -fimplicit-none
+IFORT=ifort -c -g -warn all -check all  -fpe0 -debug extended -fimplicit-none #-names as_is
 G95=g95 -c -g -Wall -Wextra -fbounds-check -fimplicit-none 
-NFORT=nagfor -c -g
-PFORT=pgfortran -c -g
+NFORT=nagfor -c -g -Warn=allocation -Warn=constant_coindexing -Warn=reallocation -Warn=subnormal -colour=error:red,warn:magenta,info:blue
+PFORT=pgfortran -c -g 
 ABSOFT=af95 -c -g -m1 -en
+SFORT=sunf95 -c -g -w3 -u -ansi -U
 
 CURRENTDIR=$(PWD)
 INTERFORMDIR=../intersection_form/newuoa/
@@ -22,8 +23,8 @@ MFILES= ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F
 FSTD=2003
 FS=f03
 
-verify: gverify iverify 9verify nverify pverify averify
-verifym: gverifym iverifym 9verifym nverifym pverifym averifym
+verify: gverify iverify 9verify nverify pverify averify sverify
+verifym: gverifym iverifym 9verifym nverifym pverifym averifym sverifym
 
 gverify:
 	$(GFORT)  $(FILES) -std=f$(FSTD) -pedantic -ffree-form
@@ -42,6 +43,9 @@ pverify:
 
 averify:
 	$(ABSOFT) $(FILES) -f free
+
+sverify:
+	$(SFORT) $(FILES) -free
 
 
 gverifym:
@@ -67,6 +71,10 @@ pverifym:
 averifym:
 	$(ABSOFT) $(M90FILES) -f free
 	cd $(INTERFORMDIR) && $(ABSOFT)  $(MFILES) -f fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+
+sverifym:
+	$(SFORT) $(M90FILES) -free
+	cd $(INTERFORMDIR) && $(SFORT)  $(MFILES) -fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 clean:
 	rm -f *.o *.mod a.out *__genmod.f90

@@ -30,7 +30,7 @@
      &PS
       use consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT&
      &_DFT, MAXIMAL_HIST
-      use infnan_mod, only : is_nan, is_inf
+      use infnan_mod, only : is_nan, is_inf, is_finite
 
       implicit none
 
@@ -62,7 +62,7 @@
       end if
 
       if (maxfun < n + 3) then
-          maxfun = int(n + 3, kind(n))
+          maxfun = int(n + 3, kind(maxfun))
           print '(/1X, 1A, I6, 1A)', solver // ': invalid MAXFUN; it sho&
      &uld an integer at least N + 3 ; it is set to ', maxfun, '.'
       end if
@@ -73,6 +73,8 @@
      &T; it should be a nonnegative integer not more thant ', MAXIMAL_HI&
      &ST, '; it is set to ', maxhist, '.'
       end if
+! MAXHIST > MAXFUN is never desirable.
+      maxhist = min(maxhist, maxfun)
 
       if (npt < n + 2 .or. npt > min(maxfun - 1, ((n + 2)*(n + 1))/2)) t&
      &hen
@@ -82,19 +84,24 @@
      &ld be less than MAXFUN; it is set to ', npt, '.'
       end if
 
-! We the difference between ETA1 and ETA2 is tiny, we force them to equal.
+! When the difference between ETA1 and ETA2 is tiny, we force them to equal.
 ! See the explanation around RHOBEG and RHOEND for the reason.
       if (abs(eta1 - eta2) < 1.0e2_RP*EPS*max(abs(eta1), ONE)) then
-          eta2 = eta1;
+          eta2 = eta1
       end if
 
       if (eta1 < ZERO .or. eta1 > ONE .or. is_nan(eta1)) then
-          eta1 = max(EPS, eta2/7.0_RP)
+! Take ETA1 into account if it has a valid value.
+          if (eta2 > ZERO .and. eta2 < ONE) then
+              eta1 = max(EPS, eta2/7.0_RP)
+          else
+              eta1 = TENTH
+          end if
           print '(/1X, 1A, 1PD15.6, 1A)', solver // ': invalid ETA1; it &
      &should be in the interval (0, 1); it is set to ', eta1, '.'
       end if
 
-      if (eta2 < eta1 .or. eta2 > ONE .or. is_nan(eta2)) then
+      if (eta2 < eta1 .or. eta2 >= ONE .or. is_nan(eta2)) then
           eta2 = (eta1 + TWO)/3.0_RP
           print '(/1X, 1A, 1PD15.6, 1A)', solver // ': invalid ETA2; it &
      &should in the intercal [ETA1, 1); it is set to ', eta2, '.'
@@ -130,7 +137,12 @@
       end if
 
       if (rhobeg <= ZERO .or. is_nan(rhobeg) .or. is_inf(rhobeg))then
-          rhobeg = max(TEN*rhoend, RHOBEG_DFT)
+! Take RHOEND into account if it has a valid value.
+          if (is_finite(rhoend) .and. rhoend > ZERO) then
+              rhobeg = max(TEN*rhoend, RHOBEG_DFT)
+          else
+              rhobeg = RHOBEG_DFT
+          end if
           print '(/1X, 1A, 1PD15.6, 1A)', solver // ': invalid RHOBEG; i&
      &t should be a positive number; it is set to ', rhobeg, '.'
       end if

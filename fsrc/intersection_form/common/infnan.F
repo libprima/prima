@@ -30,8 +30,8 @@
       module infnan_mod
 
 #if __USE_IEEE_ARITHMETIC__ != 0
-      use ieee_arithmetic, only : is_nan => ieee_is_nan, is_finite => ie&
-     &ee_is_finite
+      use, intrinsic :: ieee_arithmetic, only : is_nan => ieee_is_nan, i&
+     &s_finite => ieee_is_finite
 #endif
 
       implicit none

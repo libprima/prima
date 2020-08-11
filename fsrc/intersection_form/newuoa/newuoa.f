@@ -54,7 +54,7 @@
 !
 ! or
 !
-! call newuoa(calfun, x, f, rhobeg = 5.0_RP, rhoend = 1.0_RP, maxfun = 100_IK)
+! call newuoa(calfun, x, f, rhobeg = 0.5_RP, rhoend = 1.0E-3_RP, maxfun = 100_IK)
 !
 ! N.B.: RP and IK are defined in the module CONSTS_MOD. See consts.F90
 ! under the directory name "common". By default, RP = kind(0.0D0) and
@@ -165,7 +165,7 @@
      &PS
       use consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT&
      &_DFT, MAXIMAL_HIST, MAXFUN_DIM_DFT
-      use infnan_mod, only : is_nan, is_inf
+      use infnan_mod, only : is_nan, is_inf, is_finite
       use memory_mod, only : safealloc
 
 ! Solver-specific module
@@ -227,15 +227,26 @@
 ! Read the inputs.
 
 ! If RHOBEG is present, then RHOBEG_C is a copy of RHOBEG (_C for "copy");
-! otherwise, RHOBEG_C takes the default value for RHOBEG, taking the
-! possibly present RHOEND into account. The other inputs are read in a
-! similar way.
+! otherwise, RHOBEG_C takes the default value for RHOBEG, taking the value
+! of RHOEND into account. Note that RHOEND is considered only if it is
+! present and it is VALID (i.e., finite and positive). The other inputs
+! are read in a similar way.
       if (present(rhobeg)) then
           rhobeg_c = rhobeg
       else if (present(rhoend)) then
-           rhobeg_c = max(TEN*rhoend, RHOBEG_DFT)
+! Fortran does not take short-circuit evalation of logic expressions.
+! Thus it is WRONG to combine the evalation of PRESENT(RHOEND) and the
+! evalation of IS_FINITE(RHOEND) as
+! "if (present(rhoend) .and. is_finite(rhoend))".
+! The compiler may choose the evaluate the IS_FINITE(RHOEND) even if
+! PRESENT(RHOEND) is false!
+          if (is_finite(rhoend) .and. rhoend > ZERO) then
+              rhobeg_c = max(TEN*rhoend, RHOBEG_DFT)
+          else
+              rhobeg_c = RHOBEG_DFT
+          end if
       else
-           rhobeg_c = RHOBEG_DFT
+          rhobeg_c = RHOBEG_DFT
       end if
 
       if (present(rhoend)) then
@@ -261,7 +272,8 @@
       if (present(npt)) then
           npt_c = npt
       else if (maxfun_c >= 1) then
-          npt_c = int(max(n + 2, min(maxfun_c - 1, 2*n + 1)), kind(npt))
+          npt_c = int(max(n + 2, min(maxfun_c - 1, 2*n + 1)), kind(npt_c&
+     &))
       else
           npt_c = int(2*n + 1, kind(npt_c))
       end if
@@ -355,7 +367,7 @@
       if (present(xhist)) then
           call safealloc(xhist, n, min(nf, maxxhist))
           xhist = xhist_c(:, 1 : min(nf, maxxhist))
-! When MAXXHIST > NF, which the normal case in practice, XHIST_C
+! When MAXXHIST > NF, which is the normal case in practice, XHIST_C
 ! contains GARBAGE in XHIST_C(:, NF + 1 : MAXXHIST). Note that users
 ! do not know the value of NF if they do not output it. Therefore, we
 ! We MUST cap XHIST at min(NF, MAXXHIST) to ensure that XHIST cointains
