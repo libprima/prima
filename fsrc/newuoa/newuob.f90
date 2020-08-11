@@ -52,7 +52,7 @@ use output_mod, only : retmssg, rhomssg, fmssg
 use lina_mod, only : calquad, inprod
 
 ! Solver-specific modules
-use prob_mod, only : funeval
+use prob_mod, only : FUNEVAL
 use initialize_mod, only : initxf, initq, inith
 use trustregion_mod, only : trsapp, trrad
 use geometry_mod, only : setremove, ameliorgeo
@@ -63,7 +63,7 @@ use update_mod, only : updateh, updateq, tryqalt
 implicit none
 
 ! Inputs
-procedure(funeval) :: calfun
+procedure(FUNEVAL) :: calfun
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
 integer(IK), intent(in) :: npt

@@ -169,7 +169,7 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 #undef __USE_IEEE_ARITHMETIC__
 #endif
 /* IEEE_ARITHMETIC is available starting from Fortran 2003. */
-#define __USE_IEEE_ARITHMETIC__ 1 
+#define __USE_IEEE_ARITHMETIC__ 1
 
 /* As of gfortran 5.5, it seems that the IEEE_ARITHMETIC of gfortran does 
  * not support REAL128. */
@@ -183,6 +183,14 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 /* The code concerning IEEE_ARITHMETIC does not work well with g95. Not
  * clear why. */
 #if defined __G95__
+#undef __USE_IEEE_ARITHMETIC__
+#define __USE_IEEE_ARITHMETIC__ 0  
+#endif
+
+/* The code concerning IEEE_ARITHMETIC does not work well with Oracle 
+ * Developer Studio 12.6. Not clear why. */
+
+#if defined __SUNPRO_F90 || defined __SUNPRO_F95
 #undef __USE_IEEE_ARITHMETIC__
 #define __USE_IEEE_ARITHMETIC__ 0  
 #endif

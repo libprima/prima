@@ -150,7 +150,6 @@ subroutine calfun(n, x, funval)
 
 ! Generic modules
 use consts_mod, only : INT32, MSSGLEN
-use infnan_mod, only : is_nan
 use fmxapi_mod, only : mxGetM, mxGetN, mxIsDouble
 use fmxapi_mod, only : mxDestroyArray
 use fmxapi_mod, only : mexErrMsgIdAndTxt

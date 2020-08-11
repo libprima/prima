@@ -185,7 +185,7 @@ if (jl == 1) then
     !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
     ! This is the corrected version. It copies precisely the
     ! corresponding part of the LINCOA code.
-    if (denom < zero) then
+    if (denom < ZERO) then
         if (idz == 1) then
         ! This is the first place (out of two) where IDZ is
         ! increased. Note that IDZ = 2 <= NPT-N after the update.

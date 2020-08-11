@@ -18,7 +18,7 @@
 module consts_mod 
 
 #if __FORTRAN_STANDARD__ >= 2008
-use iso_fortran_env, only : INT16, INT32, INT64, REAL32, REAL64, REAL128
+use intrinsic :: iso_fortran_env, only : INT16, INT32, INT64, REAL32, REAL64, REAL128
 #endif
 
 implicit none
@@ -123,3 +123,4 @@ integer(IK), parameter :: MAXIMAL_HIST = 100000
 
 
 end module consts_mod 
+
