@@ -202,23 +202,27 @@ end
 % Extract the options
 rhobeg = options.rhobeg;
 rhoend = options.rhoend;
-%eta1 = options.eta1;
-%eta2 = options.eta2;
-%gamma1 = options.gamma1;
-%gamma2 = options.gamma2;
+eta1 = options.eta1;
+eta2 = options.eta2;
+gamma1 = options.gamma1;
+gamma2 = options.gamma2;
 ftarget = options.ftarget;
-maxfun = options.maxfun;
-%maxfhist = options.maxfhist;
-%maxxhist = options.maxxhist;
 npt = options.npt;
-%iprint = options.iprint;
-% Here are the values of eta1, eta2, gamma1, gamma2, and iprint used in Powell's
-% code. They should be included in options later. Also the maxf/xhist below.
-eta1 = 0.1;
-eta2 = 0.7;
-gamma1 = 0.5;
-gamma2 = 2;
-iprint = 0;
+iprint = options.iprint;
+maxfun = options.maxfun;
+maxhist = options.maxhist;
+output_xhist = options.output_xhist;
+output_fhist = options.output_fhist;
+if output_xhist
+    maxxhist = maxhist;
+else
+    maxxhist = 0;
+end 
+if output_fhist
+    maxfhist = maxhist;
+else
+    maxfhist = 0;
+end
 
 if ~strcmp(invoker, 'pdfon') && probinfo.feasibility_problem
     % An "unconstrained feasibility problem" is rediculous, yet nothing wrong mathematically.
@@ -238,27 +242,13 @@ else
     if maxfun > maxint
         % maxfun would suffer from overflow in the Fortran code 
         maxfun = maxint;
+        maxxhist = min(maxfun, maxxhist); 
+        maxfhist = min(maxfun, maxfhist); 
         wid = sprintf('%s:MaxfunTooLarge', funname);
         wmessage = sprintf('%s: maxfun exceeds the upper limit of Fortran integers; it is set to %d.', funname, maxfun);
         warning(wid, '%s', wmessage);
         output.warnings = [output.warnings, wmessage];
     end
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Should be included into the options later.
-    maxhist = maxfun;
-    output_xhist = true;
-    output_fhist = true;
-    if output_xhist
-        maxxhist = maxhist;
-    else
-        maxxhist = 0;
-    end
-    if output_fhist
-        maxfhist = maxhist;
-    else
-        maxfhist = 0;
-    end
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     try
     % Call the Fortran code

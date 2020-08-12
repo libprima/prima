@@ -212,7 +212,7 @@ if ~prob_solv_match(probinfo.refined_type, invoker)
     end
 end
 
-% Validate and preprocess options, adopt default options if needed.
+% Validate and preprocess options, adopting default options if needed.
 % This should be done after reducing the problem, because BOBYQA
 % requires rhobeg <= min(ub-lb)/2.
 % user_options_fields is a cell array that contains the names of all the 
@@ -802,9 +802,15 @@ classical = false; % Call the classical Powell code? Classical mode recommended 
 scale = false; % Scale the problem according to bounds? Scale only if the bounds reflect well the scale of the problem
 scale = (scale && max(ub-lb)<inf); % ! NEVER remove this ! Scale only if all variables are with finite lower and upper bounds
 honour_x0 = false; % Respect the user-defined x0? Needed by BOBYQA
+iprint = 0;
 quiet = true;
 debugflag = false; % Do not use 'debug' as the name, which is a MATLAB function
 chkfunval = false;
+
+maxhist = maxfun;
+output_xhist = false; %!!!
+output_fhist = true;
+output_nlchist = false; %!!!
 
 if ~(isa(options, 'struct') || isempty(options))
     % Public/normal error
@@ -879,7 +885,10 @@ options.solver = solver; % Record solver in options.solver; will be used in post
 % Check unknown fields according to solver
 % solver is '' if it has not been decided yet; in that case, we suppose (for
 % simplicity) that all possible fields are known.
-known_fields = {'maxfun', 'rhobeg', 'rhoend', 'ftarget', 'classical', 'quiet', 'debug', 'chkfunval', 'solver'};
+known_fields = {'iprint', 'maxfun', 'rhobeg', 'rhoend', 'ftarget', 'classical', 'quiet', 'debug', 'chkfunval', 'solver', 'maxhist', 'output_xhist', 'output_fhist'};
+if ~isfield(options, 'classical') || (islogicalscalar(options.classical) && ~options.classical)
+    known_fields = [known_fields, 'eta1', 'eta2', 'gamma1', 'gamma2'];
+end
 if isempty(solver) || any(strcmpi(solver, {'newuoan', 'bobyqan', 'lincoan'}))
     known_fields = [known_fields, 'npt'];
 end
@@ -888,6 +897,9 @@ if isempty(solver) || any(strcmpi(solver, {'bobyqan', 'lincoan', 'cobylan'}))
 end
 if isempty(solver) || strcmpi(solver, 'bobyqan') 
     known_fields = [known_fields, 'honour_x0'];
+end
+if isempty(solver) || strcmpi(solver, 'cobyla')
+    known_fields = [known_fields, 'output_nlchist'];
 end
 unknown_fields = setdiff(options_fields, known_fields);
 options = rmfield(options, unknown_fields);  % Remove the unknown fields
@@ -1171,8 +1183,11 @@ if ~validated % options.honour_x0 has not got a valid value yet
 end
 options.honour_x0 = logical(options.honour_x0);
 
-% Validate options.quiet
+% Validate options.quiet.
 validated = false;
+% Record user's instruction in the following two values; needed for iprint
+user_says_quiet = false;
+user_says_not_quiet = false;
 if isfield(options, 'quiet')
     if ~islogicalscalar(options.quiet)
         wid = sprintf('%s:InvalidQuietFlag', invoker);
@@ -1181,12 +1196,74 @@ if isfield(options, 'quiet')
         warnings = [warnings, wmessage]; 
     else
         validated = true;
+        if options.quiet
+            user_says_quiet = true;
+        else
+            user_says_not_quiet = true;
+        end
     end
 end
 if ~validated % options.quiet has not got a valid value yet
     options.quiet = quiet;
 end
 options.quiet = logical(options.quiet);
+
+% Validate options.iprint. 
+validated = false;
+if isfield(options, 'iprint')
+    if ~isintegerscalar(options.iprint) || (options.iprint ~= 0 && abs(options.iprint) ~= 1 && abs(options.iprint) ~=2 && abs(options.iprint) ~= 3)
+        wid = sprintf('%s:InvalidIprint', invoker);
+        wmessage = sprintf('%s: invalid iprint; it should be 0, 1, -1, 2, -2, 3, or -3; it is set to %d.', invoker, iprint);
+        warning(wid, '%s', wmessage);
+        warnings = [warnings, wmessage]; 
+    elseif options.iprint < 0 && options.classical
+        % iprint = -1, -2, or -3 is not is not supported in the classical 
+        % mode. We set iprint to 0 (if user_says_quiet) or -iprint.
+        wid = sprintf('%s:IprintContradictClassical', invoker);
+        if user_says_quiet
+            wmessage = sprintf('%s: iprint = %d is not supported by the classical mode; it is reset to 0.', invoker, options.iprint);
+            options.iprint = 0; 
+        else
+            wmessage = sprintf('%s: iprint = %d is not supported by the classical mode; it is reset to %d.', invoker, options.iprint, -options.iprint);
+            options.iprint = -options.iprint;
+        end
+        warning(wid, '%s', wmessage);
+        warnings = [warnings, wmessage]; 
+        validated = true;
+    elseif options.iprint > 0 && user_says_quiet
+        % The user says "quiet!" but still asks for information. Let's compromise.
+        wid = sprintf('%s:IprintContradictQuiet', invoker);
+        if options.classical
+            wmessage = sprintf('%s: iprint = %d but quiet = true; iprint is reset to 0.', invoker, options.iprint);
+            options.iprint = 0;
+        else
+            % In the non-classical mode, we set options.iprint = -options.iprint, 
+            % meaning that the output will not be displayed on standard output 
+            % but recorded in a text file SOLVER_output.txt, where SOLVER will
+            % be replaced by the solver name. 
+            wmessage = sprintf('%s: iprint = %d but quiet = true; the output will be printed to a text file.', invoker, options.iprint);
+            options.iprint = -options.iprint;
+        end
+        warning(wid, '%s', wmessage);
+        warnings = [warnings, wmessage]; 
+        validated = true;
+    elseif options.iprint == 0 && user_says_not_quiet
+        % The user says "don't be shy!" but sets options.iprint = 0. 
+        % We set options.iprint = 1. It seems that no warning is needed.
+        options.iprint = 1;
+        validated = true;
+    else
+        validated = true;
+    end
+end 
+if ~validated % options.iprint has not got a valid value yet
+    if user_says_quiet
+        % The user says "quiet!". Set options.iprint = 0 regarless of the default iprint.
+        options.iprint = 0;
+    else
+        options.iprint = iprint;
+    end
+end
 
 % Validate options.debug
 validated = false;
@@ -1247,6 +1324,149 @@ if options.chkfunval
     end
     warning(wid, '%s', wmessage);
     warnings = [warnings, wmessage]; 
+end
+
+% Validate options.maxhist
+validated = false;
+if isfield(options, 'maxhist')
+    if ~isintegerscalar(options.maxhist) || options.maxhist < 0
+        wid = sprintf('%s:InvalidMaxhist', invoker);
+        wmessage = sprintf('%s: invalid maxhist; it should be a nonnegative integer; it is set to maxfun.', invoker);
+        warning(wid, '%s', wmessage);
+        warnings = [warnings, wmessage]; 
+    else
+        validated = true;
+    end
+end 
+if ~validated  % options.maxhist has not got a valid value
+    options.maxhist = min(maxhist, options.maxfun);  % options.maxfun has been validated
+end
+
+% Validate options.output_xhist
+validated = false;
+if isfield(options, 'output_xhist')
+    if ~islogicalscalar(options.output_xhist)
+        wid = sprintf('%s:InvalidOutput_xhist', invoker);
+        wmessage = sprintf('%s: invalid output_xhist flag; it should be true(1) or false(0); it is set to %s.', invoker, mat2str(output_xhist));
+        warning(wid, '%s', wmessage);
+        warnings = [warnings, wmessage]; 
+    else
+        validated = true;
+    end
+end
+if ~validated
+    options.output_xhist = output_xhist;
+end
+
+% Validate options.output_fhist
+validated = false;
+if isfield(options, 'output_fhist')
+    if ~islogicalscalar(options.output_fhist)
+        wid = sprintf('%s:InvalidOutput_fhist', invoker);
+        wmessage = sprintf('%s: invalid output_fhist flag; it should be true(1) or false(0); it is set to %s.', invoker, mat2str(output_fhist));
+        warning(wid, '%s', wmessage);
+        warnings = [warnings, wmessage]; 
+    else
+        validated = true;
+    end
+end
+if ~validated
+    options.output_fhist = output_fhist;
+end
+
+% Validate options.output_nlchist
+validated = false;
+if isfield(options, 'output_nlchist')
+    if ~islogicalscalar(options.output_nlchist)
+        wid = sprintf('%s:InvalidOutput_nlchist', invoker);
+        wmessage = sprintf('%s: invalid output_nlchist flag; it should be true(1) or false(0); it is set to %s.', invoker, mat2str(output_nlchist));
+        warning(wid, '%s', wmessage);
+        warnings = [warnings, wmessage]; 
+    else
+        validated = true;
+    end
+end
+if ~validated
+    options.output_nlchist = output_nlchist;
+end
+
+% Validate options.eta1
+user_eta1_correct = false;  % Does the user provide a correct eta1? Needed when validating eta2.
+validated = false;
+if isfield(options, 'eta1')
+    if ~isrealscalar(options.eta1) || options.eta1 < 0 || options.eta1 >= 1 
+        wid = sprintf('%s:InvalidEta1', invoker);
+        if isfield(options, 'eta2') && isrealscalar(options.eta2) && options.eta2 > 0 && options.eta2 <= 1
+        % The user provides a correct eta2; we define eta1 as follows.
+            options.eta1 = max(eps, options.eta2/7);
+            wmessage = sprintf('%s: invalid eta1; it should be in the interval [0, 1) and not more than eta2; it is set to %f.', invoker, options.eta1);
+            validated = true;
+        else
+        % The user does not provide a correct eta2; we take the default eta1 hard coded in Powell's code.
+            wmessage = sprintf('%s: invalid eta1; it should be in the interval [0, 1) and not more than eta2; it will be set to the default value.', invoker);
+        end
+        warning(wid, '%s', wmessage);
+        warnings = [warnings, wmessage]; 
+    else
+        user_eta1_correct = true;
+        validated = true;
+    end
+end
+if ~validated
+    options.eta1 = NaN;  % NaN means that Fortran will take the hard-coded default value.
+end
+
+validated = false;
+if isfield(options, 'eta2')
+    if ~isrealscalar(options.eta2) || (isnan(options.eta1) && options.eta2 < 0) || options.eta2 < options.eta1 || options.eta2 > 1
+        wid = sprintf('%s:InvalidEta2', invoker);
+        if user_eta1_correct
+        % The user provides a correct eta1; we define eta2 as follows.
+            options.eta2 = (options.eta1 + 2)/3; 
+            validated = true;
+            wmessage = sprintf('%s: invalid eta2; it should be in the interval [0, 1] and not less than eta1; it is set to %f.', invoker, options.eta2);
+        else
+        % The user does not provide a correct eta1; we take the default eta2 hard coded in Powell's code.
+            wmessage = sprintf('%s: invalid eta2; it should be in the interval [0, 1] and not less than eta1; it will be set to the default value.', invoker);
+        end
+        warning(wid, '%s', wmessage);
+        warnings = [warnings, wmessage]; 
+    else
+        validated = true;
+    end
+end
+if ~validated
+    options.eta2 = NaN;  % NaN means that Fortran will take the hard-coded default value.
+end
+
+validated = false;
+if isfield(options, 'gamma1')
+    if ~isrealscalar(options.gamma1) || options.gamma1 <= 0 || options.gamma1 >= 1
+        wid = sprintf('%s:InvalidGamma1', invoker);
+        wmessage = sprintf('%s: invalid gamma1; it should be in the interval (0, 1); it wll be set to the default value.', invoker);
+        warning(wid, '%s', wmessage);
+        warnings = [warnings, wmessage]; 
+    else
+        validated = true;
+    end
+end
+if ~validated
+    options.gamma1 = NaN;  % NaN means that Fortran will take the hard-coded default value.
+end
+
+validated = false;
+if isfield(options, 'gamma2')
+    if ~isrealscalar(options.gamma2) || options.gamma2 < 1 || options.gamma2 >= inf
+        wid = sprintf('%s:InvalidGamma2', invoker);
+        wmessage = sprintf('%s: invalid gamma2; it should be a real number not less than 1; it wll be set to the default value.', invoker);
+        warning(wid, '%s', wmessage);
+        warnings = [warnings, wmessage]; 
+    else
+        validated = true;
+    end
+end
+if ~validated
+    options.gamma2 = NaN;  % NaN means that Fortran will take the hard-coded default value.
 end
 
 % pre_options finished
