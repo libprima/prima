@@ -111,16 +111,21 @@
 !
 ! IPRINT
 !   Input, INTEGER(IK) scalar, default: 0.
-!   The value of IPRINT should be set to 0, 1, 2, 3, or 4, which controls
-!   the amount of printing. Specifically, there is no output if IPRINT = 0,
-!   and there is output only at the return if IPRINT = 1. Otherwise, each
-!   new value of RHO is printed, with the best vector of variables so far
-!   and the corresponding value of the objective function. Further, each
-!   new value of F with its variables are output if IPRINT = 3. When
-!   IPRINT = 4, all the output of IPRINT = 3 will be recorded in a file
-!   named NEWUOA.output, which can be costly in terms of time and space;
-!   the file will be created if it does not exist; the new output will be
-!   appended to the end of this file if it already exists.
+!   The value of IPRINT should be set to 0, 1, -1, 2, -2, 3, or -3, which
+!   controls the printing. Specifically:
+!   0: there will be no printing;
+!   1: a message will be printed to the screen at the return, showing the
+!      best vector of veriables found and its objective function value;
+!   2: in addition to 1, each new value of RHO is printed to the screen,
+!      with the best vector of variables so far and its objective function
+!      value;
+!   3: in addition to 2, each function evaluation with its variables will
+!      be printed to the screen;
+!   -1, -2, -3: the same information as 1, 2, 3 will be printed, not to
+!   the screen but to a file named NEWUOA_output.txt; the file will be
+!   created if it does not exist; the new output will be appended to
+!   the end of this file if it already exists. Note that IPRINT = -3 can
+!   be costly in terms of time and space;
 !
 ! ETA1, ETA2, GAMMA1, GAMMA2
 !   Input, REAL(RP) scalars, default: ETA1 = 0.1, ETA2 = 0.7, GAMMA1 = 0.5,
@@ -376,7 +381,7 @@
 ! that users do not know the value of NF_C if they do not output it.
 ! Therefore, we MUST cap XHIST at min(NF_C, MAXXHIST) so that XHIST
 ! cointains only valid history. Otherwise, without knowing NF_C,
-! they cannot tell history from garbage!!!
+! one cannot tell history from garbage!!!
 ! For this reason, there is no way to avoid allocating two copies of
 ! memory for XHIST unless we declare it to be a POINTER instead of
 ! ALLOCATABLE.

@@ -153,7 +153,7 @@ do k = 1, min(npt, int(2*n + 1, kind(npt)))
     evaluated(k) = .true.
     fval(k) = f
 
-    if (iprint >= 3) then
+    if (abs(iprint) >= 3) then
         call fmssg(iprint, k, f, xtemp, solver) 
     end if
     if (maxfhist >= 1) then
@@ -236,7 +236,7 @@ do k = int(2*n + 2, kind(k)), npt_revised
     evaluated(k) = .true.
     fval(k) = f
 
-    if (iprint >= 3) then
+    if (abs(iprint) >= 3) then
         call fmssg(iprint, k, f, xtemp, solver) 
     end if
     if (maxfhist >= 1) then

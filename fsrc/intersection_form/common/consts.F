@@ -128,7 +128,7 @@
       real(RP), parameter :: RHOBEG_DFT = ONE
       real(RP), parameter :: RHOEND_DFT = 1.0E-6_RP
       real(RP), parameter :: FTARGET_DFT = -HUGENUM
-      integer(IK), parameter :: IPRINT_DFT = 1
+      integer(IK), parameter :: IPRINT_DFT = 0
       integer(IK), parameter :: MAXFUN_DIM_DFT = 500
 
 ! Maximal amount of history that XHIST, FHIST, CHIST can return

@@ -193,7 +193,7 @@
 
       if (terminate) then
           info = subinfo
-          if (iprint >= 1) then
+          if (abs(iprint) >= 1) then
               call retmssg(info, iprint, nf, f, x, solver)
           end if
 ! Rearrange FHIST and XHIST so that they are in the chronological order.
@@ -297,7 +297,7 @@
               end if
               call calfun(x, f)
               nf = int(nf + 1, kind(nf))
-              if (iprint >= 3) then
+              if (abs(iprint) >= 3) then
                   call fmssg(iprint, nf, f, x, solver)
               end if
               if (maxfhist >= 1) then
@@ -465,7 +465,7 @@
 ! latest 3 function evaluations with the current RHO.
                   dnormsave = HUGENUM
                   moderrsave = HUGENUM
-                  if (iprint >= 2) then
+                  if (abs(iprint) >= 2) then
                       call rhomssg(iprint, nf, fopt, rho, xbase + xopt, &
      &solver)
                  end if
@@ -508,7 +508,7 @@
               end if
               call calfun(x, f)
               nf = int(nf + 1, kind(nf))
-              if (iprint >= 3) then
+              if (abs(iprint) >= 3) then
                   call fmssg(iprint, nf, f, x, solver)
               end if
               if (maxfhist >= 1) then
@@ -592,7 +592,7 @@
           else
               call calfun(x, f)
               nf = int(nf + 1, kind(nf))
-              if (iprint >= 3) then
+              if (abs(iprint) >= 3) then
                   call fmssg(iprint, nf, f, x, solver)
               end if
               if (maxfhist >= 1) then
@@ -624,7 +624,7 @@
      &: khist) /), shape(xhist))
       end if
 
-      if (iprint >= 1) then
+      if (abs(iprint) >= 1) then
           call retmssg(info, iprint, nf, f, x, solver)
       end if
 

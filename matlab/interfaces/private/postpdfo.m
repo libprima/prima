@@ -37,7 +37,7 @@ obligatory_probinfo_fields = {'raw_data', 'refined_data', 'fixedx', 'fixedx_valu
     'trivial_lineq', 'trivial_leq', 'infeasible', 'scaled', 'scaling_factor', ...
     'shift', 'reduced', 'raw_type', 'raw_dim', 'refined_type', 'refined_dim', ...
     'feasibility_problem', 'user_options_fields', 'options', 'warnings'};
-obligatory_options_fields = {'classical', 'debug', 'chkfunval', 'quiet'};
+obligatory_options_fields = {'classical', 'debug', 'chkfunval'};
 
 % All possible solvers
 unconstrained_solver_list = {'uobyqan', 'newuoan'};
@@ -521,15 +521,6 @@ if isfield(probinfo, 'warnings')
 end
 if ~isempty(warnings)
     output.warnings = warnings;
-%    if ~options.quiet
-%        fprintf('The following warnings were rasied by %s:\n', invoker);
-%        fprintf('%s\n', warnings{:});
-%    end
-end
-
-% Print the return message if options.quiet=false
-if ~options.quiet
-    fprintf('\n%s\n\n', output.message)
 end
 
 % Recover the default warning behavior of displaying stack trace, which was disabled by pdfo or its solvers

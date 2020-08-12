@@ -171,7 +171,7 @@
           evaluated(k) = .true.
           fval(k) = f
 
-          if (iprint >= 3) then
+          if (abs(iprint) >= 3) then
               call fmssg(iprint, k, f, xtemp, solver)
           end if
           if (maxfhist >= 1) then
@@ -254,7 +254,7 @@
           evaluated(k) = .true.
           fval(k) = f
 
-          if (iprint >= 3) then
+          if (abs(iprint) >= 3) then
               call fmssg(iprint, k, f, xtemp, solver)
           end if
           if (maxfhist >= 1) then

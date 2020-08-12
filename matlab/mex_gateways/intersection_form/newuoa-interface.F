@@ -91,6 +91,8 @@
       call fmxReadMPtr(pinput(14), iprint)
 
 ! Call the Fortran code.
+! There are various cases because XHIST/FHIST may or may not be passed to
+! the Fortran code.
       if (maxxhist > 0 .and. maxfhist > 0) then
           call newuoa(calfun, x, f, nf, rhobeg, rhoend, ftarget, maxfun,&
      & npt, iprint, eta1, eta2, gamma1, gamma2, xhist = xhist, fhist = f&

@@ -85,8 +85,8 @@
           print '(1X)'
       end if
 
-      if (iprint >= 4) then
-          fout = solver // '.output'
+      if (iprint <= -1) then
+          fout = solver // '_output.txt'
           inquire(file = trim(fout), exist = fexist)
           if (fexist) then
               fstat = 'old'
@@ -99,8 +99,11 @@
               print '(1X, 1A)', 'Fail to open file ' // trim(fout) // '!&
      &'
           else
-              write(OUTUNIT, '(//1X, 4A)') 'Return from ', solver, ' bec&
-     &ause ', trim(mssg)
+              if (iprint <= -3) then
+                  write(OUTUNIT, '(1X)')
+              end if
+              write(OUTUNIT, '(/1X, 4A)') 'Return from ', solver, ' beca&
+     &use ', trim(mssg)
               write(OUTUNIT, '(1X, 1A, 6X, 1A, I7)') 'At the return from&
      & ' // solver, 'Number of function evaluations = ', nf
               write(OUTUNIT, '(1X, 1A, 1PD23.15, 6X, 1A, /(1X, 1P, 5D15.&
@@ -143,8 +146,8 @@
      &function value = ', f, 'The corresponding X is:', x
       end if
 
-      if (iprint >= 4) then
-          fout = solver // '.output'
+      if (iprint <= -2) then
+          fout = solver // '_output.txt'
           inquire(file = trim(fout), exist = fexist)
           if (fexist) then
               fstat = 'old'
@@ -157,8 +160,11 @@
               print '(1X, 1A)', 'Fail to open file ' // trim(fout) // '!&
      &'
           else
-              write(OUTUNIT, '(//1X, 1A, 1PD11.4, 6X, A, I7)') 'New RHO &
-     &= ', rho, 'Number of function evaluations = ', nf
+              if (iprint <= -3) then
+                  write(OUTUNIT, '(1X)')
+              end if
+              write(OUTUNIT, '(/1X, 1A, 1PD11.4, 6X, A, I7)') 'New RHO =&
+     & ', rho, 'Number of function evaluations = ', nf
               write(OUTUNIT, '(1X, 1A, 1PD23.15, 6X, 1A, /(1X, 1P, 5D15.&
      &6))') 'Least function value = ', f, 'The corresponding X is:', x
               close(OUTUNIT)
@@ -193,8 +199,8 @@
      &x
       end if
 
-      if (iprint >= 4) then
-          fout = solver // '.output'
+      if (iprint <= -3) then
+          fout = solver // '_output.txt'
           inquire(file = trim(fout), exist = fexist)
           if (fexist) then
               fstat = 'old'

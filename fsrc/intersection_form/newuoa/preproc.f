@@ -54,11 +54,11 @@
       character(len = 6), parameter :: solver = 'NEWUOA'
 
 
-      if (iprint /= 0 .and. iprint /= 1 .and. iprint /= 2 .and. iprint /&
-     &= 3 .and. iprint /= 4) then
+      if (iprint /= 0 .and. abs(iprint) /= 1 .and. abs(iprint) /= 2 .and&
+     &. abs(iprint) /= 3) then
           iprint = IPRINT_DFT
           print '(/1X, 1A, I1, 1A)', solver // ': invalid IPRINT; it sho&
-     &uld be 0, 1, 2, 3, or 4; it is set to ', iprint, '.'
+     &uld be 0, 1, -1, 2, -2, 3, or -3; it is set to ', iprint, '.'
       end if
 
       if (maxfun < n + 3) then
@@ -84,42 +84,60 @@
      &ld be less than MAXFUN; it is set to ', npt, '.'
       end if
 
-! When the difference between ETA1 and ETA2 is tiny, we force them to equal.
-! See the explanation around RHOBEG and RHOEND for the reason.
-      if (abs(eta1 - eta2) < 1.0e2_RP*EPS*max(abs(eta1), ONE)) then
-          eta2 = eta1
-      end if
-
-      if (eta1 < ZERO .or. eta1 > ONE .or. is_nan(eta1)) then
-! Take ETA1 into account if it has a valid value.
-          if (eta2 > ZERO .and. eta2 < ONE) then
-              eta1 = max(EPS, eta2/7.0_RP)
-          else
-              eta1 = TENTH
-          end if
-          print '(/1X, 1A, 1PD15.6, 1A)', solver // ': invalid ETA1; it &
-     &should be in the interval (0, 1); it is set to ', eta1, '.'
-      end if
-
-      if (eta2 < eta1 .or. eta2 >= ONE .or. is_nan(eta2)) then
-          eta2 = (eta1 + TWO)/3.0_RP
-          print '(/1X, 1A, 1PD15.6, 1A)', solver // ': invalid ETA2; it &
-     &should in the intercal [ETA1, 1); it is set to ', eta2, '.'
-      end if
-
       if (is_nan(ftarget)) then
           ftarget = FTARGET_DFT
           print '(/1X, 1A, 1PD15.6, 1A)', solver // ': invalid FTARGET; &
      &it should a real number; it is set to ', ftarget, '.'
       end if
 
-      if (gamma1 <= ZERO .or. gamma1 >= ONE .or. is_nan(gamma1)) then
-          gamma1 = HALF
-          print '(/1X, 1A, 1PD15.6, 1A)', solver // ': invalid GAMMA1; i&
-     &t should in the intercal (0, 1); it is set to ', gamma1, '.'
+! When the difference between ETA1 and ETA2 is tiny, we force them to equal.
+! See the explanation around RHOBEG and RHOEND for the reason.
+      if (abs(eta1 - eta2) < 1.0e2_RP*EPS*max(abs(eta1), ONE)) then
+          eta2 = eta1
       end if
 
-      if (gamma2 < ONE .or. is_nan(gamma2) .or. is_inf(gamma2)) then
+      if (is_nan(eta1)) then
+! In this case, we take the value hard coded in Powell's orginal code
+! without any warning. It is useful when intefacing with MATLAB/Python.
+          eta1 = TENTH
+      else if (eta1 < ZERO .or. eta1 >= ONE) then
+! Take ETA1 into account if it has a valid value.
+          if (eta2 > ZERO .and. eta2 <= ONE) then
+              eta1 = max(EPS, eta2/7.0_RP)
+          else
+              eta1 = TENTH
+          end if
+          print '(/1X, 1A, 1PD15.6, 1A)', solver // ': invalid ETA1; it &
+     &should be in the interval [0, 1) and not more than ETA2;' // ' it &
+     &is set to ', eta1, '.'
+      end if
+
+      if (is_nan(eta2)) then
+! In this case, we take the value hard coded in Powell's orginal code
+! without any warning. It is useful when intefacing with MATLAB/Python.
+          eta2 = 0.7_RP
+      else if (eta2 < eta1 .or. eta2 > ONE) then
+          eta2 = (eta1 + TWO)/3.0_RP
+          print '(/1X, 1A, 1PD15.6, 1A)', solver // ': invalid ETA2; it &
+     &should be in the interval [0, 1] and not less than ETA1;' // ' it &
+     &is set to ', eta2, '.'
+      end if
+
+      if (is_nan(gamma1)) then
+! In this case, we take the value hard coded in Powell's orginal code
+! without any warning. It is useful when intefacing with MATLAB/Python.
+          gamma1 = HALF
+      else if (gamma1 <= ZERO .or. gamma1 >= ONE) then
+          gamma1 = HALF
+          print '(/1X, 1A, 1PD15.6, 1A)', solver // ': invalid GAMMA1; i&
+     &t should in the interval (0, 1); it is set to ', gamma1, '.'
+      end if
+
+      if (is_nan(gamma2)) then
+! In this case, we take the value hard coded in Powell's orginal code
+! without any warning. It is useful when intefacing with MATLAB/Python.
+          gamma2 = TWO
+      else if (gamma2 < ONE .or. is_inf(gamma2)) then
           gamma2 = TWO
           print '(/1X, 1A, 1PD15.6, 1A)', solver // ': invalid GAMMA2; i&
      &t should a real number not less than 1; it is set to ', gamma2, '.&
