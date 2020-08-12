@@ -41,6 +41,8 @@ subroutine newuoa(calfun, x, f, &
 !
 ! call newuoa(calfun, x, f, rhobeg = 0.5_RP, rhoend = 1.0E-3_RP, maxfun = 100_IK)
 !
+! See example.f90 for a concrete example.
+!
 ! N.B.: RP and IK are defined in the module CONSTS_MOD. See consts.F90
 ! under the directory name "common". By default, RP = kind(0.0D0) and
 ! IK = kind(0). Therefore, REAL(RP) is the double-precision real, and 
@@ -152,7 +154,7 @@ use infnan_mod, only : is_nan, is_inf, is_finite
 use memory_mod, only : safealloc
 
 ! Solver-specific module
-use prob_mod, only : FUNEVAL
+use pintrf_mod, only : FUNEVAL
 use preproc_mod, only : preproc
 use newuob_mod, only : newuob
 
@@ -341,9 +343,9 @@ end if
 ! Copy XHIST_C to XHIST and FHIST_C to FHIST if needed.
 ! N.B.: Fortran 2003 supports "automatic (re)allocation of allocatable
 ! arrays upon intrinsic assignment": if an intrinsic assignment is used,
-! an allocatable variable on the left-hand side is automatically 
-! allocated (if unallocated) or reallocated (if the shape is different).
-! In that case, the lines of SAFEALLOC in the following can be removed.
+! an allocatable variable on the left-hand side is automatically allocated 
+! (if unallocated) or reallocated (if the shape is different). Therefore, 
+! the lines of SAFEALLOC in the following can indeed be removed in F2003.
 if (present(xhist)) then
     call safealloc(xhist, n, min(nf_c, maxxhist))
     xhist = xhist_c(:, 1 : min(nf_c, maxxhist))

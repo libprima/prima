@@ -21,7 +21,7 @@ use fmxapi_mod, only : fmxAllocate
 use fmxapi_mod, only : fmxReadMPtr, fmxWriteMPtr
 
 ! Solver-specific module
-use problem_mod, only : fun_ptr, calfun
+use prob_mod, only : fun_ptr, calfun
 
 implicit none
 

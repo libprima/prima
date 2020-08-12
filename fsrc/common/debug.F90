@@ -38,11 +38,17 @@ end subroutine errstop
 
 
 subroutine backtr()
-! BACKTR calls a compiler-dependent intrinsic to show a backtrace
-! if we are in the debuge mode, i.e., __DEBUGGING__ == 1.
-! N.B.: The intrisic is compiler-dependent and does not exist in
-! all compilers. Indeed, it is not standard-conforming. Therefore, 
-! compilers may warn that a non-standard intrinsic is in use.
+! BACKTR calls a compiler-dependent intrinsic to show a backtrace if we 
+! are in the debuge mode, i.e., __DEBUGGING__ == 1. 
+! N.B.: 
+! 1. The intrisic is compiler-dependent and does not exist in all 
+! compilers. Indeed, it is not standard-conforming. Therefore, compilers
+! may warn that a non-standard intrinsic is in use. 
+! 2. More seriously, if the compiler is instructed to conform to the 
+! standards (e.g., gfortran with the option -std=f2003) while __DEBUGGING__
+! is set to 1, then the compilation may FAIL at the linking stage, 
+! complaining that a subroutine cannot be found (e.g., backtrace() for
+! gfortran). In that case, we must set __DEBUGGING__ to 0 in ppf.h.
 implicit none
 #if __DEBUGGING__ == 1 
 

@@ -1089,7 +1089,7 @@ if isfield(options, 'rhobeg')
     end
 end
 if ~validated % options.rhobeg has not got a valid value yet
-    if isfield(options, 'rhoend') && isrealscalar(options.rhoend)
+    if isfield(options, 'rhoend') && isrealscalar(options.rhoend) && options.rhoend >=0 && options.rhoend < inf
         options.rhobeg = max(rhobeg, 10*options.rhoend);
     else
         options.rhobeg = rhobeg;

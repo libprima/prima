@@ -1,4 +1,4 @@
-! Here is an example to illustrate the usage of NEWUOA. 
+! This is an example to illustrate the usage of NEWUOA. 
 
 !!!!!!!!!!!!!!!!!! THE MODULE THAT IMPLEMENTS CALFUN !!!!!!!!!!!!!!!!!!!
 module calfun_mod
@@ -70,6 +70,7 @@ real(kind(0.0D0)), allocatable :: x(:)
 iprint = 2 
 
 do n = 2, 8, 2
+    ! Sets up the initial X for the Chebyquad problem. 
     if (allocated(x)) deallocate(x)
     allocate(x(n), stat = alloc_stat)
     if (alloc_stat /= 0) print *, 'Memory allocation failed.'
@@ -79,16 +80,16 @@ do n = 2, 8, 2
 
     rhobeg = 0.2D0*x(1)
 
-    print '(//1X, 1A, I2)', 'Results with N = ', n
+    print '(/1X, 1A, I2)', 'Results with N = ', n
 
     ! The following line illustrates how to call NEWUOA. 
     !------------------------------------------------------------------!
     call newuoa(calfun, x, f, rhobeg = rhobeg, iprint = iprint)
     !------------------------------------------------------------------!
-    ! In the above illustration, besides the required arguments CALFUN, 
-    ! X, and F, we specify RHOBEG and IPRINT, which are optional. All the
-    ! unspecified optional arguments (RHOEND, MAXFUN, etc.) will take 
-    ! their default values coded in NEWUOA. You can also ignore all
+    ! In additon to the required arguments CALFUN, X, and F, the above
+    ! illustration specifies also RHOBEG and IPRINT, which are optional.
+    ! All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will
+    ! take their default values coded in NEWUOA. You can also ignore all
     ! the optional arguments and invoke NEWUOA by the following line.
     !------------------------------------------------------------------!
     ! call newuoa(calfun, x, f)

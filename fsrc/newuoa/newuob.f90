@@ -52,7 +52,7 @@ use output_mod, only : retmssg, rhomssg, fmssg
 use lina_mod, only : calquad, inprod
 
 ! Solver-specific modules
-use prob_mod, only : FUNEVAL
+use pintrf_mod, only : FUNEVAL
 use initialize_mod, only : initxf, initq, inith
 use trustregion_mod, only : trsapp, trrad
 use geometry_mod, only : setremove, ameliorgeo

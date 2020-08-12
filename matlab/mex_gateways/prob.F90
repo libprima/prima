@@ -1,4 +1,4 @@
-! PROBLEM_MOD is a module defining the optimization problem. In particular, 
+! PROB_MOD is a module defining the optimization problem. In particular, 
 ! it implements CALFUN and CALCFC.  CALFUN evaluates the objective function 
 ! for unconstrained, bound constrained, and linearly constrained problems; 
 ! CALCFC evaluates the objective function and constraint for nonlinearly
@@ -8,7 +8,7 @@
 
 #include "fintrf.h"
 
-module problem_mod
+module prob_mod
 
 implicit none
 private
@@ -60,7 +60,7 @@ isdble = mxIsDouble(poutput(1))
 if (row*col /= 1 .or. isdble /= 1) then
     eid = 'PROBLEM:ObjectiveNotScalar'
     mssg = 'PROBLEM: Objective function does not return a scalar.'
-    call mexErrMsgIdAndTxt(eid, mssg)
+    call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
 end if
 
 ! Read the data in OUTPUT
@@ -80,4 +80,4 @@ call mxDestroyArray(pinput(1))
 end subroutine calfun
 
 
-end module problem_mod
+end module prob_mod

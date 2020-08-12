@@ -12,4 +12,6 @@ the order indicated in ffiles.txt. Before that, one must compile the
 Fotran files in the directory called "common" according to the ffiles.txt
 therein.
 
+See example.f90 for an illustration about how to call NEWUOA.
+
 Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
