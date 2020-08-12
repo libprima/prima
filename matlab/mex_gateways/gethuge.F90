@@ -75,12 +75,12 @@ cols = int(mxGetN(pinput(1)), kind(cols))
 if (cols > maxlen) then
     eid = 'gethuge:InvalidInput'
     mssg = 'gethuge: The input is too long.'
-    call mexErrMsgIdAndTxt (eid, mssg)
+    call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
 end if
 if (mxGetString(pinput(1), data_type, cols) /= 0) then
     eid = 'gethuge:GetInputFail' 
     mssg = 'Fail to get the input.'
-    call mexErrMsgIdAndTxt (eid, mssg)
+    call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
 end if
 
 ! Define hugeValue.
@@ -120,7 +120,7 @@ else if (data_type == 'con' .or. data_type == 'Con' .or.  data_type == 'CON' .or
 else
     eid = 'GETHUGE:WrongInput'
     mssg = 'GETHUGE: Unrecognized input.'
-    call mexErrMsgIdAndTxt (eid, mssg)
+    call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
 end if
 
 ! Write output.

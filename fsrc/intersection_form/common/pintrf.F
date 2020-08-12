@@ -1,5 +1,5 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! This is the intersection-form version of prob.F90.
+! This is the intersection-form version of pintrf.F90.
 ! The file is generated automatically and is NOT intended to be readable.
 !
 ! In the intersection form, each continued line has an ampersand at column
@@ -9,11 +9,11 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 11-Aug-2020.
+! on 12-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
-! PROB_MOD is a module specifying the abstract interfaces FUNEVAL and
+! PINTRF_MOD is a module specifying the abstract interfaces FUNEVAL and
 ! FCEVAL. FUNEVAL evaluates the objective function for unconstrained,
 ! bound constrained, and linearly constrained problems; FCEVAL evaluates
 ! the objective function and constraint for nonlinearly constrained prolems.
@@ -22,11 +22,10 @@
 !
 ! Users must provide the implementation of CALFUN or CALCFC.
 
-      module prob_mod
+      module pintrf_mod
 
       implicit none
       private
-
       public :: FUNEVAL, FCEVAL
 
       abstract interface
@@ -49,4 +48,4 @@
           end subroutine FCEVAL
       end interface
 
-      end module prob_mod
+      end module pintrf_mod

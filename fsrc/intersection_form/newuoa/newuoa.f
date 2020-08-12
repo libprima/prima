@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 11-Aug-2020.
+! on 12-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -55,6 +55,8 @@
 ! or
 !
 ! call newuoa(calfun, x, f, rhobeg = 0.5_RP, rhoend = 1.0E-3_RP, maxfun = 100_IK)
+!
+! See example.f90 for a concrete example.
 !
 ! N.B.: RP and IK are defined in the module CONSTS_MOD. See consts.F90
 ! under the directory name "common". By default, RP = kind(0.0D0) and
@@ -169,7 +171,7 @@
       use memory_mod, only : safealloc
 
 ! Solver-specific module
-      use prob_mod, only : FUNEVAL
+      use pintrf_mod, only : FUNEVAL
       use preproc_mod, only : preproc
       use newuob_mod, only : newuob
 
@@ -361,27 +363,29 @@
 ! Copy XHIST_C to XHIST and FHIST_C to FHIST if needed.
 ! N.B.: Fortran 2003 supports "automatic (re)allocation of allocatable
 ! arrays upon intrinsic assignment": if an intrinsic assignment is used,
-! an allocatable variable on the left-hand side is automatically
-! allocated (if unallocated) or reallocated (if the shape is different).
-! In that case, the lines of SAFEALLOC in the following can be removed.
+! an allocatable variable on the left-hand side is automatically allocated
+! (if unallocated) or reallocated (if the shape is different). Therefore,
+! the lines of SAFEALLOC in the following can indeed be removed in F2003.
       if (present(xhist)) then
-          call safealloc(xhist, n, min(nf, maxxhist))
-          xhist = xhist_c(:, 1 : min(nf, maxxhist))
-! When MAXXHIST > NF, which is the normal case in practice, XHIST_C
-! contains GARBAGE in XHIST_C(:, NF + 1 : MAXXHIST). Note that users
-! do not know the value of NF if they do not output it. Therefore, we
-! We MUST cap XHIST at min(NF, MAXXHIST) to ensure that XHIST cointains
-! only valid history. Otherwise, without knowing NF, they cannot tell
-! history from garbage!!!
+          call safealloc(xhist, n, min(nf_c, maxxhist))
+          xhist = xhist_c(:, 1 : min(nf_c, maxxhist))
+! N.B.:
+! 1. NF may not be present. Hence we should NOT use NF but NF_C.
+! 2. When MAXXHIST > NF_C, which is the normal case in practice,
+! XHIST_C contains GARBAGE in XHIST_C(:, NF_C + 1 : MAXXHIST). Note
+! that users do not know the value of NF_C if they do not output it.
+! Therefore, we MUST cap XHIST at min(NF_C, MAXXHIST) so that XHIST
+! cointains only valid history. Otherwise, without knowing NF_C,
+! they cannot tell history from garbage!!!
 ! For this reason, there is no way to avoid allocating two copies of
 ! memory for XHIST unless we declare it to be a POINTER instead of
 ! ALLOCATABLE.
       end if
       deallocate(xhist_c)
       if (present(fhist)) then
-          call safealloc(fhist, min(nf, maxfhist))
-          fhist = fhist_c(1 : min(nf, maxfhist))
-! The same as XHIST, we must cap FHIST at min(NF, MAXFHIST).
+          call safealloc(fhist, min(nf_c, maxfhist))
+          fhist = fhist_c(1 : min(nf_c, maxfhist))
+! The same as XHIST, we must cap FHIST at min(NF_C, MAXFHIST).
       end if
       deallocate(fhist_c)
 

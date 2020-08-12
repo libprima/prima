@@ -9,69 +9,84 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 11-Aug-2020.
+! on 12-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
-      subroutine calfun (x, f)
-!
-!     The Chebyquad test problem (Fletcher, 1965) for N = 2,4,6 and 8,
-!     with NPT = 2N+1.
-!
+! This is an example to illustrate the usage of NEWUOA.
+
+!!!!!!!!!!!!!!!!!! THE MODULE THAT IMPLEMENTS CALFUN !!!!!!!!!!!!!!!!!!!
+      module calfun_mod
+
       implicit none
-      real(kind(0.0D0)), intent(in) :: x(:)
-      real(kind(0.0D0)), intent(out) :: f
-      real(kind(0.0D0)) :: y(size(x) + 1, size(x) + 1), sum
+      private
+      public :: calfun
 
-      integer :: i, j, n, iw
+      contains
 
-      n = size(x)
+          subroutine calfun (x, f)
+! The Chebyquad test problem (Fletcher, 1965)
 
-      do j = 1, n
-          y(1, j) = 1.0D0
-          y(2, j) = 2.0D0*x(j) - 1.0D0
-      end do
-      do i = 2, n
-          do j = 1, n
-              y(i+1,j) = 2.0D0*y(2, j)*y(i, j) - y(i - 1, j)
+          implicit none
+
+          real(kind(0.0D0)), intent(in) :: x(:)
+          real(kind(0.0D0)), intent(out) :: f
+          real(kind(0.0D0)) :: y(size(x) + 1, size(x) + 1), tmp
+          integer :: i, n
+
+          n = size(x)
+
+          y(1 : n, 1) = 1.0D0
+          y(1 : n, 2) = 2.0D0*x - 1.0D0
+          do i = 2, n
+              y(1: n, i + 1) = 2.0D0*y(1 : n, 2)*y(1 : n, i) - y(1 : n, &
+     &i - 1)
           end do
-      end do
-      f=0.0D0
-      iw=1
-      do i = 1, n + 1
-          sum = 0.0D0
-          do j=1, n
-              sum=sum+y(i,j)
+
+          f = 0.0D0
+          do i = 1, n + 1
+              tmp = sum(y(1 : n, i))/real(n, kind(0.0D0))
+              if (mod(i, 2) /= 0) then
+                  tmp = tmp + 1.0D0/real(i*i - 2*i, kind(0.0D0))
+              end if
+              f = f + tmp*tmp
           end do
-          sum=sum/real(n, kind(0.0D0))
-          if (iw .gt. 0) sum = sum + 1.0d0/real(i*i - 2*i, kind(0.0D0))
-          iw = -iw
-          f = f+sum*sum
-      end do
-      end subroutine calfun
+          end subroutine calfun
+
+      end module calfun_mod
 
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!! THE MAIN PROGRAM !!!!!!!!!!!!!!!!!!!!!!!!!!!
       program example
 
+! The following line makes NEWUOA available.
+!----------------------------------------------------------------------!
       use newuoa_mod, only : newuoa
+!----------------------------------------------------------------------!
+
+! The following line specifies which module provides CALFUN.
+! If CALFUN is provided by an external subroutine instead of a module,
+! then remove this line and uncomment the "external calfun" line below.
+!----------------------------------------------------------------------!
+      use calfun_mod, only : calfun
+!----------------------------------------------------------------------!
+
       implicit none
 
       integer :: i, iprint, n, alloc_stat
       real(kind(0.0D0)) :: rhobeg, f
       real(kind(0.0D0)), allocatable :: x(:)
 
-!interface
-!    subroutine calfun(x, f)
-!    real(kind(0.0D0)), intent(in) :: x(:)
-!    real(kind(0.0D0)), intent(out) :: f
-!    end subroutine calfun
-!end interface
-
-      external calfun
+! If CALFUN is provided as an external subroutine, then remove the line
+! of "use calfun_mod, only : calfun", and uncomment the following line:
+!----------------------------------------------------------------------!
+!external calfun
+!----------------------------------------------------------------------!
 
       iprint = 2
 
       do n = 2, 8, 2
+! Sets up the initial X for the Chebyquad problem.
           if (allocated(x)) deallocate(x)
           allocate(x(n), stat = alloc_stat)
           if (alloc_stat /= 0) print *, 'Memory allocation failed.'
@@ -81,9 +96,20 @@
 
           rhobeg = 0.2D0*x(1)
 
-          print '(//1X, 1A, I2)', 'Results with N = ', n
+          print '(/1X, 1A, I2)', 'Results with N = ', n
 
+! The following line illustrates how to call NEWUOA.
+!------------------------------------------------------------------!
           call newuoa(calfun, x, f, rhobeg = rhobeg, iprint = iprint)
+!------------------------------------------------------------------!
+! In additon to the required arguments CALFUN, X, and F, the above
+! illustration specifies also RHOBEG and IPRINT, which are optional.
+! All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will
+! take their default values coded in NEWUOA. You can also ignore all
+! the optional arguments and invoke NEWUOA by the following line.
+!------------------------------------------------------------------!
+! call newuoa(calfun, x, f)
+!------------------------------------------------------------------!
       end do
 
       end program example

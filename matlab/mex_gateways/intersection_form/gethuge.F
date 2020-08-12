@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 11-Aug-2020.
+! on 12-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -90,12 +90,12 @@
       if (cols > maxlen) then
           eid = 'gethuge:InvalidInput'
           mssg = 'gethuge: The input is too long.'
-          call mexErrMsgIdAndTxt (eid, mssg)
+          call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
       end if
       if (mxGetString(pinput(1), data_type, cols) /= 0) then
           eid = 'gethuge:GetInputFail'
           mssg = 'Fail to get the input.'
-          call mexErrMsgIdAndTxt (eid, mssg)
+          call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
       end if
 
 ! Define hugeValue.
@@ -145,7 +145,7 @@
       else
           eid = 'GETHUGE:WrongInput'
           mssg = 'GETHUGE: Unrecognized input.'
-          call mexErrMsgIdAndTxt (eid, mssg)
+          call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
       end if
 
 ! Write output.

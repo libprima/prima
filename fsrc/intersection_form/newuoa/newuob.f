@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 11-Aug-2020.
+! on 12-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -70,7 +70,7 @@
       use lina_mod, only : calquad, inprod
 
 ! Solver-specific modules
-      use prob_mod, only : FUNEVAL
+      use pintrf_mod, only : FUNEVAL
       use initialize_mod, only : initxf, initq, inith
       use trustregion_mod, only : trsapp, trrad
       use geometry_mod, only : setremove, ameliorgeo

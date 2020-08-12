@@ -27,7 +27,7 @@ use infnan_mod, only : is_nan, is_posinf
 use output_mod, only : fmssg
 
 ! Solver-specific module
-use prob_mod, only : FUNEVAL
+use pintrf_mod, only : FUNEVAL
 
 implicit none
 

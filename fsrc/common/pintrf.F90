@@ -1,4 +1,4 @@
-! PROB_MOD is a module specifying the abstract interfaces FUNEVAL and 
+! PINTRF_MOD is a module specifying the abstract interfaces FUNEVAL and 
 ! FCEVAL. FUNEVAL evaluates the objective function for unconstrained, 
 ! bound constrained, and linearly constrained problems; FCEVAL evaluates
 ! the objective function and constraint for nonlinearly constrained prolems.
@@ -7,7 +7,7 @@
 !
 ! Users must provide the implementation of CALFUN or CALCFC.
 
-module prob_mod
+module pintrf_mod
 
 implicit none
 private
@@ -33,5 +33,5 @@ abstract interface
     end subroutine FCEVAL 
 end interface
 
-end module prob_mod
+end module pintrf_mod
 
