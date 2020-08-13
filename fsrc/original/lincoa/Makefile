@@ -8,7 +8,7 @@ main: calfun.o getact.o lincoa.o lincob.o \
 	$(FC) $(FFLAGS) -o main calfun.o getact.o lincoa.o lincob.o \
                                 prelim.o qmstep.o trstep.o update.o main.o 
 test: main
-	main > output ; diff output output.txt ; rm -f output
+	./main ; rm -f *.o main
 calfun.o: calfun.f
 	$(FC) $(FFLAGS) -c calfun.f
 getact.o: getact.f

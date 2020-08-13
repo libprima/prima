@@ -7,7 +7,7 @@ main: lagmax.o trstep.o uobyqb.o uobyqa.o calfun.o main.o
 	$(FC) $(FFLAGS) -o main lagmax.o trstep.o uobyqb.o uobyqa.o \
                                 calfun.o main.o
 test: main
-	main > output ; diff output output.txt ; rm -f output
+	./main ; rm -f *.o main
 calfun.o: calfun.f
 	$(FC) $(FFLAGS)  -c calfun.f
 lagmax.o: lagmax.f

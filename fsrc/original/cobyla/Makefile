@@ -11,7 +11,7 @@ FFLAGS = -g
 main: cobyla.o cobylb.o trstlp.o calcfc.o main.o
 	$(FC) $(FFLAGS) -o main cobyla.o cobylb.o trstlp.o calcfc.o main.o
 test: main
-	main > output ; diff output output.txt ; rm -f output
+	./main ; rm -f *.o main
 cobyla.o: cobyla.f
 	$(FC) $(FFLAGS) -c cobyla.f
 cobylb.o: cobylb.f

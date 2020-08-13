@@ -8,7 +8,7 @@ main: bigden.o biglag.o calfun.o newuoa.o \
 	$(FC) $(FFLAGS) -o main bigden.o biglag.o calfun.o newuoa.o \
                         newuob.o trsapp.o update.o main.o
 test: main
-	main > output ; diff output output.txt ; rm -f output
+	./main ; rm -f *.o main
 bigden.o: bigden.f
 	$(FC) $(FFLAGS) -c bigden.f
 biglag.o: biglag.f
