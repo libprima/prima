@@ -37,7 +37,6 @@ else
     classical = false;
 end
 
-
 requirements = struct();
 if isfield(options, 'list')
     requirements.list = options.list;  % Only test problems in this list
@@ -107,7 +106,7 @@ for ip = 1 : length(plist)
             fprintf('Run No. %3d: \t', ir);
         end
         % Some randomization
-        rng(ceil(1e5*abs(sin(1e10*(ir+nr+requirements.maxdim)))));
+        rng(ceil(1e6*abs(sin(1e6*(sum(double(pname))*n*ip*ir*nr*requirements.mindim*requirements.maxdim)))));
         prob.x0 = x0 + 0.5*randn(size(x0));
         test_options = struct();
         test_options.debug = true;
@@ -117,7 +116,9 @@ for ip = 1 : length(plist)
         test_options.npt = max(min(ceil(10*rand*n + 2), (n+2)*(n+1)/2), n+2);
         test_options.maxfun = max(ceil(20*n*(1+rand)), n+3);
         test_options.ftarget = -inf;
-        test_options.classical = classical;
+        test_options.classical = (randn < -1.5);
+        test_options.output_xhist = (rand > 0.5);
+        test_options.maxhist = ceil(randn*1.5*test_options.maxfun);
         if ir == 0
             test_options.npt = (n+2)*(n+1)/2;
         end

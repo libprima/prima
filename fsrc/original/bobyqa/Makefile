@@ -8,7 +8,7 @@ main: altmov.o bobyqa.o bobyqb.o calfun.o \
 	$(FC) $(FFLAGS) -o main altmov.o bobyqa.o bobyqb.o calfun.o \
                            main.o prelim.o rescue.o trsbox.o update.o
 test: main
-	main > output ; diff output output.txt ; rm -f output 
+	./main ; rm -f *.o main
 altmov.o: altmov.f
 	$(FC) $(FFLAGS) -c altmov.f
 bobyqa.o: bobyqa.f
