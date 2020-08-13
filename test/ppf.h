@@ -5,7 +5,7 @@ ppf.h defines the following preprocessing flags (the first value is default).
 __DEBUGGING__               debug or not: 0, 1
 __USE_INTRINSIC_ALGEBRA__   use intrinsic procedures like matmul or not: 0, 1 
 __USE_POWELL_ALGEBRA__      use Powell's linear algebra procedures or not: 0, 1 
-__INTEGER_KIND__            the integer kind to be used: 0, 32, 64, 16
+__INTEGER_KIND__            the integer kind to be used: 0, 32, 16, 64
 __REAL_PRECISION__          the real precision to be used: 64, 32, 128, 0 
 __FORTRAN_STANDARD__        Fortran standard to follow: 2003, 2008, 2018
 __USE_IEEE_ARITHMETIC__     use the IEEE_ARITHMETIC intrinsic or not: 1, 0
@@ -65,7 +65,7 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 #if defined __INTEGER_KIND__
 #undef __INTEGER_KIND__
 #endif
-#define __INTEGER_KIND__ 16 
+#define __INTEGER_KIND__ 0 
 /*************************************************************************/
 
 
@@ -113,8 +113,8 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 #if defined __FORTRAN_STANDARD__
 #undef __FORTRAN_STANDARD__
 #endif
-#define __FORTRAN_STANDARD__ 2003
-/* #define __FORTRAN_STANDARD__ 2008 */
+/*#define __FORTRAN_STANDARD__ 2003 */
+#define __FORTRAN_STANDARD__ 2008 
 /*#define __FORTRAN_STANDARD__ 2018 */
 
 /* Revise __FORTRAN_STANDARD__ according to the version of the compiler. */

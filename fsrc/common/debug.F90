@@ -30,7 +30,7 @@ character(len = *), intent(in) :: mssg
 call backtr()
 #endif
 
-print '(/1X, 1A/)', 'Error: ' // trim(srname) // ': ' // trim(mssg) // '.'
+print '(/1A/)', 'Error: ' // trim(srname) // ': ' // trim(mssg) // '.'
 
 stop  ! This means to stop the whole program.
 

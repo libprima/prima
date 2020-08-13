@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 12-Aug-2020.
+! on 13-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -29,7 +29,7 @@
       use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, E&
      &PS
       use consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT&
-     &_DFT, MAXIMAL_HIST
+     &_DFT
       use infnan_mod, only : is_nan, is_inf, is_finite
 
       implicit none
@@ -57,37 +57,36 @@
       if (iprint /= 0 .and. abs(iprint) /= 1 .and. abs(iprint) /= 2 .and&
      &. abs(iprint) /= 3) then
           iprint = IPRINT_DFT
-          print '(/1X, 1A, I1, 1A)', solver // ': invalid IPRINT; it sho&
-     &uld be 0, 1, -1, 2, -2, 3, or -3; it is set to ', iprint, '.'
+          print '(/1A, I2, 1A)', solver // ': invalid IPRINT; it should &
+     &be 0, 1, -1, 2, -2, 3, or -3; it is set to ', iprint, '.'
       end if
 
       if (maxfun < n + 3) then
           maxfun = int(n + 3, kind(maxfun))
-          print '(/1X, 1A, I6, 1A)', solver // ': invalid MAXFUN; it sho&
-     &uld an integer at least N + 3 ; it is set to ', maxfun, '.'
+          print '(/1A, I8, 1A)', solver // ': invalid MAXFUN; it should &
+     &an integer at least N + 3 ; it is set to ', maxfun, '.'
       end if
 
-      if (maxhist < 0 .or. maxhist > MAXIMAL_HIST) then
-          maxhist = min(MAXIMAL_HIST, maxfun)
-          print '(/1X, 1A, I8, 1A, I8, 1A)', solver // ': invalid MAXHIS&
-     &T; it should be a nonnegative integer not more thant ', MAXIMAL_HI&
-     &ST, '; it is set to ', maxhist, '.'
+      if (maxhist < 0) then
+          maxhist = maxfun
+          print '(/1A, I8, 1A)', solver // ': invalid MAXHIST; it should&
+     & be a nonnegative integer; it is set to ', maxhist, '.'
       end if
-! MAXHIST > MAXFUN is never desirable.
+! MAXHIST > MAXFUN is never needed.
       maxhist = min(maxhist, maxfun)
 
       if (npt < n + 2 .or. npt > min(maxfun - 1, ((n + 2)*(n + 1))/2)) t&
      &hen
           npt = int(min(maxfun - 1, 2*n + 1), kind(npt))
-          print '(/1X, 1A, I6, 1A)', solver // ': invalid NPT; it should&
-     & an integer in the interval [N+2, (N+1)(N+2)/2], ' // 'and it shou&
-     &ld be less than MAXFUN; it is set to ', npt, '.'
+          print '(/1A, I6, 1A)', solver // ': invalid NPT; it should an &
+     &integer in the interval [N+2, (N+1)(N+2)/2], ' // 'and it should b&
+     &e less than MAXFUN; it is set to ', npt, '.'
       end if
 
       if (is_nan(ftarget)) then
           ftarget = FTARGET_DFT
-          print '(/1X, 1A, 1PD15.6, 1A)', solver // ': invalid FTARGET; &
-     &it should a real number; it is set to ', ftarget, '.'
+          print '(/1A, 1PD15.6, 1A)', solver // ': invalid FTARGET; it s&
+     &hould a real number; it is set to ', ftarget, '.'
       end if
 
 ! When the difference between ETA1 and ETA2 is tiny, we force them to equal.
@@ -107,9 +106,9 @@
           else
               eta1 = TENTH
           end if
-          print '(/1X, 1A, 1PD15.6, 1A)', solver // ': invalid ETA1; it &
-     &should be in the interval [0, 1) and not more than ETA2;' // ' it &
-     &is set to ', eta1, '.'
+          print '(/1A, 1PD15.6, 1A)', solver // ': invalid ETA1; it shou&
+     &ld be in the interval [0, 1) and not more than ETA2;' // ' it is s&
+     &et to ', eta1, '.'
       end if
 
       if (is_nan(eta2)) then
@@ -118,9 +117,9 @@
           eta2 = 0.7_RP
       else if (eta2 < eta1 .or. eta2 > ONE) then
           eta2 = (eta1 + TWO)/3.0_RP
-          print '(/1X, 1A, 1PD15.6, 1A)', solver // ': invalid ETA2; it &
-     &should be in the interval [0, 1] and not less than ETA1;' // ' it &
-     &is set to ', eta2, '.'
+          print '(/1A, 1PD15.6, 1A)', solver // ': invalid ETA2; it shou&
+     &ld be in the interval [0, 1] and not less than ETA1;' // ' it is s&
+     &et to ', eta2, '.'
       end if
 
       if (is_nan(gamma1)) then
@@ -129,8 +128,8 @@
           gamma1 = HALF
       else if (gamma1 <= ZERO .or. gamma1 >= ONE) then
           gamma1 = HALF
-          print '(/1X, 1A, 1PD15.6, 1A)', solver // ': invalid GAMMA1; i&
-     &t should in the interval (0, 1); it is set to ', gamma1, '.'
+          print '(/1A, 1PD15.6, 1A)', solver // ': invalid GAMMA1; it sh&
+     &ould in the interval (0, 1); it is set to ', gamma1, '.'
       end if
 
       if (is_nan(gamma2)) then
@@ -139,9 +138,8 @@
           gamma2 = TWO
       else if (gamma2 < ONE .or. is_inf(gamma2)) then
           gamma2 = TWO
-          print '(/1X, 1A, 1PD15.6, 1A)', solver // ': invalid GAMMA2; i&
-     &t should a real number not less than 1; it is set to ', gamma2, '.&
-     &'
+          print '(/1A, 1PD15.6, 1A)', solver // ': invalid GAMMA2; it sh&
+     &ould a real number not less than 1; it is set to ', gamma2, '.'
       end if
 
       if (abs(rhobeg - rhoend) < 1.0e2_RP*EPS*max(abs(rhobeg), ONE))then
@@ -161,16 +159,16 @@
           else
               rhobeg = RHOBEG_DFT
           end if
-          print '(/1X, 1A, 1PD15.6, 1A)', solver // ': invalid RHOBEG; i&
-     &t should be a positive number; it is set to ', rhobeg, '.'
+          print '(/1A, 1PD15.6, 1A)', solver // ': invalid RHOBEG; it sh&
+     &ould be a positive number; it is set to ', rhobeg, '.'
       end if
 
       if (rhoend <= ZERO .or. rhobeg < rhoend .or. is_nan(rhoend) .or. i&
      &s_inf(rhoend)) then
           rhoend = max(EPS, min(TENTH*rhobeg, RHOEND_DFT))
-          print '(/1X, 1A, 1PD15.6, 1A)', solver // ': invalid RHOEND; i&
-     &t should be a positive number and RHOEND <= RHOBEG; ' // 'it is se&
-     &t to ', rhoend, '.'
+          print '(/1A, 1PD15.6, 1A)', solver // ': invalid RHOEND; it sh&
+     &ould be a positive number and RHOEND <= RHOBEG; ' // 'it is set to&
+     & ', rhoend, '.'
       end if
 
       end subroutine

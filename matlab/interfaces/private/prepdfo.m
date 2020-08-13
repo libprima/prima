@@ -809,7 +809,6 @@ chkfunval = false;
 
 maxhist = maxfun;
 output_xhist = false; %!!!
-output_fhist = true;
 output_nlchist = false; %!!!
 
 if ~(isa(options, 'struct') || isempty(options))
@@ -885,7 +884,7 @@ options.solver = solver; % Record solver in options.solver; will be used in post
 % Check unknown fields according to solver
 % solver is '' if it has not been decided yet; in that case, we suppose (for
 % simplicity) that all possible fields are known.
-known_fields = {'iprint', 'maxfun', 'rhobeg', 'rhoend', 'ftarget', 'classical', 'quiet', 'debug', 'chkfunval', 'solver', 'maxhist', 'output_xhist', 'output_fhist'};
+known_fields = {'iprint', 'maxfun', 'rhobeg', 'rhoend', 'ftarget', 'classical', 'quiet', 'debug', 'chkfunval', 'solver', 'maxhist', 'output_xhist'};
 if ~isfield(options, 'classical') || (islogicalscalar(options.classical) && ~options.classical)
     known_fields = [known_fields, 'eta1', 'eta2', 'gamma1', 'gamma2'];
 end
@@ -1187,7 +1186,6 @@ options.honour_x0 = logical(options.honour_x0);
 validated = false;
 % Record user's instruction in the following two values; needed for iprint
 user_says_quiet = false;
-user_says_not_quiet = false;
 if isfield(options, 'quiet')
     if ~islogicalscalar(options.quiet)
         wid = sprintf('%s:InvalidQuietFlag', invoker);
@@ -1196,11 +1194,7 @@ if isfield(options, 'quiet')
         warnings = [warnings, wmessage]; 
     else
         validated = true;
-        if options.quiet
-            user_says_quiet = true;
-        else
-            user_says_not_quiet = true;
-        end
+        user_says_quiet = options.quiet;
     end
 end
 if ~validated % options.quiet has not got a valid value yet
@@ -1236,22 +1230,18 @@ if isfield(options, 'iprint')
         if options.classical
             wmessage = sprintf('%s: iprint = %d but quiet = true; iprint is reset to 0.', invoker, options.iprint);
             options.iprint = 0;
+            warning(wid, '%s', wmessage);
+            warnings = [warnings, wmessage]; 
+            validated = true;
         else
             % In the non-classical mode, we set options.iprint = -options.iprint, 
             % meaning that the output will not be displayed on standard output 
             % but recorded in a text file SOLVER_output.txt, where SOLVER will
-            % be replaced by the solver name. 
-            wmessage = sprintf('%s: iprint = %d but quiet = true; the output will be printed to a text file.', invoker, options.iprint);
+            % be replaced by the solver name. We do not raise a warning since 
+            % this is explained in the help information and since the user says 
+            % quiet!
             options.iprint = -options.iprint;
         end
-        warning(wid, '%s', wmessage);
-        warnings = [warnings, wmessage]; 
-        validated = true;
-    elseif options.iprint == 0 && user_says_not_quiet
-        % The user says "don't be shy!" but sets options.iprint = 0. 
-        % We set options.iprint = 1. It seems that no warning is needed.
-        options.iprint = 1;
-        validated = true;
     else
         validated = true;
     end
@@ -1356,22 +1346,6 @@ if isfield(options, 'output_xhist')
 end
 if ~validated
     options.output_xhist = output_xhist;
-end
-
-% Validate options.output_fhist
-validated = false;
-if isfield(options, 'output_fhist')
-    if ~islogicalscalar(options.output_fhist)
-        wid = sprintf('%s:InvalidOutput_fhist', invoker);
-        wmessage = sprintf('%s: invalid output_fhist flag; it should be true(1) or false(0); it is set to %s.', invoker, mat2str(output_fhist));
-        warning(wid, '%s', wmessage);
-        warnings = [warnings, wmessage]; 
-    else
-        validated = true;
-    end
-end
-if ~validated
-    options.output_fhist = output_fhist;
 end
 
 % Validate options.output_nlchist

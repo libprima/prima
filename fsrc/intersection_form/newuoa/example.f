@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 12-Aug-2020.
+! on 13-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -73,7 +73,7 @@
 
       implicit none
 
-      integer :: i, iprint, n, alloc_stat
+      integer :: i, n, alloc_stat
       real(kind(0.0D0)) :: rhobeg, f
       real(kind(0.0D0)), allocatable :: x(:)
 
@@ -82,8 +82,6 @@
 !----------------------------------------------------------------------!
 !external calfun
 !----------------------------------------------------------------------!
-
-      iprint = 2
 
       do n = 2, 8, 2
 ! Sets up the initial X for the Chebyquad problem.
@@ -100,7 +98,8 @@
 
 ! The following line illustrates how to call NEWUOA.
 !------------------------------------------------------------------!
-          call newuoa(calfun, x, f, rhobeg = rhobeg, iprint = iprint)
+          call newuoa(calfun, x, f, rhobeg = rhobeg)
+!call newuoa(calfun, x, f, rhobeg = rhobeg, iprint = 2)
 !------------------------------------------------------------------!
 ! In additon to the required arguments CALFUN, X, and F, the above
 ! illustration specifies also RHOBEG and IPRINT, which are optional.

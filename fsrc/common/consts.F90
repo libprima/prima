@@ -18,7 +18,7 @@
 module consts_mod 
 
 #if __FORTRAN_STANDARD__ >= 2008
-use intrinsic :: iso_fortran_env, only : INT16, INT32, INT64, REAL32, REAL64, REAL128
+use, intrinsic :: iso_fortran_env, only : INT16, INT32, INT64, REAL32, REAL64, REAL128
 #endif
 
 implicit none
@@ -31,7 +31,7 @@ public :: EPS, HUGENUM, ALMOST_INFINITY, HUGEFUN, HUGECON
 public :: SRNLEN, MSSGLEN
 public :: OUTUNIT
 public :: RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT
-public :: MAXFUN_DIM_DFT, MAXIMAL_HIST
+public :: MAXFUN_DIM_DFT, MAXMEMORY
 
 #if __DEBUGGING__ == 1
 logical, parameter :: DEBUGGING = .true.
@@ -85,7 +85,7 @@ real(RP), parameter :: HALF = 0.5_RP
 real(RP), parameter :: QUART = 0.25_RP
 real(RP), parameter :: TEN = 10.0_RP
 real(RP), parameter :: TENTH = 0.1_RP
-real(RP), parameter ::PI = 3.141592653589793238462643383279502884_RP
+real(RP), parameter :: PI = 3.141592653589793238462643383279502884_RP
 ! We may set PI to acos(-1.0_RP), but some compilers may complain about 
 ! "Elemental function as initialization expression with non-integer or
 ! non-character arguments".
@@ -114,12 +114,9 @@ real(RP), parameter :: FTARGET_DFT = -HUGENUM
 integer(IK), parameter :: IPRINT_DFT = 0 
 integer(IK), parameter :: MAXFUN_DIM_DFT = 500
 
-! Maximal amount of history that XHIST, FHIST, CHIST can return
-#if __INTEGER_KIND__ <= 16
-integer(IK), parameter :: MAXIMAL_HIST = huge(0_IK)
-#else
-integer(IK), parameter :: MAXIMAL_HIST = 100000
-#endif
+! Maximal amount of memory (Byte) allowed for XHIST, FHIST, and NLCHIST
+integer(INT64), parameter :: MAXMEMORY = 2_INT64**31 
+! 2**31 is 2G.
 
 
 end module consts_mod 

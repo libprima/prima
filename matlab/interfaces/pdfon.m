@@ -104,8 +104,13 @@ function [x, fx, exitflag, output] = pdfon(varargin)
 %       nlcineq: cineq(x) (if there is nonlcon)
 %       nlceq: ceq(x) (if there is nonlcon)
 %       constrviolation: constrviolation of x (if problem is constrained)
-%       fhist: history of function values
-%       chist: history of constraint violations
+%       xhist: history of iterates (if options.output_xhist = true)
+%       fhist: history of function values 
+%       chist: history of constraint violations 
+%       nlcihist: history of nonlinear inequality constraint values (if
+%       options.output_chist = true)
+%       nlcehist: history of nonlinear equality constraint values (if 
+%       options.output_chist = true)
 %       solver: backend solver that does the computation
 %       message: return message
 %       warnings: a cell array that record all the warnings raised
@@ -138,6 +143,14 @@ function [x, fx, exitflag, output] = pdfon(varargin)
 %       'cobylan' (for general constrained or unconstrained problems)
 %   *** classical: a boolean value indicating whether to call the classical 
 %       Powell code or not; default: false
+%   *** eta1, eta2, gamma1, gamma2 (only if classical = false)
+%       eta1, eta2, gamma1, and gamma2 are parameters in the updating scheme
+%       of the trust region radius. Roughly speaking, the trust region radius
+%       is contracted by a factor of gamma1 when the reduction ratio is below
+%       eta1, and  enlarged by a factor of gamma2 when the reduction ratio is 
+%       above eta2. It is required that 0 < eta1 <= eta2 < 1 and 
+%       0 < gamma1 < 1 < gamma2. Normally, eta1 <= 0.25. It is not recommended 
+%       to set eta1 >= 0.5. Default: values hard-coded in Powell's Fortran code.
 %   *** scale: (only for BOBYQA, LINCOA, and COBYLA) a boolean value 
 %       indicating whether to scale the problem according to bounds or not; 
 %       default: false; if the problem is to be scaled, then rhobeg and rhoend 
@@ -145,9 +158,47 @@ function [x, fx, exitflag, output] = pdfon(varargin)
 %       radii for the scaled problem
 %   *** honour_x0: (only for BOBYQA) a boolean value indicating whether to 
 %       respect the user-defined x0; default: false
+%   *** iprint: a flag deciding how much information will be printed during
+%       the computation; possible values are value 0 (default), 1, -1, 2, 
+%       -2, 3, or -3. 
+%       0: there will be no printing; this is the default;
+%       1: a message will be printed to the screen at the return, showing 
+%          the best vector of veriables found and its objective function value;
+%       2: in addition to 1, at each "new stage" of the computation, a message 
+%          is printed to the screen with the best vector of variables so far 
+%          and its objective function value;
+%       3: in addition to 2, each function evaluation with its variables will
+%          be printed to the screen;
+%       -1, -2, -3: the same information as 1, 2, 3 will be printed, not to 
+%          the screen but to a file named NEWUOA_output.txt; the file will be
+%          created if it does not exist; the new output will be appended to 
+%          the end of this file if it already exists. Note that iprint = -3 
+%          can be costly in terms of time and space. 
+%       When quiet = true (see below), setting iprint = 1, 2, or 3 is
+%       the same as setting it to -1, -2, or -3, respectively.
 %   *** quiet: a boolean value indicating whether to keep quiet or not;
-%       default: true (if it is false, PDFO will print the return message of the
-%       Fortran code)
+%       if this flag is set to false or not set, then it affects nothing;
+%       if it is set to true and iprint = 1, 2, or 3, the effect is the
+%       same as setting iprint to -1, -2, or -3, repectively.
+%   *** maxhist: a nonnegative integer controlling how much history will
+%       be included in the output structure; default: maxfun; 
+%       *******************************************************************
+%       IMPORTANT NOTICE:
+%       If maxhist is so large that saving the history takes too much memory,
+%       the Fortran code will reset maxhist to a smaller value. The maximal
+%       amount of memory defined the Fortran code is 2GB. 
+%       Let L = length(x) + 2*(number of nonlinear constraints). Assuming 
+%       that maxfun <= 500*L, then any probelm with L <= 400 is not affected.
+%       *******************************************************************
+%   *** output_xhist: a boolean value inidicating whether to output the
+%       history of the iterates; if it is set to true, then the output
+%       structure will include a field "xhist", which contains the last
+%       maxhist iterates of the algorithm; default: false; 
+%   *** output_chist: a boolean value inidicating whether to output the
+%       history of the function values; if it is set to true; then the
+%       output structure will include fields "nlcihist" and "nlcehist",
+%       which respectively contain the inequality and equality constraint 
+%       values of the last maxhist iterates of the algorithm; default: false 
 %   *** debug: a boolean value indicating whether to debug or not; default: false
 %   *** chkfunval: a boolean value indicating whether to verify the returned 
 %       function and constraint (if applicable) values or not; default: false

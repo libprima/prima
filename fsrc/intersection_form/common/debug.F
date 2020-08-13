@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 12-Aug-2020.
+! on 13-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -45,8 +45,8 @@
       call backtr()
 #endif
 
-      print '(/1X, 1A/)', 'Error: ' // trim(srname) // ': ' // trim(mssg&
-     &) // '.'
+      print '(/1A/)', 'Error: ' // trim(srname) // ': ' // trim(mssg) //&
+     & '.'
 
       stop ! This means to stop the whole program.
 

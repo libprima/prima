@@ -44,7 +44,8 @@ function [x, fx, exitflag, output] = newuoan(varargin)
 %       code but cannot be returned by NEWUOA 
 %   *** output is a structure with the following fields:
 %       funcCount: number of function evaluations
-%       fhist: history of function values
+%       xhist: history of iterates (if options.output_xhist = true)
+%       fhist: history of function values 
 %       solver: backend solver that does the computation, i.e., 'newuoan'
 %       message: return message
 %       warnings: a cell array that records all the  warnings raised
@@ -69,9 +70,51 @@ function [x, fx, exitflag, output] = newuoan(varargin)
 %       default: 2*length(x0)+1
 %   *** classical: a boolean value indicating whether to call the classical 
 %       Powell code or not; default: false
+%   *** eta1, eta2, gamma1, gamma2 (only if classical = false)
+%       eta1, eta2, gamma1, and gamma2 are parameters in the updating scheme
+%       of the trust region radius. Roughly speaking, the trust region radius
+%       is contracted by a factor of gamma1 when the reduction ratio is below
+%       eta1, and  enlarged by a factor of gamma2 when the reduction ratio is 
+%       above eta2. It is required that 0 < eta1 <= eta2 < 1 and 
+%       0 < gamma1 < 1 < gamma2. Normally, eta1 <= 0.25. It is not recommended 
+%       to set eta1 >= 0.5. Default: eta1 = 0.1, eta2 = 0.7, gamma1 = 0.5, 
+%       and gamma2 = 2.
+%   *** iprint: a flag deciding how much information will be printed during
+%       the computation; possible values are value 0 (default), 1, -1, 2, 
+%       -2, 3, or -3. 
+%       0: there will be no printing; this is the default;
+%       1: a message will be printed to the screen at the return, showing 
+%          the best vector of veriables found and its objective function value;
+%       2: in addition to 1, at each "new stage" of the computation, a message 
+%          is printed to the screen with the best vector of variables so far 
+%          and its objective function value;
+%       3: in addition to 2, each function evaluation with its variables will
+%          be printed to the screen;
+%       -1, -2, -3: the same information as 1, 2, 3 will be printed, not to 
+%          the screen but to a file named NEWUOA_output.txt; the file will be
+%          created if it does not exist; the new output will be appended to 
+%          the end of this file if it already exists. Note that iprint = -3 
+%          can be costly in terms of time and space. 
+%       When quiet = true (see below), setting iprint = 1, 2, or 3 is
+%       the same as setting it to -1, -2, or -3, respectively.
 %   *** quiet: a boolean value indicating whether to keep quiet or not;
-%       default: true (if it is false, NEWUOA will print the return message of
-%       the Fortran code)
+%       if this flag is set to false or not set, then it affects nothing;
+%       if it is set to true and iprint = 1, 2, or 3, the effect is the
+%       same as setting iprint to -1, -2, or -3, repectively.
+%   *** maxhist: a nonnegative integer controlling how much history will
+%       be included in the output structure; default: maxfun; 
+%       *******************************************************************
+%       IMPORTANT NOTICE:
+%       If maxhist is so large that saving the history takes too much memory,
+%       the Fortran code will reset maxhist to a smaller value. The maximal
+%       amount of memory defined the Fortran code is 2GB. Assuming that
+%       maxfun = 500*length(x0), this does not affect problems with not
+%       more than 400 variables.
+%       *******************************************************************
+%   *** output_xhist: a boolean value inidicating whether to output the
+%       history of the iterates; if it is set to true, then the output
+%       structure will include a field "xhist", which contains the last
+%       maxhist iterates of the algorithm; default: false 
 %   *** debug: a boolean value indicating whether to debug or not; default: false
 %   *** chkfunval: a boolean value indicating whether to verify the returned 
 %       function value or not; default: false
@@ -212,17 +255,6 @@ iprint = options.iprint;
 maxfun = options.maxfun;
 maxhist = options.maxhist;
 output_xhist = options.output_xhist;
-output_fhist = options.output_fhist;
-if output_xhist
-    maxxhist = maxhist;
-else
-    maxxhist = 0;
-end 
-if output_fhist
-    maxfhist = maxhist;
-else
-    maxfhist = 0;
-end
 
 if ~strcmp(invoker, 'pdfon') && probinfo.feasibility_problem
     % An "unconstrained feasibility problem" is rediculous, yet nothing wrong mathematically.
@@ -242,8 +274,7 @@ else
     if maxfun > maxint
         % maxfun would suffer from overflow in the Fortran code 
         maxfun = maxint;
-        maxxhist = min(maxfun, maxxhist); 
-        maxfhist = min(maxfun, maxfhist); 
+        maxhist = min(maxfun, maxhist); 
         wid = sprintf('%s:MaxfunTooLarge', funname);
         wmessage = sprintf('%s: maxfun exceeds the upper limit of Fortran integers; it is set to %d.', funname, maxfun);
         warning(wid, '%s', wmessage);
@@ -254,9 +285,9 @@ else
     % Call the Fortran code
     % The mexified Fortran Function is a private function generating only private errors; however, public errors can occur due to, e.g., evalobj; error handling needed 
         if options.classical
-            [x, fx, exitflag, nf, xhist, fhist] = fnewuoan_classical(fun, x0, rhobeg, rhoend, ftarget, maxfun, maxxhist, maxfhist, npt, iprint);
+            [x, fx, exitflag, nf, xhist, fhist] = fnewuoan_classical(fun, x0, rhobeg, rhoend, ftarget, maxfun, npt, iprint, maxhist, double(output_xhist));
         else
-            [x, fx, exitflag, nf, xhist, fhist] = fnewuoan(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, maxxhist, maxfhist, npt, iprint);
+            [x, fx, exitflag, nf, xhist, fhist] = fnewuoan(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, iprint, maxhist, double(output_xhist));
         end
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly 
@@ -270,9 +301,14 @@ else
     output.fx = fx;
     output.exitflag = exitflag;
     output.funcCount = nf;
-    output.maxhist = maxhist; 
-    output.xhist = xhist;
+    if output_xhist
+        output.xhist = xhist;
+    end
     output.fhist = fhist;
+    % Record the length of history in output for verification in
+    % postpdfo. It may be smaller than maxhist due to the memory limit
+    % in the Fortran code.
+    output.maxhist = min(maxhist, max(length(fhist), size(xhist, 2)));
     output.constrviolation = 0; % Unconstrained problem; set output.constrviolation to 0
     output.chist = []; % Unconstrained problem; set output.chist to []
 end

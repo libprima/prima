@@ -1,0 +1,2654 @@
+gfortran -g -Wall -Wextra -Wconversion -Wuninitialized -Wmaybe-uninitialized -fimplicit-none -fbacktrace -ffree-line-length-0 -fcheck=all -ffpe-trap=invalid,zero,overflow,underflow  -c  ../common/consts.F90 ../common/debug.F90 ../common/memory.F90 ../common/info.F90 ../common/infnan.F90 ../common/lina.F90 ../common/output.F90 ../common/pintrf.F90  preproc.f90 initialize.f90 trustregion.f90 vlagbeta.f90 geometry.f90 update.f90 shiftbase.f90 newuob.f90 newuoa.f90 example.f90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//prob.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//newuoa-interface.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90 -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/ -pedantic  -ffree-form
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:99:9:
+
+ mwSize, parameter :: mwOne = 1 ! Integer 1 with type mwSize
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:155:13:
+
+     mwPointer, intent(in) :: px
+             1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:156:13:
+
+     mwSize, intent(in) :: n
+             1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:163:13:
+
+     mwPointer, intent(in) :: px
+             1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:164:13:
+
+     mwSize, intent(in) :: n
+             1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:170:13:
+
+     mwPointer, intent(in) :: pm
+             1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:182:13:
+
+     mwPointer, intent(in) :: pin(*)
+             1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:183:13:
+
+     mwPointer, intent(out) ::  pout(*) 
+             1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:190:13:
+
+     mwPointer :: mxCreateDoubleMatrix
+             1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:191:13:
+
+     mwSize, intent(in) :: m, n
+             1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:198:13:
+
+     mwPointer :: mxCreateDoubleScalar
+             1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:204:13:
+
+     mwPointer :: mxGetDoubles                  
+             1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:205:13:
+
+     mwPointer, intent(in) :: pa
+             1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:212:13:
+
+     mwPointer :: mxGetM  
+             1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:213:13:
+
+     mwPointer, intent(in) :: pm
+             1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:218:13:
+
+     mwPointer :: mxGetN
+             1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:219:13:
+
+     mwPointer, intent(in) :: pm
+             1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:224:13:
+
+     mwPointer :: mxGetPr                  
+             1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:225:13:
+
+     mwPointer, intent(in) :: pa
+             1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:232:13:
+
+     mwPointer, intent(in) :: pm
+             1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:234:13:
+
+     mwSize, intent(in) :: strlen
+             1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:241:13:
+
+     mwPointer, intent(in) :: pm
+             1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:249:13:
+
+     mwPointer, intent(in) :: pm
+             1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:256:13:
+
+     mwPointer, intent(in) :: pm
+             1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:270:9:
+
+ mwPointer :: fmxGetDble
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:271:9:
+
+ mwPointer, intent(in) :: pa
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:323:9:
+
+ mwPointer, intent(in) :: px
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:327:9:
+
+ mwSize :: m, n
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:610:9:
+
+ mwPointer, intent(in) :: px
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:645:9:
+
+ mwPointer, intent(in) :: px
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:653:9:
+
+ mwSize :: n_mw 
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:694:9:
+
+ mwPointer, intent(in) :: px
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:702:9:
+
+ mwSize :: xsize
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:756:9:
+
+ mwPointer, intent(in) :: px
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:794:9:
+
+ mwPointer, intent(out) :: px
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:829:9:
+
+ mwPointer, intent(out) :: px
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:834:9:
+
+ mwSize :: n_mw
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:881:9:
+
+ mwPointer, intent(out) :: px
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:886:9:
+
+ mwSize :: m_mw, n_mw
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:924:9:
+
+ mwPointer, intent(out) :: px
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:951:9:
+
+ mwPointer, intent(in) :: fun_ptr      
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:952:9:
+
+ mwPointer, intent(in) :: pin(:)
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:953:9:
+
+ mwPointer, intent(out) :: pout(:)
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:955:9:
+
+ mwPointer :: aug_pin(size(pin) + 1)
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//prob.F90:17:9:
+
+ mwPointer :: fun_ptr ! Pointer to objective function
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//prob.F90:43:9:
+
+ mwPointer :: pinput(1), poutput(1) 
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//prob.F90:44:9:
+
+ mwSize :: row, col
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:234:9:
+
+ mwPointer, intent(in) :: px
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:269:9:
+
+ mwPointer, intent(in) :: px
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:277:9:
+
+ mwSize :: n_mw 
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:318:9:
+
+ mwPointer, intent(in) :: px
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:326:9:
+
+ mwSize :: xsize
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:370:9:
+
+ mwPointer, intent(in) :: px
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:408:9:
+
+ mwPointer, intent(out) :: px
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:443:9:
+
+ mwPointer, intent(out) :: px
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:448:9:
+
+ mwSize :: n_mw
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:495:9:
+
+ mwPointer, intent(out) :: px
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:500:9:
+
+ mwSize :: m_mw, n_mw
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:538:9:
+
+ mwPointer, intent(out) :: px
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90:49:9:
+
+ mwPointer, intent(in) :: pinput(nargin)
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90:50:9:
+
+ mwPointer, intent(out) :: poutput(nargout)
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90:53:10:
+
+  mwSize :: cols ! Size of the input
+          1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90:61:10:
+
+  mwSize, parameter :: msZero = 0
+          1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90:63:10:
+
+  mwIndex, parameter :: miZero = 0
+          1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//newuoa-interface.F90:31:9:
+
+ mwPointer, intent(in) :: pinput(nargin)
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//newuoa-interface.F90:32:9:
+
+ mwPointer, intent(out) :: poutput(nargout)
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90:18:9:
+
+ mwPointer :: fun_ptr 
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90:67:9:
+
+ mwPointer, intent(in) :: pinput(nargin)
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90:68:9:
+
+ mwPointer, intent(out) :: poutput(nargout)
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90:196:9:
+
+ mwPointer :: pinput(1), poutput(1) 
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90:197:9:
+
+ mwSize :: row, col
+         1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+cd ../intersection_form/newuoa/ && gfortran -g -Wall -Wextra -Wconversion -Wuninitialized -Wmaybe-uninitialized -fimplicit-none -fbacktrace -ffree-line-length-0 -fcheck=all -ffpe-trap=invalid,zero,overflow,underflow  -c ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F ../common/infnan.F ../common/lina.F ../common/output.F ../common/pintrf.F preproc.f initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f example.f /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//prob.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/ -pedantic -ffixed-form && rm -f *.o *.mod a.out *__genmod.f90 && cd /home/zaikunzhang/Work/neupdfo/fsrc/newuoa
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:114:15:
+
+       mwSize, parameter :: mwOne = 1 ! Integer 1 with type mwSize
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:171:19:
+
+           mwPointer, intent(in) :: px
+                   1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:172:19:
+
+           mwSize, intent(in) :: n
+                   1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:179:19:
+
+           mwPointer, intent(in) :: px
+                   1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:180:19:
+
+           mwSize, intent(in) :: n
+                   1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:186:19:
+
+           mwPointer, intent(in) :: pm
+                   1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:198:19:
+
+           mwPointer, intent(in) :: pin(*)
+                   1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:199:19:
+
+           mwPointer, intent(out) :: pout(*)
+                   1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:206:19:
+
+           mwPointer :: mxCreateDoubleMatrix
+                   1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:207:19:
+
+           mwSize, intent(in) :: m, n
+                   1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:214:19:
+
+           mwPointer :: mxCreateDoubleScalar
+                   1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:220:19:
+
+           mwPointer :: mxGetDoubles
+                   1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:221:19:
+
+           mwPointer, intent(in) :: pa
+                   1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:228:19:
+
+           mwPointer :: mxGetM
+                   1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:229:19:
+
+           mwPointer, intent(in) :: pm
+                   1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:234:19:
+
+           mwPointer :: mxGetN
+                   1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:235:19:
+
+           mwPointer, intent(in) :: pm
+                   1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:240:19:
+
+           mwPointer :: mxGetPr
+                   1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:241:19:
+
+           mwPointer, intent(in) :: pa
+                   1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:248:19:
+
+           mwPointer, intent(in) :: pm
+                   1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:250:19:
+
+           mwSize, intent(in) :: strlen
+                   1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:257:19:
+
+           mwPointer, intent(in) :: pm
+                   1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:265:19:
+
+           mwPointer, intent(in) :: pm
+                   1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:272:19:
+
+           mwPointer, intent(in) :: pm
+                   1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:286:15:
+
+       mwPointer :: fmxGetDble
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:287:15:
+
+       mwPointer, intent(in) :: pa
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:339:15:
+
+       mwPointer, intent(in) :: px
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:343:15:
+
+       mwSize :: m, n
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:634:15:
+
+       mwPointer, intent(in) :: px
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:670:15:
+
+       mwPointer, intent(in) :: px
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:678:15:
+
+       mwSize :: n_mw
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:721:15:
+
+       mwPointer, intent(in) :: px
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:729:15:
+
+       mwSize :: xsize
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:785:15:
+
+       mwPointer, intent(in) :: px
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:824:15:
+
+       mwPointer, intent(out) :: px
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:860:15:
+
+       mwPointer, intent(out) :: px
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:865:15:
+
+       mwSize :: n_mw
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:915:15:
+
+       mwPointer, intent(out) :: px
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:920:15:
+
+       mwSize :: m_mw, n_mw
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:960:15:
+
+       mwPointer, intent(out) :: px
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:988:15:
+
+       mwPointer, intent(in) :: fun_ptr
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:989:15:
+
+       mwPointer, intent(in) :: pin(:)
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:990:15:
+
+       mwPointer, intent(out) :: pout(:)
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:992:15:
+
+       mwPointer :: aug_pin(size(pin) + 1)
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//prob.F:32:15:
+
+       mwPointer :: fun_ptr ! Pointer to objective function
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//prob.F:58:15:
+
+       mwPointer :: pinput(1), poutput(1)
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//prob.F:59:15:
+
+       mwSize :: row, col
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F:252:15:
+
+       mwPointer, intent(in) :: px
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F:288:15:
+
+       mwPointer, intent(in) :: px
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F:296:15:
+
+       mwSize :: n_mw
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F:339:15:
+
+       mwPointer, intent(in) :: px
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F:347:15:
+
+       mwSize :: xsize
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F:393:15:
+
+       mwPointer, intent(in) :: px
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F:432:15:
+
+       mwPointer, intent(out) :: px
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F:468:15:
+
+       mwPointer, intent(out) :: px
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F:473:15:
+
+       mwSize :: n_mw
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F:523:15:
+
+       mwPointer, intent(out) :: px
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F:528:15:
+
+       mwSize :: m_mw, n_mw
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F:568:15:
+
+       mwPointer, intent(out) :: px
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F:64:15:
+
+       mwPointer, intent(in) :: pinput(nargin)
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F:65:15:
+
+       mwPointer, intent(out) :: poutput(nargout)
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F:68:16:
+
+        mwSize :: cols ! Size of the input
+                1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F:76:16:
+
+        mwSize, parameter :: msZero = 0
+                1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F:78:16:
+
+        mwIndex, parameter :: miZero = 0
+                1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F:46:15:
+
+       mwPointer, intent(in) :: pinput(nargin)
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F:47:15:
+
+       mwPointer, intent(out) :: poutput(nargout)
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F:33:15:
+
+       mwPointer :: fun_ptr
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F:83:15:
+
+       mwPointer, intent(in) :: pinput(nargin)
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F:84:15:
+
+       mwPointer, intent(out) :: poutput(nargout)
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F:218:15:
+
+       mwPointer :: pinput(1), poutput(1)
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F:219:15:
+
+       mwSize :: row, col
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+ifort -g -warn all -check all  -fpe0 -debug extended -fimplicit-none  -c -standd:f03 -pedantic -ffree-form ../common/consts.F90 ../common/debug.F90 ../common/memory.F90 ../common/info.F90 ../common/infnan.F90 ../common/lina.F90 ../common/output.F90 ../common/pintrf.F90  preproc.f90 initialize.f90 trustregion.f90 vlagbeta.f90 geometry.f90 update.f90 shiftbase.f90 newuob.f90 newuoa.f90 example.f90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//prob.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//newuoa-interface.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90 -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/ 
+cd ../intersection_form/newuoa/ && ifort -g -warn all -check all  -fpe0 -debug extended -fimplicit-none  -c ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F ../common/infnan.F ../common/lina.F ../common/output.F ../common/pintrf.F preproc.f initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f example.f /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//prob.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/ -pedantic -ffixed-form && rm -f *.o *.mod a.out *__genmod.f90 && cd /home/zaikunzhang/Work/neupdfo/fsrc/newuoa
+g95 -g -Wall -Wextra -fbounds-check -fimplicit-none  -c ../common/consts.F90 ../common/debug.F90 ../common/memory.F90 ../common/info.F90 ../common/infnan.F90 ../common/lina.F90 ../common/output.F90 ../common/pintrf.F90  preproc.f90 initialize.f90 trustregion.f90 vlagbeta.f90 geometry.f90 update.f90 shiftbase.f90 newuob.f90 newuoa.f90 example.f90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//prob.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//newuoa-interface.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90 -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/ -pedantic -ffree-form
+In file initialize.f90:152
+
+    call calfun(xtemp, f)
+         1
+Warning (165): Implicit interface 'calfun' called at (1)
+In file initialize.f90:235
+
+    call calfun(xtemp, f)
+         1
+Warning (165): Implicit interface 'calfun' called at (1)
+In file newuob.f90:271
+
+        call calfun(x, f)
+             1
+Warning (165): Implicit interface 'calfun' called at (1)
+In file newuob.f90:470
+
+        call calfun(x, f)
+             1
+Warning (165): Implicit interface 'calfun' called at (1)
+In file newuob.f90:551
+
+        call calfun(x, f)
+             1
+Warning (165): Implicit interface 'calfun' called at (1)
+In file example.f90:55
+
+use calfun_mod, only : calfun
+                       1
+Warning (102): MODULE PROCEDURE 'calfun' USEd at (1) is not referenced
+In file /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//newuoa-interface.F90:24
+
+use prob_mod, only : fun_ptr, calfun
+                              1
+Warning (102): MODULE PROCEDURE 'calfun' USEd at (1) is not referenced
+cd ../intersection_form/newuoa/ && g95 -g -Wall -Wextra -fbounds-check -fimplicit-none  -c ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F ../common/infnan.F ../common/lina.F ../common/output.F ../common/pintrf.F preproc.f initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f example.f /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//prob.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/ -pedantic -ffixed-form && rm -f *.o *.mod a.out *__genmod.f90 && cd /home/zaikunzhang/Work/neupdfo/fsrc/newuoa
+Warning (115): Line 104 of ../common/consts.F is being truncated
+Warning (115): Line 48 of ../common/debug.F is being truncated
+Warning (115): Line 95 of ../common/debug.F is being truncated
+Warning (115): Line 233 of ../common/lina.F is being truncated
+Warning (115): Line 60 of ../common/output.F is being truncated
+Warning (115): Line 65 of ../common/output.F is being truncated
+Warning (115): Line 80 of ../common/output.F is being truncated
+Warning (115): Line 82 of ../common/output.F is being truncated
+Warning (115): Line 95 of ../common/output.F is being truncated
+Warning (115): Line 103 of ../common/output.F is being truncated
+Warning (115): Line 105 of ../common/output.F is being truncated
+Warning (115): Line 107 of ../common/output.F is being truncated
+Warning (115): Line 140 of ../common/output.F is being truncated
+Warning (115): Line 142 of ../common/output.F is being truncated
+Warning (115): Line 154 of ../common/output.F is being truncated
+Warning (115): Line 162 of ../common/output.F is being truncated
+Warning (115): Line 164 of ../common/output.F is being truncated
+Warning (115): Line 193 of ../common/output.F is being truncated
+Warning (115): Line 205 of ../common/output.F is being truncated
+Warning (115): Line 210 of ../common/output.F is being truncated
+Warning (115): Line 211 of ../common/output.F is being truncated
+Warning (115): Line 26 of preproc.f is being truncated
+Warning (115): Line 29 of preproc.f is being truncated
+Warning (115): Line 31 of preproc.f is being truncated
+Warning (115): Line 57 of preproc.f is being truncated
+Warning (115): Line 60 of preproc.f is being truncated
+Warning (115): Line 66 of preproc.f is being truncated
+Warning (115): Line 72 of preproc.f is being truncated
+Warning (115): Line 78 of preproc.f is being truncated
+Warning (115): Line 81 of preproc.f is being truncated
+Warning (115): Line 82 of preproc.f is being truncated
+Warning (115): Line 88 of preproc.f is being truncated
+Warning (115): Line 109 of preproc.f is being truncated
+Warning (115): Line 110 of preproc.f is being truncated
+Warning (115): Line 120 of preproc.f is being truncated
+Warning (115): Line 121 of preproc.f is being truncated
+Warning (115): Line 131 of preproc.f is being truncated
+Warning (115): Line 141 of preproc.f is being truncated
+Warning (115): Line 162 of preproc.f is being truncated
+Warning (115): Line 166 of preproc.f is being truncated
+Warning (115): Line 169 of preproc.f is being truncated
+Warning (115): Line 170 of preproc.f is being truncated
+Warning (115): Line 33 of initialize.f is being truncated
+Warning (115): Line 103 of initialize.f is being truncated
+Warning (115): Line 107 of initialize.f is being truncated
+Warning (115): Line 358 of initialize.f is being truncated
+In file initialize.f:170
+
+          call calfun(xtemp, f)
+               1
+Warning (165): Implicit interface 'calfun' called at (1)
+In file initialize.f:253
+
+          call calfun(xtemp, f)
+               1
+Warning (165): Implicit interface 'calfun' called at (1)
+Warning (115): Line 32 of trustregion.f is being truncated
+Warning (115): Line 68 of trustregion.f is being truncated
+Warning (115): Line 36 of vlagbeta.f is being truncated
+Warning (115): Line 44 of vlagbeta.f is being truncated
+Warning (115): Line 120 of vlagbeta.f is being truncated
+Warning (115): Line 33 of geometry.f is being truncated
+Warning (115): Line 87 of geometry.f is being truncated
+Warning (115): Line 89 of geometry.f is being truncated
+Warning (115): Line 109 of geometry.f is being truncated
+Warning (115): Line 176 of geometry.f is being truncated
+Warning (115): Line 192 of geometry.f is being truncated
+Warning (115): Line 348 of geometry.f is being truncated
+Warning (115): Line 378 of geometry.f is being truncated
+Warning (115): Line 391 of geometry.f is being truncated
+Warning (115): Line 406 of geometry.f is being truncated
+Warning (115): Line 549 of geometry.f is being truncated
+Warning (115): Line 601 of geometry.f is being truncated
+Warning (115): Line 605 of geometry.f is being truncated
+Warning (115): Line 725 of geometry.f is being truncated
+Warning (115): Line 231 of update.f is being truncated
+Warning (115): Line 275 of update.f is being truncated
+Warning (115): Line 342 of update.f is being truncated
+Warning (115): Line 33 of shiftbase.f is being truncated
+Warning (115): Line 40 of shiftbase.f is being truncated
+Warning (115): Line 43 of shiftbase.f is being truncated
+Warning (115): Line 32 of newuob.f is being truncated
+Warning (115): Line 63 of newuob.f is being truncated
+Warning (115): Line 65 of newuob.f is being truncated
+Warning (115): Line 165 of newuob.f is being truncated
+Warning (115): Line 169 of newuob.f is being truncated
+Warning (115): Line 178 of newuob.f is being truncated
+Warning (115): Line 202 of newuob.f is being truncated
+Warning (115): Line 207 of newuob.f is being truncated
+Warning (115): Line 247 of newuob.f is being truncated
+Warning (115): Line 256 of newuob.f is being truncated
+Warning (115): Line 278 of newuob.f is being truncated
+Warning (115): Line 283 of newuob.f is being truncated
+Warning (115): Line 342 of newuob.f is being truncated
+Warning (115): Line 355 of newuob.f is being truncated
+Warning (115): Line 364 of newuob.f is being truncated
+Warning (115): Line 389 of newuob.f is being truncated
+Warning (115): Line 396 of newuob.f is being truncated
+Warning (115): Line 399 of newuob.f is being truncated
+Warning (115): Line 408 of newuob.f is being truncated
+Warning (115): Line 415 of newuob.f is being truncated
+Warning (115): Line 433 of newuob.f is being truncated
+Warning (115): Line 469 of newuob.f is being truncated
+Warning (115): Line 486 of newuob.f is being truncated
+Warning (115): Line 494 of newuob.f is being truncated
+Warning (115): Line 552 of newuob.f is being truncated
+Warning (115): Line 574 of newuob.f is being truncated
+Warning (115): Line 577 of newuob.f is being truncated
+Warning (115): Line 623 of newuob.f is being truncated
+In file newuob.f:298
+
+              call calfun(x, f)
+                   1
+Warning (165): Implicit interface 'calfun' called at (1)
+In file newuob.f:509
+
+              call calfun(x, f)
+                   1
+Warning (165): Implicit interface 'calfun' called at (1)
+In file newuob.f:593
+
+              call calfun(x, f)
+                   1
+Warning (165): Implicit interface 'calfun' called at (1)
+Warning (115): Line 43 of newuoa.f is being truncated
+Warning (115): Line 44 of newuoa.f is being truncated
+Warning (115): Line 43 of newuoa.f is being truncated
+Warning (115): Line 44 of newuoa.f is being truncated
+Warning (115): Line 177 of newuoa.f is being truncated
+Warning (115): Line 179 of newuoa.f is being truncated
+Warning (115): Line 291 of newuoa.f is being truncated
+Warning (115): Line 344 of newuoa.f is being truncated
+Warning (115): Line 350 of newuoa.f is being truncated
+Warning (115): Line 353 of newuoa.f is being truncated
+Warning (115): Line 356 of newuoa.f is being truncated
+Warning (115): Line 378 of newuoa.f is being truncated
+Warning (115): Line 379 of newuoa.f is being truncated
+Warning (115): Line 378 of newuoa.f is being truncated
+Warning (115): Line 379 of newuoa.f is being truncated
+Warning (115): Line 419 of newuoa.f is being truncated
+Warning (115): Line 421 of newuoa.f is being truncated
+Warning (115): Line 423 of newuoa.f is being truncated
+Warning (115): Line 42 of example.f is being truncated
+In file example.f:71
+
+      use calfun_mod, only : calfun
+                             1
+Warning (102): MODULE PROCEDURE 'calfun' USEd at (1) is not referenced
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:1035:57: warning: no newline at end of file
+Warning (115): Line 116 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F is being truncated
+Warning (115): Line 354 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F is being truncated
+Warning (115): Line 363 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F is being truncated
+Warning (115): Line 375 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F is being truncated
+Warning (115): Line 382 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F is being truncated
+Warning (115): Line 389 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F is being truncated
+Warning (115): Line 396 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F is being truncated
+Warning (115): Line 403 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F is being truncated
+Warning (115): Line 409 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F is being truncated
+Warning (115): Line 655 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F is being truncated
+Warning (115): Line 699 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F is being truncated
+Warning (115): Line 702 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F is being truncated
+Warning (115): Line 752 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F is being truncated
+Warning (115): Line 755 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F is being truncated
+Warning (115): Line 806 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F is being truncated
+Warning (115): Line 836 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F is being truncated
+Warning (115): Line 877 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F is being truncated
+Warning (115): Line 880 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F is being truncated
+Warning (115): Line 888 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F is being truncated
+Warning (115): Line 933 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F is being truncated
+Warning (115): Line 936 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F is being truncated
+Warning (115): Line 970 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F is being truncated
+Warning (115): Line 1017 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F is being truncated
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//prob.F:100:26: warning: no newline at end of file
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F:590:27: warning: no newline at end of file
+Warning (115): Line 75 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F is being truncated
+Warning (115): Line 88 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F is being truncated
+Warning (115): Line 98 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F is being truncated
+Warning (115): Line 273 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F is being truncated
+Warning (115): Line 317 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F is being truncated
+Warning (115): Line 320 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F is being truncated
+Warning (115): Line 370 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F is being truncated
+Warning (115): Line 373 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F is being truncated
+Warning (115): Line 414 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F is being truncated
+Warning (115): Line 444 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F is being truncated
+Warning (115): Line 485 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F is being truncated
+Warning (115): Line 488 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F is being truncated
+Warning (115): Line 496 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F is being truncated
+Warning (115): Line 541 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F is being truncated
+Warning (115): Line 544 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F is being truncated
+Warning (115): Line 578 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F is being truncated
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F:159:33: warning: no newline at end of file
+Warning (115): Line 105 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F is being truncated
+Warning (115): Line 109 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F is being truncated
+Warning (115): Line 113 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F is being truncated
+Warning (115): Line 117 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F is being truncated
+Warning (115): Line 123 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F is being truncated
+Warning (115): Line 126 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F is being truncated
+Warning (115): Line 130 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F is being truncated
+Warning (115): Line 133 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F is being truncated
+Warning (115): Line 135 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F is being truncated
+Warning (115): Line 136 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F is being truncated
+Warning (115): Line 140 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F is being truncated
+Warning (115): Line 141 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F is being truncated
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F:136:33: warning: no newline at end of file
+Warning (115): Line 97 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F is being truncated
+Warning (115): Line 98 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F is being truncated
+Warning (115): Line 101 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F is being truncated
+Warning (115): Line 102 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F is being truncated
+Warning (115): Line 118 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F is being truncated
+Warning (115): Line 120 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F is being truncated
+In file /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F:39
+
+      use prob_mod, only : fun_ptr, calfun
+                                    1
+Warning (102): MODULE PROCEDURE 'calfun' USEd at (1) is not referenced
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F:264:28: warning: no newline at end of file
+Warning (115): Line 42 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F is being truncated
+Warning (115): Line 135 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F is being truncated
+Warning (115): Line 142 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F is being truncated
+Warning (115): Line 151 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F is being truncated
+Warning (115): Line 157 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F is being truncated
+Warning (115): Line 167 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F is being truncated
+Warning (115): Line 169 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F is being truncated
+Warning (115): Line 236 of /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F is being truncated
+nagfor -g -Warn=allocation -Warn=constant_coindexing -Warn=reallocation -Warn=subnormal -colour=error:red,warn:magenta,info:yellow -c ../common/consts.F90 ../common/debug.F90 ../common/memory.F90 ../common/info.F90 ../common/infnan.F90 ../common/lina.F90 ../common/output.F90 ../common/pintrf.F90  preproc.f90 initialize.f90 trustregion.f90 vlagbeta.f90 geometry.f90 update.f90 shiftbase.f90 newuob.f90 newuoa.f90 example.f90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//prob.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//newuoa-interface.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90 -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/ -f2003 -free
+Warning: -Warn=reallocation subsumed by -Warn=allocation
+NAG Fortran Compiler Release 7.0(Yurakucho) Build 7020
+Evaluation trial version of NAG Fortran Compiler Release 7.0(Yurakucho) Build 7020
+../common/consts.F90:
+[NAG Fortran Compiler normal termination]
+../common/debug.F90:
+[NAG Fortran Compiler normal termination]
+../common/memory.F90:
+[NAG Fortran Compiler normal termination]
+../common/info.F90:
+[NAG Fortran Compiler normal termination]
+../common/infnan.F90:
+[NAG Fortran Compiler normal termination]
+../common/lina.F90:
+[NAG Fortran Compiler normal termination]
+../common/output.F90:
+[NAG Fortran Compiler normal termination]
+../common/pintrf.F90:
+[NAG Fortran Compiler normal termination]
+preproc.f90:
+[NAG Fortran Compiler normal termination]
+initialize.f90:
+[NAG Fortran Compiler normal termination]
+trustregion.f90:
+[NAG Fortran Compiler normal termination]
+vlagbeta.f90:
+[NAG Fortran Compiler normal termination]
+geometry.f90:
+[NAG Fortran Compiler normal termination]
+update.f90:
+[NAG Fortran Compiler normal termination]
+shiftbase.f90:
+[NAG Fortran Compiler normal termination]
+newuob.f90:
+[NAG Fortran Compiler normal termination]
+newuoa.f90:
+[35mWarning: newuoa.f90, line 376: Intrinsic assignment might cause allocation of XHIST[0m
+[35mWarning: newuoa.f90, line 391: Intrinsic assignment might cause allocation of FHIST[0m
+[NAG Fortran Compiler normal termination, 2 warnings]
+example.f90:
+[NAG Fortran Compiler normal termination]
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:
+[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 99: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 155: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 156: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 163: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 164: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 170: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 182: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 183: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 190: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 191: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 198: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 204: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 205: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 212: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 213: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 218: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 219: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 224: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 225: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 232: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 234: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 241: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 249: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 256: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 270: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 271: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 323: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 327: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 610: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 645: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 653: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 694: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 702: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 756: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 794: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 829: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 834: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 881: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 886: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 924: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 951: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 952: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 953: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 955: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[35mWarning: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 671: Intrinsic assignment might cause allocation of X[0m
+[35mWarning: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90, line 722: Intrinsic assignment might cause allocation of X[0m
+[NAG Fortran Compiler normal termination, 46 warnings]
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//prob.F90:
+[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//prob.F90, line 17: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//prob.F90, line 43: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//prob.F90, line 44: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[NAG Fortran Compiler normal termination, 3 warnings]
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:
+[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90, line 234: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90, line 269: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90, line 277: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90, line 318: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90, line 326: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90, line 370: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90, line 408: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90, line 443: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90, line 448: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90, line 495: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90, line 500: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90, line 538: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[35mWarning: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90, line 295: Intrinsic assignment might cause allocation of X[0m
+[35mWarning: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90, line 346: Intrinsic assignment might cause allocation of X[0m
+[NAG Fortran Compiler normal termination, 14 warnings]
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90:
+[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90, line 49: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90, line 50: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90, line 53: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90, line 61: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90, line 63: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[NAG Fortran Compiler normal termination, 5 warnings]
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//newuoa-interface.F90:
+[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//newuoa-interface.F90, line 13: Line longer than 132 characters[0m
+[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//newuoa-interface.F90, line 31: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//newuoa-interface.F90, line 32: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[NAG Fortran Compiler normal termination, 3 warnings]
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90:
+[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90, line 18: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90, line 67: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90, line 68: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90, line 196: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90, line 197: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[35mWarning: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90, line 138: Intrinsic assignment might cause allocation of XHIST[0m
+[35mWarning: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90, line 142: Intrinsic assignment might cause allocation of FHIST[0m
+[NAG Fortran Compiler normal termination, 7 warnings]
+cd ../intersection_form/newuoa/ && nagfor -g -Warn=allocation -Warn=constant_coindexing -Warn=reallocation -Warn=subnormal -colour=error:red,warn:magenta,info:yellow -c ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F ../common/infnan.F ../common/lina.F ../common/output.F ../common/pintrf.F preproc.f initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f example.f /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//prob.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/ -fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd /home/zaikunzhang/Work/neupdfo/fsrc/newuoa
+Warning: -Warn=reallocation subsumed by -Warn=allocation
+NAG Fortran Compiler Release 7.0(Yurakucho) Build 7020
+Evaluation trial version of NAG Fortran Compiler Release 7.0(Yurakucho) Build 7020
+../common/consts.F:
+[35mObsolescent: ../common/consts.F, line 33: Fixed source form[0m
+[NAG Fortran Compiler normal termination, 1 warning]
+../common/debug.F:
+[35mObsolescent: ../common/debug.F, line 25: Fixed source form[0m
+[NAG Fortran Compiler normal termination, 1 warning]
+../common/memory.F:
+[35mObsolescent: ../common/memory.F, line 19: Fixed source form[0m
+[NAG Fortran Compiler normal termination, 1 warning]
+../common/info.F:
+[35mObsolescent: ../common/info.F, line 21: Fixed source form[0m
+[NAG Fortran Compiler normal termination, 1 warning]
+../common/infnan.F:
+[35mObsolescent: ../common/infnan.F, line 30: Fixed source form[0m
+[NAG Fortran Compiler normal termination, 1 warning]
+../common/lina.F:
+[35mObsolescent: ../common/lina.F, line 37: Fixed source form[0m
+[NAG Fortran Compiler normal termination, 1 warning]
+../common/output.F:
+[35mObsolescent: ../common/output.F, line 24: Fixed source form[0m
+[NAG Fortran Compiler normal termination, 1 warning]
+../common/pintrf.F:
+[35mObsolescent: ../common/pintrf.F, line 25: Fixed source form[0m
+[NAG Fortran Compiler normal termination, 1 warning]
+preproc.f:
+[35mObsolescent: preproc.f, line 16: Fixed source form[0m
+[NAG Fortran Compiler normal termination, 1 warning]
+initialize.f:
+[35mObsolescent: initialize.f, line 23: Fixed source form[0m
+[NAG Fortran Compiler normal termination, 1 warning]
+trustregion.f:
+[35mObsolescent: trustregion.f, line 23: Fixed source form[0m
+[NAG Fortran Compiler normal termination, 1 warning]
+vlagbeta.f:
+[35mObsolescent: vlagbeta.f, line 26: Fixed source form[0m
+[NAG Fortran Compiler normal termination, 1 warning]
+geometry.f:
+[35mObsolescent: geometry.f, line 23: Fixed source form[0m
+[NAG Fortran Compiler normal termination, 1 warning]
+update.f:
+[35mObsolescent: update.f, line 23: Fixed source form[0m
+[NAG Fortran Compiler normal termination, 1 warning]
+shiftbase.f:
+[35mObsolescent: shiftbase.f, line 23: Fixed source form[0m
+[NAG Fortran Compiler normal termination, 1 warning]
+newuob.f:
+[35mObsolescent: newuob.f, line 22: Fixed source form[0m
+[NAG Fortran Compiler normal termination, 1 warning]
+newuoa.f:
+[35mObsolescent: newuoa.f, line 33: Fixed source form[0m
+[35mWarning: newuoa.f, line 398: Intrinsic assignment might cause allocation of XHIST[0m
+[35mWarning: newuoa.f, line 413: Intrinsic assignment might cause allocation of FHIST[0m
+[NAG Fortran Compiler normal termination, 3 warnings]
+example.f:
+[35mObsolescent: example.f, line 19: Fixed source form[0m
+[NAG Fortran Compiler normal termination, 1 warning]
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:
+[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 114: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 171: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 172: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 179: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 180: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 186: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 198: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 199: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 206: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 207: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 214: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 220: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 221: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 228: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 229: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 234: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 235: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 240: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 241: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 248: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 250: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 257: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 265: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 272: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 286: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 287: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 339: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 343: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 634: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 670: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 678: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 721: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 729: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 785: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 824: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 860: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 865: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 915: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 920: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 960: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 988: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 989: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 990: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 992: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[35mObsolescent: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 71: Fixed source form[0m
+[35mWarning: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 696: Intrinsic assignment might cause allocation of X[0m
+[35mWarning: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F, line 749: Intrinsic assignment might cause allocation of X[0m
+[NAG Fortran Compiler normal termination, 47 warnings]
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//prob.F:
+[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//prob.F, line 32: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//prob.F, line 58: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//prob.F, line 59: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[35mObsolescent: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//prob.F, line 26: Fixed source form[0m
+[NAG Fortran Compiler normal termination, 4 warnings]
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F:
+[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F, line 252: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F, line 288: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F, line 296: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F, line 339: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F, line 347: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F, line 393: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F, line 432: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F, line 468: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F, line 473: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F, line 523: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F, line 528: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F, line 568: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[35mObsolescent: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F, line 57: Fixed source form[0m
+[35mWarning: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F, line 314: Intrinsic assignment might cause allocation of X[0m
+[35mWarning: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F, line 367: Intrinsic assignment might cause allocation of X[0m
+[NAG Fortran Compiler normal termination, 15 warnings]
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F:
+[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F, line 64: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F, line 65: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F, line 68: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F, line 76: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F, line 78: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[35mObsolescent: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F, line 39: Fixed source form[0m
+[NAG Fortran Compiler normal termination, 6 warnings]
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F:
+[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F, line 46: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F, line 47: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[35mObsolescent: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F, line 24: Fixed source form[0m
+[NAG Fortran Compiler normal termination, 3 warnings]
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F:
+[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F, line 33: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F, line 83: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F, line 84: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F, line 218: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[33mExtension: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F, line 219: Byte count on numeric data type[0m
+[33m           detected at *@4
+[0m[35mObsolescent: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F, line 22: Fixed source form[0m
+[35mWarning: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F, line 157: Intrinsic assignment might cause allocation of XHIST[0m
+[35mWarning: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F, line 162: Intrinsic assignment might cause allocation of FHIST[0m
+[NAG Fortran Compiler normal termination, 8 warnings]
+pgfortran  -g  -c ../common/consts.F90 ../common/debug.F90 ../common/memory.F90 ../common/info.F90 ../common/infnan.F90 ../common/lina.F90 ../common/output.F90 ../common/pintrf.F90  preproc.f90 initialize.f90 trustregion.f90 vlagbeta.f90 geometry.f90 update.f90 shiftbase.f90 newuob.f90 newuoa.f90 example.f90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//prob.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//newuoa-interface.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90 -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/ -Mfreeform
+../common/consts.F90:
+../common/debug.F90:
+../common/memory.F90:
+../common/info.F90:
+../common/infnan.F90:
+../common/lina.F90:
+../common/output.F90:
+../common/pintrf.F90:
+preproc.f90:
+initialize.f90:
+trustregion.f90:
+vlagbeta.f90:
+geometry.f90:
+update.f90:
+shiftbase.f90:
+newuob.f90:
+newuoa.f90:
+example.f90:
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//prob.F90:
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90:
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//newuoa-interface.F90:
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90:
+cd ../intersection_form/newuoa/ && pgfortran  -g  -c ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F ../common/infnan.F ../common/lina.F ../common/output.F ../common/pintrf.F preproc.f initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f example.f /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//prob.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/ -Mfixed && rm -f *.o *.mod a.out *__genmod.f90 && cd /home/zaikunzhang/Work/neupdfo/fsrc/newuoa
+../common/consts.F:
+../common/debug.F:
+../common/memory.F:
+../common/info.F:
+../common/infnan.F:
+../common/lina.F:
+../common/output.F:
+../common/pintrf.F:
+preproc.f:
+initialize.f:
+trustregion.f:
+vlagbeta.f:
+geometry.f:
+update.f:
+shiftbase.f:
+newuob.f:
+newuoa.f:
+example.f:
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//prob.F:
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F:
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F:
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F:
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F:
+af95  -g -m1 -en -c ../common/consts.F90 ../common/debug.F90 ../common/memory.F90 ../common/info.F90 ../common/infnan.F90 ../common/lina.F90 ../common/output.F90 ../common/pintrf.F90  preproc.f90 initialize.f90 trustregion.f90 vlagbeta.f90 geometry.f90 update.f90 shiftbase.f90 newuob.f90 newuoa.f90 example.f90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//prob.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//newuoa-interface.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90 -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/ -f free
+Absoft ANSI 1610: DEBUG_MOD: ../common/debug.F90: 19, 15 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 0 Other messages, 1 ANSI
+Absoft ANSI 1610: MEMORY_MOD: ../common/memory.F90: 12, 15 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+Absoft ANSI 1610: MEMORY_MOD: ../common/memory.F90: 19, 15 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 0 Other messages, 2 ANSI
+Absoft ANSI 1610: INFNAN_MOD: ../common/infnan.F90: 59, 15 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+Absoft ANSI 1610: INFNAN_MOD: ../common/infnan.F90: 62, 15 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+Absoft ANSI 1610: INFNAN_MOD: ../common/infnan.F90: 65, 15 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 0 Other messages, 3 ANSI
+Absoft ANSI 1610: LINA_MOD: ../common/lina.F90: 39, 15 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+Absoft ANSI 1610: LINA_MOD: ../common/lina.F90: 43, 15 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+Absoft ANSI 1610: LINA_MOD: ../common/lina.F90: 47, 15 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 0 Other messages, 3 ANSI
+Absoft ANSI 124: FMXAPI_MOD: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 99, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 1610: FMXAPI_MOD: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 110, 15 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+Absoft ANSI 1610: FMXAPI_MOD: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 118, 15 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+Absoft ANSI 1610: FMXAPI_MOD: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 127, 15 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+Absoft ANSI 124: MXCOPYPTRTOREAL8: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 155, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXCOPYPTRTOREAL8: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 155, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXCOPYPTRTOREAL8: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 156, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXCOPYREAL8TOPTR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 163, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXCOPYREAL8TOPTR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 163, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXCOPYREAL8TOPTR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 164, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXDESTROYARRAY: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 170, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXDESTROYARRAY: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 170, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MEXCALLMATLAB: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 182, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MEXCALLMATLAB: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 183, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXCREATEDOUBLEMATRIX: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 190, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXCREATEDOUBLEMATRIX: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 190, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXCREATEDOUBLEMATRIX: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 191, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXCREATEDOUBLESCALAR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 198, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXCREATEDOUBLESCALAR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 198, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETDOUBLES: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 204, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETDOUBLES: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 204, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETDOUBLES: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 205, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETM: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 212, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETM: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 212, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETM: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 213, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETN: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 218, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETN: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 218, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETN: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 219, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETPR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 224, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETPR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 224, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETPR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 225, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETSTRING: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 232, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETSTRING: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 234, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXISCLASS: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 241, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXISCHAR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 249, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXISDOUBLE: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 256, 13 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: FMXGETDBLE: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 270, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: FMXGETDBLE: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 270, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: FMXGETDBLE: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 271, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: FMXVERIFYCLASSSHAPE: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 323, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: FMXVERIFYCLASSSHAPE: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 323, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: FMXVERIFYCLASSSHAPE: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 327, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RSCALAR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 610, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RSCALAR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 610, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RVECTOR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 645, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RVECTOR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 645, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RVECTOR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 653, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RMATRIX: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 694, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RMATRIX: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 694, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RMATRIX: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 702, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_ISCALAR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 756, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_ISCALAR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 756, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: WRITE_RSCALAR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 794, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: WRITE_RVECTOR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 829, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: WRITE_RVECTOR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 834, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: WRITE_RMATRIX: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 881, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: WRITE_RMATRIX: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 886, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: WRITE_ISCALAR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 924, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: FMXCALLMATLAB: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 951, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: FMXCALLMATLAB: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 951, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: FMXCALLMATLAB: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 952, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: FMXCALLMATLAB: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 953, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: FMXCALLMATLAB: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90: 955, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 0 Other messages, 63 ANSI
+Absoft ANSI 124: PROB_MOD: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//prob.F90: 17, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: CALFUN: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//prob.F90: 43, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: CALFUN: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//prob.F90: 44, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 0 Other messages, 3 ANSI
+Absoft ANSI 1610: FMXCL_MOD: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90: 66, 15 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+Absoft ANSI 1610: FMXCL_MOD: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90: 74, 15 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+Absoft ANSI 1610: FMXCL_MOD: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90: 83, 15 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+Absoft ANSI 124: READ_RSCALAR_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90: 234, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RSCALAR_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90: 234, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RVECTOR_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90: 269, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RVECTOR_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90: 269, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RVECTOR_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90: 277, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RMATRIX_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90: 318, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RMATRIX_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90: 318, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RMATRIX_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90: 326, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_ISCALAR_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90: 370, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_ISCALAR_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90: 370, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: WRITE_RSCALAR_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90: 408, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: WRITE_RVECTOR_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90: 443, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: WRITE_RVECTOR_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90: 448, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: WRITE_RMATRIX_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90: 495, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: WRITE_RMATRIX_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90: 500, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: WRITE_ISCALAR_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90: 538, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 0 Other messages, 19 ANSI
+Absoft ANSI 124: MEXFUNCTION: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90: 49, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MEXFUNCTION: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90: 50, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MEXFUNCTION: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90: 53, 10 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MEXFUNCTION: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90: 61, 10 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MEXFUNCTION: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90: 63, 10 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 0 Other messages, 5 ANSI
+Absoft ANSI 124: MEXFUNCTION: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//newuoa-interface.F90: 31, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MEXFUNCTION: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//newuoa-interface.F90: 32, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 0 Other messages, 2 ANSI
+Absoft ANSI 124: NEWUOACL_MOD: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90: 18, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MEXFUNCTION: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90: 67, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MEXFUNCTION: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90: 68, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: CALFUN: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90: 196, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: CALFUN: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90: 197, 9 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 0 Other messages, 5 ANSI
+This demonstration copy of Absoft Pro Fortran expires 08/28/20.
+cd ../intersection_form/newuoa/ && af95  -g -m1 -en -c  ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F ../common/infnan.F ../common/lina.F ../common/output.F ../common/pintrf.F preproc.f initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f example.f /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//prob.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/ -f fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd /home/zaikunzhang/Work/neupdfo/fsrc/newuoa
+Absoft ANSI 1610: DEBUG_MOD: ../common/debug.F: 34, 21 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 0 Other messages, 1 ANSI
+Absoft ANSI 1610: MEMORY_MOD: ../common/memory.F: 27, 21 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+Absoft ANSI 1610: MEMORY_MOD: ../common/memory.F: 34, 21 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 0 Other messages, 2 ANSI
+Absoft ANSI 1610: INFNAN_MOD: ../common/infnan.F: 75, 21 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+Absoft ANSI 1610: INFNAN_MOD: ../common/infnan.F: 78, 21 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+Absoft ANSI 1610: INFNAN_MOD: ../common/infnan.F: 81, 21 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 0 Other messages, 3 ANSI
+Absoft ANSI 1610: LINA_MOD: ../common/lina.F: 54, 21 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+Absoft ANSI 1610: LINA_MOD: ../common/lina.F: 58, 21 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+Absoft ANSI 1610: LINA_MOD: ../common/lina.F: 62, 21 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 0 Other messages, 3 ANSI
+Absoft ANSI 124: FMXAPI_MOD: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 114, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 1610: FMXAPI_MOD: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 126, 21 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+Absoft ANSI 1610: FMXAPI_MOD: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 134, 21 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+Absoft ANSI 1610: FMXAPI_MOD: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 143, 21 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+Absoft ANSI 124: MXCOPYPTRTOREAL8: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 171, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXCOPYPTRTOREAL8: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 171, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXCOPYPTRTOREAL8: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 172, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXCOPYREAL8TOPTR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 179, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXCOPYREAL8TOPTR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 179, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXCOPYREAL8TOPTR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 180, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXDESTROYARRAY: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 186, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXDESTROYARRAY: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 186, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MEXCALLMATLAB: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 198, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MEXCALLMATLAB: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 199, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXCREATEDOUBLEMATRIX: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 206, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXCREATEDOUBLEMATRIX: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 206, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXCREATEDOUBLEMATRIX: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 207, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXCREATEDOUBLESCALAR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 214, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXCREATEDOUBLESCALAR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 214, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETDOUBLES: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 220, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETDOUBLES: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 220, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETDOUBLES: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 221, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETM: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 228, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETM: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 228, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETM: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 229, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETN: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 234, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETN: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 234, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETN: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 235, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETPR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 240, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETPR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 240, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETPR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 241, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETSTRING: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 248, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXGETSTRING: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 250, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXISCLASS: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 257, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXISCHAR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 265, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MXISDOUBLE: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 272, 19 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: FMXGETDBLE: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 286, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: FMXGETDBLE: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 286, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: FMXGETDBLE: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 287, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: FMXVERIFYCLASSSHAPE: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 339, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: FMXVERIFYCLASSSHAPE: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 339, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: FMXVERIFYCLASSSHAPE: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 343, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RSCALAR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 634, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RSCALAR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 634, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RVECTOR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 670, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RVECTOR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 670, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RVECTOR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 678, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RMATRIX: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 721, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RMATRIX: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 721, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RMATRIX: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 729, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_ISCALAR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 785, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_ISCALAR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 785, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: WRITE_RSCALAR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 824, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: WRITE_RVECTOR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 860, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: WRITE_RVECTOR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 865, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: WRITE_RMATRIX: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 915, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: WRITE_RMATRIX: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 920, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: WRITE_ISCALAR: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 960, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: FMXCALLMATLAB: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 988, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: FMXCALLMATLAB: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 988, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: FMXCALLMATLAB: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 989, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: FMXCALLMATLAB: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 990, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: FMXCALLMATLAB: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F: 992, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 0 Other messages, 63 ANSI
+Absoft ANSI 124: PROB_MOD: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//prob.F: 32, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: CALFUN: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//prob.F: 58, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: CALFUN: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//prob.F: 59, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 0 Other messages, 3 ANSI
+Absoft ANSI 1610: FMXCL_MOD: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F: 82, 21 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+Absoft ANSI 1610: FMXCL_MOD: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F: 91, 21 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+Absoft ANSI 1610: FMXCL_MOD: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F: 101, 21 
+  The use of a "generic-spec" after the END INTERFACE keywords is only legal in Fortran 95 and beyond.
+Absoft ANSI 124: READ_RSCALAR_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F: 252, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RSCALAR_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F: 252, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RVECTOR_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F: 288, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RVECTOR_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F: 288, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RVECTOR_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F: 296, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RMATRIX_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F: 339, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RMATRIX_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F: 339, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_RMATRIX_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F: 347, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_ISCALAR_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F: 393, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: READ_ISCALAR_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F: 393, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: WRITE_RSCALAR_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F: 432, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: WRITE_RVECTOR_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F: 468, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: WRITE_RVECTOR_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F: 473, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: WRITE_RMATRIX_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F: 523, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: WRITE_RMATRIX_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F: 528, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: WRITE_ISCALAR_CL: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F: 568, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 0 Other messages, 19 ANSI
+Absoft ANSI 124: MEXFUNCTION: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F: 64, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MEXFUNCTION: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F: 65, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MEXFUNCTION: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F: 68, 16 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MEXFUNCTION: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F: 76, 16 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MEXFUNCTION: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F: 78, 16 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 0 Other messages, 5 ANSI
+Absoft ANSI 124: MEXFUNCTION: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F: 46, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MEXFUNCTION: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F: 47, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 0 Other messages, 2 ANSI
+Absoft ANSI 124: NEWUOACL_MOD: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F: 33, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MEXFUNCTION: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F: 83, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: MEXFUNCTION: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F: 84, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: CALFUN: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F: 218, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+Absoft ANSI 124: CALFUN: /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F: 219, 15 
+  Use of INTEGER*8 is an extension to the Fortran 90 standard.
+
+Absoft Pro Fortran 20.0: 0 Errors, 0 Warnings, 0 Other messages, 5 ANSI
+This demonstration copy of Absoft Pro Fortran expires 08/28/20.
+sunf95  -g -w3 -u -ansi -U -c ../common/consts.F90 ../common/debug.F90 ../common/memory.F90 ../common/info.F90 ../common/infnan.F90 ../common/lina.F90 ../common/output.F90 ../common/pintrf.F90  preproc.f90 initialize.f90 trustregion.f90 vlagbeta.f90 geometry.f90 update.f90 shiftbase.f90 newuob.f90 newuoa.f90 example.f90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//prob.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//newuoa-interface.F90 /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90 -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/ -free
+../common/consts.F90:
+../common/debug.F90:
+../common/memory.F90:
+../common/info.F90:
+../common/infnan.F90:
+../common/lina.F90:
+../common/output.F90:
+../common/pintrf.F90:
+preproc.f90:
+initialize.f90:
+
+procedure(FUNEVAL) :: calfun
+^                            
+"initialize.f90", Line = 35, Column = 1: ANSI: PROCEDURE is a Fortran 2003 feature.
+
+f90comp: 492 SOURCE LINES
+f90comp: 0 ERRORS, 0 WARNINGS, 0 OTHER MESSAGES, 1 ANSI
+trustregion.f90:
+vlagbeta.f90:
+geometry.f90:
+update.f90:
+shiftbase.f90:
+newuob.f90:
+
+procedure(FUNEVAL) :: calfun
+^                            
+"newuob.f90", Line = 66, Column = 1: ANSI: PROCEDURE is a Fortran 2003 feature.
+
+f90comp: 592 SOURCE LINES
+f90comp: 0 ERRORS, 0 WARNINGS, 0 OTHER MESSAGES, 1 ANSI
+newuoa.f90:
+
+procedure(FUNEVAL) :: calfun
+^                            
+"newuoa.f90", Line = 175, Column = 1: ANSI: PROCEDURE is a Fortran 2003 feature.
+
+f90comp: 405 SOURCE LINES
+f90comp: 0 ERRORS, 0 WARNINGS, 0 OTHER MESSAGES, 1 ANSI
+example.f90:
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:
+
+mwSize, parameter :: mwOne = 1 ! Integer 1 with type mwSize
+        ^                                                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 99, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+real(DP), parameter :: convTol = 1.0e1_DP*max(epsilon(0.0_DP), real(epsilon(0.0_RP), DP))
+                                              ^                                           
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 101, Column = 47: ANSI: Fortran requires all intrinsic procedure actual arguments to be type integer or character for restricted expressions.
+                                                               ^                          
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 101, Column = 64: ANSI: Fortran requires all intrinsic procedure actual arguments to be type integer or character for restricted expressions.
+                                                                    ^                     
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 101, Column = 69: ANSI: Fortran requires all intrinsic procedure actual arguments to be type integer or character for restricted expressions.
+
+    mwPointer, intent(in) :: px
+            ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 155, Column = 13: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+    mwSize, intent(in) :: n
+            ^               
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 156, Column = 13: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+    mwPointer, intent(in) :: px
+            ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 163, Column = 13: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+    mwSize, intent(in) :: n
+            ^               
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 164, Column = 13: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+    mwPointer, intent(in) :: pm
+            ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 170, Column = 13: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+    mwPointer, intent(in) :: pin(*)
+            ^                       
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 182, Column = 13: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+    mwPointer, intent(out) ::  pout(*) 
+            ^                           
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 183, Column = 13: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+    mwPointer :: mxCreateDoubleMatrix
+            ^                         
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 190, Column = 13: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+    mwSize, intent(in) :: m, n
+            ^                  
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 191, Column = 13: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+    mwPointer :: mxCreateDoubleScalar
+            ^                         
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 198, Column = 13: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+    mwPointer :: mxGetDoubles                  
+            ^                                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 204, Column = 13: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+    mwPointer, intent(in) :: pa
+            ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 205, Column = 13: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+    mwPointer :: mxGetM  
+            ^             
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 212, Column = 13: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+    mwPointer, intent(in) :: pm
+            ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 213, Column = 13: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+    mwPointer :: mxGetN
+            ^           
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 218, Column = 13: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+    mwPointer, intent(in) :: pm
+            ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 219, Column = 13: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+    mwPointer :: mxGetPr                  
+            ^                              
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 224, Column = 13: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+    mwPointer, intent(in) :: pa
+            ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 225, Column = 13: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+    mwPointer, intent(in) :: pm
+            ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 232, Column = 13: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+    mwSize, intent(in) :: strlen
+            ^                    
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 234, Column = 13: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+    mwPointer, intent(in) :: pm
+            ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 241, Column = 13: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+    mwPointer, intent(in) :: pm
+            ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 249, Column = 13: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+    mwPointer, intent(in) :: pm
+            ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 256, Column = 13: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer :: fmxGetDble
+        ^               
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 270, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer, intent(in) :: pa
+        ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 271, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer, intent(in) :: px
+        ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 323, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwSize :: m, n
+        ^      
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 327, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer, intent(in) :: px
+        ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 610, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer, intent(in) :: px
+        ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 645, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwSize :: n_mw 
+        ^       
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 653, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer, intent(in) :: px
+        ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 694, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwSize :: xsize
+        ^       
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 702, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer, intent(in) :: px
+        ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 756, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer, intent(out) :: px
+        ^                    
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 794, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer, intent(out) :: px
+        ^                    
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 829, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwSize :: n_mw
+        ^      
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 834, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer, intent(out) :: px
+        ^                    
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 881, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwSize :: m_mw, n_mw
+        ^            
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 886, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer, intent(out) :: px
+        ^                    
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 924, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer, intent(in) :: fun_ptr      
+        ^                              
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 951, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer, intent(in) :: pin(:)
+        ^                       
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 952, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer, intent(out) :: pout(:)
+        ^                         
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 953, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer :: aug_pin(size(pin) + 1)
+        ^                           
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90", Line = 955, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+f90comp: 1559 SOURCE LINES
+f90comp: 0 ERRORS, 0 WARNINGS, 0 OTHER MESSAGES, 47 ANSI
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//prob.F90:
+
+mwPointer :: fun_ptr ! Pointer to objective function
+        ^                                            
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//prob.F90", Line = 17, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer :: pinput(1), poutput(1) 
+        ^                           
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//prob.F90", Line = 43, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwSize :: row, col
+        ^          
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//prob.F90", Line = 44, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+f90comp: 647 SOURCE LINES
+f90comp: 0 ERRORS, 0 WARNINGS, 0 OTHER MESSAGES, 3 ANSI
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:
+
+real(DP), parameter :: convTol = 1.0e1_DP*max(epsilon(0.0_DP), real(epsilon(0.0_RP_CL), DP))
+                                              ^                                              
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90", Line = 60, Column = 47: ANSI: Fortran requires all intrinsic procedure actual arguments to be type integer or character for restricted expressions.
+                                                               ^                             
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90", Line = 60, Column = 64: ANSI: Fortran requires all intrinsic procedure actual arguments to be type integer or character for restricted expressions.
+                                                                    ^                        
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90", Line = 60, Column = 69: ANSI: Fortran requires all intrinsic procedure actual arguments to be type integer or character for restricted expressions.
+
+mwPointer, intent(in) :: px
+        ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90", Line = 234, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer, intent(in) :: px
+        ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90", Line = 269, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwSize :: n_mw 
+        ^       
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90", Line = 277, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer, intent(in) :: px
+        ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90", Line = 318, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwSize :: xsize
+        ^       
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90", Line = 326, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer, intent(in) :: px
+        ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90", Line = 370, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer, intent(out) :: px
+        ^                    
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90", Line = 408, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer, intent(out) :: px
+        ^                    
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90", Line = 443, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwSize :: n_mw
+        ^      
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90", Line = 448, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer, intent(out) :: px
+        ^                    
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90", Line = 495, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwSize :: m_mw, n_mw
+        ^            
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90", Line = 500, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer, intent(out) :: px
+        ^                    
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90", Line = 538, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+f90comp: 1121 SOURCE LINES
+f90comp: 0 ERRORS, 0 WARNINGS, 0 OTHER MESSAGES, 15 ANSI
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90:
+
+mwPointer, intent(in) :: pinput(nargin)
+        ^                               
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90", Line = 49, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer, intent(out) :: poutput(nargout)
+        ^                                  
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90", Line = 50, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+ mwSize :: cols ! Size of the input
+         ^                          
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90", Line = 53, Column = 10: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+ mwSize, parameter :: msZero = 0
+         ^                       
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90", Line = 61, Column = 10: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+ mwIndex, parameter :: miZero = 0
+         ^                        
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90", Line = 63, Column = 10: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+f90comp: 696 SOURCE LINES
+f90comp: 0 ERRORS, 0 WARNINGS, 0 OTHER MESSAGES, 5 ANSI
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//newuoa-interface.F90:
+
+mwPointer, intent(in) :: pinput(nargin)
+        ^                               
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//newuoa-interface.F90", Line = 31, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer, intent(out) :: poutput(nargout)
+        ^                                  
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//newuoa-interface.F90", Line = 32, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+f90comp: 679 SOURCE LINES
+f90comp: 0 ERRORS, 0 WARNINGS, 0 OTHER MESSAGES, 2 ANSI
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90:
+
+mwPointer :: fun_ptr 
+        ^             
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90", Line = 18, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer, intent(in) :: pinput(nargin)
+        ^                               
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90", Line = 67, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer, intent(out) :: poutput(nargout)
+        ^                                  
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90", Line = 68, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwPointer :: pinput(1), poutput(1) 
+        ^                           
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90", Line = 196, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+mwSize :: row, col
+        ^          
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90", Line = 197, Column = 9: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+f90comp: 803 SOURCE LINES
+f90comp: 0 ERRORS, 0 WARNINGS, 0 OTHER MESSAGES, 5 ANSI
+cd ../intersection_form/newuoa/ && sunf95  -g -w3 -u -ansi -U -c ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F ../common/infnan.F ../common/lina.F ../common/output.F ../common/pintrf.F preproc.f initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f example.f /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//prob.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F /home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/ -fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd /home/zaikunzhang/Work/neupdfo/fsrc/newuoa
+../common/consts.F:
+../common/debug.F:
+../common/memory.F:
+../common/info.F:
+../common/infnan.F:
+../common/lina.F:
+../common/output.F:
+../common/pintrf.F:
+preproc.f:
+initialize.f:
+
+      procedure(FUNEVAL) :: calfun
+      ^                            
+"initialize.f", Line = 51, Column = 7: ANSI: PROCEDURE is a Fortran 2003 feature.
+
+f90comp: 511 SOURCE LINES
+f90comp: 0 ERRORS, 0 WARNINGS, 0 OTHER MESSAGES, 1 ANSI
+trustregion.f:
+vlagbeta.f:
+geometry.f:
+update.f:
+shiftbase.f:
+newuob.f:
+
+      procedure(FUNEVAL) :: calfun
+      ^                            
+"newuob.f", Line = 84, Column = 7: ANSI: PROCEDURE is a Fortran 2003 feature.
+
+f90comp: 635 SOURCE LINES
+f90comp: 0 ERRORS, 0 WARNINGS, 0 OTHER MESSAGES, 1 ANSI
+newuoa.f:
+
+      procedure(FUNEVAL) :: calfun
+      ^                            
+"newuoa.f", Line = 192, Column = 7: ANSI: PROCEDURE is a Fortran 2003 feature.
+
+f90comp: 430 SOURCE LINES
+f90comp: 0 ERRORS, 0 WARNINGS, 0 OTHER MESSAGES, 1 ANSI
+example.f:
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F:
+
+      mwSize, parameter :: mwOne = 1 ! Integer 1 with type mwSize
+              ^                                                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 114, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      real(DP), parameter :: convTol = 1.0e1_DP*max(epsilon(0.0_DP), rea&
+                                                    ^                     
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 116, Column = 53: ANSI: Fortran requires all intrinsic procedure actual arguments to be type integer or character for restricted expressions.
+                                                                     ^    
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 116, Column = 70: ANSI: Fortran requires all intrinsic procedure actual arguments to be type integer or character for restricted expressions.
+
+     &l(epsilon(0.0_RP), DP))
+        ^                     
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 117, Column = 9: ANSI: Fortran requires all intrinsic procedure actual arguments to be type integer or character for restricted expressions.
+
+          mwPointer, intent(in) :: px
+                  ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 171, Column = 19: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+          mwSize, intent(in) :: n
+                  ^               
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 172, Column = 19: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+          mwPointer, intent(in) :: px
+                  ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 179, Column = 19: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+          mwSize, intent(in) :: n
+                  ^               
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 180, Column = 19: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+          mwPointer, intent(in) :: pm
+                  ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 186, Column = 19: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+          mwPointer, intent(in) :: pin(*)
+                  ^                       
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 198, Column = 19: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+          mwPointer, intent(out) :: pout(*)
+                  ^                         
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 199, Column = 19: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+          mwPointer :: mxCreateDoubleMatrix
+                  ^                         
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 206, Column = 19: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+          mwSize, intent(in) :: m, n
+                  ^                  
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 207, Column = 19: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+          mwPointer :: mxCreateDoubleScalar
+                  ^                         
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 214, Column = 19: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+          mwPointer :: mxGetDoubles
+                  ^                 
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 220, Column = 19: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+          mwPointer, intent(in) :: pa
+                  ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 221, Column = 19: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+          mwPointer :: mxGetM
+                  ^           
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 228, Column = 19: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+          mwPointer, intent(in) :: pm
+                  ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 229, Column = 19: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+          mwPointer :: mxGetN
+                  ^           
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 234, Column = 19: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+          mwPointer, intent(in) :: pm
+                  ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 235, Column = 19: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+          mwPointer :: mxGetPr
+                  ^            
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 240, Column = 19: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+          mwPointer, intent(in) :: pa
+                  ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 241, Column = 19: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+          mwPointer, intent(in) :: pm
+                  ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 248, Column = 19: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+          mwSize, intent(in) :: strlen
+                  ^                    
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 250, Column = 19: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+          mwPointer, intent(in) :: pm
+                  ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 257, Column = 19: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+          mwPointer, intent(in) :: pm
+                  ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 265, Column = 19: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+          mwPointer, intent(in) :: pm
+                  ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 272, Column = 19: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer :: fmxGetDble
+              ^               
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 286, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer, intent(in) :: pa
+              ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 287, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer, intent(in) :: px
+              ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 339, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwSize :: m, n
+              ^      
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 343, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer, intent(in) :: px
+              ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 634, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer, intent(in) :: px
+              ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 670, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwSize :: n_mw
+              ^      
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 678, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer, intent(in) :: px
+              ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 721, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwSize :: xsize
+              ^       
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 729, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer, intent(in) :: px
+              ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 785, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer, intent(out) :: px
+              ^                    
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 824, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer, intent(out) :: px
+              ^                    
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 860, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwSize :: n_mw
+              ^      
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 865, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer, intent(out) :: px
+              ^                    
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 915, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwSize :: m_mw, n_mw
+              ^            
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 920, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer, intent(out) :: px
+              ^                    
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 960, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer, intent(in) :: fun_ptr
+              ^                        
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 988, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer, intent(in) :: pin(:)
+              ^                       
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 989, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer, intent(out) :: pout(:)
+              ^                         
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 990, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer :: aug_pin(size(pin) + 1)
+              ^                           
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//fmxapi.F", Line = 992, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+f90comp: 1597 SOURCE LINES
+f90comp: 0 ERRORS, 0 WARNINGS, 0 OTHER MESSAGES, 47 ANSI
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//prob.F:
+
+      mwPointer :: fun_ptr ! Pointer to objective function
+              ^                                            
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//prob.F", Line = 32, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer :: pinput(1), poutput(1)
+              ^                          
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//prob.F", Line = 58, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwSize :: row, col
+              ^          
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//prob.F", Line = 59, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+f90comp: 662 SOURCE LINES
+f90comp: 0 ERRORS, 0 WARNINGS, 0 OTHER MESSAGES, 3 ANSI
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F:
+
+      real(DP), parameter :: convTol = 1.0e1_DP*max(epsilon(0.0_DP), rea&
+                                                    ^                     
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F", Line = 75, Column = 53: ANSI: Fortran requires all intrinsic procedure actual arguments to be type integer or character for restricted expressions.
+                                                                     ^    
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F", Line = 75, Column = 70: ANSI: Fortran requires all intrinsic procedure actual arguments to be type integer or character for restricted expressions.
+
+     &l(epsilon(0.0_RP_CL), DP))
+        ^                        
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F", Line = 76, Column = 9: ANSI: Fortran requires all intrinsic procedure actual arguments to be type integer or character for restricted expressions.
+
+      mwPointer, intent(in) :: px
+              ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F", Line = 252, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer, intent(in) :: px
+              ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F", Line = 288, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwSize :: n_mw
+              ^      
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F", Line = 296, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer, intent(in) :: px
+              ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F", Line = 339, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwSize :: xsize
+              ^       
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F", Line = 347, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer, intent(in) :: px
+              ^                   
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F", Line = 393, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer, intent(out) :: px
+              ^                    
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F", Line = 432, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer, intent(out) :: px
+              ^                    
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F", Line = 468, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwSize :: n_mw
+              ^      
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F", Line = 473, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer, intent(out) :: px
+              ^                    
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F", Line = 523, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwSize :: m_mw, n_mw
+              ^            
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F", Line = 528, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer, intent(out) :: px
+              ^                    
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/fmxcl.F", Line = 568, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+f90comp: 1152 SOURCE LINES
+f90comp: 0 ERRORS, 0 WARNINGS, 0 OTHER MESSAGES, 15 ANSI
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F:
+
+      mwPointer, intent(in) :: pinput(nargin)
+              ^                               
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F", Line = 64, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer, intent(out) :: poutput(nargout)
+              ^                                  
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F", Line = 65, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+       mwSize :: cols ! Size of the input
+               ^                          
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F", Line = 68, Column = 16: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+       mwSize, parameter :: msZero = 0
+               ^                       
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F", Line = 76, Column = 16: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+       mwIndex, parameter :: miZero = 0
+               ^                        
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//gethuge.F", Line = 78, Column = 16: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+f90comp: 721 SOURCE LINES
+f90comp: 0 ERRORS, 0 WARNINGS, 0 OTHER MESSAGES, 5 ANSI
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F:
+
+      mwPointer, intent(in) :: pinput(nargin)
+              ^                               
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F", Line = 46, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer, intent(out) :: poutput(nargout)
+              ^                                  
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//newuoa-interface.F", Line = 47, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+f90comp: 698 SOURCE LINES
+f90comp: 0 ERRORS, 0 WARNINGS, 0 OTHER MESSAGES, 2 ANSI
+/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F:
+
+      mwPointer :: fun_ptr
+              ^            
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F", Line = 33, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer, intent(in) :: pinput(nargin)
+              ^                               
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F", Line = 83, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer, intent(out) :: poutput(nargout)
+              ^                                  
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F", Line = 84, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwPointer :: pinput(1), poutput(1)
+              ^                          
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F", Line = 218, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+      mwSize :: row, col
+              ^          
+"/home/zaikunzhang/Work/neupdfo/fsrc/newuoa/../../matlab/mex_gateways/intersection_form//classical/newuoa-interface.F", Line = 219, Column = 15: ANSI: Use of INTEGER*8 is an extension to the Fortran standard.
+
+f90comp: 826 SOURCE LINES
+f90comp: 0 ERRORS, 0 WARNINGS, 0 OTHER MESSAGES, 5 ANSI

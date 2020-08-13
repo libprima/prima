@@ -97,7 +97,7 @@ subroutine newuoa(calfun, x, f, &
 ! IPRINT
 !   Input, INTEGER(IK) scalar, default: 0.
 !   The value of IPRINT should be set to 0, 1, -1, 2, -2, 3, or -3, which
-!   controls the printing. Specifically: 
+!   controls how much information will be printed during the computation:
 !   0: there will be no printing;
 !   1: a message will be printed to the screen at the return, showing the
 !      best vector of veriables found and its objective function value;
@@ -107,10 +107,10 @@ subroutine newuoa(calfun, x, f, &
 !   3: in addition to 2, each function evaluation with its variables will
 !      be printed to the screen;
 !   -1, -2, -3: the same information as 1, 2, 3 will be printed, not to 
-!   the screen but to a file named NEWUOA_output.txt; the file will be
-!   created if it does not exist; the new output will be appended to 
-!   the end of this file if it already exists. Note that IPRINT = -3 can
-!   be costly in terms of time and space; 
+!     the screen but to a file named NEWUOA_output.txt; the file will be
+!     created if it does not exist; the new output will be appended to 
+!     the end of this file if it already exists. Note that IPRINT = -3 can
+!     be costly in terms of time and space. 
 !
 ! ETA1, ETA2, GAMMA1, GAMMA2
 !   Input, REAL(RP) scalars, default: ETA1 = 0.1, ETA2 = 0.7, GAMMA1 = 0.5,
@@ -121,12 +121,12 @@ subroutine newuoa(calfun, x, f, &
 !   by a factor of GAMMA1 when the reduction ratio is below ETA1, and 
 !   enlarged by a factor of GAMMA2 when the reduction ratio is above ETA2.
 !   It is required that 0 < ETA1 <= ETA2 < 1 and 0 < GAMMA1 < 1 < GAMMA2.
-!   Normally, ETA1 <= 0.25. ETA1 >= 0.5 is NOT recommended.
+!   Normally, ETA1 <= 0.25. It is NOT recommended to set ETA1 >= 0.5.
 !
 ! XHIST, FHIST, MAXHIST
-!   XHIST: Output, ALLOCATABLE RANK-TWO REAL(RP) array;
-!   FHIST: Output, ALLOCATABLE RANK-ONE REAL(RP) array; 
-!   MAXHIST: Input, INTEGER(IK) scalar, default: equal to MAXFUN.
+!   XHIST: Output, ALLOCATABLE rank 2 REAL(RP) array;
+!   FHIST: Output, ALLOCATABLE rank 1 REAL(RP) array; 
+!   MAXHIST: Input, INTEGER(IK) scalar, default: MAXFUN
 !   XHIST, if present, will output the history of iterates, while FHIST, 
 !   if present, will output the histroy function values. MAXHIST should 
 !   be a nonnegative integer, and XHIST/FHIST will output only the last
@@ -135,9 +135,15 @@ subroutine newuoa(calfun, x, f, &
 !   MAXHIST = MAXFUN ensures that  XHIST/FHIST will output all the history. 
 !   If XHIST is present, its size at exit will be (N, min(NF, MAXHIST));
 !   if FHIST is present, its size at exit will be min(NF, MAXHIST).
-!   Note that setting MAXHIST to a large value may be costly in terms of
-!   memory. For instance, if N = 1000 and MAXHIST = 100, 000, XHIST will
-!   take about 1 GB if we use double precision.
+!
+!   Important Notice:
+!   Setting MAXHIST to a large value can be costly in terms of memory. 
+!   For instance, if N = 1000 and MAXHIST = 100, 000, XHIST will take 
+!   about 1 GB if we use double precision. Therefore, MAXHIST will be 
+!   reset to a smaller value if the memory needed for XHIST and/or FHIST
+!   exceeds MAXMEMORY defined in CONSTS_MOD (see consts.F90 under the 
+!   directory named "common"; default: 2GB). Use XHIST, FHIST, and MAXHIST
+!   with caution!!!
 !
 ! INFO
 !   Output, INTEGER(IK) scalar.
@@ -153,10 +159,10 @@ subroutine newuoa(calfun, x, f, &
 
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS
-use consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT, MAXIMAL_HIST, MAXFUN_DIM_DFT
+use consts_mod, only : RP, IK, INT64, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS
+use consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT, MAXMEMORY, MAXFUN_DIM_DFT
 use infnan_mod, only : is_nan, is_inf, is_finite
-use memory_mod, only : safealloc
+use memory_mod, only : safealloc, cstyle_sizeof
 
 ! Solver-specific module
 use pintrf_mod, only : FUNEVAL
@@ -191,6 +197,8 @@ integer(IK) :: iprint_c
 integer(IK) :: maxfun_c
 integer(IK) :: maxfhist
 integer(IK) :: maxhist_c
+integer(IK) :: maxhist_in
+integer(INT64) :: maximal_hist
 integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: nf_c
@@ -204,6 +212,7 @@ real(RP) :: gamma2_c
 real(RP) :: rhobeg_c
 real(RP) :: rhoend_c
 real(RP), allocatable :: xhist_c(:, :)
+character(len = 6), parameter :: solver = 'NEWUOA'
 
 
 ! Get size.
@@ -303,16 +312,28 @@ else
     gamma2_c = TWO
 end if
 
+maxhist_in = 0
 if (present(maxhist)) then
     maxhist_c = maxhist
+    maxhist_in = maxhist
 else if (maxfun_c >= n + 3) then
-    maxhist_c = min(maxfun_c, MAXIMAL_HIST)
+    maxhist_c = maxfun_c
 else
-    maxhist_c = min(MAXFUN_DIM_DFT*n, MAXIMAL_HIST)
+    maxhist_c = MAXFUN_DIM_DFT*n
 end if
 
 ! Preprocess the inputs in case some of them are invalid. 
-call preproc(n, iprint_c, maxfun_c, maxhist_c, npt_c, eta1_c, eta2_c, ftarget_c, gamma1_c, gamma2_c, rhobeg_c, rhoend_c) 
+call preproc(n, iprint_c, maxfun_c, maxhist_c, npt_c, eta1_c, eta2_c, ftarget_c, gamma1_c, &
+    & gamma2_c, rhobeg_c, rhoend_c) 
+
+! Further revise MAXHIST according to MAXMEMORY, i.e., the maximal amount
+! of memory allowed for the history.
+if (present(xhist)) then
+    maximal_hist = int(MAXMEMORY/((n+1)*cstyle_sizeof(0.0_RP)), kind(maximal_hist))
+else
+    maximal_hist = int(MAXMEMORY/(cstyle_sizeof(0.0_RP)), kind(maximal_hist))
+end if
+maxhist_c = int(min(int(maxhist_c, INT64), maximal_hist), kind(maxhist_c))
 
 ! Allocate memory for the histroy of X. We use XHIST_C instead of XHIST, 
 ! which may not be present.
@@ -322,6 +343,7 @@ else
     maxxhist = 0
 end if
 call safealloc(xhist_c, n, maxxhist)
+
 ! Allocate memory for the histroy of F. We use FHIST_C instead of FHIST,
 ! which may not be present.
 if (present(fhist)) then 
@@ -347,24 +369,21 @@ end if
 
 ! Copy XHIST_C to XHIST and FHIST_C to FHIST if needed.
 ! N.B.: Fortran 2003 supports "automatic (re)allocation of allocatable
-! arrays upon intrinsic assignment": if an intrinsic assignment is used,
-! an allocatable variable on the left-hand side is automatically allocated 
-! (if unallocated) or reallocated (if the shape is different). Therefore, 
-! the lines of SAFEALLOC in the following can indeed be removed in F2003.
+! arrays upon intrinsic assignment". Therefore, the lines of SAFEALLOC 
+! in the following can indeed be removed in F2003.
 if (present(xhist)) then
     call safealloc(xhist, n, min(nf_c, maxxhist))
     xhist = xhist_c(:, 1 : min(nf_c, maxxhist))
     ! N.B.: 
+    ! 0. We allocate XHIST as long as it is present, even if MAXXHIST = 0; 
+    ! otherwise, it will be illeagle to enquire XHIST after exit.
     ! 1. NF may not be present. Hence we should NOT use NF but NF_C.
     ! 2. When MAXXHIST > NF_C, which is the normal case in practice, 
-    ! XHIST_C contains GARBAGE in XHIST_C(:, NF_C + 1 : MAXXHIST). Note 
-    ! that users do not know the value of NF_C if they do not output it.
+    ! XHIST_C contains GARBAGE in XHIST_C(:, NF_C + 1 : MAXXHIST). 
     ! Therefore, we MUST cap XHIST at min(NF_C, MAXXHIST) so that XHIST 
-    ! cointains only valid history. Otherwise, without knowing NF_C, 
-    ! one cannot tell history from garbage!!!
-    ! For this reason, there is no way to avoid allocating two copies of
-    ! memory for XHIST unless we declare it to be a POINTER instead of
-    ! ALLOCATABLE.
+    ! cointains only valid history. For this reason, there is no way to
+    ! avoid allocating two copies of memory for XHIST unless we declare
+    ! it to be a POINTER instead of ALLOCATABLE.
 end if
 deallocate(xhist_c)
 if (present(fhist)) then
@@ -373,6 +392,12 @@ if (present(fhist)) then
     ! The same as XHIST, we must cap FHIST at min(NF_C, MAXFHIST).
 end if
 deallocate(fhist_c)
+
+! If MAXFHIST_IN >= NF_C > MAXFHIST_C, warn that not all history is recorced.
+if ((present(xhist) .or. present(fhist)) .and. maxhist_c < min(nf_c, maxhist_in)) then
+    print '(/1A, I7, 1A)', 'WARNING: ' // solver // ': due to memory limit, MAXHIST is reset to ', maxhist_c, '.'
+    print '(1A/)', 'Only the history of the last MAXHIST iterations is recoreded.' 
+end if
 
 end subroutine newuoa
 

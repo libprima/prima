@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 12-Aug-2020.
+! on 13-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -33,8 +33,8 @@
       module consts_mod
 
 #if __FORTRAN_STANDARD__ >= 2008
-      use intrinsic :: iso_fortran_env, only : INT16, INT32, INT64, REAL&
-     &32, REAL64, REAL128
+      use, intrinsic :: iso_fortran_env, only : INT16, INT32, INT64, REA&
+     &L32, REAL64, REAL128
 #endif
 
       implicit none
@@ -47,7 +47,7 @@
       public :: SRNLEN, MSSGLEN
       public :: OUTUNIT
       public :: RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT
-      public :: MAXFUN_DIM_DFT, MAXIMAL_HIST
+      public :: MAXFUN_DIM_DFT, MAXMEMORY
 
 #if __DEBUGGING__ == 1
       logical, parameter :: DEBUGGING = .true.
@@ -101,8 +101,8 @@
       real(RP), parameter :: QUART = 0.25_RP
       real(RP), parameter :: TEN = 10.0_RP
       real(RP), parameter :: TENTH = 0.1_RP
-      real(RP), parameter ::PI = 3.141592653589793238462643383279502884_&
-     &RP
+      real(RP), parameter :: PI = 3.141592653589793238462643383279502884&
+     &_RP
 ! We may set PI to acos(-1.0_RP), but some compilers may complain about
 ! "Elemental function as initialization expression with non-integer or
 ! non-character arguments".
@@ -131,12 +131,9 @@
       integer(IK), parameter :: IPRINT_DFT = 0
       integer(IK), parameter :: MAXFUN_DIM_DFT = 500
 
-! Maximal amount of history that XHIST, FHIST, CHIST can return
-#if __INTEGER_KIND__ <= 16
-      integer(IK), parameter :: MAXIMAL_HIST = huge(0_IK)
-#else
-      integer(IK), parameter :: MAXIMAL_HIST = 100000
-#endif
+! Maximal amount of memory (Byte) allowed for XHIST, FHIST, and NLCHIST
+      integer(INT64), parameter :: MAXMEMORY = 2_INT64**31
+! 2**31 is 2G.
 
 
       end module consts_mod
