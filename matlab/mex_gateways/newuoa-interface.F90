@@ -10,7 +10,7 @@ subroutine mexFunction(nargout, poutput, nargin, pinput)
 ! If the binary MEX file is named as FUNCTION_NAME.mex*** 
 ! (file-name extension depends on the platform), then the 
 ! following function is callable in matlab:
-! [xopt, fopt, info, nf, xhist, fhist] = FUNCTION_NAME(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, maxhist, npt, iprint)
+! [xopt, fopt, info, nf, xhist, fhist] = FUNCTION_NAME(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, iprint, maxhist, output_xhist)
 
 ! Generic modules
 use consts_mod, only : RP, IK
@@ -35,10 +35,10 @@ mwPointer, intent(out) :: poutput(nargout)
 integer(IK) :: info
 integer(IK) :: iprint
 integer(IK) :: maxfun
-integer(IK) :: maxfhist
-integer(IK) :: maxxhist
+integer(IK) :: maxhist
 integer(IK) :: nf
 integer(IK) :: npt
+integer(IK) :: output_xhist
 real(RP) :: eta1
 real(RP) :: eta2
 real(RP) :: f
@@ -70,36 +70,27 @@ call fmxReadMPtr(pinput(7), gamma1)
 call fmxReadMPtr(pinput(8), gamma2)
 call fmxReadMPtr(pinput(9), ftarget)
 call fmxReadMPtr(pinput(10), maxfun)
-call fmxReadMPtr(pinput(11), maxxhist)
-call fmxReadMPtr(pinput(12), maxfhist)
-call fmxReadMPtr(pinput(13), npt)
-call fmxReadMPtr(pinput(14), iprint)
+call fmxReadMPtr(pinput(11), npt)
+call fmxReadMPtr(pinput(12), iprint)
+call fmxReadMPtr(pinput(13), maxhist)
+call fmxReadMPtr(pinput(14), output_xhist)
 
 ! Call the Fortran code.
-! There are various cases because XHIST/FHIST may or may not be passed to
+! There are different cases because XHIST may or may not be passed to
 ! the Fortran code.
-if (maxxhist > 0 .and. maxfhist > 0) then
+if (output_xhist > 0) then
     call newuoa(calfun, x, f, nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, &
-        & eta1, eta2, gamma1, gamma2, xhist = xhist, fhist = fhist, maxhist = maxxhist, info = info)
-else if (maxxhist > 0 .and. maxfhist <= 0) then
-    call newuoa(calfun, x, f, nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, &
-        & eta1, eta2, gamma1, gamma2, xhist = xhist, maxhist = maxxhist, info = info)
-else if (maxxhist <= 0 .and. maxfhist > 0) then
-    call newuoa(calfun, x, f, nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, &
-        & eta1, eta2, gamma1, gamma2, fhist = fhist, maxhist = maxfhist, info = info)
+        & eta1, eta2, gamma1, gamma2, xhist = xhist, fhist = fhist, maxhist = maxhist, info = info)
 else
     call newuoa(calfun, x, f, nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, &
-        & eta1, eta2, gamma1, gamma2, info = info)
+        & eta1, eta2, gamma1, gamma2, fhist = fhist, maxhist = maxhist, info = info)
 end if
 
-! After the Fortran code, XHIST or FHIST may not be allocated, because 
-! they may not have been passed to the Fortran code. We allocate them
-! here. Otherwise, fmxWriteMPtr will fail.
+! After the Fortran code, XHIST may not be allocated, because it may not
+! have been passed to the Fortran code. We allocate it here. Otherwise, 
+! fmxWriteMPtr will fail.
 if (.not. allocated(xhist)) then
     call fmxAllocate(xhist, int(size(x), IK), 0_IK)
-end if
-if (.not. allocated(fhist)) then
-    call fmxAllocate(fhist, 0_IK)
 end if
 
 ! Write outputs
@@ -107,15 +98,17 @@ call fmxWriteMPtr(x, poutput(1))
 call fmxWriteMPtr(f, poutput(2))
 call fmxWriteMPtr(info, poutput(3))
 call fmxWriteMPtr(nf, poutput(4))
-call fmxWriteMPtr(xhist(:, 1 : min(nf, maxxhist)), poutput(5))
-call fmxWriteMPtr(fhist(1 : min(nf, maxfhist)), poutput(6), 'row')
+call fmxWriteMPtr(xhist(:, 1 : min(int(nf), size(xhist, 2))), poutput(5))
+call fmxWriteMPtr(fhist(1 : min(int(nf), size(fhist))), poutput(6), 'row')
+! N.B.: 
+! 1. INT(NF) converts NF to the default integer type; if not, MIN may complain.
+! 2. It can happen that
+!    0 < SIZE(XHIST, 2) < MAXHIST or 0 < SIZE(FHIST) < MAXHIST
+!    due to the memory limit in the Fortran code.
 
 ! Free memory
-! X was allocated by fmxReadMPtr.
-deallocate(x)
-! XHIST was allocated by the Fortran code or fmxAllocate.
+deallocate(x) ! Allocated by fmxReadMPtr.
 deallocate(xhist)
-! FHIST was allocated by the Fortran code or fmxAllocate.
 deallocate(fhist)
 
 return

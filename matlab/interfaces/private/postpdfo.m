@@ -126,7 +126,7 @@ if ~isa(output, 'struct')
 end
 if ismember(solver, internal_solver_list)
     % For internal solvers, output should contain fhist, chist, and warnings
-    obligatory_output_fields = [obligatory_output_fields, 'xhist', 'fhist', 'chist', 'warnings'];
+    obligatory_output_fields = [obligatory_output_fields, 'fhist', 'chist', 'warnings'];
 end
 if strcmp(solver, 'lincoan')
     % For lincoan, output should contain constr_modified 
@@ -135,6 +135,7 @@ end
 if ismember(solver, nonlinearly_constrained_solver_list) && ismember(solver, internal_solver_list)
     % For nonlinearly constrained internal solvers, output should contain nlinceq and nlceq
     obligatory_output_fields = [obligatory_output_fields, 'nlcineq', 'nlceq'];
+    %obligatory_output_fields = [obligatory_output_fields, 'nlcineq', 'nlceq', 'nlcihist', 'nlcehist'];
 end
 missing_fields = setdiff(obligatory_output_fields, fieldnames(output));
 if ~isempty(missing_fields)
@@ -211,7 +212,7 @@ end
 
 % xhist is either empty or containing the last nhist iterates of the solver;
 % fhist is either empty or containing the function values of the last nhist iterates of the solver;
-% chist is either empty or containing the constraint values of the last nhist iterates of the solver;
+% nlchist is either empty or containing the constraint values of the last nhist iterates of the solver;
 nhist = min(nf, output.maxhist);
 output = rmfield(output, 'maxhist'); 
 
@@ -226,10 +227,6 @@ if ~isempty(xhist) && (~isnumeric(xhist) || ~isreal(xhist) || ~ismatrix(xhist) |
     error(sprintf('%s:InvalidXhist', invoker), ...
         '%s: UNEXPECTED ERROR: %s returns an xhist that is not a real matrix of size (n, min(nf, maxhist)).', invoker, solver);
 end
-% Remove xhist from output if it is empty
-if isfield(output, 'xhist') && isempty(output.xhist)
-    output = rmfield(output, 'xhist');
-end 
 
 % Read and verify fhist
 if isfield(output, 'fhist') 
@@ -267,10 +264,6 @@ if probinfo.feasibility_problem
         output.funcCount = 0;  
     end
 end
-% Remove fhist from output if it is empty
-if isfield(output, 'fhist') && isempty(output.fhist)
-    output = rmfield(output, 'fhist');
-end 
 
 % Verify constrviolation
 if ~isnumeric(constrviolation) || ~isscalar(constrviolation) || ~isreal(constrviolation)

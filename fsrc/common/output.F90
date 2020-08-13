@@ -59,9 +59,9 @@ if (iprint >= 1) then
     if (iprint >= 3) then
         print '(1X)'
     end if
-    print '(/1X, 4A)', 'Return from ', solver, ' because ', trim(mssg)
-    print '(1X, 1A, 6X, 1A, I7)', 'At the return from ' // solver, 'Number of function evaluations = ', nf
-    print '(1X, 1A, 1PD23.15, 6X, 1A, /(1X, 1P, 5D15.6))', 'Least function value = ', f, 'The corresponding X is:', x
+    print '(/4A)', 'Return from ', solver, ' because ', trim(mssg)
+    print '(1A, 6X, 1A, I7)', 'At the return from ' // solver, 'Number of function evaluations = ', nf
+    print '(1A, 1PD23.15, 6X, 1A, /(1P, 5D15.6))', 'Least function value = ', f, 'The corresponding X is:', x
     print '(1X)'
 end if
 
@@ -75,17 +75,17 @@ if (iprint <= -1) then
     end if
     open(unit = OUTUNIT, file = trim(fout), status = fstat, position = 'append', iostat = ios, action = 'write')
     if (ios /= 0) then
-        print '(1X, 1A)', 'Fail to open file ' // trim(fout) // '!'
+        print '(1A)', 'Fail to open file ' // trim(fout) // '!'
     else
         if (iprint <= -3) then
             write(OUTUNIT, '(1X)')
         end if
-        write(OUTUNIT, '(/1X, 4A)') 'Return from ', solver, ' because ', trim(mssg)
-        write(OUTUNIT, '(1X, 1A, 6X, 1A, I7)') 'At the return from ' // solver, 'Number of function evaluations = ', nf
-        write(OUTUNIT, '(1X, 1A, 1PD23.15, 6X, 1A, /(1X, 1P, 5D15.6))') 'Least function value = ', f, 'The corresponding X is:', x
+        write(OUTUNIT, '(/4A)') 'Return from ', solver, ' because ', trim(mssg)
+        write(OUTUNIT, '(1A, 6X, 1A, I7)') 'At the return from ' // solver, 'Number of function evaluations = ', nf
+        write(OUTUNIT, '(1A, 1PD23.15, 6X, 1A, /(1P, 5D15.6))') 'Least function value = ', f, 'The corresponding X is:', x
         close(OUTUNIT)     
     end if
-    print '(/1X, 1A /)', 'See ' // trim(fout) // ' for a record of the output.'
+    !print '(/1A /)', 'The output is printed to ' // trim(fout) // '.'
 end if
 
 end subroutine retmssg 
@@ -114,8 +114,8 @@ if (iprint >= 2) then
     if (iprint >= 3) then
         print '(1X)'
     end if
-    print '(/1X, 1A, 1PD11.4, 6X, A, I7)', 'New RHO = ', rho, 'Number of function evaluations = ', nf
-    print '(1X, 1A, 1PD23.15, 6X, 1A, /(1X, 1P, 5D15.6))', 'Least function value = ', f, 'The corresponding X is:', x
+    print '(/1A, 1PD11.4, 6X, A, I7)', 'New RHO = ', rho, 'Number of function evaluations = ', nf
+    print '(1A, 1PD23.15, 6X, 1A, /(1P, 5D15.6))', 'Least function value = ', f, 'The corresponding X is:', x
 end if
 
 if (iprint <= -2) then
@@ -128,13 +128,13 @@ if (iprint <= -2) then
     end if
     open(unit = OUTUNIT, file = trim(fout), status = fstat, position = 'append', iostat = ios, action = 'write')
     if (ios /= 0) then
-        print '(1X, 1A)', 'Fail to open file ' // trim(fout) // '!'
+        print '(1A)', 'Fail to open file ' // trim(fout) // '!'
     else
         if (iprint <= -3) then
             write(OUTUNIT, '(1X)')
         end if
-        write(OUTUNIT, '(/1X, 1A, 1PD11.4, 6X, A, I7)') 'New RHO = ', rho, 'Number of function evaluations = ', nf
-        write(OUTUNIT, '(1X, 1A, 1PD23.15, 6X, 1A, /(1X, 1P, 5D15.6))') 'Least function value = ', f, 'The corresponding X is:', x
+        write(OUTUNIT, '(/1A, 1PD11.4, 6X, A, I7)') 'New RHO = ', rho, 'Number of function evaluations = ', nf
+        write(OUTUNIT, '(1A, 1PD23.15, 6X, 1A, /(1P, 5D15.6))') 'Least function value = ', f, 'The corresponding X is:', x
         close(OUTUNIT)     
     end if
 end if
@@ -162,7 +162,7 @@ logical :: fexist
  !Function number     4    F =  1.1853827160D-01    The corresponding X is:
 
 if (iprint >= 3) then
-   print '(/1X, 1A, I7, 4X, 1A, 1PD18.10, 4X, 1A, /(1X, 1P, 5D15.6))', 'Function number', nf, &
+   print '(/1A, I7, 4X, 1A, 1PD18.10, 4X, 1A, /(1P, 5D15.6))', 'Function number', nf, &
        & 'F = ', f, 'The corresponding X is:', x
 end if
 
@@ -176,9 +176,9 @@ if (iprint <= -3) then
     end if
     open(unit = OUTUNIT, file = trim(fout), status = fstat, position = 'append', iostat = ios, action = 'write')
     if (ios /= 0) then
-        print '(1X, 1A)', 'Fail to open file ' // trim(fout) // '!'
+        print '(1A)', 'Fail to open file ' // trim(fout) // '!'
     else
-        write(OUTUNIT, '(/1X, 1A, I7, 4X, 1A, 1PD18.10, 4X, 1A, /(1X, 1P, 5D15.6))') 'Function number', nf, &
+        write(OUTUNIT, '(/1A, I7, 4X, 1A, 1PD18.10, 4X, 1A, /(1P, 5D15.6))') 'Function number', nf, &
             & 'F = ', f, 'The corresponding X is:', x
         close(OUTUNIT)     
     end if

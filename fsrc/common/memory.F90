@@ -5,11 +5,18 @@ module memory_mod
 
 implicit none
 private 
-public :: safealloc
+public :: safealloc, cstyle_sizeof
 
 interface safealloc
     module procedure alloc_rvector, alloc_rmatrix
 end interface safealloc
+
+interface cstyle_sizeof
+    module procedure size_of_sp, size_of_dp
+#if __QP_AVAILABLE__ == 1
+    module procedure size_of_qp
+#endif
+end interface cstyle_sizeof
 
 
 contains
@@ -79,6 +86,52 @@ end if
 x = 0.0_RP  ! Set X = 0; otherieise, compilers may complain.
 
 end subroutine alloc_rmatrix
+
+
+pure function size_of_sp(x) result(y)
+use consts_mod, only : SP, IK
+implicit none
+real(SP), intent(in) :: x
+integer(IK) :: y
+#if __FORTRAN_STANDARD__ >= 2008
+    y = int(storage_size(x)/8, kind(y))
+#else
+    y = kind(x)  ! Avoid complaint 
+    y = int(4, kind(y))
+#endif
+end function size_of_sp
+
+
+pure function size_of_dp(x) result(y)
+use consts_mod, only : DP, IK
+implicit none
+real(DP), intent(in) :: x
+integer(IK) :: y
+#if __FORTRAN_STANDARD__ >= 2008
+    y = int(storage_size(x)/8, kind(y))
+#else
+    y = kind(x)  ! Avoid complaint 
+    y = int(8, kind(y))
+#endif
+end function size_of_dp
+
+
+#if __QP_AVAILABLE__ == 1
+
+pure function size_of_qp(x) result(y)
+use consts_mod, only : QP, IK
+implicit none
+real(QP), intent(in) :: x
+integer(IK) :: y
+#if __FORTRAN_STANDARD__ >= 2008
+    y = int(storage_size(x)/8, kind(y))
+#else
+    y = kind(x)  ! Avoid complaint 
+    y = int(8, kind(y))
+#endif
+end function size_of_qp
+
+#endif
 
 
 end module memory_mod

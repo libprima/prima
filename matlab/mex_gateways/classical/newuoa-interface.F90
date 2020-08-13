@@ -11,6 +11,7 @@ implicit none
 private
 public :: fun_ptr, nf, fhist, xhist
 public :: newuoa
+public :: solver
 
 ! Some global veriables
 ! Pointer to bjective function
@@ -19,6 +20,8 @@ mwPointer :: fun_ptr
 integer(IK_CL) :: nf 
 ! History of evaluations
 real(RP_CL), allocatable :: xhist(:, :), fhist(:)
+! Solver name 
+character(len = 6), parameter :: solver = 'NEWUOA'
 
 interface
     subroutine newuoa(n, npt, x, rhobeg, rhoend, iprint, maxfun, w, f, info, ftarget)
@@ -43,16 +46,18 @@ subroutine mexFunction(nargout, poutput, nargin, pinput)
 ! If the binary MEX file is named as FUNCTION_NAME.mex*** (file-name
 ! extension depends on the platform), then the following function is
 ! callable in matlab:
-! [xopt, fopt, info, nf, xhist, fhist] = FUNCTION_NAME(fun, x0, rhobeg, rhoend, ftarget, maxfun, maxxhist, maxfhist, npt, iprint)
+! [xopt, fopt, info, nf, xhist, fhist] = FUNCTION_NAME(fun, x0, rhobeg, rhoend, ftarget, maxfun, npt, iprint, maxhist, output_xhist)
 
 ! Generic modules
+use consts_mod, only : MAXMEMORY, INT64
+use memory_mod, only : cstyle_sizeof
 use fmxapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
 use fmxapi_mod, only : fmxVerifyClassShape
 use fmxcl_mod, only : IK_CL, RP_CL
 use fmxcl_mod, only : fmxAllocate, fmxReadMPtr, fmxWriteMPtr
 
 ! Solver-specific module
-use newuoacl_mod, only : fun_ptr, nf, xhist, fhist, newuoa
+use newuoacl_mod, only : fun_ptr, nf, xhist, fhist, newuoa, solver
 
 implicit none
 
@@ -67,11 +72,13 @@ integer(IK_CL) :: info
 integer(IK_CL) :: iprint
 integer(IK_CL) :: khist
 integer(IK_CL) :: maxfun
-integer(IK_CL), parameter :: maxhist = int(10**min(5, int(log10(real(huge(0_IK_CL))))), IK_CL)
 integer(IK_CL) :: maxfhist
+integer(INT64) :: maximal_hist
+integer(IK_CL) :: maxhist
 integer(IK_CL) :: maxxhist
 integer(IK_CL) :: n
 integer(IK_CL) :: npt
+integer(IK_CL) :: output_xhist
 real(RP_CL) :: f
 real(RP_CL) :: ftarget
 real(RP_CL) :: rhobeg
@@ -94,10 +101,10 @@ call fmxReadMPtr(pinput(3), rhobeg)
 call fmxReadMPtr(pinput(4), rhoend)
 call fmxReadMPtr(pinput(5), ftarget)
 call fmxReadMPtr(pinput(6), maxfun)
-call fmxReadMPtr(pinput(7), maxxhist)
-call fmxReadMPtr(pinput(8), maxfhist)
-call fmxReadMPtr(pinput(9), npt)
-call fmxReadMPtr(pinput(10), iprint)
+call fmxReadMPtr(pinput(7), npt)
+call fmxReadMPtr(pinput(8), iprint)
+call fmxReadMPtr(pinput(9), maxhist)
+call fmxReadMPtr(pinput(10), output_xhist)
 
 ! Get size
 n = int(size(x), kind(n))
@@ -105,11 +112,21 @@ n = int(size(x), kind(n))
 ! Allocate workspace
 call fmxAllocate(w, int((npt+13)*(npt+n)+3*n*(n+3)/2 + 1, IK_CL))
 
+! Decide the maximal length of history according to MEXMEMORY in CONSTS_MOD
+if (output_xhist > 0) then
+    maximal_hist = MAXMEMORY/((n+1)*cstyle_sizeof(0.0_RP_CL))
+    maxxhist = max(0_IK_CL, min(maxfun, maxhist))
+    maxxhist = int(min(int(maxxhist, INT64), maximal_hist), kind(maxxhist))
+else
+    maximal_hist = MAXMEMORY/(cstyle_sizeof(0.0_RP_CL))
+    maxxhist = 0
+end if
+maxfhist = max(0_IK_CL, min(maxfun, maxhist))
+maxfhist = int(min(int(maxfhist, INT64), maximal_hist), kind(maxfhist))
+
 ! Initialize global variables
 nf = 0
-maxxhist = max(0_IK_CL, minval((/maxfun, maxhist, maxxhist/)))
 call fmxAllocate(xhist, n, maxxhist)
-maxfhist = max(0_IK_CL, minval((/maxfun, maxhist, maxfhist/)))
 call fmxAllocate(fhist, maxfhist)
 
 ! Call NEWUOA
@@ -123,6 +140,12 @@ end if
 if (maxfhist >= 1 .and. maxfhist < nf) then
     khist = mod(nf - 1_IK_CL, maxfhist) + 1_IK_CL
     fhist = (/ fhist(khist + 1 : maxfhist), fhist(1 : khist) /)
+end if
+
+! If MAXFHIST_IN >= NF_C > MAXFHIST_C, warn that not all history is recorced.
+if (maxfhist < min(nf, maxhist)) then
+    print '(/1A, I7, 1A)', 'WARNING: ' // solver // ': due to memory limit, MAXHIST is reset to ', maxfhist, '.'
+    print '(1A/)', 'Only the history of the last MAXHIST iterations is recoreded.' 
 end if
 
 ! Write outputs
@@ -158,7 +181,7 @@ use fmxcl_mod, only : RP_CL, IK_CL
 use fmxcl_mod, only : fmxReadMPtr, fmxWriteMPtr
 
 ! Solver-specific module
-use newuoacl_mod, only : fun_ptr, nf, fhist, xhist
+use newuoacl_mod, only : fun_ptr, nf, fhist, xhist, solver
 
 implicit none
 
@@ -175,7 +198,6 @@ mwSize :: row, col
 integer(IK_CL) :: maxfhist, maxxhist, khist
 integer(INT32) :: isdble
 character(len = MSSGLEN) :: eid, mssg
-character(len = 30) :: solver = 'FNEWUOA'
 
 ! Associate X with INPUT(1)
 call fmxWriteMPtr(x, pinput(1))
@@ -188,8 +210,8 @@ row = mxGetM(poutput(1))
 col = mxGetN(poutput(1))
 isdble = mxIsDouble(poutput(1))
 if (row*col /= 1 .or. isdble /= 1) then
-    eid = trim(solver) // ':ObjectiveNotScalar'
-    mssg = trim(solver) // ': Objective function does not return a scalar.'
+    eid = solver // ':ObjectiveNotScalar'
+    mssg = solver // ': Objective function does not return a scalar.'
     call mexErrMsgIdAndTxt(eid, mssg)
 end if
 
