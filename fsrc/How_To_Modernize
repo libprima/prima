@@ -1,0 +1,79 @@
+To modernize Powell's Fortran 77 code, do the following. 
+Do things by small steps, and user verify.m to verify that the code
+behaves in the same way before and after the changes.
+
+0. Refactoring.
+
+0.1. Refactor the code into the free form. Change the file name to .f90.
+0.2. End all blocks with END BLOCK BLOCKNAME.
+0.3. Put a space before and after all =, +, -, comma; for * and /, do
+the same if it improves the readability. For =, be careful with ==, =>,
+<=, and /=; for -, be careful with -DX (e.g., 1.0-D1).
+
+1. Remove the implicitness.
+
+1.1. Always use IMPLICIT NONE.
+1.2. Declare all reals as REAL(RP) and all integers as INTEGER(IK).
+Change all 1.0D0 to 1.0_RP, etc.
+1.3. Declare the variables in the following order:
+Inputs (integer, real)
+In-outputs (integer, real)
+Outputs (integer, real)
+Intermediate variables (integer, real, logical, character)
+Within each category, follow the alphabetical order. 
+1.4. Declare only one variable in each line.
+1.5. Specify the intent of dummy variables.
+1.6. In the signature of subroutines, arrange the dummy variables in the same
+order as they are declared. This does not apply to the main subroutine
+(e.g., newuoa.f90) or the common subroutines (e.g., r1update), where the
+dummy variables are arranged according to the logic of the subroutine.
+1.7. All dummy arrays should be assumed-size. Use VERISIZE to verify
+their sizes if DEBUGGING is true.
+
+2. Use matrix/vector operations.
+
+If appropriate, replace loops with matrix/vector operations (inprod, matprod,
+r1update, etc.; see lina.F90). This will reduce the complexity of the code.
+
+Note that floating-point arithmetic is NOT ASSOCIATIVE! For example,
+
+a = t
+do i = 1, n
+    a = a + b(i)
+end do
+
+if NOT equivalent to a = t + sum(b) unless t = 0.
+
+3. Transpose XPT and BMAT (and other arrays if appropriate). 
+
+See Notes_On_Transposing_XPT_BMAT for how to do it.
+ 
+4. Modularize the code.
+
+Recognize blocks of the code that can be modularized into subroutines.
+
+4.1. Note that WCHECK, XOPTSQ should be calculated internally rather
+than passed as a dummy argument. This may change a bit the result. To
+keep the results identical, do the same in the original code.
+
+4.2. Note that DSTEP is renamed to DELBAR in NEWUOA.
+
+5. Remove the GOTOs. 
+
+This is the most complex and important step. It needs a lot of care.
+
+6. Correct the bugs. 
+
+Two bugs have been spotted in NEWUOA:
+-- DNORM was not updated after a model step;
+-- the update of IDZ in update.f was incorrect.
+
+Similar bugs may exist in other solvers.
+
+7. Others.
+
+7.1. Temporary variables
+Use temporary variables at little as possible. 
+Do not share temporary variables. 
+Even for temporary variables, their names should be informative; do not
+use temp, tempa, tempb ...

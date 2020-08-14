@@ -376,10 +376,9 @@ if (present(xhist)) then
     ! 0. Allocate XHIST as long as it is present, even if MAXXHIST = 0; 
     ! otherwise, it will be illeagle to enquire XHIST after exit.
     ! 1. Even though Fortran 2003 supports automatic (re)allocation of 
-    ! allocatable arrays upon intrinsic assignment, the line of SAFEALLOC
-    ! should NOT be removed, because when the RHS of the assignment is 
-    ! an empty array (e.g., MAXXHIST = 0), some compilers do not allocate
-    ! the LHS (e.g., g95 4.0.3, Absoft Fortran 20.0).
+    ! allocatable arrays upon intrinsic assignment, we keep the line of 
+    ! SAFEALLOC, because some very new compilers (Absoft Fortran 20.0)
+    ! are still not standard-compliant in this respect.
     ! 2. NF may not be present. Hence we should NOT use NF but NF_C.
     ! 3. When MAXXHIST > NF_C, which is the normal case in practice, 
     ! XHIST_C contains GARBAGE in XHIST_C(:, NF_C + 1 : MAXXHIST). 
