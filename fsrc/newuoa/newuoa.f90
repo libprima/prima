@@ -312,7 +312,7 @@ else
     gamma2_c = TWO
 end if
 
-maxhist_in = 0
+maxhist_in = 0 ! MAXHIST input by user
 if (present(maxhist)) then
     maxhist_c = maxhist
     maxhist_in = maxhist
@@ -327,7 +327,7 @@ call preproc(n, iprint_c, maxfun_c, maxhist_c, npt_c, eta1_c, eta2_c, ftarget_c,
     & gamma2_c, rhobeg_c, rhoend_c) 
 
 ! Further revise MAXHIST according to MAXMEMORY, i.e., the maximal amount
-! of memory allowed for the history.
+! of memory allowed for the history. 
 if (present(xhist)) then
     maximal_hist = int(MAXMEMORY/((n+1)*cstyle_sizeof(0.0_RP)), kind(maximal_hist))
 else
@@ -353,9 +353,10 @@ else
 end if
 call safealloc(fhist_c, maxfhist)
 
-! Call NEWUOB, which performs the real calculations.
+!-------------------- Call NEWUOB, which performs the real calculations. --------------------------!
 call newuob(calfun, iprint_c, maxfun_c, npt_c, eta1_c, eta2_c, ftarget_c, gamma1_c, gamma2_c, &
     & rhobeg_c, rhoend_c, x, nf_c, f, fhist_c, xhist_c, info_c)
+!--------------------------------------------------------------------------------------------------!
 
 ! Write the outputs.
 
@@ -368,17 +369,19 @@ if (present(info)) then
 end if
 
 ! Copy XHIST_C to XHIST and FHIST_C to FHIST if needed.
-! N.B.: Fortran 2003 supports "automatic (re)allocation of allocatable
-! arrays upon intrinsic assignment". Therefore, the lines of SAFEALLOC 
-! in the following can indeed be removed in F2003.
 if (present(xhist)) then
     call safealloc(xhist, n, min(nf_c, maxxhist))
     xhist = xhist_c(:, 1 : min(nf_c, maxxhist))
     ! N.B.: 
-    ! 0. We allocate XHIST as long as it is present, even if MAXXHIST = 0; 
+    ! 0. Allocate XHIST as long as it is present, even if MAXXHIST = 0; 
     ! otherwise, it will be illeagle to enquire XHIST after exit.
-    ! 1. NF may not be present. Hence we should NOT use NF but NF_C.
-    ! 2. When MAXXHIST > NF_C, which is the normal case in practice, 
+    ! 1. Even though Fortran 2003 supports automatic (re)allocation of 
+    ! allocatable arrays upon intrinsic assignment, the line of SAFEALLOC
+    ! should NOT be removed, because when the RHS of the assignment is 
+    ! an empty array (e.g., MAXXHIST = 0), some compilers do not allocate
+    ! the LHS (e.g., g95 4.0.3, Absoft Fortran 20.0).
+    ! 2. NF may not be present. Hence we should NOT use NF but NF_C.
+    ! 3. When MAXXHIST > NF_C, which is the normal case in practice, 
     ! XHIST_C contains GARBAGE in XHIST_C(:, NF_C + 1 : MAXXHIST). 
     ! Therefore, we MUST cap XHIST at min(NF_C, MAXXHIST) so that XHIST 
     ! cointains only valid history. For this reason, there is no way to
