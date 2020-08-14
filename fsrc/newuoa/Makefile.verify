@@ -20,8 +20,8 @@ M90FILES= $(FILES) $(MEXDIR)/fmxapi.F90 $(MEXDIR)/prob.F90 $(MEXDIR)/classical/f
 MFILES= ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F ../common/infnan.F ../common/lina.F ../common/output.F ../common/pintrf.F preproc.f initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f $(INTERSECTIONMEXDIR)/fmxapi.F $(INTERSECTIONMEXDIR)/prob.F $(INTERSECTIONMEXDIR)/classical/fmxcl.F $(INTERSECTIONMEXDIR)/gethuge.F $(INTERSECTIONMEXDIR)/newuoa-interface.F $(INTERSECTIONMEXDIR)/classical/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/
 
 
-FSTD=2003
-FS=f03
+FSTD=2008
+FS=f08
 
 verify: gverify iverify 9verify nverify pverify averify sverify
 verifym: gverifym iverifym 9verifym nverifym pverifym averifym sverifym
@@ -49,32 +49,32 @@ sverify:
 
 
 gverifym:
-	$(GFORT) -c  $(M90FILES) -pedantic  -ffree-form
-	cd $(INTERFORMDIR) && $(GFORT) -c $(MFILES) -pedantic -ffixed-form && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+	$(GFORT)  $(M90FILES) -pedantic  -ffree-form
+	cd $(INTERFORMDIR) && $(GFORT) $(MFILES) -pedantic -ffixed-form && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 9verifym:
-	$(G95) -c $(M90FILES) -pedantic -ffree-form
-	cd $(INTERFORMDIR) && $(G95) -c $(MFILES) -pedantic -ffixed-form && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+	$(G95) $(M90FILES) -pedantic -ffree-form
+	cd $(INTERFORMDIR) && $(G95) $(MFILES) -pedantic -ffixed-form && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 iverifym:
-	$(IFORT) -c -standd:$(FS) -pedantic -ffree-form $(M90FILES) 
-	cd $(INTERFORMDIR) && $(IFORT) -c $(MFILES) -pedantic -ffixed-form && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+	$(IFORT) -standd:$(FS) -pedantic -ffree-form $(M90FILES) 
+	cd $(INTERFORMDIR) && $(IFORT) $(MFILES) -pedantic -ffixed-form && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 nverifym:
-	$(NFORT) -c $(M90FILES) -f$(FSTD) -free
-	cd $(INTERFORMDIR) && $(NFORT) -c $(MFILES) -fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+	$(NFORT) $(M90FILES) -f$(FSTD) -free
+	cd $(INTERFORMDIR) && $(NFORT) $(MFILES) -fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 pverifym:
-	$(PFORT) -c $(M90FILES) -Mfreeform
-	cd $(INTERFORMDIR) && $(PFORT) -c $(MFILES) -Mfixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+	$(PFORT) $(M90FILES) -Mfreeform
+	cd $(INTERFORMDIR) && $(PFORT) $(MFILES) -Mfixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 averifym:
-	$(ABSOFT) -c $(M90FILES) -f free
-	cd $(INTERFORMDIR) && $(ABSOFT) -c  $(MFILES) -f fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+	$(ABSOFT) $(M90FILES) -f free
+	cd $(INTERFORMDIR) && $(ABSOFT)  $(MFILES) -f fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 sverifym:
-	$(SFORT) -c $(M90FILES) -free
-	cd $(INTERFORMDIR) && $(SFORT) -c $(MFILES) -fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+	$(SFORT) $(M90FILES) -free
+	cd $(INTERFORMDIR) && $(SFORT) $(MFILES) -fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 # Please change the variables FC and FFLAGS to match your fortran compiler
 

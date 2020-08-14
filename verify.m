@@ -197,10 +197,10 @@ if ~isfield(oo,'constrviolation')
 end
 
 if ~isfield(output, 'chist')
-    output.chist = zeros(output.funcCount);
+    output.chist = zeros(output.funcCount, 1);
 end
 if ~isfield(oo, 'chist')
-    oo.chist = zeros(oo.funcCount);
+    oo.chist = zeros(oo.funcCount, 1);
 end
 
 if (norm(xx-x)/(1+norm(x)) > prec || abs(ff-f)/(1+abs(f)) > prec || abs(oo.constrviolation-output.constrviolation)/(1+abs(output.constrviolation)) > prec)
