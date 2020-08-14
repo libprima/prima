@@ -210,11 +210,18 @@ if nf <= 0
     '%s: UNEXPECTED ERROR: %s returns nf=0 unexpectedly with exitflag %d.', invoker, solver, exitflag); 
 end
 
+% For internal solvers:
 % xhist is either empty or containing the last nhist iterates of the solver;
-% fhist is either empty or containing the function values of the last nhist iterates of the solver;
-% nlchist is either empty or containing the constraint values of the last nhist iterates of the solver;
-nhist = min(nf, output.maxhist);
-output = rmfield(output, 'maxhist'); 
+% nlcihist is either empty or containing the nonlinear inequality constraint values of the
+% last nhist iterates of the solver;
+% nlcehist is either empty or containing the nonlinear equality constraint values of the
+% last nhist iterates of the solver;
+% fhist contains the function values of the last nhist iterates of the solver.
+if isfield(output, 'fhist')
+    nhist = length(output.fhist);
+else
+    nhist = 0;
+end
 
 % Read and verify xhist
 if isfield(output, 'xhist')

@@ -283,7 +283,8 @@ else
 
     try
     % Call the Fortran code
-    % The mexified Fortran Function is a private function generating only private errors; however, public errors can occur due to, e.g., evalobj; error handling needed 
+    % The mexified Fortran Function is a private function generating only private errors; 
+    % however, public errors can occur due to, e.g., evalobj; error handling needed.
         if options.classical
             [x, fx, exitflag, nf, xhist, fhist] = fnewuoan_classical(fun, x0, rhobeg, rhoend, ftarget, maxfun, npt, iprint, maxhist, double(output_xhist));
         else
@@ -305,10 +306,6 @@ else
         output.xhist = xhist;
     end
     output.fhist = fhist;
-    % Record the length of history in output for verification in
-    % postpdfo. It may be smaller than maxhist due to the memory limit
-    % in the Fortran code.
-    output.maxhist = min(maxhist, max(length(fhist), size(xhist, 2)));
     output.constrviolation = 0; % Unconstrained problem; set output.constrviolation to 0
     output.chist = []; % Unconstrained problem; set output.chist to []
 end
