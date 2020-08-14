@@ -119,6 +119,11 @@ for ip = 1 : length(plist)
         test_options.classical = (randn < -1.5);
         test_options.output_xhist = (rand > 0.5);
         test_options.maxhist = ceil(randn*1.5*test_options.maxfun);
+        test_options.iprint = floor(3*randn);
+        test_options.quiet = (rand > 0.5);
+        if mod(ir, 50) == 0 && exist('NEWUOA_output.txt', 'file')
+            delete('NEWUOA_output.txt');
+        end
         if ir == 0
             test_options.npt = (n+2)*(n+1)/2;
         end
