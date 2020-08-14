@@ -1,4 +1,7 @@
 ! This is an example to illustrate the usage of NEWUOA. 
+!   
+! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code. 
+
 
 !!!!!!!!!!!!!!!!!! THE MODULE THAT IMPLEMENTS CALFUN !!!!!!!!!!!!!!!!!!!
 module calfun_mod
