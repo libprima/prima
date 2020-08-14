@@ -1,4 +1,5 @@
-# Please change the variables FC and FFLAGS to match your fortran compiler
+# This is the Makefile for compiling example.f90.
+# Please change the variables FC and FFLAGS to match your fortran compiler.
 
 FC = gfortran
 FFLAGS = -g

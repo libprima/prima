@@ -22,8 +22,8 @@ To this end, here are the major changes.
 3. XPT = XPT + spread(x, dim = 1, ncopies) ==> XPT = XPT + spread(x, dim = 2, ncopies)
 4. sum(XPT, dim = 2) ==> sum(XPT, dim = 1)
 
-An important thing to note is that QALT takes only part of BMAT (indeed,
-the first NPT columns in the new code; QALT calls it SMAT) as the input.
+An important thing to note is that TRYQALT takes only part of BMAT (indeed,
+the first NPT columns in the new code; TRYQALT calls it SMAT) as the input.
 So it is not enough to search for BMAT and change only the related parts. 
 SMAT should also be revised.
 
@@ -54,7 +54,7 @@ right before the subroutine returns.
 XPT = transpose(XPR)
 
 right above the line that invokes the subroutine. The idea is indeed the
-same same as putting the same instruction before the return.
+same as putting the same instruction before the return.
 
 1.4. For each XPR, change XPR(i, j) to XPR(j, i), matmul(XPR, v) to
    matmul(x, XPR), matmul(v, XPR) to matmul(XPR, v), spread(XPR dim = 1)
