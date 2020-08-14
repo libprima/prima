@@ -4,9 +4,10 @@ FC = gfortran
 FFLAGS = -g
 COMMON = ../common
 
+# N.B.:
 # The .F90 and .f90 files will be compiled in the enumeration order of
-# that the .o files. The order matters, because the compilation of 
-# each .o file depends on the .o files before it.
+# the .o files. The order matters, because the compilation of each .o file 
+# depends on the .o files (and the corresponding .mod files) preceding it.
 
 example: example.f90 \
 	consts.o info.o debug.o memory.o infnan.o lina.o output.o pintrf.o \
@@ -16,6 +17,7 @@ example: example.f90 \
 test: example
 	./example 
  
+# Compile the Fortran code providing generic modules
 consts.o: $(COMMON)/consts.F90
 	$(FC) $(FFLAGS) -c $(COMMON)/consts.F90
 info.o: $(COMMON)/info.F90
@@ -33,6 +35,7 @@ output.o: $(COMMON)/output.F90
 pintrf.o: $(COMMON)/pintrf.F90
 	$(FC) $(FFLAGS) -c $(COMMON)/pintrf.F90
 
+# Compile the Fortran code providing solver-specific modules
 preproc.o: preproc.f90
 	$(FC) $(FFLAGS) -c preproc.f90
 initialize.o: initialize.f90
