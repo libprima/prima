@@ -9,11 +9,14 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 13-Aug-2020.
+! on 14-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 ! This is an example to illustrate the usage of NEWUOA.
+!
+! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code.
+
 
 !!!!!!!!!!!!!!!!!! THE MODULE THAT IMPLEMENTS CALFUN !!!!!!!!!!!!!!!!!!!
       module calfun_mod
@@ -98,8 +101,7 @@
 
 ! The following line illustrates how to call NEWUOA.
 !------------------------------------------------------------------!
-          call newuoa(calfun, x, f, rhobeg = rhobeg)
-!call newuoa(calfun, x, f, rhobeg = rhobeg, iprint = 2)
+          call newuoa(calfun, x, f, rhobeg = rhobeg, iprint = 2)
 !------------------------------------------------------------------!
 ! In additon to the required arguments CALFUN, X, and F, the above
 ! illustration specifies also RHOBEG and IPRINT, which are optional.

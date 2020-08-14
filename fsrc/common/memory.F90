@@ -1,6 +1,8 @@
 ! MEMORY_MOD is a module providing subroutines concerning memory management.
 
 
+#include "ppf.h"
+
 module memory_mod
 
 implicit none
@@ -93,10 +95,10 @@ use consts_mod, only : SP, IK
 implicit none
 real(SP), intent(in) :: x
 integer(IK) :: y
-#if __FORTRAN_STANDARD__ >= 2008
+#if __USE_STORAGE_SIZE__ == 1
     y = int(storage_size(x)/8, kind(y))
 #else
-    y = kind(x)  ! Avoid complaint 
+    y = int(kind(x), kind(y)) ! Avoid complaint 
     y = int(4, kind(y))
 #endif
 end function size_of_sp
@@ -107,10 +109,10 @@ use consts_mod, only : DP, IK
 implicit none
 real(DP), intent(in) :: x
 integer(IK) :: y
-#if __FORTRAN_STANDARD__ >= 2008
+#if __USE_STORAGE_SIZE__ == 1
     y = int(storage_size(x)/8, kind(y))
 #else
-    y = kind(x)  ! Avoid complaint 
+    y = int(kind(x), kind(y)) ! Avoid complaint 
     y = int(8, kind(y))
 #endif
 end function size_of_dp
@@ -123,10 +125,10 @@ use consts_mod, only : QP, IK
 implicit none
 real(QP), intent(in) :: x
 integer(IK) :: y
-#if __FORTRAN_STANDARD__ >= 2008
+#if __USE_STORAGE_SIZE__ == 1
     y = int(storage_size(x)/8, kind(y))
 #else
-    y = kind(x)  ! Avoid complaint 
+    y = int(kind(x), kind(y)) ! Avoid complaint 
     y = int(8, kind(y))
 #endif
 end function size_of_qp

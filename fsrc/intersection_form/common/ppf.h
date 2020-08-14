@@ -7,19 +7,22 @@ __USE_INTRINSIC_ALGEBRA__   use intrinsic procedures like matmul or not: 0, 1
 __USE_POWELL_ALGEBRA__      use Powell's linear algebra procedures or not: 0, 1 
 __INTEGER_KIND__            the integer kind to be used: 0, 32, 64, 16
 __REAL_PRECISION__          the real precision to be used: 64, 32, 128, 0 
-__FORTRAN_STANDARD__        Fortran standard to follow: 2003, 2008, 2018
-__USE_IEEE_ARITHMETIC__     use the IEEE_ARITHMETIC intrinsic or not: 1, 0
+__USE_IEEE_ARITHMETIC__     use the IEEE_ARITHMETIC intrinsic or not: 0, 1
+__USE_STORAGE_SIZE__        use the STORAGE_SIZE intrinsic or not: 0, 1
+__USE_ISO_FORTRAN_ENV_INTREAL__ use the ISO_FORTRAN_ENV module or not: 0, 1
 
 You may change these flags, but make sure that your compiler is supportive
-when changing __INTEGER_KIND__, __REAL_PRECISION__, __FORTRAN_STANDARD__,
-and __USE_INTRINSIC_ALGEBRA__.
+when changing __INTEGER_KIND__, __REAL_PRECISION__, 
+__USE_IEEE_ARITHMETIC__ (Fortran 2003),
+__USE_STORAGE_SIZE__ (Fortran 2008), 
+__USE_ISO_FORTRAN_ENV_INTREAL__ (Fortran 2008).
 
 Why not define these flags as parameters in the Fortran code, e.g.,
 
 logical, parameter :: __DEBUGGING__ = .false. ?
 
 Such a definition will work for __DEBUGGING__, but not for the flags that
-depend on the compiler, for instance, __FORTRAN_STANDARD__.
+depend on the compiler, for instance, __USE_IEEE_ARITHMETIC__.
 */
 /*************************************************************************/
 
@@ -39,14 +42,14 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 #if defined __USE_INTRINSIC_ALGEBRA__
 #undef __USE_INTRINSIC_ALGEBRA__
 #endif
-#define __USE_INTRINSIC_ALGEBRA__ 0 
+#define __USE_INTRINSIC_ALGEBRA__ 0
 /*************************************************************************/
 
 
 /*************************************************************************/
 /* Do we use Powell's linear algebra procedures? */
 /* If not, the implementation of some algebraic calculations will be
- * modified, mainly by replacing loops with matrix-vector operations.
+ * modified, mainly by replacing loops with matrix/vector operations.
  * This does not change Powell's algorithms, but it may not produce
  * exactly the same results as Powell's code due to properties of 
  * floating-point arithmetic, e.g., the non-associativity of floating-point
@@ -65,7 +68,7 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 #if defined __INTEGER_KIND__
 #undef __INTEGER_KIND__
 #endif
-#define __INTEGER_KIND__ 16 
+#define __INTEGER_KIND__ 0 
 /*************************************************************************/
 
 
@@ -107,91 +110,134 @@ depend on the compiler, for instance, __FORTRAN_STANDARD__.
 
 
 /*************************************************************************/
-/* Which Fortran standard do we follow? */
-/* We aim to be compatible with Fortran 2003, 2008, and 2018. 
- * Make sure that your compiler supports the selected standard. */
-#if defined __FORTRAN_STANDARD__
-#undef __FORTRAN_STANDARD__
+/* Do we use the STORAGE_SIZE intrinsic? */
+#if defined __USE_STORAGE_SIZE__
+#undef __USE_STORAGE_SIZE__
 #endif
-#define __FORTRAN_STANDARD__ 2003
-/* #define __FORTRAN_STANDARD__ 2008 */
-/*#define __FORTRAN_STANDARD__ 2018 */
-
-/* Revise __FORTRAN_STANDARD__ according to the version of the compiler. */
-/* Of course, we cannot exhaust all the compilers. */
-/*******************************************************/
-#if __FORTRAN_STANDARD__ > 2003
+#define __USE_STORAGE_SIZE__ 0
 
 #if defined __GFORTRAN__
-#if __GNUC__ <= 5  /* gfortran 5.0 supports most features of F2003/08 */
-#undef __FORTRAN_STANDARD__
-#define __FORTRAN_STANDARD__ 2003 
+#if __GNUC__ >= 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
+#undef __USE_STORAGE_SIZE__
+#define __USE_STORAGE_SIZE__ 1
 #endif
 #endif
 
 #if defined __INTEL_COMPILER
-#if __INTEL_COMPILER < 1800  /* ifort 18.0 fully supports F2008 */
-#undef __FORTRAN_STANDARD__
-#define __FORTRAN_STANDARD__ 2003 
+#if __INTEL_COMPILER >= 1710
+#undef __USE_STORAGE_SIZE__
+#define __USE_STORAGE_SIZE__ 1
 #endif
 #endif
 
 #if defined __NAG_COMPILER_RELEASE
-#if __NAG_COMPILER_RELEASE < 62  /* nagfor 6.2 supports most of F2008 */
-#undef __FORTRAN_STANDARD__
-#define __FORTRAN_STANDARD__ 2003 
+#if __NAG_COMPILER_RELEASE >= 53 
+#undef __USE_STORAGE_SIZE__
+#define __USE_STORAGE_SIZE__ 1
 #endif
 #endif
 
 #if defined __PGI
-/* pgifortran 11 fully supports F2003; support for F2008 is increasing */
-#if __PGIC__ <= 11  
-#undef __FORTRAN_STANDARD__
-#define __FORTRAN_STANDARD__ 2003 
+#if __PGIC__ >= 15 && __PGIC_MINOR__ >= 4
+#undef __USE_STORAGE_SIZE__
+#define __USE_STORAGE_SIZE__ 1
 #endif
 #endif
 
-#if defined __G95__
-#undef __FORTRAN_STANDARD__
-#define __FORTRAN_STANDARD__ 2003  /* g95 only supports F2003/08 partially */
+#if defined __ibmxl__
+#if __ibmxl_version__ >= 15 && __ibmxl_release__ >= 2 
+#undef __USE_STORAGE_SIZE__
+#define __USE_STORAGE_SIZE__ 1
 #endif
-
 #endif
-/*******************************************************/
 /*************************************************************************/
 
 
 /*************************************************************************/
-/* Do we use IEEE_ARITHMETIC? */
-/* Make sure that your compiler supports IEEE_ARITHMETIC if you set this
- * value to 1. */
-#if defined __USE_IEEE_ARITHMETIC__      
+/* Do we use the IEEE_ARITHMETIC intrinsic module? */
+#if defined __USE_IEEE_ARITHMETIC__
 #undef __USE_IEEE_ARITHMETIC__
 #endif
-/* IEEE_ARITHMETIC is available starting from Fortran 2003. */
-#define __USE_IEEE_ARITHMETIC__ 1
+#define __USE_IEEE_ARITHMETIC__ 0
 
 /* As of gfortran 5.5, it seems that the IEEE_ARITHMETIC of gfortran does 
  * not support REAL128. */
-#if __REAL_PRECISION__ > 64
-#if defined __GNUC__
-#undef __USE_IEEE_ARITHMETIC__ 
-#define __USE_IEEE_ARITHMETIC__ 0
-#endif
-#endif
-
-/* The code concerning IEEE_ARITHMETIC does not work well with g95. Not
- * clear why. */
-#if defined __G95__
+#if defined __GFORTRAN__
+#if __REAL_PRECISION__ <= 64 && __GNUC__ >= 5
 #undef __USE_IEEE_ARITHMETIC__
-#define __USE_IEEE_ARITHMETIC__ 0  
+#define __USE_IEEE_ARITHMETIC__ 1
+#endif
 #endif
 
-/* The code concerning IEEE_ARITHMETIC does not work well with Oracle 
- * Developer Studio 12.6. Not clear why. */
-
-#if defined __SUNPRO_F90 || defined __SUNPRO_F95
+#if defined __INTEL_COMPILER
+#if __INTEL_COMPILER >= 1110
 #undef __USE_IEEE_ARITHMETIC__
-#define __USE_IEEE_ARITHMETIC__ 0  
+#define __USE_IEEE_ARITHMETIC__ 1
+#endif
+#endif
+
+#if defined __NAG_COMPILER_RELEASE
+#if __NAG_COMPILER_RELEASE >= 50 
+#undef __USE_IEEE_ARITHMETIC__
+#define __USE_IEEE_ARITHMETIC__ 1
+#endif
+#endif
+
+#if defined __PGI
+#if __PGIC__ >= 11 && __PGIC_MINOR__ >= 1
+#undef __USE_IEEE_ARITHMETIC__
+#define __USE_IEEE_ARITHMETIC__ 1
+#endif
+#endif
+
+#if defined __ibmxl__
+#if __ibmxl_version__ >= 13 && __ibmxl_release__ >= 1
+#undef __USE_IEEE_ARITHMETIC__
+#define __USE_IEEE_ARITHMETIC__ 1
+#endif
+#endif
+/*************************************************************************/
+
+
+/*************************************************************************/
+/* Do we use INT16, IN32, INT64, REAL32, REAL64, REAL128 from ISO_FORTRAN_ENV? */
+#if defined __USE_ISO_FORTRAN_ENV_INTREAL__
+#undef __USE_ISO_FORTRAN_ENV_INTREAL__
+#endif
+#define __USE_ISO_FORTRAN_ENV_INTREAL__ 0
+
+#if defined __GFORTRAN__
+#if __GNUC__ >= 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5) 
+#undef __USE_ISO_FORTRAN_ENV_INTREAL__
+#define __USE_ISO_FORTRAN_ENV_INTREAL__ 1
+#endif
+#endif
+
+#if defined __INTEL_COMPILER
+#if __INTEL_COMPILER >= 1640
+#undef __USE_ISO_FORTRAN_ENV_INTREAL__
+#define __USE_ISO_FORTRAN_ENV_INTREAL__ 1
+#endif
+#endif
+
+#if defined __NAG_COMPILER_RELEASE
+#if __NAG_COMPILER_RELEASE >= 53 
+#undef __USE_ISO_FORTRAN_ENV_INTREAL__
+#define __USE_ISO_FORTRAN_ENV_INTREAL__ 1
+#endif
+#endif
+
+#if defined __PGI
+#if __PGIC__ >= 14 && __PGIC_MINOR__ >= 1
+#undef __USE_ISO_FORTRAN_ENV_INTREAL__
+#define __USE_ISO_FORTRAN_ENV_INTREAL__ 1
+#endif
+#endif
+
+#if defined __ibmxl__
+#if __ibmxl_version__ >= 14 && __ibmxl_release__ >= 1
+#undef __USE_ISO_FORTRAN_ENV_INTREAL__
+#define __USE_ISO_FORTRAN_ENV_INTREAL__ 1
+#endif
 #endif
 /*************************************************************************/

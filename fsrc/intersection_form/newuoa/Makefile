@@ -1,11 +1,11 @@
 #GFORT=gfortran -g -Wall -Wextra -Wconversion -Warray-temporaries -fimplicit-none -fbacktrace -ffree-line-length-0 -fcheck=all -ffpe-trap=invalid,zero,overflow,underflow -finit-real=nan
-GFORT=gfortran -g -Wall -Wextra -Wconversion -Wuninitialized -Wmaybe-uninitialized -fimplicit-none -fbacktrace -ffree-line-length-0 -fcheck=all -ffpe-trap=invalid,zero,overflow,underflow 
-IFORT=ifort -g -warn all -check all  -fpe0 -debug extended -fimplicit-none #-names as_is
-G95=g95 -g -Wall -Wextra -fbounds-check -fimplicit-none 
-NFORT=nagfor -g -Warn=allocation -Warn=constant_coindexing -Warn=reallocation -Warn=subnormal -colour=error:red,warn:magenta,info:yellow
-PFORT=pgfortran  -g 
-ABSOFT=af95  -g -m1 -en
-SFORT=sunf95  -g -w3 -u -ansi -U
+GFORT=gfortran -c -g -Wall -Wextra -Wconversion -Wuninitialized -Wmaybe-uninitialized -fimplicit-none -fbacktrace -ffree-line-length-0 -fcheck=all -ffpe-trap=invalid,zero,overflow,underflow 
+IFORT=ifort -c -g -warn all -check all  -fpe0 -debug extended -fimplicit-none #-names as_is
+G95=g95 -c -g -Wall -Wextra -fbounds-check -fimplicit-none 
+NFORT=nagfor -c -g -Warn=allocation -Warn=constant_coindexing -Warn=reallocation -Warn=subnormal -colour=error:red,warn:magenta,info:yellow
+PFORT=pgfortran  -c -g 
+ABSOFT=af95  -c -g -m1 -en
+SFORT=sunf95  -c -g -w3 -u -ansi -U
 
 CURRENTDIR=$(PWD)
 INTERFORMDIR=../intersection_form/newuoa/
@@ -13,15 +13,15 @@ MEXDIR= $(PWD)/../../matlab/mex_gateways/
 INTERSECTIONMEXDIR= $(PWD)/../../matlab/mex_gateways/intersection_form/
 
 COMFILES=../common/consts.F90 ../common/debug.F90 ../common/memory.F90 ../common/info.F90 ../common/infnan.F90 ../common/lina.F90 ../common/output.F90 ../common/pintrf.F90 
-FILES= $(COMFILES) preproc.f90 initialize.f90 trustregion.f90 vlagbeta.f90 geometry.f90 update.f90 shiftbase.f90 newuob.f90 newuoa.f90 example.f90
+FILES= $(COMFILES) preproc.f90 initialize.f90 trustregion.f90 vlagbeta.f90 geometry.f90 update.f90 shiftbase.f90 newuob.f90 newuoa.f90
  
 M90FILES= $(FILES) $(MEXDIR)/fmxapi.F90 $(MEXDIR)/prob.F90 $(MEXDIR)/classical/fmxcl.F90 $(MEXDIR)/gethuge.F90 $(MEXDIR)/newuoa-interface.F90 $(MEXDIR)/classical/newuoa-interface.F90 -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/
 
-MFILES= ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F ../common/infnan.F ../common/lina.F ../common/output.F ../common/pintrf.F preproc.f initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f example.f $(INTERSECTIONMEXDIR)/fmxapi.F $(INTERSECTIONMEXDIR)/prob.F $(INTERSECTIONMEXDIR)/classical/fmxcl.F $(INTERSECTIONMEXDIR)/gethuge.F $(INTERSECTIONMEXDIR)/newuoa-interface.F $(INTERSECTIONMEXDIR)/classical/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/
+MFILES= ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F ../common/infnan.F ../common/lina.F ../common/output.F ../common/pintrf.F preproc.f initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f $(INTERSECTIONMEXDIR)/fmxapi.F $(INTERSECTIONMEXDIR)/prob.F $(INTERSECTIONMEXDIR)/classical/fmxcl.F $(INTERSECTIONMEXDIR)/gethuge.F $(INTERSECTIONMEXDIR)/newuoa-interface.F $(INTERSECTIONMEXDIR)/classical/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/
 
 
-FSTD=2003
-FS=f03
+FSTD=2008
+FS=f08
 
 verify: gverify iverify 9verify nverify pverify averify sverify
 verifym: gverifym iverifym 9verifym nverifym pverifym averifym sverifym
@@ -49,32 +49,86 @@ sverify:
 
 
 gverifym:
-	$(GFORT) -c  $(M90FILES) -pedantic  -ffree-form
-	cd $(INTERFORMDIR) && $(GFORT) -c $(MFILES) -pedantic -ffixed-form && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+	$(GFORT)  $(M90FILES) -pedantic  -ffree-form
+	cd $(INTERFORMDIR) && $(GFORT) $(MFILES) -pedantic -ffixed-form && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 9verifym:
-	$(G95) -c $(M90FILES) -pedantic -ffree-form
-	cd $(INTERFORMDIR) && $(G95) -c $(MFILES) -pedantic -ffixed-form && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+	$(G95) $(M90FILES) -pedantic -ffree-form
+	cd $(INTERFORMDIR) && $(G95) $(MFILES) -pedantic -ffixed-form && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 iverifym:
-	$(IFORT) -c -standd:$(FS) -pedantic -ffree-form $(M90FILES) 
-	cd $(INTERFORMDIR) && $(IFORT) -c $(MFILES) -pedantic -ffixed-form && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+	$(IFORT) -standd:$(FS) -pedantic -ffree-form $(M90FILES) 
+	cd $(INTERFORMDIR) && $(IFORT) $(MFILES) -pedantic -ffixed-form && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 nverifym:
-	$(NFORT) -c $(M90FILES) -f$(FSTD) -free
-	cd $(INTERFORMDIR) && $(NFORT) -c $(MFILES) -fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+	$(NFORT) $(M90FILES) -f$(FSTD) -free
+	cd $(INTERFORMDIR) && $(NFORT) $(MFILES) -fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 pverifym:
-	$(PFORT) -c $(M90FILES) -Mfreeform
-	cd $(INTERFORMDIR) && $(PFORT) -c $(MFILES) -Mfixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+	$(PFORT) $(M90FILES) -Mfreeform
+	cd $(INTERFORMDIR) && $(PFORT) $(MFILES) -Mfixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 averifym:
-	$(ABSOFT) -c $(M90FILES) -f free
-	cd $(INTERFORMDIR) && $(ABSOFT) -c  $(MFILES) -f fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+	$(ABSOFT) $(M90FILES) -f free
+	cd $(INTERFORMDIR) && $(ABSOFT)  $(MFILES) -f fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 sverifym:
-	$(SFORT) -c $(M90FILES) -free
-	cd $(INTERFORMDIR) && $(SFORT) -c $(MFILES) -fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+	$(SFORT) $(M90FILES) -free
+	cd $(INTERFORMDIR) && $(SFORT) $(MFILES) -fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+
+# Please change the variables FC and FFLAGS to match your fortran compiler
+
+FC = sunf90
+FFLAGS = -g
+COMMON = ../common
+
+# The .F90 or .f90 files will be compiled in the enumeration order of
+# that the .o files. The order matters, because the compilation of 
+# each .o file depends on the .o files before it.
+
+example: example.f90 \
+	consts.o info.o debug.o memory.o infnan.o lina.o output.o pintrf.o \
+	preproc.o initialize.o trustregion.o vlagbeta.o geometry.o shiftbase.o update.o newuob.o newuoa.o 
+	$(FC) $(FFLAGS) -o example example.f90 *.o
+
+test: example
+	./example 
+ 
+consts.o: $(COMMON)/consts.F90
+	$(FC) $(FFLAGS) -c $(COMMON)/consts.F90
+info.o: $(COMMON)/info.F90
+	$(FC) $(FFLAGS) -c $(COMMON)/info.F90
+debug.o: $(COMMON)/debug.F90
+	$(FC) $(FFLAGS) -c $(COMMON)/debug.F90
+memory.o: $(COMMON)/memory.F90
+	$(FC) $(FFLAGS) -c $(COMMON)/memory.F90
+infnan.o: $(COMMON)/infnan.F90
+	$(FC) $(FFLAGS) -c $(COMMON)/infnan.F90
+lina.o: $(COMMON)/lina.F90
+	$(FC) $(FFLAGS) -c $(COMMON)/lina.F90
+output.o: $(COMMON)/output.F90
+	$(FC) $(FFLAGS) -c $(COMMON)/output.F90
+pintrf.o: $(COMMON)/pintrf.F90
+	$(FC) $(FFLAGS) -c $(COMMON)/pintrf.F90
+
+preproc.o: preproc.f90
+	$(FC) $(FFLAGS) -c preproc.f90
+initialize.o: initialize.f90
+	$(FC) $(FFLAGS) -c initialize.f90
+trustregion.o: trustregion.f90
+	$(FC) $(FFLAGS) -c trustregion.f90
+vlagbeta.o: vlagbeta.f90
+	$(FC) $(FFLAGS) -c vlagbeta.f90
+geometry.o: geometry.f90
+	$(FC) $(FFLAGS) -c geometry.f90
+shiftbase.o: shiftbase.f90
+	$(FC) $(FFLAGS) -c shiftbase.f90
+update.o: update.f90
+	$(FC) $(FFLAGS) -c update.f90
+newuob.o: newuob.f90
+	$(FC) $(FFLAGS) -c newuob.f90
+newuoa.o: newuoa.f90
+	$(FC) $(FFLAGS) -c newuoa.f90 
 
 clean:
-	rm -f *.o *.mod a.out *__genmod.f90
+	rm -f *.o *.mod a.out example *__genmod.f90

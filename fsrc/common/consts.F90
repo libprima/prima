@@ -17,7 +17,7 @@
 
 module consts_mod 
 
-#if __FORTRAN_STANDARD__ >= 2008
+#if __USE_ISO_FORTRAN_ENV_INTREAL__ == 1
 use, intrinsic :: iso_fortran_env, only : INT16, INT32, INT64, REAL32, REAL64, REAL128
 #endif
 
@@ -39,7 +39,7 @@ logical, parameter :: DEBUGGING = .true.
 logical, parameter :: DEBUGGING = .false.
 #endif
 
-#if __FORTRAN_STANDARD__ < 2008
+#if __USE_ISO_FORTRAN_ENV_INTREAL__ != 1
 ! With gfortran: selected_real_kind(k) will return INT16 with k = 3 and
 ! 4, return INT32 with k = 5--9, and return INT64 with k = 10--18.
 integer, parameter :: INT16 = selected_int_kind(4) 
@@ -57,7 +57,9 @@ integer, parameter :: QP = REAL128  ! Kind for quadruple precision
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Define the integer kind to be used in the Fortran code.
-#if __INTEGER_KIND__ == 16
+#if __INTEGER_KIND__  == 0
+integer, parameter :: IK = IK_DFT
+#elif __INTEGER_KIND__ == 16
 integer, parameter :: IK = INT16
 #elif __INTEGER_KIND__ == 32 
 integer, parameter :: IK = INT32
@@ -67,7 +69,9 @@ integer, parameter :: IK = INT64
 integer, parameter :: IK = IK_DFT
 #endif
 ! Define the real kind to be used in the Fortran code.
-#if __REAL_PRECISION__ == 32
+#if __REAL_PRECISION__ == 0
+integer, parameter :: RP = RP_DFT 
+#elif __REAL_PRECISION__ == 32
 integer, parameter :: RP = REAL32  
 #elif __REAL_PRECISION__ == 64 
 integer, parameter :: RP = REAL64  

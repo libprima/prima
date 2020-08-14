@@ -9,8 +9,14 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 13-Aug-2020.
+! on 14-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+! PREPROC_MOD is a module that preprocess the inputs.
+!
+! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
+! and the NEWUOA paper.
 
 
       module preproc_mod

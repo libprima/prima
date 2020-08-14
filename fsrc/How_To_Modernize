@@ -77,3 +77,17 @@ Use temporary variables at little as possible.
 Do not share temporary variables. 
 Even for temporary variables, their names should be informative; do not
 use temp, tempa, tempb ...
+
+7.2. Integer kind and real precision
+It is a good idea to keep integer kind IK = 16 during the development.
+This will remind us to explicitly convert integer types when necessary.
+In addition, changing IK does not affect the result unless for large
+problems, when MAXFUN may be changed due to the upper limit of
+INTEGER(IK).
+
+It is also useful to try RP = 32. The reason is the same as above. But
+changing RP will obviously affect the result.
+
+7.3. We should also try different combinations of DEBUGGING,
+USE_INTRINSIC_ALGEBRA, USE_POWELL_ALGEBRA to make sure that all
+variations of the code works correctly.
