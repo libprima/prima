@@ -55,7 +55,7 @@
 
 module fmxapi_mod
 
-use consts_mod, only : INT32, DP, RP
+use consts_mod, only : INT32_MEX, DP, RP
 implicit none
 private
 
@@ -92,9 +92,9 @@ public :: fmxCallMATLAB
 
 
 ! notComplex is used in mxCreateDoubleMatrix
-integer(INT32), parameter :: notComplex = 0
+integer(INT32_MEX), parameter :: notComplex = 0
 ! intOne and intTwo may be used when calling mexCallMATLAB 
-integer(INT32), parameter :: intOne=1, intTwo=2 
+integer(INT32_MEX), parameter :: intOne=1, intTwo=2 
 ! mwOne may be used in mxCreateDoubleMatrix and mxCopyPtrToReal8
 mwSize, parameter :: mwOne = 1 ! Integer 1 with type mwSize
 ! convTol is the tolerance of difference due to conversion between REAL(RP) and REAL(DP)
@@ -139,9 +139,33 @@ interface
 !    default INTEGER?
 ! 3. What is the kind of a real argument? Is it REAL32, REAL64, or 
 !    default REAL?
-! 4. The return values of IsClass, IsChar, and IsDouble, etc., are INT32. 
-!    MathWorks may change them in the future to, e.g., logical or 
-!    default INTEGER.
+! 4. The return values of IsClass, IsChar, and IsDouble, etc., are 
+!    INTEGER*4 (here we use INT32_MEX to represent it). MathWorks may 
+!    change them in the future to, e.g., logical or default INTEGER.
+! 5. Very wiredly, according to MATLAB 2020a documentation, the signature
+!    of mexFunction (entry point to Fortran MEX function) is
+!
+!    !---------------------------------------------!
+!    subroutine mexFunction(nlhs, plhs, nrhs, prhs)
+!    integer nlhs, nrhs
+!    mwPointer plhs(*), prhs(*)
+!    !---------------------------------------------!
+!
+!    while that of mexCallMATLAB is 
+!
+!    !------------------------------------------------------------!
+!    integer*4 mexCallMATLAB(nlhs, plhs, nrhs, prhs, functionName)
+!    integer*4 nlhs, nrhs
+!    mwPointer plhs(*), prhs(*)
+!    character*(*) functionName
+!    !------------------------------------------------------------!
+!    
+!    Note that the NLHS/NRHS in the two signatures DO NOT have the same
+!    type (INTEGER v.s. INTEGER*4). This does not cause any problem, but
+!    very bizzar! MathWorks may well modify this later --- for example, 
+!    change all the INTEGER*4 to INTEGER. In that case, we would have to
+!    replace all the INTEGER(INT32_MEX) by INTEGER.
+!
 
 ! MEX subroutines
     subroutine mexErrMsgIdAndTxt(errorid, errormsg)
@@ -173,10 +197,10 @@ interface
 
 ! MEX functions
     function mexCallMATLAB(nout, pout, nin, pin, f)
-    use consts_mod, only : INT32
+    use consts_mod, only : INT32_MEX
     implicit none
-    integer(INT32) :: mexCallMATLAB
-    integer(INT32), intent(in) :: nout, nin
+    integer(INT32_MEX) :: mexCallMATLAB
+    integer(INT32_MEX), intent(in) :: nout, nin
     ! N.B.: 
     ! Segmentation Fault will occur if we write pout(:) or pin(:) 
     mwPointer, intent(in) :: pin(*)
@@ -185,11 +209,11 @@ interface
     end function mexCallMATLAB
 
     function mxCreateDoubleMatrix(m, n, ComplexFlag)
-    use consts_mod, only : INT32
+    use consts_mod, only : INT32_MEX
     implicit none
     mwPointer :: mxCreateDoubleMatrix
     mwSize, intent(in) :: m, n
-    integer(INT32), intent(in) :: ComplexFlag
+    integer(INT32_MEX), intent(in) :: ComplexFlag
     end function mxCreateDoubleMatrix
 
     function mxCreateDoubleScalar(x)
@@ -226,33 +250,33 @@ interface
     end function mxGetPr
 
     function mxGetString(pm, str, strlen)
-    use consts_mod, only : INT32
+    use consts_mod, only : INT32_MEX
     implicit none
-    integer(INT32) :: mxGetString
+    integer(INT32_MEX) :: mxGetString
     mwPointer, intent(in) :: pm
     character*(*), intent(out) :: str
     mwSize, intent(in) :: strlen
     end function mxGetString
 
     function mxIsClass(pm, classname)
-    use consts_mod, only : INT32
+    use consts_mod, only : INT32_MEX
     implicit none
-    integer(INT32) :: mxIsClass
+    integer(INT32_MEX) :: mxIsClass
     mwPointer, intent(in) :: pm
     character*(*), intent(in) :: classname
     end function mxIsClass
 
     function mxIsChar(pm)
-    use consts_mod, only : INT32
+    use consts_mod, only : INT32_MEX
     implicit none
-    integer(INT32) :: mxIsChar
+    integer(INT32_MEX) :: mxIsChar
     mwPointer, intent(in) :: pm
     end function mxIsChar
 
     function mxIsDouble(pm)
-    use consts_mod, only : INT32
+    use consts_mod, only : INT32_MEX
     implicit none
-    integer(INT32) :: mxIsDouble
+    integer(INT32_MEX) :: mxIsDouble
     mwPointer, intent(in) :: pm
     end function mxIsDouble
     
@@ -748,7 +772,7 @@ subroutine read_iscalar(px, x)
 ! as double variables and then cast them back to integers befor using
 ! them in the Fortran code. Indeed, in MATLAB, even if we define X = 1000,
 ! the class of X is double! To get an integer X, we would have to define
-! X = INT32(1000) or X = INT64(1000)!
+! convert it to an integer explicitly!
 use consts_mod, only : DP, IK, MSSGLEN
 implicit none
 
@@ -945,7 +969,7 @@ subroutine fmxCallMATLAB(fun_ptr, pin, pout)
 ! output = feval(fun, input),
 ! where fun_ptr is an mwPointer pointing to the function handle of fun, 
 ! while pin/pout are mwPointer arrays associated with the inputs/outputs
-use consts_mod, only : INT32, MSSGLEN
+use consts_mod, only : INT32_MEX, MSSGLEN
 implicit none
 
 mwPointer, intent(in) :: fun_ptr      
@@ -953,11 +977,11 @@ mwPointer, intent(in) :: pin(:)
 mwPointer, intent(out) :: pout(:)
      
 mwPointer :: aug_pin(size(pin) + 1)
-integer(INT32) :: nin
-integer(INT32) :: nout
+integer(INT32_MEX) :: nin
+integer(INT32_MEX) :: nout
 character(5), parameter :: FEVAL = 'feval'
 
-integer(INT32) :: r
+integer(INT32_MEX) :: r
 character(len = MSSGLEN) :: eid, mssg
 
 ! Augment the input to include FUN_PTR
