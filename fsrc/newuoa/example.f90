@@ -70,7 +70,7 @@ real(kind(0.0D0)), allocatable :: x(:)
 !external calfun
 !----------------------------------------------------------------------!
 
-do n = 2, 8, 2
+do n = 2, 10, 2
     ! Sets up the initial X for the Chebyquad problem. 
     if (allocated(x)) deallocate(x)
     allocate(x(n), stat = alloc_stat)

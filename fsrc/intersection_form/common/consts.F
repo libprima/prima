@@ -84,7 +84,9 @@
       use, intrinsic :: iso_fortran_env, only : INT64
 #endif
 
-! When interfacing with MATLAB, we need INT32
+! When interfacing with MATLAB, we need INT32; it will be made public
+! under the name "INT32_MEX", emphasizing that it should be used only
+! in MEX gateways.
       use, intrinsic :: iso_fortran_env, only : INT32
 
       use, intrinsic :: iso_fortran_env, only : REAL32, REAL64, REAL128
@@ -95,7 +97,7 @@
       private
       public :: DEBUGGING
       public :: IK, IK_DFT
-      public :: INT32_MEX ! Needed in MEX gateways
+      public :: INT32_MEX ! Needed by MEX
       public :: RP, DP, SP, QP, RP_DFT
       public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
       public :: EPS, HUGENUM, ALMOST_INFINITY, HUGEFUN, HUGECON

@@ -6,7 +6,7 @@ FFLAGS = -g
 COMMON = ../common
 
 test: example
-	./example ; rm -f *.o *.mod example 
+	./example ; rm -f *.o *.mod example  *.dbg
  
 # N.B.:
 # The .F90 and .f90 files will be compiled in the enumeration order of
@@ -56,4 +56,4 @@ newuoa.o: newuoa.f90
 	$(FC) $(FFLAGS) -c newuoa.f90 
 
 clean:
-	rm -f *.o *.mod example
+	rm -f *.o *.mod example *.dbg
