@@ -49,11 +49,11 @@ subroutine mexFunction(nargout, poutput, nargin, pinput)
 ! [xopt, fopt, info, nf, xhist, fhist] = FUNCTION_NAME(fun, x0, rhobeg, rhoend, ftarget, maxfun, npt, iprint, maxhist, output_xhist)
 
 ! Generic modules
-use consts_mod, only : MAXMEMORY, INT64
+use consts_mod, only : MSSGLEN
 use memory_mod, only : cstyle_sizeof
 use fmxapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
 use fmxapi_mod, only : fmxVerifyClassShape
-use fmxcl_mod, only : IK_CL, RP_CL
+use fmxcl_mod, only : IK_CL, RP_CL, MAXMEMORY_CL
 use fmxcl_mod, only : fmxAllocate, fmxReadMPtr, fmxWriteMPtr
 
 ! Solver-specific module
@@ -68,12 +68,15 @@ mwPointer, intent(in) :: pinput(nargin)
 mwPointer, intent(out) :: poutput(nargout)
 
 ! Intermediate variables
+integer :: maximal_hist
+integer :: n_int
+integer :: npt_int
+integer :: nw
 integer(IK_CL) :: info
 integer(IK_CL) :: iprint
 integer(IK_CL) :: khist
 integer(IK_CL) :: maxfun
 integer(IK_CL) :: maxfhist
-integer(INT64) :: maximal_hist
 integer(IK_CL) :: maxhist
 integer(IK_CL) :: maxxhist
 integer(IK_CL) :: n
@@ -85,6 +88,7 @@ real(RP_CL) :: rhobeg
 real(RP_CL) :: rhoend
 real(RP_CL), allocatable :: w(:)
 real(RP_CL), allocatable :: x(:)
+character(len = MSSGLEN) :: eid, mssg
 
 ! Validate number of arguments
 call fmxVerifyNArgin(nargin, 10)
@@ -110,19 +114,36 @@ call fmxReadMPtr(pinput(10), output_xhist)
 n = int(size(x), kind(n))
 
 ! Allocate workspace
-call fmxAllocate(w, int((npt+13)*(npt+n)+3*n*(n+3)/2 + 1, IK_CL))
+n_int = int(n, kind(n_int))
+npt_int = int(npt, kind(npt_int))
+nw = (npt_int+13)*(npt_int+n_int)+3*n_int*(n_int+3)/2 + 1
+if (nw > MAXMEMORY_CL/cstyle_sizeof(0.0_RP_CL)) then
+    ! Without this checking, W may take too much memory, 
+    ! or, more seriously, NW may overflow and cause a Segmentation Falt!
+    eid = solver // ':WorkspaceTooLarge'
+    mssg = solver // ': Workspace exceeds the largest memory allowed.'
+    call mexErrMsgIdAndTxt(eid, mssg)
+end if
+call fmxAllocate(w, int(nw, IK_CL))
 
 ! Decide the maximal length of history according to MEXMEMORY in CONSTS_MOD
 if (output_xhist > 0) then
-    maximal_hist = MAXMEMORY/((n+1)*cstyle_sizeof(0.0_RP_CL))
+    maximal_hist = MAXMEMORY_CL/((n+1)*cstyle_sizeof(0.0_RP_CL))
     maxxhist = max(0_IK_CL, min(maxfun, maxhist))
-    maxxhist = int(min(int(maxxhist, INT64), maximal_hist), kind(maxxhist))
+    ! We cannot simply take MAXXHIST = MIN(MAXXHIST, MAXIMAL_HIST),
+    ! becaue they may not be the same kind, and compilers may complain.
+    ! We may convert them to the same kind, but overflow may occur.
+    if (maxxhist > maximal_hist) then
+        maxxhist = int(maximal_hist, kind(maxxhist))
+    end if
 else
-    maximal_hist = MAXMEMORY/(cstyle_sizeof(0.0_RP_CL))
+    maximal_hist = MAXMEMORY_CL/(cstyle_sizeof(0.0_RP_CL))
     maxxhist = 0
 end if
 maxfhist = max(0_IK_CL, min(maxfun, maxhist))
-maxfhist = int(min(int(maxfhist, INT64), maximal_hist), kind(maxfhist))
+if (maxfhist > maximal_hist) then
+    maxfhist = int(maximal_hist, kind(maxfhist))
+end if
 
 ! Initialize global variables
 nf = 0

@@ -41,7 +41,7 @@
 
 module fmxcl_mod
 
-use consts_mod, only : IK_CL => IK_DFT, RP_CL => DP, DP
+use consts_mod, only : DP, IK_CL => IK_DFT, RP_CL => DP
 use fmxapi_mod, only : mwOne, notComplex
 use fmxapi_mod, only : mxGetM, mxGetN, mexErrMsgIdAndTxt
 use fmxapi_mod, only : mxCreateDoubleScalar 
@@ -52,12 +52,15 @@ implicit none
 private
 public :: IK_CL
 public :: RP_CL
+public :: MAXMEMORY_CL
 public :: fmxAllocate
 public :: fmxReadMPtr
 public :: fmxWriteMPtr
 
 real(RP_CL), parameter :: ONE = 1.0_RP_CL
-real(DP), parameter :: convTol = 1.0e1_DP*max(epsilon(0.0_DP), real(epsilon(0.0_RP_CL), DP))
+real(DP), parameter :: convTol = 1.0E1_DP*max(epsilon(0.0_DP), real(epsilon(0.0_RP_CL), DP))
+integer, parameter :: MAXMEMORY_CL = int(min(21*(10**8), int(huge(0_IK_CL))), IK_CL)
+
 
 interface fmxAllocate
     ! fmxAllocate allocates the space for a vector/matrix
@@ -252,7 +255,7 @@ x = real(x_dp(1), kind(x))
 if (kind(x) /= kind(x_dp)) then
     if (abs(x-x_dp(1)) > convTol*max(abs(x), ONE)) then
         eid = 'FMXAPI:ConversionError'
-        mssg = 'READ_RSCALAR_CL: Large error occurs when converting REAL(DP) to REAL(RP_CL).'
+        mssg = 'READ_RSCALAR_CL: Large error occurs when converting REAL(DP) to REAL(RP_CL) (maybe due to overflow).'
         call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
     end if
 end if
@@ -297,7 +300,7 @@ x = real(x_dp, kind(x))
 if (kind(x) /= kind(x_dp)) then
     if (maxval(abs(x-x_dp)) > convTol*max(maxval(abs(x)), ONE)) then
         eid = 'FMXAPI:ConversionError'
-        mssg = 'READ_RVECTOR_CL: Large error occurs when converting REAL(DP) to REAL(RP_CL).'
+        mssg = 'READ_RVECTOR_CL: Large error occurs when converting REAL(DP) to REAL(RP_CL) (maybe due to overflow).'
         call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
     end if
 end if
@@ -348,7 +351,7 @@ x = real(x_dp, kind(x))
 if (kind(x) /= kind(x_dp)) then
     if (maxval(abs(x-x_dp)) > convTol*max(maxval(abs(x)), ONE)) then
         eid = 'FMXAPI:ConversionError'
-        mssg = 'READ_MATRIX_CL: Large error occurs when converting REAL(DP) to REAL(RP_CL).'
+        mssg = 'READ_MATRIX_CL: Large error occurs when converting REAL(DP) to REAL(RP_CL) (maybe due to overflow).'
         call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
     end if
 end if
@@ -388,7 +391,7 @@ x = int(x_dp(1), kind(x))
 ! Check whether the type conversion is proper
 if (abs(x-x_dp(1)) > 0.5_DP) then
     eid = 'FMXAPI:ConversionError'
-    mssg = 'READ_ISCALAR_CL: Large error occurs when converting REAL(DP) to INTEGER(IK_CL).'
+    mssg = 'READ_ISCALAR_CL: Large error occurs when converting REAL(DP) to INTEGER(IK_CL) (maybe due to overflow).'
     call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
 end if
 end subroutine read_iscalar_cl 
@@ -417,7 +420,7 @@ if (kind(x_dp) /= kind(x)) then
     ! Check whether the type conversion is proper
     if (abs(x-x_dp) > convTol*max(abs(x), ONE)) then
         eid = 'FMXAPI:ConversionError'
-        mssg = 'WRITE_RSCALAR_CL: Large error occurs when converting REAL(RP_CL) to REAL(DP).'
+        mssg = 'WRITE_RSCALAR_CL: Large error occurs when converting REAL(RP_CL) to REAL(DP) (maybe due to overflow).'
         call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
     end if
 end if
@@ -459,7 +462,7 @@ x_dp = real(x, kind(x_dp))
 if (kind(x) /= kind(x_dp)) then
     if (maxval(abs(x-x_dp)) > convTol*max(maxval(abs(x)), ONE)) then
         eid = 'FMXAPI:ConversionError'
-        mssg = 'WRITE_RVECTOR_CL: Large error occurs when converting REAL(RP_CL) to REAL(DP).'
+        mssg = 'WRITE_RVECTOR_CL: Large error occurs when converting REAL(RP_CL) to REAL(DP) (maybe due to overflow).'
         call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
     end if
 end if
@@ -512,7 +515,7 @@ x_dp = real(x, kind(x_dp))
 if(kind(x) /= kind(x_dp)) then
     if (maxval(abs(x-x_dp)) > convTol*max(maxval(abs(x)), ONE)) then
         eid = 'FMXAPI:ConversionError'
-        mssg = 'WRITE_MATRIX_CL: Large error occurs when converting REAL(RP_CL) to REAL(DP).'
+        mssg = 'WRITE_MATRIX_CL: Large error occurs when converting REAL(RP_CL) to REAL(DP) (maybe due to overflow).'
         call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
     end if
 end if
@@ -545,7 +548,7 @@ x_dp = real(x, kind(x_dp))
 
 if (abs(x - x_dp) > 0.5_DP) then
     eid = 'FMXAPI:ConversionError'
-    mssg = 'WRITE_ISCALAR_CL: Large error occurs when converting INTEGER(IK_CL) to REAL(DP).'
+    mssg = 'WRITE_ISCALAR_CL: Large error occurs when converting INTEGER(IK_CL) to REAL(DP) (maybe due to overflow).'
     call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
 end if
 

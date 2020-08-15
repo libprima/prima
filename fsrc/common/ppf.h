@@ -32,7 +32,7 @@ depend on the compiler, for instance, __USE_IEEE_ARITHMETIC__.
 #if defined __DEBUGGING__
 #undef __DEBUGGING__
 #endif
-#define __DEBUGGING__ 0 
+#define __DEBUGGING__ 1 
 /*************************************************************************/
 
 
