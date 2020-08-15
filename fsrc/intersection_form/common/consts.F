@@ -23,25 +23,80 @@
 !    expressions. Although they are supported by many compilers as
 !    extensions, it is better to avoid them.
 !
-! 2. Never use KIND with a literal value (e.g., REAL(KIND=8)),
-!    because Fortran standards never define what KIND=8 means.
-!    There is NO guarantee that REAL(KIND=8) will be of double
-!    precision.
+! 2. Never use KIND with a literal value, e.g., REAL(KIND=8), because
+!    Fortran standards never define what KIND=8 means. There is NO
+!    guarantee that REAL(KIND=8) will be legal, let alone double precision.
+!
+! 3. Fortran standard (as of F2003) specifies the following for types
+!    INTEGER and REAL.
+!
+!    - A processor shall provide ONE OR MORE representation methods that
+!      define sets of values for data of type integer; if the kind type
+!      parameter is not specified, the default kind value is KIND(0) and
+!      the type specified is DEFAULT INTEGER.
+!    - A processor shall provide TWO OR MORE approximation methods that
+!      define sets of values for data of type real; if the type keyword
+!      REAL is specified and the kind type parameter is not specified,
+!      the default kind value is KIND (0.0) and the type specified is
+!      DEFAULT REAL; If the type keyword DOUBLE PRECISION is specified,
+!      the kind value is KIND (0.0D0) and the type specified is DOUBLE
+!      PRECISION real; the decimal precision of the double precision real
+!      approximation method shall be greater than that of the default
+!      real method.
+!
+!    In other words, the standard only imposes that the following three
+!    types should be supported:
+!    - INTEGER(KIND(0)), i.e., default integer,
+!    - REAL(KIND(0.0)), i.e., default real (single-precision real),
+!    - REAL(KIND(0.0D0)), i.e., double-precision real.
+!
+!    Therefore, the following should be noted.
+!
+!    - Other types of INTEGER/REAL may not be available on all platforms
+!      (e.g., pgfortran 20 does not support REAL128).
+!    - The standard does not specify the range of the default  integer.
+!    - The standard does not specify what the range and precision of the
+!      default real or the double-precision real, except that KIND(0.0D0)
+!      should have a greater precision than KIND(0.0) --- no requirement
+!      about the range.
+!
+!    Consequently, the following should be observed in all Fortran code.
+!
+!    - DO NOT use any kind parameter other than IK, IK_DFT, RP, RP_DFT,
+!      SP, or DP unless you are sure that it is supported.
+!    - DO NOT make any assumption about the range of INTEGER, REAL, or
+!      REAL(0.0D0) unless you are sure. Be cautious about OVERFLOW!
+!      In particular, for integers working as the lower/upper limit of
+!      arrays, overflow can lead to Segmentation Faults!
+!
 
 #include "ppf.h"
 
       module consts_mod
 
 #if __USE_ISO_FORTRAN_ENV_INTREAL__ == 1
-      use, intrinsic :: iso_fortran_env, only : INT16, INT32, INT64, REA&
-     &L32, REAL64, REAL128
+
+#if __INTEGER_KIND__ == 16
+      use, intrinsic :: iso_fortran_env, only : INT16
+#endif
+
+#if __INTEGER_KIND__ == 64
+      use, intrinsic :: iso_fortran_env, only : INT64
+#endif
+
+! When interfacing with MATLAB, we need INT32
+      use, intrinsic :: iso_fortran_env, only : INT32
+
+      use, intrinsic :: iso_fortran_env, only : REAL32, REAL64, REAL128
+! The unsupported kind parameter will be negative.
 #endif
 
       implicit none
       private
       public :: DEBUGGING
-      public :: IK, INT16, INT32, INT64, IK_DFT
-      public :: RP, DP, SP, QP, REAL32, REAL64, REAL128, RP_DFT
+      public :: IK, IK_DFT
+      public :: INT32_MEX ! Needed in MEX gateways
+      public :: RP, DP, SP, QP, RP_DFT
       public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
       public :: EPS, HUGENUM, ALMOST_INFINITY, HUGEFUN, HUGECON
       public :: SRNLEN, MSSGLEN
@@ -56,15 +111,23 @@
 #endif
 
 #if __USE_ISO_FORTRAN_ENV_INTREAL__ != 1
-! With gfortran: selected_real_kind(k) will return INT16 with k = 3 and
+! For gfortran, selected_real_kind(k) will return INT16 with k = 3 and
 ! 4, return INT32 with k = 5--9, and return INT64 with k = 10--18.
+! SELECTED_REAL_KIND returns a negative value for an unsupport kind.
+#if __INTEGER_KIND__ == 16
       integer, parameter :: INT16 = selected_int_kind(4)
-      integer, parameter :: INT32 = selected_int_kind(7)
+#endif
+
+#if __INTEGER_KIND__ == 64
       integer, parameter :: INT64 = selected_int_kind(14)
+#endif
+
+      integer, parameter :: INT32 = selected_int_kind(7)
       integer, parameter :: REAL32 = kind(0.0)
       integer, parameter :: REAL64 = kind(0.0D0)
       integer, parameter :: REAL128 = selected_real_kind(p = 30)
 #endif
+      integer, parameter :: INT32_MEX = INT32 ! Needed by MEX
       integer, parameter :: IK_DFT = kind(0) ! Default integer kind
       integer, parameter :: RP_DFT = kind(0.0) ! Default real kind
       integer, parameter :: SP = REAL32 ! Kind for single precision

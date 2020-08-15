@@ -39,7 +39,7 @@
       subroutine calfun(x, funval)
 
 ! Generic modules
-      use consts_mod, only : RP, HUGEFUN, INT32, MSSGLEN
+      use consts_mod, only : RP, HUGEFUN, INT32_MEX, MSSGLEN
       use infnan_mod, only : is_nan
       use fmxapi_mod, only : mxGetM, mxGetN, mxIsDouble
       use fmxapi_mod, only : mxDestroyArray
@@ -57,7 +57,7 @@
 ! Intermediate variables
       mwPointer :: pinput(1), poutput(1)
       mwSize :: row, col
-      integer(INT32) :: isdble
+      integer(INT32_MEX) :: isdble
       character(len = MSSGLEN) :: eid, mssg
 
 ! Associate X with INPUT(1)
