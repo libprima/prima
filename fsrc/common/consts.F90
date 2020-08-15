@@ -51,7 +51,7 @@
 !    - Do NOT use any kind parameter other than IK, IK_DFT, RP, RP_DFT,
 !      SP, or DP unless you are sure that it is supported.
 !    - Do NOT make any assumption about the range of INTEGER, REAL, or
-!      REAL(0.0D0) unless you are sure.
+!      REAL(0.0D0) unless you are sure. Be cautious about OVERFLOW!
 !
 
 #include "ppf.h"
