@@ -8,10 +8,51 @@
 !    expressions. Although they are supported by many compilers as
 !    extensions, it is better to avoid them.
 !
-! 2. Never use KIND with a literal value (e.g., REAL(KIND=8)), 
-!    because Fortran standards never define what KIND=8 means.
-!    There is NO guarantee that REAL(KIND=8) will be of double
-!    precision.
+! 2. Never use KIND with a literal value, e.g., REAL(KIND=8), because 
+!    Fortran standards never define what KIND=8 means. There is NO 
+!    guarantee that REAL(KIND=8) will be legal, let alone double precision.
+!
+! 3. Fortran standard (as of F2003) specifies the following for types 
+!    INTEGER and REAL. 
+!
+!    - A processor shall provide ONE OR MORE representation methods that 
+!      define sets of values for data of type integer; if the kind type
+!      parameter is not specified, the default kind value is KIND(0) and
+!      the type specified is DEFAULT INTEGER. 
+!    - A processor shall provide TWO OR MORE approximation methods that 
+!      define sets of values for data of type real; if the type keyword 
+!      REAL is specified and the kind type parameter is not specified, 
+!      the default kind value is KIND (0.0) and the type specified is 
+!      DEFAULT REAL; If the type keyword DOUBLE PRECISION is specified, 
+!      the kind value is KIND (0.0D0) and the type specified is DOUBLE 
+!      PRECISION real; the decimal precision of the double precision real
+!      approximation method shall be greater than that of the default 
+!      real method. 
+!
+!    In other words, the standard only imposes that the following three
+!    types should be supported:
+!    - INTEGER(KIND(0)), i.e., default integer,
+!    - REAL(KIND(0.0)), i.e., default real (single-precision real),
+!    - REAL(KIND(0.0D0)), i.e., double-precision real.
+!
+!    Therefore, the following should be noted.
+!
+!    - Other types of INTEGER/REAL may not be available on all platforms
+!      (e.g., pgfortran 20 does not support REAL128).
+!    - The standard does not specify the range of the default  integer. 
+!    - The standard does not specify what the range and precision of the 
+!      default real or the double-precision real, except that KIND(0.0D0)
+!      should have a greater precision than KIND(0.0) --- no requirement 
+!      about the range. 
+!      
+!    Consequently, the following should be observed in all Fortran code 
+!    except here.
+!
+!    - Do NOT use any kind parameter other than IK, IK_DFT, RP, RP_DFT,
+!      SP, or DP unless you are sure that it is supported.
+!    - Do NOT make any assumption about the range of INTEGER, REAL, or
+!      REAL(0.0D0) unless you are sure.
+!
 
 #include "ppf.h"
 
@@ -118,9 +159,10 @@ real(RP), parameter :: FTARGET_DFT = -HUGENUM
 integer(IK), parameter :: IPRINT_DFT = 0 
 integer(IK), parameter :: MAXFUN_DIM_DFT = 500
 
-! Maximal amount of memory (Byte) allowed for XHIST, FHIST, and NLCHIST
-integer(INT64), parameter :: MAXMEMORY = 2_INT64**31 
-! 2**31 is 2G.
+! Maximal amount of memory (Byte) allowed for XHIST, FHIST, NLCHIST 
+integer, parameter :: MAXMEMORY = 21*(10**8)
+! 21*10**8 is 2G. If you set MAXMEMORY to a larger value, make sure that
+! it does not exceed HUGE(0).
 
 
 end module consts_mod 

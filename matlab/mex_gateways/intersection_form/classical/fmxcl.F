@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 14-Aug-2020.
+! on 15-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -56,7 +56,7 @@
 
       module fmxcl_mod
 
-      use consts_mod, only : IK_CL => IK_DFT, RP_CL => DP, DP
+      use consts_mod, only : DP, IK_CL => IK_DFT, RP_CL => DP
       use fmxapi_mod, only : mwOne, notComplex
       use fmxapi_mod, only : mxGetM, mxGetN, mexErrMsgIdAndTxt
       use fmxapi_mod, only : mxCreateDoubleScalar
@@ -67,13 +67,17 @@
       private
       public :: IK_CL
       public :: RP_CL
+      public :: MAXMEMORY_CL
       public :: fmxAllocate
       public :: fmxReadMPtr
       public :: fmxWriteMPtr
 
       real(RP_CL), parameter :: ONE = 1.0_RP_CL
-      real(DP), parameter :: convTol = 1.0e1_DP*max(epsilon(0.0_DP), rea&
+      real(DP), parameter :: convTol = 1.0E1_DP*max(epsilon(0.0_DP), rea&
      &l(epsilon(0.0_RP_CL), DP))
+      integer, parameter :: MAXMEMORY_CL = int(min(21*(10**8), int(huge(&
+     &0_IK_CL))), IK_CL)
+
 
       interface fmxAllocate
 ! fmxAllocate allocates the space for a vector/matrix
@@ -271,7 +275,7 @@
           if (abs(x-x_dp(1)) > convTol*max(abs(x), ONE)) then
               eid = 'FMXAPI:ConversionError'
               mssg = 'READ_RSCALAR_CL: Large error occurs when convertin&
-     &g REAL(DP) to REAL(RP_CL).'
+     &g REAL(DP) to REAL(RP_CL) (maybe due to overflow).'
               call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
           end if
       end if
@@ -318,7 +322,7 @@
      &en
               eid = 'FMXAPI:ConversionError'
               mssg = 'READ_RVECTOR_CL: Large error occurs when convertin&
-     &g REAL(DP) to REAL(RP_CL).'
+     &g REAL(DP) to REAL(RP_CL) (maybe due to overflow).'
               call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
           end if
       end if
@@ -371,7 +375,7 @@
      &en
               eid = 'FMXAPI:ConversionError'
               mssg = 'READ_MATRIX_CL: Large error occurs when converting&
-     & REAL(DP) to REAL(RP_CL).'
+     & REAL(DP) to REAL(RP_CL) (maybe due to overflow).'
               call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
           end if
       end if
@@ -412,7 +416,7 @@
       if (abs(x-x_dp(1)) > 0.5_DP) then
           eid = 'FMXAPI:ConversionError'
           mssg = 'READ_ISCALAR_CL: Large error occurs when converting RE&
-     &AL(DP) to INTEGER(IK_CL).'
+     &AL(DP) to INTEGER(IK_CL) (maybe due to overflow).'
           call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
       end if
       end subroutine read_iscalar_cl
@@ -442,7 +446,7 @@
           if (abs(x-x_dp) > convTol*max(abs(x), ONE)) then
               eid = 'FMXAPI:ConversionError'
               mssg = 'WRITE_RSCALAR_CL: Large error occurs when converti&
-     &ng REAL(RP_CL) to REAL(DP).'
+     &ng REAL(RP_CL) to REAL(DP) (maybe due to overflow).'
               call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
           end if
       end if
@@ -486,7 +490,7 @@
      &en
               eid = 'FMXAPI:ConversionError'
               mssg = 'WRITE_RVECTOR_CL: Large error occurs when converti&
-     &ng REAL(RP_CL) to REAL(DP).'
+     &ng REAL(RP_CL) to REAL(DP) (maybe due to overflow).'
               call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
           end if
       end if
@@ -542,7 +546,7 @@
      &en
               eid = 'FMXAPI:ConversionError'
               mssg = 'WRITE_MATRIX_CL: Large error occurs when convertin&
-     &g REAL(RP_CL) to REAL(DP).'
+     &g REAL(RP_CL) to REAL(DP) (maybe due to overflow).'
               call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
           end if
       end if
@@ -576,7 +580,7 @@
       if (abs(x - x_dp) > 0.5_DP) then
           eid = 'FMXAPI:ConversionError'
           mssg = 'WRITE_ISCALAR_CL: Large error occurs when converting I&
-     &NTEGER(IK_CL) to REAL(DP).'
+     &NTEGER(IK_CL) to REAL(DP) (maybe due to overflow).'
           call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
       end if
 

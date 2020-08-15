@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 14-Aug-2020.
+! on 15-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -653,7 +653,7 @@
           if (abs(x-x_dp(1)) > convTol*max(abs(x), ONE)) then
               eid = 'FMXAPI:ConversionError'
               mssg = 'READ_RSCALAR: Large error occurs when converting R&
-     &EAL(DP) to REAL(RP).'
+     &EAL(DP) to REAL(RP) (maybe due to overflow).'
               call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
           end if
       end if
@@ -700,7 +700,7 @@
      &en
               eid = 'FMXAPI:ConversionError'
               mssg = 'READ_RVECTOR: Large error occurs when converting R&
-     &EAL(DP) to REAL(RP).'
+     &EAL(DP) to REAL(RP) (maybe due to overflow).'
               call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
           end if
       end if
@@ -753,7 +753,7 @@
      &en
               eid = 'FMXAPI:ConversionError'
               mssg = 'READ_RMATRIX: Large error occurs when converting R&
-     &EAL(DP) to REAL(RP).'
+     &EAL(DP) to REAL(RP) (maybe due to overflow).'
               call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
           end if
       end if
@@ -804,7 +804,7 @@
       if (abs(x-x_dp(1)) > 0.5_DP) then
           eid = 'FMXAPI:ConversionError'
           mssg = 'READ_ISCALAR: Large error occurs when converting REAL(&
-     &DP) to INTEGER(IK).'
+     &DP) to INTEGER(IK) (maybe due to overflow).'
           call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
       end if
       end subroutine read_iscalar
@@ -834,7 +834,7 @@
           if (abs(x-x_dp) > convTol*max(abs(x), ONE)) then
               eid = 'FMXAPI:ConversionError'
               mssg = 'WRITE_RSCALAR: Large error occurs when converting &
-     &REAL(RP) to REAL(DP).'
+     &REAL(RP) to REAL(DP) (maybe due to overflow).'
               call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
           end if
       end if
@@ -878,7 +878,7 @@
      &en
               eid = 'FMXAPI:ConversionError'
               mssg = 'WRITE_RVECTOR: Large error occurs when converting &
-     &REAL(RP) to REAL(DP).'
+     &REAL(RP) to REAL(DP) (maybe due to overflow).'
               call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
           end if
       end if
@@ -934,7 +934,7 @@
      &en
               eid = 'FMXAPI:ConversionError'
               mssg = 'WRITE_RMATRIX: Large error occurs when converting &
-     &REAL(RP) to REAL(DP).'
+     &REAL(RP) to REAL(DP) (maybe due to overflow).'
               call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
           end if
       end if
@@ -968,7 +968,7 @@
       if (abs(x - x_dp) > 0.5_DP) then
           eid = 'FMXAPI:ConversionError'
           mssg = 'WRITE_ISCALAR: Large error occurs when converting INTE&
-     &GER(IK) to REAL(DP).'
+     &GER(IK) to REAL(DP) (maybe due to overflow).'
           call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
       end if
 

@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 14-Aug-2020.
+! on 15-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -135,9 +135,10 @@
       integer(IK), parameter :: IPRINT_DFT = 0
       integer(IK), parameter :: MAXFUN_DIM_DFT = 500
 
-! Maximal amount of memory (Byte) allowed for XHIST, FHIST, and NLCHIST
-      integer(INT64), parameter :: MAXMEMORY = 2_INT64**31
-! 2**31 is 2G.
+! Maximal amount of memory (Byte) allowed for XHIST, FHIST, NLCHIST
+      integer, parameter :: MAXMEMORY = 21*(10**8)
+! 21*10**8 is 2G. If you set MAXMEMORY to a larger value, make sure that
+! it does not exceed HUGE(0).
 
 
       end module consts_mod

@@ -32,7 +32,7 @@ depend on the compiler, for instance, __USE_IEEE_ARITHMETIC__.
 #if defined __DEBUGGING__
 #undef __DEBUGGING__
 #endif
-#define __DEBUGGING__ 0 
+#define __DEBUGGING__ 1 
 /*************************************************************************/
 
 
@@ -74,7 +74,7 @@ depend on the compiler, for instance, __USE_IEEE_ARITHMETIC__.
 
 /*************************************************************************/
 /* Which real kind to use? 
- * 0 = default REAL, 32 = REAL*4, 64 = REAL*8, 128 = REAL*16.
+ * 0 = default REAL (SINGLE PRECISION), 32 = REAL*4, 64 = REAL*8, 128 = REAL*16.
  * Make sure that your compiler supports the selected kind. 
  * Note: The default REAL (i.e., 0) is the single-precision REAL. */
 #if defined __REAL_PRECISION__
@@ -110,7 +110,7 @@ depend on the compiler, for instance, __USE_IEEE_ARITHMETIC__.
 
 
 /*************************************************************************/
-/* Do we use the STORAGE_SIZE intrinsic? */
+/* Do we use the STORAGE_SIZE intrinsic? (Fortran 2008) */
 #if defined __USE_STORAGE_SIZE__
 #undef __USE_STORAGE_SIZE__
 #endif
@@ -154,7 +154,7 @@ depend on the compiler, for instance, __USE_IEEE_ARITHMETIC__.
 
 
 /*************************************************************************/
-/* Do we use the IEEE_ARITHMETIC intrinsic module? */
+/* Do we use the IEEE_ARITHMETIC intrinsic module? (Fortran 2003) */
 #if defined __USE_IEEE_ARITHMETIC__
 #undef __USE_IEEE_ARITHMETIC__
 #endif
@@ -200,7 +200,8 @@ depend on the compiler, for instance, __USE_IEEE_ARITHMETIC__.
 
 
 /*************************************************************************/
-/* Do we use INT16, IN32, INT64, REAL32, REAL64, REAL128 from ISO_FORTRAN_ENV? */
+/* Do we use INT16, IN32, INT64, REAL32, REAL64, REAL128 from ISO_FORTRAN_ENV? 
+ * (Fortran 2008) */
 #if defined __USE_ISO_FORTRAN_ENV_INTREAL__
 #undef __USE_ISO_FORTRAN_ENV_INTREAL__
 #endif

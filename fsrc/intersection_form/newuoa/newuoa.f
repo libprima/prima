@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 14-Aug-2020.
+! on 15-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -174,8 +174,8 @@
 
 
 ! Generic modules
-      use consts_mod, only : RP, IK, INT64, ZERO, ONE, TWO, HALF, TEN, T&
-     &ENTH, EPS
+      use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, E&
+     &PS
       use consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT&
      &_DFT, MAXMEMORY, MAXFUN_DIM_DFT
       use infnan_mod, only : is_nan, is_inf, is_finite
@@ -209,13 +209,13 @@
       integer(IK), intent(out), optional :: info
 
 ! Intermediate variables
+      integer :: maximal_hist
       integer(IK) :: info_c
       integer(IK) :: iprint_c
       integer(IK) :: maxfun_c
       integer(IK) :: maxfhist
       integer(IK) :: maxhist_c
       integer(IK) :: maxhist_in
-      integer(INT64) :: maximal_hist
       integer(IK) :: maxxhist
       integer(IK) :: n
       integer(IK) :: nf_c
@@ -353,8 +353,12 @@
           maximal_hist = int(MAXMEMORY/(cstyle_sizeof(0.0_RP)), kind(max&
      &imal_hist))
       end if
-      maxhist_c = int(min(int(maxhist_c, INT64), maximal_hist), kind(max&
-     &hist_c))
+      if (maxhist_c > maximal_hist) then
+! We cannot simply take MAXHIST_C = MIN(MAXHIST_C, MAXIMAL_HIST)
+! becaue they may not be the same kind, and compilers may complain.
+! We may convert them to the same kind, but overflow may occur.
+          maxhist_c = int(maximal_hist, kind(maxhist_c))
+      end if
 
 ! Allocate memory for the histroy of X. We use XHIST_C instead of XHIST,
 ! which may not be present.
