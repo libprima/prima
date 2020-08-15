@@ -48,10 +48,12 @@
 !    Consequently, the following should be observed in all Fortran code 
 !    except here.
 !
-!    - Do NOT use any kind parameter other than IK, IK_DFT, RP, RP_DFT,
+!    - DO NOT use any kind parameter other than IK, IK_DFT, RP, RP_DFT,
 !      SP, or DP unless you are sure that it is supported.
-!    - Do NOT make any assumption about the range of INTEGER, REAL, or
-!      REAL(0.0D0) unless you are sure. Be cautious about OVERFLOW!
+!    - DO NOT make any assumption about the range of INTEGER, REAL, or
+!      REAL(0.0D0) unless you are sure. Be cautious about OVERFLOW! 
+!      In particular, for integers working as the lower/upper limit of
+!      arrays, overflow can lead to Segmentation Faults! 
 !
 
 #include "ppf.h"
@@ -60,6 +62,7 @@ module consts_mod
 
 #if __USE_ISO_FORTRAN_ENV_INTREAL__ == 1
 use, intrinsic :: iso_fortran_env, only : INT16, INT32, INT64, REAL32, REAL64, REAL128
+! The unsupported kind parameter will be negative.
 #endif
 
 implicit none
@@ -81,8 +84,9 @@ logical, parameter :: DEBUGGING = .false.
 #endif
 
 #if __USE_ISO_FORTRAN_ENV_INTREAL__ != 1
-! With gfortran: selected_real_kind(k) will return INT16 with k = 3 and
+! For gfortran, selected_real_kind(k) will return INT16 with k = 3 and
 ! 4, return INT32 with k = 5--9, and return INT64 with k = 10--18.
+! selected_real_kind returns a negative value for unsupported kinds.
 integer, parameter :: INT16 = selected_int_kind(4) 
 integer, parameter :: INT32 = selected_int_kind(7)
 integer, parameter :: INT64 = selected_int_kind(14)
