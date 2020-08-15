@@ -51,6 +51,7 @@ subroutine mexFunction(nargout, poutput, nargin, pinput)
 ! Generic modules
 use consts_mod, only : MSSGLEN
 use memory_mod, only : cstyle_sizeof
+use fmxapi_mod, only : mexErrMsgIdAndTxt
 use fmxapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
 use fmxapi_mod, only : fmxVerifyClassShape
 use fmxcl_mod, only : IK_CL, RP_CL, MAXMEMORY_CL

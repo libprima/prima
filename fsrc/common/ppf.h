@@ -3,6 +3,7 @@
 ppf.h defines the following preprocessing flags (the first value is default). 
 
 __DEBUGGING__               debug or not: 0, 1
+__FORTRAN_STANDARD__        which Fortran standard to follow: 2003, 2008
 __USE_INTRINSIC_ALGEBRA__   use intrinsic procedures like matmul or not: 0, 1 
 __USE_POWELL_ALGEBRA__      use Powell's linear algebra procedures or not: 0, 1 
 __INTEGER_KIND__            the integer kind to be used: 0, 32, 64, 16
@@ -12,7 +13,7 @@ __USE_STORAGE_SIZE__        use the STORAGE_SIZE intrinsic or not: 0, 1
 __USE_ISO_FORTRAN_ENV_INTREAL__ use the ISO_FORTRAN_ENV module or not: 0, 1
 
 You may change these flags, but make sure that your compiler is supportive
-when changing __INTEGER_KIND__, __REAL_PRECISION__, 
+when changing __INTEGER_KIND__, __REAL_PRECISION__, __FORTRAN_STANDARD__,
 __USE_IEEE_ARITHMETIC__ (Fortran 2003),
 __USE_STORAGE_SIZE__ (Fortran 2008), 
 __USE_ISO_FORTRAN_ENV_INTREAL__ (Fortran 2008).
@@ -33,6 +34,15 @@ depend on the compiler, for instance, __USE_IEEE_ARITHMETIC__.
 #undef __DEBUGGING__
 #endif
 #define __DEBUGGING__ 1 
+/*************************************************************************/
+
+
+/*************************************************************************/
+/* Which Fortran standard to follow? */
+#if defined __FORTRAN_STANDARD__
+#undef __FORTRAN_STANDARD__
+#endif
+#define __FORTRAN_STANDARD__ 2003 
 /*************************************************************************/
 
 
@@ -110,50 +120,6 @@ depend on the compiler, for instance, __USE_IEEE_ARITHMETIC__.
 
 
 /*************************************************************************/
-/* Do we use the STORAGE_SIZE intrinsic? (Fortran 2008) */
-#if defined __USE_STORAGE_SIZE__
-#undef __USE_STORAGE_SIZE__
-#endif
-#define __USE_STORAGE_SIZE__ 0
-
-#if defined __GFORTRAN__
-#if __GNUC__ >= 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
-#undef __USE_STORAGE_SIZE__
-#define __USE_STORAGE_SIZE__ 1
-#endif
-#endif
-
-#if defined __INTEL_COMPILER
-#if __INTEL_COMPILER >= 1710
-#undef __USE_STORAGE_SIZE__
-#define __USE_STORAGE_SIZE__ 1
-#endif
-#endif
-
-#if defined __NAG_COMPILER_RELEASE
-#if __NAG_COMPILER_RELEASE >= 53 
-#undef __USE_STORAGE_SIZE__
-#define __USE_STORAGE_SIZE__ 1
-#endif
-#endif
-
-#if defined __PGI
-#if __PGIC__ >= 15 && __PGIC_MINOR__ >= 4
-#undef __USE_STORAGE_SIZE__
-#define __USE_STORAGE_SIZE__ 1
-#endif
-#endif
-
-#if defined __ibmxl__
-#if __ibmxl_version__ >= 15 && __ibmxl_release__ >= 2 
-#undef __USE_STORAGE_SIZE__
-#define __USE_STORAGE_SIZE__ 1
-#endif
-#endif
-/*************************************************************************/
-
-
-/*************************************************************************/
 /* Do we use the IEEE_ARITHMETIC intrinsic module? (Fortran 2003) */
 #if defined __USE_IEEE_ARITHMETIC__
 #undef __USE_IEEE_ARITHMETIC__
@@ -195,6 +161,60 @@ depend on the compiler, for instance, __USE_IEEE_ARITHMETIC__.
 #undef __USE_IEEE_ARITHMETIC__
 #define __USE_IEEE_ARITHMETIC__ 1
 #endif
+#endif
+
+#if __FORTRAN_STANDARD__ < 2003
+#undef __USE_IEEE_ARITHMETIC__ 
+#define __USE_IEEE_ARITHMETIC__ 0
+#endif
+/*************************************************************************/
+
+
+/*************************************************************************/
+/* Do we use the STORAGE_SIZE intrinsic? (Fortran 2008) */
+#if defined __USE_STORAGE_SIZE__
+#undef __USE_STORAGE_SIZE__
+#endif
+#define __USE_STORAGE_SIZE__ 0
+
+#if defined __GFORTRAN__
+#if __GNUC__ >= 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
+#undef __USE_STORAGE_SIZE__
+#define __USE_STORAGE_SIZE__ 1
+#endif
+#endif
+
+#if defined __INTEL_COMPILER
+#if __INTEL_COMPILER >= 1710
+#undef __USE_STORAGE_SIZE__
+#define __USE_STORAGE_SIZE__ 1
+#endif
+#endif
+
+#if defined __NAG_COMPILER_RELEASE
+#if __NAG_COMPILER_RELEASE >= 53 
+#undef __USE_STORAGE_SIZE__
+#define __USE_STORAGE_SIZE__ 1
+#endif
+#endif
+
+#if defined __PGI
+#if __PGIC__ >= 15 && __PGIC_MINOR__ >= 4
+#undef __USE_STORAGE_SIZE__
+#define __USE_STORAGE_SIZE__ 1
+#endif
+#endif
+
+#if defined __ibmxl__
+#if __ibmxl_version__ >= 15 && __ibmxl_release__ >= 2 
+#undef __USE_STORAGE_SIZE__
+#define __USE_STORAGE_SIZE__ 1
+#endif
+#endif
+
+#if __FORTRAN_STANDARD__ < 2008
+#undef __USE_STORAGE_SIZE__
+#define __USE_STORAGE_SIZE__ 0 
 #endif
 /*************************************************************************/
 
@@ -240,5 +260,10 @@ depend on the compiler, for instance, __USE_IEEE_ARITHMETIC__.
 #undef __USE_ISO_FORTRAN_ENV_INTREAL__
 #define __USE_ISO_FORTRAN_ENV_INTREAL__ 1
 #endif
+#endif
+
+#if __FORTRAN_STANDARD__ < 2008
+#undef __USE_ISO_FORTRAN_ENV_INTREAL__
+#define __USE_ISO_FORTRAN_ENV_INTREAL__ 0
 #endif
 /*************************************************************************/
