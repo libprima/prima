@@ -41,7 +41,6 @@
 ! Generic modules
       use consts_mod, only : RP, HUGEFUN, MSSGLEN
       use infnan_mod, only : is_nan
-      use fmxapi_mod, only : mxGetM, mxGetN, mxIsDouble
       use fmxapi_mod, only : mxDestroyArray
       use fmxapi_mod, only : mexErrMsgIdAndTxt
       use fmxapi_mod, only : fmxIsDoubleScalar

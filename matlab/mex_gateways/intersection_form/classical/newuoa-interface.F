@@ -146,7 +146,8 @@
 
 ! Decide the maximal length of history according to MEXMEMORY in CONSTS_MOD
       if (output_xhist > 0) then
-          maximal_hist = MAXMEMORY_CL/((n+1)*cstyle_sizeof(0.0_RP_CL))
+          maximal_hist = int(MAXMEMORY_CL/((n+1)*cstyle_sizeof(0.0_RP_CL&
+     &)), kind(maximal_hist))
           maxxhist = max(0_IK_CL, min(maxfun, maxhist))
 ! We cannot simply take MAXXHIST = MIN(MAXXHIST, MAXIMAL_HIST),
 ! becaue they may not be the same kind, and compilers may complain.
@@ -155,7 +156,8 @@
               maxxhist = int(maximal_hist, kind(maxxhist))
           end if
       else
-          maximal_hist = MAXMEMORY_CL/(cstyle_sizeof(0.0_RP_CL))
+          maximal_hist = int(MAXMEMORY_CL/(cstyle_sizeof(0.0_RP_CL)), ki&
+     &nd(maximal_hist))
           maxxhist = 0
       end if
       maxfhist = max(0_IK_CL, min(maxfun, maxhist))
@@ -216,7 +218,6 @@
 
 ! Generic modules
       use consts_mod, only : MSSGLEN
-      use fmxapi_mod, only : mxGetM, mxGetN, mxIsDouble
       use fmxapi_mod, only : mxDestroyArray
       use fmxapi_mod, only : mexErrMsgIdAndTxt
       use fmxapi_mod, only : fmxCallMATLAB, fmxIsDoubleScalar

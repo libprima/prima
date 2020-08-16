@@ -114,7 +114,7 @@
 #if __INTEGER_KIND__ == 16
       integer, parameter :: INT16 = selected_int_kind(4)
 #elif __INTEGER_KIND__ == 32
-      integer, parameter :: INT64 = selected_int_kind(7)
+      integer, parameter :: INT32 = selected_int_kind(7)
 #elif __INTEGER_KIND__ == 64
       integer, parameter :: INT64 = selected_int_kind(14)
 #endif
