@@ -1,21 +1,28 @@
-# This is the Makefile for compiling example.f90.
+# This is the Makefile for the tests.
 # Please change the variables FC and FFLAGS to match your fortran compiler.
 
-FC = gfortran
-FFLAGS = -g
+FC = gfortran -Wall -Wextra -fcheck=all -pedantic
+#FC = ifort -warn all -check all
+#FC = nagfor 
+#FC = flang -Wall -Wextra -Mstandard 
+#FC = sunf95 -w3 -u -U
+#FC = af95 -m1
+#FC = pgfortran 
+FFLAGS = -g 
 COMMON = ../common
+NEWUOA = ../newuoa
 
-test: example
-	./example ; rm -f *.o *.mod example  *.dbg
+test_newuoa: newuoa_exmp
+	./newuoa_exmp ; rm -f *.o *.mod newuoa_exmp *.dbg
  
 # N.B.:
 # The .F90 and .f90 files will be compiled in the enumeration order of
 # the .o files. The order matters, because the compilation of each .o file 
 # depends on the .o files (and the corresponding .mod files) preceding it.
-example: example.f90 \
+newuoa_exmp: newuoa_exmp.f90 \
 	consts.o info.o debug.o memory.o infnan.o lina.o output.o pintrf.o \
 	preproc.o initialize.o trustregion.o vlagbeta.o geometry.o shiftbase.o update.o newuob.o newuoa.o 
-	$(FC) $(FFLAGS) -o example example.f90 *.o
+	$(FC) $(FFLAGS) -o newuoa_exmp newuoa_exmp.f90 *.o
 
 # Compile the Fortran code providing generic modules
 consts.o: $(COMMON)/consts.F90
@@ -36,24 +43,24 @@ pintrf.o: $(COMMON)/pintrf.F90
 	$(FC) $(FFLAGS) -c $(COMMON)/pintrf.F90
 
 # Compile the Fortran code providing solver-specific modules
-preproc.o: preproc.f90
-	$(FC) $(FFLAGS) -c preproc.f90
-initialize.o: initialize.f90
-	$(FC) $(FFLAGS) -c initialize.f90
-trustregion.o: trustregion.f90
-	$(FC) $(FFLAGS) -c trustregion.f90
-vlagbeta.o: vlagbeta.f90
-	$(FC) $(FFLAGS) -c vlagbeta.f90
-geometry.o: geometry.f90
-	$(FC) $(FFLAGS) -c geometry.f90
-shiftbase.o: shiftbase.f90
-	$(FC) $(FFLAGS) -c shiftbase.f90
-update.o: update.f90
-	$(FC) $(FFLAGS) -c update.f90
-newuob.o: newuob.f90
-	$(FC) $(FFLAGS) -c newuob.f90
-newuoa.o: newuoa.f90
-	$(FC) $(FFLAGS) -c newuoa.f90 
+preproc.o: $(NEWUOA)/preproc.f90
+	$(FC) $(FFLAGS) -c $(NEWUOA)/preproc.f90
+initialize.o: $(NEWUOA)/initialize.f90
+	$(FC) $(FFLAGS) -c $(NEWUOA)/initialize.f90
+trustregion.o: $(NEWUOA)/trustregion.f90
+	$(FC) $(FFLAGS) -c $(NEWUOA)/trustregion.f90
+vlagbeta.o: $(NEWUOA)/vlagbeta.f90
+	$(FC) $(FFLAGS) -c $(NEWUOA)/vlagbeta.f90
+geometry.o: $(NEWUOA)/geometry.f90
+	$(FC) $(FFLAGS) -c $(NEWUOA)/geometry.f90
+shiftbase.o: $(NEWUOA)/shiftbase.f90
+	$(FC) $(FFLAGS) -c $(NEWUOA)/shiftbase.f90
+update.o: $(NEWUOA)/update.f90
+	$(FC) $(FFLAGS) -c $(NEWUOA)/update.f90
+newuob.o: $(NEWUOA)/newuob.f90
+	$(FC) $(FFLAGS) -c $(NEWUOA)/newuob.f90
+newuoa.o: $(NEWUOA)/newuoa.f90
+	$(FC) $(FFLAGS) -c $(NEWUOA)/newuoa.f90 
 
 clean:
-	rm -f *.o *.mod example *.dbg
+	rm -f *.o *.mod newuoa_exmp *.dbg

@@ -1,3 +1,6 @@
+FSTD=2003
+FS=f03
+
 GFORT=gfortran -c -g -Wall -Wextra -Wconversion -Wuninitialized -Wmaybe-uninitialized  -Wsurprising -Waliasing  -Wimplicit-interface  -Wunused-parameter  -fwhole-file  -fimplicit-none -fbacktrace -ffree-line-length-0 -fcheck=all -ffpe-trap=invalid,zero,overflow,underflow #-Warray-temporaries
 IFORT=ifort -c -g -warn all -check all  -fpe0 -debug extended -fimplicit-none #-names as_is
 G95=g95 -c -g -Wall -Wextra -fbounds-check -fimplicit-none 
@@ -20,11 +23,8 @@ M90FILES= $(FILES) $(MEXDIR)/fmxapi.F90 $(MEXDIR)/prob.F90 $(MEXDIR)/classical/f
 MFILES= ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F ../common/infnan.F ../common/lina.F ../common/output.F ../common/pintrf.F preproc.f initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f $(INTERSECTIONMEXDIR)/fmxapi.F $(INTERSECTIONMEXDIR)/prob.F $(INTERSECTIONMEXDIR)/classical/fmxcl.F $(INTERSECTIONMEXDIR)/gethuge.F $(INTERSECTIONMEXDIR)/newuoa-interface.F $(INTERSECTIONMEXDIR)/classical/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2018a/extern/include/
 
 
-FSTD=2003
-FS=f03
-
-verify: gverify iverify 9verify nverify pverify averify fverify  sverify
-verifym: gverifym iverifym 9verifym nverifym pverifym averifym fverifym sverifym
+verify: gverify iverify 9verify nverify pverify averify fverify sverify clean
+verifym: gverifym iverifym 9verifym nverifym pverifym averifym fverifym sverifym clean
 
 fverify:
 	$(FLANG) $(FILES) -ffree-form -std=f$(FSTD)
