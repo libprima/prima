@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 15-Aug-2020.
+! on 16-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -215,11 +215,11 @@
       subroutine calfun(n, x, funval)
 
 ! Generic modules
-      use consts_mod, only : INT32_MEX, MSSGLEN
+      use consts_mod, only : MSSGLEN
       use fmxapi_mod, only : mxGetM, mxGetN, mxIsDouble
       use fmxapi_mod, only : mxDestroyArray
       use fmxapi_mod, only : mexErrMsgIdAndTxt
-      use fmxapi_mod, only : fmxCallMATLAB
+      use fmxapi_mod, only : fmxCallMATLAB, fmxIsDoubleScalar
       use fmxcl_mod, only : RP_CL, IK_CL
       use fmxcl_mod, only : fmxReadMPtr, fmxWriteMPtr
 
@@ -237,9 +237,7 @@
 
 ! Intermediate variables
       mwPointer :: pinput(1), poutput(1)
-      mwSize :: row, col
       integer(IK_CL) :: maxfhist, maxxhist, khist
-      integer(INT32_MEX) :: isdble
       character(len = MSSGLEN) :: eid, mssg
 
 ! Associate X with INPUT(1)
@@ -249,10 +247,7 @@
       call fmxCallMATLAB(fun_ptr, pinput, poutput)
 
 ! Verify the class and shape of outputs.
-      row = mxGetM(poutput(1))
-      col = mxGetN(poutput(1))
-      isdble = mxIsDouble(poutput(1))
-      if (row*col /= 1 .or. isdble /= 1) then
+      if (.not. fmxIsDoubleScalar(poutput(1))) then
           eid = solver // ':ObjectiveNotScalar'
           mssg = solver // ': Objective function does not return a scala&
      &r.'

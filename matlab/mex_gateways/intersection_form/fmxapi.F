@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 15-Aug-2020.
+! on 16-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -68,9 +68,31 @@
 #include "fintrf.h"
 
 
+!----------------------------------------------------------------------!
+! INT32_MEX_MOD does nothing but defines INT32_MEX, which is indeed INT32,
+! i.e., the kind of INTEGER*4. It is needed when using some MEX API
+! subroutines provided by Mathworks, e.g., mexCallMATLAB.
+! We wanted to define INT32_MEX in FMXAPI_MOD, but in that case INT32_MEX
+! will not be visable to the interface blocks like mexCallMATLAB, even
+! though it will be visable to the subroutines like fmxCallMATLAB ---
+! howe strange! Therefore, we can only define it in a separate module and
+! then use it when needed.
+      module int32_mex_mod
+      implicit none
+      private
+      public :: INT32_MEX
+! For gfortran, SELECTED_REAL_KIND(K) returns INT32 with K = 5--9.
+! In Fortran 2008, INT32 can be obtained by the following:
+!!use, intrinsic :: iso_fortran_env, only : INT32
+      integer, parameter :: INT32_MEX = selected_int_kind(7)
+      end module int32_mex_mod
+!----------------------------------------------------------------------!
+
+
       module fmxapi_mod
 
-      use consts_mod, only : INT32_MEX, DP, RP
+      use int32_mex_mod, only : INT32_MEX
+      use consts_mod, only : DP, RP
       implicit none
       private
 
@@ -104,6 +126,8 @@
       public :: fmxReadMPtr
       public :: fmxWriteMPtr
       public :: fmxCallMATLAB
+      public :: fmxIsDoubleScalar
+      public :: fmxIsDoubleVector
 
 
 ! notComplex is used in mxCreateDoubleMatrix
@@ -213,7 +237,7 @@
 
 ! MEX functions
           function mexCallMATLAB(nout, pout, nin, pin, f)
-          use consts_mod, only : INT32_MEX
+          use int32_mex_mod, only : INT32_MEX
           implicit none
           integer(INT32_MEX) :: mexCallMATLAB
           integer(INT32_MEX), intent(in) :: nout, nin
@@ -225,7 +249,7 @@
           end function mexCallMATLAB
 
           function mxCreateDoubleMatrix(m, n, ComplexFlag)
-          use consts_mod, only : INT32_MEX
+          use int32_mex_mod, only : INT32_MEX
           implicit none
           mwPointer :: mxCreateDoubleMatrix
           mwSize, intent(in) :: m, n
@@ -266,7 +290,7 @@
           end function mxGetPr
 
           function mxGetString(pm, str, strlen)
-          use consts_mod, only : INT32_MEX
+          use int32_mex_mod, only : INT32_MEX
           implicit none
           integer(INT32_MEX) :: mxGetString
           mwPointer, intent(in) :: pm
@@ -275,7 +299,7 @@
           end function mxGetString
 
           function mxIsClass(pm, classname)
-          use consts_mod, only : INT32_MEX
+          use int32_mex_mod, only : INT32_MEX
           implicit none
           integer(INT32_MEX) :: mxIsClass
           mwPointer, intent(in) :: pm
@@ -283,14 +307,14 @@
           end function mxIsClass
 
           function mxIsChar(pm)
-          use consts_mod, only : INT32_MEX
+          use int32_mex_mod, only : INT32_MEX
           implicit none
           integer(INT32_MEX) :: mxIsChar
           mwPointer, intent(in) :: pm
           end function mxIsChar
 
           function mxIsDouble(pm)
-          use consts_mod, only : INT32_MEX
+          use int32_mex_mod, only : INT32_MEX
           implicit none
           integer(INT32_MEX) :: mxIsDouble
           mwPointer, intent(in) :: pm
@@ -393,35 +417,38 @@
       m = mxGetM(px)
       n = mxGetN(px)
 
-      if (shape_type == 'rank0' .or. shape_type == 'scalar') then
+      if (shape_type == 'rank0' .or. shape_type == 'RANK0' .or. shape_ty&
+     &pe == 'scalar' .or. shape_type == 'SCALAR') then
           if (m /= 1 .or. n /= 1) then
               eid = 'FMXAPI:WrongInput'
               mssg = 'fmxVerifyClassShape: A variable of invalid shape r&
      &eceived when an array of rank 0 (scalar) is expected.'
               call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
           end if
-      else if (shape_type == 'rank1' .or. shape_type == 'vector') then
+      else if (shape_type == 'rank1' .or. shape_type == 'RANK1' .or. sha&
+     &pe_type == 'vector' .or. shape_type == 'VECTOR') then
           if ((m /= 1 .or. n < 1) .and. (m < 1 .or. n /= 1)) then
               eid = 'FMXAPI:WrongInput'
               mssg = 'fmxVerifyClassShape: A variable of invalid shape r&
      &eceived when an array of rank 1 (vector) is expected.'
               call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
           end if
-      else if (shape_type == 'rank2' .or. shape_type == 'matrix') then
+      else if (shape_type == 'rank2' .or. shape_type == 'RANK2' .or. sha&
+     &pe_type == 'matrix' .or. shape_type == 'MATRIX') then
           if (m < 1 .or. n < 1) then
               eid = 'FMXAPI:WrongInput'
               mssg = 'fmxVerifyClassShape: A variable of invalid shape r&
      &eceived when an array of rank 2 (matrix) is expected.'
               call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
           end if
-      else if (shape_type == 'column') then
+      else if (shape_type == 'column' .or. shape_type == 'COLUMN') then
           if (m < 1 .or. n /= 1) then
               eid = 'FMXAPI:WrongInput'
               mssg = 'fmxVerifyClassShape: A variable of invalid shape r&
      &eceived when a column vector is expected.'
               call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
           end if
-      else if (shape_type == 'row') then
+      else if (shape_type == 'row' .or. shape_type == 'ROW') then
           if (m /= 1 .or. n < 1) then
               eid = 'FMXAPI:WrongInput'
               mssg = 'fmxVerifyClassShape: A variable of invalid shape r&
@@ -868,7 +895,7 @@
       end subroutine write_rscalar
 
 
-      subroutine write_rvector(x, px, rowcol)
+      subroutine write_rvector(x, px, shape_type)
 ! WRITE_RVECTOR associates a REAL(RP) vector X with an mwPointer
 ! PX, after which X can be passed to MATLAB either as an output of
 ! mexFunction or an input of mexCallMATLAB. If ROWCOL = 'row', then
@@ -878,7 +905,7 @@
 
 ! Input
       real(RP), intent(in) :: x(:)
-      character(len = *), intent(in), optional :: rowcol
+      character(len = *), intent(in), optional :: shape_type
 
 ! Output
       mwPointer, intent(out) :: px
@@ -908,9 +935,8 @@
       end if
 
       row = .false.
-      if (present(rowcol)) then
-          if (rowcol == 'row' .or. rowcol == 'ROW' .or. rowcol =='Row') &
-     &then
+      if (present(shape_type)) then
+          if (shape_type == 'row' .or. shape_type == 'ROW') then
               row = .true.
           end if
       end if
@@ -1006,7 +1032,8 @@
 ! output = feval(fun, input),
 ! where fun_ptr is an mwPointer pointing to the function handle of fun,
 ! while pin/pout are mwPointer arrays associated with the inputs/outputs
-      use consts_mod, only : INT32_MEX, MSSGLEN
+      use int32_mex_mod, only : INT32_MEX
+      use consts_mod, only : MSSGLEN
       implicit none
 
       mwPointer, intent(in) :: fun_ptr
@@ -1044,6 +1071,58 @@
       end if
 
       end subroutine fmxCallMATLAB
+
+
+      function fmxIsDoubleScalar(px)
+      implicit none
+      logical :: fmxIsDoubleScalar
+      mwPointer, intent(in) :: px
+      fmxIsDoubleScalar = .true.
+      if (mxGetM(px)*mxGetN(px) /= 1) then
+          fmxIsDoubleScalar = .false.
+      else if (mxIsDouble(px) /= 1) then
+          fmxIsDoubleScalar = .false.
+      end if
+      end function fmxIsDoubleScalar
+
+
+      function fmxIsDoubleVector(px, shape_type)
+      use consts_mod, only : MSSGLEN, IK
+      implicit none
+      logical :: fmxIsDoubleVector
+      mwPointer, intent(in) :: px
+      character(len = *), intent(in), optional :: shape_type
+      character(len = MSSGLEN) :: eid, mssg
+      integer(IK) :: m, n
+
+      m = int(mxGetM(px), kind(m))
+      n = int(mxGetN(px), kind(n))
+
+      fmxIsDoubleVector = .true.
+      if ((m /= 1 .or. n < 1) .and. (m < 1 .or. n /= 1)) then
+          fmxIsDoubleVector = .false.
+      else if (mxIsDouble(px) /= 1) then
+          fmxIsDoubleVector = .false.
+      end if
+      if (present(shape_type)) then
+          if (shape_type == 'row' .or. shape_type == 'ROW') then
+              if (m /= 1) then
+                  fmxIsDoubleVector = .false.
+              end if
+          else if (shape_type == 'column' .or. shape_type == 'COLUMN') t&
+     &hen
+              if (n /= 1) then
+                  fmxIsDoubleVector = .false.
+              end if
+          else
+              eid = 'FMXAPI:WrongShapeType'
+              mssg = 'fmxIsDoubleVector: An invalid shape type "' // sha&
+     &pe_type // '" received.'
+              call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+          end if
+      end if
+      end function fmxIsDoubleVector
+
 
       end module fmxapi_mod
 

@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 15-Aug-2020.
+! on 16-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -78,16 +78,12 @@
 
 #if __INTEGER_KIND__ == 16
       use, intrinsic :: iso_fortran_env, only : INT16
-#endif
-
-#if __INTEGER_KIND__ == 64
+#elif __INTEGER_KIND__ == 32
+      use, intrinsic :: iso_fortran_env, only : INT32
+#elif __INTEGER_KIND__ == 64
       use, intrinsic :: iso_fortran_env, only : INT64
 #endif
 
-! When interfacing with MATLAB, we need INT32; it will be made public
-! under the name "INT32_MEX", emphasizing that it should be used only
-! in MEX gateways.
-      use, intrinsic :: iso_fortran_env, only : INT32
 
       use, intrinsic :: iso_fortran_env, only : REAL32, REAL64, REAL128
 ! The unsupported kind parameter will be negative.
@@ -97,8 +93,7 @@
       private
       public :: DEBUGGING
       public :: IK, IK_DFT
-      public :: INT32_MEX ! Needed by MEX
-      public :: RP, DP, SP, QP, RP_DFT
+      public :: RP, RP_DFT, DP, SP, QP
       public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
       public :: EPS, HUGENUM, ALMOST_INFINITY, HUGEFUN, HUGECON
       public :: SRNLEN, MSSGLEN
@@ -118,18 +113,16 @@
 ! SELECTED_REAL_KIND returns a negative value for an unsupport kind.
 #if __INTEGER_KIND__ == 16
       integer, parameter :: INT16 = selected_int_kind(4)
-#endif
-
-#if __INTEGER_KIND__ == 64
+#elif __INTEGER_KIND__ == 32
+      integer, parameter :: INT64 = selected_int_kind(7)
+#elif __INTEGER_KIND__ == 64
       integer, parameter :: INT64 = selected_int_kind(14)
 #endif
 
-      integer, parameter :: INT32 = selected_int_kind(7)
       integer, parameter :: REAL32 = kind(0.0)
       integer, parameter :: REAL64 = kind(0.0D0)
       integer, parameter :: REAL128 = selected_real_kind(p = 30)
 #endif
-      integer, parameter :: INT32_MEX = INT32 ! Needed by MEX
       integer, parameter :: IK_DFT = kind(0) ! Default integer kind
       integer, parameter :: RP_DFT = kind(0.0) ! Default real kind
       integer, parameter :: SP = REAL32 ! Kind for single precision

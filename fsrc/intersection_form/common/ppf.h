@@ -13,7 +13,7 @@ __USE_STORAGE_SIZE__        use the STORAGE_SIZE intrinsic or not: 0, 1
 __USE_ISO_FORTRAN_ENV_INTREAL__ use the ISO_FORTRAN_ENV module or not: 0, 1
 
 You may change these flags, but make sure that your compiler is supportive
-when changing __INTEGER_KIND__, __REAL_PRECISION__, 
+when changing __INTEGER_KIND__, __REAL_PRECISION__, __FORTRAN_STANDARD__,
 __USE_IEEE_ARITHMETIC__ (Fortran 2003),
 __USE_STORAGE_SIZE__ (Fortran 2008), 
 __USE_ISO_FORTRAN_ENV_INTREAL__ (Fortran 2008).

@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 15-Aug-2020.
+! on 16-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -39,11 +39,12 @@
       subroutine calfun(x, funval)
 
 ! Generic modules
-      use consts_mod, only : RP, HUGEFUN, INT32_MEX, MSSGLEN
+      use consts_mod, only : RP, HUGEFUN, MSSGLEN
       use infnan_mod, only : is_nan
       use fmxapi_mod, only : mxGetM, mxGetN, mxIsDouble
       use fmxapi_mod, only : mxDestroyArray
       use fmxapi_mod, only : mexErrMsgIdAndTxt
+      use fmxapi_mod, only : fmxIsDoubleScalar
       use fmxapi_mod, only : fmxReadMPtr, fmxWriteMPtr, fmxCallMATLAB
 
       implicit none
@@ -56,8 +57,6 @@
 
 ! Intermediate variables
       mwPointer :: pinput(1), poutput(1)
-      mwSize :: row, col
-      integer(INT32_MEX) :: isdble
       character(len = MSSGLEN) :: eid, mssg
 
 ! Associate X with INPUT(1)
@@ -69,10 +68,7 @@
 ! Verify the class and shape of outputs. Indeed, fmxReadMPtr
 ! does also the verification. We do it here in order to print a
 ! more informative error message when the verification fails.
-      row = mxGetM(poutput(1))
-      col = mxGetN(poutput(1))
-      isdble = mxIsDouble(poutput(1))
-      if (row*col /= 1 .or. isdble /= 1) then
+      if (.not. fmxIsDoubleScalar(poutput(1))) then
           eid = 'PROBLEM:ObjectiveNotScalar'
           mssg = 'PROBLEM: Objective function does not return a scalar.'
           call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
