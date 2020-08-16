@@ -59,7 +59,7 @@ public :: fmxWriteMPtr
 
 real(RP_CL), parameter :: ONE = 1.0_RP_CL
 real(DP), parameter :: convTol = 1.0E1_DP*max(epsilon(0.0_DP), real(epsilon(0.0_RP_CL), DP))
-integer, parameter :: MAXMEMORY_CL = int(min(21*(10**8), int(huge(0_IK_CL))), IK_CL)
+integer, parameter :: MAXMEMORY_CL = min(21*(10**8), int(huge(0_IK_CL)))
 
 
 interface fmxAllocate
