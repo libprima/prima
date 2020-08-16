@@ -579,6 +579,8 @@ end if
 if (maxxhist >= 1 .and. maxxhist < nf) then
     khist = mod(nf - 1_IK, maxxhist) + 1_IK
     xhist = reshape((/ xhist(:, khist + 1 : maxxhist), xhist(:, 1 : khist) /), shape(xhist))
+    ! The above combination of SHAPE and RESHAPE fulfills our desire 
+    ! thanks to the COLUMN-MAJOR order of Fortran arrays.
 end if
 
 if (abs(iprint) >= 1) then

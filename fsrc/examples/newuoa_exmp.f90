@@ -44,7 +44,7 @@ end module calfun_mod
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!! THE MAIN PROGRAM !!!!!!!!!!!!!!!!!!!!!!!!!!!
-program example
+program newuoa_exmp
 
 ! The following line makes NEWUOA available.
 !----------------------------------------------------------------------!
@@ -85,7 +85,7 @@ do n = 2, 10, 2
 
     ! The following line illustrates how to call NEWUOA. 
     !------------------------------------------------------------------!
-    call newuoa(calfun, x, f, rhobeg = rhobeg, iprint = 2)
+    call newuoa(calfun, x, f, rhobeg = rhobeg, iprint = 3)
     !------------------------------------------------------------------!
     ! In additon to the required arguments CALFUN, X, and F, the above
     ! illustration specifies also RHOBEG and IPRINT, which are optional.
@@ -97,4 +97,4 @@ do n = 2, 10, 2
     !------------------------------------------------------------------!
 end do
 
-end program example
+end program newuoa_exmp

@@ -1,0 +1,88 @@
+Here are points to note when translating the Fortran code to other languages.
+
+1. Row- and column-major order.
+
+   Fortran saves matrices in the column-major order. 
+
+   Same: MATLAB, Julia, R.
+   Different: NumPy, C/C++.
+
+2. Initial index.
+
+   In the Fortran code, array indices start from 1.
+
+   Same: MATLAB, Julia, R.
+   Different: Python, C/C++.
+
+3. Argument-passing by reference, by value, or by sharing.
+
+   Fortran subroutines/functions passes augments by reference. Hence
+   changes made to an argument within a subroutine is visible to the caller.
+
+   Call by value: MATLAB, C/C++, R 
+   Call by sharing: Julia, Python
+
+4. Row and column vectors.
+
+   In Fortran, there is no difference between row vectors and column vectors. 
+   They are both represented as 1D arrays. 
+
+   MATLAB can differentiate rows and columns because they are indeed 
+   considered as matrices --- in other words, there is no real 1D array 
+   or scalar in MATLAB; they are all matrices. 
+
+   Consequently, Fortran and MATLAB behave differently in the following aspects.
+
+   4.1. In Fortran, when a vector x multiplies a matrix A by the intrinsic 
+   function MATMUL, there are two possibilities:
+   - matmul(A, x): x is a 1D array whose length is size(A, 2); the result 
+     is a 1D array whose length is size(A, 1).
+   - matmul(x, A): x is a 1D array whose length is size(A, 1); the result 
+     is a 1D array whose length is size(A, 2)
+
+   In MATLAB, if x is a column vector, and A is a matrix, then A*x in is 
+   similar to matmul(A, x) in Fortran if the length of x equals size(A, 2),
+   and x'*A is similar to matmul(x, A) in Fortran if the length of x equals 
+   size(A, 1).
+
+   4.2. In Fortran, two arrays x and y can be added up as long as they
+   have the same size, the result being an array of the same size.
+   
+   In MATLAB, if x is a column vector while y is a row vector, then x+y
+   is a matrix of size [length(x), length(y)], the (i, j) entry being
+   x(i)+y(j). In Fortran, the same matrix can be obtain in Fortran by
+   spread(x, copies=size(y), dim=2) + spread(y, copies=size(x), dim=1).
+
+5. Multiplication of arrays.
+
+   In Fortran, x*y means the entry-wise multiplication of two arrays
+   x and y, where the two arrays should have the same size. Matrix
+   multiplication is done by MATMUL.
+
+   Same: numpy
+   Different: MATLAB, Julia, where * means matrix multiplication
+
+
+6. The "size" intrinsic function in Fortran.
+
+   In Fortran:
+   - size(x) returns the TOTAL number of elements in an array x, no matter
+   whether x is 1D, 2D, or multidimensional. size(x) is invalid if x is a scalar.
+   - size(x, 1) returns the size of x along the first dimension (i.e., 
+   number of rows); size(x, 2) returns the size along the second dimension (i.e.,
+   number of columns); size(x, k) is invalid if k is larger than the
+   number of dimensions that x has (hence size(x, 2) is invalid is x is
+   a vector).
+
+   In MATLAB:
+   - size(x) returns a row vector containing the size of x along 
+   all its dimensions; in addition, all scalars and vectors are indeed
+   considered as matrices; therefore, for a scalar x, size(x) = [1, 1]; 
+   for a row vector x, size(x) = [1, length(x)]; for a column vector,
+   size(x) = [length(x), 1]. 
+   - The behavior of size(x, k) is the same as in Fortran, except that 
+   there is no constraint on k; when k is larger than the number of
+   dimensions in x, size(x, k) = 1.
+   - For the size(x) in Fortran, the equivalent expressions in MATLAB are:
+   -- when x is a 1D array, length(x);
+   -- general arrays: numel(x).
