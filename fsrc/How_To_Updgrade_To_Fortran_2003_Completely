@@ -1,0 +1,55 @@
+In 2020, Fortran 2003 features are still not completely supported by
+compilers. Therefore, the Fortran code of this project keeps some pre-2003 
+features. They can be removed later (say, in 2025) if compilers implement 
+Fortran 2003 better at that time.
+
+The pre-2003 features include the following.
+
+1. Fixed-length character array.
+
+For example,
+
+integer, parameter :: MSSGLEN = 200
+character(len = MSSGLEN) :: mssg
+mssg = 'ABC'
+
+In Fortran 2003, this can be replaced by
+
+character, allocatable :: mssg(:)
+mssg = 'ABC'  ! Automatic allocation upon intrinsic assignment.
+
+HOW TO FIND: search for 'character' or 'character(len' or 'len = '.
+
+
+2. Related to 1, we do not take advantage of the "automatic allocation
+upon intrinsic assignment" feature for ALLOCATABLE variables (NOT
+POINTERS).
+
+For example,
+
+real, allocatable :: x(:)
+
+call safealloc(x, n)
+x = y  ! y is an array of size n
+
+can be replaced by
+
+real, allocatable :: x(:)
+
+x = y ! Automatic allocation upon intrinsic assignment
+
+HOW TO FIND: search for 'safealloc' and 'fmxAlloc'
+
+N.B.: Not all allocation can be removed!
+1. Automatic allocation does not happen for POINTERs.
+2. Another example:
+
+
+real, allocatable :: x(:)
+integer :: n
+
+allocate(x(n))
+do i = 1, n
+    x(i) = real(i)
+end do
+

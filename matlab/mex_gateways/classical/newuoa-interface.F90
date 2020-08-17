@@ -125,7 +125,7 @@ if (nw > MAXMEMORY_CL/cstyle_sizeof(0.0_RP_CL)) then
     mssg = solver // ': Workspace exceeds the largest memory allowed.'
     call mexErrMsgIdAndTxt(eid, mssg)
 end if
-call fmxAllocate(w, int(nw, IK_CL))
+call fmxAllocate(w, int(nw, IK_CL)) ! Not removable
 
 ! Decide the maximal length of history according to MEXMEMORY in CONSTS_MOD
 if (output_xhist > 0) then
@@ -148,8 +148,8 @@ end if
 
 ! Initialize global variables
 nf = 0
-call fmxAllocate(xhist, n, maxxhist)
-call fmxAllocate(fhist, maxfhist)
+call fmxAllocate(xhist, n, maxxhist) ! Not removable
+call fmxAllocate(fhist, maxfhist) ! Not removable
 
 ! Call NEWUOA
 call newuoa(n, npt, x, rhobeg, rhoend, iprint, maxfun, w, f, info, ftarget)
@@ -157,11 +157,11 @@ call newuoa(n, npt, x, rhobeg, rhoend, iprint, maxfun, w, f, info, ftarget)
 ! chronological order.
 if (maxxhist >= 1 .and. maxxhist < nf) then
     khist = mod(nf - 1_IK_CL, maxxhist) + 1_IK_CL
-    xhist = reshape((/ xhist(:, khist + 1 : maxxhist), xhist(:, 1 : khist) /), shape(xhist))
+    xhist = reshape([xhist(:, khist + 1 : maxxhist), xhist(:, 1 : khist)], shape(xhist))
 end if
 if (maxfhist >= 1 .and. maxfhist < nf) then
     khist = mod(nf - 1_IK_CL, maxfhist) + 1_IK_CL
-    fhist = (/ fhist(khist + 1 : maxfhist), fhist(1 : khist) /)
+    fhist = [fhist(khist + 1 : maxfhist), fhist(1 : khist)] 
 end if
 
 ! If MAXFHIST_IN >= NF_C > MAXFHIST_C, warn that not all history is recorced.

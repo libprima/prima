@@ -4,8 +4,8 @@ FS=f03
 GFORT=gfortran -c -g -Wall -Wextra -Wconversion -Wuninitialized -Wmaybe-uninitialized  -Wsurprising -Waliasing  -Wimplicit-interface  -Wunused-parameter  -fwhole-file  -fimplicit-none -fbacktrace -ffree-line-length-0 -fcheck=all -ffpe-trap=invalid,zero,overflow,underflow #-Warray-temporaries
 IFORT=ifort -c -g -warn all -check all  -fpe0 -debug extended -fimplicit-none #-names as_is
 G95=g95 -c -g -Wall -Wextra -fbounds-check -fimplicit-none 
-NFORT=nagfor -c -g -Warn=allocation -Warn=constant_coindexing -Warn=reallocation -Warn=subnormal -colour=error:red,warn:magenta,info:yellow
-PFORT=pgfortran  -c -g 
+NFORT=nagfor -c -g -C -Warn=allocation -Warn=constant_coindexing -Warn=reallocation -Warn=subnormal -colour=error:red,warn:magenta,info:yellow
+PFORT=pgfortran  -c -g -Minform=warn 
 ABSOFT=af95  -c -g -m1 -en
 SFORT=sunf95  -c -g -w3 -u -ansi -U
 FLANG=flang -c -Wall -Wextra -Mstandard 
@@ -145,4 +145,4 @@ newuoa.o: newuoa.f90
 	$(FC) $(FFLAGS) -c newuoa.f90 
 
 clean:
-	rm -f *.o *.mod a.out example *__genmod.f90 *.dbg 1
+	rm -f *.o *.mod a.out example *__genmod.f90 *.dbg 
