@@ -12,13 +12,16 @@ For example,
 integer, parameter :: MSSGLEN = 200
 character(len = MSSGLEN) :: mssg
 mssg = 'ABC'
+print *, trim(mssg)
 
 In Fortran 2003, this can be replaced by
 
 character, allocatable :: mssg(:)
 mssg = 'ABC'  ! Automatic allocation upon intrinsic assignment.
+print *, mssg
 
-HOW TO FIND: search for 'character' or 'character(len' or 'len = '.
+HOW TO FIND: search for 'character' or 'character(len' or 'len = ', 
+and also 'trim('.
 
 
 2. Related to 1, we do not take advantage of the "automatic allocation
