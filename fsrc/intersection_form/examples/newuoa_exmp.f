@@ -1,5 +1,5 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! This is the intersection-form version of example.f90.
+! This is the intersection-form version of newuoa_exmp.f90.
 ! The file is generated automatically and is NOT intended to be readable.
 !
 ! In the intersection form, each continued line has an ampersand at column
@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 16-Aug-2020.
+! on 18-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -60,7 +60,7 @@
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!! THE MAIN PROGRAM !!!!!!!!!!!!!!!!!!!!!!!!!!!
-      program example
+      program newuoa_exmp
 
 ! The following line makes NEWUOA available.
 !----------------------------------------------------------------------!
@@ -101,7 +101,7 @@
 
 ! The following line illustrates how to call NEWUOA.
 !------------------------------------------------------------------!
-          call newuoa(calfun, x, f, rhobeg = rhobeg, iprint = 2)
+          call newuoa(calfun, x, f, rhobeg = rhobeg, iprint = 3)
 !------------------------------------------------------------------!
 ! In additon to the required arguments CALFUN, X, and F, the above
 ! illustration specifies also RHOBEG and IPRINT, which are optional.
@@ -113,4 +113,4 @@
 !------------------------------------------------------------------!
       end do
 
-      end program example
+      end program newuoa_exmp

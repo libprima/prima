@@ -41,10 +41,11 @@ real(RP), allocatable, intent(out) :: x(:)
 integer :: alloc_status
 character(len = SRNLEN), parameter :: srname = 'ALLOC_RVECTOR'
 
-! Deallocate X if X is allocated. This is necessary. 
-if (allocated(x)) then
-    deallocate (x)
-end if
+! According to the Fortran 2003 standard, when a procedure is invoked, 
+! any allocated ALLOCATABLE object that is an actual argument associated
+! with an INTENT(OUT) ALLOCATABLE dummy argument is deallocated. So it is
+! unnecessary to write the following line in F2003 since X is INTENT(OUT):
+!!if (allocated(x)) deallocate (x)
 
 ! Allocate memory for X
 allocate (x(n), stat = alloc_status)
@@ -52,7 +53,10 @@ if (alloc_status /= 0) then
     call errstop(srname, 'Memory allocation fails.') 
 end if
 
-x = 0.0_RP  ! Set = 0; otherieise, compilers may complain.
+! Use X; otherwise, compilers may complain.
+if (n >= 1) then
+    x(1) = 0.0_RP  
+end if
 
 end subroutine alloc_rvector
 
@@ -74,10 +78,8 @@ real(RP), allocatable, intent(out) :: x(:, :)
 integer :: alloc_status
 character(len = SRNLEN), parameter :: srname = 'ALLOC_RMATRIX'
 
-! Deallocate X if X is allocated. This is necessary. 
-if (allocated(x)) then
-    deallocate (x)
-end if
+! Unnecessary to write the following line in F2003 since X is INTENT(OUT):
+!!if (allocated(x)) deallocate (x)
 
 ! Allocate memory for X
 allocate (x(m, n), stat = alloc_status)
@@ -85,7 +87,10 @@ if (alloc_status /= 0) then
     call errstop(srname, 'Memory allocation fails.') 
 end if
 
-x = 0.0_RP  ! Set X = 0; otherieise, compilers may complain.
+! Use X; otherwise, compilers may complain.
+if (m*n >= 1) then
+    x(1, 1) = 0.0_RP
+end if
 
 end subroutine alloc_rmatrix
 

@@ -1,4 +1,10 @@
-! FMXCL_MOD is a module that provides the following procedures: 
+! FMXCL_MOD is a module that provides the following constants 
+!
+! IK_CL
+! RP_CL
+! MAXMEMORY_CL
+!
+! and the following procedures: 
 ! 
 ! fmxAllocate
 ! fmxReadMPtr
@@ -105,10 +111,11 @@ real(SP), allocatable, intent(out) :: x(:)
 integer :: alloc_status
 character(len = MSSGLEN) :: eid, mssg
 
-! Deallocate X if X is allocated. This is necessary. 
-if (allocated(x)) then
-    deallocate (x)
-end if
+! According to the Fortran 2003 standard, when a procedure is invoked, 
+! any allocated ALLOCATABLE object that is an actual argument associated
+! with an INTENT(OUT) ALLOCATABLE dummy argument is deallocated. So it is
+! unnecessary to write the following line in F2003 since X is INTENT(OUT):
+!!if (allocated(x)) deallocate (x)
 
 ! Allocate memory for X
 allocate (x(n), stat = alloc_status)
@@ -118,9 +125,10 @@ if (alloc_status /= 0) then
     call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
 end if
 
-! Set X = 0; otherwise, compilers may complain.
-x = 0.0_SP
-
+! Use X; otherwise, compilers may complain.
+if (n >= 1) then
+    x(1) = 0.0_SP  
+end if
 end subroutine alloc_rvector_cl_sp
 
 
@@ -140,10 +148,8 @@ real(SP), allocatable, intent(out) :: x(:, :)
 integer :: alloc_status
 character(len = MSSGLEN) :: eid, mssg
 
-! Deallocate X if X is allocated. This is necessary. 
-if (allocated(x)) then
-    deallocate (x)
-end if
+! Unnecessary to write the following line in F2003 since X is INTENT(OUT):
+!!if (allocated(x)) deallocate (x)
 
 ! Allocate memory for X
 allocate (x(m, n), stat = alloc_status)
@@ -153,8 +159,10 @@ if (alloc_status /= 0) then
     call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
 end if
 
-! Set X = 0; otherwise, compilers may complain.
-x = 0.0_SP 
+! Use X; otherwise, compilers may complain.
+if (m*n >= 1) then
+    x(1, 1) = 0.0_SP  
+end if
 end subroutine alloc_rmatrix_cl_sp
 
 
@@ -174,10 +182,8 @@ real(DP), allocatable, intent(out) :: x(:)
 integer :: alloc_status
 character(len = MSSGLEN) :: eid, mssg
 
-! Deallocate X if X is allocated. This is necessary. 
-if (allocated(x)) then
-    deallocate (x)
-end if
+! Unnecessary to write the following line in F2003 since X is INTENT(OUT):
+!!if (allocated(x)) deallocate (x)
 
 ! Allocate memory for X
 allocate (x(n), stat = alloc_status)
@@ -187,9 +193,10 @@ if (alloc_status /= 0) then
     call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
 end if
 
-! Set X = 0; otherwise, compilers may complain.
-x = 0.0_DP
-
+! Use X; otherwise, compilers may complain.
+if (n >= 1) then
+    x(1) = 0.0_DP  
+end if
 end subroutine alloc_rvector_cl_dp
 
 
@@ -209,10 +216,8 @@ real(DP), allocatable, intent(out) :: x(:, :)
 integer :: alloc_status
 character(len = MSSGLEN) :: eid, mssg
 
-! Deallocate X if X is allocated. This is necessary. 
-if (allocated(x)) then
-    deallocate (x)
-end if
+! Unnecessary to write the following line in F2003 since X is INTENT(OUT):
+!!if (allocated(x)) deallocate (x)
 
 ! Allocate memory for X
 allocate (x(m, n), stat = alloc_status)
@@ -222,8 +227,10 @@ if (alloc_status /= 0) then
     call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
 end if
 
-! Set X = 0; otherwise, compilers may complain.
-x = 0.0_DP 
+! Use X; otherwise, compilers may complain.
+if (m*n >= 1) then
+    x(1, 1) = 0.0_DP  
+end if
 end subroutine alloc_rmatrix_cl_dp
 
 
@@ -287,14 +294,12 @@ call fmxVerifyClassShape(px, 'double', 'vector')
 n_mw = int(mxGetM(px)*mxGetN(px), kind(n_mw))
 n = int(n_mw, kind(n))
 
-! Allocate memory for X and X_DP
-call fmxAllocate(x, n)
-call fmxAllocate(x_dp, n)
-
 ! Copy input to X_DP
+call fmxAllocate(x_dp, n) ! NOT removable
 call mxCopyPtrToReal8(fmxGetDble(px), x_dp, n_mw)
 
 ! Convert X_DP to the type expected by the Fortran code
+call fmxAllocate(x, n) ! Removable in F2003
 x = real(x_dp, kind(x))
 ! Check whether the type conversion is proper
 if (kind(x) /= kind(x_dp)) then
@@ -305,9 +310,8 @@ if (kind(x) /= kind(x_dp)) then
     end if
 end if
 
-! Deallocate X_DP
+! Deallocate X_DP. Indeed, automatic deallocation would take place.
 deallocate(x_dp)
-
 end subroutine read_rvector_cl
 
 
@@ -338,14 +342,12 @@ n = int(mxGetN(px), kind(n))
 xsize = int(m*n, kind(xsize))
 
 
-! Allocate memory for X and X_DP
-call fmxAllocate(x, m, n)
-call fmxAllocate(x_dp, m, n)
-
 ! Copy input to X_DP
+call fmxAllocate(x_dp, m, n) ! NOT removable
 call mxCopyPtrToReal8(fmxGetDble(px), x_dp, xsize)
 
 ! Convert X_DP to the type expected by the Fortran code
+call fmxAllocate(x, m, n) ! Removable in F2003
 x = real(x_dp, kind(x))
 ! Check whether the type conversion is proper
 if (kind(x) /= kind(x_dp)) then
@@ -356,9 +358,8 @@ if (kind(x) /= kind(x_dp)) then
     end if
 end if
 
-! Deallocate X_DP
+! Deallocate X_DP. Indeed, automatic deallocation would take place.
 deallocate(x_dp)
-
 end subroutine read_rmatrix_cl
 
 

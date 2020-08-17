@@ -178,11 +178,11 @@ if (terminate) then
     ! Rearrange FHIST and XHIST so that they are in the chronological order.
     if (maxfhist >= 1 .and. maxfhist < nf) then
         khist = mod(nf - 1_IK, maxfhist) + 1_IK
-        fhist = (/ fhist(khist + 1 : maxfhist), fhist(1 : khist) /)
+        fhist = [fhist(khist + 1 : maxfhist), fhist(1 : khist)]
     end if
     if (maxxhist >= 1 .and. maxxhist < nf) then
         khist = mod(nf - 1_IK, maxxhist) + 1_IK
-        xhist = reshape((/ xhist(:, khist + 1 : maxxhist), xhist(:, 1 : khist) /), shape(xhist))
+        xhist = reshape([xhist(:, khist + 1 : maxxhist), xhist(:, 1 : khist)], shape(xhist))
     end if
     return
 end if
@@ -362,9 +362,9 @@ do tr = 1, maxtr
 
         ! DNORMSAVE constains the DNORM corresponding to the latest 3
         ! function evaluations with the current RHO.
-        dnormsave = (/ dnorm, dnormsave(1 : size(dnormsave) - 1) /)
+        dnormsave = [dnorm, dnormsave(1 : size(dnormsave) - 1)]
         ! MODERR is the prediction errors of the latest 3 models.
-        moderrsave = (/ moderr, moderrsave(1 : size(moderrsave) - 1) /)
+        moderrsave = [moderr, moderrsave(1 : size(moderrsave) - 1)]
     end if
 
     ! The geometry of XPT probably needs improvement if
@@ -531,9 +531,9 @@ do tr = 1, maxtr
         dnorm = min(delbar, sqrt(inprod(d, d)))
         ! In theory, DNORM = DELBAR in this case.
         !--------------------------------------------------------------!
-        dnormsave = (/ dnorm, dnormsave(1 : size(dnormsave) - 1) /)
+        dnormsave = [dnorm, dnormsave(1 : size(dnormsave) - 1)]
         ! MODERR is the prediction errors of the latest 3 models.
-        moderrsave = (/ moderr, moderrsave(1 : size(moderrsave) - 1) /)
+        moderrsave = [moderr, moderrsave(1 : size(moderrsave) - 1)]
     end if  ! The procedure of improving geometry ends.
 
 end do
@@ -574,11 +574,11 @@ end if
 ! Rearrange FHIST and XHIST so that they are in the chronological order.
 if (maxfhist >= 1 .and. maxfhist < nf) then
     khist = mod(nf - 1_IK, maxfhist) + 1_IK
-    fhist = (/ fhist(khist + 1 : maxfhist), fhist(1 : khist) /)
+    fhist = [fhist(khist + 1 : maxfhist), fhist(1 : khist)]
 end if
 if (maxxhist >= 1 .and. maxxhist < nf) then
     khist = mod(nf - 1_IK, maxxhist) + 1_IK
-    xhist = reshape((/ xhist(:, khist + 1 : maxxhist), xhist(:, 1 : khist) /), shape(xhist))
+    xhist = reshape([xhist(:, khist + 1 : maxxhist), xhist(:, 1 : khist)], shape(xhist))
     ! The above combination of SHAPE and RESHAPE fulfills our desire 
     ! thanks to the COLUMN-MAJOR order of Fortran arrays.
 end if

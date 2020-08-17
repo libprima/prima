@@ -106,7 +106,7 @@ call fmxWriteMPtr(fhist(1 : min(int(nf), size(fhist))), poutput(6), 'row')
 !    0 < SIZE(XHIST, 2) < MAXHIST or 0 < SIZE(FHIST) < MAXHIST
 !    due to the memory limit in the Fortran code.
 
-! Free memory
+! Free memory. Indeed, automatic deallocation would take place.
 deallocate(x) ! Allocated by fmxReadMPtr.
 deallocate(xhist)
 deallocate(fhist)

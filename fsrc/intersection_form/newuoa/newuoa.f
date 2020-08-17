@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 16-Aug-2020.
+! on 18-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -394,8 +394,9 @@
           info = info_c
       end if
 
-! Copy XHIST_C to XHIST and FHIST_C to FHIST if needed.
+! Copy XHIST_C to XHIST if needed.
       if (present(xhist)) then
+! The SAFEALLOC line is removable in F2003.
           call safealloc(xhist, n, min(nf_c, maxxhist))
           xhist = xhist_c(:, 1 : min(nf_c, maxxhist))
 ! N.B.:
@@ -413,8 +414,13 @@
 ! avoid allocating two copies of memory for XHIST unless we declare
 ! it to be a POINTER instead of ALLOCATABLE.
       end if
+! F2003 automatically deallocate local ALLOCATABLE variables at exit, yet
+! we prefer to deallocate them immediately when they finish their job.
       deallocate(xhist_c)
+
+! Copy FHIST_C to FHIST if needed.
       if (present(fhist)) then
+! The SAFEALLOC line is removable in F2003.
           call safealloc(fhist, min(nf_c, maxfhist))
           fhist = fhist_c(1 : min(nf_c, maxfhist))
 ! The same as XHIST, we must cap FHIST at min(NF_C, MAXFHIST).

@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 16-Aug-2020.
+! on 18-Aug-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -125,7 +125,7 @@
 !    0 < SIZE(XHIST, 2) < MAXHIST or 0 < SIZE(FHIST) < MAXHIST
 !    due to the memory limit in the Fortran code.
 
-! Free memory
+! Free memory. Indeed, automatic deallocation would take place.
       deallocate(x) ! Allocated by fmxReadMPtr.
       deallocate(xhist)
       deallocate(fhist)
