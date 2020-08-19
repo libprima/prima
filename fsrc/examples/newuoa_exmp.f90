@@ -14,7 +14,6 @@ contains
 
     subroutine calfun (x, f)
     ! The Chebyquad test problem (Fletcher, 1965) 
-    
     implicit none
     
     real(kind(0.0D0)), intent(in) :: x(:)
@@ -81,11 +80,11 @@ do n = 2, 10, 2
 
     rhobeg = 0.2D0*x(1)
 
-    print '(/1X, 1A, I2)', 'Results with N = ', n
+    print '(/1A, I2)', 'Result with N = ', n
 
     ! The following line illustrates how to call NEWUOA. 
     !------------------------------------------------------------------!
-    call newuoa(calfun, x, f, rhobeg = rhobeg, iprint = 3)
+    call newuoa(calfun, x, f, rhobeg = rhobeg, iprint = 2)
     !------------------------------------------------------------------!
     ! In additon to the required arguments CALFUN, X, and F, the above
     ! illustration specifies also RHOBEG and IPRINT, which are optional.
