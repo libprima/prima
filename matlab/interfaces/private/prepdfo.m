@@ -799,6 +799,7 @@ rhobeg = 1; % The default rhobeg and rhoend will be revised if solver = 'bobyqan
 rhoend = 1e-6;
 ftarget = -inf;
 classical = false; % Call the classical Powell code? Classical mode recommended only for research purpose  
+fortran = true; % Call the Fortran code?
 scale = false; % Scale the problem according to bounds? Scale only if the bounds reflect well the scale of the problem
 scale = (scale && max(ub-lb)<inf); % ! NEVER remove this ! Scale only if all variables are with finite lower and upper bounds
 honour_x0 = false; % Respect the user-defined x0? Needed by BOBYQA
@@ -1165,6 +1166,29 @@ if options.classical
     warnings = [warnings, wmessage]; 
 end
 
+% Validate options.fortran
+validated = false;
+if isfield(options, 'fortran')
+    if ~islogicalscalar(options.fortran)
+        wid = sprintf('%s:InvalidFortranFlag', invoker);
+        wmessage = sprintf('%s: invalid fortran flag; it should be true(1) or false(0); it is set to %s.', invoker, mat2str(fortran));
+        warning(wid, '%s', wmessage);
+        warnings = [warnings, wmessage]; 
+    elseif ~options.fortran && options.classical
+        wid = sprintf('%s:FortranContradictClassical', invoker);
+        wmessage = sprintf('%s: fortran = false but classical = true; fortran is reset to true.', invoker);
+        options.fortran = false; 
+        warning(wid, '%s', wmessage);
+        warnings = [warnings, wmessage]; 
+        validated = true;
+    else
+        validated = true;
+    end
+end
+if ~validated % options.fortran has not got a validated value yet
+    options.fortran = fortran;
+end 
+
 % Validate options.honour_x0
 validated = false;
 if isfield(options, 'honour_x0')
@@ -1184,7 +1208,7 @@ options.honour_x0 = logical(options.honour_x0);
 
 % Validate options.quiet.
 validated = false;
-% Record user's instruction in the following two values; needed for iprint
+% Record user's instruction in the following value; needed for iprint
 user_says_quiet = false;
 if isfield(options, 'quiet')
     if ~islogicalscalar(options.quiet)
@@ -1210,17 +1234,11 @@ if isfield(options, 'iprint')
         wmessage = sprintf('%s: invalid iprint; it should be 0, 1, -1, 2, -2, 3, or -3; it is set to %d.', invoker, iprint);
         warning(wid, '%s', wmessage);
         warnings = [warnings, wmessage]; 
-    elseif options.iprint < 0 && options.classical
-        % iprint = -1, -2, or -3 is not is not supported in the classical 
-        % mode. We set iprint to 0 (if user_says_quiet) or -iprint.
+    elseif options.iprint ~= 0 && options.classical
+        % iprint ~= 0 is not supported in the classical mode. 
         wid = sprintf('%s:IprintContradictClassical', invoker);
-        if user_says_quiet
-            wmessage = sprintf('%s: iprint = %d is not supported by the classical mode; it is reset to 0.', invoker, options.iprint);
-            options.iprint = 0; 
-        else
-            wmessage = sprintf('%s: iprint = %d is not supported by the classical mode; it is reset to %d.', invoker, options.iprint, -options.iprint);
-            options.iprint = -options.iprint;
-        end
+        wmessage = sprintf('%s: iprint = %d is not supported by the classical mode; it is reset to 0.', invoker, options.iprint);
+        options.iprint = 0; 
         warning(wid, '%s', wmessage);
         warnings = [warnings, wmessage]; 
         validated = true;
@@ -1237,11 +1255,20 @@ if isfield(options, 'iprint')
             % In the non-classical mode, we set options.iprint = -options.iprint, 
             % meaning that the output will not be displayed on standard output 
             % but recorded in a text file SOLVER_output.txt, where SOLVER will
-            % be replaced by the solver name. We do not raise a warning since 
-            % this is explained in the help information and since the user says 
-            % quiet!
+            % be replaced by the solver name. We do not raise a warning since it 
+            % is explained in the help information and since the user says quiet!
             options.iprint = -options.iprint;
+            validated = true;
         end
+    elseif options.iprint > 0 && options.fortran
+        % iprint > 0 is not supported when calling the Fortran code.
+        % This is because of I/O confliction between Fortran and MATLAB.
+        wid = sprintf('%s:IprintContradictFortran', invoker);
+        wmessage = sprintf('%s: iprint = %d but fortran = true; iprint is reset to %d and the output will be recorded in a .txt file.', invoker, options.iprint, -options.iprint);
+        options.iprint = -options.iprint;
+        warning(wid, '%s', wmessage);
+        warnings = [warnings, wmessage]; 
+        validated = true;
     else
         validated = true;
     end

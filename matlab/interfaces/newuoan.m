@@ -69,7 +69,9 @@ function [x, fx, exitflag, output] = newuoan(varargin)
 %   *** npt: number of interpolation points for constructing a model
 %       default: 2*length(x0)+1
 %   *** classical: a boolean value indicating whether to call the classical 
-%       Powell code or not; default: false
+%       version of Powell's Fortran code or not; default: false
+%   *** fortran: a boolean value indicating whether to call Fortran code or 
+%       not; default: true
 %   *** eta1, eta2, gamma1, gamma2 (only if classical = false)
 %       eta1, eta2, gamma1, and gamma2 are parameters in the updating scheme
 %       of the trust region radius. Roughly speaking, the trust region radius
@@ -95,6 +97,10 @@ function [x, fx, exitflag, output] = newuoan(varargin)
 %          created if it does not exist; the new output will be appended to 
 %          the end of this file if it already exists. Note that iprint = -3 
 %          can be costly in terms of time and space. 
+%       Note:
+%       When classical = true, only iprint = 0 is supported;
+%       When fortran = true, only iprint = 0, -1, -2, -3 are supported
+%       (due to I/O confliction between Fortran and MATLAB);
 %       When quiet = true (see below), setting iprint = 1, 2, or 3 is
 %       the same as setting it to -1, -2, or -3, respectively.
 %   *** quiet: a boolean value indicating whether to keep quiet or not;

@@ -117,6 +117,7 @@ for ip = 1 : length(plist)
         test_options.maxfun = max(ceil(20*n*(1+rand)), n+3);
         test_options.ftarget = -inf;
         test_options.classical = (randn < -1.2);
+        test_options.fortran = (rand > 0.5);
         test_options.output_xhist = (rand > 0.5);
         test_options.maxhist = ceil(randn*1.5*test_options.maxfun);
         test_options.iprint = floor(3*randn);
@@ -159,6 +160,10 @@ for ip = 1 : length(plist)
             exitflag1 = 3;
             %display('exitflag1 changed to 3.')
         end
+        if output2.funcCount == test_options.maxfun && (exitflag2 == 0 || exitflag2 == 2) && exitflag1 == 3
+            exitflag2 = 3;
+            %display('exitflag2 changed to 3.')
+        end    
         if iseq(x1, fx1, exitflag1, output1, x2, fx2, exitflag2, output2, prec)
             if n > 30
                 fprintf('Succeed\n');
