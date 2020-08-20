@@ -12,7 +12,7 @@ FC = gfortran -Wall -Wextra -fcheck=all -pedantic
 #FC = nagfor -C 
 #FC = sunf95 -w3 -u -U
 #FC = af95 -m1
-#FC = nvfortran -Minform=warn
+#FC = pgfortran -Minform=warn
 FFLAGS = -g 
 DEPS = ../common/*.h 
 COMMON = ../common
