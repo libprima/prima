@@ -5,7 +5,7 @@ GFORT=gfortran -c -g -Wall -Wextra -Wconversion -Wuninitialized -Wmaybe-uninitia
 IFORT=ifort -c -g -warn all -check all  -fpe0 -debug extended -fimplicit-none #-names as_is
 G95=g95 -c -g -Wall -Wextra -fbounds-check -fimplicit-none 
 NFORT=nagfor -c -g -C -Warn=allocation -Warn=constant_coindexing -Warn=reallocation -Warn=subnormal -colour=error:red,warn:magenta,info:yellow
-PFORT=nvfortran  -c -g -Minform=warn 
+PFORT=pgfortran  -c -g -Minform=warn 
 ABSOFT=af95  -c -g -m1 -en
 SFORT=sunf95  -c -g -w3 -u -ansi -U
 FLANG=flang -c -Wall -Wextra -Mstandard 
