@@ -8,6 +8,10 @@ __pycache__/
 *.so
 *.pyd
 *.mod
+NEWUOA_output.txt
+*_output.txt
+*.output
+test_data/
 
 # Compiled MEX files
 *.mex*
