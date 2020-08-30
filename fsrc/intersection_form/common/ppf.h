@@ -42,7 +42,7 @@ depend on the compiler, for instance, __USE_IEEE_ARITHMETIC__.
 #if defined __FORTRAN_STANDARD__
 #undef __FORTRAN_STANDARD__
 #endif
-#define __FORTRAN_STANDARD__ 2008 
+#define __FORTRAN_STANDARD__ 2003 
 /*************************************************************************/
 
 
