@@ -1,0 +1,3 @@
+language: matlab
+matlab: R2020a
+script: matlab -batch 'setup newuoan'
