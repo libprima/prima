@@ -33,7 +33,7 @@ depend on the compiler, for instance, __USE_IEEE_ARITHMETIC__.
 #if defined __DEBUGGING__
 #undef __DEBUGGING__
 #endif
-#define __DEBUGGING__ 0 
+#define __DEBUGGING__ 1 
 /*************************************************************************/
 
 
@@ -42,7 +42,7 @@ depend on the compiler, for instance, __USE_IEEE_ARITHMETIC__.
 #if defined __FORTRAN_STANDARD__
 #undef __FORTRAN_STANDARD__
 #endif
-#define __FORTRAN_STANDARD__ 2003 
+#define __FORTRAN_STANDARD__ 2008 
 /*************************************************************************/
 
 
