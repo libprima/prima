@@ -1,4 +1,4 @@
-language: c
+language: fortran 
 
 arch:
   - amd64
