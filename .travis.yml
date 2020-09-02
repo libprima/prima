@@ -1,5 +1,15 @@
-language: Fortran
-os: osx 
-osx_image: xcode9
-before_install:
+language: c
+
+arch:
+  - amd64
+  - arm64
+  - ppc64le
+  - s390x
+
+compiler:
+  - gcc
+  - gfortran
+
+
+install: skip
 script: cd fsrc/examples; make ; cd ../newuoa/; make gverify; make gverifym
