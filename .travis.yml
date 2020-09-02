@@ -10,6 +10,8 @@ compiler:
   - gcc
   - gfortran
 
+before_install:
+  - sudo apt-get -y install gfortran
 
 install: skip
 script: cd fsrc/examples; make ; cd ../newuoa/; make gverify; make gverifym
