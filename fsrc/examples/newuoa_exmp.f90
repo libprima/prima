@@ -84,7 +84,8 @@ do n = 2, 10, 2
 
     ! The following line illustrates how to call NEWUOA. 
     !------------------------------------------------------------------!
-    call newuoa(calfun, x, f, rhobeg = rhobeg, iprint = 2)
+!    call newuoa(calfun, x, f, rhobeg = rhobeg, iprint = 2)
+    call newuoa(calfun, x, f, rhobeg = rhobeg)
     !------------------------------------------------------------------!
     ! In additon to the required arguments CALFUN, X, and F, the above
     ! illustration specifies also RHOBEG and IPRINT, which are optional.
