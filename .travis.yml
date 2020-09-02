@@ -1,4 +1,5 @@
 language: Fortran
 os: osx 
+osx_image: xcode7.3
 before_install:
 script: cd fsrc/examples; make ; cd ../newuoa/; make gverify; make gverifym
