@@ -1,5 +1,5 @@
 language: Fortran
-dist: trusty 
+os: osx 
 before_install:
-  - sudo apt-get -y install gfortran
-script: cd fsrc/newuoa/; make gverify; make gverifym
+  - brew install gcc 
+script: cd fsrc/examples; make ; cd ../newuoa/; make gverify; make gverifym
