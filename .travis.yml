@@ -1,5 +1,5 @@
 language: Fortran
-dist: precise
+dist: trusty 
 before_install:
   - sudo apt-get -y install gfortran
 script: cd fsrc/newuoa/; make gverify; make gverifym
