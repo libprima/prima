@@ -1,5 +1,5 @@
 language: Fortran
 os: osx 
-osx_image: xcode8
+osx_image: xcode9
 before_install:
 script: cd fsrc/examples; make ; cd ../newuoa/; make gverify; make gverifym
