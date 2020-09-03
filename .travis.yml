@@ -1,17 +1,2 @@
-language: fortran 
-
-arch:
-  - amd64
-  - arm64
-  - ppc64le
-  - s390x
-
-compiler:
-  - gcc
-  - gfortran
-
-before_install:
-  - sudo apt-get -y install gfortran
-
-install: skip
-script: cd fsrc/examples; make ; cd ../newuoa/; make gverify; make gverifym
+language: matlab
+script: matlab -batch 'disp("Hello World")'
