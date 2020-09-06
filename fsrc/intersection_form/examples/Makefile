@@ -7,7 +7,7 @@
 # depends on the .o files (and the corresponding .mod files) preceding it.
 
 FC = gfortran -Wall -Wextra -fcheck=all -pedantic
-#FC = ifort -warn all -check all
+FC = ifort -warn all -check all
 #FC = flang -Wall -Wextra -Mstandard 
 #FC = nagfor -C 
 #FC = sunf95 -w3 -u -U
