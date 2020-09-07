@@ -117,7 +117,7 @@ for ip = 1 : length(plist)
         test_options.chkfunval = true;
         test_options.rhobeg = 1 + 0.5*(2*rand-1);
         test_options.rhoend = 1e-3*(1 + 0.5*(2*rand-1));
-        test_options.npt = max(min(ceil(10*rand*n + 2), (n+2)*(n+1)/2), n+2);
+        test_options.npt = max(min(ceil(10*rand*n + 2), (n+2)*(n+1)/2), n+2)
         test_options.maxfun = max(ceil(20*n*(1+rand)), n+3);
         test_options.ftarget = -inf;
         test_options.classical = (randn < -1.2);
@@ -198,7 +198,6 @@ eq = true;
 if ~isempty(setdiff(fieldnames(output), [fieldnames(oo); 'fhist'; 'xhist'])) || ~isempty(setdiff(fieldnames(oo), [fieldnames(output); 'fhist'; 'xhist']))
     eq = false;
 end
-keyboard
 
 if ~isfield(output,'constrviolation')
     output.constrviolation = 0;
@@ -217,7 +216,6 @@ end
 if (norm(xx-x)/(1+norm(x)) > prec || abs(ff-f)/(1+abs(f)) > prec || abs(oo.constrviolation-output.constrviolation)/(1+abs(output.constrviolation)) > prec)
     eq = false;
 end
-keyboard
 
 if isfield(output, 'fhist')
     output.fhist = output.fhist(:);
@@ -236,17 +234,14 @@ oo.fhist = oo.fhist(end - nhist + 1: end);
 if norm(output.fhist(1:nhist)-oo.fhist(1:nhist))/(1+norm(output.fhist(1:nhist))) > prec
     eq = false;
 end
-keyboard
 
 if norm(output.chist(1:nhist)-oo.chist(1:nhist))/(1+norm(output.chist(1:nhist))) > prec
     eq = false;
 end
-keyboard
 
 if (prec == 0 && (exitflag ~= ee|| oo.funcCount ~= output.funcCount))
     eq = false;
 end
-keyboard
 
 diff = max([abs(ff-f)/(1+abs(f)), norm(xx-x)/(1+norm(x)), abs(oo.constrviolation-output.constrviolation)/(1+abs(output.constrviolation))]) 
 
