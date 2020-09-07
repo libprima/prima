@@ -1,0 +1,38 @@
+
+New RHO =  1.4072D-01      Number of function evaluations =      93
+Least function value =   1.721868265281531D+06      The corresponding X is:
+   1.001485D+03   9.967402D+02   3.995885D+02   3.579107D+01   9.997095D-01
+   4.522558D-01  -7.833347D-02
+
+New RHO =  1.3991D-02      Number of function evaluations =     140
+Least function value =   1.072810908970118D+06      The corresponding X is:
+   1.001337D+03   9.966379D+02   3.994625D+02   3.588165D+01   1.033695D+00
+   3.370012D-01  -1.554917D-01
+
+Return from NEWUOA because the objective function has been evaluated MAXFUN times.
+At the return from NEWUOA      Number of function evaluations =     233
+Least function value =   1.038340946685248D+06      The corresponding X is:
+   1.001351D+03   9.966567D+02   3.994444D+02   3.599304D+01   9.581321D-01
+   3.076404D-01  -1.232295D-01
+
+Return from NEWUOA because the trust region radius reaches its lower bound.
+At the return from NEWUOA      Number of function evaluations =     111
+Least function value =   9.857673491565911D+05      The corresponding X is:
+   1.000783D+03   1.000329D+03   3.986729D+02   4.051777D+01   9.411635D-01
+   2.929718D-01  -1.075964D-01
+
+New RHO =  1.4975D-01      Number of function evaluations =      41
+Least function value =   7.538598498034227D+06      The corresponding X is:
+   1.000251D+03   9.996015D+02   3.997947D+02   4.017410D+01  -1.598095D-01
+   8.544122D-01   5.977634D-01
+
+New RHO =  1.1414D-02      Number of function evaluations =     162
+Least function value =   2.901014220954117D+06      The corresponding X is:
+   1.000158D+03   9.994452D+02   3.998906D+02   3.988792D+01   2.155112D-01
+   1.604451D-01   2.070943D-01
+
+Return from NEWUOA because the objective function has been evaluated MAXFUN times.
+At the return from NEWUOA      Number of function evaluations =     191
+Least function value =   2.901014220954117D+06      The corresponding X is:
+   1.000158D+03   9.994452D+02   3.998906D+02   3.988792D+01   2.155112D-01
+   1.604451D-01   2.070943D-01
