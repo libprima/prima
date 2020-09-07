@@ -1,0 +1,330 @@
+
+Return from NEWUOA because the trust region radius reaches its lower bound.
+At the return from NEWUOA      Number of function evaluations =      24
+Least function value =   1.313060307463464D-13      The corresponding X is:
+   2.000000D+00  -9.999996D-01
+
+Return from NEWUOA because the trust region radius reaches its lower bound.
+At the return from NEWUOA      Number of function evaluations =      27
+Least function value =   5.055144336887809D-13      The corresponding X is:
+   2.000000D+00  -1.000001D+00
+
+New RHO =  1.2839D-01      Number of function evaluations =       8
+Least function value =   4.908961385339008D-01      The corresponding X is:
+   2.523738D+00  -7.523382D-01
+
+New RHO =  1.3572D-02      Number of function evaluations =      14
+Least function value =   7.700528053246997D-05      The corresponding X is:
+   2.004343D+00  -9.937143D-01
+
+New RHO =  1.4346D-03      Number of function evaluations =      17
+Least function value =   5.637126075333768D-05      The corresponding X is:
+   1.995533D+00  -1.004037D+00
+
+Return from NEWUOA because the trust region radius reaches its lower bound.
+At the return from NEWUOA      Number of function evaluations =      23
+Least function value =   4.776523766884523D-12      The corresponding X is:
+   2.000001D+00  -9.999981D-01
+
+New RHO =  9.5723D-02      Number of function evaluations =       9
+Least function value =   3.727435787631528D-01      The corresponding X is:
+   1.568768D+00  -1.002192D+00
+
+New RHO =  7.9302D-03      Number of function evaluations =      16
+Least function value =   8.566764316982886D-05      The corresponding X is:
+   1.994941D+00  -9.941025D-01
+
+New RHO =  6.5697D-04      Number of function evaluations =      21
+Least function value =   5.132517009661959D-06      The corresponding X is:
+   2.001595D+00  -1.000208D+00
+
+Return from NEWUOA because the trust region radius reaches its lower bound.
+At the return from NEWUOA      Number of function evaluations =      26
+Least function value =   9.320433669036960D-13      The corresponding X is:
+   2.000000D+00  -9.999993D-01
+
+Return from NEWUOA because the trust region radius reaches its lower bound.
+At the return from NEWUOA      Number of function evaluations =      21
+Least function value =   8.017361692201785D-13      The corresponding X is:
+   2.000000D+00  -9.999991D-01
+
+New RHO =  1.0350D-01      Number of function evaluations =       8
+Least function value =   6.078178532318079D-01      The corresponding X is:
+   1.813124D+00  -2.444818D-01
+
+New RHO =  8.2550D-03      Number of function evaluations =      14
+Least function value =   1.826713786524068D-04      The corresponding X is:
+   1.992801D+00  -9.910589D-01
+
+New RHO =  6.5838D-04      Number of function evaluations =      19
+Least function value =   2.289893942125985D-06      The corresponding X is:
+   2.000772D+00  -9.989516D-01
+
+Return from NEWUOA because the trust region radius reaches its lower bound.
+At the return from NEWUOA      Number of function evaluations =      24
+Least function value =   1.474974082145115D-09      The corresponding X is:
+   2.000006D+00  -9.999625D-01
+
+New RHO =  1.4299D-01      Number of function evaluations =       8
+Least function value =   4.339769135562268D-02      The corresponding X is:
+   1.953149D+00  -1.195109D+00
+
+New RHO =  1.0773D-02      Number of function evaluations =      14
+Least function value =   1.018155688431038D-03      The corresponding X is:
+   2.013449D+00  -9.742010D-01
+
+New RHO =  8.1165D-04      Number of function evaluations =      19
+Least function value =   2.482084709087030D-04      The corresponding X is:
+   2.010533D+00  -1.005020D+00
+
+Return from NEWUOA because the trust region radius reaches its lower bound.
+At the return from NEWUOA      Number of function evaluations =      28
+Least function value =   2.955928115150547D-08      The corresponding X is:
+   2.000061D+00  -1.000149D+00
+
+Return from NEWUOA because the trust region radius reaches its lower bound.
+At the return from NEWUOA      Number of function evaluations =      26
+Least function value =   1.088912291821733D-11      The corresponding X is:
+   2.000001D+00  -9.999968D-01
+
+New RHO =  1.2487D-01      Number of function evaluations =       9
+Least function value =   2.203966877554155D-01      The corresponding X is:
+   2.219534D+00  -1.301035D+00
+
+New RHO =  1.1675D-02      Number of function evaluations =      16
+Least function value =   4.222240617645834D-04      The corresponding X is:
+   2.000785D+00  -9.794813D-01
+
+New RHO =  1.0915D-03      Number of function evaluations =      20
+Least function value =   4.160535949082870D-06      The corresponding X is:
+   1.999381D+00  -9.981570D-01
+
+Return from NEWUOA because the trust region radius reaches its lower bound.
+At the return from NEWUOA      Number of function evaluations =      25
+Least function value =   1.775752605741534D-11      The corresponding X is:
+   1.999999D+00  -9.999962D-01
+
+New RHO =  6.1802D-02      Number of function evaluations =      11
+Least function value =   1.547365600778290D-01      The corresponding X is:
+   2.218050D+00  -7.117181D-01
+
+New RHO =  7.4274D-03      Number of function evaluations =      19
+Least function value =   2.885672586173890D-05      The corresponding X is:
+   1.999746D+00  -9.946401D-01
+
+New RHO =  8.9263D-04      Number of function evaluations =      23
+Least function value =   1.073508253524655D-05      The corresponding X is:
+   1.998164D+00  -1.001996D+00
+
+Return from NEWUOA because the trust region radius reaches its lower bound.
+At the return from NEWUOA      Number of function evaluations =      29
+Least function value =   4.583306981693632D-12      The corresponding X is:
+   2.000000D+00  -9.999979D-01
+
+New RHO =  1.1854D-01      Number of function evaluations =       8
+Least function value =   1.037508013268935D-01      The corresponding X is:
+   1.964244D+00  -6.808139D-01
+
+New RHO =  1.3170D-02      Number of function evaluations =      15
+Least function value =   9.060943672339387D-06      The corresponding X is:
+   2.000809D+00  -9.972153D-01
+
+New RHO =  1.4632D-03      Number of function evaluations =      18
+Least function value =   9.060943672339387D-06      The corresponding X is:
+   2.000809D+00  -9.972153D-01
+
+Return from NEWUOA because the trust region radius reaches its lower bound.
+At the return from NEWUOA      Number of function evaluations =      23
+Least function value =   1.688077817698338D-11      The corresponding X is:
+   2.000001D+00  -9.999964D-01
+
+Return from NEWUOA because the trust region radius reaches its lower bound.
+At the return from NEWUOA      Number of function evaluations =      25
+Least function value =   2.787257265577338D-12      The corresponding X is:
+   2.000001D+00  -9.999985D-01
+
+Function number      1    F =   7.8734608687D+00    The corresponding X is:
+   1.059318D+00   1.329203D+00
+
+Function number      2    F =   5.9738232656D+00    The corresponding X is:
+   2.445302D+00   1.329203D+00
+
+Function number      3    F =   2.1211056214D+01    The corresponding X is:
+   1.059318D+00   2.715187D+00
+
+Function number      4    F =   2.0402800023D+01    The corresponding X is:
+  -3.266654D-01   1.329203D+00
+
+Function number      5    F =   1.7773972377D+00    The corresponding X is:
+   1.059318D+00  -5.678076D-02
+
+Function number      6    F =   1.0885959632D+00    The corresponding X is:
+   2.445302D+00  -5.678076D-02
+
+Function number      7    F =   3.9800902391D-01    The corresponding X is:
+   1.802307D+00  -4.063042D-01
+
+
+New RHO =  1.3860D-01      Number of function evaluations =       7
+Least function value =   3.980090239052281D-01      The corresponding X is:
+   1.802307D+00  -4.063042D-01
+
+Function number      8    F =   8.9647600508D-01    The corresponding X is:
+   1.840994D+00  -6.668303D-02
+
+Function number      9    F =   2.7347276715D-01    The corresponding X is:
+   1.916093D+00  -4.854387D-01
+
+Function number     10    F =   1.4798174744D-01    The corresponding X is:
+   1.949781D+00  -6.198806D-01
+
+Function number     11    F =   1.4176925133D-02    The corresponding X is:
+   2.026399D+00  -8.862784D-01
+
+Function number     12    F =   6.6684655956D-03    The corresponding X is:
+   2.056762D+00  -9.814822D-01
+
+Function number     13    F =   3.3520858449D-03    The corresponding X is:
+   1.959044D+00  -9.986039D-01
+
+Function number     14    F =   6.1660839546D-02    The corresponding X is:
+   1.823073D+00  -9.717450D-01
+
+Function number     15    F =   4.4770017172D-02    The corresponding X is:
+   1.880269D+00  -1.112639D+00
+
+Function number     16    F =   1.5906780875D-02    The corresponding X is:
+   2.026427D+00  -1.119720D+00
+
+
+New RHO =  1.2944D-02      Number of function evaluations =      16
+Least function value =   3.352085844949354D-03      The corresponding X is:
+   1.959044D+00  -9.986039D-01
+
+Function number     17    F =   1.1183004707D-05    The corresponding X is:
+   2.000306D+00  -9.966839D-01
+
+Function number     18    F =   1.1685536191D-04    The corresponding X is:
+   1.995476D+00  -1.008693D+00
+
+Function number     19    F =   2.1589994697D-04    The corresponding X is:
+   2.009529D+00  -1.005765D+00
+
+Function number     20    F =   2.6498263790D-04    The corresponding X is:
+   1.998315D+00  -9.838943D-01
+
+Function number     21    F =   3.5114128897D-04    The corresponding X is:
+   2.010935D+00  -9.892972D-01
+
+
+New RHO =  1.2088D-03      Number of function evaluations =      21
+Least function value =   1.118300470672022D-05      The corresponding X is:
+   2.000306D+00  -9.966839D-01
+
+Function number     22    F =   1.2140338255D-09    The corresponding X is:
+   2.000003D+00  -9.999653D-01
+
+Function number     23    F =   2.8697123640D-06    The corresponding X is:
+   1.998818D+00  -9.997250D-01
+
+Function number     24    F =   2.6317608193D-06    The corresponding X is:
+   2.001061D+00  -9.993808D-01
+
+Function number     25    F =   2.0637156711D-06    The corresponding X is:
+   2.000811D+00  -1.000864D+00
+
+Function number     26    F =   8.8508573822D-12    The corresponding X is:
+   2.000000D+00  -9.999971D-01
+
+
+Return from NEWUOA because the trust region radius reaches its lower bound.
+At the return from NEWUOA      Number of function evaluations =      26
+Least function value =   8.850857382247673D-12      The corresponding X is:
+   2.000000D+00  -9.999971D-01
+
+Function number      1    F =   3.2597020413D+00    The corresponding X is:
+   1.353176D+00   6.348407D-01
+
+Function number      2    F =   2.7196818045D+00    The corresponding X is:
+   2.182984D+00   6.348407D-01
+
+Function number      3    F =   7.3903846607D+00    The corresponding X is:
+   1.353176D+00   1.464649D+00
+
+Function number      4    F =   5.7319137496D+00    The corresponding X is:
+   5.233680D-01   6.348407D-01
+
+Function number      5    F =   1.0823618822D+00    The corresponding X is:
+   1.353176D+00  -1.949676D-01
+
+Function number      6    F =   8.5025165660D-02    The corresponding X is:
+   1.997260D+00  -7.084286D-01
+
+Function number      7    F =   1.1466016923D+00    The corresponding X is:
+   2.822432D+00  -7.960244D-01
+
+
+New RHO =  8.2981D-02      Number of function evaluations =       7
+Least function value =   8.502516565996070D-02      The corresponding X is:
+   1.997260D+00  -7.084286D-01
+
+Function number      8    F =   4.4988720919D-02    The corresponding X is:
+   2.017065D+00  -7.890114D-01
+
+Function number      9    F =   1.9812512205D-02    The corresponding X is:
+   1.978064D+00  -8.622555D-01
+
+Function number     10    F =   3.9171880170D-03    The corresponding X is:
+   2.009876D+00  -9.388962D-01
+
+Function number     11    F =   1.6370417673D-03    The corresponding X is:
+   2.028533D+00  -9.961220D-01
+
+Function number     12    F =   2.4465546924D-02    The corresponding X is:
+   2.110934D+00  -9.863290D-01
+
+Function number     13    F =   5.7954112393D-03    The corresponding X is:
+   1.949817D+00  -9.698619D-01
+
+
+New RHO =  7.3979D-03      Number of function evaluations =      13
+Least function value =   1.637041767303480D-03      The corresponding X is:
+   2.028533D+00  -9.961220D-01
+
+Function number     14    F =   1.6656220783D-06    The corresponding X is:
+   1.999418D+00  -1.000993D+00
+
+Function number     15    F =   9.6067382059D-05    The corresponding X is:
+   1.995236D+00  -1.007096D+00
+
+Function number     16    F =   4.0638683303D-05    The corresponding X is:
+   2.000093D+00  -9.936265D-01
+
+Function number     17    F =   1.1122458940D-04    The corresponding X is:
+   1.992678D+00  -9.979423D-01
+
+
+New RHO =  6.5953D-04      Number of function evaluations =      17
+Least function value =   1.665622078305634D-06      The corresponding X is:
+   1.999418D+00  -1.000993D+00
+
+Function number     18    F =   1.2175719416D-09    The corresponding X is:
+   2.000019D+00  -1.000022D+00
+
+Function number     19    F =   9.1775235928D-07    The corresponding X is:
+   2.000673D+00  -1.000105D+00
+
+Function number     20    F =   7.6605970994D-07    The corresponding X is:
+   1.999397D+00  -9.998032D-01
+
+Function number     21    F =   4.2580144883D-07    The corresponding X is:
+   2.000123D+00  -9.993711D-01
+
+Function number     22    F =   1.6523583777D-12    The corresponding X is:
+   2.000000D+00  -1.000001D+00
+
+
+Return from NEWUOA because the trust region radius reaches its lower bound.
+At the return from NEWUOA      Number of function evaluations =      22
+Least function value =   1.652358377715130D-12      The corresponding X is:
+   2.000000D+00  -1.000001D+00
