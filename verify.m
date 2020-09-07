@@ -197,6 +197,7 @@ eq = true;
 if ~isempty(setdiff(fieldnames(output), [fieldnames(oo); 'fhist'; 'xhist'])) || ~isempty(setdiff(fieldnames(oo), [fieldnames(output); 'fhist'; 'xhist']))
     eq = false;
 end
+keyboard
 
 if ~isfield(output,'constrviolation')
     output.constrviolation = 0;
@@ -215,6 +216,7 @@ end
 if (norm(xx-x)/(1+norm(x)) > prec || abs(ff-f)/(1+abs(f)) > prec || abs(oo.constrviolation-output.constrviolation)/(1+abs(output.constrviolation)) > prec)
     eq = false;
 end
+keyboard
 
 if isfield(output, 'fhist')
     output.fhist = output.fhist(:);
@@ -233,15 +235,18 @@ oo.fhist = oo.fhist(end - nhist + 1: end);
 if norm(output.fhist(1:nhist)-oo.fhist(1:nhist))/(1+norm(output.fhist(1:nhist))) > prec
     eq = false;
 end
+keyboard
 
 if norm(output.chist(1:nhist)-oo.chist(1:nhist))/(1+norm(output.chist(1:nhist))) > prec
     eq = false;
 end
+keyboard
 
 if (prec == 0 && (exitflag ~= ee|| oo.funcCount ~= output.funcCount))
     eq = false;
 end
+keyboard
 
-diff = max([abs(ff-f)/(1+abs(f)), norm(xx-x)/(1+norm(x)), abs(oo.constrviolation-output.constrviolation)/(1+abs(output.constrviolation))]); 
+diff = max([abs(ff-f)/(1+abs(f)), norm(xx-x)/(1+norm(x)), abs(oo.constrviolation-output.constrviolation)/(1+abs(output.constrviolation))]) 
 
 return
