@@ -117,6 +117,7 @@ for ip = 1 : length(plist)
         test_options.chkfunval = true;
         test_options.rhobeg = 1 + 0.5*(2*rand-1);
         test_options.rhoend = 1e-3*(1 + 0.5*(2*rand-1));
+        keyboard
         test_options.npt = max(min(ceil(10*rand*n + 2), (n+2)*(n+1)/2), n+2)
         test_options.maxfun = max(ceil(20*n*(1+rand)), n+3);
         test_options.ftarget = -inf;
