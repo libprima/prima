@@ -42,32 +42,32 @@ if isfield(options, 'list')
     requirements.list = options.list;  % Only test problems in this list
 else
     requirements.list = {};  % No restriction
-    if (isfield(options, 'mindim'))
-        requirements.mindim = options.mindim;
-    else
-        requirements.mindim = 1;
-    end
-    if (isfield(options, 'maxdim'))
-        requirements.maxdim = options.maxdim;
-    else
-        requirements.maxdim = 20;
-    end
-    if (isfield(options, 'mincon'))
-        requirements.mincon = options.mincon;
-    else
-        requirements.mincon = 0;
-    end
-    if (isfield(options, 'maxcon'))
-        requirements.maxcon = options.maxcon;
-    else
-        requirements.maxcon = 100;
-    end
-    if (isfield(options, 'type'))
-        requirements.type = options.type;
-    else
-        requirements.type = 'u';
-    %    requirements.type = 'ubln';
-    end
+end
+if (isfield(options, 'mindim'))
+    requirements.mindim = options.mindim;
+else
+    requirements.mindim = 1;
+end
+if (isfield(options, 'maxdim'))
+    requirements.maxdim = options.maxdim;
+else
+    requirements.maxdim = 20;
+end
+if (isfield(options, 'mincon'))
+    requirements.mincon = options.mincon;
+else
+    requirements.mincon = 0;
+end
+if (isfield(options, 'maxcon'))
+    requirements.maxcon = options.maxcon;
+else
+    requirements.maxcon = 100;
+end
+if (isfield(options, 'type'))
+    requirements.type = options.type;
+else
+    requirements.type = 'u';
+%    requirements.type = 'ubln';
 end
 
 % Supress the following warning
@@ -80,7 +80,11 @@ cellfun(@(solver) warning('off', [solver, ':UnknownOption']), solvers);
 cellfun(@(solver) warning('off', [solver, ':InvalidMaxfun']), solvers);
 cellfun(@(solver) warning('off', [solver, ':ExtremeBarrier']), solvers);
 
-plist = secup(requirements);
+if isempty(requirements.list)
+    plist = secup(requirements);
+else
+    plist = requirements.list; % Use the list provided by the user
+end
 
 if ir < 0 
     minir = 0;
