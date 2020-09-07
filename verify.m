@@ -42,32 +42,32 @@ if isfield(options, 'list')
     requirements.list = options.list;  % Only test problems in this list
 else
     requirements.list = {};  % No restriction
-end
-if (isfield(options, 'mindim'))
-    requirements.mindim = options.mindim;
-else
-    requirements.mindim = 1;
-end
-if (isfield(options, 'maxdim'))
-    requirements.maxdim = options.maxdim;
-else
-    requirements.maxdim = 20;
-end
-if (isfield(options, 'mincon'))
-    requirements.mincon = options.mincon;
-else
-    requirements.mincon = 0;
-end
-if (isfield(options, 'maxcon'))
-    requirements.maxcon = options.maxcon;
-else
-    requirements.maxcon = 100;
-end
-if (isfield(options, 'type'))
-    requirements.type = options.type;
-else
-    requirements.type = 'u';
-%    requirements.type = 'ubln';
+    if (isfield(options, 'mindim'))
+        requirements.mindim = options.mindim;
+    else
+        requirements.mindim = 1;
+    end
+    if (isfield(options, 'maxdim'))
+        requirements.maxdim = options.maxdim;
+    else
+        requirements.maxdim = 20;
+    end
+    if (isfield(options, 'mincon'))
+        requirements.mincon = options.mincon;
+    else
+        requirements.mincon = 0;
+    end
+    if (isfield(options, 'maxcon'))
+        requirements.maxcon = options.maxcon;
+    else
+        requirements.maxcon = 100;
+    end
+    if (isfield(options, 'type'))
+        requirements.type = options.type;
+    else
+        requirements.type = 'u';
+    %    requirements.type = 'ubln';
+    end
 end
 
 % Supress the following warning
