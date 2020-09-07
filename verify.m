@@ -110,21 +110,20 @@ for ip = 1 : length(plist)
             fprintf('Run No. %3d: \t', ir);
         end
         % Some randomization
-        rng(ceil(1e6*abs(sin(1e6*(sum(double(pname))*n*28*ir*nr*requirements.mindim*requirements.maxdim)))));
+        rng(ceil(1e6*abs(sin(1e6*(sum(double(pname))*n*ip*ir*nr*requirements.mindim*requirements.maxdim)))));
         prob.x0 = x0 + 0.5*randn(size(x0));
         test_options = struct();
         test_options.debug = true;
         test_options.chkfunval = true;
         test_options.rhobeg = 1 + 0.5*(2*rand-1);
         test_options.rhoend = 1e-3*(1 + 0.5*(2*rand-1));
-        test_options.npt = max(min(ceil(10*rand*n + 2), (n+2)*(n+1)/2), n+2)
+        test_options.npt = max(min(ceil(10*rand*n + 2), (n+2)*(n+1)/2), n+2);
         test_options.maxfun = max(ceil(20*n*(1+rand)), n+3);
         test_options.ftarget = -inf;
         test_options.classical = (randn < -1.2);
         test_options.fortran = (rand > 0.5);
         test_options.output_xhist = (rand > 0.5);
-        %test_options.maxhist = ceil(randn*1.5*test_options.maxfun);
-        test_options.maxhist=test_options.maxfun;
+        test_options.maxhist = ceil(randn*1.5*test_options.maxfun);
         test_options.iprint = floor(3*randn);
         test_options.quiet = (rand > 0.5);
         if mod(ir, 50) == 0 && exist('NEWUOA_output.txt', 'file')
@@ -243,6 +242,6 @@ if (prec == 0 && (exitflag ~= ee|| oo.funcCount ~= output.funcCount))
     eq = false;
 end
 
-diff = max([abs(ff-f)/(1+abs(f)), norm(xx-x)/(1+norm(x)), abs(oo.constrviolation-output.constrviolation)/(1+abs(output.constrviolation))]) 
+diff = max([abs(ff-f)/(1+abs(f)), norm(xx-x)/(1+norm(x)), abs(oo.constrviolation-output.constrviolation)/(1+abs(output.constrviolation))]); 
 
 return
