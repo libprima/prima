@@ -251,8 +251,7 @@ do tr = 1, maxtr
 
         ! Shift XBASE if XOPT may be too far from XBASE.
         !if (inprod(d, d) <= 1.0e-3_RP*inprod(xopt, xopt)) then  ! Powell
-        !if (dnorm*dnorm <= 1.0e-3_RP*inprod(xopt, xopt)) then
-        if (inprod(d, d) <= 1.0e-3_RP*inprod(xopt, xopt)) then  
+        if (dnorm*dnorm <= 1.0e-3_RP*inprod(xopt, xopt)) then
             call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
         end if
 
