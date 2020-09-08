@@ -370,28 +370,30 @@
                   fval(knew) = f
                   xpt(:, knew) = xnew
 
-                  if (delta <= rho) then ! Equivalent to DELTA == RHO.
-! Test whether to replace the new quadratic model Q by the
-! least Frobenius norm interpolant Q_alt. Perform the
-! replacement if certain ceriteria is satisfied. This part
-! is optional, but it is crucial for the performance on a
-! certain class of problems. See Section 8 of the NEWUOA paper.
-! In theory, the FVAL - FSAVE in the following line can be
-! replaced by FVAL + C with any constant C. This constant
-! will not affect the result in precise arithmetic. Powell
-! chose C = - FSAVE.
-! Since tryqalt is invoked only when DELTA equals the current
-! RHO, why not reset ITEST to 0 when RHO is reduced?
-!    call tryqalt(idz, fval - fsave, ratio, bmat(:, 1 : npt), zmat, itest, gq, hq, pq)
-                      call tryqalt(idz, fval - fval(kopt), ratio, bmat(:&
-     &, 1 : npt), zmat, itest, gq, hq, pq)
-                  end if
-
 ! Update KOPT to KNEW if F < FSAVE (i.e., last FOPT).
                   if (f < fsave) then
                       kopt = knew
                   end if
 
+! Test whether to replace the new quadratic model Q by the least Frobenius
+! norm interpolant Q_alt. Perform the replacement if certain ceriteria is
+! satisfied. This part is OPTIONAL, but it is crucial for the performance on
+! a certain class of problems. See Section 8 of the NEWUOA paper.
+                  if (delta <= rho) then ! DELTA == RHO.
+! In theory, the FVAL - FSAVE in the following line can be replaced by
+! FVAL + C with any constant C. This constant will not affect the result
+! in precise arithmetic. Powell chose C = - FVAL(KOPT_ORIGINAL), where
+! KOPT_ORIGINAL is the KOPT before the update above (i.e., Powell updated
+! KOPT after TRYQALT). Here we use the updated KOPT, because it worked
+! slightly better on CUTEst, although there is no difference theoretically.
+! Note that FVAL(KOPT_ORIGINAL) may not equal FSAVE --- it may happen that
+! KNEW = KOPT_ORIGINAL so that FVAL(KOPT_ORIGINAL) has been revised after
+! the last function evaluation.
+! QUestion: Since TRYQALT is invoked only when DELTA equals the current RHO,
+! why not reset ITEST to 0 when RHO is reduced?
+                      call tryqalt(idz, fval - fval(kopt), ratio, bmat(:&
+     &, 1 : npt), zmat, itest, gq, hq, pq)
+                  end if
               end if
 
 ! DNORMSAVE constains the DNORM corresponding to the latest 3
