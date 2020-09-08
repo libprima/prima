@@ -345,7 +345,7 @@ do tr = 1, maxtr
             ! norm interpolant Q_alt. Perform the replacement if certain ceriteria is 
             ! satisfied. This part is OPTIONAL, but it is crucial for the performance on
             ! a certain class of problems. See Section 8 of the NEWUOA paper. 
-            if (delta <= rho) then  ! Equivalent to  DELTA == RHO.
+            if (delta <= rho) then  ! DELTA == RHO.
                 ! In theory, the FVAL - FSAVE in the following line can be replaced by 
                 ! FVAL + C with any constant C. This constant will not affect the result 
                 ! in precise arithmetic. Powell chose C = - FVAL(KOPT). Note that FVAL(KOPT)
