@@ -353,10 +353,13 @@ do tr = 1, maxtr
             if (delta <= rho) then  ! DELTA == RHO.
                 ! In theory, the FVAL - FSAVE in the following line can be replaced by 
                 ! FVAL + C with any constant C. This constant will not affect the result 
-                ! in precise arithmetic. Powell chose C = - FVAL(KOPT). Note that FVAL(KOPT)
-                ! may not equal FSAVE even though KOPT has not been updated --- it may 
-                ! happen that KNEW = KOPT so that FVAL(KOPT) has been revised after the 
-                ! last function evaluation.
+                ! in precise arithmetic. Powell chose C = - FVAL(KOPT_ORIGINAL), where 
+                ! KOPT_ORIGINAL is the KOPT before the update above (i.e., Powell updated
+                ! KOPT after finishing this part). Here we use the updated KOPT, because 
+                ! it worked slightly better in tests, although there is no difference 
+                ! theoretically.  However, note that FVAL(KOPT_ORIGINAL) may not equal 
+                ! FSAVE --- it may happen that KNEW = KOPT_ORIGINAL so that FVAL(KOPT_ORIGINAL) 
+                ! has been revised after the last function evaluation.
                 ! Since TRYQALT is invoked only when DELTA equals the current RHO, why not 
                 ! reset ITEST to 0 when RHO is reduced? 
                 call tryqalt(idz, fval - fval(kopt), ratio, bmat(:, 1 : npt), zmat, itest, gq, hq, pq)
