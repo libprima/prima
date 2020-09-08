@@ -11,3 +11,9 @@ before_install:
 
 script:
   - cd fsrc/examples; make; cd ../newuoa; make gverify; make gverifym; make clean
+
+os: osx
+before_install:
+  - brew install gcc
+script:
+  - cd fsrc/examples; make; cd ../newuoa; make gverify; make gverifym; make clean
