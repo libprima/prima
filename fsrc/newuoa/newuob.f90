@@ -341,6 +341,11 @@ do tr = 1, maxtr
             fval(knew) = f
             xpt(:, knew) = xnew
 
+            ! Update KOPT to KNEW if F < FSAVE (i.e., last FOPT).
+            if (f < fsave) then
+                kopt = knew
+            end if
+
             ! Test whether to replace the new quadratic model Q by the least Frobenius 
             ! norm interpolant Q_alt. Perform the replacement if certain ceriteria is 
             ! satisfied. This part is OPTIONAL, but it is crucial for the performance on
@@ -355,11 +360,6 @@ do tr = 1, maxtr
                 ! Since TRYQALT is invoked only when DELTA equals the current RHO, why not 
                 ! reset ITEST to 0 when RHO is reduced? 
                 call tryqalt(idz, fval - fval(kopt), ratio, bmat(:, 1 : npt), zmat, itest, gq, hq, pq)
-            end if
-
-            ! Update KOPT to KNEW if F < FSAVE (i.e., last FOPT).
-            if (f < fsave) then
-                kopt = knew
             end if
         end if
 
