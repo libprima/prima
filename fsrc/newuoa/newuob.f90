@@ -341,16 +341,17 @@ do tr = 1, maxtr
             fval(knew) = f
             xpt(:, knew) = xnew
 
+            ! Test whether to replace the new quadratic model Q by the least Frobenius 
+            ! norm interpolant Q_alt. Perform the replacement if certain ceriteria is 
+            ! satisfied. This part is OPTIONAL, but it is crucial for the performance on
+            ! a certain class of problems. See Section 8 of the NEWUOA paper. 
             if (delta <= rho) then  ! Equivalent to  DELTA == RHO.
-                ! Test whether to replace the new quadratic model Q by the least Frobenius 
-                ! norm interpolant Q_alt. Perform the replacement if certain ceriteria is 
-                ! satisfied. This part is optional, but it is crucial for the performance on
-                ! a certain class of problems. See Section 8 of the NEWUOA paper. In theory, 
-                ! the FVAL - FSAVE in the following line can be replaced by FVAL + C with any 
-                ! constant C. This constant will not affect the result in precise arithmetic. 
-                ! Powell chose C = - FVAL(KOPT). Note that FVAL(KOPT) may not equal FSAVE 
-                ! even though KOPT has not been updated --- it may happen that KNEW = KOPT so 
-                ! that FVAL(KOPT) has been revised after the last function evaluation.
+                ! In theory, the FVAL - FSAVE in the following line can be replaced by 
+                ! FVAL + C with any constant C. This constant will not affect the result 
+                ! in precise arithmetic. Powell chose C = - FVAL(KOPT). Note that FVAL(KOPT)
+                ! may not equal FSAVE even though KOPT has not been updated --- it may 
+                ! happen that KNEW = KOPT so that FVAL(KOPT) has been revised after the 
+                ! last function evaluation.
                 ! Since TRYQALT is invoked only when DELTA equals the current RHO, why not 
                 ! reset ITEST to 0 when RHO is reduced? 
                 call tryqalt(idz, fval - fval(kopt), ratio, bmat(:, 1 : npt), zmat, itest, gq, hq, pq)
