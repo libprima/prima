@@ -4,7 +4,9 @@ arch:
   - ppc64le
   - s390x
   - arm64
-os: linux
+os: 
+  - linux
+  - osx
 
 before_install:
   - sudo apt-get -y install gfortran
@@ -12,7 +14,6 @@ before_install:
 script:
   - cd fsrc/examples; make; cd ../newuoa; make gverify; make gverifym; make clean
 
-os: osx
 before_install:
   - brew install gcc
 script:
