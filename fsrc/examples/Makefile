@@ -11,7 +11,7 @@ FC = gfortran -Wall -Wextra -fcheck=all -pedantic
 #FC = flang -Wall -Wextra -Mstandard 
 #FC = nagfor -C 
 #FC = sunf95 -w3 -u -U
-FC = af95 
+FC = af95 -no-pie -m1
 #FC = pgfortran -Minform=warn
 FFLAGS = -g 
 DEPS = ../common/*.h 
