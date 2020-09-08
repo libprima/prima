@@ -9,12 +9,7 @@ os:
   - osx
 
 before_install:
-  - sudo apt-get -y install gfortran
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew install gcc; else sudo apt-get -y install gfortran; fi
 
-script:
-  - cd fsrc/examples; make; cd ../newuoa; make gverify; make gverifym; make clean
-
-before_install:
-  - brew install gcc
 script:
   - cd fsrc/examples; make; cd ../newuoa; make gverify; make gverifym; make clean
