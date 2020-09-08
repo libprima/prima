@@ -1,5 +1,0 @@
-
-Return from NEWUOA because the trust region radius reaches its lower bound.
-At the return from NEWUOA      Number of function evaluations =      60
-Least function value =   9.998709706632823D-01      The corresponding X is:
-  -2.908647D-04   5.140710D-05  -9.647910D+00
