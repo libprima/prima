@@ -644,6 +644,9 @@ C     If a trust region step makes a small change to the objective function,
 C     then calculate the gradient of the least Frobenius norm interpolant at
 C     XBASE, and store it in W, using VLAG for a vector of right hand sides.
 C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+      IF (F < FSAVE) KOPT=KNEW
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       IF (KSAVE == 0 .AND. DELTA == RHO) THEN
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 2019-08-26: It is observed in Zhang Zaikun's PhD thesis
@@ -696,7 +699,9 @@ C
               END IF
           END IF
       END IF
-      IF (F < FSAVE) KOPT=KNEW
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!      IF (F < FSAVE) KOPT=KNEW
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
 C     If a trust region step has provided a sufficient decrease in F, then
 C     branch for another trust region calculation. The case KSAVE>0 occurs
