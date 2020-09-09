@@ -2,7 +2,7 @@ FSTD=2003
 FS=f03
 
 GFORT=gfortran -c -g -Wall -Wextra -Wconversion -Wuninitialized -Wmaybe-uninitialized  -Wsurprising -Waliasing  -Wimplicit-interface  -Wunused-parameter  -fwhole-file  -fimplicit-none -fbacktrace -ffree-line-length-0 -fcheck=all -ffpe-trap=invalid,zero,overflow,underflow #-Warray-temporaries
-IFORT=ifort -c -g -warn all -check all  -fpe0 -debug extended -fimplicit-none -warn stderrors #-names as_is
+IFORT=ifort -c -g -warn all -check all  -fpe0 -debug extended -fimplicit-none #-names as_is
 G95=g95 -c -g -Wall -Wextra -fbounds-check -fimplicit-none 
 NFORT=nagfor -c -g -C -Warn=allocation -Warn=constant_coindexing -Warn=reallocation -Warn=subnormal -colour=error:red,warn:magenta,info:yellow
 PFORT=pgfortran  -c -g -Minform=warn 
@@ -37,7 +37,7 @@ gverify:
 	$(G95)  $(FILES) -std=f2003 -pedantic -ffree-form
 
 iverify:
-	$(IFORT) -stand $(FS) -pedantic -ffree-form $(FILES) 
+	$(IFORT) -stand $(FS) -pedantic -ffree-form -warn stderrors $(FILES) 
 
 nverify:
 	$(NFORT) $(FILES) -f$(FSTD) -free
