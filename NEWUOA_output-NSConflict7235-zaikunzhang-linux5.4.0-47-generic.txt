@@ -1,0 +1,319 @@
+
+Return from NEWUOA because the objective function has been evaluated MAXFUN times.
+At the return from NEWUOA      Number of function evaluations =     103
+Least function value =   5.355744755102652D-04      The corresponding X is:
+   1.712456D-01   1.208022D+00   5.370472D-01   5.071850D-01
+
+Function number      1    F =   8.5881378343D-01    The corresponding X is:
+   6.578924D-01   1.306906D+00   1.776172D-01   1.412261D+00
+
+Function number      2    F =   9.7491307022D+00    The corresponding X is:
+   1.774239D+00   1.306906D+00   1.776172D-01   1.412261D+00
+
+Function number      3    F =   1.9276037114D+00    The corresponding X is:
+   6.578924D-01   2.423253D+00   1.776172D-01   1.412261D+00
+
+Function number      4    F =   3.7257878990D-01    The corresponding X is:
+   6.578924D-01   1.306906D+00   1.293964D+00   1.412261D+00
+
+Function number      5    F =   5.3052407238D-01    The corresponding X is:
+   6.578924D-01   1.306906D+00   1.776172D-01   2.528608D+00
+
+Function number      6    F =   1.6391005913D+00    The corresponding X is:
+  -4.584547D-01   1.306906D+00   1.776172D-01   1.412261D+00
+
+Function number      7    F =   2.8584734442D-01    The corresponding X is:
+   6.578924D-01   1.905594D-01   1.776172D-01   1.412261D+00
+
+Function number      8    F =   2.6291251300D+00    The corresponding X is:
+   6.578924D-01   1.306906D+00  -9.387299D-01   1.412261D+00
+
+Function number      9    F =   2.9954262638D+00    The corresponding X is:
+   6.578924D-01   1.306906D+00   1.776172D-01   2.959138D-01
+
+Function number     10    F =   9.1825119783D-01    The corresponding X is:
+  -4.584547D-01   1.905594D-01   1.776172D-01   1.412261D+00
+
+Function number     11    F =   1.2406190726D-01    The corresponding X is:
+   6.578924D-01   1.905594D-01   1.293964D+00   1.412261D+00
+
+Function number     12    F =   2.5483669133D-01    The corresponding X is:
+   6.578924D-01   1.306906D+00   1.293964D+00   2.528608D+00
+
+Function number     13    F =   1.2489569944D+00    The corresponding X is:
+  -4.584547D-01   1.306906D+00   1.776172D-01   2.528608D+00
+
+Function number     14    F =   1.1233717003D+00    The corresponding X is:
+  -4.584547D-01   1.306906D+00   1.293964D+00   1.412261D+00
+
+Function number     15    F =   2.0957448958D-01    The corresponding X is:
+   6.578924D-01   1.905594D-01   1.776172D-01   2.528608D+00
+
+Function number     16    F =   7.1089879065D-02    The corresponding X is:
+   1.639091D-01  -5.504048D-02   7.400698D-01   1.934701D+00
+
+Function number     17    F =   1.2409614870D-01    The corresponding X is:
+   2.968522D-01  -1.149476D+00   6.197972D-01   1.807024D+00
+
+Function number     18    F =   7.6733462463D-02    The corresponding X is:
+   2.319959D-01  -6.186100D-01  -1.965902D-04   1.321521D+00
+
+Function number     19    F =   1.8674587462D-01    The corresponding X is:
+  -1.036490D-01  -6.383619D-01   1.560864D+00   2.335547D+00
+
+Function number     20    F =   6.7137043114D-02    The corresponding X is:
+   5.430230D-01  -3.553097D-01   1.719041D+00   2.166988D+00
+
+Function number     21    F =   1.1202263353D-01    The corresponding X is:
+   7.473258D-01  -7.187696D-01   1.750909D+00   3.202060D+00
+
+Function number     22    F =   5.5290249361D-02    The corresponding X is:
+   3.446472D-01  -1.974432D-01   2.404982D+00   1.323519D+00
+
+Function number     23    F =   3.1950501780D-01    The corresponding X is:
+   1.285644D+00  -3.376407D-01   2.798256D+00   8.917371D-01
+
+Function number     24    F =   8.7635230855D-02    The corresponding X is:
+   7.373988D-01  -8.509527D-02   2.487304D+00   2.878653D-01
+
+Function number     25    F =   5.8376451734D-01    The corresponding X is:
+  -6.862250D-01  -4.146347D-01   2.565254D+00   9.908419D-01
+
+Function number     26    F =   6.2930705707D-02    The corresponding X is:
+   2.632461D-01   1.252437D-01   3.218038D+00   2.012298D+00
+
+Function number     27    F =   1.4932487782D-01    The corresponding X is:
+   4.198198D-01  -1.227676D+00   2.822880D+00   1.255977D+00
+
+Function number     28    F =   1.0107654114D-01    The corresponding X is:
+   1.386079D-01  -1.509276D-01   3.429666D+00   9.341126D-01
+
+Function number     29    F =   3.8658214437D-02    The corresponding X is:
+   4.879713D-01   8.024231D-02   2.687790D+00   1.754940D+00
+
+Function number     30    F =   1.9917374392D-01    The corresponding X is:
+   1.169987D+00  -6.447030D-03   3.379321D+00   2.298405D+00
+
+Function number     31    F =   5.0047159515D-02    The corresponding X is:
+   6.749794D-01   5.225627D-01   3.437076D+00   2.428871D+00
+
+
+New RHO =  1.1163D-01      Number of function evaluations =      31
+Least function value =   3.865821443738867D-02      The corresponding X is:
+   4.879713D-01   8.024231D-02   2.687790D+00   1.754940D+00
+
+Function number     32    F =   4.6741668579D-02    The corresponding X is:
+   5.089257D-01  -4.539057D-02   2.905208D+00   2.253001D+00
+
+Function number     33    F =   3.9770409580D-02    The corresponding X is:
+   3.685296D-01   1.376672D-01   2.648400D+00   1.736050D+00
+
+Function number     34    F =   4.2293196218D-02    The corresponding X is:
+   4.656384D-01  -3.340059D-02   2.834250D+00   1.547515D+00
+
+Function number     35    F =   3.7331219025D-02    The corresponding X is:
+   5.076149D-01   1.228194D-01   2.676777D+00   1.654231D+00
+
+Function number     36    F =   3.5127859242D-02    The corresponding X is:
+   4.528422D-01   1.229293D-01   2.638134D+00   1.564962D+00
+
+Function number     37    F =   3.0971192576D-02    The corresponding X is:
+   4.389607D-01   2.215435D-01   2.655235D+00   1.517502D+00
+
+Function number     38    F =   2.4038562180D-02    The corresponding X is:
+   4.170926D-01   4.010534D-01   2.702479D+00   1.395374D+00
+
+Function number     39    F =   2.4762889622D-02    The corresponding X is:
+   4.809591D-01   5.043661D-01   2.598844D+00   1.239309D+00
+
+Function number     40    F =   2.8337928776D-02    The corresponding X is:
+   5.075596D-01   4.481719D-01   2.744050D+00   1.413533D+00
+
+Function number     41    F =   2.1434508300D-02    The corresponding X is:
+   3.834599D-01   5.020539D-01   2.694549D+00   1.362707D+00
+
+Function number     42    F =   1.8241981323D-02    The corresponding X is:
+   3.478181D-01   6.118348D-01   2.732307D+00   1.175353D+00
+
+Function number     43    F =   1.4088063301D-02    The corresponding X is:
+   3.325421D-01   7.062843D-01   2.604334D+00   1.019411D+00
+
+Function number     44    F =   1.5352159473D-02    The corresponding X is:
+   2.471860D-01   8.264984D-01   2.315290D+00   7.126319D-01
+
+Function number     45    F =   1.5278330541D-02    The corresponding X is:
+   3.288158D-01   6.395261D-01   2.631893D+00   9.343685D-01
+
+Function number     46    F =   4.3257647714D-02    The corresponding X is:
+   1.833100D-01   7.951057D-01   2.671448D+00   8.961819D-01
+
+Function number     47    F =   1.3069179267D-02    The corresponding X is:
+   4.003313D-01   7.840011D-01   2.618670D+00   1.059679D+00
+
+Function number     48    F =   1.0843424536D-02    The corresponding X is:
+   3.774697D-01   7.883582D-01   2.663495D+00   9.601227D-01
+
+Function number     49    F =   8.8505852844D-03    The corresponding X is:
+   3.412953D-01   8.599485D-01   2.630745D+00   8.897242D-01
+
+Function number     50    F =   8.5197100048D-03    The corresponding X is:
+   3.702515D-01   8.416565D-01   2.631560D+00   7.834764D-01
+
+Function number     51    F =   8.0102621521D-03    The corresponding X is:
+   3.511904D-01   8.132215D-01   2.728190D+00   7.392839D-01
+
+Function number     52    F =   8.5672332322D-03    The corresponding X is:
+   3.833662D-01   7.740844D-01   2.692723D+00   6.463464D-01
+
+Function number     53    F =   1.5664023725D-02    The corresponding X is:
+   4.437937D-01   7.790598D-01   2.778501D+00   7.255465D-01
+
+Function number     54    F =   6.2997886387D-03    The corresponding X is:
+   3.426385D-01   9.065475D-01   2.722291D+00   6.789131D-01
+
+Function number     55    F =   4.1574956725D-03    The corresponding X is:
+   3.127508D-01   1.055839D+00   2.647353D+00   5.338190D-01
+
+Function number     56    F =   4.9938291340D-03    The corresponding X is:
+   2.932738D-01   1.164302D+00   2.713056D+00   3.510930D-01
+
+Function number     57    F =   2.0828716760D-02    The corresponding X is:
+   4.038015D-01   1.104552D+00   2.604957D+00   5.351262D-01
+
+Function number     58    F =   4.8458687399D-03    The corresponding X is:
+   2.853530D-01   9.995237D-01   2.601134D+00   4.537936D-01
+
+Function number     59    F =   1.3274005533D-02    The corresponding X is:
+   2.366223D-01   9.874669D-01   2.666000D+00   4.932691D-01
+
+Function number     60    F =   4.0090592710D-03    The corresponding X is:
+   2.795517D-01   1.150671D+00   2.627358D+00   4.894666D-01
+
+Function number     61    F =   3.9292177913D-03    The corresponding X is:
+   2.859271D-01   1.107464D+00   2.576828D+00   4.182580D-01
+
+Function number     62    F =   1.4932902191D-02    The corresponding X is:
+   3.657112D-01   1.068495D+00   2.516293D+00   3.880296D-01
+
+Function number     63    F =   5.8996336178D-03    The corresponding X is:
+   3.202797D-01   1.139212D+00   2.484541D+00   4.601802D-01
+
+Function number     64    F =   3.8317782578D-03    The corresponding X is:
+   2.739174D-01   1.150492D+00   2.514435D+00   4.993370D-01
+
+Function number     65    F =   2.2346431790D-02    The corresponding X is:
+   1.802629D-01   1.151939D+00   2.499027D+00   4.405864D-01
+
+Function number     66    F =   3.6443675552D-03    The corresponding X is:
+   2.876712D-01   1.254172D+00   2.547702D+00   4.789145D-01
+
+Function number     67    F =   2.2797163127D-02    The corresponding X is:
+   3.662790D-01   1.294219D+00   2.586537D+00   4.226016D-01
+
+Function number     68    F =   3.1626358849D-03    The corresponding X is:
+   2.839776D-01   1.253106D+00   2.475569D+00   5.640284D-01
+
+Function number     69    F =   3.0221083659D-03    The corresponding X is:
+   2.604004D-01   1.343364D+00   2.433621D+00   5.193032D-01
+
+Function number     70    F =   3.9440608411D-03    The corresponding X is:
+   2.405194D-01   1.416201D+00   2.482141D+00   4.529129D-01
+
+Function number     71    F =   3.6860720210D-03    The corresponding X is:
+   2.574638D-01   1.349499D+00   2.388225D+00   4.175425D-01
+
+Function number     72    F =   3.8566862757D-03    The corresponding X is:
+   2.523423D-01   1.351170D+00   2.462858D+00   4.121506D-01
+
+Function number     73    F =   2.3507381072D-02    The corresponding X is:
+   3.574264D-01   1.352318D+00   2.385041D+00   4.946438D-01
+
+Function number     74    F =   2.7647806782D-03    The corresponding X is:
+   2.544817D-01   1.419831D+00   2.396133D+00   5.912386D-01
+
+Function number     75    F =   2.6639382635D-03    The corresponding X is:
+   2.346425D-01   1.558735D+00   2.247504D+00   6.810762D-01
+
+Function number     76    F =   2.6216266948D-03    The corresponding X is:
+   2.284212D-01   1.743087D+00   2.290377D+00   7.993417D-01
+
+Function number     77    F =   4.0915079173D-02    The corresponding X is:
+   1.179015D-01   1.743060D+00   2.274955D+00   7.961948D-01
+
+Function number     78    F =   2.5612066500D-03    The corresponding X is:
+   2.633559D-01   1.743701D+00   2.361079D+00   8.783523D-01
+
+Function number     79    F =   9.5802879876D-03    The corresponding X is:
+   2.013265D-01   1.686492D+00   2.322771D+00   9.405965D-01
+
+Function number     80    F =   4.9749531816D-03    The corresponding X is:
+   2.767700D-01   1.825946D+00   2.366257D+00   8.042487D-01
+
+Function number     81    F =   3.3828047678D-02    The corresponding X is:
+   3.696165D-01   1.740988D+00   2.338708D+00   9.041046D-01
+
+Function number     82    F =   2.2333276973D-03    The corresponding X is:
+   2.495385D-01   1.727881D+00   2.251960D+00   8.890423D-01
+
+Function number     83    F =   2.1408396747D-03    The corresponding X is:
+   2.489507D-01   1.767347D+00   2.213330D+00   7.920265D-01
+
+Function number     84    F =   3.0036108947D-02    The corresponding X is:
+   3.423230D-01   1.747291D+00   2.156299D+00   8.014655D-01
+
+Function number     85    F =   1.8872773364D-03    The corresponding X is:
+   2.299837D-01   1.799668D+00   2.230398D+00   6.882643D-01
+
+Function number     86    F =   3.1152681191D-03    The corresponding X is:
+   2.027322D-01   1.900095D+00   2.203664D+00   7.185861D-01
+
+Function number     87    F =   1.8176065391D-03    The corresponding X is:
+   2.285058D-01   1.897888D+00   2.183219D+00   7.124970D-01
+
+Function number     88    F =   9.2979574578D-03    The corresponding X is:
+   1.688942D-01   1.898913D+00   2.088856D+00   7.106363D-01
+
+Function number     89    F =   1.7044995815D-03    The corresponding X is:
+   2.322636D-01   1.912456D+00   2.230826D+00   8.123443D-01
+
+Function number     90    F =   1.6345354846D-03    The corresponding X is:
+   2.227088D-01   2.016923D+00   2.229082D+00   7.742069D-01
+
+Function number     91    F =   1.7280452825D-03    The corresponding X is:
+   2.305701D-01   1.906128D+00   2.235405D+00   7.649891D-01
+
+Function number     92    F =   2.7813941097D-02    The corresponding X is:
+   1.280652D-01   2.036824D+00   2.203269D+00   8.236293D-01
+
+Function number     93    F =   1.7698973206D-03    The corresponding X is:
+   2.265663D-01   2.049417D+00   2.126676D+00   8.042864D-01
+
+Function number     94    F =   9.3511727130D-03    The corresponding X is:
+   1.731856D-01   2.029172D+00   2.328026D+00   7.658554D-01
+
+Function number     95    F =   1.8286690454D-03    The corresponding X is:
+   2.358174D-01   2.041602D+00   2.281076D+00   8.689593D-01
+
+Function number     96    F =   3.2901142129D-02    The corresponding X is:
+   3.260739D-01   2.012710D+00   2.210386D+00   8.117660D-01
+
+Function number     97    F =   2.5766659826D-03    The corresponding X is:
+   2.311488D-01   2.025831D+00   2.290802D+00   6.819989D-01
+
+Function number     98    F =   2.6323237222D-02    The corresponding X is:
+   3.010414D-01   2.069142D+00   2.201803D+00   7.207709D-01
+
+Function number     99    F =   1.4808652101D-03    The corresponding X is:
+   2.200719D-01   2.047799D+00   2.145060D+00   8.408587D-01
+
+Function number    100    F =   1.4758254726D-03    The corresponding X is:
+   2.132481D-01   2.147457D+00   2.193375D+00   8.286232D-01
+
+Function number    101    F =   6.7920492904D-03    The corresponding X is:
+   1.694941D-01   2.178153D+00   2.211435D+00   7.322931D-01
+
+
+Return from NEWUOA because the objective function has been evaluated MAXFUN times.
+At the return from NEWUOA      Number of function evaluations =     101
+Least function value =   1.475825472619831D-03      The corresponding X is:
+   2.132481D-01   2.147457D+00   2.193375D+00   8.286232D-01
