@@ -1,0 +1,37 @@
+
+New RHO =  6.8854D-02      Number of function evaluations =      55
+Least function value =   2.747409619044292D+01      The corresponding X is:
+   2.245800D+00  -8.314190D+00   9.463792D+00   9.535266D+00   1.923057D+00
+  -4.477282D+00   1.289901D+00  -7.999563D-02
+
+New RHO =  6.2528D-03      Number of function evaluations =     104
+Least function value =   4.737697979675376D+00      The corresponding X is:
+   4.024004D+00  -2.143808D+01   1.681736D+01   2.754502D+01   2.305651D+00
+  -2.882716D+01   1.586094D+01  -2.510083D+00
+
+New RHO =  5.6783D-04      Number of function evaluations =     136
+Least function value =   4.720546323643545D+00      The corresponding X is:
+   4.029581D+00  -2.135428D+01   1.655845D+01   2.771607D+01   2.537769D+00
+  -2.915215D+01   1.599265D+01  -2.527709D+00
+
+Return from NEWUOA because the trust region radius reaches its lower bound.
+At the return from NEWUOA      Number of function evaluations =     140
+Least function value =   4.720543075449669D+00      The corresponding X is:
+   4.029581D+00  -2.135428D+01   1.655845D+01   2.771607D+01   2.537769D+00
+  -2.915215D+01   1.599265D+01  -2.527708D+00
+
+New RHO =  7.0535D-02      Number of function evaluations =      82
+Least function value =   1.278342817305899D+01      The corresponding X is:
+   3.302783D+00  -1.517281D+01   1.729445D+01   1.361025D+01  -1.208711D+00
+  -9.641330D+00   5.299984D+00  -8.109286D-01
+
+New RHO =  9.9619D-03      Number of function evaluations =     133
+Least function value =   5.824089218704925D+00      The corresponding X is:
+   3.887413D+00  -2.190833D+01   2.411438D+01   1.897506D+01  -3.622412D+00
+  -1.606722D+01   9.771494D+00  -1.593276D+00
+
+Return from NEWUOA because the objective function has been evaluated MAXFUN times.
+At the return from NEWUOA      Number of function evaluations =     167
+Least function value =   5.400897966162872D+00      The corresponding X is:
+   4.033350D+00  -2.322632D+01   2.517866D+01   2.032845D+01  -3.898212D+00
+  -1.779865D+01   1.089025D+01  -1.785406D+00
