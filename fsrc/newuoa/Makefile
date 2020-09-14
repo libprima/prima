@@ -34,6 +34,7 @@ gverify:
 	$(GFORT)  $(FILES) -std=f$(FSTD) -pedantic -ffree-form
 
 9verify:
+	$(G95)  $(FILES) -std=F -pedantic -ffree-form
 	$(G95)  $(FILES) -std=f2003 -pedantic -ffree-form
 
 iverify:
