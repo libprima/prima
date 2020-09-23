@@ -1,43 +1,67 @@
 >>> Statistics:
 
- Number of source files:     4
+ Number of source files:    22
 
- Source files:     1519 lines,     36800 bytes    ( 10% comments, 90% code )
+ Source files:     8618 lines,    184704 bytes    ( 37% comments, 63% code )
  Include files:       0 lines,         0 bytes
- Total parsed:     1519 lines,     36800 bytes    ( 10% comments, 90% code )
+ Total parsed:     8618 lines,    184704 bytes    ( 37% comments, 63% code )
 
- Total subprograms:    139
-   Subroutines:         10
-   Functions:          126
-   Program:              0
+ Total subprograms:    217
+   Subroutines:         47
+   Functions:          147
+   Program:              2
    Block Data:           0
-   Module:               3
+   Module:              21
 
 Individual message summary
 --------------------------
-Intrfc WARN #189-   1x: no main program module present.
+Usage   FYI #124-  10x: dummy argument * is unused.
+Syntax  ERR #28-    5x: not a fortran statement.
+Syntax  ERR #136-   4x: type declaration for symbol * missing.
+Syntax  ERR #633-   4x: a dummy argument or function result must not have the
+                        ALLOCATABLE, PARAMETER or SAVE attribute.
+Intrfc  ERR #250-   3x: * passed to dummy arg which is * *.
+Intrfc  ERR #257-   3x: * expression passed to dummy arg which is a * array.
+Usage   FYI #744-   3x: unused module entity:  *, *
+Syntax  ERR #74-    2x: must occur before * in line *, statement ignored.
+Syntax  ERR #284-   2x: variable expression where constant required.
+Syntax  ERR #451-   2x: array sections not conformable (* vs * dimensions).
+Syntax  ERR #610-   2x: not current subprogram name.
+Syntax  ERR #621-   2x: may occur only in a subprogram or an interface block.
+Syntax  ERR #663-   2x: must be a pointer or an allocatable array; object
+                        ignored.
+Syntax  ERR #679-   2x: no matching "INTERFACE" for this "END INTERFACE".
+Usage  WARN #740-   2x: INTENT(OUT) dummy arg * is never set.
+Syntax  ERR #66-    1x: statement out of order, statement ignored.
+Usage   ERR #126-   1x: local * * is referenced but never set.
+Intrfc  FYI #131-   1x: unused functions:  *, *
+Intrfc  FYI #132-   1x: unused subroutines:  *, *
+Intrfc WARN #190-   1x: there are * program modules.
+Usage   ERR #742-   1x: module entity referenced but not set:  *, *
 
-Total messages: 1
+Total messages: 54
 
                         Errors  Warnings   FYIs
                        -------- -------- --------
-    Syntax:                  0        0        0
-    Global Interface:        0        1        0
-    Data usage:              0        0        0
+    Syntax:                 28        0        0
+    Global Interface:        6        1        2
+    Data usage:              2        2       13
     ANSI-F90 port:           0        0        0
 
     Implicit typing:              0
 
 ==============================================================================
 
-FORTRAN-lint   Rev 7.50DEMO   23-Sep-2020   23:39:38   
+FORTRAN-lint   Rev 7.50DEMO   23-Sep-2020   23:49:42   
 
 Default options:  -O276 -Xno.named.IEEE_*,no.named.C_*,no.named.ISO_*
                   -Xno.named.COMPILER_*
 Expanded options:  --2 -p
                    -I/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/common
+                   -I/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/examples
+                   -I/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/newuoa
                    -I/home/zaikunzhang/Bureau/neupdfo/fsrc/common --e --d -a
                    -m -w -f -g -u -O76,207,261,176 -s -Ttrim,nosquish,noalpha
                    -Tcondensed -t -Xno.unreferenced.parameters
                    -Xno.unused.common.variables,linenumbers -x -W140 -Y250
-                   -S/tmp/flinttmp1000-12376/flint --l -Mdepend
+                   -S/tmp/flinttmp1000-12824/flint --l -3 -Mdepend
