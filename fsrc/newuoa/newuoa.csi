@@ -13,6 +13,7 @@ Format = FLINT_020301
 /home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/common/output.F90
 /home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/common/pintrf.F90
 /home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/common/ppf.h
+/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/examples/newuoa_exmp.f90
 /home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/newuoa/geometry.f90
 /home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/newuoa/initialize.f90
 /home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/newuoa/newuoa.f90
@@ -22,7 +23,6 @@ Format = FLINT_020301
 /home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/newuoa/trustregion.f90
 /home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/newuoa/update.f90
 /home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/newuoa/vlagbeta.f90
-/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/examples/newuoa_exmp.f90
 
 [uuts]
 None
@@ -63,7 +63,7 @@ None
 
 [source configuration]
 Dialect                = Automatic
-Language               = Automatic
+Language               = Fortran 03
 Source format          = Automatic
 
 [other settings]
