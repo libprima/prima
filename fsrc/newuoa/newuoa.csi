@@ -4,24 +4,25 @@
 Format = FLINT_020301
 
 [project files]
-/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/common/ppf.h
 /home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/common/consts.F90
-/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/common/info.F90
 /home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/common/debug.F90
-/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/common/memory.F90
 /home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/common/infnan.F90
+/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/common/info.F90
 /home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/common/lina.F90
+/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/common/memory.F90
 /home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/common/output.F90
 /home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/common/pintrf.F90
-/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/newuoa/preproc.f90
-/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/newuoa/initialize.f90
-/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/newuoa/trustregion.f90
-/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/newuoa/vlagbeta.f90
+/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/common/ppf.h
 /home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/newuoa/geometry.f90
-/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/newuoa/shiftbase.f90
-/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/newuoa/update.f90
-/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/newuoa/newuob.f90
+/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/newuoa/initialize.f90
 /home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/newuoa/newuoa.f90
+/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/newuoa/newuob.f90
+/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/newuoa/preproc.f90
+/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/newuoa/shiftbase.f90
+/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/newuoa/trustregion.f90
+/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/newuoa/update.f90
+/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/newuoa/vlagbeta.f90
+/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/examples/newuoa_exmp.f90
 
 [uuts]
 None
@@ -33,7 +34,7 @@ None
 None
 
 [include directories]
-None
+/home/zaikunzhang/Bureau/neupdfo/fsrc/common
 
 [preprocessor path]
 None
@@ -108,7 +109,7 @@ Lower-case             = No
 
 [source configuration checkboxes]
 132 columns            = No
-Use 'C' preprocessor   = No
+Use 'C' preprocessor   = Yes
 Ignore paths           = No
 Ignore VMS logicals    = No
 
