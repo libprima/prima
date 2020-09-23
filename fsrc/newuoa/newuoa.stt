@@ -1,0 +1,43 @@
+>>> Statistics:
+
+ Number of source files:     4
+
+ Source files:     1519 lines,     36800 bytes    ( 10% comments, 90% code )
+ Include files:       0 lines,         0 bytes
+ Total parsed:     1519 lines,     36800 bytes    ( 10% comments, 90% code )
+
+ Total subprograms:    139
+   Subroutines:         10
+   Functions:          126
+   Program:              0
+   Block Data:           0
+   Module:               3
+
+Individual message summary
+--------------------------
+Intrfc WARN #189-   1x: no main program module present.
+
+Total messages: 1
+
+                        Errors  Warnings   FYIs
+                       -------- -------- --------
+    Syntax:                  0        0        0
+    Global Interface:        0        1        0
+    Data usage:              0        0        0
+    ANSI-F90 port:           0        0        0
+
+    Implicit typing:              0
+
+==============================================================================
+
+FORTRAN-lint   Rev 7.50DEMO   23-Sep-2020   23:39:38   
+
+Default options:  -O276 -Xno.named.IEEE_*,no.named.C_*,no.named.ISO_*
+                  -Xno.named.COMPILER_*
+Expanded options:  --2 -p
+                   -I/home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/common
+                   -I/home/zaikunzhang/Bureau/neupdfo/fsrc/common --e --d -a
+                   -m -w -f -g -u -O76,207,261,176 -s -Ttrim,nosquish,noalpha
+                   -Tcondensed -t -Xno.unreferenced.parameters
+                   -Xno.unused.common.variables,linenumbers -x -W140 -Y250
+                   -S/tmp/flinttmp1000-12376/flint --l -Mdepend

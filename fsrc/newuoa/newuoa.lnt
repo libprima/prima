@@ -1,0 +1,29 @@
+>>> Source analysis:
+
+Directory /home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/common/
+
+ppf.h
+
+Directory /home/zaikunzhang/local/flint/flintgui.dir/main/
+
+isoenv.lsh  ieeea.lsh   ieeee.lsh
+
+*******************************************************************************
+
+Global checking:
+
+Interface WARNING #189- no main program module present.
+
+<-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><
+
+                   *** DEMO VERSION - LIMITED OUTPUT ***
+
+This demo version produces only a limited number of results.  To see how
+thorough Flint is, view the statistics report (next) for the total number
+of messages produced and the number of times each error occurred.
+
+We hope you have found Flint useful! If so, why not order the unrestricted
+version today?  Email sales@cleanscape.net or call 800-944-LINT.
+
+<-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><
+
