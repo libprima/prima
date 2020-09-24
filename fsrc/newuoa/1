@@ -1,11 +1,11 @@
-flint -I../common -p ../common/consts.F90 ../common/debug.F90 ../common/memory.F90 ../common/info.F90 ../common/infnan.F90 ../common/lina.F90 ../common/output.F90 ../common/pintrf.F90  preproc.f90 initialize.f90 trustregion.f90 vlagbeta.f90 geometry.f90 update.f90 shiftbase.f90 newuob.f90 newuoa.f90
+flint -I../common -p -3 ../common/consts.F90 ../common/debug.F90 ../common/memory.F90 ../common/info.F90 ../common/infnan.F90 ../common/lina.F90 ../common/output.F90 ../common/pintrf.F90  preproc.f90 initialize.f90 trustregion.f90 vlagbeta.f90 geometry.f90 update.f90 shiftbase.f90 newuob.f90 newuoa.f90
 
-FORTRAN-lint    Rev 7.50DEMO                             24-Sep-2020  10:13:45 
+FORTRAN-lint    Rev 7.50DEMO                             24-Sep-2020  10:14:49 
 
 Default options:  -w -u -O207,276,76,261 --t -Xno.unreferenced.parameters
                   -Xno.unused.common.variables,no.named.IEEE_*,no.named.C_*
                   -Xno.named.ISO_*,no.named.COMPILER_* --x
-Command options:  -p -I../common
+Command options:  -p -I../common -3
 
 
 
