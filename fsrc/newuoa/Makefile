@@ -27,6 +27,9 @@ MFILES= ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F
 verify: gverify iverify 9verify nverify pverify averify fverify sverify clean
 verifym: gverifym iverifym 9verifym nverifym pverifym averifym fverifym sverifym clean
 
+lint: 
+	flint $(FILES)
+
 fverify:
 	$(FLANG) $(FILES) -ffree-form -std=f$(FSTD)
 

@@ -1,0 +1,487 @@
+flint ../common/consts.F90 ../common/debug.F90 ../common/memory.F90 ../common/info.F90 ../common/infnan.F90 ../common/lina.F90 ../common/output.F90 ../common/pintrf.F90  preproc.f90 initialize.f90 trustregion.f90 vlagbeta.f90 geometry.f90 update.f90 shiftbase.f90 newuob.f90 newuoa.f90
+
+FORTRAN-lint    Rev 7.50DEMO                             24-Sep-2020  10:10:51 
+
+Default options:  -w -u -O207,276,76,261 --t -Xno.unreferenced.parameters
+                  -Xno.unused.common.variables,no.named.IEEE_*,no.named.C_*
+                  -Xno.named.ISO_*,no.named.COMPILER_* --x
+
+
+
+>>> Source analysis:
+
+
+Directory ../common/
+
+consts.F90       debug.F90        memory.F90       info.F90         
+infnan.F90       lina.F90         output.F90       pintrf.F90       
+
+preproc.f90      initialize.f90   trustregion.f90  vlagbeta.f90     
+geometry.f90     update.f90       shiftbase.f90    newuob.f90       
+newuoa.f90       
+
+Directory /home/zaikunzhang/local/cleanscape/flintgui.dir/main/
+
+isoenv.lsh       ieeea.lsh        ieeee.lsh        
+
+*******************************************************************************
+       Module CONSTS_MOD                File consts.F90           Line 60
+
+>logical, parameter :: DEBUGGING = .false.
+>                      ^
+../common/consts.F90:CONSTS_MOD line 92:
+Syntax ERROR #22- symbol name already used.
+
+>integer, parameter :: INT16 = selected_int_kind(4)
+>                      ^
+../common/consts.F90:CONSTS_MOD line 100:
+Syntax ERROR #22- symbol name already used.
+
+>integer, parameter :: INT32 = selected_int_kind(7)
+>                      ^
+../common/consts.F90:CONSTS_MOD line 102:
+Syntax ERROR #22- symbol name already used.
+
+>integer, parameter :: INT64 = selected_int_kind(14)
+>                      ^
+../common/consts.F90:CONSTS_MOD line 104:
+Syntax ERROR #22- symbol name already used.
+
+>integer, parameter :: REAL32 = kind(0.0)
+>                      ^
+../common/consts.F90:CONSTS_MOD line 107:
+Syntax ERROR #22- symbol name already used.
+
+*******************************************************************************
+   Subroutine ERRSTOP                   File debug.F90            Line 25
+              <Module subprog of DEBUG_MOD>
+
+
+*******************************************************************************
+   Subroutine BACKTR                    File debug.F90            Line 40
+              <Module subprog of DEBUG_MOD>
+
+
+*******************************************************************************
+   Subroutine VERISYM                   File debug.F90            Line 65
+              <Module subprog of DEBUG_MOD>
+
+
+*******************************************************************************
+   Subroutine VERISIZE_REAL_1           File debug.F90            Line 90
+              <Module subprog of DEBUG_MOD>
+
+
+*******************************************************************************
+   Subroutine VERISIZE_REAL_2           File debug.F90            Line 104
+              <Module subprog of DEBUG_MOD>
+
+
+*******************************************************************************
+   Subroutine VERISIZE_INT_1            File debug.F90            Line 122
+              <Module subprog of DEBUG_MOD>
+
+
+*******************************************************************************
+   Subroutine VERISIZE_INT_2            File debug.F90            Line 136
+              <Module subprog of DEBUG_MOD>
+
+
+*******************************************************************************
+   Subroutine ALLOC_RVECTOR             File memory.F90           Line 27
+              <Module subprog of MEMORY_MOD>
+
+
+*******************************************************************************
+   Subroutine ALLOC_RMATRIX             File memory.F90           Line 64
+              <Module subprog of MEMORY_MOD>
+
+
+*******************************************************************************
+     Function SIZE_OF_SP                File memory.F90           Line 98
+              <Module subprog of MEMORY_MOD>
+
+
+*******************************************************************************
+     Function SIZE_OF_DP                File memory.F90           Line 112
+              <Module subprog of MEMORY_MOD>
+
+
+*******************************************************************************
+     Function SIZE_OF_QP                File memory.F90           Line 128
+              <Module subprog of MEMORY_MOD>
+
+
+*******************************************************************************
+     Function IS_NAN_SP                 File infnan.F90           Line 76
+              <Module subprog of INFNAN_MOD>
+
+
+*******************************************************************************
+     Function IS_NAN_DP                 File infnan.F90           Line 87
+              <Module subprog of INFNAN_MOD>
+
+
+*******************************************************************************
+     Function IS_FINITE_SP              File infnan.F90           Line 95
+              <Module subprog of INFNAN_MOD>
+
+
+*******************************************************************************
+     Function IS_FINITE_DP              File infnan.F90           Line 103
+              <Module subprog of INFNAN_MOD>
+
+
+*******************************************************************************
+     Function IS_POSINF_SP              File infnan.F90           Line 113
+              <Module subprog of INFNAN_MOD>
+
+
+*******************************************************************************
+     Function IS_POSINF_DP              File infnan.F90           Line 121
+              <Module subprog of INFNAN_MOD>
+
+
+*******************************************************************************
+     Function IS_NEGINF_SP              File infnan.F90           Line 129
+              <Module subprog of INFNAN_MOD>
+
+
+*******************************************************************************
+     Function IS_NEGINF_DP              File infnan.F90           Line 137
+              <Module subprog of INFNAN_MOD>
+
+
+*******************************************************************************
+     Function IS_INF_SP                 File infnan.F90           Line 145
+              <Module subprog of INFNAN_MOD>
+
+
+*******************************************************************************
+     Function IS_INF_DP                 File infnan.F90           Line 153
+              <Module subprog of INFNAN_MOD>
+
+
+*******************************************************************************
+     Function IS_NAN_QP                 File infnan.F90           Line 163
+              <Module subprog of INFNAN_MOD>
+
+
+*******************************************************************************
+     Function IS_FINITE_QP              File infnan.F90           Line 171
+              <Module subprog of INFNAN_MOD>
+
+
+*******************************************************************************
+     Function IS_NEGINF_QP              File infnan.F90           Line 180
+              <Module subprog of INFNAN_MOD>
+
+
+*******************************************************************************
+     Function IS_POSINF_QP              File infnan.F90           Line 188
+              <Module subprog of INFNAN_MOD>
+
+
+*******************************************************************************
+     Function IS_INF_QP                 File infnan.F90           Line 196
+              <Module subprog of INFNAN_MOD>
+
+
+*******************************************************************************
+   Subroutine R1_SYM                    File lina.F90             Line 53
+              <Module subprog of LINA_MOD>
+
+
+*******************************************************************************
+   Subroutine R1                        File lina.F90             Line 120
+              <Module subprog of LINA_MOD>
+
+
+*******************************************************************************
+   Subroutine R2_SYM                    File lina.F90             Line 182
+              <Module subprog of LINA_MOD>
+
+
+*******************************************************************************
+   Subroutine R2                        File lina.F90             Line 247
+              <Module subprog of LINA_MOD>
+
+
+*******************************************************************************
+     Function MATPROD12                 File lina.F90             Line 318
+              <Module subprog of LINA_MOD>
+
+
+*******************************************************************************
+     Function MATPROD21                 File lina.F90             Line 362
+              <Module subprog of LINA_MOD>
+
+
+*******************************************************************************
+     Function MATPROD22                 File lina.F90             Line 402
+              <Module subprog of LINA_MOD>
+
+
+*******************************************************************************
+     Function INPROD                    File lina.F90             Line 444
+              <Module subprog of LINA_MOD>
+
+
+*******************************************************************************
+   Subroutine GROTA                     File lina.F90             Line 488
+              <Module subprog of LINA_MOD>
+
+
+*******************************************************************************
+   Subroutine SYMMETRIZE                File lina.F90             Line 552
+              <Module subprog of LINA_MOD>
+
+
+*******************************************************************************
+     Function XPY_DOT_Z                 File lina.F90             Line 598
+              <Module subprog of LINA_MOD>
+
+
+*******************************************************************************
+     Function XDY_PLUS_A                File lina.F90             Line 641
+              <Module subprog of LINA_MOD>
+
+
+*******************************************************************************
+     Function AX_PLUS_Y                 File lina.F90             Line 683
+              <Module subprog of LINA_MOD>
+
+
+*******************************************************************************
+     Function XA_PLUS_Y                 File lina.F90             Line 725
+              <Module subprog of LINA_MOD>
+
+
+*******************************************************************************
+   Subroutine CALQUAD                   File lina.F90             Line 773
+              <Module subprog of LINA_MOD>
+
+
+*******************************************************************************
+   Subroutine RETMSSG                   File output.F90           Line 19
+              <Module subprog of OUTPUT_MOD>
+
+
+*******************************************************************************
+   Subroutine RHOMSSG                   File output.F90           Line 94
+              <Module subprog of OUTPUT_MOD>
+
+
+*******************************************************************************
+   Subroutine FMSSG                     File output.F90           Line 145
+              <Module subprog of OUTPUT_MOD>
+
+
+*******************************************************************************
+       Module PINTRF_MOD                File pintrf.F90           Line 10
+
+>abstract interface
+>^
+../common/pintrf.F90:PINTRF_MOD line 16:
+Syntax ERROR #28- not a fortran statement.
+
+>    subroutine FUNEVAL(x, f)
+>    ^
+../common/pintrf.F90:PINTRF_MOD line 17:
+Syntax ERROR #66- statement out of order, statement ignored.
+
+>    use consts_mod, only : RP
+>    ^
+../common/pintrf.F90:PINTRF_MOD line 18:
+Syntax ERROR #74- must occur before implicit statement in line 12, statement
+                  ignored.
+
+>    implicit none
+>    ^
+../common/pintrf.F90:PINTRF_MOD line 19:
+Syntax ERROR #74- must occur before specification statement in line 13,
+                  statement ignored.
+
+>    real(RP), intent(in) :: x(:)
+>         ^
+../common/pintrf.F90:PINTRF_MOD line 20:
+Syntax ERROR #284- variable expression where constant required.
+
+*******************************************************************************
+   Subroutine PREPROC                   File preproc.f90          Line 17
+              <Module subprog of PREPROC_MOD>
+
+
+*******************************************************************************
+   Subroutine INITXF                    File initialize.f90       Line 18
+              <Module subprog of INITIALIZE_MOD>
+
+
+>procedure(FUNEVAL) :: calfun
+>^
+initialize.f90:INITXF line 35:
+Syntax ERROR #28- not a fortran statement.
+
+*******************************************************************************
+   Subroutine INITQ                     File initialize.f90       Line 269
+              <Module subprog of INITIALIZE_MOD>
+
+
+*******************************************************************************
+   Subroutine INITH                     File initialize.f90       Line 378
+              <Module subprog of INITIALIZE_MOD>
+
+
+*******************************************************************************
+   Subroutine TRSAPP                    File trustregion.f90      Line 17
+              <Module subprog of TRUSTREGION_MOD>
+
+
+*******************************************************************************
+     Function TRRAD                     File trustregion.f90      Line 336
+              <Module subprog of TRUSTREGION_MOD>
+
+
+*******************************************************************************
+   Subroutine VLAGBETA                  File vlagbeta.f90         Line 21
+              <Module subprog of VLAGBETA_MOD>
+
+
+*******************************************************************************
+   Subroutine SETREMOVE                 File geometry.f90         Line 18
+              <Module subprog of GEOMETRY_MOD>
+
+
+*******************************************************************************
+   Subroutine AMELIORGEO                File geometry.f90         Line 91
+              <Module subprog of GEOMETRY_MOD>
+
+
+*******************************************************************************
+   Subroutine BIGLAG                    File geometry.f90         Line 163
+              <Module subprog of GEOMETRY_MOD>
+
+
+*******************************************************************************
+   Subroutine BIGDEN                    File geometry.f90         Line 368
+              <Module subprog of GEOMETRY_MOD>
+
+
+*******************************************************************************
+   Subroutine UPDATEH                   File update.f90           Line 18
+              <Module subprog of UPDATE_MOD>
+
+
+*******************************************************************************
+   Subroutine UPDATEQ                   File update.f90           Line 259
+              <Module subprog of UPDATE_MOD>
+
+
+*******************************************************************************
+   Subroutine TRYQALT                   File update.f90           Line 325
+              <Module subprog of UPDATE_MOD>
+
+
+*******************************************************************************
+   Subroutine SHIFTBASE                 File shiftbase.f90        Line 18
+              <Module subprog of SHIFTBASE_MOD>
+
+
+*******************************************************************************
+   Subroutine NEWUOB                    File newuob.f90           Line 17
+              <Module subprog of NEWUOB_MOD>
+
+
+>procedure(FUNEVAL) :: calfun
+>^
+newuob.f90:NEWUOB line 66:
+Syntax ERROR #28- not a fortran statement.
+
+>        xhist = reshape([xhist(:, khist + 1 : maxxhist), xhist(:, 1 : khist...
+>              ^
+newuob.f90:NEWUOB line 185:
+Syntax ERROR #451- array sections not conformable (2 vs 1 dimensions).
+
+>    xhist = reshape([xhist(:, khist + 1 : maxxhist), xhist(:, 1 : khist)], ...
+>          ^
+newuob.f90:NEWUOB line 587:
+Syntax ERROR #451- array sections not conformable (2 vs 1 dimensions).
+
+*******************************************************************************
+   Subroutine NEWUOA                    File newuoa.f90           Line 28
+              <Module subprog of NEWUOA_MOD>
+
+
+>procedure(FUNEVAL) :: calfun
+>^
+newuoa.f90:NEWUOA line 175:
+Syntax ERROR #28- not a fortran statement.
+
+*******************************************************************************
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  Missing type declarations were encountered, but Flint is performing local
+  analysis only (not -g). If you are early in your analysis of the program,
+  we recommend deferring -g until a later analysis phase; otherwise, add -g
+  and look for error messages #136 or #538.
+
+  To see the missing declarations now, enable FYIs (-f) and look for info
+  messages #872 or #873.
+
+  For more information, contact support@cleanscape.net.
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+<-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><
+
+                   *** DEMO VERSION - LIMITED OUTPUT ***
+
+This demo version produces only a limited number of results.  To see how
+thorough Flint is, view the statistics report (next) for the total number
+of messages produced and the number of times each error occurred.
+
+We hope you have found Flint useful! If so, why not order the unrestricted
+version today?  Email sales@cleanscape.net or call 800-944-LINT.
+
+<-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><-><
+
+
+>>> Statistics:
+
+ Number of source files:    20
+
+ Source files:     6400 lines,    191596 bytes    ( 37% comments, 63% code )
+ Include files:       0 lines,         0 bytes
+ Total parsed:     6400 lines,    191596 bytes    ( 37% comments, 63% code )
+
+ Total subprograms:    220
+   Subroutines:         46
+   Functions:          153
+   Program:              1
+   Block Data:           0
+   Module:              20
+
+Individual message summary
+--------------------------
+Syntax  ERR #22-   15x: symbol name already used.
+Syntax  ERR #28-    5x: not a fortran statement.
+Syntax  ERR #74-    2x: must occur before * in line *, statement ignored.
+Syntax  ERR #284-   2x: variable expression where constant required.
+Syntax  ERR #451-   2x: array sections not conformable (* vs * dimensions).
+Syntax  ERR #610-   2x: not current subprogram name.
+Syntax  ERR #621-   2x: may occur only in a subprogram or an interface block.
+Syntax  ERR #679-   2x: no matching "INTERFACE" for this "END INTERFACE".
+Usage  WARN #740-   2x: INTENT(OUT) dummy arg * is never set.
+Syntax  ERR #66-    1x: statement out of order, statement ignored.
+Usage   ERR #126-   1x: local * * is referenced but never set.
+
+Total messages: 36
+
+                        Errors  Warnings   FYIs  
+                       -------- -------- --------
+    Syntax:                 33        0   <supp> 
+    Global Interface:   <supp>   <supp>   <supp> 
+    Data usage:              1        2   <supp> 
+
+    Implicit typing:         <supp> 
+
+make: *** [Makefile:31 : lint] Erreur 3
