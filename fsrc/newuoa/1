@@ -1,10 +1,11 @@
-flint ../common/consts.F90 ../common/debug.F90 ../common/memory.F90 ../common/info.F90 ../common/infnan.F90 ../common/lina.F90 ../common/output.F90 ../common/pintrf.F90  preproc.f90 initialize.f90 trustregion.f90 vlagbeta.f90 geometry.f90 update.f90 shiftbase.f90 newuob.f90 newuoa.f90
+flint -I../common -p ../common/consts.F90 ../common/debug.F90 ../common/memory.F90 ../common/info.F90 ../common/infnan.F90 ../common/lina.F90 ../common/output.F90 ../common/pintrf.F90  preproc.f90 initialize.f90 trustregion.f90 vlagbeta.f90 geometry.f90 update.f90 shiftbase.f90 newuob.f90 newuoa.f90
 
-FORTRAN-lint    Rev 7.50DEMO                             24-Sep-2020  10:10:51 
+FORTRAN-lint    Rev 7.50DEMO                             24-Sep-2020  10:13:45 
 
 Default options:  -w -u -O207,276,76,261 --t -Xno.unreferenced.parameters
                   -Xno.unused.common.variables,no.named.IEEE_*,no.named.C_*
                   -Xno.named.ISO_*,no.named.COMPILER_* --x
+Command options:  -p -I../common
 
 
 
@@ -23,34 +24,6 @@ newuoa.f90
 Directory /home/zaikunzhang/local/cleanscape/flintgui.dir/main/
 
 isoenv.lsh       ieeea.lsh        ieeee.lsh        
-
-*******************************************************************************
-       Module CONSTS_MOD                File consts.F90           Line 60
-
->logical, parameter :: DEBUGGING = .false.
->                      ^
-../common/consts.F90:CONSTS_MOD line 92:
-Syntax ERROR #22- symbol name already used.
-
->integer, parameter :: INT16 = selected_int_kind(4)
->                      ^
-../common/consts.F90:CONSTS_MOD line 100:
-Syntax ERROR #22- symbol name already used.
-
->integer, parameter :: INT32 = selected_int_kind(7)
->                      ^
-../common/consts.F90:CONSTS_MOD line 102:
-Syntax ERROR #22- symbol name already used.
-
->integer, parameter :: INT64 = selected_int_kind(14)
->                      ^
-../common/consts.F90:CONSTS_MOD line 104:
-Syntax ERROR #22- symbol name already used.
-
->integer, parameter :: REAL32 = kind(0.0)
->                      ^
-../common/consts.F90:CONSTS_MOD line 107:
-Syntax ERROR #22- symbol name already used.
 
 *******************************************************************************
    Subroutine ERRSTOP                   File debug.F90            Line 25
@@ -108,11 +81,6 @@ Syntax ERROR #22- symbol name already used.
 
 
 *******************************************************************************
-     Function SIZE_OF_QP                File memory.F90           Line 128
-              <Module subprog of MEMORY_MOD>
-
-
-*******************************************************************************
      Function IS_NAN_SP                 File infnan.F90           Line 76
               <Module subprog of INFNAN_MOD>
 
@@ -159,31 +127,6 @@ Syntax ERROR #22- symbol name already used.
 
 *******************************************************************************
      Function IS_INF_DP                 File infnan.F90           Line 153
-              <Module subprog of INFNAN_MOD>
-
-
-*******************************************************************************
-     Function IS_NAN_QP                 File infnan.F90           Line 163
-              <Module subprog of INFNAN_MOD>
-
-
-*******************************************************************************
-     Function IS_FINITE_QP              File infnan.F90           Line 171
-              <Module subprog of INFNAN_MOD>
-
-
-*******************************************************************************
-     Function IS_NEGINF_QP              File infnan.F90           Line 180
-              <Module subprog of INFNAN_MOD>
-
-
-*******************************************************************************
-     Function IS_POSINF_QP              File infnan.F90           Line 188
-              <Module subprog of INFNAN_MOD>
-
-
-*******************************************************************************
-     Function IS_INF_QP                 File infnan.F90           Line 196
               <Module subprog of INFNAN_MOD>
 
 
@@ -449,20 +392,19 @@ version today?  Email sales@cleanscape.net or call 800-944-LINT.
 
  Number of source files:    20
 
- Source files:     6400 lines,    191596 bytes    ( 37% comments, 63% code )
+ Source files:     8203 lines,    181471 bytes    ( 36% comments, 64% code )
  Include files:       0 lines,         0 bytes
- Total parsed:     6400 lines,    191596 bytes    ( 37% comments, 63% code )
+ Total parsed:     8203 lines,    181471 bytes    ( 36% comments, 64% code )
 
- Total subprograms:    220
+ Total subprograms:    214
    Subroutines:         46
-   Functions:          153
+   Functions:          147
    Program:              1
    Block Data:           0
    Module:              20
 
 Individual message summary
 --------------------------
-Syntax  ERR #22-   15x: symbol name already used.
 Syntax  ERR #28-    5x: not a fortran statement.
 Syntax  ERR #74-    2x: must occur before * in line *, statement ignored.
 Syntax  ERR #284-   2x: variable expression where constant required.
@@ -474,11 +416,11 @@ Usage  WARN #740-   2x: INTENT(OUT) dummy arg * is never set.
 Syntax  ERR #66-    1x: statement out of order, statement ignored.
 Usage   ERR #126-   1x: local * * is referenced but never set.
 
-Total messages: 36
+Total messages: 21
 
                         Errors  Warnings   FYIs  
                        -------- -------- --------
-    Syntax:                 33        0   <supp> 
+    Syntax:                 18        0   <supp> 
     Global Interface:   <supp>   <supp>   <supp> 
     Data usage:              1        2   <supp> 
 
