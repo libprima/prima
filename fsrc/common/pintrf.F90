@@ -5,7 +5,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020.
 !
-! Users must provide the implementation of CALFUN or CALCFC.
+! Users must provide the implementation of FUNEVAL or FCEVAL. 
 
 module pintrf_mod
 
