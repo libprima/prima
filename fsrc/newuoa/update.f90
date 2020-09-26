@@ -78,7 +78,7 @@ if (DEBUGGING) then
         call errstop(srname, 'SIZE(BMAT) is invalid')
     end if
     call verisize(zmat, npt, int(npt - n - 1, kind(n)))
-    call verisize(vlag, npt + n)
+    call verisize(vlag_in, npt + n)
 end if
 
 vlag = vlag_in  ! VLAG_IN is INTENT(IN) and cannot be revised.

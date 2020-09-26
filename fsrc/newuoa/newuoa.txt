@@ -12128,7 +12128,6 @@ update_mod.updateh.v2   (Local Variable)
 update_mod.updateh.vlag   (Local Variable)
   Declared as: REAL (RP)(size)
     Define [update.f90, 65]          update_mod.updateh
-    Use Argument [update.f90, 81]    update_mod.updateh
     Set [update.f90, 84]             update_mod.updateh
     Use [update.f90, 129]            update_mod.updateh
     Set [update.f90, 133]            update_mod.updateh
@@ -12146,6 +12145,7 @@ update_mod.updateh.vlag_in   (Dummy Argument)
     Declare [update.f90, 39]         update_mod.updateh
     Use Argument [update.f90, 65]    update_mod.updateh
     Use Argument [update.f90, 66]    update_mod.updateh
+    Use Argument [update.f90, 81]    update_mod.updateh
     Use [update.f90, 84]             update_mod.updateh
 
 update_mod.updateh.w   (Local Variable)
@@ -14592,9 +14592,6 @@ newuoa.f90                        Line
 
 newuob.f90                        Line
     dnormsave                      109
-
-update.f90                        Line
-    vlag                            65
 
 vlagbeta.f90                      Line
     wz                              53
