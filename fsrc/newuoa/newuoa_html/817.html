@@ -1,0 +1,156 @@
+<html><head><title>memory.F90</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="sourcestyles.css" />
+</head><body link="blue" vlink="blue">
+<h3>File: /home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/common/memory.F90</h3>
+<SCRIPT>
+defaultStatus = "File: /home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/common/memory.F90";
+top.document.title  = "memory.F90";
+</SCRIPT>
+<pre><span class="default"></span><a name="1"><font size=-1>1     </font></a><span class="default"></span><span class="comment">! MEMORY_MOD is a module providing subroutines concerning memory management.</span>
+<a name="2"><font size=-1>2     </font></a><span class="comment"></span>
+<a name="3"><font size=-1>3     </font></a><span class="comment"></span>
+<a name="4"><font size=-1>4     </font></a><span class="comment"></span><span class="preproc">#include </span><span class="string">&quot;ppf.h&quot;</span>
+<a name="5"><font size=-1>5     </font></a><span class="string"></span>
+<a name="6"><font size=-1>6     </font></a><span class="string"></span><span class="keyword">module <a href="dictionary_M.html#495">memory_mod</a></span>
+<a name="7"><font size=-1>7     </font></a><span class="keyword"></span>
+<a name="8"><font size=-1>8     </font></a><span class="keyword">implicit none</span>
+<a name="9"><font size=-1>9     </font></a><span class="keyword">private </span>
+<a name="10"><font size=-1>10     </font></a><span class="keyword">public </span><span class="default">:: <a href="dictionary_M.html#496">safealloc</a>, <a href="dictionary_M.html#497">cstyle_sizeof</a></span>
+<a name="11"><font size=-1>11     </font></a><span class="default"></span>
+<a name="12"><font size=-1>12     </font></a><span class="default"></span><span class="keyword">interface <a href="dictionary_M.html#496">safealloc</a></span>
+<a name="13"><font size=-1>13     </font></a><span class="keyword">    module procedure <a href="dictionary_M.html#824">alloc_rvector</a></span><span class="default">, <a href="dictionary_M.html#818">alloc_rmatrix</a></span>
+<a name="14"><font size=-1>14     </font></a><span class="default"></span><span class="keyword">end interface <a href="dictionary_M.html#496">safealloc</a></span>
+<a name="15"><font size=-1>15     </font></a><span class="keyword"></span>
+<a name="16"><font size=-1>16     </font></a><span class="keyword">interface <a href="dictionary_M.html#497">cstyle_sizeof</a></span>
+<a name="17"><font size=-1>17     </font></a><span class="keyword">    module procedure <a href="dictionary_M.html#830">size_of_sp</a></span><span class="default">, <a href="dictionary_M.html#829">size_of_dp</a></span>
+<a name="18"><font size=-1>18     </font></a><span class="default"></span><span class="preproc">#if </span><span class="default">__QP_AVAILABLE__ == </span><span class="number">1</span>
+<a name="19"><font size=-1>19     </font></a><span class="number">    </span><span class="keyword">module procedure </span><span class="default">size_of_qp</span>
+<a name="20"><font size=-1>20     </font></a><span class="default"></span><span class="preproc">#endif</span>
+<a name="21"><font size=-1>21     </font></a><span class="preproc"></span><span class="keyword">end interface <a href="dictionary_M.html#497">cstyle_sizeof</a></span>
+<a name="22"><font size=-1>22     </font></a><span class="keyword"></span>
+<a name="23"><font size=-1>23     </font></a><span class="keyword"></span>
+<a name="24"><font size=-1>24     </font></a><span class="keyword">contains</span>
+<a name="25"><font size=-1>25     </font></a><span class="keyword"></span>
+<a name="26"><font size=-1>26     </font></a><span class="keyword"></span>
+<a name="27"><font size=-1>27     </font></a><span class="keyword">subroutine <a href="dictionary_M.html#824">alloc_rvector</a></span><span class="default">(<a href="dictionary_M.html#828">x</a>, <a href="dictionary_M.html#826">n</a>)</span>
+<a name="28"><font size=-1>28     </font></a><span class="default"></span><span class="comment">! ALLOC_RVECTOR allocates the space for an allocatable REAL(RP)</span>
+<a name="29"><font size=-1>29     </font></a><span class="comment">! vector X, whose size is N after allocation. </span>
+<a name="30"><font size=-1>30     </font></a><span class="comment"></span><span class="keyword">use <a href="dictionary_C.html#37">consts_mod</a></span><span class="default">, </span><span class="keyword">only </span><span class="default">: <a href="dictionary_C.html#38">RP</a>, <a href="dictionary_C.html#39">IK</a>, <a href="dictionary_C.html#137">SRNLEN</a></span>
+<a name="31"><font size=-1>31     </font></a><span class="default"></span><span class="keyword">use <a href="dictionary_D.html#138">debug_mod</a></span><span class="default">, </span><span class="keyword">only </span><span class="default">: <a href="dictionary_D.html#139">errstop</a></span>
+<a name="32"><font size=-1>32     </font></a><span class="default"></span><span class="keyword">implicit none</span>
+<a name="33"><font size=-1>33     </font></a><span class="keyword"></span>
+<a name="34"><font size=-1>34     </font></a><span class="keyword"></span><span class="comment">! Input</span>
+<a name="35"><font size=-1>35     </font></a><span class="comment"></span><span class="keyword">integer</span><span class="default">(<a href="dictionary_C.html#39">IK</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_M.html#826">n</a></span>
+<a name="36"><font size=-1>36     </font></a><span class="default"></span>
+<a name="37"><font size=-1>37     </font></a><span class="default"></span><span class="comment">! Output</span>
+<a name="38"><font size=-1>38     </font></a><span class="comment"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#38">RP</a>), </span><span class="keyword">allocatable</span><span class="default">, </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">out</span><span class="default">) :: <a href="dictionary_M.html#828">x</a>(:)</span>
+<a name="39"><font size=-1>39     </font></a><span class="default"></span>
+<a name="40"><font size=-1>40     </font></a><span class="default"></span><span class="comment">! Intermediate variable</span>
+<a name="41"><font size=-1>41     </font></a><span class="comment"></span><span class="keyword">integer </span><span class="default">:: <a href="dictionary_M.html#825">alloc_status</a></span>
+<a name="42"><font size=-1>42     </font></a><span class="default"></span><span class="keyword">character</span><span class="default">(len = <a href="dictionary_C.html#137">SRNLEN</a>), </span><span class="keyword">parameter </span><span class="default">:: <a href="dictionary_M.html#827">srname</a> = </span><span class="string">'ALLOC_RVECTOR'</span>
+<a name="43"><font size=-1>43     </font></a><span class="string"></span>
+<a name="44"><font size=-1>44     </font></a><span class="string"></span><span class="comment">! According to the Fortran 2003 standard, when a procedure is invoked, </span>
+<a name="45"><font size=-1>45     </font></a><span class="comment">! any allocated ALLOCATABLE object that is an actual argument associated</span>
+<a name="46"><font size=-1>46     </font></a><span class="comment">! with an INTENT(OUT) ALLOCATABLE dummy argument is deallocated. So it is</span>
+<a name="47"><font size=-1>47     </font></a><span class="comment">! unnecessary to write the following line in F2003 since X is INTENT(OUT):</span>
+<a name="48"><font size=-1>48     </font></a><span class="comment">!!if (allocated(x)) deallocate (x)</span>
+<a name="49"><font size=-1>49     </font></a><span class="comment"></span>
+<a name="50"><font size=-1>50     </font></a><span class="comment">! Allocate memory for X</span>
+<a name="51"><font size=-1>51     </font></a><span class="comment"></span><span class="keyword">allocate </span><span class="default">(<a href="dictionary_M.html#828">x</a>(<a href="dictionary_M.html#826">n</a>), stat = <a href="dictionary_M.html#825">alloc_status</a>)</span>
+<a name="52"><font size=-1>52     </font></a><span class="default"></span><span class="keyword">if </span><span class="default">(<a href="dictionary_M.html#825">alloc_status</a> /= </span><span class="number">0</span><span class="default">) </span><span class="keyword">then</span>
+<a name="53"><font size=-1>53     </font></a><span class="keyword">    call <a href="dictionary_D.html#139">errstop</a></span><span class="default">(<a href="dictionary_M.html#827">srname</a>, </span><span class="string">'Memory allocation fails.'</span><span class="default">) </span>
+<a name="54"><font size=-1>54     </font></a><span class="default"></span><span class="keyword">end if</span>
+<a name="55"><font size=-1>55     </font></a><span class="keyword"></span>
+<a name="56"><font size=-1>56     </font></a><span class="keyword"></span><span class="comment">! Use X; otherwise, compilers may complain.</span>
+<a name="57"><font size=-1>57     </font></a><span class="comment"></span><span class="keyword">if </span><span class="default">(<a href="dictionary_M.html#826">n</a> &gt;= </span><span class="number">1</span><span class="default">) </span><span class="keyword">then</span>
+<a name="58"><font size=-1>58     </font></a><span class="keyword">    <a href="dictionary_M.html#828">x</a></span><span class="default">(</span><span class="number">1</span><span class="default">) = </span><span class="number">0.0</span><span class="default">_RP  </span>
+<a name="59"><font size=-1>59     </font></a><span class="default"></span><span class="keyword">end if</span>
+<a name="60"><font size=-1>60     </font></a><span class="keyword"></span>
+<a name="61"><font size=-1>61     </font></a><span class="keyword">end subroutine <a href="dictionary_M.html#824">alloc_rvector</a></span>
+<a name="62"><font size=-1>62     </font></a><span class="keyword"></span>
+<a name="63"><font size=-1>63     </font></a><span class="keyword"></span>
+<a name="64"><font size=-1>64     </font></a><span class="keyword">subroutine <a href="dictionary_M.html#818">alloc_rmatrix</a></span><span class="default">(<a href="dictionary_M.html#823">x</a>, <a href="dictionary_M.html#820">m</a>, <a href="dictionary_M.html#821">n</a>)</span>
+<a name="65"><font size=-1>65     </font></a><span class="default"></span><span class="comment">! ALLOC_RMATRIX allocates the space for a REAL(RP) matrix X, whose</span>
+<a name="66"><font size=-1>66     </font></a><span class="comment">! size is (M, N) after allocation.</span>
+<a name="67"><font size=-1>67     </font></a><span class="comment"></span><span class="keyword">use <a href="dictionary_C.html#37">consts_mod</a></span><span class="default">, </span><span class="keyword">only </span><span class="default">: <a href="dictionary_C.html#38">RP</a>, <a href="dictionary_C.html#39">IK</a>, <a href="dictionary_C.html#137">SRNLEN</a></span>
+<a name="68"><font size=-1>68     </font></a><span class="default"></span><span class="keyword">use <a href="dictionary_D.html#138">debug_mod</a></span><span class="default">, </span><span class="keyword">only </span><span class="default">: <a href="dictionary_D.html#139">errstop</a></span>
+<a name="69"><font size=-1>69     </font></a><span class="default"></span><span class="keyword">implicit none</span>
+<a name="70"><font size=-1>70     </font></a><span class="keyword"></span>
+<a name="71"><font size=-1>71     </font></a><span class="keyword"></span><span class="comment">! Input</span>
+<a name="72"><font size=-1>72     </font></a><span class="comment"></span><span class="keyword">integer</span><span class="default">(<a href="dictionary_C.html#39">IK</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_M.html#820">m</a>, <a href="dictionary_M.html#821">n</a></span>
+<a name="73"><font size=-1>73     </font></a><span class="default"></span>
+<a name="74"><font size=-1>74     </font></a><span class="default"></span><span class="comment">! Output</span>
+<a name="75"><font size=-1>75     </font></a><span class="comment"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#38">RP</a>), </span><span class="keyword">allocatable</span><span class="default">, </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">out</span><span class="default">) :: <a href="dictionary_M.html#823">x</a>(:, :)</span>
+<a name="76"><font size=-1>76     </font></a><span class="default"></span>
+<a name="77"><font size=-1>77     </font></a><span class="default"></span><span class="comment">! Intermediate variable</span>
+<a name="78"><font size=-1>78     </font></a><span class="comment"></span><span class="keyword">integer </span><span class="default">:: <a href="dictionary_M.html#819">alloc_status</a></span>
+<a name="79"><font size=-1>79     </font></a><span class="default"></span><span class="keyword">character</span><span class="default">(len = <a href="dictionary_C.html#137">SRNLEN</a>), </span><span class="keyword">parameter </span><span class="default">:: <a href="dictionary_M.html#822">srname</a> = </span><span class="string">'ALLOC_RMATRIX'</span>
+<a name="80"><font size=-1>80     </font></a><span class="string"></span>
+<a name="81"><font size=-1>81     </font></a><span class="string"></span><span class="comment">! Unnecessary to write the following line in F2003 since X is INTENT(OUT):</span>
+<a name="82"><font size=-1>82     </font></a><span class="comment">!!if (allocated(x)) deallocate (x)</span>
+<a name="83"><font size=-1>83     </font></a><span class="comment"></span>
+<a name="84"><font size=-1>84     </font></a><span class="comment">! Allocate memory for X</span>
+<a name="85"><font size=-1>85     </font></a><span class="comment"></span><span class="keyword">allocate </span><span class="default">(<a href="dictionary_M.html#823">x</a>(<a href="dictionary_M.html#820">m</a>, <a href="dictionary_M.html#821">n</a>), stat = <a href="dictionary_M.html#819">alloc_status</a>)</span>
+<a name="86"><font size=-1>86     </font></a><span class="default"></span><span class="keyword">if </span><span class="default">(<a href="dictionary_M.html#819">alloc_status</a> /= </span><span class="number">0</span><span class="default">) </span><span class="keyword">then</span>
+<a name="87"><font size=-1>87     </font></a><span class="keyword">    call <a href="dictionary_D.html#139">errstop</a></span><span class="default">(<a href="dictionary_M.html#822">srname</a>, </span><span class="string">'Memory allocation fails.'</span><span class="default">) </span>
+<a name="88"><font size=-1>88     </font></a><span class="default"></span><span class="keyword">end if</span>
+<a name="89"><font size=-1>89     </font></a><span class="keyword"></span>
+<a name="90"><font size=-1>90     </font></a><span class="keyword"></span><span class="comment">! Use X; otherwise, compilers may complain.</span>
+<a name="91"><font size=-1>91     </font></a><span class="comment"></span><span class="keyword">if </span><span class="default">(<a href="dictionary_M.html#820">m</a>*<a href="dictionary_M.html#821">n</a> &gt;= </span><span class="number">1</span><span class="default">) </span><span class="keyword">then</span>
+<a name="92"><font size=-1>92     </font></a><span class="keyword">    <a href="dictionary_M.html#823">x</a></span><span class="default">(</span><span class="number">1</span><span class="default">, </span><span class="number">1</span><span class="default">) = </span><span class="number">0.0</span><span class="default">_RP</span>
+<a name="93"><font size=-1>93     </font></a><span class="default"></span><span class="keyword">end if</span>
+<a name="94"><font size=-1>94     </font></a><span class="keyword"></span>
+<a name="95"><font size=-1>95     </font></a><span class="keyword">end subroutine <a href="dictionary_M.html#818">alloc_rmatrix</a></span>
+<a name="96"><font size=-1>96     </font></a><span class="keyword"></span>
+<a name="97"><font size=-1>97     </font></a><span class="keyword"></span>
+<a name="98"><font size=-1>98     </font></a><span class="keyword">pure function <a href="dictionary_M.html#830">size_of_sp</a></span><span class="default">(<a href="dictionary_M.html#833">x</a>) </span><span class="keyword">result</span><span class="default">(<a href="dictionary_M.html#834">y</a>)</span>
+<a name="99"><font size=-1>99     </font></a><span class="default"></span><span class="keyword">use <a href="dictionary_C.html#37">consts_mod</a></span><span class="default">, </span><span class="keyword">only </span><span class="default">: <a href="dictionary_C.html#283">SP</a>, <a href="dictionary_C.html#39">IK</a></span>
+<a name="100"><font size=-1>100     </font></a><span class="default"></span><span class="keyword">implicit none</span>
+<a name="101"><font size=-1>101     </font></a><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#283">SP</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_M.html#833">x</a></span>
+<a name="102"><font size=-1>102     </font></a><span class="default"></span><span class="keyword">integer</span><span class="default">(<a href="dictionary_C.html#39">IK</a>) :: <a href="dictionary_M.html#834">y</a></span>
+<a name="103"><font size=-1>103     </font></a><span class="default"></span><span class="preproc">#if </span><span class="default">__USE_STORAGE_SIZE__ == </span><span class="number">1</span>
+<a name="104"><font size=-1>104     </font></a><span class="number">    </span><span class="default">y = int(storage_size(x)/</span><span class="number">8</span><span class="default">, kind(y))</span>
+<a name="105"><font size=-1>105     </font></a><span class="default"></span><span class="preproc">#else</span>
+<a name="106"><font size=-1>106     </font></a><span class="preproc">    <a href="dictionary_M.html#834">y</a> </span><span class="default">= <a href="dictionary_I.html#54">int</a>(<a href="dictionary_K.html#55">kind</a>(<a href="dictionary_M.html#833">x</a>), <a href="dictionary_K.html#55">kind</a>(<a href="dictionary_M.html#834">y</a>)) </span><span class="comment">! Avoid complaint </span>
+<a name="107"><font size=-1>107     </font></a><span class="comment">    <a href="dictionary_M.html#834">y</a> </span><span class="default">= <a href="dictionary_I.html#54">int</a>(</span><span class="number">4</span><span class="default">, <a href="dictionary_K.html#55">kind</a>(<a href="dictionary_M.html#834">y</a>))</span>
+<a name="108"><font size=-1>108     </font></a><span class="default"></span><span class="preproc">#endif</span>
+<a name="109"><font size=-1>109     </font></a><span class="preproc"></span><span class="keyword">end function <a href="dictionary_M.html#830">size_of_sp</a></span>
+<a name="110"><font size=-1>110     </font></a><span class="keyword"></span>
+<a name="111"><font size=-1>111     </font></a><span class="keyword"></span>
+<a name="112"><font size=-1>112     </font></a><span class="keyword">pure function <a href="dictionary_M.html#829">size_of_dp</a></span><span class="default">(<a href="dictionary_M.html#831">x</a>) </span><span class="keyword">result</span><span class="default">(<a href="dictionary_M.html#832">y</a>)</span>
+<a name="113"><font size=-1>113     </font></a><span class="default"></span><span class="keyword">use <a href="dictionary_C.html#37">consts_mod</a></span><span class="default">, </span><span class="keyword">only </span><span class="default">: <a href="dictionary_C.html#264">DP</a>, <a href="dictionary_C.html#39">IK</a></span>
+<a name="114"><font size=-1>114     </font></a><span class="default"></span><span class="keyword">implicit none</span>
+<a name="115"><font size=-1>115     </font></a><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#264">DP</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_M.html#831">x</a></span>
+<a name="116"><font size=-1>116     </font></a><span class="default"></span><span class="keyword">integer</span><span class="default">(<a href="dictionary_C.html#39">IK</a>) :: <a href="dictionary_M.html#832">y</a></span>
+<a name="117"><font size=-1>117     </font></a><span class="default"></span><span class="preproc">#if </span><span class="default">__USE_STORAGE_SIZE__ == </span><span class="number">1</span>
+<a name="118"><font size=-1>118     </font></a><span class="number">    </span><span class="default">y = int(storage_size(x)/</span><span class="number">8</span><span class="default">, kind(y))</span>
+<a name="119"><font size=-1>119     </font></a><span class="default"></span><span class="preproc">#else</span>
+<a name="120"><font size=-1>120     </font></a><span class="preproc">    <a href="dictionary_M.html#832">y</a> </span><span class="default">= <a href="dictionary_I.html#54">int</a>(<a href="dictionary_K.html#55">kind</a>(<a href="dictionary_M.html#831">x</a>), <a href="dictionary_K.html#55">kind</a>(<a href="dictionary_M.html#832">y</a>)) </span><span class="comment">! Avoid complaint </span>
+<a name="121"><font size=-1>121     </font></a><span class="comment">    <a href="dictionary_M.html#832">y</a> </span><span class="default">= <a href="dictionary_I.html#54">int</a>(</span><span class="number">8</span><span class="default">, <a href="dictionary_K.html#55">kind</a>(<a href="dictionary_M.html#832">y</a>))</span>
+<a name="122"><font size=-1>122     </font></a><span class="default"></span><span class="preproc">#endif</span>
+<a name="123"><font size=-1>123     </font></a><span class="preproc"></span><span class="keyword">end function <a href="dictionary_M.html#829">size_of_dp</a></span>
+<a name="124"><font size=-1>124     </font></a><span class="keyword"></span>
+<a name="125"><font size=-1>125     </font></a><span class="keyword"></span>
+<a name="126"><font size=-1>126     </font></a><span class="keyword"></span><span class="preproc">#if </span><span class="default">__QP_AVAILABLE__ == </span><span class="number">1</span>
+<a name="127"><font size=-1>127     </font></a><span class="number"></span>
+<a name="128"><font size=-1>128     </font></a><span class="number"></span><span class="keyword">pure function </span><span class="default">size_of_qp(x) </span><span class="keyword">result</span><span class="default">(y)</span>
+<a name="129"><font size=-1>129     </font></a><span class="default"></span><span class="keyword">use </span><span class="default">consts_mod, </span><span class="keyword">only </span><span class="default">: QP, IK</span>
+<a name="130"><font size=-1>130     </font></a><span class="default"></span><span class="keyword">implicit none</span>
+<a name="131"><font size=-1>131     </font></a><span class="keyword">real</span><span class="default">(QP), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: x</span>
+<a name="132"><font size=-1>132     </font></a><span class="default"></span><span class="keyword">integer</span><span class="default">(IK) :: y</span>
+<a name="133"><font size=-1>133     </font></a><span class="default"></span><span class="preproc">#if </span><span class="default">__USE_STORAGE_SIZE__ == </span><span class="number">1</span>
+<a name="134"><font size=-1>134     </font></a><span class="number">    </span><span class="default">y = int(storage_size(x)/</span><span class="number">8</span><span class="default">, kind(y))</span>
+<a name="135"><font size=-1>135     </font></a><span class="default"></span><span class="preproc">#else</span>
+<a name="136"><font size=-1>136     </font></a><span class="preproc">    </span><span class="default">y = int(kind(x), kind(y)) </span><span class="comment">! Avoid complaint </span>
+<a name="137"><font size=-1>137     </font></a><span class="comment">    </span><span class="default">y = int(</span><span class="number">8</span><span class="default">, kind(y))</span>
+<a name="138"><font size=-1>138     </font></a><span class="default"></span><span class="preproc">#endif</span>
+<a name="139"><font size=-1>139     </font></a><span class="preproc"></span><span class="keyword">end function </span><span class="default">size_of_qp</span>
+<a name="140"><font size=-1>140     </font></a><span class="default"></span>
+<a name="141"><font size=-1>141     </font></a><span class="default"></span><span class="preproc">#endif</span>
+<a name="142"><font size=-1>142     </font></a><span class="preproc"></span>
+<a name="143"><font size=-1>143     </font></a><span class="preproc"></span>
+<a name="144"><font size=-1>144     </font></a><span class="preproc"></span><span class="keyword">end module <a href="dictionary_M.html#495">memory_mod</a></span>
+<a name="145"><font size=-1>145     </font></a><span class="keyword"></span>
+<a name="146"><font size=-1>146     </font></a><span class="keyword"></span>
+</pre></body></html>

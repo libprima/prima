@@ -2,125 +2,125 @@
 <a2>&</a2><a href="progunit_xref_A.html">A</a><a2>B</a2><a href="progunit_xref_C.html">C</a><a href="progunit_xref_D.html">D</a><a href="progunit_xref_E.html">E</a><a2>F</a2><a href="progunit_xref_G.html">G</a><a href="progunit_xref_H.html">H</a><a href="progunit_xref_I.html">I</a><a2>J</a2><a href="progunit_xref_K.html">K</a><a href="progunit_xref_L.html">L</a><a href="progunit_xref_M.html">M</a><a href="progunit_xref_N.html">N</a><a href="progunit_xref_O.html">O</a><a href="progunit_xref_P.html">P</a><a2>Q</a2><a href="progunit_xref_R.html">R</a><a href="progunit_xref_S.html">S</a><a href="progunit_xref_T.html">T</a><a href="progunit_xref_U.html">U</a><a href="progunit_xref_V.html">V</a><a2>W</a2><a2>X</a2><a2>Y</a2><a2>Z</a2></div></div></nav>
 <script type="text/javascript">navbar();</script><script type="text/javascript">if (typeof ToC === 'undefined') {document.getElementById("dropdown-button").remove();document.getElementById("dropdown-buffer").remove();document.getElementById("nav-dropdown-content").remove();}</script>
 <div id="main-content"><pre>
-<a href="dictionary_D.html#86">debug_mod</a><a name="86"> </a>   (Module)
-    Define   [<a href="629.html#10">debug.F90, 10</a>]           debug.F90
-    ModuleUse   [<a href="1.html#53">trustregion.f90, 53</a>]   <a href="dictionary_T.html#21">trustregion_mod.trsapp</a>
-    ModuleUse   [<a href="158.html#336">update.f90, 336</a>]      <a href="dictionary_U.html#160">update_mod.tryqalt</a>
-    ModuleUse   [<a href="158.html#31">update.f90, 31</a>]       <a href="dictionary_U.html#175">update_mod.updateh</a>
-    ModuleUse   [<a href="158.html#265">update.f90, 265</a>]      <a href="dictionary_U.html#205">update_mod.updateq</a>
-    ModuleUse   [<a href="269.html#694">lina.F90, 694</a>]        <a href="dictionary_L.html#92">lina_mod.Ax_plus_y</a>
-    ModuleUse   [<a href="269.html#794">lina.F90, 794</a>]        <a href="dictionary_L.html#278">lina_mod.calquad</a>
-    ModuleUse   [<a href="269.html#505">lina.F90, 505</a>]        <a href="dictionary_L.html#219">lina_mod.grota</a>
-    ModuleUse   [<a href="269.html#454">lina.F90, 454</a>]        <a href="dictionary_L.html#93">lina_mod.inprod</a>
-    ModuleUse   [<a href="269.html#328">lina.F90, 328</a>]        <a href="dictionary_L.html#308">lina_mod.matprod12</a>
-    ModuleUse   [<a href="269.html#372">lina.F90, 372</a>]        <a href="dictionary_L.html#309">lina_mod.matprod21</a>
-    ModuleUse   [<a href="269.html#412">lina.F90, 412</a>]        <a href="dictionary_L.html#310">lina_mod.matprod22</a>
-    ModuleUse   [<a href="269.html#129">lina.F90, 129</a>]        <a href="dictionary_L.html#323">lina_mod.r1</a>
-    ModuleUse   [<a href="269.html#62">lina.F90, 62</a>]         <a href="dictionary_L.html#331">lina_mod.r1_sym</a>
-    ModuleUse   [<a href="269.html#256">lina.F90, 256</a>]        <a href="dictionary_L.html#338">lina_mod.r2</a>
-    ModuleUse   [<a href="269.html#191">lina.F90, 191</a>]        <a href="dictionary_L.html#349">lina_mod.r2_sym</a>
-    ModuleUse   [<a href="269.html#565">lina.F90, 565</a>]        <a href="dictionary_L.html#221">lina_mod.symmetrize</a>
-    ModuleUse   [<a href="269.html#739">lina.F90, 739</a>]        <a href="dictionary_L.html#360">lina_mod.xA_plus_y</a>
-    ModuleUse   [<a href="269.html#652">lina.F90, 652</a>]        <a href="dictionary_L.html#367">lina_mod.xdy_plus_a</a>
-    ModuleUse   [<a href="269.html#609">lina.F90, 609</a>]        <a href="dictionary_L.html#374">lina_mod.xpy_dot_z</a>
-    ModuleUse   [<a href="385.html#27">vlagbeta.f90, 27</a>]     <a href="dictionary_V.html#387">vlagbeta_mod.vlagbeta</a>
-    ModuleUse   [<a href="422.html#95">geometry.f90, 95</a>]     <a href="dictionary_G.html#431">geometry_mod.ameliorgeo</a>
-    ModuleUse   [<a href="422.html#383">geometry.f90, 383</a>]    <a href="dictionary_G.html#423">geometry_mod.bigden</a>
-    ModuleUse   [<a href="422.html#173">geometry.f90, 173</a>]    <a href="dictionary_G.html#424">geometry_mod.biglag</a>
-    ModuleUse   [<a href="422.html#28">geometry.f90, 28</a>]     <a href="dictionary_G.html#549">geometry_mod.setremove</a>
-    ModuleUse   [<a href="587.html#68">memory.F90, 68</a>]       <a href="dictionary_M.html#588">memory_mod.alloc_rmatrix</a>
-    ModuleUse   [<a href="587.html#31">memory.F90, 31</a>]       <a href="dictionary_M.html#594">memory_mod.alloc_rvector</a>
-    ModuleUse   [<a href="605.html#25">shiftbase.f90, 25</a>]    <a href="dictionary_S.html#607">shiftbase_mod.shiftbase</a>
-    ModuleUse   [<a href="662.html#384">initialize.f90, 384</a>]   <a href="dictionary_I.html#667">initialize_mod.inith</a>
-    ModuleUse   [<a href="662.html#279">initialize.f90, 279</a>]   <a href="dictionary_I.html#686">initialize_mod.initq</a>
-    ModuleUse   [<a href="662.html#24">initialize.f90, 24</a>]   <a href="dictionary_I.html#706">initialize_mod.initxf</a>
-    ModuleUse   [<a href="769.html#50">newuob.f90, 50</a>]       <a href="dictionary_N.html#157">newuob_mod.newuob</a>
+<a href="dictionary_D.html#138">debug_mod</a><a name="138"> </a>   (Module)
+    Define   [<a href="146.html#10">debug.F90, 10</a>]           debug.F90
+    ModuleUse   [<a href="50.html#384">initialize.f90, 384</a>]   <a href="dictionary_I.html#64">initialize_mod.inith</a>
+    ModuleUse   [<a href="50.html#279">initialize.f90, 279</a>]   <a href="dictionary_I.html#83">initialize_mod.initq</a>
+    ModuleUse   [<a href="50.html#24">initialize.f90, 24</a>]   <a href="dictionary_I.html#103">initialize_mod.initxf</a>
+    ModuleUse   [<a href="184.html#53">trustregion.f90, 53</a>]   <a href="dictionary_T.html#197">trustregion_mod.trsapp</a>
+    ModuleUse   [<a href="286.html#27">vlagbeta.f90, 27</a>]     <a href="dictionary_V.html#288">vlagbeta_mod.vlagbeta</a>
+    ModuleUse   [<a href="311.html#694">lina.F90, 694</a>]        <a href="dictionary_L.html#255">lina_mod.Ax_plus_y</a>
+    ModuleUse   [<a href="311.html#794">lina.F90, 794</a>]        <a href="dictionary_L.html#320">lina_mod.calquad</a>
+    ModuleUse   [<a href="311.html#505">lina.F90, 505</a>]        <a href="dictionary_L.html#337">lina_mod.grota</a>
+    ModuleUse   [<a href="311.html#454">lina.F90, 454</a>]        <a href="dictionary_L.html#256">lina_mod.inprod</a>
+    ModuleUse   [<a href="311.html#328">lina.F90, 328</a>]        <a href="dictionary_L.html#351">lina_mod.matprod12</a>
+    ModuleUse   [<a href="311.html#372">lina.F90, 372</a>]        <a href="dictionary_L.html#352">lina_mod.matprod21</a>
+    ModuleUse   [<a href="311.html#412">lina.F90, 412</a>]        <a href="dictionary_L.html#353">lina_mod.matprod22</a>
+    ModuleUse   [<a href="311.html#129">lina.F90, 129</a>]        <a href="dictionary_L.html#366">lina_mod.r1</a>
+    ModuleUse   [<a href="311.html#62">lina.F90, 62</a>]         <a href="dictionary_L.html#374">lina_mod.r1_sym</a>
+    ModuleUse   [<a href="311.html#256">lina.F90, 256</a>]        <a href="dictionary_L.html#382">lina_mod.r2</a>
+    ModuleUse   [<a href="311.html#191">lina.F90, 191</a>]        <a href="dictionary_L.html#393">lina_mod.r2_sym</a>
+    ModuleUse   [<a href="311.html#565">lina.F90, 565</a>]        <a href="dictionary_L.html#402">lina_mod.symmetrize</a>
+    ModuleUse   [<a href="311.html#739">lina.F90, 739</a>]        <a href="dictionary_L.html#309">lina_mod.xA_plus_y</a>
+    ModuleUse   [<a href="311.html#652">lina.F90, 652</a>]        <a href="dictionary_L.html#412">lina_mod.xdy_plus_a</a>
+    ModuleUse   [<a href="311.html#609">lina.F90, 609</a>]        <a href="dictionary_L.html#310">lina_mod.xpy_dot_z</a>
+    ModuleUse   [<a href="425.html#25">shiftbase.f90, 25</a>]    <a href="dictionary_S.html#428">shiftbase_mod.shiftbase</a>
+    ModuleUse   [<a href="502.html#336">update.f90, 336</a>]      <a href="dictionary_U.html#504">update_mod.tryqalt</a>
+    ModuleUse   [<a href="502.html#31">update.f90, 31</a>]       <a href="dictionary_U.html#519">update_mod.updateh</a>
+    ModuleUse   [<a href="502.html#265">update.f90, 265</a>]      <a href="dictionary_U.html#549">update_mod.updateq</a>
+    ModuleUse   [<a href="609.html#50">newuob.f90, 50</a>]       <a href="dictionary_N.html#501">newuob_mod.newuob</a>
+    ModuleUse   [<a href="679.html#95">geometry.f90, 95</a>]     <a href="dictionary_G.html#678">geometry_mod.ameliorgeo</a>
+    ModuleUse   [<a href="679.html#383">geometry.f90, 383</a>]    <a href="dictionary_G.html#680">geometry_mod.bigden</a>
+    ModuleUse   [<a href="679.html#173">geometry.f90, 173</a>]    <a href="dictionary_G.html#681">geometry_mod.biglag</a>
+    ModuleUse   [<a href="679.html#28">geometry.f90, 28</a>]     <a href="dictionary_G.html#677">geometry_mod.setremove</a>
+    ModuleUse   [<a href="817.html#68">memory.F90, 68</a>]       <a href="dictionary_M.html#818">memory_mod.alloc_rmatrix</a>
+    ModuleUse   [<a href="817.html#31">memory.F90, 31</a>]       <a href="dictionary_M.html#824">memory_mod.alloc_rvector</a>
 
-<a href="dictionary_D.html#631">debug_mod.backtr</a><a name="631"> </a>   (Subroutine)
+<a href="dictionary_D.html#149">debug_mod.backtr</a><a name="149"> </a>   (Subroutine)
   Declared as: REAL (implicit)
-    Declare   [<a href="629.html#14">debug.F90, 14</a>]          <a href="dictionary_D.html#86">debug_mod</a>
-    Define   [<a href="629.html#40">debug.F90, 40</a>]           <a href="dictionary_D.html#86">debug_mod</a>
-    Call   [<a href="629.html#30">debug.F90, 30</a>]             <a href="dictionary_D.html#87">debug_mod.errstop</a>
+    Declare   [<a href="146.html#14">debug.F90, 14</a>]          <a href="dictionary_D.html#138">debug_mod</a>
+    Define   [<a href="146.html#40">debug.F90, 40</a>]           <a href="dictionary_D.html#138">debug_mod</a>
+    Call   [<a href="146.html#30">debug.F90, 30</a>]             <a href="dictionary_D.html#139">debug_mod.errstop</a>
 
-<a href="dictionary_D.html#87">debug_mod.errstop</a><a name="87"> </a>   (Subroutine)
+<a href="dictionary_D.html#139">debug_mod.errstop</a><a name="139"> </a>   (Subroutine)
   Declared as: REAL (implicit)
-    Declare   [<a href="629.html#14">debug.F90, 14</a>]          <a href="dictionary_D.html#86">debug_mod</a>
-    Define   [<a href="629.html#25">debug.F90, 25</a>]           <a href="dictionary_D.html#86">debug_mod</a>
-    Call   [<a href="629.html#131">debug.F90, 131</a>]            <a href="dictionary_D.html#634">debug_mod.verisize_int_1</a>
-    Call   [<a href="629.html#146">debug.F90, 146</a>]            <a href="dictionary_D.html#635">debug_mod.verisize_int_2</a>
-    Call   [<a href="629.html#149">debug.F90, 149</a>]            <a href="dictionary_D.html#635">debug_mod.verisize_int_2</a>
-    Call   [<a href="629.html#99">debug.F90, 99</a>]             <a href="dictionary_D.html#636">debug_mod.verisize_real_1</a>
-    Call   [<a href="629.html#114">debug.F90, 114</a>]            <a href="dictionary_D.html#637">debug_mod.verisize_real_2</a>
-    Call   [<a href="629.html#117">debug.F90, 117</a>]            <a href="dictionary_D.html#637">debug_mod.verisize_real_2</a>
-    Call   [<a href="629.html#76">debug.F90, 76</a>]             <a href="dictionary_D.html#382">debug_mod.verisym</a>
-    Call   [<a href="629.html#80">debug.F90, 80</a>]             <a href="dictionary_D.html#382">debug_mod.verisym</a>
-    Call   [<a href="629.html#84">debug.F90, 84</a>]             <a href="dictionary_D.html#382">debug_mod.verisym</a>
-    Call   [<a href="1.html#126">trustregion.f90, 126</a>]      <a href="dictionary_T.html#21">trustregion_mod.trsapp</a>
-    Call   [<a href="158.html#376">update.f90, 376</a>]           <a href="dictionary_U.html#160">update_mod.tryqalt</a>
-    Call   [<a href="158.html#78">update.f90, 78</a>]            <a href="dictionary_U.html#175">update_mod.updateh</a>
-    Call   [<a href="158.html#297">update.f90, 297</a>]           <a href="dictionary_U.html#205">update_mod.updateq</a>
-    Call   [<a href="269.html#710">lina.F90, 710</a>]             <a href="dictionary_L.html#92">lina_mod.Ax_plus_y</a>
-    Call   [<a href="269.html#824">lina.F90, 824</a>]             <a href="dictionary_L.html#278">lina_mod.calquad</a>
-    Call   [<a href="269.html#519">lina.F90, 519</a>]             <a href="dictionary_L.html#219">lina_mod.grota</a>
-    Call   [<a href="269.html#522">lina.F90, 522</a>]             <a href="dictionary_L.html#219">lina_mod.grota</a>
-    Call   [<a href="269.html#469">lina.F90, 469</a>]             <a href="dictionary_L.html#93">lina_mod.inprod</a>
-    Call   [<a href="269.html#343">lina.F90, 343</a>]             <a href="dictionary_L.html#308">lina_mod.matprod12</a>
-    Call   [<a href="269.html#387">lina.F90, 387</a>]             <a href="dictionary_L.html#309">lina_mod.matprod21</a>
-    Call   [<a href="269.html#427">lina.F90, 427</a>]             <a href="dictionary_L.html#310">lina_mod.matprod22</a>
-    Call   [<a href="269.html#147">lina.F90, 147</a>]             <a href="dictionary_L.html#323">lina_mod.r1</a>
-    Call   [<a href="269.html#79">lina.F90, 79</a>]              <a href="dictionary_L.html#331">lina_mod.r1_sym</a>
-    Call   [<a href="269.html#273">lina.F90, 273</a>]             <a href="dictionary_L.html#338">lina_mod.r2</a>
-    Call   [<a href="269.html#276">lina.F90, 276</a>]             <a href="dictionary_L.html#338">lina_mod.r2</a>
-    Call   [<a href="269.html#279">lina.F90, 279</a>]             <a href="dictionary_L.html#338">lina_mod.r2</a>
-    Call   [<a href="269.html#205">lina.F90, 205</a>]             <a href="dictionary_L.html#349">lina_mod.r2_sym</a>
-    Call   [<a href="269.html#208">lina.F90, 208</a>]             <a href="dictionary_L.html#349">lina_mod.r2_sym</a>
-    Call   [<a href="269.html#578">lina.F90, 578</a>]             <a href="dictionary_L.html#221">lina_mod.symmetrize</a>
-    Call   [<a href="269.html#755">lina.F90, 755</a>]             <a href="dictionary_L.html#360">lina_mod.xA_plus_y</a>
-    Call   [<a href="269.html#668">lina.F90, 668</a>]             <a href="dictionary_L.html#367">lina_mod.xdy_plus_a</a>
-    Call   [<a href="269.html#625">lina.F90, 625</a>]             <a href="dictionary_L.html#374">lina_mod.xpy_dot_z</a>
-    Call   [<a href="385.html#65">vlagbeta.f90, 65</a>]          <a href="dictionary_V.html#387">vlagbeta_mod.vlagbeta</a>
-    Call   [<a href="422.html#134">geometry.f90, 134</a>]         <a href="dictionary_G.html#431">geometry_mod.ameliorgeo</a>
-    Call   [<a href="422.html#486">geometry.f90, 486</a>]         <a href="dictionary_G.html#423">geometry_mod.bigden</a>
-    Call   [<a href="422.html#244">geometry.f90, 244</a>]         <a href="dictionary_G.html#424">geometry_mod.biglag</a>
-    Call   [<a href="422.html#63">geometry.f90, 63</a>]          <a href="dictionary_G.html#549">geometry_mod.setremove</a>
-    Call   [<a href="587.html#87">memory.F90, 87</a>]            <a href="dictionary_M.html#588">memory_mod.alloc_rmatrix</a>
-    Call   [<a href="587.html#53">memory.F90, 53</a>]            <a href="dictionary_M.html#594">memory_mod.alloc_rvector</a>
-    Call   [<a href="605.html#64">shiftbase.f90, 64</a>]         <a href="dictionary_S.html#607">shiftbase_mod.shiftbase</a>
-    Call   [<a href="662.html#420">initialize.f90, 420</a>]       <a href="dictionary_I.html#667">initialize_mod.inith</a>
-    Call   [<a href="662.html#316">initialize.f90, 316</a>]       <a href="dictionary_I.html#686">initialize_mod.initq</a>
-    Call   [<a href="662.html#84">initialize.f90, 84</a>]        <a href="dictionary_I.html#706">initialize_mod.initxf</a>
-    Call   [<a href="662.html#87">initialize.f90, 87</a>]        <a href="dictionary_I.html#706">initialize_mod.initxf</a>
-    Call   [<a href="662.html#90">initialize.f90, 90</a>]        <a href="dictionary_I.html#706">initialize_mod.initxf</a>
-    Call   [<a href="769.html#144">newuob.f90, 144</a>]           <a href="dictionary_N.html#157">newuob_mod.newuob</a>
-    Call   [<a href="769.html#147">newuob.f90, 147</a>]           <a href="dictionary_N.html#157">newuob_mod.newuob</a>
-    Call   [<a href="769.html#150">newuob.f90, 150</a>]           <a href="dictionary_N.html#157">newuob_mod.newuob</a>
+    Declare   [<a href="146.html#14">debug.F90, 14</a>]          <a href="dictionary_D.html#138">debug_mod</a>
+    Define   [<a href="146.html#25">debug.F90, 25</a>]           <a href="dictionary_D.html#138">debug_mod</a>
+    Call   [<a href="146.html#131">debug.F90, 131</a>]            <a href="dictionary_D.html#152">debug_mod.verisize_int_1</a>
+    Call   [<a href="146.html#146">debug.F90, 146</a>]            <a href="dictionary_D.html#153">debug_mod.verisize_int_2</a>
+    Call   [<a href="146.html#149">debug.F90, 149</a>]            <a href="dictionary_D.html#153">debug_mod.verisize_int_2</a>
+    Call   [<a href="146.html#99">debug.F90, 99</a>]             <a href="dictionary_D.html#154">debug_mod.verisize_real_1</a>
+    Call   [<a href="146.html#114">debug.F90, 114</a>]            <a href="dictionary_D.html#155">debug_mod.verisize_real_2</a>
+    Call   [<a href="146.html#117">debug.F90, 117</a>]            <a href="dictionary_D.html#155">debug_mod.verisize_real_2</a>
+    Call   [<a href="146.html#76">debug.F90, 76</a>]             <a href="dictionary_D.html#170">debug_mod.verisym</a>
+    Call   [<a href="146.html#80">debug.F90, 80</a>]             <a href="dictionary_D.html#170">debug_mod.verisym</a>
+    Call   [<a href="146.html#84">debug.F90, 84</a>]             <a href="dictionary_D.html#170">debug_mod.verisym</a>
+    Call   [<a href="50.html#420">initialize.f90, 420</a>]       <a href="dictionary_I.html#64">initialize_mod.inith</a>
+    Call   [<a href="50.html#316">initialize.f90, 316</a>]       <a href="dictionary_I.html#83">initialize_mod.initq</a>
+    Call   [<a href="50.html#84">initialize.f90, 84</a>]        <a href="dictionary_I.html#103">initialize_mod.initxf</a>
+    Call   [<a href="50.html#87">initialize.f90, 87</a>]        <a href="dictionary_I.html#103">initialize_mod.initxf</a>
+    Call   [<a href="50.html#90">initialize.f90, 90</a>]        <a href="dictionary_I.html#103">initialize_mod.initxf</a>
+    Call   [<a href="184.html#126">trustregion.f90, 126</a>]      <a href="dictionary_T.html#197">trustregion_mod.trsapp</a>
+    Call   [<a href="286.html#65">vlagbeta.f90, 65</a>]          <a href="dictionary_V.html#288">vlagbeta_mod.vlagbeta</a>
+    Call   [<a href="311.html#710">lina.F90, 710</a>]             <a href="dictionary_L.html#255">lina_mod.Ax_plus_y</a>
+    Call   [<a href="311.html#824">lina.F90, 824</a>]             <a href="dictionary_L.html#320">lina_mod.calquad</a>
+    Call   [<a href="311.html#519">lina.F90, 519</a>]             <a href="dictionary_L.html#337">lina_mod.grota</a>
+    Call   [<a href="311.html#522">lina.F90, 522</a>]             <a href="dictionary_L.html#337">lina_mod.grota</a>
+    Call   [<a href="311.html#469">lina.F90, 469</a>]             <a href="dictionary_L.html#256">lina_mod.inprod</a>
+    Call   [<a href="311.html#343">lina.F90, 343</a>]             <a href="dictionary_L.html#351">lina_mod.matprod12</a>
+    Call   [<a href="311.html#387">lina.F90, 387</a>]             <a href="dictionary_L.html#352">lina_mod.matprod21</a>
+    Call   [<a href="311.html#427">lina.F90, 427</a>]             <a href="dictionary_L.html#353">lina_mod.matprod22</a>
+    Call   [<a href="311.html#147">lina.F90, 147</a>]             <a href="dictionary_L.html#366">lina_mod.r1</a>
+    Call   [<a href="311.html#79">lina.F90, 79</a>]              <a href="dictionary_L.html#374">lina_mod.r1_sym</a>
+    Call   [<a href="311.html#273">lina.F90, 273</a>]             <a href="dictionary_L.html#382">lina_mod.r2</a>
+    Call   [<a href="311.html#276">lina.F90, 276</a>]             <a href="dictionary_L.html#382">lina_mod.r2</a>
+    Call   [<a href="311.html#279">lina.F90, 279</a>]             <a href="dictionary_L.html#382">lina_mod.r2</a>
+    Call   [<a href="311.html#205">lina.F90, 205</a>]             <a href="dictionary_L.html#393">lina_mod.r2_sym</a>
+    Call   [<a href="311.html#208">lina.F90, 208</a>]             <a href="dictionary_L.html#393">lina_mod.r2_sym</a>
+    Call   [<a href="311.html#578">lina.F90, 578</a>]             <a href="dictionary_L.html#402">lina_mod.symmetrize</a>
+    Call   [<a href="311.html#755">lina.F90, 755</a>]             <a href="dictionary_L.html#309">lina_mod.xA_plus_y</a>
+    Call   [<a href="311.html#668">lina.F90, 668</a>]             <a href="dictionary_L.html#412">lina_mod.xdy_plus_a</a>
+    Call   [<a href="311.html#625">lina.F90, 625</a>]             <a href="dictionary_L.html#310">lina_mod.xpy_dot_z</a>
+    Call   [<a href="425.html#64">shiftbase.f90, 64</a>]         <a href="dictionary_S.html#428">shiftbase_mod.shiftbase</a>
+    Call   [<a href="502.html#376">update.f90, 376</a>]           <a href="dictionary_U.html#504">update_mod.tryqalt</a>
+    Call   [<a href="502.html#78">update.f90, 78</a>]            <a href="dictionary_U.html#519">update_mod.updateh</a>
+    Call   [<a href="502.html#297">update.f90, 297</a>]           <a href="dictionary_U.html#549">update_mod.updateq</a>
+    Call   [<a href="609.html#144">newuob.f90, 144</a>]           <a href="dictionary_N.html#501">newuob_mod.newuob</a>
+    Call   [<a href="609.html#147">newuob.f90, 147</a>]           <a href="dictionary_N.html#501">newuob_mod.newuob</a>
+    Call   [<a href="609.html#150">newuob.f90, 150</a>]           <a href="dictionary_N.html#501">newuob_mod.newuob</a>
+    Call   [<a href="679.html#134">geometry.f90, 134</a>]         <a href="dictionary_G.html#678">geometry_mod.ameliorgeo</a>
+    Call   [<a href="679.html#486">geometry.f90, 486</a>]         <a href="dictionary_G.html#680">geometry_mod.bigden</a>
+    Call   [<a href="679.html#244">geometry.f90, 244</a>]         <a href="dictionary_G.html#681">geometry_mod.biglag</a>
+    Call   [<a href="679.html#63">geometry.f90, 63</a>]          <a href="dictionary_G.html#677">geometry_mod.setremove</a>
+    Call   [<a href="817.html#87">memory.F90, 87</a>]            <a href="dictionary_M.html#818">memory_mod.alloc_rmatrix</a>
+    Call   [<a href="817.html#53">memory.F90, 53</a>]            <a href="dictionary_M.html#824">memory_mod.alloc_rvector</a>
 
-<a href="dictionary_D.html#634">debug_mod.verisize_int_1</a><a name="634"> </a>   (Subroutine)
-    Define   [<a href="629.html#122">debug.F90, 122</a>]          <a href="dictionary_D.html#86">debug_mod</a>
-    Declare   [<a href="629.html#18">debug.F90, 18</a>]          <a href="dictionary_D.html#88">debug_mod.verisize</a>
+<a href="dictionary_D.html#152">debug_mod.verisize_int_1</a><a name="152"> </a>   (Subroutine)
+    Define   [<a href="146.html#122">debug.F90, 122</a>]          <a href="dictionary_D.html#138">debug_mod</a>
+    Declare   [<a href="146.html#18">debug.F90, 18</a>]          <a href="dictionary_D.html#140">debug_mod.verisize</a>
 
-<a href="dictionary_D.html#635">debug_mod.verisize_int_2</a><a name="635"> </a>   (Subroutine)
-    Define   [<a href="629.html#136">debug.F90, 136</a>]          <a href="dictionary_D.html#86">debug_mod</a>
-    Declare   [<a href="629.html#18">debug.F90, 18</a>]          <a href="dictionary_D.html#88">debug_mod.verisize</a>
+<a href="dictionary_D.html#153">debug_mod.verisize_int_2</a><a name="153"> </a>   (Subroutine)
+    Define   [<a href="146.html#136">debug.F90, 136</a>]          <a href="dictionary_D.html#138">debug_mod</a>
+    Declare   [<a href="146.html#18">debug.F90, 18</a>]          <a href="dictionary_D.html#140">debug_mod.verisize</a>
 
-<a href="dictionary_D.html#636">debug_mod.verisize_real_1</a><a name="636"> </a>   (Subroutine)
-    Define   [<a href="629.html#90">debug.F90, 90</a>]           <a href="dictionary_D.html#86">debug_mod</a>
-    Declare   [<a href="629.html#17">debug.F90, 17</a>]          <a href="dictionary_D.html#88">debug_mod.verisize</a>
+<a href="dictionary_D.html#154">debug_mod.verisize_real_1</a><a name="154"> </a>   (Subroutine)
+    Define   [<a href="146.html#90">debug.F90, 90</a>]           <a href="dictionary_D.html#138">debug_mod</a>
+    Declare   [<a href="146.html#17">debug.F90, 17</a>]          <a href="dictionary_D.html#140">debug_mod.verisize</a>
 
-<a href="dictionary_D.html#637">debug_mod.verisize_real_2</a><a name="637"> </a>   (Subroutine)
-    Define   [<a href="629.html#104">debug.F90, 104</a>]          <a href="dictionary_D.html#86">debug_mod</a>
-    Declare   [<a href="629.html#17">debug.F90, 17</a>]          <a href="dictionary_D.html#88">debug_mod.verisize</a>
+<a href="dictionary_D.html#155">debug_mod.verisize_real_2</a><a name="155"> </a>   (Subroutine)
+    Define   [<a href="146.html#104">debug.F90, 104</a>]          <a href="dictionary_D.html#138">debug_mod</a>
+    Declare   [<a href="146.html#17">debug.F90, 17</a>]          <a href="dictionary_D.html#140">debug_mod.verisize</a>
 
-<a href="dictionary_D.html#382">debug_mod.verisym</a><a name="382"> </a>   (Subroutine)
+<a href="dictionary_D.html#170">debug_mod.verisym</a><a name="170"> </a>   (Subroutine)
   Declared as: REAL (implicit)
-    Declare   [<a href="629.html#14">debug.F90, 14</a>]          <a href="dictionary_D.html#86">debug_mod</a>
-    Define   [<a href="629.html#65">debug.F90, 65</a>]           <a href="dictionary_D.html#86">debug_mod</a>
-    Call   [<a href="269.html#115">lina.F90, 115</a>]             <a href="dictionary_L.html#331">lina_mod.r1_sym</a>
-    Call   [<a href="269.html#242">lina.F90, 242</a>]             <a href="dictionary_L.html#349">lina_mod.r2_sym</a>
-    Call   [<a href="269.html#593">lina.F90, 593</a>]             <a href="dictionary_L.html#221">lina_mod.symmetrize</a>
+    Declare   [<a href="146.html#14">debug.F90, 14</a>]          <a href="dictionary_D.html#138">debug_mod</a>
+    Define   [<a href="146.html#65">debug.F90, 65</a>]           <a href="dictionary_D.html#138">debug_mod</a>
+    Call   [<a href="311.html#115">lina.F90, 115</a>]             <a href="dictionary_L.html#374">lina_mod.r1_sym</a>
+    Call   [<a href="311.html#242">lina.F90, 242</a>]             <a href="dictionary_L.html#393">lina_mod.r2_sym</a>
+    Call   [<a href="311.html#593">lina.F90, 593</a>]             <a href="dictionary_L.html#402">lina_mod.symmetrize</a>
 
-<a href="dictionary_D.html#270">dot_product</a><a name="270"> </a>   (Intrinsic Function)
-    Call   [<a href="269.html#474">lina.F90, 474</a>]             <a href="dictionary_L.html#93">lina_mod.inprod</a>
+<a href="dictionary_D.html#312">dot_product</a><a name="312"> </a>   (Intrinsic Function)
+    Call   [<a href="311.html#474">lina.F90, 474</a>]             <a href="dictionary_L.html#256">lina_mod.inprod</a>
 </pre>
 <p>
-<div class="footer"><b>Generated:</b> Saturday, 26 September 2020 10:43:06 AM HKT</div><center><p><div class="scitools-tag">Scientific Toolworks, Inc.<br></div><div class="scitools-link"><A target="_blank" href="mailto:support@scitools.com">support@scitools.com</A><br><A href="http://www.scitools.com">www.scitools.com</A></div></center></div></body></html>
+<div class="footer"><b>Generated:</b> Saturday, 26 September 2020 11:31:42 AM HKT</div><center><p><div class="scitools-tag">Scientific Toolworks, Inc.<br></div><div class="scitools-link"><A target="_blank" href="mailto:support@scitools.com">support@scitools.com</A><br><A href="http://www.scitools.com">www.scitools.com</A></div></center></div></body></html>

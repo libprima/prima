@@ -2630,24 +2630,6 @@ vlagbeta.f90
 ===============================================================================
 
 abs   (Intrinsic Function)
-    Call [newuob.f90, 175]           newuob_mod.newuob
-    Call [newuob.f90, 234]           newuob_mod.newuob
-    Call [newuob.f90, 275]           newuob_mod.newuob
-    Call [newuob.f90, 438]           newuob_mod.newuob
-    Call [newuob.f90, 478]           newuob_mod.newuob
-    Call [newuob.f90, 559]           newuob_mod.newuob
-    Call [newuob.f90, 592]           newuob_mod.newuob
-    Call [infnan.F90, 108]           infnan_mod.is_finite_dp
-    Call [infnan.F90, 100]           infnan_mod.is_finite_sp
-    Call [infnan.F90, 158]           infnan_mod.is_inf_dp
-    Call [infnan.F90, 150]           infnan_mod.is_inf_sp
-    Call [initialize.f90, 431]       initialize_mod.inith
-    Call [initialize.f90, 329]       initialize_mod.initq
-    Call [initialize.f90, 156]       initialize_mod.initxf
-    Call [initialize.f90, 239]       initialize_mod.initxf
-    Call [debug.F90, 79]             debug_mod.verisym
-    Call [debug.F90, 79]             debug_mod.verisym
-    Call [debug.F90, 83]             debug_mod.verisym
     Call [geometry.f90, 156]         geometry_mod.ameliorgeo
     Call [geometry.f90, 642]         geometry_mod.bigden
     Call [geometry.f90, 642]         geometry_mod.bigden
@@ -2662,6 +2644,13 @@ abs   (Intrinsic Function)
     Call [geometry.f90, 360]         geometry_mod.biglag
     Call [geometry.f90, 360]         geometry_mod.biglag
     Call [geometry.f90, 73]          geometry_mod.setremove
+    Call [newuob.f90, 175]           newuob_mod.newuob
+    Call [newuob.f90, 234]           newuob_mod.newuob
+    Call [newuob.f90, 275]           newuob_mod.newuob
+    Call [newuob.f90, 438]           newuob_mod.newuob
+    Call [newuob.f90, 478]           newuob_mod.newuob
+    Call [newuob.f90, 559]           newuob_mod.newuob
+    Call [newuob.f90, 592]           newuob_mod.newuob
     Call [preproc.f90, 45]           preproc_mod.preproc
     Call [preproc.f90, 45]           preproc_mod.preproc
     Call [preproc.f90, 45]           preproc_mod.preproc
@@ -2669,15 +2658,26 @@ abs   (Intrinsic Function)
     Call [preproc.f90, 75]           preproc_mod.preproc
     Call [preproc.f90, 123]          preproc_mod.preproc
     Call [preproc.f90, 123]          preproc_mod.preproc
+    Call [infnan.F90, 108]           infnan_mod.is_finite_dp
+    Call [infnan.F90, 100]           infnan_mod.is_finite_sp
+    Call [infnan.F90, 158]           infnan_mod.is_inf_dp
+    Call [infnan.F90, 150]           infnan_mod.is_inf_sp
+    Call [update.f90, 134]           update_mod.updateh
+    Call [update.f90, 213]           update_mod.updateh
     Call [lina.F90, 526]             lina_mod.grota
     Call [lina.F90, 155]             lina_mod.r1
     Call [lina.F90, 88]              lina_mod.r1_sym
     Call [lina.F90, 286]             lina_mod.r2
     Call [lina.F90, 286]             lina_mod.r2
     Call [lina.F90, 216]             lina_mod.r2_sym
-    Call [update.f90, 134]           update_mod.updateh
-    Call [update.f90, 213]           update_mod.updateh
     Call [trustregion.f90, 310]      trustregion_mod.trsapp
+    Call [debug.F90, 79]             debug_mod.verisym
+    Call [debug.F90, 79]             debug_mod.verisym
+    Call [debug.F90, 83]             debug_mod.verisym
+    Call [initialize.f90, 431]       initialize_mod.inith
+    Call [initialize.f90, 329]       initialize_mod.initq
+    Call [initialize.f90, 156]       initialize_mod.initxf
+    Call [initialize.f90, 239]       initialize_mod.initxf
 
 any   (Intrinsic Function)
     Call [newuob.f90, 268]           newuob_mod.newuob
@@ -2696,16 +2696,22 @@ any   (Intrinsic Function)
 
 consts_mod   (Module)
     Define [consts.F90, 60]          consts.F90
-    ModuleUse [trustregion.f90, 339]   trustregion_mod.trrad
-    ModuleUse [trustregion.f90, 52]   trustregion_mod.trsapp
-    ModuleUse [newuoa.f90, 162]      newuoa_mod.newuoa
-    ModuleUse [newuoa.f90, 163]      newuoa_mod.newuoa
-    ModuleUse [update.f90, 335]      update_mod.tryqalt
-    ModuleUse [update.f90, 30]       update_mod.updateh
-    ModuleUse [update.f90, 264]      update_mod.updateq
     ModuleUse [output.F90, 146]      output_mod.fmssg
     ModuleUse [output.F90, 20]       output_mod.retmssg
     ModuleUse [output.F90, 95]       output_mod.rhomssg
+    ModuleUse [initialize.f90, 382]   initialize_mod.inith
+    ModuleUse [initialize.f90, 277]   initialize_mod.initq
+    ModuleUse [initialize.f90, 23]   initialize_mod.initxf
+    ModuleUse [debug.F90, 124]       debug_mod.verisize_int_1
+    ModuleUse [debug.F90, 138]       debug_mod.verisize_int_2
+    ModuleUse [debug.F90, 92]        debug_mod.verisize_real_1
+    ModuleUse [debug.F90, 106]       debug_mod.verisize_real_2
+    ModuleUse [debug.F90, 67]        debug_mod.verisym
+    ModuleUse [pintrf.F90, 28]       pintrf_mod.FCEVAL
+    ModuleUse [pintrf.F90, 18]       pintrf_mod.FUNEVAL
+    ModuleUse [trustregion.f90, 339]   trustregion_mod.trrad
+    ModuleUse [trustregion.f90, 52]   trustregion_mod.trsapp
+    ModuleUse [vlagbeta.f90, 26]     vlagbeta_mod.vlagbeta
     ModuleUse [lina.F90, 686]        lina_mod.Ax_plus_y
     ModuleUse [lina.F90, 689]        lina_mod.Ax_plus_y
     ModuleUse [lina.F90, 693]        lina_mod.Ax_plus_y
@@ -2737,36 +2743,20 @@ consts_mod   (Module)
     ModuleUse [lina.F90, 734]        lina_mod.xA_plus_y
     ModuleUse [lina.F90, 738]        lina_mod.xA_plus_y
     ModuleUse [lina.F90, 644]        lina_mod.xdy_plus_a
+                                                                     Page 49
+                      Program Unit Cross Reference Report
+===============================================================================
     ModuleUse [lina.F90, 647]        lina_mod.xdy_plus_a
     ModuleUse [lina.F90, 651]        lina_mod.xdy_plus_a
     ModuleUse [lina.F90, 601]        lina_mod.xpy_dot_z
     ModuleUse [lina.F90, 604]        lina_mod.xpy_dot_z
     ModuleUse [lina.F90, 608]        lina_mod.xpy_dot_z
-    ModuleUse [vlagbeta.f90, 26]     vlagbeta_mod.vlagbeta
-                                                                     Page 49
-                      Program Unit Cross Reference Report
-===============================================================================
-    ModuleUse [preproc.f90, 19]      preproc_mod.preproc
-    ModuleUse [preproc.f90, 20]      preproc_mod.preproc
-    ModuleUse [geometry.f90, 94]     geometry_mod.ameliorgeo
-    ModuleUse [geometry.f90, 382]    geometry_mod.bigden
-    ModuleUse [geometry.f90, 172]    geometry_mod.biglag
-    ModuleUse [geometry.f90, 27]     geometry_mod.setremove
-    ModuleUse [memory.F90, 67]       memory_mod.alloc_rmatrix
-    ModuleUse [memory.F90, 30]       memory_mod.alloc_rvector
-    ModuleUse [memory.F90, 113]      memory_mod.size_of_dp
-    ModuleUse [memory.F90, 99]       memory_mod.size_of_sp
     ModuleUse [shiftbase.f90, 24]    shiftbase_mod.shiftbase
-    ModuleUse [debug.F90, 124]       debug_mod.verisize_int_1
-    ModuleUse [debug.F90, 138]       debug_mod.verisize_int_2
-    ModuleUse [debug.F90, 92]        debug_mod.verisize_real_1
-    ModuleUse [debug.F90, 106]       debug_mod.verisize_real_2
-    ModuleUse [debug.F90, 67]        debug_mod.verisym
-    ModuleUse [pintrf.F90, 28]       pintrf_mod.FCEVAL
-    ModuleUse [pintrf.F90, 18]       pintrf_mod.FUNEVAL
-    ModuleUse [initialize.f90, 382]   initialize_mod.inith
-    ModuleUse [initialize.f90, 277]   initialize_mod.initq
-    ModuleUse [initialize.f90, 23]   initialize_mod.initxf
+    ModuleUse [newuoa.f90, 162]      newuoa_mod.newuoa
+    ModuleUse [newuoa.f90, 163]      newuoa_mod.newuoa
+    ModuleUse [update.f90, 335]      update_mod.tryqalt
+    ModuleUse [update.f90, 30]       update_mod.updateh
+    ModuleUse [update.f90, 264]      update_mod.updateq
     ModuleUse [infnan.F90, 104]      infnan_mod.is_finite_dp
     ModuleUse [infnan.F90, 96]       infnan_mod.is_finite_sp
     ModuleUse [infnan.F90, 154]      infnan_mod.is_inf_dp
@@ -2777,7 +2767,17 @@ consts_mod   (Module)
     ModuleUse [infnan.F90, 130]      infnan_mod.is_neginf_sp
     ModuleUse [infnan.F90, 122]      infnan_mod.is_posinf_dp
     ModuleUse [infnan.F90, 114]      infnan_mod.is_posinf_sp
+    ModuleUse [preproc.f90, 19]      preproc_mod.preproc
+    ModuleUse [preproc.f90, 20]      preproc_mod.preproc
     ModuleUse [newuob.f90, 47]       newuob_mod.newuob
+    ModuleUse [geometry.f90, 94]     geometry_mod.ameliorgeo
+    ModuleUse [geometry.f90, 382]    geometry_mod.bigden
+    ModuleUse [geometry.f90, 172]    geometry_mod.biglag
+    ModuleUse [geometry.f90, 27]     geometry_mod.setremove
+    ModuleUse [memory.F90, 67]       memory_mod.alloc_rmatrix
+    ModuleUse [memory.F90, 30]       memory_mod.alloc_rvector
+    ModuleUse [memory.F90, 113]      memory_mod.size_of_dp
+    ModuleUse [memory.F90, 99]       memory_mod.size_of_sp
 
 cos   (Intrinsic Function)
     Call [geometry.f90, 634]         geometry_mod.bigden
@@ -2792,19 +2792,20 @@ count   (Intrinsic Function)
 
 debug_mod   (Module)
     Define [debug.F90, 10]           debug.F90
+    ModuleUse [initialize.f90, 384]   initialize_mod.inith
+    ModuleUse [initialize.f90, 279]   initialize_mod.initq
+    ModuleUse [initialize.f90, 24]   initialize_mod.initxf
     ModuleUse [trustregion.f90, 53]   trustregion_mod.trsapp
-    ModuleUse [update.f90, 336]      update_mod.tryqalt
-    ModuleUse [update.f90, 31]       update_mod.updateh
-    ModuleUse [update.f90, 265]      update_mod.updateq
+    ModuleUse [vlagbeta.f90, 27]     vlagbeta_mod.vlagbeta
     ModuleUse [lina.F90, 694]        lina_mod.Ax_plus_y
     ModuleUse [lina.F90, 794]        lina_mod.calquad
     ModuleUse [lina.F90, 505]        lina_mod.grota
     ModuleUse [lina.F90, 454]        lina_mod.inprod
     ModuleUse [lina.F90, 328]        lina_mod.matprod12
-    ModuleUse [lina.F90, 372]        lina_mod.matprod21
                                                                      Page 50
                       Program Unit Cross Reference Report
 ===============================================================================
+    ModuleUse [lina.F90, 372]        lina_mod.matprod21
     ModuleUse [lina.F90, 412]        lina_mod.matprod22
     ModuleUse [lina.F90, 129]        lina_mod.r1
     ModuleUse [lina.F90, 62]         lina_mod.r1_sym
@@ -2814,18 +2815,17 @@ debug_mod   (Module)
     ModuleUse [lina.F90, 739]        lina_mod.xA_plus_y
     ModuleUse [lina.F90, 652]        lina_mod.xdy_plus_a
     ModuleUse [lina.F90, 609]        lina_mod.xpy_dot_z
-    ModuleUse [vlagbeta.f90, 27]     vlagbeta_mod.vlagbeta
+    ModuleUse [shiftbase.f90, 25]    shiftbase_mod.shiftbase
+    ModuleUse [update.f90, 336]      update_mod.tryqalt
+    ModuleUse [update.f90, 31]       update_mod.updateh
+    ModuleUse [update.f90, 265]      update_mod.updateq
+    ModuleUse [newuob.f90, 50]       newuob_mod.newuob
     ModuleUse [geometry.f90, 95]     geometry_mod.ameliorgeo
     ModuleUse [geometry.f90, 383]    geometry_mod.bigden
     ModuleUse [geometry.f90, 173]    geometry_mod.biglag
     ModuleUse [geometry.f90, 28]     geometry_mod.setremove
     ModuleUse [memory.F90, 68]       memory_mod.alloc_rmatrix
     ModuleUse [memory.F90, 31]       memory_mod.alloc_rvector
-    ModuleUse [shiftbase.f90, 25]    shiftbase_mod.shiftbase
-    ModuleUse [initialize.f90, 384]   initialize_mod.inith
-    ModuleUse [initialize.f90, 279]   initialize_mod.initq
-    ModuleUse [initialize.f90, 24]   initialize_mod.initxf
-    ModuleUse [newuob.f90, 50]       newuob_mod.newuob
 
 debug_mod.backtr   (Subroutine)
   Declared as: REAL (implicit)
@@ -2846,10 +2846,13 @@ debug_mod.errstop   (Subroutine)
     Call [debug.F90, 76]             debug_mod.verisym
     Call [debug.F90, 80]             debug_mod.verisym
     Call [debug.F90, 84]             debug_mod.verisym
+    Call [initialize.f90, 420]       initialize_mod.inith
+    Call [initialize.f90, 316]       initialize_mod.initq
+    Call [initialize.f90, 84]        initialize_mod.initxf
+    Call [initialize.f90, 87]        initialize_mod.initxf
+    Call [initialize.f90, 90]        initialize_mod.initxf
     Call [trustregion.f90, 126]      trustregion_mod.trsapp
-    Call [update.f90, 376]           update_mod.tryqalt
-    Call [update.f90, 78]            update_mod.updateh
-    Call [update.f90, 297]           update_mod.updateq
+    Call [vlagbeta.f90, 65]          vlagbeta_mod.vlagbeta
     Call [lina.F90, 710]             lina_mod.Ax_plus_y
     Call [lina.F90, 824]             lina_mod.calquad
     Call [lina.F90, 519]             lina_mod.grota
@@ -2858,12 +2861,12 @@ debug_mod.errstop   (Subroutine)
     Call [lina.F90, 343]             lina_mod.matprod12
     Call [lina.F90, 387]             lina_mod.matprod21
     Call [lina.F90, 427]             lina_mod.matprod22
-    Call [lina.F90, 147]             lina_mod.r1
-    Call [lina.F90, 79]              lina_mod.r1_sym
-    Call [lina.F90, 273]             lina_mod.r2
                                                                      Page 51
                       Program Unit Cross Reference Report
 ===============================================================================
+    Call [lina.F90, 147]             lina_mod.r1
+    Call [lina.F90, 79]              lina_mod.r1_sym
+    Call [lina.F90, 273]             lina_mod.r2
     Call [lina.F90, 276]             lina_mod.r2
     Call [lina.F90, 279]             lina_mod.r2
     Call [lina.F90, 205]             lina_mod.r2_sym
@@ -2872,22 +2875,19 @@ debug_mod.errstop   (Subroutine)
     Call [lina.F90, 755]             lina_mod.xA_plus_y
     Call [lina.F90, 668]             lina_mod.xdy_plus_a
     Call [lina.F90, 625]             lina_mod.xpy_dot_z
-    Call [vlagbeta.f90, 65]          vlagbeta_mod.vlagbeta
+    Call [shiftbase.f90, 64]         shiftbase_mod.shiftbase
+    Call [update.f90, 376]           update_mod.tryqalt
+    Call [update.f90, 78]            update_mod.updateh
+    Call [update.f90, 297]           update_mod.updateq
+    Call [newuob.f90, 144]           newuob_mod.newuob
+    Call [newuob.f90, 147]           newuob_mod.newuob
+    Call [newuob.f90, 150]           newuob_mod.newuob
     Call [geometry.f90, 134]         geometry_mod.ameliorgeo
     Call [geometry.f90, 486]         geometry_mod.bigden
     Call [geometry.f90, 244]         geometry_mod.biglag
     Call [geometry.f90, 63]          geometry_mod.setremove
     Call [memory.F90, 87]            memory_mod.alloc_rmatrix
     Call [memory.F90, 53]            memory_mod.alloc_rvector
-    Call [shiftbase.f90, 64]         shiftbase_mod.shiftbase
-    Call [initialize.f90, 420]       initialize_mod.inith
-    Call [initialize.f90, 316]       initialize_mod.initq
-    Call [initialize.f90, 84]        initialize_mod.initxf
-    Call [initialize.f90, 87]        initialize_mod.initxf
-    Call [initialize.f90, 90]        initialize_mod.initxf
-    Call [newuob.f90, 144]           newuob_mod.newuob
-    Call [newuob.f90, 147]           newuob_mod.newuob
-    Call [newuob.f90, 150]           newuob_mod.newuob
 
 debug_mod.verisize_int_1   (Subroutine)
     Define [debug.F90, 122]          debug_mod
@@ -2959,12 +2959,12 @@ huge   (Intrinsic Function)
 
 infnan_mod   (Module)
     Define [infnan.F90, 15]          infnan.F90
-    ModuleUse [trustregion.f90, 54]   trustregion_mod.trsapp
-    ModuleUse [newuoa.f90, 164]      newuoa_mod.newuoa
-    ModuleUse [preproc.f90, 21]      preproc_mod.preproc
     ModuleUse [initialize.f90, 385]   initialize_mod.inith
     ModuleUse [initialize.f90, 280]   initialize_mod.initq
     ModuleUse [initialize.f90, 26]   initialize_mod.initxf
+    ModuleUse [trustregion.f90, 54]   trustregion_mod.trsapp
+    ModuleUse [newuoa.f90, 164]      newuoa_mod.newuoa
+    ModuleUse [preproc.f90, 21]      preproc_mod.preproc
     ModuleUse [newuob.f90, 49]       newuob_mod.newuob
 
 infnan_mod.is_finite_dp   (Function)
@@ -3056,6 +3056,24 @@ initialize_mod.initxf   (Subroutine)
     Call [newuob.f90, 158]           newuob_mod.newuob
 
 int   (Intrinsic Function)
+    Call [memory.F90, 120]           memory_mod.size_of_dp
+    Call [memory.F90, 121]           memory_mod.size_of_dp
+    Call [memory.F90, 106]           memory_mod.size_of_sp
+    Call [memory.F90, 107]           memory_mod.size_of_sp
+    Call [geometry.f90, 129]         geometry_mod.ameliorgeo
+    Call [geometry.f90, 130]         geometry_mod.ameliorgeo
+    Call [geometry.f90, 138]         geometry_mod.ameliorgeo
+    Call [geometry.f90, 481]         geometry_mod.bigden
+    Call [geometry.f90, 482]         geometry_mod.bigden
+    Call [geometry.f90, 490]         geometry_mod.bigden
+    Call [geometry.f90, 523]         geometry_mod.bigden
+    Call [geometry.f90, 239]         geometry_mod.biglag
+    Call [geometry.f90, 240]         geometry_mod.biglag
+    Call [geometry.f90, 248]         geometry_mod.biglag
+    Call [geometry.f90, 58]          geometry_mod.setremove
+    Call [geometry.f90, 59]          geometry_mod.setremove
+    Call [geometry.f90, 67]          geometry_mod.setremove
+    Call [geometry.f90, 84]          geometry_mod.setremove
     Call [newuob.f90, 138]           newuob_mod.newuob
     Call [newuob.f90, 139]           newuob_mod.newuob
     Call [newuob.f90, 140]           newuob_mod.newuob
@@ -3063,42 +3081,93 @@ int   (Intrinsic Function)
     Call [newuob.f90, 389]           newuob_mod.newuob
     Call [newuob.f90, 477]           newuob_mod.newuob
     Call [newuob.f90, 558]           newuob_mod.newuob
-    Call [initialize.f90, 415]       initialize_mod.inith
-    Call [initialize.f90, 416]       initialize_mod.inith
-    Call [initialize.f90, 424]       initialize_mod.inith
-    Call [initialize.f90, 443]       initialize_mod.inith
-    Call [initialize.f90, 458]       initialize_mod.inith
-    Call [initialize.f90, 465]       initialize_mod.inith
-    Call [initialize.f90, 465]       initialize_mod.inith
-    Call [initialize.f90, 311]       initialize_mod.initq
-    Call [initialize.f90, 312]       initialize_mod.initq
-    Call [initialize.f90, 335]       initialize_mod.initq
-    Call [initialize.f90, 339]       initialize_mod.initq
-    Call [initialize.f90, 343]       initialize_mod.initq
-    Call [initialize.f90, 77]        initialize_mod.initxf
-    Call [initialize.f90, 78]        initialize_mod.initxf
-    Call [initialize.f90, 79]        initialize_mod.initxf
-    Call [initialize.f90, 80]        initialize_mod.initxf
-    Call [initialize.f90, 134]       initialize_mod.initxf
-    Call [initialize.f90, 138]       initialize_mod.initxf
-    Call [initialize.f90, 138]       initialize_mod.initxf
-    Call [initialize.f90, 144]       initialize_mod.initxf
-    Call [initialize.f90, 182]       initialize_mod.initxf
-    Call [initialize.f90, 189]       initialize_mod.initxf
-    Call [initialize.f90, 190]       initialize_mod.initxf
-    Call [initialize.f90, 228]       initialize_mod.initxf
-    Call [initialize.f90, 263]       initialize_mod.initxf
-    Call [initialize.f90, 264]       initialize_mod.initxf
-    Call [shiftbase.f90, 59]         shiftbase_mod.shiftbase
-    Call [shiftbase.f90, 60]         shiftbase_mod.shiftbase
-    Call [shiftbase.f90, 67]         shiftbase_mod.shiftbase
+    Call [preproc.f90, 51]           preproc_mod.preproc
+    Call [preproc.f90, 63]           preproc_mod.preproc
+    Call [update.f90, 371]           update_mod.tryqalt
+    Call [update.f90, 372]           update_mod.tryqalt
+    Call [update.f90, 380]           update_mod.tryqalt
+    Call [update.f90, 397]           update_mod.tryqalt
+    Call [update.f90, 73]            update_mod.updateh
+    Call [update.f90, 74]            update_mod.updateh
+    Call [update.f90, 80]            update_mod.updateh
+    Call [update.f90, 91]            update_mod.updateh
+    Call [update.f90, 97]            update_mod.updateh
                                                                      Page 55
                       Program Unit Cross Reference Report
 ===============================================================================
+    Call [update.f90, 97]            update_mod.updateh
+    Call [update.f90, 208]           update_mod.updateh
+    Call [update.f90, 224]           update_mod.updateh
+    Call [update.f90, 238]           update_mod.updateh
+    Call [update.f90, 292]           update_mod.updateq
+    Call [update.f90, 293]           update_mod.updateq
+    Call [update.f90, 299]           update_mod.updateq
+    Call [newuoa.f90, 219]           newuoa_mod.newuoa
+    Call [newuoa.f90, 274]           newuoa_mod.newuoa
+    Call [newuoa.f90, 276]           newuoa_mod.newuoa
+    Call [newuoa.f90, 332]           newuoa_mod.newuoa
+    Call [newuoa.f90, 334]           newuoa_mod.newuoa
+    Call [newuoa.f90, 340]           newuoa_mod.newuoa
+    Call [shiftbase.f90, 59]         shiftbase_mod.shiftbase
+    Call [shiftbase.f90, 60]         shiftbase_mod.shiftbase
+    Call [shiftbase.f90, 67]         shiftbase_mod.shiftbase
     Call [shiftbase.f90, 115]        shiftbase_mod.shiftbase
     Call [shiftbase.f90, 125]        shiftbase_mod.shiftbase
+    Call [lina.F90, 716]             lina_mod.Ax_plus_y
+    Call [lina.F90, 821]             lina_mod.calquad
+    Call [lina.F90, 822]             lina_mod.calquad
+    Call [lina.F90, 838]             lina_mod.calquad
+    Call [lina.F90, 841]             lina_mod.calquad
+    Call [lina.F90, 856]             lina_mod.calquad
+    Call [lina.F90, 151]             lina_mod.r1
+    Call [lina.F90, 83]              lina_mod.r1_sym
+    Call [lina.F90, 283]             lina_mod.r2
+    Call [lina.F90, 212]             lina_mod.r2_sym
+    Call [lina.F90, 584]             lina_mod.symmetrize
+    Call [lina.F90, 761]             lina_mod.xA_plus_y
+    Call [lina.F90, 674]             lina_mod.xdy_plus_a
+    Call [lina.F90, 631]             lina_mod.xpy_dot_z
+    Call [vlagbeta.f90, 60]          vlagbeta_mod.vlagbeta
+    Call [vlagbeta.f90, 61]          vlagbeta_mod.vlagbeta
+    Call [vlagbeta.f90, 68]          vlagbeta_mod.vlagbeta
+    Call [trustregion.f90, 121]      trustregion_mod.trsapp
+    Call [trustregion.f90, 122]      trustregion_mod.trsapp
+    Call [trustregion.f90, 249]      trustregion_mod.trsapp
+    Call [initialize.f90, 415]       initialize_mod.inith
+    Call [initialize.f90, 416]       initialize_mod.inith
+    Call [initialize.f90, 424]       initialize_mod.inith
+    Call [initialize.f90, 443]       initialize_mod.inith
+    Call [initialize.f90, 458]       initialize_mod.inith
+    Call [initialize.f90, 465]       initialize_mod.inith
+    Call [initialize.f90, 465]       initialize_mod.inith
+    Call [initialize.f90, 311]       initialize_mod.initq
+    Call [initialize.f90, 312]       initialize_mod.initq
+    Call [initialize.f90, 335]       initialize_mod.initq
+    Call [initialize.f90, 339]       initialize_mod.initq
+    Call [initialize.f90, 343]       initialize_mod.initq
+    Call [initialize.f90, 77]        initialize_mod.initxf
+    Call [initialize.f90, 78]        initialize_mod.initxf
+    Call [initialize.f90, 79]        initialize_mod.initxf
+    Call [initialize.f90, 80]        initialize_mod.initxf
+    Call [initialize.f90, 134]       initialize_mod.initxf
+    Call [initialize.f90, 138]       initialize_mod.initxf
+                                                                     Page 56
+                      Program Unit Cross Reference Report
+===============================================================================
+    Call [initialize.f90, 138]       initialize_mod.initxf
+    Call [initialize.f90, 144]       initialize_mod.initxf
+    Call [initialize.f90, 182]       initialize_mod.initxf
+    Call [initialize.f90, 189]       initialize_mod.initxf
+    Call [initialize.f90, 190]       initialize_mod.initxf
+    Call [initialize.f90, 228]       initialize_mod.initxf
+    Call [initialize.f90, 263]       initialize_mod.initxf
+    Call [initialize.f90, 264]       initialize_mod.initxf
+
+kind   (Intrinsic Function)
+    Call [memory.F90, 120]           memory_mod.size_of_dp
     Call [memory.F90, 120]           memory_mod.size_of_dp
     Call [memory.F90, 121]           memory_mod.size_of_dp
+    Call [memory.F90, 106]           memory_mod.size_of_sp
     Call [memory.F90, 106]           memory_mod.size_of_sp
     Call [memory.F90, 107]           memory_mod.size_of_sp
     Call [geometry.f90, 129]         geometry_mod.ameliorgeo
@@ -3115,25 +3184,15 @@ int   (Intrinsic Function)
     Call [geometry.f90, 59]          geometry_mod.setremove
     Call [geometry.f90, 67]          geometry_mod.setremove
     Call [geometry.f90, 84]          geometry_mod.setremove
+    Call [newuob.f90, 138]           newuob_mod.newuob
+    Call [newuob.f90, 139]           newuob_mod.newuob
+    Call [newuob.f90, 140]           newuob_mod.newuob
+    Call [newuob.f90, 274]           newuob_mod.newuob
+    Call [newuob.f90, 389]           newuob_mod.newuob
+    Call [newuob.f90, 477]           newuob_mod.newuob
+    Call [newuob.f90, 558]           newuob_mod.newuob
     Call [preproc.f90, 51]           preproc_mod.preproc
     Call [preproc.f90, 63]           preproc_mod.preproc
-    Call [vlagbeta.f90, 60]          vlagbeta_mod.vlagbeta
-    Call [vlagbeta.f90, 61]          vlagbeta_mod.vlagbeta
-    Call [vlagbeta.f90, 68]          vlagbeta_mod.vlagbeta
-    Call [lina.F90, 716]             lina_mod.Ax_plus_y
-    Call [lina.F90, 821]             lina_mod.calquad
-    Call [lina.F90, 822]             lina_mod.calquad
-    Call [lina.F90, 838]             lina_mod.calquad
-    Call [lina.F90, 841]             lina_mod.calquad
-    Call [lina.F90, 856]             lina_mod.calquad
-    Call [lina.F90, 151]             lina_mod.r1
-    Call [lina.F90, 83]              lina_mod.r1_sym
-    Call [lina.F90, 283]             lina_mod.r2
-    Call [lina.F90, 212]             lina_mod.r2_sym
-    Call [lina.F90, 584]             lina_mod.symmetrize
-    Call [lina.F90, 761]             lina_mod.xA_plus_y
-    Call [lina.F90, 674]             lina_mod.xdy_plus_a
-    Call [lina.F90, 631]             lina_mod.xpy_dot_z
     Call [update.f90, 371]           update_mod.tryqalt
     Call [update.f90, 372]           update_mod.tryqalt
     Call [update.f90, 380]           update_mod.tryqalt
@@ -3151,7 +3210,7 @@ int   (Intrinsic Function)
     Call [update.f90, 293]           update_mod.updateq
     Call [update.f90, 299]           update_mod.updateq
     Call [newuoa.f90, 219]           newuoa_mod.newuoa
-                                                                     Page 56
+                                                                     Page 57
                       Program Unit Cross Reference Report
 ===============================================================================
     Call [newuoa.f90, 274]           newuoa_mod.newuoa
@@ -3159,18 +3218,35 @@ int   (Intrinsic Function)
     Call [newuoa.f90, 332]           newuoa_mod.newuoa
     Call [newuoa.f90, 334]           newuoa_mod.newuoa
     Call [newuoa.f90, 340]           newuoa_mod.newuoa
+    Call [shiftbase.f90, 59]         shiftbase_mod.shiftbase
+    Call [shiftbase.f90, 60]         shiftbase_mod.shiftbase
+    Call [shiftbase.f90, 67]         shiftbase_mod.shiftbase
+    Call [shiftbase.f90, 115]        shiftbase_mod.shiftbase
+    Call [shiftbase.f90, 125]        shiftbase_mod.shiftbase
+    Call [lina.F90, 716]             lina_mod.Ax_plus_y
+    Call [lina.F90, 821]             lina_mod.calquad
+    Call [lina.F90, 822]             lina_mod.calquad
+    Call [lina.F90, 838]             lina_mod.calquad
+    Call [lina.F90, 841]             lina_mod.calquad
+    Call [lina.F90, 856]             lina_mod.calquad
+    Call [lina.F90, 151]             lina_mod.r1
+    Call [lina.F90, 83]              lina_mod.r1_sym
+    Call [lina.F90, 283]             lina_mod.r2
+    Call [lina.F90, 212]             lina_mod.r2_sym
+    Call [lina.F90, 584]             lina_mod.symmetrize
+    Call [lina.F90, 761]             lina_mod.xA_plus_y
+    Call [lina.F90, 674]             lina_mod.xdy_plus_a
+    Call [lina.F90, 631]             lina_mod.xpy_dot_z
+    Call [vlagbeta.f90, 60]          vlagbeta_mod.vlagbeta
+    Call [vlagbeta.f90, 61]          vlagbeta_mod.vlagbeta
+    Call [vlagbeta.f90, 68]          vlagbeta_mod.vlagbeta
+    Call [consts.F90, 107]           consts_mod
+    Call [consts.F90, 108]           consts_mod
+    Call [consts.F90, 111]           consts_mod
+    Call [consts.F90, 112]           consts_mod
     Call [trustregion.f90, 121]      trustregion_mod.trsapp
     Call [trustregion.f90, 122]      trustregion_mod.trsapp
     Call [trustregion.f90, 249]      trustregion_mod.trsapp
-
-kind   (Intrinsic Function)
-    Call [newuob.f90, 138]           newuob_mod.newuob
-    Call [newuob.f90, 139]           newuob_mod.newuob
-    Call [newuob.f90, 140]           newuob_mod.newuob
-    Call [newuob.f90, 274]           newuob_mod.newuob
-    Call [newuob.f90, 389]           newuob_mod.newuob
-    Call [newuob.f90, 477]           newuob_mod.newuob
-    Call [newuob.f90, 558]           newuob_mod.newuob
     Call [initialize.f90, 415]       initialize_mod.inith
     Call [initialize.f90, 416]       initialize_mod.inith
     Call [initialize.f90, 424]       initialize_mod.inith
@@ -3193,102 +3269,26 @@ kind   (Intrinsic Function)
     Call [initialize.f90, 144]       initialize_mod.initxf
     Call [initialize.f90, 182]       initialize_mod.initxf
     Call [initialize.f90, 189]       initialize_mod.initxf
+                                                                     Page 58
+                      Program Unit Cross Reference Report
+===============================================================================
     Call [initialize.f90, 190]       initialize_mod.initxf
     Call [initialize.f90, 228]       initialize_mod.initxf
     Call [initialize.f90, 263]       initialize_mod.initxf
     Call [initialize.f90, 264]       initialize_mod.initxf
-    Call [shiftbase.f90, 59]         shiftbase_mod.shiftbase
-    Call [shiftbase.f90, 60]         shiftbase_mod.shiftbase
-    Call [shiftbase.f90, 67]         shiftbase_mod.shiftbase
-    Call [shiftbase.f90, 115]        shiftbase_mod.shiftbase
-    Call [shiftbase.f90, 125]        shiftbase_mod.shiftbase
-    Call [memory.F90, 120]           memory_mod.size_of_dp
-    Call [memory.F90, 120]           memory_mod.size_of_dp
-    Call [memory.F90, 121]           memory_mod.size_of_dp
-    Call [memory.F90, 106]           memory_mod.size_of_sp
-    Call [memory.F90, 106]           memory_mod.size_of_sp
-    Call [memory.F90, 107]           memory_mod.size_of_sp
-    Call [consts.F90, 107]           consts_mod
-    Call [consts.F90, 108]           consts_mod
-                                                                     Page 57
-                      Program Unit Cross Reference Report
-===============================================================================
-    Call [consts.F90, 111]           consts_mod
-    Call [consts.F90, 112]           consts_mod
-    Call [geometry.f90, 129]         geometry_mod.ameliorgeo
-    Call [geometry.f90, 130]         geometry_mod.ameliorgeo
-    Call [geometry.f90, 138]         geometry_mod.ameliorgeo
-    Call [geometry.f90, 481]         geometry_mod.bigden
-    Call [geometry.f90, 482]         geometry_mod.bigden
-    Call [geometry.f90, 490]         geometry_mod.bigden
-    Call [geometry.f90, 523]         geometry_mod.bigden
-    Call [geometry.f90, 239]         geometry_mod.biglag
-    Call [geometry.f90, 240]         geometry_mod.biglag
-    Call [geometry.f90, 248]         geometry_mod.biglag
-    Call [geometry.f90, 58]          geometry_mod.setremove
-    Call [geometry.f90, 59]          geometry_mod.setremove
-    Call [geometry.f90, 67]          geometry_mod.setremove
-    Call [geometry.f90, 84]          geometry_mod.setremove
-    Call [preproc.f90, 51]           preproc_mod.preproc
-    Call [preproc.f90, 63]           preproc_mod.preproc
-    Call [vlagbeta.f90, 60]          vlagbeta_mod.vlagbeta
-    Call [vlagbeta.f90, 61]          vlagbeta_mod.vlagbeta
-    Call [vlagbeta.f90, 68]          vlagbeta_mod.vlagbeta
-    Call [lina.F90, 716]             lina_mod.Ax_plus_y
-    Call [lina.F90, 821]             lina_mod.calquad
-    Call [lina.F90, 822]             lina_mod.calquad
-    Call [lina.F90, 838]             lina_mod.calquad
-    Call [lina.F90, 841]             lina_mod.calquad
-    Call [lina.F90, 856]             lina_mod.calquad
-    Call [lina.F90, 151]             lina_mod.r1
-    Call [lina.F90, 83]              lina_mod.r1_sym
-    Call [lina.F90, 283]             lina_mod.r2
-    Call [lina.F90, 212]             lina_mod.r2_sym
-    Call [lina.F90, 584]             lina_mod.symmetrize
-    Call [lina.F90, 761]             lina_mod.xA_plus_y
-    Call [lina.F90, 674]             lina_mod.xdy_plus_a
-    Call [lina.F90, 631]             lina_mod.xpy_dot_z
-    Call [update.f90, 371]           update_mod.tryqalt
-    Call [update.f90, 372]           update_mod.tryqalt
-    Call [update.f90, 380]           update_mod.tryqalt
-    Call [update.f90, 397]           update_mod.tryqalt
-    Call [update.f90, 73]            update_mod.updateh
-    Call [update.f90, 74]            update_mod.updateh
-    Call [update.f90, 80]            update_mod.updateh
-    Call [update.f90, 91]            update_mod.updateh
-    Call [update.f90, 97]            update_mod.updateh
-    Call [update.f90, 97]            update_mod.updateh
-    Call [update.f90, 208]           update_mod.updateh
-    Call [update.f90, 224]           update_mod.updateh
-    Call [update.f90, 238]           update_mod.updateh
-    Call [update.f90, 292]           update_mod.updateq
-    Call [update.f90, 293]           update_mod.updateq
-    Call [update.f90, 299]           update_mod.updateq
-    Call [newuoa.f90, 219]           newuoa_mod.newuoa
-    Call [newuoa.f90, 274]           newuoa_mod.newuoa
-    Call [newuoa.f90, 276]           newuoa_mod.newuoa
-    Call [newuoa.f90, 332]           newuoa_mod.newuoa
-    Call [newuoa.f90, 334]           newuoa_mod.newuoa
-                                                                     Page 58
-                      Program Unit Cross Reference Report
-===============================================================================
-    Call [newuoa.f90, 340]           newuoa_mod.newuoa
-    Call [trustregion.f90, 121]      trustregion_mod.trsapp
-    Call [trustregion.f90, 122]      trustregion_mod.trsapp
-    Call [trustregion.f90, 249]      trustregion_mod.trsapp
 
 lina_mod   (Module)
     Define [lina.F90, 22]            lina.F90
     ModuleUse [trustregion.f90, 55]   trustregion_mod.trsapp
+    ModuleUse [vlagbeta.f90, 28]     vlagbeta_mod.vlagbeta
+    ModuleUse [shiftbase.f90, 26]    shiftbase_mod.shiftbase
     ModuleUse [update.f90, 337]      update_mod.tryqalt
     ModuleUse [update.f90, 32]       update_mod.updateh
     ModuleUse [update.f90, 266]      update_mod.updateq
-    ModuleUse [vlagbeta.f90, 28]     vlagbeta_mod.vlagbeta
+    ModuleUse [newuob.f90, 52]       newuob_mod.newuob
     ModuleUse [geometry.f90, 96]     geometry_mod.ameliorgeo
     ModuleUse [geometry.f90, 384]    geometry_mod.bigden
     ModuleUse [geometry.f90, 174]    geometry_mod.biglag
-    ModuleUse [shiftbase.f90, 26]    shiftbase_mod.shiftbase
-    ModuleUse [newuob.f90, 52]       newuob_mod.newuob
 
 lina_mod.Ax_plus_y   (Function)
   Declared as: REAL (RP)
@@ -3297,14 +3297,14 @@ lina_mod.Ax_plus_y   (Function)
     Call [trustregion.f90, 142]      trustregion_mod.trsapp
     Call [trustregion.f90, 182]      trustregion_mod.trsapp
     Call [trustregion.f90, 274]      trustregion_mod.trsapp
-    Call [update.f90, 316]           update_mod.updateq
     Call [vlagbeta.f90, 97]          vlagbeta_mod.vlagbeta
-    Call [geometry.f90, 702]         geometry_mod.bigden
-    Call [geometry.f90, 265]         geometry_mod.biglag
     Call [shiftbase.f90, 84]         shiftbase_mod.shiftbase
     Call [shiftbase.f90, 85]         shiftbase_mod.shiftbase
     Call [shiftbase.f90, 118]        shiftbase_mod.shiftbase
     Call [shiftbase.f90, 128]        shiftbase_mod.shiftbase
+    Call [update.f90, 316]           update_mod.updateq
+    Call [geometry.f90, 702]         geometry_mod.bigden
+    Call [geometry.f90, 265]         geometry_mod.biglag
 
 lina_mod.calquad   (Subroutine)
   Declared as: REAL (implicit)
@@ -3339,12 +3339,17 @@ lina_mod.inprod   (Function)
     Call [trustregion.f90, 277]      trustregion_mod.trsapp
     Call [trustregion.f90, 278]      trustregion_mod.trsapp
     Call [trustregion.f90, 325]      trustregion_mod.trsapp
-    Call [update.f90, 394]           update_mod.tryqalt
-    Call [update.f90, 394]           update_mod.tryqalt
     Call [vlagbeta.f90, 94]          vlagbeta_mod.vlagbeta
     Call [vlagbeta.f90, 111]         vlagbeta_mod.vlagbeta
     Call [vlagbeta.f90, 113]         vlagbeta_mod.vlagbeta
     Call [vlagbeta.f90, 114]         vlagbeta_mod.vlagbeta
+    Call [shiftbase.f90, 76]         shiftbase_mod.shiftbase
+    Call [update.f90, 394]           update_mod.tryqalt
+    Call [update.f90, 394]           update_mod.tryqalt
+    Call [newuob.f90, 229]           newuob_mod.newuob
+    Call [newuob.f90, 254]           newuob_mod.newuob
+    Call [newuob.f90, 454]           newuob_mod.newuob
+    Call [newuob.f90, 537]           newuob_mod.newuob
     Call [geometry.f90, 148]         geometry_mod.ameliorgeo
     Call [geometry.f90, 506]         geometry_mod.bigden
     Call [geometry.f90, 508]         geometry_mod.bigden
@@ -3375,11 +3380,6 @@ lina_mod.inprod   (Function)
     Call [geometry.f90, 309]         geometry_mod.biglag
     Call [geometry.f90, 310]         geometry_mod.biglag
     Call [geometry.f90, 311]         geometry_mod.biglag
-    Call [shiftbase.f90, 76]         shiftbase_mod.shiftbase
-    Call [newuob.f90, 229]           newuob_mod.newuob
-    Call [newuob.f90, 254]           newuob_mod.newuob
-    Call [newuob.f90, 454]           newuob_mod.newuob
-    Call [newuob.f90, 537]           newuob_mod.newuob
 
 lina_mod.matprod12   (Function)
   Declared as: REAL (RP)
@@ -3449,45 +3449,45 @@ matmul   (Intrinsic Function)
 ===============================================================================
 
 max   (Intrinsic Function)
-    Call [newuob.f90, 404]           newuob_mod.newuob
-    Call [newuob.f90, 433]           newuob_mod.newuob
-    Call [newuob.f90, 451]           newuob_mod.newuob
-    Call [debug.F90, 79]             debug_mod.verisym
     Call [geometry.f90, 688]         geometry_mod.bigden
     Call [geometry.f90, 70]          geometry_mod.setremove
     Call [geometry.f90, 74]          geometry_mod.setremove
+    Call [newuob.f90, 404]           newuob_mod.newuob
+    Call [newuob.f90, 433]           newuob_mod.newuob
+    Call [newuob.f90, 451]           newuob_mod.newuob
     Call [preproc.f90, 75]           preproc_mod.preproc
     Call [preproc.f90, 86]           preproc_mod.preproc
     Call [preproc.f90, 123]          preproc_mod.preproc
     Call [preproc.f90, 136]          preproc_mod.preproc
     Call [preproc.f90, 144]          preproc_mod.preproc
-    Call [lina.F90, 518]             lina_mod.grota
     Call [newuoa.f90, 243]           newuoa_mod.newuoa
     Call [newuoa.f90, 254]           newuoa_mod.newuoa
     Call [newuoa.f90, 274]           newuoa_mod.newuoa
     Call [newuoa.f90, 289]           newuoa_mod.newuoa
+    Call [lina.F90, 518]             lina_mod.grota
     Call [trustregion.f90, 355]      trustregion_mod.trrad
     Call [trustregion.f90, 357]      trustregion_mod.trrad
     Call [trustregion.f90, 249]      trustregion_mod.trsapp
+    Call [debug.F90, 79]             debug_mod.verisym
 
 maxexponent   (Intrinsic Function)
     Call [consts.F90, 160]           consts_mod
 
 maxloc   (Intrinsic Function)
-    Call [newuob.f90, 389]           newuob_mod.newuob
     Call [geometry.f90, 84]          geometry_mod.setremove
+    Call [newuob.f90, 389]           newuob_mod.newuob
 
 maxval   (Intrinsic Function)
+    Call [geometry.f90, 80]          geometry_mod.setremove
     Call [newuob.f90, 234]           newuob_mod.newuob
     Call [newuob.f90, 234]           newuob_mod.newuob
     Call [newuob.f90, 388]           newuob_mod.newuob
     Call [newuob.f90, 390]           newuob_mod.newuob
-    Call [initialize.f90, 431]       initialize_mod.inith
-    Call [initialize.f90, 329]       initialize_mod.initq
     Call [debug.F90, 79]             debug_mod.verisym
     Call [debug.F90, 79]             debug_mod.verisym
     Call [debug.F90, 83]             debug_mod.verisym
-    Call [geometry.f90, 80]          geometry_mod.setremove
+    Call [initialize.f90, 431]       initialize_mod.inith
+    Call [initialize.f90, 329]       initialize_mod.initq
 
 memory_mod   (Module)
     Define [memory.F90, 6]           memory.F90
@@ -3518,19 +3518,10 @@ min   (Intrinsic Function)
     Call [newuob.f90, 229]           newuob_mod.newuob
     Call [newuob.f90, 451]           newuob_mod.newuob
     Call [newuob.f90, 537]           newuob_mod.newuob
-    Call [initialize.f90, 443]       initialize_mod.inith
-    Call [initialize.f90, 458]       initialize_mod.inith
-    Call [initialize.f90, 335]       initialize_mod.initq
-    Call [initialize.f90, 339]       initialize_mod.initq
-    Call [initialize.f90, 134]       initialize_mod.initxf
-    Call [initialize.f90, 138]       initialize_mod.initxf
-    Call [initialize.f90, 144]       initialize_mod.initxf
-    Call [consts.F90, 161]           consts_mod
     Call [preproc.f90, 60]           preproc_mod.preproc
     Call [preproc.f90, 62]           preproc_mod.preproc
     Call [preproc.f90, 63]           preproc_mod.preproc
     Call [preproc.f90, 144]          preproc_mod.preproc
-    Call [lina.F90, 518]             lina_mod.grota
     Call [newuoa.f90, 254]           newuoa_mod.newuoa
     Call [newuoa.f90, 274]           newuoa_mod.newuoa
     Call [newuoa.f90, 346]           newuoa_mod.newuoa
@@ -3540,12 +3531,21 @@ min   (Intrinsic Function)
     Call [newuoa.f90, 403]           newuoa_mod.newuoa
     Call [newuoa.f90, 404]           newuoa_mod.newuoa
     Call [newuoa.f90, 410]           newuoa_mod.newuoa
+    Call [lina.F90, 518]             lina_mod.grota
+    Call [consts.F90, 161]           consts_mod
     Call [trustregion.f90, 190]      trustregion_mod.trsapp
     Call [trustregion.f90, 194]      trustregion_mod.trsapp
+    Call [initialize.f90, 443]       initialize_mod.inith
+    Call [initialize.f90, 458]       initialize_mod.inith
+    Call [initialize.f90, 335]       initialize_mod.initq
+    Call [initialize.f90, 339]       initialize_mod.initq
+    Call [initialize.f90, 134]       initialize_mod.initxf
+    Call [initialize.f90, 138]       initialize_mod.initxf
+    Call [initialize.f90, 144]       initialize_mod.initxf
 
 minloc   (Intrinsic Function)
-    Call [initialize.f90, 264]       initialize_mod.initxf
     Call [geometry.f90, 523]         geometry_mod.bigden
+    Call [initialize.f90, 264]       initialize_mod.initxf
 
 mod   (Intrinsic Function)
     Call [newuob.f90, 180]           newuob_mod.newuob
@@ -3614,8 +3614,8 @@ output_mod.rhomssg   (Subroutine)
 
 pintrf_mod   (Module)
     Define [pintrf.F90, 10]          pintrf.F90
-    ModuleUse [newuoa.f90, 168]      newuoa_mod.newuoa
     ModuleUse [initialize.f90, 30]   initialize_mod.initxf
+    ModuleUse [newuoa.f90, 168]      newuoa_mod.newuoa
     ModuleUse [newuob.f90, 55]       newuob_mod.newuob
 
 preproc_mod   (Module)
@@ -3700,57 +3700,6 @@ sin   (Intrinsic Function)
     Call [trustregion.f90, 321]      trustregion_mod.trsapp
 
 size   (Intrinsic Function)
-    Call [newuob.f90, 102]           newuob_mod.newuob
-    Call [newuob.f90, 102]           newuob_mod.newuob
-    Call [newuob.f90, 104]           newuob_mod.newuob
-    Call [newuob.f90, 114]           newuob_mod.newuob
-    Call [newuob.f90, 115]           newuob_mod.newuob
-    Call [newuob.f90, 115]           newuob_mod.newuob
-    Call [newuob.f90, 116]           newuob_mod.newuob
-    Call [newuob.f90, 121]           newuob_mod.newuob
-    Call [newuob.f90, 123]           newuob_mod.newuob
-    Call [newuob.f90, 125]           newuob_mod.newuob
-    Call [newuob.f90, 126]           newuob_mod.newuob
-    Call [newuob.f90, 127]           newuob_mod.newuob
-    Call [newuob.f90, 128]           newuob_mod.newuob
-    Call [newuob.f90, 138]           newuob_mod.newuob
-    Call [newuob.f90, 139]           newuob_mod.newuob
-    Call [newuob.f90, 140]           newuob_mod.newuob
-    Call [newuob.f90, 146]           newuob_mod.newuob
-    Call [newuob.f90, 371]           newuob_mod.newuob
-    Call [newuob.f90, 373]           newuob_mod.newuob
-    Call [newuob.f90, 540]           newuob_mod.newuob
-    Call [newuob.f90, 542]           newuob_mod.newuob
-    Call [initialize.f90, 415]       initialize_mod.inith
-    Call [initialize.f90, 416]       initialize_mod.inith
-    Call [initialize.f90, 311]       initialize_mod.initq
-    Call [initialize.f90, 312]       initialize_mod.initq
-    Call [initialize.f90, 70]        initialize_mod.initxf
-    Call [initialize.f90, 71]        initialize_mod.initxf
-    Call [initialize.f90, 77]        initialize_mod.initxf
-    Call [initialize.f90, 78]        initialize_mod.initxf
-    Call [initialize.f90, 79]        initialize_mod.initxf
-    Call [initialize.f90, 80]        initialize_mod.initxf
-    Call [initialize.f90, 86]        initialize_mod.initxf
-    Call [debug.F90, 130]            debug_mod.verisize_int_1
-    Call [debug.F90, 145]            debug_mod.verisize_int_2
-    Call [debug.F90, 148]            debug_mod.verisize_int_2
-    Call [debug.F90, 98]             debug_mod.verisize_real_1
-    Call [debug.F90, 113]            debug_mod.verisize_real_2
-    Call [debug.F90, 116]            debug_mod.verisize_real_2
-    Call [debug.F90, 75]             debug_mod.verisym
-                                                                     Page 66
-                      Program Unit Cross Reference Report
-===============================================================================
-    Call [debug.F90, 75]             debug_mod.verisym
-    Call [shiftbase.f90, 47]         shiftbase_mod.shiftbase
-    Call [shiftbase.f90, 49]         shiftbase_mod.shiftbase
-    Call [shiftbase.f90, 50]         shiftbase_mod.shiftbase
-    Call [shiftbase.f90, 51]         shiftbase_mod.shiftbase
-    Call [shiftbase.f90, 52]         shiftbase_mod.shiftbase
-    Call [shiftbase.f90, 54]         shiftbase_mod.shiftbase
-    Call [shiftbase.f90, 59]         shiftbase_mod.shiftbase
-    Call [shiftbase.f90, 60]         shiftbase_mod.shiftbase
     Call [geometry.f90, 124]         geometry_mod.ameliorgeo
     Call [geometry.f90, 129]         geometry_mod.ameliorgeo
     Call [geometry.f90, 130]         geometry_mod.ameliorgeo
@@ -3783,12 +3732,53 @@ size   (Intrinsic Function)
     Call [geometry.f90, 53]          geometry_mod.setremove
     Call [geometry.f90, 58]          geometry_mod.setremove
     Call [geometry.f90, 59]          geometry_mod.setremove
-    Call [vlagbeta.f90, 48]          vlagbeta_mod.vlagbeta
-    Call [vlagbeta.f90, 52]          vlagbeta_mod.vlagbeta
-    Call [vlagbeta.f90, 53]          vlagbeta_mod.vlagbeta
-    Call [vlagbeta.f90, 54]          vlagbeta_mod.vlagbeta
-    Call [vlagbeta.f90, 60]          vlagbeta_mod.vlagbeta
-    Call [vlagbeta.f90, 61]          vlagbeta_mod.vlagbeta
+    Call [newuob.f90, 102]           newuob_mod.newuob
+    Call [newuob.f90, 102]           newuob_mod.newuob
+    Call [newuob.f90, 104]           newuob_mod.newuob
+    Call [newuob.f90, 114]           newuob_mod.newuob
+    Call [newuob.f90, 115]           newuob_mod.newuob
+    Call [newuob.f90, 115]           newuob_mod.newuob
+    Call [newuob.f90, 116]           newuob_mod.newuob
+                                                                     Page 66
+                      Program Unit Cross Reference Report
+===============================================================================
+    Call [newuob.f90, 121]           newuob_mod.newuob
+    Call [newuob.f90, 123]           newuob_mod.newuob
+    Call [newuob.f90, 125]           newuob_mod.newuob
+    Call [newuob.f90, 126]           newuob_mod.newuob
+    Call [newuob.f90, 127]           newuob_mod.newuob
+    Call [newuob.f90, 128]           newuob_mod.newuob
+    Call [newuob.f90, 138]           newuob_mod.newuob
+    Call [newuob.f90, 139]           newuob_mod.newuob
+    Call [newuob.f90, 140]           newuob_mod.newuob
+    Call [newuob.f90, 146]           newuob_mod.newuob
+    Call [newuob.f90, 371]           newuob_mod.newuob
+    Call [newuob.f90, 373]           newuob_mod.newuob
+    Call [newuob.f90, 540]           newuob_mod.newuob
+    Call [newuob.f90, 542]           newuob_mod.newuob
+    Call [update.f90, 365]           update_mod.tryqalt
+    Call [update.f90, 366]           update_mod.tryqalt
+    Call [update.f90, 371]           update_mod.tryqalt
+    Call [update.f90, 372]           update_mod.tryqalt
+    Call [update.f90, 63]            update_mod.updateh
+    Call [update.f90, 64]            update_mod.updateh
+    Call [update.f90, 65]            update_mod.updateh
+    Call [update.f90, 66]            update_mod.updateh
+    Call [update.f90, 67]            update_mod.updateh
+    Call [update.f90, 73]            update_mod.updateh
+    Call [update.f90, 74]            update_mod.updateh
+    Call [update.f90, 287]           update_mod.updateq
+    Call [update.f90, 292]           update_mod.updateq
+    Call [update.f90, 293]           update_mod.updateq
+    Call [newuoa.f90, 219]           newuoa_mod.newuoa
+    Call [shiftbase.f90, 47]         shiftbase_mod.shiftbase
+    Call [shiftbase.f90, 49]         shiftbase_mod.shiftbase
+    Call [shiftbase.f90, 50]         shiftbase_mod.shiftbase
+    Call [shiftbase.f90, 51]         shiftbase_mod.shiftbase
+    Call [shiftbase.f90, 52]         shiftbase_mod.shiftbase
+    Call [shiftbase.f90, 54]         shiftbase_mod.shiftbase
+    Call [shiftbase.f90, 59]         shiftbase_mod.shiftbase
+    Call [shiftbase.f90, 60]         shiftbase_mod.shiftbase
     Call [lina.F90, 701]             lina_mod.Ax_plus_y
     Call [lina.F90, 709]             lina_mod.Ax_plus_y
     Call [lina.F90, 709]             lina_mod.Ax_plus_y
@@ -3798,9 +3788,6 @@ size   (Intrinsic Function)
     Call [lina.F90, 811]             lina_mod.calquad
     Call [lina.F90, 814]             lina_mod.calquad
     Call [lina.F90, 821]             lina_mod.calquad
-                                                                     Page 67
-                      Program Unit Cross Reference Report
-===============================================================================
     Call [lina.F90, 822]             lina_mod.calquad
     Call [lina.F90, 838]             lina_mod.calquad
     Call [lina.F90, 856]             lina_mod.calquad
@@ -3811,6 +3798,9 @@ size   (Intrinsic Function)
     Call [lina.F90, 468]             lina_mod.inprod
     Call [lina.F90, 334]             lina_mod.matprod12
     Call [lina.F90, 342]             lina_mod.matprod12
+                                                                     Page 67
+                      Program Unit Cross Reference Report
+===============================================================================
     Call [lina.F90, 342]             lina_mod.matprod12
     Call [lina.F90, 378]             lina_mod.matprod21
     Call [lina.F90, 386]             lina_mod.matprod21
@@ -3857,29 +3847,20 @@ size   (Intrinsic Function)
     Call [lina.F90, 667]             lina_mod.xdy_plus_a
     Call [lina.F90, 667]             lina_mod.xdy_plus_a
     Call [lina.F90, 674]             lina_mod.xdy_plus_a
-                                                                     Page 68
-                      Program Unit Cross Reference Report
-===============================================================================
     Call [lina.F90, 624]             lina_mod.xpy_dot_z
     Call [lina.F90, 624]             lina_mod.xpy_dot_z
     Call [lina.F90, 624]             lina_mod.xpy_dot_z
     Call [lina.F90, 624]             lina_mod.xpy_dot_z
     Call [lina.F90, 631]             lina_mod.xpy_dot_z
-    Call [update.f90, 365]           update_mod.tryqalt
-    Call [update.f90, 366]           update_mod.tryqalt
-    Call [update.f90, 371]           update_mod.tryqalt
-    Call [update.f90, 372]           update_mod.tryqalt
-    Call [update.f90, 63]            update_mod.updateh
-    Call [update.f90, 64]            update_mod.updateh
-    Call [update.f90, 65]            update_mod.updateh
-    Call [update.f90, 66]            update_mod.updateh
-    Call [update.f90, 67]            update_mod.updateh
-    Call [update.f90, 73]            update_mod.updateh
-    Call [update.f90, 74]            update_mod.updateh
-    Call [update.f90, 287]           update_mod.updateq
-    Call [update.f90, 292]           update_mod.updateq
-    Call [update.f90, 293]           update_mod.updateq
-    Call [newuoa.f90, 219]           newuoa_mod.newuoa
+    Call [vlagbeta.f90, 48]          vlagbeta_mod.vlagbeta
+    Call [vlagbeta.f90, 52]          vlagbeta_mod.vlagbeta
+    Call [vlagbeta.f90, 53]          vlagbeta_mod.vlagbeta
+    Call [vlagbeta.f90, 54]          vlagbeta_mod.vlagbeta
+    Call [vlagbeta.f90, 60]          vlagbeta_mod.vlagbeta
+                                                                     Page 68
+                      Program Unit Cross Reference Report
+===============================================================================
+    Call [vlagbeta.f90, 61]          vlagbeta_mod.vlagbeta
     Call [trustregion.f90, 87]       trustregion_mod.trsapp
     Call [trustregion.f90, 94]       trustregion_mod.trsapp
     Call [trustregion.f90, 98]       trustregion_mod.trsapp
@@ -3887,47 +3868,66 @@ size   (Intrinsic Function)
     Call [trustregion.f90, 100]      trustregion_mod.trsapp
     Call [trustregion.f90, 121]      trustregion_mod.trsapp
     Call [trustregion.f90, 122]      trustregion_mod.trsapp
+    Call [debug.F90, 130]            debug_mod.verisize_int_1
+    Call [debug.F90, 145]            debug_mod.verisize_int_2
+    Call [debug.F90, 148]            debug_mod.verisize_int_2
+    Call [debug.F90, 98]             debug_mod.verisize_real_1
+    Call [debug.F90, 113]            debug_mod.verisize_real_2
+    Call [debug.F90, 116]            debug_mod.verisize_real_2
+    Call [debug.F90, 75]             debug_mod.verisym
+    Call [debug.F90, 75]             debug_mod.verisym
+    Call [initialize.f90, 415]       initialize_mod.inith
+    Call [initialize.f90, 416]       initialize_mod.inith
+    Call [initialize.f90, 311]       initialize_mod.initq
+    Call [initialize.f90, 312]       initialize_mod.initq
+    Call [initialize.f90, 70]        initialize_mod.initxf
+    Call [initialize.f90, 71]        initialize_mod.initxf
+    Call [initialize.f90, 77]        initialize_mod.initxf
+    Call [initialize.f90, 78]        initialize_mod.initxf
+    Call [initialize.f90, 79]        initialize_mod.initxf
+    Call [initialize.f90, 80]        initialize_mod.initxf
+    Call [initialize.f90, 86]        initialize_mod.initxf
 
 spread   (Intrinsic Function)
+    Call [geometry.f90, 514]         geometry_mod.bigden
+    Call [geometry.f90, 72]          geometry_mod.setremove
     Call [newuob.f90, 387]           newuob_mod.newuob
     Call [shiftbase.f90, 90]         shiftbase_mod.shiftbase
     Call [shiftbase.f90, 140]        shiftbase_mod.shiftbase
-    Call [geometry.f90, 514]         geometry_mod.bigden
-    Call [geometry.f90, 72]          geometry_mod.setremove
 
 sqrt   (Intrinsic Function)
+    Call [geometry.f90, 538]         geometry_mod.bigden
+    Call [geometry.f90, 273]         geometry_mod.biglag
+    Call [geometry.f90, 299]         geometry_mod.biglag
     Call [newuob.f90, 229]           newuob_mod.newuob
     Call [newuob.f90, 429]           newuob_mod.newuob
     Call [newuob.f90, 451]           newuob_mod.newuob
     Call [newuob.f90, 537]           newuob_mod.newuob
-    Call [initialize.f90, 434]       initialize_mod.inith
-    Call [geometry.f90, 538]         geometry_mod.bigden
-    Call [geometry.f90, 273]         geometry_mod.biglag
-    Call [geometry.f90, 299]         geometry_mod.biglag
-    Call [lina.F90, 531]             lina_mod.grota
     Call [update.f90, 134]           update_mod.updateh
     Call [update.f90, 213]           update_mod.updateh
+    Call [lina.F90, 531]             lina_mod.grota
     Call [trustregion.f90, 179]      trustregion_mod.trsapp
     Call [trustregion.f90, 263]      trustregion_mod.trsapp
     Call [trustregion.f90, 270]      trustregion_mod.trsapp
+    Call [initialize.f90, 434]       initialize_mod.inith
 
 sum   (Intrinsic Function)
-    Call [newuob.f90, 269]           newuob_mod.newuob
-    Call [newuob.f90, 387]           newuob_mod.newuob
-    Call [newuob.f90, 472]           newuob_mod.newuob
-    Call [newuob.f90, 554]           newuob_mod.newuob
-                                                                     Page 69
-                      Program Unit Cross Reference Report
-===============================================================================
-    Call [initialize.f90, 147]       initialize_mod.initxf
-    Call [initialize.f90, 231]       initialize_mod.initxf
-    Call [shiftbase.f90, 114]        shiftbase_mod.shiftbase
     Call [geometry.f90, 519]         geometry_mod.bigden
     Call [geometry.f90, 584]         geometry_mod.bigden
     Call [geometry.f90, 606]         geometry_mod.bigden
     Call [geometry.f90, 71]          geometry_mod.setremove
+                                                                     Page 69
+                      Program Unit Cross Reference Report
+===============================================================================
     Call [geometry.f90, 71]          geometry_mod.setremove
     Call [geometry.f90, 72]          geometry_mod.setremove
+    Call [newuob.f90, 269]           newuob_mod.newuob
+    Call [newuob.f90, 387]           newuob_mod.newuob
+    Call [newuob.f90, 472]           newuob_mod.newuob
+    Call [newuob.f90, 554]           newuob_mod.newuob
+    Call [shiftbase.f90, 114]        shiftbase_mod.shiftbase
+    Call [initialize.f90, 147]       initialize_mod.initxf
+    Call [initialize.f90, 231]       initialize_mod.initxf
 
 transpose   (Intrinsic Function)
     Call [debug.F90, 79]             debug_mod.verisym
@@ -3997,15 +3997,15 @@ update_mod.updateq   (Subroutine)
 
 vlagbeta_mod   (Module)
     Define [vlagbeta.f90, 11]        vlagbeta.f90
-    ModuleUse [geometry.f90, 99]     geometry_mod.ameliorgeo
     ModuleUse [newuob.f90, 60]       newuob_mod.newuob
+    ModuleUse [geometry.f90, 99]     geometry_mod.ameliorgeo
 
 vlagbeta_mod.vlagbeta   (Subroutine)
   Declared as: REAL (implicit)
     Declare [vlagbeta.f90, 15]       vlagbeta_mod
     Define [vlagbeta.f90, 21]        vlagbeta_mod
-    Call [geometry.f90, 151]         geometry_mod.ameliorgeo
     Call [newuob.f90, 259]           newuob_mod.newuob
+    Call [geometry.f90, 151]         geometry_mod.ameliorgeo
                                                                      Page 71
                          Object Cross Reference Report
 ===============================================================================
@@ -4021,32 +4021,32 @@ consts_mod.DEBUGGING   (Variable)
     Define [consts.F90, 79]          consts_mod
     Declare [consts.F90, 90]         consts_mod
     Set [consts.F90, 90]             consts_mod
+    Use [initialize.f90, 418]        initialize_mod.inith
+    Use [initialize.f90, 314]        initialize_mod.initq
+    Use [initialize.f90, 82]         initialize_mod.initxf
     Use [trustregion.f90, 124]       trustregion_mod.trsapp
+    Use [vlagbeta.f90, 63]           vlagbeta_mod.vlagbeta
+    Use [shiftbase.f90, 62]          shiftbase_mod.shiftbase
     Use [update.f90, 374]            update_mod.tryqalt
     Use [update.f90, 76]             update_mod.updateh
     Use [update.f90, 295]            update_mod.updateq
-    Use [vlagbeta.f90, 63]           vlagbeta_mod.vlagbeta
+    Use [newuob.f90, 142]            newuob_mod.newuob
     Use [geometry.f90, 132]          geometry_mod.ameliorgeo
     Use [geometry.f90, 484]          geometry_mod.bigden
     Use [geometry.f90, 242]          geometry_mod.biglag
     Use [geometry.f90, 61]           geometry_mod.setremove
-    Use [shiftbase.f90, 62]          shiftbase_mod.shiftbase
-    Use [initialize.f90, 418]        initialize_mod.inith
-    Use [initialize.f90, 314]        initialize_mod.initq
-    Use [initialize.f90, 82]         initialize_mod.initxf
-    Use [newuob.f90, 142]            newuob_mod.newuob
 
 consts_mod.DP   (Variable)
   Declared as: INTEGER PARAMETER
     Define [consts.F90, 81]          consts_mod
     Declare [consts.F90, 114]        consts_mod
     Set [consts.F90, 114]            consts_mod
-    Use [memory.F90, 115]            memory_mod.size_of_dp
     Use [infnan.F90, 106]            infnan_mod.is_finite_dp
     Use [infnan.F90, 156]            infnan_mod.is_inf_dp
     Use [infnan.F90, 90]             infnan_mod.is_nan_dp
     Use [infnan.F90, 140]            infnan_mod.is_neginf_dp
     Use [infnan.F90, 124]            infnan_mod.is_posinf_dp
+    Use [memory.F90, 115]            memory_mod.size_of_dp
 
 consts_mod.EPS   (Variable)
   Declared as: REAL (RP) PARAMETER
@@ -4077,18 +4077,29 @@ consts_mod.HALF   (Variable)
     Declare [consts.F90, 147]        consts_mod
     Set [consts.F90, 147]            consts_mod
     Use [consts.F90, 158]            consts_mod
+    Use Argument [initialize.f90, 434]   initialize_mod.inith
+    Use [initialize.f90, 444]        initialize_mod.inith
+    Use [initialize.f90, 445]        initialize_mod.inith
+    Use [initialize.f90, 452]        initialize_mod.inith
+    Use [initialize.f90, 336]        initialize_mod.initq
     Use [trustregion.f90, 355]       trustregion_mod.trrad
     Use [trustregion.f90, 357]       trustregion_mod.trrad
     Use [trustregion.f90, 198]       trustregion_mod.trsapp
     Use [trustregion.f90, 281]       trustregion_mod.trsapp
     Use [trustregion.f90, 313]       trustregion_mod.trsapp
-    Use [newuoa.f90, 306]            newuoa_mod.newuoa
-    Use [lina.F90, 844]              lina_mod.calquad
-    Use [lina.F90, 853]              lina_mod.calquad
     Use [vlagbeta.f90, 86]           vlagbeta_mod.vlagbeta
     Use [vlagbeta.f90, 116]          vlagbeta_mod.vlagbeta
+    Use [lina.F90, 844]              lina_mod.calquad
+    Use [lina.F90, 853]              lina_mod.calquad
+    Use [shiftbase.f90, 88]          shiftbase_mod.shiftbase
+    Use [shiftbase.f90, 90]          shiftbase_mod.shiftbase
+    Use [shiftbase.f90, 140]         shiftbase_mod.shiftbase
+    Use [newuoa.f90, 306]            newuoa_mod.newuoa
     Use [preproc.f90, 107]           preproc_mod.preproc
     Use [preproc.f90, 109]           preproc_mod.preproc
+    Use [newuob.f90, 232]            newuob_mod.newuob
+    Use [newuob.f90, 424]            newuob_mod.newuob
+    Use [newuob.f90, 451]            newuob_mod.newuob
     Use [geometry.f90, 543]          geometry_mod.bigden
     Use [geometry.f90, 544]          geometry_mod.bigden
     Use [geometry.f90, 545]          geometry_mod.bigden
@@ -4106,17 +4117,6 @@ consts_mod.HALF   (Variable)
     Use [geometry.f90, 312]          geometry_mod.biglag
     Use [geometry.f90, 313]          geometry_mod.biglag
     Use [geometry.f90, 347]          geometry_mod.biglag
-    Use [shiftbase.f90, 88]          shiftbase_mod.shiftbase
-    Use [shiftbase.f90, 90]          shiftbase_mod.shiftbase
-    Use [shiftbase.f90, 140]         shiftbase_mod.shiftbase
-    Use Argument [initialize.f90, 434]   initialize_mod.inith
-    Use [initialize.f90, 444]        initialize_mod.inith
-    Use [initialize.f90, 445]        initialize_mod.inith
-    Use [initialize.f90, 452]        initialize_mod.inith
-    Use [initialize.f90, 336]        initialize_mod.initq
-    Use [newuob.f90, 232]            newuob_mod.newuob
-    Use [newuob.f90, 424]            newuob_mod.newuob
-    Use [newuob.f90, 451]            newuob_mod.newuob
 
 consts_mod.HUGECON   (Variable)
   Declared as: REAL (RP) PARAMETER
@@ -4154,49 +4154,6 @@ consts_mod.IK   (Variable)
     Use [consts.F90, 171]            consts_mod
     Use [consts.F90, 177]            consts_mod
     Use [consts.F90, 178]            consts_mod
-    Use [trustregion.f90, 69]        trustregion_mod.trsapp
-    Use [trustregion.f90, 75]        trustregion_mod.trsapp
-    Use [trustregion.f90, 76]        trustregion_mod.trsapp
-    Use [trustregion.f90, 77]        trustregion_mod.trsapp
-    Use [trustregion.f90, 78]        trustregion_mod.trsapp
-    Use [trustregion.f90, 79]        trustregion_mod.trsapp
-    Use [trustregion.f90, 80]        trustregion_mod.trsapp
-    Use [trustregion.f90, 81]        trustregion_mod.trsapp
-    Use [newuoa.f90, 178]            newuoa_mod.newuoa
-    Use [newuoa.f90, 182]            newuoa_mod.newuoa
-    Use [newuoa.f90, 183]            newuoa_mod.newuoa
-    Use [newuoa.f90, 184]            newuoa_mod.newuoa
-    Use [newuoa.f90, 191]            newuoa_mod.newuoa
-    Use [newuoa.f90, 192]            newuoa_mod.newuoa
-    Use [newuoa.f90, 196]            newuoa_mod.newuoa
-    Use [newuoa.f90, 197]            newuoa_mod.newuoa
-    Use [newuoa.f90, 198]            newuoa_mod.newuoa
-    Use [newuoa.f90, 199]            newuoa_mod.newuoa
-    Use [newuoa.f90, 200]            newuoa_mod.newuoa
-    Use [newuoa.f90, 201]            newuoa_mod.newuoa
-    Use [newuoa.f90, 202]            newuoa_mod.newuoa
-    Use [newuoa.f90, 203]            newuoa_mod.newuoa
-    Use [newuoa.f90, 204]            newuoa_mod.newuoa
-    Use [newuoa.f90, 205]            newuoa_mod.newuoa
-    Use [update.f90, 342]            update_mod.tryqalt
-    Use [update.f90, 349]            update_mod.tryqalt
-    Use [update.f90, 363]            update_mod.tryqalt
-    Use [update.f90, 364]            update_mod.tryqalt
-                                                                     Page 74
-                         Object Cross Reference Report
-===============================================================================
-    Use [update.f90, 37]             update_mod.updateh
-    Use [update.f90, 42]             update_mod.updateh
-    Use [update.f90, 47]             update_mod.updateh
-    Use [update.f90, 48]             update_mod.updateh
-    Use [update.f90, 49]             update_mod.updateh
-    Use [update.f90, 50]             update_mod.updateh
-    Use [update.f90, 51]             update_mod.updateh
-    Use [update.f90, 52]             update_mod.updateh
-    Use [update.f90, 271]            update_mod.updateq
-    Use [update.f90, 272]            update_mod.updateq
-    Use [update.f90, 285]            update_mod.updateq
-    Use [update.f90, 286]            update_mod.updateq
     Use [output.F90, 150]            output_mod.fmssg
     Use [output.F90, 151]            output_mod.fmssg
     Use [output.F90, 27]             output_mod.retmssg
@@ -4204,79 +4161,6 @@ consts_mod.IK   (Variable)
     Use [output.F90, 29]             output_mod.retmssg
     Use [output.F90, 99]             output_mod.rhomssg
     Use [output.F90, 100]            output_mod.rhomssg
-    Use [lina.F90, 704]              lina_mod.Ax_plus_y
-    Use [lina.F90, 815]              lina_mod.calquad
-    Use [lina.F90, 819]              lina_mod.calquad
-    Use [lina.F90, 509]              lina_mod.grota
-    Use [lina.F90, 510]              lina_mod.grota
-    Use [lina.F90, 511]              lina_mod.grota
-    Use [lina.F90, 138]              lina_mod.r1
-    Use [lina.F90, 70]               lina_mod.r1_sym
-    Use [lina.F90, 268]              lina_mod.r2
-    Use [lina.F90, 200]              lina_mod.r2_sym
-    Use [lina.F90, 572]              lina_mod.symmetrize
-    Use [lina.F90, 749]              lina_mod.xA_plus_y
-    Use [lina.F90, 662]              lina_mod.xdy_plus_a
-    Use [lina.F90, 619]              lina_mod.xpy_dot_z
-    Use [vlagbeta.f90, 33]           vlagbeta_mod.vlagbeta
-    Use [vlagbeta.f90, 34]           vlagbeta_mod.vlagbeta
-    Use [vlagbeta.f90, 46]           vlagbeta_mod.vlagbeta
-    Use [vlagbeta.f90, 47]           vlagbeta_mod.vlagbeta
-    Use [preproc.f90, 26]            preproc_mod.preproc
-    Use [preproc.f90, 29]            preproc_mod.preproc
-    Use [preproc.f90, 30]            preproc_mod.preproc
-    Use [preproc.f90, 31]            preproc_mod.preproc
-    Use [preproc.f90, 32]            preproc_mod.preproc
-    Use [geometry.f90, 104]          geometry_mod.ameliorgeo
-    Use [geometry.f90, 105]          geometry_mod.ameliorgeo
-    Use [geometry.f90, 106]          geometry_mod.ameliorgeo
-    Use [geometry.f90, 121]          geometry_mod.ameliorgeo
-    Use [geometry.f90, 122]          geometry_mod.ameliorgeo
-    Use [geometry.f90, 389]          geometry_mod.bigden
-    Use [geometry.f90, 390]          geometry_mod.bigden
-    Use [geometry.f90, 391]          geometry_mod.bigden
-    Use [geometry.f90, 405]          geometry_mod.bigden
-    Use [geometry.f90, 406]          geometry_mod.bigden
-    Use [geometry.f90, 407]          geometry_mod.bigden
-    Use [geometry.f90, 408]          geometry_mod.bigden
-    Use [geometry.f90, 409]          geometry_mod.bigden
-    Use [geometry.f90, 410]          geometry_mod.bigden
-                                                                     Page 75
-                         Object Cross Reference Report
-===============================================================================
-    Use [geometry.f90, 411]          geometry_mod.bigden
-    Use [geometry.f90, 412]          geometry_mod.bigden
-    Use [geometry.f90, 413]          geometry_mod.bigden
-    Use [geometry.f90, 414]          geometry_mod.bigden
-    Use [geometry.f90, 179]          geometry_mod.biglag
-    Use [geometry.f90, 180]          geometry_mod.biglag
-    Use [geometry.f90, 191]          geometry_mod.biglag
-    Use [geometry.f90, 192]          geometry_mod.biglag
-    Use [geometry.f90, 193]          geometry_mod.biglag
-    Use [geometry.f90, 194]          geometry_mod.biglag
-    Use [geometry.f90, 195]          geometry_mod.biglag
-    Use [geometry.f90, 196]          geometry_mod.biglag
-    Use [geometry.f90, 33]           geometry_mod.setremove
-    Use [geometry.f90, 34]           geometry_mod.setremove
-    Use [geometry.f90, 45]           geometry_mod.setremove
-    Use [geometry.f90, 48]           geometry_mod.setremove
-    Use [geometry.f90, 49]           geometry_mod.setremove
-    Use [memory.F90, 72]             memory_mod.alloc_rmatrix
-    Use [memory.F90, 35]             memory_mod.alloc_rvector
-    Use [memory.F90, 116]            memory_mod.size_of_dp
-    Use [memory.F90, 102]            memory_mod.size_of_sp
-    Use [shiftbase.f90, 31]          shiftbase_mod.shiftbase
-    Use [shiftbase.f90, 44]          shiftbase_mod.shiftbase
-    Use [shiftbase.f90, 45]          shiftbase_mod.shiftbase
-    Use [shiftbase.f90, 46]          shiftbase_mod.shiftbase
-    Use [debug.F90, 125]             debug_mod.verisize_int_1
-    Use [debug.F90, 126]             debug_mod.verisize_int_1
-    Use [debug.F90, 139]             debug_mod.verisize_int_2
-    Use [debug.F90, 140]             debug_mod.verisize_int_2
-    Use [debug.F90, 141]             debug_mod.verisize_int_2
-    Use [debug.F90, 94]              debug_mod.verisize_real_1
-    Use [debug.F90, 108]             debug_mod.verisize_real_2
-    Use [debug.F90, 109]             debug_mod.verisize_real_2
     Use [initialize.f90, 390]        initialize_mod.inith
     Use [initialize.f90, 394]        initialize_mod.inith
     Use [initialize.f90, 395]        initialize_mod.inith
@@ -4298,11 +4182,11 @@ consts_mod.IK   (Variable)
     Use [initialize.f90, 44]         initialize_mod.initxf
     Use [initialize.f90, 45]         initialize_mod.initxf
     Use [initialize.f90, 59]         initialize_mod.initxf
-    Use [initialize.f90, 60]         initialize_mod.initxf
-    Use [initialize.f90, 61]         initialize_mod.initxf
-                                                                     Page 76
+                                                                     Page 74
                          Object Cross Reference Report
 ===============================================================================
+    Use [initialize.f90, 60]         initialize_mod.initxf
+    Use [initialize.f90, 61]         initialize_mod.initxf
     Use [initialize.f90, 62]         initialize_mod.initxf
     Use [initialize.f90, 63]         initialize_mod.initxf
     Use [initialize.f90, 64]         initialize_mod.initxf
@@ -4310,6 +4194,84 @@ consts_mod.IK   (Variable)
     Use [initialize.f90, 66]         initialize_mod.initxf
     Use [initialize.f90, 67]         initialize_mod.initxf
     Use [initialize.f90, 68]         initialize_mod.initxf
+    Use [debug.F90, 125]             debug_mod.verisize_int_1
+    Use [debug.F90, 126]             debug_mod.verisize_int_1
+    Use [debug.F90, 139]             debug_mod.verisize_int_2
+    Use [debug.F90, 140]             debug_mod.verisize_int_2
+    Use [debug.F90, 141]             debug_mod.verisize_int_2
+    Use [debug.F90, 94]              debug_mod.verisize_real_1
+    Use [debug.F90, 108]             debug_mod.verisize_real_2
+    Use [debug.F90, 109]             debug_mod.verisize_real_2
+    Use [trustregion.f90, 69]        trustregion_mod.trsapp
+    Use [trustregion.f90, 75]        trustregion_mod.trsapp
+    Use [trustregion.f90, 76]        trustregion_mod.trsapp
+    Use [trustregion.f90, 77]        trustregion_mod.trsapp
+    Use [trustregion.f90, 78]        trustregion_mod.trsapp
+    Use [trustregion.f90, 79]        trustregion_mod.trsapp
+    Use [trustregion.f90, 80]        trustregion_mod.trsapp
+    Use [trustregion.f90, 81]        trustregion_mod.trsapp
+    Use [vlagbeta.f90, 33]           vlagbeta_mod.vlagbeta
+    Use [vlagbeta.f90, 34]           vlagbeta_mod.vlagbeta
+    Use [vlagbeta.f90, 46]           vlagbeta_mod.vlagbeta
+    Use [vlagbeta.f90, 47]           vlagbeta_mod.vlagbeta
+    Use [lina.F90, 704]              lina_mod.Ax_plus_y
+    Use [lina.F90, 815]              lina_mod.calquad
+    Use [lina.F90, 819]              lina_mod.calquad
+    Use [lina.F90, 509]              lina_mod.grota
+    Use [lina.F90, 510]              lina_mod.grota
+    Use [lina.F90, 511]              lina_mod.grota
+    Use [lina.F90, 138]              lina_mod.r1
+    Use [lina.F90, 70]               lina_mod.r1_sym
+    Use [lina.F90, 268]              lina_mod.r2
+    Use [lina.F90, 200]              lina_mod.r2_sym
+    Use [lina.F90, 572]              lina_mod.symmetrize
+    Use [lina.F90, 749]              lina_mod.xA_plus_y
+    Use [lina.F90, 662]              lina_mod.xdy_plus_a
+    Use [lina.F90, 619]              lina_mod.xpy_dot_z
+    Use [shiftbase.f90, 31]          shiftbase_mod.shiftbase
+    Use [shiftbase.f90, 44]          shiftbase_mod.shiftbase
+    Use [shiftbase.f90, 45]          shiftbase_mod.shiftbase
+    Use [shiftbase.f90, 46]          shiftbase_mod.shiftbase
+    Use [newuoa.f90, 178]            newuoa_mod.newuoa
+    Use [newuoa.f90, 182]            newuoa_mod.newuoa
+    Use [newuoa.f90, 183]            newuoa_mod.newuoa
+    Use [newuoa.f90, 184]            newuoa_mod.newuoa
+    Use [newuoa.f90, 191]            newuoa_mod.newuoa
+    Use [newuoa.f90, 192]            newuoa_mod.newuoa
+    Use [newuoa.f90, 196]            newuoa_mod.newuoa
+    Use [newuoa.f90, 197]            newuoa_mod.newuoa
+    Use [newuoa.f90, 198]            newuoa_mod.newuoa
+                                                                     Page 75
+                         Object Cross Reference Report
+===============================================================================
+    Use [newuoa.f90, 199]            newuoa_mod.newuoa
+    Use [newuoa.f90, 200]            newuoa_mod.newuoa
+    Use [newuoa.f90, 201]            newuoa_mod.newuoa
+    Use [newuoa.f90, 202]            newuoa_mod.newuoa
+    Use [newuoa.f90, 203]            newuoa_mod.newuoa
+    Use [newuoa.f90, 204]            newuoa_mod.newuoa
+    Use [newuoa.f90, 205]            newuoa_mod.newuoa
+    Use [update.f90, 342]            update_mod.tryqalt
+    Use [update.f90, 349]            update_mod.tryqalt
+    Use [update.f90, 363]            update_mod.tryqalt
+    Use [update.f90, 364]            update_mod.tryqalt
+    Use [update.f90, 37]             update_mod.updateh
+    Use [update.f90, 42]             update_mod.updateh
+    Use [update.f90, 47]             update_mod.updateh
+    Use [update.f90, 48]             update_mod.updateh
+    Use [update.f90, 49]             update_mod.updateh
+    Use [update.f90, 50]             update_mod.updateh
+    Use [update.f90, 51]             update_mod.updateh
+    Use [update.f90, 52]             update_mod.updateh
+    Use [update.f90, 271]            update_mod.updateq
+    Use [update.f90, 272]            update_mod.updateq
+    Use [update.f90, 285]            update_mod.updateq
+    Use [update.f90, 286]            update_mod.updateq
+    Use [preproc.f90, 26]            preproc_mod.preproc
+    Use [preproc.f90, 29]            preproc_mod.preproc
+    Use [preproc.f90, 30]            preproc_mod.preproc
+    Use [preproc.f90, 31]            preproc_mod.preproc
+    Use [preproc.f90, 32]            preproc_mod.preproc
     Use [newuob.f90, 67]             newuob_mod.newuob
     Use [newuob.f90, 68]             newuob_mod.newuob
     Use [newuob.f90, 69]             newuob_mod.newuob
@@ -4327,6 +4289,44 @@ consts_mod.IK   (Variable)
     Use [newuob.f90, 98]             newuob_mod.newuob
     Use [newuob.f90, 99]             newuob_mod.newuob
     Use [newuob.f90, 100]            newuob_mod.newuob
+    Use [geometry.f90, 104]          geometry_mod.ameliorgeo
+    Use [geometry.f90, 105]          geometry_mod.ameliorgeo
+    Use [geometry.f90, 106]          geometry_mod.ameliorgeo
+    Use [geometry.f90, 121]          geometry_mod.ameliorgeo
+    Use [geometry.f90, 122]          geometry_mod.ameliorgeo
+    Use [geometry.f90, 389]          geometry_mod.bigden
+    Use [geometry.f90, 390]          geometry_mod.bigden
+    Use [geometry.f90, 391]          geometry_mod.bigden
+    Use [geometry.f90, 405]          geometry_mod.bigden
+    Use [geometry.f90, 406]          geometry_mod.bigden
+    Use [geometry.f90, 407]          geometry_mod.bigden
+                                                                     Page 76
+                         Object Cross Reference Report
+===============================================================================
+    Use [geometry.f90, 408]          geometry_mod.bigden
+    Use [geometry.f90, 409]          geometry_mod.bigden
+    Use [geometry.f90, 410]          geometry_mod.bigden
+    Use [geometry.f90, 411]          geometry_mod.bigden
+    Use [geometry.f90, 412]          geometry_mod.bigden
+    Use [geometry.f90, 413]          geometry_mod.bigden
+    Use [geometry.f90, 414]          geometry_mod.bigden
+    Use [geometry.f90, 179]          geometry_mod.biglag
+    Use [geometry.f90, 180]          geometry_mod.biglag
+    Use [geometry.f90, 191]          geometry_mod.biglag
+    Use [geometry.f90, 192]          geometry_mod.biglag
+    Use [geometry.f90, 193]          geometry_mod.biglag
+    Use [geometry.f90, 194]          geometry_mod.biglag
+    Use [geometry.f90, 195]          geometry_mod.biglag
+    Use [geometry.f90, 196]          geometry_mod.biglag
+    Use [geometry.f90, 33]           geometry_mod.setremove
+    Use [geometry.f90, 34]           geometry_mod.setremove
+    Use [geometry.f90, 45]           geometry_mod.setremove
+    Use [geometry.f90, 48]           geometry_mod.setremove
+    Use [geometry.f90, 49]           geometry_mod.setremove
+    Use [memory.F90, 72]             memory_mod.alloc_rmatrix
+    Use [memory.F90, 35]             memory_mod.alloc_rvector
+    Use [memory.F90, 116]            memory_mod.size_of_dp
+    Use [memory.F90, 102]            memory_mod.size_of_sp
 
 consts_mod.IK_DFT   (Variable)
   Declared as: INTEGER PARAMETER
@@ -4381,19 +4381,29 @@ consts_mod.ONE   (Variable)
     Declare [consts.F90, 145]        consts_mod
     Set [consts.F90, 145]            consts_mod
     Use [consts.F90, 174]            consts_mod
+    Use [initialize.f90, 433]        initialize_mod.inith
+    Use [initialize.f90, 450]        initialize_mod.inith
+    Use [initialize.f90, 451]        initialize_mod.inith
+    Use Argument [debug.F90, 79]     debug_mod.verisym
     Use [trustregion.f90, 263]       trustregion_mod.trsapp
+    Use [vlagbeta.f90, 117]          vlagbeta_mod.vlagbeta
+    Use [lina.F90, 155]              lina_mod.r1
+    Use [lina.F90, 88]               lina_mod.r1_sym
+    Use [lina.F90, 286]              lina_mod.r2
+    Use [lina.F90, 286]              lina_mod.r2
+    Use [lina.F90, 216]              lina_mod.r2_sym
+    Use Argument [shiftbase.f90, 100]   shiftbase_mod.shiftbase
+    Use Argument [shiftbase.f90, 110]   shiftbase_mod.shiftbase
+    Use [shiftbase.f90, 120]         shiftbase_mod.shiftbase
+    Use [shiftbase.f90, 123]         shiftbase_mod.shiftbase
+    Use Argument [shiftbase.f90, 130]   shiftbase_mod.shiftbase
+    Use Argument [shiftbase.f90, 133]   shiftbase_mod.shiftbase
     Use [newuoa.f90, 288]            newuoa_mod.newuoa
     Use [newuoa.f90, 297]            newuoa_mod.newuoa
     Use [update.f90, 133]            update_mod.updateh
     Use [update.f90, 213]            update_mod.updateh
     Use Argument [update.f90, 251]   update_mod.updateh
     Use Argument [update.f90, 251]   update_mod.updateh
-    Use [lina.F90, 155]              lina_mod.r1
-    Use [lina.F90, 88]               lina_mod.r1_sym
-    Use [lina.F90, 286]              lina_mod.r2
-    Use [lina.F90, 286]              lina_mod.r2
-    Use [lina.F90, 216]              lina_mod.r2_sym
-    Use [vlagbeta.f90, 117]          vlagbeta_mod.vlagbeta
     Use Argument [preproc.f90, 75]   preproc_mod.preproc
     Use [preproc.f90, 83]            preproc_mod.preproc
     Use [preproc.f90, 85]            preproc_mod.preproc
@@ -4408,22 +4418,12 @@ consts_mod.ONE   (Variable)
     Use [geometry.f90, 713]          geometry_mod.bigden
     Use [geometry.f90, 279]          geometry_mod.biglag
     Use [geometry.f90, 283]          geometry_mod.biglag
-    Use Argument [geometry.f90, 74]   geometry_mod.setremove
-    Use [geometry.f90, 78]           geometry_mod.setremove
-    Use [geometry.f90, 80]           geometry_mod.setremove
-    Use Argument [shiftbase.f90, 100]   shiftbase_mod.shiftbase
-    Use Argument [shiftbase.f90, 110]   shiftbase_mod.shiftbase
-    Use [shiftbase.f90, 120]         shiftbase_mod.shiftbase
-    Use [shiftbase.f90, 123]         shiftbase_mod.shiftbase
-    Use Argument [shiftbase.f90, 130]   shiftbase_mod.shiftbase
-    Use Argument [shiftbase.f90, 133]   shiftbase_mod.shiftbase
-    Use Argument [debug.F90, 79]     debug_mod.verisym
                                                                      Page 78
                          Object Cross Reference Report
 ===============================================================================
-    Use [initialize.f90, 433]        initialize_mod.inith
-    Use [initialize.f90, 450]        initialize_mod.inith
-    Use [initialize.f90, 451]        initialize_mod.inith
+    Use Argument [geometry.f90, 74]   geometry_mod.setremove
+    Use [geometry.f90, 78]           geometry_mod.setremove
+    Use [geometry.f90, 80]           geometry_mod.setremove
 
 consts_mod.OUTUNIT   (Variable)
   Declared as: INTEGER (IK) PARAMETER
@@ -4465,9 +4465,9 @@ consts_mod.QUART   (Variable)
     Define [consts.F90, 82]          consts_mod
     Declare [consts.F90, 148]        consts_mod
     Set [consts.F90, 148]            consts_mod
+    Use [shiftbase.f90, 77]          shiftbase_mod.shiftbase
     Use [geometry.f90, 557]          geometry_mod.bigden
     Use [geometry.f90, 560]          geometry_mod.bigden
-    Use [shiftbase.f90, 77]          shiftbase_mod.shiftbase
 
 consts_mod.REAL128   (Variable)
   Declared as: INTEGER PARAMETER
@@ -4532,13 +4532,59 @@ consts_mod.RP   (Variable)
     Use [consts.F90, 174]            consts_mod
     Use [consts.F90, 175]            consts_mod
     Use [consts.F90, 176]            consts_mod
+    Use [output.F90, 152]            output_mod.fmssg
+    Use [output.F90, 153]            output_mod.fmssg
+    Use [output.F90, 30]             output_mod.retmssg
+    Use [output.F90, 31]             output_mod.retmssg
+                                                                     Page 80
+                         Object Cross Reference Report
+===============================================================================
+    Use [output.F90, 101]            output_mod.rhomssg
+    Use [output.F90, 102]            output_mod.rhomssg
+    Use [output.F90, 103]            output_mod.rhomssg
+    Use [initialize.f90, 391]        initialize_mod.inith
+    Use [initialize.f90, 396]        initialize_mod.inith
+    Use [initialize.f90, 397]        initialize_mod.inith
+    Use [initialize.f90, 405]        initialize_mod.inith
+    Use [initialize.f90, 406]        initialize_mod.inith
+    Use [initialize.f90, 407]        initialize_mod.inith
+    Use [initialize.f90, 408]        initialize_mod.inith
+    Use [initialize.f90, 409]        initialize_mod.inith
+    Use [initialize.f90, 410]        initialize_mod.inith
+    Use [initialize.f90, 286]        initialize_mod.initq
+    Use [initialize.f90, 287]        initialize_mod.initq
+    Use [initialize.f90, 291]        initialize_mod.initq
+    Use [initialize.f90, 292]        initialize_mod.initq
+    Use [initialize.f90, 293]        initialize_mod.initq
+    Use [initialize.f90, 301]        initialize_mod.initq
+    Use [initialize.f90, 302]        initialize_mod.initq
+    Use [initialize.f90, 303]        initialize_mod.initq
+    Use [initialize.f90, 304]        initialize_mod.initq
+    Use [initialize.f90, 305]        initialize_mod.initq
+    Use [initialize.f90, 306]        initialize_mod.initq
+    Use [initialize.f90, 37]         initialize_mod.initxf
+    Use [initialize.f90, 38]         initialize_mod.initxf
+    Use [initialize.f90, 39]         initialize_mod.initxf
+    Use [initialize.f90, 46]         initialize_mod.initxf
+    Use [initialize.f90, 47]         initialize_mod.initxf
+    Use [initialize.f90, 48]         initialize_mod.initxf
+    Use [initialize.f90, 49]         initialize_mod.initxf
+    Use [initialize.f90, 50]         initialize_mod.initxf
+    Use [initialize.f90, 69]         initialize_mod.initxf
+    Use [initialize.f90, 70]         initialize_mod.initxf
+    Use [debug.F90, 93]              debug_mod.verisize_real_1
+    Use [debug.F90, 107]             debug_mod.verisize_real_2
+    Use [debug.F90, 70]              debug_mod.verisym
+    Use [debug.F90, 71]              debug_mod.verisym
+    Use [pintrf.F90, 30]             pintrf_mod.FCEVAL
+    Use [pintrf.F90, 31]             pintrf_mod.FCEVAL
+    Use [pintrf.F90, 32]             pintrf_mod.FCEVAL
+    Use [pintrf.F90, 20]             pintrf_mod.FUNEVAL
+    Use [pintrf.F90, 21]             pintrf_mod.FUNEVAL
     Use [trustregion.f90, 343]       trustregion_mod.trrad
     Use [trustregion.f90, 344]       trustregion_mod.trrad
     Use [trustregion.f90, 345]       trustregion_mod.trrad
     Use [trustregion.f90, 346]       trustregion_mod.trrad
-                                                                     Page 80
-                         Object Cross Reference Report
-===============================================================================
     Use [trustregion.f90, 347]       trustregion_mod.trrad
     Use [trustregion.f90, 348]       trustregion_mod.trrad
     Use [trustregion.f90, 349]       trustregion_mod.trrad
@@ -4549,6 +4595,9 @@ consts_mod.RP   (Variable)
     Use [trustregion.f90, 63]        trustregion_mod.trsapp
     Use [trustregion.f90, 64]        trustregion_mod.trsapp
     Use [trustregion.f90, 65]        trustregion_mod.trsapp
+                                                                     Page 81
+                         Object Cross Reference Report
+===============================================================================
     Use [trustregion.f90, 66]        trustregion_mod.trsapp
     Use [trustregion.f90, 70]        trustregion_mod.trsapp
     Use [trustregion.f90, 71]        trustregion_mod.trsapp
@@ -4590,75 +4639,24 @@ consts_mod.RP   (Variable)
     Use Argument [trustregion.f90, 287]   trustregion_mod.trsapp
     Use Argument [trustregion.f90, 290]   trustregion_mod.trsapp
     Use Argument [trustregion.f90, 317]   trustregion_mod.trsapp
-    Use [newuoa.f90, 176]            newuoa_mod.newuoa
-    Use [newuoa.f90, 177]            newuoa_mod.newuoa
-    Use [newuoa.f90, 179]            newuoa_mod.newuoa
-    Use [newuoa.f90, 180]            newuoa_mod.newuoa
-    Use [newuoa.f90, 181]            newuoa_mod.newuoa
-                                                                     Page 81
-                         Object Cross Reference Report
-===============================================================================
-    Use [newuoa.f90, 185]            newuoa_mod.newuoa
-    Use [newuoa.f90, 186]            newuoa_mod.newuoa
-    Use [newuoa.f90, 187]            newuoa_mod.newuoa
-    Use [newuoa.f90, 188]            newuoa_mod.newuoa
-    Use [newuoa.f90, 189]            newuoa_mod.newuoa
-    Use [newuoa.f90, 190]            newuoa_mod.newuoa
-    Use [newuoa.f90, 206]            newuoa_mod.newuoa
-    Use [newuoa.f90, 207]            newuoa_mod.newuoa
-    Use [newuoa.f90, 208]            newuoa_mod.newuoa
-    Use [newuoa.f90, 209]            newuoa_mod.newuoa
-    Use [newuoa.f90, 210]            newuoa_mod.newuoa
-    Use [newuoa.f90, 211]            newuoa_mod.newuoa
-    Use [newuoa.f90, 212]            newuoa_mod.newuoa
-    Use [newuoa.f90, 213]            newuoa_mod.newuoa
-    Use [newuoa.f90, 214]            newuoa_mod.newuoa
-    Use [update.f90, 343]            update_mod.tryqalt
-    Use [update.f90, 344]            update_mod.tryqalt
-    Use [update.f90, 345]            update_mod.tryqalt
-    Use [update.f90, 346]            update_mod.tryqalt
-    Use [update.f90, 350]            update_mod.tryqalt
-    Use [update.f90, 351]            update_mod.tryqalt
-    Use [update.f90, 352]            update_mod.tryqalt
-    Use [update.f90, 365]            update_mod.tryqalt
-    Use [update.f90, 366]            update_mod.tryqalt
-    Use [update.f90, 38]             update_mod.updateh
-    Use [update.f90, 39]             update_mod.updateh
-    Use [update.f90, 43]             update_mod.updateh
-    Use [update.f90, 44]             update_mod.updateh
-    Use [update.f90, 53]             update_mod.updateh
-    Use [update.f90, 54]             update_mod.updateh
-    Use [update.f90, 55]             update_mod.updateh
-    Use [update.f90, 56]             update_mod.updateh
-    Use [update.f90, 57]             update_mod.updateh
-    Use [update.f90, 58]             update_mod.updateh
-    Use [update.f90, 59]             update_mod.updateh
-    Use [update.f90, 60]             update_mod.updateh
-    Use [update.f90, 61]             update_mod.updateh
-    Use [update.f90, 62]             update_mod.updateh
-    Use [update.f90, 63]             update_mod.updateh
-    Use [update.f90, 64]             update_mod.updateh
-    Use [update.f90, 65]             update_mod.updateh
-    Use [update.f90, 66]             update_mod.updateh
-    Use [update.f90, 67]             update_mod.updateh
-    Use [update.f90, 273]            update_mod.updateq
-    Use [update.f90, 275]            update_mod.updateq
-    Use [update.f90, 276]            update_mod.updateq
-    Use [update.f90, 277]            update_mod.updateq
-    Use [update.f90, 280]            update_mod.updateq
-    Use [update.f90, 281]            update_mod.updateq
-    Use [update.f90, 282]            update_mod.updateq
-    Use [update.f90, 287]            update_mod.updateq
-    Use [output.F90, 152]            output_mod.fmssg
-    Use [output.F90, 153]            output_mod.fmssg
-    Use [output.F90, 30]             output_mod.retmssg
-    Use [output.F90, 31]             output_mod.retmssg
-    Use [output.F90, 101]            output_mod.rhomssg
+    Use [vlagbeta.f90, 35]           vlagbeta_mod.vlagbeta
+    Use [vlagbeta.f90, 36]           vlagbeta_mod.vlagbeta
+    Use [vlagbeta.f90, 37]           vlagbeta_mod.vlagbeta
+    Use [vlagbeta.f90, 38]           vlagbeta_mod.vlagbeta
+    Use [vlagbeta.f90, 39]           vlagbeta_mod.vlagbeta
+    Use [vlagbeta.f90, 42]           vlagbeta_mod.vlagbeta
+    Use [vlagbeta.f90, 43]           vlagbeta_mod.vlagbeta
+    Use [vlagbeta.f90, 48]           vlagbeta_mod.vlagbeta
+    Use [vlagbeta.f90, 49]           vlagbeta_mod.vlagbeta
+    Use [vlagbeta.f90, 50]           vlagbeta_mod.vlagbeta
+    Use [vlagbeta.f90, 51]           vlagbeta_mod.vlagbeta
+    Use [vlagbeta.f90, 52]           vlagbeta_mod.vlagbeta
+    Use [vlagbeta.f90, 53]           vlagbeta_mod.vlagbeta
+    Use [vlagbeta.f90, 54]           vlagbeta_mod.vlagbeta
+    Use [vlagbeta.f90, 55]           vlagbeta_mod.vlagbeta
                                                                      Page 82
                          Object Cross Reference Report
 ===============================================================================
-    Use [output.F90, 102]            output_mod.rhomssg
-    Use [output.F90, 103]            output_mod.rhomssg
     Use [lina.F90, 698]              lina_mod.Ax_plus_y
     Use [lina.F90, 699]              lina_mod.Ax_plus_y
     Use [lina.F90, 700]              lina_mod.Ax_plus_y
@@ -4713,28 +4711,88 @@ consts_mod.RP   (Variable)
     Use [lina.F90, 657]              lina_mod.xdy_plus_a
     Use [lina.F90, 658]              lina_mod.xdy_plus_a
     Use [lina.F90, 659]              lina_mod.xdy_plus_a
+    Use [lina.F90, 613]              lina_mod.xpy_dot_z
+    Use [lina.F90, 614]              lina_mod.xpy_dot_z
                                                                      Page 83
                          Object Cross Reference Report
 ===============================================================================
-    Use [lina.F90, 613]              lina_mod.xpy_dot_z
-    Use [lina.F90, 614]              lina_mod.xpy_dot_z
     Use [lina.F90, 615]              lina_mod.xpy_dot_z
     Use [lina.F90, 616]              lina_mod.xpy_dot_z
-    Use [vlagbeta.f90, 35]           vlagbeta_mod.vlagbeta
-    Use [vlagbeta.f90, 36]           vlagbeta_mod.vlagbeta
-    Use [vlagbeta.f90, 37]           vlagbeta_mod.vlagbeta
-    Use [vlagbeta.f90, 38]           vlagbeta_mod.vlagbeta
-    Use [vlagbeta.f90, 39]           vlagbeta_mod.vlagbeta
-    Use [vlagbeta.f90, 42]           vlagbeta_mod.vlagbeta
-    Use [vlagbeta.f90, 43]           vlagbeta_mod.vlagbeta
-    Use [vlagbeta.f90, 48]           vlagbeta_mod.vlagbeta
-    Use [vlagbeta.f90, 49]           vlagbeta_mod.vlagbeta
-    Use [vlagbeta.f90, 50]           vlagbeta_mod.vlagbeta
-    Use [vlagbeta.f90, 51]           vlagbeta_mod.vlagbeta
-    Use [vlagbeta.f90, 52]           vlagbeta_mod.vlagbeta
-    Use [vlagbeta.f90, 53]           vlagbeta_mod.vlagbeta
-    Use [vlagbeta.f90, 54]           vlagbeta_mod.vlagbeta
-    Use [vlagbeta.f90, 55]           vlagbeta_mod.vlagbeta
+    Use [shiftbase.f90, 32]          shiftbase_mod.shiftbase
+    Use [shiftbase.f90, 33]          shiftbase_mod.shiftbase
+    Use [shiftbase.f90, 36]          shiftbase_mod.shiftbase
+    Use [shiftbase.f90, 37]          shiftbase_mod.shiftbase
+    Use [shiftbase.f90, 38]          shiftbase_mod.shiftbase
+    Use [shiftbase.f90, 39]          shiftbase_mod.shiftbase
+    Use [shiftbase.f90, 40]          shiftbase_mod.shiftbase
+    Use [shiftbase.f90, 41]          shiftbase_mod.shiftbase
+    Use [shiftbase.f90, 47]          shiftbase_mod.shiftbase
+    Use [shiftbase.f90, 48]          shiftbase_mod.shiftbase
+    Use [shiftbase.f90, 49]          shiftbase_mod.shiftbase
+    Use [shiftbase.f90, 50]          shiftbase_mod.shiftbase
+    Use [shiftbase.f90, 51]          shiftbase_mod.shiftbase
+    Use [shiftbase.f90, 52]          shiftbase_mod.shiftbase
+    Use [shiftbase.f90, 53]          shiftbase_mod.shiftbase
+    Use [shiftbase.f90, 54]          shiftbase_mod.shiftbase
+    Use [newuoa.f90, 176]            newuoa_mod.newuoa
+    Use [newuoa.f90, 177]            newuoa_mod.newuoa
+    Use [newuoa.f90, 179]            newuoa_mod.newuoa
+    Use [newuoa.f90, 180]            newuoa_mod.newuoa
+    Use [newuoa.f90, 181]            newuoa_mod.newuoa
+    Use [newuoa.f90, 185]            newuoa_mod.newuoa
+    Use [newuoa.f90, 186]            newuoa_mod.newuoa
+    Use [newuoa.f90, 187]            newuoa_mod.newuoa
+    Use [newuoa.f90, 188]            newuoa_mod.newuoa
+    Use [newuoa.f90, 189]            newuoa_mod.newuoa
+    Use [newuoa.f90, 190]            newuoa_mod.newuoa
+    Use [newuoa.f90, 206]            newuoa_mod.newuoa
+    Use [newuoa.f90, 207]            newuoa_mod.newuoa
+    Use [newuoa.f90, 208]            newuoa_mod.newuoa
+    Use [newuoa.f90, 209]            newuoa_mod.newuoa
+    Use [newuoa.f90, 210]            newuoa_mod.newuoa
+    Use [newuoa.f90, 211]            newuoa_mod.newuoa
+    Use [newuoa.f90, 212]            newuoa_mod.newuoa
+    Use [newuoa.f90, 213]            newuoa_mod.newuoa
+    Use [newuoa.f90, 214]            newuoa_mod.newuoa
+    Use [update.f90, 343]            update_mod.tryqalt
+    Use [update.f90, 344]            update_mod.tryqalt
+    Use [update.f90, 345]            update_mod.tryqalt
+    Use [update.f90, 346]            update_mod.tryqalt
+    Use [update.f90, 350]            update_mod.tryqalt
+    Use [update.f90, 351]            update_mod.tryqalt
+    Use [update.f90, 352]            update_mod.tryqalt
+    Use [update.f90, 365]            update_mod.tryqalt
+    Use [update.f90, 366]            update_mod.tryqalt
+    Use [update.f90, 38]             update_mod.updateh
+    Use [update.f90, 39]             update_mod.updateh
+    Use [update.f90, 43]             update_mod.updateh
+    Use [update.f90, 44]             update_mod.updateh
+    Use [update.f90, 53]             update_mod.updateh
+    Use [update.f90, 54]             update_mod.updateh
+    Use [update.f90, 55]             update_mod.updateh
+    Use [update.f90, 56]             update_mod.updateh
+    Use [update.f90, 57]             update_mod.updateh
+                                                                     Page 84
+                         Object Cross Reference Report
+===============================================================================
+    Use [update.f90, 58]             update_mod.updateh
+    Use [update.f90, 59]             update_mod.updateh
+    Use [update.f90, 60]             update_mod.updateh
+    Use [update.f90, 61]             update_mod.updateh
+    Use [update.f90, 62]             update_mod.updateh
+    Use [update.f90, 63]             update_mod.updateh
+    Use [update.f90, 64]             update_mod.updateh
+    Use [update.f90, 65]             update_mod.updateh
+    Use [update.f90, 66]             update_mod.updateh
+    Use [update.f90, 67]             update_mod.updateh
+    Use [update.f90, 273]            update_mod.updateq
+    Use [update.f90, 275]            update_mod.updateq
+    Use [update.f90, 276]            update_mod.updateq
+    Use [update.f90, 277]            update_mod.updateq
+    Use [update.f90, 280]            update_mod.updateq
+    Use [update.f90, 281]            update_mod.updateq
+    Use [update.f90, 282]            update_mod.updateq
+    Use [update.f90, 287]            update_mod.updateq
     Use [preproc.f90, 33]            preproc_mod.preproc
     Use [preproc.f90, 34]            preproc_mod.preproc
     Use [preproc.f90, 35]            preproc_mod.preproc
@@ -4742,6 +4800,48 @@ consts_mod.RP   (Variable)
     Use [preproc.f90, 37]            preproc_mod.preproc
     Use [preproc.f90, 38]            preproc_mod.preproc
     Use [preproc.f90, 39]            preproc_mod.preproc
+    Use [newuob.f90, 70]             newuob_mod.newuob
+    Use [newuob.f90, 71]             newuob_mod.newuob
+    Use [newuob.f90, 72]             newuob_mod.newuob
+    Use [newuob.f90, 73]             newuob_mod.newuob
+    Use [newuob.f90, 74]             newuob_mod.newuob
+    Use [newuob.f90, 75]             newuob_mod.newuob
+    Use [newuob.f90, 76]             newuob_mod.newuob
+    Use [newuob.f90, 79]             newuob_mod.newuob
+    Use [newuob.f90, 84]             newuob_mod.newuob
+    Use [newuob.f90, 85]             newuob_mod.newuob
+    Use [newuob.f90, 86]             newuob_mod.newuob
+    Use [newuob.f90, 101]            newuob_mod.newuob
+    Use [newuob.f90, 102]            newuob_mod.newuob
+    Use [newuob.f90, 103]            newuob_mod.newuob
+    Use [newuob.f90, 104]            newuob_mod.newuob
+    Use [newuob.f90, 105]            newuob_mod.newuob
+    Use [newuob.f90, 106]            newuob_mod.newuob
+    Use [newuob.f90, 107]            newuob_mod.newuob
+    Use [newuob.f90, 108]            newuob_mod.newuob
+    Use [newuob.f90, 109]            newuob_mod.newuob
+    Use [newuob.f90, 110]            newuob_mod.newuob
+    Use [newuob.f90, 111]            newuob_mod.newuob
+    Use [newuob.f90, 112]            newuob_mod.newuob
+    Use [newuob.f90, 113]            newuob_mod.newuob
+    Use [newuob.f90, 114]            newuob_mod.newuob
+    Use [newuob.f90, 115]            newuob_mod.newuob
+    Use [newuob.f90, 116]            newuob_mod.newuob
+    Use [newuob.f90, 117]            newuob_mod.newuob
+    Use [newuob.f90, 118]            newuob_mod.newuob
+    Use [newuob.f90, 119]            newuob_mod.newuob
+    Use [newuob.f90, 120]            newuob_mod.newuob
+                                                                     Page 85
+                         Object Cross Reference Report
+===============================================================================
+    Use [newuob.f90, 121]            newuob_mod.newuob
+    Use [newuob.f90, 122]            newuob_mod.newuob
+    Use [newuob.f90, 123]            newuob_mod.newuob
+    Use [newuob.f90, 124]            newuob_mod.newuob
+    Use [newuob.f90, 125]            newuob_mod.newuob
+    Use [newuob.f90, 126]            newuob_mod.newuob
+    Use [newuob.f90, 127]            newuob_mod.newuob
+    Use [newuob.f90, 128]            newuob_mod.newuob
     Use [geometry.f90, 107]          geometry_mod.ameliorgeo
     Use [geometry.f90, 108]          geometry_mod.ameliorgeo
     Use [geometry.f90, 109]          geometry_mod.ameliorgeo
@@ -4772,9 +4872,6 @@ consts_mod.RP   (Variable)
     Use [geometry.f90, 425]          geometry_mod.bigden
     Use [geometry.f90, 426]          geometry_mod.bigden
     Use [geometry.f90, 427]          geometry_mod.bigden
-                                                                     Page 84
-                         Object Cross Reference Report
-===============================================================================
     Use [geometry.f90, 428]          geometry_mod.bigden
     Use [geometry.f90, 429]          geometry_mod.bigden
     Use [geometry.f90, 430]          geometry_mod.bigden
@@ -4793,6 +4890,9 @@ consts_mod.RP   (Variable)
     Use [geometry.f90, 443]          geometry_mod.bigden
     Use [geometry.f90, 444]          geometry_mod.bigden
     Use [geometry.f90, 445]          geometry_mod.bigden
+                                                                     Page 86
+                         Object Cross Reference Report
+===============================================================================
     Use [geometry.f90, 446]          geometry_mod.bigden
     Use [geometry.f90, 447]          geometry_mod.bigden
     Use [geometry.f90, 448]          geometry_mod.bigden
@@ -4831,9 +4931,6 @@ consts_mod.RP   (Variable)
     Use [geometry.f90, 215]          geometry_mod.biglag
     Use [geometry.f90, 216]          geometry_mod.biglag
     Use [geometry.f90, 217]          geometry_mod.biglag
-                                                                     Page 85
-                         Object Cross Reference Report
-===============================================================================
     Use [geometry.f90, 218]          geometry_mod.biglag
     Use [geometry.f90, 219]          geometry_mod.biglag
     Use [geometry.f90, 220]          geometry_mod.biglag
@@ -4852,110 +4949,13 @@ consts_mod.RP   (Variable)
     Use [geometry.f90, 42]           geometry_mod.setremove
     Use [geometry.f90, 50]           geometry_mod.setremove
     Use [geometry.f90, 51]           geometry_mod.setremove
+                                                                     Page 87
+                         Object Cross Reference Report
+===============================================================================
     Use [geometry.f90, 52]           geometry_mod.setremove
     Use [geometry.f90, 53]           geometry_mod.setremove
     Use [memory.F90, 75]             memory_mod.alloc_rmatrix
     Use [memory.F90, 38]             memory_mod.alloc_rvector
-    Use [shiftbase.f90, 32]          shiftbase_mod.shiftbase
-    Use [shiftbase.f90, 33]          shiftbase_mod.shiftbase
-    Use [shiftbase.f90, 36]          shiftbase_mod.shiftbase
-    Use [shiftbase.f90, 37]          shiftbase_mod.shiftbase
-    Use [shiftbase.f90, 38]          shiftbase_mod.shiftbase
-    Use [shiftbase.f90, 39]          shiftbase_mod.shiftbase
-    Use [shiftbase.f90, 40]          shiftbase_mod.shiftbase
-    Use [shiftbase.f90, 41]          shiftbase_mod.shiftbase
-    Use [shiftbase.f90, 47]          shiftbase_mod.shiftbase
-    Use [shiftbase.f90, 48]          shiftbase_mod.shiftbase
-    Use [shiftbase.f90, 49]          shiftbase_mod.shiftbase
-    Use [shiftbase.f90, 50]          shiftbase_mod.shiftbase
-    Use [shiftbase.f90, 51]          shiftbase_mod.shiftbase
-    Use [shiftbase.f90, 52]          shiftbase_mod.shiftbase
-    Use [shiftbase.f90, 53]          shiftbase_mod.shiftbase
-    Use [shiftbase.f90, 54]          shiftbase_mod.shiftbase
-    Use [debug.F90, 93]              debug_mod.verisize_real_1
-    Use [debug.F90, 107]             debug_mod.verisize_real_2
-    Use [debug.F90, 70]              debug_mod.verisym
-    Use [debug.F90, 71]              debug_mod.verisym
-    Use [pintrf.F90, 30]             pintrf_mod.FCEVAL
-    Use [pintrf.F90, 31]             pintrf_mod.FCEVAL
-    Use [pintrf.F90, 32]             pintrf_mod.FCEVAL
-    Use [pintrf.F90, 20]             pintrf_mod.FUNEVAL
-    Use [pintrf.F90, 21]             pintrf_mod.FUNEVAL
-    Use [initialize.f90, 391]        initialize_mod.inith
-    Use [initialize.f90, 396]        initialize_mod.inith
-    Use [initialize.f90, 397]        initialize_mod.inith
-    Use [initialize.f90, 405]        initialize_mod.inith
-    Use [initialize.f90, 406]        initialize_mod.inith
-    Use [initialize.f90, 407]        initialize_mod.inith
-    Use [initialize.f90, 408]        initialize_mod.inith
-    Use [initialize.f90, 409]        initialize_mod.inith
-    Use [initialize.f90, 410]        initialize_mod.inith
-                                                                     Page 86
-                         Object Cross Reference Report
-===============================================================================
-    Use [initialize.f90, 286]        initialize_mod.initq
-    Use [initialize.f90, 287]        initialize_mod.initq
-    Use [initialize.f90, 291]        initialize_mod.initq
-    Use [initialize.f90, 292]        initialize_mod.initq
-    Use [initialize.f90, 293]        initialize_mod.initq
-    Use [initialize.f90, 301]        initialize_mod.initq
-    Use [initialize.f90, 302]        initialize_mod.initq
-    Use [initialize.f90, 303]        initialize_mod.initq
-    Use [initialize.f90, 304]        initialize_mod.initq
-    Use [initialize.f90, 305]        initialize_mod.initq
-    Use [initialize.f90, 306]        initialize_mod.initq
-    Use [initialize.f90, 37]         initialize_mod.initxf
-    Use [initialize.f90, 38]         initialize_mod.initxf
-    Use [initialize.f90, 39]         initialize_mod.initxf
-    Use [initialize.f90, 46]         initialize_mod.initxf
-    Use [initialize.f90, 47]         initialize_mod.initxf
-    Use [initialize.f90, 48]         initialize_mod.initxf
-    Use [initialize.f90, 49]         initialize_mod.initxf
-    Use [initialize.f90, 50]         initialize_mod.initxf
-    Use [initialize.f90, 69]         initialize_mod.initxf
-    Use [initialize.f90, 70]         initialize_mod.initxf
-    Use [newuob.f90, 70]             newuob_mod.newuob
-    Use [newuob.f90, 71]             newuob_mod.newuob
-    Use [newuob.f90, 72]             newuob_mod.newuob
-    Use [newuob.f90, 73]             newuob_mod.newuob
-    Use [newuob.f90, 74]             newuob_mod.newuob
-    Use [newuob.f90, 75]             newuob_mod.newuob
-    Use [newuob.f90, 76]             newuob_mod.newuob
-    Use [newuob.f90, 79]             newuob_mod.newuob
-    Use [newuob.f90, 84]             newuob_mod.newuob
-    Use [newuob.f90, 85]             newuob_mod.newuob
-    Use [newuob.f90, 86]             newuob_mod.newuob
-    Use [newuob.f90, 101]            newuob_mod.newuob
-    Use [newuob.f90, 102]            newuob_mod.newuob
-    Use [newuob.f90, 103]            newuob_mod.newuob
-    Use [newuob.f90, 104]            newuob_mod.newuob
-    Use [newuob.f90, 105]            newuob_mod.newuob
-    Use [newuob.f90, 106]            newuob_mod.newuob
-    Use [newuob.f90, 107]            newuob_mod.newuob
-    Use [newuob.f90, 108]            newuob_mod.newuob
-    Use [newuob.f90, 109]            newuob_mod.newuob
-    Use [newuob.f90, 110]            newuob_mod.newuob
-    Use [newuob.f90, 111]            newuob_mod.newuob
-    Use [newuob.f90, 112]            newuob_mod.newuob
-    Use [newuob.f90, 113]            newuob_mod.newuob
-    Use [newuob.f90, 114]            newuob_mod.newuob
-    Use [newuob.f90, 115]            newuob_mod.newuob
-    Use [newuob.f90, 116]            newuob_mod.newuob
-    Use [newuob.f90, 117]            newuob_mod.newuob
-    Use [newuob.f90, 118]            newuob_mod.newuob
-    Use [newuob.f90, 119]            newuob_mod.newuob
-    Use [newuob.f90, 120]            newuob_mod.newuob
-    Use [newuob.f90, 121]            newuob_mod.newuob
-    Use [newuob.f90, 122]            newuob_mod.newuob
-    Use [newuob.f90, 123]            newuob_mod.newuob
-    Use [newuob.f90, 124]            newuob_mod.newuob
-                                                                     Page 87
-                         Object Cross Reference Report
-===============================================================================
-    Use [newuob.f90, 125]            newuob_mod.newuob
-    Use [newuob.f90, 126]            newuob_mod.newuob
-    Use [newuob.f90, 127]            newuob_mod.newuob
-    Use [newuob.f90, 128]            newuob_mod.newuob
 
 consts_mod.RP_DFT   (Variable)
   Declared as: INTEGER PARAMETER
@@ -4968,22 +4968,28 @@ consts_mod.SP   (Variable)
     Define [consts.F90, 81]          consts_mod
     Declare [consts.F90, 113]        consts_mod
     Set [consts.F90, 113]            consts_mod
-    Use [memory.F90, 101]            memory_mod.size_of_sp
     Use [infnan.F90, 98]             infnan_mod.is_finite_sp
     Use [infnan.F90, 148]            infnan_mod.is_inf_sp
     Use [infnan.F90, 79]             infnan_mod.is_nan_sp
     Use [infnan.F90, 132]            infnan_mod.is_neginf_sp
     Use [infnan.F90, 116]            infnan_mod.is_posinf_sp
+    Use [memory.F90, 101]            memory_mod.size_of_sp
 
 consts_mod.SRNLEN   (Variable)
   Declared as: INTEGER PARAMETER
     Define [consts.F90, 84]          consts_mod
     Declare [consts.F90, 165]        consts_mod
     Set [consts.F90, 165]            consts_mod
+    Use [initialize.f90, 411]        initialize_mod.inith
+    Use [initialize.f90, 307]        initialize_mod.initq
+    Use [initialize.f90, 73]         initialize_mod.initxf
+    Use [debug.F90, 128]             debug_mod.verisize_int_1
+    Use [debug.F90, 143]             debug_mod.verisize_int_2
+    Use [debug.F90, 96]              debug_mod.verisize_real_1
+    Use [debug.F90, 111]             debug_mod.verisize_real_2
+    Use [debug.F90, 73]              debug_mod.verisym
     Use [trustregion.f90, 117]       trustregion_mod.trsapp
-    Use [update.f90, 367]            update_mod.tryqalt
-    Use [update.f90, 69]             update_mod.updateh
-    Use [update.f90, 288]            update_mod.updateq
+    Use [vlagbeta.f90, 56]           vlagbeta_mod.vlagbeta
     Use [lina.F90, 708]              lina_mod.Ax_plus_y
     Use [lina.F90, 820]              lina_mod.calquad
     Use [lina.F90, 517]              lina_mod.grota
@@ -4999,26 +5005,20 @@ consts_mod.SRNLEN   (Variable)
     Use [lina.F90, 753]              lina_mod.xA_plus_y
     Use [lina.F90, 666]              lina_mod.xdy_plus_a
     Use [lina.F90, 623]              lina_mod.xpy_dot_z
-    Use [vlagbeta.f90, 56]           vlagbeta_mod.vlagbeta
+    Use [shiftbase.f90, 55]          shiftbase_mod.shiftbase
+    Use [update.f90, 367]            update_mod.tryqalt
+    Use [update.f90, 69]             update_mod.updateh
+                                                                     Page 88
+                         Object Cross Reference Report
+===============================================================================
+    Use [update.f90, 288]            update_mod.updateq
+    Use [newuob.f90, 134]            newuob_mod.newuob
     Use [geometry.f90, 125]          geometry_mod.ameliorgeo
     Use [geometry.f90, 454]          geometry_mod.bigden
     Use [geometry.f90, 223]          geometry_mod.biglag
     Use [geometry.f90, 54]           geometry_mod.setremove
     Use [memory.F90, 79]             memory_mod.alloc_rmatrix
     Use [memory.F90, 42]             memory_mod.alloc_rvector
-    Use [shiftbase.f90, 55]          shiftbase_mod.shiftbase
-    Use [debug.F90, 128]             debug_mod.verisize_int_1
-                                                                     Page 88
-                         Object Cross Reference Report
-===============================================================================
-    Use [debug.F90, 143]             debug_mod.verisize_int_2
-    Use [debug.F90, 96]              debug_mod.verisize_real_1
-    Use [debug.F90, 111]             debug_mod.verisize_real_2
-    Use [debug.F90, 73]              debug_mod.verisym
-    Use [initialize.f90, 411]        initialize_mod.inith
-    Use [initialize.f90, 307]        initialize_mod.initq
-    Use [initialize.f90, 73]         initialize_mod.initxf
-    Use [newuob.f90, 134]            newuob_mod.newuob
 
 consts_mod.TEN   (Variable)
   Declared as: REAL (RP) PARAMETER
@@ -5038,11 +5038,11 @@ consts_mod.TENTH   (Variable)
     Use [preproc.f90, 82]            preproc_mod.preproc
     Use [preproc.f90, 88]            preproc_mod.preproc
     Use [preproc.f90, 144]           preproc_mod.preproc
-    Use [geometry.f90, 70]           geometry_mod.setremove
     Use [newuob.f90, 239]            newuob_mod.newuob
     Use [newuob.f90, 381]            newuob_mod.newuob
     Use [newuob.f90, 431]            newuob_mod.newuob
     Use [newuob.f90, 451]            newuob_mod.newuob
+    Use [geometry.f90, 70]           geometry_mod.setremove
 
 consts_mod.TWO   (Variable)
   Declared as: REAL (RP) PARAMETER
@@ -5077,6 +5077,18 @@ consts_mod.ZERO   (Variable)
     Use Argument [consts.F90, 156]   consts_mod
     Use Argument [consts.F90, 157]   consts_mod
     Use Argument [consts.F90, 160]   consts_mod
+    Use [initialize.f90, 437]        initialize_mod.inith
+    Use [initialize.f90, 438]        initialize_mod.inith
+    Use [initialize.f90, 471]        initialize_mod.inith
+    Use [initialize.f90, 474]        initialize_mod.inith
+    Use [initialize.f90, 325]        initialize_mod.initq
+    Use [initialize.f90, 326]        initialize_mod.initq
+    Use [initialize.f90, 327]        initialize_mod.initq
+    Use [initialize.f90, 349]        initialize_mod.initq
+    Use [initialize.f90, 354]        initialize_mod.initq
+    Use [initialize.f90, 112]        initialize_mod.initxf
+    Use [debug.F90, 78]              debug_mod.verisym
+    Use [debug.F90, 83]              debug_mod.verisym
     Use [trustregion.f90, 134]       trustregion_mod.trsapp
     Use [trustregion.f90, 135]       trustregion_mod.trsapp
     Use [trustregion.f90, 136]       trustregion_mod.trsapp
@@ -5088,17 +5100,6 @@ consts_mod.ZERO   (Variable)
     Use [trustregion.f90, 234]       trustregion_mod.trsapp
     Use [trustregion.f90, 310]       trustregion_mod.trsapp
     Use [trustregion.f90, 315]       trustregion_mod.trsapp
-    Use [newuoa.f90, 223]            newuoa_mod.newuoa
-    Use [newuoa.f90, 242]            newuoa_mod.newuoa
-    Use [newuoa.f90, 288]            newuoa_mod.newuoa
-    Use [newuoa.f90, 297]            newuoa_mod.newuoa
-    Use [update.f90, 404]            update_mod.tryqalt
-    Use [update.f90, 188]            update_mod.updateh
-    Use [update.f90, 205]            update_mod.updateh
-    Use [update.f90, 219]            update_mod.updateh
-    Use [update.f90, 220]            update_mod.updateh
-    Use [update.f90, 226]            update_mod.updateh
-    Use [update.f90, 313]            update_mod.updateq
     Use [lina.F90, 836]              lina_mod.calquad
     Use [lina.F90, 526]              lina_mod.grota
     Use [lina.F90, 537]              lina_mod.grota
@@ -5111,12 +5112,28 @@ consts_mod.ZERO   (Variable)
     Use [lina.F90, 242]              lina_mod.r2_sym
     Use [lina.F90, 593]              lina_mod.symmetrize
     Use [lina.F90, 630]              lina_mod.xpy_dot_z
+    Use [shiftbase.f90, 146]         shiftbase_mod.shiftbase
+    Use [newuoa.f90, 223]            newuoa_mod.newuoa
+    Use [newuoa.f90, 242]            newuoa_mod.newuoa
+    Use [newuoa.f90, 288]            newuoa_mod.newuoa
+    Use [newuoa.f90, 297]            newuoa_mod.newuoa
+    Use [update.f90, 404]            update_mod.tryqalt
+    Use [update.f90, 188]            update_mod.updateh
+    Use [update.f90, 205]            update_mod.updateh
+    Use [update.f90, 219]            update_mod.updateh
+    Use [update.f90, 220]            update_mod.updateh
+    Use [update.f90, 226]            update_mod.updateh
+    Use [update.f90, 313]            update_mod.updateq
+                                                                     Page 90
+                         Object Cross Reference Report
+===============================================================================
     Use [preproc.f90, 83]            preproc_mod.preproc
     Use [preproc.f90, 85]            preproc_mod.preproc
     Use [preproc.f90, 108]           preproc_mod.preproc
     Use [preproc.f90, 133]           preproc_mod.preproc
     Use [preproc.f90, 135]           preproc_mod.preproc
     Use [preproc.f90, 143]           preproc_mod.preproc
+    Use [newuob.f90, 312]            newuob_mod.newuob
     Use [geometry.f90, 533]          geometry_mod.bigden
     Use [geometry.f90, 550]          geometry_mod.bigden
     Use [geometry.f90, 563]          geometry_mod.bigden
@@ -5124,26 +5141,9 @@ consts_mod.ZERO   (Variable)
     Use [geometry.f90, 274]          geometry_mod.biglag
     Use [geometry.f90, 277]          geometry_mod.biglag
     Use [geometry.f90, 344]          geometry_mod.biglag
-                                                                     Page 90
-                         Object Cross Reference Report
-===============================================================================
     Use [geometry.f90, 349]          geometry_mod.biglag
     Use [geometry.f90, 75]           geometry_mod.setremove
     Use [geometry.f90, 80]           geometry_mod.setremove
-    Use [shiftbase.f90, 146]         shiftbase_mod.shiftbase
-    Use [debug.F90, 78]              debug_mod.verisym
-    Use [debug.F90, 83]              debug_mod.verisym
-    Use [initialize.f90, 437]        initialize_mod.inith
-    Use [initialize.f90, 438]        initialize_mod.inith
-    Use [initialize.f90, 471]        initialize_mod.inith
-    Use [initialize.f90, 474]        initialize_mod.inith
-    Use [initialize.f90, 325]        initialize_mod.initq
-    Use [initialize.f90, 326]        initialize_mod.initq
-    Use [initialize.f90, 327]        initialize_mod.initq
-    Use [initialize.f90, 349]        initialize_mod.initq
-    Use [initialize.f90, 354]        initialize_mod.initq
-    Use [initialize.f90, 112]        initialize_mod.initxf
-    Use [newuob.f90, 312]            newuob_mod.newuob
 
 debug_mod.errstop.mssg   (Dummy Argument)
   Declared as: CHARACTER (len=*) INTENT(IN)
@@ -10657,8 +10657,8 @@ pintrf_mod.FUNEVAL   (Variable)
   Declared as: REAL (implicit)
     Define [pintrf.F90, 14]          pintrf_mod
     Define [pintrf.F90, 17]          pintrf_mod
-    Use [newuoa.f90, 175]            newuoa_mod.newuoa
     Use [initialize.f90, 35]         initialize_mod.initxf
+    Use [newuoa.f90, 175]            newuoa_mod.newuoa
     Use [newuob.f90, 66]             newuob_mod.newuob
 
 pintrf_mod.FUNEVAL.f   (Dummy Argument)
@@ -12128,7 +12128,6 @@ update_mod.updateh.v2   (Local Variable)
 update_mod.updateh.vlag   (Local Variable)
   Declared as: REAL (RP)(size)
     Define [update.f90, 65]          update_mod.updateh
-    Use Argument [update.f90, 66]    update_mod.updateh
     Use Argument [update.f90, 81]    update_mod.updateh
     Set [update.f90, 84]             update_mod.updateh
     Use [update.f90, 129]            update_mod.updateh
@@ -12146,6 +12145,7 @@ update_mod.updateh.vlag_in   (Dummy Argument)
     Define [update.f90, 18]          update_mod.updateh
     Declare [update.f90, 39]         update_mod.updateh
     Use Argument [update.f90, 65]    update_mod.updateh
+    Use Argument [update.f90, 66]    update_mod.updateh
     Use [update.f90, 84]             update_mod.updateh
 
 update_mod.updateh.w   (Local Variable)
@@ -12525,11 +12525,11 @@ vlagbeta_mod.vlagbeta.zmat   (Dummy Argument)
 
 
 ppf.h
-    Include [lina.F90, 20]   lina.F90
-    Include [consts.F90, 58]   consts.F90
-    Include [memory.F90, 4]   memory.F90
     Include [debug.F90, 7]   debug.F90
+    Include [consts.F90, 58]   consts.F90
+    Include [lina.F90, 20]   lina.F90
     Include [infnan.F90, 13]   infnan.F90
+    Include [memory.F90, 4]   memory.F90
                                                                      Page 218
                             Declaration Tree Report
 ===============================================================================
@@ -13180,8 +13180,8 @@ vlagbeta_mod.vlagbeta
 Classes:                      0
 Files:                       18
 Program Units:               17
-Lines:                     5453
-Lines Blank:                821
+Lines:                     5556
+Lines Blank:                924
 Lines Code:                2999
 Lines Comment:             1787
 Lines Inactive:               0
@@ -14291,9 +14291,9 @@ pintrf.F90
 ===============================================================================
 
 ppf.h
-   Lines:                   168
+   Lines:                   271
    Comment Lines:           146
-   Blank Lines:             22
+   Blank Lines:             125
    Preprocessor Lines:      0
    Code Lines:              0
    Inactive Lines:          0

@@ -1,383 +1,202 @@
-<html><head><title>trustregion.f90</title>
+<html><head><title>output.F90</title>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <link rel="stylesheet" type="text/css" href="sourcestyles.css" />
 </head><body link="blue" vlink="blue">
-<h3>File: /home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/newuoa/trustregion.f90</h3>
+<h3>File: /home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/common/output.F90</h3>
 <SCRIPT>
-defaultStatus = "File: /home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/newuoa/trustregion.f90";
-top.document.title  = "trustregion.f90";
+defaultStatus = "File: /home/zaikunzhang/.Cloud/Nutstore/Bureau/neupdfo/fsrc/common/output.F90";
+top.document.title  = "output.F90";
 </SCRIPT>
-<pre><span class="default"></span><a name="1"><font size=-1>1     </font></a><span class="default"></span><span class="comment">! TRUSTREGION_MOD is a module providing subroutines concerning the </span>
-<a name="2"><font size=-1>2     </font></a><span class="comment">! trust-region iterations.</span>
-<a name="3"><font size=-1>3     </font></a><span class="comment">!</span>
-<a name="4"><font size=-1>4     </font></a><span class="comment">! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code </span>
-<a name="5"><font size=-1>5     </font></a><span class="comment">! and the NEWUOA paper.</span>
-<a name="6"><font size=-1>6     </font></a><span class="comment"></span>
-<a name="7"><font size=-1>7     </font></a><span class="comment"></span>
-<a name="8"><font size=-1>8     </font></a><span class="comment"></span><span class="keyword">module <a href="dictionary_T.html#12">trustregion_mod</a></span>
-<a name="9"><font size=-1>9     </font></a><span class="keyword"></span>
-<a name="10"><font size=-1>10     </font></a><span class="keyword">implicit none</span>
-<a name="11"><font size=-1>11     </font></a><span class="keyword">private </span>
-<a name="12"><font size=-1>12     </font></a><span class="keyword">public </span><span class="default">:: <a href="dictionary_T.html#21">trsapp</a>, <a href="dictionary_T.html#13">trrad</a></span>
-<a name="13"><font size=-1>13     </font></a><span class="default">     </span>
-<a name="14"><font size=-1>14     </font></a><span class="default"></span><span class="keyword">contains</span>
-<a name="15"><font size=-1>15     </font></a><span class="keyword"></span>
-<a name="16"><font size=-1>16     </font></a><span class="keyword"></span>
-<a name="17"><font size=-1>17     </font></a><span class="keyword">subroutine <a href="dictionary_T.html#21">trsapp</a></span><span class="default">(<a href="dictionary_T.html#31">delta</a>, <a href="dictionary_T.html#40">gq</a>, <a href="dictionary_T.html#42">hq</a>, <a href="dictionary_T.html#53">pq</a>, <a href="dictionary_T.html#71">tol</a>, <a href="dictionary_T.html#74">x</a>, <a href="dictionary_T.html#75">xpt</a>, <a href="dictionary_T.html#26">crvmin</a>, <a href="dictionary_T.html#58">qred</a>, <a href="dictionary_T.html#63">s</a>, <a href="dictionary_T.html#46">info</a>)</span>
-<a name="18"><font size=-1>18     </font></a><span class="default"></span><span class="comment">! TRSAPP finds an approximate solution to the N-dimensional trust</span>
-<a name="19"><font size=-1>19     </font></a><span class="comment">! region subproblem</span>
-<a name="20"><font size=-1>20     </font></a><span class="comment">!</span>
-<a name="21"><font size=-1>21     </font></a><span class="comment">! min &lt;X+S, GQ&gt; + 0.5*&lt;X+S, HESSIAN*(X+S)&gt; s.t. ||S|| &lt;= DELTA</span>
-<a name="22"><font size=-1>22     </font></a><span class="comment">!</span>
-<a name="23"><font size=-1>23     </font></a><span class="comment">! Note that the HESSIAN here is the sum of an explicit part HQ and</span>
-<a name="24"><font size=-1>24     </font></a><span class="comment">! an implicit part (PQ, XPT):</span>
-<a name="25"><font size=-1>25     </font></a><span class="comment">!</span>
-<a name="26"><font size=-1>26     </font></a><span class="comment">! HESSIAN = HQ + sum_K=1^NPT PQ(K)*XPT(:, K)*XPT(:, K)' .</span>
-<a name="27"><font size=-1>27     </font></a><span class="comment">!</span>
-<a name="28"><font size=-1>28     </font></a><span class="comment">! At return, S will be the approximate solution. CRVMIN will be </span>
-<a name="29"><font size=-1>29     </font></a><span class="comment">! set to the least curvature of HESSIAN along the conjugate </span>
-<a name="30"><font size=-1>30     </font></a><span class="comment">! directions that occur, except that it is set to ZERO if S goes</span>
-<a name="31"><font size=-1>31     </font></a><span class="comment">! all the way to the trust region boundary. QRED is the reduction</span>
-<a name="32"><font size=-1>32     </font></a><span class="comment">! of Q achieved by S. INFO is an exit flag:</span>
-<a name="33"><font size=-1>33     </font></a><span class="comment">! INFO = 0: an approximate solution satisfying one of the </span>
-<a name="34"><font size=-1>34     </font></a><span class="comment">! following conditions is found: </span>
-<a name="35"><font size=-1>35     </font></a><span class="comment">! 1. ||G+HS||/||GBEG|| &lt;= TOL, </span>
-<a name="36"><font size=-1>36     </font></a><span class="comment">! 2. ||S|| = DELTA and &lt;S, -(G+HS)&gt; &gt;= (1 - TOL)*||S||*||G+HS||, </span>
-<a name="37"><font size=-1>37     </font></a><span class="comment">! where TOL is a tolerance that is set to 1e-2 in NEWUOA.  </span>
-<a name="38"><font size=-1>38     </font></a><span class="comment">! INFO = 1: the iteration is reducing Q only slightly;</span>
-<a name="39"><font size=-1>39     </font></a><span class="comment">! INFO = 2: the maximal number of iterations is attained;</span>
-<a name="40"><font size=-1>40     </font></a><span class="comment">! INFO = -1: too much rounding error to continue</span>
-<a name="41"><font size=-1>41     </font></a><span class="comment"></span>
-<a name="42"><font size=-1>42     </font></a><span class="comment">! The calculation of S begins with the truncated conjugate</span>
-<a name="43"><font size=-1>43     </font></a><span class="comment">! gradient method. If the boundary of the trust region is reached, </span>
-<a name="44"><font size=-1>44     </font></a><span class="comment">! then further changes to S may be made, each one being in the 2D</span>
-<a name="45"><font size=-1>45     </font></a><span class="comment">! space spanned by the current S and the corresponding gradient of</span>
-<a name="46"><font size=-1>46     </font></a><span class="comment">! Q. Thus S should provide a substantial reduction to Q within the</span>
-<a name="47"><font size=-1>47     </font></a><span class="comment">! trust region.</span>
-<a name="48"><font size=-1>48     </font></a><span class="comment">!</span>
-<a name="49"><font size=-1>49     </font></a><span class="comment">! See Section 5 of the NEWUOA paper.</span>
-<a name="50"><font size=-1>50     </font></a><span class="comment"></span>
-<a name="51"><font size=-1>51     </font></a><span class="comment">! Generic modules</span>
-<a name="52"><font size=-1>52     </font></a><span class="comment"></span><span class="keyword">use <a href="dictionary_C.html#76">consts_mod</a></span><span class="default">, </span><span class="keyword">only </span><span class="default">: <a href="dictionary_C.html#77">RP</a>, <a href="dictionary_C.html#79">IK</a>, <a href="dictionary_C.html#80">ONE</a>, <a href="dictionary_C.html#81">TWO</a>, <a href="dictionary_C.html#78">HALF</a>, <a href="dictionary_C.html#82">ZERO</a>, <a href="dictionary_C.html#83">PI</a>, <a href="dictionary_C.html#84">DEBUGGING</a>, <a href="dictionary_C.html#85">SRNLEN</a></span>
-<a name="53"><font size=-1>53     </font></a><span class="default"></span><span class="keyword">use <a href="dictionary_D.html#86">debug_mod</a></span><span class="default">, </span><span class="keyword">only </span><span class="default">: <a href="dictionary_D.html#87">errstop</a>, <a href="dictionary_D.html#88">verisize</a></span>
-<a name="54"><font size=-1>54     </font></a><span class="default"></span><span class="keyword">use <a href="dictionary_I.html#89">infnan_mod</a></span><span class="default">, </span><span class="keyword">only </span><span class="default">: <a href="dictionary_I.html#90">is_nan</a></span>
-<a name="55"><font size=-1>55     </font></a><span class="default"></span><span class="keyword">use <a href="dictionary_L.html#91">lina_mod</a></span><span class="default">, </span><span class="keyword">only </span><span class="default">: <a href="dictionary_L.html#92">Ax_plus_y</a>, <a href="dictionary_L.html#93">inprod</a>, <a href="dictionary_L.html#94">matprod</a></span>
-<a name="56"><font size=-1>56     </font></a><span class="default"></span>
-<a name="57"><font size=-1>57     </font></a><span class="default"></span><span class="keyword">implicit none</span>
-<a name="58"><font size=-1>58     </font></a><span class="keyword"></span>
-<a name="59"><font size=-1>59     </font></a><span class="keyword"></span><span class="comment">! Inputs</span>
-<a name="60"><font size=-1>60     </font></a><span class="comment"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_T.html#31">delta</a> </span>
-<a name="61"><font size=-1>61     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_T.html#40">gq</a>(:)       </span><span class="comment">! GQ(N)</span>
-<a name="62"><font size=-1>62     </font></a><span class="comment"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_T.html#42">hq</a>(:, :)    </span><span class="comment">! HQ(N, N)</span>
-<a name="63"><font size=-1>63     </font></a><span class="comment"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_T.html#53">pq</a>(:)       </span><span class="comment">! PQ(NPT)</span>
-<a name="64"><font size=-1>64     </font></a><span class="comment"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_T.html#71">tol</a></span>
-<a name="65"><font size=-1>65     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_T.html#74">x</a>(:)        </span><span class="comment">! X(N)</span>
-<a name="66"><font size=-1>66     </font></a><span class="comment"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_T.html#75">xpt</a>(:, :)   </span><span class="comment">! XPT(N, NPT)</span>
-<a name="67"><font size=-1>67     </font></a><span class="comment"></span>
-<a name="68"><font size=-1>68     </font></a><span class="comment">! Outputs</span>
-<a name="69"><font size=-1>69     </font></a><span class="comment"></span><span class="keyword">integer</span><span class="default">(<a href="dictionary_C.html#79">IK</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">out</span><span class="default">) :: <a href="dictionary_T.html#46">info</a></span>
-<a name="70"><font size=-1>70     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">out</span><span class="default">) :: <a href="dictionary_T.html#26">crvmin</a></span>
-<a name="71"><font size=-1>71     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">out</span><span class="default">) :: <a href="dictionary_T.html#58">qred</a></span>
-<a name="72"><font size=-1>72     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">out</span><span class="default">) :: <a href="dictionary_T.html#63">s</a>(:)        </span><span class="comment">! S(N)</span>
-<a name="73"><font size=-1>73     </font></a><span class="comment"></span>
-<a name="74"><font size=-1>74     </font></a><span class="comment">! Intermediate variables</span>
-<a name="75"><font size=-1>75     </font></a><span class="comment"></span><span class="keyword">integer</span><span class="default">(<a href="dictionary_C.html#79">IK</a>) :: <a href="dictionary_T.html#45">i</a></span>
-<a name="76"><font size=-1>76     </font></a><span class="default"></span><span class="keyword">integer</span><span class="default">(<a href="dictionary_C.html#79">IK</a>) :: <a href="dictionary_T.html#47">isave</a></span>
-<a name="77"><font size=-1>77     </font></a><span class="default"></span><span class="keyword">integer</span><span class="default">(<a href="dictionary_C.html#79">IK</a>) :: <a href="dictionary_T.html#48">iterc</a></span>
-<a name="78"><font size=-1>78     </font></a><span class="default"></span><span class="keyword">integer</span><span class="default">(<a href="dictionary_C.html#79">IK</a>) :: <a href="dictionary_T.html#49">itermax</a></span>
-<a name="79"><font size=-1>79     </font></a><span class="default"></span><span class="keyword">integer</span><span class="default">(<a href="dictionary_C.html#79">IK</a>) :: <a href="dictionary_T.html#50">iu</a></span>
-<a name="80"><font size=-1>80     </font></a><span class="default"></span><span class="keyword">integer</span><span class="default">(<a href="dictionary_C.html#79">IK</a>) :: <a href="dictionary_T.html#51">n</a></span>
-<a name="81"><font size=-1>81     </font></a><span class="default"></span><span class="keyword">integer</span><span class="default">(<a href="dictionary_C.html#79">IK</a>) :: <a href="dictionary_T.html#52">npt</a></span>
-<a name="82"><font size=-1>82     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#22">alpha</a></span>
-<a name="83"><font size=-1>83     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#23">angle</a></span>
-<a name="84"><font size=-1>84     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#24">bstep</a></span>
-<a name="85"><font size=-1>85     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#25">cf</a></span>
-<a name="86"><font size=-1>86     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#27">cth</a></span>
-<a name="87"><font size=-1>87     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#28">d</a>(<a href="dictionary_S.html#10">size</a>(<a href="dictionary_T.html#74">x</a>))</span>
-<a name="88"><font size=-1>88     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#29">dd</a></span>
-<a name="89"><font size=-1>89     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#30">delsq</a></span>
-<a name="90"><font size=-1>90     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#32">dg</a></span>
-<a name="91"><font size=-1>91     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#33">dhd</a></span>
-<a name="92"><font size=-1>92     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#34">dhs</a></span>
-<a name="93"><font size=-1>93     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#35">ds</a></span>
-<a name="94"><font size=-1>94     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#36">g</a>(<a href="dictionary_S.html#10">size</a>(<a href="dictionary_T.html#74">x</a>))</span>
-<a name="95"><font size=-1>95     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#37">gg</a></span>
-<a name="96"><font size=-1>96     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#38">ggbeg</a></span>
-<a name="97"><font size=-1>97     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#39">ggsave</a></span>
-<a name="98"><font size=-1>98     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#41">hd</a>(<a href="dictionary_S.html#10">size</a>(<a href="dictionary_T.html#74">x</a>))</span>
-<a name="99"><font size=-1>99     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#43">hs</a>(<a href="dictionary_S.html#10">size</a>(<a href="dictionary_T.html#74">x</a>))</span>
-<a name="100"><font size=-1>100     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#44">hx</a>(<a href="dictionary_S.html#10">size</a>(<a href="dictionary_T.html#74">x</a>)) </span>
-<a name="101"><font size=-1>101     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#54">qadd</a></span>
-<a name="102"><font size=-1>102     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#55">qbeg</a></span>
-<a name="103"><font size=-1>103     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#56">qmin</a></span>
-<a name="104"><font size=-1>104     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#57">qnew</a></span>
-<a name="105"><font size=-1>105     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#59">qsave</a></span>
-<a name="106"><font size=-1>106     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#60">quada</a></span>
-<a name="107"><font size=-1>107     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#61">quadb</a></span>
-<a name="108"><font size=-1>108     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#62">reduc</a></span>
-<a name="109"><font size=-1>109     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#64">sg</a></span>
-<a name="110"><font size=-1>110     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#65">sgk</a></span>
-<a name="111"><font size=-1>111     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#66">shs</a></span>
-<a name="112"><font size=-1>112     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#68">ss</a></span>
-<a name="113"><font size=-1>113     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#69">sth</a></span>
-<a name="114"><font size=-1>114     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#70">t</a></span>
-<a name="115"><font size=-1>115     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#73">unitang</a></span>
-<a name="116"><font size=-1>116     </font></a><span class="default"></span><span class="keyword">logical </span><span class="default">:: <a href="dictionary_T.html#72">twod_search</a></span>
-<a name="117"><font size=-1>117     </font></a><span class="default"></span><span class="keyword">character</span><span class="default">(len = <a href="dictionary_C.html#85">SRNLEN</a>), </span><span class="keyword">parameter </span><span class="default">:: <a href="dictionary_T.html#67">srname</a> = </span><span class="string">'TRSAPP'</span>
-<a name="118"><font size=-1>118     </font></a><span class="string"></span>
-<a name="119"><font size=-1>119     </font></a><span class="string"></span>
-<a name="120"><font size=-1>120     </font></a><span class="string"></span><span class="comment">! Get and verify the sizes.</span>
-<a name="121"><font size=-1>121     </font></a><span class="comment"><a href="dictionary_T.html#51">n</a> </span><span class="default">= <a href="dictionary_I.html#4">int</a>(<a href="dictionary_S.html#10">size</a>(<a href="dictionary_T.html#75">xpt</a>, </span><span class="number">1</span><span class="default">), <a href="dictionary_K.html#5">kind</a>(<a href="dictionary_T.html#51">n</a>))</span>
-<a name="122"><font size=-1>122     </font></a><span class="default"><a href="dictionary_T.html#52">npt</a> = <a href="dictionary_I.html#4">int</a>(<a href="dictionary_S.html#10">size</a>(<a href="dictionary_T.html#75">xpt</a>, </span><span class="number">2</span><span class="default">), <a href="dictionary_K.html#5">kind</a>(<a href="dictionary_T.html#52">npt</a>))</span>
-<a name="123"><font size=-1>123     </font></a><span class="default"></span>
-<a name="124"><font size=-1>124     </font></a><span class="default"></span><span class="keyword">if </span><span class="default">(<a href="dictionary_C.html#84">DEBUGGING</a>) </span><span class="keyword">then</span>
-<a name="125"><font size=-1>125     </font></a><span class="keyword">    if </span><span class="default">(<a href="dictionary_T.html#51">n</a> == </span><span class="number">0 </span><span class="default">.or. <a href="dictionary_T.html#52">npt</a> &lt; <a href="dictionary_T.html#51">n</a> + </span><span class="number">2</span><span class="default">) </span><span class="keyword">then</span>
-<a name="126"><font size=-1>126     </font></a><span class="keyword">        call <a href="dictionary_D.html#87">errstop</a></span><span class="default">(<a href="dictionary_T.html#67">srname</a>, </span><span class="string">'SIZE(XPT) is invalid'</span><span class="default">)</span>
-<a name="127"><font size=-1>127     </font></a><span class="default">    </span><span class="keyword">end if</span>
-<a name="128"><font size=-1>128     </font></a><span class="keyword">    call <a href="dictionary_D.html#88">verisize</a></span><span class="default">(<a href="dictionary_T.html#40">gq</a>, <a href="dictionary_T.html#51">n</a>)</span>
-<a name="129"><font size=-1>129     </font></a><span class="default">    </span><span class="keyword">call <a href="dictionary_D.html#88">verisize</a></span><span class="default">(<a href="dictionary_T.html#42">hq</a>, <a href="dictionary_T.html#51">n</a>, <a href="dictionary_T.html#51">n</a>)</span>
-<a name="130"><font size=-1>130     </font></a><span class="default">    </span><span class="keyword">call <a href="dictionary_D.html#88">verisize</a></span><span class="default">(<a href="dictionary_T.html#53">pq</a>, <a href="dictionary_T.html#52">npt</a>)</span>
-<a name="131"><font size=-1>131     </font></a><span class="default">    </span><span class="keyword">call <a href="dictionary_D.html#88">verisize</a></span><span class="default">(<a href="dictionary_T.html#63">s</a>, <a href="dictionary_T.html#51">n</a>)</span>
-<a name="132"><font size=-1>132     </font></a><span class="default"></span><span class="keyword">end if</span>
-<a name="133"><font size=-1>133     </font></a><span class="keyword"></span>
-<a name="134"><font size=-1>134     </font></a><span class="keyword"><a href="dictionary_T.html#63">s</a> </span><span class="default">= <a href="dictionary_C.html#82">ZERO</a></span>
-<a name="135"><font size=-1>135     </font></a><span class="default"><a href="dictionary_T.html#26">crvmin</a> = <a href="dictionary_C.html#82">ZERO</a></span>
-<a name="136"><font size=-1>136     </font></a><span class="default"><a href="dictionary_T.html#58">qred</a> = <a href="dictionary_C.html#82">ZERO</a></span>
-<a name="137"><font size=-1>137     </font></a><span class="default"><a href="dictionary_T.html#46">info</a> = </span><span class="number">2  </span><span class="comment">! Default exit flag is 2, i.e., itermax is attained </span>
-<a name="138"><font size=-1>138     </font></a><span class="comment"></span>
-<a name="139"><font size=-1>139     </font></a><span class="comment">! Prepare for the first line search.</span>
-<a name="140"><font size=-1>140     </font></a><span class="comment">!----------------------------------------------------------------!</span>
-<a name="141"><font size=-1>141     </font></a><span class="comment">!-----!hx = matprod(xpt, pq*matprod(x, xpt)) + matprod(hq, x) !--!</span>
-<a name="142"><font size=-1>142     </font></a><span class="comment"><a href="dictionary_T.html#44">hx</a> </span><span class="default">= <a href="dictionary_L.html#92">Ax_plus_y</a>(<a href="dictionary_T.html#42">hq</a>, <a href="dictionary_T.html#74">x</a>, <a href="dictionary_L.html#94">matprod</a>(<a href="dictionary_T.html#75">xpt</a>, <a href="dictionary_T.html#53">pq</a>*<a href="dictionary_L.html#94">matprod</a>(<a href="dictionary_T.html#74">x</a>, <a href="dictionary_T.html#75">xpt</a>)))</span>
-<a name="143"><font size=-1>143     </font></a><span class="default"></span><span class="comment">!----------------------------------------------------------------!</span>
-<a name="144"><font size=-1>144     </font></a><span class="comment"><a href="dictionary_T.html#36">g</a> </span><span class="default">= <a href="dictionary_T.html#40">gq</a> + <a href="dictionary_T.html#44">hx</a></span>
-<a name="145"><font size=-1>145     </font></a><span class="default"><a href="dictionary_T.html#37">gg</a> = <a href="dictionary_L.html#93">inprod</a>(<a href="dictionary_T.html#36">g</a>, <a href="dictionary_T.html#36">g</a>)</span>
-<a name="146"><font size=-1>146     </font></a><span class="default"><a href="dictionary_T.html#38">ggbeg</a> = <a href="dictionary_T.html#37">gg</a></span>
-<a name="147"><font size=-1>147     </font></a><span class="default"><a href="dictionary_T.html#28">d</a> = -<a href="dictionary_T.html#36">g</a></span>
-<a name="148"><font size=-1>148     </font></a><span class="default"><a href="dictionary_T.html#29">dd</a> = <a href="dictionary_T.html#37">gg</a> </span>
-<a name="149"><font size=-1>149     </font></a><span class="default"><a href="dictionary_T.html#35">ds</a> = <a href="dictionary_C.html#82">ZERO</a></span>
-<a name="150"><font size=-1>150     </font></a><span class="default"><a href="dictionary_T.html#68">ss</a> = <a href="dictionary_C.html#82">ZERO</a></span>
-<a name="151"><font size=-1>151     </font></a><span class="default"><a href="dictionary_T.html#43">hs</a> = <a href="dictionary_C.html#82">ZERO</a></span>
-<a name="152"><font size=-1>152     </font></a><span class="default"><a href="dictionary_T.html#30">delsq</a> = <a href="dictionary_T.html#31">delta</a>*<a href="dictionary_T.html#31">delta</a></span>
-<a name="153"><font size=-1>153     </font></a><span class="default"><a href="dictionary_T.html#49">itermax</a> = <a href="dictionary_T.html#51">n</a></span>
-<a name="154"><font size=-1>154     </font></a><span class="default"></span>
-<a name="155"><font size=-1>155     </font></a><span class="default"><a href="dictionary_T.html#72">twod_search</a> = .false. </span>
-<a name="156"><font size=-1>156     </font></a><span class="default"></span>
-<a name="157"><font size=-1>157     </font></a><span class="default"></span><span class="comment">! The truncated-CG iterations. </span>
-<a name="158"><font size=-1>158     </font></a><span class="comment">!</span>
-<a name="159"><font size=-1>159     </font></a><span class="comment">! The iteration will be terminated in 4 possible cases:</span>
-<a name="160"><font size=-1>160     </font></a><span class="comment">! 1. the maximal number of iterations is attained;</span>
-<a name="161"><font size=-1>161     </font></a><span class="comment">! 2. QADD &lt;= TOL*QRED or ||G|| &lt;= TOL*||GBEG||, where QADD is the</span>
-<a name="162"><font size=-1>162     </font></a><span class="comment">!    reduction of Q due to the latest CG step, QRED is the</span>
-<a name="163"><font size=-1>163     </font></a><span class="comment">!    reduction of Q since the begnning until the latest CG step, </span>
-<a name="164"><font size=-1>164     </font></a><span class="comment">!    G is the current gradient, and GBEG is the initial gradient; </span>
-<a name="165"><font size=-1>165     </font></a><span class="comment">!    see (5.13) of the NEWUOA paper;</span>
-<a name="166"><font size=-1>166     </font></a><span class="comment">! 3. DS &lt;= 0</span>
-<a name="167"><font size=-1>167     </font></a><span class="comment">! 4. ||S|| = DELTA, i.e., CG path cuts the trust region boundary.</span>
-<a name="168"><font size=-1>168     </font></a><span class="comment">! </span>
-<a name="169"><font size=-1>169     </font></a><span class="comment">! In the 4th case, twod_search will be set to true, meaning that S</span>
-<a name="170"><font size=-1>170     </font></a><span class="comment">! will be improved by a sequence of two-dimensional search, the</span>
-<a name="171"><font size=-1>171     </font></a><span class="comment">! two-dimensional subspace at each iteration being span(S, -G).</span>
-<a name="172"><font size=-1>172     </font></a><span class="comment"></span><span class="keyword">do <a href="dictionary_T.html#48">iterc</a> </span><span class="default">= </span><span class="number">1</span><span class="default">, <a href="dictionary_T.html#49">itermax</a></span>
-<a name="173"><font size=-1>173     </font></a><span class="default">    </span><span class="comment">! Check whether to exit due to small GG </span>
-<a name="174"><font size=-1>174     </font></a><span class="comment">    </span><span class="keyword">if </span><span class="default">(<a href="dictionary_T.html#37">gg</a> &lt;= (<a href="dictionary_T.html#71">tol</a>**</span><span class="number">2</span><span class="default">)*<a href="dictionary_T.html#38">ggbeg</a>) </span><span class="keyword">then</span>
-<a name="175"><font size=-1>175     </font></a><span class="keyword">        <a href="dictionary_T.html#46">info</a> </span><span class="default">= </span><span class="number">0</span>
-<a name="176"><font size=-1>176     </font></a><span class="number">        </span><span class="keyword">exit</span>
-<a name="177"><font size=-1>177     </font></a><span class="keyword">    end if</span>
-<a name="178"><font size=-1>178     </font></a><span class="keyword">    </span><span class="comment">! Set BSTEP to the step length such that ||S+BSTEP*D|| = DELTA</span>
-<a name="179"><font size=-1>179     </font></a><span class="comment">    <a href="dictionary_T.html#24">bstep</a> </span><span class="default">= (<a href="dictionary_T.html#30">delsq</a> - <a href="dictionary_T.html#68">ss</a>)/(<a href="dictionary_T.html#35">ds</a> + <a href="dictionary_S.html#11">sqrt</a>(<a href="dictionary_T.html#35">ds</a>*<a href="dictionary_T.html#35">ds</a> + <a href="dictionary_T.html#29">dd</a>*(<a href="dictionary_T.html#30">delsq</a> - <a href="dictionary_T.html#68">ss</a>)))  </span>
-<a name="180"><font size=-1>180     </font></a><span class="default"></span><span class="comment">!----------------------------------------------------------------!</span>
-<a name="181"><font size=-1>181     </font></a><span class="comment">!-----!hd = matprod(xpt, pq*matprod(d, xpt)) + matprod(hq, d) !--------!</span>
-<a name="182"><font size=-1>182     </font></a><span class="comment"><a href="dictionary_T.html#41">hd</a> </span><span class="default">= <a href="dictionary_L.html#92">Ax_plus_y</a>(<a href="dictionary_T.html#42">hq</a>, <a href="dictionary_T.html#28">d</a>, <a href="dictionary_L.html#94">matprod</a>(<a href="dictionary_T.html#75">xpt</a>, <a href="dictionary_T.html#53">pq</a>*<a href="dictionary_L.html#94">matprod</a>(<a href="dictionary_T.html#28">d</a>, <a href="dictionary_T.html#75">xpt</a>)))</span>
-<a name="183"><font size=-1>183     </font></a><span class="default"></span><span class="comment">!----------------------------------------------------------------!</span>
-<a name="184"><font size=-1>184     </font></a><span class="comment">    <a href="dictionary_T.html#33">dhd</a> </span><span class="default">= <a href="dictionary_L.html#93">inprod</a>(<a href="dictionary_T.html#28">d</a>, <a href="dictionary_T.html#41">hd</a>)</span>
-<a name="185"><font size=-1>185     </font></a><span class="default"></span>
-<a name="186"><font size=-1>186     </font></a><span class="default">    </span><span class="comment">! Set the step-length ALPHA and update CRVMIN and </span>
-<a name="187"><font size=-1>187     </font></a><span class="comment">    </span><span class="keyword">if </span><span class="default">(<a href="dictionary_T.html#33">dhd</a> &lt;= <a href="dictionary_C.html#82">ZERO</a>) </span><span class="keyword">then</span>
-<a name="188"><font size=-1>188     </font></a><span class="keyword">        <a href="dictionary_T.html#22">alpha</a> </span><span class="default">= <a href="dictionary_T.html#24">bstep</a></span>
-<a name="189"><font size=-1>189     </font></a><span class="default">    </span><span class="keyword">else</span>
-<a name="190"><font size=-1>190     </font></a><span class="keyword">        <a href="dictionary_T.html#22">alpha</a> </span><span class="default">= <a href="dictionary_M.html#7">min</a>(<a href="dictionary_T.html#24">bstep</a>, <a href="dictionary_T.html#37">gg</a>/<a href="dictionary_T.html#33">dhd</a>)</span>
-<a name="191"><font size=-1>191     </font></a><span class="default">        </span><span class="keyword">if </span><span class="default">(<a href="dictionary_T.html#48">iterc</a> == </span><span class="number">1</span><span class="default">) </span><span class="keyword">then</span>
-<a name="192"><font size=-1>192     </font></a><span class="keyword">            <a href="dictionary_T.html#26">crvmin</a> </span><span class="default">= <a href="dictionary_T.html#33">dhd</a>/<a href="dictionary_T.html#29">dd</a></span>
-<a name="193"><font size=-1>193     </font></a><span class="default">        </span><span class="keyword">else</span>
-<a name="194"><font size=-1>194     </font></a><span class="keyword">            <a href="dictionary_T.html#26">crvmin</a> </span><span class="default">= <a href="dictionary_M.html#7">min</a>(<a href="dictionary_T.html#26">crvmin</a>, <a href="dictionary_T.html#33">dhd</a>/<a href="dictionary_T.html#29">dd</a>)</span>
-<a name="195"><font size=-1>195     </font></a><span class="default">        </span><span class="keyword">end if</span>
-<a name="196"><font size=-1>196     </font></a><span class="keyword">    end if</span>
-<a name="197"><font size=-1>197     </font></a><span class="keyword">    </span><span class="comment">! QADD is the reduction of Q due to the new CG step.</span>
-<a name="198"><font size=-1>198     </font></a><span class="comment">    <a href="dictionary_T.html#54">qadd</a> </span><span class="default">= <a href="dictionary_T.html#22">alpha</a>*(<a href="dictionary_T.html#37">gg</a> - <a href="dictionary_C.html#78">HALF</a>*<a href="dictionary_T.html#22">alpha</a>*<a href="dictionary_T.html#33">dhd</a>)  </span>
-<a name="199"><font size=-1>199     </font></a><span class="default">    </span><span class="comment">! QRED is the reduction of Q up to now.</span>
-<a name="200"><font size=-1>200     </font></a><span class="comment">    <a href="dictionary_T.html#58">qred</a> </span><span class="default">= <a href="dictionary_T.html#58">qred</a> + <a href="dictionary_T.html#54">qadd</a></span>
-<a name="201"><font size=-1>201     </font></a><span class="default">    </span><span class="comment">! QADD and QRED will be used in the 2D minimization if any.</span>
-<a name="202"><font size=-1>202     </font></a><span class="comment"></span>
-<a name="203"><font size=-1>203     </font></a><span class="comment">    ! Update S, HS, and GG.</span>
-<a name="204"><font size=-1>204     </font></a><span class="comment">    <a href="dictionary_T.html#63">s</a> </span><span class="default">= <a href="dictionary_T.html#63">s</a> + <a href="dictionary_T.html#22">alpha</a>*<a href="dictionary_T.html#28">d</a> </span>
-<a name="205"><font size=-1>205     </font></a><span class="default">    <a href="dictionary_T.html#68">ss</a> = <a href="dictionary_L.html#93">inprod</a>(<a href="dictionary_T.html#63">s</a>, <a href="dictionary_T.html#63">s</a>)</span>
-<a name="206"><font size=-1>206     </font></a><span class="default">    <a href="dictionary_T.html#43">hs</a> = <a href="dictionary_T.html#43">hs</a> + <a href="dictionary_T.html#22">alpha</a>*<a href="dictionary_T.html#41">hd</a></span>
-<a name="207"><font size=-1>207     </font></a><span class="default">    <a href="dictionary_T.html#39">ggsave</a> = <a href="dictionary_T.html#37">gg</a>  </span><span class="comment">! Gradient norm square before this iteration </span>
-<a name="208"><font size=-1>208     </font></a><span class="comment">    <a href="dictionary_T.html#37">gg</a> </span><span class="default">= <a href="dictionary_L.html#93">inprod</a>(<a href="dictionary_T.html#36">g</a> + <a href="dictionary_T.html#43">hs</a>, <a href="dictionary_T.html#36">g</a> + <a href="dictionary_T.html#43">hs</a>)  </span><span class="comment">! Current gradient norm square</span>
-<a name="209"><font size=-1>209     </font></a><span class="comment">    ! We may save g+hs for latter usage:</span>
-<a name="210"><font size=-1>210     </font></a><span class="comment">    ! gnew = g + hs</span>
-<a name="211"><font size=-1>211     </font></a><span class="comment">    ! Note that we should NOT set g = g + hs, because g contains</span>
-<a name="212"><font size=-1>212     </font></a><span class="comment">    ! the gradient of Q at x.</span>
-<a name="213"><font size=-1>213     </font></a><span class="comment">       </span>
-<a name="214"><font size=-1>214     </font></a><span class="comment">    ! Check whether to exit. This should be done after updating HS</span>
-<a name="215"><font size=-1>215     </font></a><span class="comment">    ! and GG, which will be used for the 2D minimization if any. </span>
-<a name="216"><font size=-1>216     </font></a><span class="comment">    </span><span class="keyword">if </span><span class="default">(<a href="dictionary_T.html#22">alpha</a> &gt;= <a href="dictionary_T.html#24">bstep</a> .or. <a href="dictionary_T.html#68">ss</a> &gt;= <a href="dictionary_T.html#30">delsq</a>) </span><span class="keyword">then</span>
-<a name="217"><font size=-1>217     </font></a><span class="keyword">        </span><span class="comment">! CG path cuts the boundary. Set CRVMIN to 0.</span>
-<a name="218"><font size=-1>218     </font></a><span class="comment">        <a href="dictionary_T.html#26">crvmin</a> </span><span class="default">= <a href="dictionary_C.html#82">ZERO</a></span>
-<a name="219"><font size=-1>219     </font></a><span class="default">        </span><span class="comment">! The only possibility that twod_search is true.</span>
-<a name="220"><font size=-1>220     </font></a><span class="comment">        <a href="dictionary_T.html#72">twod_search</a> </span><span class="default">= .true.</span>
-<a name="221"><font size=-1>221     </font></a><span class="default">        </span><span class="keyword">exit</span>
-<a name="222"><font size=-1>222     </font></a><span class="keyword">    end if</span>
-<a name="223"><font size=-1>223     </font></a><span class="keyword">     </span>
-<a name="224"><font size=-1>224     </font></a><span class="keyword">    </span><span class="comment">! Check whether to exit due to small QADD</span>
-<a name="225"><font size=-1>225     </font></a><span class="comment">    </span><span class="keyword">if </span><span class="default">(<a href="dictionary_T.html#54">qadd</a> &lt;= <a href="dictionary_T.html#71">tol</a>*<a href="dictionary_T.html#58">qred</a>) </span><span class="keyword">then</span>
-<a name="226"><font size=-1>226     </font></a><span class="keyword">        <a href="dictionary_T.html#46">info</a> </span><span class="default">= </span><span class="number">1 </span>
-<a name="227"><font size=-1>227     </font></a><span class="number">        </span><span class="keyword">exit</span>
-<a name="228"><font size=-1>228     </font></a><span class="keyword">    end if</span>
-<a name="229"><font size=-1>229     </font></a><span class="keyword"></span>
-<a name="230"><font size=-1>230     </font></a><span class="keyword">    </span><span class="comment">! Prepare for the next CG iteration.</span>
-<a name="231"><font size=-1>231     </font></a><span class="comment">    <a href="dictionary_T.html#28">d</a> </span><span class="default">= (<a href="dictionary_T.html#37">gg</a>/<a href="dictionary_T.html#39">ggsave</a>)*<a href="dictionary_T.html#28">d</a> - <a href="dictionary_T.html#36">g</a> - <a href="dictionary_T.html#43">hs</a>  </span><span class="comment">! CG direction</span>
-<a name="232"><font size=-1>232     </font></a><span class="comment">    <a href="dictionary_T.html#29">dd</a> </span><span class="default">= <a href="dictionary_L.html#93">inprod</a>(<a href="dictionary_T.html#28">d</a>, <a href="dictionary_T.html#28">d</a>)</span>
-<a name="233"><font size=-1>233     </font></a><span class="default">    <a href="dictionary_T.html#35">ds</a> = <a href="dictionary_L.html#93">inprod</a>(<a href="dictionary_T.html#28">d</a>, <a href="dictionary_T.html#63">s</a>)</span>
-<a name="234"><font size=-1>234     </font></a><span class="default">    </span><span class="keyword">if </span><span class="default">(<a href="dictionary_T.html#35">ds</a> &lt;= <a href="dictionary_C.html#82">ZERO</a>) </span><span class="keyword">then </span>
-<a name="235"><font size=-1>235     </font></a><span class="keyword">        </span><span class="comment">! DS is positive in theory.</span>
-<a name="236"><font size=-1>236     </font></a><span class="comment">        <a href="dictionary_T.html#46">info</a> </span><span class="default">= -</span><span class="number">1 </span>
-<a name="237"><font size=-1>237     </font></a><span class="number">        </span><span class="keyword">exit </span>
-<a name="238"><font size=-1>238     </font></a><span class="keyword">    end if</span>
-<a name="239"><font size=-1>239     </font></a><span class="keyword">end do </span>
-<a name="240"><font size=-1>240     </font></a><span class="keyword"></span>
-<a name="241"><font size=-1>241     </font></a><span class="keyword">if </span><span class="default">(<a href="dictionary_T.html#68">ss</a> &lt;= </span><span class="number">0 </span><span class="default">.or. <a href="dictionary_I.html#90">is_nan</a>(<a href="dictionary_T.html#68">ss</a>)) </span><span class="keyword">then </span>
-<a name="242"><font size=-1>242     </font></a><span class="keyword">    </span><span class="comment">! This may occur for ill-conditioned problems due to rounding.</span>
-<a name="243"><font size=-1>243     </font></a><span class="comment">    <a href="dictionary_T.html#46">info</a> </span><span class="default">= -</span><span class="number">1</span>
-<a name="244"><font size=-1>244     </font></a><span class="number">    <a href="dictionary_T.html#72">twod_search</a> </span><span class="default">= .false.</span>
-<a name="245"><font size=-1>245     </font></a><span class="default"></span><span class="keyword">end if</span>
-<a name="246"><font size=-1>246     </font></a><span class="keyword"></span>
-<a name="247"><font size=-1>247     </font></a><span class="keyword">if </span><span class="default">(<a href="dictionary_T.html#72">twod_search</a>) </span><span class="keyword">then</span>
-<a name="248"><font size=-1>248     </font></a><span class="keyword">    </span><span class="comment">! At least 1 iteration of 2D minimization</span>
-<a name="249"><font size=-1>249     </font></a><span class="comment">    <a href="dictionary_T.html#49">itermax</a> </span><span class="default">= <a href="dictionary_M.html#6">max</a>(<a href="dictionary_I.html#4">int</a>(</span><span class="number">1</span><span class="default">, <a href="dictionary_K.html#5">kind</a>(<a href="dictionary_T.html#49">itermax</a>)), <a href="dictionary_T.html#49">itermax</a> - <a href="dictionary_T.html#48">iterc</a>)  </span>
-<a name="250"><font size=-1>250     </font></a><span class="default"></span><span class="keyword">else</span>
-<a name="251"><font size=-1>251     </font></a><span class="keyword">    <a href="dictionary_T.html#49">itermax</a> </span><span class="default">= </span><span class="number">0</span>
-<a name="252"><font size=-1>252     </font></a><span class="number"></span><span class="keyword">end if</span>
-<a name="253"><font size=-1>253     </font></a><span class="keyword"></span>
-<a name="254"><font size=-1>254     </font></a><span class="keyword"></span><span class="comment">! The 2D minimization </span>
-<a name="255"><font size=-1>255     </font></a><span class="comment"></span><span class="keyword">do <a href="dictionary_T.html#48">iterc</a> </span><span class="default">= </span><span class="number">1</span><span class="default">, <a href="dictionary_T.html#49">itermax</a></span>
-<a name="256"><font size=-1>256     </font></a><span class="default">    </span><span class="keyword">if </span><span class="default">(<a href="dictionary_T.html#37">gg</a> &lt;= (<a href="dictionary_T.html#71">tol</a>**</span><span class="number">2</span><span class="default">)*<a href="dictionary_T.html#38">ggbeg</a>) </span><span class="keyword">then </span>
-<a name="257"><font size=-1>257     </font></a><span class="keyword">        <a href="dictionary_T.html#46">info</a> </span><span class="default">= </span><span class="number">0</span>
-<a name="258"><font size=-1>258     </font></a><span class="number">        </span><span class="keyword">exit</span>
-<a name="259"><font size=-1>259     </font></a><span class="keyword">    end if</span>
-<a name="260"><font size=-1>260     </font></a><span class="keyword">    <a href="dictionary_T.html#64">sg</a> </span><span class="default">= <a href="dictionary_L.html#93">inprod</a>(<a href="dictionary_T.html#63">s</a>, <a href="dictionary_T.html#36">g</a>)</span>
-<a name="261"><font size=-1>261     </font></a><span class="default">    <a href="dictionary_T.html#66">shs</a> = <a href="dictionary_L.html#93">inprod</a>(<a href="dictionary_T.html#63">s</a>, <a href="dictionary_T.html#43">hs</a>)</span>
-<a name="262"><font size=-1>262     </font></a><span class="default">    <a href="dictionary_T.html#65">sgk</a> = <a href="dictionary_T.html#64">sg</a> + <a href="dictionary_T.html#66">shs</a></span>
-<a name="263"><font size=-1>263     </font></a><span class="default">    </span><span class="keyword">if </span><span class="default">(<a href="dictionary_T.html#65">sgk</a>/<a href="dictionary_S.html#11">sqrt</a>(<a href="dictionary_T.html#37">gg</a>*<a href="dictionary_T.html#30">delsq</a>) &lt;= <a href="dictionary_T.html#71">tol</a> - <a href="dictionary_C.html#80">ONE</a>) </span><span class="keyword">then </span>
-<a name="264"><font size=-1>264     </font></a><span class="keyword">        <a href="dictionary_T.html#46">info</a> </span><span class="default">= </span><span class="number">0</span>
-<a name="265"><font size=-1>265     </font></a><span class="number">        </span><span class="keyword">exit</span>
-<a name="266"><font size=-1>266     </font></a><span class="keyword">    end if</span>
-<a name="267"><font size=-1>267     </font></a><span class="keyword">    </span>
-<a name="268"><font size=-1>268     </font></a><span class="keyword">    </span><span class="comment">! Begin the 2D minimization by calculating D and HD and some</span>
-<a name="269"><font size=-1>269     </font></a><span class="comment">    ! scalar products.</span>
-<a name="270"><font size=-1>270     </font></a><span class="comment">    <a href="dictionary_T.html#70">t</a> </span><span class="default">= <a href="dictionary_S.html#11">sqrt</a>(<a href="dictionary_T.html#30">delsq</a>*<a href="dictionary_T.html#37">gg</a> - <a href="dictionary_T.html#65">sgk</a>*<a href="dictionary_T.html#65">sgk</a>)</span>
-<a name="271"><font size=-1>271     </font></a><span class="default">    <a href="dictionary_T.html#28">d</a> = (<a href="dictionary_T.html#30">delsq</a>/<a href="dictionary_T.html#70">t</a>)*(<a href="dictionary_T.html#36">g</a> + <a href="dictionary_T.html#43">hs</a>) - (<a href="dictionary_T.html#65">sgk</a>/<a href="dictionary_T.html#70">t</a>)*<a href="dictionary_T.html#63">s</a></span>
-<a name="272"><font size=-1>272     </font></a><span class="default"></span><span class="comment">!----------------------------------------------------------------!</span>
-<a name="273"><font size=-1>273     </font></a><span class="comment">!-----!hd = matprod(xpt, pq*matprod(d, xpt)) + matprod(hq, d) !--------!</span>
-<a name="274"><font size=-1>274     </font></a><span class="comment">    <a href="dictionary_T.html#41">hd</a> </span><span class="default">= <a href="dictionary_L.html#92">Ax_plus_y</a>(<a href="dictionary_T.html#42">hq</a>, <a href="dictionary_T.html#28">d</a>, <a href="dictionary_L.html#94">matprod</a>(<a href="dictionary_T.html#75">xpt</a>, <a href="dictionary_T.html#53">pq</a>*<a href="dictionary_L.html#94">matprod</a>(<a href="dictionary_T.html#28">d</a>, <a href="dictionary_T.html#75">xpt</a>)))</span>
-<a name="275"><font size=-1>275     </font></a><span class="default"></span><span class="comment">!----------------------------------------------------------------!</span>
-<a name="276"><font size=-1>276     </font></a><span class="comment">    <a href="dictionary_T.html#32">dg</a> </span><span class="default">= <a href="dictionary_L.html#93">inprod</a>(<a href="dictionary_T.html#28">d</a>, <a href="dictionary_T.html#36">g</a>)</span>
-<a name="277"><font size=-1>277     </font></a><span class="default">    <a href="dictionary_T.html#33">dhd</a> = <a href="dictionary_L.html#93">inprod</a>(<a href="dictionary_T.html#41">hd</a>, <a href="dictionary_T.html#28">d</a>)</span>
-<a name="278"><font size=-1>278     </font></a><span class="default">    <a href="dictionary_T.html#34">dhs</a> = <a href="dictionary_L.html#93">inprod</a>(<a href="dictionary_T.html#41">hd</a>, <a href="dictionary_T.html#63">s</a>)</span>
-<a name="279"><font size=-1>279     </font></a><span class="default"></span>
-<a name="280"><font size=-1>280     </font></a><span class="default">    </span><span class="comment">! Seek the value of the angle that minimizes Q.</span>
-<a name="281"><font size=-1>281     </font></a><span class="comment">    <a href="dictionary_T.html#25">cf</a> </span><span class="default">= <a href="dictionary_C.html#78">HALF</a>*(<a href="dictionary_T.html#66">shs</a> - <a href="dictionary_T.html#33">dhd</a>)</span>
-<a name="282"><font size=-1>282     </font></a><span class="default">    <a href="dictionary_T.html#55">qbeg</a> = <a href="dictionary_T.html#64">sg</a> + <a href="dictionary_T.html#25">cf</a></span>
-<a name="283"><font size=-1>283     </font></a><span class="default">    <a href="dictionary_T.html#59">qsave</a> = <a href="dictionary_T.html#55">qbeg</a></span>
-<a name="284"><font size=-1>284     </font></a><span class="default">    <a href="dictionary_T.html#56">qmin</a> = <a href="dictionary_T.html#55">qbeg</a></span>
-<a name="285"><font size=-1>285     </font></a><span class="default">    <a href="dictionary_T.html#47">isave</a> = </span><span class="number">0</span>
-<a name="286"><font size=-1>286     </font></a><span class="number">    <a href="dictionary_T.html#50">iu</a> </span><span class="default">= </span><span class="number">49</span>
-<a name="287"><font size=-1>287     </font></a><span class="number">    <a href="dictionary_T.html#73">unitang</a> </span><span class="default">= (<a href="dictionary_C.html#81">TWO</a>*<a href="dictionary_C.html#83">PI</a>)/<a href="dictionary_R.html#8">real</a>(<a href="dictionary_T.html#50">iu</a> + </span><span class="number">1</span><span class="default">, <a href="dictionary_C.html#77">RP</a>)</span>
-<a name="288"><font size=-1>288     </font></a><span class="default"></span>
-<a name="289"><font size=-1>289     </font></a><span class="default">    </span><span class="keyword">do <a href="dictionary_T.html#45">i</a> </span><span class="default">= </span><span class="number">1</span><span class="default">, <a href="dictionary_T.html#50">iu</a></span>
-<a name="290"><font size=-1>290     </font></a><span class="default">        <a href="dictionary_T.html#23">angle</a> = <a href="dictionary_R.html#8">real</a>(<a href="dictionary_T.html#45">i</a>, <a href="dictionary_C.html#77">RP</a>)*<a href="dictionary_T.html#73">unitang</a></span>
-<a name="291"><font size=-1>291     </font></a><span class="default">        <a href="dictionary_T.html#27">cth</a> = <a href="dictionary_C.html#3">cos</a>(<a href="dictionary_T.html#23">angle</a>)</span>
-<a name="292"><font size=-1>292     </font></a><span class="default">        <a href="dictionary_T.html#69">sth</a> = <a href="dictionary_S.html#9">sin</a>(<a href="dictionary_T.html#23">angle</a>)</span>
-<a name="293"><font size=-1>293     </font></a><span class="default">        <a href="dictionary_T.html#57">qnew</a> = (<a href="dictionary_T.html#64">sg</a> + <a href="dictionary_T.html#25">cf</a>*<a href="dictionary_T.html#27">cth</a>)*<a href="dictionary_T.html#27">cth</a> + (<a href="dictionary_T.html#32">dg</a> + <a href="dictionary_T.html#34">dhs</a>*<a href="dictionary_T.html#27">cth</a>)*<a href="dictionary_T.html#69">sth</a></span>
-<a name="294"><font size=-1>294     </font></a><span class="default">        </span><span class="keyword">if </span><span class="default">(<a href="dictionary_T.html#57">qnew</a> &lt; <a href="dictionary_T.html#56">qmin</a>) </span><span class="keyword">then</span>
-<a name="295"><font size=-1>295     </font></a><span class="keyword">            <a href="dictionary_T.html#56">qmin</a> </span><span class="default">= <a href="dictionary_T.html#57">qnew</a></span>
-<a name="296"><font size=-1>296     </font></a><span class="default">            <a href="dictionary_T.html#47">isave</a> = <a href="dictionary_T.html#45">i</a></span>
-<a name="297"><font size=-1>297     </font></a><span class="default">            <a href="dictionary_T.html#60">quada</a> = <a href="dictionary_T.html#59">qsave</a></span>
-<a name="298"><font size=-1>298     </font></a><span class="default">        </span><span class="keyword">else if </span><span class="default">(<a href="dictionary_T.html#45">i</a> == <a href="dictionary_T.html#47">isave</a> + </span><span class="number">1</span><span class="default">) </span><span class="keyword">then</span>
-<a name="299"><font size=-1>299     </font></a><span class="keyword">            <a href="dictionary_T.html#61">quadb</a> </span><span class="default">= <a href="dictionary_T.html#57">qnew</a></span>
-<a name="300"><font size=-1>300     </font></a><span class="default">        </span><span class="keyword">end if</span>
-<a name="301"><font size=-1>301     </font></a><span class="keyword">        <a href="dictionary_T.html#59">qsave</a> </span><span class="default">= <a href="dictionary_T.html#57">qnew</a></span>
-<a name="302"><font size=-1>302     </font></a><span class="default">    </span><span class="keyword">end do</span>
-<a name="303"><font size=-1>303     </font></a><span class="keyword"></span>
-<a name="304"><font size=-1>304     </font></a><span class="keyword">    if </span><span class="default">(<a href="dictionary_T.html#47">isave</a> == </span><span class="number">0</span><span class="default">) </span><span class="keyword">then</span>
-<a name="305"><font size=-1>305     </font></a><span class="keyword">        <a href="dictionary_T.html#60">quada</a> </span><span class="default">= <a href="dictionary_T.html#57">qnew</a></span>
-<a name="306"><font size=-1>306     </font></a><span class="default">    </span><span class="keyword">end if</span>
-<a name="307"><font size=-1>307     </font></a><span class="keyword">    if </span><span class="default">(<a href="dictionary_T.html#47">isave</a> == <a href="dictionary_T.html#50">iu</a>) </span><span class="keyword">then </span>
-<a name="308"><font size=-1>308     </font></a><span class="keyword">        <a href="dictionary_T.html#61">quadb</a> </span><span class="default">= <a href="dictionary_T.html#55">qbeg</a></span>
-<a name="309"><font size=-1>309     </font></a><span class="default">    </span><span class="keyword">end if</span>
-<a name="310"><font size=-1>310     </font></a><span class="keyword">    if </span><span class="default">(<a href="dictionary_A.html#2">abs</a>(<a href="dictionary_T.html#60">quada</a> - <a href="dictionary_T.html#61">quadb</a>) &gt; <a href="dictionary_C.html#82">ZERO</a>) </span><span class="keyword">then</span>
-<a name="311"><font size=-1>311     </font></a><span class="keyword">        <a href="dictionary_T.html#60">quada</a> </span><span class="default">= <a href="dictionary_T.html#60">quada</a> - <a href="dictionary_T.html#56">qmin</a></span>
-<a name="312"><font size=-1>312     </font></a><span class="default">        <a href="dictionary_T.html#61">quadb</a> = <a href="dictionary_T.html#61">quadb</a> - <a href="dictionary_T.html#56">qmin</a></span>
-<a name="313"><font size=-1>313     </font></a><span class="default">        <a href="dictionary_T.html#23">angle</a> = <a href="dictionary_C.html#78">HALF</a>*(<a href="dictionary_T.html#60">quada</a> - <a href="dictionary_T.html#61">quadb</a>)/(<a href="dictionary_T.html#60">quada</a> + <a href="dictionary_T.html#61">quadb</a>)</span>
-<a name="314"><font size=-1>314     </font></a><span class="default">    </span><span class="keyword">else</span>
-<a name="315"><font size=-1>315     </font></a><span class="keyword">        <a href="dictionary_T.html#23">angle</a> </span><span class="default">= <a href="dictionary_C.html#82">ZERO</a></span>
-<a name="316"><font size=-1>316     </font></a><span class="default">    </span><span class="keyword">end if</span>
-<a name="317"><font size=-1>317     </font></a><span class="keyword">    <a href="dictionary_T.html#23">angle</a> </span><span class="default">= <a href="dictionary_T.html#73">unitang</a>*(<a href="dictionary_R.html#8">real</a>(<a href="dictionary_T.html#47">isave</a>, <a href="dictionary_C.html#77">RP</a>) + <a href="dictionary_T.html#23">angle</a>)</span>
-<a name="318"><font size=-1>318     </font></a><span class="default"></span>
-<a name="319"><font size=-1>319     </font></a><span class="default">    </span><span class="comment">! Calculate the new S and HS. Then test for convergence.</span>
-<a name="320"><font size=-1>320     </font></a><span class="comment">    <a href="dictionary_T.html#27">cth</a> </span><span class="default">= <a href="dictionary_C.html#3">cos</a>(<a href="dictionary_T.html#23">angle</a>)</span>
-<a name="321"><font size=-1>321     </font></a><span class="default">    <a href="dictionary_T.html#69">sth</a> = <a href="dictionary_S.html#9">sin</a>(<a href="dictionary_T.html#23">angle</a>)</span>
-<a name="322"><font size=-1>322     </font></a><span class="default">    <a href="dictionary_T.html#62">reduc</a> = <a href="dictionary_T.html#55">qbeg</a> - (<a href="dictionary_T.html#64">sg</a> + <a href="dictionary_T.html#25">cf</a>*<a href="dictionary_T.html#27">cth</a>)*<a href="dictionary_T.html#27">cth</a> - (<a href="dictionary_T.html#32">dg</a> + <a href="dictionary_T.html#34">dhs</a>*<a href="dictionary_T.html#27">cth</a>)*<a href="dictionary_T.html#69">sth</a></span>
-<a name="323"><font size=-1>323     </font></a><span class="default">    <a href="dictionary_T.html#63">s</a> = <a href="dictionary_T.html#27">cth</a>*<a href="dictionary_T.html#63">s</a> + <a href="dictionary_T.html#69">sth</a>*<a href="dictionary_T.html#28">d</a></span>
-<a name="324"><font size=-1>324     </font></a><span class="default">    <a href="dictionary_T.html#43">hs</a> = <a href="dictionary_T.html#27">cth</a>*<a href="dictionary_T.html#43">hs</a> + <a href="dictionary_T.html#69">sth</a>*<a href="dictionary_T.html#41">hd</a></span>
-<a name="325"><font size=-1>325     </font></a><span class="default">    <a href="dictionary_T.html#37">gg</a> = <a href="dictionary_L.html#93">inprod</a>(<a href="dictionary_T.html#36">g</a> + <a href="dictionary_T.html#43">hs</a>, <a href="dictionary_T.html#36">g</a> + <a href="dictionary_T.html#43">hs</a>)</span>
-<a name="326"><font size=-1>326     </font></a><span class="default">    <a href="dictionary_T.html#58">qred</a> = <a href="dictionary_T.html#58">qred</a> + <a href="dictionary_T.html#62">reduc</a></span>
-<a name="327"><font size=-1>327     </font></a><span class="default">    </span><span class="keyword">if </span><span class="default">(<a href="dictionary_T.html#62">reduc</a>/<a href="dictionary_T.html#58">qred</a> &lt;= <a href="dictionary_T.html#71">tol</a>) </span><span class="keyword">then </span>
-<a name="328"><font size=-1>328     </font></a><span class="keyword">        <a href="dictionary_T.html#46">info</a> </span><span class="default">= </span><span class="number">1</span>
-<a name="329"><font size=-1>329     </font></a><span class="number">        </span><span class="keyword">exit</span>
-<a name="330"><font size=-1>330     </font></a><span class="keyword">    end if</span>
-<a name="331"><font size=-1>331     </font></a><span class="keyword">end do</span>
-<a name="332"><font size=-1>332     </font></a><span class="keyword"></span>
-<a name="333"><font size=-1>333     </font></a><span class="keyword">end subroutine <a href="dictionary_T.html#21">trsapp</a></span>
-<a name="334"><font size=-1>334     </font></a><span class="keyword"></span>
-<a name="335"><font size=-1>335     </font></a><span class="keyword"></span>
-<a name="336"><font size=-1>336     </font></a><span class="keyword">function <a href="dictionary_T.html#13">trrad</a></span><span class="default">(<a href="dictionary_T.html#14">delta</a>, <a href="dictionary_T.html#15">dnorm</a>, <a href="dictionary_T.html#16">eta1</a>, <a href="dictionary_T.html#17">eta2</a>, <a href="dictionary_T.html#18">gamma1</a>, <a href="dictionary_T.html#19">gamma2</a>, <a href="dictionary_T.html#20">ratio</a>)</span>
-<a name="337"><font size=-1>337     </font></a><span class="default"></span>
-<a name="338"><font size=-1>338     </font></a><span class="default"></span><span class="comment">! Generic module</span>
-<a name="339"><font size=-1>339     </font></a><span class="comment"></span><span class="keyword">use <a href="dictionary_C.html#76">consts_mod</a></span><span class="default">, </span><span class="keyword">only </span><span class="default">: <a href="dictionary_C.html#77">RP</a>, <a href="dictionary_C.html#78">HALF</a></span>
-<a name="340"><font size=-1>340     </font></a><span class="default"></span>
-<a name="341"><font size=-1>341     </font></a><span class="default"></span><span class="keyword">implicit none</span>
-<a name="342"><font size=-1>342     </font></a><span class="keyword"></span>
-<a name="343"><font size=-1>343     </font></a><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>) :: <a href="dictionary_T.html#13">trrad</a></span>
-<a name="344"><font size=-1>344     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_T.html#14">delta</a>  </span><span class="comment">! Current trust region radius</span>
-<a name="345"><font size=-1>345     </font></a><span class="comment"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_T.html#15">dnorm</a>  </span><span class="comment">! Norm of current trust region step</span>
-<a name="346"><font size=-1>346     </font></a><span class="comment"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_T.html#16">eta1</a>  </span><span class="comment">! Ratio threshold for contraction</span>
-<a name="347"><font size=-1>347     </font></a><span class="comment"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_T.html#17">eta2</a>  </span><span class="comment">! Ratio threshold for expansion</span>
-<a name="348"><font size=-1>348     </font></a><span class="comment"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_T.html#18">gamma1</a> </span><span class="comment">! Contraction factor</span>
-<a name="349"><font size=-1>349     </font></a><span class="comment"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_T.html#19">gamma2</a> </span><span class="comment">! Expansion factor</span>
-<a name="350"><font size=-1>350     </font></a><span class="comment"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#77">RP</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_T.html#20">ratio</a>  </span><span class="comment">! Reduction ratio</span>
-<a name="351"><font size=-1>351     </font></a><span class="comment"></span>
-<a name="352"><font size=-1>352     </font></a><span class="comment"></span><span class="keyword">if </span><span class="default">(<a href="dictionary_T.html#20">ratio</a> &lt;= <a href="dictionary_T.html#16">eta1</a>) </span><span class="keyword">then</span>
-<a name="353"><font size=-1>353     </font></a><span class="keyword">    <a href="dictionary_T.html#13">trrad</a> </span><span class="default">= <a href="dictionary_T.html#18">gamma1</a>*<a href="dictionary_T.html#15">dnorm</a></span>
-<a name="354"><font size=-1>354     </font></a><span class="default"></span><span class="keyword">else if </span><span class="default">(<a href="dictionary_T.html#20">ratio</a> &lt;= <a href="dictionary_T.html#17">eta2</a>) </span><span class="keyword">then</span>
-<a name="355"><font size=-1>355     </font></a><span class="keyword">    <a href="dictionary_T.html#13">trrad</a> </span><span class="default">= <a href="dictionary_M.html#6">max</a>(<a href="dictionary_C.html#78">HALF</a>*<a href="dictionary_T.html#14">delta</a>, <a href="dictionary_T.html#15">dnorm</a>)</span>
-<a name="356"><font size=-1>356     </font></a><span class="default"></span><span class="keyword">else</span>
-<a name="357"><font size=-1>357     </font></a><span class="keyword">    <a href="dictionary_T.html#13">trrad</a> </span><span class="default">= <a href="dictionary_M.html#6">max</a>(<a href="dictionary_C.html#78">HALF</a>*<a href="dictionary_T.html#14">delta</a>, <a href="dictionary_T.html#19">gamma2</a>*<a href="dictionary_T.html#15">dnorm</a>)</span>
-<a name="358"><font size=-1>358     </font></a><span class="default"></span><span class="keyword">end if</span>
-<a name="359"><font size=-1>359     </font></a><span class="keyword"></span>
-<a name="360"><font size=-1>360     </font></a><span class="keyword"></span><span class="comment">! For noisy problems, the following may work better.</span>
-<a name="361"><font size=-1>361     </font></a><span class="comment">!if (ratio &lt;= eta1) then</span>
-<a name="362"><font size=-1>362     </font></a><span class="comment">!trrad = gamma1*dnorm</span>
-<a name="363"><font size=-1>363     </font></a><span class="comment">!else if (ratio &lt;= eta2) then  ! Ensure TRRAD &gt;= DELTA</span>
-<a name="364"><font size=-1>364     </font></a><span class="comment">!trrad = delta  </span>
-<a name="365"><font size=-1>365     </font></a><span class="comment">!else  ! Ensure TRRAD &gt; DELTA with a constant factor</span>
-<a name="366"><font size=-1>366     </font></a><span class="comment">!trrad = max(delta*(1.0_RP + gamma2)/2.0_RP, gamma2*dnorm)</span>
-<a name="367"><font size=-1>367     </font></a><span class="comment">!end if</span>
-<a name="368"><font size=-1>368     </font></a><span class="comment"></span>
-<a name="369"><font size=-1>369     </font></a><span class="comment"></span><span class="keyword">end function <a href="dictionary_T.html#13">trrad</a></span>
-<a name="370"><font size=-1>370     </font></a><span class="keyword"></span>
-<a name="371"><font size=-1>371     </font></a><span class="keyword"></span>
-<a name="372"><font size=-1>372     </font></a><span class="keyword">end module <a href="dictionary_T.html#12">trustregion_mod</a></span>
-<a name="373"><font size=-1>373     </font></a><span class="keyword"></span>
+<pre><span class="default"></span><a name="1"><font size=-1>1     </font></a><span class="default"></span><span class="comment">! output_mod is a module providing some subroutines concerning output to</span>
+<a name="2"><font size=-1>2     </font></a><span class="comment">! terminla/files. Note that these output operations are sequential in</span>
+<a name="3"><font size=-1>3     </font></a><span class="comment">! nature. In case parallelisum is desirable (especially during</span>
+<a name="4"><font size=-1>4     </font></a><span class="comment">! initializaton), the subroutines may have to be modified or disabled.</span>
+<a name="5"><font size=-1>5     </font></a><span class="comment">!</span>
+<a name="6"><font size=-1>6     </font></a><span class="comment">! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code </span>
+<a name="7"><font size=-1>7     </font></a><span class="comment">! and the NEWUOA paper.</span>
+<a name="8"><font size=-1>8     </font></a><span class="comment"></span>
+<a name="9"><font size=-1>9     </font></a><span class="comment"></span><span class="keyword">module <a href="dictionary_O.html#3">output_mod</a></span>
+<a name="10"><font size=-1>10     </font></a><span class="keyword"></span>
+<a name="11"><font size=-1>11     </font></a><span class="keyword">implicit none</span>
+<a name="12"><font size=-1>12     </font></a><span class="keyword">private</span>
+<a name="13"><font size=-1>13     </font></a><span class="keyword">public </span><span class="default">:: <a href="dictionary_O.html#14">retmssg</a>, <a href="dictionary_O.html#26">rhomssg</a>, <a href="dictionary_O.html#4">fmssg</a></span>
+<a name="14"><font size=-1>14     </font></a><span class="default"></span>
+<a name="15"><font size=-1>15     </font></a><span class="default"></span>
+<a name="16"><font size=-1>16     </font></a><span class="default"></span><span class="keyword">contains</span>
+<a name="17"><font size=-1>17     </font></a><span class="keyword"></span>
+<a name="18"><font size=-1>18     </font></a><span class="keyword"></span>
+<a name="19"><font size=-1>19     </font></a><span class="keyword">subroutine <a href="dictionary_O.html#14">retmssg</a></span><span class="default">(<a href="dictionary_O.html#19">info</a>, <a href="dictionary_O.html#21">iprint</a>, <a href="dictionary_O.html#23">nf</a>, <a href="dictionary_O.html#15">f</a>, <a href="dictionary_O.html#25">x</a>, <a href="dictionary_O.html#24">solver</a>)</span>
+<a name="20"><font size=-1>20     </font></a><span class="default"></span><span class="keyword">use <a href="dictionary_C.html#37">consts_mod</a></span><span class="default">, </span><span class="keyword">only </span><span class="default">: <a href="dictionary_C.html#38">RP</a>, <a href="dictionary_C.html#39">IK</a>, <a href="dictionary_C.html#41">MSSGLEN</a>, <a href="dictionary_C.html#40">OUTUNIT</a></span>
+<a name="21"><font size=-1>21     </font></a><span class="default"></span><span class="keyword">use <a href="dictionary_I.html#42">info_mod</a></span><span class="default">, </span><span class="keyword">only </span><span class="default">: <a href="dictionary_I.html#43">FTARGET_ACHIEVED</a>, <a href="dictionary_I.html#44">MAXFUN_REACHED</a></span>
+<a name="22"><font size=-1>22     </font></a><span class="default"></span><span class="keyword">use <a href="dictionary_I.html#42">info_mod</a></span><span class="default">, </span><span class="keyword">only </span><span class="default">: <a href="dictionary_I.html#45">SMALL_TR_RADIUS</a>, <a href="dictionary_I.html#46">TRSUBP_FAILED</a></span>
+<a name="23"><font size=-1>23     </font></a><span class="default"></span><span class="keyword">use <a href="dictionary_I.html#42">info_mod</a></span><span class="default">, </span><span class="keyword">only </span><span class="default">: <a href="dictionary_I.html#47">NAN_X</a>, <a href="dictionary_I.html#48">NAN_INF_F</a>, <a href="dictionary_I.html#49">NAN_MODEL</a></span>
+<a name="24"><font size=-1>24     </font></a><span class="default"></span><span class="keyword">implicit none</span>
+<a name="25"><font size=-1>25     </font></a><span class="keyword"></span>
+<a name="26"><font size=-1>26     </font></a><span class="keyword"></span><span class="comment">! Inputs</span>
+<a name="27"><font size=-1>27     </font></a><span class="comment"></span><span class="keyword">integer</span><span class="default">(<a href="dictionary_C.html#39">IK</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_O.html#21">iprint</a> </span>
+<a name="28"><font size=-1>28     </font></a><span class="default"></span><span class="keyword">integer</span><span class="default">(<a href="dictionary_C.html#39">IK</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_O.html#19">info</a></span>
+<a name="29"><font size=-1>29     </font></a><span class="default"></span><span class="keyword">integer</span><span class="default">(<a href="dictionary_C.html#39">IK</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_O.html#23">nf</a></span>
+<a name="30"><font size=-1>30     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#38">RP</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_O.html#15">f</a></span>
+<a name="31"><font size=-1>31     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#38">RP</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_O.html#25">x</a>(:) </span>
+<a name="32"><font size=-1>32     </font></a><span class="default"></span><span class="keyword">character</span><span class="default">(len = *), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_O.html#24">solver</a></span>
+<a name="33"><font size=-1>33     </font></a><span class="default"></span>
+<a name="34"><font size=-1>34     </font></a><span class="default"></span><span class="comment">! Intermediate variables</span>
+<a name="35"><font size=-1>35     </font></a><span class="comment"></span><span class="keyword">integer </span><span class="default">:: <a href="dictionary_O.html#20">ios</a>  </span><span class="comment">! Should be an integer of default kind</span>
+<a name="36"><font size=-1>36     </font></a><span class="comment"></span><span class="keyword">character</span><span class="default">(len = </span><span class="number">100</span><span class="default">) :: <a href="dictionary_O.html#17">fout</a></span>
+<a name="37"><font size=-1>37     </font></a><span class="default"></span><span class="keyword">character</span><span class="default">(len = </span><span class="number">3</span><span class="default">) :: <a href="dictionary_O.html#18">fstat</a></span>
+<a name="38"><font size=-1>38     </font></a><span class="default"></span><span class="keyword">character</span><span class="default">(len = <a href="dictionary_C.html#41">MSSGLEN</a>) :: <a href="dictionary_O.html#22">mssg</a></span>
+<a name="39"><font size=-1>39     </font></a><span class="default"></span><span class="keyword">logical </span><span class="default">:: <a href="dictionary_O.html#16">fexist</a></span>
+<a name="40"><font size=-1>40     </font></a><span class="default"></span>
+<a name="41"><font size=-1>41     </font></a><span class="default"></span>
+<a name="42"><font size=-1>42     </font></a><span class="default"></span><span class="keyword">if </span><span class="default">(<a href="dictionary_O.html#19">info</a> == <a href="dictionary_I.html#43">FTARGET_ACHIEVED</a>) </span><span class="keyword">then</span>
+<a name="43"><font size=-1>43     </font></a><span class="keyword">    <a href="dictionary_O.html#22">mssg</a> </span><span class="default">= </span><span class="string">'the target function value is achieved.'</span>
+<a name="44"><font size=-1>44     </font></a><span class="string"></span><span class="keyword">else if </span><span class="default">(<a href="dictionary_O.html#19">info</a> == <a href="dictionary_I.html#44">MAXFUN_REACHED</a>) </span><span class="keyword">then</span>
+<a name="45"><font size=-1>45     </font></a><span class="keyword">    <a href="dictionary_O.html#22">mssg</a> </span><span class="default">= </span><span class="string">'the objective function has been evaluated MAXFUN times.'</span>
+<a name="46"><font size=-1>46     </font></a><span class="string"></span><span class="keyword">else if </span><span class="default">(<a href="dictionary_O.html#19">info</a> == <a href="dictionary_I.html#45">SMALL_TR_RADIUS</a>) </span><span class="keyword">then</span>
+<a name="47"><font size=-1>47     </font></a><span class="keyword">    <a href="dictionary_O.html#22">mssg</a> </span><span class="default">= </span><span class="string">'the trust region radius reaches its lower bound.'</span>
+<a name="48"><font size=-1>48     </font></a><span class="string"></span><span class="keyword">else if </span><span class="default">(<a href="dictionary_O.html#19">info</a> == <a href="dictionary_I.html#46">TRSUBP_FAILED</a>) </span><span class="keyword">then</span>
+<a name="49"><font size=-1>49     </font></a><span class="keyword">    <a href="dictionary_O.html#22">mssg</a> </span><span class="default">= </span><span class="string">'a trust region step has failed to reduce the quadratic model.'</span>
+<a name="50"><font size=-1>50     </font></a><span class="string"></span><span class="keyword">else if </span><span class="default">(<a href="dictionary_O.html#19">info</a> == <a href="dictionary_I.html#47">NAN_X</a>) </span><span class="keyword">then</span>
+<a name="51"><font size=-1>51     </font></a><span class="keyword">    <a href="dictionary_O.html#22">mssg</a> </span><span class="default">= </span><span class="string">'NaN occurs in x.'</span>
+<a name="52"><font size=-1>52     </font></a><span class="string"></span><span class="keyword">else if </span><span class="default">(<a href="dictionary_O.html#19">info</a> == <a href="dictionary_I.html#48">NAN_INF_F</a>) </span><span class="keyword">then</span>
+<a name="53"><font size=-1>53     </font></a><span class="keyword">    <a href="dictionary_O.html#22">mssg</a> </span><span class="default">= </span><span class="string">'the objective function returns NaN or +INFINITY.' </span>
+<a name="54"><font size=-1>54     </font></a><span class="string"></span><span class="keyword">else if </span><span class="default">(<a href="dictionary_O.html#19">info</a> == <a href="dictionary_I.html#49">NAN_MODEL</a>) </span><span class="keyword">then</span>
+<a name="55"><font size=-1>55     </font></a><span class="keyword">    <a href="dictionary_O.html#22">mssg</a> </span><span class="default">= </span><span class="string">'NaN occurs in the models.'</span>
+<a name="56"><font size=-1>56     </font></a><span class="string"></span><span class="keyword">end if</span>
+<a name="57"><font size=-1>57     </font></a><span class="keyword"></span>
+<a name="58"><font size=-1>58     </font></a><span class="keyword">if </span><span class="default">(<a href="dictionary_O.html#21">iprint</a> &gt;= </span><span class="number">1</span><span class="default">) </span><span class="keyword">then</span>
+<a name="59"><font size=-1>59     </font></a><span class="keyword">    if </span><span class="default">(<a href="dictionary_O.html#21">iprint</a> &gt;= </span><span class="number">3</span><span class="default">) </span><span class="keyword">then</span>
+<a name="60"><font size=-1>60     </font></a><span class="keyword">        print </span><span class="string">'(1X)'</span>
+<a name="61"><font size=-1>61     </font></a><span class="string">    </span><span class="keyword">end if</span>
+<a name="62"><font size=-1>62     </font></a><span class="keyword">    print </span><span class="string">'(/4A)'</span><span class="default">, </span><span class="string">'Return from '</span><span class="default">, <a href="dictionary_O.html#24">solver</a>, </span><span class="string">' because '</span><span class="default">, <a href="dictionary_T.html#2">trim</a>(<a href="dictionary_O.html#22">mssg</a>)</span>
+<a name="63"><font size=-1>63     </font></a><span class="default">    </span><span class="keyword">print </span><span class="string">'(1A, 6X, 1A, I7)'</span><span class="default">, </span><span class="string">'At the return from ' </span><span class="default">// <a href="dictionary_O.html#24">solver</a>, </span><span class="string">'Number of function evaluations = '</span><span class="default">, <a href="dictionary_O.html#23">nf</a></span>
+<a name="64"><font size=-1>64     </font></a><span class="default">    </span><span class="keyword">print </span><span class="string">'(1A, 1PD23.15, 6X, 1A, /(1P, 5D15.6))'</span><span class="default">, </span><span class="string">'Least function value = '</span><span class="default">, <a href="dictionary_O.html#15">f</a>, </span><span class="string">'The corresponding X is:'</span><span class="default">, <a href="dictionary_O.html#25">x</a></span>
+<a name="65"><font size=-1>65     </font></a><span class="default">    </span><span class="keyword">print </span><span class="string">'(1X)'</span>
+<a name="66"><font size=-1>66     </font></a><span class="string"></span><span class="keyword">end if</span>
+<a name="67"><font size=-1>67     </font></a><span class="keyword"></span>
+<a name="68"><font size=-1>68     </font></a><span class="keyword">if </span><span class="default">(<a href="dictionary_O.html#21">iprint</a> &lt;= -</span><span class="number">1</span><span class="default">) </span><span class="keyword">then</span>
+<a name="69"><font size=-1>69     </font></a><span class="keyword">    <a href="dictionary_O.html#17">fout</a> </span><span class="default">= <a href="dictionary_O.html#24">solver</a> // </span><span class="string">'_output.txt'</span>
+<a name="70"><font size=-1>70     </font></a><span class="string">    </span><span class="keyword">inquire</span><span class="default">(file = <a href="dictionary_T.html#2">trim</a>(<a href="dictionary_O.html#17">fout</a>), exist = <a href="dictionary_O.html#16">fexist</a>)</span>
+<a name="71"><font size=-1>71     </font></a><span class="default">    </span><span class="keyword">if </span><span class="default">(<a href="dictionary_O.html#16">fexist</a>) </span><span class="keyword">then</span>
+<a name="72"><font size=-1>72     </font></a><span class="keyword">        <a href="dictionary_O.html#18">fstat</a> </span><span class="default">= </span><span class="string">'old'</span>
+<a name="73"><font size=-1>73     </font></a><span class="string">    </span><span class="keyword">else</span>
+<a name="74"><font size=-1>74     </font></a><span class="keyword">        <a href="dictionary_O.html#18">fstat</a> </span><span class="default">= </span><span class="string">'new'</span>
+<a name="75"><font size=-1>75     </font></a><span class="string">    </span><span class="keyword">end if</span>
+<a name="76"><font size=-1>76     </font></a><span class="keyword">    open</span><span class="default">(unit = <a href="dictionary_C.html#40">OUTUNIT</a>, file = <a href="dictionary_T.html#2">trim</a>(<a href="dictionary_O.html#17">fout</a>), status = <a href="dictionary_O.html#18">fstat</a>, position = </span><span class="string">'append'</span><span class="default">, iostat = <a href="dictionary_O.html#20">ios</a>, action = </span><span class="string">'write'</span><span class="default">)</span>
+<a name="77"><font size=-1>77     </font></a><span class="default">    </span><span class="keyword">if </span><span class="default">(<a href="dictionary_O.html#20">ios</a> /= </span><span class="number">0</span><span class="default">) </span><span class="keyword">then</span>
+<a name="78"><font size=-1>78     </font></a><span class="keyword">        print </span><span class="string">'(1A)'</span><span class="default">, </span><span class="string">'Fail to open file ' </span><span class="default">// <a href="dictionary_T.html#2">trim</a>(<a href="dictionary_O.html#17">fout</a>) // </span><span class="string">'!'</span>
+<a name="79"><font size=-1>79     </font></a><span class="string">    </span><span class="keyword">else</span>
+<a name="80"><font size=-1>80     </font></a><span class="keyword">        if </span><span class="default">(<a href="dictionary_O.html#21">iprint</a> &lt;= -</span><span class="number">3</span><span class="default">) </span><span class="keyword">then</span>
+<a name="81"><font size=-1>81     </font></a><span class="keyword">            write</span><span class="default">(<a href="dictionary_C.html#40">OUTUNIT</a>, </span><span class="string">'(1X)'</span><span class="default">)</span>
+<a name="82"><font size=-1>82     </font></a><span class="default">        </span><span class="keyword">end if</span>
+<a name="83"><font size=-1>83     </font></a><span class="keyword">        write</span><span class="default">(<a href="dictionary_C.html#40">OUTUNIT</a>, </span><span class="string">'(/4A)'</span><span class="default">) </span><span class="string">'Return from '</span><span class="default">, <a href="dictionary_O.html#24">solver</a>, </span><span class="string">' because '</span><span class="default">, <a href="dictionary_T.html#2">trim</a>(<a href="dictionary_O.html#22">mssg</a>)</span>
+<a name="84"><font size=-1>84     </font></a><span class="default">        </span><span class="keyword">write</span><span class="default">(<a href="dictionary_C.html#40">OUTUNIT</a>, </span><span class="string">'(1A, 6X, 1A, I7)'</span><span class="default">) </span><span class="string">'At the return from ' </span><span class="default">// <a href="dictionary_O.html#24">solver</a>, </span><span class="string">'Number of function evaluations = '</span><span class="default">, <a href="dictionary_O.html#23">nf</a></span>
+<a name="85"><font size=-1>85     </font></a><span class="default">        </span><span class="keyword">write</span><span class="default">(<a href="dictionary_C.html#40">OUTUNIT</a>, </span><span class="string">'(1A, 1PD23.15, 6X, 1A, /(1P, 5D15.6))'</span><span class="default">) </span><span class="string">'Least function value = '</span><span class="default">, <a href="dictionary_O.html#15">f</a>, </span><span class="string">'The corresponding X is:'</span><span class="default">, <a href="dictionary_O.html#25">x</a></span>
+<a name="86"><font size=-1>86     </font></a><span class="default">        </span><span class="keyword">close</span><span class="default">(<a href="dictionary_C.html#40">OUTUNIT</a>)     </span>
+<a name="87"><font size=-1>87     </font></a><span class="default">    </span><span class="keyword">end if</span>
+<a name="88"><font size=-1>88     </font></a><span class="keyword">    </span><span class="comment">!print '(/1A /)', 'The output is printed to ' // trim(fout) // '.'</span>
+<a name="89"><font size=-1>89     </font></a><span class="comment"></span><span class="keyword">end if</span>
+<a name="90"><font size=-1>90     </font></a><span class="keyword"></span>
+<a name="91"><font size=-1>91     </font></a><span class="keyword">end subroutine <a href="dictionary_O.html#14">retmssg</a> </span>
+<a name="92"><font size=-1>92     </font></a><span class="keyword"></span>
+<a name="93"><font size=-1>93     </font></a><span class="keyword"></span>
+<a name="94"><font size=-1>94     </font></a><span class="keyword">subroutine <a href="dictionary_O.html#26">rhomssg</a></span><span class="default">(<a href="dictionary_O.html#32">iprint</a>, <a href="dictionary_O.html#33">nf</a>, <a href="dictionary_O.html#27">f</a>, <a href="dictionary_O.html#34">rho</a>, <a href="dictionary_O.html#36">x</a>, <a href="dictionary_O.html#35">solver</a>)</span>
+<a name="95"><font size=-1>95     </font></a><span class="default"></span><span class="keyword">use <a href="dictionary_C.html#37">consts_mod</a></span><span class="default">, </span><span class="keyword">only </span><span class="default">: <a href="dictionary_C.html#38">RP</a>, <a href="dictionary_C.html#39">IK</a>, <a href="dictionary_C.html#40">OUTUNIT</a></span>
+<a name="96"><font size=-1>96     </font></a><span class="default"></span><span class="keyword">implicit none</span>
+<a name="97"><font size=-1>97     </font></a><span class="keyword"></span>
+<a name="98"><font size=-1>98     </font></a><span class="keyword"></span><span class="comment">! Inputs</span>
+<a name="99"><font size=-1>99     </font></a><span class="comment"></span><span class="keyword">integer</span><span class="default">(<a href="dictionary_C.html#39">IK</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_O.html#32">iprint</a> </span>
+<a name="100"><font size=-1>100     </font></a><span class="default"></span><span class="keyword">integer</span><span class="default">(<a href="dictionary_C.html#39">IK</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_O.html#33">nf</a></span>
+<a name="101"><font size=-1>101     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#38">RP</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_O.html#27">f</a></span>
+<a name="102"><font size=-1>102     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#38">RP</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_O.html#34">rho</a> </span>
+<a name="103"><font size=-1>103     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#38">RP</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_O.html#36">x</a>(:) </span>
+<a name="104"><font size=-1>104     </font></a><span class="default"></span><span class="keyword">character</span><span class="default">(len = *), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_O.html#35">solver</a></span>
+<a name="105"><font size=-1>105     </font></a><span class="default"></span>
+<a name="106"><font size=-1>106     </font></a><span class="default"></span><span class="comment">! Intermediate variables</span>
+<a name="107"><font size=-1>107     </font></a><span class="comment"></span><span class="keyword">integer </span><span class="default">:: <a href="dictionary_O.html#31">ios</a>  </span><span class="comment">! Should be an integer of default kind</span>
+<a name="108"><font size=-1>108     </font></a><span class="comment"></span><span class="keyword">character</span><span class="default">(len = </span><span class="number">100</span><span class="default">) :: <a href="dictionary_O.html#29">fout</a></span>
+<a name="109"><font size=-1>109     </font></a><span class="default"></span><span class="keyword">character</span><span class="default">(len = </span><span class="number">3</span><span class="default">) :: <a href="dictionary_O.html#30">fstat</a></span>
+<a name="110"><font size=-1>110     </font></a><span class="default"></span><span class="keyword">logical </span><span class="default">:: <a href="dictionary_O.html#28">fexist</a></span>
+<a name="111"><font size=-1>111     </font></a><span class="default"></span>
+<a name="112"><font size=-1>112     </font></a><span class="default"></span>
+<a name="113"><font size=-1>113     </font></a><span class="default"></span><span class="keyword">if </span><span class="default">(<a href="dictionary_O.html#32">iprint</a> &gt;= </span><span class="number">2</span><span class="default">) </span><span class="keyword">then</span>
+<a name="114"><font size=-1>114     </font></a><span class="keyword">    if </span><span class="default">(<a href="dictionary_O.html#32">iprint</a> &gt;= </span><span class="number">3</span><span class="default">) </span><span class="keyword">then</span>
+<a name="115"><font size=-1>115     </font></a><span class="keyword">        print </span><span class="string">'(1X)'</span>
+<a name="116"><font size=-1>116     </font></a><span class="string">    </span><span class="keyword">end if</span>
+<a name="117"><font size=-1>117     </font></a><span class="keyword">    print </span><span class="string">'(/1A, 1PD11.4, 6X, A, I7)'</span><span class="default">, </span><span class="string">'New RHO = '</span><span class="default">, <a href="dictionary_O.html#34">rho</a>, </span><span class="string">'Number of function evaluations = '</span><span class="default">, <a href="dictionary_O.html#33">nf</a></span>
+<a name="118"><font size=-1>118     </font></a><span class="default">    </span><span class="keyword">print </span><span class="string">'(1A, 1PD23.15, 6X, 1A, /(1P, 5D15.6))'</span><span class="default">, </span><span class="string">'Least function value = '</span><span class="default">, <a href="dictionary_O.html#27">f</a>, </span><span class="string">'The corresponding X is:'</span><span class="default">, <a href="dictionary_O.html#36">x</a></span>
+<a name="119"><font size=-1>119     </font></a><span class="default"></span><span class="keyword">end if</span>
+<a name="120"><font size=-1>120     </font></a><span class="keyword"></span>
+<a name="121"><font size=-1>121     </font></a><span class="keyword">if </span><span class="default">(<a href="dictionary_O.html#32">iprint</a> &lt;= -</span><span class="number">2</span><span class="default">) </span><span class="keyword">then</span>
+<a name="122"><font size=-1>122     </font></a><span class="keyword">    <a href="dictionary_O.html#29">fout</a> </span><span class="default">= <a href="dictionary_O.html#35">solver</a> // </span><span class="string">'_output.txt'</span>
+<a name="123"><font size=-1>123     </font></a><span class="string">    </span><span class="keyword">inquire</span><span class="default">(file = <a href="dictionary_T.html#2">trim</a>(<a href="dictionary_O.html#29">fout</a>), exist = <a href="dictionary_O.html#28">fexist</a>)</span>
+<a name="124"><font size=-1>124     </font></a><span class="default">    </span><span class="keyword">if </span><span class="default">(<a href="dictionary_O.html#28">fexist</a>) </span><span class="keyword">then</span>
+<a name="125"><font size=-1>125     </font></a><span class="keyword">        <a href="dictionary_O.html#30">fstat</a> </span><span class="default">= </span><span class="string">'old'</span>
+<a name="126"><font size=-1>126     </font></a><span class="string">    </span><span class="keyword">else</span>
+<a name="127"><font size=-1>127     </font></a><span class="keyword">        <a href="dictionary_O.html#30">fstat</a> </span><span class="default">= </span><span class="string">'new'</span>
+<a name="128"><font size=-1>128     </font></a><span class="string">    </span><span class="keyword">end if</span>
+<a name="129"><font size=-1>129     </font></a><span class="keyword">    open</span><span class="default">(unit = <a href="dictionary_C.html#40">OUTUNIT</a>, file = <a href="dictionary_T.html#2">trim</a>(<a href="dictionary_O.html#29">fout</a>), status = <a href="dictionary_O.html#30">fstat</a>, position = </span><span class="string">'append'</span><span class="default">, iostat = <a href="dictionary_O.html#31">ios</a>, action = </span><span class="string">'write'</span><span class="default">)</span>
+<a name="130"><font size=-1>130     </font></a><span class="default">    </span><span class="keyword">if </span><span class="default">(<a href="dictionary_O.html#31">ios</a> /= </span><span class="number">0</span><span class="default">) </span><span class="keyword">then</span>
+<a name="131"><font size=-1>131     </font></a><span class="keyword">        print </span><span class="string">'(1A)'</span><span class="default">, </span><span class="string">'Fail to open file ' </span><span class="default">// <a href="dictionary_T.html#2">trim</a>(<a href="dictionary_O.html#29">fout</a>) // </span><span class="string">'!'</span>
+<a name="132"><font size=-1>132     </font></a><span class="string">    </span><span class="keyword">else</span>
+<a name="133"><font size=-1>133     </font></a><span class="keyword">        if </span><span class="default">(<a href="dictionary_O.html#32">iprint</a> &lt;= -</span><span class="number">3</span><span class="default">) </span><span class="keyword">then</span>
+<a name="134"><font size=-1>134     </font></a><span class="keyword">            write</span><span class="default">(<a href="dictionary_C.html#40">OUTUNIT</a>, </span><span class="string">'(1X)'</span><span class="default">)</span>
+<a name="135"><font size=-1>135     </font></a><span class="default">        </span><span class="keyword">end if</span>
+<a name="136"><font size=-1>136     </font></a><span class="keyword">        write</span><span class="default">(<a href="dictionary_C.html#40">OUTUNIT</a>, </span><span class="string">'(/1A, 1PD11.4, 6X, A, I7)'</span><span class="default">) </span><span class="string">'New RHO = '</span><span class="default">, <a href="dictionary_O.html#34">rho</a>, </span><span class="string">'Number of function evaluations = '</span><span class="default">, <a href="dictionary_O.html#33">nf</a></span>
+<a name="137"><font size=-1>137     </font></a><span class="default">        </span><span class="keyword">write</span><span class="default">(<a href="dictionary_C.html#40">OUTUNIT</a>, </span><span class="string">'(1A, 1PD23.15, 6X, 1A, /(1P, 5D15.6))'</span><span class="default">) </span><span class="string">'Least function value = '</span><span class="default">, <a href="dictionary_O.html#27">f</a>, </span><span class="string">'The corresponding X is:'</span><span class="default">, <a href="dictionary_O.html#36">x</a></span>
+<a name="138"><font size=-1>138     </font></a><span class="default">        </span><span class="keyword">close</span><span class="default">(<a href="dictionary_C.html#40">OUTUNIT</a>)     </span>
+<a name="139"><font size=-1>139     </font></a><span class="default">    </span><span class="keyword">end if</span>
+<a name="140"><font size=-1>140     </font></a><span class="keyword">end if</span>
+<a name="141"><font size=-1>141     </font></a><span class="keyword"></span>
+<a name="142"><font size=-1>142     </font></a><span class="keyword">end subroutine <a href="dictionary_O.html#26">rhomssg</a></span>
+<a name="143"><font size=-1>143     </font></a><span class="keyword"></span>
+<a name="144"><font size=-1>144     </font></a><span class="keyword"></span>
+<a name="145"><font size=-1>145     </font></a><span class="keyword">subroutine <a href="dictionary_O.html#4">fmssg</a></span><span class="default">(<a href="dictionary_O.html#10">iprint</a>, <a href="dictionary_O.html#11">nf</a>, <a href="dictionary_O.html#5">f</a>, <a href="dictionary_O.html#13">x</a>, <a href="dictionary_O.html#12">solver</a>)</span>
+<a name="146"><font size=-1>146     </font></a><span class="default"></span><span class="keyword">use <a href="dictionary_C.html#37">consts_mod</a></span><span class="default">, </span><span class="keyword">only </span><span class="default">: <a href="dictionary_C.html#38">RP</a>, <a href="dictionary_C.html#39">IK</a>, <a href="dictionary_C.html#40">OUTUNIT</a></span>
+<a name="147"><font size=-1>147     </font></a><span class="default"></span><span class="keyword">implicit none</span>
+<a name="148"><font size=-1>148     </font></a><span class="keyword"></span>
+<a name="149"><font size=-1>149     </font></a><span class="keyword"></span><span class="comment">! Inputs</span>
+<a name="150"><font size=-1>150     </font></a><span class="comment"></span><span class="keyword">integer</span><span class="default">(<a href="dictionary_C.html#39">IK</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_O.html#10">iprint</a> </span>
+<a name="151"><font size=-1>151     </font></a><span class="default"></span><span class="keyword">integer</span><span class="default">(<a href="dictionary_C.html#39">IK</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_O.html#11">nf</a></span>
+<a name="152"><font size=-1>152     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#38">RP</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_O.html#5">f</a></span>
+<a name="153"><font size=-1>153     </font></a><span class="default"></span><span class="keyword">real</span><span class="default">(<a href="dictionary_C.html#38">RP</a>), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_O.html#13">x</a>(:) </span>
+<a name="154"><font size=-1>154     </font></a><span class="default"></span><span class="keyword">character</span><span class="default">(len = *), </span><span class="keyword">intent</span><span class="default">(</span><span class="keyword">in</span><span class="default">) :: <a href="dictionary_O.html#12">solver</a></span>
+<a name="155"><font size=-1>155     </font></a><span class="default"></span>
+<a name="156"><font size=-1>156     </font></a><span class="default"></span><span class="comment">! Intermediate variables</span>
+<a name="157"><font size=-1>157     </font></a><span class="comment"></span><span class="keyword">integer </span><span class="default">:: <a href="dictionary_O.html#9">ios</a>  </span><span class="comment">! Should be an integer of default kind</span>
+<a name="158"><font size=-1>158     </font></a><span class="comment"></span><span class="keyword">character</span><span class="default">(len = </span><span class="number">100</span><span class="default">) :: <a href="dictionary_O.html#7">fout</a></span>
+<a name="159"><font size=-1>159     </font></a><span class="default"></span><span class="keyword">character</span><span class="default">(len = </span><span class="number">3</span><span class="default">) :: <a href="dictionary_O.html#8">fstat</a></span>
+<a name="160"><font size=-1>160     </font></a><span class="default"></span><span class="keyword">logical </span><span class="default">:: <a href="dictionary_O.html#6">fexist</a></span>
+<a name="161"><font size=-1>161     </font></a><span class="default"></span>
+<a name="162"><font size=-1>162     </font></a><span class="default"> </span><span class="comment">!Function number     4    F =  1.1853827160D-01    The corresponding X is:</span>
+<a name="163"><font size=-1>163     </font></a><span class="comment"></span>
+<a name="164"><font size=-1>164     </font></a><span class="comment"></span><span class="keyword">if </span><span class="default">(<a href="dictionary_O.html#10">iprint</a> &gt;= </span><span class="number">3</span><span class="default">) </span><span class="keyword">then</span>
+<a name="165"><font size=-1>165     </font></a><span class="keyword">   print </span><span class="string">'(/1A, I7, 4X, 1A, 1PD18.10, 4X, 1A, /(1P, 5D15.6))'</span><span class="default">, </span><span class="string">'Function number'</span><span class="default">, <a href="dictionary_O.html#11">nf</a>, &amp;</span>
+<a name="166"><font size=-1>166     </font></a><span class="default">       &amp; </span><span class="string">'F = '</span><span class="default">, <a href="dictionary_O.html#5">f</a>, </span><span class="string">'The corresponding X is:'</span><span class="default">, <a href="dictionary_O.html#13">x</a></span>
+<a name="167"><font size=-1>167     </font></a><span class="default"></span><span class="keyword">end if</span>
+<a name="168"><font size=-1>168     </font></a><span class="keyword"></span>
+<a name="169"><font size=-1>169     </font></a><span class="keyword">if </span><span class="default">(<a href="dictionary_O.html#10">iprint</a> &lt;= -</span><span class="number">3</span><span class="default">) </span><span class="keyword">then</span>
+<a name="170"><font size=-1>170     </font></a><span class="keyword">    <a href="dictionary_O.html#7">fout</a> </span><span class="default">= <a href="dictionary_O.html#12">solver</a> // </span><span class="string">'_output.txt'</span>
+<a name="171"><font size=-1>171     </font></a><span class="string">    </span><span class="keyword">inquire</span><span class="default">(file = <a href="dictionary_T.html#2">trim</a>(<a href="dictionary_O.html#7">fout</a>), exist = <a href="dictionary_O.html#6">fexist</a>)</span>
+<a name="172"><font size=-1>172     </font></a><span class="default">    </span><span class="keyword">if </span><span class="default">(<a href="dictionary_O.html#6">fexist</a>) </span><span class="keyword">then</span>
+<a name="173"><font size=-1>173     </font></a><span class="keyword">        <a href="dictionary_O.html#8">fstat</a> </span><span class="default">= </span><span class="string">'old'</span>
+<a name="174"><font size=-1>174     </font></a><span class="string">    </span><span class="keyword">else</span>
+<a name="175"><font size=-1>175     </font></a><span class="keyword">        <a href="dictionary_O.html#8">fstat</a> </span><span class="default">= </span><span class="string">'new'</span>
+<a name="176"><font size=-1>176     </font></a><span class="string">    </span><span class="keyword">end if</span>
+<a name="177"><font size=-1>177     </font></a><span class="keyword">    open</span><span class="default">(unit = <a href="dictionary_C.html#40">OUTUNIT</a>, file = <a href="dictionary_T.html#2">trim</a>(<a href="dictionary_O.html#7">fout</a>), status = <a href="dictionary_O.html#8">fstat</a>, position = </span><span class="string">'append'</span><span class="default">, iostat = <a href="dictionary_O.html#9">ios</a>, action = </span><span class="string">'write'</span><span class="default">)</span>
+<a name="178"><font size=-1>178     </font></a><span class="default">    </span><span class="keyword">if </span><span class="default">(<a href="dictionary_O.html#9">ios</a> /= </span><span class="number">0</span><span class="default">) </span><span class="keyword">then</span>
+<a name="179"><font size=-1>179     </font></a><span class="keyword">        print </span><span class="string">'(1A)'</span><span class="default">, </span><span class="string">'Fail to open file ' </span><span class="default">// <a href="dictionary_T.html#2">trim</a>(<a href="dictionary_O.html#7">fout</a>) // </span><span class="string">'!'</span>
+<a name="180"><font size=-1>180     </font></a><span class="string">    </span><span class="keyword">else</span>
+<a name="181"><font size=-1>181     </font></a><span class="keyword">        write</span><span class="default">(<a href="dictionary_C.html#40">OUTUNIT</a>, </span><span class="string">'(/1A, I7, 4X, 1A, 1PD18.10, 4X, 1A, /(1P, 5D15.6))'</span><span class="default">) </span><span class="string">'Function number'</span><span class="default">, <a href="dictionary_O.html#11">nf</a>, &amp;</span>
+<a name="182"><font size=-1>182     </font></a><span class="default">            &amp; </span><span class="string">'F = '</span><span class="default">, <a href="dictionary_O.html#5">f</a>, </span><span class="string">'The corresponding X is:'</span><span class="default">, <a href="dictionary_O.html#13">x</a></span>
+<a name="183"><font size=-1>183     </font></a><span class="default">        </span><span class="keyword">close</span><span class="default">(<a href="dictionary_C.html#40">OUTUNIT</a>)     </span>
+<a name="184"><font size=-1>184     </font></a><span class="default">    </span><span class="keyword">end if</span>
+<a name="185"><font size=-1>185     </font></a><span class="keyword">end if</span>
+<a name="186"><font size=-1>186     </font></a><span class="keyword"></span>
+<a name="187"><font size=-1>187     </font></a><span class="keyword">end subroutine <a href="dictionary_O.html#4">fmssg</a></span>
+<a name="188"><font size=-1>188     </font></a><span class="keyword"></span>
+<a name="189"><font size=-1>189     </font></a><span class="keyword"></span>
+<a name="190"><font size=-1>190     </font></a><span class="keyword">end module <a href="dictionary_O.html#3">output_mod</a></span>
+<a name="191"><font size=-1>191     </font></a><span class="keyword"></span>
+<a name="192"><font size=-1>192     </font></a><span class="keyword"></span>
 </pre></body></html>
