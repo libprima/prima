@@ -1,0 +1,594 @@
+html, body {
+  margin: 0;
+}
+
+pre {
+/*  font-family: Helvetica, sans-serif;*/
+  font-size: 15px;
+}
+
+#main-nav {                   /*Styles the overall box for the navigation bar*/
+  position: sticky;
+  position: -webkit-sticky;
+  clear: both;
+  top: 0;
+  z-index: 999;
+  width: 100%;
+  height: 113px;
+  line-height: normal;
+}
+
+@media screen and (max-width: 1000px){
+  #main-nav {
+    position: sticky;
+    position: -webkit-sticky;
+    height: auto !important;
+  }
+}
+
+.scrolled-nav #main-nav {     /*Styles changes to overall nav bar box on scroll*/
+  height: auto;
+}
+
+.title-scrolled-nav #main-nav {
+  height: 0px;
+}
+
+#upper-nav {                  /*Styles the upper half of the navigation bar with Understand Icon*/
+  position: relative;
+  background-color: white;
+  text-align: center;
+  width: 100%;
+  height: 52px;
+  z-index: 1001;
+  -webkit-transition: height .3s, line-height .3s;
+  transition: height .3s, line-height .3s;
+}
+
+.scrolled-nav #upper-nav {    /*Styles upper half of nav bar on scroll*/
+  height: 0px;
+}
+
+.title-scrolled-nav #upper-nav {
+  height: 0px !important;
+}
+
+#lower-nav {                  /*Styles the lower half of the navigation bar*/
+  position: sticky;
+  clear: both;
+  background-color: white;
+  width: 100%;
+  z-index: 1000;
+  box-shadow: 0px 2px 15px #00000020;
+}
+
+.scrolled-nav #lower-nav {    /*Styles the lower half of the nav bar on scroll*/
+  position: sticky;
+  height: auto !important;
+  box-shadow: 0px 2px 15px #00000020 !important;
+}
+
+.title-scrolled-nav #lower-nav {
+  height: 40px !important;
+  background-color: transparent;
+}
+
+@media screen and (max-width: 1000px){
+  .scrolled-nav #lower-nav {
+    position: sticky;
+    height: auto !important;
+  }
+}
+
+#main-content {               /*Styles everything below the navigation bar, the main content of the page*/
+  padding: 20px;
+  /*padding-top: 95px;*/
+  background-color: #fff;
+  overflow: auto;
+  font-family: Verdana, sans-serif;
+  -webkit-transition: all 0.4s ease-in-out;
+  transition: all 0.4s ease-in-out;
+}
+
+@media screen and (max-width: 1000px){     /*Styles the main content area if screen width is small, resulting in taller nav bar*/
+  #main-content {
+    /*padding-top: 127px;*/
+    -webkit-transition: all 0.4s ease-in-out;
+    transition: all 0.4s ease-in-out;
+  }
+}
+
+#titlepg-main-content {               /*Styles everything below the navigation bar, the main content of the page*/
+  padding: 20px;
+  margin-top: 0px;
+  overflow: auto;
+  -webkit-transition: all 0.4s ease-in-out;
+  transition: all 0.4s ease-in-out;
+}
+
+.center {
+  overflow-x: auto;
+}
+
+#und-icon {                       /*Styles the Understand icon, defines the animations on scroll*/
+  height: 44px;
+  padding: 6px 0px 6px 0px;
+  background-color: white;
+    -webkit-transition: all .3s;
+    transition: all .3s;
+}
+
+.scrolled-nav #und-icon {         /*Styles icon on scroll*/
+  height: 0px;
+}
+
+.title-scrolled-nav #und-icon {
+  height: 0px;
+}
+
+.navbar {                         /*Styles general nav bar settings*/
+  overflow: hidden;
+  background-color: white;
+  font-family: Verdana, sans-serif; 
+}
+
+.navbar a {                       /*Default nav bar link text styling*/
+  display: inline-block;
+  font-size: 20px;
+  color: black;
+  background-color: white;
+  padding: 3px 6px;
+  text-align: center;
+  text-decoration: none;
+  border: none;
+  margin: 0 auto;
+}
+
+.navbar a2 {                      /*Styles nav bar text with no link (alpha selector)*/
+  display: inline-block;
+  clear: left;
+  font-size: 20px;
+  color: #bfbfbf;
+  background-color: white;
+  padding: 3px 6px;
+  text-align: center;
+  text-decoration: none;
+  border: none;
+  margin: 0 auto;
+  cursor: default;
+}
+
+.navbar navGenDate {          /*Styling for "Generated:" message when part of the navbar*/
+  display: block;
+  font-size: 14px;
+  color: black;
+  background-color: white;
+  padding: 6px 0px 6px 0px;
+  text-align: center !important;
+  text-decoration: none;
+  margin: 0;
+  border: none;
+  overflow: hidden;
+}
+
+.scrolled-nav .navbar navGenDate {
+  color: #cccccc;
+  transition: all .3s;
+  -webkit-transition: all .3s;
+}
+
+.title-scrolled-nav .navbar {
+  height: 0px !important;
+}
+
+.navCenter {                    /*Div to center alpha selector or other contents in lower nav*/
+  width: 80%;
+  text-align: center;
+  margin: 0 auto;
+  -webkit-transition: all 0.4s ease-in-out;
+  transition: all 0.4s ease-in-out;
+}
+
+.title-scrolled-nav .navCenter {
+  display: none;
+}
+
+@media screen and (max-width: 1000px) and (min-width: 650px){     /*Collapses alpha selector into two lines when page width is too small*/
+    .navCenter {
+    width: 380px;
+    -webkit-transition: all 0.4s ease-in-out;
+    transition: all 0.4s ease-in-out;
+  }
+}
+
+@media screen and (max-width: 650px){         /*Moves alpha selector to the right side when page width is even smaller*/
+    .navCenter {
+    width: 380px;
+    float: right;
+    text-align: right;
+    -webkit-transition: all 0.4s ease;
+    transition: all 0.4s ease;
+  }
+}
+
+.navbar #pagedesc {             /*Styles the page description text on the right side of nav bar*/
+  width: 100%;
+  z-index: 1003;
+  font-family: Verdana, sans-serif;
+  font-size: 20px;
+  padding: 3px 4px;
+  font-weight: normal;
+  color: black;
+  background-color: white;
+  min-width: 135px;
+  text-align: center;
+  text-decoration: none;
+  border: none;
+  margin: 0;
+  cursor: pointer;
+  -webkit-transition: all .3s;
+  transition: all .3s;
+}
+
+.scrolled-nav .navbar #pagedesc {
+  padding: 2px 0px 0px 0px;
+  color: #999999;
+  z-index: 1003 !important;
+  transform: scale(.8);
+  transition: transform .3s;
+  -webkit-transition: transform .3s;
+}
+
+.navbar #rightspacer {            /*Places items on the right side of the navbar, currently unused so width is set to 1px*/
+  width: 10%;
+  float: right;
+  clear: both;
+  font-family: Verdana, sans-serif;
+  font-size: 20px;
+  font-weight: normal;
+  color: black;
+  background-color: white;
+  text-align: right;
+  text-decoration: none;
+  border: none;
+  margin: 0;
+  cursor: default;
+  white-space: nowrap;
+  height: 29px;
+  display: inline-block;
+}
+
+.navbar #rightspacer button {
+  display: none;
+  float: right;
+  background-color: white;
+  border: none;
+  box-sizing: content-box;
+  padding: 5px 10px;
+  line-height: normal;
+  cursor: pointer;
+}
+
+.navbar #rightspacer img {
+/*  padding: 0px 12px 3px 4px;
+  width: 0px;
+  -webkit-transition: all .3s;
+  transition: all .3s;*/
+
+/*  box-shadow: 0px 0px 3px grey;
+  background-color: rgba(255, 255, 255, 0.7);*/
+  
+  display: block;
+  height: 12px;
+  line-height: 12px;
+  padding: 0px;
+  margin-top: 3px;
+  border-radius: 15px;
+}
+
+.navbar #imgLeft {
+  display: none;
+  transform: rotate(90deg);
+}
+
+.navbar #imgRight {
+  display: none;
+  transform: rotate(-90deg);
+}
+
+.dropdown {                     /*Styles overall dropdown div*/
+  position: absolute;
+  width: 10%;
+  top: auto;
+  min-width: 150px;
+  float: left;
+  overflow: hidden;
+  outline: none;
+}
+
+
+.dropdown .dropbtn {           /*Styles dropdown button with text/icon*/
+  display: block;
+  clear: both;
+  background-color: white;
+  color: black;
+  padding: 2px 16px;
+  font-family: Verdana, sans-serif; 
+  font-size: 20px;
+  border: none;
+  box-sizing: content-box;
+  min-width: 135px;
+  overflow: visible;
+  text-align: center;
+  margin: 0;
+}
+
+.title-scrolled-nav .dropbtn {
+  background-color: transparent;
+}
+
+.title-scrolled-nav .dropbtn span {
+  display: none;
+}
+
+.title-scrolled-nav .dropbtn img {
+/*  box-shadow: 0px 0px 3px grey;
+  background-color: rgba(255, 255, 255, 0.7);*/
+  border-radius: 15px;
+  float: left;
+  margin-top: 10px;
+  margin-bottom: 5px;
+  padding: 5px;
+}
+
+.dropdown-border {          /*Styling for the invisible buffer which makes a more forgiving dropdown (keeps open if user varies from edge slightly)*/
+  width: 275px;
+  display: none;
+  position: fixed;
+  opacity: 0;
+  z-index: 1;
+  overflow-y: auto;
+  padding: 0px;
+}
+
+.dropdown-content {           /*Styles dropdown content box*/
+  display: none;
+  opacity: 1;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  background-color: rgba(255,255,255,0.5);
+  width: 250px;
+  max-height: calc(96vh - 111px);
+  overflow: auto;
+  position: fixed;
+  z-index: 10000;
+}
+
+.scrolled-nav .dropdown-content {     /*Styles dropdown content when scrolled */
+  position: fixed;
+  z-index: 10000;
+  top: 52px;
+  max-height: calc(98vh - 58px);
+}
+
+.title-scrolled-nav .dropdown-content {     /*Styles dropdown content when scrolled */
+  position: fixed;
+  top: 40px;
+  max-height: calc(98vh - 58px);
+}
+
+
+.dropdown-content a {           /*Styles link text within dropdown*/
+  float: none;
+  text-align: left;
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  font-size: 16px;
+  display: block;
+}
+
+.navbar a:hover {       /*Changes color of dropdown button and navbar text background when hovering*/
+    background-color: #f2f2f2;
+}
+
+.dropdown-content a:hover {background-color: #ddd;}   /*Changes color of dropdown text background when hovering*/
+
+.dropdown-content txt {
+  float: none;
+  text-align: left;
+  color: black;
+  background-color: white;
+  padding: 12px 16px;
+  text-decoration: none;
+  font-size: 16px;
+  display: block;
+}
+
+.dropdown:hover .dropdown-border {display: block !important;}    /*"Displays" invisible dropdown buffer when hovering over dropdown area*/
+.dropdown:hover .dropdown-content {display: block !important;}    /*Displays dropdown content when hovering over dropdown area*/
+
+input[type=text] {          /*Currently unused, but would allow for user input into a text form, to enable a search feature for example*/
+  height: 24px;
+  width: 23px;
+  box-sizing: border-box;
+  border: none;
+  outline: none;
+  border-radius: 4px;
+  font-size: 16px;
+  background-color: white;
+  background-image: url('search.png');
+  background-size: 23px 23px;
+  background-position: 0px 0px;
+  background-repeat: no-repeat;
+  padding: 0px 5px 1px 28px;
+  -webkit-transition: width 0.4s ease-in-out;
+  transition: width 0.4s ease-in-out;
+}
+
+input[type=text]:focus {
+  width: 100%;
+}
+
+.center {
+  margin: auto;
+  width: 100%;
+  height: 100%;
+}
+
+#metrics-table {
+  padding: 20px;
+  margin: auto;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  box-sizing: border-box;
+  overflow: auto;
+  border-collapse: collapse;
+  border-style: hidden;
+  border-radius: 5px;
+  box-shadow: 0px 0px 5px grey;
+}
+
+#metrics-table tr {
+  transition: all 0.2s ease-in-out;
+  -webkit-transition: all 0.2s ease-in-out;
+}
+
+#metrics-table th {
+  position: sticky;
+  border: 0.3px solid #ddd;
+  padding: 10px 12px;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  font-family: Verdana, sans-serif;
+  background-color: #fff;    /*#34d4fc;  #30c3e8*/
+  cursor: pointer;
+}
+
+#metrics-table th a {
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+}
+
+/*#metrics-table th:hover { background-color: #ddd; }*/
+table tr:first-child th:first-child {
+    border-top-left-radius: 5px;
+}
+
+table tr:first-child th:last-child {
+    border-top-right-radius: 5px;
+}
+
+table tr:first-child th:first-child a:hover {
+    border-top-left-radius: 5px;
+}
+
+table tr:first-child th:last-child a:hover {
+    border-top-right-radius: 5px;
+}
+
+table tr:last-child td:first-child {
+    border-bottom-left-radius: 5px;
+}
+
+table tr:last-child td:first-child a:hover {
+    border-bottom-left-radius: 5px;
+}
+
+table tr:last-child td:last-child {
+    border-bottom-right-radius: 5px;
+}
+
+#metrics-table td {
+  border: 0.3px solid #ddd;
+  padding: 10px 12px;
+  max-width: 30vw;
+  overflow-wrap: break-word;
+}
+
+#metrics-table tr:nth-child(even){ background-color: #f2f2f2; }
+
+#metrics-table tr:hover { background-color: #8ee8ff; transition: all 0.2s ease-in-out; -webkit-transition: all 0.2s ease-in-out;}
+
+#metrics-table a {
+  float: none;
+  padding: 10px 12px;
+  margin: -10px -12px;
+  text-align: left;
+  color: black;
+  text-decoration: none;
+  display: block;
+}
+
+#metrics-table a:hover { background-color: #ddd; text-decoration: underline; }
+
+.scitools-tag {
+  font-family: Verdana, sans-serif;
+  font-size: 20px;
+}
+
+.scitools-link {
+  font-family: Verdana, sans-serif;
+  font-size: 17px;
+}
+
+.scitools-link a {
+  color: #2aabd2; /* #737373 */
+  text-decoration: none;
+}
+
+.footer {                 /*Places items at bottom of the main-content div, used for genDate message, understand watermark*/
+  width: 100%;
+  float: center;
+  font-family: Verdana, sans-serif;
+  font-size: 15px;
+  text-align: center;
+  position: relative;
+  bottom: 0;
+}
+
+/* --- d3 styling --- */
+.axis {
+  font: 15px sans-serif;
+}
+
+.chart rect {
+  fill: steelblue;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.bartext {
+  fill: #000;
+  opacity: 1;
+  font-weight: 400%;
+  font-size : 1em;
+  text-anchor : left;
+}
+
+#chartTitle {
+  text-align : center;
+    font: 30px sans-serif;
+  font-weight: bold;
+}
+
+#pageTitle {
+  text-align : center;
+    font: 40px sans-serif;
+  font-weight: bold;
+}
+
+#area1{
+  display:flex;
+  flex-direction:column;
+}
+#area2{
+  display:flex;
+  flex-direction:column;
+}

@@ -1,0 +1,6 @@
+span.default{color:black}
+span.comment{color:red}
+span.preproc{color:green}
+span.string{color:magenta}
+span.number{color:teal}
+span.keyword{color:black;font-weight:bold}
