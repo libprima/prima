@@ -1,29 +1,29 @@
 /*************************************************************************/
 /* 
-ppf.h defines the following preprocessing flags (the first value is default). 
-
-__DEBUGGING__               debug or not: 0, 1
-__FORTRAN_STANDARD__        which Fortran standard to follow: 2003, 2008
-__USE_INTRINSIC_ALGEBRA__   use intrinsic procedures like matmul or not: 0, 1 
-__USE_POWELL_ALGEBRA__      use Powell's linear algebra procedures or not: 0, 1 
-__INTEGER_KIND__            the integer kind to be used: 0, 32, 64, 16
-__REAL_PRECISION__          the real precision to be used: 64, 32, 128, 0 
-__USE_IEEE_ARITHMETIC__     use the IEEE_ARITHMETIC intrinsic or not: 0, 1
-__USE_STORAGE_SIZE__        use the STORAGE_SIZE intrinsic or not: 0, 1
-__USE_ISO_FORTRAN_ENV_INTREAL__ use the ISO_FORTRAN_ENV module or not: 0, 1
-
-You may change these flags, but make sure that your compiler is supportive
-when changing __INTEGER_KIND__, __REAL_PRECISION__, __FORTRAN_STANDARD__,
-__USE_IEEE_ARITHMETIC__ (Fortran 2003),
-__USE_STORAGE_SIZE__ (Fortran 2008), 
-__USE_ISO_FORTRAN_ENV_INTREAL__ (Fortran 2008).
-
-Why not define these flags as parameters in the Fortran code, e.g.,
-
-logical, parameter :: __DEBUGGING__ = .false. ?
-
-Such a definition will work for __DEBUGGING__, but not for the flags that
-depend on the compiler, for instance, __USE_IEEE_ARITHMETIC__.
+ * ppf.h defines the following preprocessing flags (the first value is default). 
+ * 
+ * __DEBUGGING__               debug or not: 0, 1
+ * __FORTRAN_STANDARD__        which Fortran standard to follow: 2003, 2008
+ * __USE_INTRINSIC_ALGEBRA__   use intrinsic procedures like matmul or not: 0, 1 
+ * __USE_POWELL_ALGEBRA__      use Powell's linear algebra procedures or not: 0, 1 
+ * __INTEGER_KIND__            the integer kind to be used: 0, 32, 64, 16
+ * __REAL_PRECISION__          the real precision to be used: 64, 32, 128, 0 
+ * __USE_IEEE_ARITHMETIC__     use the IEEE_ARITHMETIC intrinsic or not: 0, 1
+ * __USE_STORAGE_SIZE__        use the STORAGE_SIZE intrinsic or not: 0, 1
+ * __USE_ISO_FORTRAN_ENV_INTREAL__ use the ISO_FORTRAN_ENV module or not: 0, 1
+ * 
+ * You may change these flags, but make sure that your compiler is supportive
+ * when changing __INTEGER_KIND__, __REAL_PRECISION__, __FORTRAN_STANDARD__,
+ * __USE_IEEE_ARITHMETIC__ (Fortran 2003),
+ * __USE_STORAGE_SIZE__ (Fortran 2008), 
+ * __USE_ISO_FORTRAN_ENV_INTREAL__ (Fortran 2008).
+ * 
+ * Why not define these flags as parameters in the Fortran code, e.g.,
+ * 
+ * logical, parameter :: __DEBUGGING__ = .false. ?
+ * 
+ * Such a definition will work for __DEBUGGING__, but not for the flags that
+ * depend on the compiler, for instance, __USE_IEEE_ARITHMETIC__.
 */
 /*************************************************************************/
 
