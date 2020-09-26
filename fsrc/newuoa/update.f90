@@ -63,7 +63,7 @@ real(RP) :: tempb
 real(RP) :: v1(size(bmat, 1))
 real(RP) :: v2(size(bmat, 1))
 real(RP) :: vlag(size(vlag_in))  ! Copy of VLAG_IN
-real(RP) :: w(size(vlag))
+real(RP) :: w(size(vlag_in))
 real(RP) :: ztemp(size(zmat, 1))
 logical :: reduce_idz
 character(len = SRNLEN), parameter :: srname = 'UPDATEH'
