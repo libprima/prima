@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 08-Sep-2020.
+! on 04-Dec-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -71,6 +71,7 @@
 #if defined __GFORTRAN__
       call backtrace()
 #elif defined __INTEL_COMPILER
+      external :: tracebackqq
       call tracebackqq()
 #endif
 

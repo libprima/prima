@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 08-Sep-2020.
+! on 04-Dec-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -20,7 +20,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020.
 !
-! Users must provide the implementation of CALFUN or CALCFC.
+! Users must provide the implementation of FUNEVAL or FCEVAL.
 
       module pintrf_mod
 

@@ -27,6 +27,9 @@ MFILES= ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F
 verify: gverify iverify 9verify nverify pverify averify fverify sverify clean
 verifym: gverifym iverifym 9verifym nverifym pverifym averifym fverifym sverifym clean
 
+lint: 
+	flint -I../common -a -f -g -m -p -3 -e $(FILES)
+
 fverify:
 	$(FLANG) $(FILES) -ffree-form -std=f$(FSTD)
 
@@ -34,10 +37,11 @@ gverify:
 	$(GFORT)  $(FILES) -std=f$(FSTD) -pedantic -ffree-form
 
 9verify:
+	$(G95)  $(FILES) -std=F -pedantic -ffree-form
 	$(G95)  $(FILES) -std=f2003 -pedantic -ffree-form
 
 iverify:
-	$(IFORT) -stand:$(FS) -pedantic -ffree-form $(FILES) 
+	$(IFORT) -stand $(FS) -pedantic -ffree-form -warn stderrors $(FILES) 
 
 nverify:
 	$(NFORT) $(FILES) -f$(FSTD) -free

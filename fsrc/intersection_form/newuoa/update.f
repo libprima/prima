@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 08-Sep-2020.
+! on 04-Dec-2020.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -78,7 +78,7 @@
       real(RP) :: v1(size(bmat, 1))
       real(RP) :: v2(size(bmat, 1))
       real(RP) :: vlag(size(vlag_in)) ! Copy of VLAG_IN
-      real(RP) :: w(size(vlag))
+      real(RP) :: w(size(vlag_in))
       real(RP) :: ztemp(size(zmat, 1))
       logical :: reduce_idz
       character(len = SRNLEN), parameter :: srname = 'UPDATEH'
@@ -93,7 +93,7 @@
               call errstop(srname, 'SIZE(BMAT) is invalid')
           end if
           call verisize(zmat, npt, int(npt - n - 1, kind(n)))
-          call verisize(vlag, npt + n)
+          call verisize(vlag_in, npt + n)
       end if
 
       vlag = vlag_in ! VLAG_IN is INTENT(IN) and cannot be revised.

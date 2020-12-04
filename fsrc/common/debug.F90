@@ -53,8 +53,10 @@ implicit none
 #if __DEBUGGING__ == 1 
 
 #if defined __GFORTRAN__
+external :: backtrace
 call backtrace()
 #elif defined __INTEL_COMPILER
+external :: tracebackqq
 call tracebackqq()
 #endif
 
