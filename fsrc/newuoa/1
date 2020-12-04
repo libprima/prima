@@ -1,558 +1,61 @@
-gfortran -c -g -Wall -Wextra -Wconversion -Wuninitialized -Wmaybe-uninitialized  -Wsurprising -Waliasing  -Wimplicit-interface  -Wunused-parameter  -fwhole-file  -fimplicit-none -fbacktrace -ffree-line-length-0 -fcheck=all -ffpe-trap=invalid,zero,overflow,underflow   ../common/consts.F90 ../common/debug.F90 ../common/memory.F90 ../common/info.F90 ../common/infnan.F90 ../common/lina.F90 ../common/output.F90 ../common/pintrf.F90  preproc.f90 initialize.f90 trustregion.f90 vlagbeta.f90 geometry.f90 update.f90 shiftbase.f90 newuob.f90 newuoa.f90 /home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90 /home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//prob.F90 /home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90 /home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90 /home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//newuoa-interface.F90 /home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90 -I/home/zaikunzhang/local/MATLAB/R2020a/extern/include/ -I/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../ -pedantic  -ffree-form
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:123:9:
+gfortran -c -g -Wall -Wextra -Wconversion -Wuninitialized -Wmaybe-uninitialized  -Wsurprising -Waliasing  -Wimplicit-interface  -Wunused-parameter  -fwhole-file  -fimplicit-none -fbacktrace -ffree-line-length-0 -fcheck=all -ffpe-trap=invalid,zero,overflow,underflow   ../common/consts.F90 ../common/debug.F90 ../common/memory.F90 ../common/info.F90 ../common/infnan.F90 ../common/lina.F90 ../common/output.F90 ../common/pintrf.F90  preproc.f90 initialize.f90 trustregion.f90 vlagbeta.f90 geometry.f90 update.f90 shiftbase.f90 newuob.f90 newuoa.f90 -std=f2003 -pedantic -ffree-form
+../common/debug.F90:56:22:
 
-  123 | mwSize, parameter :: mwOne = 1 ! Integer 1 with type mwSize
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:203:13:
-
-  203 |     mwPointer, intent(in) :: px
-      |             1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:204:13:
-
-  204 |     mwSize, intent(in) :: n
-      |             1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:211:13:
-
-  211 |     mwPointer, intent(in) :: px
-      |             1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:212:13:
-
-  212 |     mwSize, intent(in) :: n
-      |             1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:218:13:
-
-  218 |     mwPointer, intent(in) :: pm
-      |             1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:230:13:
-
-  230 |     mwPointer, intent(in) :: pin(*)
-      |             1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:231:13:
-
-  231 |     mwPointer, intent(out) ::  pout(*)
-      |             1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:238:13:
-
-  238 |     mwPointer :: mxCreateDoubleMatrix
-      |             1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:239:13:
-
-  239 |     mwSize, intent(in) :: m, n
-      |             1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:246:13:
-
-  246 |     mwPointer :: mxCreateDoubleScalar
-      |             1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:252:13:
-
-  252 |     mwPointer :: mxGetDoubles
-      |             1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:253:13:
-
-  253 |     mwPointer, intent(in) :: pa
-      |             1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:260:13:
-
-  260 |     mwPointer :: mxGetM
-      |             1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:261:13:
-
-  261 |     mwPointer, intent(in) :: pm
-      |             1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:266:13:
-
-  266 |     mwPointer :: mxGetN
-      |             1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:267:13:
-
-  267 |     mwPointer, intent(in) :: pm
-      |             1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:272:13:
-
-  272 |     mwPointer :: mxGetPr
-      |             1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:273:13:
-
-  273 |     mwPointer, intent(in) :: pa
-      |             1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:280:13:
-
-  280 |     mwPointer, intent(in) :: pm
-      |             1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:282:13:
-
-  282 |     mwSize, intent(in) :: strlen
-      |             1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:289:13:
-
-  289 |     mwPointer, intent(in) :: pm
-      |             1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:297:13:
-
-  297 |     mwPointer, intent(in) :: pm
-      |             1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:304:13:
-
-  304 |     mwPointer, intent(in) :: pm
-      |             1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:318:9:
-
-  318 | mwPointer :: fmxGetDble
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:319:9:
-
-  319 | mwPointer, intent(in) :: pa
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:371:9:
-
-  371 | mwPointer, intent(in) :: px
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:375:9:
-
-  375 | mwSize :: m, n
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:657:9:
-
-  657 | mwPointer, intent(in) :: px
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:692:9:
-
-  692 | mwPointer, intent(in) :: px
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:700:9:
-
-  700 | mwSize :: n_mw
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:738:9:
-
-  738 | mwPointer, intent(in) :: px
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:746:9:
-
-  746 | mwSize :: xsize
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:797:9:
-
-  797 | mwPointer, intent(in) :: px
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:835:9:
-
-  835 | mwPointer, intent(out) :: px
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:870:9:
-
-  870 | mwPointer, intent(out) :: px
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:875:9:
-
-  875 | mwSize :: n_mw
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:922:9:
-
-  922 | mwPointer, intent(out) :: px
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:927:9:
-
-  927 | mwSize :: m_mw, n_mw
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:965:9:
-
-  965 | mwPointer, intent(out) :: px
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:993:9:
-
-  993 | mwPointer, intent(in) :: fun_ptr
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:994:9:
-
-  994 | mwPointer, intent(in) :: pin(:)
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:995:9:
-
-  995 | mwPointer, intent(out) :: pout(:)
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:997:9:
-
-  997 | mwPointer :: aug_pin(size(pin) + 1)
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:1032:9:
-
- 1032 | mwPointer, intent(in) :: px
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//fmxapi.F90:1046:9:
-
- 1046 | mwPointer, intent(in) :: px
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//prob.F90:17:9:
-
-   17 | mwPointer :: fun_ptr ! Pointer to objective function
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//prob.F90:43:9:
-
-   43 | mwPointer :: pinput(1), poutput(1)
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:55:22:
-
-   55 | use fmxapi_mod, only : mxCopyPtrToReal8, mxCopyReal8ToPtr
+   56 | intrinsic :: backtrace
       |                      1
-Error: Symbol ‘mxcopyptrtoreal8800’ referenced at (1) not found in module ‘fmxapi_mod’
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:55:43:
+Error: The intrinsic ‘backtrace’ declared INTRINSIC at (1) is not available in the current standard settings but a GNU Fortran extension. Use an appropriate ‘-std=*’ option or enable ‘-fall-intrinsics’ in order to use it.
+../common/memory.F90:31:4:
 
-   55 | use fmxapi_mod, only : mxCopyPtrToReal8, mxCopyReal8ToPtr
-      |                                           1
-Error: Symbol ‘mxcopyreal8toptr800’ referenced at (1) not found in module ‘fmxapi_mod’
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:54:22:
-
-   54 | use fmxapi_mod, only : mxCreateDoubleMatrix
-      |                      1
-Error: Symbol ‘mxcreatedoublematrix800’ referenced at (1) not found in module ‘fmxapi_mod’
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:53:22:
-
-   53 | use fmxapi_mod, only : mxCreateDoubleScalar
-      |                      1
-Error: Symbol ‘mxcreatedoublescalar800’ referenced at (1) not found in module ‘fmxapi_mod’
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:52:22:
-
-   52 | use fmxapi_mod, only : mxGetM, mxGetN, mexErrMsgIdAndTxt
-      |                      1
-Error: Symbol ‘mxgetm800’ referenced at (1) not found in module ‘fmxapi_mod’
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:52:33:
-
-   52 | use fmxapi_mod, only : mxGetM, mxGetN, mexErrMsgIdAndTxt
-      |                                 1
-Error: Symbol ‘mxgetn800’ referenced at (1) not found in module ‘fmxapi_mod’
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:52:44:
-
-   52 | use fmxapi_mod, only : mxGetM, mxGetN, mexErrMsgIdAndTxt
-      |                                            1
-Error: Symbol ‘mexerrmsgidandtxt800’ referenced at (1) not found in module ‘fmxapi_mod’
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:244:9:
-
-  244 | mwPointer, intent(in) :: px
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:279:9:
-
-  279 | mwPointer, intent(in) :: px
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:287:9:
-
-  287 | mwSize :: n_mw
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:325:9:
-
-  325 | mwPointer, intent(in) :: px
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:333:9:
-
-  333 | mwSize :: xsize
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:374:9:
-
-  374 | mwPointer, intent(in) :: px
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:412:9:
-
-  412 | mwPointer, intent(out) :: px
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:447:9:
-
-  447 | mwPointer, intent(out) :: px
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:452:9:
-
-  452 | mwSize :: n_mw
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:499:9:
-
-  499 | mwPointer, intent(out) :: px
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:504:9:
-
-  504 | mwSize :: m_mw, n_mw
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:542:9:
-
-  542 | mwPointer, intent(out) :: px
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:553:52:
-
-  553 |     call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
-      |                                                    1
-Warning: Procedure ‘mexerrmsgidandtxt800’ called with an implicit interface at (1) [-Wimplicit-interface]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:556:5:
-
-  556 | px = mxCreateDoubleScalar(x_dp)
-      |     1
-Warning: Procedure ‘mxcreatedoublescalar800’ called with an implicit interface at (1) [-Wimplicit-interface]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:556:5:
-
-  556 | px = mxCreateDoubleScalar(x_dp)
-      |     1
-Error: Function ‘mxcreatedoublescalar800’ at (1) has no IMPLICIT type
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:520:56:
-
-  520 |         call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
-      |                                                        1
-Warning: Procedure ‘mexerrmsgidandtxt800’ called with an implicit interface at (1) [-Wimplicit-interface]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:525:5:
-
-  525 | px = mxCreateDoubleMatrix(m_mw, n_mw, notComplex)
-      |     1
-Warning: Procedure ‘mxcreatedoublematrix800’ called with an implicit interface at (1) [-Wimplicit-interface]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:525:5:
-
-  525 | px = mxCreateDoubleMatrix(m_mw, n_mw, notComplex)
-      |     1
-Error: Function ‘mxcreatedoublematrix800’ at (1) has no IMPLICIT type
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:526:57:
-
-  526 | call mxCopyReal8ToPtr(x_dp, fmxGetDble(px), m_mw*n_mw)
-      |                                                         1
-Warning: Procedure ‘mxcopyreal8toptr800’ called with an implicit interface at (1) [-Wimplicit-interface]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:467:56:
-
-  467 |         call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
-      |                                                        1
-Warning: Procedure ‘mexerrmsgidandtxt800’ called with an implicit interface at (1) [-Wimplicit-interface]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:479:9:
-
-  479 |     px = mxCreateDoubleMatrix(mwOne, n_mw, notComplex)
-      |         1
-Warning: Procedure ‘mxcreatedoublematrix800’ called with an implicit interface at (1) [-Wimplicit-interface]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:479:9:
-
-  479 |     px = mxCreateDoubleMatrix(mwOne, n_mw, notComplex)
-      |         1
-Error: Function ‘mxcreatedoublematrix800’ at (1) has no IMPLICIT type
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:481:9:
-
-  481 |     px = mxCreateDoubleMatrix(n_mw, mwOne, notComplex)
-      |         1
-Warning: Procedure ‘mxcreatedoublematrix800’ called with an implicit interface at (1) [-Wimplicit-interface]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:481:9:
-
-  481 |     px = mxCreateDoubleMatrix(n_mw, mwOne, notComplex)
-      |         1
-Error: Function ‘mxcreatedoublematrix800’ at (1) has no IMPLICIT type
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:483:52:
-
-  483 | call mxCopyReal8ToPtr(x_dp, fmxGetDble(px), n_mw)
-      |                                                    1
-Warning: Procedure ‘mxcopyreal8toptr800’ called with an implicit interface at (1) [-Wimplicit-interface]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:425:56:
-
-  425 |         call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
-      |                                                        1
-Warning: Procedure ‘mexerrmsgidandtxt800’ called with an implicit interface at (1) [-Wimplicit-interface]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:429:5:
-
-  429 | px = mxCreateDoubleScalar(x_dp)
-      |     1
-Warning: Procedure ‘mxcreatedoublescalar800’ called with an implicit interface at (1) [-Wimplicit-interface]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:429:5:
-
-  429 | px = mxCreateDoubleScalar(x_dp)
-      |     1
-Error: Function ‘mxcreatedoublescalar800’ at (1) has no IMPLICIT type
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:387:53:
-
-  387 | call mxCopyPtrToReal8(fmxGetDble(px), x_dp, mwOne)
-      |                                                     1
-Warning: Procedure ‘mxcopyptrtoreal8800’ called with an implicit interface at (1) [-Wimplicit-interface]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:396:52:
-
-  396 |     call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
-      |                                                    1
-Warning: Procedure ‘mexerrmsgidandtxt800’ called with an implicit interface at (1) [-Wimplicit-interface]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:340:8:
-
-  340 | m = int(mxGetM(px), kind(m))
-      |        1
-Warning: Procedure ‘mxgetm800’ called with an implicit interface at (1) [-Wimplicit-interface]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:340:8:
-
-  340 | m = int(mxGetM(px), kind(m))
-      |        1
-Error: Function ‘mxgetm800’ at (1) has no IMPLICIT type
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:341:8:
-
-  341 | n = int(mxGetN(px), kind(n))
-      |        1
-Warning: Procedure ‘mxgetn800’ called with an implicit interface at (1) [-Wimplicit-interface]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:341:8:
-
-  341 | n = int(mxGetN(px), kind(n))
-      |        1
-Error: Function ‘mxgetn800’ at (1) has no IMPLICIT type
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:347:53:
-
-  347 | call mxCopyPtrToReal8(fmxGetDble(px), x_dp, xsize)
-      |                                                     1
-Warning: Procedure ‘mxcopyptrtoreal8800’ called with an implicit interface at (1) [-Wimplicit-interface]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:357:56:
-
-  357 |         call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
-      |                                                        1
-Warning: Procedure ‘mexerrmsgidandtxt800’ called with an implicit interface at (1) [-Wimplicit-interface]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:294:34:
-
-  294 | n_mw = int(mxGetM(px)*mxGetN(px), kind(n_mw))
-      |                                  1
-Warning: Procedure ‘mxgetn800’ called with an implicit interface at (1) [-Wimplicit-interface]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:294:34:
-
-  294 | n_mw = int(mxGetM(px)*mxGetN(px), kind(n_mw))
-      |                                  1
-Error: Function ‘mxgetn800’ at (1) has no IMPLICIT type
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:299:52:
-
-  299 | call mxCopyPtrToReal8(fmxGetDble(px), x_dp, n_mw)
-      |                                                    1
-Warning: Procedure ‘mxcopyptrtoreal8800’ called with an implicit interface at (1) [-Wimplicit-interface]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:309:56:
-
-  309 |         call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
-      |                                                        1
-Warning: Procedure ‘mexerrmsgidandtxt800’ called with an implicit interface at (1) [-Wimplicit-interface]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:257:53:
-
-  257 | call mxCopyPtrToReal8(fmxGetDble(px), x_dp, mwOne)
-      |                                                     1
-Warning: Procedure ‘mxcopyptrtoreal8800’ called with an implicit interface at (1) [-Wimplicit-interface]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:266:56:
-
-  266 |         call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
-      |                                                        1
-Warning: Procedure ‘mexerrmsgidandtxt800’ called with an implicit interface at (1) [-Wimplicit-interface]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:227:52:
-
-  227 |     call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
-      |                                                    1
-Warning: Procedure ‘mexerrmsgidandtxt800’ called with an implicit interface at (1) [-Wimplicit-interface]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:193:52:
-
-  193 |     call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
-      |                                                    1
-Warning: Procedure ‘mexerrmsgidandtxt800’ called with an implicit interface at (1) [-Wimplicit-interface]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:159:52:
-
-  159 |     call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
-      |                                                    1
-Warning: Procedure ‘mexerrmsgidandtxt800’ called with an implicit interface at (1) [-Wimplicit-interface]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/fmxcl.F90:125:52:
-
-  125 |     call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
-      |                                                    1
-Warning: Procedure ‘mexerrmsgidandtxt800’ called with an implicit interface at (1) [-Wimplicit-interface]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90:49:9:
-
-   49 | mwPointer, intent(in) :: pinput(nargin)
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90:50:9:
-
-   50 | mwPointer, intent(out) :: poutput(nargout)
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90:53:10:
-
-   53 |  mwSize :: cols ! Size of the input
-      |          1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90:61:10:
-
-   61 |  mwSize, parameter :: msZero = 0
-      |          1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90:63:10:
-
-   63 |  mwIndex, parameter :: miZero = 0
-      |          1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90:111:25:
-
-  111 |     hugeValue = min(real(huge(msZero), DP), real(huge(miZero), DP))
-      |                         1
-Warning: Change of value in conversion from ‘INTEGER(8)’ to ‘REAL(8)’ at (1) [-Wconversion]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//gethuge.F90:111:49:
-
-  111 |     hugeValue = min(real(huge(msZero), DP), real(huge(miZero), DP))
-      |                                                 1
-Warning: Change of value in conversion from ‘INTEGER(8)’ to ‘REAL(8)’ at (1) [-Wconversion]
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//newuoa-interface.F90:31:9:
-
-   31 | mwPointer, intent(in) :: pinput(nargin)
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//newuoa-interface.F90:32:9:
-
-   32 | mwPointer, intent(out) :: poutput(nargout)
-      |         1
-Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
-/home/zaikunzhang/Bureau/neupdfo/fsrc/newuoa/../../matlab/mex_gateways//classical/newuoa-interface.F90:9:4:
-
-    9 | use fmxcl_mod, only : RP_CL, IK_CL
+   31 | use debug_mod, only : errstop
       |    1
-Fatal Error: Cannot open module file ‘fmxcl_mod.mod’ for reading at (1): No such file or directory
+Fatal Error: Cannot open module file ‘debug_mod.mod’ for reading at (1): No such file or directory
 compilation terminated.
-make: *** [Makefile:64: gverifym] Error 1
+../common/lina.F90:62:4:
+
+   62 | use debug_mod, only : errstop, verisym
+      |    1
+Fatal Error: Cannot open module file ‘debug_mod.mod’ for reading at (1): No such file or directory
+compilation terminated.
+initialize.f90:24:4:
+
+   24 | use debug_mod, only : errstop, verisize
+      |    1
+Fatal Error: Cannot open module file ‘debug_mod.mod’ for reading at (1): No such file or directory
+compilation terminated.
+trustregion.f90:53:4:
+
+   53 | use debug_mod, only : errstop, verisize
+      |    1
+Fatal Error: Cannot open module file ‘debug_mod.mod’ for reading at (1): No such file or directory
+compilation terminated.
+vlagbeta.f90:27:4:
+
+   27 | use debug_mod, only : errstop, verisize
+      |    1
+Fatal Error: Cannot open module file ‘debug_mod.mod’ for reading at (1): No such file or directory
+compilation terminated.
+geometry.f90:28:4:
+
+   28 | use debug_mod, only : errstop, verisize
+      |    1
+Fatal Error: Cannot open module file ‘debug_mod.mod’ for reading at (1): No such file or directory
+compilation terminated.
+update.f90:31:4:
+
+   31 | use debug_mod, only : errstop, verisize
+      |    1
+Fatal Error: Cannot open module file ‘debug_mod.mod’ for reading at (1): No such file or directory
+compilation terminated.
+shiftbase.f90:25:4:
+
+   25 | use debug_mod, only : errstop, verisize
+      |    1
+Fatal Error: Cannot open module file ‘debug_mod.mod’ for reading at (1): No such file or directory
+compilation terminated.
+newuob.f90:50:4:
+
+   50 | use debug_mod, only : errstop
+      |    1
+Fatal Error: Cannot open module file ‘debug_mod.mod’ for reading at (1): No such file or directory
+compilation terminated.
+make: *** [Makefile:37: gverify] Error 1
