@@ -30,9 +30,9 @@ character(len = *), intent(in) :: mssg
 call backtr()
 #endif
 
-print '(/1A/)', 'Error: ' // trim(srname) // ': ' // trim(mssg) // '.'
+!print '(/1A/)', 'Error: ' // trim(srname) // ': ' // trim(mssg) // '.'
 
-stop  ! This means to stop the whole program.
+!stop  ! This means to stop the whole program.
 
 end subroutine errstop
 
@@ -55,7 +55,7 @@ implicit none
 #if defined __GFORTRAN__
 call backtrace()
 #elif defined __INTEL_COMPILER
-external :: tracebackqq
+!external :: tracebackqq
 call tracebackqq()
 #endif
 
