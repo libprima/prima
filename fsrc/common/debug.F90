@@ -30,14 +30,14 @@ character(len = *), intent(in) :: mssg
 call backtr()
 #endif
 
-!print '(/1A/)', 'Error: ' // trim(srname) // ': ' // trim(mssg) // '.'
+print '(/1A/)', 'Error: ' // trim(srname) // ': ' // trim(mssg) // '.'
 
-!stop  ! This means to stop the whole program.
+stop  ! This means to stop the whole program.
 
 end subroutine errstop
 
 
-subroutine backtr()
+subroutine backtr
 ! BACKTR calls a compiler-dependent intrinsic to show a backtrace if we 
 ! are in the debuge mode, i.e., __DEBUGGING__ == 1. 
 ! N.B.: 
@@ -47,16 +47,17 @@ subroutine backtr()
 ! 2. More seriously, if the compiler is instructed to conform to the 
 ! standards (e.g., gfortran with the option -std=f2003) while __DEBUGGING__
 ! is set to 1, then the compilation may FAIL at the linking stage, 
-! complaining that a subroutine cannot be found (e.g., backtrace() for
+! complaining that a subroutine cannot be found (e.g., backtrace for
 ! gfortran). In that case, we must set __DEBUGGING__ to 0 in ppf.h.
-implicit none
 #if __DEBUGGING__ == 1 
 
 #if defined __GFORTRAN__
-call backtrace()
+implicit none
+call backtrace
 #elif defined __INTEL_COMPILER
-!external :: tracebackqq
-call tracebackqq()
+use ifcore, only : tracebackqq
+implicit none
+call tracebackqq(user_exit_code = -1)
 #endif
 
 #endif
