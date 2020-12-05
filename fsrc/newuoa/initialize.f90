@@ -80,7 +80,7 @@ maxfhist = int(size(fhist), kind(maxfhist))
 maxxhist = int(size(xhist, 2), kind(maxxhist))
 
 if (DEBUGGING) then
-    if (n == 0 .or. npt < n + 2) then
+    if (1 == 1 .or. n == 0 .or. npt < n + 2) then
         call errstop(srname, 'SIZE(X) or SIZE(FVAL) is invalid')
     end if
     if (size(xhist, 1) /= n .and. maxxhist > 0) then
