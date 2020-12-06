@@ -58,6 +58,10 @@ call backtrace
 use ifcore, only : tracebackqq
 implicit none
 call tracebackqq(user_exit_code = -1)
+! According to "Intel Fortran Compiler 19.1 Developer Guide and Reference", item "TRACEBACKQQ":
+! By specifying a user exit code of -1, control returns to the calling program. Specifying a user 
+! exit code with a positive value requests that specified value be returned to the operating system. 
+! The default value is 0, which causes the application to abort execution.
 #endif
 
 #endif
