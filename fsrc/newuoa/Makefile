@@ -24,8 +24,8 @@ M90FILES= $(FILES) $(MEXDIR)/fmxapi.F90 $(MEXDIR)/prob.F90 $(MEXDIR)/classical/f
 MFILES= ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F ../common/infnan.F ../common/lina.F ../common/output.F ../common/pintrf.F preproc.f initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f $(INTERSECTIONMEXDIR)/fmxapi.F $(INTERSECTIONMEXDIR)/prob.F $(INTERSECTIONMEXDIR)/classical/fmxcl.F $(INTERSECTIONMEXDIR)/gethuge.F $(INTERSECTIONMEXDIR)/newuoa-interface.F $(INTERSECTIONMEXDIR)/classical/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2020a/extern/include/ -I$(NEUPDFO)
 
 
-verify: gverify iverify 9verify nverify pverify averify fverify sverify clean
-verifym: gverifym iverifym 9verifym nverifym pverifym averifym fverifym sverifym clean
+verify: gverify iverify nverify pverify averify fverify sverify 9verify clean
+verifym: gverifym iverifym nverifym pverifym averifym fverifym sverifym 9verifym clean
 
 lint: 
 	flint -I../common -a -f -g -m -p -3 -e $(FILES)
