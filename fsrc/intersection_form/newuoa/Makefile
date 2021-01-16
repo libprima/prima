@@ -6,7 +6,7 @@ IFORT=ifort -c -g -warn all -check all  -fpe0 -debug extended -fimplicit-none #-
 G95=g95 -c -g -Wall -Wextra -fbounds-check -fimplicit-none 
 NFORT=nagfor -c -g -C -Warn=allocation -Warn=constant_coindexing -Warn=reallocation -Warn=subnormal -colour=error:red,warn:magenta,info:yellow
 PFORT=pgfortran  -c -g -Minform=warn 
-ABSOFT=af95  -c -g -m1 -en
+AFORT=af95  -c -g -m1 -en
 SFORT=sunf95  -c -g -w3 -u -ansi -U
 FLANG=flang -c -Wall -Wextra -Mstandard 
 
@@ -24,8 +24,8 @@ M90FILES= $(FILES) $(MEXDIR)/fmxapi.F90 $(MEXDIR)/prob.F90 $(MEXDIR)/classical/f
 MFILES= ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F ../common/infnan.F ../common/lina.F ../common/output.F ../common/pintrf.F preproc.f initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f $(INTERSECTIONMEXDIR)/fmxapi.F $(INTERSECTIONMEXDIR)/prob.F $(INTERSECTIONMEXDIR)/classical/fmxcl.F $(INTERSECTIONMEXDIR)/gethuge.F $(INTERSECTIONMEXDIR)/newuoa-interface.F $(INTERSECTIONMEXDIR)/classical/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2020a/extern/include/ -I$(NEUPDFO)
 
 
-verify: gverify iverify 9verify nverify pverify averify fverify sverify clean
-verifym: gverifym iverifym 9verifym nverifym pverifym averifym fverifym sverifym clean
+verify: gverify iverify nverify pverify averify fverify sverify 9verify clean
+verifym: gverifym iverifym nverifym pverifym averifym fverifym sverifym 9verifym clean
 
 lint: 
 	flint -I../common -a -f -g -m -p -3 -e $(FILES)
@@ -37,7 +37,8 @@ gverify:
 	$(GFORT)  $(FILES) -std=f$(FSTD) -pedantic -ffree-form
 
 9verify:
-	$(G95)  $(FILES) -std=F -pedantic -ffree-form
+	#$(G95)  $(FILES) -std=F -pedantic -ffree-form
+	$(G95)  $(FILES) -pedantic -ffree-form
 	$(G95)  $(FILES) -std=f2003 -pedantic -ffree-form
 
 iverify:
@@ -50,7 +51,7 @@ pverify:
 	$(PFORT) $(FILES) -Mfreeform
 
 averify:
-	$(ABSOFT) $(FILES) -f free
+	$(AFORT) $(FILES) -f free
 
 sverify:
 	$(SFORT) $(FILES) -free
@@ -86,9 +87,9 @@ pverifym:
 	cd $(INTERFORMDIR) && $(PFORT) $(MFILES) -Mfreeform && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 averifym:
-	$(ABSOFT) $(M90FILES) -f free
-	cd $(INTERFORMDIR) && $(ABSOFT)  $(MFILES) -f fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
-	cd $(INTERFORMDIR) && $(ABSOFT)  $(MFILES) -f free && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+	$(AFORT) $(M90FILES) -f free
+	cd $(INTERFORMDIR) && $(AFORT)  $(MFILES) -f fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+	cd $(INTERFORMDIR) && $(AFORT)  $(MFILES) -f free && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 sverifym:
 	$(SFORT) $(M90FILES) -free

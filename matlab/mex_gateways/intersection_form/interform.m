@@ -199,7 +199,7 @@ for i = 1 : length(strs)
     end
 end
 fclose(fid);
-
+system(['dos2unix -q ', refactored_filename]);  % Without this, sunf95 will complain
 
 function str = refactor_str(str, first, last)
 %REFACTOR_STR refactors a given string into the "intersection form".

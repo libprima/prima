@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 04-Dec-2020.
+! on 16-Jan-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -53,7 +53,7 @@
       end subroutine errstop
 
 
-      subroutine backtr()
+      subroutine backtr
 ! BACKTR calls a compiler-dependent intrinsic to show a backtrace if we
 ! are in the debuge mode, i.e., __DEBUGGING__ == 1.
 ! N.B.:
@@ -63,16 +63,21 @@
 ! 2. More seriously, if the compiler is instructed to conform to the
 ! standards (e.g., gfortran with the option -std=f2003) while __DEBUGGING__
 ! is set to 1, then the compilation may FAIL at the linking stage,
-! complaining that a subroutine cannot be found (e.g., backtrace() for
+! complaining that a subroutine cannot be found (e.g., backtrace for
 ! gfortran). In that case, we must set __DEBUGGING__ to 0 in ppf.h.
-      implicit none
 #if __DEBUGGING__ == 1
 
 #if defined __GFORTRAN__
-      call backtrace()
+      implicit none
+      call backtrace
 #elif defined __INTEL_COMPILER
-      external :: tracebackqq
-      call tracebackqq()
+      use ifcore, only : tracebackqq
+      implicit none
+      call tracebackqq(user_exit_code = -1)
+! According to "Intel Fortran Compiler 19.1 Developer Guide and Reference", item "TRACEBACKQQ":
+! By specifying a user exit code of -1, control returns to the calling program. Specifying a user
+! exit code with a positive value requests that specified value be returned to the operating system.
+! The default value is 0, which causes the application to abort execution.
 #endif
 
 #endif

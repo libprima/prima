@@ -9,10 +9,10 @@
 FC = gfortran -Wall -Wextra -fcheck=all -pedantic
 FC = ifort -warn all -check all
 #FC = flang -Wall -Wextra -Mstandard 
-#FC = nagfor -C 
-#FC = sunf95 -w3 -u -U
-#FC = af95 -no-pie -m1
 #FC = pgfortran -Minform=warn
+#FC = sunf95 -w3 -u -U
+FC = nagfor -C 
+#FC = af95 -no-pie -m1
 FFLAGS = -g 
 DEPS = ../common/*.h 
 COMMON = ../common
@@ -20,11 +20,11 @@ NEWUOA = ../newuoa
 
 .PHONY: test_newuoa clean
 
-test_newuoa: newuoa_exmp
+test_newuoa: clean newuoa_exmp
 	./newuoa_exmp 
 	rm -f newuoa_exmp
  
-newuoa_exmp: newuoa_exmp.f90 \
+newuoa_exmp: clean newuoa_exmp.f90 \
 	consts.o info.o debug.o memory.o infnan.o lina.o output.o pintrf.o \
 	preproc.o initialize.o trustregion.o vlagbeta.o geometry.o shiftbase.o update.o newuob.o newuoa.o 
 	$(FC) $(FFLAGS) -o newuoa_exmp newuoa_exmp.f90 *.o
