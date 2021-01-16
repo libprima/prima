@@ -6,7 +6,7 @@ IFORT=ifort -c -g -warn all -check all  -fpe0 -debug extended -fimplicit-none #-
 G95=g95 -c -g -Wall -Wextra -fbounds-check -fimplicit-none 
 NFORT=nagfor -c -g -C -Warn=allocation -Warn=constant_coindexing -Warn=reallocation -Warn=subnormal -colour=error:red,warn:magenta,info:yellow
 PFORT=pgfortran  -c -g -Minform=warn 
-ABSOFT=af95  -c -g -m1 -en
+AFORT=af95  -c -g -m1 -en
 SFORT=sunf95  -c -g -w3 -u -ansi -U
 FLANG=flang -c -Wall -Wextra -Mstandard 
 
@@ -37,7 +37,8 @@ gverify:
 	$(GFORT)  $(FILES) -std=f$(FSTD) -pedantic -ffree-form
 
 9verify:
-	$(G95)  $(FILES) -std=F -pedantic -ffree-form
+	#$(G95)  $(FILES) -std=F -pedantic -ffree-form
+	$(G95)  $(FILES) -pedantic -ffree-form
 	$(G95)  $(FILES) -std=f2003 -pedantic -ffree-form
 
 iverify:
@@ -50,7 +51,7 @@ pverify:
 	$(PFORT) $(FILES) -Mfreeform
 
 averify:
-	$(ABSOFT) $(FILES) -f free
+	$(AFORT) $(FILES) -f free
 
 sverify:
 	$(SFORT) $(FILES) -free
@@ -86,9 +87,9 @@ pverifym:
 	cd $(INTERFORMDIR) && $(PFORT) $(MFILES) -Mfreeform && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 averifym:
-	$(ABSOFT) $(M90FILES) -f free
-	cd $(INTERFORMDIR) && $(ABSOFT)  $(MFILES) -f fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
-	cd $(INTERFORMDIR) && $(ABSOFT)  $(MFILES) -f free && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+	$(AFORT) $(M90FILES) -f free
+	cd $(INTERFORMDIR) && $(AFORT)  $(MFILES) -f fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+	cd $(INTERFORMDIR) && $(AFORT)  $(MFILES) -f free && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 sverifym:
 	$(SFORT) $(M90FILES) -free

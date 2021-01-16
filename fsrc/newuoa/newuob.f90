@@ -232,7 +232,7 @@ do tr = 1, maxtr
     if (dnorm < HALF*rho) then
         shortd = .true.
         if (maxval(abs(moderrsave)) <= 0.125_RP*crvmin*rho*rho .and. maxval(dnormsave) <= rho) then
-            ! Three recent values of ||D|| and |F−Q| are small.
+            ! Three recent values of ||D|| and |F-Q| are small.
             ! The 1st possibility (out of 2) that REDUCE_RHO = TRUE.
             reduce_rho = .true.
         else 
