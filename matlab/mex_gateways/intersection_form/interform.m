@@ -199,13 +199,14 @@ for i = 1 : length(strs)
     end
 end
 fclose(fid);
-system(['dos2unix -q ', refactored_filename]);  % Without this, sunf95 will complain
+evalc('system([''dos2unix -q '', refactored_filename])');  % Without this, sunf95 will complain. Supress the error message if dos2unix is unavailable. 
+
 
 function str = refactor_str(str, first, last)
 %REFACTOR_STR refactors a given string into the "intersection form".
 % See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 
-spaces = '                                                                ';
+spaces = '                                                                ';  %%
 
 str = regexprep(str, '\t', '    ');  % Replace each tab by four spaces
 

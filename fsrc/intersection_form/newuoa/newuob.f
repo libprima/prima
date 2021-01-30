@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 16-Jan-2021.
+! on 30-Jan-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -256,7 +256,7 @@
               shortd = .true.
               if (maxval(abs(moderrsave)) <= 0.125_RP*crvmin*rho*rho .an&
      &d. maxval(dnormsave) <= rho) then
-! Three recent values of ||D|| and |F−Q| are small.
+! Three recent values of ||D|| and |F-Q| are small.
 ! The 1st possibility (out of 2) that REDUCE_RHO = TRUE.
                   reduce_rho = .true.
               else
@@ -357,8 +357,10 @@
      &npt), xopt, xpt, zmat, knew)
 
               if (knew > 0) then
-! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation
-! point is replaced by XNEW.
+! If KNEW > 0, then update BMAT, ZMAT and IDZ, so that the
+! KNEW-th interpolation point is replaced by XNEW.
+! If KNEW = 0, then probably the geometry of XPT needs
+! improvement, which will be handled below.
                   call updateh(knew, beta, vlag, idz, bmat, zmat)
 
 ! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
@@ -376,7 +378,7 @@
                   end if
 
 ! Test whether to replace the new quadratic model Q by the least Frobenius
-! norm interpolant Q_alt. Perform the replacement if certain ceriteria is
+! norm interpolant Q_alt. Perform the replacement if certain ceriteria are
 ! satisfied. This part is OPTIONAL, but it is crucial for the performance on
 ! a certain class of problems. See Section 8 of the NEWUOA paper.
                   if (delta <= rho) then ! DELTA == RHO.
@@ -389,7 +391,7 @@
 ! Note that FVAL(KOPT_ORIGINAL) may not equal FSAVE --- it may happen that
 ! KNEW = KOPT_ORIGINAL so that FVAL(KOPT_ORIGINAL) has been revised after
 ! the last function evaluation.
-! QUestion: Since TRYQALT is invoked only when DELTA equals the current RHO,
+! Question: Since TRYQALT is invoked only when DELTA equals the current RHO,
 ! why not reset ITEST to 0 when RHO is reduced?
                       call tryqalt(idz, fval - fval(kopt), ratio, bmat(:&
      &, 1 : npt), zmat, itest, gq, hq, pq)
@@ -428,7 +430,7 @@
 ! If KNEW is positive (i.e., not all points are close to XOPT),
 ! then a model step will be taken to ameliorate the geometry of
 ! the interpolation set and hence improve the model. Otherwise
-! (all points are close to XOPT), RHO will be reduced
+! (i.e., all points are close to XOPT), RHO will be reduced
 ! (if MAX(DELTA, DNORM) <= RHO and D is "bad") or another
 ! trust-region step will be taken.
               if (knew > 0) then

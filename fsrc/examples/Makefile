@@ -11,7 +11,7 @@ FC = ifort -warn all -check all
 #FC = flang -Wall -Wextra -Mstandard 
 #FC = pgfortran -Minform=warn
 #FC = sunf95 -w3 -u -U
-FC = nagfor -C 
+#FC = nagfor -C 
 #FC = af95 -no-pie -m1
 FFLAGS = -g 
 DEPS = ../common/*.h 
