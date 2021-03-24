@@ -1,5 +1,5 @@
-To modernize Powell's Fortran 77 code, do the following. 
-Do things by small steps, and user verify.m to verify that the code
+To modernize Powell's Fortran 77 code, do the following.
+Do things by small steps, and use verify.m to verify that the code
 behaves in the same way before and after the changes.
 
 0. Refactoring.
@@ -20,7 +20,7 @@ Inputs (integer, real)
 In-outputs (integer, real)
 Outputs (integer, real)
 Intermediate variables (integer, real, logical, character)
-Within each category, follow the alphabetical order. 
+Within each category, follow the alphabetical order.
 1.4. Declare only one variable in each line.
 1.5. Specify the intent of dummy variables.
 1.6. In the signature of subroutines, arrange the dummy variables in the same
@@ -44,10 +44,10 @@ end do
 
 if NOT equivalent to a = t + sum(b) unless t = 0.
 
-3. Transpose XPT and BMAT (and other arrays if appropriate). 
+3. Transpose XPT and BMAT (and other arrays if appropriate).
 
 See Notes_On_Transposing_XPT_BMAT for how to do it.
- 
+
 4. Modularize the code.
 
 Recognize blocks of the code that can be modularized into subroutines.
@@ -58,11 +58,11 @@ keep the results identical, do the same in the original code.
 
 4.2. Note that DSTEP is renamed to DELBAR in NEWUOA.
 
-5. Remove the GOTOs. 
+5. Remove the GOTOs.
 
 This is the most complex and important step. It needs a lot of care.
 
-6. Correct the bugs. 
+6. Correct the bugs.
 
 Two bugs have been spotted in NEWUOA:
 -- DNORM was not updated after a model step;
@@ -73,8 +73,8 @@ Similar bugs may exist in other solvers.
 7. Others.
 
 7.1. Temporary variables
-Use temporary variables at little as possible. 
-Do not share temporary variables. 
+Use temporary variables at little as possible.
+Do not share temporary variables.
 Even for temporary variables, their names should be informative; do not
 use temp, tempa, tempb ...
 
