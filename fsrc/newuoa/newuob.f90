@@ -1,6 +1,6 @@
 ! NEWUOB_MOD is a module that performs the major calculations of NEWUOA.
 !
-! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code 
+! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 
 
@@ -16,11 +16,11 @@ contains
 
 subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend, x, nf, f, fhist, xhist, info)
 ! NEWUOB performs the actual calculations of NEWUOA. The arguments IPRINT,
-! MAXFUN, MAXHIST, NPT, ETA1, ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG, 
+! MAXFUN, MAXHIST, NPT, ETA1, ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG,
 ! RHOEND, X, NF, F, FHIST, XHIST, and INFO are identical to the corresponding
-! arguments in subroutine NEWUOA. 
+! arguments in subroutine NEWUOA.
 
-! XBASE will hold a shift of origin that should reduce the contributions 
+! XBASE will hold a shift of origin that should reduce the contributions
 ! from rounding errors to values of the model and Lagrange functions.
 ! XOPT will be set to the displacement from XBASE of the vector of variables
 ! that provides the least calculated F so far.
@@ -35,7 +35,7 @@ subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 ! of the quadratic model.
 ! BMAT will hold the last N ROWs of H. ZMAT will hold the factorization
 ! of the leading NPT by NPT sub-matrix of H, this factorization being
-! ZMAT times Diag(DZ) times ZMAT^T, where DZ(1 : IDZ-1) = -1 and 
+! ZMAT times Diag(DZ) times ZMAT^T, where DZ(1 : IDZ-1) = -1 and
 ! DZ(IDZ - 1 : NPT) = 1.
 ! D is reserved for trial steps from XOPT.
 ! VLAG will contain the values of the Lagrange functions at a new point
@@ -86,7 +86,7 @@ real(RP), intent(out) :: fhist(:)
 real(RP), intent(out) :: xhist(:, :)
 
 ! Intermediate variables
-integer(IK) :: idz 
+integer(IK) :: idz
 integer(IK) :: ij(2, npt)
 integer(IK) :: itest
 integer(IK) :: khist
@@ -183,7 +183,7 @@ if (terminate) then
     if (maxxhist >= 1 .and. maxxhist < nf) then
         khist = mod(nf - 1_IK, maxxhist) + 1_IK
         xhist = reshape([xhist(:, khist + 1 : maxxhist), xhist(:, 1 : khist)], shape(xhist))
-        ! The above combination of SHAPE and RESHAPE fulfills our desire 
+        ! The above combination of SHAPE and RESHAPE fulfills our desire
         ! thanks to the COLUMN-MAJOR order of Fortran arrays.
     end if
     return
@@ -235,12 +235,12 @@ do tr = 1, maxtr
             ! Three recent values of ||D|| and |F-Q| are small.
             ! The 1st possibility (out of 2) that REDUCE_RHO = TRUE.
             reduce_rho = .true.
-        else 
+        else
             delta = TENTH*delta  ! Reduce DELTA by a factor of 10.
             if (delta <= 1.5_RP*rho) then
                 delta = rho  ! Set DELTA to RHO when it is close.
             end if
-            ! After this, DELTA < DNORM may happen, explaining why we 
+            ! After this, DELTA < DNORM may happen, explaining why we
             ! sometimes write MAX(DELTA, DNORM).
         end if
     end if
@@ -284,7 +284,7 @@ do tr = 1, maxtr
             xhist(:, khist) = x
         end if
 
-        ! FQDIFF is the error of the current model in predicting the change
+        ! MODERR is the error of the current model in predicting the change
         ! in F due to D.
         moderr = f - fsave - vquad
 
@@ -322,23 +322,23 @@ do tr = 1, maxtr
         ! Set KNEW to the index of the interpolation point that will be
         ! replaced by XNEW. KNEW will ensure that the geometry of XPT
         ! is "optimal" after the replacement. Note that the information
-        ! of XNEW is included in VLAG and BETA, which are calculated 
+        ! of XNEW is included in VLAG and BETA, which are calculated
         ! according to D = XNEW - XOPT.
-        ! KNEW = 0 means it is not a good idea to replace any current 
-        ! interpolation point by XNEW. 
+        ! KNEW = 0 means it is not a good idea to replace any current
+        ! interpolation point by XNEW.
         call setremove(idz, kopt, beta, delta, ratio, rho, vlag(1:npt), xopt, xpt, zmat, knew)
 
-        if (knew > 0) then  
-            ! If KNEW > 0, then update BMAT, ZMAT and IDZ, so that the 
+        if (knew > 0) then
+            ! If KNEW > 0, then update BMAT, ZMAT and IDZ, so that the
             ! KNEW-th interpolation point is replaced by XNEW.
-            ! If KNEW = 0, then probably the geometry of XPT needs 
+            ! If KNEW = 0, then probably the geometry of XPT needs
             ! improvement, which will be handled below.
             call updateh(knew, beta, vlag, idz, bmat, zmat)
 
             ! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
             call updateq(idz, knew, bmat(:, knew), moderr, zmat, xpt(:, knew), gq, hq, pq)
 
-            ! Include the new interpolation point. This should be done 
+            ! Include the new interpolation point. This should be done
             ! after updating the model.
             fval(knew) = f
             xpt(:, knew) = xnew
@@ -348,22 +348,22 @@ do tr = 1, maxtr
                 kopt = knew
             end if
 
-            ! Test whether to replace the new quadratic model Q by the least Frobenius 
-            ! norm interpolant Q_alt. Perform the replacement if certain ceriteria are 
+            ! Test whether to replace the new quadratic model Q by the least Frobenius
+            ! norm interpolant Q_alt. Perform the replacement if certain ceriteria are
             ! satisfied. This part is OPTIONAL, but it is crucial for the performance on
-            ! a certain class of problems. See Section 8 of the NEWUOA paper. 
+            ! a certain class of problems. See Section 8 of the NEWUOA paper.
             if (delta <= rho) then  ! DELTA == RHO.
-                ! In theory, the FVAL - FSAVE in the following line can be replaced by 
-                ! FVAL + C with any constant C. This constant will not affect the result 
-                ! in precise arithmetic. Powell chose C = - FVAL(KOPT_ORIGINAL), where 
+                ! In theory, the FVAL - FSAVE in the following line can be replaced by
+                ! FVAL + C with any constant C. This constant will not affect the result
+                ! in precise arithmetic. Powell chose C = - FVAL(KOPT_ORIGINAL), where
                 ! KOPT_ORIGINAL is the KOPT before the update above (i.e., Powell updated
-                ! KOPT after TRYQALT). Here we use the updated KOPT, because it worked 
-                ! slightly better on CUTEst, although there is no difference theoretically.  
-                ! Note that FVAL(KOPT_ORIGINAL) may not equal FSAVE --- it may happen that 
-                ! KNEW = KOPT_ORIGINAL so that FVAL(KOPT_ORIGINAL) has been revised after 
+                ! KOPT after TRYQALT). Here we use the updated KOPT, because it worked
+                ! slightly better on CUTEst, although there is no difference theoretically.
+                ! Note that FVAL(KOPT_ORIGINAL) may not equal FSAVE --- it may happen that
+                ! KNEW = KOPT_ORIGINAL so that FVAL(KOPT_ORIGINAL) has been revised after
                 ! the last function evaluation.
-                ! Question: Since TRYQALT is invoked only when DELTA equals the current RHO, 
-                ! why not reset ITEST to 0 when RHO is reduced? 
+                ! Question: Since TRYQALT is invoked only when DELTA equals the current RHO,
+                ! why not reset ITEST to 0 when RHO is reduced?
                 call tryqalt(idz, fval - fval(kopt), ratio, bmat(:, 1 : npt), zmat, itest, gq, hq, pq)
             end if
         end if
@@ -373,16 +373,16 @@ do tr = 1, maxtr
         dnormsave = [dnorm, dnormsave(1 : size(dnormsave) - 1)]
         ! MODERR is the prediction errors of the latest 3 models.
         moderrsave = [moderr, moderrsave(1 : size(moderrsave) - 1)]
-    end if
+    end if  ! End of if (.not. shortd)
 
     ! The geometry of XPT probably needs improvement if
     ! 1. The trust region step D is not short but RATIO < TENTH or there
     ! is no good member in XPT to be replaced by XOPT + D (i.e., KNEW = 0), or
-    ! 2. D is short but the latest three model errors are not small enough 
+    ! 2. D is short but the latest three model errors are not small enough
     ! to render REDUCE_RHO = TRUE.
     if ((.not. shortd .and. (ratio < TENTH .or. knew == 0)) .or. (shortd .and. .not. reduce_rho)) then
-        ! Find out if the interpolation points are close enough to the 
-        ! best point so far, i.e., all the points are within a ball 
+        ! Find out if the interpolation points are close enough to the
+        ! best point so far, i.e., all the points are within a ball
         ! centered at XOPT with a radius of 2*DELTA. If not, set KNEW to
         ! the index of the point that is the farthest away.
         distsq = 4.0_RP*delta*delta
@@ -396,9 +396,9 @@ do tr = 1, maxtr
 
         ! If KNEW is positive (i.e., not all points are close to XOPT),
         ! then a model step will be taken to ameliorate the geometry of
-        ! the interpolation set and hence improve the model. Otherwise 
-        ! (i.e., all points are close to XOPT), RHO will be reduced 
-        ! (if MAX(DELTA, DNORM) <= RHO and D is "bad") or another 
+        ! the interpolation set and hence improve the model. Otherwise
+        ! (i.e., all points are close to XOPT), RHO will be reduced
+        ! (if MAX(DELTA, DNORM) <= RHO and D is "bad") or another
         ! trust-region step will be taken.
         if (knew > 0) then
             ! The only possibility that IMPROVE_GEOMETRY = TRUE.
@@ -407,7 +407,7 @@ do tr = 1, maxtr
             ! The 2nd possibility (out of 2) that REDUCE_RHO = TRUE.
             ! Even though all points are close to XOPT, a sufficiently
             ! small trust region does not suggest a good step to improve
-            ! the current iterate. Then we should shrink RHO (i.e., update 
+            ! the current iterate. Then we should shrink RHO (i.e., update
             ! the stadard for defining "closeness" and shortd).
             reduce_rho = .true.
         end if
@@ -417,10 +417,10 @@ do tr = 1, maxtr
     ! geometry of XPT according to REDUCE_RHO and IMPROVE_GEOMETRY.
 
     if (reduce_rho) then
-        ! The calculations with the current RHO are complete. Pick the 
+        ! The calculations with the current RHO are complete. Pick the
         ! next values of RHO and DELTA.
         if (rho <= rhoend) then
-            info = SMALL_TR_RADIUS  
+            info = SMALL_TR_RADIUS
             exit
         else
             delta = HALF*rho
@@ -447,8 +447,8 @@ do tr = 1, maxtr
         ! Save the current FOPT in fsave. It is needed later.
         fsave = fopt
 
-        ! Set DELBAR, which will be used as the trust region radius for 
-        ! the geometry-improving schemes AMELIORGEO. We also need it to 
+        ! Set DELBAR, which will be used as the trust region radius for
+        ! the geometry-improving schemes AMELIORGEO. We also need it to
         ! decide whether to shift XBASE or not.
         delbar = max(min(TENTH*sqrt(distsq), HALF*delta), rho)
 
@@ -457,13 +457,13 @@ do tr = 1, maxtr
             call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
         end if
 
-        ! Find a step D so that the geometry of XPT will be improved 
-        ! when XPT(:, KNEW) is replaced by XOPT + D. The AMELIORGEO 
+        ! Find a step D so that the geometry of XPT will be improved
+        ! when XPT(:, KNEW) is replaced by XOPT + D. The AMELIORGEO
         ! subroutine will call Powell's BIGLAG and BIGDEN. It will also
         ! calculate the VLAG and BETA for this D.
         call ameliorgeo(idz, knew, kopt, bmat, delbar, xopt, xpt, zmat, d, beta, vlag)
 
-        ! Use the current quadratic model to predict the change in F due 
+        ! Use the current quadratic model to predict the change in F due
         ! to the step D.
         call calquad(d, gq, hq, pq, xopt, xpt, vquad)
 
@@ -489,7 +489,7 @@ do tr = 1, maxtr
             xhist(:, khist) = x
         end if
 
-        ! FQDIFF is the error of the current model in predicting the 
+        ! MODERR is the error of the current model in predicting the
         ! change in F due to D.
         moderr = f - fsave - vquad
 
@@ -513,7 +513,7 @@ do tr = 1, maxtr
             exit
         end if
 
-        ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation 
+        ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation
         ! point can be moved.
         call updateh(knew, beta, vlag, idz, bmat, zmat)
 
@@ -531,7 +531,7 @@ do tr = 1, maxtr
         ! DNORMSAVE constains the DNORM corresponding to the
         ! latest 3 function evaluations with the current RHO.
         !--------------------------------------------------------------!
-        ! Powell's code does not update DNORM. Therefore, DNORM is the 
+        ! Powell's code does not update DNORM. Therefore, DNORM is the
         ! length of last trust-region trial step, which seems inconsistent
         ! with what is described in Section 7 (around (7.7)) of the NEWUOA
         ! paper. Seemingly we should keep DNORM = ||D|| as we do here. The
@@ -544,7 +544,7 @@ do tr = 1, maxtr
         moderrsave = [moderr, moderrsave(1 : size(moderrsave) - 1)]
     end if  ! The procedure of improving geometry ends.
 
-end do
+end do  ! The iterative procedure ends.
 
 ! Return from the calculation, after another Newton-Raphson step, if it
 ! is too short to have been tried before.
@@ -587,7 +587,7 @@ end if
 if (maxxhist >= 1 .and. maxxhist < nf) then
     khist = mod(nf - 1_IK, maxxhist) + 1_IK
     xhist = reshape([xhist(:, khist + 1 : maxxhist), xhist(:, 1 : khist)], shape(xhist))
-    ! The above combination of SHAPE and RESHAPE fulfills our desire 
+    ! The above combination of SHAPE and RESHAPE fulfills our desire
     ! thanks to the COLUMN-MAJOR order of Fortran arrays.
 end if
 
