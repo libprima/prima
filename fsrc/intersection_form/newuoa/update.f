@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 30-Jan-2021.
+! on 23-May-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -18,7 +18,8 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
-
+!
+! Last Modified: Saturday, May 22, 2021 PM04:18:05
 
       module update_mod
 
@@ -81,7 +82,7 @@
       real(RP) :: w(size(vlag_in))
       real(RP) :: ztemp(size(zmat, 1))
       logical :: reduce_idz
-      character(len = SRNLEN), parameter :: srname = 'UPDATEH'
+      character(len=SRNLEN), parameter :: srname = 'UPDATEH'
 
 
 ! Get and verify the sizes.
@@ -134,16 +135,16 @@
           tempa = -tempa
       end if
 
-      w(1 : npt) = tempa*zmat(:, 1)
+      w(1:npt) = tempa * zmat(:, 1)
       if (jl > 1) then
           tempb = zmat(knew, jl)
-          w(1 : npt) = w(1 : npt) + tempb*zmat(:, jl)
+          w(1:npt) = w(1:npt) + tempb * zmat(:, jl)
       end if
 
       alpha = w(knew)
       tau = vlag(knew)
-      tausq = tau*tau
-      denom = alpha*beta + tausq
+      tausq = tau * tau
+      denom = alpha * beta + tausq
 ! After the following line, VLAG = Hw - e_t in the NEWUOA paper.
       vlag(knew) = vlag(knew) - ONE
       sqrtdn = sqrt(abs(denom))
@@ -172,11 +173,11 @@
 !tempa = tau/sqrtdn
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 ! Here is the corrected version (only TEMPB is changed).
-          tempa = tau/sqrtdn
-          tempb = zmat(knew, 1)/sqrtdn
+          tempa = tau / sqrtdn
+          tempb = zmat(knew, 1) / sqrtdn
 !------------------------------------------------------------!
 
-          zmat(:, 1) = tempa*zmat(:, 1) - tempb*vlag(1 : npt)
+          zmat(:, 1) = tempa * zmat(:, 1) - tempb * vlag(1:npt)
 
 !------------------------------------------------------------!
 ! The following six lines by Powell are obviously problematic
@@ -221,15 +222,15 @@
               ja = jl
           end if
           jb = int(jl + 1 - ja, kind(jb))
-          temp = zmat(knew, jb)/denom
-          tempa = temp*beta
-          tempb = temp*tau
+          temp = zmat(knew, jb) / denom
+          tempa = temp * beta
+          tempb = temp * tau
           temp = zmat(knew, ja)
-          scala = ONE/sqrt(abs(beta)*temp*temp + tausq)
-          scalb = scala*sqrtdn
-          zmat(:, ja) = scala*(tau*zmat(:, ja) - temp*vlag(1 : npt))
-          zmat(:, jb) = scalb*(zmat(:, jb) - tempa*w(1 : npt) - tempb*vl&
-     &ag(1 : npt))
+          scala = ONE / sqrt(abs(beta) * temp * temp + tausq)
+          scalb = scala * sqrtdn
+          zmat(:, ja) = scala * (tau * zmat(:, ja) - temp * vlag(1:npt))
+          zmat(:, jb) = scalb * (zmat(:, jb) - tempa * w(1:npt) - tempb &
+     &* vlag(1:npt))
 ! If and only if DENOM <= 0, IDZ will be revised according
 ! to the sign of BETA. See (4.19)--(4.20) of the NEWUOA paper.
           if (denom <= ZERO) then
@@ -260,14 +261,16 @@
       end if
 
 ! Finally, update the matrix BMAT.
-      w(npt + 1 : npt + n) = bmat(:, knew)
-      v1 = (alpha*vlag(npt+1 : npt+n) - tau*w(npt+1 : npt+n))/denom
-      v2 = (-beta*w(npt+1 : npt+n) - tau*vlag(npt+1 : npt+n))/denom
+      w(npt + 1:npt + n) = bmat(:, knew)
+      v1 = (alpha * vlag(npt + 1:npt + n) - tau * w(npt + 1:npt + n)) / &
+     &denom
+      v2 = (-beta * w(npt + 1:npt + n) - tau * vlag(npt + 1:npt + n)) / &
+     &denom
 
       call r2update(bmat, ONE, v1, vlag, ONE, v2, w)
 ! In floating-point arithmetic, the update above does not guarante
 ! BMAT(:, NPT+1 : NPT+N) to be symmetric. Symmetrization needed.
-      call symmetrize(bmat(:, npt + 1 : npt + n))
+      call symmetrize(bmat(:, npt + 1:npt + n))
 
       end subroutine updateh
 
@@ -302,7 +305,7 @@
       integer(IK) :: n
       integer(IK) :: npt
       real(RP) :: fqdz(size(zmat, 2))
-      character(len = SRNLEN), parameter :: srname = 'UPDATEQ'
+      character(len=SRNLEN), parameter :: srname = 'UPDATEQ'
 
 
 ! Get and verify the sizes.
@@ -325,8 +328,8 @@
 !----------------------------------------------------------------!
 
 ! Update the implicit part of second derivatives.
-      fqdz = fqdiff*zmat(knew, :)
-      fqdz(1 : idz - 1) = -fqdz(1 : idz - 1)
+      fqdz = fqdiff * zmat(knew, :)
+      fqdz(1:idz - 1) = -fqdz(1:idz - 1)
       pq(knew) = ZERO
 !----------------------------------------------------------------!
 !pq = pq + matprod(zmat, fqdz) !---------------------------------!
@@ -334,7 +337,7 @@
 !----------------------------------------------------------------!
 
 ! Update the gradient.
-      gq = gq + fqdiff*bmatknew
+      gq = gq + fqdiff * bmatknew
 
       end subroutine updateq
 
@@ -382,7 +385,7 @@
       integer(IK) :: npt
       real(RP) :: fz(size(zmat, 2))
       real(RP) :: galt(size(gq))
-      character(len = SRNLEN), parameter :: srname = 'TRYQALT'
+      character(len=SRNLEN), parameter :: srname = 'TRYQALT'
 
 
 ! Get and verify the sizes.
@@ -405,11 +408,11 @@
 ! of RATIO with 0.01. Here we use RATIO, which is more efficient
 ! as observed in in Zhang Zaikun's PhD thesis (Section 3.3.2).
 !if (abs(ratio) > 1.0e-2_RP) then
-      if (ratio > 1.0e-2_RP) then
+      if (ratio > 1.0E-2_RP) then
           itest = 0
       else
           galt = matprod(smat, fval)
-          if (inprod(gq, gq) < 1.0e2_RP*inprod(galt, galt)) then
+          if (inprod(gq, gq) < 1.0E2_RP * inprod(galt, galt)) then
               itest = 0
           else
               itest = int(itest + 1, kind(itest))
@@ -421,7 +424,7 @@
           gq = galt
           hq = ZERO
           fz = matprod(fval, zmat)
-          fz(1 : idz - 1) = -fz(1 : idz - 1)
+          fz(1:idz - 1) = -fz(1:idz - 1)
           pq = matprod(zmat, fz)
           itest = 0
       end if

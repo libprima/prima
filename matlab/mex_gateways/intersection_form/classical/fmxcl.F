@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 30-Jan-2021.
+! on 23-May-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -55,6 +55,8 @@
 !    fmxReadMPtr/fmxWriteMPtr from different modules.
 
 ! Coded by Zaikun ZHANG in July 2020.
+!
+! Last Modified: Sunday, May 23, 2021 PM04:55:45
 
 
 #include "fintrf.h"
@@ -79,10 +81,10 @@
       public :: fmxWriteMPtr
 
       real(RP_CL), parameter :: ONE = 1.0_RP_CL
-      real(DP), parameter :: convTol = 1.0E1_DP*max(epsilon(0.0_DP), rea&
-     &l(epsilon(0.0_RP_CL), DP))
-      integer, parameter :: MAXMEMORY_CL = min(21*(10**8), int(huge(0_IK&
-     &_CL)))
+      real(DP), parameter :: convTol = 1.0E1_DP * max(epsilon(0.0_DP), r&
+     &eal(epsilon(0.0_RP_CL), DP))
+      integer, parameter :: MAXMEMORY_CL = min(21 * (10**8), int(huge(0_&
+     &IK_CL)))
 
 
       interface fmxAllocate
@@ -128,7 +130,7 @@
 
 ! Intermediate variable
       integer :: alloc_status
-      character(len = MSSGLEN) :: eid, mssg
+      character(len=MSSGLEN) :: eid, mssg
 
 ! According to the Fortran 2003 standard, when a procedure is invoked,
 ! any allocated ALLOCATABLE object that is an actual argument associated
@@ -137,7 +139,7 @@
 !!if (allocated(x)) deallocate (x)
 
 ! Allocate memory for X
-      allocate (x(n), stat = alloc_status)
+      allocate (x(n), stat=alloc_status)
       if (alloc_status /= 0) then
           eid = 'FMXAPI:AllocateFailed'
           mssg = 'ALLOC_RVECTOR_CL: Memory allocation fails.'
@@ -165,13 +167,13 @@
 
 ! Intermediate variable
       integer :: alloc_status
-      character(len = MSSGLEN) :: eid, mssg
+      character(len=MSSGLEN) :: eid, mssg
 
 ! Unnecessary to write the following line in F2003 since X is INTENT(OUT):
 !!if (allocated(x)) deallocate (x)
 
 ! Allocate memory for X
-      allocate (x(m, n), stat = alloc_status)
+      allocate (x(m, n), stat=alloc_status)
       if (alloc_status /= 0) then
           eid = 'FMXAPI:AllocateFailed'
           mssg = 'ALLOC_RMATRIX_CL: Memory allocation fails.'
@@ -179,7 +181,7 @@
       end if
 
 ! Use X; otherwise, compilers may complain.
-      if (m*n >= 1) then
+      if (m * n >= 1) then
           x(1, 1) = 0.0_SP
       end if
       end subroutine alloc_rmatrix_cl_sp
@@ -199,13 +201,13 @@
 
 ! Intermediate variable
       integer :: alloc_status
-      character(len = MSSGLEN) :: eid, mssg
+      character(len=MSSGLEN) :: eid, mssg
 
 ! Unnecessary to write the following line in F2003 since X is INTENT(OUT):
 !!if (allocated(x)) deallocate (x)
 
 ! Allocate memory for X
-      allocate (x(n), stat = alloc_status)
+      allocate (x(n), stat=alloc_status)
       if (alloc_status /= 0) then
           eid = 'FMXAPI:AllocateFailed'
           mssg = 'ALLOC_RVECTOR_CL: Memory allocation fails.'
@@ -233,13 +235,13 @@
 
 ! Intermediate variable
       integer :: alloc_status
-      character(len = MSSGLEN) :: eid, mssg
+      character(len=MSSGLEN) :: eid, mssg
 
 ! Unnecessary to write the following line in F2003 since X is INTENT(OUT):
 !!if (allocated(x)) deallocate (x)
 
 ! Allocate memory for X
-      allocate (x(m, n), stat = alloc_status)
+      allocate (x(m, n), stat=alloc_status)
       if (alloc_status /= 0) then
           eid = 'FMXAPI:AllocateFailed'
           mssg = 'ALLOC_RMATRIX_CL: Memory allocation fails.'
@@ -247,7 +249,7 @@
       end if
 
 ! Use X; otherwise, compilers may complain.
-      if (m*n >= 1) then
+      if (m * n >= 1) then
           x(1, 1) = 0.0_DP
       end if
       end subroutine alloc_rmatrix_cl_dp
@@ -267,7 +269,7 @@
 
 ! Intermediate variable
       real(DP) :: x_dp(1)
-      character(len = MSSGLEN) :: eid, mssg
+      character(len=MSSGLEN) :: eid, mssg
 
 ! Check input type and size
       call fmxVerifyClassShape(px, 'double', 'scalar')
@@ -279,7 +281,7 @@
       x = real(x_dp(1), kind(x))
 ! Check whether the type conversion is proper
       if (kind(x) /= kind(x_dp)) then
-          if (abs(x-x_dp(1)) > convTol*max(abs(x), ONE)) then
+          if (abs(x - x_dp(1)) > convTol * max(abs(x), ONE)) then
               eid = 'FMXAPI:ConversionError'
               mssg = 'READ_RSCALAR_CL: Large error occurs when convertin&
      &g REAL(DP) to REAL(RP_CL) (maybe due to overflow).'
@@ -305,13 +307,13 @@
       real(DP), allocatable :: x_dp(:)
       integer(IK_CL) :: n
       mwSize :: n_mw
-      character(len = MSSGLEN) :: eid, mssg
+      character(len=MSSGLEN) :: eid, mssg
 
 ! Check input type and size
       call fmxVerifyClassShape(px, 'double', 'vector')
 
 ! Get size
-      n_mw = int(mxGetM(px)*mxGetN(px), kind(n_mw))
+      n_mw = int(mxGetM(px) * mxGetN(px), kind(n_mw))
       n = int(n_mw, kind(n))
 
 ! Copy input to X_DP
@@ -323,8 +325,8 @@
       x = real(x_dp, kind(x))
 ! Check whether the type conversion is proper
       if (kind(x) /= kind(x_dp)) then
-          if (maxval(abs(x-x_dp)) > convTol*max(maxval(abs(x)), ONE)) th&
-     &en
+          if (maxval(abs(x - x_dp)) > convTol * max(maxval(abs(x)), ONE)&
+     &) then
               eid = 'FMXAPI:ConversionError'
               mssg = 'READ_RVECTOR_CL: Large error occurs when convertin&
      &g REAL(DP) to REAL(RP_CL) (maybe due to overflow).'
@@ -333,7 +335,7 @@
       end if
 
 ! Deallocate X_DP. Indeed, automatic deallocation would take place.
-      deallocate(x_dp)
+      deallocate (x_dp)
       end subroutine read_rvector_cl
 
 
@@ -353,7 +355,7 @@
       real(DP), allocatable :: x_dp(:, :)
       integer(IK_CL) :: m, n
       mwSize :: xsize
-      character(len = MSSGLEN) :: eid, mssg
+      character(len=MSSGLEN) :: eid, mssg
 
 ! Check input type and size
       call fmxVerifyClassShape(px, 'double', 'matrix')
@@ -361,7 +363,7 @@
 ! Get size
       m = int(mxGetM(px), kind(m))
       n = int(mxGetN(px), kind(n))
-      xsize = int(m*n, kind(xsize))
+      xsize = int(m * n, kind(xsize))
 
 
 ! Copy input to X_DP
@@ -373,8 +375,8 @@
       x = real(x_dp, kind(x))
 ! Check whether the type conversion is proper
       if (kind(x) /= kind(x_dp)) then
-          if (maxval(abs(x-x_dp)) > convTol*max(maxval(abs(x)), ONE)) th&
-     &en
+          if (maxval(abs(x - x_dp)) > convTol * max(maxval(abs(x)), ONE)&
+     &) then
               eid = 'FMXAPI:ConversionError'
               mssg = 'READ_MATRIX_CL: Large error occurs when converting&
      & REAL(DP) to REAL(RP_CL) (maybe due to overflow).'
@@ -383,7 +385,7 @@
       end if
 
 ! Deallocate X_DP. Indeed, automatic deallocation would take place.
-      deallocate(x_dp)
+      deallocate (x_dp)
       end subroutine read_rmatrix_cl
 
 
@@ -402,7 +404,7 @@
 
 ! Intermediate variable
       real(DP) :: x_dp(1)
-      character(len = MSSGLEN) :: eid, mssg
+      character(len=MSSGLEN) :: eid, mssg
 
 ! Check input type and size
       call fmxVerifyClassShape(px, 'double', 'scalar')
@@ -414,7 +416,7 @@
       x = int(x_dp(1), kind(x))
 
 ! Check whether the type conversion is proper
-      if (abs(x-x_dp(1)) > 0.5_DP) then
+      if (abs(x - x_dp(1)) > 0.5_DP) then
           eid = 'FMXAPI:ConversionError'
           mssg = 'READ_ISCALAR_CL: Large error occurs when converting RE&
      &AL(DP) to INTEGER(IK_CL) (maybe due to overflow).'
@@ -438,13 +440,13 @@
 
 ! Intermediate variable
       real(DP) :: x_dp
-      character(len = MSSGLEN) :: eid, mssg
+      character(len=MSSGLEN) :: eid, mssg
 
 ! Convert X to REAL(DP), which is expected by mxCopyReal8ToPtr
       x_dp = real(x, kind(x_dp))
       if (kind(x_dp) /= kind(x)) then
 ! Check whether the type conversion is proper
-          if (abs(x-x_dp) > convTol*max(abs(x), ONE)) then
+          if (abs(x - x_dp) > convTol * max(abs(x), ONE)) then
               eid = 'FMXAPI:ConversionError'
               mssg = 'WRITE_RSCALAR_CL: Large error occurs when converti&
      &ng REAL(RP_CL) to REAL(DP) (maybe due to overflow).'
@@ -467,7 +469,7 @@
 
 ! Input
       real(RP_CL), intent(in) :: x(:)
-      character(len = *), intent(in), optional :: rowcol
+      character(len=*), intent(in), optional :: rowcol
 
 ! Output
       mwPointer, intent(out) :: px
@@ -477,7 +479,7 @@
       integer(IK_CL) :: n
       mwSize :: n_mw
       logical :: row
-      character(len = MSSGLEN) :: eid, mssg
+      character(len=MSSGLEN) :: eid, mssg
 
 ! Get size of X
       n_mw = int(size(x), kind(n_mw))
@@ -487,8 +489,8 @@
       x_dp = real(x, kind(x_dp))
 ! Check whether the type conversion is proper
       if (kind(x) /= kind(x_dp)) then
-          if (maxval(abs(x-x_dp)) > convTol*max(maxval(abs(x)), ONE)) th&
-     &en
+          if (maxval(abs(x - x_dp)) > convTol * max(maxval(abs(x)), ONE)&
+     &) then
               eid = 'FMXAPI:ConversionError'
               mssg = 'WRITE_RVECTOR_CL: Large error occurs when converti&
      &ng REAL(RP_CL) to REAL(DP) (maybe due to overflow).'
@@ -498,8 +500,8 @@
 
       row = .false.
       if (present(rowcol)) then
-          if (rowcol == 'row' .or. rowcol == 'ROW' .or. rowcol =='Row') &
-     &then
+          if (rowcol == 'row' .or. rowcol == 'ROW' .or. rowcol == 'Row')&
+     & then
               row = .true.
           end if
       end if
@@ -531,7 +533,7 @@
       real(DP) :: x_dp(size(x, 1), size(x, 2))
       integer(IK_CL) :: m, n
       mwSize :: m_mw, n_mw
-      character(len = MSSGLEN) :: eid, mssg
+      character(len=MSSGLEN) :: eid, mssg
 
 ! Get size of X
       m = int(size(x, 1), kind(m))
@@ -542,9 +544,9 @@
 ! Convert X to REAL(DP), which is expected by mxCopyReal8ToPtr
       x_dp = real(x, kind(x_dp))
 ! Check whether the type conversion is proper
-      if(kind(x) /= kind(x_dp)) then
-          if (maxval(abs(x-x_dp)) > convTol*max(maxval(abs(x)), ONE)) th&
-     &en
+      if (kind(x) /= kind(x_dp)) then
+          if (maxval(abs(x - x_dp)) > convTol * max(maxval(abs(x)), ONE)&
+     &) then
               eid = 'FMXAPI:ConversionError'
               mssg = 'WRITE_MATRIX_CL: Large error occurs when convertin&
      &g REAL(RP_CL) to REAL(DP) (maybe due to overflow).'
@@ -554,7 +556,7 @@
 
 ! Create a MATLAB matrix using the data in X_DP
       px = mxCreateDoubleMatrix(m_mw, n_mw, notComplex)
-      call mxCopyReal8ToPtr(x_dp, fmxGetDble(px), m_mw*n_mw)
+      call mxCopyReal8ToPtr(x_dp, fmxGetDble(px), m_mw * n_mw)
 
       end subroutine write_rmatrix_cl
 
@@ -574,7 +576,7 @@
 
 ! Intermediate variable
       real(DP) :: x_dp
-      character(len = MSSGLEN) :: eid, mssg
+      character(len=MSSGLEN) :: eid, mssg
 
       x_dp = real(x, kind(x_dp))
 

@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 30-Jan-2021.
+! on 23-May-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -20,6 +20,9 @@
 ! constrained prolems.
 !
 ! Coded by Zaikun Zhang in July 2020.
+!
+! Last Modified: Sunday, May 23, 2021 PM04:54:58
+
 
 #include "fintrf.h"
 
@@ -56,7 +59,7 @@
 
 ! Intermediate variables
       mwPointer :: pinput(1), poutput(1)
-      character(len = MSSGLEN) :: eid, mssg
+      character(len=MSSGLEN) :: eid, mssg
 
 ! Associate X with INPUT(1)
       call fmxWriteMPtr(x, pinput(1))

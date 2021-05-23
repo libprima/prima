@@ -9,11 +9,15 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 30-Jan-2021.
+! on 23-May-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 ! MEMORY_MOD is a module providing subroutines concerning memory management.
+!
+! Coded by Zaikun ZHANG in July 2020.
+!
+! Last Modified: Sunday, May 23, 2021 AM10:59:02
 
 
 #include "ppf.h"
@@ -54,7 +58,7 @@
 
 ! Intermediate variable
       integer :: alloc_status
-      character(len = SRNLEN), parameter :: srname = 'ALLOC_RVECTOR'
+      character(len=SRNLEN), parameter :: srname = 'ALLOC_RVECTOR'
 
 ! According to the Fortran 2003 standard, when a procedure is invoked,
 ! any allocated ALLOCATABLE object that is an actual argument associated
@@ -63,7 +67,7 @@
 !!if (allocated(x)) deallocate (x)
 
 ! Allocate memory for X
-      allocate (x(n), stat = alloc_status)
+      allocate (x(n), stat=alloc_status)
       if (alloc_status /= 0) then
           call errstop(srname, 'Memory allocation fails.')
       end if
@@ -91,19 +95,19 @@
 
 ! Intermediate variable
       integer :: alloc_status
-      character(len = SRNLEN), parameter :: srname = 'ALLOC_RMATRIX'
+      character(len=SRNLEN), parameter :: srname = 'ALLOC_RMATRIX'
 
 ! Unnecessary to write the following line in F2003 since X is INTENT(OUT):
 !!if (allocated(x)) deallocate (x)
 
 ! Allocate memory for X
-      allocate (x(m, n), stat = alloc_status)
+      allocate (x(m, n), stat=alloc_status)
       if (alloc_status /= 0) then
           call errstop(srname, 'Memory allocation fails.')
       end if
 
 ! Use X; otherwise, compilers may complain.
-      if (m*n >= 1) then
+      if (m * n >= 1) then
           x(1, 1) = 0.0_RP
       end if
 
@@ -116,10 +120,10 @@
       real(SP), intent(in) :: x
       integer(IK) :: y
 #if __USE_STORAGE_SIZE__ == 1
-          y = int(storage_size(x)/8, kind(y))
+      y = int(storage_size(x) / 8, kind(y))
 #else
-          y = int(kind(x), kind(y)) ! Avoid complaint
-          y = int(4, kind(y))
+      y = int(kind(x), kind(y)) ! Avoid complaint
+      y = int(4, kind(y))
 #endif
       end function size_of_sp
 
@@ -130,10 +134,10 @@
       real(DP), intent(in) :: x
       integer(IK) :: y
 #if __USE_STORAGE_SIZE__ == 1
-          y = int(storage_size(x)/8, kind(y))
+      y = int(storage_size(x) / 8, kind(y))
 #else
-          y = int(kind(x), kind(y)) ! Avoid complaint
-          y = int(8, kind(y))
+      y = int(kind(x), kind(y)) ! Avoid complaint
+      y = int(8, kind(y))
 #endif
       end function size_of_dp
 
@@ -146,10 +150,10 @@
       real(QP), intent(in) :: x
       integer(IK) :: y
 #if __USE_STORAGE_SIZE__ == 1
-          y = int(storage_size(x)/8, kind(y))
+      y = int(storage_size(x) / 8, kind(y))
 #else
-          y = int(kind(x), kind(y)) ! Avoid complaint
-          y = int(8, kind(y))
+      y = int(kind(x), kind(y)) ! Avoid complaint
+      y = int(8, kind(y))
 #endif
       end function size_of_qp
 

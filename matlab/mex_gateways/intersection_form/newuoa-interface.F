@@ -9,13 +9,15 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 30-Jan-2021.
+! on 23-May-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 ! The mex gateway for NEWUOA
 !
 ! Coded by Zaikun Zhang in July 2020.
+!
+! Last Modified: Sunday, May 23, 2021 PM04:54:35
 
 
 #include "fintrf.h"
@@ -95,12 +97,12 @@
 ! the Fortran code.
       if (output_xhist > 0) then
           call newuoa(calfun, x, f, nf, rhobeg, rhoend, ftarget, maxfun,&
-     & npt, iprint, eta1, eta2, gamma1, gamma2, xhist = xhist, fhist = f&
-     &hist, maxhist = maxhist, info = info)
+     & npt, iprint, eta1, eta2, gamma1, gamma2, xhist=xhist, fhist=fhist&
+     &, maxhist=maxhist, info=info)
       else
           call newuoa(calfun, x, f, nf, rhobeg, rhoend, ftarget, maxfun,&
-     & npt, iprint, eta1, eta2, gamma1, gamma2, fhist = fhist, maxhist =&
-     & maxhist, info = info)
+     & npt, iprint, eta1, eta2, gamma1, gamma2, fhist=fhist, maxhist=max&
+     &hist, info=info)
       end if
 
 ! After the Fortran code, XHIST may not be allocated, because it may not
@@ -115,10 +117,10 @@
       call fmxWriteMPtr(f, poutput(2))
       call fmxWriteMPtr(info, poutput(3))
       call fmxWriteMPtr(nf, poutput(4))
-      call fmxWriteMPtr(xhist(:, 1 : min(int(nf), size(xhist, 2))), pout&
-     &put(5))
-      call fmxWriteMPtr(fhist(1 : min(int(nf), size(fhist))), poutput(6)&
-     &, 'row')
+      call fmxWriteMPtr(xhist(:, 1:min(int(nf), size(xhist, 2))), poutpu&
+     &t(5))
+      call fmxWriteMPtr(fhist(1:min(int(nf), size(fhist))), poutput(6), &
+     &'row')
 ! N.B.:
 ! 1. INT(NF) converts NF to the default integer type; if not, MIN may complain.
 ! 2. It can happen that
@@ -126,9 +128,9 @@
 !    due to the memory limit in the Fortran code.
 
 ! Free memory. Indeed, automatic deallocation would take place.
-      deallocate(x) ! Allocated by fmxReadMPtr.
-      deallocate(xhist)
-      deallocate(fhist)
+      deallocate (x) ! Allocated by fmxReadMPtr.
+      deallocate (xhist)
+      deallocate (fhist)
 
       return
       end subroutine mexFunction

@@ -1,9 +1,10 @@
 ! UPDATE_MOD is a module providing subroutines concerning the update of
 ! IDZ, BMAT, ZMAT, GQ, HQ, and PQ when XPT(:, KNEW) is replaced by XNEW.
 !
-! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code 
+! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
-
+!
+! Last Modified: Saturday, May 22, 2021 PM04:18:05
 
 module update_mod
 
@@ -66,7 +67,7 @@ real(RP) :: vlag(size(vlag_in))  ! Copy of VLAG_IN
 real(RP) :: w(size(vlag_in))
 real(RP) :: ztemp(size(zmat, 1))
 logical :: reduce_idz
-character(len = SRNLEN), parameter :: srname = 'UPDATEH'
+character(len=SRNLEN), parameter :: srname = 'UPDATEH'
 
 
 ! Get and verify the sizes.
@@ -115,20 +116,20 @@ end do
 ! Put the first NPT components of the KNEW-th column of HLAG into
 ! W, and calculate the parameters of the updating formula.
 tempa = zmat(knew, 1)
-if (idz >=  2) then
+if (idz >= 2) then
     tempa = -tempa
 end if
 
-w(1 : npt) = tempa*zmat(:, 1)
+w(1:npt) = tempa * zmat(:, 1)
 if (jl > 1) then
     tempb = zmat(knew, jl)
-    w(1 : npt) = w(1 : npt) + tempb*zmat(:, jl)
+    w(1:npt) = w(1:npt) + tempb * zmat(:, jl)
 end if
 
 alpha = w(knew)
 tau = vlag(knew)
-tausq = tau*tau
-denom = alpha*beta + tausq
+tausq = tau * tau
+denom = alpha * beta + tausq
 ! After the following line, VLAG = Hw - e_t in the NEWUOA paper.
 vlag(knew) = vlag(knew) - ONE
 sqrtdn = sqrt(abs(denom))
@@ -157,11 +158,11 @@ if (jl == 1) then
     !tempa = tau/sqrtdn
     !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
     ! Here is the corrected version (only TEMPB is changed).
-    tempa = tau/sqrtdn
-    tempb = zmat(knew, 1)/sqrtdn
+    tempa = tau / sqrtdn
+    tempb = zmat(knew, 1) / sqrtdn
     !------------------------------------------------------------!
 
-    zmat(:, 1) = tempa*zmat(:, 1) - tempb*vlag(1 : npt)
+    zmat(:, 1) = tempa * zmat(:, 1) - tempb * vlag(1:npt)
 
     !------------------------------------------------------------!
     ! The following six lines by Powell are obviously problematic
@@ -187,13 +188,13 @@ if (jl == 1) then
     ! corresponding part of the LINCOA code.
     if (denom < ZERO) then
         if (idz == 1) then
-        ! This is the first place (out of two) where IDZ is
-        ! increased. Note that IDZ = 2 <= NPT-N after the update.
+            ! This is the first place (out of two) where IDZ is
+            ! increased. Note that IDZ = 2 <= NPT-N after the update.
             idz = 2
         else
-        ! This is the first place (out of two) where IDZ is
-        ! decreased (by 1). Since IDZ >= 2 in this case, we have
-        ! IDZ >= 1 after the update.
+            ! This is the first place (out of two) where IDZ is
+            ! decreased (by 1). Since IDZ >= 2 in this case, we have
+            ! IDZ >= 1 after the update.
             reduce_idz = .true.
         end if
     end if
@@ -202,31 +203,31 @@ else
     ! Complete the updating of ZMAT in the alternative case.
     ! There are two nonzeros in ZMAT(KNEW, :) after the rotation.
     ja = 1
-    if (beta >=  ZERO) then
+    if (beta >= ZERO) then
         ja = jl
     end if
     jb = int(jl + 1 - ja, kind(jb))
-    temp = zmat(knew, jb)/denom
-    tempa = temp*beta
-    tempb = temp*tau
+    temp = zmat(knew, jb) / denom
+    tempa = temp * beta
+    tempb = temp * tau
     temp = zmat(knew, ja)
-    scala = ONE/sqrt(abs(beta)*temp*temp + tausq)
-    scalb = scala*sqrtdn
-    zmat(:, ja) = scala*(tau*zmat(:, ja) - temp*vlag(1 : npt))
-    zmat(:, jb) = scalb*(zmat(:, jb) - tempa*w(1 : npt) - tempb*vlag(1 : npt))
+    scala = ONE / sqrt(abs(beta) * temp * temp + tausq)
+    scalb = scala * sqrtdn
+    zmat(:, ja) = scala * (tau * zmat(:, ja) - temp * vlag(1:npt))
+    zmat(:, jb) = scalb * (zmat(:, jb) - tempa * w(1:npt) - tempb * vlag(1:npt))
     ! If and only if DENOM <= 0, IDZ will be revised according
     ! to the sign of BETA. See (4.19)--(4.20) of the NEWUOA paper.
-    if (denom <=  ZERO) then
+    if (denom <= ZERO) then
         if (beta < ZERO) then
-        ! This is the second place (out of two) where IDZ is
-        ! increased. Since JL = IDZ <= NPT-N-1 in this case,
-        ! we have IDZ <= NPT-N after the update.
+            ! This is the second place (out of two) where IDZ is
+            ! increased. Since JL = IDZ <= NPT-N-1 in this case,
+            ! we have IDZ <= NPT-N after the update.
             idz = int(idz + 1, kind(idz))
         end if
-        if (beta >=  ZERO) then
-        ! This is the second place (out of two) where IDZ is
-        ! decreased (by 1). Since IDZ >= 2 in this case, we have
-        ! IDZ >= 1 after the update.
+        if (beta >= ZERO) then
+            ! This is the second place (out of two) where IDZ is
+            ! decreased (by 1). Since IDZ >= 2 in this case, we have
+            ! IDZ >= 1 after the update.
             reduce_idz = .true.
         end if
     end if
@@ -244,14 +245,14 @@ if (reduce_idz) then
 end if
 
 ! Finally, update the matrix BMAT.
-w(npt + 1 : npt + n) = bmat(:, knew)
-v1 = (alpha*vlag(npt+1 : npt+n) - tau*w(npt+1 : npt+n))/denom
-v2 = (-beta*w(npt+1 : npt+n) - tau*vlag(npt+1 : npt+n))/denom
+w(npt + 1:npt + n) = bmat(:, knew)
+v1 = (alpha * vlag(npt + 1:npt + n) - tau * w(npt + 1:npt + n)) / denom
+v2 = (-beta * w(npt + 1:npt + n) - tau * vlag(npt + 1:npt + n)) / denom
 
 call r2update(bmat, ONE, v1, vlag, ONE, v2, w)
 ! In floating-point arithmetic, the update above does not guarante
 ! BMAT(:, NPT+1 : NPT+N) to be symmetric. Symmetrization needed.
-call symmetrize(bmat(:, npt + 1 : npt + n))
+call symmetrize(bmat(:, npt + 1:npt + n))
 
 end subroutine updateh
 
@@ -272,7 +273,7 @@ integer(IK), intent(in) :: idz
 integer(IK), intent(in) :: knew
 real(RP), intent(in) :: bmatknew(:) ! BMATKNEW(N)
 ! fqdiff = [f(xnew) - f(xopt)] - [q(xnew) - q(xopt)] = moderr
-real(RP), intent(in) :: fqdiff 
+real(RP), intent(in) :: fqdiff
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 real(RP), intent(in) :: xptknew(:)  ! XPTKNEW(N)
 
@@ -285,7 +286,7 @@ real(RP), intent(inout) :: pq(:)   ! PQ(NPT)
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: fqdz(size(zmat, 2))
-character(len = SRNLEN), parameter :: srname = 'UPDATEQ'
+character(len=SRNLEN), parameter :: srname = 'UPDATEQ'
 
 
 ! Get and verify the sizes.
@@ -308,8 +309,8 @@ call r1update(hq, pq(knew), xptknew)
 !----------------------------------------------------------------!
 
 ! Update the implicit part of second derivatives.
-fqdz = fqdiff*zmat(knew, :)
-fqdz(1 : idz - 1) = -fqdz(1 : idz - 1)
+fqdz = fqdiff * zmat(knew, :)
+fqdz(1:idz - 1) = -fqdz(1:idz - 1)
 pq(knew) = ZERO
 !----------------------------------------------------------------!
 !pq = pq + matprod(zmat, fqdz) !---------------------------------!
@@ -317,7 +318,7 @@ pq = Ax_plus_y(zmat, fqdz, pq)
 !----------------------------------------------------------------!
 
 ! Update the gradient.
-gq = gq + fqdiff*bmatknew
+gq = gq + fqdiff * bmatknew
 
 end subroutine updateq
 
@@ -364,7 +365,7 @@ integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: fz(size(zmat, 2))
 real(RP) :: galt(size(gq))
-character(len = SRNLEN), parameter :: srname = 'TRYQALT'
+character(len=SRNLEN), parameter :: srname = 'TRYQALT'
 
 
 ! Get and verify the sizes.
@@ -387,11 +388,11 @@ end if
 ! of RATIO with 0.01. Here we use RATIO, which is more efficient
 ! as observed in in Zhang Zaikun's PhD thesis (Section 3.3.2).
 !if (abs(ratio) > 1.0e-2_RP) then
-if (ratio > 1.0e-2_RP) then
+if (ratio > 1.0E-2_RP) then
     itest = 0
 else
     galt = matprod(smat, fval)
-    if (inprod(gq, gq) < 1.0e2_RP*inprod(galt, galt)) then
+    if (inprod(gq, gq) < 1.0E2_RP * inprod(galt, galt)) then
         itest = 0
     else
         itest = int(itest + 1, kind(itest))
@@ -403,7 +404,7 @@ if (itest >= 3) then
     gq = galt
     hq = ZERO
     fz = matprod(fval, zmat)
-    fz(1 : idz - 1) = -fz(1 : idz - 1)
+    fz(1:idz - 1) = -fz(1:idz - 1)
     pq = matprod(zmat, fz)
     itest = 0
 end if

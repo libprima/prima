@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 30-Jan-2021.
+! on 23-May-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -21,6 +21,8 @@
 !               Department of Applied Mathematics,
 !               The Hong Kong Polytechnic University
 ! **********************************************************************
+!
+! Last Modified: Sunday, May 23, 2021 PM04:54:17
 
 ! Remarks:
 !
@@ -33,6 +35,7 @@
 !
 ! 2. Be careful with the line width limit. After preprocessing (macro
 ! substitution), some lines may become too long and hence get truncated.
+
 
 #include "fintrf.h"
 
@@ -65,7 +68,7 @@
       mwPointer, intent(out) :: poutput(nargout)
 
 ! Variables
-       mwSize :: cols ! Size of the input
+      mwSize :: cols ! Size of the input
 ! The largest length of the input string.
       integer, parameter :: maxlen = 50
 ! The input string, which specifies the data type
@@ -73,12 +76,12 @@
 ! Integer zero used by the Fortran code
       integer(IK), parameter :: intZero = 0
 ! Integer zero of type mwSize on the current platform
-       mwSize, parameter :: msZero = 0
+      mwSize, parameter :: msZero = 0
 ! Integer zero of type mwIndex on the current platform
-       mwIndex, parameter :: miZero = 0
+      mwIndex, parameter :: miZero = 0
 ! The huge value that will be returned
       real(DP) :: hugeValue
-      character(len = MSSGLEN) :: eid, mssg
+      character(len=MSSGLEN) :: eid, mssg
 
 ! Check inputs
       call fmxVerifyNArgin(nargin, 1)
@@ -102,16 +105,16 @@
 ! Note that the REAL values passed to MATLAB via MEX can only be
 ! doubles. Therefore, we may need to cap the huge values by taking
 ! min to ensure that they will not overflow when cast to doubles.
-      if (data_type == 'float' .or. data_type == 'Float'.or. data_type =&
-     &= 'FLOAT') then
+      if (data_type == 'float' .or. data_type == 'Float' .or. data_type &
+     &== 'FLOAT') then
 ! No overflow in this case
           hugeValue = real(huge(0.0), DP)
-      else if (data_type == 'single' .or. data_type == 'Single'.or. data&
-     &_type == 'SINGLE') then
+      else if (data_type == 'single' .or. data_type == 'Single' .or. dat&
+     &a_type == 'SINGLE') then
 ! No overflow in this case
           hugeValue = real(huge(0.0_SP), DP)
-      else if (data_type == 'double' .or. data_type == 'Double'.or. data&
-     &_type == 'DOUBLE') then
+      else if (data_type == 'double' .or. data_type == 'Double' .or. dat&
+     &a_type == 'DOUBLE') then
 ! No overflow in this case
           hugeValue = huge(0.0_DP)
       else if (data_type == 'real' .or. data_type == 'Real' .or. data_ty&

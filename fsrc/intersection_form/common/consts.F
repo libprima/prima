@@ -9,13 +9,15 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 30-Jan-2021.
+! on 23-May-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 ! CONSTS_MOD is a module defining some constants.
 !
 ! Coded by Zaikun Zhang in July 2020.
+!
+! Last Modified: Sunday, May 23, 2021 AM11:07:23
 
 ! Remarks:
 !
@@ -23,9 +25,9 @@
 !    expressions. Although they are supported by many compilers as
 !    extensions, it is better to avoid them.
 !
-! 2. Never use KIND with a literal value, e.g., REAL(KIND=8), because
-!    Fortran standards never define what KIND=8 means. There is NO
-!    guarantee that REAL(KIND=8) will be legal, let alone double precision.
+! 2. Never use KIND with a literal value, e.g., REAL(KIND = 8), because
+!    Fortran standards never define what KIND = 8 means. There is NO
+!    guarantee that REAL(KIND = 8) will be legal, let alone double precision.
 !
 ! 3. Fortran standard (as of F2003) specifies the following for types
 !    INTEGER and REAL.
@@ -69,6 +71,7 @@
 !      In particular, for integers working as the lower/upper limit of
 !      arrays, overflow can lead to Segmentation Faults!
 !
+
 
 #include "ppf.h"
 
@@ -121,7 +124,7 @@
 
       integer, parameter :: REAL32 = kind(0.0)
       integer, parameter :: REAL64 = kind(0.0D0)
-      integer, parameter :: REAL128 = selected_real_kind(p = 30)
+      integer, parameter :: REAL128 = selected_real_kind(p=30)
 #endif
       integer, parameter :: IK_DFT = kind(0) ! Default integer kind
       integer, parameter :: RP_DFT = kind(0.0) ! Default real kind
@@ -171,10 +174,10 @@
 
       real(RP), parameter :: EPS = epsilon(ZERO)
       real(RP), parameter :: HUGENUM = huge(ZERO)
-      real(RP), parameter :: ALMOST_INFINITY = HALF*HUGENUM
+      real(RP), parameter :: ALMOST_INFINITY = HALF * HUGENUM
 
       integer, parameter :: MAXE = maxexponent(ZERO)
-      real(RP), parameter :: HUGEFUN = TWO**min(100, MAXE/2)
+      real(RP), parameter :: HUGEFUN = TWO**min(100, MAXE / 2)
       real(RP), parameter :: HUGECON = HUGEFUN
 
 ! The maximal length of subroutine/function names
@@ -194,7 +197,7 @@
       integer(IK), parameter :: MAXFUN_DIM_DFT = 500
 
 ! Maximal amount of memory (Byte) allowed for XHIST, FHIST, NLCHIST
-      integer, parameter :: MAXMEMORY = 21*(10**8)
+      integer, parameter :: MAXMEMORY = 21 * (10**8)
 ! 21*10**8 is 2G. If you set MAXMEMORY to a larger value, make sure that
 ! it does not exceed HUGE(0).
 

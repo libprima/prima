@@ -1,6 +1,9 @@
 ! The mex gateway for NEWUOA (classical version)
 !
 ! Coded by Zaikun Zhang in July 2020.
+!
+! Last Modified: Sunday, May 23, 2021 PM04:56:07
+
 
 #include "fintrf.h"
 
@@ -15,13 +18,13 @@ public :: solver
 
 ! Some global veriables
 ! Pointer to bjective function
-mwPointer :: fun_ptr 
+mwPointer :: fun_ptr
 ! Number of function evaluations
-integer(IK_CL) :: nf 
+integer(IK_CL) :: nf
 ! History of evaluations
 real(RP_CL), allocatable :: xhist(:, :), fhist(:)
-! Solver name 
-character(len = 6), parameter :: solver = 'NEWUOA'
+! Solver name
+character(len=6), parameter :: solver = 'NEWUOA'
 
 interface
     subroutine newuoa(n, npt, x, rhobeg, rhoend, iprint, maxfun, w, f, info, ftarget)
@@ -31,7 +34,7 @@ interface
     integer(IK_CL), intent(out) :: info
     real(RP_CL), intent(in) :: rhobeg, rhoend, ftarget
     real(RP_CL), intent(out) :: f
-    real(RP_CL), intent(inout) :: x(n), w(*)  
+    real(RP_CL), intent(inout) :: x(n), w(*)
     ! x(:) or w(:) does not  work !!!
     end subroutine newuoa
 end interface
@@ -89,13 +92,13 @@ real(RP_CL) :: rhobeg
 real(RP_CL) :: rhoend
 real(RP_CL), allocatable :: w(:)
 real(RP_CL), allocatable :: x(:)
-character(len = MSSGLEN) :: eid, mssg
+character(len=MSSGLEN) :: eid, mssg
 
 ! Validate number of arguments
 call fmxVerifyNArgin(nargin, 10)
 call fmxVerifyNArgout(nargout, 6)
 
-! Verify that input 1 is a function handle; 
+! Verify that input 1 is a function handle;
 ! the other inputs will be verified when read.
 call fmxVerifyClassShape(pinput(1), 'function_handle', 'rank0')
 
@@ -117,19 +120,19 @@ n = int(size(x), kind(n))
 ! Allocate workspace
 n_int = int(n, kind(n_int))
 npt_int = int(npt, kind(npt_int))
-nw = (npt_int+13)*(npt_int+n_int)+3*n_int*(n_int+3)/2 + 1
-if (nw > MAXMEMORY_CL/cstyle_sizeof(0.0_RP_CL)) then
-    ! Without this checking, W may take too much memory, 
+nw = (npt_int + 13) * (npt_int + n_int) + 3 * n_int * (n_int + 3) / 2 + 1
+if (nw > MAXMEMORY_CL / cstyle_sizeof(0.0_RP_CL)) then
+    ! Without this checking, W may take too much memory,
     ! or, more seriously, NW may overflow and cause a Segmentation Falt!
-    eid = solver // ':WorkspaceTooLarge'
-    mssg = solver // ': Workspace exceeds the largest memory allowed.'
+    eid = solver//':WorkspaceTooLarge'
+    mssg = solver//': Workspace exceeds the largest memory allowed.'
     call mexErrMsgIdAndTxt(eid, mssg)
 end if
 call fmxAllocate(w, int(nw, IK_CL)) ! Not removable
 
 ! Decide the maximal length of history according to MEXMEMORY in CONSTS_MOD
 if (output_xhist > 0) then
-    maximal_hist = int(MAXMEMORY_CL/((n+1)*cstyle_sizeof(0.0_RP_CL)), kind(maximal_hist))
+    maximal_hist = int(MAXMEMORY_CL / ((n + 1) * cstyle_sizeof(0.0_RP_CL)), kind(maximal_hist))
     maxxhist = max(0_IK_CL, min(maxfun, maxhist))
     ! We cannot simply take MAXXHIST = MIN(MAXXHIST, MAXIMAL_HIST),
     ! becaue they may not be the same kind, and compilers may complain.
@@ -138,7 +141,7 @@ if (output_xhist > 0) then
         maxxhist = int(maximal_hist, kind(maxxhist))
     end if
 else
-    maximal_hist = int(MAXMEMORY_CL/(cstyle_sizeof(0.0_RP_CL)), kind(maximal_hist))
+    maximal_hist = int(MAXMEMORY_CL / (cstyle_sizeof(0.0_RP_CL)), kind(maximal_hist))
     maxxhist = 0
 end if
 maxfhist = max(0_IK_CL, min(maxfun, maxhist))
@@ -153,21 +156,21 @@ call fmxAllocate(fhist, maxfhist) ! Not removable
 
 ! Call NEWUOA
 call newuoa(n, npt, x, rhobeg, rhoend, iprint, maxfun, w, f, info, ftarget)
-! If necessary, rearrange XHIST and FHIST so that they are in the 
+! If necessary, rearrange XHIST and FHIST so that they are in the
 ! chronological order.
 if (maxxhist >= 1 .and. maxxhist < nf) then
     khist = mod(nf - 1_IK_CL, maxxhist) + 1_IK_CL
-    xhist = reshape([xhist(:, khist + 1 : maxxhist), xhist(:, 1 : khist)], shape(xhist))
+    xhist = reshape([xhist(:, khist + 1:maxxhist), xhist(:, 1:khist)], shape(xhist))
 end if
 if (maxfhist >= 1 .and. maxfhist < nf) then
     khist = mod(nf - 1_IK_CL, maxfhist) + 1_IK_CL
-    fhist = [fhist(khist + 1 : maxfhist), fhist(1 : khist)] 
+    fhist = [fhist(khist + 1:maxfhist), fhist(1:khist)]
 end if
 
 ! If MAXFHIST_IN >= NF_C > MAXFHIST_C, warn that not all history is recorced.
 if (maxfhist < min(nf, maxhist)) then
-    print '(/1A, I7, 1A)', 'WARNING: ' // solver // ': due to memory limit, MAXHIST is reset to ', maxfhist, '.'
-    print '(1A/)', 'Only the history of the last MAXHIST iterations is recoreded.' 
+    print '(/1A, I7, 1A)', 'WARNING: '//solver//': due to memory limit, MAXHIST is reset to ', maxfhist, '.'
+    print '(1A/)', 'Only the history of the last MAXHIST iterations is recoreded.'
 end if
 
 ! Write outputs
@@ -175,8 +178,8 @@ call fmxWriteMPtr(x, poutput(1))
 call fmxWriteMPtr(f, poutput(2))
 call fmxWriteMPtr(info, poutput(3))
 call fmxWriteMPtr(nf, poutput(4))
-call fmxWriteMPtr(xhist(:, 1 : min(nf, maxxhist)), poutput(5))
-call fmxWriteMPtr(fhist(1 : min(nf, maxfhist)), poutput(6), 'row')
+call fmxWriteMPtr(xhist(:, 1:min(nf, maxxhist)), poutput(5))
+call fmxWriteMPtr(fhist(1:min(nf, maxfhist)), poutput(6), 'row')
 
 
 ! Free memory
@@ -214,9 +217,9 @@ real(RP_CL), intent(in) :: x(n)
 real(RP_CL), intent(out) :: funval
 
 ! Intermediate variables
-mwPointer :: pinput(1), poutput(1) 
+mwPointer :: pinput(1), poutput(1)
 integer(IK_CL) :: maxfhist, maxxhist, khist
-character(len = MSSGLEN) :: eid, mssg
+character(len=MSSGLEN) :: eid, mssg
 
 ! Associate X with INPUT(1)
 call fmxWriteMPtr(x, pinput(1))
@@ -224,18 +227,18 @@ call fmxWriteMPtr(x, pinput(1))
 ! Call the MATLAB function that evaluates the objective function
 call fmxCallMATLAB(fun_ptr, pinput, poutput)
 
-! Verify the class and shape of outputs. 
+! Verify the class and shape of outputs.
 if (.not. fmxIsDoubleScalar(poutput(1))) then
-    eid = solver // ':ObjectiveNotScalar'
-    mssg = solver // ': Objective function does not return a scalar.'
+    eid = solver//':ObjectiveNotScalar'
+    mssg = solver//': Objective function does not return a scalar.'
     call mexErrMsgIdAndTxt(eid, mssg)
 end if
 
 ! Read the data in OUTPUT
 call fmxReadMPtr(poutput(1), funval)
 
-! Destroy the matrix created by fmxWriteMPtr for X. This must be done. 
-call mxDestroyArray(pinput(1))  
+! Destroy the matrix created by fmxWriteMPtr for X. This must be done.
+call mxDestroyArray(pinput(1))
 
 ! Update global variables
 nf = nf + int(1, kind(nf))
@@ -243,7 +246,7 @@ nf = nf + int(1, kind(nf))
 maxxhist = int(size(xhist, 2), kind(maxxhist))
 if (maxxhist >= 1) then
     khist = mod(nf - 1_IK_CL, maxxhist) + 1_IK_CL
-    xhist(:, khist) = x 
+    xhist(:, khist) = x
 end if
 
 maxfhist = int(size(fhist), kind(maxfhist))

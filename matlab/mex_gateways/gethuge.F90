@@ -6,6 +6,8 @@
 !               Department of Applied Mathematics,
 !               The Hong Kong Polytechnic University
 ! **********************************************************************
+!
+! Last Modified: Sunday, May 23, 2021 PM04:54:17
 
 ! Remarks:
 !
@@ -18,6 +20,7 @@
 !
 ! 2. Be careful with the line width limit. After preprocessing (macro
 ! substitution), some lines may become too long and hence get truncated.
+
 
 #include "fintrf.h"
 
@@ -50,20 +53,20 @@ mwPointer, intent(in) :: pinput(nargin)
 mwPointer, intent(out) :: poutput(nargout)
 
 ! Variables
- mwSize :: cols ! Size of the input
-! The largest length of the input string. 
-integer, parameter :: maxlen = 50 
+mwSize :: cols ! Size of the input
+! The largest length of the input string.
+integer, parameter :: maxlen = 50
 ! The input string, which specifies the data type
 character(len=maxlen) :: data_type
 ! Integer zero used by the Fortran code
 integer(IK), parameter :: intZero = 0
 ! Integer zero of type mwSize on the current platform
- mwSize, parameter :: msZero = 0
+mwSize, parameter :: msZero = 0
 ! Integer zero of type mwIndex on the current platform
- mwIndex, parameter :: miZero = 0
+mwIndex, parameter :: miZero = 0
 ! The huge value that will be returned
 real(DP) :: hugeValue
-character(len = MSSGLEN) :: eid, mssg
+character(len=MSSGLEN) :: eid, mssg
 
 ! Check inputs
 call fmxVerifyNArgin(nargin, 1)
@@ -78,7 +81,7 @@ if (cols > maxlen) then
     call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
 end if
 if (mxGetString(pinput(1), data_type, cols) /= 0) then
-    eid = 'gethuge:GetInputFail' 
+    eid = 'gethuge:GetInputFail'
     mssg = 'Fail to get the input.'
     call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
 end if
@@ -87,13 +90,13 @@ end if
 ! Note that the REAL values passed to MATLAB via MEX can only be
 ! doubles. Therefore, we may need to cap the huge values by taking
 ! min to ensure that they will not overflow when cast to doubles.
-if (data_type == 'float' .or. data_type == 'Float'.or. data_type == 'FLOAT') then
+if (data_type == 'float' .or. data_type == 'Float' .or. data_type == 'FLOAT') then
     ! No overflow in this case
     hugeValue = real(huge(0.0), DP)
-else if (data_type == 'single' .or. data_type == 'Single'.or. data_type == 'SINGLE') then
+else if (data_type == 'single' .or. data_type == 'Single' .or. data_type == 'SINGLE') then
     ! No overflow in this case
     hugeValue = real(huge(0.0_SP), DP)
-else if (data_type == 'double' .or. data_type == 'Double'.or. data_type == 'DOUBLE') then
+else if (data_type == 'double' .or. data_type == 'Double' .or. data_type == 'DOUBLE') then
     ! No overflow in this case
     hugeValue = huge(0.0_DP)
 else if (data_type == 'real' .or. data_type == 'Real' .or. data_type == 'REAL') then
@@ -110,10 +113,10 @@ else if (data_type == 'mwSI' .or. data_type == 'mwsi' .or. data_type == 'MWSI') 
     ! No overflow in this case
     hugeValue = min(real(huge(msZero), DP), real(huge(miZero), DP))
 else if (data_type == 'fun' .or. data_type == 'Fun' .or. data_type == 'FUN' .or. data_type == 'function' &
-    & .or. data_type == 'Function' .or. data_type == 'FUNCTION')  then
+    & .or. data_type == 'Function' .or. data_type == 'FUNCTION') then
     ! HUGEFUN < huge(0.0_DP) according to the definition in CONSTS_MOD.
     hugeValue = real(HUGEFUN, DP)
-else if (data_type == 'con' .or. data_type == 'Con' .or.  data_type == 'CON' .or. data_type == 'constraint' &
+else if (data_type == 'con' .or. data_type == 'Con' .or. data_type == 'CON' .or. data_type == 'constraint' &
     & .or. data_type == 'Constraint' .or. data_type == 'CONSTRAINT') then
     ! HUGECON < huge(0.0_DP) according to the definition in CONSTS_MOD.
     hugeValue = real(HUGECON, DP)
@@ -124,7 +127,7 @@ else
 end if
 
 ! Write output.
-! Do NOT use fmxWriteMPtr; when DP /= RP, there is no proper 
+! Do NOT use fmxWriteMPtr; when DP /= RP, there is no proper
 ! implementation of fmxWriteMPtr available in FMXAPI_MOD.
 poutput(1) = mxCreateDoubleScalar(hugeValue)
 

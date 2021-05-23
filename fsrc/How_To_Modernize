@@ -1,6 +1,13 @@
 To modernize Powell's Fortran 77 code, do the following.
 Do things by small steps, and use verify.m to verify that the code
-behaves in the same way before and after the changes.
+behaves in the same way before and after the changes, e.g.,
+
+options=[]; options.maxdi=20; options.nr=20; verify({'newuoan', 'newuoa'}, options)
+
+verifies newuoan against newuoa on problems of at most 20 variables, 20 random runs for each
+problem.
+NOTE that newuoa has to be the version in OPDFO, which has been modified (slightly) to behave
+the same as newuoan.
 
 0. Refactoring.
 

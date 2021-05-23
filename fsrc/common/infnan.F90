@@ -2,19 +2,21 @@
 !
 ! Here we implement the procedures for single, double, and quadruple
 ! precisions, because when we interface the Fortran code with other
-! languages (e.g., MATLAB), the procedures may be invoked in both the 
+! languages (e.g., MATLAB), the procedures may be invoked in both the
 ! Fortran code and the gateway (e.g., MEX gateway), which may use
-! different real precisions (e.g., the Fortran code may use single 
+! different real precisions (e.g., the Fortran code may use single
 ! precision, but MEX gateway uses double precision by default).
 !
 ! Coded by Zaikun Zhang in July 2020.
+!
+! Last Modified: Sunday, May 23, 2021 AM10:59:55
 
 
 #include "ppf.h"
 
 module infnan_mod
 
-#if __USE_IEEE_ARITHMETIC__ != 0 
+#if __USE_IEEE_ARITHMETIC__ != 0
 use, intrinsic :: ieee_arithmetic, only : is_nan => ieee_is_nan, is_finite => ieee_is_finite
 #endif
 
@@ -67,14 +69,14 @@ end interface is_inf
 
 
 contains
-! The following functions check whether a real number x is infinite, 
-! nan, or finite. Starting from Fortran 2003, the intrincic 
+! The following functions check whether a real number x is infinite,
+! nan, or finite. Starting from Fortran 2003, the intrincic
 ! ieee_arithmetic module provides ieee_is_nan() and ieee_is_finite().
 
 
-#if __USE_IEEE_ARITHMETIC__ == 0 
+#if __USE_IEEE_ARITHMETIC__ == 0
 pure elemental function is_nan_sp(x) result(y)
-use consts_mod, only : SP 
+use consts_mod, only : SP
 implicit none
 real(SP), intent(in) :: x
 logical :: y
@@ -85,7 +87,7 @@ y = (.not. (x >= x))
 end function is_nan_sp
 
 pure elemental function is_nan_dp(x) result(y)
-use consts_mod, only : DP 
+use consts_mod, only : DP
 implicit none
 real(DP), intent(in) :: x
 logical :: y
@@ -127,7 +129,7 @@ y = (x > huge(x))
 end function is_posinf_dp
 
 pure elemental function is_neginf_sp(x) result(y)
-use consts_mod, only : SP 
+use consts_mod, only : SP
 implicit none
 real(SP), intent(in) :: x
 logical :: y
@@ -135,7 +137,7 @@ y = (-x > huge(x))
 end function is_neginf_sp
 
 pure elemental function is_neginf_dp(x) result(y)
-use consts_mod, only : DP 
+use consts_mod, only : DP
 implicit none
 real(DP), intent(in) :: x
 logical :: y
@@ -161,7 +163,7 @@ end function is_inf_dp
 #if __QP_AVAILABLE__ == 1
 #if __USE_IEEE_ARITHMETIC__ == 0
 pure elemental function is_nan_qp(x) result(y)
-use consts_mod, only : QP 
+use consts_mod, only : QP
 implicit none
 real(QP), intent(in) :: x
 logical :: y
@@ -178,7 +180,7 @@ end function is_finite_qp
 #endif
 
 pure elemental function is_neginf_qp(x) result(y)
-use consts_mod, only : QP 
+use consts_mod, only : QP
 implicit none
 real(QP), intent(in) :: x
 logical :: y
@@ -204,4 +206,3 @@ end function is_inf_qp
 
 
 end module infnan_mod
-

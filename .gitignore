@@ -4,14 +4,20 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# C/Fortran extensions
+# misc files for testing
 *.so
 *.pyd
 *.mod
 NEWUOA_output.txt
 *_output.txt
 *.output
+*.log
 test_data/
+
+# plusFORT
+SPAGged/
+_pf_data/
+_gxchk.htm
 
 # Compiled MEX files
 *.mex*

@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 30-Jan-2021.
+! on 23-May-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -17,7 +17,8 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
-
+!
+! Last Modified: Sunday, May 23, 2021 PM05:06:56
 
       module newuob_mod
 
@@ -148,8 +149,8 @@
       logical :: reduce_rho
       logical :: shortd
       logical :: terminate
-      character(len = 6), parameter :: solver = 'NEWUOA'
-      character(len = SRNLEN), parameter :: srname = 'NEWUOB'
+      character(len=6), parameter :: solver = 'NEWUOA'
+      character(len=SRNLEN), parameter :: srname = 'NEWUOB'
 
 
 ! Get size.
@@ -165,7 +166,7 @@
               call errstop(srname, 'XHIST is nonempty but SIZE(XHIST, 1)&
      & /= SIZE(X)')
           end if
-          if (maxfhist*maxxhist > 0 .and. maxfhist /= maxxhist) then
+          if (maxfhist * maxxhist > 0 .and. maxfhist /= maxxhist) then
               call errstop(srname, 'FHIST and XHIST are both nonempty bu&
      &t SIZE(FHIST) /= SIZE(XHIST, 2)')
           end if
@@ -199,12 +200,12 @@
 ! Rearrange FHIST and XHIST so that they are in the chronological order.
           if (maxfhist >= 1 .and. maxfhist < nf) then
               khist = mod(nf - 1_IK, maxfhist) + 1_IK
-              fhist = [fhist(khist + 1 : maxfhist), fhist(1 : khist)]
+              fhist = [fhist(khist + 1:maxfhist), fhist(1:khist)]
           end if
           if (maxxhist >= 1 .and. maxxhist < nf) then
               khist = mod(nf - 1_IK, maxxhist) + 1_IK
-              xhist = reshape([xhist(:, khist + 1 : maxxhist), xhist(:, &
-     &1 : khist)], shape(xhist))
+              xhist = reshape([xhist(:, khist + 1:maxxhist), xhist(:, 1:&
+     &khist)], shape(xhist))
 ! The above combination of SHAPE and RESHAPE fulfills our desire
 ! thanks to the COLUMN-MAJOR order of Fortran arrays.
           end if
@@ -242,9 +243,9 @@
 
 ! Solve the trust region subproblem.
 ! In Powell's NEWUOA code, VQUAD is not an output of TRSAPP. Here we
-! output it but will NOT use it; it will sill be calculated latter by
-! CALQUAD in order to produce the same results as Powell's code.
-          trtol = 1.0e-2_RP ! Tolerance used in trsapp.
+! output it but will NOT use it (for the moment); it will still be calculated
+! latter by CALQUAD in order to produce the same results as Powell's code.
+          trtol = 1.0E-2_RP ! Tolerance used in trsapp.
           call trsapp(delta, gq, hq, pq, trtol, xopt, xpt, crvmin, vquad&
      &, d, subinfo)
 
@@ -252,16 +253,16 @@
           dnorm = min(delta, sqrt(inprod(d, d)))
 
 ! Is the step long enough to invoke a function evaluation?
-          if (dnorm < HALF*rho) then
+          if (dnorm < HALF * rho) then
               shortd = .true.
-              if (maxval(abs(moderrsave)) <= 0.125_RP*crvmin*rho*rho .an&
-     &d. maxval(dnormsave) <= rho) then
+              if (maxval(abs(moderrsave)) <= 0.125_RP * crvmin * rho * r&
+     &ho .and. maxval(dnormsave) <= rho) then
 ! Three recent values of ||D|| and |F-Q| are small.
 ! The 1st possibility (out of 2) that REDUCE_RHO = TRUE.
                   reduce_rho = .true.
               else
-                  delta = TENTH*delta ! Reduce DELTA by a factor of 10.
-                  if (delta <= 1.5_RP*rho) then
+                  delta = TENTH * delta ! Reduce DELTA.
+                  if (delta <= 1.5_RP * rho) then
                       delta = rho ! Set DELTA to RHO when it is close.
                   end if
 ! After this, DELTA < DNORM may happen, explaining why we
@@ -275,7 +276,7 @@
 
 ! Shift XBASE if XOPT may be too far from XBASE.
 !if (inprod(d, d) <= 1.0e-3_RP*inprod(xopt, xopt)) then  ! Powell
-              if (dnorm*dnorm <= 1.0e-3_RP*inprod(xopt, xopt)) then
+              if (dnorm * dnorm <= 1.0E-3_RP * inprod(xopt, xopt)) then
                   call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xop&
      &t, xpt)
               end if
@@ -310,7 +311,7 @@
                   xhist(:, khist) = x
               end if
 
-! FQDIFF is the error of the current model in predicting the change
+! MODERR is the error of the current model in predicting the change
 ! in F due to D.
               moderr = f - fsave - vquad
 
@@ -339,10 +340,10 @@
                   info = TRSUBP_FAILED
                   exit
               end if
-              ratio = (f - fsave)/vquad
+              ratio = (f - fsave) / vquad
               delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ra&
      &tio)
-              if (delta <= 1.5_RP*rho) then
+              if (delta <= 1.5_RP * rho) then
                   delta = rho
               end if
 
@@ -394,17 +395,16 @@
 ! Question: Since TRYQALT is invoked only when DELTA equals the current RHO,
 ! why not reset ITEST to 0 when RHO is reduced?
                       call tryqalt(idz, fval - fval(kopt), ratio, bmat(:&
-     &, 1 : npt), zmat, itest, gq, hq, pq)
+     &, 1:npt), zmat, itest, gq, hq, pq)
                   end if
               end if
 
 ! DNORMSAVE constains the DNORM corresponding to the latest 3
 ! function evaluations with the current RHO.
-              dnormsave = [dnorm, dnormsave(1 : size(dnormsave) - 1)]
+              dnormsave = [dnorm, dnormsave(1:size(dnormsave) - 1)]
 ! MODERR is the prediction errors of the latest 3 models.
-              moderrsave = [moderr, moderrsave(1 : size(moderrsave) - 1)&
-     &]
-          end if
+              moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
+          end if ! End of if (.not. shortd)
 
 ! The geometry of XPT probably needs improvement if
 ! 1. The trust region step D is not short but RATIO < TENTH or there
@@ -417,11 +417,11 @@
 ! best point so far, i.e., all the points are within a ball
 ! centered at XOPT with a radius of 2*DELTA. If not, set KNEW to
 ! the index of the point that is the farthest away.
-              distsq = 4.0_RP*delta*delta
-              xdsq = sum((xpt - spread(xopt, dim = 2, ncopies = npt))**2&
-     &, dim = 1)
+              distsq = 4.0_RP * delta * delta
+              xdsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, di&
+     &m=1)
               if (maxval(xdsq) > distsq) then
-                  knew = int(maxloc(xdsq, dim = 1), kind(knew))
+                  knew = int(maxloc(xdsq, dim=1), kind(knew))
                   distsq = maxval(xdsq)
               else
                   knew = 0
@@ -457,14 +457,14 @@
                   info = SMALL_TR_RADIUS
                   exit
               else
-                  delta = HALF*rho
-                  ratio = rho/rhoend
+                  delta = HALF * rho
+                  ratio = rho / rhoend
                   if (ratio <= 16.0_RP) then
                       rho = rhoend
                   else if (ratio <= 250.0_RP) then
-                      rho = sqrt(ratio)*rhoend
+                      rho = sqrt(ratio) * rhoend
                   else
-                      rho = TENTH*rho
+                      rho = TENTH * rho
                   end if
                   delta = max(delta, rho)
 ! DNORMSAVE constains the DNORM corresponding to the
@@ -474,7 +474,7 @@
                   if (abs(iprint) >= 2) then
                       call rhomssg(iprint, nf, fopt, rho, xbase + xopt, &
      &solver)
-                 end if
+                  end if
               end if
           end if ! The procedure of reducing RHO ends.
 
@@ -485,10 +485,11 @@
 ! Set DELBAR, which will be used as the trust region radius for
 ! the geometry-improving schemes AMELIORGEO. We also need it to
 ! decide whether to shift XBASE or not.
-              delbar = max(min(TENTH*sqrt(distsq), HALF*delta), rho)
+              delbar = max(min(TENTH * sqrt(distsq), HALF * delta), rho)
 
 ! Shift XBASE if XOPT may be too far from XBASE.
-              if (delbar*delbar<= 1.0e-3_RP*inprod(xopt, xopt)) then
+              if (delbar * delbar <= 1.0E-3_RP * inprod(xopt, xopt)) the&
+     &n
                   call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xop&
      &t, xpt)
               end if
@@ -526,7 +527,7 @@
                   xhist(:, khist) = x
               end if
 
-! FQDIFF is the error of the current model in predicting the
+! MODERR is the error of the current model in predicting the
 ! change in F due to D.
               moderr = f - fsave - vquad
 
@@ -577,13 +578,12 @@
               dnorm = min(delbar, sqrt(inprod(d, d)))
 ! In theory, DNORM = DELBAR in this case.
 !--------------------------------------------------------------!
-              dnormsave = [dnorm, dnormsave(1 : size(dnormsave) - 1)]
+              dnormsave = [dnorm, dnormsave(1:size(dnormsave) - 1)]
 ! MODERR is the prediction errors of the latest 3 models.
-              moderrsave = [moderr, moderrsave(1 : size(moderrsave) - 1)&
-     &]
+              moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
           end if ! The procedure of improving geometry ends.
 
-      end do
+      end do ! The iterative procedure ends.
 
 ! Return from the calculation, after another Newton-Raphson step, if it
 ! is too short to have been tried before.
@@ -621,12 +621,12 @@
 ! Rearrange FHIST and XHIST so that they are in the chronological order.
       if (maxfhist >= 1 .and. maxfhist < nf) then
           khist = mod(nf - 1_IK, maxfhist) + 1_IK
-          fhist = [fhist(khist + 1 : maxfhist), fhist(1 : khist)]
+          fhist = [fhist(khist + 1:maxfhist), fhist(1:khist)]
       end if
       if (maxxhist >= 1 .and. maxxhist < nf) then
           khist = mod(nf - 1_IK, maxxhist) + 1_IK
-          xhist = reshape([xhist(:, khist + 1 : maxxhist), xhist(:, 1 : &
-     &khist)], shape(xhist))
+          xhist = reshape([xhist(:, khist + 1:maxxhist), xhist(:, 1:khis&
+     &t)], shape(xhist))
 ! The above combination of SHAPE and RESHAPE fulfills our desire
 ! thanks to the COLUMN-MAJOR order of Fortran arrays.
       end if

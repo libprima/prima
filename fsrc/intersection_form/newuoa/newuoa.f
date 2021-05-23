@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 30-Jan-2021.
+! on 23-May-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -28,7 +28,8 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
-
+!
+! Last Modified: Sunday, May 23, 2021 PM03:17:08
 
       module newuoa_mod
 
@@ -143,7 +144,7 @@
 !   FHIST: Output, ALLOCATABLE rank 1 REAL(RP) array;
 !   MAXHIST: Input, INTEGER(IK) scalar, default: MAXFUN
 !   XHIST, if present, will output the history of iterates, while FHIST,
-!   if present, will output the histroy function values. MAXHIST should
+!   if present, will output the history function values. MAXHIST should
 !   be a nonnegative integer, and XHIST/FHIST will output only the last
 !   MAXHIST iterates and/or the corresponding function values. Therefore,
 !   MAXHIST = 0 means XHIST/FHIST will output nothing, while setting
@@ -229,7 +230,7 @@
       real(RP) :: rhobeg_c
       real(RP) :: rhoend_c
       real(RP), allocatable :: xhist_c(:, :)
-      character(len = 6), parameter :: solver = 'NEWUOA'
+      character(len=6), parameter :: solver = 'NEWUOA'
 
 
 ! Get size.
@@ -257,7 +258,7 @@
 ! The compiler may choose the evaluate the IS_FINITE(RHOEND) even if
 ! PRESENT(RHOEND) is false!
           if (is_finite(rhoend) .and. rhoend > ZERO) then
-              rhobeg_c = max(TEN*rhoend, RHOBEG_DFT)
+              rhobeg_c = max(TEN * rhoend, RHOBEG_DFT)
           else
               rhobeg_c = RHOBEG_DFT
           end if
@@ -268,7 +269,7 @@
       if (present(rhoend)) then
           rhoend_c = rhoend
       else if (rhobeg_c > 0) then
-          rhoend_c = max(EPS, min(TENTH*rhobeg_c, RHOEND_DFT))
+          rhoend_c = max(EPS, min(TENTH * rhobeg_c, RHOEND_DFT))
       else
           rhoend_c = RHOEND_DFT
       end if
@@ -282,16 +283,16 @@
       if (present(maxfun)) then
           maxfun_c = maxfun
       else
-          maxfun_c = MAXFUN_DIM_DFT*n
+          maxfun_c = MAXFUN_DIM_DFT * n
       end if
 
       if (present(npt)) then
           npt_c = npt
       else if (maxfun_c >= 1) then
-          npt_c = int(max(n + 2, min(maxfun_c - 1, 2*n + 1)), kind(npt_c&
-     &))
+          npt_c = int(max(n + 2, min(maxfun_c - 1, 2 * n + 1)), kind(npt&
+     &_c))
       else
-          npt_c = int(2*n + 1, kind(npt_c))
+          npt_c = int(2 * n + 1, kind(npt_c))
       end if
 
       if (present(iprint)) then
@@ -304,7 +305,7 @@
           eta1_c = eta1
       else if (present(eta2)) then
           if (eta2 > ZERO .and. eta2 < ONE) then
-              eta1_c = max(EPS, eta2/7.0_RP)
+              eta1_c = max(EPS, eta2 / 7.0_RP)
           end if
       else
           eta1_c = TENTH
@@ -313,7 +314,7 @@
       if (present(eta2)) then
           eta2_c = eta2
       else if (eta1_c > ZERO .and. eta1_c < ONE) then
-          eta2_c = (eta1_c + TWO)/3.0_RP
+          eta2_c = (eta1_c + TWO) / 3.0_RP
       else
           eta2_c = 0.7_RP
       end if
@@ -337,7 +338,7 @@
       else if (maxfun_c >= n + 3) then
           maxhist_c = maxfun_c
       else
-          maxhist_c = MAXFUN_DIM_DFT*n
+          maxhist_c = MAXFUN_DIM_DFT * n
       end if
 
 ! Preprocess the inputs in case some of them are invalid.
@@ -347,11 +348,11 @@
 ! Further revise MAXHIST according to MAXMEMORY, i.e., the maximal amount
 ! of memory allowed for the history.
       if (present(xhist)) then
-          maximal_hist = int(MAXMEMORY/((n+1)*cstyle_sizeof(0.0_RP)), ki&
-     &nd(maximal_hist))
+          maximal_hist = int(MAXMEMORY / ((n + 1) * cstyle_sizeof(0.0_RP&
+     &)), kind(maximal_hist))
       else
-          maximal_hist = int(MAXMEMORY/(cstyle_sizeof(0.0_RP)), kind(max&
-     &imal_hist))
+          maximal_hist = int(MAXMEMORY / (cstyle_sizeof(0.0_RP)), kind(m&
+     &aximal_hist))
       end if
       if (maxhist_c > maximal_hist) then
 ! We cannot simply take MAXHIST_C = MIN(MAXHIST_C, MAXIMAL_HIST)
@@ -360,7 +361,7 @@
           maxhist_c = int(maximal_hist, kind(maxhist_c))
       end if
 
-! Allocate memory for the histroy of X. We use XHIST_C instead of XHIST,
+! Allocate memory for the history of X. We use XHIST_C instead of XHIST,
 ! which may not be present.
       if (present(xhist)) then
           maxxhist = min(maxhist_c, maxfun_c)
@@ -369,7 +370,7 @@
       end if
       call safealloc(xhist_c, n, maxxhist)
 
-! Allocate memory for the histroy of F. We use FHIST_C instead of FHIST,
+! Allocate memory for the history of F. We use FHIST_C instead of FHIST,
 ! which may not be present.
       if (present(fhist)) then
           maxfhist = min(maxhist_c, maxfun_c)
@@ -398,7 +399,7 @@
       if (present(xhist)) then
 ! The SAFEALLOC line is removable in F2003.
           call safealloc(xhist, n, min(nf_c, maxxhist))
-          xhist = xhist_c(:, 1 : min(nf_c, maxxhist))
+          xhist = xhist_c(:, 1:min(nf_c, maxxhist))
 ! N.B.:
 ! 0. Allocate XHIST as long as it is present, even if MAXXHIST = 0;
 ! otherwise, it will be illeagle to enquire XHIST after exit.
@@ -415,23 +416,23 @@
 ! it to be a POINTER instead of ALLOCATABLE.
       end if
 ! F2003 automatically deallocate local ALLOCATABLE variables at exit, yet
-! we prefer to deallocate them immediately when they finish their job.
-      deallocate(xhist_c)
+! we prefer to deallocate them immediately when they finish their jobs.
+      deallocate (xhist_c)
 
 ! Copy FHIST_C to FHIST if needed.
       if (present(fhist)) then
 ! The SAFEALLOC line is removable in F2003.
           call safealloc(fhist, min(nf_c, maxfhist))
-          fhist = fhist_c(1 : min(nf_c, maxfhist))
+          fhist = fhist_c(1:min(nf_c, maxfhist))
 ! The same as XHIST, we must cap FHIST at min(NF_C, MAXFHIST).
       end if
-      deallocate(fhist_c)
+      deallocate (fhist_c)
 
 ! If MAXFHIST_IN >= NF_C > MAXFHIST_C, warn that not all history is recorced.
       if ((present(xhist) .or. present(fhist)) .and. maxhist_c < min(nf_&
      &c, maxhist_in)) then
-          print '(/1A, I7, 1A)', 'WARNING: ' // solver // ': due to memo&
-     &ry limit, MAXHIST is reset to ', maxhist_c, '.'
+          print '(/1A, I7, 1A)', 'WARNING: '//solver//': due to memory l&
+     &imit, MAXHIST is reset to ', maxhist_c, '.'
           print '(1A/)', 'Only the history of the last MAXHIST iteration&
      &s is recoreded.'
       end if

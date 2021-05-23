@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 30-Jan-2021.
+! on 23-May-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -17,6 +17,8 @@
 ! errors, and warnings.
 !
 ! Coded by Zaikun Zhang in July 2020.
+!
+! Last Modified: Sunday, May 23, 2021 AM11:07:10
 
 
 #include "ppf.h"
@@ -38,15 +40,14 @@
 
 
       subroutine errstop(srname, mssg)
-      character(len = *), intent(in) :: srname
-      character(len = *), intent(in) :: mssg
+      character(len=*), intent(in) :: srname
+      character(len=*), intent(in) :: mssg
 
 #if __DEBUGGING__ == 1
       call backtr()
 #endif
 
-      print '(/1A/)', 'Error: ' // trim(srname) // ': ' // trim(mssg) //&
-     & '.'
+      print '(/1A/)', 'Error: '//trim(srname)//': '//trim(mssg)//'.'
 
       stop ! This means to stop the whole program.
 
@@ -73,7 +74,7 @@
 #elif defined __INTEL_COMPILER
       use ifcore, only : tracebackqq
       implicit none
-      call tracebackqq(user_exit_code = -1)
+      call tracebackqq(user_exit_code=-1)
 ! According to "Intel Fortran Compiler 19.1 Developer Guide and Reference", item "TRACEBACKQQ":
 ! By specifying a user exit code of -1, control returns to the calling program. Specifying a user
 ! exit code with a positive value requests that specified value be returned to the operating system.
@@ -92,19 +93,19 @@
       real(RP), intent(in) :: A(:, :)
       real(RP), intent(in) :: tol
 
-      character(len = SRNLEN), parameter :: srname = 'VERISYM'
+      character(len=SRNLEN), parameter :: srname = 'VERISYM'
 
       if (size(A, 1) /= size(A, 2)) then
           call errstop(srname, 'A is not square')
       end if
       if (tol > ZERO) then
-          if (maxval(abs((A - transpose(A)))) > tol*max(maxval(abs(A)), &
-     &ONE)) then
-               call errstop(srname, 'A is not symmetric up to TOL')
+          if (maxval(abs((A - transpose(A)))) > tol * max(maxval(abs(A))&
+     &, ONE)) then
+              call errstop(srname, 'A is not symmetric up to TOL')
           end if
       else
           if (maxval(abs((A - transpose(A)))) > ZERO) then
-               call errstop(srname, 'A is not symmetric up to TOL')
+              call errstop(srname, 'A is not symmetric up to TOL')
           end if
       end if
       end subroutine verisym
@@ -116,7 +117,7 @@
       real(RP), intent(in) :: x(:)
       integer(IK), intent(in) :: n
 
-      character(len = SRNLEN), parameter :: srname = 'VERISIZE_REAL_1'
+      character(len=SRNLEN), parameter :: srname = 'VERISIZE_REAL_1'
 
       if (size(x) /= n) then
           call errstop(srname, 'SIZE(X) /= N')
@@ -131,7 +132,7 @@
       integer(IK), intent(in) :: m
       integer(IK), intent(in) :: n
 
-      character(len = SRNLEN), parameter :: srname = 'VERISIZE_REAL_2'
+      character(len=SRNLEN), parameter :: srname = 'VERISIZE_REAL_2'
 
       if (size(x, 1) /= m) then
           call errstop(srname, 'SIZE(X, 1) /= M')
@@ -148,7 +149,7 @@
       integer(IK), intent(in) :: x(:)
       integer(IK), intent(in) :: n
 
-      character(len = SRNLEN), parameter :: srname = 'VERISIZE_INT_1'
+      character(len=SRNLEN), parameter :: srname = 'VERISIZE_INT_1'
 
       if (size(x) /= n) then
           call errstop(srname, 'SIZE(X) /= N')
@@ -163,7 +164,7 @@
       integer(IK), intent(in) :: m
       integer(IK), intent(in) :: n
 
-      character(len = SRNLEN), parameter :: srname = 'VERISIZE_INT_2'
+      character(len=SRNLEN), parameter :: srname = 'VERISIZE_INT_2'
 
       if (size(x, 1) /= m) then
           call errstop(srname, 'SIZE(X, 1) /= M')

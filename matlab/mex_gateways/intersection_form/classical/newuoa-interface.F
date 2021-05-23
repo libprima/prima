@@ -9,13 +9,16 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 30-Jan-2021.
+! on 23-May-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 ! The mex gateway for NEWUOA (classical version)
 !
 ! Coded by Zaikun Zhang in July 2020.
+!
+! Last Modified: Sunday, May 23, 2021 PM04:56:07
+
 
 #include "fintrf.h"
 
@@ -36,7 +39,7 @@
 ! History of evaluations
       real(RP_CL), allocatable :: xhist(:, :), fhist(:)
 ! Solver name
-      character(len = 6), parameter :: solver = 'NEWUOA'
+      character(len=6), parameter :: solver = 'NEWUOA'
 
       interface
           subroutine newuoa(n, npt, x, rhobeg, rhoend, iprint, maxfun, w&
@@ -105,7 +108,7 @@
       real(RP_CL) :: rhoend
       real(RP_CL), allocatable :: w(:)
       real(RP_CL), allocatable :: x(:)
-      character(len = MSSGLEN) :: eid, mssg
+      character(len=MSSGLEN) :: eid, mssg
 
 ! Validate number of arguments
       call fmxVerifyNArgin(nargin, 10)
@@ -133,21 +136,22 @@
 ! Allocate workspace
       n_int = int(n, kind(n_int))
       npt_int = int(npt, kind(npt_int))
-      nw = (npt_int+13)*(npt_int+n_int)+3*n_int*(n_int+3)/2 + 1
-      if (nw > MAXMEMORY_CL/cstyle_sizeof(0.0_RP_CL)) then
+      nw = (npt_int + 13) * (npt_int + n_int) + 3 * n_int * (n_int + 3) &
+     &/ 2 + 1
+      if (nw > MAXMEMORY_CL / cstyle_sizeof(0.0_RP_CL)) then
 ! Without this checking, W may take too much memory,
 ! or, more seriously, NW may overflow and cause a Segmentation Falt!
-          eid = solver // ':WorkspaceTooLarge'
-          mssg = solver // ': Workspace exceeds the largest memory allow&
-     &ed.'
+          eid = solver//':WorkspaceTooLarge'
+          mssg = solver//': Workspace exceeds the largest memory allowed&
+     &.'
           call mexErrMsgIdAndTxt(eid, mssg)
       end if
       call fmxAllocate(w, int(nw, IK_CL)) ! Not removable
 
 ! Decide the maximal length of history according to MEXMEMORY in CONSTS_MOD
       if (output_xhist > 0) then
-          maximal_hist = int(MAXMEMORY_CL/((n+1)*cstyle_sizeof(0.0_RP_CL&
-     &)), kind(maximal_hist))
+          maximal_hist = int(MAXMEMORY_CL / ((n + 1) * cstyle_sizeof(0.0&
+     &_RP_CL)), kind(maximal_hist))
           maxxhist = max(0_IK_CL, min(maxfun, maxhist))
 ! We cannot simply take MAXXHIST = MIN(MAXXHIST, MAXIMAL_HIST),
 ! becaue they may not be the same kind, and compilers may complain.
@@ -156,8 +160,8 @@
               maxxhist = int(maximal_hist, kind(maxxhist))
           end if
       else
-          maximal_hist = int(MAXMEMORY_CL/(cstyle_sizeof(0.0_RP_CL)), ki&
-     &nd(maximal_hist))
+          maximal_hist = int(MAXMEMORY_CL / (cstyle_sizeof(0.0_RP_CL)), &
+     &kind(maximal_hist))
           maxxhist = 0
       end if
       maxfhist = max(0_IK_CL, min(maxfun, maxhist))
@@ -177,18 +181,18 @@
 ! chronological order.
       if (maxxhist >= 1 .and. maxxhist < nf) then
           khist = mod(nf - 1_IK_CL, maxxhist) + 1_IK_CL
-          xhist = reshape([xhist(:, khist + 1 : maxxhist), xhist(:, 1 : &
-     &khist)], shape(xhist))
+          xhist = reshape([xhist(:, khist + 1:maxxhist), xhist(:, 1:khis&
+     &t)], shape(xhist))
       end if
       if (maxfhist >= 1 .and. maxfhist < nf) then
           khist = mod(nf - 1_IK_CL, maxfhist) + 1_IK_CL
-          fhist = [fhist(khist + 1 : maxfhist), fhist(1 : khist)]
+          fhist = [fhist(khist + 1:maxfhist), fhist(1:khist)]
       end if
 
 ! If MAXFHIST_IN >= NF_C > MAXFHIST_C, warn that not all history is recorced.
       if (maxfhist < min(nf, maxhist)) then
-          print '(/1A, I7, 1A)', 'WARNING: ' // solver // ': due to memo&
-     &ry limit, MAXHIST is reset to ', maxfhist, '.'
+          print '(/1A, I7, 1A)', 'WARNING: '//solver//': due to memory l&
+     &imit, MAXHIST is reset to ', maxfhist, '.'
           print '(1A/)', 'Only the history of the last MAXHIST iteration&
      &s is recoreded.'
       end if
@@ -198,8 +202,8 @@
       call fmxWriteMPtr(f, poutput(2))
       call fmxWriteMPtr(info, poutput(3))
       call fmxWriteMPtr(nf, poutput(4))
-      call fmxWriteMPtr(xhist(:, 1 : min(nf, maxxhist)), poutput(5))
-      call fmxWriteMPtr(fhist(1 : min(nf, maxfhist)), poutput(6), 'row')
+      call fmxWriteMPtr(xhist(:, 1:min(nf, maxxhist)), poutput(5))
+      call fmxWriteMPtr(fhist(1:min(nf, maxfhist)), poutput(6), 'row')
 
 
 ! Free memory
@@ -239,7 +243,7 @@
 ! Intermediate variables
       mwPointer :: pinput(1), poutput(1)
       integer(IK_CL) :: maxfhist, maxxhist, khist
-      character(len = MSSGLEN) :: eid, mssg
+      character(len=MSSGLEN) :: eid, mssg
 
 ! Associate X with INPUT(1)
       call fmxWriteMPtr(x, pinput(1))
@@ -249,9 +253,9 @@
 
 ! Verify the class and shape of outputs.
       if (.not. fmxIsDoubleScalar(poutput(1))) then
-          eid = solver // ':ObjectiveNotScalar'
-          mssg = solver // ': Objective function does not return a scala&
-     &r.'
+          eid = solver//':ObjectiveNotScalar'
+          mssg = solver//': Objective function does not return a scalar.&
+     &'
           call mexErrMsgIdAndTxt(eid, mssg)
       end if
 

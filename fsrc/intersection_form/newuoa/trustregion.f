@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 30-Jan-2021.
+! on 23-May-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -18,7 +18,8 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
-
+!
+! Last Modified: Saturday, May 22, 2021 PM04:17:16
 
       module trustregion_mod
 
@@ -131,7 +132,7 @@
       real(RP) :: t
       real(RP) :: unitang
       logical :: twod_search
-      character(len = SRNLEN), parameter :: srname = 'TRSAPP'
+      character(len=SRNLEN), parameter :: srname = 'TRSAPP'
 
 
 ! Get and verify the sizes.
@@ -156,7 +157,7 @@
 ! Prepare for the first line search.
 !----------------------------------------------------------------!
 !-----!hx = matprod(xpt, pq*matprod(x, xpt)) + matprod(hq, x) !--!
-      hx = Ax_plus_y(hq, x, matprod(xpt, pq*matprod(x, xpt)))
+      hx = Ax_plus_y(hq, x, matprod(xpt, pq * matprod(x, xpt)))
 !----------------------------------------------------------------!
       g = gq + hx
       gg = inprod(g, g)
@@ -166,7 +167,7 @@
       ds = ZERO
       ss = ZERO
       hs = ZERO
-      delsq = delta*delta
+      delsq = delta * delta
       itermax = n
 
       twod_search = .false.
@@ -188,15 +189,16 @@
 ! two-dimensional subspace at each iteration being span(S, -G).
       do iterc = 1, itermax
 ! Check whether to exit due to small GG
-          if (gg <= (tol**2)*ggbeg) then
+          if (gg <= (tol**2) * ggbeg) then
               info = 0
               exit
           end if
 ! Set BSTEP to the step length such that ||S+BSTEP*D|| = DELTA
-          bstep = (delsq - ss)/(ds + sqrt(ds*ds + dd*(delsq - ss)))
+          bstep = (delsq - ss) / (ds + sqrt(ds * ds + dd * (delsq - ss))&
+     &)
 !----------------------------------------------------------------!
 !-----!hd = matprod(xpt, pq*matprod(d, xpt)) + matprod(hq, d) !--------!
-      hd = Ax_plus_y(hq, d, matprod(xpt, pq*matprod(d, xpt)))
+          hd = Ax_plus_y(hq, d, matprod(xpt, pq * matprod(d, xpt)))
 !----------------------------------------------------------------!
           dhd = inprod(d, hd)
 
@@ -204,23 +206,23 @@
           if (dhd <= ZERO) then
               alpha = bstep
           else
-              alpha = min(bstep, gg/dhd)
+              alpha = min(bstep, gg / dhd)
               if (iterc == 1) then
-                  crvmin = dhd/dd
+                  crvmin = dhd / dd
               else
-                  crvmin = min(crvmin, dhd/dd)
+                  crvmin = min(crvmin, dhd / dd)
               end if
           end if
 ! QADD is the reduction of Q due to the new CG step.
-          qadd = alpha*(gg - HALF*alpha*dhd)
+          qadd = alpha * (gg - HALF * alpha * dhd)
 ! QRED is the reduction of Q up to now.
           qred = qred + qadd
 ! QADD and QRED will be used in the 2D minimization if any.
 
 ! Update S, HS, and GG.
-          s = s + alpha*d
+          s = s + alpha * d
           ss = inprod(s, s)
-          hs = hs + alpha*hd
+          hs = hs + alpha * hd
           ggsave = gg ! Gradient norm square before this iteration
           gg = inprod(g + hs, g + hs) ! Current gradient norm square
 ! We may save g+hs for latter usage:
@@ -239,13 +241,13 @@
           end if
 
 ! Check whether to exit due to small QADD
-          if (qadd <= tol*qred) then
+          if (qadd <= tol * qred) then
               info = 1
               exit
           end if
 
 ! Prepare for the next CG iteration.
-          d = (gg/ggsave)*d - g - hs ! CG direction
+          d = (gg / ggsave) * d - g - hs ! CG direction
           dd = inprod(d, d)
           ds = inprod(d, s)
           if (ds <= ZERO) then
@@ -270,44 +272,44 @@
 
 ! The 2D minimization
       do iterc = 1, itermax
-          if (gg <= (tol**2)*ggbeg) then
+          if (gg <= (tol**2) * ggbeg) then
               info = 0
               exit
           end if
           sg = inprod(s, g)
           shs = inprod(s, hs)
           sgk = sg + shs
-          if (sgk/sqrt(gg*delsq) <= tol - ONE) then
+          if (sgk / sqrt(gg * delsq) <= tol - ONE) then
               info = 0
               exit
           end if
 
 ! Begin the 2D minimization by calculating D and HD and some
 ! scalar products.
-          t = sqrt(delsq*gg - sgk*sgk)
-          d = (delsq/t)*(g + hs) - (sgk/t)*s
+          t = sqrt(delsq * gg - sgk * sgk)
+          d = (delsq / t) * (g + hs) - (sgk / t) * s
 !----------------------------------------------------------------!
 !-----!hd = matprod(xpt, pq*matprod(d, xpt)) + matprod(hq, d) !--------!
-          hd = Ax_plus_y(hq, d, matprod(xpt, pq*matprod(d, xpt)))
+          hd = Ax_plus_y(hq, d, matprod(xpt, pq * matprod(d, xpt)))
 !----------------------------------------------------------------!
           dg = inprod(d, g)
           dhd = inprod(hd, d)
           dhs = inprod(hd, s)
 
 ! Seek the value of the angle that minimizes Q.
-          cf = HALF*(shs - dhd)
+          cf = HALF * (shs - dhd)
           qbeg = sg + cf
           qsave = qbeg
           qmin = qbeg
           isave = 0
           iu = 49
-          unitang = (TWO*PI)/real(iu + 1, RP)
+          unitang = (TWO * PI) / real(iu + 1, RP)
 
           do i = 1, iu
-              angle = real(i, RP)*unitang
+              angle = real(i, RP) * unitang
               cth = cos(angle)
               sth = sin(angle)
-              qnew = (sg + cf*cth)*cth + (dg + dhs*cth)*sth
+              qnew = (sg + cf * cth) * cth + (dg + dhs * cth) * sth
               if (qnew < qmin) then
                   qmin = qnew
                   isave = i
@@ -327,21 +329,21 @@
           if (abs(quada - quadb) > ZERO) then
               quada = quada - qmin
               quadb = quadb - qmin
-              angle = HALF*(quada - quadb)/(quada + quadb)
+              angle = HALF * (quada - quadb) / (quada + quadb)
           else
               angle = ZERO
           end if
-          angle = unitang*(real(isave, RP) + angle)
+          angle = unitang * (real(isave, RP) + angle)
 
 ! Calculate the new S and HS. Then test for convergence.
           cth = cos(angle)
           sth = sin(angle)
-          reduc = qbeg - (sg + cf*cth)*cth - (dg + dhs*cth)*sth
-          s = cth*s + sth*d
-          hs = cth*hs + sth*hd
+          reduc = qbeg - (sg + cf * cth) * cth - (dg + dhs * cth) * sth
+          s = cth * s + sth * d
+          hs = cth * hs + sth * hd
           gg = inprod(g + hs, g + hs)
           qred = qred + reduc
-          if (reduc/qred <= tol) then
+          if (reduc / qred <= tol) then
               info = 1
               exit
           end if
@@ -367,11 +369,11 @@
       real(RP), intent(in) :: ratio ! Reduction ratio
 
       if (ratio <= eta1) then
-          trrad = gamma1*dnorm
+          trrad = gamma1 * dnorm
       else if (ratio <= eta2) then
-          trrad = max(HALF*delta, dnorm)
+          trrad = max(HALF * delta, dnorm)
       else
-          trrad = max(HALF*delta, gamma2*dnorm)
+          trrad = max(HALF * delta, gamma2 * dnorm)
       end if
 
 ! For noisy problems, the following may work better.
