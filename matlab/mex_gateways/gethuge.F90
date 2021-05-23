@@ -7,7 +7,7 @@
 !               The Hong Kong Polytechnic University
 ! **********************************************************************
 !
-! Last Modified: Sunday, May 23, 2021 PM08:38:38
+! Last Modified: Sunday, May 23, 2021 PM09:27:33
 
 ! Remarks:
 !
@@ -53,16 +53,16 @@ mwPointer, intent(in) :: pinput(nargin)
 mwPointer, intent(out) :: poutput(nargout)
 
 ! Variables
-mwSize :: cols ! Size of the input
+mwSize :: cols  ! Size of the input
 ! The largest length of the input string.
 integer, parameter :: maxlen = 50
 ! The input string, which specifies the data type
 character(len=maxlen) :: data_type
 ! Integer zero used by the Fortran code
 integer(IK), parameter :: intZero = 0
-! Integer zero of type mwSize on the current platform
+! Integer zero used by MEX for sizes
 mwSize, parameter :: msZero = 0
-! Integer zero of type mwIndex on the current platform
+! Integer zero used by MEX for indices
 mwIndex, parameter :: miZero = 0
 ! The huge value that will be returned
 real(DP) :: hugeValue
