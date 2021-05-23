@@ -4,7 +4,7 @@ FS=f03
 GFORT=gfortran -c -g -Wall -Wextra -Wconversion -Wuninitialized -Wmaybe-uninitialized  -Wsurprising -Waliasing  -Wimplicit-interface  -Wunused-parameter  -fwhole-file  -fimplicit-none -fbacktrace -ffree-line-length-0 -fcheck=all -ffpe-trap=invalid,zero,overflow,underflow #-Warray-temporaries
 IFORT=ifort -c -g -warn all -check all  -fpe0 -debug extended -fimplicit-none #-names as_is
 G95=g95 -c -g -Wall -Wextra -fbounds-check -fimplicit-none
-NFORT=nagfor -c -g -C -Warn=allocation -Warn=constant_coindexing -Warn=reallocation -Warn=subnormal -colour=error:red,warn:magenta,info:yellow
+NFORT=nagfor -c -g -u -C -Warn=allocation -Warn=constant_coindexing -Warn=reallocation -Warn=subnormal -colour=error:red,warn:magenta,info:yellow
 PFORT=pgfortran  -c -g -Minform=warn
 AFORT=af95  -c -g -m1 -en
 SFORT=sunf95  -c -g -w3 -u -ansi -U
@@ -25,8 +25,7 @@ MFILES= ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F
 
 
 verify: gverify iverify nverify pverify averify fverify sverify 9verify clean
-#verifym: gverifym iverifym nverifym pverifym averifym fverifym sverifym 9verifym clean
-verifym: gverifym iverifym pverifym averifym fverifym sverifym 9verifym clean
+verifym: gverifym iverifym nverifym pverifym averifym fverifym sverifym 9verifym clean
 
 lint:
 	flint -I../common -a -f -g -m -p -3 -e $(FILES)
