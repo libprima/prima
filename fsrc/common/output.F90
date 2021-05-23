@@ -3,8 +3,10 @@
 ! nature. In case parallelisum is desirable (especially during
 ! initializaton), the subroutines may have to be modified or disabled.
 !
-! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code 
-! and the NEWUOA paper.
+! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and papers.
+!
+! Last Modified: Sunday, May 23, 2021 AM11:08:31
+
 
 module output_mod
 
@@ -24,18 +26,18 @@ use info_mod, only : NAN_X, NAN_INF_F, NAN_MODEL
 implicit none
 
 ! Inputs
-integer(IK), intent(in) :: iprint 
+integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: info
 integer(IK), intent(in) :: nf
 real(RP), intent(in) :: f
-real(RP), intent(in) :: x(:) 
-character(len = *), intent(in) :: solver
+real(RP), intent(in) :: x(:)
+character(len=*), intent(in) :: solver
 
 ! Intermediate variables
 integer :: ios  ! Should be an integer of default kind
-character(len = 100) :: fout
-character(len = 3) :: fstat
-character(len = MSSGLEN) :: mssg
+character(len=100) :: fout
+character(len=3) :: fstat
+character(len=MSSGLEN) :: mssg
 logical :: fexist
 
 
@@ -50,7 +52,7 @@ else if (info == TRSUBP_FAILED) then
 else if (info == NAN_X) then
     mssg = 'NaN occurs in x.'
 else if (info == NAN_INF_F) then
-    mssg = 'the objective function returns NaN or +INFINITY.' 
+    mssg = 'the objective function returns NaN or +INFINITY.'
 else if (info == NAN_MODEL) then
     mssg = 'NaN occurs in the models.'
 end if
@@ -60,35 +62,35 @@ if (iprint >= 1) then
         print '(1X)'
     end if
     print '(/4A)', 'Return from ', solver, ' because ', trim(mssg)
-    print '(1A, 6X, 1A, I7)', 'At the return from ' // solver, 'Number of function evaluations = ', nf
+    print '(1A, 6X, 1A, I7)', 'At the return from '//solver, 'Number of function evaluations = ', nf
     print '(1A, 1PD23.15, 6X, 1A, /(1P, 5D15.6))', 'Least function value = ', f, 'The corresponding X is:', x
     print '(1X)'
 end if
 
 if (iprint <= -1) then
-    fout = solver // '_output.txt'
-    inquire(file = trim(fout), exist = fexist)
+    fout = solver//'_output.txt'
+    inquire (file=trim(fout), exist=fexist)
     if (fexist) then
         fstat = 'old'
     else
         fstat = 'new'
     end if
-    open(unit = OUTUNIT, file = trim(fout), status = fstat, position = 'append', iostat = ios, action = 'write')
+    open (unit=OUTUNIT, file=trim(fout), status=fstat, position='append', iostat=ios, action='write')
     if (ios /= 0) then
-        print '(1A)', 'Fail to open file ' // trim(fout) // '!'
+        print '(1A)', 'Fail to open file '//trim(fout)//'!'
     else
         if (iprint <= -3) then
-            write(OUTUNIT, '(1X)')
+            write (OUTUNIT, '(1X)')
         end if
-        write(OUTUNIT, '(/4A)') 'Return from ', solver, ' because ', trim(mssg)
-        write(OUTUNIT, '(1A, 6X, 1A, I7)') 'At the return from ' // solver, 'Number of function evaluations = ', nf
-        write(OUTUNIT, '(1A, 1PD23.15, 6X, 1A, /(1P, 5D15.6))') 'Least function value = ', f, 'The corresponding X is:', x
-        close(OUTUNIT)     
+        write (OUTUNIT, '(/4A)') 'Return from ', solver, ' because ', trim(mssg)
+        write (OUTUNIT, '(1A, 6X, 1A, I7)') 'At the return from '//solver, 'Number of function evaluations = ', nf
+        write (OUTUNIT, '(1A, 1PD23.15, 6X, 1A, /(1P, 5D15.6))') 'Least function value = ', f, 'The corresponding X is:', x
+        close (OUTUNIT)
     end if
     !print '(/1A /)', 'The output is printed to ' // trim(fout) // '.'
 end if
 
-end subroutine retmssg 
+end subroutine retmssg
 
 
 subroutine rhomssg(iprint, nf, f, rho, x, solver)
@@ -96,17 +98,17 @@ use consts_mod, only : RP, IK, OUTUNIT
 implicit none
 
 ! Inputs
-integer(IK), intent(in) :: iprint 
+integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: nf
 real(RP), intent(in) :: f
-real(RP), intent(in) :: rho 
-real(RP), intent(in) :: x(:) 
-character(len = *), intent(in) :: solver
+real(RP), intent(in) :: rho
+real(RP), intent(in) :: x(:)
+character(len=*), intent(in) :: solver
 
 ! Intermediate variables
 integer :: ios  ! Should be an integer of default kind
-character(len = 100) :: fout
-character(len = 3) :: fstat
+character(len=100) :: fout
+character(len=3) :: fstat
 logical :: fexist
 
 
@@ -119,23 +121,23 @@ if (iprint >= 2) then
 end if
 
 if (iprint <= -2) then
-    fout = solver // '_output.txt'
-    inquire(file = trim(fout), exist = fexist)
+    fout = solver//'_output.txt'
+    inquire (file=trim(fout), exist=fexist)
     if (fexist) then
         fstat = 'old'
     else
         fstat = 'new'
     end if
-    open(unit = OUTUNIT, file = trim(fout), status = fstat, position = 'append', iostat = ios, action = 'write')
+    open (unit=OUTUNIT, file=trim(fout), status=fstat, position='append', iostat=ios, action='write')
     if (ios /= 0) then
-        print '(1A)', 'Fail to open file ' // trim(fout) // '!'
+        print '(1A)', 'Fail to open file '//trim(fout)//'!'
     else
         if (iprint <= -3) then
-            write(OUTUNIT, '(1X)')
+            write (OUTUNIT, '(1X)')
         end if
-        write(OUTUNIT, '(/1A, 1PD11.4, 6X, A, I7)') 'New RHO = ', rho, 'Number of function evaluations = ', nf
-        write(OUTUNIT, '(1A, 1PD23.15, 6X, 1A, /(1P, 5D15.6))') 'Least function value = ', f, 'The corresponding X is:', x
-        close(OUTUNIT)     
+        write (OUTUNIT, '(/1A, 1PD11.4, 6X, A, I7)') 'New RHO = ', rho, 'Number of function evaluations = ', nf
+        write (OUTUNIT, '(1A, 1PD23.15, 6X, 1A, /(1P, 5D15.6))') 'Least function value = ', f, 'The corresponding X is:', x
+        close (OUTUNIT)
     end if
 end if
 
@@ -147,40 +149,40 @@ use consts_mod, only : RP, IK, OUTUNIT
 implicit none
 
 ! Inputs
-integer(IK), intent(in) :: iprint 
+integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: nf
 real(RP), intent(in) :: f
-real(RP), intent(in) :: x(:) 
-character(len = *), intent(in) :: solver
+real(RP), intent(in) :: x(:)
+character(len=*), intent(in) :: solver
 
 ! Intermediate variables
 integer :: ios  ! Should be an integer of default kind
-character(len = 100) :: fout
-character(len = 3) :: fstat
+character(len=100) :: fout
+character(len=3) :: fstat
 logical :: fexist
 
- !Function number     4    F =  1.1853827160D-01    The corresponding X is:
+!Function number     4    F =  1.1853827160D-01    The corresponding X is:
 
 if (iprint >= 3) then
-   print '(/1A, I7, 4X, 1A, 1PD18.10, 4X, 1A, /(1P, 5D15.6))', 'Function number', nf, &
-       & 'F = ', f, 'The corresponding X is:', x
+    print '(/1A, I7, 4X, 1A, 1PD18.10, 4X, 1A, /(1P, 5D15.6))', 'Function number', nf, &
+        & 'F = ', f, 'The corresponding X is:', x
 end if
 
 if (iprint <= -3) then
-    fout = solver // '_output.txt'
-    inquire(file = trim(fout), exist = fexist)
+    fout = solver//'_output.txt'
+    inquire (file=trim(fout), exist=fexist)
     if (fexist) then
         fstat = 'old'
     else
         fstat = 'new'
     end if
-    open(unit = OUTUNIT, file = trim(fout), status = fstat, position = 'append', iostat = ios, action = 'write')
+    open (unit=OUTUNIT, file=trim(fout), status=fstat, position='append', iostat=ios, action='write')
     if (ios /= 0) then
-        print '(1A)', 'Fail to open file ' // trim(fout) // '!'
+        print '(1A)', 'Fail to open file '//trim(fout)//'!'
     else
-        write(OUTUNIT, '(/1A, I7, 4X, 1A, 1PD18.10, 4X, 1A, /(1P, 5D15.6))') 'Function number', nf, &
+        write (OUTUNIT, '(/1A, I7, 4X, 1A, 1PD18.10, 4X, 1A, /(1P, 5D15.6))') 'Function number', nf, &
             & 'F = ', f, 'The corresponding X is:', x
-        close(OUTUNIT)     
+        close (OUTUNIT)
     end if
 end if
 
@@ -188,4 +190,3 @@ end subroutine fmssg
 
 
 end module output_mod
-

@@ -1,4 +1,8 @@
 ! MEMORY_MOD is a module providing subroutines concerning memory management.
+!
+! Coded by Zaikun ZHANG in July 2020.
+!
+! Last Modified: Sunday, May 23, 2021 AM10:59:02
 
 
 #include "ppf.h"
@@ -6,7 +10,7 @@
 module memory_mod
 
 implicit none
-private 
+private
 public :: safealloc, cstyle_sizeof
 
 interface safealloc
@@ -26,7 +30,7 @@ contains
 
 subroutine alloc_rvector(x, n)
 ! ALLOC_RVECTOR allocates the space for an allocatable REAL(RP)
-! vector X, whose size is N after allocation. 
+! vector X, whose size is N after allocation.
 use consts_mod, only : RP, IK, SRNLEN
 use debug_mod, only : errstop
 implicit none
@@ -39,23 +43,23 @@ real(RP), allocatable, intent(out) :: x(:)
 
 ! Intermediate variable
 integer :: alloc_status
-character(len = SRNLEN), parameter :: srname = 'ALLOC_RVECTOR'
+character(len=SRNLEN), parameter :: srname = 'ALLOC_RVECTOR'
 
-! According to the Fortran 2003 standard, when a procedure is invoked, 
+! According to the Fortran 2003 standard, when a procedure is invoked,
 ! any allocated ALLOCATABLE object that is an actual argument associated
 ! with an INTENT(OUT) ALLOCATABLE dummy argument is deallocated. So it is
 ! unnecessary to write the following line in F2003 since X is INTENT(OUT):
 !!if (allocated(x)) deallocate (x)
 
 ! Allocate memory for X
-allocate (x(n), stat = alloc_status)
+allocate (x(n), stat=alloc_status)
 if (alloc_status /= 0) then
-    call errstop(srname, 'Memory allocation fails.') 
+    call errstop(srname, 'Memory allocation fails.')
 end if
 
 ! Use X; otherwise, compilers may complain.
 if (n >= 1) then
-    x(1) = 0.0_RP  
+    x(1) = 0.0_RP
 end if
 
 end subroutine alloc_rvector
@@ -76,19 +80,19 @@ real(RP), allocatable, intent(out) :: x(:, :)
 
 ! Intermediate variable
 integer :: alloc_status
-character(len = SRNLEN), parameter :: srname = 'ALLOC_RMATRIX'
+character(len=SRNLEN), parameter :: srname = 'ALLOC_RMATRIX'
 
 ! Unnecessary to write the following line in F2003 since X is INTENT(OUT):
 !!if (allocated(x)) deallocate (x)
 
 ! Allocate memory for X
-allocate (x(m, n), stat = alloc_status)
+allocate (x(m, n), stat=alloc_status)
 if (alloc_status /= 0) then
-    call errstop(srname, 'Memory allocation fails.') 
+    call errstop(srname, 'Memory allocation fails.')
 end if
 
 ! Use X; otherwise, compilers may complain.
-if (m*n >= 1) then
+if (m * n >= 1) then
     x(1, 1) = 0.0_RP
 end if
 
@@ -101,10 +105,10 @@ implicit none
 real(SP), intent(in) :: x
 integer(IK) :: y
 #if __USE_STORAGE_SIZE__ == 1
-    y = int(storage_size(x)/8, kind(y))
+y = int(storage_size(x) / 8, kind(y))
 #else
-    y = int(kind(x), kind(y)) ! Avoid complaint 
-    y = int(4, kind(y))
+y = int(kind(x), kind(y)) ! Avoid complaint
+y = int(4, kind(y))
 #endif
 end function size_of_sp
 
@@ -115,10 +119,10 @@ implicit none
 real(DP), intent(in) :: x
 integer(IK) :: y
 #if __USE_STORAGE_SIZE__ == 1
-    y = int(storage_size(x)/8, kind(y))
+y = int(storage_size(x) / 8, kind(y))
 #else
-    y = int(kind(x), kind(y)) ! Avoid complaint 
-    y = int(8, kind(y))
+y = int(kind(x), kind(y)) ! Avoid complaint
+y = int(8, kind(y))
 #endif
 end function size_of_dp
 
@@ -131,10 +135,10 @@ implicit none
 real(QP), intent(in) :: x
 integer(IK) :: y
 #if __USE_STORAGE_SIZE__ == 1
-    y = int(storage_size(x)/8, kind(y))
+y = int(storage_size(x) / 8, kind(y))
 #else
-    y = int(kind(x), kind(y)) ! Avoid complaint 
-    y = int(8, kind(y))
+y = int(kind(x), kind(y)) ! Avoid complaint
+y = int(8, kind(y))
 #endif
 end function size_of_qp
 
@@ -142,4 +146,3 @@ end function size_of_qp
 
 
 end module memory_mod
-

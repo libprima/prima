@@ -1,14 +1,16 @@
 ! The mex gateway for NEWUOA
 !
 ! Coded by Zaikun Zhang in July 2020.
+!
+! Last Modified: Sunday, May 23, 2021 PM04:54:35
 
 
 #include "fintrf.h"
 
 ! Entry point to Fortran MEX function
 subroutine mexFunction(nargout, poutput, nargin, pinput)
-! If the binary MEX file is named as FUNCTION_NAME.mex*** 
-! (file-name extension depends on the platform), then the 
+! If the binary MEX file is named as FUNCTION_NAME.mex***
+! (file-name extension depends on the platform), then the
 ! following function is callable in matlab:
 ! [xopt, fopt, info, nf, xhist, fhist] = FUNCTION_NAME(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, iprint, maxhist, output_xhist)
 
@@ -47,7 +49,7 @@ real(RP) :: gamma1
 real(RP) :: gamma2
 real(RP) :: rhobeg
 real(RP) :: rhoend
-real(RP), allocatable ::  fhist(:)
+real(RP), allocatable :: fhist(:)
 real(RP), allocatable :: x(:)
 real(RP), allocatable :: xhist(:, :)
 
@@ -80,14 +82,14 @@ call fmxReadMPtr(pinput(14), output_xhist)
 ! the Fortran code.
 if (output_xhist > 0) then
     call newuoa(calfun, x, f, nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, &
-        & eta1, eta2, gamma1, gamma2, xhist = xhist, fhist = fhist, maxhist = maxhist, info = info)
+        & eta1, eta2, gamma1, gamma2, xhist=xhist, fhist=fhist, maxhist=maxhist, info=info)
 else
     call newuoa(calfun, x, f, nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, &
-        & eta1, eta2, gamma1, gamma2, fhist = fhist, maxhist = maxhist, info = info)
+        & eta1, eta2, gamma1, gamma2, fhist=fhist, maxhist=maxhist, info=info)
 end if
 
 ! After the Fortran code, XHIST may not be allocated, because it may not
-! have been passed to the Fortran code. We allocate it here. Otherwise, 
+! have been passed to the Fortran code. We allocate it here. Otherwise,
 ! fmxWriteMPtr will fail.
 if (.not. allocated(xhist)) then
     call fmxAllocate(xhist, int(size(x), IK), 0_IK)
@@ -98,18 +100,18 @@ call fmxWriteMPtr(x, poutput(1))
 call fmxWriteMPtr(f, poutput(2))
 call fmxWriteMPtr(info, poutput(3))
 call fmxWriteMPtr(nf, poutput(4))
-call fmxWriteMPtr(xhist(:, 1 : min(int(nf), size(xhist, 2))), poutput(5))
-call fmxWriteMPtr(fhist(1 : min(int(nf), size(fhist))), poutput(6), 'row')
-! N.B.: 
+call fmxWriteMPtr(xhist(:, 1:min(int(nf), size(xhist, 2))), poutput(5))
+call fmxWriteMPtr(fhist(1:min(int(nf), size(fhist))), poutput(6), 'row')
+! N.B.:
 ! 1. INT(NF) converts NF to the default integer type; if not, MIN may complain.
 ! 2. It can happen that
 !    0 < SIZE(XHIST, 2) < MAXHIST or 0 < SIZE(FHIST) < MAXHIST
 !    due to the memory limit in the Fortran code.
 
 ! Free memory. Indeed, automatic deallocation would take place.
-deallocate(x) ! Allocated by fmxReadMPtr.
-deallocate(xhist)
-deallocate(fhist)
+deallocate (x) ! Allocated by fmxReadMPtr.
+deallocate (xhist)
+deallocate (fhist)
 
 return
 end subroutine mexFunction

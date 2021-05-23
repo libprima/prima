@@ -1,12 +1,13 @@
 ! VLAGBETA_MOD is a module providing a suroutine that calculates VLAG
-! and BETA for a given step D. 
+! and BETA for a given step D.
 ! Both VLAG and BETA are critical for the updating procedure of H, which
 ! is detailed formula (4.11) of the NEWUOA paper. See (4.12) for the
-! definition of BETA, and VLAG is indeed Hw. 
+! definition of BETA, and VLAG is indeed Hw.
 !
-! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code 
+! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
-
+!
+! Last Modified: Saturday, May 22, 2021 PM04:18:51
 
 module vlagbeta_mod
 
@@ -19,7 +20,7 @@ contains
 
 
 subroutine vlagbeta(idz, kopt, bmat, d, xopt, xpt, zmat, beta, vlag)
-! VLAGBETA is calculates VLAG = Hw and BETA for a given step D. 
+! VLAGBETA is calculates VLAG = Hw and BETA for a given step D.
 ! See (4.11)--(4.12) of the NEWUOA paper.
 
 ! Generic modules
@@ -49,11 +50,11 @@ real(RP) :: bw(size(bmat, 1))
 real(RP) :: bwvd
 real(RP) :: dsq
 real(RP) :: dx
-real(RP) :: wcheck(size(zmat, 1)) 
+real(RP) :: wcheck(size(zmat, 1))
 real(RP) :: wz(size(zmat, 2))
 real(RP) :: wzsave(size(wz))
 real(RP) :: xoptsq
-character(len = SRNLEN), parameter :: srname = 'VLAGBETA'
+character(len=SRNLEN), parameter :: srname = 'VLAGBETA'
 
 
 ! Get and verify the sizes
@@ -73,39 +74,39 @@ end if
 
 
 !----------------------------------------------------------------------!
-! This is the one of the two places where WCHECK is calculated, 
-! the other one being BIGDEN (now removed). 
-! WCHECK contains the first NPT entries of (w-v) for the vectors 
-! w and v defined in eq(4.10) and eq(4.24) of the NEWUOA paper, 
-! and also hat{w} in eq(6.5) of 
+! This is the one of the two places where WCHECK is calculated,
+! the other one being BIGDEN (now removed).
+! WCHECK contains the first NPT entries of (w-v) for the vectors
+! w and v defined in eq(4.10) and eq(4.24) of the NEWUOA paper,
+! and also hat{w} in eq(6.5) of
 !
 ! M. J. D. Powell, Least Frobenius norm updating of quadratic
-! models that satisfy interpolation conditions. Math. Program., 
+! models that satisfy interpolation conditions. Math. Program.,
 ! 100:183--215, 2004
 wcheck = matprod(d, xpt)
-wcheck = wcheck*(HALF*wcheck + matprod(xopt, xpt))
+wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))
 !----------------------------------------------------------------------!
 
-vlag(1 : npt) = matprod(d, bmat(:, 1 : npt))
+vlag(1:npt) = matprod(d, bmat(:, 1:npt))
 
 wz = matprod(wcheck, zmat)
 wzsave = wz
-wz(1 : idz - 1) = -wz(1 : idz - 1)
+wz(1:idz - 1) = -wz(1:idz - 1)
 beta = -inprod(wzsave, wz)
 !----------------------------------------------------------------------!
 !-----!vlag(1 : npt) = vlag(1 : npt) + matprod(zmat, wz) !-------------!
- vlag(1 : npt) = Ax_plus_y(zmat, wz, vlag(1 : npt))
+vlag(1:npt) = Ax_plus_y(zmat, wz, vlag(1:npt))
 !----------------------------------------------------------------------!
 
-bw = matprod(bmat(:, 1 : npt), wcheck)
+bw = matprod(bmat(:, 1:npt), wcheck)
 !----------------------------------------------------------------------!
 !vlag(npt + 1 : npt + n) = bw + matprod(d, bmat(:, npt + 1 : npt + n)) !
-vlag(npt + 1: npt + n) = xA_plus_y(bmat(:, npt + 1 : npt + n), d, bw)
+vlag(npt + 1:npt + n) = xA_plus_y(bmat(:, npt + 1:npt + n), d, bw)
 !----------------------------------------------------------------------!
 
 !----------------------------------------------------------------------!
 !-----!bwvd = inprod(bw + vlag(npt + 1 : npt + n), d) !----------------!
-bwvd = xpy_dot_z(bw, vlag(npt + 1 : npt + n), d)
+bwvd = xpy_dot_z(bw, vlag(npt + 1:npt + n), d)
 !----------------------------------------------------------------------!
 
 dx = inprod(d, xopt)
@@ -113,7 +114,7 @@ dx = inprod(d, xopt)
 dsq = inprod(d, d)
 xoptsq = inprod(xopt, xopt)
 
-beta = dx*dx + dsq*(xoptsq + dx + dx + HALF*dsq) + beta - bwvd
+beta = dx * dx + dsq * (xoptsq + dx + dx + HALF * dsq) + beta - bwvd
 vlag(kopt) = vlag(kopt) + ONE
 
 end subroutine vlagbeta

@@ -1,5 +1,14 @@
 function success = verify(solvers, options)
 
+% As an example:
+% options=[]; options.maxdi=20; options.nr=20; verify({'newuoan', 'newuoa'}, options)
+
+% verifies newuoan against newuoa on problems of at most 20 variables, 20 random runs for each
+% problem.
+% NOTE that newuoa has to be the version in OPDFO, which has been modified (slightly) to behave
+% the same as newuoan.
+
+
 success = true;
 
 if nargin < 1
@@ -7,7 +16,7 @@ if nargin < 1
     return
 end
 
-if length(solvers) ~= 2 
+if length(solvers) ~= 2
     fprintf('\nThere should be two solvers.\n')
     return
 end
@@ -27,14 +36,12 @@ else
     nr = 10;
 end
 if isfield(options, 'ir')
+    % ir is the index of the random experiment to be conducted. If it is negative, then experiments
+    % 0, 1, ..., nr, ..., nr + 5 will be conducted. nr + 5 is because there are a few fixed
+    % experiments that will always be run.
     ir = options.ir;
 else
     ir = -1;
-end
-if isfield(options, 'classical')
-    classical = options.classical;
-else
-    classical = false;
 end
 
 requirements = struct();
@@ -86,7 +93,7 @@ else
     plist = requirements.list; % Use the list provided by the user
 end
 
-if ir < 0 
+if ir < 0
     minir = 0;
     maxir = nr + 5;
 else
@@ -111,7 +118,7 @@ for ip = 1 : length(plist)
         end
         % Some randomization
         rng(ceil(1e6*abs(sin(1e6*(sum(double(pname))*n*ip*ir*nr*requirements.mindim*requirements.maxdim))))); %!!! TO MUCH RANDOMNESS!!! DIFFICULT TO REPRODUCE!!!
-        %rng(ceil(1e6*abs(sin(1e6*(sum(double(pname))*n*ip*ir))))); 
+        %rng(ceil(1e6*abs(sin(1e6*(sum(double(pname))*n*ip*ir)))));
         prob.x0 = x0 + 0.5*randn(size(x0));
         test_options = struct();
         test_options.debug = true;
@@ -125,7 +132,7 @@ for ip = 1 : length(plist)
         test_options.fortran = (rand > 0.5);
         test_options.output_xhist = (rand > 0.5);
         test_options.maxhist = ceil(randn*1.5*test_options.maxfun);
-        test_options.iprint = floor(3*randn);
+        test_options.iprint = floor(3*rand);
         test_options.quiet = (rand > 0.5);
         if mod(ir, 50) == 0 && exist('NEWUOA_output.txt', 'file')
             delete('NEWUOA_output.txt');
@@ -133,23 +140,23 @@ for ip = 1 : length(plist)
         if ir == 0
             test_options.npt = (n+2)*(n+1)/2;
         end
-        if ir == 1 
+        if ir == 1
             test_options.npt = n + 2;
         end
-        if ir == 2 
+        if ir == 2
             test_options.maxfun = test_options.npt + 1;
         end
         if ir == 3
             test_options.maxfun = 1000*n;
-        end 
+        end
         if ir == 4
             test_options.ftarget = inf;
-        end 
+        end
         if ir == 5
             test_options.rhoend = test_options.rhobeg;
         end
         prob.options = test_options;
-        
+
         tic;
         [x1, fx1, exitflag1, output1] = feval(solvers{1}, prob);
         T = toc;
@@ -168,7 +175,7 @@ for ip = 1 : length(plist)
         if output2.funcCount == test_options.maxfun && (exitflag2 == 0 || exitflag2 == 2) && exitflag1 == 3
             exitflag2 = 3;
             %display('exitflag2 changed to 3.')
-        end    
+        end
         if iseq(x1, fx1, exitflag1, output1, x2, fx2, exitflag2, output2, prec)
             if n > 30
                 fprintf('Succeed\n');
@@ -192,7 +199,7 @@ warning(orig_warning_state); % Restore the behavior of displaying warnings
 return
 
 
-function eq = iseq(x, f, exitflag, output, xx, ff, ee, oo, prec) 
+function eq = iseq(x, f, exitflag, output, xx, ff, ee, oo, prec)
 eq = true;
 
 if ~isempty(setdiff(fieldnames(output), [fieldnames(oo); 'fhist'; 'xhist'])) || ~isempty(setdiff(fieldnames(oo), [fieldnames(output); 'fhist'; 'xhist']))
@@ -243,6 +250,6 @@ if (prec == 0 && (exitflag ~= ee|| oo.funcCount ~= output.funcCount))
     eq = false;
 end
 
-diff = max([abs(ff-f)/(1+abs(f)), norm(xx-x)/(1+norm(x)), abs(oo.constrviolation-output.constrviolation)/(1+abs(output.constrviolation))]); 
+diff = max([abs(ff-f)/(1+abs(f)), norm(xx-x)/(1+norm(x)), abs(oo.constrviolation-output.constrviolation)/(1+abs(output.constrviolation))]);
 
 return

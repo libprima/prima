@@ -1,7 +1,9 @@
-! DEBUG_MOD is a module defining some procedures concerning debugging, 
+! DEBUG_MOD is a module defining some procedures concerning debugging,
 ! errors, and warnings.
 !
 ! Coded by Zaikun Zhang in July 2020.
+!
+! Last Modified: Sunday, May 23, 2021 AM11:07:10
 
 
 #include "ppf.h"
@@ -21,16 +23,16 @@ end interface verisize
 
 contains
 
-    
+
 subroutine errstop(srname, mssg)
-character(len = *), intent(in) :: srname
-character(len = *), intent(in) :: mssg 
+character(len=*), intent(in) :: srname
+character(len=*), intent(in) :: mssg
 
 #if __DEBUGGING__ == 1
 call backtr()
 #endif
 
-print '(/1A/)', 'Error: ' // trim(srname) // ': ' // trim(mssg) // '.'
+print '(/1A/)', 'Error: '//trim(srname)//': '//trim(mssg)//'.'
 
 stop  ! This means to stop the whole program.
 
@@ -38,18 +40,18 @@ end subroutine errstop
 
 
 subroutine backtr
-! BACKTR calls a compiler-dependent intrinsic to show a backtrace if we 
-! are in the debuge mode, i.e., __DEBUGGING__ == 1. 
-! N.B.: 
-! 1. The intrisic is compiler-dependent and does not exist in all 
+! BACKTR calls a compiler-dependent intrinsic to show a backtrace if we
+! are in the debuge mode, i.e., __DEBUGGING__ == 1.
+! N.B.:
+! 1. The intrisic is compiler-dependent and does not exist in all
 ! compilers. Indeed, it is not standard-conforming. Therefore, compilers
-! may warn that a non-standard intrinsic is in use. 
-! 2. More seriously, if the compiler is instructed to conform to the 
+! may warn that a non-standard intrinsic is in use.
+! 2. More seriously, if the compiler is instructed to conform to the
 ! standards (e.g., gfortran with the option -std=f2003) while __DEBUGGING__
-! is set to 1, then the compilation may FAIL at the linking stage, 
+! is set to 1, then the compilation may FAIL at the linking stage,
 ! complaining that a subroutine cannot be found (e.g., backtrace for
 ! gfortran). In that case, we must set __DEBUGGING__ to 0 in ppf.h.
-#if __DEBUGGING__ == 1 
+#if __DEBUGGING__ == 1
 
 #if defined __GFORTRAN__
 implicit none
@@ -57,10 +59,10 @@ call backtrace
 #elif defined __INTEL_COMPILER
 use ifcore, only : tracebackqq
 implicit none
-call tracebackqq(user_exit_code = -1)
+call tracebackqq(user_exit_code=-1)
 ! According to "Intel Fortran Compiler 19.1 Developer Guide and Reference", item "TRACEBACKQQ":
-! By specifying a user exit code of -1, control returns to the calling program. Specifying a user 
-! exit code with a positive value requests that specified value be returned to the operating system. 
+! By specifying a user exit code of -1, control returns to the calling program. Specifying a user
+! exit code with a positive value requests that specified value be returned to the operating system.
 ! The default value is 0, which causes the application to abort execution.
 #endif
 
@@ -76,18 +78,18 @@ implicit none
 real(RP), intent(in) :: A(:, :)
 real(RP), intent(in) :: tol
 
-character(len = SRNLEN), parameter :: srname = 'VERISYM'
+character(len=SRNLEN), parameter :: srname = 'VERISYM'
 
 if (size(A, 1) /= size(A, 2)) then
     call errstop(srname, 'A is not square')
 end if
 if (tol > ZERO) then
-    if (maxval(abs((A - transpose(A)))) > tol*max(maxval(abs(A)), ONE)) then
-         call errstop(srname, 'A is not symmetric up to TOL')
+    if (maxval(abs((A - transpose(A)))) > tol * max(maxval(abs(A)), ONE)) then
+        call errstop(srname, 'A is not symmetric up to TOL')
     end if
 else
     if (maxval(abs((A - transpose(A)))) > ZERO) then
-         call errstop(srname, 'A is not symmetric up to TOL')
+        call errstop(srname, 'A is not symmetric up to TOL')
     end if
 end if
 end subroutine verisym
@@ -99,7 +101,7 @@ use consts_mod, only : RP, IK, SRNLEN
 real(RP), intent(in) :: x(:)
 integer(IK), intent(in) :: n
 
-character(len = SRNLEN), parameter :: srname = 'VERISIZE_REAL_1'
+character(len=SRNLEN), parameter :: srname = 'VERISIZE_REAL_1'
 
 if (size(x) /= n) then
     call errstop(srname, 'SIZE(X) /= N')
@@ -114,7 +116,7 @@ real(RP), intent(in) :: x(:, :)
 integer(IK), intent(in) :: m
 integer(IK), intent(in) :: n
 
-character(len = SRNLEN), parameter :: srname = 'VERISIZE_REAL_2'
+character(len=SRNLEN), parameter :: srname = 'VERISIZE_REAL_2'
 
 if (size(x, 1) /= m) then
     call errstop(srname, 'SIZE(X, 1) /= M')
@@ -131,7 +133,7 @@ use consts_mod, only : IK, SRNLEN
 integer(IK), intent(in) :: x(:)
 integer(IK), intent(in) :: n
 
-character(len = SRNLEN), parameter :: srname = 'VERISIZE_INT_1'
+character(len=SRNLEN), parameter :: srname = 'VERISIZE_INT_1'
 
 if (size(x) /= n) then
     call errstop(srname, 'SIZE(X) /= N')
@@ -146,7 +148,7 @@ integer(IK), intent(in) :: x(:, :)
 integer(IK), intent(in) :: m
 integer(IK), intent(in) :: n
 
-character(len = SRNLEN), parameter :: srname = 'VERISIZE_INT_2'
+character(len=SRNLEN), parameter :: srname = 'VERISIZE_INT_2'
 
 if (size(x, 1) /= m) then
     call errstop(srname, 'SIZE(X, 1) /= M')
@@ -158,4 +160,3 @@ end subroutine verisize_int_2
 
 
 end module debug_mod
-

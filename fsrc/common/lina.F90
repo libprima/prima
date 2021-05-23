@@ -1,6 +1,6 @@
 ! LINA is a module providing some basic linear algebra procedures.
-! To improve the performance of these procedures, especially matprod, 
-! one can customize their implementations, according to the resources
+! To improve the performance of these procedures, especially matprod,
+! one can customize their implementations according to the resources
 ! (hardware, e.g., cache, and libraries, e.g., BLAS) available and the
 ! sizes of the matrices/vectors.
 
@@ -15,6 +15,8 @@
 !    can be high in these languages.
 
 ! Coded by Zaikun ZHANG in July 2020.
+!
+! Last Modified: Sunday, May 23, 2021 PM05:04:11
 
 
 #include "ppf.h"
@@ -52,7 +54,7 @@ contains
 
 subroutine r1_sym(A, alpha, x)
 ! R1_SYM sets
-! A = A + ALPHA*( X*X^T ), 
+! A = A + ALPHA*( X*X^T ),
 ! where A is an NxN matrix, ALPHA is a scalar, and X is an
 ! N-dimenional vector.
 use consts_mod, only : RP, IK, ONE, ZERO
@@ -70,7 +72,7 @@ real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(X))
 integer(IK) :: n, j
 
 #if __DEBUGGING__ == 1
-character(len = SRNLEN), parameter :: srname = 'R1_SYM'
+character(len=SRNLEN), parameter :: srname = 'R1_SYM'
 ! Be careful with initialization!
 ! In Fortran >=90, the initialization in the declaration implies
 ! the "save" attribute. If the variable is not a parameter, it may
@@ -87,11 +89,11 @@ n = int(size(x), kind(n))
 ! Both of the following cases are invoked in NEWUOA.
 if (abs(alpha - ONE) > ZERO) then
     do j = 1, n
-        A(j : n, j) = A(j : n, j) + alpha*x(j : n)*x(j)
+        A(j:n, j) = A(j:n, j) + alpha * x(j:n) * x(j)
     end do
 else
     do j = 1, n
-        A(j : n, j) = A(j : n, j) + x(j : n)*x(j)
+        A(j:n, j) = A(j:n, j) + x(j:n) * x(j)
     end do
 end if
 ! Set A(UPPER_TRI) = A(LOWER_TRI).
@@ -102,11 +104,11 @@ call symmetrize(A)
 ! Both of the following cases are invoked in NEWUOA.
 if (abs(alpha - ONE) > ZERO) then
     do j = 1, n
-        A(:, j) = A(:, j) + alpha*( x*x(j) )
+        A(:, j) = A(:, j) + alpha * (x * x(j))
     end do
 else
     do j = 1, n
-        A(:, j) = A(:, j) + x*x(j)
+        A(:, j) = A(:, j) + x * x(j)
     end do
 end if
 #endif
@@ -119,7 +121,7 @@ end subroutine r1_sym
 
 subroutine r1(A, alpha, x, y)
 ! R1 sets
-! A = A + ALPHA*( X*Y^T ), 
+! A = A + ALPHA*( X*Y^T ),
 ! where A is an MxN matrix, ALPHA is a real scalar, X is an
 ! M-dimenional vector, and Y is an N-dimenional vector.
 use consts_mod, only : RP, IK, ONE, ZERO
@@ -138,7 +140,7 @@ real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
 integer(IK) :: n, j
 
 #if __DEBUGGING__ == 1
-character(len = SRNLEN), parameter :: srname = 'R1'
+character(len=SRNLEN), parameter :: srname = 'R1'
 ! Be careful with initialization!
 ! In Fortran >=90, the initialization in the declaration implies
 ! the "save" attribute. If the variable is not a parameter, it may
@@ -154,11 +156,11 @@ n = int(size(y), kind(n))
 ! Both of the following cases are invoked in NEWUOA.
 if (abs(alpha - ONE) > ZERO) then
     do j = 1, n
-        A(:, j) = A(:, j) + alpha*x*y(j)
+        A(:, j) = A(:, j) + alpha * x * y(j)
     end do
 else
     do j = 1, n
-        A(:, j) = A(:, j) + x*y(j)
+        A(:, j) = A(:, j) + x * y(j)
     end do
 end if
 #else
@@ -168,11 +170,11 @@ end if
 ! Both of the following cases are invoked in NEWUOA.
 if (abs(alpha - ONE) > ZERO) then
     do j = 1, n
-        A(:, j) = A(:, j) + alpha*( x*y(j) )
+        A(:, j) = A(:, j) + alpha * (x * y(j))
     end do
 else
     do j = 1, n
-        A(:, j) = A(:, j) + x*y(j)
+        A(:, j) = A(:, j) + x * y(j)
     end do
 end if
 #endif
@@ -181,7 +183,7 @@ end subroutine r1
 
 subroutine r2_sym(A, alpha, x, y)
 ! R2_SYM sets
-! A = A + ALPHA*( X*Y^T + Y*X^T ), 
+! A = A + ALPHA*( X*Y^T + Y*X^T ),
 ! where A is an NxN matrix, X and Y are N-dimenional vectors, and
 ! alpha is a sclalar.
 use consts_mod, only : RP, IK, ONE, ZERO
@@ -200,7 +202,7 @@ real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(X))
 integer(IK) :: n, j
 
 #if __DEBUGGING__ == 1
-character(len = SRNLEN), parameter :: srname = 'R2_SYM'
+character(len=SRNLEN), parameter :: srname = 'R2_SYM'
 if (size(x) /= size(y)) then
     call errstop(srname, 'SIZE(X) /= SIZE(Y)')
 end if
@@ -215,11 +217,11 @@ n = int(size(x), kind(n))
 ! Only update the LOWER TRIANGULAR part of A.
 if (abs(alpha - ONE) > ZERO) then  ! NOT invoked in NEWUOA.
     do j = 1, n
-        A(j : n, j) = A(j : n, j) + alpha*x(j : n)*y(j) + alpha*y(j : n)*x(j)
+        A(j:n, j) = A(j:n, j) + alpha * x(j:n) * y(j) + alpha * y(j:n) * x(j)
     end do
 else  ! This case is invoked in NEWUOA.
     do j = 1, n
-        A(j : n, j) = A(j : n, j) + x(j : n)*y(j) + y(j : n)*x(j)
+        A(j:n, j) = A(j:n, j) + x(j:n) * y(j) + y(j:n) * x(j)
     end do
 end if
 ! Set A(UPPER_TRI) = A(LOWER_TRI).
@@ -229,11 +231,11 @@ call symmetrize(A)
 ! is guaranteed symmetric even in floating-point arithmetic.
 if (abs(alpha - ONE) > ZERO) then  ! NOT invoked in NEWUOA.
     do j = 1, n
-        A(:, j) = A(:, j) + alpha*( x*y(j) + y*x(j) )
+        A(:, j) = A(:, j) + alpha * (x * y(j) + y * x(j))
     end do
 else  ! This case is invoked in NEWUOA.
     do j = 1, n
-        A(:, j) = A(:, j) + ( x*y(j) + y*x(j) )
+        A(:, j) = A(:, j) + (x * y(j) + y * x(j))
     end do
 end if
 #endif
@@ -246,7 +248,7 @@ end subroutine r2_sym
 
 subroutine r2(A, alpha, x, y, beta, u, v)
 ! R2 sets
-! A = A + ( ALPHA*( X*Y^T ) + BETA*( U*V^T ) ), 
+! A = A + ( ALPHA*( X*Y^T ) + BETA*( U*V^T ) ),
 ! where A is an MxN matrix, ALPHA and BETA are real scalars, X and
 ! U are M-dimenional vectors, Y and V are N-dimenional vectors.
 use consts_mod, only : RP, IK, ONE, ZERO
@@ -268,7 +270,7 @@ real(RP), intent(inout) :: A(:, :)    ! A(SIZE(X), SIZE(Y))
 integer(IK) :: n, j
 
 #if __DEBUGGING__ == 1
-character(len = SRNLEN), parameter :: srname = 'R2'
+character(len=SRNLEN), parameter :: srname = 'R2'
 if (size(u) /= size(x)) then
     call errstop(srname, 'SIZE(U) /= SIZE(X)')
 end if
@@ -286,29 +288,29 @@ n = int(size(y), kind(n))
 if (abs(alpha - ONE) > ZERO .or. abs(beta - ONE) > ZERO) then
     ! This case is NOT invoked in NEWUOA.
     do j = 1, n
-        A(:, j) = A(:, j) + alpha*x*y(j) + beta*u*v(j)
+        A(:, j) = A(:, j) + alpha * x * y(j) + beta * u * v(j)
     end do
 else  ! This case is invoked in NEWUOA.
     do j = 1, n
-        A(:, j) = A(:, j) + x*y(j) + u*v(j)
+        A(:, j) = A(:, j) + x * y(j) + u * v(j)
     end do
 end if
 #else
 if (abs(alpha - beta) > ZERO) then  ! NOT invoked in NEWUOA.
     do j = 1, n
-        A(:, j) = A(:, j) + (alpha*(x*y(j)) + beta*(u*v(j)))
+        A(:, j) = A(:, j) + (alpha * (x * y(j)) + beta * (u * v(j)))
     end do
 else if (abs(alpha - ONE) > ZERO) then  ! NOT invoked in NEWUOA.
 ! Here update A to A + ALPHA*( X*Y^T + U*V^T ), a semmetric update
 ! when X = V and Y = U, even in floating-point arithmetic.
     do j = 1, n
-        A(:, j) = A(:, j) + alpha*( x*y(j)  + u*v(j) )
+        A(:, j) = A(:, j) + alpha * (x * y(j) + u * v(j))
     end do
 else  ! This case is invoked in NEWUOA.
 ! Here update A to A + ( X*Y^T + U*V^T ), a semmetric update
 ! when X = V and Y = U, even in floating-point arithmetic.
     do j = 1, n
-        A(:, j) = A(:, j) + ( x*y(j) + u*v(j) )
+        A(:, j) = A(:, j) + (x * y(j) + u * v(j))
     end do
 end if
 #endif
@@ -338,7 +340,7 @@ integer(IK) :: j
 #endif
 
 #if __DEBUGGING__ == 1
-character(len = SRNLEN), parameter :: srname = 'MATPROD12'
+character(len=SRNLEN), parameter :: srname = 'MATPROD12'
 if (size(x) /= size(y, 1)) then
     call errstop(srname, 'SIZE(X) /= SIZE(Y, 1)')
 end if
@@ -351,7 +353,7 @@ do j = 1, int(size(y, 2), kind(j))
     ! When interfaced with MATLAB, the following seems more
     ! efficient than a loop, which is strange because inprod
     ! itself is implemented by a loop. This may well depend on the
-    ! machine (e.g., cache size), compiler, compiling options, 
+    ! machine (e.g., cache size), compiler, compiling options,
     ! and MATLAB version.
     z(j) = inprod(x, y(:, j))
 end do
@@ -382,7 +384,7 @@ integer(IK) :: j
 #endif
 
 #if __DEBUGGING__ == 1
-character(len = SRNLEN), parameter :: srname = 'MATPROD21'
+character(len=SRNLEN), parameter :: srname = 'MATPROD21'
 if (size(x, 2) /= size(y)) then
     call errstop(srname, 'SIZE(X, 2) /= SIZE(Y)')
 end if
@@ -393,7 +395,7 @@ z = matmul(x, y)
 #else
 z = ZERO
 do j = 1, int(size(x, 2), kind(j))
-    z = z + x(:, j)*y(j)
+    z = z + x(:, j) * y(j)
 end do
 #endif
 end function matprod21
@@ -422,7 +424,7 @@ integer(IK) :: i, j
 #endif
 
 #if __DEBUGGING__ == 1
-character(len = SRNLEN), parameter :: srname = 'MATPROD22'
+character(len=SRNLEN), parameter :: srname = 'MATPROD22'
 if (size(x, 2) /= size(y, 1)) then
     call errstop(srname, 'SIZE(X, 2) /= SIZE(Y, 1)')
 end if
@@ -434,7 +436,7 @@ z = matmul(x, y)
 z = ZERO
 do j = 1, int(size(y, 2), kind(j))
     do i = 1, int(size(x, 2), kind(i))
-        z(:, j) = z(:, j) + x(:, i)*y(i, j)
+        z(:, j) = z(:, j) + x(:, i) * y(i, j)
     end do
 end do
 #endif
@@ -464,7 +466,7 @@ integer(IK) :: i
 #endif
 
 #if __DEBUGGING__ == 1
-character(len = SRNLEN), parameter :: srname = 'INPROD'
+character(len=SRNLEN), parameter :: srname = 'INPROD'
 if (size(x) /= size(y)) then
     call errstop(srname, 'SIZE(X) /= SIZE(Y)')
 end if
@@ -479,14 +481,14 @@ z = dot_product(x, y)
 ! size), compiler, compiling options, and MATLAB version.
 z = ZERO
 do i = 1, int(size(x), kind(i))
-    z = z + x(i)*y(i)
+    z = z + x(i) * y(i)
 end do
 #endif
 end function inprod
 
 
 subroutine grota(A, i, j, k)
-! GROTA sets A = A*G, 
+! GROTA sets A = A*G,
 ! where G is the Givens rotation that
 !    [A(K, 1), ..., A(K, I), ..., A(K, J), ..., A(K, N)] * G
 !  = [A(K, 1), ..., R   , ..., 0   , ..., A(K, N)]
@@ -514,7 +516,7 @@ real(RP), intent(inout) :: A(:, :)
 real(RP) :: c, s, r, Ai(size(A, 1))
 
 #if __DEBUGGING__ == 1
-character(len = SRNLEN), parameter :: srname = 'GROTA'
+character(len=SRNLEN), parameter :: srname = 'GROTA'
 if (i == j .or. min(i, j) < 1 .or. max(i, j) > size(A, 2)) then
     call errstop(srname, 'I or J is invalid')
 end if
@@ -523,17 +525,17 @@ if (k < 1 .or. k > size(A, 1)) then
 end if
 #endif
 
-if (abs(A(k, j)) >  ZERO) then
+if (abs(A(k, j)) > ZERO) then
     c = A(k, i)
     s = A(k, j)
     ! One may use R = HYPOT(C, s), but it did not work better
     ! in our experiments on CUTEst problems.
     r = sqrt(c**2 + s**2)
-    c = c/r
-    s = s/r
+    c = c / r
+    s = s / r
     Ai = A(:, i)
-    A(:, i) =  c*Ai + s*A(:, j)
-    A(:, j) = -s*Ai + c*A(:, j)
+    A(:, i) = c * Ai + s * A(:, j)
+    A(:, j) = -s * Ai + c * A(:, j)
     A(k, j) = ZERO
 
 #if __USE_POWELL_ALGEBRA__ == 0
@@ -542,8 +544,8 @@ else if (A(k, i) < ZERO) then
     ! In this case, C = -1, S = 0. Thus it is reasonbale to set
     ! the following. Doing this will ensure the continuity of this
     ! subroutine as an operator.
-        A(:, i) = -A(:, i)
-        A(:, j) = -A(:, j)
+    A(:, i) = -A(:, i)
+    A(:, j) = -A(:, j)
 #endif
 end if
 end subroutine grota
@@ -573,7 +575,7 @@ integer(IK) :: j
 #endif
 
 #if __DEBUGGING__ == 1
-character(len = SRNLEN), parameter :: srname = 'SYMMETRIZE'
+character(len=SRNLEN), parameter :: srname = 'SYMMETRIZE'
 if (size(A, 1) /= size(A, 2)) then
     call errstop(srname, 'A is not square')
 end if
@@ -582,11 +584,11 @@ end if
 #if __USE_POWELL_ALGEBRA__ == 1
 ! A is symmetrized by setting A(UPPER_TRI) = A(LOWER_TRI).
 do j = 1, int(size(A, 1), kind(j))
-    A(1 : j - 1, j) = A(j, 1 : j - 1)
+    A(1:j - 1, j) = A(j, 1:j - 1)
 end do
 #else
 A = A + transpose(A)
-A = A*HALF
+A = A * HALF
 #endif
 
 #if __DEBUGGING__ == 1
@@ -595,7 +597,7 @@ call verisym(A, ZERO)
 end subroutine symmetrize
 
 
-function xpy_dot_z (x, y, z) result(t)
+function xpy_dot_z(x, y, z) result(t)
 ! t = (x + y)'*z
 
 use consts_mod, only : RP
@@ -620,7 +622,7 @@ integer(IK) :: i
 #endif
 
 #if __DEBUGGING__ == 1
-character(len = SRNLEN), parameter :: srname = 'XPY_DOT_Z'
+character(len=SRNLEN), parameter :: srname = 'XPY_DOT_Z'
 if (size(x) /= size(z) .or. size(y) /= size(z)) then
     call errstop(srname, 'SIZE(X) or SIZE(Y) /= SIZE(Z)')
 end if
@@ -629,7 +631,7 @@ end if
 #if __USE_POWELL_ALGEBRA__ == 1
 t = ZERO
 do i = 1, int(size(z), kind(i))
-    t = t + x(i)*z(i) + y(i)*z(i)
+    t = t + x(i) * z(i) + y(i) * z(i)
 end do
 #else
 !t = inprod(x + y, z)
@@ -663,7 +665,7 @@ integer(IK) :: i
 #endif
 
 #if __DEBUGGING__ == 1
-character(len = SRNLEN), parameter :: srname = 'XDY_PLUS_A'
+character(len=SRNLEN), parameter :: srname = 'XDY_PLUS_A'
 if (size(x) /= size(y)) then
     call errstop(srname, 'SIZE(X) /= SIZE(Y)')
 end if
@@ -672,7 +674,7 @@ end if
 #if __USE_POWELL_ALGEBRA__ == 1
 t = a
 do i = 1, int(size(x), kind(i))
-    t = t + x(i)*y(i)
+    t = t + x(i) * y(i)
 end do
 #else
 t = inprod(x, y) + a
@@ -705,7 +707,7 @@ integer(IK) :: j
 #endif
 
 #if __DEBUGGING__ == 1
-character(len = SRNLEN), parameter :: srname = 'AX_PLUS_Y'
+character(len=SRNLEN), parameter :: srname = 'AX_PLUS_Y'
 if (size(x) /= size(A, 2) .or. size(y) /= size(A, 1)) then
     call errstop(srname, 'SIZE(A) /= (SIZE(Y), SIZE(X))')
 end if
@@ -714,7 +716,7 @@ end if
 #if __USE_POWELL_ALGEBRA__ == 1
 z = y
 do j = 1, int(size(A, 2), kind(j))
-    z = z + A(:, j)*x(j)
+    z = z + A(:, j) * x(j)
 end do
 #else
 z = matprod(A, x) + y
@@ -750,7 +752,7 @@ integer(IK) :: i
 #endif
 
 #if __DEBUGGING__ == 1
-character(len = SRNLEN), parameter :: srname = 'XA_PLUS_Y'
+character(len=SRNLEN), parameter :: srname = 'XA_PLUS_Y'
 if (size(x) /= size(A, 1) .or. size(y) /= size(A, 2)) then
     call errstop(srname, 'SIZE(A) /= (SIZE(X), SIZE(Y))')
 end if
@@ -759,7 +761,7 @@ end if
 #if __USE_POWELL_ALGEBRA__ == 1
 z = y
 do i = 1, int(size(A, 1), kind(i))
-    z = z + x(i)*A(i, :)
+    z = z + x(i) * A(i, :)
 end do
 #else
 z = matprod(x, A) + y
@@ -774,7 +776,7 @@ subroutine calquad(d, gq, hq, pq, x, xpt, vquad)
 ! CALQUAD calculates
 ! VQUAD = Q(X + D) - Q(X)
 ! with Q being the quadratic function defined via (GQ, HQ, PQ) by
-! Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>, 
+! Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
 ! where HESSIAN consists of an explicit part HQ and an implicit
 ! part PQ in the following way:
 ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
@@ -817,7 +819,7 @@ integer(IK) :: i, ih, j
 
 #if __DEBUGGING__ == 1
 integer(IK) :: n, npt
-character(len = SRNLEN), parameter :: srname = 'CALQUAD'
+character(len=SRNLEN), parameter :: srname = 'CALQUAD'
 n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 if (n == 0 .or. npt < n + 2) then
@@ -836,32 +838,32 @@ s = x + d
 vquad = ZERO
 ih = 0
 do j = 1, int(size(d), kind(j))
-    vquad = vquad + d(j)*gq(j)
+    vquad = vquad + d(j) * gq(j)
     do i = 1, j
         ih = int(ih + 1, kind(ih))
-        t = d(i)*s(j) + d(j)*x(i)
+        t = d(i) * s(j) + d(j) * x(i)
         if (i == j) then
-            t = HALF*t
+            t = HALF * t
         end if
-        vquad = vquad + t*hq(i, j)
+        vquad = vquad + t * hq(i, j)
     end do
 end do
 !----------------------------------------------------------------------!
 ! Powell's original code calculates W externally and pass it as an
 ! input to CALQUAD. Here W is calculated internally.
-w = matprod(d, xpt) !--------------------------------------------!
-w = w*(HALF*w + matprod(x, xpt)) !-------------------------------!
+w = matprod(d, xpt) !---------------------------------------!
+w = w * (HALF * w + matprod(x, xpt)) !----------------------!
 !----------------------------------------------------------------------!
 ! Implicit second order term
 do i = 1, int(size(pq), kind(i))
-    vquad = vquad + pq(i)*w(i)
+    vquad = vquad + pq(i) * w(i)
 end do
 #else
 ! The order of calculation seems quite important. The following
 ! order seems to work well.
 ! 1st order term
 vquad = inprod(d, gq)
-s = HALF*d + x  ! Different from the above version.
+s = HALF * d + x  ! Different from the above version.
 ! implicit 2nd-order term
 vquad = vquad + sum(pq * (matprod(s, xpt) * matprod(d, xpt)))
 ! explicit 2nd-order term
@@ -890,4 +892,3 @@ end subroutine calquad
 
 
 end module lina_mod
-

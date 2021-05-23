@@ -1,6 +1,8 @@
 ! INFO_MOD is a module defining exit flags.
 !
 ! Coded by Zaikun Zhang in July 2020.
+!
+! Last Modified: Sunday, May 23, 2021 AM11:08:02
 
 
 module info_mod
@@ -21,11 +23,10 @@ integer, parameter :: INVALID_INPUT = -100
 integer, parameter :: SMALL_TR_RADIUS = 0
 integer, parameter :: FTARGET_ACHIEVED = 1
 integer, parameter :: TRSUBP_FAILED = 2
-integer, parameter :: MAXFUN_REACHED = 3 
+integer, parameter :: MAXFUN_REACHED = 3
 integer, parameter :: NAN_X = -1
 integer, parameter :: NAN_INF_F = -2
 integer, parameter :: NAN_MODEL = -3
 
 
 end module info_mod
-
