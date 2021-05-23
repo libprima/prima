@@ -11,6 +11,7 @@ __pycache__/
 NEWUOA_output.txt
 *_output.txt
 *.output
+*.out
 *.log
 test_data/
 
