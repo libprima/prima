@@ -5,6 +5,7 @@ __pycache__/
 *$py.class
 
 # misc files for testing
+*.o
 *.so
 *.pyd
 *.mod
