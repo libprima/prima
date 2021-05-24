@@ -28,7 +28,8 @@ verify: gverify iverify nverify pverify averify fverify sverify 9verify clean
 verifym: gverifym iverifym nverifym pverifym averifym fverifym sverifym 9verifym clean
 
 lint:
-	flint -I../common -a -f -g -m -p -3 -e $(FILES)
+	#flint -I../common/ -a -f -g -m -p -3 -e $(FILES)
+	flint -I../common/  $(FILES)
 
 fverify:
 	$(FLANG) $(FILES) -ffree-form -std=f$(FSTD)
