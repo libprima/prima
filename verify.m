@@ -1,5 +1,7 @@
 function success = verify(solvers, options)
 
+% Last Modified: Mon 24 May 2021 04:17:01 PM HKT
+
 % As an example:
 % options=[]; options.maxdi=20; options.nr=20; verify({'newuoan', 'newuoa'}, options)
 
@@ -7,8 +9,6 @@ function success = verify(solvers, options)
 % problem.
 % NOTE that newuoa has to be the version in OPDFO, which has been modified (slightly) to behave
 % the same as newuoan.
-%
-% Last Modified: Monday, May 24, 2021 PM03:00:06 
 
 success = true;
 
