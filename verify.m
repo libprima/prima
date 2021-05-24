@@ -8,7 +8,7 @@ function success = verify(solvers, options)
 % NOTE that newuoa has to be the version in OPDFO, which has been modified (slightly) to behave
 % the same as newuoan.
 %
-% Last Modified: Monday, May 24, 2021 PM02:19:45 
+% Last Modified: Monday, May 24, 2021 PM03:00:06 
 
 success = true;
 
