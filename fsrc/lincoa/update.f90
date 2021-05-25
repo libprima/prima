@@ -1,21 +1,37 @@
-!*==update.f90  processed by SPAG 7.50RE at 23:18 on 25 May 2021
+!*==update.f90  processed by SPAG 7.50RE at 23:56 on 25 May 2021
       SUBROUTINE UPDATE(N,Npt,Xpt,Bmat,Zmat,Idz,Ndim,Sp,Step,Kopt,Knew, &
      &                  Vlag,W)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IMPLICIT REAL*8*8 (A-H,O-Z)
       IMPLICIT NONE
-!*--UPDATE7
-!*** Start of declarations inserted by SPAG
-      REAL*8 alpha , beta , Bmat , bsum , denabs , denmax , denom ,       &
-     &     distsq , dx , half , hdiag , one , scala , scalb , Sp ,      &
-     &     sqrtdn , ssq , Step , sum , tau
-      REAL*8 tausq , temp , tempa , tempb , Vlag , W , Xpt , zero , Zmat
-      INTEGER i , Idz , iflag , j , ja , jb , jl , jp , k , Knew ,      &
-     &        Kopt , N , Ndim , Npt , nptm
-!*** End of declarations inserted by SPAG
+!*--UPDATE8
+!*++
+!*++ Dummy argument declarations rewritten by SPAG
+!*++
+      INTEGER , INTENT(IN) :: N
+      INTEGER , INTENT(IN) :: Npt
+      REAL*8 , INTENT(IN) , DIMENSION(Npt,*) :: Xpt
+      REAL*8 , INTENT(INOUT) , DIMENSION(Ndim,*) :: Bmat
+      REAL*8 , INTENT(INOUT) , DIMENSION(Npt,*) :: Zmat
+      INTEGER , INTENT(INOUT) :: Idz
+      INTEGER , INTENT(IN) :: Ndim
+      REAL*8 , INTENT(IN) , DIMENSION(*) :: Sp
+      REAL*8 , INTENT(IN) , DIMENSION(*) :: Step
+      INTEGER , INTENT(IN) :: Kopt
+      INTEGER , INTENT(INOUT) :: Knew
+      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Vlag
+      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: W
+!*++
+!*++ Local variable declarations rewritten by SPAG
+!*++
+      REAL*8 :: alpha , beta , bsum , denabs , denmax , denom , distsq ,  &
+     &        dx , half , hdiag , one , scala , scalb , sqrtdn , ssq ,  &
+     &        sum , tau , tausq , temp , tempa , tempb , zero
+      INTEGER :: i , iflag , j , ja , jb , jl , jp , k , nptm
+!*++
+!*++ End of declarations rewritten by SPAG
+!*++
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DIMENSION Xpt(Npt,*) , Bmat(Ndim,*) , Zmat(Npt,*) , Sp(*) ,       &
-     &          Step(*) , Vlag(*) , W(*)
 !
 !     The arguments N, NPT, XPT, BMAT, ZMAT, IDZ, NDIM ,SP and STEP are
 !       identical to the corresponding arguments in SUBROUTINE LINCOB.

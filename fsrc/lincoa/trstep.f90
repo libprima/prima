@@ -1,4 +1,4 @@
-!*==trstep.f90  processed by SPAG 7.50RE at 23:18 on 25 May 2021
+!*==trstep.f90  processed by SPAG 7.50RE at 23:56 on 25 May 2021
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 19-03-2020: B is never used
 !      SUBROUTINE TRSTEP (N,NPT,M,AMAT,B,XPT,HQ,PQ,NACT,IACT,RESCON,
@@ -8,24 +8,44 @@
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IMPLICIT REAL*8*8 (A-H,O-Z)
       IMPLICIT NONE
-!*--TRSTEP11
-!*** Start of declarations inserted by SPAG
-      REAL*8 ad , adw , alpbd , alpha , alphm , alpht , Amat , beta ,     &
-     &     ctest , D , dd , dg , dgd , ds , Dw , G , gamma , half , Hq ,&
-     &     one
-      REAL*8 Pq , Qfac , reduct , Resact , Rescon , resmax , Resnew ,     &
-     &     Rfac , rhs , scale , Snorm , snsq , ss , Step , sum , temp , &
-     &     tiny , W , wgd , Xpt
-      REAL*8 zero
-      INTEGER i , Iact , icount , ih , ir , j , jsav , k , M , N ,      &
-     &        Nact , ncall , Npt
-!*** End of declarations inserted by SPAG
+!*--TRSTEP13
+!*++
+!*++ Dummy argument declarations rewritten by SPAG
+!*++
+      INTEGER :: N
+      INTEGER , INTENT(IN) :: Npt
+      INTEGER :: M
+      REAL*8 , DIMENSION(N,*) :: Amat
+      REAL*8 , INTENT(IN) , DIMENSION(Npt,*) :: Xpt
+      REAL*8 , INTENT(IN) , DIMENSION(*) :: Hq
+      REAL*8 , INTENT(IN) , DIMENSION(*) :: Pq
+      INTEGER :: Nact
+      INTEGER , DIMENSION(*) :: Iact
+      REAL*8 , INTENT(IN) , DIMENSION(*) :: Rescon
+      REAL*8 , DIMENSION(N,*) :: Qfac
+      REAL*8 , DIMENSION(*) :: Rfac
+      REAL*8 , INTENT(INOUT) :: Snorm
+      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Step
+      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: G
+      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Resnew
+      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Resact
+      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: D
+      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Dw
+      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: W
+!*++
+!*++ Local variable declarations rewritten by SPAG
+!*++
+      REAL*8 :: ad , adw , alpbd , alpha , alphm , alpht , beta , ctest , &
+     &        dd , dg , dgd , ds , gamma , half , one , reduct ,        &
+     &        resmax , rhs , scale , snsq , ss , sum , temp , tiny ,    &
+     &        wgd , zero
+      INTEGER :: i , icount , ih , ir , j , jsav , k , ncall
+!*++
+!*++ End of declarations rewritten by SPAG
+!*++
 ! B is never used
 !      DIMENSION AMAT(N,*),B(*),XPT(NPT,*),HQ(*),PQ(*),IACT(*),
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DIMENSION Amat(N,*) , Xpt(Npt,*) , Hq(*) , Pq(*) , Iact(*) ,      &
-     &          Rescon(*) , Qfac(N,*) , Rfac(*) , Step(*) , G(*) ,      &
-     &          Resnew(*) , Resact(*) , D(*) , Dw(*) , W(*)
 !
 !     N, NPT, M, AMAT, B, XPT, HQ, PQ, NACT, IACT, RESCON, QFAC and RFAC
 !       are the same as the terms with these names in LINCOB. If RESCON(J)
