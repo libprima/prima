@@ -267,7 +267,11 @@ try
         src_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.f*');
         mex(mex_options{:}, '-c', fullfile(gateways_classical, 'fmxcl.F'));
         obj_files = [files_with_wildcard(interfaces_private, '*.o'), files_with_wildcard(interfaces_private, '*.obj')];
-        mex(mex_options{:}, '-output', ['f', solver, 'n_classical'], obj_files{:}, src_files{:}, fullfile(gateways_classical, [solver, '-interface.F']));
+        if strcmp('newuoa', solver)
+            mex(mex_options{:}, '-output', ['f', solver, 'n_classical'], obj_files{:}, src_files{:}, fullfile(gateways_classical, [solver, '-interface.F']));
+        else
+            mex(mex_options{:}, '-output', ['f', solver, 'n_classical'], obj_files{:}, fullfile(gateways_classical, [solver, '-interface.F']));
+        end
 
         fprintf('Done.\n');
     end
