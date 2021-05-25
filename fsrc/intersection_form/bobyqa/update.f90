@@ -1,28 +1,27 @@
 !*==update.f90  processed by SPAG 7.50RE at 17:55 on 25 May 2021
-      SUBROUTINE UPDATE(N,Npt,Bmat,Zmat,Ndim,Vlag,Beta,Denom,Knew,W)
+      subroutine UPDATE(N, Npt, Bmat, Zmat, Ndim, Vlag, Beta, Denom, Knew, W)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IMPLICIT REAL*8*8 (A-H,O-Z)
-      USE F77KINDS                        
-      IMPLICIT NONE
+      implicit none
 !*--UPDATE7
 !*++
 !*++ Dummy argument declarations rewritten by SPAG
 !*++
-      INTEGER , INTENT(IN) :: N
-      INTEGER , INTENT(IN) :: Npt
-      REAL*8 , INTENT(INOUT) , DIMENSION(Ndim,*) :: Bmat
-      REAL*8 , INTENT(INOUT) , DIMENSION(Npt,*) :: Zmat
-      INTEGER , INTENT(IN) :: Ndim
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Vlag
-      REAL*8 , INTENT(IN) :: Beta
-      REAL*8 , INTENT(IN) :: Denom
-      INTEGER , INTENT(IN) :: Knew
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: W
+      integer, intent(IN) :: N
+      integer, intent(IN) :: Npt
+      real*8, intent(INOUT), dimension(Ndim, *) :: Bmat
+      real*8, intent(INOUT), dimension(Npt, *) :: Zmat
+      integer, intent(IN) :: Ndim
+      real*8, intent(INOUT), dimension(*) :: Vlag
+      real*8, intent(IN) :: Beta
+      real*8, intent(IN) :: Denom
+      integer, intent(IN) :: Knew
+      real*8, intent(INOUT), dimension(*) :: W
 !*++
 !*++ Local variable declarations rewritten by SPAG
 !*++
-      REAL*8 :: alpha , one , tau , temp , tempa , tempb , zero , ztest
-      INTEGER :: i , j , jp , k , nptm
+      real*8 :: alpha, one, tau, temp, tempa, tempb, zero, ztest
+      integer :: i, j, jp, k, nptm
 !*++
 !*++ End of declarations rewritten by SPAG
 !*++
@@ -43,12 +42,12 @@
       zero = 0.0D0
       nptm = Npt - N - 1
       ztest = zero
-      DO k = 1 , Npt
-         DO j = 1 , nptm
-            ztest = DMAX1(ztest,DABS(Zmat(k,j)))
-         ENDDO
-      ENDDO
-      ztest = 1.0D-20*ztest
+      do k = 1, Npt
+          do j = 1, nptm
+              ztest = DMAX1(ztest, DABS(Zmat(k, j)))
+          end do
+      end do
+      ztest = 1.0D-20 * ztest
 !
 !     Apply the rotations that put zeros in the KNEW-th row of ZMAT.
 !
@@ -56,26 +55,26 @@
 ! Zaikun 2019-08-15: JL is never used
 !      JL=1
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DO j = 2 , nptm
-         IF ( DABS(Zmat(Knew,j))>ztest ) THEN
-            temp = DSQRT(Zmat(Knew,1)**2+Zmat(Knew,j)**2)
-            tempa = Zmat(Knew,1)/temp
-            tempb = Zmat(Knew,j)/temp
-            DO i = 1 , Npt
-               temp = tempa*Zmat(i,1) + tempb*Zmat(i,j)
-               Zmat(i,j) = tempa*Zmat(i,j) - tempb*Zmat(i,1)
-               Zmat(i,1) = temp
-            ENDDO
-         ENDIF
-         Zmat(Knew,j) = zero
-      ENDDO
+      do j = 2, nptm
+          if (DABS(Zmat(Knew, j)) > ztest) then
+              temp = DSQRT(Zmat(Knew, 1)**2 + Zmat(Knew, j)**2)
+              tempa = Zmat(Knew, 1) / temp
+              tempb = Zmat(Knew, j) / temp
+              do i = 1, Npt
+                  temp = tempa * Zmat(i, 1) + tempb * Zmat(i, j)
+                  Zmat(i, j) = tempa * Zmat(i, j) - tempb * Zmat(i, 1)
+                  Zmat(i, 1) = temp
+              end do
+          end if
+          Zmat(Knew, j) = zero
+      end do
 !
 !     Put the first NPT components of the KNEW-th column of HLAG into W,
 !     and calculate the parameters of the updating formula.
 !
-      DO i = 1 , Npt
-         W(i) = Zmat(Knew,1)*Zmat(i,1)
-      ENDDO
+      do i = 1, Npt
+          W(i) = Zmat(Knew, 1) * Zmat(i, 1)
+      end do
       alpha = W(Knew)
       tau = Vlag(Knew)
       Vlag(Knew) = Vlag(Knew) - one
@@ -83,22 +82,22 @@
 !     Complete the updating of ZMAT.
 !
       temp = DSQRT(Denom)
-      tempb = Zmat(Knew,1)/temp
-      tempa = tau/temp
-      DO i = 1 , Npt
-         Zmat(i,1) = tempa*Zmat(i,1) - tempb*Vlag(i)
-      ENDDO
+      tempb = Zmat(Knew, 1) / temp
+      tempa = tau / temp
+      do i = 1, Npt
+          Zmat(i, 1) = tempa * Zmat(i, 1) - tempb * Vlag(i)
+      end do
 !
 !     Finally, update the matrix BMAT.
 !
-      DO j = 1 , N
-         jp = Npt + j
-         W(jp) = Bmat(Knew,j)
-         tempa = (alpha*Vlag(jp)-tau*W(jp))/Denom
-         tempb = (-Beta*W(jp)-tau*Vlag(jp))/Denom
-         DO i = 1 , jp
-            Bmat(i,j) = Bmat(i,j) + tempa*Vlag(i) + tempb*W(i)
-            IF ( i>Npt ) Bmat(jp,i-Npt) = Bmat(i,j)
-         ENDDO
-      ENDDO
-      END SUBROUTINE UPDATE
+      do j = 1, N
+          jp = Npt + j
+          W(jp) = Bmat(Knew, j)
+          tempa = (alpha * Vlag(jp) - tau * W(jp)) / Denom
+          tempb = (-Beta * W(jp) - tau * Vlag(jp)) / Denom
+          do i = 1, jp
+              Bmat(i, j) = Bmat(i, j) + tempa * Vlag(i) + tempb * W(i)
+              if (i > Npt) Bmat(jp, i - Npt) = Bmat(i, j)
+          end do
+      end do
+      end subroutine UPDATE

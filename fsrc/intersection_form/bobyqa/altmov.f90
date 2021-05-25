@@ -3,7 +3,6 @@
      &                  Adelt, Xnew, Xalt, Alpha, Cauchy, Glag, Hcol, W)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IMPLICIT REAL*8*8 (A-H,O-Z)
-      use F77KINDS
       implicit none
 !*--ALTMOV8
 !*++

@@ -1,6 +1,4 @@
-f77kinds.f90
 altmov.f90
-intfaces.f90
 prelim.f90
 rescue.f90
 trsbox.f90
