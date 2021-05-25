@@ -49,7 +49,7 @@ do i = 1, n
     a = a + b(i)
 end do
 
-if NOT equivalent to a = t + sum(b) unless t = 0.
+is NOT equivalent to a = t + sum(b) unless t = 0.
 
 3. Transpose XPT and BMAT (and other arrays if appropriate).
 
