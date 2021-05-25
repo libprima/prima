@@ -1,4 +1,4 @@
-!*==prelim.f90  processed by SPAG 7.50RE at 23:18 on 25 May 2021
+!*==prelim.f90  processed by SPAG 7.50RE at 00:12 on 26 May 2021
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !     2  SP,RESCON,STEP,PQW,W)
       SUBROUTINE PRELIM(N,Npt,M,Amat,B,X,Rhobeg,Iprint,Xbase,Xpt,Fval,  &
@@ -8,21 +8,49 @@
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IMPLICIT REAL*8*8 (A-H,O-Z)
       IMPLICIT NONE
-!*--PRELIM11
-!*** Start of declarations inserted by SPAG
-      REAL*8 almost_infinity , Amat , B , bigv , Bmat , F , feas ,        &
-     &     Ftarget , Fval , Gopt , half , Hq , one , Pq , Pqw , recip , &
-     &     reciq , Rescon , resid , Rhobeg
-      REAL*8 rhosq , Sp , Step , temp , test , W , X , Xbase , Xopt ,     &
-     &     Xpt , Xsav , zero , Zmat
-      INTEGER i , Idz , Iprint , ipt , itemp , j , jp , jpt , jsav , k ,&
-     &        kbase , Kopt , M , N , Ndim , nf , Npt , nptm
-!*** End of declarations inserted by SPAG
+!*--PRELIM14
+!*++
+!*++ Dummy argument declarations rewritten by SPAG
+!*++
+      INTEGER :: N
+      INTEGER :: Npt
+      INTEGER , INTENT(IN) :: M
+      REAL*8 , INTENT(IN) , DIMENSION(N,*) :: Amat
+      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: B
+      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: X
+      REAL*8 , INTENT(IN) :: Rhobeg
+      INTEGER , INTENT(IN) :: Iprint
+      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Xbase
+      REAL*8 , INTENT(INOUT) , DIMENSION(Npt,*) :: Xpt
+      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Fval
+      REAL*8 , INTENT(OUT) , DIMENSION(*) :: Xsav
+      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Xopt
+      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Gopt
+      INTEGER , INTENT(INOUT) :: Kopt
+      REAL*8 , INTENT(OUT) , DIMENSION(*) :: Hq
+      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Pq
+      REAL*8 , INTENT(INOUT) , DIMENSION(Ndim,*) :: Bmat
+      REAL*8 , INTENT(INOUT) , DIMENSION(Npt,*) :: Zmat
+      INTEGER :: Idz
+      INTEGER :: Ndim
+      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Sp
+      REAL*8 , INTENT(OUT) , DIMENSION(*) :: Rescon
+      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Step
+      REAL*8 , DIMENSION(*) :: Pqw
+      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: W
+      REAL*8 , INTENT(INOUT) :: F
+      REAL*8 , INTENT(IN) :: Ftarget
+!*++
+!*++ Local variable declarations rewritten by SPAG
+!*++
+      REAL*8 :: almost_infinity , bigv , feas , half , one , recip ,      &
+     &        reciq , resid , rhosq , temp , test , zero
+      INTEGER :: i , ipt , itemp , j , jp , jpt , jsav , k , kbase ,    &
+     &           nf , nptm
+!*++
+!*++ End of declarations rewritten by SPAG
+!*++
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DIMENSION Amat(N,*) , B(*) , X(*) , Xbase(*) , Xpt(Npt,*) ,       &
-     &          Fval(*) , Xsav(*) , Xopt(*) , Gopt(*) , Hq(*) , Pq(*) , &
-     &          Bmat(Ndim,*) , Zmat(Npt,*) , Sp(*) , Rescon(*) , Step(*)&
-     &          , Pqw(*) , W(*)
 !
 !     The arguments N, NPT, M, AMAT, B, X, RHOBEG, IPRINT, XBASE, XPT, FVAL,
 !       XSAV, XOPT, GOPT, HQ, PQ, BMAT, ZMAT, NDIM, SP and RESCON are the

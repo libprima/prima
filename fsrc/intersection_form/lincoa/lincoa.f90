@@ -1,4 +1,4 @@
-!*==lincoa.f90  processed by SPAG 7.50RE at 23:18 on 25 May 2021
+!*==lincoa.f90  processed by SPAG 7.50RE at 00:12 on 26 May 2021
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !     1  MAXFUN,W)
       SUBROUTINE LINCOA(N,Npt,M,A,Ia,B,X,Rhobeg,Rhoend,Iprint,Maxfun,W, &
@@ -7,18 +7,37 @@
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IMPLICIT REAL*8*8 (A-H,O-Z)
       IMPLICIT NONE
-!*--LINCOA10
-!*** Start of declarations inserted by SPAG
-      REAL*8 A , B , F , Ftarget , Rhobeg , Rhoend , smallx , sum , temp ,&
-     &     W , X , zero
-      INTEGER i , Ia , iac , iamat , ib , ibmat , iflag , ifv , igo ,   &
-     &        ihq , Info , ipq , ipqw , Iprint , iqf , irc , irf , isp ,&
-     &        istp , iw
-      INTEGER ixb , ixn , ixo , ixp , ixs , izmat , j , M , Maxfun , N ,&
-     &        ndim , np , Npt , nptm
-!*** End of declarations inserted by SPAG
+!*--LINCOA12
+!*++
+!*++ Dummy argument declarations rewritten by SPAG
+!*++
+      INTEGER :: N
+      INTEGER :: Npt
+      INTEGER :: M
+      REAL*8 , INTENT(IN) , DIMENSION(Ia,*) :: A
+      INTEGER , INTENT(IN) :: Ia
+      REAL*8 , INTENT(IN) , DIMENSION(*) :: B
+      REAL*8 , DIMENSION(*) :: X
+      REAL*8 :: Rhobeg
+      REAL*8 , INTENT(INOUT) :: Rhoend
+      INTEGER :: Iprint
+      INTEGER :: Maxfun
+      REAL*8 , DIMENSION(*) :: W
+      REAL*8 :: F
+      INTEGER :: Info
+      REAL*8 :: Ftarget
+!*++
+!*++ Local variable declarations rewritten by SPAG
+!*++
+      INTEGER :: i , iac , iamat , ib , ibmat , iflag , ifv , igo ,     &
+     &           ihq , ipq , ipqw , iqf , irc , irf , isp , istp , iw , &
+     &           ixb , ixn , ixo , ixp , ixs , izmat , j , ndim , np ,  &
+     &           nptm
+      REAL*8 :: smallx , sum , temp , zero
+!*++
+!*++ End of declarations rewritten by SPAG
+!*++
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DIMENSION A(Ia,*) , B(*) , X(*) , W(*)
 !
 !     This subroutine seeks the least value of a function of many variables,
 !       subject to general linear inequality constraints, by a trust region

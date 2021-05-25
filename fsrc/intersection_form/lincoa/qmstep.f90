@@ -1,4 +1,4 @@
-!*==qmstep.f90  processed by SPAG 7.50RE at 23:18 on 25 May 2021
+!*==qmstep.f90  processed by SPAG 7.50RE at 00:12 on 26 May 2021
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 2019-08-29: B is never used
 !      SUBROUTINE QMSTEP (N,NPT,M,AMAT,B,XPT,XOPT,NACT,IACT,
@@ -8,20 +8,41 @@
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IMPLICIT REAL*8*8 (A-H,O-Z)
       IMPLICIT NONE
-!*--QMSTEP11
-!*** Start of declarations inserted by SPAG
-      REAL*8 Amat , bigv , ctol , Del , gg , ghg , Gl , half , one , Pqw ,&
-     &     Qfac , Rescon , resmax , Rstat , sp , ss , Step , stp ,      &
-     &     stpsav , sum
-      REAL*8 temp , tenth , test , vbig , vgrad , vlag , vnew , W , ww ,  &
-     &     Xopt , Xpt , zero
-      INTEGER i , Iact , Ifeas , j , jsav , k , Knew , Kopt , ksav , M ,&
-     &        N , Nact , Npt
-!*** End of declarations inserted by SPAG
+!*--QMSTEP12
+!*++
+!*++ Dummy argument declarations rewritten by SPAG
+!*++
+      INTEGER , INTENT(IN) :: N
+      INTEGER , INTENT(IN) :: Npt
+      INTEGER , INTENT(IN) :: M
+      REAL*8 , INTENT(IN) , DIMENSION(N,*) :: Amat
+      REAL*8 , INTENT(IN) , DIMENSION(Npt,*) :: Xpt
+      REAL*8 , INTENT(IN) , DIMENSION(*) :: Xopt
+      INTEGER , INTENT(IN) :: Nact
+      INTEGER , INTENT(IN) , DIMENSION(*) :: Iact
+      REAL*8 , INTENT(IN) , DIMENSION(*) :: Rescon
+      REAL*8 , INTENT(IN) , DIMENSION(N,*) :: Qfac
+      INTEGER , INTENT(IN) :: Kopt
+      INTEGER , INTENT(IN) :: Knew
+      REAL*8 , INTENT(IN) :: Del
+      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Step
+      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Gl
+      REAL*8 , INTENT(IN) , DIMENSION(*) :: Pqw
+      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Rstat
+      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: W
+      INTEGER , INTENT(INOUT) :: Ifeas
+!*++
+!*++ Local variable declarations rewritten by SPAG
+!*++
+      REAL*8 :: bigv , ctol , gg , ghg , half , one , resmax , sp , ss ,  &
+     &        stp , stpsav , sum , temp , tenth , test , vbig , vgrad , &
+     &        vlag , vnew , ww , zero
+      INTEGER :: i , j , jsav , k , ksav
+!*++
+!*++ End of declarations rewritten by SPAG
+!*++
 !      DIMENSION AMAT(N,*),B(*),XPT(NPT,*),XOPT(*),IACT(*),
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DIMENSION Amat(N,*) , Xpt(Npt,*) , Xopt(*) , Iact(*) , Rescon(*) ,&
-     &          Qfac(N,*) , Step(*) , Gl(*) , Pqw(*) , Rstat(*) , W(*)
 !
 !     N, NPT, M, AMAT, B, XPT, XOPT, NACT, IACT, RESCON, QFAC, KOPT are the
 !       same as the terms with these names in SUBROUTINE LINCOB.
