@@ -38,12 +38,12 @@ C Fortran code starts
 
       module fbobyqa
 
-      use consts_mod, only : DP, rp, hugefun, IK, zero
+      use consts_mod, only : DP, rp, hugefun, zero
       use infnan_mod
       implicit none
 
-      integer, parameter :: int32=IK
-
+      integer*4, parameter :: int32_0 =  0
+      integer, parameter :: int32=kind(int32_0)
       integer(int32), parameter :: notComplex = 0
 C notComplex is used in mxCreateDoubleMatrix, whose signature is
 C mwPointer mxCreateDoubleMatrix(mwSize m, mwSize n, integer*4 ComplexFlag)

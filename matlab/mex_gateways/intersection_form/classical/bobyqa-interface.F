@@ -37,10 +37,11 @@ C defined in it. _MGETDB gets the pointer pointing to a real array.
 C Fortran code starts
 
       module fbobyqa
-      use consts_mod, only : DP, rp, IK, zero
+      use consts_mod, only : DP, rp, zero
       implicit none
 
-      integer, parameter :: int32=IK
+      integer*4, parameter :: int32_0 =  0
+      integer, parameter :: int32=kind(int32_0)
       integer(int32), parameter :: notComplex = 0
 C notComplex is used in mxCreateDoubleMatrix, whose signature is
 C mwPointer mxCreateDoubleMatrix(mwSize m, mwSize n, integer*4 ComplexFlag)

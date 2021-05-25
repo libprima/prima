@@ -1,56 +1,53 @@
 !*==rescue.f90  processed by SPAG 7.50RE at 17:55 on 25 May 2021
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !     2  KOPT,VLAG,PTSAUX,PTSID,W)
-      SUBROUTINE RESCUE(N,Npt,Xl,Xu,Iprint,Maxfun,Xbase,Xpt,Fval,Xopt,  &
-     &                  Gopt,Hq,Pq,Bmat,Zmat,Ndim,Sl,Su,Nf,Delta,Kopt,  &
-     &                  Vlag,Ptsaux,Ptsid,W,F,Ftarget)
+      subroutine RESCUE(N, Npt, Xl, Xu, Iprint, Maxfun, Xbase, Xpt, Fval, Xopt,  &
+     &                  Gopt, Hq, Pq, Bmat, Zmat, Ndim, Sl, Su, Nf, Delta, Kopt,  &
+     &                  Vlag, Ptsaux, Ptsid, W, F, Ftarget)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IMPLICIT REAL*8*8 (A-H,O-Z)
-      USE F77KINDS                        
-      USE S_CALFUN
-      USE S_UPDATE
-      IMPLICIT NONE
+      implicit none
 !*--RESCUE14
 !*++
 !*++ Dummy argument declarations rewritten by SPAG
 !*++
-      INTEGER :: N
-      INTEGER :: Npt
-      REAL*8 , INTENT(IN) , DIMENSION(*) :: Xl
-      REAL*8 , INTENT(IN) , DIMENSION(*) :: Xu
-      INTEGER , INTENT(IN) :: Iprint
-      INTEGER , INTENT(IN) :: Maxfun
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Xbase
-      REAL*8 , INTENT(INOUT) , DIMENSION(Npt,*) :: Xpt
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Fval
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Xopt
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Gopt
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Hq
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Pq
-      REAL*8 , INTENT(INOUT) , DIMENSION(Ndim,*) :: Bmat
-      REAL*8 , INTENT(INOUT) , DIMENSION(Npt,*) :: Zmat
-      INTEGER :: Ndim
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Sl
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Su
-      INTEGER , INTENT(INOUT) :: Nf
-      REAL*8 , INTENT(IN) :: Delta
-      INTEGER , INTENT(INOUT) :: Kopt
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Vlag
-      REAL*8 , INTENT(INOUT) , DIMENSION(2,*) :: Ptsaux
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Ptsid
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: W
-      REAL*8 :: F
-      REAL*8 , INTENT(IN) :: Ftarget
+      integer :: N
+      integer :: Npt
+      real*8, intent(IN), dimension(*) :: Xl
+      real*8, intent(IN), dimension(*) :: Xu
+      integer, intent(IN) :: Iprint
+      integer, intent(IN) :: Maxfun
+      real*8, intent(INOUT), dimension(*) :: Xbase
+      real*8, intent(INOUT), dimension(Npt, *) :: Xpt
+      real*8, intent(INOUT), dimension(*) :: Fval
+      real*8, intent(INOUT), dimension(*) :: Xopt
+      real*8, intent(INOUT), dimension(*) :: Gopt
+      real*8, intent(INOUT), dimension(*) :: Hq
+      real*8, intent(INOUT), dimension(*) :: Pq
+      real*8, intent(INOUT), dimension(Ndim, *) :: Bmat
+      real*8, intent(INOUT), dimension(Npt, *) :: Zmat
+      integer :: Ndim
+      real*8, intent(INOUT), dimension(*) :: Sl
+      real*8, intent(INOUT), dimension(*) :: Su
+      integer, intent(INOUT) :: Nf
+      real*8, intent(IN) :: Delta
+      integer, intent(INOUT) :: Kopt
+      real*8, intent(INOUT), dimension(*) :: Vlag
+      real*8, intent(INOUT), dimension(2, *) :: Ptsaux
+      real*8, intent(INOUT), dimension(*) :: Ptsid
+      real*8, intent(INOUT), dimension(*) :: W
+      real*8 :: F
+      real*8, intent(IN) :: Ftarget
 !*++
 !*++ Local variable declarations rewritten by SPAG
 !*++
-      REAL*8 :: almost_infinity , beta , bsum , den , denom , diff ,      &
-     &        distsq , dsqmin , fbase , half , hdiag , one , sfrac ,    &
-     &        sum , sumpq , temp , vlmxsq , vquad , winc , xp , xq ,    &
+      real*8 :: almost_infinity, beta, bsum, den, denom, diff,      &
+     &        distsq, dsqmin, fbase, half, hdiag, one, sfrac,    &
+     &        sum, sumpq, temp, vlmxsq, vquad, winc, xp, xq,    &
      &        zero
-      INTEGER :: i , ih , ihp , ihq , ip , iq , iw , j , jp , jpn , k , &
-     &           knew , kold , kpt , np , nptm , nrem
+      integer :: i, ih, ihp, ihq, ip, iq, iw, j, jp, jpn, k, &
+     &           knew, kold, kpt, np, nptm, nrem
 !*++
 !*++ End of declarations rewritten by SPAG
 !*++
@@ -97,10 +94,10 @@
       one = 1.0D0
       zero = 0.0D0
       np = N + 1
-      sfrac = half/DFLOAT(np)
+      sfrac = half / DFLOAT(np)
       nptm = Npt - np
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      almost_infinity = HUGE(0.0D0)/2.0D0
+      almost_infinity = huge(0.0D0) / 2.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     Shift the interpolation points so that XOPT becomes the origin, and set
@@ -112,56 +109,56 @@
 !
       sumpq = zero
       winc = zero
-      DO k = 1 , Npt
-         distsq = zero
-         DO j = 1 , N
-            Xpt(k,j) = Xpt(k,j) - Xopt(j)
-            distsq = distsq + Xpt(k,j)**2
-         ENDDO
-         sumpq = sumpq + Pq(k)
-         W(Ndim+k) = distsq
-         winc = DMAX1(winc,distsq)
-         DO j = 1 , nptm
-            Zmat(k,j) = zero
-         ENDDO
-      ENDDO
+      do k = 1, Npt
+          distsq = zero
+          do j = 1, N
+              Xpt(k, j) = Xpt(k, j) - Xopt(j)
+              distsq = distsq + Xpt(k, j)**2
+          end do
+          sumpq = sumpq + Pq(k)
+          W(Ndim + k) = distsq
+          winc = DMAX1(winc, distsq)
+          do j = 1, nptm
+              Zmat(k, j) = zero
+          end do
+      end do
 !
 !     Update HQ so that HQ and PQ define the second derivatives of the model
 !     after XBASE has been shifted to the trust region centre.
 !
       ih = 0
-      DO j = 1 , N
-         W(j) = half*sumpq*Xopt(j)
-         DO k = 1 , Npt
-            W(j) = W(j) + Pq(k)*Xpt(k,j)
-         ENDDO
-         DO i = 1 , j
-            ih = ih + 1
-            Hq(ih) = Hq(ih) + W(i)*Xopt(j) + W(j)*Xopt(i)
-         ENDDO
-      ENDDO
+      do j = 1, N
+          W(j) = half * sumpq * Xopt(j)
+          do k = 1, Npt
+              W(j) = W(j) + Pq(k) * Xpt(k, j)
+          end do
+          do i = 1, j
+              ih = ih + 1
+              Hq(ih) = Hq(ih) + W(i) * Xopt(j) + W(j) * Xopt(i)
+          end do
+      end do
 !
 !     Shift XBASE, SL, SU and XOPT. Set the elements of BMAT to zero, and
 !     also set the elements of PTSAUX.
 !
-      DO j = 1 , N
-         Xbase(j) = Xbase(j) + Xopt(j)
-         Sl(j) = Sl(j) - Xopt(j)
-         Su(j) = Su(j) - Xopt(j)
-         Xopt(j) = zero
-         Ptsaux(1,j) = DMIN1(Delta,Su(j))
-         Ptsaux(2,j) = DMAX1(-Delta,Sl(j))
-         IF ( Ptsaux(1,j)+Ptsaux(2,j)<zero ) THEN
-            temp = Ptsaux(1,j)
-            Ptsaux(1,j) = Ptsaux(2,j)
-            Ptsaux(2,j) = temp
-         ENDIF
-         IF ( DABS(Ptsaux(2,j))<half*DABS(Ptsaux(1,j)) ) Ptsaux(2,j)    &
-     &        = half*Ptsaux(1,j)
-         DO i = 1 , Ndim
-            Bmat(i,j) = zero
-         ENDDO
-      ENDDO
+      do j = 1, N
+          Xbase(j) = Xbase(j) + Xopt(j)
+          Sl(j) = Sl(j) - Xopt(j)
+          Su(j) = Su(j) - Xopt(j)
+          Xopt(j) = zero
+          Ptsaux(1, j) = DMIN1(Delta, Su(j))
+          Ptsaux(2, j) = DMAX1(-Delta, Sl(j))
+          if (Ptsaux(1, j) + Ptsaux(2, j) < zero) then
+              temp = Ptsaux(1, j)
+              Ptsaux(1, j) = Ptsaux(2, j)
+              Ptsaux(2, j) = temp
+          end if
+          if (DABS(Ptsaux(2, j)) < half * DABS(Ptsaux(1, j))) Ptsaux(2, j)    &
+      &        = half * Ptsaux(1, j)
+          do i = 1, Ndim
+              Bmat(i, j) = zero
+          end do
+      end do
       fbase = Fval(Kopt)
 !
 !     Set the identifiers of the artificial interpolation points that are
@@ -169,45 +166,45 @@
 !     nonzero elements of BMAT and ZMAT.
 !
       Ptsid(1) = sfrac
-      DO j = 1 , N
-         jp = j + 1
-         jpn = jp + N
-         Ptsid(jp) = DFLOAT(j) + sfrac
-         IF ( jpn<=Npt ) THEN
-            Ptsid(jpn) = DFLOAT(j)/DFLOAT(np) + sfrac
-            temp = one/(Ptsaux(1,j)-Ptsaux(2,j))
-            Bmat(jp,j) = -temp + one/Ptsaux(1,j)
-            Bmat(jpn,j) = temp + one/Ptsaux(2,j)
-            Bmat(1,j) = -Bmat(jp,j) - Bmat(jpn,j)
-            Zmat(1,j) = DSQRT(2.0D0)/DABS(Ptsaux(1,j)*Ptsaux(2,j))
-            Zmat(jp,j) = Zmat(1,j)*Ptsaux(2,j)*temp
-            Zmat(jpn,j) = -Zmat(1,j)*Ptsaux(1,j)*temp
-         ELSE
-            Bmat(1,j) = -one/Ptsaux(1,j)
-            Bmat(jp,j) = one/Ptsaux(1,j)
-            Bmat(j+Npt,j) = -half*Ptsaux(1,j)**2
-         ENDIF
-      ENDDO
+      do j = 1, N
+          jp = j + 1
+          jpn = jp + N
+          Ptsid(jp) = DFLOAT(j) + sfrac
+          if (jpn <= Npt) then
+              Ptsid(jpn) = DFLOAT(j) / DFLOAT(np) + sfrac
+              temp = one / (Ptsaux(1, j) - Ptsaux(2, j))
+              Bmat(jp, j) = -temp + one / Ptsaux(1, j)
+              Bmat(jpn, j) = temp + one / Ptsaux(2, j)
+              Bmat(1, j) = -Bmat(jp, j) - Bmat(jpn, j)
+              Zmat(1, j) = DSQRT(2.0D0) / DABS(Ptsaux(1, j) * Ptsaux(2, j))
+              Zmat(jp, j) = Zmat(1, j) * Ptsaux(2, j) * temp
+              Zmat(jpn, j) = -Zmat(1, j) * Ptsaux(1, j) * temp
+          else
+              Bmat(1, j) = -one / Ptsaux(1, j)
+              Bmat(jp, j) = one / Ptsaux(1, j)
+              Bmat(j + Npt, j) = -half * Ptsaux(1, j)**2
+          end if
+      end do
 !
 !     Set any remaining identifiers with their nonzero elements of ZMAT.
 !
-      IF ( Npt>=N+np ) THEN
-         DO k = 2*np , Npt
+      if (Npt >= N + np) then
+          do k = 2 * np, Npt
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          IW=(DFLOAT(K-NP)-HALF)/DFLOAT(N)
-            iw = INT((DFLOAT(k-np)-half)/DFLOAT(N))
+              iw = int((DFLOAT(k - np) - half) / DFLOAT(N))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            ip = k - np - iw*N
-            iq = ip + iw
-            IF ( iq>N ) iq = iq - N
-            Ptsid(k) = DFLOAT(ip) + DFLOAT(iq)/DFLOAT(np) + sfrac
-            temp = one/(Ptsaux(1,ip)*Ptsaux(1,iq))
-            Zmat(1,k-np) = temp
-            Zmat(ip+1,k-np) = -temp
-            Zmat(iq+1,k-np) = -temp
-            Zmat(k,k-np) = temp
-         ENDDO
-      ENDIF
+              ip = k - np - iw * N
+              iq = ip + iw
+              if (iq > N) iq = iq - N
+              Ptsid(k) = DFLOAT(ip) + DFLOAT(iq) / DFLOAT(np) + sfrac
+              temp = one / (Ptsaux(1, ip) * Ptsaux(1, iq))
+              Zmat(1, k - np) = temp
+              Zmat(ip + 1, k - np) = -temp
+              Zmat(iq + 1, k - np) = -temp
+              Zmat(k, k - np) = temp
+          end do
+      end if
       nrem = Npt
       kold = 1
       knew = Kopt
@@ -215,52 +212,52 @@
 !     Reorder the provisional points in the way that exchanges PTSID(KOLD)
 !     with PTSID(KNEW).
 !
- 100  DO j = 1 , N
-         temp = Bmat(kold,j)
-         Bmat(kold,j) = Bmat(knew,j)
-         Bmat(knew,j) = temp
-      ENDDO
-      DO j = 1 , nptm
-         temp = Zmat(kold,j)
-         Zmat(kold,j) = Zmat(knew,j)
-         Zmat(knew,j) = temp
-      ENDDO
+100   do j = 1, N
+          temp = Bmat(kold, j)
+          Bmat(kold, j) = Bmat(knew, j)
+          Bmat(knew, j) = temp
+      end do
+      do j = 1, nptm
+          temp = Zmat(kold, j)
+          Zmat(kold, j) = Zmat(knew, j)
+          Zmat(knew, j) = temp
+      end do
       Ptsid(kold) = Ptsid(knew)
       Ptsid(knew) = zero
-      W(Ndim+knew) = zero
+      W(Ndim + knew) = zero
       nrem = nrem - 1
-      IF ( knew/=Kopt ) THEN
-         temp = Vlag(kold)
-         Vlag(kold) = Vlag(knew)
-         Vlag(knew) = temp
+      if (knew /= Kopt) then
+          temp = Vlag(kold)
+          Vlag(kold) = Vlag(knew)
+          Vlag(knew) = temp
 !
 !     Update the BMAT and ZMAT matrices so that the status of the KNEW-th
 !     interpolation point can be changed from provisional to original. The
 !     branch to label 350 occurs if all the original points are reinstated.
 !     The nonnegative values of W(NDIM+K) are required in the search below.
 !
-         CALL UPDATE(N,Npt,Bmat,Zmat,Ndim,Vlag,beta,denom,knew,W)
-         IF ( nrem==0 ) GOTO 99999
-         DO k = 1 , Npt
-            W(Ndim+k) = DABS(W(Ndim+k))
-         ENDDO
-      ENDIF
-      DO
+          call UPDATE(N, Npt, Bmat, Zmat, Ndim, Vlag, beta, denom, knew, W)
+          if (nrem == 0) goto 99999
+          do k = 1, Npt
+              W(Ndim + k) = DABS(W(Ndim + k))
+          end do
+      end if
+      do
 !
 !     Pick the index KNEW of an original interpolation point that has not
 !     yet replaced one of the provisional interpolation points, giving
 !     attention to the closeness to XOPT and to previous tries with KNEW.
 !
-         dsqmin = zero
-         DO k = 1 , Npt
-            IF ( W(Ndim+k)>zero ) THEN
-               IF ( dsqmin==zero .OR. W(Ndim+k)<dsqmin ) THEN
-                  knew = k
-                  dsqmin = W(Ndim+k)
-               ENDIF
-            ENDIF
-         ENDDO
-         IF ( dsqmin==zero ) THEN
+          dsqmin = zero
+          do k = 1, Npt
+              if (W(Ndim + k) > zero) then
+                  if (dsqmin == zero .or. W(Ndim + k) < dsqmin) then
+                      knew = k
+                      dsqmin = W(Ndim + k)
+                  end if
+              end if
+          end do
+          if (dsqmin == zero) then
 !
 !     When label 260 is reached, all the final positions of the interpolation
 !     points have been chosen although any changes have not been included yet
@@ -270,118 +267,118 @@
 !     by putting the new point in XPT(KPT,.) and by setting PQ(KPT) to zero,
 !     except that a RETURN occurs if MAXFUN prohibits another value of F.
 !
-            DO kpt = 1 , Npt
-               IF ( Ptsid(kpt)==zero ) CYCLE
-               IF ( Nf>=Maxfun ) THEN
-                  Nf = -1
-                  EXIT
-               ENDIF
-               ih = 0
-               DO j = 1 , N
-                  W(j) = Xpt(kpt,j)
-                  Xpt(kpt,j) = zero
-                  temp = Pq(kpt)*W(j)
-                  DO i = 1 , j
-                     ih = ih + 1
-                     Hq(ih) = Hq(ih) + temp*W(i)
-                  ENDDO
-               ENDDO
-               Pq(kpt) = zero
+              do kpt = 1, Npt
+                  if (Ptsid(kpt) == zero) cycle
+                  if (Nf >= Maxfun) then
+                      Nf = -1
+                      exit
+                  end if
+                  ih = 0
+                  do j = 1, N
+                      W(j) = Xpt(kpt, j)
+                      Xpt(kpt, j) = zero
+                      temp = Pq(kpt) * W(j)
+                      do i = 1, j
+                          ih = ih + 1
+                          Hq(ih) = Hq(ih) + temp * W(i)
+                      end do
+                  end do
+                  Pq(kpt) = zero
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IP=PTSID(KPT)
 !      IQ=DFLOAT(NP)*PTSID(KPT)-DFLOAT(IP*NP)
-               ip = INT(Ptsid(kpt))
-               iq = INT(DFLOAT(np)*Ptsid(kpt)-DFLOAT(ip*np))
+                  ip = int(Ptsid(kpt))
+                  iq = int(DFLOAT(np) * Ptsid(kpt) - DFLOAT(ip * np))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               IF ( ip>0 ) THEN
-                  xp = Ptsaux(1,ip)
-                  Xpt(kpt,ip) = xp
-               ENDIF
-               IF ( iq>0 ) THEN
-                  xq = Ptsaux(1,iq)
-                  IF ( ip==0 ) xq = Ptsaux(2,iq)
-                  Xpt(kpt,iq) = xq
-               ENDIF
+                  if (ip > 0) then
+                      xp = Ptsaux(1, ip)
+                      Xpt(kpt, ip) = xp
+                  end if
+                  if (iq > 0) then
+                      xq = Ptsaux(1, iq)
+                      if (ip == 0) xq = Ptsaux(2, iq)
+                      Xpt(kpt, iq) = xq
+                  end if
 !
 !     Set VQUAD to the value of the current model at the new point.
 !
-               vquad = fbase
-               IF ( ip>0 ) THEN
-                  ihp = (ip+ip*ip)/2
-                  vquad = vquad + xp*(Gopt(ip)+half*xp*Hq(ihp))
-               ENDIF
-               IF ( iq>0 ) THEN
-                  ihq = (iq+iq*iq)/2
-                  vquad = vquad + xq*(Gopt(iq)+half*xq*Hq(ihq))
-                  IF ( ip>0 ) THEN
-                     iw = MAX0(ihp,ihq) - IABS(ip-iq)
-                     vquad = vquad + xp*xq*Hq(iw)
-                  ENDIF
-               ENDIF
-               DO k = 1 , Npt
-                  temp = zero
-                  IF ( ip>0 ) temp = temp + xp*Xpt(k,ip)
-                  IF ( iq>0 ) temp = temp + xq*Xpt(k,iq)
-                  vquad = vquad + half*Pq(k)*temp*temp
-               ENDDO
+                  vquad = fbase
+                  if (ip > 0) then
+                      ihp = (ip + ip * ip) / 2
+                      vquad = vquad + xp * (Gopt(ip) + half * xp * Hq(ihp))
+                  end if
+                  if (iq > 0) then
+                      ihq = (iq + iq * iq) / 2
+                      vquad = vquad + xq * (Gopt(iq) + half * xq * Hq(ihq))
+                      if (ip > 0) then
+                          iw = MAX0(ihp, ihq) - IABS(ip - iq)
+                          vquad = vquad + xp * xq * Hq(iw)
+                      end if
+                  end if
+                  do k = 1, Npt
+                      temp = zero
+                      if (ip > 0) temp = temp + xp * Xpt(k, ip)
+                      if (iq > 0) temp = temp + xq * Xpt(k, iq)
+                      vquad = vquad + half * Pq(k) * temp * temp
+                  end do
 !
 !     Calculate F at the new interpolation point, and set DIFF to the factor
 !     that is going to multiply the KPT-th Lagrange function when the model
 !     is updated to provide interpolation to the new function value.
 !
-               DO i = 1 , N
-                  W(i) = DMIN1(DMAX1(Xl(i),Xbase(i)+Xpt(kpt,i)),Xu(i))
-                  IF ( Xpt(kpt,i)==Sl(i) ) W(i) = Xl(i)
-                  IF ( Xpt(kpt,i)==Su(i) ) W(i) = Xu(i)
-               ENDDO
-               Nf = Nf + 1
-               CALL CALFUN(N,W,F)
-               IF ( Iprint==3 ) THEN
-                  PRINT 99001 , Nf , F , (W(i),i=1,N)
-99001             FORMAT (/4X,'Function number',I6,'    F =',1PD18.10,  &
-     &                    '    The corresponding X is:'/(2X,5D15.6))
-               ENDIF
-               Fval(kpt) = F
-               IF ( F<Fval(Kopt) ) Kopt = kpt
-               diff = F - vquad
+                  do i = 1, N
+                      W(i) = DMIN1(DMAX1(Xl(i), Xbase(i) + Xpt(kpt, i)), Xu(i))
+                      if (Xpt(kpt, i) == Sl(i)) W(i) = Xl(i)
+                      if (Xpt(kpt, i) == Su(i)) W(i) = Xu(i)
+                  end do
+                  Nf = Nf + 1
+                  call CALFUN(N, W, F)
+                  if (Iprint == 3) then
+                      print 99001, Nf, F, (W(i), i=1, N)
+99001                 format(/4X, 'Function number', I6, '    F =', 1PD18.10,  &
+         &                    '    The corresponding X is:'/(2X, 5D15.6))
+                  end if
+                  Fval(kpt) = F
+                  if (F < Fval(Kopt)) Kopt = kpt
+                  diff = F - vquad
 !
 !     Update the quadratic model. The RETURN from the subroutine occurs when
 !     all the new interpolation points are included in the model.
 !
-               DO i = 1 , N
-                  Gopt(i) = Gopt(i) + diff*Bmat(kpt,i)
-               ENDDO
-               DO k = 1 , Npt
-                  sum = zero
-                  DO j = 1 , nptm
-                     sum = sum + Zmat(k,j)*Zmat(kpt,j)
-                  ENDDO
-                  temp = diff*sum
-                  IF ( Ptsid(k)==zero ) THEN
-                     Pq(k) = Pq(k) + temp
-                  ELSE
+                  do i = 1, N
+                      Gopt(i) = Gopt(i) + diff * Bmat(kpt, i)
+                  end do
+                  do k = 1, Npt
+                      sum = zero
+                      do j = 1, nptm
+                          sum = sum + Zmat(k, j) * Zmat(kpt, j)
+                      end do
+                      temp = diff * sum
+                      if (Ptsid(k) == zero) then
+                          Pq(k) = Pq(k) + temp
+                      else
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          IP=PTSID(K)
 !          IQ=DFLOAT(NP)*PTSID(K)-DFLOAT(IP*NP)
-                     ip = INT(Ptsid(k))
-                     iq = INT(DFLOAT(np)*Ptsid(k)-DFLOAT(ip*np))
+                          ip = int(Ptsid(k))
+                          iq = int(DFLOAT(np) * Ptsid(k) - DFLOAT(ip * np))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                     ihq = (iq*iq+iq)/2
-                     IF ( ip==0 ) THEN
-                        Hq(ihq) = Hq(ihq) + temp*Ptsaux(2,iq)**2
-                     ELSE
-                        ihp = (ip*ip+ip)/2
-                        Hq(ihp) = Hq(ihp) + temp*Ptsaux(1,ip)**2
-                        IF ( iq>0 ) THEN
-                           Hq(ihq) = Hq(ihq) + temp*Ptsaux(1,iq)**2
-                           iw = MAX0(ihp,ihq) - IABS(iq-ip)
-                           Hq(iw) = Hq(iw) + temp*Ptsaux(1,ip)          &
-     &                              *Ptsaux(1,iq)
-                        ENDIF
-                     ENDIF
-                  ENDIF
-               ENDDO
-               Ptsid(kpt) = zero
+                          ihq = (iq * iq + iq) / 2
+                          if (ip == 0) then
+                              Hq(ihq) = Hq(ihq) + temp * Ptsaux(2, iq)**2
+                          else
+                              ihp = (ip * ip + ip) / 2
+                              Hq(ihp) = Hq(ihp) + temp * Ptsaux(1, ip)**2
+                              if (iq > 0) then
+                                  Hq(ihq) = Hq(ihq) + temp * Ptsaux(1, iq)**2
+                                  iw = MAX0(ihp, ihq) - IABS(iq - ip)
+                                  Hq(iw) = Hq(iw) + temp * Ptsaux(1, ip)          &
+                                          &                              * Ptsaux(1, iq)
+                              end if
+                          end if
+                      end if
+                  end do
+                  Ptsid(kpt) = zero
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !     By Tom (on 03-06-2019):
 !     If a NaN or an infinite value has been reached during the
@@ -389,113 +386,113 @@
 !     all the parameters, not to raise an exception. KOPT is set to KPT
 !     to check in BOBYQB weather FVAL(KOPT) is NaN or infinite value or
 !     not.
-               IF ( F/=F .OR. F>almost_infinity ) EXIT
+                  if (F /= F .or. F > almost_infinity) exit
 !     By Tom (on 04-06-2019):
 !     If the target function value is reached, the loop exit and KOPT is
 !     set to KPT to check in BOBYQB weather FVAL(KOPT) .LE. FTARGET
-               IF ( F<=Ftarget ) EXIT
+                  if (F <= Ftarget) exit
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            ENDDO
-            EXIT
-         ELSE
+              end do
+              exit
+          else
 !
 !     Form the W-vector of the chosen original interpolation point.
 !
-            DO j = 1 , N
-               W(Npt+j) = Xpt(knew,j)
-            ENDDO
-            DO k = 1 , Npt
-               sum = zero
-               IF ( k==Kopt ) THEN
-               ELSEIF ( Ptsid(k)==zero ) THEN
-                  DO j = 1 , N
-                     sum = sum + W(Npt+j)*Xpt(k,j)
-                  ENDDO
-               ELSE
+              do j = 1, N
+                  W(Npt + j) = Xpt(knew, j)
+              end do
+              do k = 1, Npt
+                  sum = zero
+                  if (k == Kopt) then
+                  elseif (Ptsid(k) == zero) then
+                      do j = 1, N
+                          sum = sum + W(Npt + j) * Xpt(k, j)
+                      end do
+                  else
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          IP=PTSID(K)
-                  ip = INT(Ptsid(k))
+                      ip = int(Ptsid(k))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                  IF ( ip>0 ) sum = W(Npt+ip)*Ptsaux(1,ip)
+                      if (ip > 0) sum = W(Npt + ip) * Ptsaux(1, ip)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          IQ=DFLOAT(NP)*PTSID(K)-DFLOAT(IP*NP)
-                  iq = INT(DFLOAT(np)*Ptsid(k)-DFLOAT(ip*np))
+                      iq = int(DFLOAT(np) * Ptsid(k) - DFLOAT(ip * np))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                  IF ( iq>0 ) THEN
-                     iw = 1
-                     IF ( ip==0 ) iw = 2
-                     sum = sum + W(Npt+iq)*Ptsaux(iw,iq)
-                  ENDIF
-               ENDIF
-               W(k) = half*sum*sum
-            ENDDO
+                      if (iq > 0) then
+                          iw = 1
+                          if (ip == 0) iw = 2
+                          sum = sum + W(Npt + iq) * Ptsaux(iw, iq)
+                      end if
+                  end if
+                  W(k) = half * sum * sum
+              end do
 !
 !     Calculate VLAG and BETA for the required updating of the H matrix if
 !     XPT(KNEW,.) is reinstated in the set of interpolation points.
 !
-            DO k = 1 , Npt
-               sum = zero
-               DO j = 1 , N
-                  sum = sum + Bmat(k,j)*W(Npt+j)
-               ENDDO
-               Vlag(k) = sum
-            ENDDO
-            beta = zero
-            DO j = 1 , nptm
-               sum = zero
-               DO k = 1 , Npt
-                  sum = sum + Zmat(k,j)*W(k)
-               ENDDO
-               beta = beta - sum*sum
-               DO k = 1 , Npt
-                  Vlag(k) = Vlag(k) + sum*Zmat(k,j)
-               ENDDO
-            ENDDO
-            bsum = zero
-            distsq = zero
-            DO j = 1 , N
-               sum = zero
-               DO k = 1 , Npt
-                  sum = sum + Bmat(k,j)*W(k)
-               ENDDO
-               jp = j + Npt
-               bsum = bsum + sum*W(jp)
-               DO ip = Npt + 1 , Ndim
-                  sum = sum + Bmat(ip,j)*W(ip)
-               ENDDO
-               bsum = bsum + sum*W(jp)
-               Vlag(jp) = sum
-               distsq = distsq + Xpt(knew,j)**2
-            ENDDO
-            beta = half*distsq*distsq + beta - bsum
-            Vlag(Kopt) = Vlag(Kopt) + one
+              do k = 1, Npt
+                  sum = zero
+                  do j = 1, N
+                      sum = sum + Bmat(k, j) * W(Npt + j)
+                  end do
+                  Vlag(k) = sum
+              end do
+              beta = zero
+              do j = 1, nptm
+                  sum = zero
+                  do k = 1, Npt
+                      sum = sum + Zmat(k, j) * W(k)
+                  end do
+                  beta = beta - sum * sum
+                  do k = 1, Npt
+                      Vlag(k) = Vlag(k) + sum * Zmat(k, j)
+                  end do
+              end do
+              bsum = zero
+              distsq = zero
+              do j = 1, N
+                  sum = zero
+                  do k = 1, Npt
+                      sum = sum + Bmat(k, j) * W(k)
+                  end do
+                  jp = j + Npt
+                  bsum = bsum + sum * W(jp)
+                  do ip = Npt + 1, Ndim
+                      sum = sum + Bmat(ip, j) * W(ip)
+                  end do
+                  bsum = bsum + sum * W(jp)
+                  Vlag(jp) = sum
+                  distsq = distsq + Xpt(knew, j)**2
+              end do
+              beta = half * distsq * distsq + beta - bsum
+              Vlag(Kopt) = Vlag(Kopt) + one
 !
 !     KOLD is set to the index of the provisional interpolation point that is
 !     going to be deleted to make way for the KNEW-th original interpolation
 !     point. The choice of KOLD is governed by the avoidance of a small value
 !     of the denominator in the updating calculation of UPDATE.
 !
-            denom = zero
-            vlmxsq = zero
-            DO k = 1 , Npt
-               IF ( Ptsid(k)/=zero ) THEN
-                  hdiag = zero
-                  DO j = 1 , nptm
-                     hdiag = hdiag + Zmat(k,j)**2
-                  ENDDO
-                  den = beta*hdiag + Vlag(k)**2
-                  IF ( den>denom ) THEN
-                     kold = k
-                     denom = den
-                  ENDIF
-               ENDIF
-               vlmxsq = DMAX1(vlmxsq,Vlag(k)**2)
-            ENDDO
-            IF ( denom<=1.0D-2*vlmxsq ) THEN
-               W(Ndim+knew) = -W(Ndim+knew) - winc
-               CYCLE
-            ENDIF
-            GOTO 100
-         ENDIF
-      ENDDO
-99999 END SUBROUTINE RESCUE
+              denom = zero
+              vlmxsq = zero
+              do k = 1, Npt
+                  if (Ptsid(k) /= zero) then
+                      hdiag = zero
+                      do j = 1, nptm
+                          hdiag = hdiag + Zmat(k, j)**2
+                      end do
+                      den = beta * hdiag + Vlag(k)**2
+                      if (den > denom) then
+                          kold = k
+                          denom = den
+                      end if
+                  end if
+                  vlmxsq = DMAX1(vlmxsq, Vlag(k)**2)
+              end do
+              if (denom <= 1.0D-2 * vlmxsq) then
+                  W(Ndim + knew) = -W(Ndim + knew) - winc
+                  cycle
+              end if
+              goto 100
+          end if
+      end do
+99999 end subroutine RESCUE
