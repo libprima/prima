@@ -1,53 +1,38 @@
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! This is the intersection-form version of bobyqa.f90.
-! The file is generated automatically and is NOT intended to be readable.
-!
-! In the intersection form, each continued line has an ampersand at column
-! 73, and each continuation line has an ampersand at column 6. A Fortran
-! file in such a form can be compiled both as fixed form and as free form.
-!
-! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
-!
-! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 25-May-2021.
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
 !*==bobyqa.f90  processed by SPAG 7.50RE at 17:55 on 25 May 2021
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !     1  MAXFUN,W)
-            SUBROUTINE BOBYQA(N,Npt,X,Xl,Xu,Rhobeg,Rhoend,Iprint,Maxfun,&
-     &W,F, Info,Ftarget)
+      SUBROUTINE BOBYQA(N,Npt,X,Xl,Xu,Rhobeg,Rhoend,Iprint,Maxfun,W,F,  &
+     &                  Info,Ftarget)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IMPLICIT REAL*8*8 (A-H,O-Z)
-            USE F77KINDS
-            USE S_BOBYQB
-            IMPLICIT NONE
+      USE F77KINDS                        
+      USE S_BOBYQB
+      IMPLICIT NONE
 !*--BOBYQA12
 !*++
 !*++ Dummy argument declarations rewritten by SPAG
 !*++
-            INTEGER :: N
-            INTEGER :: Npt
-            REAL*8 , INTENT(INOUT) , DIMENSION(*) :: X
-            REAL*8 , DIMENSION(*) :: Xl
-            REAL*8 , DIMENSION(*) :: Xu
-            REAL*8 , INTENT(INOUT) :: Rhobeg
-            REAL*8 , INTENT(INOUT) :: Rhoend
-            INTEGER :: Iprint
-            INTEGER :: Maxfun
-            REAL*8 , INTENT(INOUT) , DIMENSION(*) :: W
-            REAL*8 :: F
-            INTEGER :: Info
-            REAL*8 :: Ftarget
+      INTEGER :: N
+      INTEGER :: Npt
+      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: X
+      REAL*8 , DIMENSION(*) :: Xl
+      REAL*8 , DIMENSION(*) :: Xu
+      REAL*8 , INTENT(INOUT) :: Rhobeg
+      REAL*8 , INTENT(INOUT) :: Rhoend
+      INTEGER :: Iprint
+      INTEGER :: Maxfun
+      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: W
+      REAL*8 :: F
+      INTEGER :: Info
+      REAL*8 :: Ftarget
 !*++
 !*++ Local variable declarations rewritten by SPAG
 !*++
-            INTEGER :: ibmat , id , ifv , igo , ihq , ipq , isl , isu , &
-     &ivl , iw , ixa , ixb , ixn , ixo , ixp , izmat , j , jsl , jsu , n&
-     &dim , np
-            REAL*8 :: temp , zero
+      INTEGER :: ibmat , id , ifv , igo , ihq , ipq , isl , isu , ivl , &
+     &           iw , ixa , ixb , ixn , ixo , ixp , izmat , j , jsl ,   &
+     &           jsu , ndim , np
+      REAL*8 :: temp , zero
 !*++
 !*++ End of declarations rewritten by SPAG
 !*++
@@ -116,39 +101,39 @@
 !
 !     Return if the value of NPT is unacceptable.
 !
-            np = N + 1
-            IF ( Npt<N+2 .OR. Npt>((N+2)*np)/2 ) THEN
-               IF ( Iprint>0 ) PRINT 99001
-      99001 FORMAT (/4X,'Return from BOBYQA because NPT is not in', ' th&
-     &e required interval')
+      np = N + 1
+      IF ( Npt<N+2 .OR. Npt>((N+2)*np)/2 ) THEN
+         IF ( Iprint>0 ) PRINT 99001
+99001    FORMAT (/4X,'Return from BOBYQA because NPT is not in',        &
+     &           ' the required interval')
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-               Info = 5
+         Info = 5
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               GOTO 99999
-            ENDIF
+         GOTO 99999
+      ENDIF
 !
 !     Partition the working space array, so that different parts of it can
 !     be treated separately during the calculation of BOBYQB. The partition
 !     requires the first (NPT+2)*(NPT+N)+3*N*(N+5)/2 elements of W plus the
 !     space that is taken by the last array in the argument list of BOBYQB.
 !
-            ndim = Npt + N
-            ixb = 1
-            ixp = ixb + N
-            ifv = ixp + N*Npt
-            ixo = ifv + Npt
-            igo = ixo + N
-            ihq = igo + N
-            ipq = ihq + (N*np)/2
-            ibmat = ipq + Npt
-            izmat = ibmat + ndim*N
-            isl = izmat + Npt*(Npt-np)
-            isu = isl + N
-            ixn = isu + N
-            ixa = ixn + N
-            id = ixa + N
-            ivl = id + N
-            iw = ivl + ndim
+      ndim = Npt + N
+      ixb = 1
+      ixp = ixb + N
+      ifv = ixp + N*Npt
+      ixo = ifv + Npt
+      igo = ixo + N
+      ihq = igo + N
+      ipq = ihq + (N*np)/2
+      ibmat = ipq + Npt
+      izmat = ibmat + ndim*N
+      isl = izmat + Npt*(Npt-np)
+      isu = isl + N
+      ixn = isu + N
+      ixa = ixn + N
+      id = ixa + N
+      ivl = id + N
+      iw = ivl + ndim
 !
 !     Return if there is insufficient space between the bounds. Modify the
 !     initial X if necessary in order to avoid conflicts between the bounds
@@ -165,56 +150,57 @@
 ! If we set RHOBEG = MIN(XU-XL)/2 in the interfaces, then it may happen
 ! that RHOBEG > MIN(XU-XL)/2. That is why we do the following. After
 ! this, INFO=6 should never occur.
-            Rhobeg = MIN(0.5D0*(1.0D0-1.0D-5)*MINVAL(Xu(1:N)-Xl(1:N)),Rh&
-     &obeg)
+      Rhobeg = MIN(0.5D0*(1.0D0-1.0D-5)*MINVAL(Xu(1:N)-Xl(1:N)),Rhobeg)
 ! For the same reason, we ensure RHOEND <= RHOBEG by the following.
-            Rhoend = MIN(Rhobeg,Rhoend)
+      Rhoend = MIN(Rhobeg,Rhoend)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            zero = 0.0D0
-            DO j = 1 , N
-               temp = Xu(j) - Xl(j)
-               IF ( temp<Rhobeg+Rhobeg ) THEN
-                  IF ( Iprint>0 ) PRINT 99002
-      99002 FORMAT (/4X,'Return from BOBYQA because one of the', ' diffe&
-     &rences XU(I)-XL(I)'/6X, ' is less than 2*RHOBEG.')
+      zero = 0.0D0
+      DO j = 1 , N
+         temp = Xu(j) - Xl(j)
+         IF ( temp<Rhobeg+Rhobeg ) THEN
+            IF ( Iprint>0 ) PRINT 99002
+99002       FORMAT (/4X,'Return from BOBYQA because one of the',        &
+     &              ' differences XU(I)-XL(I)'/6X,                      &
+     &              ' is less than 2*RHOBEG.')
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-                  Info = 6
+            Info = 6
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                  GOTO 99999
-               ENDIF
-               jsl = isl + j - 1
-               jsu = jsl + N
-               W(jsl) = Xl(j) - X(j)
-               W(jsu) = Xu(j) - X(j)
-               IF ( W(jsl)>=-Rhobeg ) THEN
-                  IF ( W(jsl)>=zero ) THEN
-                     X(j) = Xl(j)
-                     W(jsl) = zero
-                     W(jsu) = temp
-                  ELSE
-                     X(j) = Xl(j) + Rhobeg
-                     W(jsl) = -Rhobeg
-                     W(jsu) = DMAX1(Xu(j)-X(j),Rhobeg)
-                  ENDIF
-               ELSEIF ( W(jsu)<=Rhobeg ) THEN
-                  IF ( W(jsu)<=zero ) THEN
-                     X(j) = Xu(j)
-                     W(jsl) = -temp
-                     W(jsu) = zero
-                  ELSE
-                     X(j) = Xu(j) - Rhobeg
-                     W(jsl) = DMIN1(Xl(j)-X(j),-Rhobeg)
-                     W(jsu) = Rhobeg
-                  ENDIF
-               ENDIF
-            ENDDO
+            GOTO 99999
+         ENDIF
+         jsl = isl + j - 1
+         jsu = jsl + N
+         W(jsl) = Xl(j) - X(j)
+         W(jsu) = Xu(j) - X(j)
+         IF ( W(jsl)>=-Rhobeg ) THEN
+            IF ( W(jsl)>=zero ) THEN
+               X(j) = Xl(j)
+               W(jsl) = zero
+               W(jsu) = temp
+            ELSE
+               X(j) = Xl(j) + Rhobeg
+               W(jsl) = -Rhobeg
+               W(jsu) = DMAX1(Xu(j)-X(j),Rhobeg)
+            ENDIF
+         ELSEIF ( W(jsu)<=Rhobeg ) THEN
+            IF ( W(jsu)<=zero ) THEN
+               X(j) = Xu(j)
+               W(jsl) = -temp
+               W(jsu) = zero
+            ELSE
+               X(j) = Xu(j) - Rhobeg
+               W(jsl) = DMIN1(Xl(j)-X(j),-Rhobeg)
+               W(jsu) = Rhobeg
+            ENDIF
+         ENDIF
+      ENDDO
 !
 !     Make the call of BOBYQB.
 !
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !     2  NDIM,W(ISL),W(ISU),W(IXN),W(IXA),W(ID),W(IVL),W(IW))
-            CALL BOBYQB(N,Npt,X,Xl,Xu,Rhobeg,Rhoend,Iprint,Maxfun,W(ixb)&
-     &, W(ixp),W(ifv),W(ixo),W(igo),W(ihq),W(ipq),W(ibmat), W(izmat),ndi&
-     &m,W(isl),W(isu),W(ixn),W(ixa),W(id),W(ivl) ,W(iw),F,Info,Ftarget)
+      CALL BOBYQB(N,Npt,X,Xl,Xu,Rhobeg,Rhoend,Iprint,Maxfun,W(ixb),     &
+     &            W(ixp),W(ifv),W(ixo),W(igo),W(ihq),W(ipq),W(ibmat),   &
+     &            W(izmat),ndim,W(isl),W(isu),W(ixn),W(ixa),W(id),W(ivl)&
+     &            ,W(iw),F,Info,Ftarget)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      99999 END SUBROUTINE BOBYQA
+99999 END SUBROUTINE BOBYQA

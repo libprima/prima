@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-May-2021.
+! on 25-May-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -22,7 +22,7 @@
 !               The Hong Kong Polytechnic University
 ! **********************************************************************
 !
-! Last Modified: Sunday, May 23, 2021 PM04:54:17
+! Last Modified: Sunday, May 23, 2021 PM09:27:33
 
 ! Remarks:
 !
@@ -75,9 +75,9 @@
       character(len=maxlen) :: data_type
 ! Integer zero used by the Fortran code
       integer(IK), parameter :: intZero = 0
-! Integer zero of type mwSize on the current platform
+! Integer zero used by MEX for sizes
       mwSize, parameter :: msZero = 0
-! Integer zero of type mwIndex on the current platform
+! Integer zero used by MEX for indices
       mwIndex, parameter :: miZero = 0
 ! The huge value that will be returned
       real(DP) :: hugeValue

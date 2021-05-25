@@ -1,3 +1,9 @@
+/************************************************************************/
+/*
+ * Coded by Zaikun Zhang (www.zhangzk.net) in July 2020.
+ *
+ * Last Modified: Mon 24 May 2021 04:21:00 PM HKT
+ */
 /*************************************************************************/
 /*
  * ppf.h defines the following preprocessing flags (the first value is default).
@@ -24,7 +30,8 @@
  *
  * Such a definition will work for __DEBUGGING__, but not for the flags that
  * depend on the compiler, for instance, __USE_IEEE_ARITHMETIC__.
-*/
+ *
+ */
 /*************************************************************************/
 
 

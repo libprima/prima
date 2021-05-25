@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-May-2021.
+! on 25-May-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -18,7 +18,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Sunday, May 23, 2021 PM05:06:56
+! Last Modified: Monday, May 24, 2021 PM03:06:48
 
       module newuob_mod
 

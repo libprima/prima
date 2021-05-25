@@ -1,963 +1,1041 @@
-      SUBROUTINE BOBYQB (N,NPT,X,XL,XU,RHOBEG,RHOEND,IPRINT,
-     1  MAXFUN,XBASE,XPT,FVAL,XOPT,GOPT,HQ,PQ,BMAT,ZMAT,NDIM,
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C     2  SL,SU,XNEW,XALT,D,VLAG,W)
-     2  SL,SU,XNEW,XALT,D,VLAG,W,F,INFO,FTARGET)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! This is the intersection-form version of bobyqb.f90.
+! The file is generated automatically and is NOT intended to be readable.
+!
+! In the intersection form, each continued line has an ampersand at column
+! 73, and each continuation line has an ampersand at column 6. A Fortran
+! file in such a form can be compiled both as fixed form and as free form.
+!
+! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
+!
+! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
+! on 25-May-2021.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+!*==bobyqb.f90  processed by SPAG 7.50RE at 17:55 on 25 May 2021
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!     2  SL,SU,XNEW,XALT,D,VLAG,W)
+            subroutine BOBYQB(N, Npt, X, Xl, Xu, Rhobeg, Rhoend, Iprint,&
+     & Maxfun, Xbase, Xpt, Fval, Xopt, Gopt, Hq, Pq, Bmat, Zmat, Ndim, S&
+     &l, Su, Xnew, Xalt, D, Vlag, W, F, Info, Ftarget)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C      IMPLICIT REAL*8 (A-H,O-Z)
-      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
-      IMPLICIT INTEGER (I-N)
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!      IMPLICIT REAL*8*8 (A-H,O-Z)
+            use F77KINDS
+            use S_ALTMOV
+            use S_CALFUN
+            use S_PRELIM
+            use S_RESCUE
+            use S_TRSBOX
+            use S_UPDATE
+            implicit none
+!*--BOBYQB18
+!*++
+!*++ Dummy argument declarations rewritten by SPAG
+!*++
+            integer :: N
+            integer :: Npt
+            real*8, intent(INOUT), dimension(*) :: X
+            real*8, dimension(*) :: Xl
+            real*8, dimension(*) :: Xu
+            real*8 :: Rhobeg
+            real*8, intent(IN) :: Rhoend
+            integer :: Iprint
+            integer :: Maxfun
+            real*8, intent(INOUT), dimension(*) :: Xbase
+            real*8, intent(INOUT), dimension(Npt, *) :: Xpt
+            real*8, intent(INOUT), dimension(*) :: Fval
+            real*8, intent(INOUT), dimension(*) :: Xopt
+            real*8, intent(INOUT), dimension(*) :: Gopt
+            real*8, intent(INOUT), dimension(*) :: Hq
+            real*8, intent(INOUT), dimension(*) :: Pq
+            real*8, intent(INOUT), dimension(Ndim, *) :: Bmat
+            real*8, dimension(Npt, *) :: Zmat
+            integer :: Ndim
+            real*8, intent(INOUT), dimension(*) :: Sl
+            real*8, intent(INOUT), dimension(*) :: Su
+            real*8, intent(INOUT), dimension(*) :: Xnew
+            real*8, dimension(*) :: Xalt
+            real*8, intent(INOUT), dimension(*) :: D
+            real*8, intent(INOUT), dimension(*) :: Vlag
+            real*8, intent(INOUT), dimension(*) :: W
+            real*8, intent(INOUT) :: F
+            integer, intent(OUT) :: Info
+            real*8 :: Ftarget
+!*++
+!*++ Local variable declarations rewritten by SPAG
+!*++
+            real*8 :: adelt, almost_infinity, alpha, bdtest, bdtol, beta&
+     &, biglsq, bsum, cauchy, crvmin, curv, delsq, delta, den, denom, de&
+     &nsav, diff, diffa, diffb, diffc, dist, distsq, dnorm, dsq, dx, err&
+     &big, fopt, fracsq, frhosq, gisq, gqsq, half, hdiag, one, pqold, ra&
+     &tio, rho, scaden, sum, suma, sumb, sumpq, sumw, sumz, temp, ten, t&
+     &enth, two, vquad, xoptsq, zero
+            integer :: i, ih, ip, itest, j, jj, jp, k, kbase, knew, kopt&
+     &, ksav, nf, nfsav, nh, np, nptm, nresc, ntrits
+!*++
+!*++ End of declarations rewritten by SPAG
+!*++
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DIMENSION X(*),XL(*),XU(*),XBASE(*),XPT(NPT,*),FVAL(*),
-     1  XOPT(*),GOPT(*),HQ(*),PQ(*),BMAT(NDIM,*),ZMAT(NPT,*),
-     2  SL(*),SU(*),XNEW(*),XALT(*),D(*),VLAG(*),W(*)
-C
-C     The arguments N, NPT, X, XL, XU, RHOBEG, RHOEND, IPRINT and MAXFUN
-C       are identical to the corresponding arguments in SUBROUTINE BOBYQA.
-C     XBASE holds a shift of origin that should reduce the contributions
-C       from rounding errors to values of the model and Lagrange functions.
-C     XPT is a two-dimensional array that holds the coordinates of the
-C       interpolation points relative to XBASE.
-C     FVAL holds the values of F at the interpolation points.
-C     XOPT is set to the displacement from XBASE of the trust region centre.
-C     GOPT holds the gradient of the quadratic model at XBASE+XOPT.
-C     HQ holds the explicit second derivatives of the quadratic model.
-C     PQ contains the parameters of the implicit second derivatives of the
-C       quadratic model.
-C     BMAT holds the last N columns of H.
-C     ZMAT holds the factorization of the leading NPT by NPT submatrix of H,
-C       this factorization being ZMAT times ZMAT^T, which provides both the
-C       correct rank and positive semi-definiteness.
-C     NDIM is the first dimension of BMAT and has the value NPT+N.
-C     SL and SU hold the differences XL-XBASE and XU-XBASE, respectively.
-C       All the components of every XOPT are going to satisfy the bounds
-C       SL(I) .LEQ. XOPT(I) .LEQ. SU(I), with appropriate equalities when
-C       XOPT is on a constraint boundary.
-C     XNEW is chosen by SUBROUTINE TRSBOX or ALTMOV. Usually XBASE+XNEW is the
-C       vector of variables for the next call of CALFUN. XNEW also satisfies
-C       the SL and SU constraints in the way that has just been mentioned.
-C     XALT is an alternative to XNEW, chosen by ALTMOV, that may replace XNEW
-C       in order to increase the denominator in the updating of UPDATE.
-C     D is reserved for a trial step from XOPT, which is usually XNEW-XOPT.
-C     VLAG contains the values of the Lagrange functions at a new point X.
-C       They are part of a product that requires VLAG to be of length NDIM.
-C     W is a one-dimensional array that is used for working space. Its length
-C       must be at least 3*NDIM = 3*(NPT+N).
-C
-C     Set some constants.
-C
-      HALF=0.5D0
-      ONE=1.0D0
-      TEN=10.0D0
-      TENTH=0.1D0
-      TWO=2.0D0
-      ZERO=0.0D0
-      NP=N+1
-      NPTM=NPT-NP
-      NH=(N*NP)/2
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC      
-      ALMOST_INFINITY=HUGE(0.0D0)/2.D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!      
-C
-C     The call of PRELIM sets the elements of XBASE, XPT, FVAL, GOPT, HQ, PQ,
-C     BMAT and ZMAT for the first iteration, with the corresponding values of
-C     of NF and KOPT, which are the number of calls of CALFUN so far and the
-C     index of the interpolation point at the trust region centre. Then the
-C     initial XOPT is set too. The branch to label 720 occurs if MAXFUN is
-C     less than NPT. GOPT will be updated if KOPT is different from KBASE.
-C
-      CALL PRELIM (N,NPT,X,XL,XU,RHOBEG,IPRINT,MAXFUN,XBASE,XPT,
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C     1  FVAL,GOPT,HQ,PQ,BMAT,ZMAT,NDIM,SL,SU,NF,KOPT)
-     1  FVAL,GOPT,HQ,PQ,BMAT,ZMAT,NDIM,SL,SU,NF,KOPT,F,FTARGET)
+!
+!     The arguments N, NPT, X, XL, XU, RHOBEG, RHOEND, IPRINT and MAXFUN
+!       are identical to the corresponding arguments in SUBROUTINE BOBYQA.
+!     XBASE holds a shift of origin that should reduce the contributions
+!       from rounding errors to values of the model and Lagrange functions.
+!     XPT is a two-dimensional array that holds the coordinates of the
+!       interpolation points relative to XBASE.
+!     FVAL holds the values of F at the interpolation points.
+!     XOPT is set to the displacement from XBASE of the trust region centre.
+!     GOPT holds the gradient of the quadratic model at XBASE+XOPT.
+!     HQ holds the explicit second derivatives of the quadratic model.
+!     PQ contains the parameters of the implicit second derivatives of the
+!       quadratic model.
+!     BMAT holds the last N columns of H.
+!     ZMAT holds the factorization of the leading NPT by NPT submatrix of H,
+!       this factorization being ZMAT times ZMAT^T, which provides both the
+!       correct rank and positive semi-definiteness.
+!     NDIM is the first dimension of BMAT and has the value NPT+N.
+!     SL and SU hold the differences XL-XBASE and XU-XBASE, respectively.
+!       All the components of every XOPT are going to satisfy the bounds
+!       SL(I) .LEQ. XOPT(I) .LEQ. SU(I), with appropriate equalities when
+!       XOPT is on a constraint boundary.
+!     XNEW is chosen by SUBROUTINE TRSBOX or ALTMOV. Usually XBASE+XNEW is the
+!       vector of variables for the next call of CALFUN. XNEW also satisfies
+!       the SL and SU constraints in the way that has just been mentioned.
+!     XALT is an alternative to XNEW, chosen by ALTMOV, that may replace XNEW
+!       in order to increase the denominator in the updating of UPDATE.
+!     D is reserved for a trial step from XOPT, which is usually XNEW-XOPT.
+!     VLAG contains the values of the Lagrange functions at a new point X.
+!       They are part of a product that requires VLAG to be of length NDIM.
+!     W is a one-dimensional array that is used for working space. Its length
+!       must be at least 3*NDIM = 3*(NPT+N).
+!
+!     Set some constants.
+!
+            half = 0.5D0
+            one = 1.0D0
+            ten = 10.0D0
+            tenth = 0.1D0
+            two = 2.0D0
+            zero = 0.0D0
+            np = N + 1
+            nptm = Npt - np
+            nh = (N * np) / 2
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+            almost_infinity = huge(0.0D0) / 2.D0
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!     The call of PRELIM sets the elements of XBASE, XPT, FVAL, GOPT, HQ, PQ,
+!     BMAT and ZMAT for the first iteration, with the corresponding values of
+!     of NF and KOPT, which are the number of calls of CALFUN so far and the
+!     index of the interpolation point at the trust region centre. Then the
+!     initial XOPT is set too. The branch to label 720 occurs if MAXFUN is
+!     less than NPT. GOPT will be updated if KOPT is different from KBASE.
+!
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!     1  FVAL,GOPT,HQ,PQ,BMAT,ZMAT,NDIM,SL,SU,NF,KOPT)
+            call PRELIM(N, Npt, X, Xl, Xu, Rhobeg, Iprint, Maxfun, Xbase&
+     &, Xpt, Fval, Gopt, Hq, Pq, Bmat, Zmat, Ndim, Sl, Su, nf, kopt, F, &
+     &Ftarget)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      XOPTSQ=ZERO
-      DO I=1,N
-          XOPT(I)=XPT(KOPT,I)
-          XOPTSQ=XOPTSQ+XOPT(I)**2
-      END DO
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C Zaikun 2019-08-29: FSAVE is not needed any more. See line number 720.
-C      FSAVE=FVAL(1)
+            xoptsq = zero
+            do i = 1, N
+                Xopt(i) = Xpt(kopt, i)
+                xoptsq = xoptsq + Xopt(i)**2
+            end do
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+! Zaikun 2019-08-29: FSAVE is not needed any more. See line number 720.
+!      FSAVE=FVAL(1)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C     By Tom/Zaikun (on 04-06-2019/07-06-2019):
-      IF (F /= F .OR. F > ALMOST_INFINITY) THEN
-          INFO=-2
-          GOTO 720
-      END IF
-C     By Tom (on 04-06-2019):
-C     If F reached the target function, PRELIM will stop and BOBYQB
-C     should stop here.
-      IF (F <= FTARGET) THEN
-          INFO=1
-          GOTO 736
-      END IF
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!     By Tom/Zaikun (on 04-06-2019/07-06-2019):
+            if (F /= F .or. F > almost_infinity) then
+                Info = -2
+                goto 1000
+            end if
+!     By Tom (on 04-06-2019):
+!     If F reached the target function, PRELIM will stop and BOBYQB
+!     should stop here.
+            if (F <= Ftarget) then
+                Info = 1
+                goto 1100
+            end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      IF (NF < NPT) THEN
-          IF (IPRINT > 0) PRINT 390
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-          INFO=3
+            if (nf < Npt) then
+                if (Iprint > 0) print 99007
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+                Info = 3
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          GOTO 720
-      END IF
-      KBASE=1
-C
-C     Complete the settings that are required for the iterative procedure.
-C
-      RHO=RHOBEG
-      DELTA=RHO
-      NRESC=NF
-      NTRITS=0
-      DIFFA=ZERO
-      DIFFB=ZERO
-      ITEST=0
-      NFSAV=NF
-C
-C     Update GOPT if necessary before the first iteration and after each
-C     call of RESCUE that makes a call of CALFUN.
-C
-   20 IF (KOPT /= KBASE) THEN
-          IH=0
-          DO J=1,N
-              DO I=1,J
-                  IH=IH+1
-                  IF (I < J) GOPT(J)=GOPT(J)+HQ(IH)*XOPT(I)
-                  GOPT(I)=GOPT(I)+HQ(IH)*XOPT(J)
-              END DO
-          END DO
-          IF (NF > NPT) THEN
-              DO K=1,NPT
-                  TEMP=ZERO
-                  DO J=1,N
-                      TEMP=TEMP+XPT(K,J)*XOPT(J)
-                  END DO
-                  TEMP=PQ(K)*TEMP
-                  DO I=1,N
-                      GOPT(I)=GOPT(I)+TEMP*XPT(K,I)
-                  END DO
-              END DO
-          END IF
-      END IF
-C
-C     Generate the next point in the trust region that provides a small value
-C     of the quadratic model subject to the constraints on the variables.
-C     The integer NTRITS is set to the number "trust region" iterations that
-C     have occurred since the last "alternative" iteration. If the length
-C     of XNEW-XOPT is less than HALF*RHO, however, then there is a branch to
-C     label 650 or 680 with NTRITS=-1, instead of calculating F at XNEW.
-C
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C Zaikun 2019-08-29: For ill-conditioned problems, NaN may occur in the
-C models. In such a case, we terminate the code. Otherwise, the behavior
-C of TRBOX, ALTMOV, or RESCUE is not predictable, and Segmentation Fault or
-C infinite cycling may happen. This is because any equality/inequality
-C comparison involving NaN returns FALSE, which can lead to unintended
-C behavior of the code, including uninitialized indices.
-C
-C   60 CALL TRSBOX (N,NPT,XPT,XOPT,GOPT,HQ,PQ,SL,SU,DELTA,XNEW,D,
-   60 DO I = 1, N
-          IF (GOPT(I) /= GOPT(I)) THEN
-              INFO = -3
-              GOTO 720
-          END IF 
-      END DO
-      DO I = 1, NH
-          IF (HQ(I) /= HQ(I)) THEN
-              INFO = -3
-              GOTO 720
-          END IF 
-      END DO 
-      DO I = 1, NPT
-          IF (PQ(I) /= PQ(I)) THEN
-              INFO = -3
-              GOTO 720
-          END IF
-      END DO
-      CALL TRSBOX (N,NPT,XPT,XOPT,GOPT,HQ,PQ,SL,SU,DELTA,XNEW,D,
+                goto 1000
+            end if
+            kbase = 1
+!
+!     Complete the settings that are required for the iterative procedure.
+!
+            rho = Rhobeg
+            delta = rho
+            nresc = nf
+            ntrits = 0
+            diffa = zero
+            diffb = zero
+            itest = 0
+            nfsav = nf
+!
+!     Update GOPT if necessary before the first iteration and after each
+!     call of RESCUE that makes a call of CALFUN.
+!
+      100 if (kopt /= kbase) then
+                ih = 0
+                do j = 1, N
+                    do i = 1, j
+                        ih = ih + 1
+                        if (i < j) Gopt(j) = Gopt(j) + Hq(ih) * Xopt(i)
+                        Gopt(i) = Gopt(i) + Hq(ih) * Xopt(j)
+                    end do
+                end do
+                if (nf > Npt) then
+                    do k = 1, Npt
+                        temp = zero
+                        do j = 1, N
+                            temp = temp + Xpt(k, j) * Xopt(j)
+                        end do
+                        temp = Pq(k) * temp
+                        do i = 1, N
+                            Gopt(i) = Gopt(i) + temp * Xpt(k, i)
+                        end do
+                    end do
+                end if
+            end if
+!
+!     Generate the next point in the trust region that provides a small value
+!     of the quadratic model subject to the constraints on the variables.
+!     The integer NTRITS is set to the number "trust region" iterations that
+!     have occurred since the last "alternative" iteration. If the length
+!     of XNEW-XOPT is less than HALF*RHO, however, then there is a branch to
+!     label 650 or 680 with NTRITS=-1, instead of calculating F at XNEW.
+!
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+! Zaikun 2019-08-29: For ill-conditioned problems, NaN may occur in the
+! models. In such a case, we terminate the code. Otherwise, the behavior
+! of TRBOX, ALTMOV, or RESCUE is not predictable, and Segmentation Fault or
+! infinite cycling may happen. This is because any equality/inequality
+! comparison involving NaN returns FALSE, which can lead to unintended
+! behavior of the code, including uninitialized indices.
+!
+!   60 CALL TRSBOX (N,NPT,XPT,XOPT,GOPT,HQ,PQ,SL,SU,DELTA,XNEW,D,
+      200 do i = 1, N
+                if (Gopt(i) /= Gopt(i)) then
+                    Info = -3
+                    goto 1000
+                end if
+            end do
+            do i = 1, nh
+                if (Hq(i) /= Hq(i)) then
+                    Info = -3
+                    goto 1000
+                end if
+            end do
+            do i = 1, Npt
+                if (Pq(i) /= Pq(i)) then
+                    Info = -3
+                    goto 1000
+                end if
+            end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-     1  W,W(NP),W(NP+N),W(NP+2*N),W(NP+3*N),DSQ,CRVMIN)
-      DNORM=DMIN1(DELTA,DSQRT(DSQ))
-      IF (DNORM < HALF*RHO) THEN
-          NTRITS=-1
-          DISTSQ=(TEN*RHO)**2
-          IF (NF <= NFSAV+2) GOTO 650
-C
-C     The following choice between labels 650 and 680 depends on whether or
-C     not our work with the current RHO seems to be complete. Either RHO is
-C     decreased or termination occurs if the errors in the quadratic model at
-C     the last three interpolation points compare favourably with predictions
-C     of likely improvements to the model within distance HALF*RHO of XOPT.
-C
-          ERRBIG=DMAX1(DIFFA,DIFFB,DIFFC)
-          FRHOSQ=0.125D0*RHO*RHO
-          IF (CRVMIN > ZERO .AND. ERRBIG > FRHOSQ*CRVMIN)
-     1       GOTO 650
-          BDTOL=ERRBIG/RHO
-          DO J=1,N
-              BDTEST=BDTOL
-              IF (XNEW(J) == SL(J)) BDTEST=W(J)
-              IF (XNEW(J) == SU(J)) BDTEST=-W(J)
-              IF (BDTEST < BDTOL) THEN
-                  CURV=HQ((J+J*J)/2)
-                  DO K=1,NPT
-                      CURV=CURV+PQ(K)*XPT(K,J)**2
-                  END DO
-                  BDTEST=BDTEST+HALF*CURV*RHO
-                  IF (BDTEST < BDTOL) GOTO 650
-              END IF
-          END DO
-          GOTO 680
-      END IF
-      NTRITS=NTRITS+1
-C
-C     Severe cancellation is likely to occur if XOPT is too far from XBASE.
-C     If the following test holds, then XBASE is shifted so that XOPT becomes
-C     zero. The appropriate changes are made to BMAT and to the second
-C     derivatives of the current model, beginning with the changes to BMAT
-C     that do not depend on ZMAT. VLAG is used temporarily for working space.
-C
-   90 IF (DSQ <= 1.0D-3*XOPTSQ) THEN
-          FRACSQ=0.25D0*XOPTSQ
-          SUMPQ=ZERO
-          DO K=1,NPT
-              SUMPQ=SUMPQ+PQ(K)
-              SUM=-HALF*XOPTSQ
-              DO I=1,N
-                  SUM=SUM+XPT(K,I)*XOPT(I)
-              END DO
-              W(NPT+K)=SUM
-              TEMP=FRACSQ-HALF*SUM
-              DO I=1,N
-                  W(I)=BMAT(K,I)
-                  VLAG(I)=SUM*XPT(K,I)+TEMP*XOPT(I)
-                  IP=NPT+I
-                  DO J=1,I
-                      BMAT(IP,J)=BMAT(IP,J)+W(I)*VLAG(J)+VLAG(I)*W(J)
-                  END DO
-              END DO
-          END DO
-C
-C     Then the revisions of BMAT that depend on ZMAT are calculated.
-C
-          DO JJ=1,NPTM
-              SUMZ=ZERO
-              SUMW=ZERO
-              DO K=1,NPT
-                  SUMZ=SUMZ+ZMAT(K,JJ)
-                  VLAG(K)=W(NPT+K)*ZMAT(K,JJ)
-                  SUMW=SUMW+VLAG(K)
-              END DO
-              DO J=1,N
-                  SUM=(FRACSQ*SUMZ-HALF*SUMW)*XOPT(J)
-                  DO K=1,NPT
-                      SUM=SUM+VLAG(K)*XPT(K,J)
-                  END DO
-                  W(J)=SUM
-                  DO K=1,NPT
-                      BMAT(K,J)=BMAT(K,J)+SUM*ZMAT(K,JJ)
-                  END DO
-              END DO
-              DO I=1,N
-                  IP=I+NPT
-                  TEMP=W(I)
-                  DO J=1,I
-                      BMAT(IP,J)=BMAT(IP,J)+TEMP*W(J)
-                  END DO
-              END DO
-          END DO
-C
-C     The following instructions complete the shift, including the changes
-C     to the second derivative parameters of the quadratic model.
-C
-          IH=0
-          DO J=1,N
-              W(J)=-HALF*SUMPQ*XOPT(J)
-              DO K=1,NPT
-                  W(J)=W(J)+PQ(K)*XPT(K,J)
-                  XPT(K,J)=XPT(K,J)-XOPT(J)
-              END DO
-              DO I=1,J
-                  IH=IH+1
-                  HQ(IH)=HQ(IH)+W(I)*XOPT(J)+XOPT(I)*W(J)
-                  BMAT(NPT+I,J)=BMAT(NPT+J,I)
-              END DO
-          END DO
-          DO I=1,N
-              XBASE(I)=XBASE(I)+XOPT(I)
-              XNEW(I)=XNEW(I)-XOPT(I)
-              SL(I)=SL(I)-XOPT(I)
-              SU(I)=SU(I)-XOPT(I)
-              XOPT(I)=ZERO
-          END DO
-          XOPTSQ=ZERO
-      END IF
-      IF (NTRITS == 0) GOTO 210
-      GOTO 230
-C
-C     XBASE is also moved to XOPT by a call of RESCUE. This calculation is
-C     more expensive than the previous shift, because new matrices BMAT and
-C     ZMAT are generated from scratch, which may include the replacement of
-C     interpolation points whose positions seem to be causing near linear
-C     dependence in the interpolation conditions. Therefore RESCUE is called
-C     only if rounding errors have reduced by at least a factor of two the
-C     denominator of the formula for updating the H matrix. It provides a
-C     useful safeguard, but is not invoked in most applications of BOBYQA.
-C
-  190 NFSAV=NF
-      KBASE=KOPT
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C Zaikun 2019-08-29
-C See the comments above line number 60. 
-      DO I = 1, N
-          IF (GOPT(I) /= GOPT(I)) THEN
-              INFO = -3
-              GOTO 720
-          END IF 
-      END DO
-      DO I = 1, NH
-          IF (HQ(I) /= HQ(I)) THEN
-              INFO = -3
-              GOTO 720
-          END IF 
-      END DO 
-      DO I = 1, NPT
-          IF (PQ(I) /= PQ(I)) THEN
-              INFO = -3
-              GOTO 720
-          END IF
-      END DO
-      DO J = 1, N
-          DO I = 1, NDIM
-              IF (BMAT(I,J) /= BMAT(I,J)) THEN
-                  INFO = -3
-                  GOTO 720
-              END IF
-          END DO
-      END DO
-      DO J = 1, NPTM
-          DO I = 1, NPT
-              IF (ZMAT(I,J) /= ZMAT(I,J)) THEN
-                  INFO = -3
-                  GOTO 720
-              END IF
-          END DO
-      END DO
+            call TRSBOX(N, Npt, Xpt, Xopt, Gopt, Hq, Pq, Sl, Su, delta, &
+     &Xnew, D, W, W(np), W(np + N), W(np + 2 * N), W(np + 3 * N), dsq, c&
+     &rvmin)
+            dnorm = DMIN1(delta, DSQRT(dsq))
+            if (dnorm < half * rho) then
+                ntrits = -1
+                distsq = (ten * rho)**2
+                if (nf <= nfsav + 2) goto 800
+!
+!     The following choice between labels 650 and 680 depends on whether or
+!     not our work with the current RHO seems to be complete. Either RHO is
+!     decreased or termination occurs if the errors in the quadratic model at
+!     the last three interpolation points compare favourably with predictions
+!     of likely improvements to the model within distance HALF*RHO of XOPT.
+!
+                errbig = DMAX1(diffa, diffb, diffc)
+                frhosq = 0.125D0 * rho * rho
+                if (crvmin > zero .and. errbig > frhosq * crvmin) goto 8&
+     &00
+                bdtol = errbig / rho
+                do j = 1, N
+                    bdtest = bdtol
+                    if (Xnew(j) == Sl(j)) bdtest = W(j)
+                    if (Xnew(j) == Su(j)) bdtest = -W(j)
+                    if (bdtest < bdtol) then
+                        curv = Hq((j + j * j) / 2)
+                        do k = 1, Npt
+                            curv = curv + Pq(k) * Xpt(k, j)**2
+                        end do
+                        bdtest = bdtest + half * curv * rho
+                        if (bdtest < bdtol) goto 800
+                    end if
+                end do
+                goto 900
+            end if
+            ntrits = ntrits + 1
+!
+!     Severe cancellation is likely to occur if XOPT is too far from XBASE.
+!     If the following test holds, then XBASE is shifted so that XOPT becomes
+!     zero. The appropriate changes are made to BMAT and to the second
+!     derivatives of the current model, beginning with the changes to BMAT
+!     that do not depend on ZMAT. VLAG is used temporarily for working space.
+!
+      300 if (dsq <= 1.0D-3 * xoptsq) then
+                fracsq = 0.25D0 * xoptsq
+                sumpq = zero
+                do k = 1, Npt
+                    sumpq = sumpq + Pq(k)
+                    sum = -half * xoptsq
+                    do i = 1, N
+                        sum = sum + Xpt(k, i) * Xopt(i)
+                    end do
+                    W(Npt + k) = sum
+                    temp = fracsq - half * sum
+                    do i = 1, N
+                        W(i) = Bmat(k, i)
+                        Vlag(i) = sum * Xpt(k, i) + temp * Xopt(i)
+                        ip = Npt + i
+                        do j = 1, i
+                            Bmat(ip, j) = Bmat(ip, j) + W(i) * Vlag(j) +&
+     & Vlag(i) * W(j)
+                        end do
+                    end do
+                end do
+!
+!     Then the revisions of BMAT that depend on ZMAT are calculated.
+!
+                do jj = 1, nptm
+                    sumz = zero
+                    sumw = zero
+                    do k = 1, Npt
+                        sumz = sumz + Zmat(k, jj)
+                        Vlag(k) = W(Npt + k) * Zmat(k, jj)
+                        sumw = sumw + Vlag(k)
+                    end do
+                    do j = 1, N
+                        sum = (fracsq * sumz - half * sumw) * Xopt(j)
+                        do k = 1, Npt
+                            sum = sum + Vlag(k) * Xpt(k, j)
+                        end do
+                        W(j) = sum
+                        do k = 1, Npt
+                            Bmat(k, j) = Bmat(k, j) + sum * Zmat(k, jj)
+                        end do
+                    end do
+                    do i = 1, N
+                        ip = i + Npt
+                        temp = W(i)
+                        do j = 1, i
+                            Bmat(ip, j) = Bmat(ip, j) + temp * W(j)
+                        end do
+                    end do
+                end do
+!
+!     The following instructions complete the shift, including the changes
+!     to the second derivative parameters of the quadratic model.
+!
+                ih = 0
+                do j = 1, N
+                    W(j) = -half * sumpq * Xopt(j)
+                    do k = 1, Npt
+                        W(j) = W(j) + Pq(k) * Xpt(k, j)
+                        Xpt(k, j) = Xpt(k, j) - Xopt(j)
+                    end do
+                    do i = 1, j
+                        ih = ih + 1
+                        Hq(ih) = Hq(ih) + W(i) * Xopt(j) + Xopt(i) * W(j&
+     &)
+                        Bmat(Npt + i, j) = Bmat(Npt + j, i)
+                    end do
+                end do
+                do i = 1, N
+                    Xbase(i) = Xbase(i) + Xopt(i)
+                    Xnew(i) = Xnew(i) - Xopt(i)
+                    Sl(i) = Sl(i) - Xopt(i)
+                    Su(i) = Su(i) - Xopt(i)
+                    Xopt(i) = zero
+                end do
+                xoptsq = zero
+            end if
+            if (ntrits /= 0) goto 600
+            goto 500
+!
+!     XBASE is also moved to XOPT by a call of RESCUE. This calculation is
+!     more expensive than the previous shift, because new matrices BMAT and
+!     ZMAT are generated from scratch, which may include the replacement of
+!     interpolation points whose positions seem to be causing near linear
+!     dependence in the interpolation conditions. Therefore RESCUE is called
+!     only if rounding errors have reduced by at least a factor of two the
+!     denominator of the formula for updating the H matrix. It provides a
+!     useful safeguard, but is not invoked in most applications of BOBYQA.
+!
+      400 nfsav = nf
+            kbase = kopt
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+! Zaikun 2019-08-29
+! See the comments above line number 60.
+            do i = 1, N
+                if (Gopt(i) /= Gopt(i)) then
+                    Info = -3
+                    goto 1000
+                end if
+            end do
+            do i = 1, nh
+                if (Hq(i) /= Hq(i)) then
+                    Info = -3
+                    goto 1000
+                end if
+            end do
+            do i = 1, Npt
+                if (Pq(i) /= Pq(i)) then
+                    Info = -3
+                    goto 1000
+                end if
+            end do
+            do j = 1, N
+                do i = 1, Ndim
+                    if (Bmat(i, j) /= Bmat(i, j)) then
+                        Info = -3
+                        goto 1000
+                    end if
+                end do
+            end do
+            do j = 1, nptm
+                do i = 1, Npt
+                    if (Zmat(i, j) /= Zmat(i, j)) then
+                        Info = -3
+                        goto 1000
+                    end if
+                end do
+            end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      CALL RESCUE (N,NPT,XL,XU,IPRINT,MAXFUN,XBASE,XPT,FVAL,
-     1  XOPT,GOPT,HQ,PQ,BMAT,ZMAT,NDIM,SL,SU,NF,DELTA,KOPT,
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C     2  VLAG,W,W(N+NP),W(NDIM+NP))
-     2  VLAG,W,W(N+NP),W(NDIM+NP),F,FTARGET)
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!     2  VLAG,W,W(N+NP),W(NDIM+NP))
+            call RESCUE(N, Npt, Xl, Xu, Iprint, Maxfun, Xbase, Xpt, Fval&
+     &, Xopt, Gopt, Hq, Pq, Bmat, Zmat, Ndim, Sl, Su, nf, delta, kopt, V&
+     &lag, W, W(N + np), W(Ndim + np), F, Ftarget)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-C
-C     XOPT is updated now in case the branch below to label 720 is taken.
-C     Any updating of GOPT occurs after the branch below to label 20, which
-C     leads to a trust region iteration as does the branch to label 60.
-C
-      XOPTSQ=ZERO
-      IF (KOPT /= KBASE) THEN
-          DO I=1,N
-              XOPT(I)=XPT(KOPT,I)
-              XOPTSQ=XOPTSQ+XOPT(I)**2
-          END DO
-      END IF
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C     By Tom/Zaikun (on 04-06-2019/07-06-2019):
-      IF (F /= F .OR. F > ALMOST_INFINITY) THEN
-          INFO=-2
-          GOTO 720
-      END IF
-C     By Tom (on 04-06-2019):
-C     If F reached the target function, RESCUE will stop and BOBYQB
-C     should stop here.
-      IF (F <= FTARGET) THEN
-          INFO=1
-          GOTO 736
-      END IF
+!
+!     XOPT is updated now in case the branch below to label 720 is taken.
+!     Any updating of GOPT occurs after the branch below to label 20, which
+!     leads to a trust region iteration as does the branch to label 60.
+!
+            xoptsq = zero
+            if (kopt /= kbase) then
+                do i = 1, N
+                    Xopt(i) = Xpt(kopt, i)
+                    xoptsq = xoptsq + Xopt(i)**2
+                end do
+            end if
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!     By Tom/Zaikun (on 04-06-2019/07-06-2019):
+            if (F /= F .or. F > almost_infinity) then
+                Info = -2
+                goto 1000
+            end if
+!     By Tom (on 04-06-2019):
+!     If F reached the target function, RESCUE will stop and BOBYQB
+!     should stop here.
+            if (F <= Ftarget) then
+                Info = 1
+                goto 1100
+            end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      IF (NF < 0) THEN
-          NF=MAXFUN
-          IF (IPRINT > 0) PRINT 390
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-          INFO=3
+            if (nf < 0) then
+                nf = Maxfun
+                if (Iprint > 0) print 99007
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+                Info = 3
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          GOTO 720
-      END IF
-      NRESC=NF
-      IF (NFSAV < NF) THEN
-          NFSAV=NF
-          GOTO 20
-      END IF
-      IF (NTRITS > 0) GOTO 60
-C
-C     Pick two alternative vectors of variables, relative to XBASE, that
-C     are suitable as new positions of the KNEW-th interpolation point.
-C     Firstly, XNEW is set to the point on a line through XOPT and another
-C     interpolation point that minimizes the predicted value of the next
-C     denominator, subject to ||XNEW - XOPT|| .LEQ. ADELT and to the SL
-C     and SU bounds. Secondly, XALT is set to the best feasible point on
-C     a constrained version of the Cauchy step of the KNEW-th Lagrange
-C     function, the corresponding value of the square of this function
-C     being returned in CAUCHY. The choice between these alternatives is
-C     going to be made when the denominator is calculated.
-C
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C  Zaikun 23-07-2019:
-C  210 CALL ALTMOV (N,NPT,XPT,XOPT,BMAT,ZMAT,NDIM,SL,SU,KOPT,
-C     1  KNEW,ADELT,XNEW,XALT,ALPHA,CAUCHY,W,W(NP),W(NDIM+1))
-C
-C  Although very rare, NaN can sometimes occur in BMAT or ZMAT. If it
-C  happens, we terminate the code. See the comments above line number 60.
-C  Indeed, if ALTMOV is called with such matrices, then altmov.f will 
-C  encounter a memory error at lines 173--174. This is because the first 
-C  value of PREDSQ in ALTOMOV (see line 159 of altmov.f) will be NaN, line 
-C  164 will not be reached, and hence no value will be assigned to IBDSAV.
-C  
-C  Such an error was observed when BOBYQA was (mistakenly) tested on CUTEst 
-C  problem CONCON. CONCON is a nonlinearly constrained problem with
-C  bounds. By mistake, BOBYQA was called to solve this problem,
-C  neglecting all the constraints other than bounds. With only the bound
-C  constraints, the objective function turned to be unbounded from
-C  below, which led to abnormal values in BMAT (indeed, BETA defined in
-C  lines 366--389 took NaN/infinite values).
-C
-  210 DO J = 1,N
-          DO I = 1,NDIM
-              IF (BMAT(I,J) /= BMAT(I,J)) THEN
-                  INFO = -3
-                  GOTO 720
-              END IF
-          END DO
-      END DO
-      DO J = 1,NPTM
-          DO I = 1,NPT
-              IF (ZMAT(I,J) /= ZMAT(I,J)) THEN
-                  INFO = -3
-                  GOTO 720
-              END IF
-          END DO
-      END DO
-      CALL ALTMOV (N,NPT,XPT,XOPT,BMAT,ZMAT,NDIM,SL,SU,KOPT,
-     1  KNEW,ADELT,XNEW,XALT,ALPHA,CAUCHY,W,W(NP),W(NDIM+1))
+                goto 1000
+            end if
+            nresc = nf
+            if (nfsav < nf) then
+                nfsav = nf
+                goto 100
+            end if
+            if (ntrits > 0) goto 200
+!
+!     Pick two alternative vectors of variables, relative to XBASE, that
+!     are suitable as new positions of the KNEW-th interpolation point.
+!     Firstly, XNEW is set to the point on a line through XOPT and another
+!     interpolation point that minimizes the predicted value of the next
+!     denominator, subject to ||XNEW - XOPT|| .LEQ. ADELT and to the SL
+!     and SU bounds. Secondly, XALT is set to the best feasible point on
+!     a constrained version of the Cauchy step of the KNEW-th Lagrange
+!     function, the corresponding value of the square of this function
+!     being returned in CAUCHY. The choice between these alternatives is
+!     going to be made when the denominator is calculated.
+!
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!  Zaikun 23-07-2019:
+!  210 CALL ALTMOV (N,NPT,XPT,XOPT,BMAT,ZMAT,NDIM,SL,SU,KOPT,
+!     1  KNEW,ADELT,XNEW,XALT,ALPHA,CAUCHY,W,W(NP),W(NDIM+1))
+!
+!  Although very rare, NaN can sometimes occur in BMAT or ZMAT. If it
+!  happens, we terminate the code. See the comments above line number 60.
+!  Indeed, if ALTMOV is called with such matrices, then altmov.f will
+!  encounter a memory error at lines 173--174. This is because the first
+!  value of PREDSQ in ALTOMOV (see line 159 of altmov.f) will be NaN, line
+!  164 will not be reached, and hence no value will be assigned to IBDSAV.
+!
+!  Such an error was observed when BOBYQA was (mistakenly) tested on CUTEst
+!  problem CONCON. CONCON is a nonlinearly constrained problem with
+!  bounds. By mistake, BOBYQA was called to solve this problem,
+!  neglecting all the constraints other than bounds. With only the bound
+!  constraints, the objective function turned to be unbounded from
+!  below, which led to abnormal values in BMAT (indeed, BETA defined in
+!  lines 366--389 took NaN/infinite values).
+!
+      500 do j = 1, N
+                do i = 1, Ndim
+                    if (Bmat(i, j) /= Bmat(i, j)) then
+                        Info = -3
+                        goto 1000
+                    end if
+                end do
+            end do
+            do j = 1, nptm
+                do i = 1, Npt
+                    if (Zmat(i, j) /= Zmat(i, j)) then
+                        Info = -3
+                        goto 1000
+                    end if
+                end do
+            end do
+            call ALTMOV(N, Npt, Xpt, Xopt, Bmat, Zmat, Ndim, Sl, Su, kop&
+     &t, knew, adelt, Xnew, Xalt, alpha, cauchy, W, W(np), W(Ndim + 1))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DO I=1,N
-          D(I)=XNEW(I)-XOPT(I)
-      END DO
-C
-C     Calculate VLAG and BETA for the current choice of D. The scalar
-C     product of D with XPT(K,.) is going to be held in W(NPT+K) for
-C     use when VQUAD is calculated.
-C
-  230 DO K=1,NPT
-          SUMA=ZERO
-          SUMB=ZERO
-          SUM=ZERO
-          DO J=1,N
-              SUMA=SUMA+XPT(K,J)*D(J)
-              SUMB=SUMB+XPT(K,J)*XOPT(J)
-              SUM=SUM+BMAT(K,J)*D(J)
-          END DO
-          W(K)=SUMA*(HALF*SUMA+SUMB)
-          VLAG(K)=SUM
-          W(NPT+K)=SUMA
-      END DO
-      BETA=ZERO
-      DO JJ=1,NPTM
-          SUM=ZERO
-          DO K=1,NPT
-              SUM=SUM+ZMAT(K,JJ)*W(K)
-          END DO
-          BETA=BETA-SUM*SUM
-          DO K=1,NPT
-              VLAG(K)=VLAG(K)+SUM*ZMAT(K,JJ)
-          END DO
-      END DO
-      DSQ=ZERO
-      BSUM=ZERO
-      DX=ZERO
-      DO J=1,N
-          DSQ=DSQ+D(J)**2
-          SUM=ZERO
-          DO K=1,NPT
-              SUM=SUM+W(K)*BMAT(K,J)
-          END DO
-          BSUM=BSUM+SUM*D(J)
-          JP=NPT+J
-          DO I=1,N
-              SUM=SUM+BMAT(JP,I)*D(I)
-          END DO
-          VLAG(JP)=SUM
-          BSUM=BSUM+SUM*D(J)
-          DX=DX+D(J)*XOPT(J)
-      END DO
-      BETA=DX*DX+DSQ*(XOPTSQ+DX+DX+HALF*DSQ)+BETA-BSUM
-      VLAG(KOPT)=VLAG(KOPT)+ONE
-C
-C     If NTRITS is zero, the denominator may be increased by replacing
-C     the step D of ALTMOV by a Cauchy step. Then RESCUE may be called if
-C     rounding errors have damaged the chosen denominator.
-C
-      IF (NTRITS == 0) THEN
-          DENOM=VLAG(KNEW)**2+ALPHA*BETA
-          IF (DENOM < CAUCHY .AND. CAUCHY > ZERO) THEN
-              DO I=1,N
-                  XNEW(I)=XALT(I)
-                  D(I)=XNEW(I)-XOPT(I)
-              END DO
-              CAUCHY=ZERO
-              GO TO 230
-          END IF
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C          IF (DENOM .LE. HALF*VLAG(KNEW)**2) THEN
-          IF (.NOT. (DENOM > HALF*VLAG(KNEW)**2)) THEN
+            do i = 1, N
+                D(i) = Xnew(i) - Xopt(i)
+            end do
+      600 do
+!
+!     Calculate VLAG and BETA for the current choice of D. The scalar
+!     product of D with XPT(K,.) is going to be held in W(NPT+K) for
+!     use when VQUAD is calculated.
+!
+                do k = 1, Npt
+                    suma = zero
+                    sumb = zero
+                    sum = zero
+                    do j = 1, N
+                        suma = suma + Xpt(k, j) * D(j)
+                        sumb = sumb + Xpt(k, j) * Xopt(j)
+                        sum = sum + Bmat(k, j) * D(j)
+                    end do
+                    W(k) = suma * (half * suma + sumb)
+                    Vlag(k) = sum
+                    W(Npt + k) = suma
+                end do
+                beta = zero
+                do jj = 1, nptm
+                    sum = zero
+                    do k = 1, Npt
+                        sum = sum + Zmat(k, jj) * W(k)
+                    end do
+                    beta = beta - sum * sum
+                    do k = 1, Npt
+                        Vlag(k) = Vlag(k) + sum * Zmat(k, jj)
+                    end do
+                end do
+                dsq = zero
+                bsum = zero
+                dx = zero
+                do j = 1, N
+                    dsq = dsq + D(j)**2
+                    sum = zero
+                    do k = 1, Npt
+                        sum = sum + W(k) * Bmat(k, j)
+                    end do
+                    bsum = bsum + sum * D(j)
+                    jp = Npt + j
+                    do i = 1, N
+                        sum = sum + Bmat(jp, i) * D(i)
+                    end do
+                    Vlag(jp) = sum
+                    bsum = bsum + sum * D(j)
+                    dx = dx + D(j) * Xopt(j)
+                end do
+                beta = dx * dx + dsq * (xoptsq + dx + dx + half * dsq) +&
+     & beta - bsum
+                Vlag(kopt) = Vlag(kopt) + one
+!
+!     If NTRITS is zero, the denominator may be increased by replacing
+!     the step D of ALTMOV by a Cauchy step. Then RESCUE may be called if
+!     rounding errors have damaged the chosen denominator.
+!
+                if (ntrits == 0) then
+                    denom = Vlag(knew)**2 + alpha * beta
+                    if (denom < cauchy .and. cauchy > zero) then
+                        do i = 1, N
+                            Xnew(i) = Xalt(i)
+                            D(i) = Xnew(i) - Xopt(i)
+                        end do
+                        cauchy = zero
+                        cycle
+                    end if
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!          IF (DENOM .LE. HALF*VLAG(KNEW)**2) THEN
+                    if (denom <= half * Vlag(knew)**2) then
 !111111111111111111111!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              IF (NF > NRESC) GOTO 190
-              IF (IPRINT > 0) PRINT 320
-  320         FORMAT (/5X,'Return from BOBYQA because of much',
-     1          ' cancellation in a denominator.')
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-              INFO=4
+                        if (nf > nresc) goto 400
+                        if (Iprint > 0) print 99006
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+                        Info = 4
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              GOTO 720
-          END IF
-C
-C     Alternatively, if NTRITS is positive, then set KNEW to the index of
-C     the next interpolation point to be deleted to make room for a trust
-C     region step. Again RESCUE may be called if rounding errors have damaged
-C     the chosen denominator, which is the reason for attempting to select
-C     KNEW before calculating the next value of the objective function.
-C
-      ELSE
-          DELSQ=DELTA*DELTA
-          SCADEN=ZERO
-          BIGLSQ=ZERO
-          KNEW=0
-          DO K=1,NPT
-              IF (K == KOPT) CYCLE 
-              HDIAG=ZERO
-              DO JJ=1,NPTM
-                  HDIAG=HDIAG+ZMAT(K,JJ)**2
-              END DO
-              DEN=BETA*HDIAG+VLAG(K)**2
-              DISTSQ=ZERO
-              DO J=1,N
-                  DISTSQ=DISTSQ+(XPT(K,J)-XOPT(J))**2
-              END DO
-              TEMP=DMAX1(ONE,(DISTSQ/DELSQ)**2)
-              IF (TEMP*DEN > SCADEN) THEN
-                  SCADEN=TEMP*DEN
-                  KNEW=K
-                  DENOM=DEN
-              END IF
-              BIGLSQ=DMAX1(BIGLSQ,TEMP*VLAG(K)**2)
-          END DO
-          IF (SCADEN <= HALF*BIGLSQ) THEN
-              IF (NF > NRESC) GOTO 190
-              IF (IPRINT > 0) PRINT 320
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-              INFO=4
+                        goto 1000
+                    end if
+!
+!     Alternatively, if NTRITS is positive, then set KNEW to the index of
+!     the next interpolation point to be deleted to make room for a trust
+!     region step. Again RESCUE may be called if rounding errors have damaged
+!     the chosen denominator, which is the reason for attempting to select
+!     KNEW before calculating the next value of the objective function.
+!
+                else
+                    delsq = delta * delta
+                    scaden = zero
+                    biglsq = zero
+                    knew = 0
+                    do k = 1, Npt
+                        if (k == kopt) cycle
+                        hdiag = zero
+                        do jj = 1, nptm
+                            hdiag = hdiag + Zmat(k, jj)**2
+                        end do
+                        den = beta * hdiag + Vlag(k)**2
+                        distsq = zero
+                        do j = 1, N
+                            distsq = distsq + (Xpt(k, j) - Xopt(j))**2
+                        end do
+                        temp = DMAX1(one, (distsq / delsq)**2)
+                        if (temp * den > scaden) then
+                            scaden = temp * den
+                            knew = k
+                            denom = den
+                        end if
+                        biglsq = DMAX1(biglsq, temp * Vlag(k)**2)
+                    end do
+                    if (scaden <= half * biglsq) then
+                        if (nf > nresc) goto 400
+                        if (Iprint > 0) print 99006
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+                        Info = 4
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              GOTO 720
-          END IF
-      END IF
-C
-C     Put the variables for the next calculation of the objective function
-C       in XNEW, with any adjustments for the bounds.
-C
-C
-C     Calculate the value of the objective function at XBASE+XNEW, unless
-C       the limit on the number of calculations of F has been reached.
-C
-  360 DO I=1,N
-          X(I)=DMIN1(DMAX1(XL(I),XBASE(I)+XNEW(I)),XU(I))
-          IF (XNEW(I) == SL(I)) X(I)=XL(I)
-          IF (XNEW(I) == SU(I)) X(I)=XU(I)
-      END DO
-      IF (NF >= MAXFUN) THEN
-          IF (IPRINT > 0) PRINT 390
-  390     FORMAT (/4X,'Return from BOBYQA because CALFUN has been',
-     1      ' called MAXFUN times.')
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-          INFO=3
+                        goto 1000
+                    end if
+                end if
+                exit
+            end do
+!
+!     Put the variables for the next calculation of the objective function
+!       in XNEW, with any adjustments for the bounds.
+!
+!
+!     Calculate the value of the objective function at XBASE+XNEW, unless
+!       the limit on the number of calculations of F has been reached.
+!
+      700 do i = 1, N
+                X(i) = DMIN1(DMAX1(Xl(i), Xbase(i) + Xnew(i)), Xu(i))
+                if (Xnew(i) == Sl(i)) X(i) = Xl(i)
+                if (Xnew(i) == Su(i)) X(i) = Xu(i)
+            end do
+            if (nf >= Maxfun) then
+                if (Iprint > 0) print 99007
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+                Info = 3
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          GOTO 720
-      END IF
-      NF=NF+1
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      DO I=1,N
-          IF (X(I) /= X(I)) THEN
-              F=X(I) ! Set F to NaN
-              IF (NF == 1) THEN
-                  FOPT=F
-                  XOPT(1:N)=ZERO
-              END IF
-              INFO=-1
-              GOTO 720
-          END IF
-      END DO
+                goto 1000
+            end if
+            nf = nf + 1
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+            do i = 1, N
+                if (X(i) /= X(i)) then
+                    F = X(i) ! Set F to NaN
+                    if (nf == 1) then
+                        fopt = F
+                        Xopt(1:N) = zero
+                    end if
+                    Info = -1
+                    goto 1000
+                end if
+            end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      CALL CALFUN (N,X,F)
+            call CALFUN(N, X, F)
 
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C     By Tom (on 04-06-2019):
-      IF (F /= F .OR. F > ALMOST_INFINITY) THEN
-          IF (NF == 1) THEN
-              FOPT=F
-              XOPT(1:N)=ZERO
-          END IF
-          INFO=-2
-          GOTO 720
-      END IF
-C     By Tom (on 04-06-2019):
-C     If F achieves the function value, the algorithm exits.
-      IF (F <= FTARGET) THEN
-          INFO=1
-          GOTO 736
-      END IF
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!     By Tom (on 04-06-2019):
+            if (F /= F .or. F > almost_infinity) then
+                if (nf == 1) then
+                    fopt = F
+                    Xopt(1:N) = zero
+                end if
+                Info = -2
+                goto 1000
+            end if
+!     By Tom (on 04-06-2019):
+!     If F achieves the function value, the algorithm exits.
+            if (F <= Ftarget) then
+                Info = 1
+                goto 1100
+            end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      IF (IPRINT == 3) THEN
-          PRINT 400, NF,F,(X(I),I=1,N)
-  400      FORMAT (/4X,'Function number',I6,'    F =',1PD18.10,
-     1       '    The corresponding X is:'/(2X,5D15.6))
-      END IF
-      IF (NTRITS == -1) THEN
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C Zaikun 2019-08-29: FSAVE is not needed any more. See line number 720.
-C          FSAVE=F
+            if (Iprint == 3) then
+                print 99001, nf, F, (X(i), i=1, N)
+      99001 format(/4X, 'Function number', I6, ' F =', 1PD18.10, ' The c&
+     &orresponding X is:'/(2X, 5D15.6))
+            end if
+            if (ntrits == -1) then
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+! Zaikun 2019-08-29: FSAVE is not needed any more. See line number 720.
+!          FSAVE=F
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-          INFO=0
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+                Info = 0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          GOTO 720
-      END IF
-C
-C     Use the quadratic model to predict the change in F due to the step D,
-C       and set DIFF to the error of this prediction.
-C
-      FOPT=FVAL(KOPT)
-      VQUAD=ZERO
-      IH=0
-      DO J=1,N
-          VQUAD=VQUAD+D(J)*GOPT(J)
-          DO I=1,J
-              IH=IH+1
-              TEMP=D(I)*D(J)
-              IF (I == J) TEMP=HALF*TEMP
-              VQUAD=VQUAD+HQ(IH)*TEMP
-          END DO
-      END DO
-      DO K=1,NPT
-          VQUAD=VQUAD+HALF*PQ(K)*W(NPT+K)**2
-      END DO
-      DIFF=F-FOPT-VQUAD
-      DIFFC=DIFFB
-      DIFFB=DIFFA
-      DIFFA=DABS(DIFF)
-      IF (DNORM > RHO) NFSAV=NF
-C
-C     Pick the next value of DELTA after a trust region step.
-C
-      IF (NTRITS > 0) THEN
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C          IF (VQUAD .GE. ZERO) THEN
-          IF (.NOT. (VQUAD < ZERO)) THEN
+                goto 1000
+            end if
+!
+!     Use the quadratic model to predict the change in F due to the step D,
+!       and set DIFF to the error of this prediction.
+!
+            fopt = Fval(kopt)
+            vquad = zero
+            ih = 0
+            do j = 1, N
+                vquad = vquad + D(j) * Gopt(j)
+                do i = 1, j
+                    ih = ih + 1
+                    temp = D(i) * D(j)
+                    if (i == j) temp = half * temp
+                    vquad = vquad + Hq(ih) * temp
+                end do
+            end do
+            do k = 1, Npt
+                vquad = vquad + half * Pq(k) * W(Npt + k)**2
+            end do
+            diff = F - fopt - vquad
+            diffc = diffb
+            diffb = diffa
+            diffa = DABS(diff)
+            if (dnorm > rho) nfsav = nf
+!
+!     Pick the next value of DELTA after a trust region step.
+!
+            if (ntrits > 0) then
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!          IF (VQUAD .GE. ZERO) THEN
+                if (vquad >= zero) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              IF (IPRINT > 0) PRINT 430
-  430         FORMAT (/4X,'Return from BOBYQA because a trust',
-     1          ' region step has failed to reduce Q.')
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-              INFO=2
+                    if (Iprint > 0) print 99002
+      99002 format(/4X, 'Return from BOBYQA because a trust', ' region s&
+     &tep has failed to reduce Q.')
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+                    Info = 2
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              GOTO 720
-          END IF
-          RATIO=(F-FOPT)/VQUAD
-          IF (RATIO <= TENTH) THEN
-              DELTA=DMIN1(HALF*DELTA,DNORM)
-          ELSE IF (RATIO <= 0.7D0) THEN
-              DELTA=DMAX1(HALF*DELTA,DNORM)
-          ELSE
-              DELTA=DMAX1(HALF*DELTA,DNORM+DNORM)
-          END IF
-          IF (DELTA <= 1.5D0*RHO) DELTA=RHO
-C
-C     Recalculate KNEW and DENOM if the new F is less than FOPT.
-C
-          IF (F < FOPT) THEN
-              KSAV=KNEW
-              DENSAV=DENOM
-              DELSQ=DELTA*DELTA
-              SCADEN=ZERO
-              BIGLSQ=ZERO
-              KNEW=0
-              DO K=1,NPT
-                  HDIAG=ZERO
-                  DO JJ=1,NPTM
-                      HDIAG=HDIAG+ZMAT(K,JJ)**2
-                  END DO
-                  DEN=BETA*HDIAG+VLAG(K)**2
-                  DISTSQ=ZERO
-                  DO J=1,N
-                      DISTSQ=DISTSQ+(XPT(K,J)-XNEW(J))**2
-                  END DO
-                  TEMP=DMAX1(ONE,(DISTSQ/DELSQ)**2)
-                  IF (TEMP*DEN > SCADEN) THEN
-                      SCADEN=TEMP*DEN
-                      KNEW=K
-                      DENOM=DEN
-                  END IF
-                  BIGLSQ=DMAX1(BIGLSQ,TEMP*VLAG(K)**2)
-              END DO
-              IF (SCADEN <= HALF*BIGLSQ) THEN
-                  KNEW=KSAV
-                  DENOM=DENSAV
-              END IF
-          END IF
-      END IF
-C
-C     Update BMAT and ZMAT, so that the KNEW-th interpolation point can be
-C     moved. Also update the second derivative terms of the model.
-C
-      CALL UPDATE (N,NPT,BMAT,ZMAT,NDIM,VLAG,BETA,DENOM,KNEW,W)
-      IH=0
-      PQOLD=PQ(KNEW)
-      PQ(KNEW)=ZERO
-      DO I=1,N
-          TEMP=PQOLD*XPT(KNEW,I)
-          DO J=1,I
-              IH=IH+1
-              HQ(IH)=HQ(IH)+TEMP*XPT(KNEW,J)
-          END DO
-      END DO
-      DO JJ=1,NPTM
-          TEMP=DIFF*ZMAT(KNEW,JJ)
-          DO K=1,NPT
-              PQ(K)=PQ(K)+TEMP*ZMAT(K,JJ)
-          END DO
-      END DO
-C
-C     Include the new interpolation point, and make the changes to GOPT at
-C     the old XOPT that are caused by the updating of the quadratic model.
-C
-      FVAL(KNEW)=F
-      DO I=1,N
-          XPT(KNEW,I)=XNEW(I)
-          W(I)=BMAT(KNEW,I)
-      END DO
-      DO K=1,NPT
-          SUMA=ZERO
-          DO JJ=1,NPTM
-              SUMA=SUMA+ZMAT(KNEW,JJ)*ZMAT(K,JJ)
-          END DO
-          SUMB=ZERO
-          DO J=1,N
-              SUMB=SUMB+XPT(K,J)*XOPT(J)
-          END DO
-          TEMP=SUMA*SUMB
-          DO I=1,N
-              W(I)=W(I)+TEMP*XPT(K,I)
-          END DO
-      END DO
-      DO I=1,N
-          GOPT(I)=GOPT(I)+DIFF*W(I)
-      END DO
-C
-C     Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
-C
-      IF (F < FOPT) THEN
-          KOPT=KNEW
-          XOPTSQ=ZERO
-          IH=0
-          DO J=1,N
-              XOPT(J)=XNEW(J)
-              XOPTSQ=XOPTSQ+XOPT(J)**2
-              DO I=1,J
-                  IH=IH+1
-                  IF (I < J) GOPT(J)=GOPT(J)+HQ(IH)*D(I)
-                  GOPT(I)=GOPT(I)+HQ(IH)*D(J)
-              END DO
-          END DO
-          DO K=1,NPT
-              TEMP=ZERO
-              DO J=1,N
-                  TEMP=TEMP+XPT(K,J)*D(J)
-              END DO
-              TEMP=PQ(K)*TEMP
-              DO I=1,N
-                  GOPT(I)=GOPT(I)+TEMP*XPT(K,I)
-              END DO
-          END DO
-      END IF
-C
-C     Calculate the parameters of the least Frobenius norm interpolant to
-C     the current data, the gradient of this interpolant at XOPT being put
-C     into VLAG(NPT+I), I=1,2,...,N.
-C
-      IF (NTRITS > 0) THEN
-          DO K=1,NPT
-              VLAG(K)=FVAL(K)-FVAL(KOPT)
-              W(K)=ZERO
-          END DO
-          DO J=1,NPTM
-              SUM=ZERO
-              DO K=1,NPT
-                  SUM=SUM+ZMAT(K,J)*VLAG(K)
-              END DO
-              DO K=1,NPT
-                  W(K)=W(K)+SUM*ZMAT(K,J)
-              END DO
-          END DO
-          DO K=1,NPT
-              SUM=ZERO
-              DO J=1,N
-                  SUM=SUM+XPT(K,J)*XOPT(J)
-              END DO
-              W(K+NPT)=W(K)
-              W(K)=SUM*W(K)
-          END DO
-          GQSQ=ZERO
-          GISQ=ZERO
-          DO I=1,N
-              SUM=ZERO
-              DO K=1,NPT
-                  SUM=SUM+BMAT(K,I)*VLAG(K)+XPT(K,I)*W(K)
-              END DO
-              IF (XOPT(I) == SL(I)) THEN
-                  GQSQ=GQSQ+DMIN1(ZERO,GOPT(I))**2
-                  GISQ=GISQ+DMIN1(ZERO,SUM)**2
-              ELSE IF (XOPT(I) == SU(I)) THEN
-                  GQSQ=GQSQ+DMAX1(ZERO,GOPT(I))**2
-                  GISQ=GISQ+DMAX1(ZERO,SUM)**2
-              ELSE
-                  GQSQ=GQSQ+GOPT(I)**2
-                  GISQ=GISQ+SUM*SUM
-              END IF
-              VLAG(NPT+I)=SUM
-          END DO
-C
-C     Test whether to replace the new quadratic model by the least Frobenius
-C     norm interpolant, making the replacement if the test is satisfied.
-C
-          ITEST=ITEST+1
-          IF (GQSQ < TEN*GISQ) ITEST=0
-          IF (ITEST >= 3) THEN
-              DO I=1,MAX0(NPT,NH)
-                  IF (I <= N) GOPT(I)=VLAG(NPT+I)
-                  IF (I <= NPT) PQ(I)=W(NPT+I)
-                  IF (I <= NH) HQ(I)=ZERO
-                  ITEST=0
-              END DO
-          END IF
-      END IF
-C
-C     If a trust region step has provided a sufficient decrease in F, then
-C     branch for another trust region calculation. The case NTRITS=0 occurs
-C     when the new interpolation point was reached by an alternative step.
-C
-      IF (NTRITS == 0) GOTO 60
-      IF (F <= FOPT+TENTH*VQUAD) GOTO 60
-C
-C     Alternatively, find out if the interpolation points are close enough
-C       to the best point so far.
-C
-      DISTSQ=DMAX1((TWO*DELTA)**2,(TEN*RHO)**2)
-  650 KNEW=0
-      DO K=1,NPT
-          SUM=ZERO
-          DO J=1,N
-              SUM=SUM+(XPT(K,J)-XOPT(J))**2
-          END DO
-          IF (SUM > DISTSQ) THEN
-              KNEW=K
-              DISTSQ=SUM
-          END IF
-      END DO
-C
-C     If KNEW is positive, then ALTMOV finds alternative new positions for
-C     the KNEW-th interpolation point within distance ADELT of XOPT. It is
-C     reached via label 90. Otherwise, there is a branch to label 60 for
-C     another trust region iteration, unless the calculations with the
-C     current RHO are complete.
-C
-      IF (KNEW > 0) THEN
-          DIST=DSQRT(DISTSQ)
-          IF (NTRITS == -1) THEN
-              DELTA=DMIN1(TENTH*DELTA,HALF*DIST)
-              IF (DELTA <= 1.5D0*RHO) DELTA=RHO
-          END IF
-          NTRITS=0
-          ADELT=DMAX1(DMIN1(TENTH*DIST,DELTA),RHO)
-          DSQ=ADELT*ADELT
-          GOTO 90
-      END IF
-      IF (NTRITS == -1) GOTO 680
-      IF (RATIO > ZERO) GOTO 60
-      IF (DMAX1(DELTA,DNORM) > RHO) GOTO 60
-C
-C     The calculations with the current value of RHO are complete. Pick the
-C       next values of RHO and DELTA.
-C
-  680 IF (RHO > RHOEND) THEN
-          DELTA=HALF*RHO
-          RATIO=RHO/RHOEND
-          IF (RATIO <= 16.0D0) THEN
-              RHO=RHOEND
-          ELSE IF (RATIO <= 250.0D0) THEN
-              RHO=DSQRT(RATIO)*RHOEND
-          ELSE
-              RHO=TENTH*RHO
-          END IF
-          DELTA=DMAX1(DELTA,RHO)
-          IF (IPRINT >= 2) THEN
-              IF (IPRINT >= 3) PRINT 690
-  690         FORMAT (5X)
-              PRINT 700, RHO,NF
-  700         FORMAT (/4X,'New RHO =',1PD11.4,5X,'Number of',
-     1          ' function values =',I6)
-              PRINT 710, FVAL(KOPT),(XBASE(I)+XOPT(I),I=1,N)
-  710         FORMAT (4X,'Least value of F =',1PD23.15,9X,
-     1          'The corresponding X is:'/(2X,5D15.6))
-          END IF
-          NTRITS=0
-          NFSAV=NF
-          GOTO 60
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      ELSE
-          INFO=0
+                    goto 1000
+                end if
+                ratio = (F - fopt) / vquad
+                if (ratio <= tenth) then
+                    delta = DMIN1(half * delta, dnorm)
+                elseif (ratio <= 0.7D0) then
+                    delta = DMAX1(half * delta, dnorm)
+                else
+                    delta = DMAX1(half * delta, dnorm + dnorm)
+                end if
+                if (delta <= 1.5D0 * rho) delta = rho
+!
+!     Recalculate KNEW and DENOM if the new F is less than FOPT.
+!
+                if (F < fopt) then
+                    ksav = knew
+                    densav = denom
+                    delsq = delta * delta
+                    scaden = zero
+                    biglsq = zero
+                    knew = 0
+                    do k = 1, Npt
+                        hdiag = zero
+                        do jj = 1, nptm
+                            hdiag = hdiag + Zmat(k, jj)**2
+                        end do
+                        den = beta * hdiag + Vlag(k)**2
+                        distsq = zero
+                        do j = 1, N
+                            distsq = distsq + (Xpt(k, j) - Xnew(j))**2
+                        end do
+                        temp = DMAX1(one, (distsq / delsq)**2)
+                        if (temp * den > scaden) then
+                            scaden = temp * den
+                            knew = k
+                            denom = den
+                        end if
+                        biglsq = DMAX1(biglsq, temp * Vlag(k)**2)
+                    end do
+                    if (scaden <= half * biglsq) then
+                        knew = ksav
+                        denom = densav
+                    end if
+                end if
+            end if
+!
+!     Update BMAT and ZMAT, so that the KNEW-th interpolation point can be
+!     moved. Also update the second derivative terms of the model.
+!
+            call UPDATE(N, Npt, Bmat, Zmat, Ndim, Vlag, beta, denom, kne&
+     &w, W)
+            ih = 0
+            pqold = Pq(knew)
+            Pq(knew) = zero
+            do i = 1, N
+                temp = pqold * Xpt(knew, i)
+                do j = 1, i
+                    ih = ih + 1
+                    Hq(ih) = Hq(ih) + temp * Xpt(knew, j)
+                end do
+            end do
+            do jj = 1, nptm
+                temp = diff * Zmat(knew, jj)
+                do k = 1, Npt
+                    Pq(k) = Pq(k) + temp * Zmat(k, jj)
+                end do
+            end do
+!
+!     Include the new interpolation point, and make the changes to GOPT at
+!     the old XOPT that are caused by the updating of the quadratic model.
+!
+            Fval(knew) = F
+            do i = 1, N
+                Xpt(knew, i) = Xnew(i)
+                W(i) = Bmat(knew, i)
+            end do
+            do k = 1, Npt
+                suma = zero
+                do jj = 1, nptm
+                    suma = suma + Zmat(knew, jj) * Zmat(k, jj)
+                end do
+                sumb = zero
+                do j = 1, N
+                    sumb = sumb + Xpt(k, j) * Xopt(j)
+                end do
+                temp = suma * sumb
+                do i = 1, N
+                    W(i) = W(i) + temp * Xpt(k, i)
+                end do
+            end do
+            do i = 1, N
+                Gopt(i) = Gopt(i) + diff * W(i)
+            end do
+!
+!     Update XOPT, GOPT and KOPT if the new calculated F is less than FOPT.
+!
+            if (F < fopt) then
+                kopt = knew
+                xoptsq = zero
+                ih = 0
+                do j = 1, N
+                    Xopt(j) = Xnew(j)
+                    xoptsq = xoptsq + Xopt(j)**2
+                    do i = 1, j
+                        ih = ih + 1
+                        if (i < j) Gopt(j) = Gopt(j) + Hq(ih) * D(i)
+                        Gopt(i) = Gopt(i) + Hq(ih) * D(j)
+                    end do
+                end do
+                do k = 1, Npt
+                    temp = zero
+                    do j = 1, N
+                        temp = temp + Xpt(k, j) * D(j)
+                    end do
+                    temp = Pq(k) * temp
+                    do i = 1, N
+                        Gopt(i) = Gopt(i) + temp * Xpt(k, i)
+                    end do
+                end do
+            end if
+!
+!     Calculate the parameters of the least Frobenius norm interpolant to
+!     the current data, the gradient of this interpolant at XOPT being put
+!     into VLAG(NPT+I), I=1,2,...,N.
+!
+            if (ntrits > 0) then
+                do k = 1, Npt
+                    Vlag(k) = Fval(k) - Fval(kopt)
+                    W(k) = zero
+                end do
+                do j = 1, nptm
+                    sum = zero
+                    do k = 1, Npt
+                        sum = sum + Zmat(k, j) * Vlag(k)
+                    end do
+                    do k = 1, Npt
+                        W(k) = W(k) + sum * Zmat(k, j)
+                    end do
+                end do
+                do k = 1, Npt
+                    sum = zero
+                    do j = 1, N
+                        sum = sum + Xpt(k, j) * Xopt(j)
+                    end do
+                    W(k + Npt) = W(k)
+                    W(k) = sum * W(k)
+                end do
+                gqsq = zero
+                gisq = zero
+                do i = 1, N
+                    sum = zero
+                    do k = 1, Npt
+                        sum = sum + Bmat(k, i) * Vlag(k) + Xpt(k, i) * W&
+     &(k)
+                    end do
+                    if (Xopt(i) == Sl(i)) then
+                        gqsq = gqsq + DMIN1(zero, Gopt(i))**2
+                        gisq = gisq + DMIN1(zero, sum)**2
+                    elseif (Xopt(i) == Su(i)) then
+                        gqsq = gqsq + DMAX1(zero, Gopt(i))**2
+                        gisq = gisq + DMAX1(zero, sum)**2
+                    else
+                        gqsq = gqsq + Gopt(i)**2
+                        gisq = gisq + sum * sum
+                    end if
+                    Vlag(Npt + i) = sum
+                end do
+!
+!     Test whether to replace the new quadratic model by the least Frobenius
+!     norm interpolant, making the replacement if the test is satisfied.
+!
+                itest = itest + 1
+                if (gqsq < ten * gisq) itest = 0
+                if (itest >= 3) then
+                    do i = 1, MAX0(Npt, nh)
+                        if (i <= N) Gopt(i) = Vlag(Npt + i)
+                        if (i <= Npt) Pq(i) = W(Npt + i)
+                        if (i <= nh) Hq(i) = zero
+                        itest = 0
+                    end do
+                end if
+            end if
+!
+!     If a trust region step has provided a sufficient decrease in F, then
+!     branch for another trust region calculation. The case NTRITS=0 occurs
+!     when the new interpolation point was reached by an alternative step.
+!
+            if (ntrits == 0) goto 200
+            if (F <= fopt + tenth * vquad) goto 200
+!
+!     Alternatively, find out if the interpolation points are close enough
+!       to the best point so far.
+!
+            distsq = DMAX1((two * delta)**2, (ten * rho)**2)
+      800 knew = 0
+            do k = 1, Npt
+                sum = zero
+                do j = 1, N
+                    sum = sum + (Xpt(k, j) - Xopt(j))**2
+                end do
+                if (sum > distsq) then
+                    knew = k
+                    distsq = sum
+                end if
+            end do
+!
+!     If KNEW is positive, then ALTMOV finds alternative new positions for
+!     the KNEW-th interpolation point within distance ADELT of XOPT. It is
+!     reached via label 90. Otherwise, there is a branch to label 60 for
+!     another trust region iteration, unless the calculations with the
+!     current RHO are complete.
+!
+            if (knew > 0) then
+                dist = DSQRT(distsq)
+                if (ntrits == -1) then
+                    delta = DMIN1(tenth * delta, half * dist)
+                    if (delta <= 1.5D0 * rho) delta = rho
+                end if
+                ntrits = 0
+                adelt = DMAX1(DMIN1(tenth * dist, delta), rho)
+                dsq = adelt * adelt
+                goto 300
+            end if
+            if (ntrits /= -1) then
+                if (ratio > zero) goto 200
+                if (DMAX1(delta, dnorm) > rho) goto 200
+            end if
+!
+!     The calculations with the current value of RHO are complete. Pick the
+!       next values of RHO and DELTA.
+!
+      900 if (rho > Rhoend) then
+                delta = half * rho
+                ratio = rho / Rhoend
+                if (ratio <= 16.0D0) then
+                    rho = Rhoend
+                elseif (ratio <= 250.0D0) then
+                    rho = DSQRT(ratio) * Rhoend
+                else
+                    rho = tenth * rho
+                end if
+                delta = DMAX1(delta, rho)
+                if (Iprint >= 2) then
+                    if (Iprint >= 3) print 99003
+      99003 format(5X)
+                    print 99004, rho, nf
+      99004 format(/4X, 'New RHO =', 1PD11.4, 5X, 'Number of', ' functio&
+     &n values =', I6)
+                    print 99008, Fval(kopt), (Xbase(i) + Xopt(i), i=1, N&
+     &)
+                end if
+                ntrits = 0
+                nfsav = nf
+                goto 200
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+            else
+                Info = 0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      END IF
-C
-C     Return from the calculation, after another Newton-Raphson step, if
-C       it is too short to have been tried before.
-C
-      IF (NTRITS == -1) GOTO 360
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C  720 IF (FVAL(KOPT) .LE. FSAVE) THEN
-C  Why update X only when FVAL(KOPT) .LE. FSAVE? This seems INCORRECT, 
-C  because it may lead to a return with F and X that are not the best
-C  available. 
-  720 IF (FVAL(KOPT) <= F .OR. F /= F) THEN
+            end if
+!
+!     Return from the calculation, after another Newton-Raphson step, if
+!       it is too short to have been tried before.
+!
+            if (ntrits == -1) goto 700
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!  720 IF (FVAL(KOPT) .LE. FSAVE) THEN
+!  Why update X only when FVAL(KOPT) .LE. FSAVE? This seems INCORRECT,
+!  because it may lead to a return with F and X that are not the best
+!  available.
+      1000 if (Fval(kopt) <= F .or. F /= F) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          DO I=1,N
-              X(I)=DMIN1(DMAX1(XL(I),XBASE(I)+XOPT(I)),XU(I))
-              IF (XOPT(I) == SL(I)) X(I)=XL(I)
-              IF (XOPT(I) == SU(I)) X(I)=XU(I)
-          END DO
-          F=FVAL(KOPT)
-      END IF
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C      IF (IPRINT .GE. 1) THEN
-  736 IF (IPRINT >= 1) THEN
+                do i = 1, N
+                    X(i) = DMIN1(DMAX1(Xl(i), Xbase(i) + Xopt(i)), Xu(i)&
+     &)
+                    if (Xopt(i) == Sl(i)) X(i) = Xl(i)
+                    if (Xopt(i) == Su(i)) X(i) = Xu(i)
+                end do
+                F = Fval(kopt)
+            end if
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!      IF (IPRINT .GE. 1) THEN
+      1100 if (Iprint >= 1) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          PRINT 740, NF
-  740     FORMAT (/4X,'At the return from BOBYQA',5X,
-     1      'Number of function values =',I6)
-          PRINT 710, F,(X(I),I=1,N)
-      END IF
-      RETURN
-      END
+                print 99005, nf
+      99005 format(/4X, 'At the return from BOBYQA', 5X, 'Number of func&
+     &tion values =', I6)
+                print 99008, F, (X(i), i=1, N)
+            end if
+      99006 format(/5X, 'Return from BOBYQA because of much', ' cancella&
+     &tion in a denominator.')
+      99007 format(/4X, 'Return from BOBYQA because CALFUN has been', ' &
+     &called MAXFUN times.')
+      99008 format(4X, 'Least value of F =', 1PD23.15, 9X, 'The correspo&
+     &nding X is:'/(2X, 5D15.6))
+            end subroutine BOBYQB
