@@ -204,8 +204,8 @@ filelist = 'ffiles.txt';
 fprintf('Refactoring the Fortran code ... ');
 addpath(tools);
 %interform(fsrc);
-copyfile(fsrc, fsrc_intersection_form);
-interform(gateways);
+%copyfile(fsrc, fsrc_intersection_form);
+%interform(gateways);
 rmpath(tools);
 fprintf('Done.\n\n');
 
