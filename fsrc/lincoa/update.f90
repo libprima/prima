@@ -1,4 +1,4 @@
-!*==update.f90  processed by SPAG 7.50RE at 23:56 on 25 May 2021
+!*==update.f90  processed by SPAG 7.50RE at 00:12 on 26 May 2021
       SUBROUTINE UPDATE(N,Npt,Xpt,Bmat,Zmat,Idz,Ndim,Sp,Step,Kopt,Knew, &
      &                  Vlag,W)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
