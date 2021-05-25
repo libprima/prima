@@ -402,7 +402,7 @@
       C in the following scenario.
       C Suppose that, at an certain iteration,
       C KNEW = 0, SNORM > 0.5 * DELTA > RHO, VQUAD >= 0, and
-      C\sum_{K = 1}^NPT||XPT(K, :) - XOPT(:) ||^2 < DELTA^2
+      C sum_{K = 1}^NPT||XPT(K, :) - XOPT(:) ||^2 < DELTA^2
       C(i.e., DELTA is large and SNORM is not small, yet VQUAD >= 0 due to
       C rounding errors and XPT are not far from XOPT) .
       C then the program will goto 530 and then goto 20, where XBASE may be
@@ -481,7 +481,7 @@
       CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       do I = 1, N
           if (X(I) /= X(I)) then
-              F = X(I) ! Set F to NaN
+              F = X(I)  ! Set F to NaN
               if (NF == 1) then
                   FOPT = F
                   XOPT(1:N) = ZERO
@@ -862,4 +862,4 @@
       W(1) = F
       W(2) = DFLOAT(NF) + HALF
       return
-  end
+      end subroutine LINCOB
