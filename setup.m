@@ -1,6 +1,6 @@
 function setup(varargin)
 %SETUP compiles the package and try adding the package into the search path.
-%   
+%
 %   Let solvername be a string indicating a solver name, and options be
 %   a structure indicating compilation options. Then setup can be called
 %   in the following ways:
@@ -11,7 +11,7 @@ function setup(varargin)
 %
 %   In addition, one can uninstall the package by calling
 %
-%   setup uninstall 
+%   setup uninstall
 %
 %   or remove the compiled MEX files by calling
 %
@@ -79,9 +79,9 @@ if verLessThan('matlab', '8.3') % MATLAB R2014a = MATLAB 8.3
     return
 end
 
-% Interpret the input. 
+% Interpret the input.
 solver_list = {'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla'}; % Solvers to compile; by default, it contains all solvers
-options = struct(); % Compilation options 
+options = struct(); % Compilation options
 wrong_input = false;
 solver = 'ALL'; % The solver to compile specified by the user; by default, it is 'ALL', meaning all solvers
 if nargin == 1
@@ -123,7 +123,7 @@ if strcmp(solver, 'uninstall')
     return;
 end
 
-% Decide which solver(s) to compile. 
+% Decide which solver(s) to compile.
 solver = solver(1:end-1);  % We expect to receive 'uobyqan', 'newuoan', ...; here we remove the 'n'
 if ismember(solver, solver_list)
     solver_list = {solver};
@@ -133,9 +133,9 @@ elseif ~strcmpi(solver, 'ALL')
 end
 
 % Exit if wrong input detected.
-if wrong_input 
+if wrong_input
     return
-end 
+end
 
 % Extract compilation options.
 if isempty(options)
@@ -199,12 +199,12 @@ filelist = 'ffiles.txt';
 
 % Generate the intersection-form Fortran source code
 % We need to do this because MEX accepts only the (obselescent) fixed-form
-% Fortran code on Windows. Intersection-form Fortran code can be compiled 
+% Fortran code on Windows. Intersection-form Fortran code can be compiled
 % both as free form and as fixed form.
 fprintf('Refactoring the Fortran code ... ');
 addpath(tools);
 %interform(fsrc);
-copy()
+copyfile(fsrc, fsrc_intersection_form);
 interform(gateways);
 rmpath(tools);
 fprintf('Done.\n\n');
@@ -232,7 +232,7 @@ try
 
     % Compilation of the common files
     common_files = regexp(fileread(fullfile(fsrc_common, filelist)), '\n', 'split');
-    common_files = strtrim(common_files(~cellfun(@isempty, common_files))); 
+    common_files = strtrim(common_files(~cellfun(@isempty, common_files)));
     common_files = fullfile(fsrc_common, common_files);
     common_files = [common_files, fullfile(gateways_intersection_form, 'fmxapi.F'), fullfile(gateways_intersection_form, 'prob.F')];
     mex(mex_options{:}, '-c', common_files{:});
@@ -252,7 +252,7 @@ try
         cellfun(@(filename) delete(filename), [mod_files, obj_files]);
         % Compile
         src_files = regexp(fileread(fullfile(fsrc_intersection_form, solver, filelist)), '\n', 'split');
-        src_files = strtrim(src_files(~cellfun(@isempty, src_files))); 
+        src_files = strtrim(src_files(~cellfun(@isempty, src_files)));
         src_files = fullfile(fsrc_intersection_form, solver, src_files);
         mex(mex_options{:}, '-c', src_files{:});
         obj_files = [files_with_wildcard(interfaces_private, '*.o'), files_with_wildcard(interfaces_private, '*.obj')];
@@ -316,21 +316,21 @@ if exist(user_startup, 'file')
     end
 end
 
-if ~path_saved && numel(userpath) > 0 
-    % Administrators may set userpath to empty for certain users, especially 
+if ~path_saved && numel(userpath) > 0
+    % Administrators may set userpath to empty for certain users, especially
     % on servers. In that case, userpath = [], and user_startup = 'startup.m'.
-    % We will not use user_startup. Otherwise, we will only get a startup.m 
+    % We will not use user_startup. Otherwise, we will only get a startup.m
     % in the current directory, which will not be executed when MATLAB starts
-    % from other directories.  
+    % from other directories.
 
-    % We first check whether the last line of the user startup script is an 
-    % empty line (or the file is empty or even does not exist at all). 
+    % We first check whether the last line of the user startup script is an
+    % empty line (or the file is empty or even does not exist at all).
     % If yes, we do not need to put a line break before the path adding string.
     if exist(user_startup, 'file')
         startup_text_cells = regexp(fileread(user_startup), '\n', 'split');
         last_line_empty = isempty(startup_text_cells) || (isempty(startup_text_cells{end}) && isempty(startup_text_cells{max(1, end-1)}));
     else
-        last_line_empty = true;  
+        last_line_empty = true;
     end
     file_id = fopen(user_startup, 'a');
     if file_id ~= -1 % If FOPEN cannot open the file, it returns -1
@@ -374,7 +374,7 @@ return
 
 %%%%%%%%%%%%%%% Function for file names with handling wildcard %%%%%%%%%%%
 function full_files = files_with_wildcard(dir_name, wildcard_string)
-%FULL_FILES returns a cell array of files that match the wildcard_string 
+%FULL_FILES returns a cell array of files that match the wildcard_string
 % under dir_name.
 % MATLAB R2015b does not handle commands with wildcards like
 % delete(*.o)
@@ -520,7 +520,7 @@ if exist(user_startup, 'file')
     full_add_path_string = sprintf('%s\t%s Added by PDFO', add_path_string, '%');
     try
         del_str_ln(user_startup, full_add_path_string);
-    catch 
+    catch
         % Do nothing.
     end
 end
