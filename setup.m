@@ -203,7 +203,8 @@ filelist = 'ffiles.txt';
 % both as free form and as fixed form.
 fprintf('Refactoring the Fortran code ... ');
 addpath(tools);
-interform(fsrc);
+%interform(fsrc);
+copy()
 interform(gateways);
 rmpath(tools);
 fprintf('Done.\n\n');
