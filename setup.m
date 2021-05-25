@@ -203,9 +203,13 @@ filelist = 'ffiles.txt';
 % both as free form and as fixed form.
 fprintf('Refactoring the Fortran code ... ');
 addpath(tools);
-%interform(fsrc);
-%copyfile(fsrc, fsrc_intersection_form);
-%interform(gateways);
+if strcmp('newuoa', solver)
+    interform(fsrc);
+    interform(gateways);
+else
+    copyfile(fsrc, fsrc_intersection_form);
+    copyfile(gateways, gateways_intersection_form);
+end
 rmpath(tools);
 fprintf('Done.\n\n');
 

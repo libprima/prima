@@ -1,6 +1,5 @@
 !*==calfun.f90  processed by SPAG 7.50RE at 17:55 on 25 May 2021
       subroutine CALFUN(N, X, F)
-      use F77KINDS
       implicit none
 !*--CALFUN5
 !*++

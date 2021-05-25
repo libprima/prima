@@ -7,13 +7,6 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IMPLICIT REAL*8*8 (A-H,O-Z)
-      use F77KINDS
-      use S_ALTMOV
-      use S_CALFUN
-      use S_PRELIM
-      use S_RESCUE
-      use S_TRSBOX
-      use S_UPDATE
       implicit none
 !*--BOBYQB18
 !*++

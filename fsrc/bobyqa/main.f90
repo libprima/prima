@@ -14,16 +14,14 @@
 !     component of X to be in the interval [-1,1].
 program AA000119
 !
-use F77KINDS
-use S_BOBYQA
 implicit none
 !*++
 !*++ Local variable declarations rewritten by SPAG
 !*++
-real(R8KIND) :: bdl, bdu, rhobeg, rhoend, temp, twopi, f, ftarget
+real*8 :: bdl, bdu, rhobeg, rhoend, temp, twopi, f, ftarget
 integer :: i, iprint, j, jcase, m, maxfun, n, npt, info
-real(R8KIND), dimension(500000) :: w
-real(R8KIND), dimension(100) :: x, xl, xu
+real*8, dimension(500000) :: w
+real*8, dimension(100) :: x, xl, xu
 !*++
 !*++ End of declarations rewritten by SPAG
 !*++

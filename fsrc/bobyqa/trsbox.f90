@@ -1,43 +1,42 @@
 !*==trsbox.f90  processed by SPAG 7.50RE at 17:55 on 25 May 2021
-      SUBROUTINE TRSBOX(N,Npt,Xpt,Xopt,Gopt,Hq,Pq,Sl,Su,Delta,Xnew,D,   &
-     &                  Gnew,Xbdi,S,Hs,Hred,Dsq,Crvmin)
+      subroutine TRSBOX(N, Npt, Xpt, Xopt, Gopt, Hq, Pq, Sl, Su, Delta, Xnew, D,   &
+     &                  Gnew, Xbdi, S, Hs, Hred, Dsq, Crvmin)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IMPLICIT REAL*8*8 (A-H,O-Z)
-      USE F77KINDS                        
-      IMPLICIT NONE
+      implicit none
 !*--TRSBOX8
 !*++
 !*++ Dummy argument declarations rewritten by SPAG
 !*++
-      INTEGER , INTENT(IN) :: N
-      INTEGER , INTENT(IN) :: Npt
-      REAL*8 , INTENT(IN) , DIMENSION(Npt,*) :: Xpt
-      REAL*8 , INTENT(IN) , DIMENSION(*) :: Xopt
-      REAL*8 , INTENT(IN) , DIMENSION(*) :: Gopt
-      REAL*8 , INTENT(IN) , DIMENSION(*) :: Hq
-      REAL*8 , INTENT(IN) , DIMENSION(*) :: Pq
-      REAL*8 , INTENT(IN) , DIMENSION(*) :: Sl
-      REAL*8 , INTENT(IN) , DIMENSION(*) :: Su
-      REAL*8 , INTENT(IN) :: Delta
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Xnew
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: D
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Gnew
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Xbdi
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: S
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Hs
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Hred
-      REAL*8 , INTENT(INOUT) :: Dsq
-      REAL*8 , INTENT(INOUT) :: Crvmin
+      integer, intent(IN) :: N
+      integer, intent(IN) :: Npt
+      real*8, intent(IN), dimension(Npt, *) :: Xpt
+      real*8, intent(IN), dimension(*) :: Xopt
+      real*8, intent(IN), dimension(*) :: Gopt
+      real*8, intent(IN), dimension(*) :: Hq
+      real*8, intent(IN), dimension(*) :: Pq
+      real*8, intent(IN), dimension(*) :: Sl
+      real*8, intent(IN), dimension(*) :: Su
+      real*8, intent(IN) :: Delta
+      real*8, intent(INOUT), dimension(*) :: Xnew
+      real*8, intent(INOUT), dimension(*) :: D
+      real*8, intent(INOUT), dimension(*) :: Gnew
+      real*8, intent(INOUT), dimension(*) :: Xbdi
+      real*8, intent(INOUT), dimension(*) :: S
+      real*8, intent(INOUT), dimension(*) :: Hs
+      real*8, intent(INOUT), dimension(*) :: Hred
+      real*8, intent(INOUT) :: Dsq
+      real*8, intent(INOUT) :: Crvmin
 !*++
 !*++ Local variable declarations rewritten by SPAG
 !*++
-      REAL*8 :: angbd , angt , beta , blen , cth , delsq , dhd , dhs ,    &
-     &        dredg , dredsq , ds , ggsav , gredsq , half , one ,       &
-     &        onemin , qred , rdnext , rdprev , redmax , rednew ,       &
-     &        redsav , resid , sdec , shs , sredg , ssq , stepsq , sth ,&
-     &        stplen , temp , tempa , tempb , xsav , xsum , zero
-      INTEGER :: i , iact , ih , isav , itcsav , iterc , itermax , iu , &
-     &           j , k , nact
+      real*8 :: angbd, angt, beta, blen, cth, delsq, dhd, dhs,    &
+     &        dredg, dredsq, ds, ggsav, gredsq, half, one,       &
+     &        onemin, qred, rdnext, rdprev, redmax, rednew,       &
+     &        redsav, resid, sdec, shs, sredg, ssq, stepsq, sth,&
+     &        stplen, temp, tempa, tempb, xsav, xsum, zero
+      integer :: i, iact, ih, isav, itcsav, iterc, itermax, iu, &
+     &           j, k, nact
 !*++
 !*++ End of declarations rewritten by SPAG
 !*++
@@ -101,18 +100,18 @@
 ! Zaikun 2019-08-15: SQSTP is never used
 !      SQSTP=ZERO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DO i = 1 , N
-         Xbdi(i) = zero
-         IF ( Xopt(i)<=Sl(i) ) THEN
-            IF ( Gopt(i)>=zero ) Xbdi(i) = onemin
-         ELSEIF ( Xopt(i)>=Su(i) ) THEN
-            IF ( Gopt(i)<=zero ) Xbdi(i) = one
-         ENDIF
-         IF ( Xbdi(i)/=zero ) nact = nact + 1
-         D(i) = zero
-         Gnew(i) = Gopt(i)
-      ENDDO
-      delsq = Delta*Delta
+      do i = 1, N
+          Xbdi(i) = zero
+          if (Xopt(i) <= Sl(i)) then
+              if (Gopt(i) >= zero) Xbdi(i) = onemin
+          elseif (Xopt(i) >= Su(i)) then
+              if (Gopt(i) <= zero) Xbdi(i) = one
+          end if
+          if (Xbdi(i) /= zero) nact = nact + 1
+          D(i) = zero
+          Gnew(i) = Gopt(i)
+      end do
+      delsq = Delta * Delta
       qred = zero
       Crvmin = onemin
 !
@@ -122,322 +121,322 @@
 !     course the components of the fixed variables are zero. ITERMAX is an
 !     upper bound on the indices of the conjugate gradient iterations.
 !
- 100  beta = zero
- 200  stepsq = zero
-      DO i = 1 , N
-         IF ( Xbdi(i)/=zero ) THEN
-            S(i) = zero
-         ELSEIF ( beta==zero ) THEN
-            S(i) = -Gnew(i)
-         ELSE
-            S(i) = beta*S(i) - Gnew(i)
-         ENDIF
-         stepsq = stepsq + S(i)**2
-      ENDDO
-      IF ( stepsq==zero ) GOTO 500
-      IF ( beta==zero ) THEN
-         gredsq = stepsq
-         itermax = iterc + N - nact
-      ENDIF
+100   beta = zero
+200   stepsq = zero
+      do i = 1, N
+          if (Xbdi(i) /= zero) then
+              S(i) = zero
+          elseif (beta == zero) then
+              S(i) = -Gnew(i)
+          else
+              S(i) = beta * S(i) - Gnew(i)
+          end if
+          stepsq = stepsq + S(i)**2
+      end do
+      if (stepsq == zero) goto 500
+      if (beta == zero) then
+          gredsq = stepsq
+          itermax = iterc + N - nact
+      end if
 !
 !     Multiply the search direction by the second derivative matrix of Q and
 !     calculate some scalars for the choice of steplength. Then set BLEN to
 !     the length of the the step to the trust region boundary and STPLEN to
 !     the steplength, ignoring the simple bounds.
 !
-      IF ( gredsq*delsq>1.0D-4*qred*qred ) GOTO 600
-      GOTO 500
+      if (gredsq * delsq > 1.0D-4 * qred * qred) goto 600
+      goto 500
 !
 !     Prepare for the alternative iteration by calculating some scalars and
 !     by multiplying the reduced D by the second derivative matrix of Q.
 !
- 300  IF ( nact>=N-1 ) GOTO 500
+300   if (nact >= N - 1) goto 500
       dredsq = zero
       dredg = zero
       gredsq = zero
-      DO i = 1 , N
-         IF ( Xbdi(i)==zero ) THEN
-            dredsq = dredsq + D(i)**2
-            dredg = dredg + D(i)*Gnew(i)
-            gredsq = gredsq + Gnew(i)**2
-            S(i) = D(i)
-         ELSE
-            S(i) = zero
-         ENDIF
-      ENDDO
+      do i = 1, N
+          if (Xbdi(i) == zero) then
+              dredsq = dredsq + D(i)**2
+              dredg = dredg + D(i) * Gnew(i)
+              gredsq = gredsq + Gnew(i)**2
+              S(i) = D(i)
+          else
+              S(i) = zero
+          end if
+      end do
       itcsav = iterc
-      GOTO 600
+      goto 600
 !
 !     Let the search direction S be a linear combination of the reduced D
 !     and the reduced G that is orthogonal to the reduced D.
 !
- 400  iterc = iterc + 1
-      temp = gredsq*dredsq - dredg*dredg
-      IF ( temp>1.0D-4*qred*qred ) THEN
-         temp = DSQRT(temp)
-         DO i = 1 , N
-            IF ( Xbdi(i)==zero ) THEN
-               S(i) = (dredg*D(i)-dredsq*Gnew(i))/temp
-            ELSE
-               S(i) = zero
-            ENDIF
-         ENDDO
-         sredg = -temp
+400   iterc = iterc + 1
+      temp = gredsq * dredsq - dredg * dredg
+      if (temp > 1.0D-4 * qred * qred) then
+          temp = DSQRT(temp)
+          do i = 1, N
+              if (Xbdi(i) == zero) then
+                  S(i) = (dredg * D(i) - dredsq * Gnew(i)) / temp
+              else
+                  S(i) = zero
+              end if
+          end do
+          sredg = -temp
 !
 !     By considering the simple bounds on the variables, calculate an upper
 !     bound on the tangent of half the angle of the alternative iteration,
 !     namely ANGBD, except that, if already a free variable has reached a
 !     bound, there is a branch back to label 100 after fixing that variable.
 !
-         angbd = one
-         iact = 0
-         DO i = 1 , N
-            IF ( Xbdi(i)==zero ) THEN
-               tempa = Xopt(i) + D(i) - Sl(i)
-               tempb = Su(i) - Xopt(i) - D(i)
-               IF ( tempa<=zero ) THEN
-                  nact = nact + 1
-                  Xbdi(i) = onemin
-                  GOTO 300
-               ELSEIF ( tempb<=zero ) THEN
-                  nact = nact + 1
-                  Xbdi(i) = one
-                  GOTO 300
-               ENDIF
+          angbd = one
+          iact = 0
+          do i = 1, N
+              if (Xbdi(i) == zero) then
+                  tempa = Xopt(i) + D(i) - Sl(i)
+                  tempb = Su(i) - Xopt(i) - D(i)
+                  if (tempa <= zero) then
+                      nact = nact + 1
+                      Xbdi(i) = onemin
+                      goto 300
+                  elseif (tempb <= zero) then
+                      nact = nact + 1
+                      Xbdi(i) = one
+                      goto 300
+                  end if
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 2019-08-15: RATIO is never used
 !          RATIO=ONE
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               ssq = D(i)**2 + S(i)**2
-               temp = ssq - (Xopt(i)-Sl(i))**2
-               IF ( temp>zero ) THEN
-                  temp = DSQRT(temp) - S(i)
-                  IF ( angbd*temp>tempa ) THEN
-                     angbd = tempa/temp
-                     iact = i
-                     xsav = onemin
-                  ENDIF
-               ENDIF
-               temp = ssq - (Su(i)-Xopt(i))**2
-               IF ( temp>zero ) THEN
-                  temp = DSQRT(temp) + S(i)
-                  IF ( angbd*temp>tempb ) THEN
-                     angbd = tempb/temp
-                     iact = i
-                     xsav = one
-                  ENDIF
-               ENDIF
-            ENDIF
-         ENDDO
+                  ssq = D(i)**2 + S(i)**2
+                  temp = ssq - (Xopt(i) - Sl(i))**2
+                  if (temp > zero) then
+                      temp = DSQRT(temp) - S(i)
+                      if (angbd * temp > tempa) then
+                          angbd = tempa / temp
+                          iact = i
+                          xsav = onemin
+                      end if
+                  end if
+                  temp = ssq - (Su(i) - Xopt(i))**2
+                  if (temp > zero) then
+                      temp = DSQRT(temp) + S(i)
+                      if (angbd * temp > tempb) then
+                          angbd = tempb / temp
+                          iact = i
+                          xsav = one
+                      end if
+                  end if
+              end if
+          end do
 !
 !     Calculate HHD and some curvatures for the alternative iteration.
 !
-         GOTO 600
-      ENDIF
- 500  Dsq = zero
-      DO i = 1 , N
-         Xnew(i) = DMAX1(DMIN1(Xopt(i)+D(i),Su(i)),Sl(i))
-         IF ( Xbdi(i)==onemin ) Xnew(i) = Sl(i)
-         IF ( Xbdi(i)==one ) Xnew(i) = Su(i)
-         D(i) = Xnew(i) - Xopt(i)
-         Dsq = Dsq + D(i)**2
-      ENDDO
-      RETURN
- 
+          goto 600
+      end if
+500   Dsq = zero
+      do i = 1, N
+          Xnew(i) = DMAX1(DMIN1(Xopt(i) + D(i), Su(i)), Sl(i))
+          if (Xbdi(i) == onemin) Xnew(i) = Sl(i)
+          if (Xbdi(i) == one) Xnew(i) = Su(i)
+          D(i) = Xnew(i) - Xopt(i)
+          Dsq = Dsq + D(i)**2
+      end do
+      return
+
 !     The following instructions multiply the current S-vector by the second
 !     derivative matrix of the quadratic model, putting the product in HS.
 !     They are reached from three different parts of the software above and
 !     they can be regarded as an external subroutine.
 !
- 600  ih = 0
-      DO j = 1 , N
-         Hs(j) = zero
-         DO i = 1 , j
-            ih = ih + 1
-            IF ( i<j ) Hs(j) = Hs(j) + Hq(ih)*S(i)
-            Hs(i) = Hs(i) + Hq(ih)*S(j)
-         ENDDO
-      ENDDO
-      DO k = 1 , Npt
-         IF ( Pq(k)/=zero ) THEN
-            temp = zero
-            DO j = 1 , N
-               temp = temp + Xpt(k,j)*S(j)
-            ENDDO
-            temp = temp*Pq(k)
-            DO i = 1 , N
-               Hs(i) = Hs(i) + temp*Xpt(k,i)
-            ENDDO
-         ENDIF
-      ENDDO
-      IF ( Crvmin/=zero ) THEN
-         resid = delsq
-         ds = zero
-         shs = zero
-         DO i = 1 , N
-            IF ( Xbdi(i)==zero ) THEN
-               resid = resid - D(i)**2
-               ds = ds + S(i)*D(i)
-               shs = shs + S(i)*Hs(i)
-            ENDIF
-         ENDDO
-         IF ( resid>zero ) THEN
-            temp = DSQRT(stepsq*resid+ds*ds)
-            IF ( ds<zero ) THEN
-               blen = (temp-ds)/stepsq
-            ELSE
-               blen = resid/(temp+ds)
-            ENDIF
-            stplen = blen
-            IF ( shs>zero ) stplen = DMIN1(blen,gredsq/shs)
- 
+600   ih = 0
+      do j = 1, N
+          Hs(j) = zero
+          do i = 1, j
+              ih = ih + 1
+              if (i < j) Hs(j) = Hs(j) + Hq(ih) * S(i)
+              Hs(i) = Hs(i) + Hq(ih) * S(j)
+          end do
+      end do
+      do k = 1, Npt
+          if (Pq(k) /= zero) then
+              temp = zero
+              do j = 1, N
+                  temp = temp + Xpt(k, j) * S(j)
+              end do
+              temp = temp * Pq(k)
+              do i = 1, N
+                  Hs(i) = Hs(i) + temp * Xpt(k, i)
+              end do
+          end if
+      end do
+      if (Crvmin /= zero) then
+          resid = delsq
+          ds = zero
+          shs = zero
+          do i = 1, N
+              if (Xbdi(i) == zero) then
+                  resid = resid - D(i)**2
+                  ds = ds + S(i) * D(i)
+                  shs = shs + S(i) * Hs(i)
+              end if
+          end do
+          if (resid > zero) then
+              temp = DSQRT(stepsq * resid + ds * ds)
+              if (ds < zero) then
+                  blen = (temp - ds) / stepsq
+              else
+                  blen = resid / (temp + ds)
+              end if
+              stplen = blen
+              if (shs > zero) stplen = DMIN1(blen, gredsq / shs)
+
 !
 !     Reduce STPLEN if necessary in order to preserve the simple bounds,
 !     letting IACT be the index of the new constrained variable.
 !
-            iact = 0
-            DO i = 1 , N
-               IF ( S(i)/=zero ) THEN
-                  xsum = Xopt(i) + D(i)
-                  IF ( S(i)>zero ) THEN
-                     temp = (Su(i)-xsum)/S(i)
-                  ELSE
-                     temp = (Sl(i)-xsum)/S(i)
-                  ENDIF
-                  IF ( temp<stplen ) THEN
-                     stplen = temp
-                     iact = i
-                  ENDIF
-               ENDIF
-            ENDDO
+              iact = 0
+              do i = 1, N
+                  if (S(i) /= zero) then
+                      xsum = Xopt(i) + D(i)
+                      if (S(i) > zero) then
+                          temp = (Su(i) - xsum) / S(i)
+                      else
+                          temp = (Sl(i) - xsum) / S(i)
+                      end if
+                      if (temp < stplen) then
+                          stplen = temp
+                          iact = i
+                      end if
+                  end if
+              end do
 !
 !     Update CRVMIN, GNEW and D. Set SDEC to the decrease that occurs in Q.
 !
-            sdec = zero
-            IF ( stplen>zero ) THEN
-               iterc = iterc + 1
-               temp = shs/stepsq
-               IF ( iact==0 .AND. temp>zero ) THEN
-                  Crvmin = DMIN1(Crvmin,temp)
-                  IF ( Crvmin==onemin ) Crvmin = temp
-               ENDIF
-               ggsav = gredsq
-               gredsq = zero
-               DO i = 1 , N
-                  Gnew(i) = Gnew(i) + stplen*Hs(i)
-                  IF ( Xbdi(i)==zero ) gredsq = gredsq + Gnew(i)**2
-                  D(i) = D(i) + stplen*S(i)
-               ENDDO
-               sdec = DMAX1(stplen*(ggsav-half*stplen*shs),zero)
-               qred = qred + sdec
-            ENDIF
+              sdec = zero
+              if (stplen > zero) then
+                  iterc = iterc + 1
+                  temp = shs / stepsq
+                  if (iact == 0 .and. temp > zero) then
+                      Crvmin = DMIN1(Crvmin, temp)
+                      if (Crvmin == onemin) Crvmin = temp
+                  end if
+                  ggsav = gredsq
+                  gredsq = zero
+                  do i = 1, N
+                      Gnew(i) = Gnew(i) + stplen * Hs(i)
+                      if (Xbdi(i) == zero) gredsq = gredsq + Gnew(i)**2
+                      D(i) = D(i) + stplen * S(i)
+                  end do
+                  sdec = DMAX1(stplen * (ggsav - half * stplen * shs), zero)
+                  qred = qred + sdec
+              end if
 !
 !     Restart the conjugate gradient method if it has hit a new bound.
 !
-            IF ( iact>0 ) THEN
-               nact = nact + 1
-               Xbdi(iact) = one
-               IF ( S(iact)<zero ) Xbdi(iact) = onemin
-               delsq = delsq - D(iact)**2
-               IF ( delsq>zero ) GOTO 100
-               GOTO 650
-            ENDIF
+              if (iact > 0) then
+                  nact = nact + 1
+                  Xbdi(iact) = one
+                  if (S(iact) < zero) Xbdi(iact) = onemin
+                  delsq = delsq - D(iact)**2
+                  if (delsq > zero) goto 100
+                  goto 650
+              end if
 !
 !     If STPLEN is less than BLEN, then either apply another conjugate
 !     gradient iteration or RETURN.
 !
-            IF ( stplen<blen ) THEN
-               IF ( iterc==itermax ) GOTO 500
-               IF ( sdec<=0.01D0*qred ) GOTO 500
-               beta = gredsq/ggsav
-               GOTO 200
-            ENDIF
-         ENDIF
- 650     Crvmin = zero
-         GOTO 300
-      ELSEIF ( iterc>itcsav ) THEN
-         shs = zero
-         dhs = zero
-         dhd = zero
-         DO i = 1 , N
-            IF ( Xbdi(i)==zero ) THEN
-               shs = shs + S(i)*Hs(i)
-               dhs = dhs + D(i)*Hs(i)
-               dhd = dhd + D(i)*Hred(i)
-            ENDIF
-         ENDDO
+              if (stplen < blen) then
+                  if (iterc == itermax) goto 500
+                  if (sdec <= 0.01D0 * qred) goto 500
+                  beta = gredsq / ggsav
+                  goto 200
+              end if
+          end if
+650       Crvmin = zero
+          goto 300
+      elseif (iterc > itcsav) then
+          shs = zero
+          dhs = zero
+          dhd = zero
+          do i = 1, N
+              if (Xbdi(i) == zero) then
+                  shs = shs + S(i) * Hs(i)
+                  dhs = dhs + D(i) * Hs(i)
+                  dhd = dhd + D(i) * Hred(i)
+              end if
+          end do
 !
 !     Seek the greatest reduction in Q for a range of equally spaced values
 !     of ANGT in [0,ANGBD], where ANGT is the tangent of half the angle of
 !     the alternative iteration.
 !
-         redmax = zero
-         isav = 0
-         redsav = zero
+          redmax = zero
+          isav = 0
+          redsav = zero
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IU=17.0D0*ANGBD+3.1D0
-         iu = INT(17.0D0*angbd+3.1D0)
+          iu = int(17.0D0 * angbd + 3.1D0)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-         DO i = 1 , iu
-            angt = angbd*DFLOAT(i)/DFLOAT(iu)
-            sth = (angt+angt)/(one+angt*angt)
-            temp = shs + angt*(angt*dhd-dhs-dhs)
-            rednew = sth*(angt*dredg-sredg-half*sth*temp)
-            IF ( rednew>redmax ) THEN
-               redmax = rednew
-               isav = i
-               rdprev = redsav
-            ELSEIF ( i==isav+1 ) THEN
-               rdnext = rednew
-            ENDIF
-            redsav = rednew
-         ENDDO
+          do i = 1, iu
+              angt = angbd * DFLOAT(i) / DFLOAT(iu)
+              sth = (angt + angt) / (one + angt * angt)
+              temp = shs + angt * (angt * dhd - dhs - dhs)
+              rednew = sth * (angt * dredg - sredg - half * sth * temp)
+              if (rednew > redmax) then
+                  redmax = rednew
+                  isav = i
+                  rdprev = redsav
+              elseif (i == isav + 1) then
+                  rdnext = rednew
+              end if
+              redsav = rednew
+          end do
 !
 !     Return if the reduction is zero. Otherwise, set the sine and cosine
 !     of the angle of the alternative iteration, and calculate SDEC.
 !
-         IF ( isav==0 ) GOTO 500
-         IF ( isav<iu ) THEN
-            temp = (rdnext-rdprev)/(redmax+redmax-rdprev-rdnext)
-            angt = angbd*(DFLOAT(isav)+half*temp)/DFLOAT(iu)
-         ENDIF
-         cth = (one-angt*angt)/(one+angt*angt)
-         sth = (angt+angt)/(one+angt*angt)
-         temp = shs + angt*(angt*dhd-dhs-dhs)
-         sdec = sth*(angt*dredg-sredg-half*sth*temp)
-         IF ( sdec<=zero ) GOTO 500
+          if (isav == 0) goto 500
+          if (isav < iu) then
+              temp = (rdnext - rdprev) / (redmax + redmax - rdprev - rdnext)
+              angt = angbd * (DFLOAT(isav) + half * temp) / DFLOAT(iu)
+          end if
+          cth = (one - angt * angt) / (one + angt * angt)
+          sth = (angt + angt) / (one + angt * angt)
+          temp = shs + angt * (angt * dhd - dhs - dhs)
+          sdec = sth * (angt * dredg - sredg - half * sth * temp)
+          if (sdec <= zero) goto 500
 !
 !     Update GNEW, D and HRED. If the angle of the alternative iteration
 !     is restricted by a bound on a free variable, that variable is fixed
 !     at the bound.
 !
-         dredg = zero
-         gredsq = zero
-         DO i = 1 , N
-            Gnew(i) = Gnew(i) + (cth-one)*Hred(i) + sth*Hs(i)
-            IF ( Xbdi(i)==zero ) THEN
-               D(i) = cth*D(i) + sth*S(i)
-               dredg = dredg + D(i)*Gnew(i)
-               gredsq = gredsq + Gnew(i)**2
-            ENDIF
-            Hred(i) = cth*Hred(i) + sth*Hs(i)
-         ENDDO
-         qred = qred + sdec
-         IF ( iact>0 .AND. isav==iu ) THEN
-            nact = nact + 1
-            Xbdi(iact) = xsav
-            GOTO 300
-         ENDIF
+          dredg = zero
+          gredsq = zero
+          do i = 1, N
+              Gnew(i) = Gnew(i) + (cth - one) * Hred(i) + sth * Hs(i)
+              if (Xbdi(i) == zero) then
+                  D(i) = cth * D(i) + sth * S(i)
+                  dredg = dredg + D(i) * Gnew(i)
+                  gredsq = gredsq + Gnew(i)**2
+              end if
+              Hred(i) = cth * Hred(i) + sth * Hs(i)
+          end do
+          qred = qred + sdec
+          if (iact > 0 .and. isav == iu) then
+              nact = nact + 1
+              Xbdi(iact) = xsav
+              goto 300
+          end if
 !
 !     If SDEC is sufficiently small, then RETURN after setting XNEW to
 !     XOPT+D, giving careful attention to the bounds.
 !
-         IF ( sdec<=0.01D0*qred ) GOTO 500
-         GOTO 400
-      ELSE
-         DO i = 1 , N
-            Hred(i) = Hs(i)
-         ENDDO
-         GOTO 400
-      ENDIF
-      END SUBROUTINE TRSBOX
+          if (sdec <= 0.01D0 * qred) goto 500
+          goto 400
+      else
+          do i = 1, N
+              Hred(i) = Hs(i)
+          end do
+          goto 400
+      end if
+      end subroutine TRSBOX
