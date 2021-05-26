@@ -269,6 +269,7 @@ try
         cellfun(@(filename) delete(filename), [mod_files, obj_files]);
         % Compile
         src_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.f*');
+        keyboard
         mex(mex_options{:}, '-c', fullfile(gateways_classical, 'fmxcl.F'));
         obj_files = [files_with_wildcard(interfaces_private, '*.o'), files_with_wildcard(interfaces_private, '*.obj')];
         if strcmp('newuoa', solver)
