@@ -248,28 +248,28 @@ try
      mkdir('./tmp');
      cd('./tmp');
     for isol = 1 : length(solver_list)
-        solver = solver_list{isol};
-
-        copyfile('../*.o', './');
-        copyfile('../*.mod', './');
-
-        % Compilation of solver
-        fprintf('Compiling %s ... ', solver);
-        % Clean up the source file directory
-        mod_files = files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.mod');
-        obj_files = [files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.o'), files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.obj')];
-        cellfun(@(filename) delete(filename), [mod_files, obj_files]);
-        % Compile
-        src_files = regexp(fileread(fullfile(fsrc_intersection_form, solver, filelist)), '\n', 'split');
-        src_files = strtrim(src_files(~cellfun(@isempty, src_files)));
-        src_files = fullfile(fsrc_intersection_form, solver, src_files);
-        mex(mex_options{:}, '-c', src_files{:});
-%        obj_files = [files_with_wildcard(interfaces_private, '*.o'), files_with_wildcard(interfaces_private, '*.obj')];
-        obj_files = [files_with_wildcard(fullfile(interfaces_private, 'tmp'), '*.o'), files_with_wildcard(fullfile(interfaces_private, 'tmp'), '*.obj')];
-        mex(mex_options{:}, '-output', ['f', solver, 'n'], obj_files{:}, fullfile(gateways_intersection_form, [solver, '-interface.F']));
+%        solver = solver_list{isol};
+%
+%        copyfile('../*.o', './');
+%        copyfile('../*.mod', './');
+%
+%        % Compilation of solver
+%        fprintf('Compiling %s ... ', solver);
+%        % Clean up the source file directory
+%        mod_files = files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.mod');
+%        obj_files = [files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.o'), files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.obj')];
+%        cellfun(@(filename) delete(filename), [mod_files, obj_files]);
+%        % Compile
+%        src_files = regexp(fileread(fullfile(fsrc_intersection_form, solver, filelist)), '\n', 'split');
+%        src_files = strtrim(src_files(~cellfun(@isempty, src_files)));
+%        src_files = fullfile(fsrc_intersection_form, solver, src_files);
+%        mex(mex_options{:}, '-c', src_files{:});
+%%        obj_files = [files_with_wildcard(interfaces_private, '*.o'), files_with_wildcard(interfaces_private, '*.obj')];
+%        obj_files = [files_with_wildcard(fullfile(interfaces_private, 'tmp'), '*.o'), files_with_wildcard(fullfile(interfaces_private, 'tmp'), '*.obj')];
+%        mex(mex_options{:}, '-output', ['f', solver, 'n'], obj_files{:}, fullfile(gateways_intersection_form, [solver, '-interface.F']));
 
         copyfile('./*.mex*', '../');
-        delete('./*');
+%        delete('./*');
         copyfile('../*.o', './');
         copyfile('../*.mod', './');
 
