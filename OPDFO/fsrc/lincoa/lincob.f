@@ -257,7 +257,7 @@ C of TRSTEP or QMSTEP is not predictable, and Segmentation Fault or
 C infinite cycling may happen. This is because any equality/inequality
 C comparison involving NaN returns FALSE, which can lead to unintended
 C behavior of the code, including uninitialized indices, which can lead
-C to segmentation faults. 
+C to segmentation faults.
       DO J = 1,N
           IF (GOPT(J) /= GOPT(J)) THEN
               INFO = -3
