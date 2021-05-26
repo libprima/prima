@@ -218,7 +218,7 @@ fprintf('Done.\n\n');
 % compilation with a different ad_option. Without cleaning-up, the MEX
 % files may be linked with wrong .mod or .o files, which can lead to
 % serious errors including Segmentation Fault!
-dir_list = {fsrc_intersection_form, fsrc_classical, gateways_intersection_form, gateways_classical, interfaces_private};
+dir_list = {fsrc_common, gateways_intersection_form, gateways_classical, interfaces_private};
 for idir = 1 : length(dir_list)
     mod_files = files_with_wildcard(dir_list{idir}, '*.mod');
     obj_files = [files_with_wildcard(dir_list{idir}, '*.o'), files_with_wildcard(dir_list{idir}, '*.obj')];
@@ -234,16 +234,17 @@ try
 % We use try ... catch so that we can change directory back to cpwd in
 % case of an error.
 
+
     % Compilation of the common files
     common_files = regexp(fileread(fullfile(fsrc_common, filelist)), '\n', 'split');
     common_files = strtrim(common_files(~cellfun(@isempty, common_files)));
     common_files = fullfile(fsrc_common, common_files);
     common_files = [common_files, fullfile(gateways_intersection_form, 'fmxapi.F'), fullfile(gateways_intersection_form, 'prob.F'), fullfile(gateways_classical, 'fmxcl.F')];
-    mex(mex_options{:}, '-c', common_files{:}, '-outputdir', fsrc_common);
+    mex(mex_options{:}, '-c', common_files{:}, '-outdir', fsrc_common);
     common_obj_files = [files_with_wildcard(fsrc_common, '*.o'), files_with_wildcard(fsrc_common, '*.obj')];
 
     % Compilation of function gethuge
-    mex(mex_options{:}, '-output', 'gethuge', common_obj_files{:}, fullfile(gateways_intersection_form, 'gethuge.F'));
+    mex(mex_options{:}, '-output', 'gethuge', common_obj_files{:}, fullfile(gateways_intersection_form, 'gethuge.F'), '-outdir', interfaces_private);
 
     for isol = 1 : length(solver_list)
 
@@ -252,6 +253,7 @@ try
 
         % Compilation of solver
         fprintf('Compiling %s ... ', solver);
+
         % Clean up the source file directory
         mod_files = files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.mod');
         obj_files = [files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.o'), files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.obj')];
@@ -260,9 +262,9 @@ try
         src_files = regexp(fileread(fullfile(fsrc_intersection_form, solver, filelist)), '\n', 'split');
         src_files = strtrim(src_files(~cellfun(@isempty, src_files)));
         src_files = fullfile(fsrc_intersection_form, solver, src_files);
-        mex(mex_options{:}, '-c', src_files{:}, '-outputdir', fullfile(fsrc_intersection_form, solver));
+        mex(mex_options{:}, '-c', src_files{:}, '-outdir', fullfile(fsrc_intersection_form, solver));
         obj_files = [common_obj_files, files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.o'), files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.obj')];
-        mex(mex_options{:}, '-output', ['f', solver, 'n'], obj_files{:}, fullfile(gateways_intersection_form, [solver, '-interface.F']));
+        mex(mex_options{:}, '-output', ['f', solver, 'n'], obj_files{:}, fullfile(gateways_intersection_form, [solver, '-interface.F']), '-outdir', interfaces_private);
         % Clean up the source file directory
         mod_files = files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.mod');
         obj_files = [files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.o'), files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.obj')];
@@ -275,16 +277,21 @@ try
         cellfun(@(filename) delete(filename), [mod_files, obj_files]);
         % Compile
         src_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.f*');
-        obj_files = [common_obj_files, files_with_wildcard(interfaces_private, '*.o'), files_with_wildcard(interfaces_private, '*.obj')];
-        mex(mex_options{:}, '-output', ['f', solver, 'n_classical'], obj_files{:}, src_files{:}, fullfile(gateways_classical, [solver, '-interface.F']));
+        mex(mex_options{:}, '-c', src_files{:}, '-outdir', fullfile(fsrc_classical, solver));
+        obj_files = [common_obj_files, files_with_wildcard(fullfile(fsrc_classical, solver), '*.o'), files_with_wildcard(fullfile(fsrc_classical,solver), '*.obj')];
+        mex(mex_options{:}, '-output', ['f', solver, 'n_classical'], obj_files{:}, fullfile(gateways_classical, [solver, '-interface.F']), '-outdir', interfaces_private);
+        % Clean up the source file directory
+        mod_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.mod');
+        obj_files = [files_with_wildcard(fullfile(fsrc_classical, solver), '*.o'), files_with_wildcard(fullfile(fsrc_classical, solver), '*.obj')];
+        cellfun(@(filename) delete(filename), [mod_files, obj_files]);
 
         fprintf('Done.\n');
     end
 
-    % Clean up the .mod and .o files
-    mod_files = files_with_wildcard(fullfile(interfaces_private), '*.mod');
-    obj_files = [files_with_wildcard(fullfile(interfaces_private), '*.o'), files_with_wildcard(fullfile(interfaces_private), '*.obj')];
-    cellfun(@(filename) delete(filename), [mod_files, obj_files]);
+    % Clean up the .mod and .o files in fsrc_common.
+    cellfun(@(filename) delete(filename), [common_obj_files, files_with_wildcard(fsrc_common, '*.mod')]);
+    % Clean up the .mod files in interfaces_private.
+    cellfun(@(filename) delete(filename), files_with_wildcard(interfaces_private, '*.mod'));
 
 catch exception % NOTE: Everything above 'catch' is conducted in interfaces_private.
     cd(cpwd); % In case of an error, change directory back to cpwd

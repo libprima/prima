@@ -1,5 +1,0 @@
-{
-    "pp_suffixes": [".F90", ".F"],
-    "lowercase_intrinsics": true,
-    "debug_log": true
-}

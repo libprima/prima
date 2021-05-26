@@ -1,263 +1,318 @@
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C Zaikun 2019-08-29: B is never used 
-C      SUBROUTINE QMSTEP (N,NPT,M,AMAT,B,XPT,XOPT,NACT,IACT,
-      SUBROUTINE QMSTEP (N,NPT,M,AMAT,XPT,XOPT,NACT,IACT,
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! This is the intersection-form version of qmstep.f90.
+! The file is generated automatically and is NOT intended to be readable.
+!
+! In the intersection form, each continued line has an ampersand at column
+! 73, and each continuation line has an ampersand at column 6. A Fortran
+! file in such a form can be compiled both as fixed form and as free form.
+!
+! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
+!
+! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
+! on 26-May-2021.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+!*==qmstep.f90  processed by SPAG 7.50RE at 00:12 on 26 May 2021
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+! Zaikun 2019-08-29: B is never used
+!      SUBROUTINE QMSTEP (N,NPT,M,AMAT,B,XPT,XOPT,NACT,IACT,
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-     1  RESCON,QFAC,KOPT,KNEW,DEL,STEP,GL,PQW,RSTAT,W,IFEAS)
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C      IMPLICIT REAL*8 (A-H,O-Z)
-      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
-      IMPLICIT INTEGER (I-N)
-C      DIMENSION AMAT(N,*),B(*),XPT(NPT,*),XOPT(*),IACT(*),
-      DIMENSION AMAT(N,*),XPT(NPT,*),XOPT(*),IACT(*),
+            SUBROUTINE QMSTEP(N,Npt,M,Amat,Xpt,Xopt,Nact,Iact,Rescon,Qfa&
+     &c, Kopt,Knew,Del,Step,Gl,Pqw,Rstat,W,Ifeas)
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!      IMPLICIT REAL*8*8 (A-H,O-Z)
+            IMPLICIT NONE
+!*--QMSTEP12
+!*++
+!*++ Dummy argument declarations rewritten by SPAG
+!*++
+            INTEGER , INTENT(IN) :: N
+            INTEGER , INTENT(IN) :: Npt
+            INTEGER , INTENT(IN) :: M
+            REAL*8 , INTENT(IN) , DIMENSION(N,*) :: Amat
+            REAL*8 , INTENT(IN) , DIMENSION(Npt,*) :: Xpt
+            REAL*8 , INTENT(IN) , DIMENSION(*) :: Xopt
+            INTEGER , INTENT(IN) :: Nact
+            INTEGER , INTENT(IN) , DIMENSION(*) :: Iact
+            REAL*8 , INTENT(IN) , DIMENSION(*) :: Rescon
+            REAL*8 , INTENT(IN) , DIMENSION(N,*) :: Qfac
+            INTEGER , INTENT(IN) :: Kopt
+            INTEGER , INTENT(IN) :: Knew
+            REAL*8 , INTENT(IN) :: Del
+            REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Step
+            REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Gl
+            REAL*8 , INTENT(IN) , DIMENSION(*) :: Pqw
+            REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Rstat
+            REAL*8 , INTENT(INOUT) , DIMENSION(*) :: W
+            INTEGER , INTENT(INOUT) :: Ifeas
+!*++
+!*++ Local variable declarations rewritten by SPAG
+!*++
+            REAL*8 :: bigv , ctol , gg , ghg , half , one , resmax , sp &
+     &, ss , stp , stpsav , sum , temp , tenth , test , vbig , vgrad , v&
+     &lag , vnew , ww , zero
+            INTEGER :: i , j , jsav , k , ksav
+!*++
+!*++ End of declarations rewritten by SPAG
+!*++
+!      DIMENSION AMAT(N,*),B(*),XPT(NPT,*),XOPT(*),IACT(*),
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-     1  RESCON(*),QFAC(N,*),STEP(*),GL(*),PQW(*),RSTAT(*),W(*)
-C
-C     N, NPT, M, AMAT, B, XPT, XOPT, NACT, IACT, RESCON, QFAC, KOPT are the
-C       same as the terms with these names in SUBROUTINE LINCOB.
-C     KNEW is the index of the interpolation point that is going to be moved.
-C     DEL is the current restriction on the length of STEP, which is never
-C       greater than the current trust region radius DELTA.
-C     STEP will be set to the required step from XOPT to the new point.
-C     GL must be set on entry to the gradient of LFUNC at XBASE, where LFUNC
-C       is the KNEW-th Lagrange function. It is used also for some other
-C       gradients of LFUNC.
-C     PQW provides the second derivative parameters of LFUNC.
-C     RSTAT and W are used for working space. Their lengths must be at least
-C       M and N, respectively. RSTAT(J) is set to -1.0, 0.0, or 1.0 if the
-C       J-th constraint is irrelevant, active, or both inactive and relevant,
-C       respectively.
-C     IFEAS will be set to 0 or 1 if XOPT+STEP is infeasible or feasible.
-C
-C     STEP is chosen to provide a relatively large value of the modulus of
-C       LFUNC(XOPT+STEP), subject to ||STEP|| .LE. DEL. A projected STEP is
-C       calculated too, within the trust region, that does not alter the
-C       residuals of the active constraints. The projected step is preferred
-C       if its value of | LFUNC(XOPT+STEP) | is at least one fifth of the
-C       original one, but the greatest violation of a linear constraint must
-C       be at least 0.2*DEL, in order to keep the interpolation points apart.
-C       The remedy when the maximum constraint violation is too small is to
-C       restore the original step, which is perturbed if necessary so that
-C       its maximum constraint violation becomes 0.2*DEL.
-C
-C     Set some constants.
-C
-      HALF=0.5D0
-      ONE=1.0D0
-      TENTH=0.1D0
-      ZERO=0.0D0
-      TEST=0.2D0*DEL
-C
-C     Replace GL by the gradient of LFUNC at the trust region centre, and
-C       set the elements of RSTAT.
-C
-      DO K=1,NPT
-          TEMP=ZERO
-          DO J=1,N
-              TEMP=TEMP+XPT(K,J)*XOPT(J)
-          END DO
-          TEMP=PQW(K)*TEMP
-          DO I=1,N
-              GL(I)=GL(I)+TEMP*XPT(K,I)
-          END DO
-      END DO
-      IF (M > 0) THEN
-          DO J=1,M
-              RSTAT(J)=ONE
-              IF (DABS(RESCON(J)) >= DEL) RSTAT(J)=-ONE
-          END DO
-          DO K=1,NACT
-              RSTAT(IACT(K))=ZERO
-          END DO
-      END IF
-C
-C     Find the greatest modulus of LFUNC on a line through XOPT and
-C       another interpolation point within the trust region.
-C
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C Zaikun 2019-08-15: IFLAG is never used 
-C      IFLAG=0
+!
+!     N, NPT, M, AMAT, B, XPT, XOPT, NACT, IACT, RESCON, QFAC, KOPT are the
+!       same as the terms with these names in SUBROUTINE LINCOB.
+!     KNEW is the index of the interpolation point that is going to be moved.
+!     DEL is the current restriction on the length of STEP, which is never
+!       greater than the current trust region radius DELTA.
+!     STEP will be set to the required step from XOPT to the new point.
+!     GL must be set on entry to the gradient of LFUNC at XBASE, where LFUNC
+!       is the KNEW-th Lagrange function. It is used also for some other
+!       gradients of LFUNC.
+!     PQW provides the second derivative parameters of LFUNC.
+!     RSTAT and W are used for working space. Their lengths must be at least
+!       M and N, respectively. RSTAT(J) is set to -1.0, 0.0, or 1.0 if the
+!       J-th constraint is irrelevant, active, or both inactive and relevant,
+!       respectively.
+!     IFEAS will be set to 0 or 1 if XOPT+STEP is infeasible or feasible.
+!
+!     STEP is chosen to provide a relatively large value of the modulus of
+!       LFUNC(XOPT+STEP), subject to ||STEP|| .LE. DEL. A projected STEP is
+!       calculated too, within the trust region, that does not alter the
+!       residuals of the active constraints. The projected step is preferred
+!       if its value of | LFUNC(XOPT+STEP) | is at least one fifth of the
+!       original one, but the greatest violation of a linear constraint must
+!       be at least 0.2*DEL, in order to keep the interpolation points apart.
+!       The remedy when the maximum constraint violation is too small is to
+!       restore the original step, which is perturbed if necessary so that
+!       its maximum constraint violation becomes 0.2*DEL.
+!
+!     Set some constants.
+!
+            half = 0.5D0
+            one = 1.0D0
+            tenth = 0.1D0
+            zero = 0.0D0
+            test = 0.2D0*Del
+!
+!     Replace GL by the gradient of LFUNC at the trust region centre, and
+!       set the elements of RSTAT.
+!
+            DO k = 1 , Npt
+               temp = zero
+               DO j = 1 , N
+                  temp = temp + Xpt(k,j)*Xopt(j)
+               ENDDO
+               temp = Pqw(k)*temp
+               DO i = 1 , N
+                  Gl(i) = Gl(i) + temp*Xpt(k,i)
+               ENDDO
+            ENDDO
+            IF ( M>0 ) THEN
+               DO j = 1 , M
+                  Rstat(j) = one
+                  IF ( DABS(Rescon(j))>=Del ) Rstat(j) = -one
+               ENDDO
+               DO k = 1 , Nact
+                  Rstat(Iact(k)) = zero
+               ENDDO
+            ENDIF
+!
+!     Find the greatest modulus of LFUNC on a line through XOPT and
+!       another interpolation point within the trust region.
+!
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+! Zaikun 2019-08-15: IFLAG is never used
+!      IFLAG=0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      VBIG=ZERO
-      DO K=1,NPT
-          IF (K == KOPT) CYCLE 
-          SS=ZERO
-          SP=ZERO
-          DO I=1,N
-              TEMP=XPT(K,I)-XOPT(I)
-              SS=SS+TEMP*TEMP
-              SP=SP+GL(I)*TEMP
-          END DO
-          STP=-DEL/DSQRT(SS)
-          IF (K == KNEW) THEN
-              IF (SP*(SP-ONE) < ZERO) STP=-STP
-              VLAG=DABS(STP*SP)+STP*STP*DABS(SP-ONE)
-          ELSE
-              VLAG=DABS(STP*(ONE-STP)*SP)
-          END IF
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C Zaikun 2019-08-29: With the original code, if either VLAG or VBIG is 
-C NaN, KSAV will not get a value. This may cause Segmentation Fault
-C because XPT(KSAV, :) will later be accessed. 
-C      IF (VLAG .GT. VBIG) THEN
-          IF (.NOT. (VLAG <= VBIG)) THEN
+            vbig = zero
+            DO k = 1 , Npt
+               IF ( k==Kopt ) CYCLE
+               ss = zero
+               sp = zero
+               DO i = 1 , N
+                  temp = Xpt(k,i) - Xopt(i)
+                  ss = ss + temp*temp
+                  sp = sp + Gl(i)*temp
+               ENDDO
+               stp = -Del/DSQRT(ss)
+               IF ( k==Knew ) THEN
+                  IF ( sp*(sp-one)<zero ) stp = -stp
+                  vlag = DABS(stp*sp) + stp*stp*DABS(sp-one)
+               ELSE
+                  vlag = DABS(stp*(one-stp)*sp)
+               ENDIF
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+! Zaikun 2019-08-29: With the original code, if either VLAG or VBIG is
+! NaN, KSAV will not get a value. This may cause Segmentation Fault
+! because XPT(KSAV, :) will later be accessed.
+!      IF (VLAG .GT. VBIG) THEN
+               IF ( vlag>vbig ) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              KSAV=K
-              STPSAV=STP
-              VBIG=VLAG
-          END IF
-      END DO
-C
-C     Set STEP to the move that gives the greatest modulus calculated above.
-C       This move may be replaced by a steepest ascent step from XOPT.
-C
-      GG=ZERO
-      DO I=1,N
-          GG=GG+GL(I)**2
-          STEP(I)=STPSAV*(XPT(KSAV,I)-XOPT(I))
-      END DO
-      VGRAD=DEL*DSQRT(GG)
-      IF (VGRAD <= TENTH*VBIG) GOTO 220
-C
-C     Make the replacement if it provides a larger value of VBIG.
-C
-      GHG=ZERO
-      DO K=1,NPT
-          TEMP=ZERO
-          DO J=1,N
-              TEMP=TEMP+XPT(K,J)*GL(J)
-          END DO
-          GHG=GHG+PQW(K)*TEMP*TEMP
-      END DO
-      VNEW=VGRAD+DABS(HALF*DEL*DEL*GHG/GG)
-      IF (VNEW > VBIG) THEN
-          VBIG=VNEW
-          STP=DEL/DSQRT(GG)
-          IF (GHG < ZERO) STP=-STP
-          DO I=1,N
-              STEP(I)=STP*GL(I)
-          END DO
-      END IF
-      IF (NACT == 0 .OR. NACT == N) GOTO 220
-C
-C     Overwrite GL by its projection. Then set VNEW to the greatest
-C       value of |LFUNC| on the projected gradient from XOPT subject to
-C       the trust region bound. If VNEW is sufficiently large, then STEP
-C       may be changed to a move along the projected gradient.
-C
-      DO K=NACT+1,N
-          W(K)=ZERO
-          DO I=1,N
-              W(K)=W(K)+GL(I)*QFAC(I,K)
-          END DO
-      END DO
-      GG=ZERO
-      DO I=1,N
-          GL(I)=ZERO
-          DO K=NACT+1,N
-              GL(I)=GL(I)+QFAC(I,K)*W(K)
-          END DO
-          GG=GG+GL(I)**2
-      END DO
-      VGRAD=DEL*DSQRT(GG)
-      IF (VGRAD <= TENTH*VBIG) GOTO 220
-      GHG=ZERO
-      DO K=1,NPT
-          TEMP=ZERO
-          DO J=1,N
-              TEMP=TEMP+XPT(K,J)*GL(J)
-          END DO
-          GHG=GHG+PQW(K)*TEMP*TEMP
-      END DO
-      VNEW=VGRAD+DABS(HALF*DEL*DEL*GHG/GG)
-C
-C     Set W to the possible move along the projected gradient.
-C
-      STP=DEL/DSQRT(GG)
-      IF (GHG < ZERO) STP=-STP
-      WW=ZERO
-      DO I=1,N
-          W(I)=STP*GL(I)
-          WW=WW+W(I)**2
-      END DO
-C
-C     Set STEP to W if W gives a sufficiently large value of the modulus
-C       of the Lagrange function, and if W either preserves feasibility
-C       or gives a constraint violation of at least 0.2*DEL. The purpose
-C       of CTOL below is to provide a check on feasibility that includes
-C       a tolerance for contributions from computer rounding errors.
-C
-      IF (VNEW/VBIG >= 0.2D0) THEN
-          IFEAS=1
-          BIGV=ZERO
-          J=0
-  170     J=J+1
-          IF (J <= M) THEN
-              IF (RSTAT(J) == ONE) THEN
-                  TEMP=-RESCON(J)
-                  DO I=1,N
-                      TEMP=TEMP+W(I)*AMAT(I,J)
-                  END DO
-                  BIGV=DMAX1(BIGV,TEMP)
-              END IF
-              IF (BIGV < TEST) GOTO 170
-              IFEAS=0
-          END IF
-          CTOL=ZERO
-          TEMP=0.01D0*DSQRT(WW)
-          IF (BIGV > ZERO .AND. BIGV < TEMP) THEN
-              DO K=1,NACT
-                  J=IACT(K)
-                  SUM=ZERO
-                  DO I=1,N
-                      SUM=SUM+W(I)*AMAT(I,J)
-                  END DO
-                  CTOL=DMAX1(CTOL,DABS(SUM))
-              END DO
-          END IF
-          IF (BIGV <= 10.0D0*CTOL .OR. BIGV >= TEST) THEN
-              DO I=1,N
-                  STEP(I)=W(I)
-              END DO
-              GOTO 260
-          END IF
-      END IF
-C
-C     Calculate the greatest constraint violation at XOPT+STEP with STEP at
-C       its original value. Modify STEP if this violation is unacceptable.
-C
-  220 IFEAS=1
-      BIGV=ZERO
-      RESMAX=ZERO
-      J=0
-  230 J=J+1
-      IF (J <= M) THEN
-          IF (RSTAT(J) < ZERO) GOTO 230
-          TEMP=-RESCON(J)
-          DO I=1,N
-              TEMP=TEMP+STEP(I)*AMAT(I,J)
-          END DO
-          RESMAX=DMAX1(RESMAX,TEMP)
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C          IF (TEMP .LT. TEST) THEN
-          IF (.NOT. (TEMP >= TEST)) THEN
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!              
-              IF (TEMP <= BIGV) GOTO 230
-              BIGV=TEMP
-              JSAV=J
-              IFEAS=-1
-              GOTO 230
-          END IF
-          IFEAS=0
-      END IF
-      IF (IFEAS == -1) THEN
-          DO I=1,N
-              STEP(I)=STEP(I)+(TEST-BIGV)*AMAT(I,JSAV)
-          END DO
-          IFEAS=0
-      END IF
-C
-C     Return the calculated STEP and the value of IFEAS.
-C
-  260 RETURN
-      END
+                  ksav = k
+                  stpsav = stp
+                  vbig = vlag
+               ENDIF
+            ENDDO
+!
+!     Set STEP to the move that gives the greatest modulus calculated above.
+!       This move may be replaced by a steepest ascent step from XOPT.
+!
+            gg = zero
+            DO i = 1 , N
+               gg = gg + Gl(i)**2
+               Step(i) = stpsav*(Xpt(ksav,i)-Xopt(i))
+            ENDDO
+            vgrad = Del*DSQRT(gg)
+            IF ( vgrad>tenth*vbig ) THEN
+!
+!     Make the replacement if it provides a larger value of VBIG.
+!
+               ghg = zero
+               DO k = 1 , Npt
+                  temp = zero
+                  DO j = 1 , N
+                     temp = temp + Xpt(k,j)*Gl(j)
+                  ENDDO
+                  ghg = ghg + Pqw(k)*temp*temp
+               ENDDO
+               vnew = vgrad + DABS(half*Del*Del*ghg/gg)
+               IF ( vnew>vbig ) THEN
+                  vbig = vnew
+                  stp = Del/DSQRT(gg)
+                  IF ( ghg<zero ) stp = -stp
+                  DO i = 1 , N
+                     Step(i) = stp*Gl(i)
+                  ENDDO
+               ENDIF
+               IF ( Nact/=0 .AND. Nact/=N ) THEN
+!
+!     Overwrite GL by its projection. Then set VNEW to the greatest
+!       value of |LFUNC| on the projected gradient from XOPT subject to
+!       the trust region bound. If VNEW is sufficiently large, then STEP
+!       may be changed to a move along the projected gradient.
+!
+                  DO k = Nact + 1 , N
+                     W(k) = zero
+                     DO i = 1 , N
+                        W(k) = W(k) + Gl(i)*Qfac(i,k)
+                     ENDDO
+                  ENDDO
+                  gg = zero
+                  DO i = 1 , N
+                     Gl(i) = zero
+                     DO k = Nact + 1 , N
+                        Gl(i) = Gl(i) + Qfac(i,k)*W(k)
+                     ENDDO
+                     gg = gg + Gl(i)**2
+                  ENDDO
+                  vgrad = Del*DSQRT(gg)
+                  IF ( vgrad>tenth*vbig ) THEN
+                     ghg = zero
+                     DO k = 1 , Npt
+                        temp = zero
+                        DO j = 1 , N
+                           temp = temp + Xpt(k,j)*Gl(j)
+                        ENDDO
+                        ghg = ghg + Pqw(k)*temp*temp
+                     ENDDO
+                     vnew = vgrad + DABS(half*Del*Del*ghg/gg)
+!
+!     Set W to the possible move along the projected gradient.
+!
+                     stp = Del/DSQRT(gg)
+                     IF ( ghg<zero ) stp = -stp
+                     ww = zero
+                     DO i = 1 , N
+                        W(i) = stp*Gl(i)
+                        ww = ww + W(i)**2
+                     ENDDO
+!
+!     Set STEP to W if W gives a sufficiently large value of the modulus
+!       of the Lagrange function, and if W either preserves feasibility
+!       or gives a constraint violation of at least 0.2*DEL. The purpose
+!       of CTOL below is to provide a check on feasibility that includes
+!       a tolerance for contributions from computer rounding errors.
+!
+                     IF ( vnew/vbig>=0.2D0 ) THEN
+                        Ifeas = 1
+                        bigv = zero
+                        j = 0
+                        DO
+                           j = j + 1
+                           IF ( j<=M ) THEN
+                              IF ( Rstat(j)==one ) THEN
+                                 temp = -Rescon(j)
+                                 DO i = 1 , N
+                                    temp = temp + W(i)*Amat(i,j)
+                                 ENDDO
+                                 bigv = DMAX1(bigv,temp)
+                              ENDIF
+                              IF ( bigv<test ) CYCLE
+                              Ifeas = 0
+                           ENDIF
+                           ctol = zero
+                           temp = 0.01D0*DSQRT(ww)
+                           IF ( bigv>zero .AND. bigv<temp ) THEN
+                              DO k = 1 , Nact
+                                 j = Iact(k)
+                                 sum = zero
+                                 DO i = 1 , N
+                                    sum = sum + W(i)*Amat(i,j)
+                                 ENDDO
+                                 ctol = DMAX1(ctol,DABS(sum))
+                              ENDDO
+                           ENDIF
+                           IF ( bigv<=10.0D0*ctol .OR. bigv>=test ) THEN
+                              DO i = 1 , N
+                                 Step(i) = W(i)
+                              ENDDO
+                              GOTO 99999
+                           ENDIF
+                           EXIT
+                        ENDDO
+                     ENDIF
+                  ENDIF
+               ENDIF
+            ENDIF
+!
+!     Calculate the greatest constraint violation at XOPT+STEP with STEP at
+!       its original value. Modify STEP if this violation is unacceptable.
+!
+            Ifeas = 1
+            bigv = zero
+            resmax = zero
+            j = 0
+            DO
+               j = j + 1
+               IF ( j<=M ) THEN
+                  IF ( Rstat(j)<zero ) CYCLE
+                  temp = -Rescon(j)
+                  DO i = 1 , N
+                     temp = temp + Step(i)*Amat(i,j)
+                  ENDDO
+                  resmax = DMAX1(resmax,temp)
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!          IF (TEMP .LT. TEST) THEN
+                  IF ( temp<test ) THEN
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                     IF ( temp>bigv ) THEN
+                        bigv = temp
+                        jsav = j
+                        Ifeas = -1
+                     ENDIF
+                     CYCLE
+                  ENDIF
+                  Ifeas = 0
+               ENDIF
+               IF ( Ifeas==-1 ) THEN
+                  DO i = 1 , N
+                     Step(i) = Step(i) + (test-bigv)*Amat(i,jsav)
+                  ENDDO
+                  Ifeas = 0
+               ENDIF
+               EXIT
+            ENDDO
+!
+!     Return the calculated STEP and the value of IFEAS.
+!
+      99999 END SUBROUTINE QMSTEP
