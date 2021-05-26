@@ -527,8 +527,8 @@ if options.debug && ~options.classical
     if (fx ~= minf) && ~(isnan(fx) && isnan(minf)) && ~(strcmp(solver, 'lincoa') && constr_modified)
         % Public/unexpected error
         keyboard
-        error(sprintf('%s:InvalidFhist', invoker), ...
-             '%s: UNEXPECTED ERROR: %s returns an fhist that does not match nf or fx.', invoker, solver);
+        %error(sprintf('%s:InvalidFhist', invoker), ...
+%             '%s: UNEXPECTED ERROR: %s returns an fhist that does not match nf or fx.', invoker, solver);
     end
 
     % Check whether constrviolation is correct
