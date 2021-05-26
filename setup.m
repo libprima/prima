@@ -245,11 +245,11 @@ try
     obj_files = [files_with_wildcard(interfaces_private, '*.o'), files_with_wildcard(interfaces_private, '*.obj')];
     mex(mex_options{:}, '-output', 'gethuge', obj_files{:}, fullfile(gateways_intersection_form, 'gethuge.F'));
 
+     mkdir('./tmp');
+     cd('./tmp');
     for isol = 1 : length(solver_list)
         solver = solver_list{isol};
 
-        mkdir('./tmp');
-        cd('./tmp');
         copyfile('../*.o', './');
         copyfile('../*.mod', './');
 
@@ -283,11 +283,10 @@ try
         mex(mex_options{:}, '-c', fullfile(gateways_classical, 'fmxcl.F'));
 %        obj_files = [files_with_wildcard(interfaces_private, '*.o'), files_with_wildcard(interfaces_private, '*.obj')];
         obj_files = [files_with_wildcard(fullfile(interfaces_private, 'tmp'), '*.o'), files_with_wildcard(fullfile(interfaces_private, 'tmp'), '*.obj')];
-        keyboard
         mex(mex_options{:}, '-output', ['f', solver, 'n_classical'], obj_files{:}, src_files{:}, fullfile(gateways_classical, [solver, '-interface.F']));
 
-        cd('../');
-        delete('./tmp/')
+        copyfile('./*.mex*', '../');
+        delete('./*')
         fprintf('Done.\n');
     end
 
