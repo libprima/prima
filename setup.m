@@ -255,12 +255,12 @@ try
         obj_files = [files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.o'), files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.obj')];
         cellfun(@(filename) delete(filename), [mod_files, obj_files]);
         % Compile
-        src_files = regexp(fileread(fullfile(fsrc_intersection_form, solver, filelist)), '\n', 'split');
-        src_files = strtrim(src_files(~cellfun(@isempty, src_files)));
-        src_files = fullfile(fsrc_intersection_form, solver, src_files);
-        mex(mex_options{:}, '-c', src_files{:});
-        obj_files = [files_with_wildcard(interfaces_private, '*.o'), files_with_wildcard(interfaces_private, '*.obj')];
-        mex(mex_options{:}, '-output', ['f', solver, 'n'], obj_files{:}, fullfile(gateways_intersection_form, [solver, '-interface.F']));
+        %src_files = regexp(fileread(fullfile(fsrc_intersection_form, solver, filelist)), '\n', 'split');
+        %src_files = strtrim(src_files(~cellfun(@isempty, src_files)));
+        %src_files = fullfile(fsrc_intersection_form, solver, src_files);
+        %mex(mex_options{:}, '-c', src_files{:});
+        %obj_files = [files_with_wildcard(interfaces_private, '*.o'), files_with_wildcard(interfaces_private, '*.obj')];
+        %mex(mex_options{:}, '-output', ['f', solver, 'n'], obj_files{:}, fullfile(gateways_intersection_form, [solver, '-interface.F']));
 
         % Compilation of the 'classical' version of solver
         % Clean up the source file directory
@@ -269,14 +269,10 @@ try
         cellfun(@(filename) delete(filename), [mod_files, obj_files]);
         % Compile
         src_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.f*');
-        keyboard
         mex(mex_options{:}, '-c', fullfile(gateways_classical, 'fmxcl.F'));
         obj_files = [files_with_wildcard(interfaces_private, '*.o'), files_with_wildcard(interfaces_private, '*.obj')];
-        if strcmp('newuoa', solver)
-            mex(mex_options{:}, '-output', ['f', solver, 'n_classical'], obj_files{:}, src_files{:}, fullfile(gateways_classical, [solver, '-interface.F']));
-        else
-            mex(mex_options{:}, '-output', ['f', solver, 'n_classical'], obj_files{:}, fullfile(gateways_classical, [solver, '-interface.F']));
-        end
+        keyboard
+        mex(mex_options{:}, '-output', ['f', solver, 'n_classical'], obj_files{:}, src_files{:}, fullfile(gateways_classical, [solver, '-interface.F']));
 
         fprintf('Done.\n');
     end
