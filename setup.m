@@ -273,21 +273,21 @@ try
         copyfile('../*.o', './');
         copyfile('../*.mod', './');
 
-        % Compilation of the 'classical' version of solver
-        % Clean up the source file directory
-        mod_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.mod');
-        obj_files = [files_with_wildcard(fullfile(fsrc_classical, solver), '*.o'), files_with_wildcard(fullfile(fsrc_classical, solver), '*.obj')];
-        cellfun(@(filename) delete(filename), [mod_files, obj_files]);
-        % Compile
-        src_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.f*');
-        mex(mex_options{:}, '-c', fullfile(gateways_classical, 'fmxcl.F'));
-%        obj_files = [files_with_wildcard(interfaces_private, '*.o'), files_with_wildcard(interfaces_private, '*.obj')];
-        obj_files = [files_with_wildcard(fullfile(interfaces_private, 'tmp'), '*.o'), files_with_wildcard(fullfile(interfaces_private, 'tmp'), '*.obj')];
-        mex(mex_options{:}, '-output', ['f', solver, 'n_classical'], obj_files{:}, src_files{:}, fullfile(gateways_classical, [solver, '-interface.F']));
-
-        copyfile('./*.mex*', '../');
-        delete('./*')
-        fprintf('Done.\n');
+%        % Compilation of the 'classical' version of solver
+%        % Clean up the source file directory
+%        mod_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.mod');
+%        obj_files = [files_with_wildcard(fullfile(fsrc_classical, solver), '*.o'), files_with_wildcard(fullfile(fsrc_classical, solver), '*.obj')];
+%        cellfun(@(filename) delete(filename), [mod_files, obj_files]);
+%        % Compile
+%        src_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.f*');
+%        mex(mex_options{:}, '-c', fullfile(gateways_classical, 'fmxcl.F'));
+%%        obj_files = [files_with_wildcard(interfaces_private, '*.o'), files_with_wildcard(interfaces_private, '*.obj')];
+%        obj_files = [files_with_wildcard(fullfile(interfaces_private, 'tmp'), '*.o'), files_with_wildcard(fullfile(interfaces_private, 'tmp'), '*.obj')];
+%        mex(mex_options{:}, '-output', ['f', solver, 'n_classical'], obj_files{:}, src_files{:}, fullfile(gateways_classical, [solver, '-interface.F']));
+%
+%        copyfile('./*.mex*', '../');
+%        delete('./*')
+%        fprintf('Done.\n');
     end
 
     % Clean up the .mod and .o files
