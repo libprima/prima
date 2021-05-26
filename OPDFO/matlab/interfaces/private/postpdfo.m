@@ -590,6 +590,7 @@ if options.debug && ~options.classical
 
         if ~(isnan(conv) && isnan(constrviolation)) && ~(conv == inf && constrviolation == inf) && ~(abs(constrviolation-conv) <= lincoa_prec*max(1,abs(conv)) && strcmp(solver, 'lincoa')) && ~(abs(constrviolation-conv) <= cobyla_prec*max(1,abs(conv)) && strcmp(solver, 'cobyla'))
             % Public/unexpected error
+            keyboard
             error(sprintf('%s:InvalidChist', invoker), ...
               '%s: UNEXPECTED ERROR: %s returns a constrviolation that does not match x.', invoker, solver);
         end
