@@ -1,4 +1,4 @@
-getact.f90
+getact.f
 prelim.f90
 qmstep.f90
 trstep.f90
