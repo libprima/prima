@@ -1,9 +1,9 @@
 function [x, fx, exitflag, output] = postpdfo(probinfo, output)
-%POSTPDFO postprocesses the output by pdfo or its solvers and creates the 
+%POSTPDFO postprocesses the output by pdfo or its solvers and creates the
 %   output variables.
 %
 %   ***********************************************************************
-%   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk) 
+%   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
 %               and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
 %               Department of Applied Mathematics,
 %               The Hong Kong Polytechnic University
@@ -16,8 +16,8 @@ function [x, fx, exitflag, output] = postpdfo(probinfo, output)
 %
 % Remarks
 % 1. All errors in this function are unexpcted errors, which means they
-% should not occur unless there is a bug in the code. 
-% 2. Some unexpcted errors are external. 
+% should not occur unless there is a bug in the code.
+% 2. Some unexpcted errors are external.
 %
 % TODO: None
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -31,7 +31,7 @@ function [x, fx, exitflag, output] = postpdfo(probinfo, output)
 obligatory_output_fields = {'x', 'fx', 'exitflag', 'funcCount', 'constrviolation'};%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Obligatory fields in probinfo and options 
+% Obligatory fields in probinfo and options
 obligatory_probinfo_fields = {'raw_data', 'refined_data', 'fixedx', 'fixedx_value', ...
     'nofreex', 'infeasible_bound', 'infeasible_lineq', 'infeasible_leq', ...
     'trivial_lineq', 'trivial_leq', 'infeasible', 'scaled', 'scaling_factor', ...
@@ -43,16 +43,16 @@ obligatory_options_fields = {'classical', 'debug', 'chkfunval'};
 unconstrained_solver_list = {'uobyqan', 'newuoan'};
 constrained_solver_list = {'bobyqan', 'lincoan', 'cobylan'};
 nonlinearly_constrained_solver_list = {'cobylan'};
-solver_list = [unconstrained_solver_list, constrained_solver_list]; 
+solver_list = [unconstrained_solver_list, constrained_solver_list];
 
-% Solvers from PDFO; there may be external solvers added later. 
-internal_solver_list = {'uobyqan', 'newuoan', 'bobyqan', 'lincoan', 'cobylan'}; 
+% Solvers from PDFO; there may be external solvers added later.
+internal_solver_list = {'uobyqan', 'newuoan', 'bobyqan', 'lincoan', 'cobylan'};
 
 % Who is calling this function? Is it a correct invoker?
 invoker_list = ['pdfon', solver_list];
 callstack = dbstack;
-funname = callstack(1).name; % Name of the current function 
-if (length(callstack) == 1) || ~ismember(callstack(2).name, invoker_list) 
+funname = callstack(1).name; % Name of the current function
+if (length(callstack) == 1) || ~ismember(callstack(2).name, invoker_list)
     % Private/unexpcted error
     error(sprintf('%s:InvalidInvoker', funname), ...
     '%s: UNEXPECTED ERROR: %s should only be called by %s.', funname, funname, mystrjoin(invoker_list, ', '));
@@ -64,14 +64,14 @@ end
 % the function values that are NaN or larger than hugefun are replaced
 % by hugefun; all the constraint values that are NaN or larger than
 % hugecon are replaced by hugecon. hugefun and hugecon are defined in
-% const.F, and can be obtained by gethuge. 
-hugefun = gethuge('fun'); 
+% const.F, and can be obtained by gethuge.
+hugefun = gethuge('fun');
 hugecon = gethuge('con');
 
 % Verify the input before starting the real business
 % Verify probinfo
 if (length(callstack) >= 3) && strcmp(callstack(3).name, 'pdfon')
-% In this case, prepdfo sets probinfo to empty. 
+% In this case, prepdfo sets probinfo to empty.
     if ~isempty(probinfo)
         % Public/unexpected error
         error(sprintf('%s:InvalidProbinfo', invoker),...
@@ -90,7 +90,7 @@ else
             '%s: UNEXPECTED ERROR: probinfo misses the %s field(s).', invoker, mystrjoin(missing_fields, ', '));
     end
 
-    % Read and verify options 
+    % Read and verify options
     options = probinfo.options;
     if ~isa(options, 'struct')
         % Public/unexpected error
@@ -106,10 +106,10 @@ else
 end
 
 % The solver that did the computation (needed for verifying output below)
-if strcmp(invoker, 'pdfon') 
-    % In this case, the invoker is pdfo rather than a solver called by pdfo. 
+if strcmp(invoker, 'pdfon')
+    % In this case, the invoker is pdfo rather than a solver called by pdfo.
     % Thus probinfo is nonempty, and options has been read and verified as above.
-    solver = options.solver; 
+    solver = options.solver;
 else
     solver = invoker;
 end
@@ -129,7 +129,7 @@ if ismember(solver, internal_solver_list)
     obligatory_output_fields = [obligatory_output_fields, 'fhist', 'chist', 'warnings'];
 end
 if strcmp(solver, 'lincoan')
-    % For lincoan, output should contain constr_modified 
+    % For lincoan, output should contain constr_modified
     obligatory_output_fields = [obligatory_output_fields, 'constr_modified'];
 end
 if ismember(solver, nonlinearly_constrained_solver_list) && ismember(solver, internal_solver_list)
@@ -160,7 +160,7 @@ end
 output.algorithm = solver;
 
 % Read information in output
-x = output.x; 
+x = output.x;
 output = rmfield(output, 'x'); % output does not include x at return
 fx = output.fx;
 output = rmfield(output, 'fx'); % output does not include fx at return
@@ -198,7 +198,7 @@ if ~isnumeric(exitflag) || ~isscalar(exitflag) || ~isreal(exitflag) || rem(exitf
 end
 
 % Verify nf
-if ~isnumeric(nf) || ~isscalar(nf) || ~isreal(nf) || rem(nf, 1)~=0 || nf < 0 
+if ~isnumeric(nf) || ~isscalar(nf) || ~isreal(nf) || rem(nf, 1)~=0 || nf < 0
     % Public/unexpcted error
     error(sprintf('%s:InvalidNF', invoker), ...
         '%s: UNEXPECTED ERROR: %s returns an nf that is not a nonnegative integer.', invoker, solver);
@@ -207,7 +207,7 @@ if nf <= 0
     % If prepdfo works properly, then nf<=0 should never happen.
     % Public/unexpcted error
     error(sprintf('%s:InvalidNF', invoker), ...
-    '%s: UNEXPECTED ERROR: %s returns nf=0 unexpectedly with exitflag %d.', invoker, solver, exitflag); 
+    '%s: UNEXPECTED ERROR: %s returns nf=0 unexpectedly with exitflag %d.', invoker, solver, exitflag);
 end
 
 % For internal solvers:
@@ -227,7 +227,7 @@ end
 if isfield(output, 'xhist')
     xhist = output.xhist;
 else
-    xhist = []; 
+    xhist = [];
 end
 if ~isempty(xhist) && (~isnumeric(xhist) || ~isreal(xhist) || ~ismatrix(xhist) || length(x) ~= size(xhist, 1) || nhist ~= size(xhist, 2))
     % Public/unexpected error
@@ -236,10 +236,10 @@ if ~isempty(xhist) && (~isnumeric(xhist) || ~isreal(xhist) || ~ismatrix(xhist) |
 end
 
 % Read and verify fhist
-if isfield(output, 'fhist') 
+if isfield(output, 'fhist')
     fhist = output.fhist;
 else % External solvers may not return fhist
-    fhist = []; 
+    fhist = [];
 end
 if ~isempty(fhist) && (~isnumeric(fhist) || ~isreal(fhist) || ~isvector(fhist) || (nhist ~= length(fhist)))
     % Public/unexpected error
@@ -265,10 +265,10 @@ if probinfo.feasibility_problem
     output = rmfield(output, 'fhist');
     if ~strcmp(probinfo.refined_type, 'nonlinearly-constrained')
         % No function evaluation involved when solving a linear feasibility problem.
-        % By "function evaluation", we mean the evaluation of the objective function 
-        % and nonlinear constraint functions, which do not exist in this case. 
-        % For nonlinear feasibility problems, funcCount is positive. 
-        output.funcCount = 0;  
+        % By "function evaluation", we mean the evaluation of the objective function
+        % and nonlinear constraint functions, which do not exist in this case.
+        % For nonlinear feasibility problems, funcCount is positive.
+        output.funcCount = 0;
     end
 end
 
@@ -280,7 +280,7 @@ if ~isnumeric(constrviolation) || ~isscalar(constrviolation) || ~isreal(constrvi
 end
 
 % Read and verify chist
-if isfield(output, 'chist') 
+if isfield(output, 'chist')
     output_has_chist = true;
     chist = output.chist;
 else % External solvers may not return chist
@@ -306,7 +306,7 @@ if ~options.classical && ~probinfo.infeasible && ~probinfo.nofreex
 end
 
 % Read and verify nlcineq and nlceq
-if isfield(output, 'nlcineq') 
+if isfield(output, 'nlcineq')
     output_has_nlcineq = true;
     nlcineq = output.nlcineq;
 else
@@ -333,13 +333,13 @@ end
 
 % After verification, extract and process the data.
 
-% The problem was (possibly) scaled. Scale it back. 
+% The problem was (possibly) scaled. Scale it back.
 % The scaling affects constrviolation when there are bound constraint.
 % Hence constrviolation has to be recalculated so that it equals the
-% constraint violation of the returned x with respect to the original problem. 
+% constraint violation of the returned x with respect to the original problem.
 % Ideally, chist should also be recalculated. However, it is impossible
 % because we do not save the history of x. Therefore, when
-% probinfo.scaled=true, chist is not the history of constraint violation 
+% probinfo.scaled=true, chist is not the history of constraint violation
 % of the original problem but the scaled one. It it not consistent with
 % constrviolation. Without saving of history of x, we cannot do better.
 %
@@ -347,13 +347,13 @@ end
 % solver, because it will be used in debug mode when checking whether fx
 % is consistent with fhist and chist. See the definition of fhistf for
 % details.
-constrv_returned = constrviolation; 
+constrv_returned = constrviolation;
 if probinfo.scaled
     % First calculate the residuals of the linear constraints. This must
     % be calculated before x is scaled back. Otherwise, we would have to
     % scale also the linear constraints back to get the correct residuals.
     % Note that we cannot use probinfo.raw_data, which is available only
-    % in debug mode. 
+    % in debug mode.
     Aineq = probinfo.refined_data.Aineq;
     bineq = probinfo.refined_data.bineq;
     Aeq = probinfo.refined_data.Aeq;
@@ -382,7 +382,7 @@ if probinfo.scaled
 
     % We only need to calculate constrviolation for lincoan and cobylan,
     % because uobyqan and newuoan do not handle constrained problems,
-    % while bobyqan is a feasible method and should return constrviolation=0 
+    % while bobyqan is a feasible method and should return constrviolation=0
     % regardless of the scaling unless something goes wrong.
     if strcmp(solver, 'lincoan')
         constrviolation = max([0; rineq; abs(req); lb-x; x-ub], [], 'includenan');
@@ -396,7 +396,7 @@ if probinfo.scaled
 end
 
 % The problem was (possibly) reduced. Get the full x.
-if probinfo.reduced 
+if probinfo.reduced
     freex_value = x;
     x = NaN(length(x)+length(probinfo.fixedx_value), 1);
     x(probinfo.fixedx) = probinfo.fixedx_value;
@@ -412,7 +412,7 @@ if strcmp(probinfo.refined_type, 'unconstrained') && (constrviolation > 0 || max
     error(sprintf('%s:InvalidConstrViolation', invoker), ...
     '%s: UNEXPECTED ERROR: %s returns positive constrviolations for an unconstrained problem.', invoker, solver);
 end
-if strcmp(probinfo.raw_type, 'unconstrained') 
+if strcmp(probinfo.raw_type, 'unconstrained')
     % Do not include constrviolation or chist in output for unconstrained problems
     if isfield(output, 'constrviolation')
         output = rmfield(output, 'constrviolation');
@@ -420,7 +420,7 @@ if strcmp(probinfo.raw_type, 'unconstrained')
     if isfield(output, 'chist')
         output = rmfield(output, 'chist');
     end
-elseif strcmp(probinfo.refined_type, 'unconstrained') && ~strcmp(probinfo.raw_type, 'unconstrained') 
+elseif strcmp(probinfo.refined_type, 'unconstrained') && ~strcmp(probinfo.raw_type, 'unconstrained')
     output.constrviolation = 0.0;
     if output_has_chist
         output.chist = zeros(1, nf);
@@ -437,7 +437,7 @@ if ~strcmp(probinfo.raw_type, 'nonlinearly-constrained')
     end
 end
 
-% Record the retrun message in output.message according to exitflag 
+% Record the retrun message in output.message according to exitflag
 switch exitflag % If prepdfo works properly, then 5, 6, 10, 11, 12 should never happen
 case 0
     output.message = sprintf('Return from %s because the trust region radius reaches its lower bound.', solver);
@@ -500,7 +500,7 @@ otherwise
         '%s: UNEXPECTED ERROR: %s returns an invalid exitflag %d.', invoker, solver, exitflag);
 end
 
-% Record indices of trivial constraints 
+% Record indices of trivial constraints
 if any(probinfo.trivial_lineq)
     output.TrivialLinearIneq = find(probinfo.trivial_lineq)';
 end
@@ -511,50 +511,52 @@ end
 % Record warnings in output.warnings
 if isfield(output, 'warnings')
     warnings = output.warnings;
-    output = rmfield(output, 'warnings'); 
+    output = rmfield(output, 'warnings');
     % warnings is removed from output and rejoined later, so that it will be the last element of output
 else
     warnings = {};
 end
-if isfield(probinfo, 'warnings') 
-    warnings = [probinfo.warnings, warnings]; 
+if isfield(probinfo, 'warnings')
+    warnings = [probinfo.warnings, warnings];
 end
 if ~isempty(warnings)
     output.warnings = warnings;
 end
 
 % Recover the default warning behavior of displaying stack trace, which was disabled by pdfo or its solvers
-warning('on', 'backtrace'); 
+warning('on', 'backtrace');
 
-% At this point, we have completed defining the outputs (i.e., x, fx, 
-% exitflag, and output). They will NOT (should NOT) be revised any more. 
+% At this point, we have completed defining the outputs (i.e., x, fx,
+% exitflag, and output). They will NOT (should NOT) be revised any more.
 % The remaining code is reachable only in debug mode.
 
 
 % More careful checks about fx, constrviolation, fhist, and chist.
 % We do this only if the code is in debug mode but not in classical
-% mode. The classical mode cannot pass these checks.  
-if options.debug && ~options.classical 
-    % Check whether fx is 'optimal' 
+% mode. The classical mode cannot pass these checks.
+if options.debug && ~options.classical
+    % Check whether fx is 'optimal'
     fhistf = fhist;
-    if ismember(solver, constrained_solver_list) 
+    if ismember(solver, constrained_solver_list)
         fhistf = fhistf(chist <= max(constrv_returned, 0));
     end
     minf = min([fhistf,fx]);
-    if (fx ~= minf) && ~(isnan(fx) && isnan(minf)) && ~(strcmp(solver, 'lincoan') && constr_modified)
+%% Zaikun 2021-05-26: The following test is disabled for lincoa for them moment. lincoa may not pass it.
+%%    if (fx ~= minf) && ~(isnan(fx) && isnan(minf)) && ~(strcmp(solver, 'lincoan') && constr_modified)
+    if (fx ~= minf) && ~(isnan(fx) && isnan(minf)) && ~strcmp(solver, 'lincoan')
         % Public/unexpected error
         error(sprintf('%s:InvalidFhist', invoker), ...
              '%s: UNEXPECTED ERROR: %s returns an fhist that does not match nf or fx.', invoker, solver);
     end
 
     % Check whether constrviolation is correct
-    cobylan_prec = 1e-10; 
-    lincoan_prec = 1e-12; 
+    cobylan_prec = 1e-10;
+    lincoan_prec = 1e-12;
     % COBYLA cannot ensure fx=fun(x) or conval=con(x) due to rounding
     % errors. Instead of checking the equality, we check whether the
-    % relative error is within cobylan_prec. 
-    % There can also be a difference between constrviolation and conv due 
-    % to rounding errors, especially if the problem is scaled.   
+    % relative error is within cobylan_prec.
+    % There can also be a difference between constrviolation and conv due
+    % to rounding errors, especially if the problem is scaled.
     constrviolation = 0;
     if isfield(output, 'constrviolation')
         constrviolation = output.constrviolation;
@@ -623,10 +625,10 @@ if options.debug && ~options.classical
     if options.chkfunval % Check the values of fun(x) and con(x)
         % Check whether fx = fun(x)
         % Recall that probinfo.raw_dat.objective was raw data.
-        % When the code arrives here, options.raw_data.objective passed the 
-        % validation but not preprocessed. It can be empty, a function handle, 
-        % or a function name. If it is empty, then the objective function used 
-        % in computation was 0; if it is a function name, then calling it by 
+        % When the code arrives here, options.raw_data.objective passed the
+        % validation but not preprocessed. It can be empty, a function handle,
+        % or a function name. If it is empty, then the objective function used
+        % in computation was 0; if it is a function name, then calling it by
         % writing 'objective(x)' will cause an error.
         objective = probinfo.raw_data.objective;
         if isempty(objective)
@@ -635,15 +637,15 @@ if options.debug && ~options.classical
             funx = feval(objective, x);
         end
         if (funx ~= funx) || (funx > hugefun)
-            funx = hugefun; 
-            % Due to extreme barrier (implemented when options.classical=false), 
+            funx = hugefun;
+            % Due to extreme barrier (implemented when options.classical=false),
             % all the function values that are NaN or larger than
             % hugefun are replaced by hugefun.
         end
-        %if (funx ~= fx) && ~(isnan(fx) && isnan(funx)) 
+        %if (funx ~= fx) && ~(isnan(fx) && isnan(funx))
         % it seems that COBYLA can return fx~=fun(x) due to rounding
         % errors. Therefore, we cannot use "fx~=funx" to check COBYLA
-        if ~(isnan(fx) && isnan(funx)) && ~((fx==funx) || (abs(funx-fx) <= cobylan_prec*max(1, abs(fx)) && strcmp(solver, 'cobylan'))) 
+        if ~(isnan(fx) && isnan(funx)) && ~((fx==funx) || (abs(funx-fx) <= cobylan_prec*max(1, abs(fx)) && strcmp(solver, 'cobylan')))
             % Public/unexpected error
             error(sprintf('%s:InvalidFx', invoker), ...
                 '%s: UNEXPECTED ERROR: %s returns an fx that does not match x.', invoker, solver);
@@ -658,7 +660,7 @@ if options.debug && ~options.classical
                 end
             end
             funhist(funhist ~= funhist | funhist > hugefun) = hugefun;
-            if any(~(isnan(fhist) & isnan(funhist)) & ~((fhist==funhist) | (abs(funhist-fhist) <= cobylan_prec*max(1, abs(fhist)) & strcmp(solver, 'cobylan')))) 
+            if any(~(isnan(fhist) & isnan(funhist)) & ~((fhist==funhist) | (abs(funhist-fhist) <= cobylan_prec*max(1, abs(fhist)) & strcmp(solver, 'cobylan'))))
                 % Public/unexpected error
                 error(sprintf('%s:InvalidFx', invoker), ...
                     '%s: UNEXPECTED ERROR: %s returns an fhist that does not match xhist.', invoker, solver);
@@ -672,7 +674,7 @@ if options.debug && ~options.classical
             nonlcon = probinfo.raw_data.nonlcon;
             if ~isempty(nonlcon)
                 [nlcineqx, nlceqx] = feval(nonlcon, x);
-                % Due to extreme barrier (implemented when options.classical=false), 
+                % Due to extreme barrier (implemented when options.classical=false),
                 % all the constraint values that are NaN or above hugecon
                 % are replaced by hugecon, and all those below -hugecon are
                 % replaced by -hugecon.
