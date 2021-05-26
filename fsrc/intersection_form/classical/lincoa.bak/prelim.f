@@ -1,3 +1,4 @@
+a
       SUBROUTINE PRELIM (N,NPT,M,AMAT,B,X,RHOBEG,IPRINT,XBASE,
      1  XPT,FVAL,XSAV,XOPT,GOPT,KOPT,HQ,PQ,BMAT,ZMAT,IDZ,NDIM,
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -43,7 +44,7 @@ C
       IDZ=1
       KBASE=1
 C
-C     Set the initial elements of XPT, BMAT, SP and ZMAT to zero. 
+C     Set the initial elements of XPT, BMAT, SP and ZMAT to zero.
 C
       DO J=1,N
           XBASE(J)=X(J)
@@ -218,7 +219,7 @@ C
           END DO
           TEMP=DMAX1(TEMP,ZERO)
           IF (TEMP >= RHOBEG) TEMP=-TEMP
-          RESCON(J)=TEMP  
+          RESCON(J)=TEMP
       END DO
       RETURN
       END
