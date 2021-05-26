@@ -264,7 +264,8 @@ try
         src_files = strtrim(src_files(~cellfun(@isempty, src_files)));
         src_files = fullfile(fsrc_intersection_form, solver, src_files);
         mex(mex_options{:}, '-c', src_files{:});
-        obj_files = [files_with_wildcard(interfaces_private, '*.o'), files_with_wildcard(interfaces_private, '*.obj')];
+%        obj_files = [files_with_wildcard(interfaces_private, '*.o'), files_with_wildcard(interfaces_private, '*.obj')];
+        obj_files = [files_with_wildcard(fullfile(interfaces_private, 'tmp'), '*.o'), files_with_wildcard(fullfile(interfaces_private, 'tmp'), '*.obj')];
         mex(mex_options{:}, '-output', ['f', solver, 'n'], obj_files{:}, fullfile(gateways_intersection_form, [solver, '-interface.F']));
 
         copyfile('./*.mex*', '../');
@@ -280,12 +281,10 @@ try
         % Compile
         src_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.f*');
         mex(mex_options{:}, '-c', fullfile(gateways_classical, 'fmxcl.F'));
-        obj_files = [files_with_wildcard(interfaces_private, '*.o'), files_with_wildcard(interfaces_private, '*.obj')];
-        if strcmp('newuoa', solver)
-            mex(mex_options{:}, '-output', ['f', solver, 'n_classical'], obj_files{:}, src_files{:}, fullfile(gateways_classical, [solver, '-interface.F']));
-        else
-            mex(mex_options{:}, '-output', ['f', solver, 'n_classical'], obj_files{:}, fullfile(gateways_classical, [solver, '-interface.F']));
-        end
+%        obj_files = [files_with_wildcard(interfaces_private, '*.o'), files_with_wildcard(interfaces_private, '*.obj')];
+        obj_files = [files_with_wildcard(fullfile(interfaces_private, 'tmp'), '*.o'), files_with_wildcard(fullfile(interfaces_private, 'tmp'), '*.obj')];
+        keyboard
+        mex(mex_options{:}, '-output', ['f', solver, 'n_classical'], obj_files{:}, src_files{:}, fullfile(gateways_classical, [solver, '-interface.F']));
 
         cd('../');
         delete('./tmp/')
