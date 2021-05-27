@@ -533,7 +533,7 @@ if options.debug && ~options.classical
     end
 
     % Check whether constrviolation is correct
-    cobyla_prec = 1e-10;
+    cobyla_prec = 1e-6;
     lincoa_prec = 1e-12;
     % COBYLA cannot ensure fx=fun(x) or conval=con(x) due to rounding
     % errors. Instead of checking the equality, we check whether the
@@ -630,6 +630,7 @@ if options.debug && ~options.classical
         % it seems that COBYLA can return fx~=fun(x) due to rounding
         % errors. Therefore, we cannot use "fx~=funx" to check COBYLA
         if ~(isnan(fx) && isnan(funx)) && ~((fx==funx) || (abs(funx-fx) <= cobyla_prec*max(1, abs(fx)) && strcmp(solver, 'cobyla')))
+            keyboard
             % Public/unexpected error
             error(sprintf('%s:InvalidFx', invoker), ...
                 '%s: UNEXPECTED ERROR: %s returns an fx that does not match x.', invoker, solver);
