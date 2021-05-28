@@ -6,7 +6,7 @@ C     1  CON,SIM,SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT)
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
       LOGICAL BETTER
-      PARAMETER (NSMAX = 1000) 
+      PARAMETER (NSMAX = 1000)
 C NSMAX is the maximal number of "dropped X" to save (see comments below
 C line number 480)
       PARAMETER (CTOL = EPSILON(1.0D0))
@@ -73,7 +73,7 @@ C   20 SIMI(I,J)=0.0
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       NSAV = 0
       HUGENUM = HUGE(0.0D0)
-      DATSAV = HUGENUM 
+      DATSAV = HUGENUM
       ALMOST_INFINITY = HUGE(0.0D0)/2.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
@@ -127,10 +127,10 @@ C   60     RESMAX=AMAX1(RESMAX,-CON(K))
       CON(MPP)=RESMAX
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C By Zaikun 20190819: 
+C By Zaikun 20190819:
 C CONSAV always containts the containt value of the current x.
 C CON, however, will be changed during the calculation (see the lines
-C above line number 220). 
+C above line number 220).
       DO K = 1, MPP
           CONSAV(K) = CON(K)
       END DO
@@ -142,7 +142,7 @@ C     CSUM containts the sum of the absolute value of the constraints to
 C     check whether it contains a NaN value.
       CSUM=0.0D0
       DO K=1,M
-          CSUM=CSUM+DABS(CON(K))       
+          CSUM=CSUM+DABS(CON(K))
       END DO
       IF (CSUM /= CSUM) THEN
           RESMAX = CSUM ! Set RESMAX to NaN
@@ -159,7 +159,7 @@ C     If the objective function achieves the target value at a feasible
 C     point, then exit.
 C      IF (F .LE. FTARGET .AND. RESMAX .LE. 0.0D0) THEN
       IF (F <= FTARGET .AND. RESMAX < CTOL) THEN
-C         The feasibility is guarantee because RESMAX .LE. CTOL 
+C         The feasibility is guarantee because RESMAX .LE. CTOL
           INFO = 1
           GOTO 620
       END IF
@@ -168,9 +168,9 @@ C         The feasibility is guarantee because RESMAX .LE. CTOL
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C     By Zaikun (on 06-06-2019)
 C     The following code was placed before "CALL CALCFC (N,M,X,F,CON)".
-C     This led to a bug, because F may not equal F(X) if the subroutine 
-C     exits due to NFVALS .GE. MAXFUN (X is updated but F is not evaluated 
-C     at X). Similar thing can be said about RESMAX. 
+C     This led to a bug, because F may not equal F(X) if the subroutine
+C     exits due to NFVALS .GE. MAXFUN (X is updated but F is not evaluated
+C     at X). Similar thing can be said about RESMAX.
       IF (NFVALS >= MAXFUN .AND. NFVALS > 0) THEN
           IF (IPRINT >= 1) PRINT 50
    50     FORMAT (/3X,'Return from subroutine COBYLA because the ',
@@ -198,31 +198,31 @@ C     vertex and calculate the function values there.
 C
       IF (JDROP <= N) THEN
           IF (DATMAT(MP,NP) <= F) THEN
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC 
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C When NFVALS<=N, it is necessary to update X(JDROP) because next X will
-C be calculated based on the current one (see the code below line number 
+C be calculated based on the current one (see the code below line number
 C 120). The purpose of this update is to make this X hold the variable that
 C has the smallest function value up to now. The next X is defined as
-C a perturbation of this optimal X, which is reasonable. 
+C a perturbation of this optimal X, which is reasonable.
 C However, this update leads to inconsistency between X and [F, RESMAX],
-C meaning that X is not necessarily the X corresponding to [F, RESMAX]. 
-C This can cause COBYLA return inconsistent [X, F, RESMAX]. 
+C meaning that X is not necessarily the X corresponding to [F, RESMAX].
+C This can cause COBYLA return inconsistent [X, F, RESMAX].
 C Fortunately, this is not a problem if NFVALS <= N. Because, if COBYLA
-C returns with a NFVALS <= N, then X contains NaN or F = NaN or nearly 
+C returns with a NFVALS <= N, then X contains NaN or F = NaN or nearly
 C Inf or the constraint contains NaN, all of which would lead to an
 C immediate jump to line 600 without coming here. Therefore, if we
 C restrict the update to only the case with NFVALS <= N, ther will be no
-C inconsistency at return. 
-C With the original code, if COBYLA returns with NFVALS = NP (this can 
+C inconsistency at return.
+C With the original code, if COBYLA returns with NFVALS = NP (this can
 C happen if the initial TR problem constantly produces too short steps
-C so that RHO is reduced to RHOEND without producing any acceptable trial 
+C so that RHO is reduced to RHOEND without producing any acceptable trial
 C step; see the code below line number 380), then, when the code arrives
 C at line number 600, X and [F, RESMAX] may be inconsistent. However,
 C recall that the inconsistency occurs only if SIM(:, NP) has a lower
 C function value than X (before updated). Therefore, as long as the code
 C takes SIM(:, NP) instead of X, no harm would be done. It is the case
 C likely the in the original code, because if COBYLA returns with
-C NFVALS=NP, then PARMU=0, and hence SIM(:, NP) will be returned. 
+C NFVALS=NP, then PARMU=0, and hence SIM(:, NP) will be returned.
 C
 C              X(JDROP)=SIM(JDROP,NP)
                IF (NFVALS <= N)  X(JDROP)=SIM(JDROP,NP)
@@ -415,7 +415,7 @@ C will happen because we will read SIM(:, JDROP) and VSIG(JDROP).
       END IF
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 20190820: See the comments below line number 480
-      DO I = 1, N 
+      DO I = 1, N
           XDROP(I) = SIM(I, NP) + SIM(I, JDROP) ! JDROP<NP is guaranteed
       END DO
       DO K = 1, MPP
@@ -452,7 +452,7 @@ C          CVMAXP=AMAX1(CVMAXP,-SUM-TEMP)
 C          CVMAXM=AMAX1(CVMAXM,SUM-TEMP)
               CVMAXP=DMAX1(CVMAXP,-SUM-TEMP)
               CVMAXM=DMAX1(CVMAXM,SUM-TEMP)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!          
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           END IF
       END DO
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -460,7 +460,7 @@ C      DXSIGN=1.0
 C      IF (PARMU*(CVMAXP-CVMAXM) .GT. SUM+SUM) DXSIGN=-1.0
       DXSIGN=1.0D0
       IF (PARMU*(CVMAXP-CVMAXM) > SUM+SUM) DXSIGN=-1.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!          
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
 C     Update the elements of SIM and SIMI, and set the next X.
 C
@@ -511,12 +511,12 @@ C the code, including uninitialized indices.
       DO J = 1, N
           DO I = 1, N
               IF (SIMI(I, J) /= SIMI(I, J)) THEN
-                  IF (IPRINT >= 1) PRINT 376 
+                  IF (IPRINT >= 1) PRINT 376
   376             FORMAT (/3X,'Return from subroutine COBYLA because ',
      1            'rounding errors are becoming damaging.')
                   INFO = 7
                   GOTO 600
-              END IF 
+              END IF
           END DO
       END DO
       DO J = 1, MP
@@ -555,7 +555,7 @@ C      RESNEW=0.0
 C      CON(MP)=0.0
       RESNEW=0.0D0
       CON(MP)=0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!      
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DO K=1,MP
           SUM=CON(K)
           DO I=1,N
@@ -564,7 +564,7 @@ C      CON(MP)=0.0
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IF (K .LT. MP) RESNEW=AMAX1(RESNEW,SUM)
           IF (K < MP) RESNEW=DMAX1(RESNEW,SUM)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!      
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       END DO
 C
 C     Increase PARMU if necessary and branch back if this change alters the
@@ -687,7 +687,7 @@ C to the merit function PHI = F + PARMU*RESMAX. In this case, X will
 C simply be discarded in the original code. However, this decision
 C depends on the value of PARMU. When PARMU is updated later, the
 C discarded X might turn out better, sometimes even better than
-C SIM(:, NP), which is supposed to be the best point in the simplex. 
+C SIM(:, NP), which is supposed to be the best point in the simplex.
 C For this reason, we save the to-be-discarded X in XSAV and compare
 C them with SIM(:, NP) right before exiting. If a vector in XSAV turns
 C out better than SIM(:, NP), we replace SIM(:, NP) by this vector
@@ -695,9 +695,9 @@ C
 C When JDROP > 0, SIM(:, JDROP) will be removed from the simplex
 C according to PHI with the current PARMU. Similar to X, SIM(:, JDROP)
 C may turn out better when PARMU is updated. Therefore, XSAV also takes
-C SIM(:, JDROP) into account. 
+C SIM(:, JDROP) into account.
 C
-C We save at most NSMAX to-be-discarded X. 
+C We save at most NSMAX to-be-discarded X.
 C
       IF (JDROP == 0) THEN
           DO I = 1, N
@@ -708,7 +708,7 @@ C
           END DO
       ELSE ! JDROP < NP is guaranteed
           DO I = 1, N
-              XDROP(I) = SIM(I, NP) + SIM(I, JDROP) 
+              XDROP(I) = SIM(I, NP) + SIM(I, JDROP)
           END DO
           DO K = 1, MPP
               DATDROP(K) = DATMAT(K, JDROP)
@@ -836,39 +836,39 @@ C  610 X(I)=SIM(I,NP)
 C      F=DATMAT(MP,NP)
 C      RESMAX=DATMAT(MPP,NP)
 C
-C      Zaikun 01-06-2019: 
+C      Zaikun 01-06-2019:
 C      Why go to 620 directly without setting X and F? This seems
-C      INCORRECT, because it may lead to a return with X and F that 
+C      INCORRECT, because it may lead to a return with X and F that
 C      are not the best available.
 C      The following code defines X as an "optimal" one among the
-C      vectors: 
+C      vectors:
 C      DATSAV(:, 1:NSAV), (when NSAV >= 1),
 C      SIM(:, NP), and SIM(:, 1:min(NP-1, NFVALS-2)) (when NFVALS>=2).
-C      Here, X being "optimal" means 
+C      Here, X being "optimal" means
 C      1. the constraint violation of X is at most RESREF
 C      2. no other vector is better than X according to ISBETTER with
 C      the current PARMU.
 C
-C      Note: 
+C      Note:
 C      0. The last evaluated X and its function/constraint information
 C      are saved in [X, CONSAV, F, RESMAX].
-C      1. When NFVALS=1, SIM and DATMAT have not been initialized yet.  
-C      2. When 2<=NFVALS<=NP, the first evaluated X are saved in 
-C      SIM(:, NP), its function/constraint in DATMAT(:, NP), while the 
-C      other X are saved in SIM(:, NFVALS-1), its function/constraint 
+C      1. When NFVALS=1, SIM and DATMAT have not been initialized yet.
+C      2. When 2<=NFVALS<=NP, the first evaluated X are saved in
+C      SIM(:, NP), its function/constraint in DATMAT(:, NP), while the
+C      other X are saved in SIM(:, NFVALS-1), its function/constraint
 C      in DATMAT(:, NFVALS-1). However, when the code arrives at line 600,
 C      [X, CON, F, RESMAX] may have not been saved into SIM(:, NFVALS-1)
 C      and DATMAT(:, NFVALS-1) yet. That is why we check SIM up to
 C      NFVALS-2 instead of NFVALS-1.
   600 DO K = 1, M
-           CON(K) = CONSAV(K) 
+           CON(K) = CONSAV(K)
       END DO
       PARMU = MAX(PARMU, 1.0D2)
       IF (NFVALS >= 2) THEN ! See the comments above for why NFVALS>2
-          CALL ISBETTER(F, RESMAX, DATMAT(MP, NP), DATMAT(MPP, NP), 
-     1         PARMU, CTOL, BETTER) 
+          CALL ISBETTER(F, RESMAX, DATMAT(MP, NP), DATMAT(MPP, NP),
+     1         PARMU, CTOL, BETTER)
           IF (BETTER) THEN
-              DO I = 1, N 
+              DO I = 1, N
                   X(I) = SIM(I, NP)
               END DO
               F = DATMAT(MP, NP)
@@ -880,13 +880,13 @@ C      NFVALS-2 instead of NFVALS-1.
           RESREF = RESMAX
           IF (RESREF /= RESREF) RESREF = HUGENUM
           DO J = 1, MIN(NP-1, NFVALS-2)
-C See the comments above for why to check these J 
+C See the comments above for why to check these J
               IF (DATMAT(MPP, J) <= RESREF) THEN
-                  CALL ISBETTER(F, RESMAX, DATMAT(MP, J), 
-     1                 DATMAT(MPP, J), PARMU, CTOL, BETTER) 
+                  CALL ISBETTER(F, RESMAX, DATMAT(MP, J),
+     1                 DATMAT(MPP, J), PARMU, CTOL, BETTER)
                   IF (BETTER) THEN
                       DO I = 1, N
-                          X(I) = SIM(I, J) + SIM(I, NP)
+                          X(I) = SIM(I, J) + SIM(I, NP)  !????? why add up???
                       END DO
                       F = DATMAT(MP, J)
                       RESMAX = DATMAT(MPP, J)
@@ -899,9 +899,9 @@ C See the comments above for why to check these J
       END IF
       IF (NSAV >= 1) THEN ! Do the following only if NSAV >= 1.
 C          DO J = 1, NSAV
-          DO J = NSAV, 1, -1  ! We start with the most recent point 
+          DO J = NSAV, 1, -1  ! We start with the most recent point
               IF (DATSAV(MPP, J) <= RESREF) THEN
-                  CALL ISBETTER(F, RESMAX, DATSAV(MP, J), 
+                  CALL ISBETTER(F, RESMAX, DATSAV(MP, J),
      1                 DATSAV(MPP, J), PARMU, CTOL, BETTER)
                   IF (BETTER) THEN
                       DO I = 1, N
@@ -931,7 +931,7 @@ C Zaikun 20190820: See the comments below line number 480
      +    NSMAX, CTOL)
 C This subroutine saves XDROP in XSAV and DATDROP in DATSAV, unless
 C XDROP is dominated by a vector in XSAV(:, 1:NSAV). If XDROP dominates
-C some vectors in XSAV(:, 1:NSAV), then these vectors will be removed. 
+C some vectors in XSAV(:, 1:NSAV), then these vectors will be removed.
 C If XDROP does not dominate any of XSAV(:, 1:NSAV) but NSAV=NSMAX,
 C then we remove XSAV(:,1), which is the oldest vector in XSAV(:, 1:NSAV).
 C
@@ -946,13 +946,13 @@ C
 C Note: X dominates Y if and only if the function/constraint of X is
 C better than the function/constraint of Y accoring to the ISBETTER
 C subroutine with PARMU = -1.0D0. Indeed, PARMU can be any negative
-C number. This is because, due to the implementation of ISBETTER, 
-C X dominates Y (i.e., X is better than Y with PARMU < 0) 
+C number. This is because, due to the implementation of ISBETTER,
+C X dominates Y (i.e., X is better than Y with PARMU < 0)
 C ==> X is better than Y with any PARMU >= 0,
 C ==> X is better than Y regardless of PARMU.
 C Fot this reason, it is sufficient to save all the "dropped" X that are not
 C dominated by any vectors in XSAV (as we do in this subroutine),
-C because the other X are always worse than some vector in XSAV. 
+C because the other X are always worse than some vector in XSAV.
 C
       IMPLICIT NONE
       INTEGER, INTENT(IN) :: N, M, NSMAX
@@ -962,29 +962,29 @@ C
       REAL(KIND(0.0D0)), INTENT(INOUT) :: DATSAV(M+2, NSMAX)
       REAL(KIND(0.0D0)) :: PARMU
       INTEGER :: MP, MPP, I, J, K, L, IREMOVE(NSMAX), NREMOVE
-      LOGICAL :: BETTER 
+      LOGICAL :: BETTER
 
       IF (NSMAX <= 0) RETURN ! Do nothing if NSMAX=0
 
       MP = M + 1
-      MPP = M + 2 
+      MPP = M + 2
       PARMU = -1.0D0 ! See the comments above for why PARMU = -1
 
 C IREMOVE: indices of vectors to remove from XSAV
 C NREMOVE: number of vectors to remove from XSAV
-      DO J = 1, NSMAX 
+      DO J = 1, NSMAX
 C It is not enough to initialize IREMOVE(1:NSAV), because NSAV may be
-C incremented by 1 latter, and then IREMOVE(NSAV+1) will be accessed. 
+C incremented by 1 latter, and then IREMOVE(NSAV+1) will be accessed.
           IREMOVE(J) = -1
       END DO
-      NREMOVE = 0 
+      NREMOVE = 0
       DO I = 1, NSAV
-C If XDROP is dominated by XSAV(:, I), then return immediately, 
+C If XDROP is dominated by XSAV(:, I), then return immediately,
 C because XDROP should not be inluded into XSAV.
-          CALL ISBETTER (DATDROP(MP), DATDROP(MPP), DATSAV(MP, I), 
+          CALL ISBETTER (DATDROP(MP), DATDROP(MPP), DATSAV(MP, I),
      1         DATSAV(MPP, I), PARMU, CTOL, BETTER)
-          IF (BETTER) RETURN 
-C If XDROP dominates XSAV(:, I), then increment NREMOVE by 1 and save 
+          IF (BETTER) RETURN
+C If XDROP dominates XSAV(:, I), then increment NREMOVE by 1 and save
 C I as IREMOVE(NREMOVE).
           CALL ISBETTER (DATSAV(MP, I), DATSAV(MPP, I), DATDROP(MP),
      1         DATDROP(MPP), PARMU, CTOL, BETTER)
@@ -996,8 +996,8 @@ C I as IREMOVE(NREMOVE).
 
 C The code did not return and NREMOVE=0 (no vector to remove from XSAV).
 C If NSAV=NSMAX, then remove XSAV(:, 1); otherwise, increment NSAV by
-C 1 and then "remove" XSAV(:, NSAV) (though there is no vector saved there) 
-      IF (NREMOVE == 0) THEN 
+C 1 and then "remove" XSAV(:, NSAV) (though there is no vector saved there)
+      IF (NREMOVE == 0) THEN
           IF (NSAV == NSMAX) THEN
               IREMOVE(1) = 1
           ELSE
@@ -1028,10 +1028,10 @@ C Set the number of vectors in the new XSAV
       NSAV = NSAV - NREMOVE + 1
 
 C Save XDROP in XSAV(:, NSAV) (with NSAV updated as above)
-      IF (NSAV >= 1 .AND. NSAV <= NSMAX) THEN 
+      IF (NSAV >= 1 .AND. NSAV <= NSMAX) THEN
           ! This inequlity is not guaranteed if NSMAX=0, where NSAV will
-          ! be 0 and hence a Segmentation Fault when accessing 
-          ! XSAV(:, NSAV). Although we return immediately if NSMAX=0, 
+          ! be 0 and hence a Segmentation Fault when accessing
+          ! XSAV(:, NSAV). Although we return immediately if NSMAX=0,
           ! we still check this inequlity to be safe.
           DO L = 1, N
               XSAV(L, NSAV) = XDROP(L)
@@ -1047,19 +1047,19 @@ C Save XDROP in XSAV(:, NSAV) (with NSAV updated as above)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 20190820:
       SUBROUTINE ISBETTER (F0, R0, F, R, PARMU, CTOL, BETTER)
-C This subroutine compares whether (F, R) is (strictly) better than 
-C (F0, R0) in the sense of decreasing the merit function PHI = F + PARMU*R. 
+C This subroutine compares whether (F, R) is (strictly) better than
+C (F0, R0) in the sense of decreasing the merit function PHI = F + PARMU*R.
 C It takes care of the cases where some of these values are NaN or Inf.
 C At return, BETTER=true iff (F, R) is better than (F0, R0).
 C Note:
 C 1. A = Inf if and only if A .GT. HUGENUM (defined below);
 C 2. A = NaN if and only if A .NE. A;
-C 3. If A = NaN, then any comparison (except .NE.) with another number B 
-C    (can be Inf or NaN) returns false. 
+C 3. If A = NaN, then any comparison (except .NE.) with another number B
+C    (can be Inf or NaN) returns false.
 C
       IMPLICIT NONE
       REAL(KIND(0.0D0)), INTENT(IN) :: F0, R0, F, R, PARMU, CTOL
-      LOGICAL, INTENT(OUT) :: BETTER 
+      LOGICAL, INTENT(OUT) :: BETTER
       REAL(KIND(0.0D0)) :: HUGENUM = HUGE(0.0D0)
       LOGICAL :: F0INFNAN, FINFNAN, R0INFNAN, RINFNAN, FLE, FLT,RLE,RLT
 
@@ -1072,13 +1072,13 @@ C values (they are equally bad).
       FINFNAN = (F /= F) .OR. (F > HUGENUM) ! F = Inf or NaN?
       RINFNAN = (R /= R) .OR. (R > HUGENUM) ! R  = Inf or NaN?
 
-C When PARMU >= 0 and F + PARMU*R < F0 + PARMU*R0 and R < CTOL (feasible), 
-C then (F, R) is better than (F0, R0). 
-C Note that we should not set BETTER=FALSE even if this inequlity does not 
+C When PARMU >= 0 and F + PARMU*R < F0 + PARMU*R0 and R < CTOL (feasible),
+C then (F, R) is better than (F0, R0).
+C Note that we should not set BETTER=FALSE even if this inequlity does not
 C hold, because one or both of the two sides may be NaN.
-      IF (PARMU >= 0.0D0 .AND. F + PARMU*R < F0 + PARMU*R0 
+      IF (PARMU >= 0.0D0 .AND. F + PARMU*R < F0 + PARMU*R0
      1    .AND. R < CTOL) THEN
-          BETTER = .TRUE. 
+          BETTER = .TRUE.
       END IF
 
 C If R < CTOL and F is not Inf or NaN while (R0 < CTOL) is false (may
@@ -1089,8 +1089,8 @@ C insfeasible ones.
           BETTER = .TRUE.
       END IF
 
-C If F0 or R0 is Inf/NaN while neither F nor R is Inf/NaN, then (F, R) 
-C is better than (F0, R0). 
+C If F0 or R0 is Inf/NaN while neither F nor R is Inf/NaN, then (F, R)
+C is better than (F0, R0).
       IF ((F0INFNAN.OR.R0INFNAN) .AND. .NOT.(FINFNAN.OR.RINFNAN)) THEN
           BETTER = .TRUE.
       END IF
@@ -1099,16 +1099,16 @@ C is better than (F0, R0).
       FLE = (F0INFNAN .AND. FINFNAN) .OR. (F <= F0) .OR. FLT! F <= F0?
       RLT = (R0INFNAN .AND. (.NOT. RINFNAN)) .OR. (R < R0) ! R < R0?
       RLE = (R0INFNAN .AND. RINFNAN) .OR. (R <= R0) .OR. RLT! R <= R0?
-      
+
 C If (F < F0 and R <= R0) or (F <= F0 and R < R0) in the sense defined
 C above, the (F, R) is better than (F0, R0).
-      IF ((FLT .AND. RLE) .OR. (FLE .AND. RLT)) BETTER = .TRUE. 
+      IF ((FLT .AND. RLE) .OR. (FLE .AND. RLT)) BETTER = .TRUE.
 
 C If one of F and R is -Inf and the other is not Inf/Nan, while neither
 C F0 nor R0 is -Inf, then the (F, R) is better than (F0, R0).
-      IF ((F < -HUGENUM) .AND. (.NOT. RINFNAN) .AND. 
+      IF ((F < -HUGENUM) .AND. (.NOT. RINFNAN) .AND.
      1    (F0 >= -HUGENUM) .AND. (R0 >= -HUGENUM)) BETTER = .TRUE.
-      IF ((R < -HUGENUM) .AND. (.NOT. FINFNAN) .AND. 
+      IF ((R < -HUGENUM) .AND. (.NOT. FINFNAN) .AND.
      1    (F0 >= -HUGENUM) .AND. (R0 >= -HUGENUM)) BETTER = .TRUE.
       END SUBROUTINE
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
