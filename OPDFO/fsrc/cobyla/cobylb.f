@@ -886,7 +886,7 @@ C See the comments above for why to check these J
      1                 DATMAT(MPP, J), PARMU, CTOL, BETTER)
                   IF (BETTER) THEN
                       DO I = 1, N
-                          X(I) = SIM(I, J) + SIM(I, NP)  !????? why add up???
+                          X(I) = SIM(I, J) + SIM(I, NP)  
                       END DO
                       F = DATMAT(MP, J)
                       RESMAX = DATMAT(MPP, J)
