@@ -158,6 +158,8 @@ for ip = 1 : length(plist)
         end
         prob.options = test_options;
 
+        system('rm -f data1.dat');
+
         tic;
         [x1, fx1, exitflag1, output1] = feval(solvers{1}, prob);
         T = toc;
