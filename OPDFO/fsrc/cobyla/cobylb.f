@@ -191,6 +191,8 @@ C
   666 DO K=1,MPP
           DATMAT(K,JDROP)=CON(K)
       END DO
+      IF (INFO == 3) GOTO 600
+
 !      IF (NFVALS > NP) GOTO 130
       IF (NFVALS > NP .AND. INFO /= 3) GOTO 130
 C
@@ -249,7 +251,6 @@ C              TEMP=0.0
           END IF
       END IF
 
-      IF (INFO == 3) GOTO 600
 
       IF (NFVALS <= N) THEN
           JDROP=NFVALS

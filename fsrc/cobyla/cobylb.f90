@@ -74,6 +74,8 @@
 !     Further, SIMI holds the inverse of the matrix that is contained in the
 !     first N columns of SIM.
 !
+
+      info = 2147483647
       iptem = MIN0(N, 5)
       iptemp = iptem + 1
       np = N + 1
@@ -222,7 +224,7 @@
 99002         format(/3X, 'Return from subroutine COBYLA because the ',   &
        &              'MAXFUN limit has been reached.')
               Info = 3
-              goto 500
+              goto 666 
           end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           if (ibrnch == 1) then
