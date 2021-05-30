@@ -181,8 +181,8 @@ C     at X). Similar thing can be said about RESMAX.
           INFO = 3
       END IF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!      IF (IBRNCH == 1) GOTO 440
-      IF (IBRNCH == 1 .AND. INFO /= 3) GOTO 440
+      IF (IBRNCH == 1) GOTO 440
+!      IF (IBRNCH == 1 .AND. INFO /= 3) GOTO 440
 C
 C     Set the recently calculated function values in a column of DATMAT. This
 C     array has a column for each vertex of the current simplex, the entries of
