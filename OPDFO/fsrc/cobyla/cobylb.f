@@ -117,7 +117,7 @@ C   60     RESMAX=AMAX1(RESMAX,-CON(K))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       END IF
 
-      WRITE(10,*) X(1:N), F, RESMAX
+      WRITE(10,*) X(1:N), F, CON(1:M)
 
       IF (NFVALS == IPRINT-1 .OR. IPRINT == 3) THEN
           PRINT 70, NFVALS,F,RESMAX,(X(I),I=1,IPTEM)
@@ -281,6 +281,8 @@ C
 C     Switch the best vertex into pole position if it is not there already,
 C     and also update SIM, SIMI and DATMAT.
 C
+      WRITE(10,*) "NBEST = ", NBEST
+      WRITE(10,*) "OLD NP ", SIM(1:N, NP), DATMAT(1:MP, NP)
       IF (NBEST <= N) THEN
           DO I=1,MPP
               TEMP=DATMAT(I,NP)
@@ -305,6 +307,7 @@ C          TEMPA=0.0
               SIMI(NBEST,I)=TEMPA
           END DO
       END IF
+      WRITE(10,*) "NEW NP ", SIM(1:N, NP), DATMAT(1:MP, NP)
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       IF (INFO == 3) GOTO 600
