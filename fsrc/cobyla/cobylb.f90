@@ -1,11 +1,10 @@
-!*==cobylb.f90  processed by SPAG 7.50RE at 00:16 on 26 May 2021
+!*==cobylb.f90  processed by SPAG 7.50RE at 13:41 on 30 May 2021
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      SUBROUTINE COBYLB (N,M,MPP,X,RHOBEG,RHOEND,IPRINT,MAXFUN,
 !     1  CON,SIM,SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT)
       subroutine COBYLB(N, M, Mpp, X, Rhobeg, Rhoend, Iprint, Maxfun, Con, Sim,  &
      &                  Simi, Datmat, A, Vsig, Veta, Sigbar, Dx, W, Iact, F, Info,&
      &                  Ftarget, Resmax)
-      implicit none
 !*--COBYLB14
 !*++
 !*++ PARAMETER definitions rewritten by SPAG
@@ -35,7 +34,7 @@
       real*8, intent(INOUT), dimension(*) :: W
       integer, dimension(*) :: Iact
       real*8, intent(INOUT) :: F
-      integer, intent(OUT) :: Info
+      integer, intent(INOUT) :: Info
       real*8, intent(IN) :: Ftarget
       real*8, intent(INOUT) :: Resmax
 !*++
@@ -74,8 +73,7 @@
 !     Further, SIMI holds the inverse of the matrix that is contained in the
 !     first N columns of SIM.
 !
-
-      info = 2147483647
+      Info = 2147483647
       iptem = MIN0(N, 5)
       iptemp = iptem + 1
       np = N + 1
@@ -123,7 +121,6 @@
       hugenum = huge(0.0D0)
       datsav = hugenum
       almost_infinity = huge(0.0D0) / 2.0D0
-100   do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     Make the next call of the user-supplied subroutine CALCFC. These
@@ -141,76 +138,74 @@
 !      CALL CALCFC (N,M,X,F,CON)
 !
 !     By Zaikun (02-06-2019):
-          do i = 1, N
-              if (X(i) /= X(i)) then
-                  F = X(i)
-                  ! Set F to NaN
-                  Info = -1
-                  goto 500
-              end if
-          end do
+100   do i = 1, N
+          if (X(i) /= X(i)) then
+              F = X(i) ! Set F to NaN
+              Info = -1
+              goto 600
+          end if
+      end do
 
-          call CALCFC(N, M, X, F, Con)
-          nfvals = nfvals + 1
+      call CALCFC(N, M, X, F, Con)
+      nfvals = nfvals + 1
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      RESMAX=0.0
-          Resmax = 0.0D0
+      Resmax = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          if (M > 0) then
-              do k = 1, M
+      if (M > 0) then
+          do k = 1, M
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !   60     RESMAX=AMAX1(RESMAX,-CON(K))
-                  Resmax = DMAX1(Resmax, -Con(k))
-              end do
+              Resmax = DMAX1(Resmax, -Con(k))
+          end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          end if
+      end if
 
-          if (nfvals == Iprint - 1 .or. Iprint == 3) then
-              print 99009, nfvals, F, Resmax, (X(i), i=1, iptem)
-              if (iptem < N) print 99010, (X(i), i=iptemp, N)
-          end if
-          Con(mp) = F
-          Con(Mpp) = Resmax
+      if (nfvals == Iprint - 1 .or. Iprint == 3) then
+          print 99009, nfvals, F, Resmax, (X(i), i=1, iptem)
+          if (iptem < N) print 99010, (X(i), i=iptemp, N)
+      end if
+      Con(mp) = F
+      Con(Mpp) = Resmax
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! By Zaikun 20190819:
 ! CONSAV always containts the containt value of the current x.
 ! CON, however, will be changed during the calculation (see the lines
 ! above line number 220).
-          do k = 1, Mpp
-              consav(k) = Con(k)
-          end do
+      do k = 1, Mpp
+          consav(k) = Con(k)
+      end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !     By Tom/Zaikun (on 04-06-2019/10-06-2019):
 !     CSUM containts the sum of the absolute value of the constraints to
 !     check whether it contains a NaN value.
-          csum = 0.0D0
-          do k = 1, M
-              csum = csum + DABS(Con(k))
-          end do
-          if (csum /= csum) then
-              Resmax = csum
-              ! Set RESMAX to NaN
-              Info = -2
-              goto 500
-          end if
+      csum = 0.0D0
+      do k = 1, M
+          csum = csum + DABS(Con(k))
+      end do
+      if (csum /= csum) then
+          Resmax = csum  ! Set RESMAX to NaN
+          Info = -2
+          goto 600
+      end if
 !     If the objective function value or the constraints contain a NaN or an
 !     infinite value, the algorithm stops.
-          if (F /= F .or. F > almost_infinity) then
-              Info = -2
-              goto 500
-          end if
+      if (F /= F .or. F > almost_infinity) then
+          Info = -2
+          goto 600
+      end if
 !     If the objective function achieves the target value at a feasible
 !     point, then exit.
 !      IF (F .LE. FTARGET .AND. RESMAX .LE. 0.0D0) THEN
-          if (F <= Ftarget .and. Resmax < CTOL) then
+      if (F <= Ftarget .and. Resmax < CTOL) then
 !         The feasibility is guarantee because RESMAX .LE. CTOL
-              Info = 1
-              goto 600
-          end if
+          Info = 1
+          goto 700
+      end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -219,25 +214,25 @@
 !     This led to a bug, because F may not equal F(X) if the subroutine
 !     exits due to NFVALS .GE. MAXFUN (X is updated but F is not evaluated
 !     at X). Similar thing can be said about RESMAX.
-          if (nfvals >= Maxfun .and. nfvals > 0) then
-              if (Iprint >= 1) print 99002
-99002         format(/3X, 'Return from subroutine COBYLA because the ',   &
-       &              'MAXFUN limit has been reached.')
-              Info = 3
-              goto 666 
-          end if
+      if (nfvals >= Maxfun .and. nfvals > 0) then
+          if (Iprint >= 1) print 99002
+99002     format(/3X, 'Return from subroutine COBYLA because the ',      &
+      &           'MAXFUN limit has been reached.')
+          Info = 3
+          goto 200
+      end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          if (ibrnch == 1) then
-              vmold = Datmat(mp, np) + parmu * Datmat(Mpp, np)
-              vmnew = F + parmu * Resmax
-              trured = vmold - vmnew
+      if (ibrnch == 1) then
+          vmold = Datmat(mp, np) + parmu * Datmat(Mpp, np)
+          vmnew = F + parmu * Resmax
+          trured = vmold - vmnew
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (PARMU .EQ. 0.0 .AND. F .EQ. DATMAT(MP,NP)) THEN
-              if (parmu == 0.0D0 .and. F == Datmat(mp, np)) then
+          if (parmu == 0.0D0 .and. F == Datmat(mp, np)) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                  prerem = prerec
-                  trured = Datmat(Mpp, np) - Resmax
-              end if
+              prerem = prerec
+              trured = Datmat(Mpp, np) - Resmax
+          end if
 !
 !     Begin the operations that decide whether x(*) should replace one of the
 !     vertices of the current simplex, the change being mandatory if TRURED is
@@ -247,57 +242,57 @@
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      RATIO=0.0
 !      IF (TRURED .LE. 0.0) RATIO=1.0
-              ratio = 0.0D0
-              if (trured <= 0.0D0) ratio = 1.0D0
+          ratio = 0.0D0
+          if (trured <= 0.0D0) ratio = 1.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              jdrop = 0
-              do j = 1, N
+          jdrop = 0
+          do j = 1, N
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      TEMP=0.0
-                  temp = 0.0D0
+              temp = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                  do i = 1, N
-                      temp = temp + Simi(j, i) * Dx(i)
-                  end do
+              do i = 1, N
+                  temp = temp + Simi(j, i) * Dx(i)
+              end do
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      TEMP=ABS(TEMP)
-                  temp = DABS(temp)
+              temp = DABS(temp)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                  if (temp > ratio) then
-                      jdrop = j
-                      ratio = temp
-                  end if
-                  Sigbar(j) = temp * Vsig(j)
-              end do
+              if (temp > ratio) then
+                  jdrop = j
+                  ratio = temp
+              end if
+              Sigbar(j) = temp * Vsig(j)
+          end do
 !
 !     Calculate the value of ell.
 !
-              edgmax = delta * rho
-              l = 0
-              do j = 1, N
-                  if (Sigbar(j) >= parsig .or. Sigbar(j) >= Vsig(j)) then
-                      temp = Veta(j)
+          edgmax = delta * rho
+          l = 0
+          do j = 1, N
+              if (Sigbar(j) >= parsig .or. Sigbar(j) >= Vsig(j)) then
+                  temp = Veta(j)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          IF (TRURED .GT. 0.0) THEN
 !              TEMP=0.0
-                      if (trured > 0.0D0) then
-                          temp = 0.0D0
+                  if (trured > 0.0D0) then
+                      temp = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                          do i = 1, N
-                              temp = temp + (Dx(i) - Sim(i, j))**2
-                          end do
+                      do i = 1, N
+                          temp = temp + (Dx(i) - Sim(i, j))**2
+                      end do
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !              TEMP=SQRT(TEMP)
-                          temp = DSQRT(temp)
+                      temp = DSQRT(temp)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                      end if
-                      if (temp > edgmax) then
-                          l = j
-                          edgmax = temp
-                      end if
                   end if
-              end do
-              if (l > 0) jdrop = l
+                  if (temp > edgmax) then
+                      l = j
+                      edgmax = temp
+                  end if
+              end if
+          end do
+          if (l > 0) jdrop = l
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 20190820:
 ! When JDROP=0, the algorithm decides not to include the trust-region
@@ -318,65 +313,65 @@
 !
 ! We save at most NSMAX to-be-discarded X.
 !
-              if (jdrop == 0) then
-                  do i = 1, N
-                      xdrop(i) = X(i)
-                  end do
-                  do k = 1, Mpp
-                      datdrop(k) = consav(k)
-                  end do
-              else
-                  ! JDROP < NP is guaranteed
-                  do i = 1, N
-                      xdrop(i) = Sim(i, np) + Sim(i, jdrop)
-                  end do
-                  do k = 1, Mpp
-                      datdrop(k) = Datmat(k, jdrop)
-                  end do
-              end if
-              call SAVEX(xdrop(1:N), datdrop(1:Mpp), xsav(1:N, 1:NSMAX),     &
-       &                 datsav(1:Mpp, 1:NSMAX), N, M, nsav, NSMAX, CTOL)
+          if (jdrop == 0) then
+              do i = 1, N
+                  xdrop(i) = X(i)
+              end do
+              do k = 1, Mpp
+                  datdrop(k) = consav(k)
+              end do
+          else
+              ! JDROP < NP is guaranteed
+              do i = 1, N
+                  xdrop(i) = Sim(i, np) + Sim(i, jdrop)
+              end do
+              do k = 1, Mpp
+                  datdrop(k) = Datmat(k, jdrop)
+              end do
+          end if
+          call SAVEX(xdrop(1:N), datdrop(1:Mpp), xsav(1:N, 1:NSMAX),        &
+      &              datsav(1:Mpp, 1:NSMAX), N, M, nsav, NSMAX, CTOL)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              if (jdrop == 0) goto 400
+          if (jdrop == 0) goto 500
 !
 !     Revise the simplex by updating the elements of SIM, SIMI and DATMAT.
 !
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      TEMP=0.0
-              temp = 0.0D0
+          temp = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              do i = 1, N
-                  Sim(i, jdrop) = Dx(i)
-                  temp = temp + Simi(jdrop, i) * Dx(i)
-              end do
-              do i = 1, N
-                  Simi(jdrop, i) = Simi(jdrop, i) / temp
-              end do
-              do j = 1, N
-                  if (j /= jdrop) then
+          do i = 1, N
+              Sim(i, jdrop) = Dx(i)
+              temp = temp + Simi(jdrop, i) * Dx(i)
+          end do
+          do i = 1, N
+              Simi(jdrop, i) = Simi(jdrop, i) / temp
+          end do
+          do j = 1, N
+              if (j /= jdrop) then
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          TEMP=0.0
-                      temp = 0.0D0
+                  temp = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                      do i = 1, N
-                          temp = temp + Simi(j, i) * Dx(i)
-                      end do
-                      do i = 1, N
-                          Simi(j, i) = Simi(j, i) - temp * Simi(jdrop, i)
-                      end do
-                  end if
-              end do
-              do k = 1, Mpp
-                  Datmat(k, jdrop) = Con(k)
-              end do
+                  do i = 1, N
+                      temp = temp + Simi(j, i) * Dx(i)
+                  end do
+                  do i = 1, N
+                      Simi(j, i) = Simi(j, i) - temp * Simi(jdrop, i)
+                  end do
+              end if
+          end do
+          do k = 1, Mpp
+              Datmat(k, jdrop) = Con(k)
+          end do
 !
 !     Branch back for further iterations with the current RHO.
 !
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (TRURED .GT. 0.0 .AND. TRURED .GE. 0.1*PREREM) GOTO 140
-              if (trured <= 0.0D0 .or. trured < 0.1D0 * prerem) goto 400
-              exit
-          else
+          if (trured <= 0.0D0 .or. trured < 0.1D0 * prerem) goto 500
+          goto 300
+      end if
 !
 !     Set the recently calculated function values in a column of DATMAT. This
 !     array has a column for each vertex of the current simplex, the entries of
@@ -384,17 +379,20 @@
 !     followed by the objective function and the greatest constraint violation
 !     at the vertex.
 !
-              do k = 1, Mpp
-                  Datmat(k, jdrop) = Con(k)
-              end do
-              if (nfvals <= np) then
+200   do k = 1, Mpp
+          Datmat(k, jdrop) = Con(k)
+      end do
+      if (Info == 3) goto 600
+
+!      IF (NFVALS > NP) GOTO 130
+      if (nfvals <= np .or. Info == 3) then
 !
 !     Exchange the new vertex of the initial simplex with the optimal vertex if
 !     necessary. Then, if the initial simplex is not complete, pick its next
 !     vertex and calculate the function values there.
 !
-                  if (jdrop <= N) then
-                      if (Datmat(mp, np) <= F) then
+          if (jdrop <= N) then
+              if (Datmat(mp, np) <= F) then
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! When NFVALS<=N, it is necessary to update X(JDROP) because next X will
 ! be calculated based on the current one (see the code below line number
@@ -422,38 +420,37 @@
 ! NFVALS=NP, then PARMU=0, and hence SIM(:, NP) will be returned.
 !
 !              X(JDROP)=SIM(JDROP,NP)
-                          if (nfvals <= N) X(jdrop) = Sim(jdrop, np)
+                  if (nfvals <= N) X(jdrop) = Sim(jdrop, np)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                      else
-                          Sim(jdrop, np) = X(jdrop)
-                          do k = 1, Mpp
-                              Datmat(k, jdrop) = Datmat(k, np)
-                              Datmat(k, np) = Con(k)
-                          end do
-                          do k = 1, jdrop
-                              Sim(jdrop, k) = -rho
+              else
+                  Sim(jdrop, np) = X(jdrop)
+                  do k = 1, Mpp
+                      Datmat(k, jdrop) = Datmat(k, np)
+                      Datmat(k, np) = Con(k)
+                  end do
+                  do k = 1, jdrop
+                      Sim(jdrop, k) = -rho
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !              TEMP=0.0
-                              temp = 0.0D0
+                      temp = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                              do i = k, jdrop
-                                  temp = temp - Simi(i, k)
-                              end do
-                              Simi(jdrop, k) = temp
-                          end do
-                      end if
-                  end if
-                  if (nfvals <= N) then
-                      jdrop = nfvals
-                      X(jdrop) = X(jdrop) + rho
-                      cycle
-                  end if
+                      do i = k, jdrop
+                          temp = temp - Simi(i, k)
+                      end do
+                      Simi(jdrop, k) = temp
+                  end do
               end if
-              ibrnch = 1
-              exit
           end if
-      end do
-200   do
+
+
+          if (nfvals <= N) then
+              jdrop = nfvals
+              X(jdrop) = X(jdrop) + rho
+              goto 100
+          end if
+      end if
+      ibrnch = 1
+300   do
 !
 !     Identify the optimal vertex of the current simplex.
 !
@@ -532,7 +529,7 @@
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
               Info = 7
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              goto 500
+              goto 600
           end if
 !
 !     Calculate the coefficients of the linear approximations to the objective
@@ -612,7 +609,7 @@
           &                       'Return from subroutine COBYLA because ',  &
           &                       'rounding errors are becoming damaging.')
                           Info = 7
-                          goto 500
+                          goto 600
                       end if
                   end do
               end do
@@ -620,7 +617,7 @@
                   do i = 1, N
                       if (A(i, j) /= A(i, j)) then
                           Info = -3
-                          goto 500
+                          goto 600
                       end if
                   end do
               end do
@@ -687,12 +684,12 @@
                   phi = Datmat(mp, np) + parmu * Datmat(Mpp, np)
                   do j = 1, N
                       temp = Datmat(mp, j) + parmu * Datmat(Mpp, j)
-                      if (temp < phi) goto 300
+                      if (temp < phi) goto 400
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          IF (TEMP .EQ. PHI .AND. PARMU .EQ. 0.0) THEN
                       if (temp == phi .and. parmu == 0.0D0) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                          if (Datmat(Mpp, j) < Datmat(Mpp, np)) goto 300
+                          if (Datmat(Mpp, j) < Datmat(Mpp, np)) goto 400
                       end if
                   end do
               end if
@@ -731,7 +728,7 @@
 99006             format(/3X, 'Return from subroutine COBYLA because ',    &
         &                 'rounding errors are becoming damaging.')
                   Info = 7
-                  goto 500
+                  goto 600
               end if
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 20190820: See the comments below line number 480
@@ -814,11 +811,11 @@
               end do
           end if
           goto 100
-300   end do
+400   end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-400   if (iflag == 0) then
+500   if (iflag == 0) then
           ibrnch = 0
-          goto 200
+          goto 300
       end if
 !
 !     Otherwise reduce RHO if it is not at its least value and reset PARMU.
@@ -878,7 +875,7 @@
        &            (Sim(i, np), i=1, iptem)
               if (iptem < N) print 99010, (X(i), i=iptemp, N)
           end if
-          goto 200
+          goto 300
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       else
           Info = 0
@@ -920,7 +917,7 @@
 !      [X, CON, F, RESMAX] may have not been saved into SIM(:, NFVALS-1)
 !      and DATMAT(:, NFVALS-1) yet. That is why we check SIM up to
 !      NFVALS-2 instead of NFVALS-1.
-500   do k = 1, M
+600   do k = 1, M
           Con(k) = consav(k)
       end do
       parmu = max(parmu, 1.0D2)
@@ -977,7 +974,7 @@
           end do
       end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-600   if (Iprint >= 1) then
+700   if (Iprint >= 1) then
           print 99009, nfvals, F, Resmax, (X(i), i=1, iptem)
           if (iptem < N) print 99010, (X(i), i=iptemp, N)
       end if
@@ -986,7 +983,7 @@
      &        1PE13.6 / 3X, 'X =', 1PE13.6, 1P4E15.6)
 99010 format(1PE19.6, 1P4E15.6)
       end subroutine COBYLB
-!*==savex.f90  processed by SPAG 7.50RE at 00:16 on 26 May 2021
+!*==savex.f90  processed by SPAG 7.50RE at 13:41 on 30 May 2021
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 20190820: See the comments below line number 480
@@ -1021,22 +1018,22 @@
 !*++
 !*++ Dummy argument declarations rewritten by SPAG
 !*++
-      real*8, intent(IN), dimension(N) :: Xdrop
-      real*8, intent(IN), dimension(M + 2) :: Datdrop
-      real*8, intent(INOUT), dimension(N, Nsmax) :: Xsav
-      real*8, intent(INOUT), dimension(M + 2, Nsmax) :: Datsav
+      real(kind(0.0D0)), intent(IN), dimension(N) :: Xdrop
+      real(kind(0.0D0)), intent(IN), dimension(M + 2) :: Datdrop
+      real(kind(0.0D0)), intent(INOUT), dimension(N, Nsmax) :: Xsav
+      real(kind(0.0D0)), intent(INOUT), dimension(M + 2, Nsmax) :: Datsav
       integer, intent(IN) :: N
       integer, intent(IN) :: M
       integer, intent(INOUT) :: Nsav
       integer, intent(IN) :: Nsmax
-      real*8, intent(IN) :: Ctol
+      real(kind(0.0D0)), intent(IN) :: Ctol
 !*++
 !*++ Local variable declarations rewritten by SPAG
 !*++
       logical :: better
       integer :: i, j, k, l, mp, mpp, nremove
       integer, dimension(Nsmax) :: iremove
-      real*8 :: parmu
+      real(kind(0.0D0)) :: parmu
 !*++
 !*++ End of declarations rewritten by SPAG
 !*++
@@ -1120,7 +1117,7 @@
       end if
 
       end subroutine SAVEX
-!*==isbetter.f90  processed by SPAG 7.50RE at 00:16 on 26 May 2021
+!*==isbetter.f90  processed by SPAG 7.50RE at 13:41 on 30 May 2021
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -1141,19 +1138,19 @@
 !*++
 !*++ Dummy argument declarations rewritten by SPAG
 !*++
-      real*8, intent(IN) :: F0
-      real*8, intent(IN) :: R0
-      real*8, intent(IN) :: F
-      real*8, intent(IN) :: R
-      real*8, intent(IN) :: Parmu
-      real*8, intent(IN) :: Ctol
+      real(kind(0.0D0)), intent(IN) :: F0
+      real(kind(0.0D0)), intent(IN) :: R0
+      real(kind(0.0D0)), intent(IN) :: F
+      real(kind(0.0D0)), intent(IN) :: R
+      real(kind(0.0D0)), intent(IN) :: Parmu
+      real(kind(0.0D0)), intent(IN) :: Ctol
       logical, intent(OUT) :: Better
 !*++
 !*++ Local variable declarations rewritten by SPAG
 !*++
       logical :: f0infnan, finfnan, fle, flt, r0infnan, rinfnan,  &
      &           rle, rlt
-      real*8 :: hugenum = huge(0.0D0)
+      real(kind(0.0D0)) :: hugenum = huge(0.0D0)
 !*++
 !*++ End of declarations rewritten by SPAG
 !*++
@@ -1202,3 +1199,4 @@
       if ((R < -hugenum) .and. (.not. finfnan) .and. (F0 >= -hugenum) .and. &
      &     (R0 >= -hugenum)) Better = .true.
       end subroutine ISBETTER
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
