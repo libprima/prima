@@ -82,12 +82,12 @@ C     instructions are also used for calling CALCFC during the iterations of
 C     the algorithm.
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C   40 IF (NFVALS .GE. MAXFUN .AND. NFVALS .GT. 0) THEN
-C          IF (IPRINT .GE. 1) PRINT 50
-C   50     FORMAT (/3X,'Return from subroutine COBYLA because the ',
-C     1      'MAXFUN limit has been reached.')
-C          GOTO 600
-C      END IF
+   40 IF (NFVALS .GE. MAXFUN .AND. NFVALS .GT. 0) THEN
+          IF (IPRINT .GE. 1) PRINT 50
+   50     FORMAT (/3X,'Return from subroutine COBYLA because the '
+     1      'MAXFUN limit has been reached.')
+          GOTO 600
+      END IF
 C      NFVALS=NFVALS+1
 C      CALL CALCFC (N,M,X,F,CON)
 C
@@ -128,7 +128,7 @@ C   60     RESMAX=AMAX1(RESMAX,-CON(K))
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C By Zaikun 20190819:
-C CONSAV always containts the containt value of the current x.
+C CONSAV always containts the constraint value of the current x.
 C CON, however, will be changed during the calculation (see the lines
 C above line number 220).
       DO K = 1, MPP
@@ -165,19 +165,19 @@ C         The feasibility is guarantee because RESMAX .LE. CTOL
       END IF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C     By Zaikun (on 06-06-2019)
-C     The following code was placed before "CALL CALCFC (N,M,X,F,CON)".
-C     This led to a bug, because F may not equal F(X) if the subroutine
-C     exits due to NFVALS .GE. MAXFUN (X is updated but F is not evaluated
-C     at X). Similar thing can be said about RESMAX.
-      IF (NFVALS >= MAXFUN .AND. NFVALS > 0) THEN
-          IF (IPRINT >= 1) PRINT 50
-   50     FORMAT (/3X,'Return from subroutine COBYLA because the ',
-     1      'MAXFUN limit has been reached.')
-          INFO = 3
-          GOTO 600
-      END IF
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!C     By Zaikun (on 06-06-2019)
+!C     The following code was placed before "CALL CALCFC (N,M,X,F,CON)".
+!C     This led to a bug, because F may not equal F(X) if the subroutine
+!C     exits due to NFVALS .GE. MAXFUN (X is updated but F is not evaluated
+!C     at X). Similar thing can be said about RESMAX.
+!      IF (NFVALS >= MAXFUN .AND. NFVALS > 0) THEN
+!          IF (IPRINT >= 1) PRINT 50
+!   50     FORMAT (/3X,'Return from subroutine COBYLA because the ',
+!     1      'MAXFUN limit has been reached.')
+!          INFO = 3
+!          GOTO 600
+!      END IF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       IF (IBRNCH == 1) GOTO 440
 C
