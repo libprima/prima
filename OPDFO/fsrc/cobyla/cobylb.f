@@ -82,18 +82,17 @@ C     instructions are also used for calling CALCFC during the iterations of
 C     the algorithm.
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-   40 IF (NFVALS .GE. MAXFUN .AND. NFVALS .GT. 0) THEN
-          IF (IPRINT .GE. 1) PRINT 50
-   50     FORMAT (/3X,'Return from subroutine COBYLA because the '
-     1      'MAXFUN limit has been reached.')
-          INFO = 3
-          GOTO 600
-      END IF
+C   40 IF (NFVALS .GE. MAXFUN .AND. NFVALS .GT. 0) THEN
+C          IF (IPRINT .GE. 1) PRINT 50
+C   50     FORMAT (/3X,'Return from subroutine COBYLA because the ',
+C     1      'MAXFUN limit has been reached.')
+C          GOTO 600
+C      END IF
 C      NFVALS=NFVALS+1
 C      CALL CALCFC (N,M,X,F,CON)
 C
 C     By Zaikun (02-06-2019):
-      DO I=1,N
+   40 DO I=1,N
           IF (X(I) /= X(I)) THEN
               F=X(I) ! Set F to NaN
               INFO = -1
@@ -129,10 +128,9 @@ C   60     RESMAX=AMAX1(RESMAX,-CON(K))
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C By Zaikun 20190819:
-C CONSAV always containts the constraint value of the current x.
+C CONSAV always containts the containt value of the current x.
 C CON, however, will be changed during the calculation (see the lines
-C below the comment
-C "Calculate the coefficients of the linear approximations ..."
+C above line number 220).
       DO K = 1, MPP
           CONSAV(K) = CON(K)
       END DO
@@ -167,19 +165,19 @@ C         The feasibility is guarantee because RESMAX .LE. CTOL
       END IF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!C     By Zaikun (on 06-06-2019)
-!C     The following code was placed before "CALL CALCFC (N,M,X,F,CON)".
-!C     This led to a bug, because F may not equal F(X) if the subroutine
-!C     exits due to NFVALS .GE. MAXFUN (X is updated but F is not evaluated
-!C     at X). Similar thing can be said about RESMAX.
-!      IF (NFVALS >= MAXFUN .AND. NFVALS > 0) THEN
-!          IF (IPRINT >= 1) PRINT 50
-!   50     FORMAT (/3X,'Return from subroutine COBYLA because the ',
-!     1      'MAXFUN limit has been reached.')
-!          INFO = 3
-!          GOTO 600
-!      END IF
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C     By Zaikun (on 06-06-2019)
+C     The following code was placed before "CALL CALCFC (N,M,X,F,CON)".
+C     This led to a bug, because F may not equal F(X) if the subroutine
+C     exits due to NFVALS .GE. MAXFUN (X is updated but F is not evaluated
+C     at X). Similar thing can be said about RESMAX.
+      IF (NFVALS >= MAXFUN .AND. NFVALS > 0) THEN
+          IF (IPRINT >= 1) PRINT 50
+   50     FORMAT (/3X,'Return from subroutine COBYLA because the ',
+     1      'MAXFUN limit has been reached.')
+          INFO = 3
+          GOTO 600
+      END IF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       IF (IBRNCH == 1) GOTO 440
 C
@@ -833,14 +831,10 @@ C
   590 FORMAT (/3X,'Normal return from subroutine COBYLA')
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IF (IFULL .EQ. 1) GOTO 620
-  600 X(1:N) = SIM(1:N, NP)
-      F=DATMAT(MP,NP)
-      RESMAX=DATMAT(MPP,NP)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      RESREF = RESMAX
-      IF (RESREF /= RESREF) RESREF = HUGENUM
-      CON(1:M) = DATMAT(1:M,NP)
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C  600 DO 610 I=1,N
+C  610 X(I)=SIM(I,NP)
+C      F=DATMAT(MP,NP)
+C      RESMAX=DATMAT(MPP,NP)
 C
 C      Zaikun 01-06-2019:
 C      Why go to 620 directly without setting X and F? This seems
@@ -866,9 +860,9 @@ C      in DATMAT(:, NFVALS-1). However, when the code arrives at line 600,
 C      [X, CON, F, RESMAX] may have not been saved into SIM(:, NFVALS-1)
 C      and DATMAT(:, NFVALS-1) yet. That is why we check SIM up to
 C      NFVALS-2 instead of NFVALS-1.
-  !600 DO K = 1, M
-  !         CON(K) = CONSAV(K)
-  !    END DO
+  600 DO K = 1, M
+           CON(K) = CONSAV(K)
+      END DO
       PARMU = MAX(PARMU, 1.0D2)
       IF (NFVALS >= 2) THEN ! See the comments above for why NFVALS>2
           CALL ISBETTER(F, RESMAX, DATMAT(MP, NP), DATMAT(MPP, NP),
