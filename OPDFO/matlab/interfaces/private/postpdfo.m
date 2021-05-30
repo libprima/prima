@@ -590,6 +590,7 @@ if options.debug && ~options.classical
 
         if ~(isnan(conv) && isnan(constrviolation)) && ~(conv == inf && constrviolation == inf) && ~(abs(constrviolation-conv) <= lincoa_prec*max(1,abs(conv)) && strcmp(solver, 'lincoa')) && ~(abs(constrviolation-conv) <= cobyla_prec*max(1,abs(conv)) && strcmp(solver, 'cobyla'))
             % Public/unexpected error
+            1
             keyboard
             error(sprintf('%s:InvalidChist', invoker), ...
               '%s: UNEXPECTED ERROR: %s returns a constrviolation that does not match x.', invoker, solver);
@@ -630,6 +631,7 @@ if options.debug && ~options.classical
         % it seems that COBYLA can return fx~=fun(x) due to rounding
         % errors. Therefore, we cannot use "fx~=funx" to check COBYLA
         if ~(isnan(fx) && isnan(funx)) && ~((fx==funx) || (abs(funx-fx) <= cobyla_prec*max(1, abs(fx)) && strcmp(solver, 'cobyla')))
+            2
             keyboard
             % Public/unexpected error
             error(sprintf('%s:InvalidFx', invoker), ...
@@ -655,6 +657,7 @@ if options.debug && ~options.classical
             if any(size([nlcineq; nlceq]) ~= size([nlcineqx; nlceqx])) || any(isnan([nlcineq; nlceq]) ~= isnan([nlcineqx; nlceqx])) || (~any(isnan([nlcineq; nlceq; nlcineqx; nlceqx])) && any(abs([0; nlcineq; nlceq] - [0; nlcineqx; nlceqx]) > cobyla_prec*max(1,abs([0; nlcineqx; nlceqx]))))
             % In the last few max of the above line, we put a 0 to avoid an empty result
                 % Public/unexpected error
+                3
                 keyboard
                 error(sprintf('%s:InvalidConx', invoker), ...
                     '%s: UNEXPECTED ERROR: %s returns a con(x) that does not match x.', invoker, solver);
