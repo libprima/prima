@@ -1,4 +1,4 @@
-!*==cobylb.f90  processed by SPAG 7.50RE at 17:02 on 30 May 2021
+!*==cobylb.f90  processed by SPAG 7.50RE at 18:36 on 30 May 2021
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      SUBROUTINE COBYLB (N,M,MPP,X,RHOBEG,RHOEND,IPRINT,MAXFUN,
 !     1  CON,SIM,SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT)
@@ -226,8 +226,7 @@
               Info = 3
           end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!      IF (IBRNCH == 1) GOTO 440
-          if (ibrnch == 1 .and. Info /= 3) then
+          if (ibrnch == 1) then
               vmold = Datmat(mp, np) + parmu * Datmat(Mpp, np)
               vmnew = F + parmu * Resmax
               trured = vmold - vmnew
@@ -377,6 +376,7 @@
               if (trured <= 0.0D0 .or. trured < 0.1D0 * prerem) goto 400
               exit
           else
+!      IF (IBRNCH == 1 .AND. INFO /= 3) GOTO 440
 !
 !     Set the recently calculated function values in a column of DATMAT. This
 !     array has a column for each vertex of the current simplex, the entries of
@@ -996,7 +996,7 @@
      &        1PE13.6 / 3X, 'X =', 1PE13.6, 1P4E15.6)
 99010 format(1PE19.6, 1P4E15.6)
       end subroutine COBYLB
-!*==savex.f90  processed by SPAG 7.50RE at 17:02 on 30 May 2021
+!*==savex.f90  processed by SPAG 7.50RE at 18:36 on 30 May 2021
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 20190820: See the comments below line number 480
@@ -1027,7 +1027,7 @@
 ! because the other X are always worse than some vector in XSAV.
 !
       implicit none
-!*--SAVEX1042
+!*--SAVEX1047
 !*++
 !*++ Dummy argument declarations rewritten by SPAG
 !*++
@@ -1130,7 +1130,7 @@
       end if
 
       end subroutine SAVEX
-!*==isbetter.f90  processed by SPAG 7.50RE at 17:02 on 30 May 2021
+!*==isbetter.f90  processed by SPAG 7.50RE at 18:36 on 30 May 2021
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -1147,7 +1147,7 @@
 !    (can be Inf or NaN) returns false.
 !
       implicit none
-!*--ISBETTER1162
+!*--ISBETTER1167
 !*++
 !*++ Dummy argument declarations rewritten by SPAG
 !*++

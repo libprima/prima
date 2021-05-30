@@ -28,7 +28,6 @@ C     hold the displacements from the optimal vertex to the other vertices.
 C     Further, SIMI holds the inverse of the matrix that is contained in the
 C     first N columns of SIM.
 C
-      open(10, file = 'data1.dat', status='new')
       INFO = 2147483647
       IPTEM=MIN0(N,5)
       IPTEMP=IPTEM+1
@@ -118,7 +117,7 @@ C   60     RESMAX=AMAX1(RESMAX,-CON(K))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       END IF
 
-      WRITE(10,*) X(1:N), F, RESMAX
+      WRITE(10,*) X(1:N), F, CON(1:M)
 
       IF (NFVALS == IPRINT-1 .OR. IPRINT == 3) THEN
           PRINT 70, NFVALS,F,RESMAX,(X(I),I=1,IPTEM)
@@ -182,8 +181,8 @@ C     at X). Similar thing can be said about RESMAX.
           INFO = 3
       END IF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!      IF (IBRNCH == 1) GOTO 440
-      IF (IBRNCH == 1 .AND. INFO /= 3) GOTO 440
+      IF (IBRNCH == 1) GOTO 440
+!      IF (IBRNCH == 1 .AND. INFO /= 3) GOTO 440
 C
 C     Set the recently calculated function values in a column of DATMAT. This
 C     array has a column for each vertex of the current simplex, the entries of
@@ -282,6 +281,8 @@ C
 C     Switch the best vertex into pole position if it is not there already,
 C     and also update SIM, SIMI and DATMAT.
 C
+      WRITE(10,*) "NBEST = ", NBEST
+      WRITE(10,*) "OLD NP ", SIM(1:N, NP), DATMAT(1:MP, NP)
       IF (NBEST <= N) THEN
           DO I=1,MPP
               TEMP=DATMAT(I,NP)
@@ -306,6 +307,7 @@ C          TEMPA=0.0
               SIMI(NBEST,I)=TEMPA
           END DO
       END IF
+      WRITE(10,*) "NEW NP ", SIM(1:N, NP), DATMAT(1:MP, NP)
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       IF (INFO == 3) GOTO 600
@@ -891,6 +893,7 @@ C      NFVALS-2 instead of NFVALS-1.
                   CON(K) = DATMAT(K, NP)
               END DO
               WRITE(10,*) "NP"
+             WRITE(10, *), X(1:N), F, CON(1:M)
           END IF
           RESREF = RESMAX
           IF (RESREF /= RESREF) RESREF = HUGENUM
@@ -909,6 +912,7 @@ C See the comments above for why to check these J
                           CON(K) = DATMAT(K, J)
                       END DO
                       WRITE(10,*) "DATMAT", J
+                      WRITE(10, *), X(1:N), F, CON(1:M)
                   END IF
               END IF
           END DO
@@ -929,6 +933,7 @@ C          DO J = 1, NSAV
                           CON(K) = DATSAV(K, J)
                       END DO
                       WRITE(10,*) "DATSAV", J
+                      WRITE(10, *), X(1:N), F, CON(1:M)
                   END IF
               ENDIF
           END DO
