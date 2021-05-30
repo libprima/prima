@@ -45,6 +45,12 @@ else
     ir = -1;
 end
 
+if isfield(options, 'minip')
+    minip=options.minip;
+else
+    minip = 1;
+end
+
 requirements = struct();
 if isfield(options, 'list')
     requirements.list = options.list;  % Only test problems in this list
@@ -103,7 +109,7 @@ else
 end
 
 fprintf('\n')
-for ip = 1 : length(plist)
+for ip = minip : length(plist)
     pname = plist{ip};
     fprintf('%3d. \t%16s:\t', ip, pname);
 %    fprintf('%3d. \t%16s:\t\n', ip, pname);
