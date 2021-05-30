@@ -86,13 +86,14 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
           IF (IPRINT .GE. 1) PRINT 50
    50     FORMAT (/3X,'Return from subroutine COBYLA because the '
      1      'MAXFUN limit has been reached.')
+          INFO = 3
           GOTO 600
       END IF
 C      NFVALS=NFVALS+1
 C      CALL CALCFC (N,M,X,F,CON)
 C
 C     By Zaikun (02-06-2019):
-   40 DO I=1,N
+      DO I=1,N
           IF (X(I) /= X(I)) THEN
               F=X(I) ! Set F to NaN
               INFO = -1
@@ -130,7 +131,8 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C By Zaikun 20190819:
 C CONSAV always containts the constraint value of the current x.
 C CON, however, will be changed during the calculation (see the lines
-C above line number 220).
+C below the comment
+C "Calculate the coefficients of the linear approximations ..."
       DO K = 1, MPP
           CONSAV(K) = CON(K)
       END DO
@@ -831,10 +833,14 @@ C
   590 FORMAT (/3X,'Normal return from subroutine COBYLA')
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IF (IFULL .EQ. 1) GOTO 620
-C  600 DO 610 I=1,N
-C  610 X(I)=SIM(I,NP)
-C      F=DATMAT(MP,NP)
-C      RESMAX=DATMAT(MPP,NP)
+  600 X(1:N) = SIM(1:N, NP)
+      F=DATMAT(MP,NP)
+      RESMAX=DATMAT(MPP,NP)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      RESREF = RESMAX
+      IF (RESREF /= RESREF) RESREF = HUGENUM
+      CON(1:M) = DATMAT(1:M,NP)
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C
 C      Zaikun 01-06-2019:
 C      Why go to 620 directly without setting X and F? This seems
@@ -860,12 +866,10 @@ C      in DATMAT(:, NFVALS-1). However, when the code arrives at line 600,
 C      [X, CON, F, RESMAX] may have not been saved into SIM(:, NFVALS-1)
 C      and DATMAT(:, NFVALS-1) yet. That is why we check SIM up to
 C      NFVALS-2 instead of NFVALS-1.
-  600 DO K = 1, M
-           CON(K) = CONSAV(K)
-      END DO
+  !600 DO K = 1, M
+  !         CON(K) = CONSAV(K)
+  !    END DO
       PARMU = MAX(PARMU, 1.0D2)
-      open(1, file = 'data1.dat', status='new')
-      write(1,*) 'data1'
       IF (NFVALS >= 2) THEN ! See the comments above for why NFVALS>2
           CALL ISBETTER(F, RESMAX, DATMAT(MP, NP), DATMAT(MPP, NP),
      1         PARMU, CTOL, BETTER)
@@ -878,7 +882,6 @@ C      NFVALS-2 instead of NFVALS-1.
               DO K = 1, M
                   CON(K) = DATMAT(K, NP)
               END DO
-              WRITE(1,*) INFO, "NP"
           END IF
           RESREF = RESMAX
           IF (RESREF /= RESREF) RESREF = HUGENUM
@@ -896,7 +899,6 @@ C See the comments above for why to check these J
                       DO K = 1, M
                           CON(K) = DATMAT(K, J)
                       END DO
-                      WRITE(1,*) INFO, "DATMAT", J
                   END IF
               END IF
           END DO
@@ -916,7 +918,6 @@ C          DO J = 1, NSAV
                       DO K = 1, M
                           CON(K) = DATSAV(K, J)
                       END DO
-                      WRITE(1,*) INFO, "DATSAV", J
                   END IF
               ENDIF
           END DO
@@ -927,7 +928,6 @@ C          DO J = 1, NSAV
           IF (IPTEM < N) PRINT 80, (X(I),I=IPTEMP,N)
       END IF
       MAXFUN=NFVALS
-      close(1)
       RETURN
       END
 

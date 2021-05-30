@@ -655,6 +655,7 @@ if options.debug && ~options.classical
             if any(size([nlcineq; nlceq]) ~= size([nlcineqx; nlceqx])) || any(isnan([nlcineq; nlceq]) ~= isnan([nlcineqx; nlceqx])) || (~any(isnan([nlcineq; nlceq; nlcineqx; nlceqx])) && any(abs([0; nlcineq; nlceq] - [0; nlcineqx; nlceqx]) > cobyla_prec*max(1,abs([0; nlcineqx; nlceqx]))))
             % In the last few max of the above line, we put a 0 to avoid an empty result
                 % Public/unexpected error
+                keyboard
                 error(sprintf('%s:InvalidConx', invoker), ...
                     '%s: UNEXPECTED ERROR: %s returns a con(x) that does not match x.', invoker, solver);
             end
