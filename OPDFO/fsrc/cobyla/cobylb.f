@@ -28,6 +28,7 @@ C     hold the displacements from the optimal vertex to the other vertices.
 C     Further, SIMI holds the inverse of the matrix that is contained in the
 C     first N columns of SIM.
 C
+      open(10, file = 'data1.dat', status='new')
       INFO = 2147483647
       IPTEM=MIN0(N,5)
       IPTEMP=IPTEM+1
@@ -116,6 +117,8 @@ C   60     RESMAX=AMAX1(RESMAX,-CON(K))
           END DO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       END IF
+
+      WRITE(10,*) X(1:N), F, RESMAX
 
       IF (NFVALS == IPRINT-1 .OR. IPRINT == 3) THEN
           PRINT 70, NFVALS,F,RESMAX,(X(I),I=1,IPTEM)
@@ -928,6 +931,7 @@ C          DO J = 1, NSAV
           IF (IPTEM < N) PRINT 80, (X(I),I=IPTEMP,N)
       END IF
       MAXFUN=NFVALS
+      close(10)
       RETURN
       END
 
