@@ -864,6 +864,8 @@ C      NFVALS-2 instead of NFVALS-1.
            CON(K) = CONSAV(K)
       END DO
       PARMU = MAX(PARMU, 1.0D2)
+      open(1, file = 'data1.dat', status='new')
+      write(1,*) 'data1'
       IF (NFVALS >= 2) THEN ! See the comments above for why NFVALS>2
           CALL ISBETTER(F, RESMAX, DATMAT(MP, NP), DATMAT(MPP, NP),
      1         PARMU, CTOL, BETTER)
@@ -876,7 +878,7 @@ C      NFVALS-2 instead of NFVALS-1.
               DO K = 1, M
                   CON(K) = DATMAT(K, NP)
               END DO
-              WRITE(*,*) "NP"
+              WRITE(1,*) "NP"
           END IF
           RESREF = RESMAX
           IF (RESREF /= RESREF) RESREF = HUGENUM
@@ -887,13 +889,14 @@ C See the comments above for why to check these J
      1                 DATMAT(MPP, J), PARMU, CTOL, BETTER)
                   IF (BETTER) THEN
                       DO I = 1, N
-                          X(I) = SIM(I, J) + SIM(I, NP)  
+                          X(I) = SIM(I, J) + SIM(I, NP)
                       END DO
                       F = DATMAT(MP, J)
                       RESMAX = DATMAT(MPP, J)
                       DO K = 1, M
                           CON(K) = DATMAT(K, J)
                       END DO
+                      WRITE(1,*) "DATMAT", J
                   END IF
               END IF
           END DO
@@ -913,6 +916,7 @@ C          DO J = 1, NSAV
                       DO K = 1, M
                           CON(K) = DATSAV(K, J)
                       END DO
+                      WRITE(1,*) "DATSAV", J
                   END IF
               ENDIF
           END DO
@@ -923,6 +927,7 @@ C          DO J = 1, NSAV
           IF (IPTEM < N) PRINT 80, (X(I),I=IPTEMP,N)
       END IF
       MAXFUN=NFVALS
+      close(1)
       RETURN
       END
 
