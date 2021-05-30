@@ -180,10 +180,10 @@ C     at X). Similar thing can be said about RESMAX.
    50     FORMAT (/3X,'Return from subroutine COBYLA because the ',
      1      'MAXFUN limit has been reached.')
           INFO = 3
-          GOTO 666
       END IF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      IF (IBRNCH == 1) GOTO 440
+!      IF (IBRNCH == 1) GOTO 440
+      IF (IBRNCH == 1 .AND. INFO /= 3) GOTO 440
 C
 C     Set the recently calculated function values in a column of DATMAT. This
 C     array has a column for each vertex of the current simplex, the entries of
@@ -191,13 +191,13 @@ C     each column being the values of the constraint functions (if any)
 C     followed by the objective function and the greatest constraint violation
 C     at the vertex.
 C
-  666 DO K=1,MPP
+      DO K=1,MPP
           DATMAT(K,JDROP)=CON(K)
       END DO
-      IF (INFO == 3) GOTO 600
 
-!      IF (NFVALS > NP) GOTO 130
-      IF (NFVALS > NP .AND. INFO /= 3) GOTO 130
+      IF (NFVALS > NP) GOTO 130
+      ! IF we do not go to 130 but continue to below, then NFVALS <= NP.
+      ! Thus NFVALS may be NP = N+1 > N.
 C
 C     Exchange the new vertex of the initial simplex with the optimal vertex if
 C     necessary. Then, if the initial simplex is not complete, pick its next
@@ -254,7 +254,7 @@ C              TEMP=0.0
           END IF
       END IF
 
-
+! 120
       IF (NFVALS <= N) THEN
           JDROP=NFVALS
           X(JDROP)=X(JDROP)+RHO
@@ -306,6 +306,10 @@ C          TEMPA=0.0
               SIMI(NBEST,I)=TEMPA
           END DO
       END IF
+
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+      IF (INFO == 3) GOTO 600
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
 C     Make an error return if SIGI is a poor approximation to the inverse of
 C     the leading N by N submatrix of SIG.
@@ -347,6 +351,7 @@ C     and constraint functions, placing minus the objective function gradient
 C     after the constraint gradients in the array A. The vector W is used for
 C     working space.
 C
+! 220
       DO K=1,MP
           CON(K)=-DATMAT(K,NP)
           DO J=1,N
