@@ -885,6 +885,7 @@ C      NFVALS-2 instead of NFVALS-1.
               DO K = 1, M
                   CON(K) = DATMAT(K, NP)
               END DO
+              WRITE(10,*) "NP"
           END IF
           RESREF = RESMAX
           IF (RESREF /= RESREF) RESREF = HUGENUM
@@ -902,6 +903,7 @@ C See the comments above for why to check these J
                       DO K = 1, M
                           CON(K) = DATMAT(K, J)
                       END DO
+                      WRITE(10,*) "DATMAT", J
                   END IF
               END IF
           END DO
@@ -921,6 +923,7 @@ C          DO J = 1, NSAV
                       DO K = 1, M
                           CON(K) = DATSAV(K, J)
                       END DO
+                      WRITE(10,*) "DATSAV", J
                   END IF
               ENDIF
           END DO
