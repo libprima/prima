@@ -118,9 +118,7 @@ for ip = 1 : length(plist)
             fprintf('Run No. %3d: \t', ir);
         end
         % Some randomization
-        %ip = 46;
-        rng(ceil(1e6*abs(sin(1e6*(sum(double(pname))*n*ip*ir*nr*requirements.mindim*requirements.maxdim))))); %!!! TO MUCH RANDOMNESS!!! DIFFICULT TO REPRODUCE!!!
-        %rng(ceil(1e6*abs(sin(1e6*(sum(double(pname))*n*ip*ir)))));
+        rng(ceil(1e6*abs(sin(1e6*(sum(double(pname))*n*ir)))));
         prob.x0 = x0 + 0.5*randn(size(x0));
         test_options = struct();
         test_options.debug = true;
