@@ -28,6 +28,7 @@ C     hold the displacements from the optimal vertex to the other vertices.
 C     Further, SIMI holds the inverse of the matrix that is contained in the
 C     first N columns of SIM.
 C
+      INFO = 2147483647
       IPTEM=MIN0(N,5)
       IPTEMP=IPTEM+1
       NP=N+1
@@ -82,18 +83,17 @@ C     instructions are also used for calling CALCFC during the iterations of
 C     the algorithm.
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-   40 IF (NFVALS .GE. MAXFUN .AND. NFVALS .GT. 0) THEN
-          IF (IPRINT .GE. 1) PRINT 50
-   50     FORMAT (/3X,'Return from subroutine COBYLA because the ',
-     1      'MAXFUN limit has been reached.')
-          INFO = 3
-          GOTO 600
-      END IF
+C   40 IF (NFVALS .GE. MAXFUN .AND. NFVALS .GT. 0) THEN
+C          IF (IPRINT .GE. 1) PRINT 50
+C   50     FORMAT (/3X,'Return from subroutine COBYLA because the ',
+C     1      'MAXFUN limit has been reached.')
+C          GOTO 600
+C      END IF
 C      NFVALS=NFVALS+1
 C      CALL CALCFC (N,M,X,F,CON)
 C
 C     By Zaikun (02-06-2019):
-      DO I=1,N
+   40 DO I=1,N
           IF (X(I) /= X(I)) THEN
               F=X(I) ! Set F to NaN
               INFO = -1
@@ -131,8 +131,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C By Zaikun 20190819:
 C CONSAV always containts the constraint value of the current x.
 C CON, however, will be changed during the calculation (see the lines
-C below the comment
-C "Calculate the coefficients of the linear approximations ..."
+C above line number 220).
       DO K = 1, MPP
           CONSAV(K) = CON(K)
       END DO
@@ -167,6 +166,19 @@ C         The feasibility is guarantee because RESMAX .LE. CTOL
       END IF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C     By Zaikun (on 06-06-2019)
+C     The following code was placed before "CALL CALCFC (N,M,X,F,CON)".
+C     This led to a bug, because F may not equal F(X) if the subroutine
+C     exits due to NFVALS .GE. MAXFUN (X is updated but F is not evaluated
+C     at X). Similar thing can be said about RESMAX.
+      IF (NFVALS >= MAXFUN .AND. NFVALS > 0) THEN
+          IF (IPRINT >= 1) PRINT 50
+   50     FORMAT (/3X,'Return from subroutine COBYLA because the ',
+     1      'MAXFUN limit has been reached.')
+          INFO = 3
+      END IF
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       IF (IBRNCH == 1) GOTO 440
 C
 C     Set the recently calculated function values in a column of DATMAT. This
@@ -178,7 +190,10 @@ C
       DO K=1,MPP
           DATMAT(K,JDROP)=CON(K)
       END DO
+
       IF (NFVALS > NP) GOTO 130
+      ! IF we do not go to 130 but continue to below, then NFVALS <= NP.
+      ! Thus NFVALS may be NP = N+1 > N.
 C
 C     Exchange the new vertex of the initial simplex with the optimal vertex if
 C     necessary. Then, if the initial simplex is not complete, pick its next
@@ -234,6 +249,8 @@ C              TEMP=0.0
               END DO
           END IF
       END IF
+
+! 120
       IF (NFVALS <= N) THEN
           JDROP=NFVALS
           X(JDROP)=X(JDROP)+RHO
@@ -285,6 +302,12 @@ C          TEMPA=0.0
               SIMI(NBEST,I)=TEMPA
           END DO
       END IF
+
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+! Zaikun 2021-05-30
+      IF (INFO == 3) GOTO 600
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 C
 C     Make an error return if SIGI is a poor approximation to the inverse of
 C     the leading N by N submatrix of SIG.
@@ -326,6 +349,7 @@ C     and constraint functions, placing minus the objective function gradient
 C     after the constraint gradients in the array A. The vector W is used for
 C     working space.
 C
+! 220
       DO K=1,MP
           CON(K)=-DATMAT(K,NP)
           DO J=1,N
@@ -819,19 +843,10 @@ C
   590 FORMAT (/3X,'Normal return from subroutine COBYLA')
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IF (IFULL .EQ. 1) GOTO 620
-  600 IF (NFVALS > 1 .AND. INFO /= 3) THEN
-      ! See the comment below for why NFVALS > 1.
-      ! When INFO = 3, 600 is arrived because NFVALS >= MAXFUN. At this point,
-      ! SIM and X have been updated, but [F, DATMAT, RESMAX] has not.
-          X(1:N) = SIM(1:N, NP)
-          F=DATMAT(MP,NP)
-          RESMAX=DATMAT(MPP,NP)
-          CON(1:M) = DATMAT(1:M,NP)
-      END IF
-      RESREF = RESMAX
-      IF (RESREF /= RESREF) RESREF = HUGENUM
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C  600 DO 610 I=1,N
+C  610 X(I)=SIM(I,NP)
+C      F=DATMAT(MP,NP)
+C      RESMAX=DATMAT(MPP,NP)
 C
 C      Zaikun 01-06-2019:
 C      Why go to 620 directly without setting X and F? This seems
@@ -847,6 +862,8 @@ C      2. no other vector is better than X according to ISBETTER with
 C      the current PARMU.
 C
 C      Note:
+C      0. The last evaluated X and its function/constraint information
+C      are saved in [X, CONSAV, F, RESMAX].
 C      1. When NFVALS=1, SIM and DATMAT have not been initialized yet.
 C      2. When 2<=NFVALS<=NP, the first evaluated X are saved in
 C      SIM(:, NP), its function/constraint in DATMAT(:, NP), while the
@@ -855,8 +872,25 @@ C      in DATMAT(:, NFVALS-1). However, when the code arrives at line 600,
 C      [X, CON, F, RESMAX] may have not been saved into SIM(:, NFVALS-1)
 C      and DATMAT(:, NFVALS-1) yet. That is why we check SIM up to
 C      NFVALS-2 instead of NFVALS-1.
+  600 DO K = 1, M
+           CON(K) = CONSAV(K)
+      END DO
       PARMU = MAX(PARMU, 1.0D2)
       IF (NFVALS >= 2) THEN ! See the comments above for why NFVALS>2
+          CALL ISBETTER(F, RESMAX, DATMAT(MP, NP), DATMAT(MPP, NP),
+     1         PARMU, CTOL, BETTER)
+          IF (BETTER) THEN
+              DO I = 1, N
+                  X(I) = SIM(I, NP)
+              END DO
+              F = DATMAT(MP, NP)
+              RESMAX = DATMAT(MPP, NP)
+              DO K = 1, M
+                  CON(K) = DATMAT(K, NP)
+              END DO
+          END IF
+          RESREF = RESMAX
+          IF (RESREF /= RESREF) RESREF = HUGENUM
           DO J = 1, MIN(NP-1, NFVALS-2)
 C See the comments above for why to check these J
               IF (DATMAT(MPP, J) <= RESREF) THEN
