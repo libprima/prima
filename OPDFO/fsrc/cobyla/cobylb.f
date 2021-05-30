@@ -117,6 +117,7 @@ C   60     RESMAX=AMAX1(RESMAX,-CON(K))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       END IF
 
+      WRITE(10,*) X(1:N), F, RESMAX
 
       IF (NFVALS == IPRINT-1 .OR. IPRINT == 3) THEN
           PRINT 70, NFVALS,F,RESMAX,(X(I),I=1,IPTEM)
@@ -888,6 +889,8 @@ C      NFVALS-2 instead of NFVALS-1.
               DO K = 1, M
                   CON(K) = DATMAT(K, NP)
               END DO
+              WRITE(10,*) "NP"
+             WRITE(10, *), X(1:N), F, CON(1:M)
           END IF
           RESREF = RESMAX
           IF (RESREF /= RESREF) RESREF = HUGENUM
@@ -905,6 +908,8 @@ C See the comments above for why to check these J
                       DO K = 1, M
                           CON(K) = DATMAT(K, J)
                       END DO
+                      WRITE(10,*) "DATMAT", J
+                      WRITE(10, *), X(1:N), F, CON(1:M)
                   END IF
               END IF
           END DO
@@ -924,6 +929,8 @@ C          DO J = 1, NSAV
                       DO K = 1, M
                           CON(K) = DATSAV(K, J)
                       END DO
+                      WRITE(10,*) "DATSAV", J
+                      WRITE(10, *), X(1:N), F, CON(1:M)
                   END IF
               ENDIF
           END DO
@@ -934,6 +941,7 @@ C          DO J = 1, NSAV
           IF (IPTEM < N) PRINT 80, (X(I),I=IPTEMP,N)
       END IF
       MAXFUN=NFVALS
+      close(10)
       RETURN
       END
 
