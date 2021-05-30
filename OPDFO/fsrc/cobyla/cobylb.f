@@ -876,6 +876,7 @@ C      NFVALS-2 instead of NFVALS-1.
               DO K = 1, M
                   CON(K) = DATMAT(K, NP)
               END DO
+              WRITE(*,*) "NP"
           END IF
           RESREF = RESMAX
           IF (RESREF /= RESREF) RESREF = HUGENUM
