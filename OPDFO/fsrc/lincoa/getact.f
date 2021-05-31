@@ -243,10 +243,15 @@ C       constraints that become inactive.
 C
       IFLAG=3
       IC=NACT
+
+      WRITE(*,*) IC
+      WRITE(*,*) VLAM(IC),IACT(IC)
+      !WRITE(*,*) RESNEW(IACT(IC)),RESACT(IACT(IC))
+
   270 IF (VLAM(IC) < ZERO) GOTO 280
       RESNEW(IACT(IC))=DMAX1(RESACT(IC),TINY)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      IF (IC == 0) return
+!      IF (IC == 0) return
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       GOTO 800
   280 IC=IC-1
