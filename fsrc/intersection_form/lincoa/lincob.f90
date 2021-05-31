@@ -337,6 +337,7 @@ if (knew == 0) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     call TRSTEP(N, Npt, M, Amat, Xpt, Hq, Pq, nact, Iact, Rescon, Qfac, Rfac, &
 &               snorm, Step, Xnew, W, W(M + 1), Pqw, Pqw(np), W(M + np))
+    write (*, *) NF, snorm
 !
 !     A trust region step is applied whenever its length, namely SNORM, is at
 !       least HALF*DELTA. It is also applied if its length is at least 0.1999
