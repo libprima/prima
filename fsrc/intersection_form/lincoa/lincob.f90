@@ -331,6 +331,7 @@ if (knew == 0) then
     do i = 1, N
         Xnew(i) = Gopt(i)
     end do
+    write(*,*) XNEW(1:N)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 19-03-2020: B is never used in TRSTEP
 !          CALL TRSTEP (N,NPT,M,AMAT,B,XPT,HQ,PQ,NACT,IACT,RESCON,
