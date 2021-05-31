@@ -1,5 +1,5 @@
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C Zaikun 2019-08-29: B is never used 
+C Zaikun 2019-08-29: B is never used
 C      SUBROUTINE QMSTEP (N,NPT,M,AMAT,B,XPT,XOPT,NACT,IACT,
       SUBROUTINE QMSTEP (N,NPT,M,AMAT,XPT,XOPT,NACT,IACT,
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -75,12 +75,12 @@ C     Find the greatest modulus of LFUNC on a line through XOPT and
 C       another interpolation point within the trust region.
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C Zaikun 2019-08-15: IFLAG is never used 
+C Zaikun 2019-08-15: IFLAG is never used
 C      IFLAG=0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       VBIG=ZERO
       DO K=1,NPT
-          IF (K == KOPT) CYCLE 
+          IF (K == KOPT) CYCLE
           SS=ZERO
           SP=ZERO
           DO I=1,N
@@ -96,9 +96,9 @@ C      IFLAG=0
               VLAG=DABS(STP*(ONE-STP)*SP)
           END IF
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C Zaikun 2019-08-29: With the original code, if either VLAG or VBIG is 
+C Zaikun 2019-08-29: With the original code, if either VLAG or VBIG is
 C NaN, KSAV will not get a value. This may cause Segmentation Fault
-C because XPT(KSAV, :) will later be accessed. 
+C because XPT(KSAV, :) will later be accessed.
 C      IF (VLAG .GT. VBIG) THEN
           IF (.NOT. (VLAG <= VBIG)) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -117,7 +117,11 @@ C
           STEP(I)=STPSAV*(XPT(KSAV,I)-XOPT(I))
       END DO
       VGRAD=DEL*DSQRT(GG)
-      IF (VGRAD <= TENTH*VBIG) GOTO 220
+!      IF (VGRAD <= TENTH*VBIG) GOTO 220
+      IF (VGRAD <= TENTH*VBIG) THEN
+          WRITE(10, *) "VGRAD <= TENTH*VBIG"
+          GOTO 220
+      END IF
 C
 C     Make the replacement if it provides a larger value of VBIG.
 C
@@ -138,7 +142,11 @@ C
               STEP(I)=STP*GL(I)
           END DO
       END IF
-      IF (NACT == 0 .OR. NACT == N) GOTO 220
+!      IF (NACT == 0 .OR. NACT == N) GOTO 220
+      IF (NACT == 0 .OR. NACT == N) THEN
+          WRITE(10, *) "NACT == 0 .OR. NACT == N"
+          GOTO 220
+      END IF
 C
 C     Overwrite GL by its projection. Then set VNEW to the greatest
 C       value of |LFUNC| on the projected gradient from XOPT subject to
@@ -160,7 +168,11 @@ C
           GG=GG+GL(I)**2
       END DO
       VGRAD=DEL*DSQRT(GG)
-      IF (VGRAD <= TENTH*VBIG) GOTO 220
+!      IF (VGRAD <= TENTH*VBIG) GOTO 220
+      IF (VGRAD <= TENTH*VBIG) THEN
+          WRITE(10, *) "VGRAD <= TENTH*VBIG"
+          GOTO 220
+      END IF
       GHG=ZERO
       DO K=1,NPT
           TEMP=ZERO
@@ -200,11 +212,16 @@ C
                   END DO
                   BIGV=DMAX1(BIGV,TEMP)
               END IF
-              IF (BIGV < TEST) GOTO 170
+!              IF (BIGV < TEST) GOTO 170
+              IF (BIGV < TEST) THEN
+                  WRITE(10, *) "1"
+                  GOTO 170
+              END IF
               IFEAS=0
           END IF
           CTOL=ZERO
           TEMP=0.01D0*DSQRT(WW)
+          WRITE(10, *) "BIGV, TEMP", BIGV, TEMP
           IF (BIGV > ZERO .AND. BIGV < TEMP) THEN
               DO K=1,NACT
                   J=IACT(K)
@@ -215,10 +232,12 @@ C
                   CTOL=DMAX1(CTOL,DABS(SUM))
               END DO
           END IF
+          WRITE(10, *) "CTOL, BIGV, TEST", CTOL, BIGV, TEST
           IF (BIGV <= 10.0D0*CTOL .OR. BIGV >= TEST) THEN
               DO I=1,N
                   STEP(I)=W(I)
               END DO
+              WRITE(10, *) "2"
               GOTO 260
           END IF
       END IF
@@ -231,27 +250,46 @@ C
       RESMAX=ZERO
       J=0
   230 J=J+1
+      WRITE(10, *) "J", J, "M", M
+      WRITE(10, *)  "RSTAT(1:M)", RSTAT(1:M)
+      WRITE(10, *)  "RESCON(1:M)", RESCON(1:M)
       IF (J <= M) THEN
-          IF (RSTAT(J) < ZERO) GOTO 230
+!          IF (RSTAT(J) < ZERO) GOTO 230
+          WRITE(10, *) RSTAT(J)
+          IF (RSTAT(J) < ZERO) THEN
+              WRITE(10, *) "3"
+              GOTO 230
+          END IF
           TEMP=-RESCON(J)
+          WRITE(10, *) TEMP
           DO I=1,N
+              WRITE(10,*), I, TEMP
               TEMP=TEMP+STEP(I)*AMAT(I,J)
           END DO
           RESMAX=DMAX1(RESMAX,TEMP)
+          WRITE(10, *) "TEMP, TEST", TEMP, TEST
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C          IF (TEMP .LT. TEST) THEN
           IF (.NOT. (TEMP >= TEST)) THEN
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!              
-              IF (TEMP <= BIGV) GOTO 230
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!              IF (TEMP <= BIGV) GOTO 230
+              WRITE(10, *) "BIGV", BIGV
+              IF (TEMP <= BIGV) THEN
+                  WRITE(10, *) "4"
+                  GOTO 230
+              END IF
               BIGV=TEMP
               JSAV=J
               IFEAS=-1
+              WRITE(10, *) "5", "BIGV, JSAV, IFEAS", BIGV, JSAV, IFEAS
               GOTO 230
           END IF
           IFEAS=0
       END IF
+      WRITE(10, *) IFEAS, JSAV
       IF (IFEAS == -1) THEN
           DO I=1,N
+              WRITE(10, *) "I, JSAV", I, JSAV
               STEP(I)=STEP(I)+(TEST-BIGV)*AMAT(I,JSAV)
           END DO
           IFEAS=0
