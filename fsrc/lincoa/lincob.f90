@@ -1,54 +1,45 @@
-!*==lincob.f90  processed by SPAG 7.50RE at 17:53 on 31 May 2021
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!     2  STEP,SP,XNEW,IACT,RESCON,QFAC,RFAC,PQW,W)
-subroutine LINCOB(N, Npt, M, Amat, B, X, Rhobeg, Rhoend, Iprint, Maxfun,   &
-     &                  Xbase, Xpt, Fval, Xsav, Xopt, Gopt, Hq, Pq, Bmat, Zmat,  &
-     &                  Ndim, Step, Sp, Xnew, Iact, Rescon, Qfac, Rfac, Pqw, W, F,&
-     &                  Info, Ftarget)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IMPLICIT REAL*8*8 (A-H,O-Z)
+subroutine lincob(n, npt, m, amat, b, x, rhobeg, rhoend, iprint, maxfun,   &
+     &                  xbase, xpt, fval, xsav, xopt, gopt, hq, pq, bmat, zmat,  &
+     &                  ndim, step, sp, xnew, iact, rescon, qfac, rfac, pqw, w, f,&
+     &                  info, ftarget)
+
+! Dummy variables
+use consts_mod, only : IK, RP
 implicit none
-!*--LINCOB18
-!*++
-!*++ Dummy argument declarations rewritten by SPAG
-!*++
-integer :: N
-integer :: Npt
-integer :: M
-real*8, dimension(N, *) :: Amat
-real*8, intent(INOUT), dimension(*) :: B
-real*8, intent(INOUT), dimension(*) :: X
-real*8 :: Rhobeg
-real*8, intent(IN) :: Rhoend
-integer :: Iprint
-integer, intent(IN) :: Maxfun
-real*8, intent(INOUT), dimension(*) :: Xbase
-real*8, intent(INOUT), dimension(Npt, *) :: Xpt
-real*8, intent(INOUT), dimension(*) :: Fval
-real*8, intent(INOUT), dimension(*) :: Xsav
-real*8, intent(INOUT), dimension(*) :: Xopt
-real*8, intent(INOUT), dimension(*) :: Gopt
-real*8, intent(INOUT), dimension(*) :: Hq
-real*8, intent(INOUT), dimension(*) :: Pq
-real*8, intent(INOUT), dimension(Ndim, *) :: Bmat
-real*8, dimension(Npt, *) :: Zmat
-integer :: Ndim
-real*8, intent(INOUT), dimension(*) :: Step
-real*8, intent(INOUT), dimension(*) :: Sp
-real*8, intent(INOUT), dimension(*) :: Xnew
-integer, dimension(*) :: Iact
-real*8, intent(INOUT), dimension(*) :: Rescon
-real*8, dimension(N, *) :: Qfac
-real*8, dimension(*) :: Rfac
-real*8, intent(INOUT), dimension(*) :: Pqw
-real*8, intent(INOUT), dimension(*) :: W
-real*8, intent(INOUT) :: F
-integer, intent(OUT) :: Info
-real*8 :: Ftarget
-!*++
-!*++ Local variable declarations rewritten by SPAG
-!*++
+integer(IK), intent(in) :: iprint
+integer(IK), intent(in) :: m
+integer :: n
+integer :: ndim
+integer :: npt
+integer, dimension(*) :: iact
+integer, intent(in) :: maxfun
+integer, intent(out) :: info
+real*8 :: ftarget
+real*8 :: rhobeg
+real*8, dimension(*) :: rfac
+real*8, dimension(n, *) :: amat
+real*8, dimension(n, *) :: qfac
+real*8, dimension(npt, *) :: zmat
+real*8, intent(in) :: rhoend
+real*8, intent(inout) :: f
+real*8, intent(inout), dimension(*) :: b
+real*8, intent(inout), dimension(*) :: fval
+real*8, intent(inout), dimension(*) :: gopt
+real*8, intent(inout), dimension(*) :: hq
+real*8, intent(inout), dimension(*) :: pq
+real*8, intent(inout), dimension(*) :: pqw
+real*8, intent(inout), dimension(*) :: rescon
+real*8, intent(inout), dimension(*) :: sp
+real*8, intent(inout), dimension(*) :: step
+real*8, intent(inout), dimension(*) :: w
+real*8, intent(inout), dimension(*) :: x
+real*8, intent(inout), dimension(*) :: xbase
+real*8, intent(inout), dimension(*) :: xnew
+real*8, intent(inout), dimension(*) :: xopt
+real*8, intent(inout), dimension(*) :: xsav
+real*8, intent(inout), dimension(ndim, *) :: bmat
+real*8, intent(inout), dimension(npt, *) :: xpt
+! Local variables
 real*8 :: almost_infinity, del, delsav, delta, dffalt, diff,  &
 &        distsq, fopt, fsave, half, one, qoptsq, ratio,     &
 &        rho, snorm, ssq, sum, sumz, temp, tenth, vqalt,   &
@@ -57,7 +48,7 @@ integer :: i, idz, ifeas, ih, imprv, ip, itest, j, k,    &
 &           knew, kopt, ksave, nact, nf, nh, np, nptm,     &
 &           nvala, nvalb
 !*++
-!*++ End of declarations rewritten by SPAG
+!*++ end of declarations rewritten by spag
 !*++
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
@@ -331,7 +322,7 @@ if (knew == 0) then
     do i = 1, N
         Xnew(i) = Gopt(i)
     end do
-    write(*,*) XNEW(1:N)
+    write (*, *) XNEW(1:N)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 19-03-2020: B is never used in TRSTEP
 !          CALL TRSTEP (N,NPT,M,AMAT,B,XPT,HQ,PQ,NACT,IACT,RESCON,
