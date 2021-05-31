@@ -533,7 +533,7 @@
                   error = DMAX1(error, DABS(temp))
               end do
           end do
-          if (error > 0.1D0) then
+          if (.not. (error <= 0.1D0)) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               if (Iprint >= 1) print 99003
 99003         format(/3X, 'Return from subroutine COBYLA because ',       &
