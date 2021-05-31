@@ -284,6 +284,7 @@ C to segmentation faults.
           DO I=1,N
               XNEW(I)=GOPT(I)
           END DO
+      write(*,*) XNEW(1:N)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 19-03-2020: B is never used in TRSTEP
 C          CALL TRSTEP (N,NPT,M,AMAT,B,XPT,HQ,PQ,NACT,IACT,RESCON,
