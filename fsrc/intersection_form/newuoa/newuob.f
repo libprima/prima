@@ -18,7 +18,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Monday, May 31, 2021 PM09:22:50
+! Last Modified: Monday, May 31, 2021 PM10:19:47
 
       module newuob_mod
 
@@ -183,7 +183,7 @@
       x = xbase + xopt ! Set X.
       f = fopt ! Set F.
 
-! Check whether to return.
+! Check whether to return after initialization.
       terminate = (subinfo == FTARGET_ACHIEVED) .or. (subinfo == NAN_X) &
      &.or. (subinfo == NAN_INF_F)
 
@@ -397,7 +397,7 @@
 ! DNORMSAVE constains the DNORM corresponding to the latest 3
 ! function evaluations with the current RHO.
               dnormsave = [dnorm, dnormsave(1:size(dnormsave) - 1)]
-! MODERR is the prediction errors of the latest 3 models.
+! MODERRSAVE is the prediction errors of the latest 3 models.
               moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
           end if ! End of if (.not. shortd)
 
@@ -428,11 +428,10 @@
 ! (i.e., all points are close to XOPT), RHO will be reduced
 ! (if MAX(DELTA, DNORM) <= RHO and D is "bad") or another
 ! trust-region step will be taken.
-              if (knew > 0) then
 ! The only possibility that IMPROVE_GEOMETRY = TRUE.
-                  improve_geometry = .true.
-              else if (max(delta, dnorm) <= rho .and. (ratio <= 0 .or. s&
-     &hortd)) then
+              improve_geometry = (knew > 0)
+              if ((.not. improve_geometry) .and. max(delta, dnorm) <= rh&
+     &o .and. (ratio <= 0 .or. shortd)) then
 ! The 2nd possibility (out of 2) that REDUCE_RHO = TRUE.
 ! Even though all points are close to XOPT, a sufficiently
 ! small trust region does not suggest a good step to improve
@@ -444,6 +443,8 @@
 
 ! Before next trust region iteration, we may reduce rho or improve the
 ! geometry of XPT according to REDUCE_RHO and IMPROVE_GEOMETRY.
+! Since reduce_rho and improve_geometry are never simultaneously true, the following two cases
+! can be exchanged.
 
           if (reduce_rho) then
 ! The calculations with the current RHO are complete. Pick the
@@ -574,7 +575,7 @@
 ! In theory, DNORM = DELBAR in this case.
 !--------------------------------------------------------------!
               dnormsave = [dnorm, dnormsave(1:size(dnormsave) - 1)]
-! MODERR is the prediction errors of the latest 3 models.
+! MODERRSAVE is the prediction errors of the latest 3 models.
               moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
           end if ! The procedure of improving geometry ends.
 
