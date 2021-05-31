@@ -1,10 +1,10 @@
-!*==lincob.f90  processed by SPAG 7.50RE at 00:12 on 26 May 2021
+!*==lincob.f90  processed by SPAG 7.50RE at 17:53 on 31 May 2021
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !     2  STEP,SP,XNEW,IACT,RESCON,QFAC,RFAC,PQW,W)
 subroutine LINCOB(N, Npt, M, Amat, B, X, Rhobeg, Rhoend, Iprint, Maxfun,   &
-&                  Xbase, Xpt, Fval, Xsav, Xopt, Gopt, Hq, Pq, Bmat, Zmat,  &
-&                  Ndim, Step, Sp, Xnew, Iact, Rescon, Qfac, Rfac, Pqw, W, F,&
-&                  Info, Ftarget)
+     &                  Xbase, Xpt, Fval, Xsav, Xopt, Gopt, Hq, Pq, Bmat, Zmat,  &
+     &                  Ndim, Step, Sp, Xnew, Iact, Rescon, Qfac, Rfac, Pqw, W, F,&
+     &                  Info, Ftarget)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IMPLICIT REAL*8*8 (A-H,O-Z)
