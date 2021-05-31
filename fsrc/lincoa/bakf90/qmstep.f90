@@ -131,7 +131,7 @@
 ! NaN, KSAV will not get a value. This may cause Segmentation Fault
 ! because XPT(KSAV, :) will later be accessed.
 !      IF (VLAG .GT. VBIG) THEN
-          if (vlag > vbig .or. vlag /= vlag .or. vbig /= vbig) then
+          if (.not. (vlag <= vbig)) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               ksav = k
               stpsav = stp
@@ -278,7 +278,7 @@
               resmax = DMAX1(resmax, temp)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          IF (TEMP .LT. TEST) THEN
-              if (temp < test) then
+              if (.not. (temp >= test)) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                   if (temp > bigv) then
                       bigv = temp

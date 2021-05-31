@@ -1,4 +1,4 @@
-!*==prelim.f90  processed by SPAG 7.50RE at 17:53 on 31 May 2021
+!*==prelim.f90  processed by SPAG 7.50RE at 00:12 on 26 May 2021
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !     2  SP,RESCON,STEP,PQW,W)
       SUBROUTINE PRELIM(N,Npt,M,Amat,B,X,Rhobeg,Iprint,Xbase,Xpt,Fval,  &
