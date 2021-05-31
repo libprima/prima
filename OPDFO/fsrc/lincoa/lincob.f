@@ -91,14 +91,11 @@ C       integer from [1,NPT], then a change is made to XPT(K,.) if necessary
 C       so that the constraint violation is at least 0.2*RHOBEG. Also KOPT
 C       is set so that XPT(KOPT,.) is the initial trust region centre.
 C
-      WRITE(10,*) 'new start'
-      write(10, *) 'bp'
       CALL PRELIM (N,NPT,M,AMAT,B,X,RHOBEG,IPRINT,XBASE,XPT,FVAL,
      1  XSAV,XOPT,GOPT,KOPT,HQ,PQ,BMAT,ZMAT,IDZ,NDIM,SP,RESCON,
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C     2  STEP,PQW,W)
      2  STEP,PQW,W,F,FTARGET)
-      write(10, *) 'ap'
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -290,11 +287,9 @@ C to segmentation faults.
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 19-03-2020: B is never used in TRSTEP
 C          CALL TRSTEP (N,NPT,M,AMAT,B,XPT,HQ,PQ,NACT,IACT,RESCON,
-          write(10, *) 'bt'
           CALL TRSTEP (N,NPT,M,AMAT,XPT,HQ,PQ,NACT,IACT,RESCON,
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      1      QFAC,RFAC,SNORM,STEP,XNEW,W,W(M+1),PQW,PQW(NP),W(M+NP))
-          write(10, *) 'at'
 C
 C     A trust region step is applied whenever its length, namely SNORM, is at
 C       least HALF*DELTA. It is also applied if its length is at least 0.1999
@@ -372,11 +367,9 @@ C  180     PQW(K)=PQW(K)+TEMP*ZMAT(K,J)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 2019-08-29: B is never used in QMSTEP
 C          CALL QMSTEP (N,NPT,M,AMAT,B,XPT,XOPT,NACT,IACT,RESCON,
-          WRITE(10, *) 'bq'
           CALL QMSTEP (N,NPT,M,AMAT,XPT,XOPT,NACT,IACT,RESCON,
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      1      QFAC,KOPT,KNEW,DEL,STEP,W,PQW,W(NP),W(NP+M),IFEAS)
-          WRITE(10, *) 'aq'
       END IF
 C
 C     Set VQUAD to the change to the quadratic model when the move STEP is
@@ -498,9 +491,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
           END IF
       END DO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      WRITE(10, *) 'bc'
       CALL CALFUN (N,X,F)
-      WRITE(10, *) 'ac'
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C     By Tom (on 04-06-2019):
       IF (F /= F .OR. F > ALMOST_INFINITY) THEN
@@ -580,10 +571,8 @@ C     Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point
 C       can be moved. If STEP is a trust region step, then KNEW is zero at
 C       present, but a positive value is picked by subroutine UPDATE.
 C
-      WRITE(10, *) 'au'
       CALL UPDATE (N,NPT,XPT,BMAT,ZMAT,IDZ,NDIM,SP,STEP,KOPT,
      1  KNEW,PQW,W)
-      WRITE(10, *) 'bu'
       IF (KNEW == 0) THEN
           IF (IPRINT > 0) PRINT 320
   320     FORMAT (/4X,'Return from LINCOA because the denominator'

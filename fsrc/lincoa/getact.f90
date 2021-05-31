@@ -282,6 +282,7 @@
          ic = Nact
          EXIT
       ENDDO
+
  600  IF ( Vlam(ic)>=zero ) THEN
          Resnew(Iact(ic)) = DMAX1(Resact(ic),tiny)
          GOTO 900

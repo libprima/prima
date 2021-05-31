@@ -3,41 +3,41 @@
 ! Zaikun 2019-08-29: B is never used
 !      SUBROUTINE QMSTEP (N,NPT,M,AMAT,B,XPT,XOPT,NACT,IACT,
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      SUBROUTINE QMSTEP(N,Npt,M,Amat,Xpt,Xopt,Nact,Iact,Rescon,Qfac,    &
-     &                  Kopt,Knew,Del,Step,Gl,Pqw,Rstat,W,Ifeas)
+      subroutine QMSTEP(N, Npt, M, Amat, Xpt, Xopt, Nact, Iact, Rescon, Qfac,    &
+     &                  Kopt, Knew, Del, Step, Gl, Pqw, Rstat, W, Ifeas)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IMPLICIT REAL*8*8 (A-H,O-Z)
-      IMPLICIT NONE
+      implicit none
 !*--QMSTEP12
 !*++
 !*++ Dummy argument declarations rewritten by SPAG
 !*++
-      INTEGER , INTENT(IN) :: N
-      INTEGER , INTENT(IN) :: Npt
-      INTEGER , INTENT(IN) :: M
-      REAL*8 , INTENT(IN) , DIMENSION(N,*) :: Amat
-      REAL*8 , INTENT(IN) , DIMENSION(Npt,*) :: Xpt
-      REAL*8 , INTENT(IN) , DIMENSION(*) :: Xopt
-      INTEGER , INTENT(IN) :: Nact
-      INTEGER , INTENT(IN) , DIMENSION(*) :: Iact
-      REAL*8 , INTENT(IN) , DIMENSION(*) :: Rescon
-      REAL*8 , INTENT(IN) , DIMENSION(N,*) :: Qfac
-      INTEGER , INTENT(IN) :: Kopt
-      INTEGER , INTENT(IN) :: Knew
-      REAL*8 , INTENT(IN) :: Del
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Step
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Gl
-      REAL*8 , INTENT(IN) , DIMENSION(*) :: Pqw
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Rstat
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: W
-      INTEGER , INTENT(INOUT) :: Ifeas
+      integer, intent(IN) :: N
+      integer, intent(IN) :: Npt
+      integer, intent(IN) :: M
+      real*8, intent(IN), dimension(N, *) :: Amat
+      real*8, intent(IN), dimension(Npt, *) :: Xpt
+      real*8, intent(IN), dimension(*) :: Xopt
+      integer, intent(IN) :: Nact
+      integer, intent(IN), dimension(*) :: Iact
+      real*8, intent(IN), dimension(*) :: Rescon
+      real*8, intent(IN), dimension(N, *) :: Qfac
+      integer, intent(IN) :: Kopt
+      integer, intent(IN) :: Knew
+      real*8, intent(IN) :: Del
+      real*8, intent(INOUT), dimension(*) :: Step
+      real*8, intent(INOUT), dimension(*) :: Gl
+      real*8, intent(IN), dimension(*) :: Pqw
+      real*8, intent(INOUT), dimension(*) :: Rstat
+      real*8, intent(INOUT), dimension(*) :: W
+      integer, intent(INOUT) :: Ifeas
 !*++
 !*++ Local variable declarations rewritten by SPAG
 !*++
-      REAL*8 :: bigv , ctol , gg , ghg , half , one , resmax , sp , ss ,  &
-     &        stp , stpsav , sum , temp , tenth , test , vbig , vgrad , &
-     &        vlag , vnew , ww , zero
-      INTEGER :: i , j , jsav , k , ksav
+      real*8 :: bigv, ctol, gg, ghg, half, one, resmax, sp, ss,  &
+     &        stp, stpsav, sum, temp, tenth, test, vbig, vgrad, &
+     &        vlag, vnew, ww, zero
+      integer :: i, j, jsav, k, ksav
 !*++
 !*++ End of declarations rewritten by SPAG
 !*++
@@ -77,30 +77,30 @@
       one = 1.0D0
       tenth = 0.1D0
       zero = 0.0D0
-      test = 0.2D0*Del
+      test = 0.2D0 * Del
 !
 !     Replace GL by the gradient of LFUNC at the trust region centre, and
 !       set the elements of RSTAT.
 !
-      DO k = 1 , Npt
-         temp = zero
-         DO j = 1 , N
-            temp = temp + Xpt(k,j)*Xopt(j)
-         ENDDO
-         temp = Pqw(k)*temp
-         DO i = 1 , N
-            Gl(i) = Gl(i) + temp*Xpt(k,i)
-         ENDDO
-      ENDDO
-      IF ( M>0 ) THEN
-         DO j = 1 , M
-            Rstat(j) = one
-            IF ( DABS(Rescon(j))>=Del ) Rstat(j) = -one
-         ENDDO
-         DO k = 1 , Nact
-            Rstat(Iact(k)) = zero
-         ENDDO
-      ENDIF
+      do k = 1, Npt
+          temp = zero
+          do j = 1, N
+              temp = temp + Xpt(k, j) * Xopt(j)
+          end do
+          temp = Pqw(k) * temp
+          do i = 1, N
+              Gl(i) = Gl(i) + temp * Xpt(k, i)
+          end do
+      end do
+      if (M > 0) then
+          do j = 1, M
+              Rstat(j) = one
+              if (DABS(Rescon(j)) >= Del) Rstat(j) = -one
+          end do
+          do k = 1, Nact
+              Rstat(Iact(k)) = zero
+          end do
+      end if
 !
 !     Find the greatest modulus of LFUNC on a line through XOPT and
 !       another interpolation point within the trust region.
@@ -110,107 +110,107 @@
 !      IFLAG=0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       vbig = zero
-      DO k = 1 , Npt
-         IF ( k==Kopt ) CYCLE
-         ss = zero
-         sp = zero
-         DO i = 1 , N
-            temp = Xpt(k,i) - Xopt(i)
-            ss = ss + temp*temp
-            sp = sp + Gl(i)*temp
-         ENDDO
-         stp = -Del/DSQRT(ss)
-         IF ( k==Knew ) THEN
-            IF ( sp*(sp-one)<zero ) stp = -stp
-            vlag = DABS(stp*sp) + stp*stp*DABS(sp-one)
-         ELSE
-            vlag = DABS(stp*(one-stp)*sp)
-         ENDIF
+      do k = 1, Npt
+          if (k == Kopt) cycle
+          ss = zero
+          sp = zero
+          do i = 1, N
+              temp = Xpt(k, i) - Xopt(i)
+              ss = ss + temp * temp
+              sp = sp + Gl(i) * temp
+          end do
+          stp = -Del / DSQRT(ss)
+          if (k == Knew) then
+              if (sp * (sp - one) < zero) stp = -stp
+              vlag = DABS(stp * sp) + stp * stp * DABS(sp - one)
+          else
+              vlag = DABS(stp * (one - stp) * sp)
+          end if
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 2019-08-29: With the original code, if either VLAG or VBIG is
 ! NaN, KSAV will not get a value. This may cause Segmentation Fault
 ! because XPT(KSAV, :) will later be accessed.
 !      IF (VLAG .GT. VBIG) THEN
-         IF ( vlag>vbig ) THEN
+          if (vlag > vbig .or. vlag /= vlag .or. vbig /= vbig) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            ksav = k
-            stpsav = stp
-            vbig = vlag
-         ENDIF
-      ENDDO
+              ksav = k
+              stpsav = stp
+              vbig = vlag
+          end if
+      end do
 !
 !     Set STEP to the move that gives the greatest modulus calculated above.
 !       This move may be replaced by a steepest ascent step from XOPT.
 !
       gg = zero
-      DO i = 1 , N
-         gg = gg + Gl(i)**2
-         Step(i) = stpsav*(Xpt(ksav,i)-Xopt(i))
-      ENDDO
-      vgrad = Del*DSQRT(gg)
-      IF ( vgrad>tenth*vbig ) THEN
+      do i = 1, N
+          gg = gg + Gl(i)**2
+          Step(i) = stpsav * (Xpt(ksav, i) - Xopt(i))
+      end do
+      vgrad = Del * DSQRT(gg)
+      if (vgrad > tenth * vbig) then
 !
 !     Make the replacement if it provides a larger value of VBIG.
 !
-         ghg = zero
-         DO k = 1 , Npt
-            temp = zero
-            DO j = 1 , N
-               temp = temp + Xpt(k,j)*Gl(j)
-            ENDDO
-            ghg = ghg + Pqw(k)*temp*temp
-         ENDDO
-         vnew = vgrad + DABS(half*Del*Del*ghg/gg)
-         IF ( vnew>vbig ) THEN
-            vbig = vnew
-            stp = Del/DSQRT(gg)
-            IF ( ghg<zero ) stp = -stp
-            DO i = 1 , N
-               Step(i) = stp*Gl(i)
-            ENDDO
-         ENDIF
-         IF ( Nact/=0 .AND. Nact/=N ) THEN
+          ghg = zero
+          do k = 1, Npt
+              temp = zero
+              do j = 1, N
+                  temp = temp + Xpt(k, j) * Gl(j)
+              end do
+              ghg = ghg + Pqw(k) * temp * temp
+          end do
+          vnew = vgrad + DABS(half * Del * Del * ghg / gg)
+          if (vnew > vbig) then
+              vbig = vnew
+              stp = Del / DSQRT(gg)
+              if (ghg < zero) stp = -stp
+              do i = 1, N
+                  Step(i) = stp * Gl(i)
+              end do
+          end if
+          if (Nact /= 0 .and. Nact /= N) then
 !
 !     Overwrite GL by its projection. Then set VNEW to the greatest
 !       value of |LFUNC| on the projected gradient from XOPT subject to
 !       the trust region bound. If VNEW is sufficiently large, then STEP
 !       may be changed to a move along the projected gradient.
 !
-            DO k = Nact + 1 , N
-               W(k) = zero
-               DO i = 1 , N
-                  W(k) = W(k) + Gl(i)*Qfac(i,k)
-               ENDDO
-            ENDDO
-            gg = zero
-            DO i = 1 , N
-               Gl(i) = zero
-               DO k = Nact + 1 , N
-                  Gl(i) = Gl(i) + Qfac(i,k)*W(k)
-               ENDDO
-               gg = gg + Gl(i)**2
-            ENDDO
-            vgrad = Del*DSQRT(gg)
-            IF ( vgrad>tenth*vbig ) THEN
-               ghg = zero
-               DO k = 1 , Npt
-                  temp = zero
-                  DO j = 1 , N
-                     temp = temp + Xpt(k,j)*Gl(j)
-                  ENDDO
-                  ghg = ghg + Pqw(k)*temp*temp
-               ENDDO
-               vnew = vgrad + DABS(half*Del*Del*ghg/gg)
+              do k = Nact + 1, N
+                  W(k) = zero
+                  do i = 1, N
+                      W(k) = W(k) + Gl(i) * Qfac(i, k)
+                  end do
+              end do
+              gg = zero
+              do i = 1, N
+                  Gl(i) = zero
+                  do k = Nact + 1, N
+                      Gl(i) = Gl(i) + Qfac(i, k) * W(k)
+                  end do
+                  gg = gg + Gl(i)**2
+              end do
+              vgrad = Del * DSQRT(gg)
+              if (vgrad > tenth * vbig) then
+                  ghg = zero
+                  do k = 1, Npt
+                      temp = zero
+                      do j = 1, N
+                          temp = temp + Xpt(k, j) * Gl(j)
+                      end do
+                      ghg = ghg + Pqw(k) * temp * temp
+                  end do
+                  vnew = vgrad + DABS(half * Del * Del * ghg / gg)
 !
 !     Set W to the possible move along the projected gradient.
 !
-               stp = Del/DSQRT(gg)
-               IF ( ghg<zero ) stp = -stp
-               ww = zero
-               DO i = 1 , N
-                  W(i) = stp*Gl(i)
-                  ww = ww + W(i)**2
-               ENDDO
+                  stp = Del / DSQRT(gg)
+                  if (ghg < zero) stp = -stp
+                  ww = zero
+                  do i = 1, N
+                      W(i) = stp * Gl(i)
+                      ww = ww + W(i)**2
+                  end do
 !
 !     Set STEP to W if W gives a sufficiently large value of the modulus
 !       of the Lagrange function, and if W either preserves feasibility
@@ -218,47 +218,47 @@
 !       of CTOL below is to provide a check on feasibility that includes
 !       a tolerance for contributions from computer rounding errors.
 !
-               IF ( vnew/vbig>=0.2D0 ) THEN
-                  Ifeas = 1
-                  bigv = zero
-                  j = 0
-                  DO
-                     j = j + 1
-                     IF ( j<=M ) THEN
-                        IF ( Rstat(j)==one ) THEN
-                           temp = -Rescon(j)
-                           DO i = 1 , N
-                              temp = temp + W(i)*Amat(i,j)
-                           ENDDO
-                           bigv = DMAX1(bigv,temp)
-                        ENDIF
-                        IF ( bigv<test ) CYCLE
-                        Ifeas = 0
-                     ENDIF
-                     ctol = zero
-                     temp = 0.01D0*DSQRT(ww)
-                     IF ( bigv>zero .AND. bigv<temp ) THEN
-                        DO k = 1 , Nact
-                           j = Iact(k)
-                           sum = zero
-                           DO i = 1 , N
-                              sum = sum + W(i)*Amat(i,j)
-                           ENDDO
-                           ctol = DMAX1(ctol,DABS(sum))
-                        ENDDO
-                     ENDIF
-                     IF ( bigv<=10.0D0*ctol .OR. bigv>=test ) THEN
-                        DO i = 1 , N
-                           Step(i) = W(i)
-                        ENDDO
-                        GOTO 99999
-                     ENDIF
-                     EXIT
-                  ENDDO
-               ENDIF
-            ENDIF
-         ENDIF
-      ENDIF
+                  if (vnew / vbig >= 0.2D0) then
+                      Ifeas = 1
+                      bigv = zero
+                      j = 0
+                      do
+                          j = j + 1
+                          if (j <= M) then
+                              if (Rstat(j) == one) then
+                                  temp = -Rescon(j)
+                                  do i = 1, N
+                                      temp = temp + W(i) * Amat(i, j)
+                                  end do
+                                  bigv = DMAX1(bigv, temp)
+                              end if
+                              if (bigv < test) cycle
+                              Ifeas = 0
+                          end if
+                          ctol = zero
+                          temp = 0.01D0 * DSQRT(ww)
+                          if (bigv > zero .and. bigv < temp) then
+                              do k = 1, Nact
+                                  j = Iact(k)
+                                  sum = zero
+                                  do i = 1, N
+                                      sum = sum + W(i) * Amat(i, j)
+                                  end do
+                                  ctol = DMAX1(ctol, DABS(sum))
+                              end do
+                          end if
+                          if (bigv <= 10.0D0 * ctol .or. bigv >= test) then
+                              do i = 1, N
+                                  Step(i) = W(i)
+                              end do
+                              goto 99999
+                          end if
+                          exit
+                      end do
+                  end if
+              end if
+          end if
+      end if
 !
 !     Calculate the greatest constraint violation at XOPT+STEP with STEP at
 !       its original value. Modify STEP if this violation is unacceptable.
@@ -267,37 +267,37 @@
       bigv = zero
       resmax = zero
       j = 0
-      DO
-         j = j + 1
-         IF ( j<=M ) THEN
-            IF ( Rstat(j)<zero ) CYCLE
-            temp = -Rescon(j)
-            DO i = 1 , N
-               temp = temp + Step(i)*Amat(i,j)
-            ENDDO
-            resmax = DMAX1(resmax,temp)
+      do
+          j = j + 1
+          if (j <= M) then
+              if (Rstat(j) < zero) cycle
+              temp = -Rescon(j)
+              do i = 1, N
+                  temp = temp + Step(i) * Amat(i, j)
+              end do
+              resmax = DMAX1(resmax, temp)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          IF (TEMP .LT. TEST) THEN
-            IF ( temp<test ) THEN
+              if (temp < test) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               IF ( temp>bigv ) THEN
-                  bigv = temp
-                  jsav = j
-                  Ifeas = -1
-               ENDIF
-               CYCLE
-            ENDIF
-            Ifeas = 0
-         ENDIF
-         IF ( Ifeas==-1 ) THEN
-            DO i = 1 , N
-               Step(i) = Step(i) + (test-bigv)*Amat(i,jsav)
-            ENDDO
-            Ifeas = 0
-         ENDIF
-         EXIT
-      ENDDO
+                  if (temp > bigv) then
+                      bigv = temp
+                      jsav = j
+                      Ifeas = -1
+                  end if
+                  cycle
+              end if
+              Ifeas = 0
+          end if
+          if (Ifeas == -1) then
+              do i = 1, N
+                  Step(i) = Step(i) + (test - bigv) * Amat(i, jsav)
+              end do
+              Ifeas = 0
+          end if
+          exit
+      end do
 !
 !     Return the calculated STEP and the value of IFEAS.
 !
-99999 END SUBROUTINE QMSTEP
+99999 end subroutine QMSTEP
