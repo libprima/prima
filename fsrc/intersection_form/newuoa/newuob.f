@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 26-May-2021.
+! on 31-May-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -18,7 +18,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Monday, May 24, 2021 PM03:06:48
+! Last Modified: Monday, May 31, 2021 PM09:22:50
 
       module newuob_mod
 
@@ -136,6 +136,7 @@
       real(RP) :: pq(npt)
       real(RP) :: ratio
       real(RP) :: rho
+      real(RP) :: rho_ratio
       real(RP) :: trtol
       real(RP) :: vlag(npt + size(x))
       real(RP) :: vquad
@@ -173,7 +174,6 @@
       end if
 
       maxtr = maxfun ! Maximal number of trust region iterations.
-      terminate = .false. ! Whether to terminate after initialization.
 
 ! Initialize FVAL, XBASE, and XPT.
       call initxf(calfun, iprint, x, rhobeg, ftarget, ij, kopt, nf, fhis&
@@ -184,13 +184,8 @@
       f = fopt ! Set F.
 
 ! Check whether to return.
-      if (subinfo == FTARGET_ACHIEVED) then
-          terminate = .true.
-      else if (subinfo == NAN_X) then
-          terminate = .true.
-      else if (subinfo == NAN_INF_F) then
-          terminate = .true.
-      end if
+      terminate = (subinfo == FTARGET_ACHIEVED) .or. (subinfo == NAN_X) &
+     &.or. (subinfo == NAN_INF_F)
 
       if (terminate) then
           info = subinfo
@@ -458,11 +453,11 @@
                   exit
               else
                   delta = HALF * rho
-                  ratio = rho / rhoend
-                  if (ratio <= 16.0_RP) then
+                  rho_ratio = rho / rhoend
+                  if (rho_ratio <= 16.0_RP) then
                       rho = rhoend
-                  else if (ratio <= 250.0_RP) then
-                      rho = sqrt(ratio) * rhoend
+                  else if (rho_ratio <= 250.0_RP) then
+                      rho = sqrt(rho_ratio) * rhoend
                   else
                       rho = TENTH * rho
                   end if

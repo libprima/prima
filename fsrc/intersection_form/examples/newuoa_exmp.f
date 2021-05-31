@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 26-May-2021.
+! on 31-May-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -60,14 +60,14 @@
 
 ! The following line makes NEWUOA available.
 !----------------------------------------------------------------------!
-      use newuoa_mod, only: newuoa
+      use newuoa_mod, only : newuoa
 !----------------------------------------------------------------------!
 
 ! The following line specifies which module provides CALFUN.
 ! If CALFUN is provided by an external subroutine instead of a module,
 ! then remove this line and uncomment the "external calfun" line below.
 !----------------------------------------------------------------------!
-      use calfun_mod, only: calfun
+      use calfun_mod, only : calfun
 !----------------------------------------------------------------------!
 
       implicit none

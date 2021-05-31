@@ -8,39 +8,39 @@ use consts_mod, only : IK, RP
 implicit none
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: m
-integer :: n
-integer :: ndim
-integer :: npt
-integer, dimension(*) :: iact
-integer, intent(in) :: maxfun
-integer, intent(out) :: info
-real*8 :: ftarget
-real*8 :: rhobeg
-real*8, dimension(*) :: rfac
-real*8, dimension(n, *) :: amat
-real*8, dimension(n, *) :: qfac
-real*8, dimension(npt, *) :: zmat
-real*8, intent(in) :: rhoend
-real*8, intent(inout) :: f
-real*8, intent(inout), dimension(*) :: b
-real*8, intent(inout), dimension(*) :: fval
-real*8, intent(inout), dimension(*) :: gopt
-real*8, intent(inout), dimension(*) :: hq
-real*8, intent(inout), dimension(*) :: pq
-real*8, intent(inout), dimension(*) :: pqw
-real*8, intent(inout), dimension(*) :: rescon
-real*8, intent(inout), dimension(*) :: sp
-real*8, intent(inout), dimension(*) :: step
-real*8, intent(inout), dimension(*) :: w
-real*8, intent(inout), dimension(*) :: x
-real*8, intent(inout), dimension(*) :: xbase
-real*8, intent(inout), dimension(*) :: xnew
-real*8, intent(inout), dimension(*) :: xopt
-real*8, intent(inout), dimension(*) :: xsav
-real*8, intent(inout), dimension(ndim, *) :: bmat
-real*8, intent(inout), dimension(npt, *) :: xpt
+integer(IK), intent(in) :: n
+integer(IK), intent(in) :: ndim
+integer(IK), intent(in) :: npt
+integer(IK), intent(out) :: iact(:)
+integer(IK), intent(in) :: maxfun
+integer(IK), intent(out) :: info
+real(RP), intent(in) :: ftarget
+real(RP), intent(in) :: rhobeg
+real(RP), intent(out) :: rfac
+real(RP), intent(inout) :: amat(n, m)
+real(RP), intent(out) :: qfac(n,n)
+real(RP), dimension(npt, *) :: zmat
+real(RP), intent(in) :: rhoend
+real(RP), intent(inout) :: f
+real(RP), intent(inout), dimension(*) :: b
+real(RP), intent(inout), dimension(*) :: fval
+real(RP), intent(inout), dimension(*) :: gopt
+real(RP), intent(inout), dimension(*) :: hq
+real(RP), intent(inout), dimension(*) :: pq
+real(RP), intent(inout), dimension(*) :: pqw
+real(RP), intent(inout), dimension(*) :: rescon
+real(RP), intent(inout), dimension(*) :: sp
+real(RP), intent(inout), dimension(*) :: step
+real(RP), intent(inout), dimension(*) :: w
+real(RP), intent(inout), dimension(*) :: x
+real(RP), intent(inout), dimension(*) :: xbase
+real(RP), intent(inout), dimension(*) :: xnew
+real(RP), intent(inout), dimension(*) :: xopt
+real(RP), intent(inout), dimension(*) :: xsav
+real(RP), intent(inout), dimension(ndim, *) :: bmat
+real(RP), intent(inout), dimension(npt, *) :: xpt
 ! Local variables
-real*8 :: almost_infinity, del, delsav, delta, dffalt, diff,  &
+real(RP) :: almost_infinity, del, delsav, delta, dffalt, diff,  &
 &        distsq, fopt, fsave, half, one, qoptsq, ratio,     &
 &        rho, snorm, ssq, sum, sumz, temp, tenth, vqalt,   &
 &        vquad, xdiff, xoptsq, zero
