@@ -120,6 +120,7 @@ for ip = minip : length(plist)
         fprintf('\n');
     end
     for ir = minir : maxir
+        fprintf('ir. %3d: ', ir)
         if n > 30
             fprintf('Run No. %3d: \t', ir);
         end
