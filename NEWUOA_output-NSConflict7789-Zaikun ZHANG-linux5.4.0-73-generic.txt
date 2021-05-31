@@ -1,0 +1,14 @@
+
+New RHO =  9.4333D-02      Number of function evaluations =      51
+Least function value =   1.453192337555611D+03      The corresponding X is:
+   2.902786D+00   8.103601D+01   1.501420D+03   1.911507D+01
+
+Return from NEWUOA because the objective function has been evaluated MAXFUN times.
+At the return from NEWUOA      Number of function evaluations =     110
+Least function value =   1.070168129900731D+03      The corresponding X is:
+   2.875722D+00   9.015825D+01   1.496745D+03   2.056551D+01
+
+Return from NEWUOA because the objective function has been evaluated MAXFUN times.
+At the return from NEWUOA      Number of function evaluations =     140
+Least function value =   3.600880476742639D+02      The corresponding X is:
+   2.697815D+00   1.251391D+02   1.499641D+03   2.705313D+01
