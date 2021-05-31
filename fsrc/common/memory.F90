@@ -41,7 +41,7 @@ integer(IK), intent(in) :: n
 ! Output
 real(RP), allocatable, intent(out) :: x(:)
 
-! Intermediate variable
+! Local variable
 integer :: alloc_status
 character(len=SRNLEN), parameter :: srname = 'ALLOC_RVECTOR'
 
@@ -78,7 +78,7 @@ integer(IK), intent(in) :: m, n
 ! Output
 real(RP), allocatable, intent(out) :: x(:, :)
 
-! Intermediate variable
+! Local variable
 integer :: alloc_status
 character(len=SRNLEN), parameter :: srname = 'ALLOC_RMATRIX'
 

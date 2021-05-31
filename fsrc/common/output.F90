@@ -33,7 +33,7 @@ real(RP), intent(in) :: f
 real(RP), intent(in) :: x(:)
 character(len=*), intent(in) :: solver
 
-! Intermediate variables
+! Local variables
 integer :: ios  ! Should be an integer of default kind
 character(len=100) :: fout
 character(len=3) :: fstat
@@ -105,7 +105,7 @@ real(RP), intent(in) :: rho
 real(RP), intent(in) :: x(:)
 character(len=*), intent(in) :: solver
 
-! Intermediate variables
+! Local variables
 integer :: ios  ! Should be an integer of default kind
 character(len=100) :: fout
 character(len=3) :: fstat
@@ -155,7 +155,7 @@ real(RP), intent(in) :: f
 real(RP), intent(in) :: x(:)
 character(len=*), intent(in) :: solver
 
-! Intermediate variables
+! Local variables
 integer :: ios  ! Should be an integer of default kind
 character(len=100) :: fout
 character(len=3) :: fstat

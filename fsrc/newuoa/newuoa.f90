@@ -192,7 +192,7 @@ real(RP), intent(out), optional, allocatable :: xhist(:, :)
 integer(IK), intent(in), optional :: maxhist
 integer(IK), intent(out), optional :: info
 
-! Intermediate variables
+! Local variables
 integer :: maximal_hist
 integer(IK) :: info_c
 integer(IK) :: iprint_c

@@ -41,7 +41,7 @@ real(RP), intent(inout) :: xbase(:)  ! XBASE(N)
 real(RP), intent(inout) :: xopt(:)  ! XOPT(N)
 real(RP), intent(inout) :: xpt(:, :)  ! XPT(N, NPT)
 
-! Intermediate variables
+! Local variables
 integer(IK) :: k
 integer(IK) :: n
 integer(IK) :: npt

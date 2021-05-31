@@ -72,7 +72,7 @@ real(RP), intent(out) :: crvmin
 real(RP), intent(out) :: qred
 real(RP), intent(out) :: s(:)        ! S(N)
 
-! Intermediate variables
+! Local variables
 integer(IK) :: i
 integer(IK) :: isave
 integer(IK) :: iterc

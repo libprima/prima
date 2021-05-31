@@ -809,7 +809,7 @@ real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
 ! Output
 real(RP), intent(out) :: vquad
 
-! Intermediate variable
+! Local variable
 real(RP) :: s(size(x))
 
 #if __USE_POWELL_ALGEBRA__ == 1
