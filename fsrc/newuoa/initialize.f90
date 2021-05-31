@@ -56,7 +56,7 @@ real(RP), intent(out) :: xpt(:, :)  ! XPT(N, NPT)
 ! possibly nonzero (IJ(1, K), IJ(2, K)) entry.
 ! Indeed, IJ(:, 1 : 2*N + 1) is never used.
 
-! Intermediate variables
+! Local variables
 integer(IK) :: i
 integer(IK) :: itemp
 integer(IK) :: j
@@ -293,7 +293,7 @@ real(RP), intent(out) :: gq(:)  ! GQ(N)
 real(RP), intent(out) :: hq(:, :)  ! HQ(N, N)
 real(RP), intent(out) :: pq(:)  ! PQ(NPT)
 
-! Intermediate variables
+! Local variables
 integer(IK) :: i
 integer(IK) :: j
 integer(IK) :: k
@@ -397,7 +397,7 @@ integer(IK), intent(out) :: info
 real(RP), intent(out) :: bmat(:, :)  ! BMAT(N, NPT + N)
 real(RP), intent(out) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 
-! Intermediate variables
+! Local variables
 integer(IK) :: i
 integer(IK) :: j
 integer(IK) :: k

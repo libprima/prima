@@ -43,7 +43,7 @@ real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 real(RP), intent(out) :: beta
 real(RP), intent(out) :: vlag(:)  ! VLAG(NPT + N)
 
-! Intermediate variables
+! Local variables
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: bw(size(bmat, 1))

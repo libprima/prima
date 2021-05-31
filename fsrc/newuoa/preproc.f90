@@ -39,7 +39,7 @@ real(RP), intent(inout) :: gamma2
 real(RP), intent(inout) :: rhobeg
 real(RP), intent(inout) :: rhoend
 
-! Intermediate variable
+! Local variable
 character(len=6), parameter :: solver = 'NEWUOA'
 
 

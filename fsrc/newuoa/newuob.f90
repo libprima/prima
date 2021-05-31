@@ -86,7 +86,7 @@ real(RP), intent(out) :: f
 real(RP), intent(out) :: fhist(:)
 real(RP), intent(out) :: xhist(:, :)
 
-! Intermediate variables
+! Local variables
 integer(IK) :: idz
 integer(IK) :: ij(2, npt)
 integer(IK) :: itest
@@ -192,7 +192,7 @@ call inith(ij, xpt, idz, bmat, zmat, subinfo)
 
 ! After initializing GQ, HQ, PQ, BMAT, ZMAT, one can also choose to return
 ! if subinfo = NAN_MODEL (NaN occurs in the model). We do not do it here.
-! If such a modle is harmful, then it will probably lead to other returns
+! If such a model is harmful, then it will probably lead to other returns
 ! (NaN in X, NaN in F, trust region subproblem fails, ...); otherwise, the
 ! code will continue to run and possibly get rid of the NaN in the model.
 

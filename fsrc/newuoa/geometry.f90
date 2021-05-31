@@ -45,7 +45,7 @@ real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 ! Output
 integer(IK), intent(out) :: knew
 
-! Intermediate variables
+! Local variables
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: hdiag(size(zmat, 1))
@@ -118,7 +118,7 @@ real(RP), intent(inout) :: d(:)     ! D(N)
 real(RP), intent(out) :: beta
 real(RP), intent(out) :: vlag(:)    ! VLAG(NPT + N)
 
-! Intermediate variables
+! Local variables
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: alpha
@@ -188,7 +188,7 @@ real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 ! Output
 real(RP), intent(out) :: d(:)       ! D(N)
 
-! Intermediate variables
+! Local variables
 integer(IK) :: i
 integer(IK) :: isave
 integer(IK) :: iterc
@@ -402,7 +402,7 @@ real(RP), intent(inout) :: d(:)     ! D(N)
 real(RP), intent(out) :: beta
 real(RP), intent(out) :: vlag(:)    ! VLAG(NPT + N)
 
-! Intermediate variable
+! Local variable
 integer(IK) :: i
 integer(IK) :: isave
 integer(IK) :: iterc

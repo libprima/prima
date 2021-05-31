@@ -44,7 +44,7 @@ integer(IK), intent(inout) :: idz
 real(RP), intent(inout) :: bmat(:, :)  ! BMAT(N, NPT + N)
 real(RP), intent(inout) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 
-! Intermediate variables
+! Local variables
 integer(IK) :: j
 integer(IK) :: ja
 integer(IK) :: jb
@@ -282,7 +282,7 @@ real(RP), intent(inout) :: gq(:)   ! GQ(N)
 real(RP), intent(inout) :: hq(:, :)! HQ(N, N)
 real(RP), intent(inout) :: pq(:)   ! PQ(NPT)
 
-! Intermediate variables
+! Local variables
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: fqdz(size(zmat, 2))
@@ -360,7 +360,7 @@ real(RP), intent(inout) :: pq(:)      ! PQ(NPT)
 ! when ITEST < 3 at exit. In addition, the information in GQ is
 ! needed for definining ITEST, so it must be INTENT(INOUT).
 
-! Intermediate variables
+! Local variables
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: fz(size(zmat, 2))
