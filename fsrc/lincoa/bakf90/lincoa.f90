@@ -1,4 +1,4 @@
-!*==lincoa.f90  processed by SPAG 7.50RE at 17:53 on 31 May 2021
+!*==lincoa.f90  processed by SPAG 7.50RE at 00:12 on 26 May 2021
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !     1  MAXFUN,W)
       SUBROUTINE LINCOA(N,Npt,M,A,Ia,B,X,Rhobeg,Rhoend,Iprint,Maxfun,W, &
