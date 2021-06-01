@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Tuesday, June 01, 2021 PM07:10:18
+! Last Modified: Tuesday, June 01, 2021 PM08:24:39
 
 module newuob_mod
 
@@ -19,24 +19,22 @@ subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 ! ETA1, ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG, RHOEND, X, NF, F, FHIST, XHIST, and INFO are
 ! identical to the corresponding arguments in subroutine NEWUOA.
 
-! XBASE will hold a shift of origin that should reduce the contributions from rounding errors to
-! values of the model and Lagrange functions.
-! XOPT will be set to the displacement from XBASE of the vector of variables that provides the least
-! calculated F so far.
-! XNEW will be set to the displacement from XBASE of the vector of variables for the current
-! calculation of F.
-! XPT will contain the interpolation point coordinates relative to XBASE, each COLUMN corresponding
-! to a point.
-! FVAL will hold the values of F at the interpolation points.
+! XBASE holds a shift of origin that should reduce the contributions from rounding errors to values
+! of the model and Lagrange functions.
+! XOPT is the displacement from XBASE of the best vector of variables so far (i.e., the one provides
+! the least calculated F so far).
+! D is reserved for trial steps from XOPT.
+! XNEW = XOPT+D, corresponding to the vector of variables for the next calculation of F.
+! [XPT, FVAL, KOPT] describes the interpolation set:
+! XPT contains the interpolation points relative to XBASE, each COLUMN for a point; FVAL holds the
+! values of F at the interpolation points; KOPT is the index of XOPT in XPT (XPT(:,KOPT)=XOPT).
 ! [GQ, HQ, PQ] describes the quadratic model: GQ will hold the gradient of the quadratic model at
 ! XBASE; HQ will hold the explicit second order derivatives of the quadratic model; PQ will contain
 ! the parameters of the implicit second order derivatives of the quadratic model.
 ! [BMAT, ZMAT, IDZ] describes the matrix H in the NEWUOA paper (eq. 3.12), which is the inverse of
 ! the coefficient matrix of the KKT system for the least-Frobenius norm interpolation problem:
 ! BMAT will hold the last N ROWs of H; ZMAT will hold the factorization of the leading NPT*NPT
-! sub-matrix of H, this factorization being ZMAT*Diag(DZ)*ZMAT^T, where DZ(1 : IDZ-1) = -1 and
-! DZ(IDZ - 1 : NPT) = 1.
-! D is reserved for trial steps from XOPT.
+! submatrix of H, this factorization being ZMAT*Diag(DZ)*ZMAT^T with DZ(1:IDZ-1)=-1, DZ(IDZ:NPT)=1.
 ! VLAG will contain the values of the Lagrange functions at a new point X. They are part of a
 ! product that requires VLAG to be of length NPT + N. Both VLAG and BETA are critical for the
 ! updating procedure of H, which is detailed formula (4.10)--(4.12) of the NEWUOA paper.
@@ -128,7 +126,8 @@ real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
 logical :: improve_geo
-logical :: reduce_rho
+logical :: reduce_rho_1
+logical :: reduce_rho_2
 logical :: shortd
 logical :: terminate
 character(len=6), parameter :: solver = 'NEWUOA'
@@ -177,8 +176,8 @@ if (terminate) then
     if (maxxhist >= 1 .and. maxxhist < nf) then
         khist = mod(nf - 1_IK, maxxhist) + 1_IK
         xhist = reshape([xhist(:, khist + 1:maxxhist), xhist(:, 1:khist)], shape(xhist))
-        ! The above combination of SHAPE and RESHAPE fulfills our desire
-        ! thanks to the COLUMN-MAJOR order of Fortran arrays.
+        ! The above combination of SHAPE and RESHAPE fulfills our desire thanks to the COLUMN-MAJOR
+        ! order of Fortran arrays.
     end if
     return
 end if
@@ -206,6 +205,7 @@ itest = 0
 ! SHORTD - Is the trust region trial step too short to invoke a function evaluation?
 ! IMPROVE_GEO - Will we improve the model after the trust region iteration?
 ! REDUCE_RHO - Will we reduce rho after the trust region iteration?
+! REDUCE_RHO = REDUCE_RHO_1 .OR. REDUCE_RHO_2 (see boxes 14 and 10 of Fig. 1 in the NEWUOA paper).
 ! NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
     ! Solve the trust region subproblem. In Powell's NEWUOA code, VQUAD is not an output of TRSAPP.
@@ -217,14 +217,16 @@ do tr = 1, maxtr
     ! Calculate the length of the trial step D.
     dnorm = min(delta, sqrt(inprod(d, d)))
 
+    ! SHORTD corresponds to box 3 of the NEWUOA paper.
     shortd = (dnorm < HALF * rho)
-    reduce_rho = shortd .and. (maxval(abs(moderrsave)) <= 0.125_RP * crvmin * rho * rho) .and. (maxval(dnormsave) <= rho)
-    if (shortd .and. (.not. reduce_rho)) then
-        delta = TENTH * delta  ! Reduce DELTA.
+    ! REDUCE_RHO_1 corresponds to box 14 of the NEWUOA paper.
+    reduce_rho_1 = shortd .and. (maxval(abs(moderrsave)) <= 0.125_RP * crvmin * rho * rho) .and. (maxval(dnormsave) <= rho)
+    if (shortd .and. (.not. reduce_rho_1)) then
+        ! Reduce DELTA. After this, DELTA < DNORM may hold.
+        delta = TENTH * delta
         if (delta <= 1.5_RP * rho) then
             delta = rho  ! Set DELTA to RHO when it is close.
         end if
-        ! After this, DELTA < DNORM may happen, explaining why we sometimes write MAX(DELTA, DNORM).
     end if
 
     if (.not. shortd) then  ! D is long enough.
@@ -237,7 +239,7 @@ do tr = 1, maxtr
             call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
         end if
 
-        ! Calculate VLAG and BETA for D. It makes uses of XOPT, so this is done bfore updating XOPT.
+        ! Calculate VLAG and BETA for D. It makes uses of XOPT, so this is done before updating XOPT.
         call vlagbeta(idz, kopt, bmat, d, xopt, xpt, zmat, beta, vlag)
 
         ! Use the current quadratic model to predict the change in F due to the step D.
@@ -299,6 +301,7 @@ do tr = 1, maxtr
             exit
         end if
         ratio = (f - fsave) / vquad
+        ! Update DELTA. After this, DELTA < DNORM may hold.
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
         if (delta <= 1.5_RP * rho) then
             delta = rho
@@ -320,8 +323,7 @@ do tr = 1, maxtr
             ! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
             call updateq(idz, knew, bmat(:, knew), moderr, zmat, xpt(:, knew), gq, hq, pq)
 
-            ! Include the new interpolation point. This should be done
-            ! after updating the model.
+            ! Include the new interpolation point. This should be done after updating the model.
             fval(knew) = f
             xpt(:, knew) = xnew
 
@@ -355,20 +357,16 @@ do tr = 1, maxtr
     ! Before next trust region iteration, we may improve the geometry of XPT or reduce rho
     ! according to IMPROVE_GEO and REDUCE_RHO. Now we decide these two indicators.
 
+    ! Define IMPROVE_GEO, corresponding to box 8 of the NEWUOA paper.
     improve_geo = .false.
     ! The geometry of XPT probably needs improvement if the latest model produces a "bad" step, i.e.,
     ! 1. the step is too short, or
     ! 2. the reduction ratio is too small, or
     ! 3. it is impossible to obtain an interpolation set with good geometry by replacing a current
     ! interpolation set by the trial point corresponding the step.
-    ! If reduce_rho = true, meaning that the step is short and the latest model errors have been
+    ! If REDUCE_RHO_1 = TRUE, meaning that the step is short and the latest model errors have been
     ! small, then we do not need to improve the geometry.
-    ! In Powell's code, the condition
-    ! (.not. reduce_rho .and. (shortd .or. ratio < TENTH .or. knew == 0))
-    ! is replaced by
-    ! ((.not. shortd .and. (ratio < TENTH .or. knew == 0)) .or. (shortd .and. .not. reduce_rho)).
-    ! But they are equivalent, because up to now, REDUCE_RHO = TRUE only if SHORTD = TRUE.
-    if (.not. reduce_rho .and. (shortd .or. ratio < TENTH .or. knew == 0)) then
+    if (.not. reduce_rho_1 .and. (shortd .or. ratio < TENTH .or. knew == 0)) then
         ! Find out if the interpolation points are close enough to the
         ! best point so far, i.e., all the points are within a ball
         ! centered at XOPT with a radius of 2*DELTA. If not, set KNEW to
@@ -401,9 +399,9 @@ do tr = 1, maxtr
             call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
         end if
 
-        ! Find a step D so that the geometry of XPT will be improved
-        ! when XPT(:, KNEW) is replaced by XOPT + D. The GEOSTEP subroutine will call Powell's
-        ! BIGLAG and BIGDEN. It will also calculate the VLAG and BETA for this D.
+        ! Find a step D so that the geometry of XPT will be improved when XPT(:, KNEW) is replaced
+        ! by XOPT + D. The GEOSTEP subroutine will call Powell's BIGLAG and BIGDEN. It will also
+        ! calculate the VLAG and BETA for this D.
         call geostep(idz, knew, kopt, bmat, delbar, xopt, xpt, zmat, d, beta, vlag)
 
         ! Use the current quadratic model to predict the change in F due to the step D.
@@ -482,26 +480,14 @@ do tr = 1, maxtr
         end if
     end if  ! The procedure of improving geometry ends.
 
-    ! If all the interpolation points are close to XOPT (IMPROVE_GEO = FALSE) compared to rho,
-    ! and the trust-region radius has reached rho, but the trust region step is "bad" (short or
-    ! ratio <= 0), then we should shrink RHO (i.e., update the stadard for defining "closeness"
-    ! and shortd).
-    ! In Powell's code, the following definition of reduce_rho is placed before the geometry step.
-    ! and the condition (.not. reduce_rho) is replaced by
-    ! (.not. reduce_rho .and. (shortd .or. ratio < TENTH .or. knew == 0)) ,
-    ! where knew is the knew obtained by SETREMOVE; however, the final value of REDUCE_RHO will not
-    ! differ because (shortd .or. ratio <= 0) implies (shortd .or. ratio < TENTH .or. knew == 0)).
-    !if (.not. reduce_rho) then
-    !    ! The second possibly (out of two) that REDUCE_RHO is true.
-    !    reduce_rho = (.not. improve_geo) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= 0)
-    !    !reduce_rho = (.not. improve_geo) .and. (delta <= rho) .and. (shortd .or. ratio <= 0)
-    !end if
-    ! The above calculation is equivalent to the following:
-    reduce_rho = reduce_rho .or. ((.not. improve_geo) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= 0))
+    ! If all the interpolation points are close to XOPT (IMPROVE_GEO = FALSE) compared to rho, and
+    ! the trust region is small, but the trust region step is "bad" (SHORTD or RATIO <= 0), then we
+    ! should shrink RHO (i.e., update the standard for defining "closeness" and SHORTD).
+    ! REDUCE_RHO_2 corresponds to box 10 of the NEWUOA paper.
+    reduce_rho_2 = (.not. improve_geo) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= 0)
 
-    if (reduce_rho) then
-        ! The calculations with the current RHO are complete. Pick the
-        ! next values of RHO and DELTA.
+    if (reduce_rho_1 .or. reduce_rho_2) then
+        ! The calculations with the current RHO are complete. Pick the next values of RHO and DELTA.
         if (rho <= rhoend) then
             info = SMALL_TR_RADIUS
             exit
@@ -516,8 +502,8 @@ do tr = 1, maxtr
                 rho = TENTH * rho
             end if
             delta = max(delta, rho)
-            ! DNORMSAVE constains the DNORM corresponding to the
-            ! latest 3 function evaluations with the current RHO.
+            ! DNORMSAVE and MODERRSAVE are corresponding to the latest 3 function evaluations with
+            ! the current RHO. Update them after reducing RHO.
             dnormsave = HUGENUM
             moderrsave = HUGENUM
             if (abs(iprint) >= 2) then
