@@ -53,7 +53,9 @@ C     Set the initial QFAC to the identity matrix in the case NACT=0.
 C
       IF (NACT == 0) THEN
           QFAC = ZERO
-          forall(I = 1:N) QFAC(I,I) = ONE
+          DO I = 1, N
+              QFAC(I,I) = ONE
+          END DO
           !DO I=1,N
           !    DO J=1,N
           !        QFAC(I,J)=ZERO
