@@ -1,0 +1,12 @@
+
+Return from NEWUOA because the objective function has been evaluated MAXFUN times.
+At the return from NEWUOA      Number of function evaluations =      29
+Least function value =   3.755126815496165D-01      The corresponding X is:
+   1.562081D+00   1.750412D+00   1.608899D+00   2.729625D-01   8.827047D-01
+   5.201730D-01
+
+Return from NEWUOA because the trust region radius reaches its lower bound.
+At the return from NEWUOA      Number of function evaluations =     682
+Least function value =   1.160721257016213D-08      The corresponding X is:
+   3.974161D+00   1.002784D+01   2.982810D+00   4.977202D+00   9.947164D-01
+   9.915946D-01

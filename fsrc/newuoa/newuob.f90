@@ -3,7 +3,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Tuesday, June 01, 2021 AM10:53:55
+! Last Modified: Tuesday, June 01, 2021 PM01:50:33
 
 module newuob_mod
 
@@ -204,15 +204,12 @@ dnormsave = HUGENUM
 itest = 0
 
 ! Begin the iterative procedure.
+! In this process, NEWUOA uses three switches (boolean variables) to control the flow of the work.
+! shortd - Is the trust region trial step too short to invoke a function evaluation?
+! improve_geometry - Will we improve the model after the trust region iteration?
+! reduce_rho - Will we reduce rho after the trust region iteration?
+! NEWUOA never sets improve_geometry and reduce_rho to true simultaneously.
 do tr = 1, maxtr
-    ! Is the trust region trial step short?
-    shortd = .false.
-    ! Will we improve the model after the trust region iteration?
-    improve_geometry = .false.
-    ! Will we reduce rho after the trust region iteration?
-    reduce_rho = .false.
-    ! NEWUOA never sets IMPROVE_GEOMETRY and REDUCE_RHO to TRUE simultaneously.
-
     ! Solve the trust region subproblem.
     ! In Powell's NEWUOA code, VQUAD is not an output of TRSAPP. Here we
     ! output it but will NOT use it (for the moment); it will still be calculated
@@ -223,22 +220,15 @@ do tr = 1, maxtr
     ! Calculate the length of the trial step D.
     dnorm = min(delta, sqrt(inprod(d, d)))
 
-    ! Is the step long enough to invoke a function evaluation?
-    if (dnorm < HALF * rho) then
-        shortd = .true.
-        if (maxval(abs(moderrsave)) <= 0.125_RP * crvmin * rho * rho .and. maxval(dnormsave) <= rho) then
-            ! Three recent values of ||D|| and |F-Q| are small.
-            ! The 1st possibility (out of 2) that REDUCE_RHO = TRUE.
-            ! Note that reduce_rho is true only if shortd is true.
-            reduce_rho = .true.
-        else
-            delta = TENTH * delta  ! Reduce DELTA.
-            if (delta <= 1.5_RP * rho) then
-                delta = rho  ! Set DELTA to RHO when it is close.
-            end if
-            ! After this, DELTA < DNORM may happen, explaining why we
-            ! sometimes write MAX(DELTA, DNORM).
+    shortd = (dnorm < HALF * rho)
+    reduce_rho = shortd .and. (maxval(abs(moderrsave)) <= 0.125_RP * crvmin * rho * rho) .and. (maxval(dnormsave) <= rho)
+    if (shortd .and. (.not. reduce_rho)) then
+        delta = TENTH * delta  ! Reduce DELTA.
+        if (delta <= 1.5_RP * rho) then
+            delta = rho  ! Set DELTA to RHO when it is close.
         end if
+        ! After this, DELTA < DNORM may happen, explaining why we
+        ! sometimes write MAX(DELTA, DNORM).
     end if
 
     if (.not. shortd) then  ! This is the normal case.
@@ -317,11 +307,11 @@ do tr = 1, maxtr
 
         ! Set KNEW to the index of the interpolation point that will be
         ! replaced by XNEW. KNEW will ensure that the geometry of XPT
-        ! is "optimal" after the replacement. Note that the information
+        ! is "good enough" after the replacement. Note that the information
         ! of XNEW is included in VLAG and BETA, which are calculated
         ! according to D = XNEW - XOPT.
-        ! KNEW = 0 means it is not a good idea to replace any current
-        ! interpolation point by XNEW.
+        ! KNEW = 0 means it is impossible to obtain a good interpolation set
+        ! by replacing any current interpolation point by XNEW.
         call setremove(idz, kopt, beta, delta, ratio, rho, vlag(1:npt), xopt, xpt, zmat, knew)
 
         if (knew > 0) then
@@ -371,12 +361,22 @@ do tr = 1, maxtr
         moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
     end if  ! End of if (.not. shortd)
 
-    ! The geometry of XPT probably needs improvement if
-    ! 1. The trust region step D is not short but RATIO < TENTH or there
-    ! is no good member in XPT to be replaced by XOPT + D (i.e., KNEW = 0), or
-    ! 2. D is short but the latest three model errors are not small enough
-    ! to render REDUCE_RHO = TRUE.
-    !if ((.not. shortd .and. (ratio < TENTH .or. knew == 0)) .or. (shortd .and. .not. reduce_rho)) then
+    ! Before next trust region iteration, we may improve the geometry of XPT or reduce rho
+    ! according to IMPROVE_GEOMETRY and REDUCE_RHO. Now we decide these two indicators.
+
+    improve_geometry = .false.
+    ! The geometry of XPT probably needs improvement if the latest model produces a "bad" step, i.e.,
+    ! 1. the step is too short, or
+    ! 2. the reduction ratio is too small, or
+    ! 3. it is impossible to obtain an interpolation set with good geometry by replacing a current
+    ! interpolation set by the trial point corresponding the step.
+    ! If reduce_rho = true, meaning that the step is short and the latest model errors have been
+    ! small, then we do not need to improve the geometry.
+    ! In Powell's code, the condition
+    ! (.not. reduce_rho .and. (shortd .or. ratio < TENTH .or. knew == 0))
+    ! is replaced by
+    ! ((.not. shortd .and. (ratio < TENTH .or. knew == 0)) .or. (shortd .and. .not. reduce_rho)).
+    ! But they are equivalent, because, up to now, reduce_rho = true only if shortd = true.
     if (.not. reduce_rho .and. (shortd .or. ratio < TENTH .or. knew == 0)) then
         ! Find out if the interpolation points are close enough to the
         ! best point so far, i.e., all the points are within a ball
@@ -393,31 +393,10 @@ do tr = 1, maxtr
 
         ! If KNEW is positive (i.e., not all points are close to XOPT),
         ! then a model step will be taken to ameliorate the geometry of
-        ! the interpolation set and hence improve the model. Otherwise
-        ! (i.e., all points are close to XOPT), RHO will be reduced
-        ! (if MAX(DELTA, DNORM) <= RHO and D is "bad") or another
-        ! trust-region step will be taken.
-        ! The only possibility that IMPROVE_GEOMETRY = TRUE.
+        ! the interpolation set and hence improve the model.
+        ! This is the only possibility that IMPROVE_GEOMETRY = TRUE.
         improve_geometry = (knew > 0)
-        !if ((.not. improve_geometry) .and. max(delta, dnorm) <= rho .and. (ratio <= 0 .or. shortd)) then
-        !    ! The 2nd possibility (out of 2) that REDUCE_RHO = TRUE.
-        !    ! Even though all points are close to XOPT, a sufficiently
-        !    ! small trust region does not suggest a good step to improve
-        !    ! the current iterate. Then we should shrink RHO (i.e., update
-        !    ! the stadard for defining "closeness" and shortd).
-        !    reduce_rho = .true.
-        !end if
     end if
-
-    if (.not. reduce_rho .and. .not. improve_geometry) then
-        reduce_rho = (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= 0)
-    end if
-!    reduce_rho = reduce_rho .or. (max(delta, dnorm) <= rho .and. ratio <= 0)
-
-    ! Before next trust region iteration, we may improve the geometry of XPT or reduce rho
-    ! according to IMPROVE_GEOMETRY and REDUCE_RHO.
-    ! Since REDUCE_RHO and IMPROVE_GEOMETRY are never simultaneously true, the following two
-    ! cases can be exchanged.
 
     if (improve_geometry) then
         ! Save the current FOPT in fsave. It is needed later.
@@ -519,6 +498,23 @@ do tr = 1, maxtr
         ! MODERRSAVE is the prediction errors of the latest 3 models.
         moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
     end if  ! The procedure of improving geometry ends.
+
+    ! If all the interpolation points are close to XOPT (improve_geometry = false) compared to rho,
+    ! and the trust-region radius has reached rho, but the trust region step is "bad" (short or
+    ! ratio <= 0), then we should shrink RHO (i.e., update the stadard for defining "closeness"
+    ! and shortd).
+    ! In Powell's code, the following definition of reduce_rho is placed before the geometry step.
+    ! and the condition (.not. reduce_rho) is replaced by
+    ! (.not. reduce_rho .and. (shortd .or. ratio < TENTH .or. knew == 0)) ,
+    ! where knew is the knew obtained by setremove; however, the final value of reduce_rho will not
+    ! be different because (shortd .or. ratio <= 0) implies (shortd .or. ratio < TENTH .or. knew == 0)).
+    !if (.not. reduce_rho) then
+    !    ! The second possibly (out of two) that reduce_rho is true.
+    !    reduce_rho = (.not. improve_geometry) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= 0)
+    !    !reduce_rho = (.not. improve_geometry) .and. (delta <= rho) .and. (shortd .or. ratio <= 0)
+    !end if
+    ! The above calculation is equivalent to the following:
+    reduce_rho = reduce_rho .or. ((.not. improve_geometry) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= 0))
 
     if (reduce_rho) then
         ! The calculations with the current RHO are complete. Pick the
