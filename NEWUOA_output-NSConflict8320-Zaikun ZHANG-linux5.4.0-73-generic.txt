@@ -1,5 +1,0 @@
-
-Return from NEWUOA because the objective function has been evaluated MAXFUN times.
-At the return from NEWUOA      Number of function evaluations =      64
-Least function value =   2.858703837785024D+01      The corresponding X is:
-  -3.378479D+00  -1.463063D-01
