@@ -3,7 +3,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Tuesday, June 01, 2021 AM10:15:23
+! Last Modified: Tuesday, June 01, 2021 AM10:53:55
 
 module newuob_mod
 
@@ -399,19 +399,19 @@ do tr = 1, maxtr
         ! trust-region step will be taken.
         ! The only possibility that IMPROVE_GEOMETRY = TRUE.
         improve_geometry = (knew > 0)
-        if ((.not. improve_geometry) .and. max(delta, dnorm) <= rho .and. (ratio <= 0 .or. shortd)) then
-            ! The 2nd possibility (out of 2) that REDUCE_RHO = TRUE.
-            ! Even though all points are close to XOPT, a sufficiently
-            ! small trust region does not suggest a good step to improve
-            ! the current iterate. Then we should shrink RHO (i.e., update
-            ! the stadard for defining "closeness" and shortd).
-            reduce_rho = .true.
-        end if
+        !if ((.not. improve_geometry) .and. max(delta, dnorm) <= rho .and. (ratio <= 0 .or. shortd)) then
+        !    ! The 2nd possibility (out of 2) that REDUCE_RHO = TRUE.
+        !    ! Even though all points are close to XOPT, a sufficiently
+        !    ! small trust region does not suggest a good step to improve
+        !    ! the current iterate. Then we should shrink RHO (i.e., update
+        !    ! the stadard for defining "closeness" and shortd).
+        !    reduce_rho = .true.
+        !end if
     end if
 
-!    if (.not. reduce_rho .and. .not. improve_geometry) then
-!        reduce_rho = (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= 0)
-!    end if
+    if (.not. reduce_rho .and. .not. improve_geometry) then
+        reduce_rho = (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= 0)
+    end if
 !    reduce_rho = reduce_rho .or. (max(delta, dnorm) <= rho .and. ratio <= 0)
 
     ! Before next trust region iteration, we may improve the geometry of XPT or reduce rho
