@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 31-May-2021.
+! on 01-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -18,7 +18,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Monday, May 31, 2021 PM10:19:47
+! Last Modified: Tuesday, June 01, 2021 AM09:24:28
 
       module newuob_mod
 
@@ -104,7 +104,7 @@
       real(RP), intent(out) :: fhist(:)
       real(RP), intent(out) :: xhist(:, :)
 
-! Intermediate variables
+! Local variables
       integer(IK) :: idz
       integer(IK) :: ij(2, npt)
       integer(IK) :: itest
@@ -215,7 +215,7 @@
 
 ! After initializing GQ, HQ, PQ, BMAT, ZMAT, one can also choose to return
 ! if subinfo = NAN_MODEL (NaN occurs in the model). We do not do it here.
-! If such a modle is harmful, then it will probably lead to other returns
+! If such a model is harmful, then it will probably lead to other returns
 ! (NaN in X, NaN in F, trust region subproblem fails, ...); otherwise, the
 ! code will continue to run and possibly get rid of the NaN in the model.
 
@@ -441,38 +441,10 @@
               end if
           end if
 
-! Before next trust region iteration, we may reduce rho or improve the
-! geometry of XPT according to REDUCE_RHO and IMPROVE_GEOMETRY.
-! Since reduce_rho and improve_geometry are never simultaneously true, the following two cases
-! can be exchanged.
-
-          if (reduce_rho) then
-! The calculations with the current RHO are complete. Pick the
-! next values of RHO and DELTA.
-              if (rho <= rhoend) then
-                  info = SMALL_TR_RADIUS
-                  exit
-              else
-                  delta = HALF * rho
-                  rho_ratio = rho / rhoend
-                  if (rho_ratio <= 16.0_RP) then
-                      rho = rhoend
-                  else if (rho_ratio <= 250.0_RP) then
-                      rho = sqrt(rho_ratio) * rhoend
-                  else
-                      rho = TENTH * rho
-                  end if
-                  delta = max(delta, rho)
-! DNORMSAVE constains the DNORM corresponding to the
-! latest 3 function evaluations with the current RHO.
-                  dnormsave = HUGENUM
-                  moderrsave = HUGENUM
-                  if (abs(iprint) >= 2) then
-                      call rhomssg(iprint, nf, fopt, rho, xbase + xopt, &
-     &solver)
-                  end if
-              end if
-          end if ! The procedure of reducing RHO ends.
+! Before next trust region iteration, we may improve the geometry of XPT or reduce rho
+! according to IMPROVE_GEOMETRY and REDUCE_RHO.
+! Since REDUCE_RHO and IMPROVE_GEOMETRY are never simultaneously true, the following two
+! cases can be exchanged.
 
           if (improve_geometry) then
 ! Save the current FOPT in fsave. It is needed later.
@@ -578,6 +550,34 @@
 ! MODERRSAVE is the prediction errors of the latest 3 models.
               moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
           end if ! The procedure of improving geometry ends.
+
+          if (reduce_rho) then
+! The calculations with the current RHO are complete. Pick the
+! next values of RHO and DELTA.
+              if (rho <= rhoend) then
+                  info = SMALL_TR_RADIUS
+                  exit
+              else
+                  delta = HALF * rho
+                  rho_ratio = rho / rhoend
+                  if (rho_ratio <= 16.0_RP) then
+                      rho = rhoend
+                  else if (rho_ratio <= 250.0_RP) then
+                      rho = sqrt(rho_ratio) * rhoend
+                  else
+                      rho = TENTH * rho
+                  end if
+                  delta = max(delta, rho)
+! DNORMSAVE constains the DNORM corresponding to the
+! latest 3 function evaluations with the current RHO.
+                  dnormsave = HUGENUM
+                  moderrsave = HUGENUM
+                  if (abs(iprint) >= 2) then
+                      call rhomssg(iprint, nf, fopt, rho, xbase + xopt, &
+     &solver)
+                  end if
+              end if
+          end if ! The procedure of reducing RHO ends.
 
       end do ! The iterative procedure ends.
 

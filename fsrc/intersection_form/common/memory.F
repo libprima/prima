@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 31-May-2021.
+! on 01-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -56,7 +56,7 @@
 ! Output
       real(RP), allocatable, intent(out) :: x(:)
 
-! Intermediate variable
+! Local variable
       integer :: alloc_status
       character(len=SRNLEN), parameter :: srname = 'ALLOC_RVECTOR'
 
@@ -93,7 +93,7 @@
 ! Output
       real(RP), allocatable, intent(out) :: x(:, :)
 
-! Intermediate variable
+! Local variable
       integer :: alloc_status
       character(len=SRNLEN), parameter :: srname = 'ALLOC_RMATRIX'
 

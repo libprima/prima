@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 31-May-2021.
+! on 01-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -57,7 +57,7 @@
       real(RP), intent(inout) :: rhobeg
       real(RP), intent(inout) :: rhoend
 
-! Intermediate variable
+! Local variable
       character(len=6), parameter :: solver = 'NEWUOA'
 
 

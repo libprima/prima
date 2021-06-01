@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 31-May-2021.
+! on 01-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -72,7 +72,7 @@
 ! possibly nonzero (IJ(1, K), IJ(2, K)) entry.
 ! Indeed, IJ(:, 1 : 2*N + 1) is never used.
 
-! Intermediate variables
+! Local variables
       integer(IK) :: i
       integer(IK) :: itemp
       integer(IK) :: j
@@ -311,7 +311,7 @@
       real(RP), intent(out) :: hq(:, :) ! HQ(N, N)
       real(RP), intent(out) :: pq(:) ! PQ(NPT)
 
-! Intermediate variables
+! Local variables
       integer(IK) :: i
       integer(IK) :: j
       integer(IK) :: k
@@ -418,7 +418,7 @@
       real(RP), intent(out) :: bmat(:, :) ! BMAT(N, NPT + N)
       real(RP), intent(out) :: zmat(:, :) ! ZMAT(NPT, NPT - N - 1)
 
-! Intermediate variables
+! Local variables
       integer(IK) :: i
       integer(IK) :: j
       integer(IK) :: k

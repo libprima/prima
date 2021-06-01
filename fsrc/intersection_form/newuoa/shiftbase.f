@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 31-May-2021.
+! on 01-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -59,7 +59,7 @@
       real(RP), intent(inout) :: xopt(:) ! XOPT(N)
       real(RP), intent(inout) :: xpt(:, :) ! XPT(N, NPT)
 
-! Intermediate variables
+! Local variables
       integer(IK) :: k
       integer(IK) :: n
       integer(IK) :: npt

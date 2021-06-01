@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 31-May-2021.
+! on 01-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -826,7 +826,7 @@
 ! Output
       real(RP), intent(out) :: vquad
 
-! Intermediate variable
+! Local variable
       real(RP) :: s(size(x))
 
 #if __USE_POWELL_ALGEBRA__ == 1

@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 31-May-2021.
+! on 01-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -61,7 +61,7 @@
 ! Output
       integer(IK), intent(out) :: knew
 
-! Intermediate variables
+! Local variables
       integer(IK) :: n
       integer(IK) :: npt
       real(RP) :: hdiag(size(zmat, 1))
@@ -136,7 +136,7 @@
       real(RP), intent(out) :: beta
       real(RP), intent(out) :: vlag(:) ! VLAG(NPT + N)
 
-! Intermediate variables
+! Local variables
       integer(IK) :: n
       integer(IK) :: npt
       real(RP) :: alpha
@@ -208,7 +208,7 @@
 ! Output
       real(RP), intent(out) :: d(:) ! D(N)
 
-! Intermediate variables
+! Local variables
       integer(IK) :: i
       integer(IK) :: isave
       integer(IK) :: iterc
@@ -426,7 +426,7 @@
       real(RP), intent(out) :: beta
       real(RP), intent(out) :: vlag(:) ! VLAG(NPT + N)
 
-! Intermediate variable
+! Local variable
       integer(IK) :: i
       integer(IK) :: isave
       integer(IK) :: iterc

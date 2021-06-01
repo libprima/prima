@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 31-May-2021.
+! on 01-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -48,7 +48,7 @@
       real(RP), intent(in) :: x(:)
       character(len=*), intent(in) :: solver
 
-! Intermediate variables
+! Local variables
       integer :: ios ! Should be an integer of default kind
       character(len=100) :: fout
       character(len=3) :: fstat
@@ -128,7 +128,7 @@
       real(RP), intent(in) :: x(:)
       character(len=*), intent(in) :: solver
 
-! Intermediate variables
+! Local variables
       integer :: ios ! Should be an integer of default kind
       character(len=100) :: fout
       character(len=3) :: fstat
@@ -183,7 +183,7 @@
       real(RP), intent(in) :: x(:)
       character(len=*), intent(in) :: solver
 
-! Intermediate variables
+! Local variables
       integer :: ios ! Should be an integer of default kind
       character(len=100) :: fout
       character(len=3) :: fstat

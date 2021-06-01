@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 31-May-2021.
+! on 01-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -209,7 +209,7 @@
       integer(IK), intent(in), optional :: maxhist
       integer(IK), intent(out), optional :: info
 
-! Intermediate variables
+! Local variables
       integer :: maximal_hist
       integer(IK) :: info_c
       integer(IK) :: iprint_c
