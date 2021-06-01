@@ -3,7 +3,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Tuesday, June 01, 2021 AM09:24:28
+! Last Modified: Tuesday, June 01, 2021 AM10:15:23
 
 module newuob_mod
 
@@ -229,6 +229,7 @@ do tr = 1, maxtr
         if (maxval(abs(moderrsave)) <= 0.125_RP * crvmin * rho * rho .and. maxval(dnormsave) <= rho) then
             ! Three recent values of ||D|| and |F-Q| are small.
             ! The 1st possibility (out of 2) that REDUCE_RHO = TRUE.
+            ! Note that reduce_rho is true only if shortd is true.
             reduce_rho = .true.
         else
             delta = TENTH * delta  ! Reduce DELTA.
@@ -375,7 +376,8 @@ do tr = 1, maxtr
     ! is no good member in XPT to be replaced by XOPT + D (i.e., KNEW = 0), or
     ! 2. D is short but the latest three model errors are not small enough
     ! to render REDUCE_RHO = TRUE.
-    if ((.not. shortd .and. (ratio < TENTH .or. knew == 0)) .or. (shortd .and. .not. reduce_rho)) then
+    !if ((.not. shortd .and. (ratio < TENTH .or. knew == 0)) .or. (shortd .and. .not. reduce_rho)) then
+    if (.not. reduce_rho .and. (shortd .or. ratio < TENTH .or. knew == 0)) then
         ! Find out if the interpolation points are close enough to the
         ! best point so far, i.e., all the points are within a ball
         ! centered at XOPT with a radius of 2*DELTA. If not, set KNEW to
@@ -407,9 +409,10 @@ do tr = 1, maxtr
         end if
     end if
 
-    if (.not. reduce_rho) then
-        
-    end if 
+!    if (.not. reduce_rho .and. .not. improve_geometry) then
+!        reduce_rho = (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= 0)
+!    end if
+!    reduce_rho = reduce_rho .or. (max(delta, dnorm) <= rho .and. ratio <= 0)
 
     ! Before next trust region iteration, we may improve the geometry of XPT or reduce rho
     ! according to IMPROVE_GEOMETRY and REDUCE_RHO.
