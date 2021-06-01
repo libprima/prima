@@ -3,7 +3,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Tuesday, June 01, 2021 PM02:15:41
+! Last Modified: Tuesday, June 01, 2021 PM05:29:28
 
 module newuob_mod
 
@@ -128,7 +128,7 @@ real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
-logical :: improve_geometry
+logical :: improve_geo
 logical :: reduce_rho
 logical :: shortd
 logical :: terminate
@@ -206,9 +206,9 @@ itest = 0
 ! Begin the iterative procedure.
 ! In this process, NEWUOA uses three switches (boolean variables) to control the flow of the work.
 ! SHORTD - Is the trust region trial step too short to invoke a function evaluation?
-! IMPROVE_GEOMETRY - Will we improve the model after the trust region iteration?
+! IMPTOVE_GEO - Will we improve the model after the trust region iteration?
 ! REDUCE_RHO - Will we reduce rho after the trust region iteration?
-! NEWUOA never sets IMPROVE_GEOMETRY and REDUCE_RHO to TRUE simultaneously.
+! NEWUOA never sets IMPTOVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
     ! Solve the trust region subproblem.
     ! In Powell's NEWUOA code, VQUAD is not an output of TRSAPP. Here we
@@ -241,7 +241,7 @@ do tr = 1, maxtr
             call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
         end if
 
-        ! Calculate VLAG and BETA for D.
+        ! Calculate VLAG and BETA for D. It makes uses of XOPT, so this is done bfore updating XOPT.
         call vlagbeta(idz, kopt, bmat, d, xopt, xpt, zmat, beta, vlag)
 
         ! Use the current quadratic model to predict the change in F due
@@ -270,9 +270,15 @@ do tr = 1, maxtr
             xhist(:, khist) = x
         end if
 
+        ! DNORMSAVE constains the DNORM corresponding to the latest 3
+        ! function evaluations with the current RHO.
+        dnormsave = [dnorm, dnormsave(1:size(dnormsave) - 1)]
+
         ! MODERR is the error of the current model in predicting the change
         ! in F due to D.
         moderr = f - fsave - vquad
+        ! MODERRSAVE is the prediction errors of the latest 3 models.
+        moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
 
         ! Update FOPT and XOPT
         if (f < fopt) then
@@ -355,18 +361,12 @@ do tr = 1, maxtr
                 call tryqalt(idz, fval - fval(kopt), ratio, bmat(:, 1:npt), zmat, itest, gq, hq, pq)
             end if
         end if
-
-        ! DNORMSAVE constains the DNORM corresponding to the latest 3
-        ! function evaluations with the current RHO.
-        dnormsave = [dnorm, dnormsave(1:size(dnormsave) - 1)]
-        ! MODERRSAVE is the prediction errors of the latest 3 models.
-        moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
     end if  ! End of if (.not. shortd)
 
     ! Before next trust region iteration, we may improve the geometry of XPT or reduce rho
-    ! according to IMPROVE_GEOMETRY and REDUCE_RHO. Now we decide these two indicators.
+    ! according to IMPTOVE_GEO and REDUCE_RHO. Now we decide these two indicators.
 
-    improve_geometry = .false.
+    improve_geo = .false.
     ! The geometry of XPT probably needs improvement if the latest model produces a "bad" step, i.e.,
     ! 1. the step is too short, or
     ! 2. the reduction ratio is too small, or
@@ -396,11 +396,11 @@ do tr = 1, maxtr
         ! If KNEW is positive (i.e., not all points are close to XOPT),
         ! then a model step will be taken to ameliorate the geometry of
         ! the interpolation set and hence improve the model.
-        ! This is the only possibility that IMPROVE_GEOMETRY = TRUE.
-        improve_geometry = (knew > 0)
+        ! This is the only possibility that IMPTOVE_GEO = TRUE.
+        improve_geo = (knew > 0)
     end if
 
-    if (improve_geometry) then
+    if (improve_geo) then
         ! Save the current FOPT in fsave. It is needed later.
         fsave = fopt
 
@@ -446,9 +446,24 @@ do tr = 1, maxtr
             xhist(:, khist) = x
         end if
 
+        ! DNORMSAVE constains the DNORM corresponding to the
+        ! latest 3 function evaluations with the current RHO.
+        !--------------------------------------------------------------!
+        ! Powell's code does not update DNORM. Therefore, DNORM is the
+        ! length of last trust-region trial step, which seems inconsistent
+        ! with what is described in Section 7 (around (7.7)) of the NEWUOA
+        ! paper. Seemingly we should keep DNORM = ||D|| as we do here. The
+        ! value of DNORM will be used when defining REDUCE_RHO.
+        dnorm = min(delbar, sqrt(inprod(d, d)))
+        ! In theory, DNORM = DELBAR in this case.
+        !--------------------------------------------------------------!
+        dnormsave = [dnorm, dnormsave(1:size(dnormsave) - 1)]
+
         ! MODERR is the error of the current model in predicting the
         ! change in F due to D.
         moderr = f - fsave - vquad
+        ! MODERRSAVE is the prediction errors of the latest 3 models.
+        moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
 
         ! Update FOPT and XOPT
         if (f < fopt) then
@@ -484,24 +499,9 @@ do tr = 1, maxtr
         if (f < fsave) then
             kopt = knew
         end if
-
-        ! DNORMSAVE constains the DNORM corresponding to the
-        ! latest 3 function evaluations with the current RHO.
-        !--------------------------------------------------------------!
-        ! Powell's code does not update DNORM. Therefore, DNORM is the
-        ! length of last trust-region trial step, which seems inconsistent
-        ! with what is described in Section 7 (around (7.7)) of the NEWUOA
-        ! paper. Seemingly we should keep DNORM = ||D|| as we do here. The
-        ! value of DNORM will be used when defining REDUCE_RHO.
-        dnorm = min(delbar, sqrt(inprod(d, d)))
-        ! In theory, DNORM = DELBAR in this case.
-        !--------------------------------------------------------------!
-        dnormsave = [dnorm, dnormsave(1:size(dnormsave) - 1)]
-        ! MODERRSAVE is the prediction errors of the latest 3 models.
-        moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
     end if  ! The procedure of improving geometry ends.
 
-    ! If all the interpolation points are close to XOPT (IMPROVE_GEOMETRY = FALSE) compared to rho,
+    ! If all the interpolation points are close to XOPT (IMPTOVE_GEO = FALSE) compared to rho,
     ! and the trust-region radius has reached rho, but the trust region step is "bad" (short or
     ! ratio <= 0), then we should shrink RHO (i.e., update the stadard for defining "closeness"
     ! and shortd).
@@ -512,11 +512,11 @@ do tr = 1, maxtr
     ! be different because (shortd .or. ratio <= 0) implies (shortd .or. ratio < TENTH .or. knew == 0)).
     !if (.not. reduce_rho) then
     !    ! The second possibly (out of two) that REDUCE_RHO is true.
-    !    reduce_rho = (.not. improve_geometry) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= 0)
-    !    !reduce_rho = (.not. improve_geometry) .and. (delta <= rho) .and. (shortd .or. ratio <= 0)
+    !    reduce_rho = (.not. improve_geo) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= 0)
+    !    !reduce_rho = (.not. improve_geo) .and. (delta <= rho) .and. (shortd .or. ratio <= 0)
     !end if
     ! The above calculation is equivalent to the following:
-    reduce_rho = reduce_rho .or. ((.not. improve_geometry) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= 0))
+    reduce_rho = reduce_rho .or. ((.not. improve_geo) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= 0))
 
     if (reduce_rho) then
         ! The calculations with the current RHO are complete. Pick the

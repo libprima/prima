@@ -19,7 +19,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Saturday, May 22, 2021 PM04:17:16
+! Last Modified: Tuesday, June 01, 2021 PM05:15:36
 
       module trustregion_mod
 
