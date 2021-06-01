@@ -407,6 +407,10 @@ do tr = 1, maxtr
         end if
     end if
 
+    if (.not. reduce_rho) then
+        
+    end if 
+
     ! Before next trust region iteration, we may improve the geometry of XPT or reduce rho
     ! according to IMPROVE_GEOMETRY and REDUCE_RHO.
     ! Since REDUCE_RHO and IMPROVE_GEOMETRY are never simultaneously true, the following two
