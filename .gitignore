@@ -14,6 +14,7 @@ NEWUOA_output.txt
 *.output
 *.out
 *.log
+*NSConflict*
 test_data/
 
 # plusFORT
