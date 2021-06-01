@@ -18,7 +18,7 @@ real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: rhobeg
 real(RP), intent(out) :: rfac
 real(RP), intent(inout) :: amat(n, m)
-real(RP), intent(out) :: qfac(n,n)
+real(RP), intent(out) :: qfac(n, n)
 real(RP), dimension(npt, *) :: zmat
 real(RP), intent(in) :: rhoend
 real(RP), intent(inout) :: f
@@ -322,14 +322,12 @@ if (knew == 0) then
     do i = 1, N
         Xnew(i) = Gopt(i)
     end do
-    write (*, *) XNEW(1:N)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 19-03-2020: B is never used in TRSTEP
 !          CALL TRSTEP (N,NPT,M,AMAT,B,XPT,HQ,PQ,NACT,IACT,RESCON,
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     call TRSTEP(N, Npt, M, Amat, Xpt, Hq, Pq, nact, Iact, Rescon, Qfac, Rfac, &
 &               snorm, Step, Xnew, W, W(M + 1), Pqw, Pqw(np), W(M + np))
-    write (*, *) NF, snorm
 !
 !     A trust region step is applied whenever its length, namely SNORM, is at
 !       least HALF*DELTA. It is also applied if its length is at least 0.1999

@@ -284,14 +284,12 @@ C to segmentation faults.
           DO I=1,N
               XNEW(I)=GOPT(I)
           END DO
-      write(*,*) XNEW(1:N)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 19-03-2020: B is never used in TRSTEP
 C          CALL TRSTEP (N,NPT,M,AMAT,B,XPT,HQ,PQ,NACT,IACT,RESCON,
           CALL TRSTEP (N,NPT,M,AMAT,XPT,HQ,PQ,NACT,IACT,RESCON,
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      1      QFAC,RFAC,SNORM,STEP,XNEW,W,W(M+1),PQW,PQW(NP),W(M+NP))
-        write(*,*) NF, snorm
 C
 C     A trust region step is applied whenever its length, namely SNORM, is at
 C       least HALF*DELTA. It is also applied if its length is at least 0.1999
