@@ -17,7 +17,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Tuesday, June 01, 2021 PM08:06:18
+! Last Modified: Tuesday, June 01, 2021 PM08:24:39
 
       module newuob_mod
 
@@ -35,7 +35,7 @@
 ! ETA1, ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG, RHOEND, X, NF, F, FHIST, XHIST, and INFO are
 ! identical to the corresponding arguments in subroutine NEWUOA.
 
-! XBASE helds a shift of origin that should reduce the contributions from rounding errors to values
+! XBASE holds a shift of origin that should reduce the contributions from rounding errors to values
 ! of the model and Lagrange functions.
 ! XOPT is the displacement from XBASE of the best vector of variables so far (i.e., the one provides
 ! the least calculated F so far).
@@ -199,8 +199,8 @@
               khist = mod(nf - 1_IK, maxxhist) + 1_IK
               xhist = reshape([xhist(:, khist + 1:maxxhist), xhist(:, 1:&
      &khist)], shape(xhist))
-! The above combination of SHAPE and RESHAPE fulfills our desire
-! thanks to the COLUMN-MAJOR order of Fortran arrays.
+! The above combination of SHAPE and RESHAPE fulfills our desire thanks to the COLUMN-MAJOR
+! order of Fortran arrays.
           end if
           return
       end if
@@ -228,13 +228,12 @@
 ! SHORTD - Is the trust region trial step too short to invoke a function evaluation?
 ! IMPROVE_GEO - Will we improve the model after the trust region iteration?
 ! REDUCE_RHO - Will we reduce rho after the trust region iteration?
-! REDUCE_RHO = REDUCE_RHO_1 .OR. REDUCE_RHO_2, corresponding to box 14 and box 10 of Fig. 1 in the
-! NEWUOA paper. NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
+! REDUCE_RHO = REDUCE_RHO_1 .OR. REDUCE_RHO_2 (see boxes 14 and 10 of Fig. 1 in the NEWUOA paper).
+! NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
       do tr = 1, maxtr
-! Solve the trust region subproblem.
-! In Powell's NEWUOA code, VQUAD is not an output of TRSAPP. Here we
-! output it but will NOT use it (for the moment); it will still be calculated
-! latter by CALQUAD in order to produce the same results as Powell's code.
+! Solve the trust region subproblem. In Powell's NEWUOA code, VQUAD is not an output of TRSAPP.
+! Here we output it but will NOT use it (for the moment); it will still be calculated later
+! by CALQUAD in order to produce the same results as Powell's code.
           trtol = 1.0E-2_RP ! Tolerance used in trsapp.
           call trsapp(delta, gq, hq, pq, trtol, xopt, xpt, crvmin, vquad&
      &, d, subinfo)
@@ -242,6 +241,7 @@
 ! Calculate the length of the trial step D.
           dnorm = min(delta, sqrt(inprod(d, d)))
 
+! SHORTD corresponds to box 3 of the NEWUOA paper.
           shortd = (dnorm < HALF * rho)
 ! REDUCE_RHO_1 corresponds to box 14 of the NEWUOA paper.
           reduce_rho_1 = shortd .and. (maxval(abs(moderrsave)) <= 0.125_&
@@ -265,12 +265,11 @@
      &t, xpt)
               end if
 
-! Calculate VLAG and BETA for D. It makes uses of XOPT, so this is done bfore updating XOPT.
+! Calculate VLAG and BETA for D. It makes uses of XOPT, so this is done before updating XOPT.
               call vlagbeta(idz, kopt, bmat, d, xopt, xpt, zmat, beta, v&
      &lag)
 
-! Use the current quadratic model to predict the change in F due
-! to the step D.
+! Use the current quadratic model to predict the change in F due to the step D.
               call calquad(d, gq, hq, pq, xopt, xpt, vquad)
 
 ! Calculate the next value of the objective function.
@@ -295,14 +294,12 @@
                   xhist(:, khist) = x
               end if
 
-! DNORMSAVE constains the DNORM corresponding to the latest 3
-! function evaluations with the current RHO.
+! DNORMSAVE constains the DNORM of the latest 3 function evaluations with the current RHO.
               dnormsave = [dnorm, dnormsave(1:size(dnormsave) - 1)]
 
-! MODERR is the error of the current model in predicting the change
-! in F due to D.
+! MODERR is the error of the current model in predicting the change in F due to D.
               moderr = f - fsave - vquad
-! MODERRSAVE is the prediction errors of the latest 3 models.
+! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
               moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
 
 ! Update FOPT and XOPT
@@ -347,18 +344,16 @@
      &npt), xopt, xpt, zmat, knew)
 
               if (knew > 0) then
-! If KNEW > 0, then update BMAT, ZMAT and IDZ, so that the
-! KNEW-th interpolation point is replaced by XNEW.
-! If KNEW = 0, then probably the geometry of XPT needs
-! improvement, which will be handled below.
+! If KNEW > 0, then update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point
+! is replaced by XNEW. If KNEW = 0, then probably the geometry of XPT needs improvement,
+! which will be handled below.
                   call updateh(knew, beta, vlag, idz, bmat, zmat)
 
 ! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
                   call updateq(idz, knew, bmat(:, knew), moderr, zmat, x&
      &pt(:, knew), gq, hq, pq)
 
-! Include the new interpolation point. This should be done
-! after updating the model.
+! Include the new interpolation point. This should be done after updating the model.
                   fval(knew) = f
                   xpt(:, knew) = xnew
 
@@ -439,9 +434,9 @@
      &t, xpt)
               end if
 
-! Find a step D so that the geometry of XPT will be improved
-! when XPT(:, KNEW) is replaced by XOPT + D. The GEOSTEP subroutine will call Powell's
-! BIGLAG and BIGDEN. It will also calculate the VLAG and BETA for this D.
+! Find a step D so that the geometry of XPT will be improved when XPT(:, KNEW) is replaced
+! by XOPT + D. The GEOSTEP subroutine will call Powell's BIGLAG and BIGDEN. It will also
+! calculate the VLAG and BETA for this D.
               call geostep(idz, knew, kopt, bmat, delbar, xopt, xpt, zma&
      &t, d, beta, vlag)
 
@@ -470,8 +465,7 @@
                   xhist(:, khist) = x
               end if
 
-! DNORMSAVE constains the DNORM corresponding to the
-! latest 3 function evaluations with the current RHO.
+! DNORMSAVE constains the DNORM of the latest 3 function evaluations with the current RHO.
 !------------------------------------------------------------------------------------------!
 ! Powell's code does not update DNORM. Therefore, DNORM is the length of last trust-region
 ! trial step, which seems inconsistent with what is described in Section 7 (around (7.7)) of
@@ -482,10 +476,9 @@
 !------------------------------------------------------------------------------------------!
               dnormsave = [dnorm, dnormsave(1:size(dnormsave) - 1)]
 
-! MODERR is the error of the current model in predicting the
-! change in F due to D.
+! MODERR is the error of the current model in predicting the change in F due to D.
               moderr = f - fsave - vquad
-! MODERRSAVE is the prediction errors of the latest 3 models.
+! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
               moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
 
 ! Update FOPT and XOPT
@@ -508,16 +501,15 @@
                   exit
               end if
 
-! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation
-! point can be moved.
+! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved.
               call updateh(knew, beta, vlag, idz, bmat, zmat)
 
 ! Update the quadratic model.
               call updateq(idz, knew, bmat(:, knew), moderr, zmat, xpt(:&
      &, knew), gq, hq, pq)
 
-! Include the new interpolation point. This should be done after
-! updating BMAT, ZMAT, and the model.
+! Include the new interpolation point. This should be done after updating BMAT, ZMAT, and
+! the model.
               fval(knew) = f
               xpt(:, knew) = xnew
               if (f < fsave) then
@@ -528,13 +520,13 @@
 ! If all the interpolation points are close to XOPT (IMPROVE_GEO = FALSE) compared to rho, and
 ! the trust region is small, but the trust region step is "bad" (SHORTD or RATIO <= 0), then we
 ! should shrink RHO (i.e., update the standard for defining "closeness" and SHORTD).
-! REDUCE_RHO_2 corresponds to box 10 of the NEWUOA paper.
+! REDUCE_RHO_2 corresponds to box 10 of the NEWUOA paper. Note that DELTA < DNORM may hold due
+! to the update of DELTA.
           reduce_rho_2 = (.not. improve_geo) .and. (max(delta, dnorm) <=&
      & rho) .and. (shortd .or. ratio <= 0)
 
           if (reduce_rho_1 .or. reduce_rho_2) then
-! The calculations with the current RHO are complete. Pick the
-! next values of RHO and DELTA.
+! The calculations with the current RHO are complete. Pick the next values of RHO and DELTA.
               if (rho <= rhoend) then
                   info = SMALL_TR_RADIUS
                   exit
@@ -549,8 +541,8 @@
                       rho = TENTH * rho
                   end if
                   delta = max(delta, rho)
-! DNORMSAVE constains the DNORM corresponding to the
-! latest 3 function evaluations with the current RHO.
+! DNORMSAVE and MODERRSAVE are corresponding to the latest 3 function evaluations with
+! the current RHO. Update them after reducing RHO.
                   dnormsave = HUGENUM
                   moderrsave = HUGENUM
                   if (abs(iprint) >= 2) then
@@ -563,7 +555,7 @@
       end do ! The iterative procedure ends.
 
 ! Return from the calculation, after another Newton-Raphson step, if it is too short to have been
-! tried before.! Note that no trust region iteration has been done if MAXTR = 0, and hence we
+! tried before. Note that no trust region iteration has been done if MAXTR = 0, and hence we
 ! should not check whether SHORTD = TRUE but return immediately.
       if (maxtr > 0 .and. shortd .and. nf < maxfun) then
           x = xbase + (xopt + d)
@@ -587,8 +579,7 @@
           end if
       end if
 
-! Note that (FOPT .LE. F) is FALSE if F is NaN; When F is NaN, it is also
-! necessary to update X and F.
+! Note that (FOPT .LE. F) is FALSE if F is NaN; if F is NaN, it is also necessary to update X and F.
       if (is_nan(f) .or. fopt <= f) then
           x = xbase + xopt
           f = fopt
