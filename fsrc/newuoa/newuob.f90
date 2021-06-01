@@ -3,7 +3,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Tuesday, June 01, 2021 PM01:50:33
+! Last Modified: Tuesday, June 01, 2021 PM02:15:41
 
 module newuob_mod
 
@@ -205,10 +205,10 @@ itest = 0
 
 ! Begin the iterative procedure.
 ! In this process, NEWUOA uses three switches (boolean variables) to control the flow of the work.
-! shortd - Is the trust region trial step too short to invoke a function evaluation?
-! improve_geometry - Will we improve the model after the trust region iteration?
-! reduce_rho - Will we reduce rho after the trust region iteration?
-! NEWUOA never sets improve_geometry and reduce_rho to true simultaneously.
+! SHORTD - Is the trust region trial step too short to invoke a function evaluation?
+! IMPROVE_GEOMETRY - Will we improve the model after the trust region iteration?
+! REDUCE_RHO - Will we reduce rho after the trust region iteration?
+! NEWUOA never sets IMPROVE_GEOMETRY and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
     ! Solve the trust region subproblem.
     ! In Powell's NEWUOA code, VQUAD is not an output of TRSAPP. Here we
@@ -338,6 +338,8 @@ do tr = 1, maxtr
             ! norm interpolant Q_alt. Perform the replacement if certain ceriteria are
             ! satisfied. This part is OPTIONAL, but it is crucial for the performance on
             ! a certain class of problems. See Section 8 of the NEWUOA paper.
+            ! In NEWUOA, TRYQALT is called only after a trust-region step but not after a geometry
+            ! step. Maybe this is because the model is expected to be good after a geometry step.
             if (delta <= rho) then  ! DELTA == RHO.
                 ! In theory, the FVAL - FSAVE in the following line can be replaced by
                 ! FVAL + C with any constant C. This constant will not affect the result
@@ -376,7 +378,7 @@ do tr = 1, maxtr
     ! (.not. reduce_rho .and. (shortd .or. ratio < TENTH .or. knew == 0))
     ! is replaced by
     ! ((.not. shortd .and. (ratio < TENTH .or. knew == 0)) .or. (shortd .and. .not. reduce_rho)).
-    ! But they are equivalent, because, up to now, reduce_rho = true only if shortd = true.
+    ! But they are equivalent, because, up to now, REDUCE_RHO = TRUE only if SHORTD = TRUE.
     if (.not. reduce_rho .and. (shortd .or. ratio < TENTH .or. knew == 0)) then
         ! Find out if the interpolation points are close enough to the
         ! best point so far, i.e., all the points are within a ball
@@ -499,17 +501,17 @@ do tr = 1, maxtr
         moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
     end if  ! The procedure of improving geometry ends.
 
-    ! If all the interpolation points are close to XOPT (improve_geometry = false) compared to rho,
+    ! If all the interpolation points are close to XOPT (IMPROVE_GEOMETRY = FALSE) compared to rho,
     ! and the trust-region radius has reached rho, but the trust region step is "bad" (short or
     ! ratio <= 0), then we should shrink RHO (i.e., update the stadard for defining "closeness"
     ! and shortd).
     ! In Powell's code, the following definition of reduce_rho is placed before the geometry step.
     ! and the condition (.not. reduce_rho) is replaced by
     ! (.not. reduce_rho .and. (shortd .or. ratio < TENTH .or. knew == 0)) ,
-    ! where knew is the knew obtained by setremove; however, the final value of reduce_rho will not
+    ! where knew is the knew obtained by SETREMOVE; however, the final value of REDUCE_RHO will not
     ! be different because (shortd .or. ratio <= 0) implies (shortd .or. ratio < TENTH .or. knew == 0)).
     !if (.not. reduce_rho) then
-    !    ! The second possibly (out of two) that reduce_rho is true.
+    !    ! The second possibly (out of two) that REDUCE_RHO is true.
     !    reduce_rho = (.not. improve_geometry) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= 0)
     !    !reduce_rho = (.not. improve_geometry) .and. (delta <= rho) .and. (shortd .or. ratio <= 0)
     !end if
