@@ -4,13 +4,13 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Saturday, May 22, 2021 PM04:17:16
+! Last Modified: Tuesday, June 01, 2021 PM02:49:34
 
 module trustregion_mod
 
 implicit none
 private
-public :: trsapp, trrad
+public :: trsapp, trrad, take_trstep
 
 contains
 
@@ -369,5 +369,143 @@ end if
 
 end function trrad
 
+
+subroutine take_trstep(fopt)
+
+use consts_mod, only : IK, RP
+
+real(RP), 
+
+fsave = fopt
+
+! Shift XBASE if XOPT may be too far from XBASE.
+!if (inprod(d, d) <= 1.0e-3_RP*inprod(xopt, xopt)) then  ! Powell
+if (dnorm * dnorm <= 1.0E-3_RP * inprod(xopt, xopt)) then
+    call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
+end if
+
+! Calculate VLAG and BETA for D.
+call vlagbeta(idz, kopt, bmat, d, xopt, xpt, zmat, beta, vlag)
+
+! Use the current quadratic model to predict the change in F due
+! to the step D.
+call calquad(d, gq, hq, pq, xopt, xpt, vquad)
+
+! Calculate the next value of the objective function.
+xnew = xopt + d
+x = xbase + xnew
+if (any(is_nan(x))) then
+    f = sum(x)  ! Set F to NaN. It is necessary.
+    info = NAN_X
+    exit
+end if
+call calfun(x, f)
+nf = int(nf + 1, kind(nf))
+if (abs(iprint) >= 3) then
+    call fmssg(iprint, nf, f, x, solver)
+end if
+if (maxfhist >= 1) then
+    khist = mod(nf - 1_IK, maxfhist) + 1_IK
+    fhist(khist) = f
+end if
+if (maxxhist >= 1) then
+    khist = mod(nf - 1_IK, maxxhist) + 1_IK
+    xhist(:, khist) = x
+end if
+
+! MODERR is the error of the current model in predicting the change
+! in F due to D.
+moderr = f - fsave - vquad
+
+! Update FOPT and XOPT
+if (f < fopt) then
+    fopt = f
+    xopt = xnew
+end if
+
+! Check whether to exit
+if (is_nan(f) .or. is_posinf(f)) then
+    info = NAN_INF_F
+    exit
+end if
+if (f <= ftarget) then
+    info = FTARGET_ACHIEVED
+    exit
+end if
+if (nf >= maxfun) then
+    info = MAXFUN_REACHED
+    exit
+end if
+
+! Calculate the reduction ratio and update DELTA accordingly.
+if (is_nan(vquad) .or. vquad >= ZERO) then
+    info = TRSUBP_FAILED
+    exit
+end if
+ratio = (f - fsave) / vquad
+delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
+if (delta <= 1.5_RP * rho) then
+    delta = rho
+end if
+
+! Set KNEW to the index of the interpolation point that will be
+! replaced by XNEW. KNEW will ensure that the geometry of XPT
+! is "good enough" after the replacement. Note that the information
+! of XNEW is included in VLAG and BETA, which are calculated
+! according to D = XNEW - XOPT.
+! KNEW = 0 means it is impossible to obtain a good interpolation set
+! by replacing any current interpolation point by XNEW.
+call setremove(idz, kopt, beta, delta, ratio, rho, vlag(1:npt), xopt, xpt, zmat, knew)
+
+if (knew > 0) then
+    ! If KNEW > 0, then update BMAT, ZMAT and IDZ, so that the
+    ! KNEW-th interpolation point is replaced by XNEW.
+    ! If KNEW = 0, then probably the geometry of XPT needs
+    ! improvement, which will be handled below.
+    call updateh(knew, beta, vlag, idz, bmat, zmat)
+
+    ! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
+    call updateq(idz, knew, bmat(:, knew), moderr, zmat, xpt(:, knew), gq, hq, pq)
+
+    ! Include the new interpolation point. This should be done
+    ! after updating the model.
+    fval(knew) = f
+    xpt(:, knew) = xnew
+
+    ! Update KOPT to KNEW if F < FSAVE (i.e., last FOPT).
+    if (f < fsave) then
+        kopt = knew
+    end if
+
+    ! Test whether to replace the new quadratic model Q by the least Frobenius
+    ! norm interpolant Q_alt. Perform the replacement if certain ceriteria are
+    ! satisfied. This part is OPTIONAL, but it is crucial for the performance on
+    ! a certain class of problems. See Section 8 of the NEWUOA paper.
+    ! In NEWUOA, TRYQALT is called only after a trust-region step but not after a geometry
+    ! step. Maybe this is because the model is expected to be good after a geometry step.
+    if (delta <= rho) then  ! DELTA == RHO.
+        ! In theory, the FVAL - FSAVE in the following line can be replaced by
+        ! FVAL + C with any constant C. This constant will not affect the result
+        ! in precise arithmetic. Powell chose C = - FVAL(KOPT_ORIGINAL), where
+        ! KOPT_ORIGINAL is the KOPT before the update above (i.e., Powell updated
+        ! KOPT after TRYQALT). Here we use the updated KOPT, because it worked
+        ! slightly better on CUTEst, although there is no difference theoretically.
+        ! Note that FVAL(KOPT_ORIGINAL) may not equal FSAVE --- it may happen that
+        ! KNEW = KOPT_ORIGINAL so that FVAL(KOPT_ORIGINAL) has been revised after
+        ! the last function evaluation.
+        ! Question: Since TRYQALT is invoked only when DELTA equals the current RHO,
+        ! why not reset ITEST to 0 when RHO is reduced?
+        call tryqalt(idz, fval - fval(kopt), ratio, bmat(:, 1:npt), zmat, itest, gq, hq, pq)
+    end if
+end if
+
+! DNORMSAVE constains the DNORM corresponding to the latest 3
+! function evaluations with the current RHO.
+dnormsave = [dnorm, dnormsave(1:size(dnormsave) - 1)]
+! MODERRSAVE is the prediction errors of the latest 3 models.
+moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
+end if  ! End of if (.not. shortd)
+
+end subroutine take_trstep
 
 end module trustregion_mod
