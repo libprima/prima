@@ -1,0 +1,10 @@
+
+Return from NEWUOA because the objective function has been evaluated MAXFUN times.
+At the return from NEWUOA      Number of function evaluations =       7
+Least function value =   4.472722697928635D+00      The corresponding X is:
+  -1.936115D+00  -1.997351D+00
+
+Return from NEWUOA because the target function value is achieved.
+At the return from NEWUOA      Number of function evaluations =       1
+Least function value =   1.275877368118933D+01      The corresponding X is:
+  -3.171836D+00  -3.549305D+00
