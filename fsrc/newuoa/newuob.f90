@@ -1,9 +1,8 @@
 ! NEWUOB_MOD is a module that performs the major calculations of NEWUOA.
 !
-! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
-! and the NEWUOA paper.
+! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Tuesday, June 01, 2021 PM05:58:26
+! Last Modified: Tuesday, June 01, 2021 PM06:02:37
 
 module newuob_mod
 
@@ -440,14 +439,14 @@ do tr = 1, maxtr
 
         ! DNORMSAVE constains the DNORM corresponding to the
         ! latest 3 function evaluations with the current RHO.
-        !--------------------------------------------------------------!
-        ! Powell's code does not update DNORM. Therefore, DNORM is the length of last trust-region 
-        ! trial step, which seems inconsistent with what is described in Section 7 (around (7.7)) 
-        ! of the NEWUOA paper. Seemingly we should keep DNORM = ||D|| as we do here. The value of 
-        ! DNORM will be used when defining REDUCE_RHO.
+        !------------------------------------------------------------------------------------------!
+        ! Powell's code does not update DNORM. Therefore, DNORM is the length of last trust-region
+        ! trial step, which seems inconsistent with what is described in Section 7 (around (7.7)) of
+        ! the NEWUOA paper. Seemingly we should keep DNORM = ||D|| as we do here. The value of DNORM
+        ! will be used when defining REDUCE_RHO.
         dnorm = min(delbar, sqrt(inprod(d, d)))
         ! In theory, DNORM = DELBAR in this case.
-        !--------------------------------------------------------------!
+        !------------------------------------------------------------------------------------------!
         dnormsave = [dnorm, dnormsave(1:size(dnormsave) - 1)]
 
         ! MODERR is the error of the current model in predicting the
@@ -500,7 +499,7 @@ do tr = 1, maxtr
     ! and the condition (.not. reduce_rho) is replaced by
     ! (.not. reduce_rho .and. (shortd .or. ratio < TENTH .or. knew == 0)) ,
     ! where knew is the knew obtained by SETREMOVE; however, the final value of REDUCE_RHO will not
-    ! be different because (shortd .or. ratio <= 0) implies (shortd .or. ratio < TENTH .or. knew == 0)).
+    ! differ because (shortd .or. ratio <= 0) implies (shortd .or. ratio < TENTH .or. knew == 0)).
     !if (.not. reduce_rho) then
     !    ! The second possibly (out of two) that REDUCE_RHO is true.
     !    reduce_rho = (.not. improve_geo) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= 0)
@@ -538,10 +537,9 @@ do tr = 1, maxtr
 
 end do  ! The iterative procedure ends.
 
-! Return from the calculation, after another Newton-Raphson step, if it
-! is too short to have been tried before.
-! Note that no trust region iteration has been done if MAXTR = 0, and
-! hence we should not check whether SHORTD = TRUE but return immediately.
+! Return from the calculation, after another Newton-Raphson step, if it is too short to have been
+! tried before.! Note that no trust region iteration has been done if MAXTR = 0, and hence we
+! should not check whether SHORTD = TRUE but return immediately.
 if (maxtr > 0 .and. shortd .and. nf < maxfun) then
     x = xbase + (xopt + d)
     if (any(is_nan(x))) then
@@ -579,8 +577,8 @@ end if
 if (maxxhist >= 1 .and. maxxhist < nf) then
     khist = mod(nf - 1_IK, maxxhist) + 1_IK
     xhist = reshape([xhist(:, khist + 1:maxxhist), xhist(:, 1:khist)], shape(xhist))
-    ! The above combination of SHAPE and RESHAPE fulfills our desire
-    ! thanks to the COLUMN-MAJOR order of Fortran arrays.
+    ! The above combination of SHAPE and RESHAPE fulfills our desire thanks to the COLUMN-MAJOR
+    ! order of Fortran arrays.
 end if
 
 if (abs(iprint) >= 1) then
