@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Tuesday, June 01, 2021 PM06:02:37
+! Last Modified: Tuesday, June 01, 2021 PM07:10:18
 
 module newuob_mod
 
@@ -208,10 +208,9 @@ itest = 0
 ! REDUCE_RHO - Will we reduce rho after the trust region iteration?
 ! NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
-    ! Solve the trust region subproblem.
-    ! In Powell's NEWUOA code, VQUAD is not an output of TRSAPP. Here we
-    ! output it but will NOT use it (for the moment); it will still be calculated
-    ! latter by CALQUAD in order to produce the same results as Powell's code.
+    ! Solve the trust region subproblem. In Powell's NEWUOA code, VQUAD is not an output of TRSAPP.
+    ! Here we output it but will NOT use it (for the moment); it will still be calculated later
+    ! by CALQUAD in order to produce the same results as Powell's code.
     trtol = 1.0E-2_RP  ! Tolerance used in trsapp.
     call trsapp(delta, gq, hq, pq, trtol, xopt, xpt, crvmin, vquad, d, subinfo)
 
@@ -225,8 +224,7 @@ do tr = 1, maxtr
         if (delta <= 1.5_RP * rho) then
             delta = rho  ! Set DELTA to RHO when it is close.
         end if
-        ! After this, DELTA < DNORM may happen, explaining why we
-        ! sometimes write MAX(DELTA, DNORM).
+        ! After this, DELTA < DNORM may happen, explaining why we sometimes write MAX(DELTA, DNORM).
     end if
 
     if (.not. shortd) then  ! D is long enough.
@@ -242,8 +240,7 @@ do tr = 1, maxtr
         ! Calculate VLAG and BETA for D. It makes uses of XOPT, so this is done bfore updating XOPT.
         call vlagbeta(idz, kopt, bmat, d, xopt, xpt, zmat, beta, vlag)
 
-        ! Use the current quadratic model to predict the change in F due
-        ! to the step D.
+        ! Use the current quadratic model to predict the change in F due to the step D.
         call calquad(d, gq, hq, pq, xopt, xpt, vquad)
 
         ! Calculate the next value of the objective function.
@@ -268,14 +265,12 @@ do tr = 1, maxtr
             xhist(:, khist) = x
         end if
 
-        ! DNORMSAVE constains the DNORM corresponding to the latest 3
-        ! function evaluations with the current RHO.
+        ! DNORMSAVE constains the DNORM of the latest 3 function evaluations with the current RHO.
         dnormsave = [dnorm, dnormsave(1:size(dnormsave) - 1)]
 
-        ! MODERR is the error of the current model in predicting the change
-        ! in F due to D.
+        ! MODERR is the error of the current model in predicting the change in F due to D.
         moderr = f - fsave - vquad
-        ! MODERRSAVE is the prediction errors of the latest 3 models.
+        ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
         moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
 
         ! Update FOPT and XOPT
@@ -317,10 +312,9 @@ do tr = 1, maxtr
         call setremove(idz, kopt, beta, delta, ratio, rho, vlag(1:npt), xopt, xpt, zmat, knew)
 
         if (knew > 0) then
-            ! If KNEW > 0, then update BMAT, ZMAT and IDZ, so that the
-            ! KNEW-th interpolation point is replaced by XNEW.
-            ! If KNEW = 0, then probably the geometry of XPT needs
-            ! improvement, which will be handled below.
+            ! If KNEW > 0, then update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point
+            ! is replaced by XNEW. If KNEW = 0, then probably the geometry of XPT needs improvement,
+            ! which will be handled below.
             call updateh(knew, beta, vlag, idz, bmat, zmat)
 
             ! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
@@ -437,8 +431,7 @@ do tr = 1, maxtr
             xhist(:, khist) = x
         end if
 
-        ! DNORMSAVE constains the DNORM corresponding to the
-        ! latest 3 function evaluations with the current RHO.
+        ! DNORMSAVE constains the DNORM of the latest 3 function evaluations with the current RHO.
         !------------------------------------------------------------------------------------------!
         ! Powell's code does not update DNORM. Therefore, DNORM is the length of last trust-region
         ! trial step, which seems inconsistent with what is described in Section 7 (around (7.7)) of
@@ -449,10 +442,9 @@ do tr = 1, maxtr
         !------------------------------------------------------------------------------------------!
         dnormsave = [dnorm, dnormsave(1:size(dnormsave) - 1)]
 
-        ! MODERR is the error of the current model in predicting the
-        ! change in F due to D.
+        ! MODERR is the error of the current model in predicting the change in F due to D.
         moderr = f - fsave - vquad
-        ! MODERRSAVE is the prediction errors of the latest 3 models.
+        ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
         moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
 
         ! Update FOPT and XOPT
@@ -475,15 +467,14 @@ do tr = 1, maxtr
             exit
         end if
 
-        ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation
-        ! point can be moved.
+        ! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved.
         call updateh(knew, beta, vlag, idz, bmat, zmat)
 
         ! Update the quadratic model.
         call updateq(idz, knew, bmat(:, knew), moderr, zmat, xpt(:, knew), gq, hq, pq)
 
-        ! Include the new interpolation point. This should be done after
-        ! updating BMAT, ZMAT, and the model.
+        ! Include the new interpolation point. This should be done after updating BMAT, ZMAT, and
+        ! the model.
         fval(knew) = f
         xpt(:, knew) = xnew
         if (f < fsave) then
@@ -538,7 +529,7 @@ do tr = 1, maxtr
 end do  ! The iterative procedure ends.
 
 ! Return from the calculation, after another Newton-Raphson step, if it is too short to have been
-! tried before.! Note that no trust region iteration has been done if MAXTR = 0, and hence we
+! tried before. Note that no trust region iteration has been done if MAXTR = 0, and hence we
 ! should not check whether SHORTD = TRUE but return immediately.
 if (maxtr > 0 .and. shortd .and. nf < maxfun) then
     x = xbase + (xopt + d)
@@ -562,8 +553,7 @@ if (maxtr > 0 .and. shortd .and. nf < maxfun) then
     end if
 end if
 
-! Note that (FOPT .LE. F) is FALSE if F is NaN; When F is NaN, it is also
-! necessary to update X and F.
+! Note that (FOPT .LE. F) is FALSE if F is NaN; if F is NaN, it is also necessary to update X and F.
 if (is_nan(f) .or. fopt <= f) then
     x = xbase + xopt
     f = fopt
