@@ -1,10 +1,14 @@
+WARNING: File -, line 373
+    auto indentation failed due to chars limit, line should be split (limit: 132)
+WARNING: File -, line 373
+    auto indentation failed due to chars limit, line should be split (limit: 132)
 ! TRUSTREGION_MOD is a module providing subroutines concerning the
 ! trust-region iterations.
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Tuesday, June 01, 2021 PM02:49:34
+! Last Modified: Tuesday, June 01, 2021 PM04:29:43
 
 module trustregion_mod
 
@@ -370,11 +374,16 @@ end if
 end function trrad
 
 
-subroutine take_trstep(fopt)
+subroutine take_trstep(fopt, xopt, xpt, xbase, zmat, bmat, idz, pq, gq, hq, nf, maxfhist, fhist, maxxhist, xhist,moderrsave, dnormsave, info, delta, kopt)
 
 use consts_mod, only : IK, RP
 
-real(RP), 
+real(RP), intent(inout) :: fopt  ! Function value of the best X up to now
+real(RP), intent(inout) :: xopt(:)  ! The best X up to now
+real(RP), intent(inout) :: xbase(:)  ! The base point
+real(RP), intent(inout) :: xpt(:, :)
+real(RP), intent(inout) :: zmat(:, :)
+real(RP), intent(inout) :: bmat(:, :)
 
 fsave = fopt
 
