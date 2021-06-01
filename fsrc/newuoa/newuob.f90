@@ -483,7 +483,8 @@ do tr = 1, maxtr
     ! If all the interpolation points are close to XOPT (IMPROVE_GEO = FALSE) compared to rho, and
     ! the trust region is small, but the trust region step is "bad" (SHORTD or RATIO <= 0), then we
     ! should shrink RHO (i.e., update the standard for defining "closeness" and SHORTD).
-    ! REDUCE_RHO_2 corresponds to box 10 of the NEWUOA paper.
+    ! REDUCE_RHO_2 corresponds to box 10 of the NEWUOA paper. Note that DELTA < DNORM may hold due
+    ! to the update of DELTA.
     reduce_rho_2 = (.not. improve_geo) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= 0)
 
     if (reduce_rho_1 .or. reduce_rho_2) then
