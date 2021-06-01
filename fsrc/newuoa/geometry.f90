@@ -10,7 +10,7 @@ module geometry_mod
 
 implicit none
 private
-public :: setremove, ameliorgeo
+public :: setremove, geostep
 
 
 contains
@@ -89,7 +89,7 @@ end if
 end subroutine setremove
 
 
-subroutine ameliorgeo(idz, knew, kopt, bmat, delbar, xopt, xpt, zmat, d, beta, vlag)
+subroutine geostep(idz, knew, kopt, bmat, delbar, xopt, xpt, zmat, d, beta, vlag)
 
 ! Generic modules
 use consts_mod, only : RP, IK, ONE, DEBUGGING, SRNLEN
@@ -158,7 +158,7 @@ if (abs(ONE + alpha * beta / vlag(knew)**2) <= 0.8_RP) then
     call bigden(idz, knew, kopt, bmat, xopt, xpt, zmat, d, beta, vlag)
 end if
 
-end subroutine ameliorgeo
+end subroutine geostep
 
 
 subroutine biglag(idz, knew, delbar, bmat, x, xpt, zmat, d)

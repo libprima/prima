@@ -56,7 +56,7 @@ use lina_mod, only : calquad, inprod
 use pintrf_mod, only : FUNEVAL
 use initialize_mod, only : initxf, initq, inith
 use trustregion_mod, only : trsapp, trrad
-use geometry_mod, only : setremove, ameliorgeo
+use geometry_mod, only : setremove, geostep
 use shiftbase_mod, only : shiftbase
 use vlagbeta_mod, only : vlagbeta
 use update_mod, only : updateh, updateq, tryqalt
@@ -418,7 +418,7 @@ do tr = 1, maxtr
         ! when XPT(:, KNEW) is replaced by XOPT + D. The AMELIORGEO
         ! subroutine will call Powell's BIGLAG and BIGDEN. It will also
         ! calculate the VLAG and BETA for this D.
-        call ameliorgeo(idz, knew, kopt, bmat, delbar, xopt, xpt, zmat, d, beta, vlag)
+        call geostep(idz, knew, kopt, bmat, delbar, xopt, xpt, zmat, d, beta, vlag)
 
         ! Use the current quadratic model to predict the change in F due
         ! to the step D.

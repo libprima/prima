@@ -1,0 +1,44 @@
+
+Return from NEWUOA because the trust region radius reaches its lower bound.
+At the return from NEWUOA      Number of function evaluations =      47
+Least function value =   2.851586810307960D+01      The corresponding X is:
+  -3.438670D+00  -1.423016D-01
+
+New RHO =  1.4439D-01      Number of function evaluations =       7
+Least function value =   2.610344719844044D+03      The corresponding X is:
+  -2.774129D+00  -5.093071D-01
+
+New RHO =  1.4183D-02      Number of function evaluations =      18
+Least function value =   3.940469906995494D+01      The corresponding X is:
+  -2.813494D+00  -1.814222D-01
+
+New RHO =  1.3932D-03      Number of function evaluations =      36
+Least function value =   2.851613399683527D+01      The corresponding X is:
+  -3.437011D+00  -1.424956D-01
+
+Return from NEWUOA because the trust region radius reaches its lower bound.
+At the return from NEWUOA      Number of function evaluations =      46
+Least function value =   2.851585818984971D+01      The corresponding X is:
+  -3.438169D+00  -1.423458D-01
+
+Return from NEWUOA because the trust region radius reaches its lower bound.
+At the return from NEWUOA      Number of function evaluations =      54
+Least function value =   2.851587877596621D+01      The corresponding X is:
+  -3.437143D+00  -1.424165D-01
+
+New RHO =  5.2876D-02      Number of function evaluations =      10
+Least function value =   2.952663698531375D+01      The corresponding X is:
+  -3.437894D+00  -1.468242D-01
+
+New RHO =  8.0409D-03      Number of function evaluations =      19
+Least function value =   2.851626681470092D+01      The corresponding X is:
+  -3.437814D+00  -1.422809D-01
+
+New RHO =  1.2228D-03      Number of function evaluations =      23
+Least function value =   2.851626681470092D+01      The corresponding X is:
+  -3.437814D+00  -1.422809D-01
+
+Return from NEWUOA because the trust region radius reaches its lower bound.
+At the return from NEWUOA      Number of function evaluations =      27
+Least function value =   2.851586057656638D+01      The corresponding X is:
+  -3.437820D+00  -1.423698D-01
