@@ -1,7 +1,7 @@
-altmov.f
-prelim.f
-rescue.f
-trsbox.f
-update.f
-bobyqb.f
-bobyqa.f
+altmov.f90
+prelim.f90
+rescue.f90
+trsbox.f90
+update.f90
+bobyqb.f90
+bobyqa.f90
