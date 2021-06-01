@@ -18,7 +18,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Tuesday, June 01, 2021 PM05:25:09
+! Last Modified: Tuesday, June 01, 2021 PM05:58:26
 
       module newuob_mod
 
@@ -32,33 +32,33 @@
 
       subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget&
      &, gamma1, gamma2, rhobeg, rhoend, x, nf, f, fhist, xhist, info)
-! NEWUOB performs the actual calculations of NEWUOA. The arguments IPRINT,
-! MAXFUN, MAXHIST, NPT, ETA1, ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG,
-! RHOEND, X, NF, F, FHIST, XHIST, and INFO are identical to the corresponding
-! arguments in subroutine NEWUOA.
+! NEWUOB performs the actual calculations of NEWUOA. The arguments IPRINT, MAXFUN, MAXHIST, NPT,
+! ETA1, ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG, RHOEND, X, NF, F, FHIST, XHIST, and INFO are
+! identical to the corresponding arguments in subroutine NEWUOA.
 
-! XBASE will hold a shift of origin that should reduce the contributions
-! from rounding errors to values of the model and Lagrange functions.
-! XOPT will be set to the displacement from XBASE of the vector of variables
-! that provides the least calculated F so far.
-! XNEW will be set to the displacement from XBASE of the vector of variables
-! for the current calculation of F.
-! XPT will contain the interpolation point coordinates relative to XBASE,
-! each COLUMN corresponding to a point.
+! XBASE will hold a shift of origin that should reduce the contributions from rounding errors to
+! values of the model and Lagrange functions.
+! XOPT will be set to the displacement from XBASE of the vector of variables that provides the least
+! calculated F so far.
+! XNEW will be set to the displacement from XBASE of the vector of variables for the current
+! calculation of F.
+! XPT will contain the interpolation point coordinates relative to XBASE, each COLUMN corresponding
+! to a point.
 ! FVAL will hold the values of F at the interpolation points.
-! GQ will hold the gradient of the quadratic model at XBASE.
-! HQ will hold the explicit second order derivatives of the quadratic model.
-! PQ will contain the parameters of the implicit second order derivatives
-! of the quadratic model.
-! BMAT will hold the last N ROWs of H. ZMAT will hold the factorization
-! of the leading NPT by NPT sub-matrix of H, this factorization being
-! ZMAT times Diag(DZ) times ZMAT^T, where DZ(1 : IDZ-1) = -1 and
+! [GQ, HQ, PQ] describes the quadratic model: GQ will hold the gradient of the quadratic model at
+! XBASE; HQ will hold the explicit second order derivatives of the quadratic model; PQ will contain
+! the parameters of the implicit second order derivatives of the quadratic model.
+! [BMAT, ZMAT, IDZ] describes the matrix H in the NEWUOA paper (eq. 3.12), which is the inverse of
+! the coefficient matrix of the KKT system for the least-Frobenius norm interpolation problem:
+! BMAT will hold the last N ROWs of H; ZMAT will hold the factorization of the leading NPT*NPT
+! sub-matrix of H, this factorization being ZMAT*Diag(DZ)*ZMAT^T, where DZ(1 : IDZ-1) = -1 and
 ! DZ(IDZ - 1 : NPT) = 1.
 ! D is reserved for trial steps from XOPT.
-! VLAG will contain the values of the Lagrange functions at a new point
-! X. They are part of a product that requires VLAG to be of length NPT + N.
+! VLAG will contain the values of the Lagrange functions at a new point X. They are part of a
+! product that requires VLAG to be of length NPT + N. Both VLAG and BETA are critical for the
+! updating procedure of H, which is detailed formula (4.10)--(4.12) of the NEWUOA paper.
 !
-! See Section 2 of the NEWUOA paper.
+! See Section 2 of the NEWUOA paper for more information about these variables.
 
 ! Generic modules
       use consts_mod, only : RP, IK, ZERO, HALF, TENTH, HUGENUM, DEBUGGI&
@@ -146,7 +146,7 @@
       real(RP) :: xopt(size(x))
       real(RP) :: xpt(size(x), npt)
       real(RP) :: zmat(npt, npt - size(x) - 1)
-      logical :: improve_geometry
+      logical :: improve_geo
       logical :: reduce_rho
       logical :: shortd
       logical :: terminate
@@ -213,10 +213,9 @@
 ! Initialize BMAT and ZMAT, and IDZ.
       call inith(ij, xpt, idz, bmat, zmat, subinfo)
 
-! After initializing GQ, HQ, PQ, BMAT, ZMAT, one can also choose to return
-! if subinfo = NAN_MODEL (NaN occurs in the model). We do not do it here.
-! If such a model is harmful, then it will probably lead to other returns
-! (NaN in X, NaN in F, trust region subproblem fails, ...); otherwise, the
+! After initializing GQ, HQ, PQ, BMAT, ZMAT, one can also choose to return if subinfo = NAN_MODEL
+! (NaN occurs in the model). We do not do it here. If such a model is harmful, then it will probably
+! lead to other returns (NaN in X, NaN in F, trust region subproblem fails, ...); otherwise, the
 ! code will continue to run and possibly get rid of the NaN in the model.
 
 ! Set some more initial values.
@@ -227,11 +226,11 @@
       itest = 0
 
 ! Begin the iterative procedure.
-! In this process, NEWUOA uses three switches (boolean variables) to control the flow of the work.
+! After solving a trust-region subproblem, NEWUOA uses 3 boolean variables to control the work flow.
 ! SHORTD - Is the trust region trial step too short to invoke a function evaluation?
-! IMPROVE_GEOMETRY - Will we improve the model after the trust region iteration?
+! IMPROVE_GEO - Will we improve the model after the trust region iteration?
 ! REDUCE_RHO - Will we reduce rho after the trust region iteration?
-! NEWUOA never sets IMPROVE_GEOMETRY and REDUCE_RHO to TRUE simultaneously.
+! NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
       do tr = 1, maxtr
 ! Solve the trust region subproblem.
 ! In Powell's NEWUOA code, VQUAD is not an output of TRSAPP. Here we
@@ -256,7 +255,7 @@
 ! sometimes write MAX(DELTA, DNORM).
           end if
 
-          if (.not. shortd) then ! This is the normal case.
+          if (.not. shortd) then ! D is long enough.
 ! Save the current FOPT in FSAVE. It is needed later.
               fsave = fopt
 
@@ -267,7 +266,7 @@
      &t, xpt)
               end if
 
-! Calculate VLAG and BETA for D.
+! Calculate VLAG and BETA for D. It makes uses of XOPT, so this is done bfore updating XOPT.
               call vlagbeta(idz, kopt, bmat, d, xopt, xpt, zmat, beta, v&
      &lag)
 
@@ -339,12 +338,10 @@
                   delta = rho
               end if
 
-! Set KNEW to the index of the interpolation point that will be
-! replaced by XNEW. KNEW will ensure that the geometry of XPT
-! is "good enough" after the replacement. Note that the information
-! of XNEW is included in VLAG and BETA, which are calculated
-! according to D = XNEW - XOPT.
-! KNEW = 0 means it is impossible to obtain a good interpolation set
+! Set KNEW to the index of the interpolation point that will be replaced by XNEW. KNEW will
+! ensure that the geometry of XPT is "good enough" after the replacement. Note that the
+! information of XNEW is included in VLAG and BETA, which are calculated according to
+! D = XNEW - XOPT. KNEW = 0 means it is impossible to obtain a good interpolation set
 ! by replacing any current interpolation point by XNEW.
               call setremove(idz, kopt, beta, delta, ratio, rho, vlag(1:&
      &npt), xopt, xpt, zmat, knew)
@@ -370,24 +367,23 @@
                       kopt = knew
                   end if
 
-! Test whether to replace the new quadratic model Q by the least Frobenius
-! norm interpolant Q_alt. Perform the replacement if certain ceriteria are
-! satisfied. This part is OPTIONAL, but it is crucial for the performance on
-! a certain class of problems. See Section 8 of the NEWUOA paper.
+! Test whether to replace the new quadratic model Q by the least-Frobenius norm
+! interpolant Q_alt. Perform the replacement if certain criteria are satisfied. This
+! part is OPTIONAL, but it is crucial for the performance on some problems. See
+! Section 8 of the NEWUOA paper.
 ! In NEWUOA, TRYQALT is called only after a trust-region step but not after a geometry
 ! step. Maybe this is because the model is expected to be good after a geometry step.
                   if (delta <= rho) then ! DELTA == RHO.
-! In theory, the FVAL - FSAVE in the following line can be replaced by
-! FVAL + C with any constant C. This constant will not affect the result
-! in precise arithmetic. Powell chose C = - FVAL(KOPT_ORIGINAL), where
-! KOPT_ORIGINAL is the KOPT before the update above (i.e., Powell updated
-! KOPT after TRYQALT). Here we use the updated KOPT, because it worked
-! slightly better on CUTEst, although there is no difference theoretically.
-! Note that FVAL(KOPT_ORIGINAL) may not equal FSAVE --- it may happen that
-! KNEW = KOPT_ORIGINAL so that FVAL(KOPT_ORIGINAL) has been revised after
-! the last function evaluation.
-! Question: Since TRYQALT is invoked only when DELTA equals the current RHO,
-! why not reset ITEST to 0 when RHO is reduced?
+! In theory, the FVAL - FSAVE in the following line can be replaced by FVAL + C
+! with any constant C. This constant will not affect the result in precise
+! arithmetic. Powell chose C = - FVAL(KOPT_ORIGINAL), where KOPT_ORIGINAL is the
+! KOPT before the update above (i.e., Powell updated KOPT after TRYQALT). Here we
+! use the updated KOPT, because it worked slightly better on CUTEst, although there
+! is no difference theoretically. Note that FVAL(KOPT_ORIGINAL) may not equal FSAVE
+! --- it may happen that KNEW = KOPT_ORIGINAL so that FVAL(KOPT_ORIGINAL) has been
+! revised after the last function evaluation.
+! Question: Since TRYQALT is invoked only when DELTA equals the current RHO, why not
+! reset ITEST to 0 when RHO is reduced?
                       call tryqalt(idz, fval - fval(kopt), ratio, bmat(:&
      &, 1:npt), zmat, itest, gq, hq, pq)
                   end if
@@ -395,9 +391,9 @@
           end if ! End of if (.not. shortd)
 
 ! Before next trust region iteration, we may improve the geometry of XPT or reduce rho
-! according to IMPROVE_GEOMETRY and REDUCE_RHO. Now we decide these two indicators.
+! according to IMPROVE_GEO and REDUCE_RHO. Now we decide these two indicators.
 
-          improve_geometry = .false.
+          improve_geo = .false.
 ! The geometry of XPT probably needs improvement if the latest model produces a "bad" step, i.e.,
 ! 1. the step is too short, or
 ! 2. the reduction ratio is too small, or
@@ -409,7 +405,7 @@
 ! (.not. reduce_rho .and. (shortd .or. ratio < TENTH .or. knew == 0))
 ! is replaced by
 ! ((.not. shortd .and. (ratio < TENTH .or. knew == 0)) .or. (shortd .and. .not. reduce_rho)).
-! But they are equivalent, because, up to now, REDUCE_RHO = TRUE only if SHORTD = TRUE.
+! But they are equivalent, because up to now, REDUCE_RHO = TRUE only if SHORTD = TRUE.
           if (.not. reduce_rho .and. (shortd .or. ratio < TENTH .or. kne&
      &w == 0)) then
 ! Find out if the interpolation points are close enough to the
@@ -426,20 +422,18 @@
                   knew = 0
               end if
 
-! If KNEW is positive (i.e., not all points are close to XOPT),
-! then a model step will be taken to ameliorate the geometry of
-! the interpolation set and hence improve the model.
-! This is the only possibility that IMPROVE_GEOMETRY = TRUE.
-              improve_geometry = (knew > 0)
+! If KNEW is positive (i.e., not all points are close to XOPT), then a model step will be
+! taken to ameliorate the geometry of the interpolation set and hence improve the model.
+! This is the only possibility that IMPROVE_GEO = TRUE.
+              improve_geo = (knew > 0)
           end if
 
-          if (improve_geometry) then
+          if (improve_geo) then
 ! Save the current FOPT in fsave. It is needed later.
               fsave = fopt
 
-! Set DELBAR, which will be used as the trust region radius for
-! the geometry-improving schemes AMELIORGEO. We also need it to
-! decide whether to shift XBASE or not.
+! Set DELBAR, which will be used as the trust region radius for the geometry-improving
+! schemes GEOSTEP. We also need it to decide whether to shift XBASE or not.
               delbar = max(min(TENTH * sqrt(distsq), HALF * delta), rho)
 
 ! Shift XBASE if XOPT may be too far from XBASE.
@@ -450,14 +444,12 @@
               end if
 
 ! Find a step D so that the geometry of XPT will be improved
-! when XPT(:, KNEW) is replaced by XOPT + D. The AMELIORGEO
-! subroutine will call Powell's BIGLAG and BIGDEN. It will also
-! calculate the VLAG and BETA for this D.
+! when XPT(:, KNEW) is replaced by XOPT + D. The GEOSTEP subroutine will call Powell's
+! BIGLAG and BIGDEN. It will also calculate the VLAG and BETA for this D.
               call geostep(idz, knew, kopt, bmat, delbar, xopt, xpt, zma&
      &t, d, beta, vlag)
 
-! Use the current quadratic model to predict the change in F due
-! to the step D.
+! Use the current quadratic model to predict the change in F due to the step D.
               call calquad(d, gq, hq, pq, xopt, xpt, vquad)
 
 ! Calculate the next value of the objective function.
@@ -538,7 +530,7 @@
               end if
           end if ! The procedure of improving geometry ends.
 
-! If all the interpolation points are close to XOPT (IMPROVE_GEOMETRY = FALSE) compared to rho,
+! If all the interpolation points are close to XOPT (IMPROVE_GEO = FALSE) compared to rho,
 ! and the trust-region radius has reached rho, but the trust region step is "bad" (short or
 ! ratio <= 0), then we should shrink RHO (i.e., update the stadard for defining "closeness"
 ! and shortd).
@@ -549,12 +541,12 @@
 ! be different because (shortd .or. ratio <= 0) implies (shortd .or. ratio < TENTH .or. knew == 0)).
 !if (.not. reduce_rho) then
 !    ! The second possibly (out of two) that REDUCE_RHO is true.
-!    reduce_rho = (.not. improve_geometry) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= 0)
-!    !reduce_rho = (.not. improve_geometry) .and. (delta <= rho) .and. (shortd .or. ratio <= 0)
+!    reduce_rho = (.not. improve_geo) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= 0)
+!    !reduce_rho = (.not. improve_geo) .and. (delta <= rho) .and. (shortd .or. ratio <= 0)
 !end if
 ! The above calculation is equivalent to the following:
-          reduce_rho = reduce_rho .or. ((.not. improve_geometry) .and. (&
-     &max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= 0))
+          reduce_rho = reduce_rho .or. ((.not. improve_geo) .and. (max(d&
+     &elta, dnorm) <= rho) .and. (shortd .or. ratio <= 0))
 
           if (reduce_rho) then
 ! The calculations with the current RHO are complete. Pick the
