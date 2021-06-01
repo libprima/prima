@@ -374,7 +374,7 @@ end if
 end function trrad
 
 
-subroutine take_trstep(fopt, xopt, xpt, xbase, zmat, bmat, idz, pq, gq, hq, nf, maxfhist, fhist, maxxhist, xhist,moderrsave, dnormsave, info, delta, kopt)
+subroutine take_trstep(fopt, xopt, xpt, xbase, zmat, bmat, idz, pq, gq, hq, nf, maxfhist, fhist, maxxhist, xhist, moderrsave, dnormsave, info, delta, kopt, knew, eta1, eta2, gamma1, gamma2)
 
 use consts_mod, only : IK, RP
 
