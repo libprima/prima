@@ -9,9 +9,9 @@ C      IMPLICIT REAL*8 (A-H,O-Z)
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
 C      DIMENSION AMAT(N,*),B(*),IACT(*),QFAC(N,*),RFAC(*),
-      DIMENSION AMAT(N,*),IACT(*),QFAC(N,*),RFAC(*),
+      DIMENSION AMAT(N,M),IACT(M),QFAC(N,N),RFAC(N*(N+1)/2),
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-     1  RESNEW(*),RESACT(*),G(*),DW(*),VLAM(*),W(*)
+     1  RESNEW(M),RESACT(M),G(N),DW(N),VLAM(N),W(N)
 C
 C     N, M, AMAT, B, NACT, IACT, QFAC and RFAC are the same as the terms
 C       with these names in SUBROUTINE LINCOB. The current values must be
@@ -41,21 +41,25 @@ C
       ZERO=0.0D0
       TDEL=0.2D0*SNORM
       DDSAV=ZERO
-      DO I=1,N
-          DDSAV=DDSAV+G(I)**2
-          VLAM(I)=ZERO
-      END DO
-      DDSAV=DDSAV+DDSAV
+      !DO I=1,N
+      !    DDSAV=DDSAV+G(I)**2
+      !    VLAM(I)=ZERO
+      !END DO
+      !DDSAV=DDSAV+DDSAV
+      ddsav=dot_product(g,g) + dot_product(g, g)
+      vlam = 0.0D0
 C
 C     Set the initial QFAC to the identity matrix in the case NACT=0.
 C
       IF (NACT == 0) THEN
-          DO I=1,N
-              DO J=1,N
-                  QFAC(I,J)=ZERO
-              END DO
-              QFAC(I,I)=ONE
-          END DO
+          QFAC = ZERO
+          forall(I = 1:N) QFAC(I,I) = ONE
+          !DO I=1,N
+          !    DO J=1,N
+          !        QFAC(I,J)=ZERO
+          !    END DO
+          !    QFAC(I,I)=ONE
+          !END DO
           GOTO 100
       END IF
 C
