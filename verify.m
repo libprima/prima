@@ -110,20 +110,14 @@ end
 
 fprintf('\n')
 for ip = minip : length(plist)
-    pname = plist{ip};
+    pname = upper(plist{ip});
     fprintf('%3d. \t%16s:\t', ip, pname);
-%    fprintf('%3d. \t%16s:\t\n', ip, pname);
     prob = macup(pname);
     x0 = prob.x0;
     n = length(x0);
-    if n > 30
-        fprintf('\n');
-    end
+    fprintf('\n');
     for ir = minir : maxir
-        fprintf('ir. %3d: ', ir)
-        if n > 30
-            fprintf('Run No. %3d: \t', ir);
-        end
+        fprintf('%s Run No. %3d: \t', pname, ir);
         % Some randomization
         rng(ceil(1e6*abs(sin(1e6*(sum(double(pname))*n*ir)))));
         prob.x0 = x0 + 0.5*randn(size(x0));
@@ -185,9 +179,7 @@ for ip = minip : length(plist)
             %display('exitflag2 changed to 3.')
         end
         if iseq(x1, fx1, exitflag1, output1, x2, fx2, exitflag2, output2, prec)
-            if n > 30
-                fprintf('Succeed\n');
-            end
+            fprintf('Succeed\n');
         else
             fprintf('The solvers produce different results on %s at the %dth run.\n', pname, ir);
             success = false;
