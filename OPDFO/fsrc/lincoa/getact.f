@@ -40,7 +40,6 @@
       TINY=1.0D-60
       ZERO=0.0D0
       TDEL=0.2D0*SNORM
-      DDSAV=ZERO
       ddsav=dot_product(g,g) + dot_product(g, g)
       vlam = 0.0D0
 !

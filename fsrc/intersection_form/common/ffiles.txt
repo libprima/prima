@@ -1,8 +1,8 @@
-consts.F90
-info.F90
-debug.F90
-memory.F90
-infnan.F90
-lina.F90
-output.F90
-pintrf.F90
+consts.F
+info.F
+debug.F
+memory.F
+infnan.F
+lina.F
+output.F
+pintrf.F

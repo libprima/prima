@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 01-Jun-2021.
+! on 02-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -17,7 +17,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Tuesday, June 01, 2021 PM08:24:39
+! Last Modified: Wednesday, June 02, 2021 PM10:48:02
 
       module newuob_mod
 
@@ -106,7 +106,8 @@
       integer(IK) :: ij(2, npt)
       integer(IK) :: itest
       integer(IK) :: khist
-      integer(IK) :: knew
+      integer(IK) :: knew_geo
+      integer(IK) :: knew_tr
       integer(IK) :: kopt
       integer(IK) :: maxfhist
       integer(IK) :: maxtr
@@ -335,31 +336,31 @@
                   delta = rho
               end if
 
-! Set KNEW to the index of the interpolation point that will be replaced by XNEW. KNEW will
-! ensure that the geometry of XPT is "good enough" after the replacement. Note that the
+! Set KNEW_TR to the index of the interpolation point that will be replaced by XNEW. KNEW_TR
+! will ensure that the geometry of XPT is "good enough" after the replacement. Note that the
 ! information of XNEW is included in VLAG and BETA, which are calculated according to
-! D = XNEW - XOPT. KNEW = 0 means it is impossible to obtain a good interpolation set
+! D = XNEW - XOPT. KNEW_TR = 0 means it is impossible to obtain a good interpolation set
 ! by replacing any current interpolation point by XNEW.
               call setremove(idz, kopt, beta, delta, ratio, rho, vlag(1:&
-     &npt), xopt, xpt, zmat, knew)
+     &npt), xopt, xpt, zmat, knew_tr)
 
-              if (knew > 0) then
-! If KNEW > 0, then update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point
-! is replaced by XNEW. If KNEW = 0, then probably the geometry of XPT needs improvement,
-! which will be handled below.
-                  call updateh(knew, beta, vlag, idz, bmat, zmat)
+              if (knew_tr > 0) then
+! If KNEW_TR > 0, then update BMAT, ZMAT and IDZ, so that the KNEW_TR-th interpolation
+! point is replaced by XNEW. If KNEW_TR = 0, then probably the geometry of XPT needs
+! improvement, which will be handled below.
+                  call updateh(knew_tr, beta, vlag, idz, bmat, zmat)
 
 ! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
-                  call updateq(idz, knew, bmat(:, knew), moderr, zmat, x&
-     &pt(:, knew), gq, hq, pq)
+                  call updateq(idz, knew_tr, bmat(:, knew_tr), moderr, z&
+     &mat, xpt(:, knew_tr), gq, hq, pq)
 
 ! Include the new interpolation point. This should be done after updating the model.
-                  fval(knew) = f
-                  xpt(:, knew) = xnew
+                  fval(knew_tr) = f
+                  xpt(:, knew_tr) = xnew
 
-! Update KOPT to KNEW if F < FSAVE (i.e., last FOPT).
+! Update KOPT to KNEW_TR if F < FSAVE (i.e., last FOPT).
                   if (f < fsave) then
-                      kopt = knew
+                      kopt = knew_tr
                   end if
 
 ! Test whether to replace the new quadratic model Q by the least-Frobenius norm
@@ -375,8 +376,8 @@
 ! KOPT before the update above (i.e., Powell updated KOPT after TRYQALT). Here we
 ! use the updated KOPT, because it worked slightly better on CUTEst, although there
 ! is no difference theoretically. Note that FVAL(KOPT_ORIGINAL) may not equal FSAVE
-! --- it may happen that KNEW = KOPT_ORIGINAL so that FVAL(KOPT_ORIGINAL) has been
-! revised after the last function evaluation.
+! --- it may happen that KNEW_TR = KOPT_ORIGINAL so that FVAL(KOPT_ORIGINAL) has
+! been revised after the last function evaluation.
 ! Question: Since TRYQALT is invoked only when DELTA equals the current RHO, why not
 ! reset ITEST to 0 when RHO is reduced?
                       call tryqalt(idz, fval - fval(kopt), ratio, bmat(:&
@@ -398,25 +399,24 @@
 ! If REDUCE_RHO_1 = TRUE, meaning that the step is short and the latest model errors have been
 ! small, then we do not need to improve the geometry.
           if (.not. reduce_rho_1 .and. (shortd .or. ratio < TENTH .or. k&
-     &new == 0)) then
-! Find out if the interpolation points are close enough to the
-! best point so far, i.e., all the points are within a ball
-! centered at XOPT with a radius of 2*DELTA. If not, set KNEW to
-! the index of the point that is the farthest away.
+     &new_tr == 0)) then
+! Find out if the interpolation points are close enough to the best point so far, i.e., all
+! the points are within a ball centered at XOPT with a radius of 2*DELTA. If not, set
+! KNEW_GEO to the index of the point that is the farthest away.
               distsq = 4.0_RP * delta * delta
               xdsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, di&
      &m=1)
               if (maxval(xdsq) > distsq) then
-                  knew = int(maxloc(xdsq, dim=1), kind(knew))
+                  knew_geo = int(maxloc(xdsq, dim=1), kind(knew_geo))
                   distsq = maxval(xdsq)
               else
-                  knew = 0
+                  knew_geo = 0
               end if
 
-! If KNEW is positive (i.e., not all points are close to XOPT), then a model step will be
-! taken to ameliorate the geometry of the interpolation set and hence improve the model.
-! This is the only possibility that IMPROVE_GEO = TRUE.
-              improve_geo = (knew > 0)
+! If KNEW_GEO is positive (i.e., not all points are close to XOPT), then a geometry step
+! (aka model step) will be taken to ameliorate the geometry of the interpolation set and
+! hence improve the model.
+              improve_geo = (knew_geo > 0)
           end if
 
           if (improve_geo) then
@@ -434,11 +434,11 @@
      &t, xpt)
               end if
 
-! Find a step D so that the geometry of XPT will be improved when XPT(:, KNEW) is replaced
-! by XOPT + D. The GEOSTEP subroutine will call Powell's BIGLAG and BIGDEN. It will also
-! calculate the VLAG and BETA for this D.
-              call geostep(idz, knew, kopt, bmat, delbar, xopt, xpt, zma&
-     &t, d, beta, vlag)
+! Find a step D so that the geometry of XPT will be improved when XPT(:, KNEW_GEO) is
+! replaced by XOPT + D. The GEOSTEP subroutine will call Powell's BIGLAG and BIGDEN. It will
+! also calculate the VLAG and BETA for this D.
+              call geostep(idz, knew_geo, kopt, bmat, delbar, xopt, xpt,&
+     & zmat, d, beta, vlag)
 
 ! Use the current quadratic model to predict the change in F due to the step D.
               call calquad(d, gq, hq, pq, xopt, xpt, vquad)
@@ -501,19 +501,19 @@
                   exit
               end if
 
-! Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point can be moved.
-              call updateh(knew, beta, vlag, idz, bmat, zmat)
+! Update BMAT, ZMAT and IDZ, so that the KNEW_GEO-th interpolation point can be moved.
+              call updateh(knew_geo, beta, vlag, idz, bmat, zmat)
 
 ! Update the quadratic model.
-              call updateq(idz, knew, bmat(:, knew), moderr, zmat, xpt(:&
-     &, knew), gq, hq, pq)
+              call updateq(idz, knew_geo, bmat(:, knew_geo), moderr, zma&
+     &t, xpt(:, knew_geo), gq, hq, pq)
 
 ! Include the new interpolation point. This should be done after updating BMAT, ZMAT, and
 ! the model.
-              fval(knew) = f
-              xpt(:, knew) = xnew
+              fval(knew_geo) = f
+              xpt(:, knew_geo) = xnew
               if (f < fsave) then
-                  kopt = knew
+                  kopt = knew_geo
               end if
           end if ! The procedure of improving geometry ends.
 
