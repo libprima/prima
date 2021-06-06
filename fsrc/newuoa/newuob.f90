@@ -375,7 +375,7 @@ do tr = 1, maxtr
     ! 3. If SHORTD = FALSE and KNEW_TR = 0, then the trust-region step invokes a function evaluation
     ! at XOPT + D, but [XOPT + D, F(XOPT +D)] is not included into [XPT, FVAL]. In other words, this
     ! function value is discarded. Note that KNEW_TR = 0 only if RATIO <= 0 (see SETREMOVE), so that
-    ! a function value that renders a reduction is never discarded.
+    ! a function value that renders a reduction is never discarded. 
     ! 4. If SHORTD = FALSE and KNEW_TR > 0 and RATIO < TENTH, then [XPT, FVAL] is updated so that
     ! [XPT(KNEW_TR), FVAL(KNEW_TR)] = [XOPT + D, F(XOPT + D)], and the model is updated accordingly,
     ! but such a model will not be used in the next trust-region iteration, because a geometry step

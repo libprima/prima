@@ -79,9 +79,14 @@ if (ratio <= ZERO) then
     sigma(kopt) = -ONE
 end if
 if (maxval(sigma) > ONE .or. ratio > ZERO) then
-! KNEW > 0 unless MAXVAL(SIGMA) <= 1 and RATIO <= ZERO.
-! If RATIO > ZERO (i.e., the new F is smaller than the current FOPT),
-! then we always set KNEW > 0, ensuring XNEW to be included into XPT.
+! KNEW > 0 unless MAXVAL(SIGMA) <= 1 and RATIO <= ZERO. If RATIO > ZERO (i.e., the new F is smaller
+! than the current FOPT), then we always set KNEW > 0, ensuring XNEW to be included into XPT.
+! It is attempting to take the function value into consideration when defining KNEW, for example,
+! if there is no better choice, then set KNEW so that FVAL(KNEW) = MAX(FVAL) as long as 
+! F(XNEW) < MAX(FVAL). However, this is not a good idea, because the definition of KNEW aims at an
+! interpolation set with a good geometry; a set of points with low function values may not have good
+! geometry; in contrast, a set with good geometry needs to include points with relatively high 
+! function values in order to provide  
     knew = int(maxloc(sigma, dim=1), kind(knew))
 else
     knew = 0
