@@ -313,8 +313,11 @@
 %\usepackage{algorithm, algpseudocode, algorithmicx}
 \begin{algorithm}[htbp!]
     \caption{label{alg:newuoa}}
+        \INPUT: $y_0\in \real^n$, $\Delta_0\in (0,+\infty)$, $m\in \{n+2, n+3, \dots, (n+1)(n+2)/2\}$.
     \begin{algorithmic}[1]
-        \State \textbf{Initialize}. $x_0$, $\Int_0 \ni x_0$. 
+        \State \textbf{Initialize}.  Initial interpolation set~$\Int_0$ such that~$y_0\in \Int_0$
+        and~$|\Int_0|=0$. $x_0 = \argmin\{f(y) \mathrel{|}y\in \Int_0\}$, $Q_0 = \argmin\{\|\nabla^2
+        Q\|_F \mathrel{|} >Q(y) = f(y) \text{ for all } y\in \Int_0\}$
     \end{algorithmic}
 \end{algorithm}
 
