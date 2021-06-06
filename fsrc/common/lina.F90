@@ -15,7 +15,7 @@
 
 ! Coded by Zaikun ZHANG in July 2020.
 !
-! Last Modified: Sunday, June 06, 2021 PM06:16:23
+! Last Modified: Sunday, June 06, 2021 PM06:17:57
 
 
 #include "ppf.h"
@@ -752,9 +752,8 @@ end do
 #else
 z = matprod(x, A) + y
 ! This is identical to y + matprod(x, A) even with finite precision.
-! If implemented in MATLAB, pay attention to the sizes of the
-! vectors/matrices; if x and y are columns, then z should be
-! z = (x'*A)' + y (do not calculate A'*x + y, which involves transposing A).
+! If implemented in MATLAB, pay attention to the sizes of the vectors/matrices; if x and y are
+! columns, then z should be z = (x'*A)' + y (do not calculate A'*x+y, which involves transposing A).
 #endif
 end function xA_plus_y
 
@@ -764,8 +763,7 @@ subroutine calquad(d, gq, hq, pq, x, xpt, vquad)
 ! VQUAD = Q(X + D) - Q(X)
 ! with Q being the quadratic function defined via (GQ, HQ, PQ) by
 ! Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
-! where HESSIAN consists of an explicit part HQ and an implicit
-! part PQ in the following way:
+! where HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
 ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
 
 use consts_mod, only : RP, HALF
@@ -846,8 +844,7 @@ do i = 1, int(size(pq), kind(i))
     vquad = vquad + pq(i) * w(i)
 end do
 #else
-! The order of calculation seems quite important. The following
-! order seems to work well.
+! The order of calculation seems quite important. The following order seems to work well.
 ! 1st order term
 vquad = inprod(d, gq)
 s = HALF * d + x  ! Different from the above version.
