@@ -11,11 +11,11 @@
 ! code is short using matrix/vector operations, and because the overhead of subroutine/function
 ! calling can be high in these languages. Here we implement them as subroutines/functions in order
 ! to align with Powell's original code, which cannot be translated directly to matrix/vector
-! operations that produce the same results in finite-precision arithmetic.
+! operations that produce the same results in floating-point arithmetic.
 
 ! Coded by Zaikun ZHANG in July 2020.
 !
-! Last Modified: Sunday, June 06, 2021 PM06:17:57
+! Last Modified: Sunday, June 06, 2021 PM08:27:08
 
 
 #include "ppf.h"
@@ -706,7 +706,7 @@ do j = 1, int(size(A, 2), kind(j))
 end do
 #else
 z = matprod(A, x) + y
-! This is identical to y + matprod(A, x) even with finite precision.
+! This is identical to y + matprod(A, x) in floating-point arithmetic.
 #endif
 end function Ax_plus_y
 
@@ -751,7 +751,7 @@ do i = 1, int(size(A, 1), kind(i))
 end do
 #else
 z = matprod(x, A) + y
-! This is identical to y + matprod(x, A) even with finite precision.
+! This is identical to y + matprod(x, A) in floating-point arithmetic.
 ! If implemented in MATLAB, pay attention to the sizes of the vectors/matrices; if x and y are
 ! columns, then z should be z = (x'*A)' + y (do not calculate A'*x+y, which involves transposing A).
 #endif
