@@ -9,17 +9,16 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 02-Jun-2021.
+! on 06-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
-! GEOMETRY_MOD is a module containing subroutines that are concerned
-! with geometry-improving of the interpolation set XPT.
+! GEOMETRY_MOD is a module containing subroutines that are concerned with geometry-improving of the
+! interpolation set XPT.
 !
-! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
-! and the NEWUOA paper.
+! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Saturday, May 22, 2021 PM04:02:30
+! Last Modified: Sunday, June 06, 2021 PM07:57:08
 
       module geometry_mod
 
@@ -33,12 +32,10 @@
 
       subroutine setremove(idz, kopt, beta, delta, ratio, rho, vlag, xop&
      &t, xpt, zmat, knew)
-! SETREMOVE sets KNEW to the index of the interpolation point that will
-! be deleted AFTER A TRUST REGION STEP. KNEW will be set in a way
-! ensuring that the geometry of XPT is "optimal" after XPT(:, KNEW) is
-! replaced by XNEW = XOPT + D, where D is the trust-region step.  Note
-! that the information of XNEW is included in VLAG and BETA, which are
-! calculated according to D.
+! SETREMOVE sets KNEW to the index of the interpolation point that will be deleted AFTER A TRUST
+! REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
+! XPT(:, KNEW) is replaced by XNEW = XOPT + D, where D is the trust-region step.  Note that the
+! information of XNEW is included in VLAG and BETA, which are calculated according to D.
 
 ! Generic modules
       use consts_mod, only : RP, IK, ONE, ZERO, TENTH, SRNLEN, DEBUGGING
@@ -91,18 +88,24 @@
       sigma = abs(beta * hdiag + vlag(1:npt)**2)
       sigma = sigma * max(xdsq / rhosq, ONE)**3
       if (ratio <= ZERO) then
-! When the new F is not better than the current FOPT,
-! we set SIGMA(KOPT) = -1 to prevent KNEW from being KOPT.
+! If the new F is not better than the current FOPT, we set SIGMA(KOPT) = -1 to prevent KNEW from
+! being KOPT.
           sigma(kopt) = -ONE
       end if
       if (maxval(sigma) > ONE .or. ratio > ZERO) then
-! KNEW > 0 unless MAXVAL(SIGMA) <= 1 and RATIO <= ZERO.
-! If RATIO > ZERO (i.e., the new F is smaller than the current FOPT),
-! then KNEW > 0, ensuring XNEW to be included into XPT.
+! KNEW > 0 unless MAXVAL(SIGMA) <= 1 and RATIO <= ZERO. If RATIO > ZERO (the new F is smaller
+! than the current FOPT), then we always set KNEW > 0, ensuring XNEW to be included into XPT.
           knew = int(maxloc(sigma, dim=1), kind(knew))
       else
           knew = 0
       end if
+! It is attempting to take the function value into consideration when defining KNEW, for example,
+! set KNEW so that FVAL(KNEW) = MAX(FVAL) as long as F(XNEW) < MAX(FVAL) unless there is a better
+! choice. However, this is not a good idea, because the definition of KNEW should benefit the
+! quality of the model that interpolates f at XPT. A set of points with low function values is not
+! necessarily a good interplolation set. In contrast, a good interpolation set needs to include
+! points with relatively high function values; otherwise, the interpolant will unlikely describe the
+! landscape of the function sufficiently.
       end subroutine setremove
 
 
@@ -169,9 +172,8 @@
 ! Calculate VLAG and BETA for D.
       call vlagbeta(idz, kopt, bmat, d, xopt, xpt, zmat, beta, vlag)
 
-! If the cancellation in DENOM is unacceptable, then BIGDEN calculates
-! an alternative model step D.  VLAG and BETA for this D are calculated
-! within BIGDEN.
+! If the cancellation in DENOM is unacceptable, then BIGDEN calculates an alternative model step D.
+! VLAG and BETA for this D are calculated within BIGDEN.
       if (abs(ONE + alpha * beta / vlag(knew)**2) <= 0.8_RP) then
           call bigden(idz, knew, kopt, bmat, xopt, xpt, zmat, d, beta, v&
      &lag)
@@ -185,8 +187,7 @@
 !
 ! max |LFUNC(X + D)|, subject to ||D|| <= DELBAR,
 !
-! where LFUNC is the KNEW-th Lagrange function.
-! See Setion 6 of the NEWUOA paper.
+! where LFUNC is the KNEW-th Lagrange function. See Setion 6 of the NEWUOA paper.
 
 ! Generic modules
       use consts_mod, only : RP, IK, ONE, TWO, HALF, PI, ZERO, DEBUGGING&
@@ -248,10 +249,9 @@
 ! NPT is the number of interpolation equations.
 ! XPT contains the current interpolation points.
 ! BMAT provides the last N ROWs of H.
-! ZMAT and IDZ give a factorization of the first NPT by NPT
-! sub-matrix of H.
+! ZMAT and IDZ give a factorization of the first NPT by NPT sub-matrix of H.
 ! KNEW is the index of the interpolation point to be removed.
-! DELBAR is the trust region bound.
+! DELBAR is the trust region bound for BIGLAG.
 ! D will be set to the step from X to the new point.
 ! HCOL, GC, GD, S and W will be used for working space.
 
@@ -274,8 +274,8 @@
       zknew(1:idz - 1) = -zknew(1:idz - 1)
       hcol = matprod(zmat, zknew)
 
-! Set the unscaled initial direction D. Form the gradient of LFUNC
-! at X, and multiply D by the Hessian of LFUNC.
+! Set the unscaled initial direction D. Form the gradient of LFUNC at X, and multiply D by the
+! Hessian of LFUNC.
       d = xpt(:, knew) - x
       dd = inprod(d, d)
 
@@ -286,8 +286,8 @@
       gc = Ax_plus_y(xpt, hcol * matprod(x, xpt), bmat(:, knew))
 !----------------------------------------------------------------!
 
-! Scale D and GD, with a sign change if required. Set S to another
-! vector in the initial two dimensional subspace.
+! Scale D and GD, with a sign change if required. Set S to another vector in the initial two
+! dimensional subspace.
       gg = inprod(gc, gc)
       sp = inprod(d, gc)
       dhd = inprod(d, gd)
@@ -307,9 +307,8 @@
       gd = scaling * gd
       s = gc + t * gd
 
-! Begin the iteration by overwriting S with a vector that has the
-! required length and direction, except that termination occurs if
-! the given D and S are nearly parallel.
+! Begin the iteration by overwriting S with a vector that has the required length and direction,
+! except that termination occurs if the given D and S are nearly parallel.
       do iterc = 1, n
           dd = inprod(d, d)
           sp = inprod(d, s)
@@ -322,9 +321,8 @@
 
           w = matprod(xpt, hcol * matprod(s, xpt))
 
-! Calculate the coefficients of the objective function on the
-! circle, beginning with the multiplication of S by the second
-! derivative matrix.
+! Calculate the coefficients of the objective function on the circle, beginning with the
+! multiplication of S by the second derivative matrix.
           cf(1) = inprod(s, w)
           cf(2) = inprod(d, gc)
           cf(3) = inprod(s, gc)
@@ -394,13 +392,10 @@
 !
 ! max |SIGMA(X + D)|, subject to ||D|| <= DELBAR,
 !
-! where SIGMA is the denominator sigma in the updating formula
-! (4.11)--(4.12) for H, which is the inverse of the coefficient
-! matrix for the interplolation system (see (3.12)). Indeed, each
-! column of H corresponds to a Lagrange basis function of the
-! interpolation problem.
-! In addition, it sets VLAG and BETA for the selected D.
-! See Setion 6 of the NEWUOA paper.
+! where SIGMA is the denominator sigma in the updating formula (4.11)--(4.12) for H, which is the
+! inverse of the coefficient matrix for the interplolation system (see (3.12)). Indeed, each column
+! of H corresponds to a Lagrange basis function of the interpolation problem. In addition, it sets
+! VLAG and BETA for the selected D. See Setion 6 of the NEWUOA paper.
 
 ! Generic modules
       use consts_mod, only : RP, IK, ONE, TWO, HALF, QUART, PI, ZERO, DE&
@@ -483,23 +478,19 @@
 ! X is the best interpolation point so far.
 ! XPT contains the current interpolation points.
 ! BMAT provides the last N ROWs of H.
-! ZMAT and IDZ give a factorization of the first NPT by NPT
-! sub-matrix of H.
+! ZMAT and IDZ give a factorization of the first NPT by NPT sub-matrix of H.
 ! NDIM is the second dimension of BMAT and has the value NPT + N.
 ! KOPT is the index of the optimal interpolation point.
 ! KNEW is the index of the interpolation point to be removed.
-! D will be set to the step from X to the new point, and on
-! entry it should be the D that was calculated by the last call
-! of BIGLAG. The length of the initial D provides a trust region
-! bound on the final D.
+! D will be set to the step from X to the new point, and on entry it should be the D that was
+! calculated by the last call of BIGLAG. The length of the initial D provides a trust region bound
+! on the final D.
 ! VLAG will be set to Theta*WCHECK+e_b for the final choice of D.
-! BETA will be set to the value that will occur in the updating
-! formula when the KNEW-th interpolation point is moved to its new
-! position.
+! BETA will be set to the value that will occur in the updating formula when the KNEW-th
+! interpolation point is moved to its new position.
 
-! D is calculated in a way that should provide a denominator with
-! a large modulus in the updating formula when the KNEW-th
-! interpolation point is shifted to the new position X + D.
+! D is calculated in a way that should provide a denominator with a large modulus in the updating
+! formula when the KNEW-th interpolation point is shifted to the new position X + D.
 
 
 ! Get and verify the sizes.
@@ -523,11 +514,9 @@
       hcol = matprod(zmat, zknew)
       alpha = hcol(knew)
 
-! The initial search direction D is taken from the last call of
-! BIGLAG, and the initial S is set below, usually to the direction
-! from X to X_KNEW, but a different direction to an
-! interpolation point may be chosen, in order to prevent S from
-! being nearly parallel to D.
+! The initial search direction D is taken from the last call of BIGLAG, and the initial S is set
+! below, usually to the direction from X to X_KNEW, but a different direction to an interpolation
+! point may be chosen, in order to prevent S from being nearly parallel to D.
       dd = inprod(d, d)
       s = xpt(:, knew) - x
       ds = inprod(d, s)
@@ -537,10 +526,10 @@
       if (.not. (ds * ds <= 0.99_RP * dd * ss)) then
           dtest = ds * ds / ss
           xptemp = xpt - spread(x, dim=2, ncopies=npt)
-!----------------------------------------------------------------------!
-!---------!dstemp = matprod(d, xpt) - inprod(x, d) !-------------------!
+!----------------------------------------------------------------!
+!---------!dstemp = matprod(d, xpt) - inprod(x, d) !-------------!
           dstemp = matprod(d, xptemp)
-!----------------------------------------------------------------------!
+!----------------------------------------------------------------!
           sstemp = sum((xptemp)**2, dim=1)
 
           dstemp(kopt) = TWO * ds + ONE
@@ -548,7 +537,7 @@
           k = int(minloc(dstemp * dstemp / sstemp, dim=1), kind(k))
           if ((.not. (dstemp(k) * dstemp(k) / sstemp(k) >= dtest)) .and.&
      & k /= kopt) then
-! Althoguh unlikely, if NaN occurs, it may happen that k = kopt.
+! Although unlikely, if NaN occurs, it may happen that K = KOPT.
               s = xpt(:, k) - x
               ds = dstemp(k)
               ss = sstemp(k)
@@ -558,8 +547,7 @@
       ssden = dd * ss - ds * ds
       densav = ZERO
 
-! Begin the iteration by overwriting S with a vector that has the
-! required length and direction.
+! Begin the iteration by overwriting S with a vector that has the required length and direction.
       do iterc = 1, n
           s = (ONE / sqrt(ssden)) * (dd * s - ds * d)
           xd = inprod(x, d)
@@ -691,8 +679,8 @@
           end if
           angle = unitang * (real(isave, RP) + step)
 
-! Calculate the new parameters of the denominator, the new
-! VLAG vector and the new D. Then test for convergence.
+! Calculate the new parameters of the denominator, the new VLAG vector and the new D. Then test
+! for convergence.
           par(2) = cos(angle)
           par(3) = sin(angle)
           do j = 4, 8, 2
@@ -721,16 +709,15 @@
           end if
           densav = denmax
 
-! Set S to HALF the gradient of the denominator with respect
-! to D.
+! Set S to HALF the gradient of the denominator with respect to D.
           s = tau * bmat(:, knew) + alpha * (dxn * x + xnsq * d - vlag(n&
      &pt + 1:npt + n))
           v = matprod(xnew, xpt)
           v = (tau * hcol - alpha * vlag(1:npt)) * v
-!----------------------------------------------------------------------!
-!---------!s = s + matprod(xpt, v) !-----------------------------------!
+!------------------------------------------------------!
+!---------!s = s + matprod(xpt, v) !-------------------!
           s = Ax_plus_y(xpt, v, s)
-!----------------------------------------------------------------------!
+!------------------------------------------------------!
 
           ss = inprod(s, s)
           ds = inprod(d, s)

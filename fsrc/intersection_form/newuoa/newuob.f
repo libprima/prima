@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 02-Jun-2021.
+! on 06-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -17,7 +17,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Wednesday, June 02, 2021 PM10:48:02
+! Last Modified: Sunday, June 06, 2021 PM05:39:05
 
       module newuob_mod
 
@@ -217,12 +217,13 @@
 ! lead to other returns (NaN in X, NaN in F, trust region subproblem fails, ...); otherwise, the
 ! code will continue to run and possibly get rid of the NaN in the model.
 
-! Set some more initial values.
+! Set some more initial values and parameters.
       rho = rhobeg
       delta = rho
       moderrsave = HUGENUM
       dnormsave = HUGENUM
       itest = 0
+      trtol = 1.0E-2_RP ! Tolerance used in trsapp.
 
 ! Begin the iterative procedure.
 ! After solving a trust-region subproblem, NEWUOA uses 3 boolean variables to control the work flow.
@@ -235,7 +236,6 @@
 ! Solve the trust region subproblem. In Powell's NEWUOA code, VQUAD is not an output of TRSAPP.
 ! Here we output it but will NOT use it (for the moment); it will still be calculated later
 ! by CALQUAD in order to produce the same results as Powell's code.
-          trtol = 1.0E-2_RP ! Tolerance used in trsapp.
           call trsapp(delta, gq, hq, pq, trtol, xopt, xpt, crvmin, vquad&
      &, d, subinfo)
 
@@ -340,7 +340,7 @@
 ! will ensure that the geometry of XPT is "good enough" after the replacement. Note that the
 ! information of XNEW is included in VLAG and BETA, which are calculated according to
 ! D = XNEW - XOPT. KNEW_TR = 0 means it is impossible to obtain a good interpolation set
-! by replacing any current interpolation point by XNEW.
+! by replacing any current interpolation point with XNEW.
               call setremove(idz, kopt, beta, delta, ratio, rho, vlag(1:&
      &npt), xopt, xpt, zmat, knew_tr)
 
@@ -391,15 +391,31 @@
 
 ! Define IMPROVE_GEO, corresponding to box 8 of the NEWUOA paper.
           improve_geo = .false.
-! The geometry of XPT probably needs improvement if the latest model produces a "bad" step, i.e.,
-! 1. the step is too short, or
-! 2. the reduction ratio is too small, or
-! 3. it is impossible to obtain an interpolation set with good geometry by replacing a current
-! interpolation set by the trial point corresponding the step.
-! If REDUCE_RHO_1 = TRUE, meaning that the step is short and the latest model errors have been
-! small, then we do not need to improve the geometry.
-          if (.not. reduce_rho_1 .and. (shortd .or. ratio < TENTH .or. k&
-     &new_tr == 0)) then
+! The geometry of XPT will be improved in three cases specified below. Above all,if
+! REDUCE_RHO_1 = TRUE, meaning that the step is short and the latest model errors have been
+! small, then we do not need to improve the geometry; instead, RHO will be reduced.
+! 1. the trust-region step is too short (SHORTD = TRUE), or
+! 2. it is impossible to obtain an interpolation set with good geometry by replacing a current
+! interpolation point with the trust-region trial point (KNEW_TR = 0), or
+! 3. the trust-region reduction ratio is small (RATION < TENTH).
+! N.B.:
+! 1. KNEW_TR and RATIO are both set if SHORTD = FALSE. So the expression
+! (SHORTD .OR. KNEW_TR == 0 .OR. RATIO < TENTH) will not suffer from unset KNEW_TR or RATIO.
+! 2. If REDUCE_RHO = FALSE and SHORTD = TRUE, then the trust-region step is not tried at all,
+! as no function evaluation is invoked at XOPT + D (If REDUCE_RHO = TRUE, then the trust-region
+! step is not tried either, but the same step will be generated again at the next trust-region
+! iteration after RHO is reduced and DELTA is updated; see the last paragraph of Section 2 of
+! the NEWUOA paper).
+! 3. If SHORTD = FALSE and KNEW_TR = 0, then the trust-region step invokes a function evaluation
+! at XOPT + D, but [XOPT + D, F(XOPT +D)] is not included into [XPT, FVAL]. In other words, this
+! function value is discarded. Note that KNEW_TR = 0 only if RATIO <= 0 (see SETREMOVE), so that
+! a function value that renders a reduction is never discarded.
+! 4. If SHORTD = FALSE and KNEW_TR > 0 and RATIO < TENTH, then [XPT, FVAL] is updated so that
+! [XPT(KNEW_TR), FVAL(KNEW_TR)] = [XOPT + D, F(XOPT + D)], and the model is updated accordingly,
+! but such a model will not be used in the next trust-region iteration, because a geometry step
+! will be invoked to improve the geometry of the interpolation set and update the model again.
+          if (.not. reduce_rho_1 .and. (shortd .or. knew_tr == 0 .or. ra&
+     &tio < TENTH)) then
 ! Find out if the interpolation points are close enough to the best point so far, i.e., all
 ! the points are within a ball centered at XOPT with a radius of 2*DELTA. If not, set
 ! KNEW_GEO to the index of the point that is the farthest away.
