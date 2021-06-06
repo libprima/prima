@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Wednesday, June 02, 2021 PM10:48:02
+! Last Modified: Sunday, June 06, 2021 PM03:16:21
 
 module newuob_mod
 
@@ -360,14 +360,15 @@ do tr = 1, maxtr
 
     ! Define IMPROVE_GEO, corresponding to box 8 of the NEWUOA paper.
     improve_geo = .false.
-    ! The geometry of XPT probably needs improvement if the latest model produces a "bad" step, i.e.,
-    ! 1. the step is too short, or
-    ! 2. the reduction ratio is too small, or
-    ! 3. it is impossible to obtain an interpolation set with good geometry by replacing a current
-    ! interpolation set by the trial point corresponding the step.
-    ! If REDUCE_RHO_1 = TRUE, meaning that the step is short and the latest model errors have been
-    ! small, then we do not need to improve the geometry.
-    if (.not. reduce_rho_1 .and. (shortd .or. ratio < TENTH .or. knew_tr == 0)) then
+    ! The geometry of XPT will be improved in three cases specified below. Above all,if 
+    ! REDUCE_RHO_1 = TRUE, meaning that the step is short and the latest model errors have been
+    ! small, then we do not need to improve the geometry; instead, RHO will be reduced. 
+    ! 1. the trust-region step is too short (SHORTD = TRUE), or
+    ! 2. it is impossible to obtain an interpolation set with good geometry by replacing a current
+    ! interpolation point with the trust-region trial point (KNEW_TR = 0), or
+    ! 3. the trust-region reduction ratio is small.
+    ! N.B.
+    if (.not. reduce_rho_1 .and. (shortd .or. knew_tr == 0 .or. ratio < TENTH)) then
         ! Find out if the interpolation points are close enough to the best point so far, i.e., all
         ! the points are within a ball centered at XOPT with a radius of 2*DELTA. If not, set
         ! KNEW_GEO to the index of the point that is the farthest away.
