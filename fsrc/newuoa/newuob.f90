@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Sunday, June 06, 2021 PM03:16:21
+! Last Modified: Sunday, June 06, 2021 PM04:19:43
 
 module newuob_mod
 
@@ -360,18 +360,26 @@ do tr = 1, maxtr
 
     ! Define IMPROVE_GEO, corresponding to box 8 of the NEWUOA paper.
     improve_geo = .false.
-    ! The geometry of XPT will be improved in three cases specified below. Above all,if 
+    ! The geometry of XPT will be improved in three cases specified below. Above all,if
     ! REDUCE_RHO_1 = TRUE, meaning that the step is short and the latest model errors have been
-    ! small, then we do not need to improve the geometry; instead, RHO will be reduced. 
+    ! small, then we do not need to improve the geometry; instead, RHO will be reduced.
     ! 1. the trust-region step is too short (SHORTD = TRUE), or
     ! 2. it is impossible to obtain an interpolation set with good geometry by replacing a current
     ! interpolation point with the trust-region trial point (KNEW_TR = 0), or
     ! 3. the trust-region reduction ratio is small.
     ! N.B.:
-    ! 1. KNEW_TR and RATIO are both set if SHORTD = FALSE. So the expression 
-    ! (shortd .or. knew_tr == 0 .or. ratio < TENTH) will not suffer from uninitialized KNEW_TR 
-    ! or RATIO.
-    ! 2. If SHORTD = FALSE and RATIO < TENTH,
+    ! 1. KNEW_TR and RATIO are both set if SHORTD = FALSE. So the expression
+    ! (shortd .or. knew_tr == 0 .or. ratio < TENTH) will not suffer from unset KNEW_TR or RATIO.
+    ! 2. If REDUCE_RHO = FALSE and SHORTD = TRUE, then the trust-region step is not tried at all ---
+    ! no function evaluation is invoked at XOPT + D.
+    ! 3. If SHORTD = FALSE and KNEW_TR = 0, then the trust-region step invokes a function evaluation
+    ! at XOPT + D, but [XOPT + D, F(XOPT +D)] is not included into [XPT, FVAL]. In other words, this
+    ! function value is discarded. Note that KNEW_TR = 0 only if RATIO <= 0 (see SETREMOVE), so that
+    ! a function value that renders a reduction is never discarded.
+    ! 4. If SHORTD = FALSE and KNEW_TR > 0 and RATIO < TENTH, then [XPT, FVAL] is updated so that
+    ! [XPT(KNEW_TR), FVAL(KNEW_TR)] = [XOPT + D, F(XOPT + D)], and the model is updated accordingly,
+    ! but such a model will not be used in the next trust-region iteration, because a geometry step
+    ! will be invoked to improve the geometry of the interpolation set and update the model again.
     if (.not. reduce_rho_1 .and. (shortd .or. knew_tr == 0 .or. ratio < TENTH)) then
         ! Find out if the interpolation points are close enough to the best point so far, i.e., all
         ! the points are within a ball centered at XOPT with a radius of 2*DELTA. If not, set

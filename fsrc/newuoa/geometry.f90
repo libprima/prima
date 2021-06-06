@@ -4,7 +4,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Saturday, May 22, 2021 PM04:02:30
+! Last Modified: Sunday, June 06, 2021 PM04:14:27
 
 module geometry_mod
 
@@ -81,7 +81,7 @@ end if
 if (maxval(sigma) > ONE .or. ratio > ZERO) then
 ! KNEW > 0 unless MAXVAL(SIGMA) <= 1 and RATIO <= ZERO.
 ! If RATIO > ZERO (i.e., the new F is smaller than the current FOPT),
-! then KNEW > 0, ensuring XNEW to be included into XPT.
+! then we always set KNEW > 0, ensuring XNEW to be included into XPT.
     knew = int(maxloc(sigma, dim=1), kind(knew))
 else
     knew = 0
