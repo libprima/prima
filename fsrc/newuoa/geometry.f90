@@ -3,7 +3,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Sunday, June 06, 2021 PM05:59:12
+! Last Modified: Sunday, June 06, 2021 PM07:57:08
 
 module geometry_mod
 
@@ -685,10 +685,10 @@ do iterc = 1, n
     s = tau * bmat(:, knew) + alpha * (dxn * x + xnsq * d - vlag(npt + 1:npt + n))
     v = matprod(xnew, xpt)
     v = (tau * hcol - alpha * vlag(1:npt)) * v
-    !----------------------------------------------------------------!
-    !---------!s = s + matprod(xpt, v) !-----------------------------!
+    !------------------------------------------------------!
+    !---------!s = s + matprod(xpt, v) !-------------------!
     s = Ax_plus_y(xpt, v, s)
-    !----------------------------------------------------------------!
+    !------------------------------------------------------!
 
     ss = inprod(s, s)
     ds = inprod(d, s)

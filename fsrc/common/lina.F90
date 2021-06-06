@@ -32,7 +32,7 @@ public :: grota
 public :: calquad
 
 ! When interfaced with MATLAB, the intrinsic matmul and dot_product seem not as efficient as the
-! implementations below (mostly by loops). This may well depend on the machine (e.g., cache size),
+! implementations below (mostly by loops). This may depend on the machine (e.g., cache size),
 ! compiler, compiling options, and MATLAB version.
 interface matprod
     module procedure matprod12, matprod21, matprod22
@@ -342,7 +342,7 @@ z = matmul(x, y)
 #else
 do j = 1, int(size(y, 2), kind(j))
     ! When interfaced with MATLAB, the following seems more efficient than a loop, which is strange
-    ! since inprod itself is implemented by a loop. This may well depend on the machine (e.g., cache
+    ! since inprod itself is implemented by a loop. This may depend on the machine (e.g., cache
     ! size), compiler, compiling options, and MATLAB version.
     z(j) = inprod(x, y(:, j))
 end do
@@ -465,7 +465,7 @@ end if
 z = dot_product(x, y)
 #else
 !z = sum(x*y)
-! Using sum seems not as efficient as a loop when interfaced with MATLAB, but this may well depend
+! Using sum seems not as efficient as a loop when interfaced with MATLAB, but this may depend
 ! on the machine (e.g., cache size), compiler, compiling options, and MATLAB version.
 z = ZERO
 do i = 1, int(size(x), kind(i))
@@ -861,7 +861,7 @@ end subroutine calquad
 
 
 ! function outprod(x, y) result(z)
-! ! OUTPROD calculates the outer product of X and Y, i.e., Z = XY^T
+! ! OUTPROD calculates the outer product of X and Y, i.e., Z = X*Y^T
 ! use consts_mod, only : RP, IK
 ! implicit none
 ! real(RP), intent(in) :: x(:)
