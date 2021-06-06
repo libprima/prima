@@ -4,7 +4,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Sunday, June 06, 2021 PM04:14:27
+! Last Modified: Sunday, June 06, 2021 PM05:10:42
 
 module geometry_mod
 
@@ -82,11 +82,12 @@ if (maxval(sigma) > ONE .or. ratio > ZERO) then
 ! KNEW > 0 unless MAXVAL(SIGMA) <= 1 and RATIO <= ZERO. If RATIO > ZERO (i.e., the new F is smaller
 ! than the current FOPT), then we always set KNEW > 0, ensuring XNEW to be included into XPT.
 ! It is attempting to take the function value into consideration when defining KNEW, for example,
-! if there is no better choice, then set KNEW so that FVAL(KNEW) = MAX(FVAL) as long as 
-! F(XNEW) < MAX(FVAL). However, this is not a good idea, because the definition of KNEW aims at an
-! interpolation set with a good geometry; a set of points with low function values may not have good
-! geometry; in contrast, a set with good geometry needs to include points with relatively high 
-! function values in order to provide  
+! if there is no better choice, then set KNEW so that FVAL(KNEW) = MAX(FVAL) as long as
+! F(XNEW) < MAX(FVAL). However, this is not a good idea, because the definition of KNEW should
+! benefit the quality of the model that interpolates f at XPT. A set of points with low function
+! values is not necessarily a good interplolation set. In contrast, a good interpolation set needs
+! to include points with relatively high function values; otherwise, the interpolant cannot describe
+! the landscape of the function sufficiently.
     knew = int(maxloc(sigma, dim=1), kind(knew))
 else
     knew = 0
