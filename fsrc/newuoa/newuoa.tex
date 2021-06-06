@@ -183,6 +183,7 @@
 \newcommand{\FF}{\mathbb{F}}
 \newcommand{\CC}{\mathbb{C}}
 \newcommand{\Int}{\mathcal{X}}
+\newcommand{\Qua}{\mathcal{Q}}
 \newcommand{\sss}[1]{{\scriptscriptstyle{#1}}}
 \newcommand{\sK}{{\scriptscriptstyle{K}}}
 \newcommand{\sT}{{\scriptscriptstyle{T}}}
@@ -313,11 +314,13 @@
 %\usepackage{algorithm, algpseudocode, algorithmicx}
 \begin{algorithm}[htbp!]
     \caption{label{alg:newuoa}}
-        \INPUT: $y_0\in \real^n$, $\Delta_0\in (0,+\infty)$, $m\in \{n+2, n+3, \dots, (n+1)(n+2)/2\}$.
+        \INPUT: $x_0\in \RR^n$, $\Delta_0\in (0,+\infty)$, $m\in \{n+2, n+3, \dots, (n+1)(n+2)/2\}$.
     \begin{algorithmic}[1]
-        \State \textbf{Initialize}.  Initial interpolation set~$\Int_0$ such that~$y_0\in \Int_0$
-        and~$|\Int_0|=0$. $x_0 = \argmin\{f(y) \mathrel{|}y\in \Int_0\}$, $Q_0 = \argmin\{\|\nabla^2
-        Q\|_F \mathrel{|} >Q(y) = f(y) \text{ for all } y\in \Int_0\}$
+        \State \textbf{Initialize}.
+        Choose~$\Int_0\subset \RR^n$ such that~$x_0\in \Int_0$
+        and~$|\Int_0|=m$.
+        Set $x_0^* = \argmin\{f(x) \mathrel{:}x\in \Int_0\}$, $Q_0 = \argmin\{\|\nabla^2
+        Q\|_\fro \mathrel{:} Q\in\Qua, Q(x) = f(x) \text{ for } x\in \Int_0\}$.
     \end{algorithmic}
 \end{algorithm}
 
