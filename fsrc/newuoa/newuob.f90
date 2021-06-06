@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Sunday, June 06, 2021 PM05:14:08
+! Last Modified: Sunday, June 06, 2021 PM05:39:05
 
 module newuob_mod
 
@@ -366,15 +366,15 @@ do tr = 1, maxtr
     ! 1. the trust-region step is too short (SHORTD = TRUE), or
     ! 2. it is impossible to obtain an interpolation set with good geometry by replacing a current
     ! interpolation point with the trust-region trial point (KNEW_TR = 0), or
-    ! 3. the trust-region reduction ratio is small.
+    ! 3. the trust-region reduction ratio is small (RATION < TENTH).
     ! N.B.:
     ! 1. KNEW_TR and RATIO are both set if SHORTD = FALSE. So the expression
-    ! (shortd .or. knew_tr == 0 .or. ratio < TENTH) will not suffer from unset KNEW_TR or RATIO.
-    ! 2. If REDUCE_RHO = FALSE and SHORTD = TRUE, then the trust-region step is not tried at all ---
-    ! no function evaluation is invoked at XOPT + D (If REDUCE_RHO = TRUE, then the trust-region
-    ! step is not tried either, but the same trust-region step will be generated again at the next
-    ! trust-region iteration after RHO is reduced and DELTA is updated; see the last paragraph of
-    ! Section 2 of the NEWUOA paper).
+    ! (SHORTD .OR. KNEW_TR == 0 .OR. RATIO < TENTH) will not suffer from unset KNEW_TR or RATIO.
+    ! 2. If REDUCE_RHO = FALSE and SHORTD = TRUE, then the trust-region step is not tried at all, 
+    ! as no function evaluation is invoked at XOPT + D (If REDUCE_RHO = TRUE, then the trust-region
+    ! step is not tried either, but the same step will be generated again at the next trust-region 
+    ! iteration after RHO is reduced and DELTA is updated; see the last paragraph of Section 2 of 
+    ! the NEWUOA paper).
     ! 3. If SHORTD = FALSE and KNEW_TR = 0, then the trust-region step invokes a function evaluation
     ! at XOPT + D, but [XOPT + D, F(XOPT +D)] is not included into [XPT, FVAL]. In other words, this
     ! function value is discarded. Note that KNEW_TR = 0 only if RATIO <= 0 (see SETREMOVE), so that
