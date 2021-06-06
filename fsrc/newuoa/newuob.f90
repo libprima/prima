@@ -194,12 +194,13 @@ call inith(ij, xpt, idz, bmat, zmat, subinfo)
 ! lead to other returns (NaN in X, NaN in F, trust region subproblem fails, ...); otherwise, the
 ! code will continue to run and possibly get rid of the NaN in the model.
 
-! Set some more initial values.
+! Set some more initial values and parameters.
 rho = rhobeg
 delta = rho
 moderrsave = HUGENUM
 dnormsave = HUGENUM
 itest = 0
+trtol = 1.0E-2_RP  ! Tolerance used in trsapp.
 
 ! Begin the iterative procedure.
 ! After solving a trust-region subproblem, NEWUOA uses 3 boolean variables to control the work flow.
@@ -212,7 +213,6 @@ do tr = 1, maxtr
     ! Solve the trust region subproblem. In Powell's NEWUOA code, VQUAD is not an output of TRSAPP.
     ! Here we output it but will NOT use it (for the moment); it will still be calculated later
     ! by CALQUAD in order to produce the same results as Powell's code.
-    trtol = 1.0E-2_RP  ! Tolerance used in trsapp.
     call trsapp(delta, gq, hq, pq, trtol, xopt, xpt, crvmin, vquad, d, subinfo)
 
     ! Calculate the length of the trial step D.
@@ -367,7 +367,11 @@ do tr = 1, maxtr
     ! 2. it is impossible to obtain an interpolation set with good geometry by replacing a current
     ! interpolation point with the trust-region trial point (KNEW_TR = 0), or
     ! 3. the trust-region reduction ratio is small.
-    ! N.B.
+    ! N.B.:
+    ! 1. KNEW_TR and RATIO are both set if SHORTD = FALSE. So the expression 
+    ! (shortd .or. knew_tr == 0 .or. ratio < TENTH) will not suffer from uninitialized KNEW_TR 
+    ! or RATIO.
+    ! 2. If SHORTD = FALSE and RATIO < TENTH,
     if (.not. reduce_rho_1 .and. (shortd .or. knew_tr == 0 .or. ratio < TENTH)) then
         ! Find out if the interpolation points are close enough to the best point so far, i.e., all
         ! the points are within a ball centered at XOPT with a radius of 2*DELTA. If not, set
