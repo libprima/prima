@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Sunday, June 06, 2021 PM04:19:43
+! Last Modified: Sunday, June 06, 2021 PM05:14:08
 
 module newuob_mod
 
@@ -371,11 +371,14 @@ do tr = 1, maxtr
     ! 1. KNEW_TR and RATIO are both set if SHORTD = FALSE. So the expression
     ! (shortd .or. knew_tr == 0 .or. ratio < TENTH) will not suffer from unset KNEW_TR or RATIO.
     ! 2. If REDUCE_RHO = FALSE and SHORTD = TRUE, then the trust-region step is not tried at all ---
-    ! no function evaluation is invoked at XOPT + D.
+    ! no function evaluation is invoked at XOPT + D (If REDUCE_RHO = TRUE, then the trust-region
+    ! step is not tried either, but the same trust-region step will be generated again at the next
+    ! trust-region iteration after RHO is reduced and DELTA is updated; see the last paragraph of
+    ! Section 2 of the NEWUOA paper).
     ! 3. If SHORTD = FALSE and KNEW_TR = 0, then the trust-region step invokes a function evaluation
     ! at XOPT + D, but [XOPT + D, F(XOPT +D)] is not included into [XPT, FVAL]. In other words, this
     ! function value is discarded. Note that KNEW_TR = 0 only if RATIO <= 0 (see SETREMOVE), so that
-    ! a function value that renders a reduction is never discarded. 
+    ! a function value that renders a reduction is never discarded.
     ! 4. If SHORTD = FALSE and KNEW_TR > 0 and RATIO < TENTH, then [XPT, FVAL] is updated so that
     ! [XPT(KNEW_TR), FVAL(KNEW_TR)] = [XOPT + D, F(XOPT + D)], and the model is updated accordingly,
     ! but such a model will not be used in the next trust-region iteration, because a geometry step
