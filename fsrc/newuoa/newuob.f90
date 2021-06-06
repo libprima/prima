@@ -312,7 +312,7 @@ do tr = 1, maxtr
         ! will ensure that the geometry of XPT is "good enough" after the replacement. Note that the
         ! information of XNEW is included in VLAG and BETA, which are calculated according to
         ! D = XNEW - XOPT. KNEW_TR = 0 means it is impossible to obtain a good interpolation set
-        ! by replacing any current interpolation point by XNEW.
+        ! by replacing any current interpolation point with XNEW.
         call setremove(idz, kopt, beta, delta, ratio, rho, vlag(1:npt), xopt, xpt, zmat, knew_tr)
 
         if (knew_tr > 0) then
