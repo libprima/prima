@@ -324,8 +324,10 @@
         \State $x_k = \argmin\{f(x) \mathrel{:} x\in \Int_k\}$, $x_k^+ = \argmin\{Q_k(x)\mathrel{:} \|x-x_k\|\le \Delta_k\}$.
         \State $\rho_k = [f(x_k) - f(x_k^+)]/[Q_k(x_k) - Q_k(x_k^+)]$; update~$\Delta_k$ according
         to~$\rho_k$.
-        \State $x_k^{-}= \argmin\{K(\Int_k\cup\{x_k^+\}\setminus\{x\}) \mathrel{:} x \in \Int_{k}\}$
-        \State 
+        \State $x_k^{-}= \argmin\{\kappa(\Int_k, x_k^+, x) \mathrel{:} x \in \Int_{k}\}$
+        \State If~$\kappa(\Int_k, x_k^+, x_k^{-}) \le \kappa_0$, then~$\Int_{k+1} = \Int_k
+        \cup\{x_k^+\}\setminus\{x_k^{-}\}$.
+        \State If $\kappa(\Int_k, x_k^+, x_k^-) > 1$ or~$\rho_k < \eta$
     \end{algorithmic}
 \end{algorithm}
 
