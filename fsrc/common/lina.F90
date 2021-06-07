@@ -15,7 +15,7 @@
 
 ! Coded by Zaikun ZHANG in July 2020.
 !
-! Last Modified: Sunday, June 06, 2021 PM08:27:08
+! Last Modified: Monday, June 07, 2021 PM12:28:25
 
 
 #include "ppf.h"
@@ -712,9 +712,10 @@ end function Ax_plus_y
 
 
 function xA_plus_y(A, x, y) result(z)
-! z = x*A + y
+! z = x*A + y (imagine x, y, z as row vectors).
+! Note that Fortran does not distinguish rows and columns.
 ! If implemented in MATLAB, pay attention to the sizes of the vectors/matrices; if x and y are
-! columns, then z should be z = (x'*A)' + y (do not calculate A'*x + y, which involves transposing A).
+! columns, then z = (x'*A)' + y (do not calculate A'*x + y, which involves transposing A).
 
 use consts_mod, only : RP
 
@@ -752,8 +753,9 @@ end do
 #else
 z = matprod(x, A) + y
 ! This is identical to y + matprod(x, A) in floating-point arithmetic.
+! Note that Fortran does not distinguish rows and columns.
 ! If implemented in MATLAB, pay attention to the sizes of the vectors/matrices; if x and y are
-! columns, then z should be z = (x'*A)' + y (do not calculate A'*x+y, which involves transposing A).
+! columns, then z = (x'*A)' + y (do not calculate A'*x+y, which involves transposing A).
 #endif
 end function xA_plus_y
 
