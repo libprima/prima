@@ -324,10 +324,11 @@
         \begin{equation}
             %\label{eq:}
             \nonumber
-        x_k^* = \argmin_{x\in\Int_k} f(x),
-        \quad Q_k = \argmin_{Q\in\Qua}\{\|\nabla^2 Q - \nabla^2Q_{k-1}\|_\fro \mathrel{:} Q(x)
+        Q_k = \argmin_{Q\in\Qua}\{\|\nabla^2 Q - \nabla^2Q_{k-1}\|_\fro \mathrel{:} Q(x)
         = f(x)~\text{for}~x\in \Int_k\}.
         \end{equation}
+        \State $x_k = \argmin\{Q_k(x)\mathrel{:} \|x-x_k^*\|\le \Delta_k\}$.
+        \State 2 
     \end{algorithmic}
 \end{algorithm}
 
