@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 06-Jun-2021.
+! on 07-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -30,7 +30,7 @@
 
 ! Coded by Zaikun ZHANG in July 2020.
 !
-! Last Modified: Sunday, June 06, 2021 PM08:27:08
+! Last Modified: Monday, June 07, 2021 PM12:31:50
 
 
 #include "ppf.h"
@@ -686,7 +686,7 @@
 
 
       function Ax_plus_y(A, x, y) result(z)
-! z = A*x + y
+! z = A*x + y (imagine x, y, and z as columns)
 
       use consts_mod, only : RP
 
@@ -729,9 +729,10 @@
 
 
       function xA_plus_y(A, x, y) result(z)
-! z = x*A + y
+! z = x*A + y (imagine x, y, z as rows).
+! Note that Fortran does not distinguish rows and columns.
 ! If implemented in MATLAB, pay attention to the sizes of the vectors/matrices; if x and y are
-! columns, then z should be z = (x'*A)' + y (do not calculate A'*x + y, which involves transposing A).
+! columns, then z = (x'*A)' + y (do not calculate A'*x + y, which involves transposing A).
 
       use consts_mod, only : RP
 
@@ -769,8 +770,9 @@
 #else
       z = matprod(x, A) + y
 ! This is identical to y + matprod(x, A) in floating-point arithmetic.
+! Note that Fortran does not distinguish rows and columns.
 ! If implemented in MATLAB, pay attention to the sizes of the vectors/matrices; if x and y are
-! columns, then z should be z = (x'*A)' + y (do not calculate A'*x+y, which involves transposing A).
+! columns, then z = (x'*A)' + y (do not calculate A'*x+y, which involves transposing A).
 #endif
       end function xA_plus_y
 
