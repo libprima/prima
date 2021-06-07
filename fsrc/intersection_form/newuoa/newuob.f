@@ -17,7 +17,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Monday, June 07, 2021 PM03:47:34
+! Last Modified: Monday, June 07, 2021 PM05:22:48
 
       module newuob_mod
 
@@ -58,8 +58,8 @@
 ! See Section 2 of the NEWUOA paper for more information about these variables.
 
 ! Generic modules
-      use consts_mod, only : RP, IK, ZERO, HALF, TENTH, HUGENUM, DEBUGGI&
-     &NG, SRNLEN
+      use consts_mod, only : RP, IK, ZERO, TWO, HALF, TENTH, HUGENUM, DE&
+     &BUGGING, SRNLEN
       use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, TRSUBP_FAIL&
      &ED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
       use infnan_mod, only : is_nan, is_posinf
@@ -121,7 +121,6 @@
       real(RP) :: d(size(x))
       real(RP) :: delbar
       real(RP) :: delta
-      real(RP) :: distsq
       real(RP) :: dnorm
       real(RP) :: dnormsave(3)
       real(RP) :: fopt
@@ -139,7 +138,7 @@
       real(RP) :: vlag(npt + size(x))
       real(RP) :: vquad
       real(RP) :: xbase(size(x))
-      real(RP) :: xdsq(npt)
+      real(RP) :: xdist(npt)
       real(RP) :: xnew(size(x))
       real(RP) :: xopt(size(x))
       real(RP) :: xpt(size(x), npt)
@@ -423,14 +422,13 @@
 ! set. Note that DELTA has been updated before arriving here: if REDUCE_RHO = FALSE and
 ! SHORTD = TRUE, then DELTA was reduced by a factor of 10; if SHORTD = FALSE, then DELTA was
 ! updated by TRRAD after the trust-region iteration.
-              distsq = 4.0_RP * delta * delta
-              xdsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, di&
-     &m=1)
-              if (maxval(xdsq) > distsq) then
-                  knew_geo = int(maxloc(xdsq, dim=1), kind(knew_geo))
-                  distsq = maxval(xdsq)
-                  improve_geo = .true.
-              end if
+!xdsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+!knew_geo = int(maxloc(xdsq, dim=1), kind(knew_geo))
+!improve_geo = (maxval(xdsq) > 4.0_RP * delta * delta)
+              xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))*&
+     &*2, dim=1))
+              knew_geo = int(maxloc(xdist, dim=1), kind(knew_geo))
+              improve_geo = (maxval(xdist) > TWO * delta)
           end if
 
           if (improve_geo) then
@@ -439,7 +437,9 @@
 
 ! Set DELBAR, which will be used as the trust region radius for the geometry-improving
 ! scheme GEOSTEP. We also need it to decide whether to shift XBASE or not.
-              delbar = max(min(TENTH * sqrt(distsq), HALF * delta), rho)
+!delbar = max(min(TENTH * sqrt(maxval(xdsq)), HALF * delta), rho)
+              delbar = max(min(TENTH * maxval(xdist), HALF * delta), rho&
+     &)
 
 ! Shift XBASE if XOPT may be too far from XBASE.
               if (delbar * delbar <= 1.0E-3_RP * inprod(xopt, xopt)) the&

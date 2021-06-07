@@ -121,11 +121,11 @@ C
           KOPT=1
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C     By Zaikun (commented on 02-06-2019; implemented in 2016):
-C     The following line is to make sure that XOPT is always 
-C     up to date even if the first model has not been built yet 
+C     The following line is to make sure that XOPT is always
+C     up to date even if the first model has not been built yet
 C     (i.e., NF<NPT). This is necessary because the code may exit before
 C     the first model is built due to an NaN or nearly infinity value of
-C     F occurs. 
+C     F occurs.
           DO I = 1, N
               XOPT(I)=XPT(1, I)
           END DO
@@ -135,8 +135,8 @@ C     F occurs.
           KOPT=NF
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C     By Zaikun (commented on 02-06-2019; implemented in 2016):
-C     The following line is to make sure that XOPT is always 
-C     up to date even if the first model has not been built yet 
+C     The following line is to make sure that XOPT is always
+C     up to date even if the first model has not been built yet
 C     (i.e., NF<NPT). This is necessary because the code may exit before
 C     the first model is built due to an NaN or nearly infinity value of
           DO I = 1, N
@@ -205,7 +205,7 @@ C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 2019-08-29: For ill-conditioned problems, NaN may occur in the
 C models. In such a case, we terminate the code. Otherwise, the behavior
-C of TRSAPP, BIGDEN, or BIGLAG is not predictable, and Segmentation Fault 
+C of TRSAPP, BIGDEN, or BIGLAG is not predictable, and Segmentation Fault
 C or infinite cycling may happen. This is because any equality/inequality
 C comparison involving NaN returns FALSE, which can lead to unintended
 C behavior of the code, including uninitialized indices.
@@ -213,14 +213,14 @@ C behavior of the code, including uninitialized indices.
           IF (GQ(I) /= GQ(I)) THEN
               INFO = -3
               GOTO 530
-          END IF 
+          END IF
       END DO
       DO I = 1, NH
           IF (HQ(I) /= HQ(I)) THEN
               INFO = -3
               GOTO 530
-          END IF 
-      END DO 
+          END IF
+      END DO
       DO I = 1, NPT
           IF (PQ(I) /= PQ(I)) THEN
               INFO = -3
@@ -355,11 +355,11 @@ C Zaikun 2019-08-29: See the comments below line number 100
           CALL BIGLAG (N,NPT,XOPT,XPT,BMAT,ZMAT,IDZ,NDIM,KNEW,DSTEP,
      1      D,ALPHA,VLAG,VLAG(NPT+1),W,W(NP),W(NP+N))
 C
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC          
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          if (ABS(DSQ-DOT_PRODUCT(D(1:N),D(1:N)))/MAX(ONE,DSQ) >1.0D-13)
 !     & then
 !          PRINT *,'D',(ABS(DSQ-DOT_PRODUCT(D(1:N),D(1:N)))/MAX(ONE,DSQ))
-!        open(2,file ='d',status='old',position='append',action='write')  
+!        open(2,file ='d',status='old',position='append',action='write')
 !        WRITE(2, *) (ABS(DSQ-DOT_PRODUCT(D(1:N),D(1:N)))/MAX(ONE,DSQ))
 !        close(2)
 !          end if
@@ -367,7 +367,7 @@ C
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DNORM = MIN(SQRT(DOT_PRODUCT(D(1:N), D(1:N))), DSTEP)
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC          
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
       END IF
 C
@@ -435,8 +435,8 @@ C
       DNORM = MIN(SQRT(DOT_PRODUCT(D(1:N), D(1:N))), DSTEP)
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       END IF
-      
-      
+
+
 C
 C     Calculate the next value of the objective function.
 C
@@ -458,9 +458,9 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C     By Zaikun (commented on 02-06-2019; implemented in 2016):
-C     Exit if an NaN occurs in X. 
+C     Exit if an NaN occurs in X.
 C     It is necessary to set F to NaN, so that GOTO 530 will lead the
-C     code to 540 (i.e., update X and F).  
+C     code to 540 (i.e., update X and F).
 C     If this happends at the very first function evaluation (i.e.,
 C     NF=1), then it is necessary to set FOPT and XOPT before going to
 C     530, because these two variables have not been set yet (line 70
@@ -715,15 +715,16 @@ C     Alternatively, find out if the interpolation points are close enough
 C     to the best point so far.
 C
       KNEW=0
-  460 DISTSQ=4.0D0*DELTA*DELTA
+!  460 DISTSQ=4.0D0*DELTA*DELTA
+  460 DIST=2.0D0*DELTA
       DO K=1,NPT
           SUM=ZERO
           DO J=1,N
               SUM=SUM+(XPT(K,J)-XOPT(J))**2
           END DO
-          IF (SUM > DISTSQ) THEN
+          IF (DSQRT(SUM) > DIST) THEN
               KNEW=K
-              DISTSQ=SUM
+              DIST=DSQRT(SUM)
           END IF
       END DO
 C
@@ -731,7 +732,7 @@ C     If KNEW is positive, then set DSTEP, and branch back for the next
 C     iteration, which will generate a "model step".
 C
       IF (KNEW > 0) THEN
-          DSTEP=DMAX1(DMIN1(TENTH*DSQRT(DISTSQ),HALF*DELTA),RHO)
+          DSTEP=DMAX1(DMIN1(TENTH*DIST,HALF*DELTA),RHO)
           DSQ=DSTEP*DSTEP
           GOTO 120
       END IF
@@ -788,7 +789,7 @@ C  530 IF (FOPT .LE. F) THEN
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IF (IPRINT .GE. 1) THEN
   546 IF (IPRINT >= 1) THEN
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!      
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           PRINT 550, NF
   550     FORMAT (/4X,'At the return from NEWUOA',5X,
      1      'Number of function values =',I6)
