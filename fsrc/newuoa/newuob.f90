@@ -358,7 +358,7 @@ do tr = 1, maxtr
     ! Before next trust region iteration, we may improve the geometry of XPT or reduce rho
     ! according to IMPROVE_GEO and REDUCE_RHO. Now we decide these two indicators.
 
-    ! Define IMPROVE_GEO, corresponding to box 8 of the NEWUOA paper.
+    ! Define IMPROVE_GEO, which corresponds to box 8 of the NEWUOA paper.
     improve_geo = .false.
     ! The geometry of XPT will be improved in three cases specified below. Above all,if
     ! REDUCE_RHO_1 = TRUE, meaning that the step is short and the latest model errors have been
