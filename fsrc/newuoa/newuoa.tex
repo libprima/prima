@@ -323,13 +323,13 @@
         Q \in \Qua \text{ and } Q(x) = f(x)~\text{for}~x\in \Int_k\}$.
         \State $x_k = \argmin\{f(x) \mathrel{:} x\in \Int_k\}$
         \State $x_k^+ = \argmin\{Q_k(x)\mathrel{:} \|x-x_k\|\le \Delta_k\}$,
-        $x_k^{-}= \argmin\{\kappa(\Int_k, x_k^+, x) \mathrel{:} x \in \Int_{k}\}$
+        $x_k^{-}= \argmin\{\kappa(\Int_k, x_k^+, x) \mathrel{:} x \in \Int_{k}\setminus\{x_k\}\}$
         \State $\rho_k = [f(x_k) - f(x_k^+)]/[Q_k(x_k) - Q_k(x_k^+)]$; update~$\Delta_k$ according to~$\rho_k$.
-        \State If~$\kappa(\Int_k, x_k^+, x_k^{-}) \le \kappa_0$, then
-        set~$\Int_{k+1} = \Int_k \cup\{x_k^+\}\setminus\{x_k^{-}\}$. Increment~$k$. Go to Step~1.
-        \State $y_k^{-} = \argmax\{\|y-x_k\| \mathrel{:} y \in \Int_k\}$,
-        $y_k^{+} = \argmin\{\kappa(\Int_k, y, y_k^{-}) \mathrel{:} \|y-x_k\|\le \bar{\Delta}_k\}$.
-        Set~$\Int_{k+1} = \Int_k \cup\{y_k^+\}\setminus\{y_k^{-}\}$. Increment~$k$. Go to Step~1.
+        \State If~$\rho_k > \eta$ or~$\kappa(\Int_k, x_k^+, x_k^{-}) < \kappa_0$, then
+        set~$\Int_{k+1} = \Int_k \cup\{x_k^+\}\setminus\{x_k^{-}\}$. Otherwise,
+        set~$y_k^{-} = \argmax\{\|y-x_k\| \mathrel{:} y \in \Int_k\}$,
+        $y_k^{+} = \argmin\{\kappa(\Int_k, y, y_k^{-}) \mathrel{:} \|y-x_k\|\le \bar{\Delta}_k\}$,
+        and~$\Int_{k+1} = \Int_k \cup\{y_k^+\}\setminus\{y_k^{-}\}$. Increment~$k$. Go to Step~1.
     \end{algorithmic}
 \end{algorithm}
 
