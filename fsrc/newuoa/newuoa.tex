@@ -327,7 +327,7 @@
         \State $x_k^{-}= \argmin\{\kappa(\Int_k, x_k^+, x) \mathrel{:} x \in \Int_{k}\}$
         \State If~$\kappa(\Int_k, x_k^+, x_k^{-}) \le \kappa_0$, then~$\Int_{k+1} = \Int_k
         \cup\{x_k^+\}\setminus\{x_k^{-}\}$.
-        \State If $\kappa(\Int_k, x_k^+, x_k^-) > 1$ or~$\rho_k < \eta$
+        \State If $\kappa(\Int_k, x_k^+, x_k^-) > \kappa_0$ or~$\rho_k < \eta$
     \end{algorithmic}
 \end{algorithm}
 
