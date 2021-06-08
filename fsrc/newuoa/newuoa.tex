@@ -323,15 +323,15 @@
         Q \in \Qua \text{ and } Q(x) = f(x)~\text{for}~x\in \Int_k\}$.
         \State
         $x_k^+ \approx \argmin\{Q_k(x)\mathrel{:} \|x-x_k\|\le \Delta_k\}$,
+        %\State
+        %$y_k^{-} = \argmax\{\|y-x_k\| \mathrel{:} y \in \Int_k\}$,
+        %$y_k^{+} \approx \argmin\{\kappa(\Int_k, y, y_k^{-}) \mathrel{:} \|y-x_k\|\le \Delta_k\}$
+        \State
+        If $\|x_k^+-x_k\| \ge \alpha \Delta_k$, then 
         $x_k^{-} \approx \argmin\{\kappa(\Int_k, x_k^+, x) \mathrel{:} x \in \Int_{k}\}$
-        \State
-        $y_k^{-} = \argmax\{\|y-x_k\| \mathrel{:} y \in \Int_k\}$,
-        $y_k^{+} \approx \argmin\{\kappa(\Int_k, y, y_k^{-}) \mathrel{:} \|y-x_k\|\le \Delta_k\}$
-        \State
-        If $\|x_k^+-x_k\| \ge \eta \Delta_k$
         then~$\kappa_k = \kappa(\Int_k,x_k^{+}, x_k^{-})$, $\rho_k = [f(x_k) - f(x_k^+)]/[Q_k(x_k)
         - Q_k(x_k^+)]$.
-        \State If~$\|x_k^+-x_k\|<\Delta_k$ or $\rho_k \le 0$ and~$\kappa_k \ge \kappa_0$, then
+        \State If~$\|x_k^+-x_k\|<\eta \Delta_k$ or $\rho_k \le 0$ and~$\kappa_k \ge \kappa_0$, then
         set~$\Int_{k+1} = \Int_k \cup\{x_k^+\}\setminus\{x_k^{-}\}$. Otherwise,
         set
         $y_k^{-} = \argmax\{\|y-x_k\| \mathrel{:} y \in \Int_k\}$,
