@@ -330,10 +330,12 @@
         \State
         If $\|x_k^+-x_k\| \ge \alpha \Delta_k$, then
         \begin{align}
-            \label{eq:}
-            x_k^{-} &\approx \argmin\{\kappa(\Int_k, x_k^+, x) \mathrel{:} x \in \Int_{k}\},\\
-            \rho_k &= [f(x_k) - f(x_k^+)]/[Q_k(x_k) - Q_k(x_k^+)].
+%            \label{eq:} \rho_k &= [f(x_k) - f(x_k^+)]/[Q_k(x_k) - Q_k(x_k^+)],\\
+            \label{eq:} x_k^{-} &\approx \argmin\{\kappa(\Int_k, x_k^+, x) \mathrel{:} x \in
+            \Int_{k}\}.
         \end{align}
+        If~$\kappa(\Int_k,x_k^+,x_k^-)\le \kappa_0$ or~$f(x_k^{+})< f(x_k)$, then~$\Int_{k+1}
+        = \Int_k\cup\{x_k^{+}\}\setminus\{x_k^{-}\}$.
         \State If~$\|x_k^+-x_k\|<\eta \Delta_k$ or $\rho_k \le 0$ and~$\kappa_k \ge \kappa_0$, then
         set~$\Int_{k+1} = \Int_k \cup\{x_k^+\}\setminus\{x_k^{-}\}$. Otherwise,
         set
