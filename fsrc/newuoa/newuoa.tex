@@ -326,6 +326,13 @@
             \label{eq:} x_k^{-} &\approx \argmin\{\kappa(\Int_k, x_k^+, x) \mathrel{:} x \in \Int_k\},\\
             \label{eq:} \rho_k &= [f(x_k) - f(x_k^+)]/[Q_k(x_k) - Q_k(x_k^+)].
             \end{align}
+            Set
+            \begin{equation}
+                \label{eq:}
+                \tau_{k+1} = [\|x_k^{+}-x_k\| > \alpha\Delta_k] \land [\rho_k >0 \lor
+                \kappa(\Int_k\cup\{x_k^+\}\setminus\{x_k^-\}) < \kappa_0]
+            \end{equation}
+            <++>
             If~$\|x_k^+-x_k\|\le \alpha \Delta_k$, then set~$\tau_{k+1} = 0$, $\Int_{k+1} = \Int_k$;
             otherwise, set
           \begin{equation}
@@ -337,39 +344,21 @@
                   \Int_k, & \text{ else}.
               \end{cases}
           \end{equation}
-          Increment~$k$. Go to Step 1.
-
           \State If~$\tau_k=0$, then
           \begin{align}
               \label{eq:}
               x_k^{-} &= \argmax\{\|x-x_k\| \mathrel{:} x \in \Int_k\}, \\
               \label{eq:}
               x_k^{+} &\approx \argmin\{\kappa(\Int_k, x, x_k^{-}) \mathrel{:} \|x-x_k\|\le
-              \Delta_k\}\\
-              \label{eq:}
-              \Int_{k+1} &= \Int_k\cup\{x_k^{+}\}\setminus\{x_k^{-}\}\\
-              \label{eq:}
-              \tau_{k+1} &= 1.
+              \Delta_k\}
           \end{align}
-
-        %$y_k^{-} = \argmax\{\|y-x_k\| \mathrel{:} y \in \Int_k\}$,
-        %$y_k^{+} \approx \argmin\{\kappa(\Int_k, y, y_k^{-}) \mathrel{:} \|y-x_k\|\le \Delta_k\}$
-
-        \State
-        If $\|x_k^+-x_k\| \ge \alpha \Delta_k$, then
-        \begin{align}
-%            \label{eq:} \rho_k &= [f(x_k) - f(x_k^+)]/[Q_k(x_k) - Q_k(x_k^+)],\\
-            \label{eq:} x_k^{-} &\approx \argmin\{\kappa(\Int_k, x_k^+, x) \mathrel{:} x \in
-            \Int_{k}\}.
-        \end{align}
-        If~$\kappa(\Int_k,x_k^+,x_k^-)\le \kappa_0$ or~$f(x_k^{+})< f(x_k)$, then~$\Int_{k+1}
-        = \Int_k\cup\{x_k^{+}\}\setminus\{x_k^{-}\}$.
-        \State If~$\|x_k^+-x_k\|<\eta \Delta_k$ or $\rho_k \le 0$ and~$\kappa_k \ge \kappa_0$, then
-        set~$\Int_{k+1} = \Int_k \cup\{x_k^+\}\setminus\{x_k^{-}\}$. Otherwise,
-        set
-        $y_k^{-} = \argmax\{\|y-x_k\| \mathrel{:} y \in \Int_k\}$,
-        $y_k^{+} = \argmin\{\kappa(\Int_k, y, y_k^{-}) \mathrel{:} \|y-x_k\|\le \Delta_k\}$,
-        and~$\Int_{k+1} = \Int_k \cup\{y_k^+\}\setminus\{y_k^{-}\}$. Increment~$k$. Go to Step~1.
+          and set
+          \begin{equation}
+              \label{eq:}
+              \Int_{k+1} = \Int_k\cup\{x_k^{+}\}\setminus\{x_k^{-}\},
+              \Delta_{k+1} = \Delta_k,
+              \tau_{k+1} = 1.
+          \end{equation}
     \end{algorithmic}
 \end{algorithm}
 
