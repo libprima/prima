@@ -91,7 +91,7 @@
 \newcommand{\FOR}{\textbf{For}~}
 \algrenewcommand\algorithmicrequire{\textbf{Input:}}
 \algrenewcommand\algorithmicensure{\textbf{Output:}}
-\algrenewcommand\alglinenumber[1]{\normalsize #1.}
+%\algrenewcommand\alglinenumber[1]{\normalsize #1.}
 \newcommand*\Let[2]{\State #1 $=$ #2}
 
 
@@ -318,15 +318,20 @@
     Input $\Delta_0\in (0,+\infty)$, $m\in \{n+2, n+3, \dots, (n+1)(n+2)/2\}$,
     and~$\Int_0\subset \RR^n$ with~$x_0\in \Int_0$ and~$|\Int_0|=m$. Set~$Q_{-1} = 0$ and~$k=0$.
     \begin{algorithmic}[1]
-        \State $x_k = \argmin\{f(x) \mathrel{:} x\in \Int_k\}$
         \State $Q_k = \argmin\{\|\nabla^2 Q - \nabla^2Q_{k-1}\|_\fro \mathrel{:}
-        Q \in \Qua \text{ and } Q(x) = f(x)~\text{for}~x\in \Int_k\}$.
-        \State If~\red{$\|\nabla Q_k(x_k)\| \le \eta \Delta_k$}, then set~$\kappa_k = \infty$,~$\rho_k = -1$,
-        and~$\Delta_{k+1} = \Delta_k/2$. Otherwise, set
-        $x_k^+ = \argmin\{Q_k(x)\mathrel{:} \|x-x_k\|\le \Delta_k\}$,
-        $x_k^{-}= \argmin\{\kappa(\Int_k, x_k^+, x) \mathrel{:} x \in \Int_{k}\setminus\{x_k\}\}$,
-        $\kappa_k = \kappa(\Int_k,x_k^{+}, x_k^{-})$, $\rho_k = [f(x_k) - f(x_k^+)]/[Q_k(x_k)
-        - Q_k(x_k^+)]$, and~$\Delta_k$ according to~$\rho_k$.
+        Q \in \Qua \text{ and } Q(x) = f(x)~\text{for}~x\in \Int_k\}$
+        \State $x_k = \argmin\{f(x) \mathrel{:} x\in \Int_k\}$
+        \State $x_k^+ = \argmin\{Q_k(x)\mathrel{:} \|x-x_k\|\le \Delta_k\}$
+        \If{$\|x_k^+-x_k\| \ge \eta \Delta_k$}
+        \State $x_k^{-}= \argmin\{\kappa(\Int_k, x_k^+, x) \mathrel{:} x \in \Int_{k}\setminus\{x_k\}\}$
+        \State $\kappa_k = \kappa(\Int_k,x_k^{+}, x_k^{-})$
+        \State $\rho_k = [f(x_k) - f(x_k^+)]/[Q_k(x_k)- Q_k(x_k^+)]$
+        \State Update~$\Delta_k$ to~$\Delta_{k+1}$ according~to~$\rho_k$
+        \Else
+        \State $\kappa_k = \infty$
+        \State $\rho_k = -\infty$
+        \State $\Delta_{k+1} = \theta\Delta_k$
+        \EndIf
         \State If~$\rho_k > 0$ or~$\kappa_k < \kappa_0$, then
         set~$\Int_{k+1} = \Int_k \cup\{x_k^+\}\setminus\{x_k^{-}\}$. Otherwise,
         set~$y_k^{-} = \argmax\{\|y-x_k\| \mathrel{:} y \in \Int_k\}$,
