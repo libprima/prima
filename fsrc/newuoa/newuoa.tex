@@ -322,11 +322,20 @@
         Define~$x_k = \argmin\{f(x) \mathrel{:} x\in \Int_k\}$.
         \State If  $\tau_k = 1$, then
             \begin{align}
-            \label{eq:} x_k^+ &\approx \argmin\{Q_k(x)\mathrel{:} \|x-x_k\|\le \Delta_k\},\\
+            \label{eq:} x_k^+ &\approx \argmin\{Q_k(x)\mathrel{:} \|x-x_k\|\le \Delta_k\},
+        \end{align}
+        If~$\|x_k^+-x_k\|\le \alpha\Delta_k$, then set
+        \begin{equation*}
+            \Int_{k+1} = \Int_k, \quad
+            \tau_{k+1}  = \tau_k, \quad
+            \Delta_{k1} = \theta \Delta_k.
+        \end{equation*}
+        Otherwise, calculate
+        \begin{align}
             \label{eq:} x_k^{-} &\approx \argmin\{\kappa(\Int_k, x_k^+, x) \mathrel{:} x \in \Int_k\},\\
-            \label{eq:} \rho_k &= [f(x_k) - f(x_k^+)]/[Q_k(x_k) - Q_k(x_k^+)].
+            \label{eq:} \rho_k &= [f(x_k) - f(x_k^+)]/[Q_k(x_k) - Q_k(x_k^+)],
             \end{align}
-            Set
+            and set
             \begin{equation}
                 \label{eq:}
                 \tau_{k+1} = [\|x_k^{+}-x_k\| > \alpha\Delta_k] \land [\rho_k >0 \lor
