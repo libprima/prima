@@ -332,40 +332,32 @@
         \Else
         \begin{align}
             \label{eq:} x_k^{-} &\approx \argmin\{\kappa(\Int_k, x_k^+, x) \mathrel{:} x \in \Int_k\},\\
-            \label{eq:} \rho_k &= [f(x_k) - f(x_k^+)]/[Q_k(x_k) - Q_k(x_k^+)],
+            \label{eq:} \rho_k &= [f(x_k) - f(x_k^+)]/[Q_k(x_k) - Q_k(x_k^+)],\\
+            \label{eq:} \Delta_{k+1} &=
             \end{align}
-            \begin{equation}
-                \label{eq:}
-                \tau_{k+1} = [\|x_k^{+}-x_k\| > \alpha\Delta_k] \land [\rho_k >0 \lor
-                \kappa(\Int_k\cup\{x_k^+\}\setminus\{x_k^-\}) < \kappa_0]
-            \end{equation}
-          \EndIf
-            If~$\|x_k^+-x_k\|\le \alpha \Delta_k$, then set~$\tau_{k+1} = 0$, $\Int_{k+1} = \Int_k$;
-            otherwise, set
+        \If{$\rho_k>0$ or $\kappa(\Int_k,x_k^+, x_k^-) < \kappa_0$}
           \begin{equation}
               \label{eq:}
-              \Int_{k+1} =
-              \begin{cases}
-                  \Int_k\cup\{x_k^+\}\setminus\{x_k^{-}\} & \text{ if } \rho_k>0 \text{ or
-                  } \kappa(\Int_k, x_k^+,x_k^-)< \kappa_0,\\
-                  \Int_k, & \text{ else}.
-              \end{cases}
+              \Gamma_k = 0, \quad \Int_{k+1} = \Int_k\cup\{x_k^+\}\setminus\{x_k^{-}\}
           \end{equation}
-          \State If~$\tau_k=0$, then
+          \Else
+          \begin{equation}
+              \label{eq:}
+              \Gamma_k = 1
+          \end{equation}
+          \EndIf
+          \EndIf
+          \If{$\|x_k^{+}-x_k\|\le \theta \Delta_k$ or }
           \begin{align}
               \label{eq:}
-              x_k^{-} &= \argmax\{\|x-x_k\| \mathrel{:} x \in \Int_k\}, \\
+              y_k^{-} &= \argmax\{\|y-x_k\| \mathrel{:} y \in \Int_k\}, \\
               \label{eq:}
-              x_k^{+} &\approx \argmin\{\kappa(\Int_k, x, x_k^{-}) \mathrel{:} \|x-x_k\|\le
-              \Delta_k\}
+              y_k^{+} &\approx \argmin\{\kappa(\Int_k, y, y_k^{-}) \mathrel{:} \|y-x_k\|\le
+              \Delta_k\}\\
+              \label{eq:}
+              \Int_{k+1} &= \Int_k\cup\{y_k^{+}\}\setminus\{y_k^{-}\}.
           \end{align}
-          and set
-          \begin{equation}
-              \label{eq:}
-              \Int_{k+1} = \Int_k\cup\{x_k^{+}\}\setminus\{x_k^{-}\},
-              \Delta_{k+1} = \Delta_k,
-              \tau_{k+1} = 1.
-          \end{equation}
+          \EndIf
     \end{algorithmic}
 \end{algorithm}
 
