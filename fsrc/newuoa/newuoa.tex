@@ -319,14 +319,17 @@
     and~$\Int_0\subset \RR^n$ with~$x_0\in \Int_0$ and~$|\Int_0|=m$. Set~$Q_{-1} = 0$ and~$k=0$.
     \begin{algorithmic}[1]
         \State Pick~$Q_k \in \{Q\in\Qua\mathrel{:} Q(x)=f(x)~\text{for all}~x\in\Int_k\}$.
-        \State Define~$x_k = \argmin\{f(x) \mathrel{:} x\in \Int_k\}$, and calculate
-            \begin{equation}
-                \label{eq:}
-            x_k^+ \approx \argmin\{Q_k(x)\mathrel{:} \|x-x_k\|\le \Delta_k\},
-            \end{equation}
+        Define~$x_k = \argmin\{f(x) \mathrel{:} x\in \Int_k\}$.
+        \State If  $\tau_k = 1$, then
+            \begin{align}
+            \label{eq:} x_k^+ &\approx \argmin\{Q_k(x)\mathrel{:} \|x-x_k\|\le \Delta_k\},\\
+            \label{eq:} x_k^{-} &\approx \argmin\{\kappa(\Int_k, x_k^+, x) \mathrel{:} x \in \Int_k\},\\
+            \label{eq:} \rho_k &= [f(x_k) - f(x_k^+)]/[Q_k(x_k) - Q_k(x_k^+)].
+            \end{align}
         %\State
         %$y_k^{-} = \argmax\{\|y-x_k\| \mathrel{:} y \in \Int_k\}$,
         %$y_k^{+} \approx \argmin\{\kappa(\Int_k, y, y_k^{-}) \mathrel{:} \|y-x_k\|\le \Delta_k\}$
+
         \State
         If $\|x_k^+-x_k\| \ge \alpha \Delta_k$, then
         \begin{align}
