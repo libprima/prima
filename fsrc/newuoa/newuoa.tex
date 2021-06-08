@@ -318,19 +318,22 @@
     Input $\Delta_0\in (0,+\infty)$, $m\in \{n+2, n+3, \dots, (n+1)(n+2)/2\}$,
     and~$\Int_0\subset \RR^n$ with~$x_0\in \Int_0$ and~$|\Int_0|=m$. Set~$Q_{-1} = 0$ and~$k=0$.
     \begin{algorithmic}[1]
-        \State $x_k = \argmin\{f(x) \mathrel{:} x\in \Int_k\}$
-        \State $Q_k = \argmin\{\|\nabla^2 Q - \nabla^2Q_{k-1}\|_\fro \mathrel{:}
-        Q \in \Qua \text{ and } Q(x) = f(x)~\text{for}~x\in \Int_k\}$.
-        \State
-        $x_k^+ \approx \argmin\{Q_k(x)\mathrel{:} \|x-x_k\|\le \Delta_k\}$,
+        \State Pick~$Q_k \in \{Q\in\Qua\mathrel{:} Q(x)=f(x)~\text{for all}~x\in\Int_k\}$.
+        \State Define~$x_k = \argmin\{f(x) \mathrel{:} x\in \Int_k\}$, and calculate
+            \begin{equation}
+                \label{eq:}
+            x_k^+ \approx \argmin\{Q_k(x)\mathrel{:} \|x-x_k\|\le \Delta_k\},
+            \end{equation}
         %\State
         %$y_k^{-} = \argmax\{\|y-x_k\| \mathrel{:} y \in \Int_k\}$,
         %$y_k^{+} \approx \argmin\{\kappa(\Int_k, y, y_k^{-}) \mathrel{:} \|y-x_k\|\le \Delta_k\}$
         \State
-        If $\|x_k^+-x_k\| \ge \alpha \Delta_k$, then 
-        $x_k^{-} \approx \argmin\{\kappa(\Int_k, x_k^+, x) \mathrel{:} x \in \Int_{k}\}$
-        then~$\kappa_k = \kappa(\Int_k,x_k^{+}, x_k^{-})$, $\rho_k = [f(x_k) - f(x_k^+)]/[Q_k(x_k)
-        - Q_k(x_k^+)]$.
+        If $\|x_k^+-x_k\| \ge \alpha \Delta_k$, then
+        \begin{align}
+            \label{eq:}
+            x_k^{-} &\approx \argmin\{\kappa(\Int_k, x_k^+, x) \mathrel{:} x \in \Int_{k}\},\\
+            \rho_k &= [f(x_k) - f(x_k^+)]/[Q_k(x_k) - Q_k(x_k^+)].
+        \end{align}
         \State If~$\|x_k^+-x_k\|<\eta \Delta_k$ or $\rho_k \le 0$ and~$\kappa_k \ge \kappa_0$, then
         set~$\Int_{k+1} = \Int_k \cup\{x_k^+\}\setminus\{x_k^{-}\}$. Otherwise,
         set
