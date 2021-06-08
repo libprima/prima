@@ -317,31 +317,29 @@
     \caption{\label{alg:newuoa}}
     Input $\Delta_0\in (0,+\infty)$, $m\in \{n+2, n+3, \dots, (n+1)(n+2)/2\}$,
     and~$\Int_0\subset \RR^n$ with~$x_0\in \Int_0$ and~$|\Int_0|=m$. Set~$Q_{-1} = 0$ and~$k=0$.
-    \begin{algorithmic}[1]
+    \begin{algorithmic}
         \State Pick~$Q_k \in \{Q\in\Qua\mathrel{:} Q(x)=f(x)~\text{for all}~x\in\Int_k\}$.
         Define~$x_k = \argmin\{f(x) \mathrel{:} x\in \Int_k\}$.
-        \State If  $\tau_k = 1$, then
+        \State Calculate
             \begin{align}
             \label{eq:} x_k^+ &\approx \argmin\{Q_k(x)\mathrel{:} \|x-x_k\|\le \Delta_k\},
         \end{align}
-        If~$\|x_k^+-x_k\|\le \alpha\Delta_k$, then set
+        \If{$\|x_k^+-x_k\|\le \alpha\Delta_k$}
         \begin{equation*}
-            \Int_{k+1} = \Int_k, \quad
-            \tau_{k+1}  = \tau_k, \quad
-            \Delta_{k1} = \theta \Delta_k.
+            \Gamma_k = 1, \quad
+            \Delta_{k+1} = \theta \Delta_k.
         \end{equation*}
-        Otherwise, calculate
+        \Else
         \begin{align}
             \label{eq:} x_k^{-} &\approx \argmin\{\kappa(\Int_k, x_k^+, x) \mathrel{:} x \in \Int_k\},\\
             \label{eq:} \rho_k &= [f(x_k) - f(x_k^+)]/[Q_k(x_k) - Q_k(x_k^+)],
             \end{align}
-            and set
             \begin{equation}
                 \label{eq:}
                 \tau_{k+1} = [\|x_k^{+}-x_k\| > \alpha\Delta_k] \land [\rho_k >0 \lor
                 \kappa(\Int_k\cup\{x_k^+\}\setminus\{x_k^-\}) < \kappa_0]
             \end{equation}
-            <++>
+          \EndIf
             If~$\|x_k^+-x_k\|\le \alpha \Delta_k$, then set~$\tau_{k+1} = 0$, $\Int_{k+1} = \Int_k$;
             otherwise, set
           \begin{equation}
