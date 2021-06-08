@@ -326,7 +326,32 @@
             \label{eq:} x_k^{-} &\approx \argmin\{\kappa(\Int_k, x_k^+, x) \mathrel{:} x \in \Int_k\},\\
             \label{eq:} \rho_k &= [f(x_k) - f(x_k^+)]/[Q_k(x_k) - Q_k(x_k^+)].
             \end{align}
-        %\State
+            If~$\|x_k^+-x_k\|\le \alpha \Delta_k$, then set~$\tau_{k+1} = 0$, $\Int_{k+1} = \Int_k$;
+            otherwise, set
+          \begin{equation}
+              \label{eq:}
+              \Int_{k+1} =
+              \begin{cases}
+                  \Int_k\cup\{x_k^+\}\setminus\{x_k^{-}\} & \text{ if } \rho_k>0 \text{ or
+                  } \kappa(\Int_k, x_k^+,x_k^-)< \kappa_0,\\
+                  \Int_k, & \text{ else}.
+              \end{cases}
+          \end{equation}
+          Increment~$k$. Go to Step 1.
+
+          \State If~$\tau_k=0$, then
+          \begin{align}
+              \label{eq:}
+              x_k^{-} &= \argmax\{\|x-x_k\| \mathrel{:} x \in \Int_k\}, \\
+              \label{eq:}
+              x_k^{+} &\approx \argmin\{\kappa(\Int_k, x, x_k^{-}) \mathrel{:} \|x-x_k\|\le
+              \Delta_k\}\\
+              \label{eq:}
+              \Int_{k+1} &= \Int_k\cup\{x_k^{+}\}\setminus\{x_k^{-}\}\\
+              \label{eq:}
+              \tau_{k+1} &= 1.
+          \end{align}
+
         %$y_k^{-} = \argmax\{\|y-x_k\| \mathrel{:} y \in \Int_k\}$,
         %$y_k^{+} \approx \argmin\{\kappa(\Int_k, y, y_k^{-}) \mathrel{:} \|y-x_k\|\le \Delta_k\}$
 
