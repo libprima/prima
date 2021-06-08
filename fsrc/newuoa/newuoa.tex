@@ -321,7 +321,7 @@
         \State $x_k = \argmin\{f(x) \mathrel{:} x\in \Int_k\}$
         \State $Q_k = \argmin\{\|\nabla^2 Q - \nabla^2Q_{k-1}\|_\fro \mathrel{:}
         Q \in \Qua \text{ and } Q(x) = f(x)~\text{for}~x\in \Int_k\}$.
-        \State If~$\|\nabla Q_k\| \le \eta \Delta_k$, then set~$\kappa_k = \infty$,~$\rho_k = -1$,
+        \State If~\red{$\|\nabla Q_k(x_k)\| \le \eta \Delta_k$}, then set~$\kappa_k = \infty$,~$\rho_k = -1$,
         and~$\Delta_{k+1} = \Delta_k/2$. Otherwise, set
         $x_k^+ = \argmin\{Q_k(x)\mathrel{:} \|x-x_k\|\le \Delta_k\}$,
         $x_k^{-}= \argmin\{\kappa(\Int_k, x_k^+, x) \mathrel{:} x \in \Int_{k}\setminus\{x_k\}\}$,
@@ -335,7 +335,8 @@
     \end{algorithmic}
 \end{algorithm}
 
-
+How to terminate? Is~$\|\nabla Q_k(x_k)\| \le \eta \Delta_k$ attainable? What about~$\|\nabla
+Q_k(x_k)\| \le \epsilon$? What about~$\|x_k^+-x_k\| \le \eta \Delta_k$?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% References
 % Include references only if \iscite=1, i.e., there are citations.
