@@ -329,7 +329,7 @@
         If~$\|x_k^+-x_k\|\le \alpha\Delta_k$, then set~$\Delta_{k+1} = \theta \Delta_k$.
         Otherwise,
         update~$\Delta_k$ to~$\Delta_{k+1}$ according to~$\rho_k = [f(x_k) - f(x_k^+)]/[Q_k(x_k) - Q_k(x_k^+)]$.
-        \State \textbf{Interpolation set update.}
+        \State \textbf{Interpolation set update}.
         If~$\|x_k^{+}-x_k\| \ge \alpha\Delta_k$, then calculate
         \begin{equation}
             \label{eq:} x_k^{-} \approx \argmin\{\kappa(\Int_k, x_k^+, x) \mathrel{:} x \in
