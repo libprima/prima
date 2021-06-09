@@ -1,5 +1,5 @@
-%\documentclass[12pt,a4paper]{article}  % Use this line if this document will be released
-\documentclass[12pt,a4paper,draft]{article}  % Use this line if this document is a draft
+%\documentclass[11pt,a4paper]{article}  % Use this line if this document will be released
+\documentclass[11pt,a4paper,draft]{article}  % Use this line if this document is a draft
 \usepackage{ifdraft}
 
 
@@ -317,14 +317,15 @@
     \caption{\label{alg:newuoa}}
     Input $\Delta_0\in (0,+\infty)$, $m\in \{n+2, n+3, \dots, (n+1)(n+2)/2\}$,
     and~$\Int_0\subset \RR^n$ with~$x_0\in \Int_0$ and~$|\Int_0|=m$. Set~$Q_{-1} = 0$ and~$k=0$.
-    \begin{algorithmic}
+    \begin{algorithmic}[1]
         \State Pick~$Q_k \in \{Q\in\Qua\mathrel{:} Q(x)=f(x)~\text{for all}~x\in\Int_k\}$.
+        \State
         Define~$x_k = \argmin\{f(x) \mathrel{:} x\in \Int_k\}$.
-        \State Calculate
+        Calculate
             \begin{align}
-            \label{eq:} x_k^+ &\approx \argmin\{Q_k(x)\mathrel{:} \|x-x_k\|\le \Delta_k\},
+                \label{eq:} x_k^+ &\approx \argmin\{Q_k(x)\mathrel{:} \|x-x_k\|\le \Delta_k\}.
         \end{align}
-        If~$\|x_k^+-x_k\|\le \alpha\Delta_k$, then set~$\Delta_{k+1} = \theta \Delta_k$. Otherwise,
+        \State If~$\|x_k^+-x_k\|\le \alpha\Delta_k$, then set~$\Delta_{k+1} = \theta \Delta_k$. Otherwise,
         calculate
         \begin{align}
             \label{eq:} x_k^{-} &\approx \argmin\{\kappa(\Int_k, x_k^+, x) \mathrel{:} x \in \Int_k\},\\
@@ -333,17 +334,16 @@
         update~$\Delta_{k}$ to~$\Delta_{k+1}$ according to~$\rho_k$, and set
         $\Int_{k+1} = \Int_k\cup\{x_k^+\}\setminus\{x_k^{-}\}$
         if $\rho_k>0$ or $\kappa(\Int_k,x_k^+, x_k^-) < \kappa_0$.
-        If~$\|x_k^{+}-x_k\|\le \theta \Delta_k$ or
+        \State If~$\|x_k^{+}-x_k\|\le \alpha \Delta_k$, or~$\|x_k^{+}-x_k\| > \alpha \Delta_k$
+        but~$\rho_k\le 0$ and~$\kappa(\Int_k, x_k^{+},x_k^{-})\ge \kappa_0$, then calculate
           \begin{align}
               \label{eq:}
               y_k^{-} &= \argmax\{\|y-x_k\| \mathrel{:} y \in \Int_k\}, \\
               \label{eq:}
               y_k^{+} &\approx \argmin\{\kappa(\Int_k, y, y_k^{-}) \mathrel{:} \|y-x_k\|\le
-              \Delta_k\}\\
-              \label{eq:}
-              \Int_{k+1} &= \Int_k\cup\{y_k^{+}\}\setminus\{y_k^{-}\}.
+              \Delta_k\},
           \end{align}
-          \EndIf
+       and set~$\Int_{k+1} = \Int_k\cup\{y_k^{+}\}\setminus\{y_k^{-}\}$.
     \end{algorithmic}
 \end{algorithm}
 
