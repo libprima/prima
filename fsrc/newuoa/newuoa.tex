@@ -326,8 +326,8 @@
          \label{eq:}
           x_k^+ \approx \argmin\{Q_k(x)\mathrel{:} \|x-x_k\|\le \Delta_k\}.
         \end{equation}
-        If~$\|x_k^+-x_k\|\le \alpha\Delta_k$, then set~$\Delta_{k+1} = \theta \Delta_k$, and
-        exit if~$\Delta_{k+1}\le \tau$. Otherwise,
+        If~$\|x_k^+-x_k\|\le \alpha\Delta_k$, then set~$\Delta_{k+1} = \theta \Delta_k$.
+        Otherwise,
         update~$\Delta_k$ to~$\Delta_{k+1}$ according to~$\rho_k = [f(x_k) - f(x_k^+)]/[Q_k(x_k) - Q_k(x_k^+)]$.
         \State \textbf{Interpolation set update.}
         If~$\|x_k^{+}-x_k\| \ge \alpha\Delta_k$, then calculate
