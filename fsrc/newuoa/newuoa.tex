@@ -316,26 +316,30 @@
 \begin{algorithm}[htbp!]
     \caption{\label{alg:newuoa}}
     Input $\Delta_0\in (0,+\infty)$, $m\in \{n+2, n+3, \dots, (n+1)(n+2)/2\}$,
-    and~$\Int_0\subset \RR^n$ with~$x_0\in \Int_0$ and~$|\Int_0|=m$. Set~$Q_{-1} = 0$ and~$k=0$.
+    and~$\Int_0\subset \RR^n$ with~$|\Int_0|=m$. Set~$Q_{-1} = 0$ and~$k=0$.
     \begin{algorithmic}[1]
-        \State Pick~$Q_k \in \{Q\in\Qua\mathrel{:} Q(x)=f(x)~\text{for all}~x\in\Int_k\}$.
-        \State
-        Define~$x_k = \argmin\{f(x) \mathrel{:} x\in \Int_k\}$.
-        Calculate
-            \begin{align}
-                \label{eq:} x_k^+ &\approx \argmin\{Q_k(x)\mathrel{:} \|x-x_k\|\le \Delta_k\}.
-        \end{align}
-        \State If~$\|x_k^+-x_k\|\le \alpha\Delta_k$, then set~$\Delta_{k+1} = \theta \Delta_k$. Otherwise,
-        calculate
-        \begin{align}
-            \label{eq:} x_k^{-} &\approx \argmin\{\kappa(\Int_k, x_k^+, x) \mathrel{:} x \in \Int_k\},\\
-            \label{eq:} \rho_k &= [f(x_k) - f(x_k^+)]/[Q_k(x_k) - Q_k(x_k^+)],
-        \end{align}
-        update~$\Delta_{k}$ to~$\Delta_{k+1}$ according to~$\rho_k$, and set
-        $\Int_{k+1} = \Int_k\cup\{x_k^+\}\setminus\{x_k^{-}\}$
+        \State \textbf{Model construction}.
+        Pick~$Q_k \in \{Q\in\Qua\mathrel{:} Q(x)=f(x)~\text{for all}~x\in\Int_k\}$.
+        \State \textbf{Trust-region step}.
+        Define~$x_k = \argmin\{f(x) \mathrel{:} x\in \Int_k\}$. Calculate
+        \begin{equation}
+         \label{eq:}
+          x_k^+ \approx \argmin\{Q_k(x)\mathrel{:} \|x-x_k\|\le \Delta_k\}.
+        \end{equation}
+        If~$\|x_k^+-x_k\|\le \alpha\Delta_k$, then set~$\Delta_{k+1} = \theta \Delta_k$, and
+        exit if~$\Delta_{k+1}\le \tau$. Otherwise,
+        update~$\Delta_k$ to~$\Delta_{k+1}$ according to~$\rho_k = [f(x_k) - f(x_k^+)]/[Q_k(x_k) - Q_k(x_k^+)]$.
+        \State \textbf{Interpolation set update.}
+        If~$\|x_k^{+}-x_k\| \ge \alpha\Delta_k$, then calculate
+        \begin{equation}
+            \label{eq:} x_k^{-} \approx \argmin\{\kappa(\Int_k, x_k^+, x) \mathrel{:} x \in
+            \Int_k\},
+        \end{equation}
+        and set~$\Int_{k+1} = \Int_k\cup\{x_k^+\}\setminus\{x_k^{-}\}$
         if $\rho_k>0$ or $\kappa(\Int_k,x_k^+, x_k^-) < \kappa_0$.
-        \State If~$\|x_k^{+}-x_k\|\le \alpha \Delta_k$, or~$\|x_k^{+}-x_k\| > \alpha \Delta_k$
-        but~$\rho_k\le 0$ and~$\kappa(\Int_k, x_k^{+},x_k^{-})\ge \kappa_0$, then calculate
+        \State \textbf{Geometry improvement}.
+        If~$\|x_k^{+}-x_k\|\le \alpha \Delta_k$, or~$\|x_k^{+}-x_k\| > \alpha \Delta_k$
+        but~$\rho_k\le 0$ and $\kappa(\Int_k, x_k^{+},x_k^{-})\ge \kappa_0$, then calculate
           \begin{align}
               \label{eq:}
               y_k^{-} &= \argmax\{\|y-x_k\| \mathrel{:} y \in \Int_k\}, \\
@@ -347,8 +351,7 @@
     \end{algorithmic}
 \end{algorithm}
 
-How to terminate? Is~$\|\nabla Q_k(x_k)\| \le \eta \Delta_k$ attainable? What about~$\|\nabla
-Q_k(x_k)\| \le \epsilon$? What about~$\|x_k^+-x_k\| \le \eta \Delta_k$?
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% References
 % Include references only if \iscite=1, i.e., there are citations.
