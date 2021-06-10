@@ -17,7 +17,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Thursday, June 10, 2021 PM12:16:23
+! Last Modified: Thursday, June 10, 2021 PM02:30:49
 
       module newuob_mod
 
@@ -360,6 +360,8 @@
                   if (f < fsave) then
                       kopt = knew_tr
                   end if
+                  write (*, *) kopt, int(minloc(fval, dim=1), kind(kopt)&
+     &), fval(:)
               end if
 
 ! Test whether to replace the new quadratic model Q by the least-Frobenius norm interpolant
@@ -525,6 +527,8 @@
 !if (f < fsave) then
 !    kopt = knew_geo
 !end if
+              write (*, *) kopt, int(minloc(fval, dim=1), kind(kopt)), f&
+     &val(:)
           end if ! The procedure of improving geometry ends.
 
 ! If all the interpolation points are close to XOPT (IMPROVE_GEO = FALSE) compared to RHO, and
@@ -612,6 +616,8 @@
           call retmssg(info, iprint, nf, f, x, solver)
       end if
 
+      write (*, *) nf
+      close (6)
       return
       end subroutine newuob
 
