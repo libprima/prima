@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Thursday, June 10, 2021 PM11:59:52
+! Last Modified: Friday, June 11, 2021 AM12:30:24
 
 module newuob_mod
 
@@ -105,7 +105,6 @@ real(RP) :: delbar
 real(RP) :: delta
 real(RP) :: dnorm
 real(RP) :: dnormsave(3)
-real(RP) :: fopt
 real(RP) :: moderr
 real(RP) :: fval(npt)
 real(RP) :: gq(size(x))
@@ -155,9 +154,8 @@ maxtr = maxfun  ! Maximal number of trust region iterations.
 ! Initialize FVAL, XBASE, and XPT.
 call initxf(calfun, iprint, x, rhobeg, ftarget, ij, kopt, nf, fhist, fval, xbase, xhist, xpt, subinfo)
 xopt = xpt(:, kopt)
-fopt = fval(kopt)
 x = xbase + xopt  ! Set X.
-f = fopt  ! Set F.
+f = fval(kopt)  ! Set F.
 
 ! Check whether to return after initialization.
 terminate = (subinfo == FTARGET_ACHIEVED) .or. (subinfo == NAN_X) .or. (subinfo == NAN_INF_F)
@@ -236,8 +234,6 @@ do tr = 1, maxtr
         end if
 
         ! Calculate VLAG and BETA for D. It makes uses of XOPT, so this is done before updating XOPT.
-        !call vlagbeta(idz, kopt, bmat, d, xopt, xpt, zmat, beta, vlag)
-        !call vlagbeta(idz, kopt, bmat, d, xpt(:, kopt), xpt, zmat, beta, vlag)
         call vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
 
         ! Use the current quadratic model to predict the change in F due to the step D.
@@ -269,7 +265,7 @@ do tr = 1, maxtr
         dnormsave = [dnorm, dnormsave(1:size(dnormsave) - 1)]
 
         ! MODERR is the error of the current model in predicting the change in F due to D.
-        moderr = f - fopt - vquad
+        moderr = f - fval(kopt) - vquad
         ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
         moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
 
@@ -278,16 +274,16 @@ do tr = 1, maxtr
             info = TRSUBP_FAILED
             exit
         end if
-        ratio = (f - fopt) / vquad
+        ratio = (f - fval(kopt)) / vquad
         ! Update DELTA. After this, DELTA < DNORM may hold.
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
         if (delta <= 1.5_RP * rho) then
             delta = rho
         end if
 
-        ! Update FOPT and XOPT
-        if (f < fopt) then
-            fopt = f
+        ! Update XOPT. Before KOPT is updated, XOPT and XPT(:, KOPT) may differ.
+        ! The updated XOPT is needed by SETREMOVE.
+        if (f < fval(kopt)) then
             xopt = xnew
         end if
 
@@ -338,17 +334,17 @@ do tr = 1, maxtr
         ! Section 8 of the NEWUOA paper.
         ! 2. TRYQALT is called only after a trust-region step but not after a geometry step. Maybe
         ! this is because the model is expected to be good after a geometry step.
-        ! 3. In theory, the FVAL - FOPT in the call of TRYQALT can be replaced by FVAL + C with any
+        ! 3. In theory, FVAL - FVAL(KOPT) in the call of TRYQALT can be replaced by FVAL + C for any
         ! constant C. This constant will not affect the result in precise arithmetic. Powell chose
         ! C = - FVAL(KOPT_OLD), where KOPT_OLD is the KOPT before the update above (Powell updated
-        ! KOPT after TRYQALT). Here we use C = -FOPT, because it worked slightly better on CUTEst,
+        ! KOPT after TRYQALT). Here we use C = -FVAL(KOPT), as it worked slightly better on CUTEst,
         ! although there is no difference theoretically. Note that FVAL(KOPT_OLD) may not equal
-        ! FOPT_OLD --- it may happen that KNEW_TR = KOPT_OLD so that FVAL(KOPT_OLD) has been revised
-        ! after the last function evaluation.
+        ! F(XOPT_OLD) -- it may happen that KNEW_TR = KOPT_OLD so that FVAL(KOPT_OLD) has been
+        ! revised after the last function evaluation.
         ! 4. Question: Since TRYQALT is invoked only when DELTA equals the current RHO, why not
         ! reset ITEST to 0 when RHO is reduced?
         if (knew_tr > 0 .and. delta <= rho) then  ! DELTA == RHO.
-            call tryqalt(idz, fval - fopt, ratio, bmat(:, 1:npt), zmat, itest, gq, hq, pq)
+            call tryqalt(idz, fval - fval(kopt), ratio, bmat(:, 1:npt), zmat, itest, gq, hq, pq)
         end if
     end if  ! End of if (.not. shortd)
 
@@ -405,8 +401,6 @@ do tr = 1, maxtr
         ! Find a step D so that the geometry of XPT will be improved when XPT(:, KNEW_GEO) is
         ! replaced by XOPT + D. The GEOSTEP subroutine will call Powell's BIGLAG and BIGDEN. It will
         ! also calculate the VLAG and BETA for this D.
-        !call geostep(idz, knew_geo, kopt, bmat, delbar, xopt, xpt, zmat, d, beta, vlag)
-        !call geostep(idz, knew_geo, kopt, bmat, delbar, xpt(:, kopt), xpt, zmat, d, beta, vlag)
         call geostep(idz, knew_geo, kopt, bmat, delbar, xpt, zmat, d, beta, vlag)
 
         ! Use the current quadratic model to predict the change in F due to the step D.
@@ -446,13 +440,12 @@ do tr = 1, maxtr
         dnormsave = [dnorm, dnormsave(1:size(dnormsave) - 1)]
 
         ! MODERR is the error of the current model in predicting the change in F due to D.
-        moderr = f - fopt - vquad
+        moderr = f - fval(kopt) - vquad
         ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
         moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
 
-        ! Update FOPT and XOPT
-        if (f < fopt) then
-            fopt = f
+        ! Update XOPT. Before KOPT is updated, XOPT and XPT(:, KOPT) may differ.
+        if (f < fval(kopt)) then
             xopt = xnew
         end if
 
@@ -514,7 +507,7 @@ do tr = 1, maxtr
             dnormsave = HUGENUM
             moderrsave = HUGENUM
             if (abs(iprint) >= 2) then
-                call rhomssg(iprint, nf, fopt, rho, xbase + xopt, solver)
+                call rhomssg(iprint, nf, fval(kopt), rho, xbase + xopt, solver)
             end if
         end if
     end if  ! The procedure of reducing RHO ends.
@@ -546,10 +539,10 @@ if (maxtr > 0 .and. shortd .and. nf < maxfun) then
     end if
 end if
 
-! Note that (FOPT .LE. F) is FALSE if F is NaN; if F is NaN, it is also necessary to update X and F.
-if (is_nan(f) .or. fopt <= f) then
+! Note that (FVAL(KOPT) .LE. F) = FALSE if F is NaN; if F is NaN, it is necessary to update X and F.
+if (is_nan(f) .or. fval(kopt) <= f) then
     x = xbase + xopt
-    f = fopt
+    f = fval(kopt)
 end if
 
 ! Rearrange FHIST and XHIST so that they are in the chronological order.

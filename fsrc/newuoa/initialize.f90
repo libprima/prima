@@ -4,7 +4,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Sunday, May 23, 2021 AM11:12:05
+! Last Modified: Friday, June 11, 2021 AM12:22:56
 
 module initialize_mod
 
@@ -129,7 +129,7 @@ evaluated = .false.
 npt_revised = npt
 
 
-! Set XPT, FVAL, KOPT, FOPT, and XOPT.
+! Set XPT, FVAL, KOPT, and XOPT.
 
 ! Set XPT(:, 2 : N + 1).
 do k = 2, min(npt, int(n + 1, kind(npt)))
