@@ -17,7 +17,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Thursday, June 10, 2021 AM11:54:14
+! Last Modified: Thursday, June 10, 2021 PM12:16:23
 
       module newuob_mod
 
@@ -356,30 +356,32 @@
 ! Include the new interpolation point. This should be done after updating the model.
                   fval(knew_tr) = f
                   xpt(:, knew_tr) = xnew
-                  kopt = int(minloc(fval, dim=1), kind(kopt))
-!if (f < fsave) then
-!    kopt = knew_tr
-!end if
+!kopt = int(minloc(fval, dim=1), kind(kopt))
+                  if (f < fsave) then
+                      kopt = knew_tr
+                  end if
               end if
 
 ! Test whether to replace the new quadratic model Q by the least-Frobenius norm interpolant
-! Q_alt. Perform the replacement if certain criteria are satisfied. This part is OPTIONAL,
-! but it is crucial for the performance on some problems. See Section 8 of the NEWUOA paper.
-! In NEWUOA, TRYQALT is called only after a trust-region step but not after a geometry step.
-! Maybe this is because the model is expected to be good after a geometry step.
-              if (knew_tr > 0 .and. delta <= rho) then ! DELTA == RHO.
-! In theory, the FVAL - FSAVE in the following line can be replaced by FVAL + C with any
-! constant C. This constant will not affect the result in precise arithmetic. Powell
-! chose C = - FVAL(KOPT_ORIGINAL), where KOPT_ORIGINAL is the KOPT before the update
-! above (i.e., Powell updated KOPT after TRYQALT). Here we use the updated KOPT, because
-! it worked slightly better on CUTEst, although there is no difference theoretically.
-! Note that FVAL(KOPT_ORIGINAL) may not equal FSAVE --- it may happen that
-! KNEW_TR = KOPT_ORIGINAL so that FVAL(KOPT_ORIGINAL) has been revised after the last
-! function evaluation.
-! Question: Since TRYQALT is invoked only when DELTA equals the current RHO, why not
+! Q_alt. Perform the replacement if certain criteria are satisfied.
+! N.B.:
+! 1. This part is OPTIONAL, but it is crucial for the performance on some problems. See
+! Section 8 of the NEWUOA paper.
+! 2. TRYQALT is called only after a trust-region step but not after a geometry step. Maybe
+! this is because the model is expected to be good after a geometry step.
+! 3. In theory, the FVAL - FOPT in the call of TRYQALT can be replaced by FVAL + C with any
+! constant C. This constant will not affect the result in precise arithmetic. Powell chose
+! C = - FVAL(KOPT_OLD), where KOPT_OLD is the KOPT before the update above (Powell updated
+! KOPT after TRYQALT). Here we use C = -FOPT, because it worked slightly better on CUTEst,
+! although there is no difference theoretically. Note that FVAL(KOPT_OLD) may not equal
+! FOPT_OLD --- it may happen that KNEW_TR = KOPT_OLD so that FVAL(KOPT_OLD) has been revised
+! after the last function evaluation.
+! 4. Question: Since TRYQALT is invoked only when DELTA equals the current RHO, why not
 ! reset ITEST to 0 when RHO is reduced?
+              if (knew_tr > 0 .and. delta <= rho) then ! DELTA == RHO.
                   call tryqalt(idz, fval - fval(kopt), ratio, bmat(:, 1:&
      &npt), zmat, itest, gq, hq, pq)
+!call tryqalt(idz, fval - fopt, ratio, bmat(:, 1:npt), zmat, itest, gq, hq, pq)
               end if
           end if ! End of if (.not. shortd)
 
