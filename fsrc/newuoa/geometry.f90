@@ -3,7 +3,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, June 11, 2021 AM12:24:42
+! Last Modified: Friday, June 11, 2021 AM12:50:55
 
 module geometry_mod
 
@@ -20,6 +20,9 @@ subroutine setremove(idz, kopt, beta, delta, ratio, rho, vlag, xopt, xpt, zmat, 
 ! REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
 ! XPT(:, KNEW) is replaced by XNEW = XOPT + D, where D is the trust-region step.  Note that the
 ! information of XNEW is included in VLAG and BETA, which are calculated according to D.
+!
+! N.B.: At the entry of this function is invoked, XOPT may differ from XPT(:, KOPT), because XOPT is
+! updated but KOPT is not. See NEWUOB for details.
 
 ! Generic modules
 use consts_mod, only : RP, IK, ONE, ZERO, TENTH, SRNLEN, DEBUGGING
