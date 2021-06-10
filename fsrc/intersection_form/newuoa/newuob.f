@@ -17,7 +17,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Thursday, June 10, 2021 PM09:37:05
+! Last Modified: Thursday, June 10, 2021 PM10:17:13
 
       module newuob_mod
 
@@ -125,7 +125,6 @@
       real(RP) :: dnormsave(3)
       real(RP) :: fopt
       real(RP) :: moderr
-      real(RP) :: fsave
       real(RP) :: fval(npt)
       real(RP) :: gq(size(x))
       real(RP) :: hq(size(x), size(x))
@@ -255,9 +254,6 @@
           end if
 
           if (.not. shortd) then ! D is long enough.
-! Save the current FOPT in FSAVE. It is needed later.
-!fsave = fopt
-
 ! Shift XBASE if XOPT may be too far from XBASE.
 !if (inprod(d, d) <= 1.0e-3_RP*inprod(xopt, xopt)) then  ! Powell
               if (dnorm * dnorm <= 1.0E-3_RP * inprod(xopt, xopt)) then
@@ -307,7 +303,6 @@
                   info = TRSUBP_FAILED
                   exit
               end if
-!ratio = (f - fsave) / vquad
               ratio = (f - fopt) / vquad
 ! Update DELTA. After this, DELTA < DNORM may hold.
               delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ra&
@@ -354,15 +349,14 @@
                   call updateq(idz, knew_tr, bmat(:, knew_tr), moderr, z&
      &mat, xpt(:, knew_tr), gq, hq, pq)
 
-! Include the new interpolation point. This should be done after updating the model.
+! Include the new interpolation point.
+                  xpt(:, knew_tr) = xnew ! Should be done after UPDATEQ.
                   fval(knew_tr) = f
-                  xpt(:, knew_tr) = xnew
-!if (f < fsave) then
-                  if (ratio > ZERO) then
+                  if (fval(knew_tr) < fval(kopt)) then
                       kopt = knew_tr
                   end if
-! KOPT is NOT identical to MINLOC(FVAL). Indeed, if F = FSAVE and KNEW_TR < KOPT, then
-! MINLOC(FVAL) = KNEW_TR /= KOPT. We do not change KOPT unless necessary.
+! KOPT is NOT identical to MINLOC(FVAL). Indeed, if FVAL(KNEW_TR) = FVAL(KOPT) and
+! KNEW_TR < KOPT, then MINLOC(FVAL) = KNEW_TR /= KOPT. We do not change KOPT in this case.
               end if
 
 ! Test whether to replace the new quadratic model Q by the least-Frobenius norm interpolant
@@ -382,7 +376,6 @@
 ! 4. Question: Since TRYQALT is invoked only when DELTA equals the current RHO, why not
 ! reset ITEST to 0 when RHO is reduced?
               if (knew_tr > 0 .and. delta <= rho) then ! DELTA == RHO.
-!call tryqalt(idz, fval - fval(kopt), ratio, bmat(:, 1:npt), zmat, itest, gq, hq, pq)
                   call tryqalt(idz, fval - fopt, ratio, bmat(:, 1:npt), &
      &zmat, itest, gq, hq, pq)
               end if
@@ -430,9 +423,6 @@
      &== 0 .or. ratio < TENTH) .and. (maxval(xdist) > TWO * delta)
 
           if (improve_geo) then
-! Save the current FOPT in fsave. It is needed later.
-!fsave = fopt
-
 ! Set DELBAR, which will be used as the trust region radius for the geometry-improving
 ! scheme GEOSTEP. We also need it to decide whether to shift XBASE or not.
 !delbar = max(min(TENTH * sqrt(maxval(xdsq)), HALF * delta), rho)
@@ -497,9 +487,6 @@
               if (f < fopt) then
                   fopt = f
                   xopt = xnew
-                  kopt = knew_geo
-! KOPT is NOT identical to MINLOC(FVAL). Indeed, if F = FSAVE and KNEW_TR < KOPT, then
-! MINLOC(FVAL) = KNEW_TR /= KOPT. We do not change KOPT unless necessary.
               end if
 
 ! Check whether to exit.
@@ -519,14 +506,18 @@
 ! Update BMAT, ZMAT and IDZ, so that the KNEW_GEO-th interpolation point can be moved.
               call updateh(knew_geo, beta, vlag, idz, bmat, zmat)
 
-! Update the quadratic model.
+! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
               call updateq(idz, knew_geo, bmat(:, knew_geo), moderr, zma&
      &t, xpt(:, knew_geo), gq, hq, pq)
 
-! Include the new interpolation point. This should be done after updating BMAT, ZMAT, and
-! the model.
+! Include the new interpolation point.
+              xpt(:, knew_geo) = xnew ! Should be done after UPDATEQ.
               fval(knew_geo) = f
-              xpt(:, knew_geo) = xnew
+              if (fval(knew_geo) < fval(kopt)) then
+                  kopt = knew_geo
+              end if
+! KOPT is NOT identical to MINLOC(FVAL). Indeed, if FVAL(KNEW_GEO) = FVAL(KOPT) and
+! KNEW_GEO < KOPT, then MINLOC(FVAL) = KNEW_GEO /= KOPT. We do not change KOPT in this case.
           end if ! The procedure of improving geometry ends.
 
 ! If all the interpolation points are close to XOPT (IMPROVE_GEO = FALSE) compared to RHO, and
