@@ -57,8 +57,7 @@ real(RP), allocatable :: xhist(:, :)
 call fmxVerifyNArgin(nargin, 14)
 call fmxVerifyNArgout(nargout, 6)
 
-! Verify that input 1 is a function handle; the other inputs will
-! be verified when read.
+! Verify that input 1 is a function handle; the other inputs will be verified when read.
 call fmxVerifyClassShape(pinput(1), 'function_handle', 'rank0')
 
 ! Read inputs (there are 14)
@@ -78,8 +77,7 @@ call fmxReadMPtr(pinput(13), maxhist)
 call fmxReadMPtr(pinput(14), output_xhist)
 
 ! Call the Fortran code.
-! There are different cases because XHIST may or may not be passed to
-! the Fortran code.
+! There are different cases because XHIST may or may not be passed to the Fortran code.
 if (output_xhist > 0) then
     call newuoa(calfun, x, f, nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, &
         & eta1, eta2, gamma1, gamma2, xhist=xhist, fhist=fhist, maxhist=maxhist, info=info)
