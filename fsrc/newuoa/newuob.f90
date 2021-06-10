@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Monday, June 07, 2021 PM09:27:52
+! Last Modified: Thursday, June 10, 2021 AM11:57:08
 
 module newuob_mod
 
@@ -326,31 +326,30 @@ do tr = 1, maxtr
             ! Include the new interpolation point. This should be done after updating the model.
             fval(knew_tr) = f
             xpt(:, knew_tr) = xnew
+            kopt = int(minloc(fval, dim=1), kind(kopt))
+            !if (f < fsave) then
+            !    kopt = knew_tr
+            !end if
+        end if
 
-            ! Update KOPT to KNEW_TR if F < FSAVE (i.e., last FOPT).
-            if (f < fsave) then
-                kopt = knew_tr
-            end if
-
-            ! Test whether to replace the new quadratic model Q by the least-Frobenius norm
-            ! interpolant Q_alt. Perform the replacement if certain criteria are satisfied. This
-            ! part is OPTIONAL, but it is crucial for the performance on some problems. See
-            ! Section 8 of the NEWUOA paper.
-            ! In NEWUOA, TRYQALT is called only after a trust-region step but not after a geometry
-            ! step. Maybe this is because the model is expected to be good after a geometry step.
-            if (delta <= rho) then  ! DELTA == RHO.
-                ! In theory, the FVAL - FSAVE in the following line can be replaced by FVAL + C
-                ! with any constant C. This constant will not affect the result in precise
-                ! arithmetic. Powell chose C = - FVAL(KOPT_ORIGINAL), where KOPT_ORIGINAL is the
-                ! KOPT before the update above (i.e., Powell updated KOPT after TRYQALT). Here we
-                ! use the updated KOPT, because it worked slightly better on CUTEst, although there
-                ! is no difference theoretically. Note that FVAL(KOPT_ORIGINAL) may not equal FSAVE
-                ! --- it may happen that KNEW_TR = KOPT_ORIGINAL so that FVAL(KOPT_ORIGINAL) has
-                ! been revised after the last function evaluation.
-                ! Question: Since TRYQALT is invoked only when DELTA equals the current RHO, why not
-                ! reset ITEST to 0 when RHO is reduced?
-                call tryqalt(idz, fval - fval(kopt), ratio, bmat(:, 1:npt), zmat, itest, gq, hq, pq)
-            end if
+        ! Test whether to replace the new quadratic model Q by the least-Frobenius norm interpolant
+        ! Q_alt. Perform the replacement if certain criteria are satisfied. This part is OPTIONAL,
+        ! but it is crucial for the performance on some problems. See Section 8 of the NEWUOA paper.
+        ! In NEWUOA, TRYQALT is called only after a trust-region step but not after a geometry step.
+        ! Maybe this is because the model is expected to be good after a geometry step.
+        if (knew_tr > 0 .and. delta <= rho) then  ! DELTA == RHO.
+            ! In theory, the FVAL - FSAVE in the following line can be replaced by FVAL + C with any
+            ! constant C. This constant will not affect the result in precise arithmetic. Powell
+            ! chose C = - FVAL(KOPT_ORIGINAL), where KOPT_ORIGINAL is the KOPT before the update
+            ! above (i.e., Powell updated KOPT after TRYQALT). Here we use the updated KOPT, because
+            ! it worked slightly better on CUTEst, although there is no difference theoretically.
+            ! Note that FVAL(KOPT_ORIGINAL) may not equal FSAVE --- it may happen that
+            ! KNEW_TR = KOPT_ORIGINAL so that FVAL(KOPT_ORIGINAL) has been revised after the last
+            ! function evaluation.
+            ! Question: Since TRYQALT is invoked only when DELTA equals the current RHO, why not
+            ! reset ITEST to 0 when RHO is reduced?
+            !call tryqalt(idz, fval - fval(kopt), ratio, bmat(:, 1:npt), zmat, itest, gq, hq, pq)
+            call tryqalt(idz, fval - fopt, ratio, bmat(:, 1:npt), zmat, itest, gq, hq, pq)
         end if
     end if  ! End of if (.not. shortd)
 
@@ -387,7 +386,8 @@ do tr = 1, maxtr
     ! 5. DELTA has been updated before arriving here: if REDUCE_RHO = FALSE and SHORTD = TRUE, then
     ! DELTA was reduced by a factor of 10; if SHORTD = FALSE, then DELTA was updated by TRRAD after
     ! the trust-region iteration.
-    ! 6. When SHORTD = FALSE and RATIO > 0, XOPT has been updated after the trust-region iteration.
+    ! 6. When SHORTD = FALSE and KNEW_TR > 0, then XPT has been updated after the trust-region
+    ! iteration; if RATIO > 0 in addition, then XOPT has been updated as well.
     xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1))
     knew_geo = int(maxloc(xdist, dim=1), kind(knew_geo))
     improve_geo = (.not. reduce_rho_1) .and. (shortd .or. knew_tr == 0 .or. ratio < TENTH) .and. (maxval(xdist) > TWO * delta)
@@ -482,9 +482,10 @@ do tr = 1, maxtr
         ! the model.
         fval(knew_geo) = f
         xpt(:, knew_geo) = xnew
-        if (f < fsave) then
-            kopt = knew_geo
-        end if
+        kopt = int(minloc(fval, dim=1), kind(kopt))
+        !if (f < fsave) then
+        !    kopt = knew_geo
+        !end if
     end if  ! The procedure of improving geometry ends.
 
     ! If all the interpolation points are close to XOPT (IMPROVE_GEO = FALSE) compared to RHO, and
