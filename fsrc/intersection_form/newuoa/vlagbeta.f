@@ -22,7 +22,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Saturday, May 22, 2021 PM04:18:51
+! Last Modified: Thursday, June 10, 2021 PM11:48:55
 
       module vlagbeta_mod
 
@@ -34,8 +34,7 @@
       contains
 
 
-      subroutine vlagbeta(idz, kopt, bmat, d, xopt, xpt, zmat, beta, vla&
-     &g)
+      subroutine vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
 ! VLAGBETA is calculates VLAG = Hw and BETA for a given step D.
 ! See (4.11)--(4.12) of the NEWUOA paper.
 
@@ -52,7 +51,6 @@
       integer(IK), intent(in) :: kopt
       real(RP), intent(in) :: bmat(:, :) ! BMAT(N, NPT + N)
       real(RP), intent(in) :: d(:) ! D(N)
-      real(RP), intent(in) :: xopt(:) ! XOPT(N)
       real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
       real(RP), intent(in) :: zmat(:, :) ! ZMAT(NPT, NPT - N - 1)
 
@@ -70,6 +68,7 @@
       real(RP) :: wcheck(size(zmat, 1))
       real(RP) :: wz(size(zmat, 2))
       real(RP) :: wzsave(size(wz))
+      real(RP) :: xopt(size(xpt, 1))
       real(RP) :: xoptsq
       character(len=SRNLEN), parameter :: srname = 'VLAGBETA'
 
@@ -84,11 +83,12 @@
           end if
           call verisize(bmat, n, npt + n)
           call verisize(zmat, npt, int(npt - n - 1, kind(n)))
-          call verisize(xopt, n)
           call verisize(d, n)
           call verisize(vlag, n + npt)
       end if
 
+
+      xopt = xpt(:, kopt)
 
 !----------------------------------------------------------------------!
 ! This is the one of the two places where WCHECK is calculated,

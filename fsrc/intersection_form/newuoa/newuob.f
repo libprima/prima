@@ -17,7 +17,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Thursday, June 10, 2021 PM10:17:13
+! Last Modified: Thursday, June 10, 2021 PM11:59:52
 
       module newuob_mod
 
@@ -40,10 +40,10 @@
 ! XOPT is the displacement from XBASE of the best vector of variables so far (i.e., the one provides
 ! the least calculated F so far).
 ! D is reserved for trial steps from XOPT.
-! XNEW = XOPT+D, corresponding to the vector of variables for the next calculation of F.
+! XNEW = XOPT + D, corresponding to the vector of variables for the next calculation of F.
 ! [XPT, FVAL, KOPT] describes the interpolation set:
 ! XPT contains the interpolation points relative to XBASE, each COLUMN for a point; FVAL holds the
-! values of F at the interpolation points; KOPT is the index of XOPT in XPT (XPT(:,KOPT)=XOPT).
+! values of F at the interpolation points; KOPT is the index of XOPT in XPT (XPT(:,KOPT) = XOPT).
 ! [GQ, HQ, PQ] describes the quadratic model: GQ will hold the gradient of the quadratic model at
 ! XBASE; HQ will hold the explicit second order derivatives of the quadratic model; PQ will contain
 ! the parameters of the implicit second order derivatives of the quadratic model.
@@ -262,8 +262,9 @@
               end if
 
 ! Calculate VLAG and BETA for D. It makes uses of XOPT, so this is done before updating XOPT.
-              call vlagbeta(idz, kopt, bmat, d, xopt, xpt, zmat, beta, v&
-     &lag)
+!call vlagbeta(idz, kopt, bmat, d, xopt, xpt, zmat, beta, vlag)
+!call vlagbeta(idz, kopt, bmat, d, xpt(:, kopt), xpt, zmat, beta, vlag)
+              call vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
 
 ! Use the current quadratic model to predict the change in F due to the step D.
               call calquad(d, gq, hq, pq, xopt, xpt, vquad)
@@ -356,7 +357,7 @@
                       kopt = knew_tr
                   end if
 ! KOPT is NOT identical to MINLOC(FVAL). Indeed, if FVAL(KNEW_TR) = FVAL(KOPT) and
-! KNEW_TR < KOPT, then MINLOC(FVAL) = KNEW_TR /= KOPT. We do not change KOPT in this case.
+! KNEW_TR < KOPT, then MINLOC(FVAL) = KNEW_TR /= KOPT. Do not change KOPT in this case.
               end if
 
 ! Test whether to replace the new quadratic model Q by the least-Frobenius norm interpolant
@@ -439,8 +440,10 @@
 ! Find a step D so that the geometry of XPT will be improved when XPT(:, KNEW_GEO) is
 ! replaced by XOPT + D. The GEOSTEP subroutine will call Powell's BIGLAG and BIGDEN. It will
 ! also calculate the VLAG and BETA for this D.
-              call geostep(idz, knew_geo, kopt, bmat, delbar, xopt, xpt,&
-     & zmat, d, beta, vlag)
+!call geostep(idz, knew_geo, kopt, bmat, delbar, xopt, xpt, zmat, d, beta, vlag)
+!call geostep(idz, knew_geo, kopt, bmat, delbar, xpt(:, kopt), xpt, zmat, d, beta, vlag)
+              call geostep(idz, knew_geo, kopt, bmat, delbar, xpt, zmat,&
+     & d, beta, vlag)
 
 ! Use the current quadratic model to predict the change in F due to the step D.
               call calquad(d, gq, hq, pq, xopt, xpt, vquad)
@@ -517,7 +520,7 @@
                   kopt = knew_geo
               end if
 ! KOPT is NOT identical to MINLOC(FVAL). Indeed, if FVAL(KNEW_GEO) = FVAL(KOPT) and
-! KNEW_GEO < KOPT, then MINLOC(FVAL) = KNEW_GEO /= KOPT. We do not change KOPT in this case.
+! KNEW_GEO < KOPT, then MINLOC(FVAL) = KNEW_GEO /= KOPT. Do not change KOPT in this case.
           end if ! The procedure of improving geometry ends.
 
 ! If all the interpolation points are close to XOPT (IMPROVE_GEO = FALSE) compared to RHO, and

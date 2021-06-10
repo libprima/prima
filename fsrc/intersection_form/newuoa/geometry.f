@@ -18,7 +18,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Sunday, June 06, 2021 PM07:57:08
+! Last Modified: Thursday, June 10, 2021 PM11:59:24
 
       module geometry_mod
 
@@ -109,8 +109,8 @@
       end subroutine setremove
 
 
-      subroutine geostep(idz, knew, kopt, bmat, delbar, xopt, xpt, zmat,&
-     & d, beta, vlag)
+      subroutine geostep(idz, knew, kopt, bmat, delbar, xpt, zmat, d, be&
+     &ta, vlag)
 
 ! Generic modules
       use consts_mod, only : RP, IK, ONE, DEBUGGING, SRNLEN
@@ -128,7 +128,6 @@
       integer(IK), intent(in) :: kopt
       real(RP), intent(in) :: bmat(:, :) ! BMAT(N, NPT+N)
       real(RP), intent(in) :: delbar
-      real(RP), intent(in) :: xopt(:) ! XOPT(N)
       real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
       real(RP), intent(in) :: zmat(:, :) ! ZMAT(NPT, NPT - N - 1)
 
@@ -143,8 +142,9 @@
       integer(IK) :: n
       integer(IK) :: npt
       real(RP) :: alpha
+      real(RP) :: xopt(size(xpt, 1))
       real(RP) :: zknew(size(zmat, 2))
-      character(len=SRNLEN), parameter :: srname = 'AMELIORGEO'
+      character(len=SRNLEN), parameter :: srname = 'GEOSTEP'
 
 
 ! Get and verify the sizes.
@@ -155,12 +155,13 @@
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(XPT) is invalid')
           end if
-          call verisize(xopt, n)
           call verisize(bmat, n, npt + n)
           call verisize(zmat, npt, int(npt - n - 1, kind(n)))
           call verisize(vlag, npt + n)
           call verisize(d, n)
       end if
+
+      xopt = xpt(:, kopt)
 
       call biglag(idz, knew, delbar, bmat, xopt, xpt, zmat, d)
 
@@ -170,7 +171,7 @@
       alpha = inprod(zmat(knew, :), zknew)
 
 ! Calculate VLAG and BETA for D.
-      call vlagbeta(idz, kopt, bmat, d, xopt, xpt, zmat, beta, vlag)
+      call vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
 
 ! If the cancellation in DENOM is unacceptable, then BIGDEN calculates an alternative model step D.
 ! VLAG and BETA for this D are calculated within BIGDEN.
