@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 10-Jun-2021.
+! on 11-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -18,7 +18,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Thursday, June 10, 2021 PM11:59:24
+! Last Modified: Friday, June 11, 2021 AM12:08:02
 
       module geometry_mod
 
@@ -161,7 +161,7 @@
           call verisize(d, n)
       end if
 
-      xopt = xpt(:, kopt)
+      xopt = xpt(:, kopt) ! Read XOPT.
 
       call biglag(idz, knew, delbar, bmat, xopt, xpt, zmat, d)
 
@@ -176,8 +176,7 @@
 ! If the cancellation in DENOM is unacceptable, then BIGDEN calculates an alternative model step D.
 ! VLAG and BETA for this D are calculated within BIGDEN.
       if (abs(ONE + alpha * beta / vlag(knew)**2) <= 0.8_RP) then
-          call bigden(idz, knew, kopt, bmat, xopt, xpt, zmat, d, beta, v&
-     &lag)
+          call bigden(idz, knew, kopt, bmat, xpt, zmat, d, beta, vlag)
       end if
 
       end subroutine geostep
@@ -387,11 +386,10 @@
       end subroutine biglag
 
 
-      subroutine bigden(idz, knew, kopt, bmat, x, xpt, zmat, d, beta, vl&
-     &ag)
+      subroutine bigden(idz, knew, kopt, bmat, xpt, zmat, d, beta, vlag)
 ! BIGDEN calculates a D by approximately solving
 !
-! max |SIGMA(X + D)|, subject to ||D|| <= DELBAR,
+! max |SIGMA(XOPT + D)|, subject to ||D|| <= DELBAR,
 !
 ! where SIGMA is the denominator sigma in the updating formula (4.11)--(4.12) for H, which is the
 ! inverse of the coefficient matrix for the interplolation system (see (3.12)). Indeed, each column
@@ -411,7 +409,6 @@
       integer(IK), intent(in) :: knew
       integer(IK), intent(in) :: kopt
       real(RP), intent(in) :: bmat(:, :) ! BMAT(N, NPT+N)
-      real(RP), intent(in) :: x(:) ! X(N)
       real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
       real(RP), intent(in) :: zmat(:, :) ! ZMAT(NPT, NPT - N - 1)
 
@@ -451,8 +448,8 @@
       real(RP) :: dxn
       real(RP) :: hcol(size(xpt, 2))
       real(RP) :: par(9)
-      real(RP) :: prod(size(xpt, 2) + size(x), 5)
-      real(RP) :: s(size(x))
+      real(RP) :: prod(size(xpt, 2) + size(xpt, 1), 5)
+      real(RP) :: s(size(xpt, 1))
       real(RP) :: ss
       real(RP) :: ssden
       real(RP) :: sstemp(size(xpt, 2))
@@ -463,10 +460,11 @@
       real(RP) :: tempc
       real(RP) :: unitang
       real(RP) :: v(size(xpt, 2))
-      real(RP) :: w(size(xpt, 2) + size(x), 5)
+      real(RP) :: w(size(xpt, 2) + size(xpt, 1), 5)
       real(RP) :: wz(size(zmat, 2))
+      real(RP) :: x(size(xpt, 1))
       real(RP) :: xd
-      real(RP) :: xnew(size(x))
+      real(RP) :: xnew(size(xpt, 1))
       real(RP) :: xnsq
       real(RP) :: xptemp(size(xpt, 1), size(xpt, 2))
       real(RP) :: xs
@@ -508,6 +506,8 @@
           call verisize(vlag, npt + n)
           call verisize(d, n)
       end if
+
+      x = xpt(:, kopt) ! For simplicity, use x to denote XOPT.
 
 ! Store the first NPT elements of the KNEW-th column of H in HCOL.
       zknew = zmat(knew, :)

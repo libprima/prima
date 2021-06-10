@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 10-Jun-2021.
+! on 11-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -22,7 +22,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Thursday, June 10, 2021 PM11:48:55
+! Last Modified: Friday, June 11, 2021 AM12:04:47
 
       module vlagbeta_mod
 
@@ -87,8 +87,7 @@
           call verisize(vlag, n + npt)
       end if
 
-
-      xopt = xpt(:, kopt)
+      xopt = xpt(:, kopt) ! Read XOPT.
 
 !----------------------------------------------------------------------!
 ! This is the one of the two places where WCHECK is calculated,
