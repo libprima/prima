@@ -2,16 +2,15 @@
 !
 ! Coded by Zaikun Zhang in July 2020.
 !
-! Last Modified: Sunday, May 23, 2021 PM04:54:35
+! Last Modified: Thursday, June 10, 2021 PM10:35:24
 
 
 #include "fintrf.h"
 
 ! Entry point to Fortran MEX function
 subroutine mexFunction(nargout, poutput, nargin, pinput)
-! If the binary MEX file is named as FUNCTION_NAME.mex***
-! (file-name extension depends on the platform), then the
-! following function is callable in matlab:
+! If the binary MEX file is named as FUNCTION_NAME.mex*** (file-name extension depends on the
+! platform), then the following function is callable in matlab:
 ! [xopt, fopt, info, nf, xhist, fhist] = FUNCTION_NAME(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, iprint, maxhist, output_xhist)
 
 ! Generic modules
@@ -27,8 +26,7 @@ use prob_mod, only : fun_ptr, calfun
 
 implicit none
 
-! mexFunction arguments (dummy variables)
-! nargout and nargin are of type INTEGER in MATLAB 2019a documents
+! mexFunction arguments nargout and nargin are of type INTEGER in MATLAB 2019a documents.
 integer, intent(in) :: nargout, nargin
 mwPointer, intent(in) :: pinput(nargin)
 mwPointer, intent(out) :: poutput(nargout)
@@ -86,9 +84,8 @@ else
         & eta1, eta2, gamma1, gamma2, fhist=fhist, maxhist=maxhist, info=info)
 end if
 
-! After the Fortran code, XHIST may not be allocated, because it may not
-! have been passed to the Fortran code. We allocate it here. Otherwise,
-! fmxWriteMPtr will fail.
+! After the Fortran code, XHIST may not be allocated, because it may not have been passed to the
+! Fortran code. We allocate it here. Otherwise, fmxWriteMPtr will fail.
 if (.not. allocated(xhist)) then
     call fmxAllocate(xhist, int(size(x), IK), 0_IK)
 end if
@@ -102,9 +99,8 @@ call fmxWriteMPtr(xhist(:, 1:min(int(nf), size(xhist, 2))), poutput(5))
 call fmxWriteMPtr(fhist(1:min(int(nf), size(fhist))), poutput(6), 'row')
 ! N.B.:
 ! 1. INT(NF) converts NF to the default integer type; if not, MIN may complain.
-! 2. It can happen that
-!    0 < SIZE(XHIST, 2) < MAXHIST or 0 < SIZE(FHIST) < MAXHIST
-!    due to the memory limit in the Fortran code.
+! 2. It can happen that 0 < SIZE(XHIST, 2) < MAXHIST or 0 < SIZE(FHIST) < MAXHIST due to the memory
+! limit in the Fortran code.
 
 ! Free memory. Indeed, automatic deallocation would take place.
 deallocate (x) ! Allocated by fmxReadMPtr.
