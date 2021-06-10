@@ -17,7 +17,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Thursday, June 10, 2021 PM02:47:35
+! Last Modified: Thursday, June 10, 2021 PM02:59:27
 
       module newuob_mod
 
@@ -256,7 +256,7 @@
 
           if (.not. shortd) then ! D is long enough.
 ! Save the current FOPT in FSAVE. It is needed later.
-              fsave = fopt
+!fsave = fopt
 
 ! Shift XBASE if XOPT may be too far from XBASE.
 !if (inprod(d, d) <= 1.0e-3_RP*inprod(xopt, xopt)) then  ! Powell
@@ -298,9 +298,23 @@
               dnormsave = [dnorm, dnormsave(1:size(dnormsave) - 1)]
 
 ! MODERR is the error of the current model in predicting the change in F due to D.
-              moderr = f - fsave - vquad
+              moderr = f - fopt - vquad
 ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
               moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
+
+! Calculate the reduction ratio and update DELTA accordingly.
+              if (is_nan(vquad) .or. vquad >= ZERO) then
+                  info = TRSUBP_FAILED
+                  exit
+              end if
+!ratio = (f - fsave) / vquad
+              ratio = (f - fopt) / vquad
+! Update DELTA. After this, DELTA < DNORM may hold.
+              delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ra&
+     &tio)
+              if (delta <= 1.5_RP * rho) then
+                  delta = rho
+              end if
 
 ! Update FOPT and XOPT
               if (f < fopt) then
@@ -320,19 +334,6 @@
               if (nf >= maxfun) then
                   info = MAXFUN_REACHED
                   exit
-              end if
-
-! Calculate the reduction ratio and update DELTA accordingly.
-              if (is_nan(vquad) .or. vquad >= ZERO) then
-                  info = TRSUBP_FAILED
-                  exit
-              end if
-              ratio = (f - fsave) / vquad
-! Update DELTA. After this, DELTA < DNORM may hold.
-              delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ra&
-     &tio)
-              if (delta <= 1.5_RP * rho) then
-                  delta = rho
               end if
 
 ! Set KNEW_TR to the index of the interpolation point that will be replaced by XNEW. KNEW_TR
@@ -356,7 +357,8 @@
 ! Include the new interpolation point. This should be done after updating the model.
                   fval(knew_tr) = f
                   xpt(:, knew_tr) = xnew
-                  if (f < fsave) then
+!if (f < fsave) then
+                  if (ratio > ZERO) then
                       kopt = knew_tr
                   end if
 ! KOPT is NOT identical to INT(MINLOC(FVAL, DIM=1), KIND(KOPT)). Indeed, if F = FSAVE
@@ -430,7 +432,7 @@
 
           if (improve_geo) then
 ! Save the current FOPT in fsave. It is needed later.
-              fsave = fopt
+!fsave = fopt
 
 ! Set DELBAR, which will be used as the trust region radius for the geometry-improving
 ! scheme GEOSTEP. We also need it to decide whether to shift XBASE or not.
@@ -488,7 +490,7 @@
               dnormsave = [dnorm, dnormsave(1:size(dnormsave) - 1)]
 
 ! MODERR is the error of the current model in predicting the change in F due to D.
-              moderr = f - fsave - vquad
+              moderr = f - fopt - vquad
 ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
               moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
 
@@ -496,6 +498,10 @@
               if (f < fopt) then
                   fopt = f
                   xopt = xnew
+                  kopt = knew_geo
+! KOPT is NOT identical to INT(MINLOC(FVAL, DIM=1), KIND(KOPT)). Indeed, if F = FSAVE
+! and KNEW_TR < KOPT, then INT(MINLOC(FVAL, DIM=1), KIND(KOPT)) = KNEW_TR /= KOPT. We do
+! not change KOPT unless necessary.
               end if
 
 ! Check whether to exit.
@@ -523,12 +529,6 @@
 ! the model.
               fval(knew_geo) = f
               xpt(:, knew_geo) = xnew
-              if (f < fsave) then
-                  kopt = knew_geo
-              end if
-! KOPT is NOT identical to INT(MINLOC(FVAL, DIM=1), KIND(KOPT)). Indeed, if F = FSAVE
-! and KNEW_TR < KOPT, then INT(MINLOC(FVAL, DIM=1), KIND(KOPT)) = KNEW_TR /= KOPT. We do
-! not change KOPT unless necessary.
           end if ! The procedure of improving geometry ends.
 
 ! If all the interpolation points are close to XOPT (IMPROVE_GEO = FALSE) compared to RHO, and
