@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Thursday, June 10, 2021 PM02:59:27
+! Last Modified: Thursday, June 10, 2021 PM06:32:45
 
 module newuob_mod
 
