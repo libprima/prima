@@ -17,7 +17,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, June 11, 2021 AM12:20:08
+! Last Modified: Friday, June 11, 2021 AM12:30:24
 
       module newuob_mod
 
@@ -308,10 +308,10 @@
                   delta = rho
               end if
 
-! Update XOPT
+! Update XOPT. Before KOPT is updated, XOPT and XPT(:, KOPT) may differ.
+! The updated XOPT is needed by SETREMOVE.
               if (f < fval(kopt)) then
                   xopt = xnew
-! Before KOPT is updated, XOPT and XPT(:, KOPT) may differ.
               end if
 
 ! Check whether to exit
@@ -368,8 +368,8 @@
 ! C = - FVAL(KOPT_OLD), where KOPT_OLD is the KOPT before the update above (Powell updated
 ! KOPT after TRYQALT). Here we use C = -FVAL(KOPT), as it worked slightly better on CUTEst,
 ! although there is no difference theoretically. Note that FVAL(KOPT_OLD) may not equal
-! FOPT_OLD --- it may happen that KNEW_TR = KOPT_OLD so that FVAL(KOPT_OLD) has been revised
-! after the last function evaluation.
+! F(XOPT_OLD) -- it may happen that KNEW_TR = KOPT_OLD so that FVAL(KOPT_OLD) has been
+! revised after the last function evaluation.
 ! 4. Question: Since TRYQALT is invoked only when DELTA equals the current RHO, why not
 ! reset ITEST to 0 when RHO is reduced?
               if (knew_tr > 0 .and. delta <= rho) then ! DELTA == RHO.
@@ -480,7 +480,7 @@
 ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
               moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
 
-! Update XOPT
+! Update XOPT. Before KOPT is updated, XOPT and XPT(:, KOPT) may differ.
               if (f < fval(kopt)) then
                   xopt = xnew
               end if

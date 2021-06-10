@@ -18,7 +18,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, June 11, 2021 AM12:08:02
+! Last Modified: Friday, June 11, 2021 AM12:50:55
 
       module geometry_mod
 
@@ -36,6 +36,9 @@
 ! REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
 ! XPT(:, KNEW) is replaced by XNEW = XOPT + D, where D is the trust-region step.  Note that the
 ! information of XNEW is included in VLAG and BETA, which are calculated according to D.
+!
+! N.B.: At the entry of this function is invoked, XOPT may differ from XPT(:, KOPT), because XOPT is
+! updated but KOPT is not. See NEWUOB for details.
 
 ! Generic modules
       use consts_mod, only : RP, IK, ONE, ZERO, TENTH, SRNLEN, DEBUGGING
@@ -88,13 +91,13 @@
       sigma = abs(beta * hdiag + vlag(1:npt)**2)
       sigma = sigma * max(xdsq / rhosq, ONE)**3
       if (ratio <= ZERO) then
-! If the new F is not better than the current FOPT, we set SIGMA(KOPT) = -1 to prevent KNEW from
-! being KOPT.
+! If the new F is not better than the current FVAL(KOPT), we set SIGMA(KOPT) = -1 to prevent
+! KNEW from being KOPT.
           sigma(kopt) = -ONE
       end if
       if (maxval(sigma) > ONE .or. ratio > ZERO) then
-! KNEW > 0 unless MAXVAL(SIGMA) <= 1 and RATIO <= ZERO. If RATIO > ZERO (the new F is smaller
-! than the current FOPT), then we always set KNEW > 0, ensuring XNEW to be included into XPT.
+! KNEW > 0 unless MAXVAL(SIGMA) <= 1 and RATIO <= ZERO. If RATIO > ZERO (the new F is less than
+! the current FVAL(KOPT)), then we always set KNEW > 0, ensuring XNEW to be included in XPT.
           knew = int(maxloc(sigma, dim=1), kind(knew))
       else
           knew = 0
