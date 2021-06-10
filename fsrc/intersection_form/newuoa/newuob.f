@@ -17,7 +17,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Thursday, June 10, 2021 PM02:59:27
+! Last Modified: Thursday, June 10, 2021 PM09:37:05
 
       module newuob_mod
 
@@ -361,9 +361,8 @@
                   if (ratio > ZERO) then
                       kopt = knew_tr
                   end if
-! KOPT is NOT identical to INT(MINLOC(FVAL, DIM=1), KIND(KOPT)). Indeed, if F = FSAVE
-! and KNEW_TR < KOPT, then INT(MINLOC(FVAL, DIM=1), KIND(KOPT)) = KNEW_TR /= KOPT. We do
-! not change KOPT unless necessary.
+! KOPT is NOT identical to MINLOC(FVAL). Indeed, if F = FSAVE and KNEW_TR < KOPT, then
+! MINLOC(FVAL) = KNEW_TR /= KOPT. We do not change KOPT unless necessary.
               end if
 
 ! Test whether to replace the new quadratic model Q by the least-Frobenius norm interpolant
@@ -499,9 +498,8 @@
                   fopt = f
                   xopt = xnew
                   kopt = knew_geo
-! KOPT is NOT identical to INT(MINLOC(FVAL, DIM=1), KIND(KOPT)). Indeed, if F = FSAVE
-! and KNEW_TR < KOPT, then INT(MINLOC(FVAL, DIM=1), KIND(KOPT)) = KNEW_TR /= KOPT. We do
-! not change KOPT unless necessary.
+! KOPT is NOT identical to MINLOC(FVAL). Indeed, if F = FSAVE and KNEW_TR < KOPT, then
+! MINLOC(FVAL) = KNEW_TR /= KOPT. We do not change KOPT unless necessary.
               end if
 
 ! Check whether to exit.
