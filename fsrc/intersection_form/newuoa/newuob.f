@@ -17,7 +17,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Thursday, June 10, 2021 PM02:30:49
+! Last Modified: Thursday, June 10, 2021 PM02:47:35
 
       module newuob_mod
 
@@ -356,12 +356,12 @@
 ! Include the new interpolation point. This should be done after updating the model.
                   fval(knew_tr) = f
                   xpt(:, knew_tr) = xnew
-!kopt = int(minloc(fval, dim=1), kind(kopt))
                   if (f < fsave) then
                       kopt = knew_tr
                   end if
-                  write (*, *) kopt, int(minloc(fval, dim=1), kind(kopt)&
-     &), fval(:)
+! KOPT is NOT identical to INT(MINLOC(FVAL, DIM=1), KIND(KOPT)). Indeed, if F = FSAVE
+! and KNEW_TR < KOPT, then INT(MINLOC(FVAL, DIM=1), KIND(KOPT)) = KNEW_TR /= KOPT. We do
+! not change KOPT unless necessary.
               end if
 
 ! Test whether to replace the new quadratic model Q by the least-Frobenius norm interpolant
@@ -381,9 +381,9 @@
 ! 4. Question: Since TRYQALT is invoked only when DELTA equals the current RHO, why not
 ! reset ITEST to 0 when RHO is reduced?
               if (knew_tr > 0 .and. delta <= rho) then ! DELTA == RHO.
-                  call tryqalt(idz, fval - fval(kopt), ratio, bmat(:, 1:&
-     &npt), zmat, itest, gq, hq, pq)
-!call tryqalt(idz, fval - fopt, ratio, bmat(:, 1:npt), zmat, itest, gq, hq, pq)
+!call tryqalt(idz, fval - fval(kopt), ratio, bmat(:, 1:npt), zmat, itest, gq, hq, pq)
+                  call tryqalt(idz, fval - fopt, ratio, bmat(:, 1:npt), &
+     &zmat, itest, gq, hq, pq)
               end if
           end if ! End of if (.not. shortd)
 
@@ -523,12 +523,12 @@
 ! the model.
               fval(knew_geo) = f
               xpt(:, knew_geo) = xnew
-              kopt = int(minloc(fval, dim=1), kind(kopt))
-!if (f < fsave) then
-!    kopt = knew_geo
-!end if
-              write (*, *) kopt, int(minloc(fval, dim=1), kind(kopt)), f&
-     &val(:)
+              if (f < fsave) then
+                  kopt = knew_geo
+              end if
+! KOPT is NOT identical to INT(MINLOC(FVAL, DIM=1), KIND(KOPT)). Indeed, if F = FSAVE
+! and KNEW_TR < KOPT, then INT(MINLOC(FVAL, DIM=1), KIND(KOPT)) = KNEW_TR /= KOPT. We do
+! not change KOPT unless necessary.
           end if ! The procedure of improving geometry ends.
 
 ! If all the interpolation points are close to XOPT (IMPROVE_GEO = FALSE) compared to RHO, and
@@ -616,8 +616,6 @@
           call retmssg(info, iprint, nf, f, x, solver)
       end if
 
-      write (*, *) nf
-      close (6)
       return
       end subroutine newuob
 
