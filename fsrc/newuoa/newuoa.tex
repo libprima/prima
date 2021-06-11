@@ -388,19 +388,19 @@
         and set~$\hat{\Int}_{k} = \Int_k\cup x_k^\get\setminus x_k^\drop$
         if $r_k>0$ or $\kappa(\Int_k\cup x_k^\get \setminus x_k^\drop) \le \kappa_0$.
         \State \textbf{Geometry improvement}.
-        If~$\shortd_k = 1$, or~$t_k = 0$, or~$r_k < 1/10$, then set
+        If~$\shortd_k = 1$ or~$r_k < 1/10$, then set
           \begin{equation}
               \label{eq:ydropn}
-              y_k^\drop = \argmax\{\|y-x_k\| \mathrel{:} y \in \Int_k\}.
+              y_k^\drop = \argmax\{\|y-x_k\| \mathrel{:} y \in \hat{\Int}_k\}.
           \end{equation}
           If~$\|y_k^{\drop}-x_k\| \ge 2\Delta_{k+1}$, then define~$\bar{\Delta}_k = \max\{\rho_k,
           \min\{\|y_k^{\drop} - x_k\|/10, \Delta_{k+1}/2\}\}$, calculate
           \begin{equation}
               \label{eq:ygetn}
-              y_k^\get \approx \argmin\{\kappa(\Int_k \cup y \setminus y_k^\drop) \mathrel{:} \|y-x_k\|\le
+              y_k^\get \approx \argmin\{\kappa(\hat{\Int}_k \cup y \setminus y_k^\drop) \mathrel{:} \|y-x_k\|\le
               \bar{\Delta}_k\},
           \end{equation}
-       and set~$\Int_{k+1} = \Int_k\cup y_k^\get\setminus y_k^\drop$.
+          and set~$\Int_{k+1} = \hat{\Int}_k\cup y_k^\get\setminus y_k^\drop$.
        \State \textbf{Resolution enhancement}.
        If~$\redrho_k = 1$, then reduce~$\rho_k$ by about a factor of~$10$ to
        obtain~$\rho_{k+1}$, and set~$\Delta_{k+1} = \max\{\rho_{k+1}/2, \rho_k\}$.
