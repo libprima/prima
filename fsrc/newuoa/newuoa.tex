@@ -171,7 +171,9 @@
 \DeclareMathOperator{\diam}{diam}
 \DeclareMathOperator{\dist}{dist}
 \newcommand{\disth}{{\operatorname{\updelta_{\sss{H}}}}}
-\newcommand{\ind}[2]{\operatorname{\mathbbm{1}}\;\!\!\!\big(#2\in#1\big)}
+%\newcommand{\ind}[2]{\operatorname{\mathbbm{1}}\;\!\!\!\big(#2\in#1\big)}
+\DeclareMathOperator{\ind}{\mathbbm{1}}
+\newcommand{\shortd}{\mathbbm{s}}
 %\newcommand*{\defeq}{\stackrel{\mbox{\normalfont\tiny{\textnormal{def}}}}{=}}
 \newcommand\defeq{\mathrel{\overset{\makebox[0pt]{\mbox{\normalfont\tiny\sffamily def}}}{=}}}
 
@@ -370,7 +372,7 @@
          \label{eq:xgetn}
           x_k^\get \approx \argmin\{Q_k(x)\mathrel{:} \|x-x_k\|\le \Delta_k\}.
         \end{equation}
-        If~$\|x_k^\get-x_k\| < \rho_k/2$, then set~$\Delta_{k+1} = \theta \Delta_k$.
+        Let~$\shortd_k = \ind(\|x_k^\get-x_k\| < \rho_k/2)$, then set~$\Delta_{k+1} = \theta \Delta_k$.
         Otherwise,
         update~$\Delta_k$ to~$\Delta_{k+1}$ according to~$\rho_k = [f(x_k) - f(x_k^\get)]/[Q_k(x_k)
         - Q_k(x_k^\get)]$.
