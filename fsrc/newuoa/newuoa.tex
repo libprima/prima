@@ -174,6 +174,7 @@
 %\newcommand{\ind}[2]{\operatorname{\mathbbm{1}}\;\!\!\!\big(#2\in#1\big)}
 \DeclareMathOperator{\ind}{\mathbbm{1}}
 \newcommand{\shortd}{\mathbbm{s}}
+\newcommand{\redrho}{\mathbbm{r}}
 %\newcommand*{\defeq}{\stackrel{\mbox{\normalfont\tiny{\textnormal{def}}}}{=}}
 \newcommand\defeq{\mathrel{\overset{\makebox[0pt]{\mbox{\normalfont\tiny\sffamily def}}}{=}}}
 
@@ -332,7 +333,7 @@
         \end{equation}
         If~$\|x_k^\get-x_k\| < \alpha\Delta_k$, then set~$\Delta_{k+1} = \theta \Delta_k$.
         Otherwise,
-        update~$\Delta_k$ to~$\Delta_{k+1}$ according to~$\rho_k = [f(x_k) - f(x_k^\get)]/[Q_k(x_k)
+        update~$\Delta_k$ to~$\Delta_{k+1}$ according to~$r_k = [f(x_k) - f(x_k^\get)]/[Q_k(x_k)
         - Q_k(x_k^\get)]$.
         \State \textbf{Interpolation set update}.
         If~$\|x_k^\get-x_k\| \ge \alpha\Delta_k$, then calculate
@@ -342,10 +343,10 @@
             \Int_k\},
         \end{equation}
         and set~$\Int_{k+1} = \Int_k\cup x_k^\get\setminus x_k^\drop$
-        if $\rho_k>0$ or $\kappa(\Int_k\cup x_k^\get \setminus x_k^\drop) \le \kappa_0$.
+        if $r_k>0$ or $\kappa(\Int_k\cup x_k^\get \setminus x_k^\drop) \le \kappa_0$.
         \State \textbf{Geometry improvement}.
         If~$\|x_k^\get-x_k\|< \alpha \Delta_k$, or~$\|x_k^\get-x_k\| > \alpha \Delta_k$
-        but~$\rho_k\le 0$ and $\kappa(\Int_k \cup x_k^\get\setminus x_k^\drop) > \kappa_0$, then calculate
+        but~$r_k\le 0$ and $\kappa(\Int_k \cup x_k^\get\setminus x_k^\drop) > \kappa_0$, then calculate
           \begin{align}
               \label{eq:ydrop}
               y_k^\drop &= \argmax\{\|y-x_k\| \mathrel{:} y \in \Int_k\}, \\
@@ -372,10 +373,10 @@
          \label{eq:xgetn}
           x_k^\get \approx \argmin\{Q_k(x)\mathrel{:} \|x-x_k\|\le \Delta_k\}.
         \end{equation}
-        Let~$\shortd_k = \ind(\|x_k^\get-x_k\| < \rho_k/2)$, then set~$\Delta_{k+1} = \theta \Delta_k$.
-        Otherwise,
-        update~$\Delta_k$ to~$\Delta_{k+1}$ according to~$\rho_k = [f(x_k) - f(x_k^\get)]/[Q_k(x_k)
-        - Q_k(x_k^\get)]$.
+        If~$\|x_k^\get-x_k\| < \rho_k/2$, then set~$\shortd_k = 1$; otherwise, set~$\shortd_k = 0$.
+        If~$\shortd_k = 1$ and the errors in recent models are sufficiently small, then set~$\redrho_k = 1$; otherwise, set~$\redrho_k = 0$.
+        If~$\shortd_k=1$ and~$\redrho_k = 0$, then set~$\Delta_{k+1} = \max\{\Delta_k/10, \rho_k\}$.
+        If~$\shortd_k = 0$, then calculate~$r_k = [f(x_k)-f(x_k^\get)]/[Q_k(x_k)-Q_k(x_k^\get)]$.
         \State \textbf{Interpolation set update}.
         If~$\|x_k^\get-x_k\| \ge \alpha\Delta_k$, then calculate
         \begin{equation}
