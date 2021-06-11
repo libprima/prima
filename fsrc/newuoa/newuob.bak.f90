@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, June 11, 2021 AM09:24:45
+! Last Modified: Friday, June 11, 2021 AM09:18:22
 
 module newuob_mod
 
@@ -24,10 +24,10 @@ subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 ! XOPT is the displacement from XBASE of the best vector of variables so far (i.e., the one provides
 ! the least calculated F so far).
 ! D is reserved for trial steps from XOPT.
-! XNEW = XOPT + D, corresponding to the vector of variables for the next calculation of F.
+! XNEW = XOPT+D, corresponding to the vector of variables for the next calculation of F.
 ! [XPT, FVAL, KOPT] describes the interpolation set:
 ! XPT contains the interpolation points relative to XBASE, each COLUMN for a point; FVAL holds the
-! values of F at the interpolation points; KOPT is the index of XOPT in XPT (XPT(:,KOPT) = XOPT).
+! values of F at the interpolation points; KOPT is the index of XOPT in XPT (XPT(:,KOPT)=XOPT).
 ! [GQ, HQ, PQ] describes the quadratic model: GQ will hold the gradient of the quadratic model at
 ! XBASE; HQ will hold the explicit second order derivatives of the quadratic model; PQ will contain
 ! the parameters of the implicit second order derivatives of the quadratic model.
@@ -236,7 +236,7 @@ do tr = 1, maxtr
         end if
 
         ! Calculate VLAG and BETA for D. It makes uses of XOPT, so this is done before updating XOPT.
-        call vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
+        call vlagbeta(idz, kopt, bmat, d, xopt, xpt, zmat, beta, vlag)
 
         ! Use the current quadratic model to predict the change in F due to the step D.
         call calquad(d, gq, hq, pq, xopt, xpt, vquad)
@@ -283,9 +283,7 @@ do tr = 1, maxtr
             delta = rho
         end if
 
-        ! Update XOPT and FOPT. Before KOPT is updated, XOPT may differ from XPT(:, KOPT), and FOPT
-        ! may differ from FVAL(KOPT).
-        ! The updated XOPT is needed by SETREMOVE.
+        ! Update FOPT and XOPT
         if (f < fopt) then
             xopt = xnew
             fopt = f
@@ -338,10 +336,10 @@ do tr = 1, maxtr
         ! Section 8 of the NEWUOA paper.
         ! 2. TRYQALT is called only after a trust-region step but not after a geometry step. Maybe
         ! this is because the model is expected to be good after a geometry step.
-        ! 3. In theory, FVAL - FOPT in the call of TRYQALT can be replaced by FVAL + C with any
+        ! 3. In theory, the FVAL - FOPT in the call of TRYQALT can be replaced by FVAL + C with any
         ! constant C. This constant will not affect the result in precise arithmetic. Powell chose
         ! C = - FVAL(KOPT_OLD), where KOPT_OLD is the KOPT before the update above (Powell updated
-        ! KOPT after TRYQALT). Here we use C = -FOPT, as it worked slightly better on CUTEst,
+        ! KOPT after TRYQALT). Here we use C = -FOPT, because it worked slightly better on CUTEst,
         ! although there is no difference theoretically. Note that FVAL(KOPT_OLD) may not equal
         ! FOPT_OLD --- it may happen that KNEW_TR = KOPT_OLD so that FVAL(KOPT_OLD) has been revised
         ! after the last function evaluation.
@@ -405,7 +403,7 @@ do tr = 1, maxtr
         ! Find a step D so that the geometry of XPT will be improved when XPT(:, KNEW_GEO) is
         ! replaced by XOPT + D. The GEOSTEP subroutine will call Powell's BIGLAG and BIGDEN. It will
         ! also calculate the VLAG and BETA for this D.
-        call geostep(idz, knew_geo, kopt, bmat, delbar, xpt, zmat, d, beta, vlag)
+        call geostep(idz, knew_geo, kopt, bmat, delbar, xopt, xpt, zmat, d, beta, vlag)
 
         ! Use the current quadratic model to predict the change in F due to the step D.
         call calquad(d, gq, hq, pq, xopt, xpt, vquad)
@@ -448,8 +446,7 @@ do tr = 1, maxtr
         ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
         moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
 
-        ! Update XOPT and FOPT. Before KOPT is updated, XOPT may differ from XPT(:, KOPT), and FOPT
-        ! may differ from FVAL(KOPT).
+        ! Update FOPT and XOPT
         if (f < fopt) then
             xopt = xnew
             fopt = f
@@ -545,7 +542,7 @@ if (maxtr > 0 .and. shortd .and. nf < maxfun) then
     end if
 end if
 
-! Note that (FOPT <= F) = FALSE if F is NaN; if F is NaN, it is necessary to update X and F.
+! Note that (FOPT .LE. F) is FALSE if F is NaN; if F is NaN, it is also necessary to update X and F.
 if (is_nan(f) .or. fopt <= f) then
     x = xbase + xopt
     f = fopt
