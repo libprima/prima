@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, June 11, 2021 AM11:21:06
+! Last Modified: Friday, June 11, 2021 PM04:51:15
 
 module newuob_mod
 
@@ -338,18 +338,20 @@ do tr = 1, maxtr
         ! N.B.:
         ! 1. This part is OPTIONAL, but it is crucial for the performance on some problems. See
         ! Section 8 of the NEWUOA paper.
-        ! 2. TRYQALT is called only after a trust-region step but not after a geometry step. Maybe
-        ! this is because the model is expected to be good after a geometry step.
-        ! 3. In theory, FVAL - FOPT in the call of TRYQALT can be replaced by FVAL + C with any
+        ! 2. TRYQALT is called only after a trust-region step but not after a geometry step, maybe
+        ! because the model is expected to be good after a geometry step.
+        ! 3. If KNEW_TR = 0 after a trust-region step, TRYQALT is not invoked. In this case, the
+        ! interpolation set is unchanged, so it seems reasonable to keep the model unchanged.
+        ! 4. In theory, FVAL - FOPT in the call of TRYQALT can be replaced by FVAL + C with any
         ! constant C. This constant will not affect the result in precise arithmetic. Powell chose
         ! C = - FVAL(KOPT_OLD), where KOPT_OLD is the KOPT before the update above (Powell updated
         ! KOPT after TRYQALT). Here we use C = -FOPT, as it worked slightly better on CUTEst,
         ! although there is no difference theoretically. Note that FVAL(KOPT_OLD) may not equal
         ! FOPT_OLD --- it may happen that KNEW_TR = KOPT_OLD so that FVAL(KOPT_OLD) has been revised
         ! after the last function evaluation.
-        ! 4. Question: Since TRYQALT is invoked only when DELTA equals the current RHO, why not
+        ! 5. Question: Since TRYQALT is invoked only when DELTA equals the current RHO, why not
         ! reset ITEST to 0 when RHO is reduced?
-        if (knew_tr > 0 .and. delta <= rho) then  ! DELTA == RHO.
+        if (knew_tr > 0 .and. delta <= rho) then  ! DELTA = RHO.
             call tryqalt(idz, fval - fopt, ratio, bmat(:, 1:npt), zmat, itest, gq, hq, pq)
         end if
     end if  ! End of if (.not. shortd)
@@ -490,8 +492,11 @@ do tr = 1, maxtr
     ! If all the interpolation points are close to XOPT (IMPROVE_GEO = FALSE) compared to RHO, and
     ! the trust region is small, but the trust region step is "bad" (SHORTD or RATIO <= 0), then we
     ! should shrink RHO (i.e., update the criterion for the "closeness" and SHORTD).
-    ! REDUCE_RHO_2 corresponds to Box 10 of the NEWUOA paper. Note that DELTA < DNORM may hold due
-    ! to the update of DELTA.
+    ! REDUCE_RHO_2 corresponds to Box 10 of the NEWUOA paper.
+    ! N.B.:
+    ! 1. Even though DNORM gets a new value after the geometry step if IMPROVE_GEO = TRUE, this
+    ! value does not affect REDUCE_RHO_2, because DNORM comes into play only if IMPROVE_GEO = FALSE.
+    ! 2. DELTA < DNORM may hold due to the update of DELTA.
     reduce_rho_2 = (.not. improve_geo) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= 0)
 
     if (reduce_rho_1 .or. reduce_rho_2) then
