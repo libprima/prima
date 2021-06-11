@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, June 11, 2021 PM05:39:55
+! Last Modified: Friday, June 11, 2021 PM09:02:09
 
 module newuob_mod
 
@@ -393,7 +393,9 @@ do tr = 1, maxtr
     ! iteration; if RATIO > 0 in addition, then XOPT has been updated as well.
     xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1))
     knew_geo = int(maxloc(xdist, dim=1), kind(knew_geo))
-    improve_geo = (.not. reduce_rho_1) .and. (shortd .or. knew_tr == 0 .or. ratio < TENTH) .and. (maxval(xdist) > TWO * delta)
+    !improve_geo = (.not. reduce_rho_1) .and. (shortd .or. knew_tr == 0 .or. ratio < TENTH) .and. (maxval(xdist) > TWO * delta)
+    improve_geo = (.not. reduce_rho_1) .and. (shortd .or. ratio < TENTH) .and. (maxval(xdist) > TWO * delta)
+    reduce_rho_2 = (shortd .or. ratio <= 0) .and. (max(delta, dnorm) <= rho) .and. (maxval(xdist) <= TWO * delta)
 
     if (improve_geo) then
         ! Set DELBAR, which will be used as the trust region radius for the geometry-improving
