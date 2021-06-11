@@ -385,7 +385,7 @@
             x_k^\drop \approx \argmin\{\kappa(\Int_k\cup x_k^\get\setminus x) \mathrel{:} x \in
             \Int_k\},
         \end{equation}
-        and set~$\Int_{k+1} = \Int_k\cup x_k^\get\setminus x_k^\drop$
+        and set~$\hat{\Int}_{k+1} = \Int_k\cup x_k^\get\setminus x_k^\drop$
         if $r_k>0$ or $\kappa(\Int_k\cup x_k^\get \setminus x_k^\drop) \le \kappa_0$.
         \State \textbf{Geometry improvement}.
         If~$\shortd_k = 1$, or~$t_k = 0$, or~$r_k < 1/10$, then set
@@ -402,7 +402,9 @@
           \end{equation}
        and set~$\Int_{k+1} = \Int_k\cup y_k^\get\setminus y_k^\drop$.
        \State \textbf{Resolution enhancement}.
-       If~$\redrho_k = 1$, then update~$\rho_k$ to~$\rho_{k+1}$ by  $\Delta_{k+1} = \max\{\rho_{k+1}/2, \rho_k\}$.
+       If~$\redrho_k = 1$, then reduce~$\rho_k$ by about a factor of~$10$ to
+       obtain~$\rho_{k+1}$, and set~$\Delta_{k+1} = \max\{\rho_{k+1}/2, \rho_k\}$.
+       If~$\redrho_{k} = 0$, then set~$\rho_{k+1} = \rho_k$.
     \end{algorithmic}
 \end{algorithm}
 
