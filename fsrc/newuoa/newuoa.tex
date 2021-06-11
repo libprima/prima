@@ -388,16 +388,21 @@
         and set~$\Int_{k+1} = \Int_k\cup x_k^\get\setminus x_k^\drop$
         if $r_k>0$ or $\kappa(\Int_k\cup x_k^\get \setminus x_k^\drop) \le \kappa_0$.
         \State \textbf{Geometry improvement}.
-        If~$\shortd_k = 1$, or~$t_k = 0$, or~$r_k < 1/10$ then
-        but~$\rho_k\le 0$ and $\kappa(\Int_k \cup x_k^\get\setminus x_k^\drop) > \kappa_0$, then calculate
-          \begin{align}
+        If~$\shortd_k = 1$, or~$t_k = 0$, or~$r_k < 1/10$, then set
+          \begin{equation}
               \label{eq:ydropn}
-              y_k^\drop &= \argmax\{\|y-x_k\| \mathrel{:} y \in \Int_k\}, \\
+              y_k^\drop = \argmax\{\|y-x_k\| \mathrel{:} y \in \Int_k\}.
+          \end{equation}
+          If~$\|y_k^{\drop}-x_k\| \ge 2\Delta_{k+1}$, then define~$\bar{\Delta}_k = \max\{\rho_k,
+          \min\{\|y_k^{\drop} - x_k\|/10, \Delta_{k+1}/2\}\}$, calculate
+          \begin{equation}
               \label{eq:ygetn}
-              y_k^\get &\approx \argmin\{\kappa(\Int_k \cup y \setminus y_k^\drop) \mathrel{:} \|y-x_k\|\le
-              \Delta_k\},
-          \end{align}
+              y_k^\get \approx \argmin\{\kappa(\Int_k \cup y \setminus y_k^\drop) \mathrel{:} \|y-x_k\|\le
+              \bar{\Delta}_k\},
+          \end{equation}
        and set~$\Int_{k+1} = \Int_k\cup y_k^\get\setminus y_k^\drop$.
+       \State \textbf{Resolution enhancement}.
+       If~$\redrho_k = 1$, then update~$\rho_k$ to~$\rho_{k+1}$ by  $\Delta_{k+1} = \max\{\rho_{k+1}/2, \rho_k\}$.
     \end{algorithmic}
 \end{algorithm}
 
