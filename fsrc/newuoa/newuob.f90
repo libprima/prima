@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, June 11, 2021 PM09:02:09
+! Last Modified: Friday, June 11, 2021 PM09:26:31
 
 module newuob_mod
 
@@ -360,20 +360,17 @@ do tr = 1, maxtr
     ! according to IMPROVE_GEO and REDUCE_RHO. Now we decide these two indicators.
 
     ! First define IMPROVE_GEO, which corresponds to Box 8 of the NEWUOA paper.
-    ! The geometry of XPT likely needs improvement in three cases specified below. Above all, if
-    ! REDUCE_RHO_1 = TRUE, meaning that the step is short and the latest model errors have been
-    ! small, then we do not need to improve the geometry; instead, RHO will be reduced.
-    ! 1. The trust-region step is too short (SHORTD = TRUE), or
-    ! 2. it is impossible to obtain an interpolation set with good geometry by replacing a current
-    ! interpolation point with the trust-region trial point (KNEW_TR = 0), or
-    ! 3. the trust-region reduction ratio is small (RATION < TENTH).
-    ! In these cases, we will check whether the interpolation points are all close enough to the
-    ! best point so far, i.e., all the points are within a ball centered at XOPT with a radius of
-    ! 2*DELTA. If not, the farthest point will be replaced with a point selected by GEOSTEP, aiming
-    ! to ameliorate the geometry of the interpolation set.
+    ! The geometry of XPT likely needs improvement if the trust-region step bad --- either too short
+    ! (SHORTD = TRUE) or the reduction ratio is small (RATIO < TENTH). However, if REDUCE_RHO_1 is
+    ! TRUE, meaning that the step is short and the latest model errors have been small, then we do
+    ! not need to improve the geometry; instead, RHO will be reduced.
+    ! To improve the geometry of XPT, we will check whether the interpolation points are all close
+    ! enough to the best point so far, i.e., all the points are within a ball centered at XOPT with
+    ! a radius of 2*DELTA. If not, the farthest point will be replaced with a point selected by
+    ! GEOSTEP, aiming to ameliorate the geometry of the interpolation set.
     ! N.B.:
-    ! 1. KNEW_TR and RATIO are both set if SHORTD = FALSE. So the expression
-    ! (SHORTD .OR. KNEW_TR == 0 .OR. RATIO < TENTH) will not suffer from unset KNEW_TR or RATIO.
+    ! 1. RATIO is set if SHORTD = FALSE. So the expression (SHORTD .OR. RATIO < TENTH) will not
+    ! suffer from unset RATIO.
     ! 2. If REDUCE_RHO = FALSE and SHORTD = TRUE, then the trust-region step is not tried at all,
     ! i.e., no function evaluation is invoked at XOPT + D (When REDUCE_RHO = TRUE, the step is not
     ! tried either, but the same step will be generated again at the next trust-region iteration
@@ -393,9 +390,7 @@ do tr = 1, maxtr
     ! iteration; if RATIO > 0 in addition, then XOPT has been updated as well.
     xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1))
     knew_geo = int(maxloc(xdist, dim=1), kind(knew_geo))
-    !improve_geo = (.not. reduce_rho_1) .and. (shortd .or. knew_tr == 0 .or. ratio < TENTH) .and. (maxval(xdist) > TWO * delta)
     improve_geo = (.not. reduce_rho_1) .and. (shortd .or. ratio < TENTH) .and. (maxval(xdist) > TWO * delta)
-    reduce_rho_2 = (shortd .or. ratio <= 0) .and. (max(delta, dnorm) <= rho) .and. (maxval(xdist) <= TWO * delta)
 
     if (improve_geo) then
         ! Set DELBAR, which will be used as the trust region radius for the geometry-improving
@@ -492,15 +487,16 @@ do tr = 1, maxtr
         ! KNEW_GEO < KOPT, then MINLOC(FVAL) = KNEW_GEO /= KOPT. Do not change KOPT in this case.
     end if  ! The procedure of improving geometry ends.
 
-    ! If all the interpolation points are close to XOPT (IMPROVE_GEO = FALSE) compared to RHO, and
-    ! the trust region is small, but the trust region step is "bad" (SHORTD or RATIO <= 0), then we
-    ! should shrink RHO (i.e., update the criterion for the "closeness" and SHORTD).
-    ! REDUCE_RHO_2 corresponds to Box 10 of the NEWUOA paper.
+    ! If all the interpolation points are close to XOPT and the trust region is small, but the
+    ! trust-region step is "bad" (SHORTD or RATIO <= 0), then we shrink RHO (update the criterion
+    ! for the "closeness" and SHORTD). REDUCE_RHO_2 corresponds to Box 10 of the NEWUOA paper.
     ! N.B.:
     ! 1. Even though DNORM gets a new value after the geometry step if IMPROVE_GEO = TRUE, this
     ! value does not affect REDUCE_RHO_2, because DNORM comes into play only if IMPROVE_GEO = FALSE.
     ! 2. DELTA < DNORM may hold due to the update of DELTA.
-    reduce_rho_2 = (.not. improve_geo) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= 0)
+    ! 3. The following two lines are equivalent.
+    !reduce_rho_2 = (.not. improve_geo) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= ZERO)
+    reduce_rho_2 = (maxval(xdist) <= TWO * delta) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= ZERO)
 
     if (reduce_rho_1 .or. reduce_rho_2) then
         ! The calculations with the current RHO are complete. Pick the next values of RHO and DELTA.
