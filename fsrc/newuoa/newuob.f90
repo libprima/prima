@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, June 11, 2021 AM09:24:45
+! Last Modified: Friday, June 11, 2021 AM10:48:47
 
 module newuob_mod
 
@@ -487,7 +487,7 @@ do tr = 1, maxtr
 
     ! If all the interpolation points are close to XOPT (IMPROVE_GEO = FALSE) compared to RHO, and
     ! the trust region is small, but the trust region step is "bad" (SHORTD or RATIO <= 0), then we
-    ! should shrink RHO (i.e., update the standard for defining "closeness" and SHORTD).
+    ! should shrink RHO (i.e., update the criterion for the "closeness" and SHORTD).
     ! REDUCE_RHO_2 corresponds to Box 10 of the NEWUOA paper. Note that DELTA < DNORM may hold due
     ! to the update of DELTA.
     reduce_rho_2 = (.not. improve_geo) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= 0)
