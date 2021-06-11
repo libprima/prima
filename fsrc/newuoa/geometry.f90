@@ -3,7 +3,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, June 11, 2021 AM12:50:55
+! Last Modified: Friday, June 11, 2021 AM11:55:52
 
 module geometry_mod
 
@@ -85,8 +85,8 @@ if (maxval(sigma) > ONE .or. ratio > ZERO) then
 else
     knew = 0
 end if
-! It is attempting to take the function value into consideration when defining KNEW, for example,
-! set KNEW so that FVAL(KNEW) = MAX(FVAL) as long as F(XNEW) < MAX(FVAL) unless there is a better
+! It is tempting to take the function value into consideration when defining KNEW, for example,
+! set KNEW so that FVAL(KNEW) = MAX(FVAL) as long as F(XNEW) < MAX(FVAL), unless there is a better
 ! choice. However, this is not a good idea, because the definition of KNEW should benefit the
 ! quality of the model that interpolates f at XPT. A set of points with low function values is not
 ! necessarily a good interplolation set. In contrast, a good interpolation set needs to include

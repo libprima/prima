@@ -17,7 +17,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, June 11, 2021 AM09:24:45
+! Last Modified: Friday, June 11, 2021 AM11:21:06
 
       module newuob_mod
 
@@ -38,11 +38,13 @@
 ! XBASE holds a shift of origin that should reduce the contributions from rounding errors to values
 ! of the model and Lagrange functions.
 ! XOPT is the displacement from XBASE of the best vector of variables so far (i.e., the one provides
-! the least calculated F so far).
+! the least calculated F so far). FOPT = F(XOPT + XBASE).
 ! D is reserved for trial steps from XOPT.
 ! XNEW = XOPT + D, corresponding to the vector of variables for the next calculation of F.
 ! [XPT, FVAL, KOPT] describes the interpolation set:
 ! XPT contains the interpolation points relative to XBASE, each COLUMN for a point; FVAL holds the
+! However, there is a delay between the update of XOPT and KOPT. So they are not always consistent
+! in the mid of an iteration. See the comment on the update of XOPT for details.
 ! values of F at the interpolation points; KOPT is the index of XOPT in XPT (XPT(:,KOPT) = XOPT).
 ! [GQ, HQ, PQ] describes the quadratic model: GQ will hold the gradient of the quadratic model at
 ! XBASE; HQ will hold the explicit second order derivatives of the quadratic model; PQ will contain
@@ -311,7 +313,7 @@
               end if
 
 ! Update XOPT and FOPT. Before KOPT is updated, XOPT may differ from XPT(:, KOPT), and FOPT
-! may differ from FVAL(KOPT).
+! may differ from FVAL(KOPT). Note that the code may exit before KOPT is updated. See below.
 ! The updated XOPT is needed by SETREMOVE.
               if (f < fopt) then
                   xopt = xnew
@@ -485,7 +487,7 @@
               moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
 
 ! Update XOPT and FOPT. Before KOPT is updated, XOPT may differ from XPT(:, KOPT), and FOPT
-! may differ from FVAL(KOPT).
+! may differ from FVAL(KOPT). Note that the code may exit before KOPT is updated. See below.
               if (f < fopt) then
                   xopt = xnew
                   fopt = f
@@ -524,7 +526,7 @@
 
 ! If all the interpolation points are close to XOPT (IMPROVE_GEO = FALSE) compared to RHO, and
 ! the trust region is small, but the trust region step is "bad" (SHORTD or RATIO <= 0), then we
-! should shrink RHO (i.e., update the standard for defining "closeness" and SHORTD).
+! should shrink RHO (i.e., update the criterion for the "closeness" and SHORTD).
 ! REDUCE_RHO_2 corresponds to Box 10 of the NEWUOA paper. Note that DELTA < DNORM may hold due
 ! to the update of DELTA.
           reduce_rho_2 = (.not. improve_geo) .and. (max(delta, dnorm) <=&
