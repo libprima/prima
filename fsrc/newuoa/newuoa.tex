@@ -316,37 +316,80 @@
 
 %\usepackage{algorithm, algpseudocode, algorithmicx}
 \begin{algorithm}[htbp!]
-    \caption{\label{alg:iopt}OPTimization based on Interpolation Models (OPTIM)}
+    \caption{\label{alg:optim}OPTimization based on Interpolation Models (OPTIM)}
     Input $\Delta_0\in (0,+\infty)$, $\tau>0$, $m\in \{n+2, n+3, \dots, (n+1)(n+2)/2\}$,
-    and~$\Int_0\subset \RR^n$ with~$|\Int_0|=m$ and~$\kappa(\Int_0) < \kappa_0$. Set~$Q_{-1} = 0$ and~$k=0$.
+    and~$\Int_0\subset \RR^n$ with~$|\Int_0|=m$ and~$\kappa(\Int_0) \le \kappa_0$. Set~$Q_{-1} = 0$ and~$k=0$.
     \begin{algorithmic}[1]
         \State \textbf{Model construction}.
         Pick~$Q_k \in \{Q\in\Qua\mathrel{:} Q(x)=f(x)~\text{for all}~x\in\Int_k\}$.
-        \State \textbf{Trust-region step}.
+        \State \textbf{Trust-region step evaluation}.
         Define~$x_k = \argmin\{f(x) \mathrel{:} x\in \Int_k\}$. Calculate
         \begin{equation}
          \label{eq:xget}
           x_k^\get \approx \argmin\{Q_k(x)\mathrel{:} \|x-x_k\|\le \Delta_k\}.
         \end{equation}
-        If~$\|x_k^\get-x_k\|\le \alpha\Delta_k$, then set~$\Delta_{k+1} = \theta \Delta_k$.
+        If~$\|x_k^\get-x_k\| < \alpha\Delta_k$, then set~$\Delta_{k+1} = \theta \Delta_k$.
         Otherwise,
         update~$\Delta_k$ to~$\Delta_{k+1}$ according to~$\rho_k = [f(x_k) - f(x_k^\get)]/[Q_k(x_k)
         - Q_k(x_k^\get)]$.
         \State \textbf{Interpolation set update}.
         If~$\|x_k^\get-x_k\| \ge \alpha\Delta_k$, then calculate
         \begin{equation}
-            \label{eq:xdrop} x_k^\drop \approx \argmin\{\kappa(\Int_k\cup x_k^\get\setminus x) \mathrel{:} x \in
+            \label{eq:xdrop}
+            x_k^\drop \approx \argmin\{\kappa(\Int_k\cup x_k^\get\setminus x) \mathrel{:} x \in
             \Int_k\},
         \end{equation}
         and set~$\Int_{k+1} = \Int_k\cup x_k^\get\setminus x_k^\drop$
-        if $\rho_k>0$ or $\kappa(\Int_k\cup x_k^\get \setminus x_k^\drop) < \kappa_0$.
+        if $\rho_k>0$ or $\kappa(\Int_k\cup x_k^\get \setminus x_k^\drop) \le \kappa_0$.
         \State \textbf{Geometry improvement}.
-        If~$\|x_k^\get-x_k\|\le \alpha \Delta_k$, or~$\|x_k^\get-x_k\| > \alpha \Delta_k$
-        but~$\rho_k\le 0$ and $\kappa(\Int_k \cup x_k^\get\setminus x_k^\drop)\ge \kappa_0$, then calculate
+        If~$\|x_k^\get-x_k\|< \alpha \Delta_k$, or~$\|x_k^\get-x_k\| > \alpha \Delta_k$
+        but~$\rho_k\le 0$ and $\kappa(\Int_k \cup x_k^\get\setminus x_k^\drop) > \kappa_0$, then calculate
           \begin{align}
               \label{eq:ydrop}
               y_k^\drop &= \argmax\{\|y-x_k\| \mathrel{:} y \in \Int_k\}, \\
               \label{eq:yget}
+              y_k^\get &\approx \argmin\{\kappa(\Int_k \cup y \setminus y_k^\drop) \mathrel{:} \|y-x_k\|\le
+              \Delta_k\},
+          \end{align}
+       and set~$\Int_{k+1} = \Int_k\cup y_k^\get\setminus y_k^\drop$.
+    \end{algorithmic}
+\end{algorithm}
+
+
+%\usepackage{algorithm, algpseudocode, algorithmicx}
+\begin{algorithm}[htbp!]
+    \caption{\label{alg:newuoa}NEWUOA}
+    Input $\Delta_0\in (0,+\infty)$, $\tau>0$, $m\in \{n+2, n+3, \dots, (n+1)(n+2)/2\}$,
+    and~$\Int_0\subset \RR^n$ with~$|\Int_0|=m$ and~$\kappa(\Int_0) \le \kappa_0$. Set~$Q_{-1} = 0$ and~$k=0$.
+    \begin{algorithmic}[1]
+        \State \textbf{Model construction}.
+        Pick~$Q_k \in \{Q\in\Qua\mathrel{:} Q(x)=f(x)~\text{for all}~x\in\Int_k\}$.
+        \State \textbf{Trust-region step evaluation}.
+        Define~$x_k = \argmin\{f(x) \mathrel{:} x\in \Int_k\}$. Calculate
+        \begin{equation}
+         \label{eq:xgetn}
+          x_k^\get \approx \argmin\{Q_k(x)\mathrel{:} \|x-x_k\|\le \Delta_k\}.
+        \end{equation}
+        If~$\|x_k^\get-x_k\| < \rho_k/2$, then set~$\Delta_{k+1} = \theta \Delta_k$.
+        Otherwise,
+        update~$\Delta_k$ to~$\Delta_{k+1}$ according to~$\rho_k = [f(x_k) - f(x_k^\get)]/[Q_k(x_k)
+        - Q_k(x_k^\get)]$.
+        \State \textbf{Interpolation set update}.
+        If~$\|x_k^\get-x_k\| \ge \alpha\Delta_k$, then calculate
+        \begin{equation}
+            \label{eq:xdropn}
+            x_k^\drop \approx \argmin\{\kappa(\Int_k\cup x_k^\get\setminus x) \mathrel{:} x \in
+            \Int_k\},
+        \end{equation}
+        and set~$\Int_{k+1} = \Int_k\cup x_k^\get\setminus x_k^\drop$
+        if $\rho_k>0$ or $\kappa(\Int_k\cup x_k^\get \setminus x_k^\drop) \le \kappa_0$.
+        \State \textbf{Geometry improvement}.
+        If~$\|x_k^\get-x_k\|< \alpha \Delta_k$, or~$\|x_k^\get-x_k\| > \alpha \Delta_k$
+        but~$\rho_k\le 0$ and $\kappa(\Int_k \cup x_k^\get\setminus x_k^\drop) > \kappa_0$, then calculate
+          \begin{align}
+              \label{eq:ydropn}
+              y_k^\drop &= \argmax\{\|y-x_k\| \mathrel{:} y \in \Int_k\}, \\
+              \label{eq:ygetn}
               y_k^\get &\approx \argmin\{\kappa(\Int_k \cup y \setminus y_k^\drop) \mathrel{:} \|y-x_k\|\le
               \Delta_k\},
           \end{align}
