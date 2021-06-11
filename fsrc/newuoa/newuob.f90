@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, June 11, 2021 PM04:51:15
+! Last Modified: Friday, June 11, 2021 PM05:39:55
 
 module newuob_mod
 
@@ -398,7 +398,8 @@ do tr = 1, maxtr
     if (improve_geo) then
         ! Set DELBAR, which will be used as the trust region radius for the geometry-improving
         ! scheme GEOSTEP. We also need it to decide whether to shift XBASE or not.
-        !delbar = max(min(TENTH * sqrt(maxval(xdsq)), HALF * delta), rho)
+        ! Note that DELTA has been updated before arriving here. See the comments above the
+        ! definition of IMPROVE_GEO.
         delbar = max(min(TENTH * maxval(xdist), HALF * delta), rho)
 
         ! Shift XBASE if XOPT may be too far from XBASE.
