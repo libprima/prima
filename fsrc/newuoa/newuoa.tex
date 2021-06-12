@@ -173,8 +173,9 @@
 \newcommand{\disth}{{\operatorname{\updelta_{\sss{H}}}}}
 %\newcommand{\ind}[2]{\operatorname{\mathbbm{1}}\;\!\!\!\big(#2\in#1\big)}
 \DeclareMathOperator{\ind}{\mathbbm{1}}
-\newcommand{\shortd}{S}
-\newcommand{\redrho}{E}
+\newcommand{\shortd}{\mathsf{S}}
+\newcommand{\redrho}{\mathtt{R}}
+\newcommand{\impgeo}{\mathsfit{G}}
 %\newcommand*{\defeq}{\stackrel{\mbox{\normalfont\tiny{\textnormal{def}}}}{=}}
 \newcommand\defeq{\mathrel{\overset{\makebox[0pt]{\mbox{\normalfont\tiny\sffamily def}}}{=}}}
 
@@ -321,7 +322,8 @@
 \begin{algorithm}[htbp!]
     \caption{\label{alg:optim}OPTimization based on Interpolation Models (OPTIM)}
     Input $\Delta_0\in (0,+\infty)$, $\tau>0$, $m\in \{n+2, n+3, \dots, (n+1)(n+2)/2\}$,
-    and~$\Int_0\subset \RR^n$ with~$|\Int_0|=m$ and~$\kappa(\Int_0) \le \kappa_0$. Set~$Q_{-1} = 0$ and~$k=0$.
+    and~$\Int_0\subset \RR^n$ with~$|\Int_0|=m$ and~$\kappa(\Int_0) \le \kappa_0$.
+    Set~$k=0$.
     \begin{algorithmic}[1]
         \State \textbf{Model construction}.
         Pick~$Q_k \in \{Q\in\Qua\mathrel{:} Q(x)=f(x)~\text{for all}~x\in\Int_k\}$.
@@ -363,30 +365,35 @@
 \begin{algorithm}[htbp!]
     \caption{\label{alg:newuoa}NEWUOA}
     Input $\Delta_0\in (0,+\infty)$, $\tau>0$, $m\in \{n+2, n+3, \dots, (n+1)(n+2)/2\}$,
-    and~$\Int_0\subset \RR^n$ with~$|\Int_0|=m$ and~$\kappa(\Int_0) \le \kappa_0$. Set~$Q_{-1} = 0$ and~$k=0$.
+    and~$\Int_0\subset \RR^n$ with~$|\Int_0|=m$ and~$\kappa(\Int_0) \le \kappa_0$.
+    Define~$Q_0 = \argmin\{\|\nabla Q\|_\fro \mathrel{:} Q(x) = f(x) \text{ for all } x\in \Int_0\}$.
+    Set~$k=0$.
     \begin{algorithmic}[1]
-        \State \textbf{Model construction}.
-        Pick~$Q_k \in \{Q\in\Qua\mathrel{:} Q(x)=f(x)~\text{for all}~x\in\Int_k\}$.
         \State \textbf{Trust-region step evaluation}.
         Define~$x_k = \argmin\{f(x) \mathrel{:} x\in \Int_k\}$. Calculate
         \begin{equation}
          \label{eq:xgetn}
           x_k^\get \approx \argmin\{Q_k(x)\mathrel{:} \|x-x_k\|\le \Delta_k\}.
         \end{equation}
-        If~$\|x_k^\get-x_k\| < \rho_k/2$, then set~$\shortd_k = 1$; otherwise, set~$\shortd_k = 0$.
-        If~$\shortd_k = 1$ and the errors in recent models are sufficiently small, then set~$\redrho_k = 1$; otherwise, set~$\redrho_k = 0$.
+        Set~$\shortd_k = \ind(\|x_k^\get-x_k\| < \rho_k/2)$, $\redrho_k =  \ind(\shortd_k=1\text{
+        and the errors in recent models are small})$.
         If~$\shortd_k=1$ and~$\redrho_k = 0$, then set~$\Delta_{k+1} = \max\{\Delta_k/10, \rho_k\}$.
-        If~$\shortd_k = 0$, then calculate~$r_k = [f(x_k)-f(x_k^\get)]/[Q_k(x_k)-Q_k(x_k^\get)]$,
+        If~$\shortd_k = 0$, then calculate $r_k = [f(x_k)-f(x_k^\get)]/[Q_k(x_k)-Q_k(x_k^\get)]$,
         and update~$\Delta_k$ to~$\Delta_{k+1}$ according to~$r_k$.
         \State \textbf{Interpolation set update}.
         If~$\shortd_k = 0$, then calculate
         \begin{equation}
             \label{eq:xdropn}
             x_k^\drop \approx \argmin\{\kappa(\Int_k\cup x_k^\get\setminus x) \mathrel{:} x \in
-            \Int_k\},
+            \Int_k\}.
         \end{equation}
-        and set~$\hat{\Int}_{k} = \Int_k\cup x_k^\get\setminus x_k^\drop$
-        if $r_k>0$ or $\kappa(\Int_k\cup x_k^\get \setminus x_k^\drop) \le \kappa_0$.
+        If~$r_k>0$ or $\kappa(\Int_k\cup x_k^\get \setminus x_k^\drop) \le \kappa_0$,
+        then set~$\hat{\Int}_{k} = \Int_k\cup x_k^\get\setminus x_k^\drop$ and
+        \begin{equation*}
+            \hat{Q}_k = \argmin\{\|Q-Q_k\|_\fro \mathrel{:} Q (x) = f(x) \text{ for all } x \in
+            \hat{\Int}_k\}.
+        \end{equation*}
+        In all the other cases, $\hat{\Int}_k = \Int_k$ and~$\hat{Q}_k = Q_k$.
         \State \textbf{Geometry improvement}.
         If~$\shortd_k = 1$ or~$r_k < 1/10$, then set
           \begin{equation}
