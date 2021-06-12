@@ -370,33 +370,35 @@
     Set~$k=0$.
     \begin{algorithmic}[1]
         \State \textbf{Trust-region step evaluation}.
-        Define~$x_k = \argmin\{f(x) \mathrel{:} x\in \Int_k\}$. Calculate
-        \begin{equation}
-         \label{eq:xgetn}
-          x_k^\get \approx \argmin\{Q_k(x)\mathrel{:} \|x-x_k\|\le \Delta_k\}.
-        \end{equation}
-        Set~$\shortd_k = \ind(\|x_k^\get-x_k\| < \rho_k/2)$, $\redrho_k =  \ind(\shortd_k=1\text{
-        and the errors in recent models are small})$.
-        If~$\shortd_k=1$ and~$\redrho_k = 0$, then set~$\Delta_{k+1} = \max\{\Delta_k/10, \rho_k\}$.
-        If~$\shortd_k = 0$, then evaluate $r_k = [f(x_k)-f(x_k^\get)]/[Q_k(x_k)-Q_k(x_k^\get)]$,
+        Define~$x_k = \argmin\{f(x) \mathrel{:} x\in \Int_k\}$. Set
+        \begin{align}
+             \label{eq:xgetn}
+             x_k^\get \approx &\argmin\{Q_k(x)\mathrel{:} \|x-x_k\|\le \Delta_k\}.\\
+            \label{eq:shortd}
+            \shortd = &\ind(\|x_k^\get-x_k\| < \rho_k/2),\\
+            \label{eq:redrho}
+            \redrho = & \ind(\shortd=1\text{ and the errors in recent models are small}).
+        \end{align}
+        If~$\shortd=1$ and~$\redrho = 0$, then set~$\Delta_{k+1} = \max\{\Delta_k/10, \rho_k\}$.
+        If~$\shortd = 0$, then evaluate $r_k = [f(x_k)-f(x_k^\get)]/[Q_k(x_k)-Q_k(x_k^\get)]$,
         and update~$\Delta_k$ to~$\Delta_{k+1}$ according to~$r_k$.
         \State \textbf{Interpolation set update}.
-        If~$\shortd_k = 0$, then calculate
+        If~$\shortd = 0$, then calculate
         \begin{equation}
             \label{eq:xdropn}
             x_k^\drop \approx \argmin\{\kappa(\Int_k\cup x_k^\get\setminus x) \mathrel{:} x \in
             \Int_k\},
         \end{equation}
-        and take~$\hat{\Int}_{k} = \Int_k\cup x_k^\get\setminus x_k^\drop$
+        and let~$\hat{\Int}_{k} = \Int_k\cup x_k^\get\setminus x_k^\drop$
         if~$r_k>0$ or $\kappa(\Int_k\cup x_k^\get \setminus x_k^\drop) \le \kappa_0$. In
-        any other case,~$\hat{\Int}_k=\Int_k$. Set
+        any other case,~$\hat{\Int}_k=\Int_k$.~Set%
         \begin{equation}
             \label{eq:updateq1}
             \hat{Q}_k = \argmin\{\|Q-Q_k\|_\fro \mathrel{:} Q\in \Qua~\text{and}~Q(x) = f(x) \text{ for all } x \in
             \hat{\Int}_k\}.
         \end{equation}
         \State \textbf{Geometry improvement}.
-        If~$\redrho_k = 0$ and either~$\shortd_k = 1$ or~$r_k < 1/10$, then set
+        If~$\redrho = 0$ and either~$\shortd = 1$ or~$r_k < 1/10$, then set
           \begin{equation}
               \label{eq:ydropn}
               y_k^\drop = \argmax\{\|y-x_k\| \mathrel{:} y \in \hat{\Int}_k\}.
@@ -410,9 +412,9 @@
           \end{equation}
           and set~$\Int_{k+1} = \hat{\Int}_k\cup y_k^\get\setminus y_k^\drop$.
        \State \textbf{Resolution enhancement}.
-       If~$\redrho_k = 1$, then reduce~$\rho_k$ by about a factor of~$10$ to
+       If~$\redrho = 1$, then reduce~$\rho_k$ by about a factor of~$10$ to
        obtain~$\rho_{k+1}$, and set~$\Delta_{k+1} = \max\{\rho_{k+1}/2, \rho_k\}$.
-       If~$\redrho_{k} = 0$, then set~$\rho_{k+1} = \rho_k$.
+       If~$\redrho = 0$, then set~$\rho_{k+1} = \rho_k$.
     \end{algorithmic}
 \end{algorithm}
 

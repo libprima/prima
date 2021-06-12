@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Saturday, June 12, 2021 PM04:37:00
+! Last Modified: Saturday, June 12, 2021 PM05:16:40
 
 module newuob_mod
 
@@ -495,11 +495,11 @@ do tr = 1, maxtr
     ! trust-region step is "bad" (SHORTD or RATIO <= 0), then we shrink RHO (update the criterion
     ! for the "closeness" and SHORTD). REDUCE_RHO_2 corresponds to Box 10 of the NEWUOA paper.
     ! N.B.:
-    ! 1. Even though DNORM gets a new value after the geometry step if IMPROVE_GEO = TRUE, this
+    ! 1. Even though DNORM gets a new value after the geometry step when IMPROVE_GEO = TRUE, this
     ! value does not affect REDUCE_RHO_2, because DNORM comes into play only if IMPROVE_GEO = FALSE.
     ! 2. DELTA < DNORM may hold due to the update of DELTA.
     ! 3. The following two lines are equivalent.
-    !reduce_rho_2 = (.not. improve_geo) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= ZERO)
+    !reduce_rho_2 = (.not. improve_geo) .and. (max(delta,dnorm)<=rho) .and. (shortd .or. ratio <= 0)
     reduce_rho_2 = (maxval(xdist) <= TWO * delta) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= ZERO)
 
     if (reduce_rho_1 .or. reduce_rho_2) then
