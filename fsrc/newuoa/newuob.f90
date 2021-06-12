@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, June 11, 2021 PM09:26:31
+! Last Modified: Saturday, June 12, 2021 PM04:37:00
 
 module newuob_mod
 
@@ -371,22 +371,26 @@ do tr = 1, maxtr
     ! N.B.:
     ! 1. RATIO is set if SHORTD = FALSE. So the expression (SHORTD .OR. RATIO < TENTH) will not
     ! suffer from unset RATIO.
-    ! 2. If REDUCE_RHO = FALSE and SHORTD = TRUE, then the trust-region step is not tried at all,
+    ! 2. If SHORTD = FALSE and KNEW_TR = TRUE, then IMPROVE_GEO = TRUE, because KNEW_TR = TRUE
+    ! necessitates RATIO <= 0 < TENTH. Therefore, IMPROVE_GEO = TRUE if it is impossible to obtain
+    ! a good XPT by replacing a current point with the one suggested by the trust region step. This
+    ! is reasonable.
+    ! 3. If REDUCE_RHO = FALSE and SHORTD = TRUE, then the trust-region step is not tried at all,
     ! i.e., no function evaluation is invoked at XOPT + D (When REDUCE_RHO = TRUE, the step is not
     ! tried either, but the same step will be generated again at the next trust-region iteration
     ! after RHO is reduced and DELTA is updated; see the end of Section 2 of the NEWUOA paper).
-    ! 3. If SHORTD = FALSE and KNEW_TR = 0, then the trust-region step invokes a function evaluation
+    ! 4. If SHORTD = FALSE and KNEW_TR = 0, then the trust-region step invokes a function evaluation
     ! at XOPT + D, but [XOPT + D, F(XOPT +D)] is not included into [XPT, FVAL]. In other words, this
     ! function value is discarded. Note that KNEW_TR = 0 only if RATIO <= 0 (see SETREMOVE), so that
     ! a function value that renders a reduction is never discarded.
-    ! 4. If SHORTD = FALSE and KNEW_TR > 0 and RATIO < TENTH, then [XPT, FVAL] is updated so that
+    ! 5. If SHORTD = FALSE and KNEW_TR > 0 and RATIO < TENTH, then [XPT, FVAL] is updated so that
     ! [XPT(KNEW_TR), FVAL(KNEW_TR)] = [XOPT + D, F(XOPT + D)], and the model is updated accordingly,
     ! but such a model will not be used in the next trust-region iteration, because a geometry step
     ! will be invoked to improve the geometry of the interpolation set and update the model again.
-    ! 5. DELTA has been updated before arriving here: if REDUCE_RHO = FALSE and SHORTD = TRUE, then
+    ! 6. DELTA has been updated before arriving here: if REDUCE_RHO = FALSE and SHORTD = TRUE, then
     ! DELTA was reduced by a factor of 10; if SHORTD = FALSE, then DELTA was updated by TRRAD after
     ! the trust-region iteration.
-    ! 6. When SHORTD = FALSE and KNEW_TR > 0, then XPT has been updated after the trust-region
+    ! 7. When SHORTD = FALSE and KNEW_TR > 0, then XPT has been updated after the trust-region
     ! iteration; if RATIO > 0 in addition, then XOPT has been updated as well.
     xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1))
     knew_geo = int(maxloc(xdist, dim=1), kind(knew_geo))
