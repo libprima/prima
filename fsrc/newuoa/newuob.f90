@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Saturday, June 12, 2021 PM05:16:40
+! Last Modified: Sunday, June 13, 2021 PM06:10:32
 
 module newuob_mod
 
@@ -55,7 +55,7 @@ use lina_mod, only : calquad, inprod
 use pintrf_mod, only : FUNEVAL
 use initialize_mod, only : initxf, initq, inith
 use trustregion_mod, only : trsapp, trrad
-use geometry_mod, only : setremove, geostep
+use geometry_mod, only : setdrop, geostep
 use shiftbase_mod, only : shiftbase
 use vlagbeta_mod, only : vlagbeta
 use update_mod, only : updateh, updateq, tryqalt
@@ -287,7 +287,7 @@ do tr = 1, maxtr
 
         ! Update XOPT and FOPT. Before KOPT is updated, XOPT may differ from XPT(:, KOPT), and FOPT
         ! may differ from FVAL(KOPT). Note that the code may exit before KOPT is updated. See below.
-        ! The updated XOPT is needed by SETREMOVE.
+        ! The updated XOPT is needed by SETDROP.
         if (f < fopt) then
             xopt = xnew
             fopt = f
@@ -312,7 +312,7 @@ do tr = 1, maxtr
         ! information of XNEW is included in VLAG and BETA, which are calculated according to
         ! D = XNEW - XOPT. KNEW_TR = 0 means it is impossible to obtain a good interpolation set
         ! by replacing any current interpolation point with XNEW.
-        call setremove(idz, kopt, beta, delta, ratio, rho, vlag(1:npt), xopt, xpt, zmat, knew_tr)
+        call setdrop(idz, kopt, beta, delta, ratio, rho, vlag(1:npt), xopt, xpt, zmat, knew_tr)
 
         if (knew_tr > 0) then
             ! If KNEW_TR > 0, then update BMAT, ZMAT and IDZ, so that the KNEW_TR-th interpolation
@@ -381,7 +381,7 @@ do tr = 1, maxtr
     ! after RHO is reduced and DELTA is updated; see the end of Section 2 of the NEWUOA paper).
     ! 4. If SHORTD = FALSE and KNEW_TR = 0, then the trust-region step invokes a function evaluation
     ! at XOPT + D, but [XOPT + D, F(XOPT +D)] is not included into [XPT, FVAL]. In other words, this
-    ! function value is discarded. Note that KNEW_TR = 0 only if RATIO <= 0 (see SETREMOVE), so that
+    ! function value is discarded. Note that KNEW_TR = 0 only if RATIO <= 0 (see SETDROP), so that
     ! a function value that renders a reduction is never discarded.
     ! 5. If SHORTD = FALSE and KNEW_TR > 0 and RATIO < TENTH, then [XPT, FVAL] is updated so that
     ! [XPT(KNEW_TR), FVAL(KNEW_TR)] = [XOPT + D, F(XOPT + D)], and the model is updated accordingly,
