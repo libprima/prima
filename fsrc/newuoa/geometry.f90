@@ -3,20 +3,20 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, June 11, 2021 AM11:55:52
+! Last Modified: Sunday, June 13, 2021 PM06:10:02
 
 module geometry_mod
 
 implicit none
 private
-public :: setremove, geostep
+public :: setdrop, geostep
 
 
 contains
 
 
-subroutine setremove(idz, kopt, beta, delta, ratio, rho, vlag, xopt, xpt, zmat, knew)
-! SETREMOVE sets KNEW to the index of the interpolation point that will be deleted AFTER A TRUST
+subroutine setdrop(idz, kopt, beta, delta, ratio, rho, vlag, xopt, xpt, zmat, knew)
+! SETDROP sets KNEW to the index of the interpolation point that will be deleted AFTER A TRUST
 ! REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
 ! XPT(:, KNEW) is replaced by XNEW = XOPT + D, where D is the trust-region step.  Note that the
 ! information of XNEW is included in VLAG and BETA, which are calculated according to D.
@@ -52,7 +52,7 @@ real(RP) :: hdiag(size(zmat, 1))
 real(RP) :: rhosq
 real(RP) :: sigma(size(xpt, 2))
 real(RP) :: xdsq(size(xpt, 2))
-character(len=SRNLEN), parameter :: srname = 'SETREMOVE'
+character(len=SRNLEN), parameter :: srname = 'SETDROP'
 
 
 ! Get and verify the sizes
@@ -92,7 +92,7 @@ end if
 ! necessarily a good interplolation set. In contrast, a good interpolation set needs to include
 ! points with relatively high function values; otherwise, the interpolant will unlikely describe the
 ! landscape of the function sufficiently.
-end subroutine setremove
+end subroutine setdrop
 
 
 subroutine geostep(idz, knew, kopt, bmat, delbar, xpt, zmat, d, beta, vlag)
@@ -234,7 +234,7 @@ character(len=SRNLEN), parameter :: srname = 'BIGLAG'
 ! XPT contains the current interpolation points.
 ! BMAT provides the last N ROWs of H.
 ! ZMAT and IDZ give a factorization of the first NPT by NPT sub-matrix of H.
-! KNEW is the index of the interpolation point to be removed.
+! KNEW is the index of the interpolation point to be dropped.
 ! DELBAR is the trust region bound for BIGLAG.
 ! D will be set to the step from X to the new point.
 ! HCOL, GC, GD, S and W will be used for working space.
@@ -461,7 +461,7 @@ character(len=SRNLEN), parameter :: srname = 'BIGDEN'
 ! ZMAT and IDZ give a factorization of the first NPT by NPT sub-matrix of H.
 ! NDIM is the second dimension of BMAT and has the value NPT + N.
 ! KOPT is the index of the optimal interpolation point.
-! KNEW is the index of the interpolation point to be removed.
+! KNEW is the index of the interpolation point to be dropped.
 ! D will be set to the step from X to the new point, and on entry it should be the D that was
 ! calculated by the last call of BIGLAG. The length of the initial D provides a trust region bound
 ! on the final D.
