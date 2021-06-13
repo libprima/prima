@@ -150,6 +150,9 @@
 \newcommand{\ceil}[1]{ {\lceil{#1}\rceil} }
 \newcommand{\floor}[1]{ {\lfloor{#1}\rfloor} }
 
+\newcommand{\olsi}[1]{\,\overline{\!{#1}}} % overline short italic
+\newcommand{\lbar}[1]{\overline}
+
 \DeclareMathOperator{\tr}{tr}
 \DeclareMathOperator{\sort}{sort}
 \DeclareMathOperator*{\Argmax}{Argmax}
@@ -373,16 +376,17 @@
         Define~$x_k = \argmin\{f(x) \mathrel{:} x\in \Int_k\}$. Set
         \begin{align}
              \label{eq:xgetn}
-             x_k^\get \approx &\argmin\{Q_k(x)\mathrel{:} \|x-x_k\|\le \Delta_k\}.\\
+             x_k^\get \approx &\argmin\{Q_k(x)\mathrel{:} \|x-\olsi{\Int}_k\|\le \Delta_k\}.\\
             \label{eq:shortd}
             \shortd = &\ind(\|x_k^\get-x_k\| < \rho_k/2),\\
             \label{eq:redrho}
             \redrho = & \ind(\shortd=1\text{ and the errors in recent models are small}).
         \end{align}
+        If~$\redrho = 1$, then set~$\Int_{k+1} = \Int_k$, $Q_{k+1} = Q_k$, and go to step 4.
         If~$\shortd=1$ and~$\redrho = 0$, then set~$\Delta_{k+1} = \max\{\Delta_k/10, \rho_k\}$.
-        If~$\shortd = 0$, then evaluate $r_k = [f(x_k)-f(x_k^\get)]/[Q_k(x_k)-Q_k(x_k^\get)]$,
+        If~$\shortd = 0$, then evaluate $r_k = [f(x_k)-f(x_k^\get)]/[Q_k(x_k)-Q_k(x_k^\get)]$
         and update~$\Delta_k$ to~$\Delta_{k+1}$ according to~$r_k$.
-        \State \textbf{Interpolation set update}.
+        \State \textbf{Interpolation set and model update}.
         If~$\shortd = 0$, then calculate
         \begin{equation}
             \label{eq:xdropn}
