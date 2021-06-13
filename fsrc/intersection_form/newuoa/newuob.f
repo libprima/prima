@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 11-Jun-2021.
+! on 13-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -17,7 +17,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, June 11, 2021 PM09:26:31
+! Last Modified: Sunday, June 13, 2021 PM08:48:20
 
       module newuob_mod
 
@@ -73,7 +73,7 @@
       use pintrf_mod, only : FUNEVAL
       use initialize_mod, only : initxf, initq, inith
       use trustregion_mod, only : trsapp, trrad
-      use geometry_mod, only : setremove, geostep
+      use geometry_mod, only : setdrop, geostep
       use shiftbase_mod, only : shiftbase
       use vlagbeta_mod, only : vlagbeta
       use update_mod, only : updateh, updateq, tryqalt
@@ -314,7 +314,7 @@
 
 ! Update XOPT and FOPT. Before KOPT is updated, XOPT may differ from XPT(:, KOPT), and FOPT
 ! may differ from FVAL(KOPT). Note that the code may exit before KOPT is updated. See below.
-! The updated XOPT is needed by SETREMOVE.
+! The updated XOPT is needed by SETDROP.
               if (f < fopt) then
                   xopt = xnew
                   fopt = f
@@ -339,8 +339,8 @@
 ! information of XNEW is included in VLAG and BETA, which are calculated according to
 ! D = XNEW - XOPT. KNEW_TR = 0 means it is impossible to obtain a good interpolation set
 ! by replacing any current interpolation point with XNEW.
-              call setremove(idz, kopt, beta, delta, ratio, rho, vlag(1:&
-     &npt), xopt, xpt, zmat, knew_tr)
+              call setdrop(idz, kopt, beta, delta, ratio, rho, vlag(1:np&
+     &t), xopt, xpt, zmat, knew_tr)
 
               if (knew_tr > 0) then
 ! If KNEW_TR > 0, then update BMAT, ZMAT and IDZ, so that the KNEW_TR-th interpolation
@@ -401,28 +401,33 @@
 ! N.B.:
 ! 1. RATIO is set if SHORTD = FALSE. So the expression (SHORTD .OR. RATIO < TENTH) will not
 ! suffer from unset RATIO.
-! 2. If REDUCE_RHO = FALSE and SHORTD = TRUE, then the trust-region step is not tried at all,
+! 2. If SHORTD = FALSE and KNEW_TR = TRUE, then IMPROVE_GEO = TRUE, because KNEW_TR = TRUE
+! necessitates RATIO <= 0 < TENTH. Therefore, IMPROVE_GEO = TRUE if it is impossible to obtain
+! a good XPT by replacing a current point with the one suggested by the trust region step. This
+! is reasonable.
+! 3. If REDUCE_RHO = FALSE and SHORTD = TRUE, then the trust-region step is not tried at all,
 ! i.e., no function evaluation is invoked at XOPT + D (When REDUCE_RHO = TRUE, the step is not
 ! tried either, but the same step will be generated again at the next trust-region iteration
 ! after RHO is reduced and DELTA is updated; see the end of Section 2 of the NEWUOA paper).
-! 3. If SHORTD = FALSE and KNEW_TR = 0, then the trust-region step invokes a function evaluation
+! 4. If SHORTD = FALSE and KNEW_TR = 0, then the trust-region step invokes a function evaluation
 ! at XOPT + D, but [XOPT + D, F(XOPT +D)] is not included into [XPT, FVAL]. In other words, this
-! function value is discarded. Note that KNEW_TR = 0 only if RATIO <= 0 (see SETREMOVE), so that
+! function value is discarded. Note that KNEW_TR = 0 only if RATIO <= 0 (see SETDROP), so that
 ! a function value that renders a reduction is never discarded.
-! 4. If SHORTD = FALSE and KNEW_TR > 0 and RATIO < TENTH, then [XPT, FVAL] is updated so that
+! 5. If SHORTD = FALSE and KNEW_TR > 0 and RATIO < TENTH, then [XPT, FVAL] is updated so that
 ! [XPT(KNEW_TR), FVAL(KNEW_TR)] = [XOPT + D, F(XOPT + D)], and the model is updated accordingly,
 ! but such a model will not be used in the next trust-region iteration, because a geometry step
 ! will be invoked to improve the geometry of the interpolation set and update the model again.
-! 5. DELTA has been updated before arriving here: if REDUCE_RHO = FALSE and SHORTD = TRUE, then
+! 6. DELTA has been updated before arriving here: if REDUCE_RHO = FALSE and SHORTD = TRUE, then
 ! DELTA was reduced by a factor of 10; if SHORTD = FALSE, then DELTA was updated by TRRAD after
 ! the trust-region iteration.
-! 6. When SHORTD = FALSE and KNEW_TR > 0, then XPT has been updated after the trust-region
+! 7. When SHORTD = FALSE and KNEW_TR > 0, then XPT has been updated after the trust-region
 ! iteration; if RATIO > 0 in addition, then XOPT has been updated as well.
           xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, &
      &dim=1))
           knew_geo = int(maxloc(xdist, dim=1), kind(knew_geo))
           improve_geo = (.not. reduce_rho_1) .and. (shortd .or. ratio < &
      &TENTH) .and. (maxval(xdist) > TWO * delta)
+!improve_geo = (.not. reduce_rho_1) .and. (shortd .or. ratio <= ZERO) .and. (maxval(xdist) > TWO * delta)
 
           if (improve_geo) then
 ! Set DELBAR, which will be used as the trust region radius for the geometry-improving
@@ -528,13 +533,14 @@
 ! trust-region step is "bad" (SHORTD or RATIO <= 0), then we shrink RHO (update the criterion
 ! for the "closeness" and SHORTD). REDUCE_RHO_2 corresponds to Box 10 of the NEWUOA paper.
 ! N.B.:
-! 1. Even though DNORM gets a new value after the geometry step if IMPROVE_GEO = TRUE, this
+! 1. Even though DNORM gets a new value after the geometry step when IMPROVE_GEO = TRUE, this
 ! value does not affect REDUCE_RHO_2, because DNORM comes into play only if IMPROVE_GEO = FALSE.
 ! 2. DELTA < DNORM may hold due to the update of DELTA.
 ! 3. The following two lines are equivalent.
-!reduce_rho_2 = (.not. improve_geo) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= ZERO)
+!reduce_rho_2 = (.not. improve_geo) .and. (max(delta,dnorm)<=rho) .and. (shortd .or. ratio <= 0)
+!reduce_rho_2 = (maxval(xdist) <= TWO * delta) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= ZERO)
           reduce_rho_2 = (maxval(xdist) <= TWO * delta) .and. (max(delta&
-     &, dnorm) <= rho) .and. (shortd .or. ratio <= ZERO)
+     &, dnorm) <= rho) .and. (shortd .or. ratio < TENTH)
 
           if (reduce_rho_1 .or. reduce_rho_2) then
 ! The calculations with the current RHO are complete. Pick the next values of RHO and DELTA.
