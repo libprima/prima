@@ -345,7 +345,7 @@ If multiple points attain the minimum, then we take the earliest one visited by 
     Set~$k=0$.
     \begin{algorithmic}[1]
         \State \textbf{Model construction}.
-        Pick~$Q_k \in \{Q \mathrel{:} Q(x)=f(x)~\text{for all}~x\in\Int_k\}$.
+        Pick~$Q_k \in \{Q \mathrel{:} Q(x)=f(x)~\text{for}~x\in\Int_k\}$.
         \State \textbf{Trust-region step evaluation}.
         Calculate
         \begin{equation}
@@ -386,7 +386,8 @@ If multiple points attain the minimum, then we take the earliest one visited by 
     \caption{\label{alg:newuoa}NEWUOA}
     Input $\Delta_0\in (0,+\infty)$, $\tau>0$, $m\in \{n+2, n+3, \dots, (n+1)(n+2)/2\}$,
     and~$\Int_0\subset \RR^n$ with~$|\Int_0|=m$ and~$\kappa(\Int_0) \le \kappa_0$.
-    Define~$Q_0 = \argmin\{\|\nabla Q\|_\fro \mathrel{:} Q\in \Qua~\text{and}~Q(x) = f(x) \text{ for all } x\in \Int_0\}$.
+    Define~$Q_0 = \argmin\{\|\nabla^2 Q\|_\fro \mathrel{:} Q\in \Qua~\text{and}~Q(x)
+    = f(x)~\text{for}~x\in \Int_0\}$.
     Set~$k=0$.
     \begin{algorithmic}[1]
         \State \textbf{Trust-region step evaluation}.
@@ -415,24 +416,29 @@ If multiple points attain the minimum, then we take the earliest one visited by 
         any other case,~$\Int^{\new}_k=\Int_k$.~Set%
         \begin{equation}
             \label{eq:updateq1}
-            {Q}^{\new}_k = \argmin\{\|Q-Q_k\|_\fro \mathrel{:} Q\in \Qua~\text{and}~Q(x) = f(x) \text{ for all } x \in
-            \Int^{\new}_k\}.
+            {Q}^{\new}_k = \argmin\{\|\nabla^2Q-\nabla^2Q_k\|_\fro \mathrel{:} Q\in \Qua~\text{and}~Q(x)
+        = f(x)~\text{for}~x \in \Int^{\new}_k\}.
         \end{equation}
         \State \textbf{Geometry improvement}.
-        If~$\shortd = 1$ or~$r_k < 1/10$, then set
-          \begin{equation}
+        If~$\xdist(\Int^\new_k)\ge 2\Delta_{k+1}$ and either~$\shortd = 1$ or~$r_k < 1/10$, then
+        calculate
+          \begin{align}
               \label{eq:ydropn}
-              y_k^\drop = \argmax\{\|y-\xopt{\Int^{\new}_k}\| \mathrel{:} y \in \Int^{\new}_k\}.
-          \end{equation}
-          If~$\|y_k^{\drop}-\xopt{\Int^{\new}_k}\| \ge 2\Delta_{k+1}$, then
-          define~$\Delta^{\new}_k = \max\{\rho_k,\, \min\{\|y_k^{\drop} - \xopt{\Int^{\new}_k}\|/10,\, \Delta_{k+1}/2\}\}$,
-          calculate
-          \begin{equation}
+              y_k^\drop &= \argmax\{\|y-\xopt{\Int^{\new}_k}\| \mathrel{:} y \in \Int^{\new}_k\},\\
               \label{eq:ygetn}
-              y_k^\get \approx \argmin\{\kappa(\Int^{\new}_k \cup y \setminus y_k^\drop) \mathrel{:}
-              \|y-\xopt{\Int^{\new}_k}\|\le \Delta^{\new}_k\},
-          \end{equation}
-          and set~$\Int_{k+1} = \Int^{\new}_k\cup y_k^\get\setminus y_k^\drop$.
+              y_k^\get &\approx \argmin\{\kappa(\Int^{\new}_k \cup y \setminus y_k^\drop) \mathrel{:}
+              \|y-\xopt{\Int^{\new}_k}\|\le \Delta^{\new}_k\}
+          \end{align}
+          with~$\Delta^{\new}_k = \max\{\min\{\xdist(\Int_k^\new)/10,\,
+          \Delta_{k+1}/2\},\,\rho_{k}\}$, and set
+          \begin{align}
+              \Int_{k+1} &= \Int^{\new}_k\cup y_k^\get\setminus y_k^\drop,\\
+              {Q}_{k+1} & = \argmin\left\{\|\nabla^2Q-\nabla^2Q_k^\new\|_\fro \mathrel{:}
+              Q=f~\text{on}~\Int_{k+1},\, Q\in \Qua\right\}.
+          \end{align}
+          Otherwise, $\Int_{k+1} = \Int_k^\new$ and~$Q_{k+1} = Q_k^{\new}$.
+          If~$\max\{\xdist(\Int_k^{\new})/2, `\}\Delta_{k+1}$ and either~$\shortd=1$ or~$r_k\le 0$,
+          then set~$\redrho$ to~$1$.
        \State \textbf{Resolution enhancement}.
        If~$\redrho = 1$, then reduce~$\rho_k$ by about a factor of~$10$ to
        obtain~$\rho_{k+1}$, and set~$\Delta_{k+1} = \max\{\rho_{k+1}/2, \rho_k\}$.
