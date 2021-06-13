@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Sunday, June 13, 2021 PM06:10:32
+! Last Modified: Sunday, June 13, 2021 PM08:48:20
 
 module newuob_mod
 
@@ -395,6 +395,7 @@ do tr = 1, maxtr
     xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1))
     knew_geo = int(maxloc(xdist, dim=1), kind(knew_geo))
     improve_geo = (.not. reduce_rho_1) .and. (shortd .or. ratio < TENTH) .and. (maxval(xdist) > TWO * delta)
+    !improve_geo = (.not. reduce_rho_1) .and. (shortd .or. ratio <= ZERO) .and. (maxval(xdist) > TWO * delta)
 
     if (improve_geo) then
         ! Set DELBAR, which will be used as the trust region radius for the geometry-improving
@@ -500,7 +501,8 @@ do tr = 1, maxtr
     ! 2. DELTA < DNORM may hold due to the update of DELTA.
     ! 3. The following two lines are equivalent.
     !reduce_rho_2 = (.not. improve_geo) .and. (max(delta,dnorm)<=rho) .and. (shortd .or. ratio <= 0)
-    reduce_rho_2 = (maxval(xdist) <= TWO * delta) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= ZERO)
+    !reduce_rho_2 = (maxval(xdist) <= TWO * delta) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= ZERO)
+    reduce_rho_2 = (maxval(xdist) <= TWO * delta) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio < TENTH)
 
     if (reduce_rho_1 .or. reduce_rho_2) then
         ! The calculations with the current RHO are complete. Pick the next values of RHO and DELTA.
