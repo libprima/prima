@@ -151,7 +151,10 @@
 \newcommand{\floor}[1]{ {\lfloor{#1}\rfloor} }
 
 \newcommand{\mbarr}[1]{\mskip.5\thinmuskip\overline{\mskip-.5\thinmuskip {#1} \mskip-.5\thinmuskip}\mskip.5\thinmuskip} % overline short
-\newcommand{\mbar}[1]{\,\overline{\!\!{#1}\!}} % overline short italic
+\newcommand{\mbar}[1]{\,\overline{\!{#1}\!}\,} % overline short italic
+
+\newcommand{\xopt}{\mbar}
+\DeclareMathOperator{\xdist}{\updelta}
 
 \DeclareMathOperator{\tr}{tr}
 \DeclareMathOperator{\sort}{sort}
@@ -192,8 +195,9 @@
 \newcommand{\Int}{\mathcal{X}}
 \newcommand{\Qua}{\mathcal{Q}}
 \newcommand{\sss}[1]{{\scriptscriptstyle{#1}}}
-\newcommand{\get}{{\sss{+}}}
-\newcommand{\drop}{{\sss{-}}}
+\newcommand{\get}{{\textrm{g}}}
+\newcommand{\drop}{{\textrm{d}}}
+\newcommand{\new}{{\sss{+}}}
 \newcommand{\sK}{{\scriptscriptstyle{K}}}
 \newcommand{\sT}{{\scriptscriptstyle{T}}}
 \newcommand{\fro}{{\scriptscriptstyle{\textnormal{F}}}}
@@ -320,12 +324,17 @@
 %\textbf{Keywords}: Keyword1, Keyword2
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-We define~$\mbar{\Int_k}$ to be a point in~$\Int_k$ such that
+We define~$\xopt{\Int_k}$ to be a point in~$\Int_k$ such that
 \begin{equation}
     \label{eq:xopt}
-    f(\mbar{\Int_k}) = \min\{f(x) \mathrel{:} x\in \Int_k\}.
+    f(\xopt{\Int_k}) = \min\{f(x) \mathrel{:} x\in \Int_k\}.
 \end{equation}
 If multiple points attain the minimum, then we take the earliest one visited by the algorithm.
+\begin{equation}
+    \label{eq:xdist}
+    \xdist(\Int_k) = \max\{\|x-\xopt{\Int_k}\| \mathrel{:} x\in \Int_k\}
+\end{equation}
+
 
 
 %\usepackage{algorithm, algpseudocode, algorithmicx}
@@ -341,14 +350,14 @@ If multiple points attain the minimum, then we take the earliest one visited by 
         Calculate
         \begin{equation}
          \label{eq:xget}
-         x_k^\get \approx \argmin\{Q_k(x)\mathrel{:} \|x-\mbar{\Int_k}\|\le \Delta_k\}.
+         x_k^\get \approx \argmin\{Q_k(x)\mathrel{:} \|x-\xopt{\Int_k}\|\le \Delta_k\}.
         \end{equation}
-        If~$\|x_k^\get-\mbar{\Int_k}\| < \alpha\Delta_k$, then set~$\Delta_{k+1} = \theta \Delta_k$.
+        If~$\|x_k^\get-\xopt{\Int_k}\| < \alpha\Delta_k$, then set~$\Delta_{k+1} = \theta \Delta_k$.
         Otherwise,
-        update~$\Delta_k$ to~$\Delta_{k+1}$ according to~$r_k = [f(\mbar{\Int_k})
-        - f(x_k^\get)]/[Q_k(\mbar{\Int_k}) - Q_k(x_k^\get)]$.
+        update~$\Delta_k$ to~$\Delta_{k+1}$ according to~$r_k = [f(\xopt{\Int_k})
+        - f(x_k^\get)]/[Q_k(\xopt{\Int_k}) - Q_k(x_k^\get)]$.
         \State \textbf{Interpolation set update}.
-        If~$\|x_k^\get-\mbar{\Int_k}\| \ge \alpha\Delta_k$, then calculate
+        If~$\|x_k^\get-\xopt{\Int_k}\| \ge \alpha\Delta_k$, then calculate
         \begin{equation}
             \label{eq:xdrop}
             x_k^\drop \approx \argmin\{\kappa(\Int_k\cup x_k^\get\setminus x) \mathrel{:} x \in
@@ -357,14 +366,14 @@ If multiple points attain the minimum, then we take the earliest one visited by 
         and set~$\Int_{k+1} = \Int_k\cup x_k^\get\setminus x_k^\drop$
         if $r_k>0$ or $\kappa(\Int_k\cup x_k^\get \setminus x_k^\drop) \le \kappa_0$.
         \State \textbf{Geometry improvement}.
-        If~$\|x_k^\get-\mbar{\Int_k}\|< \alpha \Delta_k$, or~$\|x_k^\get-\mbar{\Int_k}\| > \alpha \Delta_k$
+        If~$\|x_k^\get-\xopt{\Int_k}\|< \alpha \Delta_k$, or~$\|x_k^\get-\xopt{\Int_k}\| > \alpha \Delta_k$
         but~$r_k\le 0$ and $\kappa(\Int_k \cup x_k^\get\setminus x_k^\drop) > \kappa_0$, then calculate
           \begin{align}
               \label{eq:ydrop}
-              y_k^\drop &= \argmax\{\|y-\mbar{\Int_k}\| \mathrel{:} y \in \Int_k\}, \\
+              y_k^\drop &= \argmax\{\|y-\xopt{\Int_k}\| \mathrel{:} y \in \Int_k\}, \\
               \label{eq:yget}
               y_k^\get &\approx \argmin\{\kappa(\Int_k \cup y \setminus y_k^\drop) \mathrel{:}
-                  \|y-\mbar{\Int_k}\|\le
+                  \|y-\xopt{\Int_k}\|\le
               \Delta_k\},
           \end{align}
        and set~$\Int_{k+1} = \Int_k\cup y_k^\get\setminus y_k^\drop$.
@@ -384,15 +393,15 @@ If multiple points attain the minimum, then we take the earliest one visited by 
         Set
         \begin{align}
              \label{eq:xgetn}
-             x_k^\get \approx &\argmin\{Q_k(x)\mathrel{:} \|x-\mbar{\Int_k}\|\le \Delta_k\}.\\
+             x_k^\get \approx &\argmin\{Q_k(x)\mathrel{:} \|x-\xopt{\Int_k}\|\le \Delta_k\}.\\
             \label{eq:shortd}
-            \shortd = &\ind(\|x_k^\get-\mbar{\Int_k}\| < \rho_k/2),\\
+            \shortd = &\ind(\|x_k^\get-\xopt{\Int_k}\| < \rho_k/2),\\
             \label{eq:redrho}
             \redrho = & \ind(\shortd=1\text{ and the errors in recent models are small}).
         \end{align}
         If~$\redrho = 1$, then set~$\Int_{k+1} = \Int_k$, $Q_{k+1} = Q_k$, and go to step 4.
         If~$\shortd=1$ and~$\redrho = 0$, then set $\Delta_{k+1} = \max\{\Delta_k/10, \rho_k\}$.
-        If~$\shortd = 0$, then evaluate $r_k = [f(\mbar{\Int_k})-f(x_k^\get)]/[Q_k(\mbar{\Int_k})-Q_k(x_k^\get)]$
+        If~$\shortd = 0$, then evaluate $r_k = [f(\xopt{\Int_k})-f(x_k^\get)]/[Q_k(\xopt{\Int_k})-Q_k(x_k^\get)]$
         and update~$\Delta_k$ to~$\Delta_{k+1}$ according to~$r_k$.
         \State \textbf{Interpolation set and model update}.
         If~$\shortd = 0$, then calculate
@@ -401,29 +410,29 @@ If multiple points attain the minimum, then we take the earliest one visited by 
             x_k^\drop \approx \argmin\{\kappa(\Int_k\cup x_k^\get\setminus x) \mathrel{:} x \in
             \Int_k\},
         \end{equation}
-        and let~$\Int'_{k} = \Int_k\cup x_k^\get\setminus x_k^\drop$
+        and let~$\Int^{\new}_{k} = \Int_k\cup x_k^\get\setminus x_k^\drop$
         if~$r_k>0$ or $\kappa(\Int_k\cup x_k^\get \setminus x_k^\drop) \le \kappa_0$. In
-        any other case,~$\Int'_k=\Int_k$.~Set%
+        any other case,~$\Int^{\new}_k=\Int_k$.~Set%
         \begin{equation}
             \label{eq:updateq1}
-            {Q}'_k = \argmin\{\|Q-Q_k\|_\fro \mathrel{:} Q\in \Qua~\text{and}~Q(x) = f(x) \text{ for all } x \in
-            \hat{\Int}_k\}.
+            {Q}^{\new}_k = \argmin\{\|Q-Q_k\|_\fro \mathrel{:} Q\in \Qua~\text{and}~Q(x) = f(x) \text{ for all } x \in
+            \Int^{\new}_k\}.
         \end{equation}
         \State \textbf{Geometry improvement}.
         If~$\shortd = 1$ or~$r_k < 1/10$, then set
           \begin{equation}
               \label{eq:ydropn}
-              y_k^\drop = \argmax\{\|y-\mbar{\Int'_k}\| \mathrel{:} y \in \Int'_k\}.
+              y_k^\drop = \argmax\{\|y-\xopt{\Int^{\new}_k}\| \mathrel{:} y \in \Int^{\new}_k\}.
           \end{equation}
-          If~$\|y_k^{\drop}-\mbar{\Int'_k}\| \ge 2\Delta_{k+1}$, then
-          define~$\Delta'_k = \max\{\rho_k,\, \min\{\|y_k^{\drop} - \mbar{\Int'_k}\|/10,\, \Delta_{k+1}/2\}\}$,
+          If~$\|y_k^{\drop}-\xopt{\Int^{\new}_k}\| \ge 2\Delta_{k+1}$, then
+          define~$\Delta^{\new}_k = \max\{\rho_k,\, \min\{\|y_k^{\drop} - \xopt{\Int^{\new}_k}\|/10,\, \Delta_{k+1}/2\}\}$,
           calculate
           \begin{equation}
               \label{eq:ygetn}
-              y_k^\get \approx \argmin\{\kappa(\Int'_k \cup y \setminus y_k^\drop) \mathrel{:}
-              \|y-\mbar{\Int'_k}\|\le \Delta'_k\},
+              y_k^\get \approx \argmin\{\kappa(\Int^{\new}_k \cup y \setminus y_k^\drop) \mathrel{:}
+              \|y-\xopt{\Int^{\new}_k}\|\le \Delta^{\new}_k\},
           \end{equation}
-          and set~$\Int_{k+1} = \Int'_k\cup y_k^\get\setminus y_k^\drop$.
+          and set~$\Int_{k+1} = \Int^{\new}_k\cup y_k^\get\setminus y_k^\drop$.
        \State \textbf{Resolution enhancement}.
        If~$\redrho = 1$, then reduce~$\rho_k$ by about a factor of~$10$ to
        obtain~$\rho_{k+1}$, and set~$\Delta_{k+1} = \max\{\rho_{k+1}/2, \rho_k\}$.
