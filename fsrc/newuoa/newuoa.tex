@@ -18,7 +18,7 @@
 
 
 %% Basic packages
-\usepackage{amsmath,amsthm,amssymb,amsfonts}
+\usepackage{amsmath,amsthm,amssymb,amsfonts,mathtools}
 \usepackage{empheq}
 \usepackage{color}
 \usepackage[bbgreekl]{mathbbol}
@@ -202,6 +202,7 @@
 \newcommand{\sT}{{\scriptscriptstyle{T}}}
 \newcommand{\fro}{{\scriptscriptstyle{\textrm{F}}}}
 \newcommand{\sob}{{\scriptscriptstyle{\textrm{S}}}}
+\newcommand{\Projs}{\mathrm{P}^\sob}
 \newcommand{\trs}{{\scriptscriptstyle{\mathsf{T}}}}
 \newcommand{\hmt}{{\scriptscriptstyle{{\mathsf{H}}}}}
 \newcommand{\pin}{{\scriptscriptstyle{{\mathsf{+}}}}}
@@ -387,8 +388,7 @@ If multiple points attain the minimum, then we take the earliest one visited by 
     \caption{\label{alg:newuoa}NEWUOA}
     Input $\Delta_0\in (0,+\infty)$, $\tau>0$, $m\in \{n+2, n+3, \dots, (n+1)(n+2)/2\}$,
     and~$\Int_0\subset \RR^n$ with~$|\Int_0|=m$ and~$\kappa(\Int_0) \le \kappa_0$.
-    Define~$Q_0 = \argmin\{\|\nabla^2 Q\|_\fro \mathrel{:} Q\in \Qua~\text{and}~Q(x)
-    = f(x)~\text{for}~x\in \Int_0\}$.
+    Define~$Q_0 = \Projs_{\Qua_0}(0)$.
     Set~$k=0$.
     \begin{algorithmic}[1]
         \State \textbf{Trust-region step evaluation}.
@@ -405,7 +405,7 @@ If multiple points attain the minimum, then we take the earliest one visited by 
         If~$\redrho = 0$ and~$\shortd = 1$, then set $\Delta_{k+1} = \max\{\Delta_k/10, \rho_k\}$.
         If~$\shortd = 0$, then evaluate $r_k = [f(\xopt{\Int_k})-f(x_k^\get)]/[Q_k(\xopt{\Int_k})-Q_k(x_k^\get)]$ and update~$\Delta_k$ to~$\Delta_{k+1}$ according to~$r_k$.
         \State \textbf{Interpolation set and model update}.
-        If~$\shortd = 0$, then calculate
+        Define
         \begin{equation}
             \label{eq:xdropn}
             x_k^\drop \approx \argmin\{\kappa(\Int_k\cup x_k^\get\setminus x) \mathrel{:} x \in
@@ -416,7 +416,7 @@ If multiple points attain the minimum, then we take the earliest one visited by 
         \begin{equation}
             \label{eq:updateq1}
             \Int^{\new}_{k} = \Int_k\cup x_k^\get\setminus x_k^\drop, \quad
-            {Q}^{\new}_k = \argmin\left\{\|Q-Q_k\|_\sob \mathrel{:} Q|_{\Int_k^\new}=f|_{\Int_k^\new},\, Q\in\Qua\right\};
+            {Q}^{\new}_k = \Projs_{\Qua_k^\new}(Q_k);
         \end{equation}
         otherwise, $\Int_k^\new = \Int_k$ and~$Q_k^\new =Q_k$.
         \State \textbf{Geometry improvement}.
@@ -436,7 +436,7 @@ If multiple points attain the minimum, then we take the earliest one visited by 
               \quad
               %{Q}_{k+1}  = \argmin\left\{\|Q-Q_k^\new\|_\sob \mathrel{:}
               %Q|_{\Int_{k+1}}=f|_{\Int_{k+1}},\, Q\in \Qua\right\};
-              Q_{k+1} = \mathrm{P}_{\Qua_{k+1}}^\sob(Q_k^\new) ;
+              Q_{k+1} = \Projs_{\Qua_{k+1}}(Q_k^\new) ;
           \end{align}
           otherwise, $\Int_{k+1} = \Int_k^\new$ and~$Q_{k+1} = Q_k^{\new}$.
           If~$\xdist(\Int_k^{\new}) < 2\Delta_{k+1}$, $\max\{\Delta_{k+1}, \|x_k^\get
