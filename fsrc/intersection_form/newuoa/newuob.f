@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 13-Jun-2021.
+! on 14-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -17,7 +17,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Sunday, June 13, 2021 PM08:48:20
+! Last Modified: Monday, June 14, 2021 AM06:45:14
 
       module newuob_mod
 
@@ -425,9 +425,14 @@
           xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, &
      &dim=1))
           knew_geo = int(maxloc(xdist, dim=1), kind(knew_geo))
-          improve_geo = (.not. reduce_rho_1) .and. (shortd .or. ratio < &
-     &TENTH) .and. (maxval(xdist) > TWO * delta)
-!improve_geo = (.not. reduce_rho_1) .and. (shortd .or. ratio <= ZERO) .and. (maxval(xdist) > TWO * delta)
+!improve_geo = (.not. reduce_rho_1) .and. (shortd .or. ratio < TENTH) .and. (maxval(xdist) > TWO * delta)
+! ------------------------------------------------------------------------------------------!
+! Modified IMPROVE_GEO in the following way seems to worsen a little bit the performance, but
+! not too much. The advantage of this IMPROVE_GEO is that the bound for RATIO is 0, aligning
+! with SETDROP and the definition of REDUCE_RHO_2.
+          improve_geo = (.not. reduce_rho_1) .and. (shortd .or. ratio <=&
+     & ZERO) .and. (maxval(xdist) > TWO * delta)
+! ------------------------------------------------------------------------------------------!
 
           if (improve_geo) then
 ! Set DELBAR, which will be used as the trust region radius for the geometry-improving
@@ -538,9 +543,13 @@
 ! 2. DELTA < DNORM may hold due to the update of DELTA.
 ! 3. The following two lines are equivalent.
 !reduce_rho_2 = (.not. improve_geo) .and. (max(delta,dnorm)<=rho) .and. (shortd .or. ratio <= 0)
-!reduce_rho_2 = (maxval(xdist) <= TWO * delta) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio <= ZERO)
           reduce_rho_2 = (maxval(xdist) <= TWO * delta) .and. (max(delta&
-     &, dnorm) <= rho) .and. (shortd .or. ratio < TENTH)
+     &, dnorm) <= rho) .and. (shortd .or. ratio <= ZERO)
+! ------------------------------------------------------------------------------------------!
+! Modifying REDUCE_RHO_2 in the following way seems to make little difference. The advantage
+! of this REDUCE_RHO_2 is that RATIO has the same bound as in the definition of IMPROVE_GEO.
+!reduce_rho_2 = (maxval(xdist) <= TWO * delta) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio < TENTH)
+! ------------------------------------------------------------------------------------------!
 
           if (reduce_rho_1 .or. reduce_rho_2) then
 ! The calculations with the current RHO are complete. Pick the next values of RHO and DELTA.

@@ -198,6 +198,7 @@
 \newcommand{\add}{{\textrm{a}}}
 \newcommand{\drop}{{\textrm{d}}}
 \newcommand{\new}{{\sss{+}}}
+\newcommand{\fin}{{\textrm{end}}}
 \newcommand{\sK}{{\scriptscriptstyle{K}}}
 \newcommand{\sT}{{\scriptscriptstyle{T}}}
 \newcommand{\fro}{{\scriptscriptstyle{\textrm{F}}}}
@@ -453,9 +454,10 @@ and, similarly,~$\Qua_k^\new = \{Q\in\Qua \mathrel{:} Q(x) = f(x)~\text{for}~x\i
           - \xopt{\Int_k}\|\}\le \rho_k$, and either $\shortd=1$ or~$r_k\le 0$,
           then set~$\redrho$ to~$1$.
        \State \textbf{Resolution enhancement}.
-       If~$\redrho = 1$, then reduce~$\rho_k$ by about a factor of~$10$ to
-       obtain~$\rho_{k+1}$, and set~$\Delta_{k+1} = \max\{\rho_{k+1}/2,\, \rho_k\}$.
        If~$\redrho = 0$, then set~$\rho_{k+1} = \rho_k$.
+       If~$\redrho = 1$ and~$\rho_k >\tau$, then reduce~$\rho_k$ by about a factor of~$10$ to
+       obtain~$\rho_{k+1}$ and set~$\Delta_{k+1} = \max\{\rho_{k}/2,\, \rho_{k+1}\}$.
+       If~$\redrho = 1$ and~$\rho_k\le\tau$, then exit.
     \end{algorithmic}
 \end{algorithm}
 
