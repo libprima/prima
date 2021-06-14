@@ -17,7 +17,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Monday, June 14, 2021 AM09:47:16
+! Last Modified: Monday, June 14, 2021 PM08:10:46
 
       module newuob_mod
 
@@ -427,9 +427,9 @@
           knew_geo = int(maxloc(xdist, dim=1), kind(knew_geo))
 !improve_geo = (.not. reduce_rho_1) .and. (shortd .or. ratio < TENTH) .and. (maxval(xdist) > TWO * delta)
 ! ------------------------------------------------------------------------------------------!
-! Modified IMPROVE_GEO in the following way seems to worsen a little bit the performance, but
-! not too much. The advantage of this IMPROVE_GEO is that the bound for RATIO is 0, aligning
-! with SETDROP and the definition of REDUCE_RHO_2.
+! Modifying IMPROVE_GEO in the following way seems to make little difference in the performance,
+! sometimes worsening, sometimes improving. The advantage of this IMPROVE_GEO is that the bound
+! for RATIO is 0, aligning with SETDROP and the definition of REDUCE_RHO_2.
           improve_geo = (.not. reduce_rho_1) .and. (shortd .or. ratio <=&
      & ZERO) .and. (maxval(xdist) > TWO * delta)
 ! ------------------------------------------------------------------------------------------!
