@@ -203,6 +203,8 @@
 \newcommand{\sT}{{\scriptscriptstyle{T}}}
 \newcommand{\fro}{{\scriptscriptstyle{\textrm{F}}}}
 \newcommand{\sob}{{\scriptscriptstyle{\textrm{S}}}}
+\newcommand{\pow}{{\scriptscriptstyle{\textrm{P}}}}
+\newcommand{\Proj}{\mathrm{Proj}}
 \newcommand{\Projs}{\mathrm{P}^\sob}
 \newcommand{\trs}{{\scriptscriptstyle{\mathsf{T}}}}
 \newcommand{\hmt}{{\scriptscriptstyle{{\mathsf{H}}}}}
@@ -327,30 +329,35 @@
 %\textbf{Keywords}: Keyword1, Keyword2
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-We define~$\xopt{\Int_k}$ to be a point in~$\Int_k$ such that
+We use~$\Int_k$ to denote the set of interpolation points at iteration~$k$.
+In addition, we define~$\xopt{\Int_k}$ to be a point in~$\Int_k$ such that
 \begin{equation}
     \label{eq:xopt}
     f(\xopt{\Int_k}) = \min\{f(x) \mathrel{:} x\in \Int_k\}.
 \end{equation}
 If multiple points attain the minimum, then we take the earliest one visited by the algorithm.
-In addition, define
+Meanwhile, we define
 \begin{equation}
     \label{eq:xdist}
     \xdist(\Int_k) = \max\{\|x-\xopt{\Int_k}\| \mathrel{:} x\in \Int_k\}.
 \end{equation}
 
-Let~$\Qua$ be the linear space of all the $n$-variable polynomials with degree at most two.
-Given~$\Int_k$, denote
+Let~$\Qua$ be the linear space of all the $n$-variable polynomials with degree at most two. The
+elements in~$\Qua$ will be referred to as quadratics, even though they may be linear or constant.
+Given~$\Int_k$, we denote
 \begin{equation}
     \label{eq:quak}
     \Qua_k = \{Q\in\Qua \mathrel{:} Q(x) = f(x)~\text{for}~x\in\Int_k\},
 \end{equation}
-and, similarly,~$\Qua_k^\new = \{Q\in\Qua \mathrel{:} Q(x) = f(x)~\text{for}~x\in\Int_k^\new\}$.
+which is the set of quadratics that interpolate~$f$ at~$\Int_k$. Note that~$\Qua_k$ is an affine
+subset of~$\Qua$.
+%Similarly,~$\Qua_k^\new = \{Q\in\Qua \mathrel{:} Q(x) = f(x)~\text{for}~x\in\Int_k^\new\}$.
 \begin{equation}
     \label{eq:snorm}
     \|Q\|_\sob = \|\nabla^2 Q\|_\fro
 \end{equation}
 \begin{equation*}
+    \Proj_\mathcal{C}^\pow \quad
     \Projs_{\mathcal{C}}(\Phi) = \argmin\{\|Q-\Phi\|_\sob \mathrel{:} Q\in\mathcal{C}\}
 \end{equation*}
 
