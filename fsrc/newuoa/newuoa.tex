@@ -333,10 +333,14 @@ We define~$\xopt{\Int_k}$ to be a point in~$\Int_k$ such that
     f(\xopt{\Int_k}) = \min\{f(x) \mathrel{:} x\in \Int_k\}.
 \end{equation}
 If multiple points attain the minimum, then we take the earliest one visited by the algorithm.
+In addition, define
 \begin{equation}
     \label{eq:xdist}
-    \xdist(\Int_k) = \max\{\|x-\xopt{\Int_k}\| \mathrel{:} x\in \Int_k\}
+    \xdist(\Int_k) = \max\{\|x-\xopt{\Int_k}\| \mathrel{:} x\in \Int_k\}.
 \end{equation}
+
+Let~$\Qua$ be the linear space of all the $n$-variable polynomials with degree at most two.
+Given~$\Int_k$, denote
 \begin{equation}
     \label{eq:quak}
     \Qua_k = \{Q\in\Qua \mathrel{:} Q(x) = f(x)~\text{for}~x\in\Int_k\},
@@ -399,7 +403,7 @@ and, similarly,~$\Qua_k^\new = \{Q\in\Qua \mathrel{:} Q(x) = f(x)~\text{for}~x\i
 %\usepackage{algorithm, algpseudocode, algorithmicx}
 \begin{algorithm}[htbp!]
     \caption{\label{alg:newuoa}NEWUOA}
-    Input $\Delta_0\in (0,+\infty)$, $\tau>0$, $m\in \{n+2, n+3, \dots, (n+1)(n+2)/2\}$,
+    Input $\Delta_0\in (0,+\infty)$, $\rho_{\fin}>0$, $m\in \{n+2, n+3, \dots, (n+1)(n+2)/2\}$,
     and~$\Int_0\subset \RR^n$ with~$|\Int_0|=m$ and~$\kappa(\Int_0) \le \kappa_0$.
     Define~$Q_0 = \Projs_{\Qua_0}(0)$.
     Set~$k=0$.
@@ -455,9 +459,9 @@ and, similarly,~$\Qua_k^\new = \{Q\in\Qua \mathrel{:} Q(x) = f(x)~\text{for}~x\i
           then set~$\redrho$ to~$1$.
        \State \textbf{Resolution enhancement}.
        If~$\redrho = 0$, then set~$\rho_{k+1} = \rho_k$.
-       If~$\redrho = 1$ and~$\rho_k >\tau$, then reduce~$\rho_k$ by about a factor of~$10$ to
+       If~$\redrho = 1$ and~$\rho_k >\rho_{\fin}$, then reduce~$\rho_k$ by about a factor of~$10$ to
        obtain~$\rho_{k+1}$ and set~$\Delta_{k+1} = \max\{\rho_{k}/2,\, \rho_{k+1}\}$.
-       If~$\redrho = 1$ and~$\rho_k\le\tau$, then exit.
+       If~$\redrho = 1$ and~$\rho_k\le\rho_{\fin}$, then exit.
     \end{algorithmic}
 \end{algorithm}
 

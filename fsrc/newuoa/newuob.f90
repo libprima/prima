@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Monday, June 14, 2021 AM09:47:16
+! Last Modified: Monday, June 14, 2021 AM11:09:44
 
 module newuob_mod
 
@@ -394,12 +394,12 @@ do tr = 1, maxtr
     ! iteration; if RATIO > 0 in addition, then XOPT has been updated as well.
     xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1))
     knew_geo = int(maxloc(xdist, dim=1), kind(knew_geo))
-    !improve_geo = (.not. reduce_rho_1) .and. (shortd .or. ratio < TENTH) .and. (maxval(xdist) > TWO * delta)
+    improve_geo = (.not. reduce_rho_1) .and. (shortd .or. ratio < TENTH) .and. (maxval(xdist) > TWO * delta)
     ! ------------------------------------------------------------------------------------------!
-    ! Modified IMPROVE_GEO in the following way seems to worsen a little bit the performance, but
-    ! not too much. The advantage of this IMPROVE_GEO is that the bound for RATIO is 0, aligning
-    ! with SETDROP and the definition of REDUCE_RHO_2.
-    improve_geo = (.not. reduce_rho_1) .and. (shortd .or. ratio <= ZERO) .and. (maxval(xdist) > TWO * delta)
+    ! Modifying IMPROVE_GEO in the following way seems to make little difference in the performance,
+    ! sometimes worsening, sometimes improving. The advantage of this IMPROVE_GEO is that the bound
+    ! for RATIO is 0, aligning with SETDROP and the definition of REDUCE_RHO_2.
+    !improve_geo = (.not. reduce_rho_1) .and. (shortd .or. ratio <= ZERO) .and. (maxval(xdist) > TWO * delta)
     ! ------------------------------------------------------------------------------------------!
 
     if (improve_geo) then
