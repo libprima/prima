@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 14-Jun-2021.
+! on 15-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -17,7 +17,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Monday, June 14, 2021 PM08:10:46
+! Last Modified: Tuesday, June 15, 2021 PM02:26:25
 
       module newuob_mod
 
@@ -425,13 +425,13 @@
           xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, &
      &dim=1))
           knew_geo = int(maxloc(xdist, dim=1), kind(knew_geo))
-!improve_geo = (.not. reduce_rho_1) .and. (shortd .or. ratio < TENTH) .and. (maxval(xdist) > TWO * delta)
+          improve_geo = (.not. reduce_rho_1) .and. (shortd .or. ratio < &
+     &TENTH) .and. (maxval(xdist) > TWO * delta)
 ! ------------------------------------------------------------------------------------------!
 ! Modifying IMPROVE_GEO in the following way seems to make little difference in the performance,
-! sometimes worsening, sometimes improving. The advantage of this IMPROVE_GEO is that the bound
-! for RATIO is 0, aligning with SETDROP and the definition of REDUCE_RHO_2.
-          improve_geo = (.not. reduce_rho_1) .and. (shortd .or. ratio <=&
-     & ZERO) .and. (maxval(xdist) > TWO * delta)
+! sometimes worsening, sometimes improving, but never substantially. The advantage of this
+! IMPROVE_GEO is that the bound for RATIO is 0, the same as in SETDROP and REDUCE_RHO_2.
+!improve_geo = (.not. reduce_rho_1) .and. (shortd .or. ratio <= ZERO) .and. (maxval(xdist) > TWO * delta)
 ! ------------------------------------------------------------------------------------------!
 
           if (improve_geo) then
