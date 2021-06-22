@@ -282,6 +282,8 @@
           ic = Nact
           exit
       end do
+      !!!! If NACT=0, then IC = 0, and hence IACT(IC) is undefined, which leads to memory error when
+      !RESNEW(IACT(IC)) is accessed.
 600   if (Vlam(ic) >= zero) then
           Resnew(Iact(ic)) = DMAX1(Resact(ic), tiny)
           goto 900
