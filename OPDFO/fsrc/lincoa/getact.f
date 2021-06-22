@@ -237,6 +237,8 @@
 !
       IFLAG=3
       IC=NACT
+      !!!! If NACT=0, then IC = 0, and hence IACT(IC) is undefined, which leads to memory error when
+      !RESNEW(IACT(IC)) is accessed.
       WRITE(10, *) "VLAM", VLAM(IC)
       WRITE(10, *) IC, NACT, IACT(IC), RESACT(IC)
       close(10)
