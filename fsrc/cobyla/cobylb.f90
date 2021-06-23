@@ -9,6 +9,10 @@ use debug_mod, only : errstop
 use output_mod, only : retmssg, rhomssg, fmssg
 use lina_mod, only : calquad, inprod
 
+! Solver-specific modules
+use savex_mod, only : savex
+use isbetter_mod, only : isbetter
+
 implicit none
 
 ! Inputs
@@ -1033,8 +1037,11 @@ Maxfun = nfvals
      &        1PE13.6 / 3X, 'X =', 1PE13.6, 1P4E15.6)
 99010 format(1PE19.6, 1P4E15.6)
 end subroutine COBYLB
-!*==savex.f90  processed by SPAG 7.50RE at 18:36 on 30 May 2021
 
+
+module savex_mod
+
+contains
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 20190820: See the comments below line number 480
 subroutine SAVEX(Xdrop, Datdrop, Xsav, Datsav, N, M, Nsav, Nsmax, Ctol)
@@ -1173,9 +1180,11 @@ end if
 
 end subroutine SAVEX
 
-!*==isbetter.f90  processed by SPAG 7.50RE at 18:36 on 30 May 2021
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+end module savex_mod
 
+
+module isbetter_mod
+contains
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 20190820:
 subroutine ISBETTER(F0, R0, F, R, Parmu, Ctol, Better)
@@ -1258,3 +1267,4 @@ if ((R < -HUGENUM) .and. (.not. finfnan) .and. (F0 >= -HUGENUM) .and. &
 &     (R0 >= -HUGENUM)) Better = .true.
 end subroutine ISBETTER
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+end module isbetter_mod
