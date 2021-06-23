@@ -372,8 +372,7 @@ almost_infinity = huge(0.0D0) / 2.0D0
                 datdrop(k) = Datmat(k, jdrop)
             end do
         end if
-        call SAVEX(xdrop(1:N), datdrop(1:Mpp), xsav(1:N, 1:NSMAX),     &
- &                 datsav(1:Mpp, 1:NSMAX), N, M, nsav, NSMAX, CTOL)
+        call SAVEX(xdrop(1:N), datdrop(1:Mpp), xsav(1:N, 1:NSMAX), datsav(1:Mpp, 1:NSMAX), N, M, nsav, NSMAX, CTOL)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         if (jdrop == 0) goto 400
 !
@@ -791,8 +790,7 @@ end do
         do k = 1, Mpp
             datdrop(k) = Datmat(k, jdrop)
         end do
-        call SAVEX(xdrop(1:N), datdrop(1:Mpp), xsav(1:N, 1:NSMAX),     &
- &                 datsav(1:Mpp, 1:NSMAX), N, M, nsav, NSMAX, CTOL)
+        call SAVEX(xdrop(1:N), datdrop(1:Mpp), xsav(1:N, 1:NSMAX), datsav(1:Mpp, 1:NSMAX), N, M, nsav, NSMAX, CTOL)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     Calculate the step to the new vertex and its sign.
@@ -1064,28 +1062,33 @@ subroutine SAVEX(Xdrop, Datdrop, Xsav, Datsav, N, M, Nsav, Nsmax, Ctol)
 ! Fot this reason, it is sufficient to save all the "dropped" X that are not
 ! dominated by any vectors in XSAV (as we do in this subroutine),
 ! because the other X are always worse than some vector in XSAV.
-!
+
+! Generic modules
+use consts_mod, only : RP, IK, ZERO, TWO, HALF, TENTH, HUGENUM, DEBUGGING, SRNLEN
+use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
+use infnan_mod, only : is_nan, is_posinf
+use debug_mod, only : errstop
+use output_mod, only : retmssg, rhomssg, fmssg
+use lina_mod, only : calquad, inprod
+
 implicit none
-!*--SAVEX1047
-!*++
-!*++ Dummy argument declarations rewritten by SPAG
-!*++
-real(kind(0.0D0)), intent(IN), dimension(N) :: Xdrop
-real(kind(0.0D0)), intent(IN), dimension(M + 2) :: Datdrop
-real(kind(0.0D0)), intent(INOUT), dimension(N, Nsmax) :: Xsav
-real(kind(0.0D0)), intent(INOUT), dimension(M + 2, Nsmax) :: Datsav
+
+real(RP), intent(IN) :: Xdrop(:)  ! N
+real(RP), intent(IN) :: Datdrop(:)  ! M+2
+real(RP), intent(INOUT) :: Xsav(:, :) ! (N, NSMAX)
+real(RP), intent(INOUT) :: Datsav(:, :)  ! (M+2, NSMAX)
 integer, intent(IN) :: N
 integer, intent(IN) :: M
 integer, intent(INOUT) :: Nsav
 integer, intent(IN) :: Nsmax
-real(kind(0.0D0)), intent(IN) :: Ctol
+real(RP), intent(IN) :: Ctol
 !*++
 !*++ Local variable declarations rewritten by SPAG
 !*++
 logical :: better
 integer :: i, j, k, l, mp, mpp, nremove
 integer, dimension(Nsmax) :: iremove
-real(kind(0.0D0)) :: parmu
+real(RP) :: parmu
 !*++
 !*++ End of declarations rewritten by SPAG
 !*++
@@ -1169,6 +1172,7 @@ if (Nsav >= 1 .and. Nsav <= Nsmax) then
 end if
 
 end subroutine SAVEX
+
 !*==isbetter.f90  processed by SPAG 7.50RE at 18:36 on 30 May 2021
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -1185,24 +1189,26 @@ subroutine ISBETTER(F0, R0, F, R, Parmu, Ctol, Better)
 ! 3. If A = NaN, then any comparison (except .NE.) with another number B
 !    (can be Inf or NaN) returns false.
 !
+! Generic modules
+use consts_mod, only : RP, IK, ZERO, TWO, HALF, TENTH, HUGENUM, DEBUGGING, SRNLEN
+use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
+use infnan_mod, only : is_nan, is_posinf
+use debug_mod, only : errstop
+use output_mod, only : retmssg, rhomssg, fmssg
+use lina_mod, only : calquad, inprod
 implicit none
-!*--ISBETTER1167
-!*++
-!*++ Dummy argument declarations rewritten by SPAG
-!*++
-real(kind(0.0D0)), intent(IN) :: F0
-real(kind(0.0D0)), intent(IN) :: R0
-real(kind(0.0D0)), intent(IN) :: F
-real(kind(0.0D0)), intent(IN) :: R
-real(kind(0.0D0)), intent(IN) :: Parmu
-real(kind(0.0D0)), intent(IN) :: Ctol
+
+real(RP), intent(IN) :: F0
+real(RP), intent(IN) :: R0
+real(RP), intent(IN) :: F
+real(RP), intent(IN) :: R
+real(RP), intent(IN) :: Parmu
+real(RP), intent(IN) :: Ctol
 logical, intent(OUT) :: Better
 !*++
 !*++ Local variable declarations rewritten by SPAG
 !*++
-logical :: f0infnan, finfnan, fle, flt, r0infnan, rinfnan,  &
-&           rle, rlt
-real(kind(0.0D0)) :: HUGENUM = huge(0.0D0)
+logical :: f0infnan, finfnan, fle, flt, r0infnan, rinfnan, rle, rlt
 !*++
 !*++ End of declarations rewritten by SPAG
 !*++
@@ -1211,10 +1217,10 @@ Better = .false.
 
 ! As values of F0, R0, F, and R, we regard Inf and NaN being equivalent
 ! values (they are equally bad).
-f0infnan = (F0 /= F0) .or. (F0 > HUGENUM)     ! F0 = Inf or NaN?
-r0infnan = (R0 /= R0) .or. (R0 > HUGENUM)     ! R0 = Inf or NaN?
-finfnan = (F /= F) .or. (F > HUGENUM)     ! F = Inf or NaN?
-rinfnan = (R /= R) .or. (R > HUGENUM)     ! R  = Inf or NaN?
+f0infnan = is_nan(F0) .or. (F0 > HUGENUM)     ! F0 = Inf or NaN?
+r0infnan = is_nan(R0) .or. (R0 > HUGENUM)     ! R0 = Inf or NaN?
+finfnan = is_nan(F) .or. (F > HUGENUM)     ! F = Inf or NaN?
+rinfnan = is_nan(R) .or. (R > HUGENUM)     ! R  = Inf or NaN?
 
 ! When PARMU >= 0 and F + PARMU*R < F0 + PARMU*R0 and R < CTOL (feasible),
 ! then (F, R) is better than (F0, R0).
