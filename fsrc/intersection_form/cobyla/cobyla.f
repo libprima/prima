@@ -9,40 +9,65 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 15-Jun-2021.
+! on 23-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
-!*==cobyla.f90  processed by SPAG 7.50RE at 00:16 on 26 May 2021
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      SUBROUTINE COBYLA (N,M,X,RHOBEG,RHOEND,IPRINT,MAXFUN,W,IACT)
-!      DIMENSION X(*),W(*),IACT(*)
-            SUBROUTINE COBYLA(N,M,X,Rhobeg,Rhoend,Iprint,Maxfun,W,Iact,F&
-     &,Info, Ftarget,Resmax,Con)
-            IMPLICIT NONE
-!*--COBYLA9
-!*++
-!*++ Dummy argument declarations rewritten by SPAG
-!*++
-            INTEGER :: N
-            INTEGER :: M
-            REAL*8 , DIMENSION(*) :: X
-            REAL*8 :: Rhobeg
-            REAL*8 , INTENT(INOUT) :: Rhoend
-            INTEGER :: Iprint
-            INTEGER :: Maxfun
-            REAL*8 , DIMENSION(*) :: W
-            INTEGER , DIMENSION(*) :: Iact
-            REAL*8 :: F
-            INTEGER :: Info
-            REAL*8 :: Ftarget
-            REAL*8 :: Resmax
-            REAL*8 , INTENT(OUT) , DIMENSION(*) :: Con
+      module cobyla_mod
+
+      contains
+      subroutine cobyla(n, m, x, rhobeg, rhoend, iprint, maxfun, iact, f&
+     &, info, ftarget, resmax, con)
+! Generic modules
+      use consts_mod, only : RP, IK, ZERO, TWO, HALF, TENTH, HUGENUM, DE&
+     &BUGGING, SRNLEN
+      use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, TRSUBP_FAIL&
+     &ED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
+      use infnan_mod, only : is_nan, is_posinf
+      use debug_mod, only : errstop
+      use output_mod, only : retmssg, rhomssg, fmssg
+      use lina_mod, only : calquad, inprod
+
+! Solver-specific modules
+      use cobylb_mod, only : cobylb
+
+      implicit none
+
+! Inputs
+      integer(IK), intent(in) :: iprint
+      integer(IK), intent(in) :: m
+      integer(IK), intent(in) :: maxfun
+      integer(IK), intent(in) :: n
+      real(RP), intent(in) :: ftarget
+      real(RP), intent(in) :: resmax
+      real(RP), intent(in) :: rhobeg
+      real(RP), intent(in) :: rhoend
+
+! In-outputs
+      real(RP), intent(inout) :: x(:)
+
+! Outputs
+      integer(IK), intent(out) :: iact(:)
+      integer(IK), intent(out) :: info
+      real(RP), intent(out) :: con(:)
+      real(RP), intent(out) :: f
 !*++
 !*++ Local variable declarations rewritten by SPAG
 !*++
-            INTEGER :: ia , icon , idatm , idx , isigb , isim , isimi , &
-     &iveta , ivsig , iw , k , mpp
+      integer(IK) :: ia
+      integer(IK) :: icon
+      integer(IK) :: idatm
+      integer(IK) :: idx
+      integer(IK) :: isigb
+      integer(IK) :: isim
+      integer(IK) :: isimi
+      integer(IK) :: iveta
+      integer(IK) :: ivsig
+      integer(IK) :: iw
+      integer(IK) :: k
+      integer(IK) :: mpp
+      real(RP) :: rhoend_c
+      real(RP) :: confr(m + 2)
 !*++
 !*++ End of declarations rewritten by SPAG
 !*++
@@ -123,33 +148,31 @@
 !     Partition the working space array W to provide the storage that is needed
 !     for the main calculation.
 !
-            mpp = M + 2
-            icon = 1
-            isim = icon + mpp
-            isimi = isim + N*N + N
-            idatm = isimi + N*N
-            ia = idatm + N*mpp + mpp
-            ivsig = ia + M*N + N
-            iveta = ivsig + N
-            isigb = iveta + N
-            idx = isigb + N
-            iw = idx + N
+      mpp = M + 2
+      icon = 1
+      isim = icon + mpp
+      isimi = isim + N * N + N
+      idatm = isimi + N * N
+      ia = idatm + N * mpp + mpp
+      ivsig = ia + M * N + N
+      iveta = ivsig + N
+      isigb = iveta + N
+      idx = isigb + N
+      iw = idx + N
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun, 2020-05-05
 ! When the data is passed from the interfaces to the Fortran code, RHOBEG,
-! and RHOEND may change a bit (due to rounding ???). It was oberved in
+! and RHOEND may change a bit (due to rounding ???). It was observed in
 ! a MATLAB test that MEX passed 1 to Fortran as 0.99999999999999978.
 ! If we set RHOEND = RHOBEG in the interfaces, then it may happen
 ! that RHOEND > RHOBEG. That is why we do the following.
-            Rhoend = MIN(Rhobeg,Rhoend)
+      rhoend_c = min(rhobeg, rhoend)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!     2  W(IDX),W(IW),IACT)
-            CALL COBYLB(N,M,mpp,X,Rhobeg,Rhoend,Iprint,Maxfun,W(icon),W(&
-     &isim), W(isimi),W(idatm),W(ia),W(ivsig),W(iveta),W(isigb), W(idx),&
-     &W(iw),Iact,F,Info,Ftarget,Resmax)
-            DO k = 1 , M
-               Con(k) = W(icon+k-1)
-            ENDDO
+      call cobylb(n, m, x, rhobeg, rhoend_c, iprint, maxfun, confr, iact&
+     &, f, info, ftarget, resmax)
+      con = confr(1:m)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            END SUBROUTINE COBYLA
+      end subroutine COBYLA
+
+      end module cobyla_mod

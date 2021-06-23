@@ -9,49 +9,83 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 15-Jun-2021.
+! on 23-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
-!*==trstlp.f90  processed by SPAG 7.50RE at 00:16 on 26 May 2021
-            SUBROUTINE TRSTLP(N,M,A,B,Rho,Dx,Ifull,Iact,Z,Zdota,Vmultc,S&
-     &dirn, Dxnew,Vmultd)
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-            IMPLICIT NONE
-!*--TRSTLP7
-!*++
-!*++ Dummy argument declarations rewritten by SPAG
-!*++
-            INTEGER , INTENT(IN) :: N
-            INTEGER , INTENT(IN) :: M
-            REAL*8 , INTENT(IN) , DIMENSION(N,*) :: A
-            REAL*8 , INTENT(IN) , DIMENSION(*) :: B
-            REAL*8 , INTENT(IN) :: Rho
-            REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Dx
-            INTEGER , INTENT(OUT) :: Ifull
-            INTEGER , INTENT(INOUT) , DIMENSION(*) :: Iact
-            REAL*8 , INTENT(INOUT) , DIMENSION(N,*) :: Z
-            REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Zdota
-            REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Vmultc
-            REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Sdirn
-            REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Dxnew
-            REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Vmultd
-!*++
-!*++ Local variable declarations rewritten by SPAG
-!*++
-            REAL*8 :: acca , accb , alpha , beta , dd , optnew , optold &
-     &, ratio , resmax , resold , sd , sp , spabs , ss , step , stpful ,&
-     & sum , sumabs , sumd , temp , tempa , tot , vsave , zdotv , zdotw &
-     &, zdvabs , zdwabs
-            REAL*8 , DIMENSION(N) :: dsav
-            INTEGER :: i , icon , icount , isave , iterc , j , k , kk , &
-     &kl , kp , kw , mcon , nact , nactx
-!*++
-!*++ End of declarations rewritten by SPAG
-!*++
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!     1  VMULTC(*),SDIRN(*),DXNEW(*),VMULTD(*)
+      subroutine trstlp(n, m, A, B, rho, dx, ifull, iact, z, zdota, vmul&
+     &tc, sdirn, dxnew, vmultd)
+
+! Generic modules
+      use consts_mod, only : RP, IK, ZERO, TWO, HALF, TENTH, HUGENUM, DE&
+     &BUGGING, SRNLEN
+      use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, TRSUBP_FAIL&
+     &ED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
+      use infnan_mod, only : is_nan, is_posinf
+      use debug_mod, only : errstop
+      use output_mod, only : retmssg, rhomssg, fmssg
+      use lina_mod, only : calquad, inprod
+
+      implicit none
+
+      integer(IK), intent(IN) :: N
+      integer(IK), intent(IN) :: M
+      real(RP), intent(IN) :: A(:, :) !(N, :)
+      real(RP), intent(IN) :: B(:)
+      real(RP), intent(IN) :: Rho
+      real(RP), intent(INOUT) :: Dx(:)
+      integer(IK), intent(OUT) :: Ifull
+      integer(IK), intent(INOUT) :: Iact(:)
+      real(RP), intent(INOUT) :: Z(:, :) ! (N, :)
+      real(RP), intent(INOUT) :: Zdota(:)
+      real(RP), intent(INOUT) :: Vmultc(:)
+      real(RP), intent(INOUT) :: Sdirn(:)
+      real(RP), intent(INOUT) :: Dxnew(:)
+      real(RP), intent(INOUT) :: Vmultd(:)
+
+      real(RP) :: acca
+      real(RP) :: accb
+      real(RP) :: alpha
+      real(RP) :: beta
+      real(RP) :: dd
+      real(RP) :: optnew
+      real(RP) :: optold
+      real(RP) :: ratio
+      real(RP) :: resmax
+      real(RP) :: resold
+      real(RP) :: sd
+      real(RP) :: sp
+      real(RP) :: spabs
+      real(RP) :: ss
+      real(RP) :: step
+      real(RP) :: stpful
+      real(RP) :: sum
+      real(RP) :: sumabs
+      real(RP) :: sumd
+      real(RP) :: temp
+      real(RP) :: tempa
+      real(RP) :: tot
+      real(RP) :: vsave
+      real(RP) :: zdotv
+      real(RP) :: zdotw
+      real(RP) :: zdvabs
+      real(RP) :: zdwabs
+      real(RP) :: dsav(size(dx)) ! N
+      integer(IK) :: i
+      integer(IK) :: icon
+      integer(IK) :: icount
+      integer(IK) :: isave
+      integer(IK) :: iterc
+      integer(IK) :: j
+      integer(IK) :: k
+      integer(IK) :: kk
+      integer(IK) :: kl
+      integer(IK) :: kp
+      integer(IK) :: kw
+      integer(IK) :: mcon
+      integer(IK) :: nact
+      integer(IK) :: nactx
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     This subroutine calculates an N-component vector DX by applying the
@@ -93,55 +127,55 @@
 !
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 26-06-2019: See the code below line number 80
-            iterc = 0
+      iterc = 0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            Ifull = 1
-            mcon = M
-            nact = 0
+      Ifull = 1
+      mcon = M
+      nact = 0
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      RESMAX=0.0
-            resmax = 0.0D0
+      resmax = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            DO i = 1 , N
-               DO j = 1 , N
+      do i = 1, N
+          do j = 1, N
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !   10 Z(I,J)=0.0
 !      Z(I,I)=1.0
 !   20 DX(I)=0.0
-                  Z(i,j) = 0.0D0
-               ENDDO
-               Z(i,i) = 1.0D0
-               Dx(i) = 0.0D0
-            ENDDO
+              Z(i, j) = 0.0D0
+          end do
+          Z(i, i) = 1.0D0
+          Dx(i) = 0.0D0
+      end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            IF ( M>=1 ) THEN
-               DO k = 1 , M
-                  IF ( B(k)>resmax ) THEN
-                     resmax = B(k)
-                     icon = k
-                  ENDIF
-               ENDDO
-               DO k = 1 , M
-                  Iact(k) = k
-                  Vmultc(k) = resmax - B(k)
-               ENDDO
-            ENDIF
+      if (M >= 1) then
+          do k = 1, M
+              if (B(k) > resmax) then
+                  resmax = B(k)
+                  icon = k
+              end if
+          end do
+          do k = 1, M
+              Iact(k) = k
+              Vmultc(k) = resmax - B(k)
+          end do
+      end if
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (RESMAX .EQ. 0.0) GOTO 480
-            IF ( resmax==0.0D0 ) GOTO 600
+      if (resmax == 0.0D0) goto 600
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            DO i = 1 , N
+      do i = 1, N
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !   50 SDIRN(I)=0.0
-               Sdirn(i) = 0.0D0
-            ENDDO
+          Sdirn(i) = 0.0D0
+      end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 26-06-2019: See the code below line number 80
-            DO i = 1 , N
-               dsav(i) = Dx(i)
-            ENDDO
+      do i = 1, N
+          dsav(i) = Dx(i)
+      end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     End the current stage of the calculation if 3 consecutive iterations
@@ -152,20 +186,20 @@
 !
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !   60 OPTOLD=0.0
-       100 optold = 0.0D0
+      100 optold = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            icount = 0
-       200 IF ( mcon==M ) THEN
-               optnew = resmax
-            ELSE
+      icount = 0
+      200 if (mcon == M) then
+          optnew = resmax
+      else
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          OPTNEW=0.0
-               optnew = 0.0D0
+          optnew = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               DO i = 1 , N
-                  optnew = optnew - Dx(i)*A(i,mcon)
-               ENDDO
-            ENDIF
+          do i = 1, N
+              optnew = optnew - Dx(i) * A(i, mcon)
+          end do
+      end if
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 26-06-2019
 ! The original code can still encounter infinite cycling,
@@ -174,34 +208,34 @@
 ! Indeed, in all these cases, Inf and NaN appear in D due to extremely
 ! large values in A (up to 10^219).
 ! To avoid wasting energy, we do the following.
-            sumd = 0.0D0
-            DO i = 1 , N
-               sumd = sumd + DABS(Dx(i))
-            ENDDO
-            IF ( sumd>=1.0D100 .OR. sumd/=sumd ) THEN
-               DO i = 1 , N
-                  Dx(i) = dsav(i)
-               ENDDO
-               GOTO 99999
-            ELSE
-               DO i = 1 , N
-                  dsav(i) = Dx(i)
-               ENDDO
-            ENDIF
-            iterc = iterc + 1
-            IF ( iterc>MIN(10000,100*N) ) GOTO 99999
+      sumd = 0.0D0
+      do i = 1, N
+          sumd = sumd + DABS(Dx(i))
+      end do
+      if (sumd >= 1.0D100 .or. sumd /= sumd) then
+          do i = 1, N
+              Dx(i) = dsav(i)
+          end do
+          goto 99999
+      else
+          do i = 1, N
+              dsav(i) = Dx(i)
+          end do
+      end if
+      iterc = iterc + 1
+      if (iterc > min(10000, 100 * N)) goto 99999
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            IF ( icount==0 .OR. optnew<optold ) THEN
-               optold = optnew
-               nactx = nact
-               icount = 3
-            ELSEIF ( nact>nactx ) THEN
-               nactx = nact
-               icount = 3
-            ELSE
-               icount = icount - 1
-               IF ( icount==0 ) GOTO 700
-            ENDIF
+      if (icount == 0 .or. optnew < optold) then
+          optold = optnew
+          nactx = nact
+          icount = 3
+      elseif (nact > nactx) then
+          nactx = nact
+          icount = 3
+      else
+          icount = icount - 1
+          if (icount == 0) goto 700
+      end if
 !
 !     If ICON exceeds NACT, then we add the constraint with index IACT(ICON) to
 !     the active set. Apply Givens rotations so that the last N-NACT-1 columns
@@ -209,134 +243,134 @@
 !     product being set to zero if its nonzero value could be due to computer
 !     rounding errors. The array DXNEW is used for working space.
 !
-            IF ( icon<=nact ) THEN
+      if (icon <= nact) then
 !
 !     Delete the constraint that has the index IACT(ICON) from the active set.
 !
-               IF ( icon<nact ) THEN
-                  isave = Iact(icon)
-                  vsave = Vmultc(icon)
-                  k = icon
-                  DO
-                     kp = k + 1
-                     kk = Iact(kp)
+          if (icon < nact) then
+              isave = Iact(icon)
+              vsave = Vmultc(icon)
+              k = icon
+              do
+                  kp = k + 1
+                  kk = Iact(kp)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          SP=0.0
-                     sp = 0.0D0
+                  sp = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                     DO i = 1 , N
-                        sp = sp + Z(i,k)*A(i,kk)
-                     ENDDO
+                  do i = 1, N
+                      sp = sp + Z(i, k) * A(i, kk)
+                  end do
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          TEMP=SQRT(SP*SP+ZDOTA(KP)**2)
-                     temp = DSQRT(sp*sp+Zdota(kp)**2)
+                  temp = DSQRT(sp * sp + Zdota(kp)**2)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                     alpha = Zdota(kp)/temp
-                     beta = sp/temp
-                     Zdota(kp) = alpha*Zdota(k)
-                     Zdota(k) = temp
-                     DO i = 1 , N
-                        temp = alpha*Z(i,kp) + beta*Z(i,k)
-                        Z(i,kp) = alpha*Z(i,k) - beta*Z(i,kp)
-                        Z(i,k) = temp
-                     ENDDO
-                     Iact(k) = kk
-                     Vmultc(k) = Vmultc(kp)
-                     k = kp
-                     IF ( k>=nact ) THEN
-                        Iact(k) = isave
-                        Vmultc(k) = vsave
-                        EXIT
-                     ENDIF
-                  ENDDO
-               ENDIF
-               nact = nact - 1
+                  alpha = Zdota(kp) / temp
+                  beta = sp / temp
+                  Zdota(kp) = alpha * Zdota(k)
+                  Zdota(k) = temp
+                  do i = 1, N
+                      temp = alpha * Z(i, kp) + beta * Z(i, k)
+                      Z(i, kp) = alpha * Z(i, k) - beta * Z(i, kp)
+                      Z(i, k) = temp
+                  end do
+                  Iact(k) = kk
+                  Vmultc(k) = Vmultc(kp)
+                  k = kp
+                  if (k >= nact) then
+                      Iact(k) = isave
+                      Vmultc(k) = vsave
+                      exit
+                  end if
+              end do
+          end if
+          nact = nact - 1
 !
 !     If stage one is in progress, then set SDIRN to the direction of the next
 !     change to the current vector of variables.
 !
-               IF ( mcon>M ) GOTO 400
+          if (mcon > M) goto 400
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      TEMP=0.0
-               temp = 0.0D0
+          temp = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               DO i = 1 , N
-                  temp = temp + Sdirn(i)*Z(i,nact+1)
-               ENDDO
-               DO i = 1 , N
-                  Sdirn(i) = Sdirn(i) - temp*Z(i,nact+1)
-               ENDDO
-               GOTO 500
-            ELSE
-               kk = Iact(icon)
-               DO i = 1 , N
-                  Dxnew(i) = A(i,kk)
-               ENDDO
+          do i = 1, N
+              temp = temp + Sdirn(i) * Z(i, nact + 1)
+          end do
+          do i = 1, N
+              Sdirn(i) = Sdirn(i) - temp * Z(i, nact + 1)
+          end do
+          goto 500
+      else
+          kk = Iact(icon)
+          do i = 1, N
+              Dxnew(i) = A(i, kk)
+          end do
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      TOT=0.0
-               tot = 0.0D0
+          tot = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               k = N
-               DO
-                  IF ( k>nact ) THEN
+          k = N
+          do
+              if (k > nact) then
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          SP=0.0
 !          SPABS=0.0
-                     sp = 0.0D0
-                     spabs = 0.0D0
+                  sp = 0.0D0
+                  spabs = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                     DO i = 1 , N
-                        temp = Z(i,k)*Dxnew(i)
-                        sp = sp + temp
+                  do i = 1, N
+                      temp = Z(i, k) * Dxnew(i)
+                      sp = sp + temp
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !  110     SPABS=SPABS+ABS(TEMP)
 !          ACCA=SPABS+0.1*ABS(SP)
 !          ACCB=SPABS+0.2*ABS(SP)
 !          IF (SPABS .GE. ACCA .OR. ACCA .GE. ACCB) SP=0.0
 !          IF (TOT .EQ. 0.0) THEN
-                        spabs = spabs + DABS(temp)
-                     ENDDO
-                     acca = spabs + 0.1D0*DABS(sp)
-                     accb = spabs + 0.2D0*DABS(sp)
-                     IF ( spabs>=acca .OR. acca>=accb ) sp = 0.0D0
-                     IF ( tot==0.0D0 ) THEN
+                      spabs = spabs + DABS(temp)
+                  end do
+                  acca = spabs + 0.1D0 * DABS(sp)
+                  accb = spabs + 0.2D0 * DABS(sp)
+                  if (spabs >= acca .or. acca >= accb) sp = 0.0D0
+                  if (tot == 0.0D0) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                        tot = sp
-                     ELSE
-                        kp = k + 1
+                      tot = sp
+                  else
+                      kp = k + 1
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !              TEMP=SQRT(SP*SP+TOT*TOT)
-                        temp = DSQRT(sp*sp+tot*tot)
+                      temp = DSQRT(sp * sp + tot * tot)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                        alpha = sp/temp
-                        beta = tot/temp
-                        tot = temp
-                        DO i = 1 , N
-                           temp = alpha*Z(i,k) + beta*Z(i,kp)
-                           Z(i,kp) = alpha*Z(i,kp) - beta*Z(i,k)
-                           Z(i,k) = temp
-                        ENDDO
-                     ENDIF
-                     k = k - 1
-                     CYCLE
-                  ENDIF
+                      alpha = sp / temp
+                      beta = tot / temp
+                      tot = temp
+                      do i = 1, N
+                          temp = alpha * Z(i, k) + beta * Z(i, kp)
+                          Z(i, kp) = alpha * Z(i, kp) - beta * Z(i, k)
+                          Z(i, k) = temp
+                      end do
+                  end if
+                  k = k - 1
+                  cycle
+              end if
 !
 !     Add the new constraint if this can be done without a deletion from the
 !     active set.
 !
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (TOT .NE. 0.0) THEN
-                  IF ( tot/=0.0D0 ) THEN
+              if (tot /= 0.0D0) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                     nact = nact + 1
-                     Zdota(nact) = tot
-                     Vmultc(icon) = Vmultc(nact)
+                  nact = nact + 1
+                  Zdota(nact) = tot
+                  Vmultc(icon) = Vmultc(nact)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          VMULTC(NACT)=0.0
-                     Vmultc(nact) = 0.0D0
+                  Vmultc(nact) = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                     GOTO 300
-                  ENDIF
+                  goto 300
+              end if
 !
 !     The next instruction is reached if a deletion has to be made from the
 !     active set in order to make room for the new active constraint, because
@@ -347,37 +381,37 @@
 !
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      RATIO=-1.0
-                  ratio = -1.0D0
+              ratio = -1.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                  k = nact
-                  EXIT
-               ENDDO
-               DO
+              k = nact
+              exit
+          end do
+          do
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !  130 ZDOTV=0.0
 !      ZDVABS=0.0
-                  zdotv = 0.0D0
-                  zdvabs = 0.0D0
+              zdotv = 0.0D0
+              zdvabs = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                  DO i = 1 , N
-                     temp = Z(i,k)*Dxnew(i)
-                     zdotv = zdotv + temp
+              do i = 1, N
+                  temp = Z(i, k) * Dxnew(i)
+                  zdotv = zdotv + temp
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !  140 ZDVABS=ZDVABS+ABS(TEMP)
 !      ACCA=ZDVABS+0.1*ABS(ZDOTV)
 !      ACCB=ZDVABS+0.2*ABS(ZDOTV)
-                     zdvabs = zdvabs + DABS(temp)
-                  ENDDO
-                  acca = zdvabs + 0.1D0*DABS(zdotv)
-                  accb = zdvabs + 0.2D0*DABS(zdotv)
+                  zdvabs = zdvabs + DABS(temp)
+              end do
+              acca = zdvabs + 0.1D0 * DABS(zdotv)
+              accb = zdvabs + 0.2D0 * DABS(zdotv)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                  IF ( zdvabs<acca .AND. acca<accb ) THEN
-                     temp = zdotv/Zdota(k)
+              if (zdvabs < acca .and. acca < accb) then
+                  temp = zdotv / Zdota(k)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          IF (TEMP .GT. 0.0 .AND. IACT(K) .LE. M) THEN
-                     IF ( temp>0.0D0 .AND. Iact(k)<=M ) THEN
+                  if (temp > 0.0D0 .and. Iact(k) <= M) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                        tempa = Vmultc(k)/temp
+                      tempa = Vmultc(k) / temp
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !              IF (RATIO .LT. 0.0 .OR. TEMPA .LT. RATIO) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -385,165 +419,166 @@
 ! Zaikun 2019-08-15: IOUT is never used
 !                  IOUT=K
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                        IF ( ratio<0.0D0 .OR. tempa<ratio ) ratio = temp&
+                      if (ratio < 0.0D0 .or. tempa < ratio) ratio = temp&
      &a
-                     ENDIF
-                     IF ( k>=2 ) THEN
-                        kw = Iact(k)
-                        DO i = 1 , N
-                           Dxnew(i) = Dxnew(i) - temp*A(i,kw)
-                        ENDDO
-                     ENDIF
-                     Vmultd(k) = temp
-                  ELSE
+                  end if
+                  if (k >= 2) then
+                      kw = Iact(k)
+                      do i = 1, N
+                          Dxnew(i) = Dxnew(i) - temp * A(i, kw)
+                      end do
+                  end if
+                  Vmultd(k) = temp
+              else
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          VMULTD(K)=0.0
-                     Vmultd(k) = 0.0D0
+                  Vmultd(k) = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                  ENDIF
-                  k = k - 1
-                  IF ( k<=0 ) THEN
+              end if
+              k = k - 1
+              if (k <= 0) then
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (RATIO .LT. 0.0) GOTO 490
-                     IF ( ratio<0.0D0 ) GOTO 700
+                  if (ratio < 0.0D0) goto 700
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     Revise the Lagrange multipliers and reorder the active constraints so
 !     that the one to be replaced is at the end of the list. Also calculate the
 !     new value of ZDOTA(NACT) and branch if it is not acceptable.
 !
-                     DO k = 1 , nact
+                  do k = 1, nact
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !  160 VMULTC(K)=AMAX1(0.0,VMULTC(K)-RATIO*VMULTD(K))
-                        Vmultc(k) = DMAX1(0.0D0,Vmultc(k)-ratio*Vmultd(k&
-     &))
-                     ENDDO
+                      Vmultc(k) = DMAX1(0.0D0, Vmultc(k) - ratio * Vmult&
+     &d(k))
+                  end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                     IF ( icon<nact ) THEN
-                        isave = Iact(icon)
-                        vsave = Vmultc(icon)
-                        k = icon
-                        DO
-                           kp = k + 1
-                           kw = Iact(kp)
+                  if (icon < nact) then
+                      isave = Iact(icon)
+                      vsave = Vmultc(icon)
+                      k = icon
+                      do
+                          kp = k + 1
+                          kw = Iact(kp)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          SP=0.0
-                           sp = 0.0D0
+                          sp = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                           DO i = 1 , N
-                              sp = sp + Z(i,k)*A(i,kw)
-                           ENDDO
+                          do i = 1, N
+                              sp = sp + Z(i, k) * A(i, kw)
+                          end do
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          TEMP=SQRT(SP*SP+ZDOTA(KP)**2)
-                           temp = DSQRT(sp*sp+Zdota(kp)**2)
+                          temp = DSQRT(sp * sp + Zdota(kp)**2)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                           alpha = Zdota(kp)/temp
-                           beta = sp/temp
-                           Zdota(kp) = alpha*Zdota(k)
-                           Zdota(k) = temp
-                           DO i = 1 , N
-                              temp = alpha*Z(i,kp) + beta*Z(i,k)
-                              Z(i,kp) = alpha*Z(i,k) - beta*Z(i,kp)
-                              Z(i,k) = temp
-                           ENDDO
-                           Iact(k) = kw
-                           Vmultc(k) = Vmultc(kp)
-                           k = kp
-                           IF ( k>=nact ) THEN
+                          alpha = Zdota(kp) / temp
+                          beta = sp / temp
+                          Zdota(kp) = alpha * Zdota(k)
+                          Zdota(k) = temp
+                          do i = 1, N
+                              temp = alpha * Z(i, kp) + beta * Z(i, k)
+                              Z(i, kp) = alpha * Z(i, k) - beta * Z(i, k&
+     &p)
+                              Z(i, k) = temp
+                          end do
+                          Iact(k) = kw
+                          Vmultc(k) = Vmultc(kp)
+                          k = kp
+                          if (k >= nact) then
                               Iact(k) = isave
                               Vmultc(k) = vsave
-                              EXIT
-                           ENDIF
-                        ENDDO
-                     ENDIF
+                              exit
+                          end if
+                      end do
+                  end if
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      TEMP=0.0
-                     temp = 0.0D0
+                  temp = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                     DO i = 1 , N
-                        temp = temp + Z(i,nact)*A(i,kk)
-                     ENDDO
+                  do i = 1, N
+                      temp = temp + Z(i, nact) * A(i, kk)
+                  end do
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (TEMP .EQ. 0.0) GOTO 490
-                     IF ( temp==0.0D0 ) GOTO 700
+                  if (temp == 0.0D0) goto 700
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                     Zdota(nact) = temp
+                  Zdota(nact) = temp
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      VMULTC(ICON)=0.0
-                     Vmultc(icon) = 0.0D0
+                  Vmultc(icon) = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                     Vmultc(nact) = ratio
-                     EXIT
-                  ENDIF
-               ENDDO
-            ENDIF
+                  Vmultc(nact) = ratio
+                  exit
+              end if
+          end do
+      end if
 !
 !     Update IACT and ensure that the objective function continues to be
 !     treated as the last active constraint when MCON>M.
 !
-       300 Iact(icon) = Iact(nact)
-            Iact(nact) = kk
-            IF ( mcon>M .AND. kk/=mcon ) THEN
-               k = nact - 1
+      300 Iact(icon) = Iact(nact)
+      Iact(nact) = kk
+      if (mcon > M .and. kk /= mcon) then
+          k = nact - 1
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          SP=0.0
-               sp = 0.0D0
+          sp = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               DO i = 1 , N
-                  sp = sp + Z(i,k)*A(i,kk)
-               ENDDO
+          do i = 1, N
+              sp = sp + Z(i, k) * A(i, kk)
+          end do
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          TEMP=SQRT(SP*SP+ZDOTA(NACT)**2)
-               temp = DSQRT(sp*sp+Zdota(nact)**2)
+          temp = DSQRT(sp * sp + Zdota(nact)**2)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               alpha = Zdota(nact)/temp
-               beta = sp/temp
-               Zdota(nact) = alpha*Zdota(k)
-               Zdota(k) = temp
-               DO i = 1 , N
-                  temp = alpha*Z(i,nact) + beta*Z(i,k)
-                  Z(i,nact) = alpha*Z(i,k) - beta*Z(i,nact)
-                  Z(i,k) = temp
-               ENDDO
-               Iact(nact) = Iact(k)
-               Iact(k) = kk
-               temp = Vmultc(k)
-               Vmultc(k) = Vmultc(nact)
-               Vmultc(nact) = temp
-            ENDIF
+          alpha = Zdota(nact) / temp
+          beta = sp / temp
+          Zdota(nact) = alpha * Zdota(k)
+          Zdota(k) = temp
+          do i = 1, N
+              temp = alpha * Z(i, nact) + beta * Z(i, k)
+              Z(i, nact) = alpha * Z(i, k) - beta * Z(i, nact)
+              Z(i, k) = temp
+          end do
+          Iact(nact) = Iact(k)
+          Iact(k) = kk
+          temp = Vmultc(k)
+          Vmultc(k) = Vmultc(nact)
+          Vmultc(nact) = temp
+      end if
 !
 !     If stage one is in progress, then set SDIRN to the direction of the next
 !     change to the current vector of variables.
 !
-            IF ( mcon<=M ) THEN
-               kk = Iact(nact)
+      if (mcon <= M) then
+          kk = Iact(nact)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      TEMP=0.0
-               temp = 0.0D0
+          temp = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               DO i = 1 , N
-                  temp = temp + Sdirn(i)*A(i,kk)
-               ENDDO
+          do i = 1, N
+              temp = temp + Sdirn(i) * A(i, kk)
+          end do
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      TEMP=TEMP-1.0
-               temp = temp - 1.0D0
+          temp = temp - 1.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               temp = temp/Zdota(nact)
-               DO i = 1 , N
-                  Sdirn(i) = Sdirn(i) - temp*Z(i,nact)
-               ENDDO
-               GOTO 500
-            ENDIF
+          temp = temp / Zdota(nact)
+          do i = 1, N
+              Sdirn(i) = Sdirn(i) - temp * Z(i, nact)
+          end do
+          goto 500
+      end if
 !
 !     Pick the next search direction of stage two.
 !
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !  320 TEMP=1.0/ZDOTA(NACT)
-       400 temp = 1.0D0/Zdota(nact)
+      400 temp = 1.0D0 / Zdota(nact)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            DO i = 1 , N
-               Sdirn(i) = temp*Z(i,nact)
-            ENDDO
+      do i = 1, N
+          Sdirn(i) = temp * Z(i, nact)
+      end do
 !
 !     Calculate the step to the boundary of the trust region or take the step
 !     that reduces RESMAX to zero. The two statements below that include the
@@ -551,202 +586,202 @@
 !     calculation. Further, we skip the step if it could be zero within a
 !     reasonable tolerance for computer rounding errors.
 !
-       500 dd = Rho*Rho
+      500 dd = Rho * Rho
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      SD=0.0
 !      SS=0.0
-            sd = 0.0D0
-            ss = 0.0D0
+      sd = 0.0D0
+      ss = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            DO i = 1 , N
+      do i = 1, N
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (ABS(DX(I)) .GE. 1.0E-6*RHO) DD=DD-DX(I)**2
-               IF ( DABS(Dx(i))>=1.0D-6*Rho ) dd = dd - Dx(i)**2
+          if (DABS(Dx(i)) >= 1.0D-6 * Rho) dd = dd - Dx(i)**2
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               sd = sd + Dx(i)*Sdirn(i)
-               ss = ss + Sdirn(i)**2
-            ENDDO
+          sd = sd + Dx(i) * Sdirn(i)
+          ss = ss + Sdirn(i)**2
+      end do
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (DD .LE. 0.0) GOTO 490
 !      TEMP=SQRT(SS*DD)
 !      IF (ABS(SD) .GE. 1.0E-6*TEMP) TEMP=SQRT(SS*DD+SD*SD)
-            IF ( dd<=0.0D0 ) GOTO 700
-            temp = DSQRT(ss*dd)
-            IF ( DABS(sd)>=1.0D-6*temp ) temp = DSQRT(ss*dd+sd*sd)
+      if (dd <= 0.0D0) goto 700
+      temp = DSQRT(ss * dd)
+      if (DABS(sd) >= 1.0D-6 * temp) temp = DSQRT(ss * dd + sd * sd)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            stpful = dd/(temp+sd)
-            step = stpful
-            IF ( mcon==M ) THEN
+      stpful = dd / (temp + sd)
+      step = stpful
+      if (mcon == M) then
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          ACCA=STEP+0.1*RESMAX
 !          ACCB=STEP+0.2*RESMAX
-               acca = step + 0.1D0*resmax
-               accb = step + 0.2D0*resmax
+          acca = step + 0.1D0 * resmax
+          accb = step + 0.2D0 * resmax
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               IF ( step>=acca .OR. acca>=accb ) GOTO 600
+          if (step >= acca .or. acca >= accb) goto 600
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          STEP=AMIN1(STEP,RESMAX)
-               step = DMIN1(step,resmax)
+          step = DMIN1(step, resmax)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            ENDIF
+      end if
 !
 !     Set DXNEW to the new variables if STEP is the steplength, and reduce
 !     RESMAX to the corresponding maximum residual if stage one is being done.
 !     Because DXNEW will be changed during the calculation of some Lagrange
 !     multipliers, it will be restored to the following value later.
 !
-            DO i = 1 , N
-               Dxnew(i) = Dx(i) + step*Sdirn(i)
-            ENDDO
-            IF ( mcon==M ) THEN
-               resold = resmax
+      do i = 1, N
+          Dxnew(i) = Dx(i) + step * Sdirn(i)
+      end do
+      if (mcon == M) then
+          resold = resmax
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          RESMAX=0.0
-               resmax = 0.0D0
+          resmax = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               DO k = 1 , nact
-                  kk = Iact(k)
-                  temp = B(kk)
-                  DO i = 1 , N
-                     temp = temp - A(i,kk)*Dxnew(i)
-                  ENDDO
+          do k = 1, nact
+              kk = Iact(k)
+              temp = B(kk)
+              do i = 1, N
+                  temp = temp - A(i, kk) * Dxnew(i)
+              end do
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          RESMAX=AMAX1(RESMAX,TEMP)
-                  resmax = DMAX1(resmax,temp)
+              resmax = DMAX1(resmax, temp)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               ENDDO
-            ENDIF
+          end do
+      end if
 !
 !     Set VMULTD to the VMULTC vector that would occur if DX became DXNEW. A
 !     device is included to force VMULTD(K)=0.0 if deviations from this value
 !     can be attributed to computer rounding errors. First calculate the new
 !     Lagrange multipliers.
 !
-            k = nact
-            DO
+      k = nact
+      do
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !  390 ZDOTW=0.0
 !      ZDWABS=0.0
-               zdotw = 0.0D0
-               zdwabs = 0.0D0
+          zdotw = 0.0D0
+          zdwabs = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               DO i = 1 , N
-                  temp = Z(i,k)*Dxnew(i)
-                  zdotw = zdotw + temp
+          do i = 1, N
+              temp = Z(i, k) * Dxnew(i)
+              zdotw = zdotw + temp
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !  400 ZDWABS=ZDWABS+ABS(TEMP)
 !      ACCA=ZDWABS+0.1*ABS(ZDOTW)
 !      ACCB=ZDWABS+0.2*ABS(ZDOTW)
 !      IF (ZDWABS .GE. ACCA .OR. ACCA .GE. ACCB) ZDOTW=0.0
-                  zdwabs = zdwabs + DABS(temp)
-               ENDDO
-               acca = zdwabs + 0.1D0*DABS(zdotw)
-               accb = zdwabs + 0.2D0*DABS(zdotw)
-               IF ( zdwabs>=acca .OR. acca>=accb ) zdotw = 0.0D0
+              zdwabs = zdwabs + DABS(temp)
+          end do
+          acca = zdwabs + 0.1D0 * DABS(zdotw)
+          accb = zdwabs + 0.2D0 * DABS(zdotw)
+          if (zdwabs >= acca .or. acca >= accb) zdotw = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               Vmultd(k) = zdotw/Zdota(k)
-               IF ( k>=2 ) THEN
-                  kk = Iact(k)
-                  DO i = 1 , N
-                     Dxnew(i) = Dxnew(i) - Vmultd(k)*A(i,kk)
-                  ENDDO
-                  k = k - 1
-                  CYCLE
-               ENDIF
+          Vmultd(k) = zdotw / Zdota(k)
+          if (k >= 2) then
+              kk = Iact(k)
+              do i = 1, N
+                  Dxnew(i) = Dxnew(i) - Vmultd(k) * A(i, kk)
+              end do
+              k = k - 1
+              cycle
+          end if
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (MCON .GT. M) VMULTD(NACT)=AMAX1(0.0,VMULTD(NACT))
-               IF ( mcon>M ) Vmultd(nact) = DMAX1(0.0D0,Vmultd(nact))
+          if (mcon > M) Vmultd(nact) = DMAX1(0.0D0, Vmultd(nact))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     Complete VMULTC by finding the new constraint residuals.
 !
-               DO i = 1 , N
-                  Dxnew(i) = Dx(i) + step*Sdirn(i)
-               ENDDO
-               IF ( mcon>nact ) THEN
-                  kl = nact + 1
-                  DO k = kl , mcon
-                     kk = Iact(k)
-                     sum = resmax - B(kk)
+          do i = 1, N
+              Dxnew(i) = Dx(i) + step * Sdirn(i)
+          end do
+          if (mcon > nact) then
+              kl = nact + 1
+              do k = kl, mcon
+                  kk = Iact(k)
+                  sum = resmax - B(kk)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          SUMABS=RESMAX+ABS(B(KK))
-                     sumabs = resmax + DABS(B(kk))
+                  sumabs = resmax + DABS(B(kk))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                     DO i = 1 , N
-                        temp = A(i,kk)*Dxnew(i)
-                        sum = sum + temp
+                  do i = 1, N
+                      temp = A(i, kk) * Dxnew(i)
+                      sum = sum + temp
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !  430     SUMABS=SUMABS+ABS(TEMP)
 !          ACCA=SUMABS+0.1*ABS(SUM)
 !          ACCB=SUMABS+0.2*ABS(SUM)
 !          IF (SUMABS .GE. ACCA .OR. ACCA .GE. ACCB) SUM=0.0
-                        sumabs = sumabs + DABS(temp)
-                     ENDDO
-                     acca = sumabs + 0.1D0*DABS(sum)
-                     accb = sumabs + 0.2D0*DABS(sum)
-                     IF ( sumabs>=acca .OR. acca>=accb ) sum = 0.0D0
+                      sumabs = sumabs + DABS(temp)
+                  end do
+                  acca = sumabs + 0.1D0 * DABS(sum)
+                  accb = sumabs + 0.2D0 * DABS(sum)
+                  if (sumabs >= acca .or. acca >= accb) sum = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                     Vmultd(k) = sum
-                  ENDDO
-               ENDIF
+                  Vmultd(k) = sum
+              end do
+          end if
 !
 !     Calculate the fraction of the step from DX to DXNEW that will be taken.
 !
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      RATIO=1.0
-               ratio = 1.0D0
+          ratio = 1.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               icon = 0
-               DO k = 1 , mcon
+          icon = 0
+          do k = 1, mcon
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (VMULTD(K) .LT. 0.0) THEN
-                  IF ( Vmultd(k)<0.0D0 ) THEN
+              if (Vmultd(k) < 0.0D0) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                     temp = Vmultc(k)/(Vmultc(k)-Vmultd(k))
-                     IF ( temp<ratio ) THEN
-                        ratio = temp
-                        icon = k
-                     ENDIF
-                  ENDIF
-               ENDDO
+                  temp = Vmultc(k) / (Vmultc(k) - Vmultd(k))
+                  if (temp < ratio) then
+                      ratio = temp
+                      icon = k
+                  end if
+              end if
+          end do
 !
 !     Update DX, VMULTC and RESMAX.
 !
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      TEMP=1.0-RATIO
-               temp = 1.0D0 - ratio
+          temp = 1.0D0 - ratio
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               DO i = 1 , N
-                  Dx(i) = temp*Dx(i) + ratio*Dxnew(i)
-               ENDDO
-               DO k = 1 , mcon
+          do i = 1, N
+              Dx(i) = temp * Dx(i) + ratio * Dxnew(i)
+          end do
+          do k = 1, mcon
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !  470 VMULTC(K)=AMAX1(0.0,TEMP*VMULTC(K)+RATIO*VMULTD(K))
-                  Vmultc(k) = DMAX1(0.0D0,temp*Vmultc(k)+ratio*Vmultd(k)&
-     &)
-               ENDDO
+              Vmultc(k) = DMAX1(0.0D0, temp * Vmultc(k) + ratio * Vmultd&
+     &(k))
+          end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               IF ( mcon==M ) resmax = resold + ratio*(resmax-resold)
+          if (mcon == M) resmax = resold + ratio * (resmax - resold)
 !
 !     If the full step is not acceptable then begin another iteration.
 !     Otherwise switch to stage two or end the calculation.
 !
-               IF ( icon>0 ) GOTO 200
-               IF ( step/=stpful ) EXIT
-               GOTO 99999
-            ENDDO
-       600 mcon = M + 1
-            icon = mcon
-            Iact(mcon) = mcon
+          if (icon > 0) goto 200
+          if (step /= stpful) exit
+          goto 99999
+      end do
+      600 mcon = M + 1
+      icon = mcon
+      Iact(mcon) = mcon
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      VMULTC(MCON)=0.0
-            Vmultc(mcon) = 0.0D0
+      Vmultc(mcon) = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            GOTO 100
+      goto 100
 !
 !     We employ any freedom that may be available to reduce the objective
 !     function before returning a DX whose length is less than RHO.
 !
-       700 IF ( mcon==M ) GOTO 600
-            Ifull = 0
-      99999 END SUBROUTINE TRSTLP
+      700 if (mcon == M) goto 600
+      Ifull = 0
+      99999 end subroutine TRSTLP

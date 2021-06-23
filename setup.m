@@ -203,7 +203,7 @@ filelist = 'ffiles.txt';
 % both as free form and as fixed form.
 fprintf('Refactoring the Fortran code ... ');
 addpath(tools);
-if strcmp('newuoa', solver)
+if strcmp('newuoa', solver) %|| strcmp('cobyla', solver)
     interform(fsrc);
     interform(gateways);
 else

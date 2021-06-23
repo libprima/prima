@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 15-Jun-2021.
+! on 23-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -300,6 +300,8 @@
                 ic = Nact
                 exit
             end do
+!!!! If NACT=0, then IC = 0, and hence IACT(IC) is undefined, which leads to memory error when
+!RESNEW(IACT(IC)) is accessed.
       600 if (Vlam(ic) >= zero) then
                 Resnew(Iact(ic)) = DMAX1(Resact(ic), tiny)
                 goto 900

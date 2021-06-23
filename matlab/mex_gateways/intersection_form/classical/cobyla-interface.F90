@@ -38,16 +38,13 @@
 
 module fcobyla ! Some global variables
 
-use consts_mod, only : DP, rp, hugecon, hugefun, zero
+use consts_mod, only : DP, rp, zero
 use infnan_mod
-
-use cobyla_mod, only : cobyla
-
 implicit none
 
-integer*4, parameter :: int32_0 =  0
-integer, parameter :: int32=kind(int32_0)
-integer(int32), parameter :: notComplex = 0
+integer*4, parameter :: int32_0 = 0
+integer, parameter :: INT32 = kind(int32_0)
+integer(INT32), parameter :: notComplex = 0
 ! notComplex is used in mxCreateDoubleMatrix, whose signature is
 ! mwPointer mxCreateDoubleMatrix(mwSize m, mwSize n, integer*4 ComplexFlag)
 mwSize, parameter :: mwOne = 1 ! Integer 1 with type mwSize
@@ -99,7 +96,7 @@ mwPointer, external :: _MGETDB
 ! can be replaced by mxGetDoubles since MATLAB R2018b
 mwSize, external :: mxGetM, mxGetN
 ! mwPointer mxGetM(mwPointer pm), mxGetN(mwPointer pm)
-integer(int32), external :: mxIsDouble, mxIsClass
+integer(INT32), external :: mxIsDouble, mxIsClass
 ! integer*4 mxIsDouble(mwPointer pm);
 ! integer*4 mxIsClass(mwPointer pm, character*(*) classname)
 
@@ -132,41 +129,41 @@ integer :: maxfun, nw
 ! large problems.
 
 ! Validate number of arguments.
-if (nrhs .ne. 9) then
-   call mexErrMsgIdAndTxt ('fcobyla:nInput', 'fcobyla: 9 input argument required.')
+if (nrhs /= 9) then
+    call mexErrMsgIdAndTxt('fcobyla:nInput', 'fcobyla: 9 input argument required.')
 ! subroutine mexErrMsgIdAndTxt(character*(*) errorid, character*(*) errormsg)
 end if
-if (nlhs .gt. 8) then
-   call mexErrMsgIdAndTxt ('fcobyla:nOutput','fcobyla: At most 8 outputs.')
+if (nlhs > 8) then
+    call mexErrMsgIdAndTxt('fcobyla:nOutput', 'fcobyla: At most 8 outputs.')
 end if
 
 ! Validate inputs
 ! Input 1: fun (function handle)
-if (mxIsClass(prhs(1), 'function_handle') .ne. 1) then
+if (mxIsClass(prhs(1), 'function_handle') /= 1) then
     call mexErrMsgIdAndTxt('fcobyla:WrongInput', 'fcobyla: Input 1 should be a function handle.')
 end if
 ! Input 2: con (function handle)
-if (mxIsClass(prhs(2), 'function_handle') .ne. 1) then
+if (mxIsClass(prhs(2), 'function_handle') /= 1) then
     call mexErrMsgIdAndTxt('fcobyla:WrongInput', 'fcobyla: Input 2 should be a function handle.')
 end if
 ! Input 3: x0 (double column)
-if (mxIsDouble(prhs(3)) .ne. 1 .or. mxGetM(prhs(3)) .lt. 1 .or. mxGetN(prhs(3)) .ne. 1) then
+if (mxIsDouble(prhs(3)) /= 1 .or. mxGetM(prhs(3)) < 1 .or. mxGetN(prhs(3)) /= 1) then
     call mexErrMsgIdAndTxt('fcobyla:WrongInput', 'fcobyla: Input 3 should be a column vector of doubles.')
 end if
 ! Input 4: rhobeg (double scalar)
-if (mxIsDouble(prhs(4)) .ne. 1 .or. mxGetM(prhs(4)) .ne. 1 .or. mxGetN(prhs(4)) .ne. 1) then
+if (mxIsDouble(prhs(4)) /= 1 .or. mxGetM(prhs(4)) /= 1 .or. mxGetN(prhs(4)) /= 1) then
     call mexErrMsgIdAndTxt('fcobyla:WrongInput', 'fcobyla: Input 4 should be a double.')
 end if
 ! Input 5: rhobend (double scalar)
-if (mxIsDouble(prhs(5)) .ne. 1 .or. mxGetM(prhs(5)) .ne. 1 .or. mxGetN(prhs(5)) .ne. 1) then
+if (mxIsDouble(prhs(5)) /= 1 .or. mxGetM(prhs(5)) /= 1 .or. mxGetN(prhs(5)) /= 1) then
     call mexErrMsgIdAndTxt('fcobyla:WrongInput', 'fcobyla: Input 5 should be a double.')
 end if
 ! Input 6: maxfun (double scalar)
-if (mxIsDouble(prhs(6)) .ne. 1 .or. mxGetM(prhs(6)) .ne. 1 .or. mxGetN(prhs(6)) .ne. 1) then
+if (mxIsDouble(prhs(6)) /= 1 .or. mxGetM(prhs(6)) /= 1 .or. mxGetN(prhs(6)) /= 1) then
     call mexErrMsgIdAndTxt('fcobyla:WrongInput', 'fcobyla: Input 6 should be a double (with an integer value).')
 end if
 ! Input 7: m (double scalar)
-if (mxIsDouble(prhs(7)) .ne. 1 .or. mxGetM(prhs(7)) .ne. 1 .or. mxGetN(prhs(7)) .ne. 1) then
+if (mxIsDouble(prhs(7)) /= 1 .or. mxGetM(prhs(7)) /= 1 .or. mxGetN(prhs(7)) /= 1) then
     call mexErrMsgIdAndTxt('fcobyla:WrongInput', 'fcobyla: Input 7 should be a double (with an integer value).')
 end if
 ! Although inputs 6 and 7 (maxfun and m) are integers logically,
@@ -185,11 +182,11 @@ end if
 ! maxfun = int64(1000)!
 
 ! Input 8: ftarget (double scalar)
-if (mxIsDouble(prhs(8)) .ne. 1 .or. mxGetM(prhs(8)) .ne. 1 .or. mxGetN(prhs(8)) .ne. 1) then
+if (mxIsDouble(prhs(8)) /= 1 .or. mxGetM(prhs(8)) /= 1 .or. mxGetN(prhs(8)) /= 1) then
     call mexErrMsgIdAndTxt('fcobyla:WrongInput', 'fcobyla: Input 8 should be a double.')
 end if
 ! Input 9: conval_x0 (double column, can be empty)
-if (mxIsDouble(prhs(9)) .ne. 1 .or. (mxGetM(prhs(9)) .gt. 0 .and. mxGetN(prhs(9)) .gt. 1)) then
+if (mxIsDouble(prhs(9)) /= 1 .or. (mxGetM(prhs(9)) > 0 .and. mxGetN(prhs(9)) > 1)) then
     call mexErrMsgIdAndTxt('fcobyla:WrongInput', 'fcobyla: Input 9 should be a column vector of doubles.')
 end if
 
@@ -199,12 +196,12 @@ con_ptr = prhs(2)
 n = mxGetM(prhs(3)) ! This is why n should be of type mwSize
 n_int = int(n, kind(n_int))
 ! n_int is used when a variable of type INTEGER is needed
-if (n .ne. n_int) then
+if (n /= n_int) then
     call mexErrMsgIdAndTxt('fcobyla:IntError', 'fcobyla: n does not equal n_int.')
 end if
 if (allocated(x)) deallocate (x)
 allocate (x(n_int), stat=allocate_status)
-if (allocate_status .ne. 0) then
+if (allocate_status /= 0) then
     call mexErrMsgIdAndTxt('fcobyla:InsufficientMemory', 'fcobyla: allocate(x) failed.')
 end if
 call mxCopyPtrToReal8(_MGETDB(prhs(3)), x(1:n), n)
@@ -218,7 +215,7 @@ call mxCopyPtrToReal8(_MGETDB(prhs(5)), rhoend, mwOne)
 
 ! Check the values of rhobeg and rhoend. We do not check the values of
 ! other inputs (e.g., n, maxfun, npt) because the Fortran code does it
-if (rhobeg .le. zero .or. rhobeg .lt. rhoend .or. rhoend .lt. zero) then
+if (rhobeg <= zero .or. rhobeg < rhoend .or. rhoend < zero) then
     call mexErrMsgIdAndTxt('fcobyla:InvalidRhobegRhoend', 'fcobyla: rhobeg and rhoend do not satisfy rhobeg >= rhobeg > 0.')
 end if
 
@@ -229,7 +226,7 @@ maxfun = int(maxfun_r, kind(maxfun))
 call mxCopyPtrToReal8(_MGETDB(prhs(7)), m_r, mwOne)
 m = int(m_r, kind(m))
 m_int = int(m_r, kind(m_int))
-if (m .ne. m_int) then
+if (m /= m_int) then
     call mexErrMsgIdAndTxt('fcobyla:IntError', 'fcobyla: m does not equal m_int.')
 end if
 ! m will be used in mxCopyPtrToReal8, requiring it to be of type mwSize
@@ -237,13 +234,12 @@ end if
 ! an INTEGER (not necessary the same as mwSize)
 call mxCopyPtrToReal8(_MGETDB(prhs(8)), ftarget, mwOne)
 
-if (m .gt. 0 .and. m .ne. mxGetM(prhs(9))) then
-! m is number of constraints
+if (m /= mxGetM(prhs(9))) then ! m is number of constraints
     call mexErrMsgIdAndTxt('fcobyla:WrongInput', 'fcobyla: Length of input 9 should be m (input 7).')
 end if
 if (allocated(conval_x0)) deallocate (conval_x0)
 allocate (conval_x0(m_int), stat=allocate_status)
-if (allocate_status .ne. 0) then
+if (allocate_status /= 0) then
     call mexErrMsgIdAndTxt('fcobyla:InsufficientMemory', 'fcobyla: allocate(conval_x0) failed.')
 end if
 call mxCopyPtrToReal8(_MGETDB(prhs(9)), conval_x0(1:m), m)
@@ -252,43 +248,43 @@ call mxCopyPtrToReal8(_MGETDB(prhs(9)), conval_x0(1:m), m)
 !     Allocate workspace
 if (allocated(conval)) deallocate (conval)
 allocate (conval(m_int), stat=allocate_status)
-if (allocate_status .ne. 0) then
+if (allocate_status /= 0) then
     call mexErrMsgIdAndTxt('fcobyla:InsufficientMemory', 'fcobyla: allocate(conval) failed.')
 end if
 
 if (allocated(w)) deallocate (w)
-nw = n_int*(3*n_int+2*m_int+11)+4*m_int+6
+nw = n_int * (3 * n_int + 2 * m_int + 11) + 4 * m_int + 6
 allocate (w(nw), stat=allocate_status)
-if (allocate_status .ne. 0) then
+if (allocate_status /= 0) then
     call mexErrMsgIdAndTxt('fcobyla:InsufficientMemory', 'fcobyla: allocate(w) failed.')
 end if
 
 if (allocated(iact)) deallocate (iact)
-nw = m_int+1
+nw = m_int + 1
 allocate (iact(nw), stat=allocate_status)
-if (allocate_status .ne. 0) then
-    call mexErrMsgIdAndTxt('fcobyla:InsufficientMemory', 'fcobyla: allocate(iact) failed.' )
+if (allocate_status /= 0) then
+    call mexErrMsgIdAndTxt('fcobyla:InsufficientMemory', 'fcobyla: allocate(iact) failed.')
 end if
 
 !     Initialize global variables
 nf = 0
 if (allocated(fhist)) deallocate (fhist)
 allocate (fhist(maxfun), stat=allocate_status)
-if (allocate_status .ne. 0) then
+if (allocate_status /= 0) then
     call mexErrMsgIdAndTxt('fcobyla:InsufficientMemory', 'fcobyla: allocate(fhist) failed.')
 end if
 fhist = huge(0.0_DP)
 
 if (allocated(chist)) deallocate (chist)
 allocate (chist(maxfun), stat=allocate_status)
-if (allocate_status .ne. 0) then
+if (allocate_status /= 0) then
     call mexErrMsgIdAndTxt('fcobyla:InsufficientMemory', 'fcobyla: allocate(chist) failed.')
 end if
 chist = huge(0.0_DP)
 
 !     Call COBYLA
 iprint = 0
-call COBYLA(n_int, m_int, x, rhobeg, rhoend, iprint, maxfun, iact, f, info, ftarget, resmax, conval)
+call COBYLA(n_int, m_int, x, rhobeg, rhoend, iprint, maxfun, w, iact, f, info, ftarget, resmax, conval)
 ! Note that n is of type mwSize, yet COBYLA expects input 1 to be
 ! of type INTEGER. Therefore, we should use n_int instead of n. Similar
 ! fo m/m_int.
@@ -336,11 +332,8 @@ real(rp), intent(in) :: x(n)
 real(rp), intent(out) :: funval, conval(m)
 
 ! function declarations
-integer(int32), external :: mexCallMATLAB, mxIsDouble
+integer(INT32), external :: mexCallMATLAB
 ! integer*4 mexCallMATLAB(integer*4 nlhs, mwPointer plhs, integer*4 nrhs, mwPointer prhs, character*(*) functionName)
-! integer*4 mxIsDouble(mwPointer pm);
-mwSize, external :: mxGetM, mxGetN
-! mwPointer mxGetM(mwPointer pm), mxGetN(mwPointer pm)
 mwPointer, external :: mxCreateDoubleMatrix
 ! mwPointer mxCreateDoubleMatrix(mwSize m, mwSize n, integer*4 ComplexFlag)
 mwPointer, external :: mxCreateDoubleScalar
@@ -356,7 +349,7 @@ integer :: k
 ! k is the index for the constraints; since m is of type INTEGER,
 ! k is of the same type; see the (unique) do lopp below
 mwPointer :: plhs(1), prhs(2) ! used in mexCallMATLAB
-integer(int32), parameter :: intOne=1, intTwo=2
+integer(INT32), parameter :: intOne = 1, intTwo = 2
 character(5), parameter :: funFeval = 'feval'
 ! intOne, intTwo, and funFeval are used when calling mexCallMATLAB
 real(rp) :: resmax ! constraint violation
@@ -364,10 +357,10 @@ real(rp) :: resmax ! constraint violation
 ! Start the real business
 n_mw = int(n, kind(n_mw)) ! cast n to type mwSize
 m_mw = int(m, kind(m_mw)) ! cast m to type mwSize
-if (n .ne. n_mw) then
+if (n /= n_mw) then
     call mexErrMsgIdAndTxt('fcobyla:IntError', 'fcobyla: n does not equal n_mw.')
 end if
-if (m .ne. m_mw) then
+if (m /= m_mw) then
     call mexErrMsgIdAndTxt('fcobyla:IntError', 'fcobyla: m does not equal m_mw.')
 end if
 
@@ -380,26 +373,16 @@ prhs(2) = mxCreateDoubleMatrix(n_mw, mwOne, notComplex)
 ! Second input of f_value = feval(fun, x); see below
 call mxCopyReal8ToPtr(x(1:n), _MGETDB(prhs(2)), n_mw)
 ! subroutine mxCopyReal8ToPtr(real*8 y(n), mwPointer px, mwSize n)
-if (0 .ne. mexCallMATLAB(intOne, plhs, intTwo, prhs, funFeval)) then
+if (0 /= mexCallMATLAB(intOne, plhs, intTwo, prhs, funFeval)) then
 ! Execute matlab command: f_value = feval(fun, x)
 ! integer*4 mexCallMATLAB(integer*4 nlhs, mwPointer plhs, integer*4 nrhs, mwPointer prhs, character*(*) functionName)
     call mexErrMsgIdAndTxt('fcobyla:UnsuccessfulCall', 'fcobyla: mex fails to call fun.')
 end if
-
-if (plhs(1) .eq. 0 .or. _MGETDB(plhs(1)) .eq. 0) then
+if (plhs(1) == 0 .or. _MGETDB(plhs(1)) == 0) then
     call mexErrMsgIdAndTxt('fcobyla:UnsuccessfulCall', 'fcobyla: NULL pointer returned when mex calls fun.')
-end if
-
-if (mxGetM(plhs(1))*mxGetN(plhs(1)) .ne. 1 .or. mxIsDouble(plhs(1)) .ne. 1) then
-     call mexErrMsgIdAndTxt('fcobyla:ObjectiveNotScalar', 'fcobyla: The objective function should return a scalar value.')
-end if
-
-call mxCopyPtrToReal8(_MGETDB(plhs(1)), funval, mwOne)
+else
+    call mxCopyPtrToReal8(_MGETDB(plhs(1)), funval, mwOne)
 ! subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
-
-! Use extreme barrier to cope with 'hidden constraints'
-if (funval .gt. hugefun .or. is_nan(funval)) then
-    funval = hugefun ! hugefun is defined in consts
 end if
 
 ! Free memory; note that plhs and prhs are just temporary variables in
@@ -408,7 +391,7 @@ call mxDestroyArray(plhs(1))
 ! Not yet to free prhs(2), which will be used when evaluating the constraint
 
 ! Evaluate the constraint (con_ptr) at x
-if (nf .eq. 0) then
+if (nf == 0) then
 ! The very first iteration needs con(x0), which was already evaluated in
 ! the matlab code (to get the value of m) and saved in fcobyla.mod as
 ! conval_x0. Copy the value directly without calling con.
@@ -419,54 +402,32 @@ else
     prhs(1) = con_ptr
 ! First input of c_value = feval(con, x); see below; con_ptr is a global variable
 ! prhs(2) was already set to x when evaluating fun
-    if (0 .ne. mexCallMATLAB(intOne, plhs, intTwo, prhs, funFeval)) then
+    if (0 /= mexCallMATLAB(intOne, plhs, intTwo, prhs, funFeval)) then
 ! Execute matlab command: c_value = feval(con, x)
         call mexErrMsgIdAndTxt('fcobyla:UnsuccessfulCall', 'fcobyla: mex fails to call con.')
     end if
-    if (plhs(1) .eq. 0 .or. (m .gt. 0 .and. _MGETDB(plhs(1)) .eq. 0)) then
+    if (plhs(1) == 0 .or. (m > 0 .and. _MGETDB(plhs(1)) == 0)) then
         call mexErrMsgIdAndTxt('fcobyla:UnsuccessfulCall', 'fcobyla: NULL pointer returned when mex calls con.')
-    end if
-    if (m .gt. 0 .and. (mxGetM(plhs(1)) .ne. m .or. mxGetN(plhs(1)) .ne. 1 .or. mxIsDouble(plhs(1)) .ne. 1)) then
-        call mexErrMsgIdAndTxt('fcobyla:ConstrNotScalarVector', 'fcobyla: The constraint function should return a scalar vector of &
-            &size mx1.')
-    end if
-    call mxCopyPtrToReal8(_MGETDB(plhs(1)), conval(1:m), m_mw)
+    else
+        call mxCopyPtrToReal8(_MGETDB(plhs(1)), conval(1:m), m_mw)
 ! subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
+    end if
 end if
 ! Calculate the constraint violation (named 'RESMAX' in Powell's COBYLA code)
 resmax = zero ! zero is defined in module 'consts'.
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-! Code without extreme barrier:
-! Constraint: con(x) >= 0
-!do k = 1, m
-!    if (conval(k) .ne. conval(k)) then
-!        resmax = conval(k) ! Set resmax=NaN if conval contains NaN
-!        exit
-!    else
-!        resmax = max(resmax, -conval(k))
-!    end if
-!end do
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Use extreme barrier to cope with 'hidden constraints'
 ! Constraint: con(x) >= 0
 do k = 1, m
-    if (conval(k) .lt. -hugecon .or. is_nan(conval(k))) then
-        conval(k) = -hugecon ! hugecon is defined in consts
+    if (is_nan(conval(k))) then
+        resmax = conval(k) ! Set resmax=NaN if conval contains NaN
+        exit
+    else
+        resmax = max(resmax, -conval(k))
     end if
-
-! This part is NOT extreme barrier. We replace extremely negative values
-! of cineq (which leads to no constraint violation) by -hugecon. Otherwise,
-! NaN or Inf may occur in the interpolation models.
-    if (conval(k) .gt. hugecon) then
-        conval(k) = hugecon ! hugecon is defined in consts
-    end if
-
-    resmax = max(resmax, -conval(k))
 end do
 !
 ! Free memory; note that plhs and prhs are just temporary variables in
 ! this subroutine. We are NOT in mexFunction!
-if (nf .gt. 0) call mxDestroyArray(plhs(1)) ! Only if nf >= 1
+if (nf > 0) call mxDestroyArray(plhs(1)) ! Only if nf >= 1
 call mxDestroyArray(prhs(2))
 
 ! Update global variables
