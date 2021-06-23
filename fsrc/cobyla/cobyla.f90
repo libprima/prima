@@ -31,8 +31,19 @@ real(RP), intent(out) :: w(:)
 !*++
 !*++ Local variable declarations rewritten by SPAG
 !*++
-integer :: ia, icon, idatm, idx, isigb, isim, isimi,
-         iveta, ivsig, iw, k, mpp
+integer(IK) :: ia
+integer(IK) :: icon
+integer(IK) :: idatm
+integer(IK) :: idx
+integer(IK) :: isigb
+integer(IK) :: isim
+integer(IK) :: isimi
+integer(IK) :: iveta
+integer(IK) :: ivsig
+integer(IK) :: iw
+integer(IK) :: k
+integer(IK) :: mpp
+real(RP) :: rhoend_c
 !*++
 !*++ End of declarations rewritten by SPAG
 !*++
