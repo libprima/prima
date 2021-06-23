@@ -12,7 +12,6 @@ use lina_mod, only : calquad, inprod
 implicit none
 
 ! Inputs
-
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: m
 integer(IK), intent(in) :: mpp
