@@ -1,3 +1,7 @@
+module cobylb_mod
+
+contains
+
 subroutine cobylb(n, m, mpp, x, rhobeg, rhoend, iprint, maxfun, con, sim, simi, datmat, a, vsig, &
     & veta, sigbar, dx, w, iact, f, info, ftarget, resmax)
 
@@ -10,8 +14,8 @@ use output_mod, only : retmssg, rhomssg, fmssg
 use lina_mod, only : calquad, inprod
 
 ! Solver-specific modules
-use savex_mod, only : savex
-use isbetter_mod, only : isbetter
+!use savex_mod, only : savex
+!use isbetter_mod, only : isbetter
 
 implicit none
 
@@ -78,11 +82,12 @@ real(RP) :: barmu
 real(RP) :: beta
 real(RP) :: cmax
 real(RP) :: cmin
-real(RP) :: consav(mpp), datdrop(mpp)
+real(RP) :: consav(size(con) + 2)
+real(RP) :: datdrop(size(con) + 2)
 real(RP) :: csum
 real(RP) :: cvmaxm
 real(RP) :: cvmaxp
-real(RP) :: datsav(mpp, nsmax)
+real(RP) :: datsav(size(con) + 2, nsmax)
 real(RP) :: delta
 real(RP) :: denom
 real(RP) :: dxsign
@@ -1039,9 +1044,7 @@ Maxfun = nfvals
 end subroutine COBYLB
 
 
-module savex_mod
 
-contains
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 20190820: See the comments below line number 480
 subroutine SAVEX(Xdrop, Datdrop, Xsav, Datsav, N, M, Nsav, Nsmax, Ctol)
@@ -1077,6 +1080,9 @@ use infnan_mod, only : is_nan, is_posinf
 use debug_mod, only : errstop
 use output_mod, only : retmssg, rhomssg, fmssg
 use lina_mod, only : calquad, inprod
+
+! Solver-specific modules
+!use isbetter_mod, only : isbetter
 
 implicit none
 
@@ -1180,11 +1186,7 @@ end if
 
 end subroutine SAVEX
 
-end module savex_mod
 
-
-module isbetter_mod
-contains
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 20190820:
 subroutine ISBETTER(F0, R0, F, R, Parmu, Ctol, Better)
@@ -1267,4 +1269,5 @@ if ((R < -HUGENUM) .and. (.not. finfnan) .and. (F0 >= -HUGENUM) .and. &
 &     (R0 >= -HUGENUM)) Better = .true.
 end subroutine ISBETTER
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-end module isbetter_mod
+!
+end module cobylb_mod
