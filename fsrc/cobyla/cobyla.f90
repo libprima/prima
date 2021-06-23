@@ -141,7 +141,7 @@ iw = idx + N
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun, 2020-05-05
 ! When the data is passed from the interfaces to the Fortran code, RHOBEG,
-! and RHOEND may change a bit (due to rounding ???). It was oberved in
+! and RHOEND may change a bit (due to rounding ???). It was observed in
 ! a MATLAB test that MEX passed 1 to Fortran as 0.99999999999999978.
 ! If we set RHOEND = RHOBEG in the interfaces, then it may happen
 ! that RHOEND > RHOBEG. That is why we do the following.
@@ -149,9 +149,7 @@ rhoend_c = min(rhobeg, rhoend)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !     2  W(IDX),W(IW),IACT)
-call cobylb(n, m, x, rhobeg, rhoend_c, iprint, maxfun, w(icon:isim-1), w(isim:isimi-1),&
-&            W(isimi:idatm-1), W(idatm:ia-1), W(ia:ivsig-1), W(ivsig:iveta-1), W(iveta:isigb-1), W(isigb:idx-1),   &
-&            W(idx:iw-1), W(iw), Iact, F, Info, Ftarget, Resmax)
+call cobylb(n, m, x, rhobeg, rhoend_c, iprint, maxfun, w, Iact(1:M + 1), F, Info, Ftarget, Resmax)
 do k = 1, M
     Con(k) = W(icon + k - 1)
 end do

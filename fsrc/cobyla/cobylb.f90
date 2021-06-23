@@ -2,8 +2,7 @@ module cobylb_mod
 
 contains
 
-subroutine cobylb(n, m, x, rhobeg, rhoend, iprint, maxfun, con, sim, simi, datmat, a, vsig, &
-    & veta, sigbar, dx, w, iact, f, info, ftarget, resmax)
+subroutine cobylb(n, m, x, rhobeg, rhoend, iprint, maxfun, w, iact, f, info, ftarget, resmax)
 
 ! Generic modules
 use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENUM, DEBUGGING, SRNLEN
@@ -29,23 +28,12 @@ real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: rhoend
 
 ! In-outputs
-integer(IK), intent(inout) :: iact(:)
-real(RP), intent(inout) :: A(:, :)  ! (n, )
-real(RP), intent(inout) :: con(:) ! m
-real(RP), intent(inout) :: datmat(:, :)  !(mpp, )
-real(RP), intent(inout) :: dx(:)
-real(RP), intent(inout) :: resmax
-real(RP), intent(inout) :: sigbar(:)
-real(RP), intent(inout) :: sim(:, :)  ! (n, )
-real(RP), intent(inout) :: simi(:, :)  ! (n, )
-real(RP), intent(inout) :: veta(:)
-real(RP), intent(inout) :: vsig(:)
-real(RP), intent(inout) :: w(:)
 real(RP), intent(inout) :: x(:)  ! n
 
 ! Outputs
 integer(IK), intent(out) :: info
 real(RP), intent(out) :: f
+
 
 ! Parameters
 ! NSMAX is the maximal number of "dropped X" to save (see comments below line number 480).
@@ -55,7 +43,9 @@ integer(IK), parameter :: NSMAX = 1000
 real(RP), parameter :: CTOL = epsilon(1.0_RP)
 
 ! Local variables
+
 integer(IK) :: i
+integer(IK) :: iact(:)
 integer(IK) :: ibrnch
 integer(IK) :: idxnew
 integer(IK) :: iflag
@@ -78,20 +68,24 @@ integer(IK) :: nfvals
 integer(IK) :: np
 integer(IK) :: nsav
 logical :: better
+real(RP) :: A(size(x), m + 1)  ! (n, )
 real(RP) :: almost_infinity
 real(RP) :: alpha
 real(RP) :: barmu
 real(RP) :: beta
 real(RP) :: cmax
 real(RP) :: cmin
-real(RP) :: consav(size(con) + 2)
-real(RP) :: datdrop(size(con) + 2)
+real(RP) :: con(m) ! m + 2  ! This name is bad; it should be conf
+real(RP) :: consav(size(con))
 real(RP) :: csum
 real(RP) :: cvmaxm
 real(RP) :: cvmaxp
-real(RP) :: datsav(size(con) + 2, nsmax)
+real(RP) :: datdrop(size(con))
+real(RP) :: datmat(m + 2, n + 1)  !(mpp, )
+real(RP) :: datsav(size(con), nsmax)
 real(RP) :: delta
 real(RP) :: denom
+real(RP) :: dx(size(x))
 real(RP) :: dxsign
 real(RP) :: edgmax
 real(RP) :: error
@@ -104,15 +98,22 @@ real(RP) :: phimin
 real(RP) :: prerec
 real(RP) :: prerem
 real(RP) :: ratio
+real(RP) :: resmax
 real(RP) :: resnew
 real(RP) :: resref
 real(RP) :: rho
+real(RP) :: sigbar(size(x))
+real(RP) :: sim(size(x), size(x) + 1)  ! (n, )
+real(RP) :: simi(size(x), size(x) + 1)  ! (n, )
 real(RP) :: sum
 real(RP) :: temp
 real(RP) :: tempa
 real(RP) :: trured
+real(RP) :: veta(size(x))
 real(RP) :: vmnew
 real(RP) :: vmold
+real(RP) :: vsig(size(x))
+real(RP) :: w(:)
 real(RP) :: weta
 real(RP) :: wsig
 real(RP) :: xdrop(size(x))
