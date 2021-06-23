@@ -12,16 +12,16 @@ FLANG=flang -c -Wall -Wextra -Mstandard
 
 CURRENTDIR=$(PWD)
 NEUPDFO=$(CURRENTDIR)/../../
-INTERFORMDIR=../intersection_form/newuoa/
+INTERFORMDIR=../intersection_form/cobyla/
 MEXDIR= $(PWD)/../../matlab/mex_gateways/
 INTERSECTIONMEXDIR= $(PWD)/../../matlab/mex_gateways/intersection_form/
 
 COMFILES=../common/consts.F90 ../common/debug.F90 ../common/memory.F90 ../common/info.F90 ../common/infnan.F90 ../common/lina.F90 ../common/output.F90 ../common/pintrf.F90
 FILES= $(COMFILES) trstlp.f90 cobylb.f90 cobyla.f90
 
-M90FILES= $(FILES) $(MEXDIR)/fmxapi.F90 $(MEXDIR)/prob.F90 $(MEXDIR)/classical/fmxcl.F90 $(MEXDIR)/gethuge.F90 $(MEXDIR)/newuoa-interface.F90 $(MEXDIR)/classical/newuoa-interface.F90 -I/home/zaikunzhang/local/MATLAB/R2020a/extern/include/ -I$(NEUPDFO)
+M90FILES= $(FILES) $(MEXDIR)/fmxapi.F90 $(MEXDIR)/prob.F90 $(MEXDIR)/classical/fmxcl.F90 $(MEXDIR)/gethuge.F90 $(MEXDIR)/cobyla-interface.F90 $(MEXDIR)/classical/cobyla-interface.F -I/home/zaikunzhang/local/MATLAB/R2020a/extern/include/ -I$(NEUPDFO)
 
-MFILES= ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F ../common/infnan.F ../common/lina.F ../common/output.F ../common/pintrf.F preproc.f initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f $(INTERSECTIONMEXDIR)/fmxapi.F $(INTERSECTIONMEXDIR)/prob.F $(INTERSECTIONMEXDIR)/classical/fmxcl.F $(INTERSECTIONMEXDIR)/gethuge.F $(INTERSECTIONMEXDIR)/newuoa-interface.F $(INTERSECTIONMEXDIR)/classical/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2020a/extern/include/ -I$(NEUPDFO)
+MFILES= ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F ../common/infnan.F ../common/lina.F ../common/output.F ../common/pintrf.F trstlp.f cobylb.f cobyla.f $(INTERSECTIONMEXDIR)/fmxapi.F $(INTERSECTIONMEXDIR)/prob.F $(INTERSECTIONMEXDIR)/classical/fmxcl.F $(INTERSECTIONMEXDIR)/gethuge.F $(INTERSECTIONMEXDIR)/cobyla-interface.F $(INTERSECTIONMEXDIR)/classical/cobyla-interface.F -I/home/zaikunzhang/local/MATLAB/R2020a/extern/include/ -I$(NEUPDFO)
 
 
 verify: gverify iverify nverify pverify averify fverify sverify 9verify clean
@@ -80,7 +80,7 @@ iverifym:
 nverifym:
 	$(NFORT) $(M90FILES) -f$(FSTD) -free
 	cd $(INTERFORMDIR) && $(NFORT) $(MFILES) -free && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
-	cd $(INTERFORMDIR) && $(NFORT) ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F ../common/infnan.F ../common/lina.F ../common/output.F ../common/pintrf.F preproc.f initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f $(INTERSECTIONMEXDIR)/fmxapi.F $(INTERSECTIONMEXDIR)/prob.F $(INTERSECTIONMEXDIR)/classical/fmxcl.F $(INTERSECTIONMEXDIR)/gethuge.F $(INTERSECTIONMEXDIR)/newuoa-interface.F $(INTERSECTIONMEXDIR)/classical/newuoa-interface.F -I$(NEUPDFO) -fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+	cd $(INTERFORMDIR) && $(NFORT) ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F ../common/infnan.F ../common/lina.F ../common/output.F ../common/pintrf.F trstlp.f cobylb.f cobyla.f $(INTERSECTIONMEXDIR)/fmxapi.F $(INTERSECTIONMEXDIR)/prob.F $(INTERSECTIONMEXDIR)/classical/fmxcl.F $(INTERSECTIONMEXDIR)/gethuge.F $(INTERSECTIONMEXDIR)/cobyla-interface.F $(INTERSECTIONMEXDIR)/classical/cobyla-interface.F -I$(NEUPDFO) -fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 pverifym:
 	$(PFORT) $(M90FILES) -Mfreeform
@@ -109,7 +109,7 @@ COMMON = ../common
 
 example: example.f90 \
 	consts.o info.o debug.o memory.o infnan.o lina.o output.o pintrf.o \
-	preproc.o initialize.o trustregion.o vlagbeta.o geometry.o shiftbase.o update.o newuob.o newuoa.o
+	trstlp.o cobylb.o cobyla.o
 	$(FC) $(FFLAGS) -o example example.f90 *.o
 
 test: example
@@ -132,24 +132,13 @@ output.o: $(COMMON)/output.F90
 pintrf.o: $(COMMON)/pintrf.F90
 	$(FC) $(FFLAGS) -c $(COMMON)/pintrf.F90
 
-preproc.o: preproc.f90
-	$(FC) $(FFLAGS) -c preproc.f90
-initialize.o: initialize.f90
-	$(FC) $(FFLAGS) -c initialize.f90
-trustregion.o: trustregion.f90
-	$(FC) $(FFLAGS) -c trustregion.f90
-vlagbeta.o: vlagbeta.f90
-	$(FC) $(FFLAGS) -c vlagbeta.f90
-geometry.o: geometry.f90
-	$(FC) $(FFLAGS) -c geometry.f90
-shiftbase.o: shiftbase.f90
-	$(FC) $(FFLAGS) -c shiftbase.f90
-update.o: update.f90
-	$(FC) $(FFLAGS) -c update.f90
-newuob.o: newuob.f90
-	$(FC) $(FFLAGS) -c newuob.f90
-newuoa.o: newuoa.f90
-	$(FC) $(FFLAGS) -c newuoa.f90
+
+trstlp.o: trstlp.f90
+	$(FC) $(FFLAGS) -c trstlp.f90
+cobylb.o: cobylb.f90
+	$(FC) $(FFLAGS) -c cobylb.f90
+cobyla.o: cobyla.f90
+	$(FC) $(FFLAGS) -c cobyla.f90
 
 clean:
 	rm -f *.o *.mod a.out example *__genmod.f90 *.dbg

@@ -2,7 +2,7 @@ module cobylb_mod
 
 contains
 
-subroutine cobylb(n, m, x, rhobeg, rhoend, iprint, maxfun, w, iact, f, info, ftarget, resmax)
+subroutine cobylb(n, m, x, rhobeg, rhoend, iprint, maxfun, con, iact, f, info, ftarget, resmax)
 
 ! Generic modules
 use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENUM, DEBUGGING, SRNLEN
@@ -28,6 +28,7 @@ real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: rhoend
 
 ! In-outputs
+real(RP), intent(inout) :: con(:) ! m + 2  ! This name is bad; it should be conf
 real(RP), intent(inout) :: x(:)  ! n
 
 ! Outputs
@@ -45,7 +46,7 @@ real(RP), parameter :: CTOL = epsilon(1.0_RP)
 ! Local variables
 
 integer(IK) :: i
-integer(IK) :: iact(:)
+integer(IK) :: iact(m + 1)
 integer(IK) :: ibrnch
 integer(IK) :: idxnew
 integer(IK) :: iflag
@@ -75,7 +76,6 @@ real(RP) :: barmu
 real(RP) :: beta
 real(RP) :: cmax
 real(RP) :: cmin
-real(RP) :: con(m) ! m + 2  ! This name is bad; it should be conf
 real(RP) :: consav(size(con))
 real(RP) :: csum
 real(RP) :: cvmaxm
@@ -113,7 +113,7 @@ real(RP) :: veta(size(x))
 real(RP) :: vmnew
 real(RP) :: vmold
 real(RP) :: vsig(size(x))
-real(RP) :: w(:)
+real(RP) :: w(N * (3 * N + 2 * M + 11) + 4 * M + 6)
 real(RP) :: weta
 real(RP) :: wsig
 real(RP) :: xdrop(size(x))
