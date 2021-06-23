@@ -1,76 +1,70 @@
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C Zaikun 2019-08-29: B is never used
-C      SUBROUTINE GETACT (N,M,AMAT,B,NACT,IACT,QFAC,RFAC,SNORM,
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+! Zaikun 2019-08-29: B is never used
+!      SUBROUTINE GETACT (N,M,AMAT,B,NACT,IACT,QFAC,RFAC,SNORM,
       SUBROUTINE GETACT (N,M,AMAT,NACT,IACT,QFAC,RFAC,SNORM,
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      1  RESNEW,RESACT,G,DW,VLAM,W)
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C      IMPLICIT REAL*8 (A-H,O-Z)
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!      IMPLICIT REAL*8 (A-H,O-Z)
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
-C      DIMENSION AMAT(N,*),B(*),IACT(*),QFAC(N,*),RFAC(*),
-      DIMENSION AMAT(N,*),IACT(*),QFAC(N,*),RFAC(*),
+!      DIMENSION AMAT(N,*),B(*),IACT(*),QFAC(N,*),RFAC(*),
+      DIMENSION AMAT(N,M),IACT(M),QFAC(N,N),RFAC(N*(N+1)/2),
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-     1  RESNEW(*),RESACT(*),G(*),DW(*),VLAM(*),W(*)
-C
-C     N, M, AMAT, B, NACT, IACT, QFAC and RFAC are the same as the terms
-C       with these names in SUBROUTINE LINCOB. The current values must be
-C       set on entry. NACT, IACT, QFAC and RFAC are kept up to date when
-C       GETACT changes the current active set.
-C     SNORM, RESNEW, RESACT, G and DW are the same as the terms with these
-C       names in SUBROUTINE TRSTEP. The elements of RESNEW and RESACT are
-C       also kept up to date.
-C     VLAM and W are used for working space, the vector VLAM being reserved
-C       for the Lagrange multipliers of the calculation. Their lengths must
-C       be at least N.
-C     The main purpose of GETACT is to pick the current active set. It is
-C       defined by the property that the projection of -G into the space
-C       orthogonal to the active constraint normals is as large as possible,
-C       subject to this projected steepest descent direction moving no closer
-C       to the boundary of every constraint whose current residual is at most
-C       0.2*SNORM. On return, the settings in NACT, IACT, QFAC and RFAC are
-C       all appropriate to this choice of active set.
-C     Occasionally this projected direction is zero, and then the final value
-C       of W(1) is set to zero. Otherwise, the direction itself is returned
-C       in DW, and W(1) is set to the square of the length of the direction.
-C
-C     Set some constants and a temporary VLAM.
-C
+     1  RESNEW(M),RESACT(M),G(N),DW(N),VLAM(N),W(N)
+!
+!     N, M, AMAT, B, NACT, IACT, QFAC and RFAC are the same as the terms
+!       with these names in SUBROUTINE LINCOB. The current values must be
+!       set on entry. NACT, IACT, QFAC and RFAC are kept up to date when
+!       GETACT changes the current active set.
+!     SNORM, RESNEW, RESACT, G and DW are the same as the terms with these
+!       names in SUBROUTINE TRSTEP. The elements of RESNEW and RESACT are
+!       also kept up to date.
+!     VLAM and W are used for working space, the vector VLAM being reserved
+!       for the Lagrange multipliers of the calculation. Their lengths must
+!       be at least N.
+!     The main purpose of GETACT is to pick the current active set. It is
+!       defined by the property that the projection of -G into the space
+!       orthogonal to the active constraint normals is as large as possible,
+!       subject to this projected steepest descent direction moving no closer
+!       to the boundary of every constraint whose current residual is at most
+!       0.2*SNORM. On return, the settings in NACT, IACT, QFAC and RFAC are
+!       all appropriate to this choice of active set.
+!     Occasionally this projected direction is zero, and then the final value
+!       of W(1) is set to zero. Otherwise, the direction itself is returned
+!       in DW, and W(1) is set to the square of the length of the direction.
+!
+!     Set some constants and a temporary VLAM.
+!
       ONE=1.0D0
       TINY=1.0D-60
       ZERO=0.0D0
       TDEL=0.2D0*SNORM
-      DDSAV=ZERO
-      DO I=1,N
-          DDSAV=DDSAV+G(I)**2
-          VLAM(I)=ZERO
-      END DO
-      DDSAV=DDSAV+DDSAV
-C
-C     Set the initial QFAC to the identity matrix in the case NACT=0.
-C
+      ddsav=dot_product(g,g) + dot_product(g, g)
+      vlam = 0.0D0
+!
+!     Set the initial QFAC to the identity matrix in the case NACT=0.
+!
       IF (NACT == 0) THEN
-          DO I=1,N
-              DO J=1,N
-                  QFAC(I,J)=ZERO
-              END DO
-              QFAC(I,I)=ONE
+          QFAC = ZERO
+          DO I = 1, N
+              QFAC(I,I) = ONE
           END DO
           GOTO 100
       END IF
-C
-C     Remove any constraints from the initial active set whose residuals
-C       exceed TDEL.
-C
+!
+!     Remove any constraints from the initial active set whose residuals
+!       exceed TDEL.
+!
       IFLAG=1
       IC=NACT
    40 IF (RESACT(IC) > TDEL) GOTO 800
    50 IC=IC-1
       IF (IC > 0) GOTO 40
-C
-C     Remove any constraints from the initial active set whose Lagrange
-C       multipliers are nonnegative, and set the surviving multipliers.
-C
+!
+!     Remove any constraints from the initial active set whose Lagrange
+!       multipliers are nonnegative, and set the surviving multipliers.
+!
       IFLAG=2
    60 IF (NACT == 0) GOTO 100
       IC=NACT
@@ -90,12 +84,12 @@ C
       VLAM(IC)=TEMP/RFAC(IDIAG)
       IC=IC-1
       IF (IC > 0) GOTO 70
-C
-C     Set the new search direction D. Terminate if the 2-norm of D is zero
-C       or does not decrease, or if NACT=N holds. The situation NACT=N
-C       occurs for sufficiently large SNORM if the origin is in the convex
-C       hull of the constraint gradients.
-C
+!
+!     Set the new search direction D. Terminate if the 2-norm of D is zero
+!       or does not decrease, or if NACT=N holds. The situation NACT=N
+!       occurs for sufficiently large SNORM if the origin is in the convex
+!       hull of the constraint gradients.
+!
   100 IF (NACT == N) GOTO 290
       DO J=NACT+1,N
           W(J)=ZERO
@@ -115,12 +109,12 @@ C
       IF (DD == ZERO) GOTO 300
       DDSAV=DD
       DNORM=DSQRT(DD)
-C
-C     Pick the next integer L or terminate, a positive value of L being
-C       the index of the most violated constraint. The purpose of CTOL
-C       below is to estimate whether a positive value of VIOLMX may be
-C       due to computer rounding errors.
-C
+!
+!     Pick the next integer L or terminate, a positive value of L being
+!       the index of the most violated constraint. The purpose of CTOL
+!       below is to estimate whether a positive value of VIOLMX may be
+!       due to computer rounding errors.
+!
       L=0
       IF (M > 0) THEN
           TEST=DNORM/SNORM
@@ -157,12 +151,12 @@ C
       W(1)=ONE
       IF (L == 0) GOTO 300
       IF (VIOLMX <= 10.0D0*CTOL) GOTO 300
-C
-C     Apply Givens rotations to the last (N-NACT) columns of QFAC so that
-C       the first (NACT+1) columns of QFAC are the ones required for the
-C       addition of the L-th constraint, and add the appropriate column
-C       to RFAC.
-C
+!
+!     Apply Givens rotations to the last (N-NACT) columns of QFAC so that
+!       the first (NACT+1) columns of QFAC are the ones required for the
+!       addition of the L-th constraint, and add the appropriate column
+!       to RFAC.
+!
       NACTP=NACT+1
       IDIAG=(NACTP*NACTP-NACTP)/2
       RDIAG=ZERO
@@ -200,9 +194,9 @@ C
       RESACT(NACT)=RESNEW(L)
       VLAM(NACT)=ZERO
       RESNEW(L)=ZERO
-C
-C     Set the components of the vector VMU in W.
-C
+!
+!     Set the components of the vector VMU in W.
+!
   220 W(NACT)=ONE/RFAC((NACT*NACT+NACT)/2)**2
       IF (NACT > 1) THEN
           DO I=NACT-1,1,-1
@@ -216,9 +210,9 @@ C
               W(I)=SUM/RFAC(IDIAG)
           END DO
       END IF
-C
-C     Calculate the multiple of VMU to subtract from VLAM, and update VLAM.
-C
+!
+!     Calculate the multiple of VMU to subtract from VLAM, and update VLAM.
+!
       VMULT=VIOLMX
       IC=0
       J=1
@@ -236,36 +230,39 @@ C
       IF (IC > 0) VLAM(IC)=ZERO
       VIOLMX=DMAX1(VIOLMX-VMULT,ZERO)
       IF (IC == 0) VIOLMX=ZERO
-C
-C     Reduce the active set if necessary, so that all components of the
-C       new VLAM are negative, with resetting of the residuals of the
-C       constraints that become inactive.
-C
+!
+!     Reduce the active set if necessary, so that all components of the
+!       new VLAM are negative, with resetting of the residuals of the
+!       constraints that become inactive.
+!
       IFLAG=3
       IC=NACT
       !!!! If NACT=0, then IC = 0, and hence IACT(IC) is undefined, which leads to memory error when
       !RESNEW(IACT(IC)) is accessed.
+      WRITE(10, *) "VLAM", VLAM(IC)
+      WRITE(10, *) IC, NACT, IACT(IC), RESACT(IC)
+      close(10)
   270 IF (VLAM(IC) < ZERO) GOTO 280
       RESNEW(IACT(IC))=DMAX1(RESACT(IC),TINY)
       GOTO 800
   280 IC=IC-1
       IF (IC > 0) GOTO 270
-C
-C     Calculate the next VMU if VIOLMX is positive. Return if NACT=N holds,
-C       as then the active constraints imply D=0. Otherwise, go to label
-C       100, to calculate the new D and to test for termination.
-C
+!
+!     Calculate the next VMU if VIOLMX is positive. Return if NACT=N holds,
+!       as then the active constraints imply D=0. Otherwise, go to label
+!       100, to calculate the new D and to test for termination.
+!
       IF (VIOLMX > ZERO) GOTO 220
       IF (NACT < N) GOTO 100
   290 DD=ZERO
   300 W(1)=DD
       RETURN
-C
-C     These instructions rearrange the active constraints so that the new
-C       value of IACT(NACT) is the old value of IACT(IC). A sequence of
-C       Givens rotations is applied to the current QFAC and RFAC. Then NACT
-C       is reduced by one.
-C
+!
+!     These instructions rearrange the active constraints so that the new
+!       value of IACT(NACT) is the old value of IACT(IC). A sequence of
+!       Givens rotations is applied to the current QFAC and RFAC. Then NACT
+!       is reduced by one.
+!
   800 RESNEW(IACT(IC))=DMAX1(RESACT(IC),TINY)
       JC=IC
   810 IF (JC < NACT) THEN
