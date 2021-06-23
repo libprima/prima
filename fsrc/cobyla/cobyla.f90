@@ -7,6 +7,9 @@ use debug_mod, only : errstop
 use output_mod, only : retmssg, rhomssg, fmssg
 use lina_mod, only : calquad, inprod
 
+! Solver-specific modules
+use cobylb_mod, only : cobylb
+
 implicit none
 
 ! Inputs
@@ -146,9 +149,9 @@ rhoend_c = min(rhobeg, rhoend)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !     2  W(IDX),W(IW),IACT)
-call cobylb(n, m, mpp, x, rhobeg, rhoend_c, iprint, maxfun, w(icon), w(isim),&
-&            W(isimi), W(idatm), W(ia), W(ivsig), W(iveta), W(isigb),   &
-&            W(idx), W(iw), Iact, F, Info, Ftarget, Resmax)
+call cobylb(n, m, x, rhobeg, rhoend_c, iprint, maxfun, w(icon:isim-1), w(isim:isimi-1),&
+&            W(isimi:idatm-1), W(idatm:ia-1), W(ia:ivsig-1), W(ivsig:iveta-1), W(iveta:isigb-1), W(isigb:idx-1),   &
+&            W(idx:iw-1), W(iw), Iact, F, Info, Ftarget, Resmax)
 do k = 1, M
     Con(k) = W(icon + k - 1)
 end do

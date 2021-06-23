@@ -281,8 +281,6 @@ C
 C     Switch the best vertex into pole position if it is not there already,
 C     and also update SIM, SIMI and DATMAT.
 C
-      WRITE(10,*) "NBEST = ", NBEST
-      WRITE(10,*) "OLD NP ", SIM(1:N, NP), DATMAT(1:MP, NP)
       IF (NBEST <= N) THEN
           DO I=1,MPP
               TEMP=DATMAT(I,NP)
@@ -307,11 +305,12 @@ C          TEMPA=0.0
               SIMI(NBEST,I)=TEMPA
           END DO
       END IF
-      WRITE(10,*) "NEW NP ", SIM(1:N, NP), DATMAT(1:MP, NP)
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+! Zaikun 2021-05-30
       IF (INFO == 3) GOTO 600
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 C
 C     Make an error return if SIGI is a poor approximation to the inverse of
 C     the leading N by N submatrix of SIG.
@@ -892,8 +891,6 @@ C      NFVALS-2 instead of NFVALS-1.
               DO K = 1, M
                   CON(K) = DATMAT(K, NP)
               END DO
-              WRITE(10,*) "NP"
-             WRITE(10, *), X(1:N), F, CON(1:M)
           END IF
           RESREF = RESMAX
           IF (RESREF /= RESREF) RESREF = HUGENUM
@@ -911,8 +908,6 @@ C See the comments above for why to check these J
                       DO K = 1, M
                           CON(K) = DATMAT(K, J)
                       END DO
-                      WRITE(10,*) "DATMAT", J
-                      WRITE(10, *), X(1:N), F, CON(1:M)
                   END IF
               END IF
           END DO
@@ -932,8 +927,6 @@ C          DO J = 1, NSAV
                       DO K = 1, M
                           CON(K) = DATSAV(K, J)
                       END DO
-                      WRITE(10,*) "DATSAV", J
-                      WRITE(10, *), X(1:N), F, CON(1:M)
                   END IF
               ENDIF
           END DO
@@ -944,7 +937,6 @@ C          DO J = 1, NSAV
           IF (IPTEM < N) PRINT 80, (X(I),I=IPTEMP,N)
       END IF
       MAXFUN=NFVALS
-      close(10)
       RETURN
       END
 

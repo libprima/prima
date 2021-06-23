@@ -146,7 +146,7 @@ rhoend_c = min(rhobeg, rhoend)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !     2  W(IDX),W(IW),IACT)
-call cobylb(n, m, mpp, x, rhobeg, rhoend_c, iprint, maxfun, w(icon), w(isim),&
+call cobylb(n, m, x, rhobeg, rhoend_c, iprint, maxfun, w(icon), w(isim),&
 &            W(isimi), W(idatm), W(ia), W(ivsig), W(iveta), W(isigb),   &
 &            W(idx), W(iw), Iact, F, Info, Ftarget, Resmax)
 do k = 1, M
