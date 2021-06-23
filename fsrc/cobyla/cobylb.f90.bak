@@ -1226,8 +1226,7 @@ logical :: f0infnan, finfnan, fle, flt, r0infnan, rinfnan, rle, rlt
 
 Better = .false.
 
-! As values of F0, R0, F, and R, we regard Inf and NaN being equivalent
-! values (they are equally bad).
+! As values of F0, R0, F, and R, we regard Inf and NaN being equivalent values (they are equally bad).
 f0infnan = is_nan(F0) .or. (F0 > HUGENUM)     ! F0 = Inf or NaN?
 r0infnan = is_nan(R0) .or. (R0 > HUGENUM)     ! R0 = Inf or NaN?
 finfnan = is_nan(F) .or. (F > HUGENUM)     ! F = Inf or NaN?
