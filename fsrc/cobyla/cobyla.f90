@@ -1,4 +1,7 @@
-subroutine cobyla(n, m, x, rhobeg, rhoend, iprint, maxfun, w, iact, f, info, ftarget, resmax, con)
+module cobyla_mod
+
+contains
+subroutine cobyla(n, m, x, rhobeg, rhoend, iprint, maxfun, iact, f, info, ftarget, resmax, con)
 ! Generic modules
 use consts_mod, only : RP, IK, ZERO, TWO, HALF, TENTH, HUGENUM, DEBUGGING, SRNLEN
 use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
@@ -30,7 +33,6 @@ integer(IK), intent(out) :: iact(:)
 integer(IK), intent(out) :: info
 real(RP), intent(out) :: con(:)
 real(RP), intent(out) :: f
-real(RP), intent(out) :: w(:)
 !*++
 !*++ Local variable declarations rewritten by SPAG
 !*++
@@ -47,6 +49,7 @@ integer(IK) :: iw
 integer(IK) :: k
 integer(IK) :: mpp
 real(RP) :: rhoend_c
+real(RP) :: confr(m + 2)
 !*++
 !*++ End of declarations rewritten by SPAG
 !*++
@@ -148,10 +151,9 @@ iw = idx + N
 rhoend_c = min(rhobeg, rhoend)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!     2  W(IDX),W(IW),IACT)
-call cobylb(n, m, x, rhobeg, rhoend_c, iprint, maxfun, w, Iact(1:M + 1), F, Info, Ftarget, Resmax)
-do k = 1, M
-    Con(k) = W(icon + k - 1)
-end do
+call cobylb(n, m, x, rhobeg, rhoend_c, iprint, maxfun, confr, iact, f, info, ftarget, resmax)
+con = confr(1:m)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 end subroutine COBYLA
+
+end module cobyla_mod
