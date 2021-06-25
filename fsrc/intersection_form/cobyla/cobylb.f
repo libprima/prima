@@ -33,6 +33,7 @@
 ! Solver-specific modules
 !use savex_mod, only : savex
 !use isbetter_mod, only : isbetter
+      use trustregion_mod, only : trstlp
 
       implicit none
 
@@ -670,8 +671,7 @@
           end do
       end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      call TRSTLP(N, M, A, CON, RHO, DX, IFULL, IACT, W(IZ), W(IZDOTA), &
-     &W(IVMC), W(ISDIRN), W(IDXNEW), W(IVMD))
+      call TRSTLP(N, M, A, CON, RHO, DX, IFULL, IACT)
       if (IFULL == 0) then
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          TEMP=0.0

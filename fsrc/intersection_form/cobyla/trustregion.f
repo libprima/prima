@@ -1,5 +1,5 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! This is the intersection-form version of trstlp.f90.
+! This is the intersection-form version of trustregion.f90.
 ! The file is generated automatically and is NOT intended to be readable.
 !
 ! In the intersection form, each continued line has an ampersand at column
@@ -13,8 +13,11 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
-      subroutine trstlp(n, m, A, B, rho, dx, ifull, iact, z, zdota, vmul&
-     &tc, sdirn, dxnew, vmultd)
+      module trustregion_mod
+
+      contains
+
+      subroutine trstlp(n, m, A, B, rho, dx, ifull, iact)
 
 ! Generic modules
       use consts_mod, only : RP, IK, ZERO, TWO, HALF, TENTH, HUGENUM, DE&
@@ -37,13 +40,14 @@
       real(RP), intent(INOUT) :: Dx(:)
       integer(IK), intent(OUT) :: Ifull
       integer(IK), intent(INOUT) :: Iact(:)
-      real(RP), intent(INOUT) :: Z(:, :)
-      ! (N, :)
-      real(RP), intent(INOUT) :: Zdota(:)
-      real(RP), intent(INOUT) :: Vmultc(:)
-      real(RP), intent(INOUT) :: Sdirn(:)
-      real(RP), intent(INOUT) :: Dxnew(:)
-      real(RP), intent(INOUT) :: Vmultd(:)
+
+
+      real(RP) :: Z(N, N)
+      real(RP) :: Zdota(N)
+      real(RP) :: Vmultc(M + 1)
+      real(RP) :: Sdirn(N)
+      real(RP) :: Dxnew(N)
+      real(RP) :: Vmultd(M)
 
       real(RP) :: acca
       real(RP) :: accb
@@ -788,3 +792,5 @@
 700   if (mcon == M) goto 600
       Ifull = 0
 99999 end subroutine TRSTLP
+
+      end module trustregion_mod
