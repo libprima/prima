@@ -225,12 +225,15 @@ width = last - first + 1;  % Width of the other rows of str after refactoring
 str = strtrim(str);  % Remove the leading and trailing spaces from str
 first_non_digit = min(find(~isdigit(str), 1, 'first'));
 leading_digits = str(1 : first_non_digit - 1);  % Leading digits in the string; they are statement labels
-first_exclamation = min(find(isexclamation(str), 1, 'first'));
-if isempty(first_exclamation)
-    first_exclamation = length(str) + 1;
+first_exclamation = length(str) + 1;
+for ic = 1 : length(str)
+    if isexclamation(str(ic)) && mod(length(find(issingquota(str(1:ic)))), 2) == 0
+        first_exclamation = ic;
+        break;
+    end
 end
 comment = str(first_exclamation : end);
-str = strtrim(str(first_non_digit : first_exclamation - 1));   % The string without the statement label and comment
+str = strtrim(str(first_non_digit : first_exclamation - 1));  % The string without the statement label and comment
 str = regexprep(str,' +',' ');  % Replace all the continuous multiple spaces by one single space
 len = length(str);  % Length of the trimmed str
 
@@ -240,16 +243,16 @@ strnew = [leading_spaces, str(1 : min(len, width_first_row))];  % The first row 
 
 for i = 2 : row
     strnew = [strnew, '&'];  % Append an '&' at the end of the i-1 th row.
-    strtmp = str(width_first_row + (i-2)*width + 1 : min(len, width_first_row + (i-1)*width));  % Content of the i th row
+    strtmp = str(width_first_row + (i-2)*width + 1 : min(len, width_first_row + (i-1)*width));  % Content of the i-th row
     strtmp = [spaces(1:first-2), '&', strtmp];  % Add first - 2 spaces and an '&' at the beginning of the i-th row
     strtmp = ['\n', strtmp];  % Add a '\n' at the beginning of the i-th row
     strnew = [strnew, strtmp];
 end
 
 str = strnew;
-str(1 : first_non_digit - 1) = leading_digits;  % Put the statement labels back.
+str(1 : first_non_digit - 1) = leading_digits;  % Put the statement labels back
 if ~isempty(comment)
-    str = [str, '\n', leading_spaces, comment]; % Put the comment back
+    str = [str, '\n', leading_spaces, comment];  % Put the comment back
 end
 
 function isd = isdigit(c)
@@ -257,6 +260,9 @@ isd = ischar(c) & (double(c) >= double('0')) & (double(c) <= double('9'));
 
 function ise = isexclamation(c)
 ise = ischar(c) & (double(c) == double('!'));
+
+function issq = issingquota(c)
+issq = ischar(c) & (double(c) == double(''''));
 
 function refactor_filelist(filename)
 

@@ -223,11 +223,14 @@ width_first_row = last - num_leading_spaces; % Width of the first row of str aft
 width = last - first + 1;  % Width of the other rows of str after refactoring
 
 str = strtrim(str);  % Remove the leading and trailing spaces from str
-first_non_digit = min(find(~isdigit(str), 1, 'first'));  
+first_non_digit = min(find(~isdigit(str), 1, 'first'));
 leading_digits = str(1 : first_non_digit - 1);  % Leading digits in the string; they are statement labels
-first_exclamation = min(find(isexclamation(str), 1, 'first'));     
-if isempty(first_exclamation)
-    first_exclamation = length(str) + 1;
+first_exclamation = length(str) + 1;
+for ic = 1 : length(str)
+    if isexclamation(str(ic)) && mod(length(find(issingquota(str(1:ic)))), 2) == 0
+        first_exclamation = ic;
+        break;
+    end
 end
 comment = str(first_exclamation : end);
 str = strtrim(str(first_non_digit : first_exclamation - 1));  % The string without the statement label and comment
@@ -257,6 +260,9 @@ isd = ischar(c) & (double(c) >= double('0')) & (double(c) <= double('9'));
 
 function ise = isexclamation(c)
 ise = ischar(c) & (double(c) == double('!'));
+
+function issq = issingquota(c)
+issq = ischar(c) & (double(c) == double(''''));
 
 function refactor_filelist(filename)
 

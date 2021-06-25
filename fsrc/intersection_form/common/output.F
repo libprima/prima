@@ -98,8 +98,7 @@
           open (unit=OUTUNIT, file=trim(fout), status=fstat, position='a&
      &ppend', iostat=ios, action='write')
           if (ios /= 0) then
-              print '(1A)', 'Fail to open file '//trim(fout)//'
-              !'
+              print '(1A)', 'Fail to open file '//trim(fout)//'!'
           else
               if (iprint <= -3) then
                   write (OUTUNIT, '(1X)')
@@ -159,8 +158,7 @@
           open (unit=OUTUNIT, file=trim(fout), status=fstat, position='a&
      &ppend', iostat=ios, action='write')
           if (ios /= 0) then
-              print '(1A)', 'Fail to open file '//trim(fout)//'
-              !'
+              print '(1A)', 'Fail to open file '//trim(fout)//'!'
           else
               if (iprint <= -3) then
                   write (OUTUNIT, '(1X)')
@@ -212,8 +210,7 @@
           open (unit=OUTUNIT, file=trim(fout), status=fstat, position='a&
      &ppend', iostat=ios, action='write')
           if (ios /= 0) then
-              print '(1A)', 'Fail to open file '//trim(fout)//'
-              !'
+              print '(1A)', 'Fail to open file '//trim(fout)//'!'
           else
               write (OUTUNIT, '(/1A, I7, 4X, 1A, 1PD18.10, 4X, 1A, /(1P,&
      & 5D15.6))') 'Function number', nf, 'F = ', f, 'The corresponding X&
