@@ -17,7 +17,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020.
 !
-! Last Modified: Thursday, June 10, 2021 PM10:35:24
+! Last Modified: Friday, June 25, 2021 PM07:39:47
 
 
 #include "fintrf.h"
@@ -30,13 +30,13 @@
 
 ! Generic modules
       use consts_mod, only : RP, IK
-      use newuoa_mod, only : newuoa
       use fmxapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
       use fmxapi_mod, only : fmxVerifyClassShape
       use fmxapi_mod, only : fmxAllocate
       use fmxapi_mod, only : fmxReadMPtr, fmxWriteMPtr
 
 ! Solver-specific module
+      use newuoa_mod, only : newuoa
       use prob_mod, only : fun_ptr, calfun
 
       implicit none

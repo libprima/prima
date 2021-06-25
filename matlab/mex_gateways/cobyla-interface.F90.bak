@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in June 2021.
 !
-! Last Modified: Friday, June 25, 2021 PM07:39:02
+! Last Modified: Friday, June 25, 2021 PM10:55:31
 
 
 #include "fintrf.h"
@@ -22,7 +22,7 @@ use fmxapi_mod, only : fmxAllocate
 use fmxapi_mod, only : fmxReadMPtr, fmxWriteMPtr
 
 ! Solver-specific module
-use cobyla_mod, only : cobyla 
+use cobyla_mod, only : cobyla
 
 implicit none
 
@@ -93,7 +93,7 @@ chist = huge(0.0_DP)
 iprint = 0
 call COBYLA(n_int, m_int, x, rhobeg, rhoend, iprint, maxfun, iact, f, info, ftarget, resmax, conval)
 ! Note that n is of type mwSize, yet COBYLA expects input 1 to be
-! of type INTEGER. Therefore, we should use n_int instead of n. 
+! of type INTEGER. Therefore, we should use n_int instead of n.
 
 ! Write outputs
 call fmxWriteMPtr(x, poutput(1))

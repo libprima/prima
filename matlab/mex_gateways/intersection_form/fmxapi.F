@@ -28,7 +28,7 @@
 !    unexpected behavior may occur!!!
 ! 3. Be careful with the "kind" and storage size for integer-type
 !    (integer, mwSize, mwIndex) variables/functions. Some of them may be
-!    32bit, while they others may be 64bit, depending on the machine,
+!    32bit, while the others may be 64bit, depending on the machine,
 !    the version of matlab, and the compilation option of mex. Do NOT
 !    assume any two of them to be the same. If ever a Segmentation Fault
 !    occurs, check these variables first.
