@@ -28,7 +28,7 @@ real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: rhoend
 
 ! In-outputs
-real(RP), intent(inout) :: con(:) ! m + 2  ! This name is bad; it should be conf
+real(RP), intent(inout) :: con(:) ! m+2. Bad name; should be confr
 real(RP), intent(inout) :: x(:)  ! n
 
 ! Outputs
