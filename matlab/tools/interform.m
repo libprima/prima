@@ -227,7 +227,7 @@ first_non_digit = min(find(~isdigit(str), 1, 'first'));
 leading_digits = str(1 : first_non_digit - 1);  % Leading digits in the string; they are statement labels
 first_exclamation = length(str) + 1;
 for ic = 1 : length(str)
-    if isexclamation(str(ic)) && mod(length(find(issingquota(str(1:ic)))), 2) == 0
+    if double(str(ic)) == double('!') && mod(sum(double(str(1:ic)) == double('''')), 2) == 0 && mod(sum(double(str(1:ic)) == double('"')), 2) == 0
         first_exclamation = ic;
         break;
     end
@@ -257,12 +257,6 @@ end
 
 function isd = isdigit(c)
 isd = ischar(c) & (double(c) >= double('0')) & (double(c) <= double('9'));
-
-function ise = isexclamation(c)
-ise = ischar(c) & (double(c) == double('!'));
-
-function issq = issingquota(c)
-issq = ischar(c) & (double(c) == double(''''));
 
 function refactor_filelist(filename)
 
