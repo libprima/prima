@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -51,20 +51,27 @@
 ! Inputs
       procedure(FUNEVAL) :: calfun
       integer(IK), intent(in) :: iprint
-      real(RP), intent(in) :: x(:) ! X(N)
+      real(RP), intent(in) :: x(:)
+      ! X(N)
       real(RP), intent(in) :: rhobeg
       real(RP), intent(in) :: ftarget
 
 ! Outputs
       integer(IK), intent(out) :: info
-      integer(IK), intent(out) :: ij(:, :) ! IJ(2, NPT)
+      integer(IK), intent(out) :: ij(:, :)
+      ! IJ(2, NPT)
       integer(IK), intent(out) :: kopt
       integer(IK), intent(out) :: nf
-      real(RP), intent(out) :: fval(:) ! FVAL(NPT)
-      real(RP), intent(out) :: fhist(:) ! FHIST(MAXFHIST)
-      real(RP), intent(out) :: xbase(:) ! XBASE(N)
-      real(RP), intent(out) :: xhist(:, :) ! XHIST(MAXXHIST)
-      real(RP), intent(out) :: xpt(:, :) ! XPT(N, NPT)
+      real(RP), intent(out) :: fval(:)
+      ! FVAL(NPT)
+      real(RP), intent(out) :: fhist(:)
+      ! FHIST(MAXFHIST)
+      real(RP), intent(out) :: xbase(:)
+      ! XBASE(N)
+      real(RP), intent(out) :: xhist(:, :)
+      ! XHIST(MAXXHIST)
+      real(RP), intent(out) :: xpt(:, :)
+      ! XPT(N, NPT)
 ! Remark on IJ:
 ! When K > 2*N + 1, all the entries of XPT(:, K) will be zero except
 ! that the IJ(1, K) and IJ(2, K) entries will be set to RHOBEG or
@@ -163,7 +170,8 @@
       do k = 1, min(npt, int(2 * n + 1, kind(npt)))
           xtemp = xpt(:, k) + xbase
           if (any(is_nan(xtemp))) then
-              f = sum(xtemp) ! Set F to NaN. It is necessary.
+              f = sum(xtemp)
+              ! Set F to NaN. It is necessary.
               info = NAN_X
               npt_revised = 0
               exit
@@ -247,7 +255,8 @@
       do k = int(2 * n + 2, kind(k)), npt_revised
           xtemp = xpt(:, k) + xbase
           if (any(is_nan(xtemp))) then
-              f = sum(xtemp) ! Set F to NaN. It is necessary.
+              f = sum(xtemp)
+              ! Set F to NaN. It is necessary.
               info = NAN_X
               exit
           end if
@@ -301,15 +310,21 @@
       implicit none
 
 ! Inputs
-      integer(IK), intent(in) :: ij(:, :) ! IJ(2, NPT)
-      real(RP), intent(in) :: fval(:) ! FVAL(NPT)
-      real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
+      integer(IK), intent(in) :: ij(:, :)
+      ! IJ(2, NPT)
+      real(RP), intent(in) :: fval(:)
+      ! FVAL(NPT)
+      real(RP), intent(in) :: xpt(:, :)
+      ! XPT(N, NPT)
 
 ! Outputs
       integer(IK), intent(out) :: info
-      real(RP), intent(out) :: gq(:) ! GQ(N)
-      real(RP), intent(out) :: hq(:, :) ! HQ(N, N)
-      real(RP), intent(out) :: pq(:) ! PQ(NPT)
+      real(RP), intent(out) :: gq(:)
+      ! GQ(N)
+      real(RP), intent(out) :: hq(:, :)
+      ! HQ(N, N)
+      real(RP), intent(out) :: pq(:)
+      ! PQ(NPT)
 
 ! Local variables
       integer(IK) :: i
@@ -343,9 +358,11 @@
 
       gq = ZERO
       hq = ZERO
-      pq = ZERO ! We will not update PQ. It is ZERO at return.
+      pq = ZERO
+      ! We will not update PQ. It is ZERO at return.
 
-      rhobeg = maxval(abs(xpt(:, 2))) ! Read RHOBEG from XPT.
+      rhobeg = maxval(abs(xpt(:, 2)))
+      ! Read RHOBEG from XPT.
       fbeg = fval(1)
 
 ! Set GQ by forward difference.
@@ -409,14 +426,18 @@
       implicit none
 
 ! Inputs
-      integer(IK), intent(in) :: ij(:, :) ! IJ(2, NPT)
-      real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
+      integer(IK), intent(in) :: ij(:, :)
+      ! IJ(2, NPT)
+      real(RP), intent(in) :: xpt(:, :)
+      ! XPT(N, NPT)
 
 ! Outputs
       integer(IK), intent(out) :: idz
       integer(IK), intent(out) :: info
-      real(RP), intent(out) :: bmat(:, :) ! BMAT(N, NPT + N)
-      real(RP), intent(out) :: zmat(:, :) ! ZMAT(NPT, NPT - N - 1)
+      real(RP), intent(out) :: bmat(:, :)
+      ! BMAT(N, NPT + N)
+      real(RP), intent(out) :: zmat(:, :)
+      ! ZMAT(NPT, NPT - N - 1)
 
 ! Local variables
       integer(IK) :: i
@@ -450,7 +471,8 @@
       idz = 1
 
 ! Some values to be used for setting BMAT and ZMAT.
-      rhobeg = maxval(abs(xpt(:, 2))) ! Read RHOBEG from XPT.
+      rhobeg = maxval(abs(xpt(:, 2)))
+      ! Read RHOBEG from XPT.
       rhosq = rhobeg * rhobeg
       recip = ONE / rhosq
       reciq = sqrt(HALF) / rhosq

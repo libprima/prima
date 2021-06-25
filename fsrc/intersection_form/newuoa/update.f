@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -52,12 +52,15 @@
 ! Inputs
       integer(IK), intent(in) :: knew
       real(RP), intent(in) :: beta
-      real(RP), intent(in) :: vlag_in(:) ! VLAG_IN(NPT + N)
+      real(RP), intent(in) :: vlag_in(:)
+      ! VLAG_IN(NPT + N)
 
 ! In-outputs
       integer(IK), intent(inout) :: idz
-      real(RP), intent(inout) :: bmat(:, :) ! BMAT(N, NPT + N)
-      real(RP), intent(inout) :: zmat(:, :) ! ZMAT(NPT, NPT - N - 1)
+      real(RP), intent(inout) :: bmat(:, :)
+      ! BMAT(N, NPT + N)
+      real(RP), intent(inout) :: zmat(:, :)
+      ! ZMAT(NPT, NPT - N - 1)
 
 ! Local variables
       integer(IK) :: j
@@ -78,7 +81,8 @@
       real(RP) :: tempb
       real(RP) :: v1(size(bmat, 1))
       real(RP) :: v2(size(bmat, 1))
-      real(RP) :: vlag(size(vlag_in)) ! Copy of VLAG_IN
+      real(RP) :: vlag(size(vlag_in))
+      ! Copy of VLAG_IN
       real(RP) :: w(size(vlag_in))
       real(RP) :: ztemp(size(zmat, 1))
       logical :: reduce_idz
@@ -97,18 +101,21 @@
           call verisize(vlag_in, npt + n)
       end if
 
-      vlag = vlag_in ! VLAG_IN is INTENT(IN) and cannot be revised.
+      vlag = vlag_in
+      ! VLAG_IN is INTENT(IN) and cannot be revised.
 
 ! Apply the rotations that put zeros in the KNEW-th row of ZMAT.
 ! A Givens rotation will be multiplied to ZMAT from the left so
 ! ZMAT(KNEW, JL) becomes SQRT(ZMAT(KNEW, JL)^2 + ZMAT(KNEW, J)) and
 ! ZMAT(KNEW, J) becomes 0.
-      jl = 1 ! For J = 2, ..., IDZ - 1, set JL = 1.
+      jl = 1
+      ! For J = 2, ..., IDZ - 1, set JL = 1.
       do j = 2, int(idz - 1, kind(j))
           call grota(zmat, jl, j, knew)
       end do
       if (idz <= npt - n - 1) then
-          jl = idz ! For J = IDZ + 1, ..., NPT - N - 1, set JL = IDZ.
+          jl = idz
+          ! For J = IDZ + 1, ..., NPT - N - 1, set JL = IDZ.
       end if
       do j = int(idz + 1, kind(j)), int(npt - n - 1, kind(j))
           call grota(zmat, jl, j, knew)
@@ -290,16 +297,22 @@
 ! Inputs
       integer(IK), intent(in) :: idz
       integer(IK), intent(in) :: knew
-      real(RP), intent(in) :: bmatknew(:) ! BMATKNEW(N)
+      real(RP), intent(in) :: bmatknew(:)
+      ! BMATKNEW(N)
 ! fqdiff = [f(xnew) - f(xopt)] - [q(xnew) - q(xopt)] = moderr
       real(RP), intent(in) :: fqdiff
-      real(RP), intent(in) :: zmat(:, :) ! ZMAT(NPT, NPT - N - 1)
-      real(RP), intent(in) :: xptknew(:) ! XPTKNEW(N)
+      real(RP), intent(in) :: zmat(:, :)
+      ! ZMAT(NPT, NPT - N - 1)
+      real(RP), intent(in) :: xptknew(:)
+      ! XPTKNEW(N)
 
 ! In-outputs
-      real(RP), intent(inout) :: gq(:) ! GQ(N)
-      real(RP), intent(inout) :: hq(:, :)! HQ(N, N)
-      real(RP), intent(inout) :: pq(:) ! PQ(NPT)
+      real(RP), intent(inout) :: gq(:)
+      ! GQ(N)
+      real(RP), intent(inout) :: hq(:, :)
+      ! HQ(N, N)
+      real(RP), intent(inout) :: pq(:)
+      ! PQ(NPT)
 
 ! Local variables
       integer(IK) :: n
@@ -361,16 +374,22 @@
 
 ! Inputs
       integer(IK), intent(in) :: idz
-      real(RP), intent(in) :: fval(:) ! FVAL(NPT)
+      real(RP), intent(in) :: fval(:)
+      ! FVAL(NPT)
       real(RP), intent(in) :: ratio
-      real(RP), intent(in) :: smat(:, :) ! SMAT(N, NPT)
-      real(RP), intent(in) :: zmat(:, :) ! ZMAT(NPT, NPT-N-!)
+      real(RP), intent(in) :: smat(:, :)
+      ! SMAT(N, NPT)
+      real(RP), intent(in) :: zmat(:, :)
+      ! ZMAT(NPT, NPT-N-!)
 
 ! In-output
       integer(IK), intent(inout) :: itest
-      real(RP), intent(inout) :: gq(:) ! GQ(N)
-      real(RP), intent(inout) :: hq(:, :) ! HQ(N, N)
-      real(RP), intent(inout) :: pq(:) ! PQ(NPT)
+      real(RP), intent(inout) :: gq(:)
+      ! GQ(N)
+      real(RP), intent(inout) :: hq(:, :)
+      ! HQ(N, N)
+      real(RP), intent(inout) :: pq(:)
+      ! PQ(NPT)
 ! N.B.:
 ! GQ, HQ, and PQ should be INTENT(INOUT) instead of INTENT(OUT).
 ! According to the Fortran 2018 standard, an INTENT(OUT) dummy

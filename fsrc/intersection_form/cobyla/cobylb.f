@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -46,9 +46,10 @@
       real(RP), intent(in) :: rhoend
 
 ! In-outputs
-      real(RP), intent(inout) :: con(:) ! m + 2 ! This name is bad; it s&
-     &hould be conf
-      real(RP), intent(inout) :: x(:) ! n
+      real(RP), intent(inout) :: con(:)
+      ! m+2. Bad name; should be confr
+      real(RP), intent(inout) :: x(:)
+      ! n
 
 ! Outputs
       integer(IK), intent(out) :: info
@@ -88,7 +89,8 @@
       integer(IK) :: np
       integer(IK) :: nsav
       logical :: better
-      real(RP) :: A(size(x), m + 1) ! (n, )
+      real(RP) :: A(size(x), m + 1)
+      ! (n, )
       real(RP) :: almost_infinity
       real(RP) :: alpha
       real(RP) :: barmu
@@ -100,7 +102,8 @@
       real(RP) :: cvmaxm
       real(RP) :: cvmaxp
       real(RP) :: datdrop(size(con))
-      real(RP) :: datmat(m + 2, n + 1) !(mpp, )
+      real(RP) :: datmat(m + 2, n + 1)
+      !(mpp, )
       real(RP) :: datsav(size(con), nsmax)
       real(RP) :: delta
       real(RP) :: denom
@@ -122,8 +125,10 @@
       real(RP) :: resref
       real(RP) :: rho
       real(RP) :: sigbar(size(x))
-      real(RP) :: sim(size(x), size(x) + 1) ! (n, )
-      real(RP) :: simi(size(x), size(x) + 1) ! (n, )
+      real(RP) :: sim(size(x), size(x) + 1)
+      ! (n, )
+      real(RP) :: simi(size(x), size(x) + 1)
+      ! (n, )
       real(RP) :: sum
       real(RP) :: temp
       real(RP) :: tempa
@@ -169,8 +174,8 @@
       PARMU = ZERO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       if (IPRINT >= 2) print 10, RHO
-      10 format(/3X, 'The initial value of RHO is', 1PE13.6, 2X, 'and PA&
-     &RMU is set to zero.')
+10    format(/3X, 'The initial value of RHO is', 1PE13.6, 2X, 'and PARMU&
+     & is set to zero.')
       NFVALS = 0
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      TEMP=1.0/RHO
@@ -212,9 +217,10 @@
 !      CALL CALCFC (N,M,X,F,CON)
 !
 !     By Zaikun (02-06-2019):
-      40 do I = 1, N
+40    do I = 1, N
           if (is_nan(X(I))) then
-              F = X(I) ! Set F to NaN
+              F = X(I)
+              ! Set F to NaN
               INFO = -1
               goto 600
           end if
@@ -240,10 +246,10 @@
 
       if (NFVALS == IPRINT - 1 .or. IPRINT == 3) then
           print 70, NFVALS, F, RESMAX, (X(I), I=1, IPTEM)
-      70 format(/3X, 'NFVALS =', I5, 3X, 'F =', 1PE13.6, 4X, 'MAXCV =', &
-     &1PE13.6 / 3X, 'X =', 1PE13.6, 1P4E15.6)
+70    format(/3X, 'NFVALS =', I5, 3X, 'F =', 1PE13.6, 4X, 'MAXCV =', 1PE&
+     &13.6 / 3X, 'X =', 1PE13.6, 1P4E15.6)
           if (IPTEM < N) print 80, (X(I), I=IPTEMP, N)
-      80 format(1PE19.6, 1P4E15.6)
+80    format(1PE19.6, 1P4E15.6)
       end if
       CON(MP) = F
       CON(MPP) = RESMAX
@@ -267,7 +273,8 @@
           CSUM = CSUM + DABS(CON(K))
       end do
       if (is_nan(CSUM)) then
-          RESMAX = CSUM ! Set RESMAX to NaN
+          RESMAX = CSUM
+          ! Set RESMAX to NaN
           INFO = -2
           goto 600
       end if
@@ -295,8 +302,8 @@
 !     at X). Similar thing can be said about RESMAX.
       if (NFVALS >= MAXFUN .and. NFVALS > 0) then
           if (IPRINT >= 1) print 50
-      50 format(/3X, 'Return from subroutine COBYLA because the ', 'MAXF&
-     &UN limit has been reached.')
+50    format(/3X, 'Return from subroutine COBYLA because the ', 'MAXFUN &
+     &limit has been reached.')
           INFO = 3
       end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -378,11 +385,11 @@
           X(JDROP) = X(JDROP) + RHO
           goto 40
       end if
-      130 IBRNCH = 1
+130   IBRNCH = 1
 !
 !     Identify the optimal vertex of the current simplex.
 !
-      140 PHIMIN = DATMAT(MP, NP) + PARMU * DATMAT(MPP, NP)
+140   PHIMIN = DATMAT(MP, NP) + PARMU * DATMAT(MPP, NP)
       NBEST = NP
       do J = 1, N
           TEMP = DATMAT(MP, J) + PARMU * DATMAT(MPP, J)
@@ -458,8 +465,8 @@
       if (.not. (ERROR <= TENTH)) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           if (IPRINT >= 1) print 210
-      210 format(/3X, 'Return from subroutine COBYLA because ', 'roundin&
-     &g errors are becoming damaging.')
+210   format(/3X, 'Return from subroutine COBYLA because ', 'rounding er&
+     &rors are becoming damaging.')
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
           INFO = 7
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -542,15 +549,16 @@
 ! will happen because we will read SIM(:, JDROP) and VSIG(JDROP).
       if (JDROP == 0) then
           if (IPRINT >= 1) print 286
-      286 format(/3X, 'Return from subroutine COBYLA because ', 'roundin&
-     &g errors are becoming damaging.')
+286   format(/3X, 'Return from subroutine COBYLA because ', 'rounding er&
+     &rors are becoming damaging.')
           INFO = 7
           goto 600
       end if
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 20190820: See the comments below line number 480
       do I = 1, N
-          XDROP(I) = SIM(I, NP) + SIM(I, JDROP) ! JDROP<NP is guaranteed
+          XDROP(I) = SIM(I, NP) + SIM(I, JDROP)
+          ! JDROP<NP is guaranteed
       end do
       do K = 1, MPP
           DATDROP(K) = DATMAT(K, JDROP)
@@ -629,7 +637,7 @@
 !
 !     Calculate DX=x(*)-x(0). Branch if the length of DX is less than 0.5*RHO.
 !
-      370 IZ = 1
+370   IZ = 1
       IZDOTA = IZ + N * N
       IVMC = IZDOTA + N
       ISDIRN = IVMC + MP
@@ -646,8 +654,8 @@
           do I = 1, N
               if (is_nan(SIMI(I, J))) then
                   if (IPRINT >= 1) print 376
-      376 format(/3X, 'Return from subroutine COBYLA because ', 'roundin&
-     &g errors are becoming damaging.')
+376   format(/3X, 'Return from subroutine COBYLA because ', 'rounding er&
+     &rors are becoming damaging.')
                   INFO = 7
                   goto 600
               end if
@@ -720,7 +728,7 @@
           PARMU = TWO * BARMU
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           if (IPRINT >= 2) print 410, PARMU
-      410 format(/3X, 'Increase in PARMU to', 1PE13.6)
+410   format(/3X, 'Increase in PARMU to', 1PE13.6)
           PHI = DATMAT(MP, NP) + PARMU * DATMAT(MPP, NP)
           do J = 1, N
               TEMP = DATMAT(MP, J) + PARMU * DATMAT(MPP, J)
@@ -743,7 +751,7 @@
       end do
       IBRNCH = 1
       goto 40
-      440 VMOLD = DATMAT(MP, NP) + PARMU * DATMAT(MPP, NP)
+440   VMOLD = DATMAT(MP, NP) + PARMU * DATMAT(MPP, NP)
       VMNEW = F + PARMU * RESMAX
       TRURED = VMOLD - VMNEW
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -840,7 +848,8 @@
           do K = 1, MPP
               DATDROP(K) = CONSAV(K)
           end do
-      else ! JDROP < NP is guaranteed
+      else
+      ! JDROP < NP is guaranteed
           do I = 1, N
               XDROP(I) = SIM(I, NP) + SIM(I, JDROP)
           end do
@@ -890,7 +899,7 @@
 !      IF (TRURED .GT. 0.0 .AND. TRURED .GE. 0.1*PREREM) GOTO 140
       if (TRURED > ZERO .and. TRURED >= TENTH * PREREM) goto 140
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      550 if (IFLAG == 0) then
+550   if (IFLAG == 0) then
           IBRNCH = 0
           goto 140
       end if
@@ -937,8 +946,8 @@
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !              IF (DENOM .EQ. 0.0) THEN
 !                  PARMU=0.0
-              if (abs(DENOM) <= ZERO) then ! DENOM <= ZERO??? Is it nonn&
-     &egative?
+              if (abs(DENOM) <= ZERO) then
+              ! DENOM <= ZERO???  Is it nonnegative?
                   PARMU = ZERO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               else if (CMAX - CMIN < PARMU * DENOM) then
@@ -946,8 +955,8 @@
               end if
           end if
           if (IPRINT >= 2) print 580, RHO, PARMU
-      580 format(/3X, 'Reduction in RHO to', 1PE13.6, ' and PARMU =', 1P&
-     &E13.6)
+580   format(/3X, 'Reduction in RHO to', 1PE13.6, ' and PARMU =', 1PE13.&
+     &6)
           if (IPRINT == 2) then
               print 70, NFVALS, DATMAT(MP, NP), DATMAT(MPP, NP), (SIM(I,&
      & NP), I=1, IPTEM)
@@ -963,7 +972,7 @@
 !     Return the best calculated values of the variables.
 !
       if (IPRINT >= 1) print 590
-      590 format(/3X, 'Normal return from subroutine COBYLA')
+590   format(/3X, 'Normal return from subroutine COBYLA')
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (IFULL .EQ. 1) GOTO 620
 !  600 DO 610 I=1,N
@@ -995,11 +1004,12 @@
 !      [X, CON, F, RESMAX] may have not been saved into SIM(:, NFVALS-1)
 !      and DATMAT(:, NFVALS-1) yet. That is why we check SIM up to
 !      NFVALS-2 instead of NFVALS-1.
-      600 do K = 1, M
+600   do K = 1, M
           CON(K) = CONSAV(K)
       end do
       PARMU = max(PARMU, 1.0D2)
-      if (NFVALS >= 2) then ! See the comments above for why NFVALS>2
+      if (NFVALS >= 2) then
+      ! See the comments above for why NFVALS>2
           call ISBETTER(F, RESMAX, DATMAT(MP, NP), DATMAT(MPP, NP), PARM&
      &U, CTOL, BETTER)
           if (BETTER) then
@@ -1032,9 +1042,11 @@
               end if
           end do
       end if
-      if (NSAV >= 1) then ! Do the following only if NSAV >= 1.
+      if (NSAV >= 1) then
+      ! Do the following only if NSAV >= 1.
 !          DO J = 1, NSAV
-          do J = NSAV, 1, -1 ! We start with the most recent point
+          do J = NSAV, 1, -1
+          ! We start with the most recent point
               if (DATSAV(MPP, J) <= RESREF) then
                   call ISBETTER(F, RESMAX, DATSAV(MP, J), DATSAV(MPP, J)&
      &, PARMU, CTOL, BETTER)
@@ -1052,7 +1064,7 @@
           end do
       end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      620 if (IPRINT >= 1) then
+620   if (IPRINT >= 1) then
           print 70, NFVALS, F, RESMAX, (X(I), I=1, IPTEM)
           if (IPTEM < N) print 80, (X(I), I=IPTEMP, N)
       end if
@@ -1109,13 +1121,17 @@
       integer(IK), intent(IN) :: n
       integer(IK), intent(IN) :: nsmax
       real(RP), intent(IN) :: ctol
-      real(RP), intent(IN) :: datdrop(:) ! m+2
-      real(RP), intent(IN) :: xdrop(:) ! n
+      real(RP), intent(IN) :: datdrop(:)
+      ! m+2
+      real(RP), intent(IN) :: xdrop(:)
+      ! n
 
 ! In-outputs
       integer(IK), intent(INOUT) :: Nsav
-      real(RP), intent(INOUT) :: Datsav(:, :) ! (M+2, NSMAX)
-      real(RP), intent(INOUT) :: Xsav(:, :) ! (N, NSMAX)
+      real(RP), intent(INOUT) :: Datsav(:, :)
+      ! (M+2, NSMAX)
+      real(RP), intent(INOUT) :: Xsav(:, :)
+      ! (N, NSMAX)
 
 ! Local variables
       integer(IK) :: i
@@ -1129,11 +1145,13 @@
       real(RP) :: parmu
       logical :: better
 
-      if (NSMAX <= 0) return ! Do nothing if NSMAX=0
+      if (NSMAX <= 0) return
+      ! Do nothing if NSMAX=0
 
       MP = M + 1
       MPP = M + 2
-      PARMU = -ONE ! See the comments above for why PARMU = -1
+      PARMU = -ONE
+      ! See the comments above for why PARMU = -1
 
 ! IREMOVE: indices of vectors to remove from XSAV
 ! NREMOVE: number of vectors to remove from XSAV
@@ -1173,19 +1191,25 @@
       end if
 
 ! Remove from XSAV the vectors indexed by IREMOVE
-      J = 1 ! Index of IREMOVE
-      K = 1 ! Index of the new XSAV
-      do I = 1, NSAV ! Index of the old XSAV
+      J = 1
+      ! Index of IREMOVE
+      K = 1
+      ! Index of the new XSAV
+      do I = 1, NSAV
+      ! Index of the old XSAV
           if (I == IREMOVE(J)) then
-              J = J + 1 ! Do nothing but incrementing J by 1
-          else ! Set XSAV(:, K) = XSAV(:, I)
+              J = J + 1
+              ! Do nothing but incrementing J by 1
+          else
+          ! Set XSAV(:, K) = XSAV(:, I)
               do L = 1, N
                   XSAV(L, K) = XSAV(L, I)
               end do
               do L = 1, MPP
                   DATSAV(L, K) = DATSAV(L, I)
               end do
-              K = K + 1 ! Increment K by 1
+              K = K + 1
+              ! Increment K by 1
           end if
       end do
 
@@ -1254,16 +1278,22 @@
       Better = .false.
 
 ! As values of F0, R0, F, and R, we regard Inf and NaN being equivalent values (they are equally bad).
-      f0infnan = is_nan(F0) .or. (F0 > HUGENUM) ! F0 = Inf or NaN?
-      r0infnan = is_nan(R0) .or. (R0 > HUGENUM) ! R0 = Inf or NaN?
+      f0infnan = is_nan(F0) .or. (F0 > HUGENUM)
+      ! F0 = Inf or NaN?
+      r0infnan = is_nan(R0) .or. (R0 > HUGENUM)
+      ! R0 = Inf or NaN?
 
       BETTER = .false.
 
 ! As values of F0, R0, F, and R, we regard Inf and NaN being equivalent values (they are equally bad).
-      f0infnan = is_nan(F0) .or. (F0 > HUGENUM) ! F0 = Inf or NaN?
-      r0infnan = is_nan(R0) .or. (R0 > HUGENUM) ! R0 = Inf or NaN?
-      finfnan = is_nan(F) .or. (F > HUGENUM) ! F = Inf or NaN?
-      rinfnan = is_nan(R) .or. (R > HUGENUM) ! R = Inf or NaN?
+      f0infnan = is_nan(F0) .or. (F0 > HUGENUM)
+      ! F0 = Inf or NaN?
+      r0infnan = is_nan(R0) .or. (R0 > HUGENUM)
+      ! R0 = Inf or NaN?
+      finfnan = is_nan(F) .or. (F > HUGENUM)
+      ! F = Inf or NaN?
+      rinfnan = is_nan(R) .or. (R > HUGENUM)
+      ! R  = Inf or NaN?
 
 ! When PARMU >= 0 and F + PARMU*R < F0 + PARMU*R0 and R < CTOL (feasible),
 ! then (F, R) is better than (F0, R0).
@@ -1289,10 +1319,14 @@
           BETTER = .true.
       end if
 
-      FLT = (F0INFNAN .and. (.not. FINFNAN)) .or. (F < F0) ! F < F0?
-      FLE = (F0INFNAN .and. FINFNAN) .or. (F <= F0) .or. FLT! F <= F0?
-      RLT = (R0INFNAN .and. (.not. RINFNAN)) .or. (R < R0) ! R < R0?
-      RLE = (R0INFNAN .and. RINFNAN) .or. (R <= R0) .or. RLT! R <= R0?
+      FLT = (F0INFNAN .and. (.not. FINFNAN)) .or. (F < F0)
+      ! F < F0?
+      FLE = (F0INFNAN .and. FINFNAN) .or. (F <= F0) .or. FLT
+      ! F <= F0?
+      RLT = (R0INFNAN .and. (.not. RINFNAN)) .or. (R < R0)
+      ! R < R0?
+      RLE = (R0INFNAN .and. RINFNAN) .or. (R <= R0) .or. RLT
+      ! R <= R0?
 
 ! If (F < F0 and R <= R0) or (F <= F0 and R < R0) in the sense defined
 ! above, the (F, R) is better than (F0, R0).

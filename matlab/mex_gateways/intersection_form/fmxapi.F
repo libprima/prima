@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -137,7 +137,8 @@
 ! intOne and intTwo may be used when calling mexCallMATLAB
       integer(INT32_MEX), parameter :: intOne = 1, intTwo = 2
 ! mwOne may be used in mxCreateDoubleMatrix and mxCopyPtrToReal8
-      mwSize, parameter :: mwOne = 1 ! Integer 1 with type mwSize
+      mwSize, parameter :: mwOne = 1
+      ! Integer 1 with type mwSize
 ! convTol is the tolerance of difference due to conversion between REAL(RP) and REAL(DP)
       real(DP), parameter :: convTol = 1.0E1_DP * max(epsilon(0.0_DP), r&
      &eal(epsilon(0.0_RP), DP))
@@ -352,7 +353,8 @@
 ! fmxVerifyNArgin verifies that nin = expected_nin.
       use consts_mod, only : MSSGLEN
       implicit none
-      integer, intent(in) :: nin ! NARGIN is of type INTEGER
+      integer, intent(in) :: nin
+      ! NARGIN is of type INTEGER
       integer, intent(in) :: expected_nin
 
       character(len=MSSGLEN) :: eid, mssg
@@ -368,7 +370,8 @@
 ! fmxVerifyNArgout verifies that nout <= expected_nout.
       use consts_mod, only : MSSGLEN
       implicit none
-      integer, intent(in) :: nout ! NARGOUT is of type INTEGER
+      integer, intent(in) :: nout
+      ! NARGOUT is of type INTEGER
       integer, intent(in) :: expected_nout
 
       character(len=MSSGLEN) :: eid, mssg
@@ -738,11 +741,13 @@
       n = int(n_mw, kind(n))
 
 ! Copy input to X_DP
-      call fmxAllocate(x_dp, n) ! NOT removable
+      call fmxAllocate(x_dp, n)
+      ! NOT removable
       call mxCopyPtrToReal8(fmxGetDble(px), x_dp, n_mw)
 
 ! Convert X_DP to the type expected by the Fortran code
-      call fmxAllocate(x, n) ! Removable in F2003
+      call fmxAllocate(x, n)
+      ! Removable in F2003
       x = real(x_dp, kind(x))
 ! Check whether the type conversion is proper
       if (kind(x) /= kind(x_dp)) then
@@ -788,11 +793,13 @@
 
 
 ! Copy input to X_DP
-      call fmxAllocate(x_dp, m, n) ! NOT removable
+      call fmxAllocate(x_dp, m, n)
+      ! NOT removable
       call mxCopyPtrToReal8(fmxGetDble(px), x_dp, xsize)
 
 ! Convert X_DP to the type expected by the Fortran code
-      call fmxAllocate(x, m, n) ! Removable in F2003
+      call fmxAllocate(x, m, n)
+      ! Removable in F2003
       x = real(x_dp, kind(x))
 ! Check whether the type conversion is proper
       if (kind(x) /= kind(x_dp)) then

@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -224,8 +224,8 @@
                   CALL CALFUN(N,X,F)
                   IF ( Iprint==3 ) THEN
                      PRINT 99001 , nf , F , (X(i),i=1,N)
-      99001 FORMAT (/4X,'Function number',I6,' F =',1PD18.10, ' The corr&
-     &esponding X is:'/(2X,5D15.6))
+99001 FORMAT (/4X,'Function number',I6,' F =',1PD18.10, ' The correspond&
+     &ing X is:'/(2X,5D15.6))
                   ENDIF
                   IF ( nf==1 ) THEN
                      Kopt = 1
@@ -250,7 +250,7 @@
 !
 !     Set PQ for the first quadratic model.
 !
-       100 DO j = 1 , nptm
+100    DO j = 1 , nptm
                W(j) = zero
                DO k = 1 , Npt
                   W(j) = W(j) + Zmat(k,j)*Fval(k)

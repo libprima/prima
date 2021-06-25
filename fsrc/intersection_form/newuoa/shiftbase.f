@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -48,16 +48,24 @@
 
 ! Inputs
       integer(IK), intent(in) :: idz
-      real(RP), intent(in) :: pq(:) ! PQ(NPT)
-      real(RP), intent(in) :: zmat(:, :) ! ZMAT(NPT, NPT - N - 1)
+      real(RP), intent(in) :: pq(:)
+      ! PQ(NPT)
+      real(RP), intent(in) :: zmat(:, :)
+      ! ZMAT(NPT, NPT - N - 1)
 
 ! In-outputs
-      real(RP), intent(inout) :: bmat(:, :) ! BMAT(N, NPT + N)
-      real(RP), intent(inout) :: gq(:) ! GQ(N)
-      real(RP), intent(inout) :: hq(:, :) ! HQ(N, N)
-      real(RP), intent(inout) :: xbase(:) ! XBASE(N)
-      real(RP), intent(inout) :: xopt(:) ! XOPT(N)
-      real(RP), intent(inout) :: xpt(:, :) ! XPT(N, NPT)
+      real(RP), intent(inout) :: bmat(:, :)
+      ! BMAT(N, NPT + N)
+      real(RP), intent(inout) :: gq(:)
+      ! GQ(N)
+      real(RP), intent(inout) :: hq(:, :)
+      ! HQ(N, N)
+      real(RP), intent(inout) :: xbase(:)
+      ! XBASE(N)
+      real(RP), intent(inout) :: xopt(:)
+      ! XOPT(N)
+      real(RP), intent(inout) :: xpt(:, :)
+      ! XPT(N, NPT)
 
 ! Local variables
       integer(IK) :: k

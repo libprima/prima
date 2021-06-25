@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -74,7 +74,8 @@
       call fmxVerifyClassShape(pinput(1), 'function_handle', 'rank0')
 
 ! Read inputs (there are 14)
-      fun_ptr = pinput(1) ! FUN_PTR is a pointer to the function handle
+      fun_ptr = pinput(1)
+      ! FUN_PTR is a pointer to the function handle
       call fmxReadMPtr(pinput(2), x)
       call fmxReadMPtr(pinput(3), rhobeg)
       call fmxReadMPtr(pinput(4), rhoend)
@@ -122,7 +123,8 @@
 ! limit in the Fortran code.
 
 ! Free memory. Indeed, automatic deallocation would take place.
-      deallocate (x) ! Allocated by fmxReadMPtr.
+      deallocate (x)
+      ! Allocated by fmxReadMPtr.
       deallocate (xhist)
       deallocate (fhist)
 

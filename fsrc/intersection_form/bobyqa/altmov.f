@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -247,7 +247,7 @@
 !
             bigstp = Adelt + Adelt
             iflag = 0
-      100 wfixsq = zero
+100   wfixsq = zero
             ggfree = zero
             do i = 1, N
                 W(i) = zero
@@ -352,4 +352,4 @@
                 end do
                 Cauchy = csave
             end if
-      99999 end subroutine ALTMOV
+99999 end subroutine ALTMOV

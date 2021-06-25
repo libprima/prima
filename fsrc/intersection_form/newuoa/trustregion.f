@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -76,18 +76,24 @@
 
 ! Inputs
       real(RP), intent(in) :: delta
-      real(RP), intent(in) :: gq(:) ! GQ(N)
-      real(RP), intent(in) :: hq(:, :) ! HQ(N, N)
-      real(RP), intent(in) :: pq(:) ! PQ(NPT)
+      real(RP), intent(in) :: gq(:)
+      ! GQ(N)
+      real(RP), intent(in) :: hq(:, :)
+      ! HQ(N, N)
+      real(RP), intent(in) :: pq(:)
+      ! PQ(NPT)
       real(RP), intent(in) :: tol
-      real(RP), intent(in) :: x(:) ! X(N)
-      real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
+      real(RP), intent(in) :: x(:)
+      ! X(N)
+      real(RP), intent(in) :: xpt(:, :)
+      ! XPT(N, NPT)
 
 ! Outputs
       integer(IK), intent(out) :: info
       real(RP), intent(out) :: crvmin
       real(RP), intent(out) :: qred
-      real(RP), intent(out) :: s(:) ! S(N)
+      real(RP), intent(out) :: s(:)
+      ! S(N)
 
 ! Local variables
       integer(IK) :: i
@@ -152,7 +158,8 @@
       s = ZERO
       crvmin = ZERO
       qred = ZERO
-      info = 2 ! Default exit flag is 2, i.e., itermax is attained
+      info = 2
+      ! Default exit flag is 2, i.e., itermax is attained
 
 ! Prepare for the first line search.
 !----------------------------------------------------------------!
@@ -223,8 +230,10 @@
           s = s + alpha * d
           ss = inprod(s, s)
           hs = hs + alpha * hd
-          ggsave = gg ! Gradient norm square before this iteration
-          gg = inprod(g + hs, g + hs) ! Current gradient norm square
+          ggsave = gg
+          ! Gradient norm square before this iteration
+          gg = inprod(g + hs, g + hs)
+          ! Current gradient norm square
 ! We may save g+hs for latter usage:
 ! gnew = g + hs
 ! Note that we should NOT set g = g + hs, because g contains
@@ -247,7 +256,8 @@
           end if
 
 ! Prepare for the next CG iteration.
-          d = (gg / ggsave) * d - g - hs ! CG direction
+          d = (gg / ggsave) * d - g - hs
+          ! CG direction
           dd = inprod(d, d)
           ds = inprod(d, s)
           if (ds <= ZERO) then
@@ -360,13 +370,20 @@
       implicit none
 
       real(RP) :: trrad
-      real(RP), intent(in) :: delta ! Current trust region radius
-      real(RP), intent(in) :: dnorm ! Norm of current trust region step
-      real(RP), intent(in) :: eta1 ! Ratio threshold for contraction
-      real(RP), intent(in) :: eta2 ! Ratio threshold for expansion
-      real(RP), intent(in) :: gamma1 ! Contraction factor
-      real(RP), intent(in) :: gamma2 ! Expansion factor
-      real(RP), intent(in) :: ratio ! Reduction ratio
+      real(RP), intent(in) :: delta
+      ! Current trust region radius
+      real(RP), intent(in) :: dnorm
+      ! Norm of current trust region step
+      real(RP), intent(in) :: eta1
+      ! Ratio threshold for contraction
+      real(RP), intent(in) :: eta2
+      ! Ratio threshold for expansion
+      real(RP), intent(in) :: gamma1
+      ! Contraction factor
+      real(RP), intent(in) :: gamma2
+      ! Expansion factor
+      real(RP), intent(in) :: ratio
+      ! Reduction ratio
 
       if (ratio <= eta1) then
           trrad = gamma1 * dnorm

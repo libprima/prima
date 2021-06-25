@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -126,11 +126,16 @@
       integer, parameter :: REAL64 = kind(0.0D0)
       integer, parameter :: REAL128 = selected_real_kind(p=30)
 #endif
-      integer, parameter :: IK_DFT = kind(0) ! Default integer kind
-      integer, parameter :: RP_DFT = kind(0.0) ! Default real kind
-      integer, parameter :: SP = REAL32 ! Kind for single precision
-      integer, parameter :: DP = REAL64 ! Kind for double precision
-      integer, parameter :: QP = REAL128 ! Kind for quadruple precision
+      integer, parameter :: IK_DFT = kind(0)
+      ! Default integer kind
+      integer, parameter :: RP_DFT = kind(0.0)
+      ! Default real kind
+      integer, parameter :: SP = REAL32
+      ! Kind for single precision
+      integer, parameter :: DP = REAL64
+      ! Kind for double precision
+      integer, parameter :: QP = REAL128
+      ! Kind for quadruple precision
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Define the integer kind to be used in the Fortran code.
@@ -155,7 +160,8 @@
 #elif __REAL_PRECISION__ == 128
       integer, parameter :: RP = REAL128
 #else
-      integer, parameter :: RP = REAL64 ! double precision
+      integer, parameter :: RP = REAL64
+      ! double precision
 #endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

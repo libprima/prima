@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -53,10 +53,14 @@
       real(RP), intent(in) :: delta
       real(RP), intent(in) :: ratio
       real(RP), intent(in) :: rho
-      real(RP), intent(in) :: vlag(:) ! VLAG(NPT)
-      real(RP), intent(in) :: xopt(:) ! XOPT(N)
-      real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
-      real(RP), intent(in) :: zmat(:, :) ! ZMAT(NPT, NPT - N - 1)
+      real(RP), intent(in) :: vlag(:)
+      ! VLAG(NPT)
+      real(RP), intent(in) :: xopt(:)
+      ! XOPT(N)
+      real(RP), intent(in) :: xpt(:, :)
+      ! XPT(N, NPT)
+      real(RP), intent(in) :: zmat(:, :)
+      ! ZMAT(NPT, NPT - N - 1)
 
 ! Output
       integer(IK), intent(out) :: knew
@@ -129,17 +133,22 @@
       integer(IK), intent(in) :: idz
       integer(IK), intent(in) :: knew
       integer(IK), intent(in) :: kopt
-      real(RP), intent(in) :: bmat(:, :) ! BMAT(N, NPT+N)
+      real(RP), intent(in) :: bmat(:, :)
+      ! BMAT(N, NPT+N)
       real(RP), intent(in) :: delbar
-      real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
-      real(RP), intent(in) :: zmat(:, :) ! ZMAT(NPT, NPT - N - 1)
+      real(RP), intent(in) :: xpt(:, :)
+      ! XPT(N, NPT)
+      real(RP), intent(in) :: zmat(:, :)
+      ! ZMAT(NPT, NPT - N - 1)
 
 ! In-output
-      real(RP), intent(inout) :: d(:) ! D(N)
+      real(RP), intent(inout) :: d(:)
+      ! D(N)
 
 ! Outputs
       real(RP), intent(out) :: beta
-      real(RP), intent(out) :: vlag(:) ! VLAG(NPT + N)
+      real(RP), intent(out) :: vlag(:)
+      ! VLAG(NPT + N)
 
 ! Local variables
       integer(IK) :: n
@@ -164,7 +173,8 @@
           call verisize(d, n)
       end if
 
-      xopt = xpt(:, kopt) ! Read XOPT.
+      xopt = xpt(:, kopt)
+      ! Read XOPT.
 
       call biglag(idz, knew, delbar, bmat, xopt, xpt, zmat, d)
 
@@ -204,13 +214,18 @@
       integer(IK), intent(in) :: idz
       integer(IK), intent(in) :: knew
       real(RP), intent(in) :: delbar
-      real(RP), intent(in) :: bmat(:, :) ! BMAT(N, NPT + N)
-      real(RP), intent(in) :: x(:) ! X(N)
-      real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
-      real(RP), intent(in) :: zmat(:, :) ! ZMAT(NPT, NPT - N - 1)
+      real(RP), intent(in) :: bmat(:, :)
+      ! BMAT(N, NPT + N)
+      real(RP), intent(in) :: x(:)
+      ! X(N)
+      real(RP), intent(in) :: xpt(:, :)
+      ! XPT(N, NPT)
+      real(RP), intent(in) :: zmat(:, :)
+      ! ZMAT(NPT, NPT - N - 1)
 
 ! Output
-      real(RP), intent(out) :: d(:) ! D(N)
+      real(RP), intent(out) :: d(:)
+      ! D(N)
 
 ! Local variables
       integer(IK) :: i
@@ -411,16 +426,21 @@
       integer(IK), intent(in) :: idz
       integer(IK), intent(in) :: knew
       integer(IK), intent(in) :: kopt
-      real(RP), intent(in) :: bmat(:, :) ! BMAT(N, NPT+N)
-      real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
-      real(RP), intent(in) :: zmat(:, :) ! ZMAT(NPT, NPT - N - 1)
+      real(RP), intent(in) :: bmat(:, :)
+      ! BMAT(N, NPT+N)
+      real(RP), intent(in) :: xpt(:, :)
+      ! XPT(N, NPT)
+      real(RP), intent(in) :: zmat(:, :)
+      ! ZMAT(NPT, NPT - N - 1)
 
 ! In-output
-      real(RP), intent(inout) :: d(:) ! D(N)
+      real(RP), intent(inout) :: d(:)
+      ! D(N)
 
 ! Outputs
       real(RP), intent(out) :: beta
-      real(RP), intent(out) :: vlag(:) ! VLAG(NPT + N)
+      real(RP), intent(out) :: vlag(:)
+      ! VLAG(NPT + N)
 
 ! Local variable
       integer(IK) :: i
@@ -510,7 +530,8 @@
           call verisize(d, n)
       end if
 
-      x = xpt(:, kopt) ! For simplicity, use x to denote XOPT.
+      x = xpt(:, kopt)
+      ! For simplicity, use x to denote XOPT.
 
 ! Store the first NPT elements of the KNEW-th column of H in HCOL.
       zknew = zmat(knew, :)

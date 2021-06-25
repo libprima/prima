@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -79,7 +79,8 @@
       implicit none
       real(RP), intent(in) :: alpha
       real(RP), intent(in) :: x(:)
-      real(RP), intent(inout) :: A(:, :) ! A(SIZE(X), SIZE(X))
+      real(RP), intent(inout) :: A(:, :)
+      ! A(SIZE(X), SIZE(X))
 
       integer(IK) :: n, j
 
@@ -144,7 +145,8 @@
       real(RP), intent(in) :: alpha
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
-      real(RP), intent(inout) :: A(:, :) ! A(SIZE(X), SIZE(Y))
+      real(RP), intent(inout) :: A(:, :)
+      ! A(SIZE(X), SIZE(Y))
 
       integer(IK) :: n, j
 
@@ -203,7 +205,8 @@
       real(RP), intent(in) :: alpha
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
-      real(RP), intent(inout) :: A(:, :) ! A(SIZE(X), SIZE(X))
+      real(RP), intent(inout) :: A(:, :)
+      ! A(SIZE(X), SIZE(X))
 
       integer(IK) :: n, j
 
@@ -221,12 +224,14 @@
 
 #if __USE_POWELL_ALGEBRA__ == 1
 ! Only update the LOWER TRIANGULAR part of A.
-      if (abs(alpha - ONE) > ZERO) then ! NOT invoked in NEWUOA.
+      if (abs(alpha - ONE) > ZERO) then
+      ! NOT invoked in NEWUOA.
           do j = 1, n
               A(j:n, j) = A(j:n, j) + alpha * x(j:n) * y(j) + alpha * y(&
      &j:n) * x(j)
           end do
-      else ! This case is invoked in NEWUOA.
+      else
+      ! This case is invoked in NEWUOA.
           do j = 1, n
               A(j:n, j) = A(j:n, j) + x(j:n) * y(j) + y(j:n) * x(j)
           end do
@@ -236,11 +241,13 @@
 #else
 ! Here we calculate the increment as ALPHA*( X*Y^T + Y*X^T), which is guaranteed symmetric even in
 ! floating-point arithmetic.
-      if (abs(alpha - ONE) > ZERO) then ! NOT invoked in NEWUOA.
+      if (abs(alpha - ONE) > ZERO) then
+      ! NOT invoked in NEWUOA.
           do j = 1, n
               A(:, j) = A(:, j) + alpha * (x * y(j) + y * x(j))
           end do
-      else ! This case is invoked in NEWUOA.
+      else
+      ! This case is invoked in NEWUOA.
           do j = 1, n
               A(:, j) = A(:, j) + (x * y(j) + y * x(j))
           end do
@@ -270,9 +277,12 @@
       real(RP), intent(in) :: beta
       real(RP), intent(in) :: x(:)
       real(RP), intent(in) :: y(:)
-      real(RP), intent(in) :: u(:) ! U(SIZE(X))
-      real(RP), intent(in) :: v(:) ! V(SIZE(Y))
-      real(RP), intent(inout) :: A(:, :) ! A(SIZE(X), SIZE(Y))
+      real(RP), intent(in) :: u(:)
+      ! U(SIZE(X))
+      real(RP), intent(in) :: v(:)
+      ! V(SIZE(Y))
+      real(RP), intent(inout) :: A(:, :)
+      ! A(SIZE(X), SIZE(Y))
 
       integer(IK) :: n, j
 
@@ -297,24 +307,28 @@
           do j = 1, n
               A(:, j) = A(:, j) + alpha * x * y(j) + beta * u * v(j)
           end do
-      else ! This case is invoked in NEWUOA.
+      else
+      ! This case is invoked in NEWUOA.
           do j = 1, n
               A(:, j) = A(:, j) + x * y(j) + u * v(j)
           end do
       end if
 #else
-      if (abs(alpha - beta) > ZERO) then ! NOT invoked in NEWUOA.
+      if (abs(alpha - beta) > ZERO) then
+      ! NOT invoked in NEWUOA.
           do j = 1, n
               A(:, j) = A(:, j) + (alpha * (x * y(j)) + beta * (u * v(j)&
      &))
           end do
-      else if (abs(alpha - ONE) > ZERO) then ! NOT invoked in NEWUOA.
+      else if (abs(alpha - ONE) > ZERO) then
+      ! NOT invoked in NEWUOA.
 ! Here update A to A + ALPHA*( X*Y^T + U*V^T ), a symmetric update when X = V and Y = U, even in
 ! floating-point arithmetic.
           do j = 1, n
               A(:, j) = A(:, j) + alpha * (x * y(j) + u * v(j))
           end do
-      else ! This case is invoked in NEWUOA.
+      else
+      ! This case is invoked in NEWUOA.
 ! Here update A to A + ( X*Y^T + U*V^T ), a symmetric update when X = V and Y = U, even in
 ! floating-point arithmetic.
           do j = 1, n
@@ -543,7 +557,8 @@
           A(k, j) = ZERO
 
 #if __USE_POWELL_ALGEBRA__ == 0
-          A(k, i) = r ! A(K, I) = R in precise arithmetic
+          A(k, i) = r
+          ! A(K, I) = R in precise arithmetic
       else if (A(k, i) < ZERO) then
 ! In this case, C = -1, S = 0. Thus it is reasonable to set the following. Doing this will
 ! ensure the continuity of this subroutine as an operator.
@@ -803,12 +818,18 @@
       implicit none
 
 ! Inputs
-      real(RP), intent(in) :: d(:) ! D(N)
-      real(RP), intent(in) :: gq(:) ! GQ(N)
-      real(RP), intent(in) :: hq(:, :) ! HQ(N, N)
-      real(RP), intent(in) :: pq(:) ! PQ(NPT)
-      real(RP), intent(in) :: x(:) ! X(N)
-      real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
+      real(RP), intent(in) :: d(:)
+      ! D(N)
+      real(RP), intent(in) :: gq(:)
+      ! GQ(N)
+      real(RP), intent(in) :: hq(:, :)
+      ! HQ(N, N)
+      real(RP), intent(in) :: pq(:)
+      ! PQ(NPT)
+      real(RP), intent(in) :: x(:)
+      ! X(N)
+      real(RP), intent(in) :: xpt(:, :)
+      ! XPT(N, NPT)
 
 ! Output
       real(RP), intent(out) :: vquad
@@ -855,8 +876,10 @@
 !-----------------------------------------------------------!
 ! Powell's original code calculates W externally and pass it
 ! as an input to CALQUAD. Here W is calculated internally.
-      w = matprod(d, xpt) !---------------------------------------!
-      w = w * (HALF * w + matprod(x, xpt)) !----------------------!
+      w = matprod(d, xpt)
+      !---------------------------------------!
+      w = w * (HALF * w + matprod(x, xpt))
+      !----------------------!
 !-----------------------------------------------------------!
 ! Implicit second order term
       do i = 1, int(size(pq), kind(i))
@@ -866,7 +889,8 @@
 ! The order of calculation seems quite important. The following order seems to work well.
 ! 1st order term
       vquad = inprod(d, gq)
-      s = HALF * d + x ! Different from the above version.
+      s = HALF * d + x
+      ! Different from the above version.
 ! implicit 2nd-order term
       vquad = vquad + sum(pq * (matprod(s, xpt) * matprod(d, xpt)))
 ! explicit 2nd-order term

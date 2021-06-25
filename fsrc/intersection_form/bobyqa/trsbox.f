@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -135,8 +135,8 @@
 !     course the components of the fixed variables are zero. ITERMAX is an
 !     upper bound on the indices of the conjugate gradient iterations.
 !
-      100 beta = zero
-      200 stepsq = zero
+100   beta = zero
+200   stepsq = zero
             do i = 1, N
                 if (Xbdi(i) /= zero) then
                     S(i) = zero
@@ -164,7 +164,7 @@
 !     Prepare for the alternative iteration by calculating some scalars and
 !     by multiplying the reduced D by the second derivative matrix of Q.
 !
-      300 if (nact >= N - 1) goto 500
+300   if (nact >= N - 1) goto 500
             dredsq = zero
             dredg = zero
             gredsq = zero
@@ -184,7 +184,7 @@
 !     Let the search direction S be a linear combination of the reduced D
 !     and the reduced G that is orthogonal to the reduced D.
 !
-      400 iterc = iterc + 1
+400   iterc = iterc + 1
             temp = gredsq * dredsq - dredg * dredg
             if (temp > 1.0D-4 * qred * qred) then
                 temp = DSQRT(temp)
@@ -247,7 +247,7 @@
 !
                 goto 600
             end if
-      500 Dsq = zero
+500   Dsq = zero
             do i = 1, N
                 Xnew(i) = DMAX1(DMIN1(Xopt(i) + D(i), Su(i)), Sl(i))
                 if (Xbdi(i) == onemin) Xnew(i) = Sl(i)
@@ -262,7 +262,7 @@
 !     They are reached from three different parts of the software above and
 !     they can be regarded as an external subroutine.
 !
-      600 ih = 0
+600   ih = 0
             do j = 1, N
                 Hs(j) = zero
                 do i = 1, j
@@ -368,7 +368,7 @@
                         goto 200
                     end if
                 end if
-      650 Crvmin = zero
+650   Crvmin = zero
                 goto 300
             elseif (iterc > itcsav) then
                 shs = zero

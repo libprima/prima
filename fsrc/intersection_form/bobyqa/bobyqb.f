@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -179,7 +179,7 @@
 !     Update GOPT if necessary before the first iteration and after each
 !     call of RESCUE that makes a call of CALFUN.
 !
-      100 if (kopt /= kbase) then
+100   if (kopt /= kbase) then
                 ih = 0
                 do j = 1, N
                     do i = 1, j
@@ -218,7 +218,7 @@
 ! behavior of the code, including uninitialized indices.
 !
 !   60 CALL TRSBOX (N,NPT,XPT,XOPT,GOPT,HQ,PQ,SL,SU,DELTA,XNEW,D,
-      200 do i = 1, N
+200   do i = 1, N
                 if (Gopt(i) /= Gopt(i)) then
                     Info = -3
                     goto 1000
@@ -280,7 +280,7 @@
 !     derivatives of the current model, beginning with the changes to BMAT
 !     that do not depend on ZMAT. VLAG is used temporarily for working space.
 !
-      300 if (dsq <= 1.0D-3 * xoptsq) then
+300   if (dsq <= 1.0D-3 * xoptsq) then
                 fracsq = 0.25D0 * xoptsq
                 sumpq = zero
                 do k = 1, Npt
@@ -369,7 +369,7 @@
 !     denominator of the formula for updating the H matrix. It provides a
 !     useful safeguard, but is not invoked in most applications of BOBYQA.
 !
-      400 nfsav = nf
+400   nfsav = nf
             kbase = kopt
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 2019-08-29
@@ -488,7 +488,7 @@
 !  below, which led to abnormal values in BMAT (indeed, BETA defined in
 !  lines 366--389 took NaN/infinite values).
 !
-      500 do j = 1, N
+500   do j = 1, N
                 do i = 1, Ndim
                     if (Bmat(i, j) /= Bmat(i, j)) then
                         Info = -3
@@ -510,7 +510,7 @@
             do i = 1, N
                 D(i) = Xnew(i) - Xopt(i)
             end do
-      600 do
+600   do
 !
 !     Calculate VLAG and BETA for the current choice of D. The scalar
 !     product of D with XPT(K,.) is going to be held in W(NPT+K) for
@@ -637,7 +637,7 @@
 !     Calculate the value of the objective function at XBASE+XNEW, unless
 !       the limit on the number of calculations of F has been reached.
 !
-      700 do i = 1, N
+700   do i = 1, N
                 X(i) = DMIN1(DMAX1(Xl(i), Xbase(i) + Xnew(i)), Xu(i))
                 if (Xnew(i) == Sl(i)) X(i) = Xl(i)
                 if (Xnew(i) == Su(i)) X(i) = Xu(i)
@@ -653,7 +653,8 @@
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
             do i = 1, N
                 if (X(i) /= X(i)) then
-                    F = X(i) ! Set F to NaN
+                    F = X(i)
+                    ! Set F to NaN
                     if (nf == 1) then
                         fopt = F
                         Xopt(1:N) = zero
@@ -686,8 +687,8 @@
 
             if (Iprint == 3) then
                 print 99001, nf, F, (X(i), i=1, N)
-      99001 format(/4X, 'Function number', I6, ' F =', 1PD18.10, ' The c&
-     &orresponding X is:'/(2X, 5D15.6))
+99001 format(/4X, 'Function number', I6, ' F =', 1PD18.10, ' The corresp&
+     &onding X is:'/(2X, 5D15.6))
             end if
             if (ntrits == -1) then
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -732,8 +733,8 @@
                 if (vquad >= zero) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     if (Iprint > 0) print 99002
-      99002 format(/4X, 'Return from BOBYQA because a trust', ' region s&
-     &tep has failed to reduce Q.')
+99002 format(/4X, 'Return from BOBYQA because a trust', ' region step ha&
+     &s failed to reduce Q.')
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
                     Info = 2
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -931,7 +932,7 @@
 !       to the best point so far.
 !
             distsq = DMAX1((two * delta)**2, (ten * rho)**2)
-      800 knew = 0
+800   knew = 0
             do k = 1, Npt
                 sum = zero
                 do j = 1, N
@@ -968,7 +969,7 @@
 !     The calculations with the current value of RHO are complete. Pick the
 !       next values of RHO and DELTA.
 !
-      900 if (rho > Rhoend) then
+900   if (rho > Rhoend) then
                 delta = half * rho
                 ratio = rho / Rhoend
                 if (ratio <= 16.0D0) then
@@ -981,10 +982,10 @@
                 delta = DMAX1(delta, rho)
                 if (Iprint >= 2) then
                     if (Iprint >= 3) print 99003
-      99003 format(5X)
+99003 format(5X)
                     print 99004, rho, nf
-      99004 format(/4X, 'New RHO =', 1PD11.4, 5X, 'Number of', ' functio&
-     &n values =', I6)
+99004 format(/4X, 'New RHO =', 1PD11.4, 5X, 'Number of', ' function valu&
+     &es =', I6)
                     print 99008, Fval(kopt), (Xbase(i) + Xopt(i), i=1, N&
      &)
                 end if
@@ -1006,7 +1007,7 @@
 !  Why update X only when FVAL(KOPT) .LE. FSAVE? This seems INCORRECT,
 !  because it may lead to a return with F and X that are not the best
 !  available.
-      1000 if (Fval(kopt) <= F .or. F /= F) then
+1000  if (Fval(kopt) <= F .or. F /= F) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 do i = 1, N
                     X(i) = DMIN1(DMAX1(Xl(i), Xbase(i) + Xopt(i)), Xu(i)&
@@ -1018,17 +1019,17 @@
             end if
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (IPRINT .GE. 1) THEN
-      1100 if (Iprint >= 1) then
+1100  if (Iprint >= 1) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 print 99005, nf
-      99005 format(/4X, 'At the return from BOBYQA', 5X, 'Number of func&
-     &tion values =', I6)
+99005 format(/4X, 'At the return from BOBYQA', 5X, 'Number of function v&
+     &alues =', I6)
                 print 99008, F, (X(i), i=1, N)
             end if
-      99006 format(/5X, 'Return from BOBYQA because of much', ' cancella&
-     &tion in a denominator.')
-      99007 format(/4X, 'Return from BOBYQA because CALFUN has been', ' &
-     &called MAXFUN times.')
-      99008 format(4X, 'Least value of F =', 1PD23.15, 9X, 'The correspo&
-     &nding X is:'/(2X, 5D15.6))
+99006 format(/5X, 'Return from BOBYQA because of much', ' cancellation i&
+     &n a denominator.')
+99007 format(/4X, 'Return from BOBYQA because CALFUN has been', ' called&
+     & MAXFUN times.')
+99008 format(4X, 'Least value of F =', 1PD23.15, 9X, 'The corresponding &
+     &X is:'/(2X, 5D15.6))
             end subroutine BOBYQB

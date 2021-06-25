@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -105,15 +105,15 @@
 !
             iflag = 1
             ic = Nact
-      100 if (Resact(ic) > tdel) goto 900
-      200 ic = ic - 1
+100   if (Resact(ic) > tdel) goto 900
+200   ic = ic - 1
             if (ic > 0) goto 100
 !
 !     Remove any constraints from the initial active set whose Lagrange
 !       multipliers are nonnegative, and set the surviving multipliers.
 !
             iflag = 2
-      300 if (Nact /= 0) then
+300   if (Nact /= 0) then
                 ic = Nact
                 do
                     temp = zero
@@ -140,7 +140,7 @@
 !       occurs for sufficiently large SNORM if the origin is in the convex
 !       hull of the constraint gradients.
 !
-      400 if (Nact == N) then
+400   if (Nact == N) then
                 dd = zero
                 goto 800
             else
@@ -257,7 +257,7 @@
 !
 !     Set the components of the vector VMU in W.
 !
-      500 W(Nact) = one / Rfac((Nact * Nact + Nact) / 2)**2
+500   W(Nact) = one / Rfac((Nact * Nact + Nact) / 2)**2
             if (Nact > 1) then
                 do i = Nact - 1, 1, -1
                     idiag = (i * i + i) / 2
@@ -302,11 +302,11 @@
             end do
 !!!! If NACT=0, then IC = 0, and hence IACT(IC) is undefined, which leads to memory error when
 !RESNEW(IACT(IC)) is accessed.
-      600 if (Vlam(ic) >= zero) then
+600   if (Vlam(ic) >= zero) then
                 Resnew(Iact(ic)) = DMAX1(Resact(ic), tiny)
                 goto 900
             end if
-      700 ic = ic - 1
+700   ic = ic - 1
             if (ic > 0) goto 600
 !
 !     Calculate the next VMU if VIOLMX is positive. Return if NACT=N holds,
@@ -316,7 +316,7 @@
             if (violmx > zero) goto 500
             if (Nact < N) goto 400
             dd = zero
-      800 W(1) = dd
+800   W(1) = dd
             return
 !
 !     These instructions rearrange the active constraints so that the new
@@ -324,7 +324,7 @@
 !       Givens rotations is applied to the current QFAC and RFAC. Then NACT
 !       is reduced by one.
 !
-      900 Resnew(Iact(ic)) = DMAX1(Resact(ic), tiny)
+900   Resnew(Iact(ic)) = DMAX1(Resact(ic), tiny)
             jc = ic
             do
                 if (jc < Nact) then

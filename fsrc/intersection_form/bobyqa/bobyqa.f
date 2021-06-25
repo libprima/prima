@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -116,8 +116,8 @@
             np = N + 1
             if (Npt < N + 2 .or. Npt > ((N + 2) * np) / 2) then
                 if (Iprint > 0) print 99001
-      99001 format(/4X, 'Return from BOBYQA because NPT is not in', ' th&
-     &e required interval')
+99001 format(/4X, 'Return from BOBYQA because NPT is not in', ' the requ&
+     &ired interval')
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
                 Info = 5
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -172,8 +172,8 @@
                 temp = Xu(j) - Xl(j)
                 if (temp < Rhobeg + Rhobeg) then
                     if (Iprint > 0) print 99002
-      99002 format(/4X, 'Return from BOBYQA because one of the', ' diffe&
-     &rences XU(I)-XL(I)'/6X, ' is less than 2*RHOBEG.')
+99002 format(/4X, 'Return from BOBYQA because one of the', ' differences&
+     & XU(I)-XL(I)'/6X, ' is less than 2*RHOBEG.')
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
                     Info = 6
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -215,4 +215,4 @@
      &), W(izmat), ndim, W(isl), W(isu), W(ixn), W(ixa), W(id), W(ivl) ,&
      & W(iw), F, Info, Ftarget)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      99999 end subroutine BOBYQA
+99999 end subroutine BOBYQA

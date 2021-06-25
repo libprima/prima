@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -228,7 +228,7 @@
 !     Reorder the provisional points in the way that exchanges PTSID(KOLD)
 !     with PTSID(KNEW).
 !
-      100 do j = 1, N
+100   do j = 1, N
                 temp = Bmat(kold, j)
                 Bmat(kold, j) = Bmat(knew, j)
                 Bmat(knew, j) = temp
@@ -357,8 +357,8 @@
                         call CALFUN(N, W, F)
                         if (Iprint == 3) then
                             print 99001, Nf, F, (W(i), i=1, N)
-      99001 format(/4X, 'Function number', I6, ' F =', 1PD18.10, ' The c&
-     &orresponding X is:'/(2X, 5D15.6))
+99001 format(/4X, 'Function number', I6, ' F =', 1PD18.10, ' The corresp&
+     &onding X is:'/(2X, 5D15.6))
                         end if
                         Fval(kpt) = F
                         if (F < Fval(Kopt)) Kopt = kpt
@@ -524,4 +524,4 @@
                     goto 100
                 end if
             end do
-      99999 end subroutine RESCUE
+99999 end subroutine RESCUE

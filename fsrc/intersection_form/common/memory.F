@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -122,7 +122,8 @@
 #if __USE_STORAGE_SIZE__ == 1
       y = int(storage_size(x) / 8, kind(y))
 #else
-      y = int(kind(x), kind(y)) ! Avoid complaint
+      y = int(kind(x), kind(y))
+      ! Avoid complaint
       y = int(4, kind(y))
 #endif
       end function size_of_sp
@@ -136,7 +137,8 @@
 #if __USE_STORAGE_SIZE__ == 1
       y = int(storage_size(x) / 8, kind(y))
 #else
-      y = int(kind(x), kind(y)) ! Avoid complaint
+      y = int(kind(x), kind(y))
+      ! Avoid complaint
       y = int(8, kind(y))
 #endif
       end function size_of_dp
@@ -152,7 +154,8 @@
 #if __USE_STORAGE_SIZE__ == 1
       y = int(storage_size(x) / 8, kind(y))
 #else
-      y = int(kind(x), kind(y)) ! Avoid complaint
+      y = int(kind(x), kind(y))
+      ! Avoid complaint
       y = int(8, kind(y))
 #endif
       end function size_of_qp

@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -331,7 +331,8 @@
           gamma2_c = TWO
       end if
 
-      maxhist_in = 0 ! MAXHIST input by user
+      maxhist_in = 0
+      ! MAXHIST input by user
       if (present(maxhist)) then
           maxhist_c = maxhist
           maxhist_in = maxhist

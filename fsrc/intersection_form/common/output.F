@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -49,7 +49,8 @@
       character(len=*), intent(in) :: solver
 
 ! Local variables
-      integer :: ios ! Should be an integer of default kind
+      integer :: ios
+      ! Should be an integer of default kind
       character(len=100) :: fout
       character(len=3) :: fstat
       character(len=MSSGLEN) :: mssg
@@ -97,7 +98,8 @@
           open (unit=OUTUNIT, file=trim(fout), status=fstat, position='a&
      &ppend', iostat=ios, action='write')
           if (ios /= 0) then
-              print '(1A)', 'Fail to open file '//trim(fout)//'!'
+              print '(1A)', 'Fail to open file '//trim(fout)//'
+              !'
           else
               if (iprint <= -3) then
                   write (OUTUNIT, '(1X)')
@@ -129,7 +131,8 @@
       character(len=*), intent(in) :: solver
 
 ! Local variables
-      integer :: ios ! Should be an integer of default kind
+      integer :: ios
+      ! Should be an integer of default kind
       character(len=100) :: fout
       character(len=3) :: fstat
       logical :: fexist
@@ -156,7 +159,8 @@
           open (unit=OUTUNIT, file=trim(fout), status=fstat, position='a&
      &ppend', iostat=ios, action='write')
           if (ios /= 0) then
-              print '(1A)', 'Fail to open file '//trim(fout)//'!'
+              print '(1A)', 'Fail to open file '//trim(fout)//'
+              !'
           else
               if (iprint <= -3) then
                   write (OUTUNIT, '(1X)')
@@ -184,7 +188,8 @@
       character(len=*), intent(in) :: solver
 
 ! Local variables
-      integer :: ios ! Should be an integer of default kind
+      integer :: ios
+      ! Should be an integer of default kind
       character(len=100) :: fout
       character(len=3) :: fstat
       logical :: fexist
@@ -207,7 +212,8 @@
           open (unit=OUTUNIT, file=trim(fout), status=fstat, position='a&
      &ppend', iostat=ios, action='write')
           if (ios /= 0) then
-              print '(1A)', 'Fail to open file '//trim(fout)//'!'
+              print '(1A)', 'Fail to open file '//trim(fout)//'
+              !'
           else
               write (OUTUNIT, '(/1A, I7, 4X, 1A, 1PD18.10, 4X, 1A, /(1P,&
      & 5D15.6))') 'Function number', nf, 'F = ', f, 'The corresponding X&

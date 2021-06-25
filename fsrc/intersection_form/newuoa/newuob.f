@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -94,7 +94,8 @@
       real(RP), intent(in) :: rhoend
 
 ! In-output
-      real(RP), intent(inout) :: x(:) ! SIZE(X) = N
+      real(RP), intent(inout) :: x(:)
+      ! SIZE(X) = N
 
 ! Outputs
       integer(IK), intent(out) :: info
@@ -172,15 +173,18 @@
           end if
       end if
 
-      maxtr = maxfun ! Maximal number of trust region iterations.
+      maxtr = maxfun
+      ! Maximal number of trust region iterations.
 
 ! Initialize FVAL, XBASE, and XPT.
       call initxf(calfun, iprint, x, rhobeg, ftarget, ij, kopt, nf, fhis&
      &t, fval, xbase, xhist, xpt, subinfo)
       xopt = xpt(:, kopt)
       fopt = fval(kopt)
-      x = xbase + xopt ! Set X.
-      f = fopt ! Set F.
+      x = xbase + xopt
+      ! Set X.
+      f = fopt
+      ! Set F.
 
 ! Check whether to return after initialization.
       terminate = (subinfo == FTARGET_ACHIEVED) .or. (subinfo == NAN_X) &
@@ -223,7 +227,8 @@
       moderrsave = HUGENUM
       dnormsave = HUGENUM
       itest = 0
-      trtol = 1.0E-2_RP ! Tolerance used in trsapp.
+      trtol = 1.0E-2_RP
+      ! Tolerance used in trsapp.
 
 ! Begin the iterative procedure.
 ! After solving a trust-region subproblem, NEWUOA uses 3 boolean variables to control the work flow.
@@ -251,11 +256,13 @@
 ! Reduce DELTA. After this, DELTA < DNORM may hold.
               delta = TENTH * delta
               if (delta <= 1.5_RP * rho) then
-                  delta = rho ! Set DELTA to RHO when it is close.
+                  delta = rho
+                  ! Set DELTA to RHO when it is close.
               end if
           end if
 
-          if (.not. shortd) then ! D is long enough.
+          if (.not. shortd) then
+          ! D is long enough.
 ! Shift XBASE if XOPT may be too far from XBASE.
 !if (inprod(d, d) <= 1.0e-3_RP*inprod(xopt, xopt)) then  ! Powell
               if (dnorm * dnorm <= 1.0E-3_RP * inprod(xopt, xopt)) then
@@ -273,7 +280,8 @@
               xnew = xopt + d
               x = xbase + xnew
               if (any(is_nan(x))) then
-                  f = sum(x) ! Set F to NaN. It is necessary.
+                  f = sum(x)
+                  ! Set F to NaN. It is necessary.
                   info = NAN_X
                   exit
               end if
@@ -353,7 +361,8 @@
      &mat, xpt(:, knew_tr), gq, hq, pq)
 
 ! Include the new interpolation point.
-                  xpt(:, knew_tr) = xnew ! Should be done after UPDATEQ.
+                  xpt(:, knew_tr) = xnew
+                  ! Should be done after UPDATEQ.
                   fval(knew_tr) = f
                   if (fval(knew_tr) < fval(kopt)) then
                       kopt = knew_tr
@@ -380,11 +389,13 @@
 ! after the last function evaluation.
 ! 5. Question: Since TRYQALT is invoked only when DELTA equals the current RHO, why not
 ! reset ITEST to 0 when RHO is reduced?
-              if (knew_tr > 0 .and. delta <= rho) then ! DELTA = RHO.
+              if (knew_tr > 0 .and. delta <= rho) then
+              ! DELTA = RHO.
                   call tryqalt(idz, fval - fopt, ratio, bmat(:, 1:npt), &
      &zmat, itest, gq, hq, pq)
               end if
-          end if ! End of if (.not. shortd)
+          end if
+          ! End of if (.not. shortd)
 
 ! Before next trust region iteration, we may improve the geometry of XPT or reduce rho
 ! according to IMPROVE_GEO and REDUCE_RHO. Now we decide these two indicators.
@@ -462,7 +473,8 @@
               xnew = xopt + d
               x = xbase + xnew
               if (any(is_nan(x))) then
-                  f = sum(x) ! Set F to NaN. It is necessary.
+                  f = sum(x)
+                  ! Set F to NaN. It is necessary.
                   info = NAN_X
                   exit
               end if
@@ -525,14 +537,16 @@
      &t, xpt(:, knew_geo), gq, hq, pq)
 
 ! Include the new interpolation point.
-              xpt(:, knew_geo) = xnew ! Should be done after UPDATEQ.
+              xpt(:, knew_geo) = xnew
+              ! Should be done after UPDATEQ.
               fval(knew_geo) = f
               if (fval(knew_geo) < fval(kopt)) then
                   kopt = knew_geo
               end if
 ! KOPT is NOT identical to MINLOC(FVAL). Indeed, if FVAL(KNEW_GEO) = FVAL(KOPT) and
 ! KNEW_GEO < KOPT, then MINLOC(FVAL) = KNEW_GEO /= KOPT. Do not change KOPT in this case.
-          end if ! The procedure of improving geometry ends.
+          end if
+          ! The procedure of improving geometry ends.
 
 ! If all the interpolation points are close to XOPT and the trust region is small, but the
 ! trust-region step is "bad" (SHORTD or RATIO <= 0), then we shrink RHO (update the criterion
@@ -576,9 +590,11 @@
      &solver)
                   end if
               end if
-          end if ! The procedure of reducing RHO ends.
+          end if
+          ! The procedure of reducing RHO ends.
 
-      end do ! The iterative procedure ends.
+      end do
+      ! The iterative procedure ends.
 
 ! Return from the calculation, after another Newton-Raphson step, if it is too short to have been
 ! tried before. Note that no trust region iteration has been done if MAXTR = 0, and hence we
@@ -586,7 +602,8 @@
       if (maxtr > 0 .and. shortd .and. nf < maxfun) then
           x = xbase + (xopt + d)
           if (any(is_nan(x))) then
-              f = sum(x) ! Set F to NaN. It is necessary.
+              f = sum(x)
+              ! Set F to NaN. It is necessary.
               info = NAN_X
           else
               call calfun(x, f)

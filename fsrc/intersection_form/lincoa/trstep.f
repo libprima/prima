@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -344,8 +344,8 @@
 ! values. Exit when NCALL is large or NaN detected.
                   IF ( ncall>MIN(10000,100*(M+1)*N) .OR. alpha/=alpha .O&
      &R. alpht/=alpht .OR. alphm/=alphm .OR. dgd/=dgd .OR. dg/=dg .OR. s&
-     &s/=ss .OR. snsq/=snsq .OR. reduct/=reduct ) GOTO 100 ! Note: M can&
-     & be 0.
+     &s/=ss .OR. snsq/=snsq .OR. reduct/=reduct ) GOTO 100
+                  ! Note: M can be 0.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                   IF ( alpha==alpht ) GOTO 100
                   temp = -alphm*(dg+half*alphm*dgd)
@@ -396,7 +396,7 @@
 !
 !     Return from the subroutine.
 !
-       100 Snorm = zero
+100    Snorm = zero
             IF ( reduct>zero ) Snorm = DSQRT(ss)
             G(1) = zero
             IF ( ncall>1 ) G(1) = one

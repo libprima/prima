@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -201,7 +201,7 @@
 !
 !     Calculate the pivots of the Cholesky factorization of (H+PAR*I).
 !
-       100 iterc = iterc + 1
+100    iterc = iterc + 1
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 26-06-2019
 ! The original code can encounter infinite cycling, which did happen
@@ -426,7 +426,7 @@
 !     Terminate with D set to a multiple of the current D if the following
 !     test suggests that it suitable to do so.
 !
-       200 temp = paruest
+200    temp = paruest
             IF ( gsq==zero ) temp = temp*(one-Tol)
             IF ( paruest>zero .AND. parlest>=temp ) THEN
                dtg = zero
@@ -442,7 +442,7 @@
 !
 !     Pick the value of PAR for the next iteration.
 !
-       300 IF ( paru==zero ) THEN
+300    IF ( paru==zero ) THEN
                par = two*parlest + gnorm/Delta
             ELSE
                par = 0.5D0*(parl+paru)
@@ -450,7 +450,7 @@
             ENDIF
             IF ( paruest>zero ) par = DMIN1(par,paruest)
             GOTO 100
-       400 shift = 0.5D0*(shfmin+shfmax)
+400    shift = 0.5D0*(shfmin+shfmax)
             k = 1
             temp = Td(1) - shift
             DO
@@ -488,7 +488,7 @@
 !
 !     Apply the inverse Householder transformations to D.
 !
-       500 nm = N - 1
+500    nm = N - 1
             DO k = nm , 1 , -1
                kp = k + 1
                sum = zero
@@ -502,4 +502,4 @@
 !
 !     Return from the subroutine.
 !
-      99999 END SUBROUTINE TRSTEP
+99999 END SUBROUTINE TRSTEP

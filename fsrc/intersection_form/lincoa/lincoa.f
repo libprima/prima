@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -146,8 +146,8 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             IF ( Npt<N+2 .OR. Npt>((N+2)*np)/2 ) THEN
                IF ( Iprint>0 ) PRINT 99001
-      99001 FORMAT (/4X,'Return from LINCOA because NPT is not in', ' th&
-     &e required interval.')
+99001 FORMAT (/4X,'Return from LINCOA because NPT is not in', ' the requ&
+     &ired interval.')
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
                Info = 5
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -155,8 +155,8 @@
             ENDIF
             IF ( Maxfun<=Npt ) THEN
                IF ( Iprint>0 ) PRINT 99002
-      99002 FORMAT (/4X,'Return from LINCOA because MAXFUN is less', ' t&
-     &han NPT+1.')
+99002 FORMAT (/4X,'Return from LINCOA because MAXFUN is less', ' than NP&
+     &T+1.')
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
                Info = 11
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -181,8 +181,8 @@
                   ENDDO
                   IF ( temp==zero ) THEN
                      IF ( Iprint>0 ) PRINT 99003
-      99003 FORMAT (/4X,'Return from LINCOA because the gradient', ' of &
-     &a constraint is zero.')
+99003 FORMAT (/4X,'Return from LINCOA because the gradient', ' of a cons&
+     &traint is zero.')
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
                      Info = 12
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -199,8 +199,8 @@
             ENDIF
             IF ( iflag==1 ) THEN
                IF ( Iprint>0 ) PRINT 99004
-      99004 FORMAT (/4X,'LINCOA has made the initial X feasible by', ' i&
-     &ncreasing part(s) of B.')
+99004 FORMAT (/4X,'LINCOA has made the initial X feasible by', ' increas&
+     &ing part(s) of B.')
             ENDIF
 !
 !     Partition the working space array, so that different parts of it can be
@@ -244,4 +244,4 @@
      &bmat),W(izmat),ndim,W(istp),W(isp),W(ixn), W(iac),W(irc),W(iqf),W(&
      &irf),W(ipqw),W,F,Info,Ftarget)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      99999 END SUBROUTINE LINCOA
+99999 END SUBROUTINE LINCOA

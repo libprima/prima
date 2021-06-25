@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -120,16 +120,16 @@
 !     value is needed to form the initial quadratic model. The least function
 !     value so far and its index are noted below.
 !
-       100 DO i = 1 , N
+100    DO i = 1 , N
                X(i) = Xbase(i) + Xpt(nf+1,i)
             ENDDO
             GOTO 500
-       200 tworsq = (two*rho)**2
+200    tworsq = (two*rho)**2
             rhosq = rho*rho
 !
 !     Form the gradient of the quadratic model at the trust region centre.
 !
-       300 knew = 0
+300    knew = 0
             ih = N
             DO j = 1 , N
                Xopt(j) = Xpt(kopt,j)
@@ -182,14 +182,14 @@
 !
 !     Calculate the next value of the objective function.
 !
-       400 DO i = 1 , N
+400    DO i = 1 , N
                Xnew(i) = Xopt(i) + D(i)
                X(i) = Xbase(i) + Xnew(i)
             ENDDO
-       500 IF ( nf>=nftest ) THEN
+500    IF ( nf>=nftest ) THEN
                IF ( Iprint>0 ) PRINT 99001
-      99001 FORMAT (/4X,'Return from UOBYQA because CALFUN has been', ' &
-     &called MAXFUN times')
+99001 FORMAT (/4X,'Return from UOBYQA because CALFUN has been', ' called&
+     & MAXFUN times')
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
                Info = 3
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -200,7 +200,8 @@
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
             DO i = 1 , N
                IF ( X(i)/=X(i) ) THEN
-                  F = X(i) ! Set F to NaN
+                  F = X(i)
+                  ! Set F to NaN
                   IF ( nf==1 ) THEN
                      fopt = F
                      DO j = 1 , N
@@ -241,8 +242,8 @@
 
             IF ( Iprint==3 ) THEN
                PRINT 99002 , nf , F , (X(i),i=1,N)
-      99002 FORMAT (/4X,'Function number',I6,' F =',1PD18.10, ' The corr&
-     &esponding X is:'/(2X,5D15.6))
+99002 FORMAT (/4X,'Function number',I6,' F =',1PD18.10, ' The correspond&
+     &ing X is:'/(2X,5D15.6))
             ENDIF
             IF ( nf<=Npt ) THEN
                IF ( nf==1 ) THEN
@@ -422,8 +423,8 @@
                   IF ( vquad>=zero ) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                      IF ( Iprint>0 ) PRINT 99003
-      99003 FORMAT (/4X,'Return from UOBYQA because a trust', ' region s&
-     &tep has failed to reduce Q')
+99003 FORMAT (/4X,'Return from UOBYQA because a trust', ' region step ha&
+     &s failed to reduce Q')
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
                      Info = 2
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -499,7 +500,7 @@
 !     Alternatively, find out if the interpolation points are close
 !     enough to the best point so far.
 !
-       600 DO k = 1 , Npt
+600    DO k = 1 , Npt
                W(k) = zero
                DO i = 1 , N
                   W(k) = W(k) + (Xpt(k,i)-Xopt(i))**2
@@ -621,10 +622,10 @@
                   delta = DMAX1(delta,rho)
                   IF ( Iprint>=2 ) THEN
                      IF ( Iprint>=3 ) PRINT 99004
-      99004 FORMAT (5X)
+99004 FORMAT (5X)
                      PRINT 99005 , rho , nf
-      99005 FORMAT (/4X,'New RHO =',1PD11.4,5X,'Number of', ' function v&
-     &alues =',I6)
+99005 FORMAT (/4X,'New RHO =',1PD11.4,5X,'Number of', ' function values &
+     &=',I6)
                      PRINT 99007 , fopt , (Xbase(i),i=1,N)
                   ENDIF
                   GOTO 200
@@ -641,7 +642,7 @@
             ENDDO
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !  420 IF (FOPT .LE. F) THEN
-       700 IF ( fopt<=F .OR. F/=F ) THEN
+700    IF ( fopt<=F .OR. F/=F ) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                DO i = 1 , N
                   X(i) = Xbase(i) + Xopt(i)
@@ -650,13 +651,13 @@
             ENDIF
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (IPRINT .GE. 1) THEN
-       800 IF ( Iprint>=1 ) THEN
+800    IF ( Iprint>=1 ) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                PRINT 99006 , nf
-      99006 FORMAT (/4X,'At the return from UOBYQA',5X, 'Number of funct&
-     &ion values =',I6)
+99006 FORMAT (/4X,'At the return from UOBYQA',5X, 'Number of function va&
+     &lues =',I6)
                PRINT 99007 , F , (X(i),i=1,N)
             ENDIF
-      99007 FORMAT (4X,'Least value of F =',1PD23.15,9X, 'The correspond&
-     &ing X is:'/(2X,5D15.6))
+99007 FORMAT (4X,'Least value of F =',1PD23.15,9X, 'The corresponding X &
+     &is:'/(2X,5D15.6))
             END SUBROUTINE UOBYQB

@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -51,7 +51,8 @@
 
 ! Fortran code starts
 
-      module fcobyla ! Some global variables
+      module fcobyla
+      ! Some global variables
 
       use consts_mod, only : DP, rp, zero
       use infnan_mod
@@ -62,7 +63,8 @@
       integer(INT32), parameter :: notComplex = 0
 ! notComplex is used in mxCreateDoubleMatrix, whose signature is
 ! mwPointer mxCreateDoubleMatrix(mwSize m, mwSize n, integer*4 ComplexFlag)
-      mwSize, parameter :: mwOne = 1 ! Integer 1 with type mwSize
+      mwSize, parameter :: mwOne = 1
+      ! Integer 1 with type mwSize
 ! mwOne is used in mxCreateDoubleMatrix and mxCopyPtrToReal8,
 ! whose signatures are
 ! mwPointer mxCreateDoubleMatrix(mwSize m, mwSize n, integer*4 ComplexFlag)
@@ -71,7 +73,8 @@
 ! Some global variables
       mwPointer, save :: fun_ptr, con_ptr
 ! Objective function and constraints (pointers)
-      mwSize, save :: nf ! Number of function evaluations
+      mwSize, save :: nf
+      ! Number of function evaluations
 ! nf should be of type mwSize, because it will be later used as an
 ! argument of mxCreateDoubleMatrix
       real(rp), allocatable, save :: fhist(:)
@@ -226,7 +229,8 @@
 ! Read the inputs (there are 9)
       fun_ptr = prhs(1)
       con_ptr = prhs(2)
-      n = mxGetM(prhs(3)) ! This is why n should be of type mwSize
+      n = mxGetM(prhs(3))
+      ! This is why n should be of type mwSize
       n_int = int(n, kind(n_int))
 ! n_int is used when a variable of type INTEGER is needed
       if (n /= n_int) then
@@ -271,7 +275,8 @@
 ! an INTEGER (not necessary the same as mwSize)
       call mxCopyPtrToReal8(_MGETDB(prhs(8)), ftarget, mwOne)
 
-      if (m /= mxGetM(prhs(9))) then ! m is number of constraints
+      if (m /= mxGetM(prhs(9))) then
+      ! m is number of constraints
           call mexErrMsgIdAndTxt('fcobyla:WrongInput', 'fcobyla: Length &
      &of input 9 should be m (input 7).')
       end if
@@ -393,15 +398,19 @@
       integer :: k
 ! k is the index for the constraints; since m is of type INTEGER,
 ! k is of the same type; see the (unique) do lopp below
-      mwPointer :: plhs(1), prhs(2) ! used in mexCallMATLAB
+      mwPointer :: plhs(1), prhs(2)
+      ! used in mexCallMATLAB
       integer(INT32), parameter :: intOne = 1, intTwo = 2
       character(5), parameter :: funFeval = 'feval'
 ! intOne, intTwo, and funFeval are used when calling mexCallMATLAB
-      real(rp) :: resmax ! constraint violation
+      real(rp) :: resmax
+      ! constraint violation
 
 ! Start the real business
-      n_mw = int(n, kind(n_mw)) ! cast n to type mwSize
-      m_mw = int(m, kind(m_mw)) ! cast m to type mwSize
+      n_mw = int(n, kind(n_mw))
+      ! cast n to type mwSize
+      m_mw = int(m, kind(m_mw))
+      ! cast m to type mwSize
       if (n /= n_mw) then
           call mexErrMsgIdAndTxt('fcobyla:IntError', 'fcobyla: n does no&
      &t equal n_mw.')
@@ -467,11 +476,13 @@
           end if
       end if
 ! Calculate the constraint violation (named 'RESMAX' in Powell's COBYLA code)
-      resmax = zero ! zero is defined in module 'consts'.
+      resmax = zero
+      ! zero is defined in module 'consts'.
 ! Constraint: con(x) >= 0
       do k = 1, m
           if (is_nan(conval(k))) then
-              resmax = conval(k) ! Set resmax=NaN if conval contains NaN
+              resmax = conval(k)
+              ! Set resmax=NaN if conval contains NaN
               exit
           else
               resmax = max(resmax, -conval(k))
@@ -480,7 +491,8 @@
 !
 ! Free memory; note that plhs and prhs are just temporary variables in
 ! this subroutine. We are NOT in mexFunction!
-      if (nf > 0) call mxDestroyArray(plhs(1)) ! Only if nf >= 1
+      if (nf > 0) call mxDestroyArray(plhs(1))
+      ! Only if nf >= 1
       call mxDestroyArray(prhs(2))
 
 ! Update global variables

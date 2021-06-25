@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -68,7 +68,8 @@
       mwPointer, intent(out) :: poutput(nargout)
 
 ! Variables
-      mwSize :: cols ! Size of the input
+      mwSize :: cols
+      ! Size of the input
 ! The largest length of the input string.
       integer, parameter :: maxlen = 50
 ! The input string, which specifies the data type

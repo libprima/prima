@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -38,8 +38,8 @@
                 end do
                 rhobeg = 0.2D0 * x(1)
                 print 99001, n
-      99001 format(//5X, '******************'/5X, 'Results with N =', I2&
-     &, /5X, '******************')
+99001 format(//5X, '******************'/5X, 'Results with N =', I2, /5X,&
+     & '******************')
                 call UOBYQA(n, x, rhobeg, rhoend, iprint, maxfun, w, f, &
      &info, ftarget)
             end do

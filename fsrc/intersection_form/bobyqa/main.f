@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -58,8 +58,8 @@
               npt = n + 6
               if (jcase == 2) npt = 2 * n + 1
               print 99001, m, n, npt
-      99001 format(//5X, '2D output with M =', I4, ', N =', I4, ' and NP&
-     &T =', I4)
+99001 format(//5X, '2D output with M =', I4, ', N =', I4, ' and NPT =', &
+     &I4)
               do j = 1, m
                   temp = DFLOAT(j) * twopi / DFLOAT(m)
                   x(2 * j - 1) = DCOS(temp)

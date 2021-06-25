@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -30,13 +30,15 @@
 
       integer(IK), intent(IN) :: N
       integer(IK), intent(IN) :: M
-      real(RP), intent(IN) :: A(:, :) !(N, :)
+      real(RP), intent(IN) :: A(:, :)
+      !(N, :)
       real(RP), intent(IN) :: B(:)
       real(RP), intent(IN) :: Rho
       real(RP), intent(INOUT) :: Dx(:)
       integer(IK), intent(OUT) :: Ifull
       integer(IK), intent(INOUT) :: Iact(:)
-      real(RP), intent(INOUT) :: Z(:, :) ! (N, :)
+      real(RP), intent(INOUT) :: Z(:, :)
+      ! (N, :)
       real(RP), intent(INOUT) :: Zdota(:)
       real(RP), intent(INOUT) :: Vmultc(:)
       real(RP), intent(INOUT) :: Sdirn(:)
@@ -70,7 +72,8 @@
       real(RP) :: zdotw
       real(RP) :: zdvabs
       real(RP) :: zdwabs
-      real(RP) :: dsav(size(dx)) ! N
+      real(RP) :: dsav(size(dx))
+      ! N
       integer(IK) :: i
       integer(IK) :: icon
       integer(IK) :: icount
@@ -186,10 +189,10 @@
 !
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !   60 OPTOLD=0.0
-      100 optold = 0.0D0
+100   optold = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       icount = 0
-      200 if (mcon == M) then
+200   if (mcon == M) then
           optnew = resmax
       else
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -516,7 +519,7 @@
 !     Update IACT and ensure that the objective function continues to be
 !     treated as the last active constraint when MCON>M.
 !
-      300 Iact(icon) = Iact(nact)
+300   Iact(icon) = Iact(nact)
       Iact(nact) = kk
       if (mcon > M .and. kk /= mcon) then
           k = nact - 1
@@ -574,7 +577,7 @@
 !
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !  320 TEMP=1.0/ZDOTA(NACT)
-      400 temp = 1.0D0 / Zdota(nact)
+400   temp = 1.0D0 / Zdota(nact)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       do i = 1, N
           Sdirn(i) = temp * Z(i, nact)
@@ -586,7 +589,7 @@
 !     calculation. Further, we skip the step if it could be zero within a
 !     reasonable tolerance for computer rounding errors.
 !
-      500 dd = Rho * Rho
+500   dd = Rho * Rho
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      SD=0.0
 !      SS=0.0
@@ -770,7 +773,7 @@
           if (step /= stpful) exit
           goto 99999
       end do
-      600 mcon = M + 1
+600   mcon = M + 1
       icon = mcon
       Iact(mcon) = mcon
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -782,6 +785,6 @@
 !     We employ any freedom that may be available to reduce the objective
 !     function before returning a DX whose length is less than RHO.
 !
-      700 if (mcon == M) goto 600
+700   if (mcon == M) goto 600
       Ifull = 0
-      99999 end subroutine TRSTLP
+99999 end subroutine TRSTLP

@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -32,7 +32,8 @@
       private
       public :: fun_ptr, calfun
 
-      mwPointer :: fun_ptr ! Pointer to objective function
+      mwPointer :: fun_ptr
+      ! Pointer to objective function
 
 
       contains

@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -49,14 +49,19 @@
 ! Inputs
       integer(IK), intent(in) :: idz
       integer(IK), intent(in) :: kopt
-      real(RP), intent(in) :: bmat(:, :) ! BMAT(N, NPT + N)
-      real(RP), intent(in) :: d(:) ! D(N)
-      real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
-      real(RP), intent(in) :: zmat(:, :) ! ZMAT(NPT, NPT - N - 1)
+      real(RP), intent(in) :: bmat(:, :)
+      ! BMAT(N, NPT + N)
+      real(RP), intent(in) :: d(:)
+      ! D(N)
+      real(RP), intent(in) :: xpt(:, :)
+      ! XPT(N, NPT)
+      real(RP), intent(in) :: zmat(:, :)
+      ! ZMAT(NPT, NPT - N - 1)
 
 ! Outputs
       real(RP), intent(out) :: beta
-      real(RP), intent(out) :: vlag(:) ! VLAG(NPT + N)
+      real(RP), intent(out) :: vlag(:)
+      ! VLAG(NPT + N)
 
 ! Local variables
       integer(IK) :: n
@@ -87,7 +92,8 @@
           call verisize(vlag, n + npt)
       end if
 
-      xopt = xpt(:, kopt) ! Read XOPT.
+      xopt = xpt(:, kopt)
+      ! Read XOPT.
 
 !----------------------------------------------------------------------!
 ! This is the one of the two places where WCHECK is calculated,

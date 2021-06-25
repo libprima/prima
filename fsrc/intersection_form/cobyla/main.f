@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -39,7 +39,7 @@
 !     Minimization of a simple quadratic function of two variables.
 !
               print 99001
-      99001 format(/7X, 'Output from test problem 1 (Simple quadratic)')
+99001 format(/7X, 'Output from test problem 1 (Simple quadratic)')
               n = 2
               m = 0
               xopt(1) = -1.0
@@ -49,8 +49,8 @@
 !     Easy two dimensional minimization in unit circle.
 !
               print 99002
-      99002 format(/7X, 'Output from test problem 2 (2D unit circle ', '&
-     &calculation)')
+99002 format(/7X, 'Output from test problem 2 (2D unit circle ', 'calcul&
+     &ation)')
               n = 2
               m = 1
               xopt(1) = sqrt(0.5)
@@ -60,8 +60,8 @@
 !     Easy three dimensional minimization in ellipsoid.
 !
               print 99003
-      99003 format(/7X, 'Output from test problem 3 (3D ellipsoid ', 'ca&
-     &lculation)')
+99003 format(/7X, 'Output from test problem 3 (3D ellipsoid ', 'calculat&
+     &ion)')
               n = 3
               m = 1
               xopt(1) = 1.0 / sqrt(3.0)
@@ -72,7 +72,7 @@
 !     Weak version of Rosenbrock's problem.
 !
               print 99004
-      99004 format(/7X, 'Output from test problem 4 (Weak Rosenbrock)')
+99004 format(/7X, 'Output from test problem 4 (Weak Rosenbrock)')
               n = 2
               m = 0
               xopt(1) = -1.0
@@ -82,8 +82,8 @@
 !     Intermediate version of Rosenbrock's problem.
 !
               print 99005
-      99005 format(/7X, 'Output from test problem 5 (Intermediate ', 'Ro&
-     &senbrock)')
+99005 format(/7X, 'Output from test problem 5 (Intermediate ', 'Rosenbro&
+     &ck)')
               n = 2
               m = 0
               xopt(1) = -1.0
@@ -94,8 +94,8 @@
 !     Optimization and has the equation number (9.1.15).
 !
               print 99006
-      99006 format(/7X, 'Output from test problem 6 (Equation ', '(9.1.1&
-     &5) in Fletcher)')
+99006 format(/7X, 'Output from test problem 6 (Equation ', '(9.1.15) in &
+     &Fletcher)')
               n = 2
               m = 2
               xopt(1) = sqrt(0.5)
@@ -106,8 +106,8 @@
 !     Optimization and has the equation number (14.4.2).
 !
               print 99007
-      99007 format(/7X, 'Output from test problem 7 (Equation ', '(14.4.&
-     &2) in Fletcher)')
+99007 format(/7X, 'Output from test problem 7 (Equation ', '(14.4.2) in &
+     &Fletcher)')
               n = 3
               m = 3
               xopt(1) = 0.0
@@ -120,7 +120,7 @@
 !     43, and has the name Rosen-Suzuki.
 !
               print 99008
-      99008 format(/7X, 'Output from test problem 8 (Rosen-Suzuki)')
+99008 format(/7X, 'Output from test problem 8 (Rosen-Suzuki)')
               n = 4
               m = 3
               xopt(1) = 0.0
@@ -134,8 +134,8 @@
 !     test problem Number 100.
 !
               print 99009
-      99009 format(/7X, 'Output from test problem 9 (Hock and ', 'Schitt&
-     &kowski 100)')
+99009 format(/7X, 'Output from test problem 9 (Hock and ', 'Schittkowski&
+     & 100)')
               n = 7
               m = 4
               xopt(1) = 2.330499
@@ -152,7 +152,7 @@
 !     unit diameter.
 !
               print 99010
-      99010 format(/7X, 'Output from test problem 10 (Hexagon area)')
+99010 format(/7X, 'Output from test problem 10 (Hexagon area)')
               n = 9
               m = 14
           end if
@@ -185,10 +185,10 @@
                   temp = temp + (x(i) - xopt(i))**2
               end do
               print 99011, sqrt(temp)
-      99011 format(/5X, 'Least squares error in variables =', 1PE16.6)
+99011 format(/5X, 'Least squares error in variables =', 1PE16.6)
           end do
           print 99012
-      99012 format(2X, '----------------------------------------------',&
-     & '--------------------')
+99012 format(2X, '----------------------------------------------', '----&
+     &----------------')
       end do
       end program AA0001

@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -176,14 +176,14 @@
       ifeas = 0
       nact = 0
       itest = 3
-      100 knew = 0
+100   knew = 0
       nvala = 0
       nvalb = 0
 !
 !     Shift XBASE if XOPT may be too far from XBASE. First make the changes
 !       to BMAT that do not depend on ZMAT.
 !
-      200 fsave = fopt
+200   fsave = fopt
       xoptsq = zero
       do i = 1, N
           xoptsq = xoptsq + Xopt(i)**2
@@ -494,12 +494,12 @@
 !       between the actual new value of F and the value predicted by the
 !       model is recorded in DIFF.
 !
-      300 nf = nf + 1
+300   nf = nf + 1
       if (nf > Maxfun) then
           nf = nf - 1
           if (Iprint > 0) print 99001
-      99001 format(/4X, 'Return from LINCOA because CALFUN has been', ' &
-     &called MAXFUN times.')
+99001 format(/4X, 'Return from LINCOA because CALFUN has been', ' called&
+     & MAXFUN times.')
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
           Info = 3
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -519,8 +519,8 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           ifeas = 0
           if (Iprint > 0) print 99002
-      99002 format(/4X, 'Return from LINCOA because rounding errors', ' &
-     &prevent reasonable changes to X.')
+99002 format(/4X, 'Return from LINCOA because rounding errors', ' preven&
+     &t reasonable changes to X.')
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
           Info = 8
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -531,7 +531,8 @@
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       do i = 1, N
           if (X(i) /= X(i)) then
-              F = X(i) ! Set F to NaN
+              F = X(i)
+              ! Set F to NaN
               if (nf == 1) then
                   fopt = F
                   Xopt(1:N) = zero
@@ -555,8 +556,8 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       if (Iprint == 3) then
           print 99003, nf, F, (X(i), i=1, N)
-      99003 format(/4X, 'Function number', I6, ' F =', 1PD18.10, ' The c&
-     &orresponding X is:'/(2X, 5D15.6))
+99003 format(/4X, 'Function number', I6, ' F =', 1PD18.10, ' The corresp&
+     &onding X is:'/(2X, 5D15.6))
       end if
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (KSAVE .EQ. -1) GOTO 600
@@ -626,8 +627,8 @@
      &ew, Pqw, W)
       if (knew == 0) then
           if (Iprint > 0) print 99004
-      99004 format(/4X, 'Return from LINCOA because the denominator'' of&
-     & the updating form ula is zero.')
+99004 format(/4X, 'Return from LINCOA because the denominator'' of the u&
+     &pdating form ula is zero.')
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
           Info = 9
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -830,7 +831,7 @@
 !     Alternatively, find out if the interpolation points are close enough
 !       to the best point so far.
 !
-      400 distsq = DMAX1(delta * delta, 4.0D0 * rho * rho)
+400   distsq = DMAX1(delta * delta, 4.0D0 * rho * rho)
       do k = 1, Npt
           sum = zero
           do j = 1, N
@@ -860,7 +861,7 @@
 ! Zaikun 15-08-2019
 ! See the comments below line number 210
 !  560 IF (RHO .GT. RHOEND) THEN
-      500 imprv = 0
+500   imprv = 0
       if (rho > Rhoend) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           delta = half * rho
@@ -874,10 +875,10 @@
           delta = DMAX1(delta, rho)
           if (Iprint >= 2) then
               if (Iprint >= 3) print 99005
-      99005 format(5X)
+99005 format(5X)
               print 99006, rho, nf
-      99006 format(/4X, 'New RHO =', 1PD11.4, 5X, 'Number of', ' functio&
-     &n values =', I6)
+99006 format(/4X, 'New RHO =', 1PD11.4, 5X, 'Number of', ' function valu&
+     &es =', I6)
               print 99008, fopt, (Xbase(i) + Xopt(i), i=1, N)
           end if
           goto 100
@@ -892,7 +893,7 @@
       if (ksave == -1) goto 300
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !  600 IF (FOPT .LE. F .OR. IFEAS .EQ. 0) THEN
-      600 if (fopt <= F .or. ifeas == 0 .or. F /= F) then
+600   if (fopt <= F .or. ifeas == 0 .or. F /= F) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           do i = 1, N
               X(i) = Xsav(i)
@@ -901,15 +902,15 @@
       end if
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (IPRINT .GE. 1) THEN
-      700 if (Iprint >= 1) then
+700   if (Iprint >= 1) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           print 99007, nf
-      99007 format(/4X, 'At the return from LINCOA', 5X, 'Number of func&
-     &tion values =', I6)
+99007 format(/4X, 'At the return from LINCOA', 5X, 'Number of function v&
+     &alues =', I6)
           print 99008, F, (X(i), i=1, N)
       end if
       W(1) = F
       W(2) = DFLOAT(nf) + half
-      99008 format(4X, 'Least value of F =', 1PD23.15, 9X, 'The correspo&
-     &nding X is:'/(2X, 5D15.6))
+99008 format(4X, 'Least value of F =', 1PD23.15, 9X, 'The corresponding &
+     &X is:'/(2X, 5D15.6))
       end subroutine LINCOB

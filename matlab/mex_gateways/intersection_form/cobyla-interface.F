@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 23-Jun-2021.
+! on 25-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -51,7 +51,8 @@
 
 ! Fortran code starts
 
-      module fcobyla ! Some global variables
+      module fcobyla
+      ! Some global variables
 
       use consts_mod, only : DP, rp, hugecon, hugefun, zero
       use infnan_mod
@@ -65,7 +66,8 @@
       integer(int32), parameter :: notComplex = 0
 ! notComplex is used in mxCreateDoubleMatrix, whose signature is
 ! mwPointer mxCreateDoubleMatrix(mwSize m, mwSize n, integer*4 ComplexFlag)
-      mwSize, parameter :: mwOne = 1 ! Integer 1 with type mwSize
+      mwSize, parameter :: mwOne = 1
+      ! Integer 1 with type mwSize
 ! mwOne is used in mxCreateDoubleMatrix and mxCopyPtrToReal8,
 ! whose signatures are
 ! mwPointer mxCreateDoubleMatrix(mwSize m, mwSize n, integer*4 ComplexFlag)
@@ -74,7 +76,8 @@
 ! Some global variables
       mwPointer, save :: fun_ptr, con_ptr
 ! Objective function and constraints (pointers)
-      mwSize, save :: nf ! Number of function evaluations
+      mwSize, save :: nf
+      ! Number of function evaluations
 ! nf should be of type mwSize, because it will be later used as an
 ! argument of mxCreateDoubleMatrix
       real(rp), allocatable, save :: fhist(:)
@@ -229,7 +232,8 @@
 ! Read the inputs (there are 9)
       fun_ptr = prhs(1)
       con_ptr = prhs(2)
-      n = mxGetM(prhs(3)) ! This is why n should be of type mwSize
+      n = mxGetM(prhs(3))
+      ! This is why n should be of type mwSize
       n_int = int(n, kind(n_int))
 ! n_int is used when a variable of type INTEGER is needed
       if (n .ne. n_int) then
@@ -401,15 +405,19 @@
       integer :: k
 ! k is the index for the constraints; since m is of type INTEGER,
 ! k is of the same type; see the (unique) do lopp below
-      mwPointer :: plhs(1), prhs(2) ! used in mexCallMATLAB
+      mwPointer :: plhs(1), prhs(2)
+      ! used in mexCallMATLAB
       integer(int32), parameter :: intOne=1, intTwo=2
       character(5), parameter :: funFeval = 'feval'
 ! intOne, intTwo, and funFeval are used when calling mexCallMATLAB
-      real(rp) :: resmax ! constraint violation
+      real(rp) :: resmax
+      ! constraint violation
 
 ! Start the real business
-      n_mw = int(n, kind(n_mw)) ! cast n to type mwSize
-      m_mw = int(m, kind(m_mw)) ! cast m to type mwSize
+      n_mw = int(n, kind(n_mw))
+      ! cast n to type mwSize
+      m_mw = int(m, kind(m_mw))
+      ! cast m to type mwSize
       if (n .ne. n_mw) then
           call mexErrMsgIdAndTxt('fcobyla:IntError', 'fcobyla: n does no&
      &t equal n_mw.')
@@ -452,7 +460,8 @@
 
 ! Use extreme barrier to cope with 'hidden constraints'
       if (funval .gt. hugefun .or. is_nan(funval)) then
-          funval = hugefun ! hugefun is defined in consts
+          funval = hugefun
+          ! hugefun is defined in consts
       end if
 
 ! Free memory; note that plhs and prhs are just temporary variables in
@@ -493,7 +502,8 @@
 ! subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
       end if
 ! Calculate the constraint violation (named 'RESMAX' in Powell's COBYLA code)
-      resmax = zero ! zero is defined in module 'consts'.
+      resmax = zero
+      ! zero is defined in module 'consts'.
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Code without extreme barrier:
 ! Constraint: con(x) >= 0
@@ -510,14 +520,16 @@
 ! Constraint: con(x) >= 0
       do k = 1, m
           if (conval(k) .lt. -hugecon .or. is_nan(conval(k))) then
-              conval(k) = -hugecon ! hugecon is defined in consts
+              conval(k) = -hugecon
+              ! hugecon is defined in consts
           end if
 
 ! This part is NOT extreme barrier. We replace extremely negative values
 ! of cineq (which leads to no constraint violation) by -hugecon. Otherwise,
 ! NaN or Inf may occur in the interpolation models.
           if (conval(k) .gt. hugecon) then
-              conval(k) = hugecon ! hugecon is defined in consts
+              conval(k) = hugecon
+              ! hugecon is defined in consts
           end if
 
           resmax = max(resmax, -conval(k))
@@ -525,7 +537,8 @@
 !
 ! Free memory; note that plhs and prhs are just temporary variables in
 ! this subroutine. We are NOT in mexFunction!
-      if (nf .gt. 0) call mxDestroyArray(plhs(1)) ! Only if nf >= 1
+      if (nf .gt. 0) call mxDestroyArray(plhs(1))
+      ! Only if nf >= 1
       call mxDestroyArray(prhs(2))
 
 ! Update global variables
