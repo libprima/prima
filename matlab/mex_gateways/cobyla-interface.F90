@@ -49,142 +49,21 @@ call fmxVerifyNArgin(nargin, 9)
 call fmxVerifyNArgout(nargout, 8)
 
 ! Read inputs (there are 14)
-fun_ptr = pinput(1)  ! FUN_PTR is a pointer to the function handle
-call fmxReadMPtr(pinput(2), x)
-call fmxReadMPtr(pinput(3), rhobeg)
-call fmxReadMPtr(pinput(4), rhoend)
-call fmxReadMPtr(pinput(5), eta1)
-call fmxReadMPtr(pinput(6), eta2)
-call fmxReadMPtr(pinput(7), gamma1)
-call fmxReadMPtr(pinput(8), gamma2)
-call fmxReadMPtr(pinput(9), ftarget)
-call fmxReadMPtr(pinput(10), maxfun)
-call fmxReadMPtr(pinput(11), npt)
-call fmxReadMPtr(pinput(12), iprint)
-call fmxReadMPtr(pinput(13), maxhist)
-call fmxReadMPtr(pinput(14), output_xhist)
-
-! Validate inputs
-! Input 1: fun (function handle)
-if (mxIsClass(pinput(1), 'function_handle') /= 1) then
-    call mexErrMsgIdAndTxt('fcobyla:WrongInput', 'fcobyla: Input 1 should be a function handle.')
-end if
-! Input 2: con (function handle)
-if (mxIsClass(pinput(2), 'function_handle') /= 1) then
-    call mexErrMsgIdAndTxt('fcobyla:WrongInput', 'fcobyla: Input 2 should be a function handle.')
-end if
-! Input 3: x0 (double column)
-if (mxIsDouble(pinput(3)) /= 1 .or. mxGetM(pinput(3)) < 1 .or. mxGetN(pinput(3)) /= 1) then
-    call mexErrMsgIdAndTxt('fcobyla:WrongInput', 'fcobyla: Input 3 should be a column vector of doubles.')
-end if
-! Input 4: rhobeg (double scalar)
-if (mxIsDouble(pinput(4)) /= 1 .or. mxGetM(pinput(4)) /= 1 .or. mxGetN(pinput(4)) /= 1) then
-    call mexErrMsgIdAndTxt('fcobyla:WrongInput', 'fcobyla: Input 4 should be a double.')
-end if
-! Input 5: rhobend (double scalar)
-if (mxIsDouble(pinput(5)) /= 1 .or. mxGetM(pinput(5)) /= 1 .or. mxGetN(pinput(5)) /= 1) then
-    call mexErrMsgIdAndTxt('fcobyla:WrongInput', 'fcobyla: Input 5 should be a double.')
-end if
-! Input 6: maxfun (double scalar)
-if (mxIsDouble(pinput(6)) /= 1 .or. mxGetM(pinput(6)) /= 1 .or. mxGetN(pinput(6)) /= 1) then
-    call mexErrMsgIdAndTxt('fcobyla:WrongInput', 'fcobyla: Input 6 should be a double (with an integer value).')
-end if
-! Input 7: m (double scalar)
-if (mxIsDouble(pinput(7)) /= 1 .or. mxGetM(pinput(7)) /= 1 .or. mxGetN(pinput(7)) /= 1) then
-    call mexErrMsgIdAndTxt('fcobyla:WrongInput', 'fcobyla: Input 7 should be a double (with an integer value).')
-end if
-! Although inputs 6 and 7 (maxfun and m) are integers logically,
-! they have to be passed to the mexified code as double variables. In
-! mex, data is passed by pointers, but there are only very limited
-! functions that can read an integer value from a pointer or write
-! an interger value to a pointer (mxCopyPtrToInteger1,
-! mxCopyInteger1ToPtr, mxCopyPtrToInteger2, mxCopyInteger2ToPtr,
-! mxCopyPtrToInteger4, mxCopyInteger4ToPtr; no function for
-! INTEGER*8). This makes it impossible to pass integer data properly
-! unless we know the kind of the integer. Therefore, in general, it
-! is recommended to pass integers as double variables and then cast
-! them back to integers when needed. Indeed, in MATLAB, even if we
-! define maxfun = 1000, the class of maxfun is double! To get an
-! integer maxfun, we would have to define maxfun = int32(1000) or
-! maxfun = int64(1000)!
-
-! Input 8: ftarget (double scalar)
-if (mxIsDouble(pinput(8)) /= 1 .or. mxGetM(pinput(8)) /= 1 .or. mxGetN(pinput(8)) /= 1) then
-    call mexErrMsgIdAndTxt('fcobyla:WrongInput', 'fcobyla: Input 8 should be a double.')
-end if
-! Input 9: conval_x0 (double column, can be empty)
-if (mxIsDouble(pinput(9)) /= 1 .or. (mxGetM(pinput(9)) > 0 .and. mxGetN(pinput(9)) > 1)) then
-    call mexErrMsgIdAndTxt('fcobyla:WrongInput', 'fcobyla: Input 9 should be a column vector of doubles.')
-end if
-
-! Read the inputs (there are 9)
-fun_ptr = pinput(1)
-con_ptr = pinput(2)
-n = mxGetM(pinput(3)) ! This is why n should be of type mwSize
-n_int = int(n, kind(n_int))
-! n_int is used when a variable of type INTEGER is needed
-if (n /= n_int) then
-    call mexErrMsgIdAndTxt('fcobyla:IntError', 'fcobyla: n does not equal n_int.')
-end if
-if (allocated(x)) deallocate (x)
-allocate (x(n_int), stat=allocate_status)
-if (allocate_status /= 0) then
-    call mexErrMsgIdAndTxt('fcobyla:InsufficientMemory', 'fcobyla: allocate(x) failed.')
-end if
-call mxCopyPtrToReal8(_MGETDB(pinput(3)), x(1:n), n)
-! subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
-
-call mxCopyPtrToReal8(_MGETDB(pinput(4)), rhobeg, mwOne)
-call mxCopyPtrToReal8(_MGETDB(pinput(5)), rhoend, mwOne)
-! subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
-! Note the mwOne is of type mwSize; should not use literal constant 1
-! NEVER use literal constants in Fortran mex.
-
-! Check the values of rhobeg and rhoend. We do not check the values of
-! other inputs (e.g., n, maxfun, npt) because the Fortran code does it
-if (rhobeg <= zero .or. rhobeg < rhoend .or. rhoend < zero) then
-    call mexErrMsgIdAndTxt('fcobyla:InvalidRhobegRhoend', 'fcobyla: rhobeg and rhoend do not satisfy rhobeg >= rhobeg > 0.')
-end if
-
-call mxCopyPtrToReal8(_MGETDB(pinput(6)), maxfun_r, mwOne)
-maxfun = int(maxfun_r, kind(maxfun))
-! maxfun will be an input to COBYLA, which requires maxfun to be
-! an INTEGER (not necessary the same as mwSize)
-call mxCopyPtrToReal8(_MGETDB(pinput(7)), m_r, mwOne)
-m = int(m_r, kind(m))
-m_int = int(m_r, kind(m_int))
-if (m /= m_int) then
-    call mexErrMsgIdAndTxt('fcobyla:IntError', 'fcobyla: m does not equal m_int.')
-end if
-! m will be used in mxCopyPtrToReal8, requiring it to be of type mwSize
-! m_int will be an input to COBYLA, which requires it to be
-! an INTEGER (not necessary the same as mwSize)
-call mxCopyPtrToReal8(_MGETDB(pinput(8)), ftarget, mwOne)
-
-if (m > 0 .and. m /= mxGetM(pinput(9))) then
-! m is number of constraints
-    call mexErrMsgIdAndTxt('fcobyla:WrongInput', 'fcobyla: Length of input 9 should be m (input 7).')
-end if
-if (allocated(conval_x0)) deallocate (conval_x0)
-allocate (conval_x0(m_int), stat=allocate_status)
-if (allocate_status /= 0) then
-    call mexErrMsgIdAndTxt('fcobyla:InsufficientMemory', 'fcobyla: allocate(conval_x0) failed.')
-end if
-call mxCopyPtrToReal8(_MGETDB(pinput(9)), conval_x0(1:m), m)
-! subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
+fun_ptr = pinput(1)  ! FUN_PTR is a pointer to the objective function handle
+con_ptr = pinput(2)  ! CON_PTR is a pointer to the constraint function handle
+call fmxReadMPtr(pinput(3), x)
+call fmxReadMPtr(pinput(4), rhobeg)
+call fmxReadMPtr(pinput(5), rhoend)
+call fmxReadMPtr(pinput(6), maxfun)
+call fmxReadMPtr(pinput(7), m)
+call fmxReadMPtr(pinput(8), ftarget)
+call fmxReadMPtr(pinput(9), conval_x0)
 
 !     Allocate workspace
 if (allocated(conval)) deallocate (conval)
 allocate (conval(m_int), stat=allocate_status)
 if (allocate_status /= 0) then
     call mexErrMsgIdAndTxt('fcobyla:InsufficientMemory', 'fcobyla: allocate(conval) failed.')
-end if
-
-if (allocated(w)) deallocate (w)
-nw = n_int * (3 * n_int + 2 * m_int + 11) + 4 * m_int + 6
-allocate (w(nw), stat=allocate_status)
-if (allocate_status /= 0) then
-    call mexErrMsgIdAndTxt('fcobyla:InsufficientMemory', 'fcobyla: allocate(w) failed.')
 end if
 
 if (allocated(iact)) deallocate (iact)
@@ -210,33 +89,25 @@ if (allocate_status /= 0) then
 end if
 chist = huge(0.0_DP)
 
-!     Call COBYLA
+! Call the Fortran code.
 iprint = 0
 call COBYLA(n_int, m_int, x, rhobeg, rhoend, iprint, maxfun, iact, f, info, ftarget, resmax, conval)
 ! Note that n is of type mwSize, yet COBYLA expects input 1 to be
-! of type INTEGER. Therefore, we should use n_int instead of n. Similar
-! fo m/m_int.
+! of type INTEGER. Therefore, we should use n_int instead of n. 
 
 ! Write outputs
-poutput(1) = mxCreateDoubleMatrix(n, mwOne, notComplex)
-call mxCopyReal8ToPtr(x(1:n), _MGETDB(poutput(1)), n)
-poutput(2) = mxCreateDoubleScalar(f)
-! Although info and nf are integers logically, they are passed as double
-poutput(3) = mxCreateDoubleScalar(real(info, rp))
-poutput(4) = mxCreateDoubleScalar(real(nf, rp))
-poutput(5) = mxCreateDoubleMatrix(mwOne, nf, notComplex)
-call mxCopyReal8ToPtr(fhist(1:nf), _MGETDB(poutput(5)), nf)
-! Set conval to the value of con(x)
-poutput(6) = mxCreateDoubleMatrix(m, mwOne, notComplex)
-call mxCopyReal8ToPtr(conval(1:m), _MGETDB(poutput(6)), m)
-poutput(7) = mxCreateDoubleScalar(resmax)
-poutput(8) = mxCreateDoubleMatrix(mwOne, nf, notComplex)
-call mxCopyReal8ToPtr(chist(1:nf), _MGETDB(poutput(8)), nf)
+call fmxWriteMPtr(x, poutput(1))
+call fmxWriteMPtr(f, poutput(2))
+call fmxWriteMPtr(info, poutput(3))
+call fmxWriteMPtr(nf, poutput(4))
+call fmxWriteMPtr(fhist(1:min(int(nf), size(fhist))), poutput(5), 'row')
+call fmxWriteMPtr(conval, poutput(6), 'col')
+call fmxWriteMPtr(resmax, poutput(7))
+call fmxWriteMPtr(chist(:, 1:min(int(nf), size(fhist))), poutput(8))
 
 !     Free memory
 deallocate (x)
 deallocate (conval_x0)
-deallocate (w)
 deallocate (iact)
 deallocate (fhist)
 deallocate (chist)
