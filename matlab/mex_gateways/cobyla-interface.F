@@ -111,7 +111,6 @@ C n_int and m_int are the INTEGER cast of n and m, i.e., n_int = int(n),
 C m_int = int(m), which will be used when variables of type INTEGER are
 C needed (e.g., when calling COBYLA).
       real(rp), allocatable :: x(:), conval(:)
-      integer, allocatable :: iact(:)
       real(rp) :: f, rhobeg, rhoend, maxfun_r, m_r, ftarget, resmax
       integer :: info, iprint, allocate_status
 C info and iprint are inputs to COBYLA, which requires them to be
@@ -282,13 +281,6 @@ C     Allocate workspace
      &    'fcobyla: allocate(conval) failed.')
       end if
 
-      if (allocated(iact)) deallocate (iact)
-      nw = m_int+1
-      allocate (iact(nw), stat=allocate_status)
-      if (allocate_status .ne. 0) then
-          call mexErrMsgIdAndTxt('fcobyla:InsufficientMemory',
-     &    'fcobyla: allocate(iact) failed.' )
-      end if
 
 C     Initialize global variables
       nf = 0
@@ -311,7 +303,7 @@ C     Initialize global variables
 C     Call COBYLA
       iprint = 0
       call COBYLA(n_int, m_int, x, rhobeg, rhoend, iprint, maxfun,
-     &     iact, f, info, ftarget, resmax, conval)
+     &     f, info, ftarget, resmax, conval)
 C Note that n is of type mwSize, yet COBYLA expects input 1 to be
 C of type INTEGER. Therefore, we should use n_int instead of n. Similar
 C fo m/m_int.
@@ -337,7 +329,6 @@ C Set conval to the value of con(x)
 C     Free memory
       deallocate (x)
       deallocate (conval_x0)
-      deallocate (iact)
       deallocate (fhist)
       deallocate (chist)
       deallocate (conval)
