@@ -28,9 +28,9 @@ real(RP) :: Z(N, N)
 real(RP) :: Zdota(N)
 real(RP) :: Vmultc(M + 1)
 real(RP) :: Sdirn(N)
+real(RP) :: Vmultd(M)
 real(RP) :: Dxnew(N)
 
-real(RP) :: Vmultd(M)
 
 real(RP) :: acca
 real(RP) :: accb
