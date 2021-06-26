@@ -223,6 +223,7 @@
               F = X(I)
               ! Set F to NaN
               INFO = -1
+              write (10, *), '200 g600'
               goto 600
           end if
       end do
@@ -276,12 +277,14 @@
           RESMAX = CSUM
           ! Set RESMAX to NaN
           INFO = -2
+          write (10, *) '252 g600'
           goto 600
       end if
 !     If the objective function value or the constraints contain a NaN or an
 !     infinite value, the algorithm stops.
       if (is_nan(F) .or. F > ALMOST_INFINITY) then
           INFO = -2
+          write (10, *) '258 g600'
           goto 600
       end if
 !     If the objective function achieves the target value at a feasible
@@ -290,6 +293,7 @@
       if (F <= FTARGET .and. RESMAX < CTOL) then
 !         The feasibility is guarantee because RESMAX .LE. CTOL
           INFO = 1
+          write (10, *) '268 g620'
           goto 620
       end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -307,7 +311,10 @@
           INFO = 3
       end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      if (IBRNCH == 1) goto 440
+      if (IBRNCH == 1) then
+          write (10, *) '286 g440'
+          goto 440
+      end if
 !      IF (IBRNCH == 1 .AND. INFO /= 3) GOTO 440
 !
 !     Set the recently calculated function values in a column of DATMAT. This
@@ -320,7 +327,10 @@
           DATMAT(K, JDROP) = CON(K)
       end do
 
-      if (NFVALS > NP) goto 130
+      if (NFVALS > NP) then
+          write (10, *) '302 g130'
+          goto 130
+      end if
 ! IF we do not go to 130 but continue to below, then NFVALS <= NP.
 ! Thus NFVALS may be NP = N+1 > N.
 !
@@ -383,6 +393,7 @@
       if (NFVALS <= N) then
           JDROP = NFVALS
           X(JDROP) = X(JDROP) + RHO
+          write (10, *) '367 g40'
           goto 40
       end if
 130   IBRNCH = 1
@@ -434,7 +445,10 @@
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 2021-05-30
-      if (INFO == 3) goto 600
+      if (INFO == 3) then
+          write (10, *) '420 g600'
+          goto 600
+      end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !
@@ -470,6 +484,7 @@
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
           INFO = 7
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          write (10, *) '457 g600'
           goto 600
       end if
 !
@@ -526,7 +541,10 @@
 !     If a new vertex is needed to improve acceptability, then decide which
 !     vertex to drop from the simplex.
 !
-      if (IBRNCH == 1 .or. IFLAG == 1) goto 370
+      if (IBRNCH == 1 .or. IFLAG == 1) then
+          write (10, *) '515 g370'
+          goto 370
+      end if
       JDROP = 0
       TEMP = PARETA
       do J = 1, N
@@ -552,6 +570,7 @@
 286   format(/3X, 'Return from subroutine COBYLA because ', 'rounding er&
      &rors are becoming damaging.')
           INFO = 7
+          write (10, *) '542 g600'
           goto 600
       end if
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -563,8 +582,10 @@
       do K = 1, MPP
           DATDROP(K) = DATMAT(K, JDROP)
       end do
+      write (10, *) '530 bs'
       call SAVEX(XDROP(1:N), DATDROP(1:MPP), XSAV(1:N, 1:NSMAX), DATSAV(&
      &1:MPP, 1:NSMAX), N, M, NSAV, NSMAX, CTOL)
+      write (10, *) '530 as'
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     Calculate the step to the new vertex and its sign.
@@ -633,6 +654,7 @@
           end if
           X(J) = SIM(J, NP) + DX(J)
       end do
+      write (10, *) '624 g40'
       goto 40
 !
 !     Calculate DX=x(*)-x(0). Branch if the length of DX is less than 0.5*RHO.
@@ -657,6 +679,7 @@
 376   format(/3X, 'Return from subroutine COBYLA because ', 'rounding er&
      &rors are becoming damaging.')
                   INFO = 7
+                  write (10, *) '648 g600'
                   goto 600
               end if
           end do
@@ -665,12 +688,15 @@
           do I = 1, N
               if (is_nan(A(I, J))) then
                   INFO = -3
+                  write (10, *) '657 g600'
                   goto 600
               end if
           end do
       end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      write (10, *) nfvals, 'bt'
       call TRSTLP(N, M, A, CON, RHO, DX, IFULL, IACT)
+      write (10, *) nfvals, 'at'
       if (IFULL == 0) then
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          TEMP=0.0
@@ -684,6 +710,7 @@
           if (TEMP < 0.25D0 * RHO * RHO) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               IBRNCH = 1
+              write (10, *) '657 g550'
               goto 550
           end if
       end if
@@ -731,12 +758,18 @@
           PHI = DATMAT(MP, NP) + PARMU * DATMAT(MPP, NP)
           do J = 1, N
               TEMP = DATMAT(MP, J) + PARMU * DATMAT(MPP, J)
-              if (TEMP < PHI) goto 140
+              if (TEMP < PHI) then
+                  write (10, *) '706 g140'
+                  goto 140
+              end if
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          IF (TEMP .EQ. PHI .AND. PARMU .EQ. 0.0) THEN
               if (abs(TEMP - PHI) <= ZERO .and. PARMU <= ZERO) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                  if (DATMAT(MPP, J) < DATMAT(MPP, NP)) goto 140
+                  if (DATMAT(MPP, J) < DATMAT(MPP, NP)) then
+                      write (10, *) '714 g140'
+                      goto 140
+                  end if
               end if
           end do
       end if
@@ -749,6 +782,7 @@
           X(I) = SIM(I, NP) + DX(I)
       end do
       IBRNCH = 1
+      write (10, *) '729 g40'
       goto 40
 440   VMOLD = DATMAT(MP, NP) + PARMU * DATMAT(MPP, NP)
       VMNEW = F + PARMU * RESMAX
@@ -856,10 +890,15 @@
               DATDROP(K) = DATMAT(K, JDROP)
           end do
       end if
+      write (10, *) '820 bs'
       call SAVEX(XDROP(1:N), DATDROP(1:MPP), XSAV(1:N, 1:NSMAX), DATSAV(&
      &1:MPP, 1:NSMAX), N, M, NSAV, NSMAX, CTOL)
+      write (10, *) '820 as'
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      if (JDROP == 0) goto 550
+      if (JDROP == 0) then
+          write (10, *) '841 g550'
+          goto 550
+      end if
 !
 !     Revise the simplex by updating the elements of SIM, SIMI and DATMAT.
 !
@@ -896,10 +935,14 @@
 !
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (TRURED .GT. 0.0 .AND. TRURED .GE. 0.1*PREREM) GOTO 140
-      if (TRURED > ZERO .and. TRURED >= TENTH * PREREM) goto 140
+      if (TRURED > ZERO .and. TRURED >= TENTH * PREREM) then
+          write (10, *) '881 g140'
+          goto 140
+      end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 550   if (IFLAG == 0) then
           IBRNCH = 0
+          write (10, *), '886 g140'
           goto 140
       end if
 !
@@ -961,6 +1004,7 @@
      & NP), I=1, IPTEM)
               if (IPTEM < N) print 80, (X(I), I=IPTEMP, N)
           end if
+          write (10, *), '946 g140'
           goto 140
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       else
@@ -1004,6 +1048,7 @@
 !      and DATMAT(:, NFVALS-1) yet. That is why we check SIM up to
 !      NFVALS-2 instead of NFVALS-1.
 600   do K = 1, M
+          write (10, *) nfvals, 'be'
           CON(K) = CONSAV(K)
       end do
       PARMU = max(PARMU, 1.0D2)
