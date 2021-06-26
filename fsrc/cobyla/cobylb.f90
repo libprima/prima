@@ -217,7 +217,6 @@ if (M > 0) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 end if
 
-write (10, *) X(1:N), F, CON(1:M)
 
 if (NFVALS == IPRINT - 1 .or. IPRINT == 3) then
     print 70, NFVALS, F, RESMAX, (X(I), I=1, IPTEM)
