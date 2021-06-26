@@ -17,8 +17,8 @@
 
       contains
 
-      subroutine cobylb(n, m, x, rhobeg, rhoend, iprint, maxfun, con, ia&
-     &ct, f, info, ftarget, resmax)
+      subroutine cobylb(n, m, x, rhobeg, rhoend, iprint, maxfun, con, f,&
+     & info, ftarget, resmax)
 
 ! Generic modules
       use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENU&

@@ -48,7 +48,7 @@
       real(RP) :: Sdirn(N)
       real(RP) :: Dxnew(N)
 
-      real(RP) :: Vmultd(M + 1)
+      real(RP) :: Vmultd(M + 10000)
 
       real(RP) :: acca
       real(RP) :: accb

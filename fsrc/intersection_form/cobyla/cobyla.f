@@ -16,8 +16,8 @@
       module cobyla_mod
 
       contains
-      subroutine cobyla(n, m, x, rhobeg, rhoend, iprint, maxfun, iact, f&
-     &, info, ftarget, resmax, con)
+      subroutine cobyla(n, m, x, rhobeg, rhoend, iprint, maxfun, f, info&
+     &, ftarget, resmax, con)
 ! Generic modules
       use consts_mod, only : RP, IK, ZERO, TWO, HALF, TENTH, HUGENUM, DE&
      &BUGGING, SRNLEN
@@ -47,7 +47,6 @@
       real(RP), intent(inout) :: x(:)
 
 ! Outputs
-      integer(IK), intent(out) :: iact(:)
       integer(IK), intent(out) :: info
       real(RP), intent(out) :: con(:)
       real(RP), intent(out) :: f
@@ -170,8 +169,8 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       write (10, *) 'bc'
-      call cobylb(n, m, x, rhobeg, rhoend_c, iprint, maxfun, confr, iact&
-     &, f, info, ftarget, resmax)
+      call cobylb(n, m, x, rhobeg, rhoend_c, iprint, maxfun, confr, f, i&
+     &nfo, ftarget, resmax)
       con = confr(1:m)
       write (10, *) 'ac'
       close (10)
