@@ -1067,6 +1067,8 @@ end if
     print 70, NFVALS, F, RESMAX, (X(I), I=1, IPTEM)
     if (IPTEM < N) print 80, (X(I), I=IPTEMP, N)
 end if
+
+close (10)
 return
 end subroutine cobylb
 
