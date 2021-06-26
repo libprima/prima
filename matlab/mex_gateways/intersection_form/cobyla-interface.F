@@ -110,7 +110,7 @@ C mwSize because it will be used in mxCopyPtrToReal8.
 C n_int and m_int are the INTEGER cast of n and m, i.e., n_int = int(n),
 C m_int = int(m), which will be used when variables of type INTEGER are
 C needed (e.g., when calling COBYLA).
-      real(rp), allocatable :: x(:), conval(:), w(:)
+      real(rp), allocatable :: x(:), conval(:)
       integer, allocatable :: iact(:)
       real(rp) :: f, rhobeg, rhoend, maxfun_r, m_r, ftarget, resmax
       integer :: info, iprint, allocate_status
@@ -282,14 +282,6 @@ C     Allocate workspace
      &    'fcobyla: allocate(conval) failed.')
       end if
 
-      if (allocated(w)) deallocate (w)
-      nw = n_int*(3*n_int+2*m_int+11)+4*m_int+6
-      allocate (w(nw), stat=allocate_status)
-      if (allocate_status .ne. 0) then
-          call mexErrMsgIdAndTxt('fcobyla:InsufficientMemory',
-     &    'fcobyla: allocate(w) failed.')
-      end if
-
       if (allocated(iact)) deallocate (iact)
       nw = m_int+1
       allocate (iact(nw), stat=allocate_status)
@@ -345,7 +337,6 @@ C Set conval to the value of con(x)
 C     Free memory
       deallocate (x)
       deallocate (conval_x0)
-      deallocate (w)
       deallocate (iact)
       deallocate (fhist)
       deallocate (chist)
