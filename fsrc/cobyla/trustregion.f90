@@ -755,7 +755,9 @@ goto 60
 !
 490 if (MCON == M) goto 480
 IFULL = 0
-500 return
+500 write (10, *) 'ot'
+close (10)
+return
 
 end subroutine trstlp
 end module trustregion_mod
