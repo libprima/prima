@@ -171,7 +171,7 @@
       write (10, *) 'bc'
       call cobylb(n, m, x, rhobeg, rhoend_c, iprint, maxfun, confr, f, i&
      &nfo, ftarget, resmax)
-      con = confr(1:m)
+      con(1:m) = confr(1:m)
       write (10, *) 'ac'
       close (10)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

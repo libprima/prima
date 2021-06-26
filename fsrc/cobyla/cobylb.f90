@@ -661,7 +661,7 @@ do J = 1, MP
 end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 write (10, *) nfvals, 'bt'
-call TRSTLP(N, M, A, CON, RHO, DX, IFULL, IACT)
+call TRSTLP(N, M, A, CON, RHO, DX, IFULL, IACT, W)
 write (10, *) nfvals, 'at'
 if (IFULL == 0) then
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
