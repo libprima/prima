@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 26-Jun-2021.
+! on 27-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -46,9 +46,9 @@
       real(RP) :: Zdota(N)
       real(RP) :: Vmultc(M + 1)
       real(RP) :: Sdirn(N)
+      real(RP) :: Vmultd(M)
       real(RP) :: Dxnew(N)
 
-      real(RP) :: Vmultd(M + 10000)
 
       real(RP) :: acca
       real(RP) :: accb
