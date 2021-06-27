@@ -128,9 +128,9 @@ C The original code can still encounter infinite cycling,
 C which did happen when testing the following CUTEst problems:
 C DANWOODLS, GAUSS1LS, GAUSS2LS, GAUSS3LS, KOEBHELB, TAX13322, TAXR13322.
 C Indeed, in all these cases, Inf and NaN appear in D due to extremely
-C large values in A (up to 10^219). 
+C large values in A (up to 10^219).
 C To avoid wasting energy, we do the following.
-      SUMD = 0.0D0 
+      SUMD = 0.0D0
       DO I = 1, N
           SUMD = SUMD + DABS(DX(I))
       END DO
@@ -138,7 +138,7 @@ C To avoid wasting energy, we do the following.
           DO I = 1, N
              DX(I) = DSAV(I)
           END DO
-          GOTO 500 
+          GOTO 500
       ELSE
           DO I = 1, N
              DSAV(I) = DX(I)
