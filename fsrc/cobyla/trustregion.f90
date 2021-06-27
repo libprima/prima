@@ -2,7 +2,8 @@ module trustregion_mod
 
 contains
 !subroutine TRSTLP(N, M, A, B, RHO, DX, IFULL, IACT, VMULTD)
-SUBROUTINE TRSTLP (N,M,A,B,RHO,DX,IFULL,IACT,Z,ZDOTA,VMULTC,  SDIRN,DXNEW)!, VMULTD)
+!SUBROUTINE TRSTLP (N,M,A,B,RHO,DX,IFULL,IACT)!,Z,ZDOTA,VMULTC,  SDIRN,DXNEW)!, VMULTD)
+SUBROUTINE TRSTLP (N,M,A,B,RHO,DX,IFULL,IACT)!, VMULTD)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 implicit real(kind(0.0D0)) (A - H, O - Z)
 implicit integer(I - N)
@@ -10,14 +11,15 @@ implicit integer(I - N)
 dimension A(N, *), B(*), DX(*), IACT(*), Z(N, N), ZDOTA(N)
 dimension DXNEW(N)
 dimension DSAV(N)
-dimension VMULTD(M+1)
+!dimension VMULTD(M+1)
 dimension VMULTC(M + 1), SDIRN(N)
 !REAL(kind(0.0D0)) :: VMULTD(:)
 !real(RP) :: Z(N, N)
 !real(RP) :: Zdota(N)
 !real(RP) :: Vmultc(M + 1)
 !real(RP) :: Sdirn(N)
-!real(RP) :: Vmultd(M)
+real(kind(0.0D0)) :: Vmultd(M)
+!dimension VMULTD(M)
 !real(RP) :: Dxnew(N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
@@ -61,10 +63,10 @@ dimension VMULTC(M + 1), SDIRN(N)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 26-06-2019: See the code below line number 80
 ITERC = 0
- open(unit=6,file='temp.txt',status='unknown')
-write(6,*) size(VMULTD)
-write(6,*) VMULTD
-close(6)
+! open(unit=6,file='temp.txt',status='unknown')
+!write(6,*) size(VMULTD)
+!write(6,*) VMULTD
+!close(6)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 IFULL = 1
 MCON = M
