@@ -1,28 +1,34 @@
 module trustregion_mod
 
 contains
-!subroutine TRSTLP(N, M, A, B, RHO, DX, IFULL, IACT, VMULTD)
-!SUBROUTINE TRSTLP (N,M,A,B,RHO,DX,IFULL,IACT)!,Z,ZDOTA,VMULTC,  SDIRN,DXNEW)!, VMULTD)
-SUBROUTINE TRSTLP (N,M,A,B,RHO,DX,IFULL,IACT, VMULTD)
+!subroutine TRSTLP(N, M, A, B, RHO, DX, IFULL, IACT, VMULTEE)
+!SUBROUTINE TRSTLP (N,M,A,B,RHO,DX,IFULL,IACT)!,Z,ZDOTA,VMULTC,  SDIRN,DXNEW)!, VMULTEE)
+SUBROUTINE TRSTLP (N,M,A,B,RHO,DX,IFULL,IACT)
+!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+!SUBROUTINE TRSTLP (N,M,A,B,RHO,DX,IFULL,IACT, VMULTEE)
+!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 implicit real(kind(0.0D0)) (A - H, O - Z)
 implicit integer(I - N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+real(kind(0.0D0)) :: Vmultee(M+1)
+!real(kind(0.0D0)) :: Vmultd(*)
+!real(kind(0.0D0)) :: Vmultd(:)
+!dimension Vmultd(M)
+!dimension Vmultd(*)
+!dimension Vmultd(:)
+!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 dimension A(N, *), B(*), DX(*), IACT(*), Z(N, N), ZDOTA(N)
 dimension DXNEW(N)
 dimension DSAV(N)
-!dimension VMULTD(M+1)
+!dimension VMULTEE(M+1)
 dimension VMULTC(M + 1), SDIRN(N)
-!REAL(kind(0.0D0)) :: VMULTD(:)
+!REAL(kind(0.0D0)) :: VMULTEE(:)
 !real(RP) :: Z(N, N)
 !real(RP) :: Zdota(N)
 !real(RP) :: Vmultc(M + 1)
 !real(RP) :: Sdirn(N)
-!real(kind(0.0D0)) :: Vmultd(:)
-!real(kind(0.0D0)) :: Vmultd(M)
-!real(kind(0.0D0)) :: Vmultd(*)
-!dimension Vmultd(*)
-dimension Vmultd(M)
 dimension VMULTE(M)
 !real(RP) :: Dxnew(N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -67,9 +73,9 @@ dimension VMULTE(M)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 26-06-2019: See the code below line number 80
 ITERC = 0
-! open(unit=6,file='temp.txt',status='unknown')
-!write(6,*) size(VMULTD)
-!write(6,*) VMULTD
+ open(unit=6,file='temp.txt',status='unknown')
+!write(6, *) size(VMULTEE),  size(VMULTEE)
+!write(6, *) size(VMULTEE),  VMULTEE
 !close(6)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 IFULL = 1
@@ -81,10 +87,10 @@ RESMAX = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 do I = 1, N
     do J = 1, N
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!   10 Z(I,J)=0.0
-!      Z(I,I)=1.0
-!   20 DX(I)=0.0
+        !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+        !   10 Z(I,J)=0.0
+        !      Z(I,I)=1.0
+        !   20 DX(I)=0.0
         Z(I, J) = 0.0D0
     end do
     Z(I, I) = 1.0D0
@@ -108,8 +114,8 @@ end if
 if (RESMAX == 0.0D0) goto 480
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 do I = 1, N
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!   50 SDIRN(I)=0.0
+    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+    !   50 SDIRN(I)=0.0
     SDIRN(I) = 0.0D0
 end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -135,10 +141,10 @@ ICOUNT = 0
 70 if (MCON == M) then
     OPTNEW = RESMAX
 else
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          OPTNEW=0.0
+    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+    !          OPTNEW=0.0
     OPTNEW = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     do I = 1, N
         OPTNEW = OPTNEW - DX(I) * A(I, MCON)
     end do
@@ -199,35 +205,35 @@ TOT = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 K = N
 100 if (K > NACT) then
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          SP=0.0
-!          SPABS=0.0
+    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+    !          SP=0.0
+    !          SPABS=0.0
     SP = 0.0D0
     SPABS = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     do I = 1, N
         TEMP = Z(I, K) * DXNEW(I)
         SP = SP + TEMP
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!  110     SPABS=SPABS+ABS(TEMP)
-!          ACCA=SPABS+0.1*ABS(SP)
-!          ACCB=SPABS+0.2*ABS(SP)
-!          IF (SPABS .GE. ACCA .OR. ACCA .GE. ACCB) SP=0.0
-!          IF (TOT .EQ. 0.0) THEN
+        !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+        !  110     SPABS=SPABS+ABS(TEMP)
+        !          ACCA=SPABS+0.1*ABS(SP)
+        !          ACCB=SPABS+0.2*ABS(SP)
+        !          IF (SPABS .GE. ACCA .OR. ACCA .GE. ACCB) SP=0.0
+        !          IF (TOT .EQ. 0.0) THEN
         SPABS = SPABS + DABS(TEMP)
     end do
     ACCA = SPABS + 0.1D0 * DABS(SP)
     ACCB = SPABS + 0.2D0 * DABS(SP)
     if (SPABS >= ACCA .or. ACCA >= ACCB) SP = 0.0D0
     if (TOT == 0.0D0) then
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         TOT = SP
     else
         KP = K + 1
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!              TEMP=SQRT(SP*SP+TOT*TOT)
+        !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+        !              TEMP=SQRT(SP*SP+TOT*TOT)
         TEMP = DSQRT(SP * SP + TOT * TOT)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         ALPHA = SP / TEMP
         BETA = TOT / TEMP
         TOT = TEMP
@@ -247,21 +253,21 @@ end if
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (TOT .NE. 0.0) THEN
 if (TOT /= 0.0D0) then
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     NACT = NACT + 1
     ZDOTA(NACT) = TOT
     VMULTC(ICON) = VMULTC(NACT)
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          VMULTC(NACT)=0.0
+    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+    !          VMULTC(NACT)=0.0
     VMULTC(NACT) = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     goto 210
 end if
 !
 !     The next instruction is reached if a deletion has to be made from the
 !     active set in order to make room for the new active constraint, because
 !     the new constraint gradient is a linear combination of the gradients of
-!     the old active constraints. Set the elements of VMULTD to the multipliers
+!     the old active constraints. Set the elements of VMULTEE to the multipliers
 !     of the linear combination. Further, set IOUT to the index of the
 !     constraint to be deleted, but branch if no suitable index can be found.
 !
@@ -270,6 +276,7 @@ end if
 RATIO = -1.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 K = NACT
+
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !  130 ZDOTV=0.0
 !      ZDVABS=0.0
@@ -279,10 +286,10 @@ ZDVABS = 0.0D0
 do I = 1, N
     TEMP = Z(I, K) * DXNEW(I)
     ZDOTV = ZDOTV + TEMP
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!  140 ZDVABS=ZDVABS+ABS(TEMP)
-!      ACCA=ZDVABS+0.1*ABS(ZDOTV)
-!      ACCB=ZDVABS+0.2*ABS(ZDOTV)
+    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+    !  140 ZDVABS=ZDVABS+ABS(TEMP)
+    !      ACCA=ZDVABS+0.1*ABS(ZDOTV)
+    !      ACCB=ZDVABS+0.2*ABS(ZDOTV)
     ZDVABS = ZDVABS + DABS(TEMP)
 end do
 ACCA = ZDVABS + 0.1D0 * DABS(ZDOTV)
@@ -290,20 +297,20 @@ ACCB = ZDVABS + 0.2D0 * DABS(ZDOTV)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 if (ZDVABS < ACCA .and. ACCA < ACCB) then
     TEMP = ZDOTV / ZDOTA(K)
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          IF (TEMP .GT. 0.0 .AND. IACT(K) .LE. M) THEN
+    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+    !          IF (TEMP .GT. 0.0 .AND. IACT(K) .LE. M) THEN
     if (TEMP > 0.0D0 .and. IACT(K) <= M) then
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         TEMPA = VMULTC(K) / TEMP
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!              IF (RATIO .LT. 0.0 .OR. TEMPA .LT. RATIO) THEN
+        !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+        !              IF (RATIO .LT. 0.0 .OR. TEMPA .LT. RATIO) THEN
         if (RATIO < 0.0D0 .or. TEMPA < RATIO) then
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             RATIO = TEMPA
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-! Zaikun 2019-08-15: IOUT is never used
-!                  IOUT=K
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+            ! Zaikun 2019-08-15: IOUT is never used
+            !                  IOUT=K
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         end if
     end if
     if (K >= 2) then
@@ -312,12 +319,14 @@ if (ZDVABS < ACCA .and. ACCA < ACCB) then
             DXNEW(I) = DXNEW(I) - TEMP * A(I, KW)
         end do
     end if
-    VMULTD(K) = TEMP
+    write(6, *) size(VMULTEE),  "322", K
+    VMULTEE(K) = TEMP
 else
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          VMULTD(K)=0.0
-    VMULTD(K) = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+    !          VMULTEE(K)=0.0
+    write(6, *) size(VMULTEE),  "327", K
+    if (K > 0) VMULTEE(K) = 0.0D0
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 end if
 K = K - 1
 if (K > 0) goto 130
@@ -330,29 +339,31 @@ if (RATIO < 0.0D0) goto 490
 !     that the one to be replaced is at the end of the list. Also calculate the
 !     new value of ZDOTA(NACT) and branch if it is not acceptable.
 !
+write(6, *) size(VMULTEE),  "NACT", NACT
 do K = 1, NACT
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!  160 VMULTC(K)=AMAX1(0.0,VMULTC(K)-RATIO*VMULTD(K))
-    VMULTC(K) = DMAX1(0.0D0, VMULTC(K) - RATIO * VMULTD(K))
+    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+    !  160 VMULTC(K)=AMAX1(0.0,VMULTC(K)-RATIO*VMULTEE(K))
+    write(6, *) size(VMULTEE),  "336", K
+    VMULTC(K) = DMAX1(0.0D0, VMULTC(K) - RATIO * VMULTEE(K))
 end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 if (ICON < NACT) then
     ISAVE = IACT(ICON)
     VSAVE = VMULTC(ICON)
     K = ICON
-170 KP = K + 1
+    170 KP = K + 1
     KW = IACT(KP)
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          SP=0.0
+    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+    !          SP=0.0
     SP = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     do I = 1, N
         SP = SP + Z(I, K) * A(I, KW)
     end do
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          TEMP=SQRT(SP*SP+ZDOTA(KP)**2)
+    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+    !          TEMP=SQRT(SP*SP+ZDOTA(KP)**2)
     TEMP = DSQRT(SP * SP + ZDOTA(KP)**2)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ALPHA = ZDOTA(KP) / TEMP
     BETA = SP / TEMP
     ZDOTA(KP) = ALPHA * ZDOTA(K)
@@ -394,17 +405,17 @@ VMULTC(NACT) = RATIO
 IACT(NACT) = KK
 if (MCON > M .and. KK /= MCON) then
     K = NACT - 1
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          SP=0.0
+    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+    !          SP=0.0
     SP = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     do I = 1, N
         SP = SP + Z(I, K) * A(I, KK)
     end do
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          TEMP=SQRT(SP*SP+ZDOTA(NACT)**2)
+    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+    !          TEMP=SQRT(SP*SP+ZDOTA(NACT)**2)
     TEMP = DSQRT(SP * SP + ZDOTA(NACT)**2)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ALPHA = ZDOTA(NACT) / TEMP
     BETA = SP / TEMP
     ZDOTA(NACT) = ALPHA * ZDOTA(K)
@@ -449,19 +460,19 @@ goto 340
     ISAVE = IACT(ICON)
     VSAVE = VMULTC(ICON)
     K = ICON
-270 KP = K + 1
+    270 KP = K + 1
     KK = IACT(KP)
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          SP=0.0
+    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+    !          SP=0.0
     SP = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     do I = 1, N
         SP = SP + Z(I, K) * A(I, KK)
     end do
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          TEMP=SQRT(SP*SP+ZDOTA(KP)**2)
+    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+    !          TEMP=SQRT(SP*SP+ZDOTA(KP)**2)
     TEMP = DSQRT(SP * SP + ZDOTA(KP)**2)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ALPHA = ZDOTA(KP) / TEMP
     BETA = SP / TEMP
     ZDOTA(KP) = ALPHA * ZDOTA(K)
@@ -520,10 +531,10 @@ SD = 0.0D0
 SS = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 do I = 1, N
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IF (ABS(DX(I)) .GE. 1.0E-6*RHO) DD=DD-DX(I)**2
+    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+    !      IF (ABS(DX(I)) .GE. 1.0E-6*RHO) DD=DD-DX(I)**2
     if (DABS(DX(I)) >= 1.0D-6 * RHO) DD = DD - DX(I)**2
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     SD = SD + DX(I) * SDIRN(I)
     SS = SS + SDIRN(I)**2
 end do
@@ -538,17 +549,17 @@ if (DABS(SD) >= 1.0D-6 * TEMP) TEMP = DSQRT(SS * DD + SD * SD)
 STPFUL = DD / (TEMP + SD)
 STEP = STPFUL
 if (MCON == M) then
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          ACCA=STEP+0.1*RESMAX
-!          ACCB=STEP+0.2*RESMAX
+    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+    !          ACCA=STEP+0.1*RESMAX
+    !          ACCB=STEP+0.2*RESMAX
     ACCA = STEP + 0.1D0 * RESMAX
     ACCB = STEP + 0.2D0 * RESMAX
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     if (STEP >= ACCA .or. ACCA >= ACCB) goto 480
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          STEP=AMIN1(STEP,RESMAX)
+    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+    !          STEP=AMIN1(STEP,RESMAX)
     STEP = DMIN1(STEP, RESMAX)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 end if
 !
 !     Set DXNEW to the new variables if STEP is the steplength, and reduce
@@ -561,25 +572,25 @@ do I = 1, N
 end do
 if (MCON == M) then
     RESOLD = RESMAX
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          RESMAX=0.0
+    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+    !          RESMAX=0.0
     RESMAX = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     do K = 1, NACT
         KK = IACT(K)
         TEMP = B(KK)
         do I = 1, N
             TEMP = TEMP - A(I, KK) * DXNEW(I)
         end do
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          RESMAX=AMAX1(RESMAX,TEMP)
+        !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+        !          RESMAX=AMAX1(RESMAX,TEMP)
         RESMAX = DMAX1(RESMAX, TEMP)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     end do
 end if
 !
-!     Set VMULTD to the VMULTC vector that would occur if DX became DXNEW. A
-!     device is included to force VMULTD(K)=0.0 if deviations from this value
+!     Set VMULTEE to the VMULTC vector that would occur if DX became DXNEW. A
+!     device is included to force VMULTEE(K)=0.0 if deviations from this value
 !     can be attributed to computer rounding errors. First calculate the new
 !     Lagrange multipliers.
 !
@@ -593,29 +604,32 @@ ZDWABS = 0.0D0
 do I = 1, N
     TEMP = Z(I, K) * DXNEW(I)
     ZDOTW = ZDOTW + TEMP
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!  400 ZDWABS=ZDWABS+ABS(TEMP)
-!      ACCA=ZDWABS+0.1*ABS(ZDOTW)
-!      ACCB=ZDWABS+0.2*ABS(ZDOTW)
-!      IF (ZDWABS .GE. ACCA .OR. ACCA .GE. ACCB) ZDOTW=0.0
+    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+    !  400 ZDWABS=ZDWABS+ABS(TEMP)
+    !      ACCA=ZDWABS+0.1*ABS(ZDOTW)
+    !      ACCB=ZDWABS+0.2*ABS(ZDOTW)
+    !      IF (ZDWABS .GE. ACCA .OR. ACCA .GE. ACCB) ZDOTW=0.0
     ZDWABS = ZDWABS + DABS(TEMP)
 end do
 ACCA = ZDWABS + 0.1D0 * DABS(ZDOTW)
 ACCB = ZDWABS + 0.2D0 * DABS(ZDOTW)
 if (ZDWABS >= ACCA .or. ACCA >= ACCB) ZDOTW = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-VMULTD(K) = ZDOTW / ZDOTA(K)
+write(6, *) size(VMULTEE),  "618", K
+VMULTEE(K) = ZDOTW / ZDOTA(K)
 if (K >= 2) then
     KK = IACT(K)
     do I = 1, N
-        DXNEW(I) = DXNEW(I) - VMULTD(K) * A(I, KK)
+        write(6, *) size(VMULTEE),  "623", K
+        DXNEW(I) = DXNEW(I) - VMULTEE(K) * A(I, KK)
     end do
     K = K - 1
     goto 390
 end if
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IF (MCON .GT. M) VMULTD(NACT)=AMAX1(0.0,VMULTD(NACT))
-if (MCON > M) VMULTD(NACT) = DMAX1(0.0D0, VMULTD(NACT))
+!      IF (MCON .GT. M) VMULTEE(NACT)=AMAX1(0.0,VMULTEE(NACT))
+write(6, *) size(VMULTEE),   "631", NACT
+if (MCON > M) VMULTEE(NACT) = DMAX1(0.0D0, VMULTEE(NACT))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     Complete VMULTC by finding the new constraint residuals.
@@ -628,25 +642,26 @@ if (MCON > NACT) then
     do K = KL, MCON
         KK = IACT(K)
         SUM = RESMAX - B(KK)
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          SUMABS=RESMAX+ABS(B(KK))
+        !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+        !          SUMABS=RESMAX+ABS(B(KK))
         SUMABS = RESMAX + DABS(B(KK))
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         do I = 1, N
             TEMP = A(I, KK) * DXNEW(I)
             SUM = SUM + TEMP
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!  430     SUMABS=SUMABS+ABS(TEMP)
-!          ACCA=SUMABS+0.1*ABS(SUM)
-!          ACCB=SUMABS+0.2*ABS(SUM)
-!          IF (SUMABS .GE. ACCA .OR. ACCA .GE. ACCB) SUM=0.0
+            !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+            !  430     SUMABS=SUMABS+ABS(TEMP)
+            !          ACCA=SUMABS+0.1*ABS(SUM)
+            !          ACCB=SUMABS+0.2*ABS(SUM)
+            !          IF (SUMABS .GE. ACCA .OR. ACCA .GE. ACCB) SUM=0.0
             SUMABS = SUMABS + DABS(TEMP)
         end do
         ACCA = SUMABS + 0.1D0 * DABS(SUM)
         ACCB = SUMABS + 0.2D0 * DABS(SUM)
         if (SUMABS >= ACCA .or. ACCA >= ACCB) SUM = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        VMULTD(K) = SUM
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        write(6, *) size(VMULTEE),  "663", K
+        VMULTEE(K) = SUM
     end do
 end if
 !
@@ -658,11 +673,12 @@ RATIO = 1.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ICON = 0
 do K = 1, MCON
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IF (VMULTD(K) .LT. 0.0) THEN
-    if (VMULTD(K) < 0.0D0) then
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        TEMP = VMULTC(K) / (VMULTC(K) - VMULTD(K))
+    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+    !      IF (VMULTEE(K) .LT. 0.0) THEN
+    write(6, *) size(VMULTEE),  "678", K
+    if (VMULTEE(K) < 0.0D0) then
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        TEMP = VMULTC(K) / (VMULTC(K) - VMULTEE(K))
         if (TEMP < RATIO) then
             RATIO = TEMP
             ICON = K
@@ -680,9 +696,10 @@ do I = 1, N
     DX(I) = TEMP * DX(I) + RATIO * DXNEW(I)
 end do
 do K = 1, MCON
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!  470 VMULTC(K)=AMAX1(0.0,TEMP*VMULTC(K)+RATIO*VMULTD(K))
-    VMULTC(K) = DMAX1(0.0D0, TEMP * VMULTC(K) + RATIO * VMULTD(K))
+    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+    !  470 VMULTC(K)=AMAX1(0.0,TEMP*VMULTC(K)+RATIO*VMULTEE(K))
+    write(6, *) size(VMULTEE),  "701", K
+    VMULTC(K) = DMAX1(0.0D0, TEMP * VMULTC(K) + RATIO * VMULTEE(K))
 end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 if (MCON == M) RESMAX = RESOLD + RATIO * (RESMAX - RESOLD)
@@ -1018,7 +1035,7 @@ end
 !!     The next instruction is reached if a deletion has to be made from the
 !!     active set in order to make room for the new active constraint, because
 !!     the new constraint gradient is a linear combination of the gradients of
-!!     the old active constraints. Set the elements of VMULTD to the multipliers
+!!     the old active constraints. Set the elements of VMULTEE to the multipliers
 !!     of the linear combination. Further, set IOUT to the index of the
 !!     constraint to be deleted, but branch if no suitable index can be found.
 !!
@@ -1069,11 +1086,11 @@ end
 !            DXNEW(I) = DXNEW(I) - TEMP * A(I, KW)
 !        end do
 !    end if
-!    VMULTD(K) = TEMP
+!    VMULTEE(K) = TEMP
 !else
 !!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!!          VMULTD(K)=0.0
-!    VMULTD(K) = 0.0D0
+!!          VMULTEE(K)=0.0
+!    VMULTEE(K) = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !end if
 !K = K - 1
@@ -1089,8 +1106,8 @@ end
 !!
 !do K = 1, NACT
 !!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!!  160 VMULTC(K)=AMAX1(0.0,VMULTC(K)-RATIO*VMULTD(K))
-!    VMULTC(K) = DMAX1(0.0D0, VMULTC(K) - RATIO * VMULTD(K))
+!!  160 VMULTC(K)=AMAX1(0.0,VMULTC(K)-RATIO*VMULTEE(K))
+!    VMULTC(K) = DMAX1(0.0D0, VMULTC(K) - RATIO * VMULTEE(K))
 !end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !if (ICON < NACT) then
@@ -1335,8 +1352,8 @@ end
 !    end do
 !end if
 !!
-!!     Set VMULTD to the VMULTC vector that would occur if DX became DXNEW. A
-!!     device is included to force VMULTD(K)=0.0 if deviations from this value
+!!     Set VMULTEE to the VMULTC vector that would occur if DX became DXNEW. A
+!!     device is included to force VMULTEE(K)=0.0 if deviations from this value
 !!     can be attributed to computer rounding errors. First calculate the new
 !!     Lagrange multipliers.
 !!
@@ -1361,18 +1378,18 @@ end
 !ACCB = ZDWABS + 0.2D0 * DABS(ZDOTW)
 !if (ZDWABS >= ACCA .or. ACCA >= ACCB) ZDOTW = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!VMULTD(K) = ZDOTW / ZDOTA(K)
+!VMULTEE(K) = ZDOTW / ZDOTA(K)
 !if (K >= 2) then
 !    KK = IACT(K)
 !    do I = 1, N
-!        DXNEW(I) = DXNEW(I) - VMULTD(K) * A(I, KK)
+!        DXNEW(I) = DXNEW(I) - VMULTEE(K) * A(I, KK)
 !    end do
 !    K = K - 1
 !    goto 390
 !end if
 !!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!!      IF (MCON .GT. M) VMULTD(NACT)=AMAX1(0.0,VMULTD(NACT))
-!if (MCON > M) VMULTD(NACT) = DMAX1(0.0D0, VMULTD(NACT))
+!!      IF (MCON .GT. M) VMULTEE(NACT)=AMAX1(0.0,VMULTEE(NACT))
+!if (MCON > M) VMULTEE(NACT) = DMAX1(0.0D0, VMULTEE(NACT))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!
 !!     Complete VMULTC by finding the new constraint residuals.
@@ -1403,7 +1420,7 @@ end
 !        ACCB = SUMABS + 0.2D0 * DABS(SUM)
 !        if (SUMABS >= ACCA .or. ACCA >= ACCB) SUM = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!        VMULTD(K) = SUM
+!        VMULTEE(K) = SUM
 !    end do
 !end if
 !!
@@ -1416,10 +1433,10 @@ end
 !ICON = 0
 !do K = 1, MCON
 !!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!!      IF (VMULTD(K) .LT. 0.0) THEN
-!    if (VMULTD(K) < 0.0D0) then
+!!      IF (VMULTEE(K) .LT. 0.0) THEN
+!    if (VMULTEE(K) < 0.0D0) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!        TEMP = VMULTC(K) / (VMULTC(K) - VMULTD(K))
+!        TEMP = VMULTC(K) / (VMULTC(K) - VMULTEE(K))
 !        if (TEMP < RATIO) then
 !            RATIO = TEMP
 !            ICON = K
@@ -1438,8 +1455,8 @@ end
 !end do
 !do K = 1, MCON
 !!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!!  470 VMULTC(K)=AMAX1(0.0,TEMP*VMULTC(K)+RATIO*VMULTD(K))
-!    VMULTC(K) = DMAX1(0.0D0, TEMP * VMULTC(K) + RATIO * VMULTD(K))
+!!  470 VMULTC(K)=AMAX1(0.0,TEMP*VMULTC(K)+RATIO*VMULTEE(K))
+!    VMULTC(K) = DMAX1(0.0D0, TEMP * VMULTC(K) + RATIO * VMULTEE(K))
 !end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !if (MCON == M) RESMAX = RESOLD + RATIO * (RESMAX - RESOLD)
