@@ -16,28 +16,34 @@
       module trustregion_mod
 
       contains
-!subroutine TRSTLP(N, M, A, B, RHO, DX, IFULL, IACT, VMULTD)
-!SUBROUTINE TRSTLP (N,M,A,B,RHO,DX,IFULL,IACT)!,Z,ZDOTA,VMULTC,  SDIRN,DXNEW)!, VMULTD)
-      SUBROUTINE TRSTLP (N,M,A,B,RHO,DX,IFULL,IACT, VMULTD)
+!subroutine TRSTLP(N, M, A, B, RHO, DX, IFULL, IACT, VMULTEE)
+!SUBROUTINE TRSTLP (N,M,A,B,RHO,DX,IFULL,IACT)!,Z,ZDOTA,VMULTC,  SDIRN,DXNEW)!, VMULTEE)
+      SUBROUTINE TRSTLP (N,M,A,B,RHO,DX,IFULL,IACT)
+!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+!SUBROUTINE TRSTLP (N,M,A,B,RHO,DX,IFULL,IACT, VMULTEE)
+!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       implicit real(kind(0.0D0)) (A - H, O - Z)
       implicit integer(I - N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+      real(kind(0.0D0)) :: Vmultee(M+1)
+!real(kind(0.0D0)) :: Vmultd(*)
+!real(kind(0.0D0)) :: Vmultd(:)
+!dimension Vmultd(M)
+!dimension Vmultd(*)
+!dimension Vmultd(:)
+!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
       dimension A(N, *), B(*), DX(*), IACT(*), Z(N, N), ZDOTA(N)
       dimension DXNEW(N)
       dimension DSAV(N)
-!dimension VMULTD(M+1)
+!dimension VMULTEE(M+1)
       dimension VMULTC(M + 1), SDIRN(N)
-!REAL(kind(0.0D0)) :: VMULTD(:)
+!REAL(kind(0.0D0)) :: VMULTEE(:)
 !real(RP) :: Z(N, N)
 !real(RP) :: Zdota(N)
 !real(RP) :: Vmultc(M + 1)
 !real(RP) :: Sdirn(N)
-!real(kind(0.0D0)) :: Vmultd(:)
-!real(kind(0.0D0)) :: Vmultd(M)
-!real(kind(0.0D0)) :: Vmultd(*)
-!dimension Vmultd(*)
-      dimension Vmultd(M)
       dimension VMULTE(M)
 !real(RP) :: Dxnew(N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -82,9 +88,9 @@
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 26-06-2019: See the code below line number 80
       ITERC = 0
-! open(unit=6,file='temp.txt',status='unknown')
-!write(6,*) size(VMULTD)
-!write(6,*) VMULTD
+       open(unit=6,file='temp.txt',status='unknown')
+!write(6, *) size(VMULTEE),  size(VMULTEE)
+!write(6, *) size(VMULTEE),  VMULTEE
 !close(6)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       IFULL = 1
@@ -276,7 +282,7 @@
 !     The next instruction is reached if a deletion has to be made from the
 !     active set in order to make room for the new active constraint, because
 !     the new constraint gradient is a linear combination of the gradients of
-!     the old active constraints. Set the elements of VMULTD to the multipliers
+!     the old active constraints. Set the elements of VMULTEE to the multipliers
 !     of the linear combination. Further, set IOUT to the index of the
 !     constraint to be deleted, but branch if no suitable index can be found.
 !
@@ -285,6 +291,7 @@
       RATIO = -1.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       K = NACT
+
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !  130 ZDOTV=0.0
 !      ZDVABS=0.0
@@ -327,11 +334,13 @@
                   DXNEW(I) = DXNEW(I) - TEMP * A(I, KW)
               end do
           end if
-          VMULTD(K) = TEMP
+          write(6, *) size(VMULTEE), "322", K
+          VMULTEE(K) = TEMP
       else
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          VMULTD(K)=0.0
-          VMULTD(K) = 0.0D0
+!          VMULTEE(K)=0.0
+          write(6, *) size(VMULTEE), "327", K
+          if (K > 0) VMULTEE(K) = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       end if
       K = K - 1
@@ -345,17 +354,19 @@
 !     that the one to be replaced is at the end of the list. Also calculate the
 !     new value of ZDOTA(NACT) and branch if it is not acceptable.
 !
+      write(6, *) size(VMULTEE), "NACT", NACT
       do K = 1, NACT
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!  160 VMULTC(K)=AMAX1(0.0,VMULTC(K)-RATIO*VMULTD(K))
-          VMULTC(K) = DMAX1(0.0D0, VMULTC(K) - RATIO * VMULTD(K))
+!  160 VMULTC(K)=AMAX1(0.0,VMULTC(K)-RATIO*VMULTEE(K))
+          write(6, *) size(VMULTEE), "336", K
+          VMULTC(K) = DMAX1(0.0D0, VMULTC(K) - RATIO * VMULTEE(K))
       end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       if (ICON < NACT) then
           ISAVE = IACT(ICON)
           VSAVE = VMULTC(ICON)
           K = ICON
-170   KP = K + 1
+170       KP = K + 1
           KW = IACT(KP)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          SP=0.0
@@ -464,7 +475,7 @@
           ISAVE = IACT(ICON)
           VSAVE = VMULTC(ICON)
           K = ICON
-270   KP = K + 1
+270       KP = K + 1
           KK = IACT(KP)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          SP=0.0
@@ -593,8 +604,8 @@
           end do
       end if
 !
-!     Set VMULTD to the VMULTC vector that would occur if DX became DXNEW. A
-!     device is included to force VMULTD(K)=0.0 if deviations from this value
+!     Set VMULTEE to the VMULTC vector that would occur if DX became DXNEW. A
+!     device is included to force VMULTEE(K)=0.0 if deviations from this value
 !     can be attributed to computer rounding errors. First calculate the new
 !     Lagrange multipliers.
 !
@@ -619,18 +630,21 @@
       ACCB = ZDWABS + 0.2D0 * DABS(ZDOTW)
       if (ZDWABS >= ACCA .or. ACCA >= ACCB) ZDOTW = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      VMULTD(K) = ZDOTW / ZDOTA(K)
+      write(6, *) size(VMULTEE), "618", K
+      VMULTEE(K) = ZDOTW / ZDOTA(K)
       if (K >= 2) then
           KK = IACT(K)
           do I = 1, N
-              DXNEW(I) = DXNEW(I) - VMULTD(K) * A(I, KK)
+              write(6, *) size(VMULTEE), "623", K
+              DXNEW(I) = DXNEW(I) - VMULTEE(K) * A(I, KK)
           end do
           K = K - 1
           goto 390
       end if
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IF (MCON .GT. M) VMULTD(NACT)=AMAX1(0.0,VMULTD(NACT))
-      if (MCON > M) VMULTD(NACT) = DMAX1(0.0D0, VMULTD(NACT))
+!      IF (MCON .GT. M) VMULTEE(NACT)=AMAX1(0.0,VMULTEE(NACT))
+      write(6, *) size(VMULTEE), "631", NACT
+      if (MCON > M) VMULTEE(NACT) = DMAX1(0.0D0, VMULTEE(NACT))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     Complete VMULTC by finding the new constraint residuals.
@@ -661,7 +675,8 @@
               ACCB = SUMABS + 0.2D0 * DABS(SUM)
               if (SUMABS >= ACCA .or. ACCA >= ACCB) SUM = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              VMULTD(K) = SUM
+              write(6, *) size(VMULTEE), "663", K
+              VMULTEE(K) = SUM
           end do
       end if
 !
@@ -674,10 +689,11 @@
       ICON = 0
       do K = 1, MCON
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IF (VMULTD(K) .LT. 0.0) THEN
-          if (VMULTD(K) < 0.0D0) then
+!      IF (VMULTEE(K) .LT. 0.0) THEN
+          write(6, *) size(VMULTEE), "678", K
+          if (VMULTEE(K) < 0.0D0) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              TEMP = VMULTC(K) / (VMULTC(K) - VMULTD(K))
+              TEMP = VMULTC(K) / (VMULTC(K) - VMULTEE(K))
               if (TEMP < RATIO) then
                   RATIO = TEMP
                   ICON = K
@@ -696,8 +712,10 @@
       end do
       do K = 1, MCON
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!  470 VMULTC(K)=AMAX1(0.0,TEMP*VMULTC(K)+RATIO*VMULTD(K))
-          VMULTC(K) = DMAX1(0.0D0, TEMP * VMULTC(K) + RATIO * VMULTD(K))
+!  470 VMULTC(K)=AMAX1(0.0,TEMP*VMULTC(K)+RATIO*VMULTEE(K))
+          write(6, *) size(VMULTEE), "701", K
+          VMULTC(K) = DMAX1(0.0D0, TEMP * VMULTC(K) + RATIO * VMULTEE(K)&
+     &)
       end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       if (MCON == M) RESMAX = RESOLD + RATIO * (RESMAX - RESOLD)
@@ -1033,7 +1051,7 @@
 !!     The next instruction is reached if a deletion has to be made from the
 !!     active set in order to make room for the new active constraint, because
 !!     the new constraint gradient is a linear combination of the gradients of
-!!     the old active constraints. Set the elements of VMULTD to the multipliers
+!!     the old active constraints. Set the elements of VMULTEE to the multipliers
 !!     of the linear combination. Further, set IOUT to the index of the
 !!     constraint to be deleted, but branch if no suitable index can be found.
 !!
@@ -1084,11 +1102,11 @@
 !            DXNEW(I) = DXNEW(I) - TEMP * A(I, KW)
 !        end do
 !    end if
-!    VMULTD(K) = TEMP
+!    VMULTEE(K) = TEMP
 !else
 !!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!!          VMULTD(K)=0.0
-!    VMULTD(K) = 0.0D0
+!!          VMULTEE(K)=0.0
+!    VMULTEE(K) = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !end if
 !K = K - 1
@@ -1104,8 +1122,8 @@
 !!
 !do K = 1, NACT
 !!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!!  160 VMULTC(K)=AMAX1(0.0,VMULTC(K)-RATIO*VMULTD(K))
-!    VMULTC(K) = DMAX1(0.0D0, VMULTC(K) - RATIO * VMULTD(K))
+!!  160 VMULTC(K)=AMAX1(0.0,VMULTC(K)-RATIO*VMULTEE(K))
+!    VMULTC(K) = DMAX1(0.0D0, VMULTC(K) - RATIO * VMULTEE(K))
 !end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !if (ICON < NACT) then
@@ -1350,8 +1368,8 @@
 !    end do
 !end if
 !!
-!!     Set VMULTD to the VMULTC vector that would occur if DX became DXNEW. A
-!!     device is included to force VMULTD(K)=0.0 if deviations from this value
+!!     Set VMULTEE to the VMULTC vector that would occur if DX became DXNEW. A
+!!     device is included to force VMULTEE(K)=0.0 if deviations from this value
 !!     can be attributed to computer rounding errors. First calculate the new
 !!     Lagrange multipliers.
 !!
@@ -1376,18 +1394,18 @@
 !ACCB = ZDWABS + 0.2D0 * DABS(ZDOTW)
 !if (ZDWABS >= ACCA .or. ACCA >= ACCB) ZDOTW = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!VMULTD(K) = ZDOTW / ZDOTA(K)
+!VMULTEE(K) = ZDOTW / ZDOTA(K)
 !if (K >= 2) then
 !    KK = IACT(K)
 !    do I = 1, N
-!        DXNEW(I) = DXNEW(I) - VMULTD(K) * A(I, KK)
+!        DXNEW(I) = DXNEW(I) - VMULTEE(K) * A(I, KK)
 !    end do
 !    K = K - 1
 !    goto 390
 !end if
 !!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!!      IF (MCON .GT. M) VMULTD(NACT)=AMAX1(0.0,VMULTD(NACT))
-!if (MCON > M) VMULTD(NACT) = DMAX1(0.0D0, VMULTD(NACT))
+!!      IF (MCON .GT. M) VMULTEE(NACT)=AMAX1(0.0,VMULTEE(NACT))
+!if (MCON > M) VMULTEE(NACT) = DMAX1(0.0D0, VMULTEE(NACT))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!
 !!     Complete VMULTC by finding the new constraint residuals.
@@ -1418,7 +1436,7 @@
 !        ACCB = SUMABS + 0.2D0 * DABS(SUM)
 !        if (SUMABS >= ACCA .or. ACCA >= ACCB) SUM = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!        VMULTD(K) = SUM
+!        VMULTEE(K) = SUM
 !    end do
 !end if
 !!
@@ -1431,10 +1449,10 @@
 !ICON = 0
 !do K = 1, MCON
 !!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!!      IF (VMULTD(K) .LT. 0.0) THEN
-!    if (VMULTD(K) < 0.0D0) then
+!!      IF (VMULTEE(K) .LT. 0.0) THEN
+!    if (VMULTEE(K) < 0.0D0) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!        TEMP = VMULTC(K) / (VMULTC(K) - VMULTD(K))
+!        TEMP = VMULTC(K) / (VMULTC(K) - VMULTEE(K))
 !        if (TEMP < RATIO) then
 !            RATIO = TEMP
 !            ICON = K
@@ -1453,8 +1471,8 @@
 !end do
 !do K = 1, MCON
 !!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!!  470 VMULTC(K)=AMAX1(0.0,TEMP*VMULTC(K)+RATIO*VMULTD(K))
-!    VMULTC(K) = DMAX1(0.0D0, TEMP * VMULTC(K) + RATIO * VMULTD(K))
+!!  470 VMULTC(K)=AMAX1(0.0,TEMP*VMULTC(K)+RATIO*VMULTEE(K))
+!    VMULTC(K) = DMAX1(0.0D0, TEMP * VMULTC(K) + RATIO * VMULTEE(K))
 !end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !if (MCON == M) RESMAX = RESOLD + RATIO * (RESMAX - RESOLD)
