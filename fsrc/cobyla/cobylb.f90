@@ -120,6 +120,9 @@ real(RP) :: wsig
 real(RP) :: xdrop(size(x))
 real(RP) :: xsav(size(x), NSMAX)
 
+write (*, *) "TEST"
+
+open (unit=10, file='log', status='unknown')
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
