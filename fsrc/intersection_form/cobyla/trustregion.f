@@ -46,7 +46,7 @@
       real(RP) :: Zdota(N)
       real(RP) :: Vmultc(M + 1)
       real(RP) :: Sdirn(N)
-      real(RP) :: Vmultd(M)
+      real(RP) :: Vmultd(M + 1)
       real(RP) :: Dxnew(N)
 
 
@@ -135,7 +135,6 @@
 !
 !
 
-      write (10, *) n, m, A, B, rho, dx, ifull, iact
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 26-06-2019: See the code below line number 80
