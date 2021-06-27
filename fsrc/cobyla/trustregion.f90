@@ -29,7 +29,6 @@ dimension VMULTC(M + 1), SDIRN(N)
 !real(RP) :: Zdota(N)
 !real(RP) :: Vmultc(M + 1)
 !real(RP) :: Sdirn(N)
-dimension VMULTE(M)
 !real(RP) :: Dxnew(N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
@@ -73,7 +72,7 @@ dimension VMULTE(M)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 26-06-2019: See the code below line number 80
 ITERC = 0
- open(unit=6,file='temp.txt',status='unknown')
+ open(unit=6,file='temp.txt',status='old')
 !write(6, *) size(VMULTEE),  size(VMULTEE)
 !write(6, *) size(VMULTEE),  VMULTEE
 !close(6)
@@ -326,6 +325,7 @@ else
     !          VMULTEE(K)=0.0
     write(6, *) size(VMULTEE),  "327", K
     if (K > 0) VMULTEE(K) = 0.0D0
+    !VMULTEE(K) = 0.0D0
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 end if
 K = K - 1
@@ -723,8 +723,10 @@ goto 60
 !
 490 if (MCON == M) goto 480
 IFULL = 0
-500 return
-end
+500  close(6)
+return
+!500 return
+end subroutine trstlp
 
 !subroutine trstlp(n, m, A, B, rho, dx, ifull, iact)
 
