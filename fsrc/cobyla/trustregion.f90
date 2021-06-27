@@ -3,7 +3,7 @@ module trustregion_mod
 contains
 !subroutine TRSTLP(N, M, A, B, RHO, DX, IFULL, IACT, VMULTD)
 !SUBROUTINE TRSTLP (N,M,A,B,RHO,DX,IFULL,IACT)!,Z,ZDOTA,VMULTC,  SDIRN,DXNEW)!, VMULTD)
-SUBROUTINE TRSTLP (N,M,A,B,RHO,DX,IFULL,IACT)!, VMULTD)
+SUBROUTINE TRSTLP (N,M,A,B,RHO,DX,IFULL,IACT, VMULTD)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 implicit real(kind(0.0D0)) (A - H, O - Z)
 implicit integer(I - N)
@@ -18,8 +18,12 @@ dimension VMULTC(M + 1), SDIRN(N)
 !real(RP) :: Zdota(N)
 !real(RP) :: Vmultc(M + 1)
 !real(RP) :: Sdirn(N)
-real(kind(0.0D0)) :: Vmultd(M)
-!dimension VMULTD(M)
+!real(kind(0.0D0)) :: Vmultd(:)
+!real(kind(0.0D0)) :: Vmultd(M)
+!real(kind(0.0D0)) :: Vmultd(*)
+!dimension Vmultd(*)
+dimension Vmultd(M)
+dimension VMULTE(M)
 !real(RP) :: Dxnew(N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !

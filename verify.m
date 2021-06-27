@@ -38,7 +38,7 @@ else
 end
 if isfield(options, 'ir')
     % ir is the index of the random experiment to be conducted. If it is negative, then experiments
-    % 0, 1, ..., nr, ..., nr + 5 will be conducted. nr + 5 is because there are a few fixed
+    % 0, 1, ..., nr, ..., nr + 7 will be conducted. nr + 7 is because there are a few fixed
     % experiments that will always be run.
     ir = options.ir;
 else
@@ -102,7 +102,7 @@ end
 
 if ir < 0
     minir = 0;
-    maxir = nr + 5;
+    maxir = nr + 7;
 else
     minir = ir;
     maxir = ir;
@@ -151,9 +151,15 @@ for ip = minip : length(plist)
             test_options.maxfun = 1000*n;
         end
         if ir == 4
-            test_options.ftarget = inf;
+            test_options.maxfun = 1;
         end
         if ir == 5
+            test_options.maxfun = ceil(n/2);
+        end
+        if ir == 6
+            test_options.ftarget = inf;
+        end
+        if ir == 7
             test_options.rhoend = test_options.rhobeg;
         end
         prob.options = test_options;
