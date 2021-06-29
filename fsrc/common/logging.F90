@@ -15,7 +15,7 @@ public :: logging
 contains
 
 
-subroutine logging(nfo, iprint, nf, f, x, solver)
+subroutine logging(lnnmb, nf, f, nx, mssg)
 use consts_mod, only : RP, IK, MSSGLEN, OUTUNIT
 use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED
 use info_mod, only : SMALL_TR_RADIUS, TRSUBP_FAILED
