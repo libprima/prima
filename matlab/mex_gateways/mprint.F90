@@ -20,7 +20,7 @@ contains
 
 
 ! The Fortran subroutine that evaluates the objective function.
-subroutine mprint()
+subroutine mprint(mssg)
 
 ! Generic modules
 use consts_mod, only : RP, HUGEFUN, MSSGLEN
