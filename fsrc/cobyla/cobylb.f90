@@ -121,7 +121,9 @@ real(RP) :: wsig
 real(RP) :: xdrop(size(x))
 real(RP) :: xsav(size(x), NSMAX)
 
-call logging(nfvals, f)
+character(len=SRNLEN), parameter :: srname = 'COBYLB'
+
+call logging(srname, 124, nfvals, f)
 
 open (unit=10, file='log', status='unknown')
 
