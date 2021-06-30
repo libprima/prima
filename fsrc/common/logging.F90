@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and papers.
 !
-! Last Modified: Tuesday, June 29, 2021 PM05:01:40
+! Last Modified: Wednesday, June 30, 2021 PM12:34:42
 
 
 module logging_mod
@@ -15,7 +15,7 @@ public :: logging
 contains
 
 
-subroutine logging(lnnmb, nf, f, nx, mssg)
+subroutine logging(lnnmb, nf, f, nx, conv, mssg)
 use consts_mod, only : RP, IK, MSSGLEN, OUTUNIT
 use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED
 use info_mod, only : SMALL_TR_RADIUS, TRSUBP_FAILED
