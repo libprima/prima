@@ -11,6 +11,7 @@ use infnan_mod, only : is_nan, is_posinf
 use debug_mod, only : errstop
 use output_mod, only : retmssg, rhomssg, fmssg
 use lina_mod, only : calquad, inprod
+use logging_mod, only : logging
 
 ! Solver-specific modules
 !use savex_mod, only : savex
@@ -120,7 +121,7 @@ real(RP) :: wsig
 real(RP) :: xdrop(size(x))
 real(RP) :: xsav(size(x), NSMAX)
 
-write (*, *) "TEST"
+call logging(nfvals, f)
 
 open (unit=10, file='log', status='unknown')
 
