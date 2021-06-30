@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and papers.
 !
-! Last Modified: Wednesday, June 30, 2021 PM04:22:46
+! Last Modified: Wednesday, June 30, 2021 PM11:23:38
 
 
 module logging_mod
@@ -15,18 +15,18 @@ public :: logging
 contains
 
 
-subroutine logging(srname, lnnum, nf, x, f, con, conv, mssg)
+subroutine logging(srname, lnnum, nf, f, x, con, conv, mssg)
 use consts_mod, only : RP, IK
 implicit none
 
 ! Inputs
-integer(IK), optional, intent(in) :: lnnum
+integer(IK), intent(in) :: lnnum
 integer(IK), intent(in) :: nf
 real(RP), intent(in) :: f
 real(RP), optional, intent(in) :: x(:)
 real(RP), optional, intent(in) :: con(:)
 real(RP), optional, intent(in) :: conv
-character(len=*), optional, intent(in) :: srname
+character(len=*), intent(in) :: srname
 character(len=*), optional, intent(in) :: mssg
 
 ! Local variables
@@ -37,7 +37,7 @@ character(len=3) :: fstat
 logical :: fexist
 
 
-fout = 'log'
+fout = 'logging'
 inquire (file=trim(fout), exist=fexist)
 if (fexist) then
     fstat = 'old'
@@ -48,13 +48,8 @@ open (unit=LOGUNIT, file=trim(fout), status=fstat, position='append', iostat=ios
 if (ios /= 0) then
     print '(1A)', 'Fail to open file '//trim(fout)//'!'
 else
-    if (present(srname)) then
-        write (LOGUNIT, '(/1A)') 'In '//srname
-    end if
-    if (present(lnnum)) then
-        write (LOGUNIT, '(/1A, I7)') 'Line number', lnnum
-    end if
-    write (LOGUNIT, '(/1A, I7, 4X, 1A, 1PD18.10)') 'Function number', nf, 'F = ', f
+    write (LOGUNIT, '(/1A, I7 1A, I7, 4X, 1A, 1PD18.10)') 'In '//trim(srname)//', line number', lnnum, &
+        & ', Function number', nf, 'F = ', f
     if (present(x)) then
         write (LOGUNIT, '(/1A, /(1P, 5D15.6))') 'The corresponding X is:', x
     end if
