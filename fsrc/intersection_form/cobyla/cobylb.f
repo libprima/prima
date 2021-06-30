@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 30-Jun-2021.
+! on 01-Jul-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -147,7 +147,6 @@
 
       character(len=SRNLEN), parameter :: srname = 'COBYLB'
 
-      call logging(srname, 124, nfvals, f)
 
       open (unit=10, file='log', status='unknown')
 
@@ -249,6 +248,7 @@
           end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       end if
+      call logging(srname, 225, nfvals, f, x, con, resmax, 'test')
 
 
       if (NFVALS == IPRINT - 1 .or. IPRINT == 3) then

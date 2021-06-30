@@ -123,7 +123,6 @@ real(RP) :: xsav(size(x), NSMAX)
 
 character(len=SRNLEN), parameter :: srname = 'COBYLB'
 
-call logging(srname, 124, nfvals, f)
 
 open (unit=10, file='log', status='unknown')
 
@@ -223,6 +222,7 @@ if (M > 0) then
     end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 end if
+call logging(srname, 225, nfvals, f, x, con, resmax, 'test')
 
 
 if (NFVALS == IPRINT - 1 .or. IPRINT == 3) then
