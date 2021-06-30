@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and papers.
 !
-! Last Modified: Wednesday, June 30, 2021 PM02:45:38
+! Last Modified: Wednesday, June 30, 2021 PM03:42:52
 
 
 module logging_mod
@@ -15,7 +15,7 @@ public :: logging
 contains
 
 
-subroutine logging(srname, lnnum, nf, f, x, con, mssg)
+subroutine logging(srname, lnnum, nf, x, f, con, conv, mssg)
 use consts_mod, only : RP, IK, MSSGLEN
 implicit none
 
@@ -23,9 +23,10 @@ implicit none
 integer(IK), optional, intent(in) :: lnnum
 integer(IK), intent(in) :: nf
 real(RP), intent(in) :: f
-real(RP), intent(in) :: x(:)
+real(RP), optional, intent(in) :: x(:)
 real(RP), optional, intent(in) :: con(:)
-character(len=*), optional, intent(in) :: srname 
+real(RP), optional, intent(in) :: conv
+character(len=*), optional, intent(in) :: srname
 character(len=*), optional, intent(in) :: mssg
 
 ! Local variables
@@ -47,8 +48,25 @@ open (unit=LOGUNIT, file=trim(fout), status=fstat, position='append', iostat=ios
 if (ios /= 0) then
     print '(1A)', 'Fail to open file '//trim(fout)//'!'
 else
-    write (LOGUNIT, '(/1A, 1A, I7, 4X, 1A, 1PD18.10, 4X, 1A, /(1P, 5D15.6))') 'Line number', lnnum, 'Function number', nf, &
-        & 'F = ', f, 'The corresponding X is:', x
+    if (present(srname)) then
+        write (LOGUNIT, '(/1A)', 'In '//srname)
+    end if
+    if (present(lnnum)) then
+        write (LOGUNIT, '(/1A, I7)', 'Line number', lnnum)
+    end if
+    write (LOGUNIT, '(/1A, I7, 4X, 1A, 1PD18.10') 'Function number', nf, 'F = ', f
+    if (present(x)) then
+        write (LOGUNIT, '(/1A, /(1P, 5D15.6))') 'The corresponding X is:', x
+    end if
+    if (present(con)) then
+        write (LOGUNIT, '(/1A, /(1P, 5D15.6))') 'The constraint is:', con
+    end if
+    if (present(con)) then
+        write (LOGUNIT, '(/1A, 1PD18.10)') 'The constraint violation is:', conv
+    end if
+    if (present(mssg)) then
+        write (LOGUNIT, '(/1A)') 'Message:', mssg
+    end if
     close (LOGUNIT)
 end if
 
