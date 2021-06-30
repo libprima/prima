@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 27-Jun-2021.
+! on 30-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -17,7 +17,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020.
 !
-! Last Modified: Sunday, May 23, 2021 AM11:07:23
+! Last Modified: Tuesday, June 29, 2021 PM12:13:14
 
 ! Remarks:
 !
@@ -189,7 +189,7 @@
 ! The maximal length of subroutine/function names
       integer, parameter :: SRNLEN = 30
 
-! The maximal length of messages; used in output.F and mexapi.F
+! The maximal length of messages; used in output.F90 and fmexapi.F90
       integer, parameter :: MSSGLEN = 300
 
 ! Output unit, can be any integer between 9 and 99

@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 27-Jun-2021.
+! on 30-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -18,8 +18,8 @@
 ! 2. Declare the interfaces of some MEX API subroutine/functions
 !    provided by MathWorks.
 ! 3. Define some user-friendly subroutines for interfacing Fortran with
-!    MATLAB. We suppose that the REAL type used in the Fortran code is
-!    REAL(RP), and the INTEGER type is INTEGER(IK).
+!    MATLAB. Note that we suppose that the REAL type used in the Fortran
+!    code is REAL(RP), and the INTEGER type is INTEGER(IK).
 !
 ! N.B.:
 ! 1. MathWorks may change its APIs in the future!!!
@@ -29,10 +29,10 @@
 ! 3. Be careful with the "kind" and storage size for integer-type
 !    (integer, mwSize, mwIndex) variables/functions. Some of them may be
 !    32bit, while the others may be 64bit, depending on the machine,
-!    the version of matlab, and the compilation option of mex. Do NOT
+!    the version of MATLAB, and the compilation option of mex. Do NOT
 !    assume any two of them to be the same. If ever a Segmentation Fault
 !    occurs, check these variables first.
-! 4. Note that MEX generally use double precesion for real values. It is
+! 4. Note that MEX generally use double precision for real values. It is
 !    not necessarily the case in the Fortran code. Therefore, explicit
 !    type conversion is necessary whenever real values are exchanged
 !    between Fortran and MATLAB. Type mismatch will lead to errors like
@@ -47,12 +47,12 @@
 
 ! Coded by Zaikun ZHANG in July 2020.
 !
-! Last Modified: Sunday, May 23, 2021 PM04:53:18
+! Last Modified: Tuesday, June 29, 2021 PM04:28:06
 
 
 ! Do we intend to use quad precision in the Fortran code (1) or not (0)?
 ! 1. It is rarely a good idea to use REAL128 as the working precision,
-!     which is probably inefficient and unnecessary.
+!    which is probably inefficient and unnecessary.
 ! 2. Do NOT change __USE_QP__ to 1 unless you are sure that you intend
 !    to use quad precision and such a precision is available on the
 !    current platform.

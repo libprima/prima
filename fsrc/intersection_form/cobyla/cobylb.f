@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 27-Jun-2021.
+! on 30-Jun-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -29,6 +29,7 @@
       use debug_mod, only : errstop
       use output_mod, only : retmssg, rhomssg, fmssg
       use lina_mod, only : calquad, inprod
+      use logging_mod, only : logging
 
 ! Solver-specific modules
 !use savex_mod, only : savex
@@ -144,7 +145,7 @@
       real(RP) :: xdrop(size(x))
       real(RP) :: xsav(size(x), NSMAX)
 
-      write (*, *) "TEST"
+      call logging(nfvals, f)
 
       open (unit=10, file='log', status='unknown')
 
