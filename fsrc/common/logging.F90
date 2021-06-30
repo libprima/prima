@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and papers.
 !
-! Last Modified: Wednesday, June 30, 2021 PM11:23:38
+! Last Modified: Thursday, July 01, 2021 AM01:35:14
 
 
 module logging_mod
@@ -48,19 +48,19 @@ open (unit=LOGUNIT, file=trim(fout), status=fstat, position='append', iostat=ios
 if (ios /= 0) then
     print '(1A)', 'Fail to open file '//trim(fout)//'!'
 else
-    write (LOGUNIT, '(/1A, I7 1A, I7, 4X, 1A, 1PD18.10)') 'In '//trim(srname)//', line number', lnnum, &
-        & ', Function number', nf, 'F = ', f
+    write (LOGUNIT, '(/1A, I5, 4X, 1A, I7, 4X, 1A, 1PD18.10)') 'In '//trim(srname)//', Line number', lnnum, &
+        & 'Function number', nf, 'F = ', f
     if (present(x)) then
-        write (LOGUNIT, '(/1A, /(1P, 5D15.6))') 'The corresponding X is:', x
+        write (LOGUNIT, '(1A, /(1P, 5D15.6))') 'The corresponding X is:', x
     end if
     if (present(con)) then
-        write (LOGUNIT, '(/1A, /(1P, 5D15.6))') 'The constraint is:', con
+        write (LOGUNIT, '(1A, /(1P, 5D15.6))') 'The constraint is:', con
     end if
     if (present(con)) then
-        write (LOGUNIT, '(/1A, 1PD18.10)') 'The constraint violation is:', conv
+        write (LOGUNIT, '(1A, 1PD18.10)') 'The constraint violation is:', conv
     end if
     if (present(mssg)) then
-        write (LOGUNIT, '(/1A)') 'Message:', mssg
+        write (LOGUNIT, '(1A)') 'Message:', mssg
     end if
     close (LOGUNIT)
 end if
