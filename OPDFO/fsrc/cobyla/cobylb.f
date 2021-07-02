@@ -5,6 +5,7 @@ C     1  CON,SIM,SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT)
      1  SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT,F,INFO,FTARGET,RESMAX)
 
       use logging_mod, only : logging
+
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
       LOGICAL BETTER
@@ -119,8 +120,6 @@ C   60     RESMAX=AMAX1(RESMAX,-CON(K))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       END IF
 
-      call logging('log1', 'cobyla', 121, nfvals, f, x(1:n), con(1:m),
-     &     resmax, 'test')
 
       IF (NFVALS == IPRINT-1 .OR. IPRINT == 3) THEN
           PRINT 70, NFVALS,F,RESMAX,(X(I),I=1,IPTEM)
@@ -132,6 +131,8 @@ C   60     RESMAX=AMAX1(RESMAX,-CON(K))
       CON(MP)=F
       CON(MPP)=RESMAX
 
+      call logging('log1', 'cobyla', 121, nfvals, f, x(1:n), con(1:mpp),
+     &     resmax, 'test')
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C By Zaikun 20190819:
 C CONSAV always containts the constraint value of the current x.

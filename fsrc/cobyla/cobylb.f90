@@ -222,7 +222,6 @@ if (M > 0) then
     end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 end if
-call logging('log2', srname, 225, nfvals, f, x, con, resmax, 'test')
 
 
 if (NFVALS == IPRINT - 1 .or. IPRINT == 3) then
@@ -234,6 +233,7 @@ end if
 CON(MP) = F
 CON(MPP) = RESMAX
 
+call logging('log2', srname, 225, nfvals, f, x, con, resmax, 'test')
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! By Zaikun 20190819:
 ! CONSAV always containts the containt value of the current x.
