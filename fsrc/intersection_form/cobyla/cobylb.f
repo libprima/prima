@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 01-Jul-2021.
+! on 02-Jul-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -248,7 +248,8 @@
           end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       end if
-      call logging(srname, 225, nfvals, f, x, con, resmax, 'test')
+      call logging('log2', srname, 225, nfvals, f, x, con, resmax, 'test&
+     &')
 
 
       if (NFVALS == IPRINT - 1 .or. IPRINT == 3) then
