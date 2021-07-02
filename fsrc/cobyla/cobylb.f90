@@ -672,6 +672,11 @@ write (10, *) nfvals, 'bt'
 !call TRSTLP(N, M, A, CON, RHO, DX, IFULL, IACT, W(IVMD:))
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+
+if (NFVALS == 8) then
+    write (12, *), A(1:n, 1:m + 1), con(1:m + 2)
+    close (12)
+end if
 call TRSTLP(N, M, A, CON, RHO, DX, IFULL, IACT)
 write (10, *) nfvals, 'at'
 if (IFULL == 0) then
