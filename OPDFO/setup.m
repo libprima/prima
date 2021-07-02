@@ -1,6 +1,6 @@
 function setup(varargin)
 %SETUP compiles the package and try adding the package into the search path.
-%   
+%
 %   Let solvername be a string indicating a solver name, and options be
 %   a structure indicating compilation options. Then setup can be called
 %   in the following ways:
@@ -11,7 +11,7 @@ function setup(varargin)
 %
 %   In addition, one can uninstall the package by calling
 %
-%   setup uninstall 
+%   setup uninstall
 %
 %   or remove the compiled MEX files by calling
 %
@@ -84,9 +84,9 @@ if verLessThan('matlab', '8.3') % MATLAB R2014a = MATLAB 8.3
     return
 end
 
-% Interpret the input. 
+% Interpret the input.
 solver_list = {'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla'}; % Solvers to compile; by default, it contains all solvers
-options = struct(); % Compilation options 
+options = struct(); % Compilation options
 wrong_input = false;
 solver = 'ALL'; % The solver to compile specified by the user; by default, it is 'ALL', meaning all solvers
 if nargin == 1
@@ -128,7 +128,7 @@ if strcmp(solver, 'uninstall')
     return;
 end
 
-% Decide which solver(s) to compile. 
+% Decide which solver(s) to compile.
 if ismember(solver, solver_list)
     solver_list = {solver};
 elseif ~strcmpi(solver, 'ALL')
@@ -137,9 +137,9 @@ elseif ~strcmpi(solver, 'ALL')
 end
 
 % Exit if wrong input detected.
-if wrong_input 
+if wrong_input
     return;
-end 
+end
 
 % Extract compilation options.
 if isempty(options)
@@ -184,9 +184,13 @@ end
 % The full path of several directories.
 cpwd = fileparts(mfilename('fullpath')); % Current directory
 fsrc = fullfile(cpwd, 'fsrc'); % Directory of the Fortran source code
+fsrc_intersection_form = fullfile(fileparts(cpwd), 'fsrc/intersection_form'); % Directory of the intersection-form Fortran source code
+filelist = 'ffiles.txt';
+fsrc_common = fullfile(fsrc_intersection_form, 'common'); % Directory of the common files
 fsrc_classical = fullfile(fsrc, 'classical'); % Directory of the classical Fortran source code
 matd = fullfile(cpwd, 'matlab'); % Matlab directory
 gateways = fullfile(matd, 'mex_gateways'); % Directory of the MEX gateway files
+gateways_intersection_form = fullfile(fullfile(fileparts(cpwd), 'matlab', 'mex_gateways'), 'intersection_form');  % Directory of the intersection-form MEX gateway files
 gateways_classical = fullfile(gateways, 'classical'); % Directory of the MEX gateways for the classical Fortran source code
 interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
 interfaces_private = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
@@ -197,7 +201,7 @@ examples = fullfile(matd, 'examples'); % Directory containing some test examples
 % compilation with a different ad_option. Without cleaning-up, the MEX
 % files may be linked with wrong .mod or .o files, which can lead to
 % serious errors including Segmentation Fault!
-dir_list = {fsrc, fsrc_classical, gateways, gateways_classical, interfaces_private};
+dir_list = {fsrc, fsrc_common, fsrc_classical, gateways, gateways_classical, interfaces_private};
 for idir = 1 : length(dir_list)
     modo_files = [files_with_wildcard(dir_list{idir}, '*.mod'), files_with_wildcard(dir_list{idir}, '*.o')];
     cellfun(@(filename) delete(filename), modo_files);
@@ -212,6 +216,14 @@ try
 % We use try ... catch so that we can change directory back to cpwd in
 % case of an error.
 
+    % Compilation of the common files
+    common_files = regexp(fileread(fullfile(fsrc_common, filelist)), '\n', 'split');
+    common_files = strtrim(common_files(~cellfun(@isempty, common_files)));
+    common_files = fullfile(fsrc_common, common_files);
+    common_files = [common_files, fullfile(gateways_intersection_form, 'fmxapi.F'), fullfile(gateways_intersection_form, 'prob.F')];
+    mex(mex_options{:}, '-c', common_files{:}, '-outdir', fsrc_common);
+    common_obj_files = [files_with_wildcard(fsrc_common, '*.o'), files_with_wildcard(fsrc_common, '*.obj')];
+
     % Compilation of function gethuge
     mex(mex_options{:}, '-output', 'gethuge', fullfile(fsrc, 'pdfoconst.F'), fullfile(gateways, 'gethuge.F'));
 
@@ -224,7 +236,7 @@ try
         modo_files = [files_with_wildcard(fullfile(fsrc, solver), '*.mod'), files_with_wildcard(fullfile(fsrc, solver), '*.o')];
         cellfun(@(filename) delete(filename), modo_files);
         % Compile
-        src_files = files_with_wildcard(fullfile(fsrc, solver), '*.f*');
+        src_files = [common_obj_files, files_with_wildcard(fullfile(fsrc, solver), '*.f*')];
         mex(mex_options{:}, '-output', ['f', solver], fullfile(fsrc, 'pdfoconst.F'), src_files{:}, fullfile(gateways, [solver, '-interface.F']));
 
         % Compilation of the 'classical' version of solver
@@ -281,21 +293,21 @@ if exist(user_startup, 'file')
     end
 end
 
-if ~path_saved && numel(userpath) > 0 
-    % Administrators may set userpath to empty for certain users, especially 
+if ~path_saved && numel(userpath) > 0
+    % Administrators may set userpath to empty for certain users, especially
     % on servers. In that case, userpath = [], and user_startup = 'startup.m'.
-    % We will not use user_startup. Otherwise, we will only get a startup.m 
+    % We will not use user_startup. Otherwise, we will only get a startup.m
     % in the current directory, which will not be executed when MATLAB starts
-    % from other directories.  
+    % from other directories.
 
-    % We first check whether the last line of the user startup script is an 
-    % empty line (or the file is empty or even does not exist at all). 
+    % We first check whether the last line of the user startup script is an
+    % empty line (or the file is empty or even does not exist at all).
     % If yes, we do not need to put a line break before the path adding string.
     if exist(user_startup, 'file')
         startup_text_cells = regexp(fileread(user_startup), '\n', 'split');
         last_line_empty = isempty(startup_text_cells) || (isempty(startup_text_cells{end}) && isempty(startup_text_cells{max(1, end-1)}));
     else
-        last_line_empty = true;  
+        last_line_empty = true;
     end
     file_id = fopen(user_startup, 'a');
     if file_id ~= -1 % If FOPEN cannot open the file, it returns -1
@@ -339,7 +351,7 @@ return
 
 %%%%%%%%%%%%%%% Function for file names with handling wildcard %%%%%%%%%%%
 function full_files = files_with_wildcard(dir_name, wildcard_string)
-%FULL_FILES returns a cell array of files that match the wildcard_string 
+%FULL_FILES returns a cell array of files that match the wildcard_string
 % under dir_name.
 % MATLAB R2015b does not handle commands with wildcards like
 % delete(*.o)
@@ -485,7 +497,7 @@ if exist(user_startup, 'file')
     full_add_path_string = sprintf('%s\t%s Added by PDFO', add_path_string, '%');
     try
         del_str_ln(user_startup, full_add_path_string);
-    catch 
+    catch
         % Do nothing.
     end
 end

@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and papers.
 !
-! Last Modified: Thursday, July 01, 2021 AM01:47:34
+! Last Modified: Friday, July 02, 2021 AM11:39:27
 
 
 module logging_mod
@@ -15,7 +15,7 @@ public :: logging
 contains
 
 
-subroutine logging(srname, lnnum, nf, f, x, con, conv, mssg)
+subroutine logging(logfile, srname, lnnum, nf, f, x, con, conv, mssg)
 use consts_mod, only : RP, IK
 implicit none
 
@@ -26,27 +26,26 @@ real(RP), intent(in) :: f
 real(RP), optional, intent(in) :: x(:)
 real(RP), optional, intent(in) :: con(:)
 real(RP), optional, intent(in) :: conv
+character(len=*), intent(in) :: logfile
 character(len=*), intent(in) :: srname
 character(len=*), optional, intent(in) :: mssg
 
 ! Local variables
 integer(IK), parameter :: LOGUNIT = 11
 integer :: ios  ! Should be an integer of default kind
-character(len=100) :: fout
 character(len=3) :: fstat
 logical :: fexist
 
 
-fout = 'logging'
-inquire (file=trim(fout), exist=fexist)
+inquire (file=trim(logfile), exist=fexist)
 if (fexist) then
     fstat = 'old'
 else
     fstat = 'new'
 end if
-open (unit=LOGUNIT, file=trim(fout), status=fstat, position='append', iostat=ios, action='write')
+open (unit=LOGUNIT, file=trim(logfile), status=fstat, position='append', iostat=ios, action='write')
 if (ios /= 0) then
-    print '(1A)', 'Fail to open file '//trim(fout)//'!'
+    print '(1A)', 'Fail to open file '//trim(logfile)//'!'
 else
     write (LOGUNIT, '(/1A, I5, 4X, 1A, I7, 4X, 1A, 1PD23.15)') 'In '//trim(srname)//', Line number', lnnum, &
         & 'Function number', nf, 'F = ', f

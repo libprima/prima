@@ -3,6 +3,8 @@ C      SUBROUTINE COBYLB (N,M,MPP,X,RHOBEG,RHOEND,IPRINT,MAXFUN,
 C     1  CON,SIM,SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT)
       SUBROUTINE COBYLB (N,M,MPP,X,RHOBEG,RHOEND,IPRINT,MAXFUN,CON,SIM,
      1  SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT,F,INFO,FTARGET,RESMAX)
+
+      use logging_mod, only : logging
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
       LOGICAL BETTER
@@ -116,6 +118,9 @@ C   60     RESMAX=AMAX1(RESMAX,-CON(K))
           END DO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       END IF
+
+      call logging('log1', 'cobyla', 121, nfvals, f, x(1:n), con(1:m),
+     &     resmax, 'test')
 
       IF (NFVALS == IPRINT-1 .OR. IPRINT == 3) THEN
           PRINT 70, NFVALS,F,RESMAX,(X(I),I=1,IPTEM)
