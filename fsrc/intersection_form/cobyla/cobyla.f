@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 02-Jul-2021.
+! on 04-Jul-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -169,8 +169,8 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       write (10, *) 'bc'
-      call cobylb(n, m, x, rhobeg, rhoend_c, iprint, maxfun, confr, f, i&
-     &nfo, ftarget, resmax)
+      call cobylb(m, x, rhobeg, rhoend_c, iprint, maxfun, confr, f, info&
+     &, ftarget, resmax)
       con(1:m) = confr(1:m)
       write (10, *) 'ac'
       close (10)

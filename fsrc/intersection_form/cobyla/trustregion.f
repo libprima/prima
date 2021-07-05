@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 02-Jul-2021.
+! on 04-Jul-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -39,7 +39,7 @@
       real(RP), intent(IN) :: Rho
       real(RP), intent(INOUT) :: Dx(:)
       integer(IK), intent(OUT) :: Ifull
-      integer(IK), intent(INOUT) :: Iact(:)
+      integer(IK), intent(OUT) :: Iact(:)
 
 
       real(RP) :: Z(N, N)
@@ -389,7 +389,7 @@
 !!!!! Zaikun 2021-06-27 XXXXXXXXXXXXXXXXXX
 !    VMULTD(K) = 0.0D0  !!!! This seems to lead to a memory error ("free() invalid pointer") when
 !    k = 0.
-          if (K > 0) VMULTD = 0.0D0
+          if (K > 0) VMULTD(K) = 0.0D0
 !!!!!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       end if

@@ -2,7 +2,7 @@ Here are points to note when translating the Fortran code to other languages.
 
 1. Row- and column-major order.
 
-   Fortran saves matrices in the column-major order. 
+   Fortran saves matrices in the column-major order.
 
    Same: MATLAB, Julia, R.
    Different: NumPy, C/C++.
@@ -19,35 +19,35 @@ Here are points to note when translating the Fortran code to other languages.
    Fortran subroutines/functions passes augments by reference. Hence
    changes made to an argument within a subroutine is visible to the caller.
 
-   Call by value: MATLAB, C/C++, R 
+   Call by value: MATLAB, C/C++, R
    Call by sharing: Julia, Python
 
 4. Row and column vectors.
 
-   In Fortran, there is no difference between row vectors and column vectors. 
-   They are both represented as 1D arrays. 
+   In Fortran, there is no difference between row vectors and column vectors.
+   They are both represented as 1D arrays.
 
-   MATLAB can differentiate rows and columns because they are indeed 
-   considered as matrices --- in other words, there is no real 1D array 
-   or scalar in MATLAB; they are all matrices. 
+   MATLAB can differentiate rows and columns because they are indeed
+   considered as matrices --- in other words, there is no real 1D array
+   or scalar in MATLAB; they are all matrices.
 
    Consequently, Fortran and MATLAB behave differently in the following aspects.
 
-   4.1. In Fortran, when a vector x multiplies a matrix A by the intrinsic 
+   4.1. In Fortran, when a vector x multiplies a matrix A by the intrinsic
    function MATMUL, there are two possibilities:
-   - matmul(A, x): x is a 1D array whose length is size(A, 2); the result 
+   - matmul(A, x): x is a 1D array whose length is size(A, 2); the result
      is a 1D array whose length is size(A, 1).
-   - matmul(x, A): x is a 1D array whose length is size(A, 1); the result 
+   - matmul(x, A): x is a 1D array whose length is size(A, 1); the result
      is a 1D array whose length is size(A, 2)
 
-   In MATLAB, if x is a column vector, and A is a matrix, then A*x in is 
+   In MATLAB, if x is a column vector, and A is a matrix, then A*x in is
    similar to matmul(A, x) in Fortran if the length of x equals size(A, 2),
-   and x'*A is similar to matmul(x, A) in Fortran if the length of x equals 
+   and x'*A is similar to matmul(x, A) in Fortran if the length of x equals
    size(A, 1).
 
    4.2. In Fortran, two arrays x and y can be added up as long as they
    have the same size, the result being an array of the same size.
-   
+
    In MATLAB, if x is a column vector while y is a row vector, then x+y
    is a matrix of size [length(x), length(y)], the (i, j) entry being
    x(i)+y(j). In Fortran, the same matrix can be obtain in Fortran by
@@ -57,10 +57,12 @@ Here are points to note when translating the Fortran code to other languages.
 
    In Fortran, x*y means the entry-wise multiplication of two arrays
    x and y, where the two arrays should have the same size. Matrix
-   multiplication is done by MATMUL.
+   multiplication is done by MATMUL. Similarly, A**n calculates the
+   entry-wise power of A.
 
    Same: numpy
-   Different: MATLAB, Julia, where * means matrix multiplication
+   Different: MATLAB, Julia, where * means matrix multiplication, and A^2
+   in MATLAB is matmul(A, A).
 
 
 6. The "size" intrinsic function in Fortran.
@@ -68,21 +70,79 @@ Here are points to note when translating the Fortran code to other languages.
    In Fortran:
    - size(x) returns the TOTAL number of elements in an array x, no matter
    whether x is 1D, 2D, or multidimensional. size(x) is invalid if x is a scalar.
-   - size(x, 1) returns the size of x along the first dimension (i.e., 
+   - size(x, 1) returns the size of x along the first dimension (i.e.,
    number of rows); size(x, 2) returns the size along the second dimension (i.e.,
    number of columns); size(x, k) is invalid if k is larger than the
    number of dimensions that x has (hence size(x, 2) is invalid is x is
    a vector).
 
    In MATLAB:
-   - size(x) returns a row vector containing the size of x along 
+   - size(x) returns a row vector containing the size of x along
    all its dimensions; in addition, all scalars and vectors are indeed
-   considered as matrices; therefore, for a scalar x, size(x) = [1, 1]; 
+   considered as matrices; therefore, for a scalar x, size(x) = [1, 1];
    for a row vector x, size(x) = [1, length(x)]; for a column vector,
-   size(x) = [length(x), 1]. 
-   - The behavior of size(x, k) is the same as in Fortran, except that 
+   size(x) = [length(x), 1].
+   - The behavior of size(x, k) is the same as in Fortran, except that
    there is no constraint on k; when k is larger than the number of
    dimensions in x, size(x, k) = 1.
    - For the size(x) in Fortran, the equivalent expressions in MATLAB are:
    -- when x is a 1D array, length(x);
    -- general arrays: numel(x).
+
+7. maxval/minval
+
+   In Fortran:
+   If A is a matrix, then maxval(A) returns the largest element of A;
+   maxval(A, DIM) operates down the dimension DIM of A. For example, any(A,1) operates down the
+   first dimension (the rows) of A, taking the maximum of each column of A.
+   max(a1, a2, a3, ...) returns the largest one among a1, a2, a3, ...
+
+
+   In MATLAB:
+   If A is a matrix, then max(A) returns a row vector, each entry being the largest element of the
+   corresponding column of A.
+   max(A, [], DIM) operates down the dimension DIM of A, which is the same as maxval(A, DIM) in
+   Fortran. For example, max(A, [], 1) operates down the first dimension (the rows) of A, taking the
+   maximum of each column of A, which is equivalent to the MATLAB version of max(A).
+   max(A, 'all') returns the maximum of all the elements of A.
+   C = MAX(X,Y) returns an array with the largest elements taken from X or Y. X and Y must have
+   compatible sizes. In the simplest cases, they can be the same size or one can be a scalar. Two
+   inputs have compatible sizes if, for every dimension, the dimension sizes of the inputs are
+   either the same or one of them is 1.
+
+
+   minval is similar.
+
+8. any/all
+
+   In Fortran:
+   If A is a boolean matrix, then any(A) returns the disjunction of all the elements of A.
+   any(A, DIM) operates down the dimension DIM of A. For example, any(A,1) operates down the first
+   dimension (the rows) of A, taking the disjunction of each column of A.
+
+   In MATLAB:
+   If A is a boolean matrix, then any(A) returns a row vector, each entry being the disjunction of
+   the corresponding column of A.
+   any(A, DIM) operates down the dimension DIM of A, which is the same as in Fortran. For example,
+   any(A,1) operates down the first dimension (the rows) of A, taking the disjunction of each column
+   of A, which is equivalent to the MATLAB version of any(A) .
+   any(A, 'all') returns the disjunction of all the elements of A (so it is the same as the Fortran
+   version of any(A)).
+
+   all (conjunction) is similar.
+
+9. sum
+
+   In Fortran:
+   If A is a matrix, then sum(A) returns the sum of all the elements in A.
+   sum(A, DIM) operates down the dimension DIM of A. For example, sum(A,1) operates down the first
+   dimension (the rows) of A, taking the sum of each column of A.
+
+   In MATLAB:
+   If A is a matrix, then sum(A) returns a row vector, each entry being the sum of the corresponding
+   column of A.
+   sum(A, DIM) operates down the dimension DIM of A, which is the same as in Fortran. For example,
+   sum(A,1) operates down the first dimension (the rows) of A, taking the sum of each column of A,
+   which is equivalent to the MATLAB version of sum(A) .
+   sum(A, 'all') returns the sum of all the elements of A (so it is the same as the Fortran version
+   of sum(A)).

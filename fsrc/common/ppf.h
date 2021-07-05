@@ -56,10 +56,15 @@
 /*************************************************************************/
 /* Do we use the intrinsic algebra procedures (e.g., matmul)? */
 /* If no, we use the procedures implemented in lina.F. */
+/* When __USE_INTRINSIC_ALGEBRA__ = 1, the code may not produce exactly the
+ * same results as Powell's code, because the intrinsic matmul behaves
+ * differently from a naive triple loop due to finite-precision arithmetic.
+ * For the moment (2021-070-4), the difference is observed only if neither of
+ * the matrices is a vector. */
 #if defined __USE_INTRINSIC_ALGEBRA__
 #undef __USE_INTRINSIC_ALGEBRA__
 #endif
-#define __USE_INTRINSIC_ALGEBRA__ 1
+#define __USE_INTRINSIC_ALGEBRA__ 0
 /*************************************************************************/
 
 

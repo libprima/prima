@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 02-Jul-2021.
+! on 04-Jul-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -19,7 +19,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Saturday, May 22, 2021 PM04:18:05
+! Last Modified: Friday, July 02, 2021 PM04:19:04
 
       module update_mod
 
@@ -170,7 +170,7 @@
 ! TEMPA = -ZMAT(KNEW, 1) if IDZ >= 2. However, according to
 ! (4.18) of the NEWUOA paper, TEMPB should always be
 ! ZMAT(KNEW, 1)/sqrtdn regardless of IDZ. Therefore, the
-! following definition of TEMPB is inconsist with (4.18). This
+! following definition of TEMPB is inconsistent with (4.18). This
 ! is probably a BUG. See also Lemma 4 and (5.13) of Powell's
 ! paper "On updating the inverse of a KKT matrix". However,
 ! the inconsistency is hardly observable in practice, because
