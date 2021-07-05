@@ -14,6 +14,9 @@ NEWUOA_output.txt
 *.output
 *.out
 *.log
+*log
+log*
+fort.*
 *NSConflict*
 fort.*
 test_data/
