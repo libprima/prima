@@ -5,8 +5,8 @@
 
 ! N.B.
 ! When implementing the code by MATLAB, Python, ..., note the following.
-! 1. We should following the implementation with __USE_POWELL_ALGEBRA__ == 0, which uses
-! matrix/vector operations instead of loops.
+! 1. We should follow the implementation with __USE_POWELL_ALGEBRA__ == 0, which uses matrix/vector
+! operations instead of loops.
 ! 2. We should not implement the code in subroutines/functions but write it inline, because the
 ! code is short using matrix/vector operations, and because the overhead of subroutine/function
 ! calling can be high in these languages. Here we implement them as subroutines/functions in order
@@ -15,7 +15,7 @@
 
 ! Coded by Zaikun ZHANG in July 2020.
 !
-! Last Modified: Monday, June 07, 2021 PM12:31:50
+! Last Modified: Sunday, July 04, 2021 AM11:32:51
 
 
 #include "ppf.h"
@@ -31,10 +31,15 @@ public :: xpy_dot_z, xdy_plus_a, Ax_plus_y, xA_plus_y
 public :: grota
 public :: calquad
 
-! When interfaced with MATLAB, the intrinsic matmul and dot_product seem not as efficient as the
+interface matprod
+! N.B.:
+! 1. When __USE_INTRINSIC_ALGEBRA__ = 0, matprod22(x, y) may differ from matmul(x, y) due to
+! finite-precision arithmetic. This means that the implementation of matmul is not a naive triple
+! loop. For the moment (2021-07-04), the difference has not been observed on matprod12 and
+! matprod21. This depends on the platform.
+! 2. When interfaced with MATLAB, the intrinsic matmul and dot_product seem not as efficient as the
 ! implementations below (mostly by loops). This may depend on the machine (e.g., cache size),
 ! compiler, compiling options, and MATLAB version.
-interface matprod
     module procedure matprod12, matprod21, matprod22
 end interface matprod
 
@@ -391,6 +396,9 @@ end function matprod21
 
 
 function matprod22(x, y) result(z)
+! N.B.: When __USE_INTRINSIC_ALGEBRA__ = 0, matprod22(x, y) may differ from matmul(x, y) due to
+! finite-precision arithmetic. This means that the implementation of matmul is not a naive triple
+! loop. Of course, the implementation depends on the platform.
 
 #if __USE_INTRINSIC_ALGEBRA__ == 1
 use consts_mod, only : RP

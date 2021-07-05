@@ -546,10 +546,6 @@ C the code, including uninitialized indices.
           END DO
       END DO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      if (NFVALS == 8) then
-        write (11, *), A(1:n, 1:m + 1), con(1:m + 2)
-        close (11)
-      end if
       CALL TRSTLP (N,M,A,CON,RHO,DX,IFULL,IACT,W(IZ),W(IZDOTA),
      1  W(IVMC),W(ISDIRN),W(IDXNEW),W(IVMD))
       IF (IFULL == 0) THEN
@@ -919,9 +915,7 @@ C See the comments above for why to check these J
               END IF
           END DO
       END IF
-      IF (NSAV >= 1) THEN ! Do the following only if NSAV >= 1.
-C          DO J = 1, NSAV
-          DO J = NSAV, 1, -1  ! We start with the most recent point
+          DO J = 1, NSAV
               IF (DATSAV(MPP, J) <= RESREF) THEN
                   CALL ISBETTER(F, RESMAX, DATSAV(MP, J),
      1                 DATSAV(MPP, J), PARMU, CTOL, BETTER)
@@ -937,7 +931,6 @@ C          DO J = 1, NSAV
                   END IF
               ENDIF
           END DO
-      END IF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   620 IF (IPRINT >= 1) THEN
           PRINT 70, NFVALS,F,RESMAX,(X(I),I=1,IPTEM)
