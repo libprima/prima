@@ -18,7 +18,6 @@ NEWUOA_output.txt
 log*
 fort.*
 *NSConflict*
-fort.*
 test_data/
 
 # plusFORT
