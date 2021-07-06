@@ -6,12 +6,13 @@ contains
 subroutine cobylb(m, x, rhobeg, rhoend, iprint, maxfun, con, f, info, ftarget, resmax)
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENUM, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENUM, DEBUGGING, SRNLEN, MAXMEMORY
 use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
 use infnan_mod, only : is_nan, is_posinf
 use debug_mod, only : errstop
 use output_mod, only : retmssg, rhomssg, fmssg
 use lina_mod, only : calquad, inprod, matprod
+use memory_mod, only : cstyle_sizeof
 use logging_mod, only : logging
 
 ! Solver-specific modules
@@ -39,8 +40,8 @@ real(RP), intent(out) :: f
 
 
 ! Parameters
-! NSMAX is the maximal number of "dropped X" to save (see comments below line number 480).
-integer(IK), parameter :: NSMAX = 1000
+! NSAVMAX is the maximal number of "dropped X" to save
+integer(IK), parameter :: nsavmax = 1000_IK
 ! CTOL is the tolerance for constraint violation. A point X is considered to be feasible if its
 ! constraint violation (RESMAX) is less than CTOL.
 real(RP), parameter :: CTOL = epsilon(1.0_RP)
@@ -80,7 +81,7 @@ real(RP) :: consav(m + 2)
 real(RP) :: cvmaxm
 real(RP) :: cvmaxp
 real(RP) :: datmat(m + 2, size(x) + 1)  !(mpp, )
-real(RP) :: datsav(m + 2, nsmax)
+real(RP) :: datsav(m + 2, max(nsavmax, 0))
 real(RP) :: delta
 real(RP) :: denom
 real(RP) :: dx(size(x))
@@ -99,7 +100,6 @@ real(RP) :: prerem
 real(RP) :: ratio
 real(RP) :: resmax
 real(RP) :: resnew
-real(RP) :: resref
 real(RP) :: rho
 real(RP) :: sigbar(size(x))
 real(RP) :: sim(size(x), size(x) + 1)  ! (n, )
@@ -113,9 +113,10 @@ real(RP) :: vmnew
 real(RP) :: vmold
 real(RP) :: vsig(size(x))
 real(RP) :: w(size(x) * (3 * size(x) + 2 * m + 11) + 4 * m + 6)
-real(RP) :: xsav(size(x), NSMAX)
+real(RP) :: xsav(size(x), max(nsavmax, 0))
 
 logical :: improve_geo
+logical :: better(size(x) + 1)
 
 character(len=SRNLEN), parameter :: srname = 'COBYLB'
 
@@ -201,7 +202,7 @@ if (nf >= maxfun .and. nf > 0) then
 end if
 
 if (ibrnch == 1) then
-    write (10, *) '286 g440'
+    !write (10, *) '286 g440'
     goto 440
 end if
 
@@ -212,7 +213,7 @@ end if
 datmat(:, jdrop) = con
 
 if (nf > n + 1) then
-    write (10, *) '302 g130'
+    !write (10, *) '302 g130'
     goto 130
 end if
 
@@ -257,7 +258,7 @@ end if
 if (nf <= n) then
     jdrop = nf
     x(jdrop) = x(jdrop) + rho
-    write (10, *) '367 g40'
+    !write (10, *) '367 g40'
     goto 40
 end if
 130 ibrnch = 1
@@ -271,7 +272,7 @@ if (phimin < phi(jopt)) then
 end if
 if (parmu <= ZERO .and. minval(datmat(m + 2, :), mask=(phi <= phimin)) < datmat(m + 2, jopt)) then
     ! (PARMU <= ZERO) is indeed (PARMU == ZERO), and (PHI <= PHIMIN) is indeed (PHI == PHIMIN). We
-    ! write them in this way to avoid equality comparison of real numbers.
+    ! !write them in this way to avoid equality comparison of real numbers.
     jopt = int(minloc(datmat(m + 2, :), mask=(phi <= phimin), dim=1), kind(jopt))
 end if
 
@@ -293,7 +294,7 @@ if (jopt <= n) then
 end if
 
 if (info == 3) then
-    write (10, *) '420 g600'
+    !write (10, *) '420 g600'
     goto 600
 end if
 
@@ -306,7 +307,7 @@ if (any(is_nan(error)) .or. maxval(abs(error)) > TENTH) then
 !    if (IPRINT >= 1) print 210
 !210 format(/3X, 'Return from subroutine COBYLA because ', 'rounding errors are becoming damaging.')
     info = 7
-    write (10, *) '457 g600'
+    !write (10, *) '457 g600'
     goto 600
 end if
 
@@ -334,7 +335,7 @@ veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
 improve_geo = any(vsig < parsig) .or. any(veta > pareta)
 
 if (IBRNCH == 1 .or. .not. improve_geo) then
-    write (10, *) '515 g370'
+    !write (10, *) '515 g370'
     goto 370
 end if
 
@@ -357,7 +358,7 @@ if (jdrop == 0) then
 end if
 
 ! Save the information of the JOPT-th vertex in XSAV and DATSAV.
-call savex(sim(:, n + 1) + sim(:, jdrop), datmat(:, jdrop), xsav, datsav, n, m, nsav, nsmax, ctol)
+call savex(sim(:, n + 1) + sim(:, jdrop), datmat(:, jdrop), xsav, datsav, nsav, ctol)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
@@ -427,7 +428,7 @@ do J = 1, N
     end if
     X(J) = SIM(J, N + 1) + DX(J)
 end do
-write (10, *) '624 g40'
+!write (10, *) '624 g40'
 goto 40
 !
 !     Calculate DX=x(*)-x(0). Branch if the length of DX is less than 0.5*RHO.
@@ -451,7 +452,7 @@ do J = 1, N
             if (IPRINT >= 1) print 376
 376         format(/3X, 'Return from subroutine COBYLA because ', 'rounding errors are becoming damaging.')
             INFO = 7
-            write (10, *) '648 g600'
+            !write (10, *) '648 g600'
             goto 600
         end if
     end do
@@ -460,13 +461,13 @@ do J = 1, M + 1
     do I = 1, N
         if (is_nan(A(I, J))) then
             INFO = -3
-            write (10, *) '657 g600'
+            !write (10, *) '657 g600'
             goto 600
         end if
     end do
 end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-write (10, *) nf, 'bt'
+!write (10, *) nf, 'bt'
 !call TRSTLP(N, M, A, CON, RHO, DX, IFULL, IACT)!, W(IZ), W(IZDOTA), W(IVMC), W(ISDIRN), W(IDXNEW))!, W(IVMD:))
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 !call TRSTLP(N, M, A, CON, RHO, DX, IFULL, IACT, W(IVMD:))
@@ -474,11 +475,11 @@ write (10, *) nf, 'bt'
 
 
 if (nf == 8) then
-    write (12, *), A(1:n, 1:m + 1), con(1:m + 2)
+    !write (12, *), A(1:n, 1:m + 1), con(1:m + 2)
     close (12)
 end if
 call TRSTLP(N, M, A, CON, RHO, DX, IFULL, IACT)
-write (10, *) nf, 'at'
+!write (10, *) nf, 'at'
 if (IFULL == 0) then
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          TEMP=0.0
@@ -492,7 +493,7 @@ if (IFULL == 0) then
     if (TEMP < 0.25D0 * RHO * RHO) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         IBRNCH = 1
-        write (10, *) '657 g550'
+        !write (10, *) '657 g550'
         goto 550
     end if
 end if
@@ -541,7 +542,7 @@ if (PARMU < 1.5D0 * BARMU) then
     do J = 1, N
         TEMP = DATMAT(M + 1, J) + PARMU * DATMAT(m + 2, J)
         if (TEMP < PHITMP) then
-            write (10, *) '706 g140'
+            !write (10, *) '706 g140'
             goto 140
         end if
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -549,7 +550,7 @@ if (PARMU < 1.5D0 * BARMU) then
         if (abs(TEMP - PHITMP) <= ZERO .and. PARMU <= ZERO) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             if (DATMAT(m + 2, J) < DATMAT(m + 2, N + 1)) then
-                write (10, *) '714 g140'
+                !write (10, *) '714 g140'
                 goto 140
             end if
         end if
@@ -564,7 +565,7 @@ do I = 1, N
     X(I) = SIM(I, N + 1) + DX(I)
 end do
 IBRNCH = 1
-write (10, *) '729 g40'
+!write (10, *) '729 g40'
 goto 40
 440 VMOLD = DATMAT(M + 1, N + 1) + PARMU * DATMAT(m + 2, N + 1)
 VMNEW = F + PARMU * RESMAX
@@ -654,16 +655,15 @@ if (L > 0) jdrop = L
 ! may turn out better when PARMU is updated. Therefore, XSAV also takes
 ! SIM(:, jdrop) into account.
 !
-! We save at most NSMAX to-be-discarded X.
-!
+! We save at most NSAVMAX to-be-discarded X.
 if (jdrop == 0) then
-    call savex(x, consav, xsav, datsav, n, m, nsav, nsmax, ctol)
+    call savex(x, consav, xsav, datsav, nsav, ctol)
 else
-    call savex(sim(:, n + 1) + sim(:, jdrop), datmat(:, jdrop), xsav, datsav, n, m, nsav, nsmax, ctol)
+    call savex(sim(:, n + 1) + sim(:, jdrop), datmat(:, jdrop), xsav, datsav, nsav, ctol)
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 if (jdrop == 0) then
-    write (10, *) '841 g550'
+    !write (10, *) '841 g550'
     goto 550
 end if
 !
@@ -703,13 +703,13 @@ end do
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (TRURED .GT. 0.0 .AND. TRURED .GE. 0.1*PREREM) GOTO 140
 if (TRURED > ZERO .and. TRURED >= TENTH * PREREM) then
-    write (10, *) '881 g140'
+    !write (10, *) '881 g140'
     goto 140
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 550 if (improve_geo) then
     IBRNCH = 0
-    write (10, *), '886 g140'
+    !write (10, *), '886 g140'
     goto 140
 end if
 !
@@ -768,7 +768,7 @@ if (RHO > RHOEND) then
 !        print 70, nf, DATMAT(M + 1, N + 1), DATMAT(m + 2, N + 1), (SIM(I, N + 1), I=1, IPTEM)
 !        if (IPTEM < N) print 80, (X(I), I=IPTEM + 1, N)
 !    end if
-    write (10, *), '946 g140'
+    !write (10, *), '946 g140'
     goto 140
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 else
@@ -813,51 +813,31 @@ if (IPRINT >= 1) print 590
 !      nf-2 instead of nf-1.
 600 con = consav
 parmu = max(parmu, 1.0E2_RP)
-if (nf >= 2) then  ! See the comments above for why NF > 2.
-    if (isbetter(f, resmax, datmat(m + 1, n + 1), datmat(m + 2, n + 1), parmu, ctol)) then
-        x = sim(:, n + 1)
-        f = datmat(m + 1, n + 1)
-        resmax = datmat(m + 2, n + 1)
-        con = datmat(:, n + 1)
-    end if
-    resref = resmax  ! We only consider points with constraint violation no more than RESREF.
-    if (is_nan(resref)) then
-        resref = HUGENUM
-    end if
-    do j = 1, min(n, nf - 2)  ! See the comments above for why to check these J.
-        if (datmat(m + 2, j) <= resref .and. isbetter(f, resmax, datmat(m + 1, j), datmat(m + 2, j), parmu, ctol)) then
-            x = sim(:, j) + sim(:, n + 1)
-            f = datmat(m + 1, j)
-            resmax = datmat(m + 2, j)
-            con = datmat(:, j)
-        end if
-    end do
+open (11)
+if (nf >= 2 .and. isbetter(f, resmax, datmat(m + 1, n + 1), datmat(m + 2, n + 1), parmu, ctol)) then
+    x = sim(:, n + 1)
+    f = datmat(m + 1, n + 1)
+    resmax = datmat(m + 2, n + 1)
+    con = datmat(:, n + 1)
 end if
-
-!jmax = min(n, nf - 2)
-!if (minval(datmat(m + 1, 1:jmax) + parmu * datmat(m + 2, 1:jmax), mask=(datmat(m + 2, 1:jmax) <= resref)) < f + parmu * resmax) then
-!    j = int(minloc(datmat(m + 1, 1:jmax) + parmu * datmat(m + 2, 1:jmax), mask=(datmat(m + 2, 1:jmax) <= resref), dim=1), kind(j))
-!    x = sim(:, j) + sim(:, n + 1)
-!    f = datmat(m + 1, j)
-!    resmax = datmat(m + 2, j)
-!    con = datmat(:, j)
-!end if
-
-!if (minval(datsav(m + 1, 1:nsav) + parmu * datsav(m + 2, 1:nsav), mask=(datsav(m + 2, 1:nsav) <= resref)) < f + parmu * resmax) then
-!    j = int(minloc(datsav(m + 1, 1:nsav) + parmu * datsav(m + 2, 1:nsav), mask=(datsav(m + 2, 1:nsav) <= resref), dim=1), kind(j))
-!    x = xsav(:, j)
-!    f = datsav(m + 1, j)
-!    resmax = datsav(m + 2, j)
-!    con = datsav(:, j)
-!end if
+do j = 1, min(n, nf - 2)  ! See the comments above for why to check these J.
+    if (isbetter(f, resmax, datmat(m + 1, j), datmat(m + 2, j), parmu, ctol)) then
+        x = sim(:, j) + sim(:, n + 1)
+        f = datmat(m + 1, j)
+        resmax = datmat(m + 2, j)
+        con = datmat(:, j)
+    end if
+end do
 do j = 1, nsav
-    if (datsav(m + 2, j) <= resref .and. isbetter(f, resmax, datsav(m + 1, j), datsav(m + 2, j), parmu, ctol)) then
+    if (isbetter(f, resmax, datsav(m + 1, j), datsav(m + 2, j), parmu, ctol)) then
         x = xsav(:, j)
         f = datsav(m + 1, j)
         resmax = datsav(m + 2, j)
         con = datsav(:, j)
     end if
 end do
+
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !620 if (IPRINT >= 1) then
 !    print 70, nf, F, RESMAX, (X(I), I=1, IPTEM)
@@ -867,34 +847,23 @@ end do
 return
 end subroutine cobylb
 
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-! Zaikun 20190820: See the comments below line number 480
-subroutine SAVEX(XDROP, DATDROP, XSAV, DATSAV, N, M, NSAV, NSMAX, CTOL)
-! This subroutine saves XDROP in XSAV and DATDROP in DATSAV, unless
-! XDROP is dominated by a vector in XSAV(:, 1:NSAV). If XDROP dominates
-! some vectors in XSAV(:, 1:NSAV), then these vectors will be removed.
-! If XDROP does not dominate any of XSAV(:, 1:NSAV) but NSAV=NSMAX,
-! then we remove XSAV(:,1), which is the oldest vector in XSAV(:, 1:NSAV).
+subroutine savex(xdrop, datdrop, xsav, datsav, nsav, ctol)
+! This subroutine saves XDROP in XSAV and DATDROP in DATSAV, unless a vector in XSAV(:, 1:NSAV) is
+! better than XDROP. If XDROP is better than some vectors in XSAV(:, 1:NSAV), then these vectors
+! will be removed. If XDROP is not better than any of XSAV(:, 1:NSAV) but NSAV=NSAVMAX, then we
+! remove XSAV(:,1), which is the oldest vector in XSAV(:, 1:NSAV).
 !
-! When COBYLA calls this subroutine, XDROP is a vector to be "dropped",
-! and  DATDROP contains its function/constraint inforation (in particular,
-! DATDROP(MP) = F(XDROP), and DATDROP(m+2) = RESMAX(X)). XSAV and DATSAV
-! save at most NSMAX vectors "dropped" by COBYLB and their function/constraint
-! information. Only XSAV(:, 1:NSAV) and DATSAV(:, 1:NSAV) contains such
-! vectors, while XSAV(:, NSAV+1:NSMAX) and DATSAV(:, NSAV+1:NSMAX) are
-! not initialized yet.
+! When COBYLA calls this subroutine, XDROP is a vector to be "dropped", and  DATDROP contains its
+! function/constraint information (constraint value in the first M entries, DATDROP(M+1) = F(XDROP),
+! and DATDROP(M+2) = RESMAX(X)). XSAV and DATSAV save at most NSAVMAX vectors "dropped" by COBYLB
+! and their function/constraint information. Only XSAV(:, 1:NSAV) and DATSAV(:, 1:NSAV) contains
+! such vectors, while XSAV(:, NSAV+1:NSAVMAX) and DATSAV(:, NSAV+1:NSAVMAX) are not initialized yet.
 !
-! Note: X dominates Y if and only if the function/constraint of X is
-! better than the function/constraint of Y accoring to the ISBETTER
-! subroutine with PARMU = -ONE. Indeed, PARMU can be any negative
-! number. This is because, due to the implementation of ISBETTER,
-! X dominates Y (i.e., X is better than Y with PARMU < 0)
+! Note: We decide whether X is better than the function/constraint of Y according to the ISBETTER
+! function with PARMU = -ONE. Due to the implementation of ISBETTER,
+! X is better than Y with PARMU < 0
 ! ==> X is better than Y with any PARMU >= 0,
 ! ==> X is better than Y regardless of PARMU.
-! For this reason, it is sufficient to save all the "dropped" X that are not
-! dominated by any vectors in XSAV (as we do in this subroutine),
-! because the other X are always worse than some vector in XSAV.
-!
 
 ! Generic modules
 use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENUM, DEBUGGING, SRNLEN
@@ -910,117 +879,77 @@ use lina_mod, only : calquad, inprod
 implicit none
 
 ! Inputs
-integer(IK), intent(IN) :: m
-integer(IK), intent(IN) :: n
-integer(IK), intent(IN) :: nsmax
 real(RP), intent(IN) :: ctol
 real(RP), intent(IN) :: datdrop(:)  ! m+2
 real(RP), intent(IN) :: xdrop(:)  ! n
 
 ! In-outputs
-integer(IK), intent(INOUT) :: Nsav
-real(RP), intent(INOUT) :: Datsav(:, :)  ! (M+2, NSMAX)
-real(RP), intent(INOUT) :: Xsav(:, :) ! (N, NSMAX)
+integer(IK), intent(INOUT) :: nsav
+real(RP), intent(INOUT) :: datsav(:, :)  ! (M+2, NSAVMAX)
+real(RP), intent(INOUT) :: xsav(:, :) ! (N, NSAVMAX)
 
 ! Local variables
+integer(IK) :: m
+integer(IK) :: n
+integer(IK) :: nsavmax
 integer(IK) :: i
-integer(IK) :: j
-integer(IK) :: k
-integer(IK) :: l
-integer(IK) :: mp
-integer(IK) :: mpp
-integer(IK) :: nremove
-integer(IK) :: iremove(nsmax)
 real(RP) :: parmu
-logical :: better
+logical :: better(nsav)
+logical :: keep(nsav)
+character(len=SRNLEN), parameter :: srname = 'ISBETTER'
 
-if (NSMAX <= 0) return ! Do nothing if NSMAX=0
+m = size(datdrop) - 2
+n = size(xdrop)
+nsavmax = size(xsav, 2)
 
-PARMU = -ONE ! See the comments above for why PARMU = -1
-
-! IREMOVE: indices of vectors to remove from XSAV
-! NREMOVE: number of vectors to remove from XSAV
-do J = 1, NSMAX
-! It is not enough to initialize IREMOVE(1:NSAV), because NSAV may be
-! incremented by 1 latter, and then IREMOVE(NSAV+1) will be accessed.
-    IREMOVE(J) = -1
-end do
-NREMOVE = 0
-do I = 1, NSAV
-! If XDROP is dominated by XSAV(:, I), then return immediately,
-! because XDROP should not be inluded into XSAV.
-    if (isbetter(datdrop(m + 1), datdrop(m + 2), datsav(m + 1, i), datsav(m + 2, i), parmu, ctol)) return
-! If XDROP dominates XSAV(:, I), then increment NREMOVE by 1 and save
-! I as IREMOVE(NREMOVE).
-    if (isbetter(datsav(m + 1, i), datsav(m + 2, i), datdrop(m + 1), datdrop(m + 2), parmu, ctol)) then
-        NREMOVE = NREMOVE + 1
-        IREMOVE(NREMOVE) = I
-    end if
-end do
-
-! The code did not return and NREMOVE=0 (no vector to remove from XSAV).
-! If NSAV=NSMAX, then remove XSAV(:, 1); otherwise, increment NSAV by
-! 1 and then "remove" XSAV(:, NSAV) (though there is no vector saved there)
-if (NREMOVE == 0) then
-    if (NSAV == NSMAX) then
-        IREMOVE(1) = 1
-    else
-        NSAV = NSAV + 1
-        IREMOVE(1) = NSAV
-    end if
-    NREMOVE = 1
+if (nsavmax <= 0) then
+    return  ! Do nothing if NSAVMAX=0
 end if
 
-! Remove from XSAV the vectors indexed by IREMOVE
-J = 1 ! Index of IREMOVE
-K = 1 ! Index of the new XSAV
-do I = 1, NSAV ! Index of the old XSAV
-    if (I == IREMOVE(J)) then
-        J = J + 1 ! Do nothing but incrementing J by 1
-    else ! Set XSAV(:, K) = XSAV(:, I)
-        do L = 1, N
-            XSAV(L, K) = XSAV(L, I)
-        end do
-        do L = 1, m + 2
-            DATSAV(L, K) = DATSAV(L, I)
-        end do
-        K = K + 1 ! Increment K by 1
-    end if
-end do
+parmu = -ONE  ! See the comments above for why PARMU = -1
 
-! Set the number of vectors in the new XSAV
-NSAV = NSAV - NREMOVE + 1
-
-! Save XDROP in XSAV(:, NSAV) (with NSAV updated as above)
-if (NSAV >= 1 .and. NSAV <= NSMAX) then
-    ! This inequlity is not guaranteed if NSMAX=0, where NSAV will
-    ! be 0 and hence a Segmentation Fault when accessing
-    ! XSAV(:, NSAV). Although we return immediately if NSMAX=0,
-    ! we still check this inequlity to be safe.
-    do L = 1, N
-        XSAV(L, NSAV) = XDROP(L)
-    end do
-    do L = 1, m + 2
-        DATSAV(L, NSAV) = DATDROP(L)
-    end do
+! Return immediately if any column of XSAV is better than XDROP.
+! BETTER is defined by the array constructor with an implicit do loop.
+better = [(isbetter(datdrop(m + 1), datdrop(m + 2), datsav(m + 1, i), datsav(m + 2, i), parmu, ctol), i=1, nsav)]
+if (any(better)) then
+    return
 end if
 
-end subroutine SAVEX
+! Decide which columns of XSAV to keep. We use again the array constructor with an implicit do loop.
+keep = [(.not. isbetter(datsav(m + 1, i), datsav(m + 2, i), datdrop(m + 1), datdrop(m + 2), parmu, ctol), i=1, nsav)]
+! If XDROP is not better than any column of XSAV, then we remove the first (oldest) column of XSAV.
+if (count(keep) == nsavmax) then
+    keep(1) = .false.
+end if
+xsav(:, 1:count(keep)) = xsav(:, pack([(i, i=1, nsav)], mask=keep))
+datsav(:, 1:count(keep)) = datsav(:, pack([(i, i=1, nsav)], mask=keep))
+
+! Update NSAV. Note that the update of XSAV and DATSAV used NSAV, so it should be updated afterward.
+nsav = count(keep) + 1
+
+! Save XDROP to XSAV(:, NSAV) and DATDROP to DATSAV(:, NSAV).
+xsav(:, nsav) = xdrop(:)
+datsav(:, nsav) = datdrop(:)
+
+return
+
+end subroutine savex
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-! Zaikun 20190820:
 function isbetter(f0, conv0, f, conv, parmu, ctol) result(better)
-! This subroutine compares whether (F, CONV) is (strictly) better than (F0, CONV0) in the sense of
+! This function compares whether (F, CONV) is (strictly) better than (F0, CONV0) in the sense of
 ! decreasing the merit function PHI = F + PARMU*CONV. It takes care of the cases where some of these
-! values are NaN or Inf. At return, BETTER=true iff (F, CONV) is better than (F0, CONV0).
+! values are NaN or Inf. At return, BETTER = TRUE if (F, CONV) is better than (F0, CONV0).
+!
 ! N.B.:
-! 1. A = Inf if and only if A > HUGENUM (defined below);
-! 2. A = NaN if and only if A /= A;
-! 3. If A = NaN, then any comparison (except /=) with another number B (can be Inf or NaN) returns false.
+! 1. We use this function to choose candidates for the final X.
+! 2. We prefer feasible points (i.e., constraint violation is at most CTOL) to infeasible ones.
+! 3. In this function, BETTER = TRUE only if CONV <= MAX(CTOL, CONV0), except if F0 is Inf/NaN while
+! F is not, in which case BETTER = TRUE as long as CONV is not Inf/NaN.
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, HALF, TENTH, HUGENUM, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ZERO, HALF, TENTH, TWO, TEN, HUGENUM, DEBUGGING, SRNLEN
 use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
 use infnan_mod, only : is_nan, is_posinf
 use debug_mod, only : errstop
@@ -1046,51 +975,35 @@ logical :: cinfnan
 logical :: cle
 logical :: clt
 
-better = .false.
-
-! As values of F0, CONV0, F, and CONV, we regard Inf and NaN being equivalent values (they are equally bad).
+! As values of F0, CONV0, F, and CONV, we regard Inf and NaN to be equivalent (equally bad).
 f0infnan = is_nan(f0) .or. (f0 > HUGENUM)     ! F0 = Inf or NaN?
 c0infnan = is_nan(conv0) .or. (conv0 > HUGENUM)     ! CONV0 = Inf or NaN?
 finfnan = is_nan(f) .or. (f > HUGENUM)     ! F = Inf or NaN?
 cinfnan = is_nan(conv) .or. (conv > HUGENUM)     ! CONV = Inf or NaN?
 
-! If PARMU >= 0 and F + PARMU*CONV < F0 + PARMU*CONV0 and CONV < CTOL (feasible), then (F, CONV) is
-! better than (F0, CONV0).
-! Note that we should not set BETTER=FALSE even if this inequality does not hold, as either side may be NaN.
-if (parmu >= zero .and. f + parmu * conv < f0 + parmu * conv0 .and. conv < ctol) then
-    better = .true.
-end if
-
-! If CONV < CTOL and F is not Inf or NaN while (CONV0 < CTOL) is false (may be because CONV0 is NaN),
-! then (F, CONV) is better than (F0, CONV0). We prefer feasible points (i.e., constraint violation
-! is less than CTOL) to infeasible ones.
-if (conv < ctol .and. .not. (conv0 < ctol) .and. .not. finfnan) then
-    better = .true.
-end if
-
-! If F0 or CONV0 is Inf/NaN while neither F nor CONV is Inf/NaN, then (F, CONV) is better than (F0, CONV0).
-if ((f0infnan .or. c0infnan) .and. .not. (finfnan .or. cinfnan)) then
-    better = .true.
-end if
-
+! Compare F and F0, CONV and CONV0, taking Inf/NaN into consideration.
 flt = (f0infnan .and. (.not. finfnan)) .or. (f < f0)  ! F < F0?
 fle = (f0infnan .and. finfnan) .or. (f <= f0) .or. flt  ! F <= F0?
 clt = (c0infnan .and. (.not. cinfnan)) .or. (conv < conv0)  ! CONV < CONV0?
-cle = (c0infnan .and. cinfnan) .or. (conv <= conv0) .or. clt  ! CONV <= CONV0?
+cle = (c0infnan .and. cinfnan) .or. (conv <= max(ctol, conv0)) .or. clt  ! CONV <= CONV0?
 
-! If (F < F0 and CONV <= CONV0) or (F <= F0 and CONV < CONV0) in the sense defined above, the
+better = .false.
+
+! If F0 or CONV0 is Inf/NaN while neither F nor CONV is, then (F, CONV) is better than (F0, CONV0).
+better = better .or. ((f0infnan .or. c0infnan) .and. .not. (finfnan .or. cinfnan))
+
+! If (F < F0 and CONV <= CONV0) or (F <= F0 and CONV < CONV0) in the sense defined above, then
 ! (F, CONV) is better than (F0, CONV0).
-if ((flt .and. cle) .or. (fle .and. clt)) then
-    better = .true.
-end if
+better = better .or. (flt .and. cle) .or. (fle .and. clt)
 
-! If one of F is -Inf and CONV is not Inf/Nan, while F0 is not -Inf, then the (F, CONV) is better
-! than (F0, CONV0).
-if ((f < -HUGENUM) .and. (.not. cinfnan) .and. (f0 >= -HUGENUM)) then
-    better = .true.
-end if
+! If CONV < CTOL and F is not Inf/NaN while (CONV0 < 10*CTOL) is false (may be because CONV0 = NaN),
+! then (F, CONV) is better than (F0, CONV0).
+better = better .or. (.not. finfnan .and. conv <= ctol .and. (conv0 > TEN * ctol .or. c0infnan))
 
-end function better
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! If PARMU >= 0, F + PARMU*CONV < F0 + PARMU*CONV0 and CONV <= MAX(CTOL, CONV0), then (F, CONV)
+! is better than (F0, CONV0). If PARMU < 0, then BETTER = TRUE only in the above cases.
+better = better .or. (parmu >= zero .and. f + parmu * conv < f0 + parmu * conv0 .and. cle)
+
+end function isbetter
 
 end module cobylb_mod
