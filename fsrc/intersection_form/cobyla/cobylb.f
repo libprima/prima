@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 06-Jul-2021.
+! on 07-Jul-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -29,7 +29,7 @@
       use infnan_mod, only : is_nan, is_posinf
       use debug_mod, only : errstop
       use output_mod, only : retmssg, rhomssg, fmssg
-      use lina_mod, only : calquad, inprod, matprod
+      use lina_mod, only : inprod, matprod, outprod
       use memory_mod, only : cstyle_sizeof
       use logging_mod, only : logging
 
@@ -64,7 +64,7 @@
       integer(IK), parameter :: nsavmax = 1000_IK
 ! CTOL is the tolerance for constraint violation. A point X is considered to be feasible if its
 ! constraint violation (RESMAX) is less than CTOL.
-      real(RP), parameter :: CTOL = epsilon(1.0_RP)
+      real(RP), parameter :: ctol = epsilon(1.0_RP)
 
 ! Local variables
 
@@ -89,7 +89,7 @@
       integer(IK) :: nf
       integer(IK) :: nsav
       real(RP) :: A(size(x), m + 1)
-      ! (n, )
+      ! Better name?
 ! A(:, 1:m) contains the approximate gradient for the constraints, and A(:, m+1) is minus the
 ! approximate gradient for the objective function.
       real(RP) :: almost_infinity
@@ -109,7 +109,7 @@
       real(RP) :: dx(size(x))
       real(RP) :: dxsign
       real(RP) :: edgmax
-      real(RP) :: error(size(x), size(x))
+      real(RP) :: erri(size(x), size(x))
       real(RP) :: gamma
       real(RP) :: pareta
       real(RP) :: parmu
@@ -118,20 +118,25 @@
       real(RP) :: phitmp
       real(RP) :: phimin
       real(RP) :: prerec
+      ! Predicted reduction in constraint violation
+      real(RP) :: preref
+      ! Predicted reduction in objective function
       real(RP) :: prerem
+      ! Predicted reduction in merit function
       real(RP) :: ratio
       real(RP) :: resmax
-      real(RP) :: resnew
       real(RP) :: rho
       real(RP) :: sigbar(size(x))
       real(RP) :: sim(size(x), size(x) + 1)
       ! (n, )
       real(RP) :: simi(size(x), size(x))
       ! (n, )
-      real(RP) :: summ
+      real(RP) :: simid(size(x))
       real(RP) :: temp
+      real(RP) :: tempv(size(x))
       real(RP) :: simjopt(size(x))
-      real(RP) :: trured
+      real(RP) :: simijdrop(size(x))
+      real(RP) :: actrem
       real(RP) :: veta(size(x))
       real(RP) :: vmnew
       real(RP) :: vmold
@@ -296,8 +301,8 @@
       if (phimin < phi(jopt)) then
           jopt = int(minloc(phi, dim=1), kind(jopt))
       end if
-      if (parmu <= ZERO .and. minval(datmat(m + 2, :), mask=(phi <= phim&
-     &in)) < datmat(m + 2, jopt)) then
+      if (parmu <= ZERO .and. any(datmat(m + 2, :) < datmat(m + 2, jopt)&
+     & .and. phi <= phimin)) then
 ! (PARMU <= ZERO) is indeed (PARMU == ZERO), and (PHI <= PHIMIN) is indeed (PHI == PHIMIN). We
 ! !write them in this way to avoid equality comparison of real numbers.
           jopt = int(minloc(datmat(m + 2, :), mask=(phi <= phimin), dim=&
@@ -328,11 +333,11 @@
       end if
 
 ! Make an error return if SIMI is a poor approximation to the inverse of SIM(:, 1:N).
-      error = matprod(simi, sim(:, 1:n))
+      erri = matprod(simi, sim(:, 1:n))
       do i = 1, n
-          error(i, i) = -ONE + error(i, i)
+          erri(i, i) = -ONE + erri(i, i)
       end do
-      if (any(is_nan(error)) .or. maxval(abs(error)) > TENTH) then
+      if (any(is_nan(erri)) .or. maxval(abs(erri)) > TENTH) then
 !    if (IPRINT >= 1) print 210
 !210 format(/3X, 'Return from subroutine COBYLA because ', 'rounding errors are becoming damaging.')
           info = 7
@@ -347,7 +352,7 @@
 ! finite-precision arithmetic.
 ! 220
       con = -datmat(:, n + 1)
-      ! Why put a negative sign?????
+      ! Why put a negative sign???????????????????????????
 ! Is it more reasonable to save A transpose instead of A? Better name for A?
       A = transpose(matprod(datmat(1:m + 1, 1:n) - spread(datmat(1:m + 1&
      &, n + 1), dim=2, ncopies=n), simi))
@@ -372,16 +377,16 @@
 
 ! If a new vertex is needed to improve acceptability, then decide which vertex to drop from the simplex.
       if (maxval(veta) > pareta) then
-          jdrop = maxloc(veta, dim=1)
+          jdrop = int(maxloc(veta, dim=1), kind(jdrop))
       elseif (minval(vsig) < pareta) then
-          jdrop = minloc(vsig, dim=1)
+          jdrop = int(minloc(vsig, dim=1), kind(jdrop))
       else
           jdrop = 0_IK
       end if
 
 ! If VETA or VSIG become NaN due to rounding errors, JDROP will end up being 0. If we continue, then
 ! a Segmentation Fault will happen because we will access SIM(:, JDROP) and VSIG(JDROP).
-      if (jdrop == 0) then
+      if (jdrop == 0_IK) then
 !    if (IPRINT >= 1) print 286
 !286 format(/3X, 'Return from subroutine COBYLA because ', 'rounding errors are becoming damaging.')
           INFO = 7
@@ -392,301 +397,135 @@
       call savex(sim(:, n + 1) + sim(:, jdrop), datmat(:, jdrop), xsav, &
      &datsav, nsav, ctol)
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-!     Calculate the step to the new vertex and its sign.
-!
-      TEMP = GAMMA * RHO * VSIG(jdrop)
-      do I = 1, N
-          DX(I) = TEMP * SIMI(jdrop, I)
-      end do
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      CVMAXP=0.0
-!      CVMAXM=0.0
-      CVMAXP = ZERO
-      CVMAXM = ZERO
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      do K = 1, M + 1
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      SUMM=0.0
-          SUMM = ZERO
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          do I = 1, N
-              SUMM = SUMM + A(I, K) * DX(I)
-          end do
-          if (K < M + 1) then
-              TEMP = DATMAT(K, N + 1)
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          CVMAXP=AMAX1(CVMAXP,-SUMM-TEMP)
-!          CVMAXM=AMAX1(CVMAXM,SUMM-TEMP)
-              CVMAXP = DMAX1(CVMAXP, -SUMM - TEMP)
-              CVMAXM = DMAX1(CVMAXM, SUMM - TEMP)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          end if
-      end do
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      DXSIGN=1.0
-!      IF (PARMU*(CVMAXP-CVMAXM) .GT. SUMM+SUMM) DXSIGN=-1.0
-      DXSIGN = ONE
-      if (PARMU * (CVMAXP - CVMAXM) > SUMM + SUMM) DXSIGN = -ONE
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-!     Update the elements of SIM and SIMI, and set the next X.
-!
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      TEMP=0.0
-      TEMP = ZERO
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      do I = 1, N
-          DX(I) = DXSIGN * DX(I)
-          SIM(I, jdrop) = DX(I)
-          TEMP = TEMP + SIMI(jdrop, I) * DX(I)
-      end do
-      do I = 1, N
-          SIMI(jdrop, I) = SIMI(jdrop, I) / TEMP
-      end do
-      do J = 1, N
-          if (J /= jdrop) then
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          TEMP=0.0
-              TEMP = ZERO
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              do I = 1, N
-                  TEMP = TEMP + SIMI(J, I) * DX(I)
-              end do
-              do I = 1, N
-                  SIMI(J, I) = SIMI(J, I) - TEMP * SIMI(jdrop, I)
-              end do
-          end if
-          X(J) = SIM(J, N + 1) + DX(J)
-      end do
+!Calculate the step to the new vertex and its sign.
+      dx = gamma * rho * vsig(jdrop) * simi(jdrop, :)
+      cvmaxp = maxval([ZERO, -matprod(dx, A(:, 1:m)) - datmat(1:m, n + 1&
+     &)])
+      cvmaxm = maxval([ZERO, matprod(dx, A(:, 1:m)) - datmat(1:m, n + 1)&
+     &])
+      dxsign = ONE
+      if (parmu * (cvmaxp - cvmaxm) > TWO * inprod(dx, a(:, m + 1))) the&
+     &n
+          dxsign = -ONE
+      end if
+
+! Update the elements of SIM and SIMI, and set the next X.
+      dx = dxsign * dx
+      sim(:, jdrop) = dx
+      simijdrop = simi(jdrop, :) / inprod(simi(jdrop, :), dx)
+      simi = simi - outprod(matprod(simi, dx), simijdrop)
+      simi(jdrop, :) = simijdrop
+      x = sim(:, n + 1) + dx
+!simi(jdrop, :) = simi(jdrop, :) / inprod(simi(jdrop, :), dx)
+!do j = 1, n
+!    if (j /= jdrop) then
+!        simi(j, :) = simi(j, :) - inprod(simi(j, :), dx) * simi(jdrop, :)
+!    end if
+!end do
+
 !write (10, *) '624 g40'
       goto 40
-!
-!     Calculate DX=x(*)-x(0). Branch if the length of DX is less than 0.5*RHO.
-!
-370   IZ = 1
-      IZDOTA = IZ + N * N
-      IVMC = IZDOTA + N
-      ISDIRN = IVMC + M + 1
-      IDXNEW = ISDIRN + N
-      IVMD = IDXNEW + N
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-! Zaikun 2019-08-29: For ill-conditioned problems, NaN may occur in the
-! models. In such a case, we terminate the code. Otherwise, the behavior
-! of TRSTLP is not predictable, and Segmentation Fault or infinite
-! cycling may happen. This is because any equality/inequality comparison
-! involving NaN returns FALSE, which can lead to unintended behavior of
-! the code, including uninitialized indices.
-      do J = 1, N
-          do I = 1, N
-              if (is_nan(SIMI(I, J))) then
-                  if (IPRINT >= 1) print 376
-376   format(/3X, 'Return from subroutine COBYLA because ', 'rounding er&
-     &rors are becoming damaging.')
-                  INFO = 7
-!write (10, *) '648 g600'
-                  goto 600
-              end if
-          end do
-      end do
-      do J = 1, M + 1
-          do I = 1, N
-              if (is_nan(A(I, J))) then
-                  INFO = -3
-!write (10, *) '657 g600'
-                  goto 600
-              end if
-          end do
-      end do
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!write (10, *) nf, 'bt'
-!call TRSTLP(N, M, A, CON, RHO, DX, IFULL, IACT)!, W(IZ), W(IZDOTA), W(IVMC), W(ISDIRN), W(IDXNEW))!, W(IVMD:))
-!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-!call TRSTLP(N, M, A, CON, RHO, DX, IFULL, IACT, W(IVMD:))
-!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-
-      if (nf == 8) then
-!write (12, *), A(1:n, 1:m + 1), con(1:m + 2)
-          close (12)
+! Calculate DX = X(*) - X(0). Branch if the length of DX is less than 0.5*RHO.
+370   if (any(is_nan(A))) then
+          info = -3
+          goto 600
       end if
-      call TRSTLP(N, M, A, CON, RHO, DX, IFULL, IACT)
+      call trstlp(n, m, A, con, rho, dx, ifull, iact)
 !write (10, *) nf, 'at'
-      if (IFULL == 0) then
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          TEMP=0.0
-          TEMP = ZERO
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          do I = 1, N
-              TEMP = TEMP + DX(I)**2
-          end do
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          IF (TEMP .LT. 0.25*RHO*RHO) THEN
-          if (TEMP < 0.25D0 * RHO * RHO) then
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              IBRNCH = 1
+      if (ifull == 0 .and. inprod(dx, dx) < 0.25E0_RP * rho * rho) then
+          IBRNCH = 1
 !write (10, *) '657 g550'
-              goto 550
+          goto 550
+      end if
+
+! Predict the change to F and to the maximum constraint violation if the variables are altered
+! from X(0) to X(0)+DX.
+      preref = inprod(dx, A(:, m + 1))
+      prerec = datmat(m + 2, n + 1) - maxval([ZERO, con(1:m) - matprod(d&
+     &x, A(:, 1:m))])
+
+! Increase PARMU if necessary and branch back if this change alters the optimal vertex. Otherwise
+! PREREM and PREREC will be set to the predicted reductions in the merit function and the maximum
+! constraint violation respectively.
+      barmu = zero
+      if (prerec > ZERO) then
+          barmu = -preref / prerec
+          ! PREREF < 0 ???
+      end if
+      if (parmu < 1.5E0_RP * barmu) then
+          parmu = TWO * barmu
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!    if (IPRINT >= 2) print 410, PARMU
+!410 format(/3X, 'Increase in PARMU to', 1PE13.6)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          phi = datmat(m + 1, :) + parmu * datmat(m + 2, :)
+          phimin = minval(phi)
+!jopt = n + 1 ????
+          if (phimin < phi(n + 1) .or. (parmu <= ZERO .and. any(datmat(m&
+     & + 2, :) < datmat(m + 2, n + 1) .and. phi <= phimin))) then
+! (PARMU <= ZERO) is indeed (PARMU == ZERO), and (PHI <= PHIMIN) is indeed (PHI == PHIMIN). We
+! !write them in this way to avoid equality comparison of real numbers.
+              goto 140
           end if
       end if
-!
-!     Predict the change to F and the new maximum constraint violation if the
-!     variables are altered from x(0) to x(0)+DX.
-!
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      RESNEW=0.0
-!      CON(MP)=0.0
-      RESNEW = ZERO
-      CON(M + 1) = ZERO
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      do K = 1, M + 1
-          SUMM = CON(K)
-          do I = 1, N
-              SUMM = SUMM - A(I, K) * DX(I)
-          end do
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IF (K .LT. MP) RESNEW=AMAX1(RESNEW,SUMM)
-          if (K < M + 1) RESNEW = DMAX1(RESNEW, SUMM)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      end do
-!
-!     Increase PARMU if necessary and branch back if this change alters the
-!     optimal vertex. Otherwise PREREM and PREREC will be set to the predicted
-!     reductions in the merit function and the maximum constraint violation
-!     respectively.
-!
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      BARMU=0.0
-      BARMU = ZERO
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      PREREC = DATMAT(m + 2, N + 1) - RESNEW
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IF (PREREC .GT. 0.0) BARMU=SUMM/PREREC
-!      IF (PARMU .LT. 1.5*BARMU) THEN
-!          PARMU=2.0*BARMU
-      if (PREREC > ZERO) BARMU = SUMM / PREREC
-      if (PARMU < 1.5D0 * BARMU) then
-          PARMU = TWO * BARMU
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          if (IPRINT >= 2) print 410, PARMU
-410   format(/3X, 'Increase in PARMU to', 1PE13.6)
-          PHITMP = DATMAT(M + 1, N + 1) + PARMU * DATMAT(m + 2, N + 1)
-          do J = 1, N
-              TEMP = DATMAT(M + 1, J) + PARMU * DATMAT(m + 2, J)
-              if (TEMP < PHITMP) then
-!write (10, *) '706 g140'
-                  goto 140
-              end if
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          IF (TEMP .EQ. PHITMP .AND. PARMU .EQ. 0.0) THEN
-              if (abs(TEMP - PHITMP) <= ZERO .and. PARMU <= ZERO) then
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                  if (DATMAT(m + 2, J) < DATMAT(m + 2, N + 1)) then
-!write (10, *) '714 g140'
-                      goto 140
-                  end if
-              end if
-          end do
-      end if
-      PREREM = PARMU * PREREC - SUMM
-!
-!     Calculate the constraint and objective functions at x(*). Then find the
-!     actual reduction in the merit function.
-!
-      do I = 1, N
-          X(I) = SIM(I, N + 1) + DX(I)
-      end do
+
+      prerem = preref + parmu * prerec
+
+
+! Calculate the constraint and objective functions at X(*). Then find the actual reduction in the merit function.
+      x = sim(:, n + 1) + dx
       IBRNCH = 1
 !write (10, *) '729 g40'
       goto 40
-440   VMOLD = DATMAT(M + 1, N + 1) + PARMU * DATMAT(m + 2, N + 1)
-      VMNEW = F + PARMU * RESMAX
-      TRURED = VMOLD - VMNEW
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IF (PARMU .EQ. 0.0 .AND. F .EQ. DATMAT(MP,N+1)) THEN
-      if (PARMU <= ZERO .and. abs(F - DATMAT(M + 1, N + 1)) <= ZERO) the&
+440   vmold = datmat(m + 1, n + 1) + parmu * datmat(m + 2, n + 1)
+      vmnew = f + parmu * resmax
+      actrem = vmold - vmnew
+      if (parmu <= ZERO .and. abs(f - datmat(m + 1, n + 1)) <= ZERO) the&
      &n
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          PREREM = PREREC
-          TRURED = DATMAT(m + 2, N + 1) - RESMAX
+          prerem = prerec
+          actrem = datmat(m + 2, n + 1) - resmax
       end if
-!
-!     Begin the operations that decide whether x(*) should replace one of the
-!     vertices of the current simplex, the change being mandatory if TRURED is
-!     positive. Firstly, jdrop is set to the index of the vertex that is to be
-!     replaced.
-!
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      RATIO=0.0
-!      IF (TRURED .LE. 0.0) RATIO=1.0
-      RATIO = ZERO
-      if (TRURED <= ZERO) RATIO = ONE
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+! Begin the operations that decide whether X(*) should replace one of the vertices of the current
+! simplex, the change being mandatory if ACTREM is positive. Firstly, JDROP is set to the index of
+! the vertex that is to be replaced.
+      if (actrem <= ZERO) then
+          ratio = ONE
+      else
+          ratio = ZERO
+      end if
+      simid = matprod(simi, dx)
+      sigbar = abs(simid) * vsig
       jdrop = 0
-      do J = 1, N
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      TEMP=0.0
-          TEMP = ZERO
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          do I = 1, N
-              TEMP = TEMP + SIMI(J, I) * DX(I)
-          end do
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      TEMP=ABS(TEMP)
-          TEMP = DABS(TEMP)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          if (TEMP > RATIO) then
-              jdrop = J
-              RATIO = TEMP
-          end if
-          SIGBAR(J) = TEMP * VSIG(J)
-      end do
-!
-!     Calculate the value of ell.
-!
-      EDGMAX = DELTA * RHO
-      L = 0
-      do J = 1, N
-          if (SIGBAR(J) >= PARSIG .or. SIGBAR(J) >= VSIG(J)) then
-              TEMP = VETA(J)
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          IF (TRURED .GT. 0.0) THEN
-!              TEMP=0.0
-              if (TRURED > ZERO) then
-                  TEMP = ZERO
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                  do I = 1, N
-                      TEMP = TEMP + (DX(I) - SIM(I, J))**2
-                  end do
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!              TEMP=SQRT(TEMP)
-                  TEMP = DSQRT(TEMP)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              end if
-              if (TEMP > EDGMAX) then
-                  L = J
-                  EDGMAX = TEMP
-              end if
-          end if
-      end do
-      if (L > 0) jdrop = L
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-! Zaikun 20190820:
-! When jdrop=0, the algorithm decides not to include the trust-region
-! trial point X into the simplex, because X is not good enough according
-! to the merit function PHI = F + PARMU*RESMAX. In this case, X will
-! simply be discarded in the original code. However, this decision
-! depends on the value of PARMU. When PARMU is updated later, the
-! discarded X might turn out better, sometimes even better than
-! SIM(:, N+1), which is supposed to be the best point in the simplex.
-! For this reason, we save the to-be-discarded X in XSAV and compare
-! them with SIM(:, N+1) right before exiting. If a vector in XSAV turns
-! out better than SIM(:, N+1), we replace SIM(:, N+1) by this vector
-!
-! When jdrop > 0, SIM(:, jdrop) will be removed from the simplex
-! according to PHI with the current PARMU. Similar to X, SIM(:, jdrop)
-! may turn out better when PARMU is updated. Therefore, XSAV also takes
+      if (maxval(abs(simid)) > ratio) then
+          jdrop = int(maxloc(abs(simid), dim=1), kind(jdrop))
+      end if
+
+! Calculate the value of L.
+      edgmax = delta * rho
+      if (actrem > ZERO) then
+          tempv = sqrt(sum((spread(dx, dim=2, ncopies=n) - sim(:, 1:n))*&
+     &*2, dim=1))
+      else
+          tempv = veta
+      end if
+      if (any(tempv > edgmax .and. (sigbar >= parsig .or. sigbar >= vsig&
+     &))) then
+          jdrop = int(maxloc(tempv, mask=(sigbar >= parsig .or. sigbar >&
+     &= vsig), dim=1), kind(jdrop))
+      end if
+
+
+! When jdrop=0, the algorithm decides not to include the trust-region trial point X into the
+! simplex, because X is not good enough according to the merit function PHI = F + PARMU*RESMAX. In
+! this case, X will simply be discarded in the original code. However, this decision depends on the
+! value of PARMU. When PARMU is updated later, the discarded X might turn out better, sometimes even
+! better than SIM(:, N+1), which is supposed to be the best point in the simplex. For this reason,
+! we save the to-be-discarded X in XSAV and compare them with SIM(:, N+1) right before exiting. If
+! a vector in XSAV turns out better than SIM(:, N+1), we replace SIM(:, N+1) by this vector. When
+! jdrop > 0, SIM(:, jdrop) will be removed from the simplex according to PHI with the current PARMU.
+! Similar to X, SIM(:, jdrop) may turn out better when PARMU is updated. Therefore, XSAV also takes
 ! SIM(:, jdrop) into account.
 !
 ! We save at most NSAVMAX to-be-discarded X.
@@ -701,115 +540,92 @@
 !write (10, *) '841 g550'
           goto 550
       end if
-!
-!     Revise the simplex by updating the elements of SIM, SIMI and DATMAT.
-!
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      TEMP=0.0
-      TEMP = ZERO
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      do I = 1, N
-          SIM(I, jdrop) = DX(I)
-          TEMP = TEMP + SIMI(jdrop, I) * DX(I)
-      end do
-      do I = 1, N
-          SIMI(jdrop, I) = SIMI(jdrop, I) / TEMP
-      end do
-      do J = 1, N
-          if (J /= jdrop) then
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          TEMP=0.0
-              TEMP = ZERO
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              do I = 1, N
-                  TEMP = TEMP + SIMI(J, I) * DX(I)
-              end do
-              do I = 1, N
-                  SIMI(J, I) = SIMI(J, I) - TEMP * SIMI(jdrop, I)
-              end do
-          end if
-      end do
-      do K = 1, m + 2
-          DATMAT(K, jdrop) = CON(K)
-      end do
-!
-!     Branch back for further iterations with the current RHO.
-!
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IF (TRURED .GT. 0.0 .AND. TRURED .GE. 0.1*PREREM) GOTO 140
-      if (TRURED > ZERO .and. TRURED >= TENTH * PREREM) then
+
+! Revise the simplex by updating the elements of SIM, SIMI and DATMAT.
+      sim(:, jdrop) = dx
+      simijdrop = simi(jdrop, :) / inprod(simi(jdrop, :), dx)
+      simi = simi - outprod(matprod(simi, dx), simijdrop)
+      simi(jdrop, :) = simijdrop
+      datmat(:, jdrop) = con
+!TEMP = ZERO
+!do I = 1, N
+!    SIM(I, jdrop) = DX(I)
+!    TEMP = TEMP + SIMI(jdrop, I) * DX(I)
+!end do
+!do I = 1, N
+!    SIMI(jdrop, I) = SIMI(jdrop, I) / TEMP
+!end do
+!do J = 1, N
+!    if (J /= jdrop) then
+!        TEMP = ZERO
+!        do I = 1, N
+!            TEMP = TEMP + SIMI(J, I) * DX(I)
+!        end do
+!        do I = 1, N
+!            SIMI(J, I) = SIMI(J, I) - TEMP * SIMI(jdrop, I)
+!        end do
+!    end if
+!end do
+!do K = 1, m + 2
+!    DATMAT(K, jdrop) = CON(K)
+!end do
+
+! Branch back for further iterations with the current RHO.
+      if (actrem > ZERO .and. actrem >= TENTH * prerem) then
 !write (10, *) '881 g140'
           goto 140
       end if
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 550   if (improve_geo) then
           IBRNCH = 0
 !write (10, *), '886 g140'
           goto 140
       end if
-!
-!     Otherwise reduce RHO if it is not at its least value and reset PARMU.
-!
-      if (RHO > RHOEND) then
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          RHO=0.5*RHO
-!          IF (RHO .LE. 1.5*RHOEND) RHO=RHOEND
-!          IF (PARMU .GT. 0.0) THEN
-!              DENOM=0.0
-          RHO = 0.5D0 * RHO
-          if (RHO <= 1.5D0 * RHOEND) RHO = RHOEND
-          if (PARMU > ZERO) then
-              DENOM = ZERO
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              do K = 1, M + 1
-                  CMIN = DATMAT(K, N + 1)
-                  CMAX = CMIN
-                  do I = 1, N
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!              CMIN=AMIN1(CMIN,DATMAT(K,I))
-!  560         CMAX=AMAX1(CMAX,DATMAT(K,I))
-!              IF (K .LE. M .AND. CMIN .LT. 0.5*CMAX) THEN
-!                  TEMP=AMAX1(CMAX,0.0)-CMIN
-!                  IF (DENOM .LE. 0.0) THEN
-                      CMIN = DMIN1(CMIN, DATMAT(K, I))
-                      CMAX = DMAX1(CMAX, DATMAT(K, I))
-                  end do
-                  if (K <= M .and. CMIN < 0.5D0 * CMAX) then
-                      TEMP = DMAX1(CMAX, ZERO) - CMIN
-                      if (DENOM <= ZERO) then
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                          DENOM = TEMP
+
+! Otherwise reduce RHO if it is not at its least value and reset PARMU.
+      if (rho > rhoend) then
+          rho = HALF * rho
+          if (rho <= 1.5E0_RP * rhoend) then
+              rho = rhoend
+          end if
+          if (parmu > ZERO) then
+              denom = ZERO
+              do k = 1, m + 1
+!cmin = datmat(k, n + 1)
+!cmax = cmin
+!do i = 1, n
+!    CMIN = DMIN1(CMIN, DATMAT(K, I))
+!    CMAX = DMAX1(CMAX, DATMAT(K, I))
+!end do
+                  cmin = minval(datmat(k, :))
+                  cmax = maxval(datmat(k, :))
+                  if (k <= m .and. cmin < HALF * cmax) then
+                      temp = dmax1(cmax, ZERO) - cmin
+                      if (denom <= ZERO) then
+                          denom = temp
                       else
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!                      DENOM=AMIN1(DENOM,TEMP)
-                          DENOM = DMIN1(DENOM, TEMP)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                          denom = dmin1(denom, temp)
                       end if
                   end if
               end do
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!              IF (DENOM .EQ. 0.0) THEN
-!                  PARMU=0.0
-              if (abs(DENOM) <= ZERO) then
+              if (abs(denom) <= ZERO) then
               ! DENOM <= ZERO???  Is it nonnegative?
-                  PARMU = ZERO
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              else if (CMAX - CMIN < PARMU * DENOM) then
-                  PARMU = (CMAX - CMIN) / DENOM
+                  parmu = ZERO
+              else if (cmax - cmin < parmu * denom) then
+                  parmu = (cmax - cmin) / denom
               end if
           end if
-          if (IPRINT >= 2) print 580, RHO, PARMU
-580   format(/3X, 'Reduction in RHO to', 1PE13.6, ' and PARMU =', 1PE13.&
-     &6)
-!    if (IPRINT == 2) then
-!        print 70, nf, DATMAT(M + 1, N + 1), DATMAT(m + 2, N + 1), (SIM(I, N + 1), I=1, IPTEM)
-!        if (IPTEM < N) print 80, (X(I), I=IPTEM + 1, N)
-!    end if
-!write (10, *), '946 g140'
+!if (IPRINT >= 2) print 580, RHO, PARMU
+!580 format(/3X, 'Reduction in RHO to', 1PE13.6, '  and PARMU =', 1PE13.6)
+!!    if (IPRINT == 2) then
+!!        print 70, nf, DATMAT(M + 1, N + 1), DATMAT(m + 2, N + 1), (SIM(I, N + 1), I=1, IPTEM)
+!!        if (IPTEM < N) print 80, (X(I), I=IPTEM + 1, N)
+!!    end if
+!!write (10, *), '946 g140'
           goto 140
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       else
-          INFO = 0
+          info = 0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       end if
 !
@@ -885,6 +701,7 @@
 !    if (IPTEM < N) print 80, (X(I), I=IPTEM + 1, N)
 !end if
 
+      close (16)
       return
       end subroutine cobylb
 

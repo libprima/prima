@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 06-Jul-2021.
+! on 07-Jul-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -30,7 +30,7 @@
 
 ! Coded by Zaikun ZHANG in July 2020.
 !
-! Last Modified: Tuesday, July 06, 2021 PM05:08:45
+! Last Modified: Wednesday, July 07, 2021 AM10:32:27
 
 
 #include "ppf.h"
@@ -40,7 +40,7 @@
       implicit none
       private
 ! Mathematically, inprod = dot_product, matprod = matmul
-      public :: inprod, matprod
+      public :: inprod, matprod, outprod
       public :: r1update, r2update, symmetrize
       public :: xpy_dot_z, xdy_plus_a, Ax_plus_y, xA_plus_y
       public :: grota
@@ -513,6 +513,19 @@
 #endif
       end function inprod
 
+      function outprod(x, y) result(z)
+! OUTPROD calculates the outer product of X and Y, i.e., Z = X*Y^T, regarding both X and Y as columns
+      use consts_mod, only : RP, IK
+      implicit none
+      real(RP), intent(in) :: x(:)
+      real(RP), intent(in) :: y(:)
+      real(RP), dimension(size(x), size(y)) :: z
+
+      integer(IK) :: i
+      do i = 1, int(size(y), kind(i))
+          z(:, i) = x*y(i)
+      end do
+      end function outprod
 
       subroutine grota(A, i, j, k)
 ! GROTA sets A = A*G,
@@ -909,21 +922,6 @@
 !vquad = vquad + HALF*(inprod(d, matprod(hq, s)) + inprod(s, matprod(hq, d)))
 #endif
       end subroutine calquad
-
-
-! function outprod(x, y) result(z)
-! ! OUTPROD calculates the outer product of X and Y, i.e., Z = X*Y^T
-! use consts_mod, only : RP, IK
-! implicit none
-! real(RP), intent(in) :: x(:)
-! real(RP), intent(in) :: x(:)
-! real(RP), dimension(size(x), size(y)) :: z
-!
-! integer(IK) :: i
-! do i = 1, int(size(y), kind(i))
-!     z(:, i) = x*y(i)
-! end do
-! end function outprod
 
 
       end module lina_mod
