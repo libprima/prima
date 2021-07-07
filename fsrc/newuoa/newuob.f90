@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Tuesday, June 15, 2021 PM02:26:25
+! Last Modified: Wednesday, July 07, 2021 PM06:37:06
 
 module newuob_mod
 
@@ -130,7 +130,6 @@ logical :: improve_geo
 logical :: reduce_rho_1
 logical :: reduce_rho_2
 logical :: shortd
-logical :: terminate
 character(len=6), parameter :: solver = 'NEWUOA'
 character(len=SRNLEN), parameter :: srname = 'NEWUOB'
 
@@ -162,9 +161,8 @@ x = xbase + xopt  ! Set X.
 f = fopt  ! Set F.
 
 ! Check whether to return after initialization.
-terminate = (subinfo == FTARGET_ACHIEVED) .or. (subinfo == NAN_X) .or. (subinfo == NAN_INF_F)
-
-if (terminate) then
+if (subinfo == FTARGET_ACHIEVED .or. subinfo == NAN_X .or. subinfo == NAN_INF_F) then
+    ! In these cases, pack the data and return immediately.
     info = subinfo
     if (abs(iprint) >= 1) then
         call retmssg(info, iprint, nf, f, x, solver)
