@@ -145,14 +145,14 @@ C above line number 220).
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C     By Tom/Zaikun (on 04-06-2019/10-06-2019):
-C     CSUM containts the sum of the absolute value of the constraints to
+C     CSUMM containts the sum of the absolute value of the constraints to
 C     check whether it contains a NaN value.
-      CSUM=0.0D0
+      CSUMM=0.0D0
       DO K=1,M
-          CSUM=CSUM+DABS(CON(K))
+          CSUMM=CSUMM+DABS(CON(K))
       END DO
-      IF (CSUM /= CSUM) THEN
-          RESMAX = CSUM ! Set RESMAX to NaN
+      IF (CSUMM /= CSUMM) THEN
+          RESMAX = CSUMM ! Set RESMAX to NaN
           INFO = -2
           GOTO 600
       END IF
@@ -457,27 +457,27 @@ C      CVMAXM=0.0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DO K=1,MP
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C      SUM=0.0
-          SUM=0.0D0
+C      SUMM=0.0
+          SUMM=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           DO I=1,N
-              SUM=SUM+A(I,K)*DX(I)
+              SUMM=SUMM+A(I,K)*DX(I)
           END DO
           IF (K < MP) THEN
               TEMP=DATMAT(K,NP)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C          CVMAXP=AMAX1(CVMAXP,-SUM-TEMP)
-C          CVMAXM=AMAX1(CVMAXM,SUM-TEMP)
-              CVMAXP=DMAX1(CVMAXP,-SUM-TEMP)
-              CVMAXM=DMAX1(CVMAXM,SUM-TEMP)
+C          CVMAXP=AMAX1(CVMAXP,-SUMM-TEMP)
+C          CVMAXM=AMAX1(CVMAXM,SUMM-TEMP)
+              CVMAXP=DMAX1(CVMAXP,-SUMM-TEMP)
+              CVMAXM=DMAX1(CVMAXM,SUMM-TEMP)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           END IF
       END DO
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      DXSIGN=1.0
-C      IF (PARMU*(CVMAXP-CVMAXM) .GT. SUM+SUM) DXSIGN=-1.0
+C      IF (PARMU*(CVMAXP-CVMAXM) .GT. SUMM+SUMM) DXSIGN=-1.0
       DXSIGN=1.0D0
-      IF (PARMU*(CVMAXP-CVMAXM) > SUM+SUM) DXSIGN=-1.0D0
+      IF (PARMU*(CVMAXP-CVMAXM) > 2.0D0*SUMM) DXSIGN=-1.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
 C     Update the elements of SIM and SIMI, and set the next X.
@@ -575,13 +575,14 @@ C      CON(MP)=0.0
       CON(MP)=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DO K=1,MP
-          SUM=CON(K)
-          DO I=1,N
-              SUM=SUM-A(I,K)*DX(I)
-          END DO
+        SUMM = 0.0D0
+        do I = 1, N
+            SUMM = SUMM + A(I, K) * DX(I)
+        end do
+        SUMM = CON(K) - SUMM
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C      IF (K .LT. MP) RESNEW=AMAX1(RESNEW,SUM)
-          IF (K < MP) RESNEW=DMAX1(RESNEW,SUM)
+C      IF (K .LT. MP) RESNEW=AMAX1(RESNEW,SUMM)
+          IF (K < MP) RESNEW=DMAX1(RESNEW,SUMM)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       END DO
 C
@@ -596,10 +597,10 @@ C      BARMU=0.0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       PREREC=DATMAT(MPP,NP)-RESNEW
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C      IF (PREREC .GT. 0.0) BARMU=SUM/PREREC
+C      IF (PREREC .GT. 0.0) BARMU=SUMM/PREREC
 C      IF (PARMU .LT. 1.5*BARMU) THEN
 C          PARMU=2.0*BARMU
-      IF (PREREC > 0.0D0) BARMU=SUM/PREREC
+      IF (PREREC > 0.0D0) BARMU=SUMM/PREREC
       IF (PARMU < 1.5D0*BARMU) THEN
           PARMU=2.0D0*BARMU
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -617,7 +618,7 @@ C          IF (TEMP .EQ. PHI .AND. PARMU .EQ. 0.0) THEN
               END IF
           END DO
       END IF
-      PREREM=PARMU*PREREC-SUM
+      PREREM=PARMU*PREREC-SUMM
 C
 C     Calculate the constraint and objective functions at x(*). Then find the
 C     actual reduction in the merit function.
