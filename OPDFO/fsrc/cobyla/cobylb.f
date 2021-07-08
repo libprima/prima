@@ -164,7 +164,7 @@ C     infinite value, the algorithm stops.
 C     If the objective function achieves the target value at a feasible
 C     point, then exit.
 C      IF (F .LE. FTARGET .AND. RESMAX .LE. 0.0D0) THEN
-      IF (F <= FTARGET .AND. RESMAX < CTOL) THEN
+      IF (F <= FTARGET .AND. RESMAX <= CTOL) THEN
 C         The feasibility is guarantee because RESMAX .LE. CTOL
           INFO = 1
           GOTO 620
@@ -881,7 +881,7 @@ C      NFVALS-2 instead of NFVALS-1.
   600 DO K = 1, M
            CON(K) = CONSAV(K)
       END DO
-      PARMU = MAX(PARMU, 1.0D2)
+      PARMU = MAX(PARMU, 1.0D6)
       IF (NFVALS >= 2) THEN ! See the comments above for why NFVALS>2
           CALL ISBETTER(F, RESMAX, DATMAT(MP, NP), DATMAT(MPP, NP),
      1         PARMU, CTOL, BETTER)
