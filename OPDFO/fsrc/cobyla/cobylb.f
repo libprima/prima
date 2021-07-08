@@ -78,7 +78,6 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       NSAV = 0
       HUGENUM = HUGE(0.0D0)
       DATSAV = HUGENUM
-      ALMOST_INFINITY = HUGE(0.0D0)/2.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
 C     Make the next call of the user-supplied subroutine CALCFC. These
@@ -158,7 +157,7 @@ C     check whether it contains a NaN value.
       END IF
 C     If the objective function value or the constraints contain a NaN or an
 C     infinite value, the algorithm stops.
-      IF (F /= F .OR. F > ALMOST_INFINITY) THEN
+      IF (F /= F .OR. F > HUGE(0.0D0)) THEN
           INFO = -2
           GOTO 600
       END IF
