@@ -71,12 +71,11 @@ integer(IK) :: nsav
 real(RP) :: A(size(x), m + 1)  ! Better name?
 ! A(:, 1:m) contains the approximate gradient for the constraints, and A(:, m+1) is minus the
 ! approximate gradient for the objective function.
-real(RP) :: almost_infinity
 real(RP) :: alpha
 real(RP) :: barmu
 real(RP) :: beta
-real(RP) :: cmax
-real(RP) :: cmin
+real(RP) :: cmax(m)
+real(RP) :: cmin(m)
 real(RP) :: consav(m + 2)
 real(RP) :: cvmaxm
 real(RP) :: cvmaxp
@@ -154,15 +153,12 @@ ibrnch = 0
 
 nsav = 0
 datsav = hugenum
-almost_infinity = huge(ZERO) / TWO
 
-40 do i = 1, n
-    if (is_nan(x(i))) then
-        f = x(i) ! Set F to NaN
-        INFO = -1
-        goto 600
-    end if
-end do
+40 if (any(is_nan(x))) then
+    f = sum(x)  ! Set F to NaN.
+    info = -1
+    goto 600
+end if
 
 call calcfc(n, m, x, f, con)
 nf = nf + 1
@@ -170,7 +166,7 @@ resmax = maxval([ZERO, -con(1:m)])
 con(m + 1) = f
 con(m + 2) = resmax
 
-! CONSAV always containts the containt value of the current x. CON, however, will be changed during
+! CONSAV always contains the constraint value of the current x. CON, however, will be changed during
 ! the calculation (see the lines above line number 220).
 consav = con
 
@@ -182,7 +178,7 @@ consav = con
 !end if
 
 ! If the objective function value or the constraints contain a NaN or an infinite value, the exit.
-if (is_nan(F) .or. F > ALMOST_INFINITY) then
+if (is_nan(F) .or. is_posinf(F)) then
     info = -2
     goto 600
 end if
@@ -197,7 +193,7 @@ if (f <= ftarget .and. resmax < ctol) then
     return
 end if
 
-if (nf >= maxfun .and. nf > 0) then
+if (nf >= maxfun) then
 !    if (IPRINT >= 1) print 50
 !50  format(/3X, 'Return from subroutine COBYLA because the ', 'MAXFUN limit has been reached.')
     info = 3
@@ -378,12 +374,6 @@ simijdrop = simi(jdrop, :) / inprod(simi(jdrop, :), dx)
 simi = simi - outprod(matprod(simi, dx), simijdrop)
 simi(jdrop, :) = simijdrop
 x = sim(:, n + 1) + dx
-!simi(jdrop, :) = simi(jdrop, :) / inprod(simi(jdrop, :), dx)
-!do j = 1, n
-!    if (j /= jdrop) then
-!        simi(j, :) = simi(j, :) - inprod(simi(j, :), dx) * simi(jdrop, :)
-!    end if
-!end do
 
 !write (10, *) '624 g40'
 goto 40
@@ -501,28 +491,6 @@ simijdrop = simi(jdrop, :) / inprod(simi(jdrop, :), dx)
 simi = simi - outprod(matprod(simi, dx), simijdrop)
 simi(jdrop, :) = simijdrop
 datmat(:, jdrop) = con
-!TEMP = ZERO
-!do I = 1, N
-!    SIM(I, jdrop) = DX(I)
-!    TEMP = TEMP + SIMI(jdrop, I) * DX(I)
-!end do
-!do I = 1, N
-!    SIMI(jdrop, I) = SIMI(jdrop, I) / TEMP
-!end do
-!do J = 1, N
-!    if (J /= jdrop) then
-!        TEMP = ZERO
-!        do I = 1, N
-!            TEMP = TEMP + SIMI(J, I) * DX(I)
-!        end do
-!        do I = 1, N
-!            SIMI(J, I) = SIMI(J, I) - TEMP * SIMI(jdrop, I)
-!        end do
-!    end if
-!end do
-!do K = 1, m + 2
-!    DATMAT(K, jdrop) = CON(K)
-!end do
 
 ! Branch back for further iterations with the current RHO.
 if (actrem > ZERO .and. actrem >= TENTH * prerem) then
@@ -536,36 +504,22 @@ end if
     goto 140
 end if
 
-! Otherwise reduce RHO if it is not at its least value and reset PARMU.
+! Update RHO and PARMU.
 if (rho > rhoend) then
+    ! See equation (11) in Section 3 of the COBYLA paper for the update of RHO.
     rho = HALF * rho
     if (rho <= 1.5E0_RP * rhoend) then
         rho = rhoend
     end if
+    ! See equation (12)--(13) in Section 3 of the COBYLA paper for the update of PARMU.
     if (parmu > ZERO) then
-        denom = ZERO
-        do k = 1, m + 1
-            !cmin = datmat(k, n + 1)
-            !cmax = cmin
-            !do i = 1, n
-            !    CMIN = DMIN1(CMIN, DATMAT(K, I))
-            !    CMAX = DMAX1(CMAX, DATMAT(K, I))
-            !end do
-            cmin = minval(datmat(k, :))
-            cmax = maxval(datmat(k, :))
-            if (k <= m .and. cmin < HALF * cmax) then
-                temp = dmax1(cmax, ZERO) - cmin
-                if (denom <= ZERO) then
-                    denom = temp
-                else
-                    denom = dmin1(denom, temp)
-                end if
-            end if
-        end do
-        if (abs(denom) <= ZERO) then  ! DENOM <= ZERO???  Is it nonnegative?
+        cmin = minval(datmat(1:m, :), dim=2)
+        cmax = maxval(datmat(1:m, :), dim=2)
+        if (any(cmin < HALF * cmax)) then
+            denom = minval(max(cmax, ZERO) - cmin, mask=(cmin < HALF * cmax))
+            parmu = min(parmu, (maxval(datmat(m + 1, :)) - minval(datmat(m + 1, :))) / denom)
+        else
             parmu = ZERO
-        else if (cmax - cmin < parmu * denom) then
-            parmu = (cmax - cmin) / denom
         end if
     end if
     !if (IPRINT >= 2) print 580, RHO, PARMU
@@ -620,7 +574,6 @@ end if
 !      nf-2 instead of nf-1.
 600 con = consav
 parmu = max(parmu, 1.0E2_RP)
-open (11)
 if (nf >= 2 .and. isbetter(f, resmax, datmat(m + 1, n + 1), datmat(m + 2, n + 1), parmu, ctol)) then
     x = sim(:, n + 1)
     f = datmat(m + 1, n + 1)
@@ -651,7 +604,6 @@ end do
 !    if (IPTEM < N) print 80, (X(I), I=IPTEM + 1, N)
 !end if
 
-close (16)
 return
 end subroutine cobylb
 
