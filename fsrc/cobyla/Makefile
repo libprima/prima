@@ -17,7 +17,7 @@ MEXDIR= $(PWD)/../../matlab/mex_gateways/
 INTERSECTIONMEXDIR= $(PWD)/../../matlab/mex_gateways/intersection_form/
 
 COMFILES=../common/consts.F90 ../common/debug.F90 ../common/memory.F90 ../common/info.F90 ../common/infnan.F90 ../common/lina.F90 ../common/output.F90 ../common/pintrf.F90 ../common/logging.F90
-FILES= $(COMFILES) trustregion.f90 cobylb.f90 cobyla.f90
+FILES= $(COMFILES) initialize.f90 trustregion.f90 cobylb.f90 cobyla.f90
 
 M90FILES= $(FILES) $(MEXDIR)/fmxapi.F90 $(MEXDIR)/prob.F90 $(MEXDIR)/classical/fmxcl.F90 $(MEXDIR)/gethuge.F90 $(MEXDIR)/cobyla-interface.F90 $(MEXDIR)/classical/cobyla-interface.F90 -I/home/zaikunzhang/local/MATLAB/R2020a/extern/include/ -I$(NEUPDFO)
 
@@ -111,7 +111,7 @@ COMMON = ../common
 
 example: example.f90 \
 	consts.o info.o debug.o memory.o infnan.o lina.o output.o pintrf.o \
-	trustregion.o cobylb.o cobyla.o
+	initialize.o trustregion.o cobylb.o cobyla.o
 	$(FC) $(FFLAGS) -o example example.f90 *.o
 
 test: example
@@ -135,6 +135,8 @@ pintrf.o: $(COMMON)/pintrf.F90
 	$(FC) $(FFLAGS) -c $(COMMON)/pintrf.F90
 
 
+initialize.o: initialize.f90
+	$(FC) $(FFLAGS) -c trustregion.f90
 trustregion.o: trustregion.f90
 	$(FC) $(FFLAGS) -c trustregion.f90
 cobylb.o: cobylb.f90

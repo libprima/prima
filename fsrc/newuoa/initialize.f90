@@ -4,7 +4,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Friday, June 11, 2021 AM12:22:56
+! Last Modified: Thursday, July 08, 2021 PM03:03:55
 
 module initialize_mod
 
@@ -16,7 +16,7 @@ public :: initxf, initq, inith
 contains
 
 
-subroutine initxf(calfun, iprint, x, rhobeg, ftarget, ij, kopt, nf, fhist, fval, xbase, xhist, xpt, info)
+subroutine initxf(calfun, iprint, ftarget, rhobeg, x, ij, kopt, nf, fhist, fval, xbase, xhist, xpt, info)
 ! INITXF performs the initialization regarding the interpolation
 ! points and corresponding function values.
 
@@ -35,9 +35,9 @@ implicit none
 ! Inputs
 procedure(FUNEVAL) :: calfun
 integer(IK), intent(in) :: iprint
-real(RP), intent(in) :: x(:)  ! X(N)
-real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: ftarget
+real(RP), intent(in) :: rhobeg
+real(RP), intent(in) :: x(:)  ! X(N)
 
 ! Outputs
 integer(IK), intent(out) :: info

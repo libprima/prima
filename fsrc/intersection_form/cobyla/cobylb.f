@@ -25,17 +25,19 @@
       use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENU&
      &M, DEBUGGING, SRNLEN
       use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, TRSUBP_FAIL&
-     &ED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
+     &ED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F, DAMAGING_ROUNDING
       use infnan_mod, only : is_nan, is_posinf
       use debug_mod, only : errstop
       use output_mod, only : retmssg, rhomssg, fmssg
       use lina_mod, only : inprod, matprod, outprod
       use memory_mod, only : cstyle_sizeof
-      use logging_mod, only : logging
+!use logging_mod, only : logging
 
 ! Solver-specific modules
 !use savex_mod, only : savex
 !use isbetter_mod, only : isbetter
+
+      use initialize_mod, only : initialize
       use trustregion_mod, only : trstlp
 
       implicit none
@@ -76,10 +78,10 @@
       integer(IK) :: j
       integer(IK) :: jdrop
       integer(IK) :: jopt
-      integer(IK) :: k
       integer(IK) :: n
       integer(IK) :: nf
       integer(IK) :: nsav
+      integer(IK) :: subinfo
       real(RP) :: A(size(x), m + 1)
       ! Better name?
 ! A(:, 1:m) contains the approximate gradient for the constraints, and A(:, m+1) is minus the
@@ -93,7 +95,7 @@
       real(RP) :: cvmaxm
       real(RP) :: cvmaxp
       real(RP) :: datmat(m + 2, size(x) + 1)
-      !(mpp, )
+      ! CONVAL, FVAL, CVVAL
       real(RP) :: datsav(m + 2, max(nsavmax, 0))
       real(RP) :: delta
       real(RP) :: denom
@@ -154,6 +156,7 @@
 !print 10, RHO
 !10  format(/3X, 'The initial value of RHO is', 1PE13.6, 2X, 'and PARMU is set to zero.')
 !end if
+
       sim = ZERO
       simi = ZERO
       do i = 1, n
@@ -162,88 +165,24 @@
       end do
       sim(:, n + 1) = x
 
-      jdrop = n + 1
-      ibrnch = 0
-
       nsav = 0
       datsav = hugenum
 
-      do nf = 1, n + 1
-          if (any(is_nan(x))) then
-              f = sum(x)
-              ! Set F to NaN.
-              info = -1
-              goto 600
-          end if
+      call initialize(iprint, maxfun, ctol, ftarget, rho, x, nf, datmat,&
+     & sim, simi, subinfo)
 
-          call calcfc(n, m, x, f, con)
-          resmax = maxval([ZERO, -con(1:m)])
-          con(m + 1) = f
-          con(m + 2) = resmax
+      if (subinfo == NAN_X .or. subinfo == NAN_INF_F .or. subinfo == FTA&
+     &RGET_ACHIEVED .or. subinfo == DAMAGING_ROUNDING .or. subinfo == MA&
+     &XFUN_REACHED) then
+          info = subinfo
+          x = sim(:, n + 1)
+          f = datmat(m + 1, n + 1)
+          resmax = datmat(m + 2, n + 1)
+          consav = datmat(:, n + 1)
+!return
+          goto 600
+      end if
 
-! CONSAV always contains the constraint value of the current x. CON, however, will be changed during
-! the calculation (see the lines above line number 220).
-          consav = con
-
-!if (nf == IPRINT - 1 .or. IPRINT == 3) then
-!    print 70, nf, F, RESMAX, (X(I), I=1, IPTEM)
-!70  format(/3X, 'nf =', I5, 3X, 'F =', 1PE13.6, 4X, 'MAXCV =', 1PE13.6 / 3X, 'X =', 1PE13.6, 1P4E15.6)
-!    if (IPTEM < N) print 80, (X(I), I=IPTEM + 1, N)
-!80  format(1PE19.6, 1P4E15.6)
-!end if
-
-! If the objective function value or the constraints contain a NaN or an infinite value, the exit.
-          if (is_nan(F) .or. is_posinf(F)) then
-              info = -2
-              goto 600
-          end if
-          if (any(is_nan(con(1:m)))) then
-              resmax = sum(abs(con(1:m)))
-              ! Set RESMAX to NaN
-              info = -2
-              goto 600
-          end if
-! If the objective function achieves the target value at a feasible point, then exit.
-          if (f <= ftarget .and. resmax < ctol) then
-              info = 1
-              return
-          end if
-
-          if (nf >= maxfun) then
-!    if (IPRINT >= 1) print 50
-!50  format(/3X, 'Return from subroutine COBYLA because the ', 'MAXFUN limit has been reached.')
-              info = 3
-          end if
-
-! Set the recently calculated function values in a column of DATMAT. This array has a column for
-! each vertex of the current simplex, the entries of each column being the values of the constraint
-! functions (if any) followed by the objective function and the greatest constraint violation at
-! the vertex.
-          datmat(:, jdrop) = con
-
-          if (nf <= n) then
-! Exchange the new vertex of the initial simplex with the optimal vertex if necessary. Then, if the
-! initial simplex is not complete, pick its next vertex and calculate the function values there.
-              if (jdrop <= n) then
-                  if (datmat(m + 1, n + 1) <= f) then
-                      x(jdrop) = sim(jdrop, n + 1)
-                  else
-                      sim(jdrop, n + 1) = x(jdrop)
-                      datmat(:, jdrop) = datmat(:, n + 1)
-                      datmat(:, n + 1) = con
-                      sim(jdrop, 1:jdrop) = -rho
-                      do k = 1, jdrop
-                          simi(jdrop, k) = -sum(simi(k:jdrop, k))
-                      end do
-                  end if
-              end if
-
-              jdrop = nf
-              x(jdrop) = x(jdrop) + rho
-          end if
-      end do
-
-      nf = n + 1
 41    ibrnch = 1
 ! Identify the optimal vertex of the current simplex.
 140   jopt = n + 1
@@ -260,8 +199,7 @@
      &1), kind(jopt))
       end if
 
-! Switch the best vertex into pole position if it is not there already, and also update SIM, SIMI
-! and DATMAT.
+! Switch the best vertex into SIM(:, N+1) if it is not there already. Then update SIMI and DATMAT.
       if (jopt <= n) then
           datmat(:, [jopt, n + 1]) = datmat(:, [n + 1, jopt])
           ! Exchange DATMAT(:, JOPT) AND DATMAT(:, N+1)
@@ -372,6 +310,8 @@
       if (any(is_nan(x))) then
           f = sum(x)
           ! Set F to NaN.
+          con = sum(x)
+          ! Set constraint values and constraint violation to NaN.
           info = -1
           goto 600
       end if
@@ -399,13 +339,13 @@
           goto 600
       end if
       if (any(is_nan(con(1:m)))) then
-          resmax = sum(abs(con(1:m)))
+          resmax = sum(con(1:m))
           ! Set RESMAX to NaN
           info = -2
           goto 600
       end if
 ! If the objective function achieves the target value at a feasible point, then exit.
-      if (f <= ftarget .and. resmax < ctol) then
+      if (f <= ftarget .and. resmax <= ctol) then
           info = 1
           return
       end if
@@ -479,6 +419,8 @@
       if (any(is_nan(x))) then
           f = sum(x)
           ! Set F to NaN.
+          con = sum(x)
+          ! Set constraint values and constraint violation to NaN.
           info = -1
           goto 600
       end if
@@ -506,13 +448,13 @@
           goto 600
       end if
       if (any(is_nan(con(1:m)))) then
-          resmax = sum(abs(con(1:m)))
+          resmax = sum(con(1:m))
           ! Set RESMAX to NaN
           info = -2
           goto 600
       end if
 ! If the objective function achieves the target value at a feasible point, then exit.
-      if (f <= ftarget .and. resmax < ctol) then
+      if (f <= ftarget .and. resmax <= ctol) then
           info = 1
           return
       end if
@@ -527,7 +469,7 @@
 ! each vertex of the current simplex, the entries of each column being the values of the constraint
 ! functions (if any) followed by the objective function and the greatest constraint violation at
 ! the vertex.
-440   vmold = datmat(m + 1, n + 1) + parmu * datmat(m + 2, n + 1)
+      vmold = datmat(m + 1, n + 1) + parmu * datmat(m + 2, n + 1)
       vmnew = f + parmu * resmax
       actrem = vmold - vmnew
       if (parmu <= ZERO .and. abs(f - datmat(m + 1, n + 1)) <= ZERO) the&
@@ -680,7 +622,7 @@
 !      and DATMAT(:, nf-1) yet. That is why we check SIM up to
 !      nf-2 instead of nf-1.
 600   con = consav
-      parmu = max(parmu, 1.0E2_RP)
+      parmu = max(parmu, 1.0E6_RP)
       if (nf >= 2 .and. isbetter(f, resmax, datmat(m + 1, n + 1), datmat&
      &(m + 2, n + 1), parmu, ctol)) then
           x = sim(:, n + 1)
@@ -884,7 +826,7 @@
 ! (F, CONV) is better than (F0, CONV0).
       better = better .or. (flt .and. cle) .or. (fle .and. clt)
 
-! If CONV < CTOL and F is not Inf/NaN while (CONV0 < 10*CTOL) is false (may be because CONV0 = NaN),
+! If CONV <= CTOL and F is not Inf/NaN while (CONV0 < 10*CTOL) is false (may be because CONV0 = NaN),
 ! then (F, CONV) is better than (F0, CONV0).
       better = better .or. (.not. finfnan .and. conv <= ctol .and. (conv&
      &0 > TEN * ctol .or. c0infnan))

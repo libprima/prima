@@ -17,7 +17,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Wednesday, July 07, 2021 PM06:37:06
+! Last Modified: Thursday, July 08, 2021 PM03:05:22
 
       module newuob_mod
 
@@ -176,7 +176,7 @@
       ! Maximal number of trust region iterations.
 
 ! Initialize FVAL, XBASE, and XPT.
-      call initxf(calfun, iprint, x, rhobeg, ftarget, ij, kopt, nf, fhis&
+      call initxf(calfun, iprint, ftarget, rhobeg, x, ij, kopt, nf, fhis&
      &t, fval, xbase, xhist, xpt, subinfo)
       xopt = xpt(:, kopt)
       fopt = fval(kopt)
