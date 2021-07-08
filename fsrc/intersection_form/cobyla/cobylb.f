@@ -154,7 +154,6 @@
 !print 10, RHO
 !10  format(/3X, 'The initial value of RHO is', 1PE13.6, 2X, 'and PARMU is set to zero.')
 !end if
-      nf = 0
       sim = ZERO
       simi = ZERO
       do i = 1, n
@@ -169,22 +168,22 @@
       nsav = 0
       datsav = hugenum
 
-40    if (any(is_nan(x))) then
-          f = sum(x)
-          ! Set F to NaN.
-          info = -1
-          goto 600
-      end if
+      do nf = 1, n + 1
+          if (any(is_nan(x))) then
+              f = sum(x)
+              ! Set F to NaN.
+              info = -1
+              goto 600
+          end if
 
-      call calcfc(n, m, x, f, con)
-      nf = nf + 1
-      resmax = maxval([ZERO, -con(1:m)])
-      con(m + 1) = f
-      con(m + 2) = resmax
+          call calcfc(n, m, x, f, con)
+          resmax = maxval([ZERO, -con(1:m)])
+          con(m + 1) = f
+          con(m + 2) = resmax
 
 ! CONSAV always contains the constraint value of the current x. CON, however, will be changed during
 ! the calculation (see the lines above line number 220).
-      consav = con
+          consav = con
 
 !if (nf == IPRINT - 1 .or. IPRINT == 3) then
 !    print 70, nf, F, RESMAX, (X(I), I=1, IPTEM)
@@ -194,90 +193,58 @@
 !end if
 
 ! If the objective function value or the constraints contain a NaN or an infinite value, the exit.
-      if (is_nan(F) .or. is_posinf(F)) then
-          info = -2
-          goto 600
-      end if
-      if (any(is_nan(con(1:m)))) then
-          resmax = sum(abs(con(1:m)))
-          ! Set RESMAX to NaN
-          info = -2
-          goto 600
-      end if
+          if (is_nan(F) .or. is_posinf(F)) then
+              info = -2
+              goto 600
+          end if
+          if (any(is_nan(con(1:m)))) then
+              resmax = sum(abs(con(1:m)))
+              ! Set RESMAX to NaN
+              info = -2
+              goto 600
+          end if
 ! If the objective function achieves the target value at a feasible point, then exit.
-      if (f <= ftarget .and. resmax < ctol) then
-          info = 1
-          return
-      end if
+          if (f <= ftarget .and. resmax < ctol) then
+              info = 1
+              return
+          end if
 
-      if (nf >= maxfun) then
+          if (nf >= maxfun) then
 !    if (IPRINT >= 1) print 50
 !50  format(/3X, 'Return from subroutine COBYLA because the ', 'MAXFUN limit has been reached.')
-          info = 3
-      end if
-
-      if (ibrnch == 1) then
-!write (10, *) '286 g440'
-          goto 440
-      end if
+              info = 3
+          end if
 
 ! Set the recently calculated function values in a column of DATMAT. This array has a column for
 ! each vertex of the current simplex, the entries of each column being the values of the constraint
 ! functions (if any) followed by the objective function and the greatest constraint violation at
 ! the vertex.
-      datmat(:, jdrop) = con
+          datmat(:, jdrop) = con
 
-      if (nf > n + 1) then
-!write (10, *) '302 g130'
-          goto 130
-      end if
-
+          if (nf <= n) then
 ! Exchange the new vertex of the initial simplex with the optimal vertex if necessary. Then, if the
 ! initial simplex is not complete, pick its next vertex and calculate the function values there.
-      if (jdrop <= n) then
-          if (datmat(m + 1, n + 1) <= f) then
-! When nf<=N, it is necessary to update X(JDROP) because next X will be calculated based on the
-! current one (see the code below line number 120). The purpose of this update is to make this X
-! hold the variable that has the smallest function value up to now. The next X is defined as a
-! perturbation of this optimal X, which is reasonable. However, this update leads to inconsistency
-! between X and [F, RESMAX]. This can cause COBYLA return inconsistent [X, F, RESMAX]. Fortunately,
-! this is not a problem if NF <= N. Because, if COBYLA returns with a NF <= N, then X contains NaN
-! or F = NaN or nearly Inf or the constraint contains NaN, all of which would lead to an immediate
-! jump to line 600 without coming here. Therefore, if we restrict the update to only the case with
-! NF <= N, ther will be no inconsistency at return.
-! With the original code, if COBYLA returns with NF = N+1 (this can happen if the initial
-! trust-region subproblem constantly produces too short steps so that RHO is reduced to RHOEND
-! without producing any acceptable trial step; see the code below line number 380), then, when
-! the code arrives at line number 600, X and [F, RESMAX] may be inconsistent. However, recall that
-! the inconsistency occurs only if SIM(:, N+1) has a lower function value than X (before updated).
-! Therefore, as long as the code takes SIM(:, N+1) instead of X, no harm would be done. It is the
-! case likely the in the original code, because if COBYLA returns with NF=N+1, then PARMU=0, and
-! hence SIM(:, N+1) will be returned.
-!        x(jdrop)=sim(jdrop,n+1)
-              if (nf <= n) then
-                  x(jdrop) = sim(jdrop, n + 1)
+              if (jdrop <= n) then
+                  if (datmat(m + 1, n + 1) <= f) then
+                      x(jdrop) = sim(jdrop, n + 1)
+                  else
+                      sim(jdrop, n + 1) = x(jdrop)
+                      datmat(:, jdrop) = datmat(:, n + 1)
+                      datmat(:, n + 1) = con
+                      sim(jdrop, 1:jdrop) = -rho
+                      do k = 1, jdrop
+                          simi(jdrop, k) = -sum(simi(k:jdrop, k))
+                      end do
+                  end if
               end if
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          else
-              sim(jdrop, n + 1) = x(jdrop)
-              datmat(:, jdrop) = datmat(:, n + 1)
-              datmat(:, n + 1) = con
-              sim(jdrop, 1:jdrop) = -rho
-              do k = 1, jdrop
-                  simi(jdrop, k) = -sum(simi(k:jdrop, k))
-              end do
+
+              jdrop = nf
+              x(jdrop) = x(jdrop) + rho
           end if
-      end if
+      end do
 
-! 120
-      if (nf <= n) then
-          jdrop = nf
-          x(jdrop) = x(jdrop) + rho
-!write (10, *) '367 g40'
-          goto 40
-      end if
-130   ibrnch = 1
-
+      nf = n + 1
+41    ibrnch = 1
 ! Identify the optimal vertex of the current simplex.
 140   jopt = n + 1
       phi = datmat(m + 1, :) + parmu * datmat(m + 2, :)
@@ -354,7 +321,7 @@
 !---------------------------------------------------------------------------------------!
       improve_geo = any(vsig < parsig) .or. any(veta > pareta)
 
-      if (IBRNCH == 1 .or. .not. improve_geo) then
+      if (ibrnch == 1 .or. .not. improve_geo) then
 !write (10, *) '515 g370'
           goto 370
       end if
@@ -402,7 +369,60 @@
       x = sim(:, n + 1) + dx
 
 !write (10, *) '624 g40'
-      goto 40
+      if (any(is_nan(x))) then
+          f = sum(x)
+          ! Set F to NaN.
+          info = -1
+          goto 600
+      end if
+
+      call calcfc(n, m, x, f, con)
+      nf = nf + 1
+      resmax = maxval([ZERO, -con(1:m)])
+      con(m + 1) = f
+      con(m + 2) = resmax
+
+! CONSAV always contains the constraint value of the current x. CON, however, will be changed during
+! the calculation (see the lines above line number 220).
+      consav = con
+
+!if (nf == IPRINT - 1 .or. IPRINT == 3) then
+!    print 70, nf, F, RESMAX, (X(I), I=1, IPTEM)
+!70  format(/3X, 'nf =', I5, 3X, 'F =', 1PE13.6, 4X, 'MAXCV =', 1PE13.6 / 3X, 'X =', 1PE13.6, 1P4E15.6)
+!    if (IPTEM < N) print 80, (X(I), I=IPTEM + 1, N)
+!80  format(1PE19.6, 1P4E15.6)
+!end if
+
+! If the objective function value or the constraints contain a NaN or an infinite value, the exit.
+      if (is_nan(F) .or. is_posinf(F)) then
+          info = -2
+          goto 600
+      end if
+      if (any(is_nan(con(1:m)))) then
+          resmax = sum(abs(con(1:m)))
+          ! Set RESMAX to NaN
+          info = -2
+          goto 600
+      end if
+! If the objective function achieves the target value at a feasible point, then exit.
+      if (f <= ftarget .and. resmax < ctol) then
+          info = 1
+          return
+      end if
+
+      if (nf >= maxfun) then
+!    if (IPRINT >= 1) print 50
+!50  format(/3X, 'Return from subroutine COBYLA because the ', 'MAXFUN limit has been reached.')
+          info = 3
+      end if
+
+! Set the recently calculated function values in a column of DATMAT. This array has a column for
+! each vertex of the current simplex, the entries of each column being the values of the constraint
+! functions (if any) followed by the objective function and the greatest constraint violation at
+! the vertex.
+      datmat(:, jdrop) = con
+
+      goto 41
 
 ! Calculate DX = X(*) - X(0). Branch if the length of DX is less than 0.5*RHO.
 370   if (any(is_nan(A))) then
@@ -412,7 +432,7 @@
       call trstlp(n, m, A, con, rho, dx, ifull, iact)
 !write (10, *) nf, 'at'
       if (ifull == 0 .and. inprod(dx, dx) < 0.25E0_RP * rho * rho) then
-          IBRNCH = 1
+          ibrnch = 1
 !write (10, *) '657 g550'
           goto 550
       end if
@@ -453,9 +473,60 @@
 
 ! Calculate the constraint and objective functions at X(*). Then find the actual reduction in the merit function.
       x = sim(:, n + 1) + dx
-      IBRNCH = 1
-!write (10, *) '729 g40'
-      goto 40
+      ibrnch = 1
+
+! Evaluate the objective function and constraints.
+      if (any(is_nan(x))) then
+          f = sum(x)
+          ! Set F to NaN.
+          info = -1
+          goto 600
+      end if
+
+      call calcfc(n, m, x, f, con)
+      nf = nf + 1
+      resmax = maxval([ZERO, -con(1:m)])
+      con(m + 1) = f
+      con(m + 2) = resmax
+
+! CONSAV always contains the constraint value of the current x. CON, however, will be changed during
+! the calculation (see the lines above line number 220).
+      consav = con
+
+!if (nf == IPRINT - 1 .or. IPRINT == 3) then
+!    print 70, nf, F, RESMAX, (X(I), I=1, IPTEM)
+!70  format(/3X, 'nf =', I5, 3X, 'F =', 1PE13.6, 4X, 'MAXCV =', 1PE13.6 / 3X, 'X =', 1PE13.6, 1P4E15.6)
+!    if (IPTEM < N) print 80, (X(I), I=IPTEM + 1, N)
+!80  format(1PE19.6, 1P4E15.6)
+!end if
+
+! If the objective function value or the constraints contain a NaN or an infinite value, the exit.
+      if (is_nan(F) .or. is_posinf(F)) then
+          info = -2
+          goto 600
+      end if
+      if (any(is_nan(con(1:m)))) then
+          resmax = sum(abs(con(1:m)))
+          ! Set RESMAX to NaN
+          info = -2
+          goto 600
+      end if
+! If the objective function achieves the target value at a feasible point, then exit.
+      if (f <= ftarget .and. resmax < ctol) then
+          info = 1
+          return
+      end if
+
+      if (nf >= maxfun) then
+!    if (IPRINT >= 1) print 50
+!50  format(/3X, 'Return from subroutine COBYLA because the ', 'MAXFUN limit has been reached.')
+          info = 3
+      end if
+
+! Set the recently calculated function values in a column of DATMAT. This array has a column for
+! each vertex of the current simplex, the entries of each column being the values of the constraint
+! functions (if any) followed by the objective function and the greatest constraint violation at
+! the vertex.
 440   vmold = datmat(m + 1, n + 1) + parmu * datmat(m + 2, n + 1)
       vmnew = f + parmu * resmax
       actrem = vmold - vmnew
@@ -533,7 +604,7 @@
       end if
 
 550   if (improve_geo) then
-          IBRNCH = 0
+          ibrnch = 0
 !write (10, *), '886 g140'
           goto 140
       end if
