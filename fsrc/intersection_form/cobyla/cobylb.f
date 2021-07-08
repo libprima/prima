@@ -23,7 +23,7 @@
 
 ! Generic modules
       use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENU&
-     &M, DEBUGGING, SRNLEN, MAXMEMORY
+     &M, DEBUGGING, SRNLEN
       use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, TRSUBP_FAIL&
      &ED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
       use infnan_mod, only : is_nan, is_posinf
@@ -71,20 +71,12 @@
       integer(IK) :: i
       integer(IK) :: iact(m + 1)
       integer(IK) :: ibrnch
-      integer(IK) :: idxnew
       integer(IK) :: ifull
       integer(IK) :: iptem
-      integer(IK) :: isdirn
-      integer(IK) :: ivmc
-      integer(IK) :: ivmd
-      integer(IK) :: iz
-      integer(IK) :: izdota
       integer(IK) :: j
       integer(IK) :: jdrop
-      integer(IK) :: jmax
       integer(IK) :: jopt
       integer(IK) :: k
-      integer(IK) :: l
       integer(IK) :: n
       integer(IK) :: nf
       integer(IK) :: nsav
@@ -114,7 +106,6 @@
       real(RP) :: parmu
       real(RP) :: parsig
       real(RP) :: phi(size(x) + 1)
-      real(RP) :: phitmp
       real(RP) :: phimin
       real(RP) :: prerec
       ! Predicted reduction in constraint violation
@@ -131,7 +122,6 @@
       real(RP) :: simi(size(x), size(x))
       ! (n, )
       real(RP) :: simid(size(x))
-      real(RP) :: temp
       real(RP) :: tempv(size(x))
       real(RP) :: simjopt(size(x))
       real(RP) :: simijdrop(size(x))
@@ -140,11 +130,9 @@
       real(RP) :: vmnew
       real(RP) :: vmold
       real(RP) :: vsig(size(x))
-      real(RP) :: w(size(x) * (3 * size(x) + 2 * m + 11) + 4 * m + 6)
       real(RP) :: xsav(size(x), max(nsavmax, 0))
 
       logical :: improve_geo
-      logical :: better(size(x) + 1)
 
       character(len=SRNLEN), parameter :: srname = 'COBYLB'
 
@@ -678,10 +666,7 @@
 ! ==> X is better than Y regardless of PARMU.
 
 ! Generic modules
-      use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENU&
-     &M, DEBUGGING, SRNLEN
-      use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, TRSUBP_FAIL&
-     &ED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
+      use consts_mod, only : RP, IK, ONE
       use infnan_mod, only : is_nan, is_posinf
       use debug_mod, only : errstop
       use output_mod, only : retmssg, rhomssg, fmssg
@@ -714,7 +699,6 @@
       real(RP) :: parmu
       logical :: better(nsav)
       logical :: keep(nsav)
-      character(len=SRNLEN), parameter :: srname = 'ISBETTER'
 
       m = size(datdrop) - 2
       n = size(xdrop)
@@ -773,10 +757,7 @@
 ! F is not, in which case BETTER = TRUE as long as CONV is not Inf/NaN.
 
 ! Generic modules
-      use consts_mod, only : RP, IK, ZERO, HALF, TENTH, TWO, TEN, HUGENU&
-     &M, DEBUGGING, SRNLEN
-      use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, TRSUBP_FAIL&
-     &ED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
+      use consts_mod, only : RP, ZERO, TEN, HUGENUM, DEBUGGING
       use infnan_mod, only : is_nan, is_posinf
       use debug_mod, only : errstop
       use output_mod, only : retmssg, rhomssg, fmssg
