@@ -150,11 +150,8 @@ iw = idx + N
 rhoend_c = min(rhobeg, rhoend)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-write (10, *) 'bc'
 call cobylb(m, x, rhobeg, rhoend_c, iprint, maxfun, confr, f, info, ftarget, resmax)
 con(1:m) = confr(1:m)
-write (10, *) 'ac'
-close (10)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 end subroutine COBYLA
 
