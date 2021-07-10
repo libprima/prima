@@ -555,7 +555,7 @@ if options.debug && ~options.classical
     % COBYLA cannot ensure fx=fun(x) or conval=con(x) due to rounding
     % errors. Instead of checking the equality, we check whether the
     % relative error is within cobylan_prec.
-    % There can also be a difference between constrviolation and conv due
+    % There can also be a difference between constrviolation and cstrv due
     % to rounding errors, especially if the problem is scaled.
     constrviolation = 0;
     if isfield(output, 'constrviolation')
@@ -596,16 +596,16 @@ if options.debug && ~options.classical
             req = Aeq*x-beq;
         end
         if strcmp(solver, 'lincoan')
-            conv = max([0; rineq; abs(req); lb-x; x-ub], [], 'includenan');
+            cstrv = max([0; rineq; abs(req); lb-x; x-ub], [], 'includenan');
             % max(X, [], 'includenan') returns NaN if X contains NaN, and
             % maximum of X otherwise
         else
-            conv = max([0; rineq; abs(req); lb-x; x-ub; nlcineq; abs(nlceq)], [], 'includenan');
+            cstrv = max([0; rineq; abs(req); lb-x; x-ub; nlcineq; abs(nlceq)], [], 'includenan');
             % max(X, [], 'includenan') returns NaN if X contains NaN, and
             % maximum of X otherwise
         end
 
-        if ~(isnan(conv) && isnan(constrviolation)) && ~(conv == inf && constrviolation == inf) && ~(abs(constrviolation-conv) <= lincoan_prec*max(1,abs(conv)) && strcmp(solver, 'lincoan')) && ~(abs(constrviolation-conv) <= cobylan_prec*max(1,abs(conv)) && strcmp(solver, 'cobylan'))
+        if ~(isnan(cstrv) && isnan(constrviolation)) && ~(cstrv == inf && constrviolation == inf) && ~(abs(constrviolation-cstrv) <= lincoan_prec*max(1,abs(cstrv)) && strcmp(solver, 'lincoan')) && ~(abs(constrviolation-cstrv) <= cobylan_prec*max(1,abs(cstrv)) && strcmp(solver, 'cobylan'))
             % Public/unexpected error
             error(sprintf('%s:InvalidChist', invoker), ...
               '%s: UNEXPECTED ERROR: %s returns a constrviolation that does not match x.', invoker, solver);
@@ -617,7 +617,6 @@ if options.debug && ~options.classical
         end
         if ~any(cf == constrv_returned) && ~(isnan(constrv_returned) && ~any(~isnan(cf)))
             % Public/unexpected error
-            keyboard
             error(sprintf('%s:InvalidFhist', invoker), ...
               '%s: UNEXPECTED ERROR: %s returns a constrviolation that does not match chist.', invoker, solver);
         end
