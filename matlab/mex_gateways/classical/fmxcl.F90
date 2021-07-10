@@ -66,7 +66,7 @@ public :: fmxReadMPtr
 public :: fmxWriteMPtr
 
 real(RP_CL), parameter :: ONE = 1.0_RP_CL
-real(DP), parameter :: convTol = 1.0E1_DP * max(epsilon(0.0_DP), real(epsilon(0.0_RP_CL), DP))
+real(DP), parameter :: cvsnTol = 1.0E1_DP * max(epsilon(0.0_DP), real(epsilon(0.0_RP_CL), DP))
 integer, parameter :: MAXMEMORY_CL = min(21 * (10**8), int(huge(0_IK_CL)))
 
 
@@ -262,7 +262,7 @@ call mxCopyPtrToReal8(fmxGetDble(px), x_dp, mwOne)
 x = real(x_dp(1), kind(x))
 ! Check whether the type conversion is proper
 if (kind(x) /= kind(x_dp)) then
-    if (abs(x - x_dp(1)) > convTol * max(abs(x), ONE)) then
+    if (abs(x - x_dp(1)) > cvsnTol * max(abs(x), ONE)) then
         eid = 'FMXAPI:ConversionError'
         mssg = 'READ_RSCALAR_CL: Large error occurs when converting REAL(DP) to REAL(RP_CL) (maybe due to overflow).'
         call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
@@ -305,7 +305,7 @@ call fmxAllocate(x, n) ! Removable in F2003
 x = real(x_dp, kind(x))
 ! Check whether the type conversion is proper
 if (kind(x) /= kind(x_dp)) then
-    if (maxval(abs(x - x_dp)) > convTol * max(maxval(abs(x)), ONE)) then
+    if (maxval(abs(x - x_dp)) > cvsnTol * max(maxval(abs(x)), ONE)) then
         eid = 'FMXAPI:ConversionError'
         mssg = 'READ_RVECTOR_CL: Large error occurs when converting REAL(DP) to REAL(RP_CL) (maybe due to overflow).'
         call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
@@ -353,7 +353,7 @@ call fmxAllocate(x, m, n) ! Removable in F2003
 x = real(x_dp, kind(x))
 ! Check whether the type conversion is proper
 if (kind(x) /= kind(x_dp)) then
-    if (maxval(abs(x - x_dp)) > convTol * max(maxval(abs(x)), ONE)) then
+    if (maxval(abs(x - x_dp)) > cvsnTol * max(maxval(abs(x)), ONE)) then
         eid = 'FMXAPI:ConversionError'
         mssg = 'READ_MATRIX_CL: Large error occurs when converting REAL(DP) to REAL(RP_CL) (maybe due to overflow).'
         call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
@@ -421,7 +421,7 @@ character(len=MSSGLEN) :: eid, mssg
 x_dp = real(x, kind(x_dp))
 if (kind(x_dp) /= kind(x)) then
     ! Check whether the type conversion is proper
-    if (abs(x - x_dp) > convTol * max(abs(x), ONE)) then
+    if (abs(x - x_dp) > cvsnTol * max(abs(x), ONE)) then
         eid = 'FMXAPI:ConversionError'
         mssg = 'WRITE_RSCALAR_CL: Large error occurs when converting REAL(RP_CL) to REAL(DP) (maybe due to overflow).'
         call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
@@ -463,7 +463,7 @@ n = int(n_mw, kind(n))
 x_dp = real(x, kind(x_dp))
 ! Check whether the type conversion is proper
 if (kind(x) /= kind(x_dp)) then
-    if (maxval(abs(x - x_dp)) > convTol * max(maxval(abs(x)), ONE)) then
+    if (maxval(abs(x - x_dp)) > cvsnTol * max(maxval(abs(x)), ONE)) then
         eid = 'FMXAPI:ConversionError'
         mssg = 'WRITE_RVECTOR_CL: Large error occurs when converting REAL(RP_CL) to REAL(DP) (maybe due to overflow).'
         call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
@@ -516,7 +516,7 @@ n_mw = int(n, kind(n_mw))
 x_dp = real(x, kind(x_dp))
 ! Check whether the type conversion is proper
 if (kind(x) /= kind(x_dp)) then
-    if (maxval(abs(x - x_dp)) > convTol * max(maxval(abs(x)), ONE)) then
+    if (maxval(abs(x - x_dp)) > cvsnTol * max(maxval(abs(x)), ONE)) then
         eid = 'FMXAPI:ConversionError'
         mssg = 'WRITE_MATRIX_CL: Large error occurs when converting REAL(RP_CL) to REAL(DP) (maybe due to overflow).'
         call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
