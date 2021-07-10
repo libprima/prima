@@ -15,7 +15,7 @@
 
 ! Coded by Zaikun ZHANG in July 2020.
 !
-! Last Modified: Wednesday, July 07, 2021 AM10:32:27
+! Last Modified: Saturday, July 10, 2021 PM10:28:49
 
 
 #include "ppf.h"
@@ -28,6 +28,7 @@ private
 public :: inprod, matprod, outprod
 public :: r1update, r2update, symmetrize
 public :: xpy_dot_z, xdy_plus_a, Ax_plus_y, xA_plus_y
+public :: eye
 public :: grota
 public :: calquad
 
@@ -492,9 +493,32 @@ real(RP), dimension(size(x), size(y)) :: z
 
 integer(IK) :: i
 do i = 1, int(size(y), kind(i))
-    z(:, i) = x*y(i)
+    z(:, i) = x * y(i)
 end do
 end function outprod
+
+function eye(m, n) result(x)
+! EYE is a function similar to the MATLAB function with the same name.
+use consts_mod, only : RP, IK, ZERO, ONE
+use memory_mod, only : safealloc
+implicit none
+integer(IK), intent(in) :: m
+integer(IK), intent(in), optional :: n
+real(RP), allocatable :: x(:, :)
+integer(IK) :: i
+
+if (present(n)) then
+    call safealloc(x, max(m, 0_IK), max(n, 0_IK))
+else
+    call safealloc(x, max(m, 0_IK), max(m, 0_IK))
+end if
+if (size(x, 1) * size(x, 2) > 0) then
+    x = ZERO
+    do i = 1, int(min(size(x, 1), size(x, 2)), kind(i))
+        x(i, i) = ONE
+    end do
+end if
+end function eye
 
 subroutine grota(A, i, j, k)
 ! GROTA sets A = A*G,
