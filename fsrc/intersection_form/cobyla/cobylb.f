@@ -167,14 +167,6 @@
 !10  format(/3X, 'The initial value of RHO is', 1PE13.6, 2X, 'and CPEN is set to zero.')
 !end if
 
-      sim = ZERO
-      simi = ZERO
-      do i = 1, n
-          sim(i, i) = rho
-          simi(i, i) = ONE / rho
-      end do
-      sim(:, n + 1) = x
-
       nsav = 0
       datsav = HUGENUM
       ! This is necessary; otherwise, SELECTX may return an incorrect X.
@@ -206,51 +198,17 @@
 
 41    ibrnch = 1
 ! Identify the optimal vertex of the current simplex.
-140   call updatepole(cpen, [(.true., i=1, n + 1)], datmat, sim, simi)
-
-!jopt = n + 1
-!phi = datmat(m + 1, :) + cpen * datmat(m + 2, :)
-!phimin = minval(phi)
-!if (phimin < phi(jopt)) then
-!    jopt = int(minloc(phi, dim=1), kind(jopt))
-!end if
-!if (cpen <= ZERO .and. any(datmat(m + 2, :) < datmat(m + 2, jopt) .and. phi <= phimin)) then
-!    ! (CPEN <= ZERO) is indeed (CPEN == ZERO), and (PHI <= PHIMIN) is indeed (PHI == PHIMIN). We
-!    ! !write them in this way to avoid equality comparison of real numbers.
-!    jopt = int(minloc(datmat(m + 2, :), mask=(phi <= phimin), dim=1), kind(jopt))
-!end if
-
-!! Switch the best vertex into SIM(:, N+1) if it is not there already. Then update SIMI and DATMAT.
-!if (jopt <= n) then
-!    datmat(:, [jopt, n + 1]) = datmat(:, [n + 1, jopt]) ! Exchange DATMAT(:, JOPT) AND DATMAT(:, N+1)
-!    sim(:, n + 1) = sim(:, n + 1) + sim(:, jopt)
-!    simjopt = sim(:, jopt)
-!    sim(:, jopt) = ZERO
-!    sim(:, 1:n) = sim(:, 1:n) - spread(simjopt, dim=2, ncopies=n)
-!    ! The above update is equivalent to multiply SIM(:, 1:N) from the right side by a matrix whose
-!    ! JOPT-th row is [-1, -1, ..., -1], while all the other rows are the same as those of the
-!    ! identity matrix. It is easy to check that the inverse of this matrix is itself. Therefore,
-!    ! SIMI should be updated by a multiplication with this matrix (i.e., its inverse) from the left
-!    ! side, as is done in the following line. The JOPT-th row of the updated SIMI is minus the sum
-!    ! of all rows of the original SIMI, whereas all the other rows remain unchanged.
-!    simi(jopt, :) = -sum(simi, dim=1)
-!end if
-
-      if (info == 3) then
-!write (10, *) '420 g600'
+140   call updatepole(cpen, [(.true., i=1, n + 1)], datmat, sim, simi, s&
+     &ubinfo)
+      if (subinfo == DAMAGING_ROUNDING) then
+          info = subinfo
+!    if (IPRINT >= 1) print 210
+!210 format(/3X, 'Return from subroutine COBYLA because ', 'rounding errors are becoming damaging.')
           goto 600
       end if
 
-! Make an error return if SIMI is a poor approximation to the inverse of SIM(:, 1:N).
-      erri = matprod(simi, sim(:, 1:n))
-      do i = 1, n
-          erri(i, i) = -ONE + erri(i, i)
-      end do
-      if (any(is_nan(erri)) .or. maxval(abs(erri)) > TENTH) then
-!    if (IPRINT >= 1) print 210
-!210 format(/3X, 'Return from subroutine COBYLA because ', 'rounding errors are becoming damaging.')
-          info = 7
-!write (10, *) '457 g600'
+      if (info == 3) then
+!write (10, *) '420 g600'
           goto 600
       end if
 

@@ -138,14 +138,6 @@ cpen = ZERO
 !10  format(/3X, 'The initial value of RHO is', 1PE13.6, 2X, 'and CPEN is set to zero.')
 !end if
 
-sim = ZERO
-simi = ZERO
-do i = 1, n
-    sim(i, i) = rho
-    simi(i, i) = ONE / rho
-end do
-sim(:, n + 1) = x
-
 nsav = 0
 datsav = HUGENUM  ! This is necessary; otherwise, SELECTX may return an incorrect X.
 datmat = HUGENUM  ! This is necessary; otherwise, SELECTX may return an incorrect X.
@@ -172,24 +164,18 @@ if (subinfo == NAN_X .or. subinfo == NAN_INF_F .or. subinfo == FTARGET_ACHIEVED 
 end if
 
 41 ibrnch = 1
-! Identify the optimal vertex of the current simplex.
-140 call updatepole(cpen, [(.true., i=1, n + 1)], datmat, sim, simi)
-
-if (info == 3) then
-    !write (10, *) '420 g600'
+! Identify the optimal vertex of the current simplex, and switch it to SIM(:, N+1) if it is not
+! there yet. Powell called SIM(:, N+1) the Pole Position of the simplex.
+140 call updatepole(cpen, [(.true., i=1, n + 1)], datmat, sim, simi, subinfo)
+if (subinfo == DAMAGING_ROUNDING) then
+    info = subinfo
+!    if (IPRINT >= 1) print 210
+!210 format(/3X, 'Return from subroutine COBYLA because ', 'rounding errors are becoming damaging.')
     goto 600
 end if
 
-! Make an error return if SIMI is a poor approximation to the inverse of SIM(:, 1:N).
-erri = matprod(simi, sim(:, 1:n))
-do i = 1, n
-    erri(i, i) = -ONE + erri(i, i)
-end do
-if (any(is_nan(erri)) .or. maxval(abs(erri)) > TENTH) then
-!    if (IPRINT >= 1) print 210
-!210 format(/3X, 'Return from subroutine COBYLA because ', 'rounding errors are becoming damaging.')
-    info = 7
-    !write (10, *) '457 g600'
+if (info == 3) then
+    !write (10, *) '420 g600'
     goto 600
 end if
 

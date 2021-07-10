@@ -17,7 +17,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020.
 !
-! Last Modified: Thursday, July 08, 2021 PM04:36:45
+! Last Modified: Saturday, July 10, 2021 PM10:13:33
 
 
       module info_mod
@@ -43,7 +43,7 @@
       integer, parameter :: NAN_X = -1
       integer, parameter :: NAN_INF_F = -2
       integer, parameter :: NAN_MODEL = -3
-      integer, parameter :: DAMAGING_ROUNDING = -7
+      integer, parameter :: DAMAGING_ROUNDING = 7
 
 
       end module info_mod
