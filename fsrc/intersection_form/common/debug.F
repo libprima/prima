@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 08-Jul-2021.
+! on 10-Jul-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -18,7 +18,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020.
 !
-! Last Modified: Tuesday, June 29, 2021 PM04:58:24
+! Last Modified: Saturday, July 10, 2021 PM08:54:48
 
 
 #include "ppf.h"
@@ -33,6 +33,7 @@
       interface verisize
           module procedure verisize_real_1, verisize_real_2
           module procedure verisize_int_1, verisize_int_2
+          module procedure verisize_logical_1, verisize_logical_2
       end interface verisize
 
 
@@ -174,6 +175,38 @@
           call errstop(srname, 'SIZE(X, 2) /= N')
       end if
       end subroutine verisize_int_2
+
+
+      subroutine verisize_logical_1(x, n)
+! VERISIZE_LOGICAL_1 verifies whether SIZE(X) = N.
+      use consts_mod, only : IK, SRNLEN
+      logical(IK), intent(in) :: x(:)
+      integer(IK), intent(in) :: n
+
+      character(len=SRNLEN), parameter :: srname = 'VERISIZE_LOGICAL_1'
+
+      if (size(x) /= n) then
+          call errstop(srname, 'SIZE(X) /= N')
+      end if
+      end subroutine verisize_logical_1
+
+
+      subroutine verisize_logical_2(x, m, n)
+! VERISIZE_LOGICAL_2 verifies whether SIZE(X, 1) = M, SIZE(X, 2) = N.
+      use consts_mod, only : IK, SRNLEN
+      logical(IK), intent(in) :: x(:, :)
+      integer(IK), intent(in) :: m
+      integer(IK), intent(in) :: n
+
+      character(len=SRNLEN), parameter :: srname = 'VERISIZE_LOGICAL_2'
+
+      if (size(x, 1) /= m) then
+          call errstop(srname, 'SIZE(X, 1) /= M')
+      end if
+      if (size(x, 2) /= n) then
+          call errstop(srname, 'SIZE(X, 2) /= N')
+      end if
+      end subroutine verisize_logical_2
 
 
       end module debug_mod

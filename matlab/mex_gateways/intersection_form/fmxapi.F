@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 09-Jul-2021.
+! on 10-Jul-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -98,7 +98,7 @@
       implicit none
       private
 
-      public :: notComplex, mwOne, intOne, intTwo, convTol
+      public :: notComplex, mwOne, intOne, intTwo, cvsnTol
 
 ! MEX API subroutines
       public :: mexErrMsgIdAndTxt
@@ -139,8 +139,8 @@
 ! mwOne may be used in mxCreateDoubleMatrix and mxCopyPtrToReal8
       mwSize, parameter :: mwOne = 1
       ! Integer 1 with type mwSize
-! convTol is the tolerance of difference due to conversion between REAL(RP) and REAL(DP)
-      real(DP), parameter :: convTol = 1.0E1_DP * max(epsilon(0.0_DP), r&
+! cvsnTol is the tolerance of difference due to conversion between REAL(RP) and REAL(DP)
+      real(DP), parameter :: cvsnTol = 1.0E1_DP * max(epsilon(0.0_DP), r&
      &eal(epsilon(0.0_RP), DP))
 
       interface fmxAllocate
@@ -705,7 +705,7 @@
       x = real(x_dp(1), kind(x))
 ! Check whether the type conversion is proper
       if (kind(x) /= kind(x_dp)) then
-          if (abs(x - x_dp(1)) > convTol * max(abs(x), ONE)) then
+          if (abs(x - x_dp(1)) > cvsnTol * max(abs(x), ONE)) then
               eid = 'FMXAPI:ConversionError'
               mssg = 'READ_RSCALAR: Large error occurs when converting R&
      &EAL(DP) to REAL(RP) (maybe due to overflow).'
@@ -751,7 +751,7 @@
       x = real(x_dp, kind(x))
 ! Check whether the type conversion is proper
       if (kind(x) /= kind(x_dp)) then
-          if (maxval(abs(x - x_dp)) > convTol * max(maxval(abs(x)), ONE)&
+          if (maxval(abs(x - x_dp)) > cvsnTol * max(maxval(abs(x)), ONE)&
      &) then
               eid = 'FMXAPI:ConversionError'
               mssg = 'READ_RVECTOR: Large error occurs when converting R&
@@ -803,7 +803,7 @@
       x = real(x_dp, kind(x))
 ! Check whether the type conversion is proper
       if (kind(x) /= kind(x_dp)) then
-          if (maxval(abs(x - x_dp)) > convTol * max(maxval(abs(x)), ONE)&
+          if (maxval(abs(x - x_dp)) > cvsnTol * max(maxval(abs(x)), ONE)&
      &) then
               eid = 'FMXAPI:ConversionError'
               mssg = 'READ_RMATRIX: Large error occurs when converting R&
@@ -884,7 +884,7 @@
       x_dp = real(x, kind(x_dp))
 ! Check whether the type conversion is proper
       if (kind(x_dp) /= kind(x)) then
-          if (abs(x - x_dp) > convTol * max(abs(x), ONE)) then
+          if (abs(x - x_dp) > cvsnTol * max(abs(x), ONE)) then
               eid = 'FMXAPI:ConversionError'
               mssg = 'WRITE_RSCALAR: Large error occurs when converting &
      &REAL(RP) to REAL(DP) (maybe due to overflow).'
@@ -927,7 +927,7 @@
       x_dp = real(x, kind(x_dp))
 ! Check whether the type conversion is proper
       if (kind(x) /= kind(x_dp)) then
-          if (maxval(abs(x - x_dp)) > convTol * max(maxval(abs(x)), ONE)&
+          if (maxval(abs(x - x_dp)) > cvsnTol * max(maxval(abs(x)), ONE)&
      &) then
               eid = 'FMXAPI:ConversionError'
               mssg = 'WRITE_RVECTOR: Large error occurs when converting &
@@ -982,7 +982,7 @@
       x_dp = real(x, kind(x_dp))
 ! Check whether the type conversion is proper
       if (kind(x) /= kind(x_dp)) then
-          if (maxval(abs(x - x_dp)) > convTol * max(maxval(abs(x)), ONE)&
+          if (maxval(abs(x - x_dp)) > cvsnTol * max(maxval(abs(x)), ONE)&
      &) then
               eid = 'FMXAPI:ConversionError'
               mssg = 'WRITE_RMATRIX: Large error occurs when converting &

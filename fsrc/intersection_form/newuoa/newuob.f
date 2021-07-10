@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 08-Jul-2021.
+! on 10-Jul-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -17,7 +17,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Thursday, July 08, 2021 PM03:05:22
+! Last Modified: Saturday, July 10, 2021 PM08:18:39
 
       module newuob_mod
 
@@ -153,7 +153,7 @@
       character(len=SRNLEN), parameter :: srname = 'NEWUOB'
 
 
-! Get size.
+! Get and verify the sizes.
       n = int(size(x), kind(n))
       maxfhist = int(size(fhist), kind(maxfhist))
       maxxhist = int(size(xhist, 2), kind(maxxhist))
@@ -635,8 +635,12 @@
           khist = mod(nf - 1_IK, maxxhist) + 1_IK
           xhist = reshape([xhist(:, khist + 1:maxxhist), xhist(:, 1:khis&
      &t)], shape(xhist))
-! The above combination of SHAPE and RESHAPE fulfills our desire thanks to the COLUMN-MAJOR
+! N.B.:
+! 1. The result of the array constructor is always a rank-1 array (e.g., vector), no matter what
+! elements are used to construct the array.
+! 2. The above combination of SHAPE and RESHAPE fulfills our desire thanks to the COLUMN-MAJOR
 ! order of Fortran arrays.
+! 3. In MATLAB, `xhist = [xhist(:, khist + 1:maxxhist), xhist(:, 1:khist)]` does the same thing.
       end if
 
       if (abs(iprint) >= 1) then

@@ -130,7 +130,7 @@ C   60     RESMAX=AMAX1(RESMAX,-CON(K))
       CON(MP)=F
       CON(MPP)=RESMAX
 
-!      call logging('log1', 'cobyla', 121, nfvals, f, x(1:n), con(1:mpp),
+!      call logging('log1', 'cobyla', 133, nfvals, f, x(1:n), con(1:mpp),
 !     &     resmax, 'test')
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C By Zaikun 20190819:
@@ -883,22 +883,9 @@ C      NFVALS-2 instead of NFVALS-1.
       END DO
       PARMU = MAX(PARMU, 1.0D6)
       IF (NFVALS >= 2) THEN ! See the comments above for why NFVALS>2
-          CALL ISBETTER(F, RESMAX, DATMAT(MP, NP), DATMAT(MPP, NP),
-     1         PARMU, CTOL, BETTER)
-          IF (BETTER) THEN
-              DO I = 1, N
-                  X(I) = SIM(I, NP)
-              END DO
-              F = DATMAT(MP, NP)
-              RESMAX = DATMAT(MPP, NP)
-              DO K = 1, M
-                  CON(K) = DATMAT(K, NP)
-              END DO
-          END IF
           !RESREF = RESMAX
           RESREF = HUGENUM
-          IF (RESREF /= RESREF) RESREF = HUGENUM
-          DO J = 1, MIN(NP-1, NFVALS-2)
+          DO J = 1, MIN(NP, NFVALS-2)
 C See the comments above for why to check these J
               IF (DATMAT(MPP, J) <= RESREF) THEN
                   CALL ISBETTER(F, RESMAX, DATMAT(MP, J),
@@ -915,7 +902,6 @@ C See the comments above for why to check these J
                   END IF
               END IF
           END DO
-      END IF
           DO J = 1, NSAV
               IF (DATSAV(MPP, J) <= RESREF) THEN
                   CALL ISBETTER(F, RESMAX, DATSAV(MP, J),
@@ -932,6 +918,19 @@ C See the comments above for why to check these J
                   END IF
               ENDIF
           END DO
+          CALL ISBETTER(DATMAT(MP, NP), DATMAT(MPP, NP), F, RESMAX,
+     1         PARMU, CTOL, BETTER)
+          IF (.NOT. BETTER) THEN
+              DO I = 1, N
+                  X(I) = SIM(I, NP)
+              END DO
+              F = DATMAT(MP, NP)
+              RESMAX = DATMAT(MPP, NP)
+              DO K = 1, M
+                  CON(K) = DATMAT(K, NP)
+              END DO
+          END IF
+      END IF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   620 IF (IPRINT >= 1) THEN
           PRINT 70, NFVALS,F,RESMAX,(X(I),I=1,IPTEM)

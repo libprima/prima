@@ -1,4 +1,6 @@
+update.f
 initialize.f
 trustregion.f
+selectx.f
 cobylb.f
 cobyla.f

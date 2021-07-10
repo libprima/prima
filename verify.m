@@ -185,6 +185,12 @@ for ip = minip : length(plist)
             exitflag2 = 3;
             %display('exitflag2 changed to 3.')
         end
+        if ((strcmpi(solvers{1}, 'cobyla') || strcmpi(solvers{2}, 'cobyla')) && output1.funcCount == length(x1) + 1 ...
+                && output2.funcCount == length(x2) + 1 && fx1 == fx2 && output1.constrviolation == output2.constrviolation && norm(x1-x2)>0)
+            x1 = x2;
+            fprintf('x1 changed to x2.\n');
+        end
+
         if iseq(x1, fx1, exitflag1, output1, x2, fx2, exitflag2, output2, prec)
             fprintf('Succeed\n');
         else

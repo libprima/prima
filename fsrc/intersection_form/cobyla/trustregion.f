@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 08-Jul-2021.
+! on 10-Jul-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -780,9 +780,7 @@
 !
 490   if (MCON == M) goto 480
       IFULL = 0
-500   write (10, *) 'ot'
-      close (10)
-      return
+500   return
 
       end subroutine trstlp
       end module trustregion_mod

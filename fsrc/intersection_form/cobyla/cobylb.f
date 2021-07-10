@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 08-Jul-2021.
+! on 10-Jul-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -19,7 +19,7 @@
       contains
 
       subroutine cobylb(m, x, rhobeg, rhoend, iprint, maxfun, con, f, in&
-     &fo, ftarget, resmax)
+     &fo, ftarget, cstrv)
 
 ! Generic modules
       use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENU&
@@ -31,14 +31,14 @@
       use output_mod, only : retmssg, rhomssg, fmssg
       use lina_mod, only : inprod, matprod, outprod
       use memory_mod, only : cstyle_sizeof
-!use logging_mod, only : logging
+      use logging_mod, only : logging
 
 ! Solver-specific modules
 !use savex_mod, only : savex
-!use isbetter_mod, only : isbetter
-
       use initialize_mod, only : initialize
       use trustregion_mod, only : trstlp
+      use update_mod, only : updatepole
+      use selectx_mod, only : selectx, isbetter
 
       implicit none
 
@@ -65,7 +65,7 @@
 ! NSAVMAX is the maximal number of "dropped X" to save
       integer(IK), parameter :: nsavmax = 1000_IK
 ! CTOL is the tolerance for constraint violation. A point X is considered to be feasible if its
-! constraint violation (RESMAX) is less than CTOL.
+! constraint violation (CSTRV) is less than CTOL.
       real(RP), parameter :: ctol = epsilon(1.0_RP)
 
 ! Local variables
@@ -92,6 +92,8 @@
       real(RP) :: cmax(m)
       real(RP) :: cmin(m)
       real(RP) :: consav(m + 2)
+      real(RP) :: cpen
+      ! Penalty parameter for constraint in merit function (PARMU in Powell's code)
       real(RP) :: cvmaxm
       real(RP) :: cvmaxp
       real(RP) :: datmat(m + 2, size(x) + 1)
@@ -105,9 +107,9 @@
       real(RP) :: erri(size(x), size(x))
       real(RP) :: gamma
       real(RP) :: pareta
-      real(RP) :: parmu
       real(RP) :: parsig
       real(RP) :: phi(size(x) + 1)
+      ! Merit function values
       real(RP) :: phimin
       real(RP) :: prerec
       ! Predicted reduction in constraint violation
@@ -116,7 +118,7 @@
       real(RP) :: prerem
       ! Predicted reduction in merit function
       real(RP) :: ratio
-      real(RP) :: resmax
+      real(RP) :: cstrv
       real(RP) :: rho
       real(RP) :: sigbar(size(x))
       real(RP) :: sim(size(x), size(x) + 1)
@@ -133,6 +135,14 @@
       real(RP) :: vmold
       real(RP) :: vsig(size(x))
       real(RP) :: xsav(size(x), max(nsavmax, 0))
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!! TEMPORARY
+      real(RP), allocatable :: xhist(:, :)
+      real(RP), allocatable :: fhist(:)
+      real(RP), allocatable :: conhist(:, :)
+      real(RP), allocatable :: cstrvhist(:)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       logical :: improve_geo
 
@@ -151,10 +161,10 @@
       gamma = HALF
       delta = 1.1E0_RP
       rho = rhobeg
-      parmu = ZERO
+      cpen = ZERO
 !if (iprint >= 2) then
 !print 10, RHO
-!10  format(/3X, 'The initial value of RHO is', 1PE13.6, 2X, 'and PARMU is set to zero.')
+!10  format(/3X, 'The initial value of RHO is', 1PE13.6, 2X, 'and CPEN is set to zero.')
 !end if
 
       sim = ZERO
@@ -166,55 +176,65 @@
       sim(:, n + 1) = x
 
       nsav = 0
-      datsav = hugenum
+      datsav = HUGENUM
+      ! This is necessary; otherwise, SELECTX may return an incorrect X.
+      datmat = HUGENUM
+      ! This is necessary; otherwise, SELECTX may return an incorrect X.
 
       call initialize(iprint, maxfun, ctol, ftarget, rho, x, nf, datmat,&
      & sim, simi, subinfo)
+      x = sim(:, n + 1)
+      f = datmat(m + 1, n + 1)
+      cstrv = datmat(m + 2, n + 1)
+      con = datmat(:, n + 1)
+      consav = con
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!x = sim(:, n) + sim(:, n + 1)
+!f = datmat(m + 1, n)
+!cstrv = datmat(m + 2, n)
+!con = datmat(:, n)
+!consav = con
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       if (subinfo == NAN_X .or. subinfo == NAN_INF_F .or. subinfo == FTA&
      &RGET_ACHIEVED .or. subinfo == DAMAGING_ROUNDING .or. subinfo == MA&
      &XFUN_REACHED) then
           info = subinfo
-          x = sim(:, n + 1)
-          f = datmat(m + 1, n + 1)
-          resmax = datmat(m + 2, n + 1)
-          consav = datmat(:, n + 1)
 !return
           goto 600
       end if
 
 41    ibrnch = 1
 ! Identify the optimal vertex of the current simplex.
-140   jopt = n + 1
-      phi = datmat(m + 1, :) + parmu * datmat(m + 2, :)
-      phimin = minval(phi)
-      if (phimin < phi(jopt)) then
-          jopt = int(minloc(phi, dim=1), kind(jopt))
-      end if
-      if (parmu <= ZERO .and. any(datmat(m + 2, :) < datmat(m + 2, jopt)&
-     & .and. phi <= phimin)) then
-! (PARMU <= ZERO) is indeed (PARMU == ZERO), and (PHI <= PHIMIN) is indeed (PHI == PHIMIN). We
-! !write them in this way to avoid equality comparison of real numbers.
-          jopt = int(minloc(datmat(m + 2, :), mask=(phi <= phimin), dim=&
-     &1), kind(jopt))
-      end if
+140   call updatepole(cpen, [(.true., i=1, n + 1)], datmat, sim, simi)
 
-! Switch the best vertex into SIM(:, N+1) if it is not there already. Then update SIMI and DATMAT.
-      if (jopt <= n) then
-          datmat(:, [jopt, n + 1]) = datmat(:, [n + 1, jopt])
-          ! Exchange DATMAT(:, JOPT) AND DATMAT(:, N+1)
-          sim(:, n + 1) = sim(:, n + 1) + sim(:, jopt)
-          simjopt = sim(:, jopt)
-          sim(:, jopt) = ZERO
-          sim(:, 1:n) = sim(:, 1:n) - spread(simjopt, dim=2, ncopies=n)
-! The above update is equivalent to multiply SIM(:, 1:N) from the right side by a matrix whose
-! JOPT-th row is [-1, -1, ..., -1], while all the other rows are the same as those of the
-! identity matrix. It is easy to check that the inverse of this matrix is itself. Therefore,
-! SIMI should be updated by a multiplication with this matrix (i.e., its inverse) from the left
-! side, as is done in the following line. The JOPT-th row of the updated SIMI is minus the sum
-! of all rows of the original SIMI, whereas all the other rows remain unchanged.
-          simi(jopt, :) = -sum(simi, dim=1)
-      end if
+!jopt = n + 1
+!phi = datmat(m + 1, :) + cpen * datmat(m + 2, :)
+!phimin = minval(phi)
+!if (phimin < phi(jopt)) then
+!    jopt = int(minloc(phi, dim=1), kind(jopt))
+!end if
+!if (cpen <= ZERO .and. any(datmat(m + 2, :) < datmat(m + 2, jopt) .and. phi <= phimin)) then
+!    ! (CPEN <= ZERO) is indeed (CPEN == ZERO), and (PHI <= PHIMIN) is indeed (PHI == PHIMIN). We
+!    ! !write them in this way to avoid equality comparison of real numbers.
+!    jopt = int(minloc(datmat(m + 2, :), mask=(phi <= phimin), dim=1), kind(jopt))
+!end if
+
+!! Switch the best vertex into SIM(:, N+1) if it is not there already. Then update SIMI and DATMAT.
+!if (jopt <= n) then
+!    datmat(:, [jopt, n + 1]) = datmat(:, [n + 1, jopt]) ! Exchange DATMAT(:, JOPT) AND DATMAT(:, N+1)
+!    sim(:, n + 1) = sim(:, n + 1) + sim(:, jopt)
+!    simjopt = sim(:, jopt)
+!    sim(:, jopt) = ZERO
+!    sim(:, 1:n) = sim(:, 1:n) - spread(simjopt, dim=2, ncopies=n)
+!    ! The above update is equivalent to multiply SIM(:, 1:N) from the right side by a matrix whose
+!    ! JOPT-th row is [-1, -1, ..., -1], while all the other rows are the same as those of the
+!    ! identity matrix. It is easy to check that the inverse of this matrix is itself. Therefore,
+!    ! SIMI should be updated by a multiplication with this matrix (i.e., its inverse) from the left
+!    ! side, as is done in the following line. The JOPT-th row of the updated SIMI is minus the sum
+!    ! of all rows of the original SIMI, whereas all the other rows remain unchanged.
+!    simi(jopt, :) = -sum(simi, dim=1)
+!end if
 
       if (info == 3) then
 !write (10, *) '420 g600'
@@ -293,8 +313,7 @@
       cvmaxm = maxval([ZERO, matprod(dx, A(:, 1:m)) - datmat(1:m, n + 1)&
      &])
       dxsign = ONE
-      if (parmu * (cvmaxp - cvmaxm) > TWO * inprod(dx, a(:, m + 1))) the&
-     &n
+      if (cpen * (cvmaxp - cvmaxm) > TWO * inprod(dx, a(:, m + 1))) then
           dxsign = -ONE
       end if
 
@@ -318,16 +337,18 @@
 
       call calcfc(n, m, x, f, con)
       nf = nf + 1
-      resmax = maxval([ZERO, -con(1:m)])
+      cstrv = maxval([ZERO, -con(1:m)])
       con(m + 1) = f
-      con(m + 2) = resmax
+      con(m + 2) = cstrv
+
+!call logging('log', 'cobylbn', 287, nf, f, x(1:n), con(1:m + 2), cstrv, 'test')
 
 ! CONSAV always contains the constraint value of the current x. CON, however, will be changed during
 ! the calculation (see the lines above line number 220).
       consav = con
 
 !if (nf == IPRINT - 1 .or. IPRINT == 3) then
-!    print 70, nf, F, RESMAX, (X(I), I=1, IPTEM)
+!    print 70, nf, F, CSTRV, (X(I), I=1, IPTEM)
 !70  format(/3X, 'nf =', I5, 3X, 'F =', 1PE13.6, 4X, 'MAXCV =', 1PE13.6 / 3X, 'X =', 1PE13.6, 1P4E15.6)
 !    if (IPTEM < N) print 80, (X(I), I=IPTEM + 1, N)
 !80  format(1PE19.6, 1P4E15.6)
@@ -339,13 +360,13 @@
           goto 600
       end if
       if (any(is_nan(con(1:m)))) then
-          resmax = sum(con(1:m))
-          ! Set RESMAX to NaN
+          cstrv = sum(con(1:m))
+          ! Set CSTRV to NaN
           info = -2
           goto 600
       end if
 ! If the objective function achieves the target value at a feasible point, then exit.
-      if (f <= ftarget .and. resmax <= ctol) then
+      if (f <= ftarget .and. cstrv <= ctol) then
           info = 1
           return
       end if
@@ -383,7 +404,7 @@
       prerec = datmat(m + 2, n + 1) - maxval([ZERO, con(1:m) - matprod(d&
      &x, A(:, 1:m))])
 
-! Increase PARMU if necessary and branch back if this change alters the optimal vertex. Otherwise
+! Increase CPEN if necessary and branch back if this change alters the optimal vertex. Otherwise
 ! PREREM and PREREC will be set to the predicted reductions in the merit function and the maximum
 ! constraint violation respectively.
       barmu = zero
@@ -391,24 +412,24 @@
           barmu = -preref / prerec
           ! PREREF < 0 ???
       end if
-      if (parmu < 1.5E0_RP * barmu) then
-          parmu = TWO * barmu
+      if (cpen < 1.5E0_RP * barmu) then
+          cpen = TWO * barmu
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!    if (IPRINT >= 2) print 410, PARMU
-!410 format(/3X, 'Increase in PARMU to', 1PE13.6)
+!    if (IPRINT >= 2) print 410, CPEN
+!410 format(/3X, 'Increase in CPEN to', 1PE13.6)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          phi = datmat(m + 1, :) + parmu * datmat(m + 2, :)
+          phi = datmat(m + 1, :) + cpen * datmat(m + 2, :)
           phimin = minval(phi)
 !jopt = n + 1 ????
-          if (phimin < phi(n + 1) .or. (parmu <= ZERO .and. any(datmat(m&
-     & + 2, :) < datmat(m + 2, n + 1) .and. phi <= phimin))) then
-! (PARMU <= ZERO) is indeed (PARMU == ZERO), and (PHI <= PHIMIN) is indeed (PHI == PHIMIN). We
+          if (phimin < phi(n + 1) .or. (cpen <= ZERO .and. any(datmat(m &
+     &+ 2, :) < datmat(m + 2, n + 1) .and. phi <= phimin))) then
+! (CPEN <= ZERO) is indeed (CPEN == ZERO), and (PHI <= PHIMIN) is indeed (PHI == PHIMIN). We
 ! !write them in this way to avoid equality comparison of real numbers.
               goto 140
           end if
       end if
 
-      prerem = preref + parmu * prerec
+      prerem = preref + cpen * prerec
 
 
 ! Calculate the constraint and objective functions at X(*). Then find the actual reduction in the merit function.
@@ -427,16 +448,18 @@
 
       call calcfc(n, m, x, f, con)
       nf = nf + 1
-      resmax = maxval([ZERO, -con(1:m)])
+      cstrv = maxval([ZERO, -con(1:m)])
       con(m + 1) = f
-      con(m + 2) = resmax
+      con(m + 2) = cstrv
+
+!call logging('log', 'cobylbn', 287, nf, f, x(1:n), con(1:m + 2), cstrv, 'test')
 
 ! CONSAV always contains the constraint value of the current x. CON, however, will be changed during
 ! the calculation (see the lines above line number 220).
       consav = con
 
 !if (nf == IPRINT - 1 .or. IPRINT == 3) then
-!    print 70, nf, F, RESMAX, (X(I), I=1, IPTEM)
+!    print 70, nf, F, CSTRV, (X(I), I=1, IPTEM)
 !70  format(/3X, 'nf =', I5, 3X, 'F =', 1PE13.6, 4X, 'MAXCV =', 1PE13.6 / 3X, 'X =', 1PE13.6, 1P4E15.6)
 !    if (IPTEM < N) print 80, (X(I), I=IPTEM + 1, N)
 !80  format(1PE19.6, 1P4E15.6)
@@ -448,13 +471,13 @@
           goto 600
       end if
       if (any(is_nan(con(1:m)))) then
-          resmax = sum(con(1:m))
-          ! Set RESMAX to NaN
+          cstrv = sum(con(1:m))
+          ! Set CSTRV to NaN
           info = -2
           goto 600
       end if
 ! If the objective function achieves the target value at a feasible point, then exit.
-      if (f <= ftarget .and. resmax <= ctol) then
+      if (f <= ftarget .and. cstrv <= ctol) then
           info = 1
           return
       end if
@@ -469,13 +492,12 @@
 ! each vertex of the current simplex, the entries of each column being the values of the constraint
 ! functions (if any) followed by the objective function and the greatest constraint violation at
 ! the vertex.
-      vmold = datmat(m + 1, n + 1) + parmu * datmat(m + 2, n + 1)
-      vmnew = f + parmu * resmax
+      vmold = datmat(m + 1, n + 1) + cpen * datmat(m + 2, n + 1)
+      vmnew = f + cpen * cstrv
       actrem = vmold - vmnew
-      if (parmu <= ZERO .and. abs(f - datmat(m + 1, n + 1)) <= ZERO) the&
-     &n
+      if (cpen <= ZERO .and. abs(f - datmat(m + 1, n + 1)) <= ZERO) then
           prerem = prerec
-          actrem = datmat(m + 2, n + 1) - resmax
+          actrem = datmat(m + 2, n + 1) - cstrv
       end if
 
 ! Begin the operations that decide whether X(*) should replace one of the vertices of the current
@@ -509,14 +531,14 @@
 
 
 ! When jdrop=0, the algorithm decides not to include the trust-region trial point X into the
-! simplex, because X is not good enough according to the merit function PHI = F + PARMU*RESMAX. In
+! simplex, because X is not good enough according to the merit function PHI = F + CPEN*CSTRV. In
 ! this case, X will simply be discarded in the original code. However, this decision depends on the
-! value of PARMU. When PARMU is updated later, the discarded X might turn out better, sometimes even
+! value of CPEN. When CPEN is updated later, the discarded X might turn out better, sometimes even
 ! better than SIM(:, N+1), which is supposed to be the best point in the simplex. For this reason,
 ! we save the to-be-discarded X in XSAV and compare them with SIM(:, N+1) right before exiting. If
 ! a vector in XSAV turns out better than SIM(:, N+1), we replace SIM(:, N+1) by this vector. When
-! jdrop > 0, SIM(:, jdrop) will be removed from the simplex according to PHI with the current PARMU.
-! Similar to X, SIM(:, jdrop) may turn out better when PARMU is updated. Therefore, XSAV also takes
+! jdrop > 0, SIM(:, jdrop) will be removed from the simplex according to PHI with the current CPEN.
+! Similar to X, SIM(:, jdrop) may turn out better when CPEN is updated. Therefore, XSAV also takes
 ! SIM(:, jdrop) into account.
 !
 ! We save at most NSAVMAX to-be-discarded X.
@@ -551,28 +573,28 @@
           goto 140
       end if
 
-! Update RHO and PARMU.
+! Update RHO and CPEN.
       if (rho > rhoend) then
 ! See equation (11) in Section 3 of the COBYLA paper for the update of RHO.
           rho = HALF * rho
           if (rho <= 1.5E0_RP * rhoend) then
               rho = rhoend
           end if
-! See equation (12)--(13) in Section 3 of the COBYLA paper for the update of PARMU.
-          if (parmu > ZERO) then
+! See equation (12)--(13) in Section 3 of the COBYLA paper for the update of CPEN.
+          if (cpen > ZERO) then
               cmin = minval(datmat(1:m, :), dim=2)
               cmax = maxval(datmat(1:m, :), dim=2)
               if (any(cmin < HALF * cmax)) then
                   denom = minval(max(cmax, ZERO) - cmin, mask=(cmin < HA&
      &LF * cmax))
-                  parmu = min(parmu, (maxval(datmat(m + 1, :)) - minval(&
-     &datmat(m + 1, :))) / denom)
+                  cpen = min(cpen, (maxval(datmat(m + 1, :)) - minval(da&
+     &tmat(m + 1, :))) / denom)
               else
-                  parmu = ZERO
+                  cpen = ZERO
               end if
           end if
-!if (IPRINT >= 2) print 580, RHO, PARMU
-!580 format(/3X, 'Reduction in RHO to', 1PE13.6, '  and PARMU =', 1PE13.6)
+!if (IPRINT >= 2) print 580, RHO, CPEN
+!580 format(/3X, 'Reduction in RHO to', 1PE13.6, '  and CPEN =', 1PE13.6)
 !!    if (IPRINT == 2) then
 !!        print 70, nf, DATMAT(M + 1, N + 1), DATMAT(m + 2, N + 1), (SIM(I, N + 1), I=1, IPTEM)
 !!        if (IPTEM < N) print 80, (X(I), I=IPTEM + 1, N)
@@ -590,73 +612,37 @@
 !if (iprint >= 1) print 590
 !590 format(/3X, 'Normal return from subroutine COBYLA')
 
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IF (IFULL .EQ. 1) GOTO 620
-!  600 DO 610 I=1,N
-!  610 X(I)=SIM(I,N+1)
-!      F=DATMAT(MP,N+1)
-!      RESMAX=DATMAT(m+2,N+1)
-!
-!      Zaikun 01-06-2019:
-!      Why go to 620 directly without setting X and F? This seems
-!      INCORRECT, because it may lead to a return with X and F that
-!      are not the best available.
-!      The following code defines X as an "optimal" one among the
-!      vectors:
-!      DATSAV(:, 1:NSAV), (when NSAV >= 1),
-!      SIM(:, N+1), and SIM(:, 1:min(N, nf-2)) (when nf>=2).
-!      Here, X being "optimal" means
-!      1. the constraint violation of X is at most RESREF
-!      2. no other vector is better than X according to ISBETTER with
-!      the current PARMU.
-!
-!      Note:
-!      0. The last evaluated X and its function/constraint information
-!      are saved in [X, CONSAV, F, RESMAX].
-!      1. When nf=1, SIM and DATMAT have not been initialized yet.
-!      2. When 2<=nf<=N+1, the first evaluated X are saved in
-!      SIM(:, N+1), its function/constraint in DATMAT(:, N+1), while the
-!      other X are saved in SIM(:, nf-1), its function/constraint
-!      in DATMAT(:, nf-1). However, when the code arrives at line 600,
-!      [X, CON, F, RESMAX] may have not been saved into SIM(:, nf-1)
-!      and DATMAT(:, nf-1) yet. That is why we check SIM up to
-!      nf-2 instead of nf-1.
-600   con = consav
-      parmu = max(parmu, 1.0E6_RP)
-      if (nf >= 2 .and. isbetter(f, resmax, datmat(m + 1, n + 1), datmat&
-     &(m + 2, n + 1), parmu, ctol)) then
+600   sim(:, 1:n) = sim(:, 1:n) + spread(sim(:, n + 1), dim=2, ncopies=n&
+     &)
+      !!! TEMPORARY
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!! TEMPORARY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Make sure that the history includes the last X.
+      xhist = reshape([sim, xsav(:, 1:nsav), x], [n, n + nsav + 2])
+      fhist = [datmat(m + 1, :), datsav(m + 1, 1:nsav), f]
+      conhist = reshape([datmat(1:m, :), datsav(1:m, 1:nsav), consav], [&
+     &m, n + nsav + 2])
+      cstrvhist = [datmat(m + 2, :), datsav(m + 2, 1:nsav), cstrv]
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      cpen = max(cpen, 1.0E6_RP)
+      call selectx(conhist, cstrvhist, ctol, fhist, cpen, xhist, con(1:m&
+     &), cstrv, f, x)
+! We prefer SIM(:, N+1) unless the X selected above is even better.
+      if (.not. isbetter([f, cstrv], [datmat(m + 1, n + 1), datmat(m + 2&
+     &, n + 1)], cpen, ctol)) then
           x = sim(:, n + 1)
           f = datmat(m + 1, n + 1)
-          resmax = datmat(m + 2, n + 1)
           con = datmat(:, n + 1)
+          cstrv = datmat(m + 2, n + 1)
       end if
-      do j = 1, min(n, nf - 2)
-      ! See the comments above for why to check these J.
-          if (isbetter(f, resmax, datmat(m + 1, j), datmat(m + 2, j), pa&
-     &rmu, ctol)) then
-              x = sim(:, j) + sim(:, n + 1)
-              f = datmat(m + 1, j)
-              resmax = datmat(m + 2, j)
-              con = datmat(:, j)
-          end if
-      end do
-      do j = 1, nsav
-          if (isbetter(f, resmax, datsav(m + 1, j), datsav(m + 2, j), pa&
-     &rmu, ctol)) then
-              x = xsav(:, j)
-              f = datsav(m + 1, j)
-              resmax = datsav(m + 2, j)
-              con = datsav(:, j)
-          end if
-      end do
-
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !620 if (IPRINT >= 1) then
-!    print 70, nf, F, RESMAX, (X(I), I=1, IPTEM)
+!    print 70, nf, F, CSTRV, (X(I), I=1, IPTEM)
 !    if (IPTEM < N) print 80, (X(I), I=IPTEM + 1, N)
 !end if
 
+!close (16)
       return
       end subroutine cobylb
 
@@ -668,15 +654,15 @@
 !
 ! When COBYLA calls this subroutine, XDROP is a vector to be "dropped", and  DATDROP contains its
 ! function/constraint information (constraint value in the first M entries, DATDROP(M+1) = F(XDROP),
-! and DATDROP(M+2) = RESMAX(X)). XSAV and DATSAV save at most NSAVMAX vectors "dropped" by COBYLB
+! and DATDROP(M+2) = CSTRV(X)). XSAV and DATSAV save at most NSAVMAX vectors "dropped" by COBYLB
 ! and their function/constraint information. Only XSAV(:, 1:NSAV) and DATSAV(:, 1:NSAV) contains
 ! such vectors, while XSAV(:, NSAV+1:NSAVMAX) and DATSAV(:, NSAV+1:NSAVMAX) are not initialized yet.
 !
 ! Note: We decide whether X is better than the function/constraint of Y according to the ISBETTER
-! function with PARMU = -ONE. Due to the implementation of ISBETTER,
-! X is better than Y with PARMU < 0
-! ==> X is better than Y with any PARMU >= 0,
-! ==> X is better than Y regardless of PARMU.
+! function with CPEN = -ONE. Due to the implementation of ISBETTER,
+! X is better than Y with CPEN < 0
+! ==> X is better than Y with any CPEN >= 0,
+! ==> X is better than Y regardless of CPEN.
 
 ! Generic modules
       use consts_mod, only : RP, IK, ONE
@@ -686,7 +672,7 @@
       use lina_mod, only : calquad, inprod
 
 ! Solver-specific modules
-!use isbetter_mod, only : isbetter
+      use selectx_mod, only : isbetter
 
       implicit none
 
@@ -709,7 +695,7 @@
       integer(IK) :: n
       integer(IK) :: nsavmax
       integer(IK) :: i
-      real(RP) :: parmu
+      real(RP) :: cpen
       logical :: better(nsav)
       logical :: keep(nsav)
 
@@ -722,20 +708,20 @@
           ! Do nothing if NSAVMAX=0
       end if
 
-      parmu = -ONE
-      ! See the comments above for why PARMU = -1
+      cpen = -ONE
+      ! See the comments above for why CPEN = -1
 
 ! Return immediately if any column of XSAV is better than XDROP.
 ! BETTER is defined by the array constructor with an implicit do loop.
-      better = [(isbetter(datdrop(m + 1), datdrop(m + 2), datsav(m + 1, &
-     &i), datsav(m + 2, i), parmu, ctol), i=1, nsav)]
+      better = [(isbetter([datsav(m + 1, i), datsav(m + 2, i)], [datdrop&
+     &(m + 1), datdrop(m + 2)], cpen, ctol), i=1, nsav)]
       if (any(better)) then
           return
       end if
 
 ! Decide which columns of XSAV to keep. We use again the array constructor with an implicit do loop.
-      keep = [(.not. isbetter(datsav(m + 1, i), datsav(m + 2, i), datdro&
-     &p(m + 1), datdrop(m + 2), parmu, ctol), i=1, nsav)]
+      keep = [(.not. isbetter([datdrop(m + 1), datdrop(m + 2)], [datsav(&
+     &m + 1, i), datsav(m + 2, i)], cpen, ctol), i=1, nsav)]
 ! If XDROP is not better than any column of XSAV, then we remove the first (oldest) column of XSAV.
       if (count(keep) == nsavmax) then
           keep(1) = .false.
@@ -756,86 +742,5 @@
 
       end subroutine savex
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-      function isbetter(f0, conv0, f, conv, parmu, ctol) result(better)
-! This function compares whether (F, CONV) is (strictly) better than (F0, CONV0) in the sense of
-! decreasing the merit function PHI = F + PARMU*CONV. It takes care of the cases where some of these
-! values are NaN or Inf. At return, BETTER = TRUE if (F, CONV) is better than (F0, CONV0).
-!
-! N.B.:
-! 1. We use this function to choose candidates for the final X.
-! 2. We prefer feasible points (i.e., constraint violation is at most CTOL) to infeasible ones.
-! 3. In this function, BETTER = TRUE only if CONV <= MAX(CTOL, CONV0), except if F0 is Inf/NaN while
-! F is not, in which case BETTER = TRUE as long as CONV is not Inf/NaN.
-
-! Generic modules
-      use consts_mod, only : RP, ZERO, TEN, HUGENUM, DEBUGGING
-      use infnan_mod, only : is_nan, is_posinf
-      use debug_mod, only : errstop
-      use output_mod, only : retmssg, rhomssg, fmssg
-      use lina_mod, only : calquad, inprod
-      implicit none
-
-      real(RP), intent(IN) :: f0
-      real(RP), intent(IN) :: conv0
-      real(RP), intent(IN) :: f
-      real(RP), intent(IN) :: conv
-      real(RP), intent(IN) :: parmu
-      real(RP), intent(IN) :: ctol
-      logical :: better
-
-! Local variables
-      logical :: f0infnan
-      logical :: finfnan
-      logical :: fle
-      logical :: flt
-      logical :: c0infnan
-      logical :: cinfnan
-      logical :: cle
-      logical :: clt
-
-! As values of F0, CONV0, F, and CONV, we regard Inf and NaN to be equivalent (equally bad).
-      f0infnan = is_nan(f0) .or. (f0 > HUGENUM)
-      ! F0 = Inf or NaN?
-      c0infnan = is_nan(conv0) .or. (conv0 > HUGENUM)
-      ! CONV0 = Inf or NaN?
-      finfnan = is_nan(f) .or. (f > HUGENUM)
-      ! F = Inf or NaN?
-      cinfnan = is_nan(conv) .or. (conv > HUGENUM)
-      ! CONV = Inf or NaN?
-
-! Compare F and F0, CONV and CONV0, taking Inf/NaN into consideration.
-      flt = (f0infnan .and. (.not. finfnan)) .or. (f < f0)
-      ! F < F0?
-      fle = (f0infnan .and. finfnan) .or. (f <= f0) .or. flt
-      ! F <= F0?
-      clt = (c0infnan .and. (.not. cinfnan)) .or. (conv < conv0)
-      ! CONV < CONV0?
-      cle = (c0infnan .and. cinfnan) .or. (conv <= max(ctol, conv0)) .or&
-     &. clt
-      ! CONV <= CONV0?
-
-      better = .false.
-
-! If F0 or CONV0 is Inf/NaN while neither F nor CONV is, then (F, CONV) is better than (F0, CONV0).
-      better = better .or. ((f0infnan .or. c0infnan) .and. .not. (finfna&
-     &n .or. cinfnan))
-
-! If (F < F0 and CONV <= CONV0) or (F <= F0 and CONV < CONV0) in the sense defined above, then
-! (F, CONV) is better than (F0, CONV0).
-      better = better .or. (flt .and. cle) .or. (fle .and. clt)
-
-! If CONV <= CTOL and F is not Inf/NaN while (CONV0 < 10*CTOL) is false (may be because CONV0 = NaN),
-! then (F, CONV) is better than (F0, CONV0).
-      better = better .or. (.not. finfnan .and. conv <= ctol .and. (conv&
-     &0 > TEN * ctol .or. c0infnan))
-
-! If PARMU >= 0, F + PARMU*CONV < F0 + PARMU*CONV0 and CONV <= MAX(CTOL, CONV0), then (F, CONV)
-! is better than (F0, CONV0). If PARMU < 0, then BETTER = TRUE only in the above cases.
-      better = better .or. (parmu >= zero .and. f + parmu * conv < f0 + &
-     &parmu * conv0 .and. cle)
-
-      end function isbetter
 
       end module cobylb_mod
