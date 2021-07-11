@@ -50,6 +50,9 @@ C      DELTA=1.1
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      PARMU=0.0
       PARMU=0.0D0
+
+      DATMAT(1:M+2,1:N+1) = HUGENUM
+      DATSAV(1:M+2,1:NSMAX) = HUGENUM
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       IF (IPRINT >= 2) PRINT 10, RHO
    10 FORMAT (/3X,'The initial value of RHO is',1PE13.6,2X,
@@ -885,15 +888,19 @@ C      NFVALS-2 instead of NFVALS-1.
       IF (NFVALS >= 2) THEN ! See the comments above for why NFVALS>2
           !RESREF = RESMAX
           RESREF = HUGENUM
-          DO J = 1, MIN(NP, NFVALS-2)
+          DO J = 1, NP
 C See the comments above for why to check these J
               IF (DATMAT(MPP, J) <= RESREF) THEN
                   CALL ISBETTER(F, RESMAX, DATMAT(MP, J),
      1                 DATMAT(MPP, J), PARMU, CTOL, BETTER)
                   IF (BETTER) THEN
-                      DO I = 1, N
-                          X(I) = SIM(I, J) + SIM(I, NP)
-                      END DO
+                      if (J <= N) then
+                          DO I = 1, N
+                              X(I) = SIM(I, J) + SIM(I, NP)
+                          END DO
+                      else
+                          X(1:N) = SIM(1:N, NP)
+                      end if
                       F = DATMAT(MP, J)
                       RESMAX = DATMAT(MPP, J)
                       DO K = 1, M
@@ -920,7 +927,7 @@ C See the comments above for why to check these J
           END DO
           CALL ISBETTER(DATMAT(MP, NP), DATMAT(MPP, NP), F, RESMAX,
      1         PARMU, CTOL, BETTER)
-          IF (.NOT. BETTER) THEN
+          IF (.NOT. BETTER .and. NFVALS > N+1) THEN
               DO I = 1, N
                   X(I) = SIM(I, NP)
               END DO

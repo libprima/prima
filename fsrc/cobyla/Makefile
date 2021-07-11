@@ -151,3 +151,4 @@ cobyla.o: cobyla.f90
 
 clean:
 	rm -f *.o *.mod a.out example *__genmod.f90 *.dbg
+	cd $(COMMON) && rm -f *.o *.mod a.out example *__genmod.f90 *.dbg && cd $(CURRENTDIR)
