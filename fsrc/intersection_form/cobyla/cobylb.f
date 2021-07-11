@@ -22,8 +22,8 @@
      &fo, ftarget, cstrv)
 
 ! Generic modules
-      use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENU&
-     &M, DEBUGGING, SRNLEN
+      use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH,&
+     & HUGENUM, DEBUGGING, SRNLEN
       use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, TRSUBP_FAIL&
      &ED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F, DAMAGING_ROUNDING
       use infnan_mod, only : is_nan, is_posinf
@@ -86,9 +86,7 @@
       ! Better name?
 ! A(:, 1:m) contains the approximate gradient for the constraints, and A(:, m+1) is minus the
 ! approximate gradient for the objective function.
-      real(RP) :: alpha
       real(RP) :: barmu
-      real(RP) :: beta
       real(RP) :: cmax(m)
       real(RP) :: cmin(m)
       real(RP) :: consav(m + 2)
@@ -99,12 +97,14 @@
       real(RP) :: datmat(m + 2, size(x) + 1)
       ! CONVAL, FVAL, CVVAL
       real(RP) :: datsav(m + 2, max(nsavmax, 0))
-      real(RP) :: delta
       real(RP) :: denom
       real(RP) :: dx(size(x))
       real(RP) :: dxsign
       real(RP) :: edgmax
-      real(RP) :: gamma
+      real(RP) :: factor_alpha
+      real(RP) :: factor_beta
+      real(RP) :: factor_delta
+      real(RP) :: factor_gamma
       real(RP) :: pareta
       real(RP) :: parsig
       real(RP) :: phi(size(x) + 1)
@@ -126,8 +126,7 @@
       ! (n, )
       real(RP) :: simid(size(x))
       real(RP) :: tmpv(size(x))
-      real(RP) :: simjopt(size(x))
-      real(RP) :: simijdrop(size(x))
+      real(RP) :: simi_jdrop(size(x))
       real(RP) :: actrem
       real(RP) :: veta(size(x))
       real(RP) :: vmnew
@@ -155,10 +154,10 @@
 ! columns of SIM.
       info = 2147483647
       iptem = min(n, 5)
-      alpha = 0.25E0_RP
-      beta = 2.1E0_RP
-      gamma = HALF
-      delta = 1.1E0_RP
+      factor_alpha = QUART
+      factor_beta = 2.1E0_RP
+      factor_delta = 1.1E0_RP
+      factor_gamma = HALF
       rho = rhobeg
       cpen = ZERO
 !if (iprint >= 2) then
@@ -235,8 +234,8 @@
       A(:, m + 1) = -A(:, m + 1)
 
 ! Calculate the values of sigma and eta, and set IFLAG=0 if the current simplex is not acceptable.
-      parsig = alpha * rho
-      pareta = beta * rho
+      parsig = factor_alpha * rho
+      pareta = factor_beta * rho
 ! For J = 1, 2, ..., n, VSIG(J) is The Euclidean distance from vertex J to the opposite face of
 ! the current simplex. But what about vertex N+1?
       vsig = ONE / sqrt(sum(simi**2, dim=2))
@@ -275,7 +274,7 @@
      &datsav, nsav, ctol)
 
 !Calculate the step to the new vertex and its sign.
-      dx = gamma * rho * vsig(jdrop) * simi(jdrop, :)
+      dx = factor_gamma * rho * vsig(jdrop) * simi(jdrop, :)
       cvmaxp = maxval([ZERO, -matprod(dx, A(:, 1:m)) - datmat(1:m, n + 1&
      &)])
       cvmaxm = maxval([ZERO, matprod(dx, A(:, 1:m)) - datmat(1:m, n + 1)&
@@ -288,9 +287,9 @@
 ! Update SIM and SIMI, and set the next X.
       dx = dxsign * dx
       sim(:, jdrop) = dx
-      simijdrop = simi(jdrop, :) / inprod(simi(jdrop, :), dx)
-      simi = simi - outprod(matprod(simi, dx), simijdrop)
-      simi(jdrop, :) = simijdrop
+      simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), dx)
+      simi = simi - outprod(matprod(simi, dx), simi_jdrop)
+      simi(jdrop, :) = simi_jdrop
       x = sim(:, n + 1) + dx
 
 !write (10, *) '624 g40'
@@ -361,7 +360,7 @@
       end if
       call trstlp(n, m, A, con, rho, dx, ifull, iact)
 !write (10, *) nf, 'at'
-      if (ifull == 0 .and. inprod(dx, dx) < 0.25E0_RP * rho * rho) then
+      if (ifull == 0 .and. inprod(dx, dx) < QUART * rho * rho) then
           ibrnch = 1
 !write (10, *) '657 g550'
           goto 550
@@ -485,7 +484,7 @@
       end if
 
 ! Calculate the value of L.
-      edgmax = delta * rho
+      edgmax = factor_delta * rho
       if (actrem > ZERO) then
           tmpv = sqrt(sum((spread(dx, dim=2, ncopies=n) - sim(:, 1:n))**&
      &2, dim=1))
@@ -524,9 +523,9 @@
 
 ! Revise the simplex by updating the elements of SIM, SIMI and DATMAT.
       sim(:, jdrop) = dx
-      simijdrop = simi(jdrop, :) / inprod(simi(jdrop, :), dx)
-      simi = simi - outprod(matprod(simi, dx), simijdrop)
-      simi(jdrop, :) = simijdrop
+      simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), dx)
+      simi = simi - outprod(matprod(simi, dx), simi_jdrop)
+      simi(jdrop, :) = simi_jdrop
       datmat(:, jdrop) = con
 
 ! Branch back for further iterations with the current RHO.
