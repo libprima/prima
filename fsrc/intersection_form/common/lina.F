@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 10-Jul-2021.
+! on 11-Jul-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -30,7 +30,7 @@
 
 ! Coded by Zaikun ZHANG in July 2020.
 !
-! Last Modified: Saturday, July 10, 2021 PM10:28:49
+! Last Modified: Sunday, July 11, 2021 PM04:12:06
 
 
 #include "ppf.h"
@@ -837,9 +837,9 @@
       end function xA_plus_y
 
 
-      subroutine calquad(d, gq, hq, pq, x, xpt, vquad)
+      function calquad(d, gq, hq, pq, x, xpt) result(qdiff)
 ! CALQUAD calculates
-! VQUAD = Q(X + D) - Q(X)
+! QDIFF = Q(X + D) - Q(X)
 ! with Q being the quadratic function defined via (GQ, HQ, PQ) by
 ! Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
 ! where HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
@@ -877,7 +877,7 @@
       ! XPT(N, NPT)
 
 ! Output
-      real(RP), intent(out) :: vquad
+      real(RP) :: qdiff
 
 ! Local variable
       real(RP) :: s(size(x))
@@ -905,17 +905,17 @@
 #if __USE_POWELL_ALGEBRA__ == 1
       s = x + d
 ! First order term and explicit second order term
-      vquad = ZERO
+      qdiff = ZERO
       ih = 0
       do j = 1, int(size(d), kind(j))
-          vquad = vquad + d(j) * gq(j)
+          qdiff = qdiff + d(j) * gq(j)
           do i = 1, j
               ih = int(ih + 1, kind(ih))
               t = d(i) * s(j) + d(j) * x(i)
               if (i == j) then
                   t = HALF * t
               end if
-              vquad = vquad + t * hq(i, j)
+              qdiff = qdiff + t * hq(i, j)
           end do
       end do
 !-----------------------------------------------------------!
@@ -928,24 +928,24 @@
 !-----------------------------------------------------------!
 ! Implicit second order term
       do i = 1, int(size(pq), kind(i))
-          vquad = vquad + pq(i) * w(i)
+          qdiff = qdiff + pq(i) * w(i)
       end do
 #else
 ! The order of calculation seems quite important. The following order seems to work well.
 ! 1st order term
-      vquad = inprod(d, gq)
+      qdiff = inprod(d, gq)
       s = HALF * d + x
       ! Different from the above version.
 ! implicit 2nd-order term
-      vquad = vquad + sum(pq * (matprod(s, xpt) * matprod(d, xpt)))
+      qdiff = qdiff + sum(pq * (matprod(s, xpt) * matprod(d, xpt)))
 ! explicit 2nd-order term
-      vquad = vquad + inprod(s, matprod(hq, d))
+      qdiff = qdiff + inprod(s, matprod(hq, d))
 ! The following implementations do not work as well as the above one.
-!vquad = vquad + inprod(d, matprod(hq, s))
-!vquad = vquad + sum(hq * outprod(s, d))
-!vquad = vquad + HALF*(inprod(d, matprod(hq, s)) + inprod(s, matprod(hq, d)))
+!qdiff = qdiff + inprod(d, matprod(hq, s))
+!qdiff = qdiff + sum(hq * outprod(s, d))
+!qdiff = qdiff + HALF*(inprod(d, matprod(hq, s)) + inprod(s, matprod(hq, d)))
 #endif
-      end subroutine calquad
+      end function calquad
 
 
       end module lina_mod

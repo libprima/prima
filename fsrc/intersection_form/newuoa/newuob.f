@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 10-Jul-2021.
+! on 11-Jul-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -17,7 +17,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Saturday, July 10, 2021 PM08:18:39
+! Last Modified: Sunday, July 11, 2021 PM04:10:12
 
       module newuob_mod
 
@@ -138,7 +138,7 @@
       real(RP) :: rho_ratio
       real(RP) :: trtol
       real(RP) :: vlag(npt + size(x))
-      real(RP) :: vquad
+      real(RP) :: qred
       real(RP) :: xbase(size(x))
       real(RP) :: xdist(npt)
       real(RP) :: xnew(size(x))
@@ -236,11 +236,11 @@
 ! REDUCE_RHO = REDUCE_RHO_1 .OR. REDUCE_RHO_2 (see boxes 14 and 10 of Fig. 1 in the NEWUOA paper).
 ! NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
       do tr = 1, maxtr
-! Solve the trust region subproblem. In Powell's NEWUOA code, VQUAD is not an output of TRSAPP.
+! Solve the trust region subproblem. In Powell's NEWUOA code, QRED is not an output of TRSAPP.
 ! Here we output it but will NOT use it (for the moment); it will still be calculated later
 ! by CALQUAD in order to produce the same results as Powell's code.
-          call trsapp(delta, gq, hq, pq, trtol, xopt, xpt, crvmin, vquad&
-     &, d, subinfo)
+          call trsapp(delta, gq, hq, pq, trtol, xopt, xpt, crvmin, qred,&
+     & d, subinfo)
 
 ! Calculate the length of the trial step D.
           dnorm = min(delta, sqrt(inprod(d, d)))
@@ -272,7 +272,7 @@
               call vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
 
 ! Use the current quadratic model to predict the change in F due to the step D.
-              call calquad(d, gq, hq, pq, xopt, xpt, vquad)
+              qred = calquad(d, gq, hq, pq, xopt, xpt)
 
 ! Calculate the next value of the objective function.
               xnew = xopt + d
@@ -301,16 +301,16 @@
               dnormsave = [dnorm, dnormsave(1:size(dnormsave) - 1)]
 
 ! MODERR is the error of the current model in predicting the change in F due to D.
-              moderr = f - fopt - vquad
+              moderr = f - fopt - qred
 ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
               moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
 
 ! Calculate the reduction ratio and update DELTA accordingly.
-              if (is_nan(vquad) .or. vquad >= ZERO) then
+              if (is_nan(qred) .or. qred >= ZERO) then
                   info = TRSUBP_FAILED
                   exit
               end if
-              ratio = (f - fopt) / vquad
+              ratio = (f - fopt) / qred
 ! Update DELTA. After this, DELTA < DNORM may hold.
               delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ra&
      &tio)
@@ -465,7 +465,7 @@
      & d, beta, vlag)
 
 ! Use the current quadratic model to predict the change in F due to the step D.
-              call calquad(d, gq, hq, pq, xopt, xpt, vquad)
+              qred = calquad(d, gq, hq, pq, xopt, xpt)
 
 ! Calculate the next value of the objective function.
               xnew = xopt + d
@@ -502,7 +502,7 @@
               dnormsave = [dnorm, dnormsave(1:size(dnormsave) - 1)]
 
 ! MODERR is the error of the current model in predicting the change in F due to D.
-              moderr = f - fopt - vquad
+              moderr = f - fopt - qred
 ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
               moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
 

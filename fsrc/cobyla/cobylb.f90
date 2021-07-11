@@ -81,7 +81,6 @@ real(RP) :: denom
 real(RP) :: dx(size(x))
 real(RP) :: dxsign
 real(RP) :: edgmax
-real(RP) :: erri(size(x), size(x))
 real(RP) :: gamma
 real(RP) :: pareta
 real(RP) :: parsig
@@ -97,7 +96,7 @@ real(RP) :: sigbar(size(x))
 real(RP) :: sim(size(x), size(x) + 1)  ! (n, )
 real(RP) :: simi(size(x), size(x))  ! (n, )
 real(RP) :: simid(size(x))
-real(RP) :: tempv(size(x))
+real(RP) :: tmpv(size(x))
 real(RP) :: simjopt(size(x))
 real(RP) :: simijdrop(size(x))
 real(RP) :: actrem
@@ -148,22 +147,27 @@ f = datmat(m + 1, n + 1)
 cstrv = datmat(m + 2, n + 1)
 con = datmat(:, n + 1)
 consav = con
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!x = sim(:, n) + sim(:, n + 1)
-!f = datmat(m + 1, n)
-!cstrv = datmat(m + 2, n)
-!con = datmat(:, n)
-!consav = con
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 if (subinfo == NAN_X .or. subinfo == NAN_INF_F .or. subinfo == FTARGET_ACHIEVED .or. &
     & subinfo == DAMAGING_ROUNDING .or. subinfo == MAXFUN_REACHED) then
     info = subinfo
-    !return
-    goto 600
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!! TEMPORARY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    sim(:, 1:n) = sim(:, 1:n) + spread(sim(:, n + 1), dim=2, ncopies=n)  !!! TEMPORARY
+    ! Make sure that the history includes the last X.
+    xhist = reshape([sim, xsav(:, 1:nsav), x], [n, n + nsav + 2])
+    fhist = [datmat(m + 1, :), datsav(m + 1, 1:nsav), f]
+    conhist = reshape([datmat(1:m, :), datsav(1:m, 1:nsav), consav], [m, n + nsav + 2])
+    cstrvhist = [datmat(m + 2, :), datsav(m + 2, 1:nsav), cstrv]
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    cpen = 1.0E6_RP
+    ! It is necessary to call SELECTX, because INITIALIZE chooses SIM(:, N+1) according to the
+    ! function value while neglecting the constraints.
+    call selectx(conhist, cstrvhist, ctol, fhist, cpen, xhist, con(1:m), cstrv, f, x)
+    return
 end if
 
-41 ibrnch = 1
+ibrnch = 1
 ! Identify the optimal vertex of the current simplex, and switch it to SIM(:, N+1) if it is not
 ! there yet. Powell called SIM(:, N+1) the Pole Position of the simplex.
 140 call updatepole(cpen, [(.true., i=1, n + 1)], datmat, sim, simi, subinfo)
@@ -197,10 +201,10 @@ pareta = beta * rho
 ! the current simplex. But what about vertex N+1?
 vsig = ONE / sqrt(sum(simi**2, dim=2))
 veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
+improve_geo = any(vsig < parsig) .or. any(veta > pareta) .or. any(is_nan([vsig, veta]))
 !---------------------------------------------------------------------------------------!
-!improve_geo = any(vsig < parsig) .or. any(veta > pareta) .or. any(is_nan([vsig, veta]))
+!improve_geo = any(vsig < parsig) .or. any(veta > pareta)
 !---------------------------------------------------------------------------------------!
-improve_geo = any(vsig < parsig) .or. any(veta > pareta)
 
 if (ibrnch == 1 .or. .not. improve_geo) then
     !write (10, *) '515 g370'
@@ -237,7 +241,7 @@ if (cpen * (cvmaxp - cvmaxm) > TWO * inprod(dx, a(:, m + 1))) then
     dxsign = -ONE
 end if
 
-! Update the elements of SIM and SIMI, and set the next X.
+! Update SIM and SIMI, and set the next X.
 dx = dxsign * dx
 sim(:, jdrop) = dx
 simijdrop = simi(jdrop, :) / inprod(simi(jdrop, :), dx)
@@ -300,7 +304,8 @@ end if
 ! the vertex.
 datmat(:, jdrop) = con
 
-goto 41
+ibrnch = 1
+goto 140
 
 ! Calculate DX = X(*) - X(0). Branch if the length of DX is less than 0.5*RHO.
 370 if (any(is_nan(A))) then
@@ -429,14 +434,13 @@ end if
 ! Calculate the value of L.
 edgmax = delta * rho
 if (actrem > ZERO) then
-    tempv = sqrt(sum((spread(dx, dim=2, ncopies=n) - sim(:, 1:n))**2, dim=1))
+    tmpv = sqrt(sum((spread(dx, dim=2, ncopies=n) - sim(:, 1:n))**2, dim=1))
 else
-    tempv = veta
+    tmpv = veta
 end if
-if (any(tempv > edgmax .and. (sigbar >= parsig .or. sigbar >= vsig))) then
-    jdrop = int(maxloc(tempv, mask=(sigbar >= parsig .or. sigbar >= vsig), dim=1), kind(jdrop))
+if (any(tmpv > edgmax .and. (sigbar >= parsig .or. sigbar >= vsig))) then
+    jdrop = int(maxloc(tmpv, mask=(sigbar >= parsig .or. sigbar >= vsig), dim=1), kind(jdrop))
 end if
-
 
 ! When jdrop=0, the algorithm decides not to include the trust-region trial point X into the
 ! simplex, because X is not good enough according to the merit function PHI = F + CPEN*CSTRV. In
@@ -511,12 +515,10 @@ else
     info = 0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 end if
-!
-!     Return the best calculated values of the variables.
-!
+
+! Return the best calculated values of the variables.
 !if (iprint >= 1) print 590
 !590 format(/3X, 'Normal return from subroutine COBYLA')
-
 600 sim(:, 1:n) = sim(:, 1:n) + spread(sim(:, n + 1), dim=2, ncopies=n)  !!! TEMPORARY
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!! TEMPORARY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
