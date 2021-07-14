@@ -17,7 +17,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Sunday, July 11, 2021 PM04:10:12
+! Last Modified: Wednesday, July 14, 2021 PM12:20:21
 
       module newuob_mod
 
@@ -190,9 +190,7 @@
      & == NAN_INF_F) then
 ! In these cases, pack the data and return immediately.
           info = subinfo
-          if (abs(iprint) >= 1) then
-              call retmssg(info, iprint, nf, f, x, solver)
-          end if
+          call retmssg(info, iprint, nf, f, x, solver)
 ! Rearrange FHIST and XHIST so that they are in the chronological order.
           if (maxfhist >= 1 .and. maxfhist < nf) then
               khist = mod(nf - 1_IK, maxfhist) + 1_IK
@@ -285,9 +283,7 @@
               end if
               call calfun(x, f)
               nf = int(nf + 1, kind(nf))
-              if (abs(iprint) >= 3) then
-                  call fmssg(iprint, nf, f, x, solver)
-              end if
+              call fmssg(iprint, nf, f, x, solver)
               if (maxfhist >= 1) then
                   khist = mod(nf - 1_IK, maxfhist) + 1_IK
                   fhist(khist) = f
@@ -478,9 +474,7 @@
               end if
               call calfun(x, f)
               nf = int(nf + 1, kind(nf))
-              if (abs(iprint) >= 3) then
-                  call fmssg(iprint, nf, f, x, solver)
-              end if
+              call fmssg(iprint, nf, f, x, solver)
               if (maxfhist >= 1) then
                   khist = mod(nf - 1_IK, maxfhist) + 1_IK
                   fhist(khist) = f
@@ -583,10 +577,8 @@
 ! the current RHO. Update them after reducing RHO.
                   dnormsave = HUGENUM
                   moderrsave = HUGENUM
-                  if (abs(iprint) >= 2) then
-                      call rhomssg(iprint, nf, fopt, rho, xbase + xopt, &
-     &solver)
-                  end if
+                  call rhomssg(iprint, nf, fopt, rho, xbase + xopt, solv&
+     &er)
               end if
           end if
           ! The procedure of reducing RHO ends.
@@ -606,9 +598,7 @@
           else
               call calfun(x, f)
               nf = int(nf + 1, kind(nf))
-              if (abs(iprint) >= 3) then
-                  call fmssg(iprint, nf, f, x, solver)
-              end if
+              call fmssg(iprint, nf, f, x, solver)
               if (maxfhist >= 1) then
                   khist = mod(nf - 1_IK, maxfhist) + 1_IK
                   fhist(khist) = f
@@ -643,11 +633,8 @@
 ! 3. In MATLAB, `xhist = [xhist(:, khist + 1:maxxhist), xhist(:, 1:khist)]` does the same thing.
       end if
 
-      if (abs(iprint) >= 1) then
-          call retmssg(info, iprint, nf, f, x, solver)
-      end if
+      call retmssg(info, iprint, nf, f, x, solver)
 
-      return
       end subroutine newuob
 
 

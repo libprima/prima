@@ -19,7 +19,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Thursday, July 08, 2021 PM03:03:55
+! Last Modified: Wednesday, July 14, 2021 PM12:12:42
 
       module initialize_mod
 
@@ -180,9 +180,8 @@
           evaluated(k) = .true.
           fval(k) = f
 
-          if (abs(iprint) >= 3) then
-              call fmssg(iprint, k, f, xtemp, solver)
-          end if
+          call fmssg(iprint, k, f, xtemp, solver)
+
           if (maxfhist >= 1) then
               khist = mod(k - 1_IK, maxfhist) + 1_IK
               fhist(khist) = f
@@ -264,9 +263,8 @@
           evaluated(k) = .true.
           fval(k) = f
 
-          if (abs(iprint) >= 3) then
-              call fmssg(iprint, k, f, xtemp, solver)
-          end if
+          call fmssg(iprint, k, f, xtemp, solver)
+
           if (maxfhist >= 1) then
               khist = mod(k - 1_IK, maxfhist) + 1_IK
               fhist(khist) = f

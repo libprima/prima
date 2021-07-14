@@ -20,7 +20,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and papers.
 !
-! Last Modified: Sunday, May 23, 2021 AM11:08:31
+! Last Modified: Wednesday, July 14, 2021 PM12:11:13
 
 
       module output_mod
@@ -56,6 +56,10 @@
       character(len=MSSGLEN) :: mssg
       logical :: fexist
 
+
+      if (iprint == 0) then
+          return
+      end if
 
       if (info == FTARGET_ACHIEVED) then
           mssg = 'the target function value is achieved.'
@@ -137,6 +141,10 @@
       logical :: fexist
 
 
+      if (iprint == 0) then
+          return
+      end if
+
       if (iprint >= 2) then
           if (iprint >= 3) then
               print '(1X)'
@@ -192,7 +200,10 @@
       character(len=3) :: fstat
       logical :: fexist
 
-!Function number     4    F =  1.1853827160D-01    The corresponding X is:
+
+      if (iprint == 0) then
+          return
+      end if
 
       if (iprint >= 3) then
           print '(/1A, I7, 4X, 1A, 1PD18.10, 4X, 1A, /(1P, 5D15.6))', 'F&

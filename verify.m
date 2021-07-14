@@ -134,7 +134,8 @@ for ip = minip : length(plist)
         test_options.fortran = (rand > 0.5);
         test_options.output_xhist = (rand > 0.5);
         test_options.maxhist = ceil(randn*1.5*test_options.maxfun);
-        test_options.iprint = floor(3*rand);
+        %test_options.iprint = floor(3*rand);
+        test_options.iprint = 0;
         test_options.quiet = (rand > 0.5);
         if mod(ir, 50) == 0 && exist('NEWUOA_output.txt', 'file')
             delete('NEWUOA_output.txt');
