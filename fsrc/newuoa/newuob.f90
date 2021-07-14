@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Wednesday, July 14, 2021 PM12:20:21
+! Last Modified: Wednesday, July 14, 2021 PM12:41:11
 
 module newuob_mod
 
@@ -164,7 +164,6 @@ f = fopt  ! Set F.
 if (subinfo == FTARGET_ACHIEVED .or. subinfo == NAN_X .or. subinfo == NAN_INF_F) then
     ! In these cases, pack the data and return immediately.
     info = subinfo
-    call retmssg(info, iprint, nf, f, x, solver)
     ! Rearrange FHIST and XHIST so that they are in the chronological order.
     if (maxfhist >= 1 .and. maxfhist < nf) then
         khist = mod(nf - 1_IK, maxfhist) + 1_IK
@@ -176,6 +175,7 @@ if (subinfo == FTARGET_ACHIEVED .or. subinfo == NAN_X .or. subinfo == NAN_INF_F)
         ! The above combination of SHAPE and RESHAPE fulfills our desire thanks to the COLUMN-MAJOR
         ! order of Fortran arrays.
     end if
+    call retmssg(info, iprint, nf, f, x, solver)
     return
 end if
 
@@ -520,12 +520,12 @@ do tr = 1, maxtr
             else
                 rho = TENTH * rho
             end if
+            call rhomssg(iprint, nf, fopt, rho, xbase + xopt, solver)
             delta = max(delta, rho)
             ! DNORMSAVE and MODERRSAVE are corresponding to the latest 3 function evaluations with
             ! the current RHO. Update them after reducing RHO.
             dnormsave = HUGENUM
             moderrsave = HUGENUM
-            call rhomssg(iprint, nf, fopt, rho, xbase + xopt, solver)
         end if
     end if  ! The procedure of reducing RHO ends.
 
