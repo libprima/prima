@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 11-Jul-2021.
+! on 14-Jul-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -142,9 +142,16 @@
       real(RP), allocatable :: cstrvhist(:)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+      logical :: terminate
       logical :: improve_geo
+      logical :: reduce_rho
+      logical :: shortd
+
 
       character(len=SRNLEN), parameter :: srname = 'COBYLB'
+
+      reduce_rho = .false.
+      terminate = .false.
 
       n = size(x)
 
@@ -233,6 +240,11 @@
      &, n + 1), dim=2, ncopies=n), simi))
       A(:, m + 1) = -A(:, m + 1)
 
+      if (any(is_nan(A))) then
+          info = -3
+          goto 600
+      end if
+
 ! Calculate the values of sigma and eta, and set IFLAG=0 if the current simplex is not acceptable.
       parsig = factor_alpha * rho
       pareta = factor_beta * rho
@@ -246,73 +258,66 @@
 !improve_geo = any(vsig < parsig) .or. any(veta > pareta)
 !---------------------------------------------------------------------------------------!
 
-      if (ibrnch == 1 .or. .not. improve_geo) then
-!write (10, *) '515 g370'
-          goto 370
-      end if
+      if (ibrnch == 0 .and. improve_geo) then
 
 ! If a new vertex is needed to improve acceptability, then decide which vertex to drop from the simplex.
-      if (maxval(veta) > pareta) then
-          jdrop = int(maxloc(veta, dim=1), kind(jdrop))
-      elseif (minval(vsig) < pareta) then
-          jdrop = int(minloc(vsig, dim=1), kind(jdrop))
-      else
-          jdrop = 0_IK
-      end if
+          if (maxval(veta) > pareta) then
+              jdrop = int(maxloc(veta, dim=1), kind(jdrop))
+          elseif (minval(vsig) < pareta) then
+              jdrop = int(minloc(vsig, dim=1), kind(jdrop))
+          else
+              jdrop = 0_IK
+          end if
 
 ! If VETA or VSIG become NaN due to rounding errors, JDROP will end up being 0. If we continue, then
 ! a Segmentation Fault will happen because we will access SIM(:, JDROP) and VSIG(JDROP).
-      if (jdrop == 0_IK) then
+          if (jdrop == 0_IK) then
 !    if (IPRINT >= 1) print 286
 !286 format(/3X, 'Return from subroutine COBYLA because ', 'rounding errors are becoming damaging.')
-          INFO = 7
-          goto 600
-      end if
+              INFO = 7
+              goto 600
+          end if
 
 ! Save the information of the JOPT-th vertex in XSAV and DATSAV.
-      call savex(sim(:, n + 1) + sim(:, jdrop), datmat(:, jdrop), xsav, &
-     &datsav, nsav, ctol)
+          call savex(sim(:, n + 1) + sim(:, jdrop), datmat(:, jdrop), xs&
+     &av, datsav, nsav, ctol)
 
 !Calculate the step to the new vertex and its sign.
-      dx = factor_gamma * rho * vsig(jdrop) * simi(jdrop, :)
-      cvmaxp = maxval([ZERO, -matprod(dx, A(:, 1:m)) - datmat(1:m, n + 1&
-     &)])
-      cvmaxm = maxval([ZERO, matprod(dx, A(:, 1:m)) - datmat(1:m, n + 1)&
-     &])
-      dxsign = ONE
-      if (cpen * (cvmaxp - cvmaxm) > TWO * inprod(dx, a(:, m + 1))) then
-          dxsign = -ONE
-      end if
+          dx = factor_gamma * rho * vsig(jdrop) * simi(jdrop, :)
+          cvmaxp = maxval([ZERO, -matprod(dx, A(:, 1:m)) - datmat(1:m, n&
+     & + 1)])
+          cvmaxm = maxval([ZERO, matprod(dx, A(:, 1:m)) - datmat(1:m, n &
+     &+ 1)])
+          dxsign = ONE
+          if (cpen * (cvmaxp - cvmaxm) > TWO * inprod(dx, a(:, m + 1))) &
+     &then
+              dxsign = -ONE
+          end if
 
 ! Update SIM and SIMI, and set the next X.
-      dx = dxsign * dx
-      sim(:, jdrop) = dx
-      simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), dx)
-      simi = simi - outprod(matprod(simi, dx), simi_jdrop)
-      simi(jdrop, :) = simi_jdrop
-      x = sim(:, n + 1) + dx
+          dx = dxsign * dx
+          sim(:, jdrop) = dx
+          simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), dx)
+          simi = simi - outprod(matprod(simi, dx), simi_jdrop)
+          simi(jdrop, :) = simi_jdrop
+          x = sim(:, n + 1) + dx
 
 !write (10, *) '624 g40'
-      if (any(is_nan(x))) then
-          f = sum(x)
-          ! Set F to NaN.
-          con = sum(x)
-          ! Set constraint values and constraint violation to NaN.
-          info = -1
-          goto 600
-      end if
+          if (any(is_nan(x))) then
+              f = sum(x)
+              ! Set F to NaN.
+              con = sum(x)
+              ! Set constraint values and constraint violation to NaN.
+              info = -1
+              goto 600
+          end if
 
-      call calcfc(n, m, x, f, con)
-      nf = nf + 1
-      cstrv = maxval([ZERO, -con(1:m)])
-      con(m + 1) = f
-      con(m + 2) = cstrv
-
-!call logging('log', 'cobylbn', 287, nf, f, x(1:n), con(1:m + 2), cstrv, 'test')
-
-! CONSAV always contains the constraint value of the current x. CON, however, will be changed during
-! the calculation (see the lines above line number 220).
-      consav = con
+          call calcfc(n, m, x, f, con)
+          nf = nf + 1
+          cstrv = maxval([ZERO, -con(1:m)])
+          con(m + 1) = f
+          con(m + 2) = cstrv
+          consav = con
 
 !if (nf == IPRINT - 1 .or. IPRINT == 3) then
 !    print 70, nf, F, CSTRV, (X(I), I=1, IPTEM)
@@ -322,109 +327,98 @@
 !end if
 
 ! If the objective function value or the constraints contain a NaN or an infinite value, the exit.
-      if (is_nan(F) .or. is_posinf(F)) then
-          info = -2
-          goto 600
-      end if
-      if (any(is_nan(con(1:m)))) then
-          cstrv = sum(con(1:m))
-          ! Set CSTRV to NaN
-          info = -2
-          goto 600
-      end if
+          if (is_nan(F) .or. is_posinf(F)) then
+              info = -2
+              goto 600
+          end if
+          if (any(is_nan(con(1:m)))) then
+              cstrv = sum(con(1:m))
+              ! Set CSTRV to NaN
+              info = -2
+              goto 600
+          end if
 ! If the objective function achieves the target value at a feasible point, then exit.
-      if (f <= ftarget .and. cstrv <= ctol) then
-          info = 1
-          return
-      end if
+          if (f <= ftarget .and. cstrv <= ctol) then
+              info = 1
+              return
+          end if
 
-      if (nf >= maxfun) then
+          if (nf >= maxfun) then
 !    if (IPRINT >= 1) print 50
 !50  format(/3X, 'Return from subroutine COBYLA because the ', 'MAXFUN limit has been reached.')
-          info = 3
-      end if
+              info = 3
+          end if
 
 ! Set the recently calculated function values in a column of DATMAT. This array has a column for
 ! each vertex of the current simplex, the entries of each column being the values of the constraint
 ! functions (if any) followed by the objective function and the greatest constraint violation at
 ! the vertex.
-      datmat(:, jdrop) = con
+          datmat(:, jdrop) = con
 
-      ibrnch = 1
-      goto 140
+          ibrnch = 1
+          goto 140
+      end if
 
 ! Calculate DX = X(*) - X(0). Branch if the length of DX is less than 0.5*RHO.
-370   if (any(is_nan(A))) then
-          info = -3
-          goto 600
-      end if
       call trstlp(n, m, A, con, rho, dx, ifull, iact)
-!write (10, *) nf, 'at'
-      if (ifull == 0 .and. inprod(dx, dx) < QUART * rho * rho) then
-          ibrnch = 1
-!write (10, *) '657 g550'
-          goto 550
-      end if
+      shortd = (ifull == 0 .and. inprod(dx, dx) < QUART * rho * rho)
 
+      if (shortd) then
+          ibrnch = 1
+      else
 ! Predict the change to F and to the maximum constraint violation if the variables are altered
 ! from X(0) to X(0)+DX.
-      preref = inprod(dx, A(:, m + 1))
-      prerec = datmat(m + 2, n + 1) - maxval([ZERO, con(1:m) - matprod(d&
-     &x, A(:, 1:m))])
+          preref = inprod(dx, A(:, m + 1))
+          prerec = datmat(m + 2, n + 1) - maxval([ZERO, con(1:m) - matpr&
+     &od(dx, A(:, 1:m))])
 
 ! Increase CPEN if necessary and branch back if this change alters the optimal vertex. Otherwise
 ! PREREM and PREREC will be set to the predicted reductions in the merit function and the maximum
 ! constraint violation respectively.
-      barmu = zero
-      if (prerec > ZERO) then
-          barmu = -preref / prerec
-          ! PREREF < 0 ???
-      end if
-      if (cpen < 1.5E0_RP * barmu) then
-          cpen = TWO * barmu
+          barmu = zero
+          if (prerec > ZERO) then
+              barmu = -preref / prerec
+              ! What if PREREF <= 0 ??? Is it possible?
+          end if
+          if (cpen < 1.5E0_RP * barmu) then
+              cpen = TWO * barmu
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !    if (IPRINT >= 2) print 410, CPEN
 !410 format(/3X, 'Increase in CPEN to', 1PE13.6)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          phi = datmat(m + 1, :) + cpen * datmat(m + 2, :)
-          phimin = minval(phi)
-!jopt = n + 1 ????
-          if (phimin < phi(n + 1) .or. (cpen <= ZERO .and. any(datmat(m &
-     &+ 2, :) < datmat(m + 2, n + 1) .and. phi <= phimin))) then
+              phi = datmat(m + 1, :) + cpen * datmat(m + 2, :)
+              phimin = minval(phi)
+              if (phimin < phi(n + 1) .or. (cpen <= ZERO .and. any(datma&
+     &t(m + 2, :) < datmat(m + 2, n + 1) .and. phi <= phimin))) then
 ! (CPEN <= ZERO) is indeed (CPEN == ZERO), and (PHI <= PHIMIN) is indeed (PHI == PHIMIN). We
 ! !write them in this way to avoid equality comparison of real numbers.
-              goto 140
+                  goto 140
+              end if
           end if
-      end if
 
-      prerem = preref + cpen * prerec
+          prerem = preref + cpen * prerec
 
 
 ! Calculate the constraint and objective functions at X(*). Then find the actual reduction in the merit function.
-      x = sim(:, n + 1) + dx
-      ibrnch = 1
+          x = sim(:, n + 1) + dx
+          ibrnch = 1
 
 ! Evaluate the objective function and constraints.
-      if (any(is_nan(x))) then
-          f = sum(x)
-          ! Set F to NaN.
-          con = sum(x)
-          ! Set constraint values and constraint violation to NaN.
-          info = -1
-          goto 600
-      end if
+          if (any(is_nan(x))) then
+              f = sum(x)
+              ! Set F to NaN.
+              con = sum(x)
+              ! Set constraint values and constraint violation to NaN.
+              info = -1
+              goto 600
+          end if
 
-      call calcfc(n, m, x, f, con)
-      nf = nf + 1
-      cstrv = maxval([ZERO, -con(1:m)])
-      con(m + 1) = f
-      con(m + 2) = cstrv
-
-!call logging('log', 'cobylbn', 287, nf, f, x(1:n), con(1:m + 2), cstrv, 'test')
-
-! CONSAV always contains the constraint value of the current x. CON, however, will be changed during
-! the calculation (see the lines above line number 220).
-      consav = con
+          call calcfc(n, m, x, f, con)
+          nf = nf + 1
+          cstrv = maxval([ZERO, -con(1:m)])
+          con(m + 1) = f
+          con(m + 2) = cstrv
+          consav = con
 
 !if (nf == IPRINT - 1 .or. IPRINT == 3) then
 !    print 70, nf, F, CSTRV, (X(I), I=1, IPTEM)
@@ -434,68 +428,68 @@
 !end if
 
 ! If the objective function value or the constraints contain a NaN or an infinite value, the exit.
-      if (is_nan(F) .or. is_posinf(F)) then
-          info = -2
-          goto 600
-      end if
-      if (any(is_nan(con(1:m)))) then
-          cstrv = sum(con(1:m))
-          ! Set CSTRV to NaN
-          info = -2
-          goto 600
-      end if
+          if (is_nan(F) .or. is_posinf(F)) then
+              info = -2
+              goto 600
+          end if
+          if (any(is_nan(con(1:m)))) then
+              cstrv = sum(con(1:m))
+              ! Set CSTRV to NaN
+              info = -2
+              goto 600
+          end if
 ! If the objective function achieves the target value at a feasible point, then exit.
-      if (f <= ftarget .and. cstrv <= ctol) then
-          info = 1
-          return
-      end if
+          if (f <= ftarget .and. cstrv <= ctol) then
+              info = 1
+              return
+          end if
 
-      if (nf >= maxfun) then
+          if (nf >= maxfun) then
 !    if (IPRINT >= 1) print 50
 !50  format(/3X, 'Return from subroutine COBYLA because the ', 'MAXFUN limit has been reached.')
-          info = 3
-      end if
+              info = 3
+          end if
 
 ! Set the recently calculated function values in a column of DATMAT. This array has a column for
 ! each vertex of the current simplex, the entries of each column being the values of the constraint
 ! functions (if any) followed by the objective function and the greatest constraint violation at
 ! the vertex.
-      vmold = datmat(m + 1, n + 1) + cpen * datmat(m + 2, n + 1)
-      vmnew = f + cpen * cstrv
-      actrem = vmold - vmnew
-      if (cpen <= ZERO .and. abs(f - datmat(m + 1, n + 1)) <= ZERO) then
-          prerem = prerec
-          actrem = datmat(m + 2, n + 1) - cstrv
-      end if
+          vmold = datmat(m + 1, n + 1) + cpen * datmat(m + 2, n + 1)
+          vmnew = f + cpen * cstrv
+          actrem = vmold - vmnew
+          if (cpen <= ZERO .and. abs(f - datmat(m + 1, n + 1)) <= ZERO) &
+     &then
+              prerem = prerec
+              actrem = datmat(m + 2, n + 1) - cstrv
+          end if
 
 ! Begin the operations that decide whether X(*) should replace one of the vertices of the current
 ! simplex, the change being mandatory if ACTREM is positive. Firstly, JDROP is set to the index of
 ! the vertex that is to be replaced.
-      if (actrem <= ZERO) then
-          ratio = ONE
-      else
-          ratio = ZERO
-      end if
-      simid = matprod(simi, dx)
-      sigbar = abs(simid) * vsig
-      jdrop = 0
-      if (maxval(abs(simid)) > ratio) then
-          jdrop = int(maxloc(abs(simid), dim=1), kind(jdrop))
-      end if
+          if (actrem <= ZERO) then
+              ratio = ONE
+          else
+              ratio = ZERO
+          end if
+          simid = matprod(simi, dx)
+          sigbar = abs(simid) * vsig
+          jdrop = 0
+          if (maxval(abs(simid)) > ratio) then
+              jdrop = int(maxloc(abs(simid), dim=1), kind(jdrop))
+          end if
 
-! Calculate the value of L.
-      edgmax = factor_delta * rho
-      if (actrem > ZERO) then
-          tmpv = sqrt(sum((spread(dx, dim=2, ncopies=n) - sim(:, 1:n))**&
-     &2, dim=1))
-      else
-          tmpv = veta
-      end if
-      if (any(tmpv > edgmax .and. (sigbar >= parsig .or. sigbar >= vsig)&
-     &)) then
-          jdrop = int(maxloc(tmpv, mask=(sigbar >= parsig .or. sigbar >=&
-     & vsig), dim=1), kind(jdrop))
-      end if
+          edgmax = factor_delta * rho
+          if (actrem > ZERO) then
+              tmpv = sqrt(sum((spread(dx, dim=2, ncopies=n) - sim(:, 1:n&
+     &))**2, dim=1))
+          else
+              tmpv = veta
+          end if
+          if (any(tmpv > edgmax .and. (sigbar >= parsig .or. sigbar >= v&
+     &sig))) then
+              jdrop = int(maxloc(tmpv, mask=(sigbar >= parsig .or. sigba&
+     &r >= vsig), dim=1), kind(jdrop))
+          end if
 
 ! When jdrop=0, the algorithm decides not to include the trust-region trial point X into the
 ! simplex, because X is not good enough according to the merit function PHI = F + CPEN*CSTRV. In
@@ -507,71 +501,66 @@
 ! jdrop > 0, SIM(:, jdrop) will be removed from the simplex according to PHI with the current CPEN.
 ! Similar to X, SIM(:, jdrop) may turn out better when CPEN is updated. Therefore, XSAV also takes
 ! SIM(:, jdrop) into account.
-!
-! We save at most NSAVMAX to-be-discarded X.
-      if (jdrop == 0) then
-          call savex(x, consav, xsav, datsav, nsav, ctol)
-      else
-          call savex(sim(:, n + 1) + sim(:, jdrop), datmat(:, jdrop), xs&
-     &av, datsav, nsav, ctol)
-      end if
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      if (jdrop == 0) then
-!write (10, *) '841 g550'
-          goto 550
-      end if
-
+          if (jdrop == 0) then
+              call savex(x, consav, xsav, datsav, nsav, ctol)
+              !?????
+          else
+              call savex(sim(:, n + 1) + sim(:, jdrop), datmat(:, jdrop)&
+     &, xsav, datsav, nsav, ctol)
 ! Revise the simplex by updating the elements of SIM, SIMI and DATMAT.
-      sim(:, jdrop) = dx
-      simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), dx)
-      simi = simi - outprod(matprod(simi, dx), simi_jdrop)
-      simi(jdrop, :) = simi_jdrop
-      datmat(:, jdrop) = con
+              sim(:, jdrop) = dx
+              simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), dx)
+              simi = simi - outprod(matprod(simi, dx), simi_jdrop)
+              simi(jdrop, :) = simi_jdrop
+              datmat(:, jdrop) = con
+          end if
+      end if
 
 ! Branch back for further iterations with the current RHO.
-      if (actrem > ZERO .and. actrem >= TENTH * prerem) then
-!write (10, *) '881 g140'
-          goto 140
-      end if
-
-550   if (improve_geo) then
+      if ((shortd .or. actrem <= ZERO .or. actrem < TENTH * prerem) .and&
+     &. improve_geo) then
           ibrnch = 0
-!write (10, *), '886 g140'
-          goto 140
       end if
 
+      reduce_rho = (shortd .or. actrem <= ZERO .or. actrem < TENTH * pre&
+     &rem) .and. .not. improve_geo
+
+      if (reduce_rho) then
+          if (rho <= rhoend) then
+              terminate = .true.
+          else
 ! Update RHO and CPEN.
-      if (rho > rhoend) then
 ! See equation (11) in Section 3 of the COBYLA paper for the update of RHO.
-          rho = HALF * rho
-          if (rho <= 1.5E0_RP * rhoend) then
-              rho = rhoend
-          end if
-! See equation (12)--(13) in Section 3 of the COBYLA paper for the update of CPEN.
-          if (cpen > ZERO) then
-              cmin = minval(datmat(1:m, :), dim=2)
-              cmax = maxval(datmat(1:m, :), dim=2)
-              if (any(cmin < HALF * cmax)) then
-                  denom = minval(max(cmax, ZERO) - cmin, mask=(cmin < HA&
-     &LF * cmax))
-                  cpen = min(cpen, (maxval(datmat(m + 1, :)) - minval(da&
-     &tmat(m + 1, :))) / denom)
-              else
-                  cpen = ZERO
+              rho = HALF * rho
+              if (rho <= 1.5E0_RP * rhoend) then
+                  rho = rhoend
               end if
-          end if
+! See equation (12)--(13) in Section 3 of the COBYLA paper for the update of CPEN.
+              if (cpen > ZERO) then
+                  cmin = minval(datmat(1:m, :), dim=2)
+                  cmax = maxval(datmat(1:m, :), dim=2)
+                  if (any(cmin < HALF * cmax)) then
+                      denom = minval(max(cmax, ZERO) - cmin, mask=(cmin &
+     &< HALF * cmax))
+                      cpen = min(cpen, (maxval(datmat(m + 1, :)) - minva&
+     &l(datmat(m + 1, :))) / denom)
+                  else
+                      cpen = ZERO
+                  end if
+              end if
 !if (IPRINT >= 2) print 580, RHO, CPEN
 !580 format(/3X, 'Reduction in RHO to', 1PE13.6, '  and CPEN =', 1PE13.6)
 !!    if (IPRINT == 2) then
 !!        print 70, nf, DATMAT(M + 1, N + 1), DATMAT(m + 2, N + 1), (SIM(I, N + 1), I=1, IPTEM)
 !!        if (IPTEM < N) print 80, (X(I), I=IPTEM + 1, N)
 !!    end if
-!!write (10, *), '946 g140'
-          goto 140
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      else
+          end if
+      end if
+
+      if (terminate) then
           info = 0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      else
+          goto 140
       end if
 
 ! Return the best calculated values of the variables.
