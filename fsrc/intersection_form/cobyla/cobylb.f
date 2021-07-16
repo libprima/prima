@@ -37,7 +37,7 @@
 !use savex_mod, only : savex
       use initialize_mod, only : initialize
       use trustregion_mod, only : trstlp
-      use update_mod, only : updatepole
+      use update_mod, only : updatepole, findpole
       use selectx_mod, only : selectx, isbetter
 
       implicit none
@@ -74,7 +74,9 @@
       integer(IK) :: itr
       integer(IK) :: maxtr = huge(itr)
       integer(IK) :: iact(m + 1)
-      integer(IK) :: ibrnch
+      integer(IK) :: brnch
+      integer(IK), parameter :: TR = 1
+      integer(IK), parameter :: GEO = 0
       integer(IK) :: ifull
       integer(IK) :: iptem
       integer(IK) :: j
@@ -91,7 +93,6 @@
       real(RP) :: barmu
       real(RP) :: cmax(m)
       real(RP) :: cmin(m)
-      real(RP) :: consav(m + 2)
       real(RP) :: cpen
       ! Penalty parameter for constraint in merit function (PARMU in Powell's code)
       real(RP) :: cvmaxm
@@ -108,9 +109,6 @@
       real(RP) :: factor_gamma
       real(RP) :: pareta
       real(RP) :: parsig
-      real(RP) :: phi(size(x) + 1)
-      ! Merit function values
-      real(RP) :: phimin
       real(RP) :: prerec
       ! Predicted reduction in constraint violation
       real(RP) :: preref
@@ -130,10 +128,9 @@
       real(RP) :: simi_jdrop(size(x))
       real(RP) :: actrem
       real(RP) :: veta(size(x))
-      real(RP) :: vmnew
-      real(RP) :: vmold
       real(RP) :: vsig(size(x))
       real(RP) :: xsav(size(x), max(nsavmax, 0))
+      real(RP) :: conopt(size(con))
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!! TEMPORARY
@@ -185,7 +182,6 @@
       f = datmat(m + 1, n + 1)
       cstrv = datmat(m + 2, n + 1)
       con = datmat(:, n + 1)
-      consav = con
 
       if (subinfo == NAN_X .or. subinfo == NAN_INF_F .or. subinfo == FTA&
      &RGET_ACHIEVED .or. subinfo == DAMAGING_ROUNDING .or. subinfo == MA&
@@ -199,8 +195,8 @@
 ! Make sure that the history includes the last X.
           xhist = reshape([sim, xsav(:, 1:nsav), x], [n, n + nsav + 2])
           fhist = [datmat(m + 1, :), datsav(m + 1, 1:nsav), f]
-          conhist = reshape([datmat(1:m, :), datsav(1:m, 1:nsav), consav&
-     &], [m, n + nsav + 2])
+          conhist = reshape([datmat(1:m, :), datsav(1:m, 1:nsav), con], &
+     &[m, n + nsav + 2])
           cstrvhist = [datmat(m + 2, :), datsav(m + 2, 1:nsav), cstrv]
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           cpen = 1.0E6_RP
@@ -211,7 +207,7 @@
           return
       end if
 
-      ibrnch = 1
+      brnch = 1
 ! Identify the optimal vertex of the current simplex, and switch it to SIM(:, N+1) if it is not
 ! there yet. Powell called SIM(:, N+1) the Pole Position of the simplex.
       do itr = 1, maxtr
@@ -219,11 +215,11 @@
      &i, subinfo)
           if (subinfo == DAMAGING_ROUNDING) then
               info = subinfo
-              goto 600
+              exit
           end if
 
           if (info == MAXFUN_REACHED) then
-              goto 600
+              exit
           end if
 
 ! Calculate the coefficients of the linear approximations to the objective and constraint functions,
@@ -231,22 +227,19 @@
 ! When __USE_INTRINSIC_ALGEBRA__ = 1, the following code may not produce the same result as
 ! Powell's, because the intrinsic MATMUL behaves differently from a naive triple loop in
 ! finite-precision arithmetic.
-! 220
-          con = -datmat(:, n + 1)
-          ! Why put a negative sign???????????????????????????
 ! Is it more reasonable to save A transpose instead of A? Better name for A?
           A = transpose(matprod(datmat(1:m + 1, 1:n) - spread(datmat(1:m&
      & + 1, n + 1), dim=2, ncopies=n), simi))
           A(:, m + 1) = -A(:, m + 1)
           if (any(is_nan(A))) then
               info = -3
-              goto 600
+              exit
           end if
 
 ! Calculate the values of sigma and eta, and set IFLAG=0 if the current simplex is not acceptable.
           parsig = factor_alpha * rho
           pareta = factor_beta * rho
-! For J = 1, 2, ..., n, VSIG(J) is The Euclidean distance from vertex J to the opposite face of
+! VSIG(J) (J=1, .., N)is The Euclidean distance from vertex J to the opposite face of
 ! the current simplex. But what about vertex N+1?
           vsig = ONE / sqrt(sum(simi**2, dim=2))
           veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
@@ -256,7 +249,7 @@
           ! Powell
 !---------------------------------------------------------------------------------------!
 
-          if (ibrnch == 0 .and. improve_geo) then
+          if (brnch == GEO .and. improve_geo) then
 ! Decide which vertex to drop from the simplex. It will be replaced by a new point to improve
 ! acceptability of the simplex. See equations (15) and (16) of the COBYLA paper.
               if (maxval(veta) > pareta) then
@@ -292,70 +285,61 @@
                   con = sum(x)
                   ! Set constraint values and constraint violation to NaN.
                   info = -1
-                  goto 600
+                  exit
               end if
               call calcfc(n, m, x, f, con)
               nf = nf + 1
               cstrv = maxval([ZERO, -con(1:m)])
               con(m + 1) = f
               con(m + 2) = cstrv
-              consav = con
 
-! If the objective function value or the constraints contain a NaN or an infinite value, the exit.
               if (is_nan(F) .or. is_posinf(F)) then
                   info = -2
-                  goto 600
+                  exit
               end if
               if (any(is_nan(con(1:m)))) then
                   cstrv = sum(con(1:m))
                   ! Set CSTRV to NaN
                   info = -2
-                  goto 600
+                  exit
               end if
-! If the objective function achieves the target value at a feasible point, then exit.
               if (f <= ftarget .and. cstrv <= ctol) then
                   info = 1
-                  return
+                  exit
               end if
               if (nf >= maxfun) then
                   info = 3
               end if
               datmat(:, jdrop) = con
 
-              ibrnch = 1
+              brnch = TR
               cycle
           end if
 
 ! Calculate DX = X(*) - X(0). Branch if the length of DX is less than 0.5*RHO.
-          call trstlp(n, m, A, con, rho, dx, ifull, iact)
+          conopt = datmat(:, n + 1)
+          call trstlp(n, m, A, -conopt, rho, dx, ifull, iact)
           shortd = (ifull == 0 .and. inprod(dx, dx) < QUART * rho * rho)
           if (shortd) then
-              ibrnch = 1
+              brnch = TR
           end if
 
           if (.not. shortd) then
 ! Predict the change to F and to the maximum constraint violation if the variables are altered
 ! from X(0) to X(0)+DX.
               preref = inprod(dx, A(:, m + 1))
-              prerec = datmat(m + 2, n + 1) - maxval([ZERO, con(1:m) - m&
-     &atprod(dx, A(:, 1:m))])
+              prerec = datmat(m + 2, n + 1) - maxval([ZERO, -conopt(1:m)&
+     & - matprod(dx, A(:, 1:m))])
 
 ! Increase CPEN if necessary and branch back if this change alters the optimal vertex. Otherwise
 ! PREREM and PREREC will be set to the predicted reductions in the merit function and the maximum
-! constraint violation respectively.
-              barmu = zero
-              if (prerec > ZERO) then
-                  barmu = -preref / prerec
-                  ! What if PREREF >= 0 ??? Is it possible?
-              end if
-              if (cpen < 1.5E0_RP * barmu) then
+! constraint violation respectively. See the discussions around equation (9) of the COBYLA paper.
+              barmu = -preref / prerec
+              ! PREREF + BARMU * PREREC = 0
+              if (prerec > ZERO .and. cpen < 1.5E0_RP * barmu) then
                   cpen = TWO * barmu
-                  phi = datmat(m + 1, :) + cpen * datmat(m + 2, :)
-                  phimin = minval(phi)
-                  if (phimin < phi(n + 1) .or. (cpen <= ZERO .and. any(d&
-     &atmat(m + 2, :) < datmat(m + 2, n + 1) .and. phi <= phimin))) then
-! (CPEN <= ZERO) is indeed (CPEN == ZERO), and (PHI <= PHIMIN) is indeed (PHI == PHIMIN). We
-! !write them in this way to avoid equality comparison of real numbers.
+                  if (findpole(cpen, [(.true., i=1, n + 1)], datmat) <= &
+     &n) then
                       cycle
                   end if
               end if
@@ -365,7 +349,7 @@
 
 ! Calculate the constraint and objective functions at X(*). Then find the actual reduction in the merit function.
               x = sim(:, n + 1) + dx
-              ibrnch = 1
+              brnch = TR
 
 ! Evaluate the objective function and constraints.
               if (any(is_nan(x))) then
@@ -374,7 +358,7 @@
                   con = sum(x)
                   ! Set constraint values and constraint violation to NaN.
                   info = -1
-                  goto 600
+                  exit
               end if
 
               call calcfc(n, m, x, f, con)
@@ -382,23 +366,20 @@
               cstrv = maxval([ZERO, -con(1:m)])
               con(m + 1) = f
               con(m + 2) = cstrv
-              consav = con
 
-! If the objective function value or the constraints contain a NaN or an infinite value, the exit.
               if (is_nan(F) .or. is_posinf(F)) then
                   info = -2
-                  goto 600
+                  exit
               end if
               if (any(is_nan(con(1:m)))) then
                   cstrv = sum(con(1:m))
                   ! Set CSTRV to NaN
                   info = -2
-                  goto 600
+                  exit
               end if
-! If the objective function achieves the target value at a feasible point, then exit.
               if (f <= ftarget .and. cstrv <= ctol) then
                   info = 1
-                  return
+                  exit
               end if
 
               if (nf >= maxfun) then
@@ -409,9 +390,8 @@
 ! each vertex of the current simplex, the entries of each column being the values of the constraint
 ! functions (if any) followed by the objective function and the greatest constraint violation at
 ! the vertex.
-              vmold = datmat(m + 1, n + 1) + cpen * datmat(m + 2, n + 1)
-              vmnew = f + cpen * cstrv
-              actrem = vmold - vmnew
+              actrem = (datmat(m + 1, n + 1) + cpen * datmat(m + 2, n + &
+     &1)) - (f + cpen * cstrv)
               if (cpen <= ZERO .and. abs(f - datmat(m + 1, n + 1)) <= ZE&
      &RO) then
                   prerem = prerec
@@ -451,7 +431,7 @@
 ! this case, X will simply be discarded in the original code.
 ! When jdrop > 0, SIM(:, jdrop) will be removed from the simplex.
               if (jdrop == 0) then
-                  call savex(x, consav, xsav, datsav, nsav, ctol)
+                  call savex(x, con, xsav, datsav, nsav, ctol)
                   !?????
               else
                   call savex(sim(:, n + 1) + sim(:, jdrop), datmat(:, jd&
@@ -469,7 +449,7 @@
 ! Branch back for further iterations with the current RHO.
           if ((shortd .or. actrem <= ZERO .or. actrem < TENTH * prerem) &
      &.and. improve_geo) then
-              ibrnch = 0
+              brnch = GEO
           end if
 
           reduce_rho = (shortd .or. actrem <= ZERO .or. actrem < TENTH *&
@@ -518,8 +498,8 @@
 ! Make sure that the history includes the last X.
       xhist = reshape([sim, xsav(:, 1:nsav), x], [n, n + nsav + 2])
       fhist = [datmat(m + 1, :), datsav(m + 1, 1:nsav), f]
-      conhist = reshape([datmat(1:m, :), datsav(1:m, 1:nsav), consav], [&
-     &m, n + nsav + 2])
+      conhist = reshape([datmat(1:m, :), datsav(1:m, 1:nsav), con], [m, &
+     &n + nsav + 2])
       cstrvhist = [datmat(m + 2, :), datsav(m + 2, 1:nsav), cstrv]
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       cpen = max(cpen, 1.0E6_RP)
