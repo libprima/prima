@@ -480,6 +480,7 @@ C      DXSIGN=1.0
 C      IF (PARMU*(CVMAXP-CVMAXM) .GT. SUMM+SUMM) DXSIGN=-1.0
       DXSIGN=1.0D0
       IF (PARMU*(CVMAXP-CVMAXM) > 2.0D0*SUMM) DXSIGN=-1.0D0
+      !DXSIGN=SIGN(1.0D0, 2.0D0*SUMM-PARMU*(CVMAXP-CVMAXM))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
 C     Update the elements of SIM and SIMI, and set the next X.
@@ -489,6 +490,7 @@ C      TEMP=0.0
       TEMP=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DO I=1,N
+          !DX(I)=SIGN(1.0D0, 2.0D0*SUMM-PARMU*(CVMAXP-CVMAXM))*DX(I)
           DX(I)=DXSIGN*DX(I)
           SIM(I,JDROP)=DX(I)
           TEMP=TEMP+SIMI(JDROP,I)*DX(I)
