@@ -54,7 +54,6 @@ integer(IK) :: i
 integer(IK) :: itr
 integer(IK) :: maxtr = huge(itr)
 integer(IK) :: iact(m + 1)
-integer(IK) :: brnch
 integer(IK), parameter :: TR = 1
 integer(IK), parameter :: GEO = 0
 integer(IK) :: ifull
@@ -112,8 +111,9 @@ real(RP), allocatable :: conhist(:, :)
 real(RP), allocatable :: cstrvhist(:)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-logical :: terminate
 logical :: improve_geo
+logical :: terminate
+logical :: good_sim
 logical :: reduce_rho
 logical :: shortd
 
@@ -171,10 +171,10 @@ if (subinfo == NAN_X .or. subinfo == NAN_INF_F .or. subinfo == FTARGET_ACHIEVED 
     return
 end if
 
-brnch = 1
 ! Identify the optimal vertex of the current simplex, and switch it to SIM(:, N+1) if it is not
 ! there yet. Powell called SIM(:, N+1) the Pole Position of the simplex.
 do itr = 1, maxtr
+
     call updatepole(cpen, [(.true., i=1, n + 1)], datmat, sim, simi, subinfo)
     if (subinfo == DAMAGING_ROUNDING) then
         info = subinfo
@@ -206,77 +206,12 @@ do itr = 1, maxtr
     vsig = ONE / sqrt(sum(simi**2, dim=2))
     veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
     !---------------------------------------------------------------------------------------!
-    !improve_geo = any(vsig < parsig) .or. any(veta > pareta) .or. any(is_nan([vsig, veta]))
-    improve_geo = any(vsig < parsig) .or. any(veta > pareta)  ! Powell
+    good_sim = all(vsig >= parsig) .and. all(veta <= pareta)  ! Powell
     !---------------------------------------------------------------------------------------!
-
-    if (brnch == GEO .and. improve_geo) then
-        ! Decide which vertex to drop from the simplex. It will be replaced by a new point to improve
-        ! acceptability of the simplex. See equations (15) and (16) of the COBYLA paper.
-        if (maxval(veta) > pareta) then
-            jdrop = int(maxloc(veta, dim=1), kind(jdrop))
-        else
-            jdrop = int(minloc(vsig, dim=1), kind(jdrop))
-        end if
-
-        !Calculate the step to the new vertex.
-        dx = factor_gamma * rho * vsig(jdrop) * simi(jdrop, :)
-        cvmaxp = maxval([ZERO, -matprod(dx, A(:, 1:m)) - datmat(1:m, n + 1)])
-        cvmaxm = maxval([ZERO, matprod(dx, A(:, 1:m)) - datmat(1:m, n + 1)])
-        if (TWO * inprod(dx, A(:, m + 1)) < cpen * (cvmaxp - cvmaxm)) then
-            dx = -dx
-        end if
-
-        ! Save the information of the JOPT-th vertex in XSAV and DATSAV.
-        call savex(sim(:, n + 1) + sim(:, jdrop), datmat(:, jdrop), xsav, datsav, nsav, ctol)
-        ! Update SIM and SIMI, and set the next X.
-        sim(:, jdrop) = dx
-        simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), dx)
-        simi = simi - outprod(matprod(simi, dx), simi_jdrop)
-        simi(jdrop, :) = simi_jdrop
-        x = sim(:, n + 1) + dx
-
-        if (any(is_nan(x))) then
-            f = sum(x)  ! Set F to NaN.
-            con = sum(x)  ! Set constraint values and constraint violation to NaN.
-            info = -1
-            exit
-        end if
-        call calcfc(n, m, x, f, con)
-        nf = nf + 1
-        cstrv = maxval([ZERO, -con(1:m)])
-        con(m + 1) = f
-        con(m + 2) = cstrv
-
-        if (is_nan(F) .or. is_posinf(F)) then
-            info = -2
-            exit
-        end if
-        if (any(is_nan(con(1:m)))) then
-            cstrv = sum(con(1:m))  ! Set CSTRV to NaN
-            info = -2
-            exit
-        end if
-        if (f <= ftarget .and. cstrv <= ctol) then
-            info = 1
-            exit
-        end if
-        if (nf >= maxfun) then
-            info = 3
-        end if
-        datmat(:, jdrop) = con
-
-        brnch = TR
-        cycle
-    end if
-
     ! Calculate DX = X(*) - X(0). Branch if the length of DX is less than 0.5*RHO.
     conopt = datmat(:, n + 1)
     call trstlp(n, m, A, -conopt, rho, dx, ifull, iact)
     shortd = (ifull == 0 .and. inprod(dx, dx) < QUART * rho * rho)
-    if (shortd) then
-        brnch = TR
-    end if
 
     if (.not. shortd) then
         ! Predict the change to F and to the maximum constraint violation if the variables are altered
@@ -300,7 +235,6 @@ do itr = 1, maxtr
 
         ! Calculate the constraint and objective functions at X(*). Then find the actual reduction in the merit function.
         x = sim(:, n + 1) + dx
-        brnch = TR
 
         ! Evaluate the objective function and constraints.
         if (any(is_nan(x))) then
@@ -387,15 +321,117 @@ do itr = 1, maxtr
     end if
 
     ! Branch back for further iterations with the current RHO.
-    if ((shortd .or. actrem <= ZERO .or. actrem < TENTH * prerem) .and. improve_geo) then
-        brnch = GEO
+    ! N.B.:
+    ! Here COBYLA has a major difference from NEWUOA. It seems that COBYLA is improvable.
+    ! 1. GOOD_SIM measures the geometry of the OLD simplex (the simplex before the trust-region
+    ! step), not the NEW one (the one updated after the trust-region step).
+    ! 2. In the current version, a geometry step is taken if the OLD simplex is bad, the
+    ! trust-region step is bad, and the NEW simplex is bad; RHO is reduced if the trust-region step
+    ! is bad and the OLD simplex is good. To align with NEWUOA, we should calculate GOOD_SIM after
+    ! SIM is updated (i.e., right here) instead of at the very beginning of the iteration.
+    ! 3. In the current version, REDUCE_RHO = TRUE if the OLD simplex is good, but the
+    ! trust-region step is bad. This seems reasonable.
+    improve_geo = (shortd .or. actrem <= ZERO .or. actrem < TENTH * prerem) .and. .not. good_sim
+    reduce_rho = (shortd .or. actrem <= ZERO .or. actrem < TENTH * prerem) .and. good_sim
+
+    if (improve_geo) then
+        call updatepole(cpen, [(.true., i=1, n + 1)], datmat, sim, simi, subinfo)
+        if (subinfo == DAMAGING_ROUNDING) then
+            info = subinfo
+            exit
+        end if
+
+        if (info == MAXFUN_REACHED) then
+            exit
+        end if
+
+        ! Calculate the coefficients of the linear approximations to the objective and constraint functions,
+        ! placing minus the objective function gradient after the constraint gradients in the array A.
+        ! When __USE_INTRINSIC_ALGEBRA__ = 1, the following code may not produce the same result as
+        ! Powell's, because the intrinsic MATMUL behaves differently from a naive triple loop in
+        ! finite-precision arithmetic.
+        ! Is it more reasonable to save A transpose instead of A? Better name for A?
+        A = transpose(matprod(datmat(1:m + 1, 1:n) - spread(datmat(1:m + 1, n + 1), dim=2, ncopies=n), simi))
+        A(:, m + 1) = -A(:, m + 1)
+        if (any(is_nan(A))) then
+            info = -3
+            exit
+        end if
+
+        ! Calculate the values of sigma and eta, and set IFLAG=0 if the current simplex is not acceptable.
+        parsig = factor_alpha * rho
+        pareta = factor_beta * rho
+        ! VSIG(J) (J=1, .., N)is The Euclidean distance from vertex J to the opposite face of
+        ! the current simplex. But what about vertex N+1?
+        vsig = ONE / sqrt(sum(simi**2, dim=2))
+        veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
+        !---------------------------------------------------------------------------------------!
+        good_sim = all(vsig >= parsig) .and. all(veta <= pareta)  ! Powell
+        !---------------------------------------------------------------------------------------!
+
+        if (.not. good_sim) then
+            ! Decide which vertex to drop from the simplex. It will be replaced by a new point to improve
+            ! acceptability of the simplex. See equations (15) and (16) of the COBYLA paper.
+            if (maxval(veta) > pareta) then
+                jdrop = int(maxloc(veta, dim=1), kind(jdrop))
+            else
+                jdrop = int(minloc(vsig, dim=1), kind(jdrop))
+            end if
+
+            !Calculate the step to the new vertex.
+            dx = factor_gamma * rho * vsig(jdrop) * simi(jdrop, :)
+            cvmaxp = maxval([ZERO, -matprod(dx, A(:, 1:m)) - datmat(1:m, n + 1)])
+            cvmaxm = maxval([ZERO, matprod(dx, A(:, 1:m)) - datmat(1:m, n + 1)])
+            if (TWO * inprod(dx, A(:, m + 1)) < cpen * (cvmaxp - cvmaxm)) then
+                dx = -dx
+            end if
+
+            ! Save the information of the JOPT-th vertex in XSAV and DATSAV.
+            call savex(sim(:, n + 1) + sim(:, jdrop), datmat(:, jdrop), xsav, datsav, nsav, ctol)
+            ! Update SIM and SIMI, and set the next X.
+            sim(:, jdrop) = dx
+            simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), dx)
+            simi = simi - outprod(matprod(simi, dx), simi_jdrop)
+            simi(jdrop, :) = simi_jdrop
+            x = sim(:, n + 1) + dx
+
+            if (any(is_nan(x))) then
+                f = sum(x)  ! Set F to NaN.
+                con = sum(x)  ! Set constraint values and constraint violation to NaN.
+                info = -1
+                exit
+            end if
+            call calcfc(n, m, x, f, con)
+            nf = nf + 1
+            cstrv = maxval([ZERO, -con(1:m)])
+            con(m + 1) = f
+            con(m + 2) = cstrv
+
+            if (is_nan(F) .or. is_posinf(F)) then
+                info = -2
+                exit
+            end if
+            if (any(is_nan(con(1:m)))) then
+                cstrv = sum(con(1:m))  ! Set CSTRV to NaN
+                info = -2
+                exit
+            end if
+            if (f <= ftarget .and. cstrv <= ctol) then
+                info = 1
+                exit
+            end if
+            if (nf >= maxfun) then
+                info = 3
+            end if
+            datmat(:, jdrop) = con
+        end if
     end if
 
-    reduce_rho = (shortd .or. actrem <= ZERO .or. actrem < TENTH * prerem) .and. .not. improve_geo
 
     if (reduce_rho) then
         if (rho <= rhoend) then
-            terminate = .true.
+            info = 0
+            exit
         else
             ! Update RHO and CPEN.
             ! See equation (11) in Section 3 of the COBYLA paper for the update of RHO.
@@ -416,17 +452,10 @@ do itr = 1, maxtr
             end if
         end if
     end if
-
-    if (terminate) then
-        info = 0
-        exit
-    end if
 end do
 
 ! Return the best calculated values of the variables.
-!if (iprint >= 1) print 590
-!590 format(/3X, 'Normal return from subroutine COBYLA')
-600 sim(:, 1:n) = sim(:, 1:n) + spread(sim(:, n + 1), dim=2, ncopies=n)  !!! TEMPORARY
+sim(:, 1:n) = sim(:, 1:n) + spread(sim(:, n + 1), dim=2, ncopies=n)  !!! TEMPORARY
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!! TEMPORARY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Make sure that the history includes the last X.
@@ -444,14 +473,6 @@ if (.not. isbetter([f, cstrv], [datmat(m + 1, n + 1), datmat(m + 2, n + 1)], cpe
     con = datmat(:, n + 1)
     cstrv = datmat(m + 2, n + 1)
 end if
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!620 if (IPRINT >= 1) then
-!    print 70, nf, F, CSTRV, (X(I), I=1, IPTEM)
-!    if (IPTEM < N) print 80, (X(I), I=IPTEM + 1, N)
-!end if
-
-!close (16)
 return
 end subroutine cobylb
 
