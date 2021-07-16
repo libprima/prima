@@ -332,6 +332,8 @@ do itr = 1, maxtr
     ! 3. In the current version, REDUCE_RHO = TRUE if the OLD simplex is good, but the
     ! trust-region step is bad. This seems reasonable.
     improve_geo = (shortd .or. actrem <= ZERO .or. actrem < TENTH * prerem) .and. .not. good_sim
+    ! For the moment, REDUCE_RHO should be defined before the procedure of IMPROVE_GEO, because
+    ! GOOD_SIM will be changed in the procedure.
     reduce_rho = (shortd .or. actrem <= ZERO .or. actrem < TENTH * prerem) .and. good_sim
 
     if (improve_geo) then
