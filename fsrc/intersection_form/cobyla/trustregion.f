@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 16-Jul-2021.
+! on 20-Jul-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -17,7 +17,7 @@
 
       contains
 
-      subroutine trstlp(n, m, A, B, rho, dx, ifull, iact)
+      subroutine trstlp(n, m, A, b, rho, dx, ifull, iact)
 
 ! Generic modules
       use consts_mod, only : RP, IK, ZERO, TWO, HALF, TENTH, HUGENUM, DE&
@@ -35,7 +35,7 @@
       integer(IK), intent(IN) :: M
       real(RP), intent(IN) :: A(:, :)
       !(N, :)
-      real(RP), intent(IN) :: B(:)
+      real(RP), intent(IN) :: b(:)
       real(RP), intent(IN) :: Rho
       real(RP), intent(INOUT) :: Dx(:)
       integer(IK), intent(OUT) :: Ifull

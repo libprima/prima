@@ -2,7 +2,7 @@ module trustregion_mod
 
 contains
 
-subroutine trstlp(n, m, A, B, rho, dx, ifull, iact)
+subroutine trstlp(n, m, A, b, rho, dx, ifull, iact)
 
 ! Generic modules
 use consts_mod, only : RP, IK, ZERO, TWO, HALF, TENTH, HUGENUM, DEBUGGING, SRNLEN
@@ -17,7 +17,7 @@ implicit none
 integer(IK), intent(IN) :: N
 integer(IK), intent(IN) :: M
 real(RP), intent(IN) :: A(:, :)  !(N, :)
-real(RP), intent(IN) :: B(:)
+real(RP), intent(IN) :: b(:)
 real(RP), intent(IN) :: Rho
 real(RP), intent(INOUT) :: Dx(:)
 integer(IK), intent(OUT) :: Ifull

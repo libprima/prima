@@ -34,11 +34,11 @@ end
 if isfield(options, 'nr')
     nr = options.nr;
 else
-    nr = 10;
+    nr = 20;
 end
 if isfield(options, 'ir')
     % ir is the index of the random experiment to be conducted. If it is negative, then experiments
-    % 0, 1, ..., nr, ..., nr + 7 will be conducted. nr + 7 is because there are a few fixed
+    % 1, ..., nr, ..., nr + 20 will be conducted. nr + 20 is because there are a few fixed
     % experiments that will always be run.
     ir = options.ir;
 else
@@ -65,7 +65,7 @@ end
 if (isfield(options, 'maxdim'))
     requirements.maxdim = options.maxdim;
 else
-    requirements.maxdim = 20;
+    requirements.maxdim = 40;
 end
 if (isfield(options, 'mincon'))
     requirements.mincon = options.mincon;
@@ -80,8 +80,7 @@ end
 if (isfield(options, 'type'))
     requirements.type = options.type;
 else
-    requirements.type = 'u';
-%    requirements.type = 'ubln';
+    requirements.type = 'ubln';
 end
 
 % Supress the following warning
@@ -102,15 +101,21 @@ end
 
 if ir < 0
     minir = 0;
-    maxir = nr + 7;
+    maxir = nr + 20;
 else
     minir = ir;
     maxir = ir;
 end
 
+blacklist={'gauss2'};
+
 fprintf('\n')
 for ip = minip : length(plist)
     pname = upper(plist{ip});
+    if ismember(lower(pname), blacklist)
+        fprintf ('\n!!!!!! %s is skipped!!!!!!\n', pname)
+        continue
+    end
     fprintf('%3d. \t%16s:\t', ip, pname);
     prob = macup(pname);
     x0 = prob.x0;
@@ -163,6 +168,13 @@ for ip = minip : length(plist)
         if ir == 7
             test_options.rhoend = test_options.rhobeg;
         end
+        %if 8 <= ir && ir <= 20
+        %    prob.objective = @(x) noisyfeval(prob.objective, x);
+        %    if ~isempty(prob.nonlcon)
+        %        prob.nonlcon = @(x) noisyceval(prob.nonlcon, x);
+        %    end
+        %end
+
         prob.options = test_options;
 
 
@@ -185,12 +197,10 @@ for ip = minip : length(plist)
             exitflag2 = 3;
             %display('exitflag2 changed to 3.')
         end
-        if ((strcmpi(solvers{1}, 'cobyla') || strcmpi(solvers{2}, 'cobyla')) && output1.funcCount == length(x1) + 1 ...
-                && output2.funcCount == length(x2) + 1 && fx1 == fx2 && output1.constrviolation == output2.constrviolation && norm(x1-x2)>0)
+        if ((strcmpi(solvers{1}, 'cobyla') || strcmpi(solvers{2}, 'cobyla'))  && fx1 == fx2 && isfield(output1, 'constrviolation') && output1.constrviolation == output2.constrviolation && norm(x1-x2)>0)
             x1 = x2;
             fprintf('x1 changed to x2.\n');
         end
-
         if iseq(x1, fx1, exitflag1, output1, x2, fx2, exitflag2, output2, prec)
             fprintf('Succeed\n');
         else
@@ -207,6 +217,12 @@ for ip = minip : length(plist)
     end
 end
 
+if ~isempty(intersect(plist, blacklist))
+    fprintf ('\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n');
+    fprintf ('\n!!!!!! The following problems are skipped!!!!!!\n');
+    intersect(plist, blacklist)
+    fprintf ('\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n');
+end
 warning(orig_warning_state); % Restore the behavior of displaying warnings
 
 return
@@ -265,4 +281,40 @@ end
 
 diff = max([abs(ff-f)/(1+abs(f)), norm(xx-x)/(1+norm(x)), abs(oo.constrviolation-output.constrviolation)/(1+abs(output.constrviolation))]);
 
+return
+
+function f = noisy(f, x, noise_level)
+    if nargin < 3
+        noise_level = 1e-2;
+    end
+    r = sin((abs(f)+1)*1e10*max(abs(x)+1)*sin(1e10*sum(abs(x)+1)*sin(1e10*(norm(x)+1))));
+    if (r > 0.99)
+        r = -sign(f)*inf;
+    elseif (r > 0.9)
+        r = sign(f)*inf;
+    elseif (r <-0.9)
+        r = NaN;
+    end
+    f = f*(1+noise_level*r);
+return
+
+function f = noisyfeval(func, x, noise_level)
+    if nargin < 3
+        noise_level = 1e-2;
+    end
+    f = feval(func, x);
+    f = noisy(f, x, noise_level);
+return
+
+function [cineq, ceq] = noisyceval(con, x, noise_level)
+    if nargin < 3
+        noise_level = 1e-2;
+    end
+    [cineq, ceq] = feval(con, x);
+    for i = 1 : length(cineq)
+        cineq(i) = noisy(cineq(i), x, noise_level);
+    end
+    for i = 1 : length(ceq)
+        ceq(i) = noisy(ceq(i), x, noise_level);
+    end
 return
