@@ -9,7 +9,7 @@ C     1  CON,SIM,SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT)
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
       LOGICAL BETTER
-      PARAMETER (NSMAX = 1000)
+      PARAMETER (NSMAX = 2000)
 C NSMAX is the maximal number of "dropped X" to save (see comments below
 C line number 480)
       PARAMETER (CTOL = EPSILON(1.0D0))
@@ -401,6 +401,14 @@ C      VETA(J)=SQRT(WETA)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           IF (VSIG(J) < PARSIG .OR. VETA(J) > PARETA) IFLAG=0
       END DO
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! Zaikun 2021-07-19: With the following line, the geometry step
+      ! will not be taken if the current simplex if acceptable but then
+      ! becomes unacceptable due to the update of PARMU in the lines
+      ! above the line number 410.
+      IF (IFLAG == 1) IBRNCH = 1
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
 C     If a new vertex is needed to improve acceptability, then decide which
 C     vertex to drop from the simplex.
@@ -614,6 +622,7 @@ C          PARMU=2.0*BARMU
           DO J=1,N
               TEMP=DATMAT(MP,J)+PARMU*DATMAT(MPP,J)
               IF (TEMP < PHI) GOTO 140
+
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C          IF (TEMP .EQ. PHI .AND. PARMU .EQ. 0.0) THEN
               IF (TEMP == PHI .AND. PARMU == 0.0D0) THEN
@@ -786,6 +795,7 @@ C      IF (TRURED .GT. 0.0 .AND. TRURED .GE. 0.1*PREREM) GOTO 140
 C
 C     Otherwise reduce RHO if it is not at its least value and reset PARMU.
 C
+      IF (NFVALS >= MAXFUN) GOTO 600
       IF (RHO > RHOEND) THEN
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C          RHO=0.5*RHO
@@ -886,16 +896,19 @@ C      NFVALS-2 instead of NFVALS-1.
   600 DO K = 1, M
            CON(K) = CONSAV(K)
       END DO
-      PARMU = MAX(PARMU, 1.0D6)
+      cmin = minval([datmat(mpp, 1:np), DATSAV(mpp, 1:nsav), resmax])
+      PARMU = MAX(PARMU, 1.0D8)
       IF (NFVALS >= 2) THEN ! See the comments above for why NFVALS>2
-          !RESREF = RESMAX
-          RESREF = HUGENUM
+          RESREF = 2.0D0*max(cmin - ctol, 0.0D0)
+          if (.not. (resmax-ctol <= resref)) then
+              resmax = huge(0.0D0)
+              f = huge(0.0D0)
+          end if
           DO J = 1, NP
 C See the comments above for why to check these J
-              IF (DATMAT(MPP, J) <= RESREF) THEN
-                  CALL ISBETTER(F, RESMAX, DATMAT(MP, J),
-     1                 DATMAT(MPP, J), PARMU, CTOL, BETTER)
-                  IF (BETTER) THEN
+              IF (max(DATMAT(MPP, J)-ctol, 0.0D0) <= RESREF) THEN
+                  IF (datmat(mp, j)/parmu + max(datmat(mpp, j)-ctol,
+     1             0.0D0) < f/parmu + max(resmax-ctol, 0.0D0)) THEN
                       if (J <= N) then
                           DO I = 1, N
                               X(I) = SIM(I, J) + SIM(I, NP)
@@ -912,10 +925,9 @@ C See the comments above for why to check these J
               END IF
           END DO
           DO J = 1, NSAV
-              IF (DATSAV(MPP, J) <= RESREF) THEN
-                  CALL ISBETTER(F, RESMAX, DATSAV(MP, J),
-     1                 DATSAV(MPP, J), PARMU, CTOL, BETTER)
-                  IF (BETTER) THEN
+              IF (max(DATSAV(MPP, J)-ctol, 0.0D0) <= RESREF) THEN
+                  IF (datsav(mp, j)/parmu + max(datsav(mpp, j)-ctol,
+     1              0.0D0) < f/parmu + max(resmax-ctol, 0.0D0)) THEN
                       DO I = 1, N
                           X(I) = XSAV(I, J)
                       END DO
@@ -927,18 +939,6 @@ C See the comments above for why to check these J
                   END IF
               ENDIF
           END DO
-          CALL ISBETTER(DATMAT(MP, NP), DATMAT(MPP, NP), F, RESMAX,
-     1         PARMU, CTOL, BETTER)
-          IF (.NOT. BETTER .and. NFVALS > N+1) THEN
-              DO I = 1, N
-                  X(I) = SIM(I, NP)
-              END DO
-              F = DATMAT(MP, NP)
-              RESMAX = DATMAT(MPP, NP)
-              DO K = 1, M
-                  CON(K) = DATMAT(K, NP)
-              END DO
-          END IF
       END IF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   620 IF (IPRINT >= 1) THEN
@@ -1101,6 +1101,7 @@ C
       logical :: better
 
       ! Local variables
+      real(RP) :: cref
       logical :: f0infnan
       logical :: finfnan
       logical :: fle
@@ -1111,51 +1112,13 @@ C
       logical :: clt
 
       better = .false.
+      better = better .or. (.not. is_nan(f) .and. .not. is_nan(conv)
+     & .and. (is_nan(f0) .or. is_nan(conv0)))
+      better = better .or. (f <= f0 .and. conv < conv0)
+      better = better .or. (f < f0 .and. conv <= conv0)
 
-      ! As values of F0, CONV0, F, and CONV, we regard Inf and NaN being equivalent values (they are equally bad).
-      f0infnan = is_nan(f0) .or. (f0 > HUGENUM)     ! F0 = Inf or NaN?
-      c0infnan = is_nan(conv0) .or. (conv0 > HUGENUM)     ! CONV0 = Inf or NaN?
-      finfnan = is_nan(f) .or. (f > HUGENUM)     ! F = Inf or NaN?
-      cinfnan = is_nan(conv) .or. (conv > HUGENUM)     ! CONV = Inf or NaN?
-
-      ! If F0 or CONV0 is Inf/NaN while neither F nor CONV is Inf/NaN, then (F, CONV) is better than (F0, CONV0).
-      if ((f0infnan .or. c0infnan) .and. .not. (finfnan .or. cinfnan))
-     & then
-          better = .true.
-      end if
-
-      flt = (f0infnan .and. (.not. finfnan)) .or. (f < f0)  ! F < F0?
-      fle = (f0infnan .and. finfnan) .or. (f <= f0) .or. flt  ! F <= F0?
-      clt = (c0infnan .and. (.not. cinfnan)) .or. (conv < conv0)  ! CONV < CONV0?
-      cle = (c0infnan .and. cinfnan) .or. (conv <= max(ctol, conv0))
-     & .or. clt  ! CONV <= CONV0?
-
-      ! If (F < F0 and CONV <= CONV0) or (F <= F0 and CONV < CONV0) in the sense defined above, then
-      ! (F, CONV) is better than (F0, CONV0).
-      if ((flt .and. cle) .or. (fle .and. clt)) then
-          better = .true.
-      end if
-
-      ! If CONV < CTOL and F is not Inf or NaN while (CONV0 < 10*CTOL) is false (may be because CONV0 is NaN),
-      ! then (F, CONV) is better than (F0, CONV0). We prefer feasible points (i.e., constraint violation
-      ! is less than CTOL) to infeasible ones.
-      if (conv <= ctol .and. .not. (conv0 <= TEN * ctol) .and. .not.
-     1 finfnan) then
-          better = .true.
-      end if
-
-
-      ! If PARMU >= 0 and F + PARMU*CONV < F0 + PARMU*CONV0 and CONV < CTOL (feasible), then (F, CONV) is
-      ! better than (F0, CONV0).
-      ! Note that we should not set BETTER=FALSE even if this inequality does not hold, as either side may be NaN.
-      if (parmu >= zero .and. f + parmu * conv < f0 + parmu * conv0)then
-          if (conv0 <= ctol) then
-              if (conv <= ctol) then
-                  better = .true.
-              end if
-          elseif (conv <= conv0) then
-              better = .true.
-          end if
-      end if
+      cref = 10.0D0*max(ctol, epsilon(ctol))
+      better = better .or. (f <= HUGENUM .and. conv <= ctol .and.
+     1 (conv0 > cref .or. is_nan(conv0)))
 
       END SUBROUTINE

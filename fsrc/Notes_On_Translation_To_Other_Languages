@@ -113,6 +113,19 @@ Here are points to note when translating the Fortran code to other languages.
 
    minval is similar.
 
+
+   maxloc/minloc:
+
+   In Fortran, minloc(A, mask=MASK) returns the location of the minimum of A subject to the MASK.
+   MASK is a boolean array of the same shape as A, and only the elements of A corresponding to
+   MASK = .TRUE. are considered. By default, the first location will be returned if there are
+   multiple.
+
+   In MATLAB, for a 1D array A, the same thing can be done by
+   minimum = min(A(MASK));
+   minloc = min(find(A==minimum));
+   The min function in MATLAB can return the location of the minimum, but it does NOT support mask.
+
 8. any/all
 
    In Fortran:
@@ -146,3 +159,17 @@ Here are points to note when translating the Fortran code to other languages.
    which is equivalent to the MATLAB version of sum(A) .
    sum(A, 'all') returns the sum of all the elements of A (so it is the same as the Fortran version
    of sum(A)).
+
+10. array constructor and reshape
+
+   Suppose that A is a matrix of size mXn and B of size mXk. 
+
+   In Fortran: 
+   [A, B] is a VECTOR of length m*n+m*k; it equals
+   [A(:, 1), A(:, 2), ..., A(:, n), B(:, 1), B(:, 2), ..., B(:, k)]
+   If we want a mX(n+k) matrix, the first n columns being A and the last k columns being B, we need  
+   reshape([A, B], m, n+k)
+
+   In MATLAB:
+   [A, B] is a matrix of size mX(n+k), the first n columns being A and the last k columns being B, 
+   which is the same as reshape([A, B], m, n+k) in Fortran.

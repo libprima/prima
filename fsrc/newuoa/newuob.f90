@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Wednesday, July 14, 2021 PM12:41:11
+! Last Modified: Tuesday, July 20, 2021 PM01:56:48
 
 module newuob_mod
 
@@ -151,8 +151,6 @@ if (DEBUGGING) then
     end if
 end if
 
-maxtr = maxfun  ! Maximal number of trust region iterations.
-
 ! Initialize FVAL, XBASE, and XPT.
 call initxf(calfun, iprint, ftarget, rhobeg, x, ij, kopt, nf, fhist, fval, xbase, xhist, xpt, subinfo)
 xopt = xpt(:, kopt)
@@ -197,6 +195,8 @@ moderrsave = HUGENUM
 dnormsave = HUGENUM
 itest = 0
 trtol = 1.0E-2_RP  ! Tolerance used in trsapp.
+
+maxtr = huge(tr)  ! No constraint on the maximal number of trust region iterations.
 
 ! Begin the iterative procedure.
 ! After solving a trust-region subproblem, NEWUOA uses 3 boolean variables to control the work flow.
