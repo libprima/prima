@@ -7,7 +7,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Friday, June 11, 2021 AM12:04:47
+! Last Modified: Thursday, July 22, 2021 PM07:58:04
 
 module vlagbeta_mod
 
@@ -98,10 +98,13 @@ beta = -inprod(wzsave, wz)
 vlag(1:npt) = Ax_plus_y(zmat, wz, vlag(1:npt))
 !----------------------------------------------------------------------!
 
+vlag(kopt) = vlag(kopt) + ONE  ! The calculation of VLAG(1:NPT) finishes.
+
 bw = matprod(bmat(:, 1:npt), wcheck)
 !----------------------------------------------------------------------!
 !vlag(npt + 1 : npt + n) = bw + matprod(d, bmat(:, npt + 1 : npt + n)) !
 vlag(npt + 1:npt + n) = xA_plus_y(bmat(:, npt + 1:npt + n), d, bw)
+! The calculation of VLAG finishes.
 !----------------------------------------------------------------------!
 
 !----------------------------------------------------------------------!
@@ -110,12 +113,11 @@ bwvd = xpy_dot_z(bw, vlag(npt + 1:npt + n), d)
 !----------------------------------------------------------------------!
 
 dx = inprod(d, xopt)
-
 dsq = inprod(d, d)
 xoptsq = inprod(xopt, xopt)
 
+! BETA is defined as follows
 beta = dx * dx + dsq * (xoptsq + dx + dx + HALF * dsq) + beta - bwvd
-vlag(kopt) = vlag(kopt) + ONE
 
 end subroutine vlagbeta
 

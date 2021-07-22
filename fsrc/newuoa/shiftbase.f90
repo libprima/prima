@@ -4,7 +4,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Saturday, May 22, 2021 PM04:15:41
+! Last Modified: Wednesday, July 21, 2021 PM06:49:22
 
 module shiftbase_mod
 
@@ -78,10 +78,7 @@ xoptsq = inprod(xopt, xopt)
 qxoptq = QUART * xoptsq
 
 !----------------------------------------------------------------!
-! The update for gq can indeed be done by the following 3 lines:
-!real(RP) :: hxopt(n)
-!call hessmul(n, npt, xpt, hq, pq, xopt, hxopt)
-!gq = gq + hxopt
+!--------------! gq = hessmul(hq, pq, xpt, xopt) + gq !----------!
 gq = Ax_plus_y(xpt, pq * matprod(xopt, xpt), gq)
 gq = Ax_plus_y(hq, xopt, gq)
 !----------------------------------------------------------------!

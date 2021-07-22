@@ -4,7 +4,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Friday, July 02, 2021 PM04:19:04
+! Last Modified: Wednesday, July 21, 2021 PM05:34:52
 
 module update_mod
 
@@ -272,7 +272,7 @@ implicit none
 integer(IK), intent(in) :: idz
 integer(IK), intent(in) :: knew
 real(RP), intent(in) :: bmatknew(:) ! BMATKNEW(N)
-! fqdiff = [f(xnew) - f(xopt)] - [q(xnew) - q(xopt)] = moderr
+! FQDIFF = [F(XNEW) - F(XOPT)] - [Q(XNEW) - Q(XOPT)] = MODERR
 real(RP), intent(in) :: fqdiff
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 real(RP), intent(in) :: xptknew(:)  ! XPTKNEW(N)
