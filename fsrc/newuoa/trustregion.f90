@@ -4,7 +4,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Tuesday, June 01, 2021 PM05:15:36
+! Last Modified: Thursday, July 22, 2021 PM08:05:43
 
 module trustregion_mod
 
@@ -15,7 +15,7 @@ public :: trsapp, trrad
 contains
 
 
-subroutine trsapp(delta, gq, hq, pq, tol, x, xpt, crvmin, qred, s, info)
+subroutine trsapp(delta, gq, hq, pq, tol, x, xpt, crvmin, s, info)
 ! TRSAPP finds an approximate solution to the N-dimensional trust
 ! region subproblem
 !
@@ -69,7 +69,6 @@ real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
 ! Outputs
 integer(IK), intent(out) :: info
 real(RP), intent(out) :: crvmin
-real(RP), intent(out) :: qred
 real(RP), intent(out) :: s(:)        ! S(N)
 
 ! Local variables
@@ -94,7 +93,7 @@ real(RP) :: dhs
 real(RP) :: ds
 real(RP) :: g(size(x))
 real(RP) :: gg
-real(RP) :: ggbeg
+real(RP) :: gg0
 real(RP) :: ggsave
 real(RP) :: hd(size(x))
 real(RP) :: hs(size(x))
@@ -103,6 +102,7 @@ real(RP) :: qadd
 real(RP) :: qbeg
 real(RP) :: qmin
 real(RP) :: qnew
+real(RP) :: qred
 real(RP) :: qsave
 real(RP) :: quada
 real(RP) :: quadb
@@ -139,12 +139,12 @@ info = 2  ! Default exit flag is 2, i.e., itermax is attained
 
 ! Prepare for the first line search.
 !----------------------------------------------------------------!
-!-----!hx = matprod(xpt, pq*matprod(x, xpt)) + matprod(hq, x) !--!
+!-----!hx = hessmul(hq, pq, xpt, x) !----------------------------!
 hx = Ax_plus_y(hq, x, matprod(xpt, pq * matprod(x, xpt)))
 !----------------------------------------------------------------!
 g = gq + hx
 gg = inprod(g, g)
-ggbeg = gg
+gg0 = gg
 d = -g
 dd = gg
 ds = ZERO
@@ -172,14 +172,14 @@ twod_search = .false.
 ! two-dimensional subspace at each iteration being span(S, -G).
 do iterc = 1, itermax
     ! Check whether to exit due to small GG
-    if (gg <= (tol**2) * ggbeg) then
+    if (gg <= (tol**2) * gg0) then
         info = 0
         exit
     end if
     ! Set BSTEP to the step length such that ||S+BSTEP*D|| = DELTA
     bstep = (delsq - ss) / (ds + sqrt(ds * ds + dd * (delsq - ss)))
 !----------------------------------------------------------------!
-!-----!hd = matprod(xpt, pq*matprod(d, xpt)) + matprod(hq, d) !--------!
+!-----!hd = hessmul(hq, pq, xpt, d) !----------------------------!
     hd = Ax_plus_y(hq, d, matprod(xpt, pq * matprod(d, xpt)))
 !----------------------------------------------------------------!
     dhd = inprod(d, hd)
@@ -254,7 +254,7 @@ end if
 
 ! The 2D minimization
 do iterc = 1, itermax
-    if (gg <= (tol**2) * ggbeg) then
+    if (gg <= (tol**2) * gg0) then
         info = 0
         exit
     end if
@@ -271,7 +271,7 @@ do iterc = 1, itermax
     t = sqrt(delsq * gg - sgk * sgk)
     d = (delsq / t) * (g + hs) - (sgk / t) * s
 !----------------------------------------------------------------!
-!-----!hd = matprod(xpt, pq*matprod(d, xpt)) + matprod(hq, d) !--------!
+!-----!hd = hessmul(hq, pq, xpt, d) !----------------------------!
     hd = Ax_plus_y(hq, d, matprod(xpt, pq * matprod(d, xpt)))
 !----------------------------------------------------------------!
     dg = inprod(d, g)
