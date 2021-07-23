@@ -10,7 +10,7 @@ C      IMPLICIT REAL*8 (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DIMENSION X(*),XBASE(*),XOPT(*),XNEW(*),XPT(NPT,*),FVAL(*),
-     1  GQ(*),HQ(*),PQ(*),BMAT(NDIM,*),ZMAT(NPT,*),D(*),VLAG(*),W(*)
+     1  GQ(*),HQ(*),PQ(*),BMAT(NDIM,*),ZMAT(NPT,*),D(*),VLAG(NPT+N),W(*)
 C
 C     The arguments N, NPT, X, RHOBEG, RHOEND, IPRINT and MAXFUN are identical
 C       to the corresponding arguments in SUBROUTINE NEWUOA.
@@ -431,10 +431,70 @@ C
               CALL BIGDEN (N,NPT,XOPT,XPT,BMAT,ZMAT,IDZ,NDIM,KOPT,
      1          KNEW,D,W,VLAG,BETA,XNEW,W(NDIM+1),W(6*NDIM+1))
           END IF
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DNORM = MIN(SQRT(DOT_PRODUCT(D(1:N), D(1:N))), DSTEP)
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          DSQ = DOT_PRODUCT(D(1:N), D(1:N))
+          DNORM = MIN(SQRT(DOT_PRODUCT(D(1:N), D(1:N))), DSTEP)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Zaikun 2021-07-21: Calculate VLAG and BETA from scratch, so that NEWUOA
+! and NEWUOAn will produce exactly the same results.
+C     Calculate VLAG and BETA for the current choice of D. The first NPT
+C     components of W_check will be held in W.
+C
+      DO K=1,NPT
+          SUMA=ZERO
+          SUMB=ZERO
+          SUM=ZERO
+          DO J=1,N
+              SUMA=SUMA+XPT(K,J)*D(J)
+              SUMB=SUMB+XPT(K,J)*XOPT(J)
+              SUM=SUM+BMAT(K,J)*D(J)
+          END DO
+          W(K)=SUMA*(HALF*SUMA+SUMB)
+          VLAG(K)=SUM
+      END DO
+      BETA=ZERO
+      DO K=1,NPTM
+          SUM=ZERO
+          DO I=1,NPT
+              SUM=SUM+ZMAT(I,K)*W(I)
+          END DO
+          IF (K < IDZ) THEN
+              BETA=BETA+SUM*SUM
+              SUM=-SUM
+          ELSE
+              BETA=BETA-SUM*SUM
+          END IF
+          DO I=1,NPT
+              VLAG(I)=VLAG(I)+SUM*ZMAT(I,K)
+          END DO
+      END DO
+      BSUM=ZERO
+      DX=ZERO
+      DO J=1,N
+          SUM=ZERO
+          DO I=1,NPT
+              SUM=SUM+W(I)*BMAT(I,J)
+          END DO
+          BSUM=BSUM+SUM*D(J)
+          JP=NPT+J
+          DO K=1,N
+              SUM=SUM+BMAT(JP,K)*D(K)
+          END DO
+          VLAG(JP)=SUM
+          BSUM=BSUM+SUM*D(J)
+          DX=DX+D(J)*XOPT(J)
+      END DO
+      BETA=DX*DX+DSQ*(XOPTSQ+DX+DX+HALF*DSQ)+BETA-BSUM
+      VLAG(KOPT)=VLAG(KOPT)+ONE
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
       END IF
+
 
 
 C
@@ -795,5 +855,8 @@ C      IF (IPRINT .GE. 1) THEN
      1      'Number of function values =',I6)
           PRINT 520, F,(X(I),I=1,N)
       END IF
+
+      close(17)
+
       RETURN
       END
