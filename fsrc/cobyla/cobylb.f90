@@ -195,7 +195,7 @@ do tr = 1, maxtr
     conopt = datmat(:, n + 1)
 
     ! Calculate the trust-region trial step D.
-    call trstlp(n, m, A, -conopt, rho, d, ifull, iact)
+    call trstlp(n, m, A, -conopt(1:m + 1), rho, d, ifull, iact)
 
     ! Is the trust-region trial step short?
     shortd = (ifull == 0 .and. inprod(d, d) < QUART * rho * rho)
@@ -203,7 +203,7 @@ do tr = 1, maxtr
     if (.not. shortd) then
         ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
         preref = inprod(d, A(:, m + 1))
-        prerec = datmat(m + 2, n + 1) - maxval([ZERO, -conopt(1:m) - matprod(d, A(:, 1:m))])
+        prerec = datmat(m + 2, n + 1) - maxval([-conopt(1:m) - matprod(d, A(:, 1:m)), ZERO])
 
         ! Increase CPEN if necessary and branch back if this change alters the optimal vertex.
         ! Otherwise, PREREM will be set to the predicted reductions in the merit function.
@@ -231,7 +231,7 @@ do tr = 1, maxtr
         ! Evaluate the objective function and constraints at X.
         call calcfc(n, m, x, f, con)
         nf = nf + 1
-        cstrv = maxval([ZERO, -con(1:m)])
+        cstrv = maxval([-con(1:m), ZERO])
         con(m + 1) = f
         con(m + 2) = cstrv
 
@@ -335,7 +335,7 @@ do tr = 1, maxtr
             ! Evaluate the objective function and constraints at X.
             call calcfc(n, m, x, f, con)
             nf = nf + 1
-            cstrv = maxval([ZERO, -con(1:m)])
+            cstrv = maxval([-con(1:m), ZERO])
             con(m + 1) = f
             con(m + 2) = cstrv
             datmat(:, jdrop) = con

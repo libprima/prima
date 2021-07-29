@@ -24,11 +24,11 @@ integer(IK), intent(out) :: ifull
 integer(IK), intent(out) :: iact(:)
 
 
-real(RP) :: z(n, n)
-real(RP) :: zdota(n)
-real(RP) :: vmultc(m + 1)
-real(RP) :: sdirn(n)
-real(RP) :: vmultd(m + 1)
+real(RP) :: Z(N, N)
+real(RP) :: Zdota(N)
+real(RP) :: Vmultc(M + 1)
+real(RP) :: Sdirn(N)
+real(RP) :: Vmultd(M + 1)
 real(RP) :: dnew(N)
 
 
@@ -119,7 +119,6 @@ RESMAX = 0.0D0
 
 !!!!!!! Question: what is the size of B? M, M+1, or M+2?
 ! It seems to be M+1. Then when is B(M+1) used?
-! What is the size of iact, vmultc? m or m+1?
 
 ! Initialize Z and some other variables. The value of RESMAX will be appropriate to D=0, while ICON
 ! will be the index of a most violated constraint if RESMAX is positive. Usually during the first
@@ -128,31 +127,53 @@ RESMAX = 0.0D0
 z = eye(n, n)
 d = ZERO
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-resmax = maxval([b(1:m), ZERO])
-icon = maxloc(b(1:m), dim=1)
-iact(1:m) = [(k, k=1, m)]
-vmultc(1:m) = resmax - b(1:m)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+if (m >= 1) then
+    resmax = maxval([b, ZERO])
+    icon = maxloc(b, dim=1)
+    iact(1:m) = [(k, k=1, m)]
+    vmultc(1:m) = resmax - b(1:m)
+end if
 
-if (resmax <= zero) goto 480
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!      IF (RESMAX .EQ. 0.0) GOTO 480
+if (RESMAX <= ZERO) goto 480
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+do I = 1, N
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!   50 SDIRN(I)=0.0
+    SDIRN(I) = 0.0D0
+end do
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-sdirn = ZERO
-
-dsav = d   !!!! HOW TO AVOID THIS???
-
-
-! End the current stage of the calculation if 3 consecutive iterations have either failed to reduce
-! the best calculated value of the objective function or to increase the number of active
-! constraints since the best value was calculated. This strategy prevents cycling, but there is
-! a remote possibility that it will cause premature termination.
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+! Zaikun 26-06-2019: See the code below line number 80
+do I = 1, N
+    DSAV(I) = d(I)
+end do
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
-60 optold = ZERO
-
-icount = 0_IK
-70 if (mcon == m) then
-    optnew = resmax
+!     End the current stage of the calculation if 3 consecutive iterations
+!     have either failed to reduce the best calculated value of the objective
+!     function or to increase the number of active constraints since the best
+!     value was calculated. This strategy prevents cycling, but there is a
+!     remote possibility that it will cause premature termination.
+!
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!   60 OPTOLD=0.0
+60 OPTOLD = 0.0D0
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ICOUNT = 0
+70 if (MCON == M) then
+    OPTNEW = RESMAX
 else
-    optnew = -inprod(d, A(:, mcon))
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!          OPTNEW=0.0
+    OPTNEW = 0.0D0
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    do I = 1, N
+        OPTNEW = OPTNEW - d(I) * A(I, MCON)
+    end do
 end if
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 26-06-2019
