@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, July 23, 2021 PM05:21:38
+! Last Modified: Thursday, July 22, 2021 PM08:04:55
 
 module newuob_mod
 
@@ -174,7 +174,6 @@ if (subinfo == FTARGET_ACHIEVED .or. subinfo == NAN_X .or. subinfo == NAN_INF_F)
         ! order of Fortran arrays.
     end if
     call retmssg(info, iprint, nf, f, x, solver)
-    close (16)
     return
 end if
 
@@ -541,8 +540,9 @@ do tr = 1, maxtr
 end do  ! The iterative procedure ends.
 
 ! Return from the calculation, after another Newton-Raphson step, if it is too short to have been
-! tried before.
-if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
+! tried before. Note that no trust region iteration has been done if MAXTR = 0, and hence we
+! should not check whether SHORTD = TRUE but return immediately.
+if (maxtr > 0 .and. shortd .and. nf < maxfun) then
     x = xbase + (xopt + d)
     if (any(is_nan(x))) then
         f = sum(x)  ! Set F to NaN. It is necessary.
@@ -562,7 +562,7 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     end if
 end if
 
-! Choose the [X, F] to return: either the current [X, F] or [XBASE+XOPT, FOPT].
+! Note that (FOPT <= F) = FALSE if F is NaN; if F is NaN, it is necessary to update X and F.
 if (is_nan(f) .or. fopt <= f) then
     x = xbase + xopt
     f = fopt

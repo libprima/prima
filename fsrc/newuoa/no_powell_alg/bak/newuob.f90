@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, July 23, 2021 PM05:21:38
+! Last Modified: Thursday, July 22, 2021 PM10:11:24
 
 module newuob_mod
 
@@ -44,7 +44,7 @@ subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 ! See Section 2 of the NEWUOA paper for more information about these variables.
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENUM, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ZERO, TWO, HALF, TENTH, HUGENUM, DEBUGGING, SRNLEN
 use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
 use infnan_mod, only : is_nan, is_posinf
 use debug_mod, only : errstop
@@ -174,7 +174,6 @@ if (subinfo == FTARGET_ACHIEVED .or. subinfo == NAN_X .or. subinfo == NAN_INF_F)
         ! order of Fortran arrays.
     end if
     call retmssg(info, iprint, nf, f, x, solver)
-    close (16)
     return
 end if
 
@@ -196,11 +195,6 @@ moderrsave = HUGENUM
 dnormsave = HUGENUM
 itest = 0
 trtol = 1.0E-2_RP  ! Tolerance used in trsapp.
-! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers will raise a run-time error
-! that RATIO is undefined. Powell's code indeed sets RATIO = -ONE when SHORD is TRUE, and use this
-! artificial value when setting IMPROVE_GEO and REDUCE_RHO; however, we choose not to use the
-! artificial RATIO but use SHORTD to be more explicit. See IMPROVE_GEO and REDUCE_RHO for details.
-ratio = -ONE
 
 maxtr = huge(tr)  ! No constraint on the maximal number of trust region iterations.
 
@@ -212,8 +206,10 @@ maxtr = huge(tr)  ! No constraint on the maximal number of trust region iteratio
 ! REDUCE_RHO = REDUCE_RHO_1 .OR. REDUCE_RHO_2 (see boxes 14 and 10 of Fig. 1 in the NEWUOA paper).
 ! NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
-    ! Solve the trust region subproblem.
-    call trsapp(delta, gq, hq, pq, trtol, xopt, xpt, crvmin, d, subinfo)
+    ! Solve the trust region subproblem. In Powell's NEWUOA code, QRED is not an output of TRSAPP.
+    ! Here we output it but will NOT use it (for the moment); it will still be calculated later
+    ! by CALQUAD in order to produce the same results as Powell's code.
+    call trsapp(delta, gq, hq, pq, trtol, xopt, xpt, crvmin, qred, d, subinfo)
 
     ! Calculate the length of the trial step D.
     dnorm = min(delta, sqrt(inprod(d, d)))
@@ -367,7 +363,8 @@ do tr = 1, maxtr
     ! a radius of 2*DELTA. If not, the farthest point will be replaced with a point selected by
     ! GEOSTEP, aiming to ameliorate the geometry of the interpolation set.
     ! N.B.:
-    ! 1. RATIO must be set even if SHORTD = TRUE. Otherwise, compilers will raise a run-time error.
+    ! 1. RATIO is set if SHORTD = FALSE. So the expression (SHORTD .OR. RATIO < TENTH) will not
+    ! suffer from unset RATIO.
     ! 2. If SHORTD = FALSE and KNEW_TR = TRUE, then IMPROVE_GEO = TRUE, because KNEW_TR = TRUE
     ! necessitates RATIO <= 0 < TENTH. Therefore, IMPROVE_GEO = TRUE if it is impossible to obtain
     ! a good XPT by replacing a current point with the one suggested by the trust region step. This
@@ -417,9 +414,9 @@ do tr = 1, maxtr
         ! Find a step D so that the geometry of XPT will be improved when XPT(:, KNEW_GEO) is
         ! replaced by XOPT + D. The GEOSTEP subroutine will call Powell's BIGLAG and BIGDEN. It will
         ! also calculate the VLAG and BETA for this D.
-        d = geostep(idz, knew_geo, kopt, bmat, delbar, xpt, zmat)
+        call geostep(idz, knew_geo, kopt, bmat, delbar, xpt, zmat, d, beta, vlag)
 
-        ! Calculate VLAG and BETA for D. It makes uses of XOPT, so this is done before updating XOPT.
+
         call vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
 
         ! Use the current quadratic model to predict the change in F due to the step D.
@@ -541,8 +538,9 @@ do tr = 1, maxtr
 end do  ! The iterative procedure ends.
 
 ! Return from the calculation, after another Newton-Raphson step, if it is too short to have been
-! tried before.
-if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
+! tried before. Note that no trust region iteration has been done if MAXTR = 0, and hence we
+! should not check whether SHORTD = TRUE but return immediately.
+if (maxtr > 0 .and. shortd .and. nf < maxfun) then
     x = xbase + (xopt + d)
     if (any(is_nan(x))) then
         f = sum(x)  ! Set F to NaN. It is necessary.
@@ -562,7 +560,7 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     end if
 end if
 
-! Choose the [X, F] to return: either the current [X, F] or [XBASE+XOPT, FOPT].
+! Note that (FOPT <= F) = FALSE if F is NaN; if F is NaN, it is necessary to update X and F.
 if (is_nan(f) .or. fopt <= f) then
     x = xbase + xopt
     f = fopt

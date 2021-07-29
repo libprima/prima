@@ -4,7 +4,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Sunday, July 25, 2021 AM11:21:23
+! Last Modified: Wednesday, July 21, 2021 PM01:07:18
 
 module shiftbase_mod
 
@@ -24,7 +24,7 @@ subroutine shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
 ! Generic modules
 use consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, DEBUGGING, SRNLEN
 use debug_mod, only : errstop, verisize
-use lina_mod, only : Ax_plus_y, r1update, r2update, inprod, matprod
+use lina_mod, only : hessmul, r1update, r2update, inprod, matprod
 
 implicit none
 
@@ -77,13 +77,11 @@ end if
 xoptsq = inprod(xopt, xopt)
 qxoptq = QUART * xoptsq
 
-!-------------------------------------------------------------------------!
-!------------------! gq = hessmul(hq, pq, xpt, xopt) + gq !---------------!
-!-----------------------------------! OR !--------------------------------!
-!-! gq = matmul(hq, xopt) + (matmul(xpt, pq * matprod(xopt, xpt)) + gq) !-!
-gq = Ax_plus_y(xpt, pq * matprod(xopt, xpt), gq)
-gq = Ax_plus_y(hq, xopt, gq)
-!-------------------------------------------------------------------------!
+!----------------------------------------------------------------!
+gq = hessmul(hq, pq, xopt, xpt) + gq
+!---! gq = Ax_plus_y(xpt, pq * matprod(xopt, xpt), gq) !---------!
+!---! gq = Ax_plus_y(hq, xopt, gq) !-----------------------------!
+!----------------------------------------------------------------!
 
 w1 = matprod(xopt, xpt) - HALF * xoptsq
 ! W1 equals MATPROD(XPT, XOPT) after XPT is updated as follows.
@@ -114,8 +112,8 @@ end do
 sumz = sum(zmat, dim=1)
 do k = 1, int(idz - 1, kind(k))
 !----------------------------------------------------------------------!
-!---------!vlag = qxoptq*sumz(k)*xopt + matprod(xpt, w1*zmat(:, k)) !--!
-    vlag = Ax_plus_y(xpt, w1 * zmat(:, k), qxoptq * sumz(k) * xopt)
+    vlag = qxoptq * sumz(k) * xopt + matprod(xpt, w1 * zmat(:, k))
+!--! vlag = Ax_plus_y(xpt, w1 * zmat(:, k), qxoptq * sumz(k) * xopt) !-!
 !----------------------------------------------------------------------!
     call r1update(bmat(:, 1:npt), -ONE, vlag, zmat(:, k))
     ! Implement R1UPDATE properly so that it ensures
@@ -124,8 +122,8 @@ do k = 1, int(idz - 1, kind(k))
 end do
 do k = idz, int(npt - n - 1, kind(k))
 !----------------------------------------------------------------------!
-!---------!vlag = qxoptq*sumz(k)*xopt + matprod(xpt, w1*zmat(:, k)) !--!
-    vlag = Ax_plus_y(xpt, w1 * zmat(:, k), qxoptq * sumz(k) * xopt)
+    vlag = qxoptq * sumz(k) * xopt + matprod(xpt, w1 * zmat(:, k))
+!--- vlag = Ax_plus_y(xpt, w1 * zmat(:, k), qxoptq * sumz(k) * xopt) --!
 !----------------------------------------------------------------------!
     call r1update(bmat(:, 1:npt), ONE, vlag, zmat(:, k))
     ! Implement R1UPDATE properly so that it ensures

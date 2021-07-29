@@ -4,7 +4,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Sunday, July 25, 2021 AM11:21:23
+! Last Modified: Wednesday, July 21, 2021 PM06:49:22
 
 module shiftbase_mod
 
@@ -77,13 +77,11 @@ end if
 xoptsq = inprod(xopt, xopt)
 qxoptq = QUART * xoptsq
 
-!-------------------------------------------------------------------------!
-!------------------! gq = hessmul(hq, pq, xpt, xopt) + gq !---------------!
-!-----------------------------------! OR !--------------------------------!
-!-! gq = matmul(hq, xopt) + (matmul(xpt, pq * matprod(xopt, xpt)) + gq) !-!
+!----------------------------------------------------------------!
+!--------------! gq = hessmul(hq, pq, xpt, xopt) + gq !----------!
 gq = Ax_plus_y(xpt, pq * matprod(xopt, xpt), gq)
 gq = Ax_plus_y(hq, xopt, gq)
-!-------------------------------------------------------------------------!
+!----------------------------------------------------------------!
 
 w1 = matprod(xopt, xpt) - HALF * xoptsq
 ! W1 equals MATPROD(XPT, XOPT) after XPT is updated as follows.

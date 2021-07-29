@@ -7,7 +7,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Sunday, July 25, 2021 AM10:39:15
+! Last Modified: Friday, July 23, 2021 AM11:04:15
 
 module vlagbeta_mod
 
@@ -103,7 +103,7 @@ vlag(kopt) = vlag(kopt) + ONE  ! The calculation of VLAG(1:NPT) finishes.
 bw = matprod(bmat(:, 1:npt), wcheck)
 !----------------------------------------------------------------------!
 !vlag(npt + 1 : npt + n) = bw + matprod(d, bmat(:, npt + 1 : npt + n)) !
-vlag(npt + 1:npt + n) = xA_plus_y(d, bmat(:, npt + 1:npt + n), bw)
+vlag(npt + 1:npt + n) = xA_plus_y(bmat(:, npt + 1:npt + n), d, bw)
 ! The calculation of VLAG finishes.
 !----------------------------------------------------------------------!
 

@@ -3,7 +3,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, July 23, 2021 AM11:25:05
+! Last Modified: Friday, July 23, 2021 AM11:52:31
 
 module geometry_mod
 
@@ -265,8 +265,8 @@ dd = inprod(d, d)
 gd = matprod(xpt, hcol * matprod(d, xpt))
 
 !----------------------------------------------------------------!
-!-----!gc = bmat(:, knew) + matprod(xpt, hcol*matprod(x, xpt)) !-!
-gc = Ax_plus_y(xpt, hcol * matprod(x, xpt), bmat(:, knew))
+gc = bmat(:, knew) + matprod(xpt, hcol * matprod(x, xpt)) !-!
+!gc = Ax_plus_y(xpt, hcol * matprod(x, xpt), bmat(:, knew))
 !----------------------------------------------------------------!
 
 ! Scale D and GD, with a sign change if required. Set S to another vector in the initial two
@@ -694,8 +694,8 @@ do iterc = 1, n
     v = matprod(xnew, xpt)
     v = (tau * hcol - alpha * vlag(1:npt)) * v
     !------------------------------------------------------!
-    !---------!s = s + matprod(xpt, v) !-------------------!
-    s = Ax_plus_y(xpt, v, s)
+    s = s + matprod(xpt, v) !-------------------!
+    !s = Ax_plus_y(xpt, v, s)
     !------------------------------------------------------!
 
     ss = inprod(s, s)
