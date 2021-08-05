@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 20-Jul-2021.
+! on 06-Aug-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -30,7 +30,7 @@
 
 ! Coded by Zaikun ZHANG in July 2020.
 !
-! Last Modified: Sunday, July 11, 2021 PM04:12:06
+! Last Modified: Thursday, August 05, 2021 PM11:33:57
 
 
 #include "ppf.h"
@@ -44,8 +44,10 @@
       public :: r1update, r2update, symmetrize
       public :: xpy_dot_z, xdy_plus_a, Ax_plus_y, xA_plus_y
       public :: eye
-      public :: grota
+      public :: planerot
       public :: calquad
+      public :: hessmul
+      public :: isminor
 
       interface matprod
 ! N.B.:
@@ -67,6 +69,9 @@
           module procedure r2_sym, r2
       end interface r2update
 
+      interface isminor
+          module procedure isminor_0, isminor_1
+      end interface isminor
 
       contains
 
@@ -75,10 +80,14 @@
 ! R1_SYM sets
 ! A = A + ALPHA*( X*X^T ),
 ! where A is an NxN matrix, ALPHA is a scalar, and X is an N-dimenional vector.
-      use consts_mod, only : RP, IK, ONE, ZERO
+      use consts_mod, only : RP
+
+#if __USE_POWELL_ALGEBRA__ == 1
+      use consts_mod, only : IK
+#endif
 
 #if __DEBUGGING__ == 1
-      use consts_mod, only : SRNLEN
+      use consts_mod, only : ZERO, SRNLEN
       use debug_mod, only : errstop, verisym
 #endif
 
@@ -88,7 +97,9 @@
       real(RP), intent(inout) :: A(:, :)
       ! A(SIZE(X), SIZE(X))
 
+#if __USE_POWELL_ALGEBRA__ == 1
       integer(IK) :: n, j
+#endif
 
 #if __DEBUGGING__ == 1
       character(len=SRNLEN), parameter :: srname = 'R1_SYM'
@@ -100,33 +111,23 @@
       end if
 #endif
 
-      n = int(size(x), kind(n))
-
 #if __USE_POWELL_ALGEBRA__ == 1
+      n = int(size(x), kind(n))
 ! Only update the LOWER TRIANGULAR part of A. Both of the following cases are invoked in NEWUOA.
-      if (abs(alpha - ONE) > ZERO) then
-          do j = 1, n
-              A(j:n, j) = A(j:n, j) + alpha * x(j:n) * x(j)
-          end do
-      else
-          do j = 1, n
-              A(j:n, j) = A(j:n, j) + x(j:n) * x(j)
-          end do
-      end if
-! Set A(UPPER_TRI) = A(LOWER_TRI).
+      do j = 1, n
+          A(j:n, j) = A(j:n, j) + alpha * x(j:n) * x(j)
+      end do
       call symmetrize(A)
+      ! Set A(UPPER_TRI) by COPYING A(LOWER_TRI).
 #else
-! Here we calculate the increment as ALPHA*( X*X^T ), which is guaranteed symmetric even in
-! floating-point arithmetic. Both of the following cases are invoked in NEWUOA.
-      if (abs(alpha - ONE) > ZERO) then
-          do j = 1, n
-              A(:, j) = A(:, j) + alpha * (x * x(j))
-          end do
-      else
-          do j = 1, n
-              A(:, j) = A(:, j) + x * x(j)
-          end do
-      end if
+! For some reason, A + alpha*outprod(x,x), A + (outprod(alpha*x, x) + outprod(x, alpha*x))/2,
+! A + symmetrize(x, alpha*x), or A = A + sign(alpha) * outprod(sqrt(|alpha|) * x, sqrt(|alpha|) * x)
+! does not work as well as the following lines for NEWUOA, where SYMMETRIZE should set A(UPPER_TRI)
+! by COPYING A(LOWER_TRI) rather than set A = (A'+A)/2. This is essentially the same as Powell's
+! code, although it computes A(UPPER_TRI) unnecessarily. When X is rather small or large, calculating
+! OUTPROD(X, X) can be a bad idea, even though it guarantees symmetry in finite-precision arithmetic.
+      A = A + outprod(alpha * x, x)
+      call symmetrize(A)
 #endif
 
 #if __DEBUGGING__ == 1
@@ -140,7 +141,7 @@
 ! A = A + ALPHA*( X*Y^T ),
 ! where A is an MxN matrix, ALPHA is a real scalar, X is an M-dimenional vector, and Y is an
 ! N-dimenional vector.
-      use consts_mod, only : RP, IK, ONE, ZERO
+      use consts_mod, only : RP
 
 #if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
@@ -154,8 +155,6 @@
       real(RP), intent(inout) :: A(:, :)
       ! A(SIZE(X), SIZE(Y))
 
-      integer(IK) :: n, j
-
 #if __DEBUGGING__ == 1
       character(len=SRNLEN), parameter :: srname = 'R1'
 ! Be careful with initialization!
@@ -166,44 +165,23 @@
       end if
 #endif
 
-      n = int(size(y), kind(n))
-
-#if __USE_POWELL_ALGEBRA__ == 1
-! Both of the following cases are invoked in NEWUOA.
-      if (abs(alpha - ONE) > ZERO) then
-          do j = 1, n
-              A(:, j) = A(:, j) + alpha * x * y(j)
-          end do
-      else
-          do j = 1, n
-              A(:, j) = A(:, j) + x * y(j)
-          end do
-      end if
-#else
-! Here we calculate the increment as ALPHA*( X*Y^T ) rather than ALPHA*X*Y^T to ensure that, when
-! X = Y, the increment is symmetric even in floating-point arithmetic. Both of the following cases
-! are invoked in NEWUOA.
-      if (abs(alpha - ONE) > ZERO) then
-          do j = 1, n
-              A(:, j) = A(:, j) + alpha * (x * y(j))
-          end do
-      else
-          do j = 1, n
-              A(:, j) = A(:, j) + x * y(j)
-          end do
-      end if
-#endif
+      A = A + outprod(alpha * x, y)
+!A = A + alpha * outprod(x, y)
       end subroutine r1
 
 
       subroutine r2_sym(A, alpha, x, y)
 ! R2_SYM sets
 ! A = A + ALPHA*( X*Y^T + Y*X^T ),
-! where A is an NxN matrix, X and Y are N-dimenional vectors, and alpha is a sclalar.
-      use consts_mod, only : RP, IK, ONE, ZERO
+! where A is an NxN matrix, X and Y are N-dimenional vectors, and alpha is a scalar.
+      use consts_mod, only : RP
+
+#if __USE_POWELL_ALGEBRA__ == 1
+      use consts_mod, only : IK
+#endif
 
 #if __DEBUGGING__ == 1
-      use consts_mod, only : SRNLEN
+      use consts_mod, only : ZERO, SRNLEN
       use debug_mod, only : errstop, verisym
 #endif
 
@@ -214,7 +192,9 @@
       real(RP), intent(inout) :: A(:, :)
       ! A(SIZE(X), SIZE(X))
 
+#if __USE_POWELL_ALGEBRA__ == 1
       integer(IK) :: n, j
+#endif
 
 #if __DEBUGGING__ == 1
       character(len=SRNLEN), parameter :: srname = 'R2_SYM'
@@ -226,38 +206,22 @@
       end if
 #endif
 
-      n = int(size(x), kind(n))
 
 #if __USE_POWELL_ALGEBRA__ == 1
-! Only update the LOWER TRIANGULAR part of A.
-      if (abs(alpha - ONE) > ZERO) then
-      ! NOT invoked in NEWUOA.
-          do j = 1, n
-              A(j:n, j) = A(j:n, j) + alpha * x(j:n) * y(j) + alpha * y(&
-     &j:n) * x(j)
-          end do
-      else
-      ! This case is invoked in NEWUOA.
-          do j = 1, n
-              A(j:n, j) = A(j:n, j) + x(j:n) * y(j) + y(j:n) * x(j)
-          end do
-      end if
-! Set A(UPPER_TRI) = A(LOWER_TRI).
+      n = int(size(x), kind(n))
+      do j = 1, n
+          A(j:n, j) = A(j:n, j) + alpha * x(j:n) * y(j) + alpha * y(j:n)&
+     & * x(j)
+      end do
+! Set A(UPPER_TRI) by copying A(LOWER_TRI).
       call symmetrize(A)
 #else
-! Here we calculate the increment as ALPHA*( X*Y^T + Y*X^T), which is guaranteed symmetric even in
-! floating-point arithmetic.
-      if (abs(alpha - ONE) > ZERO) then
-      ! NOT invoked in NEWUOA.
-          do j = 1, n
-              A(:, j) = A(:, j) + alpha * (x * y(j) + y * x(j))
-          end do
-      else
-      ! This case is invoked in NEWUOA.
-          do j = 1, n
-              A(:, j) = A(:, j) + (x * y(j) + y * x(j))
-          end do
-      end if
+! For some reason, A = A + ALPHA * (OUTPROD(X, Y) + OUTPROD(Y, X)) does not work as well as the
+! following lines for NEWUOA, where SYMMETRIZE should set A(UPPER_TRI) by copying A(LOWER_TRI),
+! although ALPHA*( X*Y^T + Y*X^T) is guaranteed symmetric even in floating-point arithmetic. These
+! lines are essentially the same as Powell's code, although it calculates A(UPPER_TRI) unnecessarily.
+      A = A + outprod(alpha * x, y) + outprod(alpha * y, x)
+      call symmetrize(A)
 #endif
 
 #if __DEBUGGING__ == 1
@@ -271,7 +235,7 @@
 ! A = A + ( ALPHA*( X*Y^T ) + BETA*( U*V^T ) ),
 ! where A is an MxN matrix, ALPHA and BETA are real scalars, X and U are M-dimenional vectors,
 ! Y and V are N-dimenional vectors.
-      use consts_mod, only : RP, IK, ONE, ZERO
+      use consts_mod, only : RP
 
 #if __DEBUGGING__ == 1
       use consts_mod, only : SRNLEN
@@ -290,7 +254,6 @@
       real(RP), intent(inout) :: A(:, :)
       ! A(SIZE(X), SIZE(Y))
 
-      integer(IK) :: n, j
 
 #if __DEBUGGING__ == 1
       character(len=SRNLEN), parameter :: srname = 'R2'
@@ -305,43 +268,9 @@
       end if
 #endif
 
-      n = int(size(y), kind(n))
 
-#if __USE_POWELL_ALGEBRA__ == 1
-      if (abs(alpha - ONE) > ZERO .or. abs(beta - ONE) > ZERO) then
-! This case is NOT invoked in NEWUOA.
-          do j = 1, n
-              A(:, j) = A(:, j) + alpha * x * y(j) + beta * u * v(j)
-          end do
-      else
-      ! This case is invoked in NEWUOA.
-          do j = 1, n
-              A(:, j) = A(:, j) + x * y(j) + u * v(j)
-          end do
-      end if
-#else
-      if (abs(alpha - beta) > ZERO) then
-      ! NOT invoked in NEWUOA.
-          do j = 1, n
-              A(:, j) = A(:, j) + (alpha * (x * y(j)) + beta * (u * v(j)&
-     &))
-          end do
-      else if (abs(alpha - ONE) > ZERO) then
-      ! NOT invoked in NEWUOA.
-! Here update A to A + ALPHA*( X*Y^T + U*V^T ), a symmetric update when X = V and Y = U, even in
-! floating-point arithmetic.
-          do j = 1, n
-              A(:, j) = A(:, j) + alpha * (x * y(j) + u * v(j))
-          end do
-      else
-      ! This case is invoked in NEWUOA.
-! Here update A to A + ( X*Y^T + U*V^T ), a symmetric update when X = V and Y = U, even in
-! floating-point arithmetic.
-          do j = 1, n
-              A(:, j) = A(:, j) + (x * y(j) + u * v(j))
-          end do
-      end if
-#endif
+      A = A + outprod(alpha * x, y) + outprod(beta * u, v)
+!A = A + (alpha * outprod(x, y) + beta * outprod(u, v))
       end subroutine r2
 
 
@@ -551,67 +480,37 @@
       end if
       end function eye
 
-      subroutine grota(A, i, j, k)
-! GROTA sets A = A*G,
-! where G is the Givens rotation that
-!    [A(K, 1), ..., A(K, I), ..., A(K, J), ..., A(K, N)] * G
-!  = [A(K, 1), ..., R   , ..., 0   , ..., A(K, N)]
-! with R = SQRT(A(K, I)^2 + A(K, J)^2).
-! Indeed, the [(I, I), (I, J); (J, I), (J, J)] block of G is [C, -S; S, C], where C = A(K, I)/R,
-! S = A(K, J)/R, and the other entries are 1 (diagonal) or 0. Therefore, A*G is identical to A
-! except for columns I and J:
-! new column I =  C*A(:, I) + S*A(:, J)
-! new column J = -S*A(:, I) + C*A(:, J)
 
-      use consts_mod, only : IK, RP, ZERO
+      function planerot(x) result(G)
+! As in MATLAB, PLANEROT(X) returns a 2x2 Givens matrix G for X in R^2 so that Y = G*X has Y(2) = 0.
+      use consts_mod, only : RP, IK, ZERO
 
 #if __DEBUGGING__ == 1
-      use consts_mod, only : SRNLEN
-      use debug_mod, only : errstop
+      use debug_mod, only : verisize
 #endif
 
       implicit none
-      integer(IK), intent(in) :: i
-      integer(IK), intent(in) :: j
-      integer(IK), intent(in) :: k
-      real(RP), intent(inout) :: A(:, :)
+      real(RP), intent(in) :: x(:)
+      real(RP) :: G(2, 2)
 
-      real(RP) :: c, s, r, Ai(size(A, 1))
+      real(RP) :: c, s, r
 
 #if __DEBUGGING__ == 1
-      character(len=SRNLEN), parameter :: srname = 'GROTA'
-      if (i == j .or. min(i, j) < 1 .or. max(i, j) > size(A, 2)) then
-          call errstop(srname, 'I or J is invalid')
-      end if
-      if (k < 1 .or. k > size(A, 1)) then
-          call errstop(srname, 'K is invalid')
-      end if
+      call verisize(x, 2_IK)
 #endif
 
-      if (abs(A(k, j)) > ZERO) then
-          c = A(k, i)
-          s = A(k, j)
-! One may use R = HYPOT(C, s), but it did not work better
-! in our experiments on CUTEst problems.
-          r = sqrt(c**2 + s**2)
-          c = c / r
-          s = s / r
-          Ai = A(:, i)
-          A(:, i) = c * Ai + s * A(:, j)
-          A(:, j) = -s * Ai + c * A(:, j)
-          A(k, j) = ZERO
-
-#if __USE_POWELL_ALGEBRA__ == 0
-          A(k, i) = r
-          ! A(K, I) = R in precise arithmetic
-      else if (A(k, i) < ZERO) then
-! In this case, C = -1, S = 0. Thus it is reasonable to set the following. Doing this will
-! ensure the continuity of this subroutine as an operator.
-          A(:, i) = -A(:, i)
-          A(:, j) = -A(:, j)
-#endif
+      if (abs(x(2)) > ZERO) then
+          r = sqrt(sum(x**2))
+          c = x(1) / r
+          s = x(2) / r
+          G = reshape([c, -s, s, c], [2, 2])
+      elseif (x(1) < ZERO) then
+! Setting G = -EYE(2,2) in this case ensures the continuity of G with respect to X except at 0.
+          G = -eye(2_IK, 2_IK)
+      else
+          G = eye(2_IK, 2_IK)
       end if
-      end subroutine grota
+      end function planerot
 
 
       subroutine symmetrize(A)
@@ -697,8 +596,11 @@
           t = t + x(i) * z(i) + y(i) * z(i)
       end do
 #else
+! Very strangely, none of the following works as well as the above loop for NEWUOA. They are all
+! equivalent mathematically but different numerically.
+!t = inprod(x, z) + inprod(y, z)
 !t = inprod(x + y, z)
-      t = inprod(x, z) + inprod(y, z)
+      t = sum(x * z + y * z)
 #endif
       end function xpy_dot_z
 
@@ -782,13 +684,13 @@
           z = z + A(:, j) * x(j)
       end do
 #else
+! The following line works a bit better than Powell's loop for NEWUOA.
       z = matprod(A, x) + y
-! This is identical to y + matprod(A, x) in floating-point arithmetic.
 #endif
       end function Ax_plus_y
 
 
-      function xA_plus_y(A, x, y) result(z)
+      function xA_plus_y(x, A, y) result(z)
 ! z = x*A + y (imagine x, y, z as rows).
 ! Note that Fortran does not distinguish rows and columns.
 ! If implemented in MATLAB, pay attention to the sizes of the vectors/matrices; if x and y are
@@ -806,8 +708,8 @@
 #endif
       implicit none
 
-      real(RP), intent(in) :: A(:, :)
       real(RP), intent(in) :: x(:)
+      real(RP), intent(in) :: A(:, :)
       real(RP), intent(in) :: y(:)
       real(RP) :: z(size(y))
 
@@ -828,8 +730,8 @@
           z = z + x(i) * A(i, :)
       end do
 #else
+! The following does not work as well as Powell's loop for NEWUOA.
       z = matprod(x, A) + y
-! This is identical to y + matprod(x, A) in floating-point arithmetic.
 ! Note that Fortran does not distinguish rows and columns.
 ! If implemented in MATLAB, pay attention to the sizes of the vectors/matrices; if x and y are
 ! columns, then z = (x'*A)' + y (do not calculate A'*x+y, which involves transposing A).
@@ -847,16 +749,12 @@
 
       use consts_mod, only : RP, HALF
 
-#if __USE_POWELL_ALGEBRA__ == 1 || __DEBUGGING__ == 1
-      use consts_mod, only : IK
-#endif
-
 #if __USE_POWELL_ALGEBRA__ == 1
-      use consts_mod, only : ZERO
+      use consts_mod, only : IK, ZERO
 #endif
 
 #if __DEBUGGING__ == 1
-      use consts_mod, only : SRNLEN
+      use consts_mod, only : IK, SRNLEN
       use debug_mod, only : errstop, verisize
 #endif
 
@@ -947,5 +845,88 @@
 #endif
       end function calquad
 
+
+      function hessmul(hq, pq, xpt, y) result(hy)
+! This subroutine calculates HESSIAN*Y, where HESSIAN consists of an explicit part HQ and an
+! implicit part PQ in Powell's way: HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T).
+
+      use consts_mod, only : RP
+
+#if __DEBUGGING__ == 1
+      use consts_mod, only : IK, SRNLEN
+      use debug_mod, only : errstop, verisize
+#endif
+
+      implicit none
+
+! Inputs
+      real(RP), intent(in) :: hq(:, :)
+      ! HQ(N, N)
+      real(RP), intent(in) :: pq(:)
+      ! PQ(NPT)
+      real(RP), intent(in) :: y(:)
+      ! X(N)
+      real(RP), intent(in) :: xpt(:, :)
+      ! XPT(N, NPT)
+
+! Output
+      real(RP) :: hy(size(hq, 1))
+
+#if __DEBUGGING__ == 1
+      integer(IK) :: n, npt
+      character(len=SRNLEN), parameter :: srname = 'HESSMUL'
+      n = int(size(xpt, 1), kind(n))
+      npt = int(size(xpt, 2), kind(npt))
+      if (n == 0 .or. npt < n + 2) then
+          call errstop(srname, 'SIZE(XPT) is invalid')
+      end if
+      call verisize(y, n)
+      call verisize(hq, n, n)
+      call verisize(pq, npt)
+#endif
+
+      hy = matprod(hq, y) + matprod(xpt, pq * matprod(y, xpt))
+      end function hessmul
+
+
+      function isminor_0(x, ref) result(is_minor)
+! This subroutine tests whether X is minor compared to REF. It is used by Powell in, e.g., COBYLA.
+      use consts_mod, only : RP, TENTH, TWO
+      implicit none
+
+      real(RP), intent(in) :: x
+      real(RP), intent(in) :: ref
+      logical :: is_minor
+      real(RP) :: refa, refb
+
+      refa = abs(ref) + TENTH * abs(x)
+      refb = abs(ref) + TWO * TENTH * abs(x)
+      is_minor = abs(ref) >= refa .or. refa >= refb
+      end function isminor_0
+
+
+      function isminor_1(x, ref) result(is_minor)
+! This subroutine tests whether X is minor compared to REF. It is used by Powell in, e.g., COBYLA.
+      use consts_mod, only : IK, RP
+#if __DEBUGGING__ == 1
+      use consts_mod, only : SRNLEN
+      use debug_mod, only : errstop
+#endif
+      implicit none
+
+      real(RP), intent(in) :: x(:)
+      real(RP), intent(in) :: ref(:)
+      logical :: is_minor(size(x))
+      integer(IK) :: i
+
+#if __DEBUGGING__ == 1
+      character(len=SRNLEN), parameter :: srname = 'ISMINOR_1'
+      if (size(x) /= size(ref)) then
+          call errstop(srname, 'SIZE(X) /= SIZE(REF)')
+      end if
+#endif
+
+      is_minor = [(isminor_0(x(i), ref(i)), i=1, int(size(x), IK))]
+      end function isminor_1
 
       end module lina_mod

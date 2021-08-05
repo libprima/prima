@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 20-Jul-2021.
+! on 06-Aug-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -29,7 +29,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Sunday, May 23, 2021 PM03:17:08
+! Last Modified: Thursday, July 22, 2021 AM10:56:17
 
       module newuoa_mod
 
@@ -45,26 +45,27 @@
      &n, npt, iprint, eta1, eta2, gamma1, gamma2, xhist, fhist, maxhist,&
      & info)
 
-! Among all the arguments, only CALFUN, X, and F are required. The other
-! arguments are OPTIONAL and you can neglect them unless you are farmiliar
-! with the algorithm. If you do not specify an optional argument, it will
-! be assigned the default value to it as will be explained later. For
-! example, it is valid to call NEWUOA by
+! Among all the arguments, only CALFUN, X, and F are obligatory. The others
+! are OPTIONAL and you can neglect them unless you are familiar with the
+! algorithm. If you do not specify an optional argument, it will be assigned
+! the default value  as will be explained later. For example, it is valid to
+! call NEWUOA by
 !
 ! call newuoa(calfun, x, f)
 !
 ! or
 !
-! call newuoa(calfun, x, f, rhobeg = 0.5_RP, rhoend = 1.0E-3_RP, maxfun = 100_IK)
+! call newuoa(calfun, x, f, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
 !
 ! See example.f90 for a concrete example.
 !
-! N.B.: RP and IK are defined in the module CONSTS_MOD. See consts.F90
-! under the directory name "common". By default, RP = kind(0.0D0) and
-! IK = kind(0). Therefore, REAL(RP) is the double-precision real, and
-! INTEGER(IK) is the default integer.
-!
 ! A detailed introduction to the arguments is as follows.
+! N.B.: RP and IK are defined in the module CONSTS_MOD. See consts.F90 under
+! the directory name "common". By default, RP = kind(0.0D0) and IK = kind(0).
+! Therefore, REAL(RP) is the double-precision real, and INTEGER(IK) is the
+! default integer. For ADVANCED USERS, RP and IK can be defined by specifying
+! __REAL_PRECISION__ and __INTEGER_KIND__ in common/ppf.h. Use the default if
+! you are unsure.
 !
 ! CALFUN
 !   Input, subroutine.
@@ -182,7 +183,7 @@
       use infnan_mod, only : is_nan, is_inf, is_finite
       use memory_mod, only : safealloc, cstyle_sizeof
 
-! Solver-specific module
+! Solver-specific modules
       use pintrf_mod, only : FUNEVAL
       use preproc_mod, only : preproc
       use newuob_mod, only : newuob
@@ -429,7 +430,7 @@
       end if
       deallocate (fhist_c)
 
-! If MAXFHIST_IN >= NF_C > MAXFHIST_C, warn that not all history is recorced.
+! If MAXFHIST_IN >= NF_C > MAXFHIST_C, warn that not all history is recorded.
       if ((present(xhist) .or. present(fhist)) .and. maxhist_c < min(nf_&
      &c, maxhist_in)) then
           print '(/1A, I7, 1A)', 'WARNING: '//solver//': due to memory l&

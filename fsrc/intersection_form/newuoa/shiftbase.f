@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 20-Jul-2021.
+! on 06-Aug-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -19,7 +19,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Saturday, May 22, 2021 PM04:15:41
+! Last Modified: Sunday, July 25, 2021 AM11:21:23
 
       module shiftbase_mod
 
@@ -103,14 +103,13 @@
       xoptsq = inprod(xopt, xopt)
       qxoptq = QUART * xoptsq
 
-!----------------------------------------------------------------!
-! The update for gq can indeed be done by the following 3 lines:
-!real(RP) :: hxopt(n)
-!call hessmul(n, npt, xpt, hq, pq, xopt, hxopt)
-!gq = gq + hxopt
+!-------------------------------------------------------------------------!
+!------------------! gq = hessmul(hq, pq, xpt, xopt) + gq !---------------!
+!-----------------------------------! OR !--------------------------------!
+!-! gq = matmul(hq, xopt) + (matmul(xpt, pq * matprod(xopt, xpt)) + gq) !-!
       gq = Ax_plus_y(xpt, pq * matprod(xopt, xpt), gq)
       gq = Ax_plus_y(hq, xopt, gq)
-!----------------------------------------------------------------!
+!-------------------------------------------------------------------------!
 
       w1 = matprod(xopt, xpt) - HALF * xoptsq
 ! W1 equals MATPROD(XPT, XOPT) after XPT is updated as follows.

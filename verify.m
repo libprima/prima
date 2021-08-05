@@ -107,17 +107,21 @@ else
     maxir = ir;
 end
 
-blacklist={'gauss2'};
+blacklist={'gauss2', 'gauss3','HS25NE', 'cubene'};  % Memory error
+blacklist=[blacklist, 'qcnew'];  % f(x) ~= fx due to bad condition
+blacklist=[blacklist, 'BLEACHNG']; % takes too much time
 
 fprintf('\n')
 for ip = minip : length(plist)
     pname = upper(plist{ip});
-    if ismember(lower(pname), blacklist)
+    if ismember(lower(pname), lower(blacklist))
         fprintf ('\n!!!!!! %s is skipped!!!!!!\n', pname)
         continue
     end
     fprintf('%3d. \t%16s:\t', ip, pname);
     prob = macup(pname);
+    objective = prob.objective;
+    nonlcon = prob.nonlcon;
     x0 = prob.x0;
     n = length(x0);
     fprintf('\n');
@@ -168,12 +172,15 @@ for ip = minip : length(plist)
         if ir == 7
             test_options.rhoend = test_options.rhobeg;
         end
-        %if 8 <= ir && ir <= 20
-        %    prob.objective = @(x) noisyfeval(prob.objective, x);
-        %    if ~isempty(prob.nonlcon)
-        %        prob.nonlcon = @(x) noisyceval(prob.nonlcon, x);
-        %    end
-        %end
+        if 16 <= ir && ir <= 20 && 1==0
+            prob.objective = @(x) noisyfeval(prob.objective, x);
+            if ~isempty(nonlcon)
+                prob.nonlcon = @(x) noisyceval(prob.nonlcon, x);
+            end
+        else
+            prob.objective  = objective;
+            prob.nonlcon = nonlcon;
+        end
 
         prob.options = test_options;
 
@@ -188,7 +195,6 @@ for ip = minip : length(plist)
         T = toc;
         fprintf('\nRunning time for %s:\t %f\n', solvers{2}, T);
 
-
         if output1.funcCount == test_options.maxfun && (exitflag1 == 0 || exitflag1 == 2) && exitflag2 == 3
             exitflag1 = 3;
             %display('exitflag1 changed to 3.')
@@ -196,6 +202,14 @@ for ip = minip : length(plist)
         if output2.funcCount == test_options.maxfun && (exitflag2 == 0 || exitflag2 == 2) && exitflag1 == 3
             exitflag2 = 3;
             %display('exitflag2 changed to 3.')
+        end
+        if fx1 <= test_options.ftarget
+            exitflag1 = 1;
+            display('exitflag1 changed to 1.')
+        end
+        if fx2 <= test_options.ftarget
+            exitflag2 = 1;
+            display('exitflag2 changed to 1.')
         end
         if ((strcmpi(solvers{1}, 'cobyla') || strcmpi(solvers{2}, 'cobyla'))  && fx1 == fx2 && isfield(output1, 'constrviolation') && output1.constrviolation == output2.constrviolation && norm(x1-x2)>0)
             x1 = x2;
@@ -287,12 +301,12 @@ function f = noisy(f, x, noise_level)
     if nargin < 3
         noise_level = 1e-2;
     end
-    r = sin((abs(f)+1)*1e10*max(abs(x)+1)*sin(1e10*sum(abs(x)+1)*sin(1e10*(norm(x)+1))));
+    r = sin((abs(f)+1)*1e3*max(abs(x)+1)*sin(1e3*sum(abs(x)+1)*sin(1e3*(norm(x)+1))));
     if (r > 0.99)
-        r = -sign(f)*inf;
-    elseif (r > 0.9)
         r = sign(f)*inf;
-    elseif (r <-0.9)
+    elseif (r > 0.98)
+        r = -sign(f)*inf;
+    elseif (r <-0.99)
         r = NaN;
     end
     f = f*(1+noise_level*r);
@@ -317,4 +331,8 @@ function [cineq, ceq] = noisyceval(con, x, noise_level)
     for i = 1 : length(ceq)
         ceq(i) = noisy(ceq(i), x, noise_level);
     end
+return
+
+function [x,fx, exitflag, output] = newuoan1(varargin)
+    [x,fx, exitflag, output] = newuoan(varargin, 1);
 return

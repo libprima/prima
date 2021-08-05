@@ -34,7 +34,7 @@ Within each category, follow the alphabetical order.
 order as they are declared. This does not apply to the main subroutine
 (e.g., newuoa.f90) or the common subroutines (e.g., r1update), where the
 dummy variables are arranged according to the logic of the subroutine.
-1.7. All dummy arrays should be assumed-size. Use VERISIZE to verify
+1.7. All dummy arrays should be assumed-shape. Use VERISIZE to verify
 their sizes if DEBUGGING is true.
 
 2. Use matrix/vector operations.

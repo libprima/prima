@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 20-Jul-2021.
+! on 06-Aug-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -22,7 +22,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Friday, June 11, 2021 AM12:04:47
+! Last Modified: Sunday, July 25, 2021 AM10:39:15
 
       module vlagbeta_mod
 
@@ -120,10 +120,14 @@
       vlag(1:npt) = Ax_plus_y(zmat, wz, vlag(1:npt))
 !----------------------------------------------------------------------!
 
+      vlag(kopt) = vlag(kopt) + ONE
+      ! The calculation of VLAG(1:NPT) finishes.
+
       bw = matprod(bmat(:, 1:npt), wcheck)
 !----------------------------------------------------------------------!
 !vlag(npt + 1 : npt + n) = bw + matprod(d, bmat(:, npt + 1 : npt + n)) !
-      vlag(npt + 1:npt + n) = xA_plus_y(bmat(:, npt + 1:npt + n), d, bw)
+      vlag(npt + 1:npt + n) = xA_plus_y(d, bmat(:, npt + 1:npt + n), bw)
+! The calculation of VLAG finishes.
 !----------------------------------------------------------------------!
 
 !----------------------------------------------------------------------!
@@ -132,13 +136,12 @@
 !----------------------------------------------------------------------!
 
       dx = inprod(d, xopt)
-
       dsq = inprod(d, d)
       xoptsq = inprod(xopt, xopt)
 
+! The final value of BETA is calculated as follows.
       beta = dx * dx + dsq * (xoptsq + dx + dx + HALF * dsq) + beta - bw&
      &vd
-      vlag(kopt) = vlag(kopt) + ONE
 
       end subroutine vlagbeta
 

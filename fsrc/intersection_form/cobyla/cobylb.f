@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 20-Jul-2021.
+! on 06-Aug-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -31,7 +31,6 @@
       use output_mod, only : retmssg, rhomssg, fmssg
       use lina_mod, only : inprod, matprod, outprod
       use memory_mod, only : cstyle_sizeof
-      use logging_mod, only : logging
 
 ! Solver-specific modules
 !use savex_mod, only : savex
@@ -173,8 +172,8 @@
           conhist = datmat(1:m, :)
           cstrvhist = datmat(m + 2, :)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          cpen = 1.0E8_RP
-! Select the best X to return.
+          cpen = min(1.0E8_RP, HUGENUM)
+! Return the best calculated values of the variables.
           kopt = selectx(cpen, cstrvhist, ctol, fhist)
           x = xhist(:, kopt)
           f = fhist(kopt)
@@ -233,16 +232,17 @@
           conopt = datmat(:, n + 1)
 
 ! Calculate the trust-region trial step D.
-          call trstlp(n, m, A, -conopt, rho, d, ifull, iact)
+          call trstlp(n, m, A, -conopt(1:m + 1), rho, d, ifull, iact)
 
 ! Is the trust-region trial step short?
+! Is IFULL == 0 necessary ?????????????????????? If no, TRSTLP can be a function.
           shortd = (ifull == 0 .and. inprod(d, d) < QUART * rho * rho)
 
           if (.not. shortd) then
 ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
               preref = inprod(d, A(:, m + 1))
-              prerec = datmat(m + 2, n + 1) - maxval([ZERO, -conopt(1:m)&
-     & - matprod(d, A(:, 1:m))])
+              prerec = datmat(m + 2, n + 1) - maxval([-conopt(1:m) - mat&
+     &prod(d, A(:, 1:m)), ZERO])
 
 ! Increase CPEN if necessary and branch back if this change alters the optimal vertex.
 ! Otherwise, PREREM will be set to the predicted reductions in the merit function.
@@ -275,7 +275,7 @@
 ! Evaluate the objective function and constraints at X.
               call calcfc(n, m, x, f, con)
               nf = nf + 1
-              cstrv = maxval([ZERO, -con(1:m)])
+              cstrv = maxval([-con(1:m), ZERO])
               con(m + 1) = f
               con(m + 2) = cstrv
 
@@ -349,16 +349,18 @@
               end if
 
 ! If the current interpolation set has good geometry, then we skip the geometry step.
-! There is a difference from the original COBYLA code here: If the current geometry is good,
-! then we will continue with a new trust-region iteration; at the beginning of the
+! The code has a small difference from the original COBYLA code here: If the current geometry
+! is good, then we will continue with a new trust-region iteration; at the beginning of the
 ! iteration, CPEN may be updated, which may alter the pole point SIM(:, N + 1) by UPDATEPOLE;
-! note that the quality of the interpolation point depends on SIM(:, N + 1), meaning that
-! the same interpolation set may have good or bad geometry with respect to different "poles";
-! if the geometry turns out bad with the new pole, the original COBYLA code will take a
-! geometry step, but the code here will NOT do it but continue to take a trust region step.
-! The argument is this: even if the geometry step is not skipped, the geometry may turn out
-! bad again after the pole is altered due to an update to CPEN; should we take another
-! geometry step in that case? If no, why should we do it here?
+! the quality of the interpolation point depends on SIM(:, N + 1), meaning that the same
+! interpolation set may have good or bad geometry with respect to different "poles"; if the
+! geometry turns out bad with the new pole, the original COBYLA code will take a geometry
+! step, but the code here will NOT do it but continue to take a trust region step.
+! The argument is this: even if the geometry step is not skipped at the first place, the
+! geometry may turn out bad again after the pole is altered due to an update to CPEN; should
+! we take another geometry step in that case? If no, why should we do it here? Indeed, this
+! distinction makes no practical difference for CUTEst problems with at most 100 variables
+! and 5000 constraints, while the algorithm framework is simplified.
               if (.not. goodgeo(factor_alpha, factor_beta, rho, sim, sim&
      &i)) then
 ! Decide a vertex to drop from the simplex. It will be replaced by SIM(:, N + 1) + D to
@@ -396,7 +398,7 @@
 ! Evaluate the objective function and constraints at X.
                   call calcfc(n, m, x, f, con)
                   nf = nf + 1
-                  cstrv = maxval([ZERO, -con(1:m)])
+                  cstrv = maxval([-con(1:m), ZERO])
                   con(m + 1) = f
                   con(m + 2) = cstrv
                   datmat(:, jdrop) = con
@@ -433,7 +435,7 @@
               if (rho <= 1.5E0_RP * rhoend) then
                   rho = rhoend
               end if
-! See equation (12)--(13) in Section 3 of the COBYLA paper for the update of CPEN.
+! See equations (12)--(13) in Section 3 of the COBYLA paper for the update of CPEN.
 ! If the original CPEN = 0, then the updated CPEN is also 0.
               cmin = minval(datmat(1:m, :), dim=2)
               cmax = maxval(datmat(1:m, :), dim=2)
@@ -461,13 +463,14 @@
      & [m, n + nsav + 2])
       cstrvhist = [cstrv, datmat(m + 2, :), datsav(m + 2, 1:nsav)]
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      cpen = max(cpen, 1.0E8_RP)
-! Select the best X to return.
+      cpen = max(cpen, min(1.0E8_RP, HUGENUM))
       kopt = selectx(cpen, cstrvhist, ctol, fhist)
       x = xhist(:, kopt)
       f = fhist(kopt)
       cstrv = cstrvhist(kopt)
       con = conhist(:, kopt)
+
+!close (16)
 
       end subroutine cobylb
 

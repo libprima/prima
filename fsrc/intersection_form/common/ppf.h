@@ -1,62 +1,97 @@
-/************************************************************************/
+/******************************************************************************/
 /*
  * Coded by Zaikun Zhang (www.zhangzk.net) in July 2020.
  *
  * Last Modified: Mon 24 May 2021 04:21:00 PM HKT
  */
-/*************************************************************************/
+/******************************************************************************/
 /*
  * ppf.h defines the following preprocessing flags (the first value is default).
  *
+ * __RELEASED__                released or not: 1, 0
  * __DEBUGGING__               debug or not: 0, 1
  * __FORTRAN_STANDARD__        which Fortran standard to follow: 2003, 2008
+ * __USE_POWELL_ALGEBRA__      use Powell's linear algebra procedures or not: 1, 0
  * __USE_INTRINSIC_ALGEBRA__   use intrinsic procedures like matmul or not: 0, 1
- * __USE_POWELL_ALGEBRA__      use Powell's linear algebra procedures or not: 0, 1
  * __INTEGER_KIND__            the integer kind to be used: 0, 32, 64, 16
  * __REAL_PRECISION__          the real precision to be used: 64, 32, 128, 0
  * __USE_IEEE_ARITHMETIC__     use the IEEE_ARITHMETIC intrinsic or not: 0, 1
  * __USE_STORAGE_SIZE__        use the STORAGE_SIZE intrinsic or not: 0, 1
- * __USE_ISO_FORTRAN_ENV_INTREAL__ use the ISO_FORTRAN_ENV module or not: 0, 1
+ * __USE_ISO_FORTRAN_ENV_INTREAL__ use INT32 etc in ISO_FORTRAN_ENV or not: 0, 1
  *
- * You may change these flags, but make sure that your compiler is supportive
+ * N.B.:
+ *
+ * 0. USE THE DEFAULT IF UNSURE.
+ *
+ * 1. When __USE_POWELL_ALGEBRA__ == 1, the released version will produce EXACTLY
+ * the same results as Powell's Fortran 77 code (necessarily, this means that the
+ * code performs EXACTLY the same calculations as Powell's code, or else rounding
+ * errors will lead to different computed results, the difference being sometimes
+ * significant for nonconvex problems).
+ *
+ * 2. If you change these flags, make sure that your compiler is supportive
  * when changing __INTEGER_KIND__, __REAL_PRECISION__, __FORTRAN_STANDARD__,
  * __USE_IEEE_ARITHMETIC__ (Fortran 2003),
  * __USE_STORAGE_SIZE__ (Fortran 2008),
  * __USE_ISO_FORTRAN_ENV_INTREAL__ (Fortran 2008).
  *
- * Why not define these flags as parameters in the Fortran code, e.g.,
+ * 3. Why not define these flags as parameters in the Fortran code, e.g.,
  *
- * logical, parameter :: __DEBUGGING__ = .false. ?
+ * logical, parameter :: __DEBUGGING__ == .false. ?
  *
  * Such a definition will work for __DEBUGGING__, but not for the flags that
  * depend on the compiler, for instance, __USE_IEEE_ARITHMETIC__.
  *
  */
-/*************************************************************************/
+/******************************************************************************/
 
 
-/*************************************************************************/
-/* Are we debugging? */
+/******************************************************************************/
+/* Is this a released version? Should be 1 except for the contributors. */
+#if defined RELEASED__
+#undef RELEASED__
+#endif
+#define RELEASED__ 0
+/******************************************************************************/
+
+
+/******************************************************************************/
+/* Are we debugging?
+ * __RELEASED__ == 1 and __DEBUGGING__ == 1 do not conflict. Users may debug. */
 #if defined __DEBUGGING__
 #undef __DEBUGGING__
 #endif
 #define __DEBUGGING__ 1
-/*************************************************************************/
+/******************************************************************************/
 
 
-/*************************************************************************/
+/******************************************************************************/
 /* Which Fortran standard to follow? */
 #if defined __FORTRAN_STANDARD__
 #undef __FORTRAN_STANDARD__
 #endif
 #define __FORTRAN_STANDARD__ 2003
-/*************************************************************************/
+/******************************************************************************/
 
 
-/*************************************************************************/
-/* Do we use the intrinsic algebra procedures (e.g., matmul)? */
+/******************************************************************************/
+/* Do we use Powell's linear algebra procedures? */
+/* If not, some algebraic calculations will be implemented with matrix/vector
+ * operations instead of loops. This does not change Powell's algorithms, but
+ * it may not produce exactly the same results as Powell's code due to properties
+ * of floating-point arithmetic, e.g., the non-associativity of floating-point
+ * addition and multiplication. */
+#if defined __USE_POWELL_ALGEBRA__
+#undef __USE_POWELL_ALGEBRA__
+#endif
+#define __USE_POWELL_ALGEBRA__ 1
+/******************************************************************************/
+
+
+/******************************************************************************/
+/* Do we use the intrinsic algebra procedures (e.g., matmul, dot_product)? */
 /* If no, we use the procedures implemented in lina.F. */
-/* When __USE_INTRINSIC_ALGEBRA__ = 1, the code may not produce exactly the
+/* When __USE_INTRINSIC_ALGEBRA__ == 1, the code may not produce exactly the
  * same results as Powell's code, because the intrinsic matmul behaves
  * differently from a naive triple loop due to finite-precision arithmetic.
  * For the moment (2021-070-4), the difference is observed only if neither of
@@ -65,25 +100,21 @@
 #undef __USE_INTRINSIC_ALGEBRA__
 #endif
 #define __USE_INTRINSIC_ALGEBRA__ 0
-/*************************************************************************/
+/******************************************************************************/
 
 
-/*************************************************************************/
-/* Do we use Powell's linear algebra procedures? */
-/* If not, the implementation of some algebraic calculations will be
- * modified, mainly by replacing loops with matrix/vector operations.
- * This does not change Powell's algorithms, but it may not produce
- * exactly the same results as Powell's code due to properties of
- * floating-point arithmetic, e.g., the non-associativity of floating-point
- * addition and multiplication. */
-#if defined __USE_POWELL_ALGEBRA__
-#undef __USE_POWELL_ALGEBRA__
+/******************************************************************************/
+/* __USE_POWELL_ALGEBRA__ == 1 and __USE_INTRINSIC_ALGEBRA__ == 1 do NOT conflict.
+ * However, to make sure that the code produces exactly the same results as
+ * Powell's code when __USE_POWELL_ALGEBRA__ == 1, we impose the following.*/
+#if __USE_POWELL_ALGEBRA__ == 1 && __RELEASED__ == 1
+#undef __USE_INTRINSIC_ALGEBRA__
+#define __USE_INTRINSIC_ALGEBRA__ 0
 #endif
-#define __USE_POWELL_ALGEBRA__ 1
-/*************************************************************************/
+/******************************************************************************/
 
 
-/*************************************************************************/
+/******************************************************************************/
 /* Which integer kind to use?
  * 0 = default INTEGER, 16 = INTEGER*2, 32 = INTEGER*4, 64 = INTEGER*8.
  * Make sure that your compiler supports the selected kind. */
@@ -92,10 +123,10 @@
 #endif
 #define __INTEGER_KIND__ 0
 /* Fortran standards guarantee that 0 is supported, but not the others. */
-/*************************************************************************/
+/******************************************************************************/
 
 
-/*************************************************************************/
+/******************************************************************************/
 /* Which real kind to use?
  * 0 = default REAL (SINGLE PRECISION), 32 = REAL*4, 64 = REAL*8, 128 = REAL*16.
  * Make sure that your compiler supports the selected kind.
@@ -130,10 +161,10 @@
 #undef __REAL_PRECISION__
 #define __REAL_PRECISION__ 64
 #endif
-/*************************************************************************/
+/******************************************************************************/
 
 
-/*************************************************************************/
+/******************************************************************************/
 /* Do we use the IEEE_ARITHMETIC intrinsic module? (Fortran 2003) */
 #if defined __USE_IEEE_ARITHMETIC__
 #undef __USE_IEEE_ARITHMETIC__
@@ -181,10 +212,10 @@
 #undef __USE_IEEE_ARITHMETIC__
 #define __USE_IEEE_ARITHMETIC__ 0
 #endif
-/*************************************************************************/
+/******************************************************************************/
 
 
-/*************************************************************************/
+/******************************************************************************/
 /* Do we use the STORAGE_SIZE intrinsic? (Fortran 2008) */
 #if defined __USE_STORAGE_SIZE__
 #undef __USE_STORAGE_SIZE__
@@ -230,11 +261,11 @@
 #undef __USE_STORAGE_SIZE__
 #define __USE_STORAGE_SIZE__ 0
 #endif
-/*************************************************************************/
+/******************************************************************************/
 
 
-/*************************************************************************/
-/* Do we use INT16, IN32, INT64, REAL32, REAL64, REAL128 from ISO_FORTRAN_ENV?
+/******************************************************************************/
+/* Do we use INT16, INT32, INT64, REAL32, REAL64, REAL128 from ISO_FORTRAN_ENV?
  * (Fortran 2008) */
 #if defined __USE_ISO_FORTRAN_ENV_INTREAL__
 #undef __USE_ISO_FORTRAN_ENV_INTREAL__
@@ -280,4 +311,4 @@
 #undef __USE_ISO_FORTRAN_ENV_INTREAL__
 #define __USE_ISO_FORTRAN_ENV_INTREAL__ 0
 #endif
-/*************************************************************************/
+/******************************************************************************/

@@ -5,12 +5,12 @@ contains
 subroutine trstlp(n, m, A, b, rho, d, ifull, iact)
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, TWO, HALF, TENTH, HUGENUM, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENUM, DEBUGGING, SRNLEN
 use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
-use infnan_mod, only : is_nan, is_posinf
+use infnan_mod, only : is_nan, is_posinf, is_finite
 use debug_mod, only : errstop
 use output_mod, only : retmssg, rhomssg, fmssg
-use lina_mod, only : calquad, inprod, eye
+use lina_mod, only : inprod, matprod, eye, planerot, isminor
 
 implicit none
 
@@ -23,39 +23,43 @@ real(RP), intent(inout) :: d(:)
 integer(IK), intent(out) :: ifull
 integer(IK), intent(out) :: iact(:)
 
-
+real(RP) :: hypt
 real(RP) :: z(n, n)
 real(RP) :: zdota(n)
 real(RP) :: vmultc(m + 1)
 real(RP) :: sdirn(n)
 real(RP) :: vmultd(m + 1)
-real(RP) :: dnew(N)
+real(RP) :: cgrad(n)
+real(RP) :: cgz(n)
+real(RP) :: cgzabs(n)
+real(RP) :: cgzk
+real(RP) :: cgzkabs
+real(RP) :: dnew(n)
+real(RP) :: tot, cnew(n)
 
-
-real(RP) :: acca
-real(RP) :: accb
 real(RP) :: alpha
 real(RP) :: beta
 real(RP) :: dd
+real(RP) :: grot(2, 2)
 real(RP) :: optnew
 real(RP) :: optold
 real(RP) :: ratio
-real(RP) :: resmax
-real(RP) :: resold
+real(RP) :: cstrv
+real(RP) :: cvold
 real(RP) :: sd
 real(RP) :: sp
 real(RP) :: spabs
 real(RP) :: ss
 real(RP) :: step
 real(RP) :: stpful
-real(RP) :: sum
-real(RP) :: sumabs
-real(RP) :: sumd
+real(RP) :: summ
+real(RP) :: summabs
+real(RP) :: summd
 real(RP) :: temp
 real(RP) :: tempa
-real(RP) :: tot
+real(RP) :: tmpv(m + 1)
+real(RP) :: tmpvabs(m + 1)
 real(RP) :: vsave
-real(RP) :: zdotv
 real(RP) :: zdotw
 real(RP) :: zdvabs
 real(RP) :: zdwabs
@@ -64,16 +68,20 @@ integer(IK) :: i
 integer(IK) :: icon
 integer(IK) :: icount
 integer(IK) :: isave
-integer(IK) :: iterc
+integer(IK) :: iter
 integer(IK) :: j
 integer(IK) :: k
 integer(IK) :: kk
 integer(IK) :: kl
-integer(IK) :: kp
 integer(IK) :: kw
+integer(IK) :: maxiter
 integer(IK) :: mcon
 integer(IK) :: nact
 integer(IK) :: nactx
+
+real(RP) :: ACCA, ACCB
+integer(IK) :: KP
+
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
@@ -102,39 +110,42 @@ integer(IK) :: nactx
 ! held at the beginning of VMULTC. The remainder of this vector holds the residuals of the inactive
 ! constraints at d, the ordering of the components of VMULTC being in agreement with the permutation
 ! of the indices of the constraints that is in IACT. All these residuals are nonnegative, which is
-! achieved by the shift RESMAX that makes the least residual zero.
+! achieved by the shift CSTRV that makes the least residual zero.
 !
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 26-06-2019: See the code below line number 80
-ITERC = 0
+iter = 0
+maxiter = min(10000_IK, 100_IK * n)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 IFULL = 1
 MCON = M
 NACT = 0
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      RESMAX=0.0
-RESMAX = 0.0D0
+!      CSTRV=0.0
+CSTRV = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !!!!!!! Question: what is the size of B? M, M+1, or M+2?
 ! It seems to be M+1. Then when is B(M+1) used?
 ! What is the size of iact, vmultc? m or m+1?
+! What is the upper bound of NACT? M or N, or both?
 
-! Initialize Z and some other variables. The value of RESMAX will be appropriate to D=0, while ICON
-! will be the index of a most violated constraint if RESMAX is positive. Usually during the first
+! Initialize Z and some other variables. The value of CSTRV will be appropriate to D=0, while ICON
+! will be the index of a most violated constraint if CSTRV is positive. Usually during the first
 ! stage the vector SDIRN gives a search direction that reduces all the active constraint violations
 ! by one simultaneously.
+!!!! What is size (number of columns) of Z and related variables (CGZ, ZDOTA, ZDOTW)???????
 z = eye(n, n)
 d = ZERO
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-resmax = maxval([b(1:m), ZERO])
+cstrv = maxval([b(1:m), ZERO])
 icon = maxloc(b(1:m), dim=1)
 iact(1:m) = [(k, k=1, m)]
-vmultc(1:m) = resmax - b(1:m)
+vmultc(1:m) = cstrv - b(1:m)
 
-if (resmax <= zero) goto 480
+if (cstrv <= zero) goto 480
 
 sdirn = ZERO
 
@@ -150,7 +161,7 @@ dsav = d   !!!! HOW TO AVOID THIS???
 
 icount = 0_IK
 70 if (mcon == m) then
-    optnew = resmax
+    optnew = cstrv
 else
     optnew = -inprod(d, A(:, mcon))
 end if
@@ -162,567 +173,252 @@ end if
 ! Indeed, in all these cases, Inf and NaN appear in D due to extremely
 ! large values in A (up to 10^219).
 ! To avoid wasting energy, we do the following.
-SUMD = 0.0D0
-do I = 1, N
-    SUMD = SUMD + DABS(d(I))
-end do
-if (SUMD >= 1.0D100 .or. SUMD /= SUMD) then
-    do I = 1, N
-        d(I) = DSAV(I)
-    end do
-    goto 500
+
+if (is_finite(sum(abs(d)))) then
+    dsav = d
 else
-    do I = 1, N
-        DSAV(I) = d(I)
-    end do
+    d = dsav
+    return
 end if
-ITERC = ITERC + 1
-if (ITERC > min(10000, 100 * N)) then
-    goto 500
+iter = iter + 1
+if (iter > maxiter) then
+    return
 end if
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-if (ICOUNT == 0 .or. OPTNEW < OPTOLD) then
-    OPTOLD = OPTNEW
-    NACTX = NACT
-    ICOUNT = 3
-else if (NACT > NACTX) then
-    NACTX = NACT
-    ICOUNT = 3
+! What is ICOUNT ????
+if (icount == 0 .or. optnew < optold) then
+    optold = optnew
+    nactx = nact
+    icount = 3
+else if (nact > nactx) then
+    nactx = nact
+    icount = 3
 else
-    ICOUNT = ICOUNT - 1
-    if (ICOUNT == 0) goto 490
+    icount = icount - 1
+    if (icount == 0) goto 490
 end if
-!
-!     If ICON exceeds NACT, then we add the constraint with index IACT(ICON) to
-!     the active set. Apply Givens rotations so that the last N-NACT-1 columns
-!     of Z are orthogonal to the gradient of the new constraint, a scalar
-!     product being set to zero if its nonzero value could be due to computer
-!     rounding errors. The array dnew is used for working space.
-!
-if (ICON <= NACT) goto 260
-KK = IACT(ICON)
-do I = 1, N   !!! KK = ???
-    dnew(I) = A(I, KK)
-end do
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      TOT=0.0
-TOT = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-K = N
-100 if (K > NACT) then
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          SP=0.0
-!          SPABS=0.0
-    SP = 0.0D0
-    SPABS = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    do I = 1, N
-        TEMP = Z(I, K) * dnew(I)
-        SP = SP + TEMP
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!  110     SPABS=SPABS+ABS(TEMP)
-!          ACCA=SPABS+0.1*ABS(SP)
-!          ACCB=SPABS+0.2*ABS(SP)
-!          IF (SPABS .GE. ACCA .OR. ACCA .GE. ACCB) SP=0.0
-!          IF (TOT .EQ. 0.0) THEN
-        SPABS = SPABS + DABS(TEMP)
-    end do
-    ACCA = SPABS + 0.1D0 * DABS(SP)
-    ACCB = SPABS + 0.2D0 * DABS(SP)
-    if (SPABS >= ACCA .or. ACCA >= ACCB) SP = 0.0D0
-    if (TOT == 0.0D0) then
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        TOT = SP
-    else
-        KP = K + 1
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!              TEMP=SQRT(SP*SP+TOT*TOT)
-        TEMP = DSQRT(SP * SP + TOT * TOT)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        ALPHA = SP / TEMP
-        BETA = TOT / TEMP
-        TOT = TEMP
-        do I = 1, N
-            TEMP = ALPHA * Z(I, K) + BETA * Z(I, KP)
-            Z(I, KP) = ALPHA * Z(I, KP) - BETA * Z(I, K)
-            Z(I, K) = TEMP
-        end do
+
+
+! If ICON exceeds NACT, then we add the constraint with index IACT(ICON) to the active set. Apply
+! Givens rotations so that the last N-NACT-1 columns of Z are orthogonal to the gradient of the new
+! constraint, a scalar product being set to zero if its nonzero value could be due to computer
+! rounding errors.
+if (icon <= nact) goto 260
+kk = iact(icon)
+cgrad = A(:, iact(icon))
+cgz = matprod(cgrad, z)
+cgzabs = matprod(abs(cgrad), abs(z))
+! The following code in MATLAB: CGZ(ISMINOR(CGZ, CGZABS)) = ZERO
+where (isminor(cgz, cgzabs))
+    cgz = ZERO
+end where
+do k = n - 1, nact + 1, -1
+    ! Apply a 2x2 Givens rotation to Z(:, [K,K+1]) from the right so that CGRAD'*Z(:, K+1) becomes 0.
+    if (abs(cgz(k + 1)) > ZERO) then
+        ! Powell wrote "CGZ(K + 1) /= ZERO" instead of "ABS(CGZ(K + 1)) > ZERO". The two conditions
+        ! differ if CGZ(K + 1) is NaN.
+        grot = planerot(cgz([k, k + 1]))
+        z(:, [k, k + 1]) = matprod(z(:, [k, k + 1]), transpose(grot))
+        cgz(k) = sqrt(cgz(k)**2 + cgz(k + 1)**2)
     end if
-    K = K - 1
-    goto 100
-end if
-!
-!     Add the new constraint if this can be done without a deletion from the
-!     active set.
-!
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IF (TOT .NE. 0.0) THEN
-if (TOT /= 0.0D0) then
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    NACT = NACT + 1
-    ZDOTA(NACT) = TOT
-    VMULTC(ICON) = VMULTC(NACT)
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          VMULTC(NACT)=0.0
-    VMULTC(NACT) = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+end do
+
+!Add the new constraint if this can be done without a deletion from the active set.
+if (nact < n .and. abs(cgz(nact + 1)) > ZERO) then
+    ! Powell wrote "CGZ(NACT + 1) /= ZERO" instead of "ABS(CGZ(NACT + 1)) > ZERO", the two
+    ! conditions differ if CGZ(NACT + 1) is NaN.
+    nact = nact + 1
+    zdota(nact) = cgz(nact)
+    vmultc(icon) = vmultc(nact)
+    vmultc(nact) = ZERO
     goto 210
 end if
-!
-!     The next instruction is reached if a deletion has to be made from the
-!     active set in order to make room for the new active constraint, because
-!     the new constraint gradient is a linear combination of the gradients of
-!     the old active constraints. Set the elements of VMULTD to the multipliers
-!     of the linear combination. Further, set IOUT to the index of the
-!     constraint to be deleted, but branch if no suitable index can be found.
-!
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      RATIO=-1.0
-RATIO = -1.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-K = NACT !!!! What if K = 0?
-! It seems to lead to a memory error when VMULTD(K) is accessed (by why not Z(I, K) and others?????)
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!  130 ZDOTV=0.0
-!      ZDVABS=0.0
-130 ZDOTV = 0.0D0
-ZDVABS = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-do I = 1, N
-    TEMP = Z(I, K) * dnew(I)
-    ZDOTV = ZDOTV + TEMP
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!  140 ZDVABS=ZDVABS+ABS(TEMP)
-!      ACCA=ZDVABS+0.1*ABS(ZDOTV)
-!      ACCB=ZDVABS+0.2*ABS(ZDOTV)
-    ZDVABS = ZDVABS + DABS(TEMP)
-end do
-ACCA = ZDVABS + 0.1D0 * DABS(ZDOTV)
-ACCB = ZDVABS + 0.2D0 * DABS(ZDOTV)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-if (ZDVABS < ACCA .and. ACCA < ACCB) then
-    TEMP = ZDOTV / ZDOTA(K)
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          IF (TEMP .GT. 0.0 .AND. IACT(K) .LE. M) THEN
-    if (TEMP > 0.0D0 .and. IACT(K) <= M) then
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        TEMPA = VMULTC(K) / TEMP
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!              IF (RATIO .LT. 0.0 .OR. TEMPA .LT. RATIO) THEN
-        if (RATIO < 0.0D0 .or. TEMPA < RATIO) then
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            RATIO = TEMPA
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-! Zaikun 2019-08-15: IOUT is never used
-!                  IOUT=K
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        end if
+
+! The next instruction is reached if a deletion has to be made from the active set in order to make
+! room for the new active constraint, because the new constraint gradient is a linear combination of
+! the gradients of the old active constraints. Set the elements of VMULTD to the multipliers of the
+! linear combination. Further, set IOUT to the index of the constraint to be deleted, but branch if
+! no suitable index can be found.
+
+!!!!!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+! The following part seems to lead to a memory error when VMULTD(K) is accessed (by why not Z(I, K) and others?????)
+do k = nact, 1, -1
+    ! Is it possible that NACT = 0???? In Powell's code, the DO loop will be carried out for one time if NACT = 0.
+    cgzk = inprod(cgrad, z(:, k))
+    cgzkabs = inprod(abs(cgrad), abs(z(:, k)))
+    if (isminor(cgzk, cgzkabs)) then
+        vmultd(k) = ZERO
+    else
+        vmultd(k) = cgzk / zdota(k)
     end if
-    if (K >= 2) then
-        KW = IACT(K)
-        do I = 1, N
-            dnew(I) = dnew(I) - TEMP * A(I, KW)
-        end do
+    if (k >= 2) then
+        cgrad = cgrad - vmultd(k) * A(:, iact(k))
     end if
-    VMULTD(K) = TEMP
-else
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          VMULTD(K)=0.0
-!!!!! Zaikun 2021-06-27 XXXXXXXXXXXXXXXXXX
-!    VMULTD(K) = 0.0D0  !!!! This seems to lead to a memory error ("free() invalid pointer") when
-!    k = 0.
-    if (K > 0) VMULTD(K) = 0.0D0
-!!!!!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+end do
+
+ratio = minval(vmultc(1:nact) / vmultd(1:nact), mask=(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m))
+if (ratio < ZERO .or. .not. any(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m)) goto 490
+
+! Revise the Lagrange multipliers and reorder the active constraints so that the one to be replaced
+! is at the end of the list. Also calculate the new value of ZDOTA(NACT) and branch if it is not
+! acceptable.
+vmultc(1:nact) = max(ZERO, vmultc(1:nact) - ratio * vmultd(1:nact))
+
+do k = icon, nact - 1
+    hypt = sqrt(zdota(k + 1)**2 + inprod(z(:, k), A(:, iact(k + 1)))**2)  ! What if HYPT = 0???
+    grot = planerot([zdota(k + 1), inprod(z(:, k), A(:, iact(k + 1)))])
+    z(:, [k, k + 1]) = matprod(z(:, [k + 1, k]), transpose(grot))
+    zdota([k, k + 1]) = [hypt, (zdota(k + 1) / hypt) * zdota(k)]
+end do
+if (icon < nact) then
+    ! This seems quite rare --- it never happens on CUTEst problems with n <= 50 and m <= 5000.
+    iact(icon:nact) = [iact(icon + 1:nact), iact(icon)]
+    vmultc(icon:nact) = [vmultc(icon + 1:nact), vmultc(icon)]
 end if
-K = K - 1
-if (K > 0) goto 130
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IF (RATIO .LT. 0.0) GOTO 490
-if (RATIO < 0.0D0) goto 490
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-!     Revise the Lagrange multipliers and reorder the active constraints so
-!     that the one to be replaced is at the end of the list. Also calculate the
-!     new value of ZDOTA(NACT) and branch if it is not acceptable.
-!
-do K = 1, NACT
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!  160 VMULTC(K)=AMAX1(0.0,VMULTC(K)-RATIO*VMULTD(K))
-    VMULTC(K) = DMAX1(0.0D0, VMULTC(K) - RATIO * VMULTD(K))
-end do
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-if (ICON < NACT) then
-    ISAVE = IACT(ICON)
-    VSAVE = VMULTC(ICON)
-    K = ICON
-170 KP = K + 1
-    KW = IACT(KP)
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          SP=0.0
-    SP = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    do I = 1, N
-        SP = SP + Z(I, K) * A(I, KW)
-    end do
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          TEMP=SQRT(SP*SP+ZDOTA(KP)**2)
-    TEMP = DSQRT(SP * SP + ZDOTA(KP)**2)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    ALPHA = ZDOTA(KP) / TEMP
-    BETA = SP / TEMP
-    ZDOTA(KP) = ALPHA * ZDOTA(K)
-    ZDOTA(K) = TEMP
-    do I = 1, N
-        TEMP = ALPHA * Z(I, KP) + BETA * Z(I, K)
-        Z(I, KP) = ALPHA * Z(I, K) - BETA * Z(I, KP)
-        Z(I, K) = TEMP
-    end do
-    IACT(K) = KW
-    VMULTC(K) = VMULTC(KP)
-    K = KP
-    if (K < NACT) goto 170
-    IACT(K) = ISAVE
-    VMULTC(K) = VSAVE
+
+if (inprod(z(:, nact), A(:, iact(icon))) == ZERO) goto 490
+zdota(nact) = inprod(z(:, nact), A(:, iact(icon)))
+vmultc(icon) = ZERO
+vmultc(nact) = ratio
+
+! Update IACT and ensure that the objective function continues to be treated as the last active
+! constraint when MCON>M.
+210 iact([icon, nact]) = iact([nact, icon])
+if (mcon > m .and. kk /= mcon) then
+    hypt = sqrt(zdota(nact)**2 + inprod(z(:, nact - 1), A(:, kk))**2)  ! What if HYPT = 0 ???
+    grot = planerot([zdota(nact), inprod(z(:, nact - 1), A(:, kk))])
+    z(:, [nact - 1, nact]) = matprod(z(:, [nact, nact - 1]), transpose(grot))
+    zdota([nact - 1, nact]) = [hypt, (zdota(nact) / hypt) * zdota(nact - 1)]
+    iact([nact - 1, nact]) = [kk, iact(nact - 1)]
+    vmultc([nact - 1, nact]) = vmultc([nact, nact - 1])
 end if
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      TEMP=0.0
-TEMP = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-do I = 1, N
-    TEMP = TEMP + Z(I, NACT) * A(I, KK)
-end do
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IF (TEMP .EQ. 0.0) GOTO 490
-if (TEMP == 0.0D0) goto 490
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-ZDOTA(NACT) = TEMP
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      VMULTC(ICON)=0.0
-VMULTC(ICON) = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-VMULTC(NACT) = RATIO
-!
-!     Update IACT and ensure that the objective function continues to be
-!     treated as the last active constraint when MCON>M.
-!
-210 IACT(ICON) = IACT(NACT)
-IACT(NACT) = KK
-if (MCON > M .and. KK /= MCON) then
-    K = NACT - 1
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          SP=0.0
-    SP = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    do I = 1, N
-        SP = SP + Z(I, K) * A(I, KK)
-    end do
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          TEMP=SQRT(SP*SP+ZDOTA(NACT)**2)
-    TEMP = DSQRT(SP * SP + ZDOTA(NACT)**2)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    ALPHA = ZDOTA(NACT) / TEMP
-    BETA = SP / TEMP
-    ZDOTA(NACT) = ALPHA * ZDOTA(K)
-    ZDOTA(K) = TEMP
-    do I = 1, N
-        TEMP = ALPHA * Z(I, NACT) + BETA * Z(I, K)
-        Z(I, NACT) = ALPHA * Z(I, K) - BETA * Z(I, NACT)
-        Z(I, K) = TEMP
-    end do
-    IACT(NACT) = IACT(K)
-    IACT(K) = KK
-    TEMP = VMULTC(K)
-    VMULTC(K) = VMULTC(NACT)
-    VMULTC(NACT) = TEMP
-end if
-!
-!     If stage one is in progress, then set SDIRN to the direction of the next
-!     change to the current vector of variables.
-!
-if (MCON > M) goto 320
-KK = IACT(NACT)
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      TEMP=0.0
-TEMP = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-do I = 1, N
-    TEMP = TEMP + SDIRN(I) * A(I, KK)
-end do
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      TEMP=TEMP-1.0
-TEMP = TEMP - 1.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-TEMP = TEMP / ZDOTA(NACT)
-do I = 1, N
-    SDIRN(I) = SDIRN(I) - TEMP * Z(I, NACT)
-end do
+
+! If stage one is in progress, then set SDIRN to the direction of the next change to the current
+! vector of variables.
+if (mcon > m) goto 320
+kk = iact(nact)
+sdirn = sdirn - ((inprod(sdirn, A(:, iact(nact))) - ONE) / zdota(nact)) * z(:, nact)
 goto 340
-!
-!     Delete the constraint that has the index IACT(ICON) from the active set.
-!
-260 if (ICON < NACT) then
-    ISAVE = IACT(ICON)
-    VSAVE = VMULTC(ICON)
-    K = ICON
-270 KP = K + 1
-    KK = IACT(KP)
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          SP=0.0
-    SP = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    do I = 1, N
-        SP = SP + Z(I, K) * A(I, KK)
-    end do
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          TEMP=SQRT(SP*SP+ZDOTA(KP)**2)
-    TEMP = DSQRT(SP * SP + ZDOTA(KP)**2)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    ALPHA = ZDOTA(KP) / TEMP
-    BETA = SP / TEMP
-    ZDOTA(KP) = ALPHA * ZDOTA(K)
-    ZDOTA(K) = TEMP
-    do I = 1, N
-        TEMP = ALPHA * Z(I, KP) + BETA * Z(I, K)
-        Z(I, KP) = ALPHA * Z(I, K) - BETA * Z(I, KP)
-        Z(I, K) = TEMP
-    end do
-    IACT(K) = KK
-    VMULTC(K) = VMULTC(KP)
-    K = KP
-    if (K < NACT) goto 270
-    IACT(K) = ISAVE
-    VMULTC(K) = VSAVE
+
+! Delete the constraint that has the index IACT(ICON) from the active set.
+260 do k = icon, nact - 1
+    hypt = sqrt(zdota(k + 1)**2 + inprod(z(:, k), A(:, iact(k + 1)))**2)  ! What if HYPT = 0 ???
+    grot = planerot([zdota(k + 1), inprod(z(:, k), A(:, iact(k + 1)))])
+    z(:, [k, k + 1]) = matprod(z(:, [k + 1, k]), transpose(grot))
+    zdota([k, k + 1]) = [hypt, (zdota(k + 1) / hypt) * zdota(k)]
+end do
+if (icon < nact) then
+    iact(icon:nact) = [iact(icon + 1:nact), iact(icon)]
+    vmultc(icon:nact) = [vmultc(icon + 1:nact), vmultc(icon)]
 end if
-NACT = NACT - 1
-!
-!     If stage one is in progress, then set SDIRN to the direction of the next
-!     change to the current vector of variables.
-!
-if (MCON > M) goto 320
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      TEMP=0.0
-TEMP = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-do I = 1, N
-    TEMP = TEMP + SDIRN(I) * Z(I, NACT + 1)
-end do
-do I = 1, N
-    SDIRN(I) = SDIRN(I) - TEMP * Z(I, NACT + 1)
-end do
-GO TO 340
-!
-!     Pick the next search direction of stage two.
-!
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!  320 TEMP=1.0/ZDOTA(NACT)
-320 TEMP = 1.0D0 / ZDOTA(NACT)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-do I = 1, N
-    SDIRN(I) = TEMP * Z(I, NACT)
-end do
-!
-!     Calculate the step to the boundary of the trust region or take the step
-!     that reduces RESMAX to zero. The two statements below that include the
-!     factor 1.0E-6 prevent some harmless underflows that occurred in a test
-!     calculation. Further, we skip the step if it could be zero within a
-!     reasonable tolerance for computer rounding errors.
-!
-340 DD = RHO * RHO
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      SD=0.0
-!      SS=0.0
-SD = 0.0D0
-SS = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-do I = 1, N
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IF (ABS(d(I)) .GE. 1.0E-6*RHO) DD=DD-d(I)**2
-    if (DABS(d(I)) >= 1.0D-6 * RHO) DD = DD - d(I)**2
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    SD = SD + d(I) * SDIRN(I)
-    SS = SS + SDIRN(I)**2
-end do
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IF (DD .LE. 0.0) GOTO 490
-!      TEMP=SQRT(SS*DD)
-!      IF (ABS(SD) .GE. 1.0E-6*TEMP) TEMP=SQRT(SS*DD+SD*SD)
-if (DD <= 0.0D0) goto 490
-TEMP = DSQRT(SS * DD)
-if (DABS(SD) >= 1.0D-6 * TEMP) TEMP = DSQRT(SS * DD + SD * SD)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-STPFUL = DD / (TEMP + SD)
-STEP = STPFUL
-if (MCON == M) then
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          ACCA=STEP+0.1*RESMAX
-!          ACCB=STEP+0.2*RESMAX
-    ACCA = STEP + 0.1D0 * RESMAX
-    ACCB = STEP + 0.2D0 * RESMAX
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    if (STEP >= ACCA .or. ACCA >= ACCB) goto 480
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          STEP=AMIN1(STEP,RESMAX)
-    STEP = DMIN1(STEP, RESMAX)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+nact = nact - 1
+
+! If stage one is in progress, then set SDIRN to the direction of the next change to the current
+! vector of variables.
+if (mcon > m) goto 320
+sdirn = sdirn - inprod(sdirn, z(:, nact + 1)) * z(:, nact + 1)
+goto 340
+! Pick the next search direction of stage two.
+320 sdirn = (ONE / zdota(nact)) * z(:, nact)
+
+! Calculate the step to the boundary of the trust region or take the step  that reduces CSTRV to
+! zero. The two statements below that include the factor 1.0E-6 prevent some harmless underflows
+! that occurred in a test calculation. Further, we skip the step if it could be zero within
+! a reasonable tolerance for computer rounding errors.
+340 dd = rho**2 - sum(d**2, mask=(abs(d) >= 1.0E-6_RP * rho))
+sd = inprod(sdirn, d)
+ss = inprod(sdirn, sdirn)
+if (dd <= ZERO) goto 490
+temp = sqrt(ss * dd)
+if (abs(sd) >= 1.0E-6_RP * temp) then
+    temp = sqrt(ss * dd + sd * sd)
 end if
-!
-!     Set dnew to the new variables if STEP is the steplength, and reduce
-!     RESMAX to the corresponding maximum residual if stage one is being done.
-!     Because dnew will be changed during the calculation of some Lagrange
-!     multipliers, it will be restored to the following value later.
-!
-do I = 1, N
-    dnew(I) = d(I) + STEP * SDIRN(I)
-end do
-if (MCON == M) then
-    RESOLD = RESMAX
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          RESMAX=0.0
-    RESMAX = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    do K = 1, NACT
-        KK = IACT(K)
-        TEMP = B(KK)
-        do I = 1, N
-            TEMP = TEMP - A(I, KK) * dnew(I)
-        end do
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          RESMAX=AMAX1(RESMAX,TEMP)
-        RESMAX = DMAX1(RESMAX, TEMP)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    end do
+
+stpful = dd / (temp + sd)
+step = stpful
+if (mcon == m) then
+    if (isminor(cstrv, step)) then
+        goto 480
+    end if
+    step = min(step, cstrv)
 end if
-!
-!     Set VMULTD to the VMULTC vector that would occur if d became dnew. A
-!     device is included to force VMULTD(K)=0.0 if deviations from this value
-!     can be attributed to computer rounding errors. First calculate the new
-!     Lagrange multipliers.
-!
-K = NACT
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!  390 ZDOTW=0.0
-!      ZDWABS=0.0
-390 ZDOTW = 0.0D0
-ZDWABS = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-do I = 1, N
-    TEMP = Z(I, K) * dnew(I)
-    ZDOTW = ZDOTW + TEMP
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!  400 ZDWABS=ZDWABS+ABS(TEMP)
-!      ACCA=ZDWABS+0.1*ABS(ZDOTW)
-!      ACCB=ZDWABS+0.2*ABS(ZDOTW)
-!      IF (ZDWABS .GE. ACCA .OR. ACCA .GE. ACCB) ZDOTW=0.0
-    ZDWABS = ZDWABS + DABS(TEMP)
-end do
-ACCA = ZDWABS + 0.1D0 * DABS(ZDOTW)
-ACCB = ZDWABS + 0.2D0 * DABS(ZDOTW)
-if (ZDWABS >= ACCA .or. ACCA >= ACCB) ZDOTW = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-VMULTD(K) = ZDOTW / ZDOTA(K)
-if (K >= 2) then
-    KK = IACT(K)
-    do I = 1, N
-        dnew(I) = dnew(I) - VMULTD(K) * A(I, KK)
-    end do
-    K = K - 1
-    goto 390
+
+! Set DNEW to the new variables if STEP is the steplength, and reduce CSTRV to the corresponding
+! maximum residual if stage one is being done. Because DNEW will be changed during the calculation
+! of some Lagrange multipliers, it will be restored to the following value later.
+dnew = d + step * sdirn
+if (mcon == m) then
+    cvold = cstrv
+    cstrv = maxval([b(iact(1:nact)) - matprod(dnew, A(:, iact(1:nact))), ZERO])
 end if
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IF (MCON .GT. M) VMULTD(NACT)=AMAX1(0.0,VMULTD(NACT))
-if (MCON > M) VMULTD(NACT) = DMAX1(0.0D0, VMULTD(NACT))
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-!     Complete VMULTC by finding the new constraint residuals.
-!
-do I = 1, N
-    dnew(I) = d(I) + STEP * SDIRN(I)
-end do
-if (MCON > NACT) then
-    KL = NACT + 1
-    do K = KL, MCON
-        KK = IACT(K)
-        SUM = RESMAX - B(KK)
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!          SUMABS=RESMAX+ABS(B(KK))
-        SUMABS = RESMAX + DABS(B(KK))
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        do I = 1, N
-            TEMP = A(I, KK) * dnew(I)
-            SUM = SUM + TEMP
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!  430     SUMABS=SUMABS+ABS(TEMP)
-!          ACCA=SUMABS+0.1*ABS(SUM)
-!          ACCB=SUMABS+0.2*ABS(SUM)
-!          IF (SUMABS .GE. ACCA .OR. ACCA .GE. ACCB) SUM=0.0
-            SUMABS = SUMABS + DABS(TEMP)
-        end do
-        ACCA = SUMABS + 0.1D0 * DABS(SUM)
-        ACCB = SUMABS + 0.2D0 * DABS(SUM)
-        if (SUMABS >= ACCA .or. ACCA >= ACCB) SUM = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        VMULTD(K) = SUM
-    end do
-end if
-!
-!     Calculate the fraction of the step from d to dnew that will be taken.
-!
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      RATIO=1.0
-RATIO = 1.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-ICON = 0
-do K = 1, MCON
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IF (VMULTD(K) .LT. 0.0) THEN
-    if (VMULTD(K) < 0.0D0) then
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        TEMP = VMULTC(K) / (VMULTC(K) - VMULTD(K))
-        if (TEMP < RATIO) then
-            RATIO = TEMP
-            ICON = K
-        end if
+
+! Set VMULTD to the VMULTC vector that would occur if D became DNEW. A device is included to force
+! VMULTD(K)=0.0 if deviations from this value can be attributed to computer rounding errors. First
+! calculate the new Lagrange multipliers.
+do k = nact, 1, -1
+    ! What if NACT = 0? Is it possible? Powell's code will carry out the loop for one time.
+    zdotw = inprod(z(:, k), dnew)
+    zdwabs = inprod(abs(z(:, k)), abs(dnew))
+    if (isminor(zdotw, zdwabs)) then
+        vmultd(k) = ZERO
+    else
+        vmultd(k) = zdotw / zdota(k)
+    end if
+    if (k >= 2) then
+        dnew = dnew - vmultd(k) * A(:, iact(k))
     end if
 end do
-!
-!     Update d, VMULTC and RESMAX.
-!
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      TEMP=1.0-RATIO
-TEMP = 1.0D0 - RATIO
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-do I = 1, N
-    d(I) = TEMP * d(I) + RATIO * dnew(I)
-end do
-do K = 1, MCON
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!  470 VMULTC(K)=AMAX1(0.0,TEMP*VMULTC(K)+RATIO*VMULTD(K))
-    VMULTC(K) = DMAX1(0.0D0, TEMP * VMULTC(K) + RATIO * VMULTD(K))
-end do
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-if (MCON == M) RESMAX = RESOLD + RATIO * (RESMAX - RESOLD)
-!
-!     If the full step is not acceptable then begin another iteration.
-!     Otherwise switch to stage two or end the calculation.
-!
-if (ICON > 0) goto 70
-if (STEP == STPFUL) goto 500
-480 MCON = M + 1
-ICON = MCON
-IACT(MCON) = MCON
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      VMULTC(MCON)=0.0
-VMULTC(MCON) = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+if (mcon > m) then
+    vmultd(nact) = max(ZERO, vmultd(nact))
+end if
+
+! Complete VMULTD by finding the new constraint residuals.
+dnew = d + step * sdirn
+tmpv(nact + 1:mcon) = matprod(dnew, A(:, iact(nact + 1:mcon))) - b(iact(nact + 1:mcon)) + cstrv
+tmpvabs(nact + 1:mcon) = matprod(abs(dnew), abs(A(:, iact(nact + 1:mcon)))) + abs(b(iact(nact + 1:mcon))) + cstrv
+where (isminor(tmpv, tmpvabs))
+    tmpv = ZERO
+end where
+vmultd(nact + 1:mcon) = tmpv(nact + 1:mcon)
+
+! Calculate the fraction of the step from D to DNEW that will be taken.
+tmpv = vmultc / (vmultc - vmultd)
+ratio = min(ONE, minval(tmpv(1:mcon), mask=(vmultd(1:mcon) < ZERO)))
+if (ratio < ONE) then
+    icon = minloc(tmpv(1:mcon), mask=(vmultd(1:mcon) < ZERO), dim=1)
+else
+    icon = 0
+end if
+
+! Update d, VMULTC and CSTRV.
+d = (ONE - ratio) * d + ratio * dnew
+vmultc(1:mcon) = max(ZERO, (ONE - ratio) * vmultc(1:mcon) + ratio * vmultd(1:mcon))
+if (MCON == M) then
+    !cstrv = cvold + ratio * (cstrv - cvold)
+    cstrv = (ONE - ratio) * cvold + ratio * cstrv
+end if
+
+! If the full step is not acceptable then begin another iteration. Otherwise switch to stage two or
+! end the calculation.
+if (icon > 0) then
+    goto 70
+end if
+if (abs(step - stpful) <= ZERO) then
+    goto 500
+end if
+480 mcon = m + 1
+icon = mcon
+iact(mcon) = mcon
+vmultc(mcon) = ZERO
 goto 60
-!
-!     We employ any freedom that may be available to reduce the objective
-!     function before returning a d whose length is less than RHO.
-!
-490 if (MCON == M) goto 480
-IFULL = 0
+
+! We employ any freedom that may be available to reduce the objective function before returning a D
+! whose length is less than RHO.
+490 if (mcon == m) goto 480
+ifull = 0
 500 return
 
 end subroutine trstlp
+
 end module trustregion_mod

@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 20-Jul-2021.
+! on 06-Aug-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -18,20 +18,20 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Sunday, June 13, 2021 PM06:10:02
+! Last Modified: Friday, July 23, 2021 AM11:25:05
 
       module geometry_mod
 
       implicit none
       private
-      public :: setdrop, geostep
+      public :: setdrop_tr, geostep
 
 
       contains
 
 
-      subroutine setdrop(idz, kopt, beta, delta, ratio, rho, vlag, xopt,&
-     & xpt, zmat, knew)
+      function setdrop_tr(idz, kopt, beta, delta, ratio, rho, vlag, xopt&
+     &, xpt, zmat) result(knew)
 ! SETDROP sets KNEW to the index of the interpolation point that will be deleted AFTER A TRUST
 ! REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
 ! XPT(:, KNEW) is replaced by XNEW = XOPT + D, where D is the trust-region step.  Note that the
@@ -63,7 +63,7 @@
       ! ZMAT(NPT, NPT - N - 1)
 
 ! Output
-      integer(IK), intent(out) :: knew
+      integer(IK) :: knew
 
 ! Local variables
       integer(IK) :: n
@@ -111,20 +111,22 @@
 ! choice. However, this is not a good idea, because the definition of KNEW should benefit the
 ! quality of the model that interpolates f at XPT. A set of points with low function values is not
 ! necessarily a good interplolation set. In contrast, a good interpolation set needs to include
-! points with relatively high function values; otherwise, the interpolant will unlikely describe the
+! points with relatively high function values; otherwise, the interpolant will unlikely reflect the
 ! landscape of the function sufficiently.
-      end subroutine setdrop
+      end function setdrop_tr
 
 
-      subroutine geostep(idz, knew, kopt, bmat, delbar, xpt, zmat, d, be&
-     &ta, vlag)
+      function geostep(idz, knew, kopt, bmat, delbar, xpt, zmat) result(&
+     &d)
+! This subroutine finds a step D such that the geometry of the interplolation set is improved when
+! XPT(:, KNEW) is changed to XOPT + D, where XOPT = XPT(:, KOPT)
 
 ! Generic modules
       use consts_mod, only : RP, IK, ONE, DEBUGGING, SRNLEN
       use debug_mod, only : errstop, verisize
       use lina_mod, only : inprod
 
-! Solver-spcific modules
+! Solver-specific module
       use vlagbeta_mod, only : vlagbeta
 
       implicit none
@@ -141,19 +143,16 @@
       real(RP), intent(in) :: zmat(:, :)
       ! ZMAT(NPT, NPT - N - 1)
 
-! In-output
-      real(RP), intent(inout) :: d(:)
-      ! D(N)
-
 ! Outputs
-      real(RP), intent(out) :: beta
-      real(RP), intent(out) :: vlag(:)
-      ! VLAG(NPT + N)
+      real(RP) :: d(size(xpt, 1))
+      ! D(N)
 
 ! Local variables
       integer(IK) :: n
       integer(IK) :: npt
       real(RP) :: alpha
+      real(RP) :: beta
+      real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
       real(RP) :: xopt(size(xpt, 1))
       real(RP) :: zknew(size(zmat, 2))
       character(len=SRNLEN), parameter :: srname = 'GEOSTEP'
@@ -169,14 +168,12 @@
           end if
           call verisize(bmat, n, npt + n)
           call verisize(zmat, npt, int(npt - n - 1, kind(n)))
-          call verisize(vlag, npt + n)
-          call verisize(d, n)
       end if
 
       xopt = xpt(:, kopt)
       ! Read XOPT.
 
-      call biglag(idz, knew, delbar, bmat, xopt, xpt, zmat, d)
+      d = biglag(idz, knew, delbar, bmat, xopt, xpt, zmat)
 
 ! ALPHA is the KNEW-th diagonal entry of H
       zknew = zmat(knew, :)
@@ -189,13 +186,13 @@
 ! If the cancellation in DENOM is unacceptable, then BIGDEN calculates an alternative model step D.
 ! VLAG and BETA for this D are calculated within BIGDEN.
       if (abs(ONE + alpha * beta / vlag(knew)**2) <= 0.8_RP) then
-          call bigden(idz, knew, kopt, bmat, xpt, zmat, d, beta, vlag)
+          d = bigden(idz, knew, kopt, bmat, d, xpt, zmat)
       end if
 
-      end subroutine geostep
+      end function geostep
 
 
-      subroutine biglag(idz, knew, delbar, bmat, x, xpt, zmat, d)
+      function biglag(idz, knew, delbar, bmat, x, xpt, zmat) result(d)
 ! BIGLAG calculates a D by approximately solving
 !
 ! max |LFUNC(X + D)|, subject to ||D|| <= DELBAR,
@@ -224,7 +221,7 @@
       ! ZMAT(NPT, NPT - N - 1)
 
 ! Output
-      real(RP), intent(out) :: d(:)
+      real(RP) :: d(size(xpt, 1))
       ! D(N)
 
 ! Local variables
@@ -401,18 +398,23 @@
           end if
       end do
 
-      end subroutine biglag
+      end function biglag
 
 
-      subroutine bigden(idz, knew, kopt, bmat, xpt, zmat, d, beta, vlag)
+      function bigden(idz, knew, kopt, bmat, d0, xpt, zmat) result(d)
 ! BIGDEN calculates a D by approximately solving
 !
 ! max |SIGMA(XOPT + D)|, subject to ||D|| <= DELBAR,
 !
 ! where SIGMA is the denominator sigma in the updating formula (4.11)--(4.12) for H, which is the
 ! inverse of the coefficient matrix for the interplolation system (see (3.12)). Indeed, each column
-! of H corresponds to a Lagrange basis function of the interpolation problem. In addition, it sets
-! VLAG and BETA for the selected D. See Setion 6 of the NEWUOA paper.
+! of H corresponds to a Lagrange basis function of the interpolation problem.  See Section 6 of the
+! NEWUOA paper.
+! N.B.:
+! In Powell's code, BIGDEN calculates also the VLAG and BETA for the selected D. Here, to reduce the
+! coupling of code, we return only D but computes VLAG and BETA outside by calling VLAGBETA. This
+! does not change the mathematics, but the computed VLAG (BETA) will be numerically different due to
+! rounding errors.
 
 ! Generic modules
       use consts_mod, only : RP, IK, ONE, TWO, HALF, QUART, PI, ZERO, DE&
@@ -428,19 +430,15 @@
       integer(IK), intent(in) :: kopt
       real(RP), intent(in) :: bmat(:, :)
       ! BMAT(N, NPT+N)
+      real(RP), intent(in) :: d0(:)
       real(RP), intent(in) :: xpt(:, :)
       ! XPT(N, NPT)
       real(RP), intent(in) :: zmat(:, :)
       ! ZMAT(NPT, NPT - N - 1)
 
-! In-output
-      real(RP), intent(inout) :: d(:)
+! Output
+      real(RP) :: d(size(xpt, 1))
       ! D(N)
-
-! Outputs
-      real(RP), intent(out) :: beta
-      real(RP), intent(out) :: vlag(:)
-      ! VLAG(NPT + N)
 
 ! Local variable
       integer(IK) :: i
@@ -483,6 +481,8 @@
       real(RP) :: tempc
       real(RP) :: unitang
       real(RP) :: v(size(xpt, 2))
+      real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
+      ! VLAG(NPT + N)
       real(RP) :: w(size(xpt, 2) + size(xpt, 1), 5)
       real(RP) :: wz(size(zmat, 2))
       real(RP) :: x(size(xpt, 1))
@@ -507,10 +507,7 @@
 ! D will be set to the step from X to the new point, and on entry it should be the D that was
 ! calculated by the last call of BIGLAG. The length of the initial D provides a trust region bound
 ! on the final D.
-! VLAG will be set to Theta*WCHECK+e_b for the final choice of D.
-! BETA will be set to the value that will occur in the updating formula when the KNEW-th
-! interpolation point is moved to its new position.
-
+!
 ! D is calculated in a way that should provide a denominator with a large modulus in the updating
 ! formula when the KNEW-th interpolation point is shifted to the new position X + D.
 
@@ -523,11 +520,9 @@
           if (n == 0 .or. npt < n + 2) then
               call errstop(srname, 'SIZE(XPT) is invalid')
           end if
-          call verisize(x, n)
           call verisize(bmat, n, npt + n)
+          call verisize(d0, n)
           call verisize(zmat, npt, int(npt - n - 1, kind(n)))
-          call verisize(vlag, npt + n)
-          call verisize(d, n)
       end if
 
       x = xpt(:, kopt)
@@ -542,6 +537,7 @@
 ! The initial search direction D is taken from the last call of BIGLAG, and the initial S is set
 ! below, usually to the direction from X to X_KNEW, but a different direction to an interpolation
 ! point may be chosen, in order to prevent S from being nearly parallel to D.
+      d = d0
       dd = inprod(d, d)
       s = xpt(:, knew) - x
       ds = inprod(d, s)
@@ -549,6 +545,7 @@
       xsq = inprod(x, x)
 
       if (.not. (ds * ds <= 0.99_RP * dd * ss)) then
+! `.NOT. (A <= B)` differs from `A > B`.  The former holds iff A > B or {A, B} contains NaN.
           dtest = ds * ds / ss
           xptemp = xpt - spread(x, dim=2, ncopies=npt)
 !----------------------------------------------------------------!
@@ -562,6 +559,7 @@
           k = int(minloc(dstemp * dstemp / sstemp, dim=1), kind(k))
           if ((.not. (dstemp(k) * dstemp(k) / sstemp(k) >= dtest)) .and.&
      & k /= kopt) then
+! `.NOT. (A >= B)` differs from `A < B`.  The former holds iff A < B or {A, B} contains NaN.
 ! Although unlikely, if NaN occurs, it may happen that K = KOPT.
               s = xpt(:, k) - x
               ds = dstemp(k)
@@ -713,7 +711,8 @@
               par(j + 1) = par(2) * par(j - 1) + par(3) * par(j - 2)
           end do
 
-          beta = inprod(den(1:9), par(1:9))
+!beta = inprod(den(1:9), par(1:9))  ! Not needed since we do not return BETA.
+
           denmax = inprod(denex(1:9), par(1:9))
 
           vlag = matprod(prod(:, 1:5), par(1:5))
@@ -752,9 +751,9 @@
           end if
       end do
 
-      vlag(kopt) = vlag(kopt) + ONE
+!vlag(kopt) = vlag(kopt) + ONE  ! Note needed since we do not return VLAG.
 
-      end subroutine bigden
+      end function bigden
 
 
       end module geometry_mod

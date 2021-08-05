@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 20-Jul-2021.
+! on 06-Aug-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -19,7 +19,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Wednesday, July 14, 2021 PM12:42:43
+! Last Modified: Thursday, August 05, 2021 PM04:26:35
 
       module initialize_mod
 
@@ -170,8 +170,6 @@
       do k = 1, min(npt, int(2 * n + 1, kind(npt)))
           xtemp = xpt(:, k) + xbase
           if (any(is_nan(xtemp))) then
-              f = sum(xtemp)
-              ! Set F to NaN. It is necessary.
               info = NAN_X
               npt_revised = 0
               exit
@@ -253,8 +251,6 @@
       do k = int(2 * n + 2, kind(k)), npt_revised
           xtemp = xpt(:, k) + xbase
           if (any(is_nan(xtemp))) then
-              f = sum(xtemp)
-              ! Set F to NaN. It is necessary.
               info = NAN_X
               exit
           end if

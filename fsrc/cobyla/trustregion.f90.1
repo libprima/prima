@@ -29,13 +29,15 @@ real(RP) :: zdota(n)
 real(RP) :: vmultc(m + 1)
 real(RP) :: sdirn(n)
 real(RP) :: vmultd(m + 1)
-real(RP) :: cnew(n)
+real(RP) :: cgrad(n)
 real(RP) :: dnew(n)
+real(RP) :: cgz(n)
 
 
 real(RP) :: alpha
 real(RP) :: beta
 real(RP) :: dd
+real(RP) :: grot(2, 2)
 real(RP) :: optnew
 real(RP) :: optold
 real(RP) :: ratio
@@ -195,35 +197,33 @@ end if
 if (icon <= nact) goto 260
 
 kk = iact(icon)
-cnew = A(:, kk) !!! KK = ???
-
-tot = ZERO
-do k = n, nact + 1, -1
-    sp = inprod(z(:, k), cnew)
-    if (isminor(sp, sum(abs(z(:, k) * cnew)))) then
-        sp = ZERO
-    end if
-    if (abs(tot) <= ZERO) then
-        tot = sp
-    else
-        kp = k + 1_IK
-        z(:, [k, kp]) = matprod(z(:, [k, kp]), planerot([sp, tot]))
-        tot = sqrt(sp * sp + tot * tot)
-        ! After the rotation,
-        ! Z_NEW(:, K)'*CNEW = SQRT(Z(:, K)'*CNEW^2 + Z(:, KP)'*CNEW^2),
-        ! Z_NEW(:, KP)'*CNEW = 0
+cgrad = A(:, kk) !!! KK = ???
+cgz = matprod(cgrad, z)
+do k = nact + 1, n
+    if (isminor(cgz(k), sum(abs(cgrad * z(:, k))))) then
+        cgz(k) = ZERO
     end if
 end do
+
+do k = n - 1, nact + 1, -1
+    if (abs(cgz(k + 1)) > ZERO .or. cgz(k + 1) /= cgz(k + 1)) then
+        grot = planerot(cgz([k, k + 1]))  ! MATLAB code: GROT = PLANEROT([SP; TOT])
+        z(:, [k, k + 1]) = matprod(z(:, [k, k + 1]), transpose(grot))
+        cgz(k) = sqrt(cgz(k)**2 + cgz(k + 1)**2)
+        ! After the rotation, Z(:, K)'*CNEW = TOT, Z(:, KP)'*CNEW = 0.
+    end if
+end do
+
 !
 !     Add the new constraint if this can be done without a deletion from the
 !     active set.
 !
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (TOT .NE. 0.0) THEN
-if (TOT /= 0.0D0) then
+if (nact < n .and. cgz(nact + 1) /= 0.0D0) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     NACT = NACT + 1
-    ZDOTA(NACT) = TOT
+    ZDOTA(NACT) = cgz(nact)
     VMULTC(ICON) = VMULTC(NACT)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          VMULTC(NACT)=0.0
@@ -252,7 +252,7 @@ K = NACT !!!! What if K = 0?
 ZDVABS = 0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 do I = 1, N
-    TEMP = Z(I, K) * cnew(I)
+    TEMP = Z(I, K) * cgrad(I)
     ZDOTV = ZDOTV + TEMP
     ZDVABS = ZDVABS + DABS(TEMP)
 end do
@@ -277,7 +277,7 @@ if (.not. isminor(zdotv, zdvabs)) then
     if (K >= 2) then
         KW = IACT(K)
         do I = 1, N
-            cnew(I) = cnew(I) - TEMP * A(I, KW)
+            cgrad(I) = cgrad(I) - TEMP * A(I, KW)
         end do
     end if
     VMULTD(K) = TEMP
