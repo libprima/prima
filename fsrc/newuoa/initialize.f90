@@ -4,7 +4,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Wednesday, July 14, 2021 PM12:42:43
+! Last Modified: Thursday, August 05, 2021 PM04:26:35
 
 module initialize_mod
 
@@ -145,7 +145,6 @@ end do
 do k = 1, min(npt, int(2 * n + 1, kind(npt)))
     xtemp = xpt(:, k) + xbase
     if (any(is_nan(xtemp))) then
-        f = sum(xtemp)  ! Set F to NaN. It is necessary.
         info = NAN_X
         npt_revised = 0
         exit
@@ -227,7 +226,6 @@ end do
 do k = int(2 * n + 2, kind(k)), npt_revised
     xtemp = xpt(:, k) + xbase
     if (any(is_nan(xtemp))) then
-        f = sum(xtemp)  ! Set F to NaN. It is necessary.
         info = NAN_X
         exit
     end if

@@ -4,7 +4,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Thursday, July 22, 2021 PM08:05:43
+! Last Modified: Thursday, August 05, 2021 PM05:24:38
 
 module trustregion_mod
 
@@ -126,6 +126,7 @@ if (DEBUGGING) then
     if (n == 0 .or. npt < n + 2) then
         call errstop(srname, 'SIZE(XPT) is invalid')
     end if
+    call verisize(x, n)
     call verisize(gq, n)
     call verisize(hq, n, n)
     call verisize(pq, npt)
