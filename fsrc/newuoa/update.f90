@@ -3,7 +3,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, July 30, 2021 AM01:29:27
+! Last Modified: Wednesday, August 04, 2021 PM11:41:12
 
 module update_mod
 
@@ -50,6 +50,7 @@ integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: alpha
 real(RP) :: denom
+real(RP) :: grot(2, 2)
 real(RP) :: scala
 real(RP) :: scalb
 real(RP) :: sqrtdn
@@ -81,32 +82,32 @@ end if
 
 vlag = vlag_in  ! VLAG_IN is INTENT(IN) and cannot be revised.
 
-! Apply the rotations that put zeros in the KNEW-th row of ZMAT. A Givens rotation will be
-! multiplied to ZMAT from the right so ZMAT(KNEW, JL) becomes SQRT(ZMAT(KNEW, JL)^2 + ZMAT(KNEW, J))
-! and ZMAT(KNEW, J) becomes 0. PLANEROT returns a 2x2 Givens matrix as in MATLAB.
-jl = 1  ! For J = 2, ..., IDZ - 1, set JL = 1.
-do j = 2, int(idz - 1, kind(j))
-    zmat(:, [jl, j]) = matprod(zmat(:, [jl, j]), planerot(zmat(knew, [jl, j])))
-    zmat(knew, j) = ZERO
-end do
-if (idz <= npt - n - 1) then
-    jl = idz  ! For J = IDZ + 1, ..., NPT - N - 1, set JL = IDZ.
-end if
-do j = int(idz + 1, kind(j)), int(npt - n - 1, kind(j))
-    zmat(:, [jl, j]) = matprod(zmat(:, [jl, j]), planerot(zmat(knew, [jl, j])))
-    zmat(knew, j) = ZERO
-end do
+! Apply rotations to put zeros in the KNEW-th row of ZMAT. A 2x2 rotation will be multiplied to ZMAT
+! from the right so that ZMAT(KNEW, [JL, J]) becomes [SQRT(ZMAT(KNEW, JL)^2 + ZMAT(KNEW, J)^2), 0].
+! As in MATLAB, PLANEROT(X) returns a 2x2 Givens matrix G for X in R^2 so that Y = G*X has Y(2) = 0.
 
-! JL plays an important role below. Its value is determined by the current (i.e., unupdated) value
-! of IDZ. IDZ is an integer in {1, ..., NPT - N} such that s_j = -1 for j < IDZ while s_j = 1 for
-! j >= IDZ in the factorization of Omega. See (3.17), (4.16) of the NEWUOA paper.
-!
-! For the value of JL, there are two possibilities:
+! In the loop, if 2 <= J < IDZ, then JL = 1; if IDZ < J <= NPT - N - 1, then JL = IDZ.
+jl = 1_IK
+do j = 2_IK, int(npt - n - 1, kind(j))
+    if (j == idz) then
+        jl = idz
+        cycle
+    end if
+    if (abs(zmat(knew, j)) > ZERO) then
+        grot = planerot(zmat(knew, [jl, j]))  ! MATLAB code: GROT = PLANEROT(ZMAT(KNEW, [JL, J])')
+        zmat(:, [jl, j]) = matprod(zmat(:, [jl, j]), transpose(grot))
+        zmat(knew, j) = ZERO
+    end if
+end do
+! The value of JL after the loop is important below. Its value is determined by the current (i.e.,
+! unupdated) value of IDZ. IDZ is an integer in {1, ..., NPT-N} such that s_j = -1 for j < IDZ while
+! s_j = 1 for j >= IDZ in the factorization of OMEGA. See (3.17) and (4.16) of the NEWUOA paper.
+! The value of JL has two possibilities:
 ! 1. JL = 1 iff IDZ = 1 or IDZ = NPT - N.
 ! 1.1. IDZ = 1 means that
-! Omega = sum_{J=1}^{NPT-N-1} ZMAT(:, J)*ZMAT(:, J)' ;
+! OMEGA = sum_{J=1}^{NPT-N-1} ZMAT(:, J)*ZMAT(:, J)' ;
 ! 1.2. IDZ = NPT - N means that
-! Omega = - sum_{J=1}^{NPT-N-1} ZMAT(:, J)*ZMAT(:, J)' ;
+! OMEGA = - sum_{J=1}^{NPT-N-1} ZMAT(:, J)*ZMAT(:, J)' ;
 ! 2. JL = IDZ > 1 iff 2 <= IDZ <= NPT - N - 1.
 
 ! Put the first NPT components of the KNEW-th column of HLAG into W, and calculate the parameters of
@@ -282,9 +283,9 @@ if (DEBUGGING) then
     if (n == 0 .or. npt < n + 2) then
         call errstop(srname, 'SIZE(GQ) or SIZE(PQ) is invalid')
     end if
+    call verisize(bmatknew, n)
     call verisize(zmat, npt, int(npt - n - 1, kind(n)))
     call verisize(xptknew, n)
-    call verisize(bmatknew, n)
     call verisize(hq, n, n)
 end if
 

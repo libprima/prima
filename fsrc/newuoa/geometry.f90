@@ -142,7 +142,6 @@ if (DEBUGGING) then
     end if
     call verisize(bmat, n, npt + n)
     call verisize(zmat, npt, int(npt - n - 1, kind(n)))
-    call verisize(vlag, npt + n)
 end if
 
 xopt = xpt(:, kopt)  ! Read XOPT.
@@ -480,7 +479,6 @@ if (DEBUGGING) then
     if (n == 0 .or. npt < n + 2) then
         call errstop(srname, 'SIZE(XPT) is invalid')
     end if
-    call verisize(x, n)
     call verisize(bmat, n, npt + n)
     call verisize(d0, n)
     call verisize(zmat, npt, int(npt - n - 1, kind(n)))
