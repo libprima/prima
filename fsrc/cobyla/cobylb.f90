@@ -198,6 +198,7 @@ do tr = 1, maxtr
     call trstlp(n, m, A, -conopt(1:m + 1), rho, d, ifull, iact)
 
     ! Is the trust-region trial step short?
+    ! Is IFULL == 0 necessary ?????????????????????? If no, TRSTLP can be a function.
     shortd = (ifull == 0 .and. inprod(d, d) < QUART * rho * rho)
 
     if (.not. shortd) then
@@ -370,7 +371,7 @@ do tr = 1, maxtr
         if (rho <= 1.5E0_RP * rhoend) then
             rho = rhoend
         end if
-        ! See equation (12)--(13) in Section 3 of the COBYLA paper for the update of CPEN.
+        ! See equations (12)--(13) in Section 3 of the COBYLA paper for the update of CPEN.
         ! If the original CPEN = 0, then the updated CPEN is also 0.
         cmin = minval(datmat(1:m, :), dim=2)
         cmax = maxval(datmat(1:m, :), dim=2)
@@ -399,6 +400,8 @@ x = xhist(:, kopt)
 f = fhist(kopt)
 cstrv = cstrvhist(kopt)
 con = conhist(:, kopt)
+
+!close (16)
 
 end subroutine cobylb
 

@@ -58,7 +58,7 @@ use calfun_mod, only : calfun
 implicit none
 
 integer :: i, n, alloc_stat
-real(kind(0.0D0)) :: rhobeg, f
+real(kind(0.0D0)) :: f
 real(kind(0.0D0)), allocatable :: x(:)
 
 ! If CALFUN is provided as an external subroutine, then remove the line
@@ -76,13 +76,11 @@ do n = 2, 10, 2
         x(i) = real(i, kind(0.0D0)) / real(n + 1, kind(0.0D0))
     end do
 
-    rhobeg = 0.2D0 * x(1)
-
     print '(/1A, I2)', 'Result with N = ', n
 
     ! The following line illustrates how to call NEWUOA.
     !------------------------------------------------------------------!
-    call newuoa(calfun, x, f, rhobeg=rhobeg, iprint=2)
+    call newuoa(calfun, x, f, rhobeg=0.2D0 * x(1), iprint=2)
     !------------------------------------------------------------------!
     ! In additon to the required arguments CALFUN, X, and F, the above
     ! illustration specifies also RHOBEG and IPRINT, which are optional.

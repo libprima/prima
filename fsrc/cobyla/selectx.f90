@@ -24,6 +24,7 @@ integer(IK) :: kopt
 real(RP) :: cmin
 real(RP) :: cref
 real(RP) :: cstrvhist_shifted(size(fhist))
+real(RP) :: fref
 real(RP) :: phi(size(fhist))
 real(RP) :: phimin
 character(len=SRNLEN), parameter :: srname = 'SELECTX'
@@ -48,9 +49,14 @@ if (any(fhist <= HUGENUM .and. cstrvhist_shifted <= HUGENUM)) then
     ! We use the following PHI as our merit function to select X.
     phi = (fhist / cpen) + cstrvhist_shifted
     ! We select X to minimize PHI subject to CSTRV_SHIFTED <= CREF. In case there are multiple
-    ! minimizers, we take the one with the least CSTRV_SHIFTED.
+    ! minimizers, we take the one with the least CSTRV_SHIFTED; if there are still more than one
+    ! choices, we take the one with the least function value; if there is still a tie, we take the
+    ! one with the least constraint violation; if the last comparison still leads to more than one
+    ! possibilities, any one of them is equally good, and we choose the first of them.
     phimin = minval(phi, mask=(cstrvhist_shifted <= cref))
-    kopt = int(minloc(cstrvhist_shifted, mask=(phi <= phimin), dim=1), kind(kopt))
+    cref = minval(cstrvhist_shifted, mask=(phi <= phimin))
+    fref = minval(fhist, mask=(phi <= phimin .and. cstrvhist_shifted <= cref))
+    kopt = int(minloc(cstrvhist, mask = (phi <= phimin .and. cstrvhist_shifted <= cref .and. fhist <= fref), dim=1), kind(kopt))
 end if
 
 end function selectx
