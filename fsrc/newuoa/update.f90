@@ -3,7 +3,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Wednesday, August 04, 2021 PM11:41:12
+! Last Modified: Thursday, August 05, 2021 PM11:32:45
 
 module update_mod
 
@@ -88,7 +88,7 @@ vlag = vlag_in  ! VLAG_IN is INTENT(IN) and cannot be revised.
 
 ! In the loop, if 2 <= J < IDZ, then JL = 1; if IDZ < J <= NPT - N - 1, then JL = IDZ.
 jl = 1_IK
-do j = 2_IK, int(npt - n - 1, kind(j))
+do j = 2, int(npt - n - 1, kind(j))
     if (j == idz) then
         jl = idz
         cycle

@@ -15,7 +15,7 @@
 
 ! Coded by Zaikun ZHANG in July 2020.
 !
-! Last Modified: Friday, July 30, 2021 AM01:33:19
+! Last Modified: Thursday, August 05, 2021 PM11:33:57
 
 
 #include "ppf.h"
@@ -54,6 +54,9 @@ interface r2update
     module procedure r2_sym, r2
 end interface r2update
 
+interface isminor
+    module procedure isminor_0, isminor_1
+end interface isminor
 
 contains
 
@@ -456,12 +459,11 @@ end function eye
 
 
 function planerot(x) result(G)
-! This function returns a 2-by-2 orthogonal matrix G so that y = G*x has y(2) = 0 (same as in MATLAB).
-use consts_mod, only : RP, ZERO
+! As in MATLAB, PLANEROT(X) returns a 2x2 Givens matrix G for X in R^2 so that Y = G*X has Y(2) = 0.
+use consts_mod, only : RP, IK, ZERO
 
 #if __DEBUGGING__ == 1
-use consts_mod, only : SRNLEN
-use debug_mod, only : errstop
+use debug_mod, only : verisize
 #endif
 
 implicit none
@@ -471,76 +473,21 @@ real(RP) :: G(2, 2)
 real(RP) :: c, s, r
 
 #if __DEBUGGING__ == 1
-character(len=SRNLEN), parameter :: srname = 'PLANEROT'
-if (size(x) /= 2) then
-    call errstop(srname, 'SIZE(X) /= 2')
-end if
+call verisize(x, 2_IK)
 #endif
 
-c = x(1)
-s = x(2)
-if (abs(s) > ZERO) then
-    r = sqrt(c**2 + s**2)
-    c = c / r
-    s = s / r
-    G = reshape([c, s, -s, c], [2, 2])
-#if __USE_POWELL_ALGEBRA__ == 0
-! In this case, it is reasonable to set G = -eye(2,2) so that G is continuous with respect to X.
-elseif (c < ZERO) then
-    G = -eye(2, 2)
-#endif
+if (abs(x(2)) > ZERO) then
+    r = sqrt(sum(x**2))
+    c = x(1) / r
+    s = x(2) / r
+    G = reshape([c, -s, s, c], [2, 2])
+elseif (x(1) < ZERO) then
+    ! Setting G = -EYE(2,2) in this case ensures the continuity of G with respect to X except at 0.
+    G = -eye(2_IK, 2_IK)
 else
-    G = eye(2, 2)
+    G = eye(2_IK, 2_IK)
 end if
 end function planerot
-
-!!subroutine grota(A, i, j, k)
-!!! GROTA sets A = A*G,
-!!! where G is the Givens rotation that
-!!!    [A(K, 1), ..., A(K, I), ..., A(K, J), ..., A(K, N)] * G
-!!!  = [A(K, 1), ..., R   , ..., 0   , ..., A(K, N)]
-!!! with R = SQRT(A(K, I)^2 + A(K, J)^2).
-!!! Indeed, the [(I, I), (I, J); (J, I), (J, J)] block of G is [C, -S; S, C], where C = A(K, I)/R,
-!!! S = A(K, J)/R, and the other entries are 1 (diagonal) or 0. Therefore, A*G is identical to A
-!!! except for columns I and J:
-!!! new column I =  C*A(:, I) + S*A(:, J)
-!!! new column J = -S*A(:, I) + C*A(:, J)
-!
-!!use consts_mod, only : IK, RP, ZERO
-!
-!!#if __DEBUGGING__ == 1
-!!use consts_mod, only : SRNLEN
-!!use debug_mod, only : errstop
-!!#endif
-!
-!!implicit none
-!!integer(IK), intent(in) :: i
-!!integer(IK), intent(in) :: j
-!!integer(IK), intent(in) :: k
-!!real(RP), intent(inout) :: A(:, :)
-!
-!!#if __DEBUGGING__ == 1
-!!character(len=SRNLEN), parameter :: srname = 'GROTA'
-!!if (i == j .or. min(i, j) < 1 .or. max(i, j) > size(A, 2)) then
-!!    call errstop(srname, 'I or J is invalid')
-!!end if
-!!if (k < 1 .or. k > size(A, 1)) then
-!!    call errstop(srname, 'K is invalid')
-!!end if
-!!#endif
-!
-!!if (abs(A(k, j)) > ZERO) then
-!!    A(:, [i, j]) = matprod(A(:, [i, j]), planerot(A(k, [i, j])))
-!!#if __USE_POWELL_ALGEBRA__ == 0
-!!    A(k, i) = sqrt(A(k, i)**2 + A(k, j)**2)  ! A(K, I) = R in precise arithmetic
-!!else if (A(k, i) < ZERO) then
-!!    ! In this case, C = -1, S = 0. Thus it is reasonable to set the following. Doing this will
-!!    ! ensure the continuity of this subroutine as an operator.
-!!    A(:, i) = -A(:, i)
-!!    A(:, j) = -A(:, j)
-!!#endif
-!!end if
-!!end subroutine grota
 
 
 subroutine symmetrize(A)
@@ -906,7 +853,7 @@ hy = matprod(hq, y) + matprod(xpt, pq * matprod(y, xpt))
 end function hessmul
 
 
-function isminor(x, ref) result(is_minor)
+function isminor_0(x, ref) result(is_minor)
 ! This subroutine tests whether X is minor compared to REF. It is used by Powell in, e.g., COBYLA.
 use consts_mod, only : RP, TENTH, TWO
 implicit none
@@ -919,7 +866,31 @@ real(RP) :: refa, refb
 refa = abs(ref) + TENTH * abs(x)
 refb = abs(ref) + TWO * TENTH * abs(x)
 is_minor = abs(ref) >= refa .or. refa >= refb
-end function
+end function isminor_0
 
+
+function isminor_1(x, ref) result(is_minor)
+! This subroutine tests whether X is minor compared to REF. It is used by Powell in, e.g., COBYLA.
+use consts_mod, only : IK, RP
+#if __DEBUGGING__ == 1
+use consts_mod, only : SRNLEN
+use debug_mod, only : errstop
+#endif
+implicit none
+
+real(RP), intent(in) :: x(:)
+real(RP), intent(in) :: ref(:)
+logical :: is_minor(size(x))
+integer(IK) :: i
+
+#if __DEBUGGING__ == 1
+character(len=SRNLEN), parameter :: srname = 'ISMINOR_1'
+if (size(x) /= size(ref)) then
+    call errstop(srname, 'SIZE(X) /= SIZE(REF)')
+end if
+#endif
+
+is_minor = [(isminor_0(x(i), ref(i)), i=1, int(size(x), IK))]
+end function isminor_1
 
 end module lina_mod
