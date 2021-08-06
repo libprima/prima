@@ -17,7 +17,7 @@
 
       contains
 
-      subroutine trstlp(n, m, A, b, rho, d, ifull, iact)
+      subroutine trstlp(n, m, A, b, rho, d, ifull)
 
 ! Generic modules
       use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENU&
@@ -39,7 +39,6 @@
       real(RP), intent(in) :: rho
       real(RP), intent(inout) :: d(:)
       integer(IK), intent(out) :: ifull
-      integer(IK), intent(out) :: iact(:)
 
       real(RP) :: hypt
       real(RP) :: z(n, n)
@@ -84,6 +83,7 @@
       real(RP) :: dsav(size(d))
       ! N
       integer(IK) :: i
+      integer(IK) :: iact(m + 1)
       integer(IK) :: icon
       integer(IK) :: icount
       integer(IK) :: isave
@@ -161,7 +161,9 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       cstrv = maxval([b(1:m), ZERO])
       icon = maxloc(b(1:m), dim=1)
-      iact(1:m) = [(k, k=1, m)]
+!iact(1:m) = [(k, k=1, m)]
+      iact = [(k, k=1, m + 1)]
+      ! What is the size of IACT? M or M + 1?
       vmultc(1:m) = cstrv - b(1:m)
 
       if (cstrv <= zero) goto 480
@@ -412,10 +414,9 @@
 
 ! Complete VMULTD by finding the new constraint residuals.
       dnew = d + step * sdirn
-      tmpv(nact + 1:mcon) = matprod(dnew, A(:, iact(nact + 1:mcon))) - b&
-     &(iact(nact + 1:mcon)) + cstrv
-      tmpvabs(nact + 1:mcon) = matprod(abs(dnew), abs(A(:, iact(nact + 1&
-     &:mcon)))) + abs(b(iact(nact + 1:mcon))) + cstrv
+      tmpv = matprod(dnew, A(:, iact)) - b(iact) + cstrv
+      tmpvabs = matprod(abs(dnew), abs(A(:, iact))) + abs(b(iact)) + cst&
+     &rv
       where (isminor(tmpv, tmpvabs))
           tmpv = ZERO
       end where
@@ -436,17 +437,37 @@
       d = (ONE - ratio) * d + ratio * dnew
       vmultc(1:mcon) = max(ZERO, (ONE - ratio) * vmultc(1:mcon) + ratio &
      &* vmultd(1:mcon))
-      if (MCON == M) then
+      if (mcon == m) then
 !cstrv = cvold + ratio * (cstrv - cvold)
           cstrv = (ONE - ratio) * cvold + ratio * cstrv
       end if
 
 ! If the full step is not acceptable then begin another iteration. Otherwise switch to stage two or
 ! end the calculation.
+!if (ICON > 0) goto 70
+!if (STEP == STPFUL) goto 500
+!480 MCON = M + 1
+!ICON = MCON
+!IACT(MCON) = MCON
+!!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!!      VMULTC(MCON)=0.0
+!VMULTC(MCON) = 0.0D0
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!goto 60
+!!
+!!     We employ any freedom that may be available to reduce the objective
+!!     function before returning a d whose length is less than RHO.
+!!
+!490 if (MCON == M) goto 480
+!IFULL = 0
+!500 return
       if (icon > 0) then
           goto 70
       end if
-      if (abs(step - stpful) <= ZERO) then
+!write (16, *) step, stpful
+!write (16, *) abs(step - stpful) <= ZERO, step == stpful
+!if (abs(step - stpful) <= ZERO) then
+      if (step >= stpful) then
           goto 500
       end if
 480   mcon = m + 1

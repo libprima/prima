@@ -73,7 +73,6 @@
       integer(IK) :: i
       integer(IK) :: tr
       integer(IK) :: maxtr
-      integer(IK) :: iact(m + 1)
       integer(IK) :: ifull
       integer(IK) :: j
       integer(IK) :: jdrop
@@ -232,7 +231,7 @@
           conopt = datmat(:, n + 1)
 
 ! Calculate the trust-region trial step D.
-          call trstlp(n, m, A, -conopt(1:m + 1), rho, d, ifull, iact)
+          call trstlp(n, m, A, -conopt(1:m + 1), rho, d, ifull)
 
 ! Is the trust-region trial step short?
 ! Is IFULL == 0 necessary ?????????????????????? If no, TRSTLP can be a function.
@@ -470,7 +469,7 @@
       cstrv = cstrvhist(kopt)
       con = conhist(:, kopt)
 
-!close (16)
+      close (16)
 
       end subroutine cobylb
 

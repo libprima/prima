@@ -2,7 +2,7 @@ module trustregion_mod
 
 contains
 
-subroutine trstlp(n, m, A, b, rho, d, ifull, iact)
+subroutine trstlp(n, m, A, b, rho, d, ifull)
 
 ! Generic modules
 use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENUM, DEBUGGING, SRNLEN
@@ -21,7 +21,6 @@ real(RP), intent(in) :: b(:)
 real(RP), intent(in) :: rho
 real(RP), intent(inout) :: d(:)
 integer(IK), intent(out) :: ifull
-integer(IK), intent(out) :: iact(:)
 
 real(RP) :: hypt
 real(RP) :: z(n, n)
@@ -65,6 +64,7 @@ real(RP) :: zdvabs
 real(RP) :: zdwabs
 real(RP) :: dsav(size(d))  ! N
 integer(IK) :: i
+integer(IK) :: iact(m + 1)
 integer(IK) :: icon
 integer(IK) :: icount
 integer(IK) :: isave
@@ -83,8 +83,6 @@ real(RP) :: ACCA, ACCB
 integer(IK) :: KP
 
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
 ! This subroutine calculates an N-component vector D by the following two stages. In the first
 ! stage, D is set to the shortest vector that minimizes the greatest violation of the constraints
 !       dot_product(A(1:N, K), D) >= B(K),  K= 1, 2, 3, ..., M,
@@ -118,13 +116,10 @@ integer(IK) :: KP
 iter = 0
 maxiter = min(10000_IK, 100_IK * n)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-IFULL = 1
-MCON = M
-NACT = 0
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      CSTRV=0.0
-CSTRV = 0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ifull = 1
+mcon = m
+nact = 0
+cstrv = ZERO
 
 !!!!!!! Question: what is the size of B? M, M+1, or M+2?
 ! It seems to be M+1. Then when is B(M+1) used?
@@ -142,21 +137,24 @@ d = ZERO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 cstrv = maxval([b(1:m), ZERO])
 icon = maxloc(b(1:m), dim=1)
-iact(1:m) = [(k, k=1, m)]
+!iact(1:m) = [(k, k=1, m)]
+iact = [(k, k=1, m + 1)]  ! What is the size of IACT? M or M + 1?
 vmultc(1:m) = cstrv - b(1:m)
 
-if (cstrv <= zero) goto 480
+if (cstrv <= zero) then
+    ! Indeed, CSTRV == ZERO
+    goto 480
+end if
 
 sdirn = ZERO
 
 dsav = d   !!!! HOW TO AVOID THIS???
 
-
 ! End the current stage of the calculation if 3 consecutive iterations have either failed to reduce
 ! the best calculated value of the objective function or to increase the number of active
 ! constraints since the best value was calculated. This strategy prevents cycling, but there is
 ! a remote possibility that it will cause premature termination.
-!
+
 60 optold = ZERO
 
 icount = 0_IK
@@ -165,6 +163,7 @@ icount = 0_IK
 else
     optnew = -inprod(d, A(:, mcon))
 end if
+
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 26-06-2019
 ! The original code can still encounter infinite cycling,
@@ -375,8 +374,8 @@ end if
 
 ! Complete VMULTD by finding the new constraint residuals.
 dnew = d + step * sdirn
-tmpv(nact + 1:mcon) = matprod(dnew, A(:, iact(nact + 1:mcon))) - b(iact(nact + 1:mcon)) + cstrv
-tmpvabs(nact + 1:mcon) = matprod(abs(dnew), abs(A(:, iact(nact + 1:mcon)))) + abs(b(iact(nact + 1:mcon))) + cstrv
+tmpv = matprod(dnew, A(:, iact)) - b(iact) + cstrv
+tmpvabs = matprod(abs(dnew), abs(A(:, iact))) + abs(b(iact)) + cstrv
 where (isminor(tmpv, tmpvabs))
     tmpv = ZERO
 end where
@@ -394,17 +393,15 @@ end if
 ! Update d, VMULTC and CSTRV.
 d = (ONE - ratio) * d + ratio * dnew
 vmultc(1:mcon) = max(ZERO, (ONE - ratio) * vmultc(1:mcon) + ratio * vmultd(1:mcon))
-if (MCON == M) then
+if (mcon == m) then
     !cstrv = cvold + ratio * (cstrv - cvold)
     cstrv = (ONE - ratio) * cvold + ratio * cstrv
 end if
 
-! If the full step is not acceptable then begin another iteration. Otherwise switch to stage two or
-! end the calculation.
 if (icon > 0) then
     goto 70
 end if
-if (abs(step - stpful) <= ZERO) then
+if (step >= stpful) then  ! Indeed, STEP == STPFUL
     goto 500
 end if
 480 mcon = m + 1
