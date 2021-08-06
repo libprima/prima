@@ -195,6 +195,7 @@ do tr = 1, maxtr
 
     ! Calculate the trust-region trial step D.
     call trstlp(n, m, A, -conopt(1:m + 1), rho, d, ifull)
+    !write (16, *) ifull, d
 
     ! Is the trust-region trial step short?
     ! Is IFULL == 0 necessary ?????????????????????? If no, TRSTLP can be a function.
@@ -400,7 +401,7 @@ f = fhist(kopt)
 cstrv = cstrvhist(kopt)
 con = conhist(:, kopt)
 
-close (16)
+!close (16)
 
 end subroutine cobylb
 
