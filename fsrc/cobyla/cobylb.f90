@@ -395,12 +395,15 @@ conhist = reshape([con(1:m), datmat(1:m, :), datsav(1:m, 1:nsav)], [m, n + nsav 
 cstrvhist = [cstrv, datmat(m + 2, :), datsav(m + 2, 1:nsav)]
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 cpen = max(cpen, min(1.0E8_RP, HUGENUM))
+!write (16, *) fhist
+!write (16, *) cstrvhist
 kopt = selectx(cpen, cstrvhist, ctol, fhist)
 x = xhist(:, kopt)
 f = fhist(kopt)
 cstrv = cstrvhist(kopt)
 con = conhist(:, kopt)
 
+!write (16, *) kopt, f, cstrv
 !close (16)
 
 end subroutine cobylb

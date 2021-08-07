@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 06-Aug-2021.
+! on 07-Aug-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -20,8 +20,8 @@
 
       function selectx(cpen, cstrvhist, ctol, fhist) result(kopt)
 
-      use consts_mod, only : IK, RP, HUGENUM, ZERO, TWO, DEBUGGING, SRNL&
-     &EN
+      use consts_mod, only : IK, RP, HUGENUM, HUGEFUN, HUGECON, ZERO, TW&
+     &O, DEBUGGING, SRNLEN
       use infnan_mod, only : is_nan, is_posinf
       use debug_mod, only : errstop, verisize
 
@@ -54,28 +54,46 @@
           call verisize(cstrvhist, size(fhist))
       end if
 
-      kopt = size(fhist)
-! We shift the constraint violations by CTOL, so that CSTRV <= CTOL is regarded as no violation.
-      cstrvhist_shifted = max(cstrvhist - ctol, ZERO)
-      if (any(fhist <= HUGENUM .and. cstrvhist_shifted <= HUGENUM)) then
+! We select X among the points with F < FREF and CSTRV < CREF.
+! Do NOT use F <= FREF, because F = FREF (HUGEFUN or HUGENUM) may mean F = INF in practice.
+      if (any(fhist < HUGEFUN .and. cstrvhist < HUGECON)) then
+          fref = HUGEFUN
+          cref = HUGECON
+      elseif (any(fhist < HUGENUM .and. cstrvhist < HUGECON)) then
+          fref = HUGENUM
+          cref = HUGECON
+      elseif (any(fhist < HUGEFUN .and. cstrvhist < HUGENUM)) then
+          fref = HUGEFUN
+          cref = HUGENUM
+      else
+          fref = HUGENUM
+          cref = HUGENUM
+      end if
+
+      if (.not. any(fhist < fref .and. cstrvhist < cref)) then
+          kopt = size(fhist)
+      else
+! Shift the constraint violations by CTOL, so that CSTRV <= CTOL is regarded as no violation.
+          cstrvhist_shifted = max(cstrvhist - ctol, ZERO)
 ! CMIN is the minimal shifted constraint violation attained in the history.
-          cmin = minval(cstrvhist_shifted, mask=(fhist <= HUGENUM))
+          cmin = minval(cstrvhist_shifted, mask=(fhist < fref))
 ! We select X among the points whose shifted constraint violations are at most CREF.
           cref = TWO * cmin
-          ! CREF = ZERO if CMIN = ZERO.
+          ! CREF = ZERO if CMIN = ZERO; asking for CSTRV_SHIFTED < CREF is unreasonable.
 ! We use the following PHI as our merit function to select X.
-          phi = (fhist / cpen) + cstrvhist_shifted
-! We select X to minimize PHI subject to CSTRV_SHIFTED <= CREF. In case there are multiple
-! minimizers, we take the one with the least CSTRV_SHIFTED; if there are still more than one
-! choices, we take the one with the least function value; if there is still a tie, we take the
-! one with the least constraint violation; if the last comparison still leads to more than one
-! possibilities, any one of them is equally good, and we choose the first of them.
-          phimin = minval(phi, mask=(cstrvhist_shifted <= cref))
-          cref = minval(cstrvhist_shifted, mask=(phi <= phimin))
-          fref = minval(fhist, mask=(phi <= phimin .and. cstrvhist_shift&
-     &ed <= cref))
-          kopt = int(minloc(cstrvhist, mask = (phi <= phimin .and. cstrv&
-     &hist_shifted <= cref .and. fhist <= fref), dim=1), kind(kopt))
+          phi = fhist + cpen * cstrvhist_shifted
+! We select X to minimize PHI subject to F < FREF and CSTRV_SHIFTED <= CREF. In case there are
+! multiple minimizers, we take the one with the least CSTRV; if there are still more than one
+! choices, we take the one with the least F; if the last comparison still leads to more than
+! one possibilities, then they are all equally good, and we choose the first one of them.
+! N.B.: In finite-precision arithmetic, PHI_1 = PHI_2 and CSTRV_SHIFTED_1 = CSTRV_SHIFTED_2 do
+! not ensure that F_1 = F_2!!!
+          phimin = minval(phi, mask=(fhist < fref .and. cstrvhist_shifte&
+     &d <= cref))
+          cref = minval(cstrvhist, mask=(fhist < fref .and. phi <= phimi&
+     &n))
+          kopt = int(minloc(fhist, mask=(cstrvhist <= cref), dim=1), kin&
+     &d(kopt))
       end if
 
       end function selectx
@@ -121,8 +139,8 @@
       is_better = is_better .or. (fc1(1) <= fc2(1) .and. fc1(2) < fc2(2)&
      &)
       cref = TEN * max(ctol, epsilon(ctol))
-      is_better = is_better .or. (fc1(1) <= HUGENUM .and. fc1(2) <= ctol&
-     & .and. ((fc2(2) > cref) .or. is_nan(fc2(2))))
+      is_better = is_better .or. (fc1(1) < HUGENUM .and. fc1(2) <= ctol &
+     &.and. ((fc2(2) > cref) .or. is_nan(fc2(2))))
 
       end function isbetter
 

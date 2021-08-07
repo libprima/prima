@@ -527,6 +527,7 @@ if options.debug && ~options.classical
 %% Zaikun 2021-05-26: The following test is disabled for lincoa for them moment. lincoa may not pass it.
 %%    if (fx ~= minf) && ~(isnan(fx) && isnan(minf)) && ~(strcmp(solver, 'lincoa') && constr_modified)
     if (fx ~= minf) && ~(isnan(fx) && isnan(minf)) && ~strcmp(solver, 'lincoa')
+        keyboard
         % Public/unexpected error
         error(sprintf('%s:InvalidFhist', invoker), ...
              '%s: UNEXPECTED ERROR: %s returns an fhist that does not match nf or fx.', invoker, solver);

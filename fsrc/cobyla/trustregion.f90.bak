@@ -155,9 +155,8 @@ end if
 ! constraints since the best value was calculated. This strategy prevents cycling, but there is
 ! a remote possibility that it will cause premature termination.
 
-optold = ZERO
-icount = 0_IK
 do iter = 1, maxiter
+    write (16, *) iter
     if (mcon == m) then
         optnew = cstrv
     else
@@ -177,8 +176,8 @@ do iter = 1, maxiter
         dsav = d
     else
         d = dsav
-        !! IFULL = ?????
-        exit
+        write (16, *) '1'
+        return
     end if
 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -192,7 +191,10 @@ do iter = 1, maxiter
         icount = 3
     else
         icount = icount - 1
-        if (icount == 0) goto 490
+        if (icount == 0) then
+            write (16, *) 'icount', icount
+            goto 490
+        end if
     end if
 
 
@@ -200,134 +202,141 @@ do iter = 1, maxiter
     ! Givens rotations so that the last N-NACT-1 columns of Z are orthogonal to the gradient of the new
     ! constraint, a scalar product being set to zero if its nonzero value could be due to computer
     ! rounding errors.
-    if (icon > nact) then
-        kk = iact(icon)
-        cgrad = A(:, iact(icon))
-        cgz = matprod(cgrad, z)
-        cgzabs = matprod(abs(cgrad), abs(z))
-        ! The following code in MATLAB: CGZ(ISMINOR(CGZ, CGZABS)) = ZERO
-        where (isminor(cgz, cgzabs))
-            cgz = ZERO
-        end where
-        do k = n - 1, nact + 1, -1
-            ! Apply a 2x2 Givens rotation to Z(:, [K,K+1]) from the right so that CGRAD'*Z(:, K+1) becomes 0.
-            if (abs(cgz(k + 1)) > ZERO) then
-                ! Powell wrote "CGZ(K + 1) /= ZERO" instead of "ABS(CGZ(K + 1)) > ZERO". The two conditions
-                ! differ if CGZ(K + 1) is NaN.
-                grot = planerot(cgz([k, k + 1]))
-                z(:, [k, k + 1]) = matprod(z(:, [k, k + 1]), transpose(grot))
-                cgz(k) = sqrt(cgz(k)**2 + cgz(k + 1)**2)
-            end if
-        end do
+    if (icon <= nact) goto 260
+    kk = iact(icon)
+    cgrad = A(:, iact(icon))
+    cgz = matprod(cgrad, z)
+    cgzabs = matprod(abs(cgrad), abs(z))
+    ! The following code in MATLAB: CGZ(ISMINOR(CGZ, CGZABS)) = ZERO
+    where (isminor(cgz, cgzabs))
+        cgz = ZERO
+    end where
+    do k = n - 1, nact + 1, -1
+        ! Apply a 2x2 Givens rotation to Z(:, [K,K+1]) from the right so that CGRAD'*Z(:, K+1) becomes 0.
+        if (abs(cgz(k + 1)) > ZERO) then
+            ! Powell wrote "CGZ(K + 1) /= ZERO" instead of "ABS(CGZ(K + 1)) > ZERO". The two conditions
+            ! differ if CGZ(K + 1) is NaN.
+            grot = planerot(cgz([k, k + 1]))
+            z(:, [k, k + 1]) = matprod(z(:, [k, k + 1]), transpose(grot))
+            cgz(k) = sqrt(cgz(k)**2 + cgz(k + 1)**2)
+        end if
+    end do
 
-        !Add the new constraint if this can be done without a deletion from the active set.
-        if (nact < n .and. abs(cgz(nact + 1)) > ZERO) then
-            ! Powell wrote "CGZ(NACT + 1) /= ZERO" instead of "ABS(CGZ(NACT + 1)) > ZERO", the two
-            ! conditions differ if CGZ(NACT + 1) is NaN.
-            nact = nact + 1
-            zdota(nact) = cgz(nact)
-            vmultc(icon) = vmultc(nact)
-            vmultc(nact) = ZERO
-        else
-            ! The next instruction is reached if a deletion has to be made from the active set in order to make
-            ! room for the new active constraint, because the new constraint gradient is a linear combination of
-            ! the gradients of the old active constraints. Set the elements of VMULTD to the multipliers of the
-            ! linear combination. Further, set IOUT to the index of the constraint to be deleted, but branch if
-            ! no suitable index can be found.
+    !Add the new constraint if this can be done without a deletion from the active set.
+    if (nact < n .and. abs(cgz(nact + 1)) > ZERO) then
+        ! Powell wrote "CGZ(NACT + 1) /= ZERO" instead of "ABS(CGZ(NACT + 1)) > ZERO", the two
+        ! conditions differ if CGZ(NACT + 1) is NaN.
+        nact = nact + 1
+        zdota(nact) = cgz(nact)
+        vmultc(icon) = vmultc(nact)
+        vmultc(nact) = ZERO
+        goto 210
+    end if
+
+    ! The next instruction is reached if a deletion has to be made from the active set in order to make
+    ! room for the new active constraint, because the new constraint gradient is a linear combination of
+    ! the gradients of the old active constraints. Set the elements of VMULTD to the multipliers of the
+    ! linear combination. Further, set IOUT to the index of the constraint to be deleted, but branch if
+    ! no suitable index can be found.
 
     !!!!!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-            ! The following part seems to lead to a memory error when VMULTD(K) is accessed (by why not Z(I, K) and others?????)
-            do k = nact, 1, -1
-                ! Is it possible that NACT = 0???? In Powell's code, the DO loop will be carried out for one time if NACT = 0.
-                cgzk = inprod(cgrad, z(:, k))
-                cgzkabs = inprod(abs(cgrad), abs(z(:, k)))
-                if (isminor(cgzk, cgzkabs)) then
-                    vmultd(k) = ZERO
-                else
-                    vmultd(k) = cgzk / zdota(k)
-                end if
-                if (k >= 2) then
-                    cgrad = cgrad - vmultd(k) * A(:, iact(k))
-                end if
-            end do
-
-            ratio = minval(vmultc(1:nact) / vmultd(1:nact), mask=(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m))
-            if (ratio < ZERO .or. .not. any(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m)) goto 490
-
-            ! Revise the Lagrange multipliers and reorder the active constraints so that the one to be replaced
-            ! is at the end of the list. Also calculate the new value of ZDOTA(NACT) and branch if it is not
-            ! acceptable.
-            vmultc(1:nact) = max(ZERO, vmultc(1:nact) - ratio * vmultd(1:nact))
-
-            do k = icon, nact - 1
-                hypt = sqrt(zdota(k + 1)**2 + inprod(z(:, k), A(:, iact(k + 1)))**2)  ! What if HYPT = 0???
-                grot = planerot([zdota(k + 1), inprod(z(:, k), A(:, iact(k + 1)))])
-                z(:, [k, k + 1]) = matprod(z(:, [k + 1, k]), transpose(grot))
-                zdota([k, k + 1]) = [hypt, (zdota(k + 1) / hypt) * zdota(k)]
-            end do
-            if (icon < nact) then
-                ! This seems quite rare --- it never happens on CUTEst problems with n <= 50 and m <= 5000.
-                iact(icon:nact) = [iact(icon + 1:nact), iact(icon)]
-                vmultc(icon:nact) = [vmultc(icon + 1:nact), vmultc(icon)]
-            end if
-
-            if (inprod(z(:, nact), A(:, iact(icon))) == ZERO) goto 490
-            zdota(nact) = inprod(z(:, nact), A(:, iact(icon)))
-            vmultc(icon) = ZERO
-            vmultc(nact) = ratio
-        end if
-
-        ! Update IACT and ensure that the objective function continues to be treated as the last active
-        ! constraint when MCON>M.
-        iact([icon, nact]) = iact([nact, icon])
-        if (mcon > m .and. kk /= mcon) then
-            hypt = sqrt(zdota(nact)**2 + inprod(z(:, nact - 1), A(:, kk))**2)  ! What if HYPT = 0 ???
-            grot = planerot([zdota(nact), inprod(z(:, nact - 1), A(:, kk))])
-            z(:, [nact - 1, nact]) = matprod(z(:, [nact, nact - 1]), transpose(grot))
-            zdota([nact - 1, nact]) = [hypt, (zdota(nact) / hypt) * zdota(nact - 1)]
-            iact([nact - 1, nact]) = [kk, iact(nact - 1)]
-            vmultc([nact - 1, nact]) = vmultc([nact, nact - 1])
-        end if
-
-        ! If stage one is in progress, then set SDIRN to the direction of the next change to the current
-        ! vector of variables.
-        if (mcon > m) then
-            sdirn = (ONE / zdota(nact)) * z(:, nact)
+    ! The following part seems to lead to a memory error when VMULTD(K) is accessed (by why not Z(I, K) and others?????)
+    do k = nact, 1, -1
+        ! Is it possible that NACT = 0???? In Powell's code, the DO loop will be carried out for one time if NACT = 0.
+        cgzk = inprod(cgrad, z(:, k))
+        cgzkabs = inprod(abs(cgrad), abs(z(:, k)))
+        if (isminor(cgzk, cgzkabs)) then
+            vmultd(k) = ZERO
         else
-            kk = iact(nact)
-            sdirn = sdirn - ((inprod(sdirn, A(:, iact(nact))) - ONE) / zdota(nact)) * z(:, nact)
+            vmultd(k) = cgzk / zdota(k)
         end if
-    else
-        ! Delete the constraint that has the index IACT(ICON) from the active set.
-        do k = icon, nact - 1
-            hypt = sqrt(zdota(k + 1)**2 + inprod(z(:, k), A(:, iact(k + 1)))**2)  ! What if HYPT = 0 ???
-            grot = planerot([zdota(k + 1), inprod(z(:, k), A(:, iact(k + 1)))])
-            z(:, [k, k + 1]) = matprod(z(:, [k + 1, k]), transpose(grot))
-            zdota([k, k + 1]) = [hypt, (zdota(k + 1) / hypt) * zdota(k)]
-        end do
-        if (icon < nact) then
-            iact(icon:nact) = [iact(icon + 1:nact), iact(icon)]
-            vmultc(icon:nact) = [vmultc(icon + 1:nact), vmultc(icon)]
+        if (k >= 2) then
+            cgrad = cgrad - vmultd(k) * A(:, iact(k))
         end if
-        nact = nact - 1
+    end do
 
-        ! If stage one is in progress, then set SDIRN to the direction of the next change to the current
-        ! vector of variables.
-        if (mcon > m) then
-            sdirn = (ONE / zdota(nact)) * z(:, nact)
-        else
-            sdirn = sdirn - inprod(sdirn, z(:, nact + 1)) * z(:, nact + 1)
-        end if
+    ratio = minval(vmultc(1:nact) / vmultd(1:nact), mask=(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m))
+    if (ratio < ZERO .or. .not. any(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m)) then
+        write (16, *) 'ratio', ratio
+        goto 490
     end if
+
+    ! Revise the Lagrange multipliers and reorder the active constraints so that the one to be replaced
+    ! is at the end of the list. Also calculate the new value of ZDOTA(NACT) and branch if it is not
+    ! acceptable.
+    vmultc(1:nact) = max(ZERO, vmultc(1:nact) - ratio * vmultd(1:nact))
+
+    do k = icon, nact - 1
+        hypt = sqrt(zdota(k + 1)**2 + inprod(z(:, k), A(:, iact(k + 1)))**2)  ! What if HYPT = 0???
+        grot = planerot([zdota(k + 1), inprod(z(:, k), A(:, iact(k + 1)))])
+        z(:, [k, k + 1]) = matprod(z(:, [k + 1, k]), transpose(grot))
+        zdota([k, k + 1]) = [hypt, (zdota(k + 1) / hypt) * zdota(k)]
+    end do
+    if (icon < nact) then
+        ! This seems quite rare --- it never happens on CUTEst problems with n <= 50 and m <= 5000.
+        iact(icon:nact) = [iact(icon + 1:nact), iact(icon)]
+        vmultc(icon:nact) = [vmultc(icon + 1:nact), vmultc(icon)]
+    end if
+
+    if (inprod(z(:, nact), A(:, iact(icon))) == ZERO) then
+        write (16, *) 'ZERO'
+        goto 490
+    end if
+    zdota(nact) = inprod(z(:, nact), A(:, iact(icon)))
+    vmultc(icon) = ZERO
+    vmultc(nact) = ratio
+
+    ! Update IACT and ensure that the objective function continues to be treated as the last active
+    ! constraint when MCON>M.
+210 iact([icon, nact]) = iact([nact, icon])
+    if (mcon > m .and. kk /= mcon) then
+        hypt = sqrt(zdota(nact)**2 + inprod(z(:, nact - 1), A(:, kk))**2)  ! What if HYPT = 0 ???
+        grot = planerot([zdota(nact), inprod(z(:, nact - 1), A(:, kk))])
+        z(:, [nact - 1, nact]) = matprod(z(:, [nact, nact - 1]), transpose(grot))
+        zdota([nact - 1, nact]) = [hypt, (zdota(nact) / hypt) * zdota(nact - 1)]
+        iact([nact - 1, nact]) = [kk, iact(nact - 1)]
+        vmultc([nact - 1, nact]) = vmultc([nact, nact - 1])
+    end if
+
+    ! If stage one is in progress, then set SDIRN to the direction of the next change to the current
+    ! vector of variables.
+    if (mcon > m) goto 320
+    kk = iact(nact)
+    sdirn = sdirn - ((inprod(sdirn, A(:, iact(nact))) - ONE) / zdota(nact)) * z(:, nact)
+    goto 340
+
+    ! Delete the constraint that has the index IACT(ICON) from the active set.
+260 do k = icon, nact - 1
+        hypt = sqrt(zdota(k + 1)**2 + inprod(z(:, k), A(:, iact(k + 1)))**2)  ! What if HYPT = 0 ???
+        grot = planerot([zdota(k + 1), inprod(z(:, k), A(:, iact(k + 1)))])
+        z(:, [k, k + 1]) = matprod(z(:, [k + 1, k]), transpose(grot))
+        zdota([k, k + 1]) = [hypt, (zdota(k + 1) / hypt) * zdota(k)]
+    end do
+    if (icon < nact) then
+        iact(icon:nact) = [iact(icon + 1:nact), iact(icon)]
+        vmultc(icon:nact) = [vmultc(icon + 1:nact), vmultc(icon)]
+    end if
+    nact = nact - 1
+
+    ! If stage one is in progress, then set SDIRN to the direction of the next change to the current
+    ! vector of variables.
+    if (mcon > m) goto 320
+    sdirn = sdirn - inprod(sdirn, z(:, nact + 1)) * z(:, nact + 1)
+    goto 340
+    ! Pick the next search direction of stage two.
+320 sdirn = (ONE / zdota(nact)) * z(:, nact)
 
     ! Calculate the step to the boundary of the trust region or take the step  that reduces CSTRV to
     ! zero. The two statements below that include the factor 1.0E-6 prevent some harmless underflows
     ! that occurred in a test calculation. Further, we skip the step if it could be zero within
     ! a reasonable tolerance for computer rounding errors.
-    dd = rho**2 - sum(d**2, mask=(abs(d) >= 1.0E-6_RP * rho))
+340 dd = rho**2 - sum(d**2, mask=(abs(d) >= 1.0E-6_RP * rho))
     sd = inprod(sdirn, d)
     ss = inprod(sdirn, sdirn)
-    if (dd <= ZERO) goto 490
+    if (dd <= ZERO) then
+        write (16, *) 'dd', dd
+        goto 490
+    end if
     temp = sqrt(ss * dd)
     if (abs(sd) >= 1.0E-6_RP * temp) then
         temp = sqrt(ss * dd + sd * sd)
@@ -407,6 +416,7 @@ do iter = 1, maxiter
         cycle
     else
         if (step >= stpful) then  ! Indeed, STEP == STPFUL
+            write (16, *) '2'
             return
         end if
         mcon = m + 1
@@ -420,7 +430,8 @@ do iter = 1, maxiter
 
     ! We employ any freedom that may be available to reduce the objective function before returning a D
     ! whose length is less than RHO.
-490 if (mcon == m) then
+490 write (16, *) iter, mcon, m
+    if (mcon == m) then
         mcon = m + 1
         icon = mcon
         iact(mcon) = mcon
@@ -428,13 +439,14 @@ do iter = 1, maxiter
         optold = ZERO
         icount = 0_IK
     else
+        write (16, *) '3'
         exit
     end if
 end do
 
-! If iter > maxiter, IFULL = ?????
 ifull = 0
 
+write (16, *) iter
 return
 
 end subroutine trstlp

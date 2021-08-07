@@ -5,6 +5,7 @@ C     1  CON,SIM,SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT)
      1  SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT,F,INFO,FTARGET,RESMAX)
 
       use logging_mod, only : logging
+      use consts_mod, only : HUGEFUN
 
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
@@ -23,6 +24,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C     1  A(N,*),VSIG(*),VETA(*),SIGBAR(*),DX(*),W(*),IACT(*)
      1 A(N,*),VSIG(*),VETA(*),SIGBAR(*),DX(*),W(*),IACT(*),
      1 CONSAV(MPP),XSAV(N,NSMAX),DATSAV(MPP,NSMAX),XDROP(N),DATDROP(MPP)
+     1 ,fhist(n+2+NSMAX)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
 C     Set the initial values of some parameters. The last column of SIM holds
@@ -898,97 +900,26 @@ C      NFVALS-2 instead of NFVALS-1.
       END DO
       CALL SAVEX (X(1:N), CONSAV(1:MPP), XSAV(1:N, 1:NSMAX),
      1     DATSAV(1:MPP, 1:NSMAX), N, M, NSAV, NSMAX, CTOL)
-      cmin = minval([datmat(mpp, 1:np), DATSAV(mpp, 1:nsav), resmax])
+
+      FREF = HUGEFUN
+      fhist(1:n+2+nsav) = [datmat(mp, 1:np), DATSAV(mp, 1:nsav), f]
+      cmin = minval([datmat(mpp, 1:np), DATSAV(mpp, 1:nsav), resmax],
+     1 mask = (fhist(1:n+2+nsav) < FREF))
       PARMU = MAX(PARMU, 1.0D8)
+
+
       IF (NFVALS >= 2) THEN ! See the comments above for why NFVALS>2
           RESREF = 2.0D0*max(cmin - ctol, 0.0D0)
-          if (.not. (resmax-ctol <= resref)) then
+          if (.not. (resmax-ctol <= resref .and. f < FREF)) then
               resmax = huge(0.0D0)
               f = huge(0.0D0)
           end if
           DO J = 1, NP
 C See the comments above for why to check these J
-              IF (max(DATMAT(MPP, J)-ctol, 0.0D0) <= RESREF) THEN
-                  IF (datmat(mp, j)/parmu + max(datmat(mpp, j)-ctol,
-     1             0.0D0) < f/parmu + max(resmax-ctol, 0.0D0)) THEN
-                      if (J <= N) then
-                          DO I = 1, N
-                              X(I) = SIM(I, J) + SIM(I, NP)
-                          END DO
-                      else
-                          X(1:N) = SIM(1:N, NP)
-                      end if
-                      F = DATMAT(MP, J)
-                      RESMAX = DATMAT(MPP, J)
-                      DO K = 1, M
-                          CON(K) = DATMAT(K, J)
-                      END DO
-                  END IF
-              END IF
-          END DO
-          DO J = 1, NSAV
-              IF (max(DATSAV(MPP, J)-ctol, 0.0D0) <= RESREF) THEN
-                  IF (datsav(mp, j)/parmu + max(datsav(mpp, j)-ctol,
-     1              0.0D0) < f/parmu + max(resmax-ctol, 0.0D0)) THEN
-                      DO I = 1, N
-                          X(I) = XSAV(I, J)
-                      END DO
-                      F = DATSAV(MP, J)
-                      RESMAX = DATSAV(MPP, J)
-                      DO K = 1, M
-                          CON(K) = DATSAV(K, J)
-                      END DO
-                  END IF
-              ENDIF
-          END DO
-
-
-          PHIMIN =  f/parmu + max(resmax-ctol, 0.0D0)
-
-          DO J = 1, NP
-C See the comments above for why to check these J
-              IF (max(DATMAT(MPP, J)-ctol, 0.0D0) <
-     1         max(RESmax-ctol, 0.0D0) .and.
-     1             datmat(mp, j)/parmu + max(datmat(mpp, j)-ctol,
-     1             0.0D0) <= phimin) THEN
-                      if (J <= N) then
-                          DO I = 1, N
-                              X(I) = SIM(I, J) + SIM(I, NP)
-                          END DO
-                      else
-                          X(1:N) = SIM(1:N, NP)
-                      end if
-                      F = DATMAT(MP, J)
-                      RESMAX = DATMAT(MPP, J)
-                      DO K = 1, M
-                          CON(K) = DATMAT(K, J)
-                      END DO
-              END IF
-          END DO
-          DO J = 1, NSAV
-              IF (max(DATSAV(MPP, J)-ctol, 0.0D0) <
-     1         max(resmax-ctol, 0.0D0) .and.
-     1             datsav(mp, j)/parmu + max(datsav(mpp, j)-ctol,
-     1              0.0D0) <= phimin) THEN
-                      DO I = 1, N
-                          X(I) = XSAV(I, J)
-                      END DO
-                      F = DATSAV(MP, J)
-                      RESMAX = DATSAV(MPP, J)
-                      DO K = 1, M
-                          CON(K) = DATSAV(K, J)
-                      END DO
-              ENDIF
-          END DO
-
-
-          RESREF = max(resmax-ctol, 0.0D0)
-
-          DO J = 1, NP
-C See the comments above for why to check these J
               IF (max(DATMAT(MPP, J)-ctol, 0.0D0) <= RESREF .and.
-     1             datmat(mp, j)/parmu + max(datmat(mpp, j)-ctol,
-     1             0.0D0) <= phimin .and. datmat(mp, j) < f) THEN
+     1            datmat(mp, J) < FREF) THEN
+                  IF (datmat(mp, j) + parmu*max(datmat(mpp, j)-ctol,
+     1             0.0D0) < f + parmu*max(resmax-ctol, 0.0D0)) THEN
                       if (J <= N) then
                           DO I = 1, N
                               X(I) = SIM(I, J) + SIM(I, NP)
@@ -1001,12 +932,14 @@ C See the comments above for why to check these J
                       DO K = 1, M
                           CON(K) = DATMAT(K, J)
                       END DO
+                  END IF
               END IF
           END DO
           DO J = 1, NSAV
               IF (max(DATSAV(MPP, J)-ctol, 0.0D0) <= RESREF .and.
-     1             datsav(mp, j)/parmu + max(datsav(mpp, j)-ctol,
-     1              0.0D0) <= phimin .and. datsav(mp, j) < f) THEN
+     1         datsav(mp, j) < FREF) THEN
+                  IF (datsav(mp, j)+ parmu*max(datsav(mpp, j)-ctol,
+     1              0.0D0) < f + parmu*max(resmax-ctol, 0.0D0)) THEN
                       DO I = 1, N
                           X(I) = XSAV(I, J)
                       END DO
@@ -1015,16 +948,19 @@ C See the comments above for why to check these J
                       DO K = 1, M
                           CON(K) = DATSAV(K, J)
                       END DO
+                  END IF
               ENDIF
           END DO
 
 
-          FREF = F
+          PHIMIN =  f + parmu*max(resmax-ctol, 0.0D0)
+
           DO J = 1, NP
 C See the comments above for why to check these J
-              IF (DATMAT(MPP, J) < RESmax .and.
-     1             datmat(mp, j)/parmu + max(datmat(mpp, j)-ctol,
-     1             0.0D0) <= phimin .and. datmat(mp, j) <= fref) then
+              IF (max(DATMAT(MPP, J)-ctol, 0.0D0) <= resref .and.
+     1         datmat(mp, j) < fref .and.
+     1             datmat(mp, j) + parmu*max(datmat(mpp, j)-ctol,
+     1              0.0D0) <= phimin .and. datmat(mpp, j) < resmax) THEN
                       if (J <= N) then
                           DO I = 1, N
                               X(I) = SIM(I, J) + SIM(I, NP)
@@ -1040,9 +976,10 @@ C See the comments above for why to check these J
               END IF
           END DO
           DO J = 1, NSAV
-              IF (DATSAV(MPP, J) < RESmax .and.
-     1             datsav(mp, j)/parmu + max(datsav(mpp, j)-ctol,
-     1              0.0D0) <= phimin .and. datsav(mp, j) <= fref) THEN
+              IF (max(DATSAV(MPP, J)-ctol, 0.0D0) <= resref .and.
+     1        datsav(mp, j) < fref .and.
+     1             datsav(mp, j) + parmu*max(datsav(mpp, j)-ctol,
+     1              0.0D0) <= phimin .and. datsav(mpp, j) < resmax) THEN
                       DO I = 1, N
                           X(I) = XSAV(I, J)
                       END DO
@@ -1053,6 +990,75 @@ C See the comments above for why to check these J
                       END DO
               ENDIF
           END DO
+
+
+          RESREF = resmax
+
+          DO J = 1, NP
+C See the comments above for why to check these J
+              IF (DATMAT(MPP, J) <= RESREF .and. datmat(mp, j) < f) THEN
+                      if (J <= N) then
+                          DO I = 1, N
+                              X(I) = SIM(I, J) + SIM(I, NP)
+                          END DO
+                      else
+                          X(1:N) = SIM(1:N, NP)
+                      end if
+                      F = DATMAT(MP, J)
+                      RESMAX = DATMAT(MPP, J)
+                      DO K = 1, M
+                          CON(K) = DATMAT(K, J)
+                      END DO
+              END IF
+          END DO
+          DO J = 1, NSAV
+              IF (DATSAV(MPP, J) <= RESREF .and. datsav(mp, j) < f) THEN
+                      DO I = 1, N
+                          X(I) = XSAV(I, J)
+                      END DO
+                      F = DATSAV(MP, J)
+                      RESMAX = DATSAV(MPP, J)
+                      DO K = 1, M
+                          CON(K) = DATSAV(K, J)
+                      END DO
+              ENDIF
+          END DO
+!
+!
+!          FREF = F
+!          DO J = 1, NP
+!C See the comments above for why to check these J
+!              IF (DATMAT(MPP, J) < RESmax .and.
+!     1             datmat(mp, j) + parmu*max(datmat(mpp, j)-ctol,
+!     1             0.0D0) <= phimin .and. datmat(mp, j) <= fref) then
+!                      if (J <= N) then
+!                          DO I = 1, N
+!                              X(I) = SIM(I, J) + SIM(I, NP)
+!                          END DO
+!                      else
+!                          X(1:N) = SIM(1:N, NP)
+!                      end if
+!                      F = DATMAT(MP, J)
+!                      RESMAX = DATMAT(MPP, J)
+!                      DO K = 1, M
+!                          CON(K) = DATMAT(K, J)
+!                      END DO
+!              END IF
+!          END DO
+!          DO J = 1, NSAV
+!              IF (DATSAV(MPP, J) < RESmax .and.
+!     1             datsav(mp, j) + parmu*max(datsav(mpp, j)-ctol,
+!     1              0.0D0) <= phimin .and. datsav(mp, j) <= fref) THEN
+!                      DO I = 1, N
+!                          X(I) = XSAV(I, J)
+!                      END DO
+!                      F = DATSAV(MP, J)
+!                      RESMAX = DATSAV(MPP, J)
+!                      DO K = 1, M
+!                          CON(K) = DATSAV(K, J)
+!                      END DO
+!              ENDIF
+!          END DO
 
 
 
@@ -1236,7 +1242,7 @@ C
       better = better .or. (f < f0 .and. conv <= conv0)
 
       cref = 10.0D0*max(ctol, epsilon(ctol))
-      better = better .or. (f <= HUGENUM .and. conv <= ctol .and.
+      better = better .or. (f < HUGENUM .and. conv <= ctol .and.
      1 (conv0 > cref .or. is_nan(conv0)))
 
       END SUBROUTINE

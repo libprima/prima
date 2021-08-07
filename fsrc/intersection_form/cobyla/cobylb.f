@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 06-Aug-2021.
+! on 07-Aug-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -232,6 +232,7 @@
 
 ! Calculate the trust-region trial step D.
           call trstlp(n, m, A, -conopt(1:m + 1), rho, d, ifull)
+!write (16, *) ifull, d
 
 ! Is the trust-region trial step short?
 ! Is IFULL == 0 necessary ?????????????????????? If no, TRSTLP can be a function.
@@ -463,13 +464,16 @@
       cstrvhist = [cstrv, datmat(m + 2, :), datsav(m + 2, 1:nsav)]
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       cpen = max(cpen, min(1.0E8_RP, HUGENUM))
+!write (16, *) fhist
+!write (16, *) cstrvhist
       kopt = selectx(cpen, cstrvhist, ctol, fhist)
       x = xhist(:, kopt)
       f = fhist(kopt)
       cstrv = cstrvhist(kopt)
       con = conhist(:, kopt)
 
-      close (16)
+!write (16, *) kopt, f, cstrv
+!close (16)
 
       end subroutine cobylb
 
