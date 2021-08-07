@@ -138,7 +138,7 @@
           DO I = 1, N
              DX(I) = DSAV(I)
           END DO
-          GOTO 499
+          GOTO 500
       ELSE
           DO I = 1, N
              DSAV(I) = DX(I)
@@ -146,7 +146,7 @@
       END IF
       ITERC = ITERC + 1
       IF (ITERC > MIN(10000, 100*N)) THEN
-          GOTO 499
+          GOTO 500
       END IF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       IF (ICOUNT == 0 .OR. OPTNEW < OPTOLD) THEN
@@ -697,7 +697,7 @@
 !     function before returning a DX whose length is less than RHO.
 !
   490 IF (MCON == M) GOTO 480
-  499 IFULL=0
+      IFULL=0
 
   500 RETURN
       END
