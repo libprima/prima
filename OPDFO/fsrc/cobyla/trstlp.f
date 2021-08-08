@@ -1,5 +1,6 @@
       SUBROUTINE TRSTLP (N,M,A,B,RHO,DX,IFULL,IACT,Z,ZDOTA,VMULTC,
      1  SDIRN,DXNEW,VMULTD)
+      use consts_mod, only : EPS
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
@@ -138,7 +139,7 @@
           DO I = 1, N
              DX(I) = DSAV(I)
           END DO
-          GOTO 499
+          GOTO 490
       ELSE
           DO I = 1, N
              DSAV(I) = DX(I)
@@ -146,7 +147,7 @@
       END IF
       ITERC = ITERC + 1
       IF (ITERC > MIN(10000, 100*N)) THEN
-          GOTO 499
+          GOTO 490
       END IF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       IF (ICOUNT == 0 .OR. OPTNEW < OPTOLD) THEN
@@ -505,7 +506,8 @@
       DO I=1,N
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (ABS(DX(I)) .GE. 1.0E-6*RHO) DD=DD-DX(I)**2
-          IF (DABS(DX(I)) >= 1.0D-6*RHO) DD=DD+DX(I)**2
+          !IF (DABS(DX(I)) >= 1.0D-6*RHO) DD=DD+DX(I)**2
+          IF (DABS(DX(I)) >= EPS*RHO) DD=DD+DX(I)**2
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           SD=SD+DX(I)*SDIRN(I)
           SS=SS+SDIRN(I)**2
@@ -517,7 +519,8 @@
 !      IF (ABS(SD) .GE. 1.0E-6*TEMP) TEMP=SQRT(SS*DD+SD*SD)
       IF (DD <= 0.0D0) GOTO 490
       TEMP=DSQRT(SS*DD)
-      IF (DABS(SD) >= 1.0D-6*TEMP) TEMP=DSQRT(SS*DD+SD*SD)
+      !IF (DABS(SD) >= 1.0D-6*TEMP) TEMP=DSQRT(SS*DD+SD*SD)
+      IF (DABS(SD) >= EPS*TEMP) TEMP=DSQRT(SS*DD+SD*SD)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       STPFUL=DD/(TEMP+SD)
       STEP=STPFUL
@@ -684,7 +687,8 @@
 !
       IF (ICON > 0) GOTO 70
       IF (STEP == STPFUL) GOTO 500
-  480 MCON=M+1
+  480 iterc = 0
+      MCON=M+1
       ICON=MCON
       IACT(MCON)=MCON
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -698,6 +702,5 @@
 !
   490 IF (MCON == M) GOTO 480
   499 IFULL=0
-
   500 RETURN
       END
