@@ -6,7 +6,7 @@ contains
 subroutine cobylb(m, x, rhobeg, rhoend, iprint, maxfun, con, f, info, ftarget, cstrv)
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, HUGENUM, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, EPS, HUGENUM, DEBUGGING, SRNLEN
 use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F, DAMAGING_ROUNDING
 use infnan_mod, only : is_nan, is_posinf
 use debug_mod, only : errstop
@@ -46,7 +46,7 @@ real(RP), intent(out) :: f
 integer(IK), parameter :: nsavmax = 2000_IK
 ! CTOL is the tolerance for constraint violation. A point X is considered to be feasible if its
 ! constraint violation (CSTRV) is less than CTOL.
-real(RP), parameter :: ctol = epsilon(1.0_RP)
+real(RP), parameter :: ctol = EPS
 
 ! Local variables
 
@@ -389,10 +389,10 @@ sim(:, 1:n) = sim(:, 1:n) + spread(sim(:, n + 1), dim=2, ncopies=n)  !!! TEMPORA
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!! TEMPORARY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Make sure that the history includes the last X.
-xhist = reshape([x, sim, xsav(:, 1:nsav)], [n, n + nsav + 2])
-fhist = [f, datmat(m + 1, :), datsav(m + 1, 1:nsav)]
-conhist = reshape([con(1:m), datmat(1:m, :), datsav(1:m, 1:nsav)], [m, n + nsav + 2])
-cstrvhist = [cstrv, datmat(m + 2, :), datsav(m + 2, 1:nsav)]
+xhist = reshape([sim, xsav(:, 1:nsav), x], [n, n + nsav + 2])
+fhist = [datmat(m + 1, :), datsav(m + 1, 1:nsav), f]
+conhist = reshape([datmat(1:m, :), datsav(1:m, 1:nsav), con(1:m)], [m, n + nsav + 2])
+cstrvhist = [datmat(m + 2, :), datsav(m + 2, 1:nsav), cstrv]
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 cpen = max(cpen, min(1.0E8_RP, HUGENUM))
 !write (16, *) fhist

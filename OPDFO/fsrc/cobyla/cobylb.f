@@ -5,7 +5,7 @@ C     1  CON,SIM,SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT)
      1  SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT,F,INFO,FTARGET,RESMAX)
 
       use logging_mod, only : logging
-      use consts_mod, only : HUGEFUN
+      use consts_mod, only : HUGEFUN, HUGECON
 
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
@@ -25,6 +25,7 @@ C     1  A(N,*),VSIG(*),VETA(*),SIGBAR(*),DX(*),W(*),IACT(*)
      1 A(N,*),VSIG(*),VETA(*),SIGBAR(*),DX(*),W(*),IACT(*),
      1 CONSAV(MPP),XSAV(N,NSMAX),DATSAV(MPP,NSMAX),XDROP(N),DATDROP(MPP)
      1 ,fhist(n+2+NSMAX)
+     1 ,chist(n+2+NSMAX)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
 C     Set the initial values of some parameters. The last column of SIM holds
@@ -901,15 +902,31 @@ C      NFVALS-2 instead of NFVALS-1.
       CALL SAVEX (X(1:N), CONSAV(1:MPP), XSAV(1:N, 1:NSMAX),
      1     DATSAV(1:MPP, 1:NSMAX), N, M, NSAV, NSMAX, CTOL)
 
-      FREF = HUGEFUN
       fhist(1:n+2+nsav) = [datmat(mp, 1:np), DATSAV(mp, 1:nsav), f]
-      cmin = minval([datmat(mpp, 1:np), DATSAV(mpp, 1:nsav), resmax],
-     1 mask = (fhist(1:n+2+nsav) < FREF))
+      chist(1:n+2+nsav) = [datmat(mpp, 1:np),DATSAV(mpp,1:nsav),resmax]
+      if (any(fhist(1:n+2+nsav)< HUGEFUN .and. chist(1:n+2+nsav)
+     1 < HUGECON)) then
+          fref = HUGEFUN
+          resref = HUGECON
+      elseif (any(fhist(1:n+2+nsav) < HUGENUM .and. chist(1:n+2+nsav)
+     1     < HUGECON)) then
+          fref = hugenum
+          resref = hugecon
+      elseif (any(fhist(1:n+2+nsav) < HUGEFUN .and. chist(1:n+2+nsav)
+     1     < HUGENUM)) then
+          fref = hugefun
+          resref = hugenum
+      else
+          fref = hugenum
+          resref = hugenum
+      end if
+
+      if (any (fhist(1:n+2+nsav) < fref .and. chist(1:n+2+nsav)
+     1 < resref)) then
+      cmin = minval(chist(1:n+2+nsav),mask= (fhist(1:n+2+nsav) < FREF))
       PARMU = MAX(PARMU, 1.0D8)
-
-
+      RESREF = 2.0D0*max(cmin - ctol, 0.0D0)
       IF (NFVALS >= 2) THEN ! See the comments above for why NFVALS>2
-          RESREF = 2.0D0*max(cmin - ctol, 0.0D0)
           if (.not. (resmax-ctol <= resref .and. f < FREF)) then
               resmax = huge(0.0D0)
               f = huge(0.0D0)
@@ -1063,13 +1080,14 @@ C See the comments above for why to check these J
 
 
       END IF
+      END IF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   620 IF (IPRINT >= 1) THEN
           PRINT 70, NFVALS,F,RESMAX,(X(I),I=1,IPTEM)
           IF (IPTEM < N) PRINT 80, (X(I),I=IPTEMP,N)
       END IF
       MAXFUN=NFVALS
-      !close(17)
+      close(17)
       RETURN
       END
 
