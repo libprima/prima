@@ -505,7 +505,6 @@
       DO I=1,N
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (ABS(DX(I)) .GE. 1.0E-6*RHO) DD=DD-DX(I)**2
-          IF (DABS(DX(I)) >= 1.0D-6*RHO) DD=DD+DX(I)**2
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           SD=SD+DX(I)*SDIRN(I)
           SS=SS+SDIRN(I)**2

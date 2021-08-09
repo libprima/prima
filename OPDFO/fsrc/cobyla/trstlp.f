@@ -146,7 +146,7 @@
           END DO
       END IF
       ITERC = ITERC + 1
-      IF (ITERC > MIN(10000, 100*N)) THEN
+      IF (ITERC > MIN(10000, 100*max(M,N))) THEN
           GOTO 490
       END IF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -684,23 +684,25 @@
 !
 !     If the full step is not acceptable then begin another iteration.
 !     Otherwise switch to stage two or end the calculation.
-!
       IF (ICON > 0) GOTO 70
       IF (STEP == STPFUL) GOTO 500
-  480 iterc = 0
-      MCON=M+1
+  480 MCON=M+1
       ICON=MCON
       IACT(MCON)=MCON
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      VMULTC(MCON)=0.0
       VMULTC(MCON)=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ITERC = 0
+      zdota(1:nact) = [(dot_product(z(:, i), A(:, iact(i))), i=1, nact)]
       GOTO 60
 !
 !     We employ any freedom that may be available to reduce the objective
 !     function before returning a DX whose length is less than RHO.
 !
-  490 IF (MCON == M) GOTO 480
-  499 IFULL=0
+  490 IF (MCON == M) then
+        GOTO 480
+      end if
+      IFULL=0
   500 RETURN
       END
