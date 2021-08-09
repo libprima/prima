@@ -127,17 +127,17 @@ function [x, fx, exitflag, output] = cobylan(varargin)
 %   *** classical: a boolean value indicating whether to call the classical
 %       Powell code or not; default: false
 %   *** scale: a boolean value indicating whether to scale the problem
-%       according to bounds or not; default: false; if the problem is to 
-%       be scaled, then rhobeg and rhoend mentioned above will be used as 
+%       according to bounds or not; default: false; if the problem is to
+%       be scaled, then rhobeg and rhoend mentioned above will be used as
 %       the initial and final trust region radii for the scaled  problem
 %   *** quiet: a boolean value indicating whether to keep quiet or not;
-%       default: true (if it is false COBYLA will print the return message 
+%       default: true (if it is false COBYLA will print the return message
 %       of the Fortran code)
 %   *** debug: a boolean value indicating whether to debug or not; default: false
 %   *** chkfunval: a boolean value indicating whether to verify the returned
 %       function and constraint (if applicable) value or not; default: false
-%       (if it is true, COBYLA will check whether the returned values of fun 
-%       and nonlcon matches fun(x) and nonlcon(x) or not, which costs a 
+%       (if it is true, COBYLA will check whether the returned values of fun
+%       and nonlcon matches fun(x) and nonlcon(x) or not, which costs a
 %       function/constraint evaluation; designed only for debugging)
 %
 %   For example, the following code
@@ -299,9 +299,9 @@ elseif ~strcmp(invoker, 'pdfon') && probinfo.nofreex % x was fixed by the bound 
     output.nlceq = probinfo.nlceq_fixedx;
 elseif ~strcmp(invoker, 'pdfon') && probinfo.feasibility_problem && ~strcmp(probinfo.refined_type, 'nonlinearly-constrained')
     output.x = x0;  % prepdfo has tried to set x0 to a feasible point (but may have failed)
-    % We could set fx=[], funcCount=0, and fhist=[] since no function evaluation 
-    % occured. But then we will have to modify the validation of fx, funcCount, 
-    % and fhist in postpdfo. To avoid such a modification, we set fx, funcCount, 
+    % We could set fx=[], funcCount=0, and fhist=[] since no function evaluation
+    % occured. But then we will have to modify the validation of fx, funcCount,
+    % and fhist in postpdfo. To avoid such a modification, we set fx, funcCount,
     % and fhist as below and then revise them in postpdfo.
     output.fx = fun(output.x);  % prepdfo has defined a fake objective function
     output.funcCount = 1;

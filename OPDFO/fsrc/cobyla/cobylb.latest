@@ -1087,7 +1087,7 @@ C See the comments above for why to check these J
           IF (IPTEM < N) PRINT 80, (X(I),I=IPTEMP,N)
       END IF
       MAXFUN=NFVALS
-      !close(17)
+      close(17)
       RETURN
       END
 

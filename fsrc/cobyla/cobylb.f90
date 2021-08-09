@@ -405,6 +405,7 @@ con = conhist(:, kopt)
 
 !write (16, *) kopt, f, cstrv
 !close (16)
+close (11)
 
 end subroutine cobylb
 

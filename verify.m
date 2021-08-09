@@ -205,13 +205,13 @@ for ip = minip : length(plist)
         end
         if fx1 <= test_options.ftarget
             exitflag1 = 1;
-            display('exitflag1 changed to 1.')
+            fprintf('exitflag1 changed to 1.\n')
         end
         if fx2 <= test_options.ftarget
             exitflag2 = 1;
-            display('exitflag2 changed to 1.')
+            fprintf('exitflag2 changed to 1.\n')
         end
-        if ((strcmpi(solvers{1}, 'cobyla') || strcmpi(solvers{2}, 'cobyla'))  && fx1 == fx2 && isfield(output1, 'constrviolation') && output1.constrviolation == output2.constrviolation && norm(x1-x2)>0)
+        if ((strcmpi(solvers{1}, 'cobyla') || strcmpi(solvers{2}, 'cobyla'))  && fx1 == fx2 && (~isfield(output1,'constrviolation') && ~isfield(output2, 'constrviolation') || isfield(output1, 'constrviolation') && output1.constrviolation == output2.constrviolation) && norm(x1-x2)>0)
             x1 = x2;
             fprintf('x1 changed to x2.\n');
         end
