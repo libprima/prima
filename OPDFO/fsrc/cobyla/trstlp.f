@@ -55,6 +55,11 @@
       IFULL=1
       MCON=M
       NACT=0
+
+!      zdota(1:n) = 0.0D0
+!      vmultd(1:m+1) = 0.0D0
+      !write(17,*) 'izdota', zdota(1:n)
+      !write(17,*) 'ivmultd', vmultd(1:m+1)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      RESMAX=0.0
       RESMAX=0.0D0
@@ -83,6 +88,10 @@
               VMULTC(K)=RESMAX-B(K)
           END DO
       END IF
+      !write (17, *) 'b', b(1:m)
+      !write (17, *) 'icon', ICON
+
+      !write(17,*) 'cstrv', resmax
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (RESMAX .EQ. 0.0) GOTO 480
       IF (RESMAX == 0.0D0) GOTO 480
@@ -108,11 +117,27 @@
 !     remote possibility that it will cause premature termination.
 !
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!   60 OPTOLD=0.0
+       !write (17, *) iact(1:m+1)
+       !write (17, *) ifull
+       !write (17, *) nact
+       !write (17, *) A(:, 1:m+1)
+       !write (17, *) b(1:m+1)
+       !write (17, *) rho
+       !write (17, *) resmax
+       !write (17, *) dx(1:n)
+       !write (17, *) vmultc(1:m+1)
+       !write (17, *) z(1:n, 1:n)
+
+!       write(17,*) 'stage 1'
    60 OPTOLD=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ICOUNT=0
+   !70 write (17, *) 'iter', iterc+1, icon, iact(1:mcon)
+   !   write(17,*) dx(1:n)
+
+
    70 IF (MCON == M) THEN
+!      IF (MCON == M) THEN
           OPTNEW=RESMAX
       ELSE
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -146,7 +171,7 @@
           END DO
       END IF
       ITERC = ITERC + 1
-      IF (ITERC > MIN(10000, 100*max(M,N))) THEN
+      IF (ITERC > MIN(10000, 100*max(M, N))) THEN
           GOTO 490
       END IF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -239,6 +264,10 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           GOTO 210
       END IF
+
+      !write(17,*) 'cgrad', dxnew(1:n)
+      !write(17,*) 'z', z(1:n, 1:n)
+      !write(17,*) 'vmultd', vmultd(1:mcon)
 !
 !     The next instruction is reached if a deletion has to be made from the
 !     active set in order to make room for the new active constraint, because
@@ -303,6 +332,10 @@
       END IF
       K=K-1
       IF (K > 0) GOTO 130
+
+      !write(17,*) 'zdota', zdota(1:n)
+      !write(17,*) 'vmultd', vmultd(1:mcon)
+
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (RATIO .LT. 0.0) GOTO 490
       IF (RATIO < 0.0D0) GOTO 490
@@ -567,12 +600,20 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           END DO
       END IF
+
+      !write(17,*) '==vmultd', vmultd(1:mcon)
+      !write(17,*) 'dnew', dxnew(1:n)
+      !write(17,*) 'zdota', zdota(1:n)
+      !write(17,*) 'z', z(1:n, 1:n)
+      !write(17,*) 'A', A(1:n, 1:m+1)
 !
 !     Set VMULTD to the VMULTC vector that would occur if DX became DXNEW. A
 !     device is included to force VMULTD(K)=0.0 if deviations from this value
 !     can be attributed to computer rounding errors. First calculate the new
 !     Lagrange multipliers.
 !
+      !write(17,*) 'dnew', dxnew(1:n)
+      !write(17,*) 'z', z(1:n,1:n)
       K=NACT
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !  390 ZDOTW=0.0
@@ -592,14 +633,22 @@
       END DO
       ACCA=ZDWABS+0.1D0*DABS(ZDOTW)
       ACCB=ZDWABS+2.0D0*0.1D0*DABS(ZDOTW)
-      IF (ZDWABS >= ACCA .OR. ACCA >= ACCB) ZDOTW=0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      VMULTD(K)=ZDOTW/ZDOTA(K)
+!      IF (ZDWABS >= ACCA .OR. ACCA >= ACCB) ZDOTW=0.0D0
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!      VMULTD(K)=ZDOTW/ZDOTA(K)
+      IF (ZDWABS >= ACCA .OR. ACCA >= ACCB) then
+        VMULTD(K)=ZERO
+      else
+        VMULTD(K)=ZDOTW/ZDOTA(K)
+      end if
+      !write (17, *) 'zdotw, zdwabs, vmultd(k)'
+!write (17, *) '---k', k, zdotw, zdwabs, zdota(k), vmultd(k)
       IF (K >= 2) THEN
           KK=IACT(K)
           DO I=1,N
               DXNEW(I)=DXNEW(I)-VMULTD(K)*A(I,KK)
           END DO
+!write(17,*) 'dnew', vmultd(k), A(1:n,kk), dxnew(1:n)
           K=K-1
           GOTO 390
       END IF
@@ -607,6 +656,7 @@
 !      IF (MCON .GT. M) VMULTD(NACT)=AMAX1(0.0,VMULTD(NACT))
       IF (MCON > M) VMULTD(NACT)=DMAX1(0.0D0,VMULTD(NACT))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!write(17,*) '---vmultd', vmultd(1:mcon)
 !
 !     Complete VMULTC by finding the new constraint residuals.
 !
@@ -643,6 +693,8 @@
               VMULTD(K)=SUM
           END DO
       END IF
+      !write(17,*) 'vmultc', vmultc(1:mcon)
+      !write(17,*) 'vmultd', vmultd(1:mcon)
 !
 !     Calculate the fraction of the step from DX to DXNEW that will be taken.
 !
@@ -663,11 +715,13 @@
               END IF
           END IF
       END DO
+      !write(17,*), 'icon', icon, VMULTD(1:MCON)
 !
 !     Update DX, VMULTC and RESMAX.
 !
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      TEMP=1.0-RATIO
+      !write(17,*) ratio, dxnew(1:n)
       TEMP=1.0D0-RATIO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DO I=1,N
@@ -684,9 +738,13 @@
 !
 !     If the full step is not acceptable then begin another iteration.
 !     Otherwise switch to stage two or end the calculation.
+
+      !write(17,*) dx(1:n)
+!write (17, *) 'itericon', iterc, icon, step, stpful
       IF (ICON > 0) GOTO 70
       IF (STEP == STPFUL) GOTO 500
   480 MCON=M+1
+!      write(17,*) 'stage 2'
       ICON=MCON
       IACT(MCON)=MCON
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -695,14 +753,23 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ITERC = 0
       zdota(1:nact) = [(dot_product(z(:, i), A(:, iact(i))), i=1, nact)]
+      !write (17, *) 'iact', iact(1:m+1)
+!write (17, *) dx(1:n)
+      !write (17, *) 'd', dx(1:n)
+      !write (17, *) 'vmultc', vmultc(1:m+1)
       GOTO 60
 !
 !     We employ any freedom that may be available to reduce the objective
 !     function before returning a DX whose length is less than RHO.
 !
   490 IF (MCON == M) then
-        GOTO 480
+      GOTO 480
       end if
       IFULL=0
-  500 RETURN
+!  500 write (17, *) 'iact', iact(1:m+1)
+500      write (17, *) '---ifull', ifull, dx(1:n)
+!      write (17, *) 'd', dx(1:n)
+      !write (17, *) 'vmultc', vmultc(1:m+1)
+!  500 RETURN
+      RETURN
       END
