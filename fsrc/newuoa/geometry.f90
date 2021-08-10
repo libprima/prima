@@ -193,7 +193,7 @@ real(RP) :: d(size(xpt, 1))       ! D(N)
 
 ! Local variables
 integer(IK) :: i
-integer(IK) :: isave
+integer(IK) :: isav
 integer(IK) :: iterc
 integer(IK) :: iu
 integer(IK) :: n
@@ -317,7 +317,7 @@ do iterc = 1, n
     taubeg = cf(1) + cf(2) + cf(4)
     taumax = taubeg
     tauold = taubeg
-    isave = 0
+    isav = 0
     iu = 49
     unitang = (TWO * PI) / real(iu + 1, RP)
 
@@ -328,18 +328,18 @@ do iterc = 1, n
         tau = cf(1) + (cf(2) + cf(4) * cth) * cth + (cf(3) + cf(5) * cth) * sth
         if (abs(tau) > abs(taumax)) then
             taumax = tau
-            isave = i
+            isav = i
             taua = tauold
-        else if (i == isave + 1) then
+        else if (i == isav + 1) then
             taub = tau
         end if
         tauold = tau
     end do
 
-    if (isave == 0) then
+    if (isav == 0) then
         taua = tau
     end if
-    if (isave == iu) then
+    if (isav == iu) then
         taub = taubeg
     end if
     if (abs(taua - taub) > ZERO) then
@@ -349,7 +349,7 @@ do iterc = 1, n
     else
         step = ZERO
     end if
-    angle = unitang * (real(isave, RP) + step)
+    angle = unitang * (real(isav, RP) + step)
 
     ! Calculate the new D and GD. Then test for convergence.
     cth = cos(angle)
@@ -402,7 +402,7 @@ real(RP) :: d(size(xpt, 1))     ! D(N)
 
 ! Local variable
 integer(IK) :: i
-integer(IK) :: isave
+integer(IK) :: isav
 integer(IK) :: iterc
 integer(IK) :: iu
 integer(IK) :: j
@@ -619,7 +619,7 @@ do iterc = 1, n
     denom = denex(1) + denex(2) + denex(4) + denex(6) + denex(8)
     denold = denom
     denmax = denom
-    isave = 0
+    isav = 0
     iu = 49
     unitang = (TWO * PI) / real(iu + 1, RP)
     par(1) = ONE
@@ -635,16 +635,16 @@ do iterc = 1, n
         denom = inprod(denex(1:9), par(1:9))
         if (abs(denom) > abs(denmax)) then
             denmax = denom
-            isave = i
+            isav = i
             dena = denomold
-        else if (i == isave + 1) then
+        else if (i == isav + 1) then
             denb = denom
         end if
     end do
-    if (isave == 0) then
+    if (isav == 0) then
         dena = denom
     end if
-    if (isave == iu) then
+    if (isav == iu) then
         denb = denold
     end if
     if (abs(dena - denb) > 0) then
@@ -654,7 +654,7 @@ do iterc = 1, n
     else
         step = ZERO
     end if
-    angle = unitang * (real(isave, RP) + step)
+    angle = unitang * (real(isav, RP) + step)
 
     ! Calculate the new parameters of the denominator, the new VLAG vector and the new D. Then test
     ! for convergence.
