@@ -51,7 +51,7 @@ real(RP) :: dsq
 real(RP) :: dx
 real(RP) :: wcheck(size(zmat, 1))
 real(RP) :: wz(size(zmat, 2))
-real(RP) :: wzsave(size(wz))
+real(RP) :: wzsav(size(wz))
 real(RP) :: xopt(size(xpt, 1))
 real(RP) :: xoptsq
 character(len=SRNLEN), parameter :: srname = 'VLAGBETA'
@@ -90,9 +90,9 @@ wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))
 vlag(1:npt) = matprod(d, bmat(:, 1:npt))
 
 wz = matprod(wcheck, zmat)
-wzsave = wz
+wzsav = wz
 wz(1:idz - 1) = -wz(1:idz - 1)
-beta = -inprod(wzsave, wz)
+beta = -inprod(wzsav, wz)
 !----------------------------------------------------------------------!
 !-----!vlag(1 : npt) = vlag(1 : npt) + matprod(zmat, wz) !-------------!
 vlag(1:npt) = Ax_plus_y(zmat, wz, vlag(1:npt))

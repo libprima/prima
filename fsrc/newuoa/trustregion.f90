@@ -4,7 +4,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Thursday, August 05, 2021 PM05:24:38
+! Last Modified: Tuesday, August 10, 2021 PM09:52:23
 
 module trustregion_mod
 
@@ -73,7 +73,7 @@ real(RP), intent(out) :: s(:)        ! S(N)
 
 ! Local variables
 integer(IK) :: i
-integer(IK) :: isave
+integer(IK) :: isav
 integer(IK) :: iterc
 integer(IK) :: itermax
 integer(IK) :: iu
@@ -94,7 +94,7 @@ real(RP) :: ds
 real(RP) :: g(size(x))
 real(RP) :: gg
 real(RP) :: gg0
-real(RP) :: ggsave
+real(RP) :: ggsav
 real(RP) :: hd(size(x))
 real(RP) :: hs(size(x))
 real(RP) :: hx(size(x))
@@ -103,7 +103,7 @@ real(RP) :: qbeg
 real(RP) :: qmin
 real(RP) :: qnew
 real(RP) :: qred
-real(RP) :: qsave
+real(RP) :: qsav
 real(RP) :: quada
 real(RP) :: quadb
 real(RP) :: reduc
@@ -206,9 +206,9 @@ do iterc = 1, itermax
     s = s + alpha * d
     ss = inprod(s, s)
     hs = hs + alpha * hd
-    ggsave = gg  ! Gradient norm square before this iteration
+    ggsav = gg  ! Gradient norm square before this iteration
     gg = inprod(g + hs, g + hs)  ! Current gradient norm square
-    ! We may save g+hs for latter usage:
+    ! We may record g+hs for latter usage:
     ! gnew = g + hs
     ! Note that we should NOT set g = g + hs, because g contains
     ! the gradient of Q at x.
@@ -230,7 +230,7 @@ do iterc = 1, itermax
     end if
 
     ! Prepare for the next CG iteration.
-    d = (gg / ggsave) * d - g - hs  ! CG direction
+    d = (gg / ggsav) * d - g - hs  ! CG direction
     dd = inprod(d, d)
     ds = inprod(d, s)
     if (ds <= ZERO) then
@@ -282,9 +282,9 @@ do iterc = 1, itermax
     ! Seek the value of the angle that minimizes Q.
     cf = HALF * (shs - dhd)
     qbeg = sg + cf
-    qsave = qbeg
+    qsav = qbeg
     qmin = qbeg
-    isave = 0
+    isav = 0
     iu = 49
     unitang = (TWO * PI) / real(iu + 1, RP)
 
@@ -295,18 +295,18 @@ do iterc = 1, itermax
         qnew = (sg + cf * cth) * cth + (dg + dhs * cth) * sth
         if (qnew < qmin) then
             qmin = qnew
-            isave = i
-            quada = qsave
-        else if (i == isave + 1) then
+            isav = i
+            quada = qsav
+        else if (i == isav + 1) then
             quadb = qnew
         end if
-        qsave = qnew
+        qsav = qnew
     end do
 
-    if (isave == 0) then
+    if (isav == 0) then
         quada = qnew
     end if
-    if (isave == iu) then
+    if (isav == iu) then
         quadb = qbeg
     end if
     if (abs(quada - quadb) > ZERO) then
@@ -316,7 +316,7 @@ do iterc = 1, itermax
     else
         angle = ZERO
     end if
-    angle = unitang * (real(isave, RP) + angle)
+    angle = unitang * (real(isav, RP) + angle)
 
     ! Calculate the new S and HS. Then test for convergence.
     cth = cos(angle)
