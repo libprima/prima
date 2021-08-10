@@ -57,7 +57,6 @@ real(RP) :: temp
 real(RP) :: tempa
 real(RP) :: tmpv(size(A, 2))
 real(RP) :: tmpvabs(size(A, 2))
-real(RP) :: vsave
 real(RP) :: zdotw
 real(RP) :: zdvabs
 real(RP) :: zdwabs
@@ -209,7 +208,6 @@ real(RP) :: stpful
 real(RP) :: temp
 real(RP) :: tmpv(size(A, 2))
 real(RP) :: tmpvabs(size(A, 2))
-real(RP) :: vsave
 real(RP) :: zdota(size(z, 2))
 real(RP) :: zdotw
 real(RP) :: zdvabs
@@ -288,17 +286,21 @@ do iter = 1, maxiter
     ! reduce the best calculated value of the objective function or to increase the number of active
     ! constraints since the best value was calculated. This strategy prevents cycling, but there is
     ! a remote possibility that it will cause premature termination.
-    if (icount == 0_IK .or. optnew < optold) then
+    if (iter == 1) then
         optold = optnew
         nactx = nact
-        icount = 3_IK
-    else if (nact > nactx) then
-        nactx = nact
-        icount = 3_IK
-    else
-        icount = icount - 1_IK
-        if (icount == 0_IK) exit
     end if
+    if (optnew < optold .or. nact > nactx) then
+        nactx = nact
+        icount = 0
+    elseif (iter > 1) then
+        icount = icount + 1
+        if (icount == 3) then
+            exit
+        end if
+    end if
+    optold = min(optold, optnew)
+
 
     ! If ICON exceeds NACT, then we add the constraint with index IACT(ICON) to the active set.
     ! Apply Givens rotations so that the last N-NACT-1 columns of Z are orthogonal to the gradient
@@ -519,5 +521,5 @@ end module trustregion_mod
 
 ! 1. Check the update of ZDOTA; is it always <Z(:, I), A(:, IACT(I))> ?
 ! 2. Check KK
-! 3. Check CSTRV. Is it always max([b-A*x, 0])?
+! 3. Check CSTRV. Is it always max([b-A*x, 0])? Seems no. Isn't it a bug?
 ! 4. What is the objective of trstlp_sub?
