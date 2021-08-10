@@ -289,6 +289,12 @@ C
 C     Switch the best vertex into pole position if it is not there already,
 C     and also update SIM, SIMI and DATMAT.
 C
+      if (nfvals > 840) then
+!write (17, *) 'nf', nfvals, 'jopt', NBEST
+      do j = 1, n+1
+!write (17, *) 'b1', j, datmat(1:m+2, j)
+      end do
+      end if
       IF (NBEST <= N) THEN
           DO I=1,MPP
               TEMP=DATMAT(I,NP)
@@ -313,6 +319,12 @@ C          TEMPA=0.0
               SIMI(NBEST,I)=TEMPA
           END DO
       END IF
+
+      if (nfvals > 840) then
+      do J = 1, n+1
+!write (17, *) 'b2',  j, datmat(1:m+2, j)
+      end do
+      end if
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 2021-05-30
@@ -563,6 +575,10 @@ C the code, including uninitialized indices.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       CALL TRSTLP (N,M,A,CON,RHO,DX,IFULL,IACT,W(IZ),W(IZDOTA),
      1  W(IVMC),W(ISDIRN),W(IDXNEW),W(IVMD))
+      if (nfvals >= 843) then
+!write(17,*) 'x', sim(:, n+1)
+!write(17,*) 'ifulld', nfvals, ifull, dx(1:n)
+      end if
       IF (IFULL == 0) THEN
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C          TEMP=0.0

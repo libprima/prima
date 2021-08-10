@@ -16,25 +16,24 @@ implicit none
 
 integer(IK), intent(in) :: n
 integer(IK), intent(in) :: m
-real(RP), intent(in) :: A(:, :)  !(n, m+1)
-real(RP), intent(in) :: b(:)
+real(RP), intent(in) :: A(:, :)  ! (N, M+1)
+real(RP), intent(in) :: b(:)  ! M+1
 real(RP), intent(in) :: rho
-real(RP), intent(inout) :: d(:)
+real(RP), intent(inout) :: d(:)  ! N
 integer(IK), intent(out) :: ifull
 
 real(RP) :: hypt
 real(RP) :: z(n, n)
 real(RP) :: zdota(n)
-real(RP) :: vmultc(m + 1)
 real(RP) :: sdirn(n)
-real(RP) :: vmultd(m + 1)
+real(RP) :: vmultc(size(A, 2))
+real(RP) :: vmultd(size(A, 2))
 real(RP) :: cgrad(n)
 real(RP) :: cgz(n)
 real(RP) :: cgzabs(n)
 real(RP) :: cgzk
 real(RP) :: cgzkabs
 real(RP) :: dnew(n)
-real(RP) :: tot, cnew(n)
 
 real(RP) :: alpha
 real(RP) :: beta
@@ -56,15 +55,15 @@ real(RP) :: summabs
 real(RP) :: summd
 real(RP) :: temp
 real(RP) :: tempa
-real(RP) :: tmpv(m + 1)
-real(RP) :: tmpvabs(m + 1)
+real(RP) :: tmpv(size(A, 2))
+real(RP) :: tmpvabs(size(A, 2))
 real(RP) :: vsave
 real(RP) :: zdotw
 real(RP) :: zdvabs
 real(RP) :: zdwabs
-real(RP) :: dsav(size(d))  ! N
+real(RP) :: dold(size(d))  ! N
 integer(IK) :: i
-integer(IK) :: iact(m + 1)
+integer(IK) :: iact(size(A, 2))
 integer(IK) :: icon
 integer(IK) :: icount
 integer(IK) :: isave
@@ -79,9 +78,6 @@ integer(IK) :: mcon
 integer(IK) :: nact
 integer(IK) :: nactx
 integer(IK) :: stage
-
-real(RP) :: ACCA, ACCB
-integer(IK) :: KP
 
 
 ! This subroutine calculates an N-component vector D by the following two stages. In the first
@@ -110,7 +106,6 @@ integer(IK) :: KP
 ! constraints at d, the ordering of the components of VMULTC being in agreement with the permutation
 ! of the indices of the constraints that is in IACT. All these residuals are nonnegative, which is
 ! achieved by the shift CSTRV that makes the least residual zero.
-!
 
 
 !??????????????????????????????? NACT <= min(M, N)?????????????????????????????????????????????????
@@ -120,11 +115,6 @@ mcon = m
 stage = 1
 nact = 0
 cstrv = ZERO
-
-!!!!!!! Question: what is the size of B? M, M+1, or M+2?
-! It seems to be M+1. Then when is B(M+1) used?
-! What is the size of iact, vmultc? m or m+1?
-! What is the upper bound of NACT? M or N, or both?
 
 ! Initialize Z and some other variables. The value of CSTRV will be appropriate to D=0, while ICON
 ! will be the index of a most violated constraint if CSTRV is positive. Usually during the first
@@ -148,10 +138,8 @@ if (.not. (cstrv <= zero)) then
     !-------------------------------------------------------------------------------------------------------!
 else
     ifull = 0
-
 end if
-! Should VMULTD be passed between stages or not?????
-490 mcon = m + 1
+mcon = m + 1
 stage = 2
 icon = mcon
 iact(mcon) = mcon
@@ -166,7 +154,6 @@ end if
 end subroutine trstlp
 
 
-!subroutine trstlp_sub(iact, ifull, stage, nact, A, b, rho, cstrv, d, sdirn, vmultc, vmultd, z, zdota)
 subroutine trstlp_sub(iact, ifull, stage, nact, A, b, rho, cstrv, d, vmultc, z)
 
 ! Generic modules
@@ -227,7 +214,7 @@ real(RP) :: zdota(size(z, 2))
 real(RP) :: zdotw
 real(RP) :: zdvabs
 real(RP) :: zdwabs
-real(RP) :: dsav(size(d))  ! N
+real(RP) :: dold(size(d))  ! N
 real(RP) :: vmultd(size(A, 2))  ! Is this necessary?????
 integer(IK) :: i
 integer(IK) :: icon
@@ -265,6 +252,7 @@ else
     temp = abs(temp - cstrv) / max(1.0D0, abs(cstrv))
     if (temp > 1.0D2 * epsilon(1.0D0)) then
         open (unit=11, file='fort', status='old', position='append', action='write')
+        write (11, *) 'cstrv', cstrv, temp
         write (11, *) - int(log10(temp))
         close (11)
     end if
@@ -280,12 +268,13 @@ ifull = 1
 ! Indeed, in all these cases, Inf and NaN appear in D due to extremely large values in A (up to
 ! 10^219). To resolve this, we set the maximal number of iterations to MAXITER, and terminate when
 ! NaN or Inf occurs in D.
+!maxiter = min(10000_IK, 100_IK * max(m, n))
 maxiter = min(10000_IK, 100_IK * max(m, n))
 do iter = 1, maxiter
     if (is_finite(sum(abs(d)))) then
-        dsav = d
+        dold = d
     else
-        d = dsav !! IFULL = ?????
+        d = dold !! IFULL = ?????
         exit
     end if
 
@@ -474,6 +463,8 @@ do iter = 1, maxiter
         ! What if NACT = 0? Is it possible? Powell's code will carry out the loop for one time.
         zdotw = inprod(z(:, k), dnew)
         zdwabs = inprod(abs(z(:, k)), abs(dnew))
+        ! Powell's original code set ZDOTW = 0 when ISMINOR(ZDOTW, ZDWABS) = TRUE, and then take
+        ! VMULTD(K) = ZDOTW/ZDOTA, which is NaN if ZDOTW = 0 = ZDOTA. The following code avoids NaN.
         if (isminor(zdotw, zdwabs)) then
             vmultd(k) = ZERO
         else

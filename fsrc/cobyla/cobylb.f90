@@ -163,6 +163,13 @@ maxtr = huge(tr)  ! No constraint on the maximal number of trust-region iteratio
 ! COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
 
+    if (nf > 840) then
+!write (16, *) 'nf', nf, 'jopt', findpole(cpen, [(.true., i=1, n + 1)], datmat)
+        do j = 1, n + 1
+!write (16, *) 'b1', j, datmat(:, j)
+        end do
+    end if
+
     ! Before the trust-region step, call UPDATEPOLE so that SIM(:, N + 1) is the optimal vertex.
     call updatepole(cpen, [(.true., i=1, n + 1)], datmat, sim, simi, subinfo)
     if (subinfo == DAMAGING_ROUNDING) then
@@ -193,9 +200,18 @@ do tr = 1, maxtr
     ! Constraint and objective function values of the optimal vertex.
     conopt = datmat(:, n + 1)
 
+    if (nf > 840) then
+        do j = 1, n + 1
+!write (16, *) 'b2', j, datmat(:, j)
+        end do
+    end if
+
     ! Calculate the trust-region trial step D.
     call trstlp(n, m, A, -conopt(1:m + 1), rho, d, ifull)
-    !write (16, *) ifull, d
+    if (nf >= 843) then
+!write (16, *) 'x', sim(:, n + 1)
+!write (16, *) 'ifulld', nf, ifull, d
+    end if
 
     ! Is the trust-region trial step short?
     ! Is IFULL == 0 necessary ?????????????????????? If no, TRSTLP can be a function.
@@ -288,7 +304,18 @@ do tr = 1, maxtr
 
     if (improve_geo) then
         ! Before the geometry step, call UPDATEPOLE so that SIM(:, N + 1) is the optimal vertex.
+        if (nf > 840) then
+!write (16, *) 'nf', nf, 'jopt', findpole(cpen, [(.true., i=1, n + 1)], datmat)
+            do j = 1, n + 1
+!write (16, *) 'b1', j, datmat(:, j)
+            end do
+        end if
         call updatepole(cpen, [(.true., i=1, n + 1)], datmat, sim, simi, subinfo)
+        if (nf > 840) then
+            do j = 1, n + 1
+!write (16, *) 'b2', j, datmat(:, j)
+            end do
+        end if
         if (subinfo == DAMAGING_ROUNDING) then
             info = subinfo
             exit
@@ -405,7 +432,6 @@ con = conhist(:, kopt)
 
 !write (16, *) kopt, f, cstrv
 !close (16)
-close (11)
 
 end subroutine cobylb
 
