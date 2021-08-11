@@ -94,7 +94,8 @@
       !write(17,*) 'cstrv', resmax
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (RESMAX .EQ. 0.0) GOTO 480
-      IF (RESMAX == 0.0D0) GOTO 480
+!      IF (RESMAX == 0.0D0) GOTO 480
+      IF (.not. RESMAX > 0.0D0) GOTO 480
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DO I=1,N
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -171,7 +172,7 @@
           END DO
       END IF
       ITERC = ITERC + 1
-      IF (ITERC > MIN(10000, 100*max(M, N))) THEN
+      IF (ITERC > Min(50000, 100*max(M, N))) THEN
           GOTO 490
       END IF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -394,7 +395,8 @@
       END DO
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (TEMP .EQ. 0.0) GOTO 490
-      IF (TEMP == 0.0D0) GOTO 490
+!      IF (TEMP == 0.0D0) GOTO 490
+      IF (.not. ABS(TEMP) > 0.0D0) GOTO 490
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ZDOTA(NACT)=TEMP
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -742,7 +744,10 @@
       !write(17,*) dx(1:n)
 !write (17, *) 'itericon', iterc, icon, step, stpful
       IF (ICON > 0) GOTO 70
-      IF (STEP == STPFUL) GOTO 500
+      !IF (STEP == STPFUL) GOTO 500
+      IF (MCON > M .or. .not. dot_product(dx(1:n),dx(1:n))<rho*rho) THEN
+          GOTO 500
+      END IF
   480 MCON=M+1
 !      write(17,*) 'stage 2'
       ICON=MCON
@@ -767,9 +772,9 @@
       end if
       IFULL=0
 !  500 write (17, *) 'iact', iact(1:m+1)
-500      write (17, *) '---ifull', ifull, dx(1:n)
+!500      write (17, *) '---ifull', ifull, dx(1:n)
 !      write (17, *) 'd', dx(1:n)
       !write (17, *) 'vmultc', vmultc(1:m+1)
-!  500 RETURN
-      RETURN
+  500 RETURN
+!      RETURN
       END
