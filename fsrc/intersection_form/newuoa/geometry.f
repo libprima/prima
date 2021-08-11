@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 10-Aug-2021.
+! on 11-Aug-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -226,7 +226,7 @@
 
 ! Local variables
       integer(IK) :: i
-      integer(IK) :: isave
+      integer(IK) :: isav
       integer(IK) :: iterc
       integer(IK) :: iu
       integer(IK) :: n
@@ -350,7 +350,7 @@
           taubeg = cf(1) + cf(2) + cf(4)
           taumax = taubeg
           tauold = taubeg
-          isave = 0
+          isav = 0
           iu = 49
           unitang = (TWO * PI) / real(iu + 1, RP)
 
@@ -362,18 +362,18 @@
      & * cth) * sth
               if (abs(tau) > abs(taumax)) then
                   taumax = tau
-                  isave = i
+                  isav = i
                   taua = tauold
-              else if (i == isave + 1) then
+              else if (i == isav + 1) then
                   taub = tau
               end if
               tauold = tau
           end do
 
-          if (isave == 0) then
+          if (isav == 0) then
               taua = tau
           end if
-          if (isave == iu) then
+          if (isav == iu) then
               taub = taubeg
           end if
           if (abs(taua - taub) > ZERO) then
@@ -383,7 +383,7 @@
           else
               step = ZERO
           end if
-          angle = unitang * (real(isave, RP) + step)
+          angle = unitang * (real(isav, RP) + step)
 
 ! Calculate the new D and GD. Then test for convergence.
           cth = cos(angle)
@@ -442,7 +442,7 @@
 
 ! Local variable
       integer(IK) :: i
-      integer(IK) :: isave
+      integer(IK) :: isav
       integer(IK) :: iterc
       integer(IK) :: iu
       integer(IK) :: j
@@ -665,7 +665,7 @@
           denom = denex(1) + denex(2) + denex(4) + denex(6) + denex(8)
           denold = denom
           denmax = denom
-          isave = 0
+          isav = 0
           iu = 49
           unitang = (TWO * PI) / real(iu + 1, RP)
           par(1) = ONE
@@ -681,16 +681,16 @@
               denom = inprod(denex(1:9), par(1:9))
               if (abs(denom) > abs(denmax)) then
                   denmax = denom
-                  isave = i
+                  isav = i
                   dena = denomold
-              else if (i == isave + 1) then
+              else if (i == isav + 1) then
                   denb = denom
               end if
           end do
-          if (isave == 0) then
+          if (isav == 0) then
               dena = denom
           end if
-          if (isave == iu) then
+          if (isav == iu) then
               denb = denold
           end if
           if (abs(dena - denb) > 0) then
@@ -700,7 +700,7 @@
           else
               step = ZERO
           end if
-          angle = unitang * (real(isave, RP) + step)
+          angle = unitang * (real(isav, RP) + step)
 
 ! Calculate the new parameters of the denominator, the new VLAG vector and the new D. Then test
 ! for convergence.

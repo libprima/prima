@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 10-Aug-2021.
+! on 11-Aug-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -17,7 +17,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, July 23, 2021 PM05:21:38
+! Last Modified: Tuesday, August 10, 2021 PM09:44:17
 
       module newuob_mod
 
@@ -125,13 +125,13 @@
       real(RP) :: delbar
       real(RP) :: delta
       real(RP) :: dnorm
-      real(RP) :: dnormsave(3)
+      real(RP) :: dnormsav(3)
       real(RP) :: fopt
       real(RP) :: fval(npt)
       real(RP) :: gq(size(x))
       real(RP) :: hq(size(x), size(x))
       real(RP) :: moderr
-      real(RP) :: moderrsave(size(dnormsave))
+      real(RP) :: moderrsav(size(dnormsav))
       real(RP) :: pq(npt)
       real(RP) :: ratio
       real(RP) :: rho
@@ -218,8 +218,8 @@
 ! Set some more initial values and parameters.
       rho = rhobeg
       delta = rho
-      moderrsave = HUGENUM
-      dnormsave = HUGENUM
+      moderrsav = HUGENUM
+      dnormsav = HUGENUM
       itest = 0
       trtol = 1.0E-2_RP
       ! Tolerance used in trsapp.
@@ -250,8 +250,8 @@
 ! SHORTD corresponds to Box 3 of the NEWUOA paper.
           shortd = (dnorm < HALF * rho)
 ! REDUCE_RHO_1 corresponds to Box 14 of the NEWUOA paper.
-          reduce_rho_1 = shortd .and. (maxval(abs(moderrsave)) <= 0.125_&
-     &RP * crvmin * rho * rho) .and. (maxval(dnormsave) <= rho)
+          reduce_rho_1 = shortd .and. (maxval(abs(moderrsav)) <= 0.125_R&
+     &P * crvmin * rho * rho) .and. (maxval(dnormsav) <= rho)
           if (shortd .and. (.not. reduce_rho_1)) then
 ! Reduce DELTA. After this, DELTA < DNORM may hold.
               delta = TENTH * delta
@@ -298,12 +298,12 @@
               end if
 
 ! DNORMSAVE constains the DNORM of the latest 3 function evaluations with the current RHO.
-              dnormsave = [dnorm, dnormsave(1:size(dnormsave) - 1)]
+              dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
 ! MODERR is the error of the current model in predicting the change in F due to D.
               moderr = f - fopt - qred
 ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
-              moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
+              moderrsav = [moderrsav(2:size(moderrsav)), moderr]
 
 ! Calculate the reduction ratio and update DELTA accordingly.
               if (is_nan(qred) .or. qred >= ZERO) then
@@ -501,12 +501,12 @@
               dnorm = min(delbar, sqrt(inprod(d, d)))
 ! In theory, DNORM = DELBAR in this case.
 !------------------------------------------------------------------------------------------!
-              dnormsave = [dnorm, dnormsave(1:size(dnormsave) - 1)]
+              dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
 ! MODERR is the error of the current model in predicting the change in F due to D.
               moderr = f - fopt - qred
 ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
-              moderrsave = [moderr, moderrsave(1:size(moderrsave) - 1)]
+              moderrsav = [moderrsav(2:size(moderrsav)), moderr]
 
 ! Update XOPT and FOPT. Before KOPT is updated, XOPT may differ from XPT(:, KOPT), and FOPT
 ! may differ from FVAL(KOPT). Note that the code may exit before KOPT is updated. See below.
@@ -585,8 +585,8 @@
                   delta = max(delta, rho)
 ! DNORMSAVE and MODERRSAVE are corresponding to the latest 3 function evaluations with
 ! the current RHO. Update them after reducing RHO.
-                  dnormsave = HUGENUM
-                  moderrsave = HUGENUM
+                  dnormsav = HUGENUM
+                  moderrsav = HUGENUM
               end if
           end if
           ! The procedure of reducing RHO ends.

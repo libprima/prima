@@ -2,7 +2,7 @@ module trustregion_mod
 
 contains
 
-subroutine trstlp(n, m, A, b, rho, d, ifull)
+function trstlp(A, b, rho) result(d)
 
 ! Generic modules
 use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, EPS, HUGENUM, DEBUGGING, SRNLEN
@@ -14,26 +14,27 @@ use lina_mod, only : inprod, matprod, eye, planerot, isminor
 
 implicit none
 
-integer(IK), intent(in) :: n
-integer(IK), intent(in) :: m
+! Inputs
 real(RP), intent(in) :: A(:, :)  ! (N, M+1)
 real(RP), intent(in) :: b(:)  ! M+1
 real(RP), intent(in) :: rho
-real(RP), intent(inout) :: d(:)  ! N
-integer(IK), intent(out) :: ifull
 
+! Output
+real(RP) :: d(size(A, 1))  ! N
+
+! Local variables
 real(RP) :: hypt
-real(RP) :: z(n, n)
-real(RP) :: zdota(n)
-real(RP) :: sdirn(n)
-real(RP) :: vmultc(size(A, 2))
-real(RP) :: vmultd(size(A, 2))
-real(RP) :: cgrad(n)
-real(RP) :: cgz(n)
-real(RP) :: cgzabs(n)
+real(RP) :: z(size(d), size(d))
+real(RP) :: zdota(size(d))
+real(RP) :: sdirn(size(d))
+real(RP) :: vmultc(size(b))
+real(RP) :: vmultd(size(b))
+real(RP) :: cgrad(size(d))
+real(RP) :: cgz(size(d))
+real(RP) :: cgzabs(size(d))
 real(RP) :: cgzk
 real(RP) :: cgzkabs
-real(RP) :: dnew(n)
+real(RP) :: dnew(size(d))
 
 real(RP) :: alpha
 real(RP) :: beta
@@ -43,26 +44,27 @@ real(RP) :: optnew
 real(RP) :: optold
 real(RP) :: ratio
 real(RP) :: cstrv
+real(RP) :: cvnew
 real(RP) :: cvold
 real(RP) :: sd
 real(RP) :: sp
 real(RP) :: spabs
 real(RP) :: ss
 real(RP) :: step
-real(RP) :: stpful
+!real(RP) :: stpful
 real(RP) :: summ
 real(RP) :: summabs
 real(RP) :: summd
 real(RP) :: temp
 real(RP) :: tempa
-real(RP) :: tmpv(size(A, 2))
-real(RP) :: tmpvabs(size(A, 2))
+real(RP) :: tmpv(size(b))
+real(RP) :: tmpvabs(size(b))
 real(RP) :: zdotw
 real(RP) :: zdvabs
 real(RP) :: zdwabs
 real(RP) :: dold(size(d))  ! N
 integer(IK) :: i
-integer(IK) :: iact(size(A, 2))
+integer(IK) :: iact(size(b))
 integer(IK) :: icon
 integer(IK) :: icount
 integer(IK) :: isave
@@ -72,6 +74,8 @@ integer(IK) :: k
 integer(IK) :: kk
 integer(IK) :: kl
 integer(IK) :: kw
+integer(IK) :: m
+integer(IK) :: n
 integer(IK) :: maxiter
 integer(IK) :: mcon
 integer(IK) :: nact
@@ -109,7 +113,8 @@ integer(IK) :: stage
 
 !??????????????????????????????? NACT <= min(M, N)?????????????????????????????????????????????????
 
-ifull = 1
+m = size(b) - 1
+n = size(A, 1)
 mcon = m
 stage = 1
 nact = 0
@@ -120,23 +125,22 @@ cstrv = ZERO
 ! stage the vector SDIRN gives a search direction that reduces all the active constraint violations
 ! by one simultaneously.
 z = eye(n, n) !!!! What is size (number of columns) of Z and related variables (CGZ, ZDOTA, ZDOTW)???????
-d = ZERO
 cstrv = maxval([b(1:m), ZERO])
 icon = maxloc(b(1:m), dim=1)
 !iact(1:m) = [(k, k=1, m)]
-iact = [(k, k=1, m + 1)]  ! What is the size of IACT? M or M + 1?
-vmultc(1:m) = cstrv - b(1:m)
+iact = [(i, i=1, size(iact))]  ! What is the size of IACT? M or M + 1?
+vmultc = cstrv - b
 
-if (.not. (cstrv <= zero)) then
-    call trstlp_sub(iact(1:m), ifull, stage, nact, A(:, 1:m), b(1:m), rho, cstrv, d, vmultc(1:m), z)
+d = ZERO
+if (cstrv > ZERO) then
+    ! Do not absorb the above condition into TRSTLP_SUB; it applies to stage 1 only.
+    call trstlp_sub(iact(1:m), stage, nact, A(:, 1:m), b(1:m), rho, cstrv, d, vmultc(1:m), z)
     !-------------------------------------------------------------------------------------------------------!
     !call trstlp_sub(iact(1:m), stage, nact, A(:, 1:m), b(1:m), rho, d, vmultc(1:m), z) ! Is this enough????
     ! Decide IFULL by ||D||
     ! Decide CSTRV by A and b
     ! Decide ZDOTA by Z and A
     !-------------------------------------------------------------------------------------------------------!
-else
-    ifull = 0
 end if
 mcon = m + 1
 stage = 2
@@ -146,14 +150,15 @@ vmultc(mcon) = ZERO
 optold = ZERO
 icount = 0_IK
 
-if (ifull == 0) then
-    call trstlp_sub(iact, ifull, stage, nact, A, b, rho, cstrv, d, vmultc, z)
+if (inprod(d, d) < rho * rho) then
+    ! Do not absorb the above condition into TRSTLP_SUB; it is meaningful for stage 2 only.
+    call trstlp_sub(iact, stage, nact, A, b, rho, cstrv, d, vmultc, z)
 end if
 
-end subroutine trstlp
+end function trstlp
 
 
-subroutine trstlp_sub(iact, ifull, stage, nact, A, b, rho, cstrv, d, vmultc, z)
+subroutine trstlp_sub(iact, stage, nact, A, b, rho, cstrv, d, vmultc, z)
 
 ! Generic modules
 use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, EPS, HUGENUM, DEBUGGING, SRNLEN
@@ -165,8 +170,6 @@ use lina_mod, only : inprod, matprod, eye, planerot, isminor
 
 implicit none
 
-!integer(IK), intent(in) :: n
-!integer(IK), intent(in) :: m
 integer(IK), intent(in) :: stage
 real(RP), intent(in) :: A(:, :)  !(n, m+1)
 real(RP), intent(in) :: b(:)
@@ -178,12 +181,12 @@ real(RP), intent(inout) :: z(:, :)
 
 
 integer(IK), intent(inout) :: iact(:)
-integer(IK), intent(out) :: ifull
 integer(IK), intent(inout) :: nact
 
 
 real(RP) :: hypt
 real(RP) :: dnew(size(d))
+real(RP) :: dtmp(size(d))
 real(RP) :: cgrad(size(d))
 real(RP) :: cgz(size(d))
 real(RP) :: cgzabs(size(d))
@@ -198,22 +201,24 @@ real(RP) :: optnew
 real(RP) :: optold
 real(RP) :: ratio
 real(RP) :: sdirn(size(d))
+real(RP) :: cvnew
 real(RP) :: cvold
 real(RP) :: sd
 real(RP) :: sp
 real(RP) :: spabs
 real(RP) :: ss
 real(RP) :: step
-real(RP) :: stpful
+!real(RP) :: stpful
 real(RP) :: temp
-real(RP) :: tmpv(size(A, 2))
-real(RP) :: tmpvabs(size(A, 2))
+real(RP) :: tmpv(size(b))
+real(RP) :: tmpvabs(size(b))
+real(RP) :: zdatmp
 real(RP) :: zdota(size(z, 2))
 real(RP) :: zdotw
 real(RP) :: zdvabs
 real(RP) :: zdwabs
 real(RP) :: dold(size(d))  ! N
-real(RP) :: vmultd(size(A, 2))  ! Is this necessary?????
+real(RP) :: vmultd(size(b))  ! Is this necessary?????
 integer(IK) :: i
 integer(IK) :: icon
 integer(IK) :: icount
@@ -232,7 +237,7 @@ integer(IK) :: nactx
 
 
 n = size(A, 1)
-mcon = size(A, 2)
+mcon = size(b)
 if (stage == 1) then
     m = mcon
 else
@@ -246,28 +251,26 @@ else
     ! In Powell's code, stage 2 uses the ZDOTA calculated by stage 1. Here we re-calculate ZDOTA so
     ! that we do not need to pass it from stage 1 to stage 2 in order to reduce the coupling.
     zdota(1:nact) = [(inprod(z(:, i), A(:, iact(i))), i=1, nact)]
-    temp = maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
-    temp = abs(temp - cstrv) / max(1.0D0, abs(cstrv))
-    if (temp > 1.0D2 * epsilon(1.0D0)) then
-        open (unit=11, file='fort', status='old', position='append', action='write')
-        write (11, *) 'cstrv', cstrv, temp
-        write (11, *) - int(log10(temp))
-        close (11)
-    end if
+    !temp = maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
+    !temp = abs(temp - cstrv) / max(1.0D0, abs(cstrv))
+    !if (temp > 1.0D2 * epsilon(1.0D0)) then
+    !    open (unit=11, file='fort', status='old', position='append', action='write')
+    !    write (11, *) 'cstrv', cstrv, temp
+    !    write (11, *) - int(log10(temp))
+    !    close (11)
+    !end if
 end if
 
-icount = 0_IK
-sdirn = ZERO
-optold = ZERO
-ifull = 1
+sdirn = ZERO  ! Needed when STAGE = 1.
+optold = HUGENUM  ! Needed for the first iteration.
+nactx = -1  ! Needed for the first iteration.
 
 ! Powell's code can encounter infinite cycling, which did happen when testing the following CUTEst
 ! problems: DANWOODLS, GAUSS1LS, GAUSS2LS, GAUSS3LS, KOEBHELB, TAX13322, TAXR13322.
 ! Indeed, in all these cases, Inf and NaN appear in D due to extremely large values in A (up to
 ! 10^219). To resolve this, we set the maximal number of iterations to MAXITER, and terminate when
 ! NaN or Inf occurs in D.
-!maxiter = min(10000_IK, 100_IK * max(m, n))
-maxiter = min(10000_IK, 100_IK * max(m, n))
+maxiter = min(50000_IK, 100_IK * max(m, n))
 do iter = 1, maxiter
     if (is_finite(sum(abs(d)))) then
         dold = d
@@ -286,14 +289,10 @@ do iter = 1, maxiter
     ! reduce the best calculated value of the objective function or to increase the number of active
     ! constraints since the best value was calculated. This strategy prevents cycling, but there is
     ! a remote possibility that it will cause premature termination.
-    if (iter == 1) then
-        optold = optnew
-        nactx = nact
-    end if
-    if (optnew < optold .or. nact > nactx) then
+    if (optnew < optold .or. nact > nactx) then  ! When ITER = 1, OPTOLD = HUGENUM and NACTX = -1.
         nactx = nact
         icount = 0
-    elseif (iter > 1) then
+    else
         icount = icount + 1
         if (icount == 3) then
             exit
@@ -301,17 +300,15 @@ do iter = 1, maxiter
     end if
     optold = min(optold, optnew)
 
-
     ! If ICON exceeds NACT, then we add the constraint with index IACT(ICON) to the active set.
     ! Apply Givens rotations so that the last N-NACT-1 columns of Z are orthogonal to the gradient
     ! of the new constraint, a scalar product being set to zero if its nonzero value could be due to
     ! computer rounding errors.
     if (icon > nact) then
-        kk = iact(icon)  ! IACT(ICON) will be updated later. So KK is necessary.
-        cgrad = A(:, kk)
+        cgrad = A(:, iact(icon))
         cgz = matprod(cgrad, z)
         cgzabs = matprod(abs(cgrad), abs(z))
-        where (isminor(cgz, cgzabs))  ! In MATLAB: CGZ(ISMINOR(CGZ, CGZABS)) = ZERO
+        where (isminor(cgz, cgzabs))  ! Code in MATLAB: CGZ(ISMINOR(CGZ, CGZABS)) = ZERO
             cgz = ZERO
         end where
         do k = n - 1, nact + 1, -1
@@ -327,23 +324,24 @@ do iter = 1, maxiter
 
         if (nact < n .and. abs(cgz(nact + 1)) > ZERO) then
             ! Add the new constraint if this can be done without a deletion from the active set.
-            ! Powell wrote "CGZ(NACT + 1) /= ZERO" instead of "ABS(CGZ(NACT + 1)) > ZERO", the two
-            ! conditions differ if CGZ(NACT + 1) is NaN.
+            ! Powell wrote "CGZ(NACT + 1) /= ZERO" instead of "ABS(CGZ(NACT + 1)) > ZERO".
             nact = nact + 1
-            zdota(nact) = cgz(nact)
-            vmultc(icon) = vmultc(nact)
-            vmultc(nact) = ZERO
+            vmultc([icon, nact]) = [vmultc(nact), ZERO]
+            iact([icon, nact]) = iact([nact, icon])
+            zdota(nact) = cgz(nact)  ! Indeed, ZDOTA(NACT) = INPROD(Z(:, NACT), A(:, IACT(NACT)))
         else
             ! The next instruction is reached if a deletion has to be made from the active set in
             ! order to make room for the new active constraint, because the new constraint gradient
             ! is a linear combination of the gradients of the old active constraints. Set the
-            ! elements of VMULTD to the multipliers of the linear combination.
-            !----------- Powell wrote the following comment, but IOUT is never defined ------------!
+            ! elements of VMULTD to the multipliers (i.e., coefficients) of the linear combination.
+            !
+            ! Zaikun 20210811: Powell wrote the following comment, but IOUT is NEVER DEFINED. It
+            ! seems that Powell's code always deletes the constraint with index IACT(NACT).
+            !--------------------------------------------------------------------------------------!
             ! Further, set IOUT to the index of the constraint to be deleted, but branch if no
             ! suitable index can be found.
             !--------------------------------------------------------------------------------------!
             do k = nact, 1, -1  ! NACT >= N >= 1
-                ! The following part used to lead to a memory error when VMULTD(K) is accessed (by why not Z(I, K) and others?????)
                 cgzk = inprod(cgrad, z(:, k))
                 cgzkabs = inprod(abs(cgrad), abs(z(:, k)))
                 if (isminor(cgzk, cgzkabs)) then
@@ -351,20 +349,21 @@ do iter = 1, maxiter
                 else
                     vmultd(k) = cgzk / zdota(k)
                 end if
-                if (k >= 2) then
-                    cgrad = cgrad - vmultd(k) * A(:, iact(k))
-                end if
+                cgrad = cgrad - vmultd(k) * A(:, iact(k))
             end do
 
             ratio = minval(vmultc(1:nact) / vmultd(1:nact), mask=(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m))
-            if (ratio < ZERO .or. .not. any(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m)) exit
+            if (ratio < ZERO .or. .not. any(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m)) then
+                exit
+            end if
 
             ! Revise the Lagrange multipliers and reorder the active constraints so that the one to
             ! be replaced is at the end of the list. Also calculate the new value of ZDOTA(NACT) and
             ! branch if it is not acceptable.
             vmultc(1:nact) = max(ZERO, vmultc(1:nact) - ratio * vmultd(1:nact))
 
-            !-------Powell's code includes the following, but it is IMPOSSIBLE TO REACH------------!
+            ! Zaikun 20210811: Powell's code includes the following, but it is IMPOSSIBLE TO REACH.
+            !--------------------------------------------------------------------------------------!
             !if (icon < nact) then
             !    do k = icon, nact - 1
             !        hypt = sqrt(zdota(k + 1)**2 + inprod(z(:, k), A(:, iact(k + 1)))**2)
@@ -377,38 +376,40 @@ do iter = 1, maxiter
             !end if
             !--------------------------------------------------------------------------------------!
 
-            if (inprod(z(:, nact), A(:, kk)) == ZERO) exit  ! Why?????
-            zdota(nact) = inprod(z(:, nact), A(:, kk))  ! Why ?????
-            vmultc(icon) = ZERO
-            vmultc(nact) = ratio
+            zdatmp = inprod(z(:, nact), A(:, iact(icon)))
+            if (abs(zdatmp) > ZERO) then
+                vmultc([icon, nact]) = [ZERO, ratio]
+                iact([icon, nact]) = iact([nact, icon])
+                zdota(nact) = zdatmp  ! Indeed, ZDOTA(NACT) = INPROD(Z(:, NACT), A(:, IACT(NACT)))
+            else
+                exit
+            end if
         end if
 
-        ! Update IACT and ensure that the objective function continues to be treated as the last
-        ! active constraint if stage 2 is in progress.
-        iact([icon, nact]) = iact([nact, icon])
-        if (stage == 2 .and. kk /= mcon) then
-            hypt = sqrt(zdota(nact)**2 + inprod(z(:, nact - 1), A(:, kk))**2)  ! What if HYPT = 0???
-            grot = planerot([zdota(nact), inprod(z(:, nact - 1), A(:, kk))])
+        ! Ensure that the objective function continues to be treated as the last active constraint
+        ! if stage 2 is in progress.
+        if (stage == 2 .and. iact(nact) /= mcon) then
+            ! HYPT is positive because ZDOTA(NACT) is nonzero.
+            hypt = sqrt(zdota(nact)**2 + inprod(z(:, nact - 1), A(:, iact(nact)))**2)
+            grot = planerot([zdota(nact), inprod(z(:, nact - 1), A(:, iact(nact)))])
             z(:, [nact - 1, nact]) = matprod(z(:, [nact, nact - 1]), transpose(grot))
             zdota([nact - 1, nact]) = [hypt, (zdota(nact) / hypt) * zdota(nact - 1)]
-            iact([nact - 1, nact]) = [kk, iact(nact - 1)]
+            iact([nact - 1, nact]) = iact([nact, nact - 1])
             vmultc([nact - 1, nact]) = vmultc([nact, nact - 1])
         end if
 
-        ! If stage 1 is in progress, then set SDIRN to the direction of the next change to the
-        ! current vector of variables.
+        ! Set SDIRN to the direction of the next change to the current vector of variables.
         if (stage == 1) then
             sdirn = sdirn - ((inprod(sdirn, A(:, iact(nact))) - ONE) / zdota(nact)) * z(:, nact)
         else
             sdirn = (ONE / zdota(nact)) * z(:, nact)
         end if
-
     else
-
         ! Delete the constraint that has the index IACT(ICON) from the active set.
         if (icon < nact) then
             do k = icon, nact - 1
-                hypt = sqrt(zdota(k + 1)**2 + inprod(z(:, k), A(:, iact(k + 1)))**2)  ! What if HYPT = 0 ???
+                ! Zaikun 20210811: What if HYPT = 0?
+                hypt = sqrt(zdota(k + 1)**2 + inprod(z(:, k), A(:, iact(k + 1)))**2)
                 grot = planerot([zdota(k + 1), inprod(z(:, k), A(:, iact(k + 1)))])
                 z(:, [k, k + 1]) = matprod(z(:, [k + 1, k]), transpose(grot))
                 zdota([k, k + 1]) = [hypt, (zdota(k + 1) / hypt) * zdota(k)]
@@ -416,10 +417,9 @@ do iter = 1, maxiter
             iact(icon:nact) = [iact(icon + 1:nact), iact(icon)]
             vmultc(icon:nact) = [vmultc(icon + 1:nact), vmultc(icon)]
         end if
-        nact = nact - 1
+        nact = nact - 1  ! Zaikun 20210811: Is it possible that NACT = 0 after this?
 
-        ! If stage 1 is in progress, then set SDIRN to the direction of the next change to the
-        ! current vector of variables.
+        ! Set SDIRN to the direction of the next change to the current vector of variables.
         if (stage == 1) then
             sdirn = sdirn - inprod(sdirn, z(:, nact + 1)) * z(:, nact + 1)
         else
@@ -427,21 +427,24 @@ do iter = 1, maxiter
         end if
     end if
 
-    ! Calculate the step to the boundary of the trust region or take the step  that reduces CSTRV to
-    ! zero. The two statements below that include the factor EPS  prevent some harmless underflows
+    ! Calculate the step to the boundary of the trust region or take the step that reduces CSTRV to
+    ! zero. The two statements below that include the factor EPS prevent some harmless underflows
     ! that occurred in a test calculation (here, EPS is the machine epsilon; Powell's original code
     ! used 1.0E-6, and Powell's code was written in SINGLE PRECISION). Further, we skip the step if
     ! it could be zero within a reasonable tolerance for computer rounding errors.
     dd = rho**2 - sum(d**2, mask=(abs(d) >= EPS * rho))
     sd = inprod(sdirn, d)
     ss = inprod(sdirn, sdirn)
-    if (dd <= ZERO) exit
+    if (dd <= ZERO) then
+        exit
+    end if
     temp = sqrt(ss * dd)
     if (abs(sd) >= EPS * temp) then
         temp = sqrt(ss * dd + sd * sd)
     end if
-    stpful = dd / (temp + sd)
-    step = stpful
+    !stpful = dd / (temp + sd)
+    !step = stpful
+    step = dd / (temp + sd)
     if (stage == 1) then
         if (isminor(cstrv, step)) then
             exit
@@ -450,38 +453,36 @@ do iter = 1, maxiter
     end if
 
     ! Set DNEW to the new variables if STEP is the steplength, and reduce CSTRV to the corresponding
-    ! maximum residual if stage 1 is being done. Because DNEW will be changed during the calculation
-    ! of some Lagrange multipliers, it will be restored to the following value later.
+    ! maximum residual if stage 1 is being done.
     dnew = d + step * sdirn
     if (stage == 1) then
         cvold = cstrv
         cstrv = maxval([b(iact(1:nact)) - matprod(dnew, A(:, iact(1:nact))), ZERO])
+        ! N.B.: CSTRV will be used when calculating VMULTD(NACT+1 : MCON).
     end if
 
     ! Set VMULTD to the VMULTC vector that would occur if D became DNEW. A device is included to
     ! force VMULTD(K)=ZERO if deviations from this value can be attributed to computer rounding
     ! errors. First calculate the new Lagrange multipliers.
+    dtmp = dnew  ! Use DTMP instead of DNEW for the calculation, retaining DNEW for later usage.
     do k = nact, 1, -1
-        ! What if NACT = 0? Is it possible? Powell's code will carry out the loop for one time.
-        zdotw = inprod(z(:, k), dnew)
-        zdwabs = inprod(abs(z(:, k)), abs(dnew))
-        ! Powell's original code set ZDOTW = 0 when ISMINOR(ZDOTW, ZDWABS) = TRUE, and then take
+        ! Zaikun 20210811: What if NACT = 0? Powell's code carries out the loop for one time. Why?
+        zdotw = inprod(z(:, k), dtmp)
+        zdwabs = inprod(abs(z(:, k)), abs(dtmp))
+        ! Powell's original code sets ZDOTW = 0 when ISMINOR(ZDOTW, ZDWABS) = TRUE, and then takes
         ! VMULTD(K) = ZDOTW/ZDOTA, which is NaN if ZDOTW = 0 = ZDOTA. The following code avoids NaN.
         if (isminor(zdotw, zdwabs)) then
             vmultd(k) = ZERO
         else
             vmultd(k) = zdotw / zdota(k)
         end if
-        if (k >= 2) then
-            dnew = dnew - vmultd(k) * A(:, iact(k))
-        end if
+        dtmp = dtmp - vmultd(k) * A(:, iact(k))
     end do
     if (stage == 2) then
         vmultd(nact) = max(ZERO, vmultd(nact))
     end if
 
-    ! Complete VMULTD by finding the new constraint residuals.
-    dnew = d + step * sdirn
+    ! Complete VMULTC by finding the new constraint residuals.
     tmpv = matprod(dnew, A(:, iact)) - b(iact) + cstrv  ! Indeed, only TMPV(nact+1:mcon) is needed.
     tmpvabs = matprod(abs(dnew), abs(A(:, iact))) + abs(b(iact)) + cstrv
     where (isminor(tmpv, tmpvabs))
@@ -498,28 +499,59 @@ do iter = 1, maxiter
         icon = 0
     end if
 
-    ! Update d, VMULTC and CSTRV.
+
+
+
+    !!!!!!!!!!!!!! TEMPORARY !!!!!!!!!!!!!XXXXXXXXXXXXXXXXXXXX
+    !dtmp = d !XXXXXXXXXXXXXXXXX
+    !cvnew = cstrv !XXXXXXXXXXXXXXX
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!XXXXXXXXXXXXXXXXXXXX
+
+
+
+    ! Update D, VMULTC and CSTRV.
     d = (ONE - ratio) * d + ratio * dnew
     vmultc(1:mcon) = max(ZERO, (ONE - ratio) * vmultc(1:mcon) + ratio * vmultd(1:mcon))
     if (stage == 1) then
-        !cstrv = cvold + ratio * (cstrv - cvold)
+        ! Powell's code: CSTRV = CVOLD + RATIO * (CSTRV - CVOLD).
         cstrv = (ONE - ratio) * cvold + ratio * cstrv
+
+
+
+        !!!!!!!!!!!!!! TEMPORARY !!!!!!!!!!!!!XXXXXXXXXXXXXXXXXXXX
+        !temp = maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
+        !if (abs(temp - cstrv) / max(1.0D0, abs(cstrv)) > 1.0D-6) then
+        !    open (unit=11, file='cerror', status='old', position='append', action='write')
+        !    write (11, *) '-------------'
+        !    write (11, *) 'd', d
+        !    write (11, *) 'dold', dtmp
+        !    write (11, *) 'dnew', dnew
+        !    write (11, *) 'cstrv', cstrv, temp, (cstrv - temp) / max(ONE, abs(cstrv))
+        !    write (11, *) 'cvold', cvold, maxval([b(1:m) - matprod(dtmp, A(:, 1:m)), ZERO]), &
+        !    & (cvold - maxval([b(1:m) - matprod(dtmp, A(:, 1:m)), ZERO])) / max(abs(cvold), ONE)
+        !    write (11, *) 'cvnew', cvnew, maxval([b(1:m) - matprod(dnew, A(:, 1:m)), ZERO]), &
+        !    & (cvnew - maxval([b(1:m) - matprod(dnew, A(:, 1:m)), ZERO])) / max(abs(cvnew), ONE)
+        !    write (11, *) 'ratio', ratio
+        !    write (11, *) 'A', maxval(abs(A)), any(A /= A)
+        !    write (11, *) 'b', maxval(abs(b)), any(b /= b)
+        !    close (11)
+        !end if
+        !!!!!!!!!!!!!! TEMPORARY !!!!!!!!!!!!!XXXXXXXXXXXXXXXXXXXX
+
+
+
     end if
 
     if (icon == 0) then
-        if (step >= stpful) then  ! Indeed, STEP == STPFUL.
-            return
-        else
-            exit
-        end if
+        exit
     end if
 end do
-ifull = 0
+
+
 end subroutine trstlp_sub
 
 end module trustregion_mod
 
 ! 1. Check the update of ZDOTA; is it always <Z(:, I), A(:, IACT(I))> ?
-! 2. Check KK
-! 3. Check CSTRV. Is it always max([b-A*x, 0])? Seems no. Isn't it a bug?
+! 2. Check CSTRV. Is it always max([b-A*x, 0])? Seems no. Isn't it a bug?
 ! 4. What is the objective of trstlp_sub?
