@@ -6,7 +6,7 @@ C      IMPLICIT REAL*8 (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DIMENSION XOPT(*),XPT(NPT,*),GQ(*),HQ(*),PQ(*),STEP(*),
-     1  D(*),G(*),HD(*),HS(*)
+     1  D(*),G(*),HD(*),HS(*), SOLD(N)
 C
 C     N is the number of variables of a quadratic objective function, Q say.
 C     The arguments NPT, XOPT, XPT, GQ, HQ and PQ have their usual meanings,
@@ -81,6 +81,8 @@ C
 C
 C     Update STEP and HS.
 C
+      sold = step(1:n)
+
       GGSAV=GG
       GG=ZERO
       DO I=1,N
@@ -88,6 +90,14 @@ C
           HS(I)=HS(I)+ALPHA*HD(I)
           GG=GG+(G(I)+HS(I))**2
       END DO
+
+      ! Exit in case of Inf/NaN in STEP.
+      temp = sum(abs(step(1:n)))
+      if (temp /= temp .or. temp > huge(1.0D0)) then
+        step(1:n) = sold(1:n)
+        goto 160
+      end if
+
 C
 C     Begin another conjugate direction iteration if required.
 C
@@ -183,11 +193,22 @@ C
       STH=DSIN(ANGLE)
       REDUC=QBEG-(SG+CF*CTH)*CTH-(DG+DHS*CTH)*STH
       GG=ZERO
+
+      sold(1:n) = step(1:n)
+
       DO I=1,N
           STEP(I)=CTH*STEP(I)+STH*D(I)
           HS(I)=CTH*HS(I)+STH*HD(I)
           GG=GG+(G(I)+HS(I))**2
       END DO
+
+      ! Exit in case of Inf/NaN in STEP.
+      temp = sum(abs(step(1:n)))
+      if (temp /= temp .or. temp > huge(1.0D0)) then
+        step(1:n) = sold(1:n)
+        goto 160
+      end if
+
       QRED=QRED+REDUC
       RATIO=REDUC/QRED
       IF (ITERC < ITERMAX .AND. RATIO > 0.01D0) GOTO 90

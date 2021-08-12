@@ -664,6 +664,11 @@ C
               DETRAT=TEMP
               KNEW=K
           END IF
+          ! Zaikun 20210812
+          if (TEMP /= TEMP) then
+              KNEW = 0
+              exit
+          end if
       END DO
       IF (KNEW == 0) GOTO 460
 C
@@ -709,7 +714,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       IF (KSAVE == 0 .AND. DELTA == RHO) THEN
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C Zaikun 2019-08-26: It is observed in Zhang Zaikun's PhD thesis
+C Zaikun 2019-08-26: It is observed in Zhang Zaikun-s PhD thesis
 C (Section 3.3.2) that it is more reasonable and more efficient to
 C check the value of RATIO instead of DABS(RATIO).
 C          IF (DABS(RATIO) .GT. 1.0D-2) THEN
