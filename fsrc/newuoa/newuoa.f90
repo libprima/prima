@@ -14,7 +14,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Thursday, July 22, 2021 AM10:56:17
+! Last Modified: Thursday, August 12, 2021 PM07:55:26
 
 module newuoa_mod
 
@@ -45,11 +45,11 @@ subroutine newuoa(calfun, x, f, &
 ! See example.f90 for a concrete example.
 !
 ! A detailed introduction to the arguments is as follows.
-! N.B.: RP and IK are defined in the module CONSTS_MOD. See consts.F90 under 
-! the directory name "common". By default, RP = kind(0.0D0) and IK = kind(0). 
-! Therefore, REAL(RP) is the double-precision real, and INTEGER(IK) is the 
-! default integer. For ADVANCED USERS, RP and IK can be defined by specifying 
-! __REAL_PRECISION__ and __INTEGER_KIND__ in common/ppf.h. Use the default if 
+! N.B.: RP and IK are defined in the module CONSTS_MOD. See consts.F90 under
+! the directory name "common". By default, RP = kind(0.0D0) and IK = kind(0).
+! Therefore, REAL(RP) is the double-precision real, and INTEGER(IK) is the
+! default integer. For ADVANCED USERS, RP and IK can be defined by specifying
+! __REAL_PRECISION__ and __INTEGER_KIND__ in common/ppf.h. Use the default if
 ! you are unsure.
 !
 ! CALFUN
@@ -149,12 +149,14 @@ subroutine newuoa(calfun, x, f, &
 !
 ! INFO
 !   Output, INTEGER(IK) scalar.
-!   INFO is the exit flag. It can be set to the following values defined
+!   INFO is the exit flag. It will be set to one of the following values defined
 !   in the module INFO_MOD (see info.F90 under the directory named "common"):
 !   SMALL_TR_RADIUS: the lower bound for the trust region radius is reached;
 !   FTARGET_ACHIEVED: the target function value is reached;
 !   TRSUBP_FAILED: a trust region step failed to reduce the quadratic model;
 !   MAXFUN_REACHED: the objective function has been evaluated MAXFUN times;
+!   MAXTR_REACHED: the trust region iteration has been performed MAXTR times,
+!       the value of MAXTR being 10*MAXFUN, which is very unlikely to reach;
 !   NAN_X: NaN occurs in x;
 !   NAN_INF_F: the objective function returns NaN or nearly infinite value;
 !   NAN_MODEL: NaN occurs in the models.

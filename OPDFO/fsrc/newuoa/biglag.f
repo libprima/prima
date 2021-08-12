@@ -6,7 +6,7 @@ C      IMPLICIT REAL*8 (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DIMENSION XOPT(*),XPT(NPT,*),BMAT(NDIM,*),ZMAT(NPT,*),D(*),
-     1  HCOL(*),GC(*),GD(*),S(*),W(*)
+     1  HCOL(*),GC(*),GD(*),S(*),W(*), DOLD(N)
 C
 C     N is the number of variables.
 C     NPT is the number of interpolation equations.
@@ -62,16 +62,16 @@ C
       END DO
       DO K=1,NPT
           TEMP=ZERO
-          SUM=ZERO
+          SUMM=ZERO
           DO J=1,N
               TEMP=TEMP+XPT(K,J)*XOPT(J)
-              SUM=SUM+XPT(K,J)*D(J)
+              SUMM=SUMM+XPT(K,J)*D(J)
           END DO
           TEMP=HCOL(K)*TEMP
-          SUM=HCOL(K)*SUM
+          SUMM=HCOL(K)*SUMM
           DO I=1,N
               GC(I)=GC(I)+TEMP*XPT(K,I)
-              GD(I)=GD(I)+SUM*XPT(K,I)
+              GD(I)=GD(I)+SUMM*XPT(K,I)
           END DO
       END DO
 C
@@ -123,13 +123,13 @@ C     Calculate the coefficients of the objective function on the circle,
 C     beginning with the multiplication of S by the second derivative matrix.
 C
       DO K=1,NPT
-          SUM=ZERO
+          SUMM=ZERO
           DO J=1,N
-              SUM=SUM+XPT(K,J)*S(J)
+              SUMM=SUMM+XPT(K,J)*S(J)
           END DO
-          SUM=HCOL(K)*SUM
+          SUMM=HCOL(K)*SUMM
           DO I=1,N
-              W(I)=W(I)+SUM*XPT(K,I)
+              W(I)=W(I)+SUMM*XPT(K,I)
           END DO
       END DO
       CF1=ZERO
@@ -184,11 +184,18 @@ C
       CTH=DCOS(ANGLE)
       STH=DSIN(ANGLE)
       TAU=CF1+(CF2+CF4*CTH)*CTH+(CF3+CF5*CTH)*STH
+      dold(1:n) = d(1:n)
       DO I=1,N
           D(I)=CTH*D(I)+STH*S(I)
           GD(I)=CTH*GD(I)+STH*W(I)
           S(I)=GC(I)+GD(I)
       END DO
+      ! Exit in case of Inf/NaN in D.
+      temp = sum(abs(d(1:n)))
+      if (temp /= temp .or. temp > huge(1.0D0)) then
+         d(1:n) = dold(1:n)
+         goto 160
+      end if
       IF (DABS(TAU) <= 1.1D0*DABS(TAUBEG)) GOTO 160
       IF (ITERC < N) GOTO 80
   160 RETURN

@@ -4,7 +4,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Tuesday, August 10, 2021 PM09:52:23
+! Last Modified: Friday, August 13, 2021 AM12:17:41
 
 module trustregion_mod
 
@@ -52,7 +52,7 @@ subroutine trsapp(delta, gq, hq, pq, tol, x, xpt, crvmin, s, info)
 ! Generic modules
 use consts_mod, only : RP, IK, ONE, TWO, HALF, ZERO, PI, DEBUGGING, SRNLEN
 use debug_mod, only : errstop, verisize
-use infnan_mod, only : is_nan
+use infnan_mod, only : is_nan, is_finite
 use lina_mod, only : Ax_plus_y, inprod, matprod
 
 implicit none
@@ -74,7 +74,7 @@ real(RP), intent(out) :: s(:)        ! S(N)
 ! Local variables
 integer(IK) :: i
 integer(IK) :: isav
-integer(IK) :: iterc
+integer(IK) :: iter
 integer(IK) :: itermax
 integer(IK) :: iu
 integer(IK) :: n
@@ -110,6 +110,7 @@ real(RP) :: reduc
 real(RP) :: sg
 real(RP) :: sgk
 real(RP) :: shs
+real(RP) :: sold(size(x))
 real(RP) :: ss
 real(RP) :: sth
 real(RP) :: t
@@ -171,7 +172,7 @@ twod_search = .false.
 ! In the 4th case, twod_search will be set to true, meaning that S
 ! will be improved by a sequence of two-dimensional search, the
 ! two-dimensional subspace at each iteration being span(S, -G).
-do iterc = 1, itermax
+do iter = 1, itermax
     ! Check whether to exit due to small GG
     if (gg <= (tol**2) * gg0) then
         info = 0
@@ -190,7 +191,7 @@ do iterc = 1, itermax
         alpha = bstep
     else
         alpha = min(bstep, gg / dhd)
-        if (iterc == 1) then
+        if (iter == 1) then
             crvmin = dhd / dd
         else
             crvmin = min(crvmin, dhd / dd)
@@ -203,12 +204,13 @@ do iterc = 1, itermax
     ! QADD and QRED will be used in the 2D minimization if any.
 
     ! Update S, HS, and GG.
+    sold = s
     s = s + alpha * d
     ss = inprod(s, s)
     hs = hs + alpha * hd
     ggsav = gg  ! Gradient norm square before this iteration
     gg = inprod(g + hs, g + hs)  ! Current gradient norm square
-    ! We may record g+hs for latter usage:
+    ! We may record g+hs for later usage:
     ! gnew = g + hs
     ! Note that we should NOT set g = g + hs, because g contains
     ! the gradient of Q at x.
@@ -229,6 +231,13 @@ do iterc = 1, itermax
         exit
     end if
 
+    ! Exit in case of Inf/NaN in S.
+    if (.not. is_finite(sum(abs(s)))) then
+        s = sold
+        info = -1
+        exit
+    end if
+
     ! Prepare for the next CG iteration.
     d = (gg / ggsav) * d - g - hs  ! CG direction
     dd = inprod(d, d)
@@ -240,7 +249,7 @@ do iterc = 1, itermax
     end if
 end do
 
-if (ss <= 0 .or. is_nan(ss)) then
+if (ss <= ZERO .or. is_nan(ss)) then
     ! This may occur for ill-conditioned problems due to rounding.
     info = -1
     twod_search = .false.
@@ -248,13 +257,13 @@ end if
 
 if (twod_search) then
     ! At least 1 iteration of 2D minimization
-    itermax = max(int(1, kind(itermax)), itermax - iterc)
+    itermax = max(int(1, kind(itermax)), itermax - iter)
 else
     itermax = 0
 end if
 
 ! The 2D minimization
-do iterc = 1, itermax
+do iter = 1, itermax
     if (gg <= (tol**2) * gg0) then
         info = 0
         exit
@@ -318,11 +327,21 @@ do iterc = 1, itermax
     end if
     angle = unitang * (real(isav, RP) + angle)
 
-    ! Calculate the new S and HS. Then test for convergence.
+    ! Calculate the new S.
     cth = cos(angle)
     sth = sin(angle)
     reduc = qbeg - (sg + cf * cth) * cth - (dg + dhs * cth) * sth
+    sold = s
     s = cth * s + sth * d
+
+    ! Exit in case of Inf/NaN in S.
+    if (.not. is_finite(sum(abs(s)))) then
+        s = sold
+        info = -1
+        exit
+    end if
+
+    ! Calculate HS. Then test for convergence.
     hs = cth * hs + sth * hd
     gg = inprod(g + hs, g + hs)
     qred = qred + reduc

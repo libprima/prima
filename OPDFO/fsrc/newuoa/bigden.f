@@ -7,7 +7,7 @@ C      IMPLICIT REAL*8 (A-H,O-Z)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DIMENSION XOPT(*),XPT(NPT,N),BMAT(NDIM,*),ZMAT(NPT,*),D(*),
      1  W(*),VLAG(*),S(*),WVEC(NDIM,*),PROD(NDIM,*)
-      DIMENSION DEN(9),DENEX(9),PAR(9), WSAVE(NPT)
+      DIMENSION DEN(9),DENEX(9),PAR(9), WSAVE(NPT), DOLD(N)
 C
 C     N is the number of variables.
 C     NPT is the number of interpolation equations.
@@ -73,10 +73,10 @@ C
           SS=SS+S(I)**2
           XOPTSQ=XOPTSQ+XOPT(I)**2
       END DO
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC 
-C Zaikun 2019-08-29: With the original code, if DS, DD, or SS is 
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C Zaikun 2019-08-29: With the original code, if DS, DD, or SS is
 C NaN, KSAV will not get a value. This may cause Segmentation Fault
-C because XPT(KSAV, :) will later be accessed. 
+C because XPT(KSAV, :) will later be accessed.
 C      IF (DS*DS .GT. 0.99D0*DD*SS) THEN
       IF (.NOT. (DS*DS <= 0.99D0*DD*SS)) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -172,42 +172,42 @@ C
               PROD(K,JC)=ZERO
           END DO
           DO J=1,NPTM
-              SUM=ZERO
+              SUMM=ZERO
               DO K=1,NPT
-                  SUM=SUM+ZMAT(K,J)*WVEC(K,JC)
+                  SUMM=SUMM+ZMAT(K,J)*WVEC(K,JC)
               END DO
-              IF (J < IDZ) SUM=-SUM
+              IF (J < IDZ) SUMM=-SUMM
               DO K=1,NPT
-                  PROD(K,JC)=PROD(K,JC)+SUM*ZMAT(K,J)
+                  PROD(K,JC)=PROD(K,JC)+SUMM*ZMAT(K,J)
               END DO
           END DO
           IF (NW == NDIM) THEN
               DO K=1,NPT
-                  SUM=ZERO
+                  SUMM=ZERO
                   DO J=1,N
-                      SUM=SUM+BMAT(K,J)*WVEC(NPT+J,JC)
+                      SUMM=SUMM+BMAT(K,J)*WVEC(NPT+J,JC)
                   END DO
-                  PROD(K,JC)=PROD(K,JC)+SUM
+                  PROD(K,JC)=PROD(K,JC)+SUMM
               END DO
           END IF
           DO J=1,N
-              SUM=ZERO
+              SUMM=ZERO
               DO I=1,NW
-                  SUM=SUM+BMAT(I,J)*WVEC(I,JC)
+                  SUMM=SUMM+BMAT(I,J)*WVEC(I,JC)
               END DO
-              PROD(NPT+J,JC)=SUM
+              PROD(NPT+J,JC)=SUMM
           END DO
       END DO
 C
 C     Include in DEN the part of BETA that depends on THETA.
 C
       DO K=1,NDIM
-          SUM=ZERO
+          SUMM=ZERO
           DO I=1,5
               PAR(I)=HALF*PROD(K,I)*WVEC(K,I)
-              SUM=SUM+PAR(I)
+              SUMM=SUMM+PAR(I)
           END DO
-          DEN(1)=DEN(1)-PAR(1)-SUM
+          DEN(1)=DEN(1)-PAR(1)-SUMM
           TEMPA=PROD(K,1)*WVEC(K,2)+PROD(K,2)*WVEC(K,1)
           TEMPB=PROD(K,2)*WVEC(K,4)+PROD(K,4)*WVEC(K,2)
           TEMPC=PROD(K,3)*WVEC(K,5)+PROD(K,5)*WVEC(K,3)
@@ -230,12 +230,12 @@ C
 C
 C     Extend DEN so that it holds all the coefficients of DENOM.
 C
-      SUM=ZERO
+      SUMM=ZERO
       DO I=1,5
           PAR(I)=HALF*PROD(KNEW,I)**2
-          SUM=SUM+PAR(I)
+          SUMM=SUMM+PAR(I)
       END DO
-      DENEX(1)=ALPHA*DEN(1)+PAR(1)+SUM
+      DENEX(1)=ALPHA*DEN(1)+PAR(1)+SUMM
       TEMPA=TWO*PROD(KNEW,1)*PROD(KNEW,2)
       TEMPB=PROD(KNEW,2)*PROD(KNEW,4)
       TEMPC=PROD(KNEW,3)*PROD(KNEW,5)
@@ -255,9 +255,9 @@ C
 C
 C     Seek the value of the angle that maximizes the modulus of DENOM.
 C
-      SUM=DENEX(1)+DENEX(2)+DENEX(4)+DENEX(6)+DENEX(8)
-      DENOLD=SUM
-      DENMAX=SUM
+      SUMM=DENEX(1)+DENEX(2)+DENEX(4)+DENEX(6)+DENEX(8)
+      DENOLD=SUMM
+      DENMAX=SUMM
       ISAVE=0
       IU=49
       TEMP=TWOPI/DFLOAT(IU+1)
@@ -270,20 +270,20 @@ C
               PAR(J)=PAR(2)*PAR(J-2)-PAR(3)*PAR(J-1)
               PAR(J+1)=PAR(2)*PAR(J-1)+PAR(3)*PAR(J-2)
           END DO
-          SUMOLD=SUM
-          SUM=ZERO
+          SUMMOLD=SUMM
+          SUMM=ZERO
           DO J=1,9
-              SUM=SUM+DENEX(J)*PAR(J)
+              SUMM=SUMM+DENEX(J)*PAR(J)
           END DO
-          IF (DABS(SUM) > DABS(DENMAX)) THEN
-              DENMAX=SUM
+          IF (DABS(SUMM) > DABS(DENMAX)) THEN
+              DENMAX=SUMM
               ISAVE=I
-              TEMPA=SUMOLD
+              TEMPA=SUMMOLD
           ELSE IF (I == ISAVE+1) THEN
-              TEMPB=SUM
+              TEMPB=SUMM
           END IF
       END DO
-      IF (ISAVE == 0) TEMPA=SUM
+      IF (ISAVE == 0) TEMPA=SUMM
       IF (ISAVE == IU) TEMPB=DENOLD
       STEP=ZERO
       IF (TEMPA /= TEMPB) THEN
@@ -318,6 +318,7 @@ C
       DD=ZERO
       TEMPA=ZERO
       TEMPB=ZERO
+      dold(1:n) = d(1:n)
       DO I=1,N
           D(I)=PAR(2)*D(I)+PAR(3)*S(I)
           W(I)=XOPT(I)+D(I)
@@ -325,6 +326,12 @@ C
           TEMPA=TEMPA+D(I)*W(I)
           TEMPB=TEMPB+W(I)*W(I)
       END DO
+      ! Exit in case of Inf/NaN in D.
+      temp = sum(abs(d(1:n)))
+      if (temp /= temp .or. temp > huge(1.0D0)) then
+         d(1:n) = dold(1:n)
+         goto 340
+      end if
       IF (ITERC >= N) GOTO 340
       IF (ITERC > 1) DENSAV=DMAX1(DENSAV,DENOLD)
       IF (DABS(DENMAX) <= 1.1D0*DABS(DENSAV)) GOTO 340
@@ -338,11 +345,11 @@ C
           S(I)=TAU*BMAT(KNEW,I)+ALPHA*TEMP
       END DO
       DO K=1,NPT
-          SUM=ZERO
+          SUMM=ZERO
           DO J=1,N
-              SUM=SUM+XPT(K,J)*W(J)
+              SUMM=SUMM+XPT(K,J)*W(J)
           END DO
-          TEMP=(TAU*W(N+K)-ALPHA*VLAG(K))*SUM
+          TEMP=(TAU*W(N+K)-ALPHA*VLAG(K))*SUMM
           DO I=1,N
               S(I)=S(I)+TEMP*XPT(K,I)
           END DO
@@ -369,11 +376,11 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       wsave = w(1:npt)
       w(1:npt) = matmul(xpt, d(1:n))
       w(1:npt)=w(1:npt)*(0.5D0*w(1:npt)+matmul(xpt,xopt(1:n)))
-!      if (norm2(wsave-w(1:npt))/max(norm2(w(1:npt)), 1.0D0) > 1.0D-13) 
+!      if (norm2(wsave-w(1:npt))/max(norm2(w(1:npt)), 1.0D0) > 1.0D-13)
 !     &then
-!        write(*,*) norm2(wsave-w(1:npt))/max(norm2(w(1:npt)), 1.0D0) 
-!        open(1,file ='w',status='old',position='append',action='write')  
-!        write(1,*) norm2(wsave-w(1:npt))/max(norm2(w(1:npt)), 1.0D0) 
+!        write(*,*) norm2(wsave-w(1:npt))/max(norm2(w(1:npt)), 1.0D0)
+!        open(1,file ='w',status='old',position='append',action='write')
+!        write(1,*) norm2(wsave-w(1:npt))/max(norm2(w(1:npt)), 1.0D0)
 !        close(1)
 !      end if
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
