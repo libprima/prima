@@ -278,6 +278,13 @@ nactold = -1  ! Needed for the first iteration.
 ! Inf/NaN occurs in D.
 maxiter = min(50000_IK, 100_IK * max(m, n))
 do iter = 1, maxiter
+    if (is_finite(sum(abs(d)))) then
+        dold = d
+    else
+        d = dold !! IFULL = ?????
+        exit
+    end if
+
     if (stage == 1) then
         optnew = cstrv
     else
@@ -288,7 +295,7 @@ do iter = 1, maxiter
     ! reduce the best calculated value of the objective function or to increase the number of active
     ! constraints since the best value was calculated. This strategy prevents cycling, but there is
     ! a remote possibility that it will cause premature termination.
-    if (optnew < optold .or. nact > nactold) then  ! OPTOLD = HUGENUM, NACTOLD = -1 when ITER = 1.
+    if (optnew < optold .or. nact > nactold) then  ! When ITER = 1, OPTOLD = HUGENUM, NACTOLD = -1.
         nactold = nact
         icount = 0
     else
@@ -406,9 +413,8 @@ do iter = 1, maxiter
             sdirn = (ONE / zdota(nact)) * z(:, nact)
         end if
     else
-        ! Delete the constraint with the index IACT(ICON) from the active set. ICON > 0 in theory.
-        ! We include ICON > 0 in the condition below to be safe. It does not exist in Powell's code.
-        if (icon < nact .and. icon > 0) then
+        ! Delete the constraint that has the index IACT(ICON) from the active set.
+        if (icon < nact) then
             do k = icon, nact - 1
                 ! Zaikun 20210811: What if HYPT = 0?
                 hypt = sqrt(zdota(k + 1)**2 + inprod(z(:, k), A(:, iact(k + 1)))**2)
@@ -513,14 +519,7 @@ do iter = 1, maxiter
 
 
     ! Update D, VMULTC and CSTRV.
-    dold = d
     d = (ONE - ratio) * d + ratio * dnew
-    ! Exit in case of Inf/NaN in D.
-    if (.not. is_finite(sum(abs(d)))) then
-        d = dold
-        exit
-    end if
-
     vmultc(1:mcon) = max(ZERO, (ONE - ratio) * vmultc(1:mcon) + ratio * vmultd(1:mcon))
     if (stage == 1) then
         ! Powell's code: CSTRV = CVOLD + RATIO * (CSTRV - CVOLD).
@@ -568,7 +567,8 @@ end subroutine trstlp_sub
 
 end module trustregion_mod
 
+! Checking INF/NAN in d should be in the end, not be beginning, because the D just before exit may
+! include INF/NAN.
 ! 1. Check the update of ZDOTA; is it always <Z(:, I), A(:, IACT(I))> ?
 ! 2. Check CSTRV. Is it always max([b-A*x, 0])? Seems no. Isn't it a bug?
 ! 3. What is the objective of trstlp_sub?
-! 4. Move the initializations into trstlp_sub, if possible.
