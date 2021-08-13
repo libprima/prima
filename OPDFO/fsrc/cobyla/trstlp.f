@@ -754,27 +754,10 @@
 
       IF (ICON > 0) GOTO 70
       !IF (STEP == STPFUL) THEN
-      IF (MCON == M)
-     1 THEN
-      ! .and. STEP == STPFUL)
-      if (.not.  dot_product(dx(1:n),dx(1:n)) < rho*rho) then
-!write (17, *) '1', dot_product(dx(1:n),dx(1:n)) < rho*rho, rho,
-!     1 dx(1:n)
-!write(17,*) 'stage 2'
+      IF (MCON > M .or. .not.dot_product(dx(1:n),dx(1:n))<rho*rho) then
         goto 500
-       end if
-      !    GOTO 500
       END IF
-      IF (MCON == M+1) GOTO 500
-!480  write (17, *) dot_product(dx(1:n),dx(1:n)) < rho*rho, rho, dx(1:n)
-!      IF (MCON == M) then
-!      write (17, *) dot_product(dx(1:n),dx(1:n)) < rho*rho, rho, dx(1:n)
-!      end if
-
-!write(17,*) 'stage 2'
-      IF (.not.dot_product(dx(1:n),dx(1:n))<rho*rho) GOTO 500
-480   MCON=M+1
-!      MCON=M+1
+  480 MCON=M+1
 !      write(17,*) 'stage 2'
       ICON=MCON
       IACT(MCON)=MCON

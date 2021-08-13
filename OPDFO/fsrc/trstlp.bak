@@ -8,7 +8,7 @@
       DIMENSION A(N,*),B(*),DX(*),IACT(*),Z(N,*),ZDOTA(*),
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !     1  VMULTC(*),SDIRN(*),DXNEW(*),VMULTD(*)
-     1  VMULTC(*),SDIRN(*),DXNEW(*),VMULTD(*),dold(N)
+     1  VMULTC(*),SDIRN(*),DXNEW(*),VMULTD(*),DSAV(N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     This subroutine calculates an N-component vector DX by applying the
@@ -106,9 +106,9 @@
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 26-06-2019: See the code below line number 80
-      !DO I = 1, N
-      !   DSAV(I) = DX(I)
-      !END DO
+      DO I = 1, N
+         DSAV(I) = DX(I)
+      END DO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     End the current stage of the calculation if 3 consecutive iterations
@@ -129,7 +129,7 @@
        !write (17, *) vmultc(1:m+1)
        !write (17, *) z(1:n, 1:n)
 
-!write(17,*) 'stage 1'
+!       write(17,*) 'stage 1'
    60 OPTOLD=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ICOUNT=0
@@ -157,20 +157,20 @@
 ! Indeed, in all these cases, Inf and NaN appear in D due to extremely
 ! large values in A (up to 10^219).
 ! To avoid wasting energy, we do the following.
-      !SUMD = 0.0D0
-      !DO I = 1, N
-      !    SUMD = SUMD + DABS(DX(I))
-      !END DO
-      !IF (SUMD > HUGE(SUMD) .OR. SUMD /= SUMD) THEN
-      !    DO I = 1, N
-      !       DX(I) = DSAV(I)
-      !    END DO
-      !    GOTO 490
-      !ELSE
-      !    DO I = 1, N
-      !       DSAV(I) = DX(I)
-      !    END DO
-      !END IF
+      SUMD = 0.0D0
+      DO I = 1, N
+          SUMD = SUMD + DABS(DX(I))
+      END DO
+      IF (SUMD > HUGE(SUMD) .OR. SUMD /= SUMD) THEN
+          DO I = 1, N
+             DX(I) = DSAV(I)
+          END DO
+          GOTO 490
+      ELSE
+          DO I = 1, N
+             DSAV(I) = DX(I)
+          END DO
+      END IF
       ITERC = ITERC + 1
       IF (ITERC > Min(50000, 100*max(M, N))) THEN
           GOTO 490
@@ -726,17 +726,9 @@
       !write(17,*) ratio, dxnew(1:n)
       TEMP=1.0D0-RATIO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      dold = dx(1:n)
       DO I=1,N
           DX(I)=TEMP*DX(I)+RATIO*DXNEW(I)
       END DO
-
-      ! Exit in case of Inf/NaN in D.
-      if (.not. is_finite(sum(abs(dx(1:n))))) then
-        dx(1:n) = dold(1:n)
-        goto 490
-      end if
-
       DO K=1,MCON
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !  470 VMULTC(K)=AMAX1(0.0,TEMP*VMULTC(K)+RATIO*VMULTD(K))
@@ -749,32 +741,11 @@
 !     If the full step is not acceptable then begin another iteration.
 !     Otherwise switch to stage two or end the calculation.
 
-!write(17,*) 'd', dx(1:n)
+      !write(17,*) dx(1:n)
 !write (17, *) 'itericon', iterc, icon, step, stpful
-
       IF (ICON > 0) GOTO 70
-      !IF (STEP == STPFUL) THEN
-      IF (MCON == M)
-     1 THEN
-      ! .and. STEP == STPFUL)
-      if (.not.  dot_product(dx(1:n),dx(1:n)) < rho*rho) then
-!write (17, *) '1', dot_product(dx(1:n),dx(1:n)) < rho*rho, rho,
-!     1 dx(1:n)
-!write(17,*) 'stage 2'
-        goto 500
-       end if
-      !    GOTO 500
-      END IF
-      IF (MCON == M+1) GOTO 500
-!480  write (17, *) dot_product(dx(1:n),dx(1:n)) < rho*rho, rho, dx(1:n)
-!      IF (MCON == M) then
-!      write (17, *) dot_product(dx(1:n),dx(1:n)) < rho*rho, rho, dx(1:n)
-!      end if
-
-!write(17,*) 'stage 2'
-      IF (.not.dot_product(dx(1:n),dx(1:n))<rho*rho) GOTO 500
-480   MCON=M+1
-!      MCON=M+1
+      IF (STEP == STPFUL) GOTO 500
+  480 MCON=M+1
 !      write(17,*) 'stage 2'
       ICON=MCON
       IACT(MCON)=MCON
