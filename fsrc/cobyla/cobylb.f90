@@ -53,7 +53,6 @@ real(RP), parameter :: ctol = EPS
 integer(IK) :: i
 integer(IK) :: tr
 integer(IK) :: maxtr
-integer(IK) :: ifull
 integer(IK) :: j
 integer(IK) :: jdrop
 integer(IK) :: jopt
@@ -186,19 +185,16 @@ do tr = 1, maxtr
     A = transpose(matprod(datmat(1:m + 1, 1:n) - spread(datmat(1:m + 1, n + 1), dim=2, ncopies=n), simi))
     A(:, m + 1) = -A(:, m + 1)
 
-
-    !!!!!!!!!!!!!!!!! Can this be removed? Is it safe for TRSTLP??????????
+    ! Exit if A contains NaN. Otherwise, TRSTLP may encounter memory errors or infinite loops.
     if (any(is_nan(A))) then
         info = -3
         exit
     end if
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!?????????????????????????????????
 
     ! Constraint and objective function values of the optimal vertex.
     conopt = datmat(:, n + 1)
 
 
-    ! Calculate the trust-region trial step D.
 !write (16, *), 'A', A
 !write (16, *), 'b', -conopt(1:m + 1)
 !write (16, *), 'rho', rho
@@ -210,6 +206,7 @@ do tr = 1, maxtr
 
     !write (16, *), 'simi', simi
 
+    ! Calculate the trust-region trial step D.
     d = trstlp(A, -conopt(1:m + 1), rho)
 
 
@@ -217,12 +214,7 @@ do tr = 1, maxtr
 
     ! Is the trust-region trial step short?
     ! Is IFULL == 0 necessary ?????????????????????? If no, TRSTLP can be a function.
-    !shortd = (ifull == 0 .and. inprod(d, d) < QUART * rho * rho)
     shortd = (inprod(d, d) < QUART * rho * rho)
-
-    if (ifull == 1 .and. inprod(d, d) < QUART * rho * rho) then
-!write (16, *) 'ifull', ifull, inprod(d, d) < QUART * rho * rho, inprod(d, d), QUART * rho * rho
-    end if
 
     if (.not. shortd) then
         ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
