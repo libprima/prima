@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 11-Aug-2021.
+! on 13-Aug-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -29,7 +29,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Thursday, July 22, 2021 AM10:56:17
+! Last Modified: Thursday, August 12, 2021 PM07:55:26
 
       module newuoa_mod
 
@@ -164,12 +164,14 @@
 !
 ! INFO
 !   Output, INTEGER(IK) scalar.
-!   INFO is the exit flag. It can be set to the following values defined
+!   INFO is the exit flag. It will be set to one of the following values defined
 !   in the module INFO_MOD (see info.F90 under the directory named "common"):
 !   SMALL_TR_RADIUS: the lower bound for the trust region radius is reached;
 !   FTARGET_ACHIEVED: the target function value is reached;
 !   TRSUBP_FAILED: a trust region step failed to reduce the quadratic model;
 !   MAXFUN_REACHED: the objective function has been evaluated MAXFUN times;
+!   MAXTR_REACHED: the trust region iteration has been performed MAXTR times,
+!       the value of MAXTR being 10*MAXFUN, which is very unlikely to reach;
 !   NAN_X: NaN occurs in x;
 !   NAN_INF_F: the objective function returns NaN or nearly infinite value;
 !   NAN_MODEL: NaN occurs in the models.

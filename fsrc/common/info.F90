@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020.
 !
-! Last Modified: Saturday, July 10, 2021 PM10:13:33
+! Last Modified: Thursday, August 12, 2021 PM07:52:12
 
 
 module info_mod
@@ -15,6 +15,7 @@ public :: SMALL_TR_RADIUS
 public :: FTARGET_ACHIEVED
 public :: TRSUBP_FAILED
 public :: MAXFUN_REACHED
+public :: MAXTR_REACHED
 public :: NAN_X
 public :: NAN_INF_F
 public :: NAN_MODEL
@@ -25,6 +26,7 @@ integer, parameter :: SMALL_TR_RADIUS = 0
 integer, parameter :: FTARGET_ACHIEVED = 1
 integer, parameter :: TRSUBP_FAILED = 2
 integer, parameter :: MAXFUN_REACHED = 3
+integer, parameter :: MAXTR_REACHED = 20
 integer, parameter :: NAN_X = -1
 integer, parameter :: NAN_INF_F = -2
 integer, parameter :: NAN_MODEL = -3

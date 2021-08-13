@@ -14,11 +14,15 @@ use lina_mod, only : inprod, matprod, eye, planerot, isminor
 
 implicit none
 
+! Inputs
 real(RP), intent(in) :: A(:, :)  ! (N, M+1)
 real(RP), intent(in) :: b(:)  ! M+1
 real(RP), intent(in) :: rho
+
+! Output
 real(RP) :: d(size(A, 1))  ! N
 
+! Local variables
 real(RP) :: hypt
 real(RP) :: z(size(d), size(d))
 real(RP) :: zdota(size(d))
@@ -63,19 +67,15 @@ integer(IK) :: i
 integer(IK) :: iact(size(b))
 integer(IK) :: icon
 integer(IK) :: icount
-integer(IK) :: isave
 integer(IK) :: iter
 integer(IK) :: j
 integer(IK) :: k
-integer(IK) :: kk
-integer(IK) :: kl
-integer(IK) :: kw
 integer(IK) :: m
 integer(IK) :: n
 integer(IK) :: maxiter
 integer(IK) :: mcon
 integer(IK) :: nact
-integer(IK) :: nactx
+integer(IK) :: nactold
 integer(IK) :: stage
 integer(IK) :: ifull
 
@@ -122,13 +122,14 @@ cstrv = ZERO
 ! will be the index of a most violated constraint if CSTRV is positive. Usually during the first
 ! stage the vector SDIRN gives a search direction that reduces all the active constraint violations
 ! by one simultaneously.
-z = eye(n, n) !!!! What is size (number of columns) of Z and related variables (CGZ, ZDOTA, ZDOTW)???????
+z = eye(n, n)
 cstrv = maxval([b(1:m), ZERO])
 icon = maxloc(b(1:m), dim=1)
 !iact(1:m) = [(k, k=1, m)]
 iact = [(i, i=1, size(iact))]  ! What is the size of IACT? M or M + 1?
 vmultc = cstrv - b
 
+ifull = 0
 d = ZERO
 if (cstrv > ZERO) then
     call trstlp_sub(iact(1:m), ifull, stage, nact, A(:, 1:m), b(1:m), rho, cstrv, d, vmultc(1:m), z)
@@ -138,8 +139,6 @@ if (cstrv > ZERO) then
     ! Decide CSTRV by A and b
     ! Decide ZDOTA by Z and A
     !-------------------------------------------------------------------------------------------------------!
-else
-    ifull = 0
 end if
 mcon = m + 1
 stage = 2
@@ -149,7 +148,7 @@ vmultc(mcon) = ZERO
 optold = ZERO
 icount = 0_IK
 
-if (inprod(d, d) < rho * rho) then
+if (ifull == 0) then
     call trstlp_sub(iact, ifull, stage, nact, A, b, rho, cstrv, d, vmultc, z)
 end if
 
@@ -211,6 +210,7 @@ real(RP) :: stpful
 real(RP) :: temp
 real(RP) :: tmpv(size(b))
 real(RP) :: tmpvabs(size(b))
+real(RP) :: zdatmp
 real(RP) :: zdota(size(z, 2))
 real(RP) :: zdotw
 real(RP) :: zdvabs
@@ -220,18 +220,14 @@ real(RP) :: vmultd(size(b))  ! Is this necessary?????
 integer(IK) :: i
 integer(IK) :: icon
 integer(IK) :: icount
-integer(IK) :: isave
 integer(IK) :: iter
 integer(IK) :: j
 integer(IK) :: k
-integer(IK) :: kk
-integer(IK) :: kl
-integer(IK) :: kw
 integer(IK) :: maxiter
 integer(IK) :: mcon
 integer(IK) :: m
 integer(IK) :: n
-integer(IK) :: nactx
+integer(IK) :: nactold
 
 
 n = size(A, 1)
@@ -249,6 +245,8 @@ else
     ! In Powell's code, stage 2 uses the ZDOTA calculated by stage 1. Here we re-calculate ZDOTA so
     ! that we do not need to pass it from stage 1 to stage 2 in order to reduce the coupling.
     zdota(1:nact) = [(inprod(z(:, i), A(:, iact(i))), i=1, nact)]
+
+
     !temp = maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
     !temp = abs(temp - cstrv) / max(1.0D0, abs(cstrv))
     !if (temp > 1.0D2 * epsilon(1.0D0)) then
@@ -257,12 +255,15 @@ else
     !    write (11, *) - int(log10(temp))
     !    close (11)
     !end if
+
+
+
 end if
 
 ifull = 0  ! Default IFULL.
 sdirn = ZERO  ! Needed when STAGE = 1.
 optold = HUGENUM  ! Needed for the first iteration.
-nactx = -1  ! Needed for the first iteration.
+nactold = -1  ! Needed for the first iteration.
 
 ! Powell's code can encounter infinite cycling, which did happen when testing the following CUTEst
 ! problems: DANWOODLS, GAUSS1LS, GAUSS2LS, GAUSS3LS, KOEBHELB, TAX13322, TAXR13322.
@@ -288,8 +289,8 @@ do iter = 1, maxiter
     ! reduce the best calculated value of the objective function or to increase the number of active
     ! constraints since the best value was calculated. This strategy prevents cycling, but there is
     ! a remote possibility that it will cause premature termination.
-    if (optnew < optold .or. nact > nactx) then  ! When ITER = 1, OPTOLD = HUGENUM and NACTX = -1.
-        nactx = nact
+    if (optnew < optold .or. nact > nactold) then  ! When ITER = 1, OPTOLD = HUGENUM, NACTOLD = -1.
+        nactold = nact
         icount = 0
     else
         icount = icount + 1
@@ -375,10 +376,11 @@ do iter = 1, maxiter
             !end if
             !--------------------------------------------------------------------------------------!
 
-            if (abs(inprod(z(:, nact), A(:, iact(icon)))) > ZERO) then
+            zdatmp = inprod(z(:, nact), A(:, iact(icon)))
+            if (abs(zdatmp) > ZERO) then
                 vmultc([icon, nact]) = [ZERO, ratio]
                 iact([icon, nact]) = iact([nact, icon])
-                zdota(nact) = inprod(z(:, nact), A(:, iact(nact)))
+                zdota(nact) = zdatmp  ! Indeed, ZDOTA(NACT) = INPROD(Z(:, NACT), A(:, IACT(NACT)))
             else
                 exit
             end if
@@ -545,12 +547,6 @@ do iter = 1, maxiter
         end if
         exit
     end if
-
-    !if ((ifull == 0 .and. .not. inprod(d, d) < rho * rho*(ONE-EPS)) .or. (ifull == 1 .and. inprod(d, d) < rho * rho*(ONE-EPS))) then
-    !    open (unit=11, file='iferror', status='old', position='append', action='write')
-    !    write (11, *), ifull, inprod(d, d) / rho**2, inprod(d, d), rho**2
-    !    close (11)
-    !end if
 end do
 
 
@@ -559,6 +555,5 @@ end subroutine trstlp_sub
 end module trustregion_mod
 
 ! 1. Check the update of ZDOTA; is it always <Z(:, I), A(:, IACT(I))> ?
-! 2. Check KK
-! 3. Check CSTRV. Is it always max([b-A*x, 0])? Seems no. Isn't it a bug?
-! 4. What is the objective of trstlp_sub?
+! 2. Check CSTRV. Is it always max([b-A*x, 0])? Seems no. Isn't it a bug?
+! 3. What is the objective of trstlp_sub?

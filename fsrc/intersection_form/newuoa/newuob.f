@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 11-Aug-2021.
+! on 13-Aug-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -17,7 +17,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Tuesday, August 10, 2021 PM09:44:17
+! Last Modified: Thursday, August 12, 2021 PM10:48:43
 
       module newuob_mod
 
@@ -62,8 +62,8 @@
 ! Generic modules
       use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENU&
      &M, DEBUGGING, SRNLEN
-      use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, TRSUBP_FAIL&
-     &ED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
+      use info_mod, only : FTARGET_ACHIEVED, MAXTR_REACHED, MAXFUN_REACH&
+     &ED, TRSUBP_FAILED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
       use infnan_mod, only : is_nan, is_posinf
       use debug_mod, only : errstop
       use output_mod, only : retmssg, rhomssg, fmssg
@@ -145,6 +145,7 @@
       real(RP) :: xopt(size(x))
       real(RP) :: xpt(size(x), npt)
       real(RP) :: zmat(npt, npt - size(x) - 1)
+      logical :: bad_trstep
       logical :: improve_geo
       logical :: reduce_rho_1
       logical :: reduce_rho_2
@@ -197,10 +198,9 @@
               xhist = reshape([xhist(:, khist + 1:maxxhist), xhist(:, 1:&
      &khist)], shape(xhist))
 ! The above combination of SHAPE and RESHAPE fulfills our desire thanks to the COLUMN-MAJOR
-! order of Fortran arrays.
+! order of Fortran arrays. In MATLAB, it is NOT necessary to call `reshape`.
           end if
           call retmssg(info, iprint, nf, f, x, solver)
-          close (16)
           return
       end if
 
@@ -229,8 +229,11 @@
 ! artificial RATIO but use SHORTD to be more explicit. See IMPROVE_GEO and REDUCE_RHO for details.
       ratio = -ONE
 
-      maxtr = huge(tr)
-      ! No constraint on the maximal number of trust region iterations.
+! Normally, each trust-region iteration takes one function evaluation. The following setting
+! essentially imposes no constraint on the maximal number of trust region iterations.
+      maxtr = 10 * maxfun
+! MAXTR is unlikely to be reached, but we define the following default value for INFO for safety.
+      info = MAXTR_REACHED
 
 ! Begin the iterative procedure.
 ! After solving a trust-region subproblem, NEWUOA uses 3 boolean variables to control the work flow.
@@ -320,7 +323,7 @@
 
 ! Update XOPT and FOPT. Before KOPT is updated, XOPT may differ from XPT(:, KOPT), and FOPT
 ! may differ from FVAL(KOPT). Note that the code may exit before KOPT is updated. See below.
-! The updated XOPT is needed by SETDROP.
+! The updated XOPT is needed by SETDROP_TR.
               if (f < fopt) then
                   xopt = xnew
                   fopt = f
@@ -406,21 +409,24 @@
 ! To improve the geometry of XPT, we will check whether the interpolation points are all close
 ! enough to the best point so far, i.e., all the points are within a ball centered at XOPT with
 ! a radius of 2*DELTA. If not, the farthest point will be replaced with a point selected by
-! GEOSTEP, aiming to ameliorate the geometry of the interpolation set.
+! GEOSTEP, aiming to ameliorate the geometry of the interpolation set; if yes, then RHO will be
+! reduced if MAX(DELTA, DNORM) <= RHO (if MAX(DELTA, DNORM) > RHO, then, as Powell mentioned
+! under (2.3) of the NEWUOA paper, "RHO has not restricted the most recent choice of D", so it
+! is not reasonable to reduce RHO).
 ! N.B.:
 ! 1. RATIO must be set even if SHORTD = TRUE. Otherwise, compilers will raise a run-time error.
-! 2. If SHORTD = FALSE and KNEW_TR = TRUE, then IMPROVE_GEO = TRUE, because KNEW_TR = TRUE
-! necessitates RATIO <= 0 < TENTH. Therefore, IMPROVE_GEO = TRUE if it is impossible to obtain
-! a good XPT by replacing a current point with the one suggested by the trust region step. This
-! is reasonable.
+! 2. If SHORTD = FALSE and KNEW_TR = 0, then IMPROVE_GEO = TRUE. Therefore, IMPROVE_GEO = TRUE
+! if it is impossible to obtain a good XPT by replacing a current point with the one suggested
+! by the trust region step.
 ! 3. If REDUCE_RHO = FALSE and SHORTD = TRUE, then the trust-region step is not tried at all,
-! i.e., no function evaluation is invoked at XOPT + D (When REDUCE_RHO = TRUE, the step is not
+! i.e., no function evaluation is invoked at XOPT + D (when REDUCE_RHO = TRUE, the step is not
 ! tried either, but the same step will be generated again at the next trust-region iteration
 ! after RHO is reduced and DELTA is updated; see the end of Section 2 of the NEWUOA paper).
 ! 4. If SHORTD = FALSE and KNEW_TR = 0, then the trust-region step invokes a function evaluation
 ! at XOPT + D, but [XOPT + D, F(XOPT +D)] is not included into [XPT, FVAL]. In other words, this
-! function value is discarded. Note that KNEW_TR = 0 only if RATIO <= 0 (see SETDROP), so that
-! a function value that renders a reduction is never discarded.
+! function value is discarded. THEORETICALLY, KNEW_TR = 0 only if RATIO <= 0, so that a function
+! value that renders a reduction is never discarded; however, KNEW_TR may turn out 0 due to NaN
+! even if RATIO > 0. See SETDROP_TR for details.
 ! 5. If SHORTD = FALSE and KNEW_TR > 0 and RATIO < TENTH, then [XPT, FVAL] is updated so that
 ! [XPT(KNEW_TR), FVAL(KNEW_TR)] = [XOPT + D, F(XOPT + D)], and the model is updated accordingly,
 ! but such a model will not be used in the next trust-region iteration, because a geometry step
@@ -428,21 +434,42 @@
 ! 6. DELTA has been updated before arriving here: if REDUCE_RHO = FALSE and SHORTD = TRUE, then
 ! DELTA was reduced by a factor of 10; if SHORTD = FALSE, then DELTA was updated by TRRAD after
 ! the trust-region iteration.
-! 7. When SHORTD = FALSE and KNEW_TR > 0, then XPT has been updated after the trust-region
+! 7. If SHORTD = FALSE and KNEW_TR > 0, then XPT has been updated after the trust-region
 ! iteration; if RATIO > 0 in addition, then XOPT has been updated as well.
+
           xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, &
      &dim=1))
-          improve_geo = (.not. reduce_rho_1) .and. (shortd .or. ratio < &
-     &TENTH) .and. (maxval(xdist) > TWO * delta)
-! ------------------------------------------------------------------------------------------!
-! Modifying IMPROVE_GEO in the following way seems to make little difference in the performance,
-! sometimes worsening, sometimes improving, but never substantially. The advantage of this
-! IMPROVE_GEO is that the bound for RATIO is 0, the same as in SETDROP and REDUCE_RHO_2.
-!improve_geo = (.not. reduce_rho_1) .and. (shortd .or. ratio <= ZERO) .and. (maxval(xdist) > TWO * delta)
-! ------------------------------------------------------------------------------------------!
+          bad_trstep = (shortd .or. ratio < TENTH .or. knew_tr == 0)
+          improve_geo = (.not. reduce_rho_1) .and. (maxval(xdist) > TWO &
+     &* delta) .and. bad_trstep
 
+! If all the interpolation points are close to XOPT and the trust region is small, but the
+! trust-region step is "bad" (SHORTD or RATIO <= 0), then we shrink RHO (update the criterion
+! for the "closeness" and SHORTD). REDUCE_RHO_2 corresponds to Box 10 of the NEWUOA paper.
+! N.B.:
+! 1. The definition of REDUCE_RHO_2 is equivalent to the following:
+! REDUCE_RHO_2 = (.NOT. IMPROVE_GEO) .AND. (MAX(DELTA, DNORM) <= RHO) .AND. BAD_TRSTEP
+! 2. The definition of REDUCE_RHO_2 can be moved downward below IF (IMPROVE_GEO) ... END IF.
+! Even though DNORM gets a new value after the geometry step when IMPROVE_GEO = TRUE, this
+! value does not affect REDUCE_RHO_2, because DNORM comes into play only if IMPROVE_GEO = FALSE.
+! 3. DELTA < DNORM may hold due to the update of DELTA.
+          bad_trstep = (shortd .or. ratio <= ZERO .or. knew_tr == 0)
+          reduce_rho_2 = (maxval(xdist) <= TWO * delta) .and. (max(delta&
+     &, dnorm) <= rho) .and. bad_trstep
+
+! Comments on BAD_TRSTEP:
+! 1. Powell used different thresholds (<= 0 and < 0.1) for RATIO in the definitions of BAD_TRSTEP
+! above. Unifying them to <= 0 makes little difference to the performance, sometimes worsening,
+! sometimes improving, but never substantially; unifying them to 0.1 makes little difference to
+! the performance.
+! 2. THEORETICALLY, KNEW_TR == 0 implies RATIO < 0, and hence the above definitions of BAD_TRSTEP
+! are mathematically equivalent to (SHORTD .OR. RATIO < TENTH) or (SHORTD .OR. RATIO <= ZERO).
+! However, KNEW_TR may turn out 0 due to NaN even if RATIO > 0. See SETDROP_TR for details.
+
+! NEWUOA never sets IMPROVE_GEO and (REDUCE_RHO_1 .OR. REDUCE_RHO_2) to TRUE simultaneously. So
+! the instructions "IF (IMPROVE_GEO) ... END IF" and "IF (REDUCE_RHO_1 .OR. REDUCE_RHO_2)" can
+! be exchanged without changing the algorithm.
           if (improve_geo) then
-
 ! XPT(:, KNEW_GEO) will be dropped (replaced by XOPT + D below).
               knew_geo = int(maxloc(xdist, dim=1), kind(knew_geo))
 
@@ -548,22 +575,6 @@
           end if
           ! The procedure of improving geometry ends.
 
-! If all the interpolation points are close to XOPT and the trust region is small, but the
-! trust-region step is "bad" (SHORTD or RATIO <= 0), then we shrink RHO (update the criterion
-! for the "closeness" and SHORTD). REDUCE_RHO_2 corresponds to Box 10 of the NEWUOA paper.
-! N.B.:
-! 1. Even though DNORM gets a new value after the geometry step when IMPROVE_GEO = TRUE, this
-! value does not affect REDUCE_RHO_2, because DNORM comes into play only if IMPROVE_GEO = FALSE.
-! 2. DELTA < DNORM may hold due to the update of DELTA.
-! 3. The following two lines are equivalent.
-!reduce_rho_2 = (.not. improve_geo) .and. (max(delta,dnorm)<=rho) .and. (shortd .or. ratio <= 0)
-          reduce_rho_2 = (maxval(xdist) <= TWO * delta) .and. (max(delta&
-     &, dnorm) <= rho) .and. (shortd .or. ratio <= ZERO)
-! ------------------------------------------------------------------------------------------!
-! Modifying REDUCE_RHO_2 in the following way seems to make little difference. The advantage
-! of this REDUCE_RHO_2 is that RATIO has the same bound as in the definition of IMPROVE_GEO.
-!reduce_rho_2 = (maxval(xdist) <= TWO * delta) .and. (max(delta, dnorm) <= rho) .and. (shortd .or. ratio < TENTH)
-! ------------------------------------------------------------------------------------------!
 
           if (reduce_rho_1 .or. reduce_rho_2) then
 ! The calculations with the current RHO are complete. Pick the next values of RHO and DELTA.

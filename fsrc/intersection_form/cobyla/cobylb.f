@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 11-Aug-2021.
+! on 13-Aug-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -126,8 +126,9 @@
       real(RP), allocatable :: cstrvhist(:)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      logical :: improve_geo
+      logical :: bad_trstep
       logical :: good_geo
+      logical :: improve_geo
       logical :: reduce_rho
       logical :: shortd
 
@@ -198,6 +199,7 @@
 ! COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
       do tr = 1, maxtr
 ! Before the trust-region step, call UPDATEPOLE so that SIM(:, N + 1) is the optimal vertex.
+!write (16, *) 'tr'
           call updatepole(cpen, [(.true., i=1, n + 1)], datmat, sim, sim&
      &i, subinfo)
           if (subinfo == DAMAGING_ROUNDING) then
@@ -205,8 +207,11 @@
               exit
           end if
 
-! Does the current interpolation set has good geometry? It decides IMPROVE_GEO and REDUCE_RHO.
+! Does the current interpolation set has good geometry? It affects IMPROVE_GEO and REDUCE_RHO.
           good_geo = goodgeo(factor_alpha, factor_beta, rho, sim, simi)
+
+!write (16, *) 'good_geo', good_geo
+!write (16, *) 'datmat', datmat
 
 ! Calculate the linear approximations to the objective and constraint functions, placing minus
 ! the objective function gradient after the constraint gradients in the array A.
@@ -231,7 +236,21 @@
 
 
 ! Calculate the trust-region trial step D.
+!write (16, *), 'A', A
+!write (16, *), 'b', -conopt(1:m + 1)
+!write (16, *), 'rho', rho
+
+
+!write (16, *) 'A', nf, A
+!write (16, *) 'b', -conopt(1:m + 1)
+!write (16, *) 'rho', rho
+
+!write (16, *), 'simi', simi
+
           d = trstlp(A, -conopt(1:m + 1), rho)
+
+
+!write (16, *) 'd', d
 
 ! Is the trust-region trial step short?
 ! Is IFULL == 0 necessary ?????????????????????? If no, TRSTLP can be a function.
@@ -239,8 +258,7 @@
           shortd = (inprod(d, d) < QUART * rho * rho)
 
           if (ifull == 1 .and. inprod(d, d) < QUART * rho * rho) then
-              write (16, *) 'ifull', ifull, inprod(d, d) < QUART * rho *&
-     & rho, inprod(d, d), QUART * rho * rho
+!write (16, *) 'ifull', ifull, inprod(d, d) < QUART * rho * rho, inprod(d, d), QUART * rho * rho
           end if
 
           if (.not. shortd) then
@@ -299,6 +317,7 @@
 ! Set JDROP to the index of the vertex that is to be replaced by X.
               jdrop = setdrop_tr(actrem, d, factor_alpha, factor_delta, &
      &rho, sim, simi)
+!write (16, *) 'jdrop', jdrop
 
 ! When JDROP=0, the algorithm decides not to include X into the simplex.
               if (jdrop == 0) then
@@ -316,6 +335,9 @@
                   datmat(:, jdrop) = con
               end if
 
+!write (16, *) 'datmat', datmat
+
+!!!!! WHY HERE?!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               if (is_nan(F) .or. is_posinf(F)) then
                   info = -2
                   exit
@@ -334,18 +356,27 @@
                   info = MAXFUN_REACHED
                   exit
               end if
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!????
+
           end if
 
 ! Should we take a geometry step to improve the geometry of the interpolation set?
-          improve_geo = (shortd .or. actrem <= ZERO .or. actrem < TENTH &
-     &* prerem) .and. .not. good_geo
+! N.B.: THEORETICALLY, JDROP > 0 when ACTREM > 0, and hence the definition of BAD_TRSTEP is
+! mathematically equivalent to (SHORTD .OR. ACTREM <= ZERO .OR. ACTREM < TENTH * PREREM);
+! however, JDROP may turn out 0 due to NaN even if ACTREM > 0. See SETDRTOP_TR for details.
+          bad_trstep = (shortd .or. actrem <= ZERO .or. actrem < TENTH *&
+     & prerem .or. jdrop == 0)
+          improve_geo = bad_trstep .and. .not. good_geo
 
 ! Should we revise RHO (and CPEN)?
-          reduce_rho = (shortd .or. actrem <= ZERO .or. actrem < TENTH *&
-     & prerem) .and. good_geo
+          reduce_rho = bad_trstep .and. good_geo
+
+!write (16, *) shortd, actrem, prerem
+!write (16, *) 'improve_geo', improve_geo
 
           if (improve_geo) then
 ! Before the geometry step, call UPDATEPOLE so that SIM(:, N + 1) is the optimal vertex.
+!write (16, *) 'geo'
               call updatepole(cpen, [(.true., i=1, n + 1)], datmat, sim,&
      & simi, subinfo)
               if (subinfo == DAMAGING_ROUNDING) then
@@ -372,6 +403,7 @@
 ! improve acceptability of the simplex. See equations (15) and (16) of the COBYLA paper.
                   jdrop = setdrop_geo(factor_alpha, factor_beta, rho, si&
      &m, simi)
+!write (16, *) 'nf', nf, 'jdrop', jdrop
 
 !Calculate the geometry step D.
                   d = geostep(jdrop, cpen, datmat, factor_gamma, rho, si&

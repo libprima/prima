@@ -885,7 +885,7 @@ options.solver = solver; % Record solver in options.solver; will be used in post
 % Check unknown fields according to solver
 % solver is '' if it has not been decided yet; in that case, we suppose (for
 % simplicity) that all possible fields are known.
-known_fields = {'iprint', 'maxfun', 'rhobeg', 'rhoend', 'ftarget', 'classical', 'quiet', 'debug', 'chkfunval', 'solver', 'maxhist', 'output_xhist'};
+known_fields = {'iprint', 'maxfun', 'rhobeg', 'rhoend', 'ftarget', 'classical', 'quiet', 'debug', 'chkfunval', 'solver', 'maxhist', 'output_xhist', 'fortran'};
 if ~isfield(options, 'classical') || (islogicalscalar(options.classical) && ~options.classical)
     known_fields = [known_fields, 'eta1', 'eta2', 'gamma1', 'gamma2'];
 end

@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 11-Aug-2021.
+! on 13-Aug-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -18,7 +18,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, July 23, 2021 AM11:25:05
+! Last Modified: Friday, August 13, 2021 AM08:57:22
 
       module geometry_mod
 
@@ -32,7 +32,7 @@
 
       function setdrop_tr(idz, kopt, beta, delta, ratio, rho, vlag, xopt&
      &, xpt, zmat) result(knew)
-! SETDROP sets KNEW to the index of the interpolation point that will be deleted AFTER A TRUST
+! This subroutine sets KNEW to the index of the interpolation point to be deleted AFTER A TRUST
 ! REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
 ! XPT(:, KNEW) is replaced by XNEW = XOPT + D, where D is the trust-region step.  Note that the
 ! information of XNEW is included in VLAG and BETA, which are calculated according to D.
@@ -42,6 +42,7 @@
 
 ! Generic modules
       use consts_mod, only : RP, IK, ONE, ZERO, TENTH, SRNLEN, DEBUGGING
+      use infnan_mod, only : is_nan
       use debug_mod, only : errstop, verisize
 
       implicit none
@@ -72,7 +73,7 @@
       real(RP) :: rhosq
       real(RP) :: sigma(size(xpt, 2))
       real(RP) :: xdsq(size(xpt, 2))
-      character(len=SRNLEN), parameter :: srname = 'SETDROP'
+      character(len=SRNLEN), parameter :: srname = 'SETDROP_TR'
 
 
 ! Get and verify the sizes
@@ -99,9 +100,17 @@
 ! KNEW from being KOPT.
           sigma(kopt) = -ONE
       end if
-      if (maxval(sigma) > ONE .or. ratio > ZERO) then
-! KNEW > 0 unless MAXVAL(SIGMA) <= 1 and RATIO <= ZERO. If RATIO > ZERO (the new F is less than
-! the current FVAL(KOPT)), then we always set KNEW > 0, ensuring XNEW to be included in XPT.
+      if (ratio > ZERO .or. (maxval(sigma) > ONE .and. .not. any(is_nan(&
+     &sigma)))) then
+! N.B.:
+! 1. In Powell's code, the above condition is (RATIO > ZERO .OR. MAXVAL(SIGMA) > ONE).
+! 2. THEORETICALLY speaking, with Powell's condition, when RATIO > ZERO (i.e., the new F is less
+! than the current FVAL(KOPT)), the following line sets KNEW > 0, ensuring XNEW to be included
+! in XPT. However, KNEW may turn out 0 due to NaN in SIGMA: for GFortran, KNEW = 0 if SIGMA
+! contains only NaN, yet other compilers/languages may behave differently.
+! 3. With the new condition, when SIGMA contains NaN (can happen in bad-conditioned problems,
+! although rarely), we explicitly set KNEW = 0. Consequently, NEWUOA will check whether to take
+! a geometry step or reduce RHO.
           knew = int(maxloc(sigma, dim=1), kind(knew))
       else
           knew = 0
@@ -118,7 +127,7 @@
 
       function geostep(idz, knew, kopt, bmat, delbar, xpt, zmat) result(&
      &d)
-! This subroutine finds a step D such that the geometry of the interplolation set is improved when
+! This subroutine finds a step D such that the geometry of the interpolation set is improved when
 ! XPT(:, KNEW) is changed to XOPT + D, where XOPT = XPT(:, KOPT)
 
 ! Generic modules
@@ -175,7 +184,7 @@
 
       d = biglag(idz, knew, delbar, bmat, xopt, xpt, zmat)
 
-! ALPHA is the KNEW-th diagonal entry of H
+! ALPHA is the KNEW-th diagonal entry of H.
       zknew = zmat(knew, :)
       zknew(1:idz - 1) = -zknew(1:idz - 1)
       alpha = inprod(zmat(knew, :), zknew)
@@ -184,7 +193,6 @@
       call vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
 
 ! If the cancellation in DENOM is unacceptable, then BIGDEN calculates an alternative model step D.
-! VLAG and BETA for this D are calculated within BIGDEN.
       if (abs(ONE + alpha * beta / vlag(knew)**2) <= 0.8_RP) then
           d = bigden(idz, knew, kopt, bmat, d, xpt, zmat)
       end if
@@ -203,6 +211,7 @@
       use consts_mod, only : RP, IK, ONE, TWO, HALF, PI, ZERO, DEBUGGING&
      &, SRNLEN
       use debug_mod, only : errstop, verisize
+      use infnan_mod, only : is_finite
       use lina_mod, only : Ax_plus_y, inprod, matprod
 
       implicit none
@@ -237,6 +246,7 @@
       real(RP) :: dd
       real(RP) :: denom
       real(RP) :: dhd
+      real(RP) :: dold(size(x))
       real(RP) :: gc(size(x))
       real(RP) :: gd(size(x))
       real(RP) :: gg
@@ -390,7 +400,15 @@
           sth = sin(angle)
           tau = cf(1) + (cf(2) + cf(4) * cth) * cth + (cf(3) + cf(5) * c&
      &th) * sth
+
+          dold = d
           d = cth * d + sth * s
+! Exit in case of Inf/NaN in D.
+          if (.not. is_finite(sum(abs(d)))) then
+              d = dold
+              exit
+          end if
+
           gd = cth * gd + sth * w
           s = gc + gd
           if (abs(tau) <= 1.1_RP * abs(taubeg)) then
@@ -420,6 +438,7 @@
       use consts_mod, only : RP, IK, ONE, TWO, HALF, QUART, PI, ZERO, DE&
      &BUGGING, SRNLEN
       use debug_mod, only : errstop, verisize
+      use infnan_mod, only : is_finite
       use lina_mod, only : Ax_plus_y, inprod, matprod
 
       implicit none
@@ -463,6 +482,7 @@
       real(RP) :: denom
       real(RP) :: denomold
       real(RP) :: densav
+      real(RP) :: dold(size(xpt, 1))
       real(RP) :: ds
       real(RP) :: dstemp(size(xpt, 2))
       real(RP) :: dtest
@@ -719,7 +739,14 @@
 
           tau = vlag(knew)
 
+          dold = d
           d = par(2) * d + par(3) * s
+! Exit in case of Inf/NaN in D.
+          if (.not. is_finite(sum(abs(d)))) then
+              d = dold
+              exit
+          end if
+
           dd = inprod(d, d)
           xnew = x + d
           dxn = inprod(d, xnew)

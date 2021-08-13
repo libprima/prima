@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 11-Aug-2021.
+! on 13-Aug-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -71,7 +71,6 @@
 
 ! Identify the optimal vertex of the current simplex.
 ! N.B.: Maybe not all vertex of the simplex are initialized! Use EVALUATED as a mask.
-
       jopt = findpole(cpen, evaluated, datmat)
 
 ! Switch the best vertex into SIM(:, N+1) if it is not there already. Then update SIMI and DATMAT.
@@ -138,7 +137,7 @@
       if (cpen <= ZERO .and. any(datmat(m + 2, :) < datmat(m + 2, jopt) &
      &.and. phi <= phimin .and. evaluated)) then
 ! (CPEN <= ZERO) is indeed (CPEN == ZERO), and (PHI <= PHIMIN) is indeed (PHI == PHIMIN). We
-! !write them in this way to avoid equality comparison of real numbers.
+! write them in this way to avoid equality comparison of real numbers.
           jopt = int(minloc(datmat(m + 2, :), mask=(phi <= phimin .and. &
      &evaluated), dim=1), kind(jopt))
       end if

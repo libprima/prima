@@ -186,7 +186,7 @@ do iter = 1, itermax
 !----------------------------------------------------------------!
     dhd = inprod(d, hd)
 
-    ! Set the step-length ALPHA and update CRVMIN and
+    ! Set the step-length ALPHA and update CRVMIN.
     if (dhd <= ZERO) then
         alpha = bstep
     else

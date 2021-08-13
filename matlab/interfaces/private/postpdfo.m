@@ -471,6 +471,8 @@ case 14
     output.message = sprintf('%s receives a linear feasibility problem and finds a feasible point.', invoker);
 case 15
     output.message = sprintf('%s receives a linear feasibility problem but does not find a feasible point.', invoker);
+case 20
+    output.message = sprintf('Return from %s because the trust-region iteration has been performed maxtr (= 10*maxfun) times.', invoker);
 case -1
     output.message = sprintf('Return from %s because NaN occurs in x.', solver);
 case -2
