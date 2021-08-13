@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 13-Aug-2021.
+! on 14-Aug-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -41,7 +41,7 @@
       real(RP) :: pareta
       real(RP) :: vsig(size(sim, 1))
       real(RP) :: veta(size(sim, 1))
-      character(len=SRNLEN) :: srname = 'goodgeo'
+      character(len=SRNLEN) :: srname = 'GOODGEO'
 
 ! Get and verify the sizes
       n = size(sim, 1)
@@ -98,7 +98,7 @@
       real(RP) :: sigbar(size(sim, 1))
       real(RP) :: simid(size(sim, 1))
       real(RP) :: vsig(size(sim, 1))
-      character(len=SRNLEN) :: srname = "setdrop_tr"
+      character(len=SRNLEN) :: srname = 'SETDROP_TR'
 
 ! Get and verify the sizes
       n = size(sim, 1)
@@ -161,6 +161,7 @@
      &sult(jdrop)
 
       use consts_mod, only : IK, RP, ONE, DEBUGGING, SRNLEN
+      use infnan_mod, only : is_nan
       use debug_mod, only : errstop, verisize
 
       implicit none
@@ -181,9 +182,9 @@
       real(RP) :: pareta
       real(RP) :: vsig(size(sim, 1))
       real(RP) :: veta(size(sim, 1))
-      character(len=SRNLEN) :: srname = 'setdrop_geo'
+      character(len=SRNLEN) :: srname = 'SETDROP_GEO'
 
-! Get and verify the sizes
+! Get and verify the sizes.
       n = size(sim, 1)
       if (DEBUGGING) then
           if (n < 1) then
@@ -209,10 +210,11 @@
           jdrop = int(minloc(vsig, dim=1), kind(jdrop))
       end if
 
-!XXXXXXXXXXXXXXXXXWHAT IF JDROP turns out 0 due to NaN??????????XXXXXXXXXXXXXXXX
-
-      write (16, *), 'veta', veta
-      write (16, *), 'vsig', vsig
+! Set JDROPT = 0 in case of NaN in VSIG or VETA, which can happen due to NaN in SIM or SIMI.
+! Powell's code does not include these instructions.
+      if (is_nan(sum(vsig)) .or. is_nan(sum(veta))) then
+          jdrop = 0_IK
+      end if
 
       end function setdrop_geo
 
@@ -244,7 +246,7 @@
       real(RP) :: cvmaxm
       real(RP) :: vsig(size(simi, 1))
       real(RP) :: A(size(simi, 1), size(datmat, 1) - 1)
-      character(len=SRNLEN) :: srname = 'geostep'
+      character(len=SRNLEN) :: srname = 'GEOSTEP'
 
 ! Get and verify the sizes
       m = size(datmat, 1) - 2

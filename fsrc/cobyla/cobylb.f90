@@ -163,7 +163,9 @@ maxtr = huge(tr)  ! No constraint on the maximal number of trust-region iteratio
 ! COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
     ! Before the trust-region step, call UPDATEPOLE so that SIM(:, N + 1) is the optimal vertex.
-!write (16, *) 'tr'
+
+    !write (16, *) 'tr'
+
     call updatepole(cpen, [(.true., i=1, n + 1)], datmat, sim, simi, subinfo)
     if (subinfo == DAMAGING_ROUNDING) then
         info = subinfo
@@ -210,7 +212,7 @@ do tr = 1, maxtr
     d = trstlp(A, -conopt(1:m + 1), rho)
 
 
-!write (16, *) 'd', d
+    !write (16, *) 'd', nf, d
 
     ! Is the trust-region trial step short?
     ! Is IFULL == 0 necessary ?????????????????????? If no, TRSTLP can be a function.
@@ -251,6 +253,8 @@ do tr = 1, maxtr
         con(m + 1) = f
         con(m + 2) = cstrv
 
+        !write (16, *) nf, f, x
+
         ! Begin the operations that decide whether X should replace one of the vertices of the
         ! current simplex, the change being mandatory if ACTREM is positive.
         actrem = (datmat(m + 1, n + 1) + cpen * datmat(m + 2, n + 1)) - (f + cpen * cstrv)
@@ -262,7 +266,8 @@ do tr = 1, maxtr
 
         ! Set JDROP to the index of the vertex that is to be replaced by X.
         jdrop = setdrop_tr(actrem, d, factor_alpha, factor_delta, rho, sim, simi)
-!write (16, *) 'jdrop', jdrop
+
+        !write (16, *) 'jdrop', jdrop
 
         ! When JDROP=0, the algorithm decides not to include X into the simplex.
         if (jdrop == 0) then
@@ -312,11 +317,11 @@ do tr = 1, maxtr
     reduce_rho = bad_trstep .and. good_geo
 
 !write (16, *) shortd, actrem, prerem
-!write (16, *) 'improve_geo', improve_geo
+!    write (16, *) 'improve_geo', improve_geo
+!    write (16, *) 'reduce_rho', reduce_rho
 
     if (improve_geo) then
         ! Before the geometry step, call UPDATEPOLE so that SIM(:, N + 1) is the optimal vertex.
-!write (16, *) 'geo'
         call updatepole(cpen, [(.true., i=1, n + 1)], datmat, sim, simi, subinfo)
         if (subinfo == DAMAGING_ROUNDING) then
             info = subinfo
@@ -426,6 +431,9 @@ sim(:, 1:n) = sim(:, 1:n) + spread(sim(:, n + 1), dim=2, ncopies=n)  !!! TEMPORA
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!! TEMPORARY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Make sure that the history includes the last X.
+!write (16, *) 'sim', sim
+!write (16, *) 'xsav', xsav(:, 1:nsav)
+!write (16, *) nf, f, x
 xhist = reshape([sim, xsav(:, 1:nsav), x], [n, n + nsav + 2])
 fhist = [datmat(m + 1, :), datsav(m + 1, 1:nsav), f]
 conhist = reshape([datmat(1:m, :), datsav(1:m, 1:nsav), con(1:m)], [m, n + nsav + 2])

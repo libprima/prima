@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 13-Aug-2021.
+! on 14-Aug-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -73,7 +73,6 @@
       integer(IK) :: i
       integer(IK) :: tr
       integer(IK) :: maxtr
-      integer(IK) :: ifull
       integer(IK) :: j
       integer(IK) :: jdrop
       integer(IK) :: jopt
@@ -199,7 +198,9 @@
 ! COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
       do tr = 1, maxtr
 ! Before the trust-region step, call UPDATEPOLE so that SIM(:, N + 1) is the optimal vertex.
+
 !write (16, *) 'tr'
+
           call updatepole(cpen, [(.true., i=1, n + 1)], datmat, sim, sim&
      &i, subinfo)
           if (subinfo == DAMAGING_ROUNDING) then
@@ -223,19 +224,16 @@
      & + 1, n + 1), dim=2, ncopies=n), simi))
           A(:, m + 1) = -A(:, m + 1)
 
-
-!!!!!!!!!!!!!!!!! Can this be removed? Is it safe for TRSTLP??????????
+! Exit if A contains NaN. Otherwise, TRSTLP may encounter memory errors or infinite loops.
           if (any(is_nan(A))) then
               info = -3
               exit
           end if
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!?????????????????????????????????
 
 ! Constraint and objective function values of the optimal vertex.
           conopt = datmat(:, n + 1)
 
 
-! Calculate the trust-region trial step D.
 !write (16, *), 'A', A
 !write (16, *), 'b', -conopt(1:m + 1)
 !write (16, *), 'rho', rho
@@ -247,19 +245,15 @@
 
 !write (16, *), 'simi', simi
 
+! Calculate the trust-region trial step D.
           d = trstlp(A, -conopt(1:m + 1), rho)
 
 
-!write (16, *) 'd', d
+!write (16, *) 'd', nf, d
 
 ! Is the trust-region trial step short?
 ! Is IFULL == 0 necessary ?????????????????????? If no, TRSTLP can be a function.
-!shortd = (ifull == 0 .and. inprod(d, d) < QUART * rho * rho)
           shortd = (inprod(d, d) < QUART * rho * rho)
-
-          if (ifull == 1 .and. inprod(d, d) < QUART * rho * rho) then
-!write (16, *) 'ifull', ifull, inprod(d, d) < QUART * rho * rho, inprod(d, d), QUART * rho * rho
-          end if
 
           if (.not. shortd) then
 ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
@@ -302,6 +296,8 @@
               con(m + 1) = f
               con(m + 2) = cstrv
 
+!write (16, *) nf, f, x
+
 ! Begin the operations that decide whether X should replace one of the vertices of the
 ! current simplex, the change being mandatory if ACTREM is positive.
               actrem = (datmat(m + 1, n + 1) + cpen * datmat(m + 2, n + &
@@ -317,6 +313,7 @@
 ! Set JDROP to the index of the vertex that is to be replaced by X.
               jdrop = setdrop_tr(actrem, d, factor_alpha, factor_delta, &
      &rho, sim, simi)
+
 !write (16, *) 'jdrop', jdrop
 
 ! When JDROP=0, the algorithm decides not to include X into the simplex.
@@ -372,11 +369,11 @@
           reduce_rho = bad_trstep .and. good_geo
 
 !write (16, *) shortd, actrem, prerem
-!write (16, *) 'improve_geo', improve_geo
+!    write (16, *) 'improve_geo', improve_geo
+!    write (16, *) 'reduce_rho', reduce_rho
 
           if (improve_geo) then
 ! Before the geometry step, call UPDATEPOLE so that SIM(:, N + 1) is the optimal vertex.
-!write (16, *) 'geo'
               call updatepole(cpen, [(.true., i=1, n + 1)], datmat, sim,&
      & simi, subinfo)
               if (subinfo == DAMAGING_ROUNDING) then
@@ -403,6 +400,13 @@
 ! improve acceptability of the simplex. See equations (15) and (16) of the COBYLA paper.
                   jdrop = setdrop_geo(factor_alpha, factor_beta, rho, si&
      &m, simi)
+
+! If JDROP = 0 (probably due to NaN in SIM or SIMI), then we exit. Without this, memory
+! error may occur as JDROP will be used as an index of arrays.
+                  if (jdrop == 0) then
+                      info = DAMAGING_ROUNDING
+                      exit
+                  end if
 !write (16, *) 'nf', nf, 'jdrop', jdrop
 
 !Calculate the geometry step D.
@@ -494,6 +498,9 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!! TEMPORARY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Make sure that the history includes the last X.
+!write (16, *) 'sim', sim
+!write (16, *) 'xsav', xsav(:, 1:nsav)
+!write (16, *) nf, f, x
       xhist = reshape([sim, xsav(:, 1:nsav), x], [n, n + nsav + 2])
       fhist = [datmat(m + 1, :), datsav(m + 1, 1:nsav), f]
       conhist = reshape([datmat(1:m, :), datsav(1:m, 1:nsav), con(1:m)],&
@@ -510,7 +517,7 @@
       con = conhist(:, kopt)
 
 !write (16, *) kopt, f, cstrv
-      close (16)
+!close (16)
 
       end subroutine cobylb
 

@@ -26,6 +26,7 @@ C     1  A(N,*),VSIG(*),VETA(*),SIGBAR(*),DX(*),W(*),IACT(*)
      1 CONSAV(MPP),XSAV(N,NSMAX),DATSAV(MPP,NSMAX),XDROP(N),DATDROP(MPP)
      1 ,fhist(n+2+NSMAX)
      1 ,chist(n+2+NSMAX)
+     1 , DATMAT_OLD(M+2, N+1), SIM_OLD(N, N+1), SIMI_OLD(N, N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
 C     Set the initial values of some parameters. The last column of SIM holds
@@ -294,6 +295,11 @@ C
 C     Switch the best vertex into pole position if it is not there already,
 C     and also update SIM, SIMI and DATMAT.
 C
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      DATMAT_OLD = DATMAT(1:M+2,1:N+1)
+      SIM_OLD  = SIM(1:N, 1:N+1)
+      SIMI_OLD = SIMI(1:N, 1:N)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       IF (NBEST <= N) THEN
           DO I=1,MPP
               TEMP=DATMAT(I,NP)
@@ -354,6 +360,9 @@ C      IF (ERROR .GT. 0.1) THEN
 !write(17,*) 'simi', simi(1:n,1:n)
 !write(17,*), 'error', error, (ERROR <= 0.1D0)
       IF (.NOT. (ERROR <= 0.1D0)) THEN
+          DATMAT(1:M+2,1:N+1) = DATMAT_OLD
+          SIM(1:N, 1:N+1) = SIM_OLD
+          SIMI(1:N, 1:N) = SIMI_OLD
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !write(17,*), '1'
           IF (IPRINT >= 1) PRINT 210
@@ -592,7 +601,7 @@ C the code, including uninitialized indices.
       CALL TRSTLP (N,M,A,CON,RHO,DX,IFULL,IACT,W(IZ),W(IZDOTA),
      1  W(IVMC),W(ISDIRN),W(IDXNEW),W(IVMD))
 
-!write(17,*) 'd', dx(1:n)
+!      write(17,*) 'd', nfvals, dx(1:n)
 
 !write(17,*) 'trs', dx(1:n)
 

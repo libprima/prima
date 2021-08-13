@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 13-Aug-2021.
+! on 14-Aug-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -71,7 +71,6 @@
       real(RP) :: spabs
       real(RP) :: ss
       real(RP) :: step
-      real(RP) :: stpful
       real(RP) :: summ
       real(RP) :: summabs
       real(RP) :: summd
@@ -98,7 +97,6 @@
       integer(IK) :: nact
       integer(IK) :: nactold
       integer(IK) :: stage
-      integer(IK) :: ifull
 
 
 ! This subroutine calculates an N-component vector D by the following two stages. In the first
@@ -117,6 +115,11 @@
 ! In general NACT is the number of constraints in the active set and IACT(1),...,IACT(NACT) are
 ! their indices, while the remainder of IACT contains a permutation of the remaining constraint
 ! indices.
+! N.B.: NACT <= min(M, N). Obviously, NACT <= M. In addition, The constraints in IACT(1, ..., NACT)
+! have linearly independent gradients (see the comments above the instructions that delete
+! a constraint from the active set to make room for the new active constraint with index
+! IACT(ICON)); this can also be seen from the update of NACT: starting from 0, NACT is incremented
+! only when NACT < N.
 !
 ! Further, Z is an orthogonal matrix whose first NACT columns can be regarded as the result of
 ! Gram-Schmidt applied to the active constraint gradients. For J=1, 2, ..., NACT, the number
@@ -129,11 +132,8 @@
 ! achieved by the shift CSTRV that makes the least residual zero.
 
 
-!??????????????????????????????? NACT <= min(M, N)?????????????????????????????????????????????????
-
       m = size(b) - 1
       n = size(A, 1)
-      ifull = 1
       mcon = m
       stage = 1
       nact = 0
@@ -151,13 +151,12 @@
       ! What is the size of IACT? M or M + 1?
       vmultc = cstrv - b
 
-      ifull = 0
       d = ZERO
       if (cstrv > ZERO) then
 !write (16, *) 'stage 1'
 ! Do not absorb the above condition into TRSTLP_SUB; it applies to stage 1 only.
-          call trstlp_sub(iact(1:m), ifull, stage, nact, A(:, 1:m), b(1:&
-     &m), rho, cstrv, d, vmultc(1:m), z)
+          call trstlp_sub(iact(1:m), stage, nact, A(:, 1:m), b(1:m), rho&
+     &, cstrv, d, vmultc(1:m), z)
 !-------------------------------------------------------------------------------------------------------!
 !call trstlp_sub(iact(1:m), stage, nact, A(:, 1:m), b(1:m), rho, d, vmultc(1:m), z) ! Is this enough????
 ! Decide IFULL by ||D||
@@ -176,17 +175,16 @@
 !write (16, *) inprod(d, d) < rho * rho, rho, d
 !write (16, *) 'stage 2'
       if (inprod(d, d) < rho * rho) then
-!if (ifull == 0) then
 ! Do not absorb the above condition into TRSTLP_SUB; it is meaningful for stage 2 only.
-          call trstlp_sub(iact, ifull, stage, nact, A, b, rho, cstrv, d,&
-     & vmultc, z)
+          call trstlp_sub(iact, stage, nact, A, b, rho, cstrv, d, vmultc&
+     &, z)
       end if
 
       end function trstlp
 
 
-      subroutine trstlp_sub(iact, ifull, stage, nact, A, b, rho, cstrv, &
-     &d, vmultc, z)
+      subroutine trstlp_sub(iact, stage, nact, A, b, rho, cstrv, d, vmul&
+     &tc, z)
 
 ! Generic modules
       use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, EPS, H&
@@ -212,7 +210,6 @@
 
 
       integer(IK), intent(inout) :: iact(:)
-      integer(IK), intent(out) :: ifull
       integer(IK), intent(inout) :: nact
 
 
@@ -240,7 +237,6 @@
       real(RP) :: spabs
       real(RP) :: ss
       real(RP) :: step
-      real(RP) :: stpful
       real(RP) :: temp
       real(RP) :: tmpv(size(b))
       real(RP) :: tmpvabs(size(b))
@@ -293,11 +289,8 @@
 !end if
 
 
-
       end if
 
-      ifull = 0
-      ! Default IFULL.
       sdirn = ZERO
       ! Needed when STAGE = 1.
       optold = HUGENUM
@@ -312,14 +305,6 @@
 ! Inf/NaN occurs in D.
       maxiter = min(50000_IK, 100_IK * max(m, n))
       do iter = 1, maxiter
-          if (is_finite(sum(abs(d)))) then
-              dold = d
-          else
-              d = dold
-              !! IFULL = ?????
-              exit
-          end if
-
           if (stage == 1) then
               optnew = cstrv
           else
@@ -462,8 +447,9 @@
                   sdirn = (ONE / zdota(nact)) * z(:, nact)
               end if
           else
-! Delete the constraint that has the index IACT(ICON) from the active set.
-              if (icon < nact) then
+! Delete the constraint with the index IACT(ICON) from the active set. ICON > 0 in theory.
+! We include ICON > 0 in the condition below to be safe. It does not exist in Powell's code.
+              if (icon < nact .and. icon > 0) then
                   do k = icon, nact - 1
 ! Zaikun 20210811: What if HYPT = 0?
                       hypt = sqrt(zdota(k + 1)**2 + inprod(z(:, k), A(:,&
@@ -507,8 +493,7 @@
           if (abs(sd) >= EPS * temp) then
               temp = sqrt(ss * dd + sd * sd)
           end if
-          stpful = dd / (temp + sd)
-          step = stpful
+          step = dd / (temp + sd)
           if (stage == 1) then
               if (isminor(cstrv, step)) then
 !write (16, *) '1'
@@ -582,7 +567,14 @@
 
 
 ! Update D, VMULTC and CSTRV.
+          dold = d
           d = (ONE - ratio) * d + ratio * dnew
+! Exit in case of Inf/NaN in D.
+          if (.not. is_finite(sum(abs(d)))) then
+              d = dold
+              exit
+          end if
+
           vmultc(1:mcon) = max(ZERO, (ONE - ratio) * vmultc(1:mcon) + ra&
      &tio * vmultd(1:mcon))
           if (stage == 1) then
@@ -618,11 +610,6 @@
 !write (16, *) 'itericon', iter, icon, step, stpful
 
           if (icon == 0) then
-              if (step >= stpful) then
-              ! Indeed, STEP == STPFUL.
-                  ifull = 1
-              end if
-!write (16, *) '0'
               exit
           end if
       end do
@@ -632,8 +619,7 @@
 
       end module trustregion_mod
 
-! Checking INF/NAN in d should be in the end, not be beginning, because the D just before exit may
-! include INF/NAN.
 ! 1. Check the update of ZDOTA; is it always <Z(:, I), A(:, IACT(I))> ?
 ! 2. Check CSTRV. Is it always max([b-A*x, 0])? Seems no. Isn't it a bug?
 ! 3. What is the objective of trstlp_sub?
+! 4. Move the initializations into trstlp_sub, if possible.

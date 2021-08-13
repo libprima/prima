@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 13-Aug-2021.
+! on 14-Aug-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -18,7 +18,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, August 13, 2021 AM08:57:22
+! Last Modified: Friday, August 13, 2021 PM03:27:18
 
       module geometry_mod
 
@@ -577,6 +577,10 @@
           dstemp(kopt) = TWO * ds + ONE
           sstemp(kopt) = ss
           k = int(minloc(dstemp * dstemp / sstemp, dim=1), kind(k))
+! K can be 0 due to NaN. In that case, set K = KNEW. Otherwise, memory errors will occur.
+          if (k == 0) then
+              k = knew
+          end if
           if ((.not. (dstemp(k) * dstemp(k) / sstemp(k) >= dtest)) .and.&
      & k /= kopt) then
 ! `.NOT. (A >= B)` differs from `A < B`.  The former holds iff A < B or {A, B} contains NaN.
