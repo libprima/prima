@@ -33,10 +33,13 @@ integer(IK) :: info
 integer(IK) :: jopt
 integer(IK) :: m
 integer(IK) :: n
+real(RP) :: datmat_old(size(datmat, 1), size(datmat, 2))
 real(RP) :: erri(size(sim, 1), size(sim, 1))
 real(RP) :: phi(size(sim, 2))
 real(RP) :: phimin
 real(RP) :: sim_jopt(size(sim, 1))
+real(RP) :: sim_old(size(sim, 1), size(sim, 2))
+real(RP) :: simi_old(size(simi, 1), size(simi, 2))
 character(len=SRNLEN), parameter :: srname = 'UPDATEPOLE'
 
 
@@ -59,6 +62,11 @@ info = 0
 jopt = findpole(cpen, evaluated, datmat)
 
 ! Switch the best vertex into SIM(:, N+1) if it is not there already. Then update SIMI and DATMAT.
+! Before the update, save a copy of DATMAT, SIM, and SIMI. If the update is unsuccessful due to
+! damaging rounding errors, we restore them for COBYLA to extract X/F from SIM/DATMAT at exit.
+datmat_old = datmat
+sim_old = sim
+simi_old = simi
 if (jopt <= n) then
     datmat(:, [jopt, n + 1]) = datmat(:, [n + 1, jopt]) ! Exchange DATMAT(:, JOPT) AND DATMAT(:, N+1)
     sim(:, n + 1) = sim(:, n + 1) + sim(:, jopt)
@@ -80,6 +88,9 @@ if (all(evaluated)) then
     erri = matprod(simi, sim(:, 1:n)) - eye(n, n)
     if (any(is_nan(erri)) .or. maxval(abs(erri)) > TENTH) then
         info = DAMAGING_ROUNDING
+        datmat = datmat_old
+        sim = sim_old
+        simi = simi_old
     end if
 end if
 

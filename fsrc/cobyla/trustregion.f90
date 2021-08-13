@@ -51,7 +51,6 @@ real(RP) :: sp
 real(RP) :: spabs
 real(RP) :: ss
 real(RP) :: step
-real(RP) :: stpful
 real(RP) :: summ
 real(RP) :: summabs
 real(RP) :: summd
@@ -210,7 +209,6 @@ real(RP) :: sp
 real(RP) :: spabs
 real(RP) :: ss
 real(RP) :: step
-real(RP) :: stpful
 real(RP) :: temp
 real(RP) :: tmpv(size(b))
 real(RP) :: tmpvabs(size(b))
@@ -441,8 +439,7 @@ do iter = 1, maxiter
     if (abs(sd) >= EPS * temp) then
         temp = sqrt(ss * dd + sd * sd)
     end if
-    stpful = dd / (temp + sd)
-    step = stpful
+    step = dd / (temp + sd)
     if (stage == 1) then
         if (isminor(cstrv, step)) then
 !write (16, *) '1'

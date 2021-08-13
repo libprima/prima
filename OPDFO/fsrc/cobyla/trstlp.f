@@ -732,10 +732,15 @@
       END DO
 
       ! Exit in case of Inf/NaN in D.
-      if (.not. is_finite(sum(abs(dx(1:n))))) then
+      sumd  = 0.0D0
+      do i = 1, n
+          sumd = sumd + abs(dx(i))
+      end do
+      if (sumd /= sumd .or. sumd > huge(0.0d0)) then
         dx(1:n) = dold(1:n)
         goto 490
       end if
+
 
       DO K=1,MCON
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -754,10 +759,10 @@
 
       IF (ICON > 0) GOTO 70
       !IF (STEP == STPFUL) THEN
-      IF (MCON > M .or. .not.dot_product(dx(1:n),dx(1:n))<rho*rho) then
-        goto 500
-      END IF
-  480 MCON=M+1
+      if (mcon > m .or. .not. dot_product(dx(1:n),dx(1:n))<rho*rho) then
+          goto 500
+      end if
+480   MCON=M+1
 !      write(17,*) 'stage 2'
       ICON=MCON
       IACT(MCON)=MCON
