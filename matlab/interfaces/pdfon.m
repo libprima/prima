@@ -92,6 +92,7 @@ function [x, fx, exitflag, output] = pdfon(varargin)
 %       13: all variables are fixed by the constraints
 %       14: a linear feasibility problem received and solved
 %       15: a linear feasibility problem received but not solved
+%       20: the trust-region iteration has been performed for 10*maxfun times
 %       -1: NaN occurs in x
 %       -2: the objective/constraint function returns NaN or nearly
 %       infinite values (only in the classical mode)

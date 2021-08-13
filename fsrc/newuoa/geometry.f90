@@ -3,7 +3,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, August 13, 2021 AM01:46:24
+! Last Modified: Friday, August 13, 2021 AM08:57:22
 
 module geometry_mod
 
@@ -16,7 +16,7 @@ contains
 
 
 function setdrop_tr(idz, kopt, beta, delta, ratio, rho, vlag, xopt, xpt, zmat) result(knew)
-! SETDROP sets KNEW to the index of the interpolation point that will be deleted AFTER A TRUST
+! This subroutine sets KNEW to the index of the interpolation point to be deleted AFTER A TRUST
 ! REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
 ! XPT(:, KNEW) is replaced by XNEW = XOPT + D, where D is the trust-region step.  Note that the
 ! information of XNEW is included in VLAG and BETA, which are calculated according to D.
@@ -104,7 +104,7 @@ end function setdrop_tr
 
 
 function geostep(idz, knew, kopt, bmat, delbar, xpt, zmat) result(d)
-! This subroutine finds a step D such that the geometry of the interplolation set is improved when
+! This subroutine finds a step D such that the geometry of the interpolation set is improved when
 ! XPT(:, KNEW) is changed to XOPT + D, where XOPT = XPT(:, KOPT)
 
 ! Generic modules
@@ -156,7 +156,7 @@ xopt = xpt(:, kopt)  ! Read XOPT.
 
 d = biglag(idz, knew, delbar, bmat, xopt, xpt, zmat)
 
-! ALPHA is the KNEW-th diagonal entry of H
+! ALPHA is the KNEW-th diagonal entry of H.
 zknew = zmat(knew, :)
 zknew(1:idz - 1) = -zknew(1:idz - 1)
 alpha = inprod(zmat(knew, :), zknew)
@@ -165,7 +165,6 @@ alpha = inprod(zmat(knew, :), zknew)
 call vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
 
 ! If the cancellation in DENOM is unacceptable, then BIGDEN calculates an alternative model step D.
-! VLAG and BETA for this D are calculated within BIGDEN.
 if (abs(ONE + alpha * beta / vlag(knew)**2) <= 0.8_RP) then
     d = bigden(idz, knew, kopt, bmat, d, xpt, zmat)
 end if

@@ -129,7 +129,7 @@
        !write (17, *) vmultc(1:m+1)
        !write (17, *) z(1:n, 1:n)
 
-!       write(17,*) 'stage 1'
+!write(17,*) 'stage 1'
    60 OPTOLD=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ICOUNT=0
@@ -741,12 +741,33 @@
 !     If the full step is not acceptable then begin another iteration.
 !     Otherwise switch to stage two or end the calculation.
 
-      !write(17,*) dx(1:n)
+!write(17,*) 'd', dx(1:n)
 !write (17, *) 'itericon', iterc, icon, step, stpful
+
       IF (ICON > 0) GOTO 70
-      !IF (STEP == STPFUL) GOTO 500
-      IF (.not. dot_product(dx(1:n), dx(1:n)) < rho*rho) GOTO 500
-  480 MCON=M+1
+      !IF (STEP == STPFUL) THEN
+      IF (MCON == M)
+     1 THEN
+      ! .and. STEP == STPFUL)
+      if (.not.  dot_product(dx(1:n),dx(1:n)) < rho*rho) then
+!write (17, *) '1', dot_product(dx(1:n),dx(1:n)) < rho*rho, rho,
+!     1 dx(1:n)
+!write(17,*) 'stage 2'
+        goto 500
+       end if
+      !    GOTO 500
+      END IF
+      IF (MCON == M+1) GOTO 500
+480   write (17, *) dot_product(dx(1:n),dx(1:n)) < rho*rho, rho,
+     1 dx(1:n)
+!      IF (MCON == M) then
+!      write (17, *) dot_product(dx(1:n),dx(1:n)) < rho*rho, rho, dx(1:n)
+!      end if
+
+!write(17,*) 'stage 2'
+      IF (.not.dot_product(dx(1:n),dx(1:n))<rho*rho) GOTO 500
+!480      MCON=M+1
+      MCON=M+1
 !      write(17,*) 'stage 2'
       ICON=MCON
       IACT(MCON)=MCON

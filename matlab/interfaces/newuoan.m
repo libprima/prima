@@ -44,6 +44,7 @@ function [x, fx, exitflag, output] = newuoan(varargin)
 %       3: the objective function has been evaluated maxfun times
 %       4, 7, 8, 9: rounding errors become severe in the Fortran code
 %       14: a linear feasibility problem received and solved
+%       20: the trust-region iteration has been performed for 10*maxfun times
 %       -1: NaN occurs in x
 %       -2: the objective function returns an NaN or nearly infinite
 %       value (only in the classical mode)

@@ -1,6 +1,8 @@
 ! This is an example to illustrate the usage of NEWUOA.
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code.
+!
+! Last Modified: Friday, August 13, 2021 AM09:56:10
 
 !!!!!!!!!!!!!!!!!! THE MODULE THAT IMPLEMENTS CALFUN !!!!!!!!!!!!!!!!!!!
 module calfun_mod
@@ -68,7 +70,7 @@ real(kind(0.0D0)), allocatable :: x(:)
 !----------------------------------------------------------------------!
 
 do n = 2, 10, 2
-    ! Sets up the initial X for the Chebyquad problem.
+    ! Set up the initial X for the Chebyquad problem.
     if (allocated(x)) deallocate (x)
     allocate (x(n), stat=alloc_stat)
     if (alloc_stat /= 0) print *, 'Memory allocation failed.'

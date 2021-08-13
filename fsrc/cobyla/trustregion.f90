@@ -51,7 +51,7 @@ real(RP) :: sp
 real(RP) :: spabs
 real(RP) :: ss
 real(RP) :: step
-!real(RP) :: stpful
+real(RP) :: stpful
 real(RP) :: summ
 real(RP) :: summabs
 real(RP) :: summd
@@ -67,20 +67,17 @@ integer(IK) :: i
 integer(IK) :: iact(size(b))
 integer(IK) :: icon
 integer(IK) :: icount
-integer(IK) :: isave
 integer(IK) :: iter
 integer(IK) :: j
 integer(IK) :: k
-integer(IK) :: kk
-integer(IK) :: kl
-integer(IK) :: kw
 integer(IK) :: m
 integer(IK) :: n
 integer(IK) :: maxiter
 integer(IK) :: mcon
 integer(IK) :: nact
-integer(IK) :: nactx
+integer(IK) :: nactold
 integer(IK) :: stage
+integer(IK) :: ifull
 
 
 ! This subroutine calculates an N-component vector D by the following two stages. In the first
@@ -115,6 +112,7 @@ integer(IK) :: stage
 
 m = size(b) - 1
 n = size(A, 1)
+ifull = 1
 mcon = m
 stage = 1
 nact = 0
@@ -124,17 +122,19 @@ cstrv = ZERO
 ! will be the index of a most violated constraint if CSTRV is positive. Usually during the first
 ! stage the vector SDIRN gives a search direction that reduces all the active constraint violations
 ! by one simultaneously.
-z = eye(n, n) !!!! What is size (number of columns) of Z and related variables (CGZ, ZDOTA, ZDOTW)???????
+z = eye(n, n)
 cstrv = maxval([b(1:m), ZERO])
 icon = maxloc(b(1:m), dim=1)
 !iact(1:m) = [(k, k=1, m)]
 iact = [(i, i=1, size(iact))]  ! What is the size of IACT? M or M + 1?
 vmultc = cstrv - b
 
+ifull = 0
 d = ZERO
 if (cstrv > ZERO) then
+!write (16, *) 'stage 1'
     ! Do not absorb the above condition into TRSTLP_SUB; it applies to stage 1 only.
-    call trstlp_sub(iact(1:m), stage, nact, A(:, 1:m), b(1:m), rho, cstrv, d, vmultc(1:m), z)
+    call trstlp_sub(iact(1:m), ifull, stage, nact, A(:, 1:m), b(1:m), rho, cstrv, d, vmultc(1:m), z)
     !-------------------------------------------------------------------------------------------------------!
     !call trstlp_sub(iact(1:m), stage, nact, A(:, 1:m), b(1:m), rho, d, vmultc(1:m), z) ! Is this enough????
     ! Decide IFULL by ||D||
@@ -150,15 +150,18 @@ vmultc(mcon) = ZERO
 optold = ZERO
 icount = 0_IK
 
+!write (16, *) inprod(d, d) < rho * rho, rho, d
+!write (16, *) 'stage 2'
 if (inprod(d, d) < rho * rho) then
-    ! Do not absorb the above condition into TRSTLP_SUB; it is meaningful for stage 2 only.
-    call trstlp_sub(iact, stage, nact, A, b, rho, cstrv, d, vmultc, z)
+!if (ifull == 0) then
+! Do not absorb the above condition into TRSTLP_SUB; it is meaningful for stage 2 only.
+    call trstlp_sub(iact, ifull, stage, nact, A, b, rho, cstrv, d, vmultc, z)
 end if
 
 end function trstlp
 
 
-subroutine trstlp_sub(iact, stage, nact, A, b, rho, cstrv, d, vmultc, z)
+subroutine trstlp_sub(iact, ifull, stage, nact, A, b, rho, cstrv, d, vmultc, z)
 
 ! Generic modules
 use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, EPS, HUGENUM, DEBUGGING, SRNLEN
@@ -181,6 +184,7 @@ real(RP), intent(inout) :: z(:, :)
 
 
 integer(IK), intent(inout) :: iact(:)
+integer(IK), intent(out) :: ifull
 integer(IK), intent(inout) :: nact
 
 
@@ -208,7 +212,7 @@ real(RP) :: sp
 real(RP) :: spabs
 real(RP) :: ss
 real(RP) :: step
-!real(RP) :: stpful
+real(RP) :: stpful
 real(RP) :: temp
 real(RP) :: tmpv(size(b))
 real(RP) :: tmpvabs(size(b))
@@ -222,18 +226,14 @@ real(RP) :: vmultd(size(b))  ! Is this necessary?????
 integer(IK) :: i
 integer(IK) :: icon
 integer(IK) :: icount
-integer(IK) :: isave
 integer(IK) :: iter
 integer(IK) :: j
 integer(IK) :: k
-integer(IK) :: kk
-integer(IK) :: kl
-integer(IK) :: kw
 integer(IK) :: maxiter
 integer(IK) :: mcon
 integer(IK) :: m
 integer(IK) :: n
-integer(IK) :: nactx
+integer(IK) :: nactold
 
 
 n = size(A, 1)
@@ -251,6 +251,8 @@ else
     ! In Powell's code, stage 2 uses the ZDOTA calculated by stage 1. Here we re-calculate ZDOTA so
     ! that we do not need to pass it from stage 1 to stage 2 in order to reduce the coupling.
     zdota(1:nact) = [(inprod(z(:, i), A(:, iact(i))), i=1, nact)]
+
+
     !temp = maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
     !temp = abs(temp - cstrv) / max(1.0D0, abs(cstrv))
     !if (temp > 1.0D2 * epsilon(1.0D0)) then
@@ -259,26 +261,23 @@ else
     !    write (11, *) - int(log10(temp))
     !    close (11)
     !end if
+
+
+
 end if
 
+ifull = 0  ! Default IFULL.
 sdirn = ZERO  ! Needed when STAGE = 1.
 optold = HUGENUM  ! Needed for the first iteration.
-nactx = -1  ! Needed for the first iteration.
+nactold = -1  ! Needed for the first iteration.
 
 ! Powell's code can encounter infinite cycling, which did happen when testing the following CUTEst
 ! problems: DANWOODLS, GAUSS1LS, GAUSS2LS, GAUSS3LS, KOEBHELB, TAX13322, TAXR13322.
-! Indeed, in all these cases, Inf and NaN appear in D due to extremely large values in A (up to
-! 10^219). To resolve this, we set the maximal number of iterations to MAXITER, and terminate when
-! NaN or Inf occurs in D.
+! Indeed, in all these cases, Inf/NaN appear in D due to extremely large values in A (up to 10^219).
+! To resolve this, we set the maximal number of iterations to MAXITER, and terminate in case
+! Inf/NaN occurs in D.
 maxiter = min(50000_IK, 100_IK * max(m, n))
 do iter = 1, maxiter
-    if (is_finite(sum(abs(d)))) then
-        dold = d
-    else
-        d = dold !! IFULL = ?????
-        exit
-    end if
-
     if (stage == 1) then
         optnew = cstrv
     else
@@ -289,8 +288,8 @@ do iter = 1, maxiter
     ! reduce the best calculated value of the objective function or to increase the number of active
     ! constraints since the best value was calculated. This strategy prevents cycling, but there is
     ! a remote possibility that it will cause premature termination.
-    if (optnew < optold .or. nact > nactx) then  ! When ITER = 1, OPTOLD = HUGENUM and NACTX = -1.
-        nactx = nact
+    if (optnew < optold .or. nact > nactold) then  ! OPTOLD = HUGENUM, NACTOLD = -1 when ITER = 1.
+        nactold = nact
         icount = 0
     else
         icount = icount + 1
@@ -354,6 +353,7 @@ do iter = 1, maxiter
 
             ratio = minval(vmultc(1:nact) / vmultd(1:nact), mask=(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m))
             if (ratio < ZERO .or. .not. any(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m)) then
+!write (16, *) '4'
                 exit
             end if
 
@@ -382,6 +382,7 @@ do iter = 1, maxiter
                 iact([icon, nact]) = iact([nact, icon])
                 zdota(nact) = zdatmp  ! Indeed, ZDOTA(NACT) = INPROD(Z(:, NACT), A(:, IACT(NACT)))
             else
+!write (16, *) '3'
                 exit
             end if
         end if
@@ -436,17 +437,18 @@ do iter = 1, maxiter
     sd = inprod(sdirn, d)
     ss = inprod(sdirn, sdirn)
     if (dd <= ZERO) then
+!write (16, *) '2'
         exit
     end if
     temp = sqrt(ss * dd)
     if (abs(sd) >= EPS * temp) then
         temp = sqrt(ss * dd + sd * sd)
     end if
-    !stpful = dd / (temp + sd)
-    !step = stpful
-    step = dd / (temp + sd)
+    stpful = dd / (temp + sd)
+    step = stpful
     if (stage == 1) then
         if (isminor(cstrv, step)) then
+!write (16, *) '1'
             exit
         end if
         step = min(step, cstrv)
@@ -510,7 +512,14 @@ do iter = 1, maxiter
 
 
     ! Update D, VMULTC and CSTRV.
+    dold = d
     d = (ONE - ratio) * d + ratio * dnew
+    ! Exit in case of Inf/NaN in D.
+    if (.not. is_finite(sum(abs(d)))) then
+        d = dold
+        exit
+    end if
+
     vmultc(1:mcon) = max(ZERO, (ONE - ratio) * vmultc(1:mcon) + ratio * vmultd(1:mcon))
     if (stage == 1) then
         ! Powell's code: CSTRV = CVOLD + RATIO * (CSTRV - CVOLD).
@@ -541,8 +550,14 @@ do iter = 1, maxiter
 
 
     end if
+!write (16, *) 'd', d
+!write (16, *) 'itericon', iter, icon, step, stpful
 
     if (icon == 0) then
+        if (step >= stpful) then  ! Indeed, STEP == STPFUL.
+            ifull = 1
+        end if
+!write (16, *) '0'
         exit
     end if
 end do
@@ -552,6 +567,8 @@ end subroutine trstlp_sub
 
 end module trustregion_mod
 
+! Checking INF/NAN in d should be in the end, not be beginning, because the D just before exit may
+! include INF/NAN.
 ! 1. Check the update of ZDOTA; is it always <Z(:, I), A(:, IACT(I))> ?
 ! 2. Check CSTRV. Is it always max([b-A*x, 0])? Seems no. Isn't it a bug?
-! 4. What is the objective of trstlp_sub?
+! 3. What is the objective of trstlp_sub?

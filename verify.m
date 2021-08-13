@@ -195,6 +195,8 @@ for ip = minip : length(plist)
         T = toc;
         fprintf('\nRunning time for %s:\t %f\n', solvers{2}, T);
 
+        %keyboard
+
         if output1.funcCount == test_options.maxfun && (exitflag1 == 0 || exitflag1 == 2) && exitflag2 == 3
             exitflag1 = 3;
             %display('exitflag1 changed to 3.')
