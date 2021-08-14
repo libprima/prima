@@ -42,7 +42,7 @@ real(RP) :: dd
 real(RP) :: grot(2, 2)
 real(RP) :: optnew
 real(RP) :: optold
-real(RP) :: ratio
+real(RP) :: frac
 real(RP) :: cstrv
 real(RP) :: cvnew
 real(RP) :: cvold
@@ -56,16 +56,14 @@ real(RP) :: summabs
 real(RP) :: summd
 real(RP) :: temp
 real(RP) :: tempa
-real(RP) :: tmpv(size(b))
-real(RP) :: tmpvabs(size(b))
-real(RP) :: zdotw
+real(RP) :: zdd
 real(RP) :: zdvabs
-real(RP) :: zdwabs
+real(RP) :: zddabs
 real(RP) :: dold(size(d))  ! N
 integer(IK) :: i
 integer(IK) :: iact(size(b))
 integer(IK) :: icon
-integer(IK) :: icount
+integer(IK) :: nfail
 integer(IK) :: iter
 integer(IK) :: j
 integer(IK) :: k
@@ -147,7 +145,7 @@ icon = mcon
 iact(mcon) = mcon
 vmultc(mcon) = ZERO
 optold = ZERO
-icount = 0_IK
+nfail = 0_IK
 
 !write (16, *) inprod(d, d) < rho * rho, rho, d
 !write (16, *) 'stage 2'
@@ -200,7 +198,7 @@ real(RP) :: dd
 real(RP) :: grot(2, 2)
 real(RP) :: optnew
 real(RP) :: optold
-real(RP) :: ratio
+real(RP) :: frac
 real(RP) :: sdirn(size(d))
 real(RP) :: cvnew
 real(RP) :: cvold
@@ -210,18 +208,19 @@ real(RP) :: spabs
 real(RP) :: ss
 real(RP) :: step
 real(RP) :: temp
-real(RP) :: tmpv(size(b))
-real(RP) :: tmpvabs(size(b))
-real(RP) :: zdatmp
+real(RP) :: cvshift(size(b))
+real(RP) :: cvsabs(size(b))
+real(RP) :: ftmp(size(b))
+real(RP) :: zda
 real(RP) :: zdota(size(z, 2))
-real(RP) :: zdotw
+real(RP) :: zdd
 real(RP) :: zdvabs
-real(RP) :: zdwabs
+real(RP) :: zddabs
 real(RP) :: dold(size(d))  ! N
 real(RP) :: vmultd(size(b))  ! Is this necessary?????
 integer(IK) :: i
 integer(IK) :: icon
-integer(IK) :: icount
+integer(IK) :: nfail
 integer(IK) :: iter
 integer(IK) :: j
 integer(IK) :: k
@@ -284,19 +283,19 @@ do iter = 1, maxiter
     ! a remote possibility that it will cause premature termination.
     if (optnew < optold .or. nact > nactold) then  ! OPTOLD = HUGENUM, NACTOLD = -1 when ITER = 1.
         nactold = nact
-        icount = 0
+        nfail = 0
     else
-        icount = icount + 1
-        if (icount == 3) then
-            exit
-        end if
+        nfail = nfail + 1
     end if
     optold = min(optold, optnew)
+    if (nfail == 3) then
+        exit
+    end if
 
     ! If ICON exceeds NACT, then we add the constraint with index IACT(ICON) to the active set.
     ! Apply Givens rotations so that the last N-NACT-1 columns of Z are orthogonal to the gradient
     ! of the new constraint, a scalar product being set to zero if its nonzero value could be due to
-    ! computer rounding errors.
+    ! computer rounding errors, which is tested by ISMINOR.
     if (icon > nact) then
         cgrad = A(:, iact(icon))
         cgz = matprod(cgrad, z)
@@ -345,8 +344,8 @@ do iter = 1, maxiter
                 cgrad = cgrad - vmultd(k) * A(:, iact(k))
             end do
 
-            ratio = minval(vmultc(1:nact) / vmultd(1:nact), mask=(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m))
-            if (ratio < ZERO .or. .not. any(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m)) then
+            frac = minval(vmultc(1:nact) / vmultd(1:nact), mask=(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m))
+            if (frac < ZERO .or. .not. any(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m)) then
 !write (16, *) '4'
                 exit
             end if
@@ -354,7 +353,7 @@ do iter = 1, maxiter
             ! Revise the Lagrange multipliers and reorder the active constraints so that the one to
             ! be replaced is at the end of the list. Also calculate the new value of ZDOTA(NACT) and
             ! branch if it is not acceptable.
-            vmultc(1:nact) = max(ZERO, vmultc(1:nact) - ratio * vmultd(1:nact))
+            vmultc(1:nact) = max(ZERO, vmultc(1:nact) - frac * vmultd(1:nact))
 
             ! Zaikun 20210811: Powell's code includes the following, but it is IMPOSSIBLE TO REACH.
             !--------------------------------------------------------------------------------------!
@@ -370,11 +369,11 @@ do iter = 1, maxiter
             !end if
             !--------------------------------------------------------------------------------------!
 
-            zdatmp = inprod(z(:, nact), A(:, iact(icon)))
-            if (abs(zdatmp) > ZERO) then
-                vmultc([icon, nact]) = [ZERO, ratio]
+            zda = inprod(z(:, nact), A(:, iact(icon)))
+            if (abs(zda) > ZERO) then
+                vmultc([icon, nact]) = [ZERO, frac]
                 iact([icon, nact]) = iact([nact, icon])
-                zdota(nact) = zdatmp  ! Indeed, ZDOTA(NACT) = INPROD(Z(:, NACT), A(:, IACT(NACT)))
+                zdota(nact) = zda  ! Indeed, ZDOTA(NACT) = INPROD(Z(:, NACT), A(:, IACT(NACT)))
             else
 !write (16, *) '3'
                 exit
@@ -400,7 +399,7 @@ do iter = 1, maxiter
             sdirn = (ONE / zdota(nact)) * z(:, nact)
         end if
     else
-        ! Delete the constraint with the index IACT(ICON) from the active set. ICON > 0 in theory.
+        ! Delete the constraint with the index IACT(ICON) from the active set. In theory, ICON > 0.
         ! We include ICON > 0 in the condition below to be safe. It does not exist in Powell's code.
         if (icon < nact .and. icon > 0) then
             do k = icon, nact - 1
@@ -435,11 +434,16 @@ do iter = 1, maxiter
 !write (16, *) '2'
         exit
     end if
-    temp = sqrt(ss * dd)
-    if (abs(sd) >= EPS * temp) then
-        temp = sqrt(ss * dd + sd * sd)
+    !temp = sqrt(ss * dd)
+    !if (abs(sd) >= EPS * temp) then
+    !    temp = sqrt(ss * dd + sd * sd)
+    !end if
+    !step = dd / (temp + sd)
+    if (abs(sd) >= EPS * sqrt(ss * dd)) then
+        step = dd / (sqrt(ss * dd + sd * sd) + sd)
+    else
+        step = dd / (sqrt(ss * dd) + sd)
     end if
-    step = dd / (temp + sd)
     if (stage == 1) then
         if (isminor(cstrv, step)) then
 !write (16, *) '1'
@@ -463,14 +467,14 @@ do iter = 1, maxiter
     dtmp = dnew  ! Use DTMP instead of DNEW for the calculation, retaining DNEW for later usage.
     do k = nact, 1, -1
         ! Zaikun 20210811: What if NACT = 0? Powell's code carries out the loop for one time. Why?
-        zdotw = inprod(z(:, k), dtmp)
-        zdwabs = inprod(abs(z(:, k)), abs(dtmp))
+        zdd = inprod(z(:, k), dtmp)
+        zddabs = inprod(abs(z(:, k)), abs(dtmp))
         ! Powell's original code sets ZDOTW = 0 when ISMINOR(ZDOTW, ZDWABS) = TRUE, and then takes
         ! VMULTD(K) = ZDOTW/ZDOTA, which is NaN if ZDOTW = 0 = ZDOTA. The following code avoids NaN.
-        if (isminor(zdotw, zdwabs)) then
+        if (isminor(zdd, zddabs)) then
             vmultd(k) = ZERO
         else
-            vmultd(k) = zdotw / zdota(k)
+            vmultd(k) = zdd / zdota(k)
         end if
         dtmp = dtmp - vmultd(k) * A(:, iact(k))
     end do
@@ -479,18 +483,18 @@ do iter = 1, maxiter
     end if
 
     ! Complete VMULTC by finding the new constraint residuals.
-    tmpv = matprod(dnew, A(:, iact)) - b(iact) + cstrv  ! Indeed, only TMPV(nact+1:mcon) is needed.
-    tmpvabs = matprod(abs(dnew), abs(A(:, iact))) + abs(b(iact)) + cstrv
-    where (isminor(tmpv, tmpvabs))
-        tmpv = ZERO
+    cvshift = matprod(dnew, A(:, iact)) - b(iact) + cstrv  ! Only CVSHIFT(nact+1:mcon) is needed.
+    cvsabs = matprod(abs(dnew), abs(A(:, iact))) + abs(b(iact)) + cstrv
+    where (isminor(cvshift, cvsabs))
+        cvshift = ZERO
     end where
-    vmultd(nact + 1:mcon) = tmpv(nact + 1:mcon)
+    vmultd(nact + 1:mcon) = cvshift(nact + 1:mcon)
 
-    ! Calculate the fraction of the step from D to DNEW that will be taken.
-    tmpv = vmultc / (vmultc - vmultd)  !
-    ratio = min(ONE, minval(tmpv(1:mcon), mask=(vmultd(1:mcon) < ZERO)))
-    if (ratio < ONE) then
-        icon = minloc(tmpv(1:mcon), mask=(vmultd(1:mcon) < ZERO), dim=1)
+    ! Calculate the frac of the step from D to DNEW that will be taken.
+    ftmp = vmultc / (vmultc - vmultd)  !
+    frac = min(ONE, minval(ftmp(1:mcon), mask=(vmultd(1:mcon) < ZERO)))
+    if (frac < ONE) then
+        icon = minloc(ftmp(1:mcon), mask=(vmultd(1:mcon) < ZERO), dim=1)
     else
         icon = 0
     end if
@@ -507,17 +511,17 @@ do iter = 1, maxiter
 
     ! Update D, VMULTC and CSTRV.
     dold = d
-    d = (ONE - ratio) * d + ratio * dnew
+    d = (ONE - frac) * d + frac * dnew
     ! Exit in case of Inf/NaN in D.
     if (.not. is_finite(sum(abs(d)))) then
         d = dold
         exit
     end if
 
-    vmultc(1:mcon) = max(ZERO, (ONE - ratio) * vmultc(1:mcon) + ratio * vmultd(1:mcon))
+    vmultc(1:mcon) = max(ZERO, (ONE - frac) * vmultc(1:mcon) + frac * vmultd(1:mcon))
     if (stage == 1) then
         ! Powell's code: CSTRV = CVOLD + RATIO * (CSTRV - CVOLD).
-        cstrv = (ONE - ratio) * cvold + ratio * cstrv
+        cstrv = (ONE - frac) * cvold + frac * cstrv
 
 
 
@@ -534,7 +538,7 @@ do iter = 1, maxiter
         !    & (cvold - maxval([b(1:m) - matprod(dtmp, A(:, 1:m)), ZERO])) / max(abs(cvold), ONE)
         !    write (11, *) 'cvnew', cvnew, maxval([b(1:m) - matprod(dnew, A(:, 1:m)), ZERO]), &
         !    & (cvnew - maxval([b(1:m) - matprod(dnew, A(:, 1:m)), ZERO])) / max(abs(cvnew), ONE)
-        !    write (11, *) 'ratio', ratio
+        !    write (11, *) 'frac', frac
         !    write (11, *) 'A', maxval(abs(A)), any(A /= A)
         !    write (11, *) 'b', maxval(abs(b)), any(b /= b)
         !    close (11)
