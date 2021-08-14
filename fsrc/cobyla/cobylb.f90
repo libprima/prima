@@ -180,14 +180,18 @@ do tr = 1, maxtr
 
     ! Calculate the linear approximations to the objective and constraint functions, placing minus
     ! the objective function gradient after the constraint gradients in the array A.
-    ! N.B.: When __USE_INTRINSIC_ALGEBRA__ = 1, the following code may not produce the same result
+    ! N.B.:
+    ! 1. When __USE_INTRINSIC_ALGEBRA__ = 1, the following code may not produce the same result
     ! as Powell's, because the intrinsic MATMUL behaves differently from a naive triple loop in
     ! finite-precision arithmetic.
-    ! QUESTION: Is it more reasonable to save A transpose instead of A? Better name for A?
+    ! 2. TRSTLP accesses A mostly by columns, so it is not more reasonable to save A^T instead of A.
     A = transpose(matprod(datmat(1:m + 1, 1:n) - spread(datmat(1:m + 1, n + 1), dim=2, ncopies=n), simi))
     A(:, m + 1) = -A(:, m + 1)
 
     ! Exit if A contains NaN. Otherwise, TRSTLP may encounter memory errors or infinite loops.
+    !----------------------------------------------------------------------------------------------!
+    !POSSIBLE IMPROVEMENT: INSTEAD OF EXITING, SKIP A TRUST-REGION STEP AND PERFORM A GEOMETRY ONE.
+    !----------------------------------------------------------------------------------------------!
     if (any(is_nan(A))) then
         info = -3
         exit
