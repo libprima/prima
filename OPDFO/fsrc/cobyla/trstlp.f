@@ -56,10 +56,6 @@
       MCON=M
       NACT=0
 
-!      zdota(1:n) = 0.0D0
-!      vmultd(1:m+1) = 0.0D0
-      !write(17,*) 'izdota', zdota(1:n)
-      !write(17,*) 'ivmultd', vmultd(1:m+1)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      RESMAX=0.0
       RESMAX=0.0D0
@@ -88,10 +84,7 @@
               VMULTC(K)=RESMAX-B(K)
           END DO
       END IF
-      !write (17, *) 'b', b(1:m)
-      !write (17, *) 'icon', ICON
 
-      !write(17,*) 'cstrv', resmax
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (RESMAX .EQ. 0.0) GOTO 480
 !      IF (RESMAX == 0.0D0) GOTO 480
@@ -118,24 +111,10 @@
 !     remote possibility that it will cause premature termination.
 !
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-       !write (17, *) iact(1:m+1)
-       !write (17, *) ifull
-       !write (17, *) nact
-       !write (17, *) A(:, 1:m+1)
-       !write (17, *) b(1:m+1)
-       !write (17, *) rho
-       !write (17, *) resmax
-       !write (17, *) dx(1:n)
-       !write (17, *) vmultc(1:m+1)
-       !write (17, *) z(1:n, 1:n)
 
-!write(17,*) 'stage 1'
    60 OPTOLD=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ICOUNT=0
-   !70 write (17, *) 'iter', iterc+1, icon, iact(1:mcon)
-   !   write(17,*) dx(1:n)
-
 
    70 IF (MCON == M) THEN
 !      IF (MCON == M) THEN
@@ -266,10 +245,6 @@
           GOTO 210
       END IF
 
-      !write(17,*) 'cgrad', dxnew(1:n)
-      !write(17,*) 'z', z(1:n, 1:n)
-      !write(17,*) 'vmultd', vmultd(1:mcon)
-!
 !     The next instruction is reached if a deletion has to be made from the
 !     active set in order to make room for the new active constraint, because
 !     the new constraint gradient is a linear combination of the gradients of
@@ -333,9 +308,6 @@
       END IF
       K=K-1
       IF (K > 0) GOTO 130
-
-      !write(17,*) 'zdota', zdota(1:n)
-      !write(17,*) 'vmultd', vmultd(1:mcon)
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (RATIO .LT. 0.0) GOTO 490
@@ -606,19 +578,11 @@
 
       END IF
 
-      !write(17,*) '==vmultd', vmultd(1:mcon)
-      !write(17,*) 'dnew', dxnew(1:n)
-      !write(17,*) 'zdota', zdota(1:n)
-      !write(17,*) 'z', z(1:n, 1:n)
-      !write(17,*) 'A', A(1:n, 1:m+1)
-!
 !     Set VMULTD to the VMULTC vector that would occur if DX became DXNEW. A
 !     device is included to force VMULTD(K)=0.0 if deviations from this value
 !     can be attributed to computer rounding errors. First calculate the new
 !     Lagrange multipliers.
-!
-      !write(17,*) 'dnew', dxnew(1:n)
-      !write(17,*) 'z', z(1:n,1:n)
+
       K=NACT
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !  390 ZDOTW=0.0
@@ -646,14 +610,11 @@
       else
         VMULTD(K)=ZDOTW/ZDOTA(K)
       end if
-      !write (17, *) 'zdotw, zdwabs, vmultd(k)'
-!write (17, *) '---k', k, zdotw, zdwabs, zdota(k), vmultd(k)
       IF (K >= 2) THEN
           KK=IACT(K)
           DO I=1,N
               DXNEW(I)=DXNEW(I)-VMULTD(K)*A(I,KK)
           END DO
-!write(17,*) 'dnew', vmultd(k), A(1:n,kk), dxnew(1:n)
           K=K-1
           GOTO 390
       END IF
@@ -661,7 +622,6 @@
 !      IF (MCON .GT. M) VMULTD(NACT)=AMAX1(0.0,VMULTD(NACT))
       IF (MCON > M) VMULTD(NACT)=DMAX1(0.0D0,VMULTD(NACT))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!write(17,*) '---vmultd', vmultd(1:mcon)
 !
 !     Complete VMULTC by finding the new constraint residuals.
 !
@@ -698,8 +658,6 @@
               VMULTD(K)=SUM
           END DO
       END IF
-      !write(17,*) 'vmultc', vmultc(1:mcon)
-      !write(17,*) 'vmultd', vmultd(1:mcon)
 !
 !     Calculate the fraction of the step from DX to DXNEW that will be taken.
 !
@@ -720,13 +678,11 @@
               END IF
           END IF
       END DO
-      !write(17,*), 'icon', icon, VMULTD(1:MCON)
 !
 !     Update DX, VMULTC and RESMAX.
 !
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      TEMP=1.0-RATIO
-!write(17,*) 'frac, d, dnew', ratio, dx(1:n), dxnew(1:n)
       TEMP=1.0D0-RATIO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       dold = dx(1:n)
@@ -761,21 +717,10 @@
 !     Otherwise switch to stage two or end the calculation.
 
 
-!write (17, *) 'd', dx(1:n)
-!write (17, *) 'iterc', iterc, icon, iact(1:mcon)
-
       IF (ICON > 0) GOTO 70
-      if (mcon == m) write(17,*) 'd', dx(1:n)
       !IF (STEP == STPFUL) THEN
-      if (mcon > m .or. dot_product(dx(1:n),dx(1:n)) >= rho*rho) then
-          goto 500
-      end if
+      if (mcon > m .or. dot_product(dx(1:n),dx(1:n))>=rho*rho) goto 500
 480   MCON=M+1
-!write(17,*) 'd', dx(1:n)
-!write(17,*) 'stage 2'
-!write(17,*)  'nact, A, b, rho', nact, A(1:n, 1:m+1), b(1:m+1), rho
-!write (17, *) 'cstrv, d, vmultc', resmax, dx(1:n), vmultc(1:m+1)
-!write(17,*) 'z', z(1:n,1:n)
       ICON=MCON
       IACT(MCON)=MCON
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -794,10 +739,5 @@
       GOTO 480
       end if
       IFULL=0
-!  500 write (17, *) 'iact', iact(1:m+1)
-!500      write (17, *) '---ifull', ifull, dx(1:n)
-  500    write (17, *) 'd', dx(1:n)
-      !write (17, *) 'vmultc', vmultc(1:m+1)
-!  500 RETURN
-!      RETURN
+  500 RETURN
       END

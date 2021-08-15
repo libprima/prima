@@ -198,9 +198,6 @@
 ! COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
       do tr = 1, maxtr
 ! Before the trust-region step, call UPDATEPOLE so that SIM(:, N + 1) is the optimal vertex.
-
-!write (16, *) 'tr'
-
           call updatepole(cpen, [(.true., i=1, n + 1)], datmat, sim, sim&
      &i, subinfo)
           if (subinfo == DAMAGING_ROUNDING) then
@@ -210,9 +207,6 @@
 
 ! Does the current interpolation set has good geometry? It affects IMPROVE_GEO and REDUCE_RHO.
           good_geo = goodgeo(factor_alpha, factor_beta, rho, sim, simi)
-
-!write (16, *) 'good_geo', good_geo
-!write (16, *) 'datmat', datmat
 
 ! Calculate the linear approximations to the objective and constraint functions, placing minus
 ! the objective function gradient after the constraint gradients in the array A.
@@ -237,27 +231,10 @@
 ! Constraint and objective function values of the optimal vertex.
           conopt = datmat(:, n + 1)
 
-
-!write (16, *), 'A', A
-!write (16, *), 'b', -conopt(1:m + 1)
-!write (16, *), 'rho', rho
-
-!    if (nf == 97) then
-!write (16, *) 'A', nf, A
-!write (16, *) 'rho, b', rho, -conopt(1:m + 1)
-!    end if
-
-!write (16, *), 'simi', simi
-
 ! Calculate the trust-region trial step D.
           d = trstlp(A, -conopt(1:m + 1), rho)
 
-!    if (nf == 97) then
-!write (16, *) 'd', nf, d
-!    end if
-
 ! Is the trust-region trial step short?
-! Is IFULL == 0 necessary ?????????????????????? If no, TRSTLP can be a function.
           shortd = (inprod(d, d) < QUART * rho * rho)
 
           if (.not. shortd) then
@@ -301,8 +278,6 @@
               con(m + 1) = f
               con(m + 2) = cstrv
 
-!write (16, *) nf, f, x
-
 ! Begin the operations that decide whether X should replace one of the vertices of the
 ! current simplex, the change being mandatory if ACTREM is positive.
               actrem = (datmat(m + 1, n + 1) + cpen * datmat(m + 2, n + &
@@ -318,8 +293,6 @@
 ! Set JDROP to the index of the vertex that is to be replaced by X.
               jdrop = setdrop_tr(actrem, d, factor_alpha, factor_delta, &
      &rho, sim, simi)
-
-!write (16, *) 'jdrop', jdrop
 
 ! When JDROP=0, the algorithm decides not to include X into the simplex.
               if (jdrop == 0) then
@@ -337,9 +310,7 @@
                   datmat(:, jdrop) = con
               end if
 
-!write (16, *) 'datmat', datmat
-
-!!!!! WHY HERE?!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!! WHY HERE? CAN BE MOVED UPWARD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               if (is_nan(F) .or. is_posinf(F)) then
                   info = -2
                   exit
@@ -372,10 +343,6 @@
 
 ! Should we revise RHO (and CPEN)?
           reduce_rho = bad_trstep .and. good_geo
-
-!write (16, *) shortd, actrem, prerem
-!    write (16, *) 'improve_geo', improve_geo
-!    write (16, *) 'reduce_rho', reduce_rho
 
           if (improve_geo) then
 ! Before the geometry step, call UPDATEPOLE so that SIM(:, N + 1) is the optimal vertex.
@@ -412,7 +379,6 @@
                       info = DAMAGING_ROUNDING
                       exit
                   end if
-!write (16, *) 'nf', nf, 'jdrop', jdrop
 
 !Calculate the geometry step D.
                   d = geostep(jdrop, cpen, datmat, factor_gamma, rho, si&
@@ -513,16 +479,11 @@
       cstrvhist = [datmat(m + 2, :), datsav(m + 2, 1:nsav), cstrv]
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       cpen = max(cpen, min(1.0E8_RP, HUGENUM))
-!write (16, *) fhist
-!write (16, *) cstrvhist
       kopt = selectx(cpen, cstrvhist, ctol, fhist)
       x = xhist(:, kopt)
       f = fhist(kopt)
       cstrv = cstrvhist(kopt)
       con = conhist(:, kopt)
-
-!write (16, *) kopt, f, cstrv
-      close (16)
 
       end subroutine cobylb
 
