@@ -595,13 +595,12 @@ C the code, including uninitialized indices.
       END DO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !write(17,*) 'A', nfvals, A(1:N, 1:M+1)
-!write(17,*) 'b', CON(1:M+1)
-!write(17,*) 'rho', rho
+!write(17,*) 'rho, b', rho, CON(1:M+1)
 
       CALL TRSTLP (N,M,A,CON,RHO,DX,IFULL,IACT,W(IZ),W(IZDOTA),
      1  W(IVMC),W(ISDIRN),W(IDXNEW),W(IVMD))
 
-!      write(17,*) 'd', nfvals, dx(1:n)
+      !write(17,*) 'd', nfvals, dx(1:n)
 
 !write(17,*) 'trs', dx(1:n)
 
@@ -1159,7 +1158,7 @@ C See the comments above for why to check these J
           IF (IPTEM < N) PRINT 80, (X(I),I=IPTEMP,N)
       END IF
       MAXFUN=NFVALS
-!      close(17)
+      !close(17)
       RETURN
       END
 
