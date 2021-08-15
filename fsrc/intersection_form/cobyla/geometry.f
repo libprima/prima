@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 14-Aug-2021.
+! on 16-Aug-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -267,7 +267,6 @@
 ! When __USE_INTRINSIC_ALGEBRA__ = 1, the following code may not produce the same result as
 ! Powell's, because the intrinsic MATMUL behaves differently from a naive triple loop in
 ! finite-precision arithmetic.
-! Is it more reasonable to save A transpose instead of A? Better name for A?
       A = transpose(matprod(datmat(1:m + 1, 1:n) - spread(datmat(1:m + 1&
      &, n + 1), dim=2, ncopies=n), simi))
       A(:, m + 1) = -A(:, m + 1)

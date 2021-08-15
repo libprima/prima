@@ -95,7 +95,7 @@
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (RESMAX .EQ. 0.0) GOTO 480
 !      IF (RESMAX == 0.0D0) GOTO 480
-      IF (.not. RESMAX > 0.0D0) GOTO 480
+      IF (RESMAX <= 0.0D0) GOTO 480
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DO I=1,N
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -601,6 +601,9 @@
               RESMAX=DMAX1(RESMAX,TEMP)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           END DO
+
+          !resmax = maxval([b(1:m)-matmul(dxnew(1:n),A(1:n,1:m)),ZERO])
+
       END IF
 
       !write(17,*) '==vmultd', vmultd(1:mcon)
@@ -723,7 +726,7 @@
 !
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      TEMP=1.0-RATIO
-      !write(17,*) ratio, dxnew(1:n)
+!write(17,*) 'frac, d, dnew', ratio, dx(1:n), dxnew(1:n)
       TEMP=1.0D0-RATIO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       dold = dx(1:n)
@@ -750,20 +753,29 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !IF (MCON == M) RESMAX=RESOLD+RATIO*(RESMAX-RESOLD)
       IF (MCON == M) RESMAX=TEMP*RESOLD+RATIO*RESMAX
+      !if (mcon == m)  then
+      !    resmax = maxval([b(1:m) - matmul(dx(1:n), A(:, 1:m)), ZERO])
+      !end if
 !
 !     If the full step is not acceptable then begin another iteration.
 !     Otherwise switch to stage two or end the calculation.
 
-!write(17,*) 'd', dx(1:n)
-!write (17, *) 'itericon', iterc, icon, step, stpful
+
+!write (17, *) 'd', dx(1:n)
+!write (17, *) 'iterc', iterc, icon, iact(1:mcon)
 
       IF (ICON > 0) GOTO 70
+      if (mcon == m) write(17,*) 'd', dx(1:n)
       !IF (STEP == STPFUL) THEN
-      if (mcon > m .or. .not. dot_product(dx(1:n),dx(1:n))<rho*rho) then
+      if (mcon > m .or. dot_product(dx(1:n),dx(1:n)) >= rho*rho) then
           goto 500
       end if
 480   MCON=M+1
-!      write(17,*) 'stage 2'
+!write(17,*) 'd', dx(1:n)
+!write(17,*) 'stage 2'
+!write(17,*)  'nact, A, b, rho', nact, A(1:n, 1:m+1), b(1:m+1), rho
+!write (17, *) 'cstrv, d, vmultc', resmax, dx(1:n), vmultc(1:m+1)
+!write(17,*) 'z', z(1:n,1:n)
       ICON=MCON
       IACT(MCON)=MCON
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -772,10 +784,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ITERC = 0
       zdota(1:nact) = [(dot_product(z(:, i), A(:, iact(i))), i=1, nact)]
-      !write (17, *) 'iact', iact(1:m+1)
-!write (17, *) dx(1:n)
-      !write (17, *) 'd', dx(1:n)
-      !write (17, *) 'vmultc', vmultc(1:m+1)
+      resmax = maxval([b(1:m) - matmul(dx(1:n), A(:, 1:m)), ZERO])
       GOTO 60
 !
 !     We employ any freedom that may be available to reduce the objective
@@ -787,8 +796,8 @@
       IFULL=0
 !  500 write (17, *) 'iact', iact(1:m+1)
 !500      write (17, *) '---ifull', ifull, dx(1:n)
-!      write (17, *) 'd', dx(1:n)
+  500    write (17, *) 'd', dx(1:n)
       !write (17, *) 'vmultc', vmultc(1:m+1)
-  500 RETURN
+!  500 RETURN
 !      RETURN
       END

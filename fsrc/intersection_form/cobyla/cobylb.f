@@ -9,7 +9,7 @@
 ! See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 !
 ! Generated using the interform.m script by Zaikun Zhang (www.zhangzk.net)
-! on 14-Aug-2021.
+! on 16-Aug-2021.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -91,7 +91,7 @@
       real(RP) :: cpen
       ! Penalty parameter for constraint in merit function (PARMU in Powell's code)
       real(RP) :: datmat(m + 2, size(x) + 1)
-      ! CONVAL, FVAL, CVVAL
+      ! CFVAL & CVVAL
       real(RP) :: datsav(m + 2, max(nsavmax, 0))
       real(RP) :: denom
       real(RP) :: d(size(x))
@@ -242,18 +242,19 @@
 !write (16, *), 'b', -conopt(1:m + 1)
 !write (16, *), 'rho', rho
 
-
+!    if (nf == 97) then
 !write (16, *) 'A', nf, A
-!write (16, *) 'b', -conopt(1:m + 1)
-!write (16, *) 'rho', rho
+!write (16, *) 'rho, b', rho, -conopt(1:m + 1)
+!    end if
 
 !write (16, *), 'simi', simi
 
 ! Calculate the trust-region trial step D.
           d = trstlp(A, -conopt(1:m + 1), rho)
 
-
+!    if (nf == 97) then
 !write (16, *) 'd', nf, d
+!    end if
 
 ! Is the trust-region trial step short?
 ! Is IFULL == 0 necessary ?????????????????????? If no, TRSTLP can be a function.
@@ -521,7 +522,7 @@
       con = conhist(:, kopt)
 
 !write (16, *) kopt, f, cstrv
-!close (16)
+      close (16)
 
       end subroutine cobylb
 

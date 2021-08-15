@@ -128,6 +128,14 @@ Here are points to note when translating the Fortran code to other languages.
    comparison of real numbers.
    The min function in MATLAB can return the location of the minimum, but it does NOT support mask.
 
+   MIN/MAX involving NaN
+   The Fortran standard does not specify what the result of the MAX and MIN intrinsics are if one of
+   the arguments is a NaN. In other words, such the result is unpredictable.
+   In Fortran, MINLOC(X) may return 0 if X contains NaN; with Gfrotran, if X is a vector containing
+   only NaN, then MINLOC(X) = 0, but it needs not to be the case with other languages and/or
+   compilers. Since this value can be 0, using it as the index of an array may lead to memory errors.
+
+
 8. any/all
 
    In Fortran:
