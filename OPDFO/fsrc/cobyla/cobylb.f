@@ -287,10 +287,6 @@ C      ELSE IF (TEMP .EQ. PHIMIN .AND. PARMU .EQ. 0.0) THEN
           END IF
       END DO
 
-!write(17,*) 'updatepole, sim', sim(1:n,1:n+1)
-!write(17,*) 'simi', simi(1:n,1:n)
-!write(17,*) 'datmat', datmat(1:m+2, 1:n+1)
-!write(17,*) 'jopt', nbest
 C
 C     Switch the best vertex into pole position if it is not there already,
 C     and also update SIM, SIMI and DATMAT.
@@ -356,15 +352,11 @@ C      IF (ERROR .GT. 0.1) THEN
               ERROR=DMAX1(ERROR,DABS(TEMP))
           END DO
       END DO
-!write(17,*) 'sim', sim(1:n,1:n)
-!write(17,*) 'simi', simi(1:n,1:n)
-!write(17,*), 'error', error, (ERROR <= 0.1D0)
       IF (.NOT. (ERROR <= 0.1D0)) THEN
           DATMAT(1:M+2,1:N+1) = DATMAT_OLD
           SIM(1:N, 1:N+1) = SIM_OLD
           SIMI(1:N, 1:N) = SIMI_OLD
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!write(17,*), '1'
           IF (IPRINT >= 1) PRINT 210
   210     FORMAT (/3X,'Return from subroutine COBYLA because ',
      1      'rounding errors are becoming damaging.')
@@ -380,7 +372,6 @@ C     after the constraint gradients in the array A. The vector W is used for
 C     working space.
 C
 ! 220
-!write(17,*) 'datmat', datmat(1:m+2, 1:n+1)
 
       DO K=1,MP
           CON(K)=-DATMAT(K,NP)
@@ -426,8 +417,6 @@ C      VETA(J)=SQRT(WETA)
           IF (VSIG(J) < PARSIG .OR. VETA(J) > PARETA) IFLAG=0
       END DO
 
-!write(17,*) 'good_geo', iflag == 1, ibrnch
-
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! Zaikun 2021-07-19: With the following line, the geometry step
       ! will not be taken if the current simplex if acceptable but then
@@ -456,9 +445,6 @@ C
               END IF
           END DO
       END IF
-      !write(17,*) 'veta', veta(1:N)
-      !write(17,*) 'vsig', vsig(1:N)
-      !write(17,*), 'nf', nfvals, 'jdrop', jdrop
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 20190822: If VETA or VSIG become NaN due to rounding errors,
 C JDROP may end up being 0. If we continue, then a Segmentation Fault
@@ -468,7 +454,6 @@ C will happen because we will read SIM(:, JDROP) and VSIG(JDROP).
       summ = sum(vsig(1:n))
       if (summ /= summ) jdrop = 0
       IF (JDROP == 0) THEN
-          !write(17,*), '2'
           IF (IPRINT >= 1) PRINT 286
   286     FORMAT (/3X,'Return from subroutine COBYLA because ',
      1      'rounding errors are becoming damaging.')
@@ -572,11 +557,9 @@ C of TRSTLP is not predictable, and Segmentation Fault or infinite
 C cycling may happen. This is because any equality/inequality comparison
 C involving NaN returns FALSE, which can lead to unintended behavior of
 C the code, including uninitialized indices.
-      !write(17,*) 'simi', simi(1:n,1:n)
       DO J = 1, N
           DO I = 1, N
               IF (SIMI(I, J) /= SIMI(I, J)) THEN
-                  !write(17,*) '3'
                   IF (IPRINT >= 1) PRINT 376
   376             FORMAT (/3X,'Return from subroutine COBYLA because ',
      1            'rounding errors are becoming damaging.')
@@ -594,15 +577,9 @@ C the code, including uninitialized indices.
           END DO
       END DO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!write(17,*) 'A', nfvals, A(1:N, 1:M+1)
-!write(17,*) 'rho, b', rho, CON(1:M+1)
 
       CALL TRSTLP (N,M,A,CON,RHO,DX,IFULL,IACT,W(IZ),W(IZDOTA),
      1  W(IVMC),W(ISDIRN),W(IDXNEW),W(IVMD))
-
-      !write(17,*) 'd', nfvals, dx(1:n)
-
-!write(17,*) 'trs', dx(1:n)
 
       !IF (IFULL == 0) THEN
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -666,7 +643,6 @@ C          PARMU=2.0*BARMU
           DO J=1,N
               TEMP=DATMAT(MP,J)+PARMU*DATMAT(MPP,J)
               IF (TEMP < PHI) THEN
-!write(17,*) '1g140'
                   GOTO 140
               END IF
 
@@ -675,14 +651,12 @@ C          IF (TEMP .EQ. PHI .AND. PARMU .EQ. 0.0) THEN
               IF (TEMP == PHI .AND. PARMU == 0.0D0) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                   IF (DATMAT(MPP,J) < DATMAT(MPP,NP)) THEN
-!write(17,*) '2g140'
                       GOTO 140
                   END IF
               END IF
           END DO
       END IF
       PREREM=PARMU*PREREC-SUMM
-!write(17,*) 'prerem', prerem, parmu, prerec, summ
 C
 C     Calculate the constraint and objective functions at x(*). Then find the
 C     actual reduction in the merit function.
@@ -703,8 +677,6 @@ C      IF (PARMU .EQ. 0.0 .AND. F .EQ. DATMAT(MP,NP)) THEN
           TRURED=DATMAT(MPP,NP)-RESMAX
       END IF
 
-!write(17,*), 'trured', trured, vmold, vmnew, parmu,
-!     1 datmat(mpp, np), resmax
 C
 C     Begin the operations that decide whether x(*) should replace one of the
 C     vertices of the current simplex, the change being mandatory if TRURED is
@@ -736,7 +708,6 @@ C      TEMP=ABS(TEMP)
           END IF
           SIGBAR(J)=TEMP*VSIG(J)
       END DO
-!write(17,*) 'sigbar', sigbar(1:n)
 C
 C     Calculate the value of ell.
 C
@@ -819,7 +790,6 @@ C
      1     DATSAV(1:MPP, 1:NSMAX), N, M, NSAV, NSMAX, CTOL)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       IF (JDROP == 0) then
-!write(17,*) 'g550'
           GOTO 550
       end if
 C
@@ -857,13 +827,11 @@ C
 C     Branch back for further iterations with the current RHO.
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!write(17,*) 'actrem, prerem', TRURED, PREREM
 C      IF (TRURED .GT. 0.0 .AND. TRURED .GE. 0.1*PREREM) GOTO 140
       IF (TRURED > 0.0D0 .AND. TRURED >= 0.1D0*PREREM) GOTO 140
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   550 IF (IFLAG == 0) THEN
           IBRNCH=0
-!write(17,*) '3g140'
           GOTO 140
       END IF
 C
@@ -1158,7 +1126,6 @@ C See the comments above for why to check these J
           IF (IPTEM < N) PRINT 80, (X(I),I=IPTEMP,N)
       END IF
       MAXFUN=NFVALS
-      !close(17)
       RETURN
       END
 
