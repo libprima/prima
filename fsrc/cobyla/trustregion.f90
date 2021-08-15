@@ -1,5 +1,6 @@
 module trustregion_mod
 
+
 contains
 
 function trstlp(A, b, rho) result(d)
@@ -73,16 +74,8 @@ if (DEBUGGING) then
     call verisize(b, m + 1)
 end if
 
-!write (16, *) 'stage 1'
 call trstlp_sub(iact(1:m), nact, 1, A(:, 1:m), b(1:m), rho, d, vmultc(1:m), z)
-!write (16, *) 'd', d
-
-!write (16, *) 'stage 2'
-!write (16, *) 'nact, A, b, rho', nact, A, b, rho
-!write (16, *) 'cstrv, d, vmultc', cstrv, d, vmultc
-!write (16, *) 'z', z
 call trstlp_sub(iact, nact, 2, A, b, rho, d, vmultc, z)
-!write (16, *) 'd', d
 
 end function trstlp
 
@@ -440,11 +433,6 @@ do iter = 1, maxiter
         icon = 0
     end if
 
-    !write (16, *) 'frac, ftmp', frac, ftmp
-    !write (16, *) 'vmultc', vmultc
-    !write (16, *) 'vmultd', vmultd
-    !write (16, *) 'frac, d, dnew', frac, d, dnew
-
     ! Update D, VMULTC and CSTRV.
     dold = d
     d = (ONE - frac) * d + frac * dnew
@@ -460,9 +448,6 @@ do iter = 1, maxiter
         ! In theory, CSTRV = MAXVAL([B(1:M) - MATPROD(D, A(:, 1:M)), ZERO]), yet the CSTRV updated
         ! as above can be quite different from this value if A has huge entries (e.g., > 1E20).
     end if
-
-!write (16, *) 'd', d
-!write (16, *) 'iterc', iter, icon, iact
 
     if (icon == 0) then
         exit
