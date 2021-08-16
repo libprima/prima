@@ -1,9 +1,11 @@
 consts.F90
-info.F90
+info.f90
 debug.F90
 memory.F90
 infnan.F90
 lina.F90
-output.F90
-pintrf.F90
+output.f90
+hist.f90
+preproc.f90
+pintrf.f90
 logging.F90

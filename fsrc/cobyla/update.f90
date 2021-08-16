@@ -1,5 +1,10 @@
 module update_mod
 
+implicit none
+private
+public :: updatepole, findpole
+
+
 contains
 
 subroutine updatepole(cpen, evaluated, datmat, sim, simi, info)

@@ -1,5 +1,9 @@
 module trustregion_mod
 
+implicit none
+private
+public :: trstlp
+
 
 contains
 
