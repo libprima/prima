@@ -1,5 +1,10 @@
 module geometry_mod
 
+implicit none
+private
+public :: goodgeo, geostep, setdrop_geo, setdrop_tr
+
+
 contains
 
 function goodgeo(factor_alpha, factor_beta, rho, sim, simi) result(good_geo)

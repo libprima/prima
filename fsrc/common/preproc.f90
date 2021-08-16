@@ -1,4 +1,4 @@
-! PREPROC_MOD is a module that preprocess the inputs.
+! PREPROC_MOD is a module that preprocesses the inputs.
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
@@ -123,7 +123,7 @@ end if
 
 if (abs(rhobeg - rhoend) < 1.0E2_RP * EPS * max(abs(rhobeg), ONE)) then
 ! When the data is passed from the interfaces (e.g., MEX) to the Fortran
-! code, RHOBEG, and RHOEND may change a bit. It was oberved in a MATLAB
+! code, RHOBEG, and RHOEND may change a bit. It was observed in a MATLAB
 ! test that MEX passed 1 to Fortran as 0.99999999999999978. Therefore,
 ! if we set RHOEND = RHOBEG in the interfaces, then it may happen that
 ! RHOEND > RHOBEG, which is considered as an invalid input. To avoid this

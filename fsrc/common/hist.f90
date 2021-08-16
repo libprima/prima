@@ -1,9 +1,91 @@
-module selectx_mod
+module hist_mod
+
+implicit none
+private
+public :: savex, selectx
 
 contains
 
 
-function selectx(cpen, cstrvhist, ctol, fhist) result(kopt)
+subroutine savex(xdrop, datdrop, xsav, datsav, nsav, ctol)
+! This subroutine saves XDROP in XSAV and DATDROP in DATSAV, unless a vector in XSAV(:, 1:NSAV) is
+! better than XDROP. If XDROP is better than some vectors in XSAV(:, 1:NSAV), then these vectors
+! will be removed. If XDROP is not better than any of XSAV(:, 1:NSAV) but NSAV=NSAVMAX, then we
+! remove XSAV(:,1), which is the oldest vector in XSAV(:, 1:NSAV).
+!
+! When COBYLA calls this subroutine, XDROP is a vector to be "dropped", and  DATDROP contains its
+! function/constraint information (constraint value in the first M entries, DATDROP(M+1) = F(XDROP),
+! and DATDROP(M+2) = CSTRV(X)). XSAV and DATSAV save at most NSAVMAX vectors "dropped" by COBYLB
+! and their function/constraint information. Only XSAV(:, 1:NSAV) and DATSAV(:, 1:NSAV) contains
+! such vectors, while XSAV(:, NSAV+1:NSAVMAX) and DATSAV(:, NSAV+1:NSAVMAX) are not initialized yet.
+!
+! Note: We decide whether X is better than the function/constraint of Y according to the ISBETTER
+! function with CPEN = -ONE. Due to the implementation of ISBETTER,
+! X is better than Y with CPEN < 0
+! ==> X is better than Y with any CPEN >= 0,
+! ==> X is better than Y regardless of CPEN.
+
+use consts_mod, only : RP, IK, ONE
+use infnan_mod, only : is_nan, is_posinf
+use debug_mod, only : errstop
+use output_mod, only : retmssg, rhomssg, fmssg
+use lina_mod, only : calquad, inprod
+
+implicit none
+
+! Inputs
+real(RP), intent(IN) :: ctol
+real(RP), intent(IN) :: datdrop(:)  ! m+2
+real(RP), intent(IN) :: xdrop(:)  ! n
+
+! In-outputs
+integer(IK), intent(INOUT) :: nsav
+real(RP), intent(INOUT) :: datsav(:, :)  ! (M+2, NSAVMAX)
+real(RP), intent(INOUT) :: xsav(:, :) ! (N, NSAVMAX)
+
+! Local variables
+integer(IK) :: m
+integer(IK) :: n
+integer(IK) :: nsavmax
+integer(IK) :: i
+logical :: better(nsav)
+logical :: keep(nsav)
+
+m = size(datdrop) - 2
+n = size(xdrop)
+nsavmax = size(xsav, 2)
+
+if (nsavmax <= 0) then
+    return  ! Do nothing if NSAVMAX=0
+end if
+
+! Return immediately if any column of XSAV is better than XDROP.
+! BETTER is defined by the array constructor with an implicit do loop.
+better = [(isbetter([datsav(m + 1, i), datsav(m + 2, i)], [datdrop(m + 1), datdrop(m + 2)], ctol), i=1, nsav)]
+if (any(better)) then
+    return
+end if
+
+! Decide which columns of XSAV to keep. We use again the array constructor with an implicit do loop.
+keep = [(.not. isbetter([datdrop(m + 1), datdrop(m + 2)], [datsav(m + 1, i), datsav(m + 2, i)], ctol), i=1, nsav)]
+! If XDROP is not better than any column of XSAV, then we remove the first (oldest) column of XSAV.
+if (count(keep) == nsavmax) then
+    keep(1) = .false.
+end if
+xsav(:, 1:count(keep)) = xsav(:, pack([(i, i=1, nsav)], mask=keep))
+datsav(:, 1:count(keep)) = datsav(:, pack([(i, i=1, nsav)], mask=keep))
+
+! Update NSAV. Note that the update of XSAV and DATSAV used NSAV, so it should be updated afterward.
+nsav = count(keep) + 1
+
+! Save XDROP to XSAV(:, NSAV) and DATDROP to DATSAV(:, NSAV).
+xsav(:, nsav) = xdrop(:)
+datsav(:, nsav) = datdrop(:)
+
+end subroutine savex
+
+
+function selectx(fhist, cstrvhist, cpen, ctol) result(kopt)
 
 use consts_mod, only : IK, RP, HUGENUM, HUGEFUN, HUGECON, ZERO, TWO, DEBUGGING, SRNLEN
 use infnan_mod, only : is_nan, is_posinf
@@ -17,7 +99,7 @@ real(RP), intent(in) :: cstrvhist(:)
 real(RP), intent(in) :: ctol
 real(RP), intent(in) :: fhist(:)
 
-! Outputs
+! Output
 integer(IK) :: kopt
 
 ! Local variables
@@ -78,7 +160,6 @@ end if
 
 end function selectx
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 function isbetter(fc1, fc2, ctol) result(is_better)
 ! This function compares whether FC1 = (F1, CSTRV1) is (strictly) better than FC2 = (F2, CSTRV2),
@@ -121,4 +202,4 @@ is_better = is_better .or. (fc1(1) < HUGENUM .and. fc1(2) <= ctol .and. ((fc2(2)
 end function isbetter
 
 
-end module selectx_mod
+end module hist_mod

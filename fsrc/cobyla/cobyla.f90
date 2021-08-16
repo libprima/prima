@@ -1,5 +1,10 @@
 module cobyla_mod
 
+implicit none
+private
+public :: cobyla
+
+
 contains
 subroutine cobyla(n, m, x, rhobeg, rhoend, iprint, maxfun, f, info, ftarget, resmax, con)
 ! Generic modules
