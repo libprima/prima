@@ -24,13 +24,11 @@ function trstlp(A, b, rho) result(d)
 ! ICON is the index of a most violated constraint if CSTRV is positive.
 !
 ! NACT is the number of constraints in the active set and IACT(1),...,IACT(NACT) are their indices,
-! while the remainder of IACT contains a permutation of the remaining constraint
-! indices.
+! while the remainder of IACT contains a permutation of the remaining constraint indices.
 ! N.B.: NACT <= min(M, N). Obviously, NACT <= M. In addition, The constraints in IACT(1, ..., NACT)
-! have linearly independent gradients (see the comments above the instructions that delete
-! a constraint from the active set to make room for the new active constraint with index
-! IACT(ICON)); this can also be seen from the update of NACT: starting from 0, NACT is incremented
-! only when NACT < N.
+! have linearly independent gradients (see the comments above the instructions that delete a
+! constraint from the active set to make room for the new active constraint with index IACT(ICON));
+! it can also be seen from the update of NACT: starting from 0, NACT is incremented only if NACT < N.
 !
 ! Further, Z is an orthogonal matrix whose first NACT columns can be regarded as the result of
 ! Gram-Schmidt applied to the active constraint gradients. For J=1, 2, ..., NACT, the number
@@ -83,11 +81,18 @@ call trstlp_sub(iact, nact, 2, A, b, rho, d, vmultc, z)
 
 end function trstlp
 
-
-!------------------------------------------------------------------!
-!-- QUESTION: What is the objective and algorithm of trstlp_sub? --!
-!------------------------------------------------------------------!
+!---------------------------------------------------------------------------!
+!-- QUESTION: What are exactly the objective and algorithm of trstlp_sub? --!
+!---------------------------------------------------------------------------!
 subroutine trstlp_sub(iact, nact, stage, A, b, rho, d, vmultc, z)
+! This subroutine does the real calculations for TRSTLP, both stage 1 and stage 2.
+! Major differences between stage 1 and stage 2:
+! 1. Initialization. Stage 2 inherits the values of some variables from stage 1, so they are
+! initialized in stage 1 but not in stage 2.
+! 2. CSTRV. CSTRV is updated after at iteration in stage 1, whereas it remains a constant in stage 2.
+! 3. SDIRN. See the definition of SDIRN in the code for details.
+! 4. OPTNEW. The two stages have different objectives, so OPTNEW is updated differently.
+! 5. STEP. STEP <= CSTRV in stage 1.
 
 ! Generic modules
 use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, EPS, HUGENUM, DEBUGGING, SRNLEN
@@ -332,16 +337,19 @@ do iter = 1, maxiter
         end if
 
         ! Set SDIRN to the direction of the next change to the current vector of variables.
-        ! Usually during the first stage the vector SDIRN gives a search direction that reduces all
-        ! the active constraint violations by one simultaneously.
+        ! Usually during stage 1 the vector SDIRN gives a search direction that reduces all the
+        ! active constraint violations by one simultaneously.
         if (stage == 1) then
             sdirn = sdirn - ((inprod(sdirn, A(:, iact(nact))) - ONE) / zdota(nact)) * z(:, nact)
         else
             sdirn = (ONE / zdota(nact)) * z(:, nact)
+            ! SDIRN = Z(:, NACT)/(A(:,IACT(NACT))^T*Z(:, NACT))
+            ! SDIRN^T*A(:, IACT(NACT)) = 1, SDIRN is orthogonal to A(:, IACT(1:NACT-1)) and is
+            ! parallel to Z(:, NACT).
         end if
     else
         ! Delete the constraint with the index IACT(ICON) from the active set. In theory, ICON > 0.
-        ! We include ICON > 0 in the condition below to be safe. It does not exist in Powell's code.
+        ! To be safe, the condition below requires ICON > 0, which does not exist in Powell's code.
         if (icon < nact .and. icon > 0) then
             do k = icon, nact - 1
                 ! Zaikun 20210811: What if HYPT = 0?
@@ -358,8 +366,12 @@ do iter = 1, maxiter
         ! Set SDIRN to the direction of the next change to the current vector of variables.
         if (stage == 1) then
             sdirn = sdirn - inprod(sdirn, z(:, nact + 1)) * z(:, nact + 1)
+            ! SDIRN is orthogonal to Z(:, NACT+1)
         else
             sdirn = (ONE / zdota(nact)) * z(:, nact)
+            ! SDIRN = Z(:, NACT)/(A(:,IACT(NACT))^T*Z(:, NACT))
+            ! SDIRN^T*A(:, IACT(NACT)) = 1, SDIRN is orthogonal to A(:, IACT(1:NACT-1)) and is
+            ! parallel to Z(:, NACT).
         end if
     end if
 
