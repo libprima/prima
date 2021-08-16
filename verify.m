@@ -107,7 +107,8 @@ else
     maxir = ir;
 end
 
-blacklist={'gauss2', 'gauss3','HS25NE', 'cubene'};  % Memory error
+blacklist = [];
+%blacklist={'gauss2', 'gauss3','HS25NE', 'cubene'};  % Memory error
 blacklist=[blacklist, 'qcnew'];  % f(x) ~= fx due to bad condition
 blacklist=[blacklist, 'BLEACHNG']; % takes too much time
 

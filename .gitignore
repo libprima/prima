@@ -20,6 +20,9 @@ fort.*
 *NSConflict*
 test_data/
 
+# automatically generated intersection-form files
+intersection_form/
+
 # plusFORT
 SPAGged/
 _pf_data/

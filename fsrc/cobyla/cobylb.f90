@@ -33,8 +33,8 @@ real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: rhoend
 
 ! In-outputs
-real(RP), intent(out) :: con(:) ! m+2. Bad name; should be confr
-real(RP), intent(inout) :: x(:)  ! n
+real(RP), intent(out) :: con(:) ! M + 2. Bad name; should be confr
+real(RP), intent(inout) :: x(:)  ! N
 
 ! Outputs
 integer(IK), intent(out) :: info
@@ -61,8 +61,8 @@ integer(IK) :: n
 integer(IK) :: nf
 integer(IK) :: nsav
 integer(IK) :: subinfo
-real(RP) :: A(size(x), m + 1)  ! Better name?
-! A(:, 1:m) contains the approximate gradient for the constraints, and A(:, m+1) is minus the
+real(RP) :: A(size(x), m + 1)
+! A(:, 1:M) contains the approximate gradient for the constraints, and A(:, M+1) is minus the
 ! approximate gradient for the objective function.
 real(RP) :: barmu
 real(RP) :: cmax(m)
