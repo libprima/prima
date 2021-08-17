@@ -53,7 +53,6 @@ integer(IK) :: iw
 integer(IK) :: k
 integer(IK) :: mpp
 real(RP) :: rhoend_c
-real(RP) :: confr(m + 2)
 !*++
 !*++ End of declarations rewritten by SPAG
 !*++
@@ -155,8 +154,7 @@ iw = idx + N
 rhoend_c = min(rhobeg, rhoend)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-call cobylb(m, x, rhobeg, rhoend_c, iprint, maxfun, confr, f, info, ftarget, resmax)
-con(1:m) = confr(1:m)
+call cobylb(m, x, rhobeg, rhoend_c, iprint, maxfun, con, f, info, ftarget, resmax)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 end subroutine COBYLA
 

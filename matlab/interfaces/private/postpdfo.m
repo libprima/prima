@@ -347,7 +347,7 @@ end
 % solver, because it will be used in debug mode when checking whether fx
 % is consistent with fhist and chist. See the definition of fhistf for
 % details.
-constrv_returned = constrviolation;
+cstrv_returned = constrviolation;
 if probinfo.scaled
     % First calculate the residuals of the linear constraints. This must
     % be calculated before x is scaled back. Otherwise, we would have to
@@ -540,7 +540,7 @@ if options.debug && ~options.classical
     % Check whether fx is 'optimal'
     fhistf = fhist;
     if ismember(solver, constrained_solver_list)
-        fhistf = fhistf(chist <= max(constrv_returned, 0));
+        fhistf = fhistf(chist <= max(cstrv_returned, 0));
     end
     minf = min([fhistf,fx]);
 %% Zaikun 2021-05-26: The following test is disabled for lincoa for them moment. lincoa may not pass it.
@@ -617,8 +617,9 @@ if options.debug && ~options.classical
         else
             cf = chist(fhist == fx);
         end
-        if ~any(cf == constrv_returned) && ~(isnan(constrv_returned) && ~any(~isnan(cf)))
+        if ~any(cf == cstrv_returned) && ~(isnan(cstrv_returned) && ~any(~isnan(cf)))
             % Public/unexpected error
+            keyboard
             error(sprintf('%s:InvalidFhist', invoker), ...
               '%s: UNEXPECTED ERROR: %s returns a constrviolation that does not match chist.', invoker, solver);
         end

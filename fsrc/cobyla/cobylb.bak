@@ -18,7 +18,7 @@ use debug_mod, only : errstop
 use output_mod, only : retmssg, rhomssg, fmssg
 use lina_mod, only : inprod, matprod, outprod
 use memory_mod, only : cstyle_sizeof
-use hist_mod, only : savehist, selectx
+use hist_mod, only : savex, selectx
 
 ! Solver-specific modules
 use initialize_mod, only : initialize
@@ -37,7 +37,7 @@ real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: rhoend
 
 ! In-outputs
-real(RP), intent(out) :: con(:) ! M.
+real(RP), intent(out) :: con(:) ! M + 2. Bad name; should be confr
 real(RP), intent(inout) :: x(:)  ! N
 
 ! Outputs
@@ -59,6 +59,7 @@ integer(IK) :: tr
 integer(IK) :: maxtr
 integer(IK) :: j
 integer(IK) :: jdrop
+integer(IK) :: jopt
 integer(IK) :: kopt
 integer(IK) :: n
 integer(IK) :: nf
@@ -67,19 +68,14 @@ integer(IK) :: subinfo
 real(RP) :: A(size(x), m + 1)
 ! A(:, 1:M) contains the approximate gradient for the constraints, and A(:, M+1) is minus the
 ! approximate gradient for the objective function.
-real(RP) :: b(m + 1)
 real(RP) :: barmu
 real(RP) :: cmax(m)
 real(RP) :: cmin(m)
 real(RP) :: cpen  ! Penalty parameter for constraint in merit function (PARMU in Powell's code)
-real(RP) :: conmat(m, size(x) + 1)
-real(RP) :: consav(m, max(nsavmax, 0))
-real(RP) :: csav(max(nsavmax, 0))
-real(RP) :: fsav(max(nsavmax, 0))
+real(RP) :: datmat(m + 2, size(x) + 1)  ! CFVAL & CVVAL
+real(RP) :: datsav(m + 2, max(nsavmax, 0))
 real(RP) :: denom
 real(RP) :: d(size(x))
-real(RP) :: fval(size(x) + 1)
-real(RP) :: cval(size(x) + 1)
 real(RP) :: factor_alpha
 real(RP) :: factor_beta
 real(RP) :: factor_delta
@@ -102,7 +98,7 @@ real(RP) :: conopt(size(con))
 real(RP), allocatable :: xhist(:, :)
 real(RP), allocatable :: fhist(:)
 real(RP), allocatable :: conhist(:, :)
-real(RP), allocatable :: chist(:)
+real(RP), allocatable :: cstrvhist(:)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 logical :: alltrue(size(x) + 1)
@@ -130,14 +126,10 @@ rho = rhobeg
 cpen = ZERO
 
 nsav = 0
-fsav = HUGENUM  ! This is necessary; otherwise, SELECTX may return an incorrect X.
-consav = -HUGENUM  ! This is necessary; otherwise, SELECTX may return an incorrect X.
-csav = HUGENUM  ! This is necessary; otherwise, SELECTX may return an incorrect X.
-fval = HUGENUM  ! This is necessary; otherwise, SELECTX may return an incorrect X.
-conmat = -HUGENUM  ! This is necessary; otherwise, SELECTX may return an incorrect X.
-cval = HUGENUM  ! This is necessary; otherwise, SELECTX may return an incorrect X.
+datsav = HUGENUM  ! This is necessary; otherwise, SELECTX may return an incorrect X.
+datmat = HUGENUM  ! This is necessary; otherwise, SELECTX may return an incorrect X.
 
-call initialize(iprint, maxfun, ctol, ftarget, rho, x, nf, conmat, cval, fval, sim, simi, subinfo)
+call initialize(iprint, maxfun, ctol, ftarget, rho, x, nf, datmat, sim, simi, subinfo)
 
 if (subinfo == NAN_X .or. subinfo == NAN_INF_F .or. subinfo == FTARGET_ACHIEVED .or. subinfo == MAXFUN_REACHED) then
     info = subinfo
@@ -145,24 +137,23 @@ if (subinfo == NAN_X .or. subinfo == NAN_INF_F .or. subinfo == FTARGET_ACHIEVED 
     !!!!!! TEMPORARY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     sim(:, 1:n) = sim(:, 1:n) + spread(sim(:, n + 1), dim=2, ncopies=n)  !!! TEMPORARY
     xhist = sim
-    fhist = fval
-    conhist = conmat
-    chist = cval
+    fhist = datmat(m + 1, :)
+    conhist = datmat(1:m, :)
+    cstrvhist = datmat(m + 2, :)
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     cpen = min(1.0E8_RP, HUGENUM)
     ! Return the best calculated values of the variables.
-    kopt = selectx(fhist, chist, cpen, ctol)
+    kopt = selectx(fhist, cstrvhist, cpen, ctol)
     x = xhist(:, kopt)
     f = fhist(kopt)
+    cstrv = cstrvhist(kopt)
     con = conhist(:, kopt)
-    cstrv = chist(kopt)
-    !close (16)
     return
 else
     x = sim(:, n + 1)
-    f = fval(n + 1)
-    con = conmat(:, n + 1)
-    cstrv = cval(n + 1)
+    f = datmat(m + 1, n + 1)
+    cstrv = datmat(m + 2, n + 1)
+    con = datmat(:, n + 1)
 end if
 
 ! Normally, each trust-region iteration takes one function evaluation. The following setting
@@ -180,7 +171,7 @@ info = MAXTR_REACHED
 ! COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
     ! Before the trust-region step, call UPDATEPOLE so that SIM(:, N + 1) is the optimal vertex.
-    call updatepole(cpen, alltrue, conmat, cval, fval, sim, simi, subinfo)
+    call updatepole(cpen, alltrue, datmat, sim, simi, subinfo)
     if (subinfo == DAMAGING_ROUNDING) then
         info = subinfo
         exit
@@ -196,8 +187,8 @@ do tr = 1, maxtr
     ! as Powell's, because the intrinsic MATMUL behaves differently from a naive triple loop in
     ! finite-precision arithmetic.
     ! 2. TRSTLP accesses A mostly by columns, so it is not more reasonable to save A^T instead of A.
-    A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
-    A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
+    A = transpose(matprod(datmat(1:m + 1, 1:n) - spread(datmat(1:m + 1, n + 1), dim=2, ncopies=n), simi))
+    A(:, m + 1) = -A(:, m + 1)
 
     ! Exit if A contains NaN. Otherwise, TRSTLP may encounter memory errors or infinite loops.
     !----------------------------------------------------------------------------------------------!
@@ -209,11 +200,10 @@ do tr = 1, maxtr
     end if
 
     ! Constraint and objective function values of the optimal vertex.
-    conopt = conmat(:, n + 1)
+    conopt = datmat(:, n + 1)
 
-    b = [-conopt, -fval(n + 1)]
     ! Calculate the trust-region trial step D.
-    d = trstlp(A, b, rho)
+    d = trstlp(A, -conopt(1:m + 1), rho)
 
     ! Is the trust-region trial step short?
     shortd = (inprod(d, d) < QUART * rho * rho)
@@ -221,7 +211,7 @@ do tr = 1, maxtr
     if (.not. shortd) then
         ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
         preref = inprod(d, A(:, m + 1))
-        prerec = cval(n + 1) - maxval([-conopt - matprod(d, A(:, 1:m)), ZERO])
+        prerec = datmat(m + 2, n + 1) - maxval([-conopt(1:m) - matprod(d, A(:, 1:m)), ZERO])
 
         ! Increase CPEN if necessary and branch back if this change alters the optimal vertex.
         ! Otherwise, PREREM will be set to the predicted reductions in the merit function.
@@ -230,7 +220,7 @@ do tr = 1, maxtr
         !!!!!!!!!!!!!!! Is it possible that PREREC <= 0????????????? It seems yes.
         if (prerec > ZERO .and. cpen < 1.5E0_RP * barmu) then
             cpen = min(TWO * barmu, HUGENUM)
-            if (findpole(cpen, alltrue, cval, fval) <= n) then
+            if (findpole(cpen, alltrue, datmat) <= n) then
                 cycle
             end if
         end if
@@ -241,8 +231,7 @@ do tr = 1, maxtr
         x = sim(:, n + 1) + d
         if (any(is_nan(x))) then
             f = sum(x)  ! Set F to NaN.
-            con = f  ! Set constraint values to NaN.
-            cstrv = f  ! Set constraint violation to NaN
+            con = sum(x)  ! Set constraint values and constraint violation to NaN.
             info = -1
             exit
         end if
@@ -250,14 +239,16 @@ do tr = 1, maxtr
         ! Evaluate the objective function and constraints at X.
         call calcfc(n, m, x, f, con)
         nf = nf + 1
-        cstrv = maxval([-con, ZERO])
+        cstrv = maxval([-con(1:m), ZERO])
+        con(m + 1) = f
+        con(m + 2) = cstrv
 
         ! Begin the operations that decide whether X should replace one of the vertices of the
         ! current simplex, the change being mandatory if ACTREM is positive.
-        actrem = (fval(n + 1) + cpen * cval(n + 1)) - (f + cpen * cstrv)
-        if (cpen <= ZERO .and. abs(f - fval(n + 1)) <= ZERO) then
+        actrem = (datmat(m + 1, n + 1) + cpen * datmat(m + 2, n + 1)) - (f + cpen * cstrv)
+        if (cpen <= ZERO .and. abs(f - datmat(m + 1, n + 1)) <= ZERO) then
             prerem = prerec   ! Is it positive?????
-            actrem = cval(n + 1) - cstrv
+            actrem = datmat(m + 2, n + 1) - cstrv
         end if
 
 
@@ -266,18 +257,15 @@ do tr = 1, maxtr
 
         ! When JDROP=0, the algorithm decides not to include X into the simplex.
         if (jdrop == 0) then
-            call savehist(x, f, con, cstrv, xsav, fsav, consav, csav, nsav, ctol)   !?????
+            call savex(x, con, xsav, datsav, nsav, ctol)   !?????
         else
-            call savehist(sim(:, n + 1) + sim(:, jdrop), fval(jdrop), conmat(:, jdrop), cval(jdrop), &
-                & xsav, fsav, consav, csav, nsav, ctol)
-            ! Revise the simplex by updating the elements of SIM, SIMI, FVAL, CONMAT, and CVAL.
+            call savex(sim(:, n + 1) + sim(:, jdrop), datmat(:, jdrop), xsav, datsav, nsav, ctol)
+            ! Revise the simplex by updating the elements of SIM, SIMI, and DATMAT.
             sim(:, jdrop) = d
             simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), d)
             simi = simi - outprod(matprod(simi, d), simi_jdrop)
             simi(jdrop, :) = simi_jdrop
-            fval(jdrop) = f
-            conmat(:, jdrop) = con
-            cval(jdrop) = cstrv
+            datmat(:, jdrop) = con
         end if
 
         ! TODO: The following CAN BE MOVED UPWARD to below CALCFC once XHIST etc are implemented !!!
@@ -285,8 +273,8 @@ do tr = 1, maxtr
             info = -2
             exit
         end if
-        if (any(is_nan(con))) then
-            cstrv = sum(con)  ! Set CSTRV to NaN
+        if (any(is_nan(con(1:m)))) then
+            cstrv = sum(con(1:m))  ! Set CSTRV to NaN
             info = -2
             exit
         end if
@@ -314,7 +302,7 @@ do tr = 1, maxtr
 
     if (improve_geo) then
         ! Before the geometry step, call UPDATEPOLE so that SIM(:, N + 1) is the optimal vertex.
-        call updatepole(cpen, alltrue, conmat, cval, fval, sim, simi, subinfo)
+        call updatepole(cpen, alltrue, datmat, sim, simi, subinfo)
         if (subinfo == DAMAGING_ROUNDING) then
             info = subinfo
             exit
@@ -346,11 +334,10 @@ do tr = 1, maxtr
             end if
 
             ! Calculate the geometry step D.
-            d = geostep(jdrop, cpen, conmat, cval, fval, factor_gamma, rho, simi)
+            d = geostep(jdrop, cpen, datmat, factor_gamma, rho, simi)
 
-            ! Save the information of the JOPT-th vertex.
-            call savehist(sim(:, n + 1) + sim(:, jdrop), fval(jdrop), conmat(:, jdrop), cval(jdrop),&
-              & xsav, fsav, consav, csav, nsav, ctol)
+            ! Save the information of the JOPT-th vertex in XSAV and DATSAV.
+            call savex(sim(:, n + 1) + sim(:, jdrop), datmat(:, jdrop), xsav, datsav, nsav, ctol)
 
             ! Update SIM and SIMI.
             sim(:, jdrop) = d  ! Corresponding to the new vertex SIM(:, N + 1) + D
@@ -362,8 +349,7 @@ do tr = 1, maxtr
             x = sim(:, n + 1) + d
             if (any(is_nan(x))) then
                 f = sum(x)  ! Set F to NaN.
-                con = f  ! Set constraint values to NaN.
-                cstrv = f  ! Set constraint violation to NaN.
+                con = sum(x)  ! Set constraint values and constraint violation to NaN.
                 info = -1
                 exit
             end if
@@ -371,17 +357,17 @@ do tr = 1, maxtr
             ! Evaluate the objective function and constraints at X.
             call calcfc(n, m, x, f, con)
             nf = nf + 1
-            cstrv = maxval([-con, ZERO])
-            fval(jdrop) = f
-            conmat(:, jdrop) = con
-            cval(jdrop) = cstrv
+            cstrv = maxval([-con(1:m), ZERO])
+            con(m + 1) = f
+            con(m + 2) = cstrv
+            datmat(:, jdrop) = con
 
             if (is_nan(F) .or. is_posinf(F)) then
                 info = -2
                 exit
             end if
-            if (any(is_nan(con))) then
-                cstrv = sum(con)  ! Set CSTRV to NaN
+            if (any(is_nan(con(1:m)))) then
+                cstrv = sum(con(1:m))  ! Set CSTRV to NaN
                 info = -2
                 exit
             end if
@@ -408,11 +394,11 @@ do tr = 1, maxtr
         end if
         ! See equations (12)--(13) in Section 3 of the COBYLA paper for the update of CPEN.
         ! If the original CPEN = 0, then the updated CPEN is also 0.
-        cmin = minval(conmat, dim=2)
-        cmax = maxval(conmat, dim=2)
+        cmin = minval(datmat(1:m, :), dim=2)
+        cmax = maxval(datmat(1:m, :), dim=2)
         if (any(cmin < HALF * cmax)) then
             denom = minval(max(cmax, ZERO) - cmin, mask=(cmin < HALF * cmax))
-            cpen = min(cpen, (maxval(fval) - minval(fval)) / denom)
+            cpen = min(cpen, (maxval(datmat(m + 1, :)) - minval(datmat(m + 1, :))) / denom)
         else
             cpen = ZERO
         end if
@@ -428,18 +414,16 @@ sim(:, 1:n) = sim(:, 1:n) + spread(sim(:, n + 1), dim=2, ncopies=n)  !!! TEMPORA
 !write (16, *) 'xsav', xsav(:, 1:nsav)
 !write (16, *) nf, f, x
 xhist = reshape([sim, xsav(:, 1:nsav), x], [n, n + nsav + 2])
-fhist = [fval, fsav(1:nsav), f]
-conhist = reshape([conmat, consav(:, 1:nsav), con], [m, n + nsav + 2])
-chist = [cval, csav(1:nsav), cstrv]
+fhist = [datmat(m + 1, :), datsav(m + 1, 1:nsav), f]
+conhist = reshape([datmat(1:m, :), datsav(1:m, 1:nsav), con(1:m)], [m, n + nsav + 2])
+cstrvhist = [datmat(m + 2, :), datsav(m + 2, 1:nsav), cstrv]
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 cpen = max(cpen, min(1.0E8_RP, HUGENUM))
-kopt = selectx(fhist, chist, cpen, ctol)
+kopt = selectx(fhist, cstrvhist, cpen, ctol)
 x = xhist(:, kopt)
 f = fhist(kopt)
+cstrv = cstrvhist(kopt)
 con = conhist(:, kopt)
-cstrv = chist(kopt)
-
-!close (16)
 
 end subroutine cobylb
 

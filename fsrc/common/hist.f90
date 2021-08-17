@@ -2,12 +2,12 @@ module hist_mod
 
 implicit none
 private
-public :: savex, selectx
+public :: savehist, selectx
 
 contains
 
 
-subroutine savex(xdrop, datdrop, xsav, datsav, nsav, ctol)
+subroutine savehist(x, f, con, cstrv, xsav, fsav, consav, csav, nsav, ctol)   !?????
 ! This subroutine saves XDROP in XSAV and DATDROP in DATSAV, unless a vector in XSAV(:, 1:NSAV) is
 ! better than XDROP. If XDROP is better than some vectors in XSAV(:, 1:NSAV), then these vectors
 ! will be removed. If XDROP is not better than any of XSAV(:, 1:NSAV) but NSAV=NSAVMAX, then we
@@ -25,9 +25,9 @@ subroutine savex(xdrop, datdrop, xsav, datsav, nsav, ctol)
 ! ==> X is better than Y with any CPEN >= 0,
 ! ==> X is better than Y regardless of CPEN.
 
-use consts_mod, only : RP, IK, ONE
+use consts_mod, only : RP, IK, ONE, DEBUGGING, SRNLEN
 use infnan_mod, only : is_nan, is_posinf
-use debug_mod, only : errstop
+use debug_mod, only : errstop, verisize
 use output_mod, only : retmssg, rhomssg, fmssg
 use lina_mod, only : calquad, inprod
 
@@ -35,12 +35,16 @@ implicit none
 
 ! Inputs
 real(RP), intent(IN) :: ctol
-real(RP), intent(IN) :: datdrop(:)  ! m+2
-real(RP), intent(IN) :: xdrop(:)  ! n
+real(RP), intent(IN) :: con(:)  ! M
+real(RP), intent(IN) :: cstrv
+real(RP), intent(IN) :: f
+real(RP), intent(IN) :: x(:)  ! N
 
 ! In-outputs
 integer(IK), intent(INOUT) :: nsav
-real(RP), intent(INOUT) :: datsav(:, :)  ! (M+2, NSAVMAX)
+real(RP), intent(INOUT) :: consav(:, :)  ! (M, NSAVMAX)
+real(RP), intent(INOUT) :: csav(:)  ! NSAVMAX
+real(RP), intent(INOUT) :: fsav(:)  ! NSAVMAX
 real(RP), intent(INOUT) :: xsav(:, :) ! (N, NSAVMAX)
 
 ! Local variables
@@ -48,44 +52,58 @@ integer(IK) :: m
 integer(IK) :: n
 integer(IK) :: nsavmax
 integer(IK) :: i
+integer(IK), allocatable :: index_to_keep(:)
 logical :: better(nsav)
 logical :: keep(nsav)
+character(len=SRNLEN), parameter :: srname = 'SAVEHIST'
 
-m = size(datdrop) - 2
-n = size(xdrop)
-nsavmax = size(xsav, 2)
+m = size(con)
+n = size(x)
+nsavmax = size(fsav)
+
+if (DEBUGGING) then
+    if (n <= 0) then
+        call errstop(srname, 'SIZE(X) is invalid')
+    end if
+    call verisize(xsav, n, nsavmax)
+    call verisize(consav, m, nsavmax)
+    call verisize(csav, nsavmax)
+end if
 
 if (nsavmax <= 0) then
-    return  ! Do nothing if NSAVMAX=0
+    return  ! Do nothing if NSAVMAX = 0
 end if
 
 ! Return immediately if any column of XSAV is better than XDROP.
 ! BETTER is defined by the array constructor with an implicit do loop.
-better = [(isbetter([datsav(m + 1, i), datsav(m + 2, i)], [datdrop(m + 1), datdrop(m + 2)], ctol), i=1, nsav)]
+better = [(isbetter([fsav(i), csav(i)], [f, cstrv], ctol), i=1, nsav)]
 if (any(better)) then
     return
 end if
 
 ! Decide which columns of XSAV to keep. We use again the array constructor with an implicit do loop.
-keep = [(.not. isbetter([datdrop(m + 1), datdrop(m + 2)], [datsav(m + 1, i), datsav(m + 2, i)], ctol), i=1, nsav)]
-! If XDROP is not better than any column of XSAV, then we remove the first (oldest) column of XSAV.
+keep = [(.not. isbetter([f, cstrv], [fsav(i), csav(i)], ctol), i=1, nsav)]
+! If X is not better than any column of XSAV, then we remove the first (oldest) column of XSAV.
 if (count(keep) == nsavmax) then
     keep(1) = .false.
 end if
-xsav(:, 1:count(keep)) = xsav(:, pack([(i, i=1, nsav)], mask=keep))
-datsav(:, 1:count(keep)) = datsav(:, pack([(i, i=1, nsav)], mask=keep))
 
-! Update NSAV. Note that the update of XSAV and DATSAV used NSAV, so it should be updated afterward.
+index_to_keep = pack([(i, i=1, nsav)], mask=keep)
 nsav = count(keep) + 1
 
-! Save XDROP to XSAV(:, NSAV) and DATDROP to DATSAV(:, NSAV).
-xsav(:, nsav) = xdrop(:)
-datsav(:, nsav) = datdrop(:)
+xsav(:, 1:nsav - 1) = xsav(:, index_to_keep)
+fsav(1:nsav - 1) = fsav(index_to_keep)
+consav(:, 1:nsav - 1) = consav(:, index_to_keep)
+csav(1:nsav - 1) = csav(index_to_keep)
+xsav(:, nsav) = x
+fsav(nsav) = f
+consav(:, nsav) = con
+csav(nsav) = cstrv
 
-end subroutine savex
+end subroutine savehist
 
 
-function selectx(fhist, cstrvhist, cpen, ctol) result(kopt)
+function selectx(fhist, chist, cpen, ctol) result(kopt)
 
 use consts_mod, only : IK, RP, HUGENUM, HUGEFUN, HUGECON, ZERO, TWO, DEBUGGING, SRNLEN
 use infnan_mod, only : is_nan, is_posinf
@@ -95,7 +113,7 @@ implicit none
 
 ! Inputs
 real(RP), intent(in) :: cpen
-real(RP), intent(in) :: cstrvhist(:)
+real(RP), intent(in) :: chist(:)
 real(RP), intent(in) :: ctol
 real(RP), intent(in) :: fhist(:)
 
@@ -105,7 +123,7 @@ integer(IK) :: kopt
 ! Local variables
 real(RP) :: cmin
 real(RP) :: cref
-real(RP) :: cstrvhist_shifted(size(fhist))
+real(RP) :: chist_shifted(size(fhist))
 real(RP) :: fref
 real(RP) :: phi(size(fhist))
 real(RP) :: phimin
@@ -117,18 +135,18 @@ if (DEBUGGING) then
     if (size(fhist) == 0) then
         call errstop(srname, 'SIZE(FHIST) == 0')
     end if
-    call verisize(cstrvhist, size(fhist))
+    call verisize(chist, size(fhist))
 end if
 
 ! We select X among the points with F < FREF and CSTRV < CREF.
 ! Do NOT use F <= FREF, because F = FREF (HUGEFUN or HUGENUM) may mean F = INF in practice.
-if (any(fhist < HUGEFUN .and. cstrvhist < HUGECON)) then
+if (any(fhist < HUGEFUN .and. chist < HUGECON)) then
     fref = HUGEFUN
     cref = HUGECON
-elseif (any(fhist < HUGENUM .and. cstrvhist < HUGECON)) then
+elseif (any(fhist < HUGENUM .and. chist < HUGECON)) then
     fref = HUGENUM
     cref = HUGECON
-elseif (any(fhist < HUGEFUN .and. cstrvhist < HUGENUM)) then
+elseif (any(fhist < HUGEFUN .and. chist < HUGENUM)) then
     fref = HUGEFUN
     cref = HUGENUM
 else
@@ -136,26 +154,26 @@ else
     cref = HUGENUM
 end if
 
-if (.not. any(fhist < fref .and. cstrvhist < cref)) then
+if (.not. any(fhist < fref .and. chist < cref)) then
     kopt = size(fhist)
 else
     ! Shift the constraint violations by CTOL, so that CSTRV <= CTOL is regarded as no violation.
-    cstrvhist_shifted = max(cstrvhist - ctol, ZERO)
+    chist_shifted = max(chist - ctol, ZERO)
     ! CMIN is the minimal shifted constraint violation attained in the history.
-    cmin = minval(cstrvhist_shifted, mask=(fhist < fref))
+    cmin = minval(chist_shifted, mask=(fhist < fref))
     ! We select X among the points whose shifted constraint violations are at most CREF.
     cref = TWO * cmin  ! CREF = ZERO if CMIN = ZERO; asking for CSTRV_SHIFTED < CREF is unreasonable.
     ! We use the following PHI as our merit function to select X.
-    phi = fhist + cpen * cstrvhist_shifted
+    phi = fhist + cpen * chist_shifted
     ! We select X to minimize PHI subject to F < FREF and CSTRV_SHIFTED <= CREF. In case there are
     ! multiple minimizers, we take the one with the least CSTRV; if there are still more than one
     ! choices, we take the one with the least F; if the last comparison still leads to more than
     ! one possibilities, then they are all equally good, and we choose the first one of them.
     ! N.B.: In finite-precision arithmetic, PHI_1 = PHI_2 and CSTRV_SHIFTED_1 = CSTRV_SHIFTED_2 do
     ! not ensure that F_1 = F_2!!!
-    phimin = minval(phi, mask=(fhist < fref .and. cstrvhist_shifted <= cref))
-    cref = minval(cstrvhist, mask=(fhist < fref .and. phi <= phimin))
-    kopt = int(minloc(fhist, mask=(cstrvhist <= cref), dim=1), kind(kopt))
+    phimin = minval(phi, mask=(fhist < fref .and. chist_shifted <= cref))
+    cref = minval(chist, mask=(fhist < fref .and. phi <= phimin))
+    kopt = int(minloc(fhist, mask=(chist <= cref), dim=1), kind(kopt))
 end if
 
 end function selectx
