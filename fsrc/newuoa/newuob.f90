@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Thursday, August 12, 2021 PM10:48:43
+! Last Modified: Tuesday, August 17, 2021 AM11:05:25
 
 module newuob_mod
 
@@ -186,7 +186,7 @@ call inith(ij, xpt, idz, bmat, zmat, subinfo)
 
 ! After initializing GQ, HQ, PQ, BMAT, ZMAT, one can also choose to return if subinfo = NAN_MODEL
 ! (NaN occurs in the model). We do not do it here. If such a model is harmful, then it will probably
-! lead to other returns (NaN in X, NaN in F, trust region subproblem fails, ...); otherwise, the
+! lead to other returns (NaN in X, NaN in F, trust-region subproblem fails, ...); otherwise, the
 ! code will continue to run and possibly get rid of the NaN in the model.
 
 ! Set some more initial values and parameters.
@@ -203,20 +203,20 @@ trtol = 1.0E-2_RP  ! Tolerance used in trsapp.
 ratio = -ONE
 
 ! Normally, each trust-region iteration takes one function evaluation. The following setting
-! essentially imposes no constraint on the maximal number of trust region iterations.
+! essentially imposes no constraint on the maximal number of trust-region iterations.
 maxtr = 10 * maxfun
 ! MAXTR is unlikely to be reached, but we define the following default value for INFO for safety.
 info = MAXTR_REACHED
 
 ! Begin the iterative procedure.
 ! After solving a trust-region subproblem, NEWUOA uses 3 boolean variables to control the work flow.
-! SHORTD - Is the trust region trial step too short to invoke a function evaluation?
-! IMPROVE_GEO - Will we improve the model after the trust region iteration?
-! REDUCE_RHO - Will we reduce rho after the trust region iteration?
+! SHORTD - Is the trust-region trial step too short to invoke a function evaluation?
+! IMPROVE_GEO - Will we improve the model after the trust-region iteration?
+! REDUCE_RHO - Will we reduce rho after the trust-region iteration?
 ! REDUCE_RHO = REDUCE_RHO_1 .OR. REDUCE_RHO_2 (see boxes 14 and 10 of Fig. 1 in the NEWUOA paper).
 ! NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
-    ! Solve the trust region subproblem.
+    ! Solve the trust-region subproblem.
     call trsapp(delta, gq, hq, pq, trtol, xopt, xpt, crvmin, d, subinfo)
 
     ! Calculate the length of the trial step D.
@@ -236,7 +236,7 @@ do tr = 1, maxtr
 
     if (.not. shortd) then  ! D is long enough.
         ! Shift XBASE if XOPT may be too far from XBASE.
-        !if (inprod(d, d) <= 1.0e-3_RP*inprod(xopt, xopt)) then  ! Powell
+        !if (inprod(d, d) <= 1.0e-3_RP*inprod(xopt, xopt)) then  ! Powell's code
         if (dnorm * dnorm <= 1.0E-3_RP * inprod(xopt, xopt)) then
             call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
         end if
@@ -358,7 +358,7 @@ do tr = 1, maxtr
         end if
     end if  ! End of if (.not. shortd)
 
-    ! Before next trust region iteration, we may improve the geometry of XPT or reduce rho
+    ! Before next trust-region iteration, we may improve the geometry of XPT or reduce rho
     ! according to IMPROVE_GEO and REDUCE_RHO. Now we decide these two indicators.
 
     ! First define IMPROVE_GEO, which corresponds to Box 8 of the NEWUOA paper.
@@ -377,7 +377,7 @@ do tr = 1, maxtr
     ! 1. RATIO must be set even if SHORTD = TRUE. Otherwise, compilers will raise a run-time error.
     ! 2. If SHORTD = FALSE and KNEW_TR = 0, then IMPROVE_GEO = TRUE. Therefore, IMPROVE_GEO = TRUE
     ! if it is impossible to obtain a good XPT by replacing a current point with the one suggested
-    ! by the trust region step.
+    ! by the trust-region step.
     ! 3. If REDUCE_RHO = FALSE and SHORTD = TRUE, then the trust-region step is not tried at all,
     ! i.e., no function evaluation is invoked at XOPT + D (when REDUCE_RHO = TRUE, the step is not
     ! tried either, but the same step will be generated again at the next trust-region iteration
@@ -401,7 +401,7 @@ do tr = 1, maxtr
     bad_trstep = (shortd .or. ratio < TENTH .or. knew_tr == 0)
     improve_geo = (.not. reduce_rho_1) .and. (maxval(xdist) > TWO * delta) .and. bad_trstep
 
-    ! If all the interpolation points are close to XOPT and the trust region is small, but the
+    ! If all the interpolation points are close to XOPT and the trust-region is small, but the
     ! trust-region step is "bad" (SHORTD or RATIO <= 0), then we shrink RHO (update the criterion
     ! for the "closeness" and SHORTD). REDUCE_RHO_2 corresponds to Box 10 of the NEWUOA paper.
     ! N.B.:
@@ -430,7 +430,7 @@ do tr = 1, maxtr
         ! XPT(:, KNEW_GEO) will be dropped (replaced by XOPT + D below).
         knew_geo = int(maxloc(xdist, dim=1), kind(knew_geo))
 
-        ! Set DELBAR, which will be used as the trust region radius for the geometry-improving
+        ! Set DELBAR, which will be used as the trust-region radius for the geometry-improving
         ! scheme GEOSTEP. We also need it to decide whether to shift XBASE or not.
         ! Note that DELTA has been updated before arriving here. See the comments above the
         ! definition of IMPROVE_GEO.

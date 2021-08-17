@@ -4,7 +4,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Friday, August 13, 2021 AM12:17:41
+! Last Modified: Tuesday, August 17, 2021 AM11:08:05
 
 module trustregion_mod
 
@@ -29,7 +29,7 @@ subroutine trsapp(delta, gq, hq, pq, tol, x, xpt, crvmin, s, info)
 ! At return, S will be the approximate solution. CRVMIN will be
 ! set to the least curvature of HESSIAN along the conjugate
 ! directions that occur, except that it is set to ZERO if S goes
-! all the way to the trust region boundary. QRED is the reduction
+! all the way to the trust-region boundary. QRED is the reduction
 ! of Q achieved by S. INFO is an exit flag:
 ! INFO = 0: an approximate solution satisfying one of the
 ! following conditions is found:
@@ -362,8 +362,8 @@ use consts_mod, only : RP, HALF
 implicit none
 
 real(RP) :: trrad
-real(RP), intent(in) :: delta  ! Current trust region radius
-real(RP), intent(in) :: dnorm  ! Norm of current trust region step
+real(RP), intent(in) :: delta  ! Current trust-region radius
+real(RP), intent(in) :: dnorm  ! Norm of current trust-region step
 real(RP), intent(in) :: eta1  ! Ratio threshold for contraction
 real(RP), intent(in) :: eta2  ! Ratio threshold for expansion
 real(RP), intent(in) :: gamma1 ! Contraction factor
