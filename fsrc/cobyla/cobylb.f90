@@ -11,7 +11,8 @@ subroutine cobylb(m, x, rhobeg, rhoend, iprint, maxfun, con, f, info, ftarget, c
 
 ! Generic modules
 use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, EPS, HUGENUM, DEBUGGING, SRNLEN
-use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F, DAMAGING_ROUNDING
+use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F, &
+   & DAMAGING_ROUNDING
 use infnan_mod, only : is_nan, is_posinf
 use debug_mod, only : errstop
 use output_mod, only : retmssg, rhomssg, fmssg
@@ -100,15 +101,15 @@ real(RP), allocatable :: conhist(:, :)
 real(RP), allocatable :: cstrvhist(:)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+logical :: alltrue(size(x) + 1)
 logical :: bad_trstep
 logical :: good_geo
 logical :: improve_geo
 logical :: reduce_rho
 logical :: shortd
-
-
 character(len=SRNLEN), parameter :: srname = 'COBYLB'
 
+alltrue = .true.
 reduce_rho = .false.
 
 n = size(x)
@@ -155,18 +156,22 @@ else
     con = datmat(:, n + 1)
 end if
 
-maxtr = huge(tr)  ! No constraint on the maximal number of trust-region iterations.
+! Normally, each trust-region iteration takes one function evaluation. The following setting
+! essentially imposes no constraint on the maximal number of trust-region iterations.
+maxtr = 10 * maxfun
+! MAXTR is unlikely to be reached, but we define the following default value for INFO for safety.
+info = MAXTR_REACHED
 
 ! Begin the iterative procedure.
 ! After solving a trust-region subproblem, COBYLA uses 3 boolean variables to control the work flow.
-! SHORTD - Is the trust region trial step too short to invoke a function evaluation?
-! IMPROVE_GEO - Will we improve the model after the trust region iteration? If yes, a geometry step
+! SHORTD - Is the trust-region trial step too short to invoke a function evaluation?
+! IMPROVE_GEO - Will we improve the model after the trust-region iteration? If yes, a geometry step
 ! will be taken, corresponding to the Branch (Delta) in the COBYLA paper.
-! REDUCE_RHO - Will we reduce rho after the trust region iteration?
+! REDUCE_RHO - Will we reduce rho after the trust-region iteration?
 ! COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
     ! Before the trust-region step, call UPDATEPOLE so that SIM(:, N + 1) is the optimal vertex.
-    call updatepole(cpen, [(.true., i=1, n + 1)], datmat, sim, simi, subinfo)
+    call updatepole(cpen, alltrue, datmat, sim, simi, subinfo)
     if (subinfo == DAMAGING_ROUNDING) then
         info = subinfo
         exit
@@ -187,7 +192,7 @@ do tr = 1, maxtr
 
     ! Exit if A contains NaN. Otherwise, TRSTLP may encounter memory errors or infinite loops.
     !----------------------------------------------------------------------------------------------!
-    !POSSIBLE IMPROVEMENT: INSTEAD OF EXITING, SKIP A TRUST-REGION STEP AND PERFORM A GEOMETRY ONE.
+    ! POSSIBLE IMPROVEMENT: INSTEAD OF EXITING, SKIP A TRUST-REGION STEP AND PERFORM A GEOMETRY ONE!
     !----------------------------------------------------------------------------------------------!
     if (any(is_nan(A))) then
         info = -3
@@ -215,7 +220,7 @@ do tr = 1, maxtr
         !!!!!!!!!!!!!!! Is it possible that PREREC <= 0????????????? It seems yes.
         if (prerec > ZERO .and. cpen < 1.5E0_RP * barmu) then
             cpen = min(TWO * barmu, HUGENUM)
-            if (findpole(cpen, [(.true., i=1, n + 1)], datmat) <= n) then
+            if (findpole(cpen, alltrue, datmat) <= n) then
                 cycle
             end if
         end if
@@ -297,7 +302,7 @@ do tr = 1, maxtr
 
     if (improve_geo) then
         ! Before the geometry step, call UPDATEPOLE so that SIM(:, N + 1) is the optimal vertex.
-        call updatepole(cpen, [(.true., i=1, n + 1)], datmat, sim, simi, subinfo)
+        call updatepole(cpen, alltrue, datmat, sim, simi, subinfo)
         if (subinfo == DAMAGING_ROUNDING) then
             info = subinfo
             exit
@@ -310,7 +315,7 @@ do tr = 1, maxtr
         ! the quality of the interpolation point depends on SIM(:, N + 1), meaning that the same
         ! interpolation set may have good or bad geometry with respect to different "poles"; if the
         ! geometry turns out bad with the new pole, the original COBYLA code will take a geometry
-        ! step, but the code here will NOT do it but continue to take a trust region step.
+        ! step, but the code here will NOT do it but continue to take a trust-region step.
         ! The argument is this: even if the geometry step is not skipped at the first place, the
         ! geometry may turn out bad again after the pole is altered due to an update to CPEN; should
         ! we take another geometry step in that case? If no, why should we do it here? Indeed, this

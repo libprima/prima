@@ -15,7 +15,7 @@
 
 ! Coded by Zaikun ZHANG in July 2020.
 !
-! Last Modified: Thursday, August 05, 2021 PM11:33:57
+! Last Modified: Tuesday, August 17, 2021 PM12:11:05
 
 
 #include "ppf.h"
@@ -54,8 +54,12 @@ interface r2update
     module procedure r2_sym, r2
 end interface r2update
 
+interface eye
+    module procedure eye1, eye2
+end interface eye
+
 interface isminor
-    module procedure isminor_0, isminor_1
+    module procedure isminor0, isminor1
 end interface isminor
 
 contains
@@ -424,9 +428,11 @@ function outprod(x, y) result(z)
 ! OUTPROD calculates the outer product of X and Y, i.e., Z = X*Y^T, regarding both X and Y as columns
 use consts_mod, only : RP, IK
 implicit none
+! Input
 real(RP), intent(in) :: x(:)
 real(RP), intent(in) :: y(:)
-real(RP), dimension(size(x), size(y)) :: z
+! Output
+real(RP) :: z(size(x), size(y))
 
 integer(IK) :: i
 do i = 1, int(size(y), kind(i))
@@ -434,28 +440,44 @@ do i = 1, int(size(y), kind(i))
 end do
 end function outprod
 
-function eye(m, n) result(x)
-! EYE is a function similar to the MATLAB function with the same name.
-use consts_mod, only : RP, IK, ZERO, ONE
-use memory_mod, only : safealloc
-implicit none
-integer(IK), intent(in) :: m
-integer(IK), intent(in), optional :: n
-real(RP), allocatable :: x(:, :)
-integer(IK) :: i
 
-if (present(n)) then
-    call safealloc(x, max(m, 0_IK), max(n, 0_IK))
-else
-    call safealloc(x, max(m, 0_IK), max(m, 0_IK))
-end if
+function eye1(n) result(x)
+! EYE1 is the univariate case of EYE, a function similar to the MATLAB function with the same name.
+use consts_mod, only : RP, IK, ZERO, ONE
+implicit none
+! Input
+integer(IK), intent(in) :: n
+! Output
+real(RP) :: x(max(n, 0), max(n, 0))
+! Local variable
+integer(IK) :: i
 if (size(x, 1) * size(x, 2) > 0) then
     x = ZERO
     do i = 1, int(min(size(x, 1), size(x, 2)), kind(i))
         x(i, i) = ONE
     end do
 end if
-end function eye
+end function eye1
+
+
+function eye2(m, n) result(x)
+! EYE2 is the bivariate case of EYE, a function similar to the MATLAB function with the same name.
+use consts_mod, only : RP, IK, ZERO, ONE
+implicit none
+! Inputs
+integer(IK), intent(in) :: m
+integer(IK), intent(in) :: n
+! Output
+real(RP) :: x(max(m, 0), max(n, 0))
+! Local variable
+integer(IK) :: i
+if (size(x, 1) * size(x, 2) > 0) then
+    x = ZERO
+    do i = 1, int(min(size(x, 1), size(x, 2)), kind(i))
+        x(i, i) = ONE
+    end do
+end if
+end function eye2
 
 
 function planerot(x) result(G)
@@ -853,8 +875,8 @@ hy = matprod(hq, y) + matprod(xpt, pq * matprod(y, xpt))
 end function hessmul
 
 
-function isminor_0(x, ref) result(is_minor)
-! This subroutine tests whether X is minor compared to REF. It is used by Powell in, e.g., COBYLA.
+function isminor0(x, ref) result(is_minor)
+! This subroutine tests whether X is minor compared to REF. It is used by Powell, e.g., in COBYLA.
 use consts_mod, only : RP, TENTH, TWO
 implicit none
 
@@ -866,11 +888,11 @@ real(RP) :: refa, refb
 refa = abs(ref) + TENTH * abs(x)
 refb = abs(ref) + TWO * TENTH * abs(x)
 is_minor = abs(ref) >= refa .or. refa >= refb
-end function isminor_0
+end function isminor0
 
 
-function isminor_1(x, ref) result(is_minor)
-! This subroutine tests whether X is minor compared to REF. It is used by Powell in, e.g., COBYLA.
+function isminor1(x, ref) result(is_minor)
+! This subroutine tests whether X is minor compared to REF. It is used by Powell, e.g., in COBYLA.
 use consts_mod, only : IK, RP
 #if __DEBUGGING__ == 1
 use consts_mod, only : SRNLEN
@@ -884,13 +906,14 @@ logical :: is_minor(size(x))
 integer(IK) :: i
 
 #if __DEBUGGING__ == 1
-character(len=SRNLEN), parameter :: srname = 'ISMINOR_1'
+character(len=SRNLEN), parameter :: srname = 'ISMINOR1'
 if (size(x) /= size(ref)) then
     call errstop(srname, 'SIZE(X) /= SIZE(REF)')
 end if
 #endif
 
-is_minor = [(isminor_0(x(i), ref(i)), i=1, int(size(x), IK))]
-end function isminor_1
+is_minor = [(isminor0(x(i), ref(i)), i=1, int(size(x), IK))]
+end function isminor1
+
 
 end module lina_mod
