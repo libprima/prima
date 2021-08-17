@@ -203,7 +203,7 @@ end if
 end function setdrop_geo
 
 
-function geostep(jdrop, cpen, datmat, factor_gamma, rho, simi) result(d)
+function geostep(jdrop, cpen, conmat, cval, fval, factor_gamma, rho, simi) result(d)
 
 use consts_mod, only : IK, RP, ZERO, ONE, TWO, DEBUGGING, SRNLEN
 use lina_mod, only : matprod, inprod
@@ -216,7 +216,9 @@ integer(IK), intent(in) :: jdrop
 real(RP), intent(in) :: simi(:, :)
 real(RP), intent(in) :: factor_gamma
 real(RP), intent(in) :: cpen
-real(RP), intent(in) :: datmat(:, :)
+real(RP), intent(in) :: conmat(:, :)
+real(RP), intent(in) :: cval(:)
+real(RP), intent(in) :: fval(:)
 real(RP), intent(in) :: rho
 
 ! Output
@@ -228,16 +230,18 @@ integer(IK) :: n
 real(RP) :: cvmaxp
 real(RP) :: cvmaxm
 real(RP) :: vsig(size(simi, 1))
-real(RP) :: A(size(simi, 1), size(datmat, 1) - 1)
+real(RP) :: A(size(simi, 1), size(conmat, 1) + 1)
 character(len=SRNLEN) :: srname = 'GEOSTEP'
 
 ! Get and verify the sizes
-m = size(datmat, 1) - 2
-n = size(datmat, 2) - 1
+m = size(conmat, 1)
+n = size(conmat, 2) - 1
 if (DEBUGGING) then
-    if (m < 0 .or. n < 1) then
-        call errstop(srname, 'SIZE(DATMAT) is invalid')
+    if (n < 1) then
+        call errstop(srname, 'SIZE(CONMAT) is invalid')
     end if
+    call verisize(fval, n + 1)
+    call verisize(cval, n + 1)
     call verisize(simi, n, n)
 end if
 
@@ -250,10 +254,10 @@ d = factor_gamma * rho * vsig(jdrop) * simi(jdrop, :)
 ! When __USE_INTRINSIC_ALGEBRA__ = 1, the following code may not produce the same result as
 ! Powell's, because the intrinsic MATMUL behaves differently from a naive triple loop in
 ! finite-precision arithmetic.
-A = transpose(matprod(datmat(1:m + 1, 1:n) - spread(datmat(1:m + 1, n + 1), dim=2, ncopies=n), simi))
-A(:, m + 1) = -A(:, m + 1)
-cvmaxp = maxval([ZERO, -matprod(d, A(:, 1:m)) - datmat(1:m, n + 1)])
-cvmaxm = maxval([ZERO, matprod(d, A(:, 1:m)) - datmat(1:m, n + 1)])
+A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
+A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
+cvmaxp = maxval([ZERO, -matprod(d, A(:, 1:m)) - conmat(:, n + 1)])
+cvmaxm = maxval([ZERO, matprod(d, A(:, 1:m)) - conmat(:, n + 1)])
 if (TWO * inprod(d, A(:, m + 1)) < cpen * (cvmaxp - cvmaxm)) then
     d = -d
 end if
