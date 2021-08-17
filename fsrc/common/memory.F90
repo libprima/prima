@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun ZHANG in July 2020.
 !
-! Last Modified: Sunday, May 23, 2021 AM10:59:02
+! Last Modified: Wednesday, August 18, 2021 AM04:45:57
 
 
 #include "ppf.h"
@@ -14,7 +14,7 @@ private
 public :: safealloc, cstyle_sizeof
 
 interface safealloc
-    module procedure alloc_rvector, alloc_rmatrix
+    module procedure alloc_rvector, alloc_rmatrix, alloc_ivector, alloc_imatrix
 end interface safealloc
 
 interface cstyle_sizeof
@@ -97,6 +97,77 @@ if (m * n >= 1) then
 end if
 
 end subroutine alloc_rmatrix
+
+
+subroutine alloc_ivector(x, n)
+! ALLOC_IVECTOR allocates the space for an allocatable INTEGER(IK)
+! vector X, whose size is N after allocation.
+use consts_mod, only : IK, SRNLEN
+use debug_mod, only : errstop
+implicit none
+
+! Input
+integer(IK), intent(in) :: n
+
+! Output
+integer(IK), allocatable, intent(out) :: x(:)
+
+! Local variable
+integer :: alloc_status
+character(len=SRNLEN), parameter :: srname = 'ALLOC_IVECTOR'
+
+! According to the Fortran 2003 standard, when a procedure is invoked,
+! any allocated ALLOCATABLE object that is an actual argument associated
+! with an INTENT(OUT) ALLOCATABLE dummy argument is deallocated. So it is
+! unnecessary to write the following line in F2003 since X is INTENT(OUT):
+!!if (allocated(x)) deallocate (x)
+
+! Allocate memory for X
+allocate (x(n), stat=alloc_status)
+if (alloc_status /= 0) then
+    call errstop(srname, 'Memory allocation fails.')
+end if
+
+! Use X; otherwise, compilers may complain.
+if (n >= 1) then
+    x(1) = 0_IK
+end if
+
+end subroutine alloc_ivector
+
+
+subroutine alloc_imatrix(x, m, n)
+! ALLOC_IMATRIX allocates the space for a INTEGER(IK) matrix X, whose
+! size is (M, N) after allocation.
+use consts_mod, only : IK, SRNLEN
+use debug_mod, only : errstop
+implicit none
+
+! Input
+integer(IK), intent(in) :: m, n
+
+! Output
+integer(IK), allocatable, intent(out) :: x(:, :)
+
+! Local variable
+integer :: alloc_status
+character(len=SRNLEN), parameter :: srname = 'ALLOC_IMATRIX'
+
+! Unnecessary to write the following line in F2003 since X is INTENT(OUT):
+!!if (allocated(x)) deallocate (x)
+
+! Allocate memory for X
+allocate (x(m, n), stat=alloc_status)
+if (alloc_status /= 0) then
+    call errstop(srname, 'Memory allocation fails.')
+end if
+
+! Use X; otherwise, compilers may complain.
+if (m * n >= 1) then
+    x(1, 1) = 0_IK
+end if
+
+end subroutine alloc_imatrix
 
 
 pure function size_of_sp(x) result(y)

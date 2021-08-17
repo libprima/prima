@@ -29,6 +29,7 @@ use consts_mod, only : RP, IK, ONE, DEBUGGING, SRNLEN
 use infnan_mod, only : is_nan, is_posinf
 use debug_mod, only : errstop, verisize
 use output_mod, only : retmssg, rhomssg, fmssg
+use memory_mod, only : safealloc
 use lina_mod, only : calquad, inprod
 
 implicit none
@@ -88,13 +89,19 @@ if (count(keep) == nsavmax) then
     keep(1) = .false.
 end if
 
+!--------------------------------------------------!
+!----The SAFEALLOC line is removable in F2003.-----!
+call safealloc(index_to_keep, nsav)
+!--------------------------------------------------!
 index_to_keep = pack([(i, i=1, nsav)], mask=keep)
 nsav = count(keep) + 1
-
 xsav(:, 1:nsav - 1) = xsav(:, index_to_keep)
 fsav(1:nsav - 1) = fsav(index_to_keep)
 consav(:, 1:nsav - 1) = consav(:, index_to_keep)
 csav(1:nsav - 1) = csav(index_to_keep)
+! F2003 automatically deallocate local ALLOCATABLE variables at exit, yet
+! we prefer to deallocate them immediately when they finish their jobs.
+deallocate (index_to_keep)
 xsav(:, nsav) = x
 fsav(nsav) = f
 consav(:, nsav) = con
