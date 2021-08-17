@@ -14,7 +14,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Thursday, August 12, 2021 PM07:55:26
+! Last Modified: Wednesday, August 18, 2021 AM04:49:48
 
 module newuoa_mod
 
@@ -379,12 +379,14 @@ end if
 
 ! Copy XHIST_C to XHIST if needed.
 if (present(xhist)) then
-    ! The SAFEALLOC line is removable in F2003.
+    !--------------------------------------------------!
+    !---- The SAFEALLOC line is removable in F2003. ---!
     call safealloc(xhist, n, min(nf_c, maxxhist))
+    !--------------------------------------------------!
     xhist = xhist_c(:, 1:min(nf_c, maxxhist))
     ! N.B.:
     ! 0. Allocate XHIST as long as it is present, even if MAXXHIST = 0;
-    ! otherwise, it will be illeagle to enquire XHIST after exit.
+    ! otherwise, it will be illegal to enquire XHIST after exit.
     ! 1. Even though Fortran 2003 supports automatic (re)allocation of
     ! allocatable arrays upon intrinsic assignment, we keep the line of
     ! SAFEALLOC, because some very new compilers (Absoft Fortran 20.0)
@@ -403,8 +405,10 @@ deallocate (xhist_c)
 
 ! Copy FHIST_C to FHIST if needed.
 if (present(fhist)) then
-    ! The SAFEALLOC line is removable in F2003.
+    !--------------------------------------------------!
+    !---- The SAFEALLOC line is removable in F2003. ---!
     call safealloc(fhist, min(nf_c, maxfhist))
+    !--------------------------------------------------!
     fhist = fhist_c(1:min(nf_c, maxfhist))
     ! The same as XHIST, we must cap FHIST at min(NF_C, MAXFHIST).
 end if

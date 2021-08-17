@@ -1,6 +1,6 @@
 In 2020, Fortran 2003 features are still not completely supported by
-compilers. Therefore, the Fortran code of this project keeps some pre-2003 
-features. They can be removed later (say, in 2025) if compilers implement 
+compilers. Therefore, the Fortran code of this project keeps some pre-2003
+features. They can be removed later (say, in 2025) if compilers implement
 Fortran 2003 better at that time.
 
 The pre-2003 features include the following.
@@ -20,7 +20,7 @@ character, allocatable :: mssg(:)
 mssg = 'ABC'  ! Automatic allocation upon intrinsic assignment.
 print *, mssg
 
-HOW TO FIND: search for 'character' or 'character(len' or 'len = ', 
+HOW TO FIND: search for 'character' or 'character(len' or 'len = ',
 and also 'trim('.
 
 
@@ -47,7 +47,6 @@ N.B.: Not all allocation can be removed!
 1. Automatic allocation does not happen for POINTERs.
 2. Another example:
 
-
 real, allocatable :: x(:)
 integer :: n
 
@@ -56,3 +55,7 @@ do i = 1, n
     x(i) = real(i)
 end do
 
+However, the above example can be simplified to the following without ALLOCATE using implicit loop:
+
+real, allocatable :: x(:)
+x = [(real(i), i = 1, n)]

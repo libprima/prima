@@ -37,7 +37,7 @@ real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: rhoend
 
 ! In-outputs
-real(RP), intent(out) :: con(:) ! M.
+real(RP), intent(out) :: con(:) ! M
 real(RP), intent(inout) :: x(:)  ! N
 
 ! Outputs
@@ -349,7 +349,7 @@ do tr = 1, maxtr
             d = geostep(jdrop, cpen, conmat, cval, fval, factor_gamma, rho, simi)
 
             ! Save the information of the JOPT-th vertex.
-            call savehist(sim(:, n + 1) + sim(:, jdrop), fval(jdrop), conmat(:, jdrop), cval(jdrop),&
+            call savehist(sim(:, n + 1) + sim(:, jdrop), fval(jdrop), conmat(:, jdrop), cval(jdrop), &
               & xsav, fsav, consav, csav, nsav, ctol)
 
             ! Update SIM and SIMI.
