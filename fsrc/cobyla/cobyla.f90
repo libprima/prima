@@ -8,7 +8,7 @@ public :: cobyla
 contains
 subroutine cobyla(n, m, x, rhobeg, rhoend, iprint, maxfun, f, info, ftarget, resmax, con)
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, TWO, HALF, TENTH, HUGENUM, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ZERO, TWO, HALF, TENTH, HUGENUM, EPS, DEBUGGING, SRNLEN
 use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
 use infnan_mod, only : is_nan, is_posinf
 use debug_mod, only : errstop
@@ -29,6 +29,12 @@ real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: resmax
 real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: rhoend
+
+! Parameters
+! NSAVMAX is the maximal number of "dropped X" to save
+integer(IK), parameter :: nsavmax = 2000_IK
+real(RP) :: ctol
+
 
 ! In-outputs
 real(RP), intent(inout) :: x(:)
@@ -152,9 +158,12 @@ iw = idx + N
 ! If we set RHOEND = RHOBEG in the interfaces, then it may happen
 ! that RHOEND > RHOBEG. That is why we do the following.
 rhoend_c = min(rhobeg, rhoend)
+! CTOL is the tolerance for constraint violation. A point X is considered to be feasible if its
+! constraint violation (CSTRV) is less than CTOL.
+ctol = EPS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-call cobylb(m, x, rhobeg, rhoend_c, iprint, maxfun, con, f, info, ftarget, resmax)
+call cobylb(x, rhobeg, rhoend_c, iprint, maxfun, con, f, info, ftarget, resmax, ctol, nsavmax)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 end subroutine COBYLA
 

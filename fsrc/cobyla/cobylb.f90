@@ -7,7 +7,7 @@ public :: cobylb
 
 contains
 
-subroutine cobylb(m, x, rhobeg, rhoend, iprint, maxfun, con, f, info, ftarget, cstrv)
+subroutine cobylb(x, rhobeg, rhoend, iprint, maxfun, con, f, info, ftarget, cstrv, ctol, nsavmax)
 
 ! Generic modules
 use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, EPS, HUGENUM, DEBUGGING, SRNLEN
@@ -30,8 +30,9 @@ implicit none
 
 ! Inputs
 integer(IK), intent(in) :: iprint
-integer(IK), intent(in) :: m
 integer(IK), intent(in) :: maxfun
+integer(IK), intent(in) :: nsavmax
+real(RP), intent(in) :: ctol
 real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: rhoend
@@ -44,36 +45,28 @@ real(RP), intent(inout) :: x(:)  ! N
 integer(IK), intent(out) :: info
 real(RP), intent(out) :: f
 
-
-! Parameters
-! NSAVMAX is the maximal number of "dropped X" to save
-integer(IK), parameter :: nsavmax = 2000_IK
-! CTOL is the tolerance for constraint violation. A point X is considered to be feasible if its
-! constraint violation (CSTRV) is less than CTOL.
-real(RP), parameter :: ctol = EPS
-
 ! Local variables
-
 integer(IK) :: i
 integer(IK) :: tr
 integer(IK) :: maxtr
 integer(IK) :: j
 integer(IK) :: jdrop
 integer(IK) :: kopt
+integer(IK) :: m
 integer(IK) :: n
 integer(IK) :: nf
 integer(IK) :: nsav
 integer(IK) :: subinfo
-real(RP) :: A(size(x), m + 1)
+real(RP) :: A(size(x), size(con) + 1)
 ! A(:, 1:M) contains the approximate gradient for the constraints, and A(:, M+1) is minus the
 ! approximate gradient for the objective function.
-real(RP) :: b(m + 1)
+real(RP) :: b(size(con) + 1)
 real(RP) :: barmu
-real(RP) :: cmax(m)
-real(RP) :: cmin(m)
+real(RP) :: cmax(size(con))
+real(RP) :: cmin(size(con))
 real(RP) :: cpen  ! Penalty parameter for constraint in merit function (PARMU in Powell's code)
-real(RP) :: conmat(m, size(x) + 1)
-real(RP) :: consav(m, max(nsavmax, 0))
+real(RP) :: conmat(size(con), size(x) + 1)
+real(RP) :: consav(size(con), max(nsavmax, 0))
 real(RP) :: csav(max(nsavmax, 0))
 real(RP) :: fsav(max(nsavmax, 0))
 real(RP) :: denom
@@ -95,7 +88,6 @@ real(RP) :: simid(size(x))
 real(RP) :: simi_jdrop(size(x))
 real(RP) :: actrem
 real(RP) :: xsav(size(x), max(nsavmax, 0))
-real(RP) :: conopt(size(con))
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!! TEMPORARY
@@ -116,6 +108,7 @@ character(len=SRNLEN), parameter :: srname = 'COBYLB'
 alltrue = .true.
 reduce_rho = .false.
 
+m = size(con)
 n = size(x)
 
 ! Set the initial values of some parameters. The last column of SIM holds the optimal vertex of the
@@ -208,10 +201,8 @@ do tr = 1, maxtr
         exit
     end if
 
-    ! Constraint and objective function values of the optimal vertex.
-    conopt = conmat(:, n + 1)
-
-    b = [-conopt, -fval(n + 1)]
+    ! In theory (but not computation), the last entry of B can be any number.
+    b = [-conmat(:, n + 1), -fval(n + 1)]
     ! Calculate the trust-region trial step D.
     d = trstlp(A, b, rho)
 
@@ -221,7 +212,7 @@ do tr = 1, maxtr
     if (.not. shortd) then
         ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
         preref = inprod(d, A(:, m + 1))
-        prerec = cval(n + 1) - maxval([-conopt - matprod(d, A(:, 1:m)), ZERO])
+        prerec = cval(n + 1) - maxval([-conmat(:, n + 1) - matprod(d, A(:, 1:m)), ZERO])
 
         ! Increase CPEN if necessary and branch back if this change alters the optimal vertex.
         ! Otherwise, PREREM will be set to the predicted reductions in the merit function.
