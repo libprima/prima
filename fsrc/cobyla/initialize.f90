@@ -4,7 +4,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Wednesday, August 18, 2021 AM02:42:43
+! Last Modified: Wednesday, August 18, 2021 AM09:53:39
 
 module initialize_mod
 
@@ -55,8 +55,10 @@ integer(IK) :: k
 integer(IK) :: m
 integer(IK) :: n
 integer(IK) :: subinfo
+real(RP) :: cstrv
 real(RP) :: con(size(conmat, 1))
 real(RP) :: erri(size(x0), size(x0))
+real(RP) :: f
 real(RP) :: x(size(x0))
 logical :: evaluated(size(x0) + 1)
 character(len=SRNLEN), parameter :: srname = 'INITIALIZE'
@@ -94,17 +96,20 @@ do k = 1, n + 1
 
     ! Exit if X contains NaN.
     if (any(is_nan(x))) then
+        !!!!!!!!!! WHAT ABOUT NF? There is inconsistency. Also NEWUOA and others !!!!!!!!!!!!
         fval(j) = sum(x)  ! Set F to NaN.
+        conmat(:, j) = fval(j)  ! Set constraint values to NaN.
         cval(j) = fval(j)  ! Set constraint violation to NaN.
-        con = fval(j)  ! Set constraint values to NaN.
         info = NAN_X
         exit
     end if
 
-    call calcfc(n, m, x, fval(j), con)
+    call calcfc(n, m, x, f, con)
     evaluated(j) = .true.
-    cval(j) = maxval([-con, ZERO])  ! Constraint violation for constraints con(x) >= 0.
+    cstrv = maxval([-con, ZERO])
+    fval(j) = f
     conmat(:, j) = con
+    cval(j) = cstrv  ! Constraint violation for constraints con(x) >= 0.
 
 !if (k == IPRINT - 1 .or. IPRINT == 3) then
 !    print 70, k, F, RESMAX, (X(I), I=1, IPTEM)
@@ -125,17 +130,17 @@ do k = 1, n + 1
     end if
 
     ! Exit if the objective function value or the constraints contain NaN/Inf.
-    if (is_nan(fval(j)) .or. is_posinf(fval(j))) then
+    if (is_nan(f) .or. is_posinf(f)) then
         info = NAN_INF_F
         exit
     end if
-    if (any(is_nan(con) .or. is_neginf(con))) then
-        cval(j) = sum(abs(con))  ! Set constraint violation to NaN or Inf
+    if (any(is_nan(con))) then
+        cval(j) = sum(abs(con))  ! Set constraint violation to NaN.
         info = NAN_INF_F
         exit
     end if
     ! Exit if FTARGET is achieved by a feasible point.
-    if (fval(j) <= ftarget .and. cval(j) <= ctol) then
+    if (f <= ftarget .and. cstrv <= ctol) then
         info = FTARGET_ACHIEVED
         exit
     end if

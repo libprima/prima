@@ -231,6 +231,7 @@ do tr = 1, maxtr
         ! Set X.
         x = sim(:, n + 1) + d
         if (any(is_nan(x))) then
+            !!!!!!!!!!!!! WHAT ABOUT NF ??? There is inconsistency. Also in NEWUOA and others. !!!!!!!!!!!
             f = sum(x)  ! Set F to NaN.
             con = f  ! Set constraint values to NaN.
             cstrv = f  ! Set constraint violation to NaN
@@ -278,6 +279,7 @@ do tr = 1, maxtr
         end if
         if (any(is_nan(con))) then
             cstrv = sum(con)  ! Set CSTRV to NaN
+            cval(jdrop) = cstrv
             info = -2
             exit
         end if
@@ -373,6 +375,7 @@ do tr = 1, maxtr
             end if
             if (any(is_nan(con))) then
                 cstrv = sum(con)  ! Set CSTRV to NaN
+                cval(jdrop) = cstrv
                 info = -2
                 exit
             end if
