@@ -79,7 +79,7 @@ integer(IK) :: jdrop
 
 ! Local variables
 integer(IK) :: n
-real(RP) :: distx(size(sim, 1))
+real(RP) :: xdist(size(sim, 1))
 real(RP) :: edgmax
 real(RP) :: parsig
 real(RP) :: ratio
@@ -114,9 +114,9 @@ if (maxval(abs(simid)) > ratio) then
 end if
 
 if (actrem > ZERO) then
-    distx = sqrt(sum((spread(d, dim=2, ncopies=n) - sim(:, 1:n))**2, dim=1))
+    xdist = sqrt(sum((sim(:, 1:n) - spread(d, dim=2, ncopies=n))**2, dim=1))
 else
-    distx = sqrt(sum(sim(:, 1:n)**2, dim=1))
+    xdist = sqrt(sum(sim(:, 1:n)**2, dim=1))
 end if
 
 edgmax = factor_delta * rho
@@ -125,8 +125,8 @@ vsig = ONE / sqrt(sum(simi**2, dim=2))
 sigbar = abs(simid) * vsig
 
 ! The following JDROP will overwrite the previous one if its premise holds.
-if (any(distx > edgmax .and. (sigbar >= parsig .or. sigbar >= vsig))) then
-    jdrop = int(maxloc(distx, mask=(sigbar >= parsig .or. sigbar >= vsig), dim=1), kind(jdrop))
+if (any(xdist > edgmax .and. (sigbar >= parsig .or. sigbar >= vsig))) then
+    jdrop = int(maxloc(xdist, mask=(sigbar >= parsig .or. sigbar >= vsig), dim=1), kind(jdrop))
 end if
 
 ! Powell's code does not include the following instructions. With Powell's code (i.e., the code
@@ -135,7 +135,7 @@ end if
 ! compiler and language. Here, we set explicitly JDROP = 0 in case NaN occurs in these arrays, which
 ! can happen in ill-conditioned problems, although rarely. Consequently, COBYLA will either take a
 ! geometry step or reduce RHO. (If SIMID contains NaN then so does SIGBAR. So we check only SIGBAR.)
-if (is_nan(sum(abs(sigbar))) .or. is_nan(sum(distx))) then
+if (is_nan(sum(abs(sigbar))) .or. is_nan(sum(xdist))) then
     jdrop = 0_IK
 end if
 
@@ -235,12 +235,13 @@ character(len=SRNLEN) :: srname = 'GEOSTEP'
 
 ! Get and verify the sizes
 m = size(conmat, 1)
-n = size(conmat, 2) - 1
+n = size(simi, 1)
 if (DEBUGGING) then
     if (n < 1) then
-        call errstop(srname, 'SIZE(CONMAT) is invalid')
+        call errstop(srname, 'SIZE(SIMI) is invalid')
     end if
     call verisize(fval, n + 1)
+    call verisize(conmat, m, n + 1)
     call verisize(cval, n + 1)
     call verisize(simi, n, n)
 end if

@@ -6,14 +6,13 @@ public :: cobyla
 
 
 contains
-subroutine cobyla(n, m, x, rhobeg, rhoend, iprint, maxfun, f, info, ftarget, resmax, con)
+subroutine cobyla(n, m, x, rhobeg, rhoend, iprint, maxfun, f, info, ftarget, cstrv, con)
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, TWO, HALF, TENTH, HUGENUM, EPS, DEBUGGING, SRNLEN
-use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
+use consts_mod, only : RP, IK, EPS, DEBUGGING, SRNLEN
 use infnan_mod, only : is_nan, is_posinf
 use debug_mod, only : errstop
 use output_mod, only : retmssg, rhomssg, fmssg
-use lina_mod, only : calquad, inprod
+use memory_mod, only : safealloc
 
 ! Solver-specific modules
 use cobylb_mod, only : cobylb
@@ -26,13 +25,11 @@ integer(IK), intent(in) :: m
 integer(IK), intent(in) :: maxfun
 integer(IK), intent(in) :: n
 real(RP), intent(in) :: ftarget
-real(RP), intent(in) :: resmax
 real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: rhoend
 
 ! Parameters
 ! NSAVMAX is the maximal number of "dropped X" to save
-integer(IK), parameter :: nsavmax = 2000_IK
 real(RP) :: ctol
 
 
@@ -43,9 +40,24 @@ real(RP), intent(inout) :: x(:)
 integer(IK), intent(out) :: info
 real(RP), intent(out) :: con(:)
 real(RP), intent(out) :: f
+real(RP), intent(out) :: cstrv
 !*++
 !*++ Local variable declarations rewritten by SPAG
 !*++
+integer(IK) :: maxxhist
+integer(IK) :: maxfhist
+integer(IK) :: maxchist
+integer(IK) :: maxconhist
+integer(IK) :: nf_c
+real(RP), allocatable :: xhist(:, :)
+real(RP), allocatable :: fhist(:)
+real(RP), allocatable :: conhist(:, :)
+real(RP), allocatable :: chist(:)
+real(RP), allocatable :: xhist_c(:, :)
+real(RP), allocatable :: fhist_c(:)
+real(RP), allocatable :: conhist_c(:, :)
+real(RP), allocatable :: chist_c(:)
+
 integer(IK) :: ia
 integer(IK) :: icon
 integer(IK) :: idatm
@@ -56,9 +68,9 @@ integer(IK) :: isimi
 integer(IK) :: iveta
 integer(IK) :: ivsig
 integer(IK) :: iw
-integer(IK) :: k
 integer(IK) :: mpp
 real(RP) :: rhoend_c
+character(len=SRNLEN), parameter :: srname = 'COBYLA'
 !*++
 !*++ End of declarations rewritten by SPAG
 !*++
@@ -139,17 +151,17 @@ real(RP) :: rhoend_c
 !     Partition the working space array W to provide the storage that is needed
 !     for the main calculation.
 !
-mpp = M + 2
+mpp = m + 2
 icon = 1
 isim = icon + mpp
-isimi = isim + N * N + N
-idatm = isimi + N * N
-ia = idatm + N * mpp + mpp
-ivsig = ia + M * N + N
-iveta = ivsig + N
-isigb = iveta + N
-idx = isigb + N
-iw = idx + N
+isimi = isim + n * n + n
+idatm = isimi + n * n
+ia = idatm + n * mpp + mpp
+ivsig = ia + m * n + n
+iveta = ivsig + n
+isigb = iveta + n
+idx = isigb + n
+iw = idx + n
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun, 2020-05-05
 ! When the data is passed from the interfaces to the Fortran code, RHOBEG,
@@ -163,8 +175,28 @@ rhoend_c = min(rhobeg, rhoend)
 ctol = EPS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-call cobylb(x, rhobeg, rhoend_c, iprint, maxfun, con, f, info, ftarget, resmax, ctol, nsavmax)
+maxxhist = maxfun
+maxfhist = maxfun
+maxchist = maxfun
+maxconhist = maxfun
+call safealloc(xhist_c, n, maxxhist)
+call safealloc(fhist_c, maxfhist)
+call safealloc(conhist_c, m, maxconhist)
+call safealloc(chist_c, maxchist)
+call cobylb(iprint, maxfun, ctol, ftarget, rhobeg, rhoend, con, x, nf_c, chist_c, conhist_c, cstrv, f, fhist_c, xhist_c, info)
+call safealloc(xhist, n, min(nf_c, maxxhist))
+xhist = xhist_c(:, 1:min(nf_c, maxxhist))
+deallocate (xhist_c)
+call safealloc(fhist, min(nf_c, maxfhist))
+fhist = fhist_c(1:min(nf_c, maxfhist))
+deallocate (fhist_c)
+call safealloc(conhist, m, min(nf_c, maxconhist))
+conhist = conhist_c(:, 1:min(nf_c, maxconhist))
+deallocate (conhist_c)
+call safealloc(chist, min(nf_c, maxchist))
+chist = chist_c(1:min(nf_c, maxchist))
+deallocate (chist_c)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-end subroutine COBYLA
+end subroutine cobyla
 
 end module cobyla_mod

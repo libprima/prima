@@ -1,32 +1,30 @@
-! INITIALIZE_MOD is a module containing subroutines for initializing
-! FVAL, XBASE, XPT, GQ, HQ, PQ, IDZ, ZMAT, and BMAT.
+! INITIALIZE_MOD is a module containing subroutine(s) for initialization.
+! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the COBYLA paper.
 !
-! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
-! and the NEWUOA paper.
-!
-! Last Modified: Wednesday, August 18, 2021 AM09:53:39
+! Last Modified: Thursday, August 26, 2021 PM11:06:39
 
 module initialize_mod
 
 implicit none
 private
-public :: initialize
+public :: initxfc, initfilt
 
 
 contains
 
-subroutine initialize(iprint, maxfun, ctol, ftarget, rho, x0, nf, conmat, cval, fval, sim, simi, info)
+subroutine initxfc(iprint, maxfun, ctol, ftarget, rho, x0, nf, chist, conhist, conmat, cval, fhist, &
+    & fval, sim, xhist, evaluated, info)
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, ONE, TENTH, DEBUGGING, SRNLEN
-use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, NAN_X, NAN_INF_F, DAMAGING_ROUNDING
-use infnan_mod, only : is_nan, is_posinf, is_neginf
+use consts_mod, only : RP, IK, ZERO, HUGENUM, DEBUGGING, SRNLEN
+use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, NAN_X, NAN_INF_F
+use infnan_mod, only : is_nan, is_posinf
 use debug_mod, only : errstop, verisize
 use output_mod, only : retmssg, rhomssg, fmssg
-use lina_mod, only : matprod, inprod, eye
+use lina_mod, only : eye
 
 ! Solver-specific modules
-use update_mod, only : updatepole
+use history_mod, only : savehist
 
 implicit none
 
@@ -41,52 +39,74 @@ real(RP), intent(in) :: x0(:)
 ! Outputs
 integer(IK), intent(out) :: info
 integer(IK), intent(out) :: nf
+real(RP), intent(out) :: chist(:)
+real(RP), intent(out) :: conhist(:, :)
 real(RP), intent(out) :: conmat(:, :)
 real(RP), intent(out) :: cval(:)
+real(RP), intent(out) :: fhist(:)
 real(RP), intent(out) :: fval(:)
 real(RP), intent(out) :: sim(:, :)
-real(RP), intent(out) :: simi(:, :)
+real(RP), intent(out) :: xhist(:, :)
+logical, intent(out) :: evaluated(:)
 
 ! Local variables
-integer(IK) :: i
 integer(IK) :: j
-integer(IK) :: jopt
 integer(IK) :: k
 integer(IK) :: m
+integer(IK) :: maxchist
+integer(IK) :: maxconhist
+integer(IK) :: maxfhist
+integer(IK) :: maxhist
+integer(IK) :: maxxhist
 integer(IK) :: n
-integer(IK) :: subinfo
-real(RP) :: cstrv
 real(RP) :: con(size(conmat, 1))
-real(RP) :: erri(size(x0), size(x0))
+real(RP) :: cstrv
 real(RP) :: f
 real(RP) :: x(size(x0))
-logical :: evaluated(size(x0) + 1)
 character(len=SRNLEN), parameter :: srname = 'INITIALIZE'
 
-! Get and verify the sizes
+! Get and verify the sizes.
 m = size(conmat, 1)
-n = size(conmat, 2) - 1
+n = size(sim, 1)
+maxchist = size(chist)
+maxconhist = size(conhist, 2)
+maxfhist = size(fhist)
+maxxhist = size(xhist, 2)
+maxhist = max(maxchist, maxconhist, maxfhist, maxxhist)
 if (DEBUGGING) then
     if (n < 1) then
-        call errstop(srname, 'SIZE(CONMAT) is invalid')
+        call errstop(srname, 'SIZE(SIM) is invalid')
     end if
+    call verisize(conmat, m, n + 1)
     call verisize(cval, n + 1)
     call verisize(fval, n + 1)
     call verisize(sim, n, n + 1)
-    call verisize(simi, n, n)
+    call verisize(evaluated, n + 1)
+    if (maxchist > 0) then
+        call verisize(chist, maxhist)
+    end if
+    if (maxconhist > 0) then
+        call verisize(conhist, m, maxhist)
+    end if
+    if (maxfhist > 0) then
+        call verisize(fhist, maxhist)
+    end if
+    if (maxxhist > 0) then
+        call verisize(xhist, n, maxhist)
+    end if
 end if
 
 sim = rho * eye(n, n + 1)
 sim(:, n + 1) = x0
-simi = eye(n, n) / rho
-
+fval = HUGENUM
+cval = HUGENUM
 info = 0_IK
-
 ! EVALUATED(J) = TRUE iff the function/constraint of SIM(:, J) has been evaluated.
 evaluated = .false.
 
 do k = 1, n + 1
     x = sim(:, n + 1)
+    ! We will evaluate F corresponding to SIM(:, J).
     if (k == 1) then
         j = n + 1
     else
@@ -94,48 +114,31 @@ do k = 1, n + 1
         x(j) = x(j) + rho
     end if
 
+    if (any(is_nan(x))) then
+        ! Set F and CON to NaN. This is necessary if the initial X contains NaN.
+        f = sum(x)
+        con = f
+    else
+        call calcfc(n, m, x, f, con)  ! Evaluate F and CON.
+    end if
+    evaluated(j) = .true.
+    if (any(is_nan(con))) then
+        cstrv = sum(con)  ! Set CSTRV to NaN.
+    else
+        cstrv = maxval([-con, ZERO])  ! Constraint violation for constraints CON(X) >= 0.
+    end if
+    fval(j) = f
+    conmat(:, j) = con
+    cval(j) = cstrv
+    ! Save X, F, CON, CSTRV into the history.
+    call savehist(k, con, cstrv, f, x, chist, conhist, fhist, xhist)
     ! Exit if X contains NaN.
     if (any(is_nan(x))) then
-        !!!!!!!!!! WHAT ABOUT NF? There is inconsistency. Also NEWUOA and others !!!!!!!!!!!!
-        fval(j) = sum(x)  ! Set F to NaN.
-        conmat(:, j) = fval(j)  ! Set constraint values to NaN.
-        cval(j) = fval(j)  ! Set constraint violation to NaN.
         info = NAN_X
         exit
     end if
-
-    call calcfc(n, m, x, f, con)
-    evaluated(j) = .true.
-    cstrv = maxval([-con, ZERO])
-    fval(j) = f
-    conmat(:, j) = con
-    cval(j) = cstrv  ! Constraint violation for constraints con(x) >= 0.
-
-!if (k == IPRINT - 1 .or. IPRINT == 3) then
-!    print 70, k, F, RESMAX, (X(I), I=1, IPTEM)
-!70  format(/3X, 'k =', I5, 3X, 'F =', 1PE13.6, 4X, 'MAXCV =', 1PE13.6 / 3X, 'X =', 1PE13.6, 1P4E15.6)
-!    if (IPTEM < N) print 80, (X(I), I=IPTEM + 1, N)
-!80  format(1PE19.6, 1P4E15.6)
-!end if
-
-    ! Exchange the new vertex of the initial simplex with the optimal vertex if necessary.
-    ! This is the ONLY part that is essentially non-parallel.
-    if (j <= n .and. fval(j) < fval(n + 1)) then
-        fval([j, n + 1]) = fval([n + 1, j])
-        cval([j, n + 1]) = cval([n + 1, j])
-        conmat(:, [j, n + 1]) = conmat(:, [n + 1, j])
-        sim(:, n + 1) = x
-        sim(j, 1:j) = -rho
-        simi(j, 1:j) = -sum(simi(:, 1:j), dim=1)
-    end if
-
     ! Exit if the objective function value or the constraints contain NaN/Inf.
-    if (is_nan(f) .or. is_posinf(f)) then
-        info = NAN_INF_F
-        exit
-    end if
-    if (any(is_nan(con))) then
-        cval(j) = sum(abs(con))  ! Set constraint violation to NaN.
+    if (is_nan(f) .or. is_posinf(f) .or. is_nan(cstrv) .or. is_posinf(cstrv)) then
         info = NAN_INF_F
         exit
     end if
@@ -149,6 +152,17 @@ do k = 1, n + 1
         info = MAXFUN_REACHED
         exit
     end if
+
+    ! Exchange the new vertex of the initial simplex with the optimal vertex if necessary.
+    ! This is the ONLY part that is essentially non-parallel.
+    if (j <= n .and. fval(j) < fval(n + 1)) then
+        fval([j, n + 1]) = fval([n + 1, j])
+        cval([j, n + 1]) = cval([n + 1, j])
+        conmat(:, [j, n + 1]) = conmat(:, [n + 1, j])
+        sim(:, n + 1) = x
+        sim(j, 1:j) = -rho
+    end if
+
 end do
 
 nf = int(count(evaluated), kind(nf))
@@ -157,8 +171,75 @@ nf = int(count(evaluated), kind(nf))
 ! 1. UPDATEPOLE is called at the beginning of a trust-region iteration.
 ! 2. SELECTX is called before the possible exit after initialization (due to errors like NAN_X).
 
-return
-end subroutine initialize
+end subroutine initxfc
+
+
+subroutine initfilt(conmat, ctol, cval, fval, sim, evaluated, nfilt, cfilt, confilt, ffilt, xfilt)
+! This subroutine initializes the filters (XFILT, etc) that will be used when selecting X at the
+! end of the solver.
+! N.B.:
+! 1. Why not initialize the filters using XHIST, etc? Because the history is empty if the user
+! chooses not to output it.
+! 2. We decouple INITFILT with INITXFC so that it is easier to parallelize the latter if needed.
+use consts_mod, only : RP, IK, DEBUGGING, SRNLEN
+use debug_mod, only : errstop, verisize
+use hist_mod, only : savefilt
+implicit none
+
+! Inputs
+real(RP), intent(in) :: conmat(:, :)
+real(RP), intent(in) :: ctol
+real(RP), intent(in) :: cval(:)
+real(RP), intent(in) :: fval(:)
+real(RP), intent(in) :: sim(:, :)
+logical, intent(in) :: evaluated(:)
+
+! In-outputs
+integer(IK), intent(inout) :: nfilt
+real(RP), intent(inout) :: cfilt(:)
+real(RP), intent(inout) :: confilt(:, :)
+real(RP), intent(inout) :: ffilt(:)
+real(RP), intent(inout) :: xfilt(:, :)
+
+! Local variables
+integer(IK) :: i
+integer(IK) :: m
+integer(IK) :: maxfilt
+integer(IK) :: n
+character(len=SRNLEN), parameter :: srname = 'INITFILT'
+
+! Get and verify the sizes.
+m = size(conmat, 1)
+n = size(sim, 1)
+maxfilt = size(ffilt)
+if (DEBUGGING) then
+    if (n == 0) then
+        call errstop(srname, 'SIZE(SIM, 1) == 0')
+    end if
+    if (maxfilt == 0) then
+        call errstop(srname, 'SIZE(FFILT) == 0')
+    end if
+    call verisize(conmat, m, n + 1)
+    call verisize(cval, n + 1)
+    call verisize(fval, n + 1)
+    call verisize(sim, n, n + 1)
+    call verisize(evaluated, n + 1)
+    call verisize(confilt, m, maxfilt)
+    call verisize(cfilt, maxfilt)
+    call verisize(xfilt, n, maxfilt)
+end if
+
+nfilt = 0_IK
+do i = 1, n
+    if (evaluated(i)) then
+        call savefilt(conmat(:, i), cval(i), ctol, fval(i), sim(:, i) + sim(:, n + 1), nfilt, cfilt, confilt, ffilt, xfilt)
+    end if
+end do
+if (evaluated(n + 1)) then
+    call savefilt(conmat(:, n + 1), cval(n + 1), ctol, fval(n + 1), sim(:, n + 1), nfilt, cfilt, confilt, ffilt, xfilt)
+end if
+
+end subroutine initfilt
 
 
 end module initialize_mod

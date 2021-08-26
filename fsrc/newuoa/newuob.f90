@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Tuesday, August 17, 2021 AM11:05:25
+! Last Modified: Friday, August 27, 2021 AM12:00:46
 
 module newuob_mod
 
@@ -54,6 +54,7 @@ use lina_mod, only : calquad, inprod
 ! Solver-specific modules
 use pintrf_mod, only : FUNEVAL
 use initialize_mod, only : initxf, initq, inith
+use history_mod, only : savehist
 use trustregion_mod, only : trsapp, trrad
 use geometry_mod, only : setdrop_tr, geostep
 use shiftbase_mod, only : shiftbase
@@ -252,20 +253,13 @@ do tr = 1, maxtr
         x = xbase + xnew
         if (any(is_nan(x))) then
             f = sum(x)  ! Set F to NaN. It is necessary.
-            info = NAN_X
-            exit
+        else
+            call calfun(x, f)
         end if
-        call calfun(x, f)
         nf = int(nf + 1, kind(nf))
         call fmssg(iprint, nf, f, x, solver)
-        if (maxfhist >= 1) then
-            khist = mod(nf - 1_IK, maxfhist) + 1_IK
-            fhist(khist) = f
-        end if
-        if (maxxhist >= 1) then
-            khist = mod(nf - 1_IK, maxxhist) + 1_IK
-            xhist(:, khist) = x
-        end if
+        ! Save X and F into the history.
+        call savehist(nf, f, x, fhist, xhist)
 
         ! DNORMSAVE constains the DNORM of the latest 3 function evaluations with the current RHO.
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
@@ -296,6 +290,10 @@ do tr = 1, maxtr
         end if
 
         ! Check whether to exit
+        if (any(is_nan(x))) then
+            info = NAN_X
+            exit
+        end if
         if (is_nan(f) .or. is_posinf(f)) then
             info = NAN_INF_F
             exit
@@ -457,20 +455,13 @@ do tr = 1, maxtr
         x = xbase + xnew
         if (any(is_nan(x))) then
             f = sum(x)  ! Set F to NaN. It is necessary.
-            info = NAN_X
-            exit
+        else
+            call calfun(x, f)
         end if
-        call calfun(x, f)
         nf = int(nf + 1, kind(nf))
         call fmssg(iprint, nf, f, x, solver)
-        if (maxfhist >= 1) then
-            khist = mod(nf - 1_IK, maxfhist) + 1_IK
-            fhist(khist) = f
-        end if
-        if (maxxhist >= 1) then
-            khist = mod(nf - 1_IK, maxxhist) + 1_IK
-            xhist(:, khist) = x
-        end if
+        ! Save X and F into the history.
+        call savehist(nf, f, x, fhist, xhist)
 
         ! DNORMSAVE constains the DNORM of the latest 3 function evaluations with the current RHO.
         !------------------------------------------------------------------------------------------!
@@ -496,6 +487,10 @@ do tr = 1, maxtr
         end if
 
         ! Check whether to exit.
+        if (any(is_nan(x))) then
+            info = NAN_X
+            exit
+        end if
         if (is_nan(f) .or. is_posinf(f)) then
             info = NAN_INF_F
             exit
@@ -558,20 +553,13 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     x = xbase + (xopt + d)
     if (any(is_nan(x))) then
         f = sum(x)  ! Set F to NaN. It is necessary.
-        info = NAN_X
     else
         call calfun(x, f)
-        nf = int(nf + 1, kind(nf))
-        call fmssg(iprint, nf, f, x, solver)
-        if (maxfhist >= 1) then
-            khist = mod(nf - 1_IK, maxfhist) + 1_IK
-            fhist(khist) = f
-        end if
-        if (maxxhist >= 1) then
-            khist = mod(nf - 1_IK, maxxhist) + 1_IK
-            xhist(:, khist) = x
-        end if
     end if
+    nf = int(nf + 1, kind(nf))
+    call fmssg(iprint, nf, f, x, solver)
+    ! Save X and F into the history.
+    call savehist(nf, f, x, fhist, xhist)
 end if
 
 ! Choose the [X, F] to return: either the current [X, F] or [XBASE+XOPT, FOPT].

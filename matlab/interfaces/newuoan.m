@@ -1,11 +1,11 @@
 function [x, fx, exitflag, output] = newuoan(varargin)
 
-    if isnumeric(varargin{end}) && varargin{end} == 1
-        flag = 1;
-        varargin = varargin{1:end-1};
-    else
-        flag = 0;
-    end
+    %if isnumeric(varargin{end}) && varargin{end} == 1
+    %    flag = 1;
+    %    varargin = varargin{1:end-1};
+    %else
+    %    flag = 0;
+    %end
 
 %NEWUOA is a solver for solving the following unconstrained continuous
 %   optimization problem without using derivatives:

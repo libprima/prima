@@ -14,7 +14,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Wednesday, August 18, 2021 AM04:49:48
+! Last Modified: Wednesday, August 18, 2021 PM12:31:20
 
 module newuoa_mod
 
@@ -46,8 +46,8 @@ subroutine newuoa(calfun, x, f, &
 !
 ! A detailed introduction to the arguments is as follows.
 ! N.B.: RP and IK are defined in the module CONSTS_MOD. See consts.F90 under
-! the directory name "common". By default, RP = kind(0.0D0) and IK = kind(0).
-! Therefore, REAL(RP) is the double-precision real, and INTEGER(IK) is the
+! the directory name "common". By default, RP = kind(0.0D0) and IK = kind(0),
+! with REAL(RP) being the double-precision real, and INTEGER(IK) being the
 ! default integer. For ADVANCED USERS, RP and IK can be defined by specifying
 ! __REAL_PRECISION__ and __INTEGER_KIND__ in common/ppf.h. Use the default if
 ! you are unsure.
@@ -139,13 +139,12 @@ subroutine newuoa(calfun, x, f, &
 !   if FHIST is present, its size at exit will be min(NF, MAXHIST).
 !
 !   Important Notice:
-!   Setting MAXHIST to a large value can be costly in terms of memory.
-!   For instance, if N = 1000 and MAXHIST = 100, 000, XHIST will take
-!   about 1 GB if we use double precision. Therefore, MAXHIST will be
-!   reset to a smaller value if the memory needed for XHIST and/or FHIST
-!   exceeds MAXMEMORY defined in CONSTS_MOD (see consts.F90 under the
-!   directory named "common"; default: 2GB). Use XHIST, FHIST, and MAXHIST
-!   with caution!!!
+!   Setting MAXHIST to a large value can be costly in terms of memory for problems with a large N.
+!   For instance, if N = 1000 and MAXHIST = 100, 000, XHIST will take up to 1 GB if we use double
+!   precision. MAXHIST will be  reset to a smaller value if the memory needed for XHIST and/or FHIST
+!   exceeds MAXMEMORY defined in CONSTS_MOD (see consts.F90 under the directory named "common";
+!   default: 2GB). Use XHIST, FHIST, and MAXHIST with caution!!! (Fortunately, the algorithm is NOT
+!   designed for large problems).
 !
 ! INFO
 !   Output, INTEGER(IK) scalar.
@@ -237,9 +236,9 @@ end where
 if (present(rhobeg)) then
     rhobeg_c = rhobeg
 else if (present(rhoend)) then
-    ! Fortran does not take short-circuit evalation of logic expressions.
-    ! Thus it is WRONG to combine the evalation of PRESENT(RHOEND) and the
-    ! evalation of IS_FINITE(RHOEND) as
+    ! Fortran does not take short-circuit evaluation of logic expressions.
+    ! Thus it is WRONG to combine the evaluation of PRESENT(RHOEND) and the
+    ! evaluation of IS_FINITE(RHOEND) as
     ! "if (present(rhoend) .and. is_finite(rhoend))".
     ! The compiler may choose the evaluate the IS_FINITE(RHOEND) even if
     ! PRESENT(RHOEND) is false!

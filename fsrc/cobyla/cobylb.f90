@@ -7,31 +7,31 @@ public :: cobylb
 
 contains
 
-subroutine cobylb(x, rhobeg, rhoend, iprint, maxfun, con, f, info, ftarget, cstrv, ctol, nsavmax)
+!subroutine cobylb(x, rhobeg, rhoend, iprint, maxfun, con, f, info, ftarget, cstrv, ctol, maxfilt)
+subroutine cobylb(iprint, maxfun, ctol, ftarget, rhobeg, rhoend, con, x, nf, chist, conhist, cstrv, f, fhist, xhist, info)
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, EPS, HUGENUM, DEBUGGING, SRNLEN
-use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F, &
-   & DAMAGING_ROUNDING
+use consts_mod, only : RP, IK, ZERO, TWO, HALF, QUART, TENTH, HUGENUM, DEBUGGING, SRNLEN
+use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, &
+    & SMALL_TR_RADIUS, NAN_X, NAN_INF_F, NAN_MODEL, DAMAGING_ROUNDING
 use infnan_mod, only : is_nan, is_posinf
-use debug_mod, only : errstop
+use debug_mod, only : errstop, verisize
 use output_mod, only : retmssg, rhomssg, fmssg
-use lina_mod, only : inprod, matprod, outprod
-use memory_mod, only : cstyle_sizeof
-use hist_mod, only : savehist, selectx
+use lina_mod, only : inprod, matprod, outprod, inv
+use selectx_mod, only : selectx
 
 ! Solver-specific modules
-use initialize_mod, only : initialize
+use initialize_mod, only : initxfc, initfilt
 use trustregion_mod, only : trstlp
 use update_mod, only : updatepole, findpole
 use geometry_mod, only : goodgeo, setdrop_geo, setdrop_tr, geostep
+use history_mod, only : savehist, savefilt
 
 implicit none
 
 ! Inputs
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
-integer(IK), intent(in) :: nsavmax
 real(RP), intent(in) :: ctol
 real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: rhobeg
@@ -43,19 +43,31 @@ real(RP), intent(inout) :: x(:)  ! N
 
 ! Outputs
 integer(IK), intent(out) :: info
+integer(IK), intent(out) :: nf
+real(RP), intent(out) :: chist(:)
+real(RP), intent(out) :: conhist(:, :)
+real(RP), intent(out) :: cstrv
 real(RP), intent(out) :: f
+real(RP), intent(out) :: fhist(:)
+real(RP), intent(out) :: xhist(:, :)
+
+! Parameter
+integer(IK), parameter :: maxfilt = 2000
 
 ! Local variables
-integer(IK) :: i
 integer(IK) :: tr
 integer(IK) :: maxtr
-integer(IK) :: j
 integer(IK) :: jdrop
 integer(IK) :: kopt
 integer(IK) :: m
+integer(IK) :: maxxhist
+integer(IK) :: maxfhist
+integer(IK) :: maxconhist
+integer(IK) :: maxchist
+integer(IK) :: maxhist
+
 integer(IK) :: n
-integer(IK) :: nf
-integer(IK) :: nsav
+integer(IK) :: nfilt
 integer(IK) :: subinfo
 real(RP) :: A(size(x), size(con) + 1)
 ! A(:, 1:M) contains the approximate gradient for the constraints, and A(:, M+1) is minus the
@@ -66,9 +78,9 @@ real(RP) :: cmax(size(con))
 real(RP) :: cmin(size(con))
 real(RP) :: cpen  ! Penalty parameter for constraint in merit function (PARMU in Powell's code)
 real(RP) :: conmat(size(con), size(x) + 1)
-real(RP) :: consav(size(con), max(nsavmax, 0))
-real(RP) :: csav(max(nsavmax, 0))
-real(RP) :: fsav(max(nsavmax, 0))
+real(RP) :: confilt(size(con), max(maxfilt, 0))
+real(RP) :: cfilt(max(maxfilt, 0))
+real(RP) :: ffilt(max(maxfilt, 0))
 real(RP) :: denom
 real(RP) :: d(size(x))
 real(RP) :: fval(size(x) + 1)
@@ -77,24 +89,23 @@ real(RP) :: factor_alpha
 real(RP) :: factor_beta
 real(RP) :: factor_delta
 real(RP) :: factor_gamma
-real(RP) :: prerec  ! Predicted reduction in constraint violation
-real(RP) :: preref  ! Predicted reduction in objective function
-real(RP) :: prerem  ! Predicted reduction in merit function
-real(RP) :: cstrv
+real(RP) :: prerec  ! Predicted reduction in Constraint violation
+real(RP) :: preref  ! Predicted reduction in objective Function
+real(RP) :: prerem  ! Predicted reduction in Merit function
 real(RP) :: rho
 real(RP) :: sim(size(x), size(x) + 1)  ! (n, )
 real(RP) :: simi(size(x), size(x))  ! (n, )
-real(RP) :: simid(size(x))
 real(RP) :: simi_jdrop(size(x))
 real(RP) :: actrem
-real(RP) :: xsav(size(x), max(nsavmax, 0))
+real(RP) :: xfilt(size(x), max(maxfilt, 0))
+logical :: evaluated(size(x) + 1)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!! TEMPORARY
-real(RP), allocatable :: xhist(:, :)
-real(RP), allocatable :: fhist(:)
-real(RP), allocatable :: conhist(:, :)
-real(RP), allocatable :: chist(:)
+real(RP), allocatable :: xhist_tmp(:, :)
+real(RP), allocatable :: fhist_tmp(:)
+real(RP), allocatable :: conhist_tmp(:, :)
+real(RP), allocatable :: chist_tmp(:)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 logical :: alltrue(size(x) + 1)
@@ -108,8 +119,31 @@ character(len=SRNLEN), parameter :: srname = 'COBYLB'
 alltrue = .true.
 reduce_rho = .false.
 
+! Get and verify the sizes.
 m = size(con)
 n = size(x)
+maxxhist = size(xhist, 2)
+maxfhist = size(fhist)
+maxconhist = size(conhist, 2)
+maxchist = size(chist)
+maxhist = max(maxxhist, maxfhist, maxconhist, maxchist)
+if (DEBUGGING) then
+    if (n < 1) then
+        call errstop(srname, 'SIZE(X) is invalid')
+    end if
+    if (maxxhist > 0) then
+        call verisize(xhist, n, maxhist)
+    end if
+    if (maxfhist > 0) then
+        call verisize(fhist, maxhist)
+    end if
+    if (maxconhist > 0) then
+        call verisize(conhist, m, maxhist)
+    end if
+    if (maxchist > 0) then
+        call verisize(chist, maxhist)
+    end if
+end if
 
 ! Set the initial values of some parameters. The last column of SIM holds the optimal vertex of the
 ! current simplex, and the preceding N columns hold the displacements from the optimal vertex to the
@@ -122,36 +156,22 @@ factor_gamma = HALF
 rho = rhobeg
 cpen = ZERO
 
-nsav = 0
-fsav = HUGENUM  ! This is necessary; otherwise, SELECTX may return an incorrect X.
-consav = -HUGENUM  ! This is necessary; otherwise, SELECTX may return an incorrect X.
-csav = HUGENUM  ! This is necessary; otherwise, SELECTX may return an incorrect X.
-fval = HUGENUM  ! This is necessary; otherwise, SELECTX may return an incorrect X.
-conmat = -HUGENUM  ! This is necessary; otherwise, SELECTX may return an incorrect X.
-cval = HUGENUM  ! This is necessary; otherwise, SELECTX may return an incorrect X.
-
-call initialize(iprint, maxfun, ctol, ftarget, rho, x, nf, conmat, cval, fval, sim, simi, subinfo)
+call initxfc(iprint, maxfun, ctol, ftarget, rho, x, nf, chist, conhist, conmat, cval, fhist, fval, sim, xhist, evaluated, subinfo)
+call initfilt(conmat, ctol, cval, fval, sim, evaluated, nfilt, cfilt, confilt, ffilt, xfilt)
 
 if (subinfo == NAN_X .or. subinfo == NAN_INF_F .or. subinfo == FTARGET_ACHIEVED .or. subinfo == MAXFUN_REACHED) then
     info = subinfo
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    !!!!!! TEMPORARY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    sim(:, 1:n) = sim(:, 1:n) + spread(sim(:, n + 1), dim=2, ncopies=n)  !!! TEMPORARY
-    xhist = sim
-    fhist = fval
-    conhist = conmat
-    chist = cval
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    cpen = min(1.0E8_RP, HUGENUM)
     ! Return the best calculated values of the variables.
-    kopt = selectx(fhist, chist, cpen, ctol)
-    x = xhist(:, kopt)
-    f = fhist(kopt)
-    con = conhist(:, kopt)
-    cstrv = chist(kopt)
+    cpen = min(1.0E8_RP, HUGENUM)
+    kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), cpen, ctol)
+    x = xfilt(:, kopt)
+    f = ffilt(kopt)
+    con = confilt(:, kopt)
+    cstrv = cfilt(kopt)
     !close (16)
     return
 else
+    simi = inv(sim(:, 1:n), 'ltri')  ! SIMI is the inverse of SIM(:, 1:n)
     x = sim(:, n + 1)
     f = fval(n + 1)
     con = conmat(:, n + 1)
@@ -193,11 +213,12 @@ do tr = 1, maxtr
     A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
 
     ! Exit if A contains NaN. Otherwise, TRSTLP may encounter memory errors or infinite loops.
+    ! HOW EXACTLY?????
     !----------------------------------------------------------------------------------------------!
     ! POSSIBLE IMPROVEMENT: INSTEAD OF EXITING, SKIP A TRUST-REGION STEP AND PERFORM A GEOMETRY ONE!
     !----------------------------------------------------------------------------------------------!
     if (any(is_nan(A))) then
-        info = -3
+        info = NAN_MODEL
         exit
     end if
 
@@ -212,7 +233,7 @@ do tr = 1, maxtr
     if (.not. shortd) then
         ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
         preref = inprod(d, A(:, m + 1))
-        prerec = cval(n + 1) - maxval([-conmat(:, n + 1) - matprod(d, A(:, 1:m)), ZERO])
+        prerec = cval(n + 1) - maxval([-matprod(d, A(:, 1:m)) - conmat(:, n + 1), ZERO])
 
         ! Increase CPEN if necessary and branch back if this change alters the optimal vertex.
         ! Otherwise, PREREM will be set to the predicted reductions in the merit function.
@@ -228,21 +249,41 @@ do tr = 1, maxtr
 
         prerem = preref + cpen * prerec   ! Is it positive????
 
-        ! Set X.
         x = sim(:, n + 1) + d
         if (any(is_nan(x))) then
-            !!!!!!!!!!!!! WHAT ABOUT NF ??? There is inconsistency. Also in NEWUOA and others. !!!!!!!!!!!
-            f = sum(x)  ! Set F to NaN.
-            con = f  ! Set constraint values to NaN.
-            cstrv = f  ! Set constraint violation to NaN
-            info = -1
+            f = sum(x) ! Set F to NaN.
+            con = f  ! Set CON to NaN.
+        else
+            call calcfc(n, m, x, f, con)  ! Evaluate F and CON.
+        end if
+        nf = nf + 1
+        if (any(is_nan(con))) then
+            cstrv = sum(con)  ! Set CSTRV to NaN.
+        else
+            cstrv = maxval([-con, ZERO])  ! Constraint violation for constraints CON(X) >= 0.
+        end if
+        call savehist(nf, con, cstrv, f, x, chist, conhist, fhist, xhist)
+        call savefilt(con, cstrv, ctol, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
+        ! Exit if X contains NaN.
+        if (any(is_nan(x))) then
+            info = NAN_X
             exit
         end if
-
-        ! Evaluate the objective function and constraints at X.
-        call calcfc(n, m, x, f, con)
-        nf = nf + 1
-        cstrv = maxval([-con, ZERO])
+        ! Exit if the objective function value or the constraints contain NaN/Inf.
+        if (is_nan(f) .or. is_posinf(f) .or. is_nan(cstrv) .or. is_posinf(cstrv)) then
+            info = NAN_INF_F
+            exit
+        end if
+        ! Exit if FTARGET is achieved by a feasible point.
+        if (f <= ftarget .and. cstrv <= ctol) then
+            info = FTARGET_ACHIEVED
+            exit
+        end if
+        ! Exit if MAXFUN is reached.
+        if (nf >= maxfun) then
+            info = MAXFUN_REACHED
+            exit
+        end if
 
         ! Begin the operations that decide whether X should replace one of the vertices of the
         ! current simplex, the change being mandatory if ACTREM is positive.
@@ -252,16 +293,11 @@ do tr = 1, maxtr
             actrem = cval(n + 1) - cstrv
         end if
 
-
         ! Set JDROP to the index of the vertex that is to be replaced by X.
         jdrop = setdrop_tr(actrem, d, factor_alpha, factor_delta, rho, sim, simi)
 
         ! When JDROP=0, the algorithm decides not to include X into the simplex.
-        if (jdrop == 0) then
-            call savehist(x, f, con, cstrv, xsav, fsav, consav, csav, nsav, ctol)   !?????
-        else
-            call savehist(sim(:, n + 1) + sim(:, jdrop), fval(jdrop), conmat(:, jdrop), cval(jdrop), &
-                & xsav, fsav, consav, csav, nsav, ctol)
+        if (jdrop > 0) then
             ! Revise the simplex by updating the elements of SIM, SIMI, FVAL, CONMAT, and CVAL.
             sim(:, jdrop) = d
             simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), d)
@@ -271,27 +307,6 @@ do tr = 1, maxtr
             conmat(:, jdrop) = con
             cval(jdrop) = cstrv
         end if
-
-        ! TODO: The following CAN BE MOVED UPWARD to below CALCFC once XHIST etc are implemented !!!
-        if (is_nan(F) .or. is_posinf(F)) then
-            info = -2
-            exit
-        end if
-        if (any(is_nan(con))) then
-            cstrv = sum(con)  ! Set CSTRV to NaN
-            cval(jdrop) = cstrv
-            info = -2
-            exit
-        end if
-        if (f <= ftarget .and. cstrv <= ctol) then
-            info = 1
-            exit
-        end if
-        if (nf >= maxfun) then
-            info = MAXFUN_REACHED
-            exit
-        end if
-        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
     end if
 
@@ -341,58 +356,58 @@ do tr = 1, maxtr
             ! Calculate the geometry step D.
             d = geostep(jdrop, cpen, conmat, cval, fval, factor_gamma, rho, simi)
 
-            ! Save the information of the JOPT-th vertex.
-            call savehist(sim(:, n + 1) + sim(:, jdrop), fval(jdrop), conmat(:, jdrop), cval(jdrop), &
-              & xsav, fsav, consav, csav, nsav, ctol)
-
             ! Update SIM and SIMI.
             sim(:, jdrop) = d  ! Corresponding to the new vertex SIM(:, N + 1) + D
             simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), d)
             simi = simi - outprod(matprod(simi, d), simi_jdrop)
             simi(jdrop, :) = simi_jdrop
 
-            ! Set X.
             x = sim(:, n + 1) + d
             if (any(is_nan(x))) then
-                f = sum(x)  ! Set F to NaN.
-                con = f  ! Set constraint values to NaN.
-                cstrv = f  ! Set constraint violation to NaN.
-                info = -1
-                exit
+                f = sum(x) ! Set F to NaN.
+                con = f  ! Set CON to NaN.
+            else
+                call calcfc(n, m, x, f, con)  ! Evaluate F and CON.
             end if
-
-            ! Evaluate the objective function and constraints at X.
-            call calcfc(n, m, x, f, con)
             nf = nf + 1
-            cstrv = maxval([-con, ZERO])
-            fval(jdrop) = f
-            conmat(:, jdrop) = con
-            cval(jdrop) = cstrv
-
-            if (is_nan(F) .or. is_posinf(F)) then
-                info = -2
-                exit
-            end if
             if (any(is_nan(con))) then
-                cstrv = sum(con)  ! Set CSTRV to NaN
-                cval(jdrop) = cstrv
-                info = -2
+                cstrv = sum(con)  ! Set CSTRV to NaN.
+            else
+                cstrv = maxval([-con, ZERO])
+            end if
+            call savehist(nf, con, cstrv, f, x, chist, conhist, fhist, xhist)
+            call savefilt(con, cstrv, ctol, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
+            ! Exit if X contains NaN.
+            if (any(is_nan(x))) then
+                info = NAN_X
                 exit
             end if
+            ! Exit if the objective function value or the constraints contain NaN/Inf.
+            if (is_nan(f) .or. is_posinf(f) .or. is_nan(cstrv) .or. is_posinf(cstrv)) then
+                info = NAN_INF_F
+                exit
+            end if
+            ! Exit if FTARGET is achieved by a feasible point.
             if (f <= ftarget .and. cstrv <= ctol) then
-                info = 1
+                info = FTARGET_ACHIEVED
                 exit
             end if
+            ! Exit if MAXFUN is reached.
             if (nf >= maxfun) then
                 info = MAXFUN_REACHED
                 exit
             end if
+
+            fval(jdrop) = f
+            conmat(:, jdrop) = con
+            cval(jdrop) = cstrv
+
         end if
     end if
 
     if (reduce_rho) then  ! Update RHO and CPEN.
         if (rho <= rhoend) then
-            info = 0
+            info = SMALL_TR_RADIUS
             exit
         end if
         ! See equation (11) in Section 3 of the COBYLA paper for the update of RHO.
@@ -414,24 +429,12 @@ do tr = 1, maxtr
 end do
 
 ! Return the best calculated values of the variables.
-sim(:, 1:n) = sim(:, 1:n) + spread(sim(:, n + 1), dim=2, ncopies=n)  !!! TEMPORARY
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!! TEMPORARY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Make sure that the history includes the last X.
-!write (16, *) 'sim', sim
-!write (16, *) 'xsav', xsav(:, 1:nsav)
-!write (16, *) nf, f, x
-xhist = reshape([sim, xsav(:, 1:nsav), x], [n, n + nsav + 2])
-fhist = [fval, fsav(1:nsav), f]
-conhist = reshape([conmat, consav(:, 1:nsav), con], [m, n + nsav + 2])
-chist = [cval, csav(1:nsav), cstrv]
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 cpen = max(cpen, min(1.0E8_RP, HUGENUM))
-kopt = selectx(fhist, chist, cpen, ctol)
-x = xhist(:, kopt)
-f = fhist(kopt)
-con = conhist(:, kopt)
-cstrv = chist(kopt)
+kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), cpen, ctol)
+x = xfilt(:, kopt)
+f = ffilt(kopt)
+con = confilt(:, kopt)
+cstrv = cfilt(kopt)
 
 !close (16)
 

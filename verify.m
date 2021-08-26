@@ -173,7 +173,8 @@ for ip = minip : length(plist)
         if ir == 7
             test_options.rhoend = test_options.rhobeg;
         end
-        if 16 <= ir && ir <= 20 && 1==0
+        if 16 <= ir && ir <= 20
+            test_options.chkfunval = false;
             prob.objective = @(x) noisyfeval(prob.objective, x);
             if ~isempty(nonlcon)
                 prob.nonlcon = @(x) noisyceval(prob.nonlcon, x);
