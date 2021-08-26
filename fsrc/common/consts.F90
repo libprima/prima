@@ -2,13 +2,13 @@
 !
 ! Coded by Zaikun Zhang in July 2020.
 !
-! Last Modified: Tuesday, June 29, 2021 PM12:13:14
+! Last Modified: Monday, August 23, 2021 PM01:40:59
 
 ! Remarks:
 !
 ! 1. REAL*4, REAL*8, INTEGER*4, INTEGER*8 are not Fortran standard
 !    expressions. Although they are supported by many compilers as
-!    extensions, it is better to avoid them.
+!    extensions, avoid them!
 !
 ! 2. Never use KIND with a literal value, e.g., REAL(KIND = 8), because
 !    Fortran standards never define what KIND = 8 means. There is NO
@@ -41,7 +41,7 @@
 !
 !    - Other types of INTEGER/REAL may not be available on all platforms
 !      (e.g., pgfortran 20 does not support REAL128).
-!    - The standard does not specify the range of the default  integer.
+!    - The standard does not specify the range of the default integer.
 !    - The standard does not specify what the range and precision of the
 !      default real or the double-precision real, except that KIND(0.0D0)
 !      should have a greater precision than KIND(0.0) --- no requirement
@@ -49,8 +49,8 @@
 !
 !    Consequently, the following should be observed in all Fortran code.
 !
-!    - DO NOT use any kind parameter other than IK, IK_DFT, RP, RP_DFT,
-!      SP, or DP unless you are sure that it is supported.
+!    - DO NOT use any kind parameter other than IK, IK_DFT, RP, RP_DFT, SP,
+!      or DP, unless you are sure that it is supported by your platform.
 !    - DO NOT make any assumption about the range of INTEGER, REAL, or
 !      REAL(0.0D0) unless you are sure. Be cautious about OVERFLOW!
 !      In particular, for integers working as the lower/upper limit of
@@ -81,7 +81,7 @@ implicit none
 private
 public :: DEBUGGING
 public :: IK, IK_DFT
-public :: RP, RP_DFT, DP, SP, QP
+public :: RP, DP, SP, QP, RP_DFT
 public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
 public :: EPS, HUGENUM, ALMOST_INFINITY, HUGEFUN, HUGECON
 public :: SRNLEN, MSSGLEN
@@ -180,10 +180,10 @@ real(RP), parameter :: FTARGET_DFT = -HUGENUM
 integer(IK), parameter :: IPRINT_DFT = 0
 integer(IK), parameter :: MAXFUN_DIM_DFT = 500
 
-! Maximal amount of memory (Byte) allowed for XHIST, FHIST, NLCHIST
-integer, parameter :: MAXMEMORY = 21 * (10**8)
-! 21*10**8 is 2G. If you set MAXMEMORY to a larger value, make sure that
-! it does not exceed HUGE(0).
+! Maximal amount of memory (Byte) allowed for XHIST, FHIST, CONHIST, CHIST
+integer, parameter :: MXMMY = 21 * (10**8)   ! 21*10**8 = 2G.
+! Make sure that MAXMEMORY does not exceed HUGE(0) to avoid overflow and memory errors.
+integer, parameter :: MAXMEMORY = min(MXMMY, huge(0))
 
 
 end module consts_mod

@@ -44,8 +44,6 @@ real(RP) :: conmat_old(size(conmat, 1), size(conmat, 2))
 real(RP) :: cval_old(size(cval))
 real(RP) :: fval_old(size(fval))
 real(RP) :: erri(size(sim, 1), size(sim, 1))
-real(RP) :: phi(size(sim, 2))
-real(RP) :: phimin
 real(RP) :: sim_jopt(size(sim, 1))
 real(RP) :: sim_old(size(sim, 1), size(sim, 2))
 real(RP) :: simi_old(size(simi, 1), size(simi, 2))
@@ -54,12 +52,13 @@ character(len=SRNLEN), parameter :: srname = 'UPDATEPOLE'
 
 ! Get and verify the sizes.
 m = size(conmat, 1)
-n = size(conmat, 2) - 1
+n = size(sim, 1)
 if (DEBUGGING) then
     if (n < 1) then
-        call errstop(srname, 'SIZE(CONMAT) is invalid')
+        call errstop(srname, 'SIZE(SIM) is invalid')
     end if
     call verisize(evaluated, n + 1)
+    call verisize(conmat, m, n + 1)
     call verisize(cval, n + 1)
     call verisize(fval, n + 1)
     call verisize(sim, n, n + 1)

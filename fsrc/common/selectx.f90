@@ -1,119 +1,17 @@
-module hist_mod
+module selectx_mod
 
 implicit none
 private
-public :: savehist, selectx
+public :: selectx, isbetter
 
 contains
 
 
-subroutine savehist(x, f, con, cstrv, xsav, fsav, consav, csav, nsav, ctol)   !?????
-! This subroutine saves XDROP in XSAV and DATDROP in DATSAV, unless a vector in XSAV(:, 1:NSAV) is
-! better than XDROP. If XDROP is better than some vectors in XSAV(:, 1:NSAV), then these vectors
-! will be removed. If XDROP is not better than any of XSAV(:, 1:NSAV) but NSAV=NSAVMAX, then we
-! remove XSAV(:,1), which is the oldest vector in XSAV(:, 1:NSAV).
-!
-! When COBYLA calls this subroutine, XDROP is a vector to be "dropped", and  DATDROP contains its
-! function/constraint information (constraint value in the first M entries, DATDROP(M+1) = F(XDROP),
-! and DATDROP(M+2) = CSTRV(X)). XSAV and DATSAV save at most NSAVMAX vectors "dropped" by COBYLB
-! and their function/constraint information. Only XSAV(:, 1:NSAV) and DATSAV(:, 1:NSAV) contains
-! such vectors, while XSAV(:, NSAV+1:NSAVMAX) and DATSAV(:, NSAV+1:NSAVMAX) are not initialized yet.
-!
-! Note: We decide whether X is better than the function/constraint of Y according to the ISBETTER
-! function with CPEN = -ONE. Due to the implementation of ISBETTER,
-! X is better than Y with CPEN < 0
-! ==> X is better than Y with any CPEN >= 0,
-! ==> X is better than Y regardless of CPEN.
-
-use consts_mod, only : RP, IK, ONE, DEBUGGING, SRNLEN
-use infnan_mod, only : is_nan, is_posinf
-use debug_mod, only : errstop, verisize
-use output_mod, only : retmssg, rhomssg, fmssg
-use memory_mod, only : safealloc
-use lina_mod, only : calquad, inprod
-
-implicit none
-
-! Inputs
-real(RP), intent(IN) :: ctol
-real(RP), intent(IN) :: con(:)  ! M
-real(RP), intent(IN) :: cstrv
-real(RP), intent(IN) :: f
-real(RP), intent(IN) :: x(:)  ! N
-
-! In-outputs
-integer(IK), intent(INOUT) :: nsav
-real(RP), intent(INOUT) :: consav(:, :)  ! (M, NSAVMAX)
-real(RP), intent(INOUT) :: csav(:)  ! NSAVMAX
-real(RP), intent(INOUT) :: fsav(:)  ! NSAVMAX
-real(RP), intent(INOUT) :: xsav(:, :) ! (N, NSAVMAX)
-
-! Local variables
-integer(IK) :: m
-integer(IK) :: n
-integer(IK) :: nsavmax
-integer(IK) :: i
-integer(IK), allocatable :: index_to_keep(:)
-logical :: better(nsav)
-logical :: keep(nsav)
-character(len=SRNLEN), parameter :: srname = 'SAVEHIST'
-
-m = size(con)
-n = size(x)
-nsavmax = size(fsav)
-
-if (DEBUGGING) then
-    if (n <= 0) then
-        call errstop(srname, 'SIZE(X) is invalid')
-    end if
-    call verisize(xsav, n, nsavmax)
-    call verisize(consav, m, nsavmax)
-    call verisize(csav, nsavmax)
-end if
-
-if (nsavmax <= 0) then
-    return  ! Do nothing if NSAVMAX = 0
-end if
-
-! Return immediately if any column of XSAV is better than XDROP.
-! BETTER is defined by the array constructor with an implicit do loop.
-better = [(isbetter([fsav(i), csav(i)], [f, cstrv], ctol), i=1, nsav)]
-if (any(better)) then
-    return
-end if
-
-! Decide which columns of XSAV to keep. We use again the array constructor with an implicit do loop.
-keep = [(.not. isbetter([f, cstrv], [fsav(i), csav(i)], ctol), i=1, nsav)]
-! If X is not better than any column of XSAV, then we remove the first (oldest) column of XSAV.
-if (count(keep) == nsavmax) then
-    keep(1) = .false.
-end if
-
-!--------------------------------------------------!
-!----The SAFEALLOC line is removable in F2003.-----!
-call safealloc(index_to_keep, nsav)
-!--------------------------------------------------!
-index_to_keep = pack([(i, i=1, nsav)], mask=keep)
-nsav = count(keep) + 1
-xsav(:, 1:nsav - 1) = xsav(:, index_to_keep)
-fsav(1:nsav - 1) = fsav(index_to_keep)
-consav(:, 1:nsav - 1) = consav(:, index_to_keep)
-csav(1:nsav - 1) = csav(index_to_keep)
-! F2003 automatically deallocate local ALLOCATABLE variables at exit, yet
-! we prefer to deallocate them immediately when they finish their jobs.
-deallocate (index_to_keep)
-xsav(:, nsav) = x
-fsav(nsav) = f
-consav(:, nsav) = con
-csav(nsav) = cstrv
-
-end subroutine savehist
-
-
 function selectx(fhist, chist, cpen, ctol) result(kopt)
+! This subroutine selects X according to the history of F and CSTRV. Normally, FHIST and CHIST are
+! not the complete history but only a filter.
 
 use consts_mod, only : IK, RP, HUGENUM, HUGEFUN, HUGECON, ZERO, TWO, DEBUGGING, SRNLEN
-use infnan_mod, only : is_nan, is_posinf
 use debug_mod, only : errstop, verisize
 
 implicit none
@@ -200,9 +98,9 @@ use debug_mod, only : errstop
 implicit none
 
 ! Inputs
-real(RP), intent(IN) :: fc1(:)
-real(RP), intent(IN) :: fc2(:)
-real(RP), intent(IN) :: ctol
+real(RP), intent(in) :: fc1(:)
+real(RP), intent(in) :: fc2(:)
+real(RP), intent(in) :: ctol
 
 ! Output
 real(RP) :: cref
@@ -227,4 +125,4 @@ is_better = is_better .or. (fc1(1) < HUGENUM .and. fc1(2) <= ctol .and. ((fc2(2)
 end function isbetter
 
 
-end module hist_mod
+end module selectx_mod

@@ -4,7 +4,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Thursday, August 05, 2021 PM04:26:35
+! Last Modified: Friday, August 27, 2021 AM12:00:11
 
 module initialize_mod
 
@@ -16,7 +16,7 @@ public :: initxf, initq, inith
 contains
 
 
-subroutine initxf(calfun, iprint, ftarget, rhobeg, x, ij, kopt, nf, fhist, fval, xbase, xhist, xpt, info)
+subroutine initxf(calfun, iprint, ftarget, rhobeg, x0, ij, kopt, nf, fhist, fval, xbase, xhist, xpt, info)
 ! INITXF performs the initialization regarding the interpolation
 ! points and corresponding function values.
 
@@ -28,6 +28,7 @@ use infnan_mod, only : is_nan, is_posinf
 use output_mod, only : fmssg
 
 ! Solver-specific module
+use history_mod, only : savehist
 use pintrf_mod, only : FUNEVAL
 
 implicit none
@@ -37,7 +38,7 @@ procedure(FUNEVAL) :: calfun
 integer(IK), intent(in) :: iprint
 real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: rhobeg
-real(RP), intent(in) :: x(:)  ! X(N)
+real(RP), intent(in) :: x0(:)  ! X0(N)
 
 ! Outputs
 integer(IK), intent(out) :: info
@@ -61,31 +62,30 @@ integer(IK) :: i
 integer(IK) :: itemp
 integer(IK) :: j
 integer(IK) :: k
-integer(IK) :: khist
 integer(IK) :: maxfhist
 integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: npt
 integer(IK) :: npt_revised
 real(RP) :: f
-real(RP) :: xtemp(size(x))
+real(RP) :: x(size(x0))
 logical :: evaluated(size(fval))
 character(len=6), parameter :: solver = 'NEWUOA'
 character(len=SRNLEN), parameter :: srname = 'INITXF'
 
 
 ! Get and verify the sizes.
-n = int(size(x), kind(n))
+n = int(size(x0), kind(n))
 npt = int(size(fval), kind(npt))
 maxfhist = int(size(fhist), kind(maxfhist))
 maxxhist = int(size(xhist, 2), kind(maxxhist))
 
 if (DEBUGGING) then
     if (n == 0 .or. npt < n + 2) then
-        call errstop(srname, 'SIZE(X) or SIZE(FVAL) is invalid')
+        call errstop(srname, 'SIZE(X0) or SIZE(FVAL) is invalid')
     end if
     if (size(xhist, 1) /= n .and. maxxhist > 0) then
-        call errstop(srname, 'XHIST is nonempty but SIZE(XHIST, 1) /= SIZE(X)')
+        call errstop(srname, 'XHIST is nonempty but SIZE(XHIST, 1) /= SIZE(X0)')
     end if
     if (maxfhist * maxxhist > 0 .and. maxfhist /= maxxhist) then
         call errstop(srname, 'FHIST and XHIST are both nonempty but SIZE(FHIST) /= SIZE(XHIST, 2)')
@@ -97,17 +97,17 @@ end if
 
 ! At return,
 ! INFO = 0: initialization finishes normally
-! INFO = FTARGET_ACHIEVED: return because f <= ftarget
-! INFO = NAN_X: return because x contains NaN
-! INFO = NAN_INF_F: return because f is either NaN or +infinity
+! INFO = FTARGET_ACHIEVED: return because F <= FTARGET
+! INFO = NAN_X: return because X contains NaN
+! INFO = NAN_INF_F: return because F is either NaN or +infinity
 info = 0
 
 ! We set ij = 1 in case the initialization aborts due to abnormality. If
 ! we do not do this, ij will be undefined if the initialization aborts.
 ij = 1
 
-! Set XBASE to X.
-xbase = x
+! Set XBASE to X0.
+xbase = x0
 
 ! Initialize XPT to ZERO.
 xpt = ZERO
@@ -143,34 +143,31 @@ end do
 ! Set FVAL(1 : 2*N + 1) by evaluating F. Totally parallelizable except for
 ! FMSSG, which outputs messages to the console or files.
 do k = 1, min(npt, int(2 * n + 1, kind(npt)))
-    xtemp = xpt(:, k) + xbase
-    if (any(is_nan(xtemp))) then
-        info = NAN_X
-        npt_revised = 0
-        exit
+    x = xpt(:, k) + xbase
+    if (any(is_nan(x))) then
+        f = sum(x)  ! Set F to NaN.
+    else
+        call calfun(x, f)
     end if
-    call calfun(xtemp, f)
-    call fmssg(iprint, k, f, xtemp, solver)
     evaluated(k) = .true.
     fval(k) = f
-
-    if (maxfhist >= 1) then
-        khist = mod(k - 1_IK, maxfhist) + 1_IK
-        fhist(khist) = f
-    end if
-    if (maxxhist >= 1) then
-        khist = mod(k - 1_IK, maxxhist) + 1_IK
-        xhist(:, khist) = xtemp
-    end if
+    call fmssg(iprint, k, f, x, solver)
+    ! Save X and F into the history.
+    call savehist(k, f, x, fhist, xhist)
 
     ! Check whether to exit.
-    if (f <= ftarget) then
-        info = FTARGET_ACHIEVED
+    if (any(is_nan(x))) then
+        info = NAN_X
         npt_revised = 0
         exit
     end if
     if (is_posinf(f) .or. is_nan(f)) then
         info = NAN_INF_F
+        npt_revised = 0
+        exit
+    end if
+    if (f <= ftarget) then
+        info = FTARGET_ACHIEVED
         npt_revised = 0
         exit
     end if
@@ -224,32 +221,29 @@ end do
 ! Set FVAL(2*N + 2 : NPT) by evaluating F. Totally parallelizable except
 ! FMSSG, which outputs messages to the console or files.
 do k = int(2 * n + 2, kind(k)), npt_revised
-    xtemp = xpt(:, k) + xbase
-    if (any(is_nan(xtemp))) then
-        info = NAN_X
-        exit
+    x = xpt(:, k) + xbase
+    if (any(is_nan(x))) then
+        f = sum(x)  ! Set F to NaN.
+    else
+        call calfun(x, f)
     end if
-    call calfun(xtemp, f)
-    call fmssg(iprint, k, f, xtemp, solver)
     evaluated(k) = .true.
     fval(k) = f
-
-    if (maxfhist >= 1) then
-        khist = mod(k - 1_IK, maxfhist) + 1_IK
-        fhist(khist) = f
-    end if
-    if (maxxhist >= 1) then
-        khist = mod(k - 1_IK, maxxhist) + 1_IK
-        xhist(:, khist) = xtemp
-    end if
+    call fmssg(iprint, k, f, x, solver)
+    ! Save X and F into the history.
+    call savehist(k, f, x, fhist, xhist)
 
     ! Check whether to exit.
-    if (f <= ftarget) then
-        info = FTARGET_ACHIEVED
+    if (any(is_nan(x))) then
+        info = NAN_X
         exit
     end if
     if (is_posinf(f) .or. is_nan(f)) then
         info = NAN_INF_F
+        exit
+    end if
+    if (f <= ftarget) then
+        info = FTARGET_ACHIEVED
         exit
     end if
 end do

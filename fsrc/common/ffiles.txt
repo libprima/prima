@@ -4,8 +4,8 @@ debug.F90
 memory.F90
 infnan.F90
 lina.F90
+selectx.f90
 output.f90
-hist.f90
 preproc.f90
 pintrf.f90
 logging.F90

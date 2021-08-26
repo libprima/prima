@@ -41,12 +41,8 @@ function trstlp(A, b, rho) result(d)
 ! achieved by the shift CSTRV that makes the least residual zero.
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, EPS, HUGENUM, DEBUGGING, SRNLEN
-use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
-use infnan_mod, only : is_nan, is_posinf, is_finite
+use consts_mod, only : RP, IK, DEBUGGING, SRNLEN
 use debug_mod, only : errstop, verisize
-use output_mod, only : retmssg, rhomssg, fmssg
-use lina_mod, only : inprod, matprod, eye, planerot, isminor
 
 implicit none
 
@@ -71,7 +67,7 @@ m = size(A, 2) - 1_IK
 
 if (DEBUGGING) then
     if (m < 0 .or. size(A, 1) <= 0) then
-        call errstop(srname, 'Invalid SIZE(A)')
+        call errstop(srname, 'SIZE(A) is invalid')
     end if
     call verisize(b, m + 1)
 end if
@@ -95,11 +91,9 @@ subroutine trstlp_sub(iact, nact, stage, A, b, rho, d, vmultc, z)
 ! 5. STEP. STEP <= CSTRV in stage 1.
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, EPS, HUGENUM, DEBUGGING, SRNLEN
-use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
-use infnan_mod, only : is_nan, is_posinf, is_finite
+use consts_mod, only : RP, IK, ZERO, ONE, EPS, HUGENUM, DEBUGGING, SRNLEN
+use infnan_mod, only : is_nan, is_finite
 use debug_mod, only : errstop, verisize
-use output_mod, only : retmssg, rhomssg, fmssg
 use lina_mod, only : inprod, matprod, eye, planerot, isminor
 
 implicit none
@@ -141,8 +135,8 @@ real(RP) :: dnew(size(d))
 real(RP) :: dold(size(d))
 real(RP) :: dtmp(size(d))
 real(RP) :: frac
-real(RP) :: ftmp(size(b))
-real(RP) :: grot(2_IK, 2_IK)
+real(RP) :: frtmp(size(b))
+real(RP) :: grot(2, 2)
 real(RP) :: hypt
 real(RP) :: optnew
 real(RP) :: optold
@@ -436,15 +430,15 @@ do iter = 1, maxiter
     vmultd(nact + 1:mcon) = cvshift(nact + 1:mcon)
 
     ! Calculate the fraction of the step from D to DNEW that will be taken.
-    ftmp = vmultc / (vmultc - vmultd)  !
-    if (any(vmultd < ZERO .and. .not. is_nan(ftmp))) then
-        frac = min(ONE, minval(ftmp, mask=(vmultd < ZERO)))
+    frtmp = vmultc / (vmultc - vmultd)  !
+    if (any(vmultd < ZERO .and. .not. is_nan(frtmp))) then
+        frac = min(ONE, minval(frtmp, mask=(vmultd < ZERO)))
     else
         frac = ONE
     end if
 
     if (frac < ONE) then
-        icon = minloc(ftmp, mask=(vmultd < ZERO), dim=1)
+        icon = minloc(frtmp, mask=(vmultd < ZERO), dim=1)
     else
         icon = 0
     end if

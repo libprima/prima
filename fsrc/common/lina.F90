@@ -15,7 +15,7 @@
 
 ! Coded by Zaikun ZHANG in July 2020.
 !
-! Last Modified: Tuesday, August 17, 2021 PM12:11:05
+! Last Modified: Thursday, August 26, 2021 PM05:49:41
 
 
 #include "ppf.h"
@@ -29,6 +29,7 @@ public :: inprod, matprod, outprod
 public :: r1update, r2update, symmetrize
 public :: xpy_dot_z, xdy_plus_a, Ax_plus_y, xA_plus_y
 public :: eye
+public :: inv
 public :: planerot
 public :: calquad
 public :: hessmul
@@ -478,6 +479,54 @@ if (size(x, 1) * size(x, 2) > 0) then
     end do
 end if
 end function eye2
+
+
+function inv(A, matrix_type) result(B)
+! This function calculates the inverse of a given matrix of special type. The matrix is ASSUMED
+! TO BE SMALL AND INVERTIBLE. The function is implemented NAIVELY. It is NOT coded for general
+! purposes but only for the usage in this project.
+! Only the following matrix types (MATRIX_TYPE) are supported, which is sufficient for this project:
+! ltri/LTRI: lower triangular
+! utri/UTRI: upper triangular
+use consts_mod, only : RP, IK, ZERO, ONE, DEBUGGING, SRNLEN
+use debug_mod, only : verisize, errstop
+implicit none
+
+! Input
+real(RP), intent(in) :: A(:, :)
+character(len=*), intent(in) :: matrix_type
+
+! Output
+real(RP) :: B(size(A, 1), size(A, 1))
+
+! Local variables
+integer(IK) :: i
+integer(IK) :: n
+character(len=SRNLEN), parameter :: srname = 'INV'
+
+n = size(A, 1)
+if (DEBUGGING) then
+    call verisize(A, n, n)
+    if (.not. (matrix_type == 'ltri' .or. matrix_type == 'LTRI' .or. matrix_type == 'utri' .or. matrix_type == 'UTRI')) then
+        call errstop(srname, 'Unknown matrix type: '//matrix_type)
+    end if
+end if
+
+if (matrix_type == 'ltri' .or. matrix_type == 'LTRI') then
+    B = ZERO
+    do i = 1, n
+        B(i, i) = ONE / A(i, i)
+        B(i, 1:i - 1) = -matprod(A(i, 1:i - 1) / A(i, i), B(1:i - 1, 1:i - 1))
+    end do
+else if (matrix_type == 'utri' .or. matrix_type == 'UTRI') then
+    B = ZERO
+    do i = 1, n
+        B(i, i) = ONE / A(i, i)
+        B(1:i - 1, i) = -matprod(B(1:i - 1, 1:i - 1), A(1:i - 1, i) / A(i, i))
+    end do
+end if
+
+end function inv
 
 
 function planerot(x) result(G)

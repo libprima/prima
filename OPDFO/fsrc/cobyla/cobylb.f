@@ -147,6 +147,8 @@ C above line number 220).
       DO K = 1, MPP
           CONSAV(K) = CON(K)
       END DO
+      CALL SAVEX (X(1:N), CON(1:MPP), XSAV(1:N, 1:NSMAX),
+     1     DATSAV(1:MPP, 1:NSMAX), N, M, NSAV, NSMAX, CTOL)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -468,8 +470,8 @@ C Zaikun 20190820: See the comments below line number 480
       DO K = 1, MPP
           DATDROP(K) = DATMAT(K, JDROP)
       END DO
-      CALL SAVEX (XDROP(1:N), DATDROP(1:MPP), XSAV(1:N, 1:NSMAX),
-     1     DATSAV(1:MPP, 1:NSMAX), N, M, NSAV, NSMAX, CTOL)
+!      CALL SAVEX (XDROP(1:N), DATDROP(1:MPP), XSAV(1:N, 1:NSMAX),
+!     1     DATSAV(1:MPP, 1:NSMAX), N, M, NSAV, NSMAX, CTOL)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
 C     Calculate the step to the new vertex and its sign.
@@ -786,8 +788,8 @@ C
               DATDROP(K) = DATMAT(K, JDROP)
           END DO
       END IF
-      CALL SAVEX (XDROP(1:N), DATDROP(1:MPP), XSAV(1:N, 1:NSMAX),
-     1     DATSAV(1:MPP, 1:NSMAX), N, M, NSAV, NSMAX, CTOL)
+!      CALL SAVEX (XDROP(1:N), DATDROP(1:MPP), XSAV(1:N, 1:NSMAX),
+!     1     DATSAV(1:MPP, 1:NSMAX), N, M, NSAV, NSMAX, CTOL)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       IF (JDROP == 0) then
           GOTO 550
@@ -938,20 +940,23 @@ C      NFVALS-2 instead of NFVALS-1.
   600 DO K = 1, M
            CON(K) = CONSAV(K)
       END DO
-      CALL SAVEX (X(1:N), CONSAV(1:MPP), XSAV(1:N, 1:NSMAX),
-     1     DATSAV(1:MPP, 1:NSMAX), N, M, NSAV, NSMAX, CTOL)
 
-      fhist(1:n+2+nsav) = [datmat(mp, 1:np), DATSAV(mp, 1:nsav), f]
-      chist(1:n+2+nsav) = [datmat(mpp, 1:np),DATSAV(mpp,1:nsav),resmax]
-      if (any(fhist(1:n+2+nsav)< HUGEFUN .and. chist(1:n+2+nsav)
+!      CALL SAVEX (X(1:N), CONSAV(1:MPP), XSAV(1:N, 1:NSMAX),
+!     1     DATSAV(1:MPP, 1:NSMAX), N, M, NSAV, NSMAX, CTOL)
+
+      !fhist(1:n+2+nsav) = [datmat(mp, 1:np), DATSAV(mp, 1:nsav), f]
+      !chist(1:n+2+nsav) = [datmat(mpp, 1:np),DATSAV(mpp,1:nsav),resmax]
+      fhist(1:nsav) = DATSAV(mp, 1:nsav)
+      chist(1:nsav) = DATSAV(mpp,1:nsav)
+      if (any(fhist(1:nsav)< HUGEFUN .and. chist(1:nsav)
      1 < HUGECON)) then
           fref = HUGEFUN
           resref = HUGECON
-      elseif (any(fhist(1:n+2+nsav) < HUGENUM .and. chist(1:n+2+nsav)
+      elseif (any(fhist(1:nsav) < HUGENUM .and. chist(1:nsav)
      1     < HUGECON)) then
           fref = hugenum
           resref = hugecon
-      elseif (any(fhist(1:n+2+nsav) < HUGEFUN .and. chist(1:n+2+nsav)
+      elseif (any(fhist(1:nsav) < HUGEFUN .and. chist(1:nsav)
      1     < HUGENUM)) then
           fref = hugefun
           resref = hugenum
@@ -960,37 +965,39 @@ C      NFVALS-2 instead of NFVALS-1.
           resref = hugenum
       end if
 
-      if (any (fhist(1:n+2+nsav) < fref .and. chist(1:n+2+nsav)
+      if (any (fhist(1:nsav) < fref .and. chist(1:nsav)
      1 < resref)) then
-      cmin = minval(chist(1:n+2+nsav),mask= (fhist(1:n+2+nsav) < FREF))
+      cmin = minval(chist(1:nsav),mask= (fhist(1:nsav) < FREF))
       PARMU = MAX(PARMU, 1.0D8)
       RESREF = 2.0D0*max(cmin - ctol, 0.0D0)
       IF (NFVALS >= 2) THEN ! See the comments above for why NFVALS>2
-          if (.not. (resmax-ctol <= resref .and. f < FREF)) then
-              resmax = huge(0.0D0)
-              f = huge(0.0D0)
-          end if
-          DO J = 1, NP
-C See the comments above for why to check these J
-              IF (max(DATMAT(MPP, J)-ctol, 0.0D0) <= RESREF .and.
-     1            datmat(mp, J) < FREF) THEN
-                  IF (datmat(mp, j) + parmu*max(datmat(mpp, j)-ctol,
-     1             0.0D0) < f + parmu*max(resmax-ctol, 0.0D0)) THEN
-                      if (J <= N) then
-                          DO I = 1, N
-                              X(I) = SIM(I, J) + SIM(I, NP)
-                          END DO
-                      else
-                          X(1:N) = SIM(1:N, NP)
-                      end if
-                      F = DATMAT(MP, J)
-                      RESMAX = DATMAT(MPP, J)
-                      DO K = 1, M
-                          CON(K) = DATMAT(K, J)
-                      END DO
-                  END IF
-              END IF
-          END DO
+          resmax = huge(0.0D0)
+          f = huge(0.0D0)
+          !if (.not. (resmax-ctol <= resref .and. f < FREF)) then
+          !    resmax = huge(0.0D0)
+          !    f = huge(0.0D0)
+          !end if
+          !DO J = 1, NP
+!C See the comments above for why to check these J
+          !    IF (max(DATMAT(MPP, J)-ctol, 0.0D0) <= RESREF .and.
+      !1            datmat(mp, J) < FREF) THEN
+          !        IF (datmat(mp, j) + parmu*max(datmat(mpp, j)-ctol,
+      !1             0.0D0) < f + parmu*max(resmax-ctol, 0.0D0)) THEN
+          !            if (J <= N) then
+          !                DO I = 1, N
+          !                    X(I) = SIM(I, J) + SIM(I, NP)
+          !                END DO
+          !            else
+          !                X(1:N) = SIM(1:N, NP)
+          !            end if
+          !            F = DATMAT(MP, J)
+          !            RESMAX = DATMAT(MPP, J)
+          !            DO K = 1, M
+          !                CON(K) = DATMAT(K, J)
+          !            END DO
+          !        END IF
+          !    END IF
+          !END DO
           DO J = 1, NSAV
               IF (max(DATSAV(MPP, J)-ctol, 0.0D0) <= RESREF .and.
      1         datsav(mp, j) < FREF) THEN
@@ -1011,26 +1018,26 @@ C See the comments above for why to check these J
 
           PHIMIN =  f + parmu*max(resmax-ctol, 0.0D0)
 
-          DO J = 1, NP
-C See the comments above for why to check these J
-              IF (max(DATMAT(MPP, J)-ctol, 0.0D0) <= resref .and.
-     1         datmat(mp, j) < fref .and.
-     1             datmat(mp, j) + parmu*max(datmat(mpp, j)-ctol,
-     1              0.0D0) <= phimin .and. datmat(mpp, j) < resmax) THEN
-                      if (J <= N) then
-                          DO I = 1, N
-                              X(I) = SIM(I, J) + SIM(I, NP)
-                          END DO
-                      else
-                          X(1:N) = SIM(1:N, NP)
-                      end if
-                      F = DATMAT(MP, J)
-                      RESMAX = DATMAT(MPP, J)
-                      DO K = 1, M
-                          CON(K) = DATMAT(K, J)
-                      END DO
-              END IF
-          END DO
+          !DO J = 1, NP
+!C See the comments above for why to check these J
+          !    IF (max(DATMAT(MPP, J)-ctol, 0.0D0) <= resref .and.
+      !1         datmat(mp, j) < fref .and.
+      !1             datmat(mp, j) + parmu*max(datmat(mpp, j)-ctol,
+      !1              0.0D0) <= phimin .and. datmat(mpp, j) < resmax) THEN
+          !            if (J <= N) then
+          !                DO I = 1, N
+          !                    X(I) = SIM(I, J) + SIM(I, NP)
+          !                END DO
+          !            else
+          !                X(1:N) = SIM(1:N, NP)
+          !            end if
+          !            F = DATMAT(MP, J)
+          !            RESMAX = DATMAT(MPP, J)
+          !            DO K = 1, M
+          !                CON(K) = DATMAT(K, J)
+          !            END DO
+          !    END IF
+          !END DO
           DO J = 1, NSAV
               IF (max(DATSAV(MPP, J)-ctol, 0.0D0) <= resref .and.
      1        datsav(mp, j) < fref .and.
@@ -1050,23 +1057,23 @@ C See the comments above for why to check these J
 
           RESREF = resmax
 
-          DO J = 1, NP
-C See the comments above for why to check these J
-              IF (DATMAT(MPP, J) <= RESREF .and. datmat(mp, j) < f) THEN
-                      if (J <= N) then
-                          DO I = 1, N
-                              X(I) = SIM(I, J) + SIM(I, NP)
-                          END DO
-                      else
-                          X(1:N) = SIM(1:N, NP)
-                      end if
-                      F = DATMAT(MP, J)
-                      RESMAX = DATMAT(MPP, J)
-                      DO K = 1, M
-                          CON(K) = DATMAT(K, J)
-                      END DO
-              END IF
-          END DO
+          !DO J = 1, NP
+!C See the comments above for why to check these J
+          !    IF (DATMAT(MPP, J) <= RESREF .and. datmat(mp, j) < f) THEN
+          !            if (J <= N) then
+          !                DO I = 1, N
+          !                    X(I) = SIM(I, J) + SIM(I, NP)
+          !                END DO
+          !            else
+          !                X(1:N) = SIM(1:N, NP)
+          !            end if
+          !            F = DATMAT(MP, J)
+          !            RESMAX = DATMAT(MPP, J)
+          !            DO K = 1, M
+          !                CON(K) = DATMAT(K, J)
+          !            END DO
+          !    END IF
+          !END DO
           DO J = 1, NSAV
               IF (DATSAV(MPP, J) <= RESREF .and. datsav(mp, j) < f) THEN
                       DO I = 1, N
@@ -1126,6 +1133,8 @@ C See the comments above for why to check these J
           IF (IPTEM < N) PRINT 80, (X(I),I=IPTEMP,N)
       END IF
       MAXFUN=NFVALS
+
+      !close(17)
       RETURN
       END
 
