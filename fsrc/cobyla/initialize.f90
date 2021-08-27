@@ -1,7 +1,7 @@
 ! INITIALIZE_MOD is a module containing subroutine(s) for initialization.
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the COBYLA paper.
 !
-! Last Modified: Thursday, August 26, 2021 PM11:06:39
+! Last Modified: Friday, August 27, 2021 PM03:40:44
 
 module initialize_mod
 
@@ -132,22 +132,19 @@ do k = 1, n + 1
     cval(j) = cstrv
     ! Save X, F, CON, CSTRV into the history.
     call savehist(k, con, cstrv, f, x, chist, conhist, fhist, xhist)
-    ! Exit if X contains NaN.
+    ! Check whether to exit.
     if (any(is_nan(x))) then
         info = NAN_X
         exit
     end if
-    ! Exit if the objective function value or the constraints contain NaN/Inf.
     if (is_nan(f) .or. is_posinf(f) .or. is_nan(cstrv) .or. is_posinf(cstrv)) then
         info = NAN_INF_F
         exit
     end if
-    ! Exit if FTARGET is achieved by a feasible point.
     if (f <= ftarget .and. cstrv <= ctol) then
         info = FTARGET_ACHIEVED
         exit
     end if
-    ! Exit if MAXFUN is reached.
     if (k >= maxfun) then
         info = MAXFUN_REACHED
         exit

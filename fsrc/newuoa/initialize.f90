@@ -4,7 +4,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Friday, August 27, 2021 PM03:22:11
+! Last Modified: Friday, August 27, 2021 PM03:41:47
 
 module initialize_mod
 
@@ -159,7 +159,6 @@ do k = 1, min(npt, int(2 * n + 1, kind(npt)))
     call fmssg(iprint, k, f, x, solver)
     ! Save X and F into the history.
     call savehist(k, f, x, fhist, xhist)
-
     ! Check whether to exit.
     if (any(is_nan(x))) then
         info = NAN_X
@@ -237,7 +236,6 @@ do k = int(2 * n + 2, kind(k)), npt_revised
     call fmssg(iprint, k, f, x, solver)
     ! Save X and F into the history.
     call savehist(k, f, x, fhist, xhist)
-
     ! Check whether to exit.
     if (any(is_nan(x))) then
         info = NAN_X

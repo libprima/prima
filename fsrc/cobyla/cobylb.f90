@@ -7,7 +7,6 @@ public :: cobylb
 
 contains
 
-!subroutine cobylb(x, rhobeg, rhoend, iprint, maxfun, con, f, info, ftarget, cstrv, ctol, maxfilt)
 subroutine cobylb(iprint, maxfun, ctol, ftarget, rhobeg, rhoend, con, x, nf, chist, conhist, cstrv, f, fhist, xhist, info)
 
 ! Generic modules
@@ -52,7 +51,7 @@ real(RP), intent(out) :: fhist(:)
 real(RP), intent(out) :: xhist(:, :)
 
 ! Parameter
-integer(IK), parameter :: maxfilt = 2000
+integer(IK), parameter :: maxfilt = 2000_IK  ! Must be positive. Recommended to be in [100, 10,000].
 
 ! Local variables
 integer(IK) :: tr
@@ -256,30 +255,29 @@ do tr = 1, maxtr
         else
             call calcfc(n, m, x, f, con)  ! Evaluate F and CON.
         end if
-        nf = nf + 1
+        nf = nf + 1_IK
         if (any(is_nan(con))) then
             cstrv = sum(con)  ! Set CSTRV to NaN.
         else
             cstrv = maxval([-con, ZERO])  ! Constraint violation for constraints CON(X) >= 0.
         end if
+        ! Save X, F, CON, CSTRV into the history.
         call savehist(nf, con, cstrv, f, x, chist, conhist, fhist, xhist)
+        ! Save X, F, CON, CSTRV into the filter.
         call savefilt(con, cstrv, ctol, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
-        ! Exit if X contains NaN.
+        ! Check whether to exit.
         if (any(is_nan(x))) then
             info = NAN_X
             exit
         end if
-        ! Exit if the objective function value or the constraints contain NaN/Inf.
         if (is_nan(f) .or. is_posinf(f) .or. is_nan(cstrv) .or. is_posinf(cstrv)) then
             info = NAN_INF_F
             exit
         end if
-        ! Exit if FTARGET is achieved by a feasible point.
         if (f <= ftarget .and. cstrv <= ctol) then
             info = FTARGET_ACHIEVED
             exit
         end if
-        ! Exit if MAXFUN is reached.
         if (nf >= maxfun) then
             info = MAXFUN_REACHED
             exit
@@ -369,30 +367,29 @@ do tr = 1, maxtr
             else
                 call calcfc(n, m, x, f, con)  ! Evaluate F and CON.
             end if
-            nf = nf + 1
+            nf = nf + 1_IK
             if (any(is_nan(con))) then
                 cstrv = sum(con)  ! Set CSTRV to NaN.
             else
                 cstrv = maxval([-con, ZERO])
             end if
+            ! Save X, F, CON, CSTRV into the history.
             call savehist(nf, con, cstrv, f, x, chist, conhist, fhist, xhist)
+            ! Save X, F, CON, CSTRV into the filter.
             call savefilt(con, cstrv, ctol, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
-            ! Exit if X contains NaN.
+            ! Check whether to exit.
             if (any(is_nan(x))) then
                 info = NAN_X
                 exit
             end if
-            ! Exit if the objective function value or the constraints contain NaN/Inf.
             if (is_nan(f) .or. is_posinf(f) .or. is_nan(cstrv) .or. is_posinf(cstrv)) then
                 info = NAN_INF_F
                 exit
             end if
-            ! Exit if FTARGET is achieved by a feasible point.
             if (f <= ftarget .and. cstrv <= ctol) then
                 info = FTARGET_ACHIEVED
                 exit
             end if
-            ! Exit if MAXFUN is reached.
             if (nf >= maxfun) then
                 info = MAXFUN_REACHED
                 exit
