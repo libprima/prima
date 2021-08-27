@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, August 27, 2021 PM02:41:20
+! Last Modified: Friday, August 27, 2021 PM03:27:47
 
 module newuob_mod
 
@@ -47,7 +47,7 @@ subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENUM, DEBUGGING
 use info_mod, only : FTARGET_ACHIEVED, MAXTR_REACHED, MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
 use infnan_mod, only : is_nan, is_posinf
-use debug_mod, only : errstop
+use debug_mod, only : errstop, verisize
 use output_mod, only : retmssg, rhomssg, fmssg
 use lina_mod, only : calquad, inprod
 
@@ -95,6 +95,7 @@ integer(IK) :: knew_geo
 integer(IK) :: knew_tr
 integer(IK) :: kopt
 integer(IK) :: maxfhist
+integer(IK) :: maxhist
 integer(IK) :: maxtr
 integer(IK) :: maxxhist
 integer(IK) :: n
@@ -138,18 +139,19 @@ character(len=*), parameter :: srname = 'NEWUOB'
 
 ! Get and verify the sizes.
 n = int(size(x), kind(n))
-maxfhist = int(size(fhist), kind(maxfhist))
 maxxhist = int(size(xhist, 2), kind(maxxhist))
+maxfhist = int(size(fhist), kind(maxfhist))
+maxhist = max(maxxhist, maxfhist)
 
 if (DEBUGGING) then
-    if (n == 0) then
-        call errstop(srname, 'SIZE(X) is invalid')
+    if (n < 1) then
+        call errstop(srname, 'SIZE(X) < 1')
     end if
-    if (size(xhist, 1) /= n .and. maxxhist > 0) then
-        call errstop(srname, 'XHIST is nonempty but SIZE(XHIST, 1) /= SIZE(X)')
+    if (maxxhist > 0) then
+        call verisize(xhist, n, maxhist)
     end if
-    if (maxfhist * maxxhist > 0 .and. maxfhist /= maxxhist) then
-        call errstop(srname, 'FHIST and XHIST are both nonempty but SIZE(FHIST) /= SIZE(XHIST, 2)')
+    if (maxfhist > 0) then
+        call verisize(fhist, maxhist)
     end if
 end if
 

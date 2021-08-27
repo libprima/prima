@@ -3,7 +3,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, August 27, 2021 PM01:58:41
+! Last Modified: Friday, August 27, 2021 PM03:21:56
 
 module geometry_mod
 
@@ -61,7 +61,7 @@ n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
 if (DEBUGGING) then
-    if (n == 0 .or. npt < n + 2) then
+    if (n < 1 .or. npt < n + 2) then
         call errstop(srname, 'SIZE(XPT) is invalid')
     end if
     call verisize(vlag, npt)
@@ -145,7 +145,7 @@ n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
 if (DEBUGGING) then
-    if (n == 0 .or. npt < n + 2) then
+    if (n < 1 .or. npt < n + 2) then
         call errstop(srname, 'SIZE(XPT) is invalid')
     end if
     call verisize(bmat, n, npt + n)
@@ -252,7 +252,7 @@ n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
 if (DEBUGGING) then
-    if (n == 0 .or. npt < n + 2) then
+    if (n < 1 .or. npt < n + 2) then
         call errstop(srname, 'SIZE(XPT) is invalid')
     end if
     call verisize(x, n)
@@ -495,7 +495,7 @@ n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
 if (DEBUGGING) then
-    if (n == 0 .or. npt < n + 2) then
+    if (n < 1 .or. npt < n + 2) then
         call errstop(srname, 'SIZE(XPT) is invalid')
     end if
     call verisize(bmat, n, npt + n)

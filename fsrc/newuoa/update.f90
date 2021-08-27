@@ -3,7 +3,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, August 27, 2021 PM02:00:26
+! Last Modified: Friday, August 27, 2021 PM03:20:23
 
 module update_mod
 
@@ -73,7 +73,7 @@ n = int(size(bmat, 1), kind(n))
 npt = int(size(bmat, 2), kind(npt)) - n
 
 if (DEBUGGING) then
-    if (n == 0 .or. npt < n + 2) then
+    if (n < 1 .or. npt < n + 2) then
         call errstop(srname, 'SIZE(BMAT) is invalid')
     end if
     call verisize(zmat, npt, int(npt - n - 1, kind(n)))
@@ -280,8 +280,11 @@ n = int(size(gq), kind(n))
 npt = int(size(pq), kind(npt))
 
 if (DEBUGGING) then
-    if (n == 0 .or. npt < n + 2) then
-        call errstop(srname, 'SIZE(GQ) or SIZE(PQ) is invalid')
+    if (n < 1) then
+        call errstop(srname, 'SIZE(GQ) < 1')
+    end if
+    if (npt < n + 2) then
+        call errstop(srname, 'SIZE(PQ) < N + 2')
     end if
     call verisize(bmatknew, n)
     call verisize(zmat, npt, int(npt - n - 1, kind(n)))
@@ -355,8 +358,11 @@ n = int(size(gq), kind(n))
 npt = int(size(pq), kind(npt))
 
 if (DEBUGGING) then
-    if (n == 0 .or. npt < n + 2) then
-        call errstop(srname, 'SIZE(GQ) or SIZE(PQ) is invalid')
+    if (n < 1) then
+        call errstop(srname, 'SIZE(GQ) < 1')
+    end if
+    if (npt < n + 2) then
+        call errstop(srname, 'SIZE(PQ) < N + 2')
     end if
     call verisize(fval, npt)
     call verisize(smat, n, npt)

@@ -822,7 +822,7 @@ integer(IK) :: n, npt
 character(len=*), parameter :: srname = 'CALQUAD'
 n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
-if (n == 0 .or. npt < n + 2) then
+if (n < 1 .or. npt < n + 2) then
     call errstop(srname, 'SIZE(XPT) is invalid')
 end if
 call verisize(d, n)
@@ -902,7 +902,7 @@ integer(IK) :: n, npt
 character(len=*), parameter :: srname = 'HESSMUL'
 n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
-if (n == 0 .or. npt < n + 2) then
+if (n < 1 .or. npt < n + 2) then
     call errstop(srname, 'SIZE(XPT) is invalid')
 end if
 call verisize(y, n)
