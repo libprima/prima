@@ -9,7 +9,7 @@ contains
 
 subroutine savehist(nf, f, x, fhist, xhist)
 ! This subroutine saves X and F into XHIST and FHIST respectively.
-use consts_mod, only : RP, IK, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, DEBUGGING
 use debug_mod, only : errstop, verisize
 implicit none
 
@@ -27,13 +27,13 @@ integer(IK) :: maxfhist
 integer(IK) :: maxhist
 integer(IK) :: maxxhist
 integer(IK) :: n
-character(len=SRNLEN), parameter :: srname = 'SAVEHIST'
+character(len=*), parameter :: srname = 'SAVEHIST'
 
 ! Get and verify the sizes.
-n = size(x)
-maxxhist = size(xhist, 2)
-maxfhist = size(fhist)
-maxhist = max(maxxhist, maxfhist)
+n = int(size(x), kind(n))
+maxxhist = int(size(xhist, 2), kind(maxxhist))
+maxfhist = int(size(fhist), kind(maxfhist))
+maxhist = int(max(maxxhist, maxfhist), kind(maxhist))
 if (DEBUGGING) then
     if (n < 1) then
         call errstop(srname, 'SIZE(X) < 1')

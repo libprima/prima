@@ -63,7 +63,7 @@ real(RP) :: con(size(conmat, 1))
 real(RP) :: cstrv
 real(RP) :: f
 real(RP) :: x(size(x0))
-character(len=SRNLEN), parameter :: srname = 'INITIALIZE'
+character(len=*), parameter :: srname = 'INITIALIZE'
 
 ! Get and verify the sizes.
 m = size(conmat, 1)
@@ -206,7 +206,7 @@ integer(IK) :: i
 integer(IK) :: m
 integer(IK) :: maxfilt
 integer(IK) :: n
-character(len=SRNLEN), parameter :: srname = 'INITFILT'
+character(len=*), parameter :: srname = 'INITFILT'
 
 ! Get and verify the sizes.
 m = size(conmat, 1)

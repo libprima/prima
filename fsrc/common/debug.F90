@@ -3,7 +3,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020.
 !
-! Last Modified: Saturday, July 10, 2021 PM08:54:48
+! Last Modified: Friday, August 27, 2021 PM02:02:03
 
 
 #include "ppf.h"
@@ -73,13 +73,13 @@ end subroutine backtr
 
 subroutine verisym(A, tol)
 ! VERISYM verifies whether a matrix A is symmetric up to TOL.
-use consts_mod, only : RP, ONE, ZERO, SRNLEN
+use consts_mod, only : RP, ONE, ZERO
 implicit none
 
 real(RP), intent(in) :: A(:, :)
 real(RP), intent(in) :: tol
 
-character(len=SRNLEN), parameter :: srname = 'VERISYM'
+character(len=*), parameter :: srname = 'VERISYM'
 
 if (size(A, 1) /= size(A, 2)) then
     call errstop(srname, 'A is not square')
@@ -98,11 +98,11 @@ end subroutine verisym
 
 subroutine verisize_real_1(x, n)
 ! VERISIZE_REAL_1 verifies whether SIZE(X) = N.
-use consts_mod, only : RP, IK, SRNLEN
+use consts_mod, only : RP, IK
 real(RP), intent(in) :: x(:)
 integer(IK), intent(in) :: n
 
-character(len=SRNLEN), parameter :: srname = 'VERISIZE_REAL_1'
+character(len=*), parameter :: srname = 'VERISIZE_REAL_1'
 
 if (size(x) /= n) then
     call errstop(srname, 'SIZE(X) /= N')
@@ -112,12 +112,12 @@ end subroutine verisize_real_1
 
 subroutine verisize_real_2(x, m, n)
 ! VERISIZE_REAL_2 verifies whether SIZE(X, 1) = M, SIZE(X, 2) = N.
-use consts_mod, only : RP, IK, SRNLEN
+use consts_mod, only : RP, IK
 real(RP), intent(in) :: x(:, :)
 integer(IK), intent(in) :: m
 integer(IK), intent(in) :: n
 
-character(len=SRNLEN), parameter :: srname = 'VERISIZE_REAL_2'
+character(len=*), parameter :: srname = 'VERISIZE_REAL_2'
 
 if (size(x, 1) /= m) then
     call errstop(srname, 'SIZE(X, 1) /= M')
@@ -130,11 +130,11 @@ end subroutine verisize_real_2
 
 subroutine verisize_int_1(x, n)
 ! VERISIZE_INT_1 verifies whether SIZE(X) = N.
-use consts_mod, only : IK, SRNLEN
+use consts_mod, only : IK
 integer(IK), intent(in) :: x(:)
 integer(IK), intent(in) :: n
 
-character(len=SRNLEN), parameter :: srname = 'VERISIZE_INT_1'
+character(len=*), parameter :: srname = 'VERISIZE_INT_1'
 
 if (size(x) /= n) then
     call errstop(srname, 'SIZE(X) /= N')
@@ -144,12 +144,12 @@ end subroutine verisize_int_1
 
 subroutine verisize_int_2(x, m, n)
 ! VERISIZE_INT_2 verifies whether SIZE(X, 1) = M, SIZE(X, 2) = N.
-use consts_mod, only : IK, SRNLEN
+use consts_mod, only : IK
 integer(IK), intent(in) :: x(:, :)
 integer(IK), intent(in) :: m
 integer(IK), intent(in) :: n
 
-character(len=SRNLEN), parameter :: srname = 'VERISIZE_INT_2'
+character(len=*), parameter :: srname = 'VERISIZE_INT_2'
 
 if (size(x, 1) /= m) then
     call errstop(srname, 'SIZE(X, 1) /= M')
@@ -162,11 +162,11 @@ end subroutine verisize_int_2
 
 subroutine verisize_logical_1(x, n)
 ! VERISIZE_LOGICAL_1 verifies whether SIZE(X) = N.
-use consts_mod, only : IK, SRNLEN
+use consts_mod, only : IK
 logical(IK), intent(in) :: x(:)
 integer(IK), intent(in) :: n
 
-character(len=SRNLEN), parameter :: srname = 'VERISIZE_LOGICAL_1'
+character(len=*), parameter :: srname = 'VERISIZE_LOGICAL_1'
 
 if (size(x) /= n) then
     call errstop(srname, 'SIZE(X) /= N')
@@ -176,12 +176,12 @@ end subroutine verisize_logical_1
 
 subroutine verisize_logical_2(x, m, n)
 ! VERISIZE_LOGICAL_2 verifies whether SIZE(X, 1) = M, SIZE(X, 2) = N.
-use consts_mod, only : IK, SRNLEN
+use consts_mod, only : IK
 logical(IK), intent(in) :: x(:, :)
 integer(IK), intent(in) :: m
 integer(IK), intent(in) :: n
 
-character(len=SRNLEN), parameter :: srname = 'VERISIZE_LOGICAL_2'
+character(len=*), parameter :: srname = 'VERISIZE_LOGICAL_2'
 
 if (size(x, 1) /= m) then
     call errstop(srname, 'SIZE(X, 1) /= M')

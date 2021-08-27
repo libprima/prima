@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020.
 !
-! Last Modified: Monday, August 23, 2021 PM01:40:59
+! Last Modified: Friday, August 27, 2021 PM02:30:19
 
 ! Remarks:
 !
@@ -84,7 +84,7 @@ public :: IK, IK_DFT
 public :: RP, DP, SP, QP, RP_DFT
 public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
 public :: EPS, HUGENUM, ALMOST_INFINITY, HUGEFUN, HUGECON
-public :: SRNLEN, MSSGLEN
+public :: MSSGLEN, FNAMELEN
 public :: OUTUNIT
 public :: RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT
 public :: MAXFUN_DIM_DFT, MAXMEMORY
@@ -164,13 +164,13 @@ integer, parameter :: MAXE = maxexponent(ZERO)
 real(RP), parameter :: HUGEFUN = TWO**min(100, MAXE / 2)
 real(RP), parameter :: HUGECON = HUGEFUN
 
-! The maximal length of subroutine/function names
-integer, parameter :: SRNLEN = 30
+! The maximal length of messages; used in output.f90 and fmexapi.F90
+integer, parameter :: MSSGLEN = 1000
 
-! The maximal length of messages; used in output.F90 and fmexapi.F90
-integer, parameter :: MSSGLEN = 300
+! The maximal length of output file names; used in output.f90
+integer, parameter :: FNAMELEN = 1000
 
-! Output unit, can be any integer between 9 and 99
+! Output unit, can be any integer between 9 and 99; used in output.f90
 integer(IK), parameter :: OUTUNIT = 9
 
 ! Some default values

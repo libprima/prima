@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, August 27, 2021 AM12:00:46
+! Last Modified: Friday, August 27, 2021 PM02:41:20
 
 module newuob_mod
 
@@ -44,7 +44,7 @@ subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 ! See Section 2 of the NEWUOA paper for more information about these variables.
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENUM, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENUM, DEBUGGING
 use info_mod, only : FTARGET_ACHIEVED, MAXTR_REACHED, MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
 use infnan_mod, only : is_nan, is_posinf
 use debug_mod, only : errstop
@@ -132,8 +132,8 @@ logical :: improve_geo
 logical :: reduce_rho_1
 logical :: reduce_rho_2
 logical :: shortd
-character(len=6), parameter :: solver = 'NEWUOA'
-character(len=SRNLEN), parameter :: srname = 'NEWUOB'
+character(len=*), parameter :: solver = 'NEWUOA'
+character(len=*), parameter :: srname = 'NEWUOB'
 
 
 ! Get and verify the sizes.
@@ -205,7 +205,7 @@ ratio = -ONE
 
 ! Normally, each trust-region iteration takes one function evaluation. The following setting
 ! essentially imposes no constraint on the maximal number of trust-region iterations.
-maxtr = 10 * maxfun
+maxtr = 10_IK * maxfun
 ! MAXTR is unlikely to be reached, but we define the following default value for INFO for safety.
 info = MAXTR_REACHED
 
@@ -256,7 +256,7 @@ do tr = 1, maxtr
         else
             call calfun(x, f)
         end if
-        nf = int(nf + 1, kind(nf))
+        nf = nf + 1_IK
         call fmssg(iprint, nf, f, x, solver)
         ! Save X and F into the history.
         call savehist(nf, f, x, fhist, xhist)
@@ -458,7 +458,7 @@ do tr = 1, maxtr
         else
             call calfun(x, f)
         end if
-        nf = int(nf + 1, kind(nf))
+        nf = nf + 1_IK
         call fmssg(iprint, nf, f, x, solver)
         ! Save X and F into the history.
         call savehist(nf, f, x, fhist, xhist)
@@ -556,7 +556,7 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     else
         call calfun(x, f)
     end if
-    nf = int(nf + 1, kind(nf))
+    nf = nf + 1_IK
     call fmssg(iprint, nf, f, x, solver)
     ! Save X and F into the history.
     call savehist(nf, f, x, fhist, xhist)

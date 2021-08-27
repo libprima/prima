@@ -215,7 +215,7 @@ real(RP) :: gamma2_c
 real(RP) :: rhobeg_c
 real(RP) :: rhoend_c
 real(RP), allocatable :: xhist_c(:, :)
-character(len=6), parameter :: solver = 'NEWUOA'
+character(len=*), parameter :: solver = 'NEWUOA'
 
 
 ! Get size.

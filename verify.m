@@ -129,7 +129,7 @@ for ip = minip : length(plist)
     for ir = minir : maxir
         fprintf('%s Run No. %3d: \t', pname, ir);
         % Some randomization
-        rng(ceil(1e6*abs(sin(1e6*(sum(double(pname))*n*ir)))));
+        rng(ceil(1e5*abs(sin(1e5*(sum(double(pname))*n*ir)))));
         prob.x0 = x0 + 0.5*randn(size(x0));
         test_options = struct();
         test_options.debug = true;

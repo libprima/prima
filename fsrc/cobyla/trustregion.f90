@@ -60,7 +60,7 @@ integer(IK) :: m
 integer(IK) :: nact
 real(RP) :: vmultc(size(b))
 real(RP) :: z(size(d), size(d))
-character(len=SRNLEN), parameter :: srname = 'TRSTLP'
+character(len=*), parameter :: srname = 'TRSTLP'
 
 ! Get and verify the sizes.
 m = size(A, 2) - 1_IK
@@ -149,7 +149,7 @@ real(RP) :: zda
 real(RP) :: zdd
 real(RP) :: zddabs
 real(RP) :: zdota(size(z, 2))
-character(len=SRNLEN), parameter :: srname = 'TRSTLP_SUB'
+character(len=*), parameter :: srname = 'TRSTLP_SUB'
 
 ! Get and verify the sizes.
 n = size(A, 1)

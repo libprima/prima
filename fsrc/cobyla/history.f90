@@ -34,7 +34,7 @@ integer(IK) :: maxfhist
 integer(IK) :: maxhist
 integer(IK) :: maxxhist
 integer(IK) :: n
-character(len=SRNLEN), parameter :: srname = 'SAVEHIST'
+character(len=*), parameter :: srname = 'SAVEHIST'
 
 ! Get and verify the sizes.
 m = size(con)
@@ -124,7 +124,7 @@ integer(IK) :: i
 integer(IK), allocatable :: index_to_keep(:)
 logical :: better(nfilt)
 logical :: keep(nfilt)
-character(len=SRNLEN), parameter :: srname = 'SAVEFILT'
+character(len=*), parameter :: srname = 'SAVEFILT'
 
 m = size(con)
 n = size(x)

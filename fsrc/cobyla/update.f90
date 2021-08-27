@@ -47,7 +47,7 @@ real(RP) :: erri(size(sim, 1), size(sim, 1))
 real(RP) :: sim_jopt(size(sim, 1))
 real(RP) :: sim_old(size(sim, 1), size(sim, 2))
 real(RP) :: simi_old(size(simi, 1), size(simi, 2))
-character(len=SRNLEN), parameter :: srname = 'UPDATEPOLE'
+character(len=*), parameter :: srname = 'UPDATEPOLE'
 
 
 ! Get and verify the sizes.
@@ -132,7 +132,7 @@ integer(IK) :: jopt
 ! Local variables
 real(RP) :: phi(size(cval))
 real(RP) :: phimin
-character(len=SRNLEN), parameter :: srname = 'FINDPOLE'
+character(len=*), parameter :: srname = 'FINDPOLE'
 
 if (DEBUGGING) then
     if (size(cval) /= size(fval)) then

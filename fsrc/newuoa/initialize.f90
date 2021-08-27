@@ -4,7 +4,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Friday, August 27, 2021 AM12:00:11
+! Last Modified: Friday, August 27, 2021 PM01:59:24
 
 module initialize_mod
 
@@ -21,7 +21,7 @@ subroutine initxf(calfun, iprint, ftarget, rhobeg, x0, ij, kopt, nf, fhist, fval
 ! points and corresponding function values.
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ZERO, DEBUGGING
 use debug_mod, only : errstop, verisize
 use info_mod, only : FTARGET_ACHIEVED, NAN_X, NAN_INF_F
 use infnan_mod, only : is_nan, is_posinf
@@ -70,8 +70,8 @@ integer(IK) :: npt_revised
 real(RP) :: f
 real(RP) :: x(size(x0))
 logical :: evaluated(size(fval))
-character(len=6), parameter :: solver = 'NEWUOA'
-character(len=SRNLEN), parameter :: srname = 'INITXF'
+character(len=*), parameter :: solver = 'NEWUOA'
+character(len=*), parameter :: srname = 'INITXF'
 
 
 ! Get and verify the sizes.
@@ -263,7 +263,7 @@ subroutine initq(ij, fval, xpt, gq, hq, pq, info)
 ! HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING
 use info_mod, only : NAN_MODEL
 use debug_mod, only : errstop, verisize
 use infnan_mod, only : is_nan
@@ -293,7 +293,7 @@ real(RP) :: fj
 real(RP) :: rhobeg
 real(RP) :: xi
 real(RP) :: xj
-character(len=SRNLEN), parameter :: srname = 'INITQ'
+character(len=*), parameter :: srname = 'INITQ'
 
 
 ! Get and verify the sizes.
@@ -368,7 +368,7 @@ subroutine inith(ij, xpt, idz, bmat, zmat, info)
 ! INITH initializes BMAT and ZMAT.
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
 use info_mod, only : NAN_MODEL
 use debug_mod, only : errstop, verisize
 use infnan_mod, only : is_nan
@@ -397,7 +397,7 @@ real(RP) :: rhobeg
 real(RP) :: rhosq
 real(RP) :: xi
 real(RP) :: xj
-character(len=SRNLEN), parameter :: srname = 'INITH'
+character(len=*), parameter :: srname = 'INITH'
 
 
 ! Get and verify the sizes.

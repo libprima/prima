@@ -4,7 +4,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Sunday, July 25, 2021 AM11:21:23
+! Last Modified: Friday, August 27, 2021 PM01:59:54
 
 module shiftbase_mod
 
@@ -22,7 +22,7 @@ subroutine shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
 ! shifting. See Section 7 of the NEWUOA paper.
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, DEBUGGING
 use debug_mod, only : errstop, verisize
 use lina_mod, only : Ax_plus_y, r1update, r2update, inprod, matprod
 
@@ -53,7 +53,7 @@ real(RP) :: w1(size(pq))
 real(RP) :: w2(size(xopt))
 real(RP) :: xoptsq
 real(RP) :: xpq(size(xopt))
-character(len=SRNLEN), parameter :: srname = 'SHIFTBASE'
+character(len=*), parameter :: srname = 'SHIFTBASE'
 
 
 ! Get and verify the sizes

@@ -3,7 +3,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Saturday, May 22, 2021 PM04:13:55
+! Last Modified: Friday, August 27, 2021 PM01:55:36
 
 module preproc_mod
 
@@ -40,7 +40,7 @@ real(RP), intent(inout) :: rhobeg
 real(RP), intent(inout) :: rhoend
 
 ! Local variable
-character(len=6), parameter :: solver = 'NEWUOA'
+character(len=*), parameter :: solver = 'NEWUOA'
 
 
 if (iprint /= 0 .and. abs(iprint) /= 1 .and. abs(iprint) /= 2 .and. abs(iprint) /= 3) then

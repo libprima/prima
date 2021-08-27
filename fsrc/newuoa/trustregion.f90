@@ -4,7 +4,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Tuesday, August 17, 2021 AM11:08:05
+! Last Modified: Friday, August 27, 2021 PM02:00:05
 
 module trustregion_mod
 
@@ -50,7 +50,7 @@ subroutine trsapp(delta, gq, hq, pq, tol, x, xpt, crvmin, s, info)
 ! See Section 5 of the NEWUOA paper.
 
 ! Generic modules
-use consts_mod, only : RP, IK, ONE, TWO, HALF, ZERO, PI, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ONE, TWO, HALF, ZERO, PI, DEBUGGING
 use debug_mod, only : errstop, verisize
 use infnan_mod, only : is_nan, is_finite
 use lina_mod, only : Ax_plus_y, inprod, matprod
@@ -116,7 +116,7 @@ real(RP) :: sth
 real(RP) :: t
 real(RP) :: unitang
 logical :: twod_search
-character(len=SRNLEN), parameter :: srname = 'TRSAPP'
+character(len=*), parameter :: srname = 'TRSAPP'
 
 
 ! Get and verify the sizes.

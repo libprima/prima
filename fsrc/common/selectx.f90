@@ -11,7 +11,7 @@ function selectx(fhist, chist, cpen, ctol) result(kopt)
 ! This subroutine selects X according to the history of F and CSTRV. Normally, FHIST and CHIST are
 ! not the complete history but only a filter.
 
-use consts_mod, only : IK, RP, HUGENUM, HUGEFUN, HUGECON, ZERO, TWO, DEBUGGING, SRNLEN
+use consts_mod, only : IK, RP, HUGENUM, HUGEFUN, HUGECON, ZERO, TWO, DEBUGGING
 use debug_mod, only : errstop, verisize
 
 implicit none
@@ -32,7 +32,7 @@ real(RP) :: chist_shifted(size(fhist))
 real(RP) :: fref
 real(RP) :: phi(size(fhist))
 real(RP) :: phimin
-character(len=SRNLEN), parameter :: srname = 'SELECTX'
+character(len=*), parameter :: srname = 'SELECTX'
 
 
 ! Get the verify the sizes.
@@ -92,7 +92,7 @@ function isbetter(fc1, fc2, ctol) result(is_better)
 ! Here, CSTRV means constraint violation, which is a nonnegative number.
 
 ! Generic modules
-use consts_mod, only : RP, TEN, HUGENUM, DEBUGGING, SRNLEN
+use consts_mod, only : RP, TEN, HUGENUM, DEBUGGING
 use infnan_mod, only : is_nan
 use debug_mod, only : errstop
 implicit none
@@ -107,7 +107,7 @@ real(RP) :: cref
 logical :: is_better
 
 ! Local variables
-character(len=SRNLEN), parameter :: srname = 'ISBETTER'
+character(len=*), parameter :: srname = 'ISBETTER'
 
 
 ! Verify the sizes

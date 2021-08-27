@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020.
 !
-! Last Modified: Sunday, May 23, 2021 PM04:56:07
+! Last Modified: Friday, August 27, 2021 PM02:24:52
 
 
 #include "fintrf.h"
@@ -24,7 +24,7 @@ integer(IK_CL) :: nf
 ! History of evaluations
 real(RP_CL), allocatable :: xhist(:, :), fhist(:)
 ! Solver name
-character(len=6), parameter :: solver = 'NEWUOA'
+character(len=*), parameter :: solver = 'NEWUOA'
 
 interface
     subroutine newuoa(n, npt, x, rhobeg, rhoend, iprint, maxfun, w, f, info, ftarget)

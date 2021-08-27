@@ -3,7 +3,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Thursday, August 05, 2021 PM11:32:45
+! Last Modified: Friday, August 27, 2021 PM02:00:26
 
 module update_mod
 
@@ -25,7 +25,7 @@ subroutine updateh(knew, beta, vlag_in, idz, bmat, zmat)
 ! See Section 4 of the NEWUOA paper.
 
 ! Generic modules
-use consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
 use debug_mod, only : errstop, verisize
 use lina_mod, only : matprod, planerot, r2update, symmetrize
 
@@ -65,7 +65,7 @@ real(RP) :: vlag(size(vlag_in))  ! Copy of VLAG_IN
 real(RP) :: w(size(vlag_in))
 real(RP) :: ztemp(size(zmat, 1))
 logical :: reduce_idz
-character(len=SRNLEN), parameter :: srname = 'UPDATEH'
+character(len=*), parameter :: srname = 'UPDATEH'
 
 
 ! Get and verify the sizes.
@@ -248,7 +248,7 @@ subroutine updateq(idz, knew, bmatknew, fqdiff, zmat, xptknew, gq, hq, pq)
 ! See Section 4 of the NEWUOA paper.
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ZERO, DEBUGGING
 use debug_mod, only : errstop, verisize
 use lina_mod, only : r1update, Ax_plus_y
 
@@ -272,7 +272,7 @@ real(RP), intent(inout) :: pq(:)   ! PQ(NPT)
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: fqdz(size(zmat, 2))
-character(len=SRNLEN), parameter :: srname = 'UPDATEQ'
+character(len=*), parameter :: srname = 'UPDATEQ'
 
 
 ! Get and verify the sizes.
@@ -317,7 +317,7 @@ subroutine tryqalt(idz, fval, ratio, smat, zmat, itest, gq, hq, pq)
 ! See Section 8 of the NEWUOA paper.
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ZERO, DEBUGGING
 use debug_mod, only : errstop, verisize
 use lina_mod, only : inprod, matprod
 
@@ -347,7 +347,7 @@ integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: fz(size(zmat, 2))
 real(RP) :: galt(size(gq))
-character(len=SRNLEN), parameter :: srname = 'TRYQALT'
+character(len=*), parameter :: srname = 'TRYQALT'
 
 
 ! Get and verify the sizes.

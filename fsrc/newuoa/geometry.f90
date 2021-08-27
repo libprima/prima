@@ -3,7 +3,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, August 13, 2021 PM03:27:18
+! Last Modified: Friday, August 27, 2021 PM01:58:41
 
 module geometry_mod
 
@@ -25,7 +25,7 @@ function setdrop_tr(idz, kopt, beta, delta, ratio, rho, vlag, xopt, xpt, zmat) r
 ! updated but KOPT is not. See NEWUOB for details.
 
 ! Generic modules
-use consts_mod, only : RP, IK, ONE, ZERO, TENTH, SRNLEN, DEBUGGING
+use consts_mod, only : RP, IK, ONE, ZERO, TENTH, DEBUGGING
 use infnan_mod, only : is_nan
 use debug_mod, only : errstop, verisize
 
@@ -53,7 +53,7 @@ real(RP) :: hdiag(size(zmat, 1))
 real(RP) :: rhosq
 real(RP) :: sigma(size(xpt, 2))
 real(RP) :: xdsq(size(xpt, 2))
-character(len=SRNLEN), parameter :: srname = 'SETDROP_TR'
+character(len=*), parameter :: srname = 'SETDROP_TR'
 
 
 ! Get and verify the sizes
@@ -108,7 +108,7 @@ function geostep(idz, knew, kopt, bmat, delbar, xpt, zmat) result(d)
 ! XPT(:, KNEW) is changed to XOPT + D, where XOPT = XPT(:, KOPT)
 
 ! Generic modules
-use consts_mod, only : RP, IK, ONE, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ONE, DEBUGGING
 use debug_mod, only : errstop, verisize
 use lina_mod, only : inprod
 
@@ -137,7 +137,7 @@ real(RP) :: beta
 real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
 real(RP) :: xopt(size(xpt, 1))
 real(RP) :: zknew(size(zmat, 2))
-character(len=SRNLEN), parameter :: srname = 'GEOSTEP'
+character(len=*), parameter :: srname = 'GEOSTEP'
 
 
 ! Get and verify the sizes.
@@ -180,7 +180,7 @@ function biglag(idz, knew, delbar, bmat, x, xpt, zmat) result(d)
 ! where LFUNC is the KNEW-th Lagrange function. See Setion 6 of the NEWUOA paper.
 
 ! Generic modules
-use consts_mod, only : RP, IK, ONE, TWO, HALF, PI, ZERO, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ONE, TWO, HALF, PI, ZERO, DEBUGGING
 use debug_mod, only : errstop, verisize
 use infnan_mod, only : is_finite
 use lina_mod, only : Ax_plus_y, inprod, matprod
@@ -233,7 +233,7 @@ real(RP) :: tauold
 real(RP) :: unitang
 real(RP) :: w(size(x))
 real(RP) :: zknew(size(zmat, 2))
-character(len=SRNLEN), parameter :: srname = 'BIGLAG'
+character(len=*), parameter :: srname = 'BIGLAG'
 
 
 ! N is the number of variables.
@@ -399,7 +399,7 @@ function bigden(idz, knew, kopt, bmat, d0, xpt, zmat) result(d)
 ! rounding errors.
 
 ! Generic modules
-use consts_mod, only : RP, IK, ONE, TWO, HALF, QUART, PI, ZERO, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ONE, TWO, HALF, QUART, PI, ZERO, DEBUGGING
 use debug_mod, only : errstop, verisize
 use infnan_mod, only : is_finite
 use lina_mod, only : Ax_plus_y, inprod, matprod
@@ -471,7 +471,7 @@ real(RP) :: xptemp(size(xpt, 1), size(xpt, 2))
 real(RP) :: xs
 real(RP) :: xsq
 real(RP) :: zknew(size(zmat, 2))
-character(len=SRNLEN), parameter :: srname = 'BIGDEN'
+character(len=*), parameter :: srname = 'BIGDEN'
 
 ! N is the number of variables.
 ! NPT is the number of interpolation equations.
