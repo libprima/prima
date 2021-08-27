@@ -1,7 +1,7 @@
 ! INITIALIZE_MOD is a module containing subroutine(s) for initialization.
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the COBYLA paper.
 !
-! Last Modified: Friday, August 27, 2021 PM03:40:44
+! Last Modified: Friday, August 27, 2021 PM03:57:14
 
 module initialize_mod
 
@@ -16,7 +16,7 @@ subroutine initxfc(iprint, maxfun, ctol, ftarget, rho, x0, nf, chist, conhist, c
     & fval, sim, xhist, evaluated, info)
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, HUGENUM, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ZERO, HUGENUM, DEBUGGING
 use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, NAN_X, NAN_INF_F
 use infnan_mod, only : is_nan, is_posinf
 use debug_mod, only : errstop, verisize
@@ -178,9 +178,9 @@ subroutine initfilt(conmat, ctol, cval, fval, sim, evaluated, nfilt, cfilt, conf
 ! 1. Why not initialize the filters using XHIST, etc? Because the history is empty if the user
 ! chooses not to output it.
 ! 2. We decouple INITFILT with INITXFC so that it is easier to parallelize the latter if needed.
-use consts_mod, only : RP, IK, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, DEBUGGING
 use debug_mod, only : errstop, verisize
-use hist_mod, only : savefilt
+use history_mod, only : savefilt
 implicit none
 
 ! Inputs

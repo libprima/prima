@@ -9,7 +9,7 @@ contains
 
 function goodgeo(factor_alpha, factor_beta, rho, sim, simi) result(good_geo)
 
-use consts_mod, only : IK, RP, ONE, DEBUGGING, SRNLEN
+use consts_mod, only : IK, RP, ONE, DEBUGGING
 use debug_mod, only : errstop, verisize
 
 implicit none
@@ -30,7 +30,7 @@ real(RP) :: parsig
 real(RP) :: pareta
 real(RP) :: vsig(size(sim, 1))
 real(RP) :: veta(size(sim, 1))
-character(len=*) :: srname = 'GOODGEO'
+character(len=*), parameter :: srname = 'GOODGEO'
 
 ! Get and verify the sizes
 n = size(sim, 1)
@@ -58,7 +58,7 @@ function setdrop_tr(actrem, d, factor_alpha, factor_delta, rho, sim, simi) resul
 ! This subroutine finds (the index) of a current interpolation point to be replaced by the
 ! trust-region trial point. See (19)--(21) of the COBYLA paper.
 
-use consts_mod, only : IK, RP, ZERO, ONE, DEBUGGING, SRNLEN
+use consts_mod, only : IK, RP, ZERO, ONE, DEBUGGING
 use lina_mod, only : matprod, inprod
 use infnan_mod, only : is_nan
 use debug_mod, only : errstop, verisize
@@ -86,7 +86,7 @@ real(RP) :: ratio
 real(RP) :: sigbar(size(sim, 1))
 real(RP) :: simid(size(sim, 1))
 real(RP) :: vsig(size(sim, 1))
-character(len=*) :: srname = 'SETDROP_TR'
+character(len=*), parameter :: srname = 'SETDROP_TR'
 
 ! Get and verify the sizes
 n = size(sim, 1)
@@ -144,7 +144,7 @@ end function setdrop_tr
 
 function setdrop_geo(factor_alpha, factor_beta, rho, sim, simi) result(jdrop)
 
-use consts_mod, only : IK, RP, ONE, DEBUGGING, SRNLEN
+use consts_mod, only : IK, RP, ONE, DEBUGGING
 use infnan_mod, only : is_nan
 use debug_mod, only : errstop, verisize
 
@@ -166,7 +166,7 @@ real(RP) :: parsig
 real(RP) :: pareta
 real(RP) :: vsig(size(sim, 1))
 real(RP) :: veta(size(sim, 1))
-character(len=*) :: srname = 'SETDROP_GEO'
+character(len=*), parameter :: srname = 'SETDROP_GEO'
 
 ! Get and verify the sizes.
 n = size(sim, 1)
@@ -205,7 +205,7 @@ end function setdrop_geo
 
 function geostep(jdrop, cpen, conmat, cval, fval, factor_gamma, rho, simi) result(d)
 
-use consts_mod, only : IK, RP, ZERO, ONE, TWO, DEBUGGING, SRNLEN
+use consts_mod, only : IK, RP, ZERO, ONE, TWO, DEBUGGING
 use lina_mod, only : matprod, inprod
 use debug_mod, only : errstop, verisize
 
@@ -231,7 +231,7 @@ real(RP) :: cvmaxp
 real(RP) :: cvmaxm
 real(RP) :: vsig(size(simi, 1))
 real(RP) :: A(size(simi, 1), size(conmat, 1) + 1)
-character(len=*) :: srname = 'GEOSTEP'
+character(len=*), parameter :: srname = 'GEOSTEP'
 
 ! Get and verify the sizes
 m = size(conmat, 1)

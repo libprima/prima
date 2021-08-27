@@ -16,7 +16,7 @@ subroutine updatepole(cpen, evaluated, conmat, cval, fval, sim, simi, info)
 ! 2. apply UPDATEPOLE to SIM with CPEN = CPEN2.
 ! In finite-precision arithmetic, however, they may produce different results unless CPEN1 = CPEN2.
 
-use consts_mod, only : IK, RP, ZERO, TENTH, DEBUGGING, SRNLEN
+use consts_mod, only : IK, RP, ZERO, TENTH, DEBUGGING
 use info_mod, only : DAMAGING_ROUNDING
 use debug_mod, only : errstop, verisize
 use infnan_mod, only : is_nan
@@ -115,7 +115,7 @@ end subroutine updatepole
 
 function findpole(cpen, evaluated, cval, fval) result(jopt)
 
-use consts_mod, only : IK, RP, ZERO, DEBUGGING, SRNLEN
+use consts_mod, only : IK, RP, ZERO, DEBUGGING
 use debug_mod, only : errstop
 
 implicit none

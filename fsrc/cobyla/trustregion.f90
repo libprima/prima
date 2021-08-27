@@ -41,7 +41,7 @@ function trstlp(A, b, rho) result(d)
 ! achieved by the shift CSTRV that makes the least residual zero.
 
 ! Generic modules
-use consts_mod, only : RP, IK, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, DEBUGGING
 use debug_mod, only : errstop, verisize
 
 implicit none
@@ -91,7 +91,7 @@ subroutine trstlp_sub(iact, nact, stage, A, b, rho, d, vmultc, z)
 ! 5. STEP. STEP <= CSTRV in stage 1.
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, ONE, EPS, HUGENUM, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ZERO, ONE, EPS, HUGENUM, DEBUGGING
 use infnan_mod, only : is_nan, is_finite
 use debug_mod, only : errstop, verisize
 use lina_mod, only : inprod, matprod, eye, planerot, isminor

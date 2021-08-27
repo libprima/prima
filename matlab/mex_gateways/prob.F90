@@ -41,7 +41,7 @@ real(RP), intent(in) :: x(:)
 ! Output
 real(RP), intent(out) :: funval
 
-! Intermediate variables
+! Local variables
 mwPointer :: pinput(1), poutput(1)
 character(len=MSSGLEN) :: eid, mssg
 

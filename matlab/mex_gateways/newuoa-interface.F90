@@ -31,7 +31,7 @@ integer, intent(in) :: nargout, nargin
 mwPointer, intent(in) :: pinput(nargin)
 mwPointer, intent(out) :: poutput(nargout)
 
-! Intermediate variables
+! Local variables
 integer(IK) :: info
 integer(IK) :: iprint
 integer(IK) :: maxfun

@@ -1,5 +1,5 @@
 update.f90
-hist.f90
+history.f90
 initialize.f90
 trustregion.f90
 geometry.f90
