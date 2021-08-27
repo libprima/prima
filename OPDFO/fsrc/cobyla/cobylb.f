@@ -1273,7 +1273,7 @@ C
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! Generic modules
       use consts_mod, only : RP, IK, ZERO, HALF, TENTH, TWO, TEN,
-     1 HUGENUM, DEBUGGING, SRNLEN
+     1 HUGENUM, DEBUGGING
       use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED,
      1 TRSUBP_FAILED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
       use infnan_mod, only : is_nan, is_posinf

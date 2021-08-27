@@ -9,7 +9,7 @@ contains
 
 subroutine savehist(nf, con, cstrv, f, x, chist, conhist, fhist, xhist)
 ! This subroutine saves X, F, CON, and CSTRV into XHIST, FHIST, CONHIST, and CHIST respectively.
-use consts_mod, only : RP, IK, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, DEBUGGING
 use debug_mod, only : errstop, verisize
 implicit none
 
@@ -95,7 +95,7 @@ subroutine savefilt(con, cstrv, ctol, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
 !
 ! Note: We decide whether X is better than the function/constraint of Y by the ISBETTER function.
 
-use consts_mod, only : RP, IK, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, DEBUGGING
 use debug_mod, only : errstop, verisize
 use memory_mod, only : safealloc
 use selectx_mod, only : isbetter

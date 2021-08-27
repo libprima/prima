@@ -10,38 +10,32 @@
 ! fmxReadMPtr
 ! fmxWriteMPtr
 !
-! They are analogous to the subroutines with the same name in FMXAPI_MOD.
-! The difference is that the procesures in FMXAPI_MOD deal with
-! reading/writing of INTEGER(IK) and REAL(RP), while the procesures
-! here read/write integers and reals with the "classical" kinds:
+! They are analogous to the subroutines with the same name in FMXAPI_MOD. The difference is that the
+! procedures in FMXAPI_MOD deal with reading/writing of INTEGER(IK) and REAL(RP), while the
+! procedures here read/write integers and reals with the "classical" kinds:
 !
 ! classical kind for INTEGER: IK_CL = IK_DFT, e.g., kind(0);
 ! classical kind for REAL: RP_CL = DP, e.g., kind(0.0D0).
 !
 ! N.B.:
-! 0. IK_CL and RP_CL can be changed easily if needed (see below),
-!    but we decide not to support RP_CL = REAL128.
-! 1. These procedures are needed when interfacing the "classical mode"
-!    of Powell's Fortran code with MEX.
-! 2. Why cannot we emerge the fmxReadMPtr and fmxWriteMPtr here with
-!    those in FMXAPI_MOD? Because we cannot decide at compilation time
-!    whether IK = IK_CL and whether RP = RP_CL (we can if we
-!    include ppf.h, but we do not want to do that). Consequently, it is
-!    undeciable whether the interfaces of fmxReadMPtr should or not
-!    include the subroutines read_rscalar_cl, read_iscalar, etc. A
-!    solution is to let fmxReadMPtr include all possible combinations of
-!    integer kind and real kind (write_rscalar_sp, write_rscalar_dp,
-!    write_rscalar_qp, write_iscalar_int16_sp, write_iscalar_int16_dp,
-!    ...), but there are too many combinations!
-!    The same applies to fmxWriteMPtr.
-! 3. We decide to name the procedures in exactly the same way as in
-!    FMXAPI_MOD so that the classical and normal modes of the MEX
-!    gateways can have exactly the same I/O code, although they use
-!    fmxReadMPtr/fmxWriteMPtr from different modules.
+! 0. IK_CL and RP_CL can be changed easily if needed (see below), but we decide not to support
+! RP_CL = REAL128.
+! 1. These procedures are needed when interfacing the "classical mode" of Powell's Fortran code
+! with MEX.
+! 2. Why cannot we emerge the fmxReadMPtr and fmxWriteMPtr here with those in FMXAPI_MOD? Because
+! we cannot decide at compilation time whether IK = IK_CL and whether RP = RP_CL (we can if we
+! include ppf.h, but we do not want to do that). Consequently, it is undecidable whether the
+! interfaces of fmxReadMPtr should or not include the subroutines read_rscalar_cl, read_iscalar, etc.
+! A solution is to let fmxReadMPtr include all possible combinations of integer kind and real kind
+! (write_rscalar_sp, write_rscalar_dp, write_rscalar_qp, write_iscalar_int16_sp,
+! write_iscalar_int16_dp, ...), but there are too many combinations! The same applies to fmxWriteMPtr.
+! 3. We decide to name the procedures in exactly the same way as in FMXAPI_MOD so that the classical
+! and normal modes of the MEX gateways can have exactly the same I/O code, although they use
+! fmxReadMPtr/fmxWriteMPtr from different modules.
 
 ! Coded by Zaikun ZHANG in July 2020.
 !
-! Last Modified: Sunday, May 23, 2021 PM04:55:45
+! Last Modified: Friday, August 27, 2021 PM05:05:11
 
 
 #include "fintrf.h"
@@ -85,10 +79,9 @@ interface fmxReadMPtr
 end interface fmxReadMPtr
 
 interface fmxWriteMPtr
-    ! fmxWriteMPtr associates numeric data with an mwPointer. It converts
-    ! the data to REAL(DP) if necessary, and allocates space if the
-    ! data is a vector or matrix. Therefore, it is necessary to call
-    ! mxDestroyArray when the usage of the vector/matrix terminates.
+    ! fmxWriteMPtr associates numeric data with an mwPointer. It converts the data to REAL(DP) if
+    ! necessary, and allocates space if the data is a vector or matrix. Therefore, it is necessary
+    ! to call mxDestroyArray when the usage of the vector/matrix terminates.
     module procedure write_rscalar_cl, write_rmatrix_cl, write_rvector_cl
     module procedure write_iscalar_cl
 end interface fmxWriteMPtr
@@ -98,8 +91,8 @@ contains
 
 
 subroutine alloc_rvector_cl_sp(x, n)
-! ALLOC_RVECTOR_CL_SP allocates the space for an allocatable
-! single-precision vector X, whose size is N after allocation.
+! ALLOC_RVECTOR_CL_SP allocates the space for an allocatable single-precision vector X, whose size
+! is N after allocation.
 use consts_mod, only : SP, MSSGLEN
 implicit none
 
@@ -109,14 +102,13 @@ integer(IK_CL), intent(in) :: n
 ! Output
 real(SP), allocatable, intent(out) :: x(:)
 
-! Intermediate variable
+! Local variable
 integer :: alloc_status
 character(len=MSSGLEN) :: eid, mssg
 
-! According to the Fortran 2003 standard, when a procedure is invoked,
-! any allocated ALLOCATABLE object that is an actual argument associated
-! with an INTENT(OUT) ALLOCATABLE dummy argument is deallocated. So it is
-! unnecessary to write the following line in F2003 since X is INTENT(OUT):
+! According to the Fortran 2003 standard, when a procedure is invoked, any allocated ALLOCATABLE
+! object that is an actual argument associated with an INTENT(OUT) ALLOCATABLE dummy argument is
+! deallocated. So it is unnecessary to write the following line in F2003 since X is INTENT(OUT):
 !!if (allocated(x)) deallocate (x)
 
 ! Allocate memory for X
@@ -135,8 +127,8 @@ end subroutine alloc_rvector_cl_sp
 
 
 subroutine alloc_rmatrix_cl_sp(x, m, n)
-! ALLOC_RMATRIX_CL_SP allocates the space for a single-precision
-! matrix X, whose size is (M, N) after allocation.
+! ALLOC_RMATRIX_CL_SP allocates the space for a single-precision matrix X, whose size is (M, N)
+! after allocation.
 use consts_mod, only : SP, MSSGLEN
 implicit none
 
@@ -146,7 +138,7 @@ integer(IK_CL), intent(in) :: m, n
 ! Output
 real(SP), allocatable, intent(out) :: x(:, :)
 
-! Intermediate variable
+! Local variable
 integer :: alloc_status
 character(len=MSSGLEN) :: eid, mssg
 
@@ -169,8 +161,8 @@ end subroutine alloc_rmatrix_cl_sp
 
 
 subroutine alloc_rvector_cl_dp(x, n)
-! ALLOC_RVECTOR_CL_DP allocates the space for an allocatable
-! single-precision vector X, whose size is N after allocation.
+! ALLOC_RVECTOR_CL_DP allocates the space for an allocatable single-precision vector X, whose size
+! is N after allocation.
 use consts_mod, only : DP, MSSGLEN
 implicit none
 
@@ -180,7 +172,7 @@ integer(IK_CL), intent(in) :: n
 ! Output
 real(DP), allocatable, intent(out) :: x(:)
 
-! Intermediate variable
+! Local variable
 integer :: alloc_status
 character(len=MSSGLEN) :: eid, mssg
 
@@ -203,8 +195,8 @@ end subroutine alloc_rvector_cl_dp
 
 
 subroutine alloc_rmatrix_cl_dp(x, m, n)
-! ALLOC_RMATRIX_CL_DP allocates the space for a single-precision
-! matrix X, whose size is (M, N) after allocation.
+! ALLOC_RMATRIX_CL_DP allocates the space for a single-precision matrix X, whose size is (M, N)
+! after allocation.
 use consts_mod, only : DP, MSSGLEN
 implicit none
 
@@ -214,7 +206,7 @@ integer(IK_CL), intent(in) :: m, n
 ! Output
 real(DP), allocatable, intent(out) :: x(:, :)
 
-! Intermediate variable
+! Local variable
 integer :: alloc_status
 character(len=MSSGLEN) :: eid, mssg
 
@@ -237,8 +229,8 @@ end subroutine alloc_rmatrix_cl_dp
 
 
 subroutine read_rscalar_cl(px, x)
-! READ_RSCALAR_CL reads the double scalar associated with an mwPointer
-! PX and saves the data in X, which is a REAL(RP_CL) scalar.
+! READ_RSCALAR_CL reads the double scalar associated with an mwPointer PX and saves the data in X,
+! which is a REAL(RP_CL) scalar.
 use consts_mod, only : DP, MSSGLEN
 implicit none
 
@@ -248,7 +240,7 @@ mwPointer, intent(in) :: px
 ! Output
 real(RP_CL), intent(out) :: x
 
-! Intermediate variable
+! Local variable
 real(DP) :: x_dp(1)
 character(len=MSSGLEN) :: eid, mssg
 
@@ -272,8 +264,8 @@ end subroutine read_rscalar_cl
 
 
 subroutine read_rvector_cl(px, x)
-! READ_RVECTOR_CL reads the double vector associated with an mwPointer
-! PX and saves the data in X, which is a REAL(RP_CL) vector.
+! READ_RVECTOR_CL reads the double vector associated with an mwPointer PX and saves the data in X,
+! which is a REAL(RP_CL) vector.
 use consts_mod, only : DP, MSSGLEN
 implicit none
 
@@ -283,7 +275,7 @@ mwPointer, intent(in) :: px
 ! Output
 real(RP_CL), allocatable, intent(out) :: x(:)
 
-! Intermediate variables
+! Local variables
 real(DP), allocatable :: x_dp(:)
 integer(IK_CL) :: n
 mwSize :: n_mw
@@ -318,8 +310,8 @@ end subroutine read_rvector_cl
 
 
 subroutine read_rmatrix_cl(px, x)
-! READ_MATRIX_CL reads the double matrix associated with an mwPointer
-! PX and saves the data in X, which is a REAL(RP_CL) matrix.
+! READ_MATRIX_CL reads the double matrix associated with an mwPointer PX and saves the data in X,
+! which is a REAL(RP_CL) matrix.
 use consts_mod, only : DP, MSSGLEN
 implicit none
 
@@ -329,7 +321,7 @@ mwPointer, intent(in) :: px
 ! Output
 real(RP_CL), allocatable, intent(out) :: x(:, :)
 
-! Intermediate variables
+! Local variables
 real(DP), allocatable :: x_dp(:, :)
 integer(IK_CL) :: m, n
 mwSize :: xsize
@@ -366,9 +358,8 @@ end subroutine read_rmatrix_cl
 
 
 subroutine read_iscalar_cl(px, x)
-! READ_ISCALAR_CL reads a MEX input X that is a double scalar with an
-! integer value. Such a value will be passed to the Fortran code as an
-! integer but passed by MEX as a double.
+! READ_ISCALAR_CL reads a MEX input X that is a double scalar with an integer value. Such a value
+! will be passed to the Fortran code as an integer but passed by MEX as a double.
 use consts_mod, only : DP, MSSGLEN
 implicit none
 
@@ -378,7 +369,7 @@ mwPointer, intent(in) :: px
 ! Output
 integer(IK_CL), intent(out) :: x
 
-! Intermediate variable
+! Local variable
 real(DP) :: x_dp(1)
 character(len=MSSGLEN) :: eid, mssg
 
@@ -401,9 +392,8 @@ end subroutine read_iscalar_cl
 
 
 subroutine write_rscalar_cl(x, px)
-! WRITE_RSCALAR_CL associates a REAL(RP_CL) scalar X with an mwPointer PX,
-! after which X can be passed to MATLAB either as an output of
-! mexFunction or an input of mexCallMATLAB.
+! WRITE_RSCALAR_CL associates a REAL(RP_CL) scalar X with an mwPointer PX, after which X can be
+! passed to MATLAB either as an output of mexFunction or an input of mexCallMATLAB.
 use consts_mod, only : DP, MSSGLEN
 implicit none
 
@@ -413,7 +403,7 @@ real(RP_CL), intent(in) :: x
 ! Output
 mwPointer, intent(out) :: px
 
-! Intermediate variable
+! Local variable
 real(DP) :: x_dp
 character(len=MSSGLEN) :: eid, mssg
 
@@ -434,10 +424,9 @@ end subroutine write_rscalar_cl
 
 
 subroutine write_rvector_cl(x, px, rowcol)
-! WRITE_RVECTOR_CL associates a REAL(RP_CL) vector X with an
-! mwPointer PX, after which X can be passed to MATLAB either as an output
-! of mexFunction or an input of mexCallMATLAB. If ROWCOL = 'row', then
-! the vector is passed as a row vector, otherwise, it will be a column vector.
+! WRITE_RVECTOR_CL associates a REAL(RP_CL) vector X with an mwPointer PX, after which X can be
+! passed to MATLAB either as an output of mexFunction or an input of mexCallMATLAB. If
+! ROWCOL = 'row', then the vector is passed as a row vector, otherwise, it will be a column vector.
 use consts_mod, only : DP, MSSGLEN
 implicit none
 
@@ -448,7 +437,7 @@ character(len=*), intent(in), optional :: rowcol
 ! Output
 mwPointer, intent(out) :: px
 
-! Intermediate variable
+! Local variable
 real(DP) :: x_dp(size(x))
 integer(IK_CL) :: n
 mwSize :: n_mw
@@ -488,9 +477,8 @@ end subroutine write_rvector_cl
 
 
 subroutine write_rmatrix_cl(x, px)
-! WRITE_MATRIX_CL associates a REAL(RP_CL) matrix X with an mwPointer
-! PX, after which X can be passed to MATLAB either as an output of
-! mexFunction or an input of mexCallMATLAB.
+! WRITE_MATRIX_CL associates a REAL(RP_CL) matrix X with an mwPointer PX, after which X can be
+! passed to MATLAB either as an output of mexFunction or an input of mexCallMATLAB.
 use consts_mod, only : DP, MSSGLEN
 implicit none
 
@@ -500,7 +488,7 @@ real(RP_CL), intent(in) :: x(:, :)
 ! Output
 mwPointer, intent(out) :: px
 
-! Intermediate variable
+! Local variable
 real(DP) :: x_dp(size(x, 1), size(x, 2))
 integer(IK_CL) :: m, n
 mwSize :: m_mw, n_mw
@@ -531,9 +519,8 @@ end subroutine write_rmatrix_cl
 
 
 subroutine write_iscalar_cl(x, px)
-! WRITE_RSCALAR_CL associates an INTEGER(IK_CL) scalar X with an
-! mwPointer PX, after which X can be passed to MATLAB either as an output
-! of mexFunction or an input of mexCallMATLAB.
+! WRITE_RSCALAR_CL associates an INTEGER(IK_CL) scalar X with an mwPointer PX, after which X can be
+! passed to MATLAB either as an output of mexFunction or an input of mexCallMATLAB.
 use consts_mod, only : DP, MSSGLEN
 implicit none
 
@@ -543,7 +530,7 @@ integer(IK_CL), intent(in) :: x
 ! Output
 mwPointer, intent(out) :: px
 
-! Intermediate variable
+! Local variable
 real(DP) :: x_dp
 character(len=MSSGLEN) :: eid, mssg
 

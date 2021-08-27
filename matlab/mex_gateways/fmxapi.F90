@@ -1,51 +1,39 @@
 ! FMXAPI_MOD is a module that does the following.
 ! 1. Define some constants to be used in MEX gateways.
-! 2. Declare the interfaces of some MEX API subroutine/functions
-!    provided by MathWorks.
-! 3. Define some user-friendly subroutines for interfacing Fortran with
-!    MATLAB. Note that we suppose that the REAL type used in the Fortran
-!    code is REAL(RP), and the INTEGER type is INTEGER(IK).
+! 2. Declare the interfaces of some MEX API subroutine/functions provided by MathWorks.
+! 3. Define some user-friendly subroutines for interfacing Fortran with MATLAB. Note that we suppose
+! that the REAL type used in the Fortran code is REAL(RP), and the INTEGER type is INTEGER(IK).
 !
 ! N.B.:
 ! 1. MathWorks may change its APIs in the future!!!
-! 2. Make sure that everything is identical to the description in the
-!    official documentation of MathWorks. Otherwise, failure or
-!    unexpected behavior may occur!!!
-! 3. Be careful with the "kind" and storage size for integer-type
-!    (integer, mwSize, mwIndex) variables/functions. Some of them may be
-!    32bit, while the others may be 64bit, depending on the machine,
-!    the version of MATLAB, and the compilation option of mex. Do NOT
-!    assume any two of them to be the same. If ever a Segmentation Fault
-!    occurs, check these variables first.
-! 4. Note that MEX generally use double precision for real values. It is
-!    not necessarily the case in the Fortran code. Therefore, explicit
-!    type conversion is necessary whenever real values are exchanged
-!    between Fortran and MATLAB. Type mismatch will lead to errors like
-!    Segmentation Fault.
-! 5. Be careful with the line width limit. After preprocessing (macro
-!    expansion), some lines may become too long and hence get
-!    truncated. For the same reason, do NOT have any continued line
-!    involving macros, because the & may not appear at the correct
-!    position after macro expansion. This is why, for example, we define
-!    EID and MSSG in the following subroutines to avoid line
-!    continuatuion involving mexErrMsgIdAndTxt.
-
+! 2. Make sure that everything is identical to the description in the official documentation of
+! MathWorks. Otherwise, failure or unexpected behavior may occur!!!
+! 3. Be careful with the "kind" and storage size for integer-type (integer, mwSize, mwIndex)
+! variables/functions. Some of them may be 32bit, while the others may be 64bit, depending on the
+! machine, the version of MATLAB, and the compilation option of mex. Do NOT assume any two of them
+! to be the same. If ever a Segmentation Fault occurs, check these variables first.
+! 4. Note that MEX generally use double precision for real values. It is not necessarily the case
+! in the Fortran code. Therefore, explicit type conversion is necessary whenever real values are
+! exchanged between Fortran and MATLAB. Type mismatch will lead to errors like Segmentation Fault.
+! 5. Be careful with the line width limit. After preprocessing (macro expansion), some lines may
+! become too long and hence get truncated. For the same reason, do NOT have any continued line
+! involving macros, because the & may not appear at the correct position after macro expansion. This
+! is why, for example, we define EID and MSSG in the ubroutines to avoid line continuation involving
+! mexErrMsgIdAndTxt.
+!
 ! Coded by Zaikun ZHANG in July 2020.
 !
-! Last Modified: Tuesday, June 29, 2021 PM04:28:06
+! Last Modified: Friday, August 27, 2021 PM05:18:45
 
 
-! Do we intend to use quad precision in the Fortran code (1) or not (0)?
-! 1. It is rarely a good idea to use REAL128 as the working precision,
-!    which is probably inefficient and unnecessary.
-! 2. Do NOT change __USE_QP__ to 1 unless you are sure that you intend
-!    to use quad precision and such a precision is available on the
-!    current platform.
-! 3. To use quad precision, you also need to modify ppf.h to set
-!    __QP_AVAILABLE__ to 1 and __REAL_PRECISION__ to 128. Otherwise, it
-!    will not work.
-! 4. __USE_QP__ affects only subroutines alloc_rvector_qp and
-!    alloc_rmatrix_qp.
+! Do we intend to use quadruple precision in the Fortran code (1) or not (0)?
+! 1. It is rarely a good idea to use REAL128 as the working precision, which is probably inefficient
+! and unnecessary.
+! 2. Do NOT change __USE_QP__ to 1 unless you are sure that you intend to use quadruple precision and
+! such a precision is available on the current platform.
+! 3. To use quadruple precision, you also need to modify ppf.h to set __QP_AVAILABLE__ to 1 and
+! __REAL_PRECISION__ to 128. Otherwise, it will not work.
+! 4. __USE_QP__ affects only subroutines alloc_rvector_qp and alloc_rmatrix_qp.
 #if defined __USE_QP__
 #undef __USE_QP__
 #endif
@@ -55,25 +43,23 @@
 #include "fintrf.h"
 
 
-!----------------------------------------------------------------------!
-! INT32_MEX_MOD does nothing but defines INT32_MEX, which is indeed INT32,
-! i.e., the kind of INTEGER*4. It is needed when using some MEX API
-! subroutines provided by Mathworks, e.g., mexCallMATLAB.
-! We wanted to define INT32_MEX in FMXAPI_MOD, but in that case INT32_MEX
-! will not be visable to the interface blocks like mexCallMATLAB, even
-! though it will be visable to the subroutines like fmxCallMATLAB ---
-! howe strange! Therefore, we can only define it in a separate module and
+!--------------------------------------------------------------------------------------------------!
+! INT32_MEX_MOD does nothing but defines INT32_MEX, which is indeed INT32, i.e., the kind of
+! INTEGER*4. It is needed when using some MEX API subroutines provided by Mathworks, e.g.,
+! mexCallMATLAB. We wanted to define INT32_MEX in FMXAPI_MOD, but in that case INT32_MEX
+! will not be visible to the interface blocks like mexCallMATLAB, even though it will be visible
+! to the subroutines like fmxCallMATLAB. Therefore, we can only define it in a separate module and
 ! then use it when needed.
 module int32_mex_mod
 implicit none
 private
 public :: INT32_MEX
-! For gfortran, SELECTED_REAL_KIND(K) returns INT32 with K = 5--9.
-! In Fortran 2008, INT32 can be obtained by the following:
+! For gfortran, SELECTED_REAL_KIND(K) returns INT32 with K = 5--9. In Fortran 2008, INT32 can be
+! obtained by the following:
 !!use, intrinsic :: iso_fortran_env, only : INT32
 integer, parameter :: INT32_MEX = selected_int_kind(7)
 end module int32_mex_mod
-!----------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
 
 
 module fmxapi_mod
@@ -136,40 +122,34 @@ interface fmxAllocate
 end interface fmxAllocate
 
 interface fmxReadMPtr
-    ! fmxReadMPtr reads the numeric data associated with an mwPointer.
-    ! It verifies the class and shape of the data and converts it to
-    ! REAL(RP) or INTEGER(IK).
+    ! fmxReadMPtr reads the numeric data associated with an mwPointer. It verifies the class and
+    ! shape of the data and converts it to REAL(RP) or INTEGER(IK).
     module procedure read_rscalar, read_rvector, read_rmatrix
     module procedure read_iscalar
 end interface fmxReadMPtr
 
 interface fmxWriteMPtr
-    ! fmxWriteMPtr associates numeric data with an mwPointer. It converts
-    ! the data to REAL(DP), and allocates space if the data is a vector
-    ! or matrix. Therefore, it is necessary to call mxDestroyArray when
-    ! the usage of the vector/matrix terminates.
+    ! fmxWriteMPtr associates numeric data with an mwPointer. It converts the data to REAL(DP), and
+    ! allocates space if the data is a vector or matrix. Therefore, it is necessary to call
+    ! mxDestroyArray when the usage of the vector/matrix terminates.
     module procedure write_rscalar, write_rmatrix, write_rvector
     module procedure write_iscalar
 end interface fmxWriteMPtr
 
 
 interface
-! Here we declare the interfaces of MEX API subroutines/functions provided
-! by MathWorks. MathWorks may change the interfaces in the future!!!
-! Make sure that the interfaces are identical to those described in the
-! official documentation of MathWorks!!!
+! Here we declare the interfaces of MEX API subroutines/functions provided by MathWorks. MathWorks
+! may change the interfaces in the future!!! Make sure that the interfaces are identical to those
+! described in the official documentation of MathWorks!!!
 ! In particular, pay attention to the following.
-! 1. What is the type of an array? Is it automatic (like y(n)), asumed
-!    shape (like y(:)), or assumed size (like y(*))?
-! 2. What is the kind of an integer argument? Is it INT32, INT64, or
-!    default INTEGER?
-! 3. What is the kind of a real argument? Is it REAL32, REAL64, or
-!    default REAL?
-! 4. The return values of IsClass, IsChar, and IsDouble, etc., are
-!    INTEGER*4 (here we use INT32_MEX to represent it). MathWorks may
-!    change them in the future to, e.g., logical or default INTEGER.
-! 5. Very wiredly, according to MATLAB 2020a documentation, the signature
-!    of mexFunction (entry point to Fortran MEX function) is
+! 1. What is the type of an array? Is it automatic (like y(n)), assumed shape (like y(:)), or
+! assumed size (like y(*))?
+! 2. What is the kind of an integer argument? Is it INT32, INT64, or default INTEGER?
+! 3. What is the kind of a real argument? Is it REAL32, REAL64, or default REAL?
+! 4. The return values of IsClass, IsChar, and IsDouble, etc., are INTEGER*4 (here we use INT32_MEX
+! to represent it). MathWorks may change them in the future to, e.g., logical or default INTEGER.
+! 5. Very weirdly, according to MATLAB 2020a documentation, the signature of mexFunction (entry
+! point to Fortran MEX function) is
 !
 !    !---------------------------------------------!
 !    subroutine mexFunction(nlhs, plhs, nrhs, prhs)
@@ -177,7 +157,7 @@ interface
 !    mwPointer plhs(*), prhs(*)
 !    !---------------------------------------------!
 !
-!    while that of mexCallMATLAB is
+! while that of mexCallMATLAB is
 !
 !    !------------------------------------------------------------!
 !    integer*4 mexCallMATLAB(nlhs, plhs, nrhs, prhs, functionName)
@@ -186,12 +166,10 @@ interface
 !    character*(*) functionName
 !    !------------------------------------------------------------!
 !
-!    Note that the NLHS/NRHS in the two signatures DO NOT have the same
-!    type (INTEGER v.s. INTEGER*4). This does not cause any problem, but
-!    very bizzar! MathWorks may well modify this later --- for example,
-!    change all the INTEGER*4 to INTEGER. In that case, we would have to
-!    replace all the INTEGER(INT32_MEX) by INTEGER.
-!
+! Note that the NLHS/NRHS in the two signatures DO NOT have the same type (INTEGER v.s. INTEGER*4).
+! This does not cause any problem, but very bizarre! MathWorks may well modify this later ---
+! for example, change all the INTEGER*4 to INTEGER. In that case, we would have to replace all the
+! INTEGER(INT32_MEX) by INTEGER.
 
 ! MEX subroutines
     subroutine mexErrMsgIdAndTxt(errorid, errormsg)
@@ -227,8 +205,7 @@ interface
     implicit none
     integer(INT32_MEX) :: mexCallMATLAB
     integer(INT32_MEX), intent(in) :: nout, nin
-    ! N.B.:
-    ! Segmentation Fault will occur if we write pout(:) or pin(:)
+    ! N.B.: Segmentation Fault will occur if we write POUT(:) or PIN(:)
     mwPointer, intent(in) :: pin(*)
     mwPointer, intent(out) :: pout(*)
     character*(*), intent(in) :: f
@@ -257,8 +234,7 @@ interface
 
     function mxGetM(pm)
     implicit none
-    ! The type of mxGetM/N is mwPointer according to MATLAB R2020a
-    ! documentation. Shouldn't it be mwSize?
+    ! The type of mxGetM/N is mwPointer by MATLAB R2020a documentation. Shouldn't it be mwSize?
     mwPointer :: mxGetM
     mwPointer, intent(in) :: pm
     end function mxGetM
@@ -312,18 +288,16 @@ end interface
 contains
 
 
-! Here we define some API subroutines/functions for interfacing Fortran
-! code with MATLAB.
+! Here we define some API subroutines/functions for interfacing Fortran code with MATLAB.
 
 function fmxGetDble(pa)
 implicit none
 mwPointer :: fmxGetDble
 mwPointer, intent(in) :: pa
-! fmxGetDble gets the pointer pointing to a real array. It is nothing
-! but a wrapper of the mxGetDoubles or mxGetPr subroutine defined in
-! fintrf.h. We use mxGetDoubles instead of mxGetPr if possible, the
-! former being available since MATLAB R2018b. The macros below should
-! be put after fintrf.h is included, because mxGetDoubles is defined in it.
+! fmxGetDble gets the pointer pointing to a real array. It is nothing but a wrapper of the
+! mxGetDoubles or mxGetPr subroutine defined in fintrf.h. We use mxGetDoubles instead of mxGetPr
+! if possible, the former being available since MATLAB R2018b. The macros below should be put after
+! fintrf.h is included, because mxGetDoubles is defined in it.
 #if defined mxGetDoubles
 fmxGetDble = mxGetDoubles(pa)
 #else
@@ -366,8 +340,7 @@ end subroutine fmxVerifyNArgout
 
 
 subroutine fmxVerifyClassShape(px, class_name, shape_type)
-! fmxVerifyClassShape verifies the class and shape of the data associated
-! with mwPointer px.
+! fmxVerifyClassShape verifies the class and shape of the data associated with mwPointer px.
 use consts_mod, only : MSSGLEN
 implicit none
 mwPointer, intent(in) :: px
@@ -440,8 +413,8 @@ end subroutine fmxVerifyClassShape
 
 
 subroutine alloc_rvector_sp(x, n)
-! ALLOC_RVECTOR_SP allocates the space for an allocatable single-precision
-! vector X, whose size is N after allocation.
+! ALLOC_RVECTOR_SP allocates the space for an allocatable single-precision vector X, whose size is N
+! after allocation.
 use consts_mod, only : SP, IK, MSSGLEN
 implicit none
 
@@ -451,14 +424,13 @@ integer(IK), intent(in) :: n
 ! Output
 real(SP), allocatable, intent(out) :: x(:)
 
-! Intermediate variable
+! Local variables
 integer :: alloc_status
 character(len=MSSGLEN) :: eid, mssg
 
-! According to the Fortran 2003 standard, when a procedure is invoked,
-! any allocated ALLOCATABLE object that is an actual argument associated
-! with an INTENT(OUT) ALLOCATABLE dummy argument is deallocated. So it is
-! unnecessary to write the following line in F2003 since X is INTENT(OUT):
+! According to the Fortran 2003 standard, when a procedure is invoked, any allocated ALLOCATABLE
+! object that is an actual argument associated with an INTENT(OUT) ALLOCATABLE dummy argument is
+! deallocated. So it is unnecessary to write the following line in F2003 since X is INTENT(OUT):
 !!if (allocated(x)) deallocate (x)
 
 ! Allocate memory for X
@@ -478,8 +450,8 @@ end subroutine alloc_rvector_sp
 
 
 subroutine alloc_rmatrix_sp(x, m, n)
-! ALLOC_RMATRIX_SP allocates the space for a single-precision matrix X,
-! whose size is (M, N) after allocation.
+! ALLOC_RMATRIX_SP allocates the space for a single-precision matrix X, whose size is (M, N) after
+! allocation.
 use consts_mod, only : SP, IK, MSSGLEN
 implicit none
 
@@ -489,7 +461,7 @@ integer(IK), intent(in) :: m, n
 ! Output
 real(SP), allocatable, intent(out) :: x(:, :)
 
-! Intermediate variable
+! Local variables
 integer :: alloc_status
 character(len=MSSGLEN) :: eid, mssg
 
@@ -512,8 +484,8 @@ end subroutine alloc_rmatrix_sp
 
 
 subroutine alloc_rvector_dp(x, n)
-! ALLOC_RVECTOR_DP allocates the space for an allocatable double-precision
-! vector X, whose size is N after allocation.
+! ALLOC_RVECTOR_DP allocates the space for an allocatable double-precision vector X, whose size is N
+! after allocation.
 use consts_mod, only : DP, IK, MSSGLEN
 implicit none
 
@@ -523,7 +495,7 @@ integer(IK), intent(in) :: n
 ! Output
 real(DP), allocatable, intent(out) :: x(:)
 
-! Intermediate variable
+! Local variables
 integer :: alloc_status
 character(len=MSSGLEN) :: eid, mssg
 
@@ -546,8 +518,8 @@ end subroutine alloc_rvector_dp
 
 
 subroutine alloc_rmatrix_dp(x, m, n)
-! ALLOC_RMATRIX_DP allocates the space for a double-precision matrix X,
-! whose size is (M, N) after allocation.
+! ALLOC_RMATRIX_DP allocates the space for a double-precision matrix X, whose size is (M, N) after
+! allocation.
 use consts_mod, only : DP, IK, MSSGLEN
 implicit none
 
@@ -557,7 +529,7 @@ integer(IK), intent(in) :: m, n
 ! Output
 real(DP), allocatable, intent(out) :: x(:, :)
 
-! Intermediate variable
+! Local variables
 integer :: alloc_status
 character(len=MSSGLEN) :: eid, mssg
 
@@ -581,8 +553,8 @@ end subroutine alloc_rmatrix_dp
 
 #if __USE_QP__ == 1
 subroutine alloc_rvector_qp(x, n)
-! ALLOC_RVECTOR_QP allocates the space for an allocatable quad-precision
-! vector X, whose size is N after allocation.
+! ALLOC_RVECTOR_QP allocates the space for an allocatable quadruple-precision vector X, whose size
+! is N after allocation.
 use consts_mod, only : QP, IK, MSSGLEN
 implicit none
 
@@ -592,7 +564,7 @@ integer(IK), intent(in) :: n
 ! Output
 real(QP), allocatable, intent(out) :: x(:)
 
-! Intermediate variable
+! Local variables
 integer :: alloc_status
 character(len=MSSGLEN) :: eid, mssg
 
@@ -615,8 +587,8 @@ end subroutine alloc_rvector_qp
 
 
 subroutine alloc_rmatrix_qp(x, m, n)
-! ALLOC_RMATRIX_DP allocates the space for a quad-precision matrix X,
-! whose size is (M, N) after allocation.
+! ALLOC_RMATRIX_DP allocates the space for a quadruple-precision matrix X, whose size is (M, N)
+! after allocation.
 use consts_mod, only : QP, IK, MSSGLEN
 implicit none
 
@@ -626,7 +598,7 @@ integer(IK), intent(in) :: m, n
 ! Output
 real(QP), allocatable, intent(out) :: x(:, :)
 
-! Intermediate variable
+! Local variables
 integer :: alloc_status
 character(len=MSSGLEN) :: eid, mssg
 
@@ -650,8 +622,8 @@ end subroutine alloc_rmatrix_qp
 
 
 subroutine read_rscalar(px, x)
-! READ_RSCALAR reads the double scalar associated with an mwPointer PX
-! and saves the data in X, which is a REAL(RP) scalar.
+! READ_RSCALAR reads the double scalar associated with an mwPointer PX and saves the data in X,
+! which is a REAL(RP) scalar.
 use consts_mod, only : RP, DP, ONE, MSSGLEN
 implicit none
 
@@ -661,7 +633,7 @@ mwPointer, intent(in) :: px
 ! Output
 real(RP), intent(out) :: x
 
-! Intermediate variable
+! Local variables
 real(DP) :: x_dp(1)
 character(len=MSSGLEN) :: eid, mssg
 
@@ -685,8 +657,8 @@ end subroutine read_rscalar
 
 
 subroutine read_rvector(px, x)
-! READ_RVECTOR reads the double vector associated with an mwPointer PX
-! and saves the data in X, which is a REAL(RP) vector.
+! READ_RVECTOR reads the double vector associated with an mwPointer PX and saves the data in X,
+! which is a REAL(RP) vector.
 use consts_mod, only : RP, DP, IK, ONE, MSSGLEN
 implicit none
 
@@ -696,7 +668,7 @@ mwPointer, intent(in) :: px
 ! Output
 real(RP), allocatable, intent(out) :: x(:)
 
-! Intermediate variables
+! Local variables
 real(DP), allocatable :: x_dp(:)
 integer(IK) :: n
 mwSize :: n_mw
@@ -731,8 +703,8 @@ end subroutine read_rvector
 
 
 subroutine read_rmatrix(px, x)
-! READ_RMATRIX reads the double matrix associated with an mwPointer PX
-! and saves the data in X, which is a REAL(RP) matrix.
+! READ_RMATRIX reads the double matrix associated with an mwPointer PX and saves the data in X,
+! which is a REAL(RP) matrix.
 use consts_mod, only : RP, DP, IK, ONE, MSSGLEN
 implicit none
 
@@ -742,7 +714,7 @@ mwPointer, intent(in) :: px
 ! Output
 real(RP), allocatable, intent(out) :: x(:, :)
 
-! Intermediate variables
+! Local variables
 real(DP), allocatable :: x_dp(:, :)
 integer(IK) :: m, n
 mwSize :: xsize
@@ -779,19 +751,16 @@ end subroutine read_rmatrix
 
 
 subroutine read_iscalar(px, x)
-! READ_ISCALAR reads a MEX input X that is a double scalar with an integer
-! value. Such a value will be passed to the Fortran code as an integer.
-! In MEX, data is passed by pointers, but there are only very limited
-! functions that can read an integer value from a pointer or write an
-! integer value to a pointer (mxCopyPtrToInteger1, mxCopyInteger1ToPtr,
-! mxCopyPtrToInteger2, mxCopyInteger2ToPtr, mxCopyPtrToInteger4,
-! mxCopyInteger4ToPtr; no function for INTEGER*8). This makes it
-! impossible to pass integer data properly unless we know the kind of
-! the integer. Therefore, in general, it is recommended to pass integers
-! as double variables and then cast them back to integers befor using
-! them in the Fortran code. Indeed, in MATLAB, even if we define X = 1000,
-! the class of X is double! To get an integer X, we would have to define
-! convert it to an integer explicitly!
+! READ_ISCALAR reads a MEX input X that is a double scalar with an integer value. Such a value will
+! be passed to the Fortran code as an integer. In MEX, data is passed by pointers, but there are
+! only very limited functions that can read an integer value from a pointer or write an integer
+! value to a pointer (mxCopyPtrToInteger1, mxCopyInteger1ToPtr, mxCopyPtrToInteger2,
+! mxCopyInteger2ToPtr, mxCopyPtrToInteger4, mxCopyInteger4ToPtr; no function for INTEGER*8). This
+! makes it impossible to pass integer data properly unless we know the kind of the integer.
+! Therefore, in general, it is recommended to pass integers as double variables and then cast them
+! back to integers befor using them in the Fortran code. Indeed, in MATLAB, even if we define
+! X = 1000, the class of X is double! To get an integer X, we would have to define convert it to an
+! integer explicitly!
 use consts_mod, only : DP, IK, MSSGLEN
 implicit none
 
@@ -801,7 +770,7 @@ mwPointer, intent(in) :: px
 ! Output
 integer(IK), intent(out) :: x
 
-! Intermediate variable
+! Local variables
 real(DP) :: x_dp(1)
 character(len=MSSGLEN) :: eid, mssg
 
@@ -824,9 +793,8 @@ end subroutine read_iscalar
 
 
 subroutine write_rscalar(x, px)
-! WRITE_RSCALAR associates a REAL(RP) scalar X with an mwPointer PX,
-! after which X can be passed to MATLAB either as an output of
-! mexFunction or an input of mexCallMATLAB.
+! WRITE_RSCALAR associates a REAL(RP) scalar X with an mwPointer PX, after which X can be passed to
+! MATLAB either as an output of mexFunction or an input of mexCallMATLAB.
 use consts_mod, only : RP, DP, ONE, MSSGLEN
 implicit none
 
@@ -836,7 +804,7 @@ real(RP), intent(in) :: x
 ! Output
 mwPointer, intent(out) :: px
 
-! Intermediate variable
+! Local variables
 real(DP) :: x_dp
 character(len=MSSGLEN) :: eid, mssg
 
@@ -857,9 +825,8 @@ end subroutine write_rscalar
 
 
 subroutine write_rvector(x, px, shape_type)
-! WRITE_RVECTOR associates a REAL(RP) vector X with an mwPointer
-! PX, after which X can be passed to MATLAB either as an output of
-! mexFunction or an input of mexCallMATLAB. If ROWCOL = 'row', then
+! WRITE_RVECTOR associates a REAL(RP) vector X with an mwPointer PX, after which X can be passed to
+! MATLAB either as an output of mexFunction or an input of mexCallMATLAB. If ROWCOL = 'row', then
 ! the vector is passed as a row vector, otherwise, it will be a column vector.
 use consts_mod, only : DP, RP, IK, ONE, MSSGLEN
 implicit none
@@ -871,7 +838,7 @@ character(len=*), intent(in), optional :: shape_type
 ! Output
 mwPointer, intent(out) :: px
 
-! Intermediate variable
+! Local variables
 real(DP) :: x_dp(size(x))
 integer(IK) :: n
 mwSize :: n_mw
@@ -911,9 +878,8 @@ end subroutine write_rvector
 
 
 subroutine write_rmatrix(x, px)
-! WRITE_RMATRIX associates a REAL(RP) matrix X with an mwPointer PX,
-! after which X can be passed to MATLAB either as an output of
-! mexFunction or an input of mexCallMATLAB.
+! WRITE_RMATRIX associates a REAL(RP) matrix X with an mwPointer PX, after which X can be passed to
+! MATLAB either as an output of mexFunction or an input of mexCallMATLAB.
 use consts_mod, only : DP, RP, IK, ONE, MSSGLEN
 implicit none
 
@@ -923,7 +889,7 @@ real(RP), intent(in) :: x(:, :)
 ! Output
 mwPointer, intent(out) :: px
 
-! Intermediate variable
+! Local variables
 real(DP) :: x_dp(size(x, 1), size(x, 2))
 integer(IK) :: m, n
 mwSize :: m_mw, n_mw
@@ -954,9 +920,8 @@ end subroutine write_rmatrix
 
 
 subroutine write_iscalar(x, px)
-! WRITE_RSCALAR associates an INTEGER(IK) scalar X with an mwPointer PX,
-! after which X can be passed to MATLAB either as an output of
-! mexFunction or an input of mexCallMATLAB.
+! WRITE_RSCALAR associates an INTEGER(IK) scalar X with an mwPointer PX, after which X can be passed
+! to MATLAB either as an output of mexFunction or an input of mexCallMATLAB.
 use consts_mod, only : DP, IK, MSSGLEN
 implicit none
 
@@ -966,7 +931,7 @@ integer(IK), intent(in) :: x
 ! Output
 mwPointer, intent(out) :: px
 
-! Intermediate variable
+! Local variables
 real(DP) :: x_dp
 character(len=MSSGLEN) :: eid, mssg
 
@@ -986,8 +951,8 @@ end subroutine write_iscalar
 subroutine fmxCallMATLAB(fun_ptr, pin, pout)
 ! fmxCallMATLAB executes matlab command
 ! output = feval(fun, input),
-! where fun_ptr is an mwPointer pointing to the function handle of fun,
-! while pin/pout are mwPointer arrays associated with the inputs/outputs
+! where fun_ptr is an mwPointer pointing to the function handle of fun, while pin/pout are mwPointer
+! arrays associated with the inputs/outputs
 use int32_mex_mod, only : INT32_MEX
 use consts_mod, only : MSSGLEN
 implicit none
@@ -1080,10 +1045,8 @@ end function fmxIsDoubleVector
 end module fmxapi_mod
 
 ! Remark: What is the distinction between mx and mex prefixes?
-! 1. According to
-! matlab.izmiran.ru/help/techdoc/matlab_external/ch03cre5.html
-! "Routines in the API that are prefixed with mx allow you to create,
-! access, manipulate, and destroy mxArrays. Routines prefixed with mex
-! perform operations back in the MATLAB environment."
-! 2. We use "fmx" prefix for all subroutines defined by us, e.g.,
-! fmxReadMPtr. Here "fmx" indicates "Fortran" and "MEX".
+! 1. According to matlab.izmiran.ru/help/techdoc/matlab_external/ch03cre5.html, "Routines in the API
+! that are prefixed with mx allow you to create, access, manipulate, and destroy mxArrays. Routines
+! prefixed with mex perform operations back in the MATLAB environment."
+! 2. We use "fmx" prefix for all subroutines defined by us, e.g., fmxReadMPtr. Here "fmx" indicates
+! "Fortran" and "MEX".

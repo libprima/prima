@@ -71,7 +71,7 @@ integer, intent(in) :: nargout, nargin
 mwPointer, intent(in) :: pinput(nargin)
 mwPointer, intent(out) :: poutput(nargout)
 
-! Intermediate variables
+! Local variables
 integer :: maximal_hist
 integer :: n_int
 integer :: npt_int
@@ -216,7 +216,7 @@ real(RP_CL), intent(in) :: x(n)
 ! Output
 real(RP_CL), intent(out) :: funval
 
-! Intermediate variables
+! Local variables
 mwPointer :: pinput(1), poutput(1)
 integer(IK_CL) :: maxfhist, maxxhist, khist
 character(len=MSSGLEN) :: eid, mssg

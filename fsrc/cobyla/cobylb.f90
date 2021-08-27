@@ -10,7 +10,7 @@ contains
 subroutine cobylb(iprint, maxfun, ctol, ftarget, rhobeg, rhoend, con, x, nf, chist, conhist, cstrv, f, fhist, xhist, info)
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, TWO, HALF, QUART, TENTH, HUGENUM, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ZERO, TWO, HALF, QUART, TENTH, HUGENUM, DEBUGGING
 use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, &
     & SMALL_TR_RADIUS, NAN_X, NAN_INF_F, NAN_MODEL, DAMAGING_ROUNDING
 use infnan_mod, only : is_nan, is_posinf
@@ -98,15 +98,6 @@ real(RP) :: simi_jdrop(size(x))
 real(RP) :: actrem
 real(RP) :: xfilt(size(x), max(maxfilt, 0))
 logical :: evaluated(size(x) + 1)
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!! TEMPORARY
-real(RP), allocatable :: xhist_tmp(:, :)
-real(RP), allocatable :: fhist_tmp(:)
-real(RP), allocatable :: conhist_tmp(:, :)
-real(RP), allocatable :: chist_tmp(:)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 logical :: alltrue(size(x) + 1)
 logical :: bad_trstep
 logical :: good_geo
@@ -128,7 +119,7 @@ maxchist = size(chist)
 maxhist = max(maxxhist, maxfhist, maxconhist, maxchist)
 if (DEBUGGING) then
     if (n < 1) then
-        call errstop(srname, 'SIZE(X) is invalid')
+        call errstop(srname, 'SIZE(X) < 1')
     end if
     if (maxxhist > 0) then
         call verisize(xhist, n, maxhist)

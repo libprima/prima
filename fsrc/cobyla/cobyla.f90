@@ -6,9 +6,10 @@ public :: cobyla
 
 
 contains
+
 subroutine cobyla(n, m, x, rhobeg, rhoend, iprint, maxfun, f, info, ftarget, cstrv, con)
 ! Generic modules
-use consts_mod, only : RP, IK, EPS, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, EPS, DEBUGGING
 use infnan_mod, only : is_nan, is_posinf
 use debug_mod, only : errstop
 use output_mod, only : retmssg, rhomssg, fmssg
@@ -29,7 +30,6 @@ real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: rhoend
 
 ! Parameters
-! NSAVMAX is the maximal number of "dropped X" to save
 real(RP) :: ctol
 
 
