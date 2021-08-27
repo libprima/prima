@@ -14,7 +14,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Wednesday, August 18, 2021 PM12:31:20
+! Last Modified: Friday, August 27, 2021 PM03:12:11
 
 module newuoa_mod
 
@@ -102,7 +102,7 @@ subroutine newuoa(calfun, x, f, &
 !   controls how much information will be printed during the computation:
 !   0: there will be no printing;
 !   1: a message will be printed to the screen at the return, showing the
-!      best vector of veriables found and its objective function value;
+!      best vector of variables found and its objective function value;
 !   2: in addition to 1, each new value of RHO is printed to the screen,
 !      with the best vector of variables so far and its objective function
 !      value;

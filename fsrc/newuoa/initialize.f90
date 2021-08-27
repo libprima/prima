@@ -4,7 +4,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Friday, August 27, 2021 PM01:59:24
+! Last Modified: Friday, August 27, 2021 PM03:22:11
 
 module initialize_mod
 
@@ -63,6 +63,7 @@ integer(IK) :: itemp
 integer(IK) :: j
 integer(IK) :: k
 integer(IK) :: maxfhist
+integer(IK) :: maxhist
 integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: npt
@@ -77,18 +78,22 @@ character(len=*), parameter :: srname = 'INITXF'
 ! Get and verify the sizes.
 n = int(size(x0), kind(n))
 npt = int(size(fval), kind(npt))
-maxfhist = int(size(fhist), kind(maxfhist))
 maxxhist = int(size(xhist, 2), kind(maxxhist))
+maxfhist = int(size(fhist), kind(maxfhist))
+maxhist = max(maxxhist, maxfhist)
 
 if (DEBUGGING) then
-    if (n == 0 .or. npt < n + 2) then
-        call errstop(srname, 'SIZE(X0) or SIZE(FVAL) is invalid')
+    if (n < 1) then
+        call errstop(srname, 'SIZE(X0) < 1')
     end if
-    if (size(xhist, 1) /= n .and. maxxhist > 0) then
-        call errstop(srname, 'XHIST is nonempty but SIZE(XHIST, 1) /= SIZE(X0)')
+    if (npt < n + 2) then
+        call errstop(srname, 'SIZE(FVAL) < N + 2')
     end if
-    if (maxfhist * maxxhist > 0 .and. maxfhist /= maxxhist) then
-        call errstop(srname, 'FHIST and XHIST are both nonempty but SIZE(FHIST) /= SIZE(XHIST, 2)')
+    if (maxxhist > 0) then
+        call verisize(xhist, n, maxhist)
+    end if
+    if (maxfhist > 0) then
+        call verisize(fhist, maxhist)
     end if
     call verisize(ij, 2_IK, npt)
     call verisize(xbase, n)
@@ -301,7 +306,7 @@ n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
 if (DEBUGGING) then
-    if (n == 0 .or. npt < n + 2) then
+    if (n < 1 .or. npt < n + 2) then
         call errstop(srname, 'SIZE(XPT) is invalid')
     end if
     call verisize(fval, npt)
@@ -405,7 +410,7 @@ n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
 if (DEBUGGING) then
-    if (n == 0 .or. npt < n + 2) then
+    if (n < 1 .or. npt < n + 2) then
         call errstop(srname, 'SIZE(XPT) is invalid')
     end if
     call verisize(ij, 2_IK, npt)

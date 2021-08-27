@@ -37,8 +37,8 @@ character(len=*), parameter :: srname = 'SELECTX'
 
 ! Get the verify the sizes.
 if (DEBUGGING) then
-    if (size(fhist) == 0) then
-        call errstop(srname, 'SIZE(FHIST) == 0')
+    if (size(fhist) < 1) then
+        call errstop(srname, 'SIZE(FHIST) < 1')
     end if
     call verisize(chist, size(fhist))
 end if
