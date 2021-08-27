@@ -15,7 +15,7 @@
 
 ! Coded by Zaikun ZHANG in July 2020.
 !
-! Last Modified: Thursday, August 26, 2021 PM05:49:41
+! Last Modified: Friday, August 27, 2021 PM02:37:53
 
 
 #include "ppf.h"
@@ -77,7 +77,7 @@ use consts_mod, only : IK
 #endif
 
 #if __DEBUGGING__ == 1
-use consts_mod, only : ZERO, SRNLEN
+use consts_mod, only : ZERO
 use debug_mod, only : errstop, verisym
 #endif
 
@@ -91,7 +91,7 @@ integer(IK) :: n, j
 #endif
 
 #if __DEBUGGING__ == 1
-character(len=SRNLEN), parameter :: srname = 'R1_SYM'
+character(len=*), parameter :: srname = 'R1_SYM'
 ! Be careful with initialization!
 ! In Fortran >=90, the initialization in the declaration implies the "save" attribute.
 ! If the variable is not a parameter, it may casue unwanted behavior.
@@ -132,7 +132,6 @@ subroutine r1(A, alpha, x, y)
 use consts_mod, only : RP
 
 #if __DEBUGGING__ == 1
-use consts_mod, only : SRNLEN
 use debug_mod, only : errstop
 #endif
 
@@ -143,7 +142,7 @@ real(RP), intent(in) :: y(:)
 real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
 
 #if __DEBUGGING__ == 1
-character(len=SRNLEN), parameter :: srname = 'R1'
+character(len=*), parameter :: srname = 'R1'
 ! Be careful with initialization!
 ! In Fortran >=90, the initialization in the declaration implies the "save" attribute. If the
 ! variable is not a parameter, it may casue unwanted behavior.
@@ -168,7 +167,7 @@ use consts_mod, only : IK
 #endif
 
 #if __DEBUGGING__ == 1
-use consts_mod, only : ZERO, SRNLEN
+use consts_mod, only : ZERO
 use debug_mod, only : errstop, verisym
 #endif
 
@@ -183,7 +182,7 @@ integer(IK) :: n, j
 #endif
 
 #if __DEBUGGING__ == 1
-character(len=SRNLEN), parameter :: srname = 'R2_SYM'
+character(len=*), parameter :: srname = 'R2_SYM'
 if (size(x) /= size(y)) then
     call errstop(srname, 'SIZE(X) /= SIZE(Y)')
 end if
@@ -223,7 +222,6 @@ subroutine r2(A, alpha, x, y, beta, u, v)
 use consts_mod, only : RP
 
 #if __DEBUGGING__ == 1
-use consts_mod, only : SRNLEN
 use debug_mod, only : errstop
 #endif
 
@@ -238,7 +236,7 @@ real(RP), intent(inout) :: A(:, :)    ! A(SIZE(X), SIZE(Y))
 
 
 #if __DEBUGGING__ == 1
-character(len=SRNLEN), parameter :: srname = 'R2'
+character(len=*), parameter :: srname = 'R2'
 if (size(u) /= size(x)) then
     call errstop(srname, 'SIZE(U) /= SIZE(X)')
 end if
@@ -265,7 +263,6 @@ use consts_mod, only : RP, IK
 #endif
 
 #if __DEBUGGING__ == 1
-use consts_mod, only : SRNLEN
 use debug_mod, only : errstop
 #endif
 
@@ -279,7 +276,7 @@ integer(IK) :: j
 #endif
 
 #if __DEBUGGING__ == 1
-character(len=SRNLEN), parameter :: srname = 'MATPROD12'
+character(len=*), parameter :: srname = 'MATPROD12'
 if (size(x) /= size(y, 1)) then
     call errstop(srname, 'SIZE(X) /= SIZE(Y, 1)')
 end if
@@ -307,7 +304,6 @@ use consts_mod, only : RP, IK, ZERO
 #endif
 
 #if __DEBUGGING__ == 1
-use consts_mod, only : SRNLEN
 use debug_mod, only : errstop
 #endif
 
@@ -321,7 +317,7 @@ integer(IK) :: j
 #endif
 
 #if __DEBUGGING__ == 1
-character(len=SRNLEN), parameter :: srname = 'MATPROD21'
+character(len=*), parameter :: srname = 'MATPROD21'
 if (size(x, 2) /= size(y)) then
     call errstop(srname, 'SIZE(X, 2) /= SIZE(Y)')
 end if
@@ -350,7 +346,6 @@ use consts_mod, only : RP, IK, ZERO
 #endif
 
 #if __DEBUGGING__ == 1
-use consts_mod, only : SRNLEN
 use debug_mod, only : errstop
 #endif
 
@@ -364,7 +359,7 @@ integer(IK) :: i, j
 #endif
 
 #if __DEBUGGING__ == 1
-character(len=SRNLEN), parameter :: srname = 'MATPROD22'
+character(len=*), parameter :: srname = 'MATPROD22'
 if (size(x, 2) /= size(y, 1)) then
     call errstop(srname, 'SIZE(X, 2) /= SIZE(Y, 1)')
 end if
@@ -392,7 +387,6 @@ use consts_mod, only : RP, IK, ZERO
 #endif
 
 #if __DEBUGGING__ == 1
-use consts_mod, only : SRNLEN
 use debug_mod, only : errstop
 #endif
 
@@ -406,7 +400,7 @@ integer(IK) :: i
 #endif
 
 #if __DEBUGGING__ == 1
-character(len=SRNLEN), parameter :: srname = 'INPROD'
+character(len=*), parameter :: srname = 'INPROD'
 if (size(x) /= size(y)) then
     call errstop(srname, 'SIZE(X) /= SIZE(Y)')
 end if
@@ -449,7 +443,7 @@ implicit none
 ! Input
 integer(IK), intent(in) :: n
 ! Output
-real(RP) :: x(max(n, 0), max(n, 0))
+real(RP) :: x(max(n, 0_IK), max(n, 0_IK))
 ! Local variable
 integer(IK) :: i
 if (size(x, 1) * size(x, 2) > 0) then
@@ -469,7 +463,7 @@ implicit none
 integer(IK), intent(in) :: m
 integer(IK), intent(in) :: n
 ! Output
-real(RP) :: x(max(m, 0), max(n, 0))
+real(RP) :: x(max(m, 0_IK), max(n, 0_IK))
 ! Local variable
 integer(IK) :: i
 if (size(x, 1) * size(x, 2) > 0) then
@@ -488,7 +482,7 @@ function inv(A, matrix_type) result(B)
 ! Only the following matrix types (MATRIX_TYPE) are supported, which is sufficient for this project:
 ! ltri/LTRI: lower triangular
 ! utri/UTRI: upper triangular
-use consts_mod, only : RP, IK, ZERO, ONE, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ZERO, ONE, DEBUGGING
 use debug_mod, only : verisize, errstop
 implicit none
 
@@ -502,9 +496,9 @@ real(RP) :: B(size(A, 1), size(A, 1))
 ! Local variables
 integer(IK) :: i
 integer(IK) :: n
-character(len=SRNLEN), parameter :: srname = 'INV'
+character(len=*), parameter :: srname = 'INV'
 
-n = size(A, 1)
+n = int(size(A, 1), kind(n))
 if (DEBUGGING) then
     call verisize(A, n, n)
     if (.not. (matrix_type == 'ltri' .or. matrix_type == 'LTRI' .or. matrix_type == 'utri' .or. matrix_type == 'UTRI')) then
@@ -573,7 +567,7 @@ use consts_mod, only : RP, HALF
 #endif
 
 #if __DEBUGGING__ == 1
-use consts_mod, only : ZERO, SRNLEN
+use consts_mod, only : ZERO
 use debug_mod, only : errstop, verisym
 #endif
 
@@ -585,7 +579,7 @@ integer(IK) :: j
 #endif
 
 #if __DEBUGGING__ == 1
-character(len=SRNLEN), parameter :: srname = 'SYMMETRIZE'
+character(len=*), parameter :: srname = 'SYMMETRIZE'
 if (size(A, 1) /= size(A, 2)) then
     call errstop(srname, 'A is not square')
 end if
@@ -617,7 +611,6 @@ use consts_mod, only : IK, ZERO
 #endif
 
 #if __DEBUGGING__ == 1
-use consts_mod, only : SRNLEN
 use debug_mod, only : errstop
 #endif
 implicit none
@@ -632,7 +625,7 @@ integer(IK) :: i
 #endif
 
 #if __DEBUGGING__ == 1
-character(len=SRNLEN), parameter :: srname = 'XPY_DOT_Z'
+character(len=*), parameter :: srname = 'XPY_DOT_Z'
 if (size(x) /= size(z) .or. size(y) /= size(z)) then
     call errstop(srname, 'SIZE(X) or SIZE(Y) /= SIZE(Z)')
 end if
@@ -663,7 +656,6 @@ use consts_mod, only : IK
 #endif
 
 #if __DEBUGGING__ == 1
-use consts_mod, only : SRNLEN
 use debug_mod, only : errstop
 #endif
 implicit none
@@ -678,7 +670,7 @@ integer(IK) :: i
 #endif
 
 #if __DEBUGGING__ == 1
-character(len=SRNLEN), parameter :: srname = 'XDY_PLUS_A'
+character(len=*), parameter :: srname = 'XDY_PLUS_A'
 if (size(x) /= size(y)) then
     call errstop(srname, 'SIZE(X) /= SIZE(Y)')
 end if
@@ -705,7 +697,6 @@ use consts_mod, only : IK
 #endif
 
 #if __DEBUGGING__ == 1
-use consts_mod, only : SRNLEN
 use debug_mod, only : errstop
 #endif
 implicit none
@@ -720,7 +711,7 @@ integer(IK) :: j
 #endif
 
 #if __DEBUGGING__ == 1
-character(len=SRNLEN), parameter :: srname = 'AX_PLUS_Y'
+character(len=*), parameter :: srname = 'AX_PLUS_Y'
 if (size(x) /= size(A, 2) .or. size(y) /= size(A, 1)) then
     call errstop(srname, 'SIZE(A) /= (SIZE(Y), SIZE(X))')
 end if
@@ -751,7 +742,6 @@ use consts_mod, only : IK
 #endif
 
 #if __DEBUGGING__ == 1
-use consts_mod, only : SRNLEN
 use debug_mod, only : errstop
 #endif
 implicit none
@@ -766,7 +756,7 @@ integer(IK) :: i
 #endif
 
 #if __DEBUGGING__ == 1
-character(len=SRNLEN), parameter :: srname = 'XA_PLUS_Y'
+character(len=*), parameter :: srname = 'XA_PLUS_Y'
 if (size(x) /= size(A, 1) .or. size(y) /= size(A, 2)) then
     call errstop(srname, 'SIZE(A) /= (SIZE(X), SIZE(Y))')
 end if
@@ -802,7 +792,7 @@ use consts_mod, only : IK, ZERO
 #endif
 
 #if __DEBUGGING__ == 1
-use consts_mod, only : IK, SRNLEN
+use consts_mod, only : IK
 use debug_mod, only : errstop, verisize
 #endif
 
@@ -829,7 +819,7 @@ integer(IK) :: i, ih, j
 
 #if __DEBUGGING__ == 1
 integer(IK) :: n, npt
-character(len=SRNLEN), parameter :: srname = 'CALQUAD'
+character(len=*), parameter :: srname = 'CALQUAD'
 n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 if (n == 0 .or. npt < n + 2) then
@@ -892,7 +882,7 @@ function hessmul(hq, pq, xpt, y) result(hy)
 use consts_mod, only : RP
 
 #if __DEBUGGING__ == 1
-use consts_mod, only : IK, SRNLEN
+use consts_mod, only : IK
 use debug_mod, only : errstop, verisize
 #endif
 
@@ -909,7 +899,7 @@ real(RP) :: hy(size(hq, 1))
 
 #if __DEBUGGING__ == 1
 integer(IK) :: n, npt
-character(len=SRNLEN), parameter :: srname = 'HESSMUL'
+character(len=*), parameter :: srname = 'HESSMUL'
 n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 if (n == 0 .or. npt < n + 2) then
@@ -944,7 +934,6 @@ function isminor1(x, ref) result(is_minor)
 ! This subroutine tests whether X is minor compared to REF. It is used by Powell, e.g., in COBYLA.
 use consts_mod, only : IK, RP
 #if __DEBUGGING__ == 1
-use consts_mod, only : SRNLEN
 use debug_mod, only : errstop
 #endif
 implicit none
@@ -955,7 +944,7 @@ logical :: is_minor(size(x))
 integer(IK) :: i
 
 #if __DEBUGGING__ == 1
-character(len=SRNLEN), parameter :: srname = 'ISMINOR1'
+character(len=*), parameter :: srname = 'ISMINOR1'
 if (size(x) /= size(ref)) then
     call errstop(srname, 'SIZE(X) /= SIZE(REF)')
 end if

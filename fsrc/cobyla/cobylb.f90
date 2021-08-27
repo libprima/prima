@@ -114,7 +114,7 @@ logical :: good_geo
 logical :: improve_geo
 logical :: reduce_rho
 logical :: shortd
-character(len=SRNLEN), parameter :: srname = 'COBYLB'
+character(len=*), parameter :: srname = 'COBYLB'
 
 alltrue = .true.
 reduce_rho = .false.

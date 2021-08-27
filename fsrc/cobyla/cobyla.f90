@@ -70,7 +70,7 @@ integer(IK) :: ivsig
 integer(IK) :: iw
 integer(IK) :: mpp
 real(RP) :: rhoend_c
-character(len=SRNLEN), parameter :: srname = 'COBYLA'
+character(len=*), parameter :: srname = 'COBYLA'
 !*++
 !*++ End of declarations rewritten by SPAG
 !*++

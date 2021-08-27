@@ -30,7 +30,7 @@ real(RP) :: parsig
 real(RP) :: pareta
 real(RP) :: vsig(size(sim, 1))
 real(RP) :: veta(size(sim, 1))
-character(len=SRNLEN) :: srname = 'GOODGEO'
+character(len=*) :: srname = 'GOODGEO'
 
 ! Get and verify the sizes
 n = size(sim, 1)
@@ -86,7 +86,7 @@ real(RP) :: ratio
 real(RP) :: sigbar(size(sim, 1))
 real(RP) :: simid(size(sim, 1))
 real(RP) :: vsig(size(sim, 1))
-character(len=SRNLEN) :: srname = 'SETDROP_TR'
+character(len=*) :: srname = 'SETDROP_TR'
 
 ! Get and verify the sizes
 n = size(sim, 1)
@@ -166,7 +166,7 @@ real(RP) :: parsig
 real(RP) :: pareta
 real(RP) :: vsig(size(sim, 1))
 real(RP) :: veta(size(sim, 1))
-character(len=SRNLEN) :: srname = 'SETDROP_GEO'
+character(len=*) :: srname = 'SETDROP_GEO'
 
 ! Get and verify the sizes.
 n = size(sim, 1)
@@ -231,7 +231,7 @@ real(RP) :: cvmaxp
 real(RP) :: cvmaxm
 real(RP) :: vsig(size(simi, 1))
 real(RP) :: A(size(simi, 1), size(conmat, 1) + 1)
-character(len=SRNLEN) :: srname = 'GEOSTEP'
+character(len=*) :: srname = 'GEOSTEP'
 
 ! Get and verify the sizes
 m = size(conmat, 1)

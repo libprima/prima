@@ -5,7 +5,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and papers.
 !
-! Last Modified: Wednesday, July 14, 2021 PM12:11:13
+! Last Modified: Friday, August 27, 2021 PM02:31:09
 
 
 module output_mod
@@ -19,7 +19,7 @@ contains
 
 
 subroutine retmssg(info, iprint, nf, f, x, solver)
-use consts_mod, only : RP, IK, MSSGLEN, OUTUNIT
+use consts_mod, only : RP, IK, MSSGLEN, OUTUNIT, FNAMELEN
 use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED
 use info_mod, only : SMALL_TR_RADIUS, TRSUBP_FAILED
 use info_mod, only : NAN_X, NAN_INF_F, NAN_MODEL
@@ -35,7 +35,7 @@ character(len=*), intent(in) :: solver
 
 ! Local variables
 integer :: ios  ! Should be an integer of default kind
-character(len=100) :: fout
+character(len=FNAMELEN) :: fout
 character(len=3) :: fstat
 character(len=MSSGLEN) :: mssg
 logical :: fexist
@@ -98,7 +98,7 @@ end subroutine retmssg
 
 
 subroutine rhomssg(iprint, nf, f, rho, x, solver)
-use consts_mod, only : RP, IK, OUTUNIT
+use consts_mod, only : RP, IK, OUTUNIT, FNAMELEN
 implicit none
 
 ! Inputs
@@ -111,7 +111,7 @@ character(len=*), intent(in) :: solver
 
 ! Local variables
 integer :: ios  ! Should be an integer of default kind
-character(len=100) :: fout
+character(len=FNAMELEN) :: fout
 character(len=3) :: fstat
 logical :: fexist
 
@@ -153,7 +153,7 @@ end subroutine rhomssg
 
 
 subroutine fmssg(iprint, nf, f, x, solver)
-use consts_mod, only : RP, IK, OUTUNIT
+use consts_mod, only : RP, IK, OUTUNIT, FNAMELEN
 implicit none
 
 ! Inputs
@@ -165,7 +165,7 @@ character(len=*), intent(in) :: solver
 
 ! Local variables
 integer :: ios  ! Should be an integer of default kind
-character(len=100) :: fout
+character(len=FNAMELEN) :: fout
 character(len=3) :: fstat
 logical :: fexist
 

@@ -7,7 +7,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Sunday, July 25, 2021 AM10:39:15
+! Last Modified: Friday, August 27, 2021 PM02:00:38
 
 module vlagbeta_mod
 
@@ -24,7 +24,7 @@ subroutine vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
 ! See (4.11)--(4.12) of the NEWUOA paper.
 
 ! Generic modules
-use consts_mod, only : RP, IK, ONE, HALF, DEBUGGING, SRNLEN
+use consts_mod, only : RP, IK, ONE, HALF, DEBUGGING
 use debug_mod, only : errstop, verisize
 use lina_mod, only : Ax_plus_y, xA_plus_y, xpy_dot_z, inprod, matprod
 
@@ -54,7 +54,7 @@ real(RP) :: wz(size(zmat, 2))
 real(RP) :: wzsav(size(wz))
 real(RP) :: xopt(size(xpt, 1))
 real(RP) :: xoptsq
-character(len=SRNLEN), parameter :: srname = 'VLAGBETA'
+character(len=*), parameter :: srname = 'VLAGBETA'
 
 
 ! Get and verify the sizes

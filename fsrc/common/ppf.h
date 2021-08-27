@@ -47,7 +47,7 @@
 
 
 /******************************************************************************/
-/* Is this a released version? Should be 1 except for the contributors. */
+/* Is this a released version? Should be 1 except for the developers. */
 #if defined RELEASED__
 #undef RELEASED__
 #endif
@@ -121,7 +121,7 @@
 #if defined __INTEGER_KIND__
 #undef __INTEGER_KIND__
 #endif
-#define __INTEGER_KIND__ 0
+#define __INTEGER_KIND__ 0 
 /* Fortran standards guarantee that 0 is supported, but not the others. */
 /******************************************************************************/
 
