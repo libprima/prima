@@ -2,14 +2,16 @@
 !
 ! Coded by Zaikun Zhang in July 2020.
 !
-! Last Modified: Thursday, August 12, 2021 PM07:52:12
+! Last Modified: Sunday, August 29, 2021 PM06:20:56
 
 
 module info_mod
 
+use consts_mod, only : IK
 
 implicit none
 private
+public :: INFO_DFT
 public :: INVALID_INPUT
 public :: SMALL_TR_RADIUS
 public :: FTARGET_ACHIEVED
@@ -21,16 +23,18 @@ public :: NAN_INF_F
 public :: NAN_MODEL
 public :: DAMAGING_ROUNDING
 
-integer, parameter :: INVALID_INPUT = -100
-integer, parameter :: SMALL_TR_RADIUS = 0
-integer, parameter :: FTARGET_ACHIEVED = 1
-integer, parameter :: TRSUBP_FAILED = 2
-integer, parameter :: MAXFUN_REACHED = 3
-integer, parameter :: MAXTR_REACHED = 20
-integer, parameter :: NAN_X = -1
-integer, parameter :: NAN_INF_F = -2
-integer, parameter :: NAN_MODEL = -3
-integer, parameter :: DAMAGING_ROUNDING = 7
+
+integer(IK), parameter :: INFO_DFT = 0_IK
+integer(IK), parameter :: INVALID_INPUT = -100_IK
+integer(IK), parameter :: SMALL_TR_RADIUS = 0_IK
+integer(IK), parameter :: FTARGET_ACHIEVED = 1_IK
+integer(IK), parameter :: TRSUBP_FAILED = 2_IK
+integer(IK), parameter :: MAXFUN_REACHED = 3_IK
+integer(IK), parameter :: MAXTR_REACHED = 20_IK
+integer(IK), parameter :: NAN_X = -1_IK
+integer(IK), parameter :: NAN_INF_F = -2_IK
+integer(IK), parameter :: NAN_MODEL = -3_IK
+integer(IK), parameter :: DAMAGING_ROUNDING = 7_IK
 
 
 end module info_mod

@@ -7,24 +7,28 @@ public :: cobylb
 
 contains
 
+
 subroutine cobylb(iprint, maxfun, ctol, ftarget, rhobeg, rhoend, constr, x, nf, chist, conhist, cstrv, f, fhist, xhist, info)
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, TWO, HALF, QUART, TENTH, HUGENUM, DEBUGGING
-use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, &
+use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, HUGENUM, DEBUGGING
+use info_mod, only : INFO_DFT, FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, &
     & SMALL_TR_RADIUS, NAN_X, NAN_INF_F, NAN_MODEL, DAMAGING_ROUNDING
 use infnan_mod, only : is_nan, is_posinf
 use debug_mod, only : errstop, verisize
 use output_mod, only : retmssg, rhomssg, fmssg
 use lina_mod, only : inprod, matprod, outprod, inv
 use selectx_mod, only : selectx
+use evalfc_mod, only : evalfc
 
 ! Solver-specific modules
 use initialize_mod, only : initxfc, initfilt
 use trustregion_mod, only : trstlp
-use update_mod, only : updatepole, findpole
+use update_mod, only : updatexfc, updatepole, findpole
 use geometry_mod, only : goodgeo, setdrop_geo, setdrop_tr, geostep
 use history_mod, only : savehist, savefilt
+use checkexit_mod, only : checkexit
+use resolution_mod, only : resenhance
 
 implicit none
 
@@ -101,11 +105,10 @@ logical :: evaluated(size(x) + 1)
 logical :: bad_trstep
 logical :: good_geo
 logical :: improve_geo
-logical :: reduce_rho
+logical :: enhance_resolut
 logical :: shortd
 character(len=*), parameter :: srname = 'COBYLB'
 
-reduce_rho = .false.
 
 ! Get and verify the sizes.
 m = size(constr)
@@ -147,7 +150,7 @@ cpen = ZERO
 call initxfc(iprint, maxfun, ctol, ftarget, rho, x, nf, chist, conhist, conmat, cval, fhist, fval, sim, xhist, evaluated, subinfo)
 call initfilt(conmat, ctol, cval, fval, sim, evaluated, nfilt, cfilt, confilt, ffilt, xfilt)
 
-if (subinfo == NAN_X .or. subinfo == NAN_INF_F .or. subinfo == FTARGET_ACHIEVED .or. subinfo == MAXFUN_REACHED) then
+if (subinfo /= INFO_DFT) then
     info = subinfo
     ! Return the best calculated values of the variables.
     ! N.B. SELECTX and FINDPOLE choose X by different standards. One cannot replace the other.
@@ -165,6 +168,13 @@ end if
 simi = inv(sim(:, 1:n), 'ltri')
 ! If we arrive here, the objective and constraints must have been evaluated at SIM(:, I) for all I.
 evaluated = .true.
+
+! Initialize PREREM, ACTREM, and JDROP, or some compilers will complain that they are uninitialized
+! when setting BAD_TRSTEP. Indeed, these values will not be used, because they will be overwritten
+! when SHORTD = FALSE.
+prerem = ONE
+actrem = -ONE
+jdrop = 0_IK
 
 ! Normally, each trust-region iteration takes one function evaluation. The following setting
 ! essentially imposes no constraint on the maximal number of trust-region iterations.
@@ -235,67 +245,38 @@ do tr = 1, maxtr
             end if
         end if
 
-        prerem = preref + cpen * prerec   ! Is it positive????
-
         x = sim(:, n + 1) + d
-        if (any(is_nan(x))) then
-            f = sum(x) ! Set F to NaN.
-            constr = f  ! Set CONSTR to NaN.
-        else
-            call calcfc(n, m, x, f, constr)  ! Evaluate F and CONSTR.
-        end if
-        if (any(is_nan(constr))) then
-            cstrv = sum(constr)  ! Set CSTRV to NaN.
-        else
-            cstrv = maxval([-constr, ZERO])  ! Constraint violation for constraints CONSTR(X) >= 0.
-        end if
+        ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
+        call evalfc(x, f, constr, cstrv)
         nf = nf + 1_IK
         ! Save X, F, CONSTR, CSTRV into the history.
         call savehist(nf, constr, cstrv, f, x, chist, conhist, fhist, xhist)
         ! Save X, F, CONSTR, CSTRV into the filter.
         call savefilt(constr, cstrv, ctol, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
-        ! Check whether to exit.
-        if (any(is_nan(x))) then
-            info = NAN_X
-            exit
-        end if
-        if (is_nan(f) .or. is_posinf(f) .or. is_nan(cstrv) .or. is_posinf(cstrv)) then
-            info = NAN_INF_F
-            exit
-        end if
-        if (f <= ftarget .and. cstrv <= ctol) then
-            info = FTARGET_ACHIEVED
-            exit
-        end if
-        if (nf >= maxfun) then
-            info = MAXFUN_REACHED
-            exit
-        end if
 
         ! Begin the operations that decide whether X should replace one of the vertices of the
         ! current simplex, the change being mandatory if ACTREM is positive.
+        prerem = preref + cpen * prerec   ! Is it positive????
         actrem = (fval(n + 1) + cpen * cval(n + 1)) - (f + cpen * cstrv)
         if (cpen <= ZERO .and. abs(f - fval(n + 1)) <= ZERO) then
             prerem = prerec   ! Is it positive?????
             actrem = cval(n + 1) - cstrv
         end if
-
         ! Set JDROP to the index of the vertex that is to be replaced by X.
         ! N.B.: COBYLA never sets JDROP = N + 1.
         jdrop = setdrop_tr(actrem, d, factor_alpha, factor_delta, rho, sim, simi)
-
+        ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP) is replaced by D.
         ! When JDROP=0, the algorithm decides not to include X into the simplex.
         if (jdrop > 0) then
-            ! Revise the simplex by updating the elements of SIM, SIMI, FVAL, CONMAT, and CVAL.
-            sim(:, jdrop) = d
-            simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), d)
-            simi = simi - outprod(matprod(simi, d), simi_jdrop)
-            simi(jdrop, :) = simi_jdrop
-            fval(jdrop) = f
-            conmat(:, jdrop) = constr
-            cval(jdrop) = cstrv
+            call updatexfc(jdrop, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
         end if
 
+        ! Check whether to exit.
+        subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
+        if (subinfo /= INFO_DFT) then
+            info = subinfo
+            exit
+        end if
     end if
 
     ! Should we take a geometry step to improve the geometry of the interpolation set?
@@ -306,7 +287,7 @@ do tr = 1, maxtr
     improve_geo = bad_trstep .and. .not. good_geo
 
     ! Should we revise RHO (and CPEN)?
-    reduce_rho = bad_trstep .and. good_geo
+    enhance_resolut = bad_trstep .and. good_geo
 
     if (improve_geo) then
         ! Before the geometry step, call UPDATEPOLE so that SIM(:, N + 1) is the optimal vertex.
@@ -344,73 +325,31 @@ do tr = 1, maxtr
 
             ! Calculate the geometry step D.
             d = geostep(jdrop, cpen, conmat, cval, fval, factor_gamma, rho, simi)
-
             x = sim(:, n + 1) + d
-            if (any(is_nan(x))) then
-                f = sum(x) ! Set F to NaN.
-                constr = f  ! Set CONSTR to NaN.
-            else
-                call calcfc(n, m, x, f, constr)  ! Evaluate F and CONSTR.
-            end if
-            if (any(is_nan(constr))) then
-                cstrv = sum(constr)  ! Set CSTRV to NaN.
-            else
-                cstrv = maxval([-constr, ZERO])
-            end if
+            ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
+            call evalfc(x, f, constr, cstrv)
             nf = nf + 1_IK
             ! Save X, F, CONSTR, CSTRV into the history.
             call savehist(nf, constr, cstrv, f, x, chist, conhist, fhist, xhist)
             ! Save X, F, CONSTR, CSTRV into the filter.
             call savefilt(constr, cstrv, ctol, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
+            ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP) is replaced by D.
+            call updatexfc(jdrop, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
             ! Check whether to exit.
-            if (any(is_nan(x))) then
-                info = NAN_X
+            subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
+            if (subinfo /= INFO_DFT) then
+                info = subinfo
                 exit
             end if
-            if (is_nan(f) .or. is_posinf(f) .or. is_nan(cstrv) .or. is_posinf(cstrv)) then
-                info = NAN_INF_F
-                exit
-            end if
-            if (f <= ftarget .and. cstrv <= ctol) then
-                info = FTARGET_ACHIEVED
-                exit
-            end if
-            if (nf >= maxfun) then
-                info = MAXFUN_REACHED
-                exit
-            end if
-
-            ! Revise the simplex by updating the elements of SIM, SIMI, FVAL, CONMAT, and CVAL.
-            sim(:, jdrop) = d
-            simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), d)
-            simi = simi - outprod(matprod(simi, d), simi_jdrop)
-            simi(jdrop, :) = simi_jdrop
-            fval(jdrop) = f
-            conmat(:, jdrop) = constr
-            cval(jdrop) = cstrv
         end if
     end if
 
-    if (reduce_rho) then  ! Update RHO and CPEN.
+    if (enhance_resolut) then  ! Enhance the resolution of the algorithm, updating RHO and CPEN.
         if (rho <= rhoend) then
             info = SMALL_TR_RADIUS
             exit
         end if
-        ! See equation (11) in Section 3 of the COBYLA paper for the update of RHO.
-        rho = HALF * rho
-        if (rho <= 1.5E0_RP * rhoend) then
-            rho = rhoend
-        end if
-        ! See equations (12)--(13) in Section 3 of the COBYLA paper for the update of CPEN.
-        ! If the original CPEN = 0, then the updated CPEN is also 0.
-        cmin = minval(conmat, dim=2)
-        cmax = maxval(conmat, dim=2)
-        if (any(cmin < HALF * cmax)) then
-            denom = minval(max(cmax, ZERO) - cmin, mask=(cmin < HALF * cmax))
-            cpen = min(cpen, (maxval(fval) - minval(fval)) / denom)
-        else
-            cpen = ZERO
-        end if
+        call resenhance(conmat, fval, rhoend, cpen, rho)
     end if
 end do
 
@@ -431,8 +370,12 @@ end subroutine cobylb
 end module cobylb_mod
 
 ! TODO:
-! 1. evalcfc
+! 1. evalfc, extreme barrier
 ! 2. checkexit
-! 3. update, absorbing updatepole
-! 4. Do the same for initialize
-! 5. Do the same for NEWUOA
+! 3. updatexfc, absorbing updatepole
+! 4. resenhance
+! 5. Do the same for initialize
+! 6. Do the same for NEWUOA
+! 7. In NEWUOA, resolve the inconsistency of fopt and xopt with kopt
+! 8. knew ===> jdrop
+! 9. XPT(i, :), FVAL(:) should be indexed by j; k is for iterations (fhist and ffilt)

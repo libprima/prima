@@ -2,10 +2,48 @@ module update_mod
 
 implicit none
 private
-public :: updatepole, findpole
+public :: updatexfc, updatepole, findpole
 
 
 contains
+
+
+subroutine updatexfc(jdrop, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
+! Revise the simplex by updating the elements of SIM, SIMI, FVAL, CONMAT, and CVAL.
+
+! Generic modules
+use consts_mod, only : IK, RP, DEBUGGING
+use lina_mod, only : matprod, inprod, outprod
+
+implicit none
+
+! Input
+integer(IK), intent(in) :: jdrop
+real(RP), intent(in) :: constr(:)
+real(RP), intent(in) :: cstrv
+real(RP), intent(in) :: d(:)
+real(RP), intent(in) :: f
+
+! In-outputs
+real(RP), intent(inout) :: conmat(:, :)
+real(RP), intent(inout) :: cval(:)
+real(RP), intent(inout) :: fval(:)
+real(RP), intent(inout) :: sim(:, :)
+real(RP), intent(inout) :: simi(:, :)
+
+! Local variables
+real(RP) :: simi_jdrop(size(simi, 2))
+
+sim(:, jdrop) = d
+simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), d)
+simi = simi - outprod(matprod(simi, d), simi_jdrop)
+simi(jdrop, :) = simi_jdrop
+fval(jdrop) = f
+conmat(:, jdrop) = constr
+cval(jdrop) = cstrv
+
+end subroutine updatexfc
+
 
 subroutine updatepole(cpen, evaluated, conmat, cval, fval, sim, simi, info)
 ! This subroutine identifies the best vertex of the current simplex with respect to the merit

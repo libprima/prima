@@ -54,7 +54,7 @@ C mwPointer mxCreateDoubleMatrix(mwSize m, mwSize n, integer*4 ComplexFlag)
 C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
 
 C Some global variables
-      mwPointer, save :: fun_ptr, con_ptr
+      mwPointer, save :: fun_ptr, constr_ptr
 C Objective function and constraints (pointers)
       mwSize, save :: nf ! Number of function evaluations
 C nf should be of type mwSize, because it will be later used as an
@@ -75,7 +75,7 @@ C Entry point to Fortran MEX function
 C If the binary MEX file is named as FUNCTION_NAME.mex*** (file-name
 C extension depends on the platform), then the following function is
 C callable in matlab:
-C [xopt, fopt, info, nf, fhist, convalopt, constrviolation, chist] = FUNCTION_NAME(fun, con, x0, rhobeg, rhoend, maxfun, m, ftarget, conval_x0)
+C [xopt, fopt, info, nf, fhist, convalopt, constrviolation, chist] = FUNCTION_NAME(fun, constr, x0, rhobeg, rhoend, maxfun, m, ftarget, conval_x0)
 
       use fcobyla
       use cobyla_mod, only : cobyla
@@ -145,7 +145,7 @@ C Input 1: fun (function handle)
           call mexErrMsgIdAndTxt('fcobyla:WrongInput',
      &    'fcobyla: Input 1 should be a function handle.')
       end if
-C Input 2: con (function handle)
+C Input 2: constr (function handle)
       if (mxIsClass(prhs(2), 'function_handle') .ne. 1) then
           call mexErrMsgIdAndTxt('fcobyla:WrongInput',
      &    'fcobyla: Input 2 should be a function handle.')
@@ -210,7 +210,7 @@ C Input 9: conval_x0 (double column, can be empty)
 
 C Read the inputs (there are 9)
       fun_ptr = prhs(1)
-      con_ptr = prhs(2)
+      constr_ptr = prhs(2)
       n = mxGetM(prhs(3)) ! This is why n should be of type mwSize
       n_int = int(n, kind(n_int))
 C n_int is used when a variable of type INTEGER is needed
@@ -318,7 +318,7 @@ C Although info and nf are integers logically, they are passed as double
       plhs(5) = mxCreateDoubleMatrix(mwOne, nf, notComplex)
       call mxCopyReal8ToPtr(fhist(1:nf),
      &     _MGETDB(plhs(5)), nf)
-C Set conval to the value of con(x)
+C Set conval to the value of constr(x)
       plhs(6) = mxCreateDoubleMatrix(m, mwOne, notComplex)
       call mxCopyReal8ToPtr(conval(1:m), _MGETDB(plhs(6)), m)
       plhs(7) = mxCreateDoubleScalar(resmax)
@@ -423,34 +423,35 @@ C Use extreme barrier to cope with 'hidden constraints'
       if (funval .gt. hugefun .or. is_nan(funval)) then
           funval = hugefun ! hugefun is defined in consts
       end if
+      funval = max(-hugefun, funval)
 
 C Free memory; note that plhs and prhs are just temporary variables in
 C this subroutine. We are NOT in mexFunction!
       call mxDestroyArray(plhs(1))
 C Not yet to free prhs(2), which will be used when evaluating the constraint
 
-C Evaluate the constraint (con_ptr) at x
+C Evaluate the constraint (constr_ptr) at x
       if (nf .eq. 0) then
-C The very first iteration needs con(x0), which was already evaluated in
+C The very first iteration needs constr(x0), which was already evaluated in
 C the matlab code (to get the value of m) and saved in fcobyla.mod as
-C conval_x0. Copy the value directly without calling con.
+C conval_x0. Copy the value directly without calling constr.
           conval(1:m) = conval_x0(1:m)
       else
           plhs(1) = mxCreateDoubleMatrix(m_mw, mwOne, notComplex)
-C Output of c_value = feval(con, x); see below
-          prhs(1) = con_ptr
-C First input of c_value = feval(con, x); see below; con_ptr is a global variable
+C Output of c_value = feval(constr, x); see below
+          prhs(1) = constr_ptr
+C First input of c_value = feval(constr, x); see below; constr_ptr is a global variable
 C prhs(2) was already set to x when evaluating fun
           if (0 .ne. mexCallMATLAB(intOne, plhs, intTwo,
      &        prhs, funFeval)) then
-C Execute matlab command: c_value = feval(con, x)
+C Execute matlab command: c_value = feval(constr, x)
               call mexErrMsgIdAndTxt('fcobyla:UnsuccessfulCall',
-     &        'fcobyla: mex fails to call con.')
+     &        'fcobyla: mex fails to call constr.')
           end if
           if (plhs(1) .eq. 0 .or. (m .gt. 0 .and.
      &        _MGETDB(plhs(1)) .eq. 0)) then
               call mexErrMsgIdAndTxt('fcobyla:UnsuccessfulCall',
-     &        'fcobyla: NULL pointer returned when mex calls con.')
+     &        'fcobyla: NULL pointer returned when mex calls constr.')
           end if
           if (m .gt. 0 .and. (mxGetM(plhs(1)) .ne. m .or.
      &        mxGetN(plhs(1)) .ne. 1 .or.
@@ -467,7 +468,7 @@ C Calculate the constraint violation (named 'RESMAX' in Powell's COBYLA code)
       resmax = zero ! zero is defined in module 'consts'.
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Code without extreme barrier:
-C Constraint: con(x) >= 0
+C Constraint: constr(x) >= 0
 C      do k = 1, m
 C          if (conval(k) .ne. conval(k)) then
 C              resmax = conval(k) ! Set resmax=NaN if conval contains NaN
@@ -478,7 +479,7 @@ C          end if
 C      end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C Use extreme barrier to cope with 'hidden constraints'
-C Constraint: con(x) >= 0
+C Constraint: constr(x) >= 0
       do k = 1, m
           if (conval(k) .lt. -hugecon .or. is_nan(conval(k))) then
               conval(k) = -hugecon ! hugecon is defined in consts
