@@ -7,15 +7,15 @@ public :: savehist, savefilt
 contains
 
 
-subroutine savehist(nf, con, cstrv, f, x, chist, conhist, fhist, xhist)
-! This subroutine saves X, F, CON, and CSTRV into XHIST, FHIST, CONHIST, and CHIST respectively.
+subroutine savehist(nf, constr, cstrv, f, x, chist, conhist, fhist, xhist)
+! This subroutine saves X, F, CONSTR, and CSTRV into XHIST, FHIST, CONHIST, and CHIST respectively.
 use consts_mod, only : RP, IK, DEBUGGING
 use debug_mod, only : errstop, verisize
 implicit none
 
 ! Inputs
 integer(IK), intent(in) :: nf
-real(RP), intent(in) :: con(:)
+real(RP), intent(in) :: constr(:)
 real(RP), intent(in) :: cstrv
 real(RP), intent(in) :: f
 real(RP), intent(in) :: x(:)
@@ -37,7 +37,7 @@ integer(IK) :: n
 character(len=*), parameter :: srname = 'SAVEHIST'
 
 ! Get and verify the sizes.
-m = size(con)
+m = size(constr)
 n = size(x)
 maxxhist = size(xhist, 2)
 maxfhist = size(fhist)
@@ -63,7 +63,7 @@ if (DEBUGGING) then
 end if
 
 ! Save the history. Note that NF may exceed the maximal amount of history to save. We save X, F,
-! CON, and CSTRV at the position indexed by MOD(NF - 1, MAXHIST) + 1. Before the solver terminates,
+! CONSTR, and CSTRV at the position indexed by MOD(NF - 1, MAXHIST) + 1. Before the solver terminates,
 ! the history will be re-ordered so that the information is in the chronological order.
 if (maxxhist > 0) then
     xhist(:, mod(nf - 1_IK, maxhist) + 1_IK) = x
@@ -72,7 +72,7 @@ if (maxfhist > 0) then
     fhist(mod(nf - 1_IK, maxhist) + 1_IK) = f
 end if
 if (maxconhist > 0) then
-    conhist(:, mod(nf - 1_IK, maxhist) + 1_IK) = con
+    conhist(:, mod(nf - 1_IK, maxhist) + 1_IK) = constr
 end if
 if (maxchist > 0) then
     chist(mod(nf - 1_IK, maxhist) + 1_IK) = cstrv
@@ -81,7 +81,7 @@ end if
 end subroutine savehist
 
 
-subroutine savefilt(con, cstrv, ctol, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
+subroutine savefilt(constr, cstrv, ctol, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
 ! This subroutine saves XDROP in XSAV and DATDROP in DATSAV, unless a vector in XSAV(:, 1:NFILT) is
 ! better than XDROP. If XDROP is better than some vectors in XSAV(:, 1:NFILT), then these vectors
 ! will be removed. If XDROP is not better than any of XSAV(:, 1:NFILT) but NFILT=NFILTMAX, then we
@@ -103,7 +103,7 @@ use selectx_mod, only : isbetter
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: con(:)  ! M
+real(RP), intent(in) :: constr(:)  ! M
 real(RP), intent(in) :: cstrv
 real(RP), intent(in) :: ctol
 real(RP), intent(in) :: f
@@ -126,7 +126,7 @@ logical :: better(nfilt)
 logical :: keep(nfilt)
 character(len=*), parameter :: srname = 'SAVEFILT'
 
-m = size(con)
+m = size(constr)
 n = size(x)
 nfiltmax = size(ffilt)
 
@@ -171,7 +171,7 @@ cfilt(1:nfilt - 1) = cfilt(index_to_keep)
 deallocate (index_to_keep)
 xfilt(:, nfilt) = x
 ffilt(nfilt) = f
-confilt(:, nfilt) = con
+confilt(:, nfilt) = constr
 cfilt(nfilt) = cstrv
 
 end subroutine savefilt
