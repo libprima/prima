@@ -1,7 +1,7 @@
 ! INITIALIZE_MOD is a module containing subroutine(s) for initialization.
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the COBYLA paper.
 !
-! Last Modified: Friday, August 27, 2021 PM03:57:14
+! Last Modified: Sunday, August 29, 2021 AM08:31:22
 
 module initialize_mod
 
@@ -59,7 +59,7 @@ integer(IK) :: maxfhist
 integer(IK) :: maxhist
 integer(IK) :: maxxhist
 integer(IK) :: n
-real(RP) :: con(size(conmat, 1))
+real(RP) :: constr(size(conmat, 1))
 real(RP) :: cstrv
 real(RP) :: f
 real(RP) :: x(size(x0))
@@ -115,23 +115,26 @@ do k = 1, n + 1
     end if
 
     if (any(is_nan(x))) then
-        ! Set F and CON to NaN. This is necessary if the initial X contains NaN.
+        ! Set F and CONSTR to NaN. This is necessary if the initial X contains NaN.
         f = sum(x)
-        con = f
+        constr = f
     else
-        call calcfc(n, m, x, f, con)  ! Evaluate F and CON.
+        call calcfc(n, m, x, f, constr)  ! Evaluate F and CONSTR.
+    end if
+    if (any(is_nan(constr))) then
+        cstrv = sum(constr)  ! Set CSTRV to NaN.
+    else
+        cstrv = maxval([-constr, ZERO])  ! Constraint violation for constraints CONSTR(X) >= 0.
     end if
     evaluated(j) = .true.
-    if (any(is_nan(con))) then
-        cstrv = sum(con)  ! Set CSTRV to NaN.
-    else
-        cstrv = maxval([-con, ZERO])  ! Constraint violation for constraints CON(X) >= 0.
-    end if
+    ! Save X, F, CONSTR, CSTRV into the history.
+    call savehist(k, constr, cstrv, f, x, chist, conhist, fhist, xhist)
+    ! Save F, CONSTR, and CSTRV to FVAL, CONMAT, and CVAL respectively. This must be done before
+    ! checking whether to exit. If exit, FVAL, CONMAT, and CVAL will define FFILT, CONFILT, and
+    ! CFILT, which will define the returned X, F, CONSTR, and CSTRV.
     fval(j) = f
-    conmat(:, j) = con
+    conmat(:, j) = constr
     cval(j) = cstrv
-    ! Save X, F, CON, CSTRV into the history.
-    call savehist(k, con, cstrv, f, x, chist, conhist, fhist, xhist)
     ! Check whether to exit.
     if (any(is_nan(x))) then
         info = NAN_X

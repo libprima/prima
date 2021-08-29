@@ -7,7 +7,7 @@ public :: cobyla
 
 contains
 
-subroutine cobyla(n, m, x, rhobeg, rhoend, iprint, maxfun, f, info, ftarget, cstrv, con)
+subroutine cobyla(n, m, x, rhobeg, rhoend, iprint, maxfun, f, info, ftarget, cstrv, constr)
 ! Generic modules
 use consts_mod, only : RP, IK, EPS, DEBUGGING
 use infnan_mod, only : is_nan, is_posinf
@@ -38,7 +38,7 @@ real(RP), intent(inout) :: x(:)
 
 ! Outputs
 integer(IK), intent(out) :: info
-real(RP), intent(out) :: con(:)
+real(RP), intent(out) :: constr(:)
 real(RP), intent(out) :: f
 real(RP), intent(out) :: cstrv
 !*++
@@ -140,12 +140,12 @@ character(len=*), parameter :: srname = 'COBYLA'
 !
 !     In order to define the objective and constraint functions, we require
 !     a subroutine that has the name and arguments
-!                SUBROUTINE CALCFC (N,M,X,F,CON)
-!                DIMENSION X(*),CON(*)  .
+!                SUBROUTINE CALCFC (N,M,X,F,CONSTR)
+!                DIMENSION X(*),CONSTR(*)  .
 !     The values of N and M are fixed and have been defined already, while
 !     X is now the current vector of variables. The subroutine should return
-!     the objective and constraint functions at X in F and CON(1),CON(2),
-!     ...,CON(M). Note that we are trying to adjust X so that F(X) is as
+!     the objective and constraint functions at X in F and CONSTR(1),CONSTR(2),
+!     ...,CONSTR(M). Note that we are trying to adjust X so that F(X) is as
 !     small as possible subject to the constraint functions being nonnegative.
 !
 !     Partition the working space array W to provide the storage that is needed
@@ -183,7 +183,7 @@ call safealloc(xhist_c, n, maxxhist)
 call safealloc(fhist_c, maxfhist)
 call safealloc(conhist_c, m, maxconhist)
 call safealloc(chist_c, maxchist)
-call cobylb(iprint, maxfun, ctol, ftarget, rhobeg, rhoend, con, x, nf_c, chist_c, conhist_c, cstrv, f, fhist_c, xhist_c, info)
+call cobylb(iprint, maxfun, ctol, ftarget, rhobeg, rhoend, constr, x, nf_c, chist_c, conhist_c, cstrv, f, fhist_c, xhist_c, info)
 call safealloc(xhist, n, min(nf_c, maxxhist))
 xhist = xhist_c(:, 1:min(nf_c, maxxhist))
 deallocate (xhist_c)

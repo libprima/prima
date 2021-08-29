@@ -7,7 +7,7 @@ public :: cobylb
 
 contains
 
-subroutine cobylb(iprint, maxfun, ctol, ftarget, rhobeg, rhoend, con, x, nf, chist, conhist, cstrv, f, fhist, xhist, info)
+subroutine cobylb(iprint, maxfun, ctol, ftarget, rhobeg, rhoend, constr, x, nf, chist, conhist, cstrv, f, fhist, xhist, info)
 
 ! Generic modules
 use consts_mod, only : RP, IK, ZERO, TWO, HALF, QUART, TENTH, HUGENUM, DEBUGGING
@@ -37,7 +37,7 @@ real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: rhoend
 
 ! In-outputs
-real(RP), intent(out) :: con(:) ! M
+real(RP), intent(out) :: constr(:) ! M
 real(RP), intent(inout) :: x(:)  ! N
 
 ! Outputs
@@ -68,26 +68,27 @@ integer(IK) :: maxhist
 integer(IK) :: n
 integer(IK) :: nfilt
 integer(IK) :: subinfo
-real(RP) :: A(size(x), size(con) + 1)
+real(RP) :: A(size(x), size(constr) + 1)
 ! A(:, 1:M) contains the approximate gradient for the constraints, and A(:, M+1) is minus the
 ! approximate gradient for the objective function.
-real(RP) :: b(size(con) + 1)
+real(RP) :: actrem
+real(RP) :: b(size(constr) + 1)
 real(RP) :: barmu
-real(RP) :: cmax(size(con))
-real(RP) :: cmin(size(con))
+real(RP) :: cfilt(min(max(maxfilt, 0), maxfun))
+real(RP) :: cmax(size(constr))
+real(RP) :: cmin(size(constr))
+real(RP) :: confilt(size(constr), size(cfilt))
+real(RP) :: conmat(size(constr), size(x) + 1)
 real(RP) :: cpen  ! Penalty parameter for constraint in merit function (PARMU in Powell's code)
-real(RP) :: conmat(size(con), size(x) + 1)
-real(RP) :: confilt(size(con), max(maxfilt, 0))
-real(RP) :: cfilt(max(maxfilt, 0))
-real(RP) :: ffilt(max(maxfilt, 0))
-real(RP) :: denom
-real(RP) :: d(size(x))
-real(RP) :: fval(size(x) + 1)
 real(RP) :: cval(size(x) + 1)
+real(RP) :: d(size(x))
+real(RP) :: denom
 real(RP) :: factor_alpha
 real(RP) :: factor_beta
 real(RP) :: factor_delta
 real(RP) :: factor_gamma
+real(RP) :: ffilt(size(cfilt))
+real(RP) :: fval(size(x) + 1)
 real(RP) :: prerec  ! Predicted reduction in Constraint violation
 real(RP) :: preref  ! Predicted reduction in objective Function
 real(RP) :: prerem  ! Predicted reduction in Merit function
@@ -95,10 +96,8 @@ real(RP) :: rho
 real(RP) :: sim(size(x), size(x) + 1)  ! (n, )
 real(RP) :: simi(size(x), size(x))  ! (n, )
 real(RP) :: simi_jdrop(size(x))
-real(RP) :: actrem
-real(RP) :: xfilt(size(x), max(maxfilt, 0))
+real(RP) :: xfilt(size(x), size(cfilt))
 logical :: evaluated(size(x) + 1)
-logical :: alltrue(size(x) + 1)
 logical :: bad_trstep
 logical :: good_geo
 logical :: improve_geo
@@ -106,11 +105,10 @@ logical :: reduce_rho
 logical :: shortd
 character(len=*), parameter :: srname = 'COBYLB'
 
-alltrue = .true.
 reduce_rho = .false.
 
 ! Get and verify the sizes.
-m = size(con)
+m = size(constr)
 n = size(x)
 maxxhist = size(xhist, 2)
 maxfhist = size(fhist)
@@ -152,21 +150,21 @@ call initfilt(conmat, ctol, cval, fval, sim, evaluated, nfilt, cfilt, confilt, f
 if (subinfo == NAN_X .or. subinfo == NAN_INF_F .or. subinfo == FTARGET_ACHIEVED .or. subinfo == MAXFUN_REACHED) then
     info = subinfo
     ! Return the best calculated values of the variables.
+    ! N.B. SELECTX and FINDPOLE choose X by different standards. One cannot replace the other.
     cpen = min(1.0E8_RP, HUGENUM)
     kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), cpen, ctol)
     x = xfilt(:, kopt)
     f = ffilt(kopt)
-    con = confilt(:, kopt)
+    constr = confilt(:, kopt)
     cstrv = cfilt(kopt)
     !close (16)
     return
-else
-    simi = inv(sim(:, 1:n), 'ltri')  ! SIMI is the inverse of SIM(:, 1:n)
-    x = sim(:, n + 1)
-    f = fval(n + 1)
-    con = conmat(:, n + 1)
-    cstrv = cval(n + 1)
 end if
+
+! SIMI is the inverse of SIM(:, 1:N)
+simi = inv(sim(:, 1:n), 'ltri')
+! If we arrive here, the objective and constraints must have been evaluated at SIM(:, I) for all I.
+evaluated = .true.
 
 ! Normally, each trust-region iteration takes one function evaluation. The following setting
 ! essentially imposes no constraint on the maximal number of trust-region iterations.
@@ -183,7 +181,7 @@ info = MAXTR_REACHED
 ! COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
     ! Before the trust-region step, call UPDATEPOLE so that SIM(:, N + 1) is the optimal vertex.
-    call updatepole(cpen, alltrue, conmat, cval, fval, sim, simi, subinfo)
+    call updatepole(cpen, evaluated, conmat, cval, fval, sim, simi, subinfo)
     if (subinfo == DAMAGING_ROUNDING) then
         info = subinfo
         exit
@@ -212,7 +210,7 @@ do tr = 1, maxtr
         exit
     end if
 
-    ! In theory (but not computation), the last entry of B can be any number.
+    ! Theoretically (but not numerically), the last entry of B does not affect the result of TRSTLP.
     b = [-conmat(:, n + 1), -fval(n + 1)]
     ! Calculate the trust-region trial step D.
     d = trstlp(A, b, rho)
@@ -232,7 +230,7 @@ do tr = 1, maxtr
         !!!!!!!!!!!!!!! Is it possible that PREREC <= 0????????????? It seems yes.
         if (prerec > ZERO .and. cpen < 1.5E0_RP * barmu) then
             cpen = min(TWO * barmu, HUGENUM)
-            if (findpole(cpen, alltrue, cval, fval) <= n) then
+            if (findpole(cpen, evaluated, cval, fval) <= n) then
                 cycle
             end if
         end if
@@ -242,20 +240,20 @@ do tr = 1, maxtr
         x = sim(:, n + 1) + d
         if (any(is_nan(x))) then
             f = sum(x) ! Set F to NaN.
-            con = f  ! Set CON to NaN.
+            constr = f  ! Set CONSTR to NaN.
         else
-            call calcfc(n, m, x, f, con)  ! Evaluate F and CON.
+            call calcfc(n, m, x, f, constr)  ! Evaluate F and CONSTR.
+        end if
+        if (any(is_nan(constr))) then
+            cstrv = sum(constr)  ! Set CSTRV to NaN.
+        else
+            cstrv = maxval([-constr, ZERO])  ! Constraint violation for constraints CONSTR(X) >= 0.
         end if
         nf = nf + 1_IK
-        if (any(is_nan(con))) then
-            cstrv = sum(con)  ! Set CSTRV to NaN.
-        else
-            cstrv = maxval([-con, ZERO])  ! Constraint violation for constraints CON(X) >= 0.
-        end if
-        ! Save X, F, CON, CSTRV into the history.
-        call savehist(nf, con, cstrv, f, x, chist, conhist, fhist, xhist)
-        ! Save X, F, CON, CSTRV into the filter.
-        call savefilt(con, cstrv, ctol, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
+        ! Save X, F, CONSTR, CSTRV into the history.
+        call savehist(nf, constr, cstrv, f, x, chist, conhist, fhist, xhist)
+        ! Save X, F, CONSTR, CSTRV into the filter.
+        call savefilt(constr, cstrv, ctol, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
         ! Check whether to exit.
         if (any(is_nan(x))) then
             info = NAN_X
@@ -283,6 +281,7 @@ do tr = 1, maxtr
         end if
 
         ! Set JDROP to the index of the vertex that is to be replaced by X.
+        ! N.B.: COBYLA never sets JDROP = N + 1.
         jdrop = setdrop_tr(actrem, d, factor_alpha, factor_delta, rho, sim, simi)
 
         ! When JDROP=0, the algorithm decides not to include X into the simplex.
@@ -293,7 +292,7 @@ do tr = 1, maxtr
             simi = simi - outprod(matprod(simi, d), simi_jdrop)
             simi(jdrop, :) = simi_jdrop
             fval(jdrop) = f
-            conmat(:, jdrop) = con
+            conmat(:, jdrop) = constr
             cval(jdrop) = cstrv
         end if
 
@@ -311,7 +310,7 @@ do tr = 1, maxtr
 
     if (improve_geo) then
         ! Before the geometry step, call UPDATEPOLE so that SIM(:, N + 1) is the optimal vertex.
-        call updatepole(cpen, alltrue, conmat, cval, fval, sim, simi, subinfo)
+        call updatepole(cpen, evaluated, conmat, cval, fval, sim, simi, subinfo)
         if (subinfo == DAMAGING_ROUNDING) then
             info = subinfo
             exit
@@ -333,6 +332,7 @@ do tr = 1, maxtr
         if (.not. goodgeo(factor_alpha, factor_beta, rho, sim, simi)) then
             ! Decide a vertex to drop from the simplex. It will be replaced by SIM(:, N + 1) + D to
             ! improve acceptability of the simplex. See equations (15) and (16) of the COBYLA paper.
+            ! N.B.: COBYLA never sets JDROP = N + 1.
             jdrop = setdrop_geo(factor_alpha, factor_beta, rho, sim, simi)
 
             ! If JDROP = 0 (probably due to NaN in SIM or SIMI), then we exit. Without this, memory
@@ -345,29 +345,23 @@ do tr = 1, maxtr
             ! Calculate the geometry step D.
             d = geostep(jdrop, cpen, conmat, cval, fval, factor_gamma, rho, simi)
 
-            ! Update SIM and SIMI.
-            sim(:, jdrop) = d  ! Corresponding to the new vertex SIM(:, N + 1) + D
-            simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), d)
-            simi = simi - outprod(matprod(simi, d), simi_jdrop)
-            simi(jdrop, :) = simi_jdrop
-
             x = sim(:, n + 1) + d
             if (any(is_nan(x))) then
                 f = sum(x) ! Set F to NaN.
-                con = f  ! Set CON to NaN.
+                constr = f  ! Set CONSTR to NaN.
             else
-                call calcfc(n, m, x, f, con)  ! Evaluate F and CON.
+                call calcfc(n, m, x, f, constr)  ! Evaluate F and CONSTR.
+            end if
+            if (any(is_nan(constr))) then
+                cstrv = sum(constr)  ! Set CSTRV to NaN.
+            else
+                cstrv = maxval([-constr, ZERO])
             end if
             nf = nf + 1_IK
-            if (any(is_nan(con))) then
-                cstrv = sum(con)  ! Set CSTRV to NaN.
-            else
-                cstrv = maxval([-con, ZERO])
-            end if
-            ! Save X, F, CON, CSTRV into the history.
-            call savehist(nf, con, cstrv, f, x, chist, conhist, fhist, xhist)
-            ! Save X, F, CON, CSTRV into the filter.
-            call savefilt(con, cstrv, ctol, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
+            ! Save X, F, CONSTR, CSTRV into the history.
+            call savehist(nf, constr, cstrv, f, x, chist, conhist, fhist, xhist)
+            ! Save X, F, CONSTR, CSTRV into the filter.
+            call savefilt(constr, cstrv, ctol, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
             ! Check whether to exit.
             if (any(is_nan(x))) then
                 info = NAN_X
@@ -386,10 +380,14 @@ do tr = 1, maxtr
                 exit
             end if
 
+            ! Revise the simplex by updating the elements of SIM, SIMI, FVAL, CONMAT, and CVAL.
+            sim(:, jdrop) = d
+            simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), d)
+            simi = simi - outprod(matprod(simi, d), simi_jdrop)
+            simi(jdrop, :) = simi_jdrop
             fval(jdrop) = f
-            conmat(:, jdrop) = con
+            conmat(:, jdrop) = constr
             cval(jdrop) = cstrv
-
         end if
     end if
 
@@ -417,11 +415,12 @@ do tr = 1, maxtr
 end do
 
 ! Return the best calculated values of the variables.
+! N.B. SELECTX and FINDPOLE choose X by different standards. One cannot replace the other.
 cpen = max(cpen, min(1.0E8_RP, HUGENUM))
 kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), cpen, ctol)
 x = xfilt(:, kopt)
 f = ffilt(kopt)
-con = confilt(:, kopt)
+constr = confilt(:, kopt)
 cstrv = cfilt(kopt)
 
 !close (16)
@@ -430,3 +429,10 @@ end subroutine cobylb
 
 
 end module cobylb_mod
+
+! TODO:
+! 1. evalcfc
+! 2. checkexit
+! 3. update, absorbing updatepole
+! 4. Do the same for initialize
+! 5. Do the same for NEWUOA

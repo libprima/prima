@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, August 27, 2021 PM03:27:47
+! Last Modified: Sunday, August 29, 2021 AM11:59:51
 
 module newuob_mod
 
@@ -318,8 +318,8 @@ do tr = 1, maxtr
 
         if (knew_tr > 0) then
             ! If KNEW_TR > 0, then update BMAT, ZMAT and IDZ, so that the KNEW_TR-th interpolation
-            ! point is replaced by XNEW. If KNEW_TR = 0, then probably the geometry of XPT needs
-            ! improvement, which will be handled below.
+            ! point is replaced by XNEW, whose information is included in VLAG and BET. If KNEW_TR
+            ! is 0, then probably the geometry of XPT needs improvement, which will be handled below.
             call updateh(knew_tr, beta, vlag, idz, bmat, zmat)
 
             ! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
@@ -506,7 +506,8 @@ do tr = 1, maxtr
             exit
         end if
 
-        ! Update BMAT, ZMAT and IDZ, so that the KNEW_GEO-th interpolation point can be moved.
+        ! Update BMAT, ZMAT and IDZ, so that the KNEW_GEO-th interpolation point is replaced by
+        ! XNEW, whose information is in VLAG and BETA.
         call updateh(knew_geo, beta, vlag, idz, bmat, zmat)
 
         ! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
