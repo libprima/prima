@@ -27,12 +27,12 @@ end interface
 
 
 abstract interface
-    subroutine FCEVAL(x, f, con)
+    subroutine FCEVAL(x, f, constr)
     use consts_mod, only : RP
     implicit none
     real(RP), intent(in) :: x(:)
     real(RP), intent(out) :: f
-    real(RP), intent(out) :: con(:)
+    real(RP), intent(out) :: constr(:)
     end subroutine FCEVAL
 end interface
 

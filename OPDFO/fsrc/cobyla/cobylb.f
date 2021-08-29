@@ -111,6 +111,12 @@ C     By Zaikun (02-06-2019):
       END DO
 
       CALL CALCFC (N,M,X,F,CON)
+      !!11111!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      if (F /= F) F = HUGEFUN
+      where (CON(1:M) /= CON(1:M)) CON(1:M) = HUGECON
+      F = MAX(MIN(F, HUGEFUN), -HUGEFUN)
+      CON(1:M) = MAX(MIN(CON(1:M), HUGECON), -HUGECON)
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       NFVALS=NFVALS+1
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC

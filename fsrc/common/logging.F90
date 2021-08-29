@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and papers.
 !
-! Last Modified: Friday, July 02, 2021 AM11:39:27
+! Last Modified: Friday, August 27, 2021 PM09:22:21
 
 
 module logging_mod
@@ -15,7 +15,7 @@ public :: logging
 contains
 
 
-subroutine logging(logfile, srname, lnnum, nf, f, x, con, conv, mssg)
+subroutine logging(logfile, srname, lnnum, nf, f, x, constr, conv, mssg)
 use consts_mod, only : RP, IK
 implicit none
 
@@ -24,7 +24,7 @@ integer(IK), intent(in) :: lnnum
 integer(IK), intent(in) :: nf
 real(RP), intent(in) :: f
 real(RP), optional, intent(in) :: x(:)
-real(RP), optional, intent(in) :: con(:)
+real(RP), optional, intent(in) :: constr(:)
 real(RP), optional, intent(in) :: conv
 character(len=*), intent(in) :: logfile
 character(len=*), intent(in) :: srname
@@ -49,7 +49,7 @@ if (ios /= 0) then
 else
     write (LOGUNIT, '(/1A, I5, 4X, 1A, I7, 4X, 1A, 1PD23.15)') 'In '//trim(srname)//', Line number', lnnum, &
         & 'Function number', nf, 'F = ', f
-    if (present(con)) then
+    if (present(constr)) then
         write (LOGUNIT, '(1A, 1PD23.15)') 'The constraint violation is:', conv
     end if
     if (present(mssg)) then
@@ -58,8 +58,8 @@ else
     if (present(x)) then
         write (LOGUNIT, '(1A, /(1P, 5D23.15))') 'The corresponding X is:', x
     end if
-    if (present(con)) then
-        write (LOGUNIT, '(1A, /(1P, 5D23.15))') 'The constraint is:', con
+    if (present(constr)) then
+        write (LOGUNIT, '(1A, /(1P, 5D23.15))') 'The constraint is:', constr
     end if
     close (LOGUNIT)
 end if

@@ -1,7 +1,7 @@
 ! INITIALIZE_MOD is a module containing subroutine(s) for initialization.
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the COBYLA paper.
 !
-! Last Modified: Sunday, August 29, 2021 AM08:31:22
+! Last Modified: Sunday, August 29, 2021 PM06:29:20
 
 module initialize_mod
 
@@ -17,14 +17,16 @@ subroutine initxfc(iprint, maxfun, ctol, ftarget, rho, x0, nf, chist, conhist, c
 
 ! Generic modules
 use consts_mod, only : RP, IK, ZERO, HUGENUM, DEBUGGING
-use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, NAN_X, NAN_INF_F
+use info_mod, only : INFO_DFT, FTARGET_ACHIEVED, MAXFUN_REACHED, NAN_X, NAN_INF_F
 use infnan_mod, only : is_nan, is_posinf
 use debug_mod, only : errstop, verisize
 use output_mod, only : retmssg, rhomssg, fmssg
 use lina_mod, only : eye
+use evalfc_mod, only : evalfc
 
 ! Solver-specific modules
 use history_mod, only : savehist
+use checkexit_mod, only : checkexit
 
 implicit none
 
@@ -59,6 +61,7 @@ integer(IK) :: maxfhist
 integer(IK) :: maxhist
 integer(IK) :: maxxhist
 integer(IK) :: n
+integer(IK) :: subinfo
 real(RP) :: constr(size(conmat, 1))
 real(RP) :: cstrv
 real(RP) :: f
@@ -100,7 +103,7 @@ sim = rho * eye(n, n + 1)
 sim(:, n + 1) = x0
 fval = HUGENUM
 cval = HUGENUM
-info = 0_IK
+info = INFO_DFT
 ! EVALUATED(J) = TRUE iff the function/constraint of SIM(:, J) has been evaluated.
 evaluated = .false.
 
@@ -113,19 +116,7 @@ do k = 1, n + 1
         j = k - 1
         x(j) = x(j) + rho
     end if
-
-    if (any(is_nan(x))) then
-        ! Set F and CONSTR to NaN. This is necessary if the initial X contains NaN.
-        f = sum(x)
-        constr = f
-    else
-        call calcfc(n, m, x, f, constr)  ! Evaluate F and CONSTR.
-    end if
-    if (any(is_nan(constr))) then
-        cstrv = sum(constr)  ! Set CSTRV to NaN.
-    else
-        cstrv = maxval([-constr, ZERO])  ! Constraint violation for constraints CONSTR(X) >= 0.
-    end if
+    call evalfc(x, f, constr, cstrv)
     evaluated(j) = .true.
     ! Save X, F, CONSTR, CSTRV into the history.
     call savehist(k, constr, cstrv, f, x, chist, conhist, fhist, xhist)
@@ -136,20 +127,9 @@ do k = 1, n + 1
     conmat(:, j) = constr
     cval(j) = cstrv
     ! Check whether to exit.
-    if (any(is_nan(x))) then
-        info = NAN_X
-        exit
-    end if
-    if (is_nan(f) .or. is_posinf(f) .or. is_nan(cstrv) .or. is_posinf(cstrv)) then
-        info = NAN_INF_F
-        exit
-    end if
-    if (f <= ftarget .and. cstrv <= ctol) then
-        info = FTARGET_ACHIEVED
-        exit
-    end if
-    if (k >= maxfun) then
-        info = MAXFUN_REACHED
+    subinfo = checkexit(maxfun, k, cstrv, ctol, f, ftarget, x)
+    if (subinfo /= INFO_DFT) then
+        info = subinfo
         exit
     end if
 

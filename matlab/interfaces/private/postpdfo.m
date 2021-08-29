@@ -60,7 +60,7 @@ else
     invoker = callstack(2).name; % Name of the function who calls this function
 end
 
-% With extreme barrier (implemented when options.classical=false), all
+% With the extreme barrier (implemented when options.classical=false), all
 % the function values that are NaN or larger than hugefun are replaced
 % by hugefun; all the constraint values that are NaN or larger than
 % hugecon are replaced by hugecon. hugefun and hugecon are defined in
@@ -250,10 +250,10 @@ if ~options.classical && ~probinfo.infeasible && ~probinfo.nofreex
     if any(fhist > hugefun) || any(isnan(fhist))
         % Public/unexpected error
         error(sprintf('%s:InvalidFhist', invoker), ...
-             '%s: UNEXPECTED ERROR: %s returns an fhist with NaN or values larger than hugefun=%1.2e; this is impossible with extreme barrier.', invoker, solver, hugefun);
+             '%s: UNEXPECTED ERROR: %s returns an fhist with NaN or values larger than hugefun=%1.2e; this is impossible with the extreme barrier.', invoker, solver, hugefun);
     elseif ~isempty(fhist) && max(fhist) == hugefun
         wid = sprintf('%s:ExtremeBarrier', invoker);
-        wmessage = sprintf('%s: extreme barrier is invoked; function values that are NaN or larger than hugefun=%1.2e are replaced by hugefun.', invoker, hugefun);
+        wmessage = sprintf('%s: the extreme barrier is invoked; function values that are NaN or larger than hugefun=%1.2e are replaced by hugefun.', invoker, hugefun);
         warning(wid, '%s', wmessage);
         output.warnings = [output.warnings, wmessage];
     end
@@ -296,10 +296,10 @@ if ~options.classical && ~probinfo.infeasible && ~probinfo.nofreex
     if strcmp(solver, 'cobylan') && (any(chist > hugecon) || any(isnan(chist)))
         % Public/unexpected error
         error(sprintf('%s:InvalidChist', invoker), ...
-             '%s: UNEXPECTED ERROR: %s returns a chist with NaN or values larger than hugecon=%1.2e; this is impossible with extreme barrier.', invoker, solver, hugecon);
+             '%s: UNEXPECTED ERROR: %s returns a chist with NaN or values larger than hugecon=%1.2e; this is impossible with the extreme barrier.', invoker, solver, hugecon);
     elseif ~isempty(chist) && max(chist) == hugecon
         wid = sprintf('%s:ExtremeBarrier', invoker);
-        wmessage = sprintf('%s: extreme barrier is invoked; constraint values that are NaN or larger than hugecon=%1.2e are replaced by hugecon.', invoker, hugecon);
+        wmessage = sprintf('%s: the extreme barrier is invoked; constraint values that are NaN or larger than hugecon=%1.2e are replaced by hugecon.', invoker, hugecon);
         warning(wid, '%s', wmessage);
         output.warnings = [output.warnings, wmessage];
     end
@@ -554,7 +554,7 @@ if options.debug && ~options.classical
     % Check whether constrviolation is correct
     cobylan_prec = 1e-6;
     lincoan_prec = 1e-12;
-    % COBYLA cannot ensure fx=fun(x) or conval=con(x) due to rounding
+    % COBYLA cannot ensure fx=fun(x) or constr=con(x) due to rounding
     % errors. Instead of checking the equality, we check whether the
     % relative error is within cobylan_prec.
     % There can also be a difference between constrviolation and cstrv due
@@ -641,7 +641,7 @@ if options.debug && ~options.classical
         end
         if (funx ~= funx) || (funx > hugefun)
             funx = hugefun;
-            % Due to extreme barrier (implemented when options.classical=false),
+            % Due to the extreme barrier (implemented when options.classical=false),
             % all the function values that are NaN or larger than
             % hugefun are replaced by hugefun.
         end
@@ -677,7 +677,7 @@ if options.debug && ~options.classical
             nonlcon = probinfo.raw_data.nonlcon;
             if ~isempty(nonlcon)
                 [nlcineqx, nlceqx] = feval(nonlcon, x);
-                % Due to extreme barrier (implemented when options.classical=false),
+                % Due to the extreme barrier (implemented when options.classical=false),
                 % all the constraint values that are NaN or above hugecon
                 % are replaced by hugecon, and all those below -hugecon are
                 % replaced by -hugecon.

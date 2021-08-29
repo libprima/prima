@@ -320,10 +320,10 @@ else % The problem turns out 'normal' during prepdfo
     % Include all the constraints into one single 'nonlinear constraint'
     con = @(x) cobylan_con(x, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
     % Detect the number of the constraints (required by the Fortran code)
-    [conval_x0, m_nlcineq, m_nlceq] = con(x0);
+    [constr_x0, m_nlcineq, m_nlceq] = con(x0);
     % m_nlcineq = number of nonlinear inequality constraints
     % m_nlceq = number of nonlinear equality constraints
-    m = length(conval_x0); % number of constraints
+    m = length(constr_x0); % number of constraints
     % Extract the options
     maxfun = options.maxfun;
     rhobeg = options.rhobeg;
@@ -370,9 +370,9 @@ else % The problem turns out 'normal' during prepdfo
     % Call the Fortran code
     try % The mexified Fortran function is a private function generating only private errors; however, public errors can occur due to, e.g., evalobj and evalcon; error handling needed
         if options.classical
-            [x, fx, exitflag, nf, fhist, conval, constrviolation, chist] = fcobylan_classical(fun, con, x0, rhobeg, rhoend, maxfun, m, ftarget, conval_x0);
+            [x, fx, exitflag, nf, fhist, constr, constrviolation, chist] = fcobylan_classical(fun, con, x0, rhobeg, rhoend, maxfun, m, ftarget, constr_x0);
         else
-            [x, fx, exitflag, nf, fhist, conval, constrviolation, chist] = fcobylan(fun, con, x0, rhobeg, rhoend, maxfun, m, ftarget, conval_x0);
+            [x, fx, exitflag, nf, fhist, constr, constrviolation, chist] = fcobylan(fun, con, x0, rhobeg, rhoend, maxfun, m, ftarget, constr_x0);
         end
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
@@ -393,11 +393,11 @@ else % The problem turns out 'normal' during prepdfo
     output.nlcineq = [];
     output.nlceq = [];
     if ~isempty(nonlcon)
-        output.nlcineq = -conval(end-m_nlcineq-2*m_nlceq+1 : end-2*m_nlceq);
+        output.nlcineq = -constr(end-m_nlcineq-2*m_nlceq+1 : end-2*m_nlceq);
         if isempty(output.nlcineq)
             output.nlcineq = []; % We uniformly use [] to represent empty objects
         end
-        output.nlceq = -conval(end-m_nlceq+1 : end);
+        output.nlceq = -constr(end-m_nlceq+1 : end);
         if isempty(output.nlceq)
             output.nlceq = []; % We uniformly use [] to represent empty objects
         end
@@ -419,8 +419,8 @@ end
 return
 
 %%%%%%%%%%%%%%%%%%%%%%%%% Auxiliary functions %%%%%%%%%%%%%%%%%%%%%
-function [conval, m_nlcineq, m_nlceq] = cobylan_con(x, Aineq, bineq, Aeq, beq, lb, ub, nonlcon)
-% The Fortran backend takes at input a constraint: conval(x) >= 0
+function [constr, m_nlcineq, m_nlceq] = cobylan_con(x, Aineq, bineq, Aeq, beq, lb, ub, nonlcon)
+% The Fortran backend takes at input a constraint: constr(x) >= 0
 % m_nlcineq = number of nonlinear inequality constraints
 % m_nlceq = number of nonlinear equality constraints
 cineq = [lb(lb>-inf) - x(lb>-inf); x(ub<inf) - ub(ub<inf)];
@@ -431,12 +431,12 @@ end
 if ~isempty(Aeq)
     ceq = [ceq; Aeq*x - beq];
 end
-conval = [-cineq; ceq; -ceq];
+constr = [-cineq; ceq; -ceq];
 if ~isempty(nonlcon)
     [nlcineq, nlceq] = nonlcon(x); % Nonlinear constraints: nlcineq <= 0, nlceq = 0
     m_nlcineq = length(nlcineq);
     m_nlceq = length(nlceq);
-    conval = [conval; -nlcineq; nlceq; -nlceq];
+    constr = [constr; -nlcineq; nlceq; -nlceq];
 else
     m_nlcineq = 0;
     m_nlceq = 0;

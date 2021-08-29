@@ -1335,7 +1335,7 @@ end
 if options.chkfunval
     wid = sprintf('%s:Chkfunval', invoker);
     if strcmp(solver, 'cobylan')
-        wmessage = sprintf('%s: checking whether fx=fun(x) and conval=con(x) at exit, which costs an extra function/constraint evaluation; set options.chkfunval=false to disable the check.', invoker);
+        wmessage = sprintf('%s: checking whether fx=fun(x) and constr=con(x) at exit, which costs an extra function/constraint evaluation; set options.chkfunval=false to disable the check.', invoker);
     else
         wmessage = sprintf('%s: checking whether fx=fun(x) at exit, which costs an extra function evaluation; set options.chkfunval=false to disable the check.', invoker);
     end
