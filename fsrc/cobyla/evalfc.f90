@@ -31,19 +31,21 @@ if (any(is_nan(x))) then
 else
     call calcfc(size(x), size(constr), x, f, constr)  ! Evaluate F and CONSTR.
 
-    ! Handle "hidden constraints" (indicated by NaN/huge objective value or constraint violation)
-    ! with a "moderated extreme barrier". Surely, this is naive, and better approaches exist.
+    ! Moderated extreme barrier: replace NaN/huge objective or constraint values with a large but
+    ! finite value. This is naive, and better approaches surely exist.
     if (f > HUGEFUN .or. is_nan(f)) then
         f = HUGEFUN
     end if
     where (constr < -HUGECON .or. is_nan(constr))
+        ! The constraint is CONSTR(X) >= 0, so NaN should be replaced with a large negative value.
         constr = -HUGECON  ! MATLAB code: constr(constr < -HUGECON | isnan(constr)) = -HUGECON
     end where
 
-    ! Moderate excessively negative values of F and excessively positive values of CONSTR, or they
-    ! may lead to Inf/NaN in subsequent calculations. This is NOT extreme barrier.
-    f = max(-HUGEFUN, f)
+    ! Moderate huge positive values of CONSTR, or they may lead to Inf/NaN in subsequent calculations.
+    ! This is NOT an extreme barrier.
     constr = min(HUGECON, constr)
+    ! Moderate F similarly. (Shouldn't we?)
+    f = max(-HUGEFUN, f)
 
     ! Evaluate the constraint violation for constraints CONSTR(X) >= 0.
     cstrv = maxval([-constr, ZERO])

@@ -10,6 +10,8 @@ contains
 
 subroutine updatexfc(jdrop, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
 ! Revise the simplex by updating the elements of SIM, SIMI, FVAL, CONMAT, and CVAL.
+! N.B.: UPDATEXFC does NOT manipulate the simplex so that SIM(:, N+1) is the best vertex;
+! that is the job of UPDATEPOLE, which is called before each trust-region/geometry step.
 
 ! Generic modules
 use consts_mod, only : IK, RP, DEBUGGING

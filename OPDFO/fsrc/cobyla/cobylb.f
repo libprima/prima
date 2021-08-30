@@ -111,7 +111,7 @@ C     By Zaikun (02-06-2019):
       END DO
 
       CALL CALCFC (N,M,X,F,CON)
-      !!11111!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       if (F /= F) F = HUGEFUN
       where (CON(1:M) /= CON(1:M)) CON(1:M) = HUGECON
       F = MAX(MIN(F, HUGEFUN), -HUGEFUN)
@@ -143,8 +143,6 @@ C   60     RESMAX=AMAX1(RESMAX,-CON(K))
       CON(MP)=F
       CON(MPP)=RESMAX
 
-!      call logging('log1', 'cobyla', 133, nfvals, f, x(1:n), con(1:mpp),
-!     &     resmax, 'test')
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C By Zaikun 20190819:
 C CONSAV always containts the constraint value of the current x.
