@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Sunday, August 29, 2021 AM11:59:51
+! Last Modified: Tuesday, August 31, 2021 AM12:48:19
 
 module newuob_mod
 
@@ -44,17 +44,18 @@ subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 ! See Section 2 of the NEWUOA paper for more information about these variables.
 
 ! Generic modules
+use pintrf_mod, only : FUN
+use evaluate_mod, only : evalf
 use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENUM, DEBUGGING
 use info_mod, only : FTARGET_ACHIEVED, MAXTR_REACHED, MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
 use infnan_mod, only : is_nan, is_posinf
 use debug_mod, only : errstop, verisize
 use output_mod, only : retmssg, rhomssg, fmssg
 use lina_mod, only : calquad, inprod
+use history_mod, only : savehist
 
 ! Solver-specific modules
-use pintrf_mod, only : FUNEVAL
 use initialize_mod, only : initxf, initq, inith
-use history_mod, only : savehist
 use trustregion_mod, only : trsapp, trrad
 use geometry_mod, only : setdrop_tr, geostep
 use shiftbase_mod, only : shiftbase
@@ -64,7 +65,8 @@ use update_mod, only : updateh, updateq, tryqalt
 implicit none
 
 ! Inputs
-procedure(FUNEVAL) :: calfun
+procedure(FUN) :: calfun
+! N.B.: The INTENT attribute cannot be specified for a dummy procedure without the POINTER attribute.
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
 integer(IK), intent(in) :: npt
@@ -253,11 +255,7 @@ do tr = 1, maxtr
         ! Calculate the next value of the objective function.
         xnew = xopt + d
         x = xbase + xnew
-        if (any(is_nan(x))) then
-            f = sum(x)  ! Set F to NaN. It is necessary.
-        else
-            call calfun(x, f)
-        end if
+        call evalf(calfun, x, f)
         nf = nf + 1_IK
         call fmssg(iprint, nf, f, x, solver)
         ! Save X and F into the history.
@@ -455,11 +453,7 @@ do tr = 1, maxtr
         ! Calculate the next value of the objective function.
         xnew = xopt + d
         x = xbase + xnew
-        if (any(is_nan(x))) then
-            f = sum(x)  ! Set F to NaN. It is necessary.
-        else
-            call calfun(x, f)
-        end if
+        call evalf(calfun, x, f)
         nf = nf + 1_IK
         call fmssg(iprint, nf, f, x, solver)
         ! Save X and F into the history.
@@ -554,11 +548,7 @@ end do  ! The iterative procedure ends.
 ! tried before.
 if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     x = xbase + (xopt + d)
-    if (any(is_nan(x))) then
-        f = sum(x)  ! Set F to NaN. It is necessary.
-    else
-        call calfun(x, f)
-    end if
+    call evalf(calfun, x, f)
     nf = nf + 1_IK
     call fmssg(iprint, nf, f, x, solver)
     ! Save X and F into the history.

@@ -7,8 +7,10 @@ public :: cobyla
 
 contains
 
-subroutine cobyla(n, m, x, rhobeg, rhoend, iprint, maxfun, f, info, ftarget, cstrv, constr)
+subroutine cobyla(calcfc, n, m, x, rhobeg, rhoend, iprint, maxfun, f, info, ftarget, cstrv, constr)
+
 ! Generic modules
+use pintrf_mod, only : FUNCON
 use consts_mod, only : RP, IK, EPS, DEBUGGING
 use infnan_mod, only : is_nan, is_posinf
 use debug_mod, only : errstop
@@ -34,6 +36,7 @@ real(RP) :: ctol
 
 
 ! In-outputs
+procedure(FUNCON) :: calcfc
 real(RP), intent(inout) :: x(:)
 
 ! Outputs
@@ -183,7 +186,8 @@ call safealloc(xhist_c, n, maxxhist)
 call safealloc(fhist_c, maxfhist)
 call safealloc(conhist_c, m, maxconhist)
 call safealloc(chist_c, maxchist)
-call cobylb(iprint, maxfun, ctol, ftarget, rhobeg, rhoend, constr, x, nf_c, chist_c, conhist_c, cstrv, f, fhist_c, xhist_c, info)
+call cobylb(calcfc, iprint, maxfun, ctol, ftarget, rhobeg, rhoend, constr, x, nf_c, chist_c, &
+    & conhist_c, cstrv, f, fhist_c, xhist_c, info)
 call safealloc(xhist, n, min(nf_c, maxxhist))
 xhist = xhist_c(:, 1:min(nf_c, maxxhist))
 deallocate (xhist_c)

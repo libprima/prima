@@ -4,7 +4,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Friday, August 27, 2021 PM03:41:47
+! Last Modified: Tuesday, August 31, 2021 AM12:49:15
 
 module initialize_mod
 
@@ -21,20 +21,19 @@ subroutine initxf(calfun, iprint, ftarget, rhobeg, x0, ij, kopt, nf, fhist, fval
 ! points and corresponding function values.
 
 ! Generic modules
+use pintrf_mod, only : FUN
+use evaluate_mod, only : evalf
 use consts_mod, only : RP, IK, ZERO, DEBUGGING
 use debug_mod, only : errstop, verisize
 use info_mod, only : FTARGET_ACHIEVED, NAN_X, NAN_INF_F
 use infnan_mod, only : is_nan, is_posinf
 use output_mod, only : fmssg
-
-! Solver-specific module
 use history_mod, only : savehist
-use pintrf_mod, only : FUNEVAL
 
 implicit none
 
 ! Inputs
-procedure(FUNEVAL) :: calfun
+procedure(FUN) :: calfun
 integer(IK), intent(in) :: iprint
 real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: rhobeg
@@ -149,11 +148,7 @@ end do
 ! FMSSG, which outputs messages to the console or files.
 do k = 1, min(npt, int(2 * n + 1, kind(npt)))
     x = xpt(:, k) + xbase
-    if (any(is_nan(x))) then
-        f = sum(x)  ! Set F to NaN.
-    else
-        call calfun(x, f)
-    end if
+    call evalf(calfun, x, f)
     evaluated(k) = .true.
     fval(k) = f
     call fmssg(iprint, k, f, x, solver)
@@ -226,11 +221,7 @@ end do
 ! FMSSG, which outputs messages to the console or files.
 do k = int(2 * n + 2, kind(k)), npt_revised
     x = xpt(:, k) + xbase
-    if (any(is_nan(x))) then
-        f = sum(x)  ! Set F to NaN.
-    else
-        call calfun(x, f)
-    end if
+    call evalf(calfun, x, f)
     evaluated(k) = .true.
     fval(k) = f
     call fmssg(iprint, k, f, x, solver)

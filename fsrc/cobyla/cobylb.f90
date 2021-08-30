@@ -8,9 +8,12 @@ public :: cobylb
 contains
 
 
-subroutine cobylb(iprint, maxfun, ctol, ftarget, rhobeg, rhoend, constr, x, nf, chist, conhist, cstrv, f, fhist, xhist, info)
+subroutine cobylb(calcfc, iprint, maxfun, ctol, ftarget, rhobeg, rhoend, constr, x, nf, chist, &
+        & conhist, cstrv, f, fhist, xhist, info)
 
 ! Generic modules
+use pintrf_mod, only : FUNCON
+use evaluate_mod, only : evalfc
 use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, HUGENUM, DEBUGGING
 use info_mod, only : INFO_DFT, FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, &
     & SMALL_TR_RADIUS, NAN_X, NAN_INF_F, NAN_MODEL, DAMAGING_ROUNDING
@@ -19,7 +22,6 @@ use debug_mod, only : errstop, verisize
 use output_mod, only : retmssg, rhomssg, fmssg
 use lina_mod, only : inprod, matprod, outprod, inv
 use selectx_mod, only : selectx
-use evalfc_mod, only : evalfc
 
 ! Solver-specific modules
 use initialize_mod, only : initxfc, initfilt
@@ -33,6 +35,7 @@ use resolution_mod, only : resenhance
 implicit none
 
 ! Inputs
+procedure(FUNCON) :: calcfc
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
 real(RP), intent(in) :: ctol
@@ -79,14 +82,11 @@ real(RP) :: actrem
 real(RP) :: b(size(constr) + 1)
 real(RP) :: barmu
 real(RP) :: cfilt(min(max(maxfilt, 0), maxfun))
-real(RP) :: cmax(size(constr))
-real(RP) :: cmin(size(constr))
 real(RP) :: confilt(size(constr), size(cfilt))
 real(RP) :: conmat(size(constr), size(x) + 1)
 real(RP) :: cpen  ! Penalty parameter for constraint in merit function (PARMU in Powell's code)
 real(RP) :: cval(size(x) + 1)
 real(RP) :: d(size(x))
-real(RP) :: denom
 real(RP) :: factor_alpha
 real(RP) :: factor_beta
 real(RP) :: factor_delta
@@ -99,7 +99,6 @@ real(RP) :: prerem  ! Predicted reduction in Merit function
 real(RP) :: rho
 real(RP) :: sim(size(x), size(x) + 1)  ! (n, )
 real(RP) :: simi(size(x), size(x))  ! (n, )
-real(RP) :: simi_jdrop(size(x))
 real(RP) :: xfilt(size(x), size(cfilt))
 logical :: evaluated(size(x) + 1)
 logical :: bad_trstep
@@ -147,7 +146,8 @@ factor_gamma = HALF
 rho = rhobeg
 cpen = ZERO
 
-call initxfc(iprint, maxfun, ctol, ftarget, rho, x, nf, chist, conhist, conmat, cval, fhist, fval, sim, xhist, evaluated, subinfo)
+call initxfc(calcfc, iprint, maxfun, ctol, ftarget, rho, x, nf, chist, conhist, conmat, cval, fhist,&
+   & fval, sim, xhist, evaluated, subinfo)
 call initfilt(conmat, ctol, cval, fval, sim, evaluated, nfilt, cfilt, confilt, ffilt, xfilt)
 
 if (subinfo /= INFO_DFT) then
@@ -247,7 +247,7 @@ do tr = 1, maxtr
 
         x = sim(:, n + 1) + d
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
-        call evalfc(x, f, constr, cstrv)
+        call evalfc(calcfc, x, f, constr, cstrv)
         nf = nf + 1_IK
         ! Save X, F, CONSTR, CSTRV into the history.
         call savehist(nf, constr, cstrv, f, x, chist, conhist, fhist, xhist)
@@ -330,7 +330,7 @@ do tr = 1, maxtr
             d = geostep(jdrop, cpen, conmat, cval, fval, factor_gamma, rho, simi)
             x = sim(:, n + 1) + d
             ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
-            call evalfc(x, f, constr, cstrv)
+            call evalfc(calcfc, x, f, constr, cstrv)
             nf = nf + 1_IK
             ! Save X, F, CONSTR, CSTRV into the history.
             call savehist(nf, constr, cstrv, f, x, chist, conhist, fhist, xhist)
