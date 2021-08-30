@@ -1,7 +1,7 @@
 ! INITIALIZE_MOD is a module containing subroutine(s) for initialization.
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the COBYLA paper.
 !
-! Last Modified: Sunday, August 29, 2021 PM06:29:20
+! Last Modified: Monday, August 30, 2021 PM02:33:16
 
 module initialize_mod
 

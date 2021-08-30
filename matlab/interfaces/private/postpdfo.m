@@ -60,7 +60,7 @@ else
     invoker = callstack(2).name; % Name of the function who calls this function
 end
 
-% With the extreme barrier (implemented when options.classical=false), all
+% With the moderated extreme barrier (implemented when options.classical=false), all
 % the function values that are NaN or larger than hugefun are replaced
 % by hugefun; all the constraint values that are NaN or larger than
 % hugecon are replaced by hugecon. hugefun and hugecon are defined in
@@ -250,10 +250,10 @@ if ~options.classical && ~probinfo.infeasible && ~probinfo.nofreex
     if any(fhist > hugefun) || any(isnan(fhist))
         % Public/unexpected error
         error(sprintf('%s:InvalidFhist', invoker), ...
-             '%s: UNEXPECTED ERROR: %s returns an fhist with NaN or values larger than hugefun=%1.2e; this is impossible with the extreme barrier.', invoker, solver, hugefun);
+             '%s: UNEXPECTED ERROR: %s returns an fhist with NaN or values larger than hugefun=%1.2e; this is impossible except in the classical mode.', invoker, solver, hugefun);
     elseif ~isempty(fhist) && max(fhist) == hugefun
         wid = sprintf('%s:ExtremeBarrier', invoker);
-        wmessage = sprintf('%s: the extreme barrier is invoked; function values that are NaN or larger than hugefun=%1.2e are replaced by hugefun.', invoker, hugefun);
+        wmessage = sprintf('%s: the moderated extreme barrier is invoked; function values that are NaN or larger than hugefun=%1.2e are replaced by hugefun.', invoker, hugefun);
         warning(wid, '%s', wmessage);
         output.warnings = [output.warnings, wmessage];
     end
@@ -296,10 +296,10 @@ if ~options.classical && ~probinfo.infeasible && ~probinfo.nofreex
     if strcmp(solver, 'cobylan') && (any(chist > hugecon) || any(isnan(chist)))
         % Public/unexpected error
         error(sprintf('%s:InvalidChist', invoker), ...
-             '%s: UNEXPECTED ERROR: %s returns a chist with NaN or values larger than hugecon=%1.2e; this is impossible with the extreme barrier.', invoker, solver, hugecon);
+             '%s: UNEXPECTED ERROR: %s returns a chist with NaN or values larger than hugecon=%1.2e; this is impossible except in the classical mode.', invoker, solver, hugecon);
     elseif ~isempty(chist) && max(chist) == hugecon
         wid = sprintf('%s:ExtremeBarrier', invoker);
-        wmessage = sprintf('%s: the extreme barrier is invoked; constraint values that are NaN or larger than hugecon=%1.2e are replaced by hugecon.', invoker, hugecon);
+        wmessage = sprintf('%s: the moderated extreme barrier is invoked; constraint values that are NaN or larger than hugecon=%1.2e are replaced by hugecon.', invoker, hugecon);
         warning(wid, '%s', wmessage);
         output.warnings = [output.warnings, wmessage];
     end
@@ -475,7 +475,7 @@ case 20
     output.message = sprintf('Return from %s because the trust-region iteration has been performed maxtr (= 10*maxfun) times.', invoker);
 case -1
     output.message = sprintf('Return from %s because NaN occurs in x.', solver);
-case -2
+case -2  % This cannot happen if the moderated extreme barrier is implemented, which is the case when options.classical=false.
     if strcmp(solver, 'cobylan')
         output.message = sprintf('Return from %s because the objective function returns an NaN or nearly infinite value, or the constraints return a NaN.', solver);
     else
@@ -543,7 +543,7 @@ if options.debug && ~options.classical
         fhistf = fhistf(chist <= max(cstrv_returned, 0));
     end
     minf = min([fhistf,fx]);
-%% Zaikun 2021-05-26: The following test is disabled for lincoa for them moment. lincoa may not pass it.
+%% Zaikun 2021-05-26: The following test is disabled for lincoa for the moment. lincoa may not pass it.
 %%    if (fx ~= minf) && ~(isnan(fx) && isnan(minf)) && ~(strcmp(solver, 'lincoan') && constr_modified)
     if (fx ~= minf) && ~(isnan(fx) && isnan(minf)) && ~strcmp(solver, 'lincoan')
         % Public/unexpected error
@@ -639,11 +639,10 @@ if options.debug && ~options.classical
         else
             funx = feval(objective, x);
         end
+        % Due to the moderated extreme barrier (implemented when options.classical=false),
+        % all function values that are NaN or larger than hugefun are replaced by hugefun.
         if (funx ~= funx) || (funx > hugefun)
             funx = hugefun;
-            % Due to the extreme barrier (implemented when options.classical=false),
-            % all the function values that are NaN or larger than
-            % hugefun are replaced by hugefun.
         end
         %if (funx ~= fx) && ~(isnan(fx) && isnan(funx))
         % it seems that COBYLA can return fx~=fun(x) due to rounding
@@ -656,7 +655,7 @@ if options.debug && ~options.classical
 
         % Check whether fhist = fun(xhist)
         if ~isempty(fhist) && ~isempty(xhist)
-            funhist = zeros(1, nhist);
+            funhist = zeros(1, nhist);  % When the objective is empty, the objective function used in computation was 0.
             if ~isempty(objective)
                 for k = 1 : nhist
                     funhist(k) = objective(xhist(:, k));
@@ -677,12 +676,11 @@ if options.debug && ~options.classical
             nonlcon = probinfo.raw_data.nonlcon;
             if ~isempty(nonlcon)
                 [nlcineqx, nlceqx] = feval(nonlcon, x);
-                % Due to the extreme barrier (implemented when options.classical=false),
-                % all the constraint values that are NaN or above hugecon
-                % are replaced by hugecon, and all those below -hugecon are
-                % replaced by -hugecon.
+                % Due to the moderated extreme barrier (implemented when options.classical=false),
+                % all constraint values that are NaN or above hugecon are replaced by hugecon.
                 nlcineqx(nlcineqx ~= nlcineqx | nlcineqx > hugecon) = hugecon;
-                nlcineqx(nlcineqx < -hugecon) = -hugecon; % This one was done not as an extreme barrier but for numerical stability.
+                % All constraint values below -hugecon are replaced by -hugecon to avoid numerical difficulties.
+                nlcineqx(nlcineqx < -hugecon) = -hugecon;
                 nlceqx(nlceqx ~= nlceqx | nlceqx > hugecon) = hugecon;
                 nlceqx(nlceqx < -hugecon) = -hugecon;
             end
@@ -693,6 +691,9 @@ if options.debug && ~options.classical
                     '%s: UNEXPECTED ERROR: %s returns a con(x) that does not match x.', invoker, solver);
             end
         end
+
+        % Should check also whether nlcineqhist = nlcineq(xhist), nlceqhist = nlceq(xhist), and
+        % chist = constrviolation(xhist). To be implemented.
 
     end
 end

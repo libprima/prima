@@ -221,6 +221,7 @@ do tr = 1, maxtr
     end if
 
     ! Theoretically (but not numerically), the last entry of B does not affect the result of TRSTLP.
+    ! We set it to -FVAL(N + 1) following Powell's code.
     b = [-conmat(:, n + 1), -fval(n + 1)]
     ! Calculate the trust-region trial step D.
     d = trstlp(A, b, rho)
@@ -234,10 +235,9 @@ do tr = 1, maxtr
         prerec = cval(n + 1) - maxval([-matprod(d, A(:, 1:m)) - conmat(:, n + 1), ZERO])
 
         ! Increase CPEN if necessary and branch back if this change alters the optimal vertex.
-        ! Otherwise, PREREM will be set to the predicted reductions in the merit function.
         ! See the discussions around equation (9) of the COBYLA paper.
         barmu = -preref / prerec   ! PREREF + BARMU * PREREC = 0
-        !!!!!!!!!!!!!!! Is it possible that PREREC <= 0????????????? It seems yes.
+        !!!!!!!!!!!!!!! Is it possible that PREREC <= 0????????????? It seems yes, but why?
         if (prerec > ZERO .and. cpen < 1.5E0_RP * barmu) then
             cpen = min(TWO * barmu, HUGENUM)
             if (findpole(cpen, evaluated, cval, fval) <= n) then
@@ -256,6 +256,7 @@ do tr = 1, maxtr
 
         ! Begin the operations that decide whether X should replace one of the vertices of the
         ! current simplex, the change being mandatory if ACTREM is positive.
+        ! PREREM and ACTREM are the predicted and actual reductions in the merit function respectively.
         prerem = preref + cpen * prerec   ! Is it positive????
         actrem = (fval(n + 1) + cpen * cval(n + 1)) - (f + cpen * cstrv)
         if (cpen <= ZERO .and. abs(f - fval(n + 1)) <= ZERO) then
@@ -267,6 +268,8 @@ do tr = 1, maxtr
         jdrop = setdrop_tr(actrem, d, factor_alpha, factor_delta, rho, sim, simi)
         ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP) is replaced by D.
         ! When JDROP=0, the algorithm decides not to include X into the simplex.
+        ! N.B.: UPDATEXFC does NOT manipulate the simplex so that SIM(:, N+1) is the best vertex;
+        ! that is the job of UPDATEPOLE, which is called before each trust-region/geometry step.
         if (jdrop > 0) then
             call updatexfc(jdrop, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
         end if
@@ -286,7 +289,7 @@ do tr = 1, maxtr
     bad_trstep = (shortd .or. actrem <= ZERO .or. actrem < TENTH * prerem .or. jdrop == 0)
     improve_geo = bad_trstep .and. .not. good_geo
 
-    ! Should we revise RHO (and CPEN)?
+    ! Should we enhance the resolution by reducing RHO?
     enhance_resolut = bad_trstep .and. good_geo
 
     if (improve_geo) then
@@ -298,13 +301,13 @@ do tr = 1, maxtr
         end if
 
         ! If the current interpolation set has good geometry, then we skip the geometry step.
-        ! The code has a small difference from the original COBYLA code here: If the current geometry
+        ! The code has a small difference from Powell's original code here: If the current geometry
         ! is good, then we will continue with a new trust-region iteration; at the beginning of the
         ! iteration, CPEN may be updated, which may alter the pole point SIM(:, N + 1) by UPDATEPOLE;
         ! the quality of the interpolation point depends on SIM(:, N + 1), meaning that the same
         ! interpolation set may have good or bad geometry with respect to different "poles"; if the
         ! geometry turns out bad with the new pole, the original COBYLA code will take a geometry
-        ! step, but the code here will NOT do it but continue to take a trust-region step.
+        ! step, but our code here will NOT do it but continue to take a trust-region step.
         ! The argument is this: even if the geometry step is not skipped at the first place, the
         ! geometry may turn out bad again after the pole is altered due to an update to CPEN; should
         ! we take another geometry step in that case? If no, why should we do it here? Indeed, this
@@ -334,6 +337,8 @@ do tr = 1, maxtr
             ! Save X, F, CONSTR, CSTRV into the filter.
             call savefilt(constr, cstrv, ctol, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
             ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP) is replaced by D.
+            ! N.B.: UPDATEXFC does NOT manipulate the simplex so that SIM(:, N+1) is the best vertex;
+            ! that is the job of UPDATEPOLE, which is called before each trust-region/geometry step.
             call updatexfc(jdrop, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
             ! Check whether to exit.
             subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
@@ -370,7 +375,9 @@ end subroutine cobylb
 end module cobylb_mod
 
 ! TODO:
-! 1. evalfc, extreme barrier
+! 1. evalfc, extreme barrier, moderate excessively negative objective, which has not been done in
+!    NEWUOA. Shouldn't we remove the extreme barrier in the MATLAB/Python interface after it is
+!    implemented in FORTRAN?
 ! 2. checkexit
 ! 3. updatexfc, absorbing updatepole
 ! 4. resenhance
