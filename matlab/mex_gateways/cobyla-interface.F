@@ -40,6 +40,7 @@ C Fortran code starts
 
       use consts_mod, only : DP, rp, hugecon, hugefun, zero
       use infnan_mod
+      use pintrf_mod, only : FUNCON
       implicit none
 
       integer*4, parameter :: int32_0 =  0
@@ -127,6 +128,7 @@ C kind 4, and ~9E18 for kind 8). This imposes an upper limit on the size
 C of problem solvable by this code. If nw is INTEGER*4, assuming that
 C m=10n, the largest value of n is ~9600. COBYLA is not designed for so
 C large problems.
+       procedure(FUNCON) :: calcfc
 
 C Validate number of arguments.
       if (nrhs .ne. 9) then
@@ -302,8 +304,8 @@ C     Initialize global variables
 
 C     Call COBYLA
       iprint = 0
-      call COBYLA(n_int, m_int, x, rhobeg, rhoend, iprint, maxfun,
-     &     f, info, ftarget, resmax, conval)
+      call COBYLA(calcfc, n_int, m_int, x, rhobeg, rhoend, iprint,
+     & maxfun, f, info, ftarget, resmax, conval)
 C Note that n is of type mwSize, yet COBYLA expects input 1 to be
 C of type INTEGER. Therefore, we should use n_int instead of n. Similar
 C fo m/m_int.
@@ -339,16 +341,16 @@ C     Free memory
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
 C The Fortran subroutine that evaluates the objective function
-      subroutine calcfc(n, m, x, funval, conval)
+      subroutine calcfc(x, funval, conval)
       use fcobyla
       implicit none
 
 C dummy variables
-      integer, intent(in) :: n, m
+      integer :: n, m
 C The types of n and m are derived from the code of COBYLA. Thus n and m
 C should be of type INTEGER instead of mwSize
-      real(rp), intent(in) :: x(n)
-      real(rp), intent(out) :: funval, conval(m)
+      real(rp), intent(in) :: x(:)
+      real(rp), intent(out) :: funval, conval(:)
 
 C function declarations
       integer(int32), external :: mexCallMATLAB, mxIsDouble
@@ -376,6 +378,8 @@ C k is of the same type; see the (unique) do lopp below
 C intOne, intTwo, and funFeval are used when calling mexCallMATLAB
       real(rp) :: resmax ! constraint violation
 
+      n = size(x)
+      m = size(conval)
 C Start the real business
       n_mw = int(n, kind(n_mw)) ! cast n to type mwSize
       m_mw = int(m, kind(m_mw)) ! cast m to type mwSize

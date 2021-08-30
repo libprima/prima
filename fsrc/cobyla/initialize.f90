@@ -1,7 +1,7 @@
 ! INITIALIZE_MOD is a module containing subroutine(s) for initialization.
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the COBYLA paper.
 !
-! Last Modified: Monday, August 30, 2021 PM02:33:16
+! Last Modified: Tuesday, August 31, 2021 AM12:30:09
 
 module initialize_mod
 
@@ -12,17 +12,18 @@ public :: initxfc, initfilt
 
 contains
 
-subroutine initxfc(iprint, maxfun, ctol, ftarget, rho, x0, nf, chist, conhist, conmat, cval, fhist, &
+subroutine initxfc(calcfc, iprint, maxfun, ctol, ftarget, rho, x0, nf, chist, conhist, conmat, cval, fhist, &
     & fval, sim, xhist, evaluated, info)
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, HUGENUM, DEBUGGING
+use pintrf_mod, only : FUNCON
+use evaluate_mod, only : evalfc
+use consts_mod, only : RP, IK, HUGENUM, DEBUGGING
 use info_mod, only : INFO_DFT, FTARGET_ACHIEVED, MAXFUN_REACHED, NAN_X, NAN_INF_F
 use infnan_mod, only : is_nan, is_posinf
 use debug_mod, only : errstop, verisize
 use output_mod, only : retmssg, rhomssg, fmssg
 use lina_mod, only : eye
-use evalfc_mod, only : evalfc
 
 ! Solver-specific modules
 use history_mod, only : savehist
@@ -31,6 +32,7 @@ use checkexit_mod, only : checkexit
 implicit none
 
 ! Inputs
+procedure(FUNCON) :: calcfc
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
 real(RP), intent(in) :: ctol
@@ -116,7 +118,7 @@ do k = 1, n + 1
         j = k - 1
         x(j) = x(j) + rho
     end if
-    call evalfc(x, f, constr, cstrv)
+    call evalfc(calcfc, x, f, constr, cstrv)
     evaluated(j) = .true.
     ! Save X, F, CONSTR, CSTRV into the history.
     call savehist(k, constr, cstrv, f, x, chist, conhist, fhist, xhist)

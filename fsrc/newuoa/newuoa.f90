@@ -14,7 +14,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Friday, August 27, 2021 PM03:12:11
+! Last Modified: Monday, August 30, 2021 PM11:49:54
 
 module newuoa_mod
 
@@ -162,20 +162,21 @@ subroutine newuoa(calfun, x, f, &
 
 
 ! Generic modules
+use pintrf_mod, only : FUN
 use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS
 use consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT, MAXMEMORY, MAXFUN_DIM_DFT
 use infnan_mod, only : is_nan, is_inf, is_finite
 use memory_mod, only : safealloc, cstyle_sizeof
 
 ! Solver-specific modules
-use pintrf_mod, only : FUNEVAL
 use preproc_mod, only : preproc
 use newuob_mod, only : newuob
 
 implicit none
 
 ! Dummy variables
-procedure(FUNEVAL) :: calfun
+procedure(FUN) :: calfun
+! N.B.: The INTENT attribute cannot be specified for a dummy procedure without the POINTER attribute.
 real(RP), intent(inout) :: x(:)
 real(RP), intent(out) :: f
 integer(IK), intent(out), optional :: nf

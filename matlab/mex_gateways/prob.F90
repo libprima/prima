@@ -5,7 +5,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020.
 !
-! Last Modified: Friday, June 25, 2021 PM10:06:09
+! Last Modified: Tuesday, August 31, 2021 AM12:06:40
 
 
 #include "fintrf.h"
@@ -23,7 +23,7 @@ contains
 
 
 ! The Fortran subroutine that evaluates the objective function.
-subroutine calfun(x, funval)
+subroutine calfun(x, f)
 
 ! Generic modules
 use consts_mod, only : RP, HUGEFUN, MSSGLEN
@@ -39,7 +39,7 @@ implicit none
 real(RP), intent(in) :: x(:)
 
 ! Output
-real(RP), intent(out) :: funval
+real(RP), intent(out) :: f
 
 ! Local variables
 mwPointer :: pinput(1), poutput(1)
@@ -60,12 +60,7 @@ if (.not. fmxIsDoubleScalar(poutput(1))) then
 end if
 
 ! Read the data in OUTPUT
-call fmxReadMPtr(poutput(1), funval)
-
-! Use extreme barrier to cope with 'hidden constraints'
-if (funval > HUGEFUN .or. is_nan(funval)) then
-    funval = HUGEFUN
-end if
+call fmxReadMPtr(poutput(1), f)
 
 ! Destroy the matrix created by fmxWriteMPtr for X. This must be done. Otherwise, the matrix will be
 ! destroyed only when the MEX function terminates. However, this subroutine will be called maybe
