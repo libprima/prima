@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in August 2021.
 !
-! Last Modified: Monday, August 30, 2021 PM11:50:20
+! Last Modified: Wednesday, September 01, 2021 AM12:52:25
 
 
 module evaluate_mod
@@ -43,9 +43,8 @@ else
         f = HUGEFUN
     end if
 
-    ! Moderate huge positive values of F (shouldn't we?), or they may lead to Inf/NaN in subsequent
-    ! calculations. This is NOT an extreme barrier.
-    f = max(-HUGEFUN, f)
+    !! We may moderate huge negative values of F (NOT an extreme barrier), but we decide not to.
+    !!f = max(-HUGEFUN, f)
 end if
 
 end subroutine evalf
@@ -90,8 +89,8 @@ else
     ! Moderate huge positive values of CONSTR, or they may lead to Inf/NaN in subsequent calculations.
     ! This is NOT an extreme barrier.
     constr = min(HUGECON, constr)
-    ! Moderate F similarly (shouldn't we?).
-    f = max(-HUGEFUN, f)
+    !! We may moderate F similarly, but we decide not to.
+    !!f = max(-HUGEFUN, f)
 
     ! Evaluate the constraint violation for constraints CONSTR(X) >= 0.
     cstrv = maxval([-constr, ZERO])

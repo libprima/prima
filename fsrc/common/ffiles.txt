@@ -4,7 +4,10 @@ debug.F90
 memory.F90
 infnan.F90
 lina.F90
+resolution.f90
+history.f90
 selectx.f90
+checkexit.f90
 output.f90
 preproc.f90
 pintrf.f90

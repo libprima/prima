@@ -15,22 +15,21 @@ subroutine cobylb(calcfc, iprint, maxfun, ctol, ftarget, rhobeg, rhoend, constr,
 use pintrf_mod, only : FUNCON
 use evaluate_mod, only : evalfc
 use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, HUGENUM, DEBUGGING
-use info_mod, only : INFO_DFT, FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, &
-    & SMALL_TR_RADIUS, NAN_X, NAN_INF_F, NAN_MODEL, DAMAGING_ROUNDING
+use info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, NAN_MODEL, DAMAGING_ROUNDING
 use infnan_mod, only : is_nan, is_posinf
 use debug_mod, only : errstop, verisize
 use output_mod, only : retmssg, rhomssg, fmssg
 use lina_mod, only : inprod, matprod, outprod, inv
-use selectx_mod, only : selectx
+use selectx_mod, only : savefilt, selectx
+use history_mod, only : savehist
+use checkexit_mod, only : checkexit
+use resolution_mod, only : resenhance
 
 ! Solver-specific modules
 use initialize_mod, only : initxfc, initfilt
 use trustregion_mod, only : trstlp
 use update_mod, only : updatexfc, updatepole, findpole
 use geometry_mod, only : goodgeo, setdrop_geo, setdrop_tr, geostep
-use history_mod, only : savehist, savefilt
-use checkexit_mod, only : checkexit
-use resolution_mod, only : resenhance
 
 implicit none
 
@@ -259,7 +258,10 @@ do tr = 1, maxtr
         ! PREREM and ACTREM are the predicted and actual reductions in the merit function respectively.
         prerem = preref + cpen * prerec   ! Is it positive????
         actrem = (fval(n + 1) + cpen * cval(n + 1)) - (f + cpen * cstrv)
-        if (cpen <= ZERO .and. abs(f - fval(n + 1)) <= ZERO) then
+        if (cpen <= ZERO .and. f <= fval(n + 1) .and. f >= fval(n + 1)) then
+            ! CPEN <= ZERO indeed means CPEN == ZERO, while A <= B .and. A >= B indeed mean A == B.
+            ! We write them in this way to avoid compilers complaining about equality comparison
+            ! between reals, which appears in the original code of Powell.
             prerem = prerec   ! Is it positive?????
             actrem = cval(n + 1) - cstrv
         end if
@@ -375,6 +377,7 @@ end subroutine cobylb
 end module cobylb_mod
 
 ! TODO:
+! 0. implement generic history.f90 and checkexit.f90
 ! 1. evalfc, extreme barrier, moderate excessively negative objective, which has not been done in
 !    NEWUOA. Shouldn't we remove the extreme barrier in the MATLAB/Python interface after it is
 !    implemented in FORTRAN?

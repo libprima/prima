@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Tuesday, August 31, 2021 AM12:48:19
+! Last Modified: Wednesday, September 01, 2021 AM01:22:29
 
 module newuob_mod
 
@@ -47,12 +47,14 @@ subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 use pintrf_mod, only : FUN
 use evaluate_mod, only : evalf
 use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENUM, DEBUGGING
-use info_mod, only : FTARGET_ACHIEVED, MAXTR_REACHED, MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
-use infnan_mod, only : is_nan, is_posinf
+use info_mod, only : INFO_DFT, MAXTR_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS
+use infnan_mod, only : is_nan
 use debug_mod, only : errstop, verisize
 use output_mod, only : retmssg, rhomssg, fmssg
 use lina_mod, only : calquad, inprod
 use history_mod, only : savehist
+use checkexit_mod, only : checkexit
+use resolution_mod, only : resenhance
 
 ! Solver-specific modules
 use initialize_mod, only : initxf, initq, inith
@@ -120,7 +122,6 @@ real(RP) :: moderrsav(size(dnormsav))
 real(RP) :: pq(npt)
 real(RP) :: ratio
 real(RP) :: rho
-real(RP) :: rho_ratio
 real(RP) :: trtol
 real(RP) :: vlag(npt + size(x))
 real(RP) :: qred
@@ -158,15 +159,14 @@ if (DEBUGGING) then
 end if
 
 ! Initialize FVAL, XBASE, and XPT.
-call initxf(calfun, iprint, ftarget, rhobeg, x, ij, kopt, nf, fhist, fval, xbase, xhist, xpt, subinfo)
+call initxf(calfun, iprint, maxfun, ftarget, rhobeg, x, ij, kopt, nf, fhist, fval, xbase, xhist, xpt, subinfo)
 xopt = xpt(:, kopt)
 fopt = fval(kopt)
 x = xbase + xopt  ! Set X.
 f = fopt  ! Set F.
 
 ! Check whether to return after initialization.
-if (subinfo == FTARGET_ACHIEVED .or. subinfo == NAN_X .or. subinfo == NAN_INF_F) then
-    ! In these cases, pack the data and return immediately.
+if (subinfo /= INFO_DFT) then
     info = subinfo
     ! Rearrange FHIST and XHIST so that they are in the chronological order.
     if (maxfhist >= 1 .and. maxfhist < nf) then
@@ -290,20 +290,9 @@ do tr = 1, maxtr
         end if
 
         ! Check whether to exit
-        if (any(is_nan(x))) then
-            info = NAN_X
-            exit
-        end if
-        if (is_nan(f) .or. is_posinf(f)) then
-            info = NAN_INF_F
-            exit
-        end if
-        if (f <= ftarget) then
-            info = FTARGET_ACHIEVED
-            exit
-        end if
-        if (nf >= maxfun) then
-            info = MAXFUN_REACHED
+        subinfo = checkexit(maxfun, nf, f, ftarget, x)
+        if (subinfo /= INFO_DFT) then
+            info = subinfo
             exit
         end if
 
@@ -482,21 +471,10 @@ do tr = 1, maxtr
             fopt = f
         end if
 
-        ! Check whether to exit.
-        if (any(is_nan(x))) then
-            info = NAN_X
-            exit
-        end if
-        if (is_nan(f) .or. is_posinf(f)) then
-            info = NAN_INF_F
-            exit
-        end if
-        if (f <= ftarget) then
-            info = FTARGET_ACHIEVED
-            exit
-        end if
-        if (nf >= maxfun) then
-            info = MAXFUN_REACHED
+        ! Check whether to exit
+        subinfo = checkexit(maxfun, nf, f, ftarget, x)
+        if (subinfo /= INFO_DFT) then
+            info = subinfo
             exit
         end if
 
@@ -524,17 +502,8 @@ do tr = 1, maxtr
             info = SMALL_TR_RADIUS
             exit
         else
-            delta = HALF * rho
-            rho_ratio = rho / rhoend
-            if (rho_ratio <= 16.0_RP) then
-                rho = rhoend
-            else if (rho_ratio <= 250.0_RP) then
-                rho = sqrt(rho_ratio) * rhoend
-            else
-                rho = TENTH * rho
-            end if
+            call resenhance(rhoend, delta, rho)
             call rhomssg(iprint, nf, fopt, rho, xbase + xopt, solver)
-            delta = max(delta, rho)
             ! DNORMSAVE and MODERRSAVE are corresponding to the latest 3 function evaluations with
             ! the current RHO. Update them after reducing RHO.
             dnormsav = HUGENUM
@@ -556,7 +525,7 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
 end if
 
 ! Choose the [X, F] to return: either the current [X, F] or [XBASE+XOPT, FOPT].
-if (is_nan(f) .or. fopt <= f) then
+if (is_nan(f) .or. fopt < f) then
     x = xbase + xopt
     f = fopt
 end if

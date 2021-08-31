@@ -619,7 +619,6 @@ if options.debug && ~options.classical
         end
         if ~any(cf == cstrv_returned) && ~(isnan(cstrv_returned) && ~any(~isnan(cf)))
             % Public/unexpected error
-            keyboard
             error(sprintf('%s:InvalidFhist', invoker), ...
               '%s: UNEXPECTED ERROR: %s returns a constrviolation that does not match chist.', invoker, solver);
         end
