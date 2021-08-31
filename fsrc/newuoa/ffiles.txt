@@ -1,4 +1,3 @@
-history.f90
 initialize.f90
 trustregion.f90
 vlagbeta.f90

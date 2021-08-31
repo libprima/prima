@@ -4,7 +4,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Tuesday, August 31, 2021 AM12:49:15
+! Last Modified: Wednesday, September 01, 2021 AM12:30:08
 
 module initialize_mod
 
@@ -16,7 +16,7 @@ public :: initxf, initq, inith
 contains
 
 
-subroutine initxf(calfun, iprint, ftarget, rhobeg, x0, ij, kopt, nf, fhist, fval, xbase, xhist, xpt, info)
+subroutine initxf(calfun, iprint, maxfun, ftarget, rhobeg, x0, ij, kopt, nf, fhist, fval, xbase, xhist, xpt, info)
 ! INITXF performs the initialization regarding the interpolation
 ! points and corresponding function values.
 
@@ -25,16 +25,17 @@ use pintrf_mod, only : FUN
 use evaluate_mod, only : evalf
 use consts_mod, only : RP, IK, ZERO, DEBUGGING
 use debug_mod, only : errstop, verisize
-use info_mod, only : FTARGET_ACHIEVED, NAN_X, NAN_INF_F
-use infnan_mod, only : is_nan, is_posinf
+use info_mod, only : INFO_DFT
 use output_mod, only : fmssg
 use history_mod, only : savehist
+use checkexit_mod, only : checkexit
 
 implicit none
 
 ! Inputs
 procedure(FUN) :: calfun
 integer(IK), intent(in) :: iprint
+integer(IK), intent(in) :: maxfun
 real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: x0(:)  ! X0(N)
@@ -67,6 +68,7 @@ integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: npt
 integer(IK) :: npt_revised
+integer(IK) :: subinfo
 real(RP) :: f
 real(RP) :: x(size(x0))
 logical :: evaluated(size(fval))
@@ -100,11 +102,11 @@ if (DEBUGGING) then
 end if
 
 ! At return,
-! INFO = 0: initialization finishes normally
+! INFO = INFO_DFT: initialization finishes normally
 ! INFO = FTARGET_ACHIEVED: return because F <= FTARGET
 ! INFO = NAN_X: return because X contains NaN
 ! INFO = NAN_INF_F: return because F is either NaN or +infinity
-info = 0
+info = INFO_DFT
 
 ! We set ij = 1 in case the initialization aborts due to abnormality. If
 ! we do not do this, ij will be undefined if the initialization aborts.
@@ -155,18 +157,9 @@ do k = 1, min(npt, int(2 * n + 1, kind(npt)))
     ! Save X and F into the history.
     call savehist(k, f, x, fhist, xhist)
     ! Check whether to exit.
-    if (any(is_nan(x))) then
-        info = NAN_X
-        npt_revised = 0
-        exit
-    end if
-    if (is_posinf(f) .or. is_nan(f)) then
-        info = NAN_INF_F
-        npt_revised = 0
-        exit
-    end if
-    if (f <= ftarget) then
-        info = FTARGET_ACHIEVED
+    subinfo = checkexit(maxfun, k, f, ftarget, x)
+    if (subinfo /= INFO_DFT) then
+        info = subinfo
         npt_revised = 0
         exit
     end if
@@ -228,16 +221,9 @@ do k = int(2 * n + 2, kind(k)), npt_revised
     ! Save X and F into the history.
     call savehist(k, f, x, fhist, xhist)
     ! Check whether to exit.
-    if (any(is_nan(x))) then
-        info = NAN_X
-        exit
-    end if
-    if (is_posinf(f) .or. is_nan(f)) then
-        info = NAN_INF_F
-        exit
-    end if
-    if (f <= ftarget) then
-        info = FTARGET_ACHIEVED
+    subinfo = checkexit(maxfun, k, f, ftarget, x)
+    if (subinfo /= INFO_DFT) then
+        info = subinfo
         exit
     end if
 end do

@@ -3,7 +3,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, August 27, 2021 PM03:21:56
+! Last Modified: Tuesday, August 31, 2021 AM01:08:00
 
 module geometry_mod
 
@@ -399,7 +399,7 @@ function bigden(idz, knew, kopt, bmat, d0, xpt, zmat) result(d)
 ! rounding errors.
 
 ! Generic modules
-use consts_mod, only : RP, IK, ONE, TWO, HALF, QUART, PI, ZERO, DEBUGGING
+use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, PI, ZERO, DEBUGGING
 use debug_mod, only : errstop, verisize
 use infnan_mod, only : is_finite
 use lina_mod, only : Ax_plus_y, inprod, matprod
@@ -670,7 +670,7 @@ do iterc = 1, n
     if (isav == iu) then
         denb = denold
     end if
-    if (abs(dena - denb) > 0) then
+    if (abs(dena - denb) > ZERO) then
         dena = dena - denmax
         denb = denb - denmax
         step = HALF * (dena - denb) / (dena + denb)

@@ -15,7 +15,7 @@
 
 ! Coded by Zaikun ZHANG in July 2020.
 !
-! Last Modified: Friday, August 27, 2021 PM02:37:53
+! Last Modified: Wednesday, September 01, 2021 AM12:16:12
 
 
 #include "ppf.h"
@@ -876,7 +876,7 @@ end function calquad
 
 
 function hessmul(hq, pq, xpt, y) result(hy)
-! This subroutine calculates HESSIAN*Y, where HESSIAN consists of an explicit part HQ and an
+! This function calculates HESSIAN*Y, where HESSIAN consists of an explicit part HQ and an
 ! implicit part PQ in Powell's way: HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T).
 
 use consts_mod, only : RP
@@ -915,7 +915,7 @@ end function hessmul
 
 
 function isminor0(x, ref) result(is_minor)
-! This subroutine tests whether X is minor compared to REF. It is used by Powell, e.g., in COBYLA.
+! This function tests whether X is minor compared to REF. It is used by Powell, e.g., in COBYLA.
 use consts_mod, only : RP, TENTH, TWO
 implicit none
 
@@ -931,7 +931,7 @@ end function isminor0
 
 
 function isminor1(x, ref) result(is_minor)
-! This subroutine tests whether X is minor compared to REF. It is used by Powell, e.g., in COBYLA.
+! This function tests whether X is minor compared to REF. It is used by Powell, e.g., in COBYLA.
 use consts_mod, only : IK, RP
 #if __DEBUGGING__ == 1
 use debug_mod, only : errstop

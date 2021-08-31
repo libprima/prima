@@ -5,13 +5,56 @@ private
 public :: resenhance
 
 
+interface resenhance
+    module procedure resenhance_unc, resenhance_nlc
+end interface
+
+
 contains
 
 
-subroutine resenhance(conmat, fval, rhoend, cpen, rho)
+subroutine resenhance_unc(rhoend, delta, rho)
+
+use consts_mod, only : RP, HALF, TENTH, DEBUGGING
+use debug_mod, only : errstop
+implicit none
+
+! Input
+real(RP), intent(in) :: rhoend
+
+! In-outputs
+real(RP), intent(inout) :: delta
+real(RP), intent(inout) :: rho
+
+! Local variables
+real(RP) :: rho_ratio
+character(len=*), parameter :: srname = 'RESENHANCE_UNC'
+
+
+if (DEBUGGING) then
+    if (rho <= rhoend) then
+        call errstop(srname, 'RHO <= RHOEND')
+    end if
+end if
+
+delta = HALF * rho
+rho_ratio = rho / rhoend
+if (rho_ratio <= 16.0_RP) then
+    rho = rhoend
+else if (rho_ratio <= 250.0_RP) then
+    rho = sqrt(rho_ratio) * rhoend
+else
+    rho = TENTH * rho
+end if
+delta = max(delta, rho)
+
+end subroutine resenhance_unc
+
+
+subroutine resenhance_nlc(conmat, fval, rhoend, cpen, rho)
 
 use consts_mod, only : RP, ZERO, HALF, DEBUGGING
-use debug_mod, only : errstop, verisize
+use debug_mod, only : errstop
 implicit none
 
 ! Inputs
@@ -27,7 +70,7 @@ real(RP), intent(inout) :: rho
 real(RP) :: cmax(size(conmat, 1))
 real(RP) :: cmin(size(conmat, 1))
 real(RP) :: denom
-character(len=*), parameter :: srname = 'RESENHANCE'
+character(len=*), parameter :: srname = 'RESENHANCE_NLC'
 
 
 if (DEBUGGING) then
@@ -59,6 +102,6 @@ else
     cpen = ZERO
 end if
 
-end subroutine resenhance
+end subroutine resenhance_nlc
 
 end module resolution_mod

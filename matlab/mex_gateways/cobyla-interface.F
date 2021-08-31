@@ -427,7 +427,7 @@ C Use extreme barrier to cope with 'hidden constraints'
       if (funval .gt. hugefun .or. is_nan(funval)) then
           funval = hugefun ! hugefun is defined in consts
       end if
-      funval = max(-hugefun, funval)
+      !funval = max(-hugefun, funval)
 
 C Free memory; note that plhs and prhs are just temporary variables in
 C this subroutine. We are NOT in mexFunction!
