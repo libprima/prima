@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020.
 !
-! Last Modified: Friday, August 27, 2021 PM02:30:19
+! Last Modified: Wednesday, September 01, 2021 AM10:55:47
 
 ! Remarks:
 !
@@ -171,14 +171,14 @@ integer, parameter :: MSSGLEN = 1000
 integer, parameter :: FNAMELEN = 1000
 
 ! Output unit, can be any integer between 9 and 99; used in output.f90
-integer(IK), parameter :: OUTUNIT = 9
+integer, parameter :: OUTUNIT = 9
 
 ! Some default values
 real(RP), parameter :: RHOBEG_DFT = ONE
 real(RP), parameter :: RHOEND_DFT = 1.0E-6_RP
 real(RP), parameter :: FTARGET_DFT = -HUGENUM
-integer(IK), parameter :: IPRINT_DFT = 0
-integer(IK), parameter :: MAXFUN_DIM_DFT = 500
+integer(IK), parameter :: IPRINT_DFT = 0_IK
+integer(IK), parameter :: MAXFUN_DIM_DFT = 500_IK
 
 ! Maximal amount of memory (Byte) allowed for XHIST, FHIST, CONHIST, CHIST
 integer, parameter :: MXMMY = 21 * (10**8)   ! 21*10**8 = 2G.

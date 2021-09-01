@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Wednesday, September 01, 2021 AM01:22:29
+! Last Modified: Thursday, September 02, 2021 AM12:08:56
 
 module newuob_mod
 
@@ -52,8 +52,9 @@ use infnan_mod, only : is_nan
 use debug_mod, only : errstop, verisize
 use output_mod, only : retmssg, rhomssg, fmssg
 use lina_mod, only : calquad, inprod
-use history_mod, only : savehist
+use history_mod, only : savehist, rangehist
 use checkexit_mod, only : checkexit
+use ratio_mod, only : redrat
 use resolution_mod, only : resenhance
 
 ! Solver-specific modules
@@ -62,7 +63,7 @@ use trustregion_mod, only : trsapp, trrad
 use geometry_mod, only : setdrop_tr, geostep
 use shiftbase_mod, only : shiftbase
 use vlagbeta_mod, only : vlagbeta
-use update_mod, only : updateh, updateq, tryqalt
+use update_mod, only : updateh, updateq, updatexf, tryqalt
 
 implicit none
 
@@ -168,17 +169,8 @@ f = fopt  ! Set F.
 ! Check whether to return after initialization.
 if (subinfo /= INFO_DFT) then
     info = subinfo
-    ! Rearrange FHIST and XHIST so that they are in the chronological order.
-    if (maxfhist >= 1 .and. maxfhist < nf) then
-        khist = mod(nf - 1_IK, maxfhist) + 1_IK
-        fhist = [fhist(khist + 1:maxfhist), fhist(1:khist)]
-    end if
-    if (maxxhist >= 1 .and. maxxhist < nf) then
-        khist = mod(nf - 1_IK, maxxhist) + 1_IK
-        xhist = reshape([xhist(:, khist + 1:maxxhist), xhist(:, 1:khist)], shape(xhist))
-        ! The above combination of SHAPE and RESHAPE fulfills our desire thanks to the COLUMN-MAJOR
-        ! order of Fortran arrays. In MATLAB, it is NOT necessary to call `reshape`.
-    end if
+    ! Arrange FHIST and XHIST so that they are in the chronological order.
+    call rangehist(nf, fhist, xhist)
     call retmssg(info, iprint, nf, f, x, solver)
     return
 end if
@@ -199,7 +191,7 @@ rho = rhobeg
 delta = rho
 moderrsav = HUGENUM
 dnormsav = HUGENUM
-itest = 0
+itest = 0_IK
 trtol = 1.0E-2_RP  ! Tolerance used in trsapp.
 ! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers will raise a run-time error
 ! that RATIO is undefined. Powell's code indeed sets RATIO = -ONE when SHORD is TRUE, and use this
@@ -265,28 +257,16 @@ do tr = 1, maxtr
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
         ! MODERR is the error of the current model in predicting the change in F due to D.
-        moderr = f - fopt - qred
+        moderr = f - fopt + qred
         ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
         moderrsav = [moderrsav(2:size(moderrsav)), moderr]
 
-        ! Calculate the reduction ratio and update DELTA accordingly.
-        if (is_nan(qred) .or. qred >= ZERO) then
-            info = TRSUBP_FAILED
-            exit
-        end if
-        ratio = (f - fopt) / qred
+        ! Calculate the reduction ratio.
+        ratio = redrat(fopt - f, qred, eta1)
         ! Update DELTA. After this, DELTA < DNORM may hold.
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
         if (delta <= 1.5_RP * rho) then
             delta = rho
-        end if
-
-        ! Update XOPT and FOPT. Before KOPT is updated, XOPT may differ from XPT(:, KOPT), and FOPT
-        ! may differ from FVAL(KOPT). Note that the code may exit before KOPT is updated. See below.
-        ! The updated XOPT is needed by SETDROP_TR.
-        if (f < fopt) then
-            xopt = xnew
-            fopt = f
         end if
 
         ! Check whether to exit
@@ -297,29 +277,32 @@ do tr = 1, maxtr
         end if
 
         ! Set KNEW_TR to the index of the interpolation point that will be replaced by XNEW. KNEW_TR
-        ! will ensure that the geometry of XPT is "good enough" after the replacement. Note that the
-        ! information of XNEW is included in VLAG and BETA, which are calculated according to
-        ! D = XNEW - XOPT. KNEW_TR = 0 means it is impossible to obtain a good interpolation set
-        ! by replacing any current interpolation point with XNEW.
-        knew_tr = setdrop_tr(idz, kopt, beta, delta, ratio, rho, vlag(1:npt), xopt, xpt, zmat)
+        ! will ensure that the geometry of XPT is "good enough" after the replacement.
+        ! N.B.:
+        ! 1. The information of XNEW is in VLAG and BETA, which are calculated from D = XNEW - XOPT.
+        ! 2. KNEW_TR = 0 means it is impossible to obtain a good interpolation set by replacing any
+        ! current interpolation point with XNEW. Then XNEW and its function value will be discarded.
+        ! 3. If RATIO > 0, then SETDROP_TR ensures KNEW_TR > 0 so that the XNEW is included into XPT.
+        ! Otherwise, SETDROP_TR is buggy; in addition, if RATIO > 0 and KNEW_TR = 0, XOPT will
+        ! differ from XPT(:, KOPT), because the former is set to XNEW but XNEW is discarded. Such
+        ! a difference can lead to unexpected behaviors; for example, KNEW_GEO may equal KOPT, with
+        ! which GEOSTEP will not work.
+        if (f < fopt) then
+            xdist = sqrt(sum((xpt - spread(xnew, dim=2, ncopies=npt))**2, dim=1))
+        else
+            xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1))
+        end if
+        knew_tr = setdrop_tr(idz, kopt, beta, delta, ratio, rho, vlag(1:npt), xdist, zmat)
 
         if (knew_tr > 0) then
             ! If KNEW_TR > 0, then update BMAT, ZMAT and IDZ, so that the KNEW_TR-th interpolation
-            ! point is replaced by XNEW, whose information is included in VLAG and BET. If KNEW_TR
+            ! point is replaced by XNEW, whose information is encoded in VLAG and BET. If KNEW_TR
             ! is 0, then probably the geometry of XPT needs improvement, which will be handled below.
             call updateh(knew_tr, beta, vlag, idz, bmat, zmat)
-
             ! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
             call updateq(idz, knew_tr, bmat(:, knew_tr), moderr, zmat, xpt(:, knew_tr), gq, hq, pq)
-
-            ! Include the new interpolation point.
-            xpt(:, knew_tr) = xnew  ! Should be done after UPDATEQ.
-            fval(knew_tr) = f
-            if (fval(knew_tr) < fval(kopt)) then
-                kopt = knew_tr
-            end if
-            ! KOPT is NOT identical to MINLOC(FVAL). Indeed, if FVAL(KNEW_TR) = FVAL(KOPT) and
-            ! KNEW_TR < KOPT, then MINLOC(FVAL) = KNEW_TR /= KOPT. Do not change KOPT in this case.
+            ! Include XNEW into XPT. Then update KOPT, XOPT, and FOPT.
+            call updatexf(knew_tr, f, xnew, kopt, fval, xpt, fopt, xopt)
         end if
 
         ! Test whether to replace the new quadratic model Q by the least-Frobenius norm interpolant
@@ -371,9 +354,7 @@ do tr = 1, maxtr
     ! after RHO is reduced and DELTA is updated; see the end of Section 2 of the NEWUOA paper).
     ! 4. If SHORTD = FALSE and KNEW_TR = 0, then the trust-region step invokes a function evaluation
     ! at XOPT + D, but [XOPT + D, F(XOPT +D)] is not included into [XPT, FVAL]. In other words, this
-    ! function value is discarded. THEORETICALLY, KNEW_TR = 0 only if RATIO <= 0, so that a function
-    ! value that renders a reduction is never discarded; however, KNEW_TR may turn out 0 due to NaN
-    ! even if RATIO > 0. See SETDROP_TR for details.
+    ! function value is discarded.
     ! 5. If SHORTD = FALSE and KNEW_TR > 0 and RATIO < TENTH, then [XPT, FVAL] is updated so that
     ! [XPT(KNEW_TR), FVAL(KNEW_TR)] = [XOPT + D, F(XOPT + D)], and the model is updated accordingly,
     ! but such a model will not be used in the next trust-region iteration, because a geometry step
@@ -385,7 +366,7 @@ do tr = 1, maxtr
     ! iteration; if RATIO > 0 in addition, then XOPT has been updated as well.
 
     xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1))
-    bad_trstep = (shortd .or. ratio < TENTH .or. knew_tr == 0)
+    bad_trstep = (shortd .or. ratio < TENTH)
     improve_geo = (.not. reduce_rho_1) .and. (maxval(xdist) > TWO * delta) .and. bad_trstep
 
     ! If all the interpolation points are close to XOPT and the trust-region is small, but the
@@ -398,7 +379,7 @@ do tr = 1, maxtr
     ! Even though DNORM gets a new value after the geometry step when IMPROVE_GEO = TRUE, this
     ! value does not affect REDUCE_RHO_2, because DNORM comes into play only if IMPROVE_GEO = FALSE.
     ! 3. DELTA < DNORM may hold due to the update of DELTA.
-    bad_trstep = (shortd .or. ratio <= ZERO .or. knew_tr == 0)
+    bad_trstep = (shortd .or. ratio <= ZERO)
     reduce_rho_2 = (maxval(xdist) <= TWO * delta) .and. (max(delta, dnorm) <= rho) .and. bad_trstep
 
     ! Comments on BAD_TRSTEP:
@@ -406,9 +387,7 @@ do tr = 1, maxtr
     ! above. Unifying them to <= 0 makes little difference to the performance, sometimes worsening,
     ! sometimes improving, but never substantially; unifying them to 0.1 makes little difference to
     ! the performance.
-    ! 2. THEORETICALLY, KNEW_TR == 0 implies RATIO < 0, and hence the above definitions of BAD_TRSTEP
-    ! are mathematically equivalent to (SHORTD .OR. RATIO < TENTH) or (SHORTD .OR. RATIO <= ZERO).
-    ! However, KNEW_TR may turn out 0 due to NaN even if RATIO > 0. See SETDROP_TR for details.
+    ! 2. KNEW_TR == 0 implies RATIO < 0, and hence BAD_TRSTEP = TRUE. Otherwise, SETDROP_TR is buggy.
 
     ! NEWUOA never sets IMPROVE_GEO and (REDUCE_RHO_1 .OR. REDUCE_RHO_2) to TRUE simultaneously. So
     ! the instructions "IF (IMPROVE_GEO) ... END IF" and "IF (REDUCE_RHO_1 .OR. REDUCE_RHO_2)" can
@@ -454,22 +433,14 @@ do tr = 1, maxtr
         ! trial step, which seems inconsistent with what is described in Section 7 (around (7.7)) of
         ! the NEWUOA paper. Seemingly we should keep DNORM = ||D|| as we do here. The value of DNORM
         ! will be used when defining REDUCE_RHO.
-        dnorm = min(delbar, sqrt(inprod(d, d)))
-        ! In theory, DNORM = DELBAR in this case.
+        dnorm = min(delbar, sqrt(inprod(d, d)))  ! In theory, DNORM = DELBAR in this case.
         !------------------------------------------------------------------------------------------!
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
         ! MODERR is the error of the current model in predicting the change in F due to D.
-        moderr = f - fopt - qred
+        moderr = f - fopt + qred
         ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
         moderrsav = [moderrsav(2:size(moderrsav)), moderr]
-
-        ! Update XOPT and FOPT. Before KOPT is updated, XOPT may differ from XPT(:, KOPT), and FOPT
-        ! may differ from FVAL(KOPT). Note that the code may exit before KOPT is updated. See below.
-        if (f < fopt) then
-            xopt = xnew
-            fopt = f
-        end if
 
         ! Check whether to exit
         subinfo = checkexit(maxfun, nf, f, ftarget, x)
@@ -479,22 +450,13 @@ do tr = 1, maxtr
         end if
 
         ! Update BMAT, ZMAT and IDZ, so that the KNEW_GEO-th interpolation point is replaced by
-        ! XNEW, whose information is in VLAG and BETA.
+        ! XNEW, whose information is encoded in VLAG and BETA.
         call updateh(knew_geo, beta, vlag, idz, bmat, zmat)
-
         ! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
         call updateq(idz, knew_geo, bmat(:, knew_geo), moderr, zmat, xpt(:, knew_geo), gq, hq, pq)
-
-        ! Include the new interpolation point.
-        xpt(:, knew_geo) = xnew  ! Should be done after UPDATEQ.
-        fval(knew_geo) = f
-        if (fval(knew_geo) < fval(kopt)) then
-            kopt = knew_geo
-        end if
-        ! KOPT is NOT identical to MINLOC(FVAL). Indeed, if FVAL(KNEW_GEO) = FVAL(KOPT) and
-        ! KNEW_GEO < KOPT, then MINLOC(FVAL) = KNEW_GEO /= KOPT. Do not change KOPT in this case.
+        ! Include XNEW into XPT. Then update KOPT, XOPT, and FOPT.
+        call updatexf(knew_geo, f, xnew, kopt, fval, xpt, fopt, xopt)
     end if  ! The procedure of improving geometry ends.
-
 
     if (reduce_rho_1 .or. reduce_rho_2) then
         ! The calculations with the current RHO are complete. Pick the next values of RHO and DELTA.
@@ -530,21 +492,8 @@ if (is_nan(f) .or. fopt < f) then
     f = fopt
 end if
 
-! Rearrange FHIST and XHIST so that they are in the chronological order.
-if (maxfhist >= 1 .and. maxfhist < nf) then
-    khist = mod(nf - 1_IK, maxfhist) + 1_IK
-    fhist = [fhist(khist + 1:maxfhist), fhist(1:khist)]
-end if
-if (maxxhist >= 1 .and. maxxhist < nf) then
-    khist = mod(nf - 1_IK, maxxhist) + 1_IK
-    xhist = reshape([xhist(:, khist + 1:maxxhist), xhist(:, 1:khist)], shape(xhist))
-    ! N.B.:
-    ! 1. The result of the array constructor is always a rank-1 array (e.g., vector), no matter what
-    ! elements are used to construct the array.
-    ! 2. The above combination of SHAPE and RESHAPE fulfills our desire thanks to the COLUMN-MAJOR
-    ! order of Fortran arrays.
-    ! 3. In MATLAB, `xhist = [xhist(:, khist + 1:maxxhist), xhist(:, 1:khist)]` does the same thing.
-end if
+! Arrange FHIST and XHIST so that they are in the chronological order.
+call rangehist(nf, fhist, xhist)
 
 call retmssg(info, iprint, nf, f, x, solver)
 

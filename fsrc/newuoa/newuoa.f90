@@ -14,7 +14,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Monday, August 30, 2021 PM11:49:54
+! Last Modified: Wednesday, September 01, 2021 AM10:46:10
 
 module newuoa_mod
 
@@ -316,7 +316,7 @@ else
     gamma2_c = TWO
 end if
 
-maxhist_in = 0  ! MAXHIST input by user
+maxhist_in = 0_IK  ! MAXHIST input by user
 if (present(maxhist)) then
     maxhist_c = maxhist
     maxhist_in = maxhist
@@ -349,7 +349,7 @@ end if
 if (present(xhist)) then
     maxxhist = min(maxhist_c, maxfun_c)
 else
-    maxxhist = 0
+    maxxhist = 0_IK
 end if
 call safealloc(xhist_c, n, maxxhist)
 
@@ -358,7 +358,7 @@ call safealloc(xhist_c, n, maxxhist)
 if (present(fhist)) then
     maxfhist = min(maxhist_c, maxfun_c)
 else
-    maxfhist = 0
+    maxfhist = 0_IK
 end if
 call safealloc(fhist_c, maxfhist)
 

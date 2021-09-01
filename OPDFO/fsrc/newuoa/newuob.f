@@ -256,18 +256,18 @@ C
   120 IF (DSQ <= 1.0D-3*XOPTSQ) THEN
           TEMPQ=0.25D0*XOPTSQ
           DO K=1,NPT
-              SUM=ZERO
+              SUMM=ZERO
               DO I=1,N
-                  SUM=SUM+XPT(K,I)*XOPT(I)
+                  SUMM=SUMM+XPT(K,I)*XOPT(I)
               END DO
-              TEMP=PQ(K)*SUM
-              SUM=SUM-HALF*XOPTSQ
-              W(NPT+K)=SUM
+              TEMP=PQ(K)*SUMM
+              SUMM=SUMM-HALF*XOPTSQ
+              W(NPT+K)=SUMM
               DO I=1,N
                   GQ(I)=GQ(I)+TEMP*XPT(K,I)
                   XPT(K,I)=XPT(K,I)-HALF*XOPT(I)
                   VLAG(I)=BMAT(K,I)
-                  W(I)=SUM*XPT(K,I)+TEMPQ*XOPT(I)
+                  W(I)=SUMM*XPT(K,I)+TEMPQ*XOPT(I)
                   IP=NPT+I
                   DO J=1,I
                       BMAT(IP,J)=BMAT(IP,J)+VLAG(I)*W(J)+W(I)*VLAG(J)
@@ -278,20 +278,20 @@ C
 C     Then the revisions of BMAT that depend on ZMAT are calculated.
 C
           DO K=1,NPTM
-              SUMZ=ZERO
+              SUMMZ=ZERO
               DO I=1,NPT
-                  SUMZ=SUMZ+ZMAT(I,K)
+                  SUMMZ=SUMMZ+ZMAT(I,K)
                   W(I)=W(NPT+I)*ZMAT(I,K)
               END DO
               DO J=1,N
-                  SUM=TEMPQ*SUMZ*XOPT(J)
+                  SUMM=TEMPQ*SUMMZ*XOPT(J)
                   DO I=1,NPT
-                      SUM=SUM+W(I)*XPT(I,J)
+                      SUMM=SUMM+W(I)*XPT(I,J)
                   END DO
-                  VLAG(J)=SUM
-                  IF (K < IDZ) SUM=-SUM
+                  VLAG(J)=SUMM
+                  IF (K < IDZ) SUMM=-SUMM
                   DO I=1,NPT
-                      BMAT(I,J)=BMAT(I,J)+SUM*ZMAT(I,K)
+                      BMAT(I,J)=BMAT(I,J)+SUMM*ZMAT(I,K)
                   END DO
               END DO
               DO I=1,N
@@ -376,50 +376,50 @@ C     Calculate VLAG and BETA for the current choice of D. The first NPT
 C     components of W_check will be held in W.
 C
       DO K=1,NPT
-          SUMA=ZERO
-          SUMB=ZERO
-          SUM=ZERO
+          SUMMA=ZERO
+          SUMMB=ZERO
+          SUMM=ZERO
           DO J=1,N
-              SUMA=SUMA+XPT(K,J)*D(J)
-              SUMB=SUMB+XPT(K,J)*XOPT(J)
-              SUM=SUM+BMAT(K,J)*D(J)
+              SUMMA=SUMMA+XPT(K,J)*D(J)
+              SUMMB=SUMMB+XPT(K,J)*XOPT(J)
+              SUMM=SUMM+BMAT(K,J)*D(J)
           END DO
-          W(K)=SUMA*(HALF*SUMA+SUMB)
-          VLAG(K)=SUM
+          W(K)=SUMMA*(HALF*SUMMA+SUMMB)
+          VLAG(K)=SUMM
       END DO
       BETA=ZERO
       DO K=1,NPTM
-          SUM=ZERO
+          SUMM=ZERO
           DO I=1,NPT
-              SUM=SUM+ZMAT(I,K)*W(I)
+              SUMM=SUMM+ZMAT(I,K)*W(I)
           END DO
           IF (K < IDZ) THEN
-              BETA=BETA+SUM*SUM
-              SUM=-SUM
+              BETA=BETA+SUMM*SUMM
+              SUMM=-SUMM
           ELSE
-              BETA=BETA-SUM*SUM
+              BETA=BETA-SUMM*SUMM
           END IF
           DO I=1,NPT
-              VLAG(I)=VLAG(I)+SUM*ZMAT(I,K)
+              VLAG(I)=VLAG(I)+SUMM*ZMAT(I,K)
           END DO
       END DO
-      BSUM=ZERO
+      BSUMM=ZERO
       DX=ZERO
       DO J=1,N
-          SUM=ZERO
+          SUMM=ZERO
           DO I=1,NPT
-              SUM=SUM+W(I)*BMAT(I,J)
+              SUMM=SUMM+W(I)*BMAT(I,J)
           END DO
-          BSUM=BSUM+SUM*D(J)
+          BSUMM=BSUMM+SUMM*D(J)
           JP=NPT+J
           DO K=1,N
-              SUM=SUM+BMAT(JP,K)*D(K)
+              SUMM=SUMM+BMAT(JP,K)*D(K)
           END DO
-          VLAG(JP)=SUM
-          BSUM=BSUM+SUM*D(J)
+          VLAG(JP)=SUMM
+          BSUMM=BSUMM+SUMM*D(J)
           DX=DX+D(J)*XOPT(J)
       END DO
-      BETA=DX*DX+DSQ*(XOPTSQ+DX+DX+HALF*DSQ)+BETA-BSUM
+      BETA=DX*DX+DSQ*(XOPTSQ+DX+DX+HALF*DSQ)+BETA-BSUMM
       VLAG(KOPT)=VLAG(KOPT)+ONE
 C
 C     If KNEW is positive and if the cancellation in DENOM is unacceptable,
@@ -444,50 +444,50 @@ C     Calculate VLAG and BETA for the current choice of D. The first NPT
 C     components of W_check will be held in W.
 C
       DO K=1,NPT
-          SUMA=ZERO
-          SUMB=ZERO
-          SUM=ZERO
+          SUMMA=ZERO
+          SUMMB=ZERO
+          SUMM=ZERO
           DO J=1,N
-              SUMA=SUMA+XPT(K,J)*D(J)
-              SUMB=SUMB+XPT(K,J)*XOPT(J)
-              SUM=SUM+BMAT(K,J)*D(J)
+              SUMMA=SUMMA+XPT(K,J)*D(J)
+              SUMMB=SUMMB+XPT(K,J)*XOPT(J)
+              SUMM=SUMM+BMAT(K,J)*D(J)
           END DO
-          W(K)=SUMA*(HALF*SUMA+SUMB)
-          VLAG(K)=SUM
+          W(K)=SUMMA*(HALF*SUMMA+SUMMB)
+          VLAG(K)=SUMM
       END DO
       BETA=ZERO
       DO K=1,NPTM
-          SUM=ZERO
+          SUMM=ZERO
           DO I=1,NPT
-              SUM=SUM+ZMAT(I,K)*W(I)
+              SUMM=SUMM+ZMAT(I,K)*W(I)
           END DO
           IF (K < IDZ) THEN
-              BETA=BETA+SUM*SUM
-              SUM=-SUM
+              BETA=BETA+SUMM*SUMM
+              SUMM=-SUMM
           ELSE
-              BETA=BETA-SUM*SUM
+              BETA=BETA-SUMM*SUMM
           END IF
           DO I=1,NPT
-              VLAG(I)=VLAG(I)+SUM*ZMAT(I,K)
+              VLAG(I)=VLAG(I)+SUMM*ZMAT(I,K)
           END DO
       END DO
-      BSUM=ZERO
+      BSUMM=ZERO
       DX=ZERO
       DO J=1,N
-          SUM=ZERO
+          SUMM=ZERO
           DO I=1,NPT
-              SUM=SUM+W(I)*BMAT(I,J)
+              SUMM=SUMM+W(I)*BMAT(I,J)
           END DO
-          BSUM=BSUM+SUM*D(J)
+          BSUMM=BSUMM+SUMM*D(J)
           JP=NPT+J
           DO K=1,N
-              SUM=SUM+BMAT(JP,K)*D(K)
+              SUMM=SUMM+BMAT(JP,K)*D(K)
           END DO
-          VLAG(JP)=SUM
-          BSUM=BSUM+SUM*D(J)
+          VLAG(JP)=SUMM
+          BSUMM=BSUMM+SUMM*D(J)
           DX=DX+D(J)*XOPT(J)
       END DO
-      BETA=DX*DX+DSQ*(XOPTSQ+DX+DX+HALF*DSQ)+BETA-BSUM
+      BETA=DX*DX+DSQ*(XOPTSQ+DX+DX+HALF*DSQ)+BETA-BSUMM
       VLAG(KOPT)=VLAG(KOPT)+ONE
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -648,6 +648,7 @@ C
       RHOSQ=DMAX1(TENTH*DELTA,RHO)**2
       KTEMP=0
       DETRAT=ZERO
+      ISALLNAN = 1
       IF (F >= FSAVE) THEN
           KTEMP=KOPT
           DETRAT=ONE
@@ -664,17 +665,24 @@ C
           DO J=1,N
               DISTSQ=DISTSQ+(XPT(K,J)-XOPT(J))**2
           END DO
-          IF (DISTSQ > RHOSQ) TEMP=TEMP*(DISTSQ/RHOSQ)**3
+          !IF (DISTSQ > RHOSQ) TEMP=TEMP*(DISTSQ/RHOSQ)**3
+          IF (sqrt(DISTSQ) > max(tenth*delta, rho)) then
+              TEMP=TEMP*(sqrt(DISTSQ)/max(tenth*delta, rho))**6
+          end if
           IF (TEMP > DETRAT .AND. K /= KTEMP) THEN
               DETRAT=TEMP
               KNEW=K
           END IF
-          ! Zaikun 20210812
-          if (TEMP /= TEMP) then
-              KNEW = 0
-              exit
+          ! Zaikun 20210901
+          if (TEMP == TEMP) then
+              ISALLNAN = 0
           end if
       END DO
+      if (RATIO > 0.0D0 .and. ISALLNAN == 1) then
+        knew = int(maxloc(sum((xpt(1:n, 1:npt) - spread(xopt(1:n),dim=2,
+     1   ncopies=npt))**2, dim=1), dim=1))
+      end if
+
       IF (KNEW == 0) GOTO 460
 C
 C     Update BMAT, ZMAT and IDZ, so that the KNEW-th interpolation point
@@ -732,12 +740,12 @@ C          IF (DABS(RATIO) .GT. 1.0D-2) THEN
               END DO
               GISQ=ZERO
               DO I=1,N
-                  SUM=ZERO
+                  SUMM=ZERO
                   DO K=1,NPT
-                      SUM=SUM+BMAT(K,I)*VLAG(K)
+                      SUMM=SUMM+BMAT(K,I)*VLAG(K)
                   END DO
-                  GISQ=GISQ+SUM*SUM
-                  W(I)=SUM
+                  GISQ=GISQ+SUMM*SUMM
+                  W(I)=SUMM
               END DO
 C
 C     Test whether to replace the new quadratic model by the least Frobenius
@@ -788,13 +796,13 @@ C
 !  460 DISTSQ=4.0D0*DELTA*DELTA
   460 DIST=2.0D0*DELTA
       DO K=1,NPT
-          SUM=ZERO
+          SUMM=ZERO
           DO J=1,N
-              SUM=SUM+(XPT(K,J)-XOPT(J))**2
+              SUMM=SUMM+(XPT(K,J)-XOPT(J))**2
           END DO
-          IF (DSQRT(SUM) > DIST) THEN
+          IF (DSQRT(SUMM) > DIST) THEN
               KNEW=K
-              DIST=DSQRT(SUM)
+              DIST=DSQRT(SUMM)
           END IF
       END DO
 C
@@ -849,6 +857,7 @@ C     By Zaikun (commented on 02-06-2019; implemented in 2016):
 C     Note that (FOPT .LE. F) is FALSE if F is NaN; When F is NaN, it is
 C     also necessary to update X and F.
 C  530 IF (FOPT .LE. F) THEN
+!  530 IF (FOPT < F .OR. F /= F) THEN
   530 IF (FOPT <= F .OR. F /= F) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           DO I=1,N

@@ -3,7 +3,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020.
 !
-! Last Modified: Friday, August 27, 2021 PM02:02:03
+! Last Modified: Wednesday, September 01, 2021 PM03:00:02
 
 
 #include "ppf.h"
@@ -33,7 +33,7 @@ character(len=*), intent(in) :: mssg
 call backtr()
 #endif
 
-print '(/1A/)', 'Error: '//trim(srname)//': '//trim(mssg)//'.'
+print '(/1A/)', '!!! Error: '//trim(srname)//': '//trim(mssg)//'.'
 
 stop  ! This means to stop the whole program.
 

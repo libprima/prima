@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and papers.
 !
-! Last Modified: Friday, August 27, 2021 PM09:22:21
+! Last Modified: Wednesday, September 01, 2021 AM10:58:33
 
 
 module logging_mod
@@ -31,7 +31,7 @@ character(len=*), intent(in) :: srname
 character(len=*), optional, intent(in) :: mssg
 
 ! Local variables
-integer(IK), parameter :: LOGUNIT = 11
+integer, parameter :: LOGUNIT = 11
 integer :: ios  ! Should be an integer of default kind
 character(len=3) :: fstat
 logical :: fexist
