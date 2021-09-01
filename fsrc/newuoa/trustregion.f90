@@ -4,7 +4,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Friday, August 27, 2021 PM03:22:51
+! Last Modified: Wednesday, September 01, 2021 AM10:45:37
 
 module trustregion_mod
 
@@ -175,7 +175,7 @@ twod_search = .false.
 do iter = 1, itermax
     ! Check whether to exit due to small GG
     if (gg <= (tol**2) * gg0) then
-        info = 0
+        info = 0_IK
         exit
     end if
     ! Set BSTEP to the step length such that ||S+BSTEP*D|| = DELTA
@@ -227,14 +227,14 @@ do iter = 1, itermax
 
     ! Check whether to exit due to small QADD
     if (qadd <= tol * qred) then
-        info = 1
+        info = 1_IK
         exit
     end if
 
     ! Exit in case of Inf/NaN in S.
     if (.not. is_finite(sum(abs(s)))) then
         s = sold
-        info = -1
+        info = -1_IK
         exit
     end if
 
@@ -244,14 +244,14 @@ do iter = 1, itermax
     ds = inprod(d, s)
     if (ds <= ZERO) then
         ! DS is positive in theory.
-        info = -1
+        info = -1_IK
         exit
     end if
 end do
 
 if (ss <= ZERO .or. is_nan(ss)) then
     ! This may occur for ill-conditioned problems due to rounding.
-    info = -1
+    info = -1_IK
     twod_search = .false.
 end if
 
@@ -259,20 +259,20 @@ if (twod_search) then
     ! At least 1 iteration of 2D minimization
     itermax = max(int(1, kind(itermax)), itermax - iter)
 else
-    itermax = 0
+    itermax = 0_IK
 end if
 
 ! The 2D minimization
 do iter = 1, itermax
     if (gg <= (tol**2) * gg0) then
-        info = 0
+        info = 0_IK
         exit
     end if
     sg = inprod(s, g)
     shs = inprod(s, hs)
     sgk = sg + shs
     if (sgk / sqrt(gg * delsq) <= tol - ONE) then
-        info = 0
+        info = 0_IK
         exit
     end if
 
@@ -293,8 +293,8 @@ do iter = 1, itermax
     qbeg = sg + cf
     qsav = qbeg
     qmin = qbeg
-    isav = 0
-    iu = 49
+    isav = 0_IK
+    iu = 49_IK
     unitang = (TWO * PI) / real(iu + 1, RP)
 
     do i = 1, iu
@@ -337,7 +337,7 @@ do iter = 1, itermax
     ! Exit in case of Inf/NaN in S.
     if (.not. is_finite(sum(abs(s)))) then
         s = sold
-        info = -1
+        info = -1_IK
         exit
     end if
 
@@ -346,7 +346,7 @@ do iter = 1, itermax
     gg = inprod(g + hs, g + hs)
     qred = qred + reduc
     if (reduc / qred <= tol) then
-        info = 1
+        info = 1_IK
         exit
     end if
 end do

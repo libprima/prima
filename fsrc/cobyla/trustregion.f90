@@ -440,7 +440,7 @@ do iter = 1, maxiter
     if (frac < ONE) then
         icon = minloc(frtmp, mask=(vmultd < ZERO), dim=1)
     else
-        icon = 0
+        icon = 0_IK
     end if
 
     ! Update D, VMULTC and CSTRV.

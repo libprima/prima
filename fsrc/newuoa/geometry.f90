@@ -3,7 +3,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Tuesday, August 31, 2021 AM01:08:00
+! Last Modified: Wednesday, September 01, 2021 PM08:57:11
 
 module geometry_mod
 
@@ -15,14 +15,11 @@ public :: setdrop_tr, geostep
 contains
 
 
-function setdrop_tr(idz, kopt, beta, delta, ratio, rho, vlag, xopt, xpt, zmat) result(knew)
+function setdrop_tr(idz, kopt, beta, delta, ratio, rho, vlag, xdist, zmat) result(knew)
 ! This subroutine sets KNEW to the index of the interpolation point to be deleted AFTER A TRUST
 ! REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
 ! XPT(:, KNEW) is replaced by XNEW = XOPT + D, where D is the trust-region step.  Note that the
 ! information of XNEW is included in VLAG and BETA, which are calculated according to D.
-!
-! N.B.: At the entry of this function is invoked, XOPT may differ from XPT(:, KOPT), because XOPT is
-! updated but KOPT is not. See NEWUOB for details.
 
 ! Generic modules
 use consts_mod, only : RP, IK, ONE, ZERO, TENTH, DEBUGGING
@@ -39,8 +36,7 @@ real(RP), intent(in) :: delta
 real(RP), intent(in) :: ratio
 real(RP), intent(in) :: rho
 real(RP), intent(in) :: vlag(:)  ! VLAG(NPT)
-real(RP), intent(in) :: xopt(:)  ! XOPT(N)
-real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
+real(RP), intent(in) :: xdist(:)  ! XDIST(NPT)
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 
 ! Output
@@ -51,48 +47,48 @@ integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: hdiag(size(zmat, 1))
 real(RP) :: rhosq
-real(RP) :: sigma(size(xpt, 2))
-real(RP) :: xdsq(size(xpt, 2))
+real(RP) :: sigma(size(xdist))
 character(len=*), parameter :: srname = 'SETDROP_TR'
 
 
 ! Get and verify the sizes
-n = int(size(xpt, 1), kind(n))
-npt = int(size(xpt, 2), kind(npt))
+npt = int(size(xdist), kind(npt))
 
 if (DEBUGGING) then
-    if (n < 1 .or. npt < n + 2) then
-        call errstop(srname, 'SIZE(XPT) is invalid')
+    if (npt < 3) then
+        call errstop(srname, 'NPT < 3 <= N + 2')
     end if
     call verisize(vlag, npt)
-    call verisize(xopt, n)
-    call verisize(zmat, npt, int(npt - n - 1, kind(n)))
+    if (size(zmat, 1) /= npt .or. size(zmat, 2) < 1) then
+        call errstop(srname, 'SIZE(ZMAT) is invalid')
+    end if
+    ! By the definition of RATIO in NEWUOB, RATIO cannot be NaN unless the actual reduction is NaN,
+    ! which should NOT happen due to the moderated extreme barrier.
+    if (is_nan(ratio)) then
+        call errstop(srname, 'RATIO is NaN')
+    end if
 end if
 
-rhosq = max(TENTH * delta, rho)**2
-hdiag = -sum(zmat(:, 1:idz - 1)**2, dim=2) + sum(zmat(:, idz:npt - n - 1)**2, dim=2)
-xdsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+hdiag = -sum(zmat(:, 1:idz - 1)**2, dim=2) + sum(zmat(:, idz:size(zmat, 2))**2, dim=2)
 sigma = abs(beta * hdiag + vlag(1:npt)**2)
-sigma = sigma * max(xdsq / rhosq, ONE)**3
+sigma = sigma * max(ONE, xdist / max(TENTH * delta, rho))**6
 if (ratio <= ZERO) then
-    ! If the new F is not better than the current FVAL(KOPT), we set SIGMA(KOPT) = -1 to prevent
-    ! KNEW from being KOPT.
+    ! If the new F is not better than FVAL(KOPT), we set SIGMA(KOPT) = -1 to avoid KNEW = KOPT.
     sigma(kopt) = -ONE
 end if
-if (ratio > ZERO .or. (maxval(sigma) > ONE .and. .not. any(is_nan(sigma)))) then
-    ! N.B.:
-    ! 1. In Powell's code, the above condition is (RATIO > ZERO .OR. MAXVAL(SIGMA) > ONE).
-    ! 2. THEORETICALLY speaking, with Powell's condition, when RATIO > ZERO (i.e., the new F is less
-    ! than the current FVAL(KOPT)), the following line sets KNEW > 0, ensuring XNEW to be included
-    ! in XPT. However, KNEW may turn out 0 due to NaN in SIGMA: for GFortran, KNEW = 0 if SIGMA
-    ! contains only NaN, yet other compilers/languages may behave differently.
-    ! 3. With the new condition, when SIGMA contains NaN (can happen in bad-conditioned problems,
-    ! although rarely), we explicitly set KNEW = 0. Consequently, NEWUOA will check whether to take
-    ! a geometry step or reduce RHO.
-    knew = int(maxloc(sigma, dim=1), kind(knew))
-else
-    knew = 0
+
+knew = 0_IK
+if (all(is_nan(sigma))) then  ! Powell's code does not have this branch.
+    knew = int(maxloc(xdist, dim=1), kind(knew))
+elseif (ratio > ZERO .or. maxval(sigma) > ONE) then
+    knew = int(maxloc(sigma, mask=(.not. is_nan(sigma)), dim=1), kind(knew))
 end if
+
+if (DEBUGGING .and. ratio > ZERO .and. knew == 0_IK) then
+    ! If RATIO > 0, then KNEW should be positive so that the XNEW is included into XPT.
+    call errstop(srname, 'RATIO > 0 but KNEW == 0')
+end if
+
 ! It is tempting to take the function value into consideration when defining KNEW, for example,
 ! set KNEW so that FVAL(KNEW) = MAX(FVAL) as long as F(XNEW) < MAX(FVAL), unless there is a better
 ! choice. However, this is not a good idea, because the definition of KNEW should benefit the
@@ -150,6 +146,9 @@ if (DEBUGGING) then
     end if
     call verisize(bmat, n, npt + n)
     call verisize(zmat, npt, int(npt - n - 1, kind(n)))
+    if (knew == kopt) then
+        call errstop(srname, 'KNEW == KOPT')
+    end if
 end if
 
 xopt = xpt(:, kopt)  ! Read XOPT.
@@ -294,9 +293,13 @@ tau = scaling * (abs(sp) + HALF * scaling * abs(dhd))
 if (gg * (delbar * delbar) < 1.0E-2_RP * tau * tau) then
     t = ONE
 end if
-d = scaling * d
-gd = scaling * gd
-s = gc + t * gd
+if (is_finite(sum(abs(scaling * d)))) then
+    d = scaling * d
+    gd = scaling * gd
+    s = gc + t * gd
+else
+    return  ! Avoid producing a D containing NaN/Inf.
+end if
 
 ! Begin the iteration by overwriting S with a vector that has the required length and direction,
 ! except that termination occurs if the given D and S are nearly parallel.
@@ -326,8 +329,8 @@ do iterc = 1, n
     taubeg = cf(1) + cf(2) + cf(4)
     taumax = taubeg
     tauold = taubeg
-    isav = 0
-    iu = 49
+    isav = 0_IK
+    iu = 49_IK
     unitang = (TWO * PI) / real(iu + 1, RP)
 
     do i = 1, iu
@@ -501,6 +504,9 @@ if (DEBUGGING) then
     call verisize(bmat, n, npt + n)
     call verisize(d0, n)
     call verisize(zmat, npt, int(npt - n - 1, kind(n)))
+    if (knew == kopt) then
+        call errstop(srname, 'KNEW == KOPT')
+    end if
 end if
 
 x = xpt(:, kopt) ! For simplicity, use x to denote XOPT.
@@ -642,8 +648,8 @@ do iterc = 1, n
     denom = denex(1) + denex(2) + denex(4) + denex(6) + denex(8)
     denold = denom
     denmax = denom
-    isav = 0
-    iu = 49
+    isav = 0_IK
+    iu = 49_IK
     unitang = (TWO * PI) / real(iu + 1, RP)
     par(1) = ONE
     do i = 1, iu

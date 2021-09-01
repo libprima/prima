@@ -631,6 +631,7 @@ if options.debug && ~options.classical
         % errors. Therefore, we cannot use "fx~=funx" to check COBYLA
         if ~(isnan(fx) && isnan(funx)) && ~((fx==funx) || (abs(funx-fx) <= cobyla_prec*max(1, abs(fx)) && strcmp(solver, 'cobyla')))
             % Public/unexpected error
+			keyboard
             error(sprintf('%s:InvalidFx', invoker), ...
                 '%s: UNEXPECTED ERROR: %s returns an fx that does not match x.', invoker, solver);
         end

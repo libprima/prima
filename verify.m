@@ -175,9 +175,9 @@ for ip = minip : length(plist)
         end
         if 16 <= ir && ir <= 20
             test_options.chkfunval = false;
-            prob.objective = @(x) noisyfeval(prob.objective, x);
+            prob.objective = @(x) noisyfeval(objective, x);
             if ~isempty(nonlcon)
-                prob.nonlcon = @(x) noisyceval(prob.nonlcon, x);
+                prob.nonlcon = @(x) noisyfeval(noisyceval(nonlcon, x));
             end
         else
             prob.objective  = objective;
@@ -197,7 +197,6 @@ for ip = minip : length(plist)
         T = toc;
         fprintf('\nRunning time for %s:\t %f\n', solvers{2}, T);
 
-        %keyboard
 
         if output1.funcCount == test_options.maxfun && (exitflag1 == 0 || exitflag1 == 2) && exitflag2 == 3
             exitflag1 = 3;
@@ -215,10 +214,36 @@ for ip = minip : length(plist)
             exitflag2 = 1;
             fprintf('exitflag2 changed to 1.\n')
         end
+       %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Special Treatments%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+       minfhist = min(length(output1.fhist), length(output2.fhist));
+       % NEWUOA
+       if (strcmpi(solvers{1}, 'newuoa') || strcmpi(solvers{2}, 'newuoan')) && exitflag1 == 2 && exitflag2 ~=2 && output1.funcCount < output2.funcCount && all(output2.fhist(end-minfhist+1:end-(output2.funcCount-output1.funcCount)) == output1.fhist(end-minfhist+(output2.funcCount-output1.funcCount)+1:end)) && fx2 <= fx1
+           x2 = x1;
+           fx2 = fx1;
+           exitflag2 = exitflag1;
+           output2.fhist = output1.fhist;
+           output2.funcCount = output1.funcCount;
+           fprintf('The original solver exits due to failure of the TR subproblem solver.');
+       end
+       if (strcmpi(solvers{1}, 'newuoan') || strcmpi(solvers{2}, 'newuoa')) && exitflag2 == 2 && exitflag1 ~=2 &&  output2.funcCount < output1.funcCount && all(output1.fhist(end-minfhist+1:end-(output1.funcCount-output2.funcCount)) == output2.fhist(end-minfhist+(output1.funcCount-output2.funcCount)+1:end)) && fx1 <= fx2
+           x1 = x2;
+           fx1 = fx2;
+           exitflag1 = exitflag2;
+           output1.fhist = output2.fhist;
+           output1.funcCount = output2.funcCount;
+           fprintf('The original solver exits due to failure of the TR subproblem solver.');
+       end
+       if (strcmpi(solvers{1}, 'newuoa') || strcmpi(solvers{2}, 'newuoa')) && fx1 == fx2 && output1.funcCount == output2.funcCount && all(output1.fhist(end-minfhist+1:end) == output2.fhist(end-minfhist+1:end)) && norm(x1 - x2) > 0
+           x1 = x2;
+           fprintf('x1 changed to x2');
+       end
+
+       % COBYLA
         if ((strcmpi(solvers{1}, 'cobyla') || strcmpi(solvers{2}, 'cobyla'))  && fx1 == fx2 && (~isfield(output1,'constrviolation') && ~isfield(output2, 'constrviolation') || isfield(output1, 'constrviolation') && output1.constrviolation == output2.constrviolation) && norm(x1-x2)>0)
             x1 = x2;
             fprintf('x1 changed to x2.\n');
         end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         if iseq(x1, fx1, exitflag1, output1, x2, fx2, exitflag2, output2, prec)
             fprintf('Succeed\n');
         else

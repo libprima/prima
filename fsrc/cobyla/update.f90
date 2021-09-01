@@ -105,7 +105,7 @@ if (DEBUGGING) then
     call verisize(simi, n, n)
 end if
 
-info = 0
+info = 0_IK
 
 ! Identify the optimal vertex of the current simplex.
 ! N.B.: Maybe not all vertex of the simplex are initialized! Use EVALUATED as a mask.

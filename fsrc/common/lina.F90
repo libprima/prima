@@ -15,7 +15,7 @@
 
 ! Coded by Zaikun ZHANG in July 2020.
 !
-! Last Modified: Wednesday, September 01, 2021 AM12:16:12
+! Last Modified: Wednesday, September 01, 2021 PM10:58:15
 
 
 #include "ppf.h"
@@ -777,10 +777,9 @@ z = matprod(x, A) + y
 end function xA_plus_y
 
 
-function calquad(d, gq, hq, pq, x, xpt) result(qdiff)
-! CALQUAD calculates
-! QDIFF = Q(X + D) - Q(X)
-! with Q being the quadratic function defined via (GQ, HQ, PQ) by
+function calquad(d, gq, hq, pq, x, xpt) result(qred)
+! This function evaluates QRED = Q(X) - Q(X + D) with Q being the quadratic function defined via
+! (GQ, HQ, PQ) by
 ! Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
 ! where HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
 ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
@@ -807,7 +806,7 @@ real(RP), intent(in) :: x(:)      ! X(N)
 real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
 
 ! Output
-real(RP) :: qdiff
+real(RP) :: qred
 
 ! Local variable
 real(RP) :: s(size(x))
@@ -835,17 +834,17 @@ call verisize(pq, npt)
 #if __USE_POWELL_ALGEBRA__ == 1
 s = x + d
 ! First order term and explicit second order term
-qdiff = ZERO
-ih = 0
+qred = ZERO
+ih = 0_IK
 do j = 1, int(size(d), kind(j))
-    qdiff = qdiff + d(j) * gq(j)
+    qred = qred - d(j) * gq(j)
     do i = 1, j
         ih = int(ih + 1, kind(ih))
         t = d(i) * s(j) + d(j) * x(i)
         if (i == j) then
             t = HALF * t
         end if
-        qdiff = qdiff + t * hq(i, j)
+        qred = qred - t * hq(i, j)
     end do
 end do
 !-----------------------------------------------------------!
@@ -856,21 +855,21 @@ w = w * (HALF * w + matprod(x, xpt)) !----------------------!
 !-----------------------------------------------------------!
 ! Implicit second order term
 do i = 1, int(size(pq), kind(i))
-    qdiff = qdiff + pq(i) * w(i)
+    qred = qred - pq(i) * w(i)
 end do
 #else
 ! The order of calculation seems quite important. The following order seems to work well.
 ! 1st order term
-qdiff = inprod(d, gq)
+qred = - inprod(d, gq)
 s = HALF * d + x  ! Different from the above version.
 ! implicit 2nd-order term
-qdiff = qdiff + sum(pq * (matprod(s, xpt) * matprod(d, xpt)))
+qred = qred - sum(pq * (matprod(s, xpt) * matprod(d, xpt)))
 ! explicit 2nd-order term
-qdiff = qdiff + inprod(s, matprod(hq, d))
+qred = qred - inprod(s, matprod(hq, d))
 ! The following implementations do not work as well as the above one.
-!qdiff = qdiff + inprod(d, matprod(hq, s))
-!qdiff = qdiff + sum(hq * outprod(s, d))
-!qdiff = qdiff + HALF*(inprod(d, matprod(hq, s)) + inprod(s, matprod(hq, d)))
+!qred = qred - inprod(d, matprod(hq, s))
+!qred = qred - sum(hq * outprod(s, d))
+!qred = qred - HALF*(inprod(d, matprod(hq, s)) + inprod(s, matprod(hq, d)))
 #endif
 end function calquad
 

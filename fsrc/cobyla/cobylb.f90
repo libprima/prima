@@ -377,15 +377,10 @@ end subroutine cobylb
 end module cobylb_mod
 
 ! TODO:
-! 0. implement generic history.f90 and checkexit.f90
+! 0. In COBYLA, check what should we do with JDROP = 0, both TR and GEO
 ! 1. evalfc, extreme barrier, moderate excessively negative objective, which has not been done in
 !    NEWUOA. Shouldn't we remove the extreme barrier in the MATLAB/Python interface after it is
 !    implemented in FORTRAN?
-! 2. checkexit
-! 3. updatexfc, absorbing updatepole
-! 4. resenhance
-! 5. Do the same for initialize
 ! 6. Do the same for NEWUOA
-! 7. In NEWUOA, resolve the inconsistency of fopt and xopt with kopt
 ! 8. knew ===> jdrop
 ! 9. XPT(i, :), FVAL(:) should be indexed by j; k is for iterations (fhist and ffilt)

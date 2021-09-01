@@ -4,7 +4,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Wednesday, September 01, 2021 AM12:30:08
+! Last Modified: Wednesday, September 01, 2021 AM10:40:10
 
 module initialize_mod
 
@@ -110,7 +110,7 @@ info = INFO_DFT
 
 ! We set ij = 1 in case the initialization aborts due to abnormality. If
 ! we do not do this, ij will be undefined if the initialization aborts.
-ij = 1
+ij = 1_IK
 
 ! Set XBASE to X0.
 xbase = x0
@@ -160,7 +160,7 @@ do k = 1, min(npt, int(2 * n + 1, kind(npt)))
     subinfo = checkexit(maxfun, k, f, ftarget, x)
     if (subinfo /= INFO_DFT) then
         info = subinfo
-        npt_revised = 0
+        npt_revised = 0_IK
         exit
     end if
 end do
@@ -244,7 +244,7 @@ subroutine initq(ij, fval, xpt, gq, hq, pq, info)
 
 ! Generic modules
 use consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING
-use info_mod, only : NAN_MODEL
+use info_mod, only : INFO_DFT, NAN_MODEL
 use debug_mod, only : errstop, verisize
 use infnan_mod, only : is_nan
 
@@ -338,7 +338,7 @@ end do
 if (any(is_nan(gq)) .or. any(is_nan(hq)) .or. any(is_nan(pq))) then
     info = NAN_MODEL
 else
-    info = 0
+    info = INFO_DFT
 end if
 
 end subroutine initq
@@ -349,7 +349,7 @@ subroutine inith(ij, xpt, idz, bmat, zmat, info)
 
 ! Generic modules
 use consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
-use info_mod, only : NAN_MODEL
+use info_mod, only : INFO_DFT, NAN_MODEL
 use debug_mod, only : errstop, verisize
 use infnan_mod, only : is_nan
 
@@ -394,7 +394,7 @@ if (DEBUGGING) then
 end if
 
 ! Set IDZ = 1. It will not be changed in the following.
-idz = 1
+idz = 1_IK
 
 ! Some values to be used for setting BMAT and ZMAT.
 rhobeg = maxval(abs(xpt(:, 2)))  ! Read RHOBEG from XPT.
@@ -452,7 +452,7 @@ end do
 if (any(is_nan(bmat)) .or. any(is_nan(zmat))) then
     info = NAN_MODEL
 else
-    info = 0
+    info = INFO_DFT
 end if
 
 end subroutine inith

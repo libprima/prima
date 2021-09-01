@@ -3,13 +3,13 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, August 27, 2021 PM03:20:23
+! Last Modified: Wednesday, September 01, 2021 PM11:26:52
 
 module update_mod
 
 implicit none
 private
-public :: updateh, updateq, tryqalt
+public :: updateh, updateq, updatexf, tryqalt
 
 
 contains
@@ -178,7 +178,7 @@ if (jl == 1) then
         if (idz == 1) then
             ! This is the first place (out of two) where IDZ is
             ! increased. Note that IDZ = 2 <= NPT-N after the update.
-            idz = 2
+            idz = 2_IK
         else
             ! This is the first place (out of two) where IDZ is
             ! decreased (by 1). Since IDZ >= 2 in this case, we have
@@ -190,7 +190,7 @@ if (jl == 1) then
 else
     ! Complete the updating of ZMAT in the alternative case. ZMAT(KNEW, :) has two nonzeros after
     ! the rotations.
-    ja = 1
+    ja = 1_IK
     if (beta >= ZERO) then
         ja = jl
     end if
@@ -312,6 +312,57 @@ gq = gq + fqdiff * bmatknew
 end subroutine updateq
 
 
+subroutine updatexf(knew, f, xnew, kopt, fval, xpt, fopt, xopt)
+use consts_mod, only : RP, IK, DEBUGGING
+use debug_mod, only : errstop, verisize
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: knew
+real(RP), intent(in) :: f
+real(RP), intent(in) :: xnew(:)
+
+! In-outputs
+integer(IK), intent(inout) :: kopt
+real(RP), intent(inout) :: fval(:)
+real(RP), intent(inout) :: xpt(:, :)
+
+! Outputs
+real(RP), intent(out) :: fopt
+real(RP), intent(out) :: xopt(:)
+
+! Local variables
+integer(IK) :: n
+integer(IK) :: npt
+character(len=*), parameter :: srname = 'UPDATEXF'
+
+n = size(xpt, 1)
+npt = size(xpt, 2)
+if (DEBUGGING) then
+    if (n < 1 .or. npt < n + 2) then
+        call errstop(srname, 'SIZE(XPT) is invalid')
+    end if
+    call verisize(fval, npt)
+    call verisize(xopt, n)
+end if
+
+xpt(:, knew) = xnew  ! Should be done after UPDATEQ.
+fval(knew) = f
+
+! KOPT is NOT identical to MINLOC(FVAL). Indeed, if FVAL(KNEW) = FVAL(KOPT) and KNEW < KOPT, then
+! MINLOC(FVAL) = KNEW /= KOPT. Do not change KOPT in this case.
+if (fval(knew) < fval(kopt)) then
+    kopt = knew
+end if
+
+! Even if FVAL(KNEW) >= FVAL(KOPT) and KOPT remains unchanged, we still need to update XOPT and FOPT,
+! because it may happen that KNEW = KOPT, so that XPT(:, KOPT) has been updated to XNEW.
+xopt = xpt(:, kopt)
+fopt = fval(kopt)
+
+end subroutine updatexf
+
+
 subroutine tryqalt(idz, fval, ratio, smat, zmat, itest, gq, hq, pq)
 ! TRYQALT tests whether to replace Q by the alternative model, namely the model that minimizes
 ! the F-norm of the Hessian subject to the interpolation conditions. It does the replacement
@@ -376,11 +427,11 @@ end if
 ! (Section 3.3.2).
 !if (abs(ratio) > 1.0e-2_RP) then
 if (ratio > 1.0E-2_RP) then
-    itest = 0
+    itest = 0_IK
 else
     galt = matprod(smat, fval)
     if (inprod(gq, gq) < 1.0E2_RP * inprod(galt, galt)) then
-        itest = 0
+        itest = 0_IK
     else
         itest = int(itest + 1, kind(itest))
     end if
@@ -393,7 +444,7 @@ if (itest >= 3) then
     fz = matprod(fval, zmat)
     fz(1:idz - 1) = -fz(1:idz - 1)
     pq = matprod(zmat, fz)
-    itest = 0
+    itest = 0_IK
 end if
 
 end subroutine tryqalt
