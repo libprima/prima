@@ -4,7 +4,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Wednesday, September 01, 2021 AM10:45:37
+! Last Modified: Thursday, September 02, 2021 AM08:56:18
 
 module trustregion_mod
 
@@ -357,11 +357,13 @@ end subroutine trsapp
 function trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
 
 ! Generic module
-use consts_mod, only : RP, HALF
+use consts_mod, only : RP, HALF, DEBUGGING
+use infnan_mod, only : is_nan
+use debug_mod, only : errstop
 
 implicit none
 
-real(RP) :: trrad
+! Input
 real(RP), intent(in) :: delta  ! Current trust-region radius
 real(RP), intent(in) :: dnorm  ! Norm of current trust-region step
 real(RP), intent(in) :: eta1  ! Ratio threshold for contraction
@@ -369,6 +371,20 @@ real(RP), intent(in) :: eta2  ! Ratio threshold for expansion
 real(RP), intent(in) :: gamma1 ! Contraction factor
 real(RP), intent(in) :: gamma2 ! Expansion factor
 real(RP), intent(in) :: ratio  ! Reduction ratio
+
+! Output
+real(RP) :: trrad
+
+! Local variables
+character(len=*), parameter :: srname = 'TRRAD'
+
+if (DEBUGGING) then
+    ! By the definition of RATIO in ratio.f90, RATIO cannot be NaN unless the actual reduction is
+    ! NaN, which should NOT happen due to the moderated extreme barrier.
+    if (is_nan(ratio)) then
+        call errstop(srname, 'RATIO is NaN')
+    end if
+end if
 
 if (ratio <= eta1) then
     trrad = gamma1 * dnorm

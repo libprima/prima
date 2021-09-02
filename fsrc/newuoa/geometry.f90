@@ -3,7 +3,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Wednesday, September 01, 2021 PM08:57:11
+! Last Modified: Thursday, September 02, 2021 AM08:55:00
 
 module geometry_mod
 
@@ -43,10 +43,8 @@ real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 integer(IK) :: knew
 
 ! Local variables
-integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: hdiag(size(zmat, 1))
-real(RP) :: rhosq
 real(RP) :: sigma(size(xdist))
 character(len=*), parameter :: srname = 'SETDROP_TR'
 
@@ -62,8 +60,8 @@ if (DEBUGGING) then
     if (size(zmat, 1) /= npt .or. size(zmat, 2) < 1) then
         call errstop(srname, 'SIZE(ZMAT) is invalid')
     end if
-    ! By the definition of RATIO in NEWUOB, RATIO cannot be NaN unless the actual reduction is NaN,
-    ! which should NOT happen due to the moderated extreme barrier.
+    ! By the definition of RATIO in ratio.f90, RATIO cannot be NaN unless the actual reduction is
+    ! NaN, which should NOT happen due to the moderated extreme barrier.
     if (is_nan(ratio)) then
         call errstop(srname, 'RATIO is NaN')
     end if

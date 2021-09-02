@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Thursday, September 02, 2021 AM12:08:56
+! Last Modified: Thursday, September 02, 2021 AM08:54:41
 
 module newuob_mod
 
@@ -47,7 +47,7 @@ subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 use pintrf_mod, only : FUN
 use evaluate_mod, only : evalf
 use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENUM, DEBUGGING
-use info_mod, only : INFO_DFT, MAXTR_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS
+use info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS
 use infnan_mod, only : is_nan
 use debug_mod, only : errstop, verisize
 use output_mod, only : retmssg, rhomssg, fmssg
@@ -95,7 +95,6 @@ real(RP), intent(out) :: xhist(:, :)
 integer(IK) :: idz
 integer(IK) :: ij(2, npt)
 integer(IK) :: itest
-integer(IK) :: khist
 integer(IK) :: knew_geo
 integer(IK) :: knew_tr
 integer(IK) :: kopt

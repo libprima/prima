@@ -36,21 +36,16 @@ function [x, fx, exitflag, output] = newuoan(varargin)
 %
 %   *** x is the approximate solution to the optimization problem
 %   *** fx is fun(x)
-%   *** exitflag is an integer indicating why NEWUOA returns; the
-%       possible values are
+%   *** exitflag is an integer indicating why NEWUOA returns; the possible values are
 %       0: the lower bound for the trust region radius is reached
 %       1: the target function value is achieved
-%       2: a trust region step failed to reduce the quadratic model
+%       2: a trust region step failed to reduce the quadratic model (possible only in classical mode)
 %       3: the objective function has been evaluated maxfun times
-%       4, 7, 8, 9: rounding errors become severe in the Fortran code
 %       14: a linear feasibility problem received and solved
 %       20: the trust-region iteration has been performed for 10*maxfun times
-%       -1: NaN occurs in x
-%       -2: the objective function returns an NaN or nearly infinite
-%       value (only in the classical mode)
-%       -3: NaN occurs in the models
-%       exitflag = 5, 10, 11, 12 are possible exitflags of the Fortran
-%       code but cannot be returned by NEWUOA
+%       -1: NaN occurs in x (possible only in the classical mode)
+%       -2: the objective function returns an Inf/NaN value (possible only in classical mode)
+%       -3: NaN occurs in the models (possible only in classical mode)
 %   *** output is a structure with the following fields:
 %       funcCount: number of function evaluations
 %       xhist: history of iterates (if options.output_xhist = true)
