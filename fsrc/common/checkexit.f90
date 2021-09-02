@@ -16,7 +16,7 @@ function checkexit_unc(maxfun, nf, f, ftarget, x) result(info)
 
 ! Generic modules
 use consts_mod, only : RP, IK, DEBUGGING
-use info_mod, only : INFO_DFT, NAN_X, NaN_INF_F, FTARGET_ACHIEVED, MAXFUN_REACHED
+use info_mod, only : INFO_DFT, NAN_X, NAN_INF_F, FTARGET_ACHIEVED, MAXFUN_REACHED
 use infnan_mod, only : is_nan, is_posinf
 use debug_mod, only : errstop
 
@@ -35,7 +35,7 @@ integer(IK) :: info
 character(len=*), parameter :: srname = 'CHECKEXIT_UNC'
 
 if (DEBUGGING) then
-    if (NAN_X == INFO_DFT .or. FTARGET_ACHIEVED == INFO_DFT .or. MAXFUN_REACHED == INFO_DFT) then
+    if (NAN_X == INFO_DFT .or. NAN_INF_F == INFO_DFT .or. FTARGET_ACHIEVED == INFO_DFT .or. MAXFUN_REACHED == INFO_DFT) then
         call errstop(srname, 'Invalid info codes.')
     end if
     ! NAN_X should never happen if the initial X does not contain NaN and the subroutines generating
@@ -49,13 +49,13 @@ if (DEBUGGING) then
     end if
 end if
 
-info = INFO_DFT  ! Default info.
+info = INFO_DFT  ! Default info, indicating that the solver will not exit.
 
-! This should never happen unless there is a bug.
+! NAN_X should never happen unless there is a bug.
 if (any(is_nan(x))) then
     info = NAN_X
 end if
-! With the moderated extreme barrier, this should never happen unless there is a bug.
+! With the moderated extreme barrier, NAN_INF_F should never happen unless there is a bug.
 if (is_nan(f) .or. is_posinf(f)) then
     info = NAN_INF_F
 end if
@@ -94,7 +94,7 @@ integer(IK) :: info
 character(len=*), parameter :: srname = 'CHECKEXIT_CON'
 
 if (DEBUGGING) then
-    if (NAN_X == INFO_DFT .or. FTARGET_ACHIEVED == INFO_DFT .or. MAXFUN_REACHED == INFO_DFT) then
+    if (NAN_X == INFO_DFT .or. NAN_INF_F == INFO_DFT .or. FTARGET_ACHIEVED == INFO_DFT .or. MAXFUN_REACHED == INFO_DFT) then
         call errstop(srname, 'Invalid info codes.')
     end if
     ! NAN_X should never happen if the initial X does not contain NaN and the subroutines generating
@@ -108,7 +108,7 @@ if (DEBUGGING) then
     end if
 end if
 
-info = INFO_DFT  ! Default info.
+info = INFO_DFT   ! Default info, indicating that the solver will not exit.
 
 ! This should never happen unless there is a bug.
 if (any(is_nan(x))) then

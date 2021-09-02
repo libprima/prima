@@ -14,7 +14,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Wednesday, September 01, 2021 AM10:46:10
+! Last Modified: Thursday, September 02, 2021 AM09:13:41
 
 module newuoa_mod
 
@@ -152,13 +152,17 @@ subroutine newuoa(calfun, x, f, &
 !   in the module INFO_MOD (see info.F90 under the directory named "common"):
 !   SMALL_TR_RADIUS: the lower bound for the trust region radius is reached;
 !   FTARGET_ACHIEVED: the target function value is reached;
-!   TRSUBP_FAILED: a trust region step failed to reduce the quadratic model;
 !   MAXFUN_REACHED: the objective function has been evaluated MAXFUN times;
 !   MAXTR_REACHED: the trust region iteration has been performed MAXTR times,
-!       the value of MAXTR being 10*MAXFUN, which is very unlikely to reach;
+!       the value of MAXTR being 10*MAXFUN, which is UNLIKELY to reach;
+!   !--------------------------------------------------------------------------!
+!   The following cases should NEVER occur unless there is a bug, because the
+!   code will try to continue in the corresponding scenarios.
 !   NAN_X: NaN occurs in x;
 !   NAN_INF_F: the objective function returns NaN or nearly infinite value;
-!   NAN_MODEL: NaN occurs in the models.
+!   NAN_MODEL: NaN occurs in the model;
+!   TRSUBP_FAILED: a trust region step failed to reduce the quadratic model
+!   !--------------------------------------------------------------------------!
 
 
 ! Generic modules

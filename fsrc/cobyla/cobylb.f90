@@ -378,6 +378,7 @@ end module cobylb_mod
 
 ! TODO:
 ! 0. In COBYLA, check what should we do with JDROP = 0, both TR and GEO
+!    If ACTREM > 0 ===> JDROP > 0, why COBYLA can return sub-optimal points???
 ! 1. evalfc, extreme barrier, moderate excessively negative objective, which has not been done in
 !    NEWUOA. Shouldn't we remove the extreme barrier in the MATLAB/Python interface after it is
 !    implemented in FORTRAN?
