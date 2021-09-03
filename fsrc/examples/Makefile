@@ -6,32 +6,39 @@
 # the .o files. The order matters, because the compilation of each .o file
 # depends on the .o files (and the corresponding .mod files) preceding it.
 
-FC = gfortran -Wall -Wextra -fcheck=all -pedantic
-#FC = ifort -warn all -check all
-#FC = flang -Wall -Wextra -Mstandard
-#FC = pgfortran -Minform=warn
-#FC = sunf95 -w3 -u -U
-#FC = nagfor -C
-#FC = af95 -no-pie -m1
 FFLAGS = -g
 DEPS = ../common/*.h
 COMMON = ../common
 NEWUOA = ../newuoa
+TEST_NEWUOA = atest_newuoa ftest_newuoa gtest_newuoa itest_newuoa ntest_newuoa ptest_newuoa stest_newuoa xtest_newuoa
 
-.PHONY: test_newuoa clean
+.PHONY: $(TEST_NEWUOA) clean
 
-test_newuoa: clean newuoa_exmp
+atest_newuoa: FC = af95 -no-pie -m1
+ftest_newuoa: FC = flang -Wall -Wextra -Mstandard
+gtest_newuoa: FC = gfortran -Wall -Wextra -fcheck=all -pedantic
+itest_newuoa: FC = ifort -warn all -check all
+ntest_newuoa: FC = nagfor -C
+ptest_newuoa: FC = pgfortran -Minform=warn
+stest_newuoa: FC = sunf95 -w3 -u -U
+xtest_newuoa: FC = ifx -warn all
+
+$(TEST_NEWUOA): clean newuoa_exmp
 	./newuoa_exmp
 	rm -f newuoa_exmp
 
 newuoa_exmp: clean newuoa_exmp.f90 \
-	consts.o info.o debug.o memory.o infnan.o lina.o output.o pintrf.o \
-	preproc.o initialize.o trustregion.o vlagbeta.o geometry.o shiftbase.o update.o newuob.o newuoa.o
+	consts.o info.o debug.o memory.o infnan.o lina.o \
+	ratio.o resolution.o history.o selectx.o checkexit.o output.o preproc.o pintrf.o evaluate.o \
+	initialize.o trustregion.o vlagbeta.o geometry.o shiftbase.o update.o newuob.o newuoa.o
 	$(FC) $(FFLAGS) -o newuoa_exmp newuoa_exmp.f90 *.o
 	rm -f *.o *.mod *.dbg
 
 # Compile the Fortran code providing generic modules
 %.o: $(COMMON)/%.F90 $(DEPS)
+	$(FC) $(FFLAGS) -c -o $@ $<
+
+%.o: $(COMMON)/%.f90 $(DEPS)
 	$(FC) $(FFLAGS) -c -o $@ $<
 
 # Compile the Fortran code providing solver-specific modules
