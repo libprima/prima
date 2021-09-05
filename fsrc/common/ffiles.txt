@@ -1,8 +1,8 @@
 consts.F90
 info.f90
+infnan.F90
 debug.F90
 memory.F90
-infnan.F90
 lina.F90
 ratio.f90
 resolution.f90

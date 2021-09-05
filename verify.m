@@ -83,7 +83,7 @@ else
     requirements.type = 'ubln';
 end
 
-% Supress the following warning
+% Suppress the following warning
 orig_warning_state = warning;
 cellfun(@(solver) warning('off', [solver, ':Debug']), solvers);
 cellfun(@(solver) warning('off', [solver, ':ChkFunval']), solvers);
@@ -129,7 +129,7 @@ for ip = minip : length(plist)
     for ir = minir : maxir
         fprintf('%s Run No. %3d: \t', pname, ir);
         % Some randomization
-        rng(ceil(1e5*abs(sin(1e5*(sum(double(pname))*n*ir)))));
+        rng(ceil(1e6*abs(cos(1e6*sin(1e6*(sum(double(pname))*n*ir))))));
         prob.x0 = x0 + 0.5*randn(size(x0));
         test_options = struct();
         test_options.debug = true;
@@ -173,11 +173,11 @@ for ip = minip : length(plist)
         if ir == 7
             test_options.rhoend = test_options.rhobeg;
         end
-        if 16 <= ir && ir <= 20
-            test_options.chkfunval = false;
+        if 0 <= ir && ir <= 20
+            test_options.chkfunval = false;  % The checking would fail due to noise.
             prob.objective = @(x) noisyfeval(objective, x);
             if ~isempty(nonlcon)
-                prob.nonlcon = @(x) noisyfeval(noisyceval(nonlcon, x));
+                prob.nonlcon = @(x) noisyceval(nonlcon, x);
             end
         else
             prob.objective  = objective;
@@ -217,25 +217,25 @@ for ip = minip : length(plist)
        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Special Treatments%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
        minfhist = min(length(output1.fhist), length(output2.fhist));
        % NEWUOA
-       if (strcmpi(solvers{1}, 'newuoa') || strcmpi(solvers{2}, 'newuoan')) && exitflag1 == 2 && exitflag2 ~=2 && output1.funcCount < output2.funcCount && all(output2.fhist(end-minfhist+1:end-(output2.funcCount-output1.funcCount)) == output1.fhist(end-minfhist+(output2.funcCount-output1.funcCount)+1:end)) && fx2 <= fx1
+       if (strcmpi(solvers{1}, 'newuoa') || strcmpi(solvers{2}, 'newuoan')) && exitflag1 == 2 && exitflag2 ~=2 && output1.funcCount <= output2.funcCount && all(output2.fhist(end-minfhist+1:end-(output2.funcCount-output1.funcCount)) == output1.fhist(end-minfhist+(output2.funcCount-output1.funcCount)+1:end)) && fx2 <= fx1
            x2 = x1;
            fx2 = fx1;
            exitflag2 = exitflag1;
            output2.fhist = output1.fhist;
            output2.funcCount = output1.funcCount;
-           fprintf('The original solver exits due to failure of the TR subproblem solver.');
+           fprintf('The original solver exits due to failure of the TR subproblem solver.\n');
        end
-       if (strcmpi(solvers{1}, 'newuoan') || strcmpi(solvers{2}, 'newuoa')) && exitflag2 == 2 && exitflag1 ~=2 &&  output2.funcCount < output1.funcCount && all(output1.fhist(end-minfhist+1:end-(output1.funcCount-output2.funcCount)) == output2.fhist(end-minfhist+(output1.funcCount-output2.funcCount)+1:end)) && fx1 <= fx2
+       if (strcmpi(solvers{1}, 'newuoan') || strcmpi(solvers{2}, 'newuoa')) && exitflag2 == 2 && exitflag1 ~=2 &&  output2.funcCount <= output1.funcCount && all(output1.fhist(end-minfhist+1:end-(output1.funcCount-output2.funcCount)) == output2.fhist(end-minfhist+(output1.funcCount-output2.funcCount)+1:end)) && fx1 <= fx2
            x1 = x2;
            fx1 = fx2;
            exitflag1 = exitflag2;
            output1.fhist = output2.fhist;
            output1.funcCount = output2.funcCount;
-           fprintf('The original solver exits due to failure of the TR subproblem solver.');
+           fprintf('The original solver exits due to failure of the TR subproblem solver.\n');
        end
        if (strcmpi(solvers{1}, 'newuoa') || strcmpi(solvers{2}, 'newuoa')) && fx1 == fx2 && output1.funcCount == output2.funcCount && all(output1.fhist(end-minfhist+1:end) == output2.fhist(end-minfhist+1:end)) && norm(x1 - x2) > 0
            x1 = x2;
-           fprintf('x1 changed to x2');
+           fprintf('x1 changed to x2\n');
        end
 
        % COBYLA
@@ -328,22 +328,22 @@ return
 
 function f = noisy(f, x, noise_level)
     if nargin < 3
-        noise_level = 1e-2;
+        noise_level = 5e-1;
     end
-    r = sin((abs(f)+1)*1e3*max(abs(x)+1)*sin(1e3*sum(abs(x)+1)*sin(1e3*(norm(x)+1))));
-    if (r > 0.99)
+    r = sin((abs(f)+1)*1e6*max(abs(x)+1)*cos(1e6*sum(abs(x)+1)*sin(1e6*(norm(x)+1))));
+    if (r > 0.75)
         r = sign(f)*inf;
-    elseif (r > 0.98)
-        r = -sign(f)*inf;
-    elseif (r <-0.99)
+    elseif (r > 0.5)
         r = NaN;
+    elseif (r < - 0.75)
+        r = -sign(f)*inf;
     end
     f = f*(1+noise_level*r);
 return
 
 function f = noisyfeval(func, x, noise_level)
     if nargin < 3
-        noise_level = 1e-2;
+        noise_level = 5e-1;
     end
     f = feval(func, x);
     f = noisy(f, x, noise_level);
@@ -351,7 +351,7 @@ return
 
 function [cineq, ceq] = noisyceval(con, x, noise_level)
     if nargin < 3
-        noise_level = 1e-2;
+        noise_level = 5e-1;
     end
     [cineq, ceq] = feval(con, x);
     for i = 1 : length(cineq)

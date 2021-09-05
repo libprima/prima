@@ -140,7 +140,7 @@ end if
 ! Do this only if EVALUATED contains only TRUE.
 if (all(evaluated)) then
     erri = matprod(simi, sim(:, 1:n)) - eye(n, n)
-    if (any(is_nan(erri)) .or. maxval(abs(erri)) > TENTH) then
+    if (any(is_nan(erri)) .or. any(abs(erri) > TENTH)) then
         info = DAMAGING_ROUNDING
         fval = fval_old
         conmat = conmat_old

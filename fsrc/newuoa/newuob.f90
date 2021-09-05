@@ -2,7 +2,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Thursday, September 02, 2021 AM08:54:41
+! Last Modified: Saturday, September 04, 2021 PM04:13:12
 
 module newuob_mod
 
@@ -192,10 +192,9 @@ moderrsav = HUGENUM
 dnormsav = HUGENUM
 itest = 0_IK
 trtol = 1.0E-2_RP  ! Tolerance used in trsapp.
-! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers will raise a run-time error
-! that RATIO is undefined. Powell's code indeed sets RATIO = -ONE when SHORD is TRUE, and use this
-! artificial value when setting IMPROVE_GEO and REDUCE_RHO; however, we choose not to use the
-! artificial RATIO but use SHORTD to be more explicit. See IMPROVE_GEO and REDUCE_RHO for details.
+! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers may raise a run-time error that
+! RATIO is undefined. The value will not be used: when SHORTD = FALSE, its value will be overwritten;
+! when SHORTD = TRUE, its value is used only in BAD_TRSTEP, which is TRUE regardless of RATIO.
 ratio = -ONE
 
 ! Normally, each trust-region iteration takes one function evaluation. The following setting
@@ -393,6 +392,7 @@ do tr = 1, maxtr
     ! be exchanged without changing the algorithm.
     if (improve_geo) then
         ! XPT(:, KNEW_GEO) will be dropped (replaced by XOPT + D below).
+        ! KNEW_GEO should never be KOPT. Otherwise, it is a bug.
         knew_geo = int(maxloc(xdist, dim=1), kind(knew_geo))
 
         ! Set DELBAR, which will be used as the trust-region radius for the geometry-improving
