@@ -57,6 +57,9 @@ end function goodgeo
 function setdrop_tr(actrem, d, factor_alpha, factor_delta, rho, sim, simi) result(jdrop)
 ! This subroutine finds (the index) of a current interpolation point to be replaced by the
 ! trust-region trial point. See (19)--(21) of the COBYLA paper.
+! N.B.:
+! 1. If ACTREM > 0, then JDROP > 0 so that D is included into XPT. Otherwise, it is a bug.
+! 2. COBYLA never sets JDROP = N + 1.
 
 use consts_mod, only : IK, RP, ZERO, ONE, DEBUGGING
 use lina_mod, only : matprod, inprod
@@ -82,7 +85,6 @@ integer(IK) :: n
 real(RP) :: xdist(size(sim, 1))
 real(RP) :: edgmax
 real(RP) :: parsig
-real(RP) :: ratio
 real(RP) :: sigbar(size(sim, 1))
 real(RP) :: simid(size(sim, 1))
 real(RP) :: vsig(size(sim, 1))
@@ -99,18 +101,13 @@ if (DEBUGGING) then
     call verisize(simi, n, n)
 end if
 
-! JDROP = 0 by default. It cannot be removed, as JDROP is not set in all cases below.
+! JDROP = 0 by default. It cannot be removed, as JDROP may not be set below in some cases (e.g.,
+! when ACTREM <= 0, MAXVAL(ABS(SIMID)) <= 1, and MAXVAL(XDIST) <= EDGMAX).
 jdrop = 0_IK
 
-if (actrem <= ZERO) then
-    ratio = ONE
-else
-    ratio = ZERO
-end if
 simid = matprod(simi, d)
-
-if (maxval(abs(simid)) > ratio) then
-    jdrop = int(maxloc(abs(simid), dim=1), kind(jdrop))
+if (any(abs(simid) > ONE) .or. (actrem > ZERO .and. any(.not. is_nan(simid)))) then
+    jdrop = int(maxloc(abs(simid), mask=(.not. is_nan(simid)), dim=1), kind(jdrop))
 end if
 
 if (actrem > ZERO) then
@@ -118,31 +115,34 @@ if (actrem > ZERO) then
 else
     xdist = sqrt(sum(sim(:, 1:n)**2, dim=1))
 end if
-
 edgmax = factor_delta * rho
 parsig = factor_alpha * rho
 vsig = ONE / sqrt(sum(simi**2, dim=2))
 sigbar = abs(simid) * vsig
-
 ! The following JDROP will overwrite the previous one if its premise holds.
 if (any(xdist > edgmax .and. (sigbar >= parsig .or. sigbar >= vsig))) then
     jdrop = int(maxloc(xdist, mask=(sigbar >= parsig .or. sigbar >= vsig), dim=1), kind(jdrop))
 end if
 
-! Powell's code does not include the following instructions. With Powell's code (i.e., the code
-! above), THEORETICALLY, JDROP is positive if ACTREM > 0 (i.e., D reduces the merit function).
-! However, JDROP may turn out 0 due to NaN in SIMID, SIGBAR, or DISTX. This may depend on the
-! compiler and language. Here, we set explicitly JDROP = 0 in case NaN occurs in these arrays, which
-! can happen in ill-conditioned problems, although rarely. Consequently, COBYLA will either take a
-! geometry step or reduce RHO. (If SIMID contains NaN then so does SIGBAR. So we check only SIGBAR.)
-if (is_nan(sum(abs(sigbar))) .or. is_nan(sum(xdist))) then
-    jdrop = 0_IK
+! Powell's code does not include the following instructions. With Powell's code, if SIMID consists
+! of only NaN, then JDROP can be 0 even when ACTREM > 0 (i.e., D reduces the merit function).
+if (actrem > ZERO .and. jdrop < 1_IK) then
+    jdrop = int(maxloc(xdist, mask=(.not. is_nan(xdist)), dim=1), kind(jdrop))
+end if
+
+if (DEBUGGING) then
+    if (actrem > ZERO .and. jdrop < 1_IK) then
+        ! This can happen only if NaN occurs in XDIST, which should not happen if the starting point
+        ! does not contain NaN and the trust-region/geometry steps never contain NaN.
+        call errstop(srname, 'ACTREM > 0 but JDROP < 1')
+    end if
 end if
 
 end function setdrop_tr
 
 
 function setdrop_geo(factor_alpha, factor_beta, rho, sim, simi) result(jdrop)
+! N.B.: COBYLA never sets JDROP = N + 1.
 
 use consts_mod, only : IK, RP, ONE, DEBUGGING
 use infnan_mod, only : is_nan
@@ -188,15 +188,12 @@ veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
 
 ! Decide which vertex to drop from the simplex. It will be replaced by a new point to improve
 ! acceptability of the simplex. See equations (15) and (16) of the COBYLA paper.
-if (maxval(veta) > pareta) then
-    jdrop = int(maxloc(veta, dim=1), kind(jdrop))
+if (any(veta > pareta)) then
+    jdrop = int(maxloc(veta, mask=(.not. is_nan(veta)), dim=1), kind(jdrop))
+elseif (any(.not. is_nan(vsig))) then
+    jdrop = int(minloc(vsig, mask=(.not. is_nan(vsig)), dim=1), kind(jdrop))
 else
-    jdrop = int(minloc(vsig, dim=1), kind(jdrop))
-end if
-
-! Set JDROPT = 0 in case of NaN in VSIG or VETA, which can happen due to NaN in SIM or SIMI.
-! Powell's code does not include these instructions.
-if (is_nan(sum(vsig)) .or. is_nan(sum(veta))) then
+    ! Powell's code does not include this branch. NaN can occur in VSIG/VETA due to NaN in SIM/SIMI.
     jdrop = 0_IK
 end if
 
@@ -244,6 +241,9 @@ if (DEBUGGING) then
     call verisize(conmat, m, n + 1)
     call verisize(cval, n + 1)
     call verisize(simi, n, n)
+    if (jdrop < 1_IK .or. jdrop > n) then
+        call errstop(srname, 'JDROP < 1 or JDROP > N')
+    end if
 end if
 
 ! VSIG(J) (J=1, .., N) is The Euclidean distance from vertex J to the opposite face of

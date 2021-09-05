@@ -15,7 +15,6 @@
  * __USE_INTRINSIC_ALGEBRA__   use intrinsic procedures like matmul or not: 0, 1
  * __INTEGER_KIND__            the integer kind to be used: 0, 32, 64, 16
  * __REAL_PRECISION__          the real precision to be used: 64, 32, 128, 0
- * __USE_IEEE_ARITHMETIC__     use the IEEE_ARITHMETIC intrinsic or not: 0, 1
  * __USE_STORAGE_SIZE__        use the STORAGE_SIZE intrinsic or not: 0, 1
  * __USE_ISO_FORTRAN_ENV_INTREAL__ use INT32 etc in ISO_FORTRAN_ENV or not: 0, 1
  *
@@ -31,7 +30,6 @@
  *
  * 2. If you change these flags, make sure that your compiler is supportive
  * when changing __INTEGER_KIND__, __REAL_PRECISION__, __FORTRAN_STANDARD__,
- * __USE_IEEE_ARITHMETIC__ (Fortran 2003),
  * __USE_STORAGE_SIZE__ (Fortran 2008),
  * __USE_ISO_FORTRAN_ENV_INTREAL__ (Fortran 2008).
  *
@@ -40,7 +38,7 @@
  * logical, parameter :: __DEBUGGING__ == .false. ?
  *
  * Such a definition will work for __DEBUGGING__, but not for the flags that
- * depend on the compiler, for instance, __USE_IEEE_ARITHMETIC__.
+ * depend on the compiler, for instance, __USE_ISO_FORTRAN_ENV_INTREAL__.
  *
  */
 /******************************************************************************/
@@ -121,7 +119,7 @@
 #if defined __INTEGER_KIND__
 #undef __INTEGER_KIND__
 #endif
-#define __INTEGER_KIND__ 0 
+#define __INTEGER_KIND__ 0
 /* Fortran standards guarantee that 0 is supported, but not the others. */
 /******************************************************************************/
 
@@ -160,57 +158,6 @@
 #if __QP_AVAILABLE__ != 1 && __REAL_PRECISION__ > 64
 #undef __REAL_PRECISION__
 #define __REAL_PRECISION__ 64
-#endif
-/******************************************************************************/
-
-
-/******************************************************************************/
-/* Do we use the IEEE_ARITHMETIC intrinsic module? (Fortran 2003) */
-#if defined __USE_IEEE_ARITHMETIC__
-#undef __USE_IEEE_ARITHMETIC__
-#endif
-#define __USE_IEEE_ARITHMETIC__ 0
-
-/* As of gfortran 5.5, it seems that the IEEE_ARITHMETIC of gfortran does
- * not support REAL128. */
-#if defined __GFORTRAN__
-#if __REAL_PRECISION__ <= 64 && __GNUC__ >= 5
-#undef __USE_IEEE_ARITHMETIC__
-#define __USE_IEEE_ARITHMETIC__ 1
-#endif
-#endif
-
-#if defined __INTEL_COMPILER
-#if __INTEL_COMPILER >= 1110
-#undef __USE_IEEE_ARITHMETIC__
-#define __USE_IEEE_ARITHMETIC__ 1
-#endif
-#endif
-
-#if defined __NAG_COMPILER_RELEASE
-#if __NAG_COMPILER_RELEASE >= 50
-#undef __USE_IEEE_ARITHMETIC__
-#define __USE_IEEE_ARITHMETIC__ 1
-#endif
-#endif
-
-#if defined __PGI
-#if __PGIC__ >= 11 && __PGIC_MINOR__ >= 1
-#undef __USE_IEEE_ARITHMETIC__
-#define __USE_IEEE_ARITHMETIC__ 1
-#endif
-#endif
-
-#if defined __ibmxl__
-#if __ibmxl_version__ >= 13 && __ibmxl_release__ >= 1
-#undef __USE_IEEE_ARITHMETIC__
-#define __USE_IEEE_ARITHMETIC__ 1
-#endif
-#endif
-
-#if __FORTRAN_STANDARD__ < 2003
-#undef __USE_IEEE_ARITHMETIC__
-#define __USE_IEEE_ARITHMETIC__ 0
 #endif
 /******************************************************************************/
 

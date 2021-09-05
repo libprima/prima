@@ -12,7 +12,9 @@ COMMON = ../common
 NEWUOA = ../newuoa
 TEST_NEWUOA = atest_newuoa ftest_newuoa gtest_newuoa itest_newuoa ntest_newuoa ptest_newuoa stest_newuoa xtest_newuoa
 
-.PHONY: $(TEST_NEWUOA) clean
+.PHONY: test_newuoa clean
+
+test_newuoa: $(TEST_NEWUOA)
 
 atest_newuoa: FC = af95 -no-pie -m1
 ftest_newuoa: FC = flang -Wall -Wextra -Mstandard
@@ -23,16 +25,14 @@ ptest_newuoa: FC = pgfortran -Minform=warn
 stest_newuoa: FC = sunf95 -w3 -u -U
 xtest_newuoa: FC = ifx -warn all
 
-$(TEST_NEWUOA): clean newuoa_exmp
-	./newuoa_exmp
-	rm -f newuoa_exmp
+%_newuoa: %_newuoa_exmp
+	./$<
 
-newuoa_exmp: clean newuoa_exmp.f90 \
+%_newuoa_exmp: newuoa_exmp.f90 \
 	consts.o info.o debug.o memory.o infnan.o lina.o \
 	ratio.o resolution.o history.o selectx.o checkexit.o output.o preproc.o pintrf.o evaluate.o \
 	initialize.o trustregion.o vlagbeta.o geometry.o shiftbase.o update.o newuob.o newuoa.o
 	$(FC) $(FFLAGS) -o newuoa_exmp newuoa_exmp.f90 *.o
-	rm -f *.o *.mod *.dbg
 
 # Compile the Fortran code providing generic modules
 %.o: $(COMMON)/%.F90 $(DEPS)

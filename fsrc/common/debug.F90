@@ -3,7 +3,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020.
 !
-! Last Modified: Wednesday, September 01, 2021 PM03:00:02
+! Last Modified: Sunday, September 05, 2021 AM12:16:29
 
 
 #include "ppf.h"
@@ -13,7 +13,7 @@ module debug_mod
 
 implicit none
 private
-public :: errstop, backtr, verisym, verisize
+public :: assert, errstop, backtr, verisym, verisize
 
 interface verisize
     module procedure verisize_real_1, verisize_real_2
@@ -25,6 +25,24 @@ end interface verisize
 contains
 
 
+subroutine assert(assertion, description, srname)
+! This subroutine checks whether ASSERTION is true.
+! If no, print SRNAME // 'Assertion failed: ' // DESCRIPTION
+! and then stop the program by calling ERRSTOP.
+! MATLAB analogue: assert(assertion, sprintf('%s: Assertion failed: %s', srname, description))
+! Python analogue: assert assertion, srname + ': Assertion failed: ' + description
+! C analogue: assert(assertion)  /* An error message will be produced by the compiler */
+logical, intent(in) :: assertion  ! A condition that is expected to be true
+character(len=*), intent(in) :: description  ! Description of the assertion in human language
+character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure
+#if __DEBUGGING__ == 1
+if (.not. assertion) then
+    call errstop(trim(srname), 'Assertion failed: '//description)
+end if
+#endif
+end subroutine assert
+
+
 subroutine errstop(srname, mssg)
 character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: mssg
@@ -33,7 +51,7 @@ character(len=*), intent(in) :: mssg
 call backtr()
 #endif
 
-print '(/1A/)', '!!! Error: '//trim(srname)//': '//trim(mssg)//'.'
+print '(/1A/)', 'ERROR: '//trim(srname)//': '//trim(mssg)//'.'
 
 stop  ! This means to stop the whole program.
 
@@ -44,7 +62,7 @@ subroutine backtr
 ! BACKTR calls a compiler-dependent intrinsic to show a backtrace if we
 ! are in the debuge mode, i.e., __DEBUGGING__ == 1.
 ! N.B.:
-! 1. The intrisic is compiler-dependent and does not exist in all
+! 1. The intrinsic is compiler-dependent and does not exist in all
 ! compilers. Indeed, it is not standard-conforming. Therefore, compilers
 ! may warn that a non-standard intrinsic is in use.
 ! 2. More seriously, if the compiler is instructed to conform to the
@@ -73,7 +91,8 @@ end subroutine backtr
 
 subroutine verisym(A, tol)
 ! VERISYM verifies whether a matrix A is symmetric up to TOL.
-use consts_mod, only : RP, ONE, ZERO
+use consts_mod, only : RP, ONE
+use infnan_mod, only : is_nan
 implicit none
 
 real(RP), intent(in) :: A(:, :)
@@ -84,14 +103,9 @@ character(len=*), parameter :: srname = 'VERISYM'
 if (size(A, 1) /= size(A, 2)) then
     call errstop(srname, 'A is not square')
 end if
-if (tol > ZERO) then
-    if (maxval(abs((A - transpose(A)))) > tol * max(maxval(abs(A)), ONE)) then
-        call errstop(srname, 'A is not symmetric up to TOL')
-    end if
-else
-    if (maxval(abs((A - transpose(A)))) > ZERO) then
-        call errstop(srname, 'A is not symmetric up to TOL')
-    end if
+if (maxval(abs((A - transpose(A)))) > tol * max(min(huge(ONE), maxval(abs(A))), ONE) &
+    & .or. .not. all(is_nan(A) .eqv. is_nan(transpose(A)))) then
+    call errstop(srname, 'A is not symmetric up to TOL')
 end if
 end subroutine verisym
 
@@ -163,7 +177,7 @@ end subroutine verisize_int_2
 subroutine verisize_logical_1(x, n)
 ! VERISIZE_LOGICAL_1 verifies whether SIZE(X) = N.
 use consts_mod, only : IK
-logical(IK), intent(in) :: x(:)
+logical, intent(in) :: x(:)
 integer(IK), intent(in) :: n
 
 character(len=*), parameter :: srname = 'VERISIZE_LOGICAL_1'
@@ -177,7 +191,7 @@ end subroutine verisize_logical_1
 subroutine verisize_logical_2(x, m, n)
 ! VERISIZE_LOGICAL_2 verifies whether SIZE(X, 1) = M, SIZE(X, 2) = N.
 use consts_mod, only : IK
-logical(IK), intent(in) :: x(:, :)
+logical, intent(in) :: x(:, :)
 integer(IK), intent(in) :: m
 integer(IK), intent(in) :: n
 

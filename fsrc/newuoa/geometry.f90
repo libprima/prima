@@ -3,7 +3,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Thursday, September 02, 2021 AM08:55:00
+! Last Modified: Sunday, September 05, 2021 PM11:06:15
 
 module geometry_mod
 
@@ -18,13 +18,16 @@ contains
 function setdrop_tr(idz, kopt, beta, delta, ratio, rho, vlag, xdist, zmat) result(knew)
 ! This subroutine sets KNEW to the index of the interpolation point to be deleted AFTER A TRUST
 ! REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
-! XPT(:, KNEW) is replaced by XNEW = XOPT + D, where D is the trust-region step.  Note that the
-! information of XNEW is included in VLAG and BETA, which are calculated according to D.
+! XPT(:, KNEW) is replaced by XNEW = XOPT + D, where D is the trust-region step.
+! N.B.:
+! 1. Information of XNEW is encoded in VLAG and BETA, which are calculated according to D.
+! 2. If RATIO > 0, then KNEW > 0 so that XNEW is included into XPT. Otherwise, it is a bug.
+! 3. If RATIO <= 0, then KNEW /= KOPT so that XPT(:, KOPT) is retained. Otherwise, it is a bug.
 
 ! Generic modules
 use consts_mod, only : RP, IK, ONE, ZERO, TENTH, DEBUGGING
 use infnan_mod, only : is_nan
-use debug_mod, only : errstop, verisize
+use debug_mod, only : assert
 
 implicit none
 
@@ -53,18 +56,13 @@ character(len=*), parameter :: srname = 'SETDROP_TR'
 npt = int(size(xdist), kind(npt))
 
 if (DEBUGGING) then
-    if (npt < 3) then
-        call errstop(srname, 'NPT < 3 <= N + 2')
-    end if
-    call verisize(vlag, npt)
-    if (size(zmat, 1) /= npt .or. size(zmat, 2) < 1) then
-        call errstop(srname, 'SIZE(ZMAT) is invalid')
-    end if
-    ! By the definition of RATIO in ratio.f90, RATIO cannot be NaN unless the actual reduction is
-    ! NaN, which should NOT happen due to the moderated extreme barrier.
-    if (is_nan(ratio)) then
-        call errstop(srname, 'RATIO is NaN')
-    end if
+    call assert(npt > 2, 'NPT > 2', srname)
+    call assert(size(vlag) == npt, 'SIZE(VLAG) == NPT', srname)
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) > 0, 'SIZE(ZMAT, 1) == NPT, SIZE(ZMAT, 2) > 0', srname)
+    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
+    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= NPT - N', srname)
+    call assert(.not. is_nan(ratio), 'RATIO is not NaN', srname)
+    call assert(delta >= rho .and. rho > ZERO, 'DETLA >= RHO > 0', srname)
 end if
 
 hdiag = -sum(zmat(:, 1:idz - 1)**2, dim=2) + sum(zmat(:, idz:size(zmat, 2))**2, dim=2)
@@ -75,16 +73,25 @@ if (ratio <= ZERO) then
     sigma(kopt) = -ONE
 end if
 
+! KNEW = 0 by default. It cannot be removed, as KNEW may not be set below in some cases (e.g., when
+! RATIO <= 0 and MAXVAL(SIGMA) <= 1).
 knew = 0_IK
-if (all(is_nan(sigma))) then  ! Powell's code does not have this branch.
-    knew = int(maxloc(xdist, dim=1), kind(knew))
-elseif (ratio > ZERO .or. maxval(sigma) > ONE) then
+
+if (any(sigma > ONE) .or. (ratio > ZERO .and. any(.not. is_nan(sigma)))) then
     knew = int(maxloc(sigma, mask=(.not. is_nan(sigma)), dim=1), kind(knew))
 end if
 
-if (DEBUGGING .and. ratio > ZERO .and. knew == 0_IK) then
-    ! If RATIO > 0, then KNEW should be positive so that the XNEW is included into XPT.
-    call errstop(srname, 'RATIO > 0 but KNEW == 0')
+! Powell's code does not include the following instructions. With Powell's code, if SIGMA consists
+! of only NaN, then KNEW can be 0 even when RATIO > 0.
+if (ratio > ZERO .and. knew < 1) then
+    knew = int(maxloc(xdist, mask=(.not. is_nan(xdist)), dim=1), kind(knew))
+end if
+
+if (DEBUGGING) then
+    ! KNEW >= 1 when RATIO > 0 unless NaN occurs in XDIST, which should not happen if the starting
+    ! point does not contain NaN and the trust-region/geometry steps never contain NaN.
+    call assert(.not. (ratio > ZERO .and. knew < 1), 'KNEW >= 1 when RATIO > 0', srname)
+    call assert(.not. (ratio <= ZERO .and. knew == kopt), 'KNEW /= KOPT when RATIO <= 0', srname)
 end if
 
 ! It is tempting to take the function value into consideration when defining KNEW, for example,
@@ -103,7 +110,8 @@ function geostep(idz, knew, kopt, bmat, delbar, xpt, zmat) result(d)
 
 ! Generic modules
 use consts_mod, only : RP, IK, ONE, DEBUGGING
-use debug_mod, only : errstop, verisize
+use debug_mod, only : assert
+use infnan_mod, only : is_finite
 use lina_mod, only : inprod
 
 ! Solver-specific module
@@ -139,14 +147,13 @@ n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
 if (DEBUGGING) then
-    if (n < 1 .or. npt < n + 2) then
-        call errstop(srname, 'SIZE(XPT) is invalid')
-    end if
-    call verisize(bmat, n, npt + n)
-    call verisize(zmat, npt, int(npt - n - 1, kind(n)))
-    if (knew == kopt) then
-        call errstop(srname, 'KNEW == KOPT')
-    end if
+    call assert(n > 0 .and. npt > n + 1, 'N > 0, NPT > N + 1', srname)
+    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT + N]', srname)
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
+    call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT - N', srname)
+    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
+    call assert(knew >= 1 .and. knew <= npt, '1 <= KNEW <= NPT', srname)
+    call assert(knew /= kopt, 'KNEW /= KOPT', srname)
 end if
 
 xopt = xpt(:, kopt)  ! Read XOPT.
@@ -166,6 +173,10 @@ if (abs(ONE + alpha * beta / vlag(knew)**2) <= 0.8_RP) then
     d = bigden(idz, knew, kopt, bmat, d, xpt, zmat)
 end if
 
+if (DEBUGGING) then
+    call assert(all(is_finite(d)), 'D contains only finite values', srname)
+end if
+
 end function geostep
 
 
@@ -178,7 +189,7 @@ function biglag(idz, knew, delbar, bmat, x, xpt, zmat) result(d)
 
 ! Generic modules
 use consts_mod, only : RP, IK, ONE, TWO, HALF, PI, ZERO, DEBUGGING
-use debug_mod, only : errstop, verisize
+use debug_mod, only : assert
 use infnan_mod, only : is_finite
 use lina_mod, only : Ax_plus_y, inprod, matprod
 
@@ -199,8 +210,9 @@ real(RP) :: d(size(xpt, 1))       ! D(N)
 ! Local variables
 integer(IK) :: i
 integer(IK) :: isav
-integer(IK) :: iterc
+integer(IK) :: iter
 integer(IK) :: iu
+integer(IK) :: maxiter
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: angle
@@ -249,12 +261,12 @@ n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
 if (DEBUGGING) then
-    if (n < 1 .or. npt < n + 2) then
-        call errstop(srname, 'SIZE(XPT) is invalid')
-    end if
-    call verisize(x, n)
-    call verisize(bmat, n, npt + n)
-    call verisize(zmat, npt, int(npt - n - 1, kind(n)))
+    call assert(n > 0 .and. npt > n + 1, 'N > 0, NPT > N + 1', srname)
+    call assert(size(x) == n, 'SIZE(X) == N', srname)
+    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT + N]', srname)
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
+    call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT - N', srname)
+    call assert(knew >= 1 .and. knew <= npt, '1 <= KNEW <= NPT', srname)
 end if
 
 ! Set HCOL to the leading NPT elements of the KNEW-th column of H.
@@ -295,13 +307,14 @@ if (is_finite(sum(abs(scaling * d)))) then
     d = scaling * d
     gd = scaling * gd
     s = gc + t * gd
+    maxiter = n
 else
-    return  ! Avoid producing a D containing NaN/Inf.
+    maxiter = 0_IK  ! Return immediately to avoid producing a D containing NaN/Inf.
 end if
 
 ! Begin the iteration by overwriting S with a vector that has the required length and direction,
 ! except that termination occurs if the given D and S are nearly parallel.
-do iterc = 1, n
+do iter = 1, maxiter
     dd = inprod(d, d)
     sp = inprod(d, s)
     ss = inprod(s, s)
@@ -381,6 +394,10 @@ do iterc = 1, n
     end if
 end do
 
+if (DEBUGGING) then
+    call assert(all(is_finite(d)), 'D contains only finite values', srname)
+end if
+
 end function biglag
 
 
@@ -401,7 +418,7 @@ function bigden(idz, knew, kopt, bmat, d0, xpt, zmat) result(d)
 
 ! Generic modules
 use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, PI, ZERO, DEBUGGING
-use debug_mod, only : errstop, verisize
+use debug_mod, only : assert
 use infnan_mod, only : is_finite
 use lina_mod, only : Ax_plus_y, inprod, matprod
 
@@ -422,7 +439,7 @@ real(RP) :: d(size(xpt, 1))     ! D(N)
 ! Local variable
 integer(IK) :: i
 integer(IK) :: isav
-integer(IK) :: iterc
+integer(IK) :: iter
 integer(IK) :: iu
 integer(IK) :: j
 integer(IK) :: jc
@@ -496,15 +513,14 @@ n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
 if (DEBUGGING) then
-    if (n < 1 .or. npt < n + 2) then
-        call errstop(srname, 'SIZE(XPT) is invalid')
-    end if
-    call verisize(bmat, n, npt + n)
-    call verisize(d0, n)
-    call verisize(zmat, npt, int(npt - n - 1, kind(n)))
-    if (knew == kopt) then
-        call errstop(srname, 'KNEW == KOPT')
-    end if
+    call assert(n > 0 .and. npt > n + 1, 'N > 0, NPT > N + 1', srname)
+    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT + N]', srname)
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
+    call assert(size(d0) == n, 'SIZE(D0) == N', srname)
+    call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT - N', srname)
+    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
+    call assert(knew >= 1 .and. knew <= npt, '1 <= KNEW <= NPT', srname)
+    call assert(knew /= kopt, 'KNEW /= KOPT', srname)
 end if
 
 x = xpt(:, kopt) ! For simplicity, use x to denote XOPT.
@@ -555,7 +571,7 @@ ssden = dd * ss - ds * ds
 densav = ZERO
 
 ! Begin the iteration by overwriting S with a vector that has the required length and direction.
-do iterc = 1, n
+do iter = 1, n
     s = (ONE / sqrt(ssden)) * (dd * s - ds * d)
     xd = inprod(x, d)
     xs = inprod(x, s)
@@ -713,7 +729,7 @@ do iterc = 1, n
     dxn = inprod(d, xnew)
     xnsq = inprod(xnew, xnew)
 
-    if (iterc > 1) then
+    if (iter > 1) then
         densav = max(densav, denold)
     end if
     if (abs(denmax) <= 1.1_RP * abs(densav)) then
@@ -739,6 +755,10 @@ do iterc = 1, n
 end do
 
 !vlag(kopt) = vlag(kopt) + ONE  ! Note needed since we do not return VLAG.
+
+if (DEBUGGING) then
+    call assert(all(is_finite(d)), 'D contains only finite values', srname)
+end if
 
 end function bigden
 

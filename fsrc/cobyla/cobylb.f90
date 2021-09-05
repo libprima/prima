@@ -288,7 +288,8 @@ do tr = 1, maxtr
     ! N.B.: THEORETICALLY, JDROP > 0 when ACTREM > 0, and hence the definition of BAD_TRSTEP is
     ! mathematically equivalent to (SHORTD .OR. ACTREM <= ZERO .OR. ACTREM < TENTH * PREREM);
     ! however, JDROP may turn out 0 due to NaN even if ACTREM > 0. See SETDRTOP_TR for details.
-    bad_trstep = (shortd .or. actrem <= ZERO .or. actrem < TENTH * prerem .or. jdrop == 0)
+    !bad_trstep = (shortd .or. actrem <= ZERO .or. actrem < TENTH * prerem .or. jdrop == 0)
+    bad_trstep = (shortd .or. actrem <= ZERO .or. actrem < TENTH * prerem)
     improve_geo = bad_trstep .and. .not. good_geo
 
     ! Should we enhance the resolution by reducing RHO?
@@ -378,10 +379,19 @@ end module cobylb_mod
 
 ! TODO:
 ! 0. In COBYLA, check what should we do with JDROP = 0, both TR and GEO
-!    If ACTREM > 0 ===> JDROP > 0, why COBYLA can return sub-optimal points???
+!    If ACTREM > 0 ===> JDROP > 0, why can COBYLA return sub-optimal points???
 ! 1. evalfc, extreme barrier, moderate excessively negative objective, which has not been done in
 !    NEWUOA. Shouldn't we remove the extreme barrier in the MATLAB/Python interface after it is
 !    implemented in FORTRAN?
 ! 6. Do the same for NEWUOA
 ! 8. knew ===> jdrop
 ! 9. XPT(i, :), FVAL(:) should be indexed by j; k is for iterations (fhist and ffilt)
+! 10. Check MAXVAL/MAXLOC --- are they affected by NaN?
+! 11.
+! Enforcing programming contracts
+! Programming can be thought of as requirements for correct execution of a procedure and assurances
+! for the result of correct execution. The requirements and assurances might be constraints of three
+! kinds:
+! Preconditions (requirements): logical expressions that must evaluate to .true. when a procedure starts execution,
+! Postconditions (assurances): expressions that must evaluate to .true. when a procedure finishes execution, and
+! Invariants: universal pre- and postconditions that must always be true when all procedures in a class start or finish executing.
