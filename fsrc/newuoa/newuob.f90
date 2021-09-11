@@ -4,7 +4,7 @@ module newuob_mod
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, September 10, 2021 PM10:38:44
+! Last Modified: Saturday, September 11, 2021 PM10:15:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -99,7 +99,7 @@ real(RP), intent(out) :: xhist(:, :)    ! XHIST(N, MAXXHIST)
 character(len=*), parameter :: solver = 'NEWUOA'
 character(len=*), parameter :: srname = 'NEWUOB'
 integer(IK) :: idz
-integer(IK) :: ij(2, npt)
+integer(IK) :: ij(max(0_IK, int(npt - 2 * size(x) - 1, IK)), 2_IK)
 integer(IK) :: itest
 integer(IK) :: knew_geo
 integer(IK) :: knew_tr
@@ -157,9 +157,9 @@ if (DEBUGGING) then
     call assert(eta1 >= ZERO .and. eta1 <= eta2 .and. eta2 < ONE, '0 <= ETA1 <= ETA2 < 1', srname)
     call assert(gamma1 > ZERO .and. gamma1 < ONE .and. gamma2 > ONE, &
         & '0 < GAMMA1 < 1 < GAMMA2', srname)
-    call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXXHIST', srname)
+    call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
-        & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXXHIST', srname)
+        & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
 end if
 
 !====================!

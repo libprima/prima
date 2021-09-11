@@ -20,7 +20,7 @@ subroutine savefilt(constr, cstrv, ctol, f, x, nfilt, cfilt, confilt, ffilt, xfi
 ! 2. We decide whether an X is better than another by the ISBETTER function.
 
 use consts_mod, only : RP, IK, DEBUGGING
-use debug_mod, only : errstop, verisize
+use debug_mod, only : assert
 use memory_mod, only : safealloc
 
 implicit none
@@ -54,15 +54,11 @@ n = size(x)
 nfiltmax = size(ffilt)
 
 if (DEBUGGING) then
-    if (n == 0) then
-        call errstop(srname, 'SIZE(X) == 0')
-    end if
-    if (nfiltmax == 0) then
-        call errstop(srname, 'SIZE(FFILT) == 0')
-    end if
-    call verisize(xfilt, n, nfiltmax)
-    call verisize(confilt, m, nfiltmax)
-    call verisize(cfilt, nfiltmax)
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(nfiltmax >= 1, 'NFILTMAX >= 1', srname)
+    call assert(size(xfilt, 2) == nfiltmax, 'SIZE(XFILT, 2) == NFILTMAX', srname)
+    call assert(size(confilt, 2) == nfiltmax, 'SIZE(CONFILT, 2) == NFILTMAX', srname)
+    call assert(size(cfilt) == nfiltmax, 'SIZE(CFILT) == NFILTMAX', srname)
 end if
 
 ! Return immediately if any column of XFILT is better than X.
@@ -107,7 +103,7 @@ function selectx(fhist, chist, cpen, ctol) result(kopt)
 ! in a filter should not dominate each other, but this subroutine does NOT assume such a structure.
 
 use consts_mod, only : IK, RP, HUGENUM, HUGEFUN, HUGECON, ZERO, TWO, DEBUGGING
-use debug_mod, only : errstop, verisize
+use debug_mod, only : assert
 
 implicit none
 
@@ -132,10 +128,8 @@ character(len=*), parameter :: srname = 'SELECTX'
 
 ! Get the verify the sizes.
 if (DEBUGGING) then
-    if (size(fhist) < 1) then
-        call errstop(srname, 'SIZE(FHIST) < 1')
-    end if
-    call verisize(chist, size(fhist))
+    call assert(size(fhist) >= 1, 'SIZE(FHIST) >= 1', srname)
+    call assert(size(fhist) == size(chist), 'SIZE(FHIST) == SIZE(CHIST)', srname)
 end if
 
 ! We select X among the points with F < FREF and CSTRV < CREF.
