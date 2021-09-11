@@ -5,7 +5,7 @@ module update_mod
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Saturday, September 11, 2021 AM07:31:53
+! Last Modified: Saturday, September 11, 2021 PM09:48:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -233,7 +233,7 @@ if (reduce_idz) then
     if (idz > 1) then
         ! If a vector subscript has two or more elements with the same value, an array section with
         ! that vector subscript is not definable and shall not be defined or become undefined.
-        zmat(:, [1, idz]) = zmat(:, [idz, 1])
+        zmat(:, [1_IK, idz]) = zmat(:, [idz, 1_IK])
     end if
 end if
 
@@ -377,8 +377,8 @@ integer(IK) :: n
 integer(IK) :: npt
 
 ! Sizes
-n = size(xpt, 1)
-npt = size(xpt, 2)
+n = int(size(xpt, 1), kind(n))
+npt = int(size(xpt, 2), kind(npt))
 
 ! Preconditions
 if (DEBUGGING) then
