@@ -3,7 +3,7 @@
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
 ! and the NEWUOA paper.
 !
-! Last Modified: Friday, August 27, 2021 PM01:55:36
+! Last Modified: Tuesday, September 07, 2021 PM09:23:32
 
 module preproc_mod
 
@@ -147,7 +147,7 @@ if (rhoend <= ZERO .or. rhobeg < rhoend .or. is_nan(rhoend) .or. is_inf(rhoend))
         & 'it is set to ', rhoend, '.'
 end if
 
-end subroutine
+end subroutine preproc
 
 
 end module preproc_mod

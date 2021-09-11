@@ -1,11 +1,10 @@
-module newuob_mod
-!--------------------------------------------------------------------------------------------------!
-! This module performs the major calculations of NEWUOA.
+! NEWUOB_MOD is a module that performs the major calculations of NEWUOA.
 !
 ! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, September 10, 2021 PM10:38:44
-!--------------------------------------------------------------------------------------------------!
+! Last Modified: Thursday, September 09, 2021 AM09:41:00
+
+module newuob_mod
 
 implicit none
 private
@@ -15,13 +14,11 @@ public :: newuob
 contains
 
 
-subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, &
-    & rhoend, x, nf, f, fhist, xhist, info)
-!--------------------------------------------------------------------------------------------------!
-! This subroutine performs the actual calculations of NEWUOA. The arguments IPRINT, MAXFUN, MAXHIST,
-! NPT, ETA1, ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG, RHOEND, X, NF, F, FHIST, XHIST, and INFO are
+subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend, x, nf, f, fhist, xhist, info)
+! NEWUOB performs the actual calculations of NEWUOA. The arguments IPRINT, MAXFUN, MAXHIST, NPT,
+! ETA1, ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG, RHOEND, X, NF, F, FHIST, XHIST, and INFO are
 ! identical to the corresponding arguments in subroutine NEWUOA.
-!
+
 ! XBASE holds a shift of origin that should reduce the contributions from rounding errors to values
 ! of the model and Lagrange functions.
 ! XOPT is the displacement from XBASE of the best vector of variables so far (i.e., the one provides
@@ -45,35 +42,34 @@ subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 ! updating procedure of H, which is detailed formula (4.10)--(4.12) of the NEWUOA paper.
 !
 ! See Section 2 of the NEWUOA paper for more information about these variables.
-!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use checkexit_mod, only : checkexit
-use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENUM, DEBUGGING
-use debug_mod, only : assert
-use evaluate_mod, only : evalf
-use history_mod, only : savehist, rangehist
-use infnan_mod, only : is_nan
-use info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS
-use linalg_mod, only : calquad, inprod, norm
-use output_mod, only : retmssg, rhomssg, fmssg
 use pintrf_mod, only : FUN
+use evaluate_mod, only : evalf
+use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENUM, DEBUGGING
+use info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS
+use infnan_mod, only : is_nan
+use debug_mod, only : errstop, verisize
+use output_mod, only : retmssg, rhomssg, fmssg
+use linalg_mod, only : calquad, inprod
+use history_mod, only : savehist, rangehist
+use checkexit_mod, only : checkexit
 use ratio_mod, only : redrat
 use resolution_mod, only : resenhance
 
 ! Solver-specific modules
-use geometry_mod, only : setdrop_tr, geostep
 use initialize_mod, only : initxf, initq, inith
-use shiftbase_mod, only : shiftbase
 use trustregion_mod, only : trsapp, trrad
-use update_mod, only : updateh, updateq, updatexf, tryqalt
+use geometry_mod, only : setdrop_tr, geostep
+use shiftbase_mod, only : shiftbase
 use vlagbeta_mod, only : vlagbeta
+use update_mod, only : updateh, updateq, updatexf, tryqalt
 
 implicit none
 
 ! Inputs
 procedure(FUN) :: calfun
-! N.B.: The INTENT attribute cannot be specified for a dummy procedure without the POINTER attribute
+! N.B.: The INTENT attribute cannot be specified for a dummy procedure without the POINTER attribute.
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
 integer(IK), intent(in) :: npt
@@ -85,19 +81,17 @@ real(RP), intent(in) :: gamma2
 real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: rhoend
 
-! In-outputs
-real(RP), intent(inout) :: x(:)      ! X(N)
+! In-output
+real(RP), intent(inout) :: x(:)  ! SIZE(X) = N
 
 ! Outputs
 integer(IK), intent(out) :: info
 integer(IK), intent(out) :: nf
 real(RP), intent(out) :: f
-real(RP), intent(out) :: fhist(:)   ! FHIST(MAXFHIST)
-real(RP), intent(out) :: xhist(:, :)    ! XHIST(N, MAXXHIST)
+real(RP), intent(out) :: fhist(:)
+real(RP), intent(out) :: xhist(:, :)
 
 ! Local variables
-character(len=*), parameter :: solver = 'NEWUOA'
-character(len=*), parameter :: srname = 'NEWUOB'
 integer(IK) :: idz
 integer(IK) :: ij(2, npt)
 integer(IK) :: itest
@@ -111,11 +105,6 @@ integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: subinfo
 integer(IK) :: tr
-logical :: bad_trstep
-logical :: improve_geo
-logical :: reduce_rho_1
-logical :: reduce_rho_2
-logical :: shortd
 real(RP) :: beta
 real(RP) :: bmat(size(x), npt + size(x))
 real(RP) :: crvmin
@@ -131,40 +120,43 @@ real(RP) :: hq(size(x), size(x))
 real(RP) :: moderr
 real(RP) :: moderrsav(size(dnormsav))
 real(RP) :: pq(npt)
-real(RP) :: qred
 real(RP) :: ratio
 real(RP) :: rho
 real(RP) :: trtol
 real(RP) :: vlag(npt + size(x))
+real(RP) :: qred
 real(RP) :: xbase(size(x))
 real(RP) :: xdist(npt)
 real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
+logical :: bad_trstep
+logical :: improve_geo
+logical :: reduce_rho_1
+logical :: reduce_rho_2
+logical :: shortd
+character(len=*), parameter :: solver = 'NEWUOA'
+character(len=*), parameter :: srname = 'NEWUOB'
 
-! Sizes
+
+! Get and verify the sizes.
 n = int(size(x), kind(n))
 maxxhist = int(size(xhist, 2), kind(maxxhist))
 maxfhist = int(size(fhist), kind(maxfhist))
 maxhist = max(maxxhist, maxfhist)
 
 if (DEBUGGING) then
-    call assert(n >= 1, 'N >= 1', srname)
-    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
-    call assert(maxfun >= npt + 1, 'MAXFUN >= NPT + 1', srname)
-    call assert(rhobeg >= rhoend .and. rhoend > ZERO, 'RHOBEG >= RHOEND > 0', srname)
-    call assert(eta1 >= ZERO .and. eta1 <= eta2 .and. eta2 < ONE, '0 <= ETA1 <= ETA2 < 1', srname)
-    call assert(gamma1 > ZERO .and. gamma1 < ONE .and. gamma2 > ONE, &
-        & '0 < GAMMA1 < 1 < GAMMA2', srname)
-    call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXXHIST', srname)
-    call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
-        & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXXHIST', srname)
+    if (n < 1) then
+        call errstop(srname, 'SIZE(X) < 1')
+    end if
+    if (maxxhist > 0) then
+        call verisize(xhist, n, maxhist)
+    end if
+    if (maxfhist > 0) then
+        call verisize(fhist, maxhist)
+    end if
 end if
-
-!====================!
-! Calculation starts !
-!====================!
 
 ! Initialize FVAL, XBASE, and XPT.
 call initxf(calfun, iprint, maxfun, ftarget, rhobeg, x, ij, kopt, nf, fhist, fval, xbase, xhist, xpt, subinfo)
@@ -223,13 +215,12 @@ do tr = 1, maxtr
     call trsapp(delta, gq, hq, pq, trtol, xopt, xpt, crvmin, d, subinfo)
 
     ! Calculate the length of the trial step D.
-    dnorm = min(delta, norm(d))
+    dnorm = min(delta, sqrt(inprod(d, d)))
 
     ! SHORTD corresponds to Box 3 of the NEWUOA paper.
     shortd = (dnorm < HALF * rho)
     ! REDUCE_RHO_1 corresponds to Box 14 of the NEWUOA paper.
-    reduce_rho_1 = shortd .and. (maxval(abs(moderrsav)) <= 0.125_RP * crvmin * rho * rho) .and. &
-        & (maxval(dnormsav) <= rho)
+    reduce_rho_1 = shortd .and. (maxval(abs(moderrsav)) <= 0.125_RP * crvmin * rho * rho) .and. (maxval(dnormsav) <= rho)
     if (shortd .and. (.not. reduce_rho_1)) then
         ! Reduce DELTA. After this, DELTA < DNORM may hold.
         delta = TENTH * delta
@@ -441,7 +432,7 @@ do tr = 1, maxtr
         ! trial step, which seems inconsistent with what is described in Section 7 (around (7.7)) of
         ! the NEWUOA paper. Seemingly we should keep DNORM = ||D|| as we do here. The value of DNORM
         ! will be used when defining REDUCE_RHO.
-        dnorm = min(delbar, norm(d))  ! In theory, DNORM = DELBAR in this case.
+        dnorm = min(delbar, sqrt(inprod(d, d)))  ! In theory, DNORM = DELBAR in this case.
         !------------------------------------------------------------------------------------------!
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
@@ -504,15 +495,6 @@ end if
 call rangehist(nf, fhist, xhist)
 
 call retmssg(info, iprint, nf, f, x, solver)
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(.not. any(fhist(1:min(nf, maxfhist)) < f), 'F is the smallest in FHIST', srname)
-end if
 
 end subroutine newuob
 

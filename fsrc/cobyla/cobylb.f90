@@ -19,7 +19,7 @@ use info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, NAN_MODEL, DAMAGI
 use infnan_mod, only : is_nan, is_posinf
 use debug_mod, only : errstop, verisize
 use output_mod, only : retmssg, rhomssg, fmssg
-use lina_mod, only : inprod, matprod, outprod, inv
+use linalg_mod, only : inprod, matprod, outprod, inv
 use selectx_mod, only : savefilt, selectx
 use history_mod, only : savehist
 use checkexit_mod, only : checkexit

@@ -136,7 +136,7 @@ for ip = minip : length(plist)
         test_options.chkfunval = true;
         test_options.rhobeg = 1 + 0.5*(2*rand-1);
         test_options.rhoend = 1e-3*(1 + 0.5*(2*rand-1));
-        test_options.npt = max(min(ceil(10*rand*n + 2), (n+2)*(n+1)/2), n+2);
+        test_options.npt = max(min(floor(6*rand*n), (n+2)*(n+1)/2), n+2);
         test_options.maxfun = max(ceil(20*n*(1+rand)), n+3);
         test_options.ftarget = -inf;
         %test_options.classical = (randn < -1.2);
@@ -155,6 +155,17 @@ for ip = minip : length(plist)
         if ir == 1
             test_options.npt = n + 2;
         end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        if ir == 9
+            test_options.npt = ceil(n^2/4);
+        end
+        if ir == 10
+            test_options.npt = 2*n;
+        end
+        if ir == 11
+            test_options.npt = floor(2*rand*n);
+        end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         if ir == 2
             test_options.maxfun = test_options.npt + 1;
         end

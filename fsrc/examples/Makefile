@@ -20,7 +20,7 @@ atest_newuoa: FC = af95 -no-pie -m1
 ftest_newuoa: FC = flang -Wall -Wextra -Mstandard
 gtest_newuoa: FC = gfortran -Wall -Wextra -fcheck=all -pedantic
 itest_newuoa: FC = ifort -warn all -check all
-ntest_newuoa: FC = nagfor -C
+ntest_newuoa: FC = nagfor -C -C=alias -C=dangling -C=intovf -C=undefined
 ptest_newuoa: FC = pgfortran -Minform=warn
 stest_newuoa: FC = sunf95 -w3 -u -U
 xtest_newuoa: FC = ifx -warn all
@@ -29,7 +29,7 @@ xtest_newuoa: FC = ifx -warn all
 	./$<
 
 %_newuoa_exmp: newuoa_exmp.f90 \
-	consts.o info.o debug.o memory.o infnan.o lina.o \
+	consts.o info.o debug.o memory.o infnan.o linalg.o \
 	ratio.o resolution.o history.o selectx.o checkexit.o output.o preproc.o pintrf.o evaluate.o \
 	initialize.o trustregion.o vlagbeta.o geometry.o shiftbase.o update.o newuob.o newuoa.o
 	$(FC) $(FFLAGS) -o newuoa_exmp newuoa_exmp.f90 *.o

@@ -183,3 +183,28 @@ Here are points to note when translating the Fortran code to other languages.
    In MATLAB:
    [A, B] is a matrix of size mX(n+k), the first n columns being A and the last k columns being B,
    which is the same as reshape([A, B], m, n+k) in Fortran.
+
+11. Vector subscript
+
+    A 1-D array X can be indexed by a vector of integers I (namely, A(I)) provided that
+    1) the entries in I are pairwise distinct
+    2) the entries of I all lie between the declared bounds for the indices of A.
+
+    Pay attention to 1). According to Fortran standard 2018, If a vector subscript has two or more
+    elements with the same value, an array section with that vector subscript is not definable and
+    shall not be defined or become undefined.
+
+12. WHERE ... ELSEWHERE construct
+
+    Suppose that X, Y, Z, and B are arrays of the same shape, and B is boolean. Then Fortran supports
+
+    where (B)
+        X = Y
+    elsewhere
+        X = Z
+    end where
+
+    for which the MATLAB equivalent is
+
+    X(B) = Y(B)
+    X(~B) = Z(~B)

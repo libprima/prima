@@ -40,7 +40,7 @@ their sizes if DEBUGGING is true.
 2. Use matrix/vector operations.
 
 If appropriate, replace loops with matrix/vector operations (inprod, matprod,
-r1update, etc.; see lina.F90). This will reduce the complexity of the code.
+r1update, etc.; see linalg.F90). This will reduce the complexity of the code.
 
 Note that floating-point arithmetic is NOT ASSOCIATIVE! For example,
 

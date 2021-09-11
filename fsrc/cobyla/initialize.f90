@@ -23,7 +23,7 @@ use info_mod, only : INFO_DFT
 use infnan_mod, only : is_nan, is_posinf
 use debug_mod, only : errstop, verisize
 use output_mod, only : retmssg, rhomssg, fmssg
-use lina_mod, only : eye
+use linalg_mod, only : eye
 use history_mod, only : savehist
 use checkexit_mod, only : checkexit
 

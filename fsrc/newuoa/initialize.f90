@@ -1,12 +1,11 @@
-! INITIALIZE_MOD is a module containing subroutines for initializing
-! FVAL, XBASE, XPT, GQ, HQ, PQ, IDZ, ZMAT, and BMAT.
-!
-! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
-! and the NEWUOA paper.
-!
-! Last Modified: Wednesday, September 01, 2021 AM10:40:10
-
 module initialize_mod
+!--------------------------------------------------------------------------------------------------!
+! This module contains subroutines for initializing FVAL, XBASE, XPT, GQ, HQ, PQ, IDZ, ZMAT, BMAT.
+!
+! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
+!
+! Last Modified: Saturday, September 11, 2021 PM01:47:38
+!--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
@@ -16,19 +15,34 @@ public :: initxf, initq, inith
 contains
 
 
-subroutine initxf(calfun, iprint, maxfun, ftarget, rhobeg, x0, ij, kopt, nf, fhist, fval, xbase, xhist, xpt, info)
-! INITXF performs the initialization regarding the interpolation
-! points and corresponding function values.
+subroutine initxf(calfun, iprint, maxfun, ftarget, rhobeg, x0, ij, kopt, nf, fhist, fval, xbase, &
+    & xhist, xpt, info)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine does the initialization regarding the interpolation points & their function values
+!
+! N.B.:
+! 1. Remark on IJ:
+! When K > 2*N + 1, all the entries of XPT(:, K) will be zero except that the IJ(1, K) and IJ(2, K)
+! entries will be set to RHOBEG or -RHOBEG. Consequently, the Hessian of the quadratic model will
+! get a possibly nonzero (IJ(1, K), IJ(2, K)) entry. Indeed, IJ(:, 1 : 2*N + 1) is never used.
+! 2. At return,
+! INFO = INFO_DFT: initialization finishes normally
+! INFO = FTARGET_ACHIEVED: return because F <= FTARGET
+! INFO = NAN_X: return because X contains NaN
+! INFO = NAN_INF_F: return because F is either NaN or +Inf
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use pintrf_mod, only : FUN
-use evaluate_mod, only : evalf
-use consts_mod, only : RP, IK, ZERO, DEBUGGING
-use debug_mod, only : errstop, verisize
-use info_mod, only : INFO_DFT
-use output_mod, only : fmssg
-use history_mod, only : savehist
 use checkexit_mod, only : checkexit
+use consts_mod, only : RP, IK, ZERO, DEBUGGING
+use debug_mod, only : assert
+use evaluate_mod, only : evalf
+use history_mod, only : savehist
+use infnan_mod, only : is_finite
+use info_mod, only : INFO_DFT
+use linalg_mod, only : eye
+use output_mod, only : fmssg
+use pintrf_mod, only : FUN
 
 implicit none
 
@@ -38,26 +52,22 @@ integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
 real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: rhobeg
-real(RP), intent(in) :: x0(:)  ! X0(N)
+real(RP), intent(in) :: x0(:)   ! X0(N)
 
 ! Outputs
 integer(IK), intent(out) :: info
-integer(IK), intent(out) :: ij(:, :)  ! IJ(2, NPT)
+integer(IK), intent(out) :: ij(:, :)    ! IJ(2, NPT)
 integer(IK), intent(out) :: kopt
 integer(IK), intent(out) :: nf
-real(RP), intent(out) :: fval(:)  ! FVAL(NPT)
-real(RP), intent(out) :: fhist(:)  ! FHIST(MAXFHIST)
-real(RP), intent(out) :: xbase(:)  ! XBASE(N)
-real(RP), intent(out) :: xhist(:, :)  ! XHIST(MAXXHIST)
+real(RP), intent(out) :: fval(:)    ! FVAL(NPT)
+real(RP), intent(out) :: fhist(:)   ! FHIST(MAXFHIST)
+real(RP), intent(out) :: xbase(:)   ! XBASE(N)
+real(RP), intent(out) :: xhist(:, :)    ! XHIST(N, MAXXHIST)
 real(RP), intent(out) :: xpt(:, :)  ! XPT(N, NPT)
-! Remark on IJ:
-! When K > 2*N + 1, all the entries of XPT(:, K) will be zero except
-! that the IJ(1, K) and IJ(2, K) entries will be set to RHOBEG or
-! -RHOBEG. Consequently, the Hessian of the quadratic model will get a
-! possibly nonzero (IJ(1, K), IJ(2, K)) entry.
-! Indeed, IJ(:, 1 : 2*N + 1) is never used.
 
 ! Local variables
+character(len=*), parameter :: solver = 'NEWUOA'
+character(len=*), parameter :: srname = 'INITXF'
 integer(IK) :: i
 integer(IK) :: itemp
 integer(IK) :: j
@@ -69,85 +79,68 @@ integer(IK) :: n
 integer(IK) :: npt
 integer(IK) :: npt_revised
 integer(IK) :: subinfo
+logical :: evaluated(size(fval))
 real(RP) :: f
 real(RP) :: x(size(x0))
-logical :: evaluated(size(fval))
-character(len=*), parameter :: solver = 'NEWUOA'
-character(len=*), parameter :: srname = 'INITXF'
 
-
-! Get and verify the sizes.
+! Sizes
 n = int(size(x0), kind(n))
 npt = int(size(fval), kind(npt))
 maxxhist = int(size(xhist, 2), kind(maxxhist))
 maxfhist = int(size(fhist), kind(maxfhist))
 maxhist = max(maxxhist, maxfhist)
 
+! Preconditions
 if (DEBUGGING) then
-    if (n < 1) then
-        call errstop(srname, 'SIZE(X0) < 1')
-    end if
-    if (npt < n + 2) then
-        call errstop(srname, 'SIZE(FVAL) < N + 2')
-    end if
-    if (maxxhist > 0) then
-        call verisize(xhist, n, maxhist)
-    end if
-    if (maxfhist > 0) then
-        call verisize(fhist, maxhist)
-    end if
-    call verisize(ij, 2_IK, npt)
-    call verisize(xbase, n)
-    call verisize(xpt, n, npt)
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
+    call assert(maxfun >= npt + 1, 'MAXFUN >= NPT + 1', srname)
+    call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXXHIST', srname)
+    call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
+        & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXXHIST', srname)
+    call assert(size(ij, 1) == 2 .and. size(ij, 2) == npt, 'SIZE(IJ) == [2, NPT]', srname)
+    call assert(rhobeg > ZERO, 'RHOBEG > 0', srname)
+    call assert(all(is_finite(x0)), 'X0 is finite', srname)
+    call assert(size(xbase) == n, 'SIZE(XBASE) == N', srname)
+    call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
 end if
 
-! At return,
-! INFO = INFO_DFT: initialization finishes normally
-! INFO = FTARGET_ACHIEVED: return because F <= FTARGET
-! INFO = NAN_X: return because X contains NaN
-! INFO = NAN_INF_F: return because F is either NaN or +infinity
-info = INFO_DFT
+!====================!
+! Calculation starts !
+!====================!
 
-! We set ij = 1 in case the initialization aborts due to abnormality. If
-! we do not do this, ij will be undefined if the initialization aborts.
+info = INFO_DFT  ! Default info.
+
+! We set IJ = 1 in case the initialization aborts due to abnormality. If we do not do this, IJ will
+! be undefined if the initialization aborts.
 ij = 1_IK
 
-! Set XBASE to X0.
+! Initialize XBASE to X0.
 xbase = x0
 
-! Initialize XPT to ZERO.
-xpt = ZERO
+! Begin the initialization procedure. The coordinates of the displacement of the next initial
+! interpolation point from XBASE are set in XPT(:, :).
 
-! Begin the initialization procedure. The coordinates of the
-! displacement of the next initial interpolation point from XBASE are
-! set in XPT(:, .).
-
-! EVALUATED is a boolean array indicating whether the function value of
-! the i-th interpolation point has been evaluated. We need it for a
-! portable counting of the number of function evaluations, especially
-! if the loop is conducted asynchronously. However, the loop here is
-! not fully parallelizable if NPT>2N+1, because the definition
-! XPT(;, 2N+2:end) depends on FVAL(1:2N+1).
+! EVALUATED is a boolean array with EVALUATED(I) indicating whether the function value of the I-th
+! interpolation point has been evaluated. We need it for a portable counting of the number of
+! function evaluations, especially if the loop is conducted asynchronously. However, the loop here
+! is not fully parallelizable if NPT>2N+1, as the definition XPT(;, 2N+2:end) involves FVAL(1:2N+1).
 evaluated = .false.
 
-! NPT_REVISED equals NPT, unless it turns out necessary to return due to
-! abnormality (NaN or Inf occurs, or F < FTARGET).
+! NPT_REVISED = NPT unless it turns out necessary to return abnormally (NaN/Inf, or F <= FTARGET).
 npt_revised = npt
 
 
 ! Set XPT, FVAL, KOPT, and XOPT.
 
+! Set XPT(:, 1) = ZERO
+xpt(:, 1) = ZERO
 ! Set XPT(:, 2 : N + 1).
-do k = 2, min(npt, int(n + 1, kind(npt)))
-    xpt(k - 1, k) = rhobeg
-end do
-! Set XPT(:, N+2 : NPT)
-do k = int(n + 2, kind(k)), min(npt, int(2 * n + 1, kind(npt)))
-    xpt(k - n - 1, k) = -rhobeg
-end do
+xpt(:, 2:n + 1) = rhobeg * eye(n)
+! Set XPT(:, N+2 : NPT). XPT(:, 2*N+2 : NPT) is initialized to ZERO if it is nonempty.
+xpt(:, n + 2:npt) = -rhobeg * eye(n, npt - n - 1)
 
-! Set FVAL(1 : 2*N + 1) by evaluating F. Totally parallelizable except for
-! FMSSG, which outputs messages to the console or files.
+! Set FVAL(1 : 2*N + 1) by evaluating F. Totally parallelizable except for FMSSG.
 do k = 1, min(npt, int(2 * n + 1, kind(npt)))
     x = xpt(:, k) + xbase
     call evalf(calfun, x, f)
@@ -167,12 +160,9 @@ end do
 
 ! Set XPT(:, 2*N + 2 : NPT). It depends on FVAL(2 : 2*N + 1).
 do k = int(2 * n + 2, kind(k)), npt_revised
-    ! Decide IJ(:, K).  In general, when NPT = (N+1)*(N+2)/2, we can
-    ! set IJ(1 : NPT - (2*N + 1)) to ANY permutation of
-    ! {(I, J) : 1 <= I > J <= N};
-    ! when NPT < (N+1)*(N+2)/2, IJ(1 : NPT - (2*N + 1)) is the
-    ! first NPT - (2*N - 1) elements of such a permutation. Powell took
-    ! the following permutation:
+    ! Decide IJ(:, K).  In general, when NPT = (N+1)*(N+2)/2, we can set IJ(:, 2*N + 2 : NPT) to
+    ! ANY permutation of {(I, J) : 1 <= J < I <= N}; when NPT < (N+1)*(N+2)/2, we can set it to the
+    ! first NPT - (2*N + 1) elements of such a permutation. Powell took the following permutation:
     itemp = int((k - n - 2) / n, kind(itemp))
     j = int(k - (itemp + 1) * n - 1, kind(j))
     i = j + itemp
@@ -181,23 +171,17 @@ do k = int(2 * n + 2, kind(k)), npt_revised
         j = i - n
         i = itemp
     end if
-    ij(1, k) = i
-    ij(2, k) = j
+    ij(:, k) = [i, j]  ! MATLAB code: IJ(:, K) = [I; J];
 
     ! The following lines set XPT(;, K) to
     ! XPT(:, I + 1) or XPT(:, I + N + 1)
     ! +
     ! XPT(:, J + 1) or XPT(:, J + N + 1),
-    ! depending on the values of FVAL(I + 1), FVAL(I + N + 1),
-    ! FVAL(J + 1), and FVAL(J + N + 1).
-    !
-    ! This is the only places where the definition
-    ! of XPT(:, 2*N + 2 : NPT) depends on F(2 : 2*N + 1).
-    ! If we set XPT(:, K) to XPT(:, I + 1) + XPT(:, J + 1)
-    ! regardless of FVAL, then the evaluations of FVAL(1 : NPT)
-    ! can be merged, and they are totally parallelizable; this can be
-    ! benificial if the function evaluations are expensive, which is
-    ! likely the case.
+    ! depending on the values of FVAL(I + 1), FVAL(I + N + 1), FVAL(J + 1), and FVAL(J + N + 1).
+    ! It is the only places where the definition of XPT(:, 2*N + 2 : NPT) relies on F(2 : 2*N + 1).
+    ! If we set XPT(:, K) to XPT(:, I + 1) + XPT(:, J + 1) regardless of FVAL, then the evaluations
+    ! of FVAL(1 : NPT) can be merged, and they are totally parallelizable; this can be beneficial if
+    ! the function evaluations are expensive, which is likely the case.
     if (fval(i + 1) <= fval(i + n + 1)) then
         xpt(i, k) = xpt(i, i + 1)
     else
@@ -210,8 +194,7 @@ do k = int(2 * n + 2, kind(k)), npt_revised
     end if
 end do
 
-! Set FVAL(2*N + 2 : NPT) by evaluating F. Totally parallelizable except
-! FMSSG, which outputs messages to the console or files.
+! Set FVAL(2*N + 2 : NPT) by evaluating F. Totally parallelizable except for FMSSG.
 do k = int(2 * n + 2, kind(k)), npt_revised
     x = xpt(:, k) + xbase
     call evalf(calfun, x, f)
@@ -232,28 +215,42 @@ end do
 nf = int(count(evaluated), kind(nf))
 kopt = int(minloc(fval, dim=1, mask=evaluated), kind(kopt))
 
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(all(ij(:, 2 * n + 2:npt) >= 1 .and. ij(:, 2 * n + 2:npt) <= n), '1<=IJ<=N', srname)
+    call assert(all(ij(1, 2 * n + 2:npt_revised) > ij(2, 2 * n + 2:npt_revised)), &
+        & 'IJ(1, 2N+2:END) > IJ(2, 2N+2:END)', srname)
+    call assert(nf <= npt, 'NF <= NPT', srname)
+    call assert(kopt >= 1 .and. kopt <= nf, '1 <= KOPT <= NF', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+end if
+
 end subroutine initxf
 
 
 subroutine initq(ij, fval, xpt, gq, hq, pq, info)
-! INITQ initializes the quadratic model, which is represented by
-! (GQ, HQ, PQ) in the following way:
-! the gradient of the model at XBASE is GQ;
-! the Hessian of the model is
-! HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
+!--------------------------------------------------------------------------------------------------!
+! This subroutine initializes the quadratic model, which is represented by (GQ, HQ, PQ) so that its
+! gradient at XBASE is GQ; its Hessian is HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
 use consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING
+use debug_mod, only : assert
+use infnan_mod, only : is_nan, is_finite
 use info_mod, only : INFO_DFT, NAN_MODEL
-use debug_mod, only : errstop, verisize
-use infnan_mod, only : is_nan
+use linalg_mod, only : issymmetric
 
 implicit none
 
 ! Inputs
-integer(IK), intent(in) :: ij(:, :)  ! IJ(2, NPT)
-real(RP), intent(in) :: fval(:)  ! FVAL(NPT)
-real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
+integer(IK), intent(in) :: ij(:, :)     ! IJ(2, NPT)
+real(RP), intent(in) :: fval(:)     ! FVAL(NPT)
+real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
 
 ! Outputs
 integer(IK), intent(out) :: info
@@ -262,6 +259,7 @@ real(RP), intent(out) :: hq(:, :)  ! HQ(N, N)
 real(RP), intent(out) :: pq(:)  ! PQ(NPT)
 
 ! Local variables
+character(len=*), parameter :: srname = 'INITQ'
 integer(IK) :: i
 integer(IK) :: j
 integer(IK) :: k
@@ -273,23 +271,27 @@ real(RP) :: fj
 real(RP) :: rhobeg
 real(RP) :: xi
 real(RP) :: xj
-character(len=*), parameter :: srname = 'INITQ'
 
-
-! Get and verify the sizes.
+! Sizes
 n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
+! Preconditions
 if (DEBUGGING) then
-    if (n < 1 .or. npt < n + 2) then
-        call errstop(srname, 'SIZE(XPT) is invalid')
-    end if
-    call verisize(fval, npt)
-    call verisize(ij, 2_IK, npt)
-    call verisize(gq, n)
-    call verisize(hq, n, n)
-    call verisize(pq, npt)
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
+    call assert(size(fval) == npt, 'SIZE(FVAL) == NPT', srname)
+    call assert(size(ij, 1) == 2 .and. size(ij, 2) == npt, 'SIZE(IJ) == [2, NPT]', srname)
+    call assert(all(ij(:, 2 * n + 2:npt) >= 1 .and. ij(:, 2 * n + 2:npt) <= n), '1<=IJ<=N', srname)
+    call assert(size(gq) == n, 'SIZE(GQ) == N', srname)
+    call assert(size(hq, 1) == n .and. size(hq, 2) == n, 'SIZE(HQ) == [n, n]', srname)
+    call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
 end if
+
+!====================!
+! Calculation starts !
+!====================!
 
 gq = ZERO
 hq = ZERO
@@ -326,11 +328,8 @@ do k = int(2 * n + 2, kind(k)), npt
         fj = fval(j + n + 1)
     end if
     ! With the XI, XJ, FI, and FJ found above, we have
-    ! FVAL(K) = F(XBASE + XI + XJ),
-    ! FI = F(XBASE + XI),
-    ! FJ = F(XBASE + XJ).
-    ! Thus the HQ(I, J) defined below approximates
-    ! frac{partial^2}{partial X_I partial X_J} F(XBASE)
+    ! FVAL(K) = F(XBASE + XI + XJ), FI = F(XBASE + XI), FJ = F(XBASE + XJ).
+    ! Thus the HQ(I,J) defined below approximates frac{partial^2}{partial X_I partial X_J} F(XBASE).
     hq(i, j) = (fbeg - fi - fj + fval(k)) / (xi * xj)
     hq(j, i) = hq(i, j)
 end do
@@ -341,118 +340,131 @@ else
     info = INFO_DFT
 end if
 
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(issymmetric(hq), 'HQ is symmetric', srname)
+end if
+
 end subroutine initq
 
 
 subroutine inith(ij, xpt, idz, bmat, zmat, info)
-! INITH initializes BMAT and ZMAT.
+!--------------------------------------------------------------------------------------------------!
+! This subroutine initializes IDZ, BMAT, and ZMAT.
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
 use consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
+use debug_mod, only : assert
+use infnan_mod, only : is_nan, is_finite
 use info_mod, only : INFO_DFT, NAN_MODEL
-use debug_mod, only : errstop, verisize
-use infnan_mod, only : is_nan
+use linalg_mod, only : issymmetric, eye
 
 implicit none
 
 ! Inputs
-integer(IK), intent(in) :: ij(:, :)  ! IJ(2, NPT)
-real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
+integer(IK), intent(in) :: ij(:, :)     ! IJ(2, NPT)
+real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
 
 ! Outputs
 integer(IK), intent(out) :: idz
 integer(IK), intent(out) :: info
-real(RP), intent(out) :: bmat(:, :)  ! BMAT(N, NPT + N)
-real(RP), intent(out) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
+real(RP), intent(out) :: bmat(:, :)     ! BMAT(N, NPT + N)
+real(RP), intent(out) :: zmat(:, :)     ! ZMAT(NPT, NPT - N - 1)
 
 ! Local variables
-integer(IK) :: i
-integer(IK) :: j
+character(len=*), parameter :: srname = 'INITH'
 integer(IK) :: k
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: recip
 real(RP) :: reciq
 real(RP) :: rhobeg
-real(RP) :: rhosq
-real(RP) :: xi
-real(RP) :: xj
-character(len=*), parameter :: srname = 'INITH'
 
-
-! Get and verify the sizes.
+! Sizes
 n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
+! Preconditions
 if (DEBUGGING) then
-    if (n < 1 .or. npt < n + 2) then
-        call errstop(srname, 'SIZE(XPT) is invalid')
-    end if
-    call verisize(ij, 2_IK, npt)
-    call verisize(bmat, n, npt + n)
-    call verisize(zmat, npt, int(npt - n - 1, kind(n)))
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
+    call assert(size(ij, 1) == 2 .and. size(ij, 2) == npt, 'SIZE(IJ) == [2, NPT]', srname)
+    call assert(all(ij(:, 2 * n + 2:npt) >= 1 .and. ij(:, 2 * n + 2:npt) <= n), '1<=IJ<=N', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
+        & 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
 end if
+
+!====================!
+! Calculation starts !
+!====================!
 
 ! Set IDZ = 1. It will not be changed in the following.
 idz = 1_IK
 
 ! Some values to be used for setting BMAT and ZMAT.
 rhobeg = maxval(abs(xpt(:, 2)))  ! Read RHOBEG from XPT.
-rhosq = rhobeg * rhobeg
-recip = ONE / rhosq
-reciq = sqrt(HALF) / rhosq
 
-! Initialize BMAT and ZMAT to ZERO.
+! Set BMAT.
 bmat = ZERO
+if (npt <= 2 * n + 1) then
+    bmat(1:npt - n - 1, 2:npt - n) = (HALF / rhobeg) * eye(npt - n - 1)
+    bmat(1:npt - n - 1, n + 2:npt) = -(HALF / rhobeg) * eye(npt - n - 1)
+    bmat(npt - n:n, 1) = -ONE / rhobeg
+    bmat(npt - n:n, npt - n + 1:n + 1) = (ONE / rhobeg) * eye(2 * n - npt + 1)
+    bmat(npt - n:n, 2 * npt - n:npt + n) = -(HALF * rhobeg**2) * eye(2 * n - npt + 1)
+else
+    bmat(:, 2:n + 1) = (HALF / rhobeg) * eye(n)
+    bmat(:, n + 2:2 * n + 1) = -(HALF / rhobeg) * eye(n)
+end if
+
+! Set ZMAT.
+recip = ONE / rhobeg**2
+reciq = sqrt(HALF) / rhobeg**2
 zmat = ZERO
-
-! Set the nonzero initial elements of BMAT.
-! When NPT >= 2*N + 1, this defines BMAT completely;
-! When NPT <= 2*N, this defines BMAT(1 : NPT - N - 1, :).
-do k = 1, min(int(npt - n - 1, kind(n)), n)
-    bmat(k, k + 1) = HALF / rhobeg
-    bmat(k, n + k + 1) = -HALF / rhobeg
-end do
-
-! When NPT <= 2*N, set BMAT(NPT - N : N, :)
-do k = npt - n, n
-    bmat(k, 1) = -ONE / rhobeg
-    bmat(k, k + 1) = ONE / rhobeg
-    bmat(k, npt + k) = -HALF * rhosq
-end do
-
-! Set the nonzero initial elements of ZMAT.
-! When NPT <= 2*N + 1, this defines ZMAT completely;
-! When NPT > 2*N + 1, this defines ZMAT(:, 1 : N).
-do k = 1, min(int(npt - n - 1, kind(n)), n)
-    zmat(1, k) = -reciq - reciq
-    zmat(k + 1, k) = reciq
-    zmat(k + n + 1, k) = reciq
-end do
-
-! When NPT > 2*N+1, set ZMAT(:, N + 1 : NPT - N - 1).
-do k = int(n + 1, kind(k)), int(npt - n - 1, kind(k))
-    ! I, J, XI, and XJ will be used below.
-    i = ij(1, k + n + 1)
-    j = ij(2, k + n + 1)
-    xi = xpt(i, k + n + 1)
-    xj = xpt(j, k + n + 1)
-    if (xi < ZERO) then
-        i = i + n
-    end if
-    if (xj < ZERO) then
-        j = j + n
-    end if
-    zmat(1, k) = recip
-    zmat(k + n + 1, k) = recip
-    zmat(i + 1, k) = -recip
-    zmat(j + 1, k) = -recip
-end do
+if (npt <= 2 * n + 1) then
+    zmat(1, :) = -reciq - reciq
+    zmat(2:npt - n, :) = reciq * eye(npt - n - 1)
+    zmat(n + 2:npt, :) = reciq * eye(npt - n - 1)
+else
+    zmat(1, 1:n) = -reciq - reciq
+    zmat(2:n + 1, 1:n) = reciq * eye(n)
+    zmat(n + 2:2 * n + 1, 1:n) = reciq * eye(n)
+    zmat(1, n + 1:npt - n - 1) = recip
+    zmat(2 * n + 2:npt, n + 1:npt - n - 1) = recip * eye(npt - 2 * n - 1)
+    do k = int(2 * n + 2, kind(k)), int(npt, kind(k))
+        where (xpt(ij(:, k), k) > ZERO)
+            zmat(ij(:, k) + 1, k - n - 1) = -recip
+        elsewhere
+            zmat(ij(:, k) + n + 1, k - n - 1) = -recip
+        end where
+        ! MATLAB code:
+        ! L = (XPT(IJ(:, K), K) > ZERO);
+        ! ZMAT(IJ(L, K) + 1, K - N - 1) = -RECIP;
+        ! ZMAT(IJ(~L, K) + N + 1, K - N - 1) = -RECIP;
+    end do
+end if
 
 if (any(is_nan(bmat)) .or. any(is_nan(zmat))) then
     info = NAN_MODEL
 else
     info = INFO_DFT
+end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT - N', srname)
+    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
 end if
 
 end subroutine inith

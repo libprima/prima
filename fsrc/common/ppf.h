@@ -88,7 +88,7 @@
 
 /******************************************************************************/
 /* Do we use the intrinsic algebra procedures (e.g., matmul, dot_product)? */
-/* If no, we use the procedures implemented in lina.F. */
+/* If no, we use the procedures implemented in linalg.F. */
 /* When __USE_INTRINSIC_ALGEBRA__ == 1, the code may not produce exactly the
  * same results as Powell's code, because the intrinsic matmul behaves
  * differently from a naive triple loop due to finite-precision arithmetic.
