@@ -145,11 +145,17 @@ opt_option = '-O';  % Optimize the object code; this is the default
 if isfield(options, 'debug') && options.debug
     opt_option = '-g';  % Debug mode; -g disables MEX's behavior of optimizing built object code
 end
+% N.B.: -O and -g may lead to (slightly) different behaviors of the mexified code. This was observed
+% on 2021-09-09 in a test of NEWUOA on the AKIVA problem of CUTEst. It was because the mexified code
+% produced different results when it was supposed to evaluate COS(0.59843577329095299_DP) amid OTHER
+% CALCULATIONS: with -O, the result was 0.82621783366991353; with -g, it became 0.82621783366991364.
+% Bizarrely, if we write a short Fortran program to evaluate only COS(0.59843577329095299_DP),
+% then the result is always 0.82621783366991364, regardless of -O or -g. No idea why.
 
 % Detect whether we are running a 32-bit MATLAB, where maxArrayDim = 2^31-1,
 % and then set ad_option accordingly. On a 64-bit MATLAB, maxArrayDim = 2^48-1
 % according to the document of MATLAB R2019a.
-% !!! Make sure that eveything is compiled with the SAME ad_option !!!
+% !!! Make sure that everything is compiled with the SAME ad_option !!!
 % !!! Otherwise, Segmentation Fault may occur !!!
 [Architecture, maxArrayDim] = computer;
 if any(strfind(Architecture, '64')) && log2(maxArrayDim) > 31

@@ -93,8 +93,8 @@ subroutine trstlp_sub(iact, nact, stage, A, b, rho, d, vmultc, z)
 ! Generic modules
 use consts_mod, only : RP, IK, ZERO, ONE, EPS, HUGENUM, DEBUGGING
 use infnan_mod, only : is_nan, is_finite
-use debug_mod, only : errstop, verisize
-use lina_mod, only : inprod, matprod, eye, planerot, isminor
+use debug_mod, only : assert, errstop, verisize
+use linalg_mod, only : inprod, matprod, eye, planerot, isminor
 
 implicit none
 
@@ -114,6 +114,7 @@ real(RP), intent(inout) :: z(:, :)  ! (N, N)
 ! Local variables
 integer(IK) :: icon
 integer(IK) :: iter
+integer(IK) :: itmp
 integer(IK) :: k
 integer(IK) :: m
 integer(IK) :: maxiter
@@ -173,7 +174,7 @@ if (stage == 1) then
     d = ZERO
     cstrv = maxval([b, ZERO])
     vmultc = cstrv - b
-    z = eye(n, n)
+    z = eye(n)
     if (mcon == 0 .or. cstrv <= ZERO) then
         ! Check whether a quick return is possible. Make sure the In-outputs have been initialized.
         return
@@ -258,8 +259,16 @@ do iter = 1, maxiter
             ! Add the new constraint if this can be done without a deletion from the active set.
             ! Powell wrote "CGZ(NACT + 1) /= ZERO" instead of "ABS(CGZ(NACT + 1)) > ZERO".
             nact = nact + 1
-            vmultc([icon, nact]) = [vmultc(nact), ZERO]
-            iact([icon, nact]) = iact([nact, icon])
+            if (nact /= icon) then
+                ! N.B.: It is problematic to index arrays using [NACT, ICON] when NACT == ICON.
+                ! Indeed, Sec. 9.5.3.3.3 of the Fortran 2018 standard says: "If a vector subscript
+                ! has two or more elements with the same value, an array section with that vector
+                ! subscript is NOT definable and shall NOT be defined or become undefined."
+                vmultc([icon, nact]) = [vmultc(nact), ZERO]
+                iact([icon, nact]) = iact([nact, icon])
+            else
+                vmultc(nact) = ZERO
+            end if
             zdota(nact) = cgz(nact)  ! Indeed, ZDOTA(NACT) = INPROD(Z(:, NACT), A(:, IACT(NACT)))
         else
             ! The next instruction is reached if a deletion has to be made from the active set in
@@ -310,6 +319,7 @@ do iter = 1, maxiter
 
             zda = inprod(z(:, nact), A(:, iact(icon)))
             if (abs(zda) > ZERO) then
+                ! Since ICON /= NACT, it is valid to use [ICON, NACT] to index arrays.
                 vmultc([icon, nact]) = [ZERO, frac]
                 iact([icon, nact]) = iact([nact, icon])
                 zdota(nact) = zda  ! Indeed, ZDOTA(NACT) = INPROD(Z(:, NACT), A(:, IACT(NACT)))

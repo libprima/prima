@@ -5,11 +5,13 @@ GFORT=gfortran -c -g -Wall -Wextra -Wconversion -Wuninitialized -Wmaybe-uninitia
 IFORT=ifort -c -g -warn all -check all  -fpe0 -debug extended -fimplicit-none #-names as_is
 IFX=ifx -c -g -warn all -fpe0 -debug extended -fimplicit-none #-names as_is
 G95=g95 -c -g -Wall -Wextra -fbounds-check -fimplicit-none
-NFORT=nagfor -c -g -u -C -Warn=allocation -Warn=constant_coindexing -Warn=reallocation -Warn=subnormal -colour=error:red,warn:magenta,info:yellow
+NFORT=nagfor -c -g -u -C -C=alias -C=dangling -C=intovf -C=undefined -Warn=allocation -Warn=constant_coindexing -Warn=reallocation -Warn=subnormal -colour=error:red,warn:magenta,info:yellow
 PFORT=pgfortran  -c -g -Minform=warn
 AFORT=af95  -c -g -m1 -en
 SFORT=sunf95  -c -g -w3 -u -ansi -U
 FLANG=flang -c -Wall -Wextra -Mstandard
+DFLANG=/opt/AMD/aocc-compiler-3.1.0/bin/flang -c -Wall -Wextra -Mstandard
+
 
 CURRENTDIR=$(PWD)
 NEUPDFO=$(CURRENTDIR)/../../
@@ -17,16 +19,16 @@ INTERFORMDIR=../intersection_form/newuoa/
 MEXDIR= $(PWD)/../../matlab/mex_gateways/
 INTERSECTIONMEXDIR= $(PWD)/../../matlab/mex_gateways/intersection_form/
 
-COMFILES=../common/consts.F90 ../common/infnan.F90 ../common/debug.F90 ../common/memory.F90 ../common/info.f90  ../common/lina.F90 ../common/output.f90 ../common/pintrf.f90  ../common/evaluate.f90 ../common/preproc.f90 ../common/history.f90  ../common/resolution.f90 ../common/checkexit.f90 ../common/ratio.f90
+COMFILES=../common/consts.F90 ../common/infnan.F90 ../common/debug.F90 ../common/memory.F90 ../common/info.f90  ../common/linalg.F90 ../common/output.f90 ../common/pintrf.f90  ../common/evaluate.f90 ../common/preproc.f90 ../common/history.f90  ../common/resolution.f90 ../common/checkexit.f90 ../common/ratio.f90
 FILES= $(COMFILES) initialize.f90 trustregion.f90 vlagbeta.f90 geometry.f90 update.f90 shiftbase.f90 newuob.f90 newuoa.f90
 
 M90FILES= $(FILES) $(MEXDIR)/fmxapi.F90 $(MEXDIR)/prob.F90 $(MEXDIR)/classical/fmxcl.F90 $(MEXDIR)/gethuge.F90 $(MEXDIR)/newuoa-interface.F90 $(MEXDIR)/classical/newuoa-interface.F90 -I/home/zaikunzhang/local/MATLAB/R2020a/extern/include/ -I$(NEUPDFO)
 
-MFILES= ../common/consts.F ../common/infnan.F ../common/debug.F ../common/memory.F ../common/info.f  ../common/lina.F ../common/output.f ../common/pintrf.f ../common/evaluate.f ../common/preproc.f ../common/history.f ../common/resolution.f ../common/checkexit.f ../common/ratio.f initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f $(INTERSECTIONMEXDIR)/fmxapi.F $(INTERSECTIONMEXDIR)/prob.F $(INTERSECTIONMEXDIR)/classical/fmxcl.F $(INTERSECTIONMEXDIR)/gethuge.F $(INTERSECTIONMEXDIR)/newuoa-interface.F $(INTERSECTIONMEXDIR)/classical/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2020a/extern/include/ -I$(NEUPDFO)
+MFILES= ../common/consts.F ../common/infnan.F ../common/debug.F ../common/memory.F ../common/info.f  ../common/linalg.F ../common/output.f ../common/pintrf.f ../common/evaluate.f ../common/preproc.f ../common/history.f ../common/resolution.f ../common/checkexit.f ../common/ratio.f initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f $(INTERSECTIONMEXDIR)/fmxapi.F $(INTERSECTIONMEXDIR)/prob.F $(INTERSECTIONMEXDIR)/classical/fmxcl.F $(INTERSECTIONMEXDIR)/gethuge.F $(INTERSECTIONMEXDIR)/newuoa-interface.F $(INTERSECTIONMEXDIR)/classical/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2020a/extern/include/ -I$(NEUPDFO)
 
 
-verify: gverify iverify nverify pverify averify fverify sverify 9verify clean
-verifym: gverifym iverifym nverifym pverifym averifym fverifym sverifym 9verifym clean
+verify: gverify iverify nverify pverify averify fverify sverify 9verify dverify clean
+verifym: gverifym iverifym nverifym pverifym averifym fverifym sverifym dverifym clean
 
 lint:
 	#flint -I../common/ -a -f -g -m -p -3 -e $(FILES)
@@ -34,6 +36,9 @@ lint:
 
 fverify:
 	$(FLANG) $(FILES) -ffree-form -std=f$(FSTD)
+
+dverify:
+	$(DFLANG) $(FILES) -ffree-form -std=f$(FSTD)
 
 gverify:
 	$(GFORT)  $(FILES) -std=f$(FSTD) -pedantic -ffree-form
@@ -67,6 +72,12 @@ fverifym:
 	cd $(INTERFORMDIR) && $(FLANG) $(MFILES) -fno-fixed-form && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 	cd $(INTERFORMDIR) && $(FLANG) $(MFILES) -fno-free-form && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
+dverifym:
+	$(DFLANG)  $(M90FILES) -ffree-form
+	cd $(INTERFORMDIR) && $(DFLANG) $(MFILES) -fno-fixed-form && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+	cd $(INTERFORMDIR) && $(DFLANG) $(MFILES) -fno-free-form && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+
+
 gverifym:
 	$(GFORT)  $(M90FILES) -pedantic  -ffree-form
 	cd $(INTERFORMDIR) && $(GFORT) $(MFILES) -pedantic -ffixed-form && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
@@ -90,7 +101,7 @@ xverifym:
 nverifym:
 	$(NFORT) $(M90FILES) -f$(FSTD) -free
 	cd $(INTERFORMDIR) && $(NFORT) $(MFILES) -free && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
-	cd $(INTERFORMDIR) && $(NFORT) ../common/consts.F ../common/infnan.F ../common/debug.F ../common/memory.F ../common/info.f ../common/lina.F ../common/output.f ../common/pintrf.f  ../common/evaluate.f ../common/preproc.f ../common/checkexit.f ../common/ratio.f ../common/history.f ../common/resolution.f initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f $(INTERSECTIONMEXDIR)/fmxapi.F $(INTERSECTIONMEXDIR)/prob.F $(INTERSECTIONMEXDIR)/classical/fmxcl.F $(INTERSECTIONMEXDIR)/gethuge.F $(INTERSECTIONMEXDIR)/newuoa-interface.F $(INTERSECTIONMEXDIR)/classical/newuoa-interface.F -I$(NEUPDFO) -fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+	cd $(INTERFORMDIR) && $(NFORT) ../common/consts.F ../common/infnan.F ../common/debug.F ../common/memory.F ../common/info.f ../common/linalg.F ../common/output.f ../common/pintrf.f  ../common/evaluate.f ../common/preproc.f ../common/checkexit.f ../common/ratio.f ../common/history.f ../common/resolution.f initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f $(INTERSECTIONMEXDIR)/fmxapi.F $(INTERSECTIONMEXDIR)/prob.F $(INTERSECTIONMEXDIR)/classical/fmxcl.F $(INTERSECTIONMEXDIR)/gethuge.F $(INTERSECTIONMEXDIR)/newuoa-interface.F $(INTERSECTIONMEXDIR)/classical/newuoa-interface.F -I$(NEUPDFO) -fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 pverifym:
 	$(PFORT) $(M90FILES) -Mfreeform
@@ -118,7 +129,7 @@ COMMON = ../common
 # each .o file depends on the .o files before it.
 
 example: example.f90 \
-	consts.o infnan.o info.o debug.o memory.o lina.o output.o pintrf.o evaluate.o \
+	consts.o infnan.o info.o debug.o memory.o linalg.o output.o pintrf.o evaluate.o \
 	preproc.o resolution.o history.o checkexit.o ratio.o initialize.o trustregion.o vlagbeta.o geometry.o shiftbase.o update.o newuob.o newuoa.o
 	$(FC) $(FFLAGS) -o example example.f90 *.o
 
@@ -135,8 +146,8 @@ debug.o: $(COMMON)/debug.F90
 	$(FC) $(FFLAGS) -c $(COMMON)/debug.F90
 memory.o: $(COMMON)/memory.F90
 	$(FC) $(FFLAGS) -c $(COMMON)/memory.F90
-lina.o: $(COMMON)/lina.F90
-	$(FC) $(FFLAGS) -c $(COMMON)/lina.F90
+linalg.o: $(COMMON)/linalg.F90
+	$(FC) $(FFLAGS) -c $(COMMON)/linalg.F90
 output.o: $(COMMON)/output.f90
 	$(FC) $(FFLAGS) -c $(COMMON)/output.f90
 pintrf.o: $(COMMON)/pintrf.f90

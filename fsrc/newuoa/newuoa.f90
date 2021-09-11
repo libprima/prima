@@ -1,22 +1,19 @@
-! NEWUOA_MOD is a module providing a modern Fortran implementation of
-! M. J. D. Powell's NEWUOA algorithm described in
-!
-! M. J. D. Powell, The NEWUOA software for unconstrained optimization
-! without derivatives, In Large-Scale Nonlinear Optimization, eds. G. Di
-! Pillo and M. Roma, pages 255--297, Springer, New York, US, 2006
-!
-! NEWUOA seeks the least value of a function of many variables, by a
-! trust region method that forms quadratic models by interpolation.
-! There can be some freedom in the interpolation conditions, which is
-! taken up by minimizing the Frobenius norm of the change to the second
-! derivative of the quadratic model, beginning with a zero matrix.
-!
-! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
-! and the NEWUOA paper.
-!
-! Last Modified: Thursday, September 02, 2021 AM09:13:41
-
 module newuoa_mod
+!--------------------------------------------------------------------------------------------------!
+! NEWUOA_MOD is a module providing a modern Fortran implementation of Powell's NEWUOA algorithm in
+!
+! M. J. D. Powell, The NEWUOA software for unconstrained optimization without derivatives, In Large-
+! Scale Nonlinear Optimization, eds. G. Di Pillo and M. Roma, 255--297, Springer, New York, 2006
+!
+! NEWUOA seeks the least value of a function of many variables, by a trust region method that forms
+! quadratic models by interpolation. There can be some freedom in the interpolation conditions,
+! which is taken up by minimizing the Frobenius norm of the change to the second derivative of the
+! quadratic model, beginning with a zero matrix.
+!
+! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
+!
+! Last Modified: Friday, September 10, 2021 PM08:57:16
+!--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
@@ -29,12 +26,11 @@ contains
 subroutine newuoa(calfun, x, f, &
     & nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, &
     & eta1, eta2, gamma1, gamma2, xhist, fhist, maxhist, info)
-
-! Among all the arguments, only CALFUN, X, and F are obligatory. The others
-! are OPTIONAL and you can neglect them unless you are familiar with the
-! algorithm. If you do not specify an optional argument, it will be assigned
-! the default value  as will be explained later. For example, it is valid to
-! call NEWUOA by
+!--------------------------------------------------------------------------------------------------!
+! Among all the arguments, only CALFUN, X, and F are obligatory. The others are OPTIONAL and you can
+! neglect them unless you are familiar with the algorithm. If you do not specify an optional
+! argument, it will be assigned the default value  as will be explained later. For example, it is
+! valid to call NEWUOA by
 !
 ! call newuoa(calfun, x, f)
 !
@@ -45,24 +41,20 @@ subroutine newuoa(calfun, x, f, &
 ! See example.f90 for a concrete example.
 !
 ! A detailed introduction to the arguments is as follows.
-! N.B.: RP and IK are defined in the module CONSTS_MOD. See consts.F90 under
-! the directory name "common". By default, RP = kind(0.0D0) and IK = kind(0),
-! with REAL(RP) being the double-precision real, and INTEGER(IK) being the
-! default integer. For ADVANCED USERS, RP and IK can be defined by specifying
-! __REAL_PRECISION__ and __INTEGER_KIND__ in common/ppf.h. Use the default if
-! you are unsure.
+! N.B.: RP and IK are defined in the module CONSTS_MOD. See consts.F90 under the directory name
+! "common". By default, RP = kind(0.0D0) and IK = kind(0), with REAL(RP) being the double-precision
+! real, and INTEGER(IK) being the default integer. For ADVANCED USERS, RP and IK can be defined by
+! setting __REAL_PRECISION__ and __INTEGER_KIND__ in common/ppf.h. Use the default if unsure.
 !
 ! CALFUN
 !   Input, subroutine.
-!   CALFUN(X, F) should evaluate the objective function at the given
-!   REAL(RP) vector X and set the value to the REAL(RP) scalar F. It
-!   must be provided by the user.
+!   CALFUN(X, F) should evaluate the objective function at the given REAL(RP) vector X and set the
+!   value to the REAL(RP) scalar F. It must be provided by the user.
 !
 ! X
 !   Input and outout, REAL(RP) vector.
-!   As an input, X should be an N dimensional vector that contains the
-!   initial values of the variables, N being the dimension of the problem.
-!   As an output, X will be set to an approximate minimizer.
+!   As an input, X should be an N dimensional vector that contains the starting point, N being the
+!   dimension of the problem. As an output, X will be set to an approximate minimizer.
 !
 ! F
 !   Output, REAL(RP) scalar.
@@ -73,70 +65,58 @@ subroutine newuoa(calfun, x, f, &
 !   NF will be set to the number of function evaluations at exit.
 !
 ! RHOBEG, RHOEND
-!   Inputs, REAL(RP) scalars, default: RHOBEG = 1, RHOEND = 10^-6.
-!   RHOBEG and RHOEND must be set to the initial and final values of a
-!   trust region radius, so both must be positive with RHOEND <= RHOBEG.
-!   Typically RHOBEG should be about one tenth of the greatest expected
-!   change to a variable, and RHOEND should indicate the accuracy that is
-!   required in the final values of the variables.
+!   Inputs, REAL(RP) scalars, default: RHOBEG = 1, RHOEND = 10^-6. RHOBEG and RHOEND must be set to
+!   the initial and final values of a trust-region radius, both being positive and RHOEND <= RHOBEG.
+!   Typically RHOBEG should be about one tenth of the greatest expected change to a variable, and
+!   RHOEND should indicate the accuracy that is required in the final values of the variables.
 !
 ! FTARGET
-!   Input, REAL(RP) scalar, default: - Infinity.
-!   FTARGET is the target function value. The algorithm will terminate
-!   when a point withi a function value <= FTARGET is found.
+!   Input, REAL(RP) scalar, default: - Inf.
+!   FTARGET is the target function value. The algorithm will terminate when a point with a function
+!   value <= FTARGET is found.
 !
 ! MAXFUN
-!   Input, INTEGER(IK) scalar, default: MAXFUN_DIM_DFT*N with
-!   MAXFUN_DIM_DFT defined in the module CONSTS_MOD (see consts.F90 in
-!   the directory named "common").
-!   MAXFUN is the maximal number of function evaluations.
+!   Input, INTEGER(IK) scalar, default: MAXFUN_DIM_DFT*N with MAXFUN_DIM_DFT defined in the module
+!   CONSTS_MOD (see common/consts.F90). MAXFUN is the maximal number of function evaluations.
 !
 ! NPT
 !   Input, INTEGER(IK) scalar, default: 2N + 1.
-!   NPT is the number of interpolation conditions for each trust region
-!   model. Its value must be in the interval [N+2, (N+1)(N+2)/2].
+!   NPT is the number of interpolation conditions for each trust region model. Its value must be in
+!   the interval [N+2, (N+1)(N+2)/2].
 !
 ! IPRINT
 !   Input, INTEGER(IK) scalar, default: 0.
-!   The value of IPRINT should be set to 0, 1, -1, 2, -2, 3, or -3, which
-!   controls how much information will be printed during the computation:
+!   The value of IPRINT should be set to 0, 1, -1, 2, -2, 3, or -3, which controls how much
+!   information will be printed during the computation:
 !   0: there will be no printing;
-!   1: a message will be printed to the screen at the return, showing the
-!      best vector of variables found and its objective function value;
-!   2: in addition to 1, each new value of RHO is printed to the screen,
-!      with the best vector of variables so far and its objective function
-!      value;
-!   3: in addition to 2, each function evaluation with its variables will
-!      be printed to the screen;
-!   -1, -2, -3: the same information as 1, 2, 3 will be printed, not to
-!     the screen but to a file named NEWUOA_output.txt; the file will be
-!     created if it does not exist; the new output will be appended to
-!     the end of this file if it already exists. Note that IPRINT = -3 can
-!     be costly in terms of time and space.
+!   1: a message will be printed to the screen at the return, showing the best vector of variables
+!      found and its objective function value;
+!   2: in addition to 1, each new value of RHO is printed to the screen, with the best vector of
+!      variables so far and its objective function value;
+!   3: in addition to 2, each function evaluation with its variables will be printed to the screen;
+!   -1, -2, -3: the same information as 1, 2, 3 will be printed, not to the screen but to a file
+!      named NEWUOA_output.txt; the file will be created if it does not exist; the new output will
+!      be appended to the end of this file if it already exists. Note that IPRINT = -3 can be costly
+!      in terms of time and space.
 !
 ! ETA1, ETA2, GAMMA1, GAMMA2
-!   Input, REAL(RP) scalars, default: ETA1 = 0.1, ETA2 = 0.7, GAMMA1 = 0.5,
-!   and GAMMA2 = 2.
-!   ETA1, ETA2, GAMMA1, and GAMMA2 are parameters in the updating scheme
-!   of the trust region radius as detailed in the subroutine TRRAD in
-!   trustregion.f90. Roughly speaking, the trust region radius is contracted
-!   by a factor of GAMMA1 when the reduction ratio is below ETA1, and
-!   enlarged by a factor of GAMMA2 when the reduction ratio is above ETA2.
-!   It is required that 0 < ETA1 <= ETA2 < 1 and 0 < GAMMA1 < 1 < GAMMA2.
-!   Normally, ETA1 <= 0.25. It is NOT recommended to set ETA1 >= 0.5.
+!   Input, REAL(RP) scalars, default: ETA1 = 0.1, ETA2 = 0.7, GAMMA1 = 0.5, and GAMMA2 = 2.
+!   ETA1, ETA2, GAMMA1, and GAMMA2 are parameters in the updating scheme of the trust-region radius
+!   detailed in the subroutine TRRAD in trustregion.f90. Roughly speaking, the trust-region radius
+!   is contracted by a factor of GAMMA1 when the reduction ratio is below ETA1, and enlarged by a
+!   factor of GAMMA2 when the reduction ratio is above ETA2. It is required that 0 < ETA1 <= ETA2
+!   < 1 and 0 < GAMMA1 < 1 < GAMMA2. Normally, ETA1 <= 0.25. It is NOT advised to set ETA1 >= 0.5.
 !
 ! XHIST, FHIST, MAXHIST
 !   XHIST: Output, ALLOCATABLE rank 2 REAL(RP) array;
 !   FHIST: Output, ALLOCATABLE rank 1 REAL(RP) array;
 !   MAXHIST: Input, INTEGER(IK) scalar, default: MAXFUN
-!   XHIST, if present, will output the history of iterates, while FHIST,
-!   if present, will output the history function values. MAXHIST should
-!   be a nonnegative integer, and XHIST/FHIST will output only the last
-!   MAXHIST iterates and/or the corresponding function values. Therefore,
-!   MAXHIST = 0 means XHIST/FHIST will output nothing, while setting
-!   MAXHIST = MAXFUN ensures that  XHIST/FHIST will output all the history.
-!   If XHIST is present, its size at exit will be (N, min(NF, MAXHIST));
-!   if FHIST is present, its size at exit will be min(NF, MAXHIST).
+!   XHIST, if present, will output the history of iterates, while FHIST, if present, will output the
+!   history function values. MAXHIST should be a nonnegative integer, and XHIST/FHIST will output
+!   only the last MAXHIST iterates and/or the corresponding function values. Therefore, MAXHIST
+!   = 0 means XHIST/FHIST will output nothing, while setting MAXHIST = MAXFUN ensures that
+!   XHIST/FHIST will output all the history. If XHIST is present, its size at exit will be (N,
+!   min(NF, MAXHIST)); if FHIST is present, its size at exit will be min(NF, MAXHIST).
 !
 !   Important Notice:
 !   Setting MAXHIST to a large value can be costly in terms of memory for problems with a large N.
@@ -148,8 +128,8 @@ subroutine newuoa(calfun, x, f, &
 !
 ! INFO
 !   Output, INTEGER(IK) scalar.
-!   INFO is the exit flag. It will be set to one of the following values defined
-!   in the module INFO_MOD (see info.F90 under the directory named "common"):
+!   INFO is the exit flag. It will be set to one of the following values defined in the module
+!   INFO_MOD (see common/info.F90):
 !   SMALL_TR_RADIUS: the lower bound for the trust region radius is reached;
 !   FTARGET_ACHIEVED: the target function value is reached;
 !   MAXFUN_REACHED: the objective function has been evaluated MAXFUN times;
@@ -163,24 +143,24 @@ subroutine newuoa(calfun, x, f, &
 !   NAN_MODEL: NaN occurs in the model;
 !   TRSUBP_FAILED: a trust region step failed to reduce the quadratic model
 !   !--------------------------------------------------------------------------!
-
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use pintrf_mod, only : FUN
-use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS
 use consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT, MAXMEMORY, MAXFUN_DIM_DFT
+use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS
 use infnan_mod, only : is_nan, is_inf, is_finite
 use memory_mod, only : safealloc, cstyle_sizeof
+use pintrf_mod, only : FUN
 
 ! Solver-specific modules
-use preproc_mod, only : preproc
 use newuob_mod, only : newuob
+use preproc_mod, only : preproc
 
 implicit none
 
-! Dummy variables
+! Arguments
 procedure(FUN) :: calfun
-! N.B.: The INTENT attribute cannot be specified for a dummy procedure without the POINTER attribute.
+! N.B.: The INTENT attribute cannot be specified for a dummy procedure without the POINTER attribute
 real(RP), intent(inout) :: x(:)
 real(RP), intent(out) :: f
 integer(IK), intent(out), optional :: nf
@@ -200,11 +180,12 @@ integer(IK), intent(in), optional :: maxhist
 integer(IK), intent(out), optional :: info
 
 ! Local variables
+character(len=*), parameter :: solver = 'NEWUOA'
 integer :: maximal_hist
 integer(IK) :: info_c
 integer(IK) :: iprint_c
-integer(IK) :: maxfun_c
 integer(IK) :: maxfhist
+integer(IK) :: maxfun_c
 integer(IK) :: maxhist_c
 integer(IK) :: maxhist_in
 integer(IK) :: maxxhist
@@ -213,17 +194,15 @@ integer(IK) :: nf_c
 integer(IK) :: npt_c
 real(RP) :: eta1_c
 real(RP) :: eta2_c
-real(RP), allocatable :: fhist_c(:)
 real(RP) :: ftarget_c
 real(RP) :: gamma1_c
 real(RP) :: gamma2_c
 real(RP) :: rhobeg_c
 real(RP) :: rhoend_c
+real(RP), allocatable :: fhist_c(:)
 real(RP), allocatable :: xhist_c(:, :)
-character(len=*), parameter :: solver = 'NEWUOA'
 
-
-! Get size.
+! Sizes
 n = int(size(x), kind(n))
 
 ! Replace any NaN or Inf in X by ZERO.
@@ -233,20 +212,17 @@ end where
 
 ! Read the inputs.
 
-! If RHOBEG is present, then RHOBEG_C is a copy of RHOBEG (_C for "copy");
-! otherwise, RHOBEG_C takes the default value for RHOBEG, taking the value
-! of RHOEND into account. Note that RHOEND is considered only if it is
-! present and it is VALID (i.e., finite and positive). The other inputs
-! are read in a similar way.
+! If RHOBEG is present, then RHOBEG_C is a copy of RHOBEG (_C for "copy"); otherwise, RHOBEG_C takes
+! the default value for RHOBEG, taking the value of RHOEND into account. Note that RHOEND is
+! considered only if it is present and it is VALID (i.e., finite and positive). The other inputs are
+! read in a similar way.
 if (present(rhobeg)) then
     rhobeg_c = rhobeg
 else if (present(rhoend)) then
-    ! Fortran does not take short-circuit evaluation of logic expressions.
-    ! Thus it is WRONG to combine the evaluation of PRESENT(RHOEND) and the
-    ! evaluation of IS_FINITE(RHOEND) as
-    ! "if (present(rhoend) .and. is_finite(rhoend))".
-    ! The compiler may choose the evaluate the IS_FINITE(RHOEND) even if
-    ! PRESENT(RHOEND) is false!
+    ! Fortran does not take short-circuit evaluation of logic expressions. Thus it is WRONG to
+    ! combine the evaluation of PRESENT(RHOEND) and the evaluation of IS_FINITE(RHOEND) as
+    ! "if (present(rhoend) .and. is_finite(rhoend))". The compiler may choose the evaluate the
+    ! IS_FINITE(RHOEND) even if PRESENT(RHOEND) is false!
     if (is_finite(rhoend) .and. rhoend > ZERO) then
         rhobeg_c = max(TEN * rhoend, RHOBEG_DFT)
     else
@@ -342,14 +318,12 @@ else
     maximal_hist = int(MAXMEMORY / (cstyle_sizeof(0.0_RP)), kind(maximal_hist))
 end if
 if (maxhist_c > maximal_hist) then
-    ! We cannot simply take MAXHIST_C = MIN(MAXHIST_C, MAXIMAL_HIST)
-    ! becaue they may not be the same kind, and compilers may complain.
-    ! We may convert them to the same kind, but overflow may occur.
+    ! We cannot simply take MAXHIST_C = MIN(MAXHIST_C, MAXIMAL_HIST), as they may not have the same
+    ! kind, and compilers may complain. We may convert them to the same kind, but overflow may occur
     maxhist_c = int(maximal_hist, kind(maxhist_c))
 end if
 
-! Allocate memory for the history of X. We use XHIST_C instead of XHIST,
-! which may not be present.
+! Allocate memory for the history of X. We use XHIST_C instead of XHIST, which may not be present.
 if (present(xhist)) then
     maxxhist = min(maxhist_c, maxfun_c)
 else
@@ -357,8 +331,7 @@ else
 end if
 call safealloc(xhist_c, n, maxxhist)
 
-! Allocate memory for the history of F. We use FHIST_C instead of FHIST,
-! which may not be present.
+! Allocate memory for the history of F. We use FHIST_C instead of FHIST, which may not be present.
 if (present(fhist)) then
     maxfhist = min(maxhist_c, maxfun_c)
 else
@@ -389,22 +362,19 @@ if (present(xhist)) then
     !--------------------------------------------------!
     xhist = xhist_c(:, 1:min(nf_c, maxxhist))
     ! N.B.:
-    ! 0. Allocate XHIST as long as it is present, even if MAXXHIST = 0;
-    ! otherwise, it will be illegal to enquire XHIST after exit.
-    ! 1. Even though Fortran 2003 supports automatic (re)allocation of
-    ! allocatable arrays upon intrinsic assignment, we keep the line of
-    ! SAFEALLOC, because some very new compilers (Absoft Fortran 20.0)
-    ! are still not standard-compliant in this respect.
+    ! 0. Allocate XHIST as long as it is present, even if MAXXHIST = 0; otherwise, it will be
+    ! illegal to enquire XHIST after exit.
+    ! 1. Even though Fortran 2003 supports automatic (re)allocation of allocatable arrays upon
+    ! intrinsic assignment, we keep the line of SAFEALLOC, because some very new compilers (Absoft
+    ! Fortran 20.0) are still not standard-compliant in this respect.
     ! 2. NF may not be present. Hence we should NOT use NF but NF_C.
-    ! 3. When MAXXHIST > NF_C, which is the normal case in practice,
-    ! XHIST_C contains GARBAGE in XHIST_C(:, NF_C + 1 : MAXXHIST).
-    ! Therefore, we MUST cap XHIST at min(NF_C, MAXXHIST) so that XHIST
-    ! cointains only valid history. For this reason, there is no way to
-    ! avoid allocating two copies of memory for XHIST unless we declare
-    ! it to be a POINTER instead of ALLOCATABLE.
+    ! 3. When MAXXHIST > NF_C, which is the normal case in practice, XHIST_C contains GARBAGE in
+    ! XHIST_C(:, NF_C + 1 : MAXXHIST). Therefore, we MUST cap XHIST at min(NF_C, MAXXHIST) so that
+    ! XHIST cointains only valid history. For this reason, there is no way to avoid allocating two
+    ! copies of memory for XHIST unless we declare it to be a POINTER instead of ALLOCATABLE.
 end if
-! F2003 automatically deallocate local ALLOCATABLE variables at exit, yet
-! we prefer to deallocate them immediately when they finish their jobs.
+! F2003 automatically deallocate local ALLOCATABLE variables at exit, yet we prefer to deallocate
+! them immediately when they finish their jobs.
 deallocate (xhist_c)
 
 ! Copy FHIST_C to FHIST if needed.

@@ -3,7 +3,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020.
 !
-! Last Modified: Sunday, September 05, 2021 AM12:16:29
+! Last Modified: Saturday, September 11, 2021 PM02:49:07
 
 
 #include "ppf.h"
@@ -13,7 +13,7 @@ module debug_mod
 
 implicit none
 private
-public :: assert, errstop, backtr, verisym, verisize
+public :: assert, backtr, errstop, verisize
 
 interface verisize
     module procedure verisize_real_1, verisize_real_2
@@ -87,27 +87,6 @@ call tracebackqq(user_exit_code=-1)
 
 #endif
 end subroutine backtr
-
-
-subroutine verisym(A, tol)
-! VERISYM verifies whether a matrix A is symmetric up to TOL.
-use consts_mod, only : RP, ONE
-use infnan_mod, only : is_nan
-implicit none
-
-real(RP), intent(in) :: A(:, :)
-real(RP), intent(in) :: tol
-
-character(len=*), parameter :: srname = 'VERISYM'
-
-if (size(A, 1) /= size(A, 2)) then
-    call errstop(srname, 'A is not square')
-end if
-if (maxval(abs((A - transpose(A)))) > tol * max(min(huge(ONE), maxval(abs(A))), ONE) &
-    & .or. .not. all(is_nan(A) .eqv. is_nan(transpose(A)))) then
-    call errstop(srname, 'A is not symmetric up to TOL')
-end if
-end subroutine verisym
 
 
 subroutine verisize_real_1(x, n)

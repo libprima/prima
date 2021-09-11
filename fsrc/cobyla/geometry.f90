@@ -62,7 +62,7 @@ function setdrop_tr(actrem, d, factor_alpha, factor_delta, rho, sim, simi) resul
 ! 2. COBYLA never sets JDROP = N + 1.
 
 use consts_mod, only : IK, RP, ZERO, ONE, DEBUGGING
-use lina_mod, only : matprod, inprod
+use linalg_mod, only : matprod, inprod
 use infnan_mod, only : is_nan
 use debug_mod, only : errstop, verisize
 
@@ -203,7 +203,7 @@ end function setdrop_geo
 function geostep(jdrop, cpen, conmat, cval, fval, factor_gamma, rho, simi) result(d)
 
 use consts_mod, only : IK, RP, ZERO, ONE, TWO, DEBUGGING
-use lina_mod, only : matprod, inprod
+use linalg_mod, only : matprod, inprod
 use debug_mod, only : errstop, verisize
 
 implicit none

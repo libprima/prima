@@ -28,8 +28,8 @@ real(RP) :: ratio
 character(len=*), parameter :: srname = 'REDRAT'
 
 if (DEBUGGING) then
-    if (rshrink <= ZERO) then
-        call errstop(srname, 'The threshold ratio for shrinking the trust-region radius is not positive')
+    if (rshrink < ZERO) then
+        call errstop(srname, 'The threshold ratio for shrinking the trust-region radius is negative')
     end if
     if (is_nan(ared)) then
         ! ARED should NEVER be NaN due to the moderated extreme barrier.
@@ -41,7 +41,7 @@ if (is_nan(pred) .or. pred <= ZERO) then
     ! The trust-region subproblem solver fails in this rare case. Instead of terminating as Powell's
     ! original code does, we set RATIO as follows so that the solver may continue to progress.
     if (ared > ZERO) then
-        ! The trial point will be accepted, but the trust-region radius will be shrunk.
+        ! The trial point will be accepted, but the trust-region radius will be shrunk if RSHRINK>0.
         ratio = HALF * rshrink
     else
         ! Signify a bad trust-region step, so that the solver will check whether to take a geometry

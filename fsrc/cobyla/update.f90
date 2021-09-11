@@ -15,7 +15,7 @@ subroutine updatexfc(jdrop, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
 
 ! Generic modules
 use consts_mod, only : IK, RP, DEBUGGING
-use lina_mod, only : matprod, inprod, outprod
+use linalg_mod, only : matprod, inprod, outprod
 
 implicit none
 
@@ -60,7 +60,7 @@ use consts_mod, only : IK, RP, ZERO, TENTH, DEBUGGING
 use info_mod, only : DAMAGING_ROUNDING
 use debug_mod, only : errstop, verisize
 use infnan_mod, only : is_nan
-use lina_mod, only : matprod, eye
+use linalg_mod, only : matprod, eye
 
 implicit none
 
@@ -139,7 +139,7 @@ end if
 ! Check whether SIMI is a poor approximation to the inverse of SIM(:, 1:N).
 ! Do this only if EVALUATED contains only TRUE.
 if (all(evaluated)) then
-    erri = matprod(simi, sim(:, 1:n)) - eye(n, n)
+    erri = matprod(simi, sim(:, 1:n)) - eye(n)
     if (any(is_nan(erri)) .or. any(abs(erri) > TENTH)) then
         info = DAMAGING_ROUNDING
         fval = fval_old

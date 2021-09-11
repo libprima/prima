@@ -16,12 +16,12 @@ INTERFORMDIR=../intersection_form/cobyla/
 MEXDIR= $(PWD)/../../matlab/mex_gateways/
 INTERSECTIONMEXDIR= $(PWD)/../../matlab/mex_gateways/intersection_form/
 
-COMFILES=../common/consts.F90 ../common/debug.F90 ../common/memory.F90 ../common/info.f90 ../common/infnan.F90 ../common/lina.F90 ../common/output.f90 ../common/pintrf.f90 ../common/evaluate.f90 ../common/selectx.f90 ../common/logging.F90 ../common/resolution.f90 ../common/history.f90 ../common/checkexit.f90
+COMFILES=../common/consts.F90 ../common/debug.F90 ../common/memory.F90 ../common/info.f90 ../common/infnan.F90 ../common/linalg.F90 ../common/output.f90 ../common/pintrf.f90 ../common/evaluate.f90 ../common/selectx.f90 ../common/logging.F90 ../common/resolution.f90 ../common/history.f90 ../common/checkexit.f90
 FILES= $(COMFILES) initialize.f90 trustregion.f90 update.f90 geometry.f90 cobylb.f90 cobyla.f90
 
 M90FILES= $(FILES) $(MEXDIR)/fmxapi.F90 $(MEXDIR)/prob.F90 $(MEXDIR)/classical/fmxcl.F90 $(MEXDIR)/gethuge.F90 $(MEXDIR)/cobyla-interface.F90 $(MEXDIR)/classical/cobyla-interface.F90 -I/home/zaikunzhang/local/MATLAB/R2020a/extern/include/ -I$(NEUPDFO)
 
-MFILES= ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F ../common/infnan.F ../common/lina.F ../common/output.F ../common/pintrf.f ../common/evaluate.f ../common/logging.F90 \
+MFILES= ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F ../common/infnan.F ../common/linalg.F ../common/output.F ../common/pintrf.f ../common/evaluate.f ../common/logging.F90 \
 		trstlp.f geometry.f cobylb.f cobyla.f $(INTERSECTIONMEXDIR)/fmxapi.F $(INTERSECTIONMEXDIR)/prob.F $(INTERSECTIONMEXDIR)/classical/fmxcl.F $(INTERSECTIONMEXDIR)/gethuge.F $(INTERSECTIONMEXDIR)/cobyla-interface.F $(INTERSECTIONMEXDIR)/classical/cobyla-interface.F -I/home/zaikunzhang/local/MATLAB/R2020a/extern/include/ -I$(NEUPDFO)
 
 
@@ -81,7 +81,7 @@ iverifym:
 nverifym:
 	$(NFORT) $(M90FILES) -f$(FSTD) -free
 	cd $(INTERFORMDIR) && $(NFORT) $(MFILES) -free && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
-	cd $(INTERFORMDIR) && $(NFORT) ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F ../common/infnan.F ../common/lina.F ../common/output.F ../common/pintrf.f ../common/evaluate.f ../common/logging.F90 \
+	cd $(INTERFORMDIR) && $(NFORT) ../common/consts.F ../common/debug.F ../common/memory.F ../common/info.F ../common/infnan.F ../common/linalg.F ../common/output.F ../common/pintrf.f ../common/evaluate.f ../common/logging.F90 \
 		trstlp.f geometry.f cobylb.f cobyla.f $(INTERSECTIONMEXDIR)/fmxapi.F $(INTERSECTIONMEXDIR)/prob.F $(INTERSECTIONMEXDIR)/classical/fmxcl.F $(INTERSECTIONMEXDIR)/gethuge.F $(INTERSECTIONMEXDIR)/cobyla-interface.F $(INTERSECTIONMEXDIR)/classical/cobyla-interface.F -I$(NEUPDFO) -fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 pverifym:
@@ -110,7 +110,7 @@ COMMON = ../common
 # each .o file depends on the .o files before it.
 
 example: example.f90 \
-	consts.o info.o debug.o memory.o infnan.o lina.o output.o pintrf.o evaluate.o \
+	consts.o info.o debug.o memory.o infnan.o linalg.o output.o pintrf.o evaluate.o \
 	resolution.o history.o checkexit.o initialize.o trustregion.o update.o selectx.o geometry.o cobylb.o cobyla.o
 	$(FC) $(FFLAGS) -o example example.f90 *.o
 
@@ -127,8 +127,8 @@ memory.o: $(COMMON)/memory.F90
 	$(FC) $(FFLAGS) -c $(COMMON)/memory.F90
 infnan.o: $(COMMON)/infnan.F90
 	$(FC) $(FFLAGS) -c $(COMMON)/infnan.F90
-lina.o: $(COMMON)/lina.F90
-	$(FC) $(FFLAGS) -c $(COMMON)/lina.F90
+linalg.o: $(COMMON)/linalg.F90
+	$(FC) $(FFLAGS) -c $(COMMON)/linalg.F90
 output.o: $(COMMON)/output.f90
 	$(FC) $(FFLAGS) -c $(COMMON)/output.f90
 pintrf.o: $(COMMON)/pintrf.f90

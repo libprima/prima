@@ -1,12 +1,11 @@
-! TRUSTREGION_MOD is a module providing subroutines concerning the
-! trust-region iterations.
-!
-! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
-! and the NEWUOA paper.
-!
-! Last Modified: Thursday, September 02, 2021 AM08:56:18
-
 module trustregion_mod
+!--------------------------------------------------------------------------------------------------!
+! This module provides subroutines concerning the trust-region iterations.
+!
+! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
+!
+! Last Modified: Friday, September 10, 2021 PM10:29:53
+!--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
@@ -16,21 +15,23 @@ contains
 
 
 subroutine trsapp(delta, gq, hq, pq, tol, x, xpt, crvmin, s, info)
-! TRSAPP finds an approximate solution to the N-dimensional trust
-! region subproblem
+!--------------------------------------------------------------------------------------------------!
+! TRSAPP finds an approximate solution to the N-dimensional trust region subproblem
 !
 ! min <X+S, GQ> + 0.5*<X+S, HESSIAN*(X+S)> s.t. ||S|| <= DELTA
 !
-! Note that the HESSIAN here is the sum of an explicit part HQ and
-! an implicit part (PQ, XPT):
+! Note that the HESSIAN here is the sum of an explicit part HQ and an implicit part (PQ, XPT):
 !
 ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*XPT(:, K)*XPT(:, K)' .
 !
-! At return, S will be the approximate solution. CRVMIN will be
-! set to the least curvature of HESSIAN along the conjugate
-! directions that occur, except that it is set to ZERO if S goes
-! all the way to the trust-region boundary. QRED is the reduction
-! of Q achieved by S. INFO is an exit flag:
+! The calculation of S begins with the truncated conjugate gradient method. If the boundary of the
+! trust region is reached, then further changes to S may be made, each one being in the 2D space
+! spanned by the current S and the corresponding gradient of Q. Thus S should provide a substantial
+! reduction to Q within the trust region. See Section 5 of the NEWUOA paper.
+!
+! At return, S will be the approximate solution. CRVMIN will be set to the least curvature of
+! HESSIAN along the conjugate directions that occur, except that it is set to ZERO if S goes all the
+! way to the trust-region boundary. INFO is an exit flag:
 ! INFO = 0: an approximate solution satisfying one of the
 ! following conditions is found:
 ! 1. ||G+HS||/||GBEG|| <= TOL,
@@ -40,38 +41,30 @@ subroutine trsapp(delta, gq, hq, pq, tol, x, xpt, crvmin, s, info)
 ! INFO = 2: the maximal number of iterations is attained;
 ! INFO = -1: too much rounding error to continue
 
-! The calculation of S begins with the truncated conjugate
-! gradient method. If the boundary of the trust region is reached,
-! then further changes to S may be made, each one being in the 2D
-! space spanned by the current S and the corresponding gradient of
-! Q. Thus S should provide a substantial reduction to Q within the
-! trust region.
-!
-! See Section 5 of the NEWUOA paper.
-
 ! Generic modules
 use consts_mod, only : RP, IK, ONE, TWO, HALF, ZERO, PI, DEBUGGING
-use debug_mod, only : errstop, verisize
+use debug_mod, only : assert
 use infnan_mod, only : is_nan, is_finite
-use lina_mod, only : Ax_plus_y, inprod, matprod
+use linalg_mod, only : Ax_plus_y, inprod, matprod, issymmetric
 
 implicit none
 
 ! Inputs
 real(RP), intent(in) :: delta
-real(RP), intent(in) :: gq(:)       ! GQ(N)
+real(RP), intent(in) :: gq(:)   ! GQ(N)
 real(RP), intent(in) :: hq(:, :)    ! HQ(N, N)
-real(RP), intent(in) :: pq(:)       ! PQ(NPT)
+real(RP), intent(in) :: pq(:)   ! PQ(NPT)
 real(RP), intent(in) :: tol
-real(RP), intent(in) :: x(:)        ! X(N)
+real(RP), intent(in) :: x(:)    ! X(N)
 real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
 
 ! Outputs
 integer(IK), intent(out) :: info
 real(RP), intent(out) :: crvmin
-real(RP), intent(out) :: s(:)        ! S(N)
+real(RP), intent(out) :: s(:)   ! S(N)
 
 ! Local variables
+character(len=*), parameter :: srname = 'TRSAPP'
 integer(IK) :: i
 integer(IK) :: isav
 integer(IK) :: iter
@@ -79,6 +72,7 @@ integer(IK) :: itermax
 integer(IK) :: iu
 integer(IK) :: n
 integer(IK) :: npt
+logical :: twod_search
 real(RP) :: alpha
 real(RP) :: angle
 real(RP) :: bstep
@@ -115,24 +109,25 @@ real(RP) :: ss
 real(RP) :: sth
 real(RP) :: t
 real(RP) :: unitang
-logical :: twod_search
-character(len=*), parameter :: srname = 'TRSAPP'
 
-
-! Get and verify the sizes.
+! Sizes
 n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
+! Preconditions
 if (DEBUGGING) then
-    if (n < 1 .or. npt < n + 2) then
-        call errstop(srname, 'SIZE(XPT) is invalid')
-    end if
-    call verisize(x, n)
-    call verisize(gq, n)
-    call verisize(hq, n, n)
-    call verisize(pq, npt)
-    call verisize(s, n)
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
+    call assert(size(x) == n .and. all(is_finite(x)), 'SIZE(X) == N, X is finite', srname)
+    call assert(size(gq) == n, 'SIZE(GQ) == N', srname)
+    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
+    call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
+    call assert(size(s) == n, 'SIZE(S) == N', srname)
 end if
+
+!====================!
+! Calculation starts !
+!====================!
 
 s = ZERO
 crvmin = ZERO
@@ -161,17 +156,14 @@ twod_search = .false.
 !
 ! The iteration will be terminated in 4 possible cases:
 ! 1. the maximal number of iterations is attained;
-! 2. QADD <= TOL*QRED or ||G|| <= TOL*||GBEG||, where QADD is the
-!    reduction of Q due to the latest CG step, QRED is the
-!    reduction of Q since the begnning until the latest CG step,
-!    G is the current gradient, and GBEG is the initial gradient;
-!    see (5.13) of the NEWUOA paper;
+! 2. QADD <= TOL*QRED or ||G|| <= TOL*||GBEG||, where QADD is the reduction of Q due to the latest
+! CG step, QRED is the reduction of Q since the beginning until the latest CG step, G is the
+! current gradient, and GBEG is the initial gradient; see (5.13) of the NEWUOA paper;
 ! 3. DS <= 0
 ! 4. ||S|| = DELTA, i.e., CG path cuts the trust region boundary.
 !
-! In the 4th case, twod_search will be set to true, meaning that S
-! will be improved by a sequence of two-dimensional search, the
-! two-dimensional subspace at each iteration being span(S, -G).
+! In the 4th case, twod_search will be set to true, meaning that S will be improved by a sequence of
+! two-dimensional search, the two-dimensional subspace at each iteration being span(S, -G).
 do iter = 1, itermax
     ! Check whether to exit due to small GG
     if (gg <= (tol**2) * gg0) then
@@ -212,11 +204,10 @@ do iter = 1, itermax
     gg = inprod(g + hs, g + hs)  ! Current gradient norm square
     ! We may record g+hs for later usage:
     ! gnew = g + hs
-    ! Note that we should NOT set g = g + hs, because g contains
-    ! the gradient of Q at x.
+    ! Note that we should NOT set g = g + hs, because g contains the gradient of Q at x.
 
-    ! Check whether to exit. This should be done after updating HS
-    ! and GG, which will be used for the 2D minimization if any.
+    ! Check whether to exit. This should be done after updating HS and GG, which will be used for
+    ! the 2D minimization if any.
     if (alpha >= bstep .or. ss >= delsq) then
         ! CG path cuts the boundary. Set CRVMIN to 0.
         crvmin = ZERO
@@ -276,8 +267,7 @@ do iter = 1, itermax
         exit
     end if
 
-    ! Begin the 2D minimization by calculating D and HD and some
-    ! scalar products.
+    ! Begin the 2D minimization by calculating D and HD and some scalar products.
     t = sqrt(delsq * gg - sgk * sgk)
     d = (delsq / t) * (g + hs) - (sgk / t) * s
 !----------------------------------------------------------------!
@@ -351,57 +341,86 @@ do iter = 1, itermax
     end if
 end do
 
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(all(is_finite(s)), 'S is finite', srname)
+end if
+
 end subroutine trsapp
 
 
-function trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
+function trrad(delta0, dnorm, eta1, eta2, gamma1, gamma2, ratio) result(delta)
+!--------------------------------------------------------------------------------------------------!
+! This function updates the trust region radius according to RATIO and DNORM.
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic module
-use consts_mod, only : RP, HALF, DEBUGGING
+use consts_mod, only : RP, ZERO, ONE, HALF, DEBUGGING
 use infnan_mod, only : is_nan
-use debug_mod, only : errstop
+use debug_mod, only : assert
 
 implicit none
 
 ! Input
-real(RP), intent(in) :: delta  ! Current trust-region radius
-real(RP), intent(in) :: dnorm  ! Norm of current trust-region step
-real(RP), intent(in) :: eta1  ! Ratio threshold for contraction
-real(RP), intent(in) :: eta2  ! Ratio threshold for expansion
-real(RP), intent(in) :: gamma1 ! Contraction factor
-real(RP), intent(in) :: gamma2 ! Expansion factor
-real(RP), intent(in) :: ratio  ! Reduction ratio
+real(RP), intent(in) :: delta0   ! Current trust-region radius
+real(RP), intent(in) :: dnorm   ! Norm of current trust-region step
+real(RP), intent(in) :: eta1    ! Ratio threshold for contraction
+real(RP), intent(in) :: eta2    ! Ratio threshold for expansion
+real(RP), intent(in) :: gamma1  ! Contraction factor
+real(RP), intent(in) :: gamma2  ! Expansion factor
+real(RP), intent(in) :: ratio   ! Reduction ratio
 
-! Output
-real(RP) :: trrad
+! Outputs
+real(RP) :: delta
 
 ! Local variables
 character(len=*), parameter :: srname = 'TRRAD'
 
+! Preconditions
 if (DEBUGGING) then
+    call assert(delta0 > ZERO, 'DELTA0 > 0', srname)
+    call assert(dnorm > ZERO, 'DNORM > 0', srname)
+    call assert(eta1 >= ZERO .and. eta1 <= eta2 .and. eta2 < ONE, '0 <= ETA1 <= ETA2 < 1', srname)
+    call assert(gamma1 > ZERO .and. gamma1 < ONE .and. gamma2 > ONE, &
+        & '0 < GAMMA1 < 1 < GAMMA2', srname)
     ! By the definition of RATIO in ratio.f90, RATIO cannot be NaN unless the actual reduction is
     ! NaN, which should NOT happen due to the moderated extreme barrier.
-    if (is_nan(ratio)) then
-        call errstop(srname, 'RATIO is NaN')
-    end if
+    call assert(.not. is_nan(ratio), 'RATIO is not NaN', srname)
 end if
 
+!====================!
+! Calculation starts !
+!====================!
+
 if (ratio <= eta1) then
-    trrad = gamma1 * dnorm
+    delta = gamma1 * dnorm
 else if (ratio <= eta2) then
-    trrad = max(HALF * delta, dnorm)
+    delta = max(HALF * delta0, dnorm)
 else
-    trrad = max(HALF * delta, gamma2 * dnorm)
+    delta = max(HALF * delta0, gamma2 * dnorm)
 end if
 
 ! For noisy problems, the following may work better.
-!if (ratio <= eta1) then
-!trrad = gamma1*dnorm
-!else if (ratio <= eta2) then  ! Ensure TRRAD >= DELTA
-!trrad = delta
-!else  ! Ensure TRRAD > DELTA with a constant factor
-!trrad = max(delta*(1.0_RP + gamma2)/2.0_RP, gamma2*dnorm)
-!end if
+!!if (ratio <= eta1) then
+!!    delta = gamma1 * dnorm
+!!else if (ratio <= eta2) then  ! Ensure DELTA >= DELTA0
+!!    delta = delta0
+!!else  ! Ensure DELTA > DELTA0 with a constant factor
+!!    delta = max(delta0 * (1.0_RP + gamma2) / 2.0_RP, gamma2 * dnorm)
+!!end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(delta > ZERO, 'DELTA > 0', srname)
+end if
 
 end function trrad
 

@@ -1,4 +1,4 @@
-! LINA is a module providing some basic linear algebra procedures. To improve the performance of
+! LINALG is a module providing some basic linear algebra procedures. To improve the performance of
 ! these procedures, especially matprod, one can customize their implementations according to the
 ! resources (hardware, e.g., cache, and libraries, e.g., BLAS) available and the sizes of the
 ! matrices/vectors.
@@ -15,12 +15,12 @@
 
 ! Coded by Zaikun ZHANG in July 2020.
 !
-! Last Modified: Wednesday, September 01, 2021 PM10:58:15
+! Last Modified: Saturday, September 11, 2021 PM02:51:29
 
 
 #include "ppf.h"
 
-module lina_mod
+module linalg_mod
 
 implicit none
 private
@@ -34,6 +34,8 @@ public :: planerot
 public :: calquad
 public :: hessmul
 public :: isminor
+public :: issymmetric
+public :: norm
 
 interface matprod
 ! N.B.:
@@ -77,8 +79,7 @@ use consts_mod, only : IK
 #endif
 
 #if __DEBUGGING__ == 1
-use consts_mod, only : ZERO
-use debug_mod, only : errstop, verisym
+use debug_mod, only : errstop, assert
 #endif
 
 implicit none
@@ -119,7 +120,7 @@ call symmetrize(A)
 #endif
 
 #if __DEBUGGING__ == 1
-call verisym(A, ZERO)
+call assert(issymmetric(A), 'A is symmetric', srname)
 #endif
 end subroutine r1_sym
 
@@ -167,8 +168,7 @@ use consts_mod, only : IK
 #endif
 
 #if __DEBUGGING__ == 1
-use consts_mod, only : ZERO
-use debug_mod, only : errstop, verisym
+use debug_mod, only : errstop, assert
 #endif
 
 implicit none
@@ -209,7 +209,7 @@ call symmetrize(A)
 #endif
 
 #if __DEBUGGING__ == 1
-call verisym(A, ZERO)
+call assert(issymmetric(A), 'A is symmetric', srname)
 #endif
 end subroutine r2_sym
 
@@ -436,7 +436,7 @@ end do
 end function outprod
 
 
-function eye1(n) result(x)
+pure function eye1(n) result(x)
 ! EYE1 is the univariate case of EYE, a function similar to the MATLAB function with the same name.
 use consts_mod, only : RP, IK, ZERO, ONE
 implicit none
@@ -455,7 +455,7 @@ end if
 end function eye1
 
 
-function eye2(m, n) result(x)
+pure function eye2(m, n) result(x)
 ! EYE2 is the bivariate case of EYE, a function similar to the MATLAB function with the same name.
 use consts_mod, only : RP, IK, ZERO, ONE
 implicit none
@@ -548,9 +548,9 @@ if (abs(x(2)) > ZERO) then
     G = reshape([c, -s, s, c], [2, 2])
 elseif (x(1) < ZERO) then
     ! Setting G = -EYE(2,2) in this case ensures the continuity of G with respect to X except at 0.
-    G = -eye(2_IK, 2_IK)
+    G = -eye(2_IK)
 else
-    G = eye(2_IK, 2_IK)
+    G = eye(2_IK)
 end if
 end function planerot
 
@@ -567,8 +567,7 @@ use consts_mod, only : RP, HALF
 #endif
 
 #if __DEBUGGING__ == 1
-use consts_mod, only : ZERO
-use debug_mod, only : errstop, verisym
+use debug_mod, only : errstop, assert
 #endif
 
 implicit none
@@ -596,7 +595,7 @@ A = A * HALF
 #endif
 
 #if __DEBUGGING__ == 1
-call verisym(A, ZERO)
+call assert(issymmetric(A), 'A is symmetrized', srname)
 #endif
 end subroutine symmetrize
 
@@ -860,7 +859,7 @@ end do
 #else
 ! The order of calculation seems quite important. The following order seems to work well.
 ! 1st order term
-qred = - inprod(d, gq)
+qred = -inprod(d, gq)
 s = HALF * d + x  ! Different from the above version.
 ! implicit 2nd-order term
 qred = qred - sum(pq * (matprod(s, xpt) * matprod(d, xpt)))
@@ -913,7 +912,7 @@ hy = matprod(hq, y) + matprod(xpt, pq * matprod(y, xpt))
 end function hessmul
 
 
-function isminor0(x, ref) result(is_minor)
+pure function isminor0(x, ref) result(is_minor)
 ! This function tests whether X is minor compared to REF. It is used by Powell, e.g., in COBYLA.
 use consts_mod, only : RP, TENTH, TWO
 implicit none
@@ -952,5 +951,70 @@ end if
 is_minor = [(isminor0(x(i), ref(i)), i=1, int(size(x), IK))]
 end function isminor1
 
+pure function issymmetric(A, tol) result(is_symmetric)
+! This function tests whether A is symmetric up to TOL.
+use consts_mod, only : RP, ONE, ZERO
+use infnan_mod, only : is_nan
+implicit none
 
-end module lina_mod
+! Inputs
+real(RP), intent(in) :: A(:, :)
+real(RP), intent(in), optional :: tol
+
+! Outputs
+logical :: is_symmetric
+
+is_symmetric = .true.
+if (size(A, 1) /= size(A, 2)) then
+    is_symmetric = .false.
+elseif (.not. all(is_nan(A) .eqv. is_nan(transpose(A)))) then
+    is_symmetric = .false.
+elseif (.not. present(tol) .and. any(abs(A - transpose(A)) > ZERO)) then
+    is_symmetric = .false.
+elseif (present(tol)) then
+    ! Do not merge the next line with the last, as Fortran may not evaluate the logical expression
+    ! in the short-circuit way.
+    if (any(abs(A - transpose(A)) > abs(tol) * max(maxval(abs(A)), ONE))) then
+        is_symmetric = .false.
+    end if
+end if
+
+end function issymmetric
+
+
+pure function norm(x, p) result(y)
+! This function calculates the P-norm of a vector X.
+use consts_mod, only : RP, ONE, ZERO, EPS
+use infnan_mod, only : is_finite, is_posinf
+implicit none
+
+! Inputs
+real(RP), intent(in) :: x(:)
+real(RP), intent(in), optional :: p
+
+! Outputs
+real(RP) :: y
+
+! Local variables
+real(RP) :: scaling
+
+if (.not. all(is_finite(x))) then
+    ! If X contains NaN, then Y is NaN. Otherwise, Y is Inf when X contains +/-Inf.
+    y = sum(abs(x))
+elseif (.not. any(abs(x) > ZERO)) then
+    y = ZERO
+else
+    if (.not. present(p)) then
+        y = sqrt(sum(x**2))
+    else if (is_posinf(p)) then
+        y = maxval(abs(x))
+    else
+        scaling = sqrt(max(EPS, maxval(abs(x)) * minval(abs(x), mask=(abs(x) > ZERO))))
+        y = scaling * sum(abs(x / scaling)**p)**(ONE / p)
+    end if
+end if
+
+end function norm
+
+
+end module linalg_mod
