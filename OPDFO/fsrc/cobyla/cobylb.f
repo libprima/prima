@@ -597,7 +597,8 @@ C          TEMP=0.0
           END DO
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C          IF (TEMP .LT. 0.25*RHO*RHO) THEN
-          IF (TEMP < 0.25D0*RHO*RHO) THEN
+!          IF (TEMP < 0.25D0*RHO*RHO) THEN
+          IF (TEMP < 0.25D0*RHO**2) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               IBRNCH=1
               GOTO 550

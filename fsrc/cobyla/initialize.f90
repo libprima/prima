@@ -1,7 +1,10 @@
 ! INITIALIZE_MOD is a module containing subroutine(s) for initialization.
-! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the COBYLA paper.
 !
-! Last Modified: Wednesday, September 01, 2021 AM12:42:06
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the COBYLA paper.
+!
+! Started: July 2021
+!
+! Last Modified: Wednesday, September 22, 2021 AM11:55:41
 
 module initialize_mod
 
@@ -16,16 +19,16 @@ subroutine initxfc(calcfc, iprint, maxfun, ctol, ftarget, rho, x0, nf, chist, co
     & fval, sim, xhist, evaluated, info)
 
 ! Generic modules
-use pintrf_mod, only : FUNCON
-use evaluate_mod, only : evalfc
-use consts_mod, only : RP, IK, HUGENUM, DEBUGGING
-use info_mod, only : INFO_DFT
-use infnan_mod, only : is_nan, is_posinf
-use debug_mod, only : errstop, verisize
-use output_mod, only : retmssg, rhomssg, fmssg
-use linalg_mod, only : eye
-use history_mod, only : savehist
-use checkexit_mod, only : checkexit
+use, non_intrinsic :: pintrf_mod, only : FUNCON
+use, non_intrinsic :: evaluate_mod, only : evalfc
+use, non_intrinsic :: consts_mod, only : RP, IK, HUGENUM, DEBUGGING
+use, non_intrinsic :: info_mod, only : INFO_DFT
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: debug_mod, only : errstop, verisize
+use, non_intrinsic :: output_mod, only : retmssg, rhomssg, fmssg
+use, non_intrinsic :: linalg_mod, only : eye
+use, non_intrinsic :: history_mod, only : savehist
+use, non_intrinsic :: checkexit_mod, only : checkexit
 
 implicit none
 
@@ -161,9 +164,9 @@ subroutine initfilt(conmat, ctol, cval, fval, sim, evaluated, nfilt, cfilt, conf
 ! 1. Why not initialize the filters using XHIST, etc? Because the history is empty if the user
 ! chooses not to output it.
 ! 2. We decouple INITFILT with INITXFC so that it is easier to parallelize the latter if needed.
-use consts_mod, only : RP, IK, DEBUGGING
-use debug_mod, only : errstop, verisize
-use selectx_mod, only : savefilt
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : errstop, verisize
+use, non_intrinsic :: selectx_mod, only : savefilt
 implicit none
 
 ! Inputs

@@ -1,9 +1,10 @@
 ! PREPROC_MOD is a module that preprocesses the inputs.
 !
-! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code
-! and the NEWUOA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and papers.
 !
-! Last Modified: Tuesday, September 07, 2021 PM09:23:32
+! Started: July 2020
+!
+! Last Modified: Wednesday, September 22, 2021 AM11:52:06
 
 module preproc_mod
 
@@ -17,9 +18,9 @@ contains
 
 subroutine preproc(n, iprint, maxfun, maxhist, npt, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend)
 
-use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS
-use consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT
-use infnan_mod, only : is_nan, is_inf, is_finite
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS
+use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT
+use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite
 
 implicit none
 

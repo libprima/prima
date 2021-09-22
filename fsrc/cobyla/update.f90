@@ -14,8 +14,8 @@ subroutine updatexfc(jdrop, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
 ! that is the job of UPDATEPOLE, which is called before each trust-region/geometry step.
 
 ! Generic modules
-use consts_mod, only : IK, RP, DEBUGGING
-use linalg_mod, only : matprod, inprod, outprod
+use, non_intrinsic :: consts_mod, only : IK, RP, DEBUGGING
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, outprod
 
 implicit none
 
@@ -56,11 +56,11 @@ subroutine updatepole(cpen, evaluated, conmat, cval, fval, sim, simi, info)
 ! 2. apply UPDATEPOLE to SIM with CPEN = CPEN2.
 ! In finite-precision arithmetic, however, they may produce different results unless CPEN1 = CPEN2.
 
-use consts_mod, only : IK, RP, ZERO, TENTH, DEBUGGING
-use info_mod, only : DAMAGING_ROUNDING
-use debug_mod, only : errstop, verisize
-use infnan_mod, only : is_nan
-use linalg_mod, only : matprod, eye
+use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, TENTH, DEBUGGING
+use, non_intrinsic :: info_mod, only : DAMAGING_ROUNDING
+use, non_intrinsic :: debug_mod, only : errstop, verisize
+use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: linalg_mod, only : matprod, eye
 
 implicit none
 
@@ -155,8 +155,8 @@ end subroutine updatepole
 
 function findpole(cpen, evaluated, cval, fval) result(jopt)
 
-use consts_mod, only : IK, RP, ZERO, DEBUGGING
-use debug_mod, only : errstop
+use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : errstop
 
 implicit none
 

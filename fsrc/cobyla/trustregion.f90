@@ -41,8 +41,8 @@ function trstlp(A, b, rho) result(d)
 ! achieved by the shift CSTRV that makes the least residual zero.
 
 ! Generic modules
-use consts_mod, only : RP, IK, DEBUGGING
-use debug_mod, only : errstop, verisize
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : errstop, verisize
 
 implicit none
 
@@ -91,10 +91,10 @@ subroutine trstlp_sub(iact, nact, stage, A, b, rho, d, vmultc, z)
 ! 5. STEP. STEP <= CSTRV in stage 1.
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, ONE, EPS, HUGENUM, DEBUGGING
-use infnan_mod, only : is_nan, is_finite
-use debug_mod, only : assert, errstop, verisize
-use linalg_mod, only : inprod, matprod, eye, planerot, isminor
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, EPS, HUGENUM, DEBUGGING
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
+use, non_intrinsic :: debug_mod, only : assert, errstop, verisize
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, planerot, isminor
 
 implicit none
 
@@ -184,7 +184,7 @@ if (stage == 1) then
     icon = maxloc(b, dim=1)
     sdirn = ZERO
 else
-    if (inprod(d, d) >= rho * rho) then
+    if (inprod(d, d) >= rho**2) then
         ! Check whether a quick return is possible.
         return
     end if
@@ -391,7 +391,7 @@ do iter = 1, maxiter
     ss = inprod(sdirn, sdirn)
     sd = inprod(sdirn, d)
     if (abs(sd) >= EPS * sqrt(ss * dd)) then
-        step = dd / (sqrt(ss * dd + sd * sd) + sd)
+        step = dd / (sqrt(ss * dd + sd**2) + sd)
     else
         step = dd / (sqrt(ss * dd) + sd)
     end if

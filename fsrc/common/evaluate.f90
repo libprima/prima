@@ -1,8 +1,10 @@
 ! This is a module evaluating the objective/constraint function with Nan/Inf handling.
 !
-! Coded by Zaikun Zhang in August 2021.
+! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
-! Last Modified: Wednesday, September 01, 2021 PM02:47:19
+! Started: August 2021
+!
+! Last Modified: Wednesday, September 22, 2021 AM11:48:40
 
 
 module evaluate_mod
@@ -18,9 +20,9 @@ contains
 subroutine evalf(calfun, x, f)
 
 ! Generic modules
-use consts_mod, only : RP, HUGEFUN
-use infnan_mod, only : is_nan
-use pintrf_mod, only : FUN
+use, non_intrinsic :: consts_mod, only : RP, HUGEFUN
+use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: pintrf_mod, only : FUN
 
 implicit none
 
@@ -53,9 +55,9 @@ end subroutine evalf
 subroutine evalfc(calcfc, x, f, constr, cstrv)
 
 ! Generic modules
-use consts_mod, only : RP, ZERO, HUGEFUN, HUGECON
-use infnan_mod, only : is_nan
-use pintrf_mod, only : FUNCON
+use, non_intrinsic :: consts_mod, only : RP, ZERO, HUGEFUN, HUGECON
+use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: pintrf_mod, only : FUNCON
 
 implicit none
 

@@ -3,9 +3,11 @@ module update_mod
 ! UPDATE_MOD is a module providing subroutines concerning the update of IDZ, BMAT, ZMAT, GQ, HQ, and
 ! PQ when XPT(:, KNEW) is replaced by XNEW.
 !
-! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Saturday, September 11, 2021 PM09:48:44
+! Started: July 2020
+!
+! Last Modified: Wednesday, September 22, 2021 AM11:40:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -28,9 +30,9 @@ subroutine updateh(knew, beta, vlag_in, idz, bmat, zmat)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
-use debug_mod, only : assert
-use linalg_mod, only : matprod, planerot, r2update, symmetrize, issymmetric
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: linalg_mod, only : matprod, planerot, r2update, symmetrize, issymmetric
 
 implicit none
 
@@ -207,7 +209,7 @@ else
     tempa = temp * beta
     tempb = temp * tau
     temp = zmat(knew, ja)
-    scala = ONE / sqrt(abs(beta) * temp * temp + tausq)
+    scala = ONE / sqrt(abs(beta) * temp**2 + tausq)
     scalb = scala * sqrtdn
     zmat(:, ja) = scala * (tau * zmat(:, ja) - temp * vlag(1:npt))
     zmat(:, jb) = scalb * (zmat(:, jb) - tempa * w(1:npt) - tempb * vlag(1:npt))
@@ -266,10 +268,10 @@ subroutine updateq(idz, knew, bmatknew, fqdiff, zmat, xptknew, gq, hq, pq)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, DEBUGGING
-use debug_mod, only : assert
-use infnan_mod, only : is_finite
-use linalg_mod, only : r1update, Ax_plus_y, issymmetric
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: linalg_mod, only : r1update, Ax_plus_y, issymmetric
 
 implicit none
 
@@ -350,10 +352,10 @@ subroutine updatexf(knew, f, xnew, kopt, fval, xpt, fopt, xopt)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, DEBUGGING
-use debug_mod, only : assert
-use infnan_mod, only : is_finite
-use linalg_mod, only : norm
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: linalg_mod, only : norm
 
 implicit none
 
@@ -388,10 +390,8 @@ if (DEBUGGING) then
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(fval) == npt, 'SIZE(FVAL) == NPT', srname)
-    call assert(abs(fopt - fval(kopt)) <= ZERO, 'FOPT == FVAL(KOPT)', srname)
     call assert(size(xopt) == n, 'SIZE(XOPT) == N', srname)
-    call assert(norm(xopt - xpt(:, kopt)) <= ZERO, 'XOPT == XPT(:, KOPT)', srname)
-    call assert(.not. any(fval < fopt), '.NOT. ANY(FVAL < FOPT)', srname)
+    ! N.B.: Do NOT test the value of FOPT or XOPT. Being INTENT(OUT), they are UNDEFINED up to here.
 end if
 
 !====================!
@@ -438,10 +438,10 @@ subroutine tryqalt(idz, fval, ratio, smat, zmat, itest, gq, hq, pq)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, DEBUGGING
-use debug_mod, only : assert
-use infnan_mod, only : is_nan
-use linalg_mod, only : inprod, matprod, issymmetric
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric
 
 implicit none
 
@@ -494,7 +494,7 @@ end if
 
 ! In the NEWUOA paper, Powell replaces Q with Q_alt when RATIO <= 0.01 and ||G_alt|| <= 0.1||GQ||
 ! hold for 3 consecutive times (eq(8.4)). But Powell's code compares ABS(RATIO) instead of RATIO
-! with 0.01. Here we use RATIO, which is more efficient as observed in in Zhang Zaikun's PhD thesis
+! with 0.01. Here we use RATIO, which is more efficient as observed in in Zaikun ZHANG's PhD thesis
 ! (Section 3.3.2).
 !if (abs(ratio) > 1.0e-2_RP) then
 if (ratio > 1.0E-2_RP) then

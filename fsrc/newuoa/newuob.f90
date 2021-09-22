@@ -2,9 +2,11 @@ module newuob_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module performs the major calculations of NEWUOA.
 !
-! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Saturday, September 11, 2021 PM10:15:24
+! Started: July 2020
+!
+! Last Modified: Thursday, September 23, 2021 AM01:59:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -48,26 +50,26 @@ subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use checkexit_mod, only : checkexit
-use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENUM, DEBUGGING
-use debug_mod, only : assert
-use evaluate_mod, only : evalf
-use history_mod, only : savehist, rangehist
-use infnan_mod, only : is_nan
-use info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS
-use linalg_mod, only : calquad, inprod, norm
-use output_mod, only : retmssg, rhomssg, fmssg
-use pintrf_mod, only : FUN
-use ratio_mod, only : redrat
-use resolution_mod, only : resenhance
+use, non_intrinsic :: checkexit_mod, only : checkexit
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENUM, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: evaluate_mod, only : evalf
+use, non_intrinsic :: history_mod, only : savehist, rangehist
+use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS
+use, non_intrinsic :: linalg_mod, only : calquad, inprod, norm
+use, non_intrinsic :: output_mod, only : retmssg, rhomssg, fmssg
+use, non_intrinsic :: pintrf_mod, only : FUN
+use, non_intrinsic :: ratio_mod, only : redrat
+use, non_intrinsic :: resolution_mod, only : resenhance
 
 ! Solver-specific modules
-use geometry_mod, only : setdrop_tr, geostep
-use initialize_mod, only : initxf, initq, inith
-use shiftbase_mod, only : shiftbase
-use trustregion_mod, only : trsapp, trrad
-use update_mod, only : updateh, updateq, updatexf, tryqalt
-use vlagbeta_mod, only : vlagbeta
+use, non_intrinsic :: geometry_mod, only : setdrop_tr, geostep
+use, non_intrinsic :: initialize_mod, only : initxf, initq, inith
+use, non_intrinsic :: shiftbase_mod, only : shiftbase
+use, non_intrinsic :: trustregion_mod, only : trsapp, trrad
+use, non_intrinsic :: update_mod, only : updateh, updateq, updatexf, tryqalt
+use, non_intrinsic :: vlagbeta_mod, only : vlagbeta
 
 implicit none
 
@@ -205,9 +207,9 @@ trtol = 1.0E-2_RP  ! Tolerance used in trsapp.
 ! when SHORTD = TRUE, its value is used only in BAD_TRSTEP, which is TRUE regardless of RATIO.
 ratio = -ONE
 
-! Normally, each trust-region iteration takes one function evaluation. The following setting
+! In most cases, each trust-region iteration takes one function evaluation. The following setting
 ! essentially imposes no constraint on the maximal number of trust-region iterations.
-maxtr = 10_IK * maxfun
+maxtr = 2_IK * maxfun
 ! MAXTR is unlikely to be reached, but we define the following default value for INFO for safety.
 info = MAXTR_REACHED
 
@@ -228,7 +230,7 @@ do tr = 1, maxtr
     ! SHORTD corresponds to Box 3 of the NEWUOA paper.
     shortd = (dnorm < HALF * rho)
     ! REDUCE_RHO_1 corresponds to Box 14 of the NEWUOA paper.
-    reduce_rho_1 = shortd .and. (maxval(abs(moderrsav)) <= 0.125_RP * crvmin * rho * rho) .and. &
+    reduce_rho_1 = shortd .and. (maxval(abs(moderrsav)) <= 0.125_RP * crvmin * rho**2) .and. &
         & (maxval(dnormsav) <= rho)
     if (shortd .and. (.not. reduce_rho_1)) then
         ! Reduce DELTA. After this, DELTA < DNORM may hold.
@@ -241,7 +243,7 @@ do tr = 1, maxtr
     if (.not. shortd) then  ! D is long enough.
         ! Shift XBASE if XOPT may be too far from XBASE.
         !if (inprod(d, d) <= 1.0e-3_RP*inprod(xopt, xopt)) then  ! Powell's code
-        if (dnorm * dnorm <= 1.0E-3_RP * inprod(xopt, xopt)) then
+        if (dnorm**2 <= 1.0E-3_RP * inprod(xopt, xopt)) then
             call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
         end if
 
@@ -411,7 +413,7 @@ do tr = 1, maxtr
         delbar = max(min(TENTH * maxval(xdist), HALF * delta), rho)
 
         ! Shift XBASE if XOPT may be too far from XBASE.
-        if (delbar * delbar <= 1.0E-3_RP * inprod(xopt, xopt)) then
+        if (delbar**2 <= 1.0E-3_RP * inprod(xopt, xopt)) then
             call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
         end if
 

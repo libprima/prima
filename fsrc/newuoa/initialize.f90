@@ -2,9 +2,11 @@ module initialize_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module contains subroutines for initializing FVAL, XBASE, XPT, GQ, HQ, PQ, IDZ, ZMAT, BMAT.
 !
-! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Sunday, September 12, 2021 AM12:29:33
+! Started: July 2020
+!
+! Last Modified: Wednesday, September 22, 2021 AM11:37:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -37,16 +39,16 @@ subroutine initxf(calfun, iprint, maxfun, ftarget, rhobeg, x0, ij, kopt, nf, fhi
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use checkexit_mod, only : checkexit
-use consts_mod, only : RP, IK, ZERO, DEBUGGING
-use debug_mod, only : assert
-use evaluate_mod, only : evalf
-use history_mod, only : savehist
-use infnan_mod, only : is_finite
-use info_mod, only : INFO_DFT
-use linalg_mod, only : eye
-use output_mod, only : fmssg
-use pintrf_mod, only : FUN
+use, non_intrinsic :: checkexit_mod, only : checkexit
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HUGENUM, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: evaluate_mod, only : evalf
+use, non_intrinsic :: history_mod, only : savehist
+use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: info_mod, only : INFO_DFT
+use, non_intrinsic :: linalg_mod, only : eye
+use, non_intrinsic :: output_mod, only : fmssg
+use, non_intrinsic :: pintrf_mod, only : FUN
 
 implicit none
 
@@ -123,6 +125,10 @@ xbase = x0
 ! function evaluations, especially if the loop is conducted asynchronously. However, the loop here
 ! is not fully parallelizable if NPT>2N+1, as the definition XPT(;, 2N+2:end) involves FVAL(1:2N+1).
 evaluated = .false.
+! Initialize XPT and FVAL to HUGENUM. Otherwise, compilers may complain that XPT and FVAL are not
+! (completely) initialized if the initialization aborts due to abnormality (see CHECKEXIT).
+xpt = HUGENUM
+fval = HUGENUM
 
 ! Set XPT, FVAL, KOPT, and XOPT.
 
@@ -149,7 +155,7 @@ do k = 1, min(npt, int(2 * n + 1, kind(npt)))
 end do
 
 ! Set IJ.
-! In general, when NPT = (N+1)*(N+2)/2, we can initializw IJ(2*N + 2 : NPT, :) to ANY permutation
+! In general, when NPT = (N+1)*(N+2)/2, we can initialize IJ(2*N + 2 : NPT, :) to ANY permutation
 ! of {(I, J) : 1 <= J < I <= N}; when NPT < (N+1)*(N+2)/2, we can set it to the first
 ! NPT - (2*N + 1) elements of such a permutation. Powell took the following permutation:
 ij(:, 1) = int(([(k, k=2_IK * n + 2_IK, npt)] - n - 2) / n, IK) ! [(K, K=1, NPT)] = [1, 2, ..., NPT]
@@ -172,8 +178,7 @@ ij = ij + 1_IK
 ! on FVAL(2 : 2*N + 1), and it is the sole origin of the such dependency. If we remove the revision
 ! IJ, then the evaluations of FVAL(1 : NPT) can be merged, and they are totally PARALLELIZABLE; this
 ! can be beneficial if the function evaluations are expensive, which is likely the case.
-! 4. In MATLAB, we can index a vector using a 2D array of indices (not allowed in Fortran), thus the
-! MATLAB code is simply:
+! 4. MATLAB can index a vector using a 2D array of indices (not in Fortran), thus the MATLAB code is
 ! % IJ(FVAL(IJ + N) < FVAL(IJ)) = IJ + N;
 where (fval(ij(:, 1) + n) < fval(ij(:, 1)))
     ij(:, 1) = ij(:, 1) + n
@@ -214,7 +219,7 @@ kopt = int(minloc(fval, dim=1, mask=evaluated), kind(kopt))
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(all(ij >= 2 .and. ij <= 2 * n + 1), '1<=IJ<=N', srname)
+    call assert(all(ij >= 2 .and. ij <= 2 * n + 1), '1 <= IJ <= N', srname)
     call assert(all(mod(ij(:, 1) - 2_IK, n) > mod(ij(:, 2) - 2_IK, n)), &
          & 'MOD(IJ(:, 1)-2, N) > MOD(IJ(:, 2) - 2, N)', srname)
     call assert(nf <= npt, 'NF <= NPT', srname)
@@ -232,11 +237,11 @@ subroutine initq(ij, fval, xpt, gq, hq, pq, info)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING
-use debug_mod, only : assert
-use infnan_mod, only : is_nan, is_finite
-use info_mod, only : INFO_DFT, NAN_MODEL
-use linalg_mod, only : issymmetric
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
+use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_MODEL
+use, non_intrinsic :: linalg_mod, only : issymmetric
 
 implicit none
 
@@ -274,7 +279,7 @@ if (DEBUGGING) then
     call assert(size(fval) == npt, 'SIZE(FVAL) == NPT', srname)
     call assert(size(ij, 1) == max(0_IK, npt - 2_IK * n - 1_IK) .and. size(ij, 2) == 2, &
         & 'SIZE(IJ) == [NPT-2*N-1, 2]', srname)
-    call assert(all(ij >= 2 .and. ij <= 2 * n + 1), '1<=IJ<=N', srname)
+    call assert(all(ij >= 2 .and. ij <= 2 * n + 1), '1 <= IJ <= N', srname)
     call assert(all(mod(ij(:, 1) - 2_IK, n) > mod(ij(:, 2) - 2_IK, n)), &
          & 'MOD(IJ(:, 1)-2, N) > MOD(IJ(:, 2) - 2, N)', srname)
     call assert(size(gq) == n, 'SIZE(GQ) == N', srname)
@@ -345,32 +350,31 @@ subroutine inith(ij, xpt, idz, bmat, zmat, info)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
-use debug_mod, only : assert
-use infnan_mod, only : is_nan, is_finite
-use info_mod, only : INFO_DFT, NAN_MODEL
-use linalg_mod, only : issymmetric, eye
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
+use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_MODEL
+use, non_intrinsic :: linalg_mod, only : issymmetric, eye
 
 implicit none
 
 ! Inputs
-integer(IK), intent(in) :: ij(:, :)     ! IJ(NPT, 2)
+integer(IK), intent(in) :: ij(:, :) ! IJ(NPT, 2)
 real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
 
 ! Outputs
 integer(IK), intent(out) :: idz
 integer(IK), intent(out) :: info
-real(RP), intent(out) :: bmat(:, :)     ! BMAT(N, NPT + N)
-real(RP), intent(out) :: zmat(:, :)     ! ZMAT(NPT, NPT - N - 1)
+real(RP), intent(out) :: bmat(:, :) ! BMAT(N, NPT + N)
+real(RP), intent(out) :: zmat(:, :) ! ZMAT(NPT, NPT - N - 1)
 
 ! Local variables
 character(len=*), parameter :: srname = 'INITH'
 integer(IK) :: k
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: recip
-real(RP) :: reciq
 real(RP) :: rhobeg
+real(RP) :: rhosq
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -382,7 +386,7 @@ if (DEBUGGING) then
     call assert(npt >= n + 2, 'NPT >= N + 2', srname)
     call assert(size(ij, 1) == max(0_IK, npt - 2_IK * n - 1_IK) .and. size(ij, 2) == 2, &
         & 'SIZE(IJ) == [NPT-2*N-1, 2]', srname)
-    call assert(all(ij >= 2 .and. ij <= 2 * n + 1), '1<=IJ<=N', srname)
+    call assert(all(ij >= 2 .and. ij <= 2 * n + 1), '1 <= IJ <= N', srname)
     call assert(all(mod(ij(:, 1) - 2_IK, n) > mod(ij(:, 2) - 2_IK, n)), &
          & 'MOD(IJ(:, 1)-2, N) > MOD(IJ(:, 2) - 2, N)', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
@@ -400,36 +404,39 @@ idz = 1_IK
 
 ! Some values to be used for setting BMAT and ZMAT.
 rhobeg = maxval(abs(xpt(:, 2)))  ! Read RHOBEG from XPT.
+rhosq = rhobeg**2
 
 ! Set BMAT.
 bmat = ZERO
 if (npt <= 2 * n + 1) then
+    ! Set BMAT(1 : NPT-N-1, :)
     bmat(1:npt - n - 1, 2:npt - n) = (HALF / rhobeg) * eye(npt - n - 1_IK)
     bmat(1:npt - n - 1, n + 2:npt) = -(HALF / rhobeg) * eye(npt - n - 1_IK)
+    ! Set BMAT(NPT-N : N, :)
     bmat(npt - n:n, 1) = -ONE / rhobeg
     bmat(npt - n:n, npt - n + 1:n + 1) = (ONE / rhobeg) * eye(2_IK * n - npt + 1_IK)
-    bmat(npt - n:n, 2 * npt - n:npt + n) = -(HALF * rhobeg**2) * eye(2_IK * n - npt + 1_IK)
+    bmat(npt - n:n, 2 * npt - n:npt + n) = -(HALF * rhosq) * eye(2_IK * n - npt + 1_IK)
 else
     bmat(:, 2:n + 1) = (HALF / rhobeg) * eye(n)
     bmat(:, n + 2:2 * n + 1) = -(HALF / rhobeg) * eye(n)
 end if
 
 ! Set ZMAT.
-recip = ONE / rhobeg**2
-reciq = sqrt(HALF) / rhobeg**2
 zmat = ZERO
 if (npt <= 2 * n + 1) then
-    zmat(1, :) = -reciq - reciq
-    zmat(2:npt - n, :) = reciq * eye(npt - n - 1_IK)
-    zmat(n + 2:npt, :) = reciq * eye(npt - n - 1_IK)
+    zmat(1, :) = -sqrt(TWO) / rhosq
+    zmat(2:npt - n, :) = (sqrt(HALF) / rhosq) * eye(npt - n - 1_IK)
+    zmat(n + 2:npt, :) = (sqrt(HALF) / rhosq) * eye(npt - n - 1_IK)
 else
-    zmat(1, 1:n) = -reciq - reciq
-    zmat(2:n + 1, 1:n) = reciq * eye(n)
-    zmat(n + 2:2 * n + 1, 1:n) = reciq * eye(n)
-    zmat(1, n + 1:npt - n - 1) = recip
-    zmat(2 * n + 2:npt, n + 1:npt - n - 1) = recip * eye(npt - 2_IK * n - 1_IK)
+    ! Set ZMAT(:, 1:N).
+    zmat(1, 1:n) = -sqrt(TWO) / rhosq
+    zmat(2:n + 1, 1:n) = (sqrt(HALF) / rhosq) * eye(n)
+    zmat(n + 2:2 * n + 1, 1:n) = (sqrt(HALF) / rhosq) * eye(n)
+    ! Set ZMAT(:, N+1 : NPT-N-1).
+    zmat(1, n + 1:npt - n - 1) = ONE / rhosq
+    zmat(2 * n + 2:npt, n + 1:npt - n - 1) = (ONE / rhosq) * eye(npt - 2_IK * n - 1_IK)
     do k = 1, npt - 2_IK * n - 1_IK
-        zmat(ij(k, :), k + n) = -recip
+        zmat(ij(k, :), k + n) = -ONE / rhosq
     end do
 end if
 

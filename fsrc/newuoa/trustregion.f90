@@ -2,9 +2,11 @@ module trustregion_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module provides subroutines concerning the trust-region iterations.
 !
-! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, September 10, 2021 PM10:29:53
+! Started: July 2020
+!
+! Last Modified: Wednesday, September 22, 2021 AM11:38:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -42,10 +44,10 @@ subroutine trsapp(delta, gq, hq, pq, tol, x, xpt, crvmin, s, info)
 ! INFO = -1: too much rounding error to continue
 
 ! Generic modules
-use consts_mod, only : RP, IK, ONE, TWO, HALF, ZERO, PI, DEBUGGING
-use debug_mod, only : assert
-use infnan_mod, only : is_nan, is_finite
-use linalg_mod, only : Ax_plus_y, inprod, matprod, issymmetric
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, HALF, ZERO, PI, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
+use, non_intrinsic :: linalg_mod, only : Ax_plus_y, inprod, matprod, issymmetric
 
 implicit none
 
@@ -171,7 +173,7 @@ do iter = 1, itermax
         exit
     end if
     ! Set BSTEP to the step length such that ||S+BSTEP*D|| = DELTA
-    bstep = (delsq - ss) / (ds + sqrt(ds * ds + dd * (delsq - ss)))
+    bstep = (delsq - ss) / (ds + sqrt(ds**2 + dd * (delsq - ss)))
 !----------------------------------------------------------------!
 !-----!hd = hessmul(hq, pq, xpt, d) !----------------------------!
     hd = Ax_plus_y(hq, d, matprod(xpt, pq * matprod(d, xpt)))
@@ -268,7 +270,7 @@ do iter = 1, itermax
     end if
 
     ! Begin the 2D minimization by calculating D and HD and some scalar products.
-    t = sqrt(delsq * gg - sgk * sgk)
+    t = sqrt(delsq * gg - sgk**2)
     d = (delsq / t) * (g + hs) - (sgk / t) * s
 !----------------------------------------------------------------!
 !-----!hd = hessmul(hq, pq, xpt, d) !----------------------------!
@@ -359,9 +361,9 @@ function trrad(delta0, dnorm, eta1, eta2, gamma1, gamma2, ratio) result(delta)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic module
-use consts_mod, only : RP, ZERO, ONE, HALF, DEBUGGING
-use infnan_mod, only : is_nan
-use debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, ZERO, ONE, HALF, DEBUGGING
+use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: debug_mod, only : assert
 
 implicit none
 

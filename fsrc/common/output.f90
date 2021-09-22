@@ -3,9 +3,11 @@
 ! nature. In case parallelisum is desirable (especially during
 ! initializaton), the subroutines may have to be modified or disabled.
 !
-! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and papers.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and papers.
 !
-! Last Modified: Friday, August 27, 2021 PM02:31:09
+! Started: July 2020
+!
+! Last Modified: Wednesday, September 22, 2021 AM11:53:14
 
 
 module output_mod
@@ -19,10 +21,10 @@ contains
 
 
 subroutine retmssg(info, iprint, nf, f, x, solver)
-use consts_mod, only : RP, IK, MSSGLEN, OUTUNIT, FNAMELEN
-use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED
-use info_mod, only : SMALL_TR_RADIUS, TRSUBP_FAILED
-use info_mod, only : NAN_X, NAN_INF_F, NAN_MODEL
+use, non_intrinsic :: consts_mod, only : RP, IK, MSSGLEN, OUTUNIT, FNAMELEN
+use, non_intrinsic :: info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED
+use, non_intrinsic :: info_mod, only : SMALL_TR_RADIUS, TRSUBP_FAILED
+use, non_intrinsic :: info_mod, only : NAN_X, NAN_INF_F, NAN_MODEL
 implicit none
 
 ! Inputs
@@ -98,7 +100,7 @@ end subroutine retmssg
 
 
 subroutine rhomssg(iprint, nf, f, rho, x, solver)
-use consts_mod, only : RP, IK, OUTUNIT, FNAMELEN
+use, non_intrinsic :: consts_mod, only : RP, IK, OUTUNIT, FNAMELEN
 implicit none
 
 ! Inputs
@@ -153,7 +155,7 @@ end subroutine rhomssg
 
 
 subroutine fmssg(iprint, nf, f, x, solver)
-use consts_mod, only : RP, IK, OUTUNIT, FNAMELEN
+use, non_intrinsic :: consts_mod, only : RP, IK, OUTUNIT, FNAMELEN
 implicit none
 
 ! Inputs

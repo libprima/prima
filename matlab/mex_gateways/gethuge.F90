@@ -38,12 +38,12 @@ subroutine mexFunction(nargout, poutput, nargin, pinput)
 ! Instead of 'mwSize' and 'mwIndex', we now use 'mwSI' to get the
 ! smaller value between huge(msZero) and huge(miZero).
 
-use consts_mod, only : IK, SP, DP, RP, HUGEFUN, HUGECON, MSSGLEN
-use fmxapi_mod, only : mxGetN, mxGetString
-use fmxapi_mod, only : mexErrMsgIdAndTxt
-use fmxapi_mod, only : mxCreateDoubleScalar
-use fmxapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
-use fmxapi_mod, only : fmxVerifyClassShape
+use, non_intrinsic :: consts_mod, only : IK, SP, DP, RP, HUGEFUN, HUGECON, MSSGLEN
+use, non_intrinsic :: fmxapi_mod, only : mxGetN, mxGetString
+use, non_intrinsic :: fmxapi_mod, only : mexErrMsgIdAndTxt
+use, non_intrinsic :: fmxapi_mod, only : mxCreateDoubleScalar
+use, non_intrinsic :: fmxapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
+use, non_intrinsic :: fmxapi_mod, only : fmxVerifyClassShape
 
 implicit none
 

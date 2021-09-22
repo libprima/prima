@@ -2,9 +2,11 @@ module shiftbase_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module contanis a subroutine that shifts the base point from XBASE to XBASE + XPT.
 !
-! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Saturday, September 11, 2021 AM07:53:39
+! Started: July 2020
+!
+! Last Modified: Wednesday, September 22, 2021 AM11:38:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,10 +24,10 @@ subroutine shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, DEBUGGING
-use debug_mod, only : assert
-use infnan_mod, only : is_finite
-use linalg_mod, only : Ax_plus_y, r1update, r2update, inprod, matprod, issymmetric
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: linalg_mod, only : Ax_plus_y, r1update, r2update, inprod, matprod, issymmetric
 
 implicit none
 

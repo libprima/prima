@@ -64,8 +64,8 @@ end module int32_mex_mod
 
 module fmxapi_mod
 
-use int32_mex_mod, only : INT32_MEX
-use consts_mod, only : DP, RP
+use, non_intrinsic :: int32_mex_mod, only : INT32_MEX
+use, non_intrinsic :: consts_mod, only : DP, RP
 implicit none
 private
 
@@ -308,7 +308,7 @@ end function
 
 subroutine fmxVerifyNArgin(nin, expected_nin)
 ! fmxVerifyNArgin verifies that nin = expected_nin.
-use consts_mod, only : MSSGLEN
+use, non_intrinsic :: consts_mod, only : MSSGLEN
 implicit none
 integer, intent(in) :: nin  ! NARGIN is of type INTEGER
 integer, intent(in) :: expected_nin
@@ -324,7 +324,7 @@ end subroutine fmxVerifyNArgin
 
 subroutine fmxVerifyNArgout(nout, expected_nout)
 ! fmxVerifyNArgout verifies that nout <= expected_nout.
-use consts_mod, only : MSSGLEN
+use, non_intrinsic :: consts_mod, only : MSSGLEN
 implicit none
 integer, intent(in) :: nout  ! NARGOUT is of type INTEGER
 integer, intent(in) :: expected_nout
@@ -341,7 +341,7 @@ end subroutine fmxVerifyNArgout
 
 subroutine fmxVerifyClassShape(px, class_name, shape_type)
 ! fmxVerifyClassShape verifies the class and shape of the data associated with mwPointer px.
-use consts_mod, only : MSSGLEN
+use, non_intrinsic :: consts_mod, only : MSSGLEN
 implicit none
 mwPointer, intent(in) :: px
 character(len=*), intent(in) :: class_name
@@ -415,7 +415,7 @@ end subroutine fmxVerifyClassShape
 subroutine alloc_rvector_sp(x, n)
 ! ALLOC_RVECTOR_SP allocates the space for an allocatable single-precision vector X, whose size is N
 ! after allocation.
-use consts_mod, only : SP, IK, MSSGLEN
+use, non_intrinsic :: consts_mod, only : SP, IK, MSSGLEN
 implicit none
 
 ! Input
@@ -452,7 +452,7 @@ end subroutine alloc_rvector_sp
 subroutine alloc_rmatrix_sp(x, m, n)
 ! ALLOC_RMATRIX_SP allocates the space for a single-precision matrix X, whose size is (M, N) after
 ! allocation.
-use consts_mod, only : SP, IK, MSSGLEN
+use, non_intrinsic :: consts_mod, only : SP, IK, MSSGLEN
 implicit none
 
 ! Input
@@ -486,7 +486,7 @@ end subroutine alloc_rmatrix_sp
 subroutine alloc_rvector_dp(x, n)
 ! ALLOC_RVECTOR_DP allocates the space for an allocatable double-precision vector X, whose size is N
 ! after allocation.
-use consts_mod, only : DP, IK, MSSGLEN
+use, non_intrinsic :: consts_mod, only : DP, IK, MSSGLEN
 implicit none
 
 ! Input
@@ -520,7 +520,7 @@ end subroutine alloc_rvector_dp
 subroutine alloc_rmatrix_dp(x, m, n)
 ! ALLOC_RMATRIX_DP allocates the space for a double-precision matrix X, whose size is (M, N) after
 ! allocation.
-use consts_mod, only : DP, IK, MSSGLEN
+use, non_intrinsic :: consts_mod, only : DP, IK, MSSGLEN
 implicit none
 
 ! Input
@@ -555,7 +555,7 @@ end subroutine alloc_rmatrix_dp
 subroutine alloc_rvector_qp(x, n)
 ! ALLOC_RVECTOR_QP allocates the space for an allocatable quadruple-precision vector X, whose size
 ! is N after allocation.
-use consts_mod, only : QP, IK, MSSGLEN
+use, non_intrinsic :: consts_mod, only : QP, IK, MSSGLEN
 implicit none
 
 ! Input
@@ -589,7 +589,7 @@ end subroutine alloc_rvector_qp
 subroutine alloc_rmatrix_qp(x, m, n)
 ! ALLOC_RMATRIX_DP allocates the space for a quadruple-precision matrix X, whose size is (M, N)
 ! after allocation.
-use consts_mod, only : QP, IK, MSSGLEN
+use, non_intrinsic :: consts_mod, only : QP, IK, MSSGLEN
 implicit none
 
 ! Input
@@ -624,7 +624,7 @@ end subroutine alloc_rmatrix_qp
 subroutine read_rscalar(px, x)
 ! READ_RSCALAR reads the double scalar associated with an mwPointer PX and saves the data in X,
 ! which is a REAL(RP) scalar.
-use consts_mod, only : RP, DP, ONE, MSSGLEN
+use, non_intrinsic :: consts_mod, only : RP, DP, ONE, MSSGLEN
 implicit none
 
 ! Input
@@ -659,7 +659,7 @@ end subroutine read_rscalar
 subroutine read_rvector(px, x)
 ! READ_RVECTOR reads the double vector associated with an mwPointer PX and saves the data in X,
 ! which is a REAL(RP) vector.
-use consts_mod, only : RP, DP, IK, ONE, MSSGLEN
+use, non_intrinsic :: consts_mod, only : RP, DP, IK, ONE, MSSGLEN
 implicit none
 
 ! Input
@@ -705,7 +705,7 @@ end subroutine read_rvector
 subroutine read_rmatrix(px, x)
 ! READ_RMATRIX reads the double matrix associated with an mwPointer PX and saves the data in X,
 ! which is a REAL(RP) matrix.
-use consts_mod, only : RP, DP, IK, ONE, MSSGLEN
+use, non_intrinsic :: consts_mod, only : RP, DP, IK, ONE, MSSGLEN
 implicit none
 
 ! Input
@@ -761,7 +761,7 @@ subroutine read_iscalar(px, x)
 ! back to integers befor using them in the Fortran code. Indeed, in MATLAB, even if we define
 ! X = 1000, the class of X is double! To get an integer X, we would have to define convert it to an
 ! integer explicitly!
-use consts_mod, only : DP, IK, MSSGLEN
+use, non_intrinsic :: consts_mod, only : DP, IK, MSSGLEN
 implicit none
 
 ! Input
@@ -795,7 +795,7 @@ end subroutine read_iscalar
 subroutine write_rscalar(x, px)
 ! WRITE_RSCALAR associates a REAL(RP) scalar X with an mwPointer PX, after which X can be passed to
 ! MATLAB either as an output of mexFunction or an input of mexCallMATLAB.
-use consts_mod, only : RP, DP, ONE, MSSGLEN
+use, non_intrinsic :: consts_mod, only : RP, DP, ONE, MSSGLEN
 implicit none
 
 ! Input
@@ -828,7 +828,7 @@ subroutine write_rvector(x, px, shape_type)
 ! WRITE_RVECTOR associates a REAL(RP) vector X with an mwPointer PX, after which X can be passed to
 ! MATLAB either as an output of mexFunction or an input of mexCallMATLAB. If ROWCOL = 'row', then
 ! the vector is passed as a row vector, otherwise, it will be a column vector.
-use consts_mod, only : DP, RP, IK, ONE, MSSGLEN
+use, non_intrinsic :: consts_mod, only : DP, RP, IK, ONE, MSSGLEN
 implicit none
 
 ! Input
@@ -880,7 +880,7 @@ end subroutine write_rvector
 subroutine write_rmatrix(x, px)
 ! WRITE_RMATRIX associates a REAL(RP) matrix X with an mwPointer PX, after which X can be passed to
 ! MATLAB either as an output of mexFunction or an input of mexCallMATLAB.
-use consts_mod, only : DP, RP, IK, ONE, MSSGLEN
+use, non_intrinsic :: consts_mod, only : DP, RP, IK, ONE, MSSGLEN
 implicit none
 
 ! Input
@@ -922,7 +922,7 @@ end subroutine write_rmatrix
 subroutine write_iscalar(x, px)
 ! WRITE_RSCALAR associates an INTEGER(IK) scalar X with an mwPointer PX, after which X can be passed
 ! to MATLAB either as an output of mexFunction or an input of mexCallMATLAB.
-use consts_mod, only : DP, IK, MSSGLEN
+use, non_intrinsic :: consts_mod, only : DP, IK, MSSGLEN
 implicit none
 
 ! Input
@@ -953,8 +953,8 @@ subroutine fmxCallMATLAB(fun_ptr, pin, pout)
 ! output = feval(fun, input),
 ! where fun_ptr is an mwPointer pointing to the function handle of fun, while pin/pout are mwPointer
 ! arrays associated with the inputs/outputs
-use int32_mex_mod, only : INT32_MEX
-use consts_mod, only : MSSGLEN
+use, non_intrinsic :: int32_mex_mod, only : INT32_MEX
+use, non_intrinsic :: consts_mod, only : MSSGLEN
 implicit none
 
 mwPointer, intent(in) :: fun_ptr
@@ -1007,7 +1007,7 @@ end function fmxIsDoubleScalar
 
 
 function fmxIsDoubleVector(px, shape_type)
-use consts_mod, only : MSSGLEN, IK
+use, non_intrinsic :: consts_mod, only : MSSGLEN, IK
 implicit none
 logical :: fmxIsDoubleVector
 mwPointer, intent(in) :: px

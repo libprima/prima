@@ -129,7 +129,7 @@ for ip = minip : length(plist)
     for ir = minir : maxir
         fprintf('%s Run No. %3d: \t', pname, ir);
         % Some randomization
-        rng(ceil(1e6*abs(cos(1e6*sin(1e6*(sum(double(pname))*n*ir))))));
+        rng(ceil(1e5*abs(cos(1e5*sin(1e5*(sum(double(pname))*n*ir))))));
         prob.x0 = x0 + 0.5*randn(size(x0));
         test_options = struct();
         test_options.debug = true;
@@ -138,7 +138,7 @@ for ip = minip : length(plist)
         test_options.rhoend = 1e-3*(1 + 0.5*(2*rand-1));
         test_options.npt = max(min(floor(6*rand*n), (n+2)*(n+1)/2), n+2);
         test_options.maxfun = max(ceil(20*n*(1+rand)), n+3);
-        test_options.ftarget = -inf;
+        test_options.ftarget = objective(x0) - 10*abs(randn)*max(1, objective(x0));
         %test_options.classical = (randn < -1.2);
         test_options.classical = 0;
         test_options.fortran = (rand > 0.5);
@@ -157,12 +157,12 @@ for ip = minip : length(plist)
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         if ir == 9
-            test_options.npt = ceil(n^2/4);
-        end
-        if ir == 10
             test_options.npt = 2*n;
         end
-        if ir == 11
+        if 10 <= ir && ir <= 12
+            test_options.npt = ceil(rand*n^2);
+        end
+        if 13 <= ir && ir <= 15
             test_options.npt = floor(2*rand*n);
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -341,15 +341,15 @@ function f = noisy(f, x, noise_level)
     if nargin < 3
         noise_level = 5e-1;
     end
-    r = sin((abs(f)+1)*1e6*max(abs(x)+1)*cos(1e6*sum(abs(x)+1)*sin(1e6*(norm(x)+1))));
-    if (r > 0.75)
-        r = sign(f)*inf;
-    elseif (r > 0.5)
-        r = NaN;
-    elseif (r < - 0.75)
-        r = -sign(f)*inf;
-    end
+    r = cos(1.0D6 * sin(1.0D6 * (abs(f) + 1.0D0) * cos(1.0D6 * sum(abs(x)))))
     f = f*(1+noise_level*r);
+    if (r > 0.75)
+        f = inf;
+    elseif (r > 0.5)
+        f = NaN;
+    elseif (r < - 0.999)
+        f = -inf;
+    end
 return
 
 function f = noisyfeval(func, x, noise_level)

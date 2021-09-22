@@ -12,24 +12,24 @@ subroutine cobylb(calcfc, iprint, maxfun, ctol, ftarget, rhobeg, rhoend, constr,
         & conhist, cstrv, f, fhist, xhist, info)
 
 ! Generic modules
-use pintrf_mod, only : FUNCON
-use evaluate_mod, only : evalfc
-use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, HUGENUM, DEBUGGING
-use info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, NAN_MODEL, DAMAGING_ROUNDING
-use infnan_mod, only : is_nan, is_posinf
-use debug_mod, only : errstop, verisize
-use output_mod, only : retmssg, rhomssg, fmssg
-use linalg_mod, only : inprod, matprod, outprod, inv
-use selectx_mod, only : savefilt, selectx
-use history_mod, only : savehist
-use checkexit_mod, only : checkexit
-use resolution_mod, only : resenhance
+use, non_intrinsic :: pintrf_mod, only : FUNCON
+use, non_intrinsic :: evaluate_mod, only : evalfc
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, HUGENUM, DEBUGGING
+use, non_intrinsic :: info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, NAN_MODEL, DAMAGING_ROUNDING
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: debug_mod, only : errstop, verisize
+use, non_intrinsic :: output_mod, only : retmssg, rhomssg, fmssg
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, outprod, inv
+use, non_intrinsic :: selectx_mod, only : savefilt, selectx
+use, non_intrinsic :: history_mod, only : savehist
+use, non_intrinsic :: checkexit_mod, only : checkexit
+use, non_intrinsic :: resolution_mod, only : resenhance
 
 ! Solver-specific modules
-use initialize_mod, only : initxfc, initfilt
-use trustregion_mod, only : trstlp
-use update_mod, only : updatexfc, updatepole, findpole
-use geometry_mod, only : goodgeo, setdrop_geo, setdrop_tr, geostep
+use, non_intrinsic :: initialize_mod, only : initxfc, initfilt
+use, non_intrinsic :: trustregion_mod, only : trstlp
+use, non_intrinsic :: update_mod, only : updatexfc, updatepole, findpole
+use, non_intrinsic :: geometry_mod, only : goodgeo, setdrop_geo, setdrop_tr, geostep
 
 implicit none
 
@@ -175,9 +175,9 @@ prerem = ONE
 actrem = -ONE
 jdrop = 0_IK
 
-! Normally, each trust-region iteration takes one function evaluation. The following setting
+! In most cases, each trust-region iteration takes one function evaluation. The following setting
 ! essentially imposes no constraint on the maximal number of trust-region iterations.
-maxtr = 10 * maxfun
+maxtr = 2_IK * maxfun
 ! MAXTR is unlikely to be reached, but we define the following default value for INFO for safety.
 info = MAXTR_REACHED
 
@@ -226,7 +226,7 @@ do tr = 1, maxtr
     d = trstlp(A, b, rho)
 
     ! Is the trust-region trial step short?
-    shortd = (inprod(d, d) < QUART * rho * rho)
+    shortd = (inprod(d, d) < QUART * rho**2)
 
     if (.not. shortd) then
         ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.

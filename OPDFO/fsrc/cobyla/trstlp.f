@@ -527,7 +527,8 @@
       IF (DD <= 0.0D0) GOTO 490
       TEMP=DSQRT(SS*DD)
       !IF (DABS(SD) >= 1.0D-6*TEMP) TEMP=DSQRT(SS*DD+SD*SD)
-      IF (DABS(SD) >= EPS*TEMP) TEMP=DSQRT(SS*DD+SD*SD)
+!      IF (DABS(SD) >= EPS*TEMP) TEMP=DSQRT(SS*DD+SD*SD)
+      IF (DABS(SD) >= EPS*TEMP) TEMP=DSQRT(SS*DD+SD**2)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       STPFUL=DD/(TEMP+SD)
       STEP=STPFUL
@@ -719,7 +720,7 @@
 
       IF (ICON > 0) GOTO 70
       !IF (STEP == STPFUL) THEN
-      if (mcon > m .or. dot_product(dx(1:n),dx(1:n))>=rho*rho) goto 500
+      if (mcon > m .or. dot_product(dx(1:n),dx(1:n))>=rho**2) goto 500
 480   MCON=M+1
       ICON=MCON
       IACT(MCON)=MCON

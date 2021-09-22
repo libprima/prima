@@ -1,12 +1,12 @@
 FSTD=2003
 FS=f03
 
-GFORT=gfortran -c -g -Wall -Wextra -Wconversion -Wuninitialized -Wmaybe-uninitialized  -Wsurprising -Waliasing  -Wimplicit-interface  -Wunused-parameter  -fwhole-file  -fimplicit-none -fbacktrace -ffree-line-length-0 -fcheck=all -ffpe-trap=invalid,zero,overflow,underflow #-Warray-temporaries
-IFORT=ifort -c -g -warn all -check all  -fpe0 -debug extended -fimplicit-none #-names as_is
-IFX=ifx -c -g -warn all -fpe0 -debug extended -fimplicit-none #-names as_is
+GFORT=gfortran -c -g -Wall -Wextra -Wampersand -Wconversion -Wconversion-extra -Wuninitialized -Wmaybe-uninitialized  -Wsurprising -Waliasing  -Wimplicit-interface -Wimplicit-procedure -Wintrinsics-std -Wunderflow -Wuse-without-only -Wrealloc-lhs -Wrealloc-lhs-all -Wdo-subscript  -Wunused-parameter -fimplicit-none -fbacktrace -fcheck=all -ffpe-trap=izero,overflow,underflow,denorm,invalid #-Warray-temporaries
+IFORT=ifort -c -g -warn all -check all  -fpe0 -debug extended -fimplicit-none
+IFX=ifx -c -g -warn all -fpe0 -debug extended -fimplicit-none
 G95=g95 -c -g -Wall -Wextra -fbounds-check -fimplicit-none
-NFORT=nagfor -c -g -u -C -C=alias -C=dangling -C=intovf -C=undefined -Warn=allocation -Warn=constant_coindexing -Warn=reallocation -Warn=subnormal -colour=error:red,warn:magenta,info:yellow
-PFORT=pgfortran  -c -g -Minform=warn
+NFORT=nagfor -c -info -g -gline -u -C -C=all -C=alias -C=dangling -C=intovf -C=undefined -kind=unique -Warn=allocation -Warn=constant_coindexing -Warn=subnormal -colour=error:red,warn:magenta,info:yellow
+NVFORT=nvfortran  -c -g -Minform=warn
 AFORT=af95  -c -g -m1 -en
 SFORT=sunf95  -c -g -w3 -u -ansi -U
 FLANG=flang -c -Wall -Wextra -Mstandard
@@ -27,8 +27,8 @@ M90FILES= $(FILES) $(MEXDIR)/fmxapi.F90 $(MEXDIR)/prob.F90 $(MEXDIR)/classical/f
 MFILES= ../common/consts.F ../common/infnan.F ../common/debug.F ../common/memory.F ../common/info.f  ../common/linalg.F ../common/output.f ../common/pintrf.f ../common/evaluate.f ../common/preproc.f ../common/history.f ../common/resolution.f ../common/checkexit.f ../common/ratio.f initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f $(INTERSECTIONMEXDIR)/fmxapi.F $(INTERSECTIONMEXDIR)/prob.F $(INTERSECTIONMEXDIR)/classical/fmxcl.F $(INTERSECTIONMEXDIR)/gethuge.F $(INTERSECTIONMEXDIR)/newuoa-interface.F $(INTERSECTIONMEXDIR)/classical/newuoa-interface.F -I/home/zaikunzhang/local/MATLAB/R2020a/extern/include/ -I$(NEUPDFO)
 
 
-verify: gverify iverify nverify pverify averify fverify sverify 9verify dverify clean
-verifym: gverifym iverifym nverifym pverifym averifym fverifym sverifym dverifym clean
+verify: gverify iverify nverify vverify averify fverify sverify 9verify dverify clean
+verifym: gverifym iverifym nverifym vverifym averifym fverifym sverifym dverifym clean
 
 lint:
 	#flint -I../common/ -a -f -g -m -p -3 -e $(FILES)
@@ -58,8 +58,8 @@ xverify:
 nverify:
 	$(NFORT) $(FILES) -f$(FSTD) -free
 
-pverify:
-	$(PFORT) $(FILES) -Mfreeform
+vverify:
+	$(NVFORT) $(FILES) -Mfreeform
 
 averify:
 	$(AFORT) $(FILES) -f free
@@ -103,10 +103,10 @@ nverifym:
 	cd $(INTERFORMDIR) && $(NFORT) $(MFILES) -free && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 	cd $(INTERFORMDIR) && $(NFORT) ../common/consts.F ../common/infnan.F ../common/debug.F ../common/memory.F ../common/info.f ../common/linalg.F ../common/output.f ../common/pintrf.f  ../common/evaluate.f ../common/preproc.f ../common/checkexit.f ../common/ratio.f ../common/history.f ../common/resolution.f initialize.f trustregion.f vlagbeta.f geometry.f update.f shiftbase.f newuob.f newuoa.f $(INTERSECTIONMEXDIR)/fmxapi.F $(INTERSECTIONMEXDIR)/prob.F $(INTERSECTIONMEXDIR)/classical/fmxcl.F $(INTERSECTIONMEXDIR)/gethuge.F $(INTERSECTIONMEXDIR)/newuoa-interface.F $(INTERSECTIONMEXDIR)/classical/newuoa-interface.F -I$(NEUPDFO) -fixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
-pverifym:
-	$(PFORT) $(M90FILES) -Mfreeform
-	cd $(INTERFORMDIR) && $(PFORT) $(MFILES) -Mfixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
-	cd $(INTERFORMDIR) && $(PFORT) $(MFILES) -Mfreeform && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+vverifym:
+	$(NVFORT) $(M90FILES) -Mfreeform
+	cd $(INTERFORMDIR) && $(NVFORT) $(MFILES) -Mfixed && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
+	cd $(INTERFORMDIR) && $(NVFORT) $(MFILES) -Mfreeform && rm -f *.o *.mod a.out *__genmod.f90 && cd $(CURRENTDIR)
 
 averifym:
 	$(AFORT) $(M90FILES) -f free

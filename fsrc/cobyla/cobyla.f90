@@ -10,15 +10,15 @@ contains
 subroutine cobyla(calcfc, n, m, x, rhobeg, rhoend, iprint, maxfun, f, info, ftarget, cstrv, constr)
 
 ! Generic modules
-use pintrf_mod, only : FUNCON
-use consts_mod, only : RP, IK, EPS, DEBUGGING
-use infnan_mod, only : is_nan, is_posinf
-use debug_mod, only : errstop
-use output_mod, only : retmssg, rhomssg, fmssg
-use memory_mod, only : safealloc
+use, non_intrinsic :: pintrf_mod, only : FUNCON
+use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: debug_mod, only : errstop
+use, non_intrinsic :: output_mod, only : retmssg, rhomssg, fmssg
+use, non_intrinsic :: memory_mod, only : safealloc
 
 ! Solver-specific modules
-use cobylb_mod, only : cobylb
+use, non_intrinsic :: cobylb_mod, only : cobylb
 
 implicit none
 

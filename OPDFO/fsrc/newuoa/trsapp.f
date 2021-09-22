@@ -60,7 +60,7 @@ C     Calculate the step to the trust region boundary and the product HD.
 C
    40 ITERC=ITERC+1
       TEMP=DELSQ-SS
-      BSTEP=TEMP/(DS+DSQRT(DS*DS+DD*TEMP))
+      BSTEP=TEMP/(DS+DSQRT(DS**2+DD*TEMP))
       GOTO 170
    50 DHD=ZERO
       DO J=1,N
@@ -138,7 +138,7 @@ C     Begin the alternative iteration by calculating D and HD and some
 C     scalar products.
 C
       ITERC=ITERC+1
-      TEMP=DSQRT(DELSQ*GG-SGK*SGK)
+      TEMP=DSQRT(DELSQ*GG-SGK**2)
       TEMPA=DELSQ/TEMP
       TEMPB=SGK/TEMP
       DO I=1,N

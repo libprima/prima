@@ -4,6 +4,8 @@ infnan.F90
 debug.F90
 memory.F90
 linalg.F90
+string.f90
+rand.f90
 ratio.f90
 resolution.f90
 history.f90

@@ -1,10 +1,14 @@
+!--------------------------------------------------------------------------------------------------!
 ! This is an example to illustrate the usage of NEWUOA.
 !
-! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code.
 !
-! Last Modified: Friday, August 13, 2021 AM09:56:10
+! Started: July 2020
+!
+! Last Modified: Wednesday, September 22, 2021 PM12:09:49
+!--------------------------------------------------------------------------------------------------!
 
-!!!!!!!!!!!!!!!!!! THE MODULE THAT IMPLEMENTS CALFUN !!!!!!!!!!!!!!!!!!!
+!!!!!! THE MODULE THAT IMPLEMENTS CALFUN !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 module calfun_mod
 
 implicit none
@@ -19,8 +23,9 @@ implicit none
 
 real(kind(0.0D0)), intent(in) :: x(:)
 real(kind(0.0D0)), intent(out) :: f
-real(kind(0.0D0)) :: y(size(x) + 1, size(x) + 1), tmp
+
 integer :: i, n
+real(kind(0.0D0)) :: y(size(x) + 1, size(x) + 1), tmp
 
 n = size(x)
 
@@ -42,20 +47,20 @@ end subroutine calfun
 
 end module calfun_mod
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!! THE MAIN PROGRAM !!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!!!!!!! THE MAIN PROGRAM !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 program newuoa_exmp
 
 ! The following line makes NEWUOA available.
-!----------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
 use newuoa_mod, only : newuoa
-!----------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
 
-! The following line specifies which module provides CALFUN.
-! If CALFUN is provided by an external subroutine instead of a module,
-! then remove this line and uncomment the "external calfun" line below.
-!----------------------------------------------------------------------!
+! The following line specifies which module provides CALFUN. If CALFUN is given by an external
+! subroutine instead of a module, remove this line and uncomment the "external calfun" line below.
+!--------------------------------------------------------------------------------------------------!
 use calfun_mod, only : calfun
-!----------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
 
 implicit none
 
@@ -63,11 +68,11 @@ integer :: i, n, alloc_stat
 real(kind(0.0D0)) :: f
 real(kind(0.0D0)), allocatable :: x(:)
 
-! If CALFUN is provided as an external subroutine, then remove the line
-! of "use calfun_mod, only : calfun", and uncomment the following line:
-!----------------------------------------------------------------------!
+! If CALFUN is an external subroutine, then remove the line of  "use calfun_mod, only : calfun", and
+! uncomment the following line.
+!--------------------------------------------------------------------------------------------------!
 !external calfun
-!----------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
 
 do n = 2, 10, 2
     ! Set up the initial X for the Chebyquad problem.
@@ -81,17 +86,16 @@ do n = 2, 10, 2
     print '(/1A, I2)', 'Result with N = ', n
 
     ! The following line illustrates how to call NEWUOA.
-    !------------------------------------------------------------------!
+    !----------------------------------------------------------------------------------------------!
     call newuoa(calfun, x, f, rhobeg=0.2D0 * x(1), iprint=2)
-    !------------------------------------------------------------------!
-    ! In additon to the required arguments CALFUN, X, and F, the above
-    ! illustration specifies also RHOBEG and IPRINT, which are optional.
-    ! All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will
-    ! take their default values coded in NEWUOA. You can also ignore all
-    ! the optional arguments and invoke NEWUOA by the following line.
-    !------------------------------------------------------------------!
+    !----------------------------------------------------------------------------------------------!
+    ! In additon to the required arguments CALFUN, X, and F, the above illustration specifies also
+    ! RHOBEG and IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN,
+    ! etc.) will take their default values coded in NEWUOA. You can also ignore all the optional
+    ! arguments and invoke NEWUOA by the following line.
+    !----------------------------------------------------------------------------------------------!
     ! call newuoa(calfun, x, f)
-    !------------------------------------------------------------------!
+    !----------------------------------------------------------------------------------------------!
 end do
 
 end program newuoa_exmp

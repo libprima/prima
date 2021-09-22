@@ -18,8 +18,8 @@ contains
 
 subroutine savehist_unc(nf, f, x, fhist, xhist)
 ! This subroutine saves X and F into XHIST and FHIST respectively.
-use consts_mod, only : RP, IK, DEBUGGING
-use debug_mod, only : errstop, verisize
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : errstop, verisize
 implicit none
 
 ! Inputs
@@ -70,8 +70,8 @@ end subroutine savehist_unc
 
 subroutine savehist_nlc(nf, constr, cstrv, f, x, chist, conhist, fhist, xhist)
 ! This subroutine saves X, F, CONSTR, and CSTRV into XHIST, FHIST, CONHIST, and CHIST respectively.
-use consts_mod, only : RP, IK, DEBUGGING
-use debug_mod, only : errstop, verisize
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : errstop, verisize
 implicit none
 
 ! Inputs
@@ -144,8 +144,8 @@ end subroutine savehist_nlc
 
 subroutine rangehist_unc(nf, fhist, xhist)
 ! This subroutine arranges FHIST and XHIST in the chronological order.
-use consts_mod, only : RP, IK, DEBUGGING
-use debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
@@ -192,8 +192,8 @@ end subroutine rangehist_unc
 
 subroutine rangehist_nlc(nf, chist, conhist, fhist, xhist)
 ! This subroutine arranges FHIST and XHIST, CONHIST, and CHIST in the chronological order.
-use consts_mod, only : RP, IK, DEBUGGING
-use debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
