@@ -2,9 +2,11 @@ module geometry_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module contains subroutines concerning the geometry-improving of the interpolation set XPT.
 !
-! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, September 10, 2021 PM08:44:49
+! Started: July 2020
+!
+! Last Modified: Wednesday, September 22, 2021 AM11:36:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -334,11 +336,11 @@ if (sp * dhd < ZERO) then
     scaling = -scaling
 end if
 t = ZERO
-if (sp * sp > 0.99_RP * dd * gg) then
+if (sp**2 > 0.99_RP * dd * gg) then
     t = ONE
 end if
 tau = scaling * (abs(sp) + HALF * scaling * abs(dhd))
-if (gg * (delbar * delbar) < 1.0E-2_RP * tau * tau) then
+if (gg * delbar**2 < 1.0E-2_RP * tau**2) then
     t = ONE
 end if
 if (is_finite(sum(abs(scaling * d)))) then
@@ -356,10 +358,10 @@ do iter = 1, maxiter
     dd = inprod(d, d)
     sp = inprod(d, s)
     ss = inprod(s, s)
-    if (dd * ss - sp * sp <= 1.0E-8_RP * dd * ss) then
+    if (dd * ss - sp**2 <= 1.0E-8_RP * dd * ss) then
         exit
     end if
-    denom = sqrt(dd * ss - sp * sp)
+    denom = sqrt(dd * ss - sp**2)
     s = (dd * s - sp * d) / denom
 
     w = matprod(xpt, hcol * matprod(s, xpt))
@@ -577,9 +579,9 @@ ds = inprod(d, s)
 ss = inprod(s, s)
 xsq = inprod(x, x)
 
-if (.not. (ds * ds <= 0.99_RP * dd * ss)) then
+if (.not. (ds**2 <= 0.99_RP * dd * ss)) then
     ! `.NOT. (A <= B)` differs from `A > B`.  The former holds iff A > B or {A, B} contains NaN.
-    dtest = ds * ds / ss
+    dtest = ds**2 / ss
     xptemp = xpt - spread(x, dim=2, ncopies=npt)
     !----------------------------------------------------------------!
     !---------!dstemp = matprod(d, xpt) - inprod(x, d) !-------------!
@@ -589,12 +591,12 @@ if (.not. (ds * ds <= 0.99_RP * dd * ss)) then
 
     dstemp(kopt) = TWO * ds + ONE
     sstemp(kopt) = ss
-    k = int(minloc(dstemp * dstemp / sstemp, dim=1), kind(k))
+    k = int(minloc(dstemp**2 / sstemp, dim=1), kind(k))
     ! K can be 0 due to NaN. In that case, set K = KNEW. Otherwise, memory errors will occur.
     if (k == 0) then
         k = knew
     end if
-    if ((.not. (dstemp(k) * dstemp(k) / sstemp(k) >= dtest)) .and. k /= kopt) then
+    if ((.not. (dstemp(k)**2 / sstemp(k) >= dtest)) .and. k /= kopt) then
         ! `.NOT. (A >= B)` differs from `A < B`.  The former holds iff A < B or {A, B} contains NaN.
         ! Although unlikely, if NaN occurs, it may happen that K = KOPT.
         s = xpt(:, k) - x
@@ -627,10 +629,10 @@ do iter = 1, n
         tempa = inprod(xpt(:, k), d)
         tempb = inprod(xpt(:, k), s)
         tempc = inprod(xpt(:, k), x)
-        w(k, 1) = QUART * (tempa * tempa + tempb * tempb)
+        w(k, 1) = QUART * (tempa**2 + tempb**2)
         w(k, 2) = tempa * tempc
         w(k, 3) = tempb * tempc
-        w(k, 4) = QUART * (tempa * tempa - tempb * tempb)
+        w(k, 4) = QUART * (tempa**2 - tempb**2)
         w(k, 5) = HALF * tempa * tempb
     end do
     w(npt + 1:npt + n, 1:5) = ZERO

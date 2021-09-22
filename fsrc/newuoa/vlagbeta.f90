@@ -1,12 +1,14 @@
 module vlagbeta_mod
 !--------------------------------------------------------------------------------------------------!
-! This module contains a suroutine that calculates VLAG and BETA for a given step D. Both VLAG and
+! This module contains a subroutine that calculates VLAG and BETA for a given step D. Both VLAG and
 ! BETA are critical for the updating procedure of H, which is detailed formula (4.11) of the NEWUOA
 ! paper. See (4.12) for the definition of BETA, and VLAG is indeed Hw.
 !
-! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, September 10, 2021 PM09:54:11
+! Started: July 2020
+!
+! Last Modified: Wednesday, September 22, 2021 AM11:35:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,10 +25,10 @@ subroutine vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use consts_mod, only : RP, IK, ONE, HALF, DEBUGGING
-use debug_mod, only : assert
-use infnan_mod, only : is_finite
-use linalg_mod, only : Ax_plus_y, xA_plus_y, xpy_dot_z, inprod, matprod
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, HALF, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: linalg_mod, only : Ax_plus_y, xA_plus_y, xpy_dot_z, inprod, matprod
 
 implicit none
 
@@ -118,7 +120,7 @@ dsq = inprod(d, d)
 xoptsq = inprod(xopt, xopt)
 
 ! The final value of BETA is calculated as follows.
-beta = dx * dx + dsq * (xoptsq + dx + dx + HALF * dsq) + beta - bwvd
+beta = dx**2 + dsq * (xoptsq + TWO * dx + HALF * dsq) + beta - bwvd
 
 !====================!
 !  Calculation ends  !

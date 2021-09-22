@@ -2,9 +2,11 @@
 ! function for unconstrained, bound constrained, and linearly constrained problems; FUNCON evaluates
 ! the objective and constraint functions for nonlinearly constrained problems.
 !
-! Coded by Zaikun Zhang in July 2020.
+! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
-! Last Modified: Monday, August 30, 2021 PM11:38:41
+! Started: July 2020.
+!
+! Last Modified: Wednesday, September 22, 2021 AM11:51:20
 !
 !!!!!! Users must provide the implementation of FUN or FUNCON. !!!!!!
 

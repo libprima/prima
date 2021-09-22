@@ -9,8 +9,8 @@ contains
 
 function goodgeo(factor_alpha, factor_beta, rho, sim, simi) result(good_geo)
 
-use consts_mod, only : IK, RP, ONE, DEBUGGING
-use debug_mod, only : errstop, verisize
+use, non_intrinsic :: consts_mod, only : IK, RP, ONE, DEBUGGING
+use, non_intrinsic :: debug_mod, only : errstop, verisize
 
 implicit none
 
@@ -61,10 +61,10 @@ function setdrop_tr(actrem, d, factor_alpha, factor_delta, rho, sim, simi) resul
 ! 1. If ACTREM > 0, then JDROP > 0 so that D is included into XPT. Otherwise, it is a bug.
 ! 2. COBYLA never sets JDROP = N + 1.
 
-use consts_mod, only : IK, RP, ZERO, ONE, DEBUGGING
-use linalg_mod, only : matprod, inprod
-use infnan_mod, only : is_nan
-use debug_mod, only : errstop, verisize
+use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, ONE, DEBUGGING
+use, non_intrinsic :: linalg_mod, only : matprod, inprod
+use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: debug_mod, only : errstop, verisize
 
 implicit none
 
@@ -144,9 +144,9 @@ end function setdrop_tr
 function setdrop_geo(factor_alpha, factor_beta, rho, sim, simi) result(jdrop)
 ! N.B.: COBYLA never sets JDROP = N + 1.
 
-use consts_mod, only : IK, RP, ONE, DEBUGGING
-use infnan_mod, only : is_nan
-use debug_mod, only : errstop, verisize
+use, non_intrinsic :: consts_mod, only : IK, RP, ONE, DEBUGGING
+use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: debug_mod, only : errstop, verisize
 
 implicit none
 
@@ -202,9 +202,9 @@ end function setdrop_geo
 
 function geostep(jdrop, cpen, conmat, cval, fval, factor_gamma, rho, simi) result(d)
 
-use consts_mod, only : IK, RP, ZERO, ONE, TWO, DEBUGGING
-use linalg_mod, only : matprod, inprod
-use debug_mod, only : errstop, verisize
+use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, ONE, TWO, DEBUGGING
+use, non_intrinsic :: linalg_mod, only : matprod, inprod
+use, non_intrinsic :: debug_mod, only : errstop, verisize
 
 implicit none
 

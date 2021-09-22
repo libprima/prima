@@ -1,9 +1,11 @@
 ! DEBUG_MOD is a module defining some procedures concerning debugging,
 ! errors, and warnings.
 !
-! Coded by Zaikun Zhang in July 2020.
+! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
-! Last Modified: Saturday, September 11, 2021 PM02:49:07
+! Started: July 2020.
+!
+! Last Modified: Wednesday, September 22, 2021 PM06:06:30
 
 
 #include "ppf.h"
@@ -76,7 +78,7 @@ subroutine backtr
 implicit none
 call backtrace
 #elif defined __INTEL_COMPILER
-use ifcore, only : tracebackqq
+use, non_intrinsic :: ifcore, only : tracebackqq
 implicit none
 call tracebackqq(user_exit_code=-1)
 ! According to "Intel Fortran Compiler 19.1 Developer Guide and Reference", item "TRACEBACKQQ":
@@ -91,13 +93,13 @@ end subroutine backtr
 
 subroutine verisize_real_1(x, n)
 ! VERISIZE_REAL_1 verifies whether SIZE(X) = N.
-use consts_mod, only : RP, IK
+use, non_intrinsic :: consts_mod, only : RP, IK
 real(RP), intent(in) :: x(:)
 integer(IK), intent(in) :: n
 
 character(len=*), parameter :: srname = 'VERISIZE_REAL_1'
 
-if (size(x) /= n) then
+if (int(size(x), IK) /= n) then
     call errstop(srname, 'SIZE(X) /= N')
 end if
 end subroutine verisize_real_1
@@ -105,17 +107,17 @@ end subroutine verisize_real_1
 
 subroutine verisize_real_2(x, m, n)
 ! VERISIZE_REAL_2 verifies whether SIZE(X, 1) = M, SIZE(X, 2) = N.
-use consts_mod, only : RP, IK
+use, non_intrinsic :: consts_mod, only : RP, IK
 real(RP), intent(in) :: x(:, :)
 integer(IK), intent(in) :: m
 integer(IK), intent(in) :: n
 
 character(len=*), parameter :: srname = 'VERISIZE_REAL_2'
 
-if (size(x, 1) /= m) then
+if (int(size(x, 1), IK) /= m) then
     call errstop(srname, 'SIZE(X, 1) /= M')
 end if
-if (size(x, 2) /= n) then
+if (int(size(x, 2), IK) /= n) then
     call errstop(srname, 'SIZE(X, 2) /= N')
 end if
 end subroutine verisize_real_2
@@ -123,13 +125,13 @@ end subroutine verisize_real_2
 
 subroutine verisize_int_1(x, n)
 ! VERISIZE_INT_1 verifies whether SIZE(X) = N.
-use consts_mod, only : IK
+use, non_intrinsic :: consts_mod, only : IK
 integer(IK), intent(in) :: x(:)
 integer(IK), intent(in) :: n
 
 character(len=*), parameter :: srname = 'VERISIZE_INT_1'
 
-if (size(x) /= n) then
+if (int(size(x), IK) /= n) then
     call errstop(srname, 'SIZE(X) /= N')
 end if
 end subroutine verisize_int_1
@@ -137,17 +139,17 @@ end subroutine verisize_int_1
 
 subroutine verisize_int_2(x, m, n)
 ! VERISIZE_INT_2 verifies whether SIZE(X, 1) = M, SIZE(X, 2) = N.
-use consts_mod, only : IK
+use, non_intrinsic :: consts_mod, only : IK
 integer(IK), intent(in) :: x(:, :)
 integer(IK), intent(in) :: m
 integer(IK), intent(in) :: n
 
 character(len=*), parameter :: srname = 'VERISIZE_INT_2'
 
-if (size(x, 1) /= m) then
+if (int(size(x, 1), IK) /= m) then
     call errstop(srname, 'SIZE(X, 1) /= M')
 end if
-if (size(x, 2) /= n) then
+if (int(size(x, 2), IK) /= n) then
     call errstop(srname, 'SIZE(X, 2) /= N')
 end if
 end subroutine verisize_int_2
@@ -155,13 +157,13 @@ end subroutine verisize_int_2
 
 subroutine verisize_logical_1(x, n)
 ! VERISIZE_LOGICAL_1 verifies whether SIZE(X) = N.
-use consts_mod, only : IK
+use, non_intrinsic :: consts_mod, only : IK
 logical, intent(in) :: x(:)
 integer(IK), intent(in) :: n
 
 character(len=*), parameter :: srname = 'VERISIZE_LOGICAL_1'
 
-if (size(x) /= n) then
+if (int(size(x), IK) /= n) then
     call errstop(srname, 'SIZE(X) /= N')
 end if
 end subroutine verisize_logical_1
@@ -169,17 +171,17 @@ end subroutine verisize_logical_1
 
 subroutine verisize_logical_2(x, m, n)
 ! VERISIZE_LOGICAL_2 verifies whether SIZE(X, 1) = M, SIZE(X, 2) = N.
-use consts_mod, only : IK
+use, non_intrinsic :: consts_mod, only : IK
 logical, intent(in) :: x(:, :)
 integer(IK), intent(in) :: m
 integer(IK), intent(in) :: n
 
 character(len=*), parameter :: srname = 'VERISIZE_LOGICAL_2'
 
-if (size(x, 1) /= m) then
+if (int(size(x, 1), IK) /= m) then
     call errstop(srname, 'SIZE(X, 1) /= M')
 end if
-if (size(x, 2) /= n) then
+if (int(size(x, 2), IK) /= n) then
     call errstop(srname, 'SIZE(X, 2) /= N')
 end if
 end subroutine verisize_logical_2

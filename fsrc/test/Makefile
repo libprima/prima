@@ -1,0 +1,132 @@
+# This Makefile intends to test the modern-Fortran version of Powell's solvers on as many compilers
+# as possible.
+#
+# Coded by Zaikun ZHANG (www.zhangzk.net).
+#
+# Started: September 2021
+#
+# Last Modified: September 13, 2021
+#
+# N.B.:
+# The .F90 and .f90 files will be compiled in the enumeration order of the .o files. The order
+# matters, because the compilation of each .o file depends on the .o files (and the corresponding
+# .mod files) preceding it.
+
+.PHONY: test clean
+
+####################################################################################################
+# Variables
+# Fortran standard to follow. We aim to make the code compatible with F2003, F2008, and F2018.
+FS = 03
+FSTD = 20$(FS)
+# Default options for all the compilers.
+FFLAGS = -g -O0
+# Common directories.
+COMMON = ../common/
+# Headers.
+HEADERS = $(COMMON)/*.h
+# Solver directories.
+NEWUOA = ../newuoa/
+
+####################################################################################################
+# All the tests
+test:
+	make ntest
+	make atest
+	make dtest
+	make ftest
+	make gtest
+	make itest
+	make stest
+	make vtest
+	make xtest
+
+####################################################################################################
+# Here are the testing options for each compiler. We try to turn on as many debugging options as
+# possible, in particular, the options regarding the following are included whenever available.
+# 1. Standard conformity.
+# 2. Runtime bound checking of arrays.
+# 3. IEEE 754 Floating-Point Exceptions (FPE).
+
+# Absoft af95
+# For af95, -Rb imposes bound checking for arrays. But it is unhappy with zero-sized arrays as of
+# Absoft Pro 21.0. Thus -Rb is not included in the following options.
+atest: FC = af95 -no-pie -m1 -en -et -Rc -Rs -Rp \
+	-TENV:simd_zmask=off -TENV:simd_omask=off -TENV:simd_imask=off \
+	#-TENV:simd_dmask=off -TENV:simd_umask=off
+
+# AMD AOCC Flang
+dtest: FC = /opt/AMD/aocc-compiler-3.1.0/bin/flang -std=f$(FSTD) -Mstandard -Wall -Wextra \
+	-ffp-exception-behavior=strict
+
+# LLVM Flang
+ftest: FC = flang -std=f$(FSTD) -Mstandard -Wall -Wextra
+
+# GNU gfortran
+# In the debug mode, our code includes the BACKTRACE function if the compiler is gfortran. This
+# makes the code not standard-conforming. So -std=f$(FSTD) is excluded for the following options.
+gtest: FC = gfortran \
+	-Wall -Wextra -pedantic -Wampersand -Wconversion  -Wuninitialized \
+	-Wmaybe-uninitialized -Wsurprising -Waliasing  -Wimplicit-interface -Wimplicit-procedure \
+	-Wintrinsics-std -Wunderflow -Wuse-without-only -Wrealloc-lhs -Wrealloc-lhs-all -Wdo-subscript \
+	-Wunused-parameter -fimplicit-none -fbacktrace -fcheck=all \
+	-finit-real=nan -ffpe-trap=zero,overflow,invalid#,underflow,denorm
+
+# Intel ifort
+itest: FC = ifort -stand f$(FS) -warn all -check all -debug extended -fimplicit-none \
+	-traceback -debug-parameters all -fp-stack-check \
+	-ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	#-no-ftz -fp-model strict
+
+# NAG nagfor
+ntest: FC = nagfor \
+	-colour=error:red,warn:magenta,info:yellow \
+	-f$(FSTD) -info -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique \
+	-Warn=allocation -Warn=constant_coindexing -Warn=subnormal \
+	-nan -ieee=stop
+
+# NVIDIA nvfortran (aka, pgfortran)
+vtest: FC = nvfortran -C -Mstandard -Minform=warn -Mbounds -Mchkstk -Mchkptr \
+	-Kieee -Ktrap=divz,ovf,inv#,unf,denorm
+
+# Oracle sunf95
+stest: FC = sunf95 -w3 -u -U -ansi -xcheck=%all -C \
+	-fnonstd -ftrap=overflow,division,invalid#,underflow
+
+# Intel ifx
+xtest: FC = ifx -stand f$(FS) -warn all -check all -debug extended -fimplicit-none \
+	-traceback -debug-parameters all -fp-stack-check \
+	-ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags #-fp-model strict
+
+####################################################################################################
+# Making a compiler-specific test
+%test: %_test
+	./$<
+	make clean
+
+####################################################################################################
+# Compile the binary needed for a compiler-specific test
+%_test: test_newuoa.f90 test.f90 \
+	consts.o info.o debug.o memory.o infnan.o linalg.o rand.o string.o \
+	param.o noise.o prob.o \
+	ratio.o resolution.o history.o selectx.o checkexit.o output.o preproc.o pintrf.o evaluate.o \
+	initialize.o trustregion.o vlagbeta.o geometry.o shiftbase.o update.o newuob.o newuoa.o
+	$(FC) $(FFLAGS) -o $@ test_newuoa.f90 test.f90 *.o
+
+# Compile the Fortran code providing generic modules
+%.o: $(COMMON)/%.*90 $(HEADERS)
+	$(FC) $(FFLAGS) -c -o $@ $<
+
+# Compile the Fortran code providing solver-specific modules
+%.o: $(NEWUOA)/%.f90 $(HEADERS)
+	$(FC) $(FFLAGS) -c -o $@ $<
+
+# Compile the Fortran code providing generic modules
+%.o: ./%.f90 $(HEADERS)
+	$(FC) $(FFLAGS) -c -o $@ $<
+
+####################################################################################################
+# Cleaning up.
+clean:
+	rm -f *.o *.mod *.dbg
+	rm -f *_test *_test_cobyla *_test_uobyqa *_test_newuoa *_test_bobyqa *_test_lincoa

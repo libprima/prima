@@ -1,6 +1,6 @@
 /******************************************************************************/
 /*
- * Coded by Zaikun Zhang (www.zhangzk.net) in July 2020.
+ * Coded by Zaikun ZHANG (www.zhangzk.net) in July 2020.
  *
  * Last Modified: Mon 24 May 2021 04:21:00 PM HKT
  */
@@ -119,7 +119,7 @@
 #if defined __INTEGER_KIND__
 #undef __INTEGER_KIND__
 #endif
-#define __INTEGER_KIND__ 0
+#define __INTEGER_KIND__ 16
 /* Fortran standards guarantee that 0 is supported, but not the others. */
 /******************************************************************************/
 

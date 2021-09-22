@@ -11,9 +11,9 @@ contains
 function redrat(ared, pred, rshrink) result(ratio)
 ! This function evaluates the reduction ratio of a trust-region step, handling Inf/NaN properly.
 
-use consts_mod, only : RP, ZERO, ONE, HALF, HUGENUM, DEBUGGING
-use infnan_mod, only : is_nan, is_posinf, is_neginf
-use debug_mod, only : errstop
+use, non_intrinsic :: consts_mod, only : RP, ZERO, ONE, HALF, HUGENUM, DEBUGGING
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
+use, non_intrinsic :: debug_mod, only : errstop
 implicit none
 
 ! Input

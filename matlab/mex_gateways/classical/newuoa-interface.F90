@@ -9,7 +9,7 @@
 
 module newuoacl_mod
 
-use fmxcl_mod, only : RP_CL, IK_CL
+use, non_intrinsic :: fmxcl_mod, only : RP_CL, IK_CL
 implicit none
 private
 public :: fun_ptr, nf, fhist, xhist
@@ -52,16 +52,16 @@ subroutine mexFunction(nargout, poutput, nargin, pinput)
 ! [xopt, fopt, info, nf, xhist, fhist] = FUNCTION_NAME(fun, x0, rhobeg, rhoend, ftarget, maxfun, npt, iprint, maxhist, output_xhist)
 
 ! Generic modules
-use consts_mod, only : MSSGLEN
-use memory_mod, only : cstyle_sizeof
-use fmxapi_mod, only : mexErrMsgIdAndTxt
-use fmxapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
-use fmxapi_mod, only : fmxVerifyClassShape
-use fmxcl_mod, only : IK_CL, RP_CL, MAXMEMORY_CL
-use fmxcl_mod, only : fmxAllocate, fmxReadMPtr, fmxWriteMPtr
+use, non_intrinsic :: consts_mod, only : MSSGLEN
+use, non_intrinsic :: memory_mod, only : cstyle_sizeof
+use, non_intrinsic :: fmxapi_mod, only : mexErrMsgIdAndTxt
+use, non_intrinsic :: fmxapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
+use, non_intrinsic :: fmxapi_mod, only : fmxVerifyClassShape
+use, non_intrinsic :: fmxcl_mod, only : IK_CL, RP_CL, MAXMEMORY_CL
+use, non_intrinsic :: fmxcl_mod, only : fmxAllocate, fmxReadMPtr, fmxWriteMPtr
 
 ! Solver-specific module
-use newuoacl_mod, only : fun_ptr, nf, xhist, fhist, newuoa, solver
+use, non_intrinsic :: newuoacl_mod, only : fun_ptr, nf, xhist, fhist, newuoa, solver
 
 implicit none
 
@@ -197,15 +197,15 @@ end subroutine mexFunction
 subroutine calfun(n, x, funval)
 
 ! Generic modules
-use consts_mod, only : MSSGLEN
-use fmxapi_mod, only : mxDestroyArray
-use fmxapi_mod, only : mexErrMsgIdAndTxt
-use fmxapi_mod, only : fmxCallMATLAB, fmxIsDoubleScalar
-use fmxcl_mod, only : RP_CL, IK_CL
-use fmxcl_mod, only : fmxReadMPtr, fmxWriteMPtr
+use, non_intrinsic :: consts_mod, only : MSSGLEN
+use, non_intrinsic :: fmxapi_mod, only : mxDestroyArray
+use, non_intrinsic :: fmxapi_mod, only : mexErrMsgIdAndTxt
+use, non_intrinsic :: fmxapi_mod, only : fmxCallMATLAB, fmxIsDoubleScalar
+use, non_intrinsic :: fmxcl_mod, only : RP_CL, IK_CL
+use, non_intrinsic :: fmxcl_mod, only : fmxReadMPtr, fmxWriteMPtr
 
 ! Solver-specific module
-use newuoacl_mod, only : fun_ptr, nf, fhist, xhist, solver
+use, non_intrinsic :: newuoacl_mod, only : fun_ptr, nf, fhist, xhist, solver
 
 implicit none
 

@@ -2,7 +2,7 @@
 ! these procedures, especially matprod, one can customize their implementations according to the
 ! resources (hardware, e.g., cache, and libraries, e.g., BLAS) available and the sizes of the
 ! matrices/vectors.
-
+!
 ! N.B.
 ! When implementing the code by MATLAB, Python, ..., note the following.
 ! 1. We should follow the implementation with __USE_POWELL_ALGEBRA__ == 0, which uses matrix/vector
@@ -12,10 +12,12 @@
 ! calling can be high in these languages. Here we implement them as subroutines/functions in order
 ! to align with Powell's original code, which cannot be translated directly to matrix/vector
 ! operations that produce the same results in floating-point arithmetic.
-
-! Coded by Zaikun ZHANG in July 2020.
 !
-! Last Modified: Saturday, September 11, 2021 PM02:51:29
+! Coded by Zaikun ZHANG (www.zhangzk.net).
+!
+! Started: July 2020
+!
+! Last Modified: Wednesday, September 22, 2021 PM06:52:35
 
 
 #include "ppf.h"
@@ -72,14 +74,14 @@ subroutine r1_sym(A, alpha, x)
 ! R1_SYM sets
 ! A = A + ALPHA*( X*X^T ),
 ! where A is an NxN matrix, ALPHA is a scalar, and X is an N-dimenional vector.
-use consts_mod, only : RP
+use, non_intrinsic :: consts_mod, only : RP
 
 #if __USE_POWELL_ALGEBRA__ == 1
-use consts_mod, only : IK
+use, non_intrinsic :: consts_mod, only : IK
 #endif
 
 #if __DEBUGGING__ == 1
-use debug_mod, only : errstop, assert
+use, non_intrinsic :: debug_mod, only : errstop, assert
 #endif
 
 implicit none
@@ -130,10 +132,10 @@ subroutine r1(A, alpha, x, y)
 ! A = A + ALPHA*( X*Y^T ),
 ! where A is an MxN matrix, ALPHA is a real scalar, X is an M-dimenional vector, and Y is an
 ! N-dimenional vector.
-use consts_mod, only : RP
+use, non_intrinsic :: consts_mod, only : RP
 
 #if __DEBUGGING__ == 1
-use debug_mod, only : errstop
+use, non_intrinsic :: debug_mod, only : errstop
 #endif
 
 implicit none
@@ -161,14 +163,14 @@ subroutine r2_sym(A, alpha, x, y)
 ! R2_SYM sets
 ! A = A + ALPHA*( X*Y^T + Y*X^T ),
 ! where A is an NxN matrix, X and Y are N-dimenional vectors, and alpha is a scalar.
-use consts_mod, only : RP
+use, non_intrinsic :: consts_mod, only : RP
 
 #if __USE_POWELL_ALGEBRA__ == 1
-use consts_mod, only : IK
+use, non_intrinsic :: consts_mod, only : IK
 #endif
 
 #if __DEBUGGING__ == 1
-use debug_mod, only : errstop, assert
+use, non_intrinsic :: debug_mod, only : errstop, assert
 #endif
 
 implicit none
@@ -219,10 +221,10 @@ subroutine r2(A, alpha, x, y, beta, u, v)
 ! A = A + ( ALPHA*( X*Y^T ) + BETA*( U*V^T ) ),
 ! where A is an MxN matrix, ALPHA and BETA are real scalars, X and U are M-dimenional vectors,
 ! Y and V are N-dimenional vectors.
-use consts_mod, only : RP
+use, non_intrinsic :: consts_mod, only : RP
 
 #if __DEBUGGING__ == 1
-use debug_mod, only : errstop
+use, non_intrinsic :: debug_mod, only : errstop
 #endif
 
 implicit none
@@ -257,13 +259,13 @@ end subroutine r2
 function matprod12(x, y) result(z)
 
 #if __USE_INTRINSIC_ALGEBRA__ == 1
-use consts_mod, only : RP
+use, non_intrinsic :: consts_mod, only : RP
 #else
-use consts_mod, only : RP, IK
+use, non_intrinsic :: consts_mod, only : RP, IK
 #endif
 
 #if __DEBUGGING__ == 1
-use debug_mod, only : errstop
+use, non_intrinsic :: debug_mod, only : errstop
 #endif
 
 implicit none
@@ -298,13 +300,13 @@ end function matprod12
 function matprod21(x, y) result(z)
 
 #if __USE_INTRINSIC_ALGEBRA__ == 1
-use consts_mod, only : RP
+use, non_intrinsic :: consts_mod, only : RP
 #else
-use consts_mod, only : RP, IK, ZERO
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO
 #endif
 
 #if __DEBUGGING__ == 1
-use debug_mod, only : errstop
+use, non_intrinsic :: debug_mod, only : errstop
 #endif
 
 implicit none
@@ -340,13 +342,13 @@ function matprod22(x, y) result(z)
 ! loop. Of course, the implementation depends on the platform.
 
 #if __USE_INTRINSIC_ALGEBRA__ == 1
-use consts_mod, only : RP
+use, non_intrinsic :: consts_mod, only : RP
 #else
-use consts_mod, only : RP, IK, ZERO
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO
 #endif
 
 #if __DEBUGGING__ == 1
-use debug_mod, only : errstop
+use, non_intrinsic :: debug_mod, only : errstop
 #endif
 
 implicit none
@@ -381,13 +383,13 @@ end function matprod22
 function inprod(x, y) result(z)
 
 #if __USE_INTRINSIC_ALGEBRA__ == 1
-use consts_mod, only : RP
+use, non_intrinsic :: consts_mod, only : RP
 #else
-use consts_mod, only : RP, IK, ZERO
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO
 #endif
 
 #if __DEBUGGING__ == 1
-use debug_mod, only : errstop
+use, non_intrinsic :: debug_mod, only : errstop
 #endif
 
 implicit none
@@ -421,7 +423,7 @@ end function inprod
 
 function outprod(x, y) result(z)
 ! OUTPROD calculates the outer product of X and Y, i.e., Z = X*Y^T, regarding both X and Y as columns
-use consts_mod, only : RP, IK
+use, non_intrinsic :: consts_mod, only : RP, IK
 implicit none
 ! Input
 real(RP), intent(in) :: x(:)
@@ -438,7 +440,7 @@ end function outprod
 
 pure function eye1(n) result(x)
 ! EYE1 is the univariate case of EYE, a function similar to the MATLAB function with the same name.
-use consts_mod, only : RP, IK, ZERO, ONE
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE
 implicit none
 ! Input
 integer(IK), intent(in) :: n
@@ -457,7 +459,7 @@ end function eye1
 
 pure function eye2(m, n) result(x)
 ! EYE2 is the bivariate case of EYE, a function similar to the MATLAB function with the same name.
-use consts_mod, only : RP, IK, ZERO, ONE
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE
 implicit none
 ! Inputs
 integer(IK), intent(in) :: m
@@ -482,8 +484,8 @@ function inv(A, matrix_type) result(B)
 ! Only the following matrix types (MATRIX_TYPE) are supported, which is sufficient for this project:
 ! ltri/LTRI: lower triangular
 ! utri/UTRI: upper triangular
-use consts_mod, only : RP, IK, ZERO, ONE, DEBUGGING
-use debug_mod, only : verisize, errstop
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, DEBUGGING
+use, non_intrinsic :: debug_mod, only : verisize, errstop
 implicit none
 
 ! Input
@@ -525,10 +527,10 @@ end function inv
 
 function planerot(x) result(G)
 ! As in MATLAB, PLANEROT(X) returns a 2x2 Givens matrix G for X in R^2 so that Y = G*X has Y(2) = 0.
-use consts_mod, only : RP, IK, ZERO
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO
 
 #if __DEBUGGING__ == 1
-use debug_mod, only : verisize
+use, non_intrinsic :: debug_mod, only : verisize
 #endif
 
 implicit none
@@ -561,13 +563,13 @@ subroutine symmetrize(A)
 ! comes only from rounding errors.
 
 #if __USE_POWELL_ALGEBRA__ == 1
-use consts_mod, only : RP, IK
+use, non_intrinsic :: consts_mod, only : RP, IK
 #else
-use consts_mod, only : RP, HALF
+use, non_intrinsic :: consts_mod, only : RP, HALF
 #endif
 
 #if __DEBUGGING__ == 1
-use debug_mod, only : errstop, assert
+use, non_intrinsic :: debug_mod, only : errstop, assert
 #endif
 
 implicit none
@@ -603,14 +605,14 @@ end subroutine symmetrize
 function xpy_dot_z(x, y, z) result(t)
 ! t = (x + y)'*z
 
-use consts_mod, only : RP
+use, non_intrinsic :: consts_mod, only : RP
 
 #if __USE_POWELL_ALGEBRA__ == 1
-use consts_mod, only : IK, ZERO
+use, non_intrinsic :: consts_mod, only : IK, ZERO
 #endif
 
 #if __DEBUGGING__ == 1
-use debug_mod, only : errstop
+use, non_intrinsic :: debug_mod, only : errstop
 #endif
 implicit none
 
@@ -648,14 +650,14 @@ end function xpy_dot_z
 function xdy_plus_a(x, y, a) result(t)
 ! t = x'*y + a
 
-use consts_mod, only : RP
+use, non_intrinsic :: consts_mod, only : RP
 
 #if __USE_POWELL_ALGEBRA__ == 1
-use consts_mod, only : IK
+use, non_intrinsic :: consts_mod, only : IK
 #endif
 
 #if __DEBUGGING__ == 1
-use debug_mod, only : errstop
+use, non_intrinsic :: debug_mod, only : errstop
 #endif
 implicit none
 
@@ -689,14 +691,14 @@ end function xdy_plus_a
 function Ax_plus_y(A, x, y) result(z)
 ! z = A*x + y (imagine x, y, and z as columns)
 
-use consts_mod, only : RP
+use, non_intrinsic :: consts_mod, only : RP
 
 #if __USE_POWELL_ALGEBRA__ == 1
-use consts_mod, only : IK
+use, non_intrinsic :: consts_mod, only : IK
 #endif
 
 #if __DEBUGGING__ == 1
-use debug_mod, only : errstop
+use, non_intrinsic :: debug_mod, only : errstop
 #endif
 implicit none
 
@@ -734,14 +736,14 @@ function xA_plus_y(x, A, y) result(z)
 ! If implemented in MATLAB, pay attention to the sizes of the vectors/matrices; if x and y are
 ! columns, then z = (x'*A)' + y (do not calculate A'*x + y, which involves transposing A).
 
-use consts_mod, only : RP
+use, non_intrinsic :: consts_mod, only : RP
 
 #if __USE_POWELL_ALGEBRA__ == 1
-use consts_mod, only : IK
+use, non_intrinsic :: consts_mod, only : IK
 #endif
 
 #if __DEBUGGING__ == 1
-use debug_mod, only : errstop
+use, non_intrinsic :: debug_mod, only : errstop
 #endif
 implicit none
 
@@ -783,15 +785,15 @@ function calquad(d, gq, hq, pq, x, xpt) result(qred)
 ! where HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
 ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
 
-use consts_mod, only : RP, HALF
+use, non_intrinsic :: consts_mod, only : RP, HALF
 
 #if __USE_POWELL_ALGEBRA__ == 1
-use consts_mod, only : IK, ZERO
+use, non_intrinsic :: consts_mod, only : IK, ZERO
 #endif
 
 #if __DEBUGGING__ == 1
-use consts_mod, only : IK
-use debug_mod, only : errstop, verisize
+use, non_intrinsic :: consts_mod, only : IK
+use, non_intrinsic :: debug_mod, only : errstop, verisize
 #endif
 
 implicit none
@@ -877,11 +879,11 @@ function hessmul(hq, pq, xpt, y) result(hy)
 ! This function calculates HESSIAN*Y, where HESSIAN consists of an explicit part HQ and an
 ! implicit part PQ in Powell's way: HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T).
 
-use consts_mod, only : RP
+use, non_intrinsic :: consts_mod, only : RP
 
 #if __DEBUGGING__ == 1
-use consts_mod, only : IK
-use debug_mod, only : errstop, verisize
+use, non_intrinsic :: consts_mod, only : IK
+use, non_intrinsic :: debug_mod, only : errstop, verisize
 #endif
 
 implicit none
@@ -914,7 +916,7 @@ end function hessmul
 
 pure function isminor0(x, ref) result(is_minor)
 ! This function tests whether X is minor compared to REF. It is used by Powell, e.g., in COBYLA.
-use consts_mod, only : RP, TENTH, TWO
+use, non_intrinsic :: consts_mod, only : RP, TENTH, TWO
 implicit none
 
 real(RP), intent(in) :: x
@@ -930,9 +932,9 @@ end function isminor0
 
 function isminor1(x, ref) result(is_minor)
 ! This function tests whether X is minor compared to REF. It is used by Powell, e.g., in COBYLA.
-use consts_mod, only : IK, RP
+use, non_intrinsic :: consts_mod, only : IK, RP
 #if __DEBUGGING__ == 1
-use debug_mod, only : errstop
+use, non_intrinsic :: debug_mod, only : errstop
 #endif
 implicit none
 
@@ -953,8 +955,8 @@ end function isminor1
 
 pure function issymmetric(A, tol) result(is_symmetric)
 ! This function tests whether A is symmetric up to TOL.
-use consts_mod, only : RP, ONE, ZERO
-use infnan_mod, only : is_nan
+use, non_intrinsic :: consts_mod, only : RP, ONE, ZERO
+use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
 
 ! Inputs
@@ -984,8 +986,8 @@ end function issymmetric
 
 pure function norm(x, p) result(y)
 ! This function calculates the P-norm of a vector X.
-use consts_mod, only : RP, ONE, ZERO, EPS
-use infnan_mod, only : is_finite, is_posinf
+use, non_intrinsic :: consts_mod, only : RP, ONE, ZERO, EPS
+use, non_intrinsic :: infnan_mod, only : is_finite, is_posinf
 implicit none
 
 ! Inputs
@@ -998,10 +1000,13 @@ real(RP) :: y
 ! Local variables
 real(RP) :: scaling
 
-if (.not. all(is_finite(x))) then
+if (size(x) == 0) then
+    y = ZERO
+elseif (.not. all(is_finite(x))) then
     ! If X contains NaN, then Y is NaN. Otherwise, Y is Inf when X contains +/-Inf.
     y = sum(abs(x))
 elseif (.not. any(abs(x) > ZERO)) then
+    ! The following is incorrect without checking the last case, as X may be all NaN.
     y = ZERO
 else
     if (.not. present(p)) then

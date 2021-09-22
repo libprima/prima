@@ -1,6 +1,6 @@
 ! logging_mod is a module providing some subroutines for logging.
 !
-! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and papers.
+! Coded by Zaikun ZHANG (www.zhangzk.net) in July 2020 based on Powell's Fortran 77 code and papers.
 !
 ! Last Modified: Wednesday, September 01, 2021 AM10:58:33
 
@@ -16,7 +16,7 @@ contains
 
 
 subroutine logging(logfile, srname, lnnum, nf, f, x, constr, conv, mssg)
-use consts_mod, only : RP, IK
+use, non_intrinsic :: consts_mod, only : RP, IK
 implicit none
 
 ! Inputs

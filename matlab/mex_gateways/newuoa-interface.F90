@@ -14,15 +14,15 @@ subroutine mexFunction(nargout, poutput, nargin, pinput)
 ! [xopt, fopt, info, nf, xhist, fhist] = FUNCTION_NAME(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, iprint, maxhist, output_xhist)
 
 ! Generic modules
-use consts_mod, only : RP, IK
-use fmxapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
-use fmxapi_mod, only : fmxVerifyClassShape
-use fmxapi_mod, only : fmxAllocate
-use fmxapi_mod, only : fmxReadMPtr, fmxWriteMPtr
+use, non_intrinsic :: consts_mod, only : RP, IK
+use, non_intrinsic :: fmxapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
+use, non_intrinsic :: fmxapi_mod, only : fmxVerifyClassShape
+use, non_intrinsic :: fmxapi_mod, only : fmxAllocate
+use, non_intrinsic :: fmxapi_mod, only : fmxReadMPtr, fmxWriteMPtr
 
 ! Solver-specific module
-use newuoa_mod, only : newuoa
-use prob_mod, only : fun_ptr, calfun
+use, non_intrinsic :: newuoa_mod, only : newuoa
+use, non_intrinsic :: prob_mod, only : fun_ptr, calfun
 
 implicit none
 

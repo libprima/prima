@@ -10,9 +10,11 @@ module newuoa_mod
 ! which is taken up by minimizing the Frobenius norm of the change to the second derivative of the
 ! quadratic model, beginning with a zero matrix.
 !
-! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Last Modified: Friday, September 10, 2021 PM08:57:16
+! Started: July 2020
+!
+! Last Modified: Wednesday, September 22, 2021 AM11:40:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -146,15 +148,16 @@ subroutine newuoa(calfun, x, f, &
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT, MAXMEMORY, MAXFUN_DIM_DFT
-use consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS
-use infnan_mod, only : is_nan, is_inf, is_finite
-use memory_mod, only : safealloc, cstyle_sizeof
-use pintrf_mod, only : FUN
+use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT
+use, non_intrinsic :: consts_mod, only : MAXMEMORY, MAXFUN_DIM_DFT
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS
+use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite
+use, non_intrinsic :: memory_mod, only : safealloc, cstyle_sizeof
+use, non_intrinsic :: pintrf_mod, only : FUN
 
 ! Solver-specific modules
-use newuob_mod, only : newuob
-use preproc_mod, only : preproc
+use, non_intrinsic :: newuob_mod, only : newuob
+use, non_intrinsic :: preproc_mod, only : preproc
 
 implicit none
 

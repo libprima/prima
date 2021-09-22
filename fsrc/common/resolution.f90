@@ -15,8 +15,8 @@ contains
 
 subroutine resenhance_unc(rhoend, delta, rho)
 
-use consts_mod, only : RP, HALF, TENTH, DEBUGGING
-use debug_mod, only : errstop
+use, non_intrinsic :: consts_mod, only : RP, HALF, TENTH, DEBUGGING
+use, non_intrinsic :: debug_mod, only : errstop
 implicit none
 
 ! Input
@@ -53,8 +53,8 @@ end subroutine resenhance_unc
 
 subroutine resenhance_nlc(conmat, fval, rhoend, cpen, rho)
 
-use consts_mod, only : RP, ZERO, HALF, DEBUGGING
-use debug_mod, only : errstop
+use, non_intrinsic :: consts_mod, only : RP, ZERO, HALF, DEBUGGING
+use, non_intrinsic :: debug_mod, only : errstop
 implicit none
 
 ! Inputs

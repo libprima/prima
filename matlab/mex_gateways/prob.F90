@@ -26,12 +26,12 @@ contains
 subroutine calfun(x, f)
 
 ! Generic modules
-use consts_mod, only : RP, HUGEFUN, MSSGLEN
-use infnan_mod, only : is_nan
-use fmxapi_mod, only : mxDestroyArray
-use fmxapi_mod, only : mexErrMsgIdAndTxt
-use fmxapi_mod, only : fmxIsDoubleScalar
-use fmxapi_mod, only : fmxReadMPtr, fmxWriteMPtr, fmxCallMATLAB
+use, non_intrinsic :: consts_mod, only : RP, HUGEFUN, MSSGLEN
+use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: fmxapi_mod, only : mxDestroyArray
+use, non_intrinsic :: fmxapi_mod, only : mexErrMsgIdAndTxt
+use, non_intrinsic :: fmxapi_mod, only : fmxIsDoubleScalar
+use, non_intrinsic :: fmxapi_mod, only : fmxReadMPtr, fmxWriteMPtr, fmxCallMATLAB
 
 implicit none
 

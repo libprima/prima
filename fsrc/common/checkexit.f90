@@ -15,10 +15,10 @@ contains
 function checkexit_unc(maxfun, nf, f, ftarget, x) result(info)
 
 ! Generic modules
-use consts_mod, only : RP, IK, DEBUGGING
-use info_mod, only : INFO_DFT, NAN_X, NAN_INF_F, FTARGET_ACHIEVED, MAXFUN_REACHED
-use infnan_mod, only : is_nan, is_posinf
-use debug_mod, only : errstop
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_X, NAN_INF_F, FTARGET_ACHIEVED, MAXFUN_REACHED
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: debug_mod, only : errstop
 
 implicit none
 
@@ -72,10 +72,10 @@ end function checkexit_unc
 function checkexit_con(maxfun, nf, cstrv, ctol, f, ftarget, x) result(info)
 
 ! Generic modules
-use consts_mod, only : RP, IK, DEBUGGING
-use info_mod, only : INFO_DFT, NAN_X, NAN_INF_F, FTARGET_ACHIEVED, MAXFUN_REACHED
-use infnan_mod, only : is_nan, is_posinf
-use debug_mod, only : errstop
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_X, NAN_INF_F, FTARGET_ACHIEVED, MAXFUN_REACHED
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: debug_mod, only : errstop
 
 implicit none
 

@@ -160,7 +160,8 @@ C
           ELSE IF (NFM > N) THEN
               BMAT(NF-N,NFMM)=HALF/RHOBEG
               BMAT(NF,NFMM)=-HALF/RHOBEG
-              ZMAT(1,NFMM)=-RECIQ-RECIQ
+              !ZMAT(1,NFMM)=-2.0D0*RECIQ
+              ZMAT(1,NFMM)=-sqrt(2.0D0)/RHOBEG**2
               ZMAT(NF-N,NFMM)=RECIQ
               ZMAT(NF,NFMM)=RECIQ
               IH=(NFMM*(NFMM+1))/2
@@ -242,7 +243,8 @@ C behavior of the code, including uninitialized indices.
           RATIO=-1.0D0
           IF (DELTA <= 1.5D0*RHO) DELTA=RHO
           IF (NF <= NFSAV+2) GOTO 460
-          TEMP=0.125D0*CRVMIN*RHO*RHO
+          !TEMP=0.125D0*CRVMIN*RHO*RHO
+          TEMP=0.125D0*CRVMIN*RHO**2
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C          IF (TEMP <= DMAX1(DIFFA,DIFFB,DIFFC)) GOTO 460
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -419,7 +421,8 @@ C
           BSUMM=BSUMM+SUMM*D(J)
           DX=DX+D(J)*XOPT(J)
       END DO
-      BETA=DX*DX+DSQ*(XOPTSQ+DX+DX+HALF*DSQ)+BETA-BSUMM
+      !BETA=DX*DX+DSQ*(XOPTSQ+DX+DX+HALF*DSQ)+BETA-BSUMM
+      BETA=DX**2+DSQ*(XOPTSQ+2.0D0*DX+HALF*DSQ)+BETA-BSUMM
       VLAG(KOPT)=VLAG(KOPT)+ONE
 C
 C     If KNEW is positive and if the cancellation in DENOM is unacceptable,
@@ -487,7 +490,8 @@ C
           BSUMM=BSUMM+SUMM*D(J)
           DX=DX+D(J)*XOPT(J)
       END DO
-      BETA=DX*DX+DSQ*(XOPTSQ+DX+DX+HALF*DSQ)+BETA-BSUMM
+      !BETA=DX*DX+DSQ*(XOPTSQ+DX+DX+HALF*DSQ)+BETA-BSUMM
+      BETA=DX**2+DSQ*(XOPTSQ+2.0D0*DX+HALF*DSQ)+BETA-BSUMM
       VLAG(KOPT)=VLAG(KOPT)+ONE
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

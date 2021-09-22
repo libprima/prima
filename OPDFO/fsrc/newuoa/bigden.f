@@ -78,10 +78,12 @@ C Zaikun 2019-08-29: With the original code, if DS, DD, or SS is
 C NaN, KSAV will not get a value. This may cause Segmentation Fault
 C because XPT(KSAV, :) will later be accessed.
 C      IF (DS*DS .GT. 0.99D0*DD*SS) THEN
-      IF (.NOT. (DS*DS <= 0.99D0*DD*SS)) THEN
+      !IF (.NOT. (DS*DS <= 0.99D0*DD*SS)) THEN
+      IF (.NOT. (DS**2 <= 0.99D0*DD*SS)) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           KSAV=KNEW
-          DTEST=DS*DS/SS
+          !DTEST=DS*DS/SS
+          DTEST=DS**2/SS
           DO K=1,NPT
               IF (K /= KOPT) THEN
                   DSTEMP=ZERO
@@ -94,10 +96,12 @@ C      IF (DS*DS .GT. 0.99D0*DD*SS) THEN
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 2019-08-29: See the comments below line number 30
 C              IF (DSTEMP*DSTEMP/SSTEMP .LT. DTEST) THEN
-                  IF (.NOT. (DSTEMP*DSTEMP/SSTEMP >= DTEST)) THEN
+!                  IF (.NOT. (DSTEMP*DSTEMP/SSTEMP >= DTEST)) THEN
+                  IF (.NOT. (DSTEMP**2/SSTEMP >= DTEST)) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                       KSAV=K
-                      DTEST=DSTEMP*DSTEMP/SSTEMP
+!                      DTEST=DSTEMP*DSTEMP/SSTEMP
+                      DTEST=DSTEMP**2/SSTEMP
                       DS=DSTEMP
                       SS=SSTEMP
                   END IF
@@ -148,10 +152,12 @@ C
               TEMPB=TEMPB+XPT(K,I)*S(I)
               TEMPC=TEMPC+XPT(K,I)*XOPT(I)
           END DO
-          WVEC(K,1)=QUART*(TEMPA*TEMPA+TEMPB*TEMPB)
+!          WVEC(K,1)=QUART*(TEMPA*TEMPA+TEMPB*TEMPB)
+          WVEC(K,1)=QUART*(TEMPA**2+TEMPB**2)
           WVEC(K,2)=TEMPA*TEMPC
           WVEC(K,3)=TEMPB*TEMPC
-          WVEC(K,4)=QUART*(TEMPA*TEMPA-TEMPB*TEMPB)
+!          WVEC(K,4)=QUART*(TEMPA*TEMPA-TEMPB*TEMPB)
+          WVEC(K,4)=QUART*(TEMPA**2-TEMPB**2)
           WVEC(K,5)=HALF*TEMPA*TEMPB
       END DO
       DO I=1,N

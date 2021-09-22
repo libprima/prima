@@ -1,8 +1,10 @@
 ! CONSTS_MOD is a module defining some constants.
 !
-! Coded by Zaikun Zhang in July 2020.
+! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
-! Last Modified: Wednesday, September 01, 2021 AM10:55:47
+! Started: July 2020
+!
+! Last Modified: Wednesday, September 22, 2021 AM11:47:57
 
 ! Remarks:
 !
