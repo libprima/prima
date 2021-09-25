@@ -26,8 +26,19 @@ C
               JL=IDZ
           ELSE IF (ZMAT(KNEW,J) /= ZERO) THEN
               TEMP=DSQRT(ZMAT(KNEW,JL)**2+ZMAT(KNEW,J)**2)
-              TEMPA=ZMAT(KNEW,JL)/TEMP
-              TEMPB=ZMAT(KNEW,J)/TEMP
+              !TEMPA=ZMAT(KNEW,JL)/TEMP
+              !TEMPB=ZMAT(KNEW,J)/TEMP
+              !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+              if (temp > 0.0D0 .and. temp <= huge(0.0D0)) then
+                TEMPA=ZMAT(KNEW,JL)/TEMP
+                TEMPB=ZMAT(KNEW,J)/TEMP
+              else
+                  scaling = maxval(abs(zmat(knew, [jl, j])))
+                  temp = sqrt(sum((zmat(knew, [jl, j])/scaling)**2))
+                  TEMPA=(ZMAT(KNEW,JL)/scaling)/TEMP
+                  TEMPB=(ZMAT(KNEW,J)/scaling)/TEMP
+              end if
+              !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               DO I=1,NPT
                   TEMP=TEMPA*ZMAT(I,JL)+TEMPB*ZMAT(I,J)
                   ZMAT(I,J)=TEMPA*ZMAT(I,J)-TEMPB*ZMAT(I,JL)

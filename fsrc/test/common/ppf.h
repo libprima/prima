@@ -59,7 +59,7 @@
 #if defined __DEBUGGING__
 #undef __DEBUGGING__
 #endif
-#define __DEBUGGING__ 1
+#define __DEBUGGING__ 0
 /******************************************************************************/
 
 
@@ -119,7 +119,7 @@
 #if defined __INTEGER_KIND__
 #undef __INTEGER_KIND__
 #endif
-#define __INTEGER_KIND__ 0
+#define __INTEGER_KIND__ 64
 /* Fortran standards guarantee that 0 is supported, but not the others. */
 /******************************************************************************/
 
@@ -132,7 +132,7 @@
 #if defined __REAL_PRECISION__
 #undef __REAL_PRECISION__
 #endif
-#define __REAL_PRECISION__ 64
+#define __REAL_PRECISION__ 128
 /* Fortran standards guarantee that 0, 32, and 64 are supported, but not 128. */
 
 /* Is quad precision available on this platform (compiler, hardware ...)? */

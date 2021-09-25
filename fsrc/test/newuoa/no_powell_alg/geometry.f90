@@ -1,13 +1,11 @@
+! GEOMETRY_MOD is a module containing subroutines that are concerned with geometry-improving of the
+! interpolation set XPT.
+!
+! Coded by Zaikun Zhang in July 2020 based on Powell's Fortran 77 code and the NEWUOA paper.
+!
+! Last Modified: Friday, July 23, 2021 AM11:52:31
+
 module geometry_mod
-!--------------------------------------------------------------------------------------------------!
-! This module contains subroutines concerning the geometry-improving of the interpolation set XPT.
-!
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
-!
-! Started: July 2020
-!
-! Last Modified: Saturday, September 25, 2021 PM08:53:35
-!--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
@@ -17,28 +15,18 @@ public :: setdrop_tr, geostep
 contains
 
 
-function setdrop_tr(idz, kopt, beta, delta, ratio, rho, vlag, xdist, zmat) result(knew)
-!--------------------------------------------------------------------------------------------------!
-! This subroutine sets KNEW to the index of the interpolation point to be deleted AFTER A TRUST
+function setdrop_tr(idz, kopt, beta, delta, ratio, rho, vlag, xopt, xpt, zmat) result(knew)
+! SETDROP sets KNEW to the index of the interpolation point that will be deleted AFTER A TRUST
 ! REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
-! XPT(:, KNEW) is replaced by XNEW = XOPT + D, where D is the trust-region step.
-! N.B.:
-! 1. Information of XNEW is encoded in VLAG and BETA, which are calculated according to D.
-! 2. If RATIO > 0, then KNEW > 0 so that XNEW is included into XPT. Otherwise, it is a bug.
-! 3. If RATIO <= 0, then KNEW /= KOPT so that XPT(:, KOPT) is retained. Otherwise, it is a bug.
-! 4. It is tempting to take the function value into consideration when defining KNEW, for example,
-! set KNEW so that FVAL(KNEW) = MAX(FVAL) as long as F(XNEW) < MAX(FVAL), unless there is a better
-! choice. However, this is not a good idea, because the definition of KNEW should benefit the
-! quality of the model that interpolates f at XPT. A set of points with low function values is not
-! necessarily a good interplolation set. In contrast, a good interpolation set needs to include
-! points with relatively high function values; otherwise, the interpolant will unlikely reflect the
-! landscape of the function sufficiently.
-!--------------------------------------------------------------------------------------------------!
+! XPT(:, KNEW) is replaced by XNEW = XOPT + D, where D is the trust-region step.  Note that the
+! information of XNEW is included in VLAG and BETA, which are calculated according to D.
+!
+! N.B.: At the entry of this function is invoked, XOPT may differ from XPT(:, KOPT), because XOPT is
+! updated but KOPT is not. See NEWUOB for details.
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, TENTH, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan
+use consts_mod, only : RP, IK, ONE, ZERO, TENTH, SRNLEN, DEBUGGING
+use debug_mod, only : errstop, verisize
 
 implicit none
 
@@ -49,100 +37,75 @@ real(RP), intent(in) :: beta
 real(RP), intent(in) :: delta
 real(RP), intent(in) :: ratio
 real(RP), intent(in) :: rho
-real(RP), intent(in) :: vlag(:)     ! VLAG(NPT)
-real(RP), intent(in) :: xdist(:)    ! XDIST(NPT)
+real(RP), intent(in) :: vlag(:)  ! VLAG(NPT)
+real(RP), intent(in) :: xopt(:)  ! XOPT(N)
+real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 
-! Outputs
+! Output
 integer(IK) :: knew
 
 ! Local variables
-character(len=*), parameter :: srname = 'SETDROP_TR'
+integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: hdiag(size(zmat, 1))
-real(RP) :: sigma(size(xdist))
+real(RP) :: rhosq
+real(RP) :: sigma(size(xpt, 2))
+real(RP) :: xdsq(size(xpt, 2))
+character(len=SRNLEN), parameter :: srname = 'SETDROP'
 
-! Sizes
-npt = int(size(xdist), kind(npt))
 
-! Preconditions
+! Get and verify the sizes
+n = int(size(xpt, 1), kind(n))
+npt = int(size(xpt, 2), kind(npt))
+
 if (DEBUGGING) then
-    call assert(npt >= 3, 'NPT >= 3', srname)
-    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= NPT - N', srname)
-    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
-    call assert(delta >= rho .and. rho > ZERO, 'DETLA >= RHO > 0', srname)
-    call assert(.not. is_nan(ratio), 'RATIO is not NaN', srname)
-    call assert(size(vlag) == npt, 'SIZE(VLAG) == NPT', srname)
-    call assert(all(xdist >= ZERO), 'ALL(XDIST >= ZERO)', srname)
-    call assert(size(zmat, 1) == npt .and. size(zmat, 2) >= 1, &
-        & 'SIZE(ZMAT, 1) == NPT, SIZE(ZMAT, 2) >= 1', srname)
+    if (n == 0 .or. npt < n + 2) then
+        call errstop(srname, 'SIZE(XPT) is invalid')
+    end if
+    call verisize(vlag, npt)
+    call verisize(xopt, n)
+    call verisize(zmat, npt, int(npt - n - 1, kind(n)))
 end if
 
-!====================!
-! Calculation starts !
-!====================!
-
-hdiag = -sum(zmat(:, 1:idz - 1)**2, dim=2) + sum(zmat(:, idz:size(zmat, 2))**2, dim=2)
+rhosq = max(TENTH * delta, rho)**2
+hdiag = -sum(zmat(:, 1:idz - 1)**2, dim=2) + sum(zmat(:, idz:npt - n - 1)**2, dim=2)
+xdsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 sigma = abs(beta * hdiag + vlag(1:npt)**2)
-sigma = sigma * max(ONE, xdist / max(TENTH * delta, rho))**6
+sigma = sigma * max(xdsq / rhosq, ONE)**3
 if (ratio <= ZERO) then
-    ! If the new F is not better than FVAL(KOPT), we set SIGMA(KOPT) = -1 to avoid KNEW = KOPT.
+    ! If the new F is not better than the current FVAL(KOPT), we set SIGMA(KOPT) = -1 to prevent
+    ! KNEW from being KOPT.
     sigma(kopt) = -ONE
 end if
-
-! KNEW = 0 by default. It cannot be removed, as KNEW may not be set below in some cases, e.g., when
-! RATIO <= 0 and MAXVAL(SIGMA) <= 1.
-knew = 0_IK
-
-! See (7.5) of the NEWUOA paper for the following definition of KNEW.
-if (any(sigma > ONE) .or. (ratio > ZERO .and. any(.not. is_nan(sigma)))) then
-    knew = int(maxloc(sigma, mask=(.not. is_nan(sigma)), dim=1), kind(knew))
+if (maxval(sigma) > ONE .or. ratio > ZERO) then
+    ! KNEW > 0 unless MAXVAL(SIGMA) <= 1 and RATIO <= ZERO. If RATIO > ZERO (the new F is less than
+    ! the current FVAL(KOPT)), then we always set KNEW > 0, ensuring XNEW to be included in XPT.
+    knew = int(maxloc(sigma, dim=1), kind(knew))
+else
+    knew = 0
 end if
-
-! Powell's code does not include the following instructions. With Powell's code, if SIGMA consists
-! of only NaN, then KNEW can be 0 even when RATIO > 0.
-if (ratio > ZERO .and. knew <= 0) then
-    knew = int(maxloc(xdist, mask=(.not. is_nan(xdist)), dim=1), kind(knew))
-end if
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
-if (DEBUGGING) then
-    ! KNEW >= 1 when RATIO > 0 unless NaN occurs in XDIST, which should not happen if the starting
-    ! point does not contain NaN and the trust-region/geometry steps never contain NaN.
-    call assert(.not. (ratio > ZERO .and. knew <= 0), 'KNEW >= 1 when RATIO > 0', srname)
-    call assert(.not. (ratio <= ZERO .and. knew == kopt), 'KNEW /= KOPT when RATIO <= 0', srname)
-end if
-
+! It is tempting to take the function value into consideration when defining KNEW, for example,
+! set KNEW so that FVAL(KNEW) = MAX(FVAL) as long as F(XNEW) < MAX(FVAL), unless there is a better
+! choice. However, this is not a good idea, because the definition of KNEW should benefit the
+! quality of the model that interpolates f at XPT. A set of points with low function values is not
+! necessarily a good interplolation set. In contrast, a good interpolation set needs to include
+! points with relatively high function values; otherwise, the interpolant will unlikely reflect the
+! landscape of the function sufficiently.
 end function setdrop_tr
 
 
 function geostep(idz, knew, kopt, bmat, delbar, xpt, zmat) result(d)
-!--------------------------------------------------------------------------------------------------!
-! This subroutine finds a step D such that the geometry of the interpolation set is improved when
+! This subroutine finds a step D such that the geometry of the interplolation set is improved when
 ! XPT(:, KNEW) is changed to XOPT + D, where XOPT = XPT(:, KOPT)
-!
-! N is the number of variables.
-! NPT is the number of interpolation equations.
-! XPT contains the current interpolation points.
-! BMAT provides the last N ROWs of H.
-! ZMAT and IDZ give a factorization of the first NPT by NPT sub-matrix of H.
-! KNEW is the index of the interpolation point to be dropped.
-! DELBAR is the trust region bound for the geometry step
-! D will be set to the step from X to the new point.
-!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, norm
+use consts_mod, only : RP, IK, ONE, DEBUGGING, SRNLEN
+use debug_mod, only : errstop, verisize
+use lina_mod, only : inprod
 
-! Solver-specific modules
-use, non_intrinsic :: vlagbeta_mod, only : vlagbeta
+! Solver-specific module
+use vlagbeta_mod, only : vlagbeta
 
 implicit none
 
@@ -159,45 +122,34 @@ real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 real(RP) :: d(size(xpt, 1))     ! D(N)
 
 ! Local variables
-character(len=*), parameter :: srname = 'GEOSTEP'
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: alpha
-real(RP) :: absden
 real(RP) :: beta
 real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
 real(RP) :: xopt(size(xpt, 1))
 real(RP) :: zknew(size(zmat, 2))
+character(len=SRNLEN), parameter :: srname = 'GEOSTEP'
 
-! Sizes
+
+! Get and verify the sizes.
 n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
-! Preconditions
 if (DEBUGGING) then
-    call assert(n >= 1, 'N >= 1', srname)
-    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
-    call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT - N', srname)
-    call assert(knew >= 1 .and. knew <= npt, '1 <= KNEW <= NPT', srname)
-    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
-    call assert(knew /= kopt, 'KNEW /= KOPT', srname)
-    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
-    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
-    call assert(delbar > ZERO, 'DELBAR > 0', srname)
-    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
-    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
-        & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
+    if (n == 0 .or. npt < n + 2) then
+        call errstop(srname, 'SIZE(XPT) is invalid')
+    end if
+    call verisize(bmat, n, npt + n)
+    call verisize(zmat, npt, int(npt - n - 1, kind(n)))
+    call verisize(vlag, npt + n)
 end if
-
-!====================!
-! Calculation starts !
-!====================!
 
 xopt = xpt(:, kopt)  ! Read XOPT.
 
-d = biglag(idz, knew, bmat, delbar, xopt, xpt, zmat)
+d = biglag(idz, knew, delbar, bmat, xopt, xpt, zmat)
 
-! ALPHA is the KNEW-th diagonal entry of H.
+! ALPHA is the KNEW-th diagonal entry of H
 zknew = zmat(knew, :)
 zknew(1:idz - 1) = -zknew(1:idz - 1)
 alpha = inprod(zmat(knew, :), zknew)
@@ -206,68 +158,45 @@ alpha = inprod(zmat(knew, :), zknew)
 call vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
 
 ! If the cancellation in DENOM is unacceptable, then BIGDEN calculates an alternative model step D.
-if (vlag(knew)**2 <= ZERO) then
-    ! Powell's code does not check VLAG(KNEW)**2. VLAG(KNEW)** > 0 in theory, but it can be 0 due to
-    ! rounding, which did happen in tests. If VLAG(KNEW) ** = 0, then BIGLAG fails, because BIGLAG
-    ! should maximize |VLAG(KNEW)|. Upon this failure, it is reasonable to call BIGDEN.
-    absden = -ONE
-else
-    absden = abs(ONE + alpha * beta / vlag(knew)**2)
-end if
-if (absden <= 0.8_RP) then
+! VLAG and BETA for this D are calculated within BIGDEN.
+if (abs(ONE + alpha * beta / vlag(knew)**2) <= 0.8_RP) then
     d = bigden(idz, knew, kopt, bmat, d, xpt, zmat)
-end if
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(all(is_finite(d)), 'D is finite', srname)
-    ! Due to rounding, it may happen that |D| > DELTA, but |D| > 2*DELTA is highly improbable.
-    call assert(norm(d) <= TWO * delbar, 'norm(D) <= 2*DELTA', srname)
 end if
 
 end function geostep
 
 
-function biglag(idz, knew, bmat, delbar, x, xpt, zmat) result(d)
-!--------------------------------------------------------------------------------------------------!
-! This subroutine calculates a D by approximately solving
+function biglag(idz, knew, delbar, bmat, x, xpt, zmat) result(d)
+! BIGLAG calculates a D by approximately solving
 !
 ! max |LFUNC(X + D)|, subject to ||D|| <= DELBAR,
 !
-! where LFUNC is the KNEW-th Lagrange function. See Section 6 of the NEWUOA paper.
-!--------------------------------------------------------------------------------------------------!
+! where LFUNC is the KNEW-th Lagrange function. See Setion 6 of the NEWUOA paper.
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, PI, ZERO, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : Ax_plus_y, inprod, matprod, issymmetric, norm
+use consts_mod, only : RP, IK, ONE, TWO, HALF, PI, ZERO, DEBUGGING, SRNLEN
+use debug_mod, only : errstop, verisize
+use lina_mod, only : Ax_plus_y, inprod, matprod
 
 implicit none
 
 ! Inputs
 integer(IK), intent(in) :: idz
 integer(IK), intent(in) :: knew
-real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT + N)
 real(RP), intent(in) :: delbar
+real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT + N)
 real(RP), intent(in) :: x(:)        ! X(N)
 real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 
-! Outputs
+! Output
 real(RP) :: d(size(xpt, 1))       ! D(N)
 
 ! Local variables
-character(len=*), parameter :: srname = 'BIGLAG'
 integer(IK) :: i
-integer(IK) :: isav
-integer(IK) :: iter
+integer(IK) :: isave
+integer(IK) :: iterc
 integer(IK) :: iu
-integer(IK) :: maxiter
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: angle
@@ -276,7 +205,6 @@ real(RP) :: cth
 real(RP) :: dd
 real(RP) :: denom
 real(RP) :: dhd
-real(RP) :: dold(size(x))
 real(RP) :: gc(size(x))
 real(RP) :: gd(size(x))
 real(RP) :: gg
@@ -297,29 +225,32 @@ real(RP) :: tauold
 real(RP) :: unitang
 real(RP) :: w(size(x))
 real(RP) :: zknew(size(zmat, 2))
+character(len=SRNLEN), parameter :: srname = 'BIGLAG'
 
-! Sizes
+
+! N is the number of variables.
+! NPT is the number of interpolation equations.
+! XPT contains the current interpolation points.
+! BMAT provides the last N ROWs of H.
+! ZMAT and IDZ give a factorization of the first NPT by NPT sub-matrix of H.
+! KNEW is the index of the interpolation point to be dropped.
+! DELBAR is the trust region bound for BIGLAG.
+! D will be set to the step from X to the new point.
+! HCOL, GC, GD, S and W will be used for working space.
+
+
+! Get and verify the sizes.
 n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
-! Preconditions
 if (DEBUGGING) then
-    call assert(n >= 1, 'N >= 1', srname)
-    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
-    call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT - N', srname)
-    call assert(knew >= 1 .and. knew <= npt, '1 <= KNEW <= NPT', srname)
-    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
-    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
-    call assert(delbar > ZERO, 'DELBAR > 0', srname)
-    call assert(size(x) == n .and. all(is_finite(x)), 'SIZE(X) == N, X is finite', srname)
-    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
-    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
-        & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
+    if (n == 0 .or. npt < n + 2) then
+        call errstop(srname, 'SIZE(XPT) is invalid')
+    end if
+    call verisize(x, n)
+    call verisize(bmat, n, npt + n)
+    call verisize(zmat, npt, int(npt - n - 1, kind(n)))
 end if
-
-!====================!
-! Calculation starts !
-!====================!
 
 ! Set HCOL to the leading NPT elements of the KNEW-th column of H.
 zknew = zmat(knew, :)
@@ -334,11 +265,12 @@ dd = inprod(d, d)
 gd = matprod(xpt, hcol * matprod(d, xpt))
 
 !----------------------------------------------------------------!
-!-----!gc = bmat(:, knew) + matprod(xpt, hcol*matprod(x, xpt)) !-!
-gc = Ax_plus_y(xpt, hcol * matprod(x, xpt), bmat(:, knew))
+gc = bmat(:, knew) + matprod(xpt, hcol * matprod(x, xpt)) !-!
+!gc = Ax_plus_y(xpt, hcol * matprod(x, xpt), bmat(:, knew))
 !----------------------------------------------------------------!
 
-! Scale D and GD, with a sign change if needed. Set S to another vector in the initial 2-D subspace.
+! Scale D and GD, with a sign change if required. Set S to another vector in the initial two
+! dimensional subspace.
 gg = inprod(gc, gc)
 sp = inprod(d, gc)
 dhd = inprod(d, gd)
@@ -347,32 +279,27 @@ if (sp * dhd < ZERO) then
     scaling = -scaling
 end if
 t = ZERO
-if (sp**2 > 0.99_RP * dd * gg) then
+if (sp * sp > 0.99_RP * dd * gg) then
     t = ONE
 end if
 tau = scaling * (abs(sp) + HALF * scaling * abs(dhd))
-if (gg * delbar**2 < 1.0E-2_RP * tau**2) then
+if (gg * (delbar * delbar) < 1.0E-2_RP * tau * tau) then
     t = ONE
 end if
-if (is_finite(sum(abs(scaling * d)))) then
-    d = scaling * d
-    gd = scaling * gd
-    s = gc + t * gd
-    maxiter = n
-else
-    maxiter = 0_IK  ! Return immediately to avoid producing a D containing NaN/Inf.
-end if
+d = scaling * d
+gd = scaling * gd
+s = gc + t * gd
 
 ! Begin the iteration by overwriting S with a vector that has the required length and direction,
 ! except that termination occurs if the given D and S are nearly parallel.
-do iter = 1, maxiter
+do iterc = 1, n
     dd = inprod(d, d)
     sp = inprod(d, s)
     ss = inprod(s, s)
-    if (dd * ss - sp**2 <= 1.0E-8_RP * dd * ss) then
+    if (dd * ss - sp * sp <= 1.0E-8_RP * dd * ss) then
         exit
     end if
-    denom = sqrt(dd * ss - sp**2)
+    denom = sqrt(dd * ss - sp * sp)
     s = (dd * s - sp * d) / denom
 
     w = matprod(xpt, hcol * matprod(s, xpt))
@@ -391,8 +318,8 @@ do iter = 1, maxiter
     taubeg = cf(1) + cf(2) + cf(4)
     taumax = taubeg
     tauold = taubeg
-    isav = 0_IK
-    iu = 49_IK
+    isave = 0
+    iu = 49
     unitang = (TWO * PI) / real(iu + 1, RP)
 
     do i = 1, iu
@@ -402,18 +329,18 @@ do iter = 1, maxiter
         tau = cf(1) + (cf(2) + cf(4) * cth) * cth + (cf(3) + cf(5) * cth) * sth
         if (abs(tau) > abs(taumax)) then
             taumax = tau
-            isav = i
+            isave = i
             taua = tauold
-        else if (i == isav + 1) then
+        else if (i == isave + 1) then
             taub = tau
         end if
         tauold = tau
     end do
 
-    if (isav == 0) then
+    if (isave == 0) then
         taua = tau
     end if
-    if (isav == iu) then
+    if (isave == iu) then
         taub = taubeg
     end if
     if (abs(taua - taub) > ZERO) then
@@ -423,22 +350,13 @@ do iter = 1, maxiter
     else
         step = ZERO
     end if
-    angle = unitang * (real(isav, RP) + step)
+    angle = unitang * (real(isave, RP) + step)
 
     ! Calculate the new D and GD. Then test for convergence.
     cth = cos(angle)
     sth = sin(angle)
     tau = cf(1) + (cf(2) + cf(4) * cth) * cth + (cf(3) + cf(5) * cth) * sth
-
-    dold = d
     d = cth * d + sth * s
-
-    ! Exit in case of Inf/NaN in D.
-    if (.not. is_finite(sum(abs(d)))) then
-        d = dold
-        exit
-    end if
-
     gd = cth * gd + sth * w
     s = gc + gd
     if (abs(tau) <= 1.1_RP * abs(taubeg)) then
@@ -446,22 +364,10 @@ do iter = 1, maxiter
     end if
 end do
 
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(all(is_finite(d)), 'D is finite', srname)
-    ! Due to rounding, it may happen that |D| > DELTA, but |D| > 2*DELTA is highly improbable.
-    call assert(norm(d) <= TWO * delbar, 'NORM(D) <= 2*DELTA', srname)
-end if
-
 end function biglag
 
 
 function bigden(idz, knew, kopt, bmat, d0, xpt, zmat) result(d)
-!--------------------------------------------------------------------------------------------------!
 ! BIGDEN calculates a D by approximately solving
 !
 ! max |SIGMA(XOPT + D)|, subject to ||D|| <= DELBAR,
@@ -472,15 +378,14 @@ function bigden(idz, knew, kopt, bmat, d0, xpt, zmat) result(d)
 ! NEWUOA paper.
 ! N.B.:
 ! In Powell's code, BIGDEN calculates also the VLAG and BETA for the selected D. Here, to reduce the
-! coupling of code, we return only D but compute VLAG and BETA outside by calling VLAGBETA. It makes
-! no difference mathematically, but the computed VLAG/BETA will change slightly due to rounding.
-!--------------------------------------------------------------------------------------------------!
+! coupling of code, we return only D but computes VLAG and BETA outside by calling VLAGBETA. This
+! does not change the mathematics, but the computed VLAG (BETA) will be numerically different due to
+! rounding errors.
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, PI, ZERO, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : Ax_plus_y, inprod, matprod, issymmetric, norm
+use consts_mod, only : RP, IK, ONE, TWO, HALF, QUART, PI, ZERO, DEBUGGING, SRNLEN
+use debug_mod, only : errstop, verisize
+use lina_mod, only : Ax_plus_y, inprod, matprod
 
 implicit none
 
@@ -493,14 +398,13 @@ real(RP), intent(in) :: d0(:)
 real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 
-! Outputs
+! Output
 real(RP) :: d(size(xpt, 1))     ! D(N)
 
 ! Local variable
-character(len=*), parameter :: srname = 'BIGDEN'
 integer(IK) :: i
-integer(IK) :: isav
-integer(IK) :: iter
+integer(IK) :: isave
+integer(IK) :: iterc
 integer(IK) :: iu
 integer(IK) :: j
 integer(IK) :: jc
@@ -520,7 +424,6 @@ real(RP) :: denold
 real(RP) :: denom
 real(RP) :: denomold
 real(RP) :: densav
-real(RP) :: dold(size(xpt, 1))
 real(RP) :: ds
 real(RP) :: dstemp(size(xpt, 2))
 real(RP) :: dtest
@@ -539,7 +442,7 @@ real(RP) :: tempb
 real(RP) :: tempc
 real(RP) :: unitang
 real(RP) :: v(size(xpt, 2))
-real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
+real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))    ! VLAG(NPT + N)
 real(RP) :: w(size(xpt, 2) + size(xpt, 1), 5)
 real(RP) :: wz(size(zmat, 2))
 real(RP) :: x(size(xpt, 1))
@@ -550,32 +453,40 @@ real(RP) :: xptemp(size(xpt, 1), size(xpt, 2))
 real(RP) :: xs
 real(RP) :: xsq
 real(RP) :: zknew(size(zmat, 2))
+character(len=SRNLEN), parameter :: srname = 'BIGDEN'
 
-! Sizes
+! N is the number of variables.
+! NPT is the number of interpolation equations.
+! X is the best interpolation point so far.
+! XPT contains the current interpolation points.
+! BMAT provides the last N ROWs of H.
+! ZMAT and IDZ give a factorization of the first NPT by NPT sub-matrix of H.
+! NDIM is the second dimension of BMAT and has the value NPT + N.
+! KOPT is the index of the optimal interpolation point.
+! KNEW is the index of the interpolation point to be dropped.
+! D will be set to the step from X to the new point, and on entry it should be the D that was
+! calculated by the last call of BIGLAG. The length of the initial D provides a trust region bound
+! on the final D.
+!
+! D is calculated in a way that should provide a denominator with a large modulus in the updating
+! formula when the KNEW-th interpolation point is shifted to the new position X + D.
+
+
+! Get and verify the sizes.
 n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
-! Preconditions
 if (DEBUGGING) then
-    call assert(n >= 1, 'N >= 1', srname)
-    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
-    call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT - N', srname)
-    call assert(knew >= 1 .and. knew <= npt, '1 <= KNEW <= NPT', srname)
-    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
-    call assert(knew /= kopt, 'KNEW /= KOPT', srname)
-    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
-    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
-    call assert(size(d0) == n .and. all(is_finite(d0)), 'SIZE(D0) == N, D0 is finite', srname)
-    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
-    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
-        & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
+    if (n == 0 .or. npt < n + 2) then
+        call errstop(srname, 'SIZE(XPT) is invalid')
+    end if
+    call verisize(x, n)
+    call verisize(bmat, n, npt + n)
+    call verisize(d0, n)
+    call verisize(zmat, npt, int(npt - n - 1, kind(n)))
 end if
 
-!====================!
-! Calculation starts !
-!====================!
-
-x = xpt(:, kopt) ! For simplicity, we use X to denote XOPT.
+x = xpt(:, kopt) ! For simplicity, use x to denote XOPT.
 
 ! Store the first NPT elements of the KNEW-th column of H in HCOL.
 zknew = zmat(knew, :)
@@ -593,9 +504,9 @@ ds = inprod(d, s)
 ss = inprod(s, s)
 xsq = inprod(x, x)
 
-if (.not. (ds**2 <= 0.99_RP * dd * ss)) then
+if (.not. (ds * ds <= 0.99_RP * dd * ss)) then
     ! `.NOT. (A <= B)` differs from `A > B`.  The former holds iff A > B or {A, B} contains NaN.
-    dtest = ds**2 / ss
+    dtest = ds * ds / ss
     xptemp = xpt - spread(x, dim=2, ncopies=npt)
     !----------------------------------------------------------------!
     !---------!dstemp = matprod(d, xpt) - inprod(x, d) !-------------!
@@ -605,12 +516,8 @@ if (.not. (ds**2 <= 0.99_RP * dd * ss)) then
 
     dstemp(kopt) = TWO * ds + ONE
     sstemp(kopt) = ss
-    k = int(minloc(dstemp**2 / sstemp, dim=1), kind(k))
-    ! K can be 0 due to NaN. In that case, set K = KNEW. Otherwise, memory errors will occur.
-    if (k == 0) then
-        k = knew
-    end if
-    if ((.not. (dstemp(k)**2 / sstemp(k) >= dtest)) .and. k /= kopt) then
+    k = int(minloc(dstemp * dstemp / sstemp, dim=1), kind(k))
+    if ((.not. (dstemp(k) * dstemp(k) / sstemp(k) >= dtest)) .and. k /= kopt) then
         ! `.NOT. (A >= B)` differs from `A < B`.  The former holds iff A < B or {A, B} contains NaN.
         ! Although unlikely, if NaN occurs, it may happen that K = KOPT.
         s = xpt(:, k) - x
@@ -623,7 +530,7 @@ ssden = dd * ss - ds * ds
 densav = ZERO
 
 ! Begin the iteration by overwriting S with a vector that has the required length and direction.
-do iter = 1, n
+do iterc = 1, n
     s = (ONE / sqrt(ssden)) * (dd * s - ds * d)
     xd = inprod(x, d)
     xs = inprod(x, s)
@@ -643,10 +550,10 @@ do iter = 1, n
         tempa = inprod(xpt(:, k), d)
         tempb = inprod(xpt(:, k), s)
         tempc = inprod(xpt(:, k), x)
-        w(k, 1) = QUART * (tempa**2 + tempb**2)
+        w(k, 1) = QUART * (tempa * tempa + tempb * tempb)
         w(k, 2) = tempa * tempc
         w(k, 3) = tempb * tempc
-        w(k, 4) = QUART * (tempa**2 - tempb**2)
+        w(k, 4) = QUART * (tempa * tempa - tempb * tempb)
         w(k, 5) = HALF * tempa * tempb
     end do
     w(npt + 1:npt + n, 1:5) = ZERO
@@ -714,8 +621,8 @@ do iter = 1, n
     denom = denex(1) + denex(2) + denex(4) + denex(6) + denex(8)
     denold = denom
     denmax = denom
-    isav = 0_IK
-    iu = 49_IK
+    isave = 0
+    iu = 49
     unitang = (TWO * PI) / real(iu + 1, RP)
     par(1) = ONE
     do i = 1, iu
@@ -730,26 +637,26 @@ do iter = 1, n
         denom = inprod(denex(1:9), par(1:9))
         if (abs(denom) > abs(denmax)) then
             denmax = denom
-            isav = i
+            isave = i
             dena = denomold
-        else if (i == isav + 1) then
+        else if (i == isave + 1) then
             denb = denom
         end if
     end do
-    if (isav == 0) then
+    if (isave == 0) then
         dena = denom
     end if
-    if (isav == iu) then
+    if (isave == iu) then
         denb = denold
     end if
-    if (abs(dena - denb) > ZERO) then
+    if (abs(dena - denb) > 0) then
         dena = dena - denmax
         denb = denb - denmax
         step = HALF * (dena - denb) / (dena + denb)
     else
         step = ZERO
     end if
-    angle = unitang * (real(isav, RP) + step)
+    angle = unitang * (real(isave, RP) + step)
 
     ! Calculate the new parameters of the denominator, the new VLAG vector and the new D. Then test
     ! for convergence.
@@ -768,20 +675,13 @@ do iter = 1, n
 
     tau = vlag(knew)
 
-    dold = d
     d = par(2) * d + par(3) * s
-    ! Exit in case of Inf/NaN in D.
-    if (.not. is_finite(sum(abs(d)))) then
-        d = dold
-        exit
-    end if
-
     dd = inprod(d, d)
     xnew = x + d
     dxn = inprod(d, xnew)
     xnsq = inprod(xnew, xnew)
 
-    if (iter > 1) then
+    if (iterc > 1) then
         densav = max(densav, denold)
     end if
     if (abs(denmax) <= 1.1_RP * abs(densav)) then
@@ -794,8 +694,8 @@ do iter = 1, n
     v = matprod(xnew, xpt)
     v = (tau * hcol - alpha * vlag(1:npt)) * v
     !------------------------------------------------------!
-    !---------!s = s + matprod(xpt, v) !-------------------!
-    s = Ax_plus_y(xpt, v, s)
+    s = s + matprod(xpt, v) !-------------------!
+    !s = Ax_plus_y(xpt, v, s)
     !------------------------------------------------------!
 
     ss = inprod(s, s)
@@ -807,17 +707,6 @@ do iter = 1, n
 end do
 
 !vlag(kopt) = vlag(kopt) + ONE  ! Note needed since we do not return VLAG.
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(all(is_finite(d)), 'D is finite', srname)
-    ! Due to rounding, it may happen that |D| > DELTA = |D0|, but |D| > 2*DELTA is highly improbable.
-    call assert(norm(d) <= TWO * norm(d0), 'NORM(D) <= 2*DELTA', srname)
-end if
 
 end function bigden
 

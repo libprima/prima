@@ -431,7 +431,8 @@ C     working space.
 C
       IF (KNEW > 0) THEN
           TEMP=ONE+ALPHA*BETA/VLAG(KNEW)**2
-          IF (DABS(TEMP) <= 0.8D0) THEN
+!          IF (DABS(TEMP) <= 0.8D0) THEN
+          IF (VLAG(KNEW)**2 <= 0.0D0 .or. DABS(TEMP) <= 0.8D0) THEN
               CALL BIGDEN (N,NPT,XOPT,XPT,BMAT,ZMAT,IDZ,NDIM,KOPT,
      1          KNEW,D,W,VLAG,BETA,XNEW,W(NDIM+1),W(6*NDIM+1))
           END IF

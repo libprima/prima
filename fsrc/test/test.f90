@@ -6,7 +6,7 @@ program test
 !
 ! Started: September 2021
 !
-! Last Modified: Wednesday, September 22, 2021 PM12:36:32
+! Last Modified: Thursday, September 23, 2021 AM07:27:00
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: test_newuoa_mod, only : test_newuoa

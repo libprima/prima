@@ -5,9 +5,10 @@
 !
 ! Started: July 2020.
 !
-! Last Modified: Saturday, September 25, 2021 PM06:34:43
+! Last Modified: Saturday, September 25, 2021 PM06:47:03
 
 
+#include "fintrf.h"
 #include "ppf.h"
 
 
@@ -23,6 +24,12 @@ interface verisize
     module procedure verisize_logical_1, verisize_logical_2
 end interface verisize
 
+interface
+    subroutine mexErrMsgIdAndTxt(errorid, errormsg)
+    implicit none
+    character*(*), intent(in) :: errorid, errormsg
+    end subroutine mexErrMsgIdAndTxt
+end interface
 
 contains
 
@@ -47,17 +54,23 @@ end subroutine assert
 
 
 subroutine errstop(srname, mssg)
+use, non_intrinsic :: consts_mod, only : MSSGLEN
+
 implicit none
+
 character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: mssg
+
+character(len=MSSGLEN) :: eid
+character(len=MSSGLEN) :: emssg
 
 #if __DEBUGGING__ == 1
 call backtr()
 #endif
 
-print '(/1A/)', 'ERROR: '//trim(srname)//': '//trim(mssg)//'.'
-
-stop  ! This means to stop the whole program.
+eid = 'FMXAPI:nInput'
+emssg = trim(srname)//': '//trim(mssg)
+call mexErrMsgIdAndTxt(trim(eid), trim(emssg))
 
 end subroutine errstop
 

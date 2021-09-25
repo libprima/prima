@@ -141,6 +141,8 @@ C
           IF (RHS > ZERO) THEN
               TEMP=DSQRT(DS*DS+DD*RHS)
               IF (DS <= ZERO) THEN
+          ! Zaikun 20210925
+          ! What if we are at the first iteration? BLEN = DELTA/|D|? See TRSAPP.F90 of NEWUOA.
                   GAMMA=(TEMP-DS)/DD
               ELSE
                   GAMMA=RHS/(TEMP+DS)
