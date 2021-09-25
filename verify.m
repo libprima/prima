@@ -65,7 +65,7 @@ end
 if (isfield(options, 'maxdim'))
     requirements.maxdim = options.maxdim;
 else
-    requirements.maxdim = 40;
+    requirements.maxdim = 50;
 end
 if (isfield(options, 'mincon'))
     requirements.mincon = options.mincon;
@@ -341,7 +341,7 @@ function f = noisy(f, x, noise_level)
     if nargin < 3
         noise_level = 5e-1;
     end
-    r = cos(1.0D6 * sin(1.0D6 * (abs(f) + 1.0D0) * cos(1.0D6 * sum(abs(x)))))
+    r = cos(1.0D6 * sin(1.0D6 * (abs(f) + 1.0D0) * cos(1.0D6 * sum(abs(x)))));
     f = f*(1+noise_level*r);
     if (r > 0.75)
         f = inf;

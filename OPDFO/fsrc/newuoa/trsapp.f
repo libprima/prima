@@ -60,7 +60,17 @@ C     Calculate the step to the trust region boundary and the product HD.
 C
    40 ITERC=ITERC+1
       TEMP=DELSQ-SS
-      BSTEP=TEMP/(DS+DSQRT(DS**2+DD*TEMP))
+!      BSTEP=TEMP/(DS+DSQRT(DS**2+DD*TEMP))
+
+      if (iterc == 1) then
+          bstep = delta/sqrt(dd)
+      ! The following code is copied from LINCOA.
+      elseif (ds <= 0.0D0) then
+          bstep = (sqrt(ds**2 + dd * temp)-ds)/dd
+      else
+          bstep = TEMP/(DS+DSQRT(DS**2+DD*TEMP))
+      end if
+
       GOTO 170
    50 DHD=ZERO
       DO J=1,N

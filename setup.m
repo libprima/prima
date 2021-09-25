@@ -242,6 +242,8 @@ try
 
 
     % Compilation of the common files
+    % gateways_intersection_form/debug.F contains debugging subroutines tailored for MEX.
+    copyfile(fullfile(gateways_intersection_form, 'debug.F'), fsrc_common);
     common_files = regexp(fileread(fullfile(fsrc_common, filelist)), '\n', 'split');
     common_files = strtrim(common_files(~cellfun(@isempty, common_files)));
     common_files = fullfile(fsrc_common, common_files);

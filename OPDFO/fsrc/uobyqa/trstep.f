@@ -5,8 +5,8 @@ C      IMPLICIT REAL*8 (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C      DIMENSION G(*),H(N,*),D(*),GG(*),TD(*),TN(*),W(*),PIV(*),Z(*) 
-      DIMENSION G(*),H(N,*),D(*),GG(*),TD(*),TN(*),W(*),PIV(*),Z(*), 
+C      DIMENSION G(*),H(N,*),D(*),GG(*),TD(*),TN(*),W(*),PIV(*),Z(*)
+      DIMENSION G(*),H(N,*),D(*),GG(*),TD(*),TN(*),W(*),PIV(*),Z(*),
      +  DSAV(N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
@@ -160,10 +160,10 @@ C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 26-06-2019
 C The original code can encounter infinite cycling, which did happen
-C when testing the CUTEst problems GAUSS1LS, GAUSS2LS, and GAUSS3LS. 
+C when testing the CUTEst problems GAUSS1LS, GAUSS2LS, and GAUSS3LS.
 C Indeed, in all these cases, Inf and NaN appear in D due to extremely
-C large values in H (up to 10^219). 
-C To avoid wasting energy, we do the following 
+C large values in H (up to 10^219).
+C To avoid wasting energy, we do the following
       SUMD = ZERO
       DO I = 1, N
           SUMD = SUMD + DABS(D(I))

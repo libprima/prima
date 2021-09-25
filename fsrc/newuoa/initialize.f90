@@ -6,7 +6,7 @@ module initialize_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, September 22, 2021 AM11:37:10
+! Last Modified: Saturday, September 25, 2021 PM04:45:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -125,9 +125,8 @@ xbase = x0
 ! function evaluations, especially if the loop is conducted asynchronously. However, the loop here
 ! is not fully parallelizable if NPT>2N+1, as the definition XPT(;, 2N+2:end) involves FVAL(1:2N+1).
 evaluated = .false.
-! Initialize XPT and FVAL to HUGENUM. Otherwise, compilers may complain that XPT and FVAL are not
-! (completely) initialized if the initialization aborts due to abnormality (see CHECKEXIT).
-xpt = HUGENUM
+! Initialize FVAL to HUGENUM. Otherwise, compilers may complain that FVAL is not (completely)
+! initialized if the initialization aborts due to abnormality (see CHECKEXIT).
 fval = HUGENUM
 
 ! Set XPT, FVAL, KOPT, and XOPT.

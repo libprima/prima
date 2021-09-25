@@ -5,7 +5,7 @@ module test_newuoa_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wednesday, September 22, 2021 PM11:48:31
+! Last Modified: Saturday, September 25, 2021 AM12:17:37
 
 implicit none
 private
@@ -58,18 +58,22 @@ if (present(probs)) then
 else
     nprobs = 5
     probs_loc(1:nprobs) = ['chebyqad', 'chrosen ', 'trigsabs', 'trigssqs', 'vardim  ']
+    nprobs = 1
+    probs_loc(1:nprobs) = ['chebyqad']
 end if
 
 if (present(mindim)) then
     mindim_loc = mindim
 else
     mindim_loc = MINDIM_DFT
+    mindim_loc = 10
 end if
 
 if (present(maxdim)) then
     maxdim_loc = maxdim
 else
     maxdim_loc = MAXDIM_DFT
+    maxdim_loc = 10
 end if
 
 if (present(dimstride)) then
@@ -88,11 +92,11 @@ do iprob = 1, nprobs
     probname = probs_loc(iprob)
     do n = mindim_loc, maxdim_loc, dimstride_loc
         ! NPT_LIST defines some extreme values of NPT.
-        npt_list = int([1, &
-            & n + 1, n + 2, n + 3, &
-            & 2 * n, 2 * n + 1, 2 * n + 2, &
-            & (n + 1) * (n + 2) / 2 - 1, (n + 1) * (n + 2) / 2, (n + 1) * (n + 2) / 2 + 1], &
-            & kind(npt))
+        npt_list = [1_IK, &
+            & n + 1_IK, n + 2_IK, n + 3_IK, &
+            & 2_IK * n, 2_IK * n + 1_IK, 2_IK * n + 2_IK, &
+            & (n + 1_IK) * (n + 2_IK) / 2_IK - 1_IK, (n + 1_IK) * (n + 2_IK) / 2_IK, &
+            & (n + 1_IK) * (n + 2_IK) / 2_IK + 1_IK]
         do irand = 1, int(size(npt_list) + max(0_IK, nrand_loc), kind(irand))
             call setseed(int(sum(istr(probname)) + n + irand))  ! Initialize the random seed.
             if (irand <= size(npt_list)) then

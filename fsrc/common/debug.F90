@@ -5,7 +5,7 @@
 !
 ! Started: July 2020.
 !
-! Last Modified: Wednesday, September 22, 2021 PM06:06:30
+! Last Modified: Saturday, September 25, 2021 PM06:34:43
 
 
 #include "ppf.h"
@@ -34,6 +34,7 @@ subroutine assert(assertion, description, srname)
 ! MATLAB analogue: assert(assertion, sprintf('%s: Assertion failed: %s', srname, description))
 ! Python analogue: assert assertion, srname + ': Assertion failed: ' + description
 ! C analogue: assert(assertion)  /* An error message will be produced by the compiler */
+implicit none
 logical, intent(in) :: assertion  ! A condition that is expected to be true
 character(len=*), intent(in) :: description  ! Description of the assertion in human language
 character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure
@@ -46,6 +47,7 @@ end subroutine assert
 
 
 subroutine errstop(srname, mssg)
+implicit none
 character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: mssg
 
@@ -94,6 +96,7 @@ end subroutine backtr
 subroutine verisize_real_1(x, n)
 ! VERISIZE_REAL_1 verifies whether SIZE(X) = N.
 use, non_intrinsic :: consts_mod, only : RP, IK
+implicit none
 real(RP), intent(in) :: x(:)
 integer(IK), intent(in) :: n
 
@@ -108,6 +111,7 @@ end subroutine verisize_real_1
 subroutine verisize_real_2(x, m, n)
 ! VERISIZE_REAL_2 verifies whether SIZE(X, 1) = M, SIZE(X, 2) = N.
 use, non_intrinsic :: consts_mod, only : RP, IK
+implicit none
 real(RP), intent(in) :: x(:, :)
 integer(IK), intent(in) :: m
 integer(IK), intent(in) :: n
@@ -126,6 +130,7 @@ end subroutine verisize_real_2
 subroutine verisize_int_1(x, n)
 ! VERISIZE_INT_1 verifies whether SIZE(X) = N.
 use, non_intrinsic :: consts_mod, only : IK
+implicit none
 integer(IK), intent(in) :: x(:)
 integer(IK), intent(in) :: n
 
@@ -140,6 +145,7 @@ end subroutine verisize_int_1
 subroutine verisize_int_2(x, m, n)
 ! VERISIZE_INT_2 verifies whether SIZE(X, 1) = M, SIZE(X, 2) = N.
 use, non_intrinsic :: consts_mod, only : IK
+implicit none
 integer(IK), intent(in) :: x(:, :)
 integer(IK), intent(in) :: m
 integer(IK), intent(in) :: n
@@ -158,6 +164,7 @@ end subroutine verisize_int_2
 subroutine verisize_logical_1(x, n)
 ! VERISIZE_LOGICAL_1 verifies whether SIZE(X) = N.
 use, non_intrinsic :: consts_mod, only : IK
+implicit none
 logical, intent(in) :: x(:)
 integer(IK), intent(in) :: n
 
@@ -172,6 +179,7 @@ end subroutine verisize_logical_1
 subroutine verisize_logical_2(x, m, n)
 ! VERISIZE_LOGICAL_2 verifies whether SIZE(X, 1) = M, SIZE(X, 2) = N.
 use, non_intrinsic :: consts_mod, only : IK
+implicit none
 logical, intent(in) :: x(:, :)
 integer(IK), intent(in) :: m
 integer(IK), intent(in) :: n

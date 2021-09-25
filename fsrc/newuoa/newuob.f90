@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, September 23, 2021 AM01:59:49
+! Last Modified: Saturday, September 25, 2021 PM08:28:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -513,6 +513,7 @@ call retmssg(info, iprint, nf, f, x, solver)
 
 ! Postconditions
 if (DEBUGGING) then
+    call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
     call assert(.not. any(fhist(1:min(nf, maxfhist)) < f), 'F is the smallest in FHIST', srname)
 end if
 

@@ -1,13 +1,8 @@
+! testshape.f90
 program testshape
-real, external :: test(:, :)
-real :: A(3, 4)
-real :: B(4, 3)
-B = test(A)
+implicit none
+integer :: a(3, 2)
+a(:, :) = a(:, :)  ! This line is OK. Benchmark for the erroneous line.
+a(:, 1:2) = a(:, 1:2)  ! This line is OK. Benchmark for the erroneous line.
+a(:, [1, 2]) = a(:, [1, 2])  ! Do nothing ..., but it triggers the error.
 end program testshape
-
-
-function test(A) result(B)
-real :: A(:, :)
-real :: B(size(A, 2), size(A, 1))
-B = transpose(A)
-end function test
