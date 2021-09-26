@@ -6,7 +6,7 @@ module initialize_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, September 26, 2021 PM06:21:34
+! Last Modified: Sunday, September 26, 2021 PM07:07:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -160,7 +160,7 @@ end do
 ij(:, 1) = int(([(k, k=2_IK * n + 2_IK, npt)] - n - 2) / n, IK) ! [(K, K=1, NPT)] = [1, 2, ..., NPT]
 ij(:, 2) = int([(k, k=2_IK * n + 2_IK, npt)] - (ij(:, 1) + 1) * n - 1, IK)
 ij(:, 1) = mod(ij(:, 1) + ij(:, 2) - 1_IK, n) + 1_IK  ! MOD(K-1, N) + 1 = K-N for K in [N+1, 2N]
-! The next line ensures IJ(:, 1) > IJ(:, 2). MATLAB code: IJ = SORT(IJ, 2, 'DESCEND').
+! The next line ensures IJ(:, 1) > IJ(:, 2).
 ij = sort(ij, 2, 'descend')
 ! Increment IJ by 1. This 1 comes from the fact that XPT(:, 1) corresponds to the base point XBASE.
 ij = ij + 1_IK

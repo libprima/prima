@@ -5,7 +5,7 @@ module test_newuoa_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, September 26, 2021 PM06:20:29
+! Last Modified: Sunday, September 26, 2021 PM09:38:58
 
 implicit none
 private
@@ -58,22 +58,18 @@ if (present(probs)) then
 else
     nprobs = 5
     probs_loc(1:nprobs) = ['chebyqad', 'chrosen ', 'trigsabs', 'trigssqs', 'vardim  ']
-    nprobs = 1
-    probs_loc(1:nprobs) = ['chebyqad']
 end if
 
 if (present(mindim)) then
     mindim_loc = mindim
 else
     mindim_loc = MINDIM_DFT
-    mindim_loc = 10
 end if
 
 if (present(maxdim)) then
     maxdim_loc = maxdim
 else
     maxdim_loc = MAXDIM_DFT
-    maxdim_loc = 10
 end if
 
 if (present(dimstride)) then
