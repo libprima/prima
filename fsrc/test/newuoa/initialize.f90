@@ -6,7 +6,7 @@ module initialize_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, September 22, 2021 AM11:37:10
+! Last Modified: Sunday, September 26, 2021 PM06:21:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -46,7 +46,7 @@ use, non_intrinsic :: evaluate_mod, only : evalf
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: info_mod, only : INFO_DFT
-use, non_intrinsic :: linalg_mod, only : eye
+use, non_intrinsic :: linalg_mod, only : eye, sort
 use, non_intrinsic :: output_mod, only : fmssg
 use, non_intrinsic :: pintrf_mod, only : FUN
 
@@ -125,9 +125,8 @@ xbase = x0
 ! function evaluations, especially if the loop is conducted asynchronously. However, the loop here
 ! is not fully parallelizable if NPT>2N+1, as the definition XPT(;, 2N+2:end) involves FVAL(1:2N+1).
 evaluated = .false.
-! Initialize XPT and FVAL to HUGENUM. Otherwise, compilers may complain that XPT and FVAL are not
-! (completely) initialized if the initialization aborts due to abnormality (see CHECKEXIT).
-xpt = HUGENUM
+! Initialize FVAL to HUGENUM. Otherwise, compilers may complain that FVAL is not (completely)
+! initialized if the initialization aborts due to abnormality (see CHECKEXIT).
 fval = HUGENUM
 
 ! Set XPT, FVAL, KOPT, and XOPT.
@@ -162,7 +161,7 @@ ij(:, 1) = int(([(k, k=2_IK * n + 2_IK, npt)] - n - 2) / n, IK) ! [(K, K=1, NPT)
 ij(:, 2) = int([(k, k=2_IK * n + 2_IK, npt)] - (ij(:, 1) + 1) * n - 1, IK)
 ij(:, 1) = mod(ij(:, 1) + ij(:, 2) - 1_IK, n) + 1_IK  ! MOD(K-1, N) + 1 = K-N for K in [N+1, 2N]
 ! The next line ensures IJ(:, 1) > IJ(:, 2). MATLAB code: IJ = SORT(IJ, 2, 'DESCEND').
-ij = reshape([maxval(ij, dim=2), minval(ij, dim=2)], [size(ij, 1), size(ij, 2)])
+ij = sort(ij, 2, 'descend')
 ! Increment IJ by 1. This 1 comes from the fact that XPT(:, 1) corresponds to the base point XBASE.
 ij = ij + 1_IK
 ! Further revise IJ according to FVAL(2 : 2*N + 1).
@@ -221,7 +220,7 @@ kopt = int(minloc(fval, dim=1, mask=evaluated), kind(kopt))
 if (DEBUGGING) then
     call assert(all(ij >= 2 .and. ij <= 2 * n + 1), '1 <= IJ <= N', srname)
     call assert(all(mod(ij(:, 1) - 2_IK, n) > mod(ij(:, 2) - 2_IK, n)), &
-         & 'MOD(IJ(:, 1)-2, N) > MOD(IJ(:, 2) - 2, N)', srname)
+         & 'MOD(IJ(:, 1) - 2, N) > MOD(IJ(:, 2) - 2, N)', srname)
     call assert(nf <= npt, 'NF <= NPT', srname)
     call assert(kopt >= 1 .and. kopt <= nf, '1 <= KOPT <= NF', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)

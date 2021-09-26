@@ -346,8 +346,9 @@ end if
 call safealloc(fhist_c, maxfhist)
 
 !-------------------- Call NEWUOB, which performs the real calculations. --------------------------!
-call newuob(calfun, iprint_c, maxfun_c, npt_c, eta1_c, eta2_c, ftarget_c, gamma1_c, gamma2_c, &
-    & rhobeg_c, rhoend_c, x, nf_c, f, fhist_c, xhist_c, info_c)
+!call newuob(calfun, iprint_c, maxfun_c, npt_c, eta1_c, eta2_c, ftarget_c, gamma1_c, gamma2_c, &
+!    & rhobeg_c, rhoend_c, x, nf_c, f, fhist_c, xhist_c, info_c)
+call newuob
 !--------------------------------------------------------------------------------------------------!
 
 ! Write the outputs.

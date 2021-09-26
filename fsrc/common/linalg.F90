@@ -17,7 +17,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, September 24, 2021 AM10:33:57
+! Last Modified: Sunday, September 26, 2021 PM07:06:08
 
 
 #include "ppf.h"
@@ -38,6 +38,7 @@ public :: hessmul
 public :: isminor
 public :: issymmetric
 public :: norm
+public :: sort
 
 interface matprod
 ! N.B.:
@@ -66,6 +67,11 @@ end interface eye
 interface isminor
     module procedure isminor0, isminor1
 end interface isminor
+
+interface sort
+    module procedure sort_i1, sort_i2
+end interface sort
+
 
 contains
 
@@ -1027,6 +1033,142 @@ else
 end if
 
 end function norm
+
+function sort_i1(x, direction) result(y)
+! This function sorts X according to DIRECTION, which should be 'ascend' (default) or 'descend'.
+use, non_intrinsic :: consts_mod, only : IK
+#if __DEBUGGING__ == 1
+use, non_intrinsic :: debug_mod, only : assert
+#endif
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: x(:)
+character(len=*), optional, intent(in) :: direction
+
+! Outputs
+integer(IK) :: y(size(x))
+
+! Local variables
+#if __DEBUGGING__ == 1
+character(len=*), parameter :: srname = 'SORT_I1'
+#endif
+integer(IK) :: i
+integer(IK) :: n
+integer(IK) :: newn
+logical :: ascending
+
+!====================!
+! Calculation starts !
+!====================!
+
+ascending = .true.
+if (present(direction)) then
+    if (direction == 'descend' .or. direction == 'DESCEND') then
+        ascending = .false.
+    end if
+end if
+
+y = x
+n = int(size(y), kind(n))
+do while (n > 1)  ! Bubble sort.
+    newn = 0
+    do i = 2, n
+        if ((y(i - 1) > y(i) .and. ascending) .or. (y(i - 1) < y(i) .and. .not. ascending)) then
+            y([i - 1_IK, i]) = y([i, i - 1_IK])
+            newn = i
+        end if
+    end do
+    n = newn
+end do
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+#if __DEBUGGING__ == 1
+if (ascending) then
+    call assert(all(y(1:n - 1) <= y(2:n)), 'Y is ascending', srname)
+else
+    call assert(all(y(1:n - 1) >= y(2:n)), 'Y is descending', srname)
+end if
+#endif
+end function sort_i1
+
+function sort_i2(x, dim, direction) result(y)
+! This function sorts a matrix X according to DIM (1 or 2) and DIRECTION ('ascend' or 'descend').
+#if __DEBUGGING__ == 1
+use, non_intrinsic :: debug_mod, only : assert
+#endif
+use, non_intrinsic :: consts_mod, only : IK
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: x(:, :)
+integer, optional, intent(in) :: dim
+character(len=*), optional, intent(in) :: direction
+
+! Outputs
+integer(IK) :: y(size(x, 1), size(x, 2))
+
+! Local variables
+#if __DEBUGGING__ == 1
+character(len=*), parameter :: srname = 'SORT_I2'
+integer(IK) :: n
+#endif
+character(len=100) :: direction_loc
+integer :: dim_loc
+integer(IK) :: i
+
+!====================!
+! Calculation starts !
+!====================!
+
+dim_loc = 1
+if (present(dim)) then
+    dim_loc = dim
+end if
+
+direction_loc = 'ascend'
+if (present(direction)) then
+    direction_loc = direction
+end if
+
+y = x
+if (dim_loc == 1) then
+    do i = 1, int(size(x, 2), IK)
+        y(:, i) = sort_i1(y(:, i), trim(direction_loc))
+    end do
+else
+    do i = 1, int(size(x, 1), IK)
+        y(i, :) = sort_i1(y(i, :), trim(direction_loc))
+    end do
+end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+#if __DEBUGGING__ == 1
+if (dim_loc == 1) then
+    n = int(size(y, 1), kind(n))
+    if (trim(direction_loc) == 'ascend' .or. trim(direction_loc) == 'ASCEND') then
+        call assert(all(y(1:n - 1, :) <= y(2:n, :)), 'Y is ascending along dimension 1', srname)
+    else
+        call assert(all(y(1:n - 1, :) >= y(2:n, :)), 'Y is descending along dimension 1', srname)
+    end if
+else
+    n = int(size(y, 2), kind(n))
+    if (trim(direction_loc) == 'ascend' .or. trim(direction_loc) == 'ASCEND') then
+        call assert(all(y(:, 1:n - 1) <= y(:, 2:n)), 'Y is ascending along dimension 2', srname)
+    else
+        call assert(all(y(:, 1:n - 1) >= y(:, 2:n)), 'Y is descending along dimension 2', srname)
+    end if
+end if
+#endif
+end function sort_i2
 
 
 end module linalg_mod

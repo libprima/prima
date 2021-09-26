@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, September 24, 2021 AM09:57:57
+! Last Modified: Sunday, September 26, 2021 PM02:41:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -207,8 +207,8 @@ trtol = 1.0E-2_RP  ! Tolerance used in trsapp.
 ! when SHORTD = TRUE, its value is used only in BAD_TRSTEP, which is TRUE regardless of RATIO.
 ratio = -ONE
 
-! In most cases, each trust-region iteration takes one function evaluation. The following setting
-! essentially imposes no constraint on the maximal number of trust-region iterations.
+! Each trust-region iteration takes at most two function evaluation. The following setting imposes
+! no constraint on the maximal number of trust-region iterations.
 maxtr = 2_IK * maxfun
 ! MAXTR is unlikely to be reached, but we define the following default value for INFO for safety.
 info = MAXTR_REACHED
@@ -261,6 +261,12 @@ do tr = 1, maxtr
         call fmssg(iprint, nf, f, x, solver)
         ! Save X and F into the history.
         call savehist(nf, f, x, fhist, xhist)
+        ! Check whether to exit
+        subinfo = checkexit(maxfun, nf, f, ftarget, x)
+        if (subinfo /= INFO_DFT) then
+            info = subinfo
+            exit
+        end if
 
         ! DNORMSAVE constains the DNORM of the latest 3 function evaluations with the current RHO.
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
@@ -276,13 +282,6 @@ do tr = 1, maxtr
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
         if (delta <= 1.5_RP * rho) then
             delta = rho
-        end if
-
-        ! Check whether to exit
-        subinfo = checkexit(maxfun, nf, f, ftarget, x)
-        if (subinfo /= INFO_DFT) then
-            info = subinfo
-            exit
         end if
 
         ! Set KNEW_TR to the index of the interpolation point that will be replaced by XNEW. KNEW_TR
@@ -436,6 +435,12 @@ do tr = 1, maxtr
         call fmssg(iprint, nf, f, x, solver)
         ! Save X and F into the history.
         call savehist(nf, f, x, fhist, xhist)
+        ! Check whether to exit
+        subinfo = checkexit(maxfun, nf, f, ftarget, x)
+        if (subinfo /= INFO_DFT) then
+            info = subinfo
+            exit
+        end if
 
         ! DNORMSAVE constains the DNORM of the latest 3 function evaluations with the current RHO.
         !------------------------------------------------------------------------------------------!
@@ -451,13 +456,6 @@ do tr = 1, maxtr
         moderr = f - fopt + qred
         ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
         moderrsav = [moderrsav(2:size(moderrsav)), moderr]
-
-        ! Check whether to exit
-        subinfo = checkexit(maxfun, nf, f, ftarget, x)
-        if (subinfo /= INFO_DFT) then
-            info = subinfo
-            exit
-        end if
 
         ! Update BMAT, ZMAT and IDZ, so that the KNEW_GEO-th interpolation point is replaced by
         ! XNEW, whose information is encoded in VLAG and BETA.

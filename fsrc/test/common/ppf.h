@@ -152,7 +152,7 @@
  * 1. Do NOT change is unless you are really sure.
  * 2. If the code is interfaced with MATLAB, then you still need to modify
  *    mexapi.F to set __USE_QP__ to 1. */
-#define __QP_AVAILABLE__ 0
+#define __QP_AVAILABLE__ 1
 
 /* Revise __REAL_PRECISION__ according to __QP_AVAILABLE__ . */
 #if __QP_AVAILABLE__ != 1 && __REAL_PRECISION__ > 64

@@ -44,7 +44,7 @@ end function noisyx
 
 function noisyfun(x, f) result(noify_f)
 use, intrinsic :: ieee_arithmetic, only : IEEE_VALUE, IEEE_POSITIVE_INF, IEEE_NEGATIVE_INF
-use, non_intrinsic :: consts_mod, only : RP, ONE, TWO
+use, non_intrinsic :: consts_mod, only : RP, ONE, TWO, TENTH
 use, non_intrinsic :: param_mod, only : F_NOISE
 use, non_intrinsic :: rand_mod, only : getseed, setseed, rand
 implicit none
@@ -58,7 +58,7 @@ integer :: seed
 real(RP) :: r
 
 call getseed(seedsav)
-seed = ceiling(1.0E6_RP * (cos(1.0E6_RP * sin(1.0E6_RP * (abs(f) + ONE) * cos(1.0E6_RP * sum(abs(x)))))))
+seed = ceiling(TENTH * real(huge(0), RP) * cos(1.0E3_RP * (abs(f) + ONE) * cos(1.0E3_RP * sum(abs(x)))))
 call setseed(max(abs(seed), 1))
 call setseed(seedsav)
 deallocate (seedsav)
@@ -68,11 +68,11 @@ r = TWO * rand() - ONE
 noify_f = f + F_NOISE * max(ONE, abs(f)) * r
 
 if (r > 0.75_RP) then
-    noify_f = IEEE_VALUE(ONE, IEEE_POSITIVE_INF)
+    noify_f = real(IEEE_VALUE(0.0, IEEE_POSITIVE_INF), RP)
 !elseif (r > 0.5_RP) then
-    !noify_f = IEEE_VALUE(ONE, IEEE_QUIET_NAN)
+    !noify_f = real(IEEE_VALUE(0.0, IEEE_QUIET_NAN), RP)
 elseif (r < -0.9995_RP) then
-    noify_f = IEEE_VALUE(ONE, IEEE_NEGATIVE_INF)
+    noify_f = real(IEEE_VALUE(0.0, IEEE_NEGATIVE_INF), RP)
 end if
 end function noisyfun
 

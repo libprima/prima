@@ -62,8 +62,7 @@ a_i2_r8_d1_test a_i4_r8_d1_test a_i8_r8_d1_test a_i2_r8_d0_test a_i4_r8_d0_test 
 	FC = $(AFORT) \
 	-TENV:simd_zmask=off -TENV:simd_omask=off -TENV:simd_imask=off #-TENV:simd_dmask=off -TENV:simd_umask=off
 a_i2_r16_d1_test a_i4_r16_d1_test a_i8_r16_d1_test a_i2_r16_d0_test a_i4_r16_d0_test a_i8_r16_d0_test: \
-	FC = $(AFORT) \
-	-TENV:simd_zmask=off -TENV:simd_omask=off -TENV:simd_imask=off #-TENV:simd_dmask=off -TENV:simd_umask=off
+	FC = $(AFORT) -TENV:simd_zmask=off
 
 # AMD AOCC Flang
 DFORT = /opt/AMD/aocc-compiler-3.1.0/bin/flang -std=f$(FSTD) -Mstandard -Wall -Wextra
@@ -171,7 +170,7 @@ x_i2_r16_d1_test x_i4_r16_d1_test x_i8_r16_d1_test x_i2_r16_d0_test x_i4_r16_d0_
 
 %_test: src header_% $(COMMONSRC) $(NEWUOASRC) $(TESTSRC)
 	$(FC) $(FFLAGS) -o $@ $(COMMONSRC) $(NEWUOASRC) $(TESTSRC)
-	./$@
+	./$@ || (echo "mycommand failed $$?"; exit 1)
 	@printf "\n$@ succeeds!\n\n"
 
 src: ../newuoa/* ../common/* \
@@ -179,10 +178,17 @@ src: ../newuoa/* ../common/* \
 	@cp -r ../newuoa ./
 	@cp -r ../common ./
 
+# For REAL128:
+# Flang and nvfortran do not support REAL128;
+# AOCC Flang complains about a symbol lookup error: undefined symbol: "fort_rnumq_i8";
+# ifx encounters an internal error when compiling with REAL128.
+dtest ftest vtest xtest: QPAVLB = 0
+atest gtest ntest itest stest: QPAVLB = 1
 header_%: IK = $(shell expr 8 \* $$(echo $@ | sed "s/.*_i//" | sed "s/_.*//"))
 header_%: RP = $(shell expr 8 \* $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//"))
 header_%: DBG = $(shell echo $@ | sed "s/.*_d//" | sed "s/_.*//")
 header_%: $(HEADERS)
+	@sed -i '0,/^#define __QP_AVAILABLE__ [0-9]*/s//#define __QP_AVAILABLE__ $(QPAVLB)/' $(HEADERS)
 	@sed -i '0,/^#define __INTEGER_KIND__ [0-9]*/s//#define __INTEGER_KIND__ $(IK)/' $(HEADERS)
 	@sed -i '0,/^#define __REAL_PRECISION__ [0-9]*/s//#define __REAL_PRECISION__ $(RP)/' $(HEADERS)
 	@sed -i '0,/^#define __DEBUGGING__ [0-9]*/s//#define __DEBUGGING__ $(DBG)/' $(HEADERS)

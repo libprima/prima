@@ -5,7 +5,7 @@
 !
 ! Started: July 2020.
 !
-! Last Modified: Saturday, September 25, 2021 PM06:34:43
+! Last Modified: Sunday, September 26, 2021 PM06:56:57
 
 
 #include "ppf.h"
@@ -38,12 +38,27 @@ implicit none
 logical, intent(in) :: assertion  ! A condition that is expected to be true
 character(len=*), intent(in) :: description  ! Description of the assertion in human language
 character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure
-#if __DEBUGGING__ == 1
+
 if (.not. assertion) then
+#if __DEBUGGING__ == 1
     call errstop(trim(srname), 'Assertion failed: '//description)
-end if
+#else
+    call warning(trim(srname), 'Assertion failed: '//description)
 #endif
+end if
 end subroutine assert
+
+
+#if __DEBUGGING__ == 0
+subroutine warning(srname, mssg)
+implicit none
+character(len=*), intent(in) :: srname
+character(len=*), intent(in) :: mssg
+
+print '(/1A/)', 'WARNING: '//trim(srname)//': '//trim(mssg)//'.'
+
+end subroutine warning
+#endif
 
 
 subroutine errstop(srname, mssg)
@@ -51,12 +66,8 @@ implicit none
 character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: mssg
 
-#if __DEBUGGING__ == 1
 call backtr()
-#endif
-
 print '(/1A/)', 'ERROR: '//trim(srname)//': '//trim(mssg)//'.'
-
 stop  ! This means to stop the whole program.
 
 end subroutine errstop

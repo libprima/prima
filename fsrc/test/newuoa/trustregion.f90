@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, September 24, 2021 AM09:40:55
+! Last Modified: Saturday, September 25, 2021 PM09:49:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -47,7 +47,7 @@ subroutine trsapp(delta, gq, hq, pq, tol, x, xpt, crvmin, s, info)
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, HALF, ZERO, PI, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: linalg_mod, only : Ax_plus_y, inprod, matprod, issymmetric
+use, non_intrinsic :: linalg_mod, only : Ax_plus_y, inprod, matprod, issymmetric, norm
 
 implicit none
 
@@ -94,6 +94,7 @@ real(RP) :: ggsav
 real(RP) :: hd(size(x))
 real(RP) :: hs(size(x))
 real(RP) :: hx(size(x))
+real(RP) :: hypt
 real(RP) :: qadd
 real(RP) :: qbeg
 real(RP) :: qmin
@@ -173,7 +174,18 @@ do iter = 1, itermax
         exit
     end if
     ! Set BSTEP to the step length such that ||S+BSTEP*D|| = DELTA
-    bstep = (delsq - ss) / (ds + sqrt(ds**2 + dd * (delsq - ss)))
+    if (iter == 1) then
+        bstep = delta / sqrt(dd)
+    else
+        hypt = sqrt(ds**2 + dd * (delsq - ss))
+        ! Powell's code does not distinguish the following two cases, which have no difference in
+        ! precise arithmetic. The following scheme stabilizes the calculation. Copied from LINCOA.
+        if (ds <= ZERO) then
+            bstep = (hypt - ds) / dd
+        else
+            bstep = (delsq - ss) / (ds + hypt)
+        end if
+    end if
 !----------------------------------------------------------------!
 !-----!hd = hessmul(hq, pq, xpt, d) !----------------------------!
     hd = Ax_plus_y(hq, d, matprod(xpt, pq * matprod(d, xpt)))
@@ -210,24 +222,23 @@ do iter = 1, itermax
 
     ! Check whether to exit. This should be done after updating HS and GG, which will be used for
     ! the 2D minimization if any.
-    if (alpha >= bstep .or. ss >= delsq) then
-        ! CG path cuts the boundary. Set CRVMIN to 0.
-        crvmin = ZERO
-        ! The only possibility that twod_search is true.
-        twod_search = .true.
-        exit
-    end if
-
-    ! Check whether to exit due to small QADD
-    if (qadd <= tol * qred) then
-        info = 1_IK
-        exit
-    end if
-
     ! Exit in case of Inf/NaN in S.
     if (.not. is_finite(sum(abs(s)))) then
         s = sold
         info = -1_IK
+        exit
+    end if
+
+    ! Exit if CG path cuts the boundary. It is the only possibility that twod_search is true.
+    if (alpha >= bstep .or. ss >= delsq) then
+        crvmin = ZERO
+        twod_search = (n >= 2)  ! TWOD_SEARCH should be FALSE if N = 1.
+        exit
+    end if
+
+    ! Exit due to small QADD.
+    if (qadd <= tol * qred) then
+        info = 1_IK
         exit
     end if
 
@@ -350,6 +361,8 @@ end do
 ! Postconditions
 if (DEBUGGING) then
     call assert(all(is_finite(s)), 'S is finite', srname)
+    ! Due to rounding, it may happen that |S| > DELTA, but |S| > 2*DELTA is highly improbable.
+    call assert(norm(s) <= TWO * delta, 'NORM(S) <= 2*DELTA', srname)
 end if
 
 end subroutine trsapp
