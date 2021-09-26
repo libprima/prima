@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, September 25, 2021 PM09:49:59
+! Last Modified: Monday, September 27, 2021 AM12:29:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -110,7 +110,6 @@ real(RP) :: shs
 real(RP) :: sold(size(x))
 real(RP) :: ss
 real(RP) :: sth
-real(RP) :: t
 real(RP) :: unitang
 
 ! Sizes
@@ -281,8 +280,15 @@ do iter = 1, itermax
     end if
 
     ! Begin the 2D minimization by calculating D and HD and some scalar products.
-    t = sqrt(delsq * gg - sgk**2)
-    d = (delsq / t) * (g + hs) - (sgk / t) * s
+    !----------------------------------------------------------------------------------------------!
+    !!t = sqrt(delsq * gg - sgk**2)
+    !!d = (delsq / t) * (g + hs) - (sgk / t) * s
+    ! The above is Powell's code. When DELSQ*GG - SGK**2 is close to EPS, the error in DENOM can be
+    ! large. To rectify this, we calculate D as follows, which ensures |D| = |S|.
+    d = inprod(s,s) * (g + hs) - sgk * s
+    d= (d / norm(d)) * norm(s)   ! INPROD(S, D) = 0 and |D| = |S| = in precise arithmetic.
+    !----------------------------------------------------------------------------------------------!
+
 !----------------------------------------------------------------!
 !-----!hd = hessmul(hq, pq, xpt, d) !----------------------------!
     hd = Ax_plus_y(hq, d, matprod(xpt, pq * matprod(d, xpt)))

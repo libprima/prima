@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, September 26, 2021 PM02:41:03
+! Last Modified: Sunday, September 26, 2021 PM10:27:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -181,6 +181,11 @@ if (subinfo /= INFO_DFT) then
     ! Arrange FHIST and XHIST so that they are in the chronological order.
     call rangehist(nf, fhist, xhist)
     call retmssg(info, iprint, nf, f, x, solver)
+    ! Postconditions
+    if (DEBUGGING) then
+        call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
+        call assert(.not. any(fhist(1:min(nf, maxfhist)) < f), 'F is the smallest in FHIST', srname)
+    end if
     return
 end if
 

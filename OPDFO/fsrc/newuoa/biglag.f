@@ -1,5 +1,6 @@
       SUBROUTINE BIGLAG (N,NPT,XOPT,XPT,BMAT,ZMAT,IDZ,NDIM,KNEW,
      1  DELTA,D,ALPHA,HCOL,GC,GD,S,W)
+      use linalg_mod, only : norm
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IMPLICIT REAL*8 (A-H,O-Z)
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
@@ -115,11 +116,16 @@ C
       END DO
       TEMP=DD*SS-SP*SP
       IF (TEMP <= 1.0D-8*DD*SS) GOTO 160
-      DENOM=DSQRT(TEMP)
+      !DENOM=DSQRT(TEMP)
+      !DO I=1,N
+      !    S(I)=(DD*S(I)-SP*D(I))/DENOM
+      !    W(I)=ZERO
+      !END DO
       DO I=1,N
-          S(I)=(DD*S(I)-SP*D(I))/DENOM
-          W(I)=ZERO
+          S(I)=(DD*S(I)-SP*D(I))
       END DO
+      s(1:N) = norm(d(1:N))*(s(1:N)/norm(s(1:N)))
+      W(1:N)=ZERO
 C
 C     Calculate the coefficients of the objective function on the circle,
 C     beginning with the multiplication of S by the second derivative matrix.

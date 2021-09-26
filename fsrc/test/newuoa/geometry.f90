@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, September 26, 2021 PM06:21:02
+! Last Modified: Monday, September 27, 2021 AM12:29:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -274,7 +274,6 @@ real(RP) :: angle
 real(RP) :: cf(5)
 real(RP) :: cth
 real(RP) :: dd
-real(RP) :: denom
 real(RP) :: dhd
 real(RP) :: dold(size(x))
 real(RP) :: gc(size(x))
@@ -372,8 +371,15 @@ do iter = 1, maxiter
     if (dd * ss - sp**2 <= 1.0E-8_RP * dd * ss) then
         exit
     end if
-    denom = sqrt(dd * ss - sp**2)
-    s = (dd * s - sp * d) / denom
+    !----------------------------------------------------------------------------------------------!
+    !!denom = sqrt(dd * ss - sp**2)
+    !!s = (dd * s - sp * d) / denom
+    ! The above is Powell's code. When DD*SS - SP**2 is close to EPS, the error in DENOM can be
+    ! large. In a test with single-precision arithmetic, this led to |S| > 2 |D|, but the two should
+    ! equal in theory. To rectify this, we calculate S as follows.
+    s = dd * s - sp * d
+    s = (s / norm(s)) * norm(d)  ! INPROD(S, D) = 0 and |S| = |D| in precise arithmetic.
+    !----------------------------------------------------------------------------------------------!
 
     w = matprod(xpt, hcol * matprod(s, xpt))
 
@@ -429,7 +435,6 @@ do iter = 1, maxiter
     cth = cos(angle)
     sth = sin(angle)
     tau = cf(1) + (cf(2) + cf(4) * cth) * cth + (cf(3) + cf(5) * cth) * sth
-
     dold = d
     d = cth * d + sth * s
 
@@ -619,12 +624,18 @@ if (.not. (ds**2 <= 0.99_RP * dd * ss)) then
     end if
 end if
 
-ssden = dd * ss - ds * ds
+ssden = dd * ss - ds**2
 densav = ZERO
 
 ! Begin the iteration by overwriting S with a vector that has the required length and direction.
 do iter = 1, n
-    s = (ONE / sqrt(ssden)) * (dd * s - ds * d)
+    !----------------------------------------------------------------------------------------------!
+    !!s = (ONE / sqrt(ssden)) * (dd * s - ds * d)
+    ! The above is Powell's code. When DD*SS - DS**2 is close to EPS, the error in DENOM can be
+    ! large. To rectify this, we calculate D as follows, which ensures |S| = |S|.
+    s = dd * s - ds * d
+    s = (s / norm(s)) * norm(d)  ! INPROD(S, D) = 0 and |S| = |D| in precise arithmetic.
+    !----------------------------------------------------------------------------------------------!
     xd = inprod(x, d)
     xs = inprod(x, s)
 
@@ -800,7 +811,7 @@ do iter = 1, n
 
     ss = inprod(s, s)
     ds = inprod(d, s)
-    ssden = dd * ss - ds * ds
+    ssden = dd * ss - ds**2
     if (ssden < 1.0E-8_RP * dd * ss) then
         exit
     end if

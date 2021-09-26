@@ -234,6 +234,11 @@ C
               S(I)=ZERO
           END IF
       END DO
+      ! Zaikun 20210926:
+      !!! Should we calculate S as in TRSAPP of NEWUOA in order to
+      ! make sure that |S| = |D|??? Namely,
+      ! S = something, then S = (S/norm(S))*norm(D).
+      ! See the corresponding part of TRSAPP.
       SREDG=-TEMP
 C
 C     By considering the simple bounds on the variables, calculate an upper
