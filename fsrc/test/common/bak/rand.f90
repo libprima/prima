@@ -6,7 +6,7 @@ module rand_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, September 26, 2021 AM12:36:12
+! Last Modified: Thursday, September 23, 2021 AM01:49:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -87,7 +87,7 @@ if (alloc_status /= 0) then
     call errstop(srname, 'Memory allocation fails.')
 end if
 
-seed_to_put = ceiling(huge(0) * sin(real([(i, i=seed - n + 1, seed)], DP)))
+seed_to_put = ceiling(huge(0) * sin(real([(i, i=seed, seed + n - 1)], DP)))
 d = int(real(huge(0), DP) / 1.0E2_DP)
 seed_to_put = abs(mod(seed_to_put, d)) + 1
 

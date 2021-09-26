@@ -6,7 +6,7 @@ module initialize_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, September 26, 2021 PM06:21:34
+! Last Modified: Sunday, September 26, 2021 AM11:06:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -46,7 +46,7 @@ use, non_intrinsic :: evaluate_mod, only : evalf
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: info_mod, only : INFO_DFT
-use, non_intrinsic :: linalg_mod, only : eye, sort
+use, non_intrinsic :: linalg_mod, only : eye
 use, non_intrinsic :: output_mod, only : fmssg
 use, non_intrinsic :: pintrf_mod, only : FUN
 
@@ -159,9 +159,14 @@ end do
 ! NPT - (2*N + 1) elements of such a permutation. Powell took the following permutation:
 ij(:, 1) = int(([(k, k=2_IK * n + 2_IK, npt)] - n - 2) / n, IK) ! [(K, K=1, NPT)] = [1, 2, ..., NPT]
 ij(:, 2) = int([(k, k=2_IK * n + 2_IK, npt)] - (ij(:, 1) + 1) * n - 1, IK)
+write (*, *) ij(:, 1), ij(:, 2)
 ij(:, 1) = mod(ij(:, 1) + ij(:, 2) - 1_IK, n) + 1_IK  ! MOD(K-1, N) + 1 = K-N for K in [N+1, 2N]
+write (*, *) ij(:, 1), ij(:, 2)
 ! The next line ensures IJ(:, 1) > IJ(:, 2). MATLAB code: IJ = SORT(IJ, 2, 'DESCEND').
-ij = sort(ij, 2, 'descend')
+write (*, *) [maxval(ij, dim=2), minval(ij, dim=2)]
+write (*, *) reshape([maxval(ij, dim=2), minval(ij, dim=2)], [size(ij, 1), size(ij, 2)])
+ij = reshape([maxval(ij, dim=2), minval(ij, dim=2)], [size(ij, 1), size(ij, 2)])
+write (*, *) ij(:, 1), ij(:, 2)
 ! Increment IJ by 1. This 1 comes from the fact that XPT(:, 1) corresponds to the base point XBASE.
 ij = ij + 1_IK
 ! Further revise IJ according to FVAL(2 : 2*N + 1).
@@ -185,6 +190,8 @@ end where
 where (fval(ij(:, 2) + n) < fval(ij(:, 2)))
     ij(:, 2) = ij(:, 2) + n
 end where
+write (*, *) n
+write (*, *) ij(:, 1), ij(:, 2)
 
 ! Set XPT(:, 2*N + 2 : NPT). It depends on IJ and hence on FVAL(2 : 2*N + 1).
 xpt(:, 2 * n + 2:npt) = xpt(:, ij(:, 1)) + xpt(:, ij(:, 2))
@@ -218,6 +225,9 @@ kopt = int(minloc(fval, dim=1, mask=evaluated), kind(kopt))
 
 ! Postconditions
 if (DEBUGGING) then
+    write (*, *) n, npt
+    write (*, *) ij(:, 1)
+    write (*, *) ij(:, 2)
     call assert(all(ij >= 2 .and. ij <= 2 * n + 1), '1 <= IJ <= N', srname)
     call assert(all(mod(ij(:, 1) - 2_IK, n) > mod(ij(:, 2) - 2_IK, n)), &
          & 'MOD(IJ(:, 1) - 2, N) > MOD(IJ(:, 2) - 2, N)', srname)

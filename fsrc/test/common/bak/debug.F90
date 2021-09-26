@@ -5,7 +5,7 @@
 !
 ! Started: July 2020.
 !
-! Last Modified: Sunday, September 26, 2021 PM06:56:57
+! Last Modified: Wednesday, September 22, 2021 PM06:06:30
 
 
 #include "ppf.h"
@@ -34,40 +34,27 @@ subroutine assert(assertion, description, srname)
 ! MATLAB analogue: assert(assertion, sprintf('%s: Assertion failed: %s', srname, description))
 ! Python analogue: assert assertion, srname + ': Assertion failed: ' + description
 ! C analogue: assert(assertion)  /* An error message will be produced by the compiler */
-implicit none
 logical, intent(in) :: assertion  ! A condition that is expected to be true
 character(len=*), intent(in) :: description  ! Description of the assertion in human language
 character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure
-
-if (.not. assertion) then
 #if __DEBUGGING__ == 1
+if (.not. assertion) then
     call errstop(trim(srname), 'Assertion failed: '//description)
-#else
-    call warning(trim(srname), 'Assertion failed: '//description)
-#endif
 end if
+#endif
 end subroutine assert
 
 
-#if __DEBUGGING__ == 0
-subroutine warning(srname, mssg)
-implicit none
+subroutine errstop(srname, mssg)
 character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: mssg
 
-print '(/1A/)', 'WARNING: '//trim(srname)//': '//trim(mssg)//'.'
-
-end subroutine warning
+#if __DEBUGGING__ == 1
+call backtr()
 #endif
 
-
-subroutine errstop(srname, mssg)
-implicit none
-character(len=*), intent(in) :: srname
-character(len=*), intent(in) :: mssg
-
-call backtr()
 print '(/1A/)', 'ERROR: '//trim(srname)//': '//trim(mssg)//'.'
+
 stop  ! This means to stop the whole program.
 
 end subroutine errstop
@@ -107,7 +94,6 @@ end subroutine backtr
 subroutine verisize_real_1(x, n)
 ! VERISIZE_REAL_1 verifies whether SIZE(X) = N.
 use, non_intrinsic :: consts_mod, only : RP, IK
-implicit none
 real(RP), intent(in) :: x(:)
 integer(IK), intent(in) :: n
 
@@ -122,7 +108,6 @@ end subroutine verisize_real_1
 subroutine verisize_real_2(x, m, n)
 ! VERISIZE_REAL_2 verifies whether SIZE(X, 1) = M, SIZE(X, 2) = N.
 use, non_intrinsic :: consts_mod, only : RP, IK
-implicit none
 real(RP), intent(in) :: x(:, :)
 integer(IK), intent(in) :: m
 integer(IK), intent(in) :: n
@@ -141,7 +126,6 @@ end subroutine verisize_real_2
 subroutine verisize_int_1(x, n)
 ! VERISIZE_INT_1 verifies whether SIZE(X) = N.
 use, non_intrinsic :: consts_mod, only : IK
-implicit none
 integer(IK), intent(in) :: x(:)
 integer(IK), intent(in) :: n
 
@@ -156,7 +140,6 @@ end subroutine verisize_int_1
 subroutine verisize_int_2(x, m, n)
 ! VERISIZE_INT_2 verifies whether SIZE(X, 1) = M, SIZE(X, 2) = N.
 use, non_intrinsic :: consts_mod, only : IK
-implicit none
 integer(IK), intent(in) :: x(:, :)
 integer(IK), intent(in) :: m
 integer(IK), intent(in) :: n
@@ -175,7 +158,6 @@ end subroutine verisize_int_2
 subroutine verisize_logical_1(x, n)
 ! VERISIZE_LOGICAL_1 verifies whether SIZE(X) = N.
 use, non_intrinsic :: consts_mod, only : IK
-implicit none
 logical, intent(in) :: x(:)
 integer(IK), intent(in) :: n
 
@@ -190,7 +172,6 @@ end subroutine verisize_logical_1
 subroutine verisize_logical_2(x, m, n)
 ! VERISIZE_LOGICAL_2 verifies whether SIZE(X, 1) = M, SIZE(X, 2) = N.
 use, non_intrinsic :: consts_mod, only : IK
-implicit none
 logical, intent(in) :: x(:, :)
 integer(IK), intent(in) :: m
 integer(IK), intent(in) :: n

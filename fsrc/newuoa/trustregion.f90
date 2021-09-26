@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, September 25, 2021 PM09:24:59
+! Last Modified: Saturday, September 25, 2021 PM09:49:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -232,7 +232,7 @@ do iter = 1, itermax
     ! Exit if CG path cuts the boundary. It is the only possibility that twod_search is true.
     if (alpha >= bstep .or. ss >= delsq) then
         crvmin = ZERO
-        twod_search = (n >= 2)  ! twod_search should be FALSE if N = 1.
+        twod_search = (n >= 2)  ! TWOD_SEARCH should be FALSE if N = 1.
         exit
     end if
 

@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, September 25, 2021 AM11:37:03
+! Last Modified: Sunday, September 26, 2021 PM06:21:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -136,10 +136,10 @@ function geostep(idz, knew, kopt, bmat, delbar, xpt, zmat) result(d)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : inprod, issymmetric
+use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, norm
 
 ! Solver-specific modules
 use, non_intrinsic :: vlagbeta_mod, only : vlagbeta
@@ -163,6 +163,7 @@ character(len=*), parameter :: srname = 'GEOSTEP'
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: alpha
+real(RP) :: absden
 real(RP) :: beta
 real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
 real(RP) :: xopt(size(xpt, 1))
@@ -206,8 +207,14 @@ call vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
 
 ! If the cancellation in DENOM is unacceptable, then BIGDEN calculates an alternative model step D.
 if (vlag(knew)**2 <= ZERO) then
-    d = bigden(idz, knew, kopt, bmat, d, xpt, zmat)
-elseif (abs(ONE + alpha * beta / vlag(knew)**2) <= 0.8_RP) then
+    ! Powell's code does not check VLAG(KNEW)**2. VLAG(KNEW)** > 0 in theory, but it can be 0 due to
+    ! rounding, which did happen in tests. If VLAG(KNEW) ** = 0, then BIGLAG fails, because BIGLAG
+    ! should maximize |VLAG(KNEW)|. Upon this failure, it is reasonable to call BIGDEN.
+    absden = -ONE
+else
+    absden = abs(ONE + alpha * beta / vlag(knew)**2)
+end if
+if (absden <= 0.8_RP) then
     d = bigden(idz, knew, kopt, bmat, d, xpt, zmat)
 end if
 
@@ -218,6 +225,8 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(all(is_finite(d)), 'D is finite', srname)
+    ! Due to rounding, it may happen that |D| > DELTA, but |D| > 2*DELTA is highly improbable.
+    call assert(norm(d) <= TWO * delbar, 'norm(D) <= 2*DELTA', srname)
 end if
 
 end function geostep
@@ -236,7 +245,7 @@ function biglag(idz, knew, bmat, delbar, x, xpt, zmat) result(d)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, PI, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : Ax_plus_y, inprod, matprod, issymmetric
+use, non_intrinsic :: linalg_mod, only : Ax_plus_y, inprod, matprod, issymmetric, norm
 
 implicit none
 
@@ -444,6 +453,8 @@ end do
 ! Postconditions
 if (DEBUGGING) then
     call assert(all(is_finite(d)), 'D is finite', srname)
+    ! Due to rounding, it may happen that |D| > DELTA, but |D| > 2*DELTA is highly improbable.
+    call assert(norm(d) <= TWO * delbar, 'NORM(D) <= 2*DELTA', srname)
 end if
 
 end function biglag
@@ -469,7 +480,7 @@ function bigden(idz, knew, kopt, bmat, d0, xpt, zmat) result(d)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, PI, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : Ax_plus_y, inprod, matprod, issymmetric
+use, non_intrinsic :: linalg_mod, only : Ax_plus_y, inprod, matprod, issymmetric, norm
 
 implicit none
 
@@ -804,6 +815,8 @@ end do
 ! Postconditions
 if (DEBUGGING) then
     call assert(all(is_finite(d)), 'D is finite', srname)
+    ! Due to rounding, it may happen that |D| > DELTA = |D0|, but |D| > 2*DELTA is highly improbable.
+    call assert(norm(d) <= TWO * norm(d0), 'NORM(D) <= 2*DELTA', srname)
 end if
 
 end function bigden

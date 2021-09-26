@@ -175,9 +175,9 @@ prerem = ONE
 actrem = -ONE
 jdrop = 0_IK
 
-! In most cases, each trust-region iteration takes one function evaluation. The following setting
-! essentially imposes no constraint on the maximal number of trust-region iterations.
-maxtr = 2_IK * maxfun
+! In most cases, each trust-region iteration takes at most two function evaluation. The following
+! setting essentially imposes no constraint on the maximal number of trust-region iterations.
+maxtr = 4_IK * maxfun
 ! MAXTR is unlikely to be reached, but we define the following default value for INFO for safety.
 info = MAXTR_REACHED
 

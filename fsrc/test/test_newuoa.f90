@@ -5,7 +5,7 @@ module test_newuoa_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Saturday, September 25, 2021 AM12:17:37
+! Last Modified: Sunday, September 26, 2021 PM06:20:29
 
 implicit none
 private
