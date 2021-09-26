@@ -6,7 +6,7 @@ module param_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wednesday, September 22, 2021 PM12:49:59
+! Last Modified: Sunday, September 26, 2021 PM09:39:22
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : RP, IK, TENTH
@@ -14,9 +14,9 @@ implicit none
 private
 public :: DIMSTRIDE_DFT, MINDIM_DFT, MAXDIM_DFT, NRAND_DFT, NOISE, F_NOISE, X_NOISE
 
-integer(IK), parameter :: DIMSTRIDE_DFT = 2
+integer(IK), parameter :: DIMSTRIDE_DFT = 1
 integer(IK), parameter :: MAXDIM_DFT = 20
-integer(IK), parameter :: MINDIM_DFT = 10
+integer(IK), parameter :: MINDIM_DFT = 1
 integer(IK), parameter :: NRAND_DFT = 10
 real(RP), parameter :: F_NOISE = 1.0E-2_RP
 real(RP), parameter :: NOISE = TENTH

@@ -8,6 +8,7 @@
 # Last Modified: September 13, 2021
 
 
+$(VERBOSE).SILENT:
 .PHONY: test src header_* clean
 
 SHELL = /bin/bash
@@ -29,7 +30,7 @@ NEWUOA = ./newuoa/
 TESTSRC = $(shell cat ./ffiles.txt)
 COMMONSRC = $(shell sed "s/^/\.\/common\//" ../common/ffiles.txt)
 NEWUOASRC = $(shell sed "s/^/\.\/newuoa\//" ../newuoa/ffiles.txt)
-
+TESTS = ntest atest dtest ftest gtest itest stest vtest xtest
 
 ####################################################################################################
 # All the tests
@@ -56,30 +57,30 @@ test:
 # For af95, -Rb imposes bound checking for arrays. But it is unhappy with zero-sized arrays as of
 # Absoft Pro 21.0. Thus -Rb is not included in the following options.
 AFORT = af95 -no-pie -m1 -en -et -Rc -Rs -Rp
-a_i2_r4_d1_test a_i4_r4_d1_test a_i8_r4_d1_test a_i2_r4_d0_test a_i4_r4_d0_test a_i8_r4_d0_test: \
+a_i2_r4_d1_tst a_i4_r4_d1_tst a_i8_r4_d1_tst a_i2_r4_d0_tst a_i4_r4_d0_tst a_i8_r4_d0_tst: \
 	FC = $(AFORT) -TENV:simd_zmask=off
-a_i2_r8_d1_test a_i4_r8_d1_test a_i8_r8_d1_test a_i2_r8_d0_test a_i4_r8_d0_test a_i8_r8_d0_test: \
+a_i2_r8_d1_tst a_i4_r8_d1_tst a_i8_r8_d1_tst a_i2_r8_d0_tst a_i4_r8_d0_tst a_i8_r8_d0_tst: \
 	FC = $(AFORT) \
 	-TENV:simd_zmask=off -TENV:simd_omask=off -TENV:simd_imask=off #-TENV:simd_dmask=off -TENV:simd_umask=off
-a_i2_r16_d1_test a_i4_r16_d1_test a_i8_r16_d1_test a_i2_r16_d0_test a_i4_r16_d0_test a_i8_r16_d0_test: \
+a_i2_r16_d1_tst a_i4_r16_d1_tst a_i8_r16_d1_tst a_i2_r16_d0_tst a_i4_r16_d0_tst a_i8_r16_d0_tst: \
 	FC = $(AFORT) -TENV:simd_zmask=off
 
 # AMD AOCC Flang
 DFORT = /opt/AMD/aocc-compiler-3.1.0/bin/flang -std=f$(FSTD) -Mstandard -Wall -Wextra
-d_i2_r4_d1_test d_i4_r4_d1_test d_i8_r4_d1_test d_i2_r4_d0_test d_i4_r4_d0_test d_i8_r4_d0_test: \
+d_i2_r4_d1_tst d_i4_r4_d1_tst d_i8_r4_d1_tst d_i2_r4_d0_tst d_i4_r4_d0_tst d_i8_r4_d0_tst: \
 	FC = $(DFORT)
-d_i2_r8_d1_test d_i4_r8_d1_test d_i8_r8_d1_test d_i2_r8_d0_test d_i4_r8_d0_test d_i8_r8_d0_test: \
+d_i2_r8_d1_tst d_i4_r8_d1_tst d_i8_r8_d1_tst d_i2_r8_d0_tst d_i4_r8_d0_tst d_i8_r8_d0_tst: \
 	FC = $(DFORT) -ffp-exception-behavior=strict
-d_i2_r16_d1_test d_i4_r16_d1_test d_i8_r16_d1_test d_i2_r16_d0_test d_i4_r16_d0_test d_i8_r16_d0_test: \
+d_i2_r16_d1_tst d_i4_r16_d1_tst d_i8_r16_d1_tst d_i2_r16_d0_tst d_i4_r16_d0_tst d_i8_r16_d0_tst: \
 	FC = $(DFORT) -ffp-exception-behavior=strict
 
 # LLVM Flang
 FFORT = flang -std=f$(FSTD) -Mstandard -Wall -Wextra
-f_i2_r4_d1_test f_i4_r4_d1_test f_i8_r4_d1_test f_i2_r4_d0_test f_i4_r4_d0_test f_i8_r4_d0_test: \
+f_i2_r4_d1_tst f_i4_r4_d1_tst f_i8_r4_d1_tst f_i2_r4_d0_tst f_i4_r4_d0_tst f_i8_r4_d0_tst: \
 	FC = $(FFORT)
-f_i2_r8_d1_test f_i4_r8_d1_test f_i8_r8_d1_test f_i2_r8_d0_test f_i4_r8_d0_test f_i8_r8_d0_test: \
+f_i2_r8_d1_tst f_i4_r8_d1_tst f_i8_r8_d1_tst f_i2_r8_d0_tst f_i4_r8_d0_tst f_i8_r8_d0_tst: \
 	FC = $(FFORT)
-f_i2_r16_d1_test f_i4_r16_d1_test f_i8_r16_d1_test f_i2_r16_d0_test f_i4_r16_d0_test f_i8_r16_d0_test: \
+f_i2_r16_d1_tst f_i4_r16_d1_tst f_i8_r16_d1_tst f_i2_r16_d0_tst f_i4_r16_d0_tst f_i8_r16_d0_tst: \
 	FC = $(FFORT)
 
 # GNU gfortran
@@ -90,23 +91,23 @@ GFORT = gfortran -Wall -Wextra -pedantic -Wampersand -Wconversion  -Wuninitializ
 	-Wintrinsics-std -Wunderflow -Wuse-without-only -Wrealloc-lhs -Wrealloc-lhs-all -Wdo-subscript \
 	-Wunused-parameter -fPIC -fimplicit-none -fbacktrace -fcheck=all \
 	-finit-real=nan -finit-integer=-9999999
-g_i2_r4_d1_test g_i4_r4_d1_test g_i8_r4_d1_test g_i2_r4_d0_test g_i4_r4_d0_test g_i8_r4_d0_test: \
+g_i2_r4_d1_tst g_i4_r4_d1_tst g_i8_r4_d1_tst g_i2_r4_d0_tst g_i4_r4_d0_tst g_i8_r4_d0_tst: \
 	FC = $(GFORT) -ffpe-trap=zero
-g_i2_r8_d1_test g_i4_r8_d1_test g_i8_r8_d1_test g_i2_r8_d0_test g_i4_r8_d0_test g_i8_r8_d0_test: \
+g_i2_r8_d1_tst g_i4_r8_d1_tst g_i8_r8_d1_tst g_i2_r8_d0_tst g_i4_r8_d0_tst g_i8_r8_d0_tst: \
 	FC = $(GFORT) -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
-g_i2_r16_d1_test g_i4_r16_d1_test g_i8_r16_d1_test g_i2_r16_d0_test g_i4_r16_d0_test g_i8_r16_d0_test: \
+g_i2_r16_d1_tst g_i4_r16_d1_tst g_i8_r16_d1_tst g_i2_r16_d0_tst g_i4_r16_d0_tst g_i8_r16_d0_tst: \
 	FC = $(GFORT) -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
 
 # Intel ifort
 IFORT = ifort -stand f$(FS) -warn all -check all -debug extended -fimplicit-none \
 	-traceback -debug-parameters all -fp-stack-check
-i_i2_r4_d1_test i_i4_r4_d1_test i_i8_r4_d1_test i_i2_r4_d0_test i_i4_r4_d0_test i_i8_r4_d0_test: \
+i_i2_r4_d1_tst i_i4_r4_d1_tst i_i8_r4_d1_tst i_i2_r4_d0_tst i_i4_r4_d0_tst i_i8_r4_d0_tst: \
 	FC = $(IFORT) -fp-trap=divzero
-i_i2_r8_d1_test i_i4_r8_d1_test i_i8_r8_d1_test i_i2_r8_d0_test i_i4_r8_d0_test i_i8_r8_d0_test: \
+i_i2_r8_d1_tst i_i4_r8_d1_tst i_i8_r8_d1_tst i_i2_r8_d0_tst i_i4_r8_d0_tst i_i8_r8_d0_tst: \
 	FC = $(IFORT) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,invalid,overflow#,underflow,denormal
 	#-no-ftz -fp-model strict
-i_i2_r16_d1_test i_i4_r16_d1_test i_i8_r16_d1_test i_i2_r16_d0_test i_i4_r16_d0_test i_i8_r16_d0_test: \
+i_i2_r16_d1_tst i_i4_r16_d1_tst i_i8_r16_d1_tst i_i2_r16_d0_tst i_i4_r16_d0_tst i_i8_r16_d0_tst: \
 	FC = $(IFORT) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,invalid,overflow#,underflow,denormal
 	#-no-ftz -fp-model strict
@@ -115,63 +116,79 @@ i_i2_r16_d1_test i_i4_r16_d1_test i_i8_r16_d1_test i_i2_r16_d0_test i_i4_r16_d0_
 NFORT = nagfor -colour=error:red,warn:magenta,info:yellow \
 	-f$(FSTD) -info -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique \
 	-Warn=allocation -Warn=constant_coindexing -Warn=subnormal
-n_i2_r4_d1_test n_i4_r4_d1_test n_i8_r4_d1_test n_i2_r4_d0_test n_i4_r4_d0_test n_i8_r4_d0_test: \
+n_i2_r4_d1_tst n_i4_r4_d1_tst n_i8_r4_d1_tst n_i2_r4_d0_tst n_i4_r4_d0_tst n_i8_r4_d0_tst: \
 	FC = $(NFORT) -nan -ieee=full
-n_i2_r8_d1_test n_i4_r8_d1_test n_i8_r8_d1_test n_i2_r8_d0_test n_i4_r8_d0_test n_i8_r8_d0_test: \
+n_i2_r8_d1_tst n_i4_r8_d1_tst n_i8_r8_d1_tst n_i2_r8_d0_tst n_i4_r8_d0_tst n_i8_r8_d0_tst: \
 	FC = $(NFORT) -nan -ieee=stop
-n_i2_r16_d1_test n_i4_r16_d1_test n_i8_r16_d1_test n_i2_r16_d0_test n_i4_r16_d0_test n_i8_r16_d0_test: \
+n_i2_r16_d1_tst n_i4_r16_d1_tst n_i8_r16_d1_tst n_i2_r16_d0_tst n_i4_r16_d0_tst n_i8_r16_d0_tst: \
 	FC = $(NFORT) -nan -ieee=stop
 
 # NVIDIA nvfortran (aka, pgfortran)
 VFORT = nvfortran -C -Mstandard -Minform=warn -Mbounds -Mchkstk -Mchkptr
-v_i2_r4_d1_test v_i4_r4_d1_test v_i8_r4_d1_test v_i2_r4_d0_test v_i4_r4_d0_test v_i8_r4_d0_test: \
+v_i2_r4_d1_tst v_i4_r4_d1_tst v_i8_r4_d1_tst v_i2_r4_d0_tst v_i4_r4_d0_tst v_i8_r4_d0_tst: \
 	FC = $(VFORT) -Kieee -Ktrap=divz
-v_i2_r8_d1_test v_i4_r8_d1_test v_i8_r8_d1_test v_i2_r8_d0_test v_i4_r8_d0_test v_i8_r8_d0_test: \
+v_i2_r8_d1_tst v_i4_r8_d1_tst v_i8_r8_d1_tst v_i2_r8_d0_tst v_i4_r8_d0_tst v_i8_r8_d0_tst: \
 	FC = $(VFORT) -Kieee -Ktrap=divz,ovf,inv#,unf,denorm
-v_i2_r16_d1_test v_i4_r16_d1_test v_i8_r16_d1_test v_i2_r16_d0_test v_i4_r16_d0_test v_i8_r16_d0_test: \
+v_i2_r16_d1_tst v_i4_r16_d1_tst v_i8_r16_d1_tst v_i2_r16_d0_tst v_i4_r16_d0_tst v_i8_r16_d0_tst: \
 	FC = $(VFORT) -Kieee -Ktrap=divz,ovf,inv#,unf,denorm
 
 # Oracle sunf95
 SFORT = sunf95 -w3 -u -U -ansi -xcheck=%all -C
-s_i2_r4_d1_test s_i4_r4_d1_test s_i8_r4_d1_test s_i2_r4_d0_test s_i4_r4_d0_test s_i8_r4_d0_test: \
+s_i2_r4_d1_tst s_i4_r4_d1_tst s_i8_r4_d1_tst s_i2_r4_d0_tst s_i4_r4_d0_tst s_i8_r4_d0_tst: \
 	FC = $(SFORT) -fnonstd -ftrap=division
-s_i2_r8_d1_test s_i4_r8_d1_test s_i8_r8_d1_test s_i2_r8_d0_test s_i4_r8_d0_test s_i8_r8_d0_test: \
+s_i2_r8_d1_tst s_i4_r8_d1_tst s_i8_r8_d1_tst s_i2_r8_d0_tst s_i4_r8_d0_tst s_i8_r8_d0_tst: \
 	FC = $(SFORT) \
 	-fnonstd -ftrap=overflow,division,invalid#,underflow
-s_i2_r16_d1_test s_i4_r16_d1_test s_i8_r16_d1_test s_i2_r16_d0_test s_i4_r16_d0_test s_i8_r16_d0_test: \
+s_i2_r16_d1_tst s_i4_r16_d1_tst s_i8_r16_d1_tst s_i2_r16_d0_tst s_i4_r16_d0_tst s_i8_r16_d0_tst: \
 	FC = $(SFORT) \
 	-fnonstd -ftrap=overflow,division,invalid#,underflow
 
 # Intel ifx
 XFORT = ifx -stand f$(FS) -warn all -check all -debug extended -fimplicit-none \
 	-traceback -debug-parameters all -fp-stack-check
-x_i2_r4_d1_test x_i4_r4_d1_test x_i8_r4_d1_test x_i2_r4_d0_test x_i4_r4_d0_test x_i8_r4_d0_test: \
+x_i2_r4_d1_tst x_i4_r4_d1_tst x_i8_r4_d1_tst x_i2_r4_d0_tst x_i4_r4_d0_tst x_i8_r4_d0_tst: \
 	FC = $(XFORT) -fp-trap=divzero
-x_i2_r8_d1_test x_i4_r8_d1_test x_i8_r8_d1_test x_i2_r8_d0_test x_i4_r8_d0_test x_i8_r8_d0_test: \
+x_i2_r8_d1_tst x_i4_r8_d1_tst x_i8_r8_d1_tst x_i2_r8_d0_tst x_i4_r8_d0_tst x_i8_r8_d0_tst: \
 	FC = $(XFORT) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,invalid,overflow#,underflow,denormal
 	#-no-ftz -fp-model strict
-x_i2_r16_d1_test x_i4_r16_d1_test x_i8_r16_d1_test x_i2_r16_d0_test x_i4_r16_d0_test x_i8_r16_d0_test: \
+x_i2_r16_d1_tst x_i4_r16_d1_tst x_i8_r16_d1_tst x_i2_r16_d0_tst x_i4_r16_d0_tst x_i8_r16_d0_tst: \
 	FC = $(XFORT) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,invalid,overflow#,underflow,denormal
 	#-no-ftz -fp-model strict
 
+# Log file. How to write the following assignments in one line?
+ntest: TESTLOG = ntest.log
+atest: TESTLOG = atest.log
+dtest: TESTLOG = dtest.log
+ftest: TESTLOG = ftest.log
+gtest: TESTLOG = gtest.log
+itest: TESTLOG = itest.log
+stest: TESTLOG = stest.log
+vtest: TESTLOG = vtest.log
+xtest: TESTLOG = xtest.log
 
 ####################################################################################################
 # Making a compiler-specific test
-%test: %_i2_r4_d1_test %_i4_r4_d1_test %_i8_r4_d1_test \
-	%_i2_r4_d0_test %_i4_r4_d0_test %_i8_r4_d0_test \
-	%_i2_r8_d1_test %_i4_r8_d1_test %_i8_r8_d1_test \
-	%_i2_r8_d0_test %_i4_r8_d0_test %_i8_r8_d0_test \
-	%_i2_r16_d1_test %_i4_r16_d1_test %_i8_r16_d1_test \
-	%_i2_r16_d0_test %_i4_r16_d0_test %_i8_r16_d0_test
+%test: %_i2_r4_d1_tst %_i4_r4_d1_tst %_i8_r4_d1_tst \
+	%_i2_r4_d0_tst %_i4_r4_d0_tst %_i8_r4_d0_tst \
+	%_i2_r8_d1_tst %_i4_r8_d1_tst %_i8_r8_d1_tst \
+	%_i2_r8_d0_tst %_i4_r8_d0_tst %_i8_r8_d0_tst \
+	%_i2_r16_d1_tst %_i4_r16_d1_tst %_i8_r16_d1_tst \
+	%_i2_r16_d0_tst %_i4_r16_d0_tst %_i8_r16_d0_tst
+	./checktest --warning $(TESTLOG)
+	@printf "\n$@ ends!\n\n" >> $(TESTLOG)
+	@printf "\n$@ ends!\n\n"
 	@make clean
-	@printf "\n$@ succeeds!\n\n"
 
-%_test: src header_% $(COMMONSRC) $(NEWUOASRC) $(TESTSRC)
-	$(FC) $(FFLAGS) -o $@ $(COMMONSRC) $(NEWUOASRC) $(TESTSRC)
-	./$@ || (echo "mycommand failed $$?"; exit 1)
-	@printf "\n$@ succeeds!\n\n"
+%_tst: src header_% $(COMMONSRC) $(NEWUOASRC) $(TESTSRC)
+	@printf "\n$@ starts.\n\n"
+	@printf "\n$@ starts.\n\n" >> $(TESTLOG)
+	$(FC) $(FFLAGS) -o $@ $(COMMONSRC) $(NEWUOASRC) $(TESTSRC) >> $(TESTLOG) 2>&1
+	./$@ >> $(TESTLOG) 2>&1
+	./checktest --error $(TESTLOG)
+	@printf "\n$@ ends!\n\n" >> $(TESTLOG)
+	@printf "\n$@ ends!\n\n"
 
 src: ../newuoa/* ../common/* \
 	$(NEWUOA)/* $(COMMON)/*
@@ -197,5 +214,7 @@ header_%: $(HEADERS)
 ####################################################################################################
 # Cleaning up.
 clean:
-	rm -f *.o *.mod *.dbg
-	rm -f *_test *_test_cobyla *_test_uobyqa *_test_newuoa *_test_bobyqa *_test_lincoa
+	rm -f *.o *.mod *.dbg *.cmdx *.cmod *.ilm *.stb
+	rm -f *_tst *_tst_cobyla *_tst_uobyqa *_tst_newuoa *_tst_bobyqa *_tst_lincoa
+	mkdir -p log
+	mv *.log log > /dev/null 2>&1

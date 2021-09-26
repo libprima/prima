@@ -17,7 +17,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, September 26, 2021 PM06:24:18
+! Last Modified: Sunday, September 26, 2021 PM07:06:08
 
 
 #include "ppf.h"
@@ -1167,7 +1167,6 @@ else
         call assert(all(y(:, 1:n - 1) >= y(:, 2:n)), 'Y is descending along dimension 2', srname)
     end if
 end if
-
 #endif
 end function sort_i2
 
