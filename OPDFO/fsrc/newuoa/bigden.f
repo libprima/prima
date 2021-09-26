@@ -1,6 +1,7 @@
       SUBROUTINE BIGDEN (N,NPT,XOPT,XPT,BMAT,ZMAT,IDZ,NDIM,KOPT,
      1  KNEW,D,W,VLAG,BETA,S,WVEC,PROD)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+      use linalg_mod, only : norm
 C      IMPLICIT REAL*8 (A-H,O-Z)
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
@@ -111,7 +112,8 @@ C              IF (DSTEMP*DSTEMP/SSTEMP .LT. DTEST) THEN
               S(I)=XPT(KSAV,I)-XOPT(I)
           END DO
       END IF
-      SSDEN=DD*SS-DS*DS
+      !SSDEN=DD*SS-DS*DS
+      SSDEN=DD*SS-DS**2
       ITERC=0
       DENSAV=ZERO
 C
@@ -122,8 +124,14 @@ C
       TEMP=ONE/DSQRT(SSDEN)
       XOPTD=ZERO
       XOPTS=ZERO
+      !DO I=1,N
+      !    S(I)=TEMP*(DD*S(I)-DS*D(I))
+      !    XOPTD=XOPTD+XOPT(I)*D(I)
+      !    XOPTS=XOPTS+XOPT(I)*S(I)
+      !END DO
+      S(1:N)=(DD*S(1:N)-DS*D(1:N))
+      S(1:N) = (S(1:N)/norm(S(1:N)))*norm(D(1:N))
       DO I=1,N
-          S(I)=TEMP*(DD*S(I)-DS*D(I))
           XOPTD=XOPTD+XOPT(I)*D(I)
           XOPTS=XOPTS+XOPT(I)*S(I)
       END DO
@@ -366,7 +374,8 @@ C
           SS=SS+S(I)**2
           DS=DS+D(I)*S(I)
       END DO
-      SSDEN=DD*SS-DS*DS
+      !SSDEN=DD*SS-DS*DS
+      SSDEN=DD*SS-DS**2
       IF (SSDEN >= 1.0D-8*DD*SS) GOTO 70
 C
 C     Set the vector W before the RETURN from the subroutine.

@@ -1,6 +1,7 @@
       SUBROUTINE TRSAPP (N,NPT,XOPT,XPT,GQ,HQ,PQ,DELTA,STEP,
      1  D,G,HD,HS,CRVMIN)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+      use linalg_mod, only : norm
 C      IMPLICIT REAL*8 (A-H,O-Z)
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
@@ -62,6 +63,7 @@ C
       TEMP=DELSQ-SS
 !      BSTEP=TEMP/(DS+DSQRT(DS**2+DD*TEMP))
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       if (iterc == 1) then
           bstep = delta/sqrt(dd)
       ! The following code is copied from LINCOA.
@@ -70,6 +72,7 @@ C
       else
           bstep = TEMP/(DS+DSQRT(DS**2+DD*TEMP))
       end if
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       GOTO 170
    50 DHD=ZERO
@@ -151,9 +154,14 @@ C
       TEMP=DSQRT(DELSQ*GG-SGK**2)
       TEMPA=DELSQ/TEMP
       TEMPB=SGK/TEMP
-      DO I=1,N
-          D(I)=TEMPA*(G(I)+HS(I))-TEMPB*STEP(I)
-      END DO
+!      DO I=1,N
+!          D(I)=TEMPA*(G(I)+HS(I))-TEMPB*STEP(I)
+!      END DO
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      d(1:n) = dot_product(step(1:n),step(1:n))*(g(1:n)+hs(1:n))
+     1 - sgk*step(1:n)
+      d(1:n) = d(1:n)/norm(d(1:n)) * norm(step(1:n))
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       GOTO 170
   120 DG=ZERO
       DHD=ZERO
