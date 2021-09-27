@@ -59,7 +59,7 @@
 #if defined __DEBUGGING__
 #undef __DEBUGGING__
 #endif
-#define __DEBUGGING__ 
+#define __DEBUGGING__ 1
 /******************************************************************************/
 
 
@@ -119,7 +119,7 @@
 #if defined __INTEGER_KIND__
 #undef __INTEGER_KIND__
 #endif
-#define __INTEGER_KIND__ 
+#define __INTEGER_KIND__ 16
 /* Fortran standards guarantee that 0 is supported, but not the others. */
 /******************************************************************************/
 
@@ -132,7 +132,7 @@
 #if defined __REAL_PRECISION__
 #undef __REAL_PRECISION__
 #endif
-#define __REAL_PRECISION__ 
+#define __REAL_PRECISION__ 32
 /* Fortran standards guarantee that 0, 32, and 64 are supported, but not 128. */
 
 /* Is quad precision available on this platform (compiler, hardware ...)? */
@@ -152,7 +152,7 @@
  * 1. Do NOT change is unless you are really sure.
  * 2. If the code is interfaced with MATLAB, then you still need to modify
  *    mexapi.F to set __USE_QP__ to 1. */
-#define __QP_AVAILABLE__ 
+#define __QP_AVAILABLE__ 0
 
 /* Revise __REAL_PRECISION__ according to __QP_AVAILABLE__ . */
 #if __QP_AVAILABLE__ != 1 && __REAL_PRECISION__ > 64

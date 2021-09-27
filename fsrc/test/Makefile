@@ -56,11 +56,17 @@ f_i2_r4_d1_tst: FC = $(FFORT)
 ####################################################################################################
 # Making a compiler-specific test
 %test: %_i2_r4_d1_tst
+	@printf "\n$@ ends!\n\n" >> $(TESTLOG)
 	@printf "\n$@ ends!\n\n"
 	@make clean
 
-%_tst: src header_%
+%_tst: src header_% $(COMMONSRC) $(NEWUOASRC) $(TESTSRC)
 	@printf "\n$@ starts.\n\n"
+	@printf "\n$@ starts.\n\n" >> $(TESTLOG)
+	$(FC) $(FFLAGS) -o $@ $(COMMONSRC) $(NEWUOASRC) $(TESTSRC) >> $(TESTLOG) 2>&1
+	./$@ >> $(TESTLOG) 2>&1
+	./checktest --error $(TESTLOG)
+	@printf "\n$@ ends!\n\n" >> $(TESTLOG)
 	@printf "\n$@ ends!\n\n"
 
 src: ../newuoa/* ../common/* \
