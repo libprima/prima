@@ -1,0 +1,767 @@
+ENDINLINE
+TOILM version 1/53
+I:0
+S:641
+D:57
+B:0
+G:0
+L:0
+S:1
+L:1
+P:0
+fihx:0 tag:0 parent:0 flags:0 lineno:0 srcline:0 level:0 next:0 0: 0: 0: 0:
+fihx:1 tag:0 parent:0 flags:0 lineno:3 srcline:1 level:0 next:0 8:./common 10:infnan.F90 10:infnan_mod 19:./common/infnan.F90
+fihx:2 tag:0 parent:1 flags:1 lineno:1 srcline:0 level:1 next:0 8:./common 5:ppf.h 0: 14:./common/ppf.h
+procedure:Blockdata
+d:6 I4
+d:7 I8
+s:609 c n d:6 h- 0 0:
+s:611 c n d:6 h- 1 0:
+s:624 E n d:6 c+ a- a- a:0 C- d- d:0 c:0 e:0 i:0 l:3 m- p- r- r:0 p- p- s- d- c- n- c:0 r:0 p:0 a:0 v:0 i:0 i- c- d- a- v- h- 10:infnan_mod
+s:641 c n d:7 h- 7fffffff ffffffff 0:
+end
+AST2ILM version 1/53
+i0: BOS l1 n1 n0
+i4: NOP
+i5: --------------------
+i0: BOS l0 n1 n0
+i4: ENLAB
+i5: --------------------
+i0: BOS l111 n1 n0
+i4: FILE n111 n1 n1000
+i8: END
+i9: --------------------
+end
+DIRECTIVES version 1/53
+A:0
+rou: --------------------
+z
+end
+TOILM version 1/53
+I:0
+S:747
+D:60
+B:0
+G:0
+L:0
+S:1
+L:1
+P:0
+procedure:Function
+d:6 I4
+d:7 I8
+d:9 R4
+d:18 L4
+s:609 c n d:6 h- 0 0:
+s:611 c n d:6 h- 1 0:
+s:612 c n d:7 h- 0 1 0:
+s:624 P n d:6 a:0 c- d- d:0 d- c:0 f- i:0 m- n- p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 10:infnan_mod
+s:680 V D d:9 a- a- a- d+ d:0 m- c- c- h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 o:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i+ c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 1:x
+s:681 V L d:18 a- a- a+ d+ d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 1:y
+s:682 E E d:18 c+ a- a- a:0 C- d+ d:0 c:0 e:120 i:624 l:114 m- p+ r- r:681 p- p- s- d- c- n- c:0 r:0 p:1 a:0 v:0 i:0 i- c- d- a- v- h- 680 9:is_nan_sp
+s:683 P n d:9 a:0 c- d- d:0 d- c:0 f- i:0 m- n+ p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 10:consts_mod
+s:694 c n d:9 h- 7f7fffff 11:huge(1.0_4)
+s:701 c n d:9 h- ff7fffff 0:
+s:721 p L d:9 d+ p- r- v:2139095039 7:hugenum
+s:730 p n d:9 d+ p- r- v:-8388609 11:ftarget_dft
+s:731 p n d:6 d+ p- r- v:0 10:iprint_dft
+s:742 L n d:0 c+ a- f- v- r:0 a:0 7:%L99999
+s:746 c n d:7 h- 7fffffff ffffffff 0:
+end
+AST2ILM version 1/53
+i0: BOS l114 n1 n0
+i4: NOP
+i5: --------------------
+i0: BOS l114 n1 n0
+i4: --------------------
+i0: BOS l0 n1 n0
+i4: ENLAB
+i5: --------------------
+i0: BOS l119 n1 n0
+i4: FILE n119 n1 n2000
+i8: BASE s681
+i10: RCON s694
+i12: BASE s680
+i14: RLD i12
+i16: RCMP i14 i10
+i19: LE i16
+i21: RCON s701
+i23: RCMP i14 i21
+i26: GE i23
+i28: LNOP i19
+i30: NOP
+i31: LNOP i26
+i33: NOP
+i34: LAND i28 i31
+i37: LNOT i34
+i39: ABS i14
+i41: RCMP i39 i10
+i44: GT i41
+i46: LNOP i44
+i48: NOP
+i49: LNOT i46
+i51: LAND i37 i49
+i54: LST i8 i51
+i57: --------------------
+i0: BOS l120 n1 n0
+i4: LABEL s742
+i6: --------------------
+i0: BOS l120 n1 n0
+i4: FILE n120 n1 n3000
+i8: BASE s681
+i10: LLD i8
+i12: ENDF i10
+i14: --------------------
+end
+DIRECTIVES version 1/53
+A:1
+rou: --------------------
+z
+end
+TOILM version 1/53
+I:0
+S:749
+D:60
+B:0
+G:0
+L:0
+S:1
+L:1
+P:0
+procedure:Function
+d:6 I4
+d:7 I8
+d:9 R4
+d:10 R8
+d:18 L4
+s:609 c n d:6 h- 0 0:
+s:611 c n d:6 h- 1 0:
+s:612 c n d:7 h- 0 1 0:
+s:624 P n d:6 a:0 c- d- d:0 d- c:0 f- i:0 m- n- p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 10:infnan_mod
+s:680 V D d:10 a- a- a- d+ d:0 m- c- c- h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 o:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i+ c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 1:x
+s:681 V L d:18 a- a- a+ d+ d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 1:y
+s:682 E E d:18 c+ a- a- a:0 C- d+ d:0 c:0 e:128 i:624 l:122 m- p+ r- r:681 p- p- s- d- c- n- c:0 r:0 p:1 a:0 v:0 i:0 i- c- d- a- v- h- 680 9:is_nan_dp
+s:683 P n d:9 a:0 c- d- d:0 d- c:0 f- i:0 m- n+ p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 10:consts_mod
+s:731 p n d:6 d+ p- r- v:0 10:iprint_dft
+s:740 c n d:10 h- 7fefffff ffffffff 11:huge(1.0_8)
+s:741 c n d:10 h- ffefffff ffffffff 0:
+s:744 L n d:0 c+ a- f- v- r:0 a:0 7:%L99999
+s:748 c n d:7 h- 7fffffff ffffffff 0:
+end
+AST2ILM version 1/53
+i0: BOS l122 n1 n0
+i4: NOP
+i5: --------------------
+i0: BOS l122 n1 n0
+i4: --------------------
+i0: BOS l0 n1 n0
+i4: ENLAB
+i5: --------------------
+i0: BOS l127 n1 n0
+i4: FILE n127 n1 n4000
+i8: BASE s681
+i10: DCON s740
+i12: BASE s680
+i14: DLD i12
+i16: DCMP i14 i10
+i19: LE i16
+i21: DCON s741
+i23: DCMP i14 i21
+i26: GE i23
+i28: LNOP i19
+i30: NOP
+i31: LNOP i26
+i33: NOP
+i34: LAND i28 i31
+i37: LNOT i34
+i39: DABS i14
+i41: DCMP i39 i10
+i44: GT i41
+i46: LNOP i44
+i48: NOP
+i49: LNOT i46
+i51: LAND i37 i49
+i54: LST i8 i51
+i57: --------------------
+i0: BOS l128 n1 n0
+i4: LABEL s744
+i6: --------------------
+i0: BOS l128 n1 n0
+i4: FILE n128 n1 n5000
+i8: BASE s681
+i10: LLD i8
+i12: ENDF i10
+i14: --------------------
+end
+DIRECTIVES version 1/53
+A:1
+rou: --------------------
+z
+end
+TOILM version 1/53
+I:0
+S:747
+D:60
+B:0
+G:0
+L:0
+S:1
+L:1
+P:0
+procedure:Function
+d:6 I4
+d:7 I8
+d:9 R4
+d:18 L4
+s:609 c n d:6 h- 0 0:
+s:611 c n d:6 h- 1 0:
+s:612 c n d:7 h- 0 1 0:
+s:624 P n d:6 a:0 c- d- d:0 d- c:0 f- i:0 m- n- p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 10:infnan_mod
+s:680 V D d:9 a- a- a- d+ d:0 m- c- c- h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 o:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i+ c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 1:x
+s:681 V L d:18 a- a- a+ d+ d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 1:y
+s:682 E E d:18 c+ a- a- a:0 C- d+ d:0 c:0 e:136 i:624 l:130 m- p+ r- r:681 p- p- s- d- c- n- c:0 r:0 p:1 a:0 v:0 i:0 i- c- d- a- v- h- 680 12:is_finite_sp
+s:683 P n d:9 a:0 c- d- d:0 d- c:0 f- i:0 m- n+ p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 10:consts_mod
+s:694 c n d:9 h- 7f7fffff 11:huge(1.0_4)
+s:701 c n d:9 h- ff7fffff 0:
+s:721 p L d:9 d+ p- r- v:2139095039 7:hugenum
+s:730 p n d:9 d+ p- r- v:-8388609 11:ftarget_dft
+s:731 p n d:6 d+ p- r- v:0 10:iprint_dft
+s:742 L n d:0 c+ a- f- v- r:0 a:0 7:%L99999
+s:746 c n d:7 h- 7fffffff ffffffff 0:
+end
+AST2ILM version 1/53
+i0: BOS l130 n1 n0
+i4: NOP
+i5: --------------------
+i0: BOS l130 n1 n0
+i4: --------------------
+i0: BOS l0 n1 n0
+i4: ENLAB
+i5: --------------------
+i0: BOS l135 n1 n0
+i4: FILE n135 n1 n6000
+i8: BASE s681
+i10: RCON s694
+i12: BASE s680
+i14: RLD i12
+i16: RCMP i14 i10
+i19: LE i16
+i21: RCON s701
+i23: RCMP i14 i21
+i26: GE i23
+i28: LNOP i19
+i30: NOP
+i31: LNOP i26
+i33: NOP
+i34: LAND i28 i31
+i37: LST i8 i34
+i40: --------------------
+i0: BOS l136 n1 n0
+i4: LABEL s742
+i6: --------------------
+i0: BOS l136 n1 n0
+i4: FILE n136 n1 n7000
+i8: BASE s681
+i10: LLD i8
+i12: ENDF i10
+i14: --------------------
+end
+DIRECTIVES version 1/53
+A:1
+rou: --------------------
+z
+end
+TOILM version 1/53
+I:0
+S:749
+D:60
+B:0
+G:0
+L:0
+S:1
+L:1
+P:0
+procedure:Function
+d:6 I4
+d:7 I8
+d:9 R4
+d:10 R8
+d:18 L4
+s:609 c n d:6 h- 0 0:
+s:611 c n d:6 h- 1 0:
+s:612 c n d:7 h- 0 1 0:
+s:624 P n d:6 a:0 c- d- d:0 d- c:0 f- i:0 m- n- p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 10:infnan_mod
+s:680 V D d:10 a- a- a- d+ d:0 m- c- c- h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 o:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i+ c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 1:x
+s:681 V L d:18 a- a- a+ d+ d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 1:y
+s:682 E E d:18 c+ a- a- a:0 C- d+ d:0 c:0 e:144 i:624 l:138 m- p+ r- r:681 p- p- s- d- c- n- c:0 r:0 p:1 a:0 v:0 i:0 i- c- d- a- v- h- 680 12:is_finite_dp
+s:683 P n d:9 a:0 c- d- d:0 d- c:0 f- i:0 m- n+ p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 10:consts_mod
+s:731 p n d:6 d+ p- r- v:0 10:iprint_dft
+s:740 c n d:10 h- 7fefffff ffffffff 11:huge(1.0_8)
+s:741 c n d:10 h- ffefffff ffffffff 0:
+s:744 L n d:0 c+ a- f- v- r:0 a:0 7:%L99999
+s:748 c n d:7 h- 7fffffff ffffffff 0:
+end
+AST2ILM version 1/53
+i0: BOS l138 n1 n0
+i4: NOP
+i5: --------------------
+i0: BOS l138 n1 n0
+i4: --------------------
+i0: BOS l0 n1 n0
+i4: ENLAB
+i5: --------------------
+i0: BOS l143 n1 n0
+i4: FILE n143 n1 n8000
+i8: BASE s681
+i10: DCON s740
+i12: BASE s680
+i14: DLD i12
+i16: DCMP i14 i10
+i19: LE i16
+i21: DCON s741
+i23: DCMP i14 i21
+i26: GE i23
+i28: LNOP i19
+i30: NOP
+i31: LNOP i26
+i33: NOP
+i34: LAND i28 i31
+i37: LST i8 i34
+i40: --------------------
+i0: BOS l144 n1 n0
+i4: LABEL s744
+i6: --------------------
+i0: BOS l144 n1 n0
+i4: FILE n144 n1 n9000
+i8: BASE s681
+i10: LLD i8
+i12: ENDF i10
+i14: --------------------
+end
+DIRECTIVES version 1/53
+A:1
+rou: --------------------
+z
+end
+TOILM version 1/53
+I:0
+S:747
+D:60
+B:0
+G:0
+L:0
+S:1
+L:1
+P:0
+procedure:Function
+d:6 I4
+d:7 I8
+d:9 R4
+d:18 L4
+s:609 c n d:6 h- 0 0:
+s:611 c n d:6 h- 1 0:
+s:612 c n d:7 h- 0 1 0:
+s:613 c n d:9 h- 0 0:
+s:624 P n d:6 a:0 c- d- d:0 d- c:0 f- i:0 m- n- p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 10:infnan_mod
+s:680 V D d:9 a- a- a- d+ d:0 m- c- c- h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 o:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i+ c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 1:x
+s:681 V L d:18 a- a- a+ d+ d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 1:y
+s:682 E E d:18 c+ a- a- a:0 C- d+ d:0 c:0 e:152 i:624 l:146 m- p+ r- r:681 p- p- s- d- c- n- c:0 r:0 p:1 a:0 v:0 i:0 i- c- d- a- v- h- 680 12:is_posinf_sp
+s:683 P n d:9 a:0 c- d- d:0 d- c:0 f- i:0 m- n+ p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 10:consts_mod
+s:694 c n d:9 h- 7f7fffff 11:huge(1.0_4)
+s:712 p L d:9 d+ p- r- v:0 4:zero
+s:721 p L d:9 d+ p- r- v:2139095039 7:hugenum
+s:731 p n d:6 d+ p- r- v:0 10:iprint_dft
+s:742 L n d:0 c+ a- f- v- r:0 a:0 7:%L99999
+s:746 c n d:7 h- 7fffffff ffffffff 0:
+end
+AST2ILM version 1/53
+i0: BOS l146 n1 n0
+i4: NOP
+i5: --------------------
+i0: BOS l146 n1 n0
+i4: --------------------
+i0: BOS l0 n1 n0
+i4: ENLAB
+i5: --------------------
+i0: BOS l151 n1 n0
+i4: FILE n151 n1 n10000
+i8: BASE s681
+i10: RCON s613
+i12: BASE s680
+i14: RLD i12
+i16: RCMP i14 i10
+i19: GT i16
+i21: ABS i14
+i23: RCON s694
+i25: RCMP i21 i23
+i28: GT i25
+i30: LNOP i19
+i32: NOP
+i33: LNOP i28
+i35: NOP
+i36: LAND i30 i33
+i39: LST i8 i36
+i42: --------------------
+i0: BOS l152 n1 n0
+i4: LABEL s742
+i6: --------------------
+i0: BOS l152 n1 n0
+i4: FILE n152 n1 n11000
+i8: BASE s681
+i10: LLD i8
+i12: ENDF i10
+i14: --------------------
+end
+DIRECTIVES version 1/53
+A:1
+rou: --------------------
+z
+end
+TOILM version 1/53
+I:0
+S:748
+D:60
+B:0
+G:0
+L:0
+S:1
+L:1
+P:0
+procedure:Function
+d:6 I4
+d:7 I8
+d:9 R4
+d:10 R8
+d:18 L4
+s:609 c n d:6 h- 0 0:
+s:611 c n d:6 h- 1 0:
+s:612 c n d:7 h- 0 1 0:
+s:617 c n d:10 h- 0 0 0:
+s:624 P n d:6 a:0 c- d- d:0 d- c:0 f- i:0 m- n- p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 10:infnan_mod
+s:680 V D d:10 a- a- a- d+ d:0 m- c- c- h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 o:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i+ c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 1:x
+s:681 V L d:18 a- a- a+ d+ d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 1:y
+s:682 E E d:18 c+ a- a- a:0 C- d+ d:0 c:0 e:160 i:624 l:154 m- p+ r- r:681 p- p- s- d- c- n- c:0 r:0 p:1 a:0 v:0 i:0 i- c- d- a- v- h- 680 12:is_posinf_dp
+s:683 P n d:9 a:0 c- d- d:0 d- c:0 f- i:0 m- n+ p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 10:consts_mod
+s:731 p n d:6 d+ p- r- v:0 10:iprint_dft
+s:740 c n d:10 h- 7fefffff ffffffff 11:huge(1.0_8)
+s:743 L n d:0 c+ a- f- v- r:0 a:0 7:%L99999
+s:747 c n d:7 h- 7fffffff ffffffff 0:
+end
+AST2ILM version 1/53
+i0: BOS l154 n1 n0
+i4: NOP
+i5: --------------------
+i0: BOS l154 n1 n0
+i4: --------------------
+i0: BOS l0 n1 n0
+i4: ENLAB
+i5: --------------------
+i0: BOS l159 n1 n0
+i4: FILE n159 n1 n12000
+i8: BASE s681
+i10: DCON s617
+i12: BASE s680
+i14: DLD i12
+i16: DCMP i14 i10
+i19: GT i16
+i21: DABS i14
+i23: DCON s740
+i25: DCMP i21 i23
+i28: GT i25
+i30: LNOP i19
+i32: NOP
+i33: LNOP i28
+i35: NOP
+i36: LAND i30 i33
+i39: LST i8 i36
+i42: --------------------
+i0: BOS l160 n1 n0
+i4: LABEL s743
+i6: --------------------
+i0: BOS l160 n1 n0
+i4: FILE n160 n1 n13000
+i8: BASE s681
+i10: LLD i8
+i12: ENDF i10
+i14: --------------------
+end
+DIRECTIVES version 1/53
+A:1
+rou: --------------------
+z
+end
+TOILM version 1/53
+I:0
+S:747
+D:60
+B:0
+G:0
+L:0
+S:1
+L:1
+P:0
+procedure:Function
+d:6 I4
+d:7 I8
+d:9 R4
+d:18 L4
+s:609 c n d:6 h- 0 0:
+s:611 c n d:6 h- 1 0:
+s:612 c n d:7 h- 0 1 0:
+s:613 c n d:9 h- 0 0:
+s:624 P n d:6 a:0 c- d- d:0 d- c:0 f- i:0 m- n- p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 10:infnan_mod
+s:680 V D d:9 a- a- a- d+ d:0 m- c- c- h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 o:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i+ c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 1:x
+s:681 V L d:18 a- a- a+ d+ d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 1:y
+s:682 E E d:18 c+ a- a- a:0 C- d+ d:0 c:0 e:168 i:624 l:162 m- p+ r- r:681 p- p- s- d- c- n- c:0 r:0 p:1 a:0 v:0 i:0 i- c- d- a- v- h- 680 12:is_neginf_sp
+s:683 P n d:9 a:0 c- d- d:0 d- c:0 f- i:0 m- n+ p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 10:consts_mod
+s:694 c n d:9 h- 7f7fffff 11:huge(1.0_4)
+s:712 p L d:9 d+ p- r- v:0 4:zero
+s:721 p L d:9 d+ p- r- v:2139095039 7:hugenum
+s:731 p n d:6 d+ p- r- v:0 10:iprint_dft
+s:742 L n d:0 c+ a- f- v- r:0 a:0 7:%L99999
+s:746 c n d:7 h- 7fffffff ffffffff 0:
+end
+AST2ILM version 1/53
+i0: BOS l162 n1 n0
+i4: NOP
+i5: --------------------
+i0: BOS l162 n1 n0
+i4: --------------------
+i0: BOS l0 n1 n0
+i4: ENLAB
+i5: --------------------
+i0: BOS l167 n1 n0
+i4: FILE n167 n1 n14000
+i8: BASE s681
+i10: RCON s613
+i12: BASE s680
+i14: RLD i12
+i16: RCMP i14 i10
+i19: LT i16
+i21: ABS i14
+i23: RCON s694
+i25: RCMP i21 i23
+i28: GT i25
+i30: LNOP i19
+i32: NOP
+i33: LNOP i28
+i35: NOP
+i36: LAND i30 i33
+i39: LST i8 i36
+i42: --------------------
+i0: BOS l168 n1 n0
+i4: LABEL s742
+i6: --------------------
+i0: BOS l168 n1 n0
+i4: FILE n168 n1 n15000
+i8: BASE s681
+i10: LLD i8
+i12: ENDF i10
+i14: --------------------
+end
+DIRECTIVES version 1/53
+A:1
+rou: --------------------
+z
+end
+TOILM version 1/53
+I:0
+S:748
+D:60
+B:0
+G:0
+L:0
+S:1
+L:1
+P:0
+procedure:Function
+d:6 I4
+d:7 I8
+d:9 R4
+d:10 R8
+d:18 L4
+s:609 c n d:6 h- 0 0:
+s:611 c n d:6 h- 1 0:
+s:612 c n d:7 h- 0 1 0:
+s:617 c n d:10 h- 0 0 0:
+s:624 P n d:6 a:0 c- d- d:0 d- c:0 f- i:0 m- n- p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 10:infnan_mod
+s:680 V D d:10 a- a- a- d+ d:0 m- c- c- h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 o:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i+ c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 1:x
+s:681 V L d:18 a- a- a+ d+ d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 1:y
+s:682 E E d:18 c+ a- a- a:0 C- d+ d:0 c:0 e:176 i:624 l:170 m- p+ r- r:681 p- p- s- d- c- n- c:0 r:0 p:1 a:0 v:0 i:0 i- c- d- a- v- h- 680 12:is_neginf_dp
+s:683 P n d:9 a:0 c- d- d:0 d- c:0 f- i:0 m- n+ p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 10:consts_mod
+s:731 p n d:6 d+ p- r- v:0 10:iprint_dft
+s:740 c n d:10 h- 7fefffff ffffffff 11:huge(1.0_8)
+s:743 L n d:0 c+ a- f- v- r:0 a:0 7:%L99999
+s:747 c n d:7 h- 7fffffff ffffffff 0:
+end
+AST2ILM version 1/53
+i0: BOS l170 n1 n0
+i4: NOP
+i5: --------------------
+i0: BOS l170 n1 n0
+i4: --------------------
+i0: BOS l0 n1 n0
+i4: ENLAB
+i5: --------------------
+i0: BOS l175 n1 n0
+i4: FILE n175 n1 n16000
+i8: BASE s681
+i10: DCON s617
+i12: BASE s680
+i14: DLD i12
+i16: DCMP i14 i10
+i19: LT i16
+i21: DABS i14
+i23: DCON s740
+i25: DCMP i21 i23
+i28: GT i25
+i30: LNOP i19
+i32: NOP
+i33: LNOP i28
+i35: NOP
+i36: LAND i30 i33
+i39: LST i8 i36
+i42: --------------------
+i0: BOS l176 n1 n0
+i4: LABEL s743
+i6: --------------------
+i0: BOS l176 n1 n0
+i4: FILE n176 n1 n17000
+i8: BASE s681
+i10: LLD i8
+i12: ENDF i10
+i14: --------------------
+end
+DIRECTIVES version 1/53
+A:1
+rou: --------------------
+z
+end
+TOILM version 1/53
+I:0
+S:747
+D:60
+B:0
+G:0
+L:0
+S:1
+L:1
+P:0
+procedure:Function
+d:6 I4
+d:7 I8
+d:9 R4
+d:18 L4
+s:609 c n d:6 h- 0 0:
+s:611 c n d:6 h- 1 0:
+s:612 c n d:7 h- 0 1 0:
+s:624 P n d:6 a:0 c- d- d:0 d- c:0 f- i:0 m- n- p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 10:infnan_mod
+s:680 V D d:9 a- a- a- d+ d:0 m- c- c- h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 o:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i+ c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 1:x
+s:681 V L d:18 a- a- a+ d+ d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 1:y
+s:682 E E d:18 c+ a- a- a:0 C- d+ d:0 c:0 e:184 i:624 l:178 m- p+ r- r:681 p- p- s- d- c- n- c:0 r:0 p:1 a:0 v:0 i:0 i- c- d- a- v- h- 680 9:is_inf_sp
+s:683 P n d:9 a:0 c- d- d:0 d- c:0 f- i:0 m- n+ p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 10:consts_mod
+s:694 c n d:9 h- 7f7fffff 11:huge(1.0_4)
+s:721 p L d:9 d+ p- r- v:2139095039 7:hugenum
+s:731 p n d:6 d+ p- r- v:0 10:iprint_dft
+s:742 L n d:0 c+ a- f- v- r:0 a:0 7:%L99999
+s:746 c n d:7 h- 7fffffff ffffffff 0:
+end
+AST2ILM version 1/53
+i0: BOS l178 n1 n0
+i4: NOP
+i5: --------------------
+i0: BOS l178 n1 n0
+i4: --------------------
+i0: BOS l0 n1 n0
+i4: ENLAB
+i5: --------------------
+i0: BOS l183 n1 n0
+i4: FILE n183 n1 n18000
+i8: BASE s681
+i10: BASE s680
+i12: RLD i10
+i14: ABS i12
+i16: RCON s694
+i18: RCMP i14 i16
+i21: GT i18
+i23: LST i8 i21
+i26: --------------------
+i0: BOS l184 n1 n0
+i4: LABEL s742
+i6: --------------------
+i0: BOS l184 n1 n0
+i4: FILE n184 n1 n19000
+i8: BASE s681
+i10: LLD i8
+i12: ENDF i10
+i14: --------------------
+end
+DIRECTIVES version 1/53
+A:1
+rou: --------------------
+z
+end
+TOILM version 1/53
+I:0
+S:748
+D:60
+B:0
+G:0
+L:0
+S:1
+L:1
+P:0
+procedure:Function
+d:6 I4
+d:7 I8
+d:9 R4
+d:10 R8
+d:18 L4
+s:609 c n d:6 h- 0 0:
+s:611 c n d:6 h- 1 0:
+s:612 c n d:7 h- 0 1 0:
+s:624 P n d:6 a:0 c- d- d:0 d- c:0 f- i:0 m- n- p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 10:infnan_mod
+s:680 V D d:10 a- a- a- d+ d:0 m- c- c- h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 o:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i+ c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 1:x
+s:681 V L d:18 a- a- a+ d+ d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 1:y
+s:682 E E d:18 c+ a- a- a:0 C- d+ d:0 c:0 e:192 i:624 l:186 m- p+ r- r:681 p- p- s- d- c- n- c:0 r:0 p:1 a:0 v:0 i:0 i- c- d- a- v- h- 680 9:is_inf_dp
+s:683 P n d:9 a:0 c- d- d:0 d- c:0 f- i:0 m- n+ p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 10:consts_mod
+s:731 p n d:6 d+ p- r- v:0 10:iprint_dft
+s:740 c n d:10 h- 7fefffff ffffffff 11:huge(1.0_8)
+s:743 L n d:0 c+ a- f- v- r:0 a:0 7:%L99999
+s:747 c n d:7 h- 7fffffff ffffffff 0:
+end
+AST2ILM version 1/53
+i0: BOS l186 n1 n0
+i4: NOP
+i5: --------------------
+i0: BOS l186 n1 n0
+i4: --------------------
+i0: BOS l0 n1 n0
+i4: ENLAB
+i5: --------------------
+i0: BOS l191 n1 n0
+i4: FILE n191 n1 n20000
+i8: BASE s681
+i10: BASE s680
+i12: DLD i10
+i14: DABS i12
+i16: DCON s740
+i18: DCMP i14 i16
+i21: GT i18
+i23: LST i8 i21
+i26: --------------------
+i0: BOS l192 n1 n0
+i4: LABEL s743
+i6: --------------------
+i0: BOS l192 n1 n0
+i4: FILE n192 n1 n21000
+i8: BASE s681
+i10: LLD i8
+i12: ENDF i10
+i14: --------------------
+end
+DIRECTIVES version 1/53
+A:1
+rou: --------------------
+z
+end

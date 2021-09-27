@@ -30,8 +30,8 @@ jobs:
 
       - name: Install Flang
         run: |
-          cd .github/workflows; ./install_flang
+            #cd .github/workflows; ./install_flang
 
       - name: Conduct the test
         run: |
-          source /tmp/setenv.sh; cd fsrc/test; make -d ftest
+          source /tmp/setenv.sh; cd fsrc/test; make ftest

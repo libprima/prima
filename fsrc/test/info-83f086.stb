@@ -1,0 +1,35 @@
+ENDINLINE
+TOILM version 1/53
+I:0
+S:704
+D:57
+B:0
+G:0
+L:0
+S:1
+L:1
+P:0
+fihx:0 tag:0 parent:0 flags:0 lineno:0 srcline:0 level:0 next:0 0: 0: 0: 0:
+fihx:1 tag:0 parent:0 flags:0 lineno:10 srcline:1 level:0 next:0 8:./common 8:info.f90 8:info_mod 17:./common/info.f90
+procedure:Blockdata
+d:6 I4
+d:7 I8
+d:9 R4
+s:609 c n d:6 h- 0 0:
+s:611 c n d:6 h- 1 0:
+s:624 E n d:6 c+ a- a- a:0 C- d- d:0 c:0 e:42 i:0 l:10 m- p- r- r:0 p- p- s- d- c- n- c:0 r:0 p:0 a:0 v:0 i:0 i- c- d- a- v- h- 8:info_mod
+s:625 P n d:9 a:0 c- d- d:0 d- c:0 f- i:0 m- n+ p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 10:consts_mod
+s:673 p n d:6 d+ p- r- v:0 10:iprint_dft
+s:682 p n d:6 d+ p- r- v:0 8:info_dft
+s:683 p n d:6 d+ p- r- v:-100 13:invalid_input
+s:684 p n d:6 d+ p- r- v:0 15:small_tr_radius
+s:685 p n d:6 d+ p- r- v:1 16:ftarget_achieved
+s:686 p n d:6 d+ p- r- v:2 13:trsubp_failed
+s:687 p n d:6 d+ p- r- v:3 14:maxfun_reached
+s:688 p n d:6 d+ p- r- v:20 13:maxtr_reached
+s:689 p n d:6 d+ p- r- v:-1 5:nan_x
+s:690 p n d:6 d+ p- r- v:-2 9:nan_inf_f
+s:691 p n d:6 d+ p- r- v:-3 9:nan_model
+s:692 p n d:6 d+ p- r- v:7 17:damaging_rounding
+s:704 c n d:7 h- 7fffffff ffffffff 0:
+end

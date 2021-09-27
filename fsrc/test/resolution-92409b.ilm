@@ -1,0 +1,1378 @@
+ENDINLINE
+TOILM version 1/53
+I:0
+S:629
+D:57
+B:0
+G:0
+L:0
+S:1
+L:1
+P:0
+fihx:0 tag:0 parent:0 flags:0 lineno:0 srcline:0 level:0 next:0 0: 0: 0: 0:
+fihx:1 tag:0 parent:0 flags:0 lineno:1 srcline:1 level:0 next:0 8:./common 14:resolution.f90 14:resolution_mod 23:./common/resolution.f90
+procedure:Blockdata
+d:6 I4
+d:7 I8
+d:9 R4
+s:609 c n d:6 h- 0 0:
+s:611 c n d:6 h- 1 0:
+s:624 E n d:9 c+ a- a- a:0 C- d- d:0 c:0 e:0 i:0 l:1 m- p- r- r:0 p- p- s- d- c- n- c:0 r:0 p:0 a:0 v:0 i:0 i- c- d- a- v- h- 14:resolution_mod
+s:629 c n d:7 h- 7fffffff ffffffff 0:
+end
+AST2ILM version 1/53
+i0: BOS l1 n1 n0
+i4: NOP
+i5: --------------------
+i0: BOS l0 n1 n0
+i4: ENLAB
+i5: --------------------
+i0: BOS l13 n1 n0
+i4: FILE n13 n1 n1000
+i8: END
+i9: --------------------
+end
+DIRECTIVES version 1/53
+A:0
+rou: --------------------
+z
+end
+TOILM version 1/53
+I:0
+S:824
+D:100
+B:0
+G:0
+L:0
+S:1
+L:1
+P:0
+procedure:Subroutine
+d:6 I4
+d:7 I8
+d:9 R4
+d:18 L4
+d:30 c l:-1
+d:82 c l:14
+d:84 c l:13
+d:95 A t:7 d:1 612:612 m:0 z:611 n:612
+d:98 A t:7 d:1 612:612 m:0 z:611 n:612
+s:609 c n d:6 h- 0 0:
+s:611 c n d:6 h- 1 0:
+s:612 c n d:7 h- 0 1 0:
+s:616 c n d:9 h- 3f000000 0:
+s:624 P n d:9 a:0 c- d- d:0 d- c:0 f- i:0 m- n- p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 14:resolution_mod
+s:651 V D d:9 a- a- a- d+ d:0 m- c- c- h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 o:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i+ c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 6:rhoend
+s:652 V D d:9 a- a- a+ d+ d:0 m- c- c- h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 o:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 5:delta
+s:653 V D d:9 a- a- a+ d+ d:0 m- c- c- h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 o:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 3:rho
+s:654 E E d:0 c+ a- a- a:0 C- d- d:0 c:0 e:51 i:624 l:16 m- p- r- r:0 p- p- s- d- c- n- c:0 r:0 p:3 a:0 v:0 i:0 i- c- d- a- v- h- 651 652 653 14:resenhance_unc
+s:655 P n d:9 a:0 c- d- d:0 d- c:0 f- i:0 m- n+ p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 10:consts_mod
+s:660 P n d:9 a:0 c- d- d:0 d- c:0 f- i:0 m- n+ p- r- p- p- c- s- s- d- c- n- t+ r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 9:debug_mod
+s:662 c n d:18 h- ffffffff 0:
+s:668 c n d:9 h- 3dcccccd 0:
+s:681 p L d:18 d+ p- r- v:-1 9:debugging
+s:692 p L d:9 d+ p- r- v:1056964608 4:half
+s:695 p L d:9 d+ p- r- v:1036831949 5:tenth
+s:708 p n d:6 d+ p- r- v:0 10:iprint_dft
+s:733 V D d:30 a- a- a- d+ d:0 m- c- c- h- i- d- n- o- p- p+ p:0 t- r- s- s- t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 o:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i+ c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 6:srname
+s:734 V D d:30 a- a- a- d+ d:0 m- c- c- h- i- d- n- o- p- p+ p:0 t- r- s- s- t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 o:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i+ c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 4:mssg
+s:735 P E d:0 a:0 c- d- d:0 d- c:0 f- i:660 m- n- p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:2 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 733 734 7:errstop
+s:798 V L d:9 a- a- a+ d+ d:0 m- c- c- h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 9:rho_ratio
+s:799 p L d:82 d+ p- r- s:801 6:srname
+s:801 c n d:82 h- 14:
+=524553454e48414e43455f554e43
+s:803 c n d:84 h- 13:
+=52484f203c3d2052484f454e44
+s:804 c n d:9 h- 41800000 0:
+s:805 L n d:0 c+ a- f- v- r:1 a:0 7:%L99999
+s:806 c n d:9 h- 437a0000 0:
+s:809 L n d:0 c+ a- f- v- r:0 a:0 7:%L99998
+s:815 c n d:7 h- 7fffffff ffffffff 0:
+s:816 L n d:0 c+ a- f- v- r:0 a:0 7:%L99997
+s:817 L n d:0 c+ a- f- v- r:1 a:0 7:%L99996
+s:818 L n d:0 c+ a- f- v- r:1 a:0 7:%L99995
+s:819 L n d:0 c+ a- f- v- r:1 a:0 7:%L99994
+s:820 L n d:0 c+ a- f- v- r:1 a:0 7:%L99993
+end
+AST2ILM version 1/53
+i0: BOS l16 n1 n0
+i4: NOP
+i5: --------------------
+i0: BOS l16 n1 n0
+i4: --------------------
+i0: BOS l0 n1 n0
+i4: ENLAB
+i5: --------------------
+i0: BOS l34 n1 n0
+i4: FILE n34 n1 n2000
+i8: --------------------
+i0: BOS l35 n1 n0
+i4: FILE n35 n1 n3000
+i8: BASE s653
+i10: RLD i8
+i12: BASE s651
+i14: RLD i12
+i16: RCMP i10 i14
+i19: LE i16
+i21: BRF i19 s817
+i24: --------------------
+i0: BOS l36 n1 n0
+i4: FILE n36 n1 n4000
+i8: BASE s801
+i10: BASE s803
+i12: FARG i8 t82
+i15: FARG i10 t84
+i18: UCALL n2 s735 i12 t82 i15 t84
+i23: --------------------
+i0: BOS l37 n1 n0
+i4: FILE n37 n1 n5000
+i8: LABEL s817
+i10: --------------------
+i0: BOS l38 n1 n0
+i4: FILE n38 n1 n6000
+i8: LABEL s816
+i10: --------------------
+i0: BOS l40 n1 n0
+i4: FILE n40 n1 n7000
+i8: BASE s652
+i10: RCON s616
+i12: BASE s653
+i14: RLD i12
+i16: RMUL i14 i10
+i19: RST i8 i16
+i22: --------------------
+i0: BOS l41 n1 n0
+i4: FILE n41 n1 n8000
+i8: BASE s798
+i10: BASE s653
+i12: RLD i10
+i14: BASE s651
+i16: RLD i14
+i18: RDIV i12 i16
+i21: RST i8 i18
+i24: --------------------
+i0: BOS l42 n1 n0
+i4: FILE n42 n1 n9000
+i8: RCON s804
+i10: BASE s798
+i12: RLD i10
+i14: RCMP i12 i8
+i17: LE i14
+i19: BRF i17 s818
+i22: --------------------
+i0: BOS l43 n1 n0
+i4: FILE n43 n1 n10000
+i8: BASE s653
+i10: BASE s651
+i12: RLD i10
+i14: RST i8 i12
+i17: --------------------
+i0: BOS l44 n1 n0
+i4: FILE n44 n1 n11000
+i8: BR s805
+i10: --------------------
+i0: BOS l44 n1 n0
+i4: FILE n44 n1 n12000
+i8: LABEL s818
+i10: --------------------
+i0: BOS l44 n1 n0
+i4: FILE n44 n1 n13000
+i8: RCON s806
+i10: BASE s798
+i12: RLD i10
+i14: RCMP i12 i8
+i17: LE i14
+i19: BRF i17 s819
+i22: --------------------
+i0: BOS l45 n1 n0
+i4: FILE n45 n1 n14000
+i8: BASE s653
+i10: BASE s798
+i12: RLD i10
+i14: SQRT i12
+i16: BASE s651
+i18: RLD i16
+i20: RMUL i18 i14
+i23: RST i8 i20
+i26: --------------------
+i0: BOS l46 n1 n0
+i4: FILE n46 n1 n15000
+i8: BR s820
+i10: --------------------
+i0: BOS l46 n1 n0
+i4: LABEL s819
+i6: --------------------
+i0: BOS l47 n1 n0
+i4: FILE n47 n1 n16000
+i8: BASE s653
+i10: RCON s668
+i12: BASE s653
+i14: RLD i12
+i16: RMUL i14 i10
+i19: RST i8 i16
+i22: --------------------
+i0: BOS l48 n1 n0
+i4: FILE n48 n1 n17000
+i8: LABEL s820
+i10: --------------------
+i0: BOS l48 n1 n0
+i4: FILE n48 n1 n18000
+i8: LABEL s805
+i10: --------------------
+i0: BOS l49 n1 n0
+i4: FILE n49 n1 n19000
+i8: BASE s652
+i10: BASE s652
+i12: RLD i10
+i14: BASE s653
+i16: RLD i14
+i18: RMAX i12 i16
+i21: RST i8 i18
+i24: --------------------
+i0: BOS l51 n1 n0
+i4: LABEL s809
+i6: --------------------
+i0: BOS l51 n1 n0
+i4: FILE n51 n1 n20000
+i8: END
+i9: --------------------
+end
+DIRECTIVES version 1/53
+A:1
+rou: --------------------
+z
+end
+TOILM version 1/53
+I:0
+S:944
+D:149
+B:0
+G:0
+L:0
+S:1
+L:1
+P:0
+procedure:Subroutine
+d:6 I4
+d:7 I8
+d:9 R4
+d:18 L4
+d:30 c l:-1
+d:82 A t:9 d:2 612:801 m:612 612:804 m:802 z:806 n:805
+d:85 A t:9 d:1 612:811 m:612 z:813 n:812
+d:88 A t:9 d:1 612:818 m:612 z:612 n:818
+d:91 A t:9 d:1 612:820 m:612 z:612 n:820
+d:94 c l:14
+d:96 c l:29
+d:98 c l:13
+d:115 A t:7 d:1 612:839 m:612 z:612 n:839
+d:118 A t:7 d:1 612:841 m:612 z:612 n:841
+d:121 A t:9 d:1 876:801 m:612 z:878 n:877
+d:124 A t:9 d:1 879:801 m:612 z:881 n:880
+d:136 P p:9
+d:138 P p:9
+d:140 P p:9
+d:142 P p:9
+d:144 A t:7 d:1 612:612 m:0 z:611 n:612
+d:147 A t:7 d:1 612:612 m:0 z:611 n:612
+s:609 c n d:6 h- 0 0:
+s:610 c n d:7 h- 0 0 0:
+s:611 c n d:6 h- 1 0:
+s:612 c n d:7 h- 0 1 0:
+s:613 c n d:9 h- 0 0:
+s:616 c n d:9 h- 3f000000 0:
+s:624 P n d:9 a:0 c- d- d:0 d- c:0 f- i:0 m- n- p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 14:resolution_mod
+s:651 A D d:82 a- a+ a- d+ d:0 m- c- c- h- i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 o:651 a- a- a+ a- a- n+ s+ i- c- o:2 d:840 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i+ c- p:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 6:conmat
+s:652 A D d:85 a- a+ a- d+ d:0 m- c- c- h- i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 o:652 a- a- a+ a- a- n+ s+ i- c- o:1 d:842 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i+ c- p:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 4:fval
+s:653 V D d:9 a- a- a- d+ d:0 m- c- c- h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 o:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i+ c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 6:rhoend
+s:654 V D d:9 a- a- a+ d+ d:0 m- c- c- h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 o:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 4:cpen
+s:655 V D d:9 a- a- a+ d+ d:0 m- c- c- h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 o:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 3:rho
+s:656 E E d:0 c+ a- a- a:0 C- d- d:0 c:0 e:105 i:624 l:54 m- p- r- r:0 p- p- s- d- c- n- c:0 r:0 p:7 a:0 v:0 i:0 i- c- d- a- v- h- 651 652 653 654 655 840 842 14:resenhance_nlc
+s:657 P n d:9 a:0 c- d- d:0 d- c:0 f- i:0 m- n+ p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 10:consts_mod
+s:662 P n d:9 a:0 c- d- d:0 d- c:0 f- i:0 m- n+ p- r- p- p- c- s- s- d- c- n- t+ r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 9:debug_mod
+s:664 c n d:18 h- ffffffff 0:
+s:673 c n d:9 h- 7f7fffff 11:huge(1.0_4)
+s:683 p L d:18 d+ p- r- v:-1 9:debugging
+s:691 p L d:9 d+ p- r- v:0 4:zero
+s:694 p L d:9 d+ p- r- v:1056964608 4:half
+s:700 p L d:9 d+ p- r- v:2139095039 7:hugenum
+s:710 p n d:6 d+ p- r- v:0 10:iprint_dft
+s:735 V D d:30 a- a- a- d+ d:0 m- c- c- h- i- d- n- o- p- p+ p:0 t- r- s- s- t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 o:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i+ c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 6:srname
+s:736 V D d:30 a- a- a- d+ d:0 m- c- c- h- i- d- n- o- p- p+ p:0 t- r- s- s- t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 o:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i+ c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 4:mssg
+s:737 P E d:0 a:0 c- d- d:0 d- c:0 f- i:662 m- n- p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:2 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 735 736 7:errstop
+s:801 V L d:7 a- a- a- d+ d:0 m- c- c+ h+ i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 5:z_b_1
+s:802 V L d:7 a- a- a- d+ d:0 m- c- c+ h+ i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 5:z_b_2
+s:804 V L d:7 a- a- a- d+ d:0 m- c- c+ h+ i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 5:z_b_4
+s:805 V L d:7 a- a- a- d+ d:0 m- c- c+ h+ i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 5:z_b_5
+s:806 V L d:7 a- a- a- d+ d:0 m- c- c+ h+ i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 5:z_b_6
+s:808 V L d:7 a- a- a- d+ d:0 m- c- c+ h+ i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 7:z_e_123
+s:809 V L d:7 a- a- a- d+ d:0 m- c- c+ h+ i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 7:z_e_126
+s:811 V L d:7 a- a- a- d+ d:0 m- c- c+ h+ i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 5:z_b_8
+s:812 V L d:7 a- a- a- d+ d:0 m- c- c+ h+ i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 5:z_b_9
+s:813 V L d:7 a- a- a- d+ d:0 m- c- c+ h+ i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 6:z_b_10
+s:814 V L d:7 a- a- a- d+ d:0 m- c- c+ h+ i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 7:z_e_133
+s:815 A B d:88 a+ a- a+ d+ d:0 m- c- c- h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:870 a+ a- a- a- a+ n+ s- i- c- o:1 d:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 4:cmax
+s:818 V L d:7 a- a- a- d+ d:0 m- c- c+ h+ i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 7:z_e_141
+s:819 A B d:91 a+ a- a+ d+ d:0 m- c- c- h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:815 m:871 a+ a- a- a- a+ n+ s- i- c- o:1 d:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 4:cmin
+s:820 V L d:7 a- a- a- d+ d:0 m- c- c+ h+ i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 7:z_e_146
+s:821 V L d:9 a- a- a+ d+ d:0 m- c- c- h- i- d- n- o- p- p- p:0 t- r- s- s+ t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 5:denom
+s:822 p L d:94 d+ p- r- s:824 6:srname
+s:824 c n d:94 h- 14:
+=524553454e48414e43455f4e4c43
+s:825 c n d:94 h- 14:
+=53495a45284656414c29203c2031
+s:828 c n d:96 h- 29:
+=53495a4528434f4e4d41542c203229202f3d2053495a45284656414c29
+s:830 c n d:98 h- 13:
+=52484f203c3d2052484f454e44
+s:831 c n d:9 h- 3fc00000 0:
+s:838 L n d:0 c+ a- f- v- r:0 a:0 7:%L99999
+s:839 c n d:7 h- 0 16 0:
+s:840 A D d:115 a- a- a- d+ d:0 m- c- c- h+ i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 o:0 a- a- a- a- a- n+ s+ i+ c+ o:1 d:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 9:conmat$sd
+s:841 c n d:7 h- 0 10 0:
+s:842 A D d:118 a- a- a- d+ d:0 m- c- c- h+ i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 o:0 a- a- a- a- a- n+ s+ i+ c+ o:1 d:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 7:fval$sd
+s:843 c n d:7 h- 0 c 0:
+s:844 c n d:7 h- 0 b 0:
+s:845 c n d:7 h- 0 15 0:
+s:846 c n d:7 h- 0 12 0:
+s:847 c n d:7 h- 0 11 0:
+s:848 c n d:7 h- 0 8 0:
+s:853 V L d:7 a- a- a- d+ d:0 m- c- c- h+ i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 3:i$a
+s:854 V L d:7 a- a- a- d+ d:0 m- c- c- h+ i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 3:i$b
+s:855 A B d:121 a+ a- a- d+ d:0 m- c- c- h+ i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:872 a- a- a- a- a- n+ s- i- c- o:1 d:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 8:conmat$r
+s:856 V L d:7 a- a- a- d+ d:0 m- c- c- h+ i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 3:i$c
+s:857 V L d:7 a- a- a- d+ d:0 m- c- c- h+ i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 3:i$d
+s:858 A B d:124 a+ a- a- d+ d:0 m- c- c- h+ i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:873 a- a- a- a- a- n+ s- i- c- o:1 d:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 9:conmat$r3
+s:859 V L d:7 a- a- a- d+ d:0 m- c- c- h+ i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 3:i$e
+s:860 V L d:18 a- a- a- d+ d:0 m- c- c- h+ i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 6:cmin$r
+s:861 c n d:18 h- 0 0:
+s:862 V L d:9 a- a- a- d+ d:0 m- c- c- h+ i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 6:cmax$r
+s:863 V L d:9 a- a- a- d+ d:0 m- c- c- h+ i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 6:fval$r
+s:864 V L d:9 a- a- a- d+ d:0 m- c- c- h+ i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 7:fval$r4
+s:865 V L d:7 a- a- a- d+ d:0 m- c- c- h+ i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 3:i$f
+s:870 V L d:136 a- a- a- d- d:0 m- c- c- h+ i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p+ t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 6:cmax$p
+s:871 V L d:138 a- a- a- d- d:0 m- c- c- h+ i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p+ t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 6:cmin$p
+s:872 V L d:140 a- a- a- d- d:0 m- c- c- h+ i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p+ t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 10:conmat$r$p
+s:873 V L d:142 a- a- a- d- d:0 m- c- c- h+ i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p+ t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 11:conmat$r3$p
+s:874 c n d:7 h- 0 0 0:
+s:875 c n d:7 h- 7fffffff ffffffff 0:
+s:876 V L d:7 a- a- a- d- d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 6:.A0001
+s:877 V L d:7 a- a- a- d- d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 6:.A0002
+s:878 V L d:7 a- a- a- d- d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 6:.A0003
+s:879 V L d:7 a- a- a- d- d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 6:.A0004
+s:880 V L d:7 a- a- a- d- d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 6:.A0005
+s:881 V L d:7 a- a- a- d- d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p- t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 6:.A0006
+s:882 P E d:0 a:0 c+ d- d:0 d- c:0 f- i:0 m- n- p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 19:f90_ptr_alloc04a_i8
+s:883 c n d:7 h- 0 4 0:
+s:884 c n d:7 h- 0 1b 0:
+s:885 P E d:7 a:0 c+ d- d:0 d- c:0 f- i:0 m- n- p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 19:f90_auto_alloc04_i8
+s:886 L n d:0 c+ a- f- v- r:0 a:0 7:%L99998
+s:887 L n d:0 c+ a- f- v- r:1 a:0 7:%L99997
+s:888 L n d:0 c+ a- f- v- r:1 a:0 7:%L99996
+s:889 L n d:0 c+ a- f- v- r:1 a:0 7:%L99995
+s:890 L n d:0 c+ a- f- v- r:1 a:0 7:%L99994
+s:891 P E d:0 a:0 c+ d- d:0 d- c:0 f- i:0 m- n- p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 15:f90_alloc04a_i8
+s:892 P E d:0 a:0 c+ d- d:0 d- c:0 f- i:0 m- n- p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 19:f90_alloc04_chka_i8
+s:893 L n d:0 c+ a- f- v- r:1 a:0 7:%L99993
+s:894 L n d:0 c+ a- f- v- r:1 a:0 7:%L99992
+s:895 V L d:7 a- a- a- d- d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p+ t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 7:.dY0001
+s:896 L n d:0 c+ a- f- v- r:1 a:0 7:%L99991
+s:897 L n d:0 c+ a- f- v- r:1 a:0 7:%L99990
+s:898 V L d:7 a- a- a- d- d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p+ t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 7:.dY0002
+s:899 L n d:0 c+ a- f- v- r:1 a:0 7:%L99989
+s:900 L n d:0 c+ a- f- v- r:1 a:0 7:%L99988
+s:901 V L d:7 a- a- a- d- d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p+ t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 7:.dY0003
+s:902 L n d:0 c+ a- f- v- r:1 a:0 7:%L99987
+s:903 L n d:0 c+ a- f- v- r:1 a:0 7:%L99986
+s:904 L n d:0 c+ a- f- v- r:1 a:0 7:%L99985
+s:905 V L d:7 a- a- a- d- d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p+ t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 7:.dY0004
+s:906 P E d:0 a:0 c+ d- d:0 d- c:0 f- i:0 m- n- p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 17:f90_dealloc03a_i8
+s:907 L n d:0 c+ a- f- v- r:1 a:0 7:%L99984
+s:908 L n d:0 c+ a- f- v- r:1 a:0 7:%L99983
+s:909 V L d:7 a- a- a- d- d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p+ t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 7:.dY0005
+s:910 L n d:0 c+ a- f- v- r:1 a:0 7:%L99982
+s:911 L n d:0 c+ a- f- v- r:1 a:0 7:%L99981
+s:912 V L d:7 a- a- a- d- d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p+ t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 7:.dY0006
+s:913 L n d:0 c+ a- f- v- r:1 a:0 7:%L99980
+s:914 L n d:0 c+ a- f- v- r:1 a:0 7:%L99979
+s:915 V L d:7 a- a- a- d- d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p+ t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 7:.dY0007
+s:916 L n d:0 c+ a- f- v- r:1 a:0 7:%L99978
+s:917 L n d:0 c+ a- f- v- r:1 a:0 7:%L99977
+s:918 L n d:0 c+ a- f- v- r:1 a:0 7:%L99976
+s:919 V L d:7 a- a- a- d- d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p+ t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 7:.dY0008
+s:920 L n d:0 c+ a- f- v- r:1 a:0 7:%L99975
+s:921 L n d:0 c+ a- f- v- r:1 a:0 7:%L99974
+s:922 V L d:7 a- a- a- d- d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p+ t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 7:.dY0009
+s:923 L n d:0 c+ a- f- v- r:1 a:0 7:%L99973
+s:924 c n d:6 h- ffffffff 0:
+s:925 L n d:0 c+ a- f- v- r:1 a:0 7:%L99972
+s:926 L n d:0 c+ a- f- v- r:1 a:0 7:%L99971
+s:927 L n d:0 c+ a- f- v- r:1 a:0 7:%L99970
+s:928 V L d:7 a- a- a- d- d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p+ t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 7:.dY0010
+s:929 L n d:0 c+ a- f- v- r:1 a:0 7:%L99969
+s:930 L n d:0 c+ a- f- v- r:1 a:0 7:%L99968
+s:931 L n d:0 c+ a- f- v- r:1 a:0 7:%L99967
+s:932 L n d:0 c+ a- f- v- r:1 a:0 7:%L99966
+s:933 V L d:7 a- a- a- d- d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p+ t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 7:.dY0011
+s:934 L n d:0 c+ a- f- v- r:1 a:0 7:%L99965
+s:935 L n d:0 c+ a- f- v- r:1 a:0 7:%L99964
+s:936 L n d:0 c+ a- f- v- r:1 a:0 7:%L99963
+s:937 V L d:7 a- a- a- d- d:0 m- c- c+ h- i- d- n- o- p- p- p:0 t- r- s- s- t- p- u- i- p+ t- e:0 t- t- v- a:0 c:0 c:0 l:1 m:0 p- e:0 p- p- C- a:0 c- d- p- s- c- t- m- i- c- p:0 d:0 r- r- m- c- c- r- l- d- d- d:0 a- f- p- 7:.dY0012
+s:938 L n d:0 c+ a- f- v- r:1 a:0 7:%L99962
+s:939 L n d:0 c+ a- f- v- r:1 a:0 7:%L99961
+s:940 P E d:0 a:0 c+ d- d:0 d- c:0 f- i:0 m- n- p- r- p- p- c- s- s- d- c- n- t- r- r:0 C- u- i- r:0 p:0 v:0 i:0 i- c- m- c- i- c- f- a- v- h- p- i- 19:f90_auto_dealloc_i8
+end
+AST2ILM version 1/53
+i0: BOS l54 n1 n0
+i4: NOP
+i5: --------------------
+i0: BOS l54 n1 n0
+i4: --------------------
+i0: BOS l0 n1 n0
+i4: BASE s801
+i6: KCON s843
+i8: BASE s840
+i10: ELEMENT n1 i8 t115 i6
+i15: KLD i10
+i17: KST i4 i15
+i20: --------------------
+i0: BOS l0 n1 n0
+i4: BASE s802
+i6: KCON s845
+i8: BASE s840
+i10: ELEMENT n1 i8 t115 i6
+i15: KLD i10
+i17: KST i4 i15
+i20: --------------------
+i0: BOS l0 n1 n0
+i4: BASE s804
+i6: KCON s846
+i8: BASE s840
+i10: ELEMENT n1 i8 t115 i6
+i15: KLD i10
+i17: KST i4 i15
+i20: --------------------
+i0: BOS l0 n1 n0
+i4: BASE s806
+i6: KCON s844
+i8: BASE s840
+i10: ELEMENT n1 i8 t115 i6
+i15: KCON s612
+i17: KLD i10
+i19: KSUB i17 i15
+i22: KCON s845
+i24: ELEMENT n1 i8 t115 i22
+i29: KCON s847
+i31: ELEMENT n1 i8 t115 i29
+i36: KLD i31
+i38: KSUB i36 i15
+i41: KLD i24
+i43: KMUL i41 i38
+i46: KADD i19 i43
+i49: KCON s848
+i51: ELEMENT n1 i8 t115 i49
+i56: KLD i51
+i58: KADD i46 i56
+i61: KST i4 i58
+i64: --------------------
+i0: BOS l0 n1 n0
+i4: BASE s811
+i6: KCON s843
+i8: BASE s842
+i10: ELEMENT n1 i8 t118 i6
+i15: KLD i10
+i17: KST i4 i15
+i20: --------------------
+i0: BOS l0 n1 n0
+i4: BASE s813
+i6: KCON s844
+i8: BASE s842
+i10: ELEMENT n1 i8 t118 i6
+i15: KCON s612
+i17: KLD i10
+i19: KSUB i17 i15
+i22: KCON s848
+i24: ELEMENT n1 i8 t118 i22
+i29: KLD i24
+i31: KADD i19 i29
+i34: KST i4 i31
+i37: --------------------
+i0: BOS l0 n1 n0
+i4: BASE s820
+i6: KCON s610
+i8: KCON s612
+i10: BASE s801
+i12: KLD i10
+i14: KCMP i12 i8
+i17: GE i14
+i19: KMERGE i12 i6 i17
+i23: I8TOI i19
+i25: ITOI8 i23
+i27: KST i4 i25
+i30: --------------------
+i0: BOS l0 n1 n0
+i4: BASE s818
+i6: KCON s610
+i8: KCON s612
+i10: BASE s801
+i12: KLD i10
+i14: KCMP i12 i8
+i17: GE i14
+i19: KMERGE i12 i6 i17
+i23: I8TOI i19
+i25: ITOI8 i23
+i27: KST i4 i25
+i30: --------------------
+i0: BOS l0 n1 n0
+i4: BASE s818
+i6: KCON s883
+i8: KCON s884
+i10: ACON s874
+i12: DPVAL i10
+i14: BASE s870
+i16: ACON s874
+i18: DPNULL
+i19: KCON s610
+i21: PFUNC n2 s885 i4 i6
+i26: PST i14 i21
+i29: --------------------
+i0: BOS l0 n1 n0
+i4: BASE s820
+i6: KCON s883
+i8: KCON s884
+i10: ACON s874
+i12: DPVAL i10
+i14: BASE s871
+i16: ACON s874
+i18: DPNULL
+i19: KCON s610
+i21: PFUNC n2 s885 i4 i6
+i26: PST i14 i21
+i29: --------------------
+i0: BOS l0 n1 n0
+i4: ENLAB
+i5: --------------------
+i0: BOS l76 n1 n0
+i4: FILE n76 n1 n21000
+i8: --------------------
+i0: BOS l77 n1 n0
+i4: FILE n77 n1 n22000
+i8: KCON s610
+i10: KCON s612
+i12: BASE s811
+i14: KLD i12
+i16: KCMP i14 i10
+i19: GE i16
+i21: KMERGE i14 i8 i19
+i25: I8TOI i21
+i27: ICON s611
+i29: ICMP i25 i27
+i32: LT i29
+i34: BRF i32 s887
+i37: --------------------
+i0: BOS l78 n1 n0
+i4: FILE n78 n1 n23000
+i8: BASE s824
+i10: BASE s825
+i12: FARG i8 t94
+i15: FARG i10 t94
+i18: UCALL n2 s737 i12 t94 i15 t94
+i23: --------------------
+i0: BOS l79 n1 n0
+i4: FILE n79 n1 n24000
+i8: LABEL s887
+i10: --------------------
+i0: BOS l80 n1 n0
+i4: FILE n80 n1 n25000
+i8: KCON s610
+i10: KCON s612
+i12: BASE s804
+i14: KLD i12
+i16: KCMP i14 i10
+i19: GE i16
+i21: KMERGE i14 i8 i19
+i25: I8TOI i21
+i27: BASE s811
+i29: KLD i27
+i31: KCMP i29 i10
+i34: GE i31
+i36: KMERGE i29 i8 i34
+i40: I8TOI i36
+i42: ICMP i25 i40
+i45: NE i42
+i47: BRF i45 s888
+i50: --------------------
+i0: BOS l81 n1 n0
+i4: FILE n81 n1 n26000
+i8: BASE s824
+i10: BASE s828
+i12: FARG i8 t94
+i15: FARG i10 t96
+i18: UCALL n2 s737 i12 t94 i15 t96
+i23: --------------------
+i0: BOS l82 n1 n0
+i4: FILE n82 n1 n27000
+i8: LABEL s888
+i10: --------------------
+i0: BOS l83 n1 n0
+i4: FILE n83 n1 n28000
+i8: BASE s655
+i10: RLD i8
+i12: BASE s653
+i14: RLD i12
+i16: RCMP i10 i14
+i19: LE i16
+i21: BRF i19 s889
+i24: --------------------
+i0: BOS l84 n1 n0
+i4: FILE n84 n1 n29000
+i8: BASE s824
+i10: BASE s830
+i12: FARG i8 t94
+i15: FARG i10 t98
+i18: UCALL n2 s737 i12 t94 i15 t98
+i23: --------------------
+i0: BOS l85 n1 n0
+i4: FILE n85 n1 n30000
+i8: LABEL s889
+i10: --------------------
+i0: BOS l86 n1 n0
+i4: FILE n86 n1 n31000
+i8: LABEL s886
+i10: --------------------
+i0: BOS l89 n1 n0
+i4: FILE n89 n1 n32000
+i8: BASE s655
+i10: RCON s616
+i12: BASE s655
+i14: RLD i12
+i16: RMUL i14 i10
+i19: RST i8 i16
+i22: --------------------
+i0: BOS l90 n1 n0
+i4: FILE n90 n1 n33000
+i8: RCON s831
+i10: BASE s653
+i12: RLD i10
+i14: RMUL i12 i8
+i17: BASE s655
+i19: RLD i17
+i21: RCMP i19 i14
+i24: LE i21
+i26: BRF i24 s890
+i29: --------------------
+i0: BOS l91 n1 n0
+i4: FILE n91 n1 n34000
+i8: BASE s655
+i10: BASE s653
+i12: RLD i10
+i14: RST i8 i12
+i17: --------------------
+i0: BOS l92 n1 n0
+i4: FILE n92 n1 n35000
+i8: LABEL s890
+i10: --------------------
+i0: BOS l96 n1 n0
+i4: KCON s612
+i6: BASE s876
+i8: KST i6 i4
+i11: KCON s612
+i13: BASE s801
+i15: KLD i13
+i17: BASE s877
+i19: KST i17 i15
+i22: BASE s878
+i24: KST i22 i11
+i27: KCON s883
+i29: KCON s884
+i31: ACON s874
+i33: DPVAL i31
+i35: BASE s872
+i37: ACON s874
+i39: DPNULL
+i40: KCON s610
+i42: KCON s610
+i44: ACON s874
+i46: DPVAL i44
+i48: CALL n9 s891 i17 i29 i27 i33 i35 i46 i40 i42 i39
+i60: --------------------
+i0: BOS l96 n1 n0
+i4: KCON s612
+i6: BASE s801
+i8: KLD i6
+i10: KCON s612
+i12: KDIV i8 i10
+i15: BASE s895
+i17: KST i15 i12
+i20: BASE s865
+i22: KST i20 i4
+i25: DOBEG i12 s894 s895
+i29: LABEL s893
+i31: --------------------
+i0: BOS l96 n1 n0
+i4: BASE s872
+i6: PLD i4 s855
+i9: BASE s865
+i11: KLD i9
+i13: ELEMENT n1 i6 t121 i11
+i18: RCON s673
+i20: RST i13 i18
+i23: --------------------
+i0: BOS l96 n1 n0
+i4: BASE s865
+i6: KLD i4
+i8: KCON s612
+i10: KADD i6 i8
+i13: BASE s865
+i15: KST i13 i10
+i18: DOEND s893 s895
+i21: LABEL s894
+i23: --------------------
+i0: BOS l96 n1 n0
+i4: KCON s612
+i6: BASE s804
+i8: KLD i6
+i10: KCON s612
+i12: KDIV i8 i10
+i15: BASE s898
+i17: KST i15 i12
+i20: BASE s853
+i22: KST i20 i4
+i25: DOBEG i12 s897 s898
+i29: LABEL s896
+i31: --------------------
+i0: BOS l96 n1 n0
+i4: KCON s612
+i6: BASE s801
+i8: KLD i6
+i10: KCON s612
+i12: KDIV i8 i10
+i15: BASE s901
+i17: KST i15 i12
+i20: BASE s854
+i22: KST i20 i4
+i25: DOBEG i12 s900 s901
+i29: LABEL s899
+i31: --------------------
+i0: BOS l96 n1 n0
+i4: BASE s651
+i6: BASE s854
+i8: KLD i6
+i10: BASE s853
+i12: KLD i10
+i14: ELEMENT n2 i4 t82 i8 i12
+i20: BASE s872
+i22: PLD i20 s855
+i25: ELEMENT n1 i22 t121 i8
+i30: RLD i14
+i32: RLD i25
+i34: RCMP i30 i32
+i37: LT i34
+i39: BRF i37 s902
+i42: --------------------
+i0: BOS l96 n1 n0
+i4: BASE s872
+i6: PLD i4 s855
+i9: BASE s854
+i11: KLD i9
+i13: ELEMENT n1 i6 t121 i11
+i18: BASE s651
+i20: BASE s854
+i22: KLD i20
+i24: BASE s853
+i26: KLD i24
+i28: ELEMENT n2 i18 t82 i22 i26
+i34: RLD i28
+i36: RST i13 i34
+i39: --------------------
+i0: BOS l96 n1 n0
+i4: LABEL s902
+i6: --------------------
+i0: BOS l96 n1 n0
+i4: BASE s854
+i6: KLD i4
+i8: KCON s612
+i10: KADD i6 i8
+i13: BASE s854
+i15: KST i13 i10
+i18: DOEND s899 s901
+i21: LABEL s900
+i23: --------------------
+i0: BOS l96 n1 n0
+i4: BASE s853
+i6: KLD i4
+i8: KCON s612
+i10: KADD i6 i8
+i13: BASE s853
+i15: KST i13 i10
+i18: DOEND s896 s898
+i21: LABEL s897
+i23: --------------------
+i0: BOS l96 n1 n0
+i4: KCON s612
+i6: BASE s820
+i8: KLD i6
+i10: KCON s612
+i12: KDIV i8 i10
+i15: BASE s905
+i17: KST i15 i12
+i20: BASE s865
+i22: KST i20 i4
+i25: DOBEG i12 s904 s905
+i29: LABEL s903
+i31: --------------------
+i0: BOS l96 n1 n0
+i4: BASE s871
+i6: PLD i4 s819
+i9: BASE s865
+i11: KLD i9
+i13: ELEMENT n1 i6 t91 i11
+i18: BASE s872
+i20: PLD i18 s855
+i23: BASE s865
+i25: KLD i23
+i27: ELEMENT n1 i20 t121 i25
+i32: RLD i27
+i34: RST i13 i32
+i37: --------------------
+i0: BOS l96 n1 n0
+i4: BASE s865
+i6: KLD i4
+i8: KCON s612
+i10: KADD i6 i8
+i13: BASE s865
+i15: KST i13 i10
+i18: DOEND s903 s905
+i21: LABEL s904
+i23: --------------------
+i0: BOS l96 n1 n0
+i4: ACON s874
+i6: DPVAL i4
+i8: ACON s874
+i10: DPNULL
+i11: KCON s610
+i13: BASE s872
+i15: PLD i13 s855
+i18: CALL n4 s906 i6 i15 i11 i10
+i25: BASE s872
+i27: ACON s874
+i29: PST i25 i27
+i32: --------------------
+i0: BOS l97 n1 n0
+i4: KCON s612
+i6: BASE s879
+i8: KST i6 i4
+i11: KCON s612
+i13: BASE s801
+i15: KLD i13
+i17: BASE s880
+i19: KST i17 i15
+i22: BASE s881
+i24: KST i22 i11
+i27: KCON s883
+i29: KCON s884
+i31: ACON s874
+i33: DPVAL i31
+i35: BASE s873
+i37: ACON s874
+i39: DPNULL
+i40: KCON s610
+i42: KCON s610
+i44: ACON s874
+i46: DPVAL i44
+i48: CALL n9 s891 i17 i29 i27 i33 i35 i46 i40 i42 i39
+i60: --------------------
+i0: BOS l97 n1 n0
+i4: KCON s612
+i6: BASE s801
+i8: KLD i6
+i10: KCON s612
+i12: KDIV i8 i10
+i15: BASE s909
+i17: KST i15 i12
+i20: BASE s865
+i22: KST i20 i4
+i25: DOBEG i12 s908 s909
+i29: LABEL s907
+i31: --------------------
+i0: BOS l97 n1 n0
+i4: BASE s873
+i6: PLD i4 s858
+i9: BASE s865
+i11: KLD i9
+i13: ELEMENT n1 i6 t124 i11
+i18: RCON s673
+i20: RNEG i18
+i22: RST i13 i20
+i25: --------------------
+i0: BOS l97 n1 n0
+i4: BASE s865
+i6: KLD i4
+i8: KCON s612
+i10: KADD i6 i8
+i13: BASE s865
+i15: KST i13 i10
+i18: DOEND s907 s909
+i21: LABEL s908
+i23: --------------------
+i0: BOS l97 n1 n0
+i4: KCON s612
+i6: BASE s804
+i8: KLD i6
+i10: KCON s612
+i12: KDIV i8 i10
+i15: BASE s912
+i17: KST i15 i12
+i20: BASE s856
+i22: KST i20 i4
+i25: DOBEG i12 s911 s912
+i29: LABEL s910
+i31: --------------------
+i0: BOS l97 n1 n0
+i4: KCON s612
+i6: BASE s801
+i8: KLD i6
+i10: KCON s612
+i12: KDIV i8 i10
+i15: BASE s915
+i17: KST i15 i12
+i20: BASE s857
+i22: KST i20 i4
+i25: DOBEG i12 s914 s915
+i29: LABEL s913
+i31: --------------------
+i0: BOS l97 n1 n0
+i4: BASE s651
+i6: BASE s857
+i8: KLD i6
+i10: BASE s856
+i12: KLD i10
+i14: ELEMENT n2 i4 t82 i8 i12
+i20: BASE s873
+i22: PLD i20 s858
+i25: ELEMENT n1 i22 t124 i8
+i30: RLD i14
+i32: RLD i25
+i34: RCMP i30 i32
+i37: GT i34
+i39: BRF i37 s916
+i42: --------------------
+i0: BOS l97 n1 n0
+i4: BASE s873
+i6: PLD i4 s858
+i9: BASE s857
+i11: KLD i9
+i13: ELEMENT n1 i6 t124 i11
+i18: BASE s651
+i20: BASE s857
+i22: KLD i20
+i24: BASE s856
+i26: KLD i24
+i28: ELEMENT n2 i18 t82 i22 i26
+i34: RLD i28
+i36: RST i13 i34
+i39: --------------------
+i0: BOS l97 n1 n0
+i4: LABEL s916
+i6: --------------------
+i0: BOS l97 n1 n0
+i4: BASE s857
+i6: KLD i4
+i8: KCON s612
+i10: KADD i6 i8
+i13: BASE s857
+i15: KST i13 i10
+i18: DOEND s913 s915
+i21: LABEL s914
+i23: --------------------
+i0: BOS l97 n1 n0
+i4: BASE s856
+i6: KLD i4
+i8: KCON s612
+i10: KADD i6 i8
+i13: BASE s856
+i15: KST i13 i10
+i18: DOEND s910 s912
+i21: LABEL s911
+i23: --------------------
+i0: BOS l97 n1 n0
+i4: KCON s612
+i6: BASE s818
+i8: KLD i6
+i10: KCON s612
+i12: KDIV i8 i10
+i15: BASE s919
+i17: KST i15 i12
+i20: BASE s865
+i22: KST i20 i4
+i25: DOBEG i12 s918 s919
+i29: LABEL s917
+i31: --------------------
+i0: BOS l97 n1 n0
+i4: BASE s870
+i6: PLD i4 s815
+i9: BASE s865
+i11: KLD i9
+i13: ELEMENT n1 i6 t88 i11
+i18: BASE s873
+i20: PLD i18 s858
+i23: BASE s865
+i25: KLD i23
+i27: ELEMENT n1 i20 t124 i25
+i32: RLD i27
+i34: RST i13 i32
+i37: --------------------
+i0: BOS l97 n1 n0
+i4: BASE s865
+i6: KLD i4
+i8: KCON s612
+i10: KADD i6 i8
+i13: BASE s865
+i15: KST i13 i10
+i18: DOEND s917 s919
+i21: LABEL s918
+i23: --------------------
+i0: BOS l97 n1 n0
+i4: ACON s874
+i6: DPVAL i4
+i8: ACON s874
+i10: DPNULL
+i11: KCON s610
+i13: BASE s873
+i15: PLD i13 s858
+i18: CALL n4 s906 i6 i15 i11 i10
+i25: BASE s873
+i27: ACON s874
+i29: PST i25 i27
+i32: --------------------
+i0: BOS l98 n1 n0
+i4: BASE s860
+i6: LCON s609
+i8: LST i4 i6
+i11: --------------------
+i0: BOS l98 n1 n0
+i4: KCON s612
+i6: BASE s820
+i8: KLD i6
+i10: KCON s612
+i12: KDIV i8 i10
+i15: BASE s922
+i17: KST i15 i12
+i20: BASE s859
+i22: KST i20 i4
+i25: DOBEG i12 s921 s922
+i29: LABEL s920
+i31: --------------------
+i0: BOS l98 n1 n0
+i4: BASE s871
+i6: PLD i4 s819
+i9: BASE s859
+i11: KLD i9
+i13: ELEMENT n1 i6 t91 i11
+i18: RCON s616
+i20: BASE s870
+i22: PLD i20 s815
+i25: ELEMENT n1 i22 t88 i11
+i30: RLD i25
+i32: RMUL i18 i30
+i35: RLD i13
+i37: RCMP i35 i32
+i40: LT i37
+i42: BRF i40 s923
+i45: --------------------
+i0: BOS l98 n1 n0
+i4: BASE s860
+i6: LCON s924
+i8: LST i4 i6
+i11: --------------------
+i0: BOS l98 n1 n0
+i4: LABEL s923
+i6: --------------------
+i0: BOS l98 n1 n0
+i4: BASE s859
+i6: KLD i4
+i8: KCON s612
+i10: KADD i6 i8
+i13: BASE s859
+i15: KST i13 i10
+i18: DOEND s920 s922
+i21: LABEL s921
+i23: --------------------
+i0: BOS l98 n1 n0
+i4: FILE n98 n1 n38000
+i8: BASE s860
+i10: LLD i8
+i12: BRF i10 s925
+i15: --------------------
+i0: BOS l99 n1 n0
+i4: BASE s862
+i6: RCON s673
+i8: RST i4 i6
+i11: --------------------
+i0: BOS l99 n1 n0
+i4: KCON s612
+i6: BASE s818
+i8: KLD i6
+i10: KCON s612
+i12: KDIV i8 i10
+i15: BASE s928
+i17: KST i15 i12
+i20: BASE s859
+i22: KST i20 i4
+i25: DOBEG i12 s927 s928
+i29: LABEL s926
+i31: --------------------
+i0: BOS l99 n1 n0
+i4: BASE s871
+i6: PLD i4 s819
+i9: BASE s859
+i11: KLD i9
+i13: ELEMENT n1 i6 t91 i11
+i18: RCON s616
+i20: BASE s870
+i22: PLD i20 s815
+i25: ELEMENT n1 i22 t88 i11
+i30: RLD i25
+i32: RMUL i18 i30
+i35: RLD i13
+i37: RCMP i35 i32
+i40: LT i37
+i42: BRF i40 s929
+i45: --------------------
+i0: BOS l99 n1 n0
+i4: BASE s870
+i6: PLD i4 s815
+i9: BASE s859
+i11: KLD i9
+i13: ELEMENT n1 i6 t88 i11
+i18: RCON s613
+i20: RLD i13
+i22: RMAX i20 i18
+i25: BASE s871
+i27: PLD i25 s819
+i30: ELEMENT n1 i27 t91 i11
+i35: RLD i30
+i37: RSUB i22 i35
+i40: BASE s862
+i42: RLD i40
+i44: RCMP i37 i42
+i47: LT i44
+i49: BRF i47 s930
+i52: --------------------
+i0: BOS l99 n1 n0
+i4: BASE s862
+i6: BASE s870
+i8: PLD i6 s815
+i11: BASE s859
+i13: KLD i11
+i15: ELEMENT n1 i8 t88 i13
+i20: RCON s613
+i22: RLD i15
+i24: RMAX i22 i20
+i27: BASE s871
+i29: PLD i27 s819
+i32: ELEMENT n1 i29 t91 i13
+i37: RLD i32
+i39: RSUB i24 i37
+i42: RST i4 i39
+i45: --------------------
+i0: BOS l99 n1 n0
+i4: LABEL s930
+i6: --------------------
+i0: BOS l99 n1 n0
+i4: LABEL s929
+i6: --------------------
+i0: BOS l99 n1 n0
+i4: BASE s859
+i6: KLD i4
+i8: KCON s612
+i10: KADD i6 i8
+i13: BASE s859
+i15: KST i13 i10
+i18: DOEND s926 s928
+i21: LABEL s927
+i23: --------------------
+i0: BOS l99 n1 n0
+i4: FILE n99 n1 n39000
+i8: BASE s821
+i10: BASE s862
+i12: RLD i10
+i14: RST i8 i12
+i17: --------------------
+i0: BOS l100 n1 n0
+i4: BASE s863
+i6: RCON s673
+i8: RNEG i6
+i10: RST i4 i8
+i13: --------------------
+i0: BOS l100 n1 n0
+i4: KCON s612
+i6: BASE s811
+i8: KLD i6
+i10: KCON s612
+i12: KDIV i8 i10
+i15: BASE s933
+i17: KST i15 i12
+i20: BASE s859
+i22: KST i20 i4
+i25: DOBEG i12 s932 s933
+i29: LABEL s931
+i31: --------------------
+i0: BOS l100 n1 n0
+i4: BASE s652
+i6: BASE s859
+i8: KLD i6
+i10: ELEMENT n1 i4 t85 i8
+i15: RLD i10
+i17: BASE s863
+i19: RLD i17
+i21: RCMP i15 i19
+i24: GT i21
+i26: BRF i24 s934
+i29: --------------------
+i0: BOS l100 n1 n0
+i4: BASE s863
+i6: BASE s652
+i8: BASE s859
+i10: KLD i8
+i12: ELEMENT n1 i6 t85 i10
+i17: RLD i12
+i19: RST i4 i17
+i22: --------------------
+i0: BOS l100 n1 n0
+i4: LABEL s934
+i6: --------------------
+i0: BOS l100 n1 n0
+i4: BASE s859
+i6: KLD i4
+i8: KCON s612
+i10: KADD i6 i8
+i13: BASE s859
+i15: KST i13 i10
+i18: DOEND s931 s933
+i21: LABEL s932
+i23: --------------------
+i0: BOS l100 n1 n0
+i4: BASE s864
+i6: RCON s673
+i8: RST i4 i6
+i11: --------------------
+i0: BOS l100 n1 n0
+i4: KCON s612
+i6: BASE s811
+i8: KLD i6
+i10: KCON s612
+i12: KDIV i8 i10
+i15: BASE s937
+i17: KST i15 i12
+i20: BASE s859
+i22: KST i20 i4
+i25: DOBEG i12 s936 s937
+i29: LABEL s935
+i31: --------------------
+i0: BOS l100 n1 n0
+i4: BASE s652
+i6: BASE s859
+i8: KLD i6
+i10: ELEMENT n1 i4 t85 i8
+i15: RLD i10
+i17: BASE s864
+i19: RLD i17
+i21: RCMP i15 i19
+i24: LT i21
+i26: BRF i24 s938
+i29: --------------------
+i0: BOS l100 n1 n0
+i4: BASE s864
+i6: BASE s652
+i8: BASE s859
+i10: KLD i8
+i12: ELEMENT n1 i6 t85 i10
+i17: RLD i12
+i19: RST i4 i17
+i22: --------------------
+i0: BOS l100 n1 n0
+i4: LABEL s938
+i6: --------------------
+i0: BOS l100 n1 n0
+i4: BASE s859
+i6: KLD i4
+i8: KCON s612
+i10: KADD i6 i8
+i13: BASE s859
+i15: KST i13 i10
+i18: DOEND s935 s937
+i21: LABEL s936
+i23: --------------------
+i0: BOS l100 n1 n0
+i4: FILE n100 n1 n40000
+i8: BASE s654
+i10: BASE s863
+i12: RLD i10
+i14: BASE s864
+i16: RLD i14
+i18: RSUB i12 i16
+i21: BASE s821
+i23: RLD i21
+i25: RDIV i18 i23
+i28: BASE s654
+i30: RLD i28
+i32: RMIN i30 i25
+i35: RST i8 i32
+i38: --------------------
+i0: BOS l101 n1 n0
+i4: FILE n101 n1 n41000
+i8: BR s939
+i10: --------------------
+i0: BOS l101 n1 n0
+i4: LABEL s925
+i6: --------------------
+i0: BOS l102 n1 n0
+i4: FILE n102 n1 n42000
+i8: BASE s654
+i10: RCON s613
+i12: RST i8 i10
+i15: --------------------
+i0: BOS l103 n1 n0
+i4: FILE n103 n1 n43000
+i8: LABEL s939
+i10: --------------------
+i0: BOS l105 n1 n0
+i4: LABEL s838
+i6: --------------------
+i0: BOS l105 n1 n0
+i4: ACON s874
+i6: DPVAL i4
+i8: ACON s874
+i10: DPNULL
+i11: KCON s610
+i13: BASE s871
+i15: PLD i13 s819
+i18: CALL n1 s940 i15
+i22: BASE s871
+i24: ACON s874
+i26: PST i22 i24
+i29: --------------------
+i0: BOS l105 n1 n0
+i4: ACON s874
+i6: DPVAL i4
+i8: ACON s874
+i10: DPNULL
+i11: KCON s610
+i13: BASE s870
+i15: PLD i13 s815
+i18: CALL n1 s940 i15
+i22: BASE s870
+i24: ACON s874
+i26: PST i22 i24
+i29: --------------------
+i0: BOS l105 n1 n0
+i4: FILE n105 n1 n44000
+i8: END
+i9: --------------------
+end
+DIRECTIVES version 1/53
+A:1
+rou: --------------------
+z
+end
