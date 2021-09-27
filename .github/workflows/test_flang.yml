@@ -34,4 +34,4 @@ jobs:
 
       - name: Conduct the test
         run: |
-          source /tmp/setenv.sh; cd fsrc/test; sudo apt install make; make --version; make -d ftest
+          source /tmp/setenv.sh; cd fsrc/test; make -d ftest
