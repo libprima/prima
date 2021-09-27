@@ -8,7 +8,7 @@
 # Last Modified: September 13, 2021
 
 
-$(VERBOSE).SILENT:
+#$(VERBOSE).SILENT:
 
 SHELL = /bin/bash
 
@@ -32,7 +32,7 @@ NEWUOASRC = $(shell sed "s/^/\.\/newuoa\//" ../newuoa/ffiles.txt)
 # Tests.
 TESTS = ntest atest dtest ftest gtest itest stest vtest xtest
 # Log file.
-$(foreach TST, $(TESTS), $(eval $(TST): TESTLOG = $(TST).log))
+$(foreach TST, $(TESTS), $(eval $(TST): TESTLOG = $(TST)_$(shell date +%Y.%m.%d_%H.%M.%S).log))
 
 #.PHONY: all test ntest atest dtest ftest gtest itest stest vtest xtest src header_* clean
 .PHONY: all test src header_* clean
@@ -167,9 +167,11 @@ x_i2_r16_d1_tst x_i4_r16_d1_tst x_i8_r16_d1_tst x_i2_r16_d0_tst x_i4_r16_d0_tst 
 	./checktest --warning $(TESTLOG)
 	@printf "\n$@ ends!\n\n" >> $(TESTLOG)
 	@printf "\n$@ ends!\n\n"
-	@make clean
 
-%_tst: src header_% #$(COMMONSRC) $(NEWUOASRC) $(TESTSRC)
+# No idea why, but if we put $(COMMONSRC), $(NEWUOASRC), and $(TESTSRC) as prerequisites for %_tst,
+# then the Makefile does not work with GitHub Actions, although it works on a normal machine.
+# In both cases, the `make` is `GNU Make 4.2.1`.
+%_tst: src header_%
 	@printf "\n$@ starts.\n\n"
 	@printf "\n$@ starts.\n\n" >> $(TESTLOG)
 	$(FC) $(FFLAGS) -o $@ $(COMMONSRC) $(NEWUOASRC) $(TESTSRC) >> $(TESTLOG) 2>&1
