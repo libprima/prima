@@ -60,11 +60,9 @@ f_i2_r4_d1_tst: FC = $(FFORT)
 	@printf "\n$@ ends!\n\n"
 	@make clean
 
-%_tst: src header_% $(COMMONSRC) $(NEWUOASRC) $(TESTSRC)
+%_tst: src header_%
 	@printf "\n$@ starts.\n\n"
 	@printf "\n$@ starts.\n\n" >> $(TESTLOG)
-	$(FC) $(FFLAGS) -o $@ $(COMMONSRC) $(NEWUOASRC) $(TESTSRC) >> $(TESTLOG) 2>&1
-	./$@ >> $(TESTLOG) 2>&1
 	./checktest --error $(TESTLOG)
 	@printf "\n$@ ends!\n\n" >> $(TESTLOG)
 	@printf "\n$@ ends!\n\n"
