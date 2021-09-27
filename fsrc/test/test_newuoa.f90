@@ -5,7 +5,7 @@ module test_newuoa_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, September 27, 2021 AM08:16:53
+! Last Modified: Monday, September 27, 2021 PM06:32:37
 
 implicit none
 private
@@ -48,6 +48,7 @@ integer(IK) :: npt_list(10)
 integer(IK) :: nrand_loc
 real(RP) :: f
 real(RP) :: rhobeg
+real(RP) :: rhoend
 real(RP), allocatable :: fhist(:)
 real(RP), allocatable :: x(:)
 real(RP), allocatable :: xhist(:, :)
@@ -102,14 +103,15 @@ do iprob = 1, nprobs
             else
                 npt = int(floor(TEN * rand() * real(n, RP)), kind(npt))
             end if
-            maxfun = int(floor(5.0E2_RP * rand() * real(n, RP)), kind(maxfun))
+            maxfun = int(floor(2.0E2_RP * rand() * real(n, RP)), kind(maxfun))
             maxhist = int(floor(TWO * rand() * real(maxfun, RP)), kind(maxhist))
             rhobeg = getdelta0(n)
+            rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(-5.0E0_RP * rand()))
             call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
             x = getx0(n)
             print '(/1A, I3, 1A, I3)', trimstr(probname)//': N = ', n, ', Random test ', irand
-            call newuoa(calfun, x, f, rhobeg=rhobeg, npt=npt, maxfun=maxfun, maxhist=maxhist, &
-                & fhist=fhist, xhist=xhist, iprint=1_IK)
+            call newuoa(calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, npt=npt, maxfun=maxfun, &
+                & maxhist=maxhist, fhist=fhist, xhist=xhist, iprint=1_IK)
         end do
     end do
 end do
