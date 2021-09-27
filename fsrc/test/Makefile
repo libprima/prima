@@ -20,7 +20,7 @@ FFLAGS = -g -O0
 # Common directories.
 COMMON = ./common/
 # Headers.
-HEADERS = $(COMMON)/*.h
+HEADERS = $(COMMON)/ppf.h
 # Solver directories.
 NEWUOA = ./newuoa/
 # Sources.
@@ -32,7 +32,7 @@ TESTS = ftest
 # Log file.
 $(foreach TST, $(TESTS), $(eval $(TST): TESTLOG = $(TST).log))
 
-.PHONY: all test src header_* clean
+.PHONY: all test src clean
 
 
 ####################################################################################################
