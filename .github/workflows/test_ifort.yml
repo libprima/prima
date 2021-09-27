@@ -1,4 +1,4 @@
-name: Test Flang in AMD AOCC
+name: Test ifort
 
 on:
   # Trigger the workflow on push or pull request
@@ -28,10 +28,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Install AOCC
+      - name: Install ifort
         run: |
-          cd .github/workflows; ./install_aocc
+          cd .github/workflows; ./install_ifort
 
       - name: Conduct the test
         run: |
-          source /tmp/setenv.sh; cd fsrc/test; make dtest
+          source /tmp/setenv.sh; cd fsrc/test; make clean; make itest; make clean; make xtest
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          path: fsrc/test/*.log

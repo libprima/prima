@@ -32,7 +32,9 @@ NEWUOASRC = $(shell sed "s/^/\.\/newuoa\//" ../newuoa/ffiles.txt)
 # Tests.
 TESTS = ntest atest dtest ftest gtest itest stest vtest xtest
 # Log file.
-$(foreach TST, $(TESTS), $(eval $(TST): TESTLOG = $(TST)_$(shell date +%Y.%m.%d_%H.%M.%S).log))
+RANDNUM := $(shell bash -c 'echo $$RANDOM')
+$(foreach TST, $(TESTS), $(eval $(TST): \
+	TESTLOG = $(TST)_$(shell date +%Y.%m.%d_%H.%M.%S)_$(RANDNUM).log))
 
 #.PHONY: all test ntest atest dtest ftest gtest itest stest vtest xtest src header_* clean
 .PHONY: all test src header_* clean
@@ -167,6 +169,7 @@ x_i2_r16_d1_tst x_i4_r16_d1_tst x_i8_r16_d1_tst x_i2_r16_d0_tst x_i4_r16_d0_tst 
 	./checktest --warning $(TESTLOG)
 	@printf "\n$@ ends!\n\n" >> $(TESTLOG)
 	@printf "\n$@ ends!\n\n"
+	make clean
 
 # No idea why, but if we put $(COMMONSRC), $(NEWUOASRC), and $(TESTSRC) as prerequisites for %_tst,
 # then the Makefile does not work with GitHub Actions, although it works on a normal machine.
