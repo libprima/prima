@@ -9,7 +9,6 @@
 
 
 $(VERBOSE).SILENT:
-.PHONY: test src header_* clean
 
 SHELL = /bin/bash
 
@@ -30,20 +29,19 @@ NEWUOA = ./newuoa/
 TESTSRC = $(shell cat ./ffiles.txt)
 COMMONSRC = $(shell sed "s/^/\.\/common\//" ../common/ffiles.txt)
 NEWUOASRC = $(shell sed "s/^/\.\/newuoa\//" ../newuoa/ffiles.txt)
+# Tests
 TESTS = ntest atest dtest ftest gtest itest stest vtest xtest
+# Log file.
+$(foreach TST, $(TESTS), $(eval $(TST): TESTLOG = $(TST).log))
+
+#.PHONY: all test ntest atest dtest ftest gtest itest stest vtest xtest src header_* clean
+.PHONY: all test src header_* clean
+
 
 ####################################################################################################
 # All the tests
 test:
-	make ntest
-	make atest
-	make dtest
-	make ftest
-	make gtest
-	make itest
-	make stest
-	make vtest
-	make xtest
+	 make $(TESTS)
 
 
 ####################################################################################################
@@ -157,16 +155,6 @@ x_i2_r16_d1_tst x_i4_r16_d1_tst x_i8_r16_d1_tst x_i2_r16_d0_tst x_i4_r16_d0_tst 
 	-fp-trap=divzero,invalid,overflow#,underflow,denormal
 	#-no-ftz -fp-model strict
 
-# Log file. How to write the following assignments in one line?
-ntest: TESTLOG = ntest.log
-atest: TESTLOG = atest.log
-dtest: TESTLOG = dtest.log
-ftest: TESTLOG = ftest.log
-gtest: TESTLOG = gtest.log
-itest: TESTLOG = itest.log
-stest: TESTLOG = stest.log
-vtest: TESTLOG = vtest.log
-xtest: TESTLOG = xtest.log
 
 ####################################################################################################
 # Making a compiler-specific test
@@ -217,4 +205,4 @@ clean:
 	rm -f *.o *.mod *.dbg *.cmdx *.cmod *.ilm *.stb
 	rm -f *_tst *_tst_cobyla *_tst_uobyqa *_tst_newuoa *_tst_bobyqa *_tst_lincoa
 	mkdir -p log
-	mv *.log log > /dev/null 2>&1
+	@if [ `ls -1 *.log 2>/dev/null | wc -l ` -gt 0 ]; then mv *.log log > /dev/null 2>&1 ; fi
