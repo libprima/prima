@@ -1,13 +1,13 @@
 module update_mod
 !--------------------------------------------------------------------------------------------------!
-! UPDATE_MOD is a module providing subroutines concerning the update of IDZ, BMAT, ZMAT, GQ, HQ, and
-! PQ when XPT(:, KNEW) is replaced by XNEW.
+! This module provides subroutines concerning the update of IDZ, BMAT, ZMAT, GQ, HQ, and PQ when 
+! XPT(:, KNEW) is replaced by XNEW.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, September 27, 2021 AM11:20:42
+! Last Modified: Monday, September 27, 2021 PM05:39:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,9 +22,11 @@ subroutine updateh(knew, beta, vlag_in, idz, bmat, zmat)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates arrays BMAT and ZMAT together with IDZ, in order to replace the
 ! interpolation point XPT(:, KNEW) by XNEW. On entry, VLAG_IN contains the components of the vector
-! THETA*WCHECK + e_b of the updating formula (6.11) in the NEWUOA paper, and BETA holds the value of
-! the parameter that has this name. VLAG_IN and BETA contains information about XNEW, because they
-! are calculated according to D = XNEW - XOPT.
+! Hw of the updating formula (4.11) in the NEWUOA paper, and BETA holds the value of the parameter
+! that has this name. VLAG_IN and BETA contain information about XNEW, because they are calculated
+! according to D = XNEW - XOPT.
+! N.B.: Powell's original comments mention that VLAG_IN is "the vector THETA*WCHECK + e_b of the
+! updating formula (6.11)", which does not match the published version of the NEWUOA paper.
 !
 ! See Section 4 of the NEWUOA paper.
 !--------------------------------------------------------------------------------------------------!

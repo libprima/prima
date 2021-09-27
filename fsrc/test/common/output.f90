@@ -7,7 +7,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, September 22, 2021 AM11:53:14
+! Last Modified: Monday, September 27, 2021 PM05:12:51
 
 
 module output_mod
@@ -68,8 +68,8 @@ if (iprint >= 1) then
         print '(1X)'
     end if
     print '(/4A)', 'Return from ', solver, ' because ', trim(mssg)
-    print '(1A, 6X, 1A, I7)', 'At the return from '//solver, 'Number of function evaluations = ', nf
-    print '(1A, 1PD23.15, 6X, 1A, /(1P, 5D15.6))', 'Least function value = ', f, 'The corresponding X is:', x
+    print '(1A, 3X, 1A, I10)', 'At the return from '//solver, 'Number of function evaluations = ', nf
+    print '(1A, 1PE25.16E4, 3X, 1A, /(1P, 4E18.7E4))', 'Least function value = ', f, 'The corresponding X is:', x
     print '(1X)'
 end if
 
@@ -89,8 +89,8 @@ if (iprint <= -1) then
             write (OUTUNIT, '(1X)')
         end if
         write (OUTUNIT, '(/4A)') 'Return from ', solver, ' because ', trim(mssg)
-        write (OUTUNIT, '(1A, 6X, 1A, I7)') 'At the return from '//solver, 'Number of function evaluations = ', nf
-        write (OUTUNIT, '(1A, 1PD23.15, 6X, 1A, /(1P, 5D15.6))') 'Least function value = ', f, 'The corresponding X is:', x
+        write (OUTUNIT, '(1A, 3X, 1A, I10)') 'At the return from '//solver, 'Number of function evaluations = ', nf
+        write (OUTUNIT, '(1A, 1PE25.16E4, 3X, 1A, /(1P, 4E18.7E4))') 'Least function value = ', f, 'The corresponding X is:', x
         close (OUTUNIT)
     end if
     !print '(/1A /)', 'The output is printed to ' // trim(fout) // '.'
@@ -126,8 +126,8 @@ if (iprint >= 2) then
     if (iprint >= 3) then
         print '(1X)'
     end if
-    print '(/1A, 1PD11.4, 6X, A, I7)', 'New RHO = ', rho, 'Number of function evaluations = ', nf
-    print '(1A, 1PD23.15, 6X, 1A, /(1P, 5D15.6))', 'Least function value = ', f, 'The corresponding X is:', x
+    print '(/1A, 1PE11.4, 3X, A, I10)', 'New RHO = ', rho, 'Number of function evaluations = ', nf
+    print '(1A, 1PE19.10E4, 3X, 1A, /(1P, 4E18.7E4))', 'Least function value = ', f, 'The corresponding X is:', x
 end if
 
 if (iprint <= -2) then
@@ -145,8 +145,8 @@ if (iprint <= -2) then
         if (iprint <= -3) then
             write (OUTUNIT, '(1X)')
         end if
-        write (OUTUNIT, '(/1A, 1PD11.4, 6X, A, I7)') 'New RHO = ', rho, 'Number of function evaluations = ', nf
-        write (OUTUNIT, '(1A, 1PD23.15, 6X, 1A, /(1P, 5D15.6))') 'Least function value = ', f, 'The corresponding X is:', x
+        write (OUTUNIT, '(/1A, 1PE11.4, 3X, A, I10)') 'New RHO = ', rho, 'Number of function evaluations = ', nf
+        write (OUTUNIT, '(1A, 1PE19.10E4, 3X, 1A, /(1P, 4E18.7E4))') 'Least function value = ', f, 'The corresponding X is:', x
         close (OUTUNIT)
     end if
 end if
@@ -177,7 +177,7 @@ if (iprint == 0) then
 end if
 
 if (iprint >= 3) then
-    print '(/1A, I7, 4X, 1A, 1PD18.10, 4X, 1A, /(1P, 5D15.6))', 'Function number', nf, &
+    print '(/1A, I10, 3X, 1A, 1PE19.10E4, 3X, 1A, /(1P, 4E18.7E4))', 'Function number', nf, &
         & 'F = ', f, 'The corresponding X is:', x
 end if
 
@@ -193,7 +193,7 @@ if (iprint <= -3) then
     if (ios /= 0) then
         print '(1A)', 'Fail to open file '//trim(fout)//'!'
     else
-        write (OUTUNIT, '(/1A, I7, 4X, 1A, 1PD18.10, 4X, 1A, /(1P, 5D15.6))') 'Function number', nf, &
+        write (OUTUNIT, '(/1A, I10, 3X, 1A, 1PE19.10E4, 3X, 1A, /(1P, 4E18.7E4))') 'Function number', nf, &
             & 'F = ', f, 'The corresponding X is:', x
         close (OUTUNIT)
     end if

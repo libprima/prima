@@ -29,7 +29,7 @@ NEWUOA = ./newuoa/
 TESTSRC = $(shell cat ./ffiles.txt)
 COMMONSRC = $(shell sed "s/^/\.\/common\//" ../common/ffiles.txt)
 NEWUOASRC = $(shell sed "s/^/\.\/newuoa\//" ../newuoa/ffiles.txt)
-# Tests
+# Tests.
 TESTS = ntest atest dtest ftest gtest itest stest vtest xtest
 # Log file.
 $(foreach TST, $(TESTS), $(eval $(TST): TESTLOG = $(TST).log))
