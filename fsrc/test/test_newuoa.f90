@@ -5,7 +5,7 @@ module test_newuoa_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, September 27, 2021 AM12:49:23
+! Last Modified: Monday, September 27, 2021 AM08:16:53
 
 implicit none
 private
@@ -58,6 +58,8 @@ if (present(probs)) then
 else
     nprobs = 5
     probs_loc(1:nprobs) = ['chebyqad', 'chrosen ', 'trigsabs', 'trigssqs', 'vardim  ']
+    nprobs = 1
+    probs_loc(1:nprobs) = ['chrosen ']
 end if
 
 if (present(mindim)) then

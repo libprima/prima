@@ -2,6 +2,7 @@
      1  KNEW,D,W,VLAG,BETA,S,WVEC,PROD)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       use linalg_mod, only : norm
+      use infnan_mod, only : is_finite
 C      IMPLICIT REAL*8 (A-H,O-Z)
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
@@ -121,6 +122,10 @@ C     Begin the iteration by overwriting S with a vector that has the
 C     required length and direction.
 C
    70 ITERC=ITERC+1
+   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      SSDEN=DD*SS-DS**2
+      IF (SSDEN <= max(SQRT(epsilon(0.0D0)), 1.0D-8)*DD*SS) GOTO 340
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       TEMP=ONE/DSQRT(SSDEN)
       XOPTD=ZERO
       XOPTS=ZERO
@@ -131,6 +136,11 @@ C
       !END DO
       S(1:N)=(DD*S(1:N)-DS*D(1:N))
       S(1:N) = (S(1:N)/norm(S(1:N)))*norm(D(1:N))
+      if (abs(dot_product(s(1:n), d(1:n))) >=
+     1 0.1D0*norm(d(1:n))*norm(s(1:n)) .or.
+     1 .not. is_finite(sum(abs(s(1:n))))) then
+         GOTO  340
+      end if
       DO I=1,N
           XOPTD=XOPTD+XOPT(I)*D(I)
           XOPTS=XOPTS+XOPT(I)*S(I)
@@ -375,8 +385,10 @@ C
           DS=DS+D(I)*S(I)
       END DO
       !SSDEN=DD*SS-DS*DS
-      SSDEN=DD*SS-DS**2
-      IF (SSDEN >= 1.0D-8*DD*SS) GOTO 70
+      !IF (SSDEN >= 1.0D-8*DD*SS) GOTO 70
+      !SSDEN=DD*SS-DS**2
+      !IF (SSDEN >= max(SQRT(epsilon(0.0D0)), 1.0D-8)*DD*SS) GOTO 70
+      GOTO 70
 C
 C     Set the vector W before the RETURN from the subroutine.
 C
