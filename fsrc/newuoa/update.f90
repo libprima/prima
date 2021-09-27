@@ -7,7 +7,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, September 24, 2021 AM11:36:00
+! Last Modified: Monday, September 27, 2021 AM11:20:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -167,8 +167,8 @@ if (jl == 1) then
     zmat(:, 1) = tempa * zmat(:, 1) - tempb * vlag(1:npt)
 
     !---------------------------------------------------------------------------------------------!
-    ! The following six lines by Powell are obviously problematic --- TEMP is always nonnegative.
-    ! According to (4.18) of the NEWUOA paper, the "TEMP < ZERO" and "TEMP >= ZERO" below should be
+    ! The following six lines by Powell are obviously problematic --- SQRTDN is always nonnegative.
+    ! According to (4.18) of the NEWUOA paper, "SQRTDN < ZERO" and "SQRTDN >= ZERO" below should be
     ! both revised to "DENOM < ZERO". See also the corresponding part of the LINCOA code. Note that
     ! the NEWUOA paper uses SIGMA to denote DENOM. Check also Lemma 4 and (5.13) of Powell's paper
     ! "On updating the inverse of a KKT matrix". It seems that the BOBYQA code does not have this
@@ -182,7 +182,7 @@ if (jl == 1) then
     !    reduce_idz = .true.
     !end if
     !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-    ! This is the corrected version. It copies precisely the
+    ! This is the corrected version. It duplicates` the
     ! corresponding part of the LINCOA code.
     if (denom < ZERO) then
         if (idz == 1) then

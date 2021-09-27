@@ -2,6 +2,7 @@
      1  D,G,HD,HS,CRVMIN)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       use linalg_mod, only : norm
+      use infnan_mod, only : is_finite
 C      IMPLICIT REAL*8 (A-H,O-Z)
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
@@ -145,7 +146,8 @@ C
       END DO
       SGK=SG+SHS
       ANGTEST=SGK/DSQRT(GG*DELSQ)
-      IF (ANGTEST <= -0.99D0) GOTO 160
+      !IF (ANGTEST <= -0.99D0) GOTO 160
+      IF (SGK <= -0.99D0*DSQRT(GG*DELSQ)) GOTO 160
 C
 C     Begin the alternative iteration by calculating D and HD and some
 C     scalar products.
@@ -161,6 +163,11 @@ C
       d(1:n) = dot_product(step(1:n),step(1:n))*(g(1:n)+hs(1:n))
      1 - sgk*step(1:n)
       d(1:n) = d(1:n)/norm(d(1:n)) * norm(step(1:n))
+      if (abs(dot_product(d(1:n), step(1:n))) >=
+     1 0.1D0*norm(d(1:n))*norm(step(1:n)) .or.
+     1 .not. is_finite(sum(abs(d(1:n))))) then
+          goto 160
+      end if
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       GOTO 170
   120 DG=ZERO

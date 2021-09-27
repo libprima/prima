@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, September 27, 2021 AM12:29:33
+! Last Modified: Monday, September 27, 2021 AM11:35:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -242,7 +242,7 @@ function biglag(idz, knew, bmat, delbar, x, xpt, zmat) result(d)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, PI, ZERO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, PI, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : Ax_plus_y, inprod, matprod, issymmetric, norm
@@ -368,7 +368,9 @@ do iter = 1, maxiter
     dd = inprod(d, d)
     sp = inprod(d, s)
     ss = inprod(s, s)
-    if (dd * ss - sp**2 <= 1.0E-8_RP * dd * ss) then
+    !if (dd * ss - sp**2 <= 1.0E-8_RP * dd * ss) then
+    ! We adapt the tolerance (1.0E-8) in case single precision is used.
+    if (dd * ss - sp**2 <= max(sqrt(EPS), 1.0E-8_RP) * dd * ss) then
         exit
     end if
     !----------------------------------------------------------------------------------------------!
@@ -378,7 +380,12 @@ do iter = 1, maxiter
     ! large. In a test with single-precision arithmetic, this led to |S| > 2 |D|, but the two should
     ! equal in theory. To rectify this, we calculate S as follows.
     s = dd * s - sp * d
-    s = (s / norm(s)) * norm(d)  ! INPROD(S, D) = 0 and |S| = |D| in precise arithmetic.
+    s = (s / norm(s)) * norm(d)
+    ! INPROD(S, D) = 0 and |S| = |D| in precise arithmetic. Exit if INPROD(S, D) is too large;
+    ! otherwise, |D| may become (much) larger than DELBAR, which did happen in tests.
+    if (abs(inprod(s, d)) >= TENTH * norm(d) * norm(s) .or. .not. is_finite(sum(abs(s)))) then
+        exit
+    end if
     !----------------------------------------------------------------------------------------------!
 
     w = matprod(xpt, hcol * matprod(s, xpt))
@@ -458,8 +465,8 @@ end do
 ! Postconditions
 if (DEBUGGING) then
     call assert(all(is_finite(d)), 'D is finite', srname)
-    ! Due to rounding, it may happen that |D| > DELTA, but |D| > 2*DELTA is highly improbable.
-    call assert(norm(d) <= TWO * delbar, 'NORM(D) <= 2*DELTA', srname)
+    ! Due to rounding, it may happen that |D| > DELBAR, but |D| > 2*DELBAR is highly improbable.
+    call assert(norm(d) <= TWO * delbar, 'NORM(D) <= 2*DELBAR', srname)
 end if
 
 end function biglag
@@ -826,8 +833,8 @@ end do
 ! Postconditions
 if (DEBUGGING) then
     call assert(all(is_finite(d)), 'D is finite', srname)
-    ! Due to rounding, it may happen that |D| > DELTA = |D0|, but |D| > 2*DELTA is highly improbable.
-    call assert(norm(d) <= TWO * norm(d0), 'NORM(D) <= 2*DELTA', srname)
+    ! Due to rounding, it may happen that |D| > DELBAR = |D0|, but |D| > 2*DELBAR is highly improbable.
+    call assert(norm(d) <= TWO * norm(d0), 'NORM(D) <= 2*DELBAR', srname)
 end if
 
 end function bigden

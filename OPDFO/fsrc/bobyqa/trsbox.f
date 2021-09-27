@@ -236,8 +236,10 @@ C
       END DO
       ! Zaikun 20210926:
       !!! Should we calculate S as in TRSAPP of NEWUOA in order to
-      ! make sure that |S| = |D|??? Namely,
+      ! make sure that |S| = |D|??? Namely, do the following:
       ! S = something, then S = (S/norm(S))*norm(D).
+      ! Also, should exit if the orthogonality of S and D is damaged, or
+      ! S is  not finite.
       ! See the corresponding part of TRSAPP.
       SREDG=-TEMP
 C
