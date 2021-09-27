@@ -68,6 +68,14 @@ src: ../newuoa/* ../common/* \
 	@cp -r ../newuoa ./
 	@cp -r ../common ./
 
+# For REAL128:
+# Flang and nvfortran do not support REAL128;
+# AOCC Flang complains about a symbol lookup error: undefined symbol: "fort_rnumq_i8";
+# ifx encounters an internal error when compiling with REAL128.
+ftest: QPAVLB = 0
+header_%: IK = $(shell expr 8 \* $$(echo $@ | sed "s/.*_i//" | sed "s/_.*//"))
+header_%: RP = $(shell expr 8 \* $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//"))
+header_%: DBG = $(shell echo $@ | sed "s/.*_d//" | sed "s/_.*//")
 header_%: $(HEADERS)
 	@sed -i '0,/^#define __QP_AVAILABLE__ [0-9]*/s//#define __QP_AVAILABLE__ $(QPAVLB)/' $(HEADERS)
 	@sed -i '0,/^#define __INTEGER_KIND__ [0-9]*/s//#define __INTEGER_KIND__ $(IK)/' $(HEADERS)
