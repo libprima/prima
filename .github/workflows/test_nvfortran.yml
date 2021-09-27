@@ -1,4 +1,4 @@
-name: Test Oracle sunf95
+name: Test nvfortran
 
 on:
   # Trigger the workflow on push or pull request
@@ -28,10 +28,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Install Oracle sunf95
+      - name: Install nvfotran
         run: |
-          cd .github/workflows; ./install_sunf95
+          cd .github/workflows; ./install_nvfortran
 
       - name: Conduct the test
         run: |
-          source /tmp/setenv.sh; cd fsrc/test; make stest
+          cd fsrc/test; make clean; make vtest
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          path: fsrc/test/*.log

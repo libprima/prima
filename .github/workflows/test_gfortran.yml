@@ -50,4 +50,9 @@ jobs:
 
       - name: Conduct the test
         run: |
-          cd fsrc/test; make gtest
+          cd fsrc/test; make clean; make gtest
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          path: fsrc/test/*.log
