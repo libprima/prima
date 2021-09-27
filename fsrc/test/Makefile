@@ -56,18 +56,11 @@ f_i2_r4_d1_tst: FC = $(FFORT)
 ####################################################################################################
 # Making a compiler-specific test
 %test: %_i2_r4_d1_tst
-	./checktest --warning $(TESTLOG)
-	@printf "\n$@ ends!\n\n" >> $(TESTLOG)
 	@printf "\n$@ ends!\n\n"
 	@make clean
 
-%_tst: src header_% $(COMMONSRC) $(NEWUOASRC) $(TESTSRC)
+%_tst: src header_%
 	@printf "\n$@ starts.\n\n"
-	@printf "\n$@ starts.\n\n" >> $(TESTLOG)
-	$(FC) $(FFLAGS) -o $@ $(COMMONSRC) $(NEWUOASRC) $(TESTSRC) >> $(TESTLOG) 2>&1
-	./$@ >> $(TESTLOG) 2>&1
-	./checktest --error $(TESTLOG)
-	@printf "\n$@ ends!\n\n" >> $(TESTLOG)
 	@printf "\n$@ ends!\n\n"
 
 src: ../newuoa/* ../common/* \
@@ -75,14 +68,6 @@ src: ../newuoa/* ../common/* \
 	@cp -r ../newuoa ./
 	@cp -r ../common ./
 
-# For REAL128:
-# Flang and nvfortran do not support REAL128;
-# AOCC Flang complains about a symbol lookup error: undefined symbol: "fort_rnumq_i8";
-# ifx encounters an internal error when compiling with REAL128.
-ftest: QPAVLB = 0
-header_%: IK = $(shell expr 8 \* $$(echo $@ | sed "s/.*_i//" | sed "s/_.*//"))
-header_%: RP = $(shell expr 8 \* $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//"))
-header_%: DBG = $(shell echo $@ | sed "s/.*_d//" | sed "s/_.*//")
 header_%: $(HEADERS)
 	@sed -i '0,/^#define __QP_AVAILABLE__ [0-9]*/s//#define __QP_AVAILABLE__ $(QPAVLB)/' $(HEADERS)
 	@sed -i '0,/^#define __INTEGER_KIND__ [0-9]*/s//#define __INTEGER_KIND__ $(IK)/' $(HEADERS)
