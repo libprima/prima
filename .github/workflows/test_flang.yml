@@ -30,7 +30,7 @@ jobs:
 
       - name: Install Flang
         run: |
-            #cd .github/workflows; ./install_flang
+            cd .github/workflows; ./install_flang
 
       - name: Conduct the test
         run: |
