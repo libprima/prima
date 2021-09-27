@@ -24,9 +24,9 @@ HEADERS = $(COMMON)/*.h
 # Solver directories.
 NEWUOA = ./newuoa/
 # Sources.
-TESTSRC = $(shell cat ./ffiles.txt)
-COMMONSRC = $(shell sed "s/^/\.\/common\//" ../common/ffiles.txt)
-NEWUOASRC = $(shell sed "s/^/\.\/newuoa\//" ../newuoa/ffiles.txt)
+TESTSRC != cat ./ffiles.txt
+COMMONSRC != sed "s/^/\.\/common\//" ../common/ffiles.txt
+NEWUOASRC != sed "s/^/\.\/newuoa\//" ../newuoa/ffiles.txt
 # Tests.
 TESTS = ftest
 # Log file.
