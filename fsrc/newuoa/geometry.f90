@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, September 27, 2021 PM12:25:57
+! Last Modified: Monday, September 27, 2021 PM01:04:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -646,7 +646,7 @@ do iter = 1, n
     ! The above is Powell's code. When DD*SS - DS**2 is close to EPS, the error in DENOM can be
     ! large. To rectify this, we calculate D as follows, which ensures |S| = |S|.
     s = dd * s - ds * d
-    s = (s / norm(s)) * norm(d)  ! INPROD(S, D) = 0 and |S| = |D| in precise arithmetic.
+    s = (s / norm(s)) * norm(d)
     ! INPROD(S, D) = 0 and |S| = |D| in precise arithmetic. Exit if INPROD(S, D) is too large;
     ! otherwise, |D| may become (much) larger than DELBAR, which did happen in tests.
     if (abs(inprod(s, d)) >= TENTH * norm(d) * norm(s) .or. .not. is_finite(sum(abs(s)))) then

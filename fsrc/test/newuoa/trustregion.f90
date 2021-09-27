@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, September 27, 2021 AM12:29:19
+! Last Modified: Monday, September 27, 2021 PM12:00:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -44,7 +44,7 @@ subroutine trsapp(delta, gq, hq, pq, tol, x, xpt, crvmin, s, info)
 ! INFO = -1: too much rounding error to continue
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, HALF, ZERO, PI, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, HALF, ZERO, TENTH, PI, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : Ax_plus_y, inprod, matprod, issymmetric, norm
@@ -274,7 +274,8 @@ do iter = 1, itermax
     sg = inprod(s, g)
     shs = inprod(s, hs)
     sgk = sg + shs
-    if (sgk / sqrt(gg * delsq) <= tol - ONE) then
+    !if (sgk / sqrt(gg * delsq) <= tol - ONE) then
+    if (sgk <= (tol - ONE) * sqrt(gg * delsq)) then
         info = 0_IK
         exit
     end if
@@ -285,8 +286,13 @@ do iter = 1, itermax
     !!d = (delsq / t) * (g + hs) - (sgk / t) * s
     ! The above is Powell's code. When DELSQ*GG - SGK**2 is close to EPS, the error in DENOM can be
     ! large. To rectify this, we calculate D as follows, which ensures |D| = |S|.
-    d = inprod(s,s) * (g + hs) - sgk * s
-    d= (d / norm(d)) * norm(s)   ! INPROD(S, D) = 0 and |D| = |S| = in precise arithmetic.
+    d = inprod(s, s) * (g + hs) - sgk * s
+    d = (d / norm(d)) * norm(s)
+    ! INPROD(S, D) = 0 and |D| = |S| n precise arithmetic. Exit if INPROD(S, D) is too large;
+    ! otherwise, |S| may become (much) larger than DELTA, which did happen in tests.
+    if (abs(inprod(s, d)) >= TENTH * norm(d) * norm(s) .or. .not. is_finite(sum(abs(d)))) then
+        exit
+    end if
     !----------------------------------------------------------------------------------------------!
 
 !----------------------------------------------------------------!
