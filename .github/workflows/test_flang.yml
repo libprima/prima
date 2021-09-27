@@ -34,4 +34,9 @@ jobs:
 
       - name: Conduct the test
         run: |
-          source /tmp/setenv.sh; cd fsrc/test; make ftest
+          source /tmp/setenv.sh; cd fsrc/test; make clean; make ftest
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          path: fsrc/test/*.log
