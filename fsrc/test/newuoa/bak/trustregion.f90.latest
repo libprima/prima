@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, September 29, 2021 AM01:32:21
+! Last Modified: Tuesday, September 28, 2021 AM12:47:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -44,7 +44,7 @@ subroutine trsapp(delta, gq, hq, pq, tol, x, xpt, crvmin, s, info)
 ! INFO = -1: too much rounding error to continue
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, ZERO, TENTH, PI, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, HALF, ZERO, TENTH, PI, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : Ax_plus_y, inprod, matprod, issymmetric, norm
@@ -105,7 +105,7 @@ real(RP) :: quada
 real(RP) :: quadb
 real(RP) :: reduc
 real(RP) :: sg
-!real(RP) :: sgk
+real(RP) :: sgk
 real(RP) :: shs
 real(RP) :: sold(size(x))
 real(RP) :: ss
@@ -167,14 +167,12 @@ twod_search = .false.
 ! In the 4th case, twod_search will be set to true, meaning that S will be improved by a sequence of
 ! two-dimensional search, the two-dimensional subspace at each iteration being span(S, -G).
 do iter = 1, itermax
-    ! Exit if GG is small. This must be done first; otherwise, DD can be 0 and BSTEP is not defined.
-    ! The inequality below must be non-strict so that GG = 0 will trigger the exit.
+    ! Check whether to exit due to small GG
     if (gg <= (tol**2) * gg0) then
         info = 0_IK
         exit
     end if
-
-    ! Set BSTEP to the step length such that |S + BSTEP*D| = DELTA.
+    ! Set BSTEP to the step length such that ||S+BSTEP*D|| = DELTA
     if (iter == 1) then
         bstep = delta / sqrt(dd)
     else
@@ -223,15 +221,14 @@ do iter = 1, itermax
 
     ! Check whether to exit. This should be done after updating HS and GG, which will be used for
     ! the 2D minimization if any.
-    ! Exit in case of Inf/NaN in S. This should come the first! Otherwise, we may return an S that
-    ! contains NaN and fulfills other exit conditions.
+    ! Exit in case of Inf/NaN in S.
     if (.not. is_finite(sum(abs(s)))) then
         s = sold
         info = -1_IK
         exit
     end if
 
-    ! Exit if CG path cuts the boundary. It is the only possibility that TWOD_SEARCH is true.
+    ! Exit if CG path cuts the boundary. It is the only possibility that twod_search is true.
     if (alpha >= bstep .or. ss >= delsq) then
         crvmin = ZERO
         twod_search = (n >= 2)  ! TWOD_SEARCH should be FALSE if N = 1.
@@ -270,9 +267,13 @@ end if
 
 ! The 2D minimization
 do iter = 1, itermax
+    if (gg <= (tol**2) * gg0) then
+        info = 0_IK
+        exit
+    end if
     sg = inprod(s, g)
     shs = inprod(s, hs)
-    !sgk = sg + shs
+    sgk = sg + shs
     !!if (sgk / sqrt(gg * delsq) <= tol - ONE) then
     !if (sgk <= (tol - ONE) * sqrt(gg * delsq)) then
     !    info = 0_IK
@@ -285,24 +286,16 @@ do iter = 1, itermax
     !!d = (delsq / t) * (g + hs) - (sgk / t) * s
     ! The above is Powell's code. When DELSQ*GG - SGK**2 is close to EPS, the error in DENOM can be
     ! large. To rectify this, we calculate D as follows, which ensures |D| = |S|.
-
     !d = inprod(s, s) * (g + hs) - sgk * s
-    !d = (inprod(s, s) * (g + hs) - sgk * s) / norm(s)
-    !d = (g + hs) - (sgk / ss) * s !***
-    !d = (g + hs) - sgk * s / inprod(s, s) !**
-    d = (g + hs) - inprod(g + hs, s / norm(s)) * (s / norm(s)) !**
 
+    d = (inprod(s, s) * (g + hs) - sgk * s) / norm(s)
     ! INPROD(S, D) = 0 and |D| = |S| n precise arithmetic. Exit if INPROD(S, D) is too large;
     ! otherwise, |S| may become (much) larger than DELTA, which did happen in tests.
     !if (abs(inprod(s, d)) >= TENTH * norm(d) * norm(s) .or. .not. is_finite(sum(abs(d)))) then
-    !if (sgk <= (tol - ONE) * sqrt(gg * delsq) .or. norm(d) <= sqrt(tol) * norm(g) * delsq) then
-    !if (sgk <= (tol - ONE) * sqrt(gg * delsq) .or. inprod(d, d) <= TWO * tol * (gg * delsq)) then
-    !if (sgk <= (tol - ONE) * sqrt(gg * delsq) .or. norm(d) <= sqrt(tol) * norm(g)) then
-    if (norm(d) <= sqrt(tol) * sqrt(gg)) then
-        !if (sgk <= -sqrt((ONE - tol) * (gg * delsq)) .or. norm(d) <= sqrt(tol) * sqrt(gg)) then  !***
+    if (sgk <= (tol - ONE) * sqrt(gg * delsq) .or. inprod(d, d) <= tol * gg * delsq) then
         info = 0_IK
         exit
-    elseif (abs(inprod(d, s)) >= TENTH * norm(d) * norm(s)) then
+    elseif (abs(inprod(s, d)) >= TENTH * norm(s) * norm(d)) then
         info = -1_IK
         exit
     end if
@@ -373,10 +366,6 @@ do iter = 1, itermax
     ! Calculate HS. Then test for convergence.
     hs = cth * hs + sth * hd
     gg = inprod(g + hs, g + hs)
-    if (gg <= (tol**2) * gg0) then
-        info = 0_IK
-        exit
-    end if
     qred = qred + reduc
     if (reduc / qred <= tol) then
         info = 1_IK

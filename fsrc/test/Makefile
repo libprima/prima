@@ -208,6 +208,6 @@ header_%: $(HEADERS)
 # Cleaning up.
 clean:
 	rm -f *.o *.mod *.dbg *.cmdx *.cmod *.ilm *.stb
-	rm -f *_tst *_tst_cobyla *_tst_uobyqa *_tst_newuoa *_tst_bobyqa *_tst_lincoa
+	rm -f *_tst *_tst_cobyla *_tst_uobyqa *_tst_newuoa *_tst_bobyqa *_tst_lincoa *_output.txt
 	mkdir -p log
 	@if [ `ls -1 *.log 2>/dev/null | wc -l ` -gt 0 ]; then mv *.log log > /dev/null 2>&1 ; fi
