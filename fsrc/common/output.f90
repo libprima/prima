@@ -7,7 +7,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, September 27, 2021 PM05:12:51
+! Last Modified: Tuesday, September 28, 2021 AM10:30:15
 
 
 module output_mod
@@ -15,6 +15,28 @@ module output_mod
 implicit none
 private
 public :: retmssg, rhomssg, fmssg
+
+! Format for F at return: 16 digits for base, 4 digits for exponent.
+character(len=*), parameter :: ffmt = '1PE25.16E4'
+! Format for intermediate F: 10 digits for base, 4 digits for exponent.
+character(len=*), parameter :: ffmt_intermediate = '1PE19.10E4'
+! Format for X: 8 digits for base, 4 digits for exponent, 4 components in each line.
+character(len=*), parameter :: xfmt = '/(1P, 4E19.8E4)'
+! Format for RHO: 4 digits for base, 2 digits for exponent.
+character(len=*), parameter :: rfmt = '1PE11.4E2'
+! Format for integers: 10 digits.
+character(len=*), parameter :: ifmt = 'I10'
+! Separating spaces: 3 spaces.
+character(len=*), parameter :: spaces = '3X'
+! Format for NF at return.
+character(len=*), parameter :: nf_fmt = '(1A, '//spaces//', 1A, '//ifmt//')'
+! Format for F and X at return and when RHO is updated. 
+character(len=*), parameter :: fx_fmt = '(1A, '//ffmt//', '//spaces//', 1A, '//xfmt//')'
+! Format for RHO and NF when RHO is updated. 
+character(len=*), parameter :: rnf_fmt = '(/1A, '//rfmt//', '//spaces//', 1A, '//ifmt//')'
+! Format for NF, F, and X during iterations. 
+character(len=*), parameter :: nffx_fmt = &
+    & '(/1A, '//ifmt//', '//spaces//', 1A, '//ffmt_intermediate//', '//spaces//', 1A, '//xfmt//')'
 
 
 contains
@@ -67,9 +89,9 @@ if (iprint >= 1) then
     if (iprint >= 3) then
         print '(1X)'
     end if
-    print '(/4A)', 'Return from ', solver, ' because ', trim(mssg)
-    print '(1A, 3X, 1A, I10)', 'At the return from '//solver, 'Number of function evaluations = ', nf
-    print '(1A, 1PE25.16E4, 3X, 1A, /(1P, 4E18.7E4))', 'Least function value = ', f, 'The corresponding X is:', x
+    print '(/1A)', 'Return from '//solver//' because '//trim(mssg)
+    print nf_fmt, 'At the return from '//solver, 'Number of function evaluations = ', nf
+    print fx_fmt, 'Least function value = ', f, 'The corresponding X is:', x
     print '(1X)'
 end if
 
@@ -83,14 +105,14 @@ if (iprint <= -1) then
     end if
     open (unit=OUTUNIT, file=trim(fout), status=fstat, position='append', iostat=ios, action='write')
     if (ios /= 0) then
-        print '(1A)', 'Fail to open file '//trim(fout)//'!'
+        print '(/1A)', 'Fail to open file '//trim(fout)//'!'
     else
         if (iprint <= -3) then
             write (OUTUNIT, '(1X)')
         end if
-        write (OUTUNIT, '(/4A)') 'Return from ', solver, ' because ', trim(mssg)
-        write (OUTUNIT, '(1A, 3X, 1A, I10)') 'At the return from '//solver, 'Number of function evaluations = ', nf
-        write (OUTUNIT, '(1A, 1PE25.16E4, 3X, 1A, /(1P, 4E18.7E4))') 'Least function value = ', f, 'The corresponding X is:', x
+        write (OUTUNIT, '(/1A)') 'Return from '//solver//' because '//trim(mssg)
+        write (OUTUNIT, nf_fmt) 'At the return from '//solver, 'Number of function evaluations = ', nf
+        write (OUTUNIT, fx_fmt) 'Least function value = ', f, 'The corresponding X is:', x
         close (OUTUNIT)
     end if
     !print '(/1A /)', 'The output is printed to ' // trim(fout) // '.'
@@ -126,8 +148,8 @@ if (iprint >= 2) then
     if (iprint >= 3) then
         print '(1X)'
     end if
-    print '(/1A, 1PE11.4, 3X, A, I10)', 'New RHO = ', rho, 'Number of function evaluations = ', nf
-    print '(1A, 1PE19.10E4, 3X, 1A, /(1P, 4E18.7E4))', 'Least function value = ', f, 'The corresponding X is:', x
+    print rnf_fmt, 'New RHO = ', rho, 'Number of function evaluations = ', nf
+    print fx_fmt, 'Least function value = ', f, 'The corresponding X is:', x
 end if
 
 if (iprint <= -2) then
@@ -140,13 +162,13 @@ if (iprint <= -2) then
     end if
     open (unit=OUTUNIT, file=trim(fout), status=fstat, position='append', iostat=ios, action='write')
     if (ios /= 0) then
-        print '(1A)', 'Fail to open file '//trim(fout)//'!'
+        print '(/1A)', 'Fail to open file '//trim(fout)//'!'
     else
         if (iprint <= -3) then
             write (OUTUNIT, '(1X)')
         end if
-        write (OUTUNIT, '(/1A, 1PE11.4, 3X, A, I10)') 'New RHO = ', rho, 'Number of function evaluations = ', nf
-        write (OUTUNIT, '(1A, 1PE19.10E4, 3X, 1A, /(1P, 4E18.7E4))') 'Least function value = ', f, 'The corresponding X is:', x
+        write (OUTUNIT, rnf_fmt) 'New RHO = ', rho, 'Number of function evaluations = ', nf
+        write (OUTUNIT, fx_fmt) 'Least function value = ', f, 'The corresponding X is:', x
         close (OUTUNIT)
     end if
 end if
@@ -177,8 +199,7 @@ if (iprint == 0) then
 end if
 
 if (iprint >= 3) then
-    print '(/1A, I10, 3X, 1A, 1PE19.10E4, 3X, 1A, /(1P, 4E18.7E4))', 'Function number', nf, &
-        & 'F = ', f, 'The corresponding X is:', x
+    print nffx_fmt, 'Function number', nf, 'F = ', f, 'The corresponding X is:', x
 end if
 
 if (iprint <= -3) then
@@ -191,10 +212,9 @@ if (iprint <= -3) then
     end if
     open (unit=OUTUNIT, file=trim(fout), status=fstat, position='append', iostat=ios, action='write')
     if (ios /= 0) then
-        print '(1A)', 'Fail to open file '//trim(fout)//'!'
+        print '(/1A)', 'Fail to open file '//trim(fout)//'!'
     else
-        write (OUTUNIT, '(/1A, I10, 3X, 1A, 1PE19.10E4, 3X, 1A, /(1P, 4E18.7E4))') 'Function number', nf, &
-            & 'F = ', f, 'The corresponding X is:', x
+        write (OUTUNIT, nffx_fmt) 'Function number', nf, 'F = ', f, 'The corresponding X is:', x
         close (OUTUNIT)
     end if
 end if
