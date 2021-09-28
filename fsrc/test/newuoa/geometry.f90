@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, September 27, 2021 PM01:04:08
+! Last Modified: Wednesday, September 29, 2021 AM01:06:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -293,6 +293,7 @@ real(RP) :: taub
 real(RP) :: taubeg
 real(RP) :: taumax
 real(RP) :: tauold
+real(RP) :: tol
 real(RP) :: unitang
 real(RP) :: w(size(x))
 real(RP) :: zknew(size(zmat, 2))
@@ -364,28 +365,41 @@ end if
 
 ! Begin the iteration by overwriting S with a vector that has the required length and direction,
 ! except that termination occurs if the given D and S are nearly parallel.
+! TOL is the tolerance for telling whether S and D are nearly parallel. In Powell's code, the
+! tolerance is 1.0D-8. We adapt it to MAX(SQRT(EPS), 1.0E-8_RP) in case single precision is in use.
+tol = max(sqrt(EPS), 1.0E-8_RP)
 do iter = 1, maxiter
-    dd = inprod(d, d)
-    sp = inprod(d, s)
+    !dd = inprod(d, d)
+    !sp = inprod(d, s)
     ss = inprod(s, s)
-    !if (dd * ss - sp**2 <= 1.0E-8_RP * dd * ss) then
-    ! We adapt the tolerance (1.0E-8) in case single precision is used.
-    if (dd * ss - sp**2 <= max(sqrt(EPS), 1.0E-8_RP) * dd * ss) then
-        exit
-    end if
-    !----------------------------------------------------------------------------------------------!
-    !!denom = sqrt(dd * ss - sp**2)
-    !!s = (dd * s - sp * d) / denom
-    ! The above is Powell's code. When DD*SS - SP**2 is close to EPS, the error in DENOM can be
-    ! large. In a test with single-precision arithmetic, this led to |S| > 2 |D|, but the two should
-    ! equal in theory. To rectify this, we calculate S as follows.
-    s = dd * s - sp * d
-    s = (s / norm(s)) * norm(d)
+    !!if (dd * ss - sp**2 <= 1.0E-8_RP * dd * ss) then
+    !! We adapt the tolerance (1.0E-8) in case single precision is used.
+    !if (dd * ss - sp**2 <= max(sqrt(EPS), 1.0E-8_RP) * dd * ss) then
+    !    exit
+    !end if
+    !!----------------------------------------------------------------------------------------------!
+    !!!denom = sqrt(dd * ss - sp**2)
+    !!!s = (dd * s - sp * d) / denom
+    !! The above is Powell's code. When DD*SS - SP**2 is close to EPS, the error in DENOM can be
+    !! large. In a test with single-precision arithmetic, this led to |S| > 2 |D|, but the two should
+    !! equal in theory. To rectify this, we calculate S as follows.
+
+    !s = dd * s - sp * d  !***
+    !s = (dd * s - sp * d) / norm(d)
+    !s = s - (sp / dd) * d !****
+    s = s - inprod(s, d / norm(d)) * (d / norm(d))
+
     ! INPROD(S, D) = 0 and |S| = |D| in precise arithmetic. Exit if INPROD(S, D) is too large;
     ! otherwise, |D| may become (much) larger than DELBAR, which did happen in tests.
-    if (abs(inprod(s, d)) >= TENTH * norm(d) * norm(s) .or. .not. is_finite(sum(abs(s)))) then
+    !if (norm(s) <= sqrt(tol) * dd * sqrt(ss) .or. abs(inprod(d, s)) >= TENTH * norm(d) * norm(s)) then  !***
+    !if (inprod(s, s) <= tol * dd * ss .or. abs(inprod(d, s)) >= TENTH * norm(d) * norm(s)) then
+    if (norm(s) <= sqrt(tol) * sqrt(ss) .or. abs(inprod(d, s)) >= TENTH * norm(d) * norm(s)) then
+        !if (sp**2 >= (ONE - tol) * dd * ss .or. norm(s) <= sqrt(tol * ss) .or. abs(inprod(d, s)) >= TENTH * norm(d) * norm(s)) then
+        !if (abs(sp) >= sqrt((ONE - tol)) * norm(d) * sqrt(ss) .or. norm(s) <= sqrt(tol * ss) &
+        !    & .or. abs(inprod(d, s)) >= TENTH * norm(d) * norm(s)) then
         exit
     end if
+    s = (s / norm(s)) * norm(d)
     !----------------------------------------------------------------------------------------------!
 
     w = matprod(xpt, hcol * matprod(s, xpt))
@@ -542,13 +556,13 @@ real(RP) :: par(9)
 real(RP) :: prod(size(xpt, 2) + size(xpt, 1), 5)
 real(RP) :: s(size(xpt, 1))
 real(RP) :: ss
-real(RP) :: ssden
 real(RP) :: sstemp(size(xpt, 2))
 real(RP) :: step
 real(RP) :: tau
 real(RP) :: tempa
 real(RP) :: tempb
 real(RP) :: tempc
+real(RP) :: tol
 real(RP) :: unitang
 real(RP) :: v(size(xpt, 2))
 real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
@@ -626,32 +640,47 @@ if (.not. (ds**2 <= 0.99_RP * dd * ss)) then
         ! `.NOT. (A >= B)` differs from `A < B`.  The former holds iff A < B or {A, B} contains NaN.
         ! Although unlikely, if NaN occurs, it may happen that K = KOPT.
         s = xpt(:, k) - x
-        ds = dstemp(k)
-        ss = sstemp(k)
+        !ds = dstemp(k)
+        !ss = sstemp(k)
     end if
 end if
 
 densav = ZERO
 
 ! Begin the iteration by overwriting S with a vector that has the required length and direction.
+
+! TOL is the tolerance for telling whether S and D are nearly parallel. In Powell's code, the
+! tolerance is 1.0D-8. We adapt it to MAX(SQRT(EPS), 1.0E-8_RP) in case single precision is in use.
+tol = max(sqrt(EPS), 1.0E-8_RP)
 do iter = 1, n
-    ssden = dd * ss - ds**2
-    !if (ssden < 1.0E-8_RP * dd * ss) then
-    ! We adapt the tolerance (1.0E-8) in case single precision is in use.
-    if (ssden <= max(sqrt(EPS), 1.0E-8_RP) * dd * ss) then
-        exit
-    end if
+    !ssden = dd * ss - ds**2
+    !!if (ssden < 1.0E-8_RP * dd * ss) then
+    !! We adapt the tolerance (1.0E-8) in case single precision is in use.
+    !if (ssden <= max(sqrt(EPS), 1.0E-8_RP) * dd * ss) then
+    !    exit
+    !end if
     !----------------------------------------------------------------------------------------------!
     !!s = (ONE / sqrt(ssden)) * (dd * s - ds * d)
     ! The above is Powell's code. When DD*SS - DS**2 is close to EPS, the error in DENOM can be
     ! large. To rectify this, we calculate D as follows, which ensures |S| = |S|.
-    s = dd * s - ds * d
-    s = (s / norm(s)) * norm(d)
-    ! INPROD(S, D) = 0 and |S| = |D| in precise arithmetic. Exit if INPROD(S, D) is too large;
-    ! otherwise, |D| may become (much) larger than DELBAR, which did happen in tests.
-    if (abs(inprod(s, d)) >= TENTH * norm(d) * norm(s) .or. .not. is_finite(sum(abs(s)))) then
+
+    !s = dd * s - ds * d  !***
+    !s = (dd * s - ds * d) / norm(d)
+    !s = s - (ds / dd) * d
+    ss = inprod(s, s)
+    s = s - inprod(s, d / norm(d)) * (d / norm(d))
+
+    ! INPROD(S, D) = 0 in precise arithmetic. Exit if INPROD(S, D) is too large; otherwise, |D| may
+    ! become (much) larger than DELBAR, which did happen in tests. Make sure that at least one of
+    ! the two inequalities below is non-strict, so that S = 0 will trigger the exit.
+    !if (norm(s) <= sqrt(tol) * dd * sqrt(ss) .or. abs(inprod(d, s)) >= TENTH * norm(d) * norm(s)) then  !***
+    !if (inprod(s, s) <= tol * dd * ss .or. abs(inprod(d, s)) >= TENTH * norm(d) * norm(s)) then
+    if (norm(s) <= sqrt(tol) * sqrt(ss) .or. abs(inprod(d, s)) >= TENTH * norm(d) * norm(s)) then
+        !if (abs(ds) >= sqrt((ONE - tol)) * norm(d) * sqrt(ss) .or. norm(s) <= sqrt(tol * ss) &
+        !    & .or. abs(inprod(d, s)) >= TENTH * norm(d) * norm(s)) then
         exit
     end if
+    s = (s / norm(s)) * norm(d)
     !----------------------------------------------------------------------------------------------!
     xd = inprod(x, d)
     xs = inprod(x, s)
@@ -825,8 +854,8 @@ do iter = 1, n
     !---------!s = s + matprod(xpt, v) !-------------------!
     s = Ax_plus_y(xpt, v, s)
     !------------------------------------------------------!
-    ss = inprod(s, s)
-    ds = inprod(d, s)
+    !ss = inprod(s, s)
+    !ds = inprod(d, s)
 end do
 
 !vlag(kopt) = vlag(kopt) + ONE  ! Note needed since we do not return VLAG.

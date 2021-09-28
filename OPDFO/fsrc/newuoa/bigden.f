@@ -124,7 +124,7 @@ C
    70 ITERC=ITERC+1
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       SSDEN=DD*SS-DS**2
-      IF (SSDEN <= max(SQRT(epsilon(0.0D0)), 1.0D-8)*DD*SS) GOTO 340
+      !IF (SSDEN <= max(SQRT(epsilon(0.0D0)), 1.0D-8)*DD*SS) GOTO 340
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       TEMP=ONE/DSQRT(SSDEN)
       XOPTD=ZERO
@@ -134,13 +134,15 @@ C
       !    XOPTD=XOPTD+XOPT(I)*D(I)
       !    XOPTS=XOPTS+XOPT(I)*S(I)
       !END DO
-      S(1:N)=(DD*S(1:N)-DS*D(1:N))
-      S(1:N) = (S(1:N)/norm(S(1:N)))*norm(D(1:N))
-      if (abs(dot_product(s(1:n), d(1:n))) >=
-     1 0.1D0*norm(d(1:n))*norm(s(1:n)) .or.
-     1 .not. is_finite(sum(abs(s(1:n))))) then
+      S(1:N)=S(1:N)-dot_product(S(1:n),
+     1 D(1:n)/norm(D(1:n)))*(D(1:N)/norm(D(1:N)))
+      if (norm(S(1:n)) <=
+     1 sqrt(max(sqrt(epsilon(0.0D0)), 1.0D-8))*sqrt(SS) .or.
+     1 abs(dot_product(d(1:n), s(1:n))) >=
+     1 0.1D0*norm(d(1:n))*norm(s(1:n))) then
          GOTO  340
       end if
+      S(1:N) = (S(1:N)/norm(S(1:N)))*norm(D(1:N))
       DO I=1,N
           XOPTD=XOPTD+XOPT(I)*D(I)
           XOPTS=XOPTS+XOPT(I)*S(I)
