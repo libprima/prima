@@ -1,21 +1,22 @@
-! output_mod is a module providing some subroutines concerning output to
-! terminla/files. Note that these output operations are sequential in
-! nature. In case parallelisum is desirable (especially during
+module output_mod
+!--------------------------------------------------------------------------------------------------!
+! This module provides some subroutines concerning output to terminal/files. Note that these output
+! operations are sequential in nature. In case parallelisum is desirable (especially during
 ! initializaton), the subroutines may have to be modified or disabled.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and papers.
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, September 28, 2021 AM10:30:15
-
-
-module output_mod
+! Last Modified: Tuesday, September 28, 2021 AM10:43:50
+!--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
 public :: retmssg, rhomssg, fmssg
 
+!--------------------------------------------------------------------------------------------------!
+! Formats.
 ! Format for F at return: 16 digits for base, 4 digits for exponent.
 character(len=*), parameter :: ffmt = '1PE25.16E4'
 ! Format for intermediate F: 10 digits for base, 4 digits for exponent.
@@ -30,19 +31,23 @@ character(len=*), parameter :: ifmt = 'I10'
 character(len=*), parameter :: spaces = '3X'
 ! Format for NF at return.
 character(len=*), parameter :: nf_fmt = '(1A, '//spaces//', 1A, '//ifmt//')'
-! Format for F and X at return and when RHO is updated. 
+! Format for F and X at return and when RHO is updated.
 character(len=*), parameter :: fx_fmt = '(1A, '//ffmt//', '//spaces//', 1A, '//xfmt//')'
-! Format for RHO and NF when RHO is updated. 
+! Format for RHO and NF when RHO is updated.
 character(len=*), parameter :: rnf_fmt = '(/1A, '//rfmt//', '//spaces//', 1A, '//ifmt//')'
-! Format for NF, F, and X during iterations. 
+! Format for NF, F, and X during iterations.
 character(len=*), parameter :: nffx_fmt = &
     & '(/1A, '//ifmt//', '//spaces//', 1A, '//ffmt_intermediate//', '//spaces//', 1A, '//xfmt//')'
+!--------------------------------------------------------------------------------------------------!
 
 
 contains
 
 
 subroutine retmssg(info, iprint, nf, f, x, solver)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine prints messages at return.
+!--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, MSSGLEN, OUTUNIT, FNAMELEN
 use, non_intrinsic :: info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED
 use, non_intrinsic :: info_mod, only : SMALL_TR_RADIUS, TRSUBP_FAILED
@@ -122,6 +127,9 @@ end subroutine retmssg
 
 
 subroutine rhomssg(iprint, nf, f, rho, x, solver)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine prints messages when RHO is updated.
+!--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, OUTUNIT, FNAMELEN
 implicit none
 
@@ -177,6 +185,9 @@ end subroutine rhomssg
 
 
 subroutine fmssg(iprint, nf, f, x, solver)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine prints messages at each iteration.
+!--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, OUTUNIT, FNAMELEN
 implicit none
 
