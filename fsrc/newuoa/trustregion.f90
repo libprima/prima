@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, September 29, 2021 PM01:51:07
+! Last Modified: Wednesday, September 29, 2021 PM05:42:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -318,7 +318,7 @@ do iter = 1, itermax
     end if
     d = (d / norm(d)) * norm(s)
     ! In precise arithmetic, INPROD(D, S) = 0 and |D| = |S| = DELTA.
-    if (abs(inprod(d, s)) >= TENTH * norm(d) * norm(s) .or. norm(d) >= TWO * DELTA) then
+    if (abs(inprod(d, s)) >= TENTH * norm(d) * norm(s) .or. norm(d) >= TWO * delta) then
         info = -1_IK
         exit
     end if

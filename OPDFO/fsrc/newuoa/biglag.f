@@ -124,7 +124,7 @@ C
       !END DO
       S(1:N)=S(1:N)-dot_product(S(1:n),
      1 D(1:n)/norm(D(1:n)))*(D(1:N)/norm(D(1:N)))
-      TLRNC = max(epsilon(0.0D0)**(0.25D0), 1.0D-4)
+      TLRNC = min(1.0D-1, max(epsilon(0.0D0)**(0.25D0), 1.0D-4))
       if (norm(S(1:n)) <= TLRNC*sqrt(SS)) then
          goto 160
       end if

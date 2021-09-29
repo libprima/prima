@@ -166,6 +166,7 @@ x_i2_r16_d1_tst x_i4_r16_d1_tst x_i8_r16_d1_tst x_i2_r16_d0_tst x_i4_r16_d0_tst 
 	%_i2_r8_d0_tst %_i4_r8_d0_tst %_i8_r8_d0_tst \
 	%_i2_r16_d1_tst %_i4_r16_d1_tst %_i8_r16_d1_tst \
 	%_i2_r16_d0_tst %_i4_r16_d0_tst %_i8_r16_d0_tst
+	@chmod u+x checktest
 	./checktest --warning $(TESTLOG)
 	@printf "\n$@ ends!\n\n" | tee -a $(TESTLOG)
 	make clean
@@ -177,11 +178,11 @@ x_i2_r16_d1_tst x_i4_r16_d1_tst x_i8_r16_d1_tst x_i2_r16_d0_tst x_i4_r16_d0_tst 
 	@printf "\n$@ starts.\n\n" | tee -a $(TESTLOG)
 	$(FC) $(FFLAGS) -o $@ $(COMMONSRC) $(NEWUOASRC) $(TESTSRC) 2>&1 | tee -a $(TESTLOG)
 	./$@ 2>&1 | tee -a $(TESTLOG)
+	@chmod u+x checktest
 	./checktest --error $(TESTLOG)
 	@printf "\n$@ ends!\n\n" | tee -a $(TESTLOG)
 
-src: ../newuoa/* ../common/* \
-	$(NEWUOA)/* $(COMMON)/*
+src: ../newuoa/ ../common/
 	@cp -r ../newuoa ./
 	@cp -r ../common ./
 
@@ -204,7 +205,12 @@ header_%: $(HEADERS)
 ####################################################################################################
 # Cleaning up.
 clean:
-	rm -f *.o *.mod *.dbg *.cmdx *.cmod *.ilm *.stb
-	rm -f *_tst *_tst_cobyla *_tst_uobyqa *_tst_newuoa *_tst_bobyqa *_tst_lincoa *_output.txt
-	mkdir -p log
+	@printf "\nCleaning ...\n"
+	@rm -f *.o *.mod *.dbg *.cmdx *.cmod *.ilm *.stb
+	@rm -f *_tst *_tst_cobyla *_tst_uobyqa *_tst_newuoa *_tst_bobyqa *_tst_lincoa *_output.txt
+	@mkdir -p trash
+	@if [ `ls -1 $(COMMON) 2>/dev/null | wc -l ` -gt 0 ] ; then rm -rf trash/$(COMMON); mv $(COMMON) trash > /dev/null 2>&1; fi
+	@if [ `ls -1 $(NEWUOA) 2>/dev/null | wc -l ` -gt 0 ] ; then rm -rf trash/$(NEWUOA); mv $(NEWUOA) trash > /dev/null 2>&1; fi
+	@mkdir -p log;
 	@if [ `ls -1 *.log 2>/dev/null | wc -l ` -gt 0 ]; then mv *.log log > /dev/null 2>&1 ; fi
+	@printf "\nDone.\n\n"
