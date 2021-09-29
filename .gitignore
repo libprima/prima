@@ -5,19 +5,34 @@ __pycache__/
 *$py.class
 
 # misc files for testing
-*.o
-*.so
-*.pyd
-*.mod
-NEWUOA_output.txt
-*_output.txt
-*.output
-*.out
+*.cmdx
+*.cmod
+*.dbg
+*.ilm
 *.log
-*log
-log*
-fort.*
+*.mod
+*.o
+*.out
+*.output
+*.pyd
+*.so
+*.stb
 *NSConflict*
+*_output.txt
+fsrc/test/newuoa/
+fsrc/test/common/
+*_test
+*_tst
+*_tst_bobyqa
+*_tst_cobyla
+*_tst_lincoa
+*_tst_newuoa
+*_tst_uobyqa
+*log
+NEWUOA_output.txt
+fort.*
+log*
+log/
 test_data/
 
 # automatically generated intersection-form files
