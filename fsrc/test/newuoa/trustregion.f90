@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, September 29, 2021 AM01:32:21
+! Last Modified: Wednesday, September 29, 2021 AM02:36:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -105,11 +105,11 @@ real(RP) :: quada
 real(RP) :: quadb
 real(RP) :: reduc
 real(RP) :: sg
-!real(RP) :: sgk
 real(RP) :: shs
 real(RP) :: sold(size(x))
 real(RP) :: ss
 real(RP) :: sth
+real(RP) :: sunit(size(x))
 real(RP) :: unitang
 
 ! Sizes
@@ -290,7 +290,8 @@ do iter = 1, itermax
     !d = (inprod(s, s) * (g + hs) - sgk * s) / norm(s)
     !d = (g + hs) - (sgk / ss) * s !***
     !d = (g + hs) - sgk * s / inprod(s, s) !**
-    d = (g + hs) - inprod(g + hs, s / norm(s)) * (s / norm(s)) !**
+    sunit = s / norm(s)
+    d = (g + hs) - inprod(g + hs, sunit) * sunit
 
     ! INPROD(S, D) = 0 and |D| = |S| n precise arithmetic. Exit if INPROD(S, D) is too large;
     ! otherwise, |S| may become (much) larger than DELTA, which did happen in tests.

@@ -64,6 +64,9 @@ C     and the initial S is set below, usually to the direction from X_OPT
 C     to X_KNEW, but a different direction to an interpolation point may
 C     be chosen, in order to prevent S from being nearly parallel to D.
 C
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      DELTA = norm(D(1:N))
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DD=ZERO
       DS=ZERO
       SS=ZERO
@@ -136,13 +139,16 @@ C
       !END DO
       S(1:N)=S(1:N)-dot_product(S(1:n),
      1 D(1:n)/norm(D(1:n)))*(D(1:N)/norm(D(1:N)))
-      if (norm(S(1:n)) <=
-     1 sqrt(max(sqrt(epsilon(0.0D0)), 1.0D-8))*sqrt(SS) .or.
-     1 abs(dot_product(d(1:n), s(1:n))) >=
-     1 0.1D0*norm(d(1:n))*norm(s(1:n))) then
-         GOTO  340
+      TLRNC = max(epsilon(0.0D0)**(0.25D0), 1.0D-4)
+      if (norm(S(1:n)) <= TLRNC*sqrt(SS)) then
+          goto 340
       end if
       S(1:N) = (S(1:N)/norm(S(1:N)))*norm(D(1:N))
+      if(abs(dot_product(d(1:n), s(1:n))) >=
+     1 0.1D0*norm(d(1:n))*norm(s(1:n)) .or. norm(s(1:n)) >=2.0D0*DELTA)
+     1 then
+         GOTO  340
+      end if
       DO I=1,N
           XOPTD=XOPTD+XOPT(I)*D(I)
           XOPTS=XOPTS+XOPT(I)*S(I)

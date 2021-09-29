@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, September 29, 2021 AM01:06:02
+! Last Modified: Wednesday, September 29, 2021 PM12:14:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -242,7 +242,7 @@ function biglag(idz, knew, bmat, delbar, x, xpt, zmat) result(d)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, PI, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, PI, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : Ax_plus_y, inprod, matprod, issymmetric, norm
@@ -276,6 +276,7 @@ real(RP) :: cth
 real(RP) :: dd
 real(RP) :: dhd
 real(RP) :: dold(size(x))
+real(RP) :: dunit(size(x))
 real(RP) :: gc(size(x))
 real(RP) :: gd(size(x))
 real(RP) :: gg
@@ -366,41 +367,42 @@ end if
 ! Begin the iteration by overwriting S with a vector that has the required length and direction,
 ! except that termination occurs if the given D and S are nearly parallel.
 ! TOL is the tolerance for telling whether S and D are nearly parallel. In Powell's code, the
-! tolerance is 1.0D-8. We adapt it to MAX(SQRT(EPS), 1.0E-8_RP) in case single precision is in use.
-tol = max(sqrt(EPS), 1.0E-8_RP)
+! tolerance is 1.0D-4. We adapt it to MAX(EPS^(1/4), 1.0E-4_RP) in case single precision is in use.
+tol = max(EPS**QUART, 1.0E-4_RP)
 do iter = 1, maxiter
-    !dd = inprod(d, d)
-    !sp = inprod(d, s)
+
+    !----------------------------------------------------------------------------------------------!
+    !!--------------------------------------------------!
+    !!ds = inprod(d, s)
+    !!ss = inprod(s, s)
+    !!if (dd * ss - ds**2 <= 1.0E-8_RP * dd * ss) then
+    !!    exit
+    !!end if
+    !!denom = sqrt(dd * ss - ds**2)
+    !!s = (dd * s - ds * d) / denom
+    !!--------------------------------------------------!
+    ! The above is Powell's code. In precise arithmetic, INPROD(S, D) = 0 and |S| = |D|. However,
+    ! when DD*SS - DS**2 is tiny, the error in S can be large and hence damage these inequalities
+    ! significantly. This did happen in tests, especially when using the single precision. We
+    ! calculate S as below. It did improve the performance of NEWUOA in our test.
+    !----------------------------------------------------------------------------------------------!
+
     ss = inprod(s, s)
-    !!if (dd * ss - sp**2 <= 1.0E-8_RP * dd * ss) then
-    !! We adapt the tolerance (1.0E-8) in case single precision is used.
-    !if (dd * ss - sp**2 <= max(sqrt(EPS), 1.0E-8_RP) * dd * ss) then
-    !    exit
-    !end if
-    !!----------------------------------------------------------------------------------------------!
-    !!!denom = sqrt(dd * ss - sp**2)
-    !!!s = (dd * s - sp * d) / denom
-    !! The above is Powell's code. When DD*SS - SP**2 is close to EPS, the error in DENOM can be
-    !! large. In a test with single-precision arithmetic, this led to |S| > 2 |D|, but the two should
-    !! equal in theory. To rectify this, we calculate S as follows.
-
-    !s = dd * s - sp * d  !***
-    !s = (dd * s - sp * d) / norm(d)
-    !s = s - (sp / dd) * d !****
-    s = s - inprod(s, d / norm(d)) * (d / norm(d))
-
-    ! INPROD(S, D) = 0 and |S| = |D| in precise arithmetic. Exit if INPROD(S, D) is too large;
-    ! otherwise, |D| may become (much) larger than DELBAR, which did happen in tests.
-    !if (norm(s) <= sqrt(tol) * dd * sqrt(ss) .or. abs(inprod(d, s)) >= TENTH * norm(d) * norm(s)) then  !***
-    !if (inprod(s, s) <= tol * dd * ss .or. abs(inprod(d, s)) >= TENTH * norm(d) * norm(s)) then
-    if (norm(s) <= sqrt(tol) * sqrt(ss) .or. abs(inprod(d, s)) >= TENTH * norm(d) * norm(s)) then
-        !if (sp**2 >= (ONE - tol) * dd * ss .or. norm(s) <= sqrt(tol * ss) .or. abs(inprod(d, s)) >= TENTH * norm(d) * norm(s)) then
-        !if (abs(sp) >= sqrt((ONE - tol)) * norm(d) * sqrt(ss) .or. norm(s) <= sqrt(tol * ss) &
-        !    & .or. abs(inprod(d, s)) >= TENTH * norm(d) * norm(s)) then
+    dunit = d / norm(d)  ! Normalization seems to stabilize the projection below.
+    s = s - inprod(s, dunit) * dunit
+    ! N.B.:
+    ! 1. The condition |S|<=TOL*SQRT(SS) below is equivalent to DS^2>=(1-TOL^2)*DD*SS in theory. As
+    ! shown above, Powell's code triggers an exit if DS^2>=(1-1.0E-8)*DD*SS. So our condition is the
+    ! same except that we take the machine epsilon into account in case single precision is in use.
+    ! 2. The condition below should be non-strict so that |S| = 0 can trigger the exit.
+    if (norm(s) <= tol * sqrt(ss)) then
         exit
     end if
     s = (s / norm(s)) * norm(d)
-    !----------------------------------------------------------------------------------------------!
+    ! In precise arithmetic, INPROD(S, D) = 0 and |S| = |D| = DELBAR.
+    if (abs(inprod(d, s)) >= TENTH * norm(d) * norm(s) .or. norm(s) >= TWO * delbar) then
+        exit
+    end if
 
     w = matprod(xpt, hcol * matprod(s, xpt))
 
@@ -550,6 +552,7 @@ real(RP) :: dold(size(xpt, 1))
 real(RP) :: ds
 real(RP) :: dstemp(size(xpt, 2))
 real(RP) :: dtest
+real(RP) :: dunit(size(xpt, 1))
 real(RP) :: dxn
 real(RP) :: hcol(size(xpt, 2))
 real(RP) :: par(9)
@@ -640,8 +643,6 @@ if (.not. (ds**2 <= 0.99_RP * dd * ss)) then
         ! `.NOT. (A >= B)` differs from `A < B`.  The former holds iff A < B or {A, B} contains NaN.
         ! Although unlikely, if NaN occurs, it may happen that K = KOPT.
         s = xpt(:, k) - x
-        !ds = dstemp(k)
-        !ss = sstemp(k)
     end if
 end if
 
@@ -650,38 +651,43 @@ densav = ZERO
 ! Begin the iteration by overwriting S with a vector that has the required length and direction.
 
 ! TOL is the tolerance for telling whether S and D are nearly parallel. In Powell's code, the
-! tolerance is 1.0D-8. We adapt it to MAX(SQRT(EPS), 1.0E-8_RP) in case single precision is in use.
-tol = max(sqrt(EPS), 1.0E-8_RP)
+! tolerance is 1.0D-4. We adapt it to MAX(EPS^(1/4), 1.0E-4_RP) in case single precision is in use.
+tol = max(EPS**QUART, 1.0E-4_RP)
 do iter = 1, n
-    !ssden = dd * ss - ds**2
+
+    !----------------------------------------------------------------------------------------------!
+    !!--------------------------------------------!
+    !!ds = inprod(d, s)
+    !!ss = inprod(s, s)
+    !!ssden = dd * ss - ds**2
     !!if (ssden < 1.0E-8_RP * dd * ss) then
-    !! We adapt the tolerance (1.0E-8) in case single precision is in use.
-    !if (ssden <= max(sqrt(EPS), 1.0E-8_RP) * dd * ss) then
     !    exit
     !end if
-    !----------------------------------------------------------------------------------------------!
     !!s = (ONE / sqrt(ssden)) * (dd * s - ds * d)
-    ! The above is Powell's code. When DD*SS - DS**2 is close to EPS, the error in DENOM can be
-    ! large. To rectify this, we calculate D as follows, which ensures |S| = |S|.
+    !!--------------------------------------------!
+    ! The above is Powell's code. In precise arithmetic, INPROD(S, D) = 0 and |S| = |D|. However,
+    ! when DD*SS - DS**2 is tiny, the error in S can be large and hence damage these inequalities
+    ! significantly. This did happen in tests, especially when using the single precision. We
+    ! calculate S as below. It did improve the performance of NEWUOA in our test.
+    !----------------------------------------------------------------------------------------------!
 
-    !s = dd * s - ds * d  !***
-    !s = (dd * s - ds * d) / norm(d)
-    !s = s - (ds / dd) * d
     ss = inprod(s, s)
-    s = s - inprod(s, d / norm(d)) * (d / norm(d))
-
-    ! INPROD(S, D) = 0 in precise arithmetic. Exit if INPROD(S, D) is too large; otherwise, |D| may
-    ! become (much) larger than DELBAR, which did happen in tests. Make sure that at least one of
-    ! the two inequalities below is non-strict, so that S = 0 will trigger the exit.
-    !if (norm(s) <= sqrt(tol) * dd * sqrt(ss) .or. abs(inprod(d, s)) >= TENTH * norm(d) * norm(s)) then  !***
-    !if (inprod(s, s) <= tol * dd * ss .or. abs(inprod(d, s)) >= TENTH * norm(d) * norm(s)) then
-    if (norm(s) <= sqrt(tol) * sqrt(ss) .or. abs(inprod(d, s)) >= TENTH * norm(d) * norm(s)) then
-        !if (abs(ds) >= sqrt((ONE - tol)) * norm(d) * sqrt(ss) .or. norm(s) <= sqrt(tol * ss) &
-        !    & .or. abs(inprod(d, s)) >= TENTH * norm(d) * norm(s)) then
+    dunit = d / norm(d)  ! Normalization seems to stabilize the projection below.
+    s = s - inprod(s, dunit) * dunit
+    ! N.B.:
+    ! 1. The condition |S|<=TOL*SQRT(SS) below is equivalent to DS^2>=(1-TOL^2)*DD*SS in theory. As
+    ! shown above, Powell's code triggers an exit if DS^2>=(1-1.0E-8)*DD*SS. So our condition is the
+    ! same except that we take the machine epsilon into account in case single precision is in use.
+    ! 2. The condition below should be non-strict so that |S| = 0 can trigger the exit.
+    if (norm(s) <= tol * sqrt(ss)) then
         exit
     end if
     s = (s / norm(s)) * norm(d)
-    !----------------------------------------------------------------------------------------------!
+    ! In precise arithmetic, INPROD(S, D) = 0 and |S| = |D| = DELBAR = |D0|.
+    if (abs(inprod(d, s)) >= TENTH * norm(d) * norm(s) .or. norm(s) >= TWO * norm(d0)) then
+        exit
+    end if
+
     xd = inprod(x, d)
     xs = inprod(x, s)
 
@@ -854,8 +860,6 @@ do iter = 1, n
     !---------!s = s + matprod(xpt, v) !-------------------!
     s = Ax_plus_y(xpt, v, s)
     !------------------------------------------------------!
-    !ss = inprod(s, s)
-    !ds = inprod(d, s)
 end do
 
 !vlag(kopt) = vlag(kopt) + ONE  ! Note needed since we do not return VLAG.

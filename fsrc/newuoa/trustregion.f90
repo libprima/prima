@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, September 29, 2021 AM01:32:21
+! Last Modified: Wednesday, September 29, 2021 PM01:51:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -105,11 +105,11 @@ real(RP) :: quada
 real(RP) :: quadb
 real(RP) :: reduc
 real(RP) :: sg
-!real(RP) :: sgk
 real(RP) :: shs
 real(RP) :: sold(size(x))
 real(RP) :: ss
 real(RP) :: sth
+real(RP) :: sunit(size(x))
 real(RP) :: unitang
 
 ! Sizes
@@ -137,12 +137,15 @@ qred = ZERO
 info = 2  ! Default exit flag is 2, i.e., itermax is attained
 
 ! Prepare for the first line search.
-!----------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
 !-----!hx = hessmul(hq, pq, xpt, x) !----------------------------!
 hx = Ax_plus_y(hq, x, matprod(xpt, pq * matprod(x, xpt)))
-!----------------------------------------------------------------!
+! N.B.: During the iterations, G is NOT updated, and it equals always GQ+HX, which is the gradient
+! of the trust-region model at the trust-region center X. However, GG is updated: GG = |G + HS|^2,
+! which is the norm square of the gradient at the current iterate.
 g = gq + hx
 gg = inprod(g, g)
+!--------------------------------------------------------------------------------------------------!
 gg0 = gg
 d = -g
 dd = gg
@@ -167,8 +170,8 @@ twod_search = .false.
 ! In the 4th case, twod_search will be set to true, meaning that S will be improved by a sequence of
 ! two-dimensional search, the two-dimensional subspace at each iteration being span(S, -G).
 do iter = 1, itermax
-    ! Exit if GG is small. This must be done first; otherwise, DD can be 0 and BSTEP is not defined.
-    ! The inequality below must be non-strict so that GG = 0 will trigger the exit.
+    ! Exit if GG is small. This must be done first; otherwise, DD can be 0 and BSTEP is not well
+    ! defined. The inequality below must be non-strict so that GG = 0 will trigger the exit.
     if (gg <= (tol**2) * gg0) then
         info = 0_IK
         exit
@@ -234,7 +237,8 @@ do iter = 1, itermax
     ! Exit if CG path cuts the boundary. It is the only possibility that TWOD_SEARCH is true.
     if (alpha >= bstep .or. ss >= delsq) then
         crvmin = ZERO
-        twod_search = (n >= 2)  ! TWOD_SEARCH should be FALSE if N = 1.
+        !twod_search = (n >= 2)  ! TWOD_SEARCH should be FALSE if N = 1.
+        twod_search = (n >= 2 .and. gg > (tol**2) * gg0)  ! TWOD_SEARCH should be FALSE if N = 1.
         exit
     end if
 
@@ -269,50 +273,60 @@ else
 end if
 
 ! The 2D minimization
+! N.B.: During the iterations, G is NOT updated, and it equals always GQ+HX, which is the gradient
+! of the trust-region model at the trust-region center X. However, GG is updated: GG = |G + HS|^2,
+! which is the norm square of the gradient at the current iterate.
 do iter = 1, itermax
-    sg = inprod(s, g)
-    shs = inprod(s, hs)
-    !sgk = sg + shs
-    !!if (sgk / sqrt(gg * delsq) <= tol - ONE) then
-    !if (sgk <= (tol - ONE) * sqrt(gg * delsq)) then
-    !    info = 0_IK
-    !    exit
-    !end if
-
-    ! Begin the 2D minimization by calculating D and HD and some scalar products.
-    !----------------------------------------------------------------------------------------------!
-    !!t = sqrt(delsq * gg - sgk**2)
-    !!d = (delsq / t) * (g + hs) - (sgk / t) * s
-    ! The above is Powell's code. When DELSQ*GG - SGK**2 is close to EPS, the error in DENOM can be
-    ! large. To rectify this, we calculate D as follows, which ensures |D| = |S|.
-
-    !d = inprod(s, s) * (g + hs) - sgk * s
-    !d = (inprod(s, s) * (g + hs) - sgk * s) / norm(s)
-    !d = (g + hs) - (sgk / ss) * s !***
-    !d = (g + hs) - sgk * s / inprod(s, s) !**
-    d = (g + hs) - inprod(g + hs, s / norm(s)) * (s / norm(s)) !**
-
-    ! INPROD(S, D) = 0 and |D| = |S| n precise arithmetic. Exit if INPROD(S, D) is too large;
-    ! otherwise, |S| may become (much) larger than DELTA, which did happen in tests.
-    !if (abs(inprod(s, d)) >= TENTH * norm(d) * norm(s) .or. .not. is_finite(sum(abs(d)))) then
-    !if (sgk <= (tol - ONE) * sqrt(gg * delsq) .or. norm(d) <= sqrt(tol) * norm(g) * delsq) then
-    !if (sgk <= (tol - ONE) * sqrt(gg * delsq) .or. inprod(d, d) <= TWO * tol * (gg * delsq)) then
-    !if (sgk <= (tol - ONE) * sqrt(gg * delsq) .or. norm(d) <= sqrt(tol) * norm(g)) then
-    if (norm(d) <= sqrt(tol) * sqrt(gg)) then
-        !if (sgk <= -sqrt((ONE - tol) * (gg * delsq)) .or. norm(d) <= sqrt(tol) * sqrt(gg)) then  !***
+    ! Exit if GG is small. The inequality must be non-strict so that GG = 0 can trigger the exit.
+    if (gg <= (tol**2) * gg0) then
         info = 0_IK
         exit
-    elseif (abs(inprod(d, s)) >= TENTH * norm(d) * norm(s)) then
-        info = -1_IK
+    end if
+    sg = inprod(s, g)
+    shs = inprod(s, hs)
+
+    !----------------------------------------------------------------------------------------------!
+    !!----------------------------------------------!
+    !!sgk = sg + shs
+    !!if (sgk / sqrt(gg * delsq) <= tol - ONE) then
+    !!    info = 0_IK
+    !!    exit
+    !!end if
+    !!t = sqrt(delsq * gg - sgk**2)
+    !!d = (delsq / t) * (g + hs) - (sgk / t) * s
+    !!----------------------------------------------!
+    ! The above is Powell's code. In precise arithmetic, INPROD(D, S) = 0 and |D| = |S|. However,
+    ! when DELSQ*GG - SGK**2 is tiny, the error in D can be large and hence damage these
+    ! inequalities significantly. This did happen in tests, especially when using the single
+    ! precision. We calculate D as below. It did improve the performance of NEWUOA in our test.
+    !----------------------------------------------------------------------------------------------!
+
+    ! Begin the 2D minimization by calculating D and HD and some scalar products.
+    sunit = s / norm(s)  ! Normalization seems to stabilize the projection below.
+    d = (g + hs) - inprod(g + hs, sunit) * sunit
+    ! N.B.:
+    ! 1. The condition |D|<=SQRT(TOL*GG) below is equivalent to |INPROD(G+HS,S)|<=SQRT((1-TOL)*GG*SS)
+    ! in theory. As given above, Powell's code triggers an exit if INPROD(G+HS,S)=SGK<=(TOL-1)*GG*SS.
+    ! Since |SQRT(1-TOL) - (1-TOL)| <= TOL/2, our condition is close to |SGK| <= (TOL-1)*GG*SS.
+    ! When |SGK| is tiny, S and G+HS are nearly parallel and hence the 2D search cannot continue.
+    ! Note that SGK is unlikely positive if everything goes well.
+    ! 2. SQRT(TOL)*SQRT(GG) is less likely to encounter underflow than SQRT(TOL*GG).
+    ! 3. The condition below should be non-strict so that |D| = 0 can trigger the exit.
+    if (norm(d) <= sqrt(tol) * sqrt(gg)) then
+        info = 0_IK
         exit
     end if
     d = (d / norm(d)) * norm(s)
-    !----------------------------------------------------------------------------------------------!
+    ! In precise arithmetic, INPROD(D, S) = 0 and |D| = |S| = DELTA.
+    if (abs(inprod(d, s)) >= TENTH * norm(d) * norm(s) .or. norm(d) >= TWO * DELTA) then
+        info = -1_IK
+        exit
+    end if
 
-!----------------------------------------------------------------!
-!-----!hd = hessmul(hq, pq, xpt, d) !----------------------------!
+    !----------------------------------------------------------------!
+    !-----!hd = hessmul(hq, pq, xpt, d) !----------------------------!
     hd = Ax_plus_y(hq, d, matprod(xpt, pq * matprod(d, xpt)))
-!----------------------------------------------------------------!
+    !----------------------------------------------------------------!
     dg = inprod(d, g)
     dhd = inprod(hd, d)
     dhs = inprod(hd, s)
@@ -373,10 +387,6 @@ do iter = 1, itermax
     ! Calculate HS. Then test for convergence.
     hs = cth * hs + sth * hd
     gg = inprod(g + hs, g + hs)
-    if (gg <= (tol**2) * gg0) then
-        info = 0_IK
-        exit
-    end if
     qred = qred + reduc
     if (reduc / qred <= tol) then
         info = 1_IK
