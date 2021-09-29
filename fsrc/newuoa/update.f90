@@ -1,13 +1,13 @@
 module update_mod
 !--------------------------------------------------------------------------------------------------!
-! This module provides subroutines concerning the update of IDZ, BMAT, ZMAT, GQ, HQ, and PQ when 
+! This module provides subroutines concerning the update of IDZ, BMAT, ZMAT, GQ, HQ, and PQ when
 ! XPT(:, KNEW) is replaced by XNEW.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, September 27, 2021 PM05:39:23
+! Last Modified: Thursday, September 30, 2021 AM12:03:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
