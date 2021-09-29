@@ -18,6 +18,9 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v2
 
+      - name: Make MATLAB available
+        run: export PATH=$PATH:/home/zaikunzhang/local/MATLAB/R2020a/bin/
+
       - name: Run script
         uses: matlab-actions/run-command@v1
         with:
