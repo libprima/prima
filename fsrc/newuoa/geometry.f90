@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, September 29, 2021 PM12:14:15
+! Last Modified: Wednesday, September 29, 2021 PM07:06:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -367,8 +367,8 @@ end if
 ! Begin the iteration by overwriting S with a vector that has the required length and direction,
 ! except that termination occurs if the given D and S are nearly parallel.
 ! TOL is the tolerance for telling whether S and D are nearly parallel. In Powell's code, the
-! tolerance is 1.0D-4. We adapt it to MAX(EPS^(1/4), 1.0E-4_RP) in case single precision is in use.
-tol = max(EPS**QUART, 1.0E-4_RP)
+! tolerance is 1.0D-4. We adapt it to the following value in case single precision is in use.
+tol = min(1.0E-1_RP, max(EPS**QUART, 1.0E-4_RP))
 do iter = 1, maxiter
 
     !----------------------------------------------------------------------------------------------!
@@ -651,8 +651,8 @@ densav = ZERO
 ! Begin the iteration by overwriting S with a vector that has the required length and direction.
 
 ! TOL is the tolerance for telling whether S and D are nearly parallel. In Powell's code, the
-! tolerance is 1.0D-4. We adapt it to MAX(EPS^(1/4), 1.0E-4_RP) in case single precision is in use.
-tol = max(EPS**QUART, 1.0E-4_RP)
+! tolerance is 1.0D-4. We adapt it to the following value in case single precision is in use.
+tol = min(1.0E-1_RP, max(EPS**QUART, 1.0E-4_RP))
 do iter = 1, n
 
     !----------------------------------------------------------------------------------------------!

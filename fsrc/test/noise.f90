@@ -73,7 +73,7 @@ if (r > 0.75_RP) then
 !elseif (r > 0.5_RP) then
     !noify_f = IEEE_VALUE(0.0_RP, IEEE_QUIET_NAN)
 elseif (r < -0.75_RP) then
-    noify_f = -huge(0.0_RP)
+    noify_f = -huge(0.0_RP) * 1.0D-1
 end if
 end function noisyfun
 

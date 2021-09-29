@@ -9,16 +9,16 @@ LOGFILE="$2"
 
 case "$1" in
 	-w|--warning)
-		if grep -iq "warning" "$LOGFILE" | grep -iv "0\s*warning" ; then
+		if grep -i "warning" "$LOGFILE" | grep -viq "0\s*warning" ; then
 			cat "$LOGFILE"
-			grep -i "warning" "$LOGFILE" | grep -iv "0\s*warning"
+			grep -i "warning" "$LOGFILE" | grep -vi "0\s*warning"
 		fi
 		exit 0
 		;;
 	-e|--error)
-		if grep -iq "error\|fail" "$LOGFILE" | grep -iv "0\s*error" ; then
+		if grep -iq "error\|fail" "$LOGFILE" | grep -viq "0\s*error" ; then
 			cat "$LOGFILE"
-			grep -i "error\|fail" "$LOGFILE" | grep -iv "0\s*error"
+			grep -i "error\|fail" "$LOGFILE" | grep -vi "0\s*error"
 			exit 1
 		else
 			exit 0
