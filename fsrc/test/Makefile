@@ -189,8 +189,7 @@ x_i2_r16_d1_tst x_i4_r16_d1_tst x_i8_r16_d1_tst x_i2_r16_d0_tst x_i4_r16_d0_tst 
 	%_i2_r8_d0_tst %_i4_r8_d0_tst %_i8_r8_d0_tst \
 	%_i2_r16_d1_tst %_i4_r16_d1_tst %_i8_r16_d1_tst \
 	%_i2_r16_d0_tst %_i4_r16_d0_tst %_i8_r16_d0_tst
-	@chmod u+x checktest
-	./checktest --warning $(TESTLOG)
+	bash ./checktest --warning $(TESTLOG)
 	@printf "\n$@ ends!\n\n" | tee -a $(TESTLOG)
 	make clean
 
@@ -200,8 +199,7 @@ x_i2_r16_d1_tst x_i4_r16_d1_tst x_i8_r16_d1_tst x_i2_r16_d0_tst x_i4_r16_d0_tst 
 	@printf "\n$@ starts.\n\n" | tee -a $(TESTLOG)
 	$(FC) $(FFLAGS) -o $@ $(COMMONSRC) $(NEWUOASRC) $(TESTSRC) 2>&1 | tee -a $(TESTLOG)
 	./$@ 2>&1 | tee -a $(TESTLOG)
-	@chmod u+x checktest
-	./checktest --error $(TESTLOG)
+	bash ./checktest --error $(TESTLOG)
 	@printf "\n$@ ends!\n\n" | tee -a $(TESTLOG)
 
 src:
