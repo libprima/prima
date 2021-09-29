@@ -57,7 +57,9 @@ integer :: seed
 real(RP) :: r
 
 call getseed(seedsav)
-seed = ceiling(TENTH * real(huge(0), RP) * cos(1.0E3_RP * (abs(f) + ONE) * cos(1.0E3_RP * sum(abs(x)))))
+! Some compilers cannot guarantee ABS(COS) <= 1. It may cause overflow of INTETER when taking CEILING.
+seed = ceiling(TENTH * real(huge(0), RP) * &
+    & min(ONE, abs(cos(1.0E3_RP * (abs(f) + ONE) * cos(1.0E3_RP * sum(abs(x)))))))
 call setseed(max(abs(seed), 1))
 call setseed(seedsav)
 deallocate (seedsav)
@@ -70,7 +72,7 @@ if (r > 0.75_RP) then
     noify_f = huge(0.0_RP)
 !elseif (r > 0.5_RP) then
     !noify_f = IEEE_VALUE(0.0_RP, IEEE_QUIET_NAN)
-elseif (r < -0.99_RP) then
+elseif (r < -0.75_RP) then
     noify_f = -huge(0.0_RP)
 end if
 end function noisyfun

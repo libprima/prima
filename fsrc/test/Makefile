@@ -167,21 +167,18 @@ x_i2_r16_d1_tst x_i4_r16_d1_tst x_i8_r16_d1_tst x_i2_r16_d0_tst x_i4_r16_d0_tst 
 	%_i2_r16_d1_tst %_i4_r16_d1_tst %_i8_r16_d1_tst \
 	%_i2_r16_d0_tst %_i4_r16_d0_tst %_i8_r16_d0_tst
 	./checktest --warning $(TESTLOG)
-	@printf "\n$@ ends!\n\n" >> $(TESTLOG)
-	@printf "\n$@ ends!\n\n"
+	@printf "\n$@ ends!\n\n" | tee -a $(TESTLOG)
 	make clean
 
 # No idea why, but if we put $(COMMONSRC), $(NEWUOASRC), and $(TESTSRC) as prerequisites for %_tst,
 # then the Makefile does not work with GitHub Actions, although it works on a normal machine.
 # In both cases, the `make` is `GNU Make 4.2.1`.
 %_tst: src header_%
-	@printf "\n$@ starts.\n\n"
-	@printf "\n$@ starts.\n\n" >> $(TESTLOG)
-	$(FC) $(FFLAGS) -o $@ $(COMMONSRC) $(NEWUOASRC) $(TESTSRC) >> $(TESTLOG) 2>&1
-	./$@ >> $(TESTLOG) 2>&1
+	@printf "\n$@ starts.\n\n" | tee -a $(TESTLOG)
+	$(FC) $(FFLAGS) -o $@ $(COMMONSRC) $(NEWUOASRC) $(TESTSRC) 2>&1 | tee -a $(TESTLOG)
+	./$@ 2>&1 | tee -a $(TESTLOG)
 	./checktest --error $(TESTLOG)
-	@printf "\n$@ ends!\n\n" >> $(TESTLOG)
-	@printf "\n$@ ends!\n\n"
+	@printf "\n$@ ends!\n\n" | tee -a $(TESTLOG)
 
 src: ../newuoa/* ../common/* \
 	$(NEWUOA)/* $(COMMON)/*

@@ -1,0 +1,42 @@
+name: Test nvfortran
+
+on:
+  # Trigger the workflow on push or pull request
+  push:
+  pull_request:
+  # Trigger the workflow at the end of every week
+  schedule:
+    - cron: '0 0 * * 0'
+  # Trigger the workflow when it is manually triggered
+  workflow_dispatch:
+
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # As of 20210918, according to https://github.com/actions/virtual-environments ,
+        # ubuntu-latest = ubuntu-20.04,
+        # macos-latest = macos-10.15,
+        # windows-latest = windows-2019
+        os: [ubuntu-latest, ubuntu-18.04]
+        bitness: [32, 64]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install nvfotran
+        run: |
+          cd .github/workflows; ./install_nvfortran
+
+      - name: Conduct the test
+        run: |
+          cd fsrc/test; make clean; make vtest
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          path: fsrc/test/*.log
