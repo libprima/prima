@@ -1,0 +1,17 @@
+#!/bin/bash
+
+cd /tmp/
+
+git clone https://github.com/zaikunzhang/resources
+
+cd resources/
+
+tar zvxf  flang*.tgz
+
+SETENV="/tmp/setenv.sh"
+cat > "$SETENV" <<EOF
+export PATH=$PATH:/tmp/resources/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/tmp/resources/lib
+EOF
+
+source "$SETENV"
