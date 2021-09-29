@@ -163,12 +163,15 @@ C
       d(1:n) = (g(1:n)+hs(1:n)) - dot_product(g(1:n)+hs(1:n),
      1 step(1:n)/norm(step(1:n)))*(step(1:n)/norm(step(1:n)))
 
-      if (norm(d(1:n)) <= sqrt(1.0D-2)*sqrt(gg) .or.
-     1 abs(dot_product(d(1:n), step(1:n))) >=
-     1 0.1D0*norm(d(1:n))*norm(step(1:n))) then
+      if (norm(d(1:n)) <= sqrt(1.0D-2)*sqrt(gg)) then
           goto 160
       end if
       d(1:n) = (d(1:n)/norm(d(1:n))) * norm(step(1:n))
+      if (abs(dot_product(d(1:n), step(1:n))) >=
+     1 0.1D0*norm(d(1:n))*norm(step(1:n)) .or.
+     1 norm(d(1:n)) >= 2.0D0*DELTA) then
+          goto 160
+      end if
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       GOTO 170
   120 DG=ZERO

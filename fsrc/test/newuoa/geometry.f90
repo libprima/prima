@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, September 29, 2021 AM01:06:02
+! Last Modified: Wednesday, September 29, 2021 AM02:35:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -276,6 +276,7 @@ real(RP) :: cth
 real(RP) :: dd
 real(RP) :: dhd
 real(RP) :: dold(size(x))
+real(RP) :: dunit(size(x))
 real(RP) :: gc(size(x))
 real(RP) :: gd(size(x))
 real(RP) :: gg
@@ -387,7 +388,8 @@ do iter = 1, maxiter
     !s = dd * s - sp * d  !***
     !s = (dd * s - sp * d) / norm(d)
     !s = s - (sp / dd) * d !****
-    s = s - inprod(s, d / norm(d)) * (d / norm(d))
+    dunit = d / norm(d)
+    s = s - inprod(s, dunit) * dunit
 
     ! INPROD(S, D) = 0 and |S| = |D| in precise arithmetic. Exit if INPROD(S, D) is too large;
     ! otherwise, |D| may become (much) larger than DELBAR, which did happen in tests.
@@ -550,6 +552,7 @@ real(RP) :: dold(size(xpt, 1))
 real(RP) :: ds
 real(RP) :: dstemp(size(xpt, 2))
 real(RP) :: dtest
+real(RP) :: dunit(size(xpt, 1))
 real(RP) :: dxn
 real(RP) :: hcol(size(xpt, 2))
 real(RP) :: par(9)
@@ -668,7 +671,8 @@ do iter = 1, n
     !s = (dd * s - ds * d) / norm(d)
     !s = s - (ds / dd) * d
     ss = inprod(s, s)
-    s = s - inprod(s, d / norm(d)) * (d / norm(d))
+    dunit = d / norm(d)
+    s = s - inprod(s, dunit) * dunit
 
     ! INPROD(S, D) = 0 in precise arithmetic. Exit if INPROD(S, D) is too large; otherwise, |D| may
     ! become (much) larger than DELBAR, which did happen in tests. Make sure that at least one of
