@@ -14,7 +14,7 @@ case "$1" in
 		exit 0
 		;;
 	-e|--error)
-		if grep -iq "error\|fail" "$LOGFILE" | grep -viq "0\s*error" ; then
+		if grep -i "error\|fail" "$LOGFILE" | grep -viq "0\s*error" ; then
 			cat "$LOGFILE"
 			grep -i "error\|fail" "$LOGFILE" | grep -vi "0\s*error"
 			exit 1
