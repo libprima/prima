@@ -39,6 +39,29 @@ $(foreach TST, $(TESTS), $(eval $(TST): \
 #.PHONY: all test ntest atest dtest ftest gtest itest stest vtest xtest src header_* clean
 .PHONY: all test src header_* clean
 
+# Detect operating system.
+OSTYPE :=
+ifeq ($(OS),Windows_NT)
+	OSTYPE = WINDOWS
+else
+	UNAME_S := $(shell uname -s)
+	ifeq ($(UNAME_S),Darwin)
+		OSTYPE = MAC
+	else  # We assume the OS is LINUX by default.
+		OSTYPE = LINUX
+	endif
+endif
+
+# Define SED.
+# When calling "sed -i" on macOS, it is obligatory to specify a string (e.g., .bak) after -i as the
+# extension for saving a backup. If the string is "", then no backup will be saved. If no string is
+# specified, then an error will be raised, saying "invalid command code".
+SED :=
+ifeq ($(OSTYPE), MAC)
+	SED = @sed -i ""
+else
+	SED = @sed -i
+endif
 
 ####################################################################################################
 # All the tests
@@ -181,7 +204,7 @@ x_i2_r16_d1_tst x_i4_r16_d1_tst x_i8_r16_d1_tst x_i2_r16_d0_tst x_i4_r16_d0_tst 
 	./checktest --error $(TESTLOG)
 	@printf "\n$@ ends!\n\n" | tee -a $(TESTLOG)
 
-src: ../newuoa/ ../common/
+src:
 	@cp -r ../newuoa ./
 	@cp -r ../common ./
 
@@ -195,10 +218,10 @@ header_%: IK = $(shell expr 8 \* $$(echo $@ | sed "s/.*_i//" | sed "s/_.*//"))
 header_%: RP = $(shell expr 8 \* $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//"))
 header_%: DBG = $(shell echo $@ | sed "s/.*_d//" | sed "s/_.*//")
 header_%: src
-	@sed -i '0,/^#define __QP_AVAILABLE__ [0-9]*/s//#define __QP_AVAILABLE__ $(QPAVLB)/' $(HEADERS)
-	@sed -i '0,/^#define __INTEGER_KIND__ [0-9]*/s//#define __INTEGER_KIND__ $(IK)/' $(HEADERS)
-	@sed -i '0,/^#define __REAL_PRECISION__ [0-9]*/s//#define __REAL_PRECISION__ $(RP)/' $(HEADERS)
-	@sed -i '0,/^#define __DEBUGGING__ [0-9]*/s//#define __DEBUGGING__ $(DBG)/' $(HEADERS)
+	$(SED) "0,/^#define __QP_AVAILABLE__ [0-9]*/s//#define __QP_AVAILABLE__ $(QPAVLB)/" $(HEADERS)
+	$(SED) "0,/^#define __INTEGER_KIND__ [0-9]*/s//#define __INTEGER_KIND__ $(IK)/" $(HEADERS)
+	$(SED) "0,/^#define __REAL_PRECISION__ [0-9]*/s//#define __REAL_PRECISION__ $(RP)/" $(HEADERS)
+	$(SED) "0,/^#define __DEBUGGING__ [0-9]*/s//#define __DEBUGGING__ $(DBG)/" $(HEADERS)
 
 
 ####################################################################################################
