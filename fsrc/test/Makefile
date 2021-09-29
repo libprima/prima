@@ -171,9 +171,8 @@ x_i2_r16_d1_tst x_i4_r16_d1_tst x_i8_r16_d1_tst x_i2_r16_d0_tst x_i4_r16_d0_tst 
 	@printf "\n$@ ends!\n\n" | tee -a $(TESTLOG)
 	make clean
 
-# No idea why, but if we put $(COMMONSRC), $(NEWUOASRC), and $(TESTSRC) as prerequisites for %_tst,
-# then the Makefile does not work with GitHub Actions, although it works on a normal machine.
-# In both cases, the `make` is `GNU Make 4.2.1`.
+# N.B.: The prerequisite should NOT include files that may not exits, e.g., $(COMMONSRC), because
+# Make will ignore the rule if such files do not exist, resulting in "No rule to make ..." mistake.
 %_tst: src header_%
 	@printf "\n$@ starts.\n\n" | tee -a $(TESTLOG)
 	$(FC) $(FFLAGS) -o $@ $(COMMONSRC) $(NEWUOASRC) $(TESTSRC) 2>&1 | tee -a $(TESTLOG)
@@ -195,7 +194,7 @@ atest gtest ntest itest stest: QPAVLB = 1
 header_%: IK = $(shell expr 8 \* $$(echo $@ | sed "s/.*_i//" | sed "s/_.*//"))
 header_%: RP = $(shell expr 8 \* $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//"))
 header_%: DBG = $(shell echo $@ | sed "s/.*_d//" | sed "s/_.*//")
-header_%: $(HEADERS)
+header_%: src
 	@sed -i '0,/^#define __QP_AVAILABLE__ [0-9]*/s//#define __QP_AVAILABLE__ $(QPAVLB)/' $(HEADERS)
 	@sed -i '0,/^#define __INTEGER_KIND__ [0-9]*/s//#define __INTEGER_KIND__ $(IK)/' $(HEADERS)
 	@sed -i '0,/^#define __REAL_PRECISION__ [0-9]*/s//#define __REAL_PRECISION__ $(RP)/' $(HEADERS)
@@ -211,6 +210,6 @@ clean:
 	@mkdir -p trash
 	@if [ `ls -1 $(COMMON) 2>/dev/null | wc -l ` -gt 0 ] ; then rm -rf trash/$(COMMON); mv $(COMMON) trash > /dev/null 2>&1; fi
 	@if [ `ls -1 $(NEWUOA) 2>/dev/null | wc -l ` -gt 0 ] ; then rm -rf trash/$(NEWUOA); mv $(NEWUOA) trash > /dev/null 2>&1; fi
-	@mkdir -p log;
+	@mkdir -p log
 	@if [ `ls -1 *.log 2>/dev/null | wc -l ` -gt 0 ]; then mv *.log log > /dev/null 2>&1 ; fi
 	@printf "\nDone.\n\n"
