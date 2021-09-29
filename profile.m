@@ -1,11 +1,11 @@
 function T = profile(frec, fmin, tau, n, testfeature)
 %
-% This version is not inteded to be released. It is only for test. 
+% This version is not inteded to be released. It is only for test.
 %
-% All rights reserved. 
+% All rights reserved.
 %
 % ZHANG Zaikun, 08/08/2016
-% Department of Applied Mathematics, The Hong Kong Polytechnic University
+% Department of Applied Mathematics, the Hong Kong Polytechnic University
 
 delsame = 0;
 penalty = 2;
@@ -25,7 +25,7 @@ T = NaN(np, ns, nr);
 
 f0 = -Inf(np, nr);
 for ip = 1:np
-    for ir = 1:nr 
+    for ir = 1:nr
         f0(ip,ir) = frec(ip, 1, ir, 1);
     end
 end
@@ -34,10 +34,10 @@ for ip = 1:np
     for is = 1:ns
         for ir = 1:nr
             fthreshold = tau*f0(ip,ir) + (1-tau)*fmin(ip);
-            % We need to ensure fthreshold >= fmin(ip), which may not be true 
-            % due to rounding errors when fmin(ip)=f0(ip,ir). 
+            % We need to ensure fthreshold >= fmin(ip), which may not be true
+            % due to rounding errors when fmin(ip)=f0(ip,ir).
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            fthreshold = max(fthreshold, fmin(ip)); 
+            fthreshold = max(fthreshold, fmin(ip));
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             if (min(frec(ip, is, ir, 1:M)) <= fthreshold) % Do not change the "if .. else ..." order, because frec(ip, is, ir, 1:M) may be a vector of NaNs.
                 T(ip, is, ir) = find(frec(ip, is, ir, 1:M) <= fthreshold, 1, 'first');
@@ -66,7 +66,7 @@ warning('Deleting all the problems for which all the solvers perform the same.')
             mask(ip) = false;
         end
     end
-    T = T(mask,:);    
+    T = T(mask,:);
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
