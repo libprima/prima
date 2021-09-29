@@ -1,0 +1,24 @@
+name: Test MATLAB
+
+on:
+  # Trigger the workflow on push or pull request
+  push:
+  pull_request:
+  # Trigger the workflow at the end of every week
+  schedule:
+    - cron: '0 0 * * 0'
+  # Trigger the workflow when it is manually triggered
+  workflow_dispatch:
+
+jobs:
+  my-job:
+    name: Run MATLAB tests
+    runs-on: self-hosted
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Run script
+        uses: matlab-actions/run-command@v1
+        with:
+          command: setup newuoan; cd ./OPDFO; setup newuoa; cd ../; options.type='u'; verify({'newuoan', 'newuoa'},options);

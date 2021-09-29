@@ -189,6 +189,8 @@ x_i2_r16_d1_tst x_i4_r16_d1_tst x_i8_r16_d1_tst x_i2_r16_d0_tst x_i4_r16_d0_tst 
 	%_i2_r8_d0_tst %_i4_r8_d0_tst %_i8_r8_d0_tst \
 	%_i2_r16_d1_tst %_i4_r16_d1_tst %_i8_r16_d1_tst \
 	%_i2_r16_d0_tst %_i4_r16_d0_tst %_i8_r16_d0_tst
+	# N.B.: Execute checktest by  "bash ./checktest" instead of just "./checktest", because
+	# "./checktest" may not be executable on all operating systems.
 	bash ./checktest --warning $(TESTLOG)
 	@printf "\n$@ ends!\n\n" | tee -a $(TESTLOG)
 	make clean
@@ -199,6 +201,8 @@ x_i2_r16_d1_tst x_i4_r16_d1_tst x_i8_r16_d1_tst x_i2_r16_d0_tst x_i4_r16_d0_tst 
 	@printf "\n$@ starts.\n\n" | tee -a $(TESTLOG)
 	$(FC) $(FFLAGS) -o $@ $(COMMONSRC) $(NEWUOASRC) $(TESTSRC) 2>&1 | tee -a $(TESTLOG)
 	./$@ 2>&1 | tee -a $(TESTLOG)
+	# N.B.: Execute checktest by  "bash ./checktest" instead of just "./checktest", because
+	# "./checktest" may not be executable on all operating systems.
 	bash ./checktest --error $(TESTLOG)
 	@printf "\n$@ ends!\n\n" | tee -a $(TESTLOG)
 
