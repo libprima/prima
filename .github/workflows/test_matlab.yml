@@ -21,4 +21,4 @@ jobs:
       - name: Run script
         uses: matlab-actions/run-command@v1
         with:
-          command: setup newuoan; cd ./OPDFO; setup newuoa; cd ../; options.type='u'; verify({'newuoan', 'newuoa'},options);
+          command: tic; setup newuoan; cd ./OPDFO; setup newuoa; cd ../; options.maxdim=100;options.type='u'; verify({'newuoan', 'newuoa'},options); toc
