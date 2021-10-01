@@ -11,6 +11,11 @@ on:
   # Trigger the workflow when it is manually triggered
   workflow_dispatch:
 
+name: use bashrc
+defaults:
+  run:
+    shell: bash -ieo pipefail {0}
+
 jobs:
   my-job:
     name: Run MATLAB tests
@@ -18,9 +23,6 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v2
-
-      - name: Source the bashrc
-        run: source ~/.bashrc
 
       - name: Run script
         uses: matlab-actions/run-command@v1
