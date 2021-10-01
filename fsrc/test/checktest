@@ -1,3 +1,8 @@
+#!/bin/bash
+#
+# N.B.: Execute checktest by  "bash ./checktest" instead of just "./checktest", because
+# "./checktest" may not be executable on all operating systems.
+
 if [ ! $# -eq 2 ] ; then
 	printf "Usage: checktest -w|--warning|-e|--error LOGFILE\n"
 	exit 2
@@ -7,16 +12,26 @@ LOGFILE="$2"
 
 case "$1" in
 	-w|--warning)
-		if grep -i "warning" "$LOGFILE" | grep -viq "0\s*warning" ; then
+        WARNINGS="$(grep -i "warning" "$LOGFILE" | grep -vi "[0-9]\s*warning")"
+        if [ -n "$WARNINGS" ]; then
 			cat "$LOGFILE"
-			grep -i "warning" "$LOGFILE" | grep -vi "0\s*warning"
+            printf "\n\n***********************************************************************\n\n"
+            printf "%s" "$WARNINGS"
+            printf "\n\n***********************************************************************\n\n"
 		fi
 		exit 0
 		;;
 	-e|--error)
-		if grep -i "error\|fail" "$LOGFILE" | grep -viq "0\s*error" ; then
+        ERRORS="$(grep -i "erro\|fail\|exception\|invalid\|overflow\|backtrace" "$LOGFILE" \
+            | grep -vi "[0-9]\s*error" \
+            | grep -vi "Warning:\ Floating\ overflow\ occurred" \
+            | grep -vi "Warning:\ Floating\ invalid\ operation\ occurred" \
+            | grep -vi "maxfun\|maxhist\|npt\|rhobeg\|rhoend\|ftarget")"
+        if [ -n "$ERRORS" ]; then
 			cat "$LOGFILE"
-			grep -i "error\|fail" "$LOGFILE" | grep -vi "0\s*error"
+            printf "\n\n***********************************************************************\n\n"
+            printf "%s" "$ERRORS"
+            printf "\n\n***********************************************************************\n\n"
 			exit 1
 		else
 			exit 0
