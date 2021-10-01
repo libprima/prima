@@ -230,7 +230,7 @@ test:
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
 	$(FC) $(FFLAGS) -o $@ $(COMMONSRC) $(NEWUOASRC) $(TESTSRC) 2>&1 | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
-	#./$@ 2>&1 | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
+	./$@ 2>&1 | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
 	bash ./checktest --error "$(LOG_DIR)/$@_$(STAMP).log"
 	bash ./checktest --warning "$(LOG_DIR)/$@_$(STAMP).log"
 	@printf "\n$@ ends at $(shell date +%Y.%m.%d_%H.%M.%S).\n\n" | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
