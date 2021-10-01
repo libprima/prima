@@ -27,7 +27,7 @@ jobs:
 
       - name: Conduct the test
         run: |
-          source /home/zaikunzhang/local/bash_config/bash_personal; cd fsrc/test; make clean; make ntest
+          cd fsrc/test; make clean; make ntest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
