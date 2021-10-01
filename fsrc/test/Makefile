@@ -37,7 +37,9 @@ COMMON_DIR = ./common
 # Solver directories.
 NEWUOA_DIR = ./newuoa
 # Headers.
-HEADER = $(COMMON_DIR)/ppf.h
+# N.B.: If we define COMMON_DIR as "./common/", then, when adapting the header, sed will complain
+# that"./common//*.h" cannot be found on macOS.
+HEADERS = $(COMMON_DIR)/*.h
 
 # Sources.
 SRC_DIRS = ../common ../newuoa
@@ -253,10 +255,10 @@ header_%: DBG = $(shell echo $@ | sed "s/.*_d//" | sed "s/_.*//")
 header_%: QPAVLB = $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 16)
 header_%: source_%
 	@printf "\nAdapting the header file for the test.\n"
-	$(SED) "0,/^#define __QP_AVAILABLE__ [0-9]*/s//#define __QP_AVAILABLE__ $(QPAVLB)/" $(HEADER)
-	$(SED) "0,/^#define __INTEGER_KIND__ [0-9]*/s//#define __INTEGER_KIND__ $(IK)/" $(HEADER)
-	$(SED) "0,/^#define __REAL_PRECISION__ [0-9]*/s//#define __REAL_PRECISION__ $(RP)/" $(HEADER)
-	$(SED) "0,/^#define __DEBUGGING__ [0-9]*/s//#define __DEBUGGING__ $(DBG)/" $(HEADER)
+	$(SED) "0,/^#define __QP_AVAILABLE__ [0-9]*/s//#define __QP_AVAILABLE__ $(QPAVLB)/" $(HEADERS)
+	$(SED) "0,/^#define __INTEGER_KIND__ [0-9]*/s//#define __INTEGER_KIND__ $(IK)/" $(HEADERS)
+	$(SED) "0,/^#define __REAL_PRECISION__ [0-9]*/s//#define __REAL_PRECISION__ $(RP)/" $(HEADERS)
+	$(SED) "0,/^#define __DEBUGGING__ [0-9]*/s//#define __DEBUGGING__ $(DBG)/" $(HEADERS)
 	@printf "\nDone.\n\n"
 
 
