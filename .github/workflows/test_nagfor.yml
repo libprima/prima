@@ -21,12 +21,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Source the bashrc
-        run: source /home/zaikunzhang/.bashrc
-
       - name: Conduct the test
         run: |
-          cd fsrc/test; make clean; make ntest
+          source /home/zaikunzhang/.bashrc; cd fsrc/test; make clean; make ntest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
