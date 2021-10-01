@@ -2,7 +2,7 @@ name: Test Absoft
 
 on:
   # Trigger the workflow on push or pull request
-  #push:
+  push:
   pull_request:
   # Trigger the workflow by cron
   schedule:
