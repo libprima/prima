@@ -43,7 +43,7 @@ end function noisyx
 
 
 function noisyfun(x, f) result(noify_f)
-use, non_intrinsic :: consts_mod, only : RP, ONE, TWO, TENTH
+use, non_intrinsic :: consts_mod, only : RP, ONE, TENTH
 use, non_intrinsic :: param_mod, only : F_NOISE
 use, non_intrinsic :: rand_mod, only : getseed, setseed, randn
 implicit none
