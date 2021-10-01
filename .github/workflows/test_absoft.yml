@@ -11,6 +11,10 @@ on:
   # Trigger the workflow when it is manually triggered
   workflow_dispatch:
 
+defaults:
+  run:
+    shell: bash -ieo pipefail {0}
+
 jobs:
   test:
     runs-on: self-hosted
