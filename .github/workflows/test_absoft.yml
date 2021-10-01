@@ -23,7 +23,10 @@ jobs:
 
       - name: Conduct the test
         run: |
-          source /home/zaikunzhang/.bashrc; cd fsrc/test; make clean; make atest
+          source /home/zaikunzhang/local/bash_config/bash_personal
+          cd fsrc/test;
+          make clean;
+          make atest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
