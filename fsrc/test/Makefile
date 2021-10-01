@@ -238,7 +238,9 @@ test:
 
 # Make a local copy of the source code for the test.
 source:
+	@printf "\nMaking a copy of the source code for the test.\n"
 	@for DIR in $(SRC_DIRS); do cp -r "$$DIR" ./; done
+	@printf "\nDone.\n\n"
 
 # Adapt the header file for the test.
 # For REAL128:
@@ -253,10 +255,12 @@ header_%: QPAVLB = $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 1
 #header_%: source
 header_%:
 	@make source
+	@printf "\nAdapting the header file for the test.\n"
 	$(SED) "0,/^#define __QP_AVAILABLE__ [0-9]*/s//#define __QP_AVAILABLE__ $(QPAVLB)/" $(HEADERS)
 	$(SED) "0,/^#define __INTEGER_KIND__ [0-9]*/s//#define __INTEGER_KIND__ $(IK)/" $(HEADERS)
 	$(SED) "0,/^#define __REAL_PRECISION__ [0-9]*/s//#define __REAL_PRECISION__ $(RP)/" $(HEADERS)
 	$(SED) "0,/^#define __DEBUGGING__ [0-9]*/s//#define __DEBUGGING__ $(DBG)/" $(HEADERS)
+	@printf "\nDone.\n\n"
 
 
 ####################################################################################################
