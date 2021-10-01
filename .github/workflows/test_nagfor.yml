@@ -22,6 +22,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Source the bashrc
+        run: source ~/.bashrc
+
       - name: Conduct the test
         run: |
           cd fsrc/test; make clean; make ntest
