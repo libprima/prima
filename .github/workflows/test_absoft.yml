@@ -11,10 +11,6 @@ on:
   # Trigger the workflow when it is manually triggered
   workflow_dispatch:
 
-defaults:
-  run:
-    shell: bash -ieo pipefail {0}
-
 jobs:
   test:
     runs-on: self-hosted
@@ -26,7 +22,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Source the bashrc
-        run: source ~/.bashrc
+        run: source /home/zaikunzhang/.bashrc
 
       - name: Conduct the test
         run: |
