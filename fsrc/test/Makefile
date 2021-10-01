@@ -214,10 +214,11 @@ test:
 # N.B.: Execute checktest by  "bash ./checktest" instead of just "./checktest", because
 # "./checktest" may not be executable on all operating systems.
 %test:
+	@mkdir -p $(LOG_DIR)
+	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
 	@make $(SUBTESTS)
-	@for LOGFILE in $(LOG_DIR)/*_$(STAMP).log; do cat "$$LOGFILE" >> "$(LOG_DIR)/$@_$(STAMP).log"; rm "$$LOGFILE"; done
 	bash ./checktest --warning "$(LOG_DIR)/$@_$(STAMP).log"
-	@printf "\n$@ ends!\n\n" | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
+	@printf "\n$@ ends at $(shell date +%Y.%m.%d_%H.%M.%S).\n\n" | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
 	@make clean
 
 # Make a compiler-specific subtest.
@@ -230,7 +231,9 @@ test:
 	#./$@ 2>&1 | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
 	bash ./checktest --error "$(LOG_DIR)/$@_$(STAMP).log"
 	bash ./checktest --warning "$(LOG_DIR)/$@_$(STAMP).log"
-	@printf "\n$@ ends!\n\n" | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
+	@printf "\n$@ ends at $(shell date +%Y.%m.%d_%H.%M.%S).\n\n" | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
+	@cat "$(LOG_DIR)/$@_$(STAMP).log" >> "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//")_$(STAMP).log"
+	@rm "$(LOG_DIR)/$@_$(STAMP).log"
 	@make cleanbin
 
 # Make a local copy of the source code for the test.
