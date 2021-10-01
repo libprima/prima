@@ -26,4 +26,4 @@ jobs:
       - name: Run script
         uses: matlab-actions/run-command@v1
         with:
-          command: system('source /home/zaikunzhang/.bashrc'); setup newuoan; cd ./OPDFO; setup newuoa; cd ../; options.maxdim=100;options.type='u'; verify({'newuoan', 'newuoa'},options);
+          command: system('source /home/zaikunzhang/local/bash_config/bash_personal'); setup newuoan; cd ./OPDFO; setup newuoa; cd ../; options.maxdim=100;options.type='u'; verify({'newuoan', 'newuoa'},options);
