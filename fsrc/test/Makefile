@@ -218,7 +218,7 @@ test:
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
 	@make $(SUBTESTS)
 	bash ./checktest --warning "$(LOG_DIR)/$@_$(STAMP).log"
-	@printf "\n$@ ends at $(shell date +%Y.%m.%d_%H.%M.%S).\n\n" | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
+	@printf "\n$@ ends!.\n\n" | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
 	@make clean
 
 # Make a compiler-specific subtest.
@@ -249,7 +249,10 @@ header_%: IK = $(shell expr 8 \* $$(echo $@ | sed "s/.*_i//" | sed "s/_.*//"))
 header_%: RP = $(shell expr 8 \* $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//"))
 header_%: DBG = $(shell echo $@ | sed "s/.*_d//" | sed "s/_.*//")
 header_%: QPAVLB = $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 16)
-header_%: src
+# It does not work on macOS if we put src as a prerequisite instead of making it explicitly. Why?
+#header_%: src
+header_%:
+	@make src
 	$(SED) "0,/^#define __QP_AVAILABLE__ [0-9]*/s//#define __QP_AVAILABLE__ $(QPAVLB)/" $(HEADERS)
 	$(SED) "0,/^#define __INTEGER_KIND__ [0-9]*/s//#define __INTEGER_KIND__ $(IK)/" $(HEADERS)
 	$(SED) "0,/^#define __REAL_PRECISION__ [0-9]*/s//#define __REAL_PRECISION__ $(RP)/" $(HEADERS)
