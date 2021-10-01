@@ -64,8 +64,8 @@ $(foreach TST, $(TESTS_NO_QP), $(eval $(TST): SUBTESTS := \
 	$(TST)_i2_r8_d0_tst $(TST)_i4_r8_d0_tst $(TST)_i8_r8_d0_tst \
 	))
 
-#.PHONY: all test $(TESTS) $(SUBTESTS) src header_* clean*
-.PHONY: all test src header_* clean*
+#.PHONY: all test $(TESTS) $(SUBTESTS) source header_* clean*
+.PHONY: all test source header_* clean*
 
 # Operating system.
 OSTYPE :=
@@ -224,7 +224,7 @@ test:
 # Make a compiler-specific subtest.
 # N.B.: The prerequisite should NOT include files that may not exist, e.g., $(COMMONSRC), because
 # Make will ignore the rule if such files do not exist, resulting in "No rule to make ..." mistake.
-%_tst: src header_%
+%_tst: source header_%
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
 	$(FC) $(FFLAGS) -o $@ $(COMMONSRC) $(NEWUOASRC) $(TESTSRC) 2>&1 | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
@@ -237,7 +237,7 @@ test:
 	@make cleanbin
 
 # Make a local copy of the source code for the test.
-src:
+source:
 	@for DIR in $(SRC_DIRS); do cp -r "$$DIR" ./; done
 
 # Adapt the header file for the test.
@@ -249,10 +249,10 @@ header_%: IK = $(shell expr 8 \* $$(echo $@ | sed "s/.*_i//" | sed "s/_.*//"))
 header_%: RP = $(shell expr 8 \* $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//"))
 header_%: DBG = $(shell echo $@ | sed "s/.*_d//" | sed "s/_.*//")
 header_%: QPAVLB = $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 16)
-# It does not work on macOS if we put src as a prerequisite instead of making it explicitly. Why?
-#header_%: src
+# It does not work on macOS if we put "source" as a prerequisite instead of making it explicitly. Why?
+#header_%: source
 header_%:
-	@make src
+	@make source
 	$(SED) "0,/^#define __QP_AVAILABLE__ [0-9]*/s//#define __QP_AVAILABLE__ $(QPAVLB)/" $(HEADERS)
 	$(SED) "0,/^#define __INTEGER_KIND__ [0-9]*/s//#define __INTEGER_KIND__ $(IK)/" $(HEADERS)
 	$(SED) "0,/^#define __REAL_PRECISION__ [0-9]*/s//#define __REAL_PRECISION__ $(RP)/" $(HEADERS)
