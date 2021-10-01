@@ -11,7 +11,6 @@ on:
   # Trigger the workflow when it is manually triggered
   workflow_dispatch:
 
-name: use bashrc
 defaults:
   run:
     shell: bash -ieo pipefail {0}
