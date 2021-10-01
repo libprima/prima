@@ -19,6 +19,9 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v2
 
+      - name: Source the bashrc
+        run: source ~/.bashrc
+
       - name: Run script
         uses: matlab-actions/run-command@v1
         with:
