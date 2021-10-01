@@ -28,19 +28,19 @@ TIME := $(shell date +%Y.%m.%d_%H.%M.%S)
 STAMP := $(TIME)_$(RANDNUM)
 
 # Log directory.
-LOG_DIR := ./log/
+LOG_DIR := ./log
 # Trash directory.
-TRASH_DIR := ./trash/
+TRASH_DIR := ./trash
 
 # Common directories.
-COMMON_DIR = ./common/
+COMMON_DIR = ./common
 # Solver directories.
-NEWUOA_DIR = ./newuoa/
+NEWUOA_DIR = ./newuoa
 # Headers.
 HEADER = $(COMMON_DIR)/ppf.h
 
 # Sources.
-SRC_DIRS = ../common/ ../newuoa/
+SRC_DIRS = ../common ../newuoa
 TESTSRC = $(shell cat ./ffiles.txt)
 COMMONSRC = $(shell sed "s/^/\.\/common\//" ../common/ffiles.txt)
 NEWUOASRC = $(shell sed "s/^/\.\/newuoa\//" ../newuoa/ffiles.txt)
