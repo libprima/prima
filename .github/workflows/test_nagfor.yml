@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Conduct the test
-        run: >
+        run: |
           source ~/local/bin/nag_licensing
           cd fsrc/test
           make clean
