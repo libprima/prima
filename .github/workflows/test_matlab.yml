@@ -26,7 +26,6 @@ jobs:
             setenv('CUTEST', '~/local/cutesif/cutest');
             setenv('MASTSIF', '~/local/cutesif/sif');
             addpath('~/local/cutesif/mtools/msrc');
-            getenv('CUTEST')
             setup newuoan;
             cd ./OPDFO;
             setup newuoa;
