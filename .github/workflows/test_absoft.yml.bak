@@ -1,0 +1,35 @@
+name: Test Absoft
+
+on:
+  # Trigger the workflow on push or pull request
+  push:
+  pull_request:
+  # Trigger the workflow by cron
+  schedule:
+    - cron: '0 4 * * *'
+    - cron: '0 16 * * *'
+  # Trigger the workflow when it is manually triggered
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash -leo pipefail {0}
+
+jobs:
+  test:
+    runs-on: self-hosted
+    strategy:
+      fail-fast: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Conduct the test
+        run: |
+          cd fsrc/test; make clean; make atest
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          path: fsrc/test/log/*.log
