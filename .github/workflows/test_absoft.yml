@@ -17,7 +17,7 @@ on:
 
 jobs:
   test:
-    runs-on: self-hosted
+    runs-on: [self-hosted, absoft]
     strategy:
       fail-fast: false
 
@@ -27,7 +27,11 @@ jobs:
 
       - name: Conduct the test
         run: |
-          source /home/zaikunzhang/local/absoft/absoft21.0/bin/absvars.sh; export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH; cd fsrc/test; make clean; make atest
+          source ~/local/absoft/absoft*/bin/absvars.sh
+          export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH
+          cd fsrc/test
+          make clean
+          make atest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2

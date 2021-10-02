@@ -14,8 +14,12 @@ case "$1" in
 	-w|--warning)
         WARNINGS="$(grep -i "warning" "$LOGFILE" | grep -vi "[0-9]\s*warning")"
         if [ -n "$WARNINGS" ]; then
+            printf "\n\n-----------------------------------------------------------------------\n\n"
+            printf "Warnings have been found in %s:\n\n" "$LOGFILE"
 			cat "$LOGFILE"
+            printf "\n\n-----------------------------------------------------------------------\n\n"
             printf "\n\n***********************************************************************\n\n"
+            printf "Warnings logged in %s:\n\n" "$LOGFILE"
             printf "%s" "$WARNINGS"
             printf "\n\n***********************************************************************\n\n"
 		fi
@@ -28,8 +32,12 @@ case "$1" in
             | grep -vi "Warning:\ Floating\ invalid\ operation\ occurred" \
             | grep -vi "maxfun\|maxhist\|npt\|rhobeg\|rhoend\|ftarget")"
         if [ -n "$ERRORS" ]; then
+            printf "\n\n-----------------------------------------------------------------------\n\n"
+            printf "Errors have been found in %s:\n\n" "$LOGFILE"
 			cat "$LOGFILE"
+            printf "\n\n-----------------------------------------------------------------------\n\n"
             printf "\n\n***********************************************************************\n\n"
+            printf "Errors logged in %s:\n\n" "$LOGFILE"
             printf "%s" "$ERRORS"
             printf "\n\n***********************************************************************\n\n"
 			exit 1

@@ -49,8 +49,12 @@ NEWUOASRC = $(shell sed "s/^/\.\/newuoa\//" ../newuoa/ffiles.txt)
 
 # Tests.
 TESTS = ntest atest dtest ftest gtest itest stest vtest xtest
-TESTS_QP = atest gtest ntest itest stest
-TESTS_NO_QP = dtest ftest vtest xtest
+# Decide whether to test QP, e.g., REAL128.
+# Flang and nvfortran do not support REAL128;
+# AOCC Flang complains about a symbol lookup error: undefined symbol: "fort_rnumq_i8";
+# ifx encounters an internal error when compiling with REAL128.
+TESTS_QP = gtest ntest itest stest
+TESTS_NO_QP = atest dtest ftest vtest xtest
 $(foreach TST, $(TESTS_QP), $(eval $(TST): SUBTESTS := \
 	$(TST)_i2_r4_d1_tst $(TST)_i4_r4_d1_tst $(TST)_i8_r4_d1_tst \
 	$(TST)_i2_r4_d0_tst $(TST)_i4_r4_d0_tst $(TST)_i8_r4_d0_tst \
@@ -245,10 +249,6 @@ source_%:
 	@printf "\nDone.\n\n"
 
 # Adapt the header file for the test.
-# For REAL128:
-# Flang and nvfortran do not support REAL128;
-# AOCC Flang complains about a symbol lookup error: undefined symbol: "fort_rnumq_i8";
-# ifx encounters an internal error when compiling with REAL128.
 header_%: IK = $(shell expr 8 \* $$(echo $@ | sed "s/.*_i//" | sed "s/_.*//"))
 header_%: RP = $(shell expr 8 \* $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//"))
 header_%: DBG = $(shell echo $@ | sed "s/.*_d//" | sed "s/_.*//")
