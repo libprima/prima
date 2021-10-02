@@ -221,7 +221,9 @@ try
     common_files = strtrim(common_files(~cellfun(@isempty, common_files)));
     common_files = fullfile(fsrc_common, common_files);
     common_files = [common_files, fullfile(gateways_intersection_form, 'fmxapi.F'), fullfile(gateways_intersection_form, 'prob.F')];
-    mex(mex_options{:}, '-c', common_files{:}, '-outdir', fsrc_common);
+    for ifc = 1 : length(common_files)
+        mex(mex_options{:}, '-c', common_files{ifc}, '-outdir', fsrc_common);
+    end
     common_obj_files = [files_with_wildcard(fsrc_common, '*.o'), files_with_wildcard(fsrc_common, '*.obj')];
 
     % Compilation of function gethuge
