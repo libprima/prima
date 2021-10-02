@@ -22,7 +22,7 @@ jobs:
       - name: Run script
         uses: matlab-actions/run-command@v1
         with:
-          command: >
+          command: |
             setenv('CUTEST', '~/local/cutesif/cutest');
             setenv('MASTSIF', '~/local/cutesif/sif');
             addpath('~/local/cutesif/mtools/msrc');
