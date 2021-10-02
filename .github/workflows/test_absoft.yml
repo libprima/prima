@@ -11,9 +11,9 @@ on:
   # Trigger the workflow when it is manually triggered
   workflow_dispatch:
 
-defaults:
-  run:
-    shell: bash -leo pipefail {0}
+# defaults:
+#   run:
+#     shell: bash -leo pipefail {0}
 
 jobs:
   test:
@@ -27,7 +27,7 @@ jobs:
 
       - name: Conduct the test
         run: |
-          cd fsrc/test; make clean; make atest
+          source /home/zaikunzhang/local/absoft/absoft21.0/bin/absvars.sh; export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH; cd fsrc/test; make clean; make atest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
