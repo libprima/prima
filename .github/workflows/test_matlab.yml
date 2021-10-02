@@ -11,10 +11,6 @@ on:
   # Trigger the workflow when it is manually triggered
   workflow_dispatch:
 
-defaults:
-  run:
-    shell: bash -leo pipefail {0}
-
 jobs:
   my-job:
     name: Run MATLAB tests
