@@ -26,4 +26,4 @@ jobs:
       - name: Run script
         uses: matlab-actions/run-command@v1
         with:
-          command: setup newuoan; cd ./OPDFO; setup newuoa; cd ../; options.maxdim=100;options.type='u'; verify({'newuoan', 'newuoa'},options);
+          command: setenv('CUTEST', '/home/zaikunzhang/local/cutesif/cutest'); setenv('MASTSIF','/home/zaikunzhang/local/cutesif/sif'); setup newuoan; cd ./OPDFO; setup newuoa; cd ../; options.maxdim=100;options.type='u'; verify({'newuoan', 'newuoa'},options);
