@@ -253,6 +253,7 @@ try
     % But it does not work for some versions of MATLAB. This may be because the compilation above does
     % not respect the order of common_files{:}, which is critical due to the dependence among modules.
     for icf = 1 : length(common_files)
+        icf
         mex(mex_options{:}, '-c', common_files{icf}, '-outdir', fsrc_common);
     end
     common_obj_files = [files_with_wildcard(fsrc_common, '*.o'), files_with_wildcard(fsrc_common, '*.obj')];
