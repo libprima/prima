@@ -44,8 +44,8 @@ if (is_nan(pred) .or. pred <= ZERO) then
         ! The trial point will be accepted, but the trust-region radius will be shrunk if RSHRINK>0.
         ratio = HALF * rshrink
     else
-        ! Signify a bad trust-region step, so that the solver will check whether to take a geometry
-        ! step or reduce rho.
+        ! Set ratio to a large negative number to signify a bad trust-region step, so that the
+        ! solver will check whether to take a geometry step or reduce RHO.
         ratio = -HUGENUM
     end if
 elseif (is_posinf(pred) .and. is_posinf(ared)) then
