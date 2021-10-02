@@ -248,7 +248,13 @@ try
     common_files = strtrim(common_files(~cellfun(@isempty, common_files)));
     common_files = fullfile(fsrc_common, common_files);
     common_files = [common_files, fullfile(gateways_intersection_form, 'fmxapi.F'), fullfile(gateways_intersection_form, 'prob.F'), fullfile(gateways_classical, 'fmxcl.F')];
-    mex(mex_options{:}, '-c', common_files{:}, '-outdir', fsrc_common);
+    % The loop below may be written in one line as follows:
+    %mex(mex_options{:}, '-c', common_files{:}, '-outdir', fsrc_common);
+    % But it does not work for some versions of MATLAB. This may be because the compilation above does
+    % not respect the order of common_files{:}, which is critical due to the dependence among modules.
+    for icf = 1 : length(common_files)
+        mex(mex_options{:}, '-c', common_files{icf}, '-outdir', fsrc_common);
+    end
     common_obj_files = [files_with_wildcard(fsrc_common, '*.o'), files_with_wildcard(fsrc_common, '*.obj')];
 
     % Compilation of function gethuge
@@ -270,7 +276,10 @@ try
         src_files = regexp(fileread(fullfile(fsrc_intersection_form, solver, filelist)), '\n', 'split');
         src_files = strtrim(src_files(~cellfun(@isempty, src_files)));
         src_files = fullfile(fsrc_intersection_form, solver, src_files);
-        mex(mex_options{:}, '-c', src_files{:}, '-outdir', fullfile(fsrc_intersection_form, solver));
+        %mex(mex_options{:}, '-c', src_files{:}, '-outdir', fullfile(fsrc_intersection_form, solver));
+        for isf = 1 : length(src_files)
+            mex(mex_options{:}, '-c', src_files{isf}, '-outdir', fullfile(fsrc_intersection_form, solver));
+        end
         obj_files = [common_obj_files, files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.o'), files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.obj')];
         mex(mex_options{:}, '-output', ['f', solver, 'n'], obj_files{:}, fullfile(gateways_intersection_form, [solver, '-interface.F']), '-outdir', interfaces_private);
         % Clean up the source file directory
@@ -285,7 +294,10 @@ try
         cellfun(@(filename) delete(filename), [mod_files, obj_files]);
         % Compile
         src_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.f*');
-        mex(mex_options{:}, '-c', src_files{:}, '-outdir', fullfile(fsrc_classical, solver));
+        %mex(mex_options{:}, '-c', src_files{:}, '-outdir', fullfile(fsrc_classical, solver));
+        for isf = 1 : length(src_files)
+            mex(mex_options{:}, '-c', src_files{isf}, '-outdir', fullfile(fsrc_classical, solver));
+        end
         obj_files = [common_obj_files, files_with_wildcard(fullfile(fsrc_classical, solver), '*.o'), files_with_wildcard(fullfile(fsrc_classical,solver), '*.obj')];
         mex(mex_options{:}, '-output', ['f', solver, 'n_classical'], obj_files{:}, fullfile(gateways_classical, [solver, '-interface.F']), '-outdir', interfaces_private);
         % Clean up the source file directory
@@ -494,11 +506,11 @@ cellfun(@(filename) delete(filename), trash_files);
 warning(orig_warning_state); % Restore the behavior of displaying warnings
 return
 
-%%%%%%%%%%%%% Function for removing the compliled MEX files  %%%%%%%%%%%%
+%%%%%%%%%%%%% Function for removing the compiled MEX files  %%%%%%%%%%%%
 function clean_mex
-%CLEAN_MEX removes the compliled MEX files.
+%CLEAN_MEX removes the compiled MEX files.
 
-fprintf('\nRemoving the compliled MEX files (if any) ... ');
+fprintf('\nRemoving the compiled MEX files (if any) ... ');
 % The full path of several directories.
 cpwd = fileparts(mfilename('fullpath')); % Current directory
 matd = fullfile(cpwd, 'matlab'); % Matlab directory
