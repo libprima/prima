@@ -1,4 +1,4 @@
-name: Test Absoft
+name: Test NAGFOR
 
 on:
   # Trigger the workflow on push or pull request
@@ -11,13 +11,14 @@ on:
   # Trigger the workflow when it is manually triggered
   workflow_dispatch:
 
-# defaults:
-#   run:
-#     shell: bash -leo pipefail {0}
+defaults:
+  run:
+    shell: bash -leo pipefail {0}
 
 jobs:
   test:
-    runs-on: [self-hosted, absoft]
+    name: Run NAG tests
+    runs-on: [self-hosted, nagfor]
     strategy:
       fail-fast: false
 
@@ -26,12 +27,11 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Conduct the test
-        run: |
-          source ~/local/absoft/absoft*/bin/absvars.sh
-          export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH
+        run: >
+          source ~/local/bin/nag_licensing
           cd fsrc/test
           make clean
-          make atest
+          make ntest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
