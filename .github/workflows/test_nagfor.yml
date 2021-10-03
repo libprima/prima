@@ -14,8 +14,8 @@ jobs:
   test:
     name: Run NAG tests
     runs-on: [self-hosted, nagfor]
-    strategy:
-      fail-fast: false
+    #strategy:
+    #  fail-fast: false
 
     steps:
       - name: Checkout repository
@@ -23,6 +23,7 @@ jobs:
 
       - name: Conduct the test
         run: |
+          export PATH=$PATH:"~/local/bin"
           source ~/local/bin/nag_licensing || echo "\n\nNAG licensing failed.\n\n"
           cd fsrc/tests
           make clean
