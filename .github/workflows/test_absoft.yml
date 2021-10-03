@@ -25,11 +25,11 @@ jobs:
         run: |
           source ~/local/absoft/absoft*/bin/absvars.sh
           export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH
-          cd fsrc/test
+          cd fsrc/tests
           make clean
           make atest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
         with:
-          path: fsrc/test/log/*.log
+          path: fsrc/tests/log/*.log

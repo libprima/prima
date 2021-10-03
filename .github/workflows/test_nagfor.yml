@@ -24,11 +24,11 @@ jobs:
       - name: Conduct the test
         run: |
           source ~/local/bin/nag_licensing || echo "\n\nNAG licensing failed.\n\n"
-          cd fsrc/test
+          cd fsrc/tests
           make clean
           make ntest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
         with:
-          path: fsrc/test/log/*.log
+          path: fsrc/tests/log/*.log
