@@ -25,8 +25,9 @@ jobs:
       - name: Conduct the test
         run: |
           source ~/local/bin/nag_licensing
-          echo $NAG_KUSARI_FILE
-          cd fsrc/test; make clean; make ntest
+          cd fsrc/test
+          make clean
+          make ntest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
