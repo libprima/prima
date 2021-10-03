@@ -75,10 +75,10 @@ $(foreach TST, $(TESTS_NO_QP), $(eval $(TST): SUBTESTS := \
 	$(TST)_i8_r4_d0_tst $(TST)_i8_r8_d0_tst \
 	))
 #
-# The tests with ifort and ifx are slow due to the intensive runtime checks. To save time, we define
+# The tests with ifort, ifx, etc are slow due to the intensive runtime checks. To save time, we define
 # the following tests. If itest_i2 succeeds, then itest_i4 and itest_i8 are likely (but not surely)
-# to be OK, because the only difference in the code is the integer kind. Similar for ifx.
-TESTS_INT_QP = itest_i2 itest_i4 itest_i8
+# to be OK, because the only difference in the code is the integer kind. Similar for others.
+TESTS_INT_QP = itest_i2 itest_i4 itest_i8 stest_i2 stest_i4 stest_i8
 TESTS_INT_NO_QP = xtest_i2 xtest_i4 xtest_i8
 TESTS_INT = $(TESTS_INT_QP) $(TESTS_INT_NO_QP)
 $(foreach TST, $(TESTS_INT_QP), $(eval $(TST): SUBTESTS := \
@@ -257,7 +257,7 @@ $(TESTS) $(TESTS_INT):
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
 	$(FC) $(FFLAGS) -o $@ $(COMMONSRC) $(NEWUOASRC) $(TESTSRC) 2>&1 | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
-	#./$@ 2>&1 | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
+	./$@ 2>&1 | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
 	bash ./checktest --error "$(LOG_DIR)/$@_$(STAMP).log"
 	bash ./checktest --warning "$(LOG_DIR)/$@_$(STAMP).log"
 	@printf "\n$@ ends at $(shell date +%Y.%m.%d_%H.%M.%S).\n\n" | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
