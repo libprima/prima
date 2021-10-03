@@ -47,28 +47,49 @@ TESTSRC = $(shell cat ./ffiles.txt)
 COMMONSRC = $(shell sed "s/^/\.\/common\//" ../common/ffiles.txt)
 NEWUOASRC = $(shell sed "s/^/\.\/newuoa\//" ../newuoa/ffiles.txt)
 
-# Tests.
-TESTS = ntest atest dtest ftest gtest itest stest vtest xtest
+# Define the tests.
+######################################################################################
 # Decide whether to test QP, e.g., REAL128.
+# Absoft 21.0 is buggy concerning REAL128;
 # Flang and nvfortran do not support REAL128;
 # AOCC Flang complains about a symbol lookup error: undefined symbol: "fort_rnumq_i8";
 # ifx encounters an internal error when compiling with REAL128.
 TESTS_QP = gtest ntest itest stest
 TESTS_NO_QP = atest dtest ftest vtest xtest
+TESTS = $(TESTS_QP) $(TESTS_NO_QP)
+# When listing the tests, we first put the ones that are more likely to raise errors.
 $(foreach TST, $(TESTS_QP), $(eval $(TST): SUBTESTS := \
-	$(TST)_i2_r4_d1_tst $(TST)_i4_r4_d1_tst $(TST)_i8_r4_d1_tst \
-	$(TST)_i2_r4_d0_tst $(TST)_i4_r4_d0_tst $(TST)_i8_r4_d0_tst \
-	$(TST)_i2_r8_d1_tst $(TST)_i4_r8_d1_tst $(TST)_i8_r8_d1_tst \
-	$(TST)_i2_r8_d0_tst $(TST)_i4_r8_d0_tst $(TST)_i8_r8_d0_tst \
-	$(TST)_i2_r16_d0_tst $(TST)_i4_r16_d0_tst $(TST)_i8_r16_d0_tst \
-	$(TST)_i2_r16_d1_tst $(TST)_i4_r16_d1_tst $(TST)_i8_r16_d1_tst \
+	$(TST)_i2_r16_d1_tst $(TST)_i2_r4_d1_tst $(TST)_i2_r8_d1_tst \
+	$(TST)_i4_r16_d1_tst $(TST)_i4_r4_d1_tst $(TST)_i4_r8_d1_tst \
+	$(TST)_i8_r16_d1_tst $(TST)_i8_r4_d1_tst $(TST)_i8_r8_d1_tst \
+	$(TST)_i2_r16_d0_tst $(TST)_i2_r4_d0_tst $(TST)_i2_r8_d0_tst \
+	$(TST)_i4_r16_d0_tst $(TST)_i4_r4_d0_tst $(TST)_i4_r8_d0_tst \
+	$(TST)_i8_r16_d0_tst $(TST)_i8_r4_d0_tst $(TST)_i8_r8_d0_tst \
 	))
 $(foreach TST, $(TESTS_NO_QP), $(eval $(TST): SUBTESTS := \
-	$(TST)_i2_r4_d1_tst $(TST)_i4_r4_d1_tst $(TST)_i8_r4_d1_tst \
-	$(TST)_i2_r4_d0_tst $(TST)_i4_r4_d0_tst $(TST)_i8_r4_d0_tst \
-	$(TST)_i2_r8_d1_tst $(TST)_i4_r8_d1_tst $(TST)_i8_r8_d1_tst \
-	$(TST)_i2_r8_d0_tst $(TST)_i4_r8_d0_tst $(TST)_i8_r8_d0_tst \
+	$(TST)_i2_r4_d1_tst $(TST)_i2_r8_d1_tst \
+	$(TST)_i4_r4_d1_tst $(TST)_i4_r8_d1_tst \
+	$(TST)_i8_r4_d1_tst $(TST)_i8_r8_d1_tst \
+	$(TST)_i2_r4_d0_tst $(TST)_i2_r8_d0_tst \
+	$(TST)_i4_r4_d0_tst $(TST)_i4_r8_d0_tst \
+	$(TST)_i8_r4_d0_tst $(TST)_i8_r8_d0_tst \
 	))
+#
+# The tests with ifort and ifx are slow due to the intensive runtime checks. To save time, we define
+# the following tests. If itest_i2 succeeds, then itest_i4 and itest_i8 are likely (but not surely)
+# to be OK, because the only difference in the code is the integer kind. Similar for ifx.
+TESTS_INT_QP = itest_i2 itest_i4 itest_i8
+TESTS_INT_NO_QP = xtest_i2 xtest_i4 xtest_i8
+TESTS_INT = $(TESTS_INT_QP) $(TESTS_INT_NO_QP)
+$(foreach TST, $(TESTS_INT_QP), $(eval $(TST): SUBTESTS := \
+	$(TST)_r16_d1_tst $(TST)_r4_d1_tst $(TST)_r8_d1_tst \
+	$(TST)_r16_d0_tst $(TST)_r4_d0_tst $(TST)_r8_d0_tst \
+	))
+$(foreach TST, $(TESTS_INT_NO_QP), $(eval $(TST): SUBTESTS := \
+	$(TST)_r4_d1_tst $(TST)_r8_d1_tst \
+	$(TST)_r4_d0_tst $(TST)_r8_d0_tst \
+	))
+######################################################################################
 
 #.PHONY: all test $(TESTS) $(SUBTESTS) source header_* clean*
 .PHONY: all test source_* header_* clean*
@@ -217,14 +238,16 @@ test:
 
 ####################################################################################################
 # Make a compiler-specific test.
-# N.B.: Execute checktest by  "bash ./checktest" instead of just "./checktest", because
-# "./checktest" may not be executable on all operating systems.
-%test:
+# N.B.:
+# 1. Execute checktest by  "bash ./checktest" instead of just "./checktest", because "./checktest"
+# may not be executable on all operating systems.
+# 2. The log for itest or itest_i2 will be itest_(STAMP). Similar for other tests.
+$(TESTS) $(TESTS_INT):
 	@mkdir -p $(LOG_DIR)
-	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
+	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//")_$(STAMP).log"
 	@make $(SUBTESTS)
-	bash ./checktest --warning "$(LOG_DIR)/$@_$(STAMP).log"
-	@printf "\n$@ ends!.\n\n" | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
+	bash ./checktest --warning "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//")_$(STAMP).log"
+	@printf "\n$@ ends!\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//")_$(STAMP).log"
 	@make clean
 
 # Make a compiler-specific subtest.
@@ -234,7 +257,7 @@ test:
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
 	$(FC) $(FFLAGS) -o $@ $(COMMONSRC) $(NEWUOASRC) $(TESTSRC) 2>&1 | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
-	./$@ 2>&1 | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
+	#./$@ 2>&1 | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
 	bash ./checktest --error "$(LOG_DIR)/$@_$(STAMP).log"
 	bash ./checktest --warning "$(LOG_DIR)/$@_$(STAMP).log"
 	@printf "\n$@ ends at $(shell date +%Y.%m.%d_%H.%M.%S).\n\n" | tee -a "$(LOG_DIR)/$@_$(STAMP).log"

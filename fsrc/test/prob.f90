@@ -4,7 +4,7 @@ private
 public :: PNLEN, probname, calfun, getx0, getdelta0
 
 integer, parameter :: SEED_DFT = 42
-integer, parameter :: PNLEN = 128
+integer, parameter :: PNLEN = 64
 character(len=PNLEN) :: probname
 
 

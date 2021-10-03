@@ -5,7 +5,7 @@ module test_newuoa_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thursday, September 30, 2021 AM11:49:39
+! Last Modified: Sunday, October 03, 2021 AM11:22:20
 
 implicit none
 private
@@ -33,7 +33,7 @@ integer(IK), optional, intent(in) :: maxdim
 integer(IK), optional, intent(in) :: dimstride
 integer(IK), optional, intent(in) :: nrand
 
-character(len=PNLEN) :: probs_loc(1000)
+character(len=PNLEN) :: probs_loc(100)
 integer(IK) :: dimstride_loc
 integer(IK) :: iprob
 integer(IK) :: irand
