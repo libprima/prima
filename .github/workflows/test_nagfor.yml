@@ -24,7 +24,7 @@ jobs:
 
       - name: Conduct the test
         run: |
-          source ~/local/bin/nag_licensing
+          source ~/local/bin/nag_licensing || echo "NAG licensing failed."
           cd fsrc/test
           make clean
           make ntest
