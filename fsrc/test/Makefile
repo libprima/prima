@@ -74,12 +74,19 @@ $(foreach TST, $(TESTS_NO_QP), $(eval $(TST): SUBTESTS := \
 	$(TST)_i4_r4_d0_tst $(TST)_i4_r8_d0_tst \
 	$(TST)_i8_r4_d0_tst $(TST)_i8_r8_d0_tst \
 	))
-#
+
 # The tests with ifort, ifx, etc are slow due to the intensive runtime checks. To save time, we define
 # the following tests. If itest_i2 succeeds, then itest_i4 and itest_i8 are likely (but not surely)
 # to be OK, because the only difference in the code is the integer kind. Similar for others.
-TESTS_INT_QP = itest_i2 itest_i4 itest_i8 stest_i2 stest_i4 stest_i8
-TESTS_INT_NO_QP = xtest_i2 xtest_i4 xtest_i8
+TESTS_INT_QP = gtest_i2 gtest_i4 gtest_i8 \
+			   ntest_i2 ntest_i4 ntest_i8 \
+			   itest_i2 itest_i4 itest_i8 \
+			   stest_i2 stest_i4 stest_i8
+TESTS_INT_NO_QP = atest_i2 atest_i4 atest_i8 \
+				  dtest_i2 dtest_i4 dtest_i8 \
+				  ftest_i2 ftest_i4 ftest_i8 \
+				  vtest_i2 vtest_i4 vtest_i8 \
+				  xtest_i2 xtest_i4 xtest_i8
 TESTS_INT = $(TESTS_INT_QP) $(TESTS_INT_NO_QP)
 $(foreach TST, $(TESTS_INT_QP), $(eval $(TST): SUBTESTS := \
 	$(TST)_r16_d1_tst $(TST)_r4_d1_tst $(TST)_r8_d1_tst \
