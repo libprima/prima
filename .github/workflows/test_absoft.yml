@@ -1,20 +1,19 @@
-name: Test NAGFOR
+name: Test Absoft
 
 on:
   # Trigger the workflow on push or pull request
-  push:
+  #push:
   pull_request:
-  # Trigger the workflow by cron
+  # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
-    - cron: '0 4 * * *'
-    - cron: '0 16 * * *'
+    - cron: '0 2,6,10,14,18,22 * * *'
   # Trigger the workflow when it is manually triggered
   workflow_dispatch:
 
 jobs:
   test:
-    name: Run NAG tests
-    runs-on: [self-hosted, nagfor]
+    name: Run Absoft tests
+    runs-on: [self-hosted, absoft]
     strategy:
       fail-fast: false
 
@@ -24,11 +23,11 @@ jobs:
 
       - name: Conduct the test
         run: |
-          source ~/local/bin/nag_licensing
-          echo $NAG_KUSARI_FILE
+          source ~/local/absoft/absoft*/bin/absvars.sh
+          export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH
           cd fsrc/test
           make clean
-          make ntest
+          make atest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
