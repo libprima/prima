@@ -75,6 +75,16 @@ $(foreach TST, $(TESTS_NO_QP), $(eval $(TST): SUBTESTS := \
 	$(TST)_i8_r4_d0_tst $(TST)_i8_r8_d0_tst \
 	))
 
+# Duration of one test by GitHub Actions:
+# atest: < 1 hour
+# dtest: ~30 minutes
+# ftest: ~30 minutes
+# gtest: 4~5 hours
+# itest: > 6 hours (killed by GitHub after that)
+# ntest: unknown yet
+# stest: 4~5 hours
+# vtest: 3~4 hours
+# xtest: > 6 hours
 # The tests with ifort, ifx, etc are slow due to the intensive runtime checks. To save time, we define
 # the following tests. If itest_i2 succeeds, then itest_i4 and itest_i8 are likely (but not surely)
 # to be OK, because the only difference in the code is the integer kind. Similar for others.
