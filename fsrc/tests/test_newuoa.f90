@@ -1,21 +1,21 @@
-module test_newuoa_mod
+module test_solver_mod
 ! This module tests NEWUOA on a few simple problems.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, October 03, 2021 AM11:22:20
+! Last Modified: Monday, October 04, 2021 PM10:58:41
 
 implicit none
 private
-public :: test_newuoa
+public :: test_solver
 
 
 contains
 
 
-subroutine test_newuoa(probs, mindim, maxdim, dimstride, nrand)
+subroutine test_solver(probs, mindim, maxdim, dimstride, nrand)
 
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN
 use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, DIMSTRIDE_DFT, NRAND_DFT
@@ -59,8 +59,10 @@ if (present(probs)) then
 else
 !    nprobs = 5_IK
 !    probs_loc(1:nprobs) = ['chebyqad', 'chrosen ', 'trigsabs', 'trigssqs', 'vardim  ']
-    nprobs = 4_IK
-    probs_loc(1:nprobs) = ['chebyqad', 'chrosen ', 'trigsabs', 'vardim  ']
+!    nprobs = 4_IK
+!    probs_loc(1:nprobs) = ['chebyqad', 'chrosen ', 'trigsabs', 'vardim  ']
+    nprobs = 1_IK
+    probs_loc(1:nprobs) = ['chebyqad']
 end if
 
 if (present(mindim)) then
@@ -89,7 +91,7 @@ end if
 
 do iprob = 1, nprobs
     probname = probs_loc(iprob)
-    do n = mindim_loc, maxdim_loc, dimstride_loc
+    do n = 1, 1 !mindim_loc, maxdim_loc, dimstride_loc
         ! NPT_LIST defines some extreme values of NPT.
         npt_list = [1_IK, &
             & n + 1_IK, n + 2_IK, n + 3_IK, &
@@ -103,7 +105,7 @@ do iprob = 1, nprobs
             else
                 npt = int(floor(TEN * rand() * real(n, RP)), kind(npt))
             end if
-            maxfun = int(floor(2.0E2_RP * rand() * real(n, RP)), kind(maxfun))
+            maxfun = 1_IK !int(floor(2.0E2_RP * rand() * real(n, RP)), kind(maxfun))
             maxhist = int(floor(TWO * rand() * real(maxfun, RP)), kind(maxhist))
             rhobeg = getdelta0(n)
             rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(-5.0E0_RP * rand()))
@@ -116,7 +118,7 @@ do iprob = 1, nprobs
     end do
 end do
 
-end subroutine test_newuoa
+end subroutine test_solver
 
 
-end module test_newuoa_mod
+end module test_solver_mod

@@ -2,7 +2,7 @@ name: Test NAGFOR
 
 on:
   # Trigger the workflow on push or pull request
-  push:
+  #push:
   pull_request:
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:

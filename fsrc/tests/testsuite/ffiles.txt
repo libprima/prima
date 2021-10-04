@@ -1,5 +1,3 @@
 param.f90
 noise.f90
 prob.f90
-test_newuoa.f90
-test.f90
