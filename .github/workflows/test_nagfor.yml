@@ -17,6 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        ikind: [i2, i4, i8]
         solver: [newuoa]
 
     steps:
@@ -29,7 +30,7 @@ jobs:
           source ~/local/bin/nag_licensing || echo "\n\nNAG licensing failed.\n\n"
           cd fsrc/tests
           make clean
-          make ntest.${{ matrix.solver }}
+          make ntest_${{ matrix.ikind }}.${{ matrix.solver }}
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
