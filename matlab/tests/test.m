@@ -23,8 +23,8 @@ cd(current_dir);
 solvers = {[solver, 'n'], solver};
 options = struct();
 options.mindim = 1;
-options.maxdim = 5;
-options.nr = 1;
+options.maxdim = 100;
+options.nr = 20;
 switch solver
     case {'uobyqa', 'newuoa'}
         options.type = 'u';
@@ -37,3 +37,5 @@ switch solver
 end
 
 assert(isequiv(solvers, options));
+
+fprintf('\n\nThe test on %s is successful!\n\n', solver);
