@@ -22,8 +22,4 @@ jobs:
         uses: matlab-actions/run-command@v1
         with:
           command: |
-            setenv('CUTEST', '~/local/cutesif/cutest');
-            setenv('MASTSIF', '~/local/cutesif/sif');
-            addpath('~/local/cutesif/mtools/msrc');
-            cd('matlab/tests');
-            test('newuoa');
+            cd('matlab/tests'); test('newuoa');
