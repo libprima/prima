@@ -2,7 +2,7 @@ name: Test NAGFOR
 
 on:
   # Trigger the workflow on push or pull request
-  #push:
+  push:
   pull_request:
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
@@ -14,8 +14,10 @@ jobs:
   test:
     name: Run NAG tests
     runs-on: [self-hosted, nagfor]
-    #strategy:
-    #  fail-fast: false
+    strategy:
+      fail-fast: false
+      matrix:
+        solver: [newuoa]
 
     steps:
       - name: Checkout repository
@@ -27,7 +29,7 @@ jobs:
           source ~/local/bin/nag_licensing || echo "\n\nNAG licensing failed.\n\n"
           cd fsrc/tests
           make clean
-          make ntest
+          make ntest.${{ matrix.solver }}
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
