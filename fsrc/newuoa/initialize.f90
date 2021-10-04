@@ -6,7 +6,7 @@ module initialize_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, October 05, 2021 AM01:44:02
+! Last Modified: Tuesday, October 05, 2021 AM02:27:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -138,7 +138,7 @@ xpt(:, n + 2:npt) = -rhobeg * eye(n, npt - n - 1_IK)  ! XPT(:, 2*N+2 : NPT) = ZE
 
 ! Set FVAL(1 : 2*N + 1) by evaluating F. Totally parallelizable except for FMSSG.
 do k = 1, min(npt, int(2 * n + 1, kind(npt)))
-    x = xpt(:, k) + xbase + 1.0D0
+    x = xpt(:, k) + xbase
     call evalf(calfun, x, f)
     evaluated(k) = .true.
     fval(k) = f
