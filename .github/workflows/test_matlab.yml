@@ -1,0 +1,29 @@
+name: Test MATLAB
+
+on:
+  # Trigger the workflow on push or pull request
+  push:
+  pull_request:
+  # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
+  schedule:
+    - cron: '0 2,6,10,14,18,22 * * *'
+  # Trigger the workflow when it is manually triggered
+  workflow_dispatch:
+
+jobs:
+  my-job:
+    name: Run MATLAB tests
+    runs-on: [self-hosted, matlab, ama]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Run script
+        uses: matlab-actions/run-command@v1
+        with:
+          command: |
+            setenv('CUTEST', '~/local/cutesif/cutest');
+            setenv('MASTSIF', '~/local/cutesif/sif');
+            addpath('~/local/cutesif/mtools/msrc');
+            cd matlab/tests;
+            test('newuoa');
