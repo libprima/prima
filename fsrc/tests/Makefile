@@ -1,16 +1,35 @@
 # This Makefile intends to test the modern-Fortran version of Powell's solvers on as many compilers
 # as possible.
 #
+# The following compilers are tested:
+# a: Absoft af95
+# d: AOCC flang
+# f: LLVM flang
+# g: GNU gfortran
+# n: NAG nagfor
+# i: Intel ifort
+# s: Oracle sunf95
+# v: NVIDIA nvfortran
+# x: Intel ifx
+#
+# The following tests are available, where X = a, d, f, g, n, i, s, v, x, and N = 2, 4, 8:
+# Xtest: test with compiler X
+# Xtest_c: test with compiler X; compile the code but do not run the binary
+# Xtest_iN: test with compiler X and integer kind INT(N*8)
+# Xtest_iN_c: test with compiler X and integer kind INT(N*8), compile the code but do not run the binary
+#
 # Coded by Zaikun ZHANG (www.zhangzk.net).
 #
 # Started: September 2021
 #
 # Last Modified: September 13, 2021
+####################################################################################################
 
 
-#$(VERBOSE).SILENT:
+#$(VERBOSE).SILENT:  # Order make to work quietly. Not desirable in this case.
 
 SHELL = /bin/bash
+
 
 ####################################################################################################
 # Variables
@@ -74,6 +93,29 @@ $(foreach TST, $(TESTS_NO_QP), $(eval $(TST): SUBTESTS := \
 	$(TST)_i4_r4_d0_tst $(TST)_i4_r8_d0_tst \
 	$(TST)_i8_r4_d0_tst $(TST)_i8_r8_d0_tst \
 	))
+$(foreach TST, $(TESTS), $(eval $(TST): TST_C := $(TST)_c))
+
+# The following tests compiles the code but do not run the binary. This is useful if we want to
+# check whether the code can compile
+TESTS_C_QP = gtest_c ntest_c itest_c stest_c
+TESTS_C_NO_QP = atest_c dtest_c ftest_c vtest_c xtest_c
+TESTS_C = $(TESTS_C_QP) $(TESTS_C_NO_QP)
+$(foreach TST, $(TESTS_C_QP), $(eval $(TST): SUBTESTS_C := \
+	$(subst _c,,$(TST))_i2_r16_d1_tst_c $(subst _c,,$(TST))_i2_r4_d1_tst_c $(subst _c,,$(TST))_i2_r8_d1_tst_c \
+	$(subst _c,,$(TST))_i4_r16_d1_tst_c $(subst _c,,$(TST))_i4_r4_d1_tst_c $(subst _c,,$(TST))_i4_r8_d1_tst_c \
+	$(subst _c,,$(TST))_i8_r16_d1_tst_c $(subst _c,,$(TST))_i8_r4_d1_tst_c $(subst _c,,$(TST))_i8_r8_d1_tst_c \
+	$(subst _c,,$(TST))_i2_r16_d0_tst_c $(subst _c,,$(TST))_i2_r4_d0_tst_c $(subst _c,,$(TST))_i2_r8_d0_tst_c \
+	$(subst _c,,$(TST))_i4_r16_d0_tst_c $(subst _c,,$(TST))_i4_r4_d0_tst_c $(subst _c,,$(TST))_i4_r8_d0_tst_c \
+	$(subst _c,,$(TST))_i8_r16_d0_tst_c $(subst _c,,$(TST))_i8_r4_d0_tst_c $(subst _c,,$(TST))_i8_r8_d0_tst_c \
+	))
+$(foreach TST, $(TESTS_C_NO_QP), $(eval $(TST): SUBTESTS_C := \
+	$(subst _c,,$(TST))_i2_r4_d1_tst_c $(subst _c,,$(TST))_i2_r8_d1_tst_c \
+	$(subst _c,,$(TST))_i4_r4_d1_tst_c $(subst _c,,$(TST))_i4_r8_d1_tst_c \
+	$(subst _c,,$(TST))_i8_r4_d1_tst_c $(subst _c,,$(TST))_i8_r8_d1_tst_c \
+	$(subst _c,,$(TST))_i2_r4_d0_tst_c $(subst _c,,$(TST))_i2_r8_d0_tst_c \
+	$(subst _c,,$(TST))_i4_r4_d0_tst_c $(subst _c,,$(TST))_i4_r8_d0_tst_c \
+	$(subst _c,,$(TST))_i8_r4_d0_tst_c $(subst _c,,$(TST))_i8_r8_d0_tst_c \
+	))
 
 # Duration of one test by GitHub Actions:
 # atest: < 1 hour
@@ -81,13 +123,13 @@ $(foreach TST, $(TESTS_NO_QP), $(eval $(TST): SUBTESTS := \
 # ftest: ~30 minutes
 # gtest: 4~5 hours
 # itest: > 6 hours (killed by GitHub after that)
-# ntest: unknown yet
+# ntest: 3~4 hours
 # stest: 4~5 hours
 # vtest: 3~4 hours
 # xtest: > 6 hours
-# The tests with ifort, ifx, etc are slow due to the intensive runtime checks. To save time, we define
-# the following tests. If itest_i2 succeeds, then itest_i4 and itest_i8 are likely (but not surely)
-# to be OK, because the only difference in the code is the integer kind. Similar for others.
+# The tests with ifort, ifx, etc are slow due to the intensive runtime checks. To save time, we
+# define the following tests. If itest_i2 succeeds, then itest_i4 and itest_i8 are likely (but not
+# surely) to be OK, because the only difference in the code is the integer kind. Similar for others.
 TESTS_INT_QP = gtest_i2 gtest_i4 gtest_i8 \
 			   ntest_i2 ntest_i4 ntest_i8 \
 			   itest_i2 itest_i4 itest_i8 \
@@ -106,10 +148,32 @@ $(foreach TST, $(TESTS_INT_NO_QP), $(eval $(TST): SUBTESTS := \
 	$(TST)_r4_d1_tst $(TST)_r8_d1_tst \
 	$(TST)_r4_d0_tst $(TST)_r8_d0_tst \
 	))
+$(foreach TST, $(TESTS_INT), $(eval $(TST): TST_C := $(TST)_c))
+
+# The following tests compiles the code but do not run the binary. This is useful if we want to
+# check whether the code can compile
+TESTS_INT_C_QP = gtest_i2_c gtest_i4_c gtest_i8_c \
+			   ntest_i2_c ntest_i4_c ntest_i8_c \
+			   itest_i2_c itest_i4_c itest_i8_c \
+			   stest_i2_c stest_i4_c stest_i8_c
+TESTS_INT_C_NO_QP = atest_i2_c atest_i4_c atest_i8_c \
+				  dtest_i2_c dtest_i4_c dtest_i8_c \
+				  ftest_i2_c ftest_i4_c ftest_i8_c \
+				  vtest_i2_c vtest_i4_c vtest_i8_c \
+				  xtest_i2_c xtest_i4_c xtest_i8_c
+TESTS_INT_C = $(TESTS_INT_C_QP) $(TESTS_INT_C_NO_QP)
+$(foreach TST, $(TESTS_INT_C_QP), $(eval $(TST): SUBTESTS_C := \
+	$(subst _c,,$(TST))_r16_d1_tst_c $(subst _c,,$(TST))_r4_d1_tst_c $(subst _c,,$(TST))_r8_d1_tst_c \
+	$(subst _c,,$(TST))_r16_d0_tst_c $(subst _c,,$(TST))_r4_d0_tst_c $(subst _c,,$(TST))_r8_d0_tst_c \
+	))
+$(foreach TST, $(TESTS_INT_C_NO_QP), $(eval $(TST): SUBTESTS_C := \
+	$(subst _c,,$(TST))_r4_d1_tst_c $(subst _c,,$(TST))_r8_d1_tst_c \
+	$(subst _c,,$(TST))_r4_d0_tst_c $(subst _c,,$(TST))_r8_d0_tst_c \
+	))
 ######################################################################################
 
 #.PHONY: all test $(TESTS) $(SUBTESTS) source header_* clean*
-.PHONY: all test source_* header_* clean*
+.PHONY: all test $(TESTS) $(TESTS_C) $(TESTS_INT) $(TESTS_INT_C) source_* header_* clean*
 
 # Operating system.
 OSTYPE :=
@@ -147,30 +211,30 @@ endif
 # For af95, -Rb imposes bound checking for arrays. But it is unhappy with zero-sized arrays as of
 # Absoft Pro 21.0. Thus -Rb is not included in the following options.
 AFORT = af95 -no-pie -m1 -en -et -Rc -Rs -Rp
-atest_i2_r4_d1_tst atest_i4_r4_d1_tst atest_i8_r4_d1_tst atest_i2_r4_d0_tst atest_i4_r4_d0_tst atest_i8_r4_d0_tst: \
+atest_i2_r4_d1_tst_c atest_i4_r4_d1_tst_c atest_i8_r4_d1_tst_c atest_i2_r4_d0_tst_c atest_i4_r4_d0_tst_c atest_i8_r4_d0_tst_c: \
 	FC = $(AFORT) -TENV:simd_zmask=off
-atest_i2_r8_d1_tst atest_i4_r8_d1_tst atest_i8_r8_d1_tst atest_i2_r8_d0_tst atest_i4_r8_d0_tst atest_i8_r8_d0_tst: \
+atest_i2_r8_d1_tst_c atest_i4_r8_d1_tst_c atest_i8_r8_d1_tst_c atest_i2_r8_d0_tst_c atest_i4_r8_d0_tst_c atest_i8_r8_d0_tst_c: \
 	FC = $(AFORT) \
 	-TENV:simd_zmask=off -TENV:simd_omask=off -TENV:simd_imask=off #-TENV:simd_dmask=off -TENV:simd_umask=off
-atest_i2_r16_d1_tst atest_i4_r16_d1_tst atest_i8_r16_d1_tst atest_i2_r16_d0_tst atest_i4_r16_d0_tst atest_i8_r16_d0_tst: \
+atest_i2_r16_d1_tst_c atest_i4_r16_d1_tst_c atest_i8_r16_d1_tst_c atest_i2_r16_d0_tst_c atest_i4_r16_d0_tst_c atest_i8_r16_d0_tst_c: \
 	FC = $(AFORT) -TENV:simd_zmask=off
 
 # AMD AOCC Flang
 DFORT = /opt/AMD/aocc-compiler-3.1.0/bin/flang -std=f$(FSTD) -Mstandard -Wall -Wextra
-dtest_i2_r4_d1_tst dtest_i4_r4_d1_tst dtest_i8_r4_d1_tst dtest_i2_r4_d0_tst dtest_i4_r4_d0_tst dtest_i8_r4_d0_tst: \
+dtest_i2_r4_d1_tst_c dtest_i4_r4_d1_tst_c dtest_i8_r4_d1_tst_c dtest_i2_r4_d0_tst_c dtest_i4_r4_d0_tst_c dtest_i8_r4_d0_tst_c: \
 	FC = $(DFORT)
-dtest_i2_r8_d1_tst dtest_i4_r8_d1_tst dtest_i8_r8_d1_tst dtest_i2_r8_d0_tst dtest_i4_r8_d0_tst dtest_i8_r8_d0_tst: \
+dtest_i2_r8_d1_tst_c dtest_i4_r8_d1_tst_c dtest_i8_r8_d1_tst_c dtest_i2_r8_d0_tst_c dtest_i4_r8_d0_tst_c dtest_i8_r8_d0_tst_c: \
 	FC = $(DFORT) -ffp-exception-behavior=strict
-dtest_i2_r16_d1_tst dtest_i4_r16_d1_tst dtest_i8_r16_d1_tst dtest_i2_r16_d0_tst dtest_i4_r16_d0_tst dtest_i8_r16_d0_tst: \
+dtest_i2_r16_d1_tst_c dtest_i4_r16_d1_tst_c dtest_i8_r16_d1_tst_c dtest_i2_r16_d0_tst_c dtest_i4_r16_d0_tst_c dtest_i8_r16_d0_tst_c: \
 	FC = $(DFORT) -ffp-exception-behavior=strict
 
 # LLVM Flang
 FFORT = flang -std=f$(FSTD) -Mstandard -Wall -Wextra
-ftest_i2_r4_d1_tst ftest_i4_r4_d1_tst ftest_i8_r4_d1_tst ftest_i2_r4_d0_tst ftest_i4_r4_d0_tst ftest_i8_r4_d0_tst: \
+ftest_i2_r4_d1_tst_c ftest_i4_r4_d1_tst_c ftest_i8_r4_d1_tst_c ftest_i2_r4_d0_tst_c ftest_i4_r4_d0_tst_c ftest_i8_r4_d0_tst_c: \
 	FC = $(FFORT)
-ftest_i2_r8_d1_tst ftest_i4_r8_d1_tst ftest_i8_r8_d1_tst ftest_i2_r8_d0_tst ftest_i4_r8_d0_tst ftest_i8_r8_d0_tst: \
+ftest_i2_r8_d1_tst_c ftest_i4_r8_d1_tst_c ftest_i8_r8_d1_tst_c ftest_i2_r8_d0_tst_c ftest_i4_r8_d0_tst_c ftest_i8_r8_d0_tst_c: \
 	FC = $(FFORT)
-ftest_i2_r16_d1_tst ftest_i4_r16_d1_tst ftest_i8_r16_d1_tst ftest_i2_r16_d0_tst ftest_i4_r16_d0_tst ftest_i8_r16_d0_tst: \
+ftest_i2_r16_d1_tst_c ftest_i4_r16_d1_tst_c ftest_i8_r16_d1_tst_c ftest_i2_r16_d0_tst_c ftest_i4_r16_d0_tst_c ftest_i8_r16_d0_tst_c: \
 	FC = $(FFORT)
 
 # GNU gfortran
@@ -181,23 +245,23 @@ GFORT = gfortran -Wall -Wextra -pedantic -Wampersand -Wconversion  -Wuninitializ
 	-Wintrinsics-std -Wunderflow -Wuse-without-only -Wrealloc-lhs -Wrealloc-lhs-all -Wdo-subscript \
 	-Wunused-parameter -fPIC -fimplicit-none -fbacktrace -fcheck=all \
 	-finit-real=nan -finit-integer=-9999999
-gtest_i2_r4_d1_tst gtest_i4_r4_d1_tst gtest_i8_r4_d1_tst gtest_i2_r4_d0_tst gtest_i4_r4_d0_tst gtest_i8_r4_d0_tst: \
+gtest_i2_r4_d1_tst_c gtest_i4_r4_d1_tst_c gtest_i8_r4_d1_tst_c gtest_i2_r4_d0_tst_c gtest_i4_r4_d0_tst_c gtest_i8_r4_d0_tst_c: \
 	FC = $(GFORT) -ffpe-trap=zero
-gtest_i2_r8_d1_tst gtest_i4_r8_d1_tst gtest_i8_r8_d1_tst gtest_i2_r8_d0_tst gtest_i4_r8_d0_tst gtest_i8_r8_d0_tst: \
+gtest_i2_r8_d1_tst_c gtest_i4_r8_d1_tst_c gtest_i8_r8_d1_tst_c gtest_i2_r8_d0_tst_c gtest_i4_r8_d0_tst_c gtest_i8_r8_d0_tst_c: \
 	FC = $(GFORT) -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
-gtest_i2_r16_d1_tst gtest_i4_r16_d1_tst gtest_i8_r16_d1_tst gtest_i2_r16_d0_tst gtest_i4_r16_d0_tst gtest_i8_r16_d0_tst: \
+gtest_i2_r16_d1_tst_c gtest_i4_r16_d1_tst_c gtest_i8_r16_d1_tst_c gtest_i2_r16_d0_tst_c gtest_i4_r16_d0_tst_c gtest_i8_r16_d0_tst_c: \
 	FC = $(GFORT) -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
 
 # Intel ifort
 IFORT = ifort -stand f$(FS) -warn all -check all -debug extended -fimplicit-none \
 	-traceback -debug-parameters all -fp-stack-check
-itest_i2_r4_d1_tst itest_i4_r4_d1_tst itest_i8_r4_d1_tst itest_i2_r4_d0_tst itest_i4_r4_d0_tst itest_i8_r4_d0_tst: \
+itest_i2_r4_d1_tst_c itest_i4_r4_d1_tst_c itest_i8_r4_d1_tst_c itest_i2_r4_d0_tst_c itest_i4_r4_d0_tst_c itest_i8_r4_d0_tst_c: \
 	FC = $(IFORT) -fp-trap=divzero
-itest_i2_r8_d1_tst itest_i4_r8_d1_tst itest_i8_r8_d1_tst itest_i2_r8_d0_tst itest_i4_r8_d0_tst itest_i8_r8_d0_tst: \
+itest_i2_r8_d1_tst_c itest_i4_r8_d1_tst_c itest_i8_r8_d1_tst_c itest_i2_r8_d0_tst_c itest_i4_r8_d0_tst_c itest_i8_r8_d0_tst_c: \
 	FC = $(IFORT) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,invalid,overflow#,underflow,denormal
 	#-no-ftz -fp-model strict
-itest_i2_r16_d1_tst itest_i4_r16_d1_tst itest_i8_r16_d1_tst itest_i2_r16_d0_tst itest_i4_r16_d0_tst itest_i8_r16_d0_tst: \
+itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d0_tst_c itest_i4_r16_d0_tst_c itest_i8_r16_d0_tst_c: \
 	FC = $(IFORT) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,invalid,overflow#,underflow,denormal
 	#-no-ftz -fp-model strict
@@ -206,43 +270,43 @@ itest_i2_r16_d1_tst itest_i4_r16_d1_tst itest_i8_r16_d1_tst itest_i2_r16_d0_tst 
 NFORT = nagfor -colour=error:red,warn:magenta,info:yellow \
 	-f$(FSTD) -info -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique \
 	-Warn=allocation -Warn=constant_coindexing -Warn=subnormal
-ntest_i2_r4_d1_tst ntest_i4_r4_d1_tst ntest_i8_r4_d1_tst ntest_i2_r4_d0_tst ntest_i4_r4_d0_tst ntest_i8_r4_d0_tst: \
+ntest_i2_r4_d1_tst_c ntest_i4_r4_d1_tst_c ntest_i8_r4_d1_tst_c ntest_i2_r4_d0_tst_c ntest_i4_r4_d0_tst_c ntest_i8_r4_d0_tst_c: \
 	FC = $(NFORT) -nan -ieee=full
-ntest_i2_r8_d1_tst ntest_i4_r8_d1_tst ntest_i8_r8_d1_tst ntest_i2_r8_d0_tst ntest_i4_r8_d0_tst ntest_i8_r8_d0_tst: \
+ntest_i2_r8_d1_tst_c ntest_i4_r8_d1_tst_c ntest_i8_r8_d1_tst_c ntest_i2_r8_d0_tst_c ntest_i4_r8_d0_tst_c ntest_i8_r8_d0_tst_c: \
 	FC = $(NFORT) -nan -ieee=stop
-ntest_i2_r16_d1_tst ntest_i4_r16_d1_tst ntest_i8_r16_d1_tst ntest_i2_r16_d0_tst ntest_i4_r16_d0_tst ntest_i8_r16_d0_tst: \
+ntest_i2_r16_d1_tst_c ntest_i4_r16_d1_tst_c ntest_i8_r16_d1_tst_c ntest_i2_r16_d0_tst_c ntest_i4_r16_d0_tst_c ntest_i8_r16_d0_tst_c: \
 	FC = $(NFORT) -nan -ieee=stop
 
 # NVIDIA nvfortran (aka, pgfortran)
 VFORT = nvfortran -C -Mstandard -Minform=warn -Mbounds -Mchkstk -Mchkptr
-vtest_i2_r4_d1_tst vtest_i4_r4_d1_tst vtest_i8_r4_d1_tst vtest_i2_r4_d0_tst vtest_i4_r4_d0_tst vtest_i8_r4_d0_tst: \
+vtest_i2_r4_d1_tst_c vtest_i4_r4_d1_tst_c vtest_i8_r4_d1_tst_c vtest_i2_r4_d0_tst_c vtest_i4_r4_d0_tst_c vtest_i8_r4_d0_tst_c: \
 	FC = $(VFORT) -Kieee -Ktrap=divz
-vtest_i2_r8_d1_tst vtest_i4_r8_d1_tst vtest_i8_r8_d1_tst vtest_i2_r8_d0_tst vtest_i4_r8_d0_tst vtest_i8_r8_d0_tst: \
+vtest_i2_r8_d1_tst_c vtest_i4_r8_d1_tst_c vtest_i8_r8_d1_tst_c vtest_i2_r8_d0_tst_c vtest_i4_r8_d0_tst_c vtest_i8_r8_d0_tst_c: \
 	FC = $(VFORT) -Kieee -Ktrap=divz,ovf,inv#,unf,denorm
-vtest_i2_r16_d1_tst vtest_i4_r16_d1_tst vtest_i8_r16_d1_tst vtest_i2_r16_d0_tst vtest_i4_r16_d0_tst vtest_i8_r16_d0_tst: \
+vtest_i2_r16_d1_tst_c vtest_i4_r16_d1_tst_c vtest_i8_r16_d1_tst_c vtest_i2_r16_d0_tst_c vtest_i4_r16_d0_tst_c vtest_i8_r16_d0_tst_c: \
 	FC = $(VFORT) -Kieee -Ktrap=divz,ovf,inv#,unf,denorm
 
 # Oracle sunf95
 SFORT = sunf95 -w3 -u -U -ansi -xcheck=%all -C
-stest_i2_r4_d1_tst stest_i4_r4_d1_tst stest_i8_r4_d1_tst stest_i2_r4_d0_tst stest_i4_r4_d0_tst stest_i8_r4_d0_tst: \
+stest_i2_r4_d1_tst_c stest_i4_r4_d1_tst_c stest_i8_r4_d1_tst_c stest_i2_r4_d0_tst_c stest_i4_r4_d0_tst_c stest_i8_r4_d0_tst_c: \
 	FC = $(SFORT) -fnonstd -ftrap=division
-stest_i2_r8_d1_tst stest_i4_r8_d1_tst stest_i8_r8_d1_tst stest_i2_r8_d0_tst stest_i4_r8_d0_tst stest_i8_r8_d0_tst: \
+stest_i2_r8_d1_tst_c stest_i4_r8_d1_tst_c stest_i8_r8_d1_tst_c stest_i2_r8_d0_tst_c stest_i4_r8_d0_tst_c stest_i8_r8_d0_tst_c: \
 	FC = $(SFORT) \
 	-fnonstd -ftrap=overflow,division,invalid#,underflow
-stest_i2_r16_d1_tst stest_i4_r16_d1_tst stest_i8_r16_d1_tst stest_i2_r16_d0_tst stest_i4_r16_d0_tst stest_i8_r16_d0_tst: \
+stest_i2_r16_d1_tst_c stest_i4_r16_d1_tst_c stest_i8_r16_d1_tst_c stest_i2_r16_d0_tst_c stest_i4_r16_d0_tst_c stest_i8_r16_d0_tst_c: \
 	FC = $(SFORT) \
 	-fnonstd -ftrap=overflow,division,invalid#,underflow
 
 # Intel ifx
 XFORT = ifx -stand f$(FS) -warn all -check all -debug extended -fimplicit-none \
 	-traceback -debug-parameters all -fp-stack-check
-xtest_i2_r4_d1_tst xtest_i4_r4_d1_tst xtest_i8_r4_d1_tst xtest_i2_r4_d0_tst xtest_i4_r4_d0_tst xtest_i8_r4_d0_tst: \
+xtest_i2_r4_d1_tst_c xtest_i4_r4_d1_tst_c xtest_i8_r4_d1_tst_c xtest_i2_r4_d0_tst_c xtest_i4_r4_d0_tst_c xtest_i8_r4_d0_tst_c: \
 	FC = $(XFORT) -fp-trap=divzero
-xtest_i2_r8_d1_tst xtest_i4_r8_d1_tst xtest_i8_r8_d1_tst xtest_i2_r8_d0_tst xtest_i4_r8_d0_tst xtest_i8_r8_d0_tst: \
+xtest_i2_r8_d1_tst_c xtest_i4_r8_d1_tst_c xtest_i8_r8_d1_tst_c xtest_i2_r8_d0_tst_c xtest_i4_r8_d0_tst_c xtest_i8_r8_d0_tst_c: \
 	FC = $(XFORT) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,invalid,overflow#,underflow,denormal
 	#-no-ftz -fp-model strict
-xtest_i2_r16_d1_tst xtest_i4_r16_d1_tst xtest_i8_r16_d1_tst xtest_i2_r16_d0_tst xtest_i4_r16_d0_tst xtest_i8_r16_d0_tst: \
+xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d0_tst_c xtest_i4_r16_d0_tst_c xtest_i8_r16_d0_tst_c: \
 	FC = $(XFORT) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,invalid,overflow#,underflow,denormal
 	#-no-ftz -fp-model strict
@@ -255,35 +319,66 @@ test:
 
 ####################################################################################################
 # Make a compiler-specific test.
+######################################################################################
 # N.B.:
 # 1. Execute checktest by  "bash ./checktest" instead of just "./checktest", because "./checktest"
 # may not be executable on all operating systems.
 # 2. The log for itest or itest_i2 will be itest_(STAMP). Similar for other tests.
+# 3. In the following, `@make $(TST_C)` will trigger `@make $(SUBTESTS_C)`, which compile the code
+# for all subtests. Then `@make $(SUBTESTS)` will test the binaries. We not test any binary until
+# the code can compile in all cases.
 $(TESTS) $(TESTS_INT):
 	@mkdir -p $(LOG_DIR)
-	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//")_$(STAMP).log"
+	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
+	@make $(TST_C)
 	@make $(SUBTESTS)
-	bash ./checktest --warning "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//")_$(STAMP).log"
-	@printf "\n$@ ends!\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//")_$(STAMP).log"
+	bash ./checktest --warning "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
+	@printf "\n$@ ends!\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
+	@mv "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log" "$(LOG_DIR)/$@_$(STAMP).log"
 	@make clean
 
+# Make the binary corresponding to a test in TESTS_C or TESTS_INT_C, but do not execute it.
+# This is useful if we want to check whether the code can compile.
+$(TESTS_C) $(TESTS_INT_C):
+	@mkdir -p $(LOG_DIR)
+	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log"
+	@make $(SUBTESTS_C)
+	bash ./checktest --warning "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log"
+	@printf "\n$@ ends!\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log"
+	@mv "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log" "$(LOG_DIR)/$@_$(STAMP).log"
+	@make cleanmisc
+
 # Make a compiler-specific subtest.
+######################################################################################
 # N.B.: The prerequisite should NOT include files that may not exist, e.g., $(COMMONSRC), because
 # Make will ignore the rule if such files do not exist, resulting in "No rule to make ..." mistake.
-%_tst: source_% header_%
+%_tst: %_tst_c
 	@mkdir -p $(LOG_DIR)
-	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
-	$(FC) $(FFLAGS) -o $@ $(COMMONSRC) $(NEWUOASRC) $(TESTSRC) 2>&1 | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
-	./$@ 2>&1 | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
-	bash ./checktest --error "$(LOG_DIR)/$@_$(STAMP).log"
-	bash ./checktest --warning "$(LOG_DIR)/$@_$(STAMP).log"
-	@printf "\n$@ ends at $(shell date +%Y.%m.%d_%H.%M.%S).\n\n" | tee -a "$(LOG_DIR)/$@_$(STAMP).log"
-	@cat "$(LOG_DIR)/$@_$(STAMP).log" >> "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//")_$(STAMP).log"
-	@rm "$(LOG_DIR)/$@_$(STAMP).log"
-	@make cleanbin
+	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
+	./$@ 2>&1 | tee -a "$(LOG_DIR)/$@.log"
+	bash ./checktest --error "$(LOG_DIR)/$@.log"
+	bash ./checktest --warning "$(LOG_DIR)/$@.log"
+	@printf "\n$@ ends at $(shell date +%Y.%m.%d_%H.%M.%S).\n\n" | tee -a "$(LOG_DIR)/$@.log"
+	@cat "$(LOG_DIR)/$@.log" >> "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
+	@rm "$(LOG_DIR)/$@.log"
+
+# Make the binary corresponding to %_tst_c, but do not execute it.
+# This is useful if we want to check whether the code can compile.
+%_tst_c: source_% header_%
+	@mkdir -p $(LOG_DIR)
+	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
+	$(FC) $(FFLAGS) -o $(subst _tst_c,_tst,$@) $(COMMONSRC) $(NEWUOASRC) $(TESTSRC) 2>&1 \
+		| tee -a "$(LOG_DIR)/$@.log"
+	bash ./checktest --error "$(LOG_DIR)/$@.log"
+	bash ./checktest --warning "$(LOG_DIR)/$@.log"
+	@printf "\n$@ ends at $(shell date +%Y.%m.%d_%H.%M.%S).\n\n" | tee -a "$(LOG_DIR)/$@.log"
+	@cat "$(LOG_DIR)/$@.log" >> "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log"
+	@rm "$(LOG_DIR)/$@.log"
+	@make cleanmisc
+	touch $@
 
 # Make a local copy of the source code for the test.
-source_%:
+source_%: $(SRC_DIRS)
 	@printf "\nMaking a copy of the source code for the test.\n"
 	@for DIR in $(SRC_DIRS); do cp -r "$$DIR" ./; done
 	@printf "\nDone.\n\n"
@@ -306,8 +401,13 @@ header_%: source_%
 # Cleaning up.
 cleanbin:
 	@printf "\nCleaning up the binaries ...\n"
+	@rm -f *_tst *_tst_c
+	@printf "\nDone.\n\n"
+
+cleanmisc:
+	@printf "\nCleaning up miscellaneous files ...\n"
 	@rm -f *.o *.mod *.dbg *.cmdx *.cmod *.ilm *.stb
-	@rm -f *_tst *_tst_cobyla *_tst_uobyqa *_tst_newuoa *_tst_bobyqa *_tst_lincoa *_output.txt
+	@rm -f *_output.txt
 	@printf "\nDone.\n\n"
 
 cleansrc:
@@ -321,7 +421,7 @@ cleansrc:
 		mv $(NEWUOA_DIR) $(TRASH_DIR) > /dev/null 2>&1; fi
 	@printf "\nDone.\n\n"
 
-clean: cleanbin cleansrc
+clean: cleanbin cleanmisc cleansrc
 
 cleanall:
 	@make clean
