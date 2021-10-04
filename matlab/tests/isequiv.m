@@ -262,6 +262,29 @@ for ip = minip : length(plist)
         else
             fprintf('The solvers produce different results on %s at the %dth run.\n', pname, ir);
             equiv = false;
+            format long;
+            fprintf('\nnf: nf1 = %d, nf2 = %d', output1.funcCount, output2.funcCount)
+            fprintf('\nx:')
+            x1'
+            x2'
+            fprintf('\nf: fx1 = %.16e, fx2 = %.16e', fx1, fx2)
+            fprintf('\nexitflag: exitflag1 = %d, exitflag2 = %d', exitflag1, exitflag2)
+            nhist = min(length(output1.fhist), length(output2.fhist));
+            fprintf('\nfhist (only the last %d evaluations):', nhist);
+            output1.fhist = output1.fhist(end - nhist + 1: end);
+            output2.fhist = output2.fhist(end - nhist + 1: end);
+            output1.fhist
+            output2.fhist
+            output1.fhist == output2.fhist
+            if (isfield(output1, 'constrviolation'))
+                fprintf('\nconstrviolation: constrviolation1 = %.16e, constrviolation2 = %.16e', output1.constrviolation, output2.constrviolation)
+                fprintf('\nchist (only the last %d evaluations):', nhist);
+                output1.chist = output1.chist(end - nhist + 1: end);
+                output2.chist = output2.chist(end - nhist + 1: end);
+                output1.chist
+                output2.chist
+                output1.chist == output2.chist
+            end
             break;
         end
     end
