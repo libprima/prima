@@ -2,7 +2,7 @@ name: Test Absoft
 
 on:
   # Trigger the workflow on push or pull request
-  #push:
+  push:
   pull_request:
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
@@ -16,6 +16,8 @@ jobs:
     runs-on: [self-hosted, absoft]
     strategy:
       fail-fast: false
+      matrix:
+        solver: [newuoa]
 
     steps:
       - name: Checkout repository
@@ -27,7 +29,7 @@ jobs:
           export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH
           cd fsrc/tests
           make clean
-          make atest
+          make atest.${{ matrix.solver }}
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2

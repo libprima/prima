@@ -1,0 +1,6 @@
+{
+    "source_dirs": ["../../common/", "../../newuoa"],
+    "pp_suffixes": [".F90", ".F"],
+    "include_dirs": ["../../common/", "../../newuoa"],
+    "lowercase_intrinsics": true
+}

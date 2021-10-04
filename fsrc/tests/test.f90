@@ -6,12 +6,12 @@ program test
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, September 27, 2021 PM10:22:48
+! Last Modified: Monday, October 04, 2021 PM09:19:19
 !--------------------------------------------------------------------------------------------------!
 
-use, non_intrinsic :: test_newuoa_mod, only : test_newuoa
+use, non_intrinsic :: test_solver_mod, only : test_solver
 implicit none
 
-call test_newuoa()
+call test_solver()
 
 end program test
