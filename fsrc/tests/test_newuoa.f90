@@ -5,7 +5,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, October 04, 2021 PM10:58:41
+! Last Modified: Tuesday, October 05, 2021 AM12:28:09
 
 implicit none
 private
@@ -59,10 +59,8 @@ if (present(probs)) then
 else
 !    nprobs = 5_IK
 !    probs_loc(1:nprobs) = ['chebyqad', 'chrosen ', 'trigsabs', 'trigssqs', 'vardim  ']
-!    nprobs = 4_IK
-!    probs_loc(1:nprobs) = ['chebyqad', 'chrosen ', 'trigsabs', 'vardim  ']
-    nprobs = 1_IK
-    probs_loc(1:nprobs) = ['chebyqad']
+    nprobs = 4_IK
+    probs_loc(1:nprobs) = ['chebyqad', 'chrosen ', 'trigsabs', 'vardim  ']
 end if
 
 if (present(mindim)) then
@@ -91,7 +89,7 @@ end if
 
 do iprob = 1, nprobs
     probname = probs_loc(iprob)
-    do n = 1, 1 !mindim_loc, maxdim_loc, dimstride_loc
+    do n = mindim_loc, maxdim_loc, dimstride_loc
         ! NPT_LIST defines some extreme values of NPT.
         npt_list = [1_IK, &
             & n + 1_IK, n + 2_IK, n + 3_IK, &
@@ -105,7 +103,7 @@ do iprob = 1, nprobs
             else
                 npt = int(floor(TEN * rand() * real(n, RP)), kind(npt))
             end if
-            maxfun = 1_IK !int(floor(2.0E2_RP * rand() * real(n, RP)), kind(maxfun))
+            maxfun = int(floor(2.0E2_RP * rand() * real(n, RP)), kind(maxfun))
             maxhist = int(floor(TWO * rand() * real(maxfun, RP)), kind(maxhist))
             rhobeg = getdelta0(n)
             rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(-5.0E0_RP * rand()))
