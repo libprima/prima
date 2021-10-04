@@ -1,6 +1,10 @@
 function test(solver)
 
-solvern = [solver, 'n'];
+% Make CUTEst available. The following three lines should be configured to fit the installation of
+% CUTEst on the current machine.
+setenv('CUTEST', '~/local/cutesif/cutest');
+setenv('MASTSIF', '~/local/cutesif/sif');
+addpath('~/local/cutesif/mtools/msrc');
 
 current_dir = cd();
 neupdfo_dir = fileparts(fileparts(current_dir));
@@ -9,6 +13,7 @@ opdfo_dir = fullfile(neupdfo_dir, 'OPDFO');
 mexopt = struct();
 mexopt.debug = true;
 
+solvern = [solver, 'n'];
 cd(neupdfo_dir);
 setup(solvern, mexopt);
 cd(opdfo_dir);
