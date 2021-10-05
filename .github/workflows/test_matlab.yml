@@ -27,4 +27,4 @@ jobs:
         uses: matlab-actions/run-command@v1
         with:
           command: |
-            cd('matlab/tests'); test(${{ matrix.solver }}, ${{ matrix.dim }});
+            cd('matlab/tests'); test('${{ matrix.solver }}', '${{ matrix.dim }}');
