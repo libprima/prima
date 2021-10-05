@@ -5,10 +5,14 @@ function equiv = isequiv(solvers, options)
 % options=[]; options.maxdi=20; options.nr=20; isequiv({'newuoan', 'newuoa'}, options)
 %
 % verifies newuoan against newuoa on problems of at most 20 variables, 20 random runs for each problem.
-% NOTE that newuoa has to be the version in OPDFO.
+%
+% Coded by Zaikun ZHANG (www.zhangzk.net).
 %
 % Started: July 2020
-% Last Modified: Mon 24 May 2021 04:17:01 PM HKT
+%
+% Last Modified: Monday, October 04, 2021 PM09:19:19
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 equiv = true;
 
