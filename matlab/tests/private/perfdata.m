@@ -25,12 +25,14 @@ end
 
 % Record the tested problems in `problems.txt`.
 fprob = fullfile(outdir, strcat(stamp, '.', 'problems.txt'));
-writecell(plist, fprob, 'Delimiter', ',');
-% `writecell` does not support '\n' as the delimiter. Try replacing ',' by '\n' via `sed`.
-try
-    system(['sed -i "s/,/\n/g" ', fprob]);
-catch
-    % Do nothing in case of failure.
+fid = fopen(fprob, 'w');
+if fid >= 3
+    for k = 1 : length(plist)
+        fprintf(fid, "%s\n", plist{k});
+    end
+    fclose(fid);
+else
+    error('\nFail to open file %s.\n', fprob);
 end
 
 % Plot the profiles.
