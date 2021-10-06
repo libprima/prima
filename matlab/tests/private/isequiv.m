@@ -407,7 +407,7 @@ if ~equiv
         output2.chist
         output1.chist == output2.chist
     end
-    error('The solvers produce different results on %s at the %dth run.\n', pname, ir);
+    error('\nThe solvers produce different results on %s at the %dth run.\n', pname, ir);
 end
 
 return
