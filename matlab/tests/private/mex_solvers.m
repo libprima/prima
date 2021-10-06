@@ -1,7 +1,7 @@
 function mex_solvers(solver)
 
 % Directories.
-test_dir = fileparts(fileparts(mfilename('fullpath'))); % Directory where this .m file resides.
+test_dir = fileparts(fileparts(mfilename('fullpath'))); % Parent of the directory where this .m file resides.
 neupdfo_dir = fileparts(fileparts(test_dir));
 
 callstack = dbstack;

@@ -1,4 +1,4 @@
-name: Test MATLAB
+name: Plot performance profiles
 
 on:
   # Trigger the workflow on push or pull request
@@ -12,12 +12,12 @@ on:
 
 jobs:
   test:
-    name: Verify the faithfulness of the modernized solvers.
+    name: Plot the performance profiles of the modernized solvers.
     runs-on: [self-hosted, matlab]
     strategy:
       fail-fast: false
       matrix:
-        dim: [small, big]
+        dim: [small, all]
         solver: [newuoa]
     steps:
       - name: Check out repository
@@ -27,4 +27,4 @@ jobs:
         uses: matlab-actions/run-command@v1
         with:
           command: |
-            cd('matlab/tests'); test('${{ matrix.solver }}', '${{ matrix.dim }}');
+            cd('matlab/tests'); profile('${{ matrix.solver }}', '${{ matrix.dim }}');
