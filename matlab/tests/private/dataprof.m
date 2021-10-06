@@ -1,11 +1,5 @@
-function T = dataprof(frec, fmin, tau, n, testfeature)
-%
-% This version is not intended to be released. It is only for test.
-%
-% All rights reserved.
-%
-% ZHANG Zaikun, 08/08/2016
-% Department of Applied Mathematics, The Hong Kong Polytechnic University
+function T = dataprof(frec, fmin, pdim, options)
+% To be implemented.
 
 delsame = 0;
 penalty = 2;

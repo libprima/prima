@@ -1,4 +1,4 @@
-function T = perfprof(frec, fmin, tau, solvers)
+function T = perfprof(frec, fmin, options)
 %This function plots the performance profiles of solvers.
 % frec: trajectory of function values; frec(ip, is, ir, k) is the function value of the ip-th problem
 % obtained by the is-th solver at the ir-th random run at the k-th iteration.
@@ -32,6 +32,7 @@ for ip = 1:np
     end
 end
 
+tau = options.tau;
 for ip = 1:np
     for is = 1:ns
         for ir = 1:nr
@@ -94,7 +95,7 @@ r(isnan(r)) = penalty_ratio;
 r = sort(r);
 
 clf;
-hfig=figure(1);
+hfig=figure("visible", false);  % Plot the figure without displaying it.
 for is = 1:ns
     [xs,ys] = stairs(r(:,is), (1:np)/np);
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -115,6 +116,7 @@ yticklabels({'0', '', '0.2', '', '0.4', '', '0.6', '', '0.8', '', '1'});
 
 % Legends and title should be added.
 %title(sprintf('Performance Profile with tolerance $\\tau=10^{%d}$', int32(log10(tau))), 'interpreter', 'latex');
+solvers = options.solvers;
 for is = 1:ns
     solvers{is} = regexprep(solvers{is}, '_4test', '');
     %solvers{is} = regexprep(solvers{is}, 'newuoa', 'NEWUOA');
@@ -132,11 +134,14 @@ ylabel('$\pi_s(\alpha)$', 'fontsize', fontsize, 'interpreter', 'latex');
 %set(xlabh,'Position',get(xlabh,'Position') - [0 .0175 0])
 set(gca,'FontSize',fontsize);
 
-set(hfig,'visible','off');
-figname = strcat('perf_', int2str(int32(-log10(tau))));
-epsname = strcat(figname,'.eps');
+% Save the figure as eps.
+figname = strcat(options.stamp, '.', 'perf_', int2str(int32(-log10(tau))));
+epsname = fullfile(options.outdir, strcat(figname,'.eps'));
 saveas(hfig, epsname, 'epsc2');
-system('mkdir -p results');
-system(['epstopdf ',epsname]);
-system(['mv ', epsname, ' ./results']);
-system(['mv ', strcat(figname, '.pdf'), ' ./results']);
+
+% Try converting the eps to pdf.
+try
+    system(['epstopdf ',epsname]);
+catch
+    % Do nothing in case of failure.
+end

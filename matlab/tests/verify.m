@@ -3,10 +3,17 @@ function verify(varargin)
 % whether they produce the same results on CUTEst problems.
 %
 % Usage:
-% verify(solver, dimrange) , where `solver` is the name of the solver to test, while `dimrange`
-% is the vector [mindim, maxdim], or "small", or "big", or "large";
-% vector(solver, problem), where `problem` i the name of a problem to test;
-% vector(solve, {problem, ir}), where `ir` is the index of the random run in `isequiv`.
+%
+%   verify(solver, dimrange, nocompile_flag)
+%   verify(solver, problem, nocompile_flag)
+%   verify(solve, {problem, ir}, nocompile_flag)
+%
+% where
+% - `solver` is the name of the solver to test
+% - `dimrange` is the vector [mindim, maxdim], or "small", or "big", or "large"
+% - `problem` is the name of the problem to test
+% - `ir` is the index of the random run in `isequiv`.
+% - `nocompile_flag` is either 'nocompile' or 'ncp', indicating not to compile the solves
 %
 % Coded by Zaikun ZHANG (www.zhangzk.net).
 %
@@ -19,15 +26,13 @@ function verify(varargin)
 [solver, options] = parse_input(varargin);
 
 % Mexify the solvers.
-mex_solvers(solver);
+if options.compile
+    mex_solvers(solver);
+end
 
 % Tell MATLAB where to find CUTEST.
 locate_cutest();
 
 % Conduct the verification.
 solvers = {[solver, 'n'], solver};
-if (isequiv(solvers, options))
-    fprintf('\n\nThe test succeeds!\n\n');
-else
-    error(sfprintf('\n\nThe test FAILS!\n\n'));
-end
+isequiv(solvers, options);  % `isequiv` raises an error in case the solver behave differently.

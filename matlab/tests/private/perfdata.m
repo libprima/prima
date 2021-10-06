@@ -1,117 +1,59 @@
 function perfdata(solvers, options)
 
 time = datestr(datetime(), 'yymmddHHMM');
-stamp = strcat(strjoin(solvers, '_'), '.', int2str(options.mindim), '_', int2str(options.maxdim), '.', time);
-matname = strcat(stamp, '.perfdate', '.mat');
+stamp = strcat(strjoin(solvers, '_'), '.', int2str(options.mindim), '_', int2str(options.maxdim));
+datadir = options.datadir;
+matfile = fullfile(datadir, strcat(stamp, '.perfdate', '.mat'));
 
-if (isfield(options, 'load') && options.load == true)
-    % Use directly the data of the last computation for the same n and feature.
-    load(strcat('perfdata.', feature, '.', int2str(n), '.mat'), 'frec', 'fmin', 'n', 'feature');
+% Check whether to reload data or calculate everything from scratch.
+if (isfield(options, 'reload') && options.reload == true)
+    % Use directly the data of the last computation for the same solvers and dimensions.
+    load(matfile, 'frec', 'fmin', 'pdim', 'plist');
 else
-    frec = testcu(solvers, options);
-    [np, ~, ~, ~] = size(frec);
-    fmin = NaN(np,1);
-    for ip = 1:np
-        fmin(ip) = min(min(min(frec(ip, :, :, :))));
-    end
-    save(strcat('perfdata.', feature, '.', int2str(n), '.mat'), 'frec', 'fmin', 'n', 'feature');
+    [frec, output] = testcu(solvers, options);
+    fmin = min(min(min(frec, [], 4), [], 3), [], 2);
+    pdim = output.pdim;
+    plist = output.plist;
+    save(matfile, 'frec', 'fmin', 'pdim', 'plist');
 end
 
+% `outdir` is the directory to contain the figures (.eps, .pdf) and problem list (problem.txt).
+outdir = fullfile(datadir, strcat(stamp, '.', time));
+if ~exist(outdir, 'dir')
+    mkdir(outdir);
+end
+
+% Record the tested problems in `problems.txt`.
+fprob = fullfile(outdir, strcat(stamp, '.', 'problems.txt'));
+writecell(plist, fprob, 'Delimiter', ',');
+% `writecell` does not support '\n' as the delimiter. Try replacing ',' by '\n' via `sed`.
+try
+    system(['sed -i "s/,/\n/g" ', fprob]);
+catch
+    % Do nothing in case of failure.
+end
+
+% Plot the profiles.
+prof_options = struct();
+prof_options.solvers = solvers;
+prof_options.outdir = outdir;
+prof_options.stamp = stamp;
 for tau = 10.^(-1:-1:-10)
-    perfprof(frec, fmin, tau, solvers);
-    %dataprof(frec, fmin, tau, n, feature);
+    prof_options.tau = tau;
+    perfprof(frec, fmin, prof_options);
+    %dataprof(frec, fmin, pdim, prof_options);
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%test_options = struct();
-%if (nargin == 2 && isfield(options, 'reproduce')) % Set options.reproduce = true for reproducing results of the last experiment.
-%    test_options.reproduce = options.reproduce;
-%else
-%    test_options.reproduce = false;
-%end
-
-%if (nargin == 1)
-%    options = [];
-%end
-
-%if (isfield(options, 'load') && options.load == true)
-%    % Use directly the data of the last computation for the same n and feature.
-%    load(strcat('perfdata.', feature, '.', int2str(n), '.mat'), 'frec', 'fmin', 'n', 'feature');
-%else
-%    switch feature
-%    case {'Lq', 'Lh', 'L1'}
-%        if (isfield(options, 'regul_lambda'))
-%            test_options.regul.lambda = regul_lambda;
-%        else
-%            test_options.regul.lambda = 10;
-%        end
-%        if (strcmp(feature, 'Lq'))
-%            test_options.regul.p = 0.25;
-%        elseif (strcmp(feature, 'Lh'))
-%            test_options.regul.p = 0.5;
-%        elseif (strcmp(feature, 'L1'))
-%            test_options.regul.p = 1;
-%        end
-%    case 'noisy'
-%        if (isfield(options, 'noise_type'))
-%            test_options.noise.type = options.noise_type;
-%        else
-%            test_options.noise.type = 'relative';
-%        end
-%        if (isfield(options, 'noise_level'))
-%            test_options.noise.level = options.noise_level;
-%        else
-%            test_options.noise.level = 1e-3;
-%        end
-%        if (isfield(options, 'randrun'))
-%            test_options.randrun = options.randrun;
-%        end
-%    case {'single', 's'}
-%        test_options.prec = 'single';
-%    case {'signif1', 'signif2', 'signif3', 'signif4', 'signif5', 'signif6', 'signif7', 'signif8'}
-%        test_options.signif = str2num(feature(length(feature)));
-%    case 'randomizex0'
-%        if (isfield(options, 'randomizex0'))
-%            test_options.randomizex0 = options.randomizex0;
-%        else
-%            test_options.randomizex0 = 1;
-%        end
-%        if (isfield(options, 'randrun'))
-%            test_options.randrun = options.randrun;
-%        end
-%    otherwise
-%        test_options = [];
-%    end
-
-%    test_options.debug=true;
-%    test_options.chkfunval=true;
-
-%    frec = testcu(solvers, 'ALL', test_options);
-
-%    switch feature
-%       case {'noisy', 'single', 's', 'signif1', 'signif2', 'signif3', 'signif4', 'signif5', 'signif6', 'signif7', 'signif8', 'randomizex0'}
-%           display('=======================================================');
-%           display('Auxiliary Computation:');
-%           frec_aux = testcu(solvers, 'ALL', []);
-%           [np, ~, ~, ~] = size(frec_aux);
-%           fmin = NaN(np,1);
-%           for ip = 1:np
-%               fmin(ip) = min(min(min(min(frec(ip, :, :, :)))), min(min(min(frec_aux(ip, :, :, :)))));
-%           end
-%       otherwise
-%           [np, ~, ~, ~] = size(frec);
-%           fmin = NaN(np,1);
-%           for ip = 1:np
-%               fmin(ip) = min(min(min(frec(ip, :, :, :))));
-%           end
-%    end
-
-%   % save(strcat('perfdata.', feature, '.', int2str(n), '.mat'), 'frec', 'fmin', 'n', 'feature');
-%end
-
-%for tau = 10.^(-1:-1:-10)
-%    perfprof(frec, fmin, tau, solvers);
-%    %dataprof(frec, fmin, tau, n, feature);
-%end
-
-%return;
+% For convenience, save a copy of `problems.txt` and the figures in datadir. They will be
+% overwritten in next test with the same `solvers` and `dimrange`.
+copyfile(fprob, datadir);
+epsfiles = dir(fullfile(outdir, '*.eps'));
+for k = 1 : length(epsfiles)
+    epsname = epsfiles(k).name;
+    pdfname = strrep(epsname, '.eps', '.pdf');
+    if exist(fullfile(outdir, pdfname), 'file')
+        copyfile(fullfile(outdir, pdfname), datadir);
+    else
+        copyfile(fullfile(outdir, epsname), datadir);
+    end
+end
