@@ -47,13 +47,6 @@ MAKEFILE_DIR = ./makefiles
 	cp $(MAKEFILE_DIR)/Makefile.common test.$(SOLVER)/
 	cp $(MAKEFILE_DIR)/Makefile.$(SOLVER) test.$(SOLVER)/Makefile
 	cd test.$(SOLVER)/; make $(subst .$(SOLVER),,$@)
-	mkdir -p log
-	@if [ -d test.$(SOLVER)/log ] ; then \
-		for LOGFILE in test.$(SOLVER)/log/*.log; do \
-			mv $$LOGFILE log/$$(basename "$$LOGFILE" | sed "s/.log/\.$(SOLVER)\.log/"); \
-		done; \
-		rm -rf test.$(SOLVER)/log; \
-	fi
 
 clean:
 	@rm -rf log test.cobyla test.uobyqa test.newuoa test.bobyqa test.lincoa
