@@ -38,6 +38,6 @@ jobs:
 
       - name: Store testdata
         run: |
-          cd .github/workflows; chmod u+x save_matlab_testdata; ./save_matlab_testdata
+          bash .github/workflows/save_matlab_testdata
         env:
           SHA: ${{ steps.short-sha.outputs.sha }}
