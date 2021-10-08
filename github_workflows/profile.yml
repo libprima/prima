@@ -1,0 +1,46 @@
+name: Plot performance profiles
+
+on:
+  # Trigger the workflow on push or pull request
+  push:
+  pull_request:
+  # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
+  # schedule:
+  #   - cron: '0 2,6,10,14,18,22 * * *'
+  # Trigger the workflow when it is manually triggered
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Plot the performance profiles of the modernized solvers.
+    runs-on: [self-hosted, matlab]
+    strategy:
+      fail-fast: false
+      matrix:
+        dim: [small, big]
+        solver: [cobyla, newuoa]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Get the commit short sha
+        uses: benjlevesque/short-sha@v1.2
+        id: short-sha
+
+      - name: Run script
+        uses: matlab-actions/run-command@v1
+        with:
+          command: |
+            cd('matlab/tests');
+            profile('${{ matrix.solver }}', '${{ matrix.dim }}');
+
+      - name: Store testdata to local
+        run: |
+          bash .github/workflows/save_matlab_testdata
+        env:
+          SHA: ${{ steps.short-sha.outputs.sha }}
+
+      # - name: Store artifacts
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     path: matlab/tests/testdata
