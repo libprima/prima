@@ -32,7 +32,7 @@ jobs:
           make clean
           make ntest_${{ matrix.ikind }}.${{ matrix.solver }}
 
-      - name: Store artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          path: fsrc/tests/log/*.log
+      # - name: Store artifacts
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     path: fsrc/tests/log/*.log

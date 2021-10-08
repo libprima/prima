@@ -6,7 +6,7 @@ on:
   pull_request:
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
-    - cron: '0 2,6,10,14,18,22 * * *'
+      #- cron: '0 2,6,10,14,18,22 * * *'
   # Trigger the workflow when it is manually triggered
   workflow_dispatch:
 
@@ -33,15 +33,11 @@ jobs:
         uses: matlab-actions/run-command@v1
         with:
           command: |
-            cd('matlab/tests'); profile('${{ matrix.solver }}', '${{ matrix.dim }}');
+            cd('matlab/tests');
+            profile('${{ matrix.solver }}', '${{ matrix.dim }}');
 
-      - name: Store artifacts
+      - name: Store testdata
         run: |
-            RUNNER_DIR=~/git/actions-runner/neupdfo
-            if [ `ls -1 $RUNNER_DIR/*$SHA 2>/dev/null | wc -l ` -eq 0 ] ; then
-                DIR=$RUNNER_DIR/$(date +%Y.%m.%d_%H.%M.%S)_$SHA
-                mkdir $DIR
-                cp  matlab/tests/testdata -r $DIR
-            fi
+          cd .github/workflows; chmod u+x save_matlab_testdata; ./save_matlab_testdata
         env:
           SHA: ${{ steps.short-sha.outputs.sha }}

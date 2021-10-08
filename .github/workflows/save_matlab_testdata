@@ -1,0 +1,11 @@
+#!/bin/bash
+SAVEDIR=~/git/actions-runner/neupdfo
+TESTDATA=matlab/tests/testdata
+
+STAMP=$(date +%Y.%m.%d_%H.%M.%S)_$SHA
+DIR=$SAVEDIR/STAMP
+
+if [ `ls -1 $SAVEDIR/*$SHA 2>/dev/null | wc -l ` -eq 0 ] ; then
+    mkdir $DIR
+    cp -r $TESTDATA $DIR
+fi
