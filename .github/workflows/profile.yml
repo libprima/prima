@@ -38,7 +38,7 @@ jobs:
       - name: Store artifacts
         run: |
             RUNNER_DIR=~/git/actions-runner/neupdfo
-            if [ `ls -1 $RUNNER_DIR/*$SHA 2>/dev/null | wc -l ` -gt 0 ] ; then
+            if [ `ls -1 $RUNNER_DIR/*$SHA 2>/dev/null | wc -l ` -eq 0 ] ; then
                 DIR=$RUNNER_DIR/$(date +%Y.%m.%d_%H.%M.%S)_$SHA
                 mkdir $DIR
                 cp  matlab/tests/testdata -r $DIR
