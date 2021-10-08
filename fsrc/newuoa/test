@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# The directory where this scrip resides.
+SOLVER_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+# The solver's name.
+SOLVER=$(basename "$SOLVER_DIR")
+
+# The testing directory.
+TEST_DIR="$SOLVER_DIR"/../tests
+
+# Conduct the test.
+cd "$TEST_DIR" || exit 1
+
+make clean."$SOLVER"
+
+rm -f log/*test_c*"$SOLVER".log
+
+for COMPILER in g n a s i v f d x ; do
+    for TEST in i4_r8_d1 i4_r8_d0 i2_r16_d1 i8_r4_d1 ; do
+        make "$COMPILER"test_"$TEST"_tst_c."$SOLVER" #| grep -i "Warning\|Error\|Info\|Fail"
+    done
+done
+
+make clean."$SOLVER"
+
+# Check the logfiles
+LOGFILES=(log/*test_c*"$SOLVER".log)
+for LOGFILE in "${LOGFILES[@]::${#LOGFILES[@]}-1}" ; do
+    printf "\nChecking %s ...\n" "$LOGFILE"
+    INFO="$(bash "$TEST_DIR"/checktest --warning "$LOGFILE")"
+    printf "%s" "$INFO"
+    printf "\nDone!\n"
+    if [[ -n "$INFO" ]] ; then
+        read -n1 -s -r -p $'Continue? [Y/n] ' KEY
+        printf "\n"
+        if ! [[ "$KEY" == 'Y' || "$KEY" == 'y' || "$KEY" == "" ]]; then
+            exit 0
+        fi
+    fi
+done
+# No pause needed for the last logfile.
+LOGFILE="${LOGFILES[-1]}"  # The last logfile; it needs Bash 4.x.
+printf "\nChecking %s ...\n" "$LOGFILE"
+bash "$TEST_DIR"/checktest --warning "$LOGFILE"
+printf "%s" "$INFO"
+printf "\nDone!\n\n"

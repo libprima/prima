@@ -1,20 +1,23 @@
-! CONSTS_MOD is a module defining some constants.
+#include "ppf.h"
+
+module consts_mod
+!--------------------------------------------------------------------------------------------------!
+! This is a module defining some constants.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, September 22, 2021 AM11:47:57
+! Last Modified: Friday, October 08, 2021 PM08:54:54
+!--------------------------------------------------------------------------------------------------!
 
 ! Remarks:
 !
-! 1. REAL*4, REAL*8, INTEGER*4, INTEGER*8 are not Fortran standard
-!    expressions. Although they are supported by many compilers as
-!    extensions, avoid them!
+! 1. REAL*4, REAL*8, INTEGER*4, INTEGER*8 are not Fortran standard expressions. Do not use them! 
 !
-! 2. Never use KIND with a literal value, e.g., REAL(KIND = 8), because
-!    Fortran standards never define what KIND = 8 means. There is NO
-!    guarantee that REAL(KIND = 8) will be legal, let alone double precision.
+! 2. Never use KIND with a literal value, e.g., REAL(KIND = 8), because Fortran standards never 
+! define what KIND = 8 means. There is NO guarantee that REAL(KIND = 8) will be legal, let alone 
+! being double precision.
 !
 ! 3. Fortran standard (as of F2003) specifies the following for types
 !    INTEGER and REAL.
@@ -60,9 +63,6 @@
 !
 
 
-#include "ppf.h"
-
-module consts_mod
 
 #if __USE_ISO_FORTRAN_ENV_INTREAL__ == 1
 
