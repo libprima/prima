@@ -185,7 +185,7 @@ $(foreach TST, $(TESTS_INT_C_NO_QP), $(eval $(TST): SUBTESTS_C := \
 	))
 ######################################################################################
 
-.PHONY: all test clean $(TESTS) $(TESTS_C) $(TESTS_INT) $(TESTS_INT_C) source_* header_* clean*
+.PHONY: all test test_c clean $(TESTS) $(TESTS_C) $(TESTS_INT) $(TESTS_INT_C) source_* header_* clean*
 
 # Operating system.
 OSTYPE :=
@@ -220,8 +220,9 @@ endif
 # 3. IEEE 754 Floating-Point Exceptions (FPE).
 
 # Absoft af95
-# For af95, -Rb imposes bound checking for arrays. But it is unhappy with zero-sized arrays as of
+# 1. For af95, -Rb imposes bound checking for arrays. But it is unhappy with zero-sized arrays as of
 # Absoft Pro 21.0. Thus -Rb is not included in the following options.
+# 2. For Debian-based systems, -no-pie is needed; for other systems, this option may not work.
 AFORT :=
 ifneq ("$(wildcard /etc/debian_version)","")
 	AFORT = af95 -no-pie -m1 -en -et -Rc -Rs -Rp
@@ -332,7 +333,10 @@ xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d
 ####################################################################################################
 # All the tests.
 test:
-	 make $(TESTS)
+	make $(TESTS)
+
+test_c:
+	make $(TESTS_C)
 
 ####################################################################################################
 # Make a compiler-specific test.

@@ -185,7 +185,7 @@ $(foreach TST, $(TESTS_INT_C_NO_QP), $(eval $(TST): SUBTESTS_C := \
 	))
 ######################################################################################
 
-.PHONY: all test clean $(TESTS) $(TESTS_C) $(TESTS_INT) $(TESTS_INT_C) source_* header_* clean*
+.PHONY: all test test_c clean $(TESTS) $(TESTS_C) $(TESTS_INT) $(TESTS_INT_C) source_* header_* clean*
 
 # Operating system.
 OSTYPE :=
@@ -333,7 +333,10 @@ xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d
 ####################################################################################################
 # All the tests.
 test:
-	 make $(TESTS)
+	make $(TESTS)
+
+test_c:
+	make $(TESTS_C)
 
 ####################################################################################################
 # Make a compiler-specific test.
