@@ -285,7 +285,7 @@ itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d
 	#-no-ftz -fp-model strict
 
 # NAG nagfor
-NFORT = nagfor -colour=error:red,warn:magenta,info:yellow \
+NFORT = nagfor -colour=error:red,warn:magenta,info:cyan \
 	-f$(FSTD) -info -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique \
 	-Warn=allocation -Warn=constant_coindexing -Warn=subnormal
 ntest_i2_r4_d1_tst_c ntest_i4_r4_d1_tst_c ntest_i8_r4_d1_tst_c ntest_i2_r4_d0_tst_c ntest_i4_r4_d0_tst_c ntest_i8_r4_d0_tst_c: \
@@ -411,7 +411,7 @@ header_%: RP = $(shell expr 8 \* $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//"))
 header_%: DBG = $(shell echo $@ | sed "s/.*_d//" | sed "s/_.*//")
 header_%: QPAVLB = $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 16)
 header_%: source_%
-	@printf "\nAdapting the header file for the test.\n"
+	@printf "\nPreparing the header file for the test.\n"
 	$(SED) "0,/^#define __QP_AVAILABLE__ [0-9]*/s//#define __QP_AVAILABLE__ $(QPAVLB)/" $(HEADERS)
 	$(SED) "0,/^#define __INTEGER_KIND__ [0-9]*/s//#define __INTEGER_KIND__ $(IK)/" $(HEADERS)
 	$(SED) "0,/^#define __REAL_PRECISION__ [0-9]*/s//#define __REAL_PRECISION__ $(RP)/" $(HEADERS)
