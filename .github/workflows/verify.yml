@@ -5,8 +5,8 @@ on:
   push:
   pull_request:
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
-  schedule:
-      # - cron: '0 2,6,10,14,18,22 * * *'
+  # schedule:
+  #   - cron: '0 2,6,10,14,18,22 * * *'
   # Trigger the workflow when it is manually triggered
   workflow_dispatch:
 
