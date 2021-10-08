@@ -1,4 +1,14 @@
 module history_mod
+!--------------------------------------------------------------------------------------------------!
+! This module provides subroutines that handle the X/F/C histories of the solver, taking into
+! account that MAXHIST may be smaller than NF.
+!
+! Coded by Zaikun ZHANG (www.zhangzk.net).
+!
+! Started: July 2020
+!
+! Last Modified: Saturday, October 09, 2021 AM12:28:30
+!--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
@@ -17,7 +27,9 @@ contains
 
 
 subroutine savehist_unc(nf, f, x, fhist, xhist)
+!--------------------------------------------------------------------------------------------------!
 ! This subroutine saves X and F into XHIST and FHIST respectively.
+!--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : errstop, verisize
 implicit none
@@ -44,9 +56,6 @@ maxxhist = int(size(xhist, 2), kind(maxxhist))
 maxfhist = int(size(fhist), kind(maxfhist))
 maxhist = int(max(maxxhist, maxfhist), kind(maxhist))
 if (DEBUGGING) then
-    if (n < 1) then
-        call errstop(srname, 'SIZE(X) < 1')
-    end if
     if (maxxhist > 0) then
         call verisize(xhist, n, maxhist)
     end if

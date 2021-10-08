@@ -2,11 +2,11 @@ module checkexit_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module checks whether to exit from the solver.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, October 08, 2021 PM06:52:35
+! Last Modified: Friday, October 08, 2021 PM11:22:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -28,9 +28,9 @@ function checkexit_unc(maxfun, nf, f, ftarget, x) result(info)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_X, NAN_INF_F, FTARGET_ACHIEVED, MAXFUN_REACHED
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_X, NAN_INF_F, FTARGET_ACHIEVED, MAXFUN_REACHED
 
 implicit none
 
@@ -102,9 +102,9 @@ function checkexit_con(maxfun, nf, cstrv, ctol, f, ftarget, x) result(info)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_X, NAN_INF_F, FTARGET_ACHIEVED, MAXFUN_REACHED
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_X, NAN_INF_F, FTARGET_ACHIEVED, MAXFUN_REACHED
 
 implicit none
 
