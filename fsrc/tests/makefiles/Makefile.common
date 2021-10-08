@@ -220,9 +220,15 @@ endif
 # 3. IEEE 754 Floating-Point Exceptions (FPE).
 
 # Absoft af95
-# For af95, -Rb imposes bound checking for arrays. But it is unhappy with zero-sized arrays as of
+# 1. For af95, -Rb imposes bound checking for arrays. But it is unhappy with zero-sized arrays as of
 # Absoft Pro 21.0. Thus -Rb is not included in the following options.
-AFORT = af95 -no-pie -m1 -en -et -Rc -Rs -Rp
+# 2. For Debian-based systems, -no-pie is needed; for other systems, this option may not work.
+AFORT :=
+ifneq ("$(wildcard /etc/debian_version)","")
+	AFORT = af95 -no-pie -m1 -en -et -Rc -Rs -Rp
+else
+	AFORT = af95 -m1 -en -et -Rc -Rs -Rp
+endif
 atest_i2_r4_d1_tst_c atest_i4_r4_d1_tst_c atest_i8_r4_d1_tst_c atest_i2_r4_d0_tst_c atest_i4_r4_d0_tst_c atest_i8_r4_d0_tst_c: \
 	FC = $(AFORT) -TENV:simd_zmask=off
 atest_i2_r8_d1_tst_c atest_i4_r8_d1_tst_c atest_i8_r8_d1_tst_c atest_i2_r8_d0_tst_c atest_i4_r8_d0_tst_c atest_i8_r8_d0_tst_c: \

@@ -17,11 +17,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dim: [small, all]
-        solver: [cobyla, newuoa]
+        #dim: [small, all]
+        #solver: [cobyla, newuoa]
+        dim: [small]
+        solver: [newuoa]
     steps:
       - name: Check out repository
         uses: actions/checkout@v2
+`
+      - name: Get the commit short sha
+        uses: benjlevesque/short-sha@v1.2
+        id: short-sha
 
       - name: Run script
         uses: matlab-actions/run-command@v1
@@ -30,6 +36,12 @@ jobs:
             cd('matlab/tests'); profile('${{ matrix.solver }}', '${{ matrix.dim }}');
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          path: matlab/tests/testdata
+        run: |
+            RUNNER_DIR=~/git/actions-runner/neupdfo
+            if [ `ls -1 $RUNNER_DIR/*$SHA 2>/dev/null | wc -l ` -gt 0 ] ; then
+                DIR=$RUNNER_DIR/$(date +%Y.%m.%d_%H.%M.%S)_$SHA
+                mkdir $DIR
+                cp  matlab/tests/testdata -r $DIR
+            fi
+        env:
+          SHA: ${{ steps.short-sha.outputs.sha }}
