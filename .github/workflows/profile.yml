@@ -34,7 +34,7 @@ jobs:
             cd('matlab/tests');
             profile('${{ matrix.solver }}', '${{ matrix.dim }}');
 
-      - name: Store testdata
+      - name: Store testdata to local
         run: |
           bash .github/workflows/save_matlab_testdata
         env:
