@@ -1,13 +1,13 @@
+module evaluate_mod
+!--------------------------------------------------------------------------------------------------!
 ! This is a module evaluating the objective/constraint function with Nan/Inf handling.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
 ! Started: August 2021
 !
-! Last Modified: Wednesday, September 22, 2021 AM11:48:40
-
-
-module evaluate_mod
+! Last Modified: Friday, October 08, 2021 PM11:17:25
+!--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
@@ -20,8 +20,9 @@ contains
 subroutine evalf(calfun, x, f)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, HUGEFUN
-use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: consts_mod, only : RP, HUGEFUN, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: pintrf_mod, only : FUN
 
 implicit none
@@ -33,14 +34,28 @@ real(RP), intent(in) :: x(:)
 ! Output
 real(RP), intent(out) :: f
 
+! Local variables
+character(len=*), parameter :: srname = 'EVALF'
+
+! Preconditions
+if (DEBUGGING) then
+    ! NAN_X should never happen if the initial X does not contain NaN and the subroutines generating
+    ! trust-region/geometry steps work properly so that they never produce a step containing NaN/Inf.
+    call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
 if (any(is_nan(x))) then
-    ! Set F to NaN. This is necessary if the initial X contains NaN.
-    f = sum(x)
+    ! Although this should not happen unless there is a bug, we include this case for security.
+    f = sum(x)  ! Set F to NaN
 else
     call calfun(x, f)  ! Evaluate F.
 
     ! Moderated extreme barrier: replace NaN/huge objective or constraint values with a large but
-    ! finite value. This is naive, and better approaches surely exist.
+    ! finite value. This is naive. Better approaches surely exist.
     if (f > HUGEFUN .or. is_nan(f)) then
         f = HUGEFUN
     end if
@@ -49,14 +64,26 @@ else
     !!f = max(-HUGEFUN, f)
 end if
 
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    ! With the moderated extreme barrier, F cannot be Inf/NaN.
+    call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
+end if
+
 end subroutine evalf
 
 
 subroutine evalfc(calcfc, x, f, constr, cstrv)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, ZERO, HUGEFUN, HUGECON
-use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: consts_mod, only : RP, ZERO, HUGEFUN, HUGECON, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: pintrf_mod, only : FUNCON
 
 implicit none
@@ -70,8 +97,23 @@ real(RP), intent(out) :: f
 real(RP), intent(out) :: constr(:)
 real(RP), intent(out) :: cstrv
 
+! Local variables
+character(len=*), parameter :: srname = 'EVALFC'
+
+! Preconditions
+if (DEBUGGING) then
+    ! NAN_X should never happen if the initial X does not contain NaN and the subroutines generating
+    ! trust-region/geometry steps work properly so that they never produce a step containing NaN/Inf.
+    call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
 if (any(is_nan(x))) then
-    ! Set F and CONSTR to NaN. This is necessary if the initial X contains NaN.
+    ! Although this should not happen unless there is a bug, we include this case for security.
+    ! Set F, CONSTR, and CSTRV to NaN.
     f = sum(x)
     constr = f
     cstrv = f
@@ -96,6 +138,17 @@ else
 
     ! Evaluate the constraint violation for constraints CONSTR(X) >= 0.
     cstrv = maxval([-constr, ZERO])
+end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    ! With the moderated extreme barrier, F or CSTRV cannot be Inf/NaN.
+    call assert(.not. (is_nan(f) .or. is_posinf(f) .or. any(is_nan(constr) .or. is_posinf(constr))),&
+        & 'F or CONSTR is not NaN or +Inf', srname)
 end if
 
 end subroutine evalfc

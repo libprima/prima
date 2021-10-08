@@ -8,61 +8,52 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, October 08, 2021 PM08:54:54
+! Last Modified: Friday, October 08, 2021 PM10:36:24
 !--------------------------------------------------------------------------------------------------!
 
+!--------------------------------------------------------------------------------------------------!
 ! Remarks:
 !
-! 1. REAL*4, REAL*8, INTEGER*4, INTEGER*8 are not Fortran standard expressions. Do not use them! 
+! 1. REAL*4, REAL*8, INTEGER*4, INTEGER*8 are not Fortran standard expressions. Do not use them!
 !
-! 2. Never use KIND with a literal value, e.g., REAL(KIND = 8), because Fortran standards never 
-! define what KIND = 8 means. There is NO guarantee that REAL(KIND = 8) will be legal, let alone 
+! 2. Never use KIND with a literal value, e.g., REAL(KIND = 8), because Fortran standards never
+! define what KIND = 8 means. There is NO guarantee that REAL(KIND = 8) will be legal, let alone
 ! being double precision.
 !
-! 3. Fortran standard (as of F2003) specifies the following for types
-!    INTEGER and REAL.
+! 3. Fortran standard (as of F2003) specifies the following for types INTEGER and REAL.
 !
-!    - A processor shall provide ONE OR MORE representation methods that
-!      define sets of values for data of type integer; if the kind type
-!      parameter is not specified, the default kind value is KIND(0) and
-!      the type specified is DEFAULT INTEGER.
-!    - A processor shall provide TWO OR MORE approximation methods that
-!      define sets of values for data of type real; if the type keyword
-!      REAL is specified and the kind type parameter is not specified,
-!      the default kind value is KIND (0.0) and the type specified is
-!      DEFAULT REAL; If the type keyword DOUBLE PRECISION is specified,
-!      the kind value is KIND (0.0D0) and the type specified is DOUBLE
-!      PRECISION real; the decimal precision of the double precision real
-!      approximation method shall be greater than that of the default
-!      real method.
+!    - A processor shall provide ONE OR MORE representation methods that define sets of values for
+!    data of type integer; if the kind type parameter is not specified, the default kind value is
+!    KIND(0) and the type specified is DEFAULT INTEGER.
+!    - A processor shall provide TWO OR MORE approximation methods that define sets of values for
+!    data of type real; if the type keyword REAL is specified and the kind type parameter is not
+!    specified, the default kind value is KIND (0.0) and the type specified is DEFAULT REAL; If the
+!    type keyword DOUBLE PRECISION is specified, the kind value is KIND (0.0D0) and the type
+!    specified is DOUBLE PRECISION real; the decimal precision of the double precision real
+!    approximation method shall be greater than that of the default real method.
 !
-!    In other words, the standard only imposes that the following three
-!    types should be supported:
+!    In other words, the standard only imposes that the following three types should be supported:
 !    - INTEGER(KIND(0)), i.e., default integer,
 !    - REAL(KIND(0.0)), i.e., default real (single-precision real),
 !    - REAL(KIND(0.0D0)), i.e., double-precision real.
 !
 !    Therefore, the following should be noted.
 !
-!    - Other types of INTEGER/REAL may not be available on all platforms
-!      (e.g., pgfortran 20 does not support REAL128).
+!    - Other types of INTEGER/REAL may not be available on all platforms (e.g., nvfortran 20 and
+!    flang 7.1.0 do not support REAL128).
 !    - The standard does not specify the range of the default integer.
-!    - The standard does not specify what the range and precision of the
-!      default real or the double-precision real, except that KIND(0.0D0)
-!      should have a greater precision than KIND(0.0) --- no requirement
-!      about the range.
+!    - The standard does not specify what the range and precision of the default real or the
+!    double-precision real, except that KIND(0.0D0) should have a greater precision than KIND(0.0)
+!    --- no requirement about the range.
 !
 !    Consequently, the following should be observed in all Fortran code.
 !
-!    - DO NOT use any kind parameter other than IK, IK_DFT, RP, RP_DFT, SP,
-!      or DP, unless you are sure that it is supported by your platform.
-!    - DO NOT make any assumption about the range of INTEGER, REAL, or
-!      REAL(0.0D0) unless you are sure. Be cautious about OVERFLOW!
-!      In particular, for integers working as the lower/upper limit of
-!      arrays, overflow can lead to Segmentation Faults!
-!
-
-
+!    - DO NOT use any kind parameter other than IK, IK_DFT, RP, RP_DFT, SP, or DP, unless you are
+!    sure that it is supported by your platform.
+!    - DO NOT make any assumption on the range of INTEGER, REAL, or REAL(0.0D0) unless you are sure.
+!    - Be cautious about OVERFLOW! In particular, for integers working as the lower/upper limit of
+!    arrays, overflow can lead to Segmentation Faults!
+!--------------------------------------------------------------------------------------------------!
 
 #if __USE_ISO_FORTRAN_ENV_INTREAL__ == 1
 
@@ -98,9 +89,8 @@ logical, parameter :: DEBUGGING = .false.
 #endif
 
 #if __USE_ISO_FORTRAN_ENV_INTREAL__ != 1
-! For gfortran, selected_real_kind(k) will return INT16 with k = 3 and
-! 4, return INT32 with k = 5--9, and return INT64 with k = 10--18.
-! SELECTED_REAL_KIND returns a negative value for an unsupport kind.
+! For gfortran, SELECTED_REAL_KIND(K) returns INT16 with K = 3--4, INT32 with k = 5--9, and INT64 
+! with K = 10--18. SELECTED_REAL_KIND returns a negative value for an unsupported kind.
 #if __INTEGER_KIND__ == 16
 integer, parameter :: INT16 = selected_int_kind(4)
 #elif __INTEGER_KIND__ == 32
@@ -154,9 +144,8 @@ real(RP), parameter :: QUART = 0.25_RP
 real(RP), parameter :: TEN = 10.0_RP
 real(RP), parameter :: TENTH = 0.1_RP
 real(RP), parameter :: PI = 3.141592653589793238462643383279502884_RP
-! We may set PI to acos(-1.0_RP), but some compilers may complain about
-! "Elemental function as initialization expression with non-integer or
-! non-character arguments".
+! We may set PI to acos(-1.0_RP), but some compilers may complain about `Elemental function as 
+! initialization expression with non-integer or non-character arguments`.
 
 real(RP), parameter :: EPS = epsilon(ZERO)
 real(RP), parameter :: HUGENUM = huge(ZERO)

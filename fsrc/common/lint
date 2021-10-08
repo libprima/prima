@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# The directory where this scrip resides.
+# The directory where this script resides.
 SOLVER_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 # The solver's name.
@@ -12,7 +12,7 @@ TEST_DIR="$SOLVER_DIR"/../tests
 # Conduct the test.
 cd "$TEST_DIR" || exit 1
 
-make cleanall."$SOLVER"
+make cleanall."$SOLVER" > /dev/null
 
 #rm -f log/*test*_c."$SOLVER".log
 
@@ -23,9 +23,14 @@ for COMPILER in g n a s i v f d x ; do
         TESTS="i4_r8_d1 i4_r8_d0 i2_r16_d1 i8_r4_d1"
     fi
     for TEST in $TESTS ; do
-        make "$COMPILER"test_"$TEST"_tst_c."$SOLVER" | grep -i "starts\|warning\|error\|info\|fail|abort" \
-            | grep -vi "[0-9]\s*warning\|[0-9]\s*error\|[0-9]\s*info\|info.f90\|--warning\|--error" \
-            | grep -i --color "starts\|warning\|error\|info\|fail|abort"
+        INFO="$(make "$COMPILER"test_"$TEST"_tst_c."$SOLVER" | grep -i "starts\|warning\|error\|info\|fail|abort" \
+            | grep -vi "[0-9]\s*warning\|[0-9]\s*error\|[0-9]\s*info\|info.f90\|information\|--warning\|--error" \
+            | grep -v "^- \|^| \|^\* \|^+ \|^X " \
+            )"
+        echo "$INFO" | grep -i --color "starts\|warning\|error\|info\|fail|abort"
+        if echo "$INFO" | grep -iq "error\|fail\|abort" ; then
+            exit 2
+        fi
     done
 done
 
