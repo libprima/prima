@@ -1,0 +1,30 @@
+name: Verify faithfulness
+
+on:
+  # Trigger the workflow on push or pull request
+  push:
+  pull_request:
+  # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
+  # schedule:
+  #   - cron: '0 2,6,10,14,18,22 * * *'
+  # Trigger the workflow when it is manually triggered
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Verify the faithfulness of the modernized solvers.
+    runs-on: [self-hosted, matlab]
+    strategy:
+      fail-fast: false
+      matrix:
+        dim: [small, big]
+        solver: [newuoa]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Run script
+        uses: matlab-actions/run-command@v1
+        with:
+          command: |
+            cd('matlab/tests'); verify('${{ matrix.solver }}', '${{ matrix.dim }}');
