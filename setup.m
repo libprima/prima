@@ -195,7 +195,7 @@ gateways_intersection_form = fullfile(gateways, 'intersection_form');  % Directo
 gateways_classical = fullfile(gateways_intersection_form, 'classical'); % Directory of the MEX gateway files for the classical Fortran code
 interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
 interfaces_private = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
-examples = fullfile(matd, 'examples'); % Directory containing some test examples
+tests = fullfile(matd, 'tests'); % Directory containing some tests
 tools = fullfile(matd, 'tools'); % Directory containing some tools, e.g., interform.m
 
 % Name of the file that contains the list of Fortran files. There should
@@ -394,7 +394,7 @@ else
 end
 
 fprintf('\nYou may now try ''help pdfo'' for information on the usage of the package.\n');
-addpath(examples);
+addpath(tests);
 fprintf('\nYou may also run ''testpdfo'' to test the package on a few examples.\n\n');
 
 if ~path_saved % All the path-saving attempts failed
@@ -535,7 +535,7 @@ cpwd = fileparts(mfilename('fullpath')); % Current directory
 matd = fullfile(cpwd, 'matlab'); % Matlab directory
 interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
 interfaces_private = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
-examples = fullfile(matd, 'examples'); % Directory containing some test examples
+tests = fullfile(matd, 'tests'); % Directory containing some tests
 
 % Remove the compiled MEX files
 mex_files = files_with_wildcard(interfaces_private, '*.mex*');
@@ -545,7 +545,7 @@ cellfun(@(filename) delete(filename), mex_files);
 orig_warning_state = warning;
 warning('off', 'MATLAB:rmpath:DirNotFound'); % Maybe the paths were not added. We do not want to see this warning.
 warning('off', 'MATLAB:SavePath:PathNotSaved'); % Maybe we do not have the permission to save path.
-rmpath(interfaces, examples);
+rmpath(interfaces, tests);
 savepath;
 warning(orig_warning_state); % Restore the behavior of displaying warnings
 
