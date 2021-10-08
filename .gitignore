@@ -5,6 +5,7 @@ __pycache__/
 *$py.class
 
 # misc files for testing
+matlab/tests/testdata/
 *.cmdx
 *.cmod
 *.dbg
@@ -19,8 +20,8 @@ __pycache__/
 *.stb
 *NSConflict*
 *_output.txt
-fsrc/test/newuoa/
-fsrc/test/common/
+fsrc/tests/newuoa/
+fsrc/tests/common/
 *_test
 *_tst
 *_tst_bobyqa

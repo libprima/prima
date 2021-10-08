@@ -1,1 +1,1 @@
-matlab/tests/isequiv.m
+matlab/tests/private/isequiv.m
