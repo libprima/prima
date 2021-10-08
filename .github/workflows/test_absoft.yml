@@ -32,6 +32,6 @@ jobs:
           make atest.${{ matrix.solver }}
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          path: fsrc/tests/log/*.log
+        run: |
+          mkdir -p ~/git/actions-runner/artifacts 
+          cp fsrc/tests/log/ -r ~/git/actions-runner/artifacts 

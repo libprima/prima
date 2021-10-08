@@ -24,7 +24,7 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v2
-`
+
       - name: Get the commit short sha
         uses: benjlevesque/short-sha@v1.2
         id: short-sha
