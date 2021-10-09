@@ -1,23 +1,29 @@
 #!/bin/bash
 
-# The directory where this script resides.
+# The directory where this script resides. It is the solver's directory.
 SOLVER_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+# The log directory in the solver's directory.
+SOLVER_LOG_DIR="$SOLVER_DIR"/log
 
 # The solver's name.
 SOLVER=$(basename "$SOLVER_DIR")
 
 # The testing directory.
 TEST_DIR="$SOLVER_DIR"/../tests
+# The log directory in the testing directory.
+TEST_LOG_DIR="$TEST_DIR"/test."$SOLVER"/log
+
+# Remove the old logs.
+mkdir -p "$SOLVER_LOG_DIR"
+rm -f "$SOLVER_LOG_DIR"/*test*_c.log
 
 # Conduct the test.
 cd "$TEST_DIR" || exit 1
 
 make cleanall."$SOLVER" > /dev/null
 
-#rm -f log/*test*_c."$SOLVER".log
-
 for COMPILER in g n a s i v f d x ; do
-    if [[ $COMPILER == 'f' || $COMPILER == 'v' ]] ; then
+    if [[ $COMPILER == 'f' || $COMPILER == 'v' || $COMPILER == 'x' ]] ; then
         TESTS="i4_r8_d1 i4_r8_d0 i2_r4_d1 i8_r4_d1"
     else
         TESTS="i4_r8_d1 i4_r8_d0 i2_r16_d1 i8_r4_d1"
@@ -25,19 +31,28 @@ for COMPILER in g n a s i v f d x ; do
     for TEST in $TESTS ; do
         INFO="$(make "$COMPILER"test_"$TEST"_tst_c."$SOLVER" | grep -i "starts\|warning\|error\|info\|fail|abort" \
             | grep -vi "[0-9]\s*warning\|[0-9]\s*error\|[0-9]\s*info\|info.f90\|information\|--warning\|--error" \
+            | grep -vi "Expression in IF construct is constant" \
             | grep -v "^- \|^| \|^\* \|^+ \|^X " \
             )"
         echo "$INFO" | grep -i --color "starts\|warning\|error\|info\|fail|abort"
         if echo "$INFO" | grep -iq "error\|fail\|abort" ; then
+            if [[ -f "$TEST_LOG_DIR"/"$COMPILER"test_"$TEST"_tst_c.log ]] ; then
+                LOGFILE="$COMPILER"test_"$TEST"_tst_c.log
+            else
+                LOGFILE="$COMPILER"test_c.log
+            fi
+            mv "$TEST_LOG_DIR"/"$LOGFILE" "$SOLVER_LOG_DIR"
+            cat "$SOLVER_LOG_DIR"/"$LOGFILE"
             exit 2
         fi
     done
+    mv "$TEST_LOG_DIR"/"$COMPILER"test*_c.log "$SOLVER_LOG_DIR"
 done
 
 make clean."$SOLVER"
 
 # Check the logfiles
-LOGFILES=(test."$SOLVER"/log/*test*_c.log)
+LOGFILES=("$SOLVER_LOG_DIR"/*test*_c.log)
 for LOGFILE in "${LOGFILES[@]::${#LOGFILES[@]}-1}" ; do
     printf "\nChecking %s ...\n" "$LOGFILE"
     INFO="$(bash "$TEST_DIR"/checktest --warning "$LOGFILE")"

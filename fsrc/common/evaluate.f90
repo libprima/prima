@@ -6,7 +6,7 @@ module evaluate_mod
 !
 ! Started: August 2021
 !
-! Last Modified: Friday, October 08, 2021 PM11:17:25
+! Last Modified: Saturday, October 09, 2021 AM08:09:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ subroutine evalf(calfun, x, f)
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, HUGEFUN, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: pintrf_mod, only : FUN
 
 implicit none
@@ -39,9 +39,9 @@ character(len=*), parameter :: srname = 'EVALF'
 
 ! Preconditions
 if (DEBUGGING) then
-    ! NAN_X should never happen if the initial X does not contain NaN and the subroutines generating
+    ! X should be finite if the initial X does not contain NaN and the subroutines generating
     ! trust-region/geometry steps work properly so that they never produce a step containing NaN/Inf.
-    call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
+    call assert(all(is_finite(x)), 'X is finite', srname)
 end if
 
 !====================!
@@ -83,7 +83,7 @@ subroutine evalfc(calcfc, x, f, constr, cstrv)
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, ZERO, HUGEFUN, HUGECON, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf, is_neginf
 use, non_intrinsic :: pintrf_mod, only : FUNCON
 
 implicit none
@@ -102,9 +102,9 @@ character(len=*), parameter :: srname = 'EVALFC'
 
 ! Preconditions
 if (DEBUGGING) then
-    ! NAN_X should never happen if the initial X does not contain NaN and the subroutines generating
+    ! X should be finite if the initial X does not contain NaN and the subroutines generating
     ! trust-region/geometry steps work properly so that they never produce a step containing NaN/Inf.
-    call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
+    call assert(all(is_finite(x)), 'X is finite', srname)
 end if
 
 !====================!
@@ -146,9 +146,12 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    ! With the moderated extreme barrier, F or CSTRV cannot be Inf/NaN.
-    call assert(.not. (is_nan(f) .or. is_posinf(f) .or. any(is_nan(constr) .or. is_posinf(constr))),&
-        & 'F or CONSTR is not NaN or +Inf', srname)
+    ! With the moderated extreme barrier, F cannot be NaN/+Inf, CONSTR cannot be NaN/-Inf.
+    call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
+    call assert(.not. any(is_nan(constr) .or. is_neginf(constr)), &
+        & 'CONSTR does not containt NaN or -Inf', srname)
+    call assert(.not. (cstrv < ZERO .or. is_nan(cstrv) .or. is_posinf(cstrv)), &
+        & 'CSTRV is nonnegative and not NaN or +Inf', srname)
 end if
 
 end subroutine evalfc
