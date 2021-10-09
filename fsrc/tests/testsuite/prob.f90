@@ -40,20 +40,20 @@ elseif (lower(trimstr(probname)) == 'chrosen') then
     x = -ONE
 elseif (lower(trimstr(probname)) == 'trigsabs') then
     call getseed(seedsav)  ! Backup the current random seed in SEEDSAV.
-    call setseed(SEED_DFT)  ! Set the random seed by RNG(SEED_DFT).
+    call setseed(SEED_DFT)  ! Set the random seed by SETSEED(SEED_DFT).
     xstar = PI * (TWO * rand(n) - ONE)  ! This is the \hat{x}^* in the NEWUOA paper.
     ystar = PI * (TWO * rand(n) - ONE)  ! This is the \hat{y}^* in the NEWUOA paper.
     x = xstar + TENTH * ystar
-    call setseed(seedsav)  ! Recover the random seed before RNG(SEED_DFT)
+    call setseed(seedsav)  ! Recover the random seed by SEEDSAV.
     deallocate (seedsav)
 elseif (lower(trimstr(probname)) == 'trigssqs') then
     call getseed(seedsav)  ! Backup the current random seed in SEEDSAV.
-    call setseed(SEED_DFT)  ! Set the random seed by RNG(SEED_DFT).
+    call setseed(SEED_DFT)  ! Set the random seed by SETSEED(SEED_DFT).
     xstar = PI * (TWO * rand(n) - ONE)  ! This is the \hat{x}^* in the NEWUOA paper.
     ystar = PI * (TWO * rand(n) - ONE)  ! This is the \hat{y}^* in the NEWUOA paper.
     theta = TEN**(-rand(n))
     x = (xstar + TENTH * ystar) / theta
-    call setseed(seedsav)  ! Recover the random seed before RNG(SEED_DFT)
+    call setseed(seedsav)  ! Recover the random seed by SEEDSAV.
     deallocate (seedsav)
 elseif (lower(trimstr(probname)) == 'vardim') then
     x = ONE - ind / real(n, RP)
@@ -187,11 +187,11 @@ real(RP) :: xstar(size(x))
 n = int(size(x), kind(n))
 
 call getseed(seedsav)  ! Backup the current random seed in SEEDSAV.
-call setseed(SEED_DFT)  ! Set the random seed by RNG(SEED_DFT).
+call setseed(SEED_DFT)  ! Set the random seed by SETSEED(SEED_DFT).
 C = 1.0E2_RP * (TWO * rand(2_IK * n, n) - ONE)
 S = 1.0E2_RP * (TWO * rand(2_IK * n, n) - ONE)
 xstar = PI * (TWO * rand(n) - ONE)  ! This is the \hat{x}^* in the NEWUOA paper.
-call setseed(seedsav)  ! Recover the random seed before RNG(SEED_DFT).
+call setseed(seedsav)  ! Recover the random seed by SEEDSAV.
 deallocate (seedsav)
 
 f = sum(abs(matprod(C, cos(xstar) - cos(x)) + matprod(S, sin(xstar) - sin(x))))
@@ -217,7 +217,7 @@ real(RP) :: xstar(size(x))
 n = int(size(x), kind(n))
 
 call getseed(seedsav)  ! Backup the current random seed in SEEDSAV.
-call setseed(SEED_DFT)  ! Set the random seed by RNG(SEED_DFT).
+call setseed(SEED_DFT)  ! Set the random seed by SETSEED(SEED_DFT).
 C = 1.0E2_RP * (TWO * rand(2_IK * n, n) - ONE)
 S = 1.0E2_RP * (TWO * rand(2_IK * n, n) - ONE)
 xstar = PI * (TWO * rand(n) - ONE)  ! This is the \hat{x}^* in the NEWUOA paper.
@@ -225,7 +225,7 @@ xstar = PI * (TWO * rand(n) - ONE)  ! This is the \hat{x}^* in the NEWUOA paper.
 ! clear what Powell meant by "logarithmic distribution". The commonly known logarithmic distribution
 ! is a discrete distribution on the positive integers.
 theta = TEN**(-rand(n))
-call setseed(seedsav)  ! Recover the random seed before RNG(SEED_DFT).
+call setseed(seedsav)  ! Recover the random seed by SEEDSAV.
 deallocate (seedsav)
 
 f = sum((matprod(C, cos(xstar) - cos(theta * x)) + matprod(S, sin(xstar) - sin(theta * x)))**2)

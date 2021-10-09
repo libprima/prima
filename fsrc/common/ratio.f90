@@ -1,4 +1,13 @@
 module ratio_mod
+!--------------------------------------------------------------------------------------------------!
+! This module calculates the reduction ratio for trust-region methods.
+!
+! Coded by Zaikun ZHANG (www.zhangzk.net).
+!
+! Started: September 2021
+!
+! Last Modified: Sunday, October 10, 2021 AM01:14:50
+!--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
@@ -9,33 +18,35 @@ contains
 
 
 function redrat(ared, pred, rshrink) result(ratio)
+!--------------------------------------------------------------------------------------------------!
 ! This function evaluates the reduction ratio of a trust-region step, handling Inf/NaN properly.
-
+!--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, ZERO, ONE, HALF, HUGENUM, DEBUGGING
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
-use, non_intrinsic :: debug_mod, only : errstop
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
-! Input
+! Inputs
 real(RP), intent(in) :: ared
 real(RP), intent(in) :: pred
 real(RP), intent(in) :: rshrink  ! When RATIO <= RSHRINK, DELTA will be shrunk.
 
-! Output
+! Outputs
 real(RP) :: ratio
 
 ! Local variables
 character(len=*), parameter :: srname = 'REDRAT'
 
+! Preconditions
 if (DEBUGGING) then
-    if (rshrink < ZERO) then
-        call errstop(srname, 'The threshold ratio for shrinking the trust-region radius is negative')
-    end if
-    if (is_nan(ared)) then
-        ! ARED should NEVER be NaN due to the moderated extreme barrier.
-        call errstop(srname, 'ARED is NaN')
-    end if
+    call assert(rshrink >= ZERO, 'RSHRINK >= 0', srname)
+    ! ARED should NEVER be NaN due to the moderated extreme barrier.
+    call assert(.not. is_nan(ared), 'ARED is not NaN', srname)
 end if
+
+!====================!
+! Calculation starts !
+!====================!
 
 if (is_nan(pred) .or. pred <= ZERO) then
     ! The trust-region subproblem solver fails in this rare case. Instead of terminating as Powell's
@@ -56,9 +67,14 @@ else
     ratio = ared / pred
 end if
 
-! RATIO cannot be NaN unless ARED is NaN; should NOT happen due to the moderated extreme barrier.
-if (is_nan(ratio)) then
-    call errstop(srname, 'RATIO is NaN')
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    ! RATIO cannot be NaN unless ARED is NaN; should NOT happen due to the moderated extreme barrier.
+    call assert(.not. is_nan(ratio), 'RATIO is not NaN', srname)
 end if
 
 end function redrat

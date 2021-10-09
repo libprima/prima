@@ -1,12 +1,12 @@
 module checkexit_mod
 !--------------------------------------------------------------------------------------------------!
-! This module checks whether to exit from the solver.
+! This module checks whether to exit the solver.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
-! Started: July 2020
+! Started: September 2021
 !
-! Last Modified: Saturday, October 09, 2021 PM12:59:36
+! Last Modified: Sunday, October 10, 2021 AM01:19:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,7 +23,7 @@ contains
 
 function checkexit_unc(maxfun, nf, f, ftarget, x) result(info)
 !--------------------------------------------------------------------------------------------------!
-! This module checks whether to exit from the solver in the unconstrained case.
+! This module checks whether to exit the solver in the unconstrained case.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -97,7 +97,7 @@ end function checkexit_unc
 
 function checkexit_con(maxfun, nf, cstrv, ctol, f, ftarget, x) result(info)
 !--------------------------------------------------------------------------------------------------!
-! This module checks whether to exit from the solver in the constrained case.
+! This module checks whether to exit the solver in the constrained case.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules

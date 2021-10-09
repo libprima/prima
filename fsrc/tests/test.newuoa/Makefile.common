@@ -82,12 +82,12 @@ CHCKTST = ../checktest
 # Define the tests.
 ######################################################################################
 # Decide whether to test QP, e.g., REAL128.
-# Absoft 21.0 is buggy concerning REAL128;
+# Absoft 21.0 is buggy concerning REAL128 (but we can still test the compilation without running);
 # Flang and nvfortran do not support REAL128;
 # AOCC Flang complains about a symbol lookup error: undefined symbol: "fort_rnumq_i8";
 # ifx encounters an internal error when compiling with REAL128.
-TESTS_QP = gtest ntest itest stest 9test
-TESTS_NO_QP = atest dtest ftest vtest xtest
+TESTS_QP = atest gtest ntest itest stest 9test
+TESTS_NO_QP = dtest ftest vtest xtest
 TESTS = $(TESTS_QP) $(TESTS_NO_QP)
 # When listing the tests, we first put the ones that are more likely to raise errors.
 $(foreach TST, $(TESTS_QP), $(eval $(TST): SUBTESTS := \
@@ -110,8 +110,8 @@ $(foreach TST, $(TESTS), $(eval $(TST): TST_C := $(TST)_c))
 
 # The following tests compiles the code but do not run the binary. This is useful if we want to
 # check whether the code can compile
-TESTS_C_QP = gtest_c ntest_c itest_c stest_c 9test_c
-TESTS_C_NO_QP = atest_c dtest_c ftest_c vtest_c xtest_c
+TESTS_C_QP = atest_c gtest_c ntest_c itest_c stest_c 9test_c
+TESTS_C_NO_QP = dtest_c ftest_c vtest_c xtest_c
 TESTS_C = $(TESTS_C_QP) $(TESTS_C_NO_QP)
 $(foreach TST, $(TESTS_C_QP), $(eval $(TST): SUBTESTS_C := \
 	$(subst _c,,$(TST))_i2_r16_d1_tst_c $(subst _c,,$(TST))_i2_r4_d1_tst_c $(subst _c,,$(TST))_i2_r8_d1_tst_c \
@@ -143,13 +143,13 @@ $(foreach TST, $(TESTS_C_NO_QP), $(eval $(TST): SUBTESTS_C := \
 # The tests with ifort, ifx, etc are slow due to the intensive runtime checks. To save time, we
 # define the following tests. If itest_i2 succeeds, then itest_i4 and itest_i8 are likely (but not
 # surely) to be OK, because the only difference in the code is the integer kind. Similar for others.
-TESTS_INT_QP = gtest_i2 gtest_i4 gtest_i8 \
+TESTS_INT_QP = atest_i2 atest_i4 atest_i8 \
+			   gtest_i2 gtest_i4 gtest_i8 \
 			   ntest_i2 ntest_i4 ntest_i8 \
 			   itest_i2 itest_i4 itest_i8 \
 			   stest_i2 stest_i4 stest_i8 \
 			   9test_i2 9test_i4 9test_i8
-TESTS_INT_NO_QP = atest_i2 atest_i4 atest_i8 \
-				  dtest_i2 dtest_i4 dtest_i8 \
+TESTS_INT_NO_QP = dtest_i2 dtest_i4 dtest_i8 \
 				  ftest_i2 ftest_i4 ftest_i8 \
 				  vtest_i2 vtest_i4 vtest_i8 \
 				  xtest_i2 xtest_i4 xtest_i8
@@ -166,16 +166,16 @@ $(foreach TST, $(TESTS_INT), $(eval $(TST): TST_C := $(TST)_c))
 
 # The following tests compiles the code but do not run the binary. This is useful if we want to
 # check whether the code can compile
-TESTS_INT_C_QP = gtest_i2_c gtest_i4_c gtest_i8_c \
-			   ntest_i2_c ntest_i4_c ntest_i8_c \
-			   itest_i2_c itest_i4_c itest_i8_c \
-			   stest_i2_c stest_i4_c stest_i8_c \
-			   9test_i2_c 9test_i4_c 9test_i8_c
-TESTS_INT_C_NO_QP = atest_i2_c atest_i4_c atest_i8_c \
-				  dtest_i2_c dtest_i4_c dtest_i8_c \
-				  ftest_i2_c ftest_i4_c ftest_i8_c \
-				  vtest_i2_c vtest_i4_c vtest_i8_c \
-				  xtest_i2_c xtest_i4_c xtest_i8_c
+TESTS_INT_C_QP = atest_i2_c atest_i4_c atest_i8_c \
+				 gtest_i2_c gtest_i4_c gtest_i8_c \
+				 ntest_i2_c ntest_i4_c ntest_i8_c \
+				 itest_i2_c itest_i4_c itest_i8_c \
+				 stest_i2_c stest_i4_c stest_i8_c \
+				 9test_i2_c 9test_i4_c 9test_i8_c
+TESTS_INT_C_NO_QP = dtest_i2_c dtest_i4_c dtest_i8_c \
+					ftest_i2_c ftest_i4_c ftest_i8_c \
+					vtest_i2_c vtest_i4_c vtest_i8_c \
+					xtest_i2_c xtest_i4_c xtest_i8_c
 TESTS_INT_C = $(TESTS_INT_C_QP) $(TESTS_INT_C_NO_QP)
 $(foreach TST, $(TESTS_INT_C_QP), $(eval $(TST): SUBTESTS_C := \
 	$(subst _c,,$(TST))_r16_d1_tst_c $(subst _c,,$(TST))_r4_d1_tst_c $(subst _c,,$(TST))_r8_d1_tst_c \
@@ -227,9 +227,9 @@ endif
 # 2. For Debian-based systems, -no-pie is needed; for other systems, this option may not work.
 AFORT :=
 ifneq ("$(wildcard /etc/debian_version)","")
-	AFORT = af95 -no-pie -m1 -en -et -Rc -Rs -Rp
+	AFORT = af95 -no-pie -m1 -en -et -Rb -Rc -Rs -Rp
 else
-	AFORT = af95 -m1 -en -et -Rc -Rs -Rp
+	AFORT = af95 -m1 -en -et -Rb -Rc -Rs -Rp
 endif
 atest_i2_r4_d1_tst_c atest_i4_r4_d1_tst_c atest_i8_r4_d1_tst_c atest_i2_r4_d0_tst_c atest_i4_r4_d0_tst_c atest_i8_r4_d0_tst_c: \
 	FC = $(AFORT) -TENV:simd_zmask=off

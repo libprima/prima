@@ -1,4 +1,15 @@
 module selectx_mod
+!--------------------------------------------------------------------------------------------------!
+! This module provides subroutines that ensure the returned X is optimal among all the calculated
+! points in the sense that no other point achieves both lower function value and lower constraint
+! violation at the same time. The module is needed only in the constrained case.
+!
+! Coded by Zaikun ZHANG (www.zhangzk.net).
+!
+! Started: September 2021
+!
+! Last Modified: Sunday, October 10, 2021 AM02:47:51
+!--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
@@ -9,18 +20,20 @@ contains
 
 
 subroutine savefilt(constr, cstrv, ctol, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
+!--------------------------------------------------------------------------------------------------!
 ! This subroutine saves X, F, CONSTR, and CSTRV in XFILT, FFILT, CONFILT, and CFILT, unless a vector
 ! in XFILT(:, 1:NFILT) is better than X. If X is better than some vectors in XFILT(:, 1:NFILT), then
 ! these vectors will be removed. If X is not better than any of XFILT(:, 1:NFILT) but NFILT=NFILTMAX,
 ! then we remove XFILT(:,1), which is the oldest vector in XFILT(:, 1:NFILT).
-!
-! N.B.
+! N.B.:
 ! 1. Only XFILT(:, 1:NFILT) and FFILT(:, 1:NFILT) etc contains valid information, while
 ! XFILT(:, NFILT+1:NFILTMAX) and FFILT(:, NFILT+1:NFILTMAX) etc are not initialized yet.
 ! 2. We decide whether an X is better than another by the ISBETTER function.
+!--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf, is_neginf
 use, non_intrinsic :: memory_mod, only : safealloc
 
 implicit none
@@ -40,24 +53,42 @@ real(RP), intent(inout) :: ffilt(:)  ! NFILTMAX
 real(RP), intent(inout) :: xfilt(:, :) ! (N, NFILTMAX)
 
 ! Local variables
-integer(IK) :: n
-integer(IK) :: nfiltmax
+character(len=*), parameter :: srname = 'SAVEFILT'
 integer(IK) :: i
+integer(IK) :: nfiltmax
 integer(IK), allocatable :: index_to_keep(:)
 logical :: better(nfilt)
 logical :: keep(nfilt)
-character(len=*), parameter :: srname = 'SAVEFILT'
 
-n = int(size(x), kind(n))
+! Sizes
 nfiltmax = int(size(ffilt), kind(nfiltmax))
 
+! Preconditions
 if (DEBUGGING) then
-    call assert(n >= 1, 'N >= 1', srname)
+    ! Check the size of X.
+    call assert(size(x) >= 1, 'SIZE(X) >= 1', srname)
+    ! Check NFILT
+    call assert(nfilt <= nfiltmax, 'NFILT <= NFILTMAX', srname)
+    ! Check the sizes of XFILT, FFILT, CONFILT, CFILT.
     call assert(nfiltmax >= 1, 'NFILTMAX >= 1', srname)
-    call assert(size(xfilt, 2) == nfiltmax, 'SIZE(XFILT, 2) == NFILTMAX', srname)
-    call assert(size(confilt, 2) == nfiltmax, 'SIZE(CONFILT, 2) == NFILTMAX', srname)
+    call assert(size(xfilt, 1) == size(x) .and. size(xfilt, 2) == nfiltmax, &
+        & 'SIZE(XFILT) == [SIZE(X), NFILTMAX]', srname)
+    call assert(size(confilt, 1) == size(constr) .and. size(confilt, 2) == nfiltmax, &
+        & 'SIZE(CONFILT) == [SIZE(CONSTR), NFILTMAX]', srname)
     call assert(size(cfilt) == nfiltmax, 'SIZE(CFILT) == NFILTMAX', srname)
+    ! Check the values of XFILT, FFILT, CONFILT, CFILT.
+    call assert(all(is_finite(xfilt(:, 1:nfilt))), 'XHIST is finite', srname)
+    call assert(.not. any(is_nan(ffilt(1:nfilt)) .or. is_posinf(ffilt(1:nfilt))), &
+        & 'FHIST is not NaN or +Inf', srname)
+    call assert(.not. any(is_nan(confilt(:, 1:nfilt)) .or. is_neginf(confilt(:, 1:nfilt))), &
+        & 'CONHIST is not NaN or -Inf', srname)
+    call assert(.not. any(is_nan(cfilt(1:nfilt)) .or. is_posinf(cfilt(1:nfilt))), &
+        & 'CHIST is not NaN or +Inf', srname)
 end if
+
+!====================!
+! Calculation starts !
+!====================!
 
 ! Return immediately if any column of XFILT is better than X.
 ! BETTER is defined by the array constructor with an implicit do loop.
@@ -83,24 +114,49 @@ xfilt(:, 1:nfilt - 1) = xfilt(:, index_to_keep)
 ffilt(1:nfilt - 1) = ffilt(index_to_keep)
 confilt(:, 1:nfilt - 1) = confilt(:, index_to_keep)
 cfilt(1:nfilt - 1) = cfilt(index_to_keep)
-! F2003 automatically deallocate local ALLOCATABLE variables at exit, yet
-! we prefer to deallocate them immediately when they finish their jobs.
+! F2003 automatically deallocate local ALLOCATABLE variables at exit, yet we prefer to deallocate
+! them immediately when they finish their jobs.
 deallocate (index_to_keep)
 xfilt(:, nfilt) = x
 ffilt(nfilt) = f
 confilt(:, nfilt) = constr
 cfilt(nfilt) = cstrv
 
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    ! Check NFILT
+    call assert(nfilt <= nfiltmax, 'NFILT <= NFILTMAX', srname)
+    ! Check the values of XFILT, FFILT, CONFILT, CFILT.
+    call assert(all(is_finite(xfilt(:, 1:nfilt))), 'XHIST is finite', srname)
+    call assert(.not. any(is_nan(ffilt(1:nfilt)) .or. is_posinf(ffilt(1:nfilt))), &
+        & 'FHIST is not NaN or +Inf', srname)
+    call assert(.not. any(is_nan(confilt(:, 1:nfilt)) .or. is_neginf(confilt(:, 1:nfilt))), &
+        & 'CONHIST is not NaN or -Inf', srname)
+    call assert(.not. any(is_nan(cfilt(1:nfilt)) .or. is_posinf(cfilt(1:nfilt))), &
+        & 'CHIST is not NaN or +Inf', srname)
+    ! Check that no point in the filter is better than X, and X is better than no point.
+    call assert(.not. any([(isbetter([ffilt(i), cfilt(i)], [f, cstrv], ctol), i=1, nfilt)] &
+        & .or. [(isbetter([f, cstrv], [ffilt(i), cfilt(i)], ctol), i=1, nfilt)]), &
+        & 'no point in the filter is better than X, and X is better than no point', srname)
+end if
+
 end subroutine savefilt
 
 
 function selectx(fhist, chist, cpen, ctol) result(kopt)
+!--------------------------------------------------------------------------------------------------!
 ! This subroutine selects X according to the FHIST and CHIST, which represents (a piece of) history
 ! of F and CSTRV. Normally, FHIST and CHIST are not the full history but only a filter, e.g., FFILT
 ! and CFILT generated by SAVEFILT. However, we name them as FHIST and CHIST because the [F, CSTRV]
 ! in a filter should not dominate each other, but this subroutine does NOT assume such a structure.
+!--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : IK, RP, HUGENUM, HUGEFUN, HUGECON, ZERO, TWO, DEBUGGING
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: debug_mod, only : assert
 
 implicit none
@@ -111,24 +167,34 @@ real(RP), intent(in) :: chist(:)
 real(RP), intent(in) :: ctol
 real(RP), intent(in) :: fhist(:)
 
-! Output
+! Outputs
 integer(IK) :: kopt
 
 ! Local variables
+character(len=*), parameter :: srname = 'SELECTX'
+integer(IK) :: i
+real(RP) :: chist_shifted(size(fhist))
 real(RP) :: cmin
 real(RP) :: cref
-real(RP) :: chist_shifted(size(fhist))
 real(RP) :: fref
 real(RP) :: phi(size(fhist))
 real(RP) :: phimin
-character(len=*), parameter :: srname = 'SELECTX'
 
-
-! Get the verify the sizes.
+! Preconditions
 if (DEBUGGING) then
     call assert(size(fhist) >= 1, 'SIZE(FHIST) >= 1', srname)
     call assert(size(fhist) == size(chist), 'SIZE(FHIST) == SIZE(CHIST)', srname)
+    call assert(.not. any(is_nan(fhist) .or. is_posinf(fhist)), &
+        & 'FHIST does not contain NaN/+Inf', srname)
+    call assert(.not. any(chist < ZERO .or. is_nan(chist) .or. is_posinf(chist)), &
+        & 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
+    call assert(cpen >= ZERO, 'CPEN >= 0', srname)
+    call assert(ctol >= ZERO, 'CTOL >= 0', srname)
 end if
+
+!====================!
+! Calculation starts !
+!====================!
 
 ! We select X among the points with F < FREF and CSTRV < CREF.
 ! Do NOT use F <= FREF, because F = FREF (HUGEFUN or HUGENUM) may mean F = INF in practice.
@@ -168,20 +234,33 @@ else
     kopt = int(minloc(fhist, mask=(chist <= cref), dim=1), kind(kopt))
 end if
 
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(kopt >= 1 .and. kopt <= size(fhist), '1 <= KOPT <= SIZE(FHIST)', srname)
+    call assert(.not. any([(isbetter([fhist(i), chist(i)], [fhist(kopt), chist(kopt)], ctol), &
+        & i=1, size(fhist))]), 'no point in the history is better than X', srname)
+end if
+
 end function selectx
 
 
 function isbetter(fc1, fc2, ctol) result(is_better)
+!--------------------------------------------------------------------------------------------------!
 ! This function compares whether FC1 = (F1, CSTRV1) is (strictly) better than FC2 = (F2, CSTRV2),
 ! meaning that (F1 < F2 and CSTRV1 <= CSTRV2) or (F1 <= F2 and CSTRV1 < CSTRV2).
-! It takes care of the cases where some of these values are NaN or Inf.
+! It takes care of the cases where some of these values are NaN or Inf, even though some cases
+! should never happen due to the moderated extreme barrier.
 ! At return, BETTER = TRUE if and only if (F1, CSTRV1) is better than (F2, CSTRV2).
 ! Here, CSTRV means constraint violation, which is a nonnegative number.
+!--------------------------------------------------------------------------------------------------!
 
-! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, TEN, HUGENUM, DEBUGGING
-use, non_intrinsic :: infnan_mod, only : is_nan
-use, non_intrinsic :: debug_mod, only : errstop
+use, non_intrinsic :: consts_mod, only : RP, ZERO, TEN, HUGENUM, DEBUGGING
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
@@ -189,25 +268,49 @@ real(RP), intent(in) :: fc1(:)
 real(RP), intent(in) :: fc2(:)
 real(RP), intent(in) :: ctol
 
-! Output
-real(RP) :: cref
+! Outputs
 logical :: is_better
 
 ! Local variables
 character(len=*), parameter :: srname = 'ISBETTER'
+real(RP) :: cref
 
-
-! Verify the sizes
-if (DEBUGGING .and. (size(fc1) /= 2 .or. size(fc2) /= 2)) then
-    call errstop(srname, 'SIZE(FC1) or SIZE(FC2) is not 2')
+! Preconditions
+if (DEBUGGING) then
+    call assert(size(fc1) == 2 .and. size(fc2) == 2, 'SIZE(FC1) == 2 == SIZE(FC2)', srname)
+    call assert(.not. any(is_nan(fc1) .or. is_posinf(fc1)), 'FC1 does not contain NaN/+Inf', srname)
+    call assert(.not. any(is_nan(fc2) .or. is_posinf(fc2)), 'FC2 does not contain NaN/+Inf', srname)
+    call assert(fc1(2) >= ZERO .and. fc2(2) >= ZERO, 'FC1(2) >= ZERO, FC(2) >= ZERO', srname)
+    call assert(ctol >= ZERO, 'CTOL >= 0', srname)
 end if
 
+!====================!
+! Calculation starts !
+!====================!
+
 is_better = .false.
+! Even though NaN/+Inf should not occur in FC1 or FC2 due to the moderated extreme barrier, for
+! security and robustness, the code below does not make this assumption.
 is_better = is_better .or. (.not. any(is_nan(fc1)) .and. any(is_nan(fc2)))
 is_better = is_better .or. (fc1(1) < fc2(1) .and. fc1(2) <= fc2(2))
 is_better = is_better .or. (fc1(1) <= fc2(1) .and. fc1(2) < fc2(2))
 cref = TEN * max(ctol, epsilon(ctol))
-is_better = is_better .or. (fc1(1) < HUGENUM .and. fc1(2) <= ctol .and. ((fc2(2) > cref) .or. is_nan(fc2(2))))
+is_better = is_better .or. (fc1(1) < HUGENUM .and. fc1(2) <= ctol .and. &
+    & ((fc2(2) > cref) .or. is_nan(fc2(2))))
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(.not. (fc1(1) >= fc2(1) .and. fc1(2) >= fc2(2) .and. is_better), &
+        & 'FC1 >= FC2 and IS_BETTER cannot be both true', srname)
+    call assert((.not. (fc1(1) <= fc2(1) .and. fc1(2) < fc2(2))) .or. is_better, &
+        & 'if FC1 <= FC2 but not equal, then IS_BETTER must be true', srname)
+    call assert((.not. (fc1(1) < fc2(1) .and. fc1(2) <= fc2(2))) .or. is_better, &
+        & 'if FC1 <= FC2 but not equal, then IS_BETTER must be true', srname)
+end if
 
 end function isbetter
 

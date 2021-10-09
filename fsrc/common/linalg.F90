@@ -1,4 +1,8 @@
-! LINALG is a module providing some basic linear algebra procedures. To improve the performance of
+#include "ppf.h"
+
+module linalg_mod
+!--------------------------------------------------------------------------------------------------
+! This module provides some basic linear algebra procedures. To improve the performance of
 ! these procedures, especially matprod, one can customize their implementations according to the
 ! resources (hardware, e.g., cache, and libraries, e.g., BLAS) available and the sizes of the
 ! matrices/vectors.
@@ -17,12 +21,8 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, September 26, 2021 PM07:06:08
-
-
-#include "ppf.h"
-
-module linalg_mod
+! Last Modified: Sunday, October 10, 2021 AM03:24:37
+!--------------------------------------------------------------------------------------------------
 
 implicit none
 private

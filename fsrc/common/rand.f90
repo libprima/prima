@@ -6,13 +6,12 @@ module rand_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Saturday, October 09, 2021 PM07:53:43
+! Last Modified: Saturday, October 09, 2021 PM11:04:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
 public :: getseed, setseed, rand, randn
-
 
 interface setseed
 ! SETSEED sets the random seed by calling RANDOM_SEED.
@@ -22,14 +21,14 @@ end interface setseed
 
 interface rand
 ! RAND generates a random number/vector/matrix whose entries are iid sampled from U([0,1)).
-! N.B.: Here, RAND(N) is an N-dimensional vector; in MATLAB, RAND(N) is an NxN matrix.
+! N.B.: Here, RAND(N) is an N-dimensional vector; in MATLAB, RAND(N) is an NxN matrix. DIFFERENT!!
     module procedure rand0, rand1, rand2
 end interface rand
 
 interface randn
 ! RANDN generates a random number/vector/matrix whose entries are iid sampled from N(0,1). They are
 ! generated from U([0,1)) by the Box-Muller transform.
-! N.B.: Here, RANDN(N) is an N-dimensional vector; in MATLAB, RANDN(N) is an NxN matrix.
+! N.B.: Here, RANDN(N) is an N-dimensional vector; in MATLAB, RANDN(N) is an NxN matrix. DIFFERENT!!
     module procedure randn0, randn1, randn2
 end interface randn
 
