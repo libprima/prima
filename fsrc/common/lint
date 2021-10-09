@@ -22,7 +22,7 @@ cd "$TEST_DIR" || exit 1
 
 make cleanall."$SOLVER" > /dev/null
 
-for COMPILER in g n a s i v f d x ; do
+for COMPILER in g n 9 a s i v f d x ; do
     if [[ $COMPILER == 'f' || $COMPILER == 'v' || $COMPILER == 'x' ]] ; then
         TESTS="i4_r8_d1 i4_r8_d0 i2_r4_d1 i8_r4_d1"
     else

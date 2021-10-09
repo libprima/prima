@@ -86,7 +86,7 @@ CHCKTST = ../checktest
 # Flang and nvfortran do not support REAL128;
 # AOCC Flang complains about a symbol lookup error: undefined symbol: "fort_rnumq_i8";
 # ifx encounters an internal error when compiling with REAL128.
-TESTS_QP = gtest ntest itest stest
+TESTS_QP = gtest ntest itest stest 9test
 TESTS_NO_QP = atest dtest ftest vtest xtest
 TESTS = $(TESTS_QP) $(TESTS_NO_QP)
 # When listing the tests, we first put the ones that are more likely to raise errors.
@@ -110,7 +110,7 @@ $(foreach TST, $(TESTS), $(eval $(TST): TST_C := $(TST)_c))
 
 # The following tests compiles the code but do not run the binary. This is useful if we want to
 # check whether the code can compile
-TESTS_C_QP = gtest_c ntest_c itest_c stest_c
+TESTS_C_QP = gtest_c ntest_c itest_c stest_c 9test_c
 TESTS_C_NO_QP = atest_c dtest_c ftest_c vtest_c xtest_c
 TESTS_C = $(TESTS_C_QP) $(TESTS_C_NO_QP)
 $(foreach TST, $(TESTS_C_QP), $(eval $(TST): SUBTESTS_C := \
@@ -146,7 +146,8 @@ $(foreach TST, $(TESTS_C_NO_QP), $(eval $(TST): SUBTESTS_C := \
 TESTS_INT_QP = gtest_i2 gtest_i4 gtest_i8 \
 			   ntest_i2 ntest_i4 ntest_i8 \
 			   itest_i2 itest_i4 itest_i8 \
-			   stest_i2 stest_i4 stest_i8
+			   stest_i2 stest_i4 stest_i8 \
+			   9test_i2 9test_i4 9test_i8
 TESTS_INT_NO_QP = atest_i2 atest_i4 atest_i8 \
 				  dtest_i2 dtest_i4 dtest_i8 \
 				  ftest_i2 ftest_i4 ftest_i8 \
@@ -168,7 +169,8 @@ $(foreach TST, $(TESTS_INT), $(eval $(TST): TST_C := $(TST)_c))
 TESTS_INT_C_QP = gtest_i2_c gtest_i4_c gtest_i8_c \
 			   ntest_i2_c ntest_i4_c ntest_i8_c \
 			   itest_i2_c itest_i4_c itest_i8_c \
-			   stest_i2_c stest_i4_c stest_i8_c
+			   stest_i2_c stest_i4_c stest_i8_c \
+			   9test_i2_c 9test_i4_c 9test_i8_c
 TESTS_INT_C_NO_QP = atest_i2_c atest_i4_c atest_i8_c \
 				  dtest_i2_c dtest_i4_c dtest_i8_c \
 				  ftest_i2_c ftest_i4_c ftest_i8_c \
@@ -329,6 +331,16 @@ xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d
 	-fp-trap=divzero,invalid,overflow#,underflow,denormal
 	#-no-ftz -fp-model strict
 
+# G95
+9FORT = g95 -std=f$(FSTD) -pedantic -Wall -Wextra \
+	-Wimplicit-none -Wline-truncation -Wprecision-loss -Wunused-module-vars -Wunused-vars -Wunset-vars \
+	-fimplicit-none -fbounds-check -ftrace=full
+9test_i2_r4_d1_tst_c 9test_i4_r4_d1_tst_c 9test_i8_r4_d1_tst_c 9test_i2_r4_d0_tst_c 9test_i4_r4_d0_tst_c 9test_i8_r4_d0_tst_c: \
+	FC = $(9FORT)
+9test_i2_r8_d1_tst_c 9test_i4_r8_d1_tst_c 9test_i8_r8_d1_tst_c 9test_i2_r8_d0_tst_c 9test_i4_r8_d0_tst_c 9test_i8_r8_d0_tst_c: \
+	FC = $(9FORT)
+9test_i2_r16_d1_tst_c 9test_i4_r16_d1_tst_c 9test_i8_r16_d1_tst_c 9test_i2_r16_d0_tst_c 9test_i4_r16_d0_tst_c 9test_i8_r16_d0_tst_c: \
+	FC = $(9FORT)
 
 ####################################################################################################
 # All the tests.
@@ -376,7 +388,11 @@ $(TESTS_C) $(TESTS_INT_C):
 %_tst: %_tst_c
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
-	./$< 2>&1 | tee -a "$(LOG_DIR)/$@.log"
+	@if echo $@ | grep -q 9test ; then \
+		printf "\n$@ is skipped!\n\n" ; \
+	else \
+		./$< 2>&1 | tee -a "$(LOG_DIR)/$@.log" ; \
+	fi
 	bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
 	bash $(CHCKTST) --warning "$(LOG_DIR)/$@.log"
 	@printf "\n$@ ends at $(shell date +%Y.%m.%d_%H.%M.%S).\n\n" | tee -a "$(LOG_DIR)/$@.log"
@@ -402,7 +418,18 @@ $(TESTS_C) $(TESTS_INT_C):
 source_%: $(SRC_DIRS)
 	@printf "\nMaking a copy of the source code for the test.\n"
 	@for DIR in $(SRC_DIRS); do cp -r "$$DIR" ./; done
-	for FILE in $(DRIVER_SRC); do cp $(DRIVER_DIR)/"$$FILE" ./; done
+	@for FILE in $(DRIVER_SRC); do cp $(DRIVER_DIR)/"$$FILE" ./; done
+	@find ./ -type f  \
+		\( -name '*.mod' \
+		-o -name '*.o' \
+		-o -name '*.dbg' \
+		-o -name '*.cmdx' \
+		-o -name '*.cmod' \
+		-o -name '*.ilm' \
+		-o -name '*.stb' \
+		-o -name '*.out' \
+		-o -name '*__genmod.f90' \
+		\)  -exec rm "{}" +  # Cleaning up; important!!!
 	@printf "\nDone.\n\n"
 
 # Adapt the header file for the test.
@@ -428,7 +455,7 @@ cleanbin:
 
 cleanmisc:
 	@printf "\nCleaning up miscellaneous files ...\n"
-	@rm -f *.o *.mod *.dbg *.cmdx *.cmod *.ilm *.stb
+	@rm -f *.o *.mod *.dbg *.cmdx *.cmod *.ilm *.stb *.out *__genmod.f90
 	@rm -f *_output.txt
 	@printf "\nDone.\n\n"
 

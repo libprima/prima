@@ -71,7 +71,7 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    ! With the moderated extreme barrier, F cannot be Inf/NaN.
+    ! With the moderated extreme barrier, F cannot be NaN/+Inf.
     call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
 end if
 
