@@ -6,7 +6,7 @@ module checkexit_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, October 09, 2021 AM01:23:10
+! Last Modified: Saturday, October 09, 2021 PM12:59:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -54,7 +54,7 @@ if (DEBUGGING) then
     ! X should be finite if the initial X does not contain NaN and the subroutines generating
     ! trust-region/geometry steps work properly so that they never produce a step containing NaN/Inf.
     call assert(all(is_finite(x)), 'X is finite', srname)
-    ! With the moderated extreme barrier, F cannot be Inf/NaN.
+    ! With the moderated extreme barrier, F cannot be NaN/+Inf.
     call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
 end if
 
@@ -130,7 +130,7 @@ if (DEBUGGING) then
     ! X should be finite if the initial X does not contain NaN and the subroutines generating
     ! trust-region/geometry steps work properly so that they never produce a step containing NaN/Inf.
     call assert(all(is_finite(x)), 'X is finite', srname)
-    ! With the moderated extreme barrier, F or CSTRV cannot be Inf/NaN.
+    ! With the moderated extreme barrier, F or CSTRV cannot be NaN/+Inf.
     call assert(.not. (is_nan(f) .or. is_posinf(f) .or. is_nan(cstrv) .or. is_posinf(cstrv)), &
         & 'F or CSTRV is not NaN or +Inf', srname)
 end if

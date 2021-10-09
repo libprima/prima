@@ -38,7 +38,7 @@ case "$1" in
             printf "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n\n"
             printf "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n"
             printf "X Errors logged in %s:\n\n" "$LOGFILE"
-            printf "%s" "${ERRORS//^/X }"
+            printf "%s" "$(echo "$ERRORS" | sed "s/^/X /")"
            printf "\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n\n"
 			exit 1
 		else

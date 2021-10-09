@@ -5,7 +5,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Saturday, October 09, 2021 PM12:37:05
+! Last Modified: Saturday, October 09, 2021 PM05:19:57
 
 implicit none
 private
@@ -17,7 +17,7 @@ contains
 
 subroutine test_solver(probs, mindim, maxdim, dimstride, nrand)
 
-use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN
+use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN, ZERO
 use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, DIMSTRIDE_DFT, NRAND_DFT
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: newuoa_mod, only : newuoa
@@ -103,21 +103,24 @@ do iprob = 1, nprobs
             else
                 npt = int(floor(TEN * rand() * real(n, RP)), kind(npt))
             end if
-            if (rand() < 0.2_RP) then
+            if (rand() <= 0.1_RP) then
                 npt = 0
             end if
             maxfun = int(floor(2.0E2_RP * rand() * real(n, RP)), kind(maxfun))
-            if (rand() < 0.2_RP) then
+            if (rand() <= 0.1_RP) then
                 maxfun = 0
             end if
             maxhist = int(floor(TWO * rand() * real(maxfun, RP)), kind(maxhist))
-            if (rand() < 0.2_RP) then
+            if (rand() <= 0.1_RP) then
                 maxhist = 0
             end if
             rhobeg = getdelta0(n)
             rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(6.0_RP * rand() - 5.0_RP))
-            if (rand() < 0.2_RP) then
+            if (rand() <= 0.1_RP) then
                 rhoend = rhobeg
+            elseif (rand() <= 0.1_RP) then
+                ! The probability to arrive here is 0.09. Note that the value of rand() changes.
+                rhobeg = ZERO
             end if
             call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
             x = getx0(n)

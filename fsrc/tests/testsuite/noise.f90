@@ -55,11 +55,18 @@ real(RP) :: noify_f
 integer, allocatable :: seedsav(:)
 integer :: seed
 real(RP) :: r
+real(RP) :: cosx(size(x))
+real(RP) :: cosf
+real(RP) :: seedx
+real(RP) :: seedf
 
 call getseed(seedsav)
-! Some compilers cannot guarantee ABS(COS) <= 1. It may cause overflow of INTETER when taking CEILING.
-seed = ceiling(TENTH * real(huge(0), RP) * &
-    & min(ONE, abs(cos(1.0E3_RP * (abs(f) + ONE) * cos(1.0E3_RP * sum(abs(x)))))))
+! Some compilers cannot guarantee ABS(COS) <= 1 when the variable if huge. This may cause overflow.
+cosx = min(max(cos(x), -ONE), ONE)
+cosf = min(max(cos(f), -ONE), ONE)
+seedx = min(abs(cos(1.0E3_RP * sum(cosx))), ONE)
+seedf = min(abs(cos(1.0E3_RP * cosf)), ONE)
+seed = ceiling(TENTH * real(huge(0), RP) * seedx * seedf)
 call setseed(max(abs(seed), 1))
 call setseed(seedsav)
 deallocate (seedsav)
