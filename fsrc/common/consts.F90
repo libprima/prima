@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, October 08, 2021 PM10:36:24
+! Last Modified: Saturday, October 09, 2021 AM08:58:52
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -89,7 +89,7 @@ logical, parameter :: DEBUGGING = .false.
 #endif
 
 #if __USE_ISO_FORTRAN_ENV_INTREAL__ != 1
-! For gfortran, SELECTED_REAL_KIND(K) returns INT16 with K = 3--4, INT32 with k = 5--9, and INT64 
+! For gfortran, SELECTED_REAL_KIND(K) returns INT16 with K = 3--4, INT32 with k = 5--9, and INT64
 ! with K = 10--18. SELECTED_REAL_KIND returns a negative value for an unsupported kind.
 #if __INTEGER_KIND__ == 16
 integer, parameter :: INT16 = selected_int_kind(4)
@@ -144,7 +144,7 @@ real(RP), parameter :: QUART = 0.25_RP
 real(RP), parameter :: TEN = 10.0_RP
 real(RP), parameter :: TENTH = 0.1_RP
 real(RP), parameter :: PI = 3.141592653589793238462643383279502884_RP
-! We may set PI to acos(-1.0_RP), but some compilers may complain about `Elemental function as 
+! We may set PI to acos(-1.0_RP), but some compilers may complain about `Elemental function as
 ! initialization expression with non-integer or non-character arguments`.
 
 real(RP), parameter :: EPS = epsilon(ZERO)
