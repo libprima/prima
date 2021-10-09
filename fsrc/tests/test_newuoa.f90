@@ -5,7 +5,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, October 05, 2021 AM12:28:09
+! Last Modified: Saturday, October 09, 2021 PM12:17:28
 
 implicit none
 private
@@ -103,10 +103,22 @@ do iprob = 1, nprobs
             else
                 npt = int(floor(TEN * rand() * real(n, RP)), kind(npt))
             end if
+            if (rand() < 0.3_RP) then
+                npt = 0
+            end if
             maxfun = int(floor(2.0E2_RP * rand() * real(n, RP)), kind(maxfun))
+            if (rand() < 0.3_RP) then
+                maxfun = 0
+            end if
             maxhist = int(floor(TWO * rand() * real(maxfun, RP)), kind(maxhist))
+            if (rand() < 0.3_RP) then
+                maxhist = 0
+            end if
             rhobeg = getdelta0(n)
-            rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(-5.0E0_RP * rand()))
+            rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(6.0_RP * rand() - 5.0_RP))
+            if (rand() < 0.3_RP) then
+                rhoend = rhobeg
+            end if
             call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
             x = getx0(n)
             print '(/1A, I3, 1A, I3)', trimstr(probname)//': N = ', n, ', Random test ', irand
