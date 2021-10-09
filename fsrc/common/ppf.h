@@ -164,6 +164,8 @@
 
 /******************************************************************************/
 /* Do we use the STORAGE_SIZE intrinsic? (Fortran 2008) */
+/* We prefer STORAGE_SIZE to C_SIZEOF, because the former is intrinsic while the
+ * later requires the intrinsic module ISO_C_BINDING. */
 #if defined __USE_STORAGE_SIZE__
 #undef __USE_STORAGE_SIZE__
 #endif
