@@ -2,6 +2,7 @@
 # as possible.
 #
 # The following compilers are tested:
+# 9: G95 (compilation only)
 # a: Absoft af95
 # d: AOCC flang
 # f: LLVM flang
@@ -12,7 +13,7 @@
 # v: NVIDIA nvfortran
 # x: Intel ifx
 #
-# The following tests are available, where C = a, d, f, g, n, i, s, v, x, and N = 2, 4, 8:
+# The following tests are available, where C = 9, a, d, f, g, n, i, s, v, x, and N = 2, 4, 8:
 # Ctest: test with compiler C
 # Ctest_c: test with compiler C; compilation only (do not run the binary)
 # Ctest_iN: test with compiler C and integer kind INT(N*8)
@@ -240,7 +241,8 @@ atest_i2_r16_d1_tst_c atest_i4_r16_d1_tst_c atest_i8_r16_d1_tst_c atest_i2_r16_d
 	FC = $(AFORT) -TENV:simd_zmask=off
 
 # AMD AOCC Flang
-DFORT = /opt/AMD/aocc-compiler-3.1.0/bin/flang -std=f$(FSTD) -Mstandard -Wall -Wextra
+AFLANG := $(shell find /opt/AMD \( -type l -o -type f \) -executable -name flang -print -quit)
+DFORT = $(AFLANG) -std=f$(FSTD) -Mstandard -Wall -Wextra
 dtest_i2_r4_d1_tst_c dtest_i4_r4_d1_tst_c dtest_i8_r4_d1_tst_c dtest_i2_r4_d0_tst_c dtest_i4_r4_d0_tst_c dtest_i8_r4_d0_tst_c: \
 	FC = $(DFORT)
 dtest_i2_r8_d1_tst_c dtest_i4_r8_d1_tst_c dtest_i8_r8_d1_tst_c dtest_i2_r8_d0_tst_c dtest_i4_r8_d0_tst_c dtest_i8_r8_d0_tst_c: \

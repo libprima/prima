@@ -8,7 +8,7 @@ module memory_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, October 09, 2021 PM10:44:35
+! Last Modified: Sunday, October 10, 2021 AM10:19:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -223,7 +223,7 @@ integer(IK) :: y
 y = int(storage_size(x) / 8, kind(y))
 #else
 y = int(kind(x), kind(y)) ! Avoid complaint
-y = int(8, kind(y))  ! This is not portable
+y = int(16, kind(y))  ! This is not portable
 #endif
 end function size_of_qp
 

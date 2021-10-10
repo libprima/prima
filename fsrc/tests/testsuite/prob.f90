@@ -15,6 +15,7 @@ function getx0(n) result(x)
 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, TENTH, PI
 use, non_intrinsic :: noise_mod, only : noisyx
+use, non_intrinsic :: param_mod, only : XNOISE_DFT
 use, non_intrinsic :: rand_mod, only : getseed, setseed, rand
 use, non_intrinsic :: string_mod, only : lower, trimstr
 
@@ -59,7 +60,7 @@ elseif (lower(trimstr(probname)) == 'vardim') then
     x = ONE - ind / real(n, RP)
 end if
 
-x = noisyx(x)
+x = noisyx(x, noise_level = XNOISE_DFT)
 
 end function getx0
 
@@ -68,6 +69,7 @@ function getdelta0(n) result(delta)
 
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HALF, TENTH
 use, non_intrinsic :: noise_mod, only : noisy
+use, non_intrinsic :: param_mod, only : NOISE_DFT
 use, non_intrinsic :: string_mod, only : lower, trimstr
 
 implicit none
@@ -87,7 +89,7 @@ elseif (lower(trimstr(probname)) == 'trigssqs') then
 elseif (lower(trimstr(probname)) == 'vardim') then
     delta = ONE / real(2 * n, RP)
 end if
-delta = noisy(delta)
+delta = noisy(delta, noise_level = NOISE_DFT)
 
 end function getdelta0
 
@@ -96,6 +98,7 @@ subroutine calfun(x, f)
 
 use, non_intrinsic :: consts_mod, only : RP, ZERO
 use, non_intrinsic :: noise_mod, only : noisyfun
+use, non_intrinsic :: param_mod, only : FNOISE_DFT
 use, non_intrinsic :: string_mod, only : lower, trimstr
 
 implicit none
@@ -117,7 +120,7 @@ elseif (lower(trimstr(probname)) == 'vardim') then
     f = vardim(x)
 end if
 
-f = noisyfun(x, f)
+f = noisyfun(x, f, noise_level = FNOISE_DFT, noise_type='gaussian')
 
 end subroutine calfun
 

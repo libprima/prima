@@ -6,12 +6,14 @@ module noise_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, October 10, 2021 AM12:54:48
+! Last Modified: Sunday, October 10, 2021 AM10:58:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
 public :: noisy, noisyx, noisyfun
+
+integer, parameter :: NOISE_TYPE_LEN = 64
 
 
 contains
@@ -107,7 +109,7 @@ character(len=*), optional, intent(in) :: noise_type
 real(RP) :: noify_f
 
 ! Local variables
-character(len=128) :: noise_type_loc
+character(len=NOISE_TYPE_LEN) :: noise_type_loc
 integer, allocatable :: seedsav(:)
 integer :: seed
 real(RP) :: cosx(size(x))
@@ -130,6 +132,7 @@ else
 end if
 
 ! Quick returns
+! Without doing this, some compilers (e.g., Absoft 21.0) may have difficulties when evaluating COS.
 if (.not. is_finite(f)) then
     noify_f = f
     return

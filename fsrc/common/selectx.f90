@@ -8,7 +8,7 @@ module selectx_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, October 10, 2021 AM02:47:51
+! Last Modified: Sunday, October 10, 2021 PM02:18:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -77,13 +77,13 @@ if (DEBUGGING) then
         & 'SIZE(CONFILT) == [SIZE(CONSTR), NFILTMAX]', srname)
     call assert(size(cfilt) == nfiltmax, 'SIZE(CFILT) == NFILTMAX', srname)
     ! Check the values of XFILT, FFILT, CONFILT, CFILT.
-    call assert(all(is_finite(xfilt(:, 1:nfilt))), 'XHIST is finite', srname)
+    call assert(all(is_finite(xfilt(:, 1:nfilt))), 'XFILT is finite', srname)
     call assert(.not. any(is_nan(ffilt(1:nfilt)) .or. is_posinf(ffilt(1:nfilt))), &
-        & 'FHIST is not NaN or +Inf', srname)
+        & 'FFILT does not contain NaN/+Inf', srname)
     call assert(.not. any(is_nan(confilt(:, 1:nfilt)) .or. is_neginf(confilt(:, 1:nfilt))), &
-        & 'CONHIST is not NaN or -Inf', srname)
-    call assert(.not. any(is_nan(cfilt(1:nfilt)) .or. is_posinf(cfilt(1:nfilt))), &
-        & 'CHIST is not NaN or +Inf', srname)
+        & 'CONFILT does not contain NaN/-Inf', srname)
+    call assert(.not. any(cfilt(1:nfilt) < 0 .or. is_nan(cfilt(1:nfilt)) .or. is_posinf(cfilt(1:nfilt))), &
+        & 'CFILT does not contain nonnegative values of NaN/+Inf', srname)
 end if
 
 !====================!
@@ -129,19 +129,20 @@ cfilt(nfilt) = cstrv
 ! Postconditions
 if (DEBUGGING) then
     ! Check NFILT
-    call assert(nfilt <= nfiltmax, 'NFILT <= NFILTMAX', srname)
+    call assert(nfilt >= 0 .and. nfilt <= nfiltmax, '0 <= NFILT <= NFILTMAX', srname)
     ! Check the values of XFILT, FFILT, CONFILT, CFILT.
-    call assert(all(is_finite(xfilt(:, 1:nfilt))), 'XHIST is finite', srname)
+    call assert(all(is_finite(xfilt(:, 1:nfilt))), 'XFILT is finite', srname)
     call assert(.not. any(is_nan(ffilt(1:nfilt)) .or. is_posinf(ffilt(1:nfilt))), &
-        & 'FHIST is not NaN or +Inf', srname)
+        & 'FFILT does not contain NaN/+Inf', srname)
     call assert(.not. any(is_nan(confilt(:, 1:nfilt)) .or. is_neginf(confilt(:, 1:nfilt))), &
-        & 'CONHIST is not NaN or -Inf', srname)
-    call assert(.not. any(is_nan(cfilt(1:nfilt)) .or. is_posinf(cfilt(1:nfilt))), &
-        & 'CHIST is not NaN or +Inf', srname)
+        & 'CONFILT does not contain NaN/-Inf', srname)
+    call assert(.not. any(cfilt(1:nfilt) < 0 .or. is_nan(cfilt(1:nfilt)) .or. is_posinf(cfilt(1:nfilt))), &
+        & 'CFILT does not contain nonnegative values of NaN/+Inf', srname)
     ! Check that no point in the filter is better than X, and X is better than no point.
-    call assert(.not. any([(isbetter([ffilt(i), cfilt(i)], [f, cstrv], ctol), i=1, nfilt)] &
-        & .or. [(isbetter([f, cstrv], [ffilt(i), cfilt(i)], ctol), i=1, nfilt)]), &
-        & 'no point in the filter is better than X, and X is better than no point', srname)
+    call assert(.not. any([(isbetter([ffilt(i), cfilt(i)], [f, cstrv], ctol), i=1, nfilt)]), &
+        & 'No point in the filter is better than X', srname)
+    call assert(.not. any([(isbetter([f, cstrv], [ffilt(i), cfilt(i)], ctol), i=1, nfilt)]), &
+        & 'X is better than no point in the filter', srname)
 end if
 
 end subroutine savefilt
@@ -173,6 +174,7 @@ integer(IK) :: kopt
 ! Local variables
 character(len=*), parameter :: srname = 'SELECTX'
 integer(IK) :: i
+integer(IK) :: nhist
 real(RP) :: chist_shifted(size(fhist))
 real(RP) :: cmin
 real(RP) :: cref
@@ -180,16 +182,19 @@ real(RP) :: fref
 real(RP) :: phi(size(fhist))
 real(RP) :: phimin
 
+! Sizes
+nhist = int(size(fhist), IK)
+
 ! Preconditions
 if (DEBUGGING) then
-    call assert(size(fhist) >= 1, 'SIZE(FHIST) >= 1', srname)
-    call assert(size(fhist) == size(chist), 'SIZE(FHIST) == SIZE(CHIST)', srname)
+    call assert(nhist >= 1, 'SIZE(FHIST) >= 1', srname)
+    call assert(size(chist) == nhist, 'SIZE(FHIST) == SIZE(CHIST)', srname)
     call assert(.not. any(is_nan(fhist) .or. is_posinf(fhist)), &
         & 'FHIST does not contain NaN/+Inf', srname)
-    call assert(.not. any(chist < ZERO .or. is_nan(chist) .or. is_posinf(chist)), &
+    call assert(.not. any(chist < 0 .or. is_nan(chist) .or. is_posinf(chist)), &
         & 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
-    call assert(cpen >= ZERO, 'CPEN >= 0', srname)
-    call assert(ctol >= ZERO, 'CTOL >= 0', srname)
+    call assert(cpen >= 0, 'CPEN >= 0', srname)
+    call assert(ctol >= 0, 'CTOL >= 0', srname)
 end if
 
 !====================!
@@ -213,14 +218,14 @@ else
 end if
 
 if (.not. any(fhist < fref .and. chist < cref)) then
-    kopt = int(size(fhist), kind(kopt))
+    kopt = nhist
 else
     ! Shift the constraint violations by CTOL, so that CSTRV <= CTOL is regarded as no violation.
     chist_shifted = max(chist - ctol, ZERO)
     ! CMIN is the minimal shifted constraint violation attained in the history.
     cmin = minval(chist_shifted, mask=(fhist < fref))
     ! We select X among the points whose shifted constraint violations are at most CREF.
-    cref = TWO * cmin  ! CREF = ZERO if CMIN = ZERO; asking for CSTRV_SHIFTED < CREF is unreasonable.
+    cref = TWO * cmin  ! CREF = 0 if CMIN = 0; thus asking for CSTRV_SHIFTED < CREF is unreasonable.
     ! We use the following PHI as our merit function to select X.
     phi = fhist + cpen * chist_shifted
     ! We select X to minimize PHI subject to F < FREF and CSTRV_SHIFTED <= CREF. In case there are
@@ -240,9 +245,9 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(kopt >= 1 .and. kopt <= size(fhist), '1 <= KOPT <= SIZE(FHIST)', srname)
+    call assert(kopt >= 1 .and. kopt <= nhist, '1 <= KOPT <= SIZE(FHIST)', srname)
     call assert(.not. any([(isbetter([fhist(i), chist(i)], [fhist(kopt), chist(kopt)], ctol), &
-        & i=1, size(fhist))]), 'no point in the history is better than X', srname)
+        & i=1, nhist)]), 'No point in the history is better than X', srname)
 end if
 
 end function selectx
@@ -258,7 +263,7 @@ function isbetter(fc1, fc2, ctol) result(is_better)
 ! Here, CSTRV means constraint violation, which is a nonnegative number.
 !--------------------------------------------------------------------------------------------------!
 
-use, non_intrinsic :: consts_mod, only : RP, ZERO, TEN, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, TEN, HUGENUM, DEBUGGING
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
@@ -280,8 +285,8 @@ if (DEBUGGING) then
     call assert(size(fc1) == 2 .and. size(fc2) == 2, 'SIZE(FC1) == 2 == SIZE(FC2)', srname)
     call assert(.not. any(is_nan(fc1) .or. is_posinf(fc1)), 'FC1 does not contain NaN/+Inf', srname)
     call assert(.not. any(is_nan(fc2) .or. is_posinf(fc2)), 'FC2 does not contain NaN/+Inf', srname)
-    call assert(fc1(2) >= ZERO .and. fc2(2) >= ZERO, 'FC1(2) >= ZERO, FC(2) >= ZERO', srname)
-    call assert(ctol >= ZERO, 'CTOL >= 0', srname)
+    call assert(fc1(2) >= 0 .and. fc2(2) >= 0, 'FC1(2) >= 0, FC(2) >= 0', srname)
+    call assert(ctol >= 0, 'CTOL >= 0', srname)
 end if
 
 !====================!
