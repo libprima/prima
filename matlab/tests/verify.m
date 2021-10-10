@@ -22,17 +22,33 @@ function verify(varargin)
 % Last Modified: Monday, October 04, 2021 PM09:19:19
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Parse the inputs.
-[solver, options] = parse_input(varargin);
+olddir = cd();  % Record the current path.
+oldpath = path();  % Record the current dir.
 
-% Mexify the solvers.
-if options.compile
-    mex_solvers(solver);
+try
+
+    % Parse the inputs.
+    [solver, options] = parse_input(varargin);
+
+    % Mexify the solvers.
+    if options.compile
+        mex_solvers(solver);
+    end
+
+    % Tell MATLAB where to find CUTEST.
+    locate_cutest();
+
+    % Conduct the verification.
+    solvers = {[solver, 'n'], solver};
+    isequiv(solvers, options);  % `isequiv` raises an error in case the solver behave differently.
+
+catch exception
+
+    setpath(oldpath);  % Restore the path to oldpath.
+    cd(olddir);  % Go back to olddir.
+    rethrow(exception);
+
 end
 
-% Tell MATLAB where to find CUTEST.
-locate_cutest();
-
-% Conduct the verification.
-solvers = {[solver, 'n'], solver};
-isequiv(solvers, options);  % `isequiv` raises an error in case the solver behave differently.
+setpath(oldpath);  % Restore the path to oldpath.
+cd(olddir);  % Go back to olddir.
