@@ -1,4 +1,10 @@
 ! TODO:
+
+Improve matlab/tests/private/isequiv&perfdata:
+allow to choose between parallel and non parallel ;
+improve the single test case in isequiv. 
+
+
 ! The COBYLA in ./neupdfo.1 and ./neupdfo.2 did not behave the same as OPDFO/cobyla therein on
 ! problem BQP1VAR, the 10the run. Find out why, and check whether the new version gets rid of the problem.
 !

@@ -612,10 +612,8 @@ end function vmd
 function PLANEROT_TMP(x) result(G)
 ! As in MATLAB, PLANEROT(X) returns a 2x2 Givens matrix G for X in R^2 so that Y = G*X has Y(2) = 0.
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HUGENUM
-
-#if __DEBUGGING__ == 1
+use, non_intrinsic :: linalg_mod, only : eye
 use, non_intrinsic :: debug_mod, only : verisize
-#endif
 
 implicit none
 real(RP), intent(in) :: x(:)
@@ -623,9 +621,7 @@ real(RP) :: G(2, 2)
 
 real(RP) :: c, s, r, scaling
 
-#if __DEBUGGING__ == 1
 call verisize(x, 2_IK)
-#endif
 
 if (abs(x(2)) > ZERO) then
     !>>>> SHOULD BE
