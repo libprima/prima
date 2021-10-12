@@ -124,8 +124,8 @@ if single_test
     decup(pname);
     warning(orig_warning_state); % Restore the behavior of displaying warnings
 else
-%    parfor ip = minip : length(plist)
-    for ip = minip : length(plist)
+    parfor ip = minip : length(plist)
+%    for ip = minip : length(plist)
         orig_warning_state = warnoff(solvers);
 
         pname = upper(plist{ip});
