@@ -3,6 +3,13 @@
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C     2  KOPT,VLAG,PTSAUX,PTSID,W)
      2  KOPT,VLAG,PTSAUX,PTSID,W,F,FTARGET)
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !!!!!!-----------------------!!!!!!
+      USE DIRTY_TEMPORARY_MOD4POWELL_MOD!
+      !!!!!!-----------------------!!!!!!
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IMPLICIT REAL*8 (A-H,O-Z)
@@ -42,7 +49,7 @@ C       and q are both positive, the step from XBASE+XOPT to the new K-th
 C       interpolation point is PTSAUX(1,p)*e_p + PTSAUX(1,q)*e_q. Otherwise
 C       the step is PTSAUX(1,p)*e_p or PTSAUX(2,q)*e_q in the cases q=0 or
 C       p=0, respectively.
-C     The first NDIM+NPT elements of the array W are used for working space. 
+C     The first NDIM+NPT elements of the array W are used for working space.
 C     The final elements of BMAT and ZMAT are set in a well-conditioned way
 C       to the values that are appropriate for the new interpolation points.
 C     The elements of GOPT, HQ and PQ are also revised to the values that are
@@ -50,9 +57,9 @@ C       appropriate to the final quadratic model.
 C
 C     Set some constants.
 C
-      HALF=0.5D0
-      ONE=1.0D0
-      ZERO=0.0D0
+      !HALF=0.5D0
+      !ONE=1.0D0
+      !ZERO=0.0D0
       NP=N+1
       SFRAC=HALF/DFLOAT(NP)
       NPTM=NPT-NP
@@ -327,7 +334,7 @@ C     by putting the new point in XPT(KPT,.) and by setting PQ(KPT) to zero,
 C     except that a RETURN occurs if MAXFUN prohibits another value of F.
 C
   260 DO KPT=1,NPT
-          IF (PTSID(KPT) == ZERO) CYCLE 
+          IF (PTSID(KPT) == ZERO) CYCLE
           IF (NF >= MAXFUN) THEN
               NF=-1
               GOTO 350

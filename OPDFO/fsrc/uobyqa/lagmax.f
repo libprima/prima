@@ -1,4 +1,11 @@
       SUBROUTINE LAGMAX (N,G,H,RHO,D,V,VMAX)
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !!!!!!-----------------------!!!!!!
+      USE DIRTY_TEMPORARY_MOD4POWELL_MOD!
+      !!!!!!-----------------------!!!!!!
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IMPLICIT REAL*8 (A-H,O-Z)
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
@@ -23,10 +30,10 @@ C     where the claim of accuracy has been tested by numerical experiments.
 C
 C     Preliminary calculations.
 C
-      HALF=0.5D0
+      !HALF=0.5D0
       HALFRT=DSQRT(HALF)
-      ONE=1.0D0
-      ZERO=0.0D0
+      !ONE=1.0D0
+      !ZERO=0.0D0
 C
 C     Pick V such that ||HV|| / ||V|| is large.
 C

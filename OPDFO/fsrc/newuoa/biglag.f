@@ -1,7 +1,12 @@
       SUBROUTINE BIGLAG (N,NPT,XOPT,XPT,BMAT,ZMAT,IDZ,NDIM,KNEW,
      1  DELTA,D,ALPHA,HCOL,GC,GD,S,W)
-      use linalg_mod, only : norm
-      use infnan_mod, only : is_finite
+
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        !!!!!!-----------------------!!!!!!
+        USE DIRTY_TEMPORARY_MOD4POWELL_MOD!
+        !!!!!!-----------------------!!!!!!
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IMPLICIT REAL*8 (A-H,O-Z)
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
@@ -29,10 +34,10 @@ C     the KNEW-th Lagrange function.
 C
 C     Set some constants.
 C
-      HALF=0.5D0
-      ONE=1.0D0
-      ZERO=0.0D0
-      TWOPI=8.0D0*DATAN(ONE)
+      !HALF=0.5D0
+      !ONE=1.0D0
+      !ZERO=0.0D0
+      !TWOPI=8.0D0*DATAN(ONE)
       DELSQ=DELTA*DELTA
       NPTM=NPT-N-1
 C
@@ -171,7 +176,7 @@ C
       TAUOLD=TAUBEG
       ISAVE=0
       IU=49
-      TEMP=TWOPI/DFLOAT(IU+1)
+      TEMP=(TWO*PI)/DFLOAT(IU+1)
       DO I=1,IU
           ANGLE=DFLOAT(I)*TEMP
           CTH=DCOS(ANGLE)

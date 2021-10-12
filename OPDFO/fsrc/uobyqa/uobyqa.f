@@ -2,6 +2,13 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      SUBROUTINE UOBYQA (N,X,RHOBEG,RHOEND,IPRINT,MAXFUN,W)
       SUBROUTINE UOBYQA (N,X,RHOBEG,RHOEND,IPRINT,MAXFUN,W,F,INFO,
      1  FTARGET)
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !!!!!!-----------------------!!!!!!
+      USE DIRTY_TEMPORARY_MOD4POWELL_MOD!
+      !!!!!!-----------------------!!!!!!
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IMPLICIT REAL*8 (A-H,O-Z)
@@ -74,11 +81,11 @@ C
       IW=ID+N
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun, 2020-05-05
-C When the data is passed from the interfaces to the Fortran code, RHOBEG, 
+C When the data is passed from the interfaces to the Fortran code, RHOBEG,
 C and RHOEND may change a bit (due to rounding ???). It was oberved in
 C a MATLAB test that MEX passed 1 to Fortran as 0.99999999999999978.
 C If we set RHOEND = RHOBEG in the interfaces, then it may happen
-C that RHOEND > RHOBEG. That is why we do the following. 
+C that RHOEND > RHOBEG. That is why we do the following.
       RHOEND = MIN(RHOBEG, RHOEND)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       CALL UOBYQB (N,X,RHOBEG,RHOEND,IPRINT,MAXFUN,NPT,W(IXB),W(IXO),

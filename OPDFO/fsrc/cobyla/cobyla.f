@@ -3,6 +3,13 @@ C      SUBROUTINE COBYLA (N,M,X,RHOBEG,RHOEND,IPRINT,MAXFUN,W,IACT)
 C      DIMENSION X(*),W(*),IACT(*)
       SUBROUTINE COBYLA (N,M,X,RHOBEG,RHOEND,IPRINT,MAXFUN,W,IACT,F,
      1  INFO,FTARGET,RESMAX,CON)
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !!!!!!-----------------------!!!!!!
+      USE DIRTY_TEMPORARY_MOD4POWELL_MOD!
+      !!!!!!-----------------------!!!!!!
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
       DIMENSION X(*),W(*),IACT(*),CON(*)
@@ -18,7 +25,7 @@ C     parameter RHO controls the size of the simplex and it is reduced
 C     automatically from RHOBEG to RHOEND. For each RHO the subroutine tries
 C     to achieve a good vector of variables for the current size, and then
 C     RHO is reduced until the value RHOEND is reached. Therefore RHOBEG and
-C     RHOEND should be set to reasonable initial changes to and the required   
+C     RHOEND should be set to reasonable initial changes to and the required
 C     accuracy in the variables respectively, but this accuracy should be
 C     viewed as a subject for experimentation because it is not guaranteed.
 C     The subroutine has an advantage over many of its competitors, however,
@@ -96,11 +103,11 @@ C
       IWORK=IDX+N
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun, 2020-05-05
-C When the data is passed from the interfaces to the Fortran code, RHOBEG, 
+C When the data is passed from the interfaces to the Fortran code, RHOBEG,
 C and RHOEND may change a bit (due to rounding ???). It was oberved in
 C a MATLAB test that MEX passed 1 to Fortran as 0.99999999999999978.
 C If we set RHOEND = RHOBEG in the interfaces, then it may happen
-C that RHOEND > RHOBEG. That is why we do the following. 
+C that RHOEND > RHOBEG. That is why we do the following.
       RHOEND = MIN(RHOBEG, RHOEND)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       CALL COBYLB (N,M,MPP,X,RHOBEG,RHOEND,IPRINT,MAXFUN,W(ICON),

@@ -1,0 +1,15 @@
+language: Fortran
+arch:
+  - amd64
+  - ppc64le
+  - s390x
+  - arm64
+os: 
+  - osx
+  - linux
+
+before_install:
+  - if [ ! "$TRAVIS_OS_NAME" = "osx" ]; then sudo apt-get -y install gfortran; fi
+
+script:
+  - cd fsrc/examples; make; cd ../newuoa; make gverify; make gverifym; make clean

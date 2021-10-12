@@ -6,7 +6,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, September 22, 2021 AM11:38:25
+! Last Modified: Monday, October 11, 2021 AM11:21:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -91,7 +91,7 @@ qxoptq = QUART * xoptsq
 !-------------------------------------------------------------------------!
 !------------------! gq = hessmul(hq, pq, xpt, xopt) + gq !---------------!
 !-----------------------------------! OR !--------------------------------!
-!-! gq = matmul(hq, xopt) + (matmul(xpt, pq * matprod(xopt, xpt)) + gq) !-!
+!-! gq = matprod(hq, xopt) + (matprod(xpt, pq * matprod(xopt, xpt)) + gq) !-!
 gq = Ax_plus_y(xpt, pq * matprod(xopt, xpt), gq)
 gq = Ax_plus_y(hq, xopt, gq)
 !-------------------------------------------------------------------------!

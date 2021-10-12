@@ -1,5 +1,12 @@
       SUBROUTINE UPDATE (N,NPT,BMAT,ZMAT,NDIM,VLAG,BETA,DENOM,
      1  KNEW,W)
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !!!!!!-----------------------!!!!!!
+      USE DIRTY_TEMPORARY_MOD4POWELL_MOD!
+      !!!!!!-----------------------!!!!!!
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IMPLICIT REAL*8 (A-H,O-Z)
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
@@ -18,8 +25,8 @@ C     at most ZTEST. The first NDIM elements of W are used for working space.
 C
 C     Set some constants.
 C
-      ONE=1.0D0
-      ZERO=0.0D0
+      !ONE=1.0D0
+      !ZERO=0.0D0
       NPTM=NPT-N-1
       ZTEST=ZERO
       DO K=1,NPT
@@ -30,8 +37,8 @@ C
       ZTEST=1.0D-20*ZTEST
 C
 C     Apply the rotations that put zeros in the KNEW-th row of ZMAT.
-C 
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC 
+C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 2019-08-15: JL is never used
 C      JL=1
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

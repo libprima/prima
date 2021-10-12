@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, October 10, 2021 AM03:24:37
+! Last Modified: Tuesday, October 12, 2021 AM10:23:43
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -44,8 +44,10 @@ interface matprod
 ! N.B.:
 ! 1. When __USE_INTRINSIC_ALGEBRA__ = 0, matprod22(x, y) may differ from matmul(x, y) due to
 ! finite-precision arithmetic. This means that the implementation of matmul is not a naive triple
-! loop. For the moment (2021-07-04), the difference has not been observed on matprod12 and
-! matprod21. This depends on the platform.
+! loop. The difference has been observed on matprod22 and matprod12. The second case occurred on
+! Oct. 11, 2021 in the trust-region subproblem solver of COBYLA, and it took enormous time to find
+! out that Powell's code and the modernized code behaved differently due to matmul and matprod12
+! when calculating RESMAX (in Powell's code) and CSTRV (in the modernized code) when stage 2 starts.
 ! 2. When interfaced with MATLAB, the intrinsic matmul and dot_product seem not as efficient as the
 ! implementations below (mostly by loops). This may depend on the machine (e.g., cache size),
 ! compiler, compiling options, and MATLAB version.
@@ -568,6 +570,35 @@ else
     G = eye(2_IK)
 end if
 end function planerot
+
+
+! A stabilized Givens rotation that avoids over/underflow and keeps continuity (see wikipedia)
+!function [c, s, r] = givens_rotation(a, b)
+!    if b == 0;
+!        c = sign(a);  % Continuity
+!        if (c == 0);
+!            c = 1.0; % Unlike other languages, MatLab's sign function returns 0 on input 0.
+!        end;
+!        s = 0;
+!        r = abs(a);
+!    elseif a == 0;
+!        c = 0;
+!        s = sign(b);
+!        r = abs(b);
+!    elseif abs(a) > abs(b);
+!        t = b / a;
+!        u = sign(a) * sqrt(1 + t * t);
+!        c = 1 / u;
+!        s = c * t;
+!        r = a * u;
+!    else
+!        t = a / b;
+!        u = sign(b) * sqrt(1 + t * t);
+!        s = 1 / u;
+!        c = s * t;
+!        r = b * u;
+!    end
+!end
 
 
 subroutine symmetrize(A)

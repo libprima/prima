@@ -98,3 +98,8 @@ changing RP will obviously affect the result.
 7.3. We should also try different combinations of DEBUGGING,
 USE_INTRINSIC_ALGEBRA, USE_POWELL_ALGEBRA to make sure that all
 variations of the code works correctly.
+
+7.4 Do not use ZERO, ONE,TWO, TEN, TENTH, etc in Powell's original code, as they may not be defined.
+
+7.5 Do not mix MATMUL with MATPROD or DOT_PRODUCT with INPROD. They are not guaranteed to produce
+  the same results given the same data!!!!

@@ -1,6 +1,13 @@
       SUBROUTINE TRSTLP (N,M,A,B,RHO,DX,IFULL,IACT,Z,ZDOTA,VMULTC,
      1  SDIRN,DXNEW,VMULTD)
-      use consts_mod, only : EPS
+
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !!!!!!-----------------------!!!!!!
+      USE DIRTY_TEMPORARY_MOD4POWELL_MOD!
+      !!!!!!-----------------------!!!!!!
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
@@ -9,6 +16,7 @@
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !     1  VMULTC(*),SDIRN(*),DXNEW(*),VMULTD(*)
      1  VMULTC(*),SDIRN(*),DXNEW(*),VMULTD(*),dold(N)
+      integer :: stage
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     This subroutine calculates an N-component vector DX by applying the
@@ -50,6 +58,7 @@
 !
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 26-06-2019: See the code below line number 80
+      stage = 1
       ITERC=0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       IFULL=1
@@ -84,6 +93,7 @@
               VMULTC(K)=RESMAX-B(K)
           END DO
       END IF
+
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (RESMAX .EQ. 0.0) GOTO 480
@@ -309,6 +319,8 @@
       K=K-1
       IF (K > 0) GOTO 130
 
+      !write(17,*) 'vmultd1', iterc, vmultd(1:nact)
+
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (RATIO .LT. 0.0) GOTO 490
       IF (RATIO < 0.0D0) GOTO 490
@@ -495,6 +507,7 @@
       DO I=1,N
           SDIRN(I)=TEMP*Z(I,NACT)
       END DO
+      !write(17,*) iterc, 'vmultc', vmultc(1:mcon)
 !
 !     Calculate the step to the boundary of the trust region or take the step
 !     that reduces RESMAX to zero. The two statements below that include the
@@ -575,10 +588,11 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           END DO
 
-          !resmax = maxval([b(1:m)-matmul(dxnew(1:n),A(1:n,1:m)),ZERO])
+          !resmax = maxval([b(1:m)-matprod(dxnew(1:n),A(1:n,1:m)),0.0D0])
 
       END IF
 
+      !write(17,*), mcon-m+1, iterc, 'oovd', vmultd(1:mcon)
 !     Set VMULTD to the VMULTC vector that would occur if DX became DXNEW. A
 !     device is included to force VMULTD(K)=0.0 if deviations from this value
 !     can be attributed to computer rounding errors. First calculate the new
@@ -607,7 +621,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !      VMULTD(K)=ZDOTW/ZDOTA(K)
       IF (ZDWABS >= ACCA .OR. ACCA >= ACCB) then
-        VMULTD(K)=ZERO
+        VMULTD(K)=0.0D0
       else
         VMULTD(K)=ZDOTW/ZDOTA(K)
       end if
@@ -623,12 +637,18 @@
 !      IF (MCON .GT. M) VMULTD(NACT)=AMAX1(0.0,VMULTD(NACT))
       IF (MCON > M) VMULTD(NACT)=DMAX1(0.0D0,VMULTD(NACT))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !write(17,*) 'vmultd21', iterc, vmultd(1:nact)
 !
 !     Complete VMULTC by finding the new constraint residuals.
 !
       DO I=1,N
           DXNEW(I)=DX(I)+STEP*SDIRN(I)
       END DO
+      !write(17,*) iterc, 'ovd', vmultd(1:MCON)
+      !write(17,*) iterc, nact, mcon
+      !write(17,*) 'ad', A(1:n, 1:mcon)
+      !write(17,*) 'ad', dxnew(1:n)
+      !write(17,*) 'b', b(1:mcon)
       IF (MCON > NACT) THEN
           KL=NACT+1
           DO K=KL,MCON
@@ -659,6 +679,11 @@
               VMULTD(K)=SUM
           END DO
       END IF
+      !write(17,*) 'a', iterc, a(1:n, 1:mcon)
+      !write(17,*) 'b', iterc, b(1:mcon)
+      !write(17,*) 'c', iterc, resmax
+      !write(17,*) 'iact', iterc, iact(1:mcon)
+      !write(17,*) 'vmultd22', iterc, vmultd(nact+1:mcon)
 !
 !     Calculate the fraction of the step from DX to DXNEW that will be taken.
 !
@@ -667,6 +692,11 @@
       RATIO=1.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ICON=0
+      !write(17,*) iterc, 'vc', vmultc(1:MCON)
+!      write(17,*) iterc, 'vd', vmultd(nact+1:MCON)
+      !write(17,*) iterc, 'vd',
+      !1 matprod(dxnew(1:n), A(1:n, iact(nact+1:mcon)))
+      !1 - b(iact(nact+1:mcon)) + resmax
       DO K=1,MCON
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (VMULTD(K) .LT. 0.0) THEN
@@ -687,9 +717,11 @@
       TEMP=1.0D0-RATIO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       dold = dx(1:n)
+      !write(17,*) 'iter', iterc, RATIO, DX(1:N), DXNEW(1:N)
       DO I=1,N
           DX(I)=TEMP*DX(I)+RATIO*DXNEW(I)
       END DO
+      !write(17,*) 'iterd', iterc, DX(1:N)
 
       ! Exit in case of Inf/NaN in D.
       sumd  = 0.0D0
@@ -711,7 +743,7 @@
       !IF (MCON == M) RESMAX=RESOLD+RATIO*(RESMAX-RESOLD)
       IF (MCON == M) RESMAX=TEMP*RESOLD+RATIO*RESMAX
       !if (mcon == m)  then
-      !    resmax = maxval([b(1:m) - matmul(dx(1:n), A(:, 1:m)), ZERO])
+      !    resmax = maxval([b(1:m) - matprod(dx(1:n), A(:, 1:m)), 0.0D0])
       !end if
 !
 !     If the full step is not acceptable then begin another iteration.
@@ -728,9 +760,13 @@
 !      VMULTC(MCON)=0.0
       VMULTC(MCON)=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !write(17,*) 'stage', stage, 'd', dx(1:n)
+      stage = 2  !!! Stage 2 starts here.
       ITERC = 0
       zdota(1:nact) = [(dot_product(z(:, i), A(:, iact(i))), i=1, nact)]
-      resmax = maxval([b(1:m) - matmul(dx(1:n), A(:, 1:m)), ZERO])
+      resmax = maxval([b(1:m) - matprod(dx(1:n), A(:, 1:m)), 0.0D0])  ! Do not use MATMUL! Do not use ZERO unless it is defined!
+!      write(17,*) 'stage2', vmultc(1:m)
+!      iact(1:mcon), nact, A(1:n, 1:mcon), b(1:mcon), rho,
       GOTO 60
 !
 !     We employ any freedom that may be available to reduce the objective
@@ -740,5 +776,7 @@
       GOTO 480
       end if
       IFULL=0
-  500 RETURN
+  500 continue
+      !write(17,*) 'stage', stage, 'd', dx(1:n)
+      RETURN
       END

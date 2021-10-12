@@ -1,8 +1,13 @@
       SUBROUTINE TRSAPP (N,NPT,XOPT,XPT,GQ,HQ,PQ,DELTA,STEP,
      1  D,G,HD,HS,CRVMIN)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      use linalg_mod, only : norm
-      use infnan_mod, only : is_finite
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !!!!!!-----------------------!!!!!!
+      USE DIRTY_TEMPORARY_MOD4POWELL_MOD!
+      !!!!!!-----------------------!!!!!!
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 C      IMPLICIT REAL*8 (A-H,O-Z)
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
@@ -28,9 +33,9 @@ C     should provide a substantial reduction to Q within the trust region.
 C
 C     Initialization, which includes setting HD to H times XOPT.
 C
-      HALF=0.5D0
-      ZERO=0.0D0
-      TWOPI=8.0D0*DATAN(1.0D0)
+      !HALF=0.5D0
+      !ZERO=0.0D0
+      !TWOPI=8.0D0*DATAN(1.0D0)
       DELSQ=DELTA*DELTA
       ITERC=0
       ITERMAX=N
@@ -191,7 +196,7 @@ C
       QMIN=QBEG
       ISAVE=0
       IU=49
-      TEMP=TWOPI/DFLOAT(IU+1)
+      TEMP=(TWO*PI)/DFLOAT(IU+1)
       DO I=1,IU
           ANGLE=DFLOAT(I)*TEMP
           CTH=DCOS(ANGLE)

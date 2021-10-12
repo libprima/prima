@@ -1,10 +1,17 @@
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C Zaikun 2019-08-29: B is never used 
+C Zaikun 2019-08-29: B is never used
 C      SUBROUTINE QMSTEP (N,NPT,M,AMAT,B,XPT,XOPT,NACT,IACT,
       SUBROUTINE QMSTEP (N,NPT,M,AMAT,XPT,XOPT,NACT,IACT,
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      1  RESCON,QFAC,KOPT,KNEW,DEL,STEP,GL,PQW,RSTAT,W,IFEAS)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !!!!!!-----------------------!!!!!!
+      USE DIRTY_TEMPORARY_MOD4POWELL_MOD!
+      !!!!!!-----------------------!!!!!!
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 C      IMPLICIT REAL*8 (A-H,O-Z)
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
@@ -42,10 +49,10 @@ C       its maximum constraint violation becomes 0.2*DEL.
 C
 C     Set some constants.
 C
-      HALF=0.5D0
-      ONE=1.0D0
-      TENTH=0.1D0
-      ZERO=0.0D0
+      !HALF=0.5D0
+      !ONE=1.0D0
+      !TENTH=0.1D0
+      !ZERO=0.0D0
       TEST=0.2D0*DEL
 C
 C     Replace GL by the gradient of LFUNC at the trust region centre, and
@@ -75,12 +82,12 @@ C     Find the greatest modulus of LFUNC on a line through XOPT and
 C       another interpolation point within the trust region.
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C Zaikun 2019-08-15: IFLAG is never used 
+C Zaikun 2019-08-15: IFLAG is never used
 C      IFLAG=0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       VBIG=ZERO
       DO K=1,NPT
-          IF (K == KOPT) CYCLE 
+          IF (K == KOPT) CYCLE
           SS=ZERO
           SP=ZERO
           DO I=1,N
@@ -96,9 +103,9 @@ C      IFLAG=0
               VLAG=DABS(STP*(ONE-STP)*SP)
           END IF
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C Zaikun 2019-08-29: With the original code, if either VLAG or VBIG is 
+C Zaikun 2019-08-29: With the original code, if either VLAG or VBIG is
 C NaN, KSAV will not get a value. This may cause Segmentation Fault
-C because XPT(KSAV, :) will later be accessed. 
+C because XPT(KSAV, :) will later be accessed.
 C      IF (VLAG .GT. VBIG) THEN
           IF (.NOT. (VLAG <= VBIG)) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -241,7 +248,7 @@ C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C          IF (TEMP .LT. TEST) THEN
           IF (.NOT. (TEMP >= TEST)) THEN
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!              
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               IF (TEMP <= BIGV) GOTO 230
               BIGV=TEMP
               JSAV=J

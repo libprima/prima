@@ -6,6 +6,13 @@ C     2  SP,RESCON,STEP,PQW,W)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IMPLICIT REAL*8 (A-H,O-Z)
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !!!!!!-----------------------!!!!!!
+      USE DIRTY_TEMPORARY_MOD4POWELL_MOD!
+      !!!!!!-----------------------!!!!!!
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -32,9 +39,9 @@ C       the initial elements of FVAL, XOPT, GOPT, HQ, PQ, SP and RESCON.
 C
 C     Set some constants.
 C
-      HALF=0.5D0
-      ONE=1.0D0
-      ZERO=0.0D0
+      !HALF=0.5D0
+      !ONE=1.0D0
+      !ZERO=0.0D0
       NPTM=NPT-N-1
       RHOSQ=RHOBEG*RHOBEG
       RECIP=ONE/RHOSQ
@@ -46,7 +53,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       ALMOST_INFINITY=HUGE(0.0D0)/2.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
-C     Set the initial elements of XPT, BMAT, SP and ZMAT to zero. 
+C     Set the initial elements of XPT, BMAT, SP and ZMAT to zero.
 C
       DO J=1,N
           XBASE(J)=X(J)
@@ -185,8 +192,8 @@ C     If the objective function reached a NaN or infinite value, or if
 C     the value is under the target value, the algorithm go back to
 C     LINCOB with updated KOPT and XSAV.
 C     Note that we should NOT compare F and FTARGET, because X may not
-C     be feasible. 
-          IF (F /= F .OR. F > ALMOST_INFINITY 
+C     be feasible.
+          IF (F /= F .OR. F > ALMOST_INFINITY
      +        .OR. FVAL(KOPT) <= FTARGET) THEN
               EXIT
           END IF
@@ -238,7 +245,7 @@ C
           END DO
           TEMP=DMAX1(TEMP,ZERO)
           IF (TEMP >= RHOBEG) TEMP=-TEMP
-          RESCON(J)=TEMP  
+          RESCON(J)=TEMP
       END DO
       RETURN
       END

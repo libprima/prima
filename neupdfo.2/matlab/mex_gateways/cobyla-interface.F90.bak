@@ -1,0 +1,249 @@
+! The mex gateway for COBYLA
+!
+! Coded by Zaikun Zhang in June 2021.
+!
+! Last Modified: Friday, June 25, 2021 PM10:55:31
+
+
+#include "fintrf.h"
+
+! Entry point to Fortran MEX function
+subroutine mexFunction(nargout, poutput, nargin, pinput)
+! If the binary MEX file is named as FUNCTION_NAME.mex*** (file-name extension depends on the
+! platform), then the following function is callable in matlab:
+! [xopt, fopt, info, nf, fhist, conopt, constrviolation, chist] = FUNCTION_NAME(fun, constr, x0, rhobeg, rhoend, maxfun, m, ftarget, constr_x0)
+
+
+! Generic modules
+use consts_mod, only : RP, IK
+use fmxapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
+use fmxapi_mod, only : fmxVerifyClassShape
+use fmxapi_mod, only : fmxAllocate
+use fmxapi_mod, only : fmxReadMPtr, fmxWriteMPtr
+
+! Solver-specific module
+use cobyla_mod, only : cobyla
+
+implicit none
+
+! mexFunction arguments nargout and nargin are of type INTEGER in MATLAB 2021a documents.
+integer, intent(in) :: nargout, nargin
+mwPointer, intent(in) :: pinput(nargin)
+mwPointer, intent(out) :: poutput(nargout)
+
+! Local variables
+integer(IK) :: info
+integer(IK) :: iprint
+integer(IK) :: maxfun
+integer(IK) :: nf
+real(RP) :: f
+real(RP) :: ftarget
+real(RP) :: rhobeg
+real(RP) :: rhoend
+real(RP), allocatable :: chist(:)
+real(RP), allocatable :: conhist(:, :)
+real(RP), allocatable :: fhist(:)
+real(RP), allocatable :: x(:)
+real(RP), allocatable :: xhist(:, :)
+
+! Validate number of arguments
+call fmxVerifyNArgin(nargin, 9)
+call fmxVerifyNArgout(nargout, 8)
+
+! Verify that inputs 1 and 2 are function handles; the other inputs will be verified when read.
+call fmxVerifyClassShape(pinput(1), 'function_handle', 'rank0')
+call fmxVerifyClassShape(pinput(2), 'function_handle', 'rank0')
+
+! Read inputs (there are 14)
+fun_ptr = pinput(1)  ! FUN_PTR is a pointer to the objective function handle
+con_ptr = pinput(2)  ! CONSTR_PTR is a pointer to the constraint function handle
+call fmxReadMPtr(pinput(3), x)
+call fmxReadMPtr(pinput(4), rhobeg)
+call fmxReadMPtr(pinput(5), rhoend)
+call fmxReadMPtr(pinput(6), maxfun)
+call fmxReadMPtr(pinput(7), m)
+call fmxReadMPtr(pinput(8), ftarget)
+call fmxReadMPtr(pinput(9), constr_x0)
+
+! Call the Fortran code.
+iprint = 0
+call cobyla(n, m, x, rhobeg, rhoend, iprint, maxfun, f, info, ftarget, cstrv, constr, fhist, chist)
+
+! Write outputs
+call fmxWriteMPtr(x, poutput(1))
+call fmxWriteMPtr(f, poutput(2))
+call fmxWriteMPtr(info, poutput(3))
+call fmxWriteMPtr(nf, poutput(4))
+call fmxWriteMPtr(fhist(1:min(int(nf), size(fhist))), poutput(5), 'row')
+call fmxWriteMPtr(constr, poutput(6), 'col')
+call fmxWriteMPtr(resmax, poutput(7))
+call fmxWriteMPtr(chist(:, 1:min(int(nf), size(fhist))), poutput(8))
+
+! Free memory
+deallocate (x)
+deallocate (constr_x0)
+deallocate (iact)
+deallocate (fhist)
+deallocate (chist)
+deallocate (constr)
+
+return
+end subroutine mexFunction
+
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+
+! The Fortran subroutine that evaluates the objective function
+subroutine calcfc(n, m, x, f, constr)
+use fcobyla
+implicit none
+
+! dummy variables
+integer, intent(in) :: n, m
+! The types of n and m are derived from the code of COBYLA. Thus n and m
+! should be of type INTEGER instead of mwSize
+real(rp), intent(in) :: x(n)
+real(rp), intent(out) :: f, constr(m)
+
+! function declarations
+integer(INT32), external :: mexCallMATLAB, mxIsDouble
+! integer*4 mexCallMATLAB(integer*4 nargout, mwPointer poutput, integer*4 nargin, mwPointer pinput, character*(*) functionName)
+! integer*4 mxIsDouble(mwPointer pm);
+mwSize, external :: mxGetM, mxGetN
+! mwPointer mxGetM(mwPointer pm), mxGetN(mwPointer pm)
+mwPointer, external :: mxCreateDoubleMatrix
+! mwPointer mxCreateDoubleMatrix(mwSize m, mwSize n, integer*4 ComplexFlag)
+mwPointer, external :: mxCreateDoubleScalar
+! mwPointer mxCreateDoubleScalar(real*8 value)
+mwPointer, external :: _MGETDB
+! mwPointer _MGETDB(mwPointer pm)
+
+! intermediate variables
+mwSize :: n_mw, m_mw
+! n_mw is the mwSize cast of n: n_mw = int(n, kind(n_mw));
+! used when a variable of type mwSize is needed
+integer :: k
+! k is the index for the constraints; since m is of type INTEGER,
+! k is of the same type; see the (unique) do lopp below
+mwPointer :: poutput(1), pinput(2) ! used in mexCallMATLAB
+integer(INT32), parameter :: intOne = 1, intTwo = 2
+character(5), parameter :: funFeval = 'feval'
+! intOne, intTwo, and funFeval are used when calling mexCallMATLAB
+real(rp) :: resmax ! constraint violation
+
+! Start the real business
+n_mw = int(n, kind(n_mw)) ! cast n to type mwSize
+m_mw = int(m, kind(m_mw)) ! cast m to type mwSize
+if (n /= n_mw) then
+    call mexErrMsgIdAndTxt('fcobyla:IntError', 'fcobyla: n does not equal n_mw.')
+end if
+if (m /= m_mw) then
+    call mexErrMsgIdAndTxt('fcobyla:IntError', 'fcobyla: m does not equal m_mw.')
+end if
+
+! Evaluate the objective function (fun_ptr) at x
+poutput(1) = mxCreateDoubleScalar(huge(0.0_DP))
+! Output of f_value = feval(fun, x); see below
+pinput(1) = fun_ptr
+! First input of f_value = feval(fun, x); see below; fun_ptr is a global variable
+pinput(2) = mxCreateDoubleMatrix(n_mw, mwOne, notComplex)
+! Second input of f_value = feval(fun, x); see below
+call mxCopyReal8ToPtr(x(1:n), _MGETDB(pinput(2)), n_mw)
+! subroutine mxCopyReal8ToPtr(real*8 y(n), mwPointer px, mwSize n)
+if (0 /= mexCallMATLAB(intOne, poutput, intTwo, pinput, funFeval)) then
+! Execute matlab command: f_value = feval(fun, x)
+! integer*4 mexCallMATLAB(integer*4 nargout, mwPointer poutput, integer*4 nargin, mwPointer pinput, character*(*) functionName)
+    call mexErrMsgIdAndTxt('fcobyla:UnsuccessfulCall', 'fcobyla: mex fails to call fun.')
+end if
+
+if (poutput(1) == 0 .or. _MGETDB(poutput(1)) == 0) then
+    call mexErrMsgIdAndTxt('fcobyla:UnsuccessfulCall', 'fcobyla: NULL pointer returned when mex calls fun.')
+end if
+
+if (mxGetM(poutput(1)) * mxGetN(poutput(1)) /= 1 .or. mxIsDouble(poutput(1)) /= 1) then
+    call mexErrMsgIdAndTxt('fcobyla:ObjectiveNotScalar', 'fcobyla: The objective function should return a scalar value.')
+end if
+
+call mxCopyPtrToReal8(_MGETDB(poutput(1)), f, mwOne)
+! subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
+
+! Use extreme barrier to cope with 'hidden constraints'
+if (f > hugefun .or. is_nan(f)) then
+    f = hugefun ! hugefun is defined in consts
+end if
+
+! Free memory; note that poutput and pinput are just temporary variables in
+! this subroutine. We are NOT in mexFunction!
+call mxDestroyArray(poutput(1))
+! Not yet to free pinput(2), which will be used when evaluating the constraint
+
+! Evaluate the constraint (con_ptr) at x
+if (nf == 0) then
+! The very first iteration needs constr(x0), which was already evaluated in
+! the matlab code (to get the value of m) and saved in fcobyla.mod as
+! constr_x0. Copy the value directly.
+    constr(1:m) = constr_x0(1:m)
+else
+    poutput(1) = mxCreateDoubleMatrix(m_mw, mwOne, notComplex)
+! Output of c_value = feval(constr, x); see below
+    pinput(1) = con_ptr
+! First input of c_value = feval(constr, x); see below; con_ptr is a global variable
+! pinput(2) was already set to x when evaluating fun
+    if (0 /= mexCallMATLAB(intOne, poutput, intTwo, pinput, funFeval)) then
+! Execute matlab command: c_value = feval(constr, x)
+        call mexErrMsgIdAndTxt('fcobyla:UnsuccessfulCall', 'fcobyla: mex fails to call constr.')
+    end if
+    if (poutput(1) == 0 .or. (m > 0 .and. _MGETDB(poutput(1)) == 0)) then
+        call mexErrMsgIdAndTxt('fcobyla:UnsuccessfulCall', 'fcobyla: NULL pointer returned when mex calls constr.')
+    end if
+    if (m > 0 .and. (mxGetM(poutput(1)) /= m .or. mxGetN(poutput(1)) /= 1 .or. mxIsDouble(poutput(1)) /= 1)) then
+        call mexErrMsgIdAndTxt('fcobyla:ConstrNotScalarVector', 'fcobyla: The constraint function should return a scalar vector of &
+            &size mx1.')
+    end if
+    call mxCopyPtrToReal8(_MGETDB(poutput(1)), constr(1:m), m_mw)
+! subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
+end if
+! Calculate the constraint violation (named 'RESMAX' in Powell's COBYLA code)
+resmax = zero ! zero is defined in module 'consts'.
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+! Code without extreme barrier:
+! Constraint: constr(x) >= 0
+!do k = 1, m
+!    if (constr(k) .ne. constr(k)) then
+!        resmax = constr(k) ! Set resmax=NaN if constr contains NaN
+!        exit
+!    else
+!        resmax = max(resmax, -constr(k))
+!    end if
+!end do
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Use extreme barrier to cope with 'hidden constraints'
+! Constraint: constr(x) >= 0
+do k = 1, m
+    if (constr(k) < -hugecon .or. is_nan(constr(k))) then
+        constr(k) = -hugecon ! hugecon is defined in consts
+    end if
+
+! This part is NOT extreme barrier. We replace extremely negative values
+! of cineq (which leads to no constraint violation) by -hugecon. Otherwise,
+! NaN or Inf may occur in the interpolation models.
+    if (constr(k) > hugecon) then
+        constr(k) = hugecon ! hugecon is defined in consts
+    end if
+
+    resmax = max(resmax, -constr(k))
+end do
+!
+! Free memory; note that poutput and pinput are just temporary variables in
+! this subroutine. We are NOT in mexFunction!
+if (nf > 0) call mxDestroyArray(poutput(1)) ! Only if nf >= 1
+call mxDestroyArray(pinput(2))
+
+! Update global variables
+nf = nf + int(1, kind(nf))
+! Some compiler (e.g., g95) may complain about implicit conversion if
+! written as nf = nf+1
+fhist(nf) = f
+chist(nf) = resmax
+
+return
+end subroutine calcfc

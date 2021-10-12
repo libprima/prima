@@ -1,8 +1,13 @@
       SUBROUTINE BIGDEN (N,NPT,XOPT,XPT,BMAT,ZMAT,IDZ,NDIM,KOPT,
      1  KNEW,D,W,VLAG,BETA,S,WVEC,PROD)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      use linalg_mod, only : norm
-      use infnan_mod, only : is_finite
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !!!!!!-----------------------!!!!!!
+      USE DIRTY_TEMPORARY_MOD4POWELL_MOD!
+      !!!!!!-----------------------!!!!!!
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 C      IMPLICIT REAL*8 (A-H,O-Z)
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
@@ -36,12 +41,12 @@ C     shifted to the new position XOPT+D.
 C
 C     Set some constants.
 C
-      HALF=0.5D0
-      ONE=1.0D0
-      QUART=0.25D0
-      TWO=2.0D0
-      ZERO=0.0D0
-      TWOPI=8.0D0*DATAN(ONE)
+      !HALF=0.5D0
+      !ONE=1.0D0
+      !QUART=0.25D0
+      !TWO=2.0D0
+      !ZERO=0.0D0
+      !TWOPI=8.0D0*DATAN(ONE)
       NPTM=NPT-N-1
 C
 C     Store the first NPT elements of the KNEW-th column of H in W(N+1)
@@ -292,7 +297,7 @@ C
       DENMAX=SUMM
       ISAVE=0
       IU=49
-      TEMP=TWOPI/DFLOAT(IU+1)
+      TEMP=(TWO*PI)/DFLOAT(IU+1)
       PAR(1)=ONE
       DO I=1,IU
           ANGLE=DFLOAT(I)*TEMP
@@ -409,8 +414,8 @@ C
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       wsave = w(1:npt)
-      w(1:npt) = matmul(xpt, d(1:n))
-      w(1:npt)=w(1:npt)*(0.5D0*w(1:npt)+matmul(xpt,xopt(1:n)))
+      w(1:npt) = matprod(xpt, d(1:n))
+      w(1:npt)=w(1:npt)*(0.5D0*w(1:npt)+matprod(xpt,xopt(1:n)))
 !      if (norm2(wsave-w(1:npt))/max(norm2(w(1:npt)), 1.0D0) > 1.0D-13)
 !     &then
 !        write(*,*) norm2(wsave-w(1:npt))/max(norm2(w(1:npt)), 1.0D0)
