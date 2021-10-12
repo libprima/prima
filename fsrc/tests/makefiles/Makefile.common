@@ -215,7 +215,7 @@ else
 	SED = @sed -i
 endif
 
-# Define NPROCS to be the number of processors available to make tests in parallel. 
+# Define NPROCS to be the number of processors available to make tests in parallel.
 NPROCS :=
 ifeq ($(OSTYPE), LINUX)
 	NPROCS = $(shell grep -c 'processor' /proc/cpuinfo || echo 1)
@@ -225,6 +225,9 @@ else ifeq ($(OSTYPE), WINDOWS)
 	NPROCS = $(shell echo %NUMBER_OF_PROCESSORS% || echo 1)
 else
 	NPROCS = 1
+endif
+ifeq ($(NPROCS),)
+NPROCS := 1
 endif
 
 ####################################################################################################
@@ -253,7 +256,7 @@ atest_i2_r16_d1_tst_c atest_i4_r16_d1_tst_c atest_i8_r16_d1_tst_c atest_i2_r16_d
 	FC = $(AFORT) -TENV:simd_zmask=off
 
 # AMD AOCC Flang
-AFLANG := $(shell find /opt/AMD \( -type l -o -type f \) -executable -name flang -print -quit)
+AFLANG := $(shell find /opt/AMD \( -type l -o -type f \) -executable -name flang -print -quit 2> /dev/null || echo AFLANG_NOT_FOUND)
 DFORT = $(AFLANG) -std=f$(FSTD) -Mstandard -Wall -Wextra
 dtest_i2_r4_d1_tst_c dtest_i4_r4_d1_tst_c dtest_i8_r4_d1_tst_c dtest_i2_r4_d0_tst_c dtest_i4_r4_d0_tst_c dtest_i8_r4_d0_tst_c: \
 	FC = $(DFORT)
@@ -378,7 +381,7 @@ $(TESTS) $(TESTS_INT):
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
 	@make $(TST_C)
-	@make -j$(NPROCS) $(SUBTESTS)
+	@make --jobs $(NPROCS) $(SUBTESTS)
 	bash $(CHCKTST) --warning "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
 	@printf "\n$@ ends!\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
 	@mv "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log" "$(LOG_DIR)/$@_$(STAMP).log"
