@@ -29,6 +29,7 @@
 
 #$(VERBOSE).SILENT:  # Order make to work quietly. Not desirable in this case.
 
+
 SHELL = /bin/bash
 
 
@@ -214,6 +215,17 @@ else
 	SED = @sed -i
 endif
 
+# Define NPROCS to be the number of processors available to make tests in parallel. 
+NPROCS :=
+ifeq ($(OSTYPE), LINUX)
+	NPROCS = $(shell grep -c 'processor' /proc/cpuinfo || echo 1)
+else ifeq ($(OSTYPE), MAC)
+	NPROCS = $(shell sysctl hw.ncpu  | grep -o '[0-9]\+' || echo 1)
+else ifeq ($(OSTYPE), WINDOWS)
+	NPROCS = $(shell echo %NUMBER_OF_PROCESSORS% || echo 1)
+else
+	NPROCS = 1
+endif
 
 ####################################################################################################
 # Here are the testing options for each compiler. We try to turn on as many debugging options as
@@ -366,7 +378,7 @@ $(TESTS) $(TESTS_INT):
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
 	@make $(TST_C)
-	@make $(SUBTESTS)
+	@make -j$(NPROCS) $(SUBTESTS)
 	bash $(CHCKTST) --warning "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
 	@printf "\n$@ ends!\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
 	@mv "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log" "$(LOG_DIR)/$@_$(STAMP).log"
