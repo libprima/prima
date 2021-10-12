@@ -92,8 +92,11 @@
 /* When __USE_INTRINSIC_ALGEBRA__ == 1, the code may not produce exactly the
  * same results as Powell's code, because the intrinsic matmul behaves
  * differently from a naive triple loop due to finite-precision arithmetic.
- * For the moment (2021-070-4), the difference is observed only if neither of
- * the matrices is a vector. */
+ * The difference has been observed on matprod22 and matprod12. The second case
+ * occurred on Oct. 11, 2021 in the trust-region subproblem solver of COBYLA, and
+ * it took enormous time to find out that Powell's code and the modernized code
+ * behaved differently due to matmul and matprod12 when calculating RESMAX (in
+ * Powell's code) and CSTRV (in the modernized code) when stage 2 starts. */
 #if defined __USE_INTRINSIC_ALGEBRA__
 #undef __USE_INTRINSIC_ALGEBRA__
 #endif

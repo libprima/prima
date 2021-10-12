@@ -1,5 +1,12 @@
       SUBROUTINE UPDATE (N,NPT,BMAT,ZMAT,IDZ,NDIM,VLAG,BETA,KNEW,W)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !!!!!!-----------------------!!!!!!
+      USE DIRTY_TEMPORARY_MOD4POWELL_MOD!
+      !!!!!!-----------------------!!!!!!
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 C      IMPLICIT REAL*8 (A-H,O-Z)
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
@@ -14,8 +21,8 @@ C     The vector W is used for working space.
 C
 C     Set some constants.
 C
-      ONE=1.0D0
-      ZERO=0.0D0
+      !ONE=1.0D0
+      !ZERO=0.0D0
       NPTM=NPT-N-1
 C
 C     Apply the rotations that put zeros in the KNEW-th row of ZMAT.

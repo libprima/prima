@@ -2,6 +2,13 @@
      1  XNEW,D,GNEW,XBDI,S,HS,HRED,DSQ,CRVMIN)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IMPLICIT REAL*8 (A-H,O-Z)
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !!!!!!-----------------------!!!!!!
+      USE DIRTY_TEMPORARY_MOD4POWELL_MOD!
+      !!!!!!-----------------------!!!!!!
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -48,10 +55,10 @@ C     be close to the greatest reduction that can be achieved.
 C
 C     Set some constants.
 C
-      HALF=0.5D0
-      ONE=1.0D0
-      ONEMIN=-1.0D0
-      ZERO=0.0D0
+      !HALF=0.5D0
+      !ONE=1.0D0
+      !-ONE=-1.0D0
+      !ZERO=0.0D0
 C
 C     The sign of GOPT(I) gives the sign of the change to the I-th variable
 C     that will reduce Q from its value at XOPT. Thus XBDI(I) shows whether
@@ -69,7 +76,7 @@ C      SQSTP=ZERO
       DO I=1,N
           XBDI(I)=ZERO
           IF (XOPT(I) <= SL(I)) THEN
-              IF (GOPT(I) >= ZERO) XBDI(I)=ONEMIN
+              IF (GOPT(I) >= ZERO) XBDI(I)=-ONE
           ELSE IF (XOPT(I) >= SU(I)) THEN
               IF (GOPT(I) <= ZERO) XBDI(I)=ONE
           END IF
@@ -79,7 +86,7 @@ C      SQSTP=ZERO
       END DO
       DELSQ=DELTA*DELTA
       QRED=ZERO
-      CRVMIN=ONEMIN
+      CRVMIN=-ONE
 C
 C     Set the next search direction of the conjugate gradient method. It is
 C     the steepest descent direction initially and when the iterations are
@@ -165,7 +172,7 @@ C
           TEMP=SHS/STEPSQ
           IF (IACT == 0 .AND. TEMP > ZERO) THEN
               CRVMIN=DMIN1(CRVMIN,TEMP)
-              IF (CRVMIN == ONEMIN) CRVMIN=TEMP
+              IF (CRVMIN == -ONE) CRVMIN=TEMP
           END IF
           GGSAV=GREDSQ
           GREDSQ=ZERO
@@ -183,7 +190,7 @@ C
       IF (IACT > 0) THEN
           NACT=NACT+1
           XBDI(IACT)=ONE
-          IF (S(IACT) < ZERO) XBDI(IACT)=ONEMIN
+          IF (S(IACT) < ZERO) XBDI(IACT)=-ONE
           DELSQ=DELSQ-D(IACT)**2
           IF (DELSQ <= ZERO) GOTO 90
           GOTO 20
@@ -256,7 +263,7 @@ C
               TEMPB=SU(I)-XOPT(I)-D(I)
               IF (TEMPA <= ZERO) THEN
                   NACT=NACT+1
-                  XBDI(I)=ONEMIN
+                  XBDI(I)=-ONE
                   GOTO 100
               ELSE IF (TEMPB <= ZERO) THEN
                   NACT=NACT+1
@@ -274,7 +281,7 @@ C          RATIO=ONE
                   IF (ANGBD*TEMP > TEMPA) THEN
                       ANGBD=TEMPA/TEMP
                       IACT=I
-                      XSAV=ONEMIN
+                      XSAV=-ONE
                   END IF
               END IF
               TEMP=SSQ-(SU(I)-XOPT(I))**2
@@ -372,7 +379,7 @@ C
   190 DSQ=ZERO
       DO I=1,N
           XNEW(I)=DMAX1(DMIN1(XOPT(I)+D(I),SU(I)),SL(I))
-          IF (XBDI(I) == ONEMIN) XNEW(I)=SL(I)
+          IF (XBDI(I) == -ONE) XNEW(I)=SL(I)
           IF (XBDI(I) == ONE) XNEW(I)=SU(I)
           D(I)=XNEW(I)-XOPT(I)
           DSQ=DSQ+D(I)**2

@@ -4,9 +4,9 @@ function verify(varargin)
 %
 % Usage:
 %
-%   verify(solver, dimrange, nocompile_flag)
-%   verify(solver, problem, nocompile_flag)
-%   verify(solve, {problem, ir}, nocompile_flag)
+%   verify(solver, dimrange, nocompile_flag, options)
+%   verify(solver, problem, nocompile_flag, options)
+%   verify(solve, problem, ir, nocompile_flag, options)
 %
 % where
 % - `solver` is the name of the solver to test

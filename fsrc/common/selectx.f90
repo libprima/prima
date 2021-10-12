@@ -202,7 +202,9 @@ end if
 !====================!
 
 ! We select X among the points with F < FREF and CSTRV < CREF.
-! Do NOT use F <= FREF, because F = FREF (HUGEFUN or HUGENUM) may mean F = INF in practice.
+!--------------------------------------------------------------------------------------------------!
+!! Do NOT use F <= FREF, because F == FREF (HUGEFUN or HUGENUM) may mean F == INF in practice !!
+!--------------------------------------------------------------------------------------------------!
 if (any(fhist < HUGEFUN .and. chist < HUGECON)) then
     fref = HUGEFUN
     cref = HUGECON

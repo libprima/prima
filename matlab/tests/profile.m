@@ -3,8 +3,8 @@ function profile(varargin)
 %
 % Usage:
 %
-%   profile(solver, dimrange, nocompile_flag)
-%   profile(solver, dimrange, reload_flag)
+%   profile(solver, dimrange, nocompile_flag, options)
+%   profile(solver, dimrange, reload_flag, options)
 %
 % where
 % - `solver` is the name of the solver to test

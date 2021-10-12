@@ -6,6 +6,13 @@ C     2  STEP,SP,XNEW,IACT,RESCON,QFAC,RFAC,PQW,W)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IMPLICIT REAL*8 (A-H,O-Z)
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !!!!!!-----------------------!!!!!!
+      USE DIRTY_TEMPORARY_MOD4POWELL_MOD!
+      !!!!!!-----------------------!!!!!!
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -68,10 +75,10 @@ C       elements, namely MAX[M+3*N,2*M+N,2*NPT], is set in LINCOA.
 C
 C     Set some constants.
 C
-      HALF=0.5D0
-      ONE=1.0D0
-      TENTH=0.1D0
-      ZERO=0.0D0
+      !HALF=0.5D0
+      !ONE=1.0D0
+      !TENTH=0.1D0
+      !ZERO=0.0D0
       NP=N+1
       NH=(N*NP)/2
       NPTM=NPT-NP

@@ -5,6 +5,13 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      1  RESNEW,RESACT,G,DW,VLAM,W)
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !!!!!!-----------------------!!!!!!
+      USE DIRTY_TEMPORARY_MOD4POWELL_MOD!
+      !!!!!!-----------------------!!!!!!
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 !      IMPLICIT REAL*8 (A-H,O-Z)
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
@@ -36,9 +43,9 @@
 !
 !     Set some constants and a temporary VLAM.
 !
-      ONE=1.0D0
+      !ONE=1.0D0
       TINY=1.0D-60
-      ZERO=0.0D0
+      !ZERO=0.0D0
       TDEL=0.2D0*SNORM
       ddsav=dot_product(g,g) + dot_product(g, g)
       vlam = 0.0D0

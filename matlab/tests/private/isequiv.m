@@ -88,40 +88,63 @@ end
 if ir < 0
     minir = 0;
     maxir = nr + 20;
+    single_test = false;
 else
     minir = ir;
     maxir = ir;
+    single_test = true;
 end
 
 if isempty(requirements.list)
-    blacklist = [];
+    blacklist = {};
     %blacklist={'gauss2', 'gauss3','HS25NE', 'cubene'};  % Memory error
-    blacklist=[blacklist, 'BLEACHNG']; % takes too much time
+    blacklist=[blacklist, {'BLEACHNG'}]; % takes too much time
     requirements.blacklist = blacklist;
     plist = secup(requirements);
 else
     plist = requirements.list; % Use the list provided by the user
 end
 
-parfor ip = minip : length(plist)
-	orig_warning_state = warnoff(solvers);
+if single_test
+    orig_warning_state = warnoff(solvers);
 
+    ip = 1;
     pname = upper(plist{ip});
 
     fprintf('\n%3d. \t%s:\n', ip, pname);
 
     prob = macup(pname);
 
-    for ir = minir : maxir
-        fprintf('\n%s Run No. %3d:\n', pname, ir);
-        % The following line compares the solvers on `prob`; ir is needed for the random seed, and
-        % `prec` is the precision of the comparison (should be 0). The function will raise an error
-        % if the solvers behave differently.
-        compare(solvers, prob, ir, prec);
-    end
+    fprintf('\n%s Run No. %3d:\n', pname, ir);
+    % The following line compares the solvers on `prob`; ir is needed for the random seed, and
+    % `prec` is the precision of the comparison (should be 0). The function will raise an error
+    % if the solvers behave differently.
+    compare(solvers, prob, ir, prec, single_test, options);
 
     decup(pname);
-	warning(orig_warning_state); % Restore the behavior of displaying warnings
+    warning(orig_warning_state); % Restore the behavior of displaying warnings
+else
+%    parfor ip = minip : length(plist)
+    for ip = minip : length(plist)
+        orig_warning_state = warnoff(solvers);
+
+        pname = upper(plist{ip});
+
+        fprintf('\n%3d. \t%s:\n', ip, pname);
+
+        prob = macup(pname);
+
+        for ir = minir : maxir
+            fprintf('\n%s Run No. %3d:\n', pname, ir);
+            % The following line compares the solvers on `prob`; ir is needed for the random seed, and
+            % `prec` is the precision of the comparison (should be 0). The function will raise an error
+            % if the solvers behave differently.
+            compare(solvers, prob, ir, prec, single_test, options);
+        end
+
+        decup(pname);
+        warning(orig_warning_state); % Restore the behavior of displaying warnings
+    end
 end
 
 fprintf('\n\nSucceed!\n\n');   % Declare success if we arrive here without an error.
@@ -231,7 +254,7 @@ return
 
 
 
-function equiv = compare(solvers, prob, ir, prec)
+function equiv = compare(solvers, prob, ir, prec, single_test, options)
 pname = prob.name;
 objective = prob.objective;
 nonlcon = prob.nonlcon;
@@ -247,11 +270,19 @@ test_options.chkfunval = true;
 test_options.rhobeg = 1 + 0.5*(2*rand-1);
 test_options.rhoend = 1e-3*(1 + 0.5*(2*rand-1));
 test_options.npt = max(min(floor(6*rand*n), (n+2)*(n+1)/2), n+2);
-test_options.maxfun = max(ceil(20*n*(1+rand)), n+3);
+if (isfield(options, 'maxfun'))
+    test_options.maxfun = options.maxfun;
+else
+    test_options.maxfun = max(ceil(20*n*(1+rand)), n+3);
+end
 test_options.ftarget = objective(x0) - 10*abs(randn)*max(1, objective(x0));
 test_options.fortran = (rand > 0.5);
 test_options.output_xhist = (rand > 0.5);
-test_options.maxhist = ceil(randn*1.5*test_options.maxfun);
+if single_test
+    test_options.maxhist = test_options.maxfun;
+else
+    test_options.maxhist = ceil(randn*1.5*test_options.maxfun);
+end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 test_options.classical = 0;
 test_options.iprint = 0;
@@ -314,14 +345,12 @@ prob.options = test_options;
 %tic;
 solver = str2func(solvers{1});  % Use function handle to avoid `feval`.
 [x1, fx1, exitflag1, output1] = solver(prob);
-%T = toc;
-%fprintf('\nRunning time for %s:\t %f\n', solvers{1}, T);
+%T = toc; fprintf('\nRunning time for %s:\t %f\n', solvers{1}, T);
 
 %tic;
 solver = str2func(solvers{2});  % Use function handle to avoid `feval`.
 [x2, fx2, exitflag2, output2] = solver(prob);
-%T = toc;
-%fprintf('\nRunning time for %s:\t %f\n', solvers{2}, T);
+%T = toc; fprintf('\nRunning time for %s:\t %f\n', solvers{2}, T);
 
 if output1.funcCount == test_options.maxfun && (exitflag1 == 0 || exitflag1 == 2) && exitflag2 == 3
     exitflag1 = 3;
@@ -391,21 +420,24 @@ if ~equiv
     fprintf('\nf: fx1 = %.16e, fx2 = %.16e', fx1, fx2)
     fprintf('\nexitflag: exitflag1 = %d, exitflag2 = %d', exitflag1, exitflag2)
     nhist = min(length(output1.fhist), length(output2.fhist));
-    fprintf('\nfhist (only the last %d evaluations):', nhist);
-    output1.fhist = output1.fhist(end - nhist + 1: end);
-    output2.fhist = output2.fhist(end - nhist + 1: end);
+    fprintf('\nfhist (only the first %d evaluations):', nhist);
+    output1.fhist = output1.fhist(1: nhist);
+    output2.fhist = output2.fhist(1: nhist);
     output1.fhist
     output2.fhist
     output1.fhist == output2.fhist
     if (isfield(output1, 'constrviolation'))
         fprintf('\nconstrviolation: constrviolation1 = %.16e, constrviolation2 = %.16e', ...
             output1.constrviolation, output2.constrviolation)
-        fprintf('\nchist (only the last %d evaluations):', nhist);
-        output1.chist = output1.chist(end - nhist + 1: end);
-        output2.chist = output2.chist(end - nhist + 1: end);
+        fprintf('\nchist (only the first %d evaluations):', nhist);
+        output1.chist = output1.chist(1 : nhist);
+        output2.chist = output2.chist(1 : nhist);
         output1.chist
         output2.chist
         output1.chist == output2.chist
+    end
+    if single_test
+        keyboard
     end
     error('\nThe solvers produce different results on %s at the %dth run.\n', pname, ir);
 end

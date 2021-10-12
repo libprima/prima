@@ -1,5 +1,12 @@
       SUBROUTINE ALTMOV (N,NPT,XPT,XOPT,BMAT,ZMAT,NDIM,SL,SU,KOPT,
      1  KNEW,ADELT,XNEW,XALT,ALPHA,CAUCHY,GLAG,HCOL,W)
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !!!!!!-----------------------!!!!!!
+      USE DIRTY_TEMPORARY_MOD4POWELL_MOD!
+      !!!!!!-----------------------!!!!!!
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IMPLICIT REAL*8 (A-H,O-Z)
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
@@ -38,9 +45,9 @@ C
 C     Set the first NPT components of W to the leading elements of the
 C     KNEW-th column of the H matrix.
 C
-      HALF=0.5D0
-      ONE=1.0D0
-      ZERO=0.0D0
+      !HALF=0.5D0
+      !ONE=1.0D0
+      !ZERO=0.0D0
       CONST=ONE+DSQRT(2.0D0)
       DO K=1,NPT
           HCOL(K)=ZERO
@@ -78,7 +85,7 @@ C     will be set to the largest admissible value of PREDSQ that occurs.
 C
       PRESAV=ZERO
       DO K=1,NPT
-          IF (K == KOPT) CYCLE 
+          IF (K == KOPT) CYCLE
           DDERIV=ZERO
           DISTSQ=ZERO
           DO I=1,N
@@ -171,7 +178,7 @@ C
           PREDSQ=VLAG*VLAG*(VLAG*VLAG+HA*TEMP*TEMP)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 2019-08-29: With the original code, if either PREDSQ or PRESAV
-C is NaN, KSAV/STPSAV/IBDSAV will not get a value. This may cause 
+C is NaN, KSAV/STPSAV/IBDSAV will not get a value. This may cause
 C Segmentation Fault.
 C      IF (PREDSQ .GT. PRESAV) THEN
           IF (.NOT. (PREDSQ <= PRESAV)) THEN

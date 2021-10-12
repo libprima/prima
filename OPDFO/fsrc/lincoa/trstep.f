@@ -5,6 +5,13 @@ C      SUBROUTINE TRSTEP (N,NPT,M,AMAT,B,XPT,HQ,PQ,NACT,IACT,RESCON,
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      1  QFAC,RFAC,SNORM,STEP,G,RESNEW,RESACT,D,DW,W)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !!!!!!-----------------------!!!!!!
+      USE DIRTY_TEMPORARY_MOD4POWELL_MOD!
+      !!!!!!-----------------------!!!!!!
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 C      IMPLICIT REAL*8 (A-H,O-Z)
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
@@ -43,10 +50,10 @@ C       must be at least MAX[M,2*N].
 C
 C     Set some numbers for the conjugate gradient iterations.
 C
-      HALF=0.5D0
-      ONE=1.0D0
+      !HALF=0.5D0
+      !ONE=1.0D0
       TINY=1.0D-60
-      ZERO=0.0D0
+      !ZERO=0.0D0
       CTEST=0.01D0
       SNSQ=SNORM*SNORM
 C
@@ -85,7 +92,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 2019-08-29: B is never used in GETACT
 C      CALL GETACT (N,M,AMAT,B,NACT,IACT,QFAC,RFAC,SNORM,RESNEW,
       CALL GETACT (N,M,AMAT,NACT,IACT,QFAC,RFAC,SNORM,RESNEW,
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!      
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      1  RESACT,G,DW,W,W(N+1))
       IF (W(N+1) == ZERO) GOTO 320
       SCALE=0.2D0*SNORM/DSQRT(W(N+1))
@@ -296,12 +303,12 @@ C     Test for termination. Branch to label 40 if there is a new active
 C       constraint and if the distance from STEP to the trust region
 C       boundary is at least 0.2*SNORM.
 C
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC      
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 2019-08-29: the code can encounter infinite cycling due to NaN
-C values. Exit when NCALL is large or NaN detected. 
+C values. Exit when NCALL is large or NaN detected.
       IF (NCALL > MIN(10000, 100*(M+1)*N) .OR. ! Note: M can be 0.
-     1    ALPHA /= ALPHA .OR. ALPHT /= ALPHT .OR. 
-     1    ALPHM /= ALPHM .OR. DGD /= DGD .OR. DG /= DG .OR. 
+     1    ALPHA /= ALPHA .OR. ALPHT /= ALPHT .OR.
+     1    ALPHM /= ALPHM .OR. DGD /= DGD .OR. DG /= DG .OR.
      1    SS /= SS .OR. SNSQ /= SNSQ .OR. REDUCT /= REDUCT) THEN
           GOTO 320
       END IF

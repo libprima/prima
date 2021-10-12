@@ -3,6 +3,13 @@
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C     2  SL,SU,XNEW,XALT,D,VLAG,W)
      2  SL,SU,XNEW,XALT,D,VLAG,W,F,INFO,FTARGET)
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !!!!!!-----------------------!!!!!!
+      USE DIRTY_TEMPORARY_MOD4POWELL_MOD!
+      !!!!!!-----------------------!!!!!!
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IMPLICIT REAL*8 (A-H,O-Z)
@@ -47,18 +54,18 @@ C       must be at least 3*NDIM = 3*(NPT+N).
 C
 C     Set some constants.
 C
-      HALF=0.5D0
-      ONE=1.0D0
-      TEN=10.0D0
-      TENTH=0.1D0
-      TWO=2.0D0
-      ZERO=0.0D0
+      !HALF=0.5D0
+      !ONE=1.0D0
+      !TEN=10.0D0
+      !TENTH=0.1D0
+      !TWO=2.0D0
+      !ZERO=0.0D0
       NP=N+1
       NPTM=NPT-NP
       NH=(N*NP)/2
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC      
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       ALMOST_INFINITY=HUGE(0.0D0)/2.D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!      
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
 C     The call of PRELIM sets the elements of XBASE, XPT, FVAL, GOPT, HQ, PQ,
 C     BMAT and ZMAT for the first iteration, with the corresponding values of
@@ -162,14 +169,14 @@ C   60 CALL TRSBOX (N,NPT,XPT,XOPT,GOPT,HQ,PQ,SL,SU,DELTA,XNEW,D,
           IF (GOPT(I) /= GOPT(I)) THEN
               INFO = -3
               GOTO 720
-          END IF 
+          END IF
       END DO
       DO I = 1, NH
           IF (HQ(I) /= HQ(I)) THEN
               INFO = -3
               GOTO 720
-          END IF 
-      END DO 
+          END IF
+      END DO
       DO I = 1, NPT
           IF (PQ(I) /= PQ(I)) THEN
               INFO = -3
@@ -310,19 +317,19 @@ C
       KBASE=KOPT
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 2019-08-29
-C See the comments above line number 60. 
+C See the comments above line number 60.
       DO I = 1, N
           IF (GOPT(I) /= GOPT(I)) THEN
               INFO = -3
               GOTO 720
-          END IF 
+          END IF
       END DO
       DO I = 1, NH
           IF (HQ(I) /= HQ(I)) THEN
               INFO = -3
               GOTO 720
-          END IF 
-      END DO 
+          END IF
+      END DO
       DO I = 1, NPT
           IF (PQ(I) /= PQ(I)) THEN
               INFO = -3
@@ -412,12 +419,12 @@ C     1  KNEW,ADELT,XNEW,XALT,ALPHA,CAUCHY,W,W(NP),W(NDIM+1))
 C
 C  Although very rare, NaN can sometimes occur in BMAT or ZMAT. If it
 C  happens, we terminate the code. See the comments above line number 60.
-C  Indeed, if ALTMOV is called with such matrices, then altmov.f will 
-C  encounter a memory error at lines 173--174. This is because the first 
-C  value of PREDSQ in ALTOMOV (see line 159 of altmov.f) will be NaN, line 
+C  Indeed, if ALTMOV is called with such matrices, then altmov.f will
+C  encounter a memory error at lines 173--174. This is because the first
+C  value of PREDSQ in ALTOMOV (see line 159 of altmov.f) will be NaN, line
 C  164 will not be reached, and hence no value will be assigned to IBDSAV.
-C  
-C  Such an error was observed when BOBYQA was (mistakenly) tested on CUTEst 
+C
+C  Such an error was observed when BOBYQA was (mistakenly) tested on CUTEst
 C  problem CONCON. CONCON is a nonlinearly constrained problem with
 C  bounds. By mistake, BOBYQA was called to solve this problem,
 C  neglecting all the constraints other than bounds. With only the bound
@@ -537,7 +544,7 @@ C
           BIGLSQ=ZERO
           KNEW=0
           DO K=1,NPT
-              IF (K == KOPT) CYCLE 
+              IF (K == KOPT) CYCLE
               HDIAG=ZERO
               DO JJ=1,NPTM
                   HDIAG=HDIAG+ZMAT(K,JJ)**2
@@ -938,9 +945,9 @@ C
       IF (NTRITS == -1) GOTO 360
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C  720 IF (FVAL(KOPT) .LE. FSAVE) THEN
-C  Why update X only when FVAL(KOPT) .LE. FSAVE? This seems INCORRECT, 
+C  Why update X only when FVAL(KOPT) .LE. FSAVE? This seems INCORRECT,
 C  because it may lead to a return with F and X that are not the best
-C  available. 
+C  available.
   720 IF (FVAL(KOPT) <= F .OR. F /= F) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           DO I=1,N

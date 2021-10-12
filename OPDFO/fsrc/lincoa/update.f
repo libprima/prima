@@ -1,5 +1,12 @@
       SUBROUTINE UPDATE (N,NPT,XPT,BMAT,ZMAT,IDZ,NDIM,SP,STEP,
      1  KOPT,KNEW,VLAG,W)
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !!!!!!-----------------------!!!!!!
+      USE DIRTY_TEMPORARY_MOD4POWELL_MOD!
+      !!!!!!-----------------------!!!!!!
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IMPLICIT REAL*8 (A-H,O-Z)
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
@@ -27,9 +34,9 @@ C       updating formula, which should never happen.
 C
 C     Set some constants.
 C
-      HALF=0.5D0
-      ONE=1.0D0
-      ZERO=0.0D0
+      !HALF=0.5D0
+      !ONE=1.0D0
+      !ZERO=0.0D0
       NPTM=NPT-N-1
 C
 C     Calculate VLAG and BETA for the current choice of STEP. The first NPT
@@ -85,7 +92,7 @@ C
 C     If KNEW is zero initially, then pick the index of the interpolation
 C       point to be deleted, by maximizing the absolute value of the
 C       denominator of the updating formula times a weighting factor.
-C       
+C
 C
       IF (KNEW == 0) THEN
           DENMAX=ZERO

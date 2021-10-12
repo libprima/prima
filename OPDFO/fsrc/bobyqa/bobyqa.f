@@ -2,6 +2,13 @@
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C     1  MAXFUN,W)
      1  MAXFUN,W,F,INFO,FTARGET)
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !!!!!!-----------------------!!!!!!
+      USE DIRTY_TEMPORARY_MOD4POWELL_MOD!
+      !!!!!!-----------------------!!!!!!
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IMPLICIT REAL*8 (A-H,O-Z)
@@ -116,17 +123,17 @@ C     components of X that become within distance RHOBEG from their bounds.
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun, 2020-05-05
-C When the data is passed from the interfaces to the Fortran code, RHOBEG, 
+C When the data is passed from the interfaces to the Fortran code, RHOBEG,
 C XU and XL may change a bit (due to rounding ???). It was oberved in
 C a MATLAB test that MEX passed 1 to Fortran as 0.99999999999999978.
 C If we set RHOBEG = MIN(XU-XL)/2 in the interfaces, then it may happen
 C that RHOBEG > MIN(XU-XL)/2. That is why we do the following. After
-C this, INFO=6 should never occur. 
+C this, INFO=6 should never occur.
       RHOBEG = MIN(0.5D0*(1.0D0-1.0D-5)*MINVAL(XU(1:N)-XL(1:N)),RHOBEG)
 C For the same reason, we ensure RHOEND <= RHOBEG by the following.
       RHOEND = MIN(RHOBEG, RHOEND)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      ZERO=0.0D0
+      !ZERO=0.0D0
       DO J=1,N
           TEMP=XU(J)-XL(J)
           IF (TEMP < RHOBEG+RHOBEG) THEN

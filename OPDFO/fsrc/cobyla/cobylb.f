@@ -4,8 +4,13 @@ C     1  CON,SIM,SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT)
       SUBROUTINE COBYLB (N,M,MPP,X,RHOBEG,RHOEND,IPRINT,MAXFUN,CON,SIM,
      1  SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT,F,INFO,FTARGET,RESMAX)
 
-      use logging_mod, only : logging
-      use consts_mod, only : HUGEFUN, HUGECON
+
+
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        !!!!!!-----------------------!!!!!!
+        USE DIRTY_TEMPORARY_MOD4POWELL_MOD!
+        !!!!!!-----------------------!!!!!!
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
@@ -83,7 +88,6 @@ C   20 SIMI(I,J)=0.0
       IBRNCH=0
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       NSAV = 0
-      HUGENUM = HUGE(0.0D0)
       DATSAV = HUGENUM
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
@@ -132,6 +136,7 @@ C   60     RESMAX=AMAX1(RESMAX,-CON(K))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       END IF
 
+      !if (NFVALS >=14) write(17,*) NFVALS, F, RESMAX
 
       IF (NFVALS == IPRINT-1 .OR. IPRINT == 3) THEN
           PRINT 70, NFVALS,F,RESMAX,(X(I),I=1,IPTEM)
@@ -180,7 +185,7 @@ C      IF (F .LE. FTARGET .AND. RESMAX .LE. 0.0D0) THEN
       IF (F <= FTARGET .AND. RESMAX <= CTOL) THEN
 C         The feasibility is guarantee because RESMAX .LE. CTOL
           INFO = 1
-          GOTO 620
+          GOTO 600
       END IF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -586,6 +591,7 @@ C the code, including uninitialized indices.
 
       CALL TRSTLP (N,M,A,CON,RHO,DX,IFULL,IACT,W(IZ),W(IZDOTA),
      1  W(IVMC),W(ISDIRN),W(IDXNEW),W(IVMD))
+      !if (NFVALS == 14) write(17,*) 'dt', DX(1:N)
 
       !IF (IFULL == 0) THEN
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -888,8 +894,10 @@ C                  PARMU=0.0
               IF (DENOM == 0.0D0) THEN
                   PARMU=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              ELSE IF (CMAX-CMIN < PARMU*DENOM) THEN
-                  PARMU=(CMAX-CMIN)/DENOM
+!              ELSE IF (CMAX-CMIN < PARMU*DENOM) THEN
+!                  PARMU=(CMAX-CMIN)/DENOM
+              ELSE
+                  PARMU = min(PARMU, (CMAX-CMIN)/DENOM)
               END IF
           END IF
           IF (IPRINT >= 2) PRINT 580, RHO,PARMU
@@ -969,6 +977,8 @@ C      NFVALS-2 instead of NFVALS-1.
           fref = hugenum
           resref = hugenum
       end if
+
+      !write(17,*) fref, resref
 
       if (any (fhist(1:nsav) < fref .and. chist(1:nsav)
      1 < resref)) then
@@ -1091,6 +1101,8 @@ C      NFVALS-2 instead of NFVALS-1.
                       END DO
               ENDIF
           END DO
+
+          !write(17,*) PHIMIN, RESREF, F, RESMAX
 !
 !
 !          FREF = F
@@ -1139,7 +1151,8 @@ C      NFVALS-2 instead of NFVALS-1.
       END IF
       MAXFUN=NFVALS
 
-      !close(17)
+      close(17)
+
       RETURN
       END
 
@@ -1147,6 +1160,13 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 20190820: See the comments below line number 480
       SUBROUTINE SAVEX (XDROP, DATDROP, XSAV, DATSAV, N, M, NSAV,
      +    NSMAX, CTOL)
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !!!!!!-----------------------!!!!!!
+      USE DIRTY_TEMPORARY_MOD4POWELL_MOD!
+      !!!!!!-----------------------!!!!!!
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 C This subroutine saves XDROP in XSAV and DATDROP in DATSAV, unless
 C XDROP is dominated by a vector in XSAV(:, 1:NSAV). If XDROP dominates
 C some vectors in XSAV(:, 1:NSAV), then these vectors will be removed.
@@ -1275,16 +1295,14 @@ C 2. A = NaN if and only if A .NE. A;
 C 3. If A = NaN, then any comparison (except .NE.) with another number B
 C    (can be Inf or NaN) returns false.
 C
+
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        !!!!!!-----------------------!!!!!!
+        USE DIRTY_TEMPORARY_MOD4POWELL_MOD!
+        !!!!!!-----------------------!!!!!!
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      ! Generic modules
-      use consts_mod, only : RP, IK, ZERO, HALF, TENTH, TWO, TEN,
-     1 HUGENUM, DEBUGGING
-      use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED,
-     1 TRSUBP_FAILED, SMALL_TR_RADIUS, NAN_X, NAN_INF_F
-      use infnan_mod, only : is_nan, is_posinf
-      use debug_mod, only : errstop
-      use output_mod, only : retmssg, rhomssg, fmssg
-      use lina_mod, only : calquad, inprod
       implicit none
       real(RP), intent(IN) :: f0
       real(RP), intent(IN) :: conv0

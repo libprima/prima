@@ -2,20 +2,18 @@ function [solver, options] = parse_input(argin)
 %This function parses the input to a testing function, returning the name of the solver to test and
 % the testing options. The testing function can have the signature
 %
-%   test(solver, dimrange, nocompile_flag)
-%   test(solver, dimrange, reload_flag)
+%   test(solver, dimrange, nocompile_flag, options)
 %
 % where
 % - `solver` is the name of solver to test
 % - `dimrange` (optional) is the vector [mindim, maxdim], or "small", or "big", or "large", or "all"
 % - `nocompile` (optional) is either 'nocompile' or 'ncp', which means not to compile the solvers
-% - `reload_flag` is either 'reload' or 'load', indicating not load the data directly from the .mat
-% file corresponding to `solver` and `dimrange`
+% - `options` (optional) is a structure containing options to pass to `isequiv`, `perfdata`, etc.
 %
 % If the testing function is `verify`, then the following signatures are also supported:
 %
-%   verify(solver, problem, nocompile_flag)
-%   verify(solver, {problem, ir}, nocompile_flag)
+%   verify(solver, problem, nocompile_flag, options)
+%   verify(solver, problem, ir, nocompile_flag, options)
 %
 % where
 % - `problem` is a problem to test
@@ -52,37 +50,35 @@ maxdim = 50;
 compile = true;
 reload = false;
 
+if any(cellfun(@isstruct, argin))
+    options = argin{find(cellfun(@isstruct, argin), 1)};
+    argin = argin(~cellfun(@isstruct, argin));
+else
+    options = struct();
+end
+
+fun = @(x) ischstr(x) && ismember(x, nocomplie_flags);
+if any(cellfun(fun, argin))
+    compile = false;
+    argin = argin(~cellfun(fun, argin));
+end
+
+% After last step, 1 <= length(argin) <= 3.
 wrong_input = (length(argin) < 1 || length(argin) > 3);
 
-
-if length(argin) == 3
-    if ischstr(argin{1}) && ismember(argin{1}, nocomplie_flags)
-        compile = false;
-        argin = argin([2, 3]);
-    elseif ischstr(argin{2}) && ismember(argin{2}, nocomplie_flags)
-        compile = false;
-        argin = argin([1, 3]);
-    elseif ischstr(argin{3}) && ismember(argin{3}, nocomplie_flags)
-        compile = false;
-        argin = argin([1, 2]);
-    else
-        wrong_input = true;
+if length(argin) == 3 && strcmp(invoker, 'verify')
+    if any(cellfun(@isintnum, argin))
+        ir = argin{find(cellfun(@isintnum, argin), 1)};
+        argin = argin(~cellfun(@isintnum, argin));
     end
 end
 
 if length(argin) == 3 && strcmp(invoker, 'profile')
-    if ischstr(argin{1}) && ismember(argin{1}, reload_flags)
+    fun = @(x) ischstr(x) && ismember(x, reload_flags);
+    if any(cellfun(fun, argin))
         reload = true;
         compile = false;
-        argin = argin([2, 3]);
-    elseif ischstr(argin{2}) && ismember(argin{2}, reload_flags)
-        reload = true;
-        compile = false;
-        argin = argin([1, 3]);
-    elseif ischstr(argin{3}) && ismember(argin{3}, reload_flags)
-        reload = true;
-        compile = false;
-        argin = argin([1, 2]);
+        argin = argin(~cellfun(fun, argin));
     else
         wrong_input = true;
     end
@@ -113,12 +109,6 @@ if length(argin) == 2
         else
             wrong_input = true;
         end
-    elseif ischstr(argin{1}) && iscell(argin{2}) && strcmp(invoker, 'verify')
-        solver = argin{1};
-        [prob, ir, wrong_input] = parse_prob_ir(argin{2});
-    elseif ischstr(argin{2}) && iscell(argin{1}) && strcmp(invoker, 'verify')
-        solver = argin{2};
-        [prob, ir, wrong_input] = parse_prob_ir(argin{1});
     else
         wrong_input = true;
     end
@@ -134,21 +124,20 @@ end
 
 solver = lower(solver);
 
-wrong_input = wrong_input || ~(ismember(solver, known_solvers) && (mindim <= maxdim) && mindim >= 1 && isint(mindim) && isint(maxdim));
+wrong_input = wrong_input || ~(ismember(solver, known_solvers) && (mindim <= maxdim) && mindim >= 1 && isintnum(mindim) && isintnum(maxdim));
 
 if wrong_input
     if (strcmp(invoker, 'verify'))
-        errmsg = sprintf('\nUsage:\n\n\t%s(solver, dimrange, nocomplie_flag), or %s(solver, {problem, ir}, nocomplie_flag).\n', invoker, invoker);
+        errmsg = sprintf('\nUsage:\n\n\t%s(solver, dimrange, nocomplie_flag, options), or %s(solver, problem, ir, nocomplie_flag, options).\n', invoker, invoker);
     elseif (strcmp(invoker, 'profile'))
-        errmsg = sprintf('\nUsage:\n\n\t%s(solver, dimrange, nocompile_flag), or %s(solver, dimrange, reload_flag).\n', invoker, invoker);
+        errmsg = sprintf('\nUsage:\n\n\t%s(solver, dimrange, nocompile_flag, options), or %s(solver, dimrange, reload_flag, options).\n', invoker, invoker);
     else
-        errmsg = sprintf('\nUsage:\n\n\t%s(solver, dimrange, nocompile_flag).\n', invoker);
+        errmsg = sprintf('\nUsage:\n\n\t%s(solver, dimrange, nocompile_flag, options).\n', invoker);
     end
     error(errmsg)
 end
 
 % Define the testing options.
-options = struct();
 options.compile = compile;
 options.reload = reload;
 if isempty(prob)
@@ -194,19 +183,3 @@ case 'all'
 otherwise
     wrong_input = true;
 end
-
-
-function [prob, ir, wrong_input] = parse_prob_ir(prob_ir)
-
-wrong_input = false;
-if ischstr(prob_ir{1}) && isnumvec(prob_ir{2})
-    prob = prob_ir{1};
-    ir = prob_ir{2};
-elseif ischstr(prob_ir{2}) && isnumvec(prob_ir{1})
-    prob = prob_ir{2};
-    ir = prob_ir{1};
-else
-    wrong_input = true;
-end
-
-wrong_input = wrong_input || ~(isint(ir) && ir >= 0);
