@@ -223,7 +223,7 @@ ifeq ($(OSTYPE), LINUX)
 else ifeq ($(OSTYPE), MAC)
 	NPROCS = $(shell sysctl hw.ncpu | grep -o '[0-9]\+' || echo 1)
 else
-	NPROCS = $(shell echo $NUMBER_OF_PROCESSORS)
+	NPROCS = $(shell echo $(NUMBER_OF_PROCESSORS))
 endif
 
 
