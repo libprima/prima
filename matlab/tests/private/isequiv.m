@@ -98,7 +98,7 @@ end
 if isempty(requirements.list)
     blacklist = {};
     %blacklist={'gauss2', 'gauss3','HS25NE', 'cubene'};  % Memory error
-    if strcmpi(solvers{1}, 'cobyla') || strcmpi(solvers{2}, 'cobylan')
+    if strcmpi(solvers{1}, 'cobyla') || strcmpi(solvers{2}, 'cobyla')
         blacklist=[blacklist, {'BLEACHNG'}];  % Takes too much time to solve
         blacklist=[blacklist, {'DMN15102', 'DMN15103', 'DMN15332', 'DMN15333', 'DMN37142', 'DMN37143'}]; % Takes more than 1 min to solve
         blacklist = [blacklist, {'DUAL2', 'FEEDLOC', 'GROUPING', 'HYDCAR20', 'KISSING2', 'LINSPANH', ...

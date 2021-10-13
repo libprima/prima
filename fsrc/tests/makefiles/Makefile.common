@@ -219,12 +219,13 @@ endif
 # Question: How to do it in WINDOWS? $(shell echo %NUMBER_OF_PROCESSORS%) does not work.
 NPROCS :=
 ifeq ($(OSTYPE), LINUX)
-	NPROCS = $(shell grep -c 'processor' /proc/cpuinfo || echo 1)
+	NPROCS = $(shell grep -c 'processor' /proc/cpuinfo 2>/dev/null || echo 1)
 else ifeq ($(OSTYPE), MAC)
-	NPROCS = $(shell sysctl hw.ncpu  | grep -o '[0-9]\+' || echo 1)
+	NPROCS = $(shell sysctl hw.ncpu | grep -o '[0-9]\+' || echo 1)
 else
-	NPROCS = 1
+	NPROCS = $(shell echo $NUMBER_OF_PROCESSORS)
 endif
+
 
 ####################################################################################################
 # Here are the testing options for each compiler. We try to turn on as many debugging options as
