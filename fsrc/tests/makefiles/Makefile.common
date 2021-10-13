@@ -216,18 +216,14 @@ else
 endif
 
 # Define NPROCS to be the number of processors available to make tests in parallel.
+# Question: How to do it in WINDOWS? $(shell echo %NUMBER_OF_PROCESSORS%) does not work.
 NPROCS :=
 ifeq ($(OSTYPE), LINUX)
 	NPROCS = $(shell grep -c 'processor' /proc/cpuinfo || echo 1)
 else ifeq ($(OSTYPE), MAC)
 	NPROCS = $(shell sysctl hw.ncpu  | grep -o '[0-9]\+' || echo 1)
-else ifeq ($(OSTYPE), WINDOWS)
-	NPROCS = $(shell echo %NUMBER_OF_PROCESSORS% || echo 1)
 else
 	NPROCS = 1
-endif
-ifeq ($(NPROCS),)
-NPROCS := 1
 endif
 
 ####################################################################################################
