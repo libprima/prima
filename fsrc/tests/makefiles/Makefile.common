@@ -216,7 +216,6 @@ else
 endif
 
 # Define NPROCS to be the number of processors available to make tests in parallel.
-# Question: How to do it in WINDOWS? $(shell echo %NUMBER_OF_PROCESSORS%) does not work.
 NPROCS :=
 ifeq ($(OSTYPE), LINUX)
 	NPROCS = $(shell grep -c 'processor' /proc/cpuinfo 2>/dev/null || echo 1)
@@ -426,7 +425,11 @@ $(TESTS_C) $(TESTS_INT_C):
 	@cat "$(LOG_DIR)/$@.log" >> "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log"
 	@rm "$(LOG_DIR)/$@.log"
 	@make cleanmisc
-	#touch $@  # Without this line, %_tst_c is remade even if it is up to date. (Better approach???)
+	# Without the following line, 9test_c is always remade when making 9test even if 9test_c is up
+	# to date. Also observed for gtest on Windows. No idea why. Strange! Better approach?
+	# Note that %test is made in parallel. If $test_c is remade when making %test, then it will also
+	# be in parallel, which will cause errors.
+	touch $@
 
 # Make a local copy of the source code for the test.
 source_%: $(SRC_DIRS)

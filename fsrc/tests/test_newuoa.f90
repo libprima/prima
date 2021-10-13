@@ -5,7 +5,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Saturday, October 09, 2021 PM05:19:57
+! Last Modified: Wednesday, October 13, 2021 PM11:30:12
 
 implicit none
 private
@@ -57,10 +57,8 @@ if (present(probs)) then
     nprobs = int(size(probs), kind(nprobs))
     probs_loc(1:nprobs) = probs
 else
-!    nprobs = 5_IK
-!    probs_loc(1:nprobs) = ['chebyqad', 'chrosen ', 'trigsabs', 'trigssqs', 'vardim  ']
-    nprobs = 4_IK
-    probs_loc(1:nprobs) = ['chebyqad', 'chrosen ', 'trigsabs', 'vardim  ']
+    nprobs = 5_IK
+    probs_loc(1:nprobs) = ['chebyqad', 'chrosen ', 'trigsabs', 'trigssqs', 'vardim  ']
 end if
 
 if (present(mindim)) then
