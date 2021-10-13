@@ -141,11 +141,24 @@ end
 options.compile = compile;
 options.reload = reload;
 if isempty(prob)
+    % Define the dimension range.
     options.mindim = mindim;
     options.maxdim = maxdim;
-    if ~isfield(options, 'nr')
-        options.nr = 20;
+    % Revise the dimension range for COBYLA.
+    if strcmpi(solver, 'cobyla')
+        if options.maxdim == 50
+            options.maxdim = 20;
+        end
+        if options.mindim == 51
+            options.mindim = 21;
+        end
     end
+
+    % Define the number of random runs. The actual number of run is 20 + nr.
+    if ~isfield(options, 'nr')
+        options.nr = 10;
+    end
+
     % Define the problem type(s) to test.
     switch solver
     case {'uobyqa', 'newuoa'}
