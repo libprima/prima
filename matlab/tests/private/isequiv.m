@@ -360,15 +360,15 @@ end
 
 prob.options = test_options;
 
-tic;
+%tic;
 solver = str2func(solvers{1});  % Use function handle to avoid `feval`.
 [x1, fx1, exitflag1, output1] = solver(prob);
-T = toc; fprintf('\nRunning time for %s:\t %f\n', solvers{1}, T);
+%T = toc; fprintf('\nRunning time for %s:\t %f\n', solvers{1}, T);
 
-tic;
+%tic;
 solver = str2func(solvers{2});  % Use function handle to avoid `feval`.
 [x2, fx2, exitflag2, output2] = solver(prob);
-T = toc; fprintf('\nRunning time for %s:\t %f\n', solvers{2}, T);
+%T = toc; fprintf('\nRunning time for %s:\t %f\n', solvers{2}, T);
 
 if output1.funcCount == test_options.maxfun && (exitflag1 == 0 || exitflag1 == 2) && exitflag2 == 3
     exitflag1 = 3;
