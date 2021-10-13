@@ -377,7 +377,7 @@ $(TESTS) $(TESTS_INT):
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
 	@make $(TST_C)
-	@make --jobs $(NPROCS) $(SUBTESTS)
+	@make $(SUBTESTS) --jobs $(NPROCS)
 	bash $(CHCKTST) --warning "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
 	@printf "\n$@ ends!\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
 	@mv "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log" "$(LOG_DIR)/$@_$(STAMP).log"
@@ -427,9 +427,9 @@ $(TESTS_C) $(TESTS_INT_C):
 	@make cleanmisc
 	# Without the following line, 9test_c is always remade when making 9test even if 9test_c is up
 	# to date. Also observed for gtest on Windows. No idea why. Strange! Better approach?
-	# Note that %test is made in parallel. If $test_c is remade when making %test, then it will also
+	# Note that %test is made in parallel. If %test_c is remade when making %test, then it will also
 	# be in parallel, which will cause errors.
-	touch $@
+	@touch $@
 
 # Make a local copy of the source code for the test.
 source_%: $(SRC_DIRS)
