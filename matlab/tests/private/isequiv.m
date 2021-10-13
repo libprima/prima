@@ -98,32 +98,41 @@ end
 if isempty(requirements.list)
     blacklist = {};
     %blacklist={'gauss2', 'gauss3','HS25NE', 'cubene'};  % Memory error
-    blacklist=[blacklist, {'BLEACHNG'}]; % takes too much time
+    if strcmpi(solvers{1}, 'cobyla') || strcmpi(solvers{2}, 'cobylan')
+        blacklist=[blacklist, {'BLEACHNG'}];  % Takes too much time to solve
+        blacklist=[blacklist, {'DMN15102', 'DMN15103', 'DMN15332', 'DMN15333', 'DMN37142', 'DMN37143'}]; % Takes more than 1 min to solve
+        blacklist = [blacklist, {'DUAL2', 'FEEDLOC', 'GROUPING', 'HYDCAR20', 'KISSING2', 'LINSPANH', ...
+            'LUKSAN11', 'LUKSAN12', 'LUKSAN13', 'LUKSAN14', 'LUKSAN15', 'LUKSAN16', 'LUKSAN17', 'LUKSAN21', 'LUKSAN22', ...
+            'MANCINONE', 'QPCBLEND', 'QPNBLEND', 'SPANHYD', 'SWOPF', 'TAX13322', 'TAXR13322', 'TRO4X4', ...
+            'VANDERM1', 'VANDERM2', 'VANDERM3', 'VANDERM4'}]; % Takes more than 10 sec to solve
+    end
     requirements.blacklist = blacklist;
     plist = secup(requirements);
 else
     plist = requirements.list; % Use the list provided by the user
+    if (ischstr(plist))  % In case plist is indeed the name of a problem
+        plist = {plist};
+    end
 end
 
-
 if single_test
-    orig_warning_state = warnoff(solvers);
+    for ip = minip : length(plist)
+        orig_warning_state = warnoff(solvers);
+        pname = upper(plist{ip});
 
-    ip = 1;
-    pname = upper(plist{ip});
+        fprintf('\n%3d. \t%s:\n', ip, pname);
 
-    fprintf('\n%3d. \t%s:\n', ip, pname);
+        prob = macup(pname);
 
-    prob = macup(pname);
+        fprintf('\n%s Run No. %3d:\n', pname, ir);
+        % The following line compares the solvers on `prob`; ir is needed for the random seed, and
+        % `prec` is the precision of the comparison (should be 0). The function will raise an error
+        % if the solvers behave differently.
+        compare(solvers, prob, ir, prec, single_test, options);
 
-    fprintf('\n%s Run No. %3d:\n', pname, ir);
-    % The following line compares the solvers on `prob`; ir is needed for the random seed, and
-    % `prec` is the precision of the comparison (should be 0). The function will raise an error
-    % if the solvers behave differently.
-    compare(solvers, prob, ir, prec, single_test, options);
-
-    decup(pname);
-    warning(orig_warning_state); % Restore the behavior of displaying warnings
+        decup(pname);
+        warning(orig_warning_state); % Restore the behavior of displaying warnings
+    end
 else
     parfor ip = minip : length(plist)
 %    for ip = minip : length(plist)
@@ -343,15 +352,15 @@ end
 
 prob.options = test_options;
 
-%tic;
+tic;
 solver = str2func(solvers{1});  % Use function handle to avoid `feval`.
 [x1, fx1, exitflag1, output1] = solver(prob);
-%T = toc; fprintf('\nRunning time for %s:\t %f\n', solvers{1}, T);
+T = toc; fprintf('\nRunning time for %s:\t %f\n', solvers{1}, T);
 
-%tic;
+tic;
 solver = str2func(solvers{2});  % Use function handle to avoid `feval`.
 [x2, fx2, exitflag2, output2] = solver(prob);
-%T = toc; fprintf('\nRunning time for %s:\t %f\n', solvers{2}, T);
+T = toc; fprintf('\nRunning time for %s:\t %f\n', solvers{2}, T);
 
 if output1.funcCount == test_options.maxfun && (exitflag1 == 0 || exitflag1 == 2) && exitflag2 == 3
     exitflag1 = 3;
