@@ -36,7 +36,7 @@ end
 if isfield(options, 'nr')
     nr = options.nr;
 else
-    nr = 20;
+    nr = 10;
 end
 if isfield(options, 'ir')
     % ir is the index of the random experiment to be conducted. If it is negative, then experiments
@@ -67,7 +67,11 @@ end
 if (isfield(options, 'maxdim'))
     requirements.maxdim = options.maxdim;
 else
-    requirements.maxdim = 50;
+    if strcmpi(solvers{1}, 'cobyla') || strcmpi(solvers{2}, 'cobyla')
+        requirements.maxdim = 20;
+    else
+        requirements.maxdim = 50;
+    end
 end
 if (isfield(options, 'mincon'))
     requirements.mincon = options.mincon;
@@ -99,9 +103,12 @@ if isempty(requirements.list)
     blacklist = {};
     %blacklist={'gauss2', 'gauss3','HS25NE', 'cubene'};  % Memory error
     if strcmpi(solvers{1}, 'cobyla') || strcmpi(solvers{2}, 'cobyla')
-        blacklist=[blacklist, {'BLEACHNG'}];  % Takes too much time to solve
+        if requirements.maxdim <= 50  % This means we intend to have a quick test with small problems
+            blacklist=[blacklist, {'BLEACHNG'}];  % A 17 dimensional bound-constrained problem that
+                                                  % takes too much time for a small problem
+        end
         blacklist=[blacklist, {'DMN15102', 'DMN15103', 'DMN15332', 'DMN15333', 'DMN37142', 'DMN37143'}]; % Takes more than 5 min to solve
-        %blacklist = [blacklist, {'KISSING2', 'LUKSAN16', 'QPCBLEND', 'VANDERM4'}]; % Takes more than 20 sec to solve
+        blacklist = [blacklist, {'KISSING2', 'LUKSAN16', 'QPCBLEND', 'VANDERM4'}]; % Takes more than 20 sec to solve
         %blacklist = [blacklist, {'DUAL2', 'FEEDLOC', 'GROUPING', 'HYDCAR20', 'LINSPANH', 'LUKSAN11', ...
         %    'LUKSAN12', 'LUKSAN13', 'LUKSAN14', 'LUKSAN15', 'LUKSAN17', 'LUKSAN21', 'LUKSAN22', ...
         %    'MANCINONE', 'QPNBLEND', 'SPANHYD', 'SWOPF', 'TAX13322', 'TAXR13322', 'TRO4X4', ...
