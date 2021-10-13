@@ -15,7 +15,11 @@ ctol = 1e-10;
 cpenalty = 1e10;
 type = 'ubln'; % The types of problems to test
 mindim = 1; % The minimal dimension of problems to test
-maxdim = 50; % The maximal dimension of problems to test
+if strcmpi(solvers{1}, 'cobyla') || strcmpi(solvers{2}, 'cobyla')
+    maxdim = 20; % The maximal dimension of problems to test
+else
+    maxdim = 50; % The maximal dimension of problems to test
+end
 mincon = 0; % The minimal number of constraints of problems to test
 maxcon = min(5000, 100*maxdim); % The maximal number of constraints of problems to test
 thorough_test = 0;
