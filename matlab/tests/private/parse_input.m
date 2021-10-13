@@ -143,7 +143,9 @@ options.reload = reload;
 if isempty(prob)
     options.mindim = mindim;
     options.maxdim = maxdim;
-    options.nr = 20;
+    if ~isfield(options, 'nr')
+        options.nr = 20;
+    end
     % Define the problem type(s) to test.
     switch solver
     case {'uobyqa', 'newuoa'}
