@@ -1,3 +1,11 @@
+####################################################################################################
+# TODO: 9test_c is always remade when making 9test; the same for gtest_c on Windows. Why??? How to
+# solve this problem???
+####################################################################################################
+#
+#
+#
+#
 # This Makefile intends to test the modern-Fortran version of Powell's solvers on as many compilers
 # as possible.
 #
@@ -429,7 +437,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	# to date. Also observed for gtest on Windows. No idea why. Strange! Better approach?
 	# Note that %test is made in parallel. If %test_c is remade when making %test, then it will also
 	# be in parallel, which will cause errors.
-	@touch $@
+	#@touch $@
 
 # Make a local copy of the source code for the test.
 source_%: $(SRC_DIRS)
@@ -468,6 +476,7 @@ header_%: source_%
 cleanbin:
 	@printf "\nCleaning up the binaries ...\n"
 	@rm -f *_tst_c
+	@rm -f *_test_c
 	@printf "\nDone.\n\n"
 
 cleanmisc:
