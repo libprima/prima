@@ -6,7 +6,7 @@ module noise_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, October 17, 2021 PM10:18:45
+! Last Modified: Sunday, October 17, 2021 PM11:03:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -148,19 +148,18 @@ seed = max(abs(seed), 1)
 ! Generate a random number R.
 call getseed(seedsav)  ! Back up the current random seed in SEEDSAV.
 call setseed(seed)  ! Set the random seed by SETSEED(SEED).
+
 if (lower(trimstr(noise_type_loc)) == 'uniform') then
     r = TWO * rand() - ONE
 else
     r = randn()
 end if
-call setseed(seedsav)  ! Recover the random seed by SEEDSAV.
-deallocate (seedsav)
-
 ! Define NOISY_F.
 noify_f = f + noise_level_loc * max(abs(f), ONE) * r
 
-! Inject faulty values into F.
 r = rand()  ! Generate a random value that is independent of the NOISY_F above.
+
+! Inject faulty values into F.
 if (r > 0.8_RP) then
     noify_f = huge(0.0_RP)
 !elseif (r > 0.7_RP) then
@@ -168,6 +167,9 @@ if (r > 0.8_RP) then
 elseif (r < 0.1_RP) then
     noify_f = -10.0_RP * max(abs(f), ONE)
 end if
+
+call setseed(seedsav)  ! Recover the random seed by SEEDSAV.
+!deallocate (seedsav)  ! SEEDSAV is deallocated automatically at return.
 end function noisyfun
 
 
