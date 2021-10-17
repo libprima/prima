@@ -40,8 +40,8 @@ else
 end
 if isfield(options, 'ir')
     % ir is the index of the random experiment to be conducted. If it is negative, then experiments
-    % 1, ..., nr, ..., nr + 20 will be conducted. nr + 20 is because there are a few fixed
-    % experiments that will always be run.
+    % 1, ..., nr, ..., nr + 20 will be conducted. nr + 20 is because there are fixed experiments
+    % that will always be run.
     ir = options.ir;
 else
     ir = -1;

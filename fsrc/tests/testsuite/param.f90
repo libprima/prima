@@ -6,7 +6,7 @@ module param_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, October 10, 2021 AM12:17:51
+! Last Modified: Sunday, October 17, 2021 PM08:05:25
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : RP, IK, TENTH
@@ -14,10 +14,11 @@ implicit none
 private
 public :: DIMSTRIDE_DFT, MINDIM_DFT, MAXDIM_DFT, NRAND_DFT, NOISE_DFT, FNOISE_DFT, XNOISE_DFT
 
-integer(IK), parameter :: DIMSTRIDE_DFT = 1
-integer(IK), parameter :: MAXDIM_DFT = 20
+! Use an odd stride so that both odd and even dimensional problems will be tested.
+integer(IK), parameter :: DIMSTRIDE_DFT = 3
 ! Testing univariate problems can help us to uncover some bugs that can only occur in extreme cases.
 integer(IK), parameter :: MINDIM_DFT = 1
+integer(IK), parameter :: MAXDIM_DFT = 25
 integer(IK), parameter :: NRAND_DFT = 5
 real(RP), parameter :: FNOISE_DFT = 0.2_RP
 real(RP), parameter :: NOISE_DFT = TENTH
