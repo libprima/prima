@@ -6,7 +6,7 @@ module noise_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, October 17, 2021 PM01:17:26
+! Last Modified: Sunday, October 17, 2021 PM07:50:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -92,8 +92,8 @@ function noisyfun(x, f, noise_level, noise_type) result(noify_f)
 ! same result;
 ! 2. the noises for different (X, F) are (nearly) independent from each other.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, ONE, TWO, TENTH
-use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
+use, non_intrinsic :: consts_mod, only : RP, ONE, TWO, TEN, TENTH, EPS
+use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: param_mod, only : FNOISE_DFT
 use, non_intrinsic :: rand_mod, only : getseed, setseed, rand, randn
 use, non_intrinsic :: string_mod, only : lower, trimstr
@@ -112,8 +112,6 @@ real(RP) :: noify_f
 character(len=NOISE_TYPE_LEN) :: noise_type_loc
 integer, allocatable :: seedsav(:)
 integer :: seed
-real(RP) :: cosx(size(x))
-real(RP) :: cosf
 real(RP) :: noise_level_loc
 real(RP) :: r
 real(RP) :: seedx
@@ -137,24 +135,13 @@ if (.not. is_finite(f)) then
     noify_f = f
     return
 end if
-cosx = cos(x)
-if (any(is_nan(cosx))) then
-    noify_f = sum(cosx)
-    return
-end if
-cosf = cos(f)
-if (is_nan(cosf)) then
-    noify_f = cosf
-    return
-end if
-
-! Some compilers cannot guarantee ABS(COS) <= 1 when the variable if huge. This may cause overflow.
-cosx = min(max(cosx, -ONE), ONE)
-cosf = min(max(cosf, -ONE), ONE)
 
 ! Define the seed.
-seedx = min(abs(cos(1.0E3_RP * sum(cosx))), ONE)
-seedf = min(abs(cos(1.0E3_RP * cosf)), ONE)
+! Many compilers have difficulties in handling COS of huge variables. They may return invalid
+! results (NaN or numbers with absolute values much larger than 1, observed on Absoft 21.0 and NAG
+! Fortran 7.0) or even encounter segmentation faults (Absoft 21.0).
+seedx = sum(cos(x * TEN**(-int(log10(abs(x) + EPS)))))
+seedf = cos(f * TEN**(-int(log10(abs(f) + EPS))))
 seed = ceiling(TENTH * real(huge(0), RP) * seedx * seedf)
 seed = max(abs(seed), 1)
 
