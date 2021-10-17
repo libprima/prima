@@ -373,7 +373,6 @@ test_c:
 
 ####################################################################################################
 # Make a compiler-specific test.
-######################################################################################
 # N.B.:
 # 1. Execute CHCKTST by  "bash $(CHCKTST)" instead of just "$(CHCKTST)", because "$(CHCKTST)" may
 # not be executable on all operating systems.
@@ -403,7 +402,6 @@ $(TESTS_C) $(TESTS_INT_C):
 	@make cleanmisc
 
 # Make a compiler-specific subtest.
-######################################################################################
 # N.B.: The prerequisite should NOT include files that may not exist, e.g., $(SRC), because
 # Make will ignore the rule if such files do not exist, resulting in "No rule to make ..." mistake.
 %_tst: %_tst_c

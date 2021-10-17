@@ -6,7 +6,7 @@ module noise_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, October 10, 2021 AM10:58:08
+! Last Modified: Sunday, October 17, 2021 PM01:17:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -44,7 +44,7 @@ else
     noise_level_loc = NOISE_DFT
 end if
 
-noisy_x = x + noise_level_loc * max(ONE, abs(x)) * (TWO * rand() - ONE)
+noisy_x = x + noise_level_loc * max(abs(x), ONE) * (TWO * rand() - ONE)
 
 end function noisy
 
@@ -78,7 +78,7 @@ end if
 
 r = randn(int(size(r), IK))
 
-noisy_x = x + noise_level_loc * max(ONE, norm(x)) * (r / norm(r))
+noisy_x = x + noise_level_loc * max(norm(x), ONE) * (r / norm(r))
 
 end function noisyx
 
@@ -170,13 +170,16 @@ call setseed(seedsav)  ! Recover the random seed by SEEDSAV.
 deallocate (seedsav)
 
 ! Define NOISY_F.
-noify_f = f + noise_level_loc * max(ONE, abs(f)) * r
-if (r > 0.75_RP) then
+noify_f = f + noise_level_loc * max(abs(f), ONE) * r
+
+! Inject faulty values into F.
+r = rand()  ! Generate a random value that is independent of the NOISY_F above.
+if (r > 0.8_RP) then
     noify_f = huge(0.0_RP)
-!elseif (r > 0.5_RP) then
+!elseif (r > 0.7_RP) then
     !noify_f = IEEE_VALUE(0.0_RP, IEEE_QUIET_NAN)
-elseif (r < -0.75_RP) then
-    noify_f = -max(1.0E10_RP, huge(0.0_RP)**(0.25_RP))
+elseif (r < 0.1_RP) then
+    noify_f = -10.0_RP * max(abs(f), ONE)
 end if
 end function noisyfun
 
