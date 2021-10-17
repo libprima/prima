@@ -6,7 +6,7 @@ module noise_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, October 17, 2021 PM07:50:57
+! Last Modified: Sunday, October 17, 2021 PM10:18:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -140,7 +140,7 @@ end if
 ! Many compilers have difficulties in handling COS of huge variables. They may return invalid
 ! results (NaN or numbers with absolute values much larger than 1, observed on Absoft 21.0 and NAG
 ! Fortran 7.0) or even encounter segmentation faults (Absoft 21.0).
-seedx = sum(cos(x * TEN**(-int(log10(abs(x) + EPS)))))
+seedx = sum(cos(x * TEN**(-int(log10(abs(x) + EPS))))) / real(size(x), RP)
 seedf = cos(f * TEN**(-int(log10(abs(f) + EPS))))
 seed = ceiling(TENTH * real(huge(0), RP) * seedx * seedf)
 seed = max(abs(seed), 1)
