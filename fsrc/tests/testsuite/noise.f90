@@ -136,7 +136,7 @@ if (.not. is_finite(f)) then
     return
 end if
 
-! Define the seed.
+! Define the seed by scrambling X and F.
 ! Many compilers have difficulties in handling COS of huge variables. They may return invalid
 ! results (NaN or numbers with absolute values much larger than 1, observed on Absoft 21.0 and NAG
 ! Fortran 7.0) or even encounter segmentation faults (Absoft 21.0).
@@ -157,15 +157,14 @@ end if
 ! Define NOISY_F.
 noify_f = f + noise_level_loc * max(abs(f), ONE) * r
 
-r = rand()  ! Generate a random value that is independent of the NOISY_F above.
-
 ! Inject faulty values into F.
+r = rand()  ! Generate a random value that is independent of the NOISY_F above.
 if (r > 0.8_RP) then
-    noify_f = huge(0.0_RP)
+    noify_f = rand()*huge(0.0_RP)  ! "Almost +Inf" values.
 !elseif (r > 0.7_RP) then
-    !noify_f = IEEE_VALUE(0.0_RP, IEEE_QUIET_NAN)
+    !noify_f = IEEE_VALUE(0.0_RP, IEEE_QUIET_NAN)  ! NaN
 elseif (r < 0.1_RP) then
-    noify_f = -10.0_RP * max(abs(f), ONE)
+    noify_f = -10.0_RP * max(abs(f), ONE)  ! Discontinuously decreased values
 end if
 
 call setseed(seedsav)  ! Recover the random seed by SEEDSAV.
