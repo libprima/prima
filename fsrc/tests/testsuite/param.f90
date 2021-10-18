@@ -6,7 +6,7 @@ module param_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, October 18, 2021 AM08:28:52
+! Last Modified: Monday, October 18, 2021 AM09:41:43
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : RP, IK, TENTH
@@ -18,7 +18,7 @@ public :: DIMSTRIDE_DFT, MINDIM_DFT, MAXDIM_DFT, NRAND_DFT, NOISE_DFT, FNOISE_DF
 integer(IK), parameter :: DIMSTRIDE_DFT = 3
 ! Testing univariate problems can help us to uncover some bugs that can only occur in extreme cases.
 integer(IK), parameter :: MINDIM_DFT = 1
-integer(IK), parameter :: MAXDIM_DFT = 25
+integer(IK), parameter :: MAXDIM_DFT = 20
 integer(IK), parameter :: NRAND_DFT = 5
 real(RP), parameter :: FNOISE_DFT = 0.2_RP
 real(RP), parameter :: NOISE_DFT = TENTH
