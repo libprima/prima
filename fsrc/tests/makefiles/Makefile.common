@@ -404,13 +404,19 @@ $(TESTS_C) $(TESTS_INT_C):
 # Make a compiler-specific subtest.
 # N.B.: The prerequisite should NOT include files that may not exist, e.g., $(SRC), because
 # Make will ignore the rule if such files do not exist, resulting in "No rule to make ..." mistake.
-%_tst: %_tst_c
+#%_tst: %_tst_c
+%_tst:
+	@if [[ ! -f $@_c ]] ; \
+		then make $@_c ; \
+	else \
+		printf "\n$@_c exists!\n\n" ; \
+	fi
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
 	@if echo $@ | grep -q 9test ; then \
 		printf "\n$@ is skipped!\n\n" ; \
 	else \
-		./$< 2>&1 | tee -a "$(LOG_DIR)/$@.log" ; \
+		./$@_c 2>&1 | tee -a "$(LOG_DIR)/$@.log" ; \
 	fi
 	bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
 	bash $(CHCKTST) --warning "$(LOG_DIR)/$@.log"
@@ -435,7 +441,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	# to date. Also observed for gtest on Windows. No idea why. Strange! Better approach?
 	# Note that %test is made in parallel. If %test_c is remade when making %test, then it will also
 	# be in parallel, which will cause errors.
-	#@touch $@
+	@touch $@
 
 # Make a local copy of the source code for the test.
 source_%: $(SRC_DIRS)
