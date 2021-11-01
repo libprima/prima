@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, October 12, 2021 AM10:23:43
+! Last Modified: Monday, November 01, 2021 PM11:29:02
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -33,8 +33,7 @@ public :: xpy_dot_z, xdy_plus_a, Ax_plus_y, xA_plus_y
 public :: eye
 public :: inv
 public :: planerot
-public :: calquad
-public :: hessmul
+public :: calquad, errquad, hessmul
 public :: isminor
 public :: issymmetric
 public :: norm
@@ -917,6 +916,63 @@ qred = qred - inprod(s, matprod(hq, d))
 !qred = qred - HALF*(inprod(d, matprod(hq, s)) + inprod(s, matprod(hq, d)))
 #endif
 end function calquad
+
+
+function errquad(gq, hq, pq, xpt, fval) result(err)
+!--------------------------------------------------------------------------------------------------!
+! This function calculates the maximal relative error of Q in interpolating FVAL on XPT.
+! Here, Q is the quadratic function defined via (GQ, HQ, PQ) by
+! Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
+! where HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
+! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
+!--------------------------------------------------------------------------------------------------!
+
+! Generic modules
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HUGENUM, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf
+implicit none
+
+! Inputs
+real(RP), intent(in) :: gq(:)     ! GQ(N)
+real(RP), intent(in) :: hq(:, :)  ! HQ(N, N)
+real(RP), intent(in) :: pq(:)     ! PQ(NPT)
+real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
+real(RP), intent(in) :: fval(:)   ! FVAL(NPT)
+
+! Outputs
+real(RP) :: err
+
+! Local variables
+character(len=*), parameter :: srname = 'ERRQUAD'
+integer(IK) :: k
+integer(IK) :: n
+integer(IK) :: npt
+real(RP) :: zeros(size(xpt, 1))
+real(RP) :: qval(size(xpt, 2))
+
+! Sizes
+n = int(size(xpt, 1), kind(n))
+npt = int(size(xpt, 2), kind(npt))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
+    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
+    call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(size(fval) == npt, 'SIZE(FVAL) = NPT', srname)
+    call assert(.not. any(is_nan(fval) .or. is_posinf(fval)), 'FVAL is not NaN or +Inf', srname)
+end if
+
+zeros = ZERO
+qval = [(-calquad(xpt(:, k), gq, hq, pq, zeros, xpt), k=1, npt)]
+if (.not. all(is_finite(qval))) then
+    err = HUGENUM
+else
+    err = maxval(abs(fval - qval) / max(abs(fval), ONE))
+end if
+end function errquad
 
 
 function hessmul(hq, pq, xpt, y) result(hy)
