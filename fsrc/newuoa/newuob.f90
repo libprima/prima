@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 01, 2021 AM09:38:07
+! Last Modified: Monday, November 01, 2021 AM10:07:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -311,11 +311,7 @@ do tr = 1, maxtr
             ! If KNEW_TR > 0, then update BMAT, ZMAT and IDZ, so that the KNEW_TR-th interpolation
             ! point is replaced by XNEW, whose information is encoded in VLAG and BET. If KNEW_TR
             ! is 0, then probably the geometry of XPT needs improvement, which will be handled below.
-
-            !!! Calculate VLAG and BETA for D. It makes uses of XOPT, so this is done before updating XOPT.
-            call vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
-            call updateh(knew_tr, beta, vlag, idz, bmat, zmat)
-            vlag = ZERO; beta = ZERO  !!!!!!!!
+            call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
             ! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
             call updateq(idz, knew_tr, bmat(:, knew_tr), moderr, zmat, xpt(:, knew_tr), gq, hq, pq)
             ! Include XNEW into XPT. Then update KOPT, XOPT, and FOPT.
@@ -465,10 +461,7 @@ do tr = 1, maxtr
 
         ! Update BMAT, ZMAT and IDZ, so that the KNEW_GEO-th interpolation point is replaced by
         ! XNEW, whose information is encoded in VLAG and BETA.
-        !!! Calculate VLAG and BETA for D. It makes uses of XOPT, so this is done before updating XOPT.
-        call vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
-        call updateh(knew_geo, beta, vlag, idz, bmat, zmat)
-        vlag = ZERO; beta = ZERO !!!!!!!
+        call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)
         ! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
         call updateq(idz, knew_geo, bmat(:, knew_geo), moderr, zmat, xpt(:, knew_geo), gq, hq, pq)
         ! Include XNEW into XPT. Then update KOPT, XOPT, and FOPT.
