@@ -7,7 +7,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 01, 2021 PM12:38:42
+! Last Modified: Monday, November 01, 2021 PM01:07:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -318,8 +318,7 @@ if (DEBUGGING) then
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
-    call assert(size(xpt) == n .and. all(is_finite(xpt)), &
-        & 'SIZE(XPTKNEW) == N, XPTKNEW is finite', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
 end if
 
