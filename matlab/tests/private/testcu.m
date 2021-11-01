@@ -35,7 +35,7 @@ requirements.maxdim = options.maxdim;
 requirements.mincon = options.mincon;
 requirements.maxcon = options.maxcon;
 requirements.type = options.type;
-if strcmpi(solvers{1}, 'cobyla') || strcmpi(solvers{2}, 'cobylan')
+if strcmpi(solvers{1}, 'cobyla') || strcmpi(solvers{2}, 'cobyla')
     requirements.blacklist={'DMN15102', 'DMN15103', 'DMN15332', 'DMN15333', 'DMN37142', 'DMN37143'}; % Takes more than 1 min to solve
 end
 plist = secup(requirements);
