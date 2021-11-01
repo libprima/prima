@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 01, 2021 AM10:46:41
+! Last Modified: Monday, November 01, 2021 AM11:02:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -67,7 +67,7 @@ integer(IK) :: npt
 real(RP) :: beta
 real(RP) :: hdiag(size(zmat, 1))
 real(RP) :: sigma(size(xpt, 2))
-real(RP) :: vlag(size(xpt, 2))
+real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
 real(RP) :: xdist(size(xpt, 2))
 
 ! Sizes
@@ -224,7 +224,7 @@ zknew = zmat(knew, :)
 zknew(1:idz - 1) = -zknew(1:idz - 1)
 alpha = inprod(zmat(knew, :), zknew)
 
-! Calculate VLAG and BETA for D.
+! Calculate VLAG and BETA for D. Indeed, VLAG(NPT + 1 : NPT + N) will not be used.
 call vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
 
 ! If the cancellation in DENOM is unacceptable, then BIGDEN calculates an alternative model step D.
