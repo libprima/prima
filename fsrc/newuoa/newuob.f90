@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 01, 2021 AM11:50:47
+! Last Modified: Monday, November 01, 2021 PM12:39:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -125,7 +125,6 @@ real(RP) :: fopt
 real(RP) :: fval(npt)
 real(RP) :: gq(size(x))
 real(RP) :: hq(size(x), size(x))
-real(RP) :: moderr
 real(RP) :: moderrsav(size(dnormsav))
 real(RP) :: pq(npt)
 real(RP) :: qred
@@ -262,12 +261,10 @@ do tr = 1, maxtr
         ! DNORMSAVE constains the DNORM of the latest 3 function evaluations with the current RHO.
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
-        ! Use the current quadratic model to predict the change in F due to the step D.
-        qred = calquad(d, gq, hq, pq, xopt, xpt)
-        ! MODERR is the error of the current model in predicting the change in F due to D.
-        moderr = f - fopt + qred
+        qred = calquad(d, gq, hq, pq, xopt, xpt)  ! QRED = Q(XOPT) - Q(XOPT + D)
+        ! F - FOPT + QRED is the error of the current model in predicting the change in F due to D.
         ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
-        moderrsav = [moderrsav(2:size(moderrsav)), moderr]
+        moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
 
         ! Calculate the reduction ratio.
         ratio = redrat(fopt - f, qred, eta1)
@@ -296,7 +293,7 @@ do tr = 1, maxtr
             ! of XPT needs improvement, which will be handled below.
             call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
             ! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
-            call updateq(idz, knew_tr, bmat(:, knew_tr), moderr, zmat, xpt(:, knew_tr), gq, hq, pq)
+            call updateq(idz, knew_tr, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
             ! Include XNEW into XPT. Then update KOPT, XOPT, and FOPT.
             call updatexf(knew_tr, d, f, kopt, fval, xpt, fopt, xopt)
         end if
@@ -426,23 +423,21 @@ do tr = 1, maxtr
         ! Powell's code does not update DNORM. Therefore, DNORM is the length of last trust-region
         ! trial step, which seems inconsistent with what is described in Section 7 (around (7.7)) of
         ! the NEWUOA paper. Seemingly we should keep DNORM = ||D|| as we do here. The value of DNORM
-        ! will be used when defining REDUCE_RHO.
+        ! saved in DNORMSAVE will be used when defining REDUCE_RHO_1.
         dnorm = min(delbar, norm(d))  ! In theory, DNORM = DELBAR in this case.
         !------------------------------------------------------------------------------------------!
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
-        ! Use the current quadratic model to predict the change in F due to the step D.
-        qred = calquad(d, gq, hq, pq, xopt, xpt)
-        ! MODERR is the error of the current model in predicting the change in F due to D.
-        moderr = f - fopt + qred
+        qred = calquad(d, gq, hq, pq, xopt, xpt)  ! QRED = Q(XOPT) - Q(XOPT + D)
+        ! F - FOPT + QRED is the error of the current model in predicting the change in F due to D.
         ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
-        moderrsav = [moderrsav(2:size(moderrsav)), moderr]
+        moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
 
         ! Update BMAT, ZMAT and IDZ, so that the KNEW_GEO-th interpolation point is replaced by
         ! XNEW = XOPT + D.
         call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)
         ! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
-        call updateq(idz, knew_geo, bmat(:, knew_geo), moderr, zmat, xpt(:, knew_geo), gq, hq, pq)
+        call updateq(idz, knew_geo, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
         ! Include XNEW into XPT. Then update KOPT, XOPT, and FOPT.
         call updatexf(knew_geo, d, f, kopt, fval, xpt, fopt, xopt)
     end if  ! The procedure of improving geometry ends.
