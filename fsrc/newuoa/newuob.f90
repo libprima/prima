@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 01, 2021 AM10:07:00
+! Last Modified: Monday, November 01, 2021 AM10:52:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -69,7 +69,6 @@ use, non_intrinsic :: initialize_mod, only : initxf, initq, inith
 use, non_intrinsic :: shiftbase_mod, only : shiftbase
 use, non_intrinsic :: trustregion_mod, only : trsapp, trrad
 use, non_intrinsic :: update_mod, only : updateh, updateq, updatexf, tryqalt
-use, non_intrinsic :: vlagbeta_mod, only : vlagbeta
 
 implicit none
 
@@ -118,7 +117,6 @@ logical :: improve_geo
 logical :: reduce_rho_1
 logical :: reduce_rho_2
 logical :: shortd
-real(RP) :: beta
 real(RP) :: bmat(size(x), npt + size(x))
 real(RP) :: crvmin
 real(RP) :: d(size(x))
@@ -137,7 +135,6 @@ real(RP) :: qred
 real(RP) :: ratio
 real(RP) :: rho
 real(RP) :: trtol
-real(RP) :: vlag(npt + size(x))
 real(RP) :: xbase(size(x))
 real(RP) :: xdist(npt)
 real(RP) :: xnew(size(x))
@@ -252,9 +249,6 @@ do tr = 1, maxtr
             call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
         end if
 
-        ! Use the current quadratic model to predict the change in F due to the step D.
-        qred = calquad(d, gq, hq, pq, xopt, xpt)
-
         ! Calculate the next value of the objective function.
         xnew = xopt + d
         x = xbase + xnew
@@ -273,6 +267,8 @@ do tr = 1, maxtr
         ! DNORMSAVE constains the DNORM of the latest 3 function evaluations with the current RHO.
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
+        ! Use the current quadratic model to predict the change in F due to the step D.
+        qred = calquad(d, gq, hq, pq, xopt, xpt)
         ! MODERR is the error of the current model in predicting the change in F due to D.
         moderr = f - fopt + qred
         ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
@@ -297,15 +293,7 @@ do tr = 1, maxtr
         ! differ from XPT(:, KOPT), because the former is set to XNEW but XNEW is discarded. Such
         ! a difference can lead to unexpected behaviors; for example, KNEW_GEO may equal KOPT, with
         ! which GEOSTEP will not work.
-        if (f < fopt) then
-            xdist = sqrt(sum((xpt - spread(xnew, dim=2, ncopies=npt))**2, dim=1))
-        else
-            xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1))
-        end if
-        !!! Calculate VLAG and BETA for D. It makes uses of XOPT, so this is done before updating XOPT.
-        call vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
-        knew_tr = setdrop_tr(idz, kopt, beta, delta, ratio, rho, vlag(1:npt), xdist, zmat)
-        vlag = ZERO; beta = ZERO !!!!!!
+        knew_tr = setdrop_tr(idz, kopt, bmat, d, delta, ratio, rho, xpt, zmat)
 
         if (knew_tr > 0) then
             ! If KNEW_TR > 0, then update BMAT, ZMAT and IDZ, so that the KNEW_TR-th interpolation
@@ -422,13 +410,8 @@ do tr = 1, maxtr
         end if
 
         ! Find a step D so that the geometry of XPT will be improved when XPT(:, KNEW_GEO) is
-        ! replaced by XOPT + D. The GEOSTEP subroutine will call Powell's BIGLAG and BIGDEN. It will
-        ! also calculate the VLAG and BETA for this D.
+        ! replaced by XOPT + D. The GEOSTEP subroutine will call Powell's BIGLAG and BIGDEN. 
         d = geostep(idz, knew_geo, kopt, bmat, delbar, xpt, zmat)
-
-        ! Use the current quadratic model to predict the change in F due to the step D.
-        qred = calquad(d, gq, hq, pq, xopt, xpt)
-
         ! Calculate the next value of the objective function.
         xnew = xopt + d
         x = xbase + xnew
@@ -454,6 +437,8 @@ do tr = 1, maxtr
         !------------------------------------------------------------------------------------------!
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
+        ! Use the current quadratic model to predict the change in F due to the step D.
+        qred = calquad(d, gq, hq, pq, xopt, xpt)
         ! MODERR is the error of the current model in predicting the change in F due to D.
         moderr = f - fopt + qred
         ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
