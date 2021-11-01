@@ -7,7 +7,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 01, 2021 PM09:36:46
+! Last Modified: Monday, November 01, 2021 PM11:25:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -279,10 +279,10 @@ subroutine updateq(idz, knew, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : r1update, Ax_plus_y, issymmetric, calquad
+use, non_intrinsic :: linalg_mod, only : r1update, Ax_plus_y, issymmetric, calquad, errquad
 
 implicit none
 
@@ -307,6 +307,7 @@ character(len=*), parameter :: srname = 'UPDATEQ'
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: fqdz(size(zmat, 2))
+real(RP), parameter :: intp_tol = 10.0_RP * EPS**(0.5_RP)  ! Tolerance of interpolation error.
 real(RP) :: moderr
 
 ! Sizes
@@ -327,7 +328,10 @@ if (DEBUGGING) then
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
+    call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
+    call assert(errquad(gq, hq, pq, xpt, fval) <= intp_tol, 'Q interpolates FVAL at XPT', srname)
 end if
 
 !====================!
@@ -368,6 +372,7 @@ gq = gq + moderr * bmat(:, knew)
 ! Postconditions
 if (DEBUGGING) then
     call assert(issymmetric(hq), 'HQ is symmetric', srname)
+    call assert(errquad(gq, hq, pq, xpt, fval) <= intp_tol, 'Q interpolates FVAL at XPT', srname)
 end if
 
 end subroutine updateq
@@ -524,7 +529,9 @@ if (DEBUGGING) then
     call assert(size(smat, 1) == n .and. size(smat, 2) == npt, 'SIZE(SMAT) == [N, NPT]', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
+    call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
+    call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
 end if
 
 !====================!
