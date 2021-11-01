@@ -1,13 +1,13 @@
 module update_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module provides subroutines concerning the update of IDZ, BMAT, ZMAT, GQ, HQ, and PQ when
-! XPT(:, KNEW) is replaced by XNEW.
+! XPT(:, KNEW) is replaced by XNEW = XOPT + D.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 01, 2021 AM10:34:48
+! Last Modified: Monday, November 01, 2021 AM11:23:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -21,14 +21,7 @@ contains
 subroutine updateh(knew, kopt, idz, d, xpt, bmat, zmat)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates arrays BMAT and ZMAT together with IDZ, in order to replace the
-! interpolation point XPT(:, KNEW) by XNEW. On entry, VLAG_IN contains the components of the vector
-! Hw of the updating formula (4.11) in the NEWUOA paper, and BETA holds the value of the parameter
-! that has this name. VLAG_IN and BETA contain information about XNEW, because they are calculated
-! according to D = XNEW - XOPT.
-! N.B.: Powell's original comments mention that VLAG_IN is "the vector THETA*WCHECK + e_b of the
-! updating formula (6.11)", which does not match the published version of the NEWUOA paper.
-!
-! See Section 4 of the NEWUOA paper.
+! interpolation point XPT(:, KNEW) by XNEW = XOPT + D. See Section 4 of the NEWUOA paper.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -102,6 +95,10 @@ end if
 !====================!
 
 ! Calculate VLAG and BETA according to D.
+! VLAG contains the components of the vector Hw of the updating formula (4.11) in the NEWUOA paper,
+! and BETA holds the value of the parameter that has this name.
+! N.B.: Powell's original comments mention that VLAG is "the vector THETA*WCHECK + e_b of the
+! updating formula (6.11)", which does not match the published version of the NEWUOA paper.
 call vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
 
 ! Apply rotations to put zeros in the KNEW-th row of ZMAT. A 2x2 rotation will be multiplied to ZMAT
@@ -272,8 +269,8 @@ end subroutine updateh
 
 subroutine updateq(idz, knew, bmatknew, fqdiff, zmat, xptknew, gq, hq, pq)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine updates GQ, HQ, and PQ when XPT(:, KNEW) is replaced by XNEW. See Section 4 of
-! the NEWUOA paper.
+! This subroutine updates GQ, HQ, and PQ when XPT(:, KNEW) is replaced by XNEW = XOPT + D. See
+! Section 4 of the NEWUOA paper.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -355,23 +352,23 @@ end if
 end subroutine updateq
 
 
-subroutine updatexf(knew, f, xnew, kopt, fval, xpt, fopt, xopt)
+subroutine updatexf(knew, d, f, kopt, fval, xpt, fopt, xopt)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine updates XPT, FVAL, KOPT, XOPT, and FOPT so that X(:, KNEW) is replaced by XNEW.
+! This subroutine updates XPT, FVAL, KOPT, XOPT, and FOPT so that X(:, KNEW) is replaced by XOPT+D.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf
 use, non_intrinsic :: linalg_mod, only : norm
 
 implicit none
 
 ! Inputs
 integer(IK), intent(in) :: knew
+real(RP), intent(in) :: d(:)     ! D(N)
 real(RP), intent(in) :: f
-real(RP), intent(in) :: xnew(:)     ! XNEW(N)
 
 ! In-outputs
 integer(IK), intent(inout) :: kopt
@@ -397,6 +394,9 @@ if (DEBUGGING) then
     call assert(npt >= n + 2, 'NPT >= N + 2', srname)
     call assert(knew >= 1 .and. knew <= npt, '1 <= KNEW <= NPT', srname)
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
+    call assert(size(d) == n, 'SIZE(D) == N', srname)
+    call assert(all(is_finite(d)), 'D is finite', srname)
+    call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(fval) == npt, 'SIZE(FVAL) == NPT', srname)
     call assert(size(xopt) == n, 'SIZE(XOPT) == N', srname)
@@ -407,7 +407,7 @@ end if
 ! Calculation starts !
 !====================!
 
-xpt(:, knew) = xnew  ! Should be done after UPDATEQ.
+xpt(:, knew) = xpt(:, kopt) + d
 fval(knew) = f
 
 ! KOPT is NOT identical to MINLOC(FVAL). Indeed, if FVAL(KNEW) = FVAL(KOPT) and KNEW < KOPT, then
@@ -417,7 +417,7 @@ if (fval(knew) < fval(kopt)) then
 end if
 
 ! Even if FVAL(KNEW) >= FVAL(KOPT) and KOPT remains unchanged, we still need to update XOPT and FOPT,
-! because it may happen that KNEW = KOPT, so that XPT(:, KOPT) has been updated to XNEW.
+! because it may happen that KNEW = KOPT, so that XPT(:, KOPT) has been updated to XNEW = XOPT + D.
 xopt = xpt(:, kopt)
 fopt = fval(kopt)
 
@@ -429,7 +429,6 @@ fopt = fval(kopt)
 if (DEBUGGING) then
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
     call assert(abs(f - fval(knew)) <= ZERO, 'F == FVAL(KNEW)', srname)
-    call assert(norm(xnew - xpt(:, knew)) <= ZERO, 'XNEW == XPT(:, KNEW)', srname)
     call assert(abs(fopt - fval(kopt)) <= ZERO, 'FOPT == FVAL(KOPT)', srname)
     call assert(norm(xopt - xpt(:, kopt)) <= ZERO, 'XOPT == XPT(:, KOPT)', srname)
     call assert(.not. any(fval < fopt), '.NOT. ANY(FVAL < FOPT)', srname)

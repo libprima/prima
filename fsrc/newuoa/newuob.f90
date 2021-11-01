@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 01, 2021 AM10:52:02
+! Last Modified: Monday, November 01, 2021 AM11:50:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -29,7 +29,6 @@ subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 ! XOPT is the displacement from XBASE of the best vector of variables so far (i.e., the one provides
 ! the least calculated F so far). FOPT = F(XOPT + XBASE).
 ! D is reserved for trial steps from XOPT.
-! XNEW = XOPT + D, corresponding to the vector of variables for the next calculation of F.
 ! [XPT, FVAL, KOPT] describes the interpolation set:
 ! XPT contains the interpolation points relative to XBASE, each COLUMN for a point; FVAL holds the
 ! However, there is a delay between the update of XOPT and KOPT. So they are not always consistent
@@ -42,9 +41,6 @@ subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 ! the coefficient matrix of the KKT system for the least-Frobenius norm interpolation problem:
 ! BMAT will hold the last N ROWs of H; ZMAT will hold the factorization of the leading NPT*NPT
 ! submatrix of H, this factorization being ZMAT*Diag(DZ)*ZMAT^T with DZ(1:IDZ-1)=-1, DZ(IDZ:NPT)=1.
-! VLAG will contain the values of the Lagrange functions at a new point X. They are part of a
-! product that requires VLAG to be of length NPT + N. Both VLAG and BETA are critical for the
-! updating procedure of H, which is detailed formula (4.10)--(4.12) of the NEWUOA paper.
 !
 ! See Section 2 of the NEWUOA paper for more information about these variables.
 !--------------------------------------------------------------------------------------------------!
@@ -117,6 +113,7 @@ logical :: improve_geo
 logical :: reduce_rho_1
 logical :: reduce_rho_2
 logical :: shortd
+logical :: tr_success
 real(RP) :: bmat(size(x), npt + size(x))
 real(RP) :: crvmin
 real(RP) :: d(size(x))
@@ -137,7 +134,6 @@ real(RP) :: rho
 real(RP) :: trtol
 real(RP) :: xbase(size(x))
 real(RP) :: xdist(npt)
-real(RP) :: xnew(size(x))
 real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
@@ -250,8 +246,7 @@ do tr = 1, maxtr
         end if
 
         ! Calculate the next value of the objective function.
-        xnew = xopt + d
-        x = xbase + xnew
+        x = xbase + (xopt + d)
         call evalf(calfun, x, f)
         nf = nf + 1_IK
         call fmssg(iprint, nf, f, x, solver)
@@ -282,28 +277,28 @@ do tr = 1, maxtr
             delta = rho
         end if
 
-        ! Set KNEW_TR to the index of the interpolation point that will be replaced by XNEW. KNEW_TR
-        ! will ensure that the geometry of XPT is "good enough" after the replacement.
+        ! Set KNEW_TR to the index of the interpolation point to be replaced by XNEW = XOPT + D.
+        ! KNEW_TR will ensure that the geometry of XPT is "good enough" after the replacement.
         ! N.B.:
-        ! 1. The information of XNEW is in VLAG and BETA, which are calculated from D = XNEW - XOPT.
-        ! 2. KNEW_TR = 0 means it is impossible to obtain a good interpolation set by replacing any
+        ! 1. KNEW_TR = 0 means it is impossible to obtain a good interpolation set by replacing any
         ! current interpolation point with XNEW. Then XNEW and its function value will be discarded.
-        ! 3. If RATIO > 0, then SETDROP_TR ensures KNEW_TR > 0 so that the XNEW is included into XPT.
-        ! Otherwise, SETDROP_TR is buggy; in addition, if RATIO > 0 and KNEW_TR = 0, XOPT will
-        ! differ from XPT(:, KOPT), because the former is set to XNEW but XNEW is discarded. Such
-        ! a difference can lead to unexpected behaviors; for example, KNEW_GEO may equal KOPT, with
-        ! which GEOSTEP will not work.
-        knew_tr = setdrop_tr(idz, kopt, bmat, d, delta, ratio, rho, xpt, zmat)
+        ! 2. If TR_SUCCESS = TRUE (i.e., RATIO > 0), then SETDROP_TR ensures KNEW_TR > 0 so that
+        ! XNEW is included into XPT. Otherwise, SETDROP_TR is buggy; moreover, if TR_SUCCESS = TRUE
+        ! and KNEW_TR = 0, XOPT will differ from XPT(:, KOPT), because the former is set to XNEW but
+        ! XNEW is discarded. Such a difference can lead to unexpected behaviors; for example,
+        ! KNEW_GEO may equal KOPT, with which GEOSTEP will not work.
+        tr_success = (ratio > ZERO)
+        knew_tr = setdrop_tr(idz, kopt, tr_success, bmat, d, delta, rho, xpt, zmat)
 
         if (knew_tr > 0) then
             ! If KNEW_TR > 0, then update BMAT, ZMAT and IDZ, so that the KNEW_TR-th interpolation
-            ! point is replaced by XNEW, whose information is encoded in VLAG and BET. If KNEW_TR
-            ! is 0, then probably the geometry of XPT needs improvement, which will be handled below.
+            ! point is replaced by XNEW = XOPT + D. If KNEW_TR is is 0, then probably the geometry
+            ! of XPT needs improvement, which will be handled below.
             call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
             ! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
             call updateq(idz, knew_tr, bmat(:, knew_tr), moderr, zmat, xpt(:, knew_tr), gq, hq, pq)
             ! Include XNEW into XPT. Then update KOPT, XOPT, and FOPT.
-            call updatexf(knew_tr, f, xnew, kopt, fval, xpt, fopt, xopt)
+            call updatexf(knew_tr, d, f, kopt, fval, xpt, fopt, xopt)
         end if
 
         ! Test whether to replace the new quadratic model Q by the least-Frobenius norm interpolant
@@ -367,7 +362,7 @@ do tr = 1, maxtr
     ! iteration; if RATIO > 0 in addition, then XOPT has been updated as well.
 
     xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1))
-    bad_trstep = (shortd .or. ratio < TENTH)
+    bad_trstep = (shortd .or. ratio < TENTH)  ! BAD_TRSTEP for IMPROVE_GEO
     improve_geo = (.not. reduce_rho_1) .and. (maxval(xdist) > TWO * delta) .and. bad_trstep
 
     ! If all the interpolation points are close to XOPT and the trust-region is small, but the
@@ -380,7 +375,7 @@ do tr = 1, maxtr
     ! Even though DNORM gets a new value after the geometry step when IMPROVE_GEO = TRUE, this
     ! value does not affect REDUCE_RHO_2, because DNORM comes into play only if IMPROVE_GEO = FALSE.
     ! 3. DELTA < DNORM may hold due to the update of DELTA.
-    bad_trstep = (shortd .or. ratio <= ZERO)
+    bad_trstep = (shortd .or. ratio <= ZERO)  ! BAD_TRSTEP for REDUCE_RHO_2
     reduce_rho_2 = (maxval(xdist) <= TWO * delta) .and. (max(delta, dnorm) <= rho) .and. bad_trstep
 
     ! Comments on BAD_TRSTEP:
@@ -410,11 +405,10 @@ do tr = 1, maxtr
         end if
 
         ! Find a step D so that the geometry of XPT will be improved when XPT(:, KNEW_GEO) is
-        ! replaced by XOPT + D. The GEOSTEP subroutine will call Powell's BIGLAG and BIGDEN. 
+        ! replaced by XOPT + D. The GEOSTEP subroutine will call Powell's BIGLAG and BIGDEN.
         d = geostep(idz, knew_geo, kopt, bmat, delbar, xpt, zmat)
         ! Calculate the next value of the objective function.
-        xnew = xopt + d
-        x = xbase + xnew
+        x = xbase + (xopt + d)
         call evalf(calfun, x, f)
         nf = nf + 1_IK
         call fmssg(iprint, nf, f, x, solver)
@@ -445,12 +439,12 @@ do tr = 1, maxtr
         moderrsav = [moderrsav(2:size(moderrsav)), moderr]
 
         ! Update BMAT, ZMAT and IDZ, so that the KNEW_GEO-th interpolation point is replaced by
-        ! XNEW, whose information is encoded in VLAG and BETA.
+        ! XNEW = XOPT + D.
         call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)
         ! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
         call updateq(idz, knew_geo, bmat(:, knew_geo), moderr, zmat, xpt(:, knew_geo), gq, hq, pq)
         ! Include XNEW into XPT. Then update KOPT, XOPT, and FOPT.
-        call updatexf(knew_geo, f, xnew, kopt, fval, xpt, fopt, xopt)
+        call updatexf(knew_geo, d, f, kopt, fval, xpt, fopt, xopt)
     end if  ! The procedure of improving geometry ends.
 
     if (reduce_rho_1 .or. reduce_rho_2) then
