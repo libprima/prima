@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 01, 2021 PM08:45:01
+! Last Modified: Monday, November 01, 2021 PM09:35:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -287,16 +287,16 @@ do tr = 1, maxtr
         tr_success = (f < fopt)
         knew_tr = setdrop_tr(idz, kopt, tr_success, bmat, d, delta, rho, xpt, zmat)
 
-        if (knew_tr > 0) then
-            ! If KNEW_TR > 0, then update BMAT, ZMAT and IDZ, so that the KNEW_TR-th interpolation
-            ! point is replaced by XNEW = XOPT + D. If KNEW_TR is is 0, then probably the geometry
-            ! of XPT needs improvement, which will be handled below.
-            call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
-            ! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
-            call updateq(idz, knew_tr, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
-            ! Include XNEW into XPT. Then update KOPT, XOPT, and FOPT.
-            call updatexf(knew_tr, d, f, kopt, fval, xpt, fopt, xopt)
-        end if
+        ! Update BMAT, ZMAT, IDZ (corresponding to H is the NEWUOA paper), GQ, HQ, PQ (defining the
+        ! quadratic model), and FVAL, XPT, KOPT, FOPT, XOPT so that XPT(:, KNEW_TR) becomes XOPT + D.
+        ! If KNEW_TR = 0, the updating subroutines will do essentially nothing; in that case, the
+        ! geometry of XPT likely needs improvement, which will be handled below.
+        ! Update BMAT, ZMAT and IDZ.
+        call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
+        ! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
+        call updateq(idz, knew_tr, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
+        ! Update XPT(:, KNEW_TR) to XOPT + D. Then update KOPT, XOPT, and FOPT.
+        call updatexf(knew_tr, d, f, kopt, fval, xpt, fopt, xopt)
 
         ! Test whether to replace the new quadratic model Q by the least-Frobenius norm interpolant
         ! Q_alt. Perform the replacement if certain criteria are satisfied.
@@ -433,12 +433,13 @@ do tr = 1, maxtr
         ! MODERRSAVE is the prediction errors of the latest 3 models with the current RHO.
         moderrsav = [moderrsav(2:size(moderrsav)), f - fopt + qred]
 
-        ! Update BMAT, ZMAT and IDZ, so that the KNEW_GEO-th interpolation point is replaced by
-        ! XNEW = XOPT + D.
+        ! Update BMAT, ZMAT, IDZ (corresponding to H is the NEWUOA paper), GQ, HQ, PQ (defining the
+        ! quadratic model), and FVAL, XPT, KOPT, FOPT, XOPT so that XPT(:, KNEW_TR) becomes XOPT + D.
+        ! Update BMAT, ZMAT and IDZ.
         call updateh(knew_geo, kopt, idz, d, xpt, bmat, zmat)
         ! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
         call updateq(idz, knew_geo, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
-        ! Include XNEW into XPT. Then update KOPT, XOPT, and FOPT.
+        ! Update XPT(:, KNEW_GEO) to XOPT + D. Then update KOPT, XOPT, and FOPT.
         call updatexf(knew_geo, d, f, kopt, fval, xpt, fopt, xopt)
     end if  ! The procedure of improving geometry ends.
 
