@@ -6,7 +6,7 @@ module noise_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, October 17, 2021 PM11:03:37
+! Last Modified: Wednesday, October 27, 2021 PM07:32:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -160,7 +160,7 @@ noify_f = f + noise_level_loc * max(abs(f), ONE) * r
 ! Inject faulty values into F.
 r = rand()  ! Generate a random value that is independent of the NOISY_F above.
 if (r > 0.8_RP) then
-    noify_f = rand()*huge(0.0_RP)  ! "Almost +Inf" values.
+    noify_f = rand() * huge(0.0_RP)  ! "Almost +Inf" values.
 !elseif (r > 0.7_RP) then
     !noify_f = IEEE_VALUE(0.0_RP, IEEE_QUIET_NAN)  ! NaN
 elseif (r < 0.1_RP) then

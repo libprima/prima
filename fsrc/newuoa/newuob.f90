@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, October 02, 2021 PM02:22:12
+! Last Modified: Monday, November 01, 2021 AM09:38:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -252,9 +252,6 @@ do tr = 1, maxtr
             call shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
         end if
 
-        ! Calculate VLAG and BETA for D. It makes uses of XOPT, so this is done before updating XOPT.
-        call vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
-
         ! Use the current quadratic model to predict the change in F due to the step D.
         qred = calquad(d, gq, hq, pq, xopt, xpt)
 
@@ -305,13 +302,20 @@ do tr = 1, maxtr
         else
             xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1))
         end if
+        !!! Calculate VLAG and BETA for D. It makes uses of XOPT, so this is done before updating XOPT.
+        call vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
         knew_tr = setdrop_tr(idz, kopt, beta, delta, ratio, rho, vlag(1:npt), xdist, zmat)
+        vlag = ZERO; beta = ZERO !!!!!!
 
         if (knew_tr > 0) then
             ! If KNEW_TR > 0, then update BMAT, ZMAT and IDZ, so that the KNEW_TR-th interpolation
             ! point is replaced by XNEW, whose information is encoded in VLAG and BET. If KNEW_TR
             ! is 0, then probably the geometry of XPT needs improvement, which will be handled below.
+
+            !!! Calculate VLAG and BETA for D. It makes uses of XOPT, so this is done before updating XOPT.
+            call vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
             call updateh(knew_tr, beta, vlag, idz, bmat, zmat)
+            vlag = ZERO; beta = ZERO  !!!!!!!!
             ! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
             call updateq(idz, knew_tr, bmat(:, knew_tr), moderr, zmat, xpt(:, knew_tr), gq, hq, pq)
             ! Include XNEW into XPT. Then update KOPT, XOPT, and FOPT.
@@ -426,9 +430,6 @@ do tr = 1, maxtr
         ! also calculate the VLAG and BETA for this D.
         d = geostep(idz, knew_geo, kopt, bmat, delbar, xpt, zmat)
 
-        ! Calculate VLAG and BETA for D. It makes uses of XOPT, so this is done before updating XOPT.
-        call vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
-
         ! Use the current quadratic model to predict the change in F due to the step D.
         qred = calquad(d, gq, hq, pq, xopt, xpt)
 
@@ -464,7 +465,10 @@ do tr = 1, maxtr
 
         ! Update BMAT, ZMAT and IDZ, so that the KNEW_GEO-th interpolation point is replaced by
         ! XNEW, whose information is encoded in VLAG and BETA.
+        !!! Calculate VLAG and BETA for D. It makes uses of XOPT, so this is done before updating XOPT.
+        call vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
         call updateh(knew_geo, beta, vlag, idz, bmat, zmat)
+        vlag = ZERO; beta = ZERO !!!!!!!
         ! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
         call updateq(idz, knew_geo, bmat(:, knew_geo), moderr, zmat, xpt(:, knew_geo), gq, hq, pq)
         ! Include XNEW into XPT. Then update KOPT, XOPT, and FOPT.
