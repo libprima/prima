@@ -7,7 +7,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, September 30, 2021 AM12:03:23
+! Last Modified: Monday, November 01, 2021 AM10:10:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -18,7 +18,7 @@ public :: updateh, updateq, updatexf, tryqalt
 contains
 
 
-subroutine updateh(knew, beta, vlag_in, idz, bmat, zmat)
+subroutine updateh(knew, kopt, idz, d, xpt, bmat, zmat)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates arrays BMAT and ZMAT together with IDZ, in order to replace the
 ! interpolation point XPT(:, KNEW) by XNEW. On entry, VLAG_IN contains the components of the vector
@@ -36,12 +36,16 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: linalg_mod, only : matprod, planerot, r2update, symmetrize, issymmetric
 
+! Solver-specific modules
+use, non_intrinsic :: vlagbeta_mod, only : vlagbeta
+
 implicit none
 
 ! Inputs
 integer(IK), intent(in) :: knew
-real(RP), intent(in) :: beta
-real(RP), intent(in) :: vlag_in(:)     ! VLAG_IN(NPT + N)
+integer(IK), intent(in) :: kopt
+real(RP), intent(in) :: d(:)  ! D(N)
+real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
 
 ! In-outputs
 integer(IK), intent(inout) :: idz
@@ -58,6 +62,7 @@ integer(IK) :: n
 integer(IK) :: npt
 logical :: reduce_idz
 real(RP) :: alpha
+real(RP) :: beta
 real(RP) :: denom
 real(RP) :: grot(2, 2)
 real(RP) :: scala
@@ -70,12 +75,12 @@ real(RP) :: tempa
 real(RP) :: tempb
 real(RP) :: v1(size(bmat, 1))
 real(RP) :: v2(size(bmat, 1))
-real(RP) :: vlag(size(vlag_in))  ! Copy of VLAG_IN
-real(RP) :: w(size(vlag_in))
+real(RP) :: vlag(size(bmat, 2))
+real(RP) :: w(size(bmat, 2))
 
 ! Sizes
-n = int(size(bmat, 1), kind(n))
-npt = int(size(bmat, 2), kind(npt)) - n
+n = int(size(xpt, 1), kind(n))
+npt = int(size(xpt, 2), kind(npt))
 
 ! Preconditions
 if (DEBUGGING) then
@@ -83,7 +88,7 @@ if (DEBUGGING) then
     call assert(npt >= n + 2, 'NPT >= N + 2', srname)
     call assert(knew >= 1 .and. knew <= npt, '1 <= KNEW <= NPT', srname)
     call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT-N', srname)
-    call assert(size(vlag_in) == npt + n, 'SIZE(VLAG) = NPT + N', srname)
+    call assert(size(d) == n, 'SIZE(D) == N', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
@@ -94,8 +99,8 @@ end if
 ! Calculation starts !
 !====================!
 
-! Copy VLAG_IN to VLAG. VLAG_IN is INTENT(IN) and cannot be revised.
-vlag = vlag_in
+! Calculate VLAG and BETA according to D.
+call vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
 
 ! Apply rotations to put zeros in the KNEW-th row of ZMAT. A 2x2 rotation will be multiplied to ZMAT
 ! from the right so that ZMAT(KNEW, [JL, J]) becomes [SQRT(ZMAT(KNEW, JL)^2 + ZMAT(KNEW, J)^2), 0].
