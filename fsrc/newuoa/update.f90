@@ -7,7 +7,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 01, 2021 AM10:10:37
+! Last Modified: Monday, November 01, 2021 AM10:34:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -34,6 +34,7 @@ subroutine updateh(knew, kopt, idz, d, xpt, bmat, zmat)
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, planerot, r2update, symmetrize, issymmetric
 
 ! Solver-specific modules
@@ -89,6 +90,7 @@ if (DEBUGGING) then
     call assert(knew >= 1 .and. knew <= npt, '1 <= KNEW <= NPT', srname)
     call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT-N', srname)
     call assert(size(d) == n, 'SIZE(D) == N', srname)
+    call assert(all(is_finite(d)), 'D is finite', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &

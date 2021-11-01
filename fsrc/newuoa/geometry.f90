@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, September 29, 2021 PM07:06:25
+! Last Modified: Monday, November 01, 2021 AM10:46:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -17,7 +17,7 @@ public :: setdrop_tr, geostep
 contains
 
 
-function setdrop_tr(idz, kopt, beta, delta, ratio, rho, vlag, xdist, zmat) result(knew)
+function setdrop_tr(idz, kopt, bmat, d, delta, ratio, rho, xpt, zmat) result(knew)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine sets KNEW to the index of the interpolation point to be deleted AFTER A TRUST
 ! REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
@@ -38,19 +38,23 @@ function setdrop_tr(idz, kopt, beta, delta, ratio, rho, vlag, xdist, zmat) resul
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
+use, non_intrinsic :: linalg_mod, only : issymmetric
+
+! Solver-specific modules
+use, non_intrinsic :: vlagbeta_mod, only : vlagbeta
 
 implicit none
 
 ! Inputs
 integer(IK), intent(in) :: idz
 integer(IK), intent(in) :: kopt
-real(RP), intent(in) :: beta
+real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT + N)
+real(RP), intent(in) :: d(:)
 real(RP), intent(in) :: delta
 real(RP), intent(in) :: ratio
 real(RP), intent(in) :: rho
-real(RP), intent(in) :: vlag(:)     ! VLAG(NPT)
-real(RP), intent(in) :: xdist(:)    ! XDIST(NPT)
+real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
 
 ! Outputs
@@ -58,22 +62,30 @@ integer(IK) :: knew
 
 ! Local variables
 character(len=*), parameter :: srname = 'SETDROP_TR'
+integer(IK) :: n
 integer(IK) :: npt
+real(RP) :: beta
 real(RP) :: hdiag(size(zmat, 1))
-real(RP) :: sigma(size(xdist))
+real(RP) :: sigma(size(xpt, 2))
+real(RP) :: vlag(size(xpt, 2))
+real(RP) :: xdist(size(xpt, 2))
 
 ! Sizes
-npt = int(size(xdist), kind(npt))
+n = int(size(xpt, 1), kind(npt))
+npt = int(size(xpt, 2), kind(npt))
 
 ! Preconditions
 if (DEBUGGING) then
+    call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= 3, 'NPT >= 3', srname)
     call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= NPT - N', srname)
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
     call assert(delta >= rho .and. rho > ZERO, 'DETLA >= RHO > 0', srname)
     call assert(.not. is_nan(ratio), 'RATIO is not NaN', srname)
-    call assert(size(vlag) == npt, 'SIZE(VLAG) == NPT', srname)
-    call assert(all(xdist >= ZERO), 'ALL(XDIST >= ZERO)', srname)
+    call assert(size(d) == n, 'SIZE(D) == N', srname)
+    call assert(all(is_finite(d)), 'D is finite', srname)
+    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
+    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) >= 1, &
         & 'SIZE(ZMAT, 1) == NPT, SIZE(ZMAT, 2) >= 1', srname)
 end if
@@ -81,6 +93,16 @@ end if
 !====================!
 ! Calculation starts !
 !====================!
+
+! Calculate VLAG and BETA for D.
+call vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
+
+! Calculate the distance between the interpolation points and the optimal point up to now.
+if (ratio > ZERO) then
+    xdist = sqrt(sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1))
+else
+    xdist = sqrt(sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1))
+end if
 
 hdiag = -sum(zmat(:, 1:idz - 1)**2, dim=2) + sum(zmat(:, idz:size(zmat, 2))**2, dim=2)
 sigma = abs(beta * hdiag + vlag(1:npt)**2)
@@ -150,7 +172,7 @@ implicit none
 integer(IK), intent(in) :: idz
 integer(IK), intent(in) :: knew
 integer(IK), intent(in) :: kopt
-real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT+N)
+real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT + N)
 real(RP), intent(in) :: delbar
 real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
