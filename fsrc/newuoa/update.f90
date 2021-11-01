@@ -7,7 +7,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 01, 2021 PM01:07:11
+! Last Modified: Monday, November 01, 2021 PM08:45:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -326,15 +326,15 @@ end if
 ! Calculation starts !
 !====================!
 
-!----------------------------------------------------------------!
-! Implement R1UPDATE properly so that it ensures HQ is symmetric.
-call r1update(hq, pq(knew), xpt(:, knew))
-!----------------------------------------------------------------!
-
 ! MODERR is the error of the current model in predicting the change in F due to D.
 ! MODERR = [F(XNEW) - F(XOPT)] - [Q(XNEW) - Q(XOPT)]
 ! CALQUAD = Q(XOPT + D) - Q(XOPT) = Q(XNEW) - Q(XOPT)
 moderr = f - fval(kopt) + calquad(d, gq, hq, pq, xpt(:, kopt), xpt)
+
+!----------------------------------------------------------------!
+! Implement R1UPDATE properly so that it ensures HQ is symmetric.
+call r1update(hq, pq(knew), xpt(:, knew))
+!----------------------------------------------------------------!
 
 ! Update the implicit part of second derivatives.
 fqdz = moderr * zmat(knew, :)

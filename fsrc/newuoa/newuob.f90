@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 01, 2021 PM12:39:12
+! Last Modified: Monday, November 01, 2021 PM08:45:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -284,7 +284,7 @@ do tr = 1, maxtr
         ! and KNEW_TR = 0, XOPT will differ from XPT(:, KOPT), because the former is set to XNEW but
         ! XNEW is discarded. Such a difference can lead to unexpected behaviors; for example,
         ! KNEW_GEO may equal KOPT, with which GEOSTEP will not work.
-        tr_success = (ratio > ZERO)
+        tr_success = (f < fopt)
         knew_tr = setdrop_tr(idz, kopt, tr_success, bmat, d, delta, rho, xpt, zmat)
 
         if (knew_tr > 0) then
