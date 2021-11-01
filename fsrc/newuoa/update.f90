@@ -1,13 +1,13 @@
 module update_mod
 !--------------------------------------------------------------------------------------------------!
-! This module provides subroutines concerning the update of IDZ, BMAT, ZMAT, GQ, HQ, and PQ when
-! XPT(:, KNEW) is replaced by XNEW = XOPT + D.
+! This module provides subroutines concerning the update of IDZ, BMAT, ZMAT, GQ, HQ, PQ, FVAL, XPT,
+! KOPT, FOPT, and XOPT when XPT(:, KNEW) is replaced by XNEW = XOPT + D.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 01, 2021 PM08:45:23
+! Last Modified: Monday, November 01, 2021 PM09:36:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -80,7 +80,7 @@ npt = int(size(xpt, 2), kind(npt))
 if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= n + 2, 'NPT >= N + 2', srname)
-    call assert(knew >= 1 .and. knew <= npt, '1 <= KNEW <= NPT', srname)
+    call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
     call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT-N', srname)
     call assert(size(d) == n, 'SIZE(D) == N', srname)
     call assert(all(is_finite(d)), 'D is finite', srname)
@@ -93,6 +93,11 @@ end if
 !====================!
 ! Calculation starts !
 !====================!
+
+! Do nothing when KNEW is 0.
+if (knew == 0) then
+    return
+end if
 
 ! Calculate VLAG and BETA according to D.
 ! VLAG contains the components of the vector Hw of the updating formula (4.11) in the NEWUOA paper,
@@ -313,7 +318,10 @@ if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= n + 2, 'NPT >= N + 2', srname)
     call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT-N', srname)
-    call assert(knew >= 1 .and. knew <= npt, '1 <= KNEW <= NPT', srname)
+    call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
+    call assert(knew >= 1 .or. f >= fval(kopt), 'KNEW >= 1 unless F >= FOPT', srname)
+    call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
+    call assert(knew /= kopt .or. f < fval(kopt), 'KNEW /= KOPT unless F < FOPT', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
@@ -326,9 +334,14 @@ end if
 ! Calculation starts !
 !====================!
 
-! MODERR is the error of the current model in predicting the change in F due to D.
-! MODERR = [F(XNEW) - F(XOPT)] - [Q(XNEW) - Q(XOPT)]
-! CALQUAD = Q(XOPT + D) - Q(XOPT) = Q(XNEW) - Q(XOPT)
+! Do nothing when KNEW is 0.
+if (knew == 0) then
+    return
+end if
+
+! The unupdated model corresponding to [GQ, HQ, PQ] interpolates F at all points in XPT except for
+! XNEW, which will become XPT(:, KNEW). The error is MODERR = [F(XNEW)-F(XOPT)] - [Q(XNEW)-Q(XOPT)].
+! In the following, CALQUAD = Q(XOPT + D) - Q(XOPT) = Q(XNEW) - Q(XOPT)
 moderr = f - fval(kopt) + calquad(d, gq, hq, pq, xpt(:, kopt), xpt)
 
 !----------------------------------------------------------------!
@@ -400,8 +413,10 @@ npt = int(size(xpt, 2), kind(npt))
 if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= n + 2, 'NPT >= N + 2', srname)
-    call assert(knew >= 1 .and. knew <= npt, '1 <= KNEW <= NPT', srname)
+    call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
+    call assert(knew >= 1 .or. f >= fval(kopt), 'KNEW >= 1 unless F >= FOPT', srname)
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
+    call assert(knew /= kopt .or. f < fval(kopt), 'KNEW /= KOPT unless F < FOPT', srname)
     call assert(size(d) == n, 'SIZE(D) == N', srname)
     call assert(all(is_finite(d)), 'D is finite', srname)
     call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
@@ -414,6 +429,14 @@ end if
 !====================!
 ! Calculation starts !
 !====================!
+
+! Do essentially nothing when KNEW is 0.
+if (knew == 0) then
+    ! We must set FOPT and XOPT. Otherwise, they are UNDEFINED because we declare them as INTENT(OUT).
+    fopt = fval(kopt)
+    xopt = xpt(:, kopt)
+    return
+end if
 
 xpt(:, knew) = xpt(:, kopt) + d
 fval(knew) = f
