@@ -7,7 +7,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 01, 2021 AM11:23:09
+! Last Modified: Monday, November 01, 2021 PM12:38:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -267,7 +267,7 @@ end if
 end subroutine updateh
 
 
-subroutine updateq(idz, knew, bmatknew, fqdiff, zmat, xptknew, gq, hq, pq)
+subroutine updateq(idz, knew, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates GQ, HQ, and PQ when XPT(:, KNEW) is replaced by XNEW = XOPT + D. See
 ! Section 4 of the NEWUOA paper.
@@ -277,18 +277,20 @@ subroutine updateq(idz, knew, bmatknew, fqdiff, zmat, xptknew, gq, hq, pq)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : r1update, Ax_plus_y, issymmetric
+use, non_intrinsic :: linalg_mod, only : r1update, Ax_plus_y, issymmetric, calquad
 
 implicit none
 
 ! Inputs
 integer(IK), intent(in) :: idz
 integer(IK), intent(in) :: knew
-real(RP), intent(in) :: bmatknew(:) ! BMATKNEW(N)
-! FQDIFF = [F(XNEW) - F(XOPT)] - [Q(XNEW) - Q(XOPT)] = MODERR
-real(RP), intent(in) :: fqdiff
+integer(IK), intent(in) :: kopt
+real(RP), intent(in) :: bmat(:, :) ! BMAT(N, NPT + N)
+real(RP), intent(in) :: d(:) ! D(N)
+real(RP), intent(in) :: f
+real(RP), intent(in) :: fval(:) ! FVAL(NPT)
+real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
-real(RP), intent(in) :: xptknew(:)  ! XPTKNEW(N)
 
 ! In-outputs
 real(RP), intent(inout) :: gq(:)    ! GQ(N)
@@ -300,10 +302,11 @@ character(len=*), parameter :: srname = 'UPDATEQ'
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: fqdz(size(zmat, 2))
+real(RP) :: moderr
 
 ! Sizes
-n = int(size(gq), kind(n))
-npt = int(size(pq), kind(npt))
+n = int(size(xpt, 1), kind(n))
+npt = int(size(xpt, 2), kind(npt))
 
 ! Preconditions
 if (DEBUGGING) then
@@ -311,10 +314,11 @@ if (DEBUGGING) then
     call assert(npt >= n + 2, 'NPT >= N + 2', srname)
     call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT-N', srname)
     call assert(knew >= 1 .and. knew <= npt, '1 <= KNEW <= NPT', srname)
-    call assert(size(bmatknew) == n, 'SIZE(BMATKNEW) == N', srname)
+    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
+    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
-    call assert(size(xptknew) == n .and. all(is_finite(xptknew)), &
+    call assert(size(xpt) == n .and. all(is_finite(xpt)), &
         & 'SIZE(XPTKNEW) == N, XPTKNEW is finite', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
 end if
@@ -325,11 +329,16 @@ end if
 
 !----------------------------------------------------------------!
 ! Implement R1UPDATE properly so that it ensures HQ is symmetric.
-call r1update(hq, pq(knew), xptknew)
+call r1update(hq, pq(knew), xpt(:, knew))
 !----------------------------------------------------------------!
 
+! MODERR is the error of the current model in predicting the change in F due to D.
+! MODERR = [F(XNEW) - F(XOPT)] - [Q(XNEW) - Q(XOPT)]
+! CALQUAD = Q(XOPT + D) - Q(XOPT) = Q(XNEW) - Q(XOPT)
+moderr = f - fval(kopt) + calquad(d, gq, hq, pq, xpt(:, kopt), xpt)
+
 ! Update the implicit part of second derivatives.
-fqdz = fqdiff * zmat(knew, :)
+fqdz = moderr * zmat(knew, :)
 fqdz(1:idz - 1) = -fqdz(1:idz - 1)
 pq(knew) = ZERO
 !----------------------------------------------------------------!
@@ -338,7 +347,7 @@ pq = Ax_plus_y(zmat, fqdz, pq)
 !----------------------------------------------------------------!
 
 ! Update the gradient.
-gq = gq + fqdiff * bmatknew
+gq = gq + moderr * bmat(:, knew)
 
 !====================!
 !  Calculation ends  !
