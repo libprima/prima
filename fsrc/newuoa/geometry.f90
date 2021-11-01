@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 01, 2021 AM11:02:54
+! Last Modified: Monday, November 01, 2021 AM11:47:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -17,16 +17,15 @@ public :: setdrop_tr, geostep
 contains
 
 
-function setdrop_tr(idz, kopt, bmat, d, delta, ratio, rho, xpt, zmat) result(knew)
+function setdrop_tr(idz, kopt, tr_success, bmat, d, delta, rho, xpt, zmat) result(knew)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine sets KNEW to the index of the interpolation point to be deleted AFTER A TRUST
 ! REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
 ! XPT(:, KNEW) is replaced by XNEW = XOPT + D, where D is the trust-region step.
 ! N.B.:
-! 1. Information of XNEW is encoded in VLAG and BETA, which are calculated according to D.
-! 2. If RATIO > 0, then KNEW > 0 so that XNEW is included into XPT. Otherwise, it is a bug.
-! 3. If RATIO <= 0, then KNEW /= KOPT so that XPT(:, KOPT) is retained. Otherwise, it is a bug.
-! 4. It is tempting to take the function value into consideration when defining KNEW, for example,
+! 1. If TR_SUCCESS = TRUE, then KNEW > 0 so that XNEW is included into XPT. Otherwise, it is a bug.
+! 2. If TR_SUCCESS = FALSE, then KNEW /= KOPT so that XPT(:, KOPT) stays. Otherwise, it is a bug.
+! 3. It is tempting to take the function value into consideration when defining KNEW, for example,
 ! set KNEW so that FVAL(KNEW) = MAX(FVAL) as long as F(XNEW) < MAX(FVAL), unless there is a better
 ! choice. However, this is not a good idea, because the definition of KNEW should benefit the
 ! quality of the model that interpolates f at XPT. A set of points with low function values is not
@@ -49,10 +48,10 @@ implicit none
 ! Inputs
 integer(IK), intent(in) :: idz
 integer(IK), intent(in) :: kopt
+logical, intent(in) :: tr_success
 real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT + N)
 real(RP), intent(in) :: d(:)
 real(RP), intent(in) :: delta
-real(RP), intent(in) :: ratio
 real(RP), intent(in) :: rho
 real(RP), intent(in) :: xpt(:, :)   ! XPT(N, NPT)
 real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT - N - 1)
@@ -81,7 +80,6 @@ if (DEBUGGING) then
     call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= NPT - N', srname)
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
     call assert(delta >= rho .and. rho > ZERO, 'DETLA >= RHO > 0', srname)
-    call assert(.not. is_nan(ratio), 'RATIO is not NaN', srname)
     call assert(size(d) == n, 'SIZE(D) == N', srname)
     call assert(all(is_finite(d)), 'D is finite', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
@@ -98,7 +96,7 @@ end if
 call vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
 
 ! Calculate the distance between the interpolation points and the optimal point up to now.
-if (ratio > ZERO) then
+if (tr_success) then
     xdist = sqrt(sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1))
 else
     xdist = sqrt(sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1))
@@ -107,23 +105,23 @@ end if
 hdiag = -sum(zmat(:, 1:idz - 1)**2, dim=2) + sum(zmat(:, idz:size(zmat, 2))**2, dim=2)
 sigma = abs(beta * hdiag + vlag(1:npt)**2)
 sigma = sigma * max(ONE, xdist / max(TENTH * delta, rho))**6
-if (ratio <= ZERO) then
+if (.not. tr_success) then
     ! If the new F is not better than FVAL(KOPT), we set SIGMA(KOPT) = -1 to avoid KNEW = KOPT.
     sigma(kopt) = -ONE
 end if
 
 ! KNEW = 0 by default. It cannot be removed, as KNEW may not be set below in some cases, e.g., when
-! RATIO <= 0 and MAXVAL(SIGMA) <= 1.
+! TR_SUCCESS = FALSE and MAXVAL(SIGMA) <= 1.
 knew = 0_IK
 
 ! See (7.5) of the NEWUOA paper for the following definition of KNEW.
-if (any(sigma > ONE) .or. (ratio > ZERO .and. any(.not. is_nan(sigma)))) then
+if (any(sigma > ONE) .or. (tr_success .and. any(.not. is_nan(sigma)))) then
     knew = int(maxloc(sigma, mask=(.not. is_nan(sigma)), dim=1), kind(knew))
 end if
 
 ! Powell's code does not include the following instructions. With Powell's code, if SIGMA consists
 ! of only NaN, then KNEW can be 0 even when RATIO > 0.
-if (ratio > ZERO .and. knew <= 0) then
+if (tr_success .and. knew <= 0) then
     knew = int(maxloc(xdist, mask=(.not. is_nan(xdist)), dim=1), kind(knew))
 end if
 
@@ -133,10 +131,10 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    ! KNEW >= 1 when RATIO > 0 unless NaN occurs in XDIST, which should not happen if the starting
-    ! point does not contain NaN and the trust-region/geometry steps never contain NaN.
-    call assert(.not. (ratio > ZERO .and. knew <= 0), 'KNEW >= 1 when RATIO > 0', srname)
-    call assert(.not. (ratio <= ZERO .and. knew == kopt), 'KNEW /= KOPT when RATIO <= 0', srname)
+    ! KNEW >= 1 when TR_SUCCESS = TRUE unless NaN occurs in XDIST, which should not happen if the
+    ! starting point does not contain NaN and the trust-region/geometry steps never contain NaN.
+    call assert(knew >= 1 .or. .not. tr_success, 'KNEW >= 1 unless TR_SUCCESS = FALSE', srname)
+    call assert(knew /= kopt .or. tr_success, 'KNEW /= KOPT unless TR_SUCCESS = TRUE', srname)
 end if
 
 end function setdrop_tr
