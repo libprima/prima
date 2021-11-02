@@ -7,7 +7,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, November 02, 2021 PM11:06:02
+! Last Modified: Tuesday, November 02, 2021 PM11:13:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -85,7 +85,7 @@ n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
 ! Preconditions
-htol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * real(n + npt, RP) * EPS)) ! Tolerance of H
+htol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E10_RP * EPS)) ! Tolerance for H
 if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= n + 2, 'NPT >= N + 2', srname)
