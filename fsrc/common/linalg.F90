@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, November 02, 2021 PM11:02:16
+! Last Modified: Tuesday, November 02, 2021 PM11:12:02
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1099,7 +1099,7 @@ e(2, 3) = maxval(abs(sum(bmat(:, 1:npt), dim=2)))
 e(3, 1) = maxval(abs(matprod(xpt, Omega)))
 e(3, 2) = maxval(abs(matprod(xpt, r)))
 e(3, 3) = maxval(abs(matprod(xpt, transpose(bmat(:, 1:npt))) - eye(n)))
-err = maxval(e) / maxabs
+err = maxval(e) / (maxabs * real(n + npt, RP))
 end function
 
 
