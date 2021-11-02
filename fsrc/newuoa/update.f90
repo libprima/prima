@@ -7,7 +7,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, November 02, 2021 PM11:38:58
+! Last Modified: Tuesday, November 02, 2021 PM11:58:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -31,10 +31,10 @@ subroutine updateh(knew, kopt, idz, d, xpt, bmat, zmat)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, planerot, r2update, symmetrize, issymmetric, errh
+use, non_intrinsic :: linalg_mod, only : matprod, planerot, r2update, symmetrize, issymmetric
 
 ! Solver-specific modules
 use, non_intrinsic :: vlagbeta_mod, only : vlagbeta
@@ -78,7 +78,6 @@ real(RP) :: v1(size(bmat, 1))
 real(RP) :: v2(size(bmat, 1))
 real(RP) :: vlag(size(bmat, 2))
 real(RP) :: w(size(bmat, 2))
-real(RP) :: xpt_test(size(xpt, 1), size(xpt, 2))
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -89,13 +88,14 @@ if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= n + 2, 'NPT >= N + 2', srname)
     call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
+    call assert(kopt >= 1 .and. kopt <= npt, '0 <= KOPT <= NPT', srname)
     call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT-N', srname)
-    call assert(size(d) == n, 'SIZE(D) == N', srname)
-    call assert(all(is_finite(d)), 'D is finite', srname)
+    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N and D is finite', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
         & 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     ! The following test cannot be passed.
     !htol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E10_RP * EPS)) ! Tolerance for H
     !call assert(errh(idz, bmat, zmat, xpt) <= htol, 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
@@ -278,8 +278,8 @@ call symmetrize(bmat(:, npt + 1:npt + n))
 if (DEBUGGING) then
     call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT-N', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
-    xpt_test = xpt
-    xpt_test(:, knew) = xpt(:, kopt) + d
+    !xpt_test = xpt
+    !xpt_test(:, knew) = xpt(:, kopt) + d
     ! The following test cannot be passed.
     !call assert(errh(idz, bmat, zmat, xpt_test) <= htol, &
     !    & 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
@@ -297,7 +297,7 @@ subroutine updateq(idz, knew, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: infnan_mod, only : is_finite, is_posinf, is_nan
 use, non_intrinsic :: linalg_mod, only : r1update, Ax_plus_y, issymmetric, calquad
 
 implicit none
@@ -342,7 +342,12 @@ if (DEBUGGING) then
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
+    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N and D is finite', srname)
+    call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(size(fval) == npt .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
+        & 'SIZE(FVAL) == NPT and FVAL is not NaN or +Inf', srname)
+    call assert(.not. any(fval < fval(kopt)), 'FVAL(KOPT) = MINVAL(FVAL)', srname)
     call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
@@ -438,11 +443,12 @@ if (DEBUGGING) then
     call assert(knew >= 1 .or. f >= fval(kopt), 'KNEW >= 1 unless F >= FOPT', srname)
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
     call assert(knew /= kopt .or. f < fval(kopt), 'KNEW /= KOPT unless F < FOPT', srname)
-    call assert(size(d) == n, 'SIZE(D) == N', srname)
-    call assert(all(is_finite(d)), 'D is finite', srname)
+    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N and D is finite', srname)
     call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
-    call assert(size(fval) == npt, 'SIZE(FVAL) == NPT', srname)
+    call assert(size(fval) == npt .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
+        & 'SIZE(FVAL) == NPT and FVAL is not NaN or +Inf', srname)
+    call assert(.not. any(fval < fval(kopt)), 'FVAL(KOPT) = MINVAL(FVAL)', srname)
     call assert(size(xopt) == n, 'SIZE(XOPT) == N', srname)
     ! N.B.: Do NOT test the value of FOPT or XOPT. Being INTENT(OUT), they are UNDEFINED up to here.
 end if
@@ -500,7 +506,7 @@ subroutine tryqalt(idz, fval, ratio, smat, zmat, itest, gq, hq, pq)
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric
 
 implicit none
@@ -541,7 +547,8 @@ if (DEBUGGING) then
     call assert(npt >= n + 2, 'NPT >= N + 2', srname)
     call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT-N', srname)
     call assert(.not. is_nan(ratio), 'RATION is not NaN', srname)
-    call assert(size(fval) == npt, 'SIZE(FVAL) == NPT', srname)
+    call assert(size(fval) == npt .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
+        & 'SIZE(FVAL) == NPT and FVAL is not NaN or +Inf', srname)
     call assert(size(smat, 1) == n .and. size(smat, 2) == npt, 'SIZE(SMAT) == [N, NPT]', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
