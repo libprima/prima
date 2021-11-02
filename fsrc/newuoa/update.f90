@@ -7,7 +7,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, November 02, 2021 PM11:20:26
+! Last Modified: Tuesday, November 02, 2021 PM11:38:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -362,7 +362,7 @@ end if
 ! The unupdated model corresponding to [GQ, HQ, PQ] interpolates F at all points in XPT except for
 ! XNEW, which will become XPT(:, KNEW). The error is MODERR = [F(XNEW)-F(XOPT)] - [Q(XNEW)-Q(XOPT)].
 ! In the following, CALQUAD = Q(XOPT + D) - Q(XOPT) = Q(XNEW) - Q(XOPT).
-!moderr = f - fval(kopt) + calquad(d, gq, hq, pq, xpt(:, kopt), xpt)
+moderr = f - fval(kopt) + calquad(d, gq, hq, pq, xpt(:, kopt), xpt)
 
 ! Absorb PQ(KNEW)*XPT(:, KNEW)*XPT(:, KNEW)^T into the explicit part of the Hessian.
 !----------------------------------------------------------------!
@@ -370,8 +370,6 @@ end if
 call r1update(hq, pq(knew), xpt(:, knew))
 !----------------------------------------------------------------!
 pq(knew) = ZERO
-
-moderr = f - fval(kopt) + calquad(d, gq, hq, pq, xpt(:, kopt), xpt)
 
 ! Update the implicit part of the Hessian.
 fqdz = moderr * zmat(knew, :)
