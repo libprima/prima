@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, November 02, 2021 PM10:18:49
+! Last Modified: Tuesday, November 02, 2021 PM11:02:16
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1029,7 +1029,7 @@ end function hessmul
 
 function errh(idz, bmat, zmat, xpt) result(err)
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 implicit none

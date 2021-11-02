@@ -7,7 +7,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, November 02, 2021 PM10:34:35
+! Last Modified: Tuesday, November 02, 2021 PM11:06:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -85,7 +85,7 @@ n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
 ! Preconditions
-htol = max(1.0E-10_RP, min(1.0E-2_RP, 1.0E2_RP * real(n + npt, RP) * EPS))  ! Tolerance for H
+htol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * real(n + npt, RP) * EPS)) ! Tolerance of H
 if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= n + 2, 'NPT >= N + 2', srname)
@@ -293,10 +293,10 @@ subroutine updateq(idz, knew, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : r1update, Ax_plus_y, issymmetric, calquad, matprod
+use, non_intrinsic :: linalg_mod, only : r1update, Ax_plus_y, issymmetric, calquad
 
 implicit none
 
@@ -318,7 +318,6 @@ real(RP), intent(inout) :: pq(:)    ! PQ(NPT)
 
 ! Local variables
 character(len=*), parameter :: srname = 'UPDATEQ'
-integer(IK) :: k
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: fqdz(size(zmat, 2))
