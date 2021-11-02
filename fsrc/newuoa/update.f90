@@ -7,7 +7,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 01, 2021 PM11:28:37
+! Last Modified: Tuesday, November 02, 2021 PM10:34:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,13 +22,19 @@ subroutine updateh(knew, kopt, idz, d, xpt, bmat, zmat)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates arrays BMAT and ZMAT together with IDZ, in order to replace the
 ! interpolation point XPT(:, KNEW) by XNEW = XOPT + D. See Section 4 of the NEWUOA paper.
+! [BMAT, ZMAT, IDZ] describes the matrix H in the NEWUOA paper (eq. 3.12), which is the inverse of
+! the coefficient matrix of the KKT system for the least-Frobenius norm interpolation problem:
+! ZMAT will hold a factorization of the leading NPT*NPT submatrix of H, the factorization being
+! ZMAT*Diag(DZ)*ZMAT^T with DZ(1:IDZ-1)=-1, DZ(IDZ:NPT-N-1)=1. BMAT will hold the last N ROWs of H
+! except for the (NPT+1)th column. Note that the (NPT + 1)th row and (NPT + 1)th are not saved as
+! they are unnecessary for the calculation.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, planerot, r2update, symmetrize, issymmetric
+use, non_intrinsic :: linalg_mod, only : matprod, planerot, r2update, symmetrize, issymmetric, errh
 
 ! Solver-specific modules
 use, non_intrinsic :: vlagbeta_mod, only : vlagbeta
@@ -59,6 +65,7 @@ real(RP) :: alpha
 real(RP) :: beta
 real(RP) :: denom
 real(RP) :: grot(2, 2)
+real(RP) :: htol
 real(RP) :: scala
 real(RP) :: scalb
 real(RP) :: sqrtdn
@@ -71,12 +78,14 @@ real(RP) :: v1(size(bmat, 1))
 real(RP) :: v2(size(bmat, 1))
 real(RP) :: vlag(size(bmat, 2))
 real(RP) :: w(size(bmat, 2))
+real(RP) :: xpt_test(size(xpt, 1), size(xpt, 2))
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
 
 ! Preconditions
+htol = max(1.0E-10_RP, min(1.0E-2_RP, 1.0E2_RP * real(n + npt, RP) * EPS))  ! Tolerance for H
 if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= n + 2, 'NPT >= N + 2', srname)
@@ -88,13 +97,14 @@ if (DEBUGGING) then
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
         & 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
+    call assert(errh(idz, bmat, zmat, xpt) <= htol, 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
 end if
 
 !====================!
 ! Calculation starts !
 !====================!
 
-! Do nothing when KNEW is 0.
+! Do nothing when KNEW is 0. This can only happen after a trust-region step.
 if (knew == 0) then
     return
 end if
@@ -267,6 +277,10 @@ call symmetrize(bmat(:, npt + 1:npt + n))
 if (DEBUGGING) then
     call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT-N', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
+    xpt_test = xpt
+    xpt_test(:, knew) = xpt(:, kopt) + d
+    call assert(errh(idz, bmat, zmat, xpt_test) <= htol, &
+        & 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
 end if
 
 end subroutine updateh
@@ -279,10 +293,10 @@ subroutine updateq(idz, knew, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : r1update, Ax_plus_y, issymmetric, calquad, errquad
+use, non_intrinsic :: linalg_mod, only : r1update, Ax_plus_y, issymmetric, calquad, matprod
 
 implicit none
 
@@ -304,10 +318,10 @@ real(RP), intent(inout) :: pq(:)    ! PQ(NPT)
 
 ! Local variables
 character(len=*), parameter :: srname = 'UPDATEQ'
+integer(IK) :: k
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: fqdz(size(zmat, 2))
-real(RP), parameter :: intp_tol = 10.0_RP * EPS**(0.5_RP)  ! Tolerance of interpolation error.
 real(RP) :: moderr
 
 ! Sizes
@@ -331,32 +345,34 @@ if (DEBUGGING) then
     call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
-    call assert(errquad(gq, hq, pq, xpt, fval) <= intp_tol, 'Q interpolates FVAL at XPT', srname)
+    ! [GQ, HQ, PQ] cannot pass the following test if FVAL contains extremely large values.
+    !call assert(errquad(gq, hq, pq, xpt, fval) <= intp_tol, 'Q interpolates FVAL at XPT', srname)
 end if
 
 !====================!
 ! Calculation starts !
 !====================!
 
-! Do nothing when KNEW is 0.
+! Do nothing when KNEW is 0. This can only happen after a trust-region step.
 if (knew == 0) then
     return
 end if
 
 ! The unupdated model corresponding to [GQ, HQ, PQ] interpolates F at all points in XPT except for
 ! XNEW, which will become XPT(:, KNEW). The error is MODERR = [F(XNEW)-F(XOPT)] - [Q(XNEW)-Q(XOPT)].
-! In the following, CALQUAD = Q(XOPT + D) - Q(XOPT) = Q(XNEW) - Q(XOPT)
+! In the following, CALQUAD = Q(XOPT + D) - Q(XOPT) = Q(XNEW) - Q(XOPT).
 moderr = f - fval(kopt) + calquad(d, gq, hq, pq, xpt(:, kopt), xpt)
 
+! Absorb PQ(KNEW)*XPT(:, KNEW)*XPT(:, KNEW)^T into the explicit part of the Hessian.
 !----------------------------------------------------------------!
 ! Implement R1UPDATE properly so that it ensures HQ is symmetric.
 call r1update(hq, pq(knew), xpt(:, knew))
 !----------------------------------------------------------------!
+pq(knew) = ZERO
 
-! Update the implicit part of second derivatives.
+! Update the implicit part of the Hessian.
 fqdz = moderr * zmat(knew, :)
 fqdz(1:idz - 1) = -fqdz(1:idz - 1)
-pq(knew) = ZERO
 !----------------------------------------------------------------!
 !pq = pq + matprod(zmat, fqdz) !---------------------------------!
 pq = Ax_plus_y(zmat, fqdz, pq)
@@ -372,7 +388,6 @@ gq = gq + moderr * bmat(:, knew)
 ! Postconditions
 if (DEBUGGING) then
     call assert(issymmetric(hq), 'HQ is symmetric', srname)
-    call assert(errquad(gq, hq, pq, xpt, fval) <= intp_tol, 'Q interpolates FVAL at XPT', srname)
 end if
 
 end subroutine updateq
@@ -435,7 +450,7 @@ end if
 ! Calculation starts !
 !====================!
 
-! Do essentially nothing when KNEW is 0.
+! Do essentially nothing when KNEW is 0. This can only happen after a trust-region step.
 if (knew == 0) then
     ! We must set FOPT and XOPT. Otherwise, they are UNDEFINED because we declare them as INTENT(OUT).
     fopt = fval(kopt)

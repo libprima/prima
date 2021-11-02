@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 01, 2021 PM09:35:17
+! Last Modified: Tuesday, November 02, 2021 AM09:24:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -39,8 +39,10 @@ subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 ! the parameters of the implicit second order derivatives of the quadratic model.
 ! [BMAT, ZMAT, IDZ] describes the matrix H in the NEWUOA paper (eq. 3.12), which is the inverse of
 ! the coefficient matrix of the KKT system for the least-Frobenius norm interpolation problem:
-! BMAT will hold the last N ROWs of H; ZMAT will hold the factorization of the leading NPT*NPT
-! submatrix of H, this factorization being ZMAT*Diag(DZ)*ZMAT^T with DZ(1:IDZ-1)=-1, DZ(IDZ:NPT)=1.
+! ZMAT will hold a factorization of the leading NPT*NPT submatrix of H, the factorization being
+! ZMAT*Diag(DZ)*ZMAT^T with DZ(1:IDZ-1)=-1, DZ(IDZ:NPT-N-1)=1. BMAT will hold the last N ROWs of H
+! except for the (NPT+1)th column. Note that the (NPT + 1)th row and (NPT + 1)th are not saved as
+! they are unnecessary for the calculation. 
 !
 ! See Section 2 of the NEWUOA paper for more information about these variables.
 !--------------------------------------------------------------------------------------------------!

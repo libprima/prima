@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 01, 2021 PM11:29:02
+! Last Modified: Tuesday, November 02, 2021 PM10:18:49
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -34,6 +34,7 @@ public :: eye
 public :: inv
 public :: planerot
 public :: calquad, errquad, hessmul
+public :: errh
 public :: isminor
 public :: issymmetric
 public :: norm
@@ -928,7 +929,7 @@ function errquad(gq, hq, pq, xpt, fval) result(err)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf
 implicit none
@@ -948,8 +949,9 @@ character(len=*), parameter :: srname = 'ERRQUAD'
 integer(IK) :: k
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: zeros(size(xpt, 1))
+real(RP) :: fmq(size(xpt, 2))
 real(RP) :: qval(size(xpt, 2))
+real(RP) :: zeros(size(xpt, 1))
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -957,6 +959,8 @@ npt = int(size(xpt, 2), kind(npt))
 
 ! Preconditions
 if (DEBUGGING) then
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
     call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
@@ -965,13 +969,22 @@ if (DEBUGGING) then
     call assert(.not. any(is_nan(fval) .or. is_posinf(fval)), 'FVAL is not NaN or +Inf', srname)
 end if
 
+!====================!
+! Calculation starts !
+!====================!
+
 zeros = ZERO
 qval = [(-calquad(xpt(:, k), gq, hq, pq, zeros, xpt), k=1, npt)]
 if (.not. all(is_finite(qval))) then
     err = HUGENUM
 else
-    err = maxval(abs(fval - qval) / max(abs(fval), ONE))
+    fmq = fval - qval
+    err = (maxval(fmq) - minval(fmq)) !/ max(ONE, maxval(abs(fval)))
 end if
+
+!====================!
+!  Calculation ends  !
+!====================!
 end function errquad
 
 
@@ -1012,6 +1025,82 @@ call verisize(pq, npt)
 
 hy = matprod(hq, y) + matprod(xpt, pq * matprod(y, xpt))
 end function hessmul
+
+
+function errh(idz, bmat, zmat, xpt) result(err)
+! Generic modules
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: idz
+real(RP), intent(in) :: bmat(:, :)
+real(RP), intent(in) :: zmat(:, :)
+real(RP), intent(in) :: xpt(:, :)
+
+! Outputs
+real(RP) :: err
+
+! Local variables
+character(len=*), parameter :: srname = 'ERRH'
+integer(IK) :: n
+integer(IK) :: npt
+real(RP) :: A(size(xpt, 2), size(xpt, 2))
+real(RP) :: e(3, 3)
+real(RP) :: maxabs
+real(RP) :: Omega(size(xpt, 2), size(xpt, 2))
+real(RP) :: U(size(xpt, 2), size(xpt, 2))
+real(RP) :: V(size(xpt, 1), size(xpt, 2))
+real(RP) :: r(size(xpt, 2))
+real(RP) :: s(size(xpt, 1))
+real(RP) :: t(size(xpt, 2))
+
+! Sizes
+n = int(size(xpt, 1), kind(n))
+npt = int(size(xpt, 2), kind(npt))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
+    call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT-N', srname)
+    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
+    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
+        & 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+! N.B.: The (NPT+1)th column (and row) of H is not saved. It is [r; t(1), s]  below.
+! W = [A, ONES(NPT, 1), XPT^T; ONES(1, NPT), ZERO, ZEROS(1, N); XPT, ZEROS(N, 1), ZEROS(N, N)]
+! H = [Omega, r, BMAT(:, 1:NPT)^T; r^T, t(1), s^T, BMAT(:, 1:NPT), s, BMAT(:, NPT+1:NPT+N)]
+
+A = HALF * matprod(transpose(xpt), xpt)**2
+Omega = -matprod(zmat(:, 1:idz - 1), transpose(zmat(:, 1:idz - 1))) + &
+    & matprod(zmat(:, idz:npt - n - 1), transpose(zmat(:, idz:npt - n - 1)))
+maxabs = maxval([ONE, maxval(abs(A)), maxval(abs(Omega)), maxval(abs(bmat))])
+U = eye(npt) - matprod(A, Omega) - matprod(transpose(xpt), bmat(:, 1:npt))
+V = -matprod(bmat(:, 1:npt), A) - matprod(bmat(:, npt + 1:npt + n), xpt)
+r = sum(U, dim=1) / real(npt, RP)
+s = sum(V, dim=2) / real(npt, RP)
+t = -matprod(A, r) - matprod(s, xpt)
+e(1, 1) = maxval(maxval(U, dim=1) - minval(U, dim=1))
+e(1, 2) = maxval(t) - minval(t)
+e(1, 3) = maxval(maxval(V, dim=2) - minval(V, dim=2))
+e(2, 1) = maxval(abs(sum(Omega, dim=1)))
+e(2, 2) = abs(sum(r) - ONE)
+e(2, 3) = maxval(abs(sum(bmat(:, 1:npt), dim=2)))
+e(3, 1) = maxval(abs(matprod(xpt, Omega)))
+e(3, 2) = maxval(abs(matprod(xpt, r)))
+e(3, 3) = maxval(abs(matprod(xpt, transpose(bmat(:, 1:npt))) - eye(n)))
+err = maxval(e) / maxabs
+end function
 
 
 pure function isminor0(x, ref) result(is_minor)
