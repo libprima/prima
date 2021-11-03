@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, November 03, 2021 PM10:11:57
+! Last Modified: Thursday, November 04, 2021 AM12:07:13
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -29,7 +29,7 @@ private
 ! Mathematically, inprod = dot_product, matprod = matmul
 public :: inprod, matprod, outprod
 public :: r1update, r2update, symmetrize
-public :: xpy_dot_z, xdy_plus_a, Ax_plus_y, xA_plus_y
+public :: Ax_plus_y
 public :: eye
 public :: inv
 public :: planerot
@@ -646,180 +646,46 @@ call assert(issymmetric(A), 'A is symmetrized', srname)
 end subroutine symmetrize
 
 
-function xpy_dot_z(x, y, z) result(t)
-! t = (x + y)'*z
-
-use, non_intrinsic :: consts_mod, only : RP
-
-#if __USE_POWELL_ALGEBRA__ == 1
-use, non_intrinsic :: consts_mod, only : IK, ZERO
-#endif
-
-#if __DEBUGGING__ == 1
-use, non_intrinsic :: debug_mod, only : errstop
-#endif
-implicit none
-
-real(RP), intent(in) :: x(:)
-real(RP), intent(in) :: y(:)
-real(RP), intent(in) :: z(:)
-real(RP) :: t
-
-#if __USE_POWELL_ALGEBRA__ == 1
-integer(IK) :: i
-#endif
-
-#if __DEBUGGING__ == 1
-character(len=*), parameter :: srname = 'XPY_DOT_Z'
-if (size(x) /= size(z) .or. size(y) /= size(z)) then
-    call errstop(srname, 'SIZE(X) or SIZE(Y) /= SIZE(Z)')
-end if
-#endif
-
-#if __USE_POWELL_ALGEBRA__ == 1
-t = ZERO
-do i = 1, int(size(z), kind(i))
-    t = t + x(i) * z(i) + y(i) * z(i)
-end do
-#else
-! Very strangely, none of the following works as well as the above loop for NEWUOA. They are all
-! equivalent mathematically but different numerically.
-!t = inprod(x, z) + inprod(y, z)
-!t = inprod(x + y, z)
-t = sum(x * z + y * z)
-#endif
-end function xpy_dot_z
-
-
-function xdy_plus_a(x, y, a) result(t)
-! t = x'*y + a
-
-use, non_intrinsic :: consts_mod, only : RP
-
-#if __USE_POWELL_ALGEBRA__ == 1
-use, non_intrinsic :: consts_mod, only : IK
-#endif
-
-#if __DEBUGGING__ == 1
-use, non_intrinsic :: debug_mod, only : errstop
-#endif
-implicit none
-
-real(RP), intent(in) :: x(:)
-real(RP), intent(in) :: y(:)
-real(RP), intent(in) :: a
-real(RP) :: t
-
-#if __USE_POWELL_ALGEBRA__ == 1
-integer(IK) :: i
-#endif
-
-#if __DEBUGGING__ == 1
-character(len=*), parameter :: srname = 'XDY_PLUS_A'
-if (size(x) /= size(y)) then
-    call errstop(srname, 'SIZE(X) /= SIZE(Y)')
-end if
-#endif
-
-#if __USE_POWELL_ALGEBRA__ == 1
-t = a
-do i = 1, int(size(x), kind(i))
-    t = t + x(i) * y(i)
-end do
-#else
-t = inprod(x, y) + a
-#endif
-end function xdy_plus_a
-
-
 function Ax_plus_y(A, x, y) result(z)
+!--------------------------------------------------------------------------------------------------!
 ! z = A*x + y (imagine x, y, and z as columns)
-
-use, non_intrinsic :: consts_mod, only : RP
-
-#if __USE_POWELL_ALGEBRA__ == 1
-use, non_intrinsic :: consts_mod, only : IK
-#endif
-
-#if __DEBUGGING__ == 1
-use, non_intrinsic :: debug_mod, only : errstop
-#endif
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
+! Inputs
 real(RP), intent(in) :: A(:, :)
 real(RP), intent(in) :: x(:)
 real(RP), intent(in) :: y(:)
+
+! Outputs
 real(RP) :: z(size(y))
 
-#if __USE_POWELL_ALGEBRA__ == 1
-integer(IK) :: j
-#endif
-
-#if __DEBUGGING__ == 1
+! Local variables
 character(len=*), parameter :: srname = 'AX_PLUS_Y'
-if (size(x) /= size(A, 2) .or. size(y) /= size(A, 1)) then
-    call errstop(srname, 'SIZE(A) /= (SIZE(Y), SIZE(X))')
-end if
-#endif
+integer(IK) :: j
 
-#if __USE_POWELL_ALGEBRA__ == 1
+! Preconditions
+if (DEBUGGING) then
+    call assert(size(x) == size(A, 2) .and. size(y) == size(A, 1), 'SIZE(A) = [SIZE(Y), SIZE(X)]', &
+        & srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
 z = y
 do j = 1, int(size(A, 2), kind(j))
     z = z + A(:, j) * x(j)
 end do
-#else
-! The following line works a bit better than Powell's loop for NEWUOA.
-z = matprod(A, x) + y
-#endif
+
+!====================!
+!  Calculation ends  !
+!====================!
+
 end function Ax_plus_y
-
-
-function xA_plus_y(x, A, y) result(z)
-! z = x*A + y (imagine x, y, z as rows).
-! Note that Fortran does not distinguish rows and columns.
-! If implemented in MATLAB, pay attention to the sizes of the vectors/matrices; if x and y are
-! columns, then z = (x'*A)' + y (do not calculate A'*x + y, which involves transposing A).
-
-use, non_intrinsic :: consts_mod, only : RP
-
-#if __USE_POWELL_ALGEBRA__ == 1
-use, non_intrinsic :: consts_mod, only : IK
-#endif
-
-#if __DEBUGGING__ == 1
-use, non_intrinsic :: debug_mod, only : errstop
-#endif
-implicit none
-
-real(RP), intent(in) :: x(:)
-real(RP), intent(in) :: A(:, :)
-real(RP), intent(in) :: y(:)
-real(RP) :: z(size(y))
-
-#if __USE_POWELL_ALGEBRA__ == 1
-integer(IK) :: i
-#endif
-
-#if __DEBUGGING__ == 1
-character(len=*), parameter :: srname = 'XA_PLUS_Y'
-if (size(x) /= size(A, 1) .or. size(y) /= size(A, 2)) then
-    call errstop(srname, 'SIZE(A) /= (SIZE(X), SIZE(Y))')
-end if
-#endif
-
-#if __USE_POWELL_ALGEBRA__ == 1
-z = y
-do i = 1, int(size(A, 1), kind(i))
-    z = z + x(i) * A(i, :)
-end do
-#else
-! The following does not work as well as Powell's loop for NEWUOA.
-z = matprod(x, A) + y
-! Note that Fortran does not distinguish rows and columns.
-! If implemented in MATLAB, pay attention to the sizes of the vectors/matrices; if x and y are
-! columns, then z = (x'*A)' + y (do not calculate A'*x+y, which involves transposing A).
-#endif
-end function xA_plus_y
 
 
 function calquad(d, gq, hq, pq, x, xpt) result(qred)
@@ -927,8 +793,6 @@ function errquad(gq, hq, pq, xpt, fval) result(err)
 ! where HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
 ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
 !--------------------------------------------------------------------------------------------------!
-
-! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf
@@ -985,6 +849,7 @@ end if
 !====================!
 !  Calculation ends  !
 !====================!
+!
 end function errquad
 
 
@@ -1027,12 +892,21 @@ if (DEBUGGING) then
     call assert(size(y) == n, 'SIZE(Y) = N', srname)
 end if
 
+!====================!
+! Calculation starts !
+!====================!
+
 !!hy = matprod(hq, y) + matprod(xpt, pq * matprod(y, xpt))
 ! The following loop works numerically better than the last line (but why?).
 hy = matprod(xpt, pq * matprod(y, xpt))
-do j = 1, int(size(hq, 2), kind(j))
+do j = 1, n
     hy = hy + hq(:, j) * y(j)
 end do
+
+!====================!
+!  Calculation ends  !
+!====================!
+
 end function hessmul
 
 
@@ -1044,7 +918,6 @@ function errh(idz, bmat, zmat, xpt) result(err)
 ! W = [A, ONES(NPT, 1), XPT^T; ONES(1, NPT), ZERO, ZEROS(1, N); XPT, ZEROS(N, 1), ZEROS(N, N)]
 ! H = [Omega, r, BMAT(:, 1:NPT)^T; r^T, t(1), s^T, BMAT(:, 1:NPT), s, BMAT(:, NPT+1:NPT+N)]
 !--------------------------------------------------------------------------------------------------!
-! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
@@ -1112,6 +985,11 @@ e(3, 1) = maxval(abs(matprod(xpt, Omega)))
 e(3, 2) = maxval(abs(matprod(xpt, r)))
 e(3, 3) = maxval(abs(matprod(xpt, transpose(bmat(:, 1:npt))) - eye(n)))
 err = maxval(e) / (maxabs * real(n + npt, RP))
+
+!====================!
+!  Calculation ends  !
+!====================!
+
 end function
 
 
