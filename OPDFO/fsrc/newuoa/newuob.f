@@ -17,7 +17,8 @@ C      IMPLICIT REAL*8 (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DIMENSION X(*),XBASE(*),XOPT(*),XNEW(*),XPT(NPT,*),FVAL(*),
-     1  GQ(*),HQ(*),PQ(*),BMAT(NDIM,*),ZMAT(NPT,*),D(*),VLAG(NPT+N),W(*)
+     1  GQ(*),HQ(*),PQ(*),BMAT(NDIM,*),ZMAT(NPT,*),D(*),VLAG(NPT+N),
+     1  W(*), vtmp(npt)
 C
 C     The arguments N, NPT, X, RHOBEG, RHOEND, IPRINT and MAXFUN are identical
 C       to the corresponding arguments in SUBROUTINE NEWUOA.
@@ -393,8 +394,14 @@ C
               SUMM=SUMM+BMAT(K,J)*D(J)
           END DO
           W(K)=SUMMA*(HALF*SUMMA+SUMMB)
-          VLAG(K)=SUMM
+          !VLAG(K)=SUMM
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          vtmp(k) = summ
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       END DO
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      vlag(1:npt) = zero
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       BETA=ZERO
       DO K=1,NPTM
           SUMM=ZERO
@@ -411,6 +418,9 @@ C
               VLAG(I)=VLAG(I)+SUMM*ZMAT(I,K)
           END DO
       END DO
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      vlag(1:npt) = vlag(1:npt) + vtmp(1:npt)
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       BSUMM=ZERO
       DX=ZERO
       DO J=1,N
@@ -466,8 +476,14 @@ C
               SUMM=SUMM+BMAT(K,J)*D(J)
           END DO
           W(K)=SUMMA*(HALF*SUMMA+SUMMB)
-          VLAG(K)=SUMM
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          !VLAG(K)=SUMM
+          vtmp(k)=summ
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       END DO
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      vlag(1:npt) = zero
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       BETA=ZERO
       DO K=1,NPTM
           SUMM=ZERO
@@ -484,6 +500,9 @@ C
               VLAG(I)=VLAG(I)+SUMM*ZMAT(I,K)
           END DO
       END DO
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      vlag(1:npt) = vlag(1:npt) + vtmp(1:npt)
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       BSUMM=ZERO
       DX=ZERO
       DO J=1,N

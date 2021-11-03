@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, September 29, 2021 PM11:54:50
+! Last Modified: Wednesday, November 03, 2021 PM09:58:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -47,7 +47,7 @@ subroutine trsapp(delta, gq, hq, pq, tol, x, xpt, crvmin, s, info)
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, ZERO, TENTH, PI, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: linalg_mod, only : Ax_plus_y, inprod, matprod, issymmetric, norm
+use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, norm, hessmul
 
 implicit none
 
@@ -137,9 +137,8 @@ qred = ZERO
 info = 2  ! Default exit flag is 2, i.e., itermax is attained
 
 ! Prepare for the first line search.
+hx = hessmul(hq, pq, xpt, x)
 !--------------------------------------------------------------------------------------------------!
-!-----!hx = hessmul(hq, pq, xpt, x) !----------------------------!
-hx = Ax_plus_y(hq, x, matprod(xpt, pq * matprod(x, xpt)))
 ! N.B.: During the iterations, G is NOT updated, and it equals always GQ+HX, which is the gradient
 ! of the trust-region model at the trust-region center X. However, GG is updated: GG = |G + HS|^2,
 ! which is the norm square of the gradient at the current iterate.
@@ -190,10 +189,7 @@ do iter = 1, itermax
             bstep = (delsq - ss) / (ds + hypt)
         end if
     end if
-!----------------------------------------------------------------!
-!-----!hd = hessmul(hq, pq, xpt, d) !----------------------------!
-    hd = Ax_plus_y(hq, d, matprod(xpt, pq * matprod(d, xpt)))
-!----------------------------------------------------------------!
+    hd = hessmul(hq, pq, xpt, d)
     dhd = inprod(d, hd)
 
     ! Set the step-length ALPHA and update CRVMIN.
@@ -323,10 +319,7 @@ do iter = 1, itermax
         exit
     end if
 
-    !----------------------------------------------------------------!
-    !-----!hd = hessmul(hq, pq, xpt, d) !----------------------------!
-    hd = Ax_plus_y(hq, d, matprod(xpt, pq * matprod(d, xpt)))
-    !----------------------------------------------------------------!
+    hd = hessmul(hq, pq, xpt, d)
     dg = inprod(d, g)
     dhd = inprod(hd, d)
     dhs = inprod(hd, s)

@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, November 03, 2021 PM02:01:23
+! Last Modified: Wednesday, November 03, 2021 PM10:05:21
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -989,41 +989,50 @@ end function errquad
 
 
 function hessmul(hq, pq, xpt, y) result(hy)
+!--------------------------------------------------------------------------------------------------!
 ! This function calculates HESSIAN*Y, where HESSIAN consists of an explicit part HQ and an
 ! implicit part PQ in Powell's way: HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T).
-
-use, non_intrinsic :: consts_mod, only : RP
-
-#if __DEBUGGING__ == 1
-use, non_intrinsic :: consts_mod, only : IK
-use, non_intrinsic :: debug_mod, only : errstop, verisize
-#endif
-
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite
 implicit none
 
 ! Inputs
 real(RP), intent(in) :: hq(:, :)  ! HQ(N, N)
 real(RP), intent(in) :: pq(:)     ! PQ(NPT)
-real(RP), intent(in) :: y(:)      ! X(N)
+real(RP), intent(in) :: y(:)      ! Y(N)
 real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
 
-! Output
+! Outputs
 real(RP) :: hy(size(hq, 1))
 
-#if __DEBUGGING__ == 1
-integer(IK) :: n, npt
+! Local variables
 character(len=*), parameter :: srname = 'HESSMUL'
+integer(IK) :: j
+integer(IK) :: n
+integer(IK) :: npt
+
+! Sizes
 n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
-if (n < 1 .or. npt < n + 2) then
-    call errstop(srname, 'SIZE(XPT) is invalid')
-end if
-call verisize(y, n)
-call verisize(hq, n, n)
-call verisize(pq, npt)
-#endif
 
-hy = matprod(hq, y) + matprod(xpt, pq * matprod(y, xpt))
+! Preconditions
+if (DEBUGGING) then
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
+    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
+    call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(size(y) == n, 'SIZE(Y) = N', srname)
+end if
+
+!!hy = matprod(hq, y) + matprod(xpt, pq * matprod(y, xpt))
+! The following loop works numerically better than the last line (but why?).
+hy = matprod(xpt, pq * matprod(y, xpt))
+do j = 1, int(size(hq, 2), kind(j))
+    hy = hy + hq(:, j) * y(j)
+end do
 end function hessmul
 
 
