@@ -7,7 +7,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, November 02, 2021 PM11:58:11
+! Last Modified: Wednesday, November 03, 2021 AM10:11:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -292,6 +292,7 @@ subroutine updateq(idz, knew, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates GQ, HQ, and PQ when XPT(:, KNEW) is replaced by XNEW = XOPT + D. See
 ! Section 4 of the NEWUOA paper.
+! N.B.: Indeed, we only need BMAT(:, KNEW) instead of the entire matrix.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -495,12 +496,12 @@ end if
 end subroutine updatexf
 
 
-subroutine tryqalt(idz, fval, ratio, smat, zmat, itest, gq, hq, pq)
+subroutine tryqalt(idz, fval, ratio, bmat, zmat, itest, gq, hq, pq)
 !--------------------------------------------------------------------------------------------------!
 ! TRYQALT tests whether to replace Q by the alternative model, namely the model that minimizes
 ! the F-norm of the Hessian subject to the interpolation conditions. It does the replacement
-! when certain criteria are satisfied (i.e., when ITEST = 3). Note that SMAT = BMAT(:, 1:NPT)
-! See Section 8 of the NEWUOA paper.
+! when certain criteria are satisfied (i.e., when ITEST = 3). See Section 8 of the NEWUOA paper.
+! N.B.: Indeed, we only need BMAT(:, KNEW) instead of the entire matrix.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -515,8 +516,8 @@ implicit none
 integer(IK), intent(in) :: idz
 real(RP), intent(in) :: fval(:)     ! FVAL(NPT)
 real(RP), intent(in) :: ratio
-real(RP), intent(in) :: smat(:, :)  ! SMAT(N, NPT)
-real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-!)
+real(RP), intent(in) :: bmat(:, :)  ! BMAT(N, NPT+N)
+real(RP), intent(in) :: zmat(:, :)  ! ZMAT(NPT, NPT-N-1)
 
 ! In-output
 integer(IK), intent(inout) :: itest
@@ -549,7 +550,8 @@ if (DEBUGGING) then
     call assert(.not. is_nan(ratio), 'RATION is not NaN', srname)
     call assert(size(fval) == npt .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
         & 'SIZE(FVAL) == NPT and FVAL is not NaN or +Inf', srname)
-    call assert(size(smat, 1) == n .and. size(smat, 2) == npt, 'SIZE(SMAT) == [N, NPT]', srname)
+    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
+    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
     call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
@@ -563,13 +565,13 @@ end if
 
 ! In the NEWUOA paper, Powell replaces Q with Q_alt when RATIO <= 0.01 and ||G_alt|| <= 0.1||GQ||
 ! hold for 3 consecutive times (eq(8.4)). But Powell's code compares ABS(RATIO) instead of RATIO
-! with 0.01. Here we use RATIO, which is more efficient as observed in in Zaikun ZHANG's PhD thesis
+! with 0.01. Here we use RATIO, which is more efficient as observed in Zaikun ZHANG's PhD thesis
 ! (Section 3.3.2).
 !if (abs(ratio) > 1.0e-2_RP) then
 if (ratio > 1.0E-2_RP) then
     itest = 0_IK
 else
-    galt = matprod(smat, fval)
+    galt = matprod(bmat(:, 1:npt), fval)
     if (inprod(gq, gq) < 1.0E2_RP * inprod(galt, galt)) then
         itest = 0_IK
     else

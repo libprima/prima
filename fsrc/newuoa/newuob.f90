@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, November 02, 2021 AM09:24:24
+! Last Modified: Wednesday, November 03, 2021 AM10:05:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -42,7 +42,7 @@ subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 ! ZMAT will hold a factorization of the leading NPT*NPT submatrix of H, the factorization being
 ! ZMAT*Diag(DZ)*ZMAT^T with DZ(1:IDZ-1)=-1, DZ(IDZ:NPT-N-1)=1. BMAT will hold the last N ROWs of H
 ! except for the (NPT+1)th column. Note that the (NPT + 1)th row and (NPT + 1)th are not saved as
-! they are unnecessary for the calculation. 
+! they are unnecessary for the calculation.
 !
 ! See Section 2 of the NEWUOA paper for more information about these variables.
 !--------------------------------------------------------------------------------------------------!
@@ -319,7 +319,7 @@ do tr = 1, maxtr
         ! 5. Question: Since TRYQALT is invoked only when DELTA equals the current RHO, why not
         ! reset ITEST to 0 when RHO is reduced?
         if (knew_tr > 0 .and. delta <= rho) then  ! DELTA = RHO.
-            call tryqalt(idz, fval - fopt, ratio, bmat(:, 1:npt), zmat, itest, gq, hq, pq)
+            call tryqalt(idz, fval - fopt, ratio, bmat, zmat, itest, gq, hq, pq)
         end if
     end if  ! End of if (.not. shortd)
 
