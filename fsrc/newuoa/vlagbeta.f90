@@ -8,7 +8,7 @@ module vlagbeta_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, November 03, 2021 PM09:54:25
+! Last Modified: Thursday, November 04, 2021 AM12:47:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -28,7 +28,7 @@ function calvlag(idz, kopt, bmat, d, xpt, zmat) result(vlag)
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : matprod
+use, non_intrinsic :: linalg_mod, only : matprod, omega_mul
 
 implicit none
 
@@ -48,7 +48,6 @@ character(len=*), parameter :: srname = 'CALVLAG'
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: wcheck(size(zmat, 1))
-real(RP) :: wz(size(zmat, 2))
 real(RP) :: xopt(size(xpt, 1))
 
 ! Sizes
@@ -82,9 +81,7 @@ wcheck = matprod(d, xpt)
 wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))
 
 vlag(1:npt) = matprod(d, bmat(:, 1:npt))
-wz = matprod(wcheck, zmat)
-wz(1:idz - 1) = -wz(1:idz - 1)
-vlag(1:npt) = vlag(1:npt) + matprod(zmat, wz)
+vlag(1:npt) = vlag(1:npt) + omega_mul(idz, zmat, wcheck)
 vlag(kopt) = vlag(kopt) + ONE  ! The calculation of VLAG(1:NPT) finishes.
 vlag(npt + 1:npt + n) = matprod(bmat, [wcheck, d]) ! The calculation of VLAG finishes.
 
@@ -104,7 +101,7 @@ function calbeta(idz, kopt, bmat, d, xpt, zmat) result(beta)
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : inprod, matprod
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, omega_inprod
 
 implicit none
 
@@ -129,8 +126,6 @@ real(RP) :: bsum
 real(RP) :: dsq
 real(RP) :: dx
 real(RP) :: wcheck(size(zmat, 1))
-real(RP) :: wz(size(zmat, 2))
-real(RP) :: wzsav(size(wz))
 real(RP) :: xopt(size(xpt, 1))
 real(RP) :: xoptsq
 
@@ -168,15 +163,11 @@ xoptsq = inprod(xopt, xopt)
 wcheck = matprod(d, xpt)
 wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))
 
-wz = matprod(wcheck, zmat)
-wzsav = wz
-wz(1:idz - 1) = -wz(1:idz - 1)
-
 bw = matprod(bmat(:, 1:npt), wcheck)
 bd = matprod(bmat(:, npt + 1:npt + n), d)
 bsum = sum(bd * d + bw * d + bw * d)
 
-beta = dx**2 + dsq * (xoptsq + TWO * dx + HALF * dsq) - inprod(wzsav, wz) - bsum
+beta = dx**2 + dsq * (xoptsq + TWO * dx + HALF * dsq) - omega_inprod(idz, zmat, wcheck, wcheck) - bsum
 
 !====================!
 !  Calculation ends  !

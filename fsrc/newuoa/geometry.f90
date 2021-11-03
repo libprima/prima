@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, November 03, 2021 PM10:44:39
+! Last Modified: Thursday, November 04, 2021 AM01:33:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -161,7 +161,7 @@ function geostep(idz, knew, kopt, bmat, delbar, xpt, zmat) result(d)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, norm
+use, non_intrinsic :: linalg_mod, only : issymmetric, norm, omega_col
 
 ! Solver-specific modules
 use, non_intrinsic :: vlagbeta_mod, only : calvlag, calbeta
@@ -187,9 +187,9 @@ integer(IK) :: npt
 real(RP) :: alpha
 real(RP) :: absden
 real(RP) :: beta
+real(RP) :: hcol(size(xpt, 2))
 real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
 real(RP) :: xopt(size(xpt, 1))
-real(RP) :: zknew(size(zmat, 2))
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -220,9 +220,8 @@ xopt = xpt(:, kopt)  ! Read XOPT.
 d = biglag(idz, knew, bmat, delbar, xopt, xpt, zmat)
 
 ! ALPHA is the KNEW-th diagonal entry of H.
-zknew = zmat(knew, :)
-zknew(1:idz - 1) = -zknew(1:idz - 1)
-alpha = inprod(zmat(knew, :), zknew)
+hcol = omega_col(idz, zmat, knew)
+alpha = hcol(knew)
 
 ! Calculate VLAG and BETA for D. Indeed, VLAG(NPT + 1 : NPT + N) will not be used.
 vlag = calvlag(idz, kopt, bmat, d, xpt, zmat)
@@ -268,7 +267,7 @@ function biglag(idz, knew, bmat, delbar, x, xpt, zmat) result(d)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, PI, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : Ax_plus_y, inprod, matprod, issymmetric, norm
+use, non_intrinsic :: linalg_mod, only : Ax_plus_y, inprod, matprod, issymmetric, norm, omega_col
 
 implicit none
 
@@ -320,7 +319,6 @@ real(RP) :: tauold
 real(RP) :: tol
 real(RP) :: unitang
 real(RP) :: w(size(x))
-real(RP) :: zknew(size(zmat, 2))
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -346,9 +344,7 @@ end if
 !====================!
 
 ! Set HCOL to the leading NPT elements of the KNEW-th column of H.
-zknew = zmat(knew, :)
-zknew(1:idz - 1) = -zknew(1:idz - 1)
-hcol = matprod(zmat, zknew)
+hcol = omega_col(idz, zmat, knew)
 
 ! Set the unscaled initial direction D. Form the gradient of LFUNC at X, and multiply D by the
 ! Hessian of LFUNC.
@@ -532,7 +528,7 @@ function bigden(idz, knew, kopt, bmat, d0, xpt, zmat) result(d)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, QUART, PI, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric, norm
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric, norm, omega_col, omega_mul
 
 implicit none
 
@@ -594,7 +590,6 @@ real(RP) :: unitang
 real(RP) :: v(size(xpt, 2))
 real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
 real(RP) :: w(size(xpt, 2) + size(xpt, 1), 5)
-real(RP) :: wz(size(zmat, 2))
 real(RP) :: x(size(xpt, 1))
 real(RP) :: xd
 real(RP) :: xnew(size(xpt, 1))
@@ -602,7 +597,6 @@ real(RP) :: xnsq
 real(RP) :: xptemp(size(xpt, 1), size(xpt, 2))
 real(RP) :: xs
 real(RP) :: xsq
-real(RP) :: zknew(size(zmat, 2))
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -631,9 +625,7 @@ end if
 x = xpt(:, kopt) ! For simplicity, we use X to denote XOPT.
 
 ! Store the first NPT elements of the KNEW-th column of H in HCOL.
-zknew = zmat(knew, :)
-zknew(1:idz - 1) = -zknew(1:idz - 1)
-hcol = matprod(zmat, zknew)
+hcol = omega_col(idz, zmat, knew)
 alpha = hcol(knew)
 
 ! The initial search direction D is taken from the last call of BIGLAG, and the initial S is set
@@ -742,9 +734,7 @@ do iter = 1, n
 
     ! Put the coefficents of THETA*WCHECK in PROD.
     do jc = 1, 5
-        wz = matprod(w(1:npt, jc), zmat)
-        wz(1:idz - 1) = -wz(1:idz - 1)
-        prod(1:npt, jc) = matprod(zmat, wz)
+        prod(1:npt, jc) = omega_mul(idz, zmat, w(1:npt, jc))
 
         nw = npt
         if (jc == 2 .or. jc == 3) then

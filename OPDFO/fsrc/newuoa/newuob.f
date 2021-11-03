@@ -756,14 +756,17 @@ C
       vtmp(1:npt) = pq(1:npt); pq(1:npt) = zero
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DO J=1,NPTM
-          TEMP=DIFF*ZMAT(KNEW,J)
+          !!!!!!!!!!!!!!!!!!!!!!!!
+          !TEMP=DIFF*ZMAT(KNEW,J)
+          TEMP=ZMAT(KNEW,J)
+          !!!!!!!!!!!!!!!!!!!!!!!!
           IF (J < IDZ) TEMP=-TEMP
           DO K=1,NPT
               PQ(K)=PQ(K)+TEMP*ZMAT(K,J)
           END DO
       END DO
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      pq(1:npt) = vtmp(1:npt) + pq(1:npt)
+      pq(1:npt) = vtmp(1:npt) + diff*pq(1:npt)
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       GQSQ=ZERO
       DO I=1,N
