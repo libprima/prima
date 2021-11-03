@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 01, 2021 AM11:55:00
+! Last Modified: Wednesday, November 03, 2021 PM08:39:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -41,7 +41,7 @@ use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : issymmetric
 
 ! Solver-specific modules
-use, non_intrinsic :: vlagbeta_mod, only : vlagbeta
+use, non_intrinsic :: vlagbeta_mod, only : calvlag, calbeta
 
 implicit none
 
@@ -93,7 +93,8 @@ end if
 !====================!
 
 ! Calculate VLAG and BETA for D.
-call vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
+vlag = calvlag(idz, kopt, bmat, d, xpt, zmat)
+beta = calbeta(idz, kopt, bmat, d, xpt, zmat)
 
 ! Calculate the distance between the interpolation points and the optimal point up to now.
 if (tr_success) then
@@ -163,7 +164,7 @@ use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, norm
 
 ! Solver-specific modules
-use, non_intrinsic :: vlagbeta_mod, only : vlagbeta
+use, non_intrinsic :: vlagbeta_mod, only : calvlag, calbeta
 
 implicit none
 
@@ -224,7 +225,8 @@ zknew(1:idz - 1) = -zknew(1:idz - 1)
 alpha = inprod(zmat(knew, :), zknew)
 
 ! Calculate VLAG and BETA for D. Indeed, VLAG(NPT + 1 : NPT + N) will not be used.
-call vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
+vlag = calvlag(idz, kopt, bmat, d, xpt, zmat)
+beta = calbeta(idz, kopt, bmat, d, xpt, zmat)
 
 ! If the cancellation in DENOM is unacceptable, then BIGDEN calculates an alternative model step D.
 if (vlag(knew)**2 <= ZERO) then

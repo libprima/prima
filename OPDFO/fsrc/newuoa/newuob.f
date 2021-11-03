@@ -427,6 +427,9 @@ C
           BSUMM=BSUMM+SUMM*D(J)
           DX=DX+D(J)*XOPT(J)
       END DO
+      bsumm = sum(matprod(d(1:n), bmat(npt + 1:npt + n, 1:n)) * d(1:n)
+     & + matprod(w(1:npt), bmat(1:npt, 1:n))*d(1:n)
+     & + matprod(w(1:npt), bmat(1:npt, 1:n))*d(1:n))
       !BETA=DX*DX+DSQ*(XOPTSQ+DX+DX+HALF*DSQ)+BETA-BSUMM
       BETA=DX**2+DSQ*(XOPTSQ+2.0D0*DX+HALF*DSQ)+BETA-BSUMM
       VLAG(KOPT)=VLAG(KOPT)+ONE
@@ -497,6 +500,9 @@ C
           BSUMM=BSUMM+SUMM*D(J)
           DX=DX+D(J)*XOPT(J)
       END DO
+      bsumm = sum(matprod(d(1:n), bmat(npt + 1:npt + n, 1:n)) * d(1:n)
+     & + matprod(w(1:npt), bmat(1:npt, 1:n))*d(1:n)
+     & + matprod(w(1:npt), bmat(1:npt, 1:n))*d(1:n))
       !BETA=DX*DX+DSQ*(XOPTSQ+DX+DX+HALF*DSQ)+BETA-BSUMM
       BETA=DX**2+DSQ*(XOPTSQ+2.0D0*DX+HALF*DSQ)+BETA-BSUMM
       VLAG(KOPT)=VLAG(KOPT)+ONE
