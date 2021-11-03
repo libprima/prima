@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, November 03, 2021 AM10:05:52
+! Last Modified: Wednesday, November 03, 2021 PM12:16:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -132,7 +132,7 @@ real(RP) :: pq(npt)
 real(RP) :: qred
 real(RP) :: ratio
 real(RP) :: rho
-real(RP) :: trtol
+real(RP) :: tr_tol
 real(RP) :: xbase(size(x))
 real(RP) :: xdist(npt)
 real(RP) :: xopt(size(x))
@@ -200,7 +200,7 @@ delta = rho
 moderrsav = HUGENUM
 dnormsav = HUGENUM
 itest = 0_IK
-trtol = 1.0E-2_RP  ! Tolerance used in trsapp.
+tr_tol = 1.0E-2_RP  ! Tolerance used in trsapp.
 ! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers may raise a run-time error that
 ! RATIO is undefined. The value will not be used: when SHORTD = FALSE, its value will be overwritten;
 ! when SHORTD = TRUE, its value is used only in BAD_TRSTEP, which is TRUE regardless of RATIO.
@@ -221,9 +221,7 @@ info = MAXTR_REACHED
 ! NEWUOA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
     ! Solve the trust-region subproblem.
-    call trsapp(delta, gq, hq, pq, trtol, xopt, xpt, crvmin, d, subinfo)
-
-    ! Calculate the length of the trial step D.
+    call trsapp(delta, gq, hq, pq, tr_tol, xopt, xpt, crvmin, d, subinfo)
     dnorm = min(delta, norm(d))
 
     ! SHORTD corresponds to Box 3 of the NEWUOA paper.
@@ -240,6 +238,9 @@ do tr = 1, maxtr
     end if
 
     if (.not. shortd) then  ! D is long enough.
+        ! DNORMSAVE constains the DNORM of the latest 3 function evaluations with the current RHO.
+        dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
+
         ! Shift XBASE if XOPT may be too far from XBASE.
         !if (inprod(d, d) <= 1.0e-3_RP*inprod(xopt, xopt)) then  ! Powell's code
         if (dnorm**2 <= 1.0E-3_RP * inprod(xopt, xopt)) then
@@ -259,9 +260,6 @@ do tr = 1, maxtr
             info = subinfo
             exit
         end if
-
-        ! DNORMSAVE constains the DNORM of the latest 3 function evaluations with the current RHO.
-        dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
         qred = calquad(d, gq, hq, pq, xopt, xpt)  ! QRED = Q(XOPT) - Q(XOPT + D)
         ! F - FOPT + QRED is the error of the current model in predicting the change in F due to D.
@@ -406,6 +404,16 @@ do tr = 1, maxtr
         ! Find a step D so that the geometry of XPT will be improved when XPT(:, KNEW_GEO) is
         ! replaced by XOPT + D. The GEOSTEP subroutine will call Powell's BIGLAG and BIGDEN.
         d = geostep(idz, knew_geo, kopt, bmat, delbar, xpt, zmat)
+        !------------------------------------------------------------------------------------------!
+        ! Powell's code does not update DNORM. Therefore, DNORM is the length of last trust-region
+        ! trial step, which seems inconsistent with what is described in Section 7 (around (7.7)) of
+        ! the NEWUOA paper. Seemingly we should keep DNORM = ||D|| as we do here. The value of DNORM
+        ! saved in DNORMSAVE will be used when defining REDUCE_RHO_1.
+        dnorm = min(delbar, norm(d))  ! In theory, DNORM = DELBAR in this case.
+        !------------------------------------------------------------------------------------------!
+        ! DNORMSAVE constains the DNORM of the latest 3 function evaluations with the current RHO.
+        dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
+
         ! Calculate the next value of the objective function.
         x = xbase + (xopt + d)
         call evalf(calfun, x, f)
@@ -419,16 +427,6 @@ do tr = 1, maxtr
             info = subinfo
             exit
         end if
-
-        ! DNORMSAVE constains the DNORM of the latest 3 function evaluations with the current RHO.
-        !------------------------------------------------------------------------------------------!
-        ! Powell's code does not update DNORM. Therefore, DNORM is the length of last trust-region
-        ! trial step, which seems inconsistent with what is described in Section 7 (around (7.7)) of
-        ! the NEWUOA paper. Seemingly we should keep DNORM = ||D|| as we do here. The value of DNORM
-        ! saved in DNORMSAVE will be used when defining REDUCE_RHO_1.
-        dnorm = min(delbar, norm(d))  ! In theory, DNORM = DELBAR in this case.
-        !------------------------------------------------------------------------------------------!
-        dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
         qred = calquad(d, gq, hq, pq, xopt, xpt)  ! QRED = Q(XOPT) - Q(XOPT + D)
         ! F - FOPT + QRED is the error of the current model in predicting the change in F due to D.

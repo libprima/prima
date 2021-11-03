@@ -7,7 +7,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, November 03, 2021 AM11:20:38
+! Last Modified: Wednesday, November 03, 2021 AM11:51:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -336,9 +336,9 @@ if (DEBUGGING) then
     call assert(npt >= n + 2, 'NPT >= N + 2', srname)
     call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT-N', srname)
     call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
-    call assert(knew >= 1 .or. f >= fval(kopt), 'KNEW >= 1 unless F >= FOPT', srname)
+    call assert(knew >= 1 .or. f >= fval(kopt), 'KNEW >= 1 unless F >= FVAL(KOPT)', srname)
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
-    call assert(knew /= kopt .or. f < fval(kopt), 'KNEW /= KOPT unless F < FOPT', srname)
+    call assert(knew /= kopt .or. f < fval(kopt), 'KNEW /= KOPT unless F < FVAL(KOPT)', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
@@ -439,9 +439,9 @@ if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= n + 2, 'NPT >= N + 2', srname)
     call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
-    call assert(knew >= 1 .or. f >= fval(kopt), 'KNEW >= 1 unless F >= FOPT', srname)
+    call assert(knew >= 1 .or. f >= fval(kopt), 'KNEW >= 1 unless F >= FVAL(KOPT)', srname)
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
-    call assert(knew /= kopt .or. f < fval(kopt), 'KNEW /= KOPT unless F < FOPT', srname)
+    call assert(knew /= kopt .or. f < fval(kopt), 'KNEW /= KOPT unless F < FVAL(KOPT)', srname)
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N and D is finite', srname)
     call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
