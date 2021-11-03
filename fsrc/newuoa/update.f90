@@ -7,7 +7,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, November 03, 2021 PM08:39:22
+! Last Modified: Wednesday, November 03, 2021 PM10:17:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -300,7 +300,7 @@ subroutine updateq(idz, knew, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_posinf, is_nan
-use, non_intrinsic :: linalg_mod, only : r1update, Ax_plus_y, issymmetric, calquad
+use, non_intrinsic :: linalg_mod, only : r1update, issymmetric, calquad, matprod
 
 implicit none
 
@@ -379,10 +379,7 @@ pq(knew) = ZERO
 ! Update the implicit part of the Hessian.
 modez = moderr * zmat(knew, :)
 modez(1:idz - 1) = -modez(1:idz - 1)
-!----------------------------------------------------------------!
-!pq = pq + matprod(zmat, modez) !---------------------------------!
-pq = Ax_plus_y(zmat, modez, pq)
-!----------------------------------------------------------------!
+pq = pq + matprod(zmat, modez)
 
 ! Update the gradient.
 gq = gq + moderr * bmat(:, knew)
