@@ -7,7 +7,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, November 03, 2021 AM11:01:54
+! Last Modified: Wednesday, November 03, 2021 AM11:20:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -299,7 +299,7 @@ subroutine updateq(idz, knew, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_posinf, is_nan
-use, non_intrinsic :: linalg_mod, only : r1update, Ax_plus_y, issymmetric, calquad, matprod, errquad
+use, non_intrinsic :: linalg_mod, only : r1update, Ax_plus_y, issymmetric, calquad
 
 implicit none
 
@@ -323,14 +323,8 @@ real(RP), intent(inout) :: pq(:)    ! PQ(NPT)
 character(len=*), parameter :: srname = 'UPDATEQ'
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: fqdz(size(zmat, 2))
 real(RP) :: moderr
-
-!---------------------------------------!
-integer(IK) :: k
-real(RP) :: fmq(size(xpt, 2))
-real(RP) :: fmqz(size(zmat, 2))
-!---------------------------------------!
+real(RP) :: modez(size(zmat, 2))
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -360,7 +354,6 @@ if (DEBUGGING) then
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
     ! [GQ, HQ, PQ] cannot pass the following test if FVAL contains extremely large values.
     !call assert(errquad(gq, hq, pq, xpt, fval) <= intp_tol, 'Q interpolates FVAL at XPT', srname)
-    write (*, *) errquad(gq, hq, pq, xpt, fval)
 end if
 
 !====================!
@@ -372,45 +365,26 @@ if (knew == 0) then
     return
 end if
 
-!! The unupdated model corresponding to [GQ, HQ, PQ] interpolates F at all points in XPT except for
-!! XNEW, which will become XPT(:, KNEW). The error is MODERR = [F(XNEW)-F(XOPT)] - [Q(XNEW)-Q(XOPT)].
-!! In the following, CALQUAD = Q(XOPT + D) - Q(XOPT) = Q(XNEW) - Q(XOPT).
-!moderr = f - fval(kopt) + calquad(d, gq, hq, pq, xpt(:, kopt), xpt)
+! The unupdated model corresponding to [GQ, HQ, PQ] interpolates F at all points in XPT except for
+! XNEW, which will become XPT(:, KNEW). The error is MODERR = [F(XNEW)-F(XOPT)] - [Q(XNEW)-Q(XOPT)].
+! In the following, CALQUAD = Q(XOPT + D) - Q(XOPT) = Q(XNEW) - Q(XOPT).
+moderr = f - fval(kopt) + calquad(d, gq, hq, pq, xpt(:, kopt), xpt)
 
-!! Absorb PQ(KNEW)*XPT(:, KNEW)*XPT(:, KNEW)^T into the explicit part of the Hessian.
-!! Implement R1UPDATE properly so that it ensures HQ is symmetric.
-!call r1update(hq, pq(knew), xpt(:, knew))
-!pq(knew) = ZERO
-
-!! Update the implicit part of the Hessian.
-!fqdz = moderr * zmat(knew, :)
-!fqdz(1:idz - 1) = -fqdz(1:idz - 1)
-!!----------------------------------------------------------------!
-!!pq = pq + matprod(zmat, fqdz) !---------------------------------!
-!pq = Ax_plus_y(zmat, fqdz, pq)
-!!----------------------------------------------------------------!
-
-!! Update the gradient.
-!gq = gq + moderr * bmat(:, knew)
-
-!--------------------------------------------------------------------------------------------------!
 ! Absorb PQ(KNEW)*XPT(:, KNEW)*XPT(:, KNEW)^T into the explicit part of the Hessian.
 ! Implement R1UPDATE properly so that it ensures HQ is symmetric.
 call r1update(hq, pq(knew), xpt(:, knew))
 pq(knew) = ZERO
 
-! FMQ = [F(X) - F(XNEW)] + [Q(XNEW) - Q(X)] = [F(X) - Q(X)] - [F(XNEW) - Q(XNEW)]
-fmq = fval - f + [(calquad(xpt(:, k) - (xpt(:, kopt) + d), gq, hq, pq, xpt(:, kopt) + d, xpt), k=1, npt)]
-fmq(knew) = ZERO
-!fmq = fmq - sum(fmq) / real(npt, RP)
-
-fmqz = matprod(fmq, zmat)
-fmqz(1:idz - 1) = -fmqz(1:idz - 1)
+! Update the implicit part of the Hessian.
+modez = moderr * zmat(knew, :)
+modez(1:idz - 1) = -modez(1:idz - 1)
 !----------------------------------------------------------------!
-!pq = pq + matprod(zmat, fmqz) !---------------------------------!
-pq = Ax_plus_y(zmat, fmqz, pq)
-gq = gq + matprod(bmat(:, 1:npt), fmq)
-!--------------------------------------------------------------------------------------------------!
+!pq = pq + matprod(zmat, modez) !---------------------------------!
+pq = Ax_plus_y(zmat, modez, pq)
+!----------------------------------------------------------------!
+
+! Update the gradient.
+gq = gq + moderr * bmat(:, knew)
 
 !====================!
 !  Calculation ends  !
