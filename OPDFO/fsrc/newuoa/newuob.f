@@ -740,6 +740,9 @@ C
 C     Update the other second derivative parameters, and then the gradient
 C     vector of the model. Also include the new interpolation point.
 C
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      vtmp(1:npt) = pq(1:npt); pq(1:npt) = zero
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DO J=1,NPTM
           TEMP=DIFF*ZMAT(KNEW,J)
           IF (J < IDZ) TEMP=-TEMP
@@ -747,6 +750,9 @@ C
               PQ(K)=PQ(K)+TEMP*ZMAT(K,J)
           END DO
       END DO
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      pq(1:npt) = vtmp(1:npt) + pq(1:npt)
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       GQSQ=ZERO
       DO I=1,N
           GQ(I)=GQ(I)+DIFF*BMAT(KNEW,I)
