@@ -264,6 +264,9 @@ C     to BMAT that do not depend on ZMAT.
 C
   120 IF (DSQ <= 1.0D-3*XOPTSQ) THEN
           TEMPQ=0.25D0*XOPTSQ
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          vtmp(1:n) = gq(1:n) ; gq(1:n) = zero
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           DO K=1,NPT
               SUMM=ZERO
               DO I=1,N
@@ -293,10 +296,16 @@ C
                   W(I)=W(NPT+I)*ZMAT(I,K)
               END DO
               DO J=1,N
-                  SUMM=TEMPQ*SUMMZ*XOPT(J)
+                  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                  !SUMM=TEMPQ*SUMMZ*XOPT(J)
+                  summ=zero
+                  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                   DO I=1,NPT
                       SUMM=SUMM+W(I)*XPT(I,J)
                   END DO
+                  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                  summ = summ + tempq*summz*xopt(j)
+                  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                   VLAG(J)=SUMM
                   IF (K < IDZ) SUMM=-SUMM
                   DO I=1,NPT
@@ -331,6 +340,9 @@ C
                   BMAT(NPT+I,J)=BMAT(NPT+J,I)
               END DO
           END DO
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          gq(1:n) = vtmp(1:n) + gq(1:n)
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           DO J=1,N
               XBASE(J)=XBASE(J)+XOPT(J)
               XOPT(J)=ZERO

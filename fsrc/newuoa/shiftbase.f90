@@ -6,7 +6,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, November 03, 2021 PM10:46:35
+! Last Modified: Wednesday, November 03, 2021 PM11:48:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -27,7 +27,7 @@ subroutine shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : Ax_plus_y, r1update, r2update, inprod, matprod, issymmetric
+use, non_intrinsic :: linalg_mod, only : r1update, r2update, inprod, matprod, issymmetric, hessmul
 
 implicit none
 
@@ -52,6 +52,7 @@ integer(IK) :: npt
 real(RP) :: bmatk(size(bmat, 1))
 real(RP) :: qxoptq
 real(RP) :: sumz(size(zmat, 2))
+real(RP) :: t
 real(RP) :: vlag(size(xopt))
 real(RP) :: w1(size(pq))
 real(RP) :: w2(size(xopt))
@@ -88,51 +89,35 @@ xoptsq = inprod(xopt, xopt)
 qxoptq = QUART * xoptsq
 
 ! Update GQ.
-!-------------------------------------------------------------------------!
-!------------------! gq = hessmul(hq, pq, xpt, xopt) + gq !---------------!
-!-----------------------------------! OR !--------------------------------!
-!-! gq = matprod(hq, xopt) + (matprod(xpt, pq * matprod(xopt, xpt)) + gq) !-!
-gq = Ax_plus_y(xpt, pq * matprod(xopt, xpt), gq)
-gq = Ax_plus_y(hq, xopt, gq)
-!-------------------------------------------------------------------------!
+gq = hessmul(hq, pq, xpt, xopt) + gq
 
 ! Update HQ. See (7.14) of the NEWUOA paper.
 w1 = matprod(xopt, xpt) - HALF * xoptsq
 ! W1 equals MATPROD(XPT, XOPT) after XPT is updated TEMPORARILY as follows.
 xpt = xpt - HALF * spread(xopt, dim=2, ncopies=npt)  ! TEMPORARY
 xpq = matprod(xpt, pq)
-!----------------------------------------------------------------!
-! Implement R2UPDATE properly so that it ensures HQ is symmetric.
-call r2update(hq, ONE, xopt, xpq)
-!----------------------------------------------------------------!
+call r2update(hq, ONE, xopt, xpq)  ! Implement R2UPDATE properly so that HQ is symmetric.
 
 ! Update BMAT. See (7.11)--(7.12) of the NEWUOA paper.
 ! First, make the changes to BMAT that do not depend on ZMAT.
 do k = 1, npt
     bmatk = bmat(:, k)
     w2 = w1(k) * xpt(:, k) + qxoptq * xopt
-    ! Implement R2UPDATE properly so that it ensures BMAT(:, NPT+1:NPT+N) is symmetric.
+    ! Implement R2UPDATE properly so that BMAT(:, NPT+1:NPT+N) is symmetric.
     call r2update(bmat(:, npt + 1:npt + n), ONE, bmatk, w2)
 end do
 ! Then the revisions of BMAT that depend on ZMAT are calculated.
 sumz = sum(zmat, dim=1)
-do k = 1, int(idz - 1, kind(k))
-!----------------------------------------------------------------------!
-!---------!vlag = qxoptq*sumz(k)*xopt + matprod(xpt, w1*zmat(:, k)) !--!
-    vlag = Ax_plus_y(xpt, w1 * zmat(:, k), qxoptq * sumz(k) * xopt)
-!----------------------------------------------------------------------!
-    call r1update(bmat(:, 1:npt), -ONE, vlag, zmat(:, k))
-    ! Implement R1UPDATE properly so that it ensures BMAT(:, NPT+1:NPT+N) is symmetric.
-    call r1update(bmat(:, npt + 1:npt + n), -ONE, vlag)
-end do
-do k = idz, int(npt - n - 1, kind(k))
-!----------------------------------------------------------------------!
-!---------!vlag = qxoptq*sumz(k)*xopt + matprod(xpt, w1*zmat(:, k)) !--!
-    vlag = Ax_plus_y(xpt, w1 * zmat(:, k), qxoptq * sumz(k) * xopt)
-!----------------------------------------------------------------------!
-    call r1update(bmat(:, 1:npt), ONE, vlag, zmat(:, k))
-    ! Implement R1UPDATE properly so that it ensures BMAT(:, NPT+1:NPT+N) is symmetric.
-    call r1update(bmat(:, npt + 1:npt + n), ONE, vlag)
+do k = 1, int(npt - n - 1, kind(k))
+    vlag = qxoptq * sumz(k) * xopt + matprod(xpt, w1 * zmat(:, k))
+    if (k <= idz - 1) then
+        t = -ONE
+    else
+        t = ONE
+    end if
+    call r1update(bmat(:, 1:npt), t, vlag, zmat(:, k))
+    ! Implement R1UPDATE properly so that BMAT(:, NPT+1:NPT+N) is symmetric.
+    call r1update(bmat(:, npt + 1:npt + n), t, vlag)
 end do
 
 ! The following instructions complete the shift of XBASE. Recall the we have already subtracted
