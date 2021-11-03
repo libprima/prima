@@ -7,7 +7,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, November 03, 2021 PM10:17:34
+! Last Modified: Thursday, November 04, 2021 AM01:33:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -300,7 +300,7 @@ subroutine updateq(idz, knew, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_posinf, is_nan
-use, non_intrinsic :: linalg_mod, only : r1update, issymmetric, calquad, matprod
+use, non_intrinsic :: linalg_mod, only : r1update, issymmetric, calquad, omega_col
 
 implicit none
 
@@ -325,7 +325,6 @@ character(len=*), parameter :: srname = 'UPDATEQ'
 integer(IK) :: n
 integer(IK) :: npt
 real(RP) :: moderr
-real(RP) :: modez(size(zmat, 2))
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -377,9 +376,7 @@ call r1update(hq, pq(knew), xpt(:, knew))
 pq(knew) = ZERO
 
 ! Update the implicit part of the Hessian.
-modez = moderr * zmat(knew, :)
-modez(1:idz - 1) = -modez(1:idz - 1)
-pq = pq + matprod(zmat, modez)
+pq = pq + moderr * omega_col(idz, zmat, knew)
 
 ! Update the gradient.
 gq = gq + moderr * bmat(:, knew)
@@ -504,7 +501,7 @@ subroutine tryqalt(idz, fval, ratio, bmat, zmat, itest, gq, hq, pq)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric, omega_mul
 
 implicit none
 
@@ -531,7 +528,6 @@ real(RP), intent(inout) :: pq(:)    ! PQ(NPT)
 character(len=*), parameter :: srname = 'TRYQALT'
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: fz(size(zmat, 2))
 real(RP) :: galt(size(gq))
 
 ! Sizes
@@ -579,9 +575,7 @@ end if
 if (itest >= 3) then
     gq = galt
     hq = ZERO
-    fz = matprod(fval, zmat)
-    fz(1:idz - 1) = -fz(1:idz - 1)
-    pq = matprod(zmat, fz)
+    pq = omega_mul(idz, zmat, fval)
     itest = 0_IK
 end if
 

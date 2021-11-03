@@ -27,7 +27,7 @@ subroutine shiftbase(idz, pq, zmat, bmat, gq, hq, xbase, xopt, xpt)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : r1update, r2update, inprod, matprod, issymmetric, hessmul
+use, non_intrinsic :: linalg_mod, only : r1update, r2update, inprod, matprod, issymmetric, hess_mul
 
 implicit none
 
@@ -89,7 +89,7 @@ xoptsq = inprod(xopt, xopt)
 qxoptq = QUART * xoptsq
 
 ! Update GQ.
-gq = hessmul(hq, pq, xpt, xopt) + gq
+gq = hess_mul(hq, pq, xpt, xopt) + gq
 
 ! Update HQ. See (7.14) of the NEWUOA paper.
 w1 = matprod(xopt, xpt) - HALF * xoptsq

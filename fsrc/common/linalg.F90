@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, November 04, 2021 AM12:07:13
+! Last Modified: Thursday, November 04, 2021 AM01:10:12
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -33,7 +33,8 @@ public :: Ax_plus_y
 public :: eye
 public :: inv
 public :: planerot
-public :: calquad, errquad, hessmul
+public :: calquad, errquad, hess_mul
+public :: omega_col, omega_mul, omega_inprod
 public :: errh
 public :: isminor
 public :: issymmetric
@@ -853,9 +854,9 @@ end if
 end function errquad
 
 
-function hessmul(hq, pq, xpt, y) result(hy)
+function hess_mul(hq, pq, xpt, x) result(y)
 !--------------------------------------------------------------------------------------------------!
-! This function calculates HESSIAN*Y, where HESSIAN consists of an explicit part HQ and an
+! This function calculates HESSIAN*X, where HESSIAN consists of an explicit part HQ and an
 ! implicit part PQ in Powell's way: HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T).
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
@@ -866,11 +867,11 @@ implicit none
 ! Inputs
 real(RP), intent(in) :: hq(:, :)  ! HQ(N, N)
 real(RP), intent(in) :: pq(:)     ! PQ(NPT)
-real(RP), intent(in) :: y(:)      ! Y(N)
+real(RP), intent(in) :: x(:)      ! X(N)
 real(RP), intent(in) :: xpt(:, :) ! XPT(N, NPT)
 
 ! Outputs
-real(RP) :: hy(size(hq, 1))
+real(RP) :: y(size(hq, 1))
 
 ! Local variables
 character(len=*), parameter :: srname = 'HESSMUL'
@@ -889,25 +890,25 @@ if (DEBUGGING) then
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
-    call assert(size(y) == n, 'SIZE(Y) = N', srname)
+    call assert(size(x) == n, 'SIZE(Y) = N', srname)
 end if
 
 !====================!
 ! Calculation starts !
 !====================!
 
-!!hy = matprod(hq, y) + matprod(xpt, pq * matprod(y, xpt))
+!!y = matprod(hq, x) + matprod(xpt, pq * matprod(x, xpt))
 ! The following loop works numerically better than the last line (but why?).
-hy = matprod(xpt, pq * matprod(y, xpt))
+y = matprod(xpt, pq * matprod(x, xpt))
 do j = 1, n
-    hy = hy + hq(:, j) * y(j)
+    y = y + hq(:, j) * x(j)
 end do
 
 !====================!
 !  Calculation ends  !
 !====================!
 
-end function hessmul
+end function hess_mul
 
 
 function errh(idz, bmat, zmat, xpt) result(err)
@@ -990,7 +991,137 @@ err = maxval(e) / (maxabs * real(n + npt, RP))
 !  Calculation ends  !
 !====================!
 
-end function
+end function errh
+
+
+function omega_col(idz, zmat, k) result(y)
+!--------------------------------------------------------------------------------------------------!
+! This function calculates Y = column K of OMEGA, where, as Powell did in NEWUOA, BOBYQA, and LINCOA,
+! OMEGA = sum_{i=1}^{K} S_i*ZMAT(:, i)*ZMAT(:, i)^T if S_i = -1 when i < IDZ and S_i = 1 if i >= IDZ
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: idz
+integer(IK), intent(in) :: k
+real(RP), intent(in) :: zmat(:, :)
+
+! Outputs
+real(RP) :: y(size(zmat, 1))
+
+! Local variables
+character(len=*), parameter :: srname = 'OMEGA_COL'
+real(RP) :: zk(size(zmat, 2))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
+    call assert(k >= 1 .and. idz <= size(zmat, 1), '1 <= K <= SIZE(ZMAT, 1)', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+zk = zmat(k, :)
+zk(1:idz - 1) = -zk(1:idz - 1)
+y = matprod(zmat, zk)
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+end function omega_col
+
+
+function omega_mul(idz, zmat, x) result(y)
+!--------------------------------------------------------------------------------------------------!
+! This function calculates Y = OMEGA*X, where, as Powell did in NEWUOA, BOBYQA, and LINCOA,
+! OMEGA = sum_{i=1}^{K} S_i*ZMAT(:, i)*ZMAT(:, i)^T if S_i = -1 when i < IDZ and S_i = 1 if i >= IDZ
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: idz
+real(RP), intent(in) :: zmat(:, :)
+real(RP), intent(in) :: x(:)
+
+! Outputs
+real(RP) :: y(size(zmat, 1))
+
+! Local variables
+character(len=*), parameter :: srname = 'OMEGA_MUL'
+real(RP) :: xz(size(zmat, 2))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
+    call assert(size(x) == size(zmat, 1), 'SIZE(X) == SIZE(ZMAT, 1)', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+xz = matprod(x, zmat)
+xz(1:idz - 1) = -xz(1:idz - 1)
+y = matprod(zmat, xz)
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+end function omega_mul
+
+
+function omega_inprod(idz, zmat, x, y) result(p)
+!--------------------------------------------------------------------------------------------------!
+! This function calculates P = X^T*OMEGA*Y, where, as Powell did in NEWUOA, BOBYQA, and LINCOA,
+! OMEGA = sum_{i=1}^{K} S_i*ZMAT(:, i)*ZMAT(:, i)^T if S_i = -1 when i < IDZ and S_i = 1 if i >= IDZ
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: idz
+real(RP), intent(in) :: zmat(:, :)
+real(RP), intent(in) :: x(:)
+real(RP), intent(in) :: y(:)
+
+! Outputs
+real(RP) :: p
+
+! Local variables
+character(len=*), parameter :: srname = 'OMEGA_INPROD'
+real(RP) :: xz(size(zmat, 2))
+real(RP) :: yz(size(zmat, 2))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
+    call assert(size(x) == size(zmat, 1), 'SIZE(X) == SIZE(ZMAT, 1)', srname)
+    call assert(size(y) == size(zmat, 1), 'SIZE(Y) == SIZE(ZMAT, 1)', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+xz = matprod(x, zmat)
+xz(1:idz - 1) = -xz(1:idz - 1)
+yz = matprod(y, zmat)
+p = inprod(xz, yz)
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+end function omega_inprod
 
 
 pure function isminor0(x, ref) result(is_minor)

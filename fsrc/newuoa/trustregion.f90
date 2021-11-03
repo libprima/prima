@@ -47,7 +47,7 @@ subroutine trsapp(delta, gq, hq, pq, tol, x, xpt, crvmin, s, info)
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, ZERO, TENTH, PI, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, norm, hessmul
+use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, norm, hess_mul
 
 implicit none
 
@@ -137,7 +137,7 @@ qred = ZERO
 info = 2  ! Default exit flag is 2, i.e., itermax is attained
 
 ! Prepare for the first line search.
-hx = hessmul(hq, pq, xpt, x)
+hx = hess_mul(hq, pq, xpt, x)
 !--------------------------------------------------------------------------------------------------!
 ! N.B.: During the iterations, G is NOT updated, and it equals always GQ+HX, which is the gradient
 ! of the trust-region model at the trust-region center X. However, GG is updated: GG = |G + HS|^2,
@@ -189,7 +189,7 @@ do iter = 1, itermax
             bstep = (delsq - ss) / (ds + hypt)
         end if
     end if
-    hd = hessmul(hq, pq, xpt, d)
+    hd = hess_mul(hq, pq, xpt, d)
     dhd = inprod(d, hd)
 
     ! Set the step-length ALPHA and update CRVMIN.
@@ -319,7 +319,7 @@ do iter = 1, itermax
         exit
     end if
 
-    hd = hessmul(hq, pq, xpt, d)
+    hd = hess_mul(hq, pq, xpt, d)
     dg = inprod(d, g)
     dhd = inprod(hd, d)
     dhs = inprod(hd, s)
