@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, November 03, 2021 PM08:39:49
+! Last Modified: Wednesday, November 03, 2021 PM10:44:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -357,10 +357,11 @@ dd = inprod(d, d)
 
 gd = matprod(xpt, hcol * matprod(d, xpt))
 
-!----------------------------------------------------------------!
-!-----!gc = bmat(:, knew) + matprod(xpt, hcol*matprod(x, xpt)) !-!
+!-----------------------------------------------------------------------!
+!-----!gc = bmat(:, knew) + matprod(xpt, hcol*matprod(x, xpt)) !--------!
+! The following line works numerically better than the last line (why?).
 gc = Ax_plus_y(xpt, hcol * matprod(x, xpt), bmat(:, knew))
-!----------------------------------------------------------------!
+!-----------------------------------------------------------------------!
 
 ! Scale D and GD, with a sign change if needed. Set S to another vector in the initial 2-D subspace.
 gg = inprod(gc, gc)
@@ -531,7 +532,7 @@ function bigden(idz, knew, kopt, bmat, d0, xpt, zmat) result(d)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, QUART, PI, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : Ax_plus_y, inprod, matprod, issymmetric, norm
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric, norm
 
 implicit none
 
@@ -879,13 +880,10 @@ do iter = 1, n
     s = tau * bmat(:, knew) + alpha * (dxn * x + xnsq * d - vlag(npt + 1:npt + n))
     v = matprod(xnew, xpt)
     v = (tau * hcol - alpha * vlag(1:npt)) * v
-    !------------------------------------------------------!
-    !---------!s = s + matprod(xpt, v) !-------------------!
-    s = Ax_plus_y(xpt, v, s)
-    !------------------------------------------------------!
+    s = s + matprod(xpt, v)
 end do
 
-!vlag(kopt) = vlag(kopt) + ONE  ! Note needed since we do not return VLAG.
+!vlag(kopt) = vlag(kopt) + ONE  ! Not needed since we do not return VLAG.
 
 !====================!
 !  Calculation ends  !
