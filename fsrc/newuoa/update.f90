@@ -7,7 +7,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, November 03, 2021 AM11:51:59
+! Last Modified: Wednesday, November 03, 2021 PM08:39:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -37,7 +37,7 @@ use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, planerot, r2update, symmetrize, issymmetric
 
 ! Solver-specific modules
-use, non_intrinsic :: vlagbeta_mod, only : vlagbeta
+use, non_intrinsic :: vlagbeta_mod, only : calvlag, calbeta
 
 implicit none
 
@@ -115,7 +115,8 @@ end if
 ! and BETA holds the value of the parameter that has this name.
 ! N.B.: Powell's original comments mention that VLAG is "the vector THETA*WCHECK + e_b of the
 ! updating formula (6.11)", which does not match the published version of the NEWUOA paper.
-call vlagbeta(idz, kopt, bmat, d, xpt, zmat, beta, vlag)
+vlag = calvlag(idz, kopt, bmat, d, xpt, zmat)
+beta = calbeta(idz, kopt, bmat, d, xpt, zmat)
 
 ! Apply rotations to put zeros in the KNEW-th row of ZMAT. A 2x2 rotation will be multiplied to ZMAT
 ! from the right so that ZMAT(KNEW, [JL, J]) becomes [SQRT(ZMAT(KNEW, JL)^2 + ZMAT(KNEW, J)^2), 0].
