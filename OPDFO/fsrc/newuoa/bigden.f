@@ -14,7 +14,7 @@ C      IMPLICIT REAL*8 (A-H,O-Z)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DIMENSION XOPT(*),XPT(NPT,N),BMAT(NDIM,*),ZMAT(NPT,*),D(*),
      1  W(*),VLAG(*),S(*),WVEC(NDIM,*),PROD(NDIM,*)
-      DIMENSION DEN(9),DENEX(9),PAR(9), WSAVE(NPT), DOLD(N)
+      DIMENSION DEN(9),DENEX(9),PAR(9), WSAVE(NPT), DOLD(N), vtmp(n)
 C
 C     N is the number of variables.
 C     NPT is the number of interpolation equations.
@@ -381,6 +381,9 @@ C
           TEMP=TEMPA*XOPT(I)+TEMPB*D(I)-VLAG(NPT+I)
           S(I)=TAU*BMAT(KNEW,I)+ALPHA*TEMP
       END DO
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      vtmp(1:n) = s(1:n) ; s(1:n) = zero
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DO K=1,NPT
           SUMM=ZERO
           DO J=1,N
@@ -391,6 +394,9 @@ C
               S(I)=S(I)+TEMP*XPT(K,I)
           END DO
       END DO
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      s(1:n) = vtmp(1:n) + s(1:n)
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       SS=ZERO
       DS=ZERO
       DO I=1,N
