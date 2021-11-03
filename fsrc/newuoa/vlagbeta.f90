@@ -8,7 +8,7 @@ module vlagbeta_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, November 03, 2021 PM08:36:33
+! Last Modified: Wednesday, November 03, 2021 PM09:54:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -28,7 +28,7 @@ function calvlag(idz, kopt, bmat, d, xpt, zmat) result(vlag)
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : Ax_plus_y, matprod
+use, non_intrinsic :: linalg_mod, only : matprod
 
 implicit none
 
@@ -74,7 +74,6 @@ end if
 
 xopt = xpt(:, kopt)  ! Read XOPT.
 
-! This is one of the two places where WCHECK is calculated, the other being in BIGDEN but removed.
 ! WCHECK contains the first NPT entries of (w-v) for the vectors w and v defined in (4.10) and
 ! (4.24) of the NEWUOA paper, and also hat{w} in eq(6.5) of
 ! M. J. D. Powell, Least Frobenius norm updating of quadratic models that satisfy interpolation
@@ -85,10 +84,7 @@ wcheck = wcheck * (HALF * wcheck + matprod(xopt, xpt))
 vlag(1:npt) = matprod(d, bmat(:, 1:npt))
 wz = matprod(wcheck, zmat)
 wz(1:idz - 1) = -wz(1:idz - 1)
-!----------------------------------------------------------------------!
-!-----!vlag(1 : npt) = vlag(1 : npt) + matprod(zmat, wz) !-------------!
-vlag(1:npt) = Ax_plus_y(zmat, wz, vlag(1:npt))
-!----------------------------------------------------------------------!
+vlag(1:npt) = vlag(1:npt) + matprod(zmat, wz)
 vlag(kopt) = vlag(kopt) + ONE  ! The calculation of VLAG(1:NPT) finishes.
 vlag(npt + 1:npt + n) = matprod(bmat, [wcheck, d]) ! The calculation of VLAG finishes.
 
@@ -165,7 +161,6 @@ dx = inprod(d, xopt)
 dsq = inprod(d, d)
 xoptsq = inprod(xopt, xopt)
 
-! This is one of the two places where WCHECK is calculated, the other being in BIGDEN but removed.
 ! WCHECK contains the first NPT entries of (w-v) for the vectors w and v defined in (4.10) and
 ! (4.24) of the NEWUOA paper, and also hat{w} in eq(6.5) of
 ! M. J. D. Powell, Least Frobenius norm updating of quadratic models that satisfy interpolation
