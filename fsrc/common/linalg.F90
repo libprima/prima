@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, November 02, 2021 PM11:12:02
+! Last Modified: Wednesday, November 03, 2021 AM10:34:08
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1028,6 +1028,13 @@ end function hessmul
 
 
 function errh(idz, bmat, zmat, xpt) result(err)
+!--------------------------------------------------------------------------------------------------!
+! This function calculates the error in H as the inverse of W. See (3.12) of the NEWUOA paper.
+! N.B.: The (NPT+1)th column (row) of H is not contained in [BMAT, ZMAT]. It is [r; t(1); s] below.
+! In the complete form, the W and H in (3.12) of the NEWUOA paper are as follows.
+! W = [A, ONES(NPT, 1), XPT^T; ONES(1, NPT), ZERO, ZEROS(1, N); XPT, ZEROS(N, 1), ZEROS(N, N)]
+! H = [Omega, r, BMAT(:, 1:NPT)^T; r^T, t(1), s^T, BMAT(:, 1:NPT), s, BMAT(:, NPT+1:NPT+N)]
+!--------------------------------------------------------------------------------------------------!
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -1076,10 +1083,6 @@ end if
 !====================!
 ! Calculation starts !
 !====================!
-
-! N.B.: The (NPT+1)th column (and row) of H is not saved. It is [r; t(1), s]  below.
-! W = [A, ONES(NPT, 1), XPT^T; ONES(1, NPT), ZERO, ZEROS(1, N); XPT, ZEROS(N, 1), ZEROS(N, N)]
-! H = [Omega, r, BMAT(:, 1:NPT)^T; r^T, t(1), s^T, BMAT(:, 1:NPT), s, BMAT(:, NPT+1:NPT+N)]
 
 A = HALF * matprod(transpose(xpt), xpt)**2
 Omega = -matprod(zmat(:, 1:idz - 1), transpose(zmat(:, 1:idz - 1))) + &
