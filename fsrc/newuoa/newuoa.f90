@@ -14,7 +14,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 05, 2021 PM06:05:04
+! Last Modified: Friday, November 05, 2021 PM08:25:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -188,25 +188,25 @@ integer(IK), intent(out), optional :: info
 character(len=*), parameter :: solver = 'NEWUOA'
 character(len=*), parameter :: srname = 'NEWUOA'
 integer :: maximal_hist
-integer(IK) :: info_c
-integer(IK) :: iprint_c
+integer(IK) :: info_loc
+integer(IK) :: iprint_loc
 integer(IK) :: maxfhist
-integer(IK) :: maxfun_c
-integer(IK) :: maxhist_c
+integer(IK) :: maxfun_loc
+integer(IK) :: maxhist_loc
 integer(IK) :: maxhist_in
 integer(IK) :: maxxhist
 integer(IK) :: n
-integer(IK) :: nf_c
-integer(IK) :: npt_c
-real(RP) :: eta1_c
-real(RP) :: eta2_c
-real(RP) :: ftarget_c
-real(RP) :: gamma1_c
-real(RP) :: gamma2_c
-real(RP) :: rhobeg_c
-real(RP) :: rhoend_c
-real(RP), allocatable :: fhist_c(:)
-real(RP), allocatable :: xhist_c(:, :)
+integer(IK) :: nf_loc
+integer(IK) :: npt_loc
+real(RP) :: eta1_loc
+real(RP) :: eta2_loc
+real(RP) :: ftarget_loc
+real(RP) :: gamma1_loc
+real(RP) :: gamma2_loc
+real(RP) :: rhobeg_loc
+real(RP) :: rhoend_loc
+real(RP), allocatable :: fhist_loc(:)
+real(RP), allocatable :: xhist_loc(:, :)
 
 ! Sizes
 n = int(size(x), kind(n))
@@ -218,103 +218,102 @@ end where
 
 ! Read the inputs.
 
-! If RHOBEG is present, then RHOBEG_C is a copy of RHOBEG (_C for "copy"); otherwise, RHOBEG_C takes
-! the default value for RHOBEG, taking the value of RHOEND into account. Note that RHOEND is
-! considered only if it is present and it is VALID (i.e., finite and positive). The other inputs are
-! read in a similar way.
+! If RHOBEG is present, then RHOBEG_LOC is a copy of RHOBEG; otherwise, RHOBEG_LOC takes the default
+! value for RHOBEG, taking the value of RHOEND into account. Note that RHOEND is considered only if
+! it is present and it is VALID (i.e., finite and positive). The other inputs are read similarly.
 if (present(rhobeg)) then
-    rhobeg_c = rhobeg
+    rhobeg_loc = rhobeg
 else if (present(rhoend)) then
     ! Fortran does not take short-circuit evaluation of logic expressions. Thus it is WRONG to
     ! combine the evaluation of PRESENT(RHOEND) and the evaluation of IS_FINITE(RHOEND) as
     ! "if (present(rhoend) .and. is_finite(rhoend))". The compiler may choose the evaluate the
     ! IS_FINITE(RHOEND) even if PRESENT(RHOEND) is false!
     if (is_finite(rhoend) .and. rhoend > ZERO) then
-        rhobeg_c = max(TEN * rhoend, RHOBEG_DFT)
+        rhobeg_loc = max(TEN * rhoend, RHOBEG_DFT)
     else
-        rhobeg_c = RHOBEG_DFT
+        rhobeg_loc = RHOBEG_DFT
     end if
 else
-    rhobeg_c = RHOBEG_DFT
+    rhobeg_loc = RHOBEG_DFT
 end if
 
 if (present(rhoend)) then
-    rhoend_c = rhoend
-else if (rhobeg_c > 0) then
-    rhoend_c = max(EPS, min(TENTH * rhobeg_c, RHOEND_DFT))
+    rhoend_loc = rhoend
+else if (rhobeg_loc > 0) then
+    rhoend_loc = max(EPS, min(TENTH * rhobeg_loc, RHOEND_DFT))
 else
-    rhoend_c = RHOEND_DFT
+    rhoend_loc = RHOEND_DFT
 end if
 
 if (present(ftarget)) then
-    ftarget_c = ftarget
+    ftarget_loc = ftarget
 else
-    ftarget_c = FTARGET_DFT
+    ftarget_loc = FTARGET_DFT
 end if
 
 if (present(maxfun)) then
-    maxfun_c = maxfun
+    maxfun_loc = maxfun
 else
-    maxfun_c = MAXFUN_DIM_DFT * n
+    maxfun_loc = MAXFUN_DIM_DFT * n
 end if
 
 if (present(npt)) then
-    npt_c = npt
-else if (maxfun_c >= 1) then
-    npt_c = int(max(n + 2, min(maxfun_c - 1, 2 * n + 1)), kind(npt_c))
+    npt_loc = npt
+else if (maxfun_loc >= 1) then
+    npt_loc = int(max(n + 2, min(maxfun_loc - 1, 2 * n + 1)), kind(npt_loc))
 else
-    npt_c = int(2 * n + 1, kind(npt_c))
+    npt_loc = int(2 * n + 1, kind(npt_loc))
 end if
 
 if (present(iprint)) then
-    iprint_c = iprint
+    iprint_loc = iprint
 else
-    iprint_c = IPRINT_DFT
+    iprint_loc = IPRINT_DFT
 end if
 
 if (present(eta1)) then
-    eta1_c = eta1
+    eta1_loc = eta1
 else if (present(eta2)) then
     if (eta2 > ZERO .and. eta2 < ONE) then
-        eta1_c = max(EPS, eta2 / 7.0_RP)
+        eta1_loc = max(EPS, eta2 / 7.0_RP)
     end if
 else
-    eta1_c = TENTH
+    eta1_loc = TENTH
 end if
 
 if (present(eta2)) then
-    eta2_c = eta2
-else if (eta1_c > ZERO .and. eta1_c < ONE) then
-    eta2_c = (eta1_c + TWO) / 3.0_RP
+    eta2_loc = eta2
+else if (eta1_loc > ZERO .and. eta1_loc < ONE) then
+    eta2_loc = (eta1_loc + TWO) / 3.0_RP
 else
-    eta2_c = 0.7_RP
+    eta2_loc = 0.7_RP
 end if
 
 if (present(gamma1)) then
-    gamma1_c = gamma1
+    gamma1_loc = gamma1
 else
-    gamma1_c = HALF
+    gamma1_loc = HALF
 end if
 
 if (present(gamma2)) then
-    gamma2_c = gamma2
+    gamma2_loc = gamma2
 else
-    gamma2_c = TWO
+    gamma2_loc = TWO
 end if
 
 maxhist_in = 0_IK  ! MAXHIST input by user
 if (present(maxhist)) then
-    maxhist_c = maxhist
+    maxhist_loc = maxhist
     maxhist_in = maxhist
-else if (maxfun_c >= n + 3) then
-    maxhist_c = maxfun_c
+else if (maxfun_loc >= n + 3) then
+    maxhist_loc = maxfun_loc
 else
-    maxhist_c = MAXFUN_DIM_DFT * n
+    maxhist_loc = MAXFUN_DIM_DFT * n
 end if
 
 ! Preprocess the inputs in case some of them are invalid.
-call preproc(n, iprint_c, maxfun_c, maxhist_c, npt_c, eta1_c, eta2_c, ftarget_c, gamma1_c, &
-    & gamma2_c, rhobeg_c, rhoend_c)
+call preproc(n, iprint_loc, maxfun_loc, maxhist_loc, npt_loc, eta1_loc, eta2_loc, ftarget_loc, &
+    & gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc)
 
 ! Further revise MAXHIST according to MAXMEMORY, i.e., the maximal amount
 ! of memory allowed for the history.
@@ -323,93 +322,94 @@ if (present(xhist)) then
 else
     maximal_hist = int(MAXMEMORY / (cstyle_sizeof(0.0_RP)), kind(maximal_hist))
 end if
-if (maxhist_c > maximal_hist) then
-    ! We cannot simply take MAXHIST_C = MIN(MAXHIST_C, MAXIMAL_HIST), as they may not have the same
-    ! kind, and compilers may complain. We may convert them to the same kind, but overflow may occur
-    maxhist_c = int(maximal_hist, kind(maxhist_c))
+if (maxhist_loc > maximal_hist) then
+    ! We cannot simply take MAXHIST_LOC = MIN(MAXHIST_LOC, MAXIMAL_HIST), as they may not have the
+    ! same kind, and compilers may complain. We may convert them to the same, but overflow may occur
+    maxhist_loc = int(maximal_hist, kind(maxhist_loc))
 end if
 
-! Allocate memory for the history of X. We use XHIST_C instead of XHIST, which may not be present.
+! Allocate memory for the history of X. We use XHIST_LOC instead of XHIST, which may not be present.
 if (present(xhist)) then
-    maxxhist = maxhist_c
+    maxxhist = maxhist_loc
 else
     maxxhist = 0_IK
 end if
-call safealloc(xhist_c, n, maxxhist)
+call safealloc(xhist_loc, n, maxxhist)
 
-! Allocate memory for the history of F. We use FHIST_C instead of FHIST, which may not be present.
+! Allocate memory for the history of F. We use FHIST_LOC instead of FHIST, which may not be present.
 if (present(fhist)) then
-    maxfhist = maxhist_c
+    maxfhist = maxhist_loc
 else
     maxfhist = 0_IK
 end if
-call safealloc(fhist_c, maxfhist)
+call safealloc(fhist_loc, maxfhist)
 
 !-------------------- Call NEWUOB, which performs the real calculations. --------------------------!
-call newuob(calfun, iprint_c, maxfun_c, npt_c, eta1_c, eta2_c, ftarget_c, gamma1_c, gamma2_c, &
-    & rhobeg_c, rhoend_c, x, nf_c, f, fhist_c, xhist_c, info_c)
+call newuob(calfun, iprint_loc, maxfun_loc, npt_loc, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, &
+    & gamma2_loc, rhobeg_loc, rhoend_loc, x, nf_loc, f, fhist_loc, xhist_loc, info_loc)
 !--------------------------------------------------------------------------------------------------!
 
 ! Write the outputs.
 
 if (present(nf)) then
-    nf = nf_c
+    nf = nf_loc
 end if
 
 if (present(info)) then
-    info = info_c
+    info = info_loc
 end if
 
-! Copy XHIST_C to XHIST if needed.
+! Copy XHIST_LOC to XHIST if needed.
 if (present(xhist)) then
     !--------------------------------------------------!
     !---- The SAFEALLOC line is removable in F2003. ---!
-    call safealloc(xhist, n, min(nf_c, maxxhist))
+    call safealloc(xhist, n, min(nf_loc, maxxhist))
     !--------------------------------------------------!
-    xhist = xhist_c(:, 1:min(nf_c, maxxhist))
+    xhist = xhist_loc(:, 1:min(nf_loc, maxxhist))
     ! N.B.:
     ! 0. Allocate XHIST as long as it is present, even if MAXXHIST = 0; otherwise, it will be
     ! illegal to enquire XHIST after exit.
     ! 1. Even though Fortran 2003 supports automatic (re)allocation of allocatable arrays upon
     ! intrinsic assignment, we keep the line of SAFEALLOC, because some very new compilers (Absoft
     ! Fortran 20.0) are still not standard-compliant in this respect.
-    ! 2. NF may not be present. Hence we should NOT use NF but NF_C.
-    ! 3. When MAXXHIST > NF_C, which is the normal case in practice, XHIST_C contains GARBAGE in
-    ! XHIST_C(:, NF_C + 1 : MAXXHIST). Therefore, we MUST cap XHIST at min(NF_C, MAXXHIST) so that
-    ! XHIST cointains only valid history. For this reason, there is no way to avoid allocating two
-    ! copies of memory for XHIST unless we declare it to be a POINTER instead of ALLOCATABLE.
+    ! 2. NF may not be present. Hence we should NOT use NF but NF_LOC.
+    ! 3. When MAXXHIST > NF_LOC, which is the normal case in practice, XHIST_LOC contains GARBAGE in
+    ! XHIST_LOC(:, NF_LOC + 1 : MAXXHIST). Therefore, we MUST cap XHIST at min(NF_LOC, MAXXHIST) so
+    ! that XHIST cointains only valid history. For this reason, there is no way to avoid allocating
+    ! two copies of memory for XHIST unless we declare it to be a POINTER instead of ALLOCATABLE.
 end if
 ! F2003 automatically deallocate local ALLOCATABLE variables at exit, yet we prefer to deallocate
 ! them immediately when they finish their jobs.
-deallocate (xhist_c)
+deallocate (xhist_loc)
 
-! Copy FHIST_C to FHIST if needed.
+! Copy FHIST_LOC to FHIST if needed.
 if (present(fhist)) then
     !--------------------------------------------------!
     !---- The SAFEALLOC line is removable in F2003. ---!
-    call safealloc(fhist, min(nf_c, maxfhist))
+    call safealloc(fhist, min(nf_loc, maxfhist))
     !--------------------------------------------------!
-    fhist = fhist_c(1:min(nf_c, maxfhist))
-    ! The same as XHIST, we must cap FHIST at min(NF_C, MAXFHIST).
+    fhist = fhist_loc(1:min(nf_loc, maxfhist))
+    ! The same as XHIST, we must cap FHIST at min(NF_LOC, MAXFHIST).
 end if
-deallocate (fhist_c)
+deallocate (fhist_loc)
 
-! If MAXFHIST_IN >= NF_C > MAXFHIST_C, warn that not all history is recorded.
-if ((present(xhist) .or. present(fhist)) .and. maxhist_c < min(nf_c, maxhist_in)) then
-    print '(/1A, I7, 1A)', 'WARNING: '//solver//': due to memory limit, MAXHIST is reset to ', maxhist_c, '.'
+! If MAXFHIST_IN >= NF_LOC > MAXFHIST_LOC, warn that not all history is recorded.
+if ((present(xhist) .or. present(fhist)) .and. maxhist_loc < min(nf_loc, maxhist_in)) then
+    print '(/1A, I7, 1A)', 'WARNING: '//solver//': due to memory limit, MAXHIST is reset to ', maxhist_loc, '.'
     print '(1A/)', 'Only the history of the last MAXHIST iterations is recoreded.'
 end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
+    call assert(nf <= maxfun_loc, 'NF <= MAXFUN', srname)
+    call assert(size(x) == n .and. .not. any(is_nan(x)), 'SIZE(X) == N, X does not contain NaN', srname)
     if (present(xhist)) then
-        call assert(size(xhist, 1) == n .and. size(xhist, 2) == min(nf_c, maxhist_c), &
+        call assert(size(xhist, 1) == n .and. size(xhist, 2) == min(nf_loc, maxhist_loc), &
                 & 'SIZE(XHIST) == [N, MIN(NF, MAXHIST)]', srname)
         call assert(.not. any(is_nan(xhist)), 'XHIST does not contain NaN', srname)
     end if
     if (present(fhist)) then
-        call assert(size(fhist) == min(nf_c, maxhist_c), 'SIZE(FHIST) == MIN(NF, MAXHIST)', srname)
+        call assert(size(fhist) == min(nf_loc, maxhist_loc), 'SIZE(FHIST) == MIN(NF, MAXHIST)', srname)
         call assert(.not. any(fhist < f), 'F is the smallest in FHIST', srname)
     end if
 end if
