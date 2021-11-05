@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 05, 2021 AM11:21:14
+! Last Modified: Friday, November 05, 2021 PM01:57:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -35,7 +35,7 @@ function setdrop_tr(idz, kopt, tr_success, bmat, d, delta, rho, xpt, zmat) resul
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, TENTH, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : issymmetric
@@ -78,7 +78,7 @@ if (DEBUGGING) then
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
     call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
-    call assert(delta >= rho .and. rho > ZERO, 'DELTA >= RHO > 0', srname)
+    call assert(delta >= rho .and. rho > 0, 'DELTA >= RHO > 0', srname)
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
