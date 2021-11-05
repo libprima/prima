@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 05, 2021 AM10:56:59
+! Last Modified: Friday, November 05, 2021 AM11:21:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -243,7 +243,7 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(all(is_finite(d)), 'D is finite', srname)
+    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     call assert(norm(d) <= TWO * delbar, '|D| <= 2*DELBAR', srname)
     ! Due to rounding, it may happen that |D| > DELBAR, but |D| > 2*DELBAR is highly improbable.
 end if
@@ -496,7 +496,7 @@ end do
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(all(is_finite(d)), 'D is finite', srname)
+    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     call assert(norm(d) <= TWO * delbar, '|D| <= 2*DELBAR', srname)
     ! Due to rounding, it may happen that |D| > DELBAR, but |D| > 2*DELBAR is highly improbable.
 end if
@@ -876,7 +876,7 @@ end do
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(all(is_finite(d)), 'D is finite', srname)
+    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     call assert(norm(d) <= TWO * norm(d0), '|D| <= 2*DELBAR', srname)
     ! Due to rounding, it may happen that |D| > DELBAR, but |D| > 2*DELBAR is highly improbable.
 end if
