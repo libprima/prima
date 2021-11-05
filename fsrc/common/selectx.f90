@@ -8,7 +8,7 @@ module selectx_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, October 10, 2021 PM02:18:04
+! Last Modified: Friday, November 05, 2021 PM10:25:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -33,7 +33,7 @@ subroutine savefilt(constr, cstrv, ctol, f, x, nfilt, cfilt, confilt, ffilt, xfi
 
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf, is_neginf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
 use, non_intrinsic :: memory_mod, only : safealloc
 
 implicit none
@@ -55,35 +55,46 @@ real(RP), intent(inout) :: xfilt(:, :) ! (N, NFILTMAX)
 ! Local variables
 character(len=*), parameter :: srname = 'SAVEFILT'
 integer(IK) :: i
+integer(IK) :: m
+integer(IK) :: n
 integer(IK) :: nfiltmax
 integer(IK), allocatable :: index_to_keep(:)
 logical :: better(nfilt)
 logical :: keep(nfilt)
 
 ! Sizes
+m = int(size(constr), kind(m))
+n = int(size(x), kind(n))
 nfiltmax = int(size(ffilt), kind(nfiltmax))
 
 ! Preconditions
 if (DEBUGGING) then
     ! Check the size of X.
-    call assert(size(x) >= 1, 'SIZE(X) >= 1', srname)
+    call assert(n >= 1, 'N >= 1', srname)
     ! Check NFILT
     call assert(nfilt <= nfiltmax, 'NFILT <= NFILTMAX', srname)
     ! Check the sizes of XFILT, FFILT, CONFILT, CFILT.
     call assert(nfiltmax >= 1, 'NFILTMAX >= 1', srname)
-    call assert(size(xfilt, 1) == size(x) .and. size(xfilt, 2) == nfiltmax, &
-        & 'SIZE(XFILT) == [SIZE(X), NFILTMAX]', srname)
-    call assert(size(confilt, 1) == size(constr) .and. size(confilt, 2) == nfiltmax, &
-        & 'SIZE(CONFILT) == [SIZE(CONSTR), NFILTMAX]', srname)
+    call assert(size(xfilt, 1) == n .and. size(xfilt, 2) == nfiltmax, 'SIZE(XFILT) == [N, NFILTMAX]', srname)
+    call assert(size(confilt, 1) == m .and. size(confilt, 2) == nfiltmax, 'SIZE(CONFILT) == [M, NFILTMAX]', srname)
     call assert(size(cfilt) == nfiltmax, 'SIZE(CFILT) == NFILTMAX', srname)
     ! Check the values of XFILT, FFILT, CONFILT, CFILT.
-    call assert(all(is_finite(xfilt(:, 1:nfilt))), 'XFILT is finite', srname)
+    call assert(.not. any(is_nan(xfilt(:, 1:nfilt))), 'XFILT does not contain NaN', srname)
     call assert(.not. any(is_nan(ffilt(1:nfilt)) .or. is_posinf(ffilt(1:nfilt))), &
         & 'FFILT does not contain NaN/+Inf', srname)
     call assert(.not. any(is_nan(confilt(:, 1:nfilt)) .or. is_neginf(confilt(:, 1:nfilt))), &
         & 'CONFILT does not contain NaN/-Inf', srname)
     call assert(.not. any(cfilt(1:nfilt) < 0 .or. is_nan(cfilt(1:nfilt)) .or. is_posinf(cfilt(1:nfilt))), &
         & 'CFILT does not contain nonnegative values of NaN/+Inf', srname)
+    ! Check the values of X, F, CONSTR, CSTRV.
+    ! X does not contain NaN if X0 does not and the trust-region/geometry steps are proper.
+    call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
+    ! F cannot be NaN/+Inf due to the moderated extreme barrier.
+    call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN/+Inf', srname)
+    ! CONSTR cannot contain NaN/-Inf due to the moderated extreme barrier.
+    call assert(.not. any(is_nan(constr) .or. is_neginf(constr)), 'CONSTR does not contain NaN/-Inf', srname)
+    ! CSTRV cannot be NaN/+Inf due to the moderated extreme barrier.
+    call assert(.not. (cstrv < 0 .or. is_nan(cstrv) .or. is_posinf(cstrv)), 'CSTRV is nonnegative and not NaN/+Inf', srname)
 end if
 
 !====================!
@@ -128,10 +139,14 @@ cfilt(nfilt) = cstrv
 
 ! Postconditions
 if (DEBUGGING) then
-    ! Check NFILT
+    ! Check NFILT and the sizes of XFILT, FFILT, CONFILT, CFILT
     call assert(nfilt >= 0 .and. nfilt <= nfiltmax, '0 <= NFILT <= NFILTMAX', srname)
+    call assert(size(xfilt, 1) == n .and. size(xfilt, 2) == nfiltmax, 'SIZE(XFILT) == [N, NFILTMAX]', srname)
+    call assert(size(ffilt) == nfiltmax, 'SIZE(FFILT) = NFILTMAX', srname)
+    call assert(size(confilt, 1) == m .and. size(confilt, 2) == nfiltmax, 'SIZE(CONFILT) == [M, NFILTMAX]', srname)
+    call assert(size(cfilt) == nfiltmax, 'SIZE(CFILT) = NFILTMAX', srname)
     ! Check the values of XFILT, FFILT, CONFILT, CFILT.
-    call assert(all(is_finite(xfilt(:, 1:nfilt))), 'XFILT is finite', srname)
+    call assert(.not. any(is_nan(xfilt(:, 1:nfilt))), 'XFILT does not contain NaN', srname)
     call assert(.not. any(is_nan(ffilt(1:nfilt)) .or. is_posinf(ffilt(1:nfilt))), &
         & 'FFILT does not contain NaN/+Inf', srname)
     call assert(.not. any(is_nan(confilt(:, 1:nfilt)) .or. is_neginf(confilt(:, 1:nfilt))), &

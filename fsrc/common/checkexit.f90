@@ -6,7 +6,7 @@ module checkexit_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Friday, November 05, 2021 PM07:59:34
+! Last Modified: Friday, November 05, 2021 PM10:10:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -89,8 +89,8 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(any([INFO_DFT, FTARGET_ACHIEVED, MAXFUN_REACHED] == info), &
-        & 'INFO is FTARGET_ACHIEVED, MAXFUN_REACHED, or INFO_DFT', srname)
+    call assert(any([INFO_DFT, NAN_INF_X, FTARGET_ACHIEVED, MAXFUN_REACHED] == info), &
+        & 'INFO is NAN_INF_X, FTARGET_ACHIEVED, MAXFUN_REACHED, or INFO_DFT', srname)
 end if
 
 end function checkexit_unc
@@ -167,8 +167,8 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(any([INFO_DFT, FTARGET_ACHIEVED, MAXFUN_REACHED] == info), &
-        & 'INFO is FTARGET_ACHIEVED, MAXFUN_REACHED, or INFO_DFT', srname)
+    call assert(any([INFO_DFT, NAN_INF_F, FTARGET_ACHIEVED, MAXFUN_REACHED] == info), &
+        & 'INFO is NAN_INF_X, FTARGET_ACHIEVED, MAXFUN_REACHED, or INFO_DFT', srname)
 end if
 
 end function checkexit_con
