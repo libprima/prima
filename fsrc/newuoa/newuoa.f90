@@ -14,7 +14,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 05, 2021 PM08:25:20
+! Last Modified: Friday, November 05, 2021 PM08:45:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -156,10 +156,10 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite
 use, non_intrinsic :: memory_mod, only : safealloc, cstyle_sizeof
 use, non_intrinsic :: pintrf_mod, only : FUN
+use, non_intrinsic :: preproc_mod, only : preproc
 
 ! Solver-specific modules
 use, non_intrinsic :: newuob_mod, only : newuob
-use, non_intrinsic :: preproc_mod, only : preproc
 
 implicit none
 
@@ -312,7 +312,7 @@ else
 end if
 
 ! Preprocess the inputs in case some of them are invalid.
-call preproc(n, iprint_loc, maxfun_loc, maxhist_loc, npt_loc, eta1_loc, eta2_loc, ftarget_loc, &
+call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, npt_loc, eta1_loc, eta2_loc, ftarget_loc, &
     & gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc)
 
 ! Further revise MAXHIST according to MAXMEMORY, i.e., the maximal amount
