@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, November 04, 2021 AM01:10:12
+! Last Modified: Thursday, November 04, 2021 AM07:59:51
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -677,6 +677,9 @@ end if
 ! Calculation starts !
 !====================!
 
+!--------------------------------------------------------------------------------------------------!
+! In BIGLAG of NEWUOA, the following loop works numerically better than Z = MATPROD(A, X) + Y. Why?
+!--------------------------------------------------------------------------------------------------!
 z = y
 do j = 1, int(size(A, 2), kind(j))
     z = z + A(:, j) * x(j)
@@ -690,11 +693,13 @@ end function Ax_plus_y
 
 
 function calquad(d, gq, hq, pq, x, xpt) result(qred)
+!--------------------------------------------------------------------------------------------------!
 ! This function evaluates QRED = Q(X) - Q(X + D) with Q being the quadratic function defined via
 ! (GQ, HQ, PQ) by
 ! Q(Y) = <Y, GQ> + 0.5*<Y, HESSIAN*Y>,
 ! where HESSIAN consists of an explicit part HQ and an implicit part PQ in Powell's way:
 ! HESSIAN = HQ + sum_K=1^NPT PQ(K)*(XPT(:, K)*XPT(:, K)^T) .
+!--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : RP, HALF
 
@@ -897,8 +902,10 @@ end if
 ! Calculation starts !
 !====================!
 
-!!y = matprod(hq, x) + matprod(xpt, pq * matprod(x, xpt))
+!--------------------------------------------------------------------------------!
+!----------! y = matprod(hq, x) + matprod(xpt, pq * matprod(x, xpt)) !-----------!
 ! The following loop works numerically better than the last line (but why?).
+!--------------------------------------------------------------------------------!
 y = matprod(xpt, pq * matprod(x, xpt))
 do j = 1, n
     y = y + hq(:, j) * x(j)
