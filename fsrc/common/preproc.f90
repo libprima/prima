@@ -4,7 +4,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, September 25, 2021 PM11:52:33
+! Last Modified: Friday, November 05, 2021 PM08:46:51
 
 module preproc_mod
 
@@ -16,15 +16,17 @@ public :: preproc
 contains
 
 
-subroutine preproc(n, iprint, maxfun, maxhist, npt, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend)
+subroutine preproc(solver, n, iprint, maxfun, maxhist, npt, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend)
 
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS, DEBUGGING
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT
+use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite
 
 implicit none
 
 ! Input
+character(len=*), intent(in) :: solver
 integer(IK), intent(in) :: n
 
 ! In-outputs
@@ -39,9 +41,6 @@ real(RP), intent(inout) :: gamma1
 real(RP), intent(inout) :: gamma2
 real(RP), intent(inout) :: rhobeg
 real(RP), intent(inout) :: rhoend
-
-! Local variable
-character(len=*), parameter :: solver = 'NEWUOA'
 
 
 if (iprint /= 0 .and. abs(iprint) /= 1 .and. abs(iprint) /= 2 .and. abs(iprint) /= 3) then
@@ -146,6 +145,17 @@ if (rhoend <= ZERO .or. rhobeg < rhoend .or. is_nan(rhoend) .or. is_inf(rhoend))
     rhoend = max(EPS, min(TENTH * rhobeg, RHOEND_DFT))
     print '(/1A, 1PD15.6, 1A)', solver//': invalid RHOEND; it should be a positive number and RHOEND <= RHOBEG; '// &
         & 'it is set to ', rhoend, '.'
+end if
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', solver)
+    call assert(maxfun >= npt + 1, 'MAXFUN >= NPT + 1', solver)
+    call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', solver)
+    call assert(npt >= 3, 'NPT >= 3', solver)
+    call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', solver)
+    call assert(gamma1 > 0 .and. gamma1 < 1 .and. gamma2 > 1, '0 < GAMMA1 < 1 < GAMMA2', solver)
+    call assert(rhobeg >= rhoend .and. rhoend > ZERO, 'RHOBEG >= RHOEND > 0', solver)
 end if
 
 end subroutine preproc

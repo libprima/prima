@@ -6,7 +6,7 @@ module initialize_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 05, 2021 PM07:58:05
+! Last Modified: Friday, November 05, 2021 PM08:42:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -94,6 +94,7 @@ maxhist = max(maxxhist, maxfhist)
 
 ! Preconditions
 if (DEBUGGING) then
+    call assert(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', srname)
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
     call assert(maxfun >= npt + 1, 'MAXFUN >= NPT + 1', srname)
     call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
