@@ -6,7 +6,7 @@ module initialize_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, October 05, 2021 AM02:27:49
+! Last Modified: Friday, November 05, 2021 PM03:33:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -44,7 +44,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evalf
 use, non_intrinsic :: history_mod, only : savehist
-use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : INFO_DFT
 use, non_intrinsic :: linalg_mod, only : eye, sort
 use, non_intrinsic :: output_mod, only : fmssg
@@ -75,9 +75,7 @@ real(RP), intent(out) :: xpt(:, :)  ! XPT(N, NPT)
 character(len=*), parameter :: solver = 'NEWUOA'
 character(len=*), parameter :: srname = 'INITXF'
 integer(IK) :: k
-integer(IK) :: maxfhist
 integer(IK) :: maxhist
-integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: npt
 integer(IK) :: subinfo
@@ -88,21 +86,19 @@ real(RP) :: x(size(x0))
 ! Sizes
 n = int(size(x0), kind(n))
 npt = int(size(fval), kind(npt))
-maxxhist = int(size(xhist, 2), kind(maxxhist))
-maxfhist = int(size(fhist), kind(maxfhist))
-maxhist = max(maxxhist, maxfhist)
+maxhist = int(max(size(xhist, 2), size(fhist)), kind(maxhist))
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(n >= 1, 'N >= 1', srname)
-    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
+    call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
     call assert(maxfun >= npt + 1, 'MAXFUN >= NPT + 1', srname)
-    call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
-    call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
+    call assert(size(fhist) * (size(fhist) - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
+    call assert(size(xhist, 1) == n .and. size(xhist, 2) * (size(xhist, 2) - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
+    call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
     call assert(size(ij, 1) == max(0_IK, npt - 2_IK * n - 1_IK) .and. size(ij, 2) == 2, &
-        & 'SIZE(IJ) == [NPT-2*N-1, 2]', srname)
-    call assert(rhobeg > ZERO, 'RHOBEG > 0', srname)
+        & 'SIZE(IJ) == [NPT - 2*N - 1, 2]', srname)
+    call assert(rhobeg > 0, 'RHOBEG > 0', srname)
     call assert(all(is_finite(x0)), 'X0 is finite', srname)
     call assert(size(xbase) == n, 'SIZE(XBASE) == N', srname)
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
@@ -156,7 +152,7 @@ end do
 ! Set IJ.
 ! In general, when NPT = (N+1)*(N+2)/2, we can initialize IJ(2*N + 2 : NPT, :) to ANY permutation
 ! of {(I, J) : 1 <= J < I <= N}; when NPT < (N+1)*(N+2)/2, we can set it to the first
-! NPT - (2*N + 1) elements of such a permutation. Powell took the following permutation:
+! NPT - (2*N + 1) elements of such a permutation. Powell took the following permutation.
 ij(:, 1) = int(([(k, k=2_IK * n + 2_IK, npt)] - n - 2) / n, IK) ! [(K, K=1, NPT)] = [1, 2, ..., NPT]
 ij(:, 2) = int([(k, k=2_IK * n + 2_IK, npt)] - (ij(:, 1) + 1) * n - 1, IK)
 ij(:, 1) = mod(ij(:, 1) + ij(:, 2) - 1_IK, n) + 1_IK  ! MOD(K-1, N) + 1 = K-N for K in [N+1, 2N]
@@ -218,12 +214,22 @@ kopt = int(minloc(fval, dim=1, mask=evaluated), kind(kopt))
 
 ! Postconditions
 if (DEBUGGING) then
+    call assert(size(ij, 1) == max(0_IK, npt - 2_IK * n - 1_IK) .and. size(ij, 2) == 2, &
+        & 'SIZE(IJ) == [NPT - 2*N - 1, 2]', srname)
     call assert(all(ij >= 2 .and. ij <= 2 * n + 1), '1 <= IJ <= N', srname)
     call assert(all(mod(ij(:, 1) - 2_IK, n) > mod(ij(:, 2) - 2_IK, n)), &
-         & 'MOD(IJ(:, 1) - 2, N) > MOD(IJ(:, 2) - 2, N)', srname)
+        & 'MOD(IJ(:, 1) - 2, N) > MOD(IJ(:, 2) - 2, N)', srname)
     call assert(nf <= npt, 'NF <= NPT', srname)
     call assert(kopt >= 1 .and. kopt <= nf, '1 <= KOPT <= NF', srname)
+    call assert(size(xbase) == n .and. all(is_finite(xbase)), 'SIZE(XBASE) == N, XBASE is finite', srname)
+    call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
+    call assert(size(fval) == npt .and. .not. any(evaluated .and. (is_nan(fval) .or. is_posinf(fval))), &
+        & 'SIZE(FVAL) == NPT and FVAL is not NaN or +Inf', srname)
+    call assert(.not. any(fval < fval(kopt)), 'FVAL(KOPT) = MINVAL(FVAL)', srname)
+    call assert(size(fhist) * (size(fhist) - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
+    call assert(size(xhist, 1) == n .and. size(xhist, 2) * (size(xhist, 2) - maxhist) == 0, &
+        & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
 end if
 
 end subroutine initxf
@@ -238,7 +244,7 @@ subroutine initq(ij, fval, xpt, gq, hq, pq, info)
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_MODEL
 use, non_intrinsic :: linalg_mod, only : issymmetric
 
@@ -273,17 +279,17 @@ npt = int(size(xpt, 2), kind(npt))
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(n >= 1, 'N >= 1', srname)
-    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
-    call assert(size(fval) == npt, 'SIZE(FVAL) == NPT', srname)
+    call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
+    call assert(size(fval) == npt .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
+        & 'SIZE(FVAL) == NPT and FVAL is not NaN or +Inf', srname)
     call assert(size(ij, 1) == max(0_IK, npt - 2_IK * n - 1_IK) .and. size(ij, 2) == 2, &
-        & 'SIZE(IJ) == [NPT-2*N-1, 2]', srname)
+        & 'SIZE(IJ) == [NPT - 2*N - 1, 2]', srname)
     call assert(all(ij >= 2 .and. ij <= 2 * n + 1), '1 <= IJ <= N', srname)
     call assert(all(mod(ij(:, 1) - 2_IK, n) > mod(ij(:, 2) - 2_IK, n)), &
-         & 'MOD(IJ(:, 1)-2, N) > MOD(IJ(:, 2) - 2, N)', srname)
-    call assert(size(gq) == n, 'SIZE(GQ) == N', srname)
-    call assert(size(hq, 1) == n .and. size(hq, 2) == n, 'SIZE(HQ) == [n, n]', srname)
-    call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
+        & 'MOD(IJ(:, 1) - 2, N) > MOD(IJ(:, 2) - 2, N)', srname)
+    call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
+    call assert(size(hq, 1) == n .and. size(hq, 2) == n, 'SIZE(HQ) = [N, N]', srname)
+    call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
 end if
 
@@ -337,7 +343,9 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(issymmetric(hq), 'HQ is symmetric', srname)
+    call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
+    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
+    call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
 end if
 
 end subroutine initq
@@ -381,17 +389,16 @@ npt = int(size(xpt, 2), kind(npt))
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(n >= 1, 'N >= 1', srname)
-    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
+    call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
     call assert(size(ij, 1) == max(0_IK, npt - 2_IK * n - 1_IK) .and. size(ij, 2) == 2, &
-        & 'SIZE(IJ) == [NPT-2*N-1, 2]', srname)
+        & 'SIZE(IJ) == [NPT - 2*N - 1, 2]', srname)
     call assert(all(ij >= 2 .and. ij <= 2 * n + 1), '1 <= IJ <= N', srname)
     call assert(all(mod(ij(:, 1) - 2_IK, n) > mod(ij(:, 2) - 2_IK, n)), &
-         & 'MOD(IJ(:, 1)-2, N) > MOD(IJ(:, 2) - 2, N)', srname)
+        & 'MOD(IJ(:, 1) - 2, N) > MOD(IJ(:, 2) - 2, N)', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
-        & 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
+        & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
 end if
 
 !====================!
@@ -451,8 +458,11 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT - N', srname)
+    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
+    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
+        & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
 end if
 
 end subroutine inith
