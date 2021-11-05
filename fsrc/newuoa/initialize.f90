@@ -6,7 +6,7 @@ module initialize_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 05, 2021 PM03:33:05
+! Last Modified: Friday, November 05, 2021 PM07:58:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -34,7 +34,7 @@ subroutine initxf(calfun, iprint, maxfun, ftarget, rhobeg, x0, ij, kopt, nf, fhi
 ! 2. At return,
 ! INFO = INFO_DFT: initialization finishes normally
 ! INFO = FTARGET_ACHIEVED: return because F <= FTARGET
-! INFO = NAN_X: return because X contains NaN
+! INFO = NAN_INF_X: return because X contains NaN
 ! INFO = NAN_INF_F: return because F is either NaN or +Inf
 !--------------------------------------------------------------------------------------------------!
 
@@ -75,7 +75,9 @@ real(RP), intent(out) :: xpt(:, :)  ! XPT(N, NPT)
 character(len=*), parameter :: solver = 'NEWUOA'
 character(len=*), parameter :: srname = 'INITXF'
 integer(IK) :: k
+integer(IK) :: maxfhist
 integer(IK) :: maxhist
+integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: npt
 integer(IK) :: subinfo
@@ -86,16 +88,18 @@ real(RP) :: x(size(x0))
 ! Sizes
 n = int(size(x0), kind(n))
 npt = int(size(fval), kind(npt))
-maxhist = int(max(size(xhist, 2), size(fhist)), kind(maxhist))
+maxxhist = int(size(xhist, 2), kind(maxxhist))
+maxfhist = int(size(fhist), kind(maxfhist))
+maxhist = max(maxxhist, maxfhist)
 
 ! Preconditions
 if (DEBUGGING) then
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
     call assert(maxfun >= npt + 1, 'MAXFUN >= NPT + 1', srname)
-    call assert(size(fhist) * (size(fhist) - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
-    call assert(size(xhist, 1) == n .and. size(xhist, 2) * (size(xhist, 2) - maxhist) == 0, &
-        & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
     call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
+    call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
+    call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
+        & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
     call assert(size(ij, 1) == max(0_IK, npt - 2_IK * n - 1_IK) .and. size(ij, 2) == 2, &
         & 'SIZE(IJ) == [NPT - 2*N - 1, 2]', srname)
     call assert(rhobeg > 0, 'RHOBEG > 0', srname)
@@ -227,9 +231,8 @@ if (DEBUGGING) then
     call assert(size(fval) == npt .and. .not. any(evaluated .and. (is_nan(fval) .or. is_posinf(fval))), &
         & 'SIZE(FVAL) == NPT and FVAL is not NaN or +Inf', srname)
     call assert(.not. any(fval < fval(kopt)), 'FVAL(KOPT) = MINVAL(FVAL)', srname)
-    call assert(size(fhist) * (size(fhist) - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
-    call assert(size(xhist, 1) == n .and. size(xhist, 2) * (size(xhist, 2) - maxhist) == 0, &
-        & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
+    call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
+    call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
 end if
 
 end subroutine initxf

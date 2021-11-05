@@ -8,7 +8,7 @@ module output_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, September 28, 2021 PM03:14:36
+! Last Modified: Friday, November 05, 2021 PM06:03:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -51,7 +51,7 @@ subroutine retmssg(info, iprint, nf, f, x, solver)
 use, non_intrinsic :: consts_mod, only : RP, IK, MSSGLEN, OUTUNIT, FNAMELEN
 use, non_intrinsic :: info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED
 use, non_intrinsic :: info_mod, only : SMALL_TR_RADIUS, TRSUBP_FAILED
-use, non_intrinsic :: info_mod, only : NAN_X, NAN_INF_F, NAN_MODEL
+use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL
 implicit none
 
 ! Inputs
@@ -82,8 +82,8 @@ else if (info == SMALL_TR_RADIUS) then
     mssg = 'the trust region radius reaches its lower bound.'
 else if (info == TRSUBP_FAILED) then
     mssg = 'a trust region step has failed to reduce the quadratic model.'
-else if (info == NAN_X) then
-    mssg = 'NaN occurs in x.'
+else if (info == NAN_INF_X) then
+    mssg = 'NaN or Inf occurs in x.'
 else if (info == NAN_INF_F) then
     mssg = 'the objective function returns NaN or +INFINITY.'
 else if (info == NAN_MODEL) then

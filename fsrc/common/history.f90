@@ -7,7 +7,7 @@ module history_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, October 10, 2021 AM10:39:54
+! Last Modified: Friday, November 05, 2021 PM06:22:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -70,8 +70,8 @@ if (DEBUGGING) then
     call assert(.not. any(is_nan(fhist(1:min(nf - 1_IK, maxfhist))) .or. &
         & is_posinf(fhist(1:min(nf - 1_IK, maxfhist)))), 'FHIST does not contain NaN/+Inf', srname)
     ! Check the values of X, F.
-    ! X is finite if X0 is finite and the trust-region/geometry steps are implemented properly.
-    call assert(all(is_finite(x)), 'X is finite', srname)
+    ! X does not contain NaN if X0 does not and the trust-region/geometry steps are proper.
+    call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
     ! F cannot be NaN/+Inf due to the moderated extreme barrier.
     call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
 end if
@@ -167,8 +167,8 @@ if (DEBUGGING) then
     call assert(.not. any(chist(1:min(nf - 1_IK, maxchist)) < 0 .or. is_nan(chist(1:min(nf - 1_IK, maxchist))) .or. &
         & is_posinf(chist(1:min(nf - 1_IK, maxchist)))), 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
     ! Check the values of X, F, CONSTR, CSTRV.
-    ! X is finite if X0 is finite and the trust-region/geometry steps are implemented properly.
-    call assert(all(is_finite(x)), 'X is finite', srname)
+    ! X does not contain NaN if X0 does not and the trust-region/geometry steps are proper.
+    call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
     ! F cannot be NaN/+Inf due to the moderated extreme barrier.
     call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
     ! CONSTR cannot contain NaN/-Inf due to the moderated extreme barrier.

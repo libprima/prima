@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, November 04, 2021 PM12:18:09
+! Last Modified: Friday, November 05, 2021 PM08:09:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -53,7 +53,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HU
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evalf
 use, non_intrinsic :: history_mod, only : savehist, rangehist
-use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS
 use, non_intrinsic :: linalg_mod, only : calquad, inprod, norm
 use, non_intrinsic :: output_mod, only : retmssg, rhomssg, fmssg
@@ -146,13 +146,12 @@ maxfhist = int(size(fhist), kind(maxfhist))
 maxhist = max(maxxhist, maxfhist)
 
 if (DEBUGGING) then
-    call assert(n >= 1, 'N >= 1', srname)
-    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
+    call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
     call assert(maxfun >= npt + 1, 'MAXFUN >= NPT + 1', srname)
     call assert(rhobeg >= rhoend .and. rhoend > ZERO, 'RHOBEG >= RHOEND > 0', srname)
-    call assert(eta1 >= ZERO .and. eta1 <= eta2 .and. eta2 < ONE, '0 <= ETA1 <= ETA2 < 1', srname)
-    call assert(gamma1 > ZERO .and. gamma1 < ONE .and. gamma2 > ONE, &
-        & '0 < GAMMA1 < 1 < GAMMA2', srname)
+    call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
+    call assert(gamma1 > 0 .and. gamma1 < 1 .and. gamma2 > 1, '0 < GAMMA1 < 1 < GAMMA2', srname)
+    call assert(maxhist >= 0, 'MAXHIST >= 0', srname)
     call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
@@ -177,7 +176,15 @@ if (subinfo /= INFO_DFT) then
     call retmssg(info, iprint, nf, f, x, solver)
     ! Postconditions
     if (DEBUGGING) then
-        call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
+        call assert(nf <= maxfun, 'NF <= MAXFUN', srname)
+        call assert(size(x) == n .and. .not. any(is_nan(x)), 'SIZE(X) == N, X does not contain NaN', srname)
+        call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
+        call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
+        call assert(.not. any(is_nan(xhist(:, 1:min(nf, maxxhist)))), 'XHIST does not contain NaN', srname)
+        ! The last calculated X can be Inf (finite + finite can be Inf numerically).
+        call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
+        call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. is_posinf(fhist(1:min(nf, maxfhist)))), &
+            & 'FHIST does not contain NaN of +Inf', srname)
         call assert(.not. any(fhist(1:min(nf, maxfhist)) < f), 'F is the smallest in FHIST', srname)
     end if
     return
@@ -488,7 +495,15 @@ call retmssg(info, iprint, nf, f, x, solver)
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
+    call assert(nf <= maxfun, 'NF <= MAXFUN', srname)
+    call assert(size(x) == n .and. .not. any(is_nan(x)), 'SIZE(X) == N, X does not contain NaN', srname)
+    call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
+    call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
+    call assert(.not. any(is_nan(xhist(:, 1:min(nf, maxxhist)))), 'XHIST does not contain NaN', srname)
+    ! The last calculated X can be Inf (finite + finite can be Inf numerically).
+    call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
+    call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. is_posinf(fhist(1:min(nf, maxfhist)))), &
+        & 'FHIST does not contain NaN of +Inf', srname)
     call assert(.not. any(fhist(1:min(nf, maxfhist)) < f), 'F is the smallest in FHIST', srname)
 end if
 
