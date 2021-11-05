@@ -7,7 +7,7 @@ module history_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 05, 2021 PM10:06:49
+! Last Modified: Friday, November 05, 2021 PM09:41:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -60,7 +60,7 @@ maxhist = int(max(maxxhist, maxfhist), kind(maxhist))
 ! Preconditions
 if (DEBUGGING) then
     ! Check the size of X.
-    call assert(n >= 1, 'N >= 1', srname)
+    call assert(n >= 1, 'SIZE(X) >= 1', srname)
     ! Check the sizes of XHIST, FHIST.
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
@@ -73,7 +73,7 @@ if (DEBUGGING) then
     ! X does not contain NaN if X0 does not and the trust-region/geometry steps are proper.
     call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
     ! F cannot be NaN/+Inf due to the moderated extreme barrier.
-    call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN/+Inf', srname)
+    call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
 end if
 
 !====================!
@@ -98,12 +98,9 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
-    call assert(.not. any(is_nan(xhist(:, 1:min(nf, maxxhist)))), 'XHIST does not contain NaN', srname)
-    ! The last calculated X can be Inf (finite + finite can be Inf numerically).
-    call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
-    call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. is_posinf(fhist(1:min(nf, maxfhist)))), &
-        & 'FHIST does not contain NaN/+Inf', srname)
+    call assert(all(is_finite(xhist(:, 1:min(nf, maxxhist)))), 'XHIST is finite', srname)
+    call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. &
+        & is_posinf(fhist(1:min(nf, maxfhist)))), 'FHIST does not contain NaN/+Inf', srname)
 end if
 
 end subroutine savehist_unc
@@ -153,7 +150,7 @@ maxhist = max(maxxhist, maxfhist, maxconhist, maxchist)
 ! Preconditions
 if (DEBUGGING) then
     ! Check the size of X.
-    call assert(n >= 1, 'N >= 1', srname)
+    call assert(n >= 1, 'SIZE(X) >= 1', srname)
     ! Check the sizes of XHIST, FHIST, CONHIST, CHIST.
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
@@ -164,21 +161,22 @@ if (DEBUGGING) then
     ! Check the values of XHIST, FHIST, CONHIST, CHIST.
     call assert(all(is_finite(xhist(:, 1:min(nf - 1_IK, maxxhist)))), 'XHIST is finite', srname)
     call assert(.not. any(is_nan(fhist(1:min(nf - 1_IK, maxfhist))) .or. &
-        & is_posinf(fhist(1:min(nf - 1_IK, maxfhist)))), 'FHIST does not contain NaN/+Inf - 1_IK', srname)
+        & is_posinf(fhist(1:min(nf - 1_IK, maxfhist)))), 'FHIST does not contain NaN/+Inf', srname)
     call assert(.not. any(is_nan(conhist(:, 1:min(nf - 1_IK, maxconhist))) .or. &
-        & is_neginf(conhist(:, 1:min(nf - 1_IK, maxconhist)))), 'CONHIST does not contain NaN/-Inf - 1_IK', srname)
-    call assert(.not. any(chist(1:min(nf - 1_IK, maxchist)) < 0 .or. &
-        & is_nan(chist(1:min(nf - 1_IK, maxchist))) .or. is_posinf(chist(1:min(nf - 1_IK, maxchist)))), &
-        & 'CHIST does not contain nonnegative values or NaN/+Inf - 1_IK', srname)
+        & is_neginf(conhist(:, 1:min(nf - 1_IK, maxconhist)))), 'CONHIST does not contain NaN/-Inf', srname)
+    call assert(.not. any(chist(1:min(nf - 1_IK, maxchist)) < 0 .or. is_nan(chist(1:min(nf - 1_IK, maxchist))) .or. &
+        & is_posinf(chist(1:min(nf - 1_IK, maxchist)))), 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
     ! Check the values of X, F, CONSTR, CSTRV.
     ! X does not contain NaN if X0 does not and the trust-region/geometry steps are proper.
     call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
     ! F cannot be NaN/+Inf due to the moderated extreme barrier.
-    call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN/+Inf', srname)
+    call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
     ! CONSTR cannot contain NaN/-Inf due to the moderated extreme barrier.
-    call assert(.not. any(is_nan(constr) .or. is_neginf(constr)), 'CONSTR does not contain NaN/-Inf', srname)
+    call assert(.not. any(is_nan(constr) .or. is_neginf(constr)), &
+        & 'CONSTR does not contain NaN/-Inf', srname)
     ! CSTRV cannot be NaN/+Inf due to the moderated extreme barrier.
-    call assert(.not. (cstrv < 0 .or. is_nan(cstrv) .or. is_posinf(cstrv)), 'CSTRV is nonnegative and not NaN/+Inf', srname)
+    call assert(.not. (cstrv < 0 .or. is_nan(cstrv) .or. is_posinf(cstrv)), &
+        & 'CSTRV is nonnegative and not NaN or +Inf', srname)
 end if
 
 !====================!
@@ -209,17 +207,11 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
-    call assert(.not. any(is_nan(xhist(:, 1:min(nf, maxxhist)))), 'XHIST does not contain NaN', srname)
-    ! The last calculated X can be Inf (finite + finite can be Inf numerically).
-    call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
-    call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. is_posinf(fhist(1:min(nf, maxfhist)))), &
-        & 'FHIST does not contain NaN of +Inf', srname)
-    call assert(size(conhist, 1) == m .and. size(conhist, 2) == maxconhist, &
-        & 'SIZE(CONHIST) == [M, MAXCONHIST]', srname)
+    call assert(all(is_finite(xhist(:, 1:min(nf, maxxhist)))), 'XHIST is finite', srname)
+    call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. &
+        & is_posinf(fhist(1:min(nf, maxfhist)))), 'FHIST does not contain NaN/+Inf', srname)
     call assert(.not. any(is_nan(conhist(:, 1:min(nf, maxconhist))) .or. &
         & is_neginf(conhist(:, 1:min(nf, maxconhist)))), 'CONHIST does not contain NaN/-Inf', srname)
-    call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
     call assert(.not. any(chist(1:min(nf, maxchist)) < 0 .or. is_nan(chist(1:min(nf, maxchist))) .or. &
         & is_posinf(chist(1:min(nf, maxchist)))), 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
 end if
@@ -232,7 +224,7 @@ subroutine rangehist_unc(nf, fhist, xhist)
 ! This subroutine arranges FHIST and XHIST in the chronological order.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
@@ -248,11 +240,9 @@ integer(IK) :: khist
 integer(IK) :: maxfhist
 integer(IK) :: maxhist
 integer(IK) :: maxxhist
-integer(IK) :: n
 character(len=*), parameter :: srname = 'RANGEHIST_UNC'
 
 ! Sizes
-n = int(size(xhist, 1), kind(n))
 maxxhist = int(size(xhist, 2), kind(maxxhist))
 maxfhist = int(size(fhist), kind(maxfhist))
 maxhist = int(max(maxxhist, maxfhist), kind(maxhist))
@@ -260,13 +250,13 @@ maxhist = int(max(maxxhist, maxfhist), kind(maxhist))
 ! Preconditions
 if (DEBUGGING) then
     ! Check the sizes of XHIST, FHIST.
-    call assert(n >= 1, 'N >= 1', srname)
-    call assert(maxxhist * (maxxhist - maxhist) == 0, 'SIZE(XHIST, 2) == 0 or MAXHIST', srname)
+    call assert(size(xhist, 1) >= 1 .and. maxxhist * (maxxhist - maxhist) == 0, &
+         & 'SIZE(XHIST, 1) >= 1, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
     call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
     ! Check the values of XHIST, FHIST.
-    call assert(.not. any(is_nan(xhist(:, 1:min(nf, maxxhist)))), 'XHIST does not contain NaN', srname)
-    call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. &
-        & is_posinf(fhist(1:min(nf, maxfhist)))), 'FHIST does not contain NaN/+Inf', srname)
+    call assert(all(is_finite(xhist(:, 1:min(nf - 1_IK, maxxhist)))), 'XHIST is finite', srname)
+    call assert(.not. any(is_nan(fhist(1:min(nf - 1_IK, maxfhist))) .or. &
+        & is_posinf(fhist(1:min(nf - 1_IK, maxfhist)))), 'FHIST does not contain NaN/+Inf', srname)
 end if
 
 !====================!
@@ -298,14 +288,9 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. &
-        & is_posinf(fhist(1:min(nf, maxfhist)))), 'FHIST does not contain NaN/+Inf', srname)
-    call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
-    call assert(.not. any(is_nan(xhist(:, 1:min(nf, maxxhist)))), 'XHIST does not contain NaN', srname)
-    ! The last calculated X can be Inf (finite + finite can be Inf numerically).
-    call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
-    call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. is_posinf(fhist(1:min(nf, maxfhist)))), &
-        & 'FHIST does not contain NaN of +Inf', srname)
+    call assert(all(is_finite(xhist(:, 1:min(nf - 1_IK, maxxhist)))), 'XHIST is finite', srname)
+    call assert(.not. any(is_nan(fhist(1:min(nf - 1_IK, maxfhist))) .or. &
+        & is_posinf(fhist(1:min(nf - 1_IK, maxfhist)))), 'FHIST does not contain NaN/+Inf', srname)
 end if
 
 end subroutine rangehist_unc
@@ -314,7 +299,7 @@ end subroutine rangehist_unc
 subroutine rangehist_nlc(nf, chist, conhist, fhist, xhist)
 ! This subroutine arranges FHIST and XHIST, CONHIST, and CHIST in the chronological order.
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf, is_neginf
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
@@ -329,18 +314,14 @@ real(RP), intent(inout) :: xhist(:, :)
 
 ! Local variables
 integer(IK) :: khist
-integer(IK) :: m
 integer(IK) :: maxchist
 integer(IK) :: maxconhist
 integer(IK) :: maxfhist
 integer(IK) :: maxhist
 integer(IK) :: maxxhist
-integer(IK) :: n
 character(len=*), parameter :: srname = 'RANGEHIST_NLC'
 
 ! Sizes
-n = int(size(xhist, 1), kind(n))
-m = int(size(conhist, 1), kind(m))
 maxxhist = int(size(xhist, 2), kind(maxxhist))
 maxfhist = int(size(fhist), kind(maxfhist))
 maxconhist = int(size(conhist, 2), kind(maxconhist))
@@ -350,20 +331,20 @@ maxhist = max(maxxhist, maxfhist, maxconhist, maxchist)
 ! Preconditions
 if (DEBUGGING) then
     ! Check the sizes of XHIST, FHIST, CONHIST, CHIST.
-    call assert(n >= 1, 'N >= 1', srname)
-    call assert(maxxhist * (maxxhist - maxhist) == 0, 'SIZE(XHIST, 2) == 0 or MAXHIST', srname)
+    call assert(size(xhist, 1) >= 1 .and. maxxhist * (maxxhist - maxhist) == 0, &
+         & 'SIZE(XHIST, 1) >= 1, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
     call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
     call assert(maxconhist * (maxconhist - maxhist) == 0, &
          & 'SIZE(CONHIST, 2) == 0 or MAXHIST', srname)
     call assert(maxchist * (maxchist - maxhist) == 0, 'SIZE(CHIST) == 0 or MAXHIST', srname)
     ! Check the values of XHIST, FHIST, CONHIST, CHIST.
-    call assert(.not. any(is_nan(xhist(:, 1:min(nf, maxxhist)))), 'XHIST does not contain NaN', srname)
-    call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. &
-        & is_posinf(fhist(1:min(nf, maxfhist)))), 'FHIST does not contain NaN/+Inf', srname)
-    call assert(.not. any(is_nan(conhist(:, 1:min(nf, maxconhist))) .or. &
-        & is_neginf(conhist(:, 1:min(nf, maxconhist)))), 'CONHIST does not contain NaN/-Inf', srname)
-    call assert(.not. any(chist(1:min(nf, maxchist)) < 0 .or. is_nan(chist(1:min(nf, maxchist))) .or. &
-        & is_posinf(chist(1:min(nf, maxchist)))), 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
+    call assert(all(is_finite(xhist(:, 1:min(nf - 1_IK, maxxhist)))), 'XHIST is finite', srname)
+    call assert(.not. any(is_nan(fhist(1:min(nf - 1_IK, maxfhist))) .or. &
+        & is_posinf(fhist(1:min(nf - 1_IK, maxfhist)))), 'FHIST does not contain NaN/+Inf', srname)
+    call assert(.not. any(is_nan(conhist(:, 1:min(nf - 1_IK, maxconhist))) .or. &
+        & is_neginf(conhist(:, 1:min(nf - 1_IK, maxconhist)))), 'CONHIST does not contain NaN/-Inf', srname)
+    call assert(.not. any(chist(1:min(nf - 1_IK, maxchist)) < 0 .or. is_nan(chist(1:min(nf - 1_IK, maxchist))) .or. &
+        & is_posinf(chist(1:min(nf - 1_IK, maxchist)))), 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
 end if
 
 !====================!
@@ -405,17 +386,11 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
-    call assert(.not. any(is_nan(xhist(:, 1:min(nf, maxxhist)))), 'XHIST does not contain NaN', srname)
-    ! The last calculated X can be Inf (finite + finite can be Inf numerically).
-    call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
-    call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. is_posinf(fhist(1:min(nf, maxfhist)))), &
-        & 'FHIST does not contain NaN of +Inf', srname)
-    call assert(size(conhist, 1) == m .and. size(conhist, 2) == maxconhist, &
-        & 'SIZE(CONHIST) == [M, MAXCONHIST]', srname)
+    call assert(all(is_finite(xhist(:, 1:min(nf, maxxhist)))), 'XHIST is finite', srname)
+    call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. &
+        & is_posinf(fhist(1:min(nf, maxfhist)))), 'FHIST does not contain NaN/+Inf', srname)
     call assert(.not. any(is_nan(conhist(:, 1:min(nf, maxconhist))) .or. &
         & is_neginf(conhist(:, 1:min(nf, maxconhist)))), 'CONHIST does not contain NaN/-Inf', srname)
-    call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
     call assert(.not. any(chist(1:min(nf, maxchist)) < 0 .or. is_nan(chist(1:min(nf, maxchist))) .or. &
         & is_posinf(chist(1:min(nf, maxchist)))), 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
 end if
