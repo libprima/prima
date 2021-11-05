@@ -14,7 +14,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 05, 2021 PM08:45:13
+! Last Modified: Friday, November 05, 2021 PM11:20:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -401,7 +401,7 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(nf <= maxfun_loc, 'NF <= MAXFUN', srname)
+    call assert(nf_loc <= maxfun_loc, 'NF <= MAXFUN', srname)
     call assert(size(x) == n .and. .not. any(is_nan(x)), 'SIZE(X) == N, X does not contain NaN', srname)
     if (present(xhist)) then
         call assert(size(xhist, 1) == n .and. size(xhist, 2) == min(nf_loc, maxhist_loc), &

@@ -11,17 +11,17 @@ module linalg_mod
 ! When implementing the code by MATLAB, Python, ..., note the following.
 ! 1. We should follow the implementation with __USE_POWELL_ALGEBRA__ == 0, which uses matrix/vector
 ! operations instead of loops.
-! 2. We should not implement the code in subroutines/functions but write it inline, because the
-! code is short using matrix/vector operations, and because the overhead of subroutine/function
-! calling can be high in these languages. Here we implement them as subroutines/functions in order
-! to align with Powell's original code, which cannot be translated directly to matrix/vector
-! operations that produce the same results in floating-point arithmetic.
+! 2. Most of the subroutines/functions here are better written inline, because the code is short
+! using matrix/vector operations, and because the overhead of subroutine/function calling can be
+! high in these languages. Here we implement them as subroutines/functions in order to align with
+! Powell's original code, which cannot be translated directly to matrix/vector operations that
+! produce the same results in floating-point arithmetic.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, November 04, 2021 AM07:59:51
+! Last Modified: Friday, November 05, 2021 PM10:44:52
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -106,7 +106,7 @@ integer(IK) :: n, j
 character(len=*), parameter :: srname = 'R1_SYM'
 ! Be careful with initialization!
 ! In Fortran >=90, the initialization in the declaration implies the "save" attribute.
-! If the variable is not a parameter, it may casue unwanted behavior.
+! If the variable is not a parameter, it may cause unwanted behavior.
 if (size(A, 1) /= size(x) .or. size(A, 2) /= size(x)) then
     call errstop(srname, 'SIZE(A) is invalid')
 end if
@@ -157,7 +157,7 @@ real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
 character(len=*), parameter :: srname = 'R1'
 ! Be careful with initialization!
 ! In Fortran >=90, the initialization in the declaration implies the "save" attribute. If the
-! variable is not a parameter, it may casue unwanted behavior.
+! variable is not a parameter, it may cause unwanted behavior.
 if (size(A, 1) /= size(x) .or. size(A, 2) /= size(y)) then
     call errstop(srname, 'SIZE(A) is invalid')
 end if
