@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, November 04, 2021 AM01:33:31
+! Last Modified: Friday, November 05, 2021 AM10:56:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -29,7 +29,7 @@ function setdrop_tr(idz, kopt, tr_success, bmat, d, delta, rho, xpt, zmat) resul
 ! set KNEW so that FVAL(KNEW) = MAX(FVAL) as long as F(XNEW) < MAX(FVAL), unless there is a better
 ! choice. However, this is not a good idea, because the definition of KNEW should benefit the
 ! quality of the model that interpolates f at XPT. A set of points with low function values is not
-! necessarily a good interplolation set. In contrast, a good interpolation set needs to include
+! necessarily a good interpolation set. In contrast, a good interpolation set needs to include
 ! points with relatively high function values; otherwise, the interpolant will unlikely reflect the
 ! landscape of the function sufficiently.
 !--------------------------------------------------------------------------------------------------!
@@ -75,17 +75,15 @@ npt = int(size(xpt, 2), kind(npt))
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(n >= 1, 'N >= 1', srname)
-    call assert(npt >= 3, 'NPT >= 3', srname)
-    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= NPT - N', srname)
+    call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
+    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
-    call assert(delta >= rho .and. rho > ZERO, 'DETLA >= RHO > 0', srname)
-    call assert(size(d) == n, 'SIZE(D) == N', srname)
-    call assert(all(is_finite(d)), 'D is finite', srname)
+    call assert(delta >= rho .and. rho > ZERO, 'DELTA >= RHO > 0', srname)
+    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
-    call assert(size(zmat, 1) == npt .and. size(zmat, 2) >= 1, &
-        & 'SIZE(ZMAT, 1) == NPT, SIZE(ZMAT, 2) >= 1', srname)
+    call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
+        & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
 end if
 
 !====================!
@@ -133,10 +131,10 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
-    ! KNEW >= 1 when TR_SUCCESS = TRUE unless NaN occurs in XDIST, which should not happen if the
-    ! starting point does not contain NaN and the trust-region/geometry steps never contain NaN.
     call assert(knew >= 1 .or. .not. tr_success, 'KNEW >= 1 unless TR_SUCCESS = FALSE', srname)
     call assert(knew /= kopt .or. tr_success, 'KNEW /= KOPT unless TR_SUCCESS = TRUE', srname)
+    ! KNEW >= 1 when TR_SUCCESS = TRUE unless NaN occurs in XDIST, which should not happen if the
+    ! starting point does not contain NaN and the trust-region/geometry steps never contain NaN.
 end if
 
 end function setdrop_tr
@@ -197,15 +195,14 @@ npt = int(size(xpt, 2), kind(npt))
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(n >= 1, 'N >= 1', srname)
-    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
-    call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT - N', srname)
+    call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
+    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
     call assert(knew >= 1 .and. knew <= npt, '1 <= KNEW <= NPT', srname)
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
     call assert(knew /= kopt, 'KNEW /= KOPT', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
-    call assert(delbar > ZERO, 'DELBAR > 0', srname)
+    call assert(delbar > 0, 'DELBAR > 0', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
@@ -229,9 +226,9 @@ beta = calbeta(idz, kopt, bmat, d, xpt, zmat)
 
 ! If the cancellation in DENOM is unacceptable, then BIGDEN calculates an alternative model step D.
 if (vlag(knew)**2 <= ZERO) then
-    ! Powell's code does not check VLAG(KNEW)**2. VLAG(KNEW)** > 0 in theory, but it can be 0 due to
-    ! rounding, which did happen in tests. If VLAG(KNEW) ** = 0, then BIGLAG fails, because BIGLAG
-    ! should maximize |VLAG(KNEW)|. Upon this failure, it is reasonable to call BIGDEN.
+    ! Powell's code does not check VLAG(KNEW)**2. VLAG(KNEW)**2 > 0 in theory, but it can be 0 due
+    ! to rounding, which did happen in tests. If VLAG(KNEW) **2 = 0, then BIGLAG fails, because
+    ! BIGLAG should maximize |VLAG(KNEW)|. Upon this failure, it is reasonable to call BIGDEN.
     absden = -ONE
 else
     absden = abs(ONE + alpha * beta / vlag(knew)**2)
@@ -247,8 +244,8 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(all(is_finite(d)), 'D is finite', srname)
-    ! Due to rounding, it may happen that |D| > DELTA, but |D| > 2*DELTA is highly improbable.
-    call assert(norm(d) <= TWO * delbar, 'norm(D) <= 2*DELTA', srname)
+    call assert(norm(d) <= TWO * delbar, '|D| <= 2*DELBAR', srname)
+    ! Due to rounding, it may happen that |D| > DELBAR, but |D| > 2*DELBAR is highly improbable.
 end if
 
 end function geostep
@@ -326,13 +323,12 @@ npt = int(size(xpt, 2), kind(npt))
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(n >= 1, 'N >= 1', srname)
-    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
-    call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT - N', srname)
+    call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
+    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
     call assert(knew >= 1 .and. knew <= npt, '1 <= KNEW <= NPT', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
-    call assert(delbar > ZERO, 'DELBAR > 0', srname)
+    call assert(delbar > 0, 'DELBAR > 0', srname)
     call assert(size(x) == n .and. all(is_finite(x)), 'SIZE(X) == N, X is finite', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
@@ -501,8 +497,8 @@ end do
 ! Postconditions
 if (DEBUGGING) then
     call assert(all(is_finite(d)), 'D is finite', srname)
+    call assert(norm(d) <= TWO * delbar, '|D| <= 2*DELBAR', srname)
     ! Due to rounding, it may happen that |D| > DELBAR, but |D| > 2*DELBAR is highly improbable.
-    call assert(norm(d) <= TWO * delbar, 'NORM(D) <= 2*DELBAR', srname)
 end if
 
 end function biglag
@@ -604,9 +600,8 @@ npt = int(size(xpt, 2), kind(npt))
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(n >= 1, 'N >= 1', srname)
-    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
-    call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT - N', srname)
+    call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
+    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
     call assert(knew >= 1 .and. knew <= npt, '1 <= KNEW <= NPT', srname)
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
     call assert(knew /= kopt, 'KNEW /= KOPT', srname)
@@ -882,8 +877,8 @@ end do
 ! Postconditions
 if (DEBUGGING) then
     call assert(all(is_finite(d)), 'D is finite', srname)
-    ! Due to rounding, it may happen that |D| > DELBAR = |D0|, but |D| > 2*DELBAR is highly improbable.
-    call assert(norm(d) <= TWO * norm(d0), 'NORM(D) <= 2*DELBAR', srname)
+    call assert(norm(d) <= TWO * norm(d0), '|D| <= 2*DELBAR', srname)
+    ! Due to rounding, it may happen that |D| > DELBAR, but |D| > 2*DELBAR is highly improbable.
 end if
 
 end function bigden

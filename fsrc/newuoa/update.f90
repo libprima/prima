@@ -7,7 +7,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, November 04, 2021 AM01:33:06
+! Last Modified: Thursday, November 04, 2021 PM12:18:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -336,8 +336,8 @@ if (DEBUGGING) then
     call assert(npt >= n + 2, 'NPT >= N + 2', srname)
     call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT-N', srname)
     call assert(knew >= 0 .and. knew <= npt, '0 <= KNEW <= NPT', srname)
-    call assert(knew >= 1 .or. f >= fval(kopt), 'KNEW >= 1 unless F >= FVAL(KOPT)', srname)
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
+    call assert(knew >= 1 .or. f >= fval(kopt), 'KNEW >= 1 unless F >= FVAL(KOPT)', srname)
     call assert(knew /= kopt .or. f < fval(kopt), 'KNEW /= KOPT unless F < FVAL(KOPT)', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
@@ -377,6 +377,8 @@ pq(knew) = ZERO
 
 ! Update the implicit part of the Hessian.
 pq = pq + moderr * omega_col(idz, zmat, knew)
+! Numerically, the last line works slightly better than Powell's code, which multiplies MODERR to
+! ZMAT(:, KNEW) and then calculates a matrix-vector product (by loops).
 
 ! Update the gradient.
 gq = gq + moderr * bmat(:, knew)
@@ -567,7 +569,7 @@ else
     if (inprod(gq, gq) < 1.0E2_RP * inprod(galt, galt)) then
         itest = 0_IK
     else
-        itest = int(itest + 1, kind(itest))
+        itest = itest + 1_IK
     end if
 end if
 
