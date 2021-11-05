@@ -6,7 +6,7 @@ module checkexit_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, October 10, 2021 AM01:19:19
+! Last Modified: Friday, November 05, 2021 PM07:59:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -29,8 +29,8 @@ function checkexit_unc(maxfun, nf, f, ftarget, x) result(info)
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
-use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_X, NAN_INF_F, FTARGET_ACHIEVED, MAXFUN_REACHED
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_inf
+use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, MAXFUN_REACHED
 
 implicit none
 
@@ -49,11 +49,11 @@ character(len=*), parameter :: srname = 'CHECKEXIT_UNC'
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(.not. any([NAN_X, NAN_INF_F, FTARGET_ACHIEVED, MAXFUN_REACHED] == INFO_DFT), &
-        & 'NAN_X, NAN_INF_F, FTARGET_ACHIEVED, and MAXFUN_REACHED differ from INFO_DFT', srname)
-    ! X should be finite if the initial X does not contain NaN and the subroutines generating
+    call assert(.not. any([NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, MAXFUN_REACHED] == INFO_DFT), &
+        & 'NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, and MAXFUN_REACHED differ from INFO_DFT', srname)
+    ! X does not contain NaN if the initial X does not contain NaN and the subroutines generating
     ! trust-region/geometry steps work properly so that they never produce a step containing NaN/Inf.
-    call assert(all(is_finite(x)), 'X is finite', srname)
+    call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
     ! With the moderated extreme barrier, F cannot be NaN/+Inf.
     call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
 end if
@@ -64,9 +64,10 @@ end if
 
 info = INFO_DFT  ! Default info, indicating that the solver should not exit.
 
-! Although NAN_X should not happen unless there is a bug, we include the following for security.
-if (any(is_nan(x))) then
-    info = NAN_X
+! Although X should not contain NaN unless there is a bug, we write the following for security.
+! X can be Inf, as finite + finite can be Inf numerically.
+if (any(is_nan(x) .or. is_inf(x))) then
+    info = NAN_INF_X
 end if
 
 ! Although NAN_INF_F should not happen unless there is a bug, we include the following for security.
@@ -103,8 +104,8 @@ function checkexit_con(maxfun, nf, cstrv, ctol, f, ftarget, x) result(info)
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
-use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_X, NAN_INF_F, FTARGET_ACHIEVED, MAXFUN_REACHED
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_inf
+use, non_intrinsic :: info_mod, only : INFO_DFT, NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, MAXFUN_REACHED
 
 implicit none
 
@@ -125,11 +126,11 @@ character(len=*), parameter :: srname = 'CHECKEXIT_CON'
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(.not. any([NAN_X, NAN_INF_F, FTARGET_ACHIEVED, MAXFUN_REACHED] == INFO_DFT), &
-        & 'NAN_X, NAN_INF_F, FTARGET_ACHIEVED, and MAXFUN_REACHED differ from INFO_DFT', srname)
-    ! X should be finite if the initial X does not contain NaN and the subroutines generating
+    call assert(.not. any([NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, MAXFUN_REACHED] == INFO_DFT), &
+        & 'NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, and MAXFUN_REACHED differ from INFO_DFT', srname)
+    ! X does not contain NaN if the initial X does not contain NaN and the subroutines generating
     ! trust-region/geometry steps work properly so that they never produce a step containing NaN/Inf.
-    call assert(all(is_finite(x)), 'X is finite', srname)
+    call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
     ! With the moderated extreme barrier, F or CSTRV cannot be NaN/+Inf.
     call assert(.not. (is_nan(f) .or. is_posinf(f) .or. is_nan(cstrv) .or. is_posinf(cstrv)), &
         & 'F or CSTRV is not NaN or +Inf', srname)
@@ -141,9 +142,10 @@ end if
 
 info = INFO_DFT   ! Default info, indicating that the solver should not exit.
 
-! Although NAN_X should not happen unless there is a bug, we include the following for security.
-if (any(is_nan(x))) then
-    info = NAN_X
+! Although X should not contain NaN unless there is a bug, we write the following for security.
+! X can be Inf, as finite + finite can be Inf numerically.
+if (any(is_nan(x) .or. is_inf(x))) then
+    info = NAN_INF_X
 end if
 
 ! Although NAN_INF_F should not happen unless there is a bug, we include the following for security.

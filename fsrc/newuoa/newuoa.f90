@@ -14,7 +14,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, September 25, 2021 PM11:52:15
+! Last Modified: Friday, November 05, 2021 PM06:05:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -137,11 +137,11 @@ subroutine newuoa(calfun, x, f, &
 !   MAXFUN_REACHED: the objective function has been evaluated MAXFUN times;
 !   MAXTR_REACHED: the trust region iteration has been performed MAXTR times,
 !       the value of MAXTR being 10*MAXFUN, which is UNLIKELY to reach;
+!   NAN_INF_X: NaN or Inf occurs in x;
 !   !--------------------------------------------------------------------------!
 !   The following cases should NEVER occur unless there is a bug, because the
 !   code will try to continue in the corresponding scenarios.
-!   NAN_X: NaN occurs in x;
-!   NAN_INF_F: the objective function returns NaN or nearly infinite value;
+!   NAN_INF_F: the objective function returns NaN or +Inf
 !   NAN_MODEL: NaN occurs in the model;
 !   TRSUBP_FAILED: a trust region step failed to reduce the quadratic model
 !   !--------------------------------------------------------------------------!

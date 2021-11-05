@@ -20,7 +20,7 @@ public :: FTARGET_ACHIEVED
 public :: TRSUBP_FAILED
 public :: MAXFUN_REACHED
 public :: MAXTR_REACHED
-public :: NAN_X
+public :: NAN_INF_X
 public :: NAN_INF_F
 public :: NAN_MODEL
 public :: DAMAGING_ROUNDING
@@ -33,7 +33,7 @@ integer(IK), parameter :: FTARGET_ACHIEVED = 1_IK
 integer(IK), parameter :: TRSUBP_FAILED = 2_IK
 integer(IK), parameter :: MAXFUN_REACHED = 3_IK
 integer(IK), parameter :: MAXTR_REACHED = 20_IK
-integer(IK), parameter :: NAN_X = -1_IK
+integer(IK), parameter :: NAN_INF_X = -1_IK
 integer(IK), parameter :: NAN_INF_F = -2_IK
 integer(IK), parameter :: NAN_MODEL = -3_IK
 integer(IK), parameter :: DAMAGING_ROUNDING = 7_IK

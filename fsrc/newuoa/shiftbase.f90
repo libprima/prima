@@ -6,7 +6,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, November 03, 2021 PM11:48:28
+! Last Modified: Friday, November 05, 2021 PM03:40:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -65,19 +65,17 @@ npt = int(size(xpt, 2), kind(npt))
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(n >= 1, 'N >= 1', srname)
-    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
-    call assert(idz >= 1 .and. idz <= npt - n, '1 <= IDZ <= NPT-N', srname)
+    call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
+    call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
-    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetrize', srname)
+    call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
-        & 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
-    call assert(size(gq) == n, 'SIZE(GQ) == N', srname)
+        & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
+    call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
-    call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
-    call assert(size(xbase) == n .and. all(is_finite(xbase)), &
-        & 'SIZE(XBASE) == N, XBASE is finite', srname)
-    call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT)==N, XOPT is finite', srname)
+    call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
+    call assert(size(xbase) == n .and. all(is_finite(xbase)), 'SIZE(XBASE) == N, XBASE is finite', srname)
+    call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT) == N, XOPT is finite', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
 end if
 
@@ -132,8 +130,15 @@ xopt = ZERO
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(issymmetric(hq), 'HQ is symmetric', srname)
+    call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
+    call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
+    call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
+    call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
+    call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT) == N, XOPT is finite', srname)
+    call assert(size(xbase) == n .and. all(is_finite(xbase)), 'SIZE(XBASE) == N, XBASE is finite', srname)
+    call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
+    call assert(all(is_finite(xpt)), 'XPT is finite', srname)
 end if
 
 end subroutine shiftbase
