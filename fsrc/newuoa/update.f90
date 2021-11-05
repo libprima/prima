@@ -7,7 +7,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 05, 2021 AM11:36:26
+! Last Modified: Friday, November 05, 2021 PM02:00:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -485,6 +485,7 @@ if (DEBUGGING) then
     call assert(kopt >= 1 .and. kopt <= npt, '1 <= KOPT <= NPT', srname)
     call assert(abs(f - fval(knew)) <= ZERO, 'F == FVAL(KNEW)', srname)
     call assert(abs(fopt - fval(kopt)) <= ZERO, 'FOPT == FVAL(KOPT)', srname)
+    call assert(size(xopt) == n, 'SIZE(XOPT) == N', srname)
     call assert(norm(xopt - xpt(:, kopt)) <= ZERO, 'XOPT == XPT(:, KOPT)', srname)
     call assert(.not. any(fval < fopt), '.NOT. ANY(FVAL < FOPT)', srname)
 end if
@@ -541,6 +542,8 @@ npt = int(size(pq), kind(npt))
 if (DEBUGGING) then
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
     call assert(idz >= 1 .and. idz <= size(zmat, 2) + 1, '1 <= IDZ <= SIZE(ZMAT, 2) + 1', srname)
+    ! By the definition of RATIO in ratio.f90, RATIO cannot be NaN unless the actual reduction is
+    ! NaN, which should NOT happen due to the moderated extreme barrier.
     call assert(.not. is_nan(ratio), 'RATIO is not NaN', srname)
     call assert(size(fval) == npt .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
         & 'SIZE(FVAL) == NPT and FVAL is not NaN or +Inf', srname)

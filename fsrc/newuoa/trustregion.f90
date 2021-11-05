@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, November 03, 2021 PM09:58:53
+! Last Modified: Friday, November 05, 2021 PM02:01:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -118,12 +118,11 @@ npt = int(size(xpt, 2), kind(npt))
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(n >= 1, 'N >= 1', srname)
-    call assert(npt >= n + 2, 'NPT >= N + 2', srname)
-    call assert(size(x) == n .and. all(is_finite(x)), 'SIZE(X) == N, X is finite', srname)
-    call assert(size(gq) == n, 'SIZE(GQ) == N', srname)
+    call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
+    call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
-    call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
+    call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
+    call assert(size(x) == n .and. all(is_finite(x)), 'SIZE(X) == N, X is finite', srname)
     call assert(size(s) == n, 'SIZE(S) == N', srname)
 end if
 
@@ -393,9 +392,9 @@ end do
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(all(is_finite(s)), 'S is finite', srname)
+    call assert(size(s) == n .and. all(is_finite(s)), 'SIZE(S) == N, S is finite', srname)
+    call assert(norm(s) <= TWO * delta, '|S| <= 2*DELTA', srname)
     ! Due to rounding, it may happen that |S| > DELTA, but |S| > 2*DELTA is highly improbable.
-    call assert(norm(s) <= TWO * delta, 'NORM(S) <= 2*DELTA', srname)
 end if
 
 end subroutine trsapp
@@ -430,11 +429,10 @@ character(len=*), parameter :: srname = 'TRRAD'
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(delta0 > ZERO, 'DELTA0 > 0', srname)
-    call assert(dnorm > ZERO, 'DNORM > 0', srname)
+    call assert(delta0 >= dnorm .and. dnorm > 0, 'DELTA0 >= DNORM > 0', srname)
     call assert(eta1 >= ZERO .and. eta1 <= eta2 .and. eta2 < ONE, '0 <= ETA1 <= ETA2 < 1', srname)
-    call assert(gamma1 > ZERO .and. gamma1 < ONE .and. gamma2 > ONE, &
-        & '0 < GAMMA1 < 1 < GAMMA2', srname)
+    call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
+    call assert(gamma1 > 0 .and. gamma1 < 1 .and. gamma2 > 1, '0 < GAMMA1 < 1 < GAMMA2', srname)
     ! By the definition of RATIO in ratio.f90, RATIO cannot be NaN unless the actual reduction is
     ! NaN, which should NOT happen due to the moderated extreme barrier.
     call assert(.not. is_nan(ratio), 'RATIO is not NaN', srname)
@@ -467,7 +465,7 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(delta > ZERO, 'DELTA > 0', srname)
+    call assert(delta > 0, 'DELTA > 0', srname)
 end if
 
 end function trrad
