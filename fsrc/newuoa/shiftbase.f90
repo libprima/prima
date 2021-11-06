@@ -6,7 +6,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 05, 2021 PM03:40:13
+! Last Modified: Saturday, November 06, 2021 AM09:09:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -49,7 +49,6 @@ character(len=*), parameter :: srname = 'SHIFTBASE'
 integer(IK) :: k
 integer(IK) :: n
 integer(IK) :: npt
-real(RP) :: bmatk(size(bmat, 1))
 real(RP) :: qxoptq
 real(RP) :: sumz(size(zmat, 2))
 real(RP) :: t
@@ -99,10 +98,9 @@ call r2update(hq, ONE, xopt, xpq)  ! Implement R2UPDATE properly so that HQ is s
 ! Update BMAT. See (7.11)--(7.12) of the NEWUOA paper.
 ! First, make the changes to BMAT that do not depend on ZMAT.
 do k = 1, npt
-    bmatk = bmat(:, k)
     w2 = w1(k) * xpt(:, k) + qxoptq * xopt
     ! Implement R2UPDATE properly so that BMAT(:, NPT+1:NPT+N) is symmetric.
-    call r2update(bmat(:, npt + 1:npt + n), ONE, bmatk, w2)
+    call r2update(bmat(:, npt + 1:npt + n), ONE, bmat(:, k), w2)
 end do
 ! Then the revisions of BMAT that depend on ZMAT are calculated.
 sumz = sum(zmat, dim=1)
