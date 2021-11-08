@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 05, 2021 PM08:42:38
+! Last Modified: Monday, November 08, 2021 PM01:11:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -367,28 +367,33 @@ do tr = 1, maxtr
     ! iteration; if RATIO > 0 in addition, then XOPT has been updated as well.
 
     xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1))
-    bad_trstep = (shortd .or. ratio < TENTH)  ! BAD_TRSTEP for IMPROVE_GEO
+    ! KNEW_TR == 0 implies RATIO <= 0. Therefore, we can remove KNEW_TR == 0 from the definition
+    ! of BAD_TRSTEP. Nevertheless, we keep it for robustness.
+    bad_trstep = (shortd .or. ratio < TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
     improve_geo = (.not. reduce_rho_1) .and. (maxval(xdist) > TWO * delta) .and. bad_trstep
 
     ! If all the interpolation points are close to XOPT and the trust-region is small, but the
     ! trust-region step is "bad" (SHORTD or RATIO <= 0), then we shrink RHO (update the criterion
     ! for the "closeness" and SHORTD). REDUCE_RHO_2 corresponds to Box 10 of the NEWUOA paper.
     ! N.B.:
+    ! 0. KNEW_TR == 0 implies RATIO <= 0. Therefore, we can remove KNEW_TR == 0 from the definition
+    ! of BAD_TRSTEP. Nevertheless, we keep it for robustness.
     ! 1. The definition of REDUCE_RHO_2 is equivalent to the following:
     ! REDUCE_RHO_2 = (.NOT. IMPROVE_GEO) .AND. (MAX(DELTA, DNORM) <= RHO) .AND. BAD_TRSTEP
     ! 2. The definition of REDUCE_RHO_2 can be moved downward below IF (IMPROVE_GEO) ... END IF.
     ! Even though DNORM gets a new value after the geometry step when IMPROVE_GEO = TRUE, this
     ! value does not affect REDUCE_RHO_2, because DNORM comes into play only if IMPROVE_GEO = FALSE.
     ! 3. DELTA < DNORM may hold due to the update of DELTA.
-    bad_trstep = (shortd .or. ratio <= ZERO)  ! BAD_TRSTEP for REDUCE_RHO_2
+    bad_trstep = (shortd .or. ratio <= ZERO .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO_2
     reduce_rho_2 = (maxval(xdist) <= TWO * delta) .and. (max(delta, dnorm) <= rho) .and. bad_trstep
 
     ! Comments on BAD_TRSTEP:
     ! 1. Powell used different thresholds (<= 0 and < 0.1) for RATIO in the definitions of BAD_TRSTEP
     ! above. Unifying them to <= 0 makes little difference to the performance, sometimes worsening,
     ! sometimes improving, but never substantially; unifying them to 0.1 makes little difference to
-    ! the performance.
-    ! 2. KNEW_TR == 0 implies RATIO < 0, and hence BAD_TRSTEP = TRUE. Otherwise, SETDROP_TR is buggy.
+    ! the performance either.
+    ! 2. KNEW_TR == 0 implies RATIO <= 0, and hence BAD_TRSTEP = TRUE. Otherwise, SETDROP_TR is buggy.
+    ! Indeed, we can remove KNEW_TR == 0 from the definition of BAD_TRSTEP. It is kept for robustness.
 
     ! NEWUOA never sets IMPROVE_GEO and (REDUCE_RHO_1 .OR. REDUCE_RHO_2) to TRUE simultaneously. So
     ! the instructions "IF (IMPROVE_GEO) ... END IF" and "IF (REDUCE_RHO_1 .OR. REDUCE_RHO_2)" can

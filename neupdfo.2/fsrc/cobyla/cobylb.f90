@@ -265,6 +265,9 @@ do tr = 1, maxtr
             prerem = prerec   ! Is it positive?????
             actrem = cval(n + 1) - cstrv
         end if
+        if (is_nan(actrem)) then
+            actrem = -hugenum
+        end if
         ! Set JDROP to the index of the vertex that is to be replaced by X.
         ! N.B.: COBYLA never sets JDROP = N + 1.
         jdrop = setdrop_tr(actrem, d, factor_alpha, factor_delta, rho, sim, simi)

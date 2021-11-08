@@ -45,8 +45,9 @@ end if
 ! Calculate the values of sigma and eta.
 parsig = factor_alpha * rho
 pareta = factor_beta * rho
-! VSIG(J) (J=1, .., N) is The Euclidean distance from vertex J to the opposite face of
-! the current simplex. But what about vertex N+1?
+! VETA(J) (1 <= J <= N) is the distance between vertices J and 0 (the best vertex) of the simplex.
+! VSIG(J) is the distance from vertex J to the opposite face of the simplex. Thus VSIG <= VETA.
+! But what about vertex N+1?
 vsig = ONE / sqrt(sum(simi**2, dim=2))
 veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
 good_geo = all(vsig >= parsig) .and. all(veta <= pareta)
@@ -82,7 +83,7 @@ integer(IK) :: jdrop
 
 ! Local variables
 integer(IK) :: n
-real(RP) :: xdist(size(sim, 1))
+real(RP) :: veta(size(sim, 1))
 real(RP) :: edgmax
 real(RP) :: parsig
 real(RP) :: sigbar(size(sim, 1))
@@ -102,7 +103,7 @@ if (DEBUGGING) then
 end if
 
 ! JDROP = 0 by default. It cannot be removed, as JDROP may not be set below in some cases (e.g.,
-! when ACTREM <= 0, MAXVAL(ABS(SIMID)) <= 1, and MAXVAL(XDIST) <= EDGMAX).
+! when ACTREM <= 0, MAXVAL(ABS(SIMID)) <= 1, and MAXVAL(VETA) <= EDGMAX).
 jdrop = 0_IK
 
 simid = matprod(simi, d)
@@ -111,28 +112,32 @@ if (any(abs(simid) > ONE) .or. (actrem > ZERO .and. any(.not. is_nan(simid)))) t
 end if
 
 if (actrem > ZERO) then
-    xdist = sqrt(sum((sim(:, 1:n) - spread(d, dim=2, ncopies=n))**2, dim=1))
+    veta = sqrt(sum((sim(:, 1:n) - spread(d, dim=2, ncopies=n))**2, dim=1))
 else
-    xdist = sqrt(sum(sim(:, 1:n)**2, dim=1))
+    veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
 end if
 edgmax = factor_delta * rho
 parsig = factor_alpha * rho
 vsig = ONE / sqrt(sum(simi**2, dim=2))
 sigbar = abs(simid) * vsig
 ! The following JDROP will overwrite the previous one if its premise holds.
-if (any(xdist > edgmax .and. (sigbar >= parsig .or. sigbar >= vsig))) then
-    jdrop = int(maxloc(xdist, mask=(sigbar >= parsig .or. sigbar >= vsig), dim=1), kind(jdrop))
+if (any(veta > edgmax .and. (sigbar >= parsig .or. sigbar >= vsig))) then
+    jdrop = int(maxloc(veta, mask=(veta > edgmax .and. (sigbar >= parsig .or. sigbar >= vsig)), &
+        & dim=1), kind(jdrop))
 end if
 
 ! Powell's code does not include the following instructions. With Powell's code, if SIMID consists
 ! of only NaN, then JDROP can be 0 even when ACTREM > 0 (i.e., D reduces the merit function).
-if (actrem > ZERO .and. jdrop < 1_IK) then
-    jdrop = int(maxloc(xdist, mask=(.not. is_nan(xdist)), dim=1), kind(jdrop))
+! With the following code, JDROP cannot be 0 when ACTREM > 0, unless VETA is all NaN, which should
+! not happen if X0 does not contain NaN, the trust-region/geometry steps never contain NaN, and we
+! exit once encountering an iterate containing Inf (due to overflow).
+if (actrem > ZERO .and. jdrop <= 0) then  ! Write JDROP <= 0 instead of JDROP == 0 for robustness.
+    jdrop = int(maxloc(veta, mask=(.not. is_nan(veta)), dim=1), kind(jdrop))
 end if
 
 if (DEBUGGING) then
-    if (actrem > ZERO .and. jdrop < 1_IK) then
-        ! This can happen only if NaN occurs in XDIST, which should not happen if the starting point
+    if (actrem > ZERO .and. jdrop <= 0) then ! Write JDROP <= 0 instead of JDROP == 0 for robustness.
+        ! This can happen only if NaN occurs in VETA, which should not happen if the starting point
         ! does not contain NaN and the trust-region/geometry steps never contain NaN.
         call errstop(srname, 'ACTREM > 0 but JDROP < 1')
     end if
@@ -190,10 +195,10 @@ veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
 ! acceptability of the simplex. See equations (15) and (16) of the COBYLA paper.
 if (any(veta > pareta)) then
     jdrop = int(maxloc(veta, mask=(.not. is_nan(veta)), dim=1), kind(jdrop))
-elseif (any(.not. is_nan(vsig))) then
+elseif (any(vsig < parsig)) then
     jdrop = int(minloc(vsig, mask=(.not. is_nan(vsig)), dim=1), kind(jdrop))
 else
-    ! Powell's code does not include this branch. NaN can occur in VSIG/VETA due to NaN in SIM/SIMI.
+    ! We arrive here if VSIG and VETA are all NaN, which can happen due to NaN in SIM and SIMI.
     jdrop = 0_IK
 end if
 

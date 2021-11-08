@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 05, 2021 PM10:44:52
+! Last Modified: Sunday, November 07, 2021 PM02:00:57
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -31,8 +31,7 @@ public :: inprod, matprod, outprod
 public :: r1update, r2update, symmetrize
 public :: Ax_plus_y
 public :: eye
-public :: inv
-public :: planerot
+public :: planerot, qr, inv
 public :: calquad, errquad, hess_mul
 public :: omega_col, omega_mul, omega_inprod
 public :: errh
@@ -532,6 +531,338 @@ else if (matrix_type == 'utri' .or. matrix_type == 'UTRI') then
 end if
 
 end function inv
+
+
+subroutine qr(A, Q, R, P)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine calculates the QR factorization of A, possibly with column pivoting, so that
+! A = Q*R (if no pivoting) or A(:, P) = Q*R (if pivoting), where the columns of Q are orthonormal,
+! and R is upper triangular.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+implicit none
+
+! Inputs
+real(RP), intent(in) :: A(:, :)
+
+! Outputs
+real(RP), intent(out), optional :: Q(:, :)
+real(RP), intent(out), optional :: R(:, :)
+integer(IK), intent(out), optional :: P(:)
+
+! Local variables
+character(len=*), parameter :: srname = 'QR'
+logical :: pivote
+integer(IK) :: i
+integer(IK) :: j
+integer(IK) :: k
+integer(IK) :: m
+integer(IK) :: n
+real(RP) :: G(2, 2)
+real(RP) :: Q_loc(size(A, 1), size(A, 1))
+real(RP) :: R_loc(size(A, 1), size(A, 2))
+real(RP) :: tol
+
+if (.not. (present(Q) .or. present(R) .or. present(R))) then
+    return
+end if
+
+! Sizes
+m = int(size(A, 1), kind(m))
+n = int(size(A, 2), kind(n))
+
+! Preconditions
+if (DEBUGGING) then
+    if (present(Q)) then
+        call assert(size(Q, 1) == m .and. (size(Q, 2) == m .or. size(Q, 2) == min(m, n)), &
+            & 'SIZE(Q) == [M, N] .or. SIZE(Q) == [M, MIN(M, N)]', srname)
+    end if
+    if (present(R)) then
+        call assert((size(R, 1) == m .or. size(R, 1) == min(m, n)) .and. size(R, 2) == n, &
+            & 'SIZE(R) == [M, N] .or. SIZE(R) == [MIN(M, N), N]', srname)
+    end if
+    if (present(Q) .and. present(R)) then
+        call assert(size(Q, 2) == size(R, 1), 'SIZE(Q, 2) == SIZE(R, 1)', srname)
+    end if
+    if (present(P)) then
+        call assert(size(P) == N, 'SIZE(P) == N', srname)
+    end if
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+pivote = (present(P))
+Q_loc = eye(m)
+R_loc = A
+if (pivote) then
+    P = [(j, j=1, n)]
+end if
+
+do j = 1, n
+    if (pivote) then
+        k = maxloc(sum(R_loc(j:m, j:n)**2, dim=1), dim=1)
+        if (k > 1) then
+            k = k + j - 1_IK
+            P([j, k]) = P([k, j])
+            R_loc(:, [j, k]) = R_loc(:, [k, j])
+        end if
+    end if
+    do i = m, j + 1_IK, -1_IK
+        G = planerot(R_loc([j, i], j))
+        !R_loc([j, i], j) = [hypot(R_loc(j, j), R_loc(i, j)), ZERO]
+        R_loc([j, i], j) = [sqrt(R_loc(j, j)**2 + R_loc(i, j)**2), ZERO]
+        R_loc([j, i], j + 1:n) = matprod(G, R_loc([j, i], j + 1:n))
+        Q_loc(:, [j, i]) = matprod(Q_loc(:, [j, i]), transpose(G))
+    end do
+end do
+
+Q = Q_loc(:, 1:size(Q, 2))
+R = R_loc(1:size(R, 1), :)
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    tol = 1.0E2_RP * EPS * real(max(m, n), RP)
+    call assert(isorth(Q_loc, tol), 'The columns of Q are orthonormal', srname)
+    call assert(istriu(R_loc, tol), 'R is upper triangular', srname)
+    if (pivote) then
+        call assert(all(abs(matprod(Q_loc, R_loc) - A(:, P)) <= max(tol, tol * maxval(abs(A)))), &
+            & 'A(:, P) = Q*R', srname)
+        do j = 1, min(m, n) - 1_IK
+            call assert(R_loc(j, j) >= R_loc(j + 1, j + 1), 'R(J, J) >= R(J + 1, J + 1)', srname)
+            call assert(all(R_loc(j, j)**2 >= sum(R_loc(j:min(m, n), j + 1:n)**2, dim=1)), &
+                & 'R(J, J)^2 >= SUM(R(J : MIN(M, N), J + 1 : N).^2', srname)
+        end do
+    else
+        call assert(all(abs(matprod(Q_loc, R_loc) - A) <= max(tol, tol * maxval(abs(A)))), 'A = Q*R', srname)
+    end if
+end if
+end subroutine qr
+
+
+!function lsqr(A, b, Q, R, Rdiag) result(x)
+!!--------------------------------------------------------------------------------------------------!
+!! This function solves the linear least squares problem min ||A*x - b||_2 by the QR factorization.
+!!--------------------------------------------------------------------------------------------------!
+!use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, EPS, DEBUGGING
+!use, non_intrinsic :: debug_mod, only : assert
+!implicit none
+
+!! Inputs
+!real(RP), intent(in) :: A(:, :)
+!real(RP), intent(in) :: b(:)
+!real(RP), intent(in), optional :: Q(:, :)
+!real(RP), intent(in), optional :: R(:, :)
+!real(RP), intent(in), optional :: Rdiag(:)
+
+!! Outputs
+!real(RP) :: x(size(A, 2))
+
+!! Local variables
+!character(len=*), parameter :: srname = 'LSQR'
+!integer(IK) :: k
+!real(RP), parameter :: tol = 1.0E4_RP * sqrt(EPS)
+!real(RP) :: Q_loc(size(A, 1), min(size(A, 1), size(A, 2)))
+!real(RP) :: Rdiag_loc(min(size(A, 1), size(A, 2)))
+!real(RP) :: y(size(b))
+!real(RP) :: yqk
+!real(RP) :: yqkabs
+
+!! Sizes
+!m = int(size(A, 1), kind(m))
+!n = int(size(A, 2), kind(n))
+
+!! Preconditions
+!if (DEBUGGING) then
+!    call assert(size(b) == m, 'SIZE(B) == M', srname)
+!    if (present(Q)) then
+!        call assert(size(Q, 1) == m .and. (size(Q, 2) == m .or. size(Q, 2) == min(m, n)), &
+!            & 'SIZE(Q) == [M, N] .or. SIZE(Q) == [M, MIN(M, N)]', srname)
+!        call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
+!    end if
+!    if (present(R)) then
+!        call assert((size(R, 1) == m .or. size(R, 1) == min(m, n)) .and. size(R, 2) == n, &
+!            & 'SIZE(R) == [M, N] .or. SIZE(R) == [MIN(M, N), N]', srname)
+!        call assert(istriu(R, tol), 'R is upper triangular', srname)
+!    end if
+!    if (present(Q) .and. present(R)) then
+!        call assert(size(Q, 2) == size(R, 1), 'SIZE(Q, 2) == SIZE(R, 1)', srname)
+!        call assert(all(abs(matprod(Q, R) - A) <= max(tol, tol * maxval(abs(A)))), 'A = Q*R', srname)
+!    end if
+!    if (present(Rdiag)) then
+!        call assert(size(Rdiag) == min(size(A, 1), size(A, 2)), &
+!            & 'SIZE(RDIAG) == MIN(SIZE(A, 1), SIZE(A, 2))', srname)
+!    end if
+!    if (present(Q) .and. present(Rdiag)) then
+!        call assert(all(abs(Rdiag - [(inprod(Q(:, k), A(:, k)), k=1, size(Rdiag))]) &
+!            & <= max(tol, tol * maxval(abs(A)))), 'RDIAG = DIAG(Q^T*A)', srname)
+!    end if
+!end if
+
+!!====================!
+!! Calculation starts !
+!!====================!
+
+!if (present(Q)) then
+!    Q_loc = Q(:, 1:size(Q_loc, 2))
+!else
+!    call qr(A, Q = Q_loc, P = P_loc)
+!end if
+
+!if (present(Rdiag)) then
+!    Rdiag_loc = Rdiag
+!else
+!    if (present(R)) then
+!        Rdiag_loc = diag(R)
+!    else
+!        Rdiag_loc = [(inprod(Q_loc(:, k), A(:, k)), k=1, size(A, 2))]
+!    end if
+!end if
+
+!y = b  ! Local copy of B; B is INTENT(IN) and should not be modified.
+
+!do k = n, 1, -1
+!    yqk = inprod(y, Q_loc(:, k))
+!    yqkabs = inprod(abs(y), abs(Q_loc(:, k)))
+!    ! Powell's code sets YQK = 0 when ISMINOR(YQK, YQKABS) = TRUE, and then X(K) = YQK/RDIAG(K),
+!    ! which is NaN if YQK = 0 = RDIAG(K) (in precise arithmetic, this cannot happen).
+!    if (isminor(yqk, yqkabs)) then
+!        x(k) = ZERO
+!    else
+!        x(k) = yqk / Rdiag_loc(k)
+!    end if
+!    y = y - x(k) * A(:, k)
+!end do
+
+!!====================!
+!!  Calculation ends  !
+!!====================!
+
+!! Postconditions
+!if (DEBUGGING) then
+!    call assert(norm(matprod(b - matprod(A, x), A)) <= max(tol, tol * norm(matprod(b, A))), &
+!        & 'A*X is the projection of B to the column space of A', srname)
+!end if
+!end function lsqr
+
+
+function diag(A) result(D)
+!--------------------------------------------------------------------------------------------------!
+! This function takes the main diagonal of the matrix A.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK
+implicit none
+! Inputs
+real(RP), intent(in) :: A(:, :)
+! Outputs
+real(RP) :: D(min(size(A, 1), size(A, 2)))
+! Local variables
+integer(IK) :: i
+D = [(A(i, i), i=1, size(D))]
+end function diag
+
+
+function istril(A, tol) result(is_tril)
+!--------------------------------------------------------------------------------------------------!
+! This function tests whether the matrix A is lower triangular up to the tolerance TOL.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO
+implicit none
+! Inputs
+real(RP), intent(in) :: A(:, :)
+real(RP), intent(in), optional :: tol
+
+! Outputs
+logical :: is_tril
+
+! Local variables
+integer(IK) :: i
+integer(IK) :: m
+integer(IK) :: n
+real(RP) :: tol_loc
+
+if (present(tol)) then
+    tol_loc = max(tol, tol * maxval(abs(A)))
+else
+    tol_loc = ZERO
+end if
+m = int(size(A, 1), kind(m))
+n = int(size(A, 2), kind(n))
+is_tril = .true.
+do i = 1, min(m, n)
+    if (any(abs(A(1:i - 1, i)) > tol_loc)) then
+        is_tril = .false.
+        exit
+    end if
+end do
+end function istril
+
+
+function istriu(A, tol) result(is_triu)
+!--------------------------------------------------------------------------------------------------!
+! This function tests whether the matrix A is upper triangular up to the tolerance TOL.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO
+implicit none
+! Inputs
+real(RP), intent(in) :: A(:, :)
+real(RP), intent(in), optional :: tol
+
+! Outputs
+logical :: is_triu
+
+! Local variables
+integer(IK) :: i
+integer(IK) :: m
+integer(IK) :: n
+real(RP) :: tol_loc
+
+if (present(tol)) then
+    tol_loc = max(tol, tol * maxval(abs(A)))
+else
+    tol_loc = ZERO
+end if
+m = int(size(A, 1), kind(m))
+n = int(size(A, 2), kind(n))
+is_triu = .true.
+do i = 1, min(m, n)
+    if (any(abs(A(i + 1:m, i)) > tol_loc)) then
+        is_triu = .false.
+        exit
+    end if
+end do
+end function istriu
+
+
+function isorth(A, tol) result(is_orth)
+!--------------------------------------------------------------------------------------------------!
+! This function tests whether the matrix A has orthonormal columns up to the tolerance TOL.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP
+implicit none
+! Inputs
+real(RP), intent(in) :: A(:, :)
+real(RP), intent(in), optional :: tol
+
+! Outputs
+logical :: is_orth
+
+if (size(A, 2) > size(A, 1)) then
+    is_orth = .false.
+else
+    if (present(tol)) then
+        is_orth = all(abs(matprod(transpose(A), A) - eye(size(A, 2))) <= max(tol, tol * maxval(abs(A))))
+    else
+        is_orth = all(abs(matprod(transpose(A), A) - eye(size(A, 2))) <= 0)
+    end if
+end if
+end function
 
 
 function planerot(x) result(G)
@@ -1143,7 +1474,7 @@ real(RP) :: refa, refb
 
 refa = abs(ref) + TENTH * abs(x)
 refb = abs(ref) + TWO * TENTH * abs(x)
-is_minor = abs(ref) >= refa .or. refa >= refb
+is_minor = (abs(ref) >= refa .or. refa >= refb)
 end function isminor0
 
 
@@ -1197,7 +1528,6 @@ elseif (present(tol)) then
         is_symmetric = .false.
     end if
 end if
-
 end function issymmetric
 
 

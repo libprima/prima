@@ -62,7 +62,8 @@ integer(IK), parameter :: maxfilt = 2000_IK  ! Must be positive. Recommended to 
 ! Local variables
 integer(IK) :: tr
 integer(IK) :: maxtr
-integer(IK) :: jdrop
+integer(IK) :: jdrop_tr
+integer(IK) :: jdrop_geo
 integer(IK) :: kopt
 integer(IK) :: m
 integer(IK) :: maxxhist
@@ -168,12 +169,13 @@ simi = inv(sim(:, 1:n), 'ltri')
 ! If we arrive here, the objective and constraints must have been evaluated at SIM(:, I) for all I.
 evaluated = .true.
 
-! Initialize PREREM, ACTREM, and JDROP, or some compilers will complain that they are uninitialized
-! when setting BAD_TRSTEP. Indeed, these values will not be used, because they will be overwritten
-! when SHORTD = FALSE.
+! Initialize PREREM, ACTREM, JDROP_TR, and JDROP_GEO, or some compilers will complain that they are
+! uninitialized when setting BAD_TRSTEP. Indeed, these values will not be used, because they will be
+! overwritten when SHORTD = FALSE.
 prerem = ONE
 actrem = -ONE
-jdrop = 0_IK
+jdrop_tr = 0_IK
+jdrop_geo = 0_IK
 
 ! In most cases, each trust-region iteration takes at most two function evaluation. The following
 ! setting essentially imposes no constraint on the maximal number of trust-region iterations.
@@ -265,15 +267,18 @@ do tr = 1, maxtr
             prerem = prerec   ! Is it positive?????
             actrem = cval(n + 1) - cstrv
         end if
-        ! Set JDROP to the index of the vertex that is to be replaced by X.
-        ! N.B.: COBYLA never sets JDROP = N + 1.
-        jdrop = setdrop_tr(actrem, d, factor_alpha, factor_delta, rho, sim, simi)
-        ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP) is replaced by D.
-        ! When JDROP=0, the algorithm decides not to include X into the simplex.
+        if (is_nan(actrem)) then
+            actrem = -HUGENUM
+        end if
+        ! Set JDROP_TR to the index of the vertex that is to be replaced by X.
+        ! N.B.: COBYLA never sets JDROP_TR = N + 1.
+        jdrop_tr = setdrop_tr(actrem, d, factor_alpha, factor_delta, rho, sim, simi)
+        ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_TR) is replaced by D.
+        ! When JDROP_TR == 0, the algorithm decides not to include X into the simplex.
         ! N.B.: UPDATEXFC does NOT manipulate the simplex so that SIM(:, N+1) is the best vertex;
         ! that is the job of UPDATEPOLE, which is called before each trust-region/geometry step.
-        if (jdrop > 0) then
-            call updatexfc(jdrop, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
+        if (jdrop_tr > 0) then
+            call updatexfc(jdrop_tr, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
         end if
 
         ! Check whether to exit.
@@ -285,11 +290,11 @@ do tr = 1, maxtr
     end if
 
     ! Should we take a geometry step to improve the geometry of the interpolation set?
-    ! N.B.: THEORETICALLY, JDROP > 0 when ACTREM > 0, and hence the definition of BAD_TRSTEP is
-    ! mathematically equivalent to (SHORTD .OR. ACTREM <= ZERO .OR. ACTREM < TENTH * PREREM);
-    ! however, JDROP may turn out 0 due to NaN even if ACTREM > 0. See SETDRTOP_TR for details.
-    !bad_trstep = (shortd .or. actrem <= ZERO .or. actrem < TENTH * prerem .or. jdrop == 0)
-    bad_trstep = (shortd .or. actrem <= ZERO .or. actrem < TENTH * prerem)
+    ! N.B.: THEORETICALLY, JDROP_TR > 0 when ACTREM > 0, and hence the definition of BAD_TRSTEP is
+    ! mathematically equivalent to (SHORTD .OR. ACTREM <= ZERO .OR. ACTREM < TENTH * PREREM).
+    ! However, Powell's code can set JDROP_TR = 0 when ACTREM >0 due to NaN. This has been rectified
+    ! in the subroutine SETDROP_TR. Nevertheless, we still keep JDROP_TR == 0 for robustness.
+    bad_trstep = (shortd .or. actrem <= ZERO .or. actrem < TENTH * prerem .or. jdrop_tr == 0)
     improve_geo = bad_trstep .and. .not. good_geo
 
     ! Should we enhance the resolution by reducing RHO?
@@ -319,18 +324,18 @@ do tr = 1, maxtr
         if (.not. goodgeo(factor_alpha, factor_beta, rho, sim, simi)) then
             ! Decide a vertex to drop from the simplex. It will be replaced by SIM(:, N + 1) + D to
             ! improve acceptability of the simplex. See equations (15) and (16) of the COBYLA paper.
-            ! N.B.: COBYLA never sets JDROP = N + 1.
-            jdrop = setdrop_geo(factor_alpha, factor_beta, rho, sim, simi)
+            ! N.B.: COBYLA never sets JDROP_GEO = N + 1.
+            jdrop_geo = setdrop_geo(factor_alpha, factor_beta, rho, sim, simi)
 
-            ! If JDROP = 0 (probably due to NaN in SIM or SIMI), then we exit. Without this, memory
-            ! error may occur as JDROP will be used as an index of arrays.
-            if (jdrop == 0) then
+            ! If JDROP_GEO == 0 (due to NaN in SIM or SIMI), then we exit. Without this, memory
+            ! error will occur as JDROP_GEO will be used as an index of arrays.
+            if (jdrop_geo == 0) then
                 info = DAMAGING_ROUNDING
                 exit
             end if
 
             ! Calculate the geometry step D.
-            d = geostep(jdrop, cpen, conmat, cval, fval, factor_gamma, rho, simi)
+            d = geostep(jdrop_geo, cpen, conmat, cval, fval, factor_gamma, rho, simi)
             x = sim(:, n + 1) + d
             ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
             call evalfc(calcfc, x, f, constr, cstrv)
@@ -339,12 +344,12 @@ do tr = 1, maxtr
             call savehist(nf, constr, cstrv, f, x, chist, conhist, fhist, xhist)
             ! Save X, F, CONSTR, CSTRV into the filter.
             call savefilt(constr, cstrv, ctol, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
-            ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP) is replaced by D.
+            ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_GEO) is replaced by D.
             !--------------------------------------------------------------------------------------!
             ! N.B.: UPDATEXFC does NOT manipulate the simplex so that SIM(:, N+1) is the best vertex;
             ! that is the job of UPDATEPOLE, which is called before each trust-region/geometry step.
             !--------------------------------------------------------------------------------------!
-            call updatexfc(jdrop, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
+            call updatexfc(jdrop_geo, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
             ! Check whether to exit.
             subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
             if (subinfo /= INFO_DFT) then
