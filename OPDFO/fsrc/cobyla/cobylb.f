@@ -136,7 +136,6 @@ C   60     RESMAX=AMAX1(RESMAX,-CON(K))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       END IF
 
-      !if (NFVALS >=14) write(17,*) NFVALS, F, RESMAX
 
       IF (NFVALS == IPRINT-1 .OR. IPRINT == 3) THEN
           PRINT 70, NFVALS,F,RESMAX,(X(I),I=1,IPTEM)
@@ -383,7 +382,6 @@ C     after the constraint gradients in the array A. The vector W is used for
 C     working space.
 C
 ! 220
-
       DO K=1,MP
           CON(K)=-DATMAT(K,NP)
           DO J=1,N
@@ -460,10 +458,10 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 20190822: If VETA or VSIG become NaN due to rounding errors,
 C JDROP may end up being 0. If we continue, then a Segmentation Fault
 C will happen because we will read SIM(:, JDROP) and VSIG(JDROP).
-      summ = sum(veta(1:n))
-      if (summ /= summ) jdrop = 0
-      summ = sum(vsig(1:n))
-      if (summ /= summ) jdrop = 0
+!      summ = sum(veta(1:n))
+!      if (summ /= summ) jdrop = 0
+!      summ = sum(vsig(1:n))
+!      if (summ /= summ) jdrop = 0
       IF (JDROP == 0) THEN
           IF (IPRINT >= 1) PRINT 286
   286     FORMAT (/3X,'Return from subroutine COBYLA because ',
@@ -591,7 +589,6 @@ C the code, including uninitialized indices.
 
       CALL TRSTLP (N,M,A,CON,RHO,DX,IFULL,IACT,W(IZ),W(IZDOTA),
      1  W(IVMC),W(ISDIRN),W(IDXNEW),W(IVMD))
-      !if (NFVALS == 14) write(17,*) 'dt', DX(1:N)
 
       !IF (IFULL == 0) THEN
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -648,7 +645,11 @@ C      IF (PARMU .LT. 1.5*BARMU) THEN
 C          PARMU=2.0*BARMU
       IF (PREREC > 0.0D0) BARMU=SUMM/PREREC
       IF (PARMU < 1.5D0*BARMU) THEN
-          PARMU=2.0D0*BARMU
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          ! Zaikun 20211108
+          !PARMU=2.0D0*BARMU
+          PARMU=min(2.0D0*BARMU, HUGENUM)
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           IF (IPRINT >= 2) PRINT 410, PARMU
   410     FORMAT (/3X,'Increase in PARMU to',1PE13.6)
@@ -689,6 +690,10 @@ C      IF (PARMU .EQ. 0.0 .AND. F .EQ. DATMAT(MP,NP)) THEN
           PREREM=PREREC
           TRURED=DATMAT(MPP,NP)-RESMAX
       END IF
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! Zaikun 20211008
+      if (is_nan(trured)) then trured = -hugenum
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 C
 C     Begin the operations that decide whether x(*) should replace one of the
@@ -699,8 +704,13 @@ C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      RATIO=0.0
 C      IF (TRURED .LE. 0.0) RATIO=1.0
-      RATIO=0.0D0
-      IF (TRURED <= 0.0D0) RATIO=1.0D0
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !Zaikun 20211108: The follow two versions differ when TRUERED=NaN
+      !RATIO=0.0D0
+      !IF (TRURED <= 0.0D0) RATIO=1.0D0
+      RATIO = 1.0D0
+      IF (TRURED > 0.0D0) RATIO=0.0D0
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       JDROP=0
       DO J=1,N
@@ -744,14 +754,14 @@ C              TEMP=SQRT(TEMP)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               END IF
 
-              !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              ! Zaikun 20210812
-              if (temp /= temp) then
-                  jdrop = 0
-                  l = 0
-                  exit
-              end if
-              !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+              !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+              !! Zaikun 20210812
+              !if (temp /= temp) then
+              !    jdrop = 0
+              !    l = 0
+              !    exit
+              !end if
+              !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
               IF (TEMP > EDGMAX) THEN
                   L=J
@@ -761,8 +771,23 @@ C              TEMP=SQRT(TEMP)
       END DO
       IF (L > 0) JDROP=L
 
-      summ = sum(abs(sigbar(1:n)))
-      if (summ /= summ) jdrop = 0
+
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! Zaikun 20211107
+      ! With the following, JDROP should not be 0 unless VETA is all NaN,
+      ! which should not happen if X0 does not contain NaN, trust-region/
+      ! geometry step never contains NaN, and we exit once we arrive at
+      ! an iterate containing Inf (due to overflow).
+      ! Nevertheless, we still keep the code from 20190820 that handles
+      ! the case JDROP = 0 for robustness.
+      if (trured > 0 .and. jdrop < 1) then
+      jdrop=int(maxloc(veta(1:n),mask=(.not.is_nan(veta(1:n))), dim=1))
+      end if
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+      !summ = sum(abs(sigbar(1:n)))
+      !if (summ /= summ) jdrop = 0
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 20190820:
@@ -978,7 +1003,6 @@ C      NFVALS-2 instead of NFVALS-1.
           resref = hugenum
       end if
 
-      !write(17,*) fref, resref
 
       if (any (fhist(1:nsav) < fref .and. chist(1:nsav)
      1 < resref)) then
@@ -1102,7 +1126,6 @@ C      NFVALS-2 instead of NFVALS-1.
               ENDIF
           END DO
 
-          !write(17,*) PHIMIN, RESREF, F, RESMAX
 !
 !
 !          FREF = F

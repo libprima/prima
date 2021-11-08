@@ -286,7 +286,10 @@
       ACCB=ZDVABS+2.0D0*0.1D0*DABS(ZDOTV)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       IF (ZDVABS < ACCA .AND. ACCA < ACCB) THEN
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           TEMP=ZDOTV/ZDOTA(K)
+          !!!TEMP=ZDOTV/inprod(A(:, iact(k)), Z(:, k))
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          IF (TEMP .GT. 0.0 .AND. IACT(K) .LE. M) THEN
           IF (TEMP > 0.0D0 .AND. IACT(K) <= M) THEN
@@ -623,7 +626,10 @@
       IF (ZDWABS >= ACCA .OR. ACCA >= ACCB) then
         VMULTD(K)=0.0D0
       else
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         VMULTD(K)=ZDOTW/ZDOTA(K)
+        !!!vmultd(k)=zdotw/inprod(A(:, iact(k)), Z(:, k))
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       end if
       IF (K >= 2) THEN
           KK=IACT(K)

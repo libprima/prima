@@ -10,7 +10,7 @@ contains
 function trstlp(A, b, rho) result(d)
 ! This subroutine calculates an N-component vector D by the following two stages. In the first
 ! stage, D is set to the shortest vector that minimizes the greatest violation of the constraints
-!       dot_product(A(1:N, K), D) >= B(K),  K= 1, 2, 3, ..., M,
+!       dot_product(A(1:N, K), D) >= B(K),  K = 1, 2, 3, ..., M,
 ! subject to the Euclidean length of D being at most RHO. If its length is strictly less than RHO,
 ! then we use the resultant freedom in D to minimize the objective function
 !       dot_product(-A(1:N, M+1), D)
@@ -23,7 +23,7 @@ function trstlp(A, b, rho) result(d)
 ! CSTRV is the largest constraint violation of the current D: MAXVAL([B(1:M)-A(:,1:M)^T*D), ZERO]).
 ! ICON is the index of a most violated constraint if CSTRV is positive.
 !
-! NACT is the number of constraints in the active set and IACT(1),...,IACT(NACT) are their indices,
+! NACT is the number of constraints in the active set and IACT(1), ...,IACT(NACT) are their indices,
 ! while the remainder of IACT contains a permutation of the remaining constraint indices.
 ! N.B.: NACT <= min(M, N). Obviously, NACT <= M. In addition, The constraints in IACT(1, ..., NACT)
 ! have linearly independent gradients (see the comments above the instructions that delete a
@@ -31,7 +31,7 @@ function trstlp(A, b, rho) result(d)
 ! it can also be seen from the update of NACT: starting from 0, NACT is incremented only if NACT < N.
 !
 ! Further, Z is an orthogonal matrix whose first NACT columns can be regarded as the result of
-! Gram-Schmidt applied to the active constraint gradients. For J=1, 2, ..., NACT, the number
+! Gram-Schmidt applied to the active constraint gradients. For J = 1, 2, ..., NACT, the number
 ! ZDOTA(J) is the scalar product of the J-th column of Z with the gradient of the J-th active
 ! constraint. D is the current vector of variables and here the residuals of the active constraints
 ! should be zero. Further, the active constraints have nonnegative Lagrange multipliers that are
@@ -113,11 +113,8 @@ subroutine trstlp_sub(iact, nact, stage, A, b, rho, d, vmultc, z)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, EPS, HUGENUM, DEBUGGING
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: debug_mod, only : assert, errstop, verisize
-!!!!!! use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, planerot, isminor
+!!!!!! use, non_intrinsic:: linalg_mod, only : inprod, matprod, eye, planerot, isminor
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, isminor !!!!!!!!!!!!!!!!!!
-
-use, intrinsic :: ieee_arithmetic, only : ieee_value, ieee_signaling_nan
-
 implicit none
 
 ! Inputs
@@ -136,7 +133,6 @@ real(RP), intent(inout) :: z(:, :)  ! (N, N)
 ! Local variables
 integer(IK) :: icon
 integer(IK) :: iter
-integer(IK) :: itmp
 integer(IK) :: k
 integer(IK) :: m
 integer(IK) :: maxiter
@@ -147,8 +143,6 @@ integer(IK) :: nfail
 real(RP) :: cgrad(size(d))
 real(RP) :: cgz(size(d))
 real(RP) :: cgzabs(size(d))
-real(RP) :: cgzk
-real(RP) :: cgzkabs
 real(RP) :: cstrv
 real(RP) :: cvold
 real(RP) :: cvsabs(size(b))
@@ -156,7 +150,6 @@ real(RP) :: cvshift(size(b))
 real(RP) :: dd
 real(RP) :: dnew(size(d))
 real(RP) :: dold(size(d))
-real(RP) :: dtmp(size(d))
 real(RP) :: frac
 real(RP) :: frtmp(size(b))
 real(RP) :: grot(2, 2)
@@ -169,8 +162,6 @@ real(RP) :: ss
 real(RP) :: step
 real(RP) :: vmultd(size(b))
 real(RP) :: zda
-real(RP) :: zdd
-real(RP) :: zddabs
 real(RP) :: zdota(size(z, 2))
 character(len=*), parameter :: srname = 'TRSTLP_SUB'
 
@@ -266,7 +257,7 @@ do iter = 1, maxiter
     ! of the new constraint, a scalar product being set to zero if its nonzero value could be due to
     ! computer rounding errors, which is tested by ISMINOR.
     if (icon > nact) then
-        !!!!!!!!!! This is QRADD -------------------------------------------------------------------
+        !!!!!!!!!! This is QRADD-------------------------------------------------------------------
         cgrad = A(:, iact(icon))
         cgz = matprod(cgrad, z)
         cgzabs = matprod(abs(cgrad), abs(z))
@@ -274,20 +265,20 @@ do iter = 1, maxiter
             cgz = ZERO
         end where
         do k = n - 1, nact + 1, -1
-            ! Apply a 2D Givens rotation to Z(:, [K,K+1]) from the right to zero CGRAD'*Z(:, K+1) out.
+            ! Apply a 2D Givens rotation to Z(:, [K, K+1]) from the right to zero CGRAD'*Z(:, K+1) out.
             if (abs(cgz(k + 1)) > ZERO) then
-                ! Powell wrote CGZ(K + 1) /= ZERO instead of ABS(CGZ(K + 1)) > ZERO. The two
-                ! conditions differ if CGZ(K + 1) is NaN.
+                ! Powell wrote CGZ(K+1) /= ZERO instead of ABS(CGZ(K+1)) > ZERO. The two
+                ! conditions differ if CGZ(K+1) is NaN.
                 grot = PLANEROT_TMP(cgz([k, k + 1]))
                 z(:, [k, k + 1]) = matprod(z(:, [k, k + 1]), transpose(grot))
                 cgz(k) = sqrt(cgz(k)**2 + cgz(k + 1)**2)
             end if
         end do
-        !!!!!!!!!! This is QRADD -------------------------------------------------------------------
+        !!!!!!!!!! This is QRADD-------------------------------------------------------------------
 
         if (nact < n .and. abs(cgz(nact + 1)) > ZERO) then
             ! Add the new constraint if this can be done without a deletion from the active set.
-            ! Powell wrote "CGZ(NACT + 1) /= ZERO" instead of "ABS(CGZ(NACT + 1)) > ZERO".
+            ! Powell wrote "CGZ(NACT+1) /= ZERO" instead of "ABS(CGZ(NACT+1)) > ZERO".
             ! Zaikun 20211012: Shouldn't this be QREXC? No, because A(:, NACT) is not in the range
             ! of the QR factorization (before the factorization).
             ! Zaikun 20211012: Is it true that IACT(NACT) is always the constraint with the largest
@@ -305,12 +296,12 @@ do iter = 1, maxiter
                 ! Zaikun 20211012: Is this needed ? Isn't it true naturally?
                 vmultc(nact) = ZERO
             end if
-            !!!!!!!!!!!!!!!!!!! This is also QRADD ------------------------------------------------
+            !!!!!!!!!!!!!!!!!!! This is also QRADD------------------------------------------------
             !!!!!!!!!!!!!!!!!!!!!!! Calculate ZDOTA from scratch? Test it.
             zdota(nact) = cgz(nact)  ! Indeed, ZDOTA(NACT) = INPROD(Z(:, NACT), A(:, IACT(NACT)))
             !zdota(nact) = inprod(z(:, nact), a(:, iact(nact)))
             !!!!!!!!!!!!!!!!!!!!!!! Test
-            !!!!!!!!!!!!!!!!!!! This is also QRADD ------------------------------------------------
+            !!!!!!!!!!!!!!!!!!! This is also QRADD------------------------------------------------
         else
             ! The next instruction is reached if a deletion has to be made from the active set in
             ! order to make room for the new active constraint, because the new constraint gradient
@@ -324,13 +315,14 @@ do iter = 1, maxiter
             ! suitable index can be found.
             !--------------------------------------------------------------------------------------!
 
-            !----------------------------! 1st VMULTD CALCULATION STARTS !-------------------------!
+            !----------------------------! 1st VMULTD CALCULATION STARTS  !-------------------------!
             ! Zaikun 20211011:
             ! 1. VMULTD is calculated from scratch for the first time (out of 2) in one iteration.
             ! 2. The sole purpose of this VMULTD is to compute VMULTC(1 : NACT) and check possible
             ! exit immediately after this loop. Only VMULTD(1 : NACT) is needed.
             ! 3. VMULTD will be computed from scratch again later.
             vmultd(1:nact) = vmd(cgrad, A(:, iact(1:nact)), z(:, 1:nact), zdota(1:nact))
+            !!!vmultd(1:nact) = vmd(cgrad, A(:, iact(1:nact)), z(:, 1:nact))
             !----------------------------! 1st VMULTD CALCULATION ENDS  !--------------------------!
 
             frac = minval(vmultc(1:nact) / vmultd(1:nact), mask=(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m))
@@ -346,14 +338,14 @@ do iter = 1, maxiter
             ! Zaikun 20210811: Powell's code includes the following, but it is IMPOSSIBLE TO REACH.
             !--------------------------------------------------------------------------------------!
             !if (icon < nact) then
-            !    do k = icon, nact - 1
-            !        hypt = sqrt(zdota(k + 1)**2 + inprod(z(:, k), A(:, iact(k + 1)))**2)
-            !        grot = planerot([zdota(k + 1), inprod(z(:, k), A(:, iact(k + 1)))])
-            !        z(:, [k, k + 1]) = matprod(z(:, [k + 1, k]), transpose(grot))
-            !        zdota([k, k + 1]) = [hypt, (zdota(k + 1) / hypt) * zdota(k)]
+            !    do k = icon, nact-1
+            !        hypt = sqrt(zdota(k+1)**2+inprod(z(:, k), A(:, iact(k+1)))**2)
+            !        grot = planerot([zdota(k+1), inprod(z(:, k), A(:, iact(k+1)))])
+            !        z(:, [k, k+1]) = matprod(z(:, [k+1, k]), transpose(grot))
+            !        zdota([k, k+1]) = [hypt, (zdota(k+1) / hypt) * zdota(k)]
             !    end do
-            !    iact(icon:nact) = [iact(icon + 1:nact), iact(icon)]
-            !    vmultc(icon:nact) = [vmultc(icon + 1:nact), vmultc(icon)]
+            !    iact(icon:nact) = [iact(icon+1:nact), iact(icon)]
+            !    vmultc(icon:nact) = [vmultc(icon+1:nact), vmultc(icon)]
             !end if
             !--------------------------------------------------------------------------------------!
 
@@ -370,7 +362,7 @@ do iter = 1, maxiter
 
         ! Ensure that the objective function continues to be treated as the last active constraint
         ! if stage 2 is in progress.
-        ! Zaikun 20211011: Is it for stage 2 that IACT(NACT - 1) = MCON when IACT(NACT) /= MCON?
+        ! Zaikun 20211011: Is it for stage 2 that IACT(NACT-1) = MCON when IACT(NACT) /= MCON?
         if (stage == 2 .and. iact(nact) /= mcon) then
             !!!!!! This is QREXC-----------------------------------------------------------------
             ! HYPT is positive because ZDOTA(NACT) is nonzero.
@@ -379,13 +371,13 @@ do iter = 1, maxiter
             z(:, [nact - 1, nact]) = matprod(z(:, [nact, nact - 1]), transpose(grot))
 
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Calculate ZDOTA from scratch? Test it.
-            zdota([nact - 1, nact]) = [hypt, (zdota(nact) / hypt) * zdota(nact - 1)]   ! zdota([nact - 1, nact]) = [hypt, grot(1,1)* zdota(nact - 1)]
+            zdota([nact - 1, nact]) = [hypt, (zdota(nact) / hypt) * zdota(nact - 1)]   ! zdota([nact-1, nact]) = [hypt, grot(1, 1)* zdota(nact-1)]
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Test
 
             iact([nact - 1, nact]) = iact([nact, nact - 1])
 
             !!!!!!! Test
-            !zdota(nact - 1:nact) = [(inprod(z(:, k), A(:, iact(k))), k=nact - 1, nact)]
+            !zdota(nact-1:nact) = [(inprod(z(:, k), A(:, iact(k))), k = nact-1, nact)]
             !!!!!!! Test
             !!!!!! This is QREXC-----------------------------------------------------------------
 
@@ -423,7 +415,7 @@ do iter = 1, maxiter
             iact(icon:nact) = [iact(icon + 1:nact), iact(icon)]
 
             !!!!!!!!!!!!!! Test
-            !zdota(icon:nact) = [(inprod(z(:, k), A(:, iact(k))), k=icon, nact)]
+            !zdota(icon:nact) = [(inprod(z(:, k), A(:, iact(k))), k = icon, nact)]
             !!!!!!!!!!!!!! Test
         !!!!!!!!!!!! This is QRDEL-----------------------------------------------------------------
 
@@ -485,6 +477,10 @@ do iter = 1, maxiter
     ! force VMULTD(K)=ZERO if deviations from this value can be attributed to computer rounding
     ! errors. First calculate the new Lagrange multipliers.
     vmultd(1:nact) = vmd(dnew, A(:, iact(1:nact)), z(:, 1:nact), zdota(1:nact))
+    !!!vmultd(1:nact) = vmd(dnew, A(:, iact(1:nact)), z(:, 1:nact))
+    if (stage == 2) then
+        vmultd(nact) = max(ZERO, vmultd(nact))  ! This seems a safeguard never activated.
+    end if
 
     ! Complete VMULTD by finding the new constraint residuals. (Powell wrote "Complete VMULTC ...")
     cvshift = matprod(dnew, A(:, iact)) - b(iact) + cstrv  ! Only CVSHIFT(nact+1:mcon) is needed.
@@ -532,10 +528,9 @@ end do
 
 end subroutine trstlp_sub
 
-
 !--------------------------------------------------------------------------------------------------!
 ! The following function indeed solves the linear least squares problem
-! min |V*VMULTD - u|
+! min |V*VMULTD-u|
 ! 1. Z is the Q in the QR factorization of V, and zdotv is the diagonal of R.
 ! 2. In COBYLA, V is of full column rank.
 ! 3. In COBYLA, it seems that u (CGRAD and DNEW) is in the column space of V. Not sure yet.
@@ -544,12 +539,14 @@ end subroutine trstlp_sub
 ! maybe with a bit generalization.
 !--------------------------------------------------------------------------------------------------!
 
+
 function vmd(u, V, Z, zdotv) result(vmultd)
+!function vmd(u, V, Z) result(vmultd)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates VMULTD(1:NACT) for a vector U. Here,
 ! V represents A(:, IACT(1:NACT))
 ! Z represents Z(:, 1:NACT)
-! ZDOTV represents ZDOTA(1:NACT), and it equals DIAG(Z^T * V) so that is should be calculated
+! ZDOTV represents ZDOTA(1:NACT), and it equals DIAG(Z^T*V) so that is should be calculated
 ! internally!!!
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, EPS, DEBUGGING
@@ -573,6 +570,7 @@ real(RP), parameter :: tol = 1.0E4_RP * sqrt(EPS)
 real(RP) :: w(size(u))
 real(RP) :: wzk
 real(RP) :: wzkabs
+!!!real(RP) :: zdotv(size(V, 2))
 
 ! Preconditions
 if (DEBUGGING) then
@@ -580,12 +578,13 @@ if (DEBUGGING) then
     call assert(size(Z, 1) == size(V, 1) .and. size(Z, 2) == size(V, 2), 'SIZE(Z) == SIZE(V)', srname)
     call assert(size(zdotv) == size(V, 2), 'SIZE(ZDOTV) == SIZE(V, 2)', srname)
     !call assert(maxval(abs(matprod(transpose(Z), Z) - eye(size(Z, 2)))) &
-    !    & <= tol * real(size(Z, 2), RP), 'The columns of Z are orthogonal', srname)
-    !call assert(maxval(abs(zdotv - [(inprod(Z(:, k), V(:, k)), k=1, size(zdotv))])) &
-    !    & <= tol * max(maxval(abs(V)), ONE), 'ZDOTV = DIAG(Z^T * V)', srname)
+    !    & <= tol*real(size(Z, 2), RP), 'The columns of Z are orthogonal', srname)
+    !call assert(maxval(abs(zdotv - [(inprod(Z(:, k), V(:, k)), k = 1, size(zdotv))])) &
+    !    & <= tol*max(maxval(abs(V)), ONE), 'ZDOTV = DIAG(Z^T*V)', srname)
 end if
 
 w = u  ! Local copy of U; U is INTENT(IN) and should not be modified.
+!!!zdotv = [(inprod(Z(:, k), V(:, k)), k=1, size(zdotv))]
 
 do k = int(size(V, 2), kind(k)), 1, -1
     wzk = inprod(w, Z(:, k))
@@ -602,7 +601,7 @@ do k = int(size(V, 2), kind(k)), 1, -1
 end do
 
 if (DEBUGGING) then
-    !call assert(norm(matprod(u - matprod(V, vmultd), V)) <= tol * max(norm(matprod(u, V)), ONE), &
+    !call assert(norm(matprod(u-matprod(V, vmultd), V)) <= tol*max(norm(matprod(u, V)), ONE), &
     !    & 'V*VMULTD is the projection of U to the column space of V', srname)
 end if
 
@@ -631,16 +630,12 @@ if (abs(x(2)) > ZERO) then
     !    s = x(2) / r
     !else
     !    scaling = maxval(abs(x))
-    !    r = sqrt(sum((x / scaling)**2))
+    !    r = sqrt(sum((x/scaling)**2))
     !    c = (x(1) / scaling) / r
     !    s = (x(2) / scaling) / r
     !end if
     !G = reshape([c, -s, s, c], [2, 2])
     !>>>> SHOUD BE
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    !write (*, *) '!!!!!!!!!!!!!!!!!!!! PLANROT UNDER REVISION !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     !<<<< TEMP
     r = sqrt(sum(x**2))
@@ -650,7 +645,7 @@ if (abs(x(2)) > ZERO) then
     !<<<< TEMP
 
 elseif (x(1) < ZERO) then
-    ! Setting G = -EYE(2,2) in this case ensures the continuity of G with respect to X except at 0.
+    ! Setting G = -EYE(2, 2) in this case ensures the continuity of G with respect to X except at 0.
     G = -eye(2_IK)
 else
     G = eye(2_IK)
@@ -672,17 +667,17 @@ end function PLANEROT_TMP
 !        s = sign(b);
 !        r = abs(b);
 !    elseif abs(a) > abs(b);
-!        t = b / a;
-!        u = sign(a) * sqrt(1 + t * t);
-!        c = 1 / u;
-!        s = c * t;
-!        r = a * u;
+!        t = b/a;
+!        u = sign(a) * sqrt(1+t * t);
+!        c = 1/u;
+!        s = c*t;
+!        r = a*u;
 !    else
-!        t = a / b;
-!        u = sign(b) * sqrt(1 + t * t);
-!        s = 1 / u;
-!        c = s * t;
-!        r = b * u;
+!        t = a/b;
+!        u = sign(b) * sqrt(1+t * t);
+!        s = 1/u;
+!        c = s*t;
+!        r = b*u;
 !    end
 !end
 

@@ -143,7 +143,7 @@ if single_test
     end
 else
     parfor ip = minip : length(plist)
-%    for ip = minip : length(plist)
+    %for ip = minip : length(plist)
         orig_warning_state = warnoff(solvers);
 
         pname = upper(plist{ip});
