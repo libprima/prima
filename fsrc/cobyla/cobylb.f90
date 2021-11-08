@@ -267,8 +267,9 @@ do tr = 1, maxtr
             prerem = prerec   ! Is it positive?????
             actrem = cval(n + 1) - cstrv
         end if
-        if (is_nan(actrem)) then
-            actrem = -HUGENUM
+        ! This should not happen under precise arithmetic.
+        if (is_nan(actrem) .or. is_nan(prerem)) then
+            actrem = -HUGENUM  ! Signify a bad trust-region step.
         end if
         ! Set JDROP_TR to the index of the vertex that is to be replaced by X.
         ! N.B.: COBYLA never sets JDROP_TR = N + 1.
