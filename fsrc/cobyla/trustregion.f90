@@ -321,8 +321,8 @@ do iter = 1, maxiter
             ! 2. The sole purpose of this VMULTD is to compute VMULTC(1 : NACT) and check possible
             ! exit immediately after this loop. Only VMULTD(1 : NACT) is needed.
             ! 3. VMULTD will be computed from scratch again later.
-            vmultd(1:nact) = vmd(cgrad, A(:, iact(1:nact)), z(:, 1:nact), zdota(1:nact))
-            !!!vmultd(1:nact) = vmd(cgrad, A(:, iact(1:nact)), z(:, 1:nact))
+            !!!vmultd(1:nact) = vmd(cgrad, A(:, iact(1:nact)), z(:, 1:nact), zdota(1:nact))
+            vmultd(1:nact) = vmd(cgrad, A(:, iact(1:nact)), z(:, 1:nact))
             !----------------------------! 1st VMULTD CALCULATION ENDS  !--------------------------!
 
             frac = minval(vmultc(1:nact) / vmultd(1:nact), mask=(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m))
@@ -476,8 +476,8 @@ do iter = 1, maxiter
     ! Set VMULTD to the VMULTC vector that would occur if D became DNEW. A device is included to
     ! force VMULTD(K)=ZERO if deviations from this value can be attributed to computer rounding
     ! errors. First calculate the new Lagrange multipliers.
-    vmultd(1:nact) = vmd(dnew, A(:, iact(1:nact)), z(:, 1:nact), zdota(1:nact))
-    !!!vmultd(1:nact) = vmd(dnew, A(:, iact(1:nact)), z(:, 1:nact))
+    !!!vmultd(1:nact) = vmd(dnew, A(:, iact(1:nact)), z(:, 1:nact), zdota(1:nact))
+    vmultd(1:nact) = vmd(dnew, A(:, iact(1:nact)), z(:, 1:nact))
     if (stage == 2) then
         vmultd(nact) = max(ZERO, vmultd(nact))  ! This seems a safeguard never activated.
     end if
@@ -540,8 +540,8 @@ end subroutine trstlp_sub
 !--------------------------------------------------------------------------------------------------!
 
 
-function vmd(u, V, Z, zdotv) result(vmultd)
-!function vmd(u, V, Z) result(vmultd)
+!function vmd(u, V, Z, zdotv) result(vmultd)
+function vmd(u, V, Z) result(vmultd)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates VMULTD(1:NACT) for a vector U. Here,
 ! V represents A(:, IACT(1:NACT))
@@ -558,7 +558,7 @@ implicit none
 real(RP), intent(in) :: u(:)
 real(RP), intent(in) :: V(:, :)
 real(RP), intent(in) :: Z(:, :)
-real(RP), intent(in) :: zdotv(:)
+!!!real(RP), intent(in) :: zdotv(:)
 
 ! Outputs
 real(RP) :: vmultd(size(V, 2))
@@ -570,7 +570,7 @@ real(RP), parameter :: tol = 1.0E4_RP * sqrt(EPS)
 real(RP) :: w(size(u))
 real(RP) :: wzk
 real(RP) :: wzkabs
-!!!real(RP) :: zdotv(size(V, 2))
+real(RP) :: zdotv(size(V, 2))
 
 ! Preconditions
 if (DEBUGGING) then
@@ -584,7 +584,7 @@ if (DEBUGGING) then
 end if
 
 w = u  ! Local copy of U; U is INTENT(IN) and should not be modified.
-!!!zdotv = [(inprod(Z(:, k), V(:, k)), k=1, size(zdotv))]
+zdotv = [(inprod(Z(:, k), V(:, k)), k=1, size(zdotv))]
 
 do k = int(size(V, 2), kind(k)), 1, -1
     wzk = inprod(w, Z(:, k))
