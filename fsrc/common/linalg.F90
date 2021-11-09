@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, November 07, 2021 PM02:00:57
+! Last Modified: Tuesday, November 09, 2021 PM02:13:57
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -586,7 +586,7 @@ if (DEBUGGING) then
         call assert(size(Q, 2) == size(R, 1), 'SIZE(Q, 2) == SIZE(R, 1)', srname)
     end if
     if (present(P)) then
-        call assert(size(P) == N, 'SIZE(P) == N', srname)
+        call assert(size(P) == n, 'SIZE(P) == N', srname)
     end if
 end if
 
@@ -603,7 +603,7 @@ end if
 
 do j = 1, n
     if (pivote) then
-        k = maxloc(sum(R_loc(j:m, j:n)**2, dim=1), dim=1)
+        k = int(maxloc(sum(R_loc(j:m, j:n)**2, dim=1), dim=1), kind(k))
         if (k > 1) then
             k = k + j - 1_IK
             P([j, k]) = P([k, j])
@@ -764,7 +764,7 @@ real(RP), intent(in) :: A(:, :)
 real(RP) :: D(min(size(A, 1), size(A, 2)))
 ! Local variables
 integer(IK) :: i
-D = [(A(i, i), i=1, size(D))]
+D = [(A(i, i), i=1, int(size(D), IK))]
 end function diag
 
 
@@ -844,7 +844,7 @@ function isorth(A, tol) result(is_orth)
 !--------------------------------------------------------------------------------------------------!
 ! This function tests whether the matrix A has orthonormal columns up to the tolerance TOL.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP
+use, non_intrinsic :: consts_mod, only : RP, IK
 implicit none
 ! Inputs
 real(RP), intent(in) :: A(:, :)
@@ -853,13 +853,18 @@ real(RP), intent(in), optional :: tol
 ! Outputs
 logical :: is_orth
 
-if (size(A, 2) > size(A, 1)) then
+! Local variables
+integer(IK) :: n
+
+n = int(size(A, 2), kind(n))
+
+if (n > size(A, 1)) then
     is_orth = .false.
 else
     if (present(tol)) then
-        is_orth = all(abs(matprod(transpose(A), A) - eye(size(A, 2))) <= max(tol, tol * maxval(abs(A))))
+        is_orth = all(abs(matprod(transpose(A), A) - eye(n)) <= max(tol, tol * maxval(abs(A))))
     else
-        is_orth = all(abs(matprod(transpose(A), A) - eye(size(A, 2))) <= 0)
+        is_orth = all(abs(matprod(transpose(A), A) - eye(n)) <= 0)
     end if
 end if
 end function
