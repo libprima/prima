@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 08, 2021 PM01:11:51
+! Last Modified: Tuesday, November 09, 2021 PM09:28:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -212,7 +212,9 @@ tr_tol = 1.0E-2_RP  ! Tolerance used in trsapp.
 ! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers may raise a run-time error that
 ! RATIO is undefined. The value will not be used: when SHORTD = FALSE, its value will be overwritten;
 ! when SHORTD = TRUE, its value is used only in BAD_TRSTEP, which is TRUE regardless of RATIO.
+! Similar for KNEW_TR.
 ratio = -ONE
+knew_tr = 0_IK
 
 ! Each trust-region iteration takes at most two function evaluation. The following setting imposes
 ! no constraint on the maximal number of trust-region iterations.

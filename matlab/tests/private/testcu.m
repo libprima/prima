@@ -51,6 +51,7 @@ crec = NaN(np, ns, nr, maxfun);
 pdim = NaN(np, 1);  % Data profile needs the dimension of the problem.
 
 parfor ip = 1 : np
+%for ip = 1 : np
 	orig_warning_state = warnoff(solvers);
 
     pname = plist{ip};
