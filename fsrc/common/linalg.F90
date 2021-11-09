@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, November 09, 2021 PM02:13:57
+! Last Modified: Tuesday, November 09, 2021 PM03:30:10
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -31,7 +31,7 @@ public :: inprod, matprod, outprod
 public :: r1update, r2update, symmetrize
 public :: Ax_plus_y
 public :: eye
-public :: planerot, qr, inv
+public :: planerot, qr, lsqr, inv
 public :: calquad, errquad, hess_mul
 public :: omega_col, omega_mul, omega_inprod
 public :: errh
@@ -619,8 +619,12 @@ do j = 1, n
     end do
 end do
 
-Q = Q_loc(:, 1:size(Q, 2))
-R = R_loc(1:size(R, 1), :)
+if (present(Q)) then
+    Q = Q_loc(:, 1:size(Q, 2))
+end if
+if (present(R)) then
+    R = R_loc(1:size(R, 1), :)
+end if
 
 !====================!
 !  Calculation ends  !
@@ -646,110 +650,101 @@ end if
 end subroutine qr
 
 
-!function lsqr(A, b, Q, R, Rdiag) result(x)
-!!--------------------------------------------------------------------------------------------------!
-!! This function solves the linear least squares problem min ||A*x - b||_2 by the QR factorization.
-!!--------------------------------------------------------------------------------------------------!
-!use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, EPS, DEBUGGING
-!use, non_intrinsic :: debug_mod, only : assert
-!implicit none
+function lsqr(A, b, Q) result(x)
+!--------------------------------------------------------------------------------------------------!
+! This function solves the linear least squares problem min ||A*x - b||_2 by the QR factorization.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+implicit none
 
-!! Inputs
-!real(RP), intent(in) :: A(:, :)
-!real(RP), intent(in) :: b(:)
-!real(RP), intent(in), optional :: Q(:, :)
-!real(RP), intent(in), optional :: R(:, :)
-!real(RP), intent(in), optional :: Rdiag(:)
+! Inputs
+real(RP), intent(in) :: A(:, :)
+real(RP), intent(in) :: b(:)
+real(RP), intent(in), optional :: Q(:, :)
 
-!! Outputs
-!real(RP) :: x(size(A, 2))
+! Outputs
+real(RP) :: x(size(A, 2))
 
-!! Local variables
-!character(len=*), parameter :: srname = 'LSQR'
-!integer(IK) :: k
-!real(RP), parameter :: tol = 1.0E4_RP * sqrt(EPS)
-!real(RP) :: Q_loc(size(A, 1), min(size(A, 1), size(A, 2)))
-!real(RP) :: Rdiag_loc(min(size(A, 1), size(A, 2)))
-!real(RP) :: y(size(b))
-!real(RP) :: yqk
-!real(RP) :: yqkabs
+! Local variables
+character(len=*), parameter :: srname = 'LSQR'
+logical :: pivote
+integer(IK) :: i
+integer(IK) :: j
+integer(IK) :: m
+integer(IK) :: n
+integer(IK) :: P(size(A, 2))
+integer(IK) :: rank
+real(RP), parameter :: tol = 1.0E4_RP * sqrt(EPS)
+real(RP) :: Q_loc(size(A, 1), min(size(A, 1), size(A, 2)))
+real(RP) :: Rdiag(min(size(A, 1), size(A, 2)))
+real(RP) :: y(size(b))
+real(RP) :: yq
+real(RP) :: yqa
 
-!! Sizes
-!m = int(size(A, 1), kind(m))
-!n = int(size(A, 2), kind(n))
+! Sizes
+m = int(size(A, 1), kind(m))
+n = int(size(A, 2), kind(n))
 
-!! Preconditions
-!if (DEBUGGING) then
-!    call assert(size(b) == m, 'SIZE(B) == M', srname)
-!    if (present(Q)) then
-!        call assert(size(Q, 1) == m .and. (size(Q, 2) == m .or. size(Q, 2) == min(m, n)), &
-!            & 'SIZE(Q) == [M, N] .or. SIZE(Q) == [M, MIN(M, N)]', srname)
-!        call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
-!    end if
-!    if (present(R)) then
-!        call assert((size(R, 1) == m .or. size(R, 1) == min(m, n)) .and. size(R, 2) == n, &
-!            & 'SIZE(R) == [M, N] .or. SIZE(R) == [MIN(M, N), N]', srname)
-!        call assert(istriu(R, tol), 'R is upper triangular', srname)
-!    end if
-!    if (present(Q) .and. present(R)) then
-!        call assert(size(Q, 2) == size(R, 1), 'SIZE(Q, 2) == SIZE(R, 1)', srname)
-!        call assert(all(abs(matprod(Q, R) - A) <= max(tol, tol * maxval(abs(A)))), 'A = Q*R', srname)
-!    end if
-!    if (present(Rdiag)) then
-!        call assert(size(Rdiag) == min(size(A, 1), size(A, 2)), &
-!            & 'SIZE(RDIAG) == MIN(SIZE(A, 1), SIZE(A, 2))', srname)
-!    end if
-!    if (present(Q) .and. present(Rdiag)) then
-!        call assert(all(abs(Rdiag - [(inprod(Q(:, k), A(:, k)), k=1, size(Rdiag))]) &
-!            & <= max(tol, tol * maxval(abs(A)))), 'RDIAG = DIAG(Q^T*A)', srname)
-!    end if
-!end if
+! Preconditions
+if (DEBUGGING) then
+    call assert(size(b) == m, 'SIZE(B) == M', srname)
+    if (present(Q)) then
+        call assert(size(Q, 1) == m .and. (size(Q, 2) == m .or. size(Q, 2) == min(m, n)), &
+            & 'SIZE(Q) == [M, N] .or. SIZE(Q) == [M, MIN(M, N)]', srname)
+        call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
+    end if
+end if
 
-!!====================!
-!! Calculation starts !
-!!====================!
+!====================!
+! Calculation starts !
+!====================!
 
-!if (present(Q)) then
-!    Q_loc = Q(:, 1:size(Q_loc, 2))
-!else
-!    call qr(A, Q = Q_loc, P = P_loc)
-!end if
+Rdiag = ZERO
+if (present(Q)) then
+    Q_loc = Q(:, 1:size(Q_loc, 2))
+    Rdiag = [(inprod(Q_loc(:, i), A(:, i)), i=1, min(m, n))]
+    rank = min(m, n)
+    pivote = .false.
+end if
 
-!if (present(Rdiag)) then
-!    Rdiag_loc = Rdiag
-!else
-!    if (present(R)) then
-!        Rdiag_loc = diag(R)
-!    else
-!        Rdiag_loc = [(inprod(Q_loc(:, k), A(:, k)), k=1, size(A, 2))]
-!    end if
-!end if
+!if (.not. present(Q) .or. any(abs(Rdiag) <= ZERO)) then
+if (.not. present(Q)) then
+    call qr(A, Q=Q_loc, P=P)
+    Rdiag = [(inprod(Q_loc(:, i), A(:, P(i))), i=1, min(m, n))]
+    rank = maxval([(i, i=1, min(m, n))], mask=(abs(Rdiag) > 0))
+    pivote = .true.
+end if
 
-!y = b  ! Local copy of B; B is INTENT(IN) and should not be modified.
+y = b  ! Local copy of B; B is INTENT(IN) and should not be modified.
+x = ZERO
 
-!do k = n, 1, -1
-!    yqk = inprod(y, Q_loc(:, k))
-!    yqkabs = inprod(abs(y), abs(Q_loc(:, k)))
-!    ! Powell's code sets YQK = 0 when ISMINOR(YQK, YQKABS) = TRUE, and then X(K) = YQK/RDIAG(K),
-!    ! which is NaN if YQK = 0 = RDIAG(K) (in precise arithmetic, this cannot happen).
-!    if (isminor(yqk, yqkabs)) then
-!        x(k) = ZERO
-!    else
-!        x(k) = yqk / Rdiag_loc(k)
-!    end if
-!    y = y - x(k) * A(:, k)
-!end do
+do i = rank, 1, -1
+    if (pivote) then
+        j = P(i)
+    else
+        j = i
+    end if
+    yq = inprod(y, Q_loc(:, i))
+    yqa = inprod(abs(y), abs(Q_loc(:, i)))
+    if (isminor(yq, yqa)) then
+        x(j) = ZERO
+    else
+        x(j) = yq / Rdiag(i)
+        y = y - x(j) * A(:, j)
+    end if
+end do
 
-!!====================!
-!!  Calculation ends  !
-!!====================!
+!====================!
+!  Calculation ends  !
+!====================!
 
-!! Postconditions
-!if (DEBUGGING) then
-!    call assert(norm(matprod(b - matprod(A, x), A)) <= max(tol, tol * norm(matprod(b, A))), &
-!        & 'A*X is the projection of B to the column space of A', srname)
-!end if
-!end function lsqr
+! Postconditions
+if (DEBUGGING) then
+    !call assert(norm(matprod(b - matprod(A, x), A)) <= max(tol, tol * norm(matprod(b, A))), &
+    !    & 'A*X is the projection of B to the column space of A', srname)
+end if
+end function lsqr
 
 
 function diag(A) result(D)
