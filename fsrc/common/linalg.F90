@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, November 09, 2021 PM03:30:10
+! Last Modified: Tuesday, November 09, 2021 PM09:27:49
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -626,10 +626,6 @@ if (present(R)) then
     R = R_loc(1:size(R, 1), :)
 end if
 
-!====================!
-!  Calculation ends  !
-!====================!
-
 ! Postconditions
 if (DEBUGGING) then
     tol = 1.0E2_RP * EPS * real(max(m, n), RP)
@@ -639,12 +635,15 @@ if (DEBUGGING) then
         call assert(all(abs(matprod(Q_loc, R_loc) - A(:, P)) <= max(tol, tol * maxval(abs(A)))), &
             & 'A(:, P) = Q*R', srname)
         do j = 1, min(m, n) - 1_IK
-            call assert(R_loc(j, j) >= R_loc(j + 1, j + 1), 'R(J, J) >= R(J + 1, J + 1)', srname)
-            call assert(all(R_loc(j, j)**2 >= sum(R_loc(j:min(m, n), j + 1:n)**2, dim=1)), &
+            call assert(abs(R_loc(j, j)) + max(tol, tol * abs(R_loc(j, j))) >= &
+                & abs(R_loc(j + 1, j + 1)), '|R(J, J)| >= |R(J + 1, J + 1)|', srname)
+            call assert(all(R_loc(j, j)**2 + max(tol, tol * R_loc(j, j)**2) >= &
+                & sum(R_loc(j:min(m, n), j + 1:n)**2, dim=1)), &
                 & 'R(J, J)^2 >= SUM(R(J : MIN(M, N), J + 1 : N).^2', srname)
         end do
     else
-        call assert(all(abs(matprod(Q_loc, R_loc) - A) <= max(tol, tol * maxval(abs(A)))), 'A = Q*R', srname)
+        call assert(all(abs(matprod(Q_loc, R_loc) - A) <= max(tol, tol * maxval(abs(A)))), &
+            & 'A = Q*R', srname)
     end if
 end if
 end subroutine qr
@@ -653,6 +652,8 @@ end subroutine qr
 function lsqr(A, b, Q) result(x)
 !--------------------------------------------------------------------------------------------------!
 ! This function solves the linear least squares problem min ||A*x - b||_2 by the QR factorization.
+! This function is used in COBYLA, where the Q of the factorization is supplied externally, and A is
+! supposed to have full column rank.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -675,7 +676,6 @@ integer(IK) :: m
 integer(IK) :: n
 integer(IK) :: P(size(A, 2))
 integer(IK) :: rank
-real(RP), parameter :: tol = 1.0E4_RP * sqrt(EPS)
 real(RP) :: Q_loc(size(A, 1), min(size(A, 1), size(A, 2)))
 real(RP) :: Rdiag(min(size(A, 1), size(A, 2)))
 real(RP) :: y(size(b))
@@ -692,7 +692,7 @@ if (DEBUGGING) then
     if (present(Q)) then
         call assert(size(Q, 1) == m .and. (size(Q, 2) == m .or. size(Q, 2) == min(m, n)), &
             & 'SIZE(Q) == [M, N] .or. SIZE(Q) == [M, MIN(M, N)]', srname)
-        call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
+        !call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     end if
 end if
 
@@ -708,7 +708,7 @@ if (present(Q)) then
     pivote = .false.
 end if
 
-!if (.not. present(Q) .or. any(abs(Rdiag) <= ZERO)) then
+!if (.not. present(Q) .or. any(abs(Rdiag) <= ZERO)) then  ! This is more reasonable
 if (.not. present(Q)) then
     call qr(A, Q=Q_loc, P=P)
     Rdiag = [(inprod(Q_loc(:, i), A(:, P(i))), i=1, min(m, n))]
@@ -725,6 +725,8 @@ do i = rank, 1, -1
     else
         j = i
     end if
+    ! The following IF comes from Powell. It forces X(J)=ZERO if deviations from this value can be
+    ! attributed to computer rounding errors. This is a favorable choice in the context of COBYLA.
     yq = inprod(y, Q_loc(:, i))
     yqa = inprod(abs(y), abs(Q_loc(:, i)))
     if (isminor(yq, yqa)) then
@@ -741,6 +743,7 @@ end do
 
 ! Postconditions
 if (DEBUGGING) then
+    ! This test cannot be passed.
     !call assert(norm(matprod(b - matprod(A, x), A)) <= max(tol, tol * norm(matprod(b, A))), &
     !    & 'A*X is the projection of B to the column space of A', srname)
 end if
