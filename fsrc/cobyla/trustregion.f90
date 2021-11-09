@@ -114,7 +114,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, EPS, HUGENUM, DEBUGG
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: debug_mod, only : assert, errstop, verisize
 !!!!!! use, non_intrinsic:: linalg_mod, only : inprod, matprod, eye, planerot, isminor
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, isminor !!!!!!!!!!!!!!!!!!
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, isminor, lsqr !!!!!!!!!!!!!!!!!!
 implicit none
 
 ! Inputs
@@ -321,8 +321,7 @@ do iter = 1, maxiter
             ! 2. The sole purpose of this VMULTD is to compute VMULTC(1 : NACT) and check possible
             ! exit immediately after this loop. Only VMULTD(1 : NACT) is needed.
             ! 3. VMULTD will be computed from scratch again later.
-            !!!vmultd(1:nact) = vmd(cgrad, A(:, iact(1:nact)), z(:, 1:nact), zdota(1:nact))
-            vmultd(1:nact) = vmd(cgrad, A(:, iact(1:nact)), z(:, 1:nact))
+            vmultd(1:nact) = lsqr(A(:, iact(1:nact)), cgrad, z(:, 1:nact))
             !----------------------------! 1st VMULTD CALCULATION ENDS  !--------------------------!
 
             frac = minval(vmultc(1:nact) / vmultd(1:nact), mask=(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m))
@@ -476,8 +475,7 @@ do iter = 1, maxiter
     ! Set VMULTD to the VMULTC vector that would occur if D became DNEW. A device is included to
     ! force VMULTD(K)=ZERO if deviations from this value can be attributed to computer rounding
     ! errors. First calculate the new Lagrange multipliers.
-    !!!vmultd(1:nact) = vmd(dnew, A(:, iact(1:nact)), z(:, 1:nact), zdota(1:nact))
-    vmultd(1:nact) = vmd(dnew, A(:, iact(1:nact)), z(:, 1:nact))
+    vmultd(1:nact) = lsqr(A(:, iact(1:nact)), dnew, z(:, 1:nact))
     if (stage == 2) then
         vmultd(nact) = max(ZERO, vmultd(nact))  ! This seems a safeguard never activated.
     end if
@@ -539,73 +537,6 @@ end subroutine trstlp_sub
 ! maybe with a bit generalization.
 !--------------------------------------------------------------------------------------------------!
 
-
-!function vmd(u, V, Z, zdotv) result(vmultd)
-function vmd(u, V, Z) result(vmultd)
-!--------------------------------------------------------------------------------------------------!
-! This function calculates VMULTD(1:NACT) for a vector U. Here,
-! V represents A(:, IACT(1:NACT))
-! Z represents Z(:, 1:NACT)
-! ZDOTV represents ZDOTA(1:NACT), and it equals DIAG(Z^T*V) so that is should be calculated
-! internally!!!
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, EPS, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: linalg_mod, only : isminor, inprod, matprod, eye, norm
-implicit none
-
-! Inputs
-real(RP), intent(in) :: u(:)
-real(RP), intent(in) :: V(:, :)
-real(RP), intent(in) :: Z(:, :)
-!!!real(RP), intent(in) :: zdotv(:)
-
-! Outputs
-real(RP) :: vmultd(size(V, 2))
-
-! Local variables
-character(len=*), parameter :: srname = 'VMD'
-integer(IK) :: k
-real(RP), parameter :: tol = 1.0E4_RP * sqrt(EPS)
-real(RP) :: w(size(u))
-real(RP) :: wzk
-real(RP) :: wzkabs
-real(RP) :: zdotv(size(V, 2))
-
-! Preconditions
-if (DEBUGGING) then
-    call assert(size(u) == size(V, 1), 'SIZE(U) == SIZE(V, 1)', srname)
-    call assert(size(Z, 1) == size(V, 1) .and. size(Z, 2) == size(V, 2), 'SIZE(Z) == SIZE(V)', srname)
-    call assert(size(zdotv) == size(V, 2), 'SIZE(ZDOTV) == SIZE(V, 2)', srname)
-    !call assert(maxval(abs(matprod(transpose(Z), Z) - eye(size(Z, 2)))) &
-    !    & <= tol*real(size(Z, 2), RP), 'The columns of Z are orthogonal', srname)
-    !call assert(maxval(abs(zdotv - [(inprod(Z(:, k), V(:, k)), k = 1, size(zdotv))])) &
-    !    & <= tol*max(maxval(abs(V)), ONE), 'ZDOTV = DIAG(Z^T*V)', srname)
-end if
-
-w = u  ! Local copy of U; U is INTENT(IN) and should not be modified.
-zdotv = [(inprod(Z(:, k), V(:, k)), k=1, size(zdotv))]
-
-do k = int(size(V, 2), kind(k)), 1, -1
-    wzk = inprod(w, Z(:, k))
-    wzkabs = inprod(abs(w), abs(Z(:, k)))
-    ! Powell's original code sets UZK = 0 when ISMINOR(UZK, UZKABS) = TRUE, and then takes
-    ! VMULTD(K) = UZK/ZDOTV(K), which is NaN if UZK = 0 = ZDOTV(K) (in precise arithmetic, this
-    ! cannot happen). The following code avoids NaN.
-    if (isminor(wzk, wzkabs)) then
-        vmultd(k) = ZERO
-    else
-        vmultd(k) = wzk / zdotv(k)
-    end if
-    w = w - vmultd(k) * V(:, k)
-end do
-
-if (DEBUGGING) then
-    !call assert(norm(matprod(u-matprod(V, vmultd), V)) <= tol*max(norm(matprod(u, V)), ONE), &
-    !    & 'V*VMULTD is the projection of U to the column space of V', srname)
-end if
-
-end function vmd
 
 !!!!!! This is temporary!!! It must be merged with the PLANEROT in linalg_mod.
 function PLANEROT_TMP(x) result(G)
