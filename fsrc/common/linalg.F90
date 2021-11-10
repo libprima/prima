@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, November 10, 2021 PM02:09:57
+! Last Modified: Wednesday, November 10, 2021 PM09:28:44
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -257,7 +257,6 @@ if (size(A, 1) /= size(x) .or. size(A, 2) /= size(y)) then
     call errstop(srname, 'SIZE(A) is invalid')
 end if
 #endif
-
 
 A = A + outprod(alpha * x, y) + outprod(beta * u, v)
 !A = A + (alpha * outprod(x, y) + beta * outprod(u, v))
@@ -528,12 +527,14 @@ end if
 !====================!
 
 if (istril(A)) then
-    ! This cased is invoked in COBYLA.
+    ! This case is invoked in COBYLA.
+    R = transpose(A)  ! Take transpose to work on columns.
     B = ZERO
     do i = 1, n
-        B(i, i) = ONE / A(i, i)
-        B(i, 1:i - 1) = -matprod(A(i, 1:i - 1) / A(i, i), B(1:i - 1, 1:i - 1))
+        B(i, i) = ONE / R(i, i)
+        B(1:i - 1, i) = -matprod(B(1:i - 1, 1:i - 1), R(1:i - 1, i) / R(i, i))
     end do
+    B = transpose(B)
 else if (istriu(A)) then
     B = ZERO
     do i = 1, n
@@ -543,8 +544,9 @@ else if (istriu(A)) then
 else
     ! This is NOT the best algorithm for INV, but since the QR subroutine is available ...
     call qr(A, Q, R, P)
+    R = transpose(R)  ! Take transpose to work on columns.
     do i = n, 1, -1
-        B(:, i) = (Q(:, i) - matprod(B(:, i + 1:n), R(i, i + 1:n))) / R(i, i)
+        B(:, i) = (Q(:, i) - matprod(B(:, i + 1:n), R(i + 1:n, i))) / R(i, i)
     end do
     PI(P) = [(i, i=1, n)]  ! The inverse permutation
     B = transpose(B(:, PI))
@@ -557,6 +559,8 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(B, 1) == n .and. size(B, 2) == n, 'SIZE(B) == [N, N]', srname)
+    call assert(istril(B) .or. .not. istril(A), 'If A is lower triangular, then so is B', srname)
+    call assert(istriu(B) .or. .not. istriu(A), 'If A is upper triangular, then so is B', srname)
     tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E4_RP * EPS * real(n, RP)))
     call assert(all(abs(matprod(A, B) - eye(n)) <= max(tol, tol * maxval(abs(A)))), &
         & 'B = A^(-1)', srname)
@@ -593,7 +597,7 @@ integer(IK) :: m
 integer(IK) :: n
 real(RP) :: G(2, 2)
 real(RP) :: Q_loc(size(A, 1), size(A, 1))
-real(RP) :: R_loc(size(A, 1), size(A, 2))
+real(RP) :: T(size(A, 2), size(A, 1))
 real(RP) :: tol
 
 if (.not. (present(Q) .or. present(R) .or. present(R))) then
@@ -628,26 +632,26 @@ end if
 
 pivote = (present(P))
 Q_loc = eye(m)
-R_loc = A
+T = transpose(A)  ! T is the transpose of R. We consider T in order to work on columns.
 if (pivote) then
     P = [(j, j=1, n)]
 end if
 
 do j = 1, n
     if (pivote) then
-        k = int(maxloc(sum(R_loc(j:m, j:n)**2, dim=1), dim=1), kind(k))
+        k = int(maxloc(sum(T(j:n, j:m)**2, dim=2), dim=1), kind(k))
         if (k > 1) then
             k = k + j - 1_IK
             P([j, k]) = P([k, j])
-            R_loc(:, [j, k]) = R_loc(:, [k, j])
+            T([j, k], :) = T([k, j], :)
         end if
     end if
     do i = m, j + 1_IK, -1_IK
-        G = planerot(R_loc([j, i], j))
-        !R_loc([j, i], j) = [hypot(R_loc(j, j), R_loc(i, j)), ZERO]
-        R_loc([j, i], j) = [sqrt(R_loc(j, j)**2 + R_loc(i, j)**2), ZERO]
-        R_loc([j, i], j + 1:n) = matprod(G, R_loc([j, i], j + 1:n))
-        Q_loc(:, [j, i]) = matprod(Q_loc(:, [j, i]), transpose(G))
+        G = transpose(planerot(T(j, [j, i])))
+        !T(j, [j, i]) = [hypot(T(j, j), T(j, i)), ZERO]
+        T(j, [j, i]) = [sqrt(T(j, j)**2 + T(j, i)**2), ZERO]
+        T(j + 1:n, [j, i]) = matprod(T(j + 1:n, [j, i]), G)
+        Q_loc(:, [j, i]) = matprod(Q_loc(:, [j, i]), G)
     end do
 end do
 
@@ -655,26 +659,26 @@ if (present(Q)) then
     Q = Q_loc(:, 1:size(Q, 2))
 end if
 if (present(R)) then
-    R = R_loc(1:size(R, 1), :)
+    R = transpose(T(:, 1:size(R, 1)))
 end if
 
 ! Postconditions
 if (DEBUGGING) then
     tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E4_RP * EPS * real(max(m, n), RP)))
     call assert(isorth(Q_loc, tol), 'The columns of Q are orthonormal', srname)
-    call assert(istriu(R_loc, tol), 'R is upper triangular', srname)
+    call assert(istril(T, tol), 'R is upper triangular', srname)
     if (pivote) then
-        call assert(all(abs(matprod(Q_loc, R_loc) - A(:, P)) <= max(tol, tol * maxval(abs(A)))), &
-            & 'A(:, P) = Q*R', srname)
+        call assert(all(abs(matprod(Q_loc, transpose(T)) - A(:, P)) <= &
+                        max(tol, tol * maxval(abs(A)))), 'A(:, P) = Q*R', srname)
         do j = 1, min(m, n) - 1_IK
-            call assert(abs(R_loc(j, j)) + max(tol, tol * abs(R_loc(j, j))) >= &
-                & abs(R_loc(j + 1, j + 1)), '|R(J, J)| >= |R(J + 1, J + 1)|', srname)
-            call assert(all(R_loc(j, j)**2 + max(tol, tol * R_loc(j, j)**2) >= &
-                & sum(R_loc(j:min(m, n), j + 1:n)**2, dim=1)), &
+            call assert(abs(T(j, j)) + max(tol, tol * abs(T(j, j))) >= &
+                & abs(T(j + 1, j + 1)), '|R(J, J)| >= |R(J + 1, J + 1)|', srname)
+            call assert(all(T(j, j)**2 + max(tol, tol * T(j, j)**2) >= &
+                & sum(T(j + 1:n, j:min(m, n))**2, dim=2)), &
                 & 'R(J, J)^2 >= SUM(R(J : MIN(M, N), J + 1 : N).^2', srname)
         end do
     else
-        call assert(all(abs(matprod(Q_loc, R_loc) - A) <= max(tol, tol * maxval(abs(A)))), &
+        call assert(all(abs(matprod(Q_loc, transpose(T)) - A) <= max(tol, tol * maxval(abs(A)))), &
             & 'A = Q*R', srname)
     end if
 end if
@@ -684,8 +688,10 @@ end subroutine qr
 function lsqr(A, b, Q) result(x)
 !--------------------------------------------------------------------------------------------------!
 ! This function solves the linear least squares problem min ||A*x - b||_2 by the QR factorization.
-! This function is used in COBYLA, where the Q of the factorization is supplied externally, and A
-! HAS FULL COLUMN RANK.
+! This function is used in COBYLA, where,
+! 1. Q of the factorization is supplied externally (called Z);
+! 2. A HAS FULL COLUMN RANK;
+! 3. it seems that b (CGRAD and DNEW) is in the column space of A (not sure yet).
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
