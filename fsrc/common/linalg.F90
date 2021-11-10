@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, November 09, 2021 PM09:27:49
+! Last Modified: Wednesday, November 10, 2021 PM01:50:48
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -31,7 +31,7 @@ public :: inprod, matprod, outprod
 public :: r1update, r2update, symmetrize
 public :: Ax_plus_y
 public :: eye
-public :: planerot, qr, lsqr, inv
+public :: planerot, lsqr, inv
 public :: calquad, errquad, hess_mul
 public :: omega_col, omega_mul, omega_inprod
 public :: errh
@@ -447,14 +447,16 @@ end function outprod
 
 
 pure function eye1(n) result(x)
+!--------------------------------------------------------------------------------------------------!
 ! EYE1 is the univariate case of EYE, a function similar to the MATLAB function with the same name.
+!--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE
 implicit none
-! Input
+! Inputs
 integer(IK), intent(in) :: n
-! Output
+! Outputs
 real(RP) :: x(max(n, 0_IK), max(n, 0_IK))
-! Local variable
+! Local variables
 integer(IK) :: i
 if (size(x, 1) * size(x, 2) > 0) then
     x = ZERO
@@ -466,15 +468,17 @@ end function eye1
 
 
 pure function eye2(m, n) result(x)
+!--------------------------------------------------------------------------------------------------!
 ! EYE2 is the bivariate case of EYE, a function similar to the MATLAB function with the same name.
+!--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE
 implicit none
 ! Inputs
 integer(IK), intent(in) :: m
 integer(IK), intent(in) :: n
-! Output
+! Outputs
 real(RP) :: x(max(m, 0_IK), max(n, 0_IK))
-! Local variable
+! Local variables
 integer(IK) :: i
 if (size(x, 1) * size(x, 2) > 0) then
     x = ZERO
@@ -485,49 +489,77 @@ end if
 end function eye2
 
 
-function inv(A, matrix_type) result(B)
-! This function calculates the inverse of a given matrix of special type. The matrix is ASSUMED
-! TO BE SMALL AND INVERTIBLE. The function is implemented NAIVELY. It is NOT coded for general
-! purposes but only for the usage in this project.
-! Only the following matrix types (MATRIX_TYPE) are supported, which is sufficient for this project:
-! ltri/LTRI: lower triangular
-! utri/UTRI: upper triangular
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, DEBUGGING
-use, non_intrinsic :: debug_mod, only : verisize, errstop
+function inv(A) result(B)
+!--------------------------------------------------------------------------------------------------!
+! This function calculates the inverse of a matrix A, which is ASSUMED TO BE SMALL AND INVERTIBLE.
+! The function is implemented NAIVELY. It is NOT coded for general purposes but only for the usage
+! in this project. Indeed, only the lower triangular case is used.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, EPS, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
-! Input
+! Inputs
 real(RP), intent(in) :: A(:, :)
-character(len=*), intent(in) :: matrix_type
 
-! Output
+! Outputs
 real(RP) :: B(size(A, 1), size(A, 1))
 
 ! Local variables
 integer(IK) :: i
 integer(IK) :: n
+integer(IK) :: P(size(A, 1))
+integer(IK) :: PI(size(A, 1))
 character(len=*), parameter :: srname = 'INV'
+real(RP) :: Q(size(A, 1), size(A, 1))
+real(RP) :: R(size(A, 1), size(A, 1))
+real(RP) :: tol
 
+! Sizes
 n = int(size(A, 1), kind(n))
+
+! Preconditions
 if (DEBUGGING) then
-    call verisize(A, n, n)
-    if (.not. (matrix_type == 'ltri' .or. matrix_type == 'LTRI' .or. matrix_type == 'utri' .or. matrix_type == 'UTRI')) then
-        call errstop(srname, 'Unknown matrix type: '//matrix_type)
-    end if
+    call assert(size(A, 1) == size(A, 2), 'A is squre', srname)
 end if
 
-if (matrix_type == 'ltri' .or. matrix_type == 'LTRI') then
+!====================!
+! Calculation starts !
+!====================!
+
+if (istril(A)) then
+    ! This cased is invoked in COBYLA.
     B = ZERO
     do i = 1, n
         B(i, i) = ONE / A(i, i)
         B(i, 1:i - 1) = -matprod(A(i, 1:i - 1) / A(i, i), B(1:i - 1, 1:i - 1))
     end do
-else if (matrix_type == 'utri' .or. matrix_type == 'UTRI') then
+else if (istriu(A)) then
     B = ZERO
     do i = 1, n
         B(i, i) = ONE / A(i, i)
         B(1:i - 1, i) = -matprod(B(1:i - 1, 1:i - 1), A(1:i - 1, i) / A(i, i))
     end do
+else
+    ! This is NOT the best algorithm for INV, but since the QR subroutine is available ...
+    call qr(A, Q, R, P)
+    do i = n, 1, -1
+        B(:, i) = (Q(:, i) - matprod(B(:, i + 1:n), R(i, i + 1:n))) / R(i, i)
+    end do
+    PI(P) = [(i, i=1, n)]  ! The inverse permutation
+    B = transpose(B(:, PI))
+end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(B, 1) == n .and. size(B, 2) == n, 'SIZE(B) == [N, N]', srname)
+    tol = 1.0E2_RP * real(n, RP) * EPS
+    call assert(all(abs(matprod(A, B) - eye(n)) <= max(tol, tol * maxval(abs(A)))), &
+        & 'B = A^(-1)', srname)
 end if
 
 end function inv
@@ -652,10 +684,10 @@ end subroutine qr
 function lsqr(A, b, Q) result(x)
 !--------------------------------------------------------------------------------------------------!
 ! This function solves the linear least squares problem min ||A*x - b||_2 by the QR factorization.
-! This function is used in COBYLA, where the Q of the factorization is supplied externally, and A is
-! supposed to have full column rank.
+! This function is used in COBYLA, where the Q of the factorization is supplied externally, and A
+! HAS FULL COLUMN RANK.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
@@ -692,6 +724,7 @@ if (DEBUGGING) then
     if (present(Q)) then
         call assert(size(Q, 1) == m .and. (size(Q, 2) == m .or. size(Q, 2) == min(m, n)), &
             & 'SIZE(Q) == [M, N] .or. SIZE(Q) == [M, MIN(M, N)]', srname)
+        ! The following test cannot be passed.
         !call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     end if
 end if
@@ -743,7 +776,7 @@ end do
 
 ! Postconditions
 if (DEBUGGING) then
-    ! This test cannot be passed.
+    ! The following test cannot be passed.
     !call assert(norm(matprod(b - matprod(A, x), A)) <= max(tol, tol * norm(matprod(b, A))), &
     !    & 'A*X is the projection of B to the column space of A', srname)
 end if

@@ -4,7 +4,7 @@
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, September 22, 2021 AM11:55:41
+! Last Modified: Wednesday, November 10, 2021 PM01:39:52
 
 module initialize_mod
 
@@ -143,7 +143,7 @@ do k = 1, n + 1
         cval([j, n + 1]) = cval([n + 1, j])
         conmat(:, [j, n + 1]) = conmat(:, [n + 1, j])
         sim(:, n + 1) = x
-        sim(j, 1:j) = -rho
+        sim(j, 1:j) = -rho  ! SIM(:, 1:N) is lower triangular.
     end if
 
 end do

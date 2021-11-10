@@ -164,8 +164,8 @@ if (subinfo /= INFO_DFT) then
     return
 end if
 
-! SIMI is the inverse of SIM(:, 1:N)
-simi = inv(sim(:, 1:n), 'ltri')
+! SIMI is the inverse of SIM(:, 1:N), which is lower triangular by Powell's initialization.
+simi = inv(sim(:, 1:n))
 ! If we arrive here, the objective and constraints must have been evaluated at SIM(:, I) for all I.
 evaluated = .true.
 
@@ -182,6 +182,14 @@ jdrop_geo = 0_IK
 maxtr = 4_IK * maxfun
 ! MAXTR is unlikely to be reached, but we define the following default value for INFO for safety.
 info = MAXTR_REACHED
+
+! We must initialize ACTREM and PREREM. Otherwise, when SHORTD = TRUE, compilers may raise a
+! run-time error that they are undefined. The values will not be used: when SHORTD = FALSE, they
+! will be overwritten; when SHORTD = TRUE, the values are used only in BAD_TRSTEP, which is TRUE
+! regardless of ACTREM or PREREM. Similar for JDROP_TR.
+actrem = -HUGENUM
+prerem = HUGENUM
+jdrop_tr = 0_IK
 
 ! Begin the iterative procedure.
 ! After solving a trust-region subproblem, COBYLA uses 3 boolean variables to control the work flow.
