@@ -471,13 +471,13 @@ do iter = 1, maxiter
     ! 1. VMULTD is computed from scratch for the second (out of 2) time in one iteration.
     ! 2. VMULTD(1:NACT) and VMULTD(NACT+1:MCON) are calculated separately with no coupling.
     ! 3. VMULTD will be calculated from scratch again in the next iteration.
-
+    !
     ! Set VMULTD to the VMULTC vector that would occur if D became DNEW. A device is included to
     ! force VMULTD(K)=ZERO if deviations from this value can be attributed to computer rounding
     ! errors. First calculate the new Lagrange multipliers.
     vmultd(1:nact) = lsqr(A(:, iact(1:nact)), dnew, z(:, 1:nact))
     if (stage == 2) then
-        vmultd(nact) = max(ZERO, vmultd(nact))  ! This seems a safeguard never activated.
+        vmultd(nact) = max(ZERO, vmultd(nact))  ! This seems never activated.
     end if
 
     ! Complete VMULTD by finding the new constraint residuals. (Powell wrote "Complete VMULTC ...")

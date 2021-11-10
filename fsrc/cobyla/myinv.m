@@ -16,10 +16,11 @@ elseif (istriu(A))
     end
 else
     [Q, R, P] = qr(A, 'vector');
+    R = R';
     %[Q, R] = qr(A);
     B = zeros(n, n);
     for i = n : -1 : 1
-        B(:, i) = (Q(:, i) - B(:, i+1:n)*R(i, i+1:n)') / R(i, i);
+        B(:, i) = (Q(:, i) - B(:, i+1:n)*R(i+1:n, i)) / R(i, i);
     end
     PI(P) = (1:n);
     B = B(:, PI)';

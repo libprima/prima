@@ -276,7 +276,6 @@ do tr = 1, maxtr
             actrem = cval(n + 1) - cstrv
         end if
         if (is_nan(actrem)) then
-            ! This should not happen under precise arithmetic.
             actrem = -HUGENUM  ! Signify a bad trust-region step.
         end if
         ! Set JDROP_TR to the index of the vertex that is to be replaced by X.
