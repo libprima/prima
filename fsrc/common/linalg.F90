@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, November 10, 2021 PM01:50:48
+! Last Modified: Wednesday, November 10, 2021 PM02:09:57
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -557,7 +557,7 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(B, 1) == n .and. size(B, 2) == n, 'SIZE(B) == [N, N]', srname)
-    tol = 1.0E2_RP * real(n, RP) * EPS
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E4_RP * EPS * real(n, RP)))
     call assert(all(abs(matprod(A, B) - eye(n)) <= max(tol, tol * maxval(abs(A)))), &
         & 'B = A^(-1)', srname)
 end if
@@ -660,7 +660,7 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    tol = 1.0E2_RP * EPS * real(max(m, n), RP)
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E4_RP * EPS * real(max(m, n), RP)))
     call assert(isorth(Q_loc, tol), 'The columns of Q are orthonormal', srname)
     call assert(istriu(R_loc, tol), 'R is upper triangular', srname)
     if (pivote) then
