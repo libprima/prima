@@ -1,3 +1,211 @@
+module LINALG_TMP_MOD
+use, non_intrinsic :: linalg_mod
+implicit none
+
+contains
+
+subroutine qrdel(A, Q, Rdiag, i)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine updates the QR factorization of A when the Ith column of A is deleted. Here, A
+! IS ASSUMED TO HAVE FULL COLUMN RANK.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: i
+real(RP), intent(in) :: A(:, :)
+
+! In-outputs
+real(RP), intent(inout) :: Q(:, :)
+real(RP), intent(inout) :: Rdiag(:)
+
+
+! Local variables
+character(len=*), parameter :: srname = 'QRDEL'
+integer(IK) :: n
+integer(IK) :: k
+real(RP) :: G(2, 2)
+real(RP) :: hypt
+real(RP) :: tol
+
+! Sizes
+n = int(size(A, 2), kind(n))
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(Q, 1) == size(A, 1) .and. size(Q, 2) == size(A, 2), 'SIZE(Q) == SIZE(R)', srname)
+    call assert(i >= 1 .and. i <= n, '1 <= I <= N', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+if (i <= 0 .or. i >= n) then  ! I <= 0 or I > N should not happen.
+    return
+end if
+
+do k = i, n - 1_IK
+    ! Zaikun 20210811: What if HYPT = 0?
+    hypt = sqrt(Rdiag(k + 1)**2 + inprod(Q(:, k), A(:, k + 1))**2)
+    G = PLANEROT_TMP([Rdiag(k + 1), inprod(Q(:, k), A(:, k + 1))])
+    Q(:, [k, k + 1]) = matprod(Q(:, [k + 1, k]), transpose(G))
+    Rdiag([k, k + 1]) = [hypt, (Rdiag(k + 1) / hypt) * Rdiag(k)]
+end do
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E4_RP * EPS * real(n, RP)))
+    call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
+end if
+end subroutine qrdel
+
+subroutine qrexc(A, Q, Rdiag, i)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine updates the QR factorization of A when the columns [I, I+1, ..., N] are exchanged
+! into [I+1, ..., N, I]; in other words, column I becomes the last column, and columns [I+1, ..., N]
+! are moved to the left by one position. Here, A IS ASSUMED TO HAVE FULL COLUMN RANK.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: i
+real(RP), intent(in) :: A(:, :)
+
+! In-outputs
+real(RP), intent(inout) :: Q(:, :)
+real(RP), intent(inout) :: Rdiag(:)
+
+
+! Local variables
+character(len=*), parameter :: srname = 'QREXC'
+integer(IK) :: n
+integer(IK) :: k
+real(RP) :: G(2, 2)
+real(RP) :: hypt
+real(RP) :: tol
+
+! Sizes
+n = int(size(A, 2), kind(n))
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(Q, 1) == size(A, 1) .and. size(Q, 2) == size(A, 2), 'SIZE(Q) == SIZE(R)', srname)
+    call assert(i >= 1 .and. i <= n - 1, '1 <= I <= N-1', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+if (i == n) then   ! Should not happen.
+    return
+end if
+
+do k = i, n - 1_IK
+    hypt = sqrt(Rdiag(k + 1)**2 + inprod(Q(:, k), A(:, k + 1))**2)
+    G = PLANEROT_TMP([Rdiag(k + 1), inprod(Q(:, k), A(:, k + 1))])
+    Q(:, [k, k + 1]) = matprod(Q(:, [k + 1, k]), transpose(G))
+    Rdiag([k, k + 1]) = [hypt, (Rdiag(k + 1) / hypt) * Rdiag(k)]
+    ! Rdiag([k, k+1]) = [hypt, G(1, 1)* Rdiag(k)]
+end do
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E4_RP * EPS * real(n, RP)))
+    call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
+end if
+end subroutine qrexc
+
+
+!!!!!! This is temporary!!! It must be merged with the PLANEROT in linalg_mod.
+function PLANEROT_TMP(x) result(G)
+! As in MATLAB, PLANEROT(X) returns a 2x2 Givens matrix G for X in R^2 so that Y = G*X has Y(2) = 0.
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HUGENUM
+use, non_intrinsic :: linalg_mod, only : eye
+use, non_intrinsic :: debug_mod, only : verisize
+
+implicit none
+real(RP), intent(in) :: x(:)
+real(RP) :: G(2, 2)
+
+real(RP) :: c, s, r, scaling
+
+call verisize(x, 2_IK)
+
+if (abs(x(2)) > ZERO) then
+    !>>>> SHOULD BE
+    !r = sqrt(sum(x**2))
+    !if (r > ZERO .and. r <= HUGENUM) then
+    !    c = x(1) / r
+    !    s = x(2) / r
+    !else
+    !    scaling = maxval(abs(x))
+    !    r = sqrt(sum((x/scaling)**2))
+    !    c = (x(1) / scaling) / r
+    !    s = (x(2) / scaling) / r
+    !end if
+    !G = reshape([c, -s, s, c], [2, 2])
+    !>>>> SHOUD BE
+
+    !<<<< TEMP
+    r = sqrt(sum(x**2))
+    c = x(1) / r
+    s = x(2) / r
+    G = reshape([c, -s, s, c], [2, 2])
+    !<<<< TEMP
+
+elseif (x(1) < ZERO) then
+    ! Setting G = -EYE(2, 2) in this case ensures the continuity of G with respect to X except at 0.
+    G = -eye(2_IK)
+else
+    G = eye(2_IK)
+end if
+end function PLANEROT_TMP
+
+
+! A stabilized Givens rotation that avoids over/underflow and keeps continuity (see wikipedia)
+!function [c, s, r] = givens_rotation(a, b)
+!    if b == 0;
+!        c = sign(a);  % Continuity
+!        if (c == 0);
+!            c = 1.0; % Unlike other languages, MatLab's sign function returns 0 on input 0.
+!        end;
+!        s = 0;
+!        r = abs(a);
+!    elseif a == 0;
+!        c = 0;
+!        s = sign(b);
+!        r = abs(b);
+!    elseif abs(a) > abs(b);
+!        t = b/a;
+!        u = sign(a) * sqrt(1+t * t);
+!        c = 1/u;
+!        s = c*t;
+!        r = a*u;
+!    else
+!        t = a/b;
+!        u = sign(b) * sqrt(1+t * t);
+!        s = 1/u;
+!        c = s*t;
+!        r = b*u;
+!    end
+!end
+end module LINALG_TMP_MOD
+
+
 module trustregion_mod
 
 implicit none
@@ -113,8 +321,8 @@ subroutine trstlp_sub(iact, nact, stage, A, b, rho, d, vmultc, z)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, EPS, HUGENUM, DEBUGGING
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: debug_mod, only : assert, errstop, verisize
-!!!!!! use, non_intrinsic:: linalg_mod, only : inprod, matprod, eye, planerot, isminor
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, isminor, lsqr !!!!!!!!!!!!!!!!!!
+use, non_intrinsic :: LINALG_TMP_MOD, only : PLANEROT_TMP, qrdel, qrexc
 implicit none
 
 ! Inputs
@@ -363,23 +571,10 @@ do iter = 1, maxiter
         ! if stage 2 is in progress.
         ! Zaikun 20211011: Is it for stage 2 that IACT(NACT-1) = MCON when IACT(NACT) /= MCON?
         if (stage == 2 .and. iact(nact) /= mcon) then
-            !!!!!! This is QREXC-----------------------------------------------------------------
-            ! HYPT is positive because ZDOTA(NACT) is nonzero.
-            hypt = sqrt(zdota(nact)**2 + inprod(z(:, nact - 1), A(:, iact(nact)))**2)
-            grot = PLANEROT_TMP([zdota(nact), inprod(z(:, nact - 1), A(:, iact(nact)))])
-            z(:, [nact - 1, nact]) = matprod(z(:, [nact, nact - 1]), transpose(grot))
-
-            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Calculate ZDOTA from scratch? Test it.
-            zdota([nact - 1, nact]) = [hypt, (zdota(nact) / hypt) * zdota(nact - 1)]   ! zdota([nact-1, nact]) = [hypt, grot(1, 1)* zdota(nact-1)]
-            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Test
-
+            call qrexc(A(:, iact(1:nact)), Z(:, 1:nact), zdota(1:nact), nact - 1)
             iact([nact - 1, nact]) = iact([nact, nact - 1])
-
             !!!!!!! Test
             !zdota(nact-1:nact) = [(inprod(z(:, k), A(:, iact(k))), k = nact-1, nact)]
-            !!!!!!! Test
-            !!!!!! This is QREXC-----------------------------------------------------------------
-
             vmultc([nact - 1, nact]) = vmultc([nact, nact - 1])
         end if
 
@@ -397,27 +592,11 @@ do iter = 1, maxiter
     else
         ! Delete the constraint with the index IACT(ICON) from the active set. In theory, ICON > 0.
         ! To be safe, the condition below requires ICON > 0, which does not exist in Powell's code.
-
-        !!!!!!!!!!!! This is QRDEL-----------------------------------------------------------------
         if (icon < nact .and. icon > 0) then
-            do k = icon, nact - 1
-                ! Zaikun 20210811: What if HYPT = 0?
-                hypt = sqrt(zdota(k + 1)**2 + inprod(z(:, k), A(:, iact(k + 1)))**2)
-                grot = PLANEROT_TMP([zdota(k + 1), inprod(z(:, k), A(:, iact(k + 1)))])
-                z(:, [k, k + 1]) = matprod(z(:, [k + 1, k]), transpose(grot))
-
-                !!!!!!!!! Calculate ZDOTA from scratch? Test it.
-                zdota([k, k + 1]) = [hypt, (zdota(k + 1) / hypt) * zdota(k)]
-                !!!!!!!!! Test
-
-            end do
+            call qrdel(A(:, iact(1:nact)), Z(:, 1:nact), zdota(1:nact), icon)
             iact(icon:nact) = [iact(icon + 1:nact), iact(icon)]
-
             !!!!!!!!!!!!!! Test
             !zdota(icon:nact) = [(inprod(z(:, k), A(:, iact(k))), k = icon, nact)]
-            !!!!!!!!!!!!!! Test
-        !!!!!!!!!!!! This is QRDEL-----------------------------------------------------------------
-
             vmultc(icon:nact) = [vmultc(icon + 1:nact), vmultc(icon)]
         end if
         nact = nact - 1
@@ -525,91 +704,5 @@ do iter = 1, maxiter
 end do
 
 end subroutine trstlp_sub
-
-!--------------------------------------------------------------------------------------------------!
-! The following function indeed solves the linear least squares problem
-! min |V*VMULTD-u|
-! 1. Z is the Q in the QR factorization of V, and zdotv is the diagonal of R.
-! 2. In COBYLA, V is of full column rank.
-! 3. In COBYLA, it seems that u (CGRAD and DNEW) is in the column space of V. Not sure yet.
-! 4. It should be included into linalg_mod as
-! function lsqr(A, b, Q = Q)
-! maybe with a bit generalization.
-!--------------------------------------------------------------------------------------------------!
-
-
-!!!!!! This is temporary!!! It must be merged with the PLANEROT in linalg_mod.
-function PLANEROT_TMP(x) result(G)
-! As in MATLAB, PLANEROT(X) returns a 2x2 Givens matrix G for X in R^2 so that Y = G*X has Y(2) = 0.
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HUGENUM
-use, non_intrinsic :: linalg_mod, only : eye
-use, non_intrinsic :: debug_mod, only : verisize
-
-implicit none
-real(RP), intent(in) :: x(:)
-real(RP) :: G(2, 2)
-
-real(RP) :: c, s, r, scaling
-
-call verisize(x, 2_IK)
-
-if (abs(x(2)) > ZERO) then
-    !>>>> SHOULD BE
-    !r = sqrt(sum(x**2))
-    !if (r > ZERO .and. r <= HUGENUM) then
-    !    c = x(1) / r
-    !    s = x(2) / r
-    !else
-    !    scaling = maxval(abs(x))
-    !    r = sqrt(sum((x/scaling)**2))
-    !    c = (x(1) / scaling) / r
-    !    s = (x(2) / scaling) / r
-    !end if
-    !G = reshape([c, -s, s, c], [2, 2])
-    !>>>> SHOUD BE
-
-    !<<<< TEMP
-    r = sqrt(sum(x**2))
-    c = x(1) / r
-    s = x(2) / r
-    G = reshape([c, -s, s, c], [2, 2])
-    !<<<< TEMP
-
-elseif (x(1) < ZERO) then
-    ! Setting G = -EYE(2, 2) in this case ensures the continuity of G with respect to X except at 0.
-    G = -eye(2_IK)
-else
-    G = eye(2_IK)
-end if
-end function PLANEROT_TMP
-
-
-! A stabilized Givens rotation that avoids over/underflow and keeps continuity (see wikipedia)
-!function [c, s, r] = givens_rotation(a, b)
-!    if b == 0;
-!        c = sign(a);  % Continuity
-!        if (c == 0);
-!            c = 1.0; % Unlike other languages, MatLab's sign function returns 0 on input 0.
-!        end;
-!        s = 0;
-!        r = abs(a);
-!    elseif a == 0;
-!        c = 0;
-!        s = sign(b);
-!        r = abs(b);
-!    elseif abs(a) > abs(b);
-!        t = b/a;
-!        u = sign(a) * sqrt(1+t * t);
-!        c = 1/u;
-!        s = c*t;
-!        r = a*u;
-!    else
-!        t = a/b;
-!        u = sign(b) * sqrt(1+t * t);
-!        s = 1/u;
-!        c = s*t;
-!        r = b*u;
-!    end
-!end
 
 end module trustregion_mod
