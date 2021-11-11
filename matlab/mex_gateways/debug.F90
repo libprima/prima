@@ -5,7 +5,7 @@
 !
 ! Started: July 2020.
 !
-! Last Modified: Saturday, September 25, 2021 PM06:47:03
+! Last Modified: Thursday, November 11, 2021 AM10:59:34
 
 
 #include "fintrf.h"
@@ -47,7 +47,7 @@ character(len=*), intent(in) :: description  ! Description of the assertion in h
 character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure
 #if __DEBUGGING__ == 1
 if (.not. assertion) then
-    call errstop(trim(srname), 'Assertion failed: '//description)
+    call errstop(trim(srname), 'Assertion failed: '//trim(description))
 end if
 #endif
 end subroutine assert
@@ -69,7 +69,7 @@ call backtr()
 #endif
 
 eid = 'FMXAPI:nInput'
-emssg = trim(srname)//': '//trim(mssg)
+emssg = trim(srname)//': '//trim(mssg)//'.'
 call mexErrMsgIdAndTxt(trim(eid), trim(emssg))
 
 end subroutine errstop

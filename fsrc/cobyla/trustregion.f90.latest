@@ -377,7 +377,6 @@ real(RP) :: sdirn(size(d))
 real(RP) :: ss
 real(RP) :: step
 real(RP) :: vmultd(size(b))
-real(RP) :: zda_old
 real(RP) :: zdota(size(z, 2))
 character(len=*), parameter :: srname = 'TRSTLP_SUB'
 
@@ -530,6 +529,7 @@ do iter = 1, maxiter
             ! Further, set IOUT to the index of the constraint to be deleted, but branch if no
             ! suitable index can be found.
             !--------------------------------------------------------------------------------------!
+            zdota(nact) = inprod(z(:, nact), A(:, iact(icon)))
 
             !----------------------------! 1st VMULTD CALCULATION STARTS  !-------------------------!
             ! Zaikun 20211011:
@@ -537,10 +537,7 @@ do iter = 1, maxiter
             ! 2. The sole purpose of this VMULTD is to compute VMULTC(1 : NACT) and check possible
             ! exit immediately after this loop. Only VMULTD(1 : NACT) is needed.
             ! 3. VMULTD will be computed from scratch again later.
-            ! 4. NOTE that IACT has not been updated to replace IACT(NACT) with IACT(ICON). Thus
-            ! A(:, IACT(1:NACT)) is the UNUPDATED version before QRADD (Z(:, 1:NACT) remains the
-            ! same before and after QRADD). Therefore, if we supply ZDOTA to LSQR (as Rdiag) as
-            ! Powell did, we should use the UNUPDATED version.
+            !vmultd(1:nact) = lsqr(A(:, iact(1:nact)), cgrad, z(:, 1:nact))
             vmultd(1:nact) = lsqr(A(:, iact(1:nact)), A(:, iact(icon)), z(:, 1:nact))
             !----------------------------! 1st VMULTD CALCULATION ENDS  !--------------------------!
 
@@ -568,16 +565,11 @@ do iter = 1, maxiter
             !end if
             !--------------------------------------------------------------------------------------!
 
-            zda_old = zdota(nact)
-            zdota(nact) = inprod(z(:, nact), A(:, iact(icon)))
-            if (abs(zdota(nact)) > 0) then
-                ! Note that the opposite of 'ABS(ZDOTA(NACT)) > 0' is not 'ABS(ZDOTA(NACT) <= 0)',
-                ! as ZDOTA(NACT) can be NaN.
-                ! Since ICON /= NACT, it is valid to use [ICON, NACT] to index arrays.
-                vmultc([icon, nact]) = [ZERO, frac]
-                iact([icon, nact]) = iact([nact, icon])
-            else
-                zdota(nact) = zda_old
+            ! Since ICON /= NACT, it is valid to use [ICON, NACT] to index arrays.
+            vmultc([icon, nact]) = [ZERO, frac]
+            iact([icon, nact]) = iact([nact, icon])
+
+            if (abs(zdota(nact)) <= ZERO) then
                 exit
             end if
         end if
