@@ -5,7 +5,7 @@
 !
 ! Started: July 2020.
 !
-! Last Modified: Sunday, September 26, 2021 PM09:37:27
+! Last Modified: Thursday, November 11, 2021 AM10:57:43
 
 
 #include "ppf.h"
@@ -41,9 +41,9 @@ character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this
 
 if (.not. assertion) then
 #if __DEBUGGING__ == 1
-    call errstop(trim(srname), 'Assertion failed: '//description)
+    call errstop(trim(srname), 'Assertion failed: '//trim(description))
 #else
-    call warning(trim(srname), 'Assertion failed: '//description)
+    call warning(trim(srname), 'Assertion failed: '//trim(description))
 #endif
 end if
 end subroutine assert

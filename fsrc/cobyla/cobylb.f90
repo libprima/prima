@@ -250,6 +250,7 @@ do tr = 1, maxtr
         if (prerec > ZERO .and. cpen < 1.5E0_RP * barmu) then
             cpen = min(TWO * barmu, HUGENUM)
             if (findpole(cpen, evaluated, cval, fval) <= n) then
+                ! Zaikun 20211111: Can this lead to infinite cycling?
                 cycle
             end if
         end if
