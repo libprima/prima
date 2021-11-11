@@ -520,6 +520,7 @@ do iter = 1, maxiter
                 ! Zaikun 20211012: Is this needed ? Isn't it true naturally?
                 vmultc(nact) = ZERO
             end if
+            !else
         else
             ! The next instruction is reached if a deletion has to be made from the active set in
             ! order to make room for the new active constraint, because the new constraint gradient
@@ -533,6 +534,9 @@ do iter = 1, maxiter
             ! suitable index can be found.
             !--------------------------------------------------------------------------------------!
 
+            if (nact > 0) then !!!!!!
+                zdota(nact) = inprod(z(:, nact), A(:, iact(icon)))
+            end if  !!!!!!
 
             !----------------------------! 1st VMULTD CALCULATION STARTS  !-------------------------!
             ! Zaikun 20211011:
@@ -573,7 +577,6 @@ do iter = 1, maxiter
             !end if
             !--------------------------------------------------------------------------------------!
 
-            zdota(nact) = inprod(z(:, nact), A(:, iact(icon)))
             if (abs(zdota(nact)) > 0) then
                 ! Note that the opposite of 'ABS(ZDOTA(NACT)) > 0' is not 'ABS(ZDOTA(NACT) <= 0)',
                 ! as ZDOTA(NACT) can be NaN.
