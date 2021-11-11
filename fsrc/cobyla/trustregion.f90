@@ -377,7 +377,7 @@ real(RP) :: sdirn(size(d))
 real(RP) :: ss
 real(RP) :: step
 real(RP) :: vmultd(size(b))
-real(RP) :: zdasav
+real(RP) :: zda_old
 real(RP) :: zdota(size(z, 2))
 character(len=*), parameter :: srname = 'TRSTLP_SUB'
 
@@ -492,8 +492,6 @@ do iter = 1, maxiter
         end do
         !!!!!!!!!! This is QRADD-------------------------------------------------------------------
 
-        zdasav = zdota(nact)
-
         if (nact < n .and. abs(cgz(nact + 1)) > ZERO) then
             ! Add the new constraint if this can be done without a deletion from the active set.
             ! Powell wrote "CGZ(NACT+1) /= ZERO" instead of "ABS(CGZ(NACT+1)) > ZERO".
@@ -533,8 +531,6 @@ do iter = 1, maxiter
             ! suitable index can be found.
             !--------------------------------------------------------------------------------------!
 
-            zdota(nact) = inprod(z(:, nact), A(:, iact(icon)))
-
             !----------------------------! 1st VMULTD CALCULATION STARTS  !-------------------------!
             ! Zaikun 20211011:
             ! 1. VMULTD is calculated from scratch for the first time (out of 2) in one iteration.
@@ -550,8 +546,6 @@ do iter = 1, maxiter
 
             frac = minval(vmultc(1:nact) / vmultd(1:nact), mask=(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m))
             if (frac < ZERO .or. .not. any(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m)) then
-                zdota(nact) = zdasav  ! A(:, IACT(NACT)) stays unchanged in this situation.
-                ! Without the last line, segmentation fault can occur. Whyyyyyy???????
                 exit
             end if
 
@@ -574,6 +568,9 @@ do iter = 1, maxiter
             !end if
             !--------------------------------------------------------------------------------------!
 
+            zda_old = zdota(nact)
+            zdota(nact) = inprod(z(:, nact), A(:, iact(icon)))
+
             if (abs(zdota(nact)) > 0) then
                 ! Note that the opposite of 'ABS(ZDOTA(NACT)) > 0' is not 'ABS(ZDOTA(NACT) <= 0)',
                 ! as ZDOTA(NACT) can be NaN.
@@ -581,7 +578,7 @@ do iter = 1, maxiter
                 vmultc([icon, nact]) = [ZERO, frac]
                 iact([icon, nact]) = iact([nact, icon])
             else
-                zdota(nact) = zdasav  ! A(:, IACT(NACT)) stays unchanged in this situation.
+                zdota(nact) = zda_old  ! A(:, IACT(NACT)) stays unchanged in this situation.
                 exit
             end if
         end if

@@ -377,6 +377,7 @@ real(RP) :: sdirn(size(d))
 real(RP) :: ss
 real(RP) :: step
 real(RP) :: vmultd(size(b))
+real(RP) :: zdasav
 real(RP) :: zdota(size(z, 2))
 character(len=*), parameter :: srname = 'TRSTLP_SUB'
 
@@ -491,6 +492,8 @@ do iter = 1, maxiter
         end do
         !!!!!!!!!! This is QRADD-------------------------------------------------------------------
 
+        zdasav = zdota(nact)
+
         if (nact < n .and. abs(cgz(nact + 1)) > ZERO) then
             ! Add the new constraint if this can be done without a deletion from the active set.
             ! Powell wrote "CGZ(NACT+1) /= ZERO" instead of "ABS(CGZ(NACT+1)) > ZERO".
@@ -529,6 +532,7 @@ do iter = 1, maxiter
             ! Further, set IOUT to the index of the constraint to be deleted, but branch if no
             ! suitable index can be found.
             !--------------------------------------------------------------------------------------!
+
             zdota(nact) = inprod(z(:, nact), A(:, iact(icon)))
 
             !----------------------------! 1st VMULTD CALCULATION STARTS  !-------------------------!
@@ -537,12 +541,17 @@ do iter = 1, maxiter
             ! 2. The sole purpose of this VMULTD is to compute VMULTC(1 : NACT) and check possible
             ! exit immediately after this loop. Only VMULTD(1 : NACT) is needed.
             ! 3. VMULTD will be computed from scratch again later.
-            !vmultd(1:nact) = lsqr(A(:, iact(1:nact)), cgrad, z(:, 1:nact))
+            ! 4. NOTE that IACT has not been updated to replace IACT(NACT) with IACT(ICON). Thus
+            ! A(:, IACT(1:NACT)) is the UNUPDATED version before QRADD (Z(:, 1:NACT) remains the
+            ! same before and after QRADD). Therefore, if we supply ZDOTA to LSQR (as Rdiag) as
+            ! Powell did, we should use the UNUPDATED version.
             vmultd(1:nact) = lsqr(A(:, iact(1:nact)), A(:, iact(icon)), z(:, 1:nact))
             !----------------------------! 1st VMULTD CALCULATION ENDS  !--------------------------!
 
             frac = minval(vmultc(1:nact) / vmultd(1:nact), mask=(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m))
             if (frac < ZERO .or. .not. any(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m)) then
+                zdota(nact) = zdasav  ! A(:, IACT(NACT)) stays unchanged in this situation.
+                ! Without the last line, segmentation fault can occur. Whyyyyyy???????
                 exit
             end if
 
@@ -565,11 +574,14 @@ do iter = 1, maxiter
             !end if
             !--------------------------------------------------------------------------------------!
 
-            ! Since ICON /= NACT, it is valid to use [ICON, NACT] to index arrays.
-            vmultc([icon, nact]) = [ZERO, frac]
-            iact([icon, nact]) = iact([nact, icon])
-
-            if (abs(zdota(nact)) <= ZERO) then
+            if (abs(zdota(nact)) > 0) then
+                ! Note that the opposite of 'ABS(ZDOTA(NACT)) > 0' is not 'ABS(ZDOTA(NACT) <= 0)',
+                ! as ZDOTA(NACT) can be NaN.
+                ! Since ICON /= NACT, it is valid to use [ICON, NACT] to index arrays.
+                vmultc([icon, nact]) = [ZERO, frac]
+                iact([icon, nact]) = iact([nact, icon])
+            else
+                zdota(nact) = zdasav  ! A(:, IACT(NACT)) stays unchanged in this situation.
                 exit
             end if
         end if
