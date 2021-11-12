@@ -474,7 +474,11 @@ do iter = 1, maxiter
     ! of the new constraint, a scalar product being set to zero if its nonzero value could be due to
     ! computer rounding errors, which is tested by ISMINOR.
     if (icon > nact) then
-        zdasav = zdota(nact)
+
+        if (nact > 0) then !!!!!
+            zdasav = zdota(nact)
+        end if  !!!
+
         nactsav = nact
 
         !!!!!!!!!! This is QRADD-------------------------------------------------------------------
@@ -494,7 +498,6 @@ do iter = 1, maxiter
                 cgz(k) = sqrt(cgz(k)**2 + cgz(k + 1)**2)
             end if
         end do
-        !!!!!!!!!! This is QRADD-------------------------------------------------------------------
 
         if (nact < n .and. abs(cgz(nact + 1)) > ZERO) then
             ! Add the new constraint if this can be done without a deletion from the active set.
@@ -528,6 +531,14 @@ do iter = 1, maxiter
             end if  !!!!!!
         end if
 
+        !!!!!!!!!! This is QRADD-------------------------------------------------------------------
+
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        !if (nact > 0 .and. .not. abs(zdota(nact)) > 0) then
+        !    zdota(nact) = zdasav  ! A(:, IACT(NACT)) stays unchanged in this situation.
+        !    exit
+        !end if
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         if (nact == nactsav + 1) then
             if (nact /= icon) then
@@ -544,7 +555,7 @@ do iter = 1, maxiter
             end if
             !else
         else
-            !----------------------------! 1st VMULTD CALCULATION STARTS  !-------------------------!
+            !----------------------------! 1st VMULTD CALCULATION STARTS  !------------------------!
             ! Zaikun 20211011:
             ! 1. VMULTD is calculated from scratch for the first time (out of 2) in one iteration.
             ! 2. The sole purpose of this VMULTD is to compute VMULTC(1 : NACT) and check possible
@@ -559,7 +570,9 @@ do iter = 1, maxiter
 
             frac = minval(vmultc(1:nact) / vmultd(1:nact), mask=(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m))
             if (frac < ZERO .or. .not. any(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m)) then
-                zdota(nact) = zdasav  ! A(:, IACT(NACT)) stays unchanged in this situation.
+                if (nact > 0) then !!!
+                    zdota(nact) = zdasav  ! A(:, IACT(NACT)) stays unchanged in this situation.
+                end if !!!
                 ! Without the last line, segmentation fault can occur. Whyyyyyy???????
                 exit
             end if
