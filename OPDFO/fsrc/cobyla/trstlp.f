@@ -338,9 +338,11 @@
 !  160 VMULTC(K)=AMAX1(0.0,VMULTC(K)-RATIO*VMULTD(K))
           VMULTC(K)=DMAX1(0.0D0,VMULTC(K)-RATIO*VMULTD(K))
       END DO
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!!!>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>!
+!!!>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> This part cannot be reached!
       IF (ICON < NACT) THEN
-          stop "icon<nact"
+          stop "icon<nact" !!!!
           ISAVE=IACT(ICON)
           VSAVE=VMULTC(ICON)
           K=ICON
@@ -373,6 +375,9 @@
           IACT(K)=ISAVE
           VMULTC(K)=VSAVE
       END IF
+!!!<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< This part cannot be reached
+!!!<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<!
+
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      TEMP=0.0
       TEMP=0.0D0
