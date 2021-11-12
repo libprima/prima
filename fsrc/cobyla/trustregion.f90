@@ -473,6 +473,7 @@ do iter = 1, maxiter
     ! Apply Givens rotations so that the last N-NACT-1 columns of Z are orthogonal to the gradient
     ! of the new constraint, a scalar product being set to zero if its nonzero value could be due to
     ! computer rounding errors, which is tested by ISMINOR.
+    ! What if NACT = 0????!!!!
     if (icon > nact) then
 
         if (nact > 0) then !!!!!
@@ -534,6 +535,10 @@ do iter = 1, maxiter
         !!!!!!!!!! This is QRADD-------------------------------------------------------------------
 
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        !if ((nact == 0 .and. .not. abs(zdota(1)) > 0) .or. (nact > 0 .and. .not. abs(zdota(nact)) > 0)) then
+        !    exit
+        !end if
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         !if (nact > 0 .and. .not. abs(zdota(nact)) > 0) then
         !    zdota(nact) = zdasav  ! A(:, IACT(NACT)) stays unchanged in this situation.
         !    exit
@@ -555,6 +560,11 @@ do iter = 1, maxiter
             end if
             !else
         else
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!
+            if (nact == 0) then !!!!!
+                exit !!!!
+            end if !!!!
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!
             !----------------------------! 1st VMULTD CALCULATION STARTS  !------------------------!
             ! Zaikun 20211011:
             ! 1. VMULTD is calculated from scratch for the first time (out of 2) in one iteration.
@@ -565,7 +575,8 @@ do iter = 1, maxiter
             ! A(:, IACT(1:NACT)) is the UNUPDATED version before QRADD (Z(:, 1:NACT) remains the
             ! same before and after QRADD). Therefore, if we supply ZDOTA to LSQR (as Rdiag) as
             ! Powell did, we should use the UNUPDATED version.
-            vmultd(1:nact) = lsqr(A(:, iact(1:nact)), A(:, iact(icon)), z(:, 1:nact))
+            !vmultd(1:nact) = lsqr(A(:, iact(1:nact)), A(:, iact(icon)), z(:, 1:nact))
+            vmultd(1:nact) = lsqr(A(:, iact(1:nact)), A(:, iact(icon)), z(:, 1:nact), [zdota(1:nact - 1), zdasav])
             !----------------------------! 1st VMULTD CALCULATION ENDS  !--------------------------!
 
             frac = minval(vmultc(1:nact) / vmultd(1:nact), mask=(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m))
@@ -694,7 +705,7 @@ do iter = 1, maxiter
     ! Set VMULTD to the VMULTC vector that would occur if D became DNEW. A device is included to
     ! force VMULTD(K)=ZERO if deviations from this value can be attributed to computer rounding
     ! errors. First calculate the new Lagrange multipliers.
-    vmultd(1:nact) = lsqr(A(:, iact(1:nact)), dnew, z(:, 1:nact))
+    vmultd(1:nact) = lsqr(A(:, iact(1:nact)), dnew, z(:, 1:nact), zdota(1:nact))
     if (stage == 2) then
         vmultd(nact) = max(ZERO, vmultd(nact))  ! This seems never activated.
     end if
