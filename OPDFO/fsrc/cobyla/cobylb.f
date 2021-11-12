@@ -1,3 +1,7 @@
+!     IFLAG = 0: The current simplex is not acceptable
+!     IFLAG = 1: The current simplex is acceptable
+!     IBRNCH = 0: The next iteration is geometry step
+!     IBRNCH = 1: The next iteration is trust-region step
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      SUBROUTINE COBYLB (N,M,MPP,X,RHOBEG,RHOEND,IPRINT,MAXFUN,
 C     1  CON,SIM,SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT)
@@ -122,6 +126,7 @@ C     By Zaikun (02-06-2019):
       CON(1:M) = MAX(CON(1:M), -HUGECON)
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       NFVALS=NFVALS+1
+
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      RESMAX=0.0
@@ -428,7 +433,7 @@ C      VETA(J)=SQRT(WETA)
 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! Zaikun 2021-07-19: With the following line, the geometry step
-      ! will not be taken if the current simplex if acceptable but then
+      ! will not be taken if the current simplex is acceptable but then
       ! becomes unacceptable due to the update of PARMU in the lines
       ! above the line number 410.
       IF (IFLAG == 1) IBRNCH = 1

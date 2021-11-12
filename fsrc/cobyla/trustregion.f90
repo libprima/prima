@@ -566,6 +566,7 @@ do iter = 1, maxiter
                 exit !!!!
             end if !!!!
             if (.not. abs(zdota(nact)) > 0) then
+                zdota(nact) = zdasav  !!??
                 exit
             end if
             !!!!!!!!!!!!!!!!!!!!!!!!!!!

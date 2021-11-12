@@ -265,9 +265,11 @@
           if (isminor(temp,inprod(abs(Z(1:N,nact)),abs(A(1:N,kk)))))then
               temp = 0.0d0
           end if
+          zdota(nact) = temp
       end if
       if (nact == 0) GOTO 490
-      IF (.not. ABS(temp) > 0.0D0) THEN
+      IF (.not. ABS(zdota(nact)) > 0.0D0) THEN
+          zdota(nact) = zdasav  !!??
           GOTO 490
       end if
 !!!!!!<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -584,9 +586,7 @@
           ACCA=STEP+0.1D0*RESMAX
           ACCB=STEP+2.0D0*0.1D0*RESMAX
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          IF (STEP >= ACCA .OR. ACCA >= ACCB) THEN
-              GOTO 480
-          END IF
+          IF (STEP >= ACCA .OR. ACCA >= ACCB) GOTO 480
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          STEP=AMIN1(STEP,RESMAX)
           STEP=DMIN1(STEP,RESMAX)
@@ -800,8 +800,8 @@
       !write(17,*) 'stage', stage, 'd', dx(1:n)
       stage = 2  !!! Stage 2 starts here.
       ITERC = 0
+      zdota(1:nact) = [(dot_product(z(:, i), A(:, iact(i))), i=1, nact)]
       resmax = maxval([b(1:m) - matprod(dx(1:n), A(:, 1:m)), 0.0D0])  ! Do not use MATMUL! Do not use ZERO unless it is defined!
-      zdota(1:nact) = [(inprod(z(:, i), A(:, iact(i))), i=1, nact)]
 !      write(17,*) 'stage2', vmultc(1:m)
 !      iact(1:mcon), nact, A(1:n, 1:mcon), b(1:mcon), rho,
       GOTO 60
