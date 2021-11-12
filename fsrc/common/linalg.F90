@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 12, 2021 PM12:46:11
+! Last Modified: Friday, November 12, 2021 PM01:51:27
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1517,16 +1517,22 @@ end function omega_inprod
 
 pure function isminor0(x, ref) result(is_minor)
 ! This function tests whether X is minor compared to REF. It is used by Powell, e.g., in COBYLA.
+! In precise arithmetic, ISMINOR(X, REF) is TRUE if and only if X == 0; in floating-point
+! arithmetic, ISMINOR(X, REF) is true if X is zero or its nonzero value can be attributed to
+! computer rounding errors according to REF.
+! Larger SENSITIVITY means the function is more strict/precise.
 use, non_intrinsic :: consts_mod, only : RP, TENTH, TWO
 implicit none
 
 real(RP), intent(in) :: x
 real(RP), intent(in) :: ref
 logical :: is_minor
-real(RP) :: refa, refb
+real(RP), parameter :: sensitivity = TENTH
+real(RP) :: refa
+real(RP) :: refb
 
-refa = abs(ref) + TENTH * abs(x)
-refb = abs(ref) + TWO * TENTH * abs(x)
+refa = abs(ref) + sensitivity * abs(x)
+refb = abs(ref) + TWO * sensitivity * abs(x)
 is_minor = (abs(ref) >= refa .or. refa >= refb)
 end function isminor0
 
