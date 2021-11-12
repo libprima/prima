@@ -355,6 +355,7 @@ integer(IK) :: maxiter
 integer(IK) :: mcon
 integer(IK) :: n
 integer(IK) :: nactold
+integer(IK) :: nactsav
 integer(IK) :: nfail
 real(RP) :: cgrad(size(d))
 real(RP) :: cgz(size(d))
@@ -473,6 +474,9 @@ do iter = 1, maxiter
     ! of the new constraint, a scalar product being set to zero if its nonzero value could be due to
     ! computer rounding errors, which is tested by ISMINOR.
     if (icon > nact) then
+        zdasav = zdota(nact)
+        nactsav = nact
+
         !!!!!!!!!! This is QRADD-------------------------------------------------------------------
         cgrad = A(:, iact(icon))
         cgz = matprod(cgrad, z)
@@ -492,8 +496,6 @@ do iter = 1, maxiter
         end do
         !!!!!!!!!! This is QRADD-------------------------------------------------------------------
 
-        zdasav = zdota(nact)
-
         if (nact < n .and. abs(cgz(nact + 1)) > ZERO) then
             ! Add the new constraint if this can be done without a deletion from the active set.
             ! Powell wrote "CGZ(NACT+1) /= ZERO" instead of "ABS(CGZ(NACT+1)) > ZERO".
@@ -508,19 +510,6 @@ do iter = 1, maxiter
             !!??zdota(nact) = inprod(z(:, nact), a(:, iact(nact)))
             !!!!!!!!!!!!!!!!!!!!!!! Test
             !!!!!!!!!!!!!!!!!!! This is also QRADD------------------------------------------------
-            if (nact /= icon) then
-                ! N.B.: It is problematic to index arrays using [NACT, ICON] when NACT == ICON.
-                ! Indeed, Sec. 9.5.3.3.3 of the Fortran 2018 standard says: "If a vector subscript
-                ! has two or more elements with the same value, an array section with that vector
-                ! subscript is NOT definable and shall NOT be defined or become undefined."
-                ! Zaikun 20211012: Why should VMULTC(NACT) = 0?
-                vmultc([icon, nact]) = [vmultc(nact), ZERO]
-                iact([icon, nact]) = iact([nact, icon])
-            else
-                ! Zaikun 20211012: Is this needed ? Isn't it true naturally?
-                vmultc(nact) = ZERO
-            end if
-            !else
         else
             ! The next instruction is reached if a deletion has to be made from the active set in
             ! order to make room for the new active constraint, because the new constraint gradient
@@ -537,7 +526,24 @@ do iter = 1, maxiter
             if (nact > 0) then !!!!!!
                 zdota(nact) = inprod(z(:, nact), A(:, iact(icon)))
             end if  !!!!!!
+        end if
 
+
+        if (nact == nactsav + 1) then
+            if (nact /= icon) then
+                ! N.B.: It is problematic to index arrays using [NACT, ICON] when NACT == ICON.
+                ! Indeed, Sec. 9.5.3.3.3 of the Fortran 2018 standard says: "If a vector subscript
+                ! has two or more elements with the same value, an array section with that vector
+                ! subscript is NOT definable and shall NOT be defined or become undefined."
+                ! Zaikun 20211012: Why should VMULTC(NACT) = 0?
+                vmultc([icon, nact]) = [vmultc(nact), ZERO]
+                iact([icon, nact]) = iact([nact, icon])
+            else
+                ! Zaikun 20211012: Is this needed ? Isn't it true naturally?
+                vmultc(nact) = ZERO
+            end if
+            !else
+        else
             !----------------------------! 1st VMULTD CALCULATION STARTS  !-------------------------!
             ! Zaikun 20211011:
             ! 1. VMULTD is calculated from scratch for the first time (out of 2) in one iteration.
