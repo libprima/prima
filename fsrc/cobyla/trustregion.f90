@@ -586,9 +586,7 @@ do iter = 1, maxiter
 
             frac = minval(vmultc(1:nact) / vmultd(1:nact), mask=(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m))
             if (frac < ZERO .or. .not. any(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m)) then
-                if (nact > 0) then !!!
-                    zdota(nact) = zdasav  ! A(:, IACT(NACT)) stays unchanged in this situation.
-                end if !!!
+                zdota(nact) = zdasav  ! A(:, IACT(NACT)) stays unchanged in this situation.
                 ! Without the last line, segmentation fault can occur. Whyyyyyy???????
                 exit
             end if
@@ -612,16 +610,11 @@ do iter = 1, maxiter
             !end if
             !--------------------------------------------------------------------------------------!
 
-            if (abs(zdota(nact)) > 0) then
-                ! Note that the opposite of 'ABS(ZDOTA(NACT)) > 0' is not 'ABS(ZDOTA(NACT) <= 0)',
-                ! as ZDOTA(NACT) can be NaN.
-                ! Since ICON /= NACT, it is valid to use [ICON, NACT] to index arrays.
-                vmultc([icon, nact]) = [ZERO, frac]
-                iact([icon, nact]) = iact([nact, icon])
-            else
-                zdota(nact) = zdasav  ! A(:, IACT(NACT)) stays unchanged in this situation.
-                exit
-            end if
+            ! Note that the opposite of 'ABS(ZDOTA(NACT)) > 0' is not 'ABS(ZDOTA(NACT) <= 0)',
+            ! as ZDOTA(NACT) can be NaN.
+            ! Since ICON /= NACT, it is valid to use [ICON, NACT] to index arrays.
+            vmultc([icon, nact]) = [ZERO, frac]
+            iact([icon, nact]) = iact([nact, icon])
         end if
 
         ! Ensure that the objective function continues to be treated as the last active constraint
