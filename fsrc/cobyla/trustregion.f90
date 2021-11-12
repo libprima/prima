@@ -378,7 +378,7 @@ real(RP) :: sdirn(size(d))
 real(RP) :: ss
 real(RP) :: step
 real(RP) :: vmultd(size(b))
-real(RP) :: zdasav
+real(RP) :: zdasav(size(z, 2))
 real(RP) :: zdota(size(z, 2))
 character(len=*), parameter :: srname = 'TRSTLP_SUB'
 
@@ -475,11 +475,7 @@ do iter = 1, maxiter
     ! computer rounding errors, which is tested by ISMINOR.
     ! What if NACT = 0????!!!!
     if (icon > nact) then
-
-        if (nact > 0) then !!!!!
-            zdasav = zdota(nact)
-        end if  !!!
-
+        zdasav = zdota
         nactsav = nact
 
         !!!!!!!!!! This is QRADD-------------------------------------------------------------------
@@ -541,7 +537,7 @@ do iter = 1, maxiter
         !end if
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         !if (nact > 0 .and. .not. abs(zdota(nact)) > 0) then
-        !    zdota(nact) = zdasav  ! A(:, IACT(NACT)) stays unchanged in this situation.
+        !    zdota = zdasav  ! A(:, IACT(NACT)) stays unchanged in this situation.
         !    exit
         !end if
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -566,7 +562,7 @@ do iter = 1, maxiter
                 exit !!!!
             end if !!!!
             !if (.not. abs(zdota(nact)) > 0) then
-            !    zdota(nact) = zdasav  !!??
+            !    zdota = zdasav  !!??
             !    exit
             !end if
             !!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -581,12 +577,11 @@ do iter = 1, maxiter
             ! same before and after QRADD). Therefore, if we supply ZDOTA to LSQR (as Rdiag) as
             ! Powell did, we should use the UNUPDATED version.
             !vmultd(1:nact) = lsqr(A(:, iact(1:nact)), A(:, iact(icon)), z(:, 1:nact))
-            vmultd(1:nact) = lsqr(A(:, iact(1:nact)), A(:, iact(icon)), z(:, 1:nact), [zdota(1:nact - 1), zdasav])
+            vmultd(1:nact) = lsqr(A(:, iact(1:nact)), A(:, iact(icon)), z(:, 1:nact), zdasav(1:nact))
             !----------------------------! 1st VMULTD CALCULATION ENDS  !--------------------------!
 
             frac = minval(vmultc(1:nact) / vmultd(1:nact), mask=(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m))
             if (frac < ZERO .or. .not. any(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m)) then
-                zdota(nact) = zdasav  ! A(:, IACT(NACT)) stays unchanged in this situation.
                 ! Without the last line, segmentation fault can occur. Whyyyyyy???????
                 exit
             end if
@@ -617,7 +612,6 @@ do iter = 1, maxiter
                 vmultc([icon, nact]) = [ZERO, frac]
                 iact([icon, nact]) = iact([nact, icon])
             else
-                zdota(nact) = zdasav  ! A(:, IACT(NACT)) stays unchanged in this situation.
                 exit
             end if
         end if
