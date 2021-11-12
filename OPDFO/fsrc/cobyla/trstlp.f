@@ -239,7 +239,7 @@
 !
 !     Add the new constraint if this can be done without a deletion from the
 !     active set.
-!
+
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (TOT .NE. 0.0) THEN
       !IF (TOT /= 0.0D0) THEN
@@ -256,6 +256,7 @@
       END IF
 
 !!!!!!>>>>>>>>>>>> Zaikun 20211112
+      if (nact == 0) GOTO 490
       TEMP=0.0D0
       DO I=1,N
           TEMP=TEMP+Z(I,NACT)*A(I,KK)
