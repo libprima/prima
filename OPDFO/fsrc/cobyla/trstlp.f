@@ -391,7 +391,10 @@
 !      IF (.not. ABS(TEMP) > 0.0D0) GOTO 490
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !Zaikun 20211112
-      if(isminor(temp, inprod(abs(Z(:, nact)), abs(A(:, kk))))) goto 490
+      if(isminor(temp, inprod(abs(Z(:, nact)), abs(A(:, kk))))) then
+          temp = 0.0d0
+      end if
+      IF (.not. ABS(TEMP) > 0.0D0) GOTO 490
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ZDOTA(NACT)=TEMP
