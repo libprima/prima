@@ -265,9 +265,7 @@
       !    if (isminor(temp,inprod(abs(Z(1:N,nact)),abs(A(1:N,kk)))))then
       !        temp = 0.0d0
       !    end if
-      ! IF (.not. ABS(temp) > 0.0D0) THEN
-      !    GOTO 490
-      !  end if
+      !    IF (.not. ABS(temp) > 0.0D0) THEN GOTO 490
       !end if
 
       if (nact == 0) GOTO 490
