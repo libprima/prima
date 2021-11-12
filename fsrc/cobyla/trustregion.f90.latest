@@ -355,6 +355,7 @@ integer(IK) :: maxiter
 integer(IK) :: mcon
 integer(IK) :: n
 integer(IK) :: nactold
+integer(IK) :: nactsav
 integer(IK) :: nfail
 real(RP) :: cgrad(size(d))
 real(RP) :: cgz(size(d))
@@ -472,7 +473,15 @@ do iter = 1, maxiter
     ! Apply Givens rotations so that the last N-NACT-1 columns of Z are orthogonal to the gradient
     ! of the new constraint, a scalar product being set to zero if its nonzero value could be due to
     ! computer rounding errors, which is tested by ISMINOR.
+    ! What if NACT = 0????!!!!
     if (icon > nact) then
+
+        if (nact > 0) then !!!!!
+            zdasav = zdota(nact)
+        end if  !!!
+
+        nactsav = nact
+
         !!!!!!!!!! This is QRADD-------------------------------------------------------------------
         cgrad = A(:, iact(icon))
         cgz = matprod(cgrad, z)
@@ -490,9 +499,6 @@ do iter = 1, maxiter
                 cgz(k) = sqrt(cgz(k)**2 + cgz(k + 1)**2)
             end if
         end do
-        !!!!!!!!!! This is QRADD-------------------------------------------------------------------
-
-        zdasav = zdota(nact)
 
         if (nact < n .and. abs(cgz(nact + 1)) > ZERO) then
             ! Add the new constraint if this can be done without a deletion from the active set.
@@ -508,18 +514,6 @@ do iter = 1, maxiter
             !!??zdota(nact) = inprod(z(:, nact), a(:, iact(nact)))
             !!!!!!!!!!!!!!!!!!!!!!! Test
             !!!!!!!!!!!!!!!!!!! This is also QRADD------------------------------------------------
-            if (nact /= icon) then
-                ! N.B.: It is problematic to index arrays using [NACT, ICON] when NACT == ICON.
-                ! Indeed, Sec. 9.5.3.3.3 of the Fortran 2018 standard says: "If a vector subscript
-                ! has two or more elements with the same value, an array section with that vector
-                ! subscript is NOT definable and shall NOT be defined or become undefined."
-                ! Zaikun 20211012: Why should VMULTC(NACT) = 0?
-                vmultc([icon, nact]) = [vmultc(nact), ZERO]
-                iact([icon, nact]) = iact([nact, icon])
-            else
-                ! Zaikun 20211012: Is this needed ? Isn't it true naturally?
-                vmultc(nact) = ZERO
-            end if
         else
             ! The next instruction is reached if a deletion has to be made from the active set in
             ! order to make room for the new active constraint, because the new constraint gradient
@@ -533,9 +527,50 @@ do iter = 1, maxiter
             ! suitable index can be found.
             !--------------------------------------------------------------------------------------!
 
-            zdota(nact) = inprod(z(:, nact), A(:, iact(icon)))
+            if (nact > 0) then !!!!!!
+                zdota(nact) = cgz(nact)
+                !!??zdota(nact) = inprod(z(:, nact), A(:, iact(icon)))
+            end if  !!!!!!
+        end if
 
-            !----------------------------! 1st VMULTD CALCULATION STARTS  !-------------------------!
+        !!!!!!!!!! This is QRADD-------------------------------------------------------------------
+
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        !if ((nact == 0 .and. .not. abs(zdota(1)) > 0) .or. (nact > 0 .and. .not. abs(zdota(nact)) > 0)) then
+        !    exit
+        !end if
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        !if (nact > 0 .and. .not. abs(zdota(nact)) > 0) then
+        !    zdota(nact) = zdasav  ! A(:, IACT(NACT)) stays unchanged in this situation.
+        !    exit
+        !end if
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+        if (nact == nactsav + 1) then
+            if (nact /= icon) then
+                ! N.B.: It is problematic to index arrays using [NACT, ICON] when NACT == ICON.
+                ! Indeed, Sec. 9.5.3.3.3 of the Fortran 2018 standard says: "If a vector subscript
+                ! has two or more elements with the same value, an array section with that vector
+                ! subscript is NOT definable and shall NOT be defined or become undefined."
+                ! Zaikun 20211012: Why should VMULTC(NACT) = 0?
+                vmultc([icon, nact]) = [vmultc(nact), ZERO]
+                iact([icon, nact]) = iact([nact, icon])
+            else
+                ! Zaikun 20211012: Is this needed ? Isn't it true naturally?
+                vmultc(nact) = ZERO
+            end if
+            !else
+        else
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!
+            if (nact == 0) then !!!!!
+                exit !!!!
+            end if !!!!
+            if (.not. abs(zdota(nact)) > 0) then
+                zdota(nact) = zdasav  !!??
+                exit
+            end if
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!
+            !----------------------------! 1st VMULTD CALCULATION STARTS  !------------------------!
             ! Zaikun 20211011:
             ! 1. VMULTD is calculated from scratch for the first time (out of 2) in one iteration.
             ! 2. The sole purpose of this VMULTD is to compute VMULTC(1 : NACT) and check possible
@@ -545,12 +580,15 @@ do iter = 1, maxiter
             ! A(:, IACT(1:NACT)) is the UNUPDATED version before QRADD (Z(:, 1:NACT) remains the
             ! same before and after QRADD). Therefore, if we supply ZDOTA to LSQR (as Rdiag) as
             ! Powell did, we should use the UNUPDATED version.
-            vmultd(1:nact) = lsqr(A(:, iact(1:nact)), A(:, iact(icon)), z(:, 1:nact))
+            !vmultd(1:nact) = lsqr(A(:, iact(1:nact)), A(:, iact(icon)), z(:, 1:nact))
+            vmultd(1:nact) = lsqr(A(:, iact(1:nact)), A(:, iact(icon)), z(:, 1:nact), [zdota(1:nact - 1), zdasav])
             !----------------------------! 1st VMULTD CALCULATION ENDS  !--------------------------!
 
             frac = minval(vmultc(1:nact) / vmultd(1:nact), mask=(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m))
             if (frac < ZERO .or. .not. any(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m)) then
-                zdota(nact) = zdasav  ! A(:, IACT(NACT)) stays unchanged in this situation.
+                if (nact > 0) then !!!
+                    zdota(nact) = zdasav  ! A(:, IACT(NACT)) stays unchanged in this situation.
+                end if !!!
                 ! Without the last line, segmentation fault can occur. Whyyyyyy???????
                 exit
             end if
@@ -672,7 +710,7 @@ do iter = 1, maxiter
     ! Set VMULTD to the VMULTC vector that would occur if D became DNEW. A device is included to
     ! force VMULTD(K)=ZERO if deviations from this value can be attributed to computer rounding
     ! errors. First calculate the new Lagrange multipliers.
-    vmultd(1:nact) = lsqr(A(:, iact(1:nact)), dnew, z(:, 1:nact))
+    vmultd(1:nact) = lsqr(A(:, iact(1:nact)), dnew, z(:, 1:nact), zdota(1:nact))
     if (stage == 2) then
         vmultd(nact) = max(ZERO, vmultd(nact))  ! This seems never activated.
     end if
