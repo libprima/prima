@@ -565,10 +565,10 @@ do iter = 1, maxiter
             if (nact == 0) then !!!!!
                 exit !!!!
             end if !!!!
-            if (.not. abs(zdota(nact)) > 0) then
-                zdota(nact) = zdasav  !!??
-                exit
-            end if
+            !if (.not. abs(zdota(nact)) > 0) then
+            !    zdota(nact) = zdasav  !!??
+            !    exit
+            !end if
             !!!!!!!!!!!!!!!!!!!!!!!!!!!
             !----------------------------! 1st VMULTD CALCULATION STARTS  !------------------------!
             ! Zaikun 20211011:
@@ -610,11 +610,16 @@ do iter = 1, maxiter
             !end if
             !--------------------------------------------------------------------------------------!
 
-            ! Note that the opposite of 'ABS(ZDOTA(NACT)) > 0' is not 'ABS(ZDOTA(NACT) <= 0)',
-            ! as ZDOTA(NACT) can be NaN.
-            ! Since ICON /= NACT, it is valid to use [ICON, NACT] to index arrays.
-            vmultc([icon, nact]) = [ZERO, frac]
-            iact([icon, nact]) = iact([nact, icon])
+            if (abs(zdota(nact)) > 0) then
+                ! Note that the opposite of 'ABS(ZDOTA(NACT)) > 0' is not 'ABS(ZDOTA(NACT) <= 0)',
+                ! as ZDOTA(NACT) can be NaN.
+                ! Since ICON /= NACT, it is valid to use [ICON, NACT] to index arrays.
+                vmultc([icon, nact]) = [ZERO, frac]
+                iact([icon, nact]) = iact([nact, icon])
+            else
+                zdota(nact) = zdasav  ! A(:, IACT(NACT)) stays unchanged in this situation.
+                exit
+            end if
         end if
 
         ! Ensure that the objective function continues to be treated as the last active constraint
