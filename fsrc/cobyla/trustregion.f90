@@ -529,7 +529,7 @@ do iter = 1, maxiter
 
             if (nact > 0) then !!!!!!
                 zdota(nact) = cgz(nact)
-                !zdota(nact) = inprod(z(:, nact), A(:, iact(icon)))
+                !!??zdota(nact) = inprod(z(:, nact), A(:, iact(icon)))
             end if  !!!!!!
         end if
 
@@ -565,6 +565,9 @@ do iter = 1, maxiter
             if (nact == 0) then !!!!!
                 exit !!!!
             end if !!!!
+            if (.not. abs(zdota(nact)) > 0) then
+                exit
+            end if
             !!!!!!!!!!!!!!!!!!!!!!!!!!!
             !----------------------------! 1st VMULTD CALCULATION STARTS  !------------------------!
             ! Zaikun 20211011:

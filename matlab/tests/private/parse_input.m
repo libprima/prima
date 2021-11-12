@@ -152,6 +152,9 @@ if isempty(prob)
         if options.mindim == 51
             options.mindim = 21;
         end
+        if options.maxdim == 100
+            options.maxdim = 90;
+        end
     end
 
     % Define the number of random runs. The actual number of run is 20 + nr.
