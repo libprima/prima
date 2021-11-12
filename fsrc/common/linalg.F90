@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, November 10, 2021 PM11:45:53
+! Last Modified: Friday, November 12, 2021 PM12:46:11
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -685,13 +685,14 @@ end if
 end subroutine qr
 
 
-function lsqr(A, b, Q) result(x)
+function lsqr(A, b, Q, Rdiag) result(x)
 !--------------------------------------------------------------------------------------------------!
 ! This function solves the linear least squares problem min ||A*x - b||_2 by the QR factorization.
 ! This function is used in COBYLA, where,
-! 1. Q of the factorization is supplied externally (called Z);
-! 2. A HAS FULL COLUMN RANK;
-! 3. it seems that b (CGRAD and DNEW) is in the column space of A (not sure yet).
+! 1. Q is supplied externally (called Z);
+! 2. Rdiag (the diagonal of R) is supplied externally (called zdota);
+! 3. A HAS FULL COLUMN RANK;
+! 4. It seems that b (CGRAD and DNEW) is in the column space of A (not sure yet).
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -701,6 +702,7 @@ implicit none
 real(RP), intent(in) :: A(:, :)
 real(RP), intent(in) :: b(:)
 real(RP), intent(in), optional :: Q(:, :)
+real(RP), intent(in), optional :: Rdiag(:)
 
 ! Outputs
 real(RP) :: x(size(A, 2))
@@ -715,7 +717,7 @@ integer(IK) :: n
 integer(IK) :: P(size(A, 2))
 integer(IK) :: rank
 real(RP) :: Q_loc(size(A, 1), min(size(A, 1), size(A, 2)))
-real(RP) :: Rdiag(min(size(A, 1), size(A, 2)))
+real(RP) :: Rdiag_loc(min(size(A, 1), size(A, 2)))
 real(RP) :: y(size(b))
 real(RP) :: yq
 real(RP) :: yqa
@@ -730,8 +732,13 @@ if (DEBUGGING) then
     if (present(Q)) then
         call assert(size(Q, 1) == m .and. (size(Q, 2) == m .or. size(Q, 2) == min(m, n)), &
             & 'SIZE(Q) == [M, N] .or. SIZE(Q) == [M, MIN(M, N)]', srname)
-        ! The following test cannot be passed.
+        ! The following test cannot be passed. Maybe because of NaN in Q? Check it again after
+        ! PLANEROT_TMP is revised.
         !call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
+    end if
+    if (present(Rdiag)) then
+        call assert(size(Rdiag) == min(m, n), 'SIZE(R) == MIN(M, N)', srname)
+        call assert(present(Q), 'Rdiag is present only if Q is present', srname)
     end if
 end if
 
@@ -739,19 +746,23 @@ end if
 ! Calculation starts !
 !====================!
 
-Rdiag = ZERO
+Rdiag_loc = ZERO
 if (present(Q)) then
     Q_loc = Q(:, 1:size(Q_loc, 2))
-    Rdiag = [(inprod(Q_loc(:, i), A(:, i)), i=1, min(m, n))]
+    if (present(Rdiag)) then
+        Rdiag_loc = Rdiag
+    else
+        Rdiag_loc = [(inprod(Q_loc(:, i), A(:, i)), i=1, min(m, n))]
+    end if
     rank = min(m, n)
     pivote = .false.
 end if
 
-!if (.not. present(Q) .or. any(abs(Rdiag) <= ZERO)) then  ! This is more reasonable
+!if (.not. present(Q) .or. any(abs(Rdiag_loc) <= ZERO)) then  ! This is more reasonable
 if (.not. present(Q)) then
     call qr(A, Q=Q_loc, P=P)
-    Rdiag = [(inprod(Q_loc(:, i), A(:, P(i))), i=1, min(m, n))]
-    rank = maxval([(i, i=1, min(m, n))], mask=(abs(Rdiag) > 0))
+    Rdiag_loc = [(inprod(Q_loc(:, i), A(:, P(i))), i=1, min(m, n))]
+    rank = maxval([(i, i=1, min(m, n))], mask=(abs(Rdiag_loc) > 0))
     pivote = .true.
 end if
 
@@ -771,7 +782,7 @@ do i = rank, 1, -1
     if (isminor(yq, yqa)) then
         x(j) = ZERO
     else
-        x(j) = yq / Rdiag(i)
+        x(j) = yq / Rdiag_loc(i)
         y = y - x(j) * A(:, j)
     end if
 end do

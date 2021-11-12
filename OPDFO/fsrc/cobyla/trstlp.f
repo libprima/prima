@@ -287,8 +287,8 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       IF (ZDVABS < ACCA .AND. ACCA < ACCB) THEN
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          !!!TEMP=ZDOTV/ZDOTA(K)
-          temp=zdotv/inprod(A(:, iact(k)), z(:, k))
+          TEMP=ZDOTV/ZDOTA(K)
+          !!!temp=zdotv/inprod(A(:, iact(k)), z(:, k))
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          IF (TEMP .GT. 0.0 .AND. IACT(K) .LE. M) THEN
@@ -632,8 +632,8 @@
         VMULTD(K)=0.0D0
       else
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        !!!VMULTD(K)=ZDOTW/ZDOTA(K)
-        vmultd(k)=zdotw/inprod(A(:, iact(k)), Z(:, k))
+        VMULTD(K)=ZDOTW/ZDOTA(K)
+        !!!vmultd(k)=zdotw/inprod(A(:, iact(k)), Z(:, k))
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       end if
       IF (K >= 2) THEN
