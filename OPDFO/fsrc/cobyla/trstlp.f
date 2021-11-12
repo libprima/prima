@@ -255,6 +255,17 @@
           GOTO 210
       END IF
 
+!!!!!!>>>>>>>>>>>> Zaikun 20211112
+      TEMP=0.0D0
+      DO I=1,N
+          TEMP=TEMP+Z(I,NACT)*A(I,KK)
+      END DO
+      if (isminor(temp, inprod(abs(Z(:, nact)), abs(A(:, kk))))) then
+          temp = 0.0d0
+      end if
+      IF (.not. ABS(TEMP) > 0.0D0) GOTO 490
+!!!!!!<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
 !     The next instruction is reached if a deletion has to be made from the
 !     active set in order to make room for the new active constraint, because
 !     the new constraint gradient is a linear combination of the gradients of
