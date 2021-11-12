@@ -528,7 +528,8 @@ do iter = 1, maxiter
             !--------------------------------------------------------------------------------------!
 
             if (nact > 0) then !!!!!!
-                zdota(nact) = inprod(z(:, nact), A(:, iact(icon)))
+                zdota(nact) = cgz(nact)
+                !zdota(nact) = inprod(z(:, nact), A(:, iact(icon)))
             end if  !!!!!!
         end if
 

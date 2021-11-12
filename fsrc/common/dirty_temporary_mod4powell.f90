@@ -6,7 +6,7 @@ module dirty_temporary_mod4powell_mod
 use consts_mod, only : ZERO, ONE, TWO, HALF, TEN, TENTH, QUART, PI
 use consts_mod, only : HUGENUM, HUGEFUN, HUGECON
 use consts_mod, only : IK, RP
-use linalg_mod, only : matprod, inprod, norm, calquad, inprod
+use linalg_mod, only : matprod, inprod, norm, calquad, inprod, isminor
 use linalg_mod, only : matmul => matprod, dot_product => inprod
 use info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, TRSUBP_FAILED, SMALL_TR_RADIUS, NAN_INF_X, NAN_INF_F
 use infnan_mod, only : is_nan, is_posinf, is_inf, is_posinf, is_neginf
