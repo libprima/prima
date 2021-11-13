@@ -553,16 +553,9 @@ do iter = 1, maxiter
                 iact([icon, nact]) = iact([nact, icon])
             else
                 ! Zaikun 20211012: Is this needed ? Isn't it true naturally?
-                vmultc(nact) = ZERO
+                !vmultc(nact) = ZERO
             end if
-            !else
         else
-            !!!!!!!!!!!!!!!!!!!!!!!!!!!
-            !if (.not. abs(zdota(nact)) > 0) then
-            !    zdota = zdasav  !!??
-            !    exit
-            !end if
-            !!!!!!!!!!!!!!!!!!!!!!!!!!!
             !----------------------------! 1st VMULTD CALCULATION STARTS  !------------------------!
             ! Zaikun 20211011:
             ! 1. VMULTD is calculated from scratch for the first time (out of 2) in one iteration.
@@ -581,9 +574,8 @@ do iter = 1, maxiter
                 exit  ! This can be triggered by NACT == 0, among other possibilities.
             end if
 
-            ! Revise the Lagrange multipliers. Powell's code calculates only VMULTC(1:NACT). We
-            ! calculate the full vector for simplicity.
-            vmultc = max(ZERO, vmultc - frac * vmultd)
+            ! Revise the Lagrange multipliers. The revision is not applicable to VMULTC(NACT + 1:M).
+            vmultc(1:nact) = max(ZERO, vmultc(1:nact) - frac * vmultd(1:nact))
 
             ! Zaikun 20210811: Powell's code includes the following, but it is IMPOSSIBLE TO REACH.
             !--------------------------------------------------------------------------------------!
