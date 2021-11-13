@@ -75,6 +75,8 @@ function setup(varargin)
 %
 % TODO: None
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+COMPILE_CLASSICAL = false; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % setup starts
 
@@ -238,16 +240,18 @@ try
         modo_files = [files_with_wildcard(fullfile(fsrc, solver), '*.mod'), files_with_wildcard(fullfile(fsrc, solver), '*.o')];
         cellfun(@(filename) delete(filename), modo_files);
         % Compile
-        src_files = [common_obj_files, files_with_wildcard(fullfile(fsrc, solver), '*.f*')];
+        src_files = [common_obj_files, files_with_wildcard(fullfile(fsrc, solver), '*.f'), files_with_wildcard(fullfile(fsrc, solver), '*.f90')];
         mex(mex_options{:}, '-output', ['f', solver], fullfile(fsrc, 'pdfoconst.F'), src_files{:}, fullfile(gateways, [solver, '-interface.F']));
 
+ if (COMPILE_CLASSICAL)  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Compilation of the 'classical' version of solver
         % Clean up the source file directory
         modo_files = [files_with_wildcard(fullfile(fsrc_classical, solver), '*.mod'), files_with_wildcard(fullfile(fsrc_classical, solver), '*.o')];
         cellfun(@(filename) delete(filename), modo_files);
         % Compile
-        src_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.f*');
+        src_files = [files_with_wildcard(fullfile(fsrc_classical, solver), '*.f'), files_with_wildcard(fullfile(fsrc_classical, solver), '*.f90')];
         mex(mex_options{:}, '-output', ['f', solver, '_classical'], fullfile(fsrc, 'pdfoconst.F'), src_files{:}, fullfile(gateways_classical, [solver, '-interface.F']));
+  end
 
         fprintf('Done.\n');
     end
