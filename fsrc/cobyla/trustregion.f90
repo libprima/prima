@@ -4,6 +4,112 @@ implicit none
 
 contains
 
+
+subroutine qradd(c, Q, Rdiag, n)
+!--------------------------------------------------------------------------------------------------!
+! This function updates the QR factorization of an MxN matrix of full column rank when a new column
+! C is added to this matrix as the LAST column, maintaining the full-rankness.
+!--------------------------------------------------------------------------------------------------!
+
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: linalg_mod, only : matprod, isminor
+implicit none
+
+! Inputs
+real(RP), intent(in) :: c(:)
+
+! In-outputs
+integer(IK), intent(inout) :: n
+real(RP), intent(inout) :: Q(:, :)
+real(RP), intent(inout) :: Rdiag(:)
+
+! Local variables
+character(len=*), parameter :: srname = 'QRADD'
+integer(IK) :: k
+integer(IK) :: m
+real(RP) :: cq(size(Q, 2))
+real(RP) :: cqa(size(Q, 2))
+real(RP) :: G(2, 2)
+real(RP) :: tol
+
+! Sizes
+m = int(size(Q, 2), kind(m))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(n <= m, 'N <= M', srname)
+    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
+    !!! This test cannot be passed, because NaN appears in Q, probably because of
+    !!! PLANEROT_TMP, where 0/0 can occur. Must be investigated when revising PLANEROT_TMP.
+    !write (16, *) Q
+    !tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E4_RP * EPS * real(n, RP)))
+    !call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+cq = matprod(c, Q)
+cqa = matprod(abs(c), abs(Q))
+where (isminor(cq, cqa))  ! Code in MATLAB: CQ(ISMINOR(CQ, CQA)) = ZERO
+    cq = ZERO
+end where
+
+do k = m - 1, n + 1, -1
+    ! Apply a 2D Givens rotation to Q(:, [K, K+1]) from the right to zero C'*Q(:, K+1) out.
+    if (abs(cq(k + 1)) > ZERO) then
+        ! Powell wrote CQ(K+1) /= ZERO instead of ABS(CQ(K+1)) > ZERO.
+        ! The two conditions differ if CQ(K+1) is NaN.
+        G = PLANEROT_TMP(cq([k, k + 1]))
+        Q(:, [k, k + 1]) = matprod(Q(:, [k, k + 1]), transpose(G))
+        cq(k) = sqrt(cq(k)**2 + cq(k + 1)**2)
+    end if
+end do
+
+if (n < m .and. abs(cq(n + 1)) > ZERO) then
+    ! Add the new constraint if this can be done without a deletion from the active set.
+    ! Powell wrote "CQ(NACT+1) /= ZERO" instead of "ABS(CQ(NACT+1)) > ZERO".
+    n = n + 1
+    !!!!!!!!!!!!!!!!!!!!!!! Calculate ZDOTA from scratch? Test it.
+    Rdiag(n) = cq(n)  ! Indeed, RDIAG(N) = INPROD(C, Q(:, N))
+    !!??Rdiag(n) = inprod(C, Q(:, N))
+    !!!!!!!!!!!!!!!!!!!!!!! Test
+else
+    ! The next instruction is reached if a deletion has to be made from the active set in
+    ! order to make room for the new active constraint, because the new constraint gradient
+    ! is a linear combination of the gradients of the old active constraints.
+    !
+    ! Zaikun 20210811: Powell wrote the following comment, but IOUT is NEVER DEFINED. It
+    ! seems that Powell's code always deletes the constraint with index IACT(NACT).
+    !--------------------------------------------------------------------------------------!
+    ! Further, set IOUT to the index of the constraint to be deleted, but branch if no
+    ! suitable index can be found.
+    !--------------------------------------------------------------------------------------!
+
+    if (n >= 1 .and. n <= m) then !!!!!!
+        Rdiag(n) = cq(n)
+        !!??Rdiag(n) = inprod(c, Q(:, n))
+    end if  !!!!!!
+end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(n <= m, 'N <= M', srname)
+    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
+    !!! This test cannot be passed, because NaN appears in Q, probably because of
+    !!! PLANEROT_TMP, where 0/0 can occur. Must be investigated when revising PLANEROT_TMP.
+    !write (16, *) Q
+    !call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
+end if
+end subroutine qradd
+
+
 subroutine qrdel(A, Q, Rdiag, i)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates the QR factorization of A when the Ith column of A is deleted. Here, A
@@ -21,7 +127,6 @@ real(RP), intent(in) :: A(:, :)
 real(RP), intent(inout) :: Q(:, :)
 real(RP), intent(inout) :: Rdiag(:)
 
-
 ! Local variables
 character(len=*), parameter :: srname = 'QRDEL'
 integer(IK) :: m
@@ -37,8 +142,13 @@ n = int(size(A, 2), kind(n))
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
     call assert(i >= 1 .and. i <= n, '1 <= I <= N', srname)
+    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
+    !!! This test cannot be passed, because NaN appears in Q, probably because of
+    !!! PLANEROT_TMP, where 0/0 can occur. Must be investigated when revising PLANEROT_TMP.
+    !write (16, *) Q
+    !tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E4_RP * EPS * real(n, RP)))
+    !call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
 end if
 
 !====================!
@@ -63,11 +173,10 @@ end do
 
 ! Postconditions
 if (DEBUGGING) then
+    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
     !!! This test cannot be passed, because NaN appears in Q, probably because of
     !!! PLANEROT_TMP, where 0/0 can occur. Must be investigated when revising PLANEROT_TMP.
     !write (16, *) Q
-    !call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
-    !tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E4_RP * EPS * real(n, RP)))
     !call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
 end if
 end subroutine qrdel
@@ -102,8 +211,13 @@ n = int(size(A, 2), kind(n))
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
     call assert(n >= 2, 'N >= 2', srname)
+    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
+    !!! This test cannot be passed, because NaN appears in Q, probably because of
+    !!! PLANEROT_TMP, where 0/0 can occur. Must be investigated when revising PLANEROT_TMP.
+    !write (16, *) Q
+    !tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E4_RP * EPS * real(n, RP)))
+    !call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
 end if
 
 !====================!
@@ -126,11 +240,10 @@ Rdiag([n - 1, n]) = [hypt, (Rdiag(n) / hypt) * Rdiag(n - 1)]
 
 ! Postconditions
 if (DEBUGGING) then
+    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
     !!! This test cannot be passed, because NaN appears in Q, probably because of
     !!! PLANEROT_TMP, where 0/0 can occur. Must be investigated when revising PLANEROT_TMP.
     !write (16, *) (abs(matprod(transpose(Q), Q) - eye(m)))
-    !call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
-    !tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E4_RP * EPS * real(n, RP)))
     !write (16, *) tol
     !close (16)
     !call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
@@ -330,7 +443,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, EPS, HUGENUM, DEBUGG
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: debug_mod, only : assert, errstop, verisize
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, isminor, lsqr !!!!!!!!!!!!!!!!!!
-use, non_intrinsic :: LINALG_TMP_MOD, only : PLANEROT_TMP, qrdel, qrexc
+use, non_intrinsic :: LINALG_TMP_MOD, only : PLANEROT_TMP, qradd, qrdel, qrexc
 implicit none
 
 ! Inputs
@@ -357,9 +470,6 @@ integer(IK) :: n
 integer(IK) :: nactold
 integer(IK) :: nactsav
 integer(IK) :: nfail
-real(RP) :: cgrad(size(d))
-real(RP) :: cgz(size(d))
-real(RP) :: cgzabs(size(d))
 real(RP) :: cstrv
 real(RP) :: cvold
 real(RP) :: cvsabs(size(b))
@@ -369,8 +479,6 @@ real(RP) :: dnew(size(d))
 real(RP) :: dold(size(d))
 real(RP) :: frac
 real(RP) :: frtmp(size(b))
-real(RP) :: grot(2, 2)
-real(RP) :: hypt
 real(RP) :: optnew
 real(RP) :: optold
 real(RP) :: sd
@@ -436,6 +544,8 @@ nactold = nact
 nfail = 0_IK
 
 
+! Zaikun 20211012: Is it true that IACT(NACT) is always the constraint with the largest vioaltion (in stage 1)?
+
 !----------------------------------------------------------------------------------------------!
 ! Zaikun 20211011: VMULTD is computed from scratch at each iteration, but VMULTC is inherited.
 !----------------------------------------------------------------------------------------------!
@@ -477,82 +587,15 @@ do iter = 1, maxiter
     if (icon > nact) then
         zdasav = zdota
         nactsav = nact
-
-        !!!!!!!!!! This is QRADD-------------------------------------------------------------------
-        cgrad = A(:, iact(icon))
-        cgz = matprod(cgrad, z)
-        cgzabs = matprod(abs(cgrad), abs(z))
-        where (isminor(cgz, cgzabs))  ! Code in MATLAB: CGZ(ISMINOR(CGZ, CGZABS)) = ZERO
-            cgz = ZERO
-        end where
-        do k = n - 1, nact + 1, -1
-            ! Apply a 2D Givens rotation to Z(:, [K, K+1]) from the right to zero CGRAD'*Z(:, K+1) out.
-            if (abs(cgz(k + 1)) > ZERO) then
-                ! Powell wrote CGZ(K+1) /= ZERO instead of ABS(CGZ(K+1)) > ZERO. The two
-                ! conditions differ if CGZ(K+1) is NaN.
-                grot = PLANEROT_TMP(cgz([k, k + 1]))
-                z(:, [k, k + 1]) = matprod(z(:, [k, k + 1]), transpose(grot))
-                cgz(k) = sqrt(cgz(k)**2 + cgz(k + 1)**2)
-            end if
-        end do
-
-        if (nact < n .and. abs(cgz(nact + 1)) > ZERO) then
-            ! Add the new constraint if this can be done without a deletion from the active set.
-            ! Powell wrote "CGZ(NACT+1) /= ZERO" instead of "ABS(CGZ(NACT+1)) > ZERO".
-            ! Zaikun 20211012: Shouldn't this be QREXC? No, because A(:, NACT) is not in the range
-            ! of the QR factorization (before the factorization).
-            ! Zaikun 20211012: Is it true that IACT(NACT) is always the constraint with the largest
-            ! vioaltion (in stage 1)?
-            nact = nact + 1
-            !!!!!!!!!!!!!!!!!!! This is also QRADD------------------------------------------------
-            !!!!!!!!!!!!!!!!!!!!!!! Calculate ZDOTA from scratch? Test it.
-            zdota(nact) = cgz(nact)  ! Indeed, ZDOTA(NACT) = INPROD(Z(:, NACT), A(:, IACT(NACT)))
-            !!??zdota(nact) = inprod(z(:, nact), a(:, iact(nact)))
-            !!!!!!!!!!!!!!!!!!!!!!! Test
-            !!!!!!!!!!!!!!!!!!! This is also QRADD------------------------------------------------
-        else
-            ! The next instruction is reached if a deletion has to be made from the active set in
-            ! order to make room for the new active constraint, because the new constraint gradient
-            ! is a linear combination of the gradients of the old active constraints. Set the
-            ! elements of VMULTD to the multipliers (i.e., coefficients) of the linear combination.
-            !
-            ! Zaikun 20210811: Powell wrote the following comment, but IOUT is NEVER DEFINED. It
-            ! seems that Powell's code always deletes the constraint with index IACT(NACT).
-            !--------------------------------------------------------------------------------------!
-            ! Further, set IOUT to the index of the constraint to be deleted, but branch if no
-            ! suitable index can be found.
-            !--------------------------------------------------------------------------------------!
-
-            if (nact > 0) then !!!!!!
-                zdota(nact) = cgz(nact)
-                !!??zdota(nact) = inprod(z(:, nact), A(:, iact(icon)))
-            end if  !!!!!!
-        end if
-
-        !!!!!!!!!! This is QRADD-------------------------------------------------------------------
-
-        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        !if ((nact == 0 .and. .not. abs(zdota(1)) > 0) .or. (nact > 0 .and. .not. abs(zdota(nact)) > 0)) then
-        !    exit
-        !end if
-        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        !if (nact > 0 .and. .not. abs(zdota(nact)) > 0) then
-        !    zdota = zdasav  ! A(:, IACT(NACT)) stays unchanged in this situation.
-        !    exit
-        !end if
-        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        call qradd(A(:, iact(icon)), z, zdota, nact)
 
         if (nact == nactsav + 1) then
+            ! N.B.: It is problematic to index arrays using [NACT, ICON] when NACT == ICON.
+            ! Zaikun 20211012: Why should VMULTC(NACT) = 0?
             if (nact /= icon) then
-                ! N.B.: It is problematic to index arrays using [NACT, ICON] when NACT == ICON.
-                ! Indeed, Sec. 9.5.3.3.3 of the Fortran 2018 standard says: "If a vector subscript
-                ! has two or more elements with the same value, an array section with that vector
-                ! subscript is NOT definable and shall NOT be defined or become undefined."
-                ! Zaikun 20211012: Why should VMULTC(NACT) = 0?
                 vmultc([icon, nact]) = [vmultc(nact), ZERO]
                 iact([icon, nact]) = iact([nact, icon])
             else
-                ! Zaikun 20211012: Is this needed ? Isn't it true naturally?
                 vmultc(nact) = ZERO
             end if
         else
