@@ -558,9 +558,6 @@ do iter = 1, maxiter
             !else
         else
             !!!!!!!!!!!!!!!!!!!!!!!!!!!
-            if (nact == 0) then !!!!!
-                exit !!!!
-            end if !!!!
             !if (.not. abs(zdota(nact)) > 0) then
             !    zdota = zdasav  !!??
             !    exit
@@ -575,21 +572,18 @@ do iter = 1, maxiter
             ! 4. NOTE that IACT has not been updated to replace IACT(NACT) with IACT(ICON). Thus
             ! A(:, IACT(1:NACT)) is the UNUPDATED version before QRADD (Z(:, 1:NACT) remains the
             ! same before and after QRADD). Therefore, if we supply ZDOTA to LSQR (as Rdiag) as
-            ! Powell did, we should use the UNUPDATED version.
-            !vmultd(1:nact) = lsqr(A(:, iact(1:nact)), A(:, iact(icon)), z(:, 1:nact))
+            ! Powell did, we should use the UNUPDATED version, namely ZDASAV.
             vmultd(1:nact) = lsqr(A(:, iact(1:nact)), A(:, iact(icon)), z(:, 1:nact), zdasav(1:nact))
             !----------------------------! 1st VMULTD CALCULATION ENDS  !--------------------------!
 
             frac = minval(vmultc(1:nact) / vmultd(1:nact), mask=(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m))
             if (frac < ZERO .or. .not. any(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m)) then
-                ! Without the last line, segmentation fault can occur. Whyyyyyy???????
-                exit
+                exit  ! This can be triggered by NACT == 0, among other possibilities.
             end if
 
-            ! Revise the Lagrange multipliers and reorder the active constraints so that the one to
-            ! be replaced is at the end of the list. Also calculate the new value of ZDOTA(NACT) and
-            ! branch if it is not acceptable.
-            vmultc(1:nact) = max(ZERO, vmultc(1:nact) - frac * vmultd(1:nact))
+            ! Revise the Lagrange multipliers. Powell's code calculates only VMULTC(1:NACT). We
+            ! calculate the full vector for simplicity.
+            vmultc = max(ZERO, vmultc - frac * vmultd)
 
             ! Zaikun 20210811: Powell's code includes the following, but it is IMPOSSIBLE TO REACH.
             !--------------------------------------------------------------------------------------!
@@ -605,11 +599,11 @@ do iter = 1, maxiter
             !end if
             !--------------------------------------------------------------------------------------!
 
+            ! Reorder the active constraints so that the one to be replaced is at the end of the list.
+            ! Exit if the new value of ZDOTA(NACT) is not acceptable. Note that the opposite of
+            ! 'ABS(ZDOTA(NACT)) > 0' is not 'ABS(ZDOTA(NACT) <= 0)', as ZDOTA(NACT) can be NaN.
             if (abs(zdota(nact)) > 0) then
-                ! Note that the opposite of 'ABS(ZDOTA(NACT)) > 0' is not 'ABS(ZDOTA(NACT) <= 0)',
-                ! as ZDOTA(NACT) can be NaN.
-                ! Since ICON /= NACT, it is valid to use [ICON, NACT] to index arrays.
-                vmultc([icon, nact]) = [ZERO, frac]
+                vmultc([icon, nact]) = [ZERO, frac]  ! We can use [ICON, NACT] as ICON > NACT.
                 iact([icon, nact]) = iact([nact, icon])
             else
                 exit

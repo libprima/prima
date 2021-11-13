@@ -71,6 +71,8 @@ function setup(varargin)
 % TODO: None
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+COMPILE_CLASSICAL = false; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % setup starts
 
 % Check the version of MATLAB.
@@ -287,13 +289,14 @@ try
         obj_files = [files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.o'), files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.obj')];
         cellfun(@(filename) delete(filename), [mod_files, obj_files]);
 
+  if (COMPILE_CLASSICAL) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Compilation of the 'classical' version of solver
         % Clean up the source file directory
         mod_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.mod');
         obj_files = [files_with_wildcard(fullfile(fsrc_classical, solver), '*.o'), files_with_wildcard(fullfile(fsrc_classical, solver), '*.obj')];
         cellfun(@(filename) delete(filename), [mod_files, obj_files]);
         % Compile
-        src_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.f*');
+        src_files = [files_with_wildcard(fullfile(fsrc_classical, solver), '*.f'), files_with_wildcard(fullfile(fsrc_classical, solver), '*.f90')];
         %mex(mex_options{:}, '-c', src_files{:}, '-outdir', fullfile(fsrc_classical, solver));
         for isf = 1 : length(src_files)
             mex(mex_options{:}, '-c', src_files{isf}, '-outdir', fullfile(fsrc_classical, solver));
@@ -304,6 +307,7 @@ try
         mod_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.mod');
         obj_files = [files_with_wildcard(fullfile(fsrc_classical, solver), '*.o'), files_with_wildcard(fullfile(fsrc_classical, solver), '*.obj')];
         cellfun(@(filename) delete(filename), [mod_files, obj_files]);
+  end
 
         fprintf('Done.\n');
     end
