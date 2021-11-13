@@ -28,6 +28,7 @@ real(RP), intent(inout) :: Rdiag(:)
 character(len=*), parameter :: srname = 'QRADD'
 integer(IK) :: k
 integer(IK) :: m
+integer(IK) :: nsav
 real(RP) :: cq(size(Q, 2))
 real(RP) :: cqa(size(Q, 2))
 real(RP) :: G(2, 2)
@@ -38,7 +39,7 @@ m = int(size(Q, 2), kind(m))
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(n <= m, 'N <= M', srname)
+    call assert(n >= 0 .and. n <= m, '0 <= N <= M', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
     !!! This test cannot be passed, because NaN appears in Q, probably because of
     !!! PLANEROT_TMP, where 0/0 can occur. Must be investigated when revising PLANEROT_TMP.
@@ -50,6 +51,8 @@ end if
 !====================!
 ! Calculation starts !
 !====================!
+
+nsav = n  ! Needed for debugging.
 
 cq = matprod(c, Q)
 cqa = matprod(abs(c), abs(Q))
@@ -100,7 +103,7 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(n <= m, 'N <= M', srname)
+    call assert(n >= nsav .and. n <= min(nsav + 1_IK, m), 'NSAV <= N <= min(NSAV + 1, M)', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
     !!! This test cannot be passed, because NaN appears in Q, probably because of
     !!! PLANEROT_TMP, where 0/0 can occur. Must be investigated when revising PLANEROT_TMP.
@@ -599,6 +602,9 @@ do iter = 1, maxiter
                 vmultc(nact) = ZERO
             end if
         else
+            if (nact > 0) then
+                if (.not. abs(zdota(nact)) > 0) exit
+            end if
             !----------------------------! 1st VMULTD CALCULATION STARTS  !------------------------!
             ! Zaikun 20211011:
             ! 1. VMULTD is calculated from scratch for the first time (out of 2) in one iteration.

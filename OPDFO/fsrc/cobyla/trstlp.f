@@ -256,19 +256,19 @@
       END IF
 
 !!!!!!>>>>>>>>>>>> Zaikun 20211112
-      !if (nact > 0) then
-      !    zdasav = zdota(nact)
-      !    TEMP=0.0D0
-      !    DO I=1,N
-      !        TEMP=TEMP+Z(I,NACT)*A(I,KK)
-      !    END DO
-      !    if (isminor(temp,inprod(abs(Z(1:N,nact)),abs(A(1:N,kk)))))then
-      !        temp = 0.0d0
-      !    end if
-      !    IF (.not. ABS(temp) > 0.0D0) THEN GOTO 490
-      !end if
+      if (nact > 0) then
+          zdasav = zdota(nact)
+          TEMP=0.0D0
+          DO I=1,N
+              TEMP=TEMP+Z(I,NACT)*A(I,KK)
+          END DO
+          if (isminor(temp,inprod(abs(Z(1:N,nact)),abs(A(1:N,kk)))))then
+              temp = 0.0d0
+          end if
+          IF (.not. ABS(temp) > 0.0D0) GOTO 490
+      end if
 
-      if (nact == 0) GOTO 490
+      !if (nact == 0) GOTO 490
 !!!!!!<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 !     The next instruction is reached if a deletion has to be made from the
