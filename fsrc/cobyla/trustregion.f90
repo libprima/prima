@@ -553,7 +553,7 @@ do iter = 1, maxiter
                 iact([icon, nact]) = iact([nact, icon])
             else
                 ! Zaikun 20211012: Is this needed ? Isn't it true naturally?
-                !vmultc(nact) = ZERO
+                vmultc(nact) = ZERO
             end if
         else
             !----------------------------! 1st VMULTD CALCULATION STARTS  !------------------------!
