@@ -1131,7 +1131,7 @@ validated = false;
 if isfield(options, 'ftarget')
     if ~isrealscalar(options.ftarget) || isnan(options.ftarget)
         wid = sprintf('%s:InvalidFtarget', invoker);
-        wmessage = sprintf('%s: invalid ftarget; it should be real number; it is set to %f.', invoker, ftarget);
+        wmessage = sprintf('%s: invalid ftarget; it should be a real number; it is set to %f.', invoker, ftarget);
         warning(wid, '%s', wmessage);
         warnings = [warnings, wmessage];
     else
