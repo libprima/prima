@@ -750,16 +750,10 @@ do iter = 1, maxiter
 
     ! Calculate the fraction of the step from D to DNEW that will be taken.
     fracmult = vmultc / (vmultc - vmultd)  !
-    if (any(vmultd < ZERO .and. .not. is_nan(fracmult))) then
-        frac = min(ONE, minval(fracmult, mask=(vmultd < ZERO)))
-    else
-        frac = ONE
-    end if
-!    frac = min(ONE, minval(fracmult, mask=(vmultd < ZERO .and. .not. is_nan(fracmult)))) ????
+    frac = min(ONE, minval(fracmult, mask=(vmultd < ZERO .and. .not. is_nan(fracmult))))
 
     if (frac < ONE) then
-        icon = minloc(fracmult, mask=(vmultd < ZERO), dim=1)
-!        icon = minloc(fracmult, mask=(vmultd < ZERO .and. .not. is_nan(fracmult)), dim=1) ????
+        icon = minloc(fracmult, mask=(vmultd < ZERO .and. .not. is_nan(fracmult)), dim=1)
     else
         icon = 0_IK  ! This will trigger an exit after the update of D, VMULTC, and CSTRV.
     end if
