@@ -12,10 +12,21 @@
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DIMENSION A(N,*),B(*),DX(*),IACT(*),Z(N,*),ZDOTA(*),
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!      DIMENSION A(N,*),B(*),DX(*),IACT(*),Z(N,*),ZDOTA(*),
 !     1  VMULTC(*),SDIRN(*),DXNEW(*),VMULTD(*)
-     1  VMULTC(*),SDIRN(*),DXNEW(*),VMULTD(*),dold(N)
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!N.B.: Strangely, for some unknown reason, the original COBYLA and the
+!modernized code can behave differently unless at least one of the
+!following dimensions (excluding DOLD!) are defined as follows. This
+!happened when stage 1 finished  before doing anything due to RESMAX <= 0.
+!This difference can also be resolved by printing after line number 480
+!any of NACT, MCON, ICON, STAGE, ITERC, RESMAX, ICOUNT, OPTOLD, SUMD,
+!all of which are local variables;  however, printing N, M, DX, IACT,
+!VMULTC, Z, ZDOTA, A, b, ... any of the dummy variables does not work.
+!This very strange. Seemingly because of some uninitialized variable,
+!but which one?
+      DIMENSION A(N,M+1),B(M+1),DX(N),IACT(M+1),Z(N,N),ZDOTA(N),
+     1  VMULTC(M+1),SDIRN(N),DXNEW(N),VMULTD(M+1),dold(N)
       integer :: stage
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
@@ -256,19 +267,18 @@
       END IF
 
 !!!!!!>>>>>>>>>>>> Zaikun 20211112
-      if (nact > 0) then
-          zdasav = zdota(nact)
-          TEMP=0.0D0
-          DO I=1,N
-              TEMP=TEMP+Z(I,NACT)*A(I,KK)
-          END DO
-          if (isminor(temp,inprod(abs(Z(1:N,nact)),abs(A(1:N,kk)))))then
-              temp = 0.0d0
-          end if
-          IF (.not. ABS(temp) > 0.0D0) GOTO 490
-      end if
+      !if (nact > 0) then
+      !    TEMP=0.0D0
+      !    DO I=1,N
+      !        TEMP=TEMP+Z(I,NACT)*A(I,KK)
+      !    END DO
+      !    if (isminor(temp,inprod(abs(Z(1:N,nact)),abs(A(1:N,kk)))))then
+      !        temp = 0.0d0
+      !    end if
+      !    IF (.not. ABS(temp) > 0.0D0) GOTO 490
+      !end if
 
-      !if (nact == 0) GOTO 490
+      if (nact == 0) GOTO 490  ! This should be include!!!
 !!!!!!<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 !     The next instruction is reached if a deletion has to be made from the
@@ -282,7 +292,7 @@
 !      RATIO=-1.0
       RATIO=-1.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      K=NACT
+      K=NACT  !!!What if NACT = 0???
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !  130 ZDOTV=0.0
 !      ZDVABS=0.0
@@ -631,7 +641,7 @@
 !     can be attributed to computer rounding errors. First calculate the new
 !     Lagrange multipliers.
 
-      K=NACT
+      K=NACT   !!! What if NACT = 0???
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !  390 ZDOTW=0.0
 !      ZDWABS=0.0
@@ -789,6 +799,8 @@
       IF (ICON > 0) GOTO 70
       !IF (STEP == STPFUL) THEN
       if (mcon > m .or. dot_product(dx(1:n),dx(1:n))>=rho**2) goto 500
+      ! Shouldn't 480 be the last line??? Note that TRSTLP in trustregion.f90 checks whether |D| >=
+      ! RHO at the very beginning of the second stage.
 480   MCON=M+1
       ICON=MCON
       IACT(MCON)=MCON
