@@ -62,39 +62,34 @@ end where
 
 do k = m - 1, n + 1, -1
     ! Apply a 2D Givens rotation to Q(:, [K, K+1]) from the right to zero C'*Q(:, K+1) out.
-    if (abs(cq(k + 1)) > ZERO) then
-        ! Powell wrote CQ(K+1) /= ZERO instead of ABS(CQ(K+1)) > ZERO.
-        ! The two conditions differ if CQ(K+1) is NaN.
+    if (abs(cq(k + 1)) > 0) then
+        ! Powell wrote CQ(K+1) /= 0 instead of ABS(CQ(K+1)) > 0. The two differ if CQ(K+1) is NaN.
         G = PLANEROT_TMP(cq([k, k + 1]))
         Q(:, [k, k + 1]) = matprod(Q(:, [k, k + 1]), transpose(G))
         cq(k) = sqrt(cq(k)**2 + cq(k + 1)**2)
     end if
 end do
 
-if (n < m .and. abs(cq(n + 1)) > ZERO) then
-    ! Add the new constraint if this can be done without a deletion from the active set.
-    ! Powell wrote "CQ(NACT+1) /= ZERO" instead of "ABS(CQ(NACT+1)) > ZERO".
-    n = n + 1
-    !!!!!!!!!!!!!!!!!!!!!!! Calculate ZDOTA from scratch? Test it.
+! Add the new column to A if this can be done without a deletion from the columns of A.
+! The two IFs cannot be merged as Fortran may evaluate CQ(N+1) even if N>=M, leading to a SEGFAULT.  
+if (n < m) then
+    if (abs(cq(n + 1)) > 0) then
+        ! Powell wrote CQ(N+1) /= 0 instead of ABS(CQ(N+1)) > 0. The two differ if CQ(N+1) is NaN.
+        n = n + 1
+    end if
+end if
+!else
+!    ! The next instruction is reached if a deletion has to be made from A in order to make room for
+!    ! the new column, because the new column is in the range space of A.
+!    !
+!    ! Zaikun 20210811: Powell wrote the following comment, but IOUT is NEVER DEFINED. It
+!    ! seems that Powell's code always deletes the constraint with index IACT(NACT).
+!    !--------------------------------------------------------------------------------------!
+!    ! Further, set IOUT to the index of the constraint to be deleted, but branch if no
+!    ! suitable index can be found.
+!    !--------------------------------------------------------------------------------------!
+if (n >= 1 .and. n <= m) then  ! N > M should not happen unless the input is wrong.
     Rdiag(n) = cq(n)  ! Indeed, RDIAG(N) = INPROD(C, Q(:, N))
-    !!??Rdiag(n) = inprod(C, Q(:, N))
-    !!!!!!!!!!!!!!!!!!!!!!! Test
-else
-    ! The next instruction is reached if a deletion has to be made from the active set in
-    ! order to make room for the new active constraint, because the new constraint gradient
-    ! is a linear combination of the gradients of the old active constraints.
-    !
-    ! Zaikun 20210811: Powell wrote the following comment, but IOUT is NEVER DEFINED. It
-    ! seems that Powell's code always deletes the constraint with index IACT(NACT).
-    !--------------------------------------------------------------------------------------!
-    ! Further, set IOUT to the index of the constraint to be deleted, but branch if no
-    ! suitable index can be found.
-    !--------------------------------------------------------------------------------------!
-
-    if (n >= 1 .and. n <= m) then !!!!!!
-        Rdiag(n) = cq(n)
-        !!??Rdiag(n) = inprod(c, Q(:, n))
-    end if  !!!!!!
 end if
 
 !====================!
@@ -651,7 +646,8 @@ do iter = 1, maxiter
         ! Ensure that the objective function continues to be treated as the last active constraint
         ! if stage 2 is in progress.
         ! Zaikun 20211011, 20211111: Is it guaranteed for stage 2 that IACT(NACT-1) = MCON when
-        ! IACT(NACT) /= MCON????
+        ! IACT(NACT) /= MCON???? If not, then how does the following procedure ensure that MCON is
+        ! the last of IACT(1:NACT)?
         if (stage == 2 .and. iact(nact) /= mcon) then
             call qrexc(A(:, iact(1:nact)), Z, zdota(1:nact))
             iact([nact - 1, nact]) = iact([nact, nact - 1])
