@@ -278,7 +278,11 @@
       !    IF (.not. ABS(temp) > 0.0D0) GOTO 490
       !end if
 
-      if (nact == 0) GOTO 490  ! This should be include!!!
+      if (nact == 0) GOTO 490  
+      ! To make the modernized code behave the same as this code, the last
+      ! line must be be include!!! The modernized code ensures an exit when
+      ! NACT = 0. In addition, if we do not exit when NACT = 0, a memory 
+      ! may occur below because K is set to NACT.  
 !!!!!!<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 !     The next instruction is reached if a deletion has to be made from the
@@ -798,10 +802,10 @@
 
       IF (ICON > 0) GOTO 70
       !IF (STEP == STPFUL) THEN
-      if (mcon > m .or. dot_product(dx(1:n),dx(1:n))>=rho**2) goto 500
+ 480  if (mcon > m .or. dot_product(dx(1:n),dx(1:n))>=rho**2) goto 500
       ! Shouldn't 480 be the last line??? Note that TRSTLP in trustregion.f90 checks whether |D| >=
       ! RHO at the very beginning of the second stage.
-480   MCON=M+1
+      MCON=M+1
       ICON=MCON
       IACT(MCON)=MCON
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
