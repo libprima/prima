@@ -481,7 +481,7 @@ real(RP) :: dd
 real(RP) :: dnew(size(d))
 real(RP) :: dold(size(d))
 real(RP) :: frac
-real(RP) :: frtmp(size(b))
+real(RP) :: fracmult(size(b))
 real(RP) :: optnew
 real(RP) :: optold
 real(RP) :: sd
@@ -536,7 +536,7 @@ else
     icon = mcon
 
     ! In Powell's code, stage 2 uses the ZDOTA and CSTRV calculated by stage 1. Here we re-calculate
-    ! them so that they need to be passed from stage 1 to stage 2, and hence the coupling is reduced.
+    ! them so that they need not be passed from stage 1 to 2, and hence the coupling is reduced.
     cstrv = maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
     zdota(1:nact) = [(inprod(z(:, k), A(:, iact(k))), k=1, nact)]
 end if
@@ -602,9 +602,6 @@ do iter = 1, maxiter
                 vmultc(nact) = ZERO
             end if
         else
-            if (nact > 0) then
-                if (.not. abs(zdota(nact)) > 0) exit
-            end if
             !----------------------------! 1st VMULTD CALCULATION STARTS  !------------------------!
             ! Zaikun 20211011:
             ! 1. VMULTD is calculated from scratch for the first time (out of 2) in one iteration.
@@ -626,7 +623,7 @@ do iter = 1, maxiter
             ! Revise the Lagrange multipliers. The revision is not applicable to VMULTC(NACT + 1:M).
             vmultc(1:nact) = max(ZERO, vmultc(1:nact) - frac * vmultd(1:nact))
 
-            ! Zaikun 20210811: Powell's code includes the following, but it is IMPOSSIBLE TO REACH.
+            ! Zaikun 20210811: Powell's code includes the following, which is IMPOSSIBLE TO REACH.
             !--------------------------------------------------------------------------------------!
             !if (icon < nact) then
             !    do k = icon, nact-1
@@ -644,7 +641,7 @@ do iter = 1, maxiter
             ! Exit if the new value of ZDOTA(NACT) is not acceptable. Note that the opposite of
             ! 'ABS(ZDOTA(NACT)) > 0' is not 'ABS(ZDOTA(NACT) <= 0)', as ZDOTA(NACT) can be NaN.
             if (abs(zdota(nact)) > 0) then
-                vmultc([icon, nact]) = [ZERO, frac]  ! We can use [ICON, NACT] as ICON > NACT.
+                vmultc([icon, nact]) = [ZERO, frac]  ! VMULTC([ICON, NACT]) is valid as ICON > NACT.
                 iact([icon, nact]) = iact([nact, icon])
             else
                 exit
@@ -752,17 +749,19 @@ do iter = 1, maxiter
     !--------------------------------! 2nd VMULTD CALCULATION ENDS !-------------------------------!
 
     ! Calculate the fraction of the step from D to DNEW that will be taken.
-    frtmp = vmultc / (vmultc - vmultd)  !
-    if (any(vmultd < ZERO .and. .not. is_nan(frtmp))) then
-        frac = min(ONE, minval(frtmp, mask=(vmultd < ZERO)))
+    fracmult = vmultc / (vmultc - vmultd)  !
+    if (any(vmultd < ZERO .and. .not. is_nan(fracmult))) then
+        frac = min(ONE, minval(fracmult, mask=(vmultd < ZERO)))
     else
         frac = ONE
     end if
+!    frac = min(ONE, minval(fracmult, mask=(vmultd < ZERO .and. .not. is_nan(fracmult)))) ????
 
     if (frac < ONE) then
-        icon = minloc(frtmp, mask=(vmultd < ZERO), dim=1)
+        icon = minloc(fracmult, mask=(vmultd < ZERO), dim=1)
+!        icon = minloc(fracmult, mask=(vmultd < ZERO .and. .not. is_nan(fracmult)), dim=1) ????
     else
-        icon = 0_IK
+        icon = 0_IK  ! This will trigger an exit after the update of D, VMULTC, and CSTRV.
     end if
 
     ! Update D, VMULTC and CSTRV.
