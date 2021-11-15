@@ -27,6 +27,7 @@
 !but which one?
       DIMENSION A(N,M+1),B(M+1),DX(N),IACT(M+1),Z(N,N),ZDOTA(N),
      1  VMULTC(M+1),SDIRN(N),DXNEW(N),VMULTD(M+1),dold(N)
+      real(kind(0.0D0)) :: G(2,2)
       integer :: stage
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
@@ -237,6 +238,9 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               ALPHA=SP/TEMP
               BETA=TOT/TEMP
+              !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+              G = planerot([sp, tot]); alpha = G(1,1); beta = -G(2,1)
+              !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               TOT=TEMP
               DO I=1,N
                   TEMP=ALPHA*Z(I,K)+BETA*Z(I,KP)
@@ -278,11 +282,11 @@
       !    IF (.not. ABS(temp) > 0.0D0) GOTO 490
       !end if
 
-      if (nact == 0) GOTO 490  
+      if (nact == 0) GOTO 490
       ! To make the modernized code behave the same as this code, the last
       ! line must be be include!!! The modernized code ensures an exit when
-      ! NACT = 0. In addition, if we do not exit when NACT = 0, a memory 
-      ! may occur below because K is set to NACT.  
+      ! NACT = 0. In addition, if we do not exit when NACT = 0, a memory
+      ! may occur below because K is set to NACT.
 !!!!!!<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 !     The next instruction is reached if a deletion has to be made from the
@@ -391,6 +395,9 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           ALPHA=ZDOTA(KP)/TEMP
           BETA=SP/TEMP
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          G = planerot([zdota(kp), sp]); alpha = G(1,1); beta = -G(2,1)
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           ZDOTA(KP)=ALPHA*ZDOTA(K)
           ZDOTA(K)=TEMP
           DO I=1,N
@@ -454,6 +461,9 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           ALPHA=ZDOTA(NACT)/TEMP
           BETA=SP/TEMP
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          G = planerot([zdota(nact), sp]); alpha = G(1,1); beta =-G(2,1)
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           ZDOTA(NACT)=ALPHA*ZDOTA(K)
           ZDOTA(K)=TEMP
           DO I=1,N
@@ -511,6 +521,9 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           ALPHA=ZDOTA(KP)/TEMP
           BETA=SP/TEMP
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          G = planerot([zdota(kp), sp]); alpha = G(1,1); beta = -G(2,1)
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           ZDOTA(KP)=ALPHA*ZDOTA(K)
           ZDOTA(K)=TEMP
           DO I=1,N
