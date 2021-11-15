@@ -1,3 +1,0 @@
-include *.txt pyproject.toml
-recursive-include fsrc *
-recursive-include python *.f90 *.pyf
