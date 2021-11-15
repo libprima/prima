@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 12, 2021 PM09:43:11
+! Last Modified: Tuesday, November 16, 2021 AM12:52:15
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -32,6 +32,7 @@ public :: r1update, r2update, symmetrize
 public :: Ax_plus_y
 public :: eye
 public :: planerot, lsqr, inv
+public :: qradd, qrdel, qrexc
 public :: calquad, errquad, hess_mul
 public :: omega_col, omega_mul, omega_inprod
 public :: errh
@@ -920,21 +921,33 @@ end function
 
 function planerot(x) result(G)
 ! As in MATLAB, PLANEROT(X) returns a 2x2 Givens matrix G for X in R^2 so that Y = G*X has Y(2) = 0.
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HUGENUM
-
-#if __DEBUGGING__ == 1
-use, non_intrinsic :: debug_mod, only : verisize
-#endif
-
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, HUGENUM, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite
 implicit none
+
+! Inputs
 real(RP), intent(in) :: x(:)
+
+! Outputs
 real(RP) :: G(2, 2)
 
-real(RP) :: c, s, r, scaling
+! Local variables
+character(len=*), parameter :: srname = 'PLANEROT'
+real(RP) :: c
+real(RP) :: s
+real(RP) :: r
+real(RP) :: scaling
+real(RP) :: tol
 
-#if __DEBUGGING__ == 1
-call verisize(x, 2_IK)
-#endif
+! Preconditions
+if (DEBUGGING) then
+    call assert(size(x) == 2, 'SIZE(X) ==2', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
 
 if (abs(x(2)) > ZERO) then
     r = sqrt(sum(x**2))
@@ -954,36 +967,252 @@ elseif (x(1) < ZERO) then
 else
     G = eye(2_IK)
 end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(G,1 ) == 2 .and. size(G, 2) == 2, 'SIZE(G) == [2, 2]', srname)
+    call assert(all(is_finite(G)), 'G is finite', srname)
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS))
+    call assert(isorth(G, tol), 'G is orthonormal', srname)
+    r = sqrt(sum(x**2))
+    if (is_finite(r)) then
+        call assert(norm(matprod(G, x) - [r, ZERO]) <= tol*r, 'G*x = [|x|, 0]', srname)
+    end if
+end if
 end function planerot
 
 
-! A stabilized Givens rotation that avoids over/underflow and keeps continuity (see wikipedia)
-!function [c, s, r] = givens_rotation(a, b)
-!    if b == 0;
-!        c = sign(a);  % Continuity
-!        if (c == 0);
-!            c = 1.0; % Unlike other languages, MatLab's sign function returns 0 on input 0.
-!        end;
-!        s = 0;
-!        r = abs(a);
-!    elseif a == 0;
-!        c = 0;
-!        s = sign(b);
-!        r = abs(b);
-!    elseif abs(a) > abs(b);
-!        t = b / a;
-!        u = sign(a) * sqrt(1 + t * t);
-!        c = 1 / u;
-!        s = c * t;
-!        r = a * u;
-!    else
-!        t = a / b;
-!        u = sign(b) * sqrt(1 + t * t);
-!        s = 1 / u;
-!        c = s * t;
-!        r = b * u;
-!    end
-!end
+subroutine qradd(c, Q, Rdiag, n)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine updates the QR factorization of an MxN matrix A of full column rank, attempting to
+! add a new column C is to this matrix as the LAST column while maintaining the full-rankness.
+! Case 1. If C is not in range(A) (theoretically, it implies N < M), then the new matrix is [A, C];
+! Case 2. If C is in range(A), then the new matrix is [A(:, N-1), C].
+! N.B.:
+! 0. Instead of R, this subroutine updates Rdiag, which is diag(R), whose size is min(M, N).
+! 1. With the two cases specified as above, this function does not need A as an input.
+! 2. Indeed, when C is in range(A), Powell wrote in comments that "set IOUT to the index of the
+! constraint (here, column of A -- Zaikun) to be deleted, but branch if no suitable index can be
+! found". The idea is to replace a column of A by C so that the new matrix still has full rank
+! (such a column must exist unless C = 0). But his code essentially set IOUT = N always. Maybe he
+! found this works well enough in practice. Meanwhile, Powell's code includes a snippet that can
+! never be reached, which was probably intended to deal with the case with IOUT =/= N.
+!--------------------------------------------------------------------------------------------------!
+
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+implicit none
+
+! Inputs
+real(RP), intent(in) :: c(:)
+
+! In-outputs
+integer(IK), intent(inout) :: n
+real(RP), intent(inout) :: Q(:, :)
+real(RP), intent(inout) :: Rdiag(:)
+
+! Local variables
+character(len=*), parameter :: srname = 'QRADD'
+integer(IK) :: k
+integer(IK) :: m
+integer(IK) :: nsav
+real(RP) :: cq(size(Q, 2))
+real(RP) :: cqa(size(Q, 2))
+real(RP) :: G(2, 2)
+real(RP) :: tol
+
+! Sizes
+m = int(size(Q, 2), kind(m))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(n >= 0 .and. n <= m, '0 <= N <= M', srname)
+    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n, RP)))
+    call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+nsav = n  ! Needed for debugging.
+
+cq = matprod(c, Q)
+cqa = matprod(abs(c), abs(Q))
+where (isminor(cq, cqa))  ! Code in MATLAB: CQ(ISMINOR(CQ, CQA)) = ZERO
+    cq = ZERO
+end where
+
+! Update Q so that the columns of Q(:, N+2:M) are orthogonal to C. This is done by applying a 2D
+! Givens rotation to Q(:, [K, K+1]) from the right to zero C'*Q(:, K+1) out for K = N+1, ..., M-1.
+! Nothing will be done if N >= M-2.
+do k = m - 1_IK, n + 1_IK, -1
+    if (abs(cq(k + 1)) > 0) then
+        ! Powell wrote CQ(K+1) /= 0 instead of ABS(CQ(K+1)) > 0. The two differ if CQ(K+1) is NaN.
+        G = planerot(cq([k, k + 1_IK]))
+        Q(:, [k, k + 1_IK]) = matprod(Q(:, [k, k + 1_IK]), transpose(G))
+        cq(k) = sqrt(cq(k)**2 + cq(k + 1)**2)
+    end if
+end do
+
+! Augment N by 1 if C is not in range(A).
+! The two IFs cannot be merged as Fortran may evaluate CQ(N+1) even if N>=M, leading to a SEGFAULT.
+if (n < m) then
+    if (abs(cq(n + 1)) > 0) then  ! C is not in range(A).
+        ! Powell wrote CQ(N+1) /= 0 instead of ABS(CQ(N+1)) > 0. The two differ if CQ(N+1) is NaN.
+        n = n + 1_IK
+    end if
+end if
+
+! Update Rdiag so that RDIAG(N) = CQ(N) = INPROD(C, Q(:, N)). Note that N may have been augmented.
+if (n >= 1 .and. n <= m) then  ! N > M should not happen unless the input is wrong.
+    Rdiag(n) = cq(n)  ! Indeed, RDIAG(N) = INPROD(C, Q(:, N))
+end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(n >= nsav .and. n <= min(nsav + 1_IK, m), 'NSAV <= N <= min(NSAV + 1, M)', srname)
+    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
+    call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
+end if
+end subroutine qradd
+
+
+subroutine qrdel(A, Q, Rdiag, i)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine updates the QR factorization of A when the Ith column of A is deleted. Here, A
+! IS ASSUMED TO HAVE FULL COLUMN RANK.
+! N.B. Instead of R, this subroutine updates Rdiag, which is diag(R), whose size is min(M, N).
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: i
+real(RP), intent(in) :: A(:, :)
+
+! In-outputs
+real(RP), intent(inout) :: Q(:, :)
+real(RP), intent(inout) :: Rdiag(:)
+
+! Local variables
+character(len=*), parameter :: srname = 'QRDEL'
+integer(IK) :: m
+integer(IK) :: n
+integer(IK) :: k
+real(RP) :: G(2, 2)
+real(RP) :: hypt
+real(RP) :: tol
+
+! Sizes
+m = int(size(A, 1), kind(m))
+n = int(size(A, 2), kind(n))
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(i >= 1 .and. i <= n, '1 <= I <= N', srname)
+    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n, RP)))
+    call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+if (i <= 0 .or. i >= n) then  ! I <= 0 or I > N should not happen.
+    return
+end if
+
+do k = i, n - 1_IK
+    hypt = sqrt(Rdiag(k + 1)**2 + inprod(Q(:, k), A(:, k + 1))**2)
+    G = planerot([Rdiag(k + 1), inprod(Q(:, k), A(:, k + 1))])
+    Q(:, [k, k + 1_IK]) = matprod(Q(:, [k + 1_IK, k]), transpose(G))
+    Rdiag([k, k + 1_IK]) = [hypt, (Rdiag(k + 1) / hypt) * Rdiag(k)]
+end do
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
+    call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
+end if
+end subroutine qrdel
+
+
+subroutine qrexc(A, Q, Rdiag)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine updates the QR factorization of A when the last two columns of A are exchanged.
+! Here, A IS ASSUMED TO HAVE FULL COLUMN RANK.
+! N.B. Instead of R, this subroutine updates Rdiag, which is diag(R), whose size is min(M, N).
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+implicit none
+
+! Inputs
+real(RP), intent(in) :: A(:, :)
+
+! In-outputs
+real(RP), intent(inout) :: Q(:, :)
+real(RP), intent(inout) :: Rdiag(:)
+
+! Local variables
+character(len=*), parameter :: srname = 'QREXC'
+integer(IK) :: m
+integer(IK) :: n
+real(RP) :: G(2, 2)
+real(RP) :: hypt
+real(RP) :: tol
+
+! Sizes
+m = int(size(A, 1), kind(m))
+n = int(size(A, 2), kind(n))
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(n >= 2, 'N >= 2', srname)
+    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n, RP)))
+    call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+if (n < 2) then   ! Should not happen.
+    return
+end if
+
+hypt = sqrt(Rdiag(n)**2 + inprod(Q(:, n - 1), A(:, n))**2)
+G = planerot([Rdiag(n), inprod(Q(:, n - 1), A(:, n))])
+Q(:, [n - 1_IK, n]) = matprod(Q(:, [n, n - 1_IK]), transpose(G))
+Rdiag([n - 1_IK, n]) = [hypt, (Rdiag(n) / hypt) * Rdiag(n - 1)]
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
+    call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
+end if
+end subroutine qrexc
 
 
 subroutine symmetrize(A)
