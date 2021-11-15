@@ -24,7 +24,7 @@ subroutine qradd(c, Q, Rdiag, n)
 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: linalg_mod, only : matprod, isminor
+use, non_intrinsic :: linalg_mod, only : matprod, isminor, planerot
 implicit none
 
 ! Inputs
@@ -53,7 +53,7 @@ if (DEBUGGING) then
     call assert(n >= 0 .and. n <= m, '0 <= N <= M', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
     !!! This test cannot be passed, because NaN appears in Q, probably because of
-    !!! PLANEROT_TMP, where 0/0 can occur. Must be investigated when revising PLANEROT_TMP.
+    !!! planerot, where 0/0 can occur. Must be investigated when revising planerot.
     !write (16, *) Q
     !tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E4_RP * EPS * real(n, RP)))
     !call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
@@ -77,7 +77,7 @@ end where
 do k = m - 1, n + 1, -1
     if (abs(cq(k + 1)) > 0) then
         ! Powell wrote CQ(K+1) /= 0 instead of ABS(CQ(K+1)) > 0. The two differ if CQ(K+1) is NaN.
-        G = PLANEROT_TMP(cq([k, k + 1]))
+        G = planerot(cq([k, k + 1]))
         Q(:, [k, k + 1]) = matprod(Q(:, [k, k + 1]), transpose(G))
         cq(k) = sqrt(cq(k)**2 + cq(k + 1)**2)
     end if
@@ -106,7 +106,7 @@ if (DEBUGGING) then
     call assert(n >= nsav .and. n <= min(nsav + 1_IK, m), 'NSAV <= N <= min(NSAV + 1, M)', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
     !!! This test cannot be passed, because NaN appears in Q, probably because of
-    !!! PLANEROT_TMP, where 0/0 can occur. Must be investigated when revising PLANEROT_TMP.
+    !!! planerot, where 0/0 can occur. Must be investigated when revising planerot.
     !write (16, *) Q
     !call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
 end if
@@ -120,6 +120,7 @@ subroutine qrdel(A, Q, Rdiag, i)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: linalg_mod, only : planerot
 implicit none
 
 ! Inputs
@@ -148,7 +149,7 @@ if (DEBUGGING) then
     call assert(i >= 1 .and. i <= n, '1 <= I <= N', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
     !!! This test cannot be passed, because NaN appears in Q, probably because of
-    !!! PLANEROT_TMP, where 0/0 can occur. Must be investigated when revising PLANEROT_TMP.
+    !!! planerot, where 0/0 can occur. Must be investigated when revising planerot.
     !write (16, *) Q
     !tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E4_RP * EPS * real(n, RP)))
     !call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
@@ -163,10 +164,10 @@ if (i <= 0 .or. i >= n) then  ! I <= 0 or I > N should not happen.
 end if
 
 do k = i, n - 1_IK
-    ! Zaikun 20210811: What if HYPT = 0?
     hypt = sqrt(Rdiag(k + 1)**2 + inprod(Q(:, k), A(:, k + 1))**2)
-    G = PLANEROT_TMP([Rdiag(k + 1), inprod(Q(:, k), A(:, k + 1))])
+    G = planerot([Rdiag(k + 1), inprod(Q(:, k), A(:, k + 1))])
     Q(:, [k, k + 1]) = matprod(Q(:, [k + 1, k]), transpose(G))
+    ! Zaikun 20211115: What if HYPT = 0?
     Rdiag([k, k + 1]) = [hypt, (Rdiag(k + 1) / hypt) * Rdiag(k)]
 end do
 
@@ -178,7 +179,7 @@ end do
 if (DEBUGGING) then
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
     !!! This test cannot be passed, because NaN appears in Q, probably because of
-    !!! PLANEROT_TMP, where 0/0 can occur. Must be investigated when revising PLANEROT_TMP.
+    !!! planerot, where 0/0 can occur. Must be investigated when revising planerot.
     !write (16, *) Q
     !call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
 end if
@@ -217,7 +218,7 @@ if (DEBUGGING) then
     call assert(n >= 2, 'N >= 2', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
     !!! This test cannot be passed, because NaN appears in Q, probably because of
-    !!! PLANEROT_TMP, where 0/0 can occur. Must be investigated when revising PLANEROT_TMP.
+    !!! planerot, where 0/0 can occur. Must be investigated when revising planerot.
     !write (16, *) Q
     !tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E4_RP * EPS * real(n, RP)))
     !call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
@@ -232,8 +233,9 @@ if (n < 2) then   ! Should not happen.
 end if
 
 hypt = sqrt(Rdiag(n)**2 + inprod(Q(:, n - 1), A(:, n))**2)
-G = PLANEROT_TMP([Rdiag(n), inprod(Q(:, n - 1), A(:, n))])
+G = planerot([Rdiag(n), inprod(Q(:, n - 1), A(:, n))])
 Q(:, [n - 1, n]) = matprod(Q(:, [n, n - 1]), transpose(G))
+! Zaikun 20211115: What if HYPT = 0?
 Rdiag([n - 1, n]) = [hypt, (Rdiag(n) / hypt) * Rdiag(n - 1)]
 ! Rdiag([n - 1, n - 1+1]) = [hypt, G(1, 1)* Rdiag(n - 1)]
 
@@ -245,7 +247,7 @@ Rdiag([n - 1, n]) = [hypt, (Rdiag(n) / hypt) * Rdiag(n - 1)]
 if (DEBUGGING) then
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
     !!! This test cannot be passed, because NaN appears in Q, probably because of
-    !!! PLANEROT_TMP, where 0/0 can occur. Must be investigated when revising PLANEROT_TMP.
+    !!! planerot, where 0/0 can occur. Must be investigated when revising planerot.
     !write (16, *) (abs(matprod(transpose(Q), Q) - eye(m)))
     !write (16, *) tol
     !close (16)
@@ -253,80 +255,6 @@ if (DEBUGGING) then
 end if
 end subroutine qrexc
 
-
-!!!!!! This is temporary!!! It must be merged with the PLANEROT in linalg_mod.
-function PLANEROT_TMP(x) result(G)
-! As in MATLAB, PLANEROT(X) returns a 2x2 Givens matrix G for X in R^2 so that Y = G*X has Y(2) = 0.
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HUGENUM
-use, non_intrinsic :: linalg_mod, only : eye
-use, non_intrinsic :: debug_mod, only : verisize
-
-implicit none
-real(RP), intent(in) :: x(:)
-real(RP) :: G(2, 2)
-
-real(RP) :: c, s, r, scaling
-
-call verisize(x, 2_IK)
-
-if (abs(x(2)) > ZERO) then
-    !>>>> SHOULD BE
-    !r = sqrt(sum(x**2))
-    !if (r > ZERO .and. r <= HUGENUM) then
-    !    c = x(1) / r
-    !    s = x(2) / r
-    !else
-    !    scaling = maxval(abs(x))
-    !    r = sqrt(sum((x/scaling)**2))
-    !    c = (x(1) / scaling) / r
-    !    s = (x(2) / scaling) / r
-    !end if
-    !G = reshape([c, -s, s, c], [2, 2])
-    !>>>> SHOUD BE
-
-    !<<<< TEMP
-    r = sqrt(sum(x**2))
-    c = x(1) / r
-    s = x(2) / r
-    G = reshape([c, -s, s, c], [2, 2])
-    !<<<< TEMP
-
-elseif (x(1) < ZERO) then
-    ! Setting G = -EYE(2, 2) in this case ensures the continuity of G with respect to X except at 0.
-    G = -eye(2_IK)
-else
-    G = eye(2_IK)
-end if
-end function PLANEROT_TMP
-
-
-! A stabilized Givens rotation that avoids over/underflow and keeps continuity (see wikipedia)
-!function [c, s, r] = givens_rotation(a, b)
-!    if b == 0;
-!        c = sign(a);  % Continuity
-!        if (c == 0);
-!            c = 1.0; % Unlike other languages, MatLab's sign function returns 0 on input 0.
-!        end;
-!        s = 0;
-!        r = abs(a);
-!    elseif a == 0;
-!        c = 0;
-!        s = sign(b);
-!        r = abs(b);
-!    elseif abs(a) > abs(b);
-!        t = b/a;
-!        u = sign(a) * sqrt(1+t * t);
-!        c = 1/u;
-!        s = c*t;
-!        r = a*u;
-!    else
-!        t = a/b;
-!        u = sign(b) * sqrt(1+t * t);
-!        s = 1/u;
-!        c = s*t;
-!        r = b*u;
-!    end
-!end
 end module LINALG_TMP_MOD
 
 
