@@ -7,8 +7,19 @@ contains
 
 subroutine qradd(c, Q, Rdiag, n)
 !--------------------------------------------------------------------------------------------------!
-! This function updates the QR factorization of an MxN matrix of full column rank when a new column
-! C is added to this matrix as the LAST column, maintaining the full-rankness.
+! This subroutine updates the QR factorization of an MxN matrix A of full column rank, attempting to
+! add a new column C is to this matrix as the LAST column while maintaining the full-rankness.
+! Case 1. If C is not in range(A) (theoretically, it implies N < M), then the new matrix is [A, C];
+! Case 2. If C is in range(A), then the new matrix is [A(:, N-1), C].
+! N.B.:
+! 0. Instead of R, this subroutine updates Rdiag, which is diag(R), whose size is min(M, N).
+! 1. With the two cases specified as above, this function does not need A as an input.
+! 2. Indeed, when C is in range(A), Powell wrote in comments that "set IOUT to the index of the
+! constraint (here, column of A -- Zaikun) to be deleted, but branch if no suitable index can be
+! found". The idea is to replace a column of A by C so that the new matrix still has full rank
+! (such a column must exist unless C = 0). But his code essentially set IOUT = N always. Maybe he
+! found this works well enough in practice. Meanwhile, Powell's code includes a snippet that can
+! never be reached, which was probably intended to deal with the case with IOUT =/= N.
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
@@ -60,8 +71,10 @@ where (isminor(cq, cqa))  ! Code in MATLAB: CQ(ISMINOR(CQ, CQA)) = ZERO
     cq = ZERO
 end where
 
+! Update Q so that the columns of Q(:, N+2:M) are orthogonal to C. This is done by applying a 2D
+! Givens rotation to Q(:, [K, K+1]) from the right to zero C'*Q(:, K+1) out for K = N+1, ..., M-1.
+! Nothing will be done if N >= M-2.
 do k = m - 1, n + 1, -1
-    ! Apply a 2D Givens rotation to Q(:, [K, K+1]) from the right to zero C'*Q(:, K+1) out.
     if (abs(cq(k + 1)) > 0) then
         ! Powell wrote CQ(K+1) /= 0 instead of ABS(CQ(K+1)) > 0. The two differ if CQ(K+1) is NaN.
         G = PLANEROT_TMP(cq([k, k + 1]))
@@ -70,24 +83,16 @@ do k = m - 1, n + 1, -1
     end if
 end do
 
-! Add the new column to A if this can be done without a deletion from the columns of A.
-! The two IFs cannot be merged as Fortran may evaluate CQ(N+1) even if N>=M, leading to a SEGFAULT.  
+! Augment N by 1 if C is not in range(A).
+! The two IFs cannot be merged as Fortran may evaluate CQ(N+1) even if N>=M, leading to a SEGFAULT.
 if (n < m) then
-    if (abs(cq(n + 1)) > 0) then
+    if (abs(cq(n + 1)) > 0) then  ! C is not in range(A).
         ! Powell wrote CQ(N+1) /= 0 instead of ABS(CQ(N+1)) > 0. The two differ if CQ(N+1) is NaN.
         n = n + 1
     end if
 end if
-!else
-!    ! The next instruction is reached if a deletion has to be made from A in order to make room for
-!    ! the new column, because the new column is in the range space of A.
-!    !
-!    ! Zaikun 20210811: Powell wrote the following comment, but IOUT is NEVER DEFINED. It
-!    ! seems that Powell's code always deletes the constraint with index IACT(NACT).
-!    !--------------------------------------------------------------------------------------!
-!    ! Further, set IOUT to the index of the constraint to be deleted, but branch if no
-!    ! suitable index can be found.
-!    !--------------------------------------------------------------------------------------!
+
+! Update Rdiag so that RDIAG(N) = CQ(N) = INPROD(C, Q(:, N)). Note that N may have been augmented.
 if (n >= 1 .and. n <= m) then  ! N > M should not happen unless the input is wrong.
     Rdiag(n) = cq(n)  ! Indeed, RDIAG(N) = INPROD(C, Q(:, N))
 end if
@@ -441,7 +446,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, EPS, HUGENUM, DEBUGG
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: debug_mod, only : assert, errstop, verisize
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, isminor, lsqr !!!!!!!!!!!!!!!!!!
-use, non_intrinsic :: LINALG_TMP_MOD, only : PLANEROT_TMP, qradd, qrdel, qrexc
+use, non_intrinsic :: LINALG_TMP_MOD, only : qradd, qrdel, qrexc
 implicit none
 
 ! Inputs
