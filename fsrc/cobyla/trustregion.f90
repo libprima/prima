@@ -1,263 +1,3 @@
-module LINALG_TMP_MOD
-use, non_intrinsic :: linalg_mod
-implicit none
-
-contains
-
-
-subroutine qradd(c, Q, Rdiag, n)
-!--------------------------------------------------------------------------------------------------!
-! This subroutine updates the QR factorization of an MxN matrix A of full column rank, attempting to
-! add a new column C is to this matrix as the LAST column while maintaining the full-rankness.
-! Case 1. If C is not in range(A) (theoretically, it implies N < M), then the new matrix is [A, C];
-! Case 2. If C is in range(A), then the new matrix is [A(:, N-1), C].
-! N.B.:
-! 0. Instead of R, this subroutine updates Rdiag, which is diag(R), whose size is min(M, N).
-! 1. With the two cases specified as above, this function does not need A as an input.
-! 2. Indeed, when C is in range(A), Powell wrote in comments that "set IOUT to the index of the
-! constraint (here, column of A -- Zaikun) to be deleted, but branch if no suitable index can be
-! found". The idea is to replace a column of A by C so that the new matrix still has full rank
-! (such a column must exist unless C = 0). But his code essentially set IOUT = N always. Maybe he
-! found this works well enough in practice. Meanwhile, Powell's code includes a snippet that can
-! never be reached, which was probably intended to deal with the case with IOUT =/= N.
-!--------------------------------------------------------------------------------------------------!
-
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: linalg_mod, only : matprod, isminor, planerot
-implicit none
-
-! Inputs
-real(RP), intent(in) :: c(:)
-
-! In-outputs
-integer(IK), intent(inout) :: n
-real(RP), intent(inout) :: Q(:, :)
-real(RP), intent(inout) :: Rdiag(:)
-
-! Local variables
-character(len=*), parameter :: srname = 'QRADD'
-integer(IK) :: k
-integer(IK) :: m
-integer(IK) :: nsav
-real(RP) :: cq(size(Q, 2))
-real(RP) :: cqa(size(Q, 2))
-real(RP) :: G(2, 2)
-real(RP) :: tol
-
-! Sizes
-m = int(size(Q, 2), kind(m))
-
-! Preconditions
-if (DEBUGGING) then
-    call assert(n >= 0 .and. n <= m, '0 <= N <= M', srname)
-    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
-    !!! This test cannot be passed, because NaN appears in Q, probably because of
-    !!! planerot, where 0/0 can occur. Must be investigated when revising planerot.
-    !write (16, *) Q
-    !tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E4_RP * EPS * real(n, RP)))
-    !call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
-end if
-
-!====================!
-! Calculation starts !
-!====================!
-
-nsav = n  ! Needed for debugging.
-
-cq = matprod(c, Q)
-cqa = matprod(abs(c), abs(Q))
-where (isminor(cq, cqa))  ! Code in MATLAB: CQ(ISMINOR(CQ, CQA)) = ZERO
-    cq = ZERO
-end where
-
-! Update Q so that the columns of Q(:, N+2:M) are orthogonal to C. This is done by applying a 2D
-! Givens rotation to Q(:, [K, K+1]) from the right to zero C'*Q(:, K+1) out for K = N+1, ..., M-1.
-! Nothing will be done if N >= M-2.
-do k = m - 1, n + 1, -1
-    if (abs(cq(k + 1)) > 0) then
-        ! Powell wrote CQ(K+1) /= 0 instead of ABS(CQ(K+1)) > 0. The two differ if CQ(K+1) is NaN.
-        G = planerot(cq([k, k + 1]))
-        Q(:, [k, k + 1]) = matprod(Q(:, [k, k + 1]), transpose(G))
-        cq(k) = sqrt(cq(k)**2 + cq(k + 1)**2)
-    end if
-end do
-
-! Augment N by 1 if C is not in range(A).
-! The two IFs cannot be merged as Fortran may evaluate CQ(N+1) even if N>=M, leading to a SEGFAULT.
-if (n < m) then
-    if (abs(cq(n + 1)) > 0) then  ! C is not in range(A).
-        ! Powell wrote CQ(N+1) /= 0 instead of ABS(CQ(N+1)) > 0. The two differ if CQ(N+1) is NaN.
-        n = n + 1
-    end if
-end if
-
-! Update Rdiag so that RDIAG(N) = CQ(N) = INPROD(C, Q(:, N)). Note that N may have been augmented.
-if (n >= 1 .and. n <= m) then  ! N > M should not happen unless the input is wrong.
-    Rdiag(n) = cq(n)  ! Indeed, RDIAG(N) = INPROD(C, Q(:, N))
-end if
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(n >= nsav .and. n <= min(nsav + 1_IK, m), 'NSAV <= N <= min(NSAV + 1, M)', srname)
-    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
-    !!! This test cannot be passed, because NaN appears in Q, probably because of
-    !!! planerot, where 0/0 can occur. Must be investigated when revising planerot.
-    !write (16, *) Q
-    !call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
-end if
-end subroutine qradd
-
-
-subroutine qrdel(A, Q, Rdiag, i)
-!--------------------------------------------------------------------------------------------------!
-! This subroutine updates the QR factorization of A when the Ith column of A is deleted. Here, A
-! IS ASSUMED TO HAVE FULL COLUMN RANK.
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: linalg_mod, only : planerot
-implicit none
-
-! Inputs
-integer(IK), intent(in) :: i
-real(RP), intent(in) :: A(:, :)
-
-! In-outputs
-real(RP), intent(inout) :: Q(:, :)
-real(RP), intent(inout) :: Rdiag(:)
-
-! Local variables
-character(len=*), parameter :: srname = 'QRDEL'
-integer(IK) :: m
-integer(IK) :: n
-integer(IK) :: k
-real(RP) :: G(2, 2)
-real(RP) :: hypt
-real(RP) :: tol
-
-! Sizes
-m = int(size(A, 1), kind(m))
-n = int(size(A, 2), kind(n))
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(i >= 1 .and. i <= n, '1 <= I <= N', srname)
-    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
-    !!! This test cannot be passed, because NaN appears in Q, probably because of
-    !!! planerot, where 0/0 can occur. Must be investigated when revising planerot.
-    !write (16, *) Q
-    !tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E4_RP * EPS * real(n, RP)))
-    !call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
-end if
-
-!====================!
-! Calculation starts !
-!====================!
-
-if (i <= 0 .or. i >= n) then  ! I <= 0 or I > N should not happen.
-    return
-end if
-
-do k = i, n - 1_IK
-    hypt = sqrt(Rdiag(k + 1)**2 + inprod(Q(:, k), A(:, k + 1))**2)
-    G = planerot([Rdiag(k + 1), inprod(Q(:, k), A(:, k + 1))])
-    Q(:, [k, k + 1]) = matprod(Q(:, [k + 1, k]), transpose(G))
-    ! Zaikun 20211115: What if HYPT = 0?
-    Rdiag([k, k + 1]) = [hypt, (Rdiag(k + 1) / hypt) * Rdiag(k)]
-end do
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
-    !!! This test cannot be passed, because NaN appears in Q, probably because of
-    !!! planerot, where 0/0 can occur. Must be investigated when revising planerot.
-    !write (16, *) Q
-    !call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
-end if
-end subroutine qrdel
-
-subroutine qrexc(A, Q, Rdiag)
-!--------------------------------------------------------------------------------------------------!
-! This subroutine updates the QR factorization of A when the last two columns of A are exchanged.
-! Here, A IS ASSUMED TO HAVE FULL COLUMN RANK.
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-implicit none
-
-! Inputs
-real(RP), intent(in) :: A(:, :)
-
-! In-outputs
-real(RP), intent(inout) :: Q(:, :)
-real(RP), intent(inout) :: Rdiag(:)
-
-! Local variables
-character(len=*), parameter :: srname = 'QREXC'
-integer(IK) :: m
-integer(IK) :: n
-real(RP) :: G(2, 2)
-real(RP) :: hypt
-real(RP) :: tol
-
-! Sizes
-m = int(size(A, 1), kind(m))
-n = int(size(A, 2), kind(n))
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(n >= 2, 'N >= 2', srname)
-    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
-    !!! This test cannot be passed, because NaN appears in Q, probably because of
-    !!! planerot, where 0/0 can occur. Must be investigated when revising planerot.
-    !write (16, *) Q
-    !tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E4_RP * EPS * real(n, RP)))
-    !call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
-end if
-
-!====================!
-! Calculation starts !
-!====================!
-
-if (n < 2) then   ! Should not happen.
-    return
-end if
-
-hypt = sqrt(Rdiag(n)**2 + inprod(Q(:, n - 1), A(:, n))**2)
-G = planerot([Rdiag(n), inprod(Q(:, n - 1), A(:, n))])
-Q(:, [n - 1, n]) = matprod(Q(:, [n, n - 1]), transpose(G))
-! Zaikun 20211115: What if HYPT = 0?
-Rdiag([n - 1, n]) = [hypt, (Rdiag(n) / hypt) * Rdiag(n - 1)]
-! Rdiag([n - 1, n - 1+1]) = [hypt, G(1, 1)* Rdiag(n - 1)]
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
-    !!! This test cannot be passed, because NaN appears in Q, probably because of
-    !!! planerot, where 0/0 can occur. Must be investigated when revising planerot.
-    !write (16, *) (abs(matprod(transpose(Q), Q) - eye(m)))
-    !write (16, *) tol
-    !close (16)
-    !call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
-end if
-end subroutine qrexc
-
-end module LINALG_TMP_MOD
-
-
 module trustregion_mod
 
 implicit none
@@ -337,27 +77,14 @@ call trstlp_sub(iact, nact, 2, A, b, rho, d, vmultc, z)
 
 end function trstlp
 
-!---------------------------------------------------------------------------!
-!-- QUESTION: What are exactly the objective and algorithm of trstlp_sub? --!
-! The algorithm was NOT documented in the COBYLA paper. A note should be
-! written to introduce it!
-! As a major part of the algorithm, the code maintains and updates the QR
-! factorization of A(IACT(1:NACT)), i.e., the gradients of all the active
-! (linear) constraints. The matrix Z is indeed Q, and the vector ZDOTA
-! is the diagonal of R. The factorization is updated by Givens rotations when
-! an index is added in or removed from IACT.
-! Zaikun 20211011: This subroutine SHOULD BE rewritten to make the update of
-! the QR factorization more manifested. Include subroutines that update the
-! factorization when IACT is changed by one element !!!!!!!!!!!!!!!!!!!!!!!!!
-! This is related to the VMD function (see the end of the module). Also, note
-! that in stage 2 the last index in IACT is always M+1, corresponding to the
-! (linear) objective function.
-! The following functions will be useful, and they can be included into linalg:
-! qradd(A, Q, a, R optional, Rdiag optional) : add a new column
-! qrdel(A, Q, i, R optional, Rdiag optional) : remove a column
-! qrexc(A, Q, i, j, R optional, Rdiag optional) : exchange two columns
-! lsqr(A, x, Q optional, R optional, Rdiag options) : linear least squares
-!---------------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
+!---------------- QUESTION: What are exactly the objective and algorithm of trstlp_sub? -----------!
+! The algorithm was NOT documented in the COBYLA paper. A note should be written to introduce it!
+! As a major part of the algorithm, the code maintains and updates the QR factorization of
+! A(IACT(1:NACT)), i.e., the gradients of all the active (linear) constraints. The matrix Z is
+! indeed Q, and the vector ZDOTA is the diagonal of R. The factorization is updated by Givens
+! rotations when an index is added in or removed from IACT.
+!--------------------------------------------------------------------------------------------------!
 
 subroutine trstlp_sub(iact, nact, stage, A, b, rho, d, vmultc, z)
 ! This subroutine does the real calculations for TRSTLP, both stage 1 and stage 2.
@@ -373,8 +100,7 @@ subroutine trstlp_sub(iact, nact, stage, A, b, rho, d, vmultc, z)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, EPS, HUGENUM, DEBUGGING
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: debug_mod, only : assert, errstop, verisize
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, isminor, lsqr !!!!!!!!!!!!!!!!!!
-use, non_intrinsic :: LINALG_TMP_MOD, only : qradd, qrdel, qrexc
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, isminor, lsqr, qradd, qrdel, qrexc
 implicit none
 
 ! Inputs
@@ -474,13 +200,11 @@ optold = HUGENUM
 nactold = nact
 nfail = 0_IK
 
-
 ! Zaikun 20211012: Is it true that IACT(NACT) is always the constraint with the largest vioaltion (in stage 1)?
 
 !----------------------------------------------------------------------------------------------!
 ! Zaikun 20211011: VMULTD is computed from scratch at each iteration, but VMULTC is inherited.
 !----------------------------------------------------------------------------------------------!
-
 
 ! Powell's code can encounter infinite cycling, which did happen when testing the following CUTEst
 ! problems: DANWOODLS, GAUSS1LS, GAUSS2LS, GAUSS3LS, KOEBHELB, TAX13322, TAXR13322.
@@ -514,7 +238,6 @@ do iter = 1, maxiter
     ! Apply Givens rotations so that the last N-NACT-1 columns of Z are orthogonal to the gradient
     ! of the new constraint, a scalar product being set to zero if its nonzero value could be due to
     ! computer rounding errors, which is tested by ISMINOR.
-    ! What if NACT = 0????!!!!
     if (icon > nact) then
         zdasav = zdota
         nactsav = nact
