@@ -12,7 +12,8 @@ C      DIMENSION X(*),W(*),IACT(*)
 
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
-      DIMENSION X(*),W(*),IACT(*),CON(*)
+!      DIMENSION X(*),W(*),IACT(*),CON(*)
+      DIMENSION X(N),W(N*(3*N+2*M+11)+4*M+6),IACT(M+1),CON(M)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
 C     This subroutine minimizes an objective function F(X) subject to M
@@ -114,7 +115,7 @@ C that RHOEND > RHOBEG. That is why we do the following.
      1  W(ISIM),W(ISIMI),W(IDATM),W(IA),W(IVSIG),W(IVETA),W(ISIGB),
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C     2  W(IDX),W(IWORK),IACT)
-     2  W(IDX),W(IWORK),IACT,F,INFO,FTARGET,RESMAX)
+     2  W(IDX),W(IWORK),IACT,F,INFO,FTARGET,RESMAX, size(W)-IWORK+1)
       DO K = 1, M
           CON(K) = W(ICON+K-1)
       END DO

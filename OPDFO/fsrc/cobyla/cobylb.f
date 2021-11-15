@@ -6,7 +6,8 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      SUBROUTINE COBYLB (N,M,MPP,X,RHOBEG,RHOEND,IPRINT,MAXFUN,
 C     1  CON,SIM,SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT)
       SUBROUTINE COBYLB (N,M,MPP,X,RHOBEG,RHOEND,IPRINT,MAXFUN,CON,SIM,
-     1  SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT,F,INFO,FTARGET,RESMAX)
+     1  SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT,F,INFO,FTARGET,RESMAX,
+     1 NW)
 
 
 
@@ -28,13 +29,13 @@ C to be feasible if its constraint violation (RESMAX) is less than CTOL.
 C EPSILON(1.0D0) returns the machine epsilon corresponding to 1.0D0,
 C which is expected to be about 2.0D-16.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DIMENSION X(*),CON(*),SIM(N,*),SIMI(N,*),DATMAT(MPP,*),
+!      DIMENSION X(*),CON(*),SIM(N,*),SIMI(N,*),DATMAT(MPP,*),
+!     1  A(N,*),VSIG(*),VETA(*),SIGBAR(*),DX(*),W(*),IACT(*)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C     1  A(N,*),VSIG(*),VETA(*),SIGBAR(*),DX(*),W(*),IACT(*)
-     1 A(N,*),VSIG(*),VETA(*),SIGBAR(*),DX(*),W(*),IACT(*),
+      DIMENSION X(N),CON(MPP),SIM(N,N+1),SIMI(N,N),DATMAT(MPP,N+1),
+     1 A(N,M+1),VSIG(N),VETA(N),SIGBAR(N),DX(N),W(NW),IACT(M+1),
      1 CONSAV(MPP),XSAV(N,NSMAX),DATSAV(MPP,NSMAX),XDROP(N),DATDROP(MPP)
-     1 ,fhist(n+2+NSMAX)
-     1 ,chist(n+2+NSMAX)
+     1 ,fhist(n+2+NSMAX), chist(n+2+NSMAX)
      1 , DATMAT_OLD(M+2, N+1), SIM_OLD(N, N+1), SIMI_OLD(N, N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
