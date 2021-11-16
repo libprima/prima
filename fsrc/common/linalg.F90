@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, November 16, 2021 PM01:39:38
+! Last Modified: Tuesday, November 16, 2021 PM04:02:19
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -950,6 +950,9 @@ end if
 ! Calculation starts !
 !====================!
 
+! The following is a stable and continuous implementation of the Givens rotation. It follows
+! Bindel, D., Demmel, J., Kahan, W., & Marques, O. (2002). On computing Givens rotations reliably
+! and efficiently. ACM Transactions on Mathematical Software (TOMS), 28(2), 206-238.
 if (abs(x(2)) > ZERO) then
     ! 1. Modern compilers compute SQRT(EPS) and SQRT(HUGENUM/TWO) at compilation time.
     ! 2. The direct calculation without involving T and U seems to work better; use it if possible.
@@ -986,11 +989,6 @@ if (DEBUGGING) then
     call assert(all(is_finite(G)), 'G is finite', srname)
     tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS))
     call assert(isorth(G, tol), 'G is orthonormal', srname)
-    r = sqrt(sum(x**2))
-    write (*, *) 'x', x, r
-    write (*, *) G
-    write (*, *) matprod(G, x)
-    !close (*)
     if (is_finite(r)) then
         call assert(norm(matprod(G, x) - [r, ZERO]) <= max(tol, tol * r), 'G*x = [|x|, 0]', srname)
     end if
