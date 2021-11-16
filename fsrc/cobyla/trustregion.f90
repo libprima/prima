@@ -1,4 +1,13 @@
 module trustregion_mod
+!--------------------------------------------------------------------------------------------------!
+! This module provides subroutines concerning the trust-region iterations.
+!
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
+!
+! Started: June 2021
+!
+! Last Modified: Tuesday, November 16, 2021 PM04:14:28
+!--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
@@ -77,6 +86,7 @@ call trstlp_sub(iact, nact, 2, A, b, rho, d, vmultc, z)
 
 end function trstlp
 
+
 !--------------------------------------------------------------------------------------------------!
 !---------------- QUESTION: What are exactly the objective and algorithm of trstlp_sub? -----------!
 ! The algorithm was NOT documented in the COBYLA paper. A note should be written to introduce it!
@@ -85,6 +95,7 @@ end function trstlp
 ! indeed Q, and the vector ZDOTA is the diagonal of R. The factorization is updated by Givens
 ! rotations when an index is added in or removed from IACT.
 !--------------------------------------------------------------------------------------------------!
+
 
 subroutine trstlp_sub(iact, nact, stage, A, b, rho, d, vmultc, z)
 ! This subroutine does the real calculations for TRSTLP, both stage 1 and stage 2.

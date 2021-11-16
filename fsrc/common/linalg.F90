@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, November 16, 2021 PM04:02:19
+! Last Modified: Tuesday, November 16, 2021 PM04:18:55
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -989,6 +989,7 @@ if (DEBUGGING) then
     call assert(all(is_finite(G)), 'G is finite', srname)
     tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS))
     call assert(isorth(G, tol), 'G is orthonormal', srname)
+    r = sqrt(sum(x**2))
     if (is_finite(r)) then
         call assert(norm(matprod(G, x) - [r, ZERO]) <= max(tol, tol * r), 'G*x = [|x|, 0]', srname)
     end if
