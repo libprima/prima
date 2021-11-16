@@ -12,6 +12,10 @@ C      IMPLICIT REAL*8 (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DIMENSION BMAT(NDIM,*),ZMAT(NPT,*),VLAG(*),W(*)
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !Zaikun 20211116
+      real(kind(0.0d0)) :: G(2,2)
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
 C     The arrays BMAT and ZMAT with IDZ are updated, in order to shift the
 C     interpolation point that has index KNEW. On entry, VLAG contains the
@@ -32,19 +36,13 @@ C
           IF (J == IDZ) THEN
               JL=IDZ
           ELSE IF (ZMAT(KNEW,J) /= ZERO) THEN
-              TEMP=DSQRT(ZMAT(KNEW,JL)**2+ZMAT(KNEW,J)**2)
+              !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+              !Zaikun 20211116
+              !TEMP=DSQRT(ZMAT(KNEW,JL)**2+ZMAT(KNEW,J)**2)
               !TEMPA=ZMAT(KNEW,JL)/TEMP
               !TEMPB=ZMAT(KNEW,J)/TEMP
-              !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              if (temp > 0.0D0 .and. temp <= huge(0.0D0)) then
-                TEMPA=ZMAT(KNEW,JL)/TEMP
-                TEMPB=ZMAT(KNEW,J)/TEMP
-              else
-                  scaling = maxval(abs(zmat(knew, [jl, j])))
-                  temp = sqrt(sum((zmat(knew, [jl, j])/scaling)**2))
-                  TEMPA=(ZMAT(KNEW,JL)/scaling)/TEMP
-                  TEMPB=(ZMAT(KNEW,J)/scaling)/TEMP
-              end if
+              G=planerot([ZMAT(KNEW,JL),ZMAT(KNEW,J)])
+              TEMPA=G(1,1); TEMPB=-G(2,1)
               !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               DO I=1,NPT
                   TEMP=TEMPA*ZMAT(I,JL)+TEMPB*ZMAT(I,J)

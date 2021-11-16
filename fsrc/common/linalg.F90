@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, November 16, 2021 AM12:52:15
+! Last Modified: Tuesday, November 16, 2021 PM01:39:38
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -921,7 +921,7 @@ end function
 
 function planerot(x) result(G)
 ! As in MATLAB, PLANEROT(X) returns a 2x2 Givens matrix G for X in R^2 so that Y = G*X has Y(2) = 0.
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, EPS, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 implicit none
@@ -937,7 +937,8 @@ character(len=*), parameter :: srname = 'PLANEROT'
 real(RP) :: c
 real(RP) :: s
 real(RP) :: r
-real(RP) :: scaling
+real(RP) :: t
+real(RP) :: u
 real(RP) :: tol
 
 ! Preconditions
@@ -950,15 +951,22 @@ end if
 !====================!
 
 if (abs(x(2)) > ZERO) then
-    r = sqrt(sum(x**2))
-    if (r > ZERO .and. r <= HUGENUM) then
+    ! 1. Modern compilers compute SQRT(EPS) and SQRT(HUGENUM/TWO) at compilation time.
+    ! 2. The direct calculation without involving T and U seems to work better; use it if possible.
+    if (maxval(abs(x)) > sqrt(tiny(0.0_RP)) .and. maxval(abs(x)) < sqrt(HUGENUM / 2.1_RP)) then
+        r = sqrt(sum(x**2))
         c = x(1) / r
         s = x(2) / r
+    elseif (abs(x(1)) > abs(x(2))) then
+        t = x(2) / x(1)
+        u = sign(sqrt(ONE + t**2), x(1))  ! MATLAB: u = sign(x(1))*sqrt(ONE + t**2)
+        c = ONE / u
+        s = t / u
     else
-        scaling = maxval(abs(x))
-        r = sqrt(sum((x / scaling)**2))
-        c = (x(1) / scaling) / r
-        s = (x(2) / scaling) / r
+        t = x(1) / x(2)
+        u = sign(sqrt(ONE + t**2), x(2))  ! MATLAB: u = sign(x(1))*sqrt(ONE + t**2)
+        s = ONE / u
+        c = t / u
     end if
     G = reshape([c, -s, s, c], [2, 2])
 elseif (x(1) < ZERO) then
@@ -974,13 +982,17 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(size(G,1 ) == 2 .and. size(G, 2) == 2, 'SIZE(G) == [2, 2]', srname)
+    call assert(size(G, 1) == 2 .and. size(G, 2) == 2, 'SIZE(G) == [2, 2]', srname)
     call assert(all(is_finite(G)), 'G is finite', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS))
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS))
     call assert(isorth(G, tol), 'G is orthonormal', srname)
     r = sqrt(sum(x**2))
+    write (*, *) 'x', x, r
+    write (*, *) G
+    write (*, *) matprod(G, x)
+    !close (*)
     if (is_finite(r)) then
-        call assert(norm(matprod(G, x) - [r, ZERO]) <= tol*r, 'G*x = [|x|, 0]', srname)
+        call assert(norm(matprod(G, x) - [r, ZERO]) <= max(tol, tol * r), 'G*x = [|x|, 0]', srname)
     end if
 end if
 end function planerot
@@ -1032,7 +1044,7 @@ m = int(size(Q, 2), kind(m))
 if (DEBUGGING) then
     call assert(n >= 0 .and. n <= m, '0 <= N <= M', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n, RP)))
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS * real(n, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
 end if
 
@@ -1122,7 +1134,7 @@ n = int(size(A, 2), kind(n))
 if (DEBUGGING) then
     call assert(i >= 1 .and. i <= n, '1 <= I <= N', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n, RP)))
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS * real(n, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
 end if
 
@@ -1186,7 +1198,7 @@ n = int(size(A, 2), kind(n))
 if (DEBUGGING) then
     call assert(n >= 2, 'N >= 2', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n, RP)))
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS * real(n, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
 end if
 
