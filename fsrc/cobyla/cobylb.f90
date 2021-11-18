@@ -392,26 +392,8 @@ end subroutine cobylb
 end module cobylb_mod
 
 ! TODO:
-! The COBYLA in ./neupdfo.1 and ./neupdfo.2 did not behave the same as OPDFO/cobyla therein on
-! problem BQP1VAR, the 10the run. Find out why, and check whether the new version gets rid of the problem.
-!
-! Write a note on the algorithm of trstlp. Rewrite the subroutine using the language of QR
-! facorization. Rewrite the VMD function. See the comments in trustregion.f90.
-! The following functions will be useful, and they can be included into linalg:
-! qradd(Q, a, R optional, Rdiag optional) : add a new column
-! qrdel(Q, i, R optional, Rdiag optional) : remove a column
-! qrexc(Q, i, j, R optional, Rdiag optional) : exchange two columns
-! lsqr(A, x, Q optional, R optional, Rdiag options) : linear least squares
-!
-! The Q (Z) in the QR factorization of A(:, IACT(1:NACT)) may lose orthogonality. How to
-! to re-orthogonalize?
-!
 ! BTW, write a projection function to be used in TRSAPP, BIGLAG, BIGDEN in NEWUOA. See lines 305-306
 ! of trustregion.f90 and 391-392, 675-676 of geometry.f90 of NEWUOA.
-!
-! PLANEROT is not in its final version. Adapt OPDFO/cobyla/trstlp.f90 so that the better version of
-! PLANEROT can be taken. This version will suffer from over/underflow; also the modernized NEWUOA
-! will not behave the same as the original one due to this version of PLANEROT.
 !
 ! HYPOT is used  in trustregion.f90 for updating ZDOTA. A robust version should be written (avoid
 ! under/overflow in particular). This version may also be used in PLANEROT. This has been done
@@ -430,8 +412,6 @@ end module cobylb_mod
 ! 3. merge UPDATEPOLE and UPDATEXFC
 ! 6. Do the same for NEWUOA
 ! 8. knew ===> jdrop
-! 9. XPT(i, :), FVAL(:) should be indexed by j; k is for iterations (fhist and ffilt)
-! 10. Check MAXVAL/MAXLOC --- are they affected by NaN?
 ! 11.
 ! Enforcing programming contracts
 ! Programming can be thought of as requirements for correct execution of a procedure and assurances
