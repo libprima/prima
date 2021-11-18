@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, November 18, 2021 AM11:54:00
+! Last Modified: Thursday, November 18, 2021 PM12:13:46
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1098,9 +1098,10 @@ if (DEBUGGING) then
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
     call assert(norm(matprod(c, Q(:, n + 1:m))) <= max(tol, tol * norm(c)), 'C^T*Q(:, N+1:M)=0', srname)
     ! The following test may fail.
-    write (teststr, *) inprod(c, Q(:, n)), Rdiag(n), inprod(abs(c), abs(Q(:, n))), n, c
-    call assert(abs(inprod(c, Q(:, n)) - Rdiag(n)) <= max(tol, tol * inprod(abs(c), abs(Q(:, n)))), &
-        & 'C^T*Q(:, N) = Rdiag(N)'//teststr, srname)
+    if (n >= 1) then
+        call assert(abs(inprod(c, Q(:, n)) - Rdiag(n)) <= max(tol, tol * inprod(abs(c), abs(Q(:, n)))), &
+            & 'C^T*Q(:, N) = Rdiag(N)'//teststr, srname)
+    end if
     !& 'C^T*Q(:, N) = Rdiag(N)', srname)
 end if
 end subroutine qradd
