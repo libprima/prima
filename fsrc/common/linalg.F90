@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, November 16, 2021 PM04:18:55
+! Last Modified: Thursday, November 18, 2021 AM10:17:39
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -32,7 +32,7 @@ public :: r1update, r2update, symmetrize
 public :: Ax_plus_y
 public :: eye
 public :: planerot, lsqr, inv
-public :: qradd, qrdel, qrexc
+public :: qradd, qrexc
 public :: calquad, errquad, hess_mul
 public :: omega_col, omega_mul, omega_inprod
 public :: errh
@@ -1094,14 +1094,18 @@ if (DEBUGGING) then
     call assert(n >= nsav .and. n <= min(nsav + 1_IK, m), 'NSAV <= N <= min(NSAV + 1, M)', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
+    call assert(norm(matprod(c, Q(:, n + 1:m))) <= max(tol, tol * norm(c)), 'C^T*Q(:, N+1:M)=0', srname)
+    ! The following test may fail.
+    call assert(abs(inprod(c, Q(:, n)) - Rdiag(n)) <= max(tol, tol * inprod(abs(c), abs(Q(:, n)))), &
+        & 'C^T*Q(:, N) = Rdiag(N)', srname)
 end if
 end subroutine qradd
 
 
-subroutine qrdel(A, Q, Rdiag, i)
+subroutine qrexc(A, Q, Rdiag, i)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine updates the QR factorization of A when the Ith column of A is deleted. Here, A
-! IS ASSUMED TO HAVE FULL COLUMN RANK.
+! This subroutine updates the QR factorization of A when its [I, I+1, ..., N] columns are reordered
+! as [I+1, ..., N, I]. Here, A IS ASSUMED TO HAVE FULL COLUMN RANK.
 ! N.B. Instead of R, this subroutine updates Rdiag, which is diag(R), whose size is min(M, N).
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
@@ -1109,20 +1113,22 @@ use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-integer(IK), intent(in) :: i
 real(RP), intent(in) :: A(:, :)
 
 ! In-outputs
 real(RP), intent(inout) :: Q(:, :)
 real(RP), intent(inout) :: Rdiag(:)
+integer(IK), intent(in) :: i
 
 ! Local variables
-character(len=*), parameter :: srname = 'QRDEL'
+character(len=*), parameter :: srname = 'QREXC'
+integer(IK) :: k
 integer(IK) :: m
 integer(IK) :: n
-integer(IK) :: k
+real(RP) :: A_test(size(A, 1), size(A, 2))
 real(RP) :: G(2, 2)
 real(RP) :: hypt
+real(RP) :: QA_test(size(A, 1), size(A, 2))
 real(RP) :: tol
 
 ! Sizes
@@ -1131,7 +1137,7 @@ n = int(size(A, 2), kind(n))
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(i >= 1 .and. i <= n, '1 <= I <= N', srname)
+    call assert(i >= 1 .and. i <= n, '1 <= i <= N', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
     tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS * real(n, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
@@ -1141,78 +1147,28 @@ end if
 ! Calculation starts !
 !====================!
 
-if (i <= 0 .or. i >= n) then  ! I <= 0 or I > N should not happen.
+if (i <= 0 .or. i >= n) then   ! I <= 0 or I > N should not happen.
     return
 end if
 
+! For each K, find a Givens rotation G so that G*Q(:, [K+1, K])^T*A(:, K+1) = [r, 0].
+! Then update Q(:, [K, K+1]) to Q(:, [K+1, K])*G^T, and A(:, [K, K+1]) to A(:, [K+1, K]). After
+! this, Q(:, [K, K+1])^T*A(:, [K, K+1]) is upper triangular, the diagonal being Rdiag([K, K+1])
+! defined below. In this way, we obtain the QR factorization of A when its Kth and (K+1)th columns
+! are exhanged. After this is done for each K = 1, ..., N-1, we obtain the QR factorization of
+! A when its [I, I+1, ..., N] columns are reordered as [I+1, ..., N, I].
 do k = i, n - 1_IK
     hypt = sqrt(Rdiag(k + 1)**2 + inprod(Q(:, k), A(:, k + 1))**2)
     G = planerot([Rdiag(k + 1), inprod(Q(:, k), A(:, k + 1))])
     Q(:, [k, k + 1_IK]) = matprod(Q(:, [k + 1_IK, k]), transpose(G))
-    Rdiag([k, k + 1_IK]) = [hypt, (Rdiag(k + 1) / hypt) * Rdiag(k)]
+    ! Powell's code updates RDIAG in the following way. Note that RDIAG(N) inherits all rounding in
+    ! RDIAG(I:N-1) and Q(:, I:N-1) and hence contain significant errors. Thus we modify the code,
+    ! only calculate RDIAG(K) here, and then calculate RDIAG(N) by an inner product after the loop.
+    !Rdiag([k, k + 1_IK]) = [hypt, (Rdiag(k + 1) / hypt) * Rdiag(k)]
+    Rdiag(k) = hypt
 end do
 
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
-    call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
-end if
-end subroutine qrdel
-
-
-subroutine qrexc(A, Q, Rdiag)
-!--------------------------------------------------------------------------------------------------!
-! This subroutine updates the QR factorization of A when the last two columns of A are exchanged.
-! Here, A IS ASSUMED TO HAVE FULL COLUMN RANK.
-! N.B. Instead of R, this subroutine updates Rdiag, which is diag(R), whose size is min(M, N).
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-implicit none
-
-! Inputs
-real(RP), intent(in) :: A(:, :)
-
-! In-outputs
-real(RP), intent(inout) :: Q(:, :)
-real(RP), intent(inout) :: Rdiag(:)
-
-! Local variables
-character(len=*), parameter :: srname = 'QREXC'
-integer(IK) :: m
-integer(IK) :: n
-real(RP) :: G(2, 2)
-real(RP) :: hypt
-real(RP) :: tol
-
-! Sizes
-m = int(size(A, 1), kind(m))
-n = int(size(A, 2), kind(n))
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(n >= 2, 'N >= 2', srname)
-    call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS * real(n, RP)))
-    call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
-end if
-
-!====================!
-! Calculation starts !
-!====================!
-
-if (n < 2) then   ! Should not happen.
-    return
-end if
-
-hypt = sqrt(Rdiag(n)**2 + inprod(Q(:, n - 1), A(:, n))**2)
-G = planerot([Rdiag(n), inprod(Q(:, n - 1), A(:, n))])
-Q(:, [n - 1_IK, n]) = matprod(Q(:, [n, n - 1_IK]), transpose(G))
-Rdiag([n - 1_IK, n]) = [hypt, (Rdiag(n) / hypt) * Rdiag(n - 1)]
+Rdiag(n) = inprod(Q(:, n), A(:, i))
 
 !====================!
 !  Calculation ends  !
@@ -1222,6 +1178,12 @@ Rdiag([n - 1_IK, n]) = [hypt, (Rdiag(n) / hypt) * Rdiag(n - 1)]
 if (DEBUGGING) then
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
+    A_test = reshape([A(:, 1:i - 1), A(:, i + 1:n), A(:, i)], shape(A))
+    QA_test = matprod(transpose(Q), A_test)
+    call assert(istriu(QA_test, tol), 'QA_test is upper triangular', srname)
+    ! The following test may fail.
+    call assert(norm(diag(QA_test) - Rdiag) <= max(tol, tol * norm([(inprod(abs(Q(:, k)), &
+        & abs(A_test(:, k))), k=1, n)])), 'Rdiag = diag(QA_test)', srname)
 end if
 end subroutine qrexc
 

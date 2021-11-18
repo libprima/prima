@@ -471,6 +471,10 @@
               Z(I,NACT)=ALPHA*Z(I,K)-BETA*Z(I,NACT)
               Z(I,K)=TEMP
           END DO
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          ! Zaikun 20211118: 
+          zdota(nact) = inprod(Z(:, nact), A(:, iact(k)))
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           IACT(NACT)=IACT(K)
           IACT(K)=KK
           TEMP=VMULTC(K)
@@ -535,6 +539,11 @@
           VMULTC(K)=VMULTC(KP)
           K=KP
           IF (K < NACT) GOTO 270
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          ! Zaikun 20211118
+          ! ZDOTA(NACT) calculated in last way can contain significant error
+          zdota(nact) = inprod(Z(:, nact), A(:, iact(icon)))
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           IACT(K)=ISAVE
           VMULTC(K)=VSAVE
       END IF
