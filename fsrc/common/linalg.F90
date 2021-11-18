@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, November 18, 2021 PM12:13:46
+! Last Modified: Thursday, November 18, 2021 PM01:02:07
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1036,8 +1036,6 @@ real(RP) :: cqa(size(Q, 2))
 real(RP) :: G(2, 2)
 real(RP) :: tol
 
-character(len=1000) :: teststr
-
 ! Sizes
 m = int(size(Q, 2), kind(m))
 
@@ -1100,7 +1098,7 @@ if (DEBUGGING) then
     ! The following test may fail.
     if (n >= 1) then
         call assert(abs(inprod(c, Q(:, n)) - Rdiag(n)) <= max(tol, tol * inprod(abs(c), abs(Q(:, n)))), &
-            & 'C^T*Q(:, N) = Rdiag(N)'//teststr, srname)
+            & 'C^T*Q(:, N) = Rdiag(N)', srname)
     end if
     !& 'C^T*Q(:, N) = Rdiag(N)', srname)
 end if

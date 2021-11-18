@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Thursday, November 18, 2021 AM11:51:02
+! Last Modified: Thursday, November 18, 2021 PM01:03:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -105,7 +105,6 @@ end function trstlp
 
 
 !--------------------------------------------------------------------------------------------------!
-!---------------- QUESTION: What are exactly the objective and algorithm of trstlp_sub? -----------!
 ! The algorithm was NOT documented in the COBYLA paper. A note should be written to introduce it!
 ! As a major part of the algorithm, the code maintains and updates the QR factorization of
 ! A(IACT(1:NACT)), i.e., the gradients of all the active (linear) constraints. The matrix Z is
