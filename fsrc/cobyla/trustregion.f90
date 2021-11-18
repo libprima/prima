@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Tuesday, November 16, 2021 PM04:14:28
+! Last Modified: Wednesday, November 17, 2021 PM09:15:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -111,7 +111,7 @@ subroutine trstlp_sub(iact, nact, stage, A, b, rho, d, vmultc, z)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, EPS, HUGENUM, DEBUGGING
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: debug_mod, only : assert, errstop, verisize
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, isminor, lsqr, qradd, qrdel, qrexc
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, isminor, lsqr, qradd, qrexc
 implicit none
 
 ! Inputs
@@ -252,7 +252,7 @@ do iter = 1, maxiter
     if (icon > nact) then
         zdasav = zdota
         nactsav = nact
-        call qradd(A(:, iact(icon)), z, zdota, nact)
+        call qradd(A(:, iact(icon)), z, zdota, nact)  ! QRADD may update NACT tp NACT + 1.
 
         if (nact == nactsav + 1) then
             ! N.B.: It is problematic to index arrays using [NACT, ICON] when NACT == ICON.
@@ -316,11 +316,14 @@ do iter = 1, maxiter
         ! IACT(NACT) /= MCON???? If not, then how does the following procedure ensure that MCON is
         ! the last of IACT(1:NACT)?
         if (stage == 2 .and. iact(nact) /= mcon) then
-            call qrexc(A(:, iact(1:nact)), Z, zdota(1:nact))
+            call qrexc(A(:, iact(1:nact)), Z, zdota(1:nact), nact - 1)
             iact([nact - 1, nact]) = iact([nact, nact - 1])
             !!??zdota(nact-1:nact) = [(inprod(z(:, k), A(:, iact(k))), k = nact-1, nact)]
             vmultc([nact - 1, nact]) = vmultc([nact, nact - 1])
         end if
+        ! Zaikun 20211117: It turns out that the last few lines do not guarantee IACT(NACT) == N in
+        ! stage 2; the following test cannot be passed. IS THIS A BUG??!!
+        !call assert(iact(nact) == mcon .or. stage == 1, 'IACT(NACT) == MCON in stage 2', srname)
 
         ! Set SDIRN to the direction of the next change to the current vector of variables.
         ! Usually during stage 1 the vector SDIRN gives a search direction that reduces all the
@@ -334,10 +337,11 @@ do iter = 1, maxiter
             ! parallel to Z(:, NACT).
         end if
     else
-        ! Delete the constraint with the index IACT(ICON) from the active set. In theory, ICON > 0.
+        ! Delete the constraint with the index IACT(ICON) from the active set, which is done by
+        ! reordering IACT(ICONT:NACT) into [IACT(ICON+1:NACT), IACT(ICON)]. In theory, ICON > 0.
         ! To be safe, the condition below requires ICON > 0, which does not exist in Powell's code.
         if (icon < nact .and. icon > 0) then
-            call qrdel(A(:, iact(1:nact)), Z, zdota(1:nact), icon)
+            call qrexc(A(:, iact(1:nact)), Z, zdota(1:nact), icon)
             iact(icon:nact) = [iact(icon + 1:nact), iact(icon)]
             !!??zdota(icon:nact) = [(inprod(z(:, k), A(:, iact(k))), k = icon, nact)]
             vmultc(icon:nact) = [vmultc(icon + 1:nact), vmultc(icon)]
