@@ -12,24 +12,24 @@ subroutine cobylb(calcfc, iprint, maxfun, ctol, ftarget, rhobeg, rhoend, constr,
         & conhist, cstrv, f, fhist, xhist, info)
 
 ! Generic modules
-use, non_intrinsic :: pintrf_mod, only : FUNCON
-use, non_intrinsic :: evaluate_mod, only : evalfc
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, HUGENUM, DEBUGGING
-use, non_intrinsic :: info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, NAN_MODEL, DAMAGING_ROUNDING
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: debug_mod, only : errstop, verisize
-use, non_intrinsic :: output_mod, only : retmssg, rhomssg, fmssg
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, outprod, inv
-use, non_intrinsic :: selectx_mod, only : savefilt, selectx
-use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: checkexit_mod, only : checkexit
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, HUGENUM, DEBUGGING
+use, non_intrinsic :: debug_mod, only : errstop, verisize
+use, non_intrinsic :: evaluate_mod, only : evalfc
+use, non_intrinsic :: history_mod, only : savehist
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, NAN_MODEL, DAMAGING_ROUNDING
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, outprod, inv
+use, non_intrinsic :: output_mod, only : retmssg, rhomssg, fmssg
+use, non_intrinsic :: pintrf_mod, only : FUNCON
 use, non_intrinsic :: resolution_mod, only : resenhance
+use, non_intrinsic :: selectx_mod, only : savefilt, selectx
 
 ! Solver-specific modules
+use, non_intrinsic :: geometry_mod, only : goodgeo, setdrop_geo, setdrop_tr, geostep
 use, non_intrinsic :: initialize_mod, only : initxfc, initfilt
 use, non_intrinsic :: trustregion_mod, only : trstlp
 use, non_intrinsic :: update_mod, only : updatexfc, updatepole, findpole
-use, non_intrinsic :: geometry_mod, only : goodgeo, setdrop_geo, setdrop_tr, geostep
 
 implicit none
 
@@ -71,7 +71,6 @@ integer(IK) :: maxfhist
 integer(IK) :: maxconhist
 integer(IK) :: maxchist
 integer(IK) :: maxhist
-
 integer(IK) :: n
 integer(IK) :: nfilt
 integer(IK) :: subinfo

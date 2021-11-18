@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Wednesday, November 17, 2021 PM09:15:37
+! Last Modified: Thursday, November 18, 2021 AM11:51:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -16,7 +16,9 @@ public :: trstlp
 
 contains
 
+
 function trstlp(A, b, rho) result(d)
+!--------------------------------------------------------------------------------------------------!
 ! This subroutine calculates an N-component vector D by the following two stages. In the first
 ! stage, D is set to the shortest vector that minimizes the greatest violation of the constraints
 !       dot_product(A(1:N, K), D) >= B(K),  K = 1, 2, 3, ..., M,
@@ -48,11 +50,13 @@ function trstlp(A, b, rho) result(d)
 ! constraints at d, the ordering of the components of VMULTC being in agreement with the permutation
 ! of the indices of the constraints that is in IACT. All these residuals are nonnegative, which is
 ! achieved by the shift CSTRV that makes the least residual zero.
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic :: debug_mod, only : errstop, verisize
-
+use, non_intrinsic :: consts_mod, only : RP, IK, TWO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: linalg_mod, only : norm
 implicit none
 
 ! Inputs
@@ -60,30 +64,43 @@ real(RP), intent(in) :: A(:, :)  ! (N, M+1)
 real(RP), intent(in) :: b(:)  ! M+1
 real(RP), intent(in) :: rho
 
-! Output
+! Outputs
 real(RP) :: d(size(A, 1))  ! N
 
 ! Local variables
+character(len=*), parameter :: srname = 'TRSTLP'
 integer(IK) :: iact(size(b))
 integer(IK) :: m
 integer(IK) :: nact
 real(RP) :: vmultc(size(b))
 real(RP) :: z(size(d), size(d))
-character(len=*), parameter :: srname = 'TRSTLP'
 
-! Get and verify the sizes.
+! Sizes
 m = size(A, 2) - 1_IK
 
+! Preconditions
 if (DEBUGGING) then
-    if (m < 0 .or. size(A, 1) <= 0) then
-        call errstop(srname, 'SIZE(A) is invalid')
-    end if
-    call verisize(b, m + 1)
+    call assert(size(A, 1) >= 1 .and. size(A, 2) >= 1, 'SIZE(A) >= [1, 1]', srname)
+    call assert(size(b) == size(A, 2), 'SIZE(B) == size(A, 2)', srname)
 end if
+
+!====================!
+! Calculation starts !
+!====================!
 
 call trstlp_sub(iact(1:m), nact, 1, A(:, 1:m), b(1:m), rho, d, vmultc(1:m), z)
 call trstlp_sub(iact, nact, 2, A, b, rho, d, vmultc, z)
 
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(d) == size(A, 1), 'SIZE(D) == SIZE(A, 1)', srname)
+    call assert(all(is_finite(d)), 'D is finite', srname)
+    call assert(norm(d) <= TWO * rho, '|D| <= 2*RHO', srname)
+end if
 end function trstlp
 
 
@@ -98,6 +115,7 @@ end function trstlp
 
 
 subroutine trstlp_sub(iact, nact, stage, A, b, rho, d, vmultc, z)
+!--------------------------------------------------------------------------------------------------!
 ! This subroutine does the real calculations for TRSTLP, both stage 1 and stage 2.
 ! Major differences between stage 1 and stage 2:
 ! 1. Initialization. Stage 2 inherits the values of some variables from stage 1, so they are
@@ -106,12 +124,13 @@ subroutine trstlp_sub(iact, nact, stage, A, b, rho, d, vmultc, z)
 ! 3. SDIRN. See the definition of SDIRN in the code for details.
 ! 4. OPTNEW. The two stages have different objectives, so OPTNEW is updated differently.
 ! 5. STEP. STEP <= CSTRV in stage 1.
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, EPS, HUGENUM, DEBUGGING
-use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, EPS, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, errstop, verisize
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, isminor, lsqr, qradd, qrexc
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, isminor, lsqr, qradd, qrexc, norm
 implicit none
 
 ! Inputs
@@ -128,6 +147,7 @@ real(RP), intent(inout) :: vmultc(:)  ! MCON
 real(RP), intent(inout) :: z(:, :)  ! (N, N)
 
 ! Local variables
+character(len=*), parameter :: srname = 'TRSTLP_SUB'
 integer(IK) :: icon
 integer(IK) :: iter
 integer(IK) :: k
@@ -156,22 +176,29 @@ real(RP) :: step
 real(RP) :: vmultd(size(b))
 real(RP) :: zdasav(size(z, 2))
 real(RP) :: zdota(size(z, 2))
-character(len=*), parameter :: srname = 'TRSTLP_SUB'
 
-! Get and verify the sizes.
+! Sizes
 n = size(A, 1)
 mcon = size(A, 2)
 
+! Preconditions
 if (DEBUGGING) then
-    if (n <= 0 .and. mcon > 0) then
-        call errstop(srname, 'SIZE(A, 1) <= 0 while SIZE(A, 2) > 0')
-    end if
-    call verisize(b, mcon)
-    call verisize(iact, mcon)
-    call verisize(vmultc, mcon)
-    call verisize(d, n)
-    call verisize(z, n, n)
+    call assert(n >= 1 .or. mcon == 0, 'N >= 1 when MCON > 0', srname)
+    call assert(size(b) == mcon, 'SIZE(B) == MCON', srname)
+    call assert(size(iact) == mcon, 'SIZE(IACT) == MCON', srname)
+    call assert(size(vmultc) == mcon, 'SIZE(VMULTC) == MCON', srname)
+    call assert(size(d) == n, 'SIZE(D) == N', srname)
+    call assert(all(is_finite(d)) .and. norm(d) <= TWO * RHO .or. stage == 1, &
+        & 'D is finite and |D| <= 2*RHO at the beginning of stage 2', srname)
+    call assert(size(z, 1) == n .and. size(z, 2) == n, 'SIZE(Z) == [N, N]', srname)
+    call assert((nact >= 0 .and. nact <= min(mcon, n)) .or. stage == 1, &
+        & '0 <= NACT <= MIN(MCON, N) at the beginning of stage 2', srname)
+    call assert(rho > 0, 'RHO > 0', srname)
 end if
+
+!====================!
+! Calculation starts !
+!====================!
 
 ! Initialization according to STAGE.
 if (stage == 1) then
@@ -210,8 +237,6 @@ end if
 optold = HUGENUM
 nactold = nact
 nfail = 0_IK
-
-! Zaikun 20211012: Is it true that IACT(NACT) is always the constraint with the largest vioaltion (in stage 1)?
 
 !----------------------------------------------------------------------------------------------!
 ! Zaikun 20211011: VMULTD is computed from scratch at each iteration, but VMULTC is inherited.
@@ -264,18 +289,13 @@ do iter = 1, maxiter
                 vmultc(nact) = ZERO
             end if
         else
-            !----------------------------! 1st VMULTD CALCULATION STARTS  !------------------------!
             ! Zaikun 20211011:
             ! 1. VMULTD is calculated from scratch for the first time (out of 2) in one iteration.
-            ! 2. The sole purpose of this VMULTD is to compute VMULTC(1 : NACT) and check possible
-            ! exit immediately after this loop. Only VMULTD(1 : NACT) is needed.
-            ! 3. VMULTD will be computed from scratch again later.
-            ! 4. NOTE that IACT has not been updated to replace IACT(NACT) with IACT(ICON). Thus
+            ! 2. NOTE that IACT has not been updated to replace IACT(NACT) with IACT(ICON). Thus
             ! A(:, IACT(1:NACT)) is the UNUPDATED version before QRADD (Z(:, 1:NACT) remains the
             ! same before and after QRADD). Therefore, if we supply ZDOTA to LSQR (as Rdiag) as
             ! Powell did, we should use the UNUPDATED version, namely ZDASAV.
             vmultd(1:nact) = lsqr(A(:, iact(1:nact)), A(:, iact(icon)), z(:, 1:nact), zdasav(1:nact))
-            !----------------------------! 1st VMULTD CALCULATION ENDS  !--------------------------!
 
             frac = minval(vmultc(1:nact) / vmultd(1:nact), mask=(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m))
             if (frac < ZERO .or. .not. any(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m)) then
@@ -392,12 +412,10 @@ do iter = 1, maxiter
         ! N.B.: CSTRV will be used when calculating VMULTD(NACT+1 : MCON).
     end if
 
-    !--------------------------------! 2nd VMULTD CALCULATION STARTS !-----------------------------!
     ! Zaikun 20211011:
     ! 1. VMULTD is computed from scratch for the second (out of 2) time in one iteration.
     ! 2. VMULTD(1:NACT) and VMULTD(NACT+1:MCON) are calculated separately with no coupling.
     ! 3. VMULTD will be calculated from scratch again in the next iteration.
-    !
     ! Set VMULTD to the VMULTC vector that would occur if D became DNEW. A device is included to
     ! force VMULTD(K)=ZERO if deviations from this value can be attributed to computer rounding
     ! errors. First calculate the new Lagrange multipliers.
@@ -405,7 +423,6 @@ do iter = 1, maxiter
     if (stage == 2) then
         vmultd(nact) = max(ZERO, vmultd(nact))  ! This seems never activated.
     end if
-
     ! Complete VMULTD by finding the new constraint residuals. (Powell wrote "Complete VMULTC ...")
     cvshift = matprod(dnew, A(:, iact)) - b(iact) + cstrv  ! Only CVSHIFT(nact+1:mcon) is needed.
     cvsabs = matprod(abs(dnew), abs(A(:, iact))) + abs(b(iact)) + cstrv
@@ -413,7 +430,6 @@ do iter = 1, maxiter
         cvshift = ZERO
     end where
     vmultd(nact + 1:mcon) = cvshift(nact + 1:mcon)
-    !--------------------------------! 2nd VMULTD CALCULATION ENDS !-------------------------------!
 
     ! Calculate the fraction of the step from D to DNEW that will be taken.
     fracmult = vmultc / (vmultc - vmultd)  !
@@ -445,6 +461,21 @@ do iter = 1, maxiter
         exit
     end if
 end do
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(iact) == mcon, 'SIZE(IACT) == MCON', srname)
+    call assert(size(vmultc) == mcon, 'SIZE(VMULTC) == MCON', srname)
+    call assert(size(d) == n, 'SIZE(D) == N', srname)
+    call assert(all(is_finite(d)), 'D is finite', srname)
+    call assert(norm(d) <= TWO * rho, '|D| <= 2*RHO', srname)
+    call assert(size(z, 1) == n .and. size(z, 2) == n, 'SIZE(Z) == [N, N]', srname)
+    call assert(nact >= 0 .and. nact <= min(mcon, n), '0 <= NACT <= MIN(MCON, N)', srname)
+end if
 
 end subroutine trstlp_sub
 
