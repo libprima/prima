@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, November 18, 2021 AM10:17:39
+! Last Modified: Thursday, November 18, 2021 AM11:54:00
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -921,7 +921,7 @@ end function
 
 function planerot(x) result(G)
 ! As in MATLAB, PLANEROT(X) returns a 2x2 Givens matrix G for X in R^2 so that Y = G*X has Y(2) = 0.
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, EPS, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, EPS, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 implicit none
@@ -954,7 +954,7 @@ end if
 ! Bindel, D., Demmel, J., Kahan, W., & Marques, O. (2002). On computing Givens rotations reliably
 ! and efficiently. ACM Transactions on Mathematical Software (TOMS), 28(2), 206-238.
 if (abs(x(2)) > ZERO) then
-    ! 1. Modern compilers compute SQRT(EPS) and SQRT(HUGENUM/TWO) at compilation time.
+    ! 1. Modern compilers compute SQRT(TINY(0.0_RP)) and SQRT(HUGENUM/2.1) at compilation time.
     ! 2. The direct calculation without involving T and U seems to work better; use it if possible.
     if (maxval(abs(x)) > sqrt(tiny(0.0_RP)) .and. maxval(abs(x)) < sqrt(HUGENUM / 2.1_RP)) then
         r = sqrt(sum(x**2))
@@ -1036,6 +1036,8 @@ real(RP) :: cqa(size(Q, 2))
 real(RP) :: G(2, 2)
 real(RP) :: tol
 
+character(len=1000) :: teststr
+
 ! Sizes
 m = int(size(Q, 2), kind(m))
 
@@ -1096,8 +1098,10 @@ if (DEBUGGING) then
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)
     call assert(norm(matprod(c, Q(:, n + 1:m))) <= max(tol, tol * norm(c)), 'C^T*Q(:, N+1:M)=0', srname)
     ! The following test may fail.
+    write (teststr, *) inprod(c, Q(:, n)), Rdiag(n), inprod(abs(c), abs(Q(:, n))), n, c
     call assert(abs(inprod(c, Q(:, n)) - Rdiag(n)) <= max(tol, tol * inprod(abs(c), abs(Q(:, n)))), &
-        & 'C^T*Q(:, N) = Rdiag(N)', srname)
+        & 'C^T*Q(:, N) = Rdiag(N)'//teststr, srname)
+    !& 'C^T*Q(:, N) = Rdiag(N)', srname)
 end if
 end subroutine qradd
 
@@ -1168,7 +1172,7 @@ do k = i, n - 1_IK
     Rdiag(k) = hypt
 end do
 
-Rdiag(n) = inprod(Q(:, n), A(:, i))
+Rdiag(n) = inprod(Q(:, n), A(:, i))  ! Calculate RDIAG(N) from scratch.
 
 !====================!
 !  Calculation ends  !
