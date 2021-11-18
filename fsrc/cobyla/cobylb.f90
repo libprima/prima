@@ -56,24 +56,31 @@ real(RP), intent(out) :: f
 real(RP), intent(out) :: fhist(:)
 real(RP), intent(out) :: xhist(:, :)
 
-! Parameter
+! Parameters
 integer(IK), parameter :: maxfilt = 2000_IK  ! Must be positive. Recommended to be in [100, 10,000].
 
 ! Local variables
-integer(IK) :: tr
-integer(IK) :: maxtr
-integer(IK) :: jdrop_tr
+character(len=*), parameter :: srname = 'COBYLB'
 integer(IK) :: jdrop_geo
+integer(IK) :: jdrop_tr
 integer(IK) :: kopt
 integer(IK) :: m
-integer(IK) :: maxxhist
-integer(IK) :: maxfhist
-integer(IK) :: maxconhist
 integer(IK) :: maxchist
+integer(IK) :: maxconhist
+integer(IK) :: maxfhist
 integer(IK) :: maxhist
+integer(IK) :: maxtr
+integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: nfilt
 integer(IK) :: subinfo
+integer(IK) :: tr
+logical :: bad_trstep
+logical :: enhance_resolut
+logical :: evaluated(size(x) + 1)
+logical :: good_geo
+logical :: improve_geo
+logical :: shortd
 real(RP) :: A(size(x), size(constr) + 1)
 ! A(:, 1:M) contains the approximate gradient for the constraints, and A(:, M+1) is minus the
 ! approximate gradient for the objective function.
@@ -99,16 +106,8 @@ real(RP) :: rho
 real(RP) :: sim(size(x), size(x) + 1)  ! (n, )
 real(RP) :: simi(size(x), size(x))  ! (n, )
 real(RP) :: xfilt(size(x), size(cfilt))
-logical :: evaluated(size(x) + 1)
-logical :: bad_trstep
-logical :: good_geo
-logical :: improve_geo
-logical :: enhance_resolut
-logical :: shortd
-character(len=*), parameter :: srname = 'COBYLB'
 
-
-! Get and verify the sizes.
+! Sizes
 m = size(constr)
 n = size(x)
 maxxhist = size(xhist, 2)
