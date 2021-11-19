@@ -31,7 +31,8 @@ public :: inprod, matprod, outprod
 public :: r1update, r2update, symmetrize
 public :: Ax_plus_y
 public :: eye
-public :: planerot, lsqr, inv
+public :: planerot, lsqr
+public :: inv, isinv
 public :: qradd, qrexc
 public :: calquad, errquad, hess_mul
 public :: omega_col, omega_mul, omega_inprod
@@ -563,11 +564,56 @@ if (DEBUGGING) then
     call assert(istril(B) .or. .not. istril(A), 'If A is lower triangular, then so is B', srname)
     call assert(istriu(B) .or. .not. istriu(A), 'If A is upper triangular, then so is B', srname)
     tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS * real(n, RP)))
-    call assert(all(abs(matprod(A, B) - eye(n)) <= max(tol, tol * maxval(abs(A)))), &
-        & 'B = A^(-1)', srname)
+    call assert(isinv(A, B, tol), 'B = A^(-1)', srname)
 end if
 
 end function inv
+
+
+function isinv(A, B, tol) result(is_inv)
+use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+implicit none
+
+! Inputs
+real(RP), intent(in) :: A(:, :)
+real(RP), intent(in) :: B(:, :)
+real(RP), optional, intent(in) :: tol
+
+! Outputs
+logical :: is_inv
+
+! Local variables
+character(len=*), parameter :: srname = 'ISINV'
+real(RP) :: tol_loc
+integer(IK) :: n
+
+! Sizes
+n = int(size(A, 1), kind(n))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(size(A, 1) == size(A, 2), 'A is suqare', srname)
+    call assert(size(B, 1) == size(B, 2), 'B is suqare', srname)
+    call assert(size(A, 1) == size(B, 1), 'SIZE(A) == SIZE(B)', srname)
+end if
+
+if (present(tol)) then
+    tol_loc = tol
+else
+    tol_loc = min(1.0E-3_RP, 1.0E2_RP * EPS * real(max(size(A, 1), size(A,2)), RP))
+end if
+
+is_inv = all(abs(matprod(A, B) - eye(n)) <= tol_loc .and. abs(matprod(B, A) - eye(n)) <= tol_loc)
+
+if (.not. is_inv) then
+    write(16, *) A
+    write(16, *) B
+    write(16, *) matprod(A, B)
+    write(16, *) matprod(B, A)
+    close(16)
+end if
+end function
 
 
 subroutine qr(A, Q, R, P)

@@ -6,7 +6,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, November 19, 2021 PM06:08:34
+! Last Modified: Friday, November 19, 2021 PM09:05:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -27,7 +27,7 @@ subroutine updatexfc(jdrop, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : IK, RP, TENTH, DEBUGGING
 use, non_intrinsic :: infnan_mod, only : is_nan, is_neginf, is_posinf, is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, outprod, eye
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, outprod, isinv
 use, non_intrinsic :: debug_mod, only : assert
 
 implicit none
@@ -59,7 +59,7 @@ n = size(sim, 1)
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(jdrop >= 1 .and. jdrop <= n, '1 <= JDROP <= N', srname)
+    call assert(jdrop >= 0 .and. jdrop <= n, '1 <= JDROP <= N', srname)
     call assert(.not. any(is_nan(constr) .or. is_neginf(constr)), 'CONSTR does not contain NaN/-Inf', srname)
     call assert(.not. (is_nan(cstrv) .or. is_posinf(cstrv)), 'CSTRV is not NaN/+Inf', srname)
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
@@ -74,12 +74,17 @@ if (DEBUGGING) then
     call assert(all(is_finite(sim)), 'SIM is finite', srname)
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)), 'SIMI is finite', srname)
-    call assert(all(abs(matprod(simi, sim(:, 1:n)) - eye(n)) <= itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
+!    call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
 end if
 
 !====================!
 ! Calculation starts !
 !====================!
+
+! Do nothing when JDROP is 0. This can only happen after a trust-region step.
+if (jdrop <= 0) then  ! JDROP < 0 is impossible if the input is correct.
+    return
+end if
 
 sim(:, jdrop) = d
 simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), d)
@@ -104,12 +109,13 @@ if (DEBUGGING) then
     call assert(all(is_finite(sim)), 'SIM is finite', srname)
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)), 'SIMI is finite', srname)
-    call assert(all(abs(matprod(simi, sim(:, 1:n)) - eye(n)) <= itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
+!    call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
 end if
 end subroutine updatexfc
 
 
 subroutine updatepole(cpen, evaluated, conmat, cval, fval, sim, simi, info)
+!--------------------------------------------------------------------------------------------------!
 ! This subroutine identifies the best vertex of the current simplex with respect to the merit
 ! function PHI = F + CPEN * CSTRV, and then switch this vertex to SIM(:, N + 1), namely the
 ! "Pole Position" as per Powell's code. CONMAT, CVAL, FVAL, and SIMI are updated accordingly.
@@ -117,16 +123,18 @@ subroutine updatepole(cpen, evaluated, conmat, cval, fval, sim, simi, info)
 ! 1. apply UPDATEPOLE to SIM twice the first time with CPEN = CPEN1 and the second with CPEN = CPEN2;
 ! 2. apply UPDATEPOLE to SIM with CPEN = CPEN2.
 ! In finite-precision arithmetic, however, they may produce different results unless CPEN1 = CPEN2.
+!--------------------------------------------------------------------------------------------------!
 
+! Generic modules
 use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, TENTH, DEBUGGING
 use, non_intrinsic :: info_mod, only : DAMAGING_ROUNDING
-use, non_intrinsic :: debug_mod, only : errstop, verisize
-use, non_intrinsic :: infnan_mod, only : is_nan
-use, non_intrinsic :: linalg_mod, only : matprod, eye, inv
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan, is_neginf, is_posinf, is_finite
+use, non_intrinsic :: linalg_mod, only : matprod, eye, inv, isinv
 
 implicit none
 
-! Input
+! Inputs
 real(RP), intent(in) :: cpen
 logical, intent(in) :: evaluated(:)
 
@@ -138,35 +146,45 @@ real(RP), intent(inout) :: sim(:, :)
 real(RP), intent(inout) :: simi(:, :)
 
 ! Local variables
+character(len=*), parameter :: srname = 'UPDATEPOLE'
 integer(IK) :: info
 integer(IK) :: jopt
 integer(IK) :: m
 integer(IK) :: n
 real(RP) :: conmat_old(size(conmat, 1), size(conmat, 2))
 real(RP) :: cval_old(size(cval))
-real(RP) :: fval_old(size(fval))
 real(RP) :: erri(size(sim, 1), size(sim, 1))
-real(RP), parameter :: itol = TENTH
+real(RP) :: fval_old(size(fval))
 real(RP) :: sim_jopt(size(sim, 1))
 real(RP) :: sim_old(size(sim, 1), size(sim, 2))
 real(RP) :: simi_old(size(simi, 1), size(simi, 2))
-character(len=*), parameter :: srname = 'UPDATEPOLE'
+real(RP), parameter :: itol = TENTH
 
-
-! Get and verify the sizes.
+! Sizes
 m = size(conmat, 1)
 n = size(sim, 1)
+
+! Preconditions
 if (DEBUGGING) then
-    if (n < 1) then
-        call errstop(srname, 'SIZE(SIM) is invalid')
-    end if
-    call verisize(evaluated, n + 1)
-    call verisize(conmat, m, n + 1)
-    call verisize(cval, n + 1)
-    call verisize(fval, n + 1)
-    call verisize(sim, n, n + 1)
-    call verisize(simi, n, n)
+    call assert(cpen >= 0, 'CPEN >= 0', srname)
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(size(evaluated) == n + 1, 'SIZE(EVALUATED) == N+1', srname)
+    call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
+    call assert(.not. any(is_nan(conmat) .or. is_neginf(conmat)), 'CONMAT does not contain NaN/-Inf', srname)
+    call assert(size(cval) == n + 1 .and. .not. any(is_nan(cval) .or. is_posinf(cval)), &
+        & 'SIZE(CVAL) == N+1 and CVAL is not NaN/+Inf', srname)
+    call assert(size(fval) == n + 1 .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
+        & 'SIZE(FVAL) == N+1 and FVAL is not NaN/+Inf', srname)
+    call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
+    call assert(all(is_finite(sim)), 'SIM is finite', srname)
+    call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
+    call assert(all(is_finite(simi)), 'SIMI is finite', srname)
+    call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
 end if
+
+!====================!
+! Calculation starts !
+!====================!
 
 info = 0_IK
 
@@ -218,35 +236,74 @@ if (all(evaluated)) then
     end if
 end if
 
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(findpole(cpen, evaluated, cval, fval) == n + 1, 'The best point is SIM(:, N+1)', srname)
+    call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
+    call assert(.not. any(is_nan(conmat) .or. is_neginf(conmat)), 'CONMAT does not contain NaN/-Inf', srname)
+    call assert(size(cval) == n + 1 .and. .not. any(is_nan(cval) .or. is_posinf(cval)), &
+        & 'SIZE(CVAL) == N+1 and CVAL is not NaN/+Inf', srname)
+    call assert(size(fval) == n + 1 .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
+        & 'SIZE(FVAL) == N+1 and FVAL is not NaN/+Inf', srname)
+    call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
+    call assert(all(is_finite(sim)), 'SIM is finite', srname)
+    call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
+    call assert(all(is_finite(simi)), 'SIMI is finite', srname)
+    ! Do not check SIMI = SIM(:, 1:N)^{-1}, as it may not be true due to damaging rounding.
+    !call assert(isinv(sim(:, 1:n), simi, itol) .or. , 'SIMI = SIM(:, 1:N)^{-1}', srname)
+end if
+
 end subroutine updatepole
 
 
 function findpole(cpen, evaluated, cval, fval) result(jopt)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine identifies the best vertex of the current simplex with respect to the merit
+! function PHI = F + CPEN * CSTRV.
+!--------------------------------------------------------------------------------------------------!
 
+! Generic modules
 use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, DEBUGGING
-use, non_intrinsic :: debug_mod, only : errstop
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
 
 implicit none
 
-! Input
+! Inputs
 real(RP), intent(in) :: cpen
 logical, intent(in) :: evaluated(:)
 real(RP), intent(inout) :: cval(:)
 real(RP), intent(inout) :: fval(:)
 
-! Output
+! Outputs
 integer(IK) :: jopt
 
 ! Local variables
+character(len=*), parameter :: srname = 'FINDPOLE'
+integer(IK) :: n
 real(RP) :: phi(size(cval))
 real(RP) :: phimin
-character(len=*), parameter :: srname = 'FINDPOLE'
 
+! Size
+n = int(size(fval) - 1, kind(n))
+
+! Preconditions
 if (DEBUGGING) then
-    if (size(cval) /= size(fval)) then
-        call errstop(srname, 'SIZE(CVAL) /= SIZE(FVAL)')
-    end if
+    call assert(cpen >= 0, 'CPEN >= 0', srname)
+    call assert(size(evaluated) == n + 1, 'SIZE(EVALUATED) == N+1', srname)
+    call assert(size(cval) == n + 1 .and. .not. any(is_nan(cval) .or. is_posinf(cval)), &
+        & 'SIZE(CVAL) == N+1 and CVAL is not NaN/+Inf', srname)
+    call assert(size(fval) == n + 1 .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
+        & 'SIZE(FVAL) == N+1 and FVAL is not NaN/+Inf', srname)
 end if
+
+!====================!
+! Calculation starts !
+!====================!
 
 ! Identify the optimal vertex of the current simplex.
 ! N.B.: Maybe not all vertex of the simplex are initialized! Use EVALUATED as a mask.
@@ -260,6 +317,15 @@ if (cpen <= ZERO .and. any(cval < cval(jopt) .and. phi <= phimin .and. evaluated
     ! (CPEN <= ZERO) is indeed (CPEN == ZERO), and (PHI <= PHIMIN) is indeed (PHI == PHIMIN). We
     ! write them in this way to avoid equality comparison of real numbers.
     jopt = int(minloc(cval, mask=(phi <= phimin .and. evaluated), dim=1), kind(jopt))
+end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(jopt >= 1 .and. jopt <= n + 1, '1 <= JOPT <= N+1', srname)
 end if
 end function findpole
 

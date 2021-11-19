@@ -7,7 +7,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 08, 2021 PM12:54:06
+! Last Modified: Friday, November 19, 2021 PM08:57:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -104,7 +104,7 @@ end if
 !====================!
 
 ! Do nothing when KNEW is 0. This can only happen after a trust-region step.
-if (knew == 0) then
+if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
     return
 end if
 
@@ -361,7 +361,7 @@ end if
 !====================!
 
 ! Do nothing when KNEW is 0. This can only happen after a trust-region step.
-if (knew == 0) then
+if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
     return
 end if
 
@@ -455,7 +455,7 @@ end if
 !====================!
 
 ! Do essentially nothing when KNEW is 0. This can only happen after a trust-region step.
-if (knew == 0) then
+if (knew <= 0) then  ! KNEW < 0 is impossible if the input is correct.
     ! We must set FOPT and XOPT. Otherwise, they are UNDEFINED because we declare them as INTENT(OUT).
     fopt = fval(kopt)
     xopt = xpt(:, kopt)
