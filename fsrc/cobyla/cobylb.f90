@@ -1,4 +1,13 @@
 module cobylb_mod
+!--------------------------------------------------------------------------------------------------!
+! This module performs the major calculations of COBYLA.
+!
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
+!
+! Started: July 2021
+!
+! Last Modified: Friday, November 19, 2021 PM02:03:16
+!--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
@@ -14,16 +23,16 @@ subroutine cobylb(calcfc, iprint, maxfun, ctol, ftarget, rhobeg, rhoend, constr,
 ! Generic modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, HUGENUM, DEBUGGING
-use, non_intrinsic :: debug_mod, only : errstop, verisize
+use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evalfc
 use, non_intrinsic :: history_mod, only : savehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
 use, non_intrinsic :: info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, NAN_MODEL, DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, outprod, inv
 use, non_intrinsic :: output_mod, only : retmssg, rhomssg, fmssg
 use, non_intrinsic :: pintrf_mod, only : FUNCON
 use, non_intrinsic :: resolution_mod, only : resenhance
-use, non_intrinsic :: selectx_mod, only : savefilt, selectx
+use, non_intrinsic :: selectx_mod, only : savefilt, selectx, isbetter
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_mod, only : goodgeo, setdrop_geo, setdrop_tr, geostep
@@ -63,6 +72,7 @@ integer(IK), parameter :: maxfilt = 2000_IK  ! Must be positive. Recommended to 
 character(len=*), parameter :: srname = 'COBYLB'
 integer(IK) :: jdrop_geo
 integer(IK) :: jdrop_tr
+integer(IK) :: k
 integer(IK) :: kopt
 integer(IK) :: m
 integer(IK) :: maxchist
@@ -115,23 +125,27 @@ maxfhist = size(fhist)
 maxconhist = size(conhist, 2)
 maxchist = size(chist)
 maxhist = max(maxxhist, maxfhist, maxconhist, maxchist)
+
+! Preconditions
 if (DEBUGGING) then
-    if (n < 1) then
-        call errstop(srname, 'SIZE(X) < 1')
-    end if
-    if (maxxhist > 0) then
-        call verisize(xhist, n, maxhist)
-    end if
-    if (maxfhist > 0) then
-        call verisize(fhist, maxhist)
-    end if
-    if (maxconhist > 0) then
-        call verisize(conhist, m, maxhist)
-    end if
-    if (maxchist > 0) then
-        call verisize(chist, maxhist)
-    end if
+    call assert(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', srname)
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(maxfun >= n + 2, 'MAXFUN >= N + 2', srname)
+    call assert(rhobeg >= rhoend .and. rhoend > 0, 'RHOBEG >= RHOEND > 0', srname)
+    !call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
+    !call assert(gamma1 > 0 .and. gamma1 < 1 .and. gamma2 > 1, '0 < GAMMA1 < 1 < GAMMA2', srname)
+    call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
+    call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
+        & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
+    call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
+    call assert(size(conhist, 1) == m .and. maxconhist * (maxconhist - maxhist) == 0, &
+        & 'SIZE(CONHIST, 1) == M, SIZE(CONHIST, 2) == 0 or MAXHIST', srname)
+    call assert(maxchist * (maxchist - maxhist) == 0, 'SIZE(CHIST) == 0 or MAXHIST', srname)
 end if
+
+!====================!
+! Calculation starts !
+!====================!
 
 ! Set the initial values of some parameters. The last column of SIM holds the optimal vertex of the
 ! current simplex, and the preceding N columns hold the displacements from the optimal vertex to the
@@ -158,6 +172,27 @@ if (subinfo /= INFO_DFT) then
     f = ffilt(kopt)
     constr = confilt(:, kopt)
     cstrv = cfilt(kopt)
+    ! Postconditions
+    if (DEBUGGING) then
+        call assert(nf <= maxfun, 'NF <= MAXFUN', srname)
+        call assert(size(x) == n .and. .not. any(is_nan(x)), 'SIZE(X) == N, X does not contain NaN', srname)
+        call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
+        call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
+        call assert(.not. any(is_nan(xhist(:, 1:min(nf, maxxhist)))), 'XHIST does not contain NaN', srname)
+        ! The last calculated X can be Inf (finite + finite can be Inf numerically).
+        call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
+        call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. is_posinf(fhist(1:min(nf, maxfhist)))), &
+            & 'FHIST does not contain NaN of +Inf', srname)
+        call assert(size(conhist, 1) == m .and. size(conhist, 2) == maxconhist, &
+            & 'SIZE(CONHIST) == [M, MAXCONHIST]', srname)
+        call assert(.not. any(is_nan(conhist(:, 1:min(nf, maxconhist))) .or. &
+            & is_neginf(conhist(:, 1:min(nf, maxconhist)))), 'CONHIST does not contain NaN of -Inf', srname)
+        call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
+        call assert(.not. any(is_nan(chist(1:min(nf, maxchist))) .or. is_posinf(chist(1:min(nf, maxchist)))), &
+            & 'CHIST does not contain NaN of +Inf', srname)
+        call assert(.not. any([(isbetter([fhist(k), chist(k)], [f, cstrv], ctol), &
+            & k=1, minval([nf, maxfhist, maxchist]))]), 'No point in the history is better than X', srname)
+    end if
     !close (16)
     return
 end if
@@ -383,6 +418,32 @@ x = xfilt(:, kopt)
 f = ffilt(kopt)
 constr = confilt(:, kopt)
 cstrv = cfilt(kopt)
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(nf <= maxfun, 'NF <= MAXFUN', srname)
+    call assert(size(x) == n .and. .not. any(is_nan(x)), 'SIZE(X) == N, X does not contain NaN', srname)
+    call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
+    call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
+    call assert(.not. any(is_nan(xhist(:, 1:min(nf, maxxhist)))), 'XHIST does not contain NaN', srname)
+    ! The last calculated X can be Inf (finite + finite can be Inf numerically).
+    call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
+    call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. is_posinf(fhist(1:min(nf, maxfhist)))), &
+        & 'FHIST does not contain NaN of +Inf', srname)
+    call assert(size(conhist, 1) == m .and. size(conhist, 2) == maxconhist, &
+        & 'SIZE(CONHIST) == [M, MAXCONHIST]', srname)
+    call assert(.not. any(is_nan(conhist(:, 1:min(nf, maxconhist))) .or. &
+        & is_neginf(conhist(:, 1:min(nf, maxconhist)))), 'CONHIST does not contain NaN of -Inf', srname)
+    call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
+    call assert(.not. any(is_nan(chist(1:min(nf, maxchist))) .or. is_posinf(chist(1:min(nf, maxchist)))), &
+        & 'CHIST does not contain NaN of +Inf', srname)
+    call assert(.not. any([(isbetter([fhist(k), chist(k)], [f, cstrv], ctol), &
+        & k=1, minval([nf, maxfhist, maxchist]))]), 'No point in the history is better than X', srname)
+end if
 
 close (16)
 
