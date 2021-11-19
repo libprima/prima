@@ -1,4 +1,13 @@
 module update_mod
+!--------------------------------------------------------------------------------------------------!
+! This module contains subroutines concerning the update of the interpolation set.
+!
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the COBYLA paper.
+!
+! Started: July 2021
+!
+! Last Modified: Friday, November 19, 2021 PM05:47:23
+!--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
@@ -9,17 +18,20 @@ contains
 
 
 subroutine updatexfc(jdrop, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
-! Revise the simplex by updating the elements of SIM, SIMI, FVAL, CONMAT, and CVAL.
+!--------------------------------------------------------------------------------------------------!
+! This subroutine revises the simplex by updating the elements of SIM, SIMI, FVAL, CONMAT, and CVAL.
 ! N.B.: UPDATEXFC does NOT manipulate the simplex so that SIM(:, N+1) is the best vertex;
 ! that is the job of UPDATEPOLE, which is called before each trust-region/geometry step.
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : IK, RP, DEBUGGING
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, outprod
+use, non_intrinsic :: debug_mod, only : assert
 
 implicit none
 
-! Input
+! Inputs
 integer(IK), intent(in) :: jdrop
 real(RP), intent(in) :: constr(:)
 real(RP), intent(in) :: cstrv
@@ -34,7 +46,20 @@ real(RP), intent(inout) :: sim(:, :)
 real(RP), intent(inout) :: simi(:, :)
 
 ! Local variables
+character(len=*), parameter :: srname = 'UPDATEXFC'
+integer(IK) :: m
+integer(IK) :: n
 real(RP) :: simi_jdrop(size(simi, 2))
+
+! Sizes
+m = size(constr)
+n = size(sim, 1)
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(jdrop >= 1 .and. jdrop <= n, '1 <= JDROP <= N', srname)
+
+end if
 
 sim(:, jdrop) = d
 simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), d)
@@ -60,7 +85,7 @@ use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, TENTH, DEBUGGING
 use, non_intrinsic :: info_mod, only : DAMAGING_ROUNDING
 use, non_intrinsic :: debug_mod, only : errstop, verisize
 use, non_intrinsic :: infnan_mod, only : is_nan
-use, non_intrinsic :: linalg_mod, only : matprod, eye
+use, non_intrinsic :: linalg_mod, only : matprod, eye, inv
 
 implicit none
 
@@ -84,6 +109,7 @@ real(RP) :: conmat_old(size(conmat, 1), size(conmat, 2))
 real(RP) :: cval_old(size(cval))
 real(RP) :: fval_old(size(fval))
 real(RP) :: erri(size(sim, 1), size(sim, 1))
+real(RP), parameter :: itol = TENTH
 real(RP) :: sim_jopt(size(sim, 1))
 real(RP) :: sim_old(size(sim, 1), size(sim, 2))
 real(RP) :: simi_old(size(simi, 1), size(simi, 2))
@@ -140,7 +166,12 @@ end if
 ! Do this only if EVALUATED contains only TRUE.
 if (all(evaluated)) then
     erri = matprod(simi, sim(:, 1:n)) - eye(n)
-    if (any(is_nan(erri)) .or. any(abs(erri) > TENTH)) then
+    ! Recalculate SIMI if the updated one is damaged by rounding errors.
+    if (any(is_nan(erri)) .or. any(abs(erri) > itol)) then
+        simi = inv(sim(:, 1:n))
+        erri = matprod(simi, sim(:, 1:n)) - eye(n)
+    end if
+    if (any(is_nan(erri)) .or. any(abs(erri) > itol)) then
         info = DAMAGING_ROUNDING
         fval = fval_old
         conmat = conmat_old

@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, November 19, 2021 PM03:25:12
+! Last Modified: Friday, November 19, 2021 PM05:45:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -42,7 +42,7 @@ logical :: good_geo
 ! Local variables
 character(len=*), parameter :: srname = 'GOODGEO'
 integer(IK) :: n
-real(RP) :: itol
+real(RP), parameter :: itol = TENTH
 real(RP) :: pareta
 real(RP) :: parsig
 real(RP) :: veta(size(sim, 1))
@@ -58,8 +58,7 @@ if (DEBUGGING) then
     call assert(all(is_finite(sim)), 'SIM is finite', srname)
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)), 'SIMI is finite', srname)
-    itol = TENTH
-    call assert(all(abs(matprod(sim(:, 1:n), simi) - eye(n)) <= itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
+    call assert(all(abs(matprod(simi, sim(:, 1:n)) - eye(n)) <= itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
     call assert(rho > 0, 'RHO > 0', srname)
     call assert(factor_alpha > 0 .and. factor_alpha < 1, '0 < FACTOR_ALPHA < 1', srname)
     call assert(factor_beta > 1, 'FACTOR_BETA > 1', srname)
@@ -118,7 +117,7 @@ integer(IK) :: jdrop
 character(len=*), parameter :: srname = 'SETDROP_TR'
 integer(IK) :: n
 real(RP) :: edgmax
-real(RP) :: itol
+real(RP), parameter :: itol = TENTH
 real(RP) :: parsig
 real(RP) :: sigbar(size(sim, 1))
 real(RP) :: simid(size(sim, 1))
@@ -136,8 +135,7 @@ if (DEBUGGING) then
     call assert(all(is_finite(sim)), 'SIM is finite', srname)
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)), 'SIMI is finite', srname)
-    itol = TENTH
-    call assert(all(abs(matprod(sim(:, 1:n), simi) - eye(n)) <= itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
+    call assert(all(abs(matprod(simi, sim(:, 1:n)) - eye(n)) <= itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
     call assert(.not. is_nan(actrem), 'ACTREM is not NaN', srname)
 end if
 
@@ -210,7 +208,7 @@ integer(IK) :: jdrop
 ! Local variables
 character(len=*), parameter :: srname = 'SETDROP_GEO'
 integer(IK) :: n
-real(RP) :: itol
+real(RP), parameter :: itol = TENTH
 real(RP) :: pareta
 real(RP) :: parsig
 real(RP) :: veta(size(sim, 1))
@@ -224,8 +222,7 @@ if (DEBUGGING) then
     call assert(all(is_finite(sim)), 'SIM is finite', srname)
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)), 'SIMI is finite', srname)
-    itol = TENTH
-    call assert(all(abs(matprod(sim(:, 1:n), simi) - eye(n)) <= itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
+    call assert(all(abs(matprod(simi, sim(:, 1:n)) - eye(n)) <= itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
 end if
 
 !====================!
