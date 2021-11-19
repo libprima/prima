@@ -604,15 +604,7 @@ else
     tol_loc = min(1.0E-3_RP, 1.0E2_RP * EPS * real(max(size(A, 1), size(A,2)), RP))
 end if
 
-is_inv = all(abs(matprod(A, B) - eye(n)) <= tol_loc .and. abs(matprod(B, A) - eye(n)) <= tol_loc)
-
-if (.not. is_inv) then
-    write(16, *) A
-    write(16, *) B
-    write(16, *) matprod(A, B)
-    write(16, *) matprod(B, A)
-    close(16)
-end if
+is_inv = all(abs(matprod(A, B) - eye(n)) <= tol_loc) .or. all(abs(matprod(B, A) - eye(n)) <= tol_loc)
 end function
 
 
