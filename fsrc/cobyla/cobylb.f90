@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, November 19, 2021 PM08:59:43
+! Last Modified: Friday, November 19, 2021 PM11:09:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -158,7 +158,7 @@ factor_gamma = HALF
 rho = rhobeg
 cpen = ZERO
 
-call initxfc(calcfc, iprint, maxfun, ctol, ftarget, rho, x, nf, chist, conhist, conmat, cval, fhist,&
+call initxfc(calcfc, iprint, maxfun, ctol, ftarget, rhobeg, x, nf, chist, conhist, conmat, cval, fhist,&
    & fval, sim, xhist, evaluated, subinfo)
 call initfilt(conmat, ctol, cval, fval, sim, evaluated, nfilt, cfilt, confilt, ffilt, xfilt)
 
