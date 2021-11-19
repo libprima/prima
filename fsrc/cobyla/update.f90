@@ -6,7 +6,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, November 19, 2021 PM05:47:23
+! Last Modified: Friday, November 19, 2021 PM06:08:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -25,8 +25,9 @@ subroutine updatexfc(jdrop, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : IK, RP, DEBUGGING
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, outprod
+use, non_intrinsic :: consts_mod, only : IK, RP, TENTH, DEBUGGING
+use, non_intrinsic :: infnan_mod, only : is_nan, is_neginf, is_posinf, is_finite
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, outprod, eye
 use, non_intrinsic :: debug_mod, only : assert
 
 implicit none
@@ -49,6 +50,7 @@ real(RP), intent(inout) :: simi(:, :)
 character(len=*), parameter :: srname = 'UPDATEXFC'
 integer(IK) :: m
 integer(IK) :: n
+real(RP), parameter :: itol = TENTH
 real(RP) :: simi_jdrop(size(simi, 2))
 
 ! Sizes
@@ -58,8 +60,26 @@ n = size(sim, 1)
 ! Preconditions
 if (DEBUGGING) then
     call assert(jdrop >= 1 .and. jdrop <= n, '1 <= JDROP <= N', srname)
-
+    call assert(.not. any(is_nan(constr) .or. is_neginf(constr)), 'CONSTR does not contain NaN/-Inf', srname)
+    call assert(.not. (is_nan(cstrv) .or. is_posinf(cstrv)), 'CSTRV is not NaN/+Inf', srname)
+    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
+    call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN/+Inf', srname)
+    call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
+    call assert(.not. any(is_nan(conmat) .or. is_neginf(conmat)), 'CONMAT does not contain NaN/-Inf', srname)
+    call assert(size(cval) == n + 1 .and. .not. any(is_nan(cval) .or. is_posinf(cval)), &
+        & 'SIZE(CVAL) == N+1 and CVAL is not NaN/+Inf', srname)
+    call assert(size(fval) == n + 1 .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
+        & 'SIZE(FVAL) == N+1 and FVAL is not NaN/+Inf', srname)
+    call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
+    call assert(all(is_finite(sim)), 'SIM is finite', srname)
+    call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
+    call assert(all(is_finite(simi)), 'SIMI is finite', srname)
+    call assert(all(abs(matprod(simi, sim(:, 1:n)) - eye(n)) <= itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
 end if
+
+!====================!
+! Calculation starts !
+!====================!
 
 sim(:, jdrop) = d
 simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), d)
@@ -69,6 +89,23 @@ fval(jdrop) = f
 conmat(:, jdrop) = constr
 cval(jdrop) = cstrv
 
+!====================!
+!  Calculation ends  !
+!====================!
+
+if (DEBUGGING) then
+    call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
+    call assert(.not. any(is_nan(conmat) .or. is_neginf(conmat)), 'CONMAT does not contain NaN/-Inf', srname)
+    call assert(size(cval) == n + 1 .and. .not. any(is_nan(cval) .or. is_posinf(cval)), &
+        & 'SIZE(CVAL) == N+1 and CVAL is not NaN/+Inf', srname)
+    call assert(size(fval) == n + 1 .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
+        & 'SIZE(FVAL) == N+1 and FVAL is not NaN/+Inf', srname)
+    call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
+    call assert(all(is_finite(sim)), 'SIM is finite', srname)
+    call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
+    call assert(all(is_finite(simi)), 'SIMI is finite', srname)
+    call assert(all(abs(matprod(simi, sim(:, 1:n)) - eye(n)) <= itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
+end if
 end subroutine updatexfc
 
 
