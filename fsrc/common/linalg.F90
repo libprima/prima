@@ -562,7 +562,7 @@ if (DEBUGGING) then
     call assert(size(B, 1) == n .and. size(B, 2) == n, 'SIZE(B) == [N, N]', srname)
     call assert(istril(B) .or. .not. istril(A), 'If A is lower triangular, then so is B', srname)
     call assert(istriu(B) .or. .not. istriu(A), 'If A is upper triangular, then so is B', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E4_RP * EPS * real(n, RP)))
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS * real(n, RP)))
     call assert(all(abs(matprod(A, B) - eye(n)) <= max(tol, tol * maxval(abs(A)))), &
         & 'B = A^(-1)', srname)
 end if
