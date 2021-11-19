@@ -6,7 +6,7 @@ module evaluate_mod
 !
 ! Started: August 2021
 !
-! Last Modified: Friday, November 05, 2021 PM08:10:30
+! Last Modified: Friday, November 19, 2021 PM03:20:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -72,7 +72,7 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     ! With the moderated extreme barrier, F cannot be NaN/+Inf.
-    call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
+    call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN/+Inf', srname)
 end if
 
 end subroutine evalf
@@ -147,11 +147,11 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     ! With the moderated extreme barrier, F cannot be NaN/+Inf, CONSTR cannot be NaN/-Inf.
-    call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
+    call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN/+Inf', srname)
     call assert(.not. any(is_nan(constr) .or. is_neginf(constr)), &
-        & 'CONSTR does not containt NaN or -Inf', srname)
+        & 'CONSTR does not containt NaN/-Inf', srname)
     call assert(.not. (cstrv < ZERO .or. is_nan(cstrv) .or. is_posinf(cstrv)), &
-        & 'CSTRV is nonnegative and not NaN or +Inf', srname)
+        & 'CSTRV is nonnegative and not NaN/+Inf', srname)
 end if
 
 end subroutine evalfc

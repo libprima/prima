@@ -6,7 +6,7 @@ module checkexit_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Friday, November 05, 2021 PM10:10:04
+! Last Modified: Friday, November 19, 2021 PM03:20:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -55,7 +55,7 @@ if (DEBUGGING) then
     ! trust-region/geometry steps work properly so that they never produce a step containing NaN/Inf.
     call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
     ! With the moderated extreme barrier, F cannot be NaN/+Inf.
-    call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN or +Inf', srname)
+    call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN/+Inf', srname)
 end if
 
 !====================!
@@ -133,7 +133,7 @@ if (DEBUGGING) then
     call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
     ! With the moderated extreme barrier, F or CSTRV cannot be NaN/+Inf.
     call assert(.not. (is_nan(f) .or. is_posinf(f) .or. is_nan(cstrv) .or. is_posinf(cstrv)), &
-        & 'F or CSTRV is not NaN or +Inf', srname)
+        & 'F or CSTRV is not NaN/+Inf', srname)
 end if
 
 !====================!

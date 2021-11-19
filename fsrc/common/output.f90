@@ -8,7 +8,7 @@ module output_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 05, 2021 PM06:03:25
+! Last Modified: Friday, November 19, 2021 PM03:21:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -85,7 +85,7 @@ else if (info == TRSUBP_FAILED) then
 else if (info == NAN_INF_X) then
     mssg = 'NaN or Inf occurs in x.'
 else if (info == NAN_INF_F) then
-    mssg = 'the objective function returns NaN or +INFINITY.'
+    mssg = 'the objective function returns NaN/+Inf.'
 else if (info == NAN_MODEL) then
     mssg = 'NaN occurs in the models.'
 end if

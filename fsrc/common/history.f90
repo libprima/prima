@@ -7,7 +7,7 @@ module history_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, November 06, 2021 AM09:28:07
+! Last Modified: Friday, November 19, 2021 PM03:19:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -216,7 +216,7 @@ if (DEBUGGING) then
     ! The last calculated X can be Inf (finite + finite can be Inf numerically).
     call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
     call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. is_posinf(fhist(1:min(nf, maxfhist)))), &
-        & 'FHIST does not contain NaN of +Inf', srname)
+        & 'FHIST does not contain NaN/+Inf', srname)
     call assert(size(conhist, 1) == m .and. size(conhist, 2) == maxconhist, &
         & 'SIZE(CONHIST) == [M, MAXCONHIST]', srname)
     call assert(.not. any(is_nan(conhist(:, 1:min(nf, maxconhist))) .or. &
@@ -306,7 +306,7 @@ if (DEBUGGING) then
     ! The last calculated X can be Inf (finite + finite can be Inf numerically).
     call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
     call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. is_posinf(fhist(1:min(nf, maxfhist)))), &
-        & 'FHIST does not contain NaN of +Inf', srname)
+        & 'FHIST does not contain NaN/+Inf', srname)
 end if
 
 end subroutine rangehist_unc
@@ -411,7 +411,7 @@ if (DEBUGGING) then
     ! The last calculated X can be Inf (finite + finite can be Inf numerically).
     call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
     call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. is_posinf(fhist(1:min(nf, maxfhist)))), &
-        & 'FHIST does not contain NaN of +Inf', srname)
+        & 'FHIST does not contain NaN/+Inf', srname)
     call assert(size(conhist, 1) == m .and. size(conhist, 2) == maxconhist, &
         & 'SIZE(CONHIST) == [M, MAXCONHIST]', srname)
     call assert(.not. any(is_nan(conhist(:, 1:min(nf, maxconhist))) .or. &
