@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, November 19, 2021 PM03:16:50
+! Last Modified: Friday, November 19, 2021 PM08:59:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -317,11 +317,11 @@ do tr = 1, maxtr
         jdrop_tr = setdrop_tr(actrem, d, factor_alpha, factor_delta, rho, sim, simi)
         ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_TR) is replaced by D.
         ! When JDROP_TR == 0, the algorithm decides not to include X into the simplex.
-        ! N.B.: UPDATEXFC does NOT manipulate the simplex so that SIM(:, N+1) is the best vertex;
+        ! N.B.:
+        ! 1. UPDATEXFC does NOT manipulate the simplex so that SIM(:, N+1) is the best vertex;
         ! that is the job of UPDATEPOLE, which is called before each trust-region/geometry step.
-        if (jdrop_tr > 0) then
-            call updatexfc(jdrop_tr, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
-        end if
+        ! 2. UPDATEXFC does nothing when JDROP_TR == 0.
+        call updatexfc(jdrop_tr, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
 
         ! Check whether to exit.
         subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
