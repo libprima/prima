@@ -6,7 +6,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, November 19, 2021 PM09:05:20
+! Last Modified: Friday, November 19, 2021 PM09:22:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -74,7 +74,7 @@ if (DEBUGGING) then
     call assert(all(is_finite(sim)), 'SIM is finite', srname)
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)), 'SIMI is finite', srname)
-!    call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
+    !!!call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
 end if
 
 !====================!
@@ -109,7 +109,7 @@ if (DEBUGGING) then
     call assert(all(is_finite(sim)), 'SIM is finite', srname)
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)), 'SIMI is finite', srname)
-!    call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
+    !!!call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
 end if
 end subroutine updatexfc
 
@@ -179,7 +179,7 @@ if (DEBUGGING) then
     call assert(all(is_finite(sim)), 'SIM is finite', srname)
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)), 'SIMI is finite', srname)
-    call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
+    !!!call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
 end if
 
 !====================!
