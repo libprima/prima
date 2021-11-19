@@ -1,86 +1,27 @@
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-module proc_mod 
-! PROC_MOD provides a subroutine PROC(X, Y, F) that invokes a subroutine
-! F at (X, Y) and then increment Y by 1.
+!        This is file : test
+! Author= zaikunzhang
+! Started at: 10.11.2021
+! Last Modified: Tuesday, November 16, 2021 PM12:07:01
 
-implicit none
-private 
-public :: proc
-
-
-contains
-
-
-subroutine proc(x, y, f)
-
+program test
+use consts_mod
+use linalg_mod
+!use rand_mod
 implicit none
 
-real, intent(in) :: x(:)
-real, intent(out) :: y
+integer, parameter :: n = 5000
+real(RP) :: G(2, 2)
+real(RP), parameter :: a = sqrt(huge(0.0_RP))
+!real(RP), parameter :: a = sqrt(tiny(0.0_RP))
+!real(RP), parameter :: a = sqrt(epsilon(0.0_RP))
+real(RP), parameter :: x(2) = [a / PI, a / (PI * 1.0E2_RP)]
+real(RP), parameter :: y(2) = [x(2), x(1)]
+real(RP) :: r
 
-interface
-    subroutine f(x, y)
-    real, intent(in) :: x(:)
-    real, intent(out) :: y
-    end subroutine f
-end interface
+r = sqrt(sum(x**2))
+G = planerot(x)
+write (*, *) '-->', maxval(abs(matprod(transpose(G), G) - eye(2))), norm(matprod(G, x) - [r, ZERO]) / max(r, EPS)
+G = planerot(y)
+write (*, *) '-->', maxval(abs(matprod(transpose(G), G) - eye(2))), norm(matprod(G, y) - [r, ZERO]) / max(r, EPS)
 
-call f(x, y)
-y = y + 1.0
-
-end subroutine proc 
-
-
-end module proc_mod
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-module fun_mod
-! FUN_MOD provides a subroutine FUN(X, Y) that sets Y = SUM(X**2).
-! In practice, this module is provided by OTHERS, and we do not
-! know how it is implemented except for the signature of FUN.
-
-implicit none
-private 
-public :: fun 
-
-
-contains 
-
-
-subroutine fun(x, y)
-
-implicit none
-real, intent(in) :: x(:)
-real, intent(out)  :: y 
-
-y = sum(x**2)
-
-end subroutine fun
-
-
-end module fun_mod
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-program main 
-! MAIN tests PROC(X, Y, FUN) with PROC from PROC_MOD and FUN from FUN_MOD.
-
-use proc_mod, only : proc
-use fun_mod, only : fun
-implicit none
-
-real :: x(3), y
-
-call random_number(x)
-print *, x
-
-call proc(x, y, fun)
-print *, y
-
-print *, sum(x**2) + 1.0
-
-end program main 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+end program test

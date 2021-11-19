@@ -8,12 +8,12 @@ module selectx_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Friday, November 05, 2021 PM10:25:33
+! Last Modified: Friday, November 19, 2021 PM01:59:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
-public :: savefilt, selectx
+public :: savefilt, selectx, isbetter
 
 
 contains
