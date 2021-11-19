@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, November 18, 2021 PM01:02:07
+! Last Modified: Friday, November 19, 2021 PM03:20:43
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1425,7 +1425,7 @@ if (DEBUGGING) then
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(fval) == npt, 'SIZE(FVAL) = NPT', srname)
-    call assert(.not. any(is_nan(fval) .or. is_posinf(fval)), 'FVAL is not NaN or +Inf', srname)
+    call assert(.not. any(is_nan(fval) .or. is_posinf(fval)), 'FVAL is not NaN/+Inf', srname)
 end if
 
 !====================!

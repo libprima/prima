@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 05, 2021 PM11:52:43
+! Last Modified: Friday, November 19, 2021 PM02:21:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -511,7 +511,7 @@ function bigden(idz, knew, kopt, bmat, d0, xpt, zmat) result(d)
 ! max |SIGMA(XOPT + D)|, subject to ||D|| <= DELBAR,
 !
 ! where SIGMA is the denominator sigma in the updating formula (4.11)--(4.12) for H, which is the
-! inverse of the coefficient matrix for the interplolation system (see (3.12)). Indeed, each column
+! inverse of the coefficient matrix for the interpolation system (see (3.12)). Indeed, each column
 ! of H corresponds to a Lagrange basis function of the interpolation problem.  See Section 6 of the
 ! NEWUOA paper.
 ! N.B.:

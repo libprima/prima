@@ -1,46 +1,73 @@
 module geometry_mod
+!--------------------------------------------------------------------------------------------------!
+! This module contains subroutines concerning the geometry-improving of the interpolation set.
+!
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the COBYLA paper.
+!
+! Started: July 2021
+!
+! Last Modified: Friday, November 19, 2021 PM03:25:12
+!--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
-public :: goodgeo, geostep, setdrop_geo, setdrop_tr
+public :: goodgeo, setdrop_geo, setdrop_tr, geostep
 
 
 contains
 
 function goodgeo(factor_alpha, factor_beta, rho, sim, simi) result(good_geo)
+!--------------------------------------------------------------------------------------------------!
+! This function checks whether an interpolation set has good geometry as (14) of the COBYLA paper.
+!--------------------------------------------------------------------------------------------------!
 
-use, non_intrinsic :: consts_mod, only : IK, RP, ONE, DEBUGGING
-use, non_intrinsic :: debug_mod, only : errstop, verisize
+! Generic modules
+use, non_intrinsic :: consts_mod, only : IK, RP, ONE, TENTH, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: linalg_mod, only : eye, matprod
 
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: sim(:, :)
-real(RP), intent(in) :: simi(:, :)
 real(RP), intent(in) :: factor_alpha
 real(RP), intent(in) :: factor_beta
 real(RP), intent(in) :: rho
+real(RP), intent(in) :: sim(:, :)
+real(RP), intent(in) :: simi(:, :)
 
-! Output
+! Outputs
 logical :: good_geo
 
 ! Local variables
-integer(IK) :: n
-real(RP) :: parsig
-real(RP) :: pareta
-real(RP) :: vsig(size(sim, 1))
-real(RP) :: veta(size(sim, 1))
 character(len=*), parameter :: srname = 'GOODGEO'
+integer(IK) :: n
+real(RP) :: itol
+real(RP) :: pareta
+real(RP) :: parsig
+real(RP) :: veta(size(sim, 1))
+real(RP) :: vsig(size(sim, 1))
 
-! Get and verify the sizes
+! Sizes
 n = size(sim, 1)
+
+! Preconditions
 if (DEBUGGING) then
-    if (n < 1) then
-        call errstop(srname, 'SIZE(SIM, 1) < 1')
-    end if
-    call verisize(sim, n, n + 1)
-    call verisize(simi, n, n)
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
+    call assert(all(is_finite(sim)), 'SIM is finite', srname)
+    call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
+    call assert(all(is_finite(simi)), 'SIMI is finite', srname)
+    itol = TENTH
+    call assert(all(abs(matprod(sim(:, 1:n), simi) - eye(n)) <= itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
+    call assert(rho > 0, 'RHO > 0', srname)
+    call assert(factor_alpha > 0 .and. factor_alpha < 1, '0 < FACTOR_ALPHA < 1', srname)
+    call assert(factor_beta > 1, 'FACTOR_BETA > 1', srname)
 end if
+
+!====================!
+! Calculation starts !
+!====================!
 
 ! Calculate the values of sigma and eta.
 parsig = factor_alpha * rho
@@ -52,20 +79,26 @@ vsig = ONE / sqrt(sum(simi**2, dim=2))
 veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
 good_geo = all(vsig >= parsig) .and. all(veta <= pareta)
 
+!====================!
+!  Calculation ends  !
+!====================!
 end function goodgeo
 
 
 function setdrop_tr(actrem, d, factor_alpha, factor_delta, rho, sim, simi) result(jdrop)
+!--------------------------------------------------------------------------------------------------!
 ! This subroutine finds (the index) of a current interpolation point to be replaced by the
-! trust-region trial point. See (19)--(21) of the COBYLA paper.
+! trust-region trial point. See (19)--(22) of the COBYLA paper.
 ! N.B.:
 ! 1. If ACTREM > 0, then JDROP > 0 so that D is included into XPT. Otherwise, it is a bug.
 ! 2. COBYLA never sets JDROP = N + 1.
+!--------------------------------------------------------------------------------------------------!
 
-use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, ONE, DEBUGGING
-use, non_intrinsic :: linalg_mod, only : matprod, inprod
-use, non_intrinsic :: infnan_mod, only : is_nan
-use, non_intrinsic :: debug_mod, only : errstop, verisize
+! Generic modules
+use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, ONE, TENTH, DEBUGGING
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, eye
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
+use, non_intrinsic :: debug_mod, only : assert
 
 implicit none
 
@@ -78,28 +111,34 @@ real(RP), intent(in) :: rho
 real(RP), intent(in) :: sim(:, :)
 real(RP), intent(in) :: simi(:, :)
 
-! Output
+! Outputs
 integer(IK) :: jdrop
 
 ! Local variables
+character(len=*), parameter :: srname = 'SETDROP_TR'
 integer(IK) :: n
-real(RP) :: veta(size(sim, 1))
 real(RP) :: edgmax
+real(RP) :: itol
 real(RP) :: parsig
 real(RP) :: sigbar(size(sim, 1))
 real(RP) :: simid(size(sim, 1))
+real(RP) :: veta(size(sim, 1))
 real(RP) :: vsig(size(sim, 1))
-character(len=*), parameter :: srname = 'SETDROP_TR'
 
-! Get and verify the sizes
+! Sizes
 n = size(sim, 1)
+
+! Preconditions
 if (DEBUGGING) then
-    if (n < 1) then
-        call errstop(srname, 'SIZE(SIM, 1) < 1')
-    end if
-    call verisize(d, n)
-    call verisize(sim, n, n + 1)
-    call verisize(simi, n, n)
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
+    call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
+    call assert(all(is_finite(sim)), 'SIM is finite', srname)
+    call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
+    call assert(all(is_finite(simi)), 'SIMI is finite', srname)
+    itol = TENTH
+    call assert(all(abs(matprod(sim(:, 1:n), simi) - eye(n)) <= itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
+    call assert(.not. is_nan(actrem), 'ACTREM is not NaN', srname)
 end if
 
 ! JDROP = 0 by default. It cannot be removed, as JDROP may not be set below in some cases (e.g.,
@@ -136,22 +175,25 @@ if (actrem > ZERO .and. jdrop <= 0) then  ! Write JDROP <= 0 instead of JDROP ==
 end if
 
 if (DEBUGGING) then
-    if (actrem > ZERO .and. jdrop <= 0) then ! Write JDROP <= 0 instead of JDROP == 0 for robustness.
-        ! This can happen only if NaN occurs in VETA, which should not happen if the starting point
-        ! does not contain NaN and the trust-region/geometry steps never contain NaN.
-        call errstop(srname, 'ACTREM > 0 but JDROP < 1')
-    end if
+    call assert(jdrop >= 0 .and. jdrop <= n, '0 <= JDROP <= N', srname)
+    call assert(jdrop >= 1 .or. .not. actrem > 0, 'JDROP >= 1 unless ACTREM <= 0', srname)
 end if
 
 end function setdrop_tr
 
 
 function setdrop_geo(factor_alpha, factor_beta, rho, sim, simi) result(jdrop)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine finds (the index) of a current interpolation point to be replaced by
+! a geometry-improving point. See (15)--(16) of the COBYLA paper.
 ! N.B.: COBYLA never sets JDROP = N + 1.
+!--------------------------------------------------------------------------------------------------!
 
-use, non_intrinsic :: consts_mod, only : IK, RP, ONE, DEBUGGING
-use, non_intrinsic :: infnan_mod, only : is_nan
-use, non_intrinsic :: debug_mod, only : errstop, verisize
+! Generic modules
+use, non_intrinsic :: consts_mod, only : IK, RP, ONE, TENTH, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
+use, non_intrinsic :: linalg_mod, only : matprod, eye
 
 implicit none
 
@@ -162,26 +204,33 @@ real(RP), intent(in) :: factor_alpha
 real(RP), intent(in) :: factor_beta
 real(RP), intent(in) :: rho
 
-! Output
+! Outputs
 integer(IK) :: jdrop
 
 ! Local variables
-integer(IK) :: n
-real(RP) :: parsig
-real(RP) :: pareta
-real(RP) :: vsig(size(sim, 1))
-real(RP) :: veta(size(sim, 1))
 character(len=*), parameter :: srname = 'SETDROP_GEO'
+integer(IK) :: n
+real(RP) :: itol
+real(RP) :: pareta
+real(RP) :: parsig
+real(RP) :: veta(size(sim, 1))
+real(RP) :: vsig(size(sim, 1))
 
-! Get and verify the sizes.
+! Sizes
 n = size(sim, 1)
 if (DEBUGGING) then
-    if (n < 1) then
-        call errstop(srname, 'SIZE(SIM, 1) < 1')
-    end if
-    call verisize(sim, n, n + 1)
-    call verisize(simi, n, n)
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
+    call assert(all(is_finite(sim)), 'SIM is finite', srname)
+    call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
+    call assert(all(is_finite(simi)), 'SIMI is finite', srname)
+    itol = TENTH
+    call assert(all(abs(matprod(sim(:, 1:n), simi) - eye(n)) <= itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
 end if
+
+!====================!
+! Calculation starts !
+!====================!
 
 ! Calculate the values of sigma and eta.
 parsig = factor_alpha * rho
@@ -198,58 +247,81 @@ if (any(veta > pareta)) then
 elseif (any(vsig < parsig)) then
     jdrop = int(minloc(vsig, mask=(.not. is_nan(vsig)), dim=1), kind(jdrop))
 else
-    ! We arrive here if VSIG and VETA are all NaN, which can happen due to NaN in SIM and SIMI.
+    ! We arrive here if VSIG and VETA are all NaN, which can happen due to NaN in SIM and SIMI,
+    ! which should not happen unless there is a bug.
     jdrop = 0_IK
 end if
 
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+if (DEBUGGING) then
+    call assert(jdrop >= 0 .and. jdrop <= n, '0 <= JDROP <= N', srname)
+    call assert(jdrop >= 1 .or. any(is_nan(sim)) .or. any(is_nan(simi)), &
+        & 'JDROP >= 1 unless SIM or SIMI contains NaN', srname)
+end if
 end function setdrop_geo
 
 
 function geostep(jdrop, cpen, conmat, cval, fval, factor_gamma, rho, simi) result(d)
+!--------------------------------------------------------------------------------------------------!
+! This function calculates a geometry step so that the geometry of the interpolation set is improved
+! when SIM(:, JDRO_GEO) is replaced by SIM(:, N+1) + D.
+!--------------------------------------------------------------------------------------------------!
 
+! Generic modules
 use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, ONE, TWO, DEBUGGING
-use, non_intrinsic :: linalg_mod, only : matprod, inprod
-use, non_intrinsic :: debug_mod, only : errstop, verisize
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf, is_neginf
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, norm
 
 implicit none
 
 ! Inputs
 integer(IK), intent(in) :: jdrop
-real(RP), intent(in) :: simi(:, :)
-real(RP), intent(in) :: factor_gamma
-real(RP), intent(in) :: cpen
 real(RP), intent(in) :: conmat(:, :)
+real(RP), intent(in) :: cpen
 real(RP), intent(in) :: cval(:)
+real(RP), intent(in) :: factor_gamma
 real(RP), intent(in) :: fval(:)
 real(RP), intent(in) :: rho
+real(RP), intent(in) :: simi(:, :)
 
-! Output
+! Outputs
 real(RP) :: d(size(simi, 1))
 
 ! Local variables
+character(len=*), parameter :: srname = 'GEOSTEP'
 integer(IK) :: m
 integer(IK) :: n
-real(RP) :: cvmaxp
-real(RP) :: cvmaxm
-real(RP) :: vsig(size(simi, 1))
 real(RP) :: A(size(simi, 1), size(conmat, 1) + 1)
-character(len=*), parameter :: srname = 'GEOSTEP'
+real(RP) :: cvmaxm
+real(RP) :: cvmaxp
+real(RP) :: vsig(size(simi, 1))
 
-! Get and verify the sizes
+! Sizes
 m = size(conmat, 1)
 n = size(simi, 1)
+
+! Preconditions
 if (DEBUGGING) then
-    if (n < 1) then
-        call errstop(srname, 'SIZE(SIMI) is invalid')
-    end if
-    call verisize(fval, n + 1)
-    call verisize(conmat, m, n + 1)
-    call verisize(cval, n + 1)
-    call verisize(simi, n, n)
-    if (jdrop < 1_IK .or. jdrop > n) then
-        call errstop(srname, 'JDROP < 1 or JDROP > N')
-    end if
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
+    call assert(all(is_finite(simi)), 'SIMI is finite', srname)
+    call assert(size(fval) == n + 1 .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
+        & 'SIZE(FVAL) == NPT and FVAL is not NaN/+Inf', srname)
+    call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) == [M, N+1]', srname)
+    call assert(.not. any(is_nan(conmat) .or. is_neginf(conmat)), 'CONMAT does not contain NaN/-Inf', srname)
+    call assert(size(cval) == n + 1 .and. .not. any(is_nan(cval) .or. is_posinf(cval)), &
+        & 'SIZE(CVAL) == NPT and FVAL is not NaN/+Inf', srname)
+    call assert(jdrop >= 1 .and. jdrop <= n, '1 <= JDROP <= N', srname)
 end if
+
+!====================!
+! Calculation starts !
+!====================!
 
 ! VSIG(J) (J=1, .., N) is The Euclidean distance from vertex J to the opposite face of
 ! the current simplex. But what about vertex N+1?
@@ -268,6 +340,15 @@ if (TWO * inprod(d, A(:, m + 1)) < cpen * (cvmaxp - cvmaxm)) then
     d = -d
 end if
 
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
+    call assert(norm(d) <= TWO * rho, '|D| <= 2*RHO', srname)
+end if
 end function geostep
 
 
