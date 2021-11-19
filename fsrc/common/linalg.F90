@@ -563,8 +563,8 @@ if (DEBUGGING) then
     call assert(size(B, 1) == n .and. size(B, 2) == n, 'SIZE(B) == [N, N]', srname)
     call assert(istril(B) .or. .not. istril(A), 'If A is lower triangular, then so is B', srname)
     call assert(istriu(B) .or. .not. istriu(A), 'If A is upper triangular, then so is B', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS * real(n, RP)))
-    call assert(isinv(A, B, tol), 'B = A^(-1)', srname)
+    tol = max(1.0E-10_RP, min(1.0E-3_RP, 1.0E2_RP * EPS * real(n, RP)))
+    call assert(isinv(A, B, tol), 'B = A^{-1}', srname)
 end if
 
 end function inv
@@ -603,8 +603,17 @@ if (present(tol)) then
 else
     tol_loc = min(1.0E-3_RP, 1.0E2_RP * EPS * real(max(size(A, 1), size(A,2)), RP))
 end if
+tol_loc = maxval([tol_loc, tol_loc*maxval(abs(A)), tol_loc*maxval(abs(B))])
 
 is_inv = all(abs(matprod(A, B) - eye(n)) <= tol_loc) .or. all(abs(matprod(B, A) - eye(n)) <= tol_loc)
+!if (.not. is_inv) then
+!    write(16, *) A
+!    write(16, *) B
+!    write(16, *) maxval(abs(matprod(A, B) -eye(n)))
+!    write(16, *) maxval(abs(matprod(B, A) - eye(n)))
+!    write(16, *) n, tol, tol_loc
+!    close(16)
+!end if
 end function
 
 

@@ -6,7 +6,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, November 19, 2021 PM09:22:40
+! Last Modified: Friday, November 19, 2021 PM10:40:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -242,7 +242,8 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(findpole(cpen, evaluated, cval, fval) == n + 1, 'The best point is SIM(:, N+1)', srname)
+    call assert(findpole(cpen, evaluated, cval, fval) == n + 1 .or. info == DAMAGING_ROUNDING, &
+        & 'The best point is SIM(:, N+1)', srname)
     call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
     call assert(.not. any(is_nan(conmat) .or. is_neginf(conmat)), 'CONMAT does not contain NaN/-Inf', srname)
     call assert(size(cval) == n + 1 .and. .not. any(is_nan(cval) .or. is_posinf(cval)), &

@@ -1,12 +1,13 @@
-! INITIALIZE_MOD is a module containing subroutine(s) for initialization.
+module initialize_mod
+!--------------------------------------------------------------------------------------------------!
+! This module contains subroutines for initialization.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the COBYLA paper.
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, November 10, 2021 PM01:39:52
-
-module initialize_mod
+! Last Modified: Saturday, November 20, 2021 AM12:07:37
+!--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
@@ -15,20 +16,24 @@ public :: initxfc, initfilt
 
 contains
 
-subroutine initxfc(calcfc, iprint, maxfun, ctol, ftarget, rho, x0, nf, chist, conhist, conmat, cval, fhist, &
-    & fval, sim, xhist, evaluated, info)
+
+subroutine initxfc(calcfc, iprint, maxfun, ctol, ftarget, rhobeg, x0, nf, chist, conhist, conmat, &
+    & cval, fhist, fval, sim, xhist, evaluated, info)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine does the initialization concerning X, function values, and constraints.
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: pintrf_mod, only : FUNCON
-use, non_intrinsic :: evaluate_mod, only : evalfc
-use, non_intrinsic :: consts_mod, only : RP, IK, HUGENUM, DEBUGGING
-use, non_intrinsic :: info_mod, only : INFO_DFT
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: debug_mod, only : errstop, verisize
-use, non_intrinsic :: output_mod, only : retmssg, rhomssg, fmssg
-use, non_intrinsic :: linalg_mod, only : eye
-use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: checkexit_mod, only : checkexit
+use, non_intrinsic :: consts_mod, only : RP, IK, HUGENUM, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: evaluate_mod, only : evalfc
+use, non_intrinsic :: history_mod, only : savehist
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf, is_finite
+use, non_intrinsic :: info_mod, only : INFO_DFT
+use, non_intrinsic :: linalg_mod, only : eye
+use, non_intrinsic :: output_mod, only : retmssg, rhomssg, fmssg
+use, non_intrinsic :: pintrf_mod, only : FUNCON
 
 implicit none
 
@@ -38,12 +43,13 @@ integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
 real(RP), intent(in) :: ctol
 real(RP), intent(in) :: ftarget
-real(RP), intent(in) :: rho
+real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: x0(:)
 
 ! Outputs
 integer(IK), intent(out) :: info
 integer(IK), intent(out) :: nf
+logical, intent(out) :: evaluated(:)
 real(RP), intent(out) :: chist(:)
 real(RP), intent(out) :: conhist(:, :)
 real(RP), intent(out) :: conmat(:, :)
@@ -52,9 +58,9 @@ real(RP), intent(out) :: fhist(:)
 real(RP), intent(out) :: fval(:)
 real(RP), intent(out) :: sim(:, :)
 real(RP), intent(out) :: xhist(:, :)
-logical, intent(out) :: evaluated(:)
 
 ! Local variables
+character(len=*), parameter :: srname = 'INITIALIZE'
 integer(IK) :: j
 integer(IK) :: k
 integer(IK) :: m
@@ -69,9 +75,8 @@ real(RP) :: constr(size(conmat, 1))
 real(RP) :: cstrv
 real(RP) :: f
 real(RP) :: x(size(x0))
-character(len=*), parameter :: srname = 'INITIALIZE'
 
-! Get and verify the sizes.
+! Sizes
 m = size(conmat, 1)
 n = size(sim, 1)
 maxchist = size(chist)
@@ -79,36 +84,42 @@ maxconhist = size(conhist, 2)
 maxfhist = size(fhist)
 maxxhist = size(xhist, 2)
 maxhist = max(maxchist, maxconhist, maxfhist, maxxhist)
+
+! Preconditions
 if (DEBUGGING) then
-    if (n < 1) then
-        call errstop(srname, 'SIZE(SIM) is invalid')
-    end if
-    call verisize(conmat, m, n + 1)
-    call verisize(cval, n + 1)
-    call verisize(fval, n + 1)
-    call verisize(sim, n, n + 1)
-    call verisize(evaluated, n + 1)
-    if (maxchist > 0) then
-        call verisize(chist, maxhist)
-    end if
-    if (maxconhist > 0) then
-        call verisize(conhist, m, maxhist)
-    end if
-    if (maxfhist > 0) then
-        call verisize(fhist, maxhist)
-    end if
-    if (maxxhist > 0) then
-        call verisize(xhist, n, maxhist)
-    end if
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', srname)
+    call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
+    call assert(size(cval) == n + 1, 'SIZE(CVAL) == N+1', srname)
+    call assert(size(fval) == n + 1, 'SIZE(FVAL) == N+1', srname)
+    call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
+    call assert(size(evaluated) == n + 1, 'SIZE(EVALUATED) == N + 1', srname)
+    call assert(maxchist * (maxchist - maxhist) == 0, 'SIZE(CHIST) == 0 or MAXHIST', srname)
+    call assert(size(conhist, 1) == m .and. maxconhist * (maxconhist - maxhist) == 0, &
+        & 'SIZE(CONHIST, 1) == M, SIZE(CONHIST, 2) == 0 or MAXHIST', srname)
+    call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
+    call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
+        & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
+    call assert(all(is_finite(x0)), 'X0 is finite', srname)
+    call assert(rhobeg > 0, 'RHOBEG > 0', srname)
 end if
 
-sim = rho * eye(n, n + 1)
+!====================!
+! Calculation starts !
+!====================!
+
+sim = rhobeg * eye(n, n + 1)
 sim(:, n + 1) = x0
 fval = HUGENUM
 cval = HUGENUM
 info = INFO_DFT
 ! EVALUATED(J) = TRUE iff the function/constraint of SIM(:, J) has been evaluated.
 evaluated = .false.
+! Initialize FVAL, CVAL, and CONMAT. Otherwise, compilers may complain that they are not (completely)
+! initialized if the initialization aborts due to abnormality (see CHECKEXIT).
+fval = HUGENUM
+cval = HUGENUM
+conmat = -HUGENUM
 
 do k = 1, n + 1
     x = sim(:, n + 1)
@@ -117,7 +128,7 @@ do k = 1, n + 1
         j = n + 1
     else
         j = k - 1
-        x(j) = x(j) + rho
+        x(j) = x(j) + rhobeg
     end if
     call evalfc(calcfc, x, f, constr, cstrv)
     evaluated(j) = .true.
@@ -143,29 +154,60 @@ do k = 1, n + 1
         cval([j, n + 1]) = cval([n + 1, j])
         conmat(:, [j, n + 1]) = conmat(:, [n + 1, j])
         sim(:, n + 1) = x
-        sim(j, 1:j) = -rho  ! SIM(:, 1:N) is lower triangular.
+        sim(j, 1:j) = -rhobeg  ! SIM(:, 1:N) is lower triangular.
     end if
 
 end do
 
 nf = int(count(evaluated), kind(nf))
 
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(nf <= maxfun, 'NF <= MAXFUN', srname)
+    call assert(size(evaluated) == n + 1, 'SIZE(EVALUATED) == N + 1', srname)
+    call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
+    call assert(.not. any(evaluated .and. (is_nan(chist(1:min(nf, maxchist))) .or. &
+        & is_posinf(chist(1:min(nf, maxchist))))), 'CHIST does not contain NaN/Inf', srname)
+    call assert(size(conhist, 1) == m .and. size(conhist, 2) == maxconhist, &
+        & 'SIZE(CONHIST) == [M, MAXCONHIST]', srname)
+    call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
+    call assert(.not. any(is_nan(conmat) .or. is_neginf(conmat)), 'CONMAT does not contain NaN/-Inf', srname)
+    call assert(size(cval) == n + 1 .and. .not. any(is_nan(cval) .or. is_posinf(cval)), &
+        & 'SIZE(CVAL) == N+1 and CVAL is not NaN/+Inf', srname)
+    call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
+    call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
+    call assert(size(fval) == n + 1 .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
+        & 'SIZE(FVAL) == N+1 and FVAL is not NaN/+Inf', srname)
+    call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
+    call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
+    call assert(all(is_finite(sim)), 'SIM is finite', srname)
+end if
+
 ! It is unnecessary to call UPDATEPOLE in the end, as long as we ensure the following.
 ! 1. UPDATEPOLE is called at the beginning of a trust-region iteration.
-! 2. SELECTX is called before the possible exit after initialization (due to errors like NAN_X).
+! 2. SELECTX is called before the possible exit after initialization (due to errors like NAN_INF_X).
 
 end subroutine initxfc
 
 
 subroutine initfilt(conmat, ctol, cval, fval, sim, evaluated, nfilt, cfilt, confilt, ffilt, xfilt)
+!--------------------------------------------------------------------------------------------------!
 ! This subroutine initializes the filters (XFILT, etc) that will be used when selecting X at the
 ! end of the solver.
 ! N.B.:
 ! 1. Why not initialize the filters using XHIST, etc? Because the history is empty if the user
 ! chooses not to output it.
 ! 2. We decouple INITFILT with INITXFC so that it is easier to parallelize the latter if needed.
+!--------------------------------------------------------------------------------------------------!
+
+! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic :: debug_mod, only : errstop, verisize
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf, is_finite
 use, non_intrinsic :: selectx_mod, only : savefilt
 implicit none
 
@@ -191,26 +233,33 @@ integer(IK) :: maxfilt
 integer(IK) :: n
 character(len=*), parameter :: srname = 'INITFILT'
 
-! Get and verify the sizes.
+! Sizes
 m = size(conmat, 1)
 n = size(sim, 1)
 maxfilt = size(ffilt)
+
+! Preconditions
 if (DEBUGGING) then
-    if (n == 0) then
-        call errstop(srname, 'SIZE(SIM, 1) == 0')
-    end if
-    if (maxfilt == 0) then
-        call errstop(srname, 'SIZE(FFILT) == 0')
-    end if
-    call verisize(conmat, m, n + 1)
-    call verisize(cval, n + 1)
-    call verisize(fval, n + 1)
-    call verisize(sim, n, n + 1)
-    call verisize(evaluated, n + 1)
-    call verisize(confilt, m, maxfilt)
-    call verisize(cfilt, maxfilt)
-    call verisize(xfilt, n, maxfilt)
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(maxfilt >= 1, 'MAXFILT >= 1', srname)
+    call assert(size(confilt, 1) == m .and. size(confilt, 2) == maxfilt, 'SIZE(CONFILT) == [M, MAXFILT]', srname)
+    call assert(size(cfilt) == MAXFILT, 'SIZE(CFILT) == MAXFILT', srname)
+    call assert(size(xfilt, 1) == n .and. size(xfilt, 2) == maxfilt, 'SIZE(XFILT) == [N, MAXFILT]', srname)
+    call assert(size(ffilt) == MAXFILT, 'SIZE(FFILT) == MAXFILT', srname)
+    call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
+    call assert(.not. any(is_nan(conmat) .or. is_neginf(conmat)), 'CONMAT does not contain NaN/-Inf', srname)
+    call assert(size(cval) == n + 1 .and. .not. any(is_nan(cval) .or. is_posinf(cval)), &
+        & 'SIZE(CVAL) == N+1 and CVAL is not NaN/+Inf', srname)
+    call assert(size(fval) == n + 1 .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
+        & 'SIZE(FVAL) == N+1 and FVAL is not NaN/+Inf', srname)
+    call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
+    call assert(all(is_finite(sim)), 'SIM is finite', srname)
+    call assert(size(evaluated) == n + 1, 'SIZE(EVALUATED) == N + 1', srname)
 end if
+
+!====================!
+! Calculation starts !
+!====================!
 
 nfilt = 0_IK
 do i = 1, n
@@ -222,6 +271,26 @@ if (evaluated(n + 1)) then
     call savefilt(conmat(:, n + 1), cval(n + 1), ctol, fval(n + 1), sim(:, n + 1), nfilt, cfilt, confilt, ffilt, xfilt)
 end if
 
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(nfilt <= maxfilt, 'NFILT <= MAXFILT', srname)
+    call assert(size(confilt, 1) == m .and. size(confilt, 2) == maxfilt, 'SIZE(CONFILT) == [M, MAXFILT]', srname)
+    call assert(.not. any(is_nan(confilt(:, 1:nfilt)) .or. is_neginf(confilt(:, 1:nfilt))), &
+        & 'CONFILT does not contain NaN/-Inf', srname)
+    call assert(size(cfilt) == MAXFILT, 'SIZE(CFILT) == MAXFILT', srname)
+    call assert(.not. any(is_nan(cfilt(1:nfilt)) .or. is_posinf(cfilt(1:nfilt))), &
+        & 'CFILT does not contain NaN/Inf', srname)
+    call assert(size(xfilt, 1) == n .and. size(xfilt, 2) == maxfilt, 'SIZE(XFILT) == [N, MAXFILT]', srname)
+    call assert(.not. any(is_nan(xfilt(:, 1:nfilt))), 'XFILT does not contain NaN', srname)
+    ! The last calculated X can be Inf (finite + finite can be Inf numerically).
+    call assert(size(ffilt) == MAXFILT, 'SIZE(FFILT) == MAXFILT', srname)
+    call assert(.not. any(is_nan(ffilt(1:nfilt)) .or. is_posinf(ffilt(1:nfilt))), &
+        & 'FFILT does not contain NaN/+Inf', srname)
+end if
 end subroutine initfilt
 
 
