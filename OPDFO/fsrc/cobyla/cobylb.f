@@ -36,7 +36,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
      1 A(N,M+1),VSIG(N),VETA(N),SIGBAR(N),DX(N),W(NW),IACT(M+1),
      1 CONSAV(MPP),XSAV(N,NSMAX),DATSAV(MPP,NSMAX),XDROP(N),DATDROP(MPP)
      1 ,fhist(n+2+NSMAX), chist(n+2+NSMAX)
-     1 , DATMAT_OLD(M+2, N+1), SIM_OLD(N, N+1), SIMI_OLD(N, N)
+     1 , DATMAT_OLD(M+2, N+1), SIM_OLD(N, N+1), SIMI_OLD(N, N),erri(n,n)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
 C     Set the initial values of some parameters. The last column of SIM holds
@@ -366,8 +366,24 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C  200 ERROR=AMAX1(ERROR,ABS(TEMP))
 C      IF (ERROR .GT. 0.1) THEN
               ERROR=DMAX1(ERROR,DABS(TEMP))
+              !--------------------------------------------------------!
+              ! Zaikun 20211119
+              if (is_nan(temp)) error = hugenum
+              !--------------------------------------------------------!
           END DO
       END DO
+      !---------------------------------------------------------------!
+      ! Zaikun 20211119
+      if (.not. (error <= 0.1d0)) then
+          simi = inv(sim(:, 1:n))
+          erri = matprod(simi, sim(:, 1:n)) - eye(n)
+          if (any(is_nan(erri))) then
+              error = hugenum
+          else
+              error = maxval(abs(erri))
+          end if
+      end if
+      !---------------------------------------------------------------!
       IF (.NOT. (ERROR <= 0.1D0)) THEN
           DATMAT(1:M+2,1:N+1) = DATMAT_OLD
           SIM(1:N, 1:N+1) = SIM_OLD
