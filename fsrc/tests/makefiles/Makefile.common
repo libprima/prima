@@ -323,7 +323,7 @@ ltest_i2_r16_d1_tst_c ltest_i4_r16_d1_tst_c ltest_i8_r16_d1_tst_c ltest_i2_r16_d
 
 # NAG nagfor
 NFORT = nagfor -colour=error:red,warn:magenta,info:cyan \
-	-f$(FSTD) -info -mtrace -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique \
+	-f$(FSTD) -info -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique \
 	-Warn=allocation -Warn=constant_coindexing -Warn=subnormal
 ntest_i2_r4_d1_tst_c ntest_i4_r4_d1_tst_c ntest_i8_r4_d1_tst_c ntest_i2_r4_d0_tst_c ntest_i4_r4_d0_tst_c ntest_i8_r4_d0_tst_c: \
 	FC = $(NFORT) -nan -ieee=full
