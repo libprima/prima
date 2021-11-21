@@ -1,0 +1,23 @@
+#!/bin/bash
+
+DIR="$(realpath "$1")"
+PINTRFF90="pintrf.f90"
+PINTRF="$DIR/common/$PINTRFF90"
+
+if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
+    printf "\n%s is not a testing directory.\n\nExit.\n\n" "$DIR"
+    exit 1
+fi
+
+if grep -q  "^\s*public ::" "$PINTRF" ; then
+    sed -i '0,/^\s*public ::/d' "$PINTRF"
+fi
+sed -i '/^\s*end module/d ; s/abstract interface/interface/ ; s/FUNCON/calcfc/g ; s/FUN/calfun/g' "$PINTRF"
+
+find "$DIR" -type f \( -name "*.f90" -o -name "*.F90" \) -print0 \
+    | xargs -0 sed -i "s/, non_intrinsic ::// ; s/\[/\(\//g ; s/\]/\/\)/g ; /^\s*use pintrf_mod/d ; \
+    s|^procedure(FUN) :: calfun$|include \"$PINTRF\"| ; s|^procedure(FUNCON) :: calcfc$|include \"$PINTRF\"|"
+
+find "$DIR" -type f  -name "ffiles.txt" -print0 | xargs -0 sed -i "/^$PINTRFF90$/d"
+
+exit 0

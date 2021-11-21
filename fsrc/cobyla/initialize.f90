@@ -6,7 +6,7 @@ module initialize_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, November 20, 2021 AM12:07:37
+! Last Modified: Sunday, November 21, 2021 PM07:40:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -190,6 +190,7 @@ end if
 ! It is unnecessary to call UPDATEPOLE in the end, as long as we ensure the following.
 ! 1. UPDATEPOLE is called at the beginning of a trust-region iteration.
 ! 2. SELECTX is called before the possible exit after initialization (due to errors like NAN_INF_X).
+!!if (all(evaluated)) updatepole
 
 end subroutine initxfc
 
@@ -227,11 +228,12 @@ real(RP), intent(inout) :: ffilt(:)
 real(RP), intent(inout) :: xfilt(:, :)
 
 ! Local variables
+character(len=*), parameter :: srname = 'INITFILT'
 integer(IK) :: i
 integer(IK) :: m
 integer(IK) :: maxfilt
 integer(IK) :: n
-character(len=*), parameter :: srname = 'INITFILT'
+real(RP) :: x(size(sim, 1))
 
 ! Sizes
 m = size(conmat, 1)
@@ -262,14 +264,16 @@ end if
 !====================!
 
 nfilt = 0_IK
-do i = 1, n
+do i = 1, n + 1
     if (evaluated(i)) then
-        call savefilt(conmat(:, i), cval(i), ctol, fval(i), sim(:, i) + sim(:, n + 1), nfilt, cfilt, confilt, ffilt, xfilt)
+        if (i <= n) then
+            x = sim(:, i) + sim(:, n + 1)
+        else
+            x = sim(:, i)  ! I == N+1
+        end if
+        call savefilt(conmat(:, i), cval(i), ctol, fval(i), x, nfilt, cfilt, confilt, ffilt, xfilt)
     end if
 end do
-if (evaluated(n + 1)) then
-    call savefilt(conmat(:, n + 1), cval(n + 1), ctol, fval(n + 1), sim(:, n + 1), nfilt, cfilt, confilt, ffilt, xfilt)
-end if
 
 !====================!
 !  Calculation ends  !

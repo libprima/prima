@@ -6,7 +6,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, November 19, 2021 PM10:40:39
+! Last Modified: Sunday, November 21, 2021 PM07:29:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -114,7 +114,7 @@ end if
 end subroutine updatexfc
 
 
-subroutine updatepole(cpen, evaluated, conmat, cval, fval, sim, simi, info)
+subroutine updatepole(cpen, conmat, cval, fval, sim, simi, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine identifies the best vertex of the current simplex with respect to the merit
 ! function PHI = F + CPEN * CSTRV, and then switch this vertex to SIM(:, N + 1), namely the
@@ -136,7 +136,6 @@ implicit none
 
 ! Inputs
 real(RP), intent(in) :: cpen
-logical, intent(in) :: evaluated(:)
 
 ! In-outputs
 real(RP), intent(inout) :: conmat(:, :)
@@ -168,7 +167,6 @@ n = size(sim, 1)
 if (DEBUGGING) then
     call assert(cpen >= 0, 'CPEN >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
-    call assert(size(evaluated) == n + 1, 'SIZE(EVALUATED) == N+1', srname)
     call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
     call assert(.not. any(is_nan(conmat) .or. is_neginf(conmat)), 'CONMAT does not contain NaN/-Inf', srname)
     call assert(size(cval) == n + 1 .and. .not. any(is_nan(cval) .or. is_posinf(cval)), &
@@ -189,8 +187,7 @@ end if
 info = 0_IK
 
 ! Identify the optimal vertex of the current simplex.
-! N.B.: Maybe not all vertex of the simplex are initialized! Use EVALUATED as a mask.
-jopt = findpole(cpen, evaluated, cval, fval)
+jopt = findpole(cpen, cval, fval)
 
 ! Switch the best vertex into SIM(:, N+1) if it is not there already. Then update CONMAT etc.
 ! Before the update, save a copy of CONMAT etc. If the update is unsuccessful due to damaging
@@ -218,22 +215,19 @@ if (jopt <= n) then
 end if
 
 ! Check whether SIMI is a poor approximation to the inverse of SIM(:, 1:N).
-! Do this only if EVALUATED contains only TRUE.
-if (all(evaluated)) then
+erri = matprod(simi, sim(:, 1:n)) - eye(n)
+! Recalculate SIMI if the updated one is damaged by rounding errors.
+if (any(is_nan(erri)) .or. any(abs(erri) > itol)) then
+    simi = inv(sim(:, 1:n))
     erri = matprod(simi, sim(:, 1:n)) - eye(n)
-    ! Recalculate SIMI if the updated one is damaged by rounding errors.
-    if (any(is_nan(erri)) .or. any(abs(erri) > itol)) then
-        simi = inv(sim(:, 1:n))
-        erri = matprod(simi, sim(:, 1:n)) - eye(n)
-    end if
-    if (any(is_nan(erri)) .or. any(abs(erri) > itol)) then
-        info = DAMAGING_ROUNDING
-        fval = fval_old
-        conmat = conmat_old
-        cval = cval_old
-        sim = sim_old
-        simi = simi_old
-    end if
+end if
+if (any(is_nan(erri)) .or. any(abs(erri) > itol)) then
+    info = DAMAGING_ROUNDING
+    fval = fval_old
+    conmat = conmat_old
+    cval = cval_old
+    sim = sim_old
+    simi = simi_old
 end if
 
 !====================!
@@ -242,8 +236,8 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(findpole(cpen, evaluated, cval, fval) == n + 1 .or. info == DAMAGING_ROUNDING, &
-        & 'The best point is SIM(:, N+1)', srname)
+    call assert(findpole(cpen, cval, fval) == n + 1 .or. info == DAMAGING_ROUNDING, &
+        & 'The best point is SIM(:, N+1) unless the rounding is damaging', srname)
     call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
     call assert(.not. any(is_nan(conmat) .or. is_neginf(conmat)), 'CONMAT does not contain NaN/-Inf', srname)
     call assert(size(cval) == n + 1 .and. .not. any(is_nan(cval) .or. is_posinf(cval)), &
@@ -261,7 +255,7 @@ end if
 end subroutine updatepole
 
 
-function findpole(cpen, evaluated, cval, fval) result(jopt)
+function findpole(cpen, cval, fval) result(jopt)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine identifies the best vertex of the current simplex with respect to the merit
 ! function PHI = F + CPEN * CSTRV.
@@ -276,7 +270,6 @@ implicit none
 
 ! Inputs
 real(RP), intent(in) :: cpen
-logical, intent(in) :: evaluated(:)
 real(RP), intent(inout) :: cval(:)
 real(RP), intent(inout) :: fval(:)
 
@@ -295,7 +288,6 @@ n = int(size(fval) - 1, kind(n))
 ! Preconditions
 if (DEBUGGING) then
     call assert(cpen >= 0, 'CPEN >= 0', srname)
-    call assert(size(evaluated) == n + 1, 'SIZE(EVALUATED) == N+1', srname)
     call assert(size(cval) == n + 1 .and. .not. any(is_nan(cval) .or. is_posinf(cval)), &
         & 'SIZE(CVAL) == N+1 and CVAL is not NaN/+Inf', srname)
     call assert(size(fval) == n + 1 .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
@@ -307,17 +299,16 @@ end if
 !====================!
 
 ! Identify the optimal vertex of the current simplex.
-! N.B.: Maybe not all vertex of the simplex are initialized! Use EVALUATED as a mask.
 jopt = size(cval) ! We use N + 1 as the default value of JOPT.
 phi = fval + cpen * cval
-phimin = minval(phi, mask=evaluated)
+phimin = minval(phi)
 if (phimin < phi(jopt)) then  ! We keep JOPT = N + 1 unless there is a strictly better choice.
-    jopt = int(minloc(phi, mask=evaluated, dim=1), kind(jopt))
+    jopt = int(minloc(phi, dim=1), kind(jopt))
 end if
-if (cpen <= ZERO .and. any(cval < cval(jopt) .and. phi <= phimin .and. evaluated)) then
+if (cpen <= ZERO .and. any(cval < cval(jopt) .and. phi <= phimin)) then
     ! (CPEN <= ZERO) is indeed (CPEN == ZERO), and (PHI <= PHIMIN) is indeed (PHI == PHIMIN). We
     ! write them in this way to avoid equality comparison of real numbers.
-    jopt = int(minloc(cval, mask=(phi <= phimin .and. evaluated), dim=1), kind(jopt))
+    jopt = int(minloc(cval, mask=(phi <= phimin), dim=1), kind(jopt))
 end if
 
 !====================!

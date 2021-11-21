@@ -102,13 +102,13 @@ end if
 !====================!
 
 ! Return immediately if any column of XFILT is better than X.
-! BETTER is defined by the array constructor with an implicit do loop.
+! BETTER is defined by the array constructor with an implied do loop.
 better = [(isbetter([ffilt(i), cfilt(i)], [f, cstrv], ctol), i=1, nfilt)]
 if (any(better)) then
     return
 end if
 
-! Decide which columns of XFILT to keep. We use again the array constructor with an implicit do loop.
+! Decide which columns of XFILT to keep. We use again the array constructor with an implied do loop.
 keep = [(.not. isbetter([f, cstrv], [ffilt(i), cfilt(i)], ctol), i=1, nfilt)]
 ! If X is not better than any column of XFILT, then we remove the first (oldest) column of XFILT.
 if (count(keep) == nfiltmax) then
