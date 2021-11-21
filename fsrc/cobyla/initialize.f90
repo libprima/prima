@@ -6,7 +6,7 @@ module initialize_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, November 21, 2021 PM07:40:44
+! Last Modified: Sunday, November 21, 2021 PM08:00:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -202,7 +202,7 @@ subroutine initfilt(conmat, ctol, cval, fval, sim, evaluated, nfilt, cfilt, conf
 ! N.B.:
 ! 1. Why not initialize the filters using XHIST, etc? Because the history is empty if the user
 ! chooses not to output it.
-! 2. We decouple INITFILT with INITXFC so that it is easier to parallelize the latter if needed.
+! 2. We decouple INITXFC and INITFILT so that it is easier to parallelize the former if needed.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
