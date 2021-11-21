@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, November 19, 2021 PM11:09:15
+! Last Modified: Sunday, November 21, 2021 PM07:30:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -199,8 +199,6 @@ end if
 
 ! SIMI is the inverse of SIM(:, 1:N), which is lower triangular by Powell's initialization.
 simi = inv(sim(:, 1:n))
-! If we arrive here, the objective and constraints must have been evaluated at SIM(:, I) for all I.
-evaluated = .true.
 
 ! Initialize PREREM, ACTREM, JDROP_TR, and JDROP_GEO, or some compilers will complain that they are
 ! uninitialized when setting BAD_TRSTEP. Indeed, these values will not be used, because they will be
@@ -233,11 +231,13 @@ jdrop_tr = 0_IK
 ! COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
     ! Before the trust-region step, call UPDATEPOLE so that SIM(:, N + 1) is the optimal vertex.
-    call updatepole(cpen, evaluated, conmat, cval, fval, sim, simi, subinfo)
+    !-----------------------------------------------------------------------!
+    call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
     if (subinfo == DAMAGING_ROUNDING) then
         info = subinfo
         exit
     end if
+    !-----------------------------------------------------------------------!
 
     ! Does the current interpolation set has good geometry? It affects IMPROVE_GEO and REDUCE_RHO.
     good_geo = goodgeo(factor_alpha, factor_beta, rho, sim, simi)
@@ -282,8 +282,15 @@ do tr = 1, maxtr
         !!!!!!!!!!!!!!! Is it possible that PREREC <= 0????????????? It seems yes, but why?
         if (prerec > ZERO .and. cpen < 1.5E0_RP * barmu) then
             cpen = min(TWO * barmu, HUGENUM)
-            if (findpole(cpen, evaluated, cval, fval) <= n) then
+            if (findpole(cpen, cval, fval) <= n) then
                 ! Zaikun 20211111: Can this lead to infinite cycling?
+                !!-----------------------------------------------------------------------!
+                !call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
+                !if (subinfo == DAMAGING_ROUNDING) then
+                !    info = subinfo
+                !    exit
+                !end if
+                !!-----------------------------------------------------------------------!
                 cycle
             end if
         end if
@@ -322,6 +329,13 @@ do tr = 1, maxtr
         ! that is the job of UPDATEPOLE, which is called before each trust-region/geometry step.
         ! 2. UPDATEXFC does nothing when JDROP_TR == 0.
         call updatexfc(jdrop_tr, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
+        !!-----------------------------------------------------------------------!
+        !call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
+        !if (subinfo == DAMAGING_ROUNDING) then
+        !    info = subinfo
+        !    exit
+        !end if
+        !!-----------------------------------------------------------------------!
 
         ! Check whether to exit.
         subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
@@ -344,11 +358,13 @@ do tr = 1, maxtr
 
     if (improve_geo) then
         ! Before the geometry step, call UPDATEPOLE so that SIM(:, N + 1) is the optimal vertex.
-        call updatepole(cpen, evaluated, conmat, cval, fval, sim, simi, subinfo)
+        !-----------------------------------------------------------------------!
+        call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
         if (subinfo == DAMAGING_ROUNDING) then
             info = subinfo
             exit
         end if
+        !-----------------------------------------------------------------------!
 
         ! If the current interpolation set has good geometry, then we skip the geometry step.
         ! The code has a small difference from Powell's original code here: If the current geometry
@@ -392,6 +408,13 @@ do tr = 1, maxtr
             ! that is the job of UPDATEPOLE, which is called before each trust-region/geometry step.
             !--------------------------------------------------------------------------------------!
             call updatexfc(jdrop_geo, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
+            !!-----------------------------------------------------------------------!
+            !call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
+            !if (subinfo == DAMAGING_ROUNDING) then
+            !    info = subinfo
+            !    exit
+            !end if
+            !!-----------------------------------------------------------------------!
             ! Check whether to exit.
             subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
             if (subinfo /= INFO_DFT) then
@@ -407,6 +430,13 @@ do tr = 1, maxtr
             exit
         end if
         call resenhance(conmat, fval, rhoend, cpen, rho)
+        !!-----------------------------------------------------------------------!
+        !call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
+        !if (subinfo == DAMAGING_ROUNDING) then
+        !    info = subinfo
+        !    exit
+        !end if
+        !!-----------------------------------------------------------------------!
     end if
 end do
 

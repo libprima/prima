@@ -22,8 +22,8 @@ cd "$TEST_DIR" || exit 1
 
 make cleanall."$SOLVER" > /dev/null
 
-#for COMPILER in g n 9 a s i v f d x ; do
-for COMPILER in g n 9 s i v f d x ; do
+#for COMPILER in g n 9 a s i v f d x l; do
+for COMPILER in g n 9 s i v f d x l; do
     if [[ $COMPILER == 'f' || $COMPILER == 'v' || $COMPILER == 'x' ]] ; then
         TESTS="i4_r8_d1 i4_r8_d0 i2_r4_d1 i8_r4_d1"
     else
@@ -33,6 +33,7 @@ for COMPILER in g n 9 s i v f d x ; do
         INFO="$(make "$COMPILER"test_"$TEST"_tst_c."$SOLVER" | grep -i "starts\|warning\|error\|info\|fail|abort" \
             | grep -vi "[0-9]\s*warning\|[0-9]\s*error\|[0-9]\s*info\|info.f90\|information\|--warning\|--error" \
             | grep -v "interpolation error" \
+            | grep -v "WARNING --  When --chk x is specified" \
             | grep -v "^- \|^| \|^\* \|^+ \|^X \|\# " \
             )"
         if [[ "$COMPILER" == "9" ]] ; then
