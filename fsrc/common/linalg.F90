@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 19, 2021 PM03:20:43
+! Last Modified: Tuesday, November 23, 2021 PM03:15:39
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -601,9 +601,9 @@ end if
 if (present(tol)) then
     tol_loc = tol
 else
-    tol_loc = min(1.0E-3_RP, 1.0E2_RP * EPS * real(max(size(A, 1), size(A,2)), RP))
+    tol_loc = min(1.0E-3_RP, 1.0E2_RP * EPS * real(max(size(A, 1), size(A, 2)), RP))
 end if
-tol_loc = maxval([tol_loc, tol_loc*maxval(abs(A)), tol_loc*maxval(abs(B))])
+tol_loc = maxval([tol_loc, tol_loc * maxval(abs(A)), tol_loc * maxval(abs(B))])
 
 is_inv = all(abs(matprod(A, B) - eye(n)) <= tol_loc) .or. all(abs(matprod(B, A) - eye(n)) <= tol_loc)
 !if (.not. is_inv) then

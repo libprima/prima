@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, November 21, 2021 PM07:30:38
+! Last Modified: Sunday, November 21, 2021 PM08:45:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -236,6 +236,8 @@ do tr = 1, maxtr
     if (subinfo == DAMAGING_ROUNDING) then
         info = subinfo
         exit
+        ! Instead of exiting, what about setting GOOD_GEO to FALSE in order to activate a
+        ! geometry step of enhance_resolut?
     end if
     !-----------------------------------------------------------------------!
 

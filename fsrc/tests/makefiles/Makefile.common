@@ -1,13 +1,4 @@
-####################################################################################################
-# TODO: 9test_c is always remade when making 9test; the same for gtest_c on Windows. Why??? How to
-# solve this problem???
-####################################################################################################
-#
-#
-#
-#
-# This Makefile intends to test the modern-Fortran version of Powell's solvers on as many compilers
-# as possible.
+# This Makefile tests the modern-Fortran version of Powell's solvers on multiple compilers.
 #
 # The following compilers are tested:
 # 9: G95 (compilation only)
@@ -15,13 +6,14 @@
 # d: AOCC flang
 # f: LLVM flang
 # g: GNU gfortran
+# l: Lahey lf95
 # n: NAG nagfor
 # i: Intel ifort
 # s: Oracle sunf95
 # v: NVIDIA nvfortran
 # x: Intel ifx
 #
-# The following tests are available, where C = 9, a, d, f, g, n, i, s, v, x, and N = 2, 4, 8:
+# The following tests are available, where C = 9, a, d, f, g, l, n, i, s, v, x, and N = 2, 4, 8:
 # Ctest: test with compiler C
 # Ctest_c: test with compiler C; compilation only (do not run the binary)
 # Ctest_iN: test with compiler C and integer kind INT(N*8)
@@ -31,7 +23,7 @@
 #
 # Started: September 2021
 #
-# Last Modified: October 4, 2021
+# Last Modified: November 21, 2021
 ####################################################################################################
 
 
@@ -214,15 +206,15 @@ else
 	endif
 endif
 
-# Define SED.
+# Define SEDI.
 # When calling "sed -i" on macOS, it is obligatory to specify a string (e.g., .bak) after -i as the
 # extension for saving a backup. If the string is "", then no backup will be saved. If no string is
 # specified, then an error will be raised, saying "invalid command code".
-SED :=
+SEDI :=
 ifeq ($(OSTYPE), MAC)
-	SED = @sed -i ""
+	SEDI = @sed -i ""
 else
-	SED = @sed -i
+	SEDI = @sed -i
 endif
 
 # Define NPROCS to be the number of processors available to make tests in parallel.
@@ -242,6 +234,9 @@ endif
 # 1. Standard conformity.
 # 2. Runtime bound checking of arrays.
 # 3. IEEE 754 Floating-Point Exceptions (FPE).
+# Depending on the compiler, some FPEs are ignored for the tests with r4 (single-precision real),
+# e.g., over/underflow.
+####################################################################################################
 
 # Absoft af95
 # 1. For af95, -Rb imposes bound checking for arrays. But it is unhappy with zero-sized arrays as of
@@ -309,19 +304,23 @@ itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d
 	-fp-trap=divzero,invalid,overflow#,underflow,denormal
 	#-no-ftz -fp-model strict
 
-# Lahey Fortran
+# Lahey lf95
+# The compiler encounters the following internal error randomly. In that case, rerun the test.
+# ```
+# double free or corruption (!prev)
+# f95: /usr/local/lf6481/bin/../bin/jwd_fort: SIGABRT signal received.
+# ```
 LFORT = lf95 --f95 -v95s -v95o -AU --ap --chkglobal --lst --sav --xref --in --info --nswm --trace \
-		-w --warn --wo -g -O0  \
-		--chk a,e,f,o,s,u,x \
-		--trap #-WI,-u
+		-w --warn --wo --chk a,e,f,o,s,u,x
 ltest_i2_r4_d1_tst_c ltest_i4_r4_d1_tst_c ltest_i8_r4_d1_tst_c ltest_i2_r4_d0_tst_c ltest_i4_r4_d0_tst_c ltest_i8_r4_d0_tst_c: \
-	FC = $(LFORT)
+	FC = $(LFORT) #--trap
 ltest_i2_r8_d1_tst_c ltest_i4_r8_d1_tst_c ltest_i8_r8_d1_tst_c ltest_i2_r8_d0_tst_c ltest_i4_r8_d0_tst_c ltest_i8_r8_d0_tst_c: \
-	FC = $(LFORT)
+	FC = $(LFORT) --trap
 ltest_i2_r16_d1_tst_c ltest_i4_r16_d1_tst_c ltest_i8_r16_d1_tst_c ltest_i2_r16_d0_tst_c ltest_i4_r16_d0_tst_c ltest_i8_r16_d0_tst_c: \
-	FC = $(LFORT)
+	FC = $(LFORT) --trap
 
 # NAG nagfor
+# In massive tests, we skip the useful -mtrace option (print memory allocation trace), as its output is enormous.
 NFORT = nagfor -colour=error:red,warn:magenta,info:cyan \
 	-f$(FSTD) -info -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique \
 	-Warn=allocation -Warn=constant_coindexing -Warn=subnormal
@@ -420,8 +419,8 @@ $(TESTS_C) $(TESTS_INT_C):
 # Make will ignore the rule if such files do not exist, resulting in "No rule to make ..." mistake.
 #%_tst: %_tst_c
 %_tst:
-	@if [[ ! -f $@_c ]] ; \
-		then make $@_c ; \
+	@if [[ ! -f $@_c ]] ; then \
+		make $@_c ; \
 	else \
 		printf "\n$@_c exists!\n\n" ; \
 	fi
@@ -429,8 +428,11 @@ $(TESTS_C) $(TESTS_INT_C):
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
 	@if echo $@ | grep -q 9test ; then \
 		printf "\n$@ is skipped!\n\n" ; \
-	else \
+	elif [[ -x $@_c ]] ; then \
 		./$@_c 2>&1 | tee -a "$(LOG_DIR)/$@.log" ; \
+	else \
+		@printf "\n$@_c i not executable!\n\n" ; \
+		exit 126 ; \
 	fi
 	bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
 	bash $(CHCKTST) --warning "$(LOG_DIR)/$@.log"
@@ -490,10 +492,10 @@ header_%: DBG = $(shell echo $@ | sed "s/.*_d//" | sed "s/_.*//")
 header_%: QPAVLB = $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 16)
 header_%: source_%
 	@printf "\nPreparing the header file for the test.\n"
-	$(SED) "0,/^#define __QP_AVAILABLE__ [0-9]*/s//#define __QP_AVAILABLE__ $(QPAVLB)/" $(HEADERS)
-	$(SED) "0,/^#define __INTEGER_KIND__ [0-9]*/s//#define __INTEGER_KIND__ $(IK)/" $(HEADERS)
-	$(SED) "0,/^#define __REAL_PRECISION__ [0-9]*/s//#define __REAL_PRECISION__ $(RP)/" $(HEADERS)
-	$(SED) "0,/^#define __DEBUGGING__ [0-9]*/s//#define __DEBUGGING__ $(DBG)/" $(HEADERS)
+	$(SEDI) "0,/^#define __QP_AVAILABLE__ [0-9]*/s//#define __QP_AVAILABLE__ $(QPAVLB)/" $(HEADERS)
+	$(SEDI) "0,/^#define __INTEGER_KIND__ [0-9]*/s//#define __INTEGER_KIND__ $(IK)/" $(HEADERS)
+	$(SEDI) "0,/^#define __REAL_PRECISION__ [0-9]*/s//#define __REAL_PRECISION__ $(RP)/" $(HEADERS)
+	$(SEDI) "0,/^#define __DEBUGGING__ [0-9]*/s//#define __DEBUGGING__ $(DBG)/" $(HEADERS)
 	@printf "\nDone.\n\n"
 
 

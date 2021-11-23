@@ -28,7 +28,7 @@ case "$1" in
 		exit 0
 		;;
 	-e|--error)
-        ERRORS="$(grep -i "erro\|fail\|exception\|invalid\|overflow\|backtrace" "$LOGFILE" \
+        ERRORS="$(grep -i "erro\|fail\|exception\|invalid\|bad\|overflow\|backtrace" "$LOGFILE" \
             | grep -vi "[0-9]\s*error" \
             | grep -vi "Warning:\ Floating\ overflow\ occurred" \
             | grep -vi "Warning:\ Floating\ invalid\ operation\ occurred" \

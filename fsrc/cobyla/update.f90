@@ -6,7 +6,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, November 21, 2021 PM07:29:04
+! Last Modified: Sunday, November 21, 2021 PM08:41:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -299,7 +299,7 @@ end if
 !====================!
 
 ! Identify the optimal vertex of the current simplex.
-jopt = size(cval) ! We use N + 1 as the default value of JOPT.
+jopt = size(fval) ! We use N + 1 as the default value of JOPT.
 phi = fval + cpen * cval
 phimin = minval(phi)
 if (phimin < phi(jopt)) then  ! We keep JOPT = N + 1 unless there is a strictly better choice.
