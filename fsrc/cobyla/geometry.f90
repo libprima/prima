@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, November 19, 2021 PM08:04:13
+! Last Modified: Wednesday, November 24, 2021 PM03:17:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -255,9 +255,7 @@ end if
 !====================!
 
 if (DEBUGGING) then
-    call assert(jdrop >= 0 .and. jdrop <= n, '0 <= JDROP <= N', srname)
-    call assert(jdrop >= 1 .or. any(is_nan(sim)) .or. any(is_nan(simi)), &
-        & 'JDROP >= 1 unless SIM or SIMI contains NaN', srname)
+    call assert(jdrop >= 1 .and. jdrop <= n, '1 <= JDROP <= N', srname)
 end if
 end function setdrop_geo
 
