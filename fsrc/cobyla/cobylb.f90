@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, November 21, 2021 PM08:45:57
+! Last Modified: Wednesday, November 24, 2021 PM03:17:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -387,8 +387,10 @@ do tr = 1, maxtr
             ! N.B.: COBYLA never sets JDROP_GEO = N + 1.
             jdrop_geo = setdrop_geo(factor_alpha, factor_beta, rho, sim, simi)
 
-            ! If JDROP_GEO == 0 (due to NaN in SIM or SIMI), then we exit. Without this, memory
-            ! error will occur as JDROP_GEO will be used as an index of arrays.
+            ! JDROP_GEO is between 1 and N unless SIM and SIMI contains NaN, which should not happen
+            ! at this point unless there is a bug. Nevertheless, for robustness, we include the
+            ! following instruction to exit when JDROP_GEO == 0 (if JDROP_GEO does become 0, then
+            ! memory error will occur if we continue, as JDROP_GEO is used as an index of arrays.)
             if (jdrop_geo == 0) then
                 info = DAMAGING_ROUNDING
                 exit

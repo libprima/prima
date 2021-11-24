@@ -446,6 +446,7 @@ $(TESTS_C) $(TESTS_INT_C):
 %_tst_c: source_% header_%
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
+	@printf "\nCompiler:\n***********************\n%s\n***********************\n\n" "$(shell $(FC) --version)"
 	@if echo $@ | grep -q "ltest"; then \
 		$(FC) $(FFLAGS) -o $@ $(shell echo $(SRC) | sed 's|./common/pintrf.f90||') 2>&1 | tee -a "$(LOG_DIR)/$@.log" ; \
 	else  \
