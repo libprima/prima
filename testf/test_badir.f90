@@ -22,3 +22,8 @@ print *, y
 end subroutine bar
 
 end module test_mod
+
+program testprog
+use test_mod
+call test
+end program testprog
