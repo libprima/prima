@@ -1,7 +1,18 @@
 module prob_mod
+!--------------------------------------------------------------------------------------------------!
+! This module implements the following testing problems.
+! chebyqad
+! chrosen
+! hexagon
+! trigsabs
+! trigssqs
+! vardim
+!--------------------------------------------------------------------------------------------------!
 implicit none
 private
-public :: PNLEN, probname, calfun, getx0, getdelta0
+public :: PNLEN, probname
+public :: getx0, getdelta0, getcsize
+public :: calfun, calcfc
 
 integer, parameter :: SEED_DFT = 42
 integer, parameter :: PNLEN = 64
@@ -12,8 +23,8 @@ contains
 
 
 function getx0(n) result(x)
-
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, TENTH, PI
+use, non_intrinsic :: debug_mod, only : errstop
 use, non_intrinsic :: noise_mod, only : noisyx
 use, non_intrinsic :: param_mod, only : XNOISE_DFT
 use, non_intrinsic :: rand_mod, only : getseed, setseed, rand
@@ -24,6 +35,7 @@ implicit none
 integer(IK), intent(in) :: n
 real(RP) :: x(n)
 
+character(len=*), parameter :: srname = 'GETX0'
 integer(IK) :: i
 integer, allocatable :: seedsav(:)
 real(RP) :: ind(n)
@@ -35,11 +47,14 @@ ind = real([(i, i=1, n)], RP)
 
 x = ZERO
 
-if (lower(trimstr(probname)) == 'chebyqad') then
+select case (lower(trimstr(probname)))
+case ('chebyqad')
     x = ind / real([(n + 1, i=1, n)], RP)
-elseif (lower(trimstr(probname)) == 'chrosen') then
+case ('chrosen')
     x = -ONE
-elseif (lower(trimstr(probname)) == 'trigsabs') then
+case ('hexagon')
+    x = ONE
+case ('trigsabs')
     call getseed(seedsav)  ! Backup the current random seed in SEEDSAV.
     call setseed(SEED_DFT)  ! Set the random seed by SETSEED(SEED_DFT).
     xstar = PI * (TWO * rand(n) - ONE)  ! This is the \hat{x}^* in the NEWUOA paper.
@@ -47,7 +62,7 @@ elseif (lower(trimstr(probname)) == 'trigsabs') then
     x = xstar + TENTH * ystar
     call setseed(seedsav)  ! Recover the random seed by SEEDSAV.
     deallocate (seedsav)
-elseif (lower(trimstr(probname)) == 'trigssqs') then
+case ('trigssqs')
     call getseed(seedsav)  ! Backup the current random seed in SEEDSAV.
     call setseed(SEED_DFT)  ! Set the random seed by SETSEED(SEED_DFT).
     xstar = PI * (TWO * rand(n) - ONE)  ! This is the \hat{x}^* in the NEWUOA paper.
@@ -56,18 +71,20 @@ elseif (lower(trimstr(probname)) == 'trigssqs') then
     x = (xstar + TENTH * ystar) / theta
     call setseed(seedsav)  ! Recover the random seed by SEEDSAV.
     deallocate (seedsav)
-elseif (lower(trimstr(probname)) == 'vardim') then
+case ('vardim')
     x = ONE - ind / real(n, RP)
-end if
+case default
+    call errstop(srname, 'Unknown problem: '//trimstr(probname))
+end select
 
-x = noisyx(x, noise_level = XNOISE_DFT)
+x = noisyx(x, noise_level=XNOISE_DFT)
 
 end function getx0
 
 
 function getdelta0(n) result(delta)
-
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HALF, TENTH
+use, non_intrinsic :: debug_mod, only : errstop
 use, non_intrinsic :: noise_mod, only : noisy
 use, non_intrinsic :: param_mod, only : NOISE_DFT
 use, non_intrinsic :: string_mod, only : lower, trimstr
@@ -77,52 +94,106 @@ implicit none
 integer(IK), intent(in) :: n
 real(RP) :: delta
 
+character(len=*), parameter :: srname = 'GETDELTA0'
+
 delta = ONE
-if (lower(trimstr(probname)) == 'chebyqad') then
+select case (lower(trimstr(probname)))
+case ('chebyqad')
     delta = 0.2_RP / real(n + 1, RP)
-elseif (lower(trimstr(probname)) == 'chrosen') then
+case ('chrosen')
     delta = HALF
-elseif (lower(trimstr(probname)) == 'trigsabs') then
+case ('hexagon')
+    delta = HALF
+case ('trigsabs')
     delta = TENTH
-elseif (lower(trimstr(probname)) == 'trigssqs') then
+case ('trigssqs')
     delta = TENTH
-elseif (lower(trimstr(probname)) == 'vardim') then
+case ('vardim')
     delta = ONE / real(2 * n, RP)
-end if
-delta = noisy(delta, noise_level = NOISE_DFT)
+case default
+    call errstop(srname, 'Unknown problem: '//trimstr(probname))
+end select
+delta = noisy(delta, noise_level=NOISE_DFT)
 
 end function getdelta0
 
 
-subroutine calfun(x, f)
+function getcsize(n) result(m)
+use, non_intrinsic :: consts_mod, only : IK
+use, non_intrinsic :: debug_mod, only : errstop
+use, non_intrinsic :: string_mod, only : lower, trimstr
+implicit none
 
-use, non_intrinsic :: consts_mod, only : RP, ZERO
+character(len=*), parameter :: srname = 'GETCSIZE'
+integer(IK) :: m
+integer(IK), intent(in) :: n
+
+select case (lower(trimstr(probname)))
+case ('hexagon')
+    m = 14
+case default
+    call errstop(srname, 'Unknown problem: '//trimstr(probname))
+end select
+end function getcsize
+
+
+subroutine calfun(x, f)
+use, non_intrinsic :: consts_mod, only : RP
+use, non_intrinsic :: debug_mod, only : errstop
 use, non_intrinsic :: noise_mod, only : noisyfun
 use, non_intrinsic :: param_mod, only : FNOISE_DFT
 use, non_intrinsic :: string_mod, only : lower, trimstr
 
 implicit none
 
+character(len=*), parameter :: srname = 'CALFUN'
 real(RP), intent(in) :: x(:)
 real(RP), intent(out) :: f
 
-f = ZERO
-
-if (lower(trimstr(probname)) == 'chebyqad') then
+select case (lower(trimstr(probname)))
+case ('chebyqad')
     f = chebyqad(x)
-elseif (lower(trimstr(probname)) == 'chrosen') then
+case ('chrosen')
     f = chrosen(x)
-elseif (lower(trimstr(probname)) == 'trigsabs') then
+case ('trigsabs')
     f = trigsabs(x)
-elseif (lower(trimstr(probname)) == 'trigssqs') then
+case ('trigssqs')
     f = trigssqs(x)
-elseif (lower(trimstr(probname)) == 'vardim') then
+case ('vardim')
     f = vardim(x)
-end if
+case default
+    call errstop(srname, 'Unknown problem: '//trimstr(probname))
+end select
 
-f = noisyfun(x, f, noise_level = FNOISE_DFT, noise_type='gaussian')
+f = noisyfun(x, f, noise_level=FNOISE_DFT, noise_type='gaussian')
 
 end subroutine calfun
+
+
+subroutine calcfc(x, f, con)
+use, non_intrinsic :: consts_mod, only : RP
+use, non_intrinsic :: debug_mod, only : errstop
+use, non_intrinsic :: noise_mod, only : noisyfun
+use, non_intrinsic :: param_mod, only : FNOISE_DFT
+use, non_intrinsic :: string_mod, only : lower, trimstr
+
+implicit none
+
+character(len=*), parameter :: srname = 'CALCFC'
+real(RP), intent(in) :: x(:)
+real(RP), intent(out) :: f
+real(RP), intent(out) :: con(:)
+
+select case (lower(trimstr(probname)))
+case ('hexagon')
+    call hexagon(x, f, con)
+case default
+    call errstop(srname, 'Unknown problem: '//trimstr(probname))
+end select
+
+f = noisyfun(x, f, noise_level=FNOISE_DFT, noise_type='gaussian')
+con = noisyfun(x, f, noise_level=FNOISE_DFT, noise_type='gaussian')
+end subroutine calcfc
 
 
 pure function chebyqad(x) result(f)
@@ -133,7 +204,8 @@ implicit none
 real(RP), intent(in) :: x(:)
 real(RP) :: f
 
-integer(IK) :: i, n
+integer(IK) :: i
+integer(IK) :: n
 real(RP) :: y(size(x) + 1, size(x) + 1), tmp
 
 n = int(size(x), kind(n))
@@ -170,6 +242,37 @@ real(RP), parameter :: alpha = 1.0E2_RP
 n = int(size(x), kind(n))
 f = sum((x(1:n - 1) - ONE)**2 + alpha * (x(2:n) - x(1:n - 1)**2)**2); 
 end function chrosen
+
+
+subroutine hexagon(x, f, con)
+! Test problem 10 (Hexagon area) in Powell's original COBYLA package.
+use, non_intrinsic :: consts_mod, only : RP, ONE, HALF
+use, non_intrinsic :: debug_mod, only : assert
+implicit none
+
+character(len=*), parameter :: srname = 'HEXAGON'
+real(RP), intent(in) :: x(:)
+real(RP), intent(out) :: con(:)
+real(RP), intent(out) :: f
+
+call assert(size(x) == 9 .and. size(con) == 14, 'SIZE(X) == 9, SIZE(CON) == 14', srname)
+
+f = -HALF * (x(1) * x(4) - x(2) * x(3) + x(3) * x(9) - x(5) * x(9) + x(5) * x(8) - x(6) * x(7))
+con(1) = ONE - x(3)**2 - x(4)**2
+con(2) = ONE - x(9)**2
+con(3) = ONE - x(5)**2 - x(6)**2
+con(4) = ONE - x(1)**2 - (x(2) - x(9))**2
+con(5) = ONE - (x(1) - x(5))**2 - (x(2) - x(6))**2
+con(6) = ONE - (x(1) - x(7))**2 - (x(2) - x(8))**2
+con(7) = ONE - (x(3) - x(5))**2 - (x(4) - x(6))**2
+con(8) = ONE - (x(3) - x(7))**2 - (x(4) - x(8))**2
+con(9) = ONE - x(7)**2 - (x(8) - x(9))**2
+con(10) = x(1) * x(4) - x(2) * x(3)
+con(11) = x(3) * x(9)
+con(12) = -x(5) * x(9)
+con(13) = x(5) * x(8) - x(6) * x(7)
+con(14) = x(9)
+end subroutine hexagon
 
 
 function trigsabs(x) result(f)

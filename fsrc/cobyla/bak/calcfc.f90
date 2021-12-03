@@ -1,105 +1,28 @@
-!*==calcfc.f90  processed by SPAG 7.50RE at 00:16 on 26 May 2021
-      subroutine CALCFC(N, M, X, F, Con)
-      implicit none
-!*--CALCFC5
-!*++
-!*++ Dummy argument declarations rewritten by SPAG
-!*++
-      integer :: N, NProb
-      integer :: M
-      real*8, intent(IN), dimension(*) :: X
-      real*8, intent(OUT) :: F
-      real*8, intent(OUT), dimension(*) :: Con
-!*++
-!*++ End of declarations rewritten by SPAG
-!*++
-      if (NPRob == 1) then
-!
-!     Test problem 1 (Simple quadratic)
-!
-          F = 10.0 * (X(1) + 1.0)**2 + X(2)**2
-      elseif (NPRob == 2) then
-!
-!    Test problem 2 (2D unit circle calculation)
-!
-          F = X(1) * X(2)
-          Con(1) = 1.0 - X(1)**2 - X(2)**2
-      elseif (NPRob == 3) then
-!
-!     Test problem 3 (3D ellipsoid calculation)
-!
-          F = X(1) * X(2) * X(3)
-          Con(1) = 1.0 - X(1)**2 - 2.0 * X(2)**2 - 3.0 * X(3)**2
-      elseif (NPRob == 4) then
-!
-!     Test problem 4 (Weak Rosenbrock)
-!
-          F = (X(1)**2 - X(2))**2 + (1.0 + X(1))**2
-      elseif (NPRob == 5) then
-!
-!     Test problem 5 (Intermediate Rosenbrock)
-!
-          F = 10.0 * (X(1)**2 - X(2))**2 + (1.0 + X(1))**2
-      elseif (NPRob == 6) then
-!
-!     Test problem 6 (Equation (9.1.15) in Fletcher's book)
-!
-          F = -X(1) - X(2)
-          Con(1) = X(2) - X(1)**2
-          Con(2) = 1.0 - X(1)**2 - X(2)**2
-      elseif (NPRob == 7) then
-!
-!     Test problem 7 (Equation (14.4.2) in Fletcher's book)
-!
-          F = X(3)
-          Con(1) = 5.0 * X(1) - X(2) + X(3)
-          Con(2) = X(3) - X(1)**2 - X(2)**2 - 4.0 * X(2)
-          Con(3) = X(3) - 5.0 * X(1) - X(2)
-      elseif (NPRob == 8) then
-!
-!     Test problem 8 (Rosen-Suzuki)
-!
-          F = X(1)**2 + X(2)**2 + 2.0 * X(3)**2 + X(4)**2 - 5.0 * X(1)       &
-      &       - 5.0 * X(2) - 21.0 * X(3) + 7.0 * X(4)
-          Con(1) = 8.0 - X(1)**2 - X(2)**2 - X(3)**2 - X(4)**2 - X(1)    &
-      &            + X(2) - X(3) + X(4)
-          Con(2) = 10.0 - X(1)**2 - 2.0 * X(2)**2 - X(3)**2 - 2.0 * X(4)     &
-                  &            **2 + X(1) + X(4)
-          Con(3) = 5.0 - 2.0 * X(1)**2 - X(2)**2 - X(3)**2 - 2.0 * X(1)      &
-      &            + X(2) + X(4)
-      elseif (NPRob == 9) then
-!
-!     Test problem 9 (Hock and Schittkowski 100)
-!
-          F = (X(1) - 10.0)**2 + 5.0 * (X(2) - 12.0)**2 + X(3)                 &
-             &       **4 + 3.0 * (X(4) - 11.0)**2 + 10.0 * X(5)**6 + 7.0 * X(6)         &
-             &       **2 + X(7)**4 - 4.0 * X(6) * X(7) - 10.0 * X(6) - 8.0 * X(7)
-          Con(1) = 127.0 - 2.0 * X(1)**2 - 3.0 * X(2)**4 - X(3) - 4.0 * X(4)   &
-                  &            **2 - 5.0 * X(5)
-          Con(2) = 282.0 - 7.0 * X(1) - 3.0 * X(2) - 10.0 * X(3)**2 - X(4)     &
-      &            + X(5)
-          Con(3) = 196.0 - 23.0 * X(1) - X(2)**2 - 6.0 * X(6)**2 + 8.0 * X(7)
-          Con(4) = -4.0 * X(1)**2 - X(2)**2 + 3.0 * X(1) * X(2) - 2.0 * X(3)     &
-                  &            **2 - 5.0 * X(6) + 11.0 * X(7)
-      elseif (NPRob == 10) then
-!
-!     Test problem 10 (Hexagon area)
-!
-          F = -0.5 * (X(1) * X(4) - X(2) * X(3) + X(3) * X(9) - X(5) * X(9) + X(5) * X(8)    &
-      &       - X(6) * X(7))
-          Con(1) = 1.0 - X(3)**2 - X(4)**2
-          Con(2) = 1.0 - X(9)**2
-          Con(3) = 1.0 - X(5)**2 - X(6)**2
-          Con(4) = 1.0 - X(1)**2 - (X(2) - X(9))**2
-          Con(5) = 1.0 - (X(1) - X(5))**2 - (X(2) - X(6))**2
-          Con(6) = 1.0 - (X(1) - X(7))**2 - (X(2) - X(8))**2
-          Con(7) = 1.0 - (X(3) - X(5))**2 - (X(4) - X(6))**2
-          Con(8) = 1.0 - (X(3) - X(7))**2 - (X(4) - X(8))**2
-          Con(9) = 1.0 - X(7)**2 - (X(8) - X(9))**2
-          Con(10) = X(1) * X(4) - X(2) * X(3)
-          Con(11) = X(3) * X(9)
-          Con(12) = -X(5) * X(9)
-          Con(13) = X(5) * X(8) - X(6) * X(7)
-          Con(14) = X(9)
-      end if
-      end subroutine CALCFC
+subroutine calcfc(x, f, con)
+! Test problem 10 (Hexagon area) in Powell's original COBYLA package.
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HALF
+implicit none
+
+! Inputs
+real(RP), intent(in) :: x(:)
+
+! Outputs
+real(RP), intent(out) :: f
+real(RP), intent(out) :: con(:)
+
+f = -HALF * (x(1) * x(4) - x(2) * x(3) + x(3) * x(9) - x(5) * x(9) + x(5) * x(8) - x(6) * x(7))
+con(1) = ONE - x(3)**2 - x(4)**2
+con(2) = ONE - x(9)**2
+con(3) = ONE - x(5)**2 - x(6)**2
+con(4) = ONE - x(1)**2 - (x(2) - x(9))**2
+con(5) = ONE - (x(1) - x(5))**2 - (x(2) - x(6))**2
+con(6) = ONE - (x(1) - x(7))**2 - (x(2) - x(8))**2
+con(7) = ONE - (x(3) - x(5))**2 - (x(4) - x(6))**2
+con(8) = ONE - (x(3) - x(7))**2 - (x(4) - x(8))**2
+con(9) = ONE - x(7)**2 - (x(8) - x(9))**2
+con(10) = x(1) * x(4) - x(2) * x(3)
+con(11) = x(3) * x(9)
+con(12) = -x(5) * x(9)
+con(13) = x(5) * x(8) - x(6) * x(7)
+con(14) = x(9)
+end subroutine calcfc
