@@ -7,7 +7,7 @@ module history_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 19, 2021 PM03:19:14
+! Last Modified: Thursday, December 02, 2021 PM09:41:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -152,7 +152,7 @@ maxchist = int(size(chist), kind(maxchist))
 maxhist = max(maxxhist, maxfhist, maxconhist, maxchist)
 
 ! Preconditions
-if (DEBUGGING) then
+if (DEBUGGING) then  ! Called after each function evaluation when debugging; can be expensive.
     ! Check the size of X.
     call assert(n >= 1, 'N >= 1', srname)
     ! Check the sizes of XHIST, FHIST, CONHIST, CHIST.
@@ -210,7 +210,7 @@ end if
 !====================!
 
 ! Postconditions
-if (DEBUGGING) then
+if (DEBUGGING) then  ! Called after each function evaluation when debugging; can be expensive.
     call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
     call assert(.not. any(is_nan(xhist(:, 1:min(nf, maxxhist)))), 'XHIST does not contain NaN', srname)
     ! The last calculated X can be Inf (finite + finite can be Inf numerically).
