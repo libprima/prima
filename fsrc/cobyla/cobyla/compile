@@ -1,0 +1,6 @@
+#!/bin/bash
+
+SRC="$(cat ffiles.txt | tr '\n' ' ')"
+COMMON="$(cat ../../common/ffiles.txt | sed 's/\n\|^/\.\.\/\.\.\/common\//g' | tr '\n' ' ')"
+
+gfortran -g -O0 $COMMON $SRC calcfc.f90 test.f90

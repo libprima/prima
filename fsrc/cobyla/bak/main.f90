@@ -1,4 +1,6 @@
 program AA0001
+use cobyla_mod
+use pintrf_mod
 !*==aa0001.f90  processed by SPAG 7.50RE at 00:16 on 26 May 2021
 implicit none
 !*--AA00015
@@ -8,8 +10,11 @@ implicit none
 integer :: i, icase, iprint, m, maxfun, n, NPROB, info
 integer, dimension(51) :: iact
 real*8 :: rhobeg, rhoend, temp, tempa, tempb, tempc, tempd, f, ftarget, resmax
-real*8, dimension(3000) :: w, con
-real*8, dimension(10) :: x, xopt
+!real*8, dimension(3000) :: w, con
+real*8, dimension(14) :: w, con
+!real*8, dimension(10) :: x, xopt
+real*8, dimension(9) :: x, xopt
+procedure(FUNCON) :: calcfc
 !*++
 !*++ End of declarations rewritten by SPAG
 !*++
@@ -17,7 +22,7 @@ real*8, dimension(10) :: x, xopt
 !------------------------------------------------------------------------------
 !     Main program of test problems in Report DAMTP 1992/NA5.
 !------------------------------------------------------------------------------
-do NPRob = 1, 10
+do NPRob = 10, 10
     if (NPRob == 1) then
 !
 !     Minimization of a simple quadratic function of two variables.
@@ -149,7 +154,10 @@ do NPRob = 1, 10
         if (icase == 2) rhoend = 0.0001
         iprint = 1
         maxfun = 2000
-        call COBYLA(n, m, x, rhobeg, rhoend, iprint, maxfun, w, iact, f, info, ftarget, resmax, con)
+!        call COBYLA(n, m, x, rhobeg, rhoend, iprint, maxfun, w, iact, f, info, ftarget, resmax, con)
+        call cobyla(calcfc, n, m, x, rhobeg, rhoend, iprint, maxfun, f, info, ftarget, resmax, con)
+        write (*, *) info, resmax, f, x
+
         if (NPRob == 10) then
             tempa = x(1) + x(3) + x(5) + x(7)
             tempb = x(2) + x(4) + x(6) + x(8)
