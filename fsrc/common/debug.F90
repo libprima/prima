@@ -5,7 +5,7 @@
 !
 ! Started: July 2020.
 !
-! Last Modified: Thursday, November 11, 2021 AM10:57:43
+! Last Modified: Friday, December 03, 2021 AM11:14:06
 
 
 #include "ppf.h"
@@ -40,25 +40,19 @@ character(len=*), intent(in) :: description  ! Description of the assertion in h
 character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure
 
 if (.not. assertion) then
-#if __DEBUGGING__ == 1
     call errstop(trim(srname), 'Assertion failed: '//trim(description))
-#else
-    call warning(trim(srname), 'Assertion failed: '//trim(description))
-#endif
 end if
 end subroutine assert
 
 
-#if __DEBUGGING__ == 0
-subroutine warning(srname, mssg)
-implicit none
-character(len=*), intent(in) :: srname
-character(len=*), intent(in) :: mssg
+!subroutine warning(srname, mssg)
+!implicit none
+!character(len=*), intent(in) :: srname
+!character(len=*), intent(in) :: mssg
 
-print '(/1A/)', 'WARNING: '//trim(srname)//': '//trim(mssg)//'.'
+!print '(/1A/)', 'WARNING: '//trim(srname)//': '//trim(mssg)//'.'
 
-end subroutine warning
-#endif
+!end subroutine warning
 
 
 subroutine errstop(srname, mssg)

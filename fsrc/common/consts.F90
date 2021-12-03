@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, December 02, 2021 PM03:56:39
+! Last Modified: Friday, December 03, 2021 AM09:45:32
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -82,15 +82,12 @@ public :: OUTUNIT
 public :: RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT
 public :: MAXFUN_DIM_DFT, MAXMEMORY
 
-public :: debug_flag
 
 #if __DEBUGGING__ == 1
 logical, parameter :: DEBUGGING = .true.
 #else
 logical, parameter :: DEBUGGING = .false.
 #endif
-
-logical, parameter :: debug_flag = .false.
 
 #if __USE_ISO_FORTRAN_ENV_INTREAL__ != 1
 ! For gfortran, SELECTED_REAL_KIND(K) returns INT16 with K = 3--4, INT32 with k = 5--9, and INT64
