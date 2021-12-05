@@ -16,12 +16,14 @@ print *, trim(mssg)
 
 In Fortran 2003, this can be replaced by
 
-character, allocatable :: mssg(:)
+character(len=:), allocatable :: mssg
 mssg = 'ABC'  ! Automatic allocation upon intrinsic assignment.
 print *, mssg
 
 HOW TO FIND: search for 'character' or 'character(len' or 'len = ',
 and also 'trim('.
+
+Up to Absoft 22.0, af95 does not support allocatable strings.
 
 
 2. Related to 1, we do not take advantage of the "automatic allocation
