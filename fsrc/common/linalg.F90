@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, December 03, 2021 AM09:24:31
+! Last Modified: Sunday, December 05, 2021 PM10:26:27
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -970,7 +970,7 @@ function planerot(x) result(G)
 ! As in MATLAB, PLANEROT(X) returns a 2x2 Givens matrix G for X in R^2 so that Y = G*X has Y(2) = 0.
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, EPS, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 implicit none
 
 ! Inputs
@@ -997,13 +997,24 @@ end if
 ! Calculation starts !
 !====================!
 
-! The following is a stable and continuous implementation of the Givens rotation. It follows
-! Bindel, D., Demmel, J., Kahan, W., & Marques, O. (2002). On computing Givens rotations reliably
-! and efficiently. ACM Transactions on Mathematical Software (TOMS), 28(2), 206-238.
-if (abs(x(2)) > ZERO) then
+! Handle Inf/NaN
+if (any(is_nan(x))) then
+    G = eye(2_IK)  ! MATLAB sets G to NaN(2, 2)
+elseif (abs(x(2)) <= EPS * abs(x(1))) then
+    ! This case covers X(1) = 0 = X(2) and ABS(X(1)) = INF = ABS(X(2)). Do NOT change <= to <.
+    ! Setting G in this way ensures the continuity of G with respect to X except at 0.
+    G = sign(eye(2_IK), x(1))  ! MATLAB: if x(1) == 0, G = eye(2), else G = sign(x(1)) * eye(2)
+    ! Note that sign(0) = 1 in MATLAB!
+elseif (abs(x(1)) <= EPS * abs(x(2))) then
+    G = reshape([ZERO, -ONE, ONE, ZERO], [2, 2])
+    G = sign(G, x(2))  ! MATLAB : G = sign(x(2)) * [0, 1; -1, 0]
+else
+    ! The following is a stable and continuous implementation of the Givens rotation. It follows
+    ! Bindel, D., Demmel, J., Kahan, W., & Marques, O. (2002). On computing Givens rotations reliably
+    ! and efficiently. ACM Transactions on Mathematical Software (TOMS), 28(2), 206-238.
     ! 1. Modern compilers compute SQRT(TINY(0.0_RP)) and SQRT(HUGENUM/2.1) at compilation time.
     ! 2. The direct calculation without involving T and U seems to work better; use it if possible.
-    if (maxval(abs(x)) > sqrt(tiny(0.0_RP)) .and. maxval(abs(x)) < sqrt(HUGENUM / 2.1_RP)) then
+    if (minval(abs(x)) > sqrt(tiny(0.0_RP)) .and. maxval(abs(x)) < sqrt(HUGENUM / 2.1_RP)) then
         r = sqrt(sum(x**2))
         c = x(1) / r
         s = x(2) / r
@@ -1019,11 +1030,6 @@ if (abs(x(2)) > ZERO) then
         c = t / u
     end if
     G = reshape([c, -s, s, c], [2, 2])
-elseif (x(1) < ZERO) then
-    ! Setting G = -EYE(2,2) in this case ensures the continuity of G with respect to X except at 0.
-    G = -eye(2_IK)
-else
-    G = eye(2_IK)
 end if
 
 !====================!

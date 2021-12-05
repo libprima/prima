@@ -5,7 +5,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, October 17, 2021 PM07:53:34
+! Last Modified: Sunday, December 05, 2021 PM10:32:55
 
 implicit none
 private
@@ -18,10 +18,12 @@ contains
 subroutine test_solver(probs, mindim, maxdim, dimstride, nrand)
 
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN, ZERO
-use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, DIMSTRIDE_DFT, NRAND_DFT
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: newuoa_mod, only : newuoa
-use, non_intrinsic :: prob_mod, only : PNLEN, probname, calfun, getx0, getdelta0
+use, non_intrinsic :: noise_mod, only : noisy, noisy_calfun, orig_calfun
+use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, DIMSTRIDE_DFT, NRAND_DFT
+use, non_intrinsic :: pintrf_mod, only : FUN
+use, non_intrinsic :: prob_mod, only : PNLEN, problem_t, setup
 use, non_intrinsic :: rand_mod, only : setseed, rand
 use, non_intrinsic :: string_mod, only : trimstr, istr
 
@@ -33,6 +35,7 @@ integer(IK), optional, intent(in) :: maxdim
 integer(IK), optional, intent(in) :: dimstride
 integer(IK), optional, intent(in) :: nrand
 
+character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)
 integer(IK) :: dimstride_loc
 integer(IK) :: iprob
@@ -52,13 +55,16 @@ real(RP) :: rhoend
 real(RP), allocatable :: fhist(:)
 real(RP), allocatable :: x(:)
 real(RP), allocatable :: xhist(:, :)
+type(problem_t) :: prob
 
 if (present(probs)) then
     nprobs = int(size(probs), kind(nprobs))
     probs_loc(1:nprobs) = probs
 else
-    nprobs = 5_IK
-    probs_loc(1:nprobs) = ['chebyqad', 'chrosen ', 'trigsabs', 'trigssqs', 'vardim  ']
+!    nprobs = 5_IK
+!    probs_loc(1:nprobs) = ['chebyqad', 'chrosen ', 'trigsabs', 'trigssqs', 'vardim  ']
+    nprobs = 1
+    probs_loc(1:nprobs) = ['chebyqad']
 end if
 
 if (present(mindim)) then
@@ -112,7 +118,8 @@ do iprob = 1, nprobs
             if (rand() <= 0.1_RP) then
                 maxhist = 0
             end if
-            rhobeg = getdelta0(n)
+            call setup(prob, probname, n)
+            rhobeg = noisy(prob % Delta0)
             rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(6.0_RP * rand() - 5.0_RP))
             if (rand() <= 0.1_RP) then
                 rhoend = rhobeg
@@ -121,9 +128,10 @@ do iprob = 1, nprobs
                 rhobeg = ZERO
             end if
             call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
-            x = getx0(n)
+            x = noisy(prob % x0)
+            orig_calfun => prob % calfun
             print '(/1A, I3, 1A, I3)', trimstr(probname)//': N = ', n, ', Random test ', irand
-            call newuoa(calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, npt=npt, maxfun=maxfun, &
+            call newuoa(noisy_calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, npt=npt, maxfun=maxfun, &
                 & maxhist=maxhist, fhist=fhist, xhist=xhist, iprint=1_IK)
         end do
     end do
