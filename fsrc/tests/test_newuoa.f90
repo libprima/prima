@@ -5,7 +5,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, December 06, 2021 AM08:02:29
+! Last Modified: Tuesday, December 07, 2021 AM02:33:39
 
 implicit none
 private
@@ -17,14 +17,14 @@ contains
 
 subroutine test_solver(probs, mindim, maxdim, dimstride, nrand)
 
-use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN, ZERO
+use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN, ZERO, HUGENUM
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: newuoa_mod, only : newuoa
 use, non_intrinsic :: noise_mod, only : noisy, noisy_calfun, orig_calfun
 use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, DIMSTRIDE_DFT, NRAND_DFT
 use, non_intrinsic :: pintrf_mod, only : FUN
 use, non_intrinsic :: prob_mod, only : PNLEN, problem_t, construct, destruct
-use, non_intrinsic :: rand_mod, only : setseed, rand
+use, non_intrinsic :: rand_mod, only : setseed, rand, randn
 use, non_intrinsic :: string_mod, only : trimstr, istr
 
 implicit none
@@ -50,6 +50,7 @@ integer(IK) :: npt
 integer(IK) :: npt_list(10)
 integer(IK) :: nrand_loc
 real(RP) :: f
+real(RP) :: ftarget
 real(RP) :: rhobeg
 real(RP) :: rhoend
 real(RP), allocatable :: fhist(:)
@@ -118,13 +119,23 @@ do iprob = 1, nprobs
             if (rand() <= 0.1_RP) then
                 maxhist = 0
             end if
-            call construct(prob, probname, n)
+            if (rand() <= 0.1_RP) then
+                ftarget = -TEN**abs(TWO*randn())
+            elseif (rand() <= 0.1_RP) then
+                ! The probability of arriving here is 0.09. Note that the value of rand() changes.
+                ftarget = HUGENUM
+            else
+                ftarget = -HUGENUM
+            end if
+
+            call construct(prob, probname, n)  ! Construct the testing problem.
+
             rhobeg = noisy(prob % Delta0)
             rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(6.0_RP * rand() - 5.0_RP))
             if (rand() <= 0.1_RP) then
                 rhoend = rhobeg
             elseif (rand() <= 0.1_RP) then
-                ! The probability to arrive here is 0.09. Note that the value of rand() changes.
+                ! The probability of arriving here is 0.09. Note that the value of rand() changes.
                 rhobeg = ZERO
             end if
             call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
@@ -132,8 +143,10 @@ do iprob = 1, nprobs
             orig_calfun => prob % calfun
             print '(/1A, I3, 1A, I3)', trimstr(probname)//': N = ', n, ', Random test ', irand
             call newuoa(noisy_calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, npt=npt, maxfun=maxfun, &
-                & maxhist=maxhist, fhist=fhist, xhist=xhist, iprint=1_IK)
-            call destruct(prob)  ! Deallocate allocated arrays/pointers, and nullify the pointers.
+                & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, iprint=1_IK)
+
+            call destruct(prob)  ! Destruct the testing problem.
+            ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
         end do
     end do
 end do

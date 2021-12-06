@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, December 07, 2021 AM01:39:58
+! Last Modified: Tuesday, December 07, 2021 AM01:59:15
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -960,7 +960,7 @@ end function
 
 function planerot(x) result(G)
 ! As in MATLAB, PLANEROT(X) returns a 2x2 Givens matrix G for X in R^2 so that Y = G*X has Y(2) = 0.
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, EPS, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, ZERO, ONE, EPS, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 implicit none
@@ -1007,9 +1007,8 @@ elseif (abs(x(2)) <= EPS * abs(x(1))) then
     s = ZERO
 elseif (abs(x(1)) <= EPS * abs(x(2))) then
     ! N.B.: SIGN(A, X) = ABS(A) * sign of X /= A * sign of X !!! Therefore, it is WRONG to define G
-    ! as SIGN(RESHAPE([ZERO, -ONE, ONE, ZERO], [2, 2]), X(2)).
-    ! Such a mistake was committed on on 20211206, and it took a whole day to debug! 
-    ! NEVER use SIGN on arrays unless you really know what you are doing.
+    ! as SIGN(RESHAPE([ZERO, -ONE, ONE, ZERO], [2, 2]), X(2)). ! This mistake was committed on on
+    ! 20211206, taking a whole day to debug! NEVER use SIGN on arrays unless you are really sure.
     c = ZERO
     s = sign(ONE, x(2))  ! MATLAB: s = sign(x(2))
 else

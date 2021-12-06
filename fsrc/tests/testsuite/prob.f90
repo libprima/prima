@@ -16,15 +16,15 @@ private
 public :: PNLEN
 public :: problem_t
 public :: construct
+public :: destruct
 
 integer, parameter :: PNLEN = 64
 
 type problem_t
     character(len=PNLEN) :: probname  ! Should be allocatable, which is not supported by Absoft 22.0
     character :: probtype
-    integer(IK) :: n
     integer(IK) :: m
-    real(RP) :: Delta0
+    integer(IK) :: n
     real(RP), allocatable :: x0(:)
     real(RP), allocatable :: lb(:)
     real(RP), allocatable :: ub(:)
@@ -32,6 +32,7 @@ type problem_t
     real(RP), allocatable :: beq(:)
     real(RP), allocatable :: Aineq(:, :)
     real(RP), allocatable :: bineq(:)
+    real(RP) :: Delta0
     procedure(FUN), nopass, pointer :: calfun => null()
     procedure(FUNCON), nopass, pointer :: calcfc => null()
 end type problem_t
@@ -47,6 +48,36 @@ subroutine destruct(prob)
 ! Here we code an explicit destructor. It must be called when PROB is not used anymore.
 ! In F2003, this subroutine can be contained in the definition of PROBLEM_T as a FINAL subroutine.
 !--------------------------------------------------------------------------------------------------!
+implicit none
+! Inputs
+type(problem_t), intent(inout) :: prob
+
+!if (allocated(prob % probname)) then
+!    deallocate (prob % probname)
+!end if
+if (allocated(prob % x0)) then
+    deallocate (prob % x0)
+end if
+if (allocated(prob % lb)) then
+    deallocate (prob % lb)
+end if
+if (allocated(prob % ub)) then
+    deallocate (prob % ub)
+end if
+if (allocated(prob % Aeq)) then
+    deallocate (prob % Aeq)
+end if
+if (allocated(prob % beq)) then
+    deallocate (prob % beq)
+end if
+if (allocated(prob % Aineq)) then
+    deallocate (prob % Aineq)
+end if
+if (allocated(prob % bineq)) then
+    deallocate (prob % bineq)
+end if
+nullify (prob % calfun)
+nullify (prob % calcfc)
 end subroutine destruct
 
 
@@ -95,6 +126,7 @@ type(problem_t), intent(out) :: prob
 integer(IK) :: i
 
 prob % probname = 'chebyqad'
+prob % probtype = 'u'
 prob % n = n
 call safealloc(prob % x0, n)  ! Not needed if F2003 is fully supported. Needed by Absoft 22.0.
 prob % x0 = real([(i, i=1, n)], RP) / real([(n + 1, i=1, n)], RP)
