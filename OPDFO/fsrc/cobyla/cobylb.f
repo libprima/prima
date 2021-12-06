@@ -307,6 +307,12 @@ C
 C     Switch the best vertex into pole position if it is not there already,
 C     and also update SIM, SIMI and DATMAT.
 C
+!        write(16,*) 'nfvals', nfvals
+!        write(16,*) 'in updatepole'
+!        write(16,*) 'cf', parmu, datmat(m+2, 1:n+1), datmat(m+1, 1:n+1)
+!        write(16,*) 'sim', sim(1:n, 1:n+1)
+!        write(16,*) 'simi', simi(1:n, 1:n)
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DATMAT_OLD = DATMAT(1:M+2,1:N+1)
       SIM_OLD  = SIM(1:N, 1:N+1)
@@ -337,6 +343,10 @@ C          TEMPA=0.0
           END DO
       END IF
 
+!        write(16,*) 'out updatepole'
+!        write(16,*) 'cf', parmu, datmat(m+2, 1:n+1), datmat(m+1, 1:n+1)
+!        write(16,*) 'sim', sim(1:n, 1:n+1)
+!        write(16,*) 'simi', simi(1:n, 1:n)
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 2021-05-30
@@ -540,6 +550,11 @@ C      IF (PARMU*(CVMAXP-CVMAXM) .GT. SUMM+SUMM) DXSIGN=-1.0
       IF (PARMU*(CVMAXP-CVMAXM) > 2.0D0*SUMM) DXSIGN=-1.0D0
       !DXSIGN=SIGN(1.0D0, 2.0D0*SUMM-PARMU*(CVMAXP-CVMAXM))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!        write(16,*) 'in updatexfc', jdrop
+!        write(16,*) 'sim', sim(1:n, 1:n+1)
+!        write(16,*) 'simi', simi(1:n, 1:n)
+
 C
 C     Update the elements of SIM and SIMI, and set the next X.
 C
@@ -571,6 +586,9 @@ C          TEMP=0.0
           END IF
           X(J)=SIM(J,NP)+DX(J)
       END DO
+!        write(16,*) 'out updatexfc'
+!        write(16,*) 'sim', sim(1:n, 1:n+1)
+!        write(16,*) 'simi', simi(1:n, 1:n)
       GOTO 40
 C
 C     Calculate DX=x(*)-x(0). Branch if the length of DX is less than 0.5*RHO.
@@ -608,9 +626,16 @@ C the code, including uninitialized indices.
           END DO
       END DO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!       write(16,*) NFVALS
+!       write (16, *) 'simi', simi(1:n, 1:n)
+!       write (16, *) 'conmat', datmat(1:m, 1:n+1)
+!       write (16, *) 'fval', datmat(m+1, 1:n+1)
+!       write (16, *) 'A', A(1:n, 1:m + 1)
 
       CALL TRSTLP (N,M,A,CON,RHO,DX,IFULL,IACT,W(IZ),W(IZDOTA),
      1  W(IVMC),W(ISDIRN),W(IDXNEW),W(IVMD))
+
+!        write (16, *) 'tr', nfvals, dx(1:n)
 
       !IF (IFULL == 0) THEN
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -854,6 +879,9 @@ C
       end if
 C
 C     Revise the simplex by updating the elements of SIM, SIMI and DATMAT.
+!        write(16,*) 'in updatexfc', jdrop
+!        write(16,*) 'sim', sim(1:n, 1:n+1)
+!        write(16,*) 'simi', simi(1:n, 1:n)
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      TEMP=0.0
@@ -883,6 +911,9 @@ C          TEMP=0.0
       DO K=1,MPP
           DATMAT(K,JDROP)=CON(K)
       END DO
+!        write(16,*) 'out updatexfc'
+!        write(16,*) 'sim', sim(1:n, 1:n+1)
+!        write(16,*) 'simi', simi(1:n, 1:n)
 C
 C     Branch back for further iterations with the current RHO.
 C

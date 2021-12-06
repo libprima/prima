@@ -5,7 +5,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, December 05, 2021 PM10:32:55
+! Last Modified: Monday, December 06, 2021 AM08:02:29
 
 implicit none
 private
@@ -23,7 +23,7 @@ use, non_intrinsic :: newuoa_mod, only : newuoa
 use, non_intrinsic :: noise_mod, only : noisy, noisy_calfun, orig_calfun
 use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, DIMSTRIDE_DFT, NRAND_DFT
 use, non_intrinsic :: pintrf_mod, only : FUN
-use, non_intrinsic :: prob_mod, only : PNLEN, problem_t, setup
+use, non_intrinsic :: prob_mod, only : PNLEN, problem_t, construct, destruct
 use, non_intrinsic :: rand_mod, only : setseed, rand
 use, non_intrinsic :: string_mod, only : trimstr, istr
 
@@ -118,7 +118,7 @@ do iprob = 1, nprobs
             if (rand() <= 0.1_RP) then
                 maxhist = 0
             end if
-            call setup(prob, probname, n)
+            call construct(prob, probname, n)
             rhobeg = noisy(prob % Delta0)
             rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(6.0_RP * rand() - 5.0_RP))
             if (rand() <= 0.1_RP) then
@@ -133,6 +133,7 @@ do iprob = 1, nprobs
             print '(/1A, I3, 1A, I3)', trimstr(probname)//': N = ', n, ', Random test ', irand
             call newuoa(noisy_calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, npt=npt, maxfun=maxfun, &
                 & maxhist=maxhist, fhist=fhist, xhist=xhist, iprint=1_IK)
+            call destruct(prob)  ! Deallocate allocated arrays/pointers, and nullify the pointers.
         end do
     end do
 end do
