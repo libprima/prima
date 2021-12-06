@@ -15,7 +15,7 @@ implicit none
 private
 public :: PNLEN
 public :: problem_t
-public :: setup
+public :: construct
 
 integer, parameter :: PNLEN = 64
 
@@ -40,7 +40,22 @@ end type problem_t
 contains
 
 
-subroutine setup(prob, probname, n)
+subroutine destruct(prob)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine destructs a derived type PROB of type PROBLEM_T.
+! F2003 has the FINALIZATION mechanism for derived types, but not yet supported by all compilers.
+! Here we code an explicit destructor. It must be called when PROB is not used anymore.
+! In F2003, this subroutine can be contained in the definition of PROBLEM_T as a FINAL subroutine.
+!--------------------------------------------------------------------------------------------------!
+end subroutine destruct
+
+
+subroutine construct(prob, probname, n)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine constructs a derived type PROB of type PROBLEM_T.
+! In F2003, this subroutine can be contained in the definition of PROBLEM_T, but the declaration of
+! PROB must be changed to CLASS(PROBLEM_T).
+!--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : IK
 use, non_intrinsic :: debug_mod, only : errstop
 use, non_intrinsic :: string_mod, only : lower, trimstr
@@ -51,21 +66,21 @@ character(len=*), intent(in) :: probname
 integer(IK), intent(in) :: n
 
 ! Outputs
-type(problem_t), intent(inout) :: prob
+type(problem_t), intent(out) :: prob
 
 ! Local variables
 character(len=*), parameter :: srname = 'SETUP'
 
 select case (lower(trimstr(probname)))
 case ('chebyqad')
-    call setup_chebyqad(prob, n)
+    call construct_chebyqad(prob, n)
 case default
     call errstop(srname, 'Unkown problem: '//trimstr(probname))
 end select
-end subroutine setup
+end subroutine construct
 
 
-subroutine setup_chebyqad(prob, n)
+subroutine construct_chebyqad(prob, n)
 use, non_intrinsic :: consts_mod, only : RP, IK
 use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
@@ -85,7 +100,7 @@ call safealloc(prob % x0, n)  ! Not needed if F2003 is fully supported. Needed b
 prob % x0 = real([(i, i=1, n)], RP) / real([(n + 1, i=1, n)], RP)
 prob % Delta0 = 0.2_RP / real(n + 1, RP)
 prob % calfun => calfun_chebyqad
-end subroutine setup_chebyqad
+end subroutine construct_chebyqad
 
 
 !function getx0(n) result(x)

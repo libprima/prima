@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, December 05, 2021 PM10:26:27
+! Last Modified: Tuesday, December 07, 2021 AM01:39:58
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -606,14 +606,6 @@ end if
 tol_loc = maxval([tol_loc, tol_loc * maxval(abs(A)), tol_loc * maxval(abs(B))])
 
 is_inv = all(abs(matprod(A, B) - eye(n)) <= tol_loc) .or. all(abs(matprod(B, A) - eye(n)) <= tol_loc)
-!if (.not. is_inv) then
-!    write(16, *) A
-!    write(16, *) B
-!    write(16, *) maxval(abs(matprod(A, B) -eye(n)))
-!    write(16, *) maxval(abs(matprod(B, A) - eye(n)))
-!    write(16, *) n, tol, tol_loc
-!    close(16)
-!end if
 end function
 
 
@@ -997,17 +989,29 @@ end if
 ! Calculation starts !
 !====================!
 
-! Handle Inf/NaN
+! Define C = X(1) / R and S = X(2) / R with R = HYPOT(X(1), X(2)). Handle Inf/NaN, over/underflow.
 if (any(is_nan(x))) then
-    G = eye(2_IK)  ! MATLAB sets G to NaN(2, 2)
+    ! In this case, MATLAB sets G to NaN(2, 2). We refrain from doing this so that G is orthogonal.
+    c = ONE
+    s = ZERO
+elseif (abs(x(1)) <= 0 .and. abs(x(2)) <= 0) then  ! X(1) == 0 == X(2).
+    c = ONE
+    s = ZERO
 elseif (abs(x(2)) <= EPS * abs(x(1))) then
-    ! This case covers X(1) = 0 = X(2) and ABS(X(1)) = INF = ABS(X(2)). Do NOT change <= to <.
-    ! Setting G in this way ensures the continuity of G with respect to X except at 0.
-    G = sign(eye(2_IK), x(1))  ! MATLAB: if x(1) == 0, G = eye(2), else G = sign(x(1)) * eye(2)
-    ! Note that sign(0) = 1 in MATLAB!
+    ! N.B.:
+    ! 0. Do NOT change <= to <. This case is intended to cover ABS(X(1))==INF==ABS(X(2)). It covers
+    ! also X(1)==0==X(2), which is treated above separately to avoid the confusing SIGN(.,0) (see 1).
+    ! 1. SIGN(A, 0) = ABS(A) in Fortran but sign(0) = 0 in MATLAB, Python, Julia, and R!!!
+    ! 2. Taking SIGN(X(1)) into account ensures the continuity of G with respect to X except at 0.
+    c = sign(ONE, x(1))  ! MATLAB: c = sign(x(1))
+    s = ZERO
 elseif (abs(x(1)) <= EPS * abs(x(2))) then
-    G = reshape([ZERO, -ONE, ONE, ZERO], [2, 2])
-    G = sign(G, x(2))  ! MATLAB : G = sign(x(2)) * [0, 1; -1, 0]
+    ! N.B.: SIGN(A, X) = ABS(A) * sign of X /= A * sign of X !!! Therefore, it is WRONG to define G
+    ! as SIGN(RESHAPE([ZERO, -ONE, ONE, ZERO], [2, 2]), X(2)).
+    ! Such a mistake was committed on on 20211206, and it took a whole day to debug! 
+    ! NEVER use SIGN on arrays unless you really know what you are doing.
+    c = ZERO
+    s = sign(ONE, x(2))  ! MATLAB: s = sign(x(2))
 else
     ! The following is a stable and continuous implementation of the Givens rotation. It follows
     ! Bindel, D., Demmel, J., Kahan, W., & Marques, O. (2002). On computing Givens rotations reliably
@@ -1015,7 +1019,7 @@ else
     ! 1. Modern compilers compute SQRT(TINY(0.0_RP)) and SQRT(HUGENUM/2.1) at compilation time.
     ! 2. The direct calculation without involving T and U seems to work better; use it if possible.
     if (minval(abs(x)) > sqrt(tiny(0.0_RP)) .and. maxval(abs(x)) < sqrt(HUGENUM / 2.1_RP)) then
-        r = sqrt(sum(x**2))
+        r = sqrt(sum(x**2))  ! R = HYPOT(X(1), X(2))
         c = x(1) / r
         s = x(2) / r
     elseif (abs(x(1)) > abs(x(2))) then
@@ -1025,12 +1029,13 @@ else
         s = t / u
     else
         t = x(1) / x(2)
-        u = sign(sqrt(ONE + t**2), x(2))  ! MATLAB: u = sign(x(1))*sqrt(ONE + t**2)
-        s = ONE / u
+        u = sign(sqrt(ONE + t**2), x(2))  ! MATLAB: u = sign(x(2))*sqrt(ONE + t**2)
         c = t / u
+        s = ONE / u
     end if
-    G = reshape([c, -s, s, c], [2, 2])
 end if
+
+G = reshape([c, -s, s, c], [2, 2])
 
 !====================!
 !  Calculation ends  !
@@ -1040,6 +1045,8 @@ end if
 if (DEBUGGING) then
     call assert(size(G, 1) == 2 .and. size(G, 2) == 2, 'SIZE(G) == [2, 2]', srname)
     call assert(all(is_finite(G)), 'G is finite', srname)
+    call assert(abs(G(1, 1) - G(2, 2)) + abs(G(1, 2) + G(2, 1)) <= 0, &
+        & 'G(1,1) == G(2,2), G(1,2) = -G(2,1)', srname)
     tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS))
     call assert(isorth(G, tol), 'G is orthonormal', srname)
     r = sqrt(sum(x**2))
@@ -1047,6 +1054,7 @@ if (DEBUGGING) then
         call assert(norm(matprod(G, x) - [r, ZERO]) <= max(tol, tol * r), 'G*x = [|x|, 0]', srname)
     end if
 end if
+
 end function planerot
 
 

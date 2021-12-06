@@ -70,7 +70,9 @@
 !
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 26-06-2019: See the code below line number 80
+
       stage = 1
+!      write(16,*) stage, 'A', A(1:n, 1:m+1)
       ITERC=0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       IFULL=1
@@ -196,6 +198,8 @@
 !     rounding errors. The array DXNEW is used for working space.
 !
       IF (ICON <= NACT) GOTO 260
+!        write(16,*) icon, nact,A(:, iact(icon)),Z(1:n,1:n),zdota(1:nact)
+!        write(16,*)  'QRADD'
       KK=IACT(ICON)
       DO I=1,N
           DXNEW(I)=A(I,KK)
@@ -239,7 +243,7 @@
               !ALPHA=SP/TEMP
               !BETA=TOT/TEMP
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              G = planerot([sp, tot]); alpha = G(1,1); beta = -G(2,1)
+              G = planerot([sp, tot]); alpha = G(1,1); beta = G(1,2)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               TOT=TEMP
               DO I=1,N
@@ -251,6 +255,7 @@
           K=K-1
           GOTO 100
       END IF
+!        write(16,*) 'oadd', Z(1:n, 1:n), zdota(1:nact)
 !
 !     Add the new constraint if this can be done without a deletion from the
 !     active set.
@@ -396,7 +401,7 @@
           !ALPHA=ZDOTA(KP)/TEMP
           !BETA=SP/TEMP
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          G = planerot([zdota(kp), sp]); alpha = G(1,1); beta = -G(2,1)
+          G = planerot([zdota(kp), sp]); alpha = G(1,1); beta = G(1,2)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           ZDOTA(KP)=ALPHA*ZDOTA(K)
           ZDOTA(K)=TEMP
@@ -444,9 +449,11 @@
 !     Update IACT and ensure that the objective function continues to be
 !     treated as the last active constraint when MCON>M.
 !
+!       write(16,*) A(:, iact(1:nact)), Z(1:n, 1:n), zdota(1:nact)
   210 IACT(ICON)=IACT(NACT)
       IACT(NACT)=KK
       IF (MCON > M .AND. KK /= MCON) THEN
+!              write(16,*)  'QREXC'
           K=NACT-1
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          SP=0.0
@@ -462,7 +469,7 @@
           !ALPHA=ZDOTA(NACT)/TEMP
           !BETA=SP/TEMP
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          G = planerot([zdota(nact), sp]); alpha = G(1,1); beta =-G(2,1)
+          G = planerot([zdota(nact), sp]); alpha = G(1,1); beta =G(1,2)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           ZDOTA(NACT)=ALPHA*ZDOTA(K)
           ZDOTA(K)=TEMP
@@ -472,7 +479,7 @@
               Z(I,K)=TEMP
           END DO
           !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          ! Zaikun 20211118: 
+          ! Zaikun 20211118:
           zdota(nact) = inprod(Z(:, nact), A(:, iact(k)))
           !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           IACT(NACT)=IACT(K)
@@ -481,6 +488,7 @@
           VMULTC(K)=VMULTC(NACT)
           VMULTC(NACT)=TEMP
       END IF
+!            write(16,*) 'oexc', Z(1:n, 1:n), zdota(1:nact)
 !
 !     If stage one is in progress, then set SDIRN to the direction of the next
 !     change to the current vector of variables.
@@ -507,6 +515,7 @@
 !     Delete the constraint that has the index IACT(ICON) from the active set.
 !
   260 IF (ICON < NACT) THEN
+!              write(16,*)  'QREXC'
           ISAVE=IACT(ICON)
           VSAVE=VMULTC(ICON)
           K=ICON
@@ -526,7 +535,7 @@
           !ALPHA=ZDOTA(KP)/TEMP
           !BETA=SP/TEMP
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          G = planerot([zdota(kp), sp]); alpha = G(1,1); beta = -G(2,1)
+          G = planerot([zdota(kp), sp]); alpha = G(1,1); beta = G(1,2)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           ZDOTA(KP)=ALPHA*ZDOTA(K)
           ZDOTA(K)=TEMP
@@ -574,6 +583,7 @@
       DO I=1,N
           SDIRN(I)=TEMP*Z(I,NACT)
       END DO
+!        write(16,*) 'sdirn', sdirn(1:n)
       !write(17,*) iterc, 'vmultc', vmultc(1:mcon)
 !
 !     Calculate the step to the boundary of the trust region or take the step
@@ -716,6 +726,8 @@
       DO I=1,N
           DXNEW(I)=DX(I)+STEP*SDIRN(I)
       END DO
+
+!        write(16,*) 'sdirn', step, sdirn(1:n), dx(1:n)
       !write(17,*) iterc, 'ovd', vmultd(1:MCON)
       !write(17,*) iterc, nact, mcon
       !write(17,*) 'ad', A(1:n, 1:mcon)
@@ -805,6 +817,7 @@
         goto 490
       end if
 
+!        write(16,*) iterc, 'd', ratio, dold(1:n), dxnew(1:n), dx(1:n)
 
       DO K=1,MCON
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -836,6 +849,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !write(17,*) 'stage', stage, 'd', dx(1:n)
       stage = 2  !!! Stage 2 starts here.
+!      write(16,*) stage, 'A', A(1:n, 1:m+1)
       ITERC = 0
       resmax = maxval([b(1:m) - matprod(dx(1:n), A(:, 1:m)), 0.0D0])  ! Do not use MATMUL! Do not use ZERO unless it is defined!
       zdota(1:nact) = [(inprod(z(:, i), A(:, iact(i))), i=1, nact)]
