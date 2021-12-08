@@ -6,7 +6,7 @@
 # d: AOCC flang
 # f: LLVM flang
 # g: GNU gfortran
-# l: Lahey lf95
+# l: Lahey lf95 (compilation only)
 # n: NAG nagfor
 # i: Intel ifort
 # s: Oracle sunf95
@@ -72,6 +72,7 @@ SOLVER_SRC = $(shell sed "s/^/\.\/$(SOLVER)\//" $(SOLVER_DIR)/ffiles.txt)
 TESTSUITE_SRC = $(shell sed "s/^/\.\/$(TESTSUITE)\//" $(TESTSUITE_DIR)/ffiles.txt)
 DRIVER_SRC = test_$(SOLVER).f90 test.f90
 SRC = $(COMMON_SRC) $(SOLVER_SRC) $(TESTSUITE_SRC) $(DRIVER_SRC)
+SRC_NO_TEST = $(COMMON_SRC) $(SOLVER_SRC)
 
 # Headers.
 # N.B.: If we define COMMON as "./common/", then, when adapting the header, sed will complain
@@ -321,6 +322,7 @@ ltest_i2_r16_d1_tst_c ltest_i4_r16_d1_tst_c ltest_i8_r16_d1_tst_c ltest_i2_r16_d
 
 # NAG nagfor
 # In massive tests, we skip the useful -mtrace option (print memory allocation trace), as its output is enormous.
+# It is necessary to use "-I $(TESTSUITE_DIR)"; otherwise, the INCLUDE lines in the test suite will not work.
 NFORT = nagfor -colour=error:red,warn:magenta,info:cyan \
 	-I $(TESTSUITE_DIR) \
 	-f$(FSTD) -info -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique \
@@ -427,7 +429,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	fi
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
-	@if echo $@ | grep -q 9test ; then \
+	@if echo $@ | grep -q "9test\|ltest" ; then \
 		printf "\n$@ is skipped!\n\n" ; \
 	elif [[ -x $@_c ]] ; then \
 		./$@_c 2>&1 | tee -a "$(LOG_DIR)/$@.log" ; \
@@ -447,8 +449,10 @@ $(TESTS_C) $(TESTS_INT_C):
 %_tst_c: source_% header_%
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
-	@if echo $@ | grep -q "ltest"; then \
-		$(FC) $(FFLAGS) -o $@ $(shell echo $(SRC) | sed 's|./common/pintrf.f90||') 2>&1 | tee -a "$(LOG_DIR)/$@.log" ; \
+	@if echo $@ | grep -q "9test"; then \
+		$(FC) $(FFLAGS) -c $(shell echo $(SRC_NO_TEST)) 2>&1 | tee -a "$(LOG_DIR)/$@.log" ; \
+	elif echo $@ | grep -q "ltest"; then \
+		$(FC) $(FFLAGS) -c $(shell echo $(SRC_NO_TEST) | sed 's|./common/pintrf.f90||') 2>&1 | tee -a "$(LOG_DIR)/$@.log" ; \
 	else  \
 		$(FC) $(FFLAGS) -o $@ $(SRC) 2>&1 | tee -a "$(LOG_DIR)/$@.log" ; \
 	fi
