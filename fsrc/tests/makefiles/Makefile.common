@@ -1,12 +1,12 @@
 # This Makefile tests the modern-Fortran version of Powell's solvers on multiple compilers.
 #
 # The following compilers are tested:
-# 9: G95 (compilation only)
+# 9: G95 (compilation only; no compilation of the testing code, which contains F03 constructs unsupported by G95)
 # a: Absoft af95
 # d: AOCC flang
 # f: LLVM flang
 # g: GNU gfortran
-# l: Lahey lf95 (compilation only)
+# l: Lahey lf95 (compilation only; no compilation of the testing code, which contains F03 constructs unsupported by lf95)
 # n: NAG nagfor
 # i: Intel ifort
 # s: Oracle sunf95

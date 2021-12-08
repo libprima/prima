@@ -22,11 +22,12 @@ else
 end
 mincon = 0; % The minimal number of constraints of problems to test
 maxcon = min(5000, 100*maxdim); % The maximal number of constraints of problems to test
+sequential = false;
 thorough_test = 0;
 
 % Set options
 options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, randomizex0, ...
-    noiselevel, dnoiselevel, nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, thorough_test);
+    noiselevel, dnoiselevel, nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, sequential, thorough_test);
 
 % Select the problems to test.
 requirements = struct();
@@ -44,30 +45,51 @@ np = length(plist);
 ns = length(solvers);
 nr = options.randrun;
 maxfun = options.maxfun;
+sequential = options.sequential;
 
 % These arrays will record the function values and constraint values during the tests.
 frec = NaN(np, ns, nr, maxfun);
 crec = NaN(np, ns, nr, maxfun);
 pdim = NaN(np, 1);  % Data profile needs the dimension of the problem.
 
-parfor ip = 1 : np
-%for ip = 1 : np
-	orig_warning_state = warnoff(solvers);
+if sequential
+    for ip = 1 : np
+        orig_warning_state = warnoff(solvers);
 
-    pname = plist{ip};
+        pname = plist{ip};
 
-    fprintf('\n%3d. \t%s:\n', ip, upper(pname));
+        fprintf('\n%3d. \t%s:\n', ip, upper(pname));
 
-    prob = macup(pname);
-    pdim(ip) = length(prob.x0);
+        prob = macup(pname);
+        pdim(ip) = length(prob.x0);
 
-    for ir = 1 : nr
-        for is = 1 : ns
-            [frec(ip, is, ir, :), crec(ip, is, ir, :)] = testsolv(solvers{is}, prob, options);
+        for ir = 1 : nr
+            for is = 1 : ns
+                [frec(ip, is, ir, :), crec(ip, is, ir, :)] = testsolv(solvers{is}, prob, options);
+            end
         end
-    end
 
-    warning(orig_warning_state); % Restore the behavior of displaying warnings
+        warning(orig_warning_state); % Restore the behavior of displaying warnings
+    end
+else
+    parfor ip = 1 : np
+        orig_warning_state = warnoff(solvers);
+
+        pname = plist{ip};
+
+        fprintf('\n%3d. \t%s:\n', ip, upper(pname));
+
+        prob = macup(pname);
+        pdim(ip) = length(prob.x0);
+
+        for ir = 1 : nr
+            for is = 1 : ns
+                [frec(ip, is, ir, :), crec(ip, is, ir, :)] = testsolv(solvers{is}, prob, options);
+            end
+        end
+
+        warning(orig_warning_state); % Restore the behavior of displaying warnings
+    end
 end
 
 mrec = frec + options.cpenalty*crec;
@@ -125,7 +147,7 @@ return
 
 
 function options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, randomizex0, ...
-        noiselevel, dnoiselevel, nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, thorough_test) % Set options
+        noiselevel, dnoiselevel, nr, ctol, cpenalty, type, mindim, maxdim, mincon, maxcon, sequential, thorough_test) % Set options
 
 if (~isfield(options, 'rhoend'))
     options.rhoend = rhoend;
@@ -180,6 +202,9 @@ if (~isfield(options, 'mincon'))
 end
 if (~isfield(options, 'maxcon'))
     options.maxcon = maxcon;
+end
+if (~isfield(options, 'sequential'))
+    options.sequential = sequential;
 end
 if (~isfield(options, 'thorough_test'))
     options.thorough_test = thorough_test;
