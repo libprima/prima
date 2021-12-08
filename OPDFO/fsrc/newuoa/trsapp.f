@@ -165,8 +165,9 @@ C
 !          D(I)=TEMPA*(G(I)+HS(I))-TEMPB*STEP(I)
 !      END DO
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      d(1:n) = (g(1:n)+hs(1:n)) - dot_product(g(1:n)+hs(1:n),
-     1 step(1:n)/norm(step(1:n)))*(step(1:n)/norm(step(1:n)))
+!      d(1:n) = (g(1:n)+hs(1:n)) - dot_product(g(1:n)+hs(1:n),
+!     1 step(1:n)/norm(step(1:n)))*(step(1:n)/norm(step(1:n)))
+      d(1:n) = (g(1:n)+hs(1:n)) - project(g(1:n)+hs(1:n),step(1:n))
 
       if (norm(d(1:n)) <= sqrt(1.0D-2)*sqrt(gg)) then
           goto 160
