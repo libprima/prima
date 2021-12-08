@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, December 08, 2021 PM08:36:09
+! Last Modified: Wednesday, December 08, 2021 PM09:23:52
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -67,6 +67,10 @@ end interface r2update
 interface eye
     module procedure eye1, eye2
 end interface eye
+
+interface project
+    module procedure project1
+end interface
 
 interface isminor
     module procedure isminor0, isminor1
@@ -958,6 +962,61 @@ end if
 end function
 
 
+function project1(x, v) result(y)
+use, non_intrinsic :: consts_mod, only : RP, ONE, ZERO, EPS, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_inf, is_finite
+implicit none
+
+! Inputs
+real(RP), intent(in) :: x(:)
+real(RP), intent(in) :: v(:)
+
+! Outputs
+real(RP) :: y(size(x))
+
+! Local variables
+character(len=*), parameter :: srname = 'PROJECT1'
+real(RP) :: u(size(v))
+real(RP) :: tol
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(size(x) == size(v), 'SIZE(X) == SIZE(V)', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+if (all(abs(v) <= ZERO)) then
+    y = ZERO
+else if (any(is_inf(v))) then
+    where (is_inf(v))
+        u = sign(ONE, v)
+    elsewhere
+        u = ZERO
+    end where
+    u = u / norm(u)
+    y = inprod(x, u) * u
+else
+    u = v / norm(v)
+    y = inprod(x, u) * u
+end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+if (DEBUGGING) then
+    if (is_finite(norm(x)) .and. is_finite(norm(v))) then
+        tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS))
+        call assert(abs(inprod(x - y, v)) <= tol * norm(x - y) * norm(v), 'X - Y is orthogonal to V', srname)
+    end if
+end if
+end function project1
+
+
 function hypotenuse(x1, x2) result(r)
 ! HYPOTENUSE(X1, X2) returns SQRT(X1^2 + X2^2), handling over/underflow.
 use, non_intrinsic :: consts_mod, only : RP, ONE, HUGENUM, DEBUGGING
@@ -987,11 +1046,11 @@ else if (.not. is_finite(x2)) then
 else
     x = abs([x1, x2])
     x = [minval(x), maxval(x)]
-    if (x(1) > sqrt(tiny(0.0_RP)) .and. x(2) < sqrt(HUGENUM / 2.1_RP)) then
-        r = sqrt(sum(x**2))
-    else
-        r = x(2) * sqrt((x(1) / x(2))**2 + ONE)
-    end if
+!    if (x(1) > sqrt(tiny(0.0_RP)) .and. x(2) < sqrt(HUGENUM / 2.1_RP)) then
+!        r = sqrt(sum(x**2))
+!    else
+    r = x(2) * sqrt((x(1) / x(2))**2 + ONE)
+!    end if
 end if
 
 !====================!
