@@ -16,11 +16,6 @@
 ! BTW, write a projection function to be used in TRSAPP, BIGLAG, BIGDEN in NEWUOA. See lines 305-306
 ! of trustregion.f90 and 391-392, 675-676 of geometry.f90 of NEWUOA.
 !
-! HYPOT is used  in trustregion.f90 for updating ZDOTA. A robust version should be written (avoid
-! under/overflow in particular). This version may also be used in PLANEROT. This has been done
-! previously, but it
-! worsened a bit the performance of NEWUOA so it was discarded. Find it back, and test NEWUOA again.
-!
 ! 1. Shouldn't we remove the extreme barrier in the MATLAB/Python interface after it is
 !    implemented in FORTRAN?
 ! 3. merge UPDATEPOLE and UPDATEXFC
