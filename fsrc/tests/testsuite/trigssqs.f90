@@ -1,5 +1,5 @@
 subroutine construct_trigssqs(prob, n)
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, HALF, TEN, TENTH, PI
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, TEN, TENTH, PI
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: rand_mod, only : getseed, setseed, rand
 implicit none

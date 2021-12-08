@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, December 07, 2021 AM01:59:15
+! Last Modified: Wednesday, December 08, 2021 PM05:14:10
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -962,7 +962,7 @@ function planerot(x) result(G)
 ! As in MATLAB, PLANEROT(X) returns a 2x2 Givens matrix G for X in R^2 so that Y = G*X has Y(2) = 0.
 use, non_intrinsic :: consts_mod, only : RP, ZERO, ONE, EPS, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
+use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_inf
 implicit none
 
 ! Inputs
@@ -991,16 +991,20 @@ end if
 
 ! Define C = X(1) / R and S = X(2) / R with R = HYPOT(X(1), X(2)). Handle Inf/NaN, over/underflow.
 if (any(is_nan(x))) then
-    ! In this case, MATLAB sets G to NaN(2, 2). We refrain from doing this so that G is orthogonal.
+    ! In this case, MATLAB sets G to NaN(2, 2). We refrain from doing this to keep G orthogonal.
     c = ONE
     s = ZERO
+else if (all(is_inf(x))) then
+    ! In this case, MATLAB sets G to NaN(2, 2). We refrain from doing this to keep G orthogonal.
+    c = sign(1 / sqrt(2.0_RP), x(1))
+    s = sign(1 / sqrt(2.0_RP), x(2))
 elseif (abs(x(1)) <= 0 .and. abs(x(2)) <= 0) then  ! X(1) == 0 == X(2).
     c = ONE
     s = ZERO
 elseif (abs(x(2)) <= EPS * abs(x(1))) then
     ! N.B.:
-    ! 0. Do NOT change <= to <. This case is intended to cover ABS(X(1))==INF==ABS(X(2)). It covers
-    ! also X(1)==0==X(2), which is treated above separately to avoid the confusing SIGN(.,0) (see 1).
+    ! 0. With <= instead of <, this case covers X(1)==0==X(2), which is treated above separately to
+    ! avoid the confusing SIGN(.,0) (see 1).
     ! 1. SIGN(A, 0) = ABS(A) in Fortran but sign(0) = 0 in MATLAB, Python, Julia, and R!!!
     ! 2. Taking SIGN(X(1)) into account ensures the continuity of G with respect to X except at 0.
     c = sign(ONE, x(1))  ! MATLAB: c = sign(x(1))

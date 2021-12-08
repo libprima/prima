@@ -1,5 +1,5 @@
 subroutine construct_chrosen(prob, n)
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HALF
+use, non_intrinsic :: consts_mod, only : IK, ONE, HALF
 use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 
