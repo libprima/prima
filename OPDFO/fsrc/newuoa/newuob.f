@@ -243,7 +243,10 @@ C behavior of the code, including uninitialized indices.
       DO I=1,N
           DSQ=DSQ+D(I)**2
       END DO
-      DNORM=DMIN1(DELTA,DSQRT(DSQ))
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!      DNORM=DMIN1(DELTA,DSQRT(DSQ))
+      dnorm = min(delta, norm(d(1:n)))
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       IF (DNORM < HALF*RHO) THEN
           KNEW=-1
           DELTA=TENTH*DELTA
@@ -387,7 +390,8 @@ C
 !          end if
           DSQ = DOT_PRODUCT(D(1:N), D(1:N))
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DNORM = MIN(SQRT(DOT_PRODUCT(D(1:N), D(1:N))), DSTEP)
+      !DNORM = MIN(SQRT(DOT_PRODUCT(D(1:N), D(1:N))), DSTEP)
+      dnorm = min(dstep, norm(d(1:n)))
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
