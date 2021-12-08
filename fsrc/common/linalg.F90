@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, December 08, 2021 PM10:50:36
+! Last Modified: Wednesday, December 08, 2021 PM11:23:38
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -2051,11 +2051,12 @@ end if
 end function issymmetric
 
 
-pure function norm(x, p) result(y)
+function norm(x, p) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates the P-norm of a vector X.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, ONE, ZERO
+use, non_intrinsic :: consts_mod, only : RP, ONE, TWO, ZERO
+use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_posinf
 implicit none
 
@@ -2067,10 +2068,21 @@ real(RP), intent(in), optional :: p
 real(RP) :: y
 
 ! Local variables
+character(len=*), parameter :: srname = 'NORM'
 real(RP) :: scaling
+real(RP) :: p_loc
+
+if (present(p)) then
+    p_loc = p
+    call assert(p >= 0, 'P >= 0', srname)
+else
+    p_loc = TWO
+end if
 
 if (size(x) == 0) then
     y = ZERO
+else if (p_loc <= 0) then
+    y = count(abs(x) > 0)
 elseif (.not. all(is_finite(x))) then
     ! If X contains NaN, then Y is NaN. Otherwise, Y is Inf when X contains +/-Inf.
     y = sum(abs(x))
@@ -2078,13 +2090,16 @@ elseif (.not. any(abs(x) > ZERO)) then
     ! The following is incorrect without checking the last case, as X may be all NaN.
     y = ZERO
 else
-    if (.not. present(p)) then
-        y = sqrt(sum(x**2))
-    else if (is_posinf(p)) then
+    if (is_posinf(p_loc)) then
         y = maxval(abs(x))
+    elseif (.not. present(p) .or. abs(p_loc - TWO) <= 0) then
+        !y = sqrt(sum(x**2))
+        scaling = maxval(abs(x))
+        y = scaling * sqrt(sum((x / scaling)**2))
     else
-        scaling = max(tiny(1.0_RP), sqrt(maxval(abs(x)) * minval(abs(x), mask=(abs(x) > ZERO))))
-        y = scaling * sum(abs(x / scaling)**p)**(ONE / p)
+        !scaling = max(tiny(1.0_RP), sqrt(maxval(abs(x)) * minval(abs(x), mask=(abs(x) > ZERO))))
+        scaling = maxval(abs(x))
+        y = scaling * sum(abs(x / scaling)**p_loc)**(ONE / p_loc)
     end if
 end if
 
