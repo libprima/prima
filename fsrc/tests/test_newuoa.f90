@@ -5,7 +5,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wednesday, December 08, 2021 PM03:19:05
+! Last Modified: Wednesday, December 08, 2021 PM05:04:12
 
 implicit none
 private
@@ -22,7 +22,6 @@ use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: newuoa_mod, only : newuoa
 use, non_intrinsic :: noise_mod, only : noisy, noisy_calfun, orig_calfun
 use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, DIMSTRIDE_DFT, NRAND_DFT
-use, non_intrinsic :: pintrf_mod, only : FUN
 use, non_intrinsic :: prob_mod, only : PNLEN, problem_t, construct, destruct
 use, non_intrinsic :: rand_mod, only : setseed, rand, randn
 use, non_intrinsic :: string_mod, only : trimstr, istr
