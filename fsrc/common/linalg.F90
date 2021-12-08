@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, December 08, 2021 PM11:23:38
+! Last Modified: Thursday, December 09, 2021 AM12:48:34
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -982,6 +982,7 @@ real(RP) :: y(size(x))
 ! Local variables
 character(len=*), parameter :: srname = 'PROJECT1'
 real(RP) :: u(size(v))
+real(RP) :: scaling
 real(RP) :: tol
 
 ! Preconditions
@@ -1004,10 +1005,14 @@ else if (any(is_inf(v))) then
         u = ZERO
     end where
     u = u / norm(u)
-    y = inprod(x, u) * u
+!    y = inprod(x, u) * u
+    scaling = maxval(abs(x))  ! The scaling seems to reduce the rounding error.
+    y = scaling * inprod(x / scaling, u) * u
 else
     u = v / norm(v)
-    y = inprod(x, u) * u
+!    y = inprod(x, u) * u
+    scaling = maxval(abs(x))  ! The scaling seems to reduce the rounding error.
+    y = scaling * inprod(x / scaling, u) * u
 end if
 
 !====================!
@@ -1019,11 +1024,10 @@ if (DEBUGGING) then
     if (is_finite(norm(x)) .and. is_finite(norm(v))) then
         tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS))
         call assert(norm(y) <= (ONE + tol) * norm(x), 'NORM(Y) <= NORM(X)', srname)
-!        write (16, *) inprod(x - y, v), norm(x - y), norm(v), norm(x), norm(y)
-!        close (16)
-!        ! The following test may not be passed.
-!        call assert(abs(inprod(x - y, v)) <= max(tol, tol * norm(x - y) * norm(v)), &
-!           & 'X - Y is orthogonal to V', srname)
+        call assert(norm(x - y) <= (ONE + tol) * norm(x), 'NORM(X - Y) <= NORM(X)', srname)
+        ! The following test may not be passed.
+        call assert(abs(inprod(x - y, v)) <= max(tol, tol * max(norm(x - y) * norm(v), abs(inprod(x, v)))), &
+           & 'X - Y is orthogonal to V', srname)
     end if
 end if
 end function project1
@@ -1087,8 +1091,11 @@ end if
 if (DEBUGGING) then
     if (is_finite(norm(x)) .and. is_finite(sum(V**2))) then
         tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS))
-        call assert(norm(matprod(x - y, V)) <= max(tol, tol * norm(x - y) * sqrt(real(size(V, 1) &
-            & + size(V, 2), RP)) * maxval(abs(V))), 'X - Y is orthogonal to V', srname)
+        call assert(norm(y) <= (ONE + tol) * norm(x), 'NORM(Y) <= NORM(X)', srname)
+        call assert(norm(x - y) <= (ONE + tol) * norm(x), 'NORM(X - Y) <= NORM(X)', srname)
+        ! The following test may not be passed.
+        call assert(norm(matprod(x - y, V)) <= max(tol, tol * max(norm(x - y) * sqrt(sum(V**2)), &
+            & norm(matprod(x, V)))), 'X - Y is orthogonal to V', srname)
     end if
 end if
 end function project2
@@ -1397,7 +1404,7 @@ n = int(size(A, 2), kind(n))
 if (DEBUGGING) then
     call assert(i >= 1 .and. i <= n, '1 <= i <= N', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS * real(n, RP)))
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  !! Costly!
 end if
 
@@ -2094,11 +2101,11 @@ else
         y = maxval(abs(x))
     elseif (.not. present(p) .or. abs(p_loc - TWO) <= 0) then
         !y = sqrt(sum(x**2))
-        scaling = maxval(abs(x))
+        scaling = maxval(abs(x))  ! The scaling seems to reduce the rounding error.
         y = scaling * sqrt(sum((x / scaling)**2))
     else
         !scaling = max(tiny(1.0_RP), sqrt(maxval(abs(x)) * minval(abs(x), mask=(abs(x) > ZERO))))
-        scaling = maxval(abs(x))
+        scaling = maxval(abs(x))  ! The scaling seems to reduce the rounding error.
         y = scaling * sum(abs(x / scaling)**p_loc)**(ONE / p_loc)
     end if
 end if

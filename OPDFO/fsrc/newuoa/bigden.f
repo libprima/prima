@@ -142,8 +142,9 @@ C
       !    XOPTD=XOPTD+XOPT(I)*D(I)
       !    XOPTS=XOPTS+XOPT(I)*S(I)
       !END DO
-      S(1:N)=S(1:N)-dot_product(S(1:n),
-     1 D(1:n)/norm(D(1:n)))*(D(1:N)/norm(D(1:N)))
+!      S(1:N)=S(1:N)-dot_product(S(1:n),
+!     1 D(1:n)/norm(D(1:n)))*(D(1:N)/norm(D(1:N)))
+      s(1:n) = s(1:n) - project(s(1:n), d(1:n))
       TLRNC = min(1.0D-1, max(epsilon(0.0D0)**(0.25D0), 1.0D-4))
       if (norm(S(1:n)) <= TLRNC*sqrt(SS)) then
           goto 340
