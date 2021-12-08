@@ -5,7 +5,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, December 07, 2021 AM02:33:39
+! Last Modified: Wednesday, December 08, 2021 PM03:19:05
 
 implicit none
 private
@@ -62,10 +62,8 @@ if (present(probs)) then
     nprobs = int(size(probs), kind(nprobs))
     probs_loc(1:nprobs) = probs
 else
-!    nprobs = 5_IK
-!    probs_loc(1:nprobs) = ['chebyqad', 'chrosen ', 'trigsabs', 'trigssqs', 'vardim  ']
-    nprobs = 1
-    probs_loc(1:nprobs) = ['chebyqad']
+    nprobs = 5_IK
+    probs_loc(1:nprobs) = ['chebyqad', 'chrosen ', 'trigsabs', 'trigssqs', 'vardim  ']
 end if
 
 if (present(mindim)) then
@@ -120,7 +118,7 @@ do iprob = 1, nprobs
                 maxhist = 0
             end if
             if (rand() <= 0.1_RP) then
-                ftarget = -TEN**abs(TWO*randn())
+                ftarget = -TEN**abs(TWO * randn())
             elseif (rand() <= 0.1_RP) then
                 ! The probability of arriving here is 0.09. Note that the value of rand() changes.
                 ftarget = HUGENUM
@@ -147,6 +145,8 @@ do iprob = 1, nprobs
 
             call destruct(prob)  ! Destruct the testing problem.
             ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
+
+            nullify (orig_calfun)
         end do
     end do
 end do
