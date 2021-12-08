@@ -2,18 +2,19 @@ function [solver, options] = parse_input(argin)
 %This function parses the input to a testing function, returning the name of the solver to test and
 % the testing options. The testing function can have the signature
 %
-%   test(solver, dimrange, nocompile_flag, options)
+%   test(solver, dimrange, nocompile_flag, sequential_flag, options)
 %
 % where
 % - `solver` is the name of solver to test
 % - `dimrange` (optional) is the vector [mindim, maxdim], or "small", or "big", or "large", or "all"
-% - `nocompile` (optional) is either 'nocompile' or 'ncp', which means not to compile the solvers
+% - `nocompile_flag` (optional) is either 'nocompile' or 'ncp', which means not to compile the solvers
+% - `sequential_flag` (optional) is either 'sequential' or 'seq', which means to test the problems sequentially
 % - `options` (optional) is a structure containing options to pass to `isequiv`, `perfdata`, etc.
 %
 % If the testing function is `verify`, then the following signatures are also supported:
 %
-%   verify(solver, problem, nocompile_flag, options)
-%   verify(solver, problem, ir, nocompile_flag, options)
+%   verify(solver, problem, nocompile_flag, sequential_flag, options)
+%   verify(solver, problem, ir, nocompile_flag, sequential_flag, options)
 %
 % where
 % - `problem` is a problem to test
@@ -39,6 +40,7 @@ invoker = callstack(2).name;  % The function that calls this function.
 known_solvers = {'cobyla','uobyqa','newuoa','bobyqa','lincoa'};
 known_sizes = {'small', 'big', 'large', 'all'};
 nocomplie_flags = {'nocompile', 'ncp'};
+sequential_flags = {'sequential', 'seq'};
 reload_flags = {'reload', 'load'};
 
 % Default values.
@@ -48,6 +50,7 @@ ir = NaN;
 mindim = 1;
 maxdim = 50;
 compile = true;
+sequential = false;
 reload = false;
 
 if any(cellfun(@isstruct, argin))
@@ -60,6 +63,12 @@ end
 fun = @(x) ischstr(x) && ismember(x, nocomplie_flags);
 if any(cellfun(fun, argin))
     compile = false;
+    argin = argin(~cellfun(fun, argin));
+end
+
+fun = @(x) ischstr(x) && ismember(x, sequential_flags);
+if any(cellfun(fun, argin))
+    sequential = true;
     argin = argin(~cellfun(fun, argin));
 end
 
@@ -130,15 +139,16 @@ if wrong_input
     if (strcmp(invoker, 'verify'))
         errmsg = sprintf('\nUsage:\n\n\t%s(solver, dimrange, nocomplie_flag, options), or %s(solver, problem, ir, nocomplie_flag, options).\n', invoker, invoker);
     elseif (strcmp(invoker, 'profile'))
-        errmsg = sprintf('\nUsage:\n\n\t%s(solver, dimrange, nocompile_flag, options), or %s(solver, dimrange, reload_flag, options).\n', invoker, invoker);
+        errmsg = sprintf('\nUsage:\n\n\t%s(solver, dimrange, nocompile_flag, sequential_flag, options), or %s(solver, dimrange, reload_flag, options).\n', invoker, invoker);
     else
-        errmsg = sprintf('\nUsage:\n\n\t%s(solver, dimrange, nocompile_flag, options).\n', invoker);
+        errmsg = sprintf('\nUsage:\n\n\t%s(solver, dimrange, nocompile_flag, sequential_flag, options).\n', invoker);
     end
     error(errmsg)
 end
 
 % Define the testing options.
 options.compile = compile;
+options.sequential = sequential;
 options.reload = reload;
 if isempty(prob)
     % Define the dimension range.

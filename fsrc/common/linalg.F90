@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, December 08, 2021 PM05:14:10
+! Last Modified: Wednesday, December 08, 2021 PM08:36:09
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -31,7 +31,7 @@ public :: inprod, matprod, outprod
 public :: r1update, r2update, symmetrize
 public :: Ax_plus_y
 public :: eye
-public :: planerot, lsqr
+public :: hypotenuse, planerot, lsqr
 public :: inv, isinv
 public :: qradd, qrexc
 public :: calquad, errquad, hess_mul
@@ -688,8 +688,8 @@ do j = 1, n
     end if
     do i = m, j + 1_IK, -1_IK
         G = transpose(planerot(T(j, [j, i])))
-        !T(j, [j, i]) = [hypot(T(j, j), T(j, i)), ZERO]
-        T(j, [j, i]) = [sqrt(T(j, j)**2 + T(j, i)**2), ZERO]
+        T(j, [j, i]) = [hypotenuse(T(j, j), T(j, i)), ZERO]
+        !T(j, [j, i]) = [sqrt(T(j, j)**2 + T(j, i)**2), ZERO]
         T(j + 1:n, [j, i]) = matprod(T(j + 1:n, [j, i]), G)
         Q_loc(:, [j, i]) = matprod(Q_loc(:, [j, i]), G)
     end do
@@ -958,6 +958,59 @@ end if
 end function
 
 
+function hypotenuse(x1, x2) result(r)
+! HYPOTENUSE(X1, X2) returns SQRT(X1^2 + X2^2), handling over/underflow.
+use, non_intrinsic :: consts_mod, only : RP, ONE, HUGENUM, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
+implicit none
+
+! Inputs
+real(RP), intent(in) :: x1
+real(RP), intent(in) :: x2
+
+! Outputs
+real(RP) :: r
+
+! Local variables
+character(len=*), parameter :: srname = 'HYPOTENUSE'
+real(RP) :: x(2)
+
+!====================!
+! Calculation starts !
+!====================!
+
+if (.not. is_finite(x1)) then
+    r = abs(x1)
+else if (.not. is_finite(x2)) then
+    r = abs(x2)
+else
+    x = abs([x1, x2])
+    x = [minval(x), maxval(x)]
+    if (x(1) > sqrt(tiny(0.0_RP)) .and. x(2) < sqrt(HUGENUM / 2.1_RP)) then
+        r = sqrt(sum(x**2))
+    else
+        r = x(2) * sqrt((x(1) / x(2))**2 + ONE)
+    end if
+end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    if (is_nan(x1) .or. is_nan(x2)) then
+        call assert(is_nan(r), 'R is NaN if X1 or X2 is NaN', srname)
+    else
+        call assert(r >= abs(x1) .and. r >= abs(x2) .and. r <= abs(x1) + abs(x2), &
+            & 'MAX{ABS(X1), ABS(X2)} <= R <= ABS(X1) + ABS(X2)', srname)
+    end if
+end if
+
+end function hypotenuse
+
+
 function planerot(x) result(G)
 ! As in MATLAB, PLANEROT(X) returns a 2x2 Givens matrix G for X in R^2 so that Y = G*X has Y(2) = 0.
 use, non_intrinsic :: consts_mod, only : RP, ZERO, ONE, EPS, HUGENUM, DEBUGGING
@@ -1131,7 +1184,8 @@ do k = m - 1_IK, n + 1_IK, -1
         ! Powell wrote CQ(K+1) /= 0 instead of ABS(CQ(K+1)) > 0. The two differ if CQ(K+1) is NaN.
         G = planerot(cq([k, k + 1_IK]))
         Q(:, [k, k + 1_IK]) = matprod(Q(:, [k, k + 1_IK]), transpose(G))
-        cq(k) = sqrt(cq(k)**2 + cq(k + 1)**2)
+        cq(k) = hypotenuse(cq(k), cq(k + 1))
+        !cq(k) = sqrt(cq(k)**2 + cq(k + 1)**2)
     end if
 end do
 
@@ -1224,7 +1278,8 @@ end if
 ! are exhanged. After this is done for each K = 1, ..., N-1, we obtain the QR factorization of
 ! A when its [I, I+1, ..., N] columns are reordered as [I+1, ..., N, I].
 do k = i, n - 1_IK
-    hypt = sqrt(Rdiag(k + 1)**2 + inprod(Q(:, k), A(:, k + 1))**2)
+    hypt = hypotenuse(Rdiag(k + 1), inprod(Q(:, k), A(:, k + 1)))
+    !hypt = sqrt(Rdiag(k + 1)**2 + inprod(Q(:, k), A(:, k + 1))**2)
     G = planerot([Rdiag(k + 1), inprod(Q(:, k), A(:, k + 1))])
     Q(:, [k, k + 1_IK]) = matprod(Q(:, [k + 1_IK, k]), transpose(G))
     ! Powell's code updates RDIAG in the following way. Note that RDIAG(N) inherits all rounding in

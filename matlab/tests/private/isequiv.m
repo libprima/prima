@@ -92,11 +92,9 @@ end
 if ir < 0
     minir = 0;
     maxir = nr + 20;
-    single_test = false;
 else
     minir = ir;
     maxir = ir;
-    single_test = true;
 end
 
 if isempty(requirements.list)
@@ -141,7 +139,15 @@ else
     end
 end
 
-if single_test
+single_test = (length(plist) <= 1);
+
+if isfield(options, 'sequential')
+    sequential = options.sequential || single_test;
+else
+    sequential = single_test;
+end
+
+if sequential
     for ip = minip : length(plist)
         orig_warning_state = warnoff(solvers);
         pname = upper(plist{ip});
@@ -150,11 +156,13 @@ if single_test
 
         prob = macup(pname);
 
-        fprintf('\n%s Run No. %3d:\n', pname, ir);
-        % The following line compares the solvers on `prob`; ir is needed for the random seed, and
-        % `prec` is the precision of the comparison (should be 0). The function will raise an error
-        % if the solvers behave differently.
-        compare(solvers, prob, ir, prec, single_test, options);
+        for ir = minir : maxir
+            fprintf('\n%s Run No. %3d:\n', pname, ir);
+            % The following line compares the solvers on `prob`; ir is needed for the random seed, and
+            % `prec` is the precision of the comparison (should be 0). The function will raise an error
+            % if the solvers behave differently.
+            compare(solvers, prob, ir, prec, single_test, options);
+        end
 
         decup(pname);
         warning(orig_warning_state); % Restore the behavior of displaying warnings

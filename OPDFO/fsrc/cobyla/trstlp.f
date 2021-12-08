@@ -237,8 +237,9 @@
           ELSE
               KP=K+1
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+               temp = hypotenuse(sp, tot)
 !              TEMP=SQRT(SP*SP+TOT*TOT)
-              TEMP=DSQRT(SP*SP+TOT*TOT)
+!              TEMP=DSQRT(SP*SP+TOT*TOT)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               !ALPHA=SP/TEMP
               !BETA=TOT/TEMP
@@ -395,8 +396,9 @@
               SP=SP+Z(I,K)*A(I,KW)
           END DO
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+           temp = hypotenuse(sp, zdota(kp))
 !          TEMP=SQRT(SP*SP+ZDOTA(KP)**2)
-          TEMP=DSQRT(SP*SP+ZDOTA(KP)**2)
+!          TEMP=DSQRT(SP*SP+ZDOTA(KP)**2)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           !ALPHA=ZDOTA(KP)/TEMP
           !BETA=SP/TEMP
@@ -463,8 +465,9 @@
               SP=SP+Z(I,K)*A(I,KK)
           END DO
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+          temp=hypotenuse(sp, zdota(nact))
 !          TEMP=SQRT(SP*SP+ZDOTA(NACT)**2)
-          TEMP=DSQRT(SP*SP+ZDOTA(NACT)**2)
+!          TEMP=DSQRT(SP*SP+ZDOTA(NACT)**2)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           !ALPHA=ZDOTA(NACT)/TEMP
           !BETA=SP/TEMP
@@ -529,8 +532,9 @@
               SP=SP+Z(I,K)*A(I,KK)
           END DO
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+          temp=hypotenuse(sp, zdota(kp))
 !          TEMP=SQRT(SP*SP+ZDOTA(KP)**2)
-          TEMP=DSQRT(SP*SP+ZDOTA(KP)**2)
+!          TEMP=DSQRT(SP*SP+ZDOTA(KP)**2)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           !ALPHA=ZDOTA(KP)/TEMP
           !BETA=SP/TEMP
