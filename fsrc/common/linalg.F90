@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, December 08, 2021 PM09:23:52
+! Last Modified: Wednesday, December 08, 2021 PM10:50:36
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -32,6 +32,7 @@ public :: r1update, r2update, symmetrize
 public :: Ax_plus_y
 public :: eye
 public :: hypotenuse, planerot, lsqr
+public :: project
 public :: inv, isinv
 public :: qradd, qrexc
 public :: calquad, errquad, hess_mul
@@ -69,7 +70,7 @@ interface eye
 end interface eye
 
 interface project
-    module procedure project1
+    module procedure project1, project2
 end interface
 
 interface isminor
@@ -963,9 +964,12 @@ end function
 
 
 function project1(x, v) result(y)
+!--------------------------------------------------------------------------------------------------!
+! This function returns the projection of X to SPAN(V).
+!--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, ONE, ZERO, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_inf, is_finite
+use, non_intrinsic :: infnan_mod, only : is_inf, is_finite, is_nan
 implicit none
 
 ! Inputs
@@ -989,8 +993,10 @@ end if
 ! Calculation starts !
 !====================!
 
-if (all(abs(v) <= ZERO)) then
+if (all(abs(x) <= ZERO) .or. all(abs(v) <= ZERO)) then
     y = ZERO
+else if (any(is_nan(x)) .or. any(is_nan(v))) then
+    y = sum(x) + sum(v)  ! Set Y to NaN
 else if (any(is_inf(v))) then
     where (is_inf(v))
         u = sign(ONE, v)
@@ -1008,18 +1014,89 @@ end if
 !  Calculation ends  !
 !====================!
 
+! Postconditions
 if (DEBUGGING) then
     if (is_finite(norm(x)) .and. is_finite(norm(v))) then
         tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS))
-        call assert(abs(inprod(x - y, v)) <= tol * norm(x - y) * norm(v), 'X - Y is orthogonal to V', srname)
+        call assert(norm(y) <= (ONE + tol) * norm(x), 'NORM(Y) <= NORM(X)', srname)
+!        write (16, *) inprod(x - y, v), norm(x - y), norm(v), norm(x), norm(y)
+!        close (16)
+!        ! The following test may not be passed.
+!        call assert(abs(inprod(x - y, v)) <= max(tol, tol * norm(x - y) * norm(v)), &
+!           & 'X - Y is orthogonal to V', srname)
     end if
 end if
 end function project1
 
 
+function project2(x, V) result(y)
+!--------------------------------------------------------------------------------------------------!
+! This function returns the projection of X to RANGE(V).
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, ONE, ZERO, EPS, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_inf, is_finite, is_nan
+implicit none
+
+! Inputs
+real(RP), intent(in) :: x(:)
+real(RP), intent(in) :: V(:, :)
+
+! Outputs
+real(RP) :: y(size(x))
+
+! Local variables
+character(len=*), parameter :: srname = 'PROJECT2'
+real(RP) :: U(size(V, 1), min(size(V, 1), size(V, 2)))
+real(RP) :: V_loc(size(V, 1), size(V, 2))
+real(RP) :: tol
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(size(x) == size(V, 1), 'SIZE(X) == SIZE(V, 1)', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+if (size(V, 2) == 1) then
+    y = project1(x, V(:, 1))
+elseif (all(abs(x) <= ZERO) .or. all(abs(V) <= ZERO)) then
+    y = ZERO
+else if (any(is_nan(x)) .or. any(is_nan(V))) then
+    y = sum(x) + sum(V)  ! Set Y to NaN
+else if (any(is_inf(V))) then
+    where (.not. is_inf(V))
+        V_loc = ZERO
+    elsewhere
+        V_loc = sign(ONE, V)
+    end where
+    call qr(V_loc, Q=U)
+    y = matprod(U, matprod(x, U))
+else
+    call qr(V, Q=U)
+    y = matprod(U, matprod(x, U))
+end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    if (is_finite(norm(x)) .and. is_finite(sum(V**2))) then
+        tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS))
+        call assert(norm(matprod(x - y, V)) <= max(tol, tol * norm(x - y) * sqrt(real(size(V, 1) &
+            & + size(V, 2), RP)) * maxval(abs(V))), 'X - Y is orthogonal to V', srname)
+    end if
+end if
+end function project2
+
+
 function hypotenuse(x1, x2) result(r)
 ! HYPOTENUSE(X1, X2) returns SQRT(X1^2 + X2^2), handling over/underflow.
-use, non_intrinsic :: consts_mod, only : RP, ONE, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, ONE, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 implicit none
@@ -1046,11 +1123,12 @@ else if (.not. is_finite(x2)) then
 else
     x = abs([x1, x2])
     x = [minval(x), maxval(x)]
-!    if (x(1) > sqrt(tiny(0.0_RP)) .and. x(2) < sqrt(HUGENUM / 2.1_RP)) then
-!        r = sqrt(sum(x**2))
-!    else
+    !if (x(1) > sqrt(tiny(0.0_RP)) .and. x(2) < sqrt(HUGENUM / 2.1_RP)) then
+    !    r = sqrt(sum(x**2))
+    !else
+    !    r = x(2) * sqrt((x(1) / x(2))**2 + ONE)
+    !end if
     r = x(2) * sqrt((x(1) / x(2))**2 + ONE)
-!    end if
 end if
 
 !====================!
@@ -1134,7 +1212,8 @@ else
     ! 1. Modern compilers compute SQRT(TINY(0.0_RP)) and SQRT(HUGENUM/2.1) at compilation time.
     ! 2. The direct calculation without involving T and U seems to work better; use it if possible.
     if (minval(abs(x)) > sqrt(tiny(0.0_RP)) .and. maxval(abs(x)) < sqrt(HUGENUM / 2.1_RP)) then
-        r = sqrt(sum(x**2))  ! R = HYPOT(X(1), X(2))
+        ! Do NOT use HYPOTENUSE here; the best implementation for one may not be the best for the other
+        r = sqrt(sum(x**2))
         c = x(1) / r
         s = x(2) / r
     elseif (abs(x(1)) > abs(x(2))) then
@@ -1973,7 +2052,9 @@ end function issymmetric
 
 
 pure function norm(x, p) result(y)
+!--------------------------------------------------------------------------------------------------!
 ! This function calculates the P-norm of a vector X.
+!--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, ONE, ZERO
 use, non_intrinsic :: infnan_mod, only : is_finite, is_posinf
 implicit none

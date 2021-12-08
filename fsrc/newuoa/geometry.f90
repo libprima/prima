@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 19, 2021 PM02:21:45
+! Last Modified: Wednesday, December 08, 2021 PM10:26:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -264,7 +264,7 @@ function biglag(idz, knew, bmat, delbar, x, xpt, zmat) result(d)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, PI, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : Ax_plus_y, inprod, matprod, issymmetric, norm, omega_col
+use, non_intrinsic :: linalg_mod, only : Ax_plus_y, inprod, matprod, issymmetric, norm, project, omega_col
 
 implicit none
 
@@ -295,7 +295,6 @@ real(RP) :: cth
 real(RP) :: dd
 real(RP) :: dhd
 real(RP) :: dold(size(x))
-real(RP) :: dunit(size(x))
 real(RP) :: gc(size(x))
 real(RP) :: gd(size(x))
 real(RP) :: gg
@@ -404,8 +403,9 @@ do iter = 1, maxiter
     !----------------------------------------------------------------------------------------------!
 
     ss = inprod(s, s)
-    dunit = d / norm(d)  ! Normalization seems to stabilize the projection below.
-    s = s - inprod(s, dunit) * dunit
+    !!dunit = d / norm(d)  ! Normalization seems to stabilize the projection below.
+    !!s = s - inprod(s, dunit) * dunit
+    s = s - project(s, d)
     ! N.B.:
     ! 1. The condition |S|<=TOL*SQRT(SS) below is equivalent to DS^2>=(1-TOL^2)*DD*SS in theory. As
     ! shown above, Powell's code triggers an exit if DS^2>=(1-1.0E-8)*DD*SS. So our condition is the
@@ -524,7 +524,7 @@ function bigden(idz, knew, kopt, bmat, d0, xpt, zmat) result(d)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, QUART, PI, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric, norm, omega_col, omega_mul
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric, norm, project, omega_col, omega_mul
 
 implicit none
 
@@ -568,7 +568,6 @@ real(RP) :: dold(size(xpt, 1))
 real(RP) :: ds
 real(RP) :: dstemp(size(xpt, 2))
 real(RP) :: dtest
-real(RP) :: dunit(size(xpt, 1))
 real(RP) :: dxn
 real(RP) :: hcol(size(xpt, 2))
 real(RP) :: par(9)
@@ -683,8 +682,9 @@ do iter = 1, n
     !----------------------------------------------------------------------------------------------!
 
     ss = inprod(s, s)
-    dunit = d / norm(d)  ! Normalization seems to stabilize the projection below.
-    s = s - inprod(s, dunit) * dunit
+    !!dunit = d / norm(d)  ! Normalization seems to stabilize the projection below.
+    !!s = s - inprod(s, dunit) * dunit
+    s = s - project(s, d)
     ! N.B.:
     ! 1. The condition |S|<=TOL*SQRT(SS) below is equivalent to DS^2>=(1-TOL^2)*DD*SS in theory. As
     ! shown above, Powell's code triggers an exit if DS^2>=(1-1.0E-8)*DD*SS. So our condition is the

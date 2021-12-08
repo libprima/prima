@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 05, 2021 PM02:01:32
+! Last Modified: Wednesday, December 08, 2021 PM10:26:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -47,7 +47,7 @@ subroutine trsapp(delta, gq, hq, pq, tol, x, xpt, crvmin, s, info)
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, ZERO, TENTH, PI, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, norm, hess_mul
+use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, norm, project, hess_mul
 
 implicit none
 
@@ -109,7 +109,6 @@ real(RP) :: shs
 real(RP) :: sold(size(x))
 real(RP) :: ss
 real(RP) :: sth
-real(RP) :: sunit(size(x))
 real(RP) :: unitang
 
 ! Sizes
@@ -297,8 +296,9 @@ do iter = 1, itermax
     !----------------------------------------------------------------------------------------------!
 
     ! Begin the 2D minimization by calculating D and HD and some scalar products.
-    sunit = s / norm(s)  ! Normalization seems to stabilize the projection below.
-    d = (g + hs) - inprod(g + hs, sunit) * sunit
+    !!sunit = s / norm(s)  ! Normalization seems to stabilize the projection below.
+    !!d = (g + hs) - inprod(g + hs, sunit) * sunit
+    d = (g + hs) - project(g + hs, s)
     ! N.B.:
     ! 1. The condition |D|<=SQRT(TOL*GG) below is equivalent to |INPROD(G+HS,S)|<=SQRT((1-TOL)*GG*SS)
     ! in theory. As given above, Powell's code triggers an exit if INPROD(G+HS,S)=SGK<=(TOL-1)*GG*SS.
