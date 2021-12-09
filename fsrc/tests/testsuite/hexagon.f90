@@ -1,10 +1,7 @@
-subroutine construct_hexagon(prob, n)
-use, non_intrinsic :: consts_mod, only : IK, ONE, HALF
+subroutine construct_hexagon(prob)
+use, non_intrinsic :: consts_mod, only : ONE, HALF
 use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
-
-! Inputs
-integer(IK), intent(in) :: n
 
 ! Outputs
 type(problem_t), intent(out) :: prob
@@ -13,7 +10,7 @@ prob % probname = 'hexagon'
 prob % probtype = 'n'
 prob % m = 14
 prob % n = 9
-call safealloc(prob % x0, n)  ! Not needed if F2003 is fully supported. Needed by Absoft 22.0.
+call safealloc(prob % x0, prob % n)  ! Not needed if F2003 is fully supported. Needed by Absoft 22.0.
 prob % x0 = ONE
 prob % Delta0 = HALF
 prob % calcfc => calcfc_hexagon
