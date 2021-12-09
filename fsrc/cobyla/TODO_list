@@ -13,9 +13,6 @@
 ! an index is added in or removed from IACT.
 !---------------------------------------------------------------------------!
 !
-! BTW, write a projection function to be used in TRSAPP, BIGLAG, BIGDEN in NEWUOA. See lines 305-306
-! of trustregion.f90 and 391-392, 675-676 of geometry.f90 of NEWUOA.
-!
 ! 1. Shouldn't we remove the extreme barrier in the MATLAB/Python interface after it is
 !    implemented in FORTRAN?
 ! 3. merge UPDATEPOLE and UPDATEXFC

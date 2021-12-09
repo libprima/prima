@@ -5,7 +5,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wednesday, December 08, 2021 PM05:04:12
+! Last Modified: Thursday, December 09, 2021 AM10:56:35
 
 implicit none
 private
@@ -145,6 +145,7 @@ do iprob = 1, nprobs
             call destruct(prob)  ! Destruct the testing problem.
             ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
 
+            deallocate (x)
             nullify (orig_calfun)
         end do
     end do

@@ -1,4 +1,31 @@
 module cobyla_mod
+!--------------------------------------------------------------------------------------------------!
+! COBYLA_MOD is a module providing a modern Fortran implementation of Powell's COBYLA algorithm in
+!
+! M. J. D. Powell, A direct search optimization method that models the objective and constraint
+! functions by linear interpolation, In Advances in Optimization and Numerical Analysis, eds. S.
+! Gomez and J. P. Hennart, pages 51--67, Springer Verlag, Dordrecht, Netherlands, 1994
+!
+! COBYLA minimizes an objective function F(X) subject to M inequality constraints on X, where X is
+! a vector of variables that has N components. The algorithm employs linear approximations to the
+! objective and constraint functions, the approximations being formed by linear interpolation at N+1
+! points in the space of the variables. We regard these interpolation points as vertices of
+! a simplex. The parameter RHO controls the size of the simplex and it is reduced automatically from
+! RHOBEG to RHOEND. For each RHO the subroutine tries to achieve a good vector of variables for the
+! current size, and then RHO is reduced until the value RHOEND is reached. Therefore RHOBEG and
+! RHOEND should be set to reasonable initial changes to and the required accuracy in the variables
+! respectively, but this accuracy should be viewed as a subject for experimentation because it is
+! not guaranteed.  The subroutine has an advantage over many of its competitors, however, which is
+! that it treats each constraint individually when calculating a change to the variables, instead of
+! lumping the constraints together into a single penalty function. The name of the subroutine is
+! derived from the phrase Constrained Optimization BY Linear Approximations.
+!
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the COBYLA paper.
+!
+! Started: July 2021
+!
+! Last Modified: Thursday, December 09, 2021 AM01:06:43
+!--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
@@ -7,15 +34,16 @@ public :: cobyla
 
 contains
 
+
 subroutine cobyla(calcfc, n, m, x, rhobeg, rhoend, iprint, maxfun, f, info, ftarget, cstrv, constr)
 
 ! Generic modules
-use, non_intrinsic :: pintrf_mod, only : FUNCON
 use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: debug_mod, only : errstop
-use, non_intrinsic :: output_mod, only : retmssg, rhomssg, fmssg
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: memory_mod, only : safealloc
+use, non_intrinsic :: output_mod, only : retmssg, rhomssg, fmssg
+use, non_intrinsic :: pintrf_mod, only : FUNCON
 
 ! Solver-specific modules
 use, non_intrinsic :: cobylb_mod, only : cobylb
@@ -43,59 +71,26 @@ integer(IK), intent(out) :: info
 real(RP), intent(out) :: constr(:)
 real(RP), intent(out) :: f
 real(RP), intent(out) :: cstrv
-!*++
-!*++ Local variable declarations rewritten by SPAG
-!*++
-integer(IK) :: maxxhist
-integer(IK) :: maxfhist
+
+! Local variables
+character(len=*), parameter :: solver = 'COBYLA'
+character(len=*), parameter :: srname = 'COBYLA'
 integer(IK) :: maxchist
 integer(IK) :: maxconhist
-integer(IK) :: nf_c
-real(RP), allocatable :: xhist(:, :)
-real(RP), allocatable :: fhist(:)
-real(RP), allocatable :: conhist(:, :)
+integer(IK) :: maxfhist
+integer(IK) :: maxxhist
+integer(IK) :: nf_loc
+real(RP) :: rhoend_loc
 real(RP), allocatable :: chist(:)
-real(RP), allocatable :: xhist_c(:, :)
-real(RP), allocatable :: fhist_c(:)
-real(RP), allocatable :: conhist_c(:, :)
-real(RP), allocatable :: chist_c(:)
+real(RP), allocatable :: chist_loc(:)
+real(RP), allocatable :: conhist(:, :)
+real(RP), allocatable :: conhist_loc(:, :)
+real(RP), allocatable :: fhist(:)
+real(RP), allocatable :: fhist_loc(:)
+real(RP), allocatable :: xhist(:, :)
+real(RP), allocatable :: xhist_loc(:, :)
 
-integer(IK) :: ia
-integer(IK) :: icon
-integer(IK) :: idatm
-integer(IK) :: idx
-integer(IK) :: isigb
-integer(IK) :: isim
-integer(IK) :: isimi
-integer(IK) :: iveta
-integer(IK) :: ivsig
-integer(IK) :: iw
-integer(IK) :: mpp
-real(RP) :: rhoend_c
-character(len=*), parameter :: srname = 'COBYLA'
-!*++
-!*++ End of declarations rewritten by SPAG
-!*++
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-!     This subroutine minimizes an objective function F(X) subject to M
-!     inequality constraints on X, where X is a vector of variables that has
-!     N components. The algorithm employs linear approximations to the
-!     objective and constraint functions, the approximations being formed by
-!     linear interpolation at N+1 points in the space of the variables.
-!     We regard these interpolation points as vertices of a simplex. The
-!     parameter RHO controls the size of the simplex and it is reduced
-!     automatically from RHOBEG to RHOEND. For each RHO the subroutine tries
-!     to achieve a good vector of variables for the current size, and then
-!     RHO is reduced until the value RHOEND is reached. Therefore RHOBEG and
-!     RHOEND should be set to reasonable initial changes to and the required
-!     accuracy in the variables respectively, but this accuracy should be
-!     viewed as a subject for experimentation because it is not guaranteed.
-!     The subroutine has an advantage over many of its competitors, however,
-!     which is that it treats each constraint individually when calculating
-!     a change to the variables, instead of lumping the constraints together
-!     into a single penalty function. The name of the subroutine is derived
-!     from the phrase Constrained Optimization BY Linear Approximations.
 !
 !     The user must set the values of N, M, RHOBEG and RHOEND, and must
 !     provide an initial vector of variables in X. Further, the value of
@@ -153,17 +148,6 @@ character(len=*), parameter :: srname = 'COBYLA'
 !     Partition the working space array W to provide the storage that is needed
 !     for the main calculation.
 !
-mpp = m + 2
-icon = 1
-isim = icon + mpp
-isimi = isim + n * n + n
-idatm = isimi + n * n
-ia = idatm + n * mpp + mpp
-ivsig = ia + m * n + n
-iveta = ivsig + n
-isigb = iveta + n
-idx = isigb + n
-iw = idx + n
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun, 2020-05-05
 ! When the data is passed from the interfaces to the Fortran code, RHOBEG,
@@ -171,7 +155,7 @@ iw = idx + n
 ! a MATLAB test that MEX passed 1 to Fortran as 0.99999999999999978.
 ! If we set RHOEND = RHOBEG in the interfaces, then it may happen
 ! that RHOEND > RHOBEG. That is why we do the following.
-rhoend_c = min(rhobeg, rhoend)
+rhoend_loc = min(rhobeg, rhoend)
 ! CTOL is the tolerance for constraint violation. A point X is considered to be feasible if its
 ! constraint violation (CSTRV) is less than CTOL.
 ctol = EPS
@@ -181,24 +165,24 @@ maxxhist = maxfun
 maxfhist = maxfun
 maxchist = maxfun
 maxconhist = maxfun
-call safealloc(xhist_c, n, maxxhist)
-call safealloc(fhist_c, maxfhist)
-call safealloc(conhist_c, m, maxconhist)
-call safealloc(chist_c, maxchist)
-call cobylb(calcfc, iprint, maxfun, ctol, ftarget, rhobeg, rhoend, constr, x, nf_c, chist_c, &
-    & conhist_c, cstrv, f, fhist_c, xhist_c, info)
-call safealloc(xhist, n, min(nf_c, maxxhist))
-xhist = xhist_c(:, 1:min(nf_c, maxxhist))
-deallocate (xhist_c)
-call safealloc(fhist, min(nf_c, maxfhist))
-fhist = fhist_c(1:min(nf_c, maxfhist))
-deallocate (fhist_c)
-call safealloc(conhist, m, min(nf_c, maxconhist))
-conhist = conhist_c(:, 1:min(nf_c, maxconhist))
-deallocate (conhist_c)
-call safealloc(chist, min(nf_c, maxchist))
-chist = chist_c(1:min(nf_c, maxchist))
-deallocate (chist_c)
+call safealloc(xhist_loc, n, maxxhist)
+call safealloc(fhist_loc, maxfhist)
+call safealloc(conhist_loc, m, maxconhist)
+call safealloc(chist_loc, maxchist)
+call cobylb(calcfc, iprint, maxfun, ctol, ftarget, rhobeg, rhoend, constr, x, nf_loc, chist_loc, &
+    & conhist_loc, cstrv, f, fhist_loc, xhist_loc, info)
+call safealloc(xhist, n, min(nf_loc, maxxhist))
+xhist = xhist_loc(:, 1:min(nf_loc, maxxhist))
+deallocate (xhist_loc)
+call safealloc(fhist, min(nf_loc, maxfhist))
+fhist = fhist_loc(1:min(nf_loc, maxfhist))
+deallocate (fhist_loc)
+call safealloc(conhist, m, min(nf_loc, maxconhist))
+conhist = conhist_loc(:, 1:min(nf_loc, maxconhist))
+deallocate (conhist_loc)
+call safealloc(chist, min(nf_loc, maxchist))
+chist = chist_loc(1:min(nf_loc, maxchist))
+deallocate (chist_loc)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 end subroutine cobyla
 

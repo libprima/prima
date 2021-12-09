@@ -59,27 +59,34 @@ implicit none
 
 ! Inputs
 character(len=*), intent(in) :: probname
-integer(IK), intent(in) :: n
+integer(IK), optional, intent(in) :: n
 
 ! Outputs
 type(problem_t), intent(out) :: prob
 
 ! Local variables
 character(len=*), parameter :: srname = 'CONSTRUC'
+integer(IK) :: n_loc
+
+if (present(n)) then
+    n_loc = n
+else
+    n_loc = 1
+end if
 
 select case (lower(trimstr(probname)))
 case ('chebyqad')
-    call construct_chebyqad(prob, n)
+    call construct_chebyqad(prob, n_loc)
 case ('chrosen')
-    call construct_chrosen(prob, n)
+    call construct_chrosen(prob, n_loc)
 case ('hexagon')
-    call construct_hexagon(prob, n)
+    call construct_hexagon(prob)
 case ('trigsabs')
-    call construct_trigsabs(prob, n)
+    call construct_trigsabs(prob, n_loc)
 case ('trigssqs')
-    call construct_trigssqs(prob, n)
+    call construct_trigssqs(prob, n_loc)
 case ('vardim')
-    call construct_vardim(prob, n)
+    call construct_vardim(prob, n_loc)
 case default
     call errstop(srname, 'Unkown problem: '//trimstr(probname))
 end select

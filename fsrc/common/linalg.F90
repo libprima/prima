@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, December 09, 2021 AM12:48:34
+! Last Modified: Thursday, December 09, 2021 AM01:11:55
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1135,6 +1135,7 @@ else
     !else
     !    r = x(2) * sqrt((x(1) / x(2))**2 + ONE)
     !end if
+    ! It seems better in general to scale X before taking the hypotenuse.
     r = x(2) * sqrt((x(1) / x(2))**2 + ONE)
 end if
 
