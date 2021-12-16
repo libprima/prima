@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, December 09, 2021 AM01:11:55
+! Last Modified: Thursday, December 16, 2021 PM04:24:38
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -583,7 +583,7 @@ implicit none
 ! Inputs
 real(RP), intent(in) :: A(:, :)
 real(RP), intent(in) :: B(:, :)
-real(RP), optional, intent(in) :: tol
+real(RP), intent(in), optional :: tol
 
 ! Outputs
 logical :: is_inv
@@ -2090,7 +2090,7 @@ end if
 if (size(x) == 0) then
     y = ZERO
 else if (p_loc <= 0) then
-    y = count(abs(x) > 0)
+    y = real(count(abs(x) > 0), kind(y))
 elseif (.not. all(is_finite(x))) then
     ! If X contains NaN, then Y is NaN. Otherwise, Y is Inf when X contains +/-Inf.
     y = sum(abs(x))
@@ -2123,7 +2123,7 @@ implicit none
 
 ! Inputs
 integer(IK), intent(in) :: x(:)
-character(len=*), optional, intent(in) :: direction
+character(len=*), intent(in), optional :: direction
 
 ! Outputs
 integer(IK) :: y(size(x))
@@ -2185,8 +2185,8 @@ implicit none
 
 ! Inputs
 integer(IK), intent(in) :: x(:, :)
-integer, optional, intent(in) :: dim
-character(len=*), optional, intent(in) :: direction
+integer, intent(in), optional :: dim
+character(len=*), intent(in), optional :: direction
 
 ! Outputs
 integer(IK) :: y(size(x, 1), size(x, 2))

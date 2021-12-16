@@ -43,10 +43,10 @@ MAKEFILE_DIR = ./makefiles
 	@make $@.cobyla $@.uobyqa $@.newuoa $@.bobyqa $@.lincoa
 
 %.cobyla %.uobyqa %.newuoa %.bobyqa %.lincoa:
-	mkdir -p test.$(SOLVER)
-	cp $(MAKEFILE_DIR)/Makefile.common test.$(SOLVER)/
-	cp $(MAKEFILE_DIR)/Makefile.$(SOLVER) test.$(SOLVER)/Makefile
-	cd test.$(SOLVER)/; make $(subst .$(SOLVER),,$@)
+	@mkdir -p test.$(SOLVER)
+	@cp $(MAKEFILE_DIR)/Makefile.common test.$(SOLVER)/
+	@cp $(MAKEFILE_DIR)/Makefile.$(SOLVER) test.$(SOLVER)/Makefile
+	@cd test.$(SOLVER)/ && make $(subst .$(SOLVER),,$@) --no-print-directory
 
 clean:
 	@rm -rf log test.cobyla test.uobyqa test.newuoa test.bobyqa test.lincoa

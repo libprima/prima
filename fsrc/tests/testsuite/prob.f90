@@ -59,7 +59,7 @@ implicit none
 
 ! Inputs
 character(len=*), intent(in) :: probname
-integer(IK), optional, intent(in) :: n
+integer(IK), intent(in), optional :: n
 
 ! Outputs
 type(problem_t), intent(out) :: prob
