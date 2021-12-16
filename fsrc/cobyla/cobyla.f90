@@ -24,7 +24,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, December 09, 2021 AM01:06:43
+! Last Modified: Monday, December 13, 2021 PM04:59:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -35,7 +35,11 @@ public :: cobyla
 contains
 
 
-subroutine cobyla(calcfc, n, m, x, rhobeg, rhoend, iprint, maxfun, f, info, ftarget, cstrv, constr)
+subroutine cobyla(calcfc, x, f, cstrv, &
+    & constr, f0, constr0, m, &
+    & nf, rhobeg, rhoend, ftarget, ctol, maxfun, iprint, &
+    & xhist, fhist, conhist, chist, maxhist, info)
+!& eta1, eta2, gamma1, gamma2, xhist, fhist, conhist, chist, maxhist, info)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
@@ -50,36 +54,48 @@ use, non_intrinsic :: cobylb_mod, only : cobylb
 
 implicit none
 
-! Inputs
-integer(IK), intent(in) :: iprint
-integer(IK), intent(in) :: m
-integer(IK), intent(in) :: maxfun
-integer(IK), intent(in) :: n
-real(RP), intent(in) :: ftarget
-real(RP), intent(in) :: rhobeg
-real(RP), intent(in) :: rhoend
-
-! Parameters
-real(RP) :: ctol
-
-! In-outputs
+! Compulsory arguments
 procedure(FUNCON) :: calcfc
 real(RP), intent(inout) :: x(:)
-
-! Outputs
-integer(IK), intent(out) :: info
-real(RP), intent(out) :: constr(:)
 real(RP), intent(out) :: f
 real(RP), intent(out) :: cstrv
+real(RP), intent(out) :: constr(:)
+
+! Optional inputs
+integer(IK), intent(in), optional :: iprint
+integer(IK), intent(in), optional :: m
+integer(IK), intent(in), optional :: maxfun
+integer(IK), intent(in), optional :: maxhist
+integer(IK), intent(in), optional :: nf
+real(RP), intent(in), optional :: constr0(:)
+real(RP), intent(in), optional :: ctol
+real(RP), intent(in), optional :: f0
+real(RP), intent(in), optional :: ftarget
+real(RP), intent(in), optional :: rhobeg
+real(RP), intent(in), optional :: rhoend
+
+! Optional outputs
+integer(IK), intent(out), optional :: info
+real(RP), intent(out), allocatable, optional :: chist(:)
+real(RP), intent(out), allocatable, optional :: conhist(:, :)
+real(RP), intent(out), allocatable, optional :: fhist(:)
+real(RP), intent(out), allocatable, optional :: xhist(:, :)
 
 ! Local variables
 character(len=*), parameter :: solver = 'COBYLA'
 character(len=*), parameter :: srname = 'COBYLA'
+integer(IK) :: constr0_loc
+integer(IK) :: ctol_loc
+integer(IK) :: iprint_loc
 integer(IK) :: maxchist
 integer(IK) :: maxconhist
 integer(IK) :: maxfhist
+integer(IK) :: maxfun_loc
+integer(IK) :: maxhist_loc
 integer(IK) :: maxxhist
 integer(IK) :: nf_loc
+real(RP) :: ctol_loc
+real(RP) :: ftarget_loc
 real(RP) :: rhoend_loc
 real(RP), allocatable :: chist(:)
 real(RP), allocatable :: chist_loc(:)
@@ -158,7 +174,6 @@ real(RP), allocatable :: xhist_loc(:, :)
 rhoend_loc = min(rhobeg, rhoend)
 ! CTOL is the tolerance for constraint violation. A point X is considered to be feasible if its
 ! constraint violation (CSTRV) is less than CTOL.
-ctol = EPS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 maxxhist = maxfun

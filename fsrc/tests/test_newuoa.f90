@@ -5,7 +5,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thursday, December 09, 2021 AM10:56:35
+! Last Modified: Saturday, December 11, 2021 PM09:03:01
 
 implicit none
 private
@@ -28,11 +28,11 @@ use, non_intrinsic :: string_mod, only : trimstr, istr
 
 implicit none
 
-character(len=PNLEN), optional, intent(in) :: probs(:)
-integer(IK), optional, intent(in) :: mindim
-integer(IK), optional, intent(in) :: maxdim
-integer(IK), optional, intent(in) :: dimstride
-integer(IK), optional, intent(in) :: nrand
+character(len=PNLEN), intent(in), optional :: probs(:)
+integer(IK), intent(in), optional :: mindim
+integer(IK), intent(in), optional :: maxdim
+integer(IK), intent(in), optional :: dimstride
+integer(IK), intent(in), optional :: nrand
 
 character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)

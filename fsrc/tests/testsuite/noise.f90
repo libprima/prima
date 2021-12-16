@@ -6,7 +6,7 @@ module noise_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, December 05, 2021 PM10:33:47
+! Last Modified: Thursday, December 16, 2021 PM12:45:02
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: pintrf_mod, only : FUN, FUNCON
@@ -46,9 +46,9 @@ implicit none
 
 ! Inputs
 real(RP), intent(in) :: x
-real(RP), optional, intent(in) :: noise_level
-character(len=*), optional, intent(in) :: noise_type
-integer, optional, intent(in) :: seed
+real(RP), intent(in), optional :: noise_level
+character(len=*), intent(in), optional :: noise_type
+integer, intent(in), optional :: seed
 
 ! Outputs
 real(RP) :: noisy_x
@@ -115,9 +115,9 @@ implicit none
 
 ! Inputs
 real(RP), intent(in) :: x(:)
-real(RP), optional, intent(in) :: noise_level
-character(len=*), optional, intent(in) :: noise_type
-integer, optional, intent(in) :: seed
+real(RP), intent(in), optional :: noise_level
+character(len=*), intent(in), optional :: noise_type
+integer, intent(in), optional :: seed
 
 ! Outputs
 real(RP) :: noisy_x(size(x))
@@ -184,8 +184,8 @@ implicit none
 ! Inputs
 real(RP), intent(in) :: x(:)
 real(RP), intent(in) :: f
-real(RP), optional, intent(in) :: noise_level
-character(len=*), optional, intent(in) :: noise_type
+real(RP), intent(in), optional :: noise_level
+character(len=*), intent(in), optional :: noise_type
 
 ! Outputs
 real(RP) :: noisy_f
@@ -224,7 +224,7 @@ end if
 ! Fortran 7.0) or even encounter segmentation faults (Absoft 21.0).
 seedx = sum(cos(x * TEN**(-int(log10(abs(x) + EPS))))) / real(size(x), RP)
 seedf = cos(f * TEN**(-int(log10(abs(f) + EPS))))
-seed = ceiling(TENTH * real(huge(0), RP) * seedx * seedf)
+seed = ceiling(TENTH * real(10**range(0), RP) * seedx * seedf)
 seed = max(abs(seed), 1)
 
 ! Define NOISY_F.
@@ -260,8 +260,8 @@ implicit none
 ! Inputs
 real(RP), intent(in) :: x(:)
 real(RP), intent(in) :: f(:)
-real(RP), optional, intent(in) :: noise_level
-character(len=*), optional, intent(in) :: noise_type
+real(RP), intent(in), optional :: noise_level
+character(len=*), intent(in), optional :: noise_type
 
 ! Outputs
 real(RP) :: noisy_f(size(f))
