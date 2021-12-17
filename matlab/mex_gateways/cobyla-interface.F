@@ -332,10 +332,10 @@ C     Call COBYLA
      & nf_loc, rhobeg, rhoend, ftarget, ctol, maxfun, iprint,
      & fhist = fhist_loc, chist = chist_loc, maxhist=maxhist,info=info)
       nf = nf_loc
-      fhist(1:min(nf_loc, size(fhist), size(fhist_loc))) =
-     & fhist_loc(1:min(nf_loc, size(fhist), size(fhist_loc)))
-      chist(1:min(nf_loc, size(chist), size(chist_loc))) =
-     & chist_loc(1:min(nf_loc, size(chist), size(chist_loc)))
+      fhist(1:min(size(fhist), size(fhist_loc))) =
+     & fhist_loc(1:min(size(fhist), size(fhist_loc)))
+      chist(1:min(size(chist), size(chist_loc))) =
+     & chist_loc(1:min(size(chist), size(chist_loc)))
 C Note that n is of type mwSize, yet COBYLA expects input 1 to be
 C of type INTEGER. Therefore, we should use n_int instead of n. Similar
 C fo m/m_int.
@@ -464,40 +464,33 @@ C this subroutine. We are NOT in mexFunction!
       call mxDestroyArray(plhs(1))
 C Not yet to free prhs(2), which will be used when evaluating the constraint
 
-C Evaluate the constraint (constr_ptr) at x
-      if (nf .eq. 0) then
-C The very first iteration needs constr(x0), which was already evaluated in
-C the matlab code (to get the value of m) and saved in fcobyla.mod as
-C conval_x0. Copy the value directly without calling constr.
-          conval(1:m) = conval_x0(1:m)
-      else
-          plhs(1) = mxCreateDoubleMatrix(m_mw, mwOne, notComplex)
+!C Evaluate the constraint (constr_ptr) at x
+      plhs(1) = mxCreateDoubleMatrix(m_mw, mwOne, notComplex)
 C Output of c_value = feval(constr, x); see below
-          prhs(1) = constr_ptr
+      prhs(1) = constr_ptr
 C First input of c_value = feval(constr, x); see below; constr_ptr is a global variable
 C prhs(2) was already set to x when evaluating fun
-          if (0 .ne. mexCallMATLAB(intOne, plhs, intTwo,
-     &        prhs, funFeval)) then
+      if (0 .ne. mexCallMATLAB(intOne, plhs, intTwo,
+     &    prhs, funFeval)) then
 C Execute matlab command: c_value = feval(constr, x)
-              call mexErrMsgIdAndTxt('fcobyla:UnsuccessfulCall',
-     &        'fcobyla: mex fails to call constr.')
-          end if
-          if (plhs(1) .eq. 0 .or. (m .gt. 0 .and.
-     &        _MGETDB(plhs(1)) .eq. 0)) then
-              call mexErrMsgIdAndTxt('fcobyla:UnsuccessfulCall',
-     &        'fcobyla: NULL pointer returned when mex calls constr.')
-          end if
-          if (m .gt. 0 .and. (mxGetM(plhs(1)) .ne. m .or.
-     &        mxGetN(plhs(1)) .ne. 1 .or.
-     &        mxIsDouble(plhs(1)) .ne. 1)) then
-           call mexErrMsgIdAndTxt('fcobyla:ConstrNotScalarVector',
+          call mexErrMsgIdAndTxt('fcobyla:UnsuccessfulCall',
+     &    'fcobyla: mex fails to call constr.')
+      end if
+      if (plhs(1) .eq. 0 .or. (m .gt. 0 .and.
+     &    _MGETDB(plhs(1)) .eq. 0)) then
+          call mexErrMsgIdAndTxt('fcobyla:UnsuccessfulCall',
+     &   'fcobyla: NULL pointer returned when mex calls constr.')
+      end if
+      if (m .gt. 0 .and. (mxGetM(plhs(1)) .ne. m .or.
+     &    mxGetN(plhs(1)) .ne. 1 .or.
+     &    mxIsDouble(plhs(1)) .ne. 1)) then
+          call mexErrMsgIdAndTxt('fcobyla:ConstrNotScalarVector',
      &'fcobyla: The constraint function should return a scalar vector of
      &size mx1.')
-          end if
-          call mxCopyPtrToReal8(_MGETDB(plhs(1)),
-     &         conval(1:m), m_mw)
-C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
       end if
+      call mxCopyPtrToReal8(_MGETDB(plhs(1)),
+     &    conval(1:m), m_mw)
+!C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
 C Calculate the constraint violation (named 'RESMAX' in Powell's COBYLA code)
       resmax = zero ! zero is defined in module 'consts'.
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC

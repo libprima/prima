@@ -5,7 +5,7 @@
 !
 ! Started: July 2020.
 !
-! Last Modified: Thursday, November 11, 2021 AM10:59:34
+! Last Modified: Friday, December 17, 2021 PM04:35:06
 
 
 #include "fintrf.h"
@@ -16,7 +16,7 @@ module debug_mod
 
 implicit none
 private
-public :: assert, backtr, errstop, verisize
+public :: assert, backtr, warning, errstop, verisize
 
 interface verisize
     module procedure verisize_real_1, verisize_real_2
@@ -25,11 +25,16 @@ interface verisize
 end interface verisize
 
 interface
+    subroutine mexWarnMsgIdAndTxt(warningid, warningmsg)
+    implicit none
+    character * (*) warningid, warningmsg
+    end subroutine mexWarnMsgIdAndTxt
     subroutine mexErrMsgIdAndTxt(errorid, errormsg)
     implicit none
     character*(*), intent(in) :: errorid, errormsg
     end subroutine mexErrMsgIdAndTxt
 end interface
+
 
 contains
 
@@ -53,9 +58,24 @@ end if
 end subroutine assert
 
 
+subroutine warning(srname, mssg)
+use, non_intrinsic :: consts_mod, only : MSSGLEN
+implicit none
+character(len=*), intent(in) :: srname
+character(len=*), intent(in) :: mssg
+
+character(len=MSSGLEN) :: wid
+character(len=MSSGLEN) :: wmssg
+
+call backtr()
+wid = 'FMXAPI'
+wmssg = trim(srname)//': '//trim(mssg)//'.'
+call mexWarnMsgIdAndTxt(trim(wid), trim(wmssg))
+end subroutine warning
+
+
 subroutine errstop(srname, mssg)
 use, non_intrinsic :: consts_mod, only : MSSGLEN
-
 implicit none
 
 character(len=*), intent(in) :: srname
@@ -64,14 +84,10 @@ character(len=*), intent(in) :: mssg
 character(len=MSSGLEN) :: eid
 character(len=MSSGLEN) :: emssg
 
-#if __DEBUGGING__ == 1
 call backtr()
-#endif
-
-eid = 'FMXAPI:nInput'
+eid = 'FMXAPI'
 emssg = trim(srname)//': '//trim(mssg)//'.'
 call mexErrMsgIdAndTxt(trim(eid), trim(emssg))
-
 end subroutine errstop
 
 

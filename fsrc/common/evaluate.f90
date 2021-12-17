@@ -6,12 +6,25 @@ module evaluate_mod
 !
 ! Started: August 2021
 !
-! Last Modified: Friday, November 19, 2021 PM03:20:02
+! Last Modified: Friday, December 17, 2021 PM04:54:04
 !--------------------------------------------------------------------------------------------------!
 
+use, non_intrinsic :: consts_mod, only : RP, IK
 implicit none
 private
-public :: evalf, evalfc
+public :: evalf
+public :: evalfc
+public :: eval_count, f_x0, constr_x0
+
+! Remarks on EVAL_COUNT, F_X0, and CONSTR_X0:
+! 1. Currently (20211217), EVAL_COUNT, F_X0, and CONSTR_X0 are only used in nonlinear constrained
+! problems, where the user may provide the function/constraint value of the starting point X0.
+! 2. EVAL_COUNT is only used to indicate whether the current evaluation is for the starting point.
+! Even though it equals the number of function/constrained evaluation, it is not used to define NF.
+! The solvers will count NF themselves.
+integer(IK), save :: eval_count = 0_IK
+real(RP), pointer, save :: f_x0 => null()
+real(RP), pointer, save :: constr_x0(:) => null()
 
 
 contains
@@ -118,7 +131,15 @@ if (any(is_nan(x))) then
     constr = f
     cstrv = f
 else
-    call calcfc(x, f, constr)  ! Evaluate F and CONSTR.
+    if (eval_count == 0 .and. associated(f_x0) .and. associated(constr_x0)) then
+        f = f_x0
+        nullify (f_x0)
+        constr = constr_x0
+        nullify (constr_x0)
+    else
+        call calcfc(x, f, constr)  ! Evaluate F and CONSTR.
+    end if
+    eval_count = eval_count + 1_IK
 
     ! Moderated extreme barrier: replace NaN/huge objective or constraint values with a large but
     ! finite value. This is naive, and better approaches surely exist.

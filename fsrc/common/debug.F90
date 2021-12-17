@@ -5,7 +5,7 @@
 !
 ! Started: July 2020.
 !
-! Last Modified: Friday, December 03, 2021 AM11:14:06
+! Last Modified: Friday, December 17, 2021 PM04:33:25
 
 
 #include "ppf.h"
@@ -15,7 +15,7 @@ module debug_mod
 
 implicit none
 private
-public :: assert, backtr, errstop, verisize
+public :: assert, backtr, warning, errstop, verisize
 
 interface verisize
     module procedure verisize_real_1, verisize_real_2
@@ -45,14 +45,14 @@ end if
 end subroutine assert
 
 
-!subroutine warning(srname, mssg)
-!implicit none
-!character(len=*), intent(in) :: srname
-!character(len=*), intent(in) :: mssg
+subroutine warning(srname, mssg)
+implicit none
+character(len=*), intent(in) :: srname
+character(len=*), intent(in) :: mssg
 
-!print '(/1A/)', 'WARNING: '//trim(srname)//': '//trim(mssg)//'.'
-
-!end subroutine warning
+call backtr()
+print '(/1A/)', 'WARNING: '//trim(srname)//': '//trim(mssg)//'.'
+end subroutine warning
 
 
 subroutine errstop(srname, mssg)
@@ -63,7 +63,6 @@ character(len=*), intent(in) :: mssg
 call backtr()
 print '(/1A/)', 'ERROR: '//trim(srname)//': '//trim(mssg)//'.'
 stop  ! This means to stop the whole program.
-
 end subroutine errstop
 
 

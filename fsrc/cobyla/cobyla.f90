@@ -24,7 +24,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, December 17, 2021 AM11:36:47
+! Last Modified: Friday, December 17, 2021 PM04:46:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -106,7 +106,8 @@ use, non_intrinsic :: consts_mod, only : DEBUGGING
 use, non_intrinsic :: consts_mod, only : MAXMEMORY, MAXFUN_DIM_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, FTARGET_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TEN, TENTH, EPS
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: debug_mod, only : assert, errstop, warning
+use, non_intrinsic :: evaluate_mod, only : eval_count, f_x0, constr_x0
 use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite, is_neginf, is_posinf
 use, non_intrinsic :: memory_mod, only : safealloc, cstyle_sizeof
 use, non_intrinsic :: pintrf_mod, only : FUNCON
@@ -128,9 +129,9 @@ integer(IK), intent(in), optional :: iprint
 integer(IK), intent(in), optional :: m
 integer(IK), intent(in), optional :: maxfun
 integer(IK), intent(in), optional :: maxhist
-real(RP), intent(in), optional :: constr0(:)
+real(RP), intent(in), target, optional :: constr0(:)
 real(RP), intent(in), optional :: ctol
-real(RP), intent(in), optional :: f0
+real(RP), intent(in), target, optional :: f0
 real(RP), intent(in), optional :: ftarget
 real(RP), intent(in), optional :: rhobeg
 real(RP), intent(in), optional :: rhoend
@@ -149,36 +150,45 @@ real(RP), intent(out), optional :: cstrv
 character(len=*), parameter :: solver = 'COBYLA'
 character(len=*), parameter :: srname = 'COBYLA'
 integer(IK) :: i
+integer(IK) :: info_loc
 integer(IK) :: iprint_loc
+integer(IK) :: m_loc
 integer(IK) :: maxchist
 integer(IK) :: maxconhist
 integer(IK) :: maxfhist
 integer(IK) :: maxfun_loc
-integer(IK) :: maxhist_loc
 integer(IK) :: maxhist_in
-integer(IK) :: maxxhist
+integer(IK) :: maxhist_loc
 integer(IK) :: maximal_hist
-integer(IK) :: m_loc
+integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: nf_loc
 integer(IK) :: nhist
-integer(IK) :: info_loc
+integer(IK) :: unit_memo
+logical :: output_hist
 real(RP) :: cstrv_loc
 real(RP) :: ctol_loc
 real(RP) :: ftarget_loc
-real(RP), allocatable :: chist_loc(:)
-real(RP), allocatable :: conhist_loc(:, :)
-!real(RP), allocatable :: constr0_loc(:)
-real(RP), allocatable :: constr_loc(:)
-real(RP), allocatable :: fhist_loc(:)
 real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
+real(RP), allocatable :: chist_loc(:)
+real(RP), allocatable :: conhist_loc(:, :)
+real(RP), allocatable :: constr_loc(:)
+!real(RP), allocatable :: constr0_loc(:)
+real(RP), allocatable :: fhist_loc(:)
 real(RP), allocatable :: xhist_loc(:, :)
 
 ! Sizes
 n = int(size(x), kind(n))
 if (present(m) .and. present(constr0)) then
-    call assert(m == size(constr0), 'M == SIZE(CONSTR0)', srname)
+    if (size(constr0) /= m) then
+        if (DEBUGGING) then
+            call errstop(srname, 'SIZE(CONSTR0) /= M. Exiting')
+        else
+            call warning(srname, 'SIZE(CONSTR0) /= M. Exiting')
+            return
+        end if
+    end if
 end if
 if (present(m)) then
     m_loc = m
@@ -186,6 +196,24 @@ elseif (present(constr0)) then
     m_loc = int(size(constr0), kind(m_loc))
 else
     m_loc = 0_IK
+end if
+if (present(constr)) then
+    if (size(constr) /= m_loc) then
+        if (DEBUGGING) then
+            call errstop(srname, 'SIZE(CONSTR) /= M. Exiting')
+        else
+            call warning(srname, 'SIZE(CONSTR) /= M. Exiting')
+            return
+        end if
+    end if
+end if
+
+eval_count = 0
+if (present(f0)) then
+    f_x0 => f0
+end if
+if (present(constr0)) then
+    constr_x0 => constr0
 end if
 
 ! Allocate memory for CONSTR_LOC
@@ -249,27 +277,37 @@ end if
 
 maxhist_in = 0_IK  ! MAXHIST input by user
 if (present(maxhist)) then
-    maxhist_loc = maxhist
     maxhist_in = maxhist
+    maxhist_loc = maxhist
 else if (maxfun_loc >= n + 2) then
     maxhist_loc = maxfun_loc
 else
     maxhist_loc = MAXFUN_DIM_DFT * n
+end if
+output_hist = (present(xhist) .or. present(fhist) .or. present(conhist) .or. present(chist))
+if (.not. output_hist) then
+    maxhist_in = 0
+    maxhist_loc = 0
 end if
 
 ! Preprocess the inputs in case some of them are invalid.
 !call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc)
 
 ! Further revise MAXHIST according to MAXMEMORY, i.e., the maximal memory allowed for the history.
-if (present(xhist) .and. present(conhist)) then
-    maximal_hist = int(MAXMEMORY / ((n + m_loc + 2) * cstyle_sizeof(0.0_RP)), kind(maximal_hist))
-elseif (present(xhist)) then
-    maximal_hist = int(MAXMEMORY / ((n + 2) * cstyle_sizeof(0.0_RP)), kind(maximal_hist))
-elseif (present(conhist)) then
-    maximal_hist = int(MAXMEMORY / ((m_loc + 2) * cstyle_sizeof(0.0_RP)), kind(maximal_hist))
-else
-    maximal_hist = int(MAXMEMORY / (2 * cstyle_sizeof(0.0_RP)), kind(maximal_hist))
+unit_memo = 0_IK
+if (present(xhist)) then
+    unit_memo = unit_memo + n
 end if
+if (present(fhist)) then
+    unit_memo = unit_memo + 1_IK
+end if
+if (present(conhist)) then
+    unit_memo = unit_memo + m_loc
+end if
+if (present(chist)) then
+    unit_memo = unit_memo + 1_IK
+end if
+maximal_hist = int(MAXMEMORY / max(1_IK, unit_memo * cstyle_sizeof(0.0_RP)), kind(maximal_hist))
 if (maxhist_loc > maximal_hist) then
     ! We cannot simply take MAXHIST_LOC = MIN(MAXHIST_LOC, MAXIMAL_HIST), as they may not have the
     ! same kind, and compilers may complain. We may convert them to the same, but overflow may occur
@@ -312,6 +350,9 @@ call safealloc(chist_loc, maxchist)
 call cobylb(calcfc, iprint_loc, maxfun_loc, ctol_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
     & constr_loc, x, nf_loc, chist_loc, conhist_loc, cstrv_loc, f, fhist_loc, xhist_loc, info_loc)
 !--------------------------------------------------------------------------------------------------!
+
+nullify (f_x0)
+nullify (constr_x0)
 
 ! Write the outputs.
 
@@ -394,7 +435,7 @@ end if
 deallocate (chist_loc)
 
 ! If MAXFHIST_IN >= NF_LOC > MAXFHIST_LOC, warn that not all history is recorded.
-if ((present(xhist) .or. present(fhist)) .and. maxhist_loc < min(nf_loc, maxhist_in)) then
+if (output_hist .and. maxhist_loc < min(nf_loc, maxhist_in)) then
     print '(/1A, I7, 1A)', 'WARNING: '//solver//': due to memory limit, MAXHIST is reset to ', maxhist_loc, '.'
     print '(1A/)', 'Only the history of the last MAXHIST iterations is recoreded.'
 end if
@@ -402,6 +443,7 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(nf_loc <= maxfun_loc, 'NF <= MAXFUN', srname)
+    call assert(nf_loc == eval_count, 'NF == EVAL_COUNT', srname)
     call assert(size(x) == n .and. .not. any(is_nan(x)), 'SIZE(X) == N, X does not contain NaN', srname)
     nhist = min(nf_loc, maxhist_loc)
     if (present(xhist)) then
