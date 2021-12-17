@@ -6,7 +6,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, December 07, 2021 AM01:35:05
+! Last Modified: Thursday, December 16, 2021 PM11:39:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -25,7 +25,7 @@ subroutine updatexfc(jdrop, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : IK, RP, TENTH, DEBUGGING
+use, non_intrinsic :: consts_mod, only : IK, RP, DEBUGGING
 use, non_intrinsic :: infnan_mod, only : is_nan, is_neginf, is_posinf, is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, outprod, isinv
 use, non_intrinsic :: debug_mod, only : assert
@@ -50,7 +50,7 @@ real(RP), intent(inout) :: simi(:, :)
 character(len=*), parameter :: srname = 'UPDATEXFC'
 integer(IK) :: m
 integer(IK) :: n
-real(RP), parameter :: itol = TENTH
+!real(RP), parameter :: itol = TENTH
 real(RP) :: simi_jdrop(size(simi, 2))
 
 ! Sizes
