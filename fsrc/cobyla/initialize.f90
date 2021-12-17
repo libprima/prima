@@ -6,7 +6,7 @@ module initialize_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, December 02, 2021 PM02:09:01
+! Last Modified: Saturday, December 18, 2021 AM01:30:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -32,7 +32,7 @@ use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf, is_finite
 use, non_intrinsic :: info_mod, only : INFO_DFT
 use, non_intrinsic :: linalg_mod, only : eye
-use, non_intrinsic :: output_mod, only : retmssg, rhomssg, fmssg
+!use, non_intrinsic :: output_mod, only : retmssg, rhomssg, fmssg
 use, non_intrinsic :: pintrf_mod, only : FUNCON
 
 implicit none
@@ -77,13 +77,13 @@ real(RP) :: f
 real(RP) :: x(size(x0))
 
 ! Sizes
-m = size(conmat, 1)
-n = size(sim, 1)
-maxchist = size(chist)
-maxconhist = size(conhist, 2)
-maxfhist = size(fhist)
-maxxhist = size(xhist, 2)
-maxhist = max(maxchist, maxconhist, maxfhist, maxxhist)
+m = int(size(conmat, 1), kind(m))
+n = int(size(sim, 1), kind(n))
+maxchist = int(size(chist), kind(maxchist))
+maxconhist = int(size(conhist, 2), kind(maxconhist))
+maxfhist = int(size(fhist), kind(maxfhist))
+maxxhist = int(size(xhist, 2), kind(maxxhist))
+maxhist = int(max(maxchist, maxconhist, maxfhist, maxxhist), kind(maxhist))
 
 ! Preconditions
 if (DEBUGGING) then
@@ -108,7 +108,7 @@ end if
 ! Calculation starts !
 !====================!
 
-sim = rhobeg * eye(n, n + 1)
+sim = rhobeg * eye(n, n + 1_IK)
 sim(:, n + 1) = x0
 fval = HUGENUM
 cval = HUGENUM
@@ -121,13 +121,13 @@ fval = HUGENUM
 cval = HUGENUM
 conmat = -HUGENUM
 
-do k = 1, n + 1
+do k = 1, n + 1_IK
     x = sim(:, n + 1)
     ! We will evaluate F corresponding to SIM(:, J).
     if (k == 1) then
-        j = n + 1
+        j = n + 1_IK
     else
-        j = k - 1
+        j = k - 1_IK
         x(j) = x(j) + rhobeg
     end if
     call evalfc(calcfc, x, f, constr, cstrv)
@@ -150,9 +150,9 @@ do k = 1, n + 1
     ! Exchange the new vertex of the initial simplex with the optimal vertex if necessary.
     ! This is the ONLY part that is essentially non-parallel.
     if (j <= n .and. fval(j) < fval(n + 1)) then
-        fval([j, n + 1]) = fval([n + 1, j])
-        cval([j, n + 1]) = cval([n + 1, j])
-        conmat(:, [j, n + 1]) = conmat(:, [n + 1, j])
+        fval([j, n + 1_IK]) = fval([n + 1_IK, j])
+        cval([j, n + 1_IK]) = cval([n + 1_IK, j])
+        conmat(:, [j, n + 1_IK]) = conmat(:, [n + 1_IK, j])
         sim(:, n + 1) = x
         sim(j, 1:j) = -rhobeg  ! SIM(:, 1:N) is lower triangular.
     end if
@@ -236,18 +236,18 @@ integer(IK) :: n
 real(RP) :: x(size(sim, 1))
 
 ! Sizes
-m = size(conmat, 1)
-n = size(sim, 1)
-maxfilt = size(ffilt)
+m = int(size(conmat, 1), kind(m))
+n = int(size(sim, 1), kind(n))
+maxfilt = int(size(ffilt), kind(maxfilt))
 
 ! Preconditions
 if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(maxfilt >= 1, 'MAXFILT >= 1', srname)
     call assert(size(confilt, 1) == m .and. size(confilt, 2) == maxfilt, 'SIZE(CONFILT) == [M, MAXFILT]', srname)
-    call assert(size(cfilt) == MAXFILT, 'SIZE(CFILT) == MAXFILT', srname)
+    call assert(size(cfilt) == maxfilt, 'SIZE(CFILT) == MAXFILT', srname)
     call assert(size(xfilt, 1) == n .and. size(xfilt, 2) == maxfilt, 'SIZE(XFILT) == [N, MAXFILT]', srname)
-    call assert(size(ffilt) == MAXFILT, 'SIZE(FFILT) == MAXFILT', srname)
+    call assert(size(ffilt) == maxfilt, 'SIZE(FFILT) == MAXFILT', srname)
     call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
     call assert(.not. any(is_nan(conmat) .or. is_neginf(conmat)), 'CONMAT does not contain NaN/-Inf', srname)
     call assert(size(cval) == n + 1 .and. .not. any(is_nan(cval) .or. is_posinf(cval)), &
@@ -264,7 +264,7 @@ end if
 !====================!
 
 nfilt = 0_IK
-do i = 1, n + 1
+do i = 1, n + 1_IK
     if (evaluated(i)) then
         if (i <= n) then
             x = sim(:, i) + sim(:, n + 1)
@@ -285,13 +285,13 @@ if (DEBUGGING) then
     call assert(size(confilt, 1) == m .and. size(confilt, 2) == maxfilt, 'SIZE(CONFILT) == [M, MAXFILT]', srname)
     call assert(.not. any(is_nan(confilt(:, 1:nfilt)) .or. is_neginf(confilt(:, 1:nfilt))), &
         & 'CONFILT does not contain NaN/-Inf', srname)
-    call assert(size(cfilt) == MAXFILT, 'SIZE(CFILT) == MAXFILT', srname)
+    call assert(size(cfilt) == maxfilt, 'SIZE(CFILT) == MAXFILT', srname)
     call assert(.not. any(is_nan(cfilt(1:nfilt)) .or. is_posinf(cfilt(1:nfilt))), &
         & 'CFILT does not contain NaN/Inf', srname)
     call assert(size(xfilt, 1) == n .and. size(xfilt, 2) == maxfilt, 'SIZE(XFILT) == [N, MAXFILT]', srname)
     call assert(.not. any(is_nan(xfilt(:, 1:nfilt))), 'XFILT does not contain NaN', srname)
     ! The last calculated X can be Inf (finite + finite can be Inf numerically).
-    call assert(size(ffilt) == MAXFILT, 'SIZE(FFILT) == MAXFILT', srname)
+    call assert(size(ffilt) == maxfilt, 'SIZE(FFILT) == MAXFILT', srname)
     call assert(.not. any(is_nan(ffilt(1:nfilt)) .or. is_posinf(ffilt(1:nfilt))), &
         & 'FFILT does not contain NaN/+Inf', srname)
 end if

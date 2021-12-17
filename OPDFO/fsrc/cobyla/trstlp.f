@@ -175,7 +175,7 @@
       !    END DO
       !END IF
       ITERC = ITERC + 1
-      IF (ITERC > Min(50000, 100*max(M, N))) THEN
+      IF (ITERC > Min(100000, 100*max(M, N))) THEN
           GOTO 490
       END IF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

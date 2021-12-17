@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, December 02, 2021 PM02:08:08
+! Last Modified: Saturday, December 18, 2021 AM01:33:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -26,7 +26,7 @@ function goodgeo(factor_alpha, factor_beta, rho, sim, simi) result(good_geo)
 use, non_intrinsic :: consts_mod, only : IK, RP, ONE, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, isinv
+use, non_intrinsic :: linalg_mod, only : isinv
 
 implicit none
 
@@ -50,7 +50,7 @@ real(RP) :: vsig(size(sim, 1))
 real(RP), parameter :: itol = TENTH
 
 ! Sizes
-n = size(sim, 1)
+n = int(size(sim, 1), kind(n))
 
 ! Preconditions
 if (DEBUGGING) then
@@ -96,7 +96,7 @@ function setdrop_tr(actrem, d, factor_alpha, factor_delta, rho, sim, simi) resul
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, ONE, TENTH, DEBUGGING
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, isinv
+use, non_intrinsic :: linalg_mod, only : matprod, isinv
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: debug_mod, only : assert
 
@@ -126,7 +126,7 @@ real(RP) :: vsig(size(sim, 1))
 real(RP), parameter :: itol = TENTH
 
 ! Sizes
-n = size(sim, 1)
+n = int(size(sim, 1), kind(n))
 
 ! Preconditions
 if (DEBUGGING) then
@@ -139,6 +139,10 @@ if (DEBUGGING) then
     call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
     call assert(.not. is_nan(actrem), 'ACTREM is not NaN', srname)
 end if
+
+!====================!
+! Calculation starts !
+!====================!
 
 ! JDROP = 0 by default. It cannot be removed, as JDROP may not be set below in some cases (e.g.,
 ! when ACTREM <= 0, MAXVAL(ABS(SIMID)) <= 1, and MAXVAL(VETA) <= EDGMAX).
@@ -173,6 +177,11 @@ if (actrem > ZERO .and. jdrop <= 0) then  ! Write JDROP <= 0 instead of JDROP ==
     jdrop = int(maxloc(veta, mask=(.not. is_nan(veta)), dim=1), kind(jdrop))
 end if
 
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
 if (DEBUGGING) then
     call assert(jdrop >= 0 .and. jdrop <= n, '0 <= JDROP <= N', srname)
     call assert(jdrop >= 1 .or. .not. actrem > 0, 'JDROP >= 1 unless ACTREM <= 0', srname)
@@ -192,7 +201,7 @@ function setdrop_geo(factor_alpha, factor_beta, rho, sim, simi) result(jdrop)
 use, non_intrinsic :: consts_mod, only : IK, RP, ONE, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, isinv
+use, non_intrinsic :: linalg_mod, only : isinv
 
 implicit none
 
@@ -216,7 +225,9 @@ real(RP) :: vsig(size(sim, 1))
 real(RP), parameter :: itol = TENTH
 
 ! Sizes
-n = size(sim, 1)
+n = int(size(sim, 1), kind(n))
+
+! Preconditions
 if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
@@ -250,11 +261,11 @@ else
     jdrop = 0_IK
 end if
 
-
 !====================!
 !  Calculation ends  !
 !====================!
 
+!Postconditions
 if (DEBUGGING) then
     call assert(jdrop >= 1 .and. jdrop <= n, '1 <= JDROP <= N', srname)
 end if
@@ -298,8 +309,8 @@ real(RP) :: cvmaxp
 real(RP) :: vsig(size(simi, 1))
 
 ! Sizes
-m = size(conmat, 1)
-n = size(simi, 1)
+m = int(size(conmat, 1), kind(m))
+n = int(size(simi, 1), kind(m))
 
 ! Preconditions
 if (DEBUGGING) then
