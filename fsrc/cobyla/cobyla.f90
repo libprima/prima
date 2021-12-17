@@ -24,7 +24,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, December 17, 2021 PM04:46:16
+! Last Modified: Friday, December 17, 2021 PM11:54:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -112,7 +112,7 @@ use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite, is_neginf, i
 use, non_intrinsic :: memory_mod, only : safealloc, cstyle_sizeof
 use, non_intrinsic :: pintrf_mod, only : FUNCON
 use, non_intrinsic :: selectx_mod, only : isbetter
-!use, non_intrinsic :: preproc_mod, only : preproc
+use, non_intrinsic :: preproc_mod, only : preproc
 
 ! Solver-specific modules
 use, non_intrinsic :: cobylb_mod, only : cobylb
@@ -141,9 +141,9 @@ integer(IK), intent(out), optional :: info
 integer(IK), intent(out), optional :: nf
 real(RP), intent(out), allocatable, optional :: chist(:)
 real(RP), intent(out), allocatable, optional :: conhist(:, :)
+real(RP), intent(out), allocatable, optional :: constr(:)
 real(RP), intent(out), allocatable, optional :: fhist(:)
 real(RP), intent(out), allocatable, optional :: xhist(:, :)
-real(RP), intent(out), optional :: constr(:)
 real(RP), intent(out), optional :: cstrv
 
 ! Local variables
@@ -174,7 +174,6 @@ real(RP) :: rhoend_loc
 real(RP), allocatable :: chist_loc(:)
 real(RP), allocatable :: conhist_loc(:, :)
 real(RP), allocatable :: constr_loc(:)
-!real(RP), allocatable :: constr0_loc(:)
 real(RP), allocatable :: fhist_loc(:)
 real(RP), allocatable :: xhist_loc(:, :)
 
@@ -197,18 +196,13 @@ elseif (present(constr0)) then
 else
     m_loc = 0_IK
 end if
-if (present(constr)) then
-    if (size(constr) /= m_loc) then
-        if (DEBUGGING) then
-            call errstop(srname, 'SIZE(CONSTR) /= M. Exiting')
-        else
-            call warning(srname, 'SIZE(CONSTR) /= M. Exiting')
-            return
-        end if
-    end if
-end if
 
+! The user may provide the function/constraint value at X0. Set up F_X0 and CONSTR_X0 accordingly.
+! EVAL_COUNT is only used to indicate whether we are at X0 when calling EVALFC. We do not use it to
+! define NF. COBYLB will count NF even though NF = EVAL_COUNT.
 eval_count = 0
+nullify (f_x0)
+nullify (constr_x0)
 if (present(f0)) then
     f_x0 => f0
 end if
@@ -290,10 +284,11 @@ if (.not. output_hist) then
     maxhist_loc = 0
 end if
 
-! Preprocess the inputs in case some of them are invalid.
-!call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc)
+! Preprocess the inputs in case some of them are invalid. It does nothing if all inputs are valid.
+call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, ctol=ctol_loc)
 
 ! Further revise MAXHIST according to MAXMEMORY, i.e., the maximal memory allowed for the history.
+maxhist_loc = min(maxhist_loc, maxfun_loc)  ! MAXHIST > MAXFUN is never needed.
 unit_memo = 0_IK
 if (present(xhist)) then
     unit_memo = unit_memo + n
@@ -360,7 +355,7 @@ nullify (constr_x0)
 if (present(constr)) then
     !--------------------------------------------------!
     !---- The SAFEALLOC line is removable in F2003. ---!
-    !!call safealloc(constr, m_loc)
+    call safealloc(constr, m_loc)
     !--------------------------------------------------!
     constr = constr_loc
 end if
@@ -463,7 +458,7 @@ if (DEBUGGING) then
         call assert(.not. any(is_nan(chist) .or. is_posinf(chist)), 'CHIST does not contain NaN/+Inf', srname)
     end if
     if (present(fhist) .and. present(chist)) then
-        call assert(.not. any([(isbetter([fhist(i), chist(i)], [f, cstrv], ctol), i=1, nhist)]), &
+        call assert(.not. any([(isbetter([fhist(i), chist(i)], [f, cstrv_loc], ctol), i=1, nhist)]),&
             & 'No point in the filter is better than X', srname)
     end if
 end if
