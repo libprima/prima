@@ -16,7 +16,7 @@ INTERFORMDIR=../intersection_form/cobyla/
 MEXDIR= $(PWD)/../../matlab/mex_gateways/
 INTERSECTIONMEXDIR= $(PWD)/../../matlab/mex_gateways/intersection_form/
 
-COMFILES=../common/consts.F90 ../common/debug.F90 ../common/memory.F90 ../common/info.f90 ../common/infnan.F90 ../common/linalg.F90 ../common/output.f90 ../common/pintrf.f90 ../common/evaluate.f90 ../common/selectx.f90 ../common/logging.F90 ../common/resolution.f90 ../common/history.f90 ../common/checkexit.f90
+COMFILES=../common/consts.F90 ../common/debug.F90 ../common/memory.F90 ../common/info.f90 ../common/infnan.F90 ../common/linalg.F90 ../common/output.f90 ../common/pintrf.f90 ../common/evaluate.f90 ../common/selectx.f90 ../common/logging.F90 ../common/resolution.f90 ../common/history.f90 ../common/checkexit.f90 ../common/string.f90 ../common/preproc.f90
 FILES= $(COMFILES) initialize.f90 trustregion.f90 update.f90 geometry.f90 cobylb.f90 cobyla.f90
 
 M90FILES= $(FILES) $(MEXDIR)/fmxapi.F90 $(MEXDIR)/prob.F90 $(MEXDIR)/classical/fmxcl.F90 $(MEXDIR)/gethuge.F90 $(MEXDIR)/cobyla-interface.F90 $(MEXDIR)/classical/cobyla-interface.F90 -I/home/zaikunzhang/local/MATLAB/R2020a/extern/include/ -I$(NEUPDFO)
@@ -111,7 +111,7 @@ COMMON = ../common
 
 example: example.f90 \
 	consts.o info.o debug.o memory.o infnan.o linalg.o output.o pintrf.o evaluate.o \
-	resolution.o history.o checkexit.o initialize.o trustregion.o update.o selectx.o geometry.o cobylb.o cobyla.o
+	resolution.o history.o checkexit.o  string.o preproc.o initialize.o trustregion.o update.o selectx.o geometry.o cobylb.o cobyla.o
 	$(FC) $(FFLAGS) -o example example.f90 *.o
 
 test: example
@@ -143,6 +143,10 @@ history.o: $(COMMON)/history.f90
 	$(FC) $(FFLAGS) -c $(COMMON)/history.f90
 checkexit.o: $(COMMON)/checkexit.f90
 	$(FC) $(FFLAGS) -c $(COMMON)/checkexit.f90
+string.o: $(COMMON)/string.f90
+	$(FC) $(FFLAGS) -c $(COMMON)/string.f90
+preproc.o: $(COMMON)/preproc.f90
+	$(FC) $(FFLAGS) -c $(COMMON)/preproc.f90
 
 initialize.o: initialize.f90
 	$(FC) $(FFLAGS) -c initialize.f90

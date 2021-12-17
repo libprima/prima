@@ -14,7 +14,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, December 17, 2021 PM03:34:51
+! Last Modified: Friday, December 17, 2021 PM08:10:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -320,10 +320,11 @@ if (.not. output_hist) then
 end if
 
 ! Preprocess the inputs in case some of them are invalid.
-call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, npt_loc, eta1_loc, eta2_loc, ftarget_loc, &
-    & gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc)
+call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
+    & npt_loc, eta1=eta1_loc, eta2=eta2_loc, gamma1=gamma1_loc, gamma2=gamma2_loc)
 
 ! Further revise MAXHIST according to MAXMEMORY, i.e., the maximal memory allowed for the history.
+maxhist_loc = min(maxhist_loc, maxfun_loc)  ! MAXHIST > MAXFUN is never needed.
 unit_memo = 0_IK
 if (present(xhist)) then
     unit_memo = unit_memo + n

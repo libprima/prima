@@ -617,8 +617,9 @@ if options.debug && ~options.classical
         else
             cf = chist(fhist == fx);
         end
-        if ~any(cf == cstrv_returned) && ~(isnan(cstrv_returned) && ~any(~isnan(cf)))
+        if (nhist >= nf) && ~any(cf == cstrv_returned) && ~(isnan(cstrv_returned) && ~any(~isnan(cf)))
             % Public/unexpected error
+            % Note: When nhist < nf, FHIST and CHIST do not contain the whole history.
             error(sprintf('%s:InvalidFhist', invoker), ...
               '%s: UNEXPECTED ERROR: %s returns a constrviolation that does not match chist.', invoker, solver);
         end

@@ -293,14 +293,6 @@ C m is number of constraints
      &     conval_x0(1:m), m)
 C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
 
-C     Allocate workspace
-      if (allocated(conval)) deallocate (conval)
-      allocate (conval(m_int), stat=allocate_status)
-      if (allocate_status .ne. 0) then
-          call mexErrMsgIdAndTxt('fcobyla:InsufficientMemory',
-     &    'fcobyla: allocate(conval) failed.')
-      end if
-
 
 C     Initialize global variables
       nf = 0
@@ -336,6 +328,7 @@ C     Call COBYLA
      & fhist_loc(1:min(size(fhist), size(fhist_loc)))
       chist(1:min(size(chist), size(chist_loc))) =
      & chist_loc(1:min(size(chist), size(chist_loc)))
+      maxhist = min(nf, maxhist)
 C Note that n is of type mwSize, yet COBYLA expects input 1 to be
 C of type INTEGER. Therefore, we should use n_int instead of n. Similar
 C fo m/m_int.
@@ -347,16 +340,16 @@ C Write outputs
 C Although info and nf are integers logically, they are passed as double
       plhs(3) = mxCreateDoubleScalar(real(info, rp))
       plhs(4) = mxCreateDoubleScalar(real(nf, rp))
-      plhs(5) = mxCreateDoubleMatrix(mwOne, nf, notComplex)
-      call mxCopyReal8ToPtr(fhist(1:nf),
-     &     _MGETDB(plhs(5)), nf)
+      plhs(5) = mxCreateDoubleMatrix(mwOne, maxhist, notComplex)
+      call mxCopyReal8ToPtr(fhist(1:maxhist),
+     &     _MGETDB(plhs(5)), maxhist)
 C Set conval to the value of constr(x)
       plhs(6) = mxCreateDoubleMatrix(m, mwOne, notComplex)
       call mxCopyReal8ToPtr(conval(1:m), _MGETDB(plhs(6)), m)
       plhs(7) = mxCreateDoubleScalar(resmax)
-      plhs(8) = mxCreateDoubleMatrix(mwOne, nf, notComplex)
-      call mxCopyReal8ToPtr(chist(1:nf),
-     &     _MGETDB(plhs(8)), nf)
+      plhs(8) = mxCreateDoubleMatrix(mwOne, maxhist, notComplex)
+      call mxCopyReal8ToPtr(chist(1:maxhist),
+     &     _MGETDB(plhs(8)), maxhist)
 
 C     Free memory
       deallocate (x)

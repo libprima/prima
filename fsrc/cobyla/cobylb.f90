@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, December 17, 2021 AM11:36:56
+! Last Modified: Friday, December 17, 2021 PM11:58:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -25,7 +25,7 @@ use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evalfc
-use, non_intrinsic :: history_mod, only : savehist
+use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
 use, non_intrinsic :: info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, NAN_MODEL, DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, outprod, inv
@@ -172,6 +172,8 @@ if (subinfo /= INFO_DFT) then
     f = ffilt(kopt)
     constr = confilt(:, kopt)
     cstrv = cfilt(kopt)
+    ! Arrange CHIST, CONHIST, FHIST, and XHIST so that they are in the chronological order.
+    call rangehist(nf, chist, conhist, fhist, xhist)
     ! Postconditions
     if (DEBUGGING) then
         call assert(nf <= maxfun, 'NF <= MAXFUN', srname)
@@ -453,6 +455,9 @@ f = ffilt(kopt)
 constr = confilt(:, kopt)
 cstrv = cfilt(kopt)
 
+! Arrange CHIST, CONHIST, FHIST, and XHIST so that they are in the chronological order.
+call rangehist(nf, chist, conhist, fhist, xhist)
+
 !====================!
 !  Calculation ends  !
 !====================!
@@ -478,8 +483,6 @@ if (DEBUGGING) then
     call assert(.not. any([(isbetter([fhist(k), chist(k)], [f, cstrv], ctol), &
         & k=1, minval([nf, maxfhist, maxchist]))]), 'No point in the history is better than X', srname)
 end if
-
-!close (16)
 
 end subroutine cobylb
 
