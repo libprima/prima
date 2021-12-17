@@ -6,7 +6,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, December 16, 2021 PM11:39:34
+! Last Modified: Saturday, December 18, 2021 AM01:29:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -27,7 +27,7 @@ subroutine updatexfc(jdrop, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : IK, RP, DEBUGGING
 use, non_intrinsic :: infnan_mod, only : is_nan, is_neginf, is_posinf, is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, outprod, isinv
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, outprod
 use, non_intrinsic :: debug_mod, only : assert
 
 implicit none
@@ -54,8 +54,8 @@ integer(IK) :: n
 real(RP) :: simi_jdrop(size(simi, 2))
 
 ! Sizes
-m = size(constr)
-n = size(sim, 1)
+m = int(size(constr), kind(m))
+n = int(size(sim, 1), kind(n))
 
 ! Preconditions
 if (DEBUGGING) then
@@ -130,7 +130,7 @@ use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, TENTH, DEBUGGING
 use, non_intrinsic :: info_mod, only : DAMAGING_ROUNDING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_neginf, is_posinf, is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, eye, inv, isinv
+use, non_intrinsic :: linalg_mod, only : matprod, eye, inv
 
 implicit none
 
@@ -138,6 +138,7 @@ implicit none
 real(RP), intent(in) :: cpen
 
 ! In-outputs
+integer(IK), intent(inout) :: info
 real(RP), intent(inout) :: conmat(:, :)
 real(RP), intent(inout) :: cval(:)
 real(RP), intent(inout) :: fval(:)
@@ -146,7 +147,6 @@ real(RP), intent(inout) :: simi(:, :)
 
 ! Local variables
 character(len=*), parameter :: srname = 'UPDATEPOLE'
-integer(IK) :: info
 integer(IK) :: jopt
 integer(IK) :: m
 integer(IK) :: n
@@ -160,8 +160,8 @@ real(RP) :: simi_old(size(simi, 1), size(simi, 2))
 real(RP), parameter :: itol = TENTH
 
 ! Sizes
-m = size(conmat, 1)
-n = size(sim, 1)
+m = int(size(conmat, 1), kind(m))
+n = int(size(sim, 1), kind(n))
 
 ! Preconditions
 if (DEBUGGING) then
@@ -198,9 +198,9 @@ cval_old = cval
 sim_old = sim
 simi_old = simi
 if (jopt <= n) then
-    fval([jopt, n + 1]) = fval([n + 1, jopt])
-    conmat(:, [jopt, n + 1]) = conmat(:, [n + 1, jopt]) ! Exchange CONMAT(:, JOPT) AND CONMAT(:, N+1)
-    cval([jopt, n + 1]) = cval([n + 1, jopt])
+    fval([jopt, n + 1_IK]) = fval([n + 1_IK, jopt])
+    conmat(:, [jopt, n + 1_IK]) = conmat(:, [n + 1_IK, jopt]) ! Exchange CONMAT(:, JOPT) AND CONMAT(:, N+1)
+    cval([jopt, n + 1_IK]) = cval([n + 1_IK, jopt])
     sim(:, n + 1) = sim(:, n + 1) + sim(:, jopt)
     sim_jopt = sim(:, jopt)
     sim(:, jopt) = ZERO
@@ -264,7 +264,7 @@ function findpole(cpen, cval, fval) result(jopt)
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 
 implicit none
 
@@ -299,7 +299,7 @@ end if
 !====================!
 
 ! Identify the optimal vertex of the current simplex.
-jopt = size(fval) ! We use N + 1 as the default value of JOPT.
+jopt = int(size(fval), kind(jopt))  ! We use N + 1 as the default value of JOPT.
 phi = fval + cpen * cval
 phimin = minval(phi)
 if (phimin < phi(jopt)) then  ! We keep JOPT = N + 1 unless there is a strictly better choice.

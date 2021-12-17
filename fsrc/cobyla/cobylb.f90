@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, December 17, 2021 PM11:58:38
+! Last Modified: Saturday, December 18, 2021 AM01:28:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -28,8 +28,8 @@ use, non_intrinsic :: evaluate_mod, only : evalfc
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
 use, non_intrinsic :: info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, NAN_MODEL, DAMAGING_ROUNDING
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, outprod, inv
-use, non_intrinsic :: output_mod, only : retmssg, rhomssg, fmssg
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, inv
+!use, non_intrinsic :: output_mod, only : retmssg, rhomssg, fmssg
 use, non_intrinsic :: pintrf_mod, only : FUNCON
 use, non_intrinsic :: resolution_mod, only : resenhance
 use, non_intrinsic :: selectx_mod, only : savefilt, selectx, isbetter
@@ -97,7 +97,7 @@ real(RP) :: A(size(x), size(constr) + 1)
 real(RP) :: actrem
 real(RP) :: b(size(constr) + 1)
 real(RP) :: barmu
-real(RP) :: cfilt(min(max(maxfilt, 0), maxfun))
+real(RP) :: cfilt(min(max(maxfilt, 0_IK), maxfun))
 real(RP) :: confilt(size(constr), size(cfilt))
 real(RP) :: conmat(size(constr), size(x) + 1)
 real(RP) :: cpen  ! Penalty parameter for constraint in merit function (PARMU in Powell's code)
@@ -118,13 +118,13 @@ real(RP) :: simi(size(x), size(x))  ! (n, )
 real(RP) :: xfilt(size(x), size(cfilt))
 
 ! Sizes
-m = size(constr)
-n = size(x)
-maxxhist = size(xhist, 2)
-maxfhist = size(fhist)
-maxconhist = size(conhist, 2)
-maxchist = size(chist)
-maxhist = max(maxxhist, maxfhist, maxconhist, maxchist)
+m = int(size(constr), kind(m))
+n = int(size(x), kind(n))
+maxxhist = int(size(xhist, 2), kind(maxxhist))
+maxfhist = int(size(fhist), kind(maxfhist))
+maxconhist = int(size(conhist, 2), kind(maxconhist))
+maxchist = int(size(chist), kind(maxchist))
+maxhist = int(max(maxxhist, maxfhist, maxconhist, maxchist), kind(maxhist))
 
 ! Preconditions
 if (DEBUGGING) then

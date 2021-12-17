@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Tuesday, December 07, 2021 AM01:34:02
+! Last Modified: Saturday, December 18, 2021 AM01:36:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -76,7 +76,7 @@ real(RP) :: vmultc(size(b))
 real(RP) :: z(size(d), size(d))
 
 ! Sizes
-m = size(A, 2) - 1_IK
+m = int(size(A, 2) - 1, kind(m))
 
 ! Preconditions
 if (DEBUGGING) then
@@ -88,8 +88,8 @@ end if
 ! Calculation starts !
 !====================!
 
-call trstlp_sub(iact(1:m), nact, 1, A(:, 1:m), b(1:m), rho, d, vmultc(1:m), z)
-call trstlp_sub(iact, nact, 2, A, b, rho, d, vmultc, z)
+call trstlp_sub(iact(1:m), nact, 1_IK, A(:, 1:m), b(1:m), rho, d, vmultc(1:m), z)
+call trstlp_sub(iact, nact, 2_IK, A, b, rho, d, vmultc, z)
 
 !====================!
 !  Calculation ends  !
@@ -127,7 +127,7 @@ subroutine trstlp_sub(iact, nact, stage, A, b, rho, d, vmultc, z)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, EPS, HUGENUM, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert, errstop, verisize
+use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, isminor, lsqr, qradd, qrexc, norm
 implicit none
@@ -177,8 +177,8 @@ real(RP) :: zdasav(size(z, 2))
 real(RP) :: zdota(size(z, 2))
 
 ! Sizes
-n = size(A, 1)
-mcon = size(A, 2)
+n = int(size(A, 1), kind(n))
+mcon = int(size(A, 2), kind(mcon))
 
 ! Preconditions
 if (DEBUGGING) then
@@ -187,7 +187,7 @@ if (DEBUGGING) then
     call assert(size(iact) == mcon, 'SIZE(IACT) == MCON', srname)
     call assert(size(vmultc) == mcon, 'SIZE(VMULTC) == MCON', srname)
     call assert(size(d) == n, 'SIZE(D) == N', srname)
-    call assert(all(is_finite(d)) .and. norm(d) <= TWO * RHO .or. stage == 1, &
+    call assert(all(is_finite(d)) .and. norm(d) <= TWO * rho .or. stage == 1, &
         & 'D is finite and |D| <= 2*RHO at the beginning of stage 2', srname)
     call assert(size(z, 1) == n .and. size(z, 2) == n, 'SIZE(Z) == [N, N]', srname)
     call assert((nact >= 0 .and. nact <= min(mcon, n)) .or. stage == 1, &
@@ -201,7 +201,7 @@ end if
 
 ! Initialization according to STAGE.
 if (stage == 1) then
-    iact = [(k, k=1, size(iact))]
+    iact = [(k, k=1, int(size(iact), IK))]
     nact = 0_IK
     d = ZERO
     cstrv = maxval([b, ZERO])
@@ -213,7 +213,7 @@ if (stage == 1) then
     end if
 
     m = mcon
-    icon = maxloc(b, dim=1)
+    icon = int(maxloc(b, dim=1), kind(icon))
     sdirn = ZERO
 else
     if (inprod(d, d) >= rho**2) then
@@ -246,7 +246,7 @@ nfail = 0_IK
 ! Indeed, in all these cases, Inf/NaN appear in D due to extremely large values in A (up to 10^219).
 ! To resolve this, we set the maximal number of iterations to MAXITER, and terminate in case
 ! Inf/NaN occurs in D.
-maxiter = min(50000_IK, 100_IK * max(m, n))
+maxiter = int(min(int(10_IK**min(5, range(0_IK)), IK), 100_IK * max(m, n)), kind(maxiter))
 do iter = 1, maxiter
     if (stage == 1) then
         optnew = cstrv
@@ -335,10 +335,10 @@ do iter = 1, maxiter
         ! IACT(NACT) /= MCON???? If not, then how does the following procedure ensure that MCON is
         ! the last of IACT(1:NACT)?
         if (stage == 2 .and. iact(nact) /= mcon) then
-            call qrexc(A(:, iact(1:nact)), Z, zdota(1:nact), nact - 1)
-            iact([nact - 1, nact]) = iact([nact, nact - 1])
-            !!??zdota(nact-1:nact) = [(inprod(z(:, k), A(:, iact(k))), k = nact-1, nact)]
-            vmultc([nact - 1, nact]) = vmultc([nact, nact - 1])
+            call qrexc(A(:, iact(1:nact)), z, zdota(1:nact), nact - 1_IK)
+            iact([nact - 1_IK, nact]) = iact([nact, nact - 1_IK])
+            !!??zdota(nact-1:nact) = [(inprod(z(:, k), A(:, iact(k))), k = nact-1_IK, nact)]
+            vmultc([nact - 1_IK, nact]) = vmultc([nact, nact - 1_IK])
         end if
         ! Zaikun 20211117: It turns out that the last few lines do not guarantee IACT(NACT) == N in
         ! stage 2; the following test cannot be passed. IS THIS A BUG??!!
@@ -360,12 +360,12 @@ do iter = 1, maxiter
         ! reordering IACT(ICONT:NACT) into [IACT(ICON+1:NACT), IACT(ICON)]. In theory, ICON > 0.
         ! To be safe, the condition below requires ICON > 0, which does not exist in Powell's code.
         if (icon < nact .and. icon > 0) then
-            call qrexc(A(:, iact(1:nact)), Z, zdota(1:nact), icon)
+            call qrexc(A(:, iact(1:nact)), z, zdota(1:nact), icon)
             iact(icon:nact) = [iact(icon + 1:nact), iact(icon)]
             !!??zdota(icon:nact) = [(inprod(z(:, k), A(:, iact(k))), k = icon, nact)]
             vmultc(icon:nact) = [vmultc(icon + 1:nact), vmultc(icon)]
         end if
-        nact = nact - 1
+        nact = nact - 1_IK
 
         ! Set SDIRN to the direction of the next change to the current vector of variables.
         if (stage == 1) then
@@ -435,9 +435,9 @@ do iter = 1, maxiter
     frac = min(ONE, minval(fracmult, mask=(vmultd < ZERO .and. .not. is_nan(fracmult))))
 
     if (frac < ONE) then
-        icon = minloc(fracmult, mask=(vmultd < ZERO .and. .not. is_nan(fracmult)), dim=1)
+        icon = int(minloc(fracmult, mask=(vmultd < ZERO .and. .not. is_nan(fracmult)), dim=1), kind(icon))
     else
-        icon = 0_IK  ! This will trigger an exit after the update of D, VMULTC, and CSTRV.
+        icon = 0  ! This will trigger an exit after the update of D, VMULTC, and CSTRV.
     end if
 
     ! Update D, VMULTC and CSTRV.
