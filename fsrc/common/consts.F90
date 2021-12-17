@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, December 03, 2021 AM09:45:32
+! Last Modified: Thursday, December 16, 2021 PM10:00:28
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -79,7 +79,7 @@ public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
 public :: EPS, HUGENUM, ALMOST_INFINITY, HUGEFUN, HUGECON
 public :: MSSGLEN, FNAMELEN
 public :: OUTUNIT
-public :: RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT
+public :: RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, CTOL_DFT, IPRINT_DFT
 public :: MAXFUN_DIM_DFT, MAXMEMORY
 
 
@@ -170,6 +170,7 @@ integer, parameter :: OUTUNIT = 9
 real(RP), parameter :: RHOBEG_DFT = ONE
 real(RP), parameter :: RHOEND_DFT = 1.0E-6_RP
 real(RP), parameter :: FTARGET_DFT = -HUGENUM
+real(RP), parameter :: CTOL_DFT = EPS
 integer(IK), parameter :: IPRINT_DFT = 0_IK
 integer(IK), parameter :: MAXFUN_DIM_DFT = 500_IK
 

@@ -6,7 +6,7 @@ module noise_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thursday, December 16, 2021 PM12:45:02
+! Last Modified: Friday, December 17, 2021 AM07:24:12
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: pintrf_mod, only : FUN, FUNCON
@@ -224,7 +224,7 @@ end if
 ! Fortran 7.0) or even encounter segmentation faults (Absoft 21.0).
 seedx = sum(cos(x * TEN**(-int(log10(abs(x) + EPS))))) / real(size(x), RP)
 seedf = cos(f * TEN**(-int(log10(abs(f) + EPS))))
-seed = ceiling(TENTH * real(10**range(0), RP) * seedx * seedf)
+seed = ceiling(real(10**range(0), RP) * seedx * seedf)
 seed = max(abs(seed), 1)
 
 ! Define NOISY_F.

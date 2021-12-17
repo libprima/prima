@@ -14,7 +14,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 05, 2021 PM11:20:16
+! Last Modified: Thursday, December 16, 2021 PM10:44:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -197,6 +197,7 @@ integer(IK) :: maxhist_in
 integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: nf_loc
+integer(IK) :: nhist
 integer(IK) :: npt_loc
 real(RP) :: eta1_loc
 real(RP) :: eta2_loc
@@ -315,8 +316,7 @@ end if
 call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, npt_loc, eta1_loc, eta2_loc, ftarget_loc, &
     & gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc)
 
-! Further revise MAXHIST according to MAXMEMORY, i.e., the maximal amount
-! of memory allowed for the history.
+! Further revise MAXHIST according to MAXMEMORY, i.e., the maximal memory allowed for the history.
 if (present(xhist)) then
     maximal_hist = int(MAXMEMORY / ((n + 1) * cstyle_sizeof(0.0_RP)), kind(maximal_hist))
 else
@@ -403,13 +403,13 @@ end if
 if (DEBUGGING) then
     call assert(nf_loc <= maxfun_loc, 'NF <= MAXFUN', srname)
     call assert(size(x) == n .and. .not. any(is_nan(x)), 'SIZE(X) == N, X does not contain NaN', srname)
+    nhist = min(nf_loc, maxhist_loc)
     if (present(xhist)) then
-        call assert(size(xhist, 1) == n .and. size(xhist, 2) == min(nf_loc, maxhist_loc), &
-                & 'SIZE(XHIST) == [N, MIN(NF, MAXHIST)]', srname)
+        call assert(size(xhist, 1) == n .and. size(xhist, 2) == nhist, 'SIZE(XHIST) == [N, NHIST]', srname)
         call assert(.not. any(is_nan(xhist)), 'XHIST does not contain NaN', srname)
     end if
     if (present(fhist)) then
-        call assert(size(fhist) == min(nf_loc, maxhist_loc), 'SIZE(FHIST) == MIN(NF, MAXHIST)', srname)
+        call assert(size(fhist) == nhist, 'SIZE(FHIST) == NHIST', srname)
         call assert(.not. any(fhist < f), 'F is the smallest in FHIST', srname)
     end if
 end if

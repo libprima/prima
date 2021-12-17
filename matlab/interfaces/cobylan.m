@@ -372,7 +372,9 @@ else % The problem turns out 'normal' during prepdfo
         if options.classical
             [x, fx, exitflag, nf, fhist, constr, constrviolation, chist] = fcobylan_classical(fun, con, x0, rhobeg, rhoend, maxfun, m, ftarget, constr_x0);
         else
-            [x, fx, exitflag, nf, fhist, constr, constrviolation, chist] = fcobylan(fun, con, x0, rhobeg, rhoend, maxfun, m, ftarget, constr_x0);
+            f_x0 = fun(x0);
+            ctol = eps;
+            [x, fx, exitflag, nf, fhist, constr, constrviolation, chist] = fcobylan(fun, con, x0, rhobeg, rhoend, maxfun, m, ftarget, constr_x0, f_x0, ctol);
         end
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
