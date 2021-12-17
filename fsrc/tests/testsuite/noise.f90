@@ -6,7 +6,7 @@ module noise_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Friday, December 17, 2021 AM07:24:12
+! Last Modified: Friday, December 17, 2021 PM02:38:40
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: pintrf_mod, only : FUN, FUNCON
@@ -175,7 +175,7 @@ function noisyfun0(x, f, noise_level, noise_type) result(noisy_f)
 ! 1. the noise is fully determined by (X, F); multiple runs with the same (X, F) return the same;
 ! 2. the noises for different (X, F) are (nearly) independent from each other.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, ONE, TEN, TENTH, EPS
+use, non_intrinsic :: consts_mod, only : RP, ONE, TEN, EPS
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: param_mod, only : NOISE_LEVEL_DFT, NOISE_TYPE_DFT
 use, non_intrinsic :: rand_mod, only : getseed, setseed, rand

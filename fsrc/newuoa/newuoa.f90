@@ -14,7 +14,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, December 16, 2021 PM10:44:45
+! Last Modified: Friday, December 17, 2021 PM03:34:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -199,6 +199,8 @@ integer(IK) :: n
 integer(IK) :: nf_loc
 integer(IK) :: nhist
 integer(IK) :: npt_loc
+integer(IK) :: unit_memo
+logical :: output_hist
 real(RP) :: eta1_loc
 real(RP) :: eta2_loc
 real(RP) :: ftarget_loc
@@ -304,12 +306,17 @@ end if
 
 maxhist_in = 0_IK  ! MAXHIST input by user
 if (present(maxhist)) then
-    maxhist_loc = maxhist
     maxhist_in = maxhist
+    maxhist_loc = maxhist
 else if (maxfun_loc >= n + 3) then
     maxhist_loc = maxfun_loc
 else
     maxhist_loc = MAXFUN_DIM_DFT * n
+end if
+output_hist = (present(xhist) .or. present(fhist))
+if (.not. output_hist) then
+    maxhist_in = 0
+    maxhist_loc = 0
 end if
 
 ! Preprocess the inputs in case some of them are invalid.
@@ -317,11 +324,14 @@ call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, npt_loc, eta1_loc, 
     & gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc)
 
 ! Further revise MAXHIST according to MAXMEMORY, i.e., the maximal memory allowed for the history.
+unit_memo = 0_IK
 if (present(xhist)) then
-    maximal_hist = int(MAXMEMORY / ((n + 1) * cstyle_sizeof(0.0_RP)), kind(maximal_hist))
-else
-    maximal_hist = int(MAXMEMORY / (cstyle_sizeof(0.0_RP)), kind(maximal_hist))
+    unit_memo = unit_memo + n
 end if
+if (present(fhist)) then
+    unit_memo = unit_memo + 1_IK
+end if
+maximal_hist = int(MAXMEMORY / max(1_IK, unit_memo * cstyle_sizeof(0.0_RP)), kind(maximal_hist))
 if (maxhist_loc > maximal_hist) then
     ! We cannot simply take MAXHIST_LOC = MIN(MAXHIST_LOC, MAXIMAL_HIST), as they may not have the
     ! same kind, and compilers may complain. We may convert them to the same, but overflow may occur
@@ -394,7 +404,7 @@ end if
 deallocate (fhist_loc)
 
 ! If MAXFHIST_IN >= NF_LOC > MAXFHIST_LOC, warn that not all history is recorded.
-if ((present(xhist) .or. present(fhist)) .and. maxhist_loc < min(nf_loc, maxhist_in)) then
+if (output_hist .and. maxhist_loc < min(nf_loc, maxhist_in)) then
     print '(/1A, I7, 1A)', 'WARNING: '//solver//': due to memory limit, MAXHIST is reset to ', maxhist_loc, '.'
     print '(1A/)', 'Only the history of the last MAXHIST iterations is recoreded.'
 end if
