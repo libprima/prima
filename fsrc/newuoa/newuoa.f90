@@ -14,7 +14,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, December 17, 2021 PM08:10:50
+! Last Modified: Saturday, December 18, 2021 PM05:43:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -187,7 +187,6 @@ integer(IK), intent(out), optional :: info
 ! Local variables
 character(len=*), parameter :: solver = 'NEWUOA'
 character(len=*), parameter :: srname = 'NEWUOA'
-integer :: maximal_hist
 integer(IK) :: info_loc
 integer(IK) :: iprint_loc
 integer(IK) :: maxfhist
@@ -332,11 +331,11 @@ end if
 if (present(fhist)) then
     unit_memo = unit_memo + 1_IK
 end if
-maximal_hist = int(MAXMEMORY / max(1_IK, unit_memo * cstyle_sizeof(0.0_RP)), kind(maximal_hist))
-if (maxhist_loc > maximal_hist) then
-    ! We cannot simply take MAXHIST_LOC = MIN(MAXHIST_LOC, MAXIMAL_HIST), as they may not have the
-    ! same kind, and compilers may complain. We may convert them to the same, but overflow may occur
-    maxhist_loc = int(maximal_hist, kind(maxhist_loc))
+unit_memo = max(1_IK, unit_memo * cstyle_sizeof(0.0_RP))
+if (maxhist_loc > MAXMEMORY / unit_memo) then
+    maxhist_loc = int(MAXMEMORY / unit_memo, kind(maxhist_loc))
+    ! We cannot simply set MAXHIST_LOC = MIN(MAXHIST_LOC, MAXMEMORY/UNIT_MEMO), as they may not have
+    ! the same kind, and compilers may complain. We may convert them, but overflow may occur
 end if
 
 ! Allocate memory for the history of X. We use XHIST_LOC instead of XHIST, which may not be present.

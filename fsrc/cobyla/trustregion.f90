@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Saturday, December 18, 2021 PM03:58:13
+! Last Modified: Saturday, December 18, 2021 PM05:38:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -186,12 +186,16 @@ if (DEBUGGING) then
     call assert(size(iact) == mcon, 'SIZE(IACT) == MCON', srname)
     call assert(size(vmultc) == mcon, 'SIZE(VMULTC) == MCON', srname)
     call assert(size(d) == n, 'SIZE(D) == N', srname)
-    call assert(all(is_finite(d)) .and. norm(d) <= TWO * rho .or. stage == 1, &
-        & 'D is finite and |D| <= 2*RHO at the beginning of stage 2', srname)
     call assert(size(z, 1) == n .and. size(z, 2) == n, 'SIZE(Z) == [N, N]', srname)
-    call assert((nact >= 0 .and. nact <= min(mcon, n)) .or. stage == 1, &
-        & '0 <= NACT <= MIN(MCON, N) at the beginning of stage 2', srname)
     call assert(rho > 0, 'RHO > 0', srname)
+    if (stage == 2) then
+        call assert(all(is_finite(d)) .and. norm(d) <= TWO * rho, &
+            & 'D is finite and |D| <= 2*RHO at the beginning of stage 2', srname)
+        call assert((nact >= 0 .and. nact <= min(mcon, n)), &
+            & '0 <= NACT <= MIN(MCON, N) at the beginning of stage 2', srname)
+        call assert(all(vmultc(1:mcon - 1) >= 0), 'VMULTC >= 0 at the beginning of stage 2', srname)
+        ! N.B.: Stage 1 defines only VMULTC(1:M); VMULTC(M+1) is undefined!
+    end if
 end if
 
 !====================!
@@ -228,8 +232,8 @@ else
     ! In Powell's code, stage 2 uses the ZDOTA and CSTRV calculated by stage 1. Here we re-calculate
     ! them so that they need not be passed from stage 1 to 2, and hence the coupling is reduced.
     cstrv = maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
-    zdota(1:nact) = [(inprod(z(:, k), A(:, iact(k))), k=1, nact)]
 end if
+zdota(1:nact) = [(inprod(z(:, k), A(:, iact(k))), k=1, nact)]
 
 ! More initialization.
 optold = HUGENUM
@@ -277,7 +281,7 @@ do iter = 1, maxiter
     ! of the new constraint, a scalar product being set to zero if its nonzero value could be due to
     ! computer rounding errors, which is tested by ISMINOR.
     if (icon > nact) then
-        zdasav = zdota
+        zdasav(1:nact) = zdota(1:nact)
         nactsav = nact
         call qradd(A(:, iact(icon)), z, zdota, nact)  ! QRADD may update NACT tp NACT + 1.
 
