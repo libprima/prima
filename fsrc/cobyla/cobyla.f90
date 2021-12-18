@@ -24,7 +24,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, December 18, 2021 AM11:53:29
+! Last Modified: Saturday, December 18, 2021 PM02:36:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -462,8 +462,6 @@ if (DEBUGGING) then
             & 'No point in the filter is better than X', srname)
     end if
 end if
-
-    close (16)
 
 end subroutine cobyla
 
