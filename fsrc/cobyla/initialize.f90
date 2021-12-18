@@ -170,8 +170,8 @@ if (DEBUGGING) then
     call assert(nf <= maxfun, 'NF <= MAXFUN', srname)
     call assert(size(evaluated) == n + 1, 'SIZE(EVALUATED) == N + 1', srname)
     call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
-    call assert(.not. any(evaluated .and. (is_nan(chist(1:min(nf, maxchist))) .or. &
-        & is_posinf(chist(1:min(nf, maxchist))))), 'CHIST does not contain NaN/Inf', srname)
+    call assert(.not. any(evaluated(1:min(nf, maxchist)) .and. (is_nan(chist(1:min(nf, maxchist))) &
+        & .or. is_posinf(chist(1:min(nf, maxchist))))), 'CHIST does not contain NaN/Inf', srname)
     call assert(size(conhist, 1) == m .and. size(conhist, 2) == maxconhist, &
         & 'SIZE(CONHIST) == [M, MAXCONHIST]', srname)
     call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)

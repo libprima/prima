@@ -492,6 +492,11 @@
           VMULTC(NACT)=TEMP
       END IF
 !            write(16,*) 'oexc', Z(1:n, 1:n), zdota(1:nact)
+        !------- Powell's code does not include the following ------!
+        if (abs(zdota(nact)) <= 0 .or. is_nan(zdota(nact))) then
+            GOTO 490
+        end if
+        !-----------------------------------------------------------!
 !
 !     If stage one is in progress, then set SDIRN to the direction of the next
 !     change to the current vector of variables.
@@ -565,6 +570,11 @@
 !     If stage one is in progress, then set SDIRN to the direction of the next
 !     change to the current vector of variables.
 !
+        !------- Powell's code does not include the following ------!
+        if (abs(zdota(nact)) <= 0 .or. is_nan(zdota(nact))) then
+            GOTO 490
+        end if
+        !-----------------------------------------------------------!
       IF (MCON > M) GOTO 320
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      TEMP=0.0
@@ -618,7 +628,8 @@
 !      IF (DD .LE. 0.0) GOTO 490
 !      TEMP=SQRT(SS*DD)
 !      IF (ABS(SD) .GE. 1.0E-6*TEMP) TEMP=SQRT(SS*DD+SD*SD)
-      IF (DD <= 0.0D0) GOTO 490
+      !IF (DD <= 0.0D0) GOTO 490
+      IF (DD*SS <= 0.0D0) GOTO 490
       TEMP=DSQRT(SS*DD)
       !IF (DABS(SD) >= 1.0D-6*TEMP) TEMP=DSQRT(SS*DD+SD*SD)
 !      IF (DABS(SD) >= EPS*TEMP) TEMP=DSQRT(SS*DD+SD*SD)

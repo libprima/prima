@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Saturday, December 18, 2021 AM01:20:25
+! Last Modified: Saturday, December 18, 2021 PM03:15:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -100,8 +100,6 @@ do iprob = 1, nprobs
     call construct(prob, probname)  ! Construct the testing problem.
     m = prob % m
     n = prob % n
-
-    !do n = mindim_loc, maxdim_loc, dimstride_loc
     do irand = 1, max(1_IK, nrand_loc)
         call setseed(int(sum(istr(probname)) + n + irand))  ! Initialize the random seed.
         maxfun = int(floor(2.0E2_RP * rand() * real(n, RP)), kind(maxfun))
@@ -145,13 +143,11 @@ do iprob = 1, nprobs
             & maxfun=maxfun, maxhist=maxhist, fhist=fhist, xhist=xhist, conhist=conhist, chist=chist, &
             & ctol=ctol, ftarget=ftarget, iprint=1_IK)
 
-        call destruct(prob)  ! Destruct the testing problem.
-        ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
-
         deallocate (x)
         nullify (orig_calcfc)
     end do
-    !end do
+    call destruct(prob)  ! Destruct the testing problem.
+    ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
 end do
 
 end subroutine test_solver
