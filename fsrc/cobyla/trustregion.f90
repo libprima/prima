@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Saturday, December 18, 2021 PM05:38:05
+! Last Modified: Saturday, December 18, 2021 PM07:28:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -165,6 +165,7 @@ real(RP) :: dd
 real(RP) :: dnew(size(d))
 real(RP) :: dold(size(d))
 real(RP) :: frac
+real(RP) :: fracmult(size(vmultc))
 real(RP) :: optnew
 real(RP) :: optold
 real(RP) :: sd
@@ -304,7 +305,8 @@ do iter = 1, maxiter
             vmultd(1:nact) = lsqr(A(:, iact(1:nact)), A(:, iact(icon)), z(:, 1:nact), zdasav(1:nact))
 
             frac = minval(vmultc(1:nact) / vmultd(1:nact), mask=(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m))
-            if (frac < ZERO .or. .not. any(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m)) then
+            !if (frac < ZERO .or. .not. any(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m)) then
+            if (.not. any(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m)) then
                 exit  ! This can be triggered by NACT == 0, among other possibilities.
             end if
 
@@ -453,9 +455,10 @@ do iter = 1, maxiter
     ! In Fortran, it is OK to merge the IF...ELSE... below to FRAC = MIN(ONE, MINVAL(...)) and
     ! ICON = MINLOC(...), because MINVAL([]) = +Inf. However, MATLAB defines MIN([]) as []. To avoid
     ! the confusion, we retain the IF...ELSE... and describe the cases explicitly.
+    fracmult = vmultc / max(vmultc + tiny(ZERO), vmultc - vmultd)
     if (any(vmultd < 0)) then
-        frac = min(ONE, minval(vmultc / (vmultc - vmultd), mask=(vmultd < 0)))
-        icon = int(minloc(vmultc / (vmultc - vmultd), mask=(vmultd < 0), dim=1), kind(icon))
+        frac = min(ONE, minval(fracmult, mask=(vmultd < 0)))
+        icon = int(minloc(fracmult, mask=(vmultd < 0), dim=1), kind(icon))
     else
         frac = ONE
     end if

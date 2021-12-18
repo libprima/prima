@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, December 18, 2021 AM10:07:57
+! Last Modified: Saturday, December 18, 2021 PM06:18:19
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1251,8 +1251,8 @@ if (DEBUGGING) then
         & 'G(1,1) == G(2,2), G(1,2) = -G(2,1)', srname)
     tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS))
     call assert(isorth(G, tol), 'G is orthonormal', srname)
-    r = sqrt(sum(x**2))
-    if (is_finite(r)) then
+    if (maxval(abs(x)) < sqrt(HUGENUM / 2.1_RP)) then
+        r = sqrt(sum(x**2))
         call assert(norm(matprod(G, x) - [r, ZERO]) <= max(tol, tol * r), 'G*x = [|x|, 0]', srname)
     end if
 end if
