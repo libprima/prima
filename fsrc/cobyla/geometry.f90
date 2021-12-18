@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, December 18, 2021 AM01:33:09
+! Last Modified: Saturday, December 18, 2021 PM10:01:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -304,7 +304,7 @@ character(len=*), parameter :: srname = 'GEOSTEP'
 integer(IK) :: m
 integer(IK) :: n
 real(RP) :: A(size(simi, 1), size(conmat, 1) + 1)
-real(RP) :: cvmaxm
+real(RP) :: cvmaxn
 real(RP) :: cvmaxp
 real(RP) :: vsig(size(simi, 1))
 
@@ -315,6 +315,7 @@ n = int(size(simi, 1), kind(m))
 ! Preconditions
 if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
+    call assert(cpen >= 0, 'CPEN >= 0', srname)
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)), 'SIMI is finite', srname)
     call assert(size(fval) == n + 1 .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
@@ -342,8 +343,8 @@ d = factor_gamma * rho * vsig(jdrop) * simi(jdrop, :)
 A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
 A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
 cvmaxp = maxval([ZERO, -matprod(d, A(:, 1:m)) - conmat(:, n + 1)])
-cvmaxm = maxval([ZERO, matprod(d, A(:, 1:m)) - conmat(:, n + 1)])
-if (TWO * inprod(d, A(:, m + 1)) < cpen * (cvmaxp - cvmaxm)) then
+cvmaxn = maxval([ZERO, matprod(d, A(:, 1:m)) - conmat(:, n + 1)])
+if (TWO * inprod(d, A(:, m + 1)) < cpen * (cvmaxp - cvmaxn)) then
     d = -d
 end if
 
