@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, December 16, 2021 PM04:24:38
+! Last Modified: Saturday, December 18, 2021 AM10:07:57
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -568,7 +568,7 @@ if (DEBUGGING) then
     call assert(size(B, 1) == n .and. size(B, 2) == n, 'SIZE(B) == [N, N]', srname)
     call assert(istril(B) .or. .not. istril(A), 'If A is lower triangular, then so is B', srname)
     call assert(istriu(B) .or. .not. istriu(A), 'If A is upper triangular, then so is B', srname)
-    tol = max(1.0E-10_RP, min(1.0E-3_RP, 1.0E2_RP * EPS * real(n, RP)))
+    tol = max(1.0E-10_RP, min(1.0E-3_RP, 1.0E2_RP * EPS * real(n + 1_IK, RP)))
     call assert(isinv(A, B, tol), 'B = A^{-1}', srname)
 end if
 
@@ -709,7 +709,7 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E4_RP * EPS * real(max(m, n), RP)))
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E4_RP * EPS * real(max(m, n) + 1_IK, RP)))
     call assert(isorth(Q_loc, tol), 'The columns of Q are orthonormal', srname)
     call assert(istril(T, tol), 'R is upper triangular', srname)
     if (pivote) then
@@ -778,7 +778,7 @@ if (DEBUGGING) then
     if (present(Q)) then
         call assert(size(Q, 1) == m .and. (size(Q, 2) == m .or. size(Q, 2) == min(m, n)), &
             & 'SIZE(Q) == [M, N] .or. SIZE(Q) == [M, MIN(M, N)]', srname)
-        tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS * real(n, RP)))
+        tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS * real(max(m, n) + 1_IK, RP)))
         call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     end if
     if (present(Rdiag)) then
@@ -1306,7 +1306,7 @@ m = int(size(Q, 2), kind(m))
 if (DEBUGGING) then
     call assert(n >= 0 .and. n <= m, '0 <= N <= M', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS * real(n, RP)))
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS * real(m + 1_IK, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  !! Costly!
 end if
 
@@ -1403,9 +1403,10 @@ n = int(size(A, 2), kind(n))
 
 ! Postconditions
 if (DEBUGGING) then
+    call assert(n >= 0 .and. n <= m, '0 <= N <= M', srname)
     call assert(i >= 1 .and. i <= n, '1 <= i <= N', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n, RP)))
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS * real(m + 1_IK, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  !! Costly!
 end if
 

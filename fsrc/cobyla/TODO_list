@@ -1,5 +1,8 @@
 ! TODO:
 
+implement the outputting/printing procedures for COBYLA
+implement the MATLAB interface for COBYLA
+
 ! Write a note on the algorithm of trstlp. Rewrite the subroutine using the language of QR
 ! facorization. Rewrite the VMD function. See the comments in trustregion.f90.
 !---------------------------------------------------------------------------!

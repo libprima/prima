@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Saturday, December 18, 2021 AM01:36:26
+! Last Modified: Saturday, December 18, 2021 AM11:16:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -246,8 +246,10 @@ nfail = 0_IK
 ! Indeed, in all these cases, Inf/NaN appear in D due to extremely large values in A (up to 10^219).
 ! To resolve this, we set the maximal number of iterations to MAXITER, and terminate in case
 ! Inf/NaN occurs in D.
-maxiter = int(min(int(10_IK**min(5, range(0_IK)), IK), 100_IK * max(m, n)), kind(maxiter))
+! In MATLAB or Python: MAXITER = MIN(10000, 100*MAX(M,N))
+maxiter = int(min(int(10_IK**min(4, range(0_IK)), IK), 100_IK * max(m, n)), kind(maxiter))
 do iter = 1, maxiter
+    call assert(all(vmultc >= 0), 'VMULTC >= 0', srname)
     if (stage == 1) then
         optnew = cstrv
     else
@@ -431,12 +433,19 @@ do iter = 1, maxiter
     vmultd(nact + 1:mcon) = cvshift(nact + 1:mcon)
 
     ! Calculate the fraction of the step from D to DNEW that will be taken.
-    fracmult = vmultc / (vmultc - vmultd)  !
-    frac = min(ONE, minval(fracmult, mask=(vmultd < ZERO .and. .not. is_nan(fracmult))))
-
-    if (frac < ONE) then
+    !!fracmult = vmultc / (vmultc - vmultd)
+    !fracmult = vmultc / max(tiny(ZERO), vmultc - vmultd)
+    !frac = min(ONE, minval(fracmult, mask=(vmultd < ZERO .and. .not. is_nan(fracmult))))
+    !if (frac < ONE) then
+    !    icon = int(minloc(fracmult, mask=(vmultd < ZERO .and. .not. is_nan(fracmult)), dim=1), kind(icon))
+    !else
+    !    icon = 0  ! This will trigger an exit after the update of D, VMULTC, and CSTRV.
+    !end if
+    if (any(vmultc > 0 .and. vmultd < 0)) then
+        frac = minval(vmultc / (vmultc - vmultd), mask=(vmultc > 0 .and. vmultd < 0))
         icon = int(minloc(fracmult, mask=(vmultd < ZERO .and. .not. is_nan(fracmult)), dim=1), kind(icon))
     else
+        frac = ONE
         icon = 0  ! This will trigger an exit after the update of D, VMULTC, and CSTRV.
     end if
 
@@ -469,6 +478,7 @@ end do
 if (DEBUGGING) then
     call assert(size(iact) == mcon, 'SIZE(IACT) == MCON', srname)
     call assert(size(vmultc) == mcon, 'SIZE(VMULTC) == MCON', srname)
+    call assert(all(vmultc >= 0), 'VMULTC >= 0', srname)
     call assert(size(d) == n, 'SIZE(D) == N', srname)
     call assert(all(is_finite(d)), 'D is finite', srname)
     call assert(norm(d) <= TWO * rho, '|D| <= 2*RHO', srname)
