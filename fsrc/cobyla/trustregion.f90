@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Saturday, December 18, 2021 PM08:58:00
+! Last Modified: Saturday, December 18, 2021 PM09:30:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -308,13 +308,12 @@ do iter = 1, maxiter
             end if
 
             ! Revise the Lagrange multipliers. The revision is not applicable to VMULTC(NACT + 1:M).
-            !frac = minval(vmultc(1:nact) / vmultd(1:nact), mask=(vmultd(1:nact) > 0 .and. iact(1:nact) <= m))
             where (vmultd > 0 .and. iact <= m)
                 fracmult = vmultc / vmultd
             elsewhere
                 fracmult = HUGENUM
             end where
-            frac = minval(fracmult(1:nact), mask=(vmultd(1:nact) > 0 .and. iact(1:nact) <= m))
+            frac = minval(fracmult(1:nact))
             vmultc(1:nact) = max(ZERO, vmultc(1:nact) - frac * vmultd(1:nact))
 
             ! Zaikun 20210811: Powell's code includes the following, which is IMPOSSIBLE TO REACH.
@@ -456,24 +455,13 @@ do iter = 1, maxiter
     vmultd(nact + 1:mcon) = cvshift(nact + 1:mcon)
 
     ! Calculate the fraction of the step from D to DNEW that will be taken.
-    ! In Fortran, it is OK to merge the IF...ELSE... below to FRAC = MIN(ONE, MINVAL(...)) and
-    ! ICON = MINLOC(...), because MINVAL([]) = +Inf. However, MATLAB defines MIN([]) as []. To avoid
-    ! the confusion, we retain the IF...ELSE... and describe the cases explicitly.
-    !fracmult = vmultc / max(vmultc + REALMIN, vmultc - vmultd)
     where (vmultd < 0)
         fracmult = vmultc / (vmultc - vmultd)
-    else where
+    elsewhere
         fracmult = HUGENUM
     end where
-    if (any(vmultd < 0)) then
-        frac = min(ONE, minval(fracmult, mask=(vmultd < 0)))
-        icon = int(minloc(fracmult, mask=(vmultd < 0), dim=1), kind(icon))
-    else
-        frac = ONE
-    end if
-    if (frac >= ONE) then  ! Indeed, FRAC == 1
-        icon = 0  ! This will trigger an exit after the update of D, VMULTC, and CSTRV.
-    end if
+    frac = minval([ONE, fracmult])
+    icon = int(minloc([ONE, fracmult], dim=1), kind(icon)) - 1_IK
 
     ! Update D, VMULTC and CSTRV.
     dold = d
