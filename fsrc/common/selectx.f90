@@ -8,7 +8,7 @@ module selectx_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thursday, December 02, 2021 PM02:05:42
+! Last Modified: Saturday, December 18, 2021 PM10:45:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -115,19 +115,20 @@ if (count(keep) == nfiltmax) then
     keep(1) = .false.
 end if
 
+nfilt = int(count(keep), kind(nfilt))
 !--------------------------------------------------!
 !----The SAFEALLOC line is removable in F2003.-----!
 call safealloc(index_to_keep, nfilt)
 !--------------------------------------------------!
-index_to_keep = pack([(int(i, IK), i=1, nfilt)], mask=keep)
-nfilt = int(count(keep) + 1, kind(nfilt))
-xfilt(:, 1:nfilt - 1) = xfilt(:, index_to_keep)
-ffilt(1:nfilt - 1) = ffilt(index_to_keep)
-confilt(:, 1:nfilt - 1) = confilt(:, index_to_keep)
-cfilt(1:nfilt - 1) = cfilt(index_to_keep)
+index_to_keep = pack([(int(i, IK), i=1, int(size(keep), IK))], mask=keep) 
+xfilt(:, 1:nfilt) = xfilt(:, index_to_keep)
+ffilt(1:nfilt) = ffilt(index_to_keep)
+confilt(:, 1:nfilt) = confilt(:, index_to_keep)
+cfilt(1:nfilt) = cfilt(index_to_keep)
 ! F2003 automatically deallocate local ALLOCATABLE variables at exit, yet we prefer to deallocate
 ! them immediately when they finish their jobs.
 deallocate (index_to_keep)
+nfilt = nfilt + 1_IK
 xfilt(:, nfilt) = x
 ffilt(nfilt) = f
 confilt(:, nfilt) = constr
@@ -140,7 +141,7 @@ cfilt(nfilt) = cstrv
 ! Postconditions
 if (DEBUGGING) then
     ! Check NFILT and the sizes of XFILT, FFILT, CONFILT, CFILT
-    call assert(nfilt >= 0 .and. nfilt <= nfiltmax, '0 <= NFILT <= NFILTMAX', srname)
+    call assert(nfilt >= 1 .and. nfilt <= nfiltmax, '1 <= NFILT <= NFILTMAX', srname)
     call assert(size(xfilt, 1) == n .and. size(xfilt, 2) == nfiltmax, 'SIZE(XFILT) == [N, NFILTMAX]', srname)
     call assert(size(ffilt) == nfiltmax, 'SIZE(FFILT) = NFILTMAX', srname)
     call assert(size(confilt, 1) == m .and. size(confilt, 2) == nfiltmax, 'SIZE(CONFILT) == [M, NFILTMAX]', srname)

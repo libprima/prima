@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Saturday, December 18, 2021 PM09:30:25
+! Last Modified: Saturday, December 18, 2021 PM09:33:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -313,6 +313,7 @@ do iter = 1, maxiter
             elsewhere
                 fracmult = HUGENUM
             end where
+            ! Only the places where VMULTD > 0 and IACT <= M is relevant blow, if any.
             frac = minval(fracmult(1:nact))
             vmultc(1:nact) = max(ZERO, vmultc(1:nact) - frac * vmultd(1:nact))
 
@@ -460,6 +461,7 @@ do iter = 1, maxiter
     elsewhere
         fracmult = HUGENUM
     end where
+    ! Only the places where VMULTD < 0 is relevant below, if any.
     frac = minval([ONE, fracmult])
     icon = int(minloc([ONE, fracmult], dim=1), kind(icon)) - 1_IK
 

@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, December 18, 2021 PM09:08:20
+! Last Modified: Saturday, December 18, 2021 PM10:42:08
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1358,7 +1358,9 @@ if (DEBUGGING) then
     call assert(n >= nsav .and. n <= min(nsav + 1_IK, m), 'NSAV <= N <= min(NSAV + 1, M)', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  !! Costly!
-    call assert(norm(matprod(c, Q(:, n + 1:m))) <= max(tol, tol * norm(c)), 'C^T*Q(:, N+1:M)=0', srname)
+    if (n < m) then
+        call assert(norm(matprod(c, Q(:, n + 1:m))) <= max(tol, tol * norm(c)), 'C^T*Q(:, N+1:M)=0', srname)
+    end if
     ! The following test may fail.
     if (n >= 1) then
         call assert(abs(inprod(c, Q(:, n)) - Rdiag(n)) <= max(tol, tol * inprod(abs(c), abs(Q(:, n)))), &

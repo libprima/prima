@@ -337,7 +337,7 @@ NFORT := $(NFORT) -colour=error:red,warn:magenta,info:cyan
 NFORT := $(NFORT) -f$(FSTD) -info -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique \
 	-Warn=constant_coindexing -Warn=subnormal #-Warn=allocation
 ntest_i2_r4_d1_tst_c ntest_i4_r4_d1_tst_c ntest_i8_r4_d1_tst_c ntest_i2_r4_d0_tst_c ntest_i4_r4_d0_tst_c ntest_i8_r4_d0_tst_c: \
-	FC = $(NFORT) -nan -ieee=stop #-ieee=full
+	FC = $(NFORT) -nan -ieee=full
 ntest_i2_r8_d1_tst_c ntest_i4_r8_d1_tst_c ntest_i8_r8_d1_tst_c ntest_i2_r8_d0_tst_c ntest_i4_r8_d0_tst_c ntest_i8_r8_d0_tst_c: \
 	FC = $(NFORT) -nan -ieee=stop
 ntest_i2_r16_d1_tst_c ntest_i4_r16_d1_tst_c ntest_i8_r16_d1_tst_c ntest_i2_r16_d0_tst_c ntest_i4_r16_d0_tst_c ntest_i8_r16_d0_tst_c: \
