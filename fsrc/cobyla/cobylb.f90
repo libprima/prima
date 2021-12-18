@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, December 18, 2021 AM01:28:09
+! Last Modified: Saturday, December 18, 2021 PM04:46:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -282,20 +282,21 @@ do tr = 1, maxtr
 
         ! Increase CPEN if necessary and branch back if this change alters the optimal vertex.
         ! See the discussions around equation (9) of the COBYLA paper.
-        barmu = -preref / prerec   ! PREREF + BARMU * PREREC = 0
-        !!!!!!!!!!!!!!! Is it possible that PREREC <= 0????????????? It seems yes, but why?
-        if (prerec > ZERO .and. cpen < 1.5E0_RP * barmu) then
-            cpen = min(TWO * barmu, HUGENUM)
-            if (findpole(cpen, cval, fval) <= n) then
-                ! Zaikun 20211111: Can this lead to infinite cycling?
-                !!-----------------------------------------------------------------------!
-                !call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
-                !if (subinfo == DAMAGING_ROUNDING) then
-                !    info = subinfo
-                !    exit
-                !end if
-                !!-----------------------------------------------------------------------!
-                cycle
+        if (prerec > ZERO) then  ! When and why will we have PREREC <= 0?
+            barmu = -preref / prerec   ! PREREF + BARMU * PREREC = 0
+            if (cpen < 1.5E0_RP * barmu) then
+                cpen = min(TWO * barmu, HUGENUM)
+                if (findpole(cpen, cval, fval) <= n) then
+                    ! Zaikun 20211111: Can this lead to infinite cycling?
+                    !!-----------------------------------------------------------------------!
+                    !call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
+                    !if (subinfo == DAMAGING_ROUNDING) then
+                    !    info = subinfo
+                    !    exit
+                    !end if
+                    !!-----------------------------------------------------------------------!
+                    cycle
+                end if
             end if
         end if
 
