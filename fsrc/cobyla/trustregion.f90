@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Saturday, December 18, 2021 PM02:30:47
+! Last Modified: Saturday, December 18, 2021 PM03:58:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -165,7 +165,6 @@ real(RP) :: dd
 real(RP) :: dnew(size(d))
 real(RP) :: dold(size(d))
 real(RP) :: frac
-real(RP) :: fracmult(size(b))
 real(RP) :: optnew
 real(RP) :: optold
 real(RP) :: sd
@@ -249,7 +248,9 @@ nfail = 0_IK
 ! In MATLAB or Python: MAXITER = MIN(10000, 100*MAX(M,N))
 maxiter = int(min(int(10_IK**min(4, range(0_IK)), IK), 100_IK * max(m, n)), kind(maxiter))
 do iter = 1, maxiter
-    call assert(all(vmultc >= 0), 'VMULTC >= 0', srname)
+    if (DEBUGGING) then
+        call assert(all(vmultc >= 0), 'VMULTC >= 0', srname)
+    end if
     if (stage == 1) then
         optnew = cstrv
     else
@@ -323,12 +324,11 @@ do iter = 1, maxiter
             ! Reorder the active constraints so that the one to be replaced is at the end of the list.
             ! Exit if the new value of ZDOTA(NACT) is not acceptable. Note that the opposite of
             ! 'ABS(ZDOTA(NACT)) > 0' is not 'ABS(ZDOTA(NACT) <= 0)', as ZDOTA(NACT) can be NaN.
-            if (abs(zdota(nact)) > 0) then
-                vmultc([icon, nact]) = [ZERO, frac]  ! VMULTC([ICON, NACT]) is valid as ICON > NACT.
-                iact([icon, nact]) = iact([nact, icon])
-            else
+            if (abs(zdota(nact)) <= 0 .or. is_nan(zdota(nact))) then
                 exit
             end if
+            vmultc([icon, nact]) = [ZERO, frac]  ! VMULTC([ICON, NACT]) is valid as ICON > NACT.
+            iact([icon, nact]) = iact([nact, icon])
         end if
 
         ! Ensure that the objective function continues to be treated as the last active constraint
@@ -345,6 +345,12 @@ do iter = 1, maxiter
         ! Zaikun 20211117: It turns out that the last few lines do not guarantee IACT(NACT) == N in
         ! stage 2; the following test cannot be passed. IS THIS A BUG??!!
         !call assert(iact(nact) == mcon .or. stage == 1, 'IACT(NACT) == MCON in stage 2', srname)
+
+        !------- Powell's code does not include the following ------!
+        if (abs(zdota(nact)) <= 0 .or. is_nan(zdota(nact))) then
+            exit
+        end if
+        !-----------------------------------------------------------!
 
         ! Set SDIRN to the direction of the next change to the current vector of variables.
         ! Usually during stage 1 the vector SDIRN gives a search direction that reduces all the
@@ -369,6 +375,12 @@ do iter = 1, maxiter
         end if
         nact = nact - 1_IK
 
+        !------- Powell's code does not include the following ------!
+        if (abs(zdota(nact)) <= 0 .or. is_nan(zdota(nact))) then
+            exit
+        end if
+        !-----------------------------------------------------------!
+
         ! Set SDIRN to the direction of the next change to the current vector of variables.
         if (stage == 1) then
             sdirn = sdirn - inprod(sdirn, z(:, nact + 1)) * z(:, nact + 1)
@@ -387,10 +399,11 @@ do iter = 1, maxiter
     ! used 1.0E-6, and Powell's code was written in SINGLE PRECISION). Further, we skip the step if
     ! it could be zero within a reasonable tolerance for computer rounding errors.
     dd = rho**2 - sum(d**2, mask=(abs(d) >= EPS * rho))
-    if (dd <= ZERO) then
+    ss = inprod(sdirn, sdirn)
+    !if (dd  <= 0) then
+    if (dd * ss <= 0) then
         exit
     end if
-    ss = inprod(sdirn, sdirn)
     sd = inprod(sdirn, d)
     if (abs(sd) >= EPS * sqrt(ss * dd)) then
         step = dd / (sqrt(ss * dd + sd**2) + sd)
@@ -433,23 +446,11 @@ do iter = 1, maxiter
     vmultd(nact + 1:mcon) = cvshift(nact + 1:mcon)
 
     ! Calculate the fraction of the step from D to DNEW that will be taken.
-    !!fracmult = vmultc / (vmultc - vmultd)
-    !fracmult = vmultc / max(tiny(ZERO), vmultc - vmultd)
-    !frac = min(ONE, minval(fracmult, mask=(vmultd < ZERO .and. .not. is_nan(fracmult))))
-    !if (frac < ONE) then
-    !    icon = int(minloc(fracmult, mask=(vmultd < ZERO .and. .not. is_nan(fracmult)), dim=1), kind(icon))
-    !else
-    !    icon = 0  ! This will trigger an exit after the update of D, VMULTC, and CSTRV.
-    !end if
-!?    if (any(vmultd < 0)) then
-!?        frac = minval(vmultc / (vmultc - vmultd), mask=(vmultd < 0))
-!?        icon = int(minloc(vmultc / (vmultc - vmultd), mask=(vmultd < 0), dim=1), kind(icon))
-!?    else
-!?        frac = ONE
-!?        icon = 0  ! This will trigger an exit after the update of D, VMULTC, and CSTRV.
-!?    end if
+    ! In Fortran, it is OK to merge the IF...ELSE... below to FRAC = MIN(ONE, MINVAL(...)) and
+    ! ICON = MINLOC(...), because MINVAL([]) = +Inf. However, MATLAB defines MIN([]) as []. To avoid
+    ! the confusion, we retain the IF...ELSE... and describe the cases explicitly.
     if (any(vmultd < 0)) then
-        frac = minval(vmultc / (vmultc - vmultd), mask=(vmultd < 0))
+        frac = min(ONE, minval(vmultc / (vmultc - vmultd), mask=(vmultd < 0)))
         icon = int(minloc(vmultc / (vmultc - vmultd), mask=(vmultd < 0), dim=1), kind(icon))
     else
         frac = ONE
@@ -457,8 +458,6 @@ do iter = 1, maxiter
     if (frac >= ONE) then  ! Indeed, FRAC == 1
         icon = 0  ! This will trigger an exit after the update of D, VMULTC, and CSTRV.
     end if
-    !write (16, *) (frac < ONE), icon
-    !write (16, *) vmultc, vmultd
 
     ! Update D, VMULTC and CSTRV.
     dold = d

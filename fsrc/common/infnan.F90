@@ -54,7 +54,7 @@ module infnan_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Saturday, September 25, 2021 PM11:52:02
+! Last Modified: Saturday, December 18, 2021 PM02:59:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
