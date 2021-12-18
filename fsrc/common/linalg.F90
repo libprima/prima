@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, December 18, 2021 PM06:18:19
+! Last Modified: Saturday, December 18, 2021 PM08:26:20
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1130,7 +1130,7 @@ else if (.not. is_finite(x2)) then
 else
     x = abs([x1, x2])
     x = [minval(x), maxval(x)]
-    !if (x(1) > sqrt(tiny(0.0_RP)) .and. x(2) < sqrt(HUGENUM / 2.1_RP)) then
+    !if (x(1) > sqrt(REALMIN) .and. x(2) < sqrt(HUGENUM / 2.1_RP)) then
     !    r = sqrt(sum(x**2))
     !else
     !    r = x(2) * sqrt((x(1) / x(2))**2 + ONE)
@@ -1158,7 +1158,7 @@ end function hypotenuse
 
 function planerot(x) result(G)
 ! As in MATLAB, PLANEROT(X) returns a 2x2 Givens matrix G for X in R^2 so that Y = G*X has Y(2) = 0.
-use, non_intrinsic :: consts_mod, only : RP, ZERO, ONE, EPS, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, ZERO, ONE, REALMIN, EPS, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_inf
 implicit none
@@ -1217,9 +1217,9 @@ else
     ! The following is a stable and continuous implementation of the Givens rotation. It follows
     ! Bindel, D., Demmel, J., Kahan, W., & Marques, O. (2002). On computing Givens rotations reliably
     ! and efficiently. ACM Transactions on Mathematical Software (TOMS), 28(2), 206-238.
-    ! 1. Modern compilers compute SQRT(TINY(0.0_RP)) and SQRT(HUGENUM/2.1) at compilation time.
+    ! 1. Modern compilers compute SQRT(REALMIN) and SQRT(HUGENUM/2.1) at compilation time.
     ! 2. The direct calculation without involving T and U seems to work better; use it if possible.
-    if (minval(abs(x)) > sqrt(tiny(0.0_RP)) .and. maxval(abs(x)) < sqrt(HUGENUM / 2.1_RP)) then
+    if (minval(abs(x)) > sqrt(REALMIN) .and. maxval(abs(x)) < sqrt(HUGENUM / 2.1_RP)) then
         ! Do NOT use HYPOTENUSE here; the best implementation for one may not be the best for the other
         r = sqrt(sum(x**2))
         c = x(1) / r
@@ -2106,7 +2106,7 @@ else
         scaling = maxval(abs(x))  ! The scaling seems to reduce the rounding error.
         y = scaling * sqrt(sum((x / scaling)**2))
     else
-        !scaling = max(tiny(1.0_RP), sqrt(maxval(abs(x)) * minval(abs(x), mask=(abs(x) > ZERO))))
+        !scaling = max(REALMIN, sqrt(maxval(abs(x)) * minval(abs(x), mask=(abs(x) > ZERO))))
         scaling = maxval(abs(x))  ! The scaling seems to reduce the rounding error.
         y = scaling * sum(abs(x / scaling)**p_loc)**(ONE / p_loc)
     end if

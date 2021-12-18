@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, December 17, 2021 PM07:30:54
+! Last Modified: Saturday, December 18, 2021 PM08:20:33
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -76,7 +76,7 @@ public :: DEBUGGING
 public :: IK, IK_DFT
 public :: RP, DP, SP, QP, RP_DFT
 public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
-public :: EPS, HUGENUM, ALMOST_INFINITY, HUGEFUN, HUGECON
+public :: REALMIN, EPS, HUGENUM, ALMOST_INFINITY, HUGEFUN, HUGECON
 public :: MSSGLEN, FNAMELEN
 public :: OUTUNIT
 public :: RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, CTOL_DFT, IPRINT_DFT
@@ -150,7 +150,13 @@ real(RP), parameter :: PI = 3.141592653589793238462643383279502884_RP
 ! We may set PI to acos(-1.0_RP), but some compilers may complain about `Elemental function as
 ! initialization expression with non-integer or non-character arguments`.
 
-real(RP), parameter :: EPS = epsilon(ZERO)
+! REALMIN is the smallest positive normalized floating-point number, which is 2^(-1022), ~2.225E-308
+! for IEEE double precision. Taking double precision as an example, REALMIN in other languages:
+! MATLAB: realmin or realmin('double')
+! Python: numpy.finfo(numpy.float64).tiny
+! Julia: realmin(Float64)
+real(RP), parameter :: REALMIN = tiny(ZERO)
+real(RP), parameter :: EPS = epsilon(ZERO)  ! Machine epsilon
 real(RP), parameter :: HUGENUM = huge(ZERO)
 real(RP), parameter :: ALMOST_INFINITY = HALF * HUGENUM
 

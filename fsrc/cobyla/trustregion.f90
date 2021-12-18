@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Saturday, December 18, 2021 PM07:28:25
+! Last Modified: Saturday, December 18, 2021 PM08:58:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -126,7 +126,7 @@ subroutine trstlp_sub(iact, nact, stage, A, b, rho, d, vmultc, z)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, EPS, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, REALMIN, EPS, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, isminor, lsqr, qradd, qrexc, norm
@@ -172,7 +172,7 @@ real(RP) :: sd
 real(RP) :: sdirn(size(d))
 real(RP) :: ss
 real(RP) :: step
-real(RP) :: vmultd(size(b))
+real(RP) :: vmultd(size(vmultc))
 real(RP) :: zdasav(size(z, 2))
 real(RP) :: zdota(size(z, 2))
 
@@ -303,14 +303,18 @@ do iter = 1, maxiter
             ! same before and after QRADD). Therefore, if we supply ZDOTA to LSQR (as Rdiag) as
             ! Powell did, we should use the UNUPDATED version, namely ZDASAV.
             vmultd(1:nact) = lsqr(A(:, iact(1:nact)), A(:, iact(icon)), z(:, 1:nact), zdasav(1:nact))
-
-            frac = minval(vmultc(1:nact) / vmultd(1:nact), mask=(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m))
-            !if (frac < ZERO .or. .not. any(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m)) then
             if (.not. any(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m)) then
                 exit  ! This can be triggered by NACT == 0, among other possibilities.
             end if
 
             ! Revise the Lagrange multipliers. The revision is not applicable to VMULTC(NACT + 1:M).
+            !frac = minval(vmultc(1:nact) / vmultd(1:nact), mask=(vmultd(1:nact) > 0 .and. iact(1:nact) <= m))
+            where (vmultd > 0 .and. iact <= m)
+                fracmult = vmultc / vmultd
+            elsewhere
+                fracmult = HUGENUM
+            end where
+            frac = minval(fracmult(1:nact), mask=(vmultd(1:nact) > 0 .and. iact(1:nact) <= m))
             vmultc(1:nact) = max(ZERO, vmultc(1:nact) - frac * vmultd(1:nact))
 
             ! Zaikun 20210811: Powell's code includes the following, which is IMPOSSIBLE TO REACH.
@@ -455,7 +459,12 @@ do iter = 1, maxiter
     ! In Fortran, it is OK to merge the IF...ELSE... below to FRAC = MIN(ONE, MINVAL(...)) and
     ! ICON = MINLOC(...), because MINVAL([]) = +Inf. However, MATLAB defines MIN([]) as []. To avoid
     ! the confusion, we retain the IF...ELSE... and describe the cases explicitly.
-    fracmult = vmultc / max(vmultc + tiny(ZERO), vmultc - vmultd)
+    !fracmult = vmultc / max(vmultc + REALMIN, vmultc - vmultd)
+    where (vmultd < 0)
+        fracmult = vmultc / (vmultc - vmultd)
+    else where
+        fracmult = HUGENUM
+    end where
     if (any(vmultd < 0)) then
         frac = min(ONE, minval(fracmult, mask=(vmultd < 0)))
         icon = int(minloc(fracmult, mask=(vmultd < 0), dim=1), kind(icon))
