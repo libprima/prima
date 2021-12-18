@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Saturday, December 18, 2021 PM12:16:36
+! Last Modified: Saturday, December 18, 2021 PM01:12:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -441,19 +441,19 @@ do iter = 1, maxiter
     !else
     !    icon = 0  ! This will trigger an exit after the update of D, VMULTC, and CSTRV.
     !end if
-!?    if (any(vmultd < 0)) then
-!?        frac = minval(vmultc / (vmultc - vmultd), mask=(vmultd < 0))
-!?        icon = int(minloc(vmultc / (vmultc - vmultd), mask=(vmultd < 0), dim=1), kind(icon))
-!?    else
-!?        frac = ONE
-!?        icon = 0  ! This will trigger an exit after the update of D, VMULTC, and CSTRV.
-!?    end if
-    frac = min(ONE, minval(vmultc / (vmultc - vmultd), mask=(vmultd < 0)))
-    icon = int(minloc(vmultc / (vmultc - vmultd), mask=(vmultd < 0), dim=1), kind(icon))
-    if (frac >= ONE) then
+    if (any(vmultd < 0)) then
+        frac = minval(vmultc / (vmultc - vmultd), mask=(vmultd < 0))
+        icon = int(minloc(vmultc / (vmultc - vmultd), mask=(vmultd < 0), dim=1), kind(icon))
+    else
         frac = ONE
         icon = 0  ! This will trigger an exit after the update of D, VMULTC, and CSTRV.
     end if
+!?!    frac = min(ONE, minval(vmultc / (vmultc - vmultd), mask=(vmultd < 0)))
+!?!    icon = int(minloc(vmultc / (vmultc - vmultd), mask=(vmultd < 0), dim=1), kind(icon))
+!?!    if (frac >= ONE) then
+!?!        frac = ONE
+!?!        icon = 0  ! This will trigger an exit after the update of D, VMULTC, and CSTRV.
+!?!    end if
     !write (16, *) (frac < ONE), icon
     !write (16, *) vmultc, vmultd
 
