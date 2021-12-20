@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, December 18, 2021 AM12:00:20
+! Last Modified: Monday, December 20, 2021 PM04:44:09
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: If all the inputs are valid, then PREPROC should do nothing.
@@ -20,17 +20,18 @@ contains
 
 
 subroutine preproc(solver, n, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend, npt, ctol, eta1, eta2, gamma1, gamma2)
-
+!--------------------------------------------------------------------------------------------------!
+! This subroutine preprocesses the inputs. It does nothing to the inputs that are valid.
+!--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, TEN, TENTH, EPS, DEBUGGING
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, ETA1_DFT, ETA2_DFT, GAMMA1_DFT, GAMMA2_DFT
 use, non_intrinsic :: consts_mod, only : CTOL_DFT, FTARGET_DFT, IPRINT_DFT
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite
 use, non_intrinsic :: string_mod, only : lower
-
 implicit none
 
-! Inputs
+! Compulsory inputs
 character(len=*), intent(in) :: solver
 integer(IK), intent(in) :: n
 
@@ -56,11 +57,13 @@ real(RP) :: eta1_loc
 real(RP) :: eta2_loc
 
 
-if (iprint /= 0 .and. abs(iprint) /= 1 .and. abs(iprint) /= 2 .and. abs(iprint) /= 3) then
+! Validate IPRINT
+if (abs(iprint) > 3) then
     iprint = IPRINT_DFT
     print '(/1A, I2, 1A)', solver//': invalid IPRINT; it should be 0, 1, -1, 2, -2, 3, or -3; it is set to ', iprint, '.'
 end if
 
+! Validate MAXFUN
 if (lower(solver) == 'newuoa' .or. lower(solver) == 'bobyqa' .or. lower(solver) == 'lincoa') then
     min_maxfun = n + 3_IK
 else if (lower(solver) == 'uobyqa') then
@@ -73,17 +76,20 @@ if (maxfun < min_maxfun) then
     print '(/1A, I8, 1A)', solver//': invalid MAXFUN; it should an integer at least N + 3 ; it is set to ', maxfun, '.'
 end if
 
+! Validate MAXHIST
 if (maxhist < 0) then
     maxhist = maxfun
     print '(/1A, I8, 1A)', solver//': invalid MAXHIST; it should be a nonnegative integer; it is set to ', maxhist, '.'
 end if
 maxhist = min(maxhist, maxfun)  ! MAXHIST > MAXFUN is never needed.
 
+! Validate FTARGET
 if (is_nan(ftarget)) then
     ftarget = FTARGET_DFT
     print '(/1A, 1PD15.6, 1A)', solver//': invalid FTARGET; it should a real number; it is set to ', ftarget, '.'
 end if
 
+! Validate NPT
 if ((lower(solver) == 'newuoa' .or. lower(solver) == 'bobyqa' .or. lower(solver) == 'lincoa') &
     & .and. present(npt)) then
     if (npt < n + 2 .or. npt > min(maxfun - 1, ((n + 2) * (n + 1)) / 2)) then
@@ -93,6 +99,7 @@ if ((lower(solver) == 'newuoa' .or. lower(solver) == 'bobyqa' .or. lower(solver)
     end if
 end if
 
+! Validate ETA1 and ETA2
 if (present(eta1)) then
     eta1_loc = eta1
 else
@@ -141,6 +148,7 @@ if (present(eta2)) then
     end if
 end if
 
+! Validate GAMMA1 and GAMMA2
 if (present(gamma1)) then
     if (is_nan(gamma1)) then
         ! In this case, we take the value hard coded in Powell's orginal code
@@ -164,13 +172,13 @@ if (present(gamma2)) then
     end if
 end if
 
+! Validate RHOBEG and RHOEND
 if (abs(rhobeg - rhoend) < 1.0E2_RP * EPS * max(abs(rhobeg), ONE)) then
-! When the data is passed from the interfaces (e.g., MEX) to the Fortran
-! code, RHOBEG, and RHOEND may change a bit. It was observed in a MATLAB
-! test that MEX passed 1 to Fortran as 0.99999999999999978. Therefore,
-! if we set RHOEND = RHOBEG in the interfaces, then it may happen that
-! RHOEND > RHOBEG, which is considered as an invalid input. To avoid this
-! situation, we force RHOBEG and RHOEND to equal when the difference is tiny.
+    ! When the data is passed from the interfaces (e.g., MEX) to the Fortran code, RHOBEG, and RHOEND
+    ! may change a bit. It was observed in a MATLAB test that MEX passed 1 to Fortran as
+    ! 0.99999999999999978. Therefore, if we set RHOEND = RHOBEG in the interfaces, then it may happen
+    ! that RHOEND > RHOBEG, which is considered as an invalid input. To avoid this situation, we
+    ! force RHOBEG and RHOEND to equal when the difference is tiny.
     rhoend = rhobeg
 end if
 
@@ -190,6 +198,7 @@ if (rhoend <= 0 .or. rhobeg < rhoend .or. is_nan(rhoend) .or. is_inf(rhoend)) th
         & 'it is set to ', rhoend, '.'
 end if
 
+! Validate CTOL
 if (present(ctol)) then
     if (is_nan(ctol) .or. ctol < 0) then
         ctol = CTOL_DFT

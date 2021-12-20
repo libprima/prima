@@ -24,7 +24,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, December 18, 2021 PM05:42:24
+! Last Modified: Monday, December 20, 2021 PM04:21:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -103,13 +103,15 @@ subroutine cobyla(calcfc, x, f, &
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : DEBUGGING
-use, non_intrinsic :: consts_mod, only : MAXMEMORY, MAXFUN_DIM_DFT
+use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, FTARGET_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TEN, TENTH, EPS
 use, non_intrinsic :: debug_mod, only : assert, errstop, warning
 use, non_intrinsic :: evaluate_mod, only : eval_count, f_x0, constr_x0
+use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite, is_neginf, is_posinf
-use, non_intrinsic :: memory_mod, only : safealloc, cstyle_sizeof
+use, non_intrinsic :: linalg_mod, only : int
+use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : FUNCON
 use, non_intrinsic :: selectx_mod, only : isbetter
 use, non_intrinsic :: preproc_mod, only : preproc
@@ -153,18 +155,11 @@ integer(IK) :: i
 integer(IK) :: info_loc
 integer(IK) :: iprint_loc
 integer(IK) :: m_loc
-integer(IK) :: maxchist
-integer(IK) :: maxconhist
-integer(IK) :: maxfhist
 integer(IK) :: maxfun_loc
-integer(IK) :: maxhist_in
 integer(IK) :: maxhist_loc
-integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: nf_loc
 integer(IK) :: nhist
-integer(IK) :: unit_memo
-logical :: output_hist
 real(RP) :: cstrv_loc
 real(RP) :: ctol_loc
 real(RP) :: ftarget_loc
@@ -268,77 +263,22 @@ else
     iprint_loc = IPRINT_DFT
 end if
 
-maxhist_in = 0_IK  ! MAXHIST input by user
 if (present(maxhist)) then
-    maxhist_in = maxhist
     maxhist_loc = maxhist
-else if (maxfun_loc >= n + 2) then
-    maxhist_loc = maxfun_loc
 else
-    maxhist_loc = MAXFUN_DIM_DFT * n
-end if
-output_hist = (present(xhist) .or. present(fhist) .or. present(conhist) .or. present(chist))
-if (.not. output_hist) then
-    maxhist_in = 0
-    maxhist_loc = 0
+    maxhist_loc = maxval([maxfun_loc, n + 2_IK, MAXFUN_DIM_DFT * n])
 end if
 
 ! Preprocess the inputs in case some of them are invalid. It does nothing if all inputs are valid.
-call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, ctol=ctol_loc)
+call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
+    & ctol=ctol_loc)
 
-! Further revise MAXHIST according to MAXMEMORY, i.e., the maximal memory allowed for the history.
-maxhist_loc = min(maxhist_loc, maxfun_loc)  ! MAXHIST > MAXFUN is never needed.
-unit_memo = 0_IK
-if (present(xhist)) then
-    unit_memo = unit_memo + n
-end if
-if (present(fhist)) then
-    unit_memo = unit_memo + 1_IK
-end if
-if (present(conhist)) then
-    unit_memo = unit_memo + m_loc
-end if
-if (present(chist)) then
-    unit_memo = unit_memo + 1_IK
-end if
-unit_memo = max(1_IK, unit_memo * cstyle_sizeof(0.0_RP))
-if (maxhist_loc > MAXMEMORY / unit_memo) then
-    maxhist_loc = int(MAXMEMORY / unit_memo, kind(maxhist_loc))
-    ! We cannot simply set MAXHIST_LOC = MIN(MAXHIST_LOC, MAXMEMORY/UNIT_MEMO), as they may not have
-    ! the same kind, and compilers may complain. We may convert them, but overflow may occur
-end if
-
-! Allocate memory for the history of X. We use XHIST_LOC instead of XHIST, which be absent.
-if (present(xhist)) then
-    maxxhist = maxhist_loc
-else
-    maxxhist = 0_IK
-end if
-call safealloc(xhist_loc, n, maxxhist)
-
-! Allocate memory for the history of F. We use FHIST_LOC instead of FHIST, which be absent.
-if (present(fhist)) then
-    maxfhist = maxhist_loc
-else
-    maxfhist = 0_IK
-end if
-call safealloc(fhist_loc, maxfhist)
-
-! Allocate memory for the history of CONSTR. Use CONHIST_LOC instead of CONHIST, which may be absent.
-if (present(conhist)) then
-    maxconhist = maxhist_loc
-else
-    maxconhist = 0_IK
-end if
-call safealloc(conhist_loc, m_loc, maxconhist)
-
-! Allocate memory for the history of CSTRV. We use CHIST_LOC instead of CHIST, which may be absent.
-if (present(chist)) then
-    maxchist = maxhist_loc
-else
-    maxchist = 0_IK
-end if
-call safealloc(chist_loc, maxchist)
+! Further revise MAXHIST_LOC according to MAXMEMORY, and allocate memory for the history.
+! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
+! CHIST = NaN(1, MAXFUN), CONHIST = NaN(M, MAXFUN), FHIST = NaN(1, MAXFUN), XHIST = NaN(N, MAXFUN)
+! if they are requested; replace MAXFUN with 0 for the history that is not requested.
+call prehist(maxhist_loc, m_loc, n, present(chist), chist_loc, present(conhist), conhist_loc, &
+    & present(fhist), fhist_loc, present(xhist), xhist_loc)
 
 !-------------------- Call COBYLB, which performs the real calculations. --------------------------!
 call cobylb(calcfc, iprint_loc, maxfun_loc, ctol_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
@@ -353,8 +293,7 @@ nullify (constr_x0)
 ! Copy CONSTR_LOC to CONSTR if needed.
 if (present(constr)) then
     !--------------------------------------------------!
-    !---- The SAFEALLOC line is removable in F2003. ---!
-    call safealloc(constr, m_loc)
+    call safealloc(constr, m_loc)  ! Removable in F2003.
     !--------------------------------------------------!
     constr = constr_loc
 end if
@@ -374,21 +313,21 @@ end if
 
 ! Copy XHIST_LOC to XHIST if needed.
 if (present(xhist)) then
-    !--------------------------------------------------!
-    !---- The SAFEALLOC line is removable in F2003. ---!
-    call safealloc(xhist, n, min(nf_loc, maxxhist))
-    !--------------------------------------------------!
-    xhist = xhist_loc(:, 1:min(nf_loc, maxxhist))
+    nhist = min(nf_loc, int(size(xhist_loc, 2), IK))
+    !----------------------------------------------------!
+    call safealloc(xhist, n, nhist)  ! Removable in F2003.
+    !----------------------------------------------------!
+    xhist = xhist_loc(:, 1:nhist)
     ! N.B.:
-    ! 0. Allocate XHIST as long as it is present, even if MAXXHIST = 0; otherwise, it will be
+    ! 0. Allocate XHIST as long as it is present, even if the size is 0; otherwise, it will be
     ! illegal to enquire XHIST after exit.
     ! 1. Even though Fortran 2003 supports automatic (re)allocation of allocatable arrays upon
     ! intrinsic assignment, we keep the line of SAFEALLOC, because some very new compilers (Absoft
     ! Fortran 20.0) are still not standard-compliant in this respect.
     ! 2. NF may not be present. Hence we should NOT use NF but NF_LOC.
-    ! 3. When MAXXHIST > NF_LOC, which is the normal case in practice, XHIST_LOC contains GARBAGE in
-    ! XHIST_LOC(:, NF_LOC + 1 : MAXXHIST). Therefore, we MUST cap XHIST at min(NF_LOC, MAXXHIST) so
-    ! that XHIST cointains only valid history. For this reason, there is no way to avoid allocating
+    ! 3. When SIZE(XHIST_LOC, 2) > NF_LOC, which is the normal case in practice, XHIST_LOC contains
+    ! GARBAGE in XHIST_LOC(:, NF_LOC + 1 : END). Therefore, we MUST cap XHIST at NF_LOC so that
+    ! XHIST cointains only valid history. For this reason, there is no way to avoid allocating
     ! two copies of memory for XHIST unless we declare it to be a POINTER instead of ALLOCATABLE.
 end if
 ! F2003 automatically deallocate local ALLOCATABLE variables at exit, yet we prefer to deallocate
@@ -397,41 +336,38 @@ deallocate (xhist_loc)
 
 ! Copy FHIST_LOC to FHIST if needed.
 if (present(fhist)) then
+    nhist = min(nf_loc, int(size(fhist_loc), IK))
     !--------------------------------------------------!
-    !---- The SAFEALLOC line is removable in F2003. ---!
-    call safealloc(fhist, min(nf_loc, maxfhist))
+    call safealloc(fhist, nhist)  ! Removable in F2003.
     !--------------------------------------------------!
-    fhist = fhist_loc(1:min(nf_loc, maxfhist))
-    ! The same as XHIST, we must cap FHIST at min(NF_LOC, MAXFHIST).
+    fhist = fhist_loc(1:nhist)  ! The same as XHIST, we must cap FHIST at NF_LOC.
 end if
 deallocate (fhist_loc)
 
 ! Copy CONHIST_LOC to CONHIST if needed.
 if (present(conhist)) then
-    !--------------------------------------------------!
-    !---- The SAFEALLOC line is removable in F2003. ---!
-    call safealloc(conhist, m_loc, min(nf_loc, maxconhist))
-    !--------------------------------------------------!
-    conhist = conhist_loc(:, 1:min(nf_loc, maxconhist))
-    ! The same as XHIST, we must cap CONHIST at min(NF_LOC, MAXCONHIST).
+    nhist = min(nf_loc, int(size(conhist_loc, 2), IK))
+    !----------------------------------------------------------!
+    call safealloc(conhist, m_loc, nhist)  ! Removable in F2003.
+    !----------------------------------------------------------!
+    conhist = conhist_loc(:, 1:nhist)  ! The same as XHIST, we must cap CONHIST at NF_LOC.
 end if
 deallocate (conhist_loc)
 
 ! Copy CHIST_LOC to CHIST if needed.
 if (present(chist)) then
+    nhist = min(nf_loc, int(size(chist_loc), IK))
     !--------------------------------------------------!
-    !---- The SAFEALLOC line is removable in F2003. ---!
-    call safealloc(chist, min(nf_loc, maxchist))
+    call safealloc(chist, nhist)  ! Removable in F2003.
     !--------------------------------------------------!
-    chist = chist_loc(1:min(nf_loc, maxchist))
-    ! The same as XHIST, we must cap CHIST at min(NF_LOC, MAXCHIST).
+    chist = chist_loc(1:nhist)  ! The same as XHIST, we must cap CHIST at NF_LOC.
 end if
 deallocate (chist_loc)
 
-! If MAXFHIST_IN >= NF_LOC > MAXFHIST_LOC, warn that not all history is recorded.
-if (output_hist .and. maxhist_loc < min(nf_loc, maxhist_in)) then
-    print '(/1A, I7, 1A)', 'WARNING: '//solver//': due to memory limit, MAXHIST is reset to ', maxhist_loc, '.'
-    print '(1A/)', 'Only the history of the last MAXHIST iterations is recoreded.'
+! If NF_LOC > MAXHIST_LOC, warn that not all history is recorded.
+if ((present(xhist) .or. present(fhist) .or. present(conhist) .or. present(chist)) .and. maxhist_loc < nf_loc) then
+    print '(/1A, I7, 1A)', 'WARNING: '//solver//': Only the history of the last ', &
+        & maxhist_loc, ' iterations is recoreded.'
 end if
 
 ! Postconditions

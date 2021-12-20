@@ -259,7 +259,8 @@ atest_i2_r16_d1_tst_c atest_i4_r16_d1_tst_c atest_i8_r16_d1_tst_c atest_i2_r16_d
 # AMD AOCC Flang
 AFLANG := $(shell find /opt/AMD \( -type l -o -type f \) -executable -name flang -print -quit 2> /dev/null || echo AFLANG_NOT_FOUND)
 AFLANG := $(AFLANG) -Werror
-DFORT := $(AFLANG) -std=f$(FSTD) -Mstandard -Wall -Wextra
+# Strangely, with `-Mchkptr`, the compiler may not print the error message of `-Mbounds` anymore.
+DFORT := $(AFLANG) -std=f$(FSTD) -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Kieee #-Mchkptr
 dtest_i2_r4_d1_tst_c dtest_i4_r4_d1_tst_c dtest_i8_r4_d1_tst_c dtest_i2_r4_d0_tst_c dtest_i4_r4_d0_tst_c dtest_i8_r4_d0_tst_c: \
 	FC = $(DFORT)
 dtest_i2_r8_d1_tst_c dtest_i4_r8_d1_tst_c dtest_i8_r8_d1_tst_c dtest_i2_r8_d0_tst_c dtest_i4_r8_d0_tst_c dtest_i8_r8_d0_tst_c: \
@@ -270,7 +271,7 @@ dtest_i2_r16_d1_tst_c dtest_i4_r16_d1_tst_c dtest_i8_r16_d1_tst_c dtest_i2_r16_d
 # LLVM Flang
 FFORT := flang
 FFORT := $(FFORT) -Werror
-FFORT := $(FFORT) -std=f$(FSTD) -Mstandard -Wall -Wextra
+FFORT := $(FFORT) -std=f$(FSTD) -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkptr -Kieee
 ftest_i2_r4_d1_tst_c ftest_i4_r4_d1_tst_c ftest_i8_r4_d1_tst_c ftest_i2_r4_d0_tst_c ftest_i4_r4_d0_tst_c ftest_i8_r4_d0_tst_c: \
 	FC = $(FFORT)
 ftest_i2_r8_d1_tst_c ftest_i4_r8_d1_tst_c ftest_i8_r8_d1_tst_c ftest_i2_r8_d0_tst_c ftest_i4_r8_d0_tst_c ftest_i8_r8_d0_tst_c: \
@@ -346,7 +347,7 @@ ntest_i2_r16_d1_tst_c ntest_i4_r16_d1_tst_c ntest_i8_r16_d1_tst_c ntest_i2_r16_d
 # NVIDIA nvfortran (aka, pgfortran)
 VFORT := nvfortran
 VFORT := $(VFORT) -Werror
-VFORT := $(VFORT) -C -Mstandard -Minform=warn -Mbounds -Mchkstk -Mchkptr -Wall -Wextra
+VFORT := $(VFORT) -C -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkstk -Mchkptr
 vtest_i2_r4_d1_tst_c vtest_i4_r4_d1_tst_c vtest_i8_r4_d1_tst_c vtest_i2_r4_d0_tst_c vtest_i4_r4_d0_tst_c vtest_i8_r4_d0_tst_c: \
 	FC = $(VFORT) -Kieee -Ktrap=divz
 vtest_i2_r8_d1_tst_c vtest_i4_r8_d1_tst_c vtest_i8_r8_d1_tst_c vtest_i2_r8_d0_tst_c vtest_i4_r8_d0_tst_c vtest_i8_r8_d0_tst_c: \
