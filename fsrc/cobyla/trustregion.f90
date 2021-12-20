@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Monday, December 20, 2021 PM05:45:39
+! Last Modified: Monday, December 20, 2021 PM07:07:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -306,9 +306,9 @@ do iter = 1, maxiter
             if (.not. any(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m)) then
                 exit  ! This can be triggered by NACT == 0, among other possibilities.
             end if
-            ! VMULTD(NACT:MCON) is not used, but we have to initialize it in Fortran, or compilers
+            ! VMULTD(NACT+1:MCON) is not used, but we have to initialize it in Fortran, or compilers
             ! complain about the WHERE construct below (another solution: restrict WHERE to 1:NACT).
-            vmultd(nact:mcon) = -ONE  ! SIZE(VMULTD) = MCON
+            vmultd(nact + 1:mcon) = -ONE  ! SIZE(VMULTD) = MCON
 
             ! Revise the Lagrange multipliers. The revision is not applicable to VMULTC(NACT + 1:M).
             where (vmultd > 0 .and. iact <= m)
@@ -317,7 +317,7 @@ do iter = 1, maxiter
                 fracmult = HUGENUM
             end where
             ! Only the places where VMULTD > 0 and IACT <= M is relevant blow, if any.
-            frac = minval(fracmult(1:nact))  ! FRACMULT(NACT:MCON) may contain garbage.
+            frac = minval(fracmult(1:nact))  ! FRACMULT(NACT+1:MCON) may contain garbage.
             vmultc(1:nact) = max(ZERO, vmultc(1:nact) - frac * vmultd(1:nact))
 
             ! Zaikun 20210811: Powell's code includes the following, which is IMPOSSIBLE TO REACH.
