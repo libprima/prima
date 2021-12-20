@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Saturday, December 18, 2021 AM12:31:10
+! Last Modified: Monday, December 20, 2021 PM09:32:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -101,27 +101,26 @@ do iprob = 1, nprobs
             & (n + 1_IK) * (n + 2_IK) / 2_IK - 1_IK, (n + 1_IK) * (n + 2_IK) / 2_IK, &
             & (n + 1_IK) * (n + 2_IK) / 2_IK + 1_IK]
         do irand = 1, int(size(npt_list) + max(0_IK, nrand_loc), kind(irand))
-            call setseed(int(sum(istr(probname)) + n + irand))  ! Initialize the random seed.
+            call setseed(int(sum(istr(probname)) + n + irand + IK + RP))  ! Initialize the random seed.
             if (irand <= size(npt_list)) then
                 npt = npt_list(irand)
             else
                 npt = int(floor(TEN * rand() * real(n, RP)), kind(npt))
             end if
-            if (rand() <= 0.1_RP) then
+            if (rand() <= 0.2_RP) then
                 npt = 0
             end if
             maxfun = int(floor(2.0E2_RP * rand() * real(n, RP)), kind(maxfun))
-            if (rand() <= 0.1_RP) then
+            if (rand() <= 0.2_RP) then
                 maxfun = 0
             end if
             maxhist = int(floor(TWO * rand() * real(maxfun, RP)), kind(maxhist))
-            if (rand() <= 0.1_RP) then
+            if (rand() <= 0.2_RP) then
                 maxhist = 0
             end if
-            if (rand() <= 0.1_RP) then
+            if (rand() <= 0.2_RP) then
                 ftarget = -TEN**abs(TWO * randn())
-            elseif (rand() <= 0.1_RP) then
-                ! The probability of arriving here is 0.09. Note that the value of rand() changes.
+            elseif (rand() <= 0.2_RP) then  ! Note that the value of rand() changes.
                 ftarget = HUGENUM
             else
                 ftarget = -HUGENUM
@@ -131,10 +130,9 @@ do iprob = 1, nprobs
 
             rhobeg = noisy(prob % Delta0)
             rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(6.0_RP * rand() - 5.0_RP))
-            if (rand() <= 0.1_RP) then
+            if (rand() <= 0.2_RP) then
                 rhoend = rhobeg
-            elseif (rand() <= 0.1_RP) then
-                ! The probability of arriving here is 0.09. Note that the value of rand() changes.
+            elseif (rand() <= 0.2_RP) then  ! Note that the value of rand() changes.
                 rhobeg = ZERO
             end if
             call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.

@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, December 19, 2021 PM08:54:25
+! Last Modified: Monday, December 20, 2021 PM11:05:42
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -43,6 +43,7 @@ public :: issymmetric, isorth
 public :: norm
 public :: sort
 public :: int
+public :: trueloc, falseloc
 
 interface matprod
 ! N.B.:
@@ -2259,12 +2260,44 @@ end function sort_i2
 
 
 pure elemental function logical_to_int(x) result(y)
+!--------------------------------------------------------------------------------------------------!
+! LOGICAL_TO_INT(.TRUE.) = 1, LOGICAL_TO_INT(.FALSE.) = 0
+!--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : IK
 implicit none
 logical, intent(in) :: x
 integer(IK) :: y
 y = merge(tsource=1_IK, fsource=0_IK, mask=x)
 end function logical_to_int
+
+
+function trueloc(x) result(loc)
+!--------------------------------------------------------------------------------------------------!
+! Similar to the `find` function in MATLAB, TRUELOC returns the indices where X is true.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : IK
+use, non_intrinsic :: memory_mod, only : safealloc
+implicit none
+logical, intent(in) :: x(:)
+integer(IK), allocatable :: loc(:)  ! INTEGER(IK) :: LOC(COUNT(X)) does not work with Absoft 22.0
+integer(IK) :: i
+call safealloc(loc, int(count(x), IK))  ! Removable in F03.
+loc = pack([(i, i=1_IK, int(size(x), IK))], mask=x)
+end function trueloc
+
+
+function falseloc(x) result(loc)
+!--------------------------------------------------------------------------------------------------!
+! FALSELOC = TRUELOC(.NOT. X)
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : IK
+use, non_intrinsic :: memory_mod, only : safealloc
+implicit none
+logical, intent(in) :: x(:)
+integer(IK), allocatable :: loc(:)  ! INTEGER(IK) :: LOC(COUNT(.NOT.X)) does not work with Absoft 22.0
+call safealloc(loc, int(count(.not. x), IK))  ! Removable in F03.
+loc = trueloc(.not. x)
+end function falseloc
 
 
 end module linalg_mod

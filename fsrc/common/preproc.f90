@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, December 20, 2021 PM04:44:09
+! Last Modified: Monday, December 20, 2021 PM09:28:49
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: If all the inputs are valid, then PREPROC should do nothing.
@@ -52,6 +52,7 @@ real(RP), intent(inout), optional :: gamma1
 real(RP), intent(inout), optional :: gamma2
 
 ! Local variables
+character(len=100) :: min_maxfun_str
 integer(IK) :: min_maxfun
 real(RP) :: eta1_loc
 real(RP) :: eta2_loc
@@ -66,14 +67,17 @@ end if
 ! Validate MAXFUN
 if (lower(solver) == 'newuoa' .or. lower(solver) == 'bobyqa' .or. lower(solver) == 'lincoa') then
     min_maxfun = n + 3_IK
+    min_maxfun_str = 'N + 3'
 else if (lower(solver) == 'uobyqa') then
     min_maxfun = (n + 1_IK) * (n + 2_IK) / 2_IK + 1_IK
+    min_maxfun_str = '(N+1)(N+2)/2 + 1'
 else
     min_maxfun = n + 2_IK
+    min_maxfun_str = 'N + 2'
 end if
 if (maxfun < min_maxfun) then
     maxfun = min_maxfun
-    print '(/1A, I8, 1A)', solver//': invalid MAXFUN; it should an integer at least N + 3 ; it is set to ', maxfun, '.'
+    print '(/1A, I8, 1A)', solver//': invalid MAXFUN; it should be at least '//trim(min_maxfun_str)//'; it is set to ', maxfun, '.'
 end if
 
 ! Validate MAXHIST
@@ -86,7 +90,7 @@ maxhist = min(maxhist, maxfun)  ! MAXHIST > MAXFUN is never needed.
 ! Validate FTARGET
 if (is_nan(ftarget)) then
     ftarget = FTARGET_DFT
-    print '(/1A, 1PD15.6, 1A)', solver//': invalid FTARGET; it should a real number; it is set to ', ftarget, '.'
+    print '(/1A, 1PD15.6, 1A)', solver//': invalid FTARGET; it should be a real number; it is set to ', ftarget, '.'
 end if
 
 ! Validate NPT
@@ -94,7 +98,7 @@ if ((lower(solver) == 'newuoa' .or. lower(solver) == 'bobyqa' .or. lower(solver)
     & .and. present(npt)) then
     if (npt < n + 2 .or. npt > min(maxfun - 1, ((n + 2) * (n + 1)) / 2)) then
         npt = int(min(maxfun - 1, 2 * n + 1), kind(npt))
-        print '(/1A, I6, 1A)', solver//': invalid NPT; it should an integer in the interval [N+2, (N+1)(N+2)/2], '// &
+        print '(/1A, I6, 1A)', solver//': invalid NPT; it should be an integer in the interval [N+2, (N+1)(N+2)/2], '// &
             & 'and it should be less than MAXFUN; it is set to ', npt, '.'
     end if
 end if
@@ -143,8 +147,8 @@ if (present(eta2)) then
         eta2 = ETA2_DFT
     else if (present(eta1) .and. (eta2 < eta1_loc .or. eta2 > 1)) then
         eta2 = (eta1 + TWO) / 3.0_RP
-        print '(/1A, 1PD15.6, 1A)', solver//': invalid ETA2; it should be in the interval [0, 1] and not less than ETA1;'// &
-            & ' it is set to ', eta2, '.'
+        print '(/1A, 1PD15.6, 1A)', solver// &
+            & ': invalid ETA2; it should be in [0, 1] and not less than ETA1;'//' it is set to ', eta2, '.'
     end if
 end if
 
@@ -167,8 +171,8 @@ if (present(gamma2)) then
         gamma2 = GAMMA2_DFT
     else if (gamma2 < 1 .or. is_inf(gamma2)) then
         gamma2 = GAMMA2_DFT
-        print '(/1A, 1PD15.6, 1A)', solver//': invalid GAMMA2; it should a real number not less than 1; it is set to ', &
-            & gamma2, '.'
+        print '(/1A, 1PD15.6, 1A)', solver// &
+            & ': invalid GAMMA2; it should be a real number not less than 1; it is set to ', gamma2, '.'
     end if
 end if
 
