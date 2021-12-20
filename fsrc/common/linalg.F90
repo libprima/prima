@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, December 18, 2021 PM10:42:08
+! Last Modified: Sunday, December 19, 2021 PM08:54:25
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -42,6 +42,7 @@ public :: isminor
 public :: issymmetric, isorth
 public :: norm
 public :: sort
+public :: int
 
 interface matprod
 ! N.B.:
@@ -80,6 +81,10 @@ end interface isminor
 interface sort
     module procedure sort_i1, sort_i2
 end interface sort
+
+interface int
+    module procedure logical_to_int
+end interface int
 
 
 contains
@@ -2251,6 +2256,15 @@ else
 end if
 #endif
 end function sort_i2
+
+
+pure elemental function logical_to_int(x) result(y)
+use, non_intrinsic :: consts_mod, only : IK
+implicit none
+logical, intent(in) :: x
+integer(IK) :: y
+y = merge(tsource=1_IK, fsource=0_IK, mask=x)
+end function logical_to_int
 
 
 end module linalg_mod

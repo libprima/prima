@@ -7,12 +7,16 @@ module history_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, December 17, 2021 PM11:55:58
+! Last Modified: Monday, December 20, 2021 PM04:44:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
-public :: savehist, rangehist
+public :: prehist, savehist, rangehist
+
+interface prehist
+    module procedure prehist_unc, prehist_nlc
+end interface prehist
 
 interface savehist
     module procedure savehist_unc, savehist_nlc
@@ -24,6 +28,178 @@ end interface rangehist
 
 
 contains
+
+
+subroutine prehist_unc(maxhist, n, output_fhist, fhist, output_xhist, xhist)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine revises MAXHIST according to MAXMEMORY, and allocate memory for the history.
+! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
+! FHIST = NaN(1, MAXFUN), XHIST = NaN(N, MAXFUN) if they are requested; replace MAXFUN with 0 for
+! the history that is not requested.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, MAXMEMORY, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: linalg_mod, only : int
+use, non_intrinsic :: memory_mod, only : safealloc, cstyle_sizeof
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: n
+logical, intent(in) :: output_fhist
+logical, intent(in) :: output_xhist
+
+! In-outputs
+integer(IK), intent(inout) :: maxhist
+
+! Outputs
+real(RP), intent(out), allocatable :: fhist(:)
+real(RP), intent(out), allocatable :: xhist(:, :)
+
+! Local variables
+character(len=*), parameter :: srname = 'PREHIST_UNC'
+integer(IK) :: maxhist_in
+integer(IK) :: unit_memo
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(maxhist >= 0, 'MAXHIST >= 0', srname)
+    call assert(n >= 1, 'N >= 1', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+! Save the input value of MAXHIST for debugging.
+maxhist_in = maxhist
+
+! Revise MAXHIST according to MAXMEMORY, i.e., the maximal memory allowed for the history.
+unit_memo = int(output_xhist) * n + int(output_fhist)
+unit_memo = unit_memo * cstyle_sizeof(0.0_RP)
+if (unit_memo <= 0) then  ! No output of history is requested
+    maxhist = 0_IK
+elseif (maxhist > MAXMEMORY / unit_memo) then
+    maxhist = int(MAXMEMORY / unit_memo, kind(maxhist))
+    ! We cannot simply set MAXHIST = MIN(MAXHIST, MAXMEMORY/UNIT_MEMO), as they may not have
+    ! the same kind, and compilers may complain. We may convert them, but overflow may occur.
+end if
+
+call safealloc(fhist, maxhist * int(output_fhist))
+call safealloc(xhist, n, maxhist * int(output_xhist))
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(maxhist >= 0 .and. maxhist <= maxhist_in, '0 <= MAXHIST <= MAXHIST_IN', srname)
+    call assert(maxhist == max(size(fhist), size(xhist, 2)), &
+        & 'MAXHIST == MAX(SIZE(CHIST), SIZE(CONHIST, 2), SIZE(FHIST), SIZE(XHIST, 2))', srname)
+    call assert(int(maxhist, kind(MAXMEMORY)) * int(unit_memo, kind(MAXMEMORY)) <= MAXMEMORY, &
+        & 'the history will not take more memory than MAXMEMORY', srname)
+    call assert(allocated(fhist) .and. allocated(xhist), 'the history is allocated', srname)
+    call assert(size(fhist) == maxhist * int(output_fhist), &
+        & 'if FHIST is requested, then SIZE(FHIST) == MAXHIST; otherwise, SIZE(FHIST) == 0', srname)
+    call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxhist * int(output_xhist), &
+        & 'if XHIST is requested, then SIZE(XHIST) == [N, MAXHIST]; otherwise, SIZE(XHIST) == [N, 0]', srname)
+    call assert(int(size(fhist) + size(xhist), kind(MAXMEMORY)) * &
+       & int(cstyle_sizeof(0.0_RP), kind(MAXMEMORY)) <= MAXMEMORY, &
+        & 'the history will not take more memory than MAXMEMORY', srname)
+end if
+end subroutine prehist_unc
+
+subroutine prehist_nlc(maxhist, m, n, output_chist, chist, output_conhist, conhist, output_fhist, fhist, output_xhist, xhist)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine revises MAXHIST according to MAXMEMORY, and allocate memory for the history.
+! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
+! CHIST = NaN(1, MAXFUN), CONHIST = NaN(M, MAXFUN), FHIST = NaN(1, MAXFUN), XHIST = NaN(N, MAXFUN)
+! if they are requested; replace MAXFUN with 0 for the history that is not requested.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, MAXMEMORY, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: linalg_mod, only : int
+use, non_intrinsic :: memory_mod, only : safealloc, cstyle_sizeof
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: m
+integer(IK), intent(in) :: n
+logical, intent(in) :: output_chist
+logical, intent(in) :: output_conhist
+logical, intent(in) :: output_fhist
+logical, intent(in) :: output_xhist
+
+! In-outputs
+integer(IK), intent(inout) :: maxhist
+
+! Outputs
+real(RP), intent(out), allocatable :: chist(:)
+real(RP), intent(out), allocatable :: conhist(:, :)
+real(RP), intent(out), allocatable :: fhist(:)
+real(RP), intent(out), allocatable :: xhist(:, :)
+
+! Local variables
+character(len=*), parameter :: srname = 'PREHIST_NLC'
+integer(IK) :: maxhist_in
+integer(IK) :: unit_memo
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(maxhist >= 0, 'MAXHIST >= 0', srname)
+    call assert(m >= 0, 'M >= 0', srname)
+    call assert(n >= 1, 'N >= 1', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+! Save the input value of MAXHIST for debugging.
+maxhist_in = maxhist
+
+! Revise MAXHIST according to MAXMEMORY, i.e., the maximal memory allowed for the history.
+unit_memo = int(output_xhist) * n + int(output_fhist) + int(output_conhist) * m + int(output_chist)
+unit_memo = unit_memo * cstyle_sizeof(0.0_RP)
+if (unit_memo <= 0) then  ! No output of history is requested
+    maxhist = 0_IK
+elseif (maxhist > MAXMEMORY / unit_memo) then
+    maxhist = int(MAXMEMORY / unit_memo, kind(maxhist))
+    ! We cannot simply set MAXHIST = MIN(MAXHIST, MAXMEMORY/UNIT_MEMO), as they may not have
+    ! the same kind, and compilers may complain. We may convert them, but overflow may occur.
+end if
+
+call safealloc(chist, maxhist * int(output_chist))
+call safealloc(conhist, m, maxhist * int(output_conhist))
+call safealloc(fhist, maxhist * int(output_fhist))
+call safealloc(xhist, n, maxhist * int(output_xhist))
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(maxhist >= 0 .and. maxhist <= maxhist_in, '0 <= MAXHIST <= MAXHIST_IN', srname)
+    call assert(maxhist == max(size(chist), size(conhist, 2), size(fhist), size(xhist, 2)), &
+        & 'MAXHIST == MAX(SIZE(CHIST), SIZE(CONHIST, 2), SIZE(FHIST), SIZE(XHIST, 2))', srname)
+    call assert(int(maxhist, kind(MAXMEMORY)) * int(unit_memo, kind(MAXMEMORY)) <= MAXMEMORY, &
+        & 'the history will not take more memory than MAXMEMORY', srname)
+    call assert(allocated(chist) .and. allocated(conhist) .and. allocated(fhist) .and. allocated(xhist), &
+        & 'the history is allocated', srname)
+    call assert(size(chist) == maxhist * int(output_chist), &
+        & 'if CHIST is requested, then SIZE(CHIST) == MAXHIST; otherwise, SIZE(CHIST) == 0', srname)
+    call assert(size(conhist, 1) == m .and. size(conhist, 2) == maxhist * int(output_conhist), &
+        & 'if CONHIST is requested, then SIZE(CONHIST) == [M, MAXHIST]; otherwise, SIZE(CONHIST) == [M, 0]', srname)
+    call assert(size(fhist) == maxhist * int(output_fhist), &
+        & 'if FHIST is requested, then SIZE(FHIST) == MAXHIST; otherwise, SIZE(FHIST) == 0', srname)
+    call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxhist * int(output_xhist), &
+        & 'if XHIST is requested, then SIZE(XHIST) == [N, MAXHIST]; otherwise, SIZE(XHIST) == [N, 0]', srname)
+    call assert(int(size(chist) + size(conhist) + size(fhist) + size(xhist), kind(MAXMEMORY)) * &
+       & int(cstyle_sizeof(0.0_RP), kind(MAXMEMORY)) <= MAXMEMORY, &
+        & 'the history will not take more memory than MAXMEMORY', srname)
+end if
+end subroutine prehist_nlc
 
 
 subroutine savehist_unc(nf, f, x, fhist, xhist)

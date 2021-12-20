@@ -97,7 +97,7 @@ real(RP) :: A(size(x), size(constr) + 1)
 real(RP) :: actrem
 real(RP) :: b(size(constr) + 1)
 real(RP) :: barmu
-real(RP) :: cfilt(min(max(maxfilt, 0_IK), maxfun))
+real(RP) :: cfilt(min(max(maxfilt, 1_IK), maxfun))
 real(RP) :: confilt(size(constr), size(cfilt))
 real(RP) :: conmat(size(constr), size(x) + 1)
 real(RP) :: cpen  ! Penalty parameter for constraint in merit function (PARMU in Powell's code)

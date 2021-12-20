@@ -8,7 +8,7 @@ module selectx_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Saturday, December 18, 2021 PM10:45:34
+! Last Modified: Monday, December 20, 2021 PM05:58:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,11 +23,11 @@ subroutine savefilt(constr, cstrv, ctol, f, x, nfilt, cfilt, confilt, ffilt, xfi
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine saves X, F, CONSTR, and CSTRV in XFILT, FFILT, CONFILT, and CFILT, unless a vector
 ! in XFILT(:, 1:NFILT) is better than X. If X is better than some vectors in XFILT(:, 1:NFILT), then
-! these vectors will be removed. If X is not better than any of XFILT(:, 1:NFILT) but NFILT=NFILTMAX,
+! these vectors will be removed. If X is not better than any of XFILT(:, 1:NFILT) but NFILT=MAXFILT,
 ! then we remove XFILT(:,1), which is the oldest vector in XFILT(:, 1:NFILT).
 ! N.B.:
 ! 1. Only XFILT(:, 1:NFILT) and FFILT(:, 1:NFILT) etc contains valid information, while
-! XFILT(:, NFILT+1:NFILTMAX) and FFILT(:, NFILT+1:NFILTMAX) etc are not initialized yet.
+! XFILT(:, NFILT+1:MAXFILT) and FFILT(:, NFILT+1:MAXFILT) etc are not initialized yet.
 ! 2. We decide whether an X is better than another by the ISBETTER function.
 !--------------------------------------------------------------------------------------------------!
 
@@ -47,17 +47,17 @@ real(RP), intent(in) :: x(:)  ! N
 
 ! In-outputs
 integer(IK), intent(inout) :: nfilt
-real(RP), intent(inout) :: cfilt(:)  ! NFILTMAX
-real(RP), intent(inout) :: confilt(:, :)  ! (M, NFILTMAX)
-real(RP), intent(inout) :: ffilt(:)  ! NFILTMAX
-real(RP), intent(inout) :: xfilt(:, :) ! (N, NFILTMAX)
+real(RP), intent(inout) :: cfilt(:)  ! MAXFILT
+real(RP), intent(inout) :: confilt(:, :)  ! (M, MAXFILT)
+real(RP), intent(inout) :: ffilt(:)  ! MAXFILT
+real(RP), intent(inout) :: xfilt(:, :) ! (N, MAXFILT)
 
 ! Local variables
 character(len=*), parameter :: srname = 'SAVEFILT'
 integer(IK) :: i
 integer(IK) :: m
 integer(IK) :: n
-integer(IK) :: nfiltmax
+integer(IK) :: maxfilt
 integer(IK), allocatable :: index_to_keep(:)
 logical :: better(nfilt)
 logical :: keep(nfilt)
@@ -65,19 +65,19 @@ logical :: keep(nfilt)
 ! Sizes
 m = int(size(constr), kind(m))
 n = int(size(x), kind(n))
-nfiltmax = int(size(ffilt), kind(nfiltmax))
+maxfilt = int(size(ffilt), kind(maxfilt))
 
 ! Preconditions
 if (DEBUGGING) then
     ! Check the size of X.
     call assert(n >= 1, 'N >= 1', srname)
     ! Check NFILT
-    call assert(nfilt <= nfiltmax, 'NFILT <= NFILTMAX', srname)
+    call assert(nfilt <= maxfilt, 'NFILT <= MAXFILT', srname)
     ! Check the sizes of XFILT, FFILT, CONFILT, CFILT.
-    call assert(nfiltmax >= 1, 'NFILTMAX >= 1', srname)
-    call assert(size(xfilt, 1) == n .and. size(xfilt, 2) == nfiltmax, 'SIZE(XFILT) == [N, NFILTMAX]', srname)
-    call assert(size(confilt, 1) == m .and. size(confilt, 2) == nfiltmax, 'SIZE(CONFILT) == [M, NFILTMAX]', srname)
-    call assert(size(cfilt) == nfiltmax, 'SIZE(CFILT) == NFILTMAX', srname)
+    call assert(maxfilt >= 1, 'MAXFILT >= 1', srname)
+    call assert(size(xfilt, 1) == n .and. size(xfilt, 2) == maxfilt, 'SIZE(XFILT) == [N, MAXFILT]', srname)
+    call assert(size(confilt, 1) == m .and. size(confilt, 2) == maxfilt, 'SIZE(CONFILT) == [M, MAXFILT]', srname)
+    call assert(size(cfilt) == maxfilt, 'SIZE(CFILT) == MAXFILT', srname)
     ! Check the values of XFILT, FFILT, CONFILT, CFILT.
     call assert(.not. any(is_nan(xfilt(:, 1:nfilt))), 'XFILT does not contain NaN', srname)
     call assert(.not. any(is_nan(ffilt(1:nfilt)) .or. is_posinf(ffilt(1:nfilt))), &
@@ -111,7 +111,7 @@ end if
 ! Decide which columns of XFILT to keep. We use again the array constructor with an implied do loop.
 keep = [(.not. isbetter([f, cstrv], [ffilt(i), cfilt(i)], ctol), i=1, nfilt)]
 ! If X is not better than any column of XFILT, then we remove the first (oldest) column of XFILT.
-if (count(keep) == nfiltmax) then
+if (count(keep) == maxfilt .and. size(keep) > 0) then  ! SIZE(KEEP)==MAXFILT>0 unless bug occurs.
     keep(1) = .false.
 end if
 
@@ -120,7 +120,7 @@ nfilt = int(count(keep), kind(nfilt))
 !----The SAFEALLOC line is removable in F2003.-----!
 call safealloc(index_to_keep, nfilt)
 !--------------------------------------------------!
-index_to_keep = pack([(int(i, IK), i=1, int(size(keep), IK))], mask=keep) 
+index_to_keep = pack([(int(i, IK), i=1, int(size(keep), IK))], mask=keep)
 xfilt(:, 1:nfilt) = xfilt(:, index_to_keep)
 ffilt(1:nfilt) = ffilt(index_to_keep)
 confilt(:, 1:nfilt) = confilt(:, index_to_keep)
@@ -141,11 +141,11 @@ cfilt(nfilt) = cstrv
 ! Postconditions
 if (DEBUGGING) then
     ! Check NFILT and the sizes of XFILT, FFILT, CONFILT, CFILT
-    call assert(nfilt >= 1 .and. nfilt <= nfiltmax, '1 <= NFILT <= NFILTMAX', srname)
-    call assert(size(xfilt, 1) == n .and. size(xfilt, 2) == nfiltmax, 'SIZE(XFILT) == [N, NFILTMAX]', srname)
-    call assert(size(ffilt) == nfiltmax, 'SIZE(FFILT) = NFILTMAX', srname)
-    call assert(size(confilt, 1) == m .and. size(confilt, 2) == nfiltmax, 'SIZE(CONFILT) == [M, NFILTMAX]', srname)
-    call assert(size(cfilt) == nfiltmax, 'SIZE(CFILT) = NFILTMAX', srname)
+    call assert(nfilt >= 1 .and. nfilt <= maxfilt, '1 <= NFILT <= MAXFILT', srname)
+    call assert(size(xfilt, 1) == n .and. size(xfilt, 2) == maxfilt, 'SIZE(XFILT) == [N, MAXFILT]', srname)
+    call assert(size(ffilt) == maxfilt, 'SIZE(FFILT) = MAXFILT', srname)
+    call assert(size(confilt, 1) == m .and. size(confilt, 2) == maxfilt, 'SIZE(CONFILT) == [M, MAXFILT]', srname)
+    call assert(size(cfilt) == maxfilt, 'SIZE(CFILT) = MAXFILT', srname)
     ! Check the values of XFILT, FFILT, CONFILT, CFILT.
     call assert(.not. any(is_nan(xfilt(:, 1:nfilt))), 'XFILT does not contain NaN', srname)
     call assert(.not. any(is_nan(ffilt(1:nfilt)) .or. is_posinf(ffilt(1:nfilt))), &
@@ -281,7 +281,7 @@ function isbetter(fc1, fc2, ctol) result(is_better)
 ! Here, CSTRV means constraint violation, which is a nonnegative number.
 !--------------------------------------------------------------------------------------------------!
 
-use, non_intrinsic :: consts_mod, only : RP, TEN, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, TEN, EPS, HUGECON, HUGENUM, DEBUGGING
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
@@ -314,10 +314,10 @@ end if
 is_better = .false.
 ! Even though NaN/+Inf should not occur in FC1 or FC2 due to the moderated extreme barrier, for
 ! security and robustness, the code below does not make this assumption.
-is_better = is_better .or. (.not. any(is_nan(fc1)) .and. any(is_nan(fc2)))
+is_better = is_better .or. (any(is_nan(fc2)) .and. .not. any(is_nan(fc2)))
 is_better = is_better .or. (fc1(1) < fc2(1) .and. fc1(2) <= fc2(2))
 is_better = is_better .or. (fc1(1) <= fc2(1) .and. fc1(2) < fc2(2))
-cref = TEN * max(ctol, epsilon(ctol))
+cref = TEN * max(EPS, min(ctol, 1.0E-2_RP * HUGECON))  ! The MIN avoids overflow.
 is_better = is_better .or. (fc1(1) < HUGENUM .and. fc1(2) <= ctol .and. &
     & ((fc2(2) > cref) .or. is_nan(fc2(2))))
 
@@ -327,11 +327,11 @@ is_better = is_better .or. (fc1(1) < HUGENUM .and. fc1(2) <= ctol .and. &
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(.not. (fc1(1) >= fc2(1) .and. fc1(2) >= fc2(2) .and. is_better), &
+    call assert(.not. (is_better .and. fc1(1) >= fc2(1) .and. fc1(2) >= fc2(2)), &
         & 'FC1 >= FC2 and IS_BETTER cannot be both true', srname)
-    call assert((.not. (fc1(1) <= fc2(1) .and. fc1(2) < fc2(2))) .or. is_better, &
+    call assert(is_better .or. .not. (fc1(1) <= fc2(1) .and. fc1(2) < fc2(2)), &
         & 'if FC1 <= FC2 but not equal, then IS_BETTER must be true', srname)
-    call assert((.not. (fc1(1) < fc2(1) .and. fc1(2) <= fc2(2))) .or. is_better, &
+    call assert(is_better .or. .not. (fc1(1) < fc2(1) .and. fc1(2) <= fc2(2)), &
         & 'if FC1 <= FC2 but not equal, then IS_BETTER must be true', srname)
 end if
 
