@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, December 18, 2021 PM04:46:43
+! Last Modified: Tuesday, December 21, 2021 AM02:01:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -17,8 +17,8 @@ public :: cobylb
 contains
 
 
-subroutine cobylb(calcfc, iprint, maxfun, ctol, ftarget, rhobeg, rhoend, constr, x, nf, chist, &
-        & conhist, cstrv, f, fhist, xhist, info)
+subroutine cobylb(calcfc, iprint, maxfilt, maxfun, ctol, ftarget, rhobeg, rhoend, constr, x, nf, &
+        & chist, conhist, cstrv, f, fhist, xhist, info)
 
 ! Generic modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
@@ -45,6 +45,7 @@ implicit none
 ! Inputs
 procedure(FUNCON) :: calcfc
 integer(IK), intent(in) :: iprint
+integer(IK), intent(in) :: maxfilt
 integer(IK), intent(in) :: maxfun
 real(RP), intent(in) :: ctol
 real(RP), intent(in) :: ftarget
@@ -64,9 +65,6 @@ real(RP), intent(out) :: cstrv
 real(RP), intent(out) :: f
 real(RP), intent(out) :: fhist(:)
 real(RP), intent(out) :: xhist(:, :)
-
-! Parameters
-integer(IK), parameter :: maxfilt = 2000_IK  ! Must be positive. Recommended to be in [100, 10,000].
 
 ! Local variables
 character(len=*), parameter :: srname = 'COBYLB'
@@ -135,6 +133,7 @@ if (DEBUGGING) then
     !call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
     !call assert(gamma1 > 0 .and. gamma1 < 1 .and. gamma2 > 1, '0 < GAMMA1 < 1 < GAMMA2', srname)
     call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
+    call assert(maxfilt >= 1 .and. maxfilt <= maxfun, '1 <= MAXFILT <= MAXFUN', srname)
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
     call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)

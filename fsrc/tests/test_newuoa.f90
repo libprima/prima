@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, December 20, 2021 PM09:32:02
+! Last Modified: Tuesday, December 21, 2021 AM12:43:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -138,13 +138,13 @@ do iprob = 1, nprobs
             call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
             x = noisy(prob % x0)
             orig_calfun => prob % calfun
+
             print '(/1A, I3, 1A, I3)', trimstr(probname)//': N = ', n, ', Random test ', irand
             call newuoa(noisy_calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, npt=npt, maxfun=maxfun, &
                 & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, iprint=1_IK)
 
             call destruct(prob)  ! Destruct the testing problem.
             ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
-
             deallocate (x)
             nullify (orig_calfun)
         end do

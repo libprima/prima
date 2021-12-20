@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, December 20, 2021 PM09:46:19
+! Last Modified: Tuesday, December 21, 2021 AM12:12:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -43,6 +43,7 @@ integer(IK) :: iprob
 integer(IK) :: irand
 integer(IK) :: m
 integer(IK) :: maxdim_loc
+integer(IK) :: maxfilt
 integer(IK) :: maxfun
 integer(IK) :: maxhist
 integer(IK) :: mindim_loc
@@ -110,6 +111,10 @@ do iprob = 1, nprobs
         if (rand() <= 0.2_RP) then
             maxhist = 0
         end if
+        maxfilt = int(floor(TWO * rand() * real(maxfun, RP)), kind(maxfilt))
+        if (rand() <= 0.2_RP) then
+            maxfilt = 0
+        end if
         if (rand() <= 0.2_RP) then
             ctol = randn() * TEN**(-abs(TWO * randn()))
         elseif (rand() <= 0.2_RP) then  ! Note that the value of rand() changes.
@@ -135,10 +140,11 @@ do iprob = 1, nprobs
         call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
         x = noisy(prob % x0)
         orig_calcfc => prob % calcfc
+
         print '(/1A, I3, 1A, I3)', trimstr(probname)//': N = ', n, ', Random test ', irand
         call cobyla(noisy_calcfc, x, f, m=m, cstrv=cstrv, constr=constr, rhobeg=rhobeg, rhoend=rhoend, &
             & maxfun=maxfun, maxhist=maxhist, fhist=fhist, xhist=xhist, conhist=conhist, chist=chist, &
-            & ctol=ctol, ftarget=ftarget, iprint=1_IK)
+            & ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=1_IK)
 
         deallocate (x)
         nullify (orig_calcfc)

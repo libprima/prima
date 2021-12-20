@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, December 20, 2021 PM09:28:49
+! Last Modified: Tuesday, December 21, 2021 AM01:59:12
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: If all the inputs are valid, then PREPROC should do nothing.
@@ -19,21 +19,26 @@ public :: preproc
 contains
 
 
-subroutine preproc(solver, n, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend, npt, ctol, eta1, eta2, gamma1, gamma2)
+subroutine preproc(solver, n, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend, m, npt, maxfilt, &
+        & ctol, eta1, eta2, gamma1, gamma2)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine preprocesses the inputs. It does nothing to the inputs that are valid.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, TEN, TENTH, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, TEN, TENTH, EPS, MAXMEMORY, DEBUGGING
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, ETA1_DFT, ETA2_DFT, GAMMA1_DFT, GAMMA2_DFT
-use, non_intrinsic :: consts_mod, only : CTOL_DFT, FTARGET_DFT, IPRINT_DFT
+use, non_intrinsic :: consts_mod, only : CTOL_DFT, FTARGET_DFT, IPRINT_DFT, MAXFILT_DFT
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite
+use, non_intrinsic :: memory_mod, only : cstyle_sizeof
 use, non_intrinsic :: string_mod, only : lower
 implicit none
 
 ! Compulsory inputs
 character(len=*), intent(in) :: solver
 integer(IK), intent(in) :: n
+
+! Optional inputs
+integer(IK), intent(in), optional :: m
 
 ! Compulsory in-outputs
 integer(IK), intent(inout) :: iprint
@@ -45,6 +50,7 @@ real(RP), intent(inout) :: rhoend
 
 ! Optional in-outputs
 integer(IK), intent(inout), optional :: npt
+integer(IK), intent(inout), optional :: maxfilt
 real(RP), intent(inout), optional :: ctol
 real(RP), intent(inout), optional :: eta1
 real(RP), intent(inout), optional :: eta2
@@ -52,11 +58,32 @@ real(RP), intent(inout), optional :: gamma1
 real(RP), intent(inout), optional :: gamma2
 
 ! Local variables
+character(len=*), parameter :: srname = 'PREPROC'
 character(len=100) :: min_maxfun_str
+integer(IK) :: m_loc
+integer(IK) :: maxfilt_in
 integer(IK) :: min_maxfun
 real(RP) :: eta1_loc
 real(RP) :: eta2_loc
 
+! Preconditions
+if (DEBUGGING) then
+    call assert(n >= 1, 'N >= 1', srname)
+    if (lower(solver) == 'cobyla' .and. present(m)) then
+        call assert(m >= 0, 'M >= 0', srname)
+    end if
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+! Read M, if necessary
+if (lower(solver) == 'cobyla' .and. present(m)) then
+    m_loc = m
+else
+    m_loc = 0_IK
+end if
 
 ! Validate IPRINT
 if (abs(iprint) > 3) then
@@ -100,6 +127,31 @@ if ((lower(solver) == 'newuoa' .or. lower(solver) == 'bobyqa' .or. lower(solver)
         npt = int(min(maxfun - 1, 2 * n + 1), kind(npt))
         print '(/1A, I6, 1A)', solver//': invalid NPT; it should be an integer in the interval [N+2, (N+1)(N+2)/2], '// &
             & 'and it should be less than MAXFUN; it is set to ', npt, '.'
+    end if
+end if
+
+! Validate MAXFILT
+if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cobyla')) then
+    maxfilt_in = maxfilt
+    if (maxfilt < 1) then
+        maxfilt = MAXFILT_DFT
+    end if
+    if (lower(solver) == 'lincoa') then
+        ! We cannot simply set MAXFILT = MIN(MAXFILT, MAXMEMORY/...), as they may not have
+        ! the same kind, and compilers may complain. We may convert them, but overflow may occur.
+        if (maxfilt > MAXMEMORY / (cstyle_sizeof(0.0_RP) * (n + 2_IK))) then
+            maxfilt = int(MAXMEMORY / (cstyle_sizeof(0.0_RP) * (n + 2_IK)), kind(maxfilt))
+        end if
+    elseif (lower(solver) == 'cobyla') then
+        if (maxfilt > MAXMEMORY / (cstyle_sizeof(0.0_RP) * (m_loc + n + 2_IK))) then
+            maxfilt = int(MAXMEMORY / (cstyle_sizeof(0.0_RP) * (m_loc + n + 2_IK)), kind(maxfilt))
+        end if
+    end if
+    maxfilt = min(maxfun, max(1_IK, maxfilt))
+    if (maxfilt_in < 1) then
+        print '(/1A, I8, 1A)', solver//': invalid MAXFILT; it should be a positive integer; it is set to ', maxfilt, '.'
+    elseif (maxfilt < min(maxfilt_in, maxfun)) then
+        print '(/1A, I8, 1A)', solver//': WARNING: MAXFILT is reset to ', maxfilt, '.'
     end if
 end if
 
@@ -211,6 +263,10 @@ if (present(ctol)) then
     end if
 end if
 
+!====================!
+!  Calculation ends  !
+!====================!
+
 ! Postconditions
 if (DEBUGGING) then
     call assert(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', solver)
@@ -218,6 +274,9 @@ if (DEBUGGING) then
     if (present(npt)) then
         call assert(maxfun >= npt + 1, 'MAXFUN >= NPT + 1', solver)
         call assert(npt >= 3, 'NPT >= 3', solver)
+    end if
+    if (present(maxfilt)) then
+        call assert(maxfilt >= 1 .and. maxfilt <= maxfun, '1 <= MAXFILT <= MAXFUN', solver)
     end if
     if (present(eta1) .and. present(eta2)) then
         call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', solver)

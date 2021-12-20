@@ -113,11 +113,12 @@ C m_int = int(m), which will be used when variables of type INTEGER are
 C needed (e.g., when calling COBYLA).
       real(rp) :: f_x0, ctol
       real(rp), allocatable :: x(:), conval(:)
-      real(rp) :: f, rhobeg, rhoend, maxfun_r, m_r, ftarget, resmax
+      real(rp) :: f, rhobeg, rhoend, maxfun_r, maxfilt_r, m_r, ftarget,
+     & resmax
       integer :: info, iprint, allocate_status
 C info and iprint are inputs to COBYLA, which requires them to be
 C INTEGERs (not necessarily the same as mwSize)
-      integer :: maxfun, nw
+      integer :: maxfun, nw, maxfilt
       integer :: nf_loc
       integer :: maxhist
       real(RP), allocatable :: fhist_loc(:), chist_loc(:)
@@ -135,9 +136,9 @@ C large problems.
        procedure(FUNCON) :: calcfc
 
 C Validate number of arguments.
-      if (nrhs .ne. 11) then
+      if (nrhs .ne. 12) then
          call mexErrMsgIdAndTxt ('fcobyla:nInput',
-     &   'fcobyla: 11 input argument required.')
+     &   'fcobyla: 12 input argument required.')
 C subroutine mexErrMsgIdAndTxt(character*(*) errorid, character*(*) errormsg)
       end if
       if (nlhs .gt. 8) then
@@ -225,6 +226,12 @@ C Input 11: ctol (double scalar)
           call mexErrMsgIdAndTxt('fcobyla:WrongInput',
      &    'fcobyla: Input 11 should be a double.')
       end if
+C Input 12: maxfilt (double scalar)
+      if (mxIsDouble(prhs(12)) .ne. 1 .or. mxGetM(prhs(12)) .ne. 1
+     &    .or. mxGetN(prhs(12)) .ne. 1) then
+          call mexErrMsgIdAndTxt('fcobyla:WrongInput',
+     & 'fcobyla: Input 12 should be a double (with an integer value).')
+      end if
 
 C Read the inputs (there are 11)
       fun_ptr = prhs(1)
@@ -278,6 +285,10 @@ C an INTEGER (not necessary the same as mwSize)
       call mxCopyPtrToReal8(_MGETDB(prhs(10)), f_x0, mwOne)
       call mxCopyPtrToReal8(_MGETDB(prhs(11)), ctol, mwOne)
 
+      call mxCopyPtrToReal8(_MGETDB(prhs(12)),
+     &     maxfilt_r, mwOne)
+      maxfilt = int(maxfilt_r, kind(maxfilt))
+
       if (m .gt. 0 .and. m .ne. mxGetM(prhs(9))) then
 C m is number of constraints
           call mexErrMsgIdAndTxt('fcobyla:WrongInput',
@@ -322,7 +333,8 @@ C     Call COBYLA
      & resmax, conval,
      & m_int, f_x0, conval_x0,
      & nf_loc, rhobeg, rhoend, ftarget, ctol, maxfun, iprint,
-     & fhist = fhist_loc, chist = chist_loc, maxhist=maxhist,info=info)
+     & fhist = fhist_loc, chist = chist_loc, maxhist=maxhist,
+     & maxfilt = maxfilt, info=info)
       nf = nf_loc
       fhist(1:min(size(fhist), size(fhist_loc))) =
      & fhist_loc(1:min(size(fhist), size(fhist_loc)))
