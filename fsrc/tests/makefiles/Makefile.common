@@ -451,7 +451,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	elif [[ -x $@_c ]] ; then \
 		./$@_c 2>&1 | tee -a "$(LOG_DIR)/$@.log" ; \
 	else \
-		@printf "\n$@_c i not executable!\n\n" ; \
+		@printf "\n$@_c is not executable!\n\n" ; \
 		exit 126 ; \
 	fi
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"

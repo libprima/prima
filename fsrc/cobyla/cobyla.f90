@@ -24,7 +24,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, December 20, 2021 PM04:21:22
+! Last Modified: Tuesday, December 21, 2021 AM01:55:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -39,7 +39,7 @@ subroutine cobyla(calcfc, x, f, &
     & cstrv, constr, &
     & m, f0, constr0, &
     & nf, rhobeg, rhoend, ftarget, ctol, maxfun, iprint, &
-    & xhist, fhist, conhist, chist, maxhist, info)
+    & xhist, fhist, conhist, chist, maxhist, maxfilt, info)
 !& eta1, eta2, gamma1, gamma2, xhist, fhist, conhist, chist, maxhist, info)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
@@ -103,7 +103,7 @@ subroutine cobyla(calcfc, x, f, &
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : DEBUGGING
-use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT
+use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, FTARGET_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TEN, TENTH, EPS
 use, non_intrinsic :: debug_mod, only : assert, errstop, warning
@@ -129,6 +129,7 @@ real(RP), intent(out) :: f
 ! Optional inputs
 integer(IK), intent(in), optional :: iprint
 integer(IK), intent(in), optional :: m
+integer(IK), intent(in), optional :: maxfilt
 integer(IK), intent(in), optional :: maxfun
 integer(IK), intent(in), optional :: maxhist
 real(RP), intent(in), target, optional :: constr0(:)
@@ -155,6 +156,7 @@ integer(IK) :: i
 integer(IK) :: info_loc
 integer(IK) :: iprint_loc
 integer(IK) :: m_loc
+integer(IK) :: maxfilt_loc
 integer(IK) :: maxfun_loc
 integer(IK) :: maxhist_loc
 integer(IK) :: n
@@ -269,9 +271,15 @@ else
     maxhist_loc = maxval([maxfun_loc, n + 2_IK, MAXFUN_DIM_DFT * n])
 end if
 
+if (present(maxfilt)) then
+    maxfilt_loc = maxfilt
+else
+    maxfilt_loc = MAXFILT_DFT
+end if
+
 ! Preprocess the inputs in case some of them are invalid. It does nothing if all inputs are valid.
 call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
-    & ctol=ctol_loc)
+    & m=m_loc, ctol=ctol_loc, maxfilt=maxfilt_loc)
 
 ! Further revise MAXHIST_LOC according to MAXMEMORY, and allocate memory for the history.
 ! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
@@ -281,7 +289,7 @@ call prehist(maxhist_loc, m_loc, n, present(chist), chist_loc, present(conhist),
     & present(fhist), fhist_loc, present(xhist), xhist_loc)
 
 !-------------------- Call COBYLB, which performs the real calculations. --------------------------!
-call cobylb(calcfc, iprint_loc, maxfun_loc, ctol_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
+call cobylb(calcfc, iprint_loc, maxfilt_loc, maxfun_loc, ctol_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
     & constr_loc, x, nf_loc, chist_loc, conhist_loc, cstrv_loc, f, fhist_loc, xhist_loc, info_loc)
 !--------------------------------------------------------------------------------------------------!
 
