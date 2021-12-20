@@ -8,7 +8,7 @@ module selectx_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, December 20, 2021 PM05:58:25
+! Last Modified: Monday, December 20, 2021 PM10:32:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -34,7 +34,7 @@ subroutine savefilt(constr, cstrv, ctol, f, x, nfilt, cfilt, confilt, ffilt, xfi
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
-use, non_intrinsic :: memory_mod, only : safealloc
+use, non_intrinsic :: linalg_mod, only : trueloc
 
 implicit none
 
@@ -55,10 +55,10 @@ real(RP), intent(inout) :: xfilt(:, :) ! (N, MAXFILT)
 ! Local variables
 character(len=*), parameter :: srname = 'SAVEFILT'
 integer(IK) :: i
+integer(IK) :: index_to_keep(size(ffilt))
 integer(IK) :: m
-integer(IK) :: n
 integer(IK) :: maxfilt
-integer(IK), allocatable :: index_to_keep(:)
+integer(IK) :: n
 logical :: better(nfilt)
 logical :: keep(nfilt)
 
@@ -72,7 +72,7 @@ if (DEBUGGING) then
     ! Check the size of X.
     call assert(n >= 1, 'N >= 1', srname)
     ! Check NFILT
-    call assert(nfilt <= maxfilt, 'NFILT <= MAXFILT', srname)
+    call assert(nfilt >= 0 .and. nfilt <= maxfilt, '0 <= NFILT <= MAXFILT', srname)
     ! Check the sizes of XFILT, FFILT, CONFILT, CFILT.
     call assert(maxfilt >= 1, 'MAXFILT >= 1', srname)
     call assert(size(xfilt, 1) == n .and. size(xfilt, 2) == maxfilt, 'SIZE(XFILT) == [N, MAXFILT]', srname)
@@ -116,18 +116,12 @@ if (count(keep) == maxfilt .and. size(keep) > 0) then  ! SIZE(KEEP)==MAXFILT>0 u
 end if
 
 nfilt = int(count(keep), kind(nfilt))
-!--------------------------------------------------!
-!----The SAFEALLOC line is removable in F2003.-----!
-call safealloc(index_to_keep, nfilt)
-!--------------------------------------------------!
-index_to_keep = pack([(int(i, IK), i=1, int(size(keep), IK))], mask=keep)
-xfilt(:, 1:nfilt) = xfilt(:, index_to_keep)
-ffilt(1:nfilt) = ffilt(index_to_keep)
-confilt(:, 1:nfilt) = confilt(:, index_to_keep)
-cfilt(1:nfilt) = cfilt(index_to_keep)
-! F2003 automatically deallocate local ALLOCATABLE variables at exit, yet we prefer to deallocate
-! them immediately when they finish their jobs.
-deallocate (index_to_keep)
+index_to_keep(1:nfilt) = trueloc(keep)
+xfilt(:, 1:nfilt) = xfilt(:, index_to_keep(1:nfilt))
+ffilt(1:nfilt) = ffilt(index_to_keep(1:nfilt))
+confilt(:, 1:nfilt) = confilt(:, index_to_keep(1:nfilt))
+cfilt(1:nfilt) = cfilt(index_to_keep(1:nfilt))
+
 nfilt = nfilt + 1_IK
 xfilt(:, nfilt) = x
 ffilt(nfilt) = f

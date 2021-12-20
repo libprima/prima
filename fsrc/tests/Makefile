@@ -36,17 +36,18 @@ MAKEFILE_DIR = ./makefiles
 %.bobyqa: SOLVER = bobyqa
 %.lincoa: SOLVER = lincoa
 
+# GNU make manual: Recursive make commands should always use the variable MAKE, not the explicit command name ‘make’.
 %test:
-	@make $@.cobyla $@.uobyqa $@.newuoa $@.bobyqa $@.lincoa
+	@$(MAKE) $@.cobyla $@.uobyqa $@.newuoa $@.bobyqa $@.lincoa
 
 %test_c:
-	@make $@.cobyla $@.uobyqa $@.newuoa $@.bobyqa $@.lincoa
+	@$(MAKE) $@.cobyla $@.uobyqa $@.newuoa $@.bobyqa $@.lincoa
 
 %.cobyla %.uobyqa %.newuoa %.bobyqa %.lincoa:
 	@mkdir -p test.$(SOLVER)
 	@cp $(MAKEFILE_DIR)/Makefile.common test.$(SOLVER)/
 	@cp $(MAKEFILE_DIR)/Makefile.$(SOLVER) test.$(SOLVER)/Makefile
-	@cd test.$(SOLVER)/ && make $(subst .$(SOLVER),,$@) --no-print-directory
+	@cd test.$(SOLVER)/ && $(MAKE) $(subst .$(SOLVER),,$@) --no-print-directory
 
 clean:
 	@rm -rf log test.cobyla test.uobyqa test.newuoa test.bobyqa test.lincoa

@@ -397,11 +397,12 @@ xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d
 
 ####################################################################################################
 # All the tests.
+# GNU make manual: Recursive make commands should always use the variable MAKE, not the explicit command name ‘make’.
 test:
-	make $(TESTS)
+	$(MAKE) $(TESTS)
 
 test_c:
-	make $(TESTS_C)
+	$(MAKE) $(TESTS_C)
 
 ####################################################################################################
 # Make a compiler-specific test.
@@ -409,29 +410,29 @@ test_c:
 # 1. Execute CHCKTST by  "bash $(CHCKTST)" instead of just "$(CHCKTST)", because "$(CHCKTST)" may
 # not be executable on all operating systems.
 # 2. The log for itest or itest_i2 will be itest_(STAMP). Similar for other tests.
-# 3. In the following, `@make $(TST_C)` will trigger `@make $(SUBTESTS_C)`, which compile the code
-# for all subtests. Then `@make $(SUBTESTS)` will test the binaries. We not test any binary until
+# 3. In the following, `@$(MAKE) $(TST_C)` will trigger `@$(MAKE) $(SUBTESTS_C)`, which compile the code
+# for all subtests. Then `@$(MAKE) $(SUBTESTS)` will test the binaries. We not test any binary until
 # the code can compile in all cases.
 $(TESTS) $(TESTS_INT):
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
-	@make $(TST_C)
-	@make $(SUBTESTS) --jobs $(NPROCS)
+	@$(MAKE) $(TST_C)
+	@$(MAKE) $(SUBTESTS) --jobs $(NPROCS)
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
 	@printf "\n\n$@ ends!\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
 	@mv "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log" "$(LOG_DIR)/$@_$(STAMP).log"
-	@make clean
+	@$(MAKE) clean
 
 # Make the binary corresponding to a test in TESTS_C or TESTS_INT_C, but do not execute it.
 # This is useful if we want to check whether the code can compile.
 $(TESTS_C) $(TESTS_INT_C):
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log"
-	@make $(SUBTESTS_C)
+	@$(MAKE) $(SUBTESTS_C)
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log"
 	@printf "\n\n$@ ends!\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log"
 	@mv "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log" "$(LOG_DIR)/$@_$(STAMP).log"
-	@make cleanmisc
+	@$(MAKE) cleanmisc
 
 # Make a compiler-specific subtest.
 # N.B.: The prerequisite should NOT include files that may not exist, e.g., $(SRC), because
@@ -439,7 +440,7 @@ $(TESTS_C) $(TESTS_INT_C):
 #%_tst: %_tst_c
 %_tst:
 	@if [[ ! -f $@_c ]] ; then \
-		make $@_c ; \
+		$(MAKE) $@_c ; \
 	else \
 		printf "\n$@_c exists!\n\n" ; \
 	fi
@@ -458,7 +459,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	@printf "$@ ends at $(shell date +%Y.%m.%d_%H.%M.%S).\n" | tee -a "$(LOG_DIR)/$@.log"
 	@cat "$(LOG_DIR)/$@.log" >> "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
 	@rm "$(LOG_DIR)/$@.log"
-	@make cleanmisc
+	@$(MAKE) cleanmisc
 
 # Make the binary corresponding to %_tst_c, but do not execute it.
 # This is useful if we want to check whether the code can compile.
@@ -469,6 +470,7 @@ $(TESTS_C) $(TESTS_INT_C):
 		$(FC) $(FFLAGS) -c $(shell echo $(SRC_NO_TEST)) 2>&1 | tee -a "$(LOG_DIR)/$@.log" ; \
 	elif echo $@ | grep -q "ltest"; then \
 		$(FC) $(FFLAGS) -c $(shell echo $(SRC_NO_TEST) | sed 's|./common/pintrf.f90||') 2>&1 \
+		| grep -v "An allocatable array function '.*' is an extended feature." \
 		| grep -v 'Encountered 0 errors, 0 warnings, [0-9]* information.* in file' \
 		| grep -v 'Compiling file\|Module subprogram name' \
 		| grep -v 'An allocatable dummy array\ '.*' is an extended feature' \
@@ -496,7 +498,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	@printf "$@ ends at $(shell date +%Y.%m.%d_%H.%M.%S).\n" | tee -a "$(LOG_DIR)/$@.log"
 	@cat "$(LOG_DIR)/$@.log" >> "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log"
 	@rm "$(LOG_DIR)/$@.log"
-	@make cleanmisc
+	@$(MAKE) cleanmisc
 	@touch $@
 # Without the last line, 9test_c is always remade when making 9test even if 9test_c is up
 # to date. Also observed for gtest on Windows. No idea why. Strange! Better approach?

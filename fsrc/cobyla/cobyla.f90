@@ -393,7 +393,7 @@ if (DEBUGGING) then
         call assert(.not. any(is_nan(chist) .or. is_posinf(chist)), 'CHIST does not contain NaN/+Inf', srname)
     end if
     if (present(fhist) .and. present(chist)) then
-        call assert(.not. any([(isbetter([fhist(i), chist(i)], [f, cstrv_loc], ctol), i=1, nhist)]),&
+        call assert(.not. any([(isbetter([fhist(i), chist(i)], [f, cstrv_loc], ctol_loc), i=1, nhist)]),&
             & 'No point in the filter is better than X', srname)
     end if
 end if
