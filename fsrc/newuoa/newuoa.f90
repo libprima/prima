@@ -14,7 +14,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, December 20, 2021 PM04:03:08
+! Last Modified: Tuesday, December 21, 2021 PM12:01:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -307,7 +307,7 @@ end if
 
 ! Preprocess the inputs in case some of them are invalid.
 call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
-    & npt_loc, eta1=eta1_loc, eta2=eta2_loc, gamma1=gamma1_loc, gamma2=gamma2_loc)
+    & npt=npt_loc, eta1=eta1_loc, eta2=eta2_loc, gamma1=gamma1_loc, gamma2=gamma2_loc)
 
 ! Further revise MAXHIST_LOC according to MAXMEMORY, and allocate memory for the history.
 ! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
