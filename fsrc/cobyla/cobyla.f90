@@ -24,7 +24,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, December 21, 2021 AM01:55:25
+! Last Modified: Wednesday, December 22, 2021 PM11:30:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -110,7 +110,6 @@ use, non_intrinsic :: debug_mod, only : assert, errstop, warning
 use, non_intrinsic :: evaluate_mod, only : eval_count, f_x0, constr_x0
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite, is_neginf, is_posinf
-use, non_intrinsic :: linalg_mod, only : int
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : FUNCON
 use, non_intrinsic :: selectx_mod, only : isbetter

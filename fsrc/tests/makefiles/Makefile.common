@@ -335,7 +335,10 @@ ltest_i2_r16_d1_tst_c ltest_i4_r16_d1_tst_c ltest_i8_r16_d1_tst_c ltest_i2_r16_d
 NFORT := nagfor
 NFORT := $(NFORT) -I $(TESTSUITE_DIR)
 NFORT := $(NFORT) -colour=error:red,warn:magenta,info:cyan
-NFORT := $(NFORT) -f$(FSTD) -info -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique \
+NFORT := $(NFORT) -f$(FSTD) -info -gline -u -C -C=alias -C=dangling -C=intovf -kind=unique \
+	-Warn=constant_coindexing -Warn=subnormal #-Warn=allocation
+# 20211221: for the moment, -C=undefined may cause SEGFAULT in SAFEALLOC due to a bug of nagfor; has been reported to NAG.
+#NFORT := $(NFORT) -f$(FSTD) -info -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique \
 	-Warn=constant_coindexing -Warn=subnormal #-Warn=allocation
 ntest_i2_r4_d1_tst_c ntest_i4_r4_d1_tst_c ntest_i8_r4_d1_tst_c ntest_i2_r4_d0_tst_c ntest_i4_r4_d0_tst_c ntest_i8_r4_d0_tst_c: \
 	FC = $(NFORT) -nan -ieee=full
@@ -447,13 +450,14 @@ $(TESTS_C) $(TESTS_INT_C):
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
 	@if echo $@ | grep -q "9test\|ltest" ; then \
-		printf "\n$@ is skipped!\n\n" ; \
+		printf "\n$@ is skipped!\n\n" | tee -a "$(LOG_DIR)/$@.log" ; \
 	elif [[ -x $@_c ]] ; then \
-		./$@_c 2>&1 | tee -a "$(LOG_DIR)/$@.log" ; \
+		set -o pipefail && ./$@_c 2>&1 | tee -a "$(LOG_DIR)/$@.log" ; \
 	else \
-		@printf "\n$@_c is not executable!\n\n" ; \
+		@printf "\n$@_c is not executable!\n\n" | tee -a "$(LOG_DIR)/$@.log" ; \
 		exit 126 ; \
 	fi
+	@set +o pipefail  # Restore the original pipe setting
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$@.log"
 	@printf "$@ ends at $(shell date +%Y.%m.%d_%H.%M.%S).\n" | tee -a "$(LOG_DIR)/$@.log"
@@ -524,6 +528,10 @@ source_%: $(SRC_DIRS)
 	@if echo $@ | grep -q "ltest"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash ../lfsrc ./ ; \
+	fi
+	@if echo $@ | grep -q "stest"; then \
+		printf "\nPreparing the source code for $@.\n" ; \
+		bash ../sunsrc ./ ; \
 	fi
 	@printf "Done.\n"
 
