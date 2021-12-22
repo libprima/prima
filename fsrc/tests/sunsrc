@@ -1,0 +1,21 @@
+#!/bin/bash
+# This script prepares the Fortran source code for sunf95. It does not recognize overloaded
+# intrinsic functions (particularly, their returning type/kind) correctly, e.g., INT in LINALG_MOD.
+
+DIR="$(realpath "$1")"
+HISTORYF90="history.f90"
+HISTORY="$DIR/common/$HISTORYF90"
+LINALG90="linalg.F90"
+LINALG="$DIR/common/$LINALG90"
+
+if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
+    printf "\n%s is not a testing directory.\n\nExit.\n\n" "$DIR"
+    exit 1
+fi
+
+sed -i "s/^\s*public :: int\s*$/public :: logical_to_int/" "$LINALG"
+sed -i '/^\s*interface int\s*$/,+3d' "$LINALG"
+sed -i "s/^\s*use, non_intrinsic :: linalg_mod, only : int\s*$/use, non_intrinsic :: linalg_mod, only : logical_to_int/" "$HISTORY"
+sed -i "s/int(output_/logical_to_int(output_/g" "$HISTORY"
+
+exit 0

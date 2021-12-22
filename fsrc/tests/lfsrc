@@ -1,4 +1,10 @@
 #!/bin/bash
+# This script prepares the Fortran source code for lf95, which does not support the following:
+# ```
+# public ::
+# use, non_intrinsic ::
+# abstract interface
+# ```
 
 DIR="$(realpath "$1")"
 PINTRFF90="pintrf.f90"
