@@ -79,8 +79,20 @@ case ('chebyqad')
     call construct_chebyqad(prob, n_loc)
 case ('chrosen')
     call construct_chrosen(prob, n_loc)
+case ('circle')
+    call construct_circle(prob)
+case ('ellipsoid')
+    call construct_ellipsoid(prob)
+case ('fletcheq1')
+    call construct_fletcheq1(prob)
+case ('fletcheq2')
+    call construct_fletcheq2(prob)
 case ('hexagon')
     call construct_hexagon(prob)
+case ('hs100')
+    call construct_hs100(prob)
+case ('rsnszk')
+    call construct_rsnszk(prob)
 case ('trigsabs')
     call construct_trigsabs(prob, n_loc)
 case ('trigssqs')
@@ -137,7 +149,19 @@ include 'chebyqad.f90'
 
 include 'chrosen.f90'
 
+include 'circle.f90'
+
+include 'ellipsoid.f90'
+
+include 'fletcheq1.f90'
+
+include 'fletcheq2.f90'
+
 include 'hexagon.f90'
+
+include 'hs100.f90'
+
+include 'rsnszk.f90'
 
 include 'trigsabs.f90'
 

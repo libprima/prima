@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, December 21, 2021 PM02:41:26
+! Last Modified: Friday, December 24, 2021 AM12:52:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,6 +23,7 @@ subroutine cobylb(calcfc, iprint, maxfilt, maxfun, ctol, ftarget, rhobeg, rhoend
 ! Generic modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : MIN_MAXFILT
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evalfc
 use, non_intrinsic :: history_mod, only : savehist, rangehist
@@ -133,7 +134,8 @@ if (DEBUGGING) then
     !call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
     !call assert(gamma1 > 0 .and. gamma1 < 1 .and. gamma2 > 1, '0 < GAMMA1 < 1 < GAMMA2', srname)
     call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
-    call assert(maxfilt >= 1 .and. maxfilt <= maxfun, '1 <= MAXFILT <= MAXFUN', srname)
+    call assert(maxfilt >= min(MIN_MAXFILT, maxfun) .and. maxfilt <= maxfun, &
+        & 'MIN(MIN_MAXFILT, MAXFUN) <= MAXFILT <= MAXFUN', srname)
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
     call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)

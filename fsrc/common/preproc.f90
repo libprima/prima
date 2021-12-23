@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, December 23, 2021 PM05:12:15
+! Last Modified: Friday, December 24, 2021 AM12:45:13
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: If all the inputs are valid, then PREPROC should do nothing.
@@ -26,7 +26,7 @@ subroutine preproc(solver, n, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend, 
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, TEN, TENTH, EPS, MAXMEMORY, DEBUGGING
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, ETA1_DFT, ETA2_DFT, GAMMA1_DFT, GAMMA2_DFT
-use, non_intrinsic :: consts_mod, only : CTOL_DFT, FTARGET_DFT, IPRINT_DFT, MAXFILT_DFT
+use, non_intrinsic :: consts_mod, only : CTOL_DFT, FTARGET_DFT, IPRINT_DFT, MIN_MAXFILT, MAXFILT_DFT
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite
 use, non_intrinsic :: memory_mod, only : cstyle_sizeof
@@ -135,7 +135,7 @@ end if
 ! Validate MAXFILT
 if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cobyla')) then
     maxfilt_in = maxfilt
-    if (maxfilt < 1) then
+    if (maxfilt < MIN_MAXFILT) then
         maxfilt = MAXFILT_DFT
     end if
     ! Further revise MAXFILT according to MAXMEMORY.
@@ -150,9 +150,9 @@ if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cob
     if (maxfilt > MAXMEMORY / unit_memo) then
         maxfilt = int(MAXMEMORY / unit_memo, kind(maxfilt))
     end if
-    maxfilt = min(maxfun, max(1_IK, maxfilt))
-    if (maxfilt_in < 1) then
-        print '(/1A, I8, 1A)', solver//': invalid MAXFILT; it should be a positive integer; it is set to ', maxfilt, '.'
+    maxfilt = min(maxfun, max(MIN_MAXFILT, maxfilt))
+    if (maxfilt_in < MIN_MAXFILT) then
+        print '(/1A, I8, 1A)', solver//': MAXFILT is too small; it is set to ', maxfilt, '.'
     elseif (maxfilt < min(maxfilt_in, maxfun)) then
         print '(/1A, I8, 1A)', solver//': WARNING: MAXFILT is reset to ', maxfilt, '.'
     end if
@@ -279,7 +279,8 @@ if (DEBUGGING) then
         call assert(npt >= 3, 'NPT >= 3', solver)
     end if
     if (present(maxfilt)) then
-        call assert(maxfilt >= 1 .and. maxfilt <= maxfun, '1 <= MAXFILT <= MAXFUN', solver)
+        call assert(maxfilt >= min(MIN_MAXFILT, maxfun) .and. maxfilt <= maxfun, &
+            & 'MIN(MIN_MAXFILT, MAXFUN) <= MAXFILT <= MAXFUN', solver)
     end if
     if (present(eta1) .and. present(eta2)) then
         call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', solver)

@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thursday, December 23, 2021 PM10:23:05
+! Last Modified: Friday, December 24, 2021 AM12:04:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -31,9 +31,9 @@ use, non_intrinsic :: string_mod, only : trimstr, istr
 implicit none
 
 character(len=PNLEN), intent(in), optional :: probs(:)
-integer(IK), intent(in), optional :: mindim
-integer(IK), intent(in), optional :: maxdim
 integer(IK), intent(in), optional :: dimstride
+integer(IK), intent(in), optional :: maxdim
+integer(IK), intent(in), optional :: mindim
 integer(IK), intent(in), optional :: nrand
 
 character(len=PNLEN) :: probname
@@ -72,10 +72,11 @@ if (present(probs)) then
     nprobs = int(size(probs), kind(nprobs))
     probs_loc(1:nprobs) = probs
 else
-    nprobs = 6_IK
-    probs_loc(1:nprobs) = ['hexagon ', 'chebyqad', 'chrosen ', 'trigsabs', 'trigssqs', 'vardim  ']
+    nprobs = 12_IK
+    probs_loc(1:nprobs) = ['circle   ', 'ellipsoid', 'fletcheq1', 'fletcheq2', 'hs100    ', 'hexagon  ', 'rsnszk   ', &
+        & 'chebyqad ', 'chrosen  ', 'trigsabs ', 'trigssqs ', 'vardim   ']
 end if
-fix_dim_probs(1:1) = ['hexagon ']
+fix_dim_probs(1:7) = ['circle   ', 'ellipsoid', 'fletcheq1', 'fletcheq2', 'hs100    ', 'hexagon  ', 'rsnszk   ']
 
 if (present(mindim)) then
     mindim_loc = mindim

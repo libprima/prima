@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, December 21, 2021 AM12:40:33
+! Last Modified: Friday, December 24, 2021 AM12:38:56
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -81,7 +81,7 @@ public :: MSSGLEN, FNAMELEN
 public :: OUTUNIT
 public :: RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, CTOL_DFT, IPRINT_DFT
 public :: ETA1_DFT, ETA2_DFT, GAMMA1_DFT, GAMMA2_DFT
-public :: MAXFUN_DIM_DFT, MAXMEMORY, MAXFILT_DFT
+public :: MAXFUN_DIM_DFT, MAXMEMORY, MIN_MAXFILT, MAXFILT_DFT
 
 
 #if __DEBUGGING__ == 1
@@ -191,6 +191,7 @@ integer, parameter :: MXMMY = 21 * (10**8)   ! 21*10**8 = 2G.
 integer, parameter :: MAXMEMORY = min(MXMMY, huge(0))
 
 ! Maximal length of the filter used in constrained solvers.
-integer(IK), parameter :: MAXFILT_DFT = 2000_IK  ! Should be positive; < 100 is not recommended.
+integer(IK), parameter :: MIN_MAXFILT = 200_IK  ! Should be positive; < 100 is not recommended.
+integer(IK), parameter :: MAXFILT_DFT = 10_IK * MIN_MAXFILT
 
 end module consts_mod
