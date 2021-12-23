@@ -65,7 +65,7 @@ integer(IK), intent(in), optional :: n
 type(problem_t), intent(out) :: prob
 
 ! Local variables
-character(len=*), parameter :: srname = 'CONSTRUC'
+character(len=*), parameter :: srname = 'CONSTRUCT'
 integer(IK) :: n_loc
 
 if (present(n)) then
@@ -88,7 +88,7 @@ case ('trigssqs')
 case ('vardim')
     call construct_vardim(prob, n_loc)
 case default
-    call errstop(srname, 'Unkown problem: '//trimstr(probname))
+    call errstop(srname, 'Unknown problem: '//trimstr(probname))
 end select
 end subroutine construct
 
@@ -131,6 +131,7 @@ end if
 nullify (prob % calfun)
 nullify (prob % calcfc)
 end subroutine destruct
+
 
 include 'chebyqad.f90'
 
