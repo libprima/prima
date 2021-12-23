@@ -471,14 +471,20 @@ $(TESTS_C) $(TESTS_INT_C):
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
 	@if echo $@ | grep -q "9test"; then \
-		$(FC) $(FFLAGS) -c $(shell echo $(SRC_NO_TEST)) 2>&1 | tee -a "$(LOG_DIR)/$@.log" ; \
+		$(FC) $(FFLAGS) -c $(shell echo $(SRC_NO_TEST)) 2>&1 \
+		| grep -v "Warning (165): Implicit interface 'calfun' called at (1)" \
+		| grep -v "Warning (165): Implicit interface 'calcfc' called at (1)" \
+		| grep -v "Warning (102): MODULE PROCEDURE 'inv' USEd at (1) is not referenced" \
+		| grep -v "Warning (102): MODULE PROCEDURE 'calfun' USEd at (1) is not referenced" \
+		| grep -v "Warning (102): MODULE PROCEDURE 'calcfc' USEd at (1) is not referenced" \
+		| tee -a "$(LOG_DIR)/$@.log" ; \
 	elif echo $@ | grep -q "ltest"; then \
 		$(FC) $(FFLAGS) -c $(shell echo $(SRC_NO_TEST) | sed 's|./common/pintrf.f90||') 2>&1 \
+		| grep -v "Encountered 0 errors, 0 warnings, [0-9]* information.* in file" \
+		| grep -v "Compiling file\|Module subprogram name" \
 		| grep -v "An allocatable array function '.*' is an extended feature." \
-		| grep -v 'Encountered 0 errors, 0 warnings, [0-9]* information.* in file' \
-		| grep -v 'Compiling file\|Module subprogram name' \
-		| grep -v 'An allocatable dummy array\ '.*' is an extended feature' \
-		| grep -v 'WARNING --  When --chk x is specified, it must be used to compile all source files of a program' \
+		| grep -v "An allocatable dummy array\ '.*' is an extended feature" \
+		| grep -v "WARNING --  When --chk x is specified, it must be used to compile all source files of a program" \
 		| tee -a "$(LOG_DIR)/$@.log" ; \
 	else \
 		$(FC) $(FFLAGS) -o $@ $(SRC) 2>&1 \
