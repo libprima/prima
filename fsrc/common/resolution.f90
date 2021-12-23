@@ -62,7 +62,7 @@ delta = HALF * rho
 rho_ratio = rho / rhoend
 if (rho_ratio <= 16.0_RP) then
     rho = rhoend
-else if (rho_ratio <= 250.0_RP) then
+elseif (rho_ratio <= 250.0_RP) then
     rho = sqrt(rho_ratio) * rhoend
 else
     rho = TENTH * rho

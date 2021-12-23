@@ -95,7 +95,7 @@ end if
 if (lower(solver) == 'newuoa' .or. lower(solver) == 'bobyqa' .or. lower(solver) == 'lincoa') then
     min_maxfun = n + 3_IK
     min_maxfun_str = 'N + 3'
-else if (lower(solver) == 'uobyqa') then
+elseif (lower(solver) == 'uobyqa') then
     min_maxfun = (n + 1_IK) * (n + 2_IK) / 2_IK + 1_IK
     min_maxfun_str = '(N+1)(N+2)/2 + 1'
 else
@@ -180,7 +180,7 @@ if (present(eta1)) then
         ! In this case, we take the value hard coded in Powell's orginal code
         ! without any warning. It is useful when interfacing with MATLAB/Python.
         eta1 = ETA1_DFT
-    else if (eta1 < 0 .or. eta1 >= 1) then
+    elseif (eta1 < 0 .or. eta1 >= 1) then
         ! Take ETA2 into account if it has a valid value.
         if (present(eta2) .and. eta2_loc > 0 .and. eta2_loc <= 1) then
             eta1 = max(EPS, eta2 / 7.0_RP)
@@ -197,7 +197,7 @@ if (present(eta2)) then
         ! In this case, we take the value hard coded in Powell's orginal code
         ! without any warning. It is useful when interfacing with MATLAB/Python.
         eta2 = ETA2_DFT
-    else if (present(eta1) .and. (eta2 < eta1_loc .or. eta2 > 1)) then
+    elseif (present(eta1) .and. (eta2 < eta1_loc .or. eta2 > 1)) then
         eta2 = (eta1 + TWO) / 3.0_RP
         print '(/1A, 1PD15.6, 1A)', solver// &
             & ': invalid ETA2; it should be in [0, 1] and not less than ETA1;'//' it is set to ', eta2, '.'
@@ -210,7 +210,7 @@ if (present(gamma1)) then
         ! In this case, we take the value hard coded in Powell's orginal code
         ! without any warning. It is useful when interfacing with MATLAB/Python.
         gamma1 = GAMMA1_DFT
-    else if (gamma1 <= 0 .or. gamma1 >= 1) then
+    elseif (gamma1 <= 0 .or. gamma1 >= 1) then
         gamma1 = GAMMA1_DFT
         print '(/1A, 1PD15.6, 1A)', solver//': invalid GAMMA1; it should in the interval (0, 1); it is set to ', gamma1, '.'
     end if
@@ -221,7 +221,7 @@ if (present(gamma2)) then
         ! In this case, we take the value hard coded in Powell's orginal code
         ! without any warning. It is useful when interfacing with MATLAB/Python.
         gamma2 = GAMMA2_DFT
-    else if (gamma2 < 1 .or. is_inf(gamma2)) then
+    elseif (gamma2 < 1 .or. is_inf(gamma2)) then
         gamma2 = GAMMA2_DFT
         print '(/1A, 1PD15.6, 1A)', solver// &
             & ': invalid GAMMA2; it should be a real number not less than 1; it is set to ', gamma2, '.'
