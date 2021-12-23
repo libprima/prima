@@ -7,7 +7,7 @@ module history_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, December 20, 2021 PM04:44:33
+! Last Modified: Thursday, December 23, 2021 AM11:05:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -32,7 +32,7 @@ contains
 
 subroutine prehist_unc(maxhist, n, output_fhist, fhist, output_xhist, xhist)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine revises MAXHIST according to MAXMEMORY, and allocate memory for the history.
+! This subroutine revises MAXHIST according to MAXMEMORY, and allocates memory for the history.
 ! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
 ! FHIST = NaN(1, MAXFUN), XHIST = NaN(N, MAXFUN) if they are requested; replace MAXFUN with 0 for
 ! the history that is not requested.
@@ -111,7 +111,7 @@ end subroutine prehist_unc
 
 subroutine prehist_nlc(maxhist, m, n, output_chist, chist, output_conhist, conhist, output_fhist, fhist, output_xhist, xhist)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine revises MAXHIST according to MAXMEMORY, and allocate memory for the history.
+! This subroutine revises MAXHIST according to MAXMEMORY, and allocates memory for the history.
 ! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
 ! CHIST = NaN(1, MAXFUN), CONHIST = NaN(M, MAXFUN), FHIST = NaN(1, MAXFUN), XHIST = NaN(N, MAXFUN)
 ! if they are requested; replace MAXFUN with 0 for the history that is not requested.

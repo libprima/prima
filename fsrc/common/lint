@@ -35,7 +35,8 @@ for COMPILER in $COMPILER_LIST; do
         TESTS="i4_r8_d1 i4_r8_d0 i2_r16_d1 i8_r4_d1"
     fi
     for TEST in $TESTS ; do
-        INFO="$(make "$COMPILER"test_"$TEST"_tst_c."$SOLVER" | grep -i "starts\|warning\|error\|info\|fail|abort" \
+        INFO="$(make "$COMPILER"test_"$TEST"_tst_c."$SOLVER" \
+            | grep -i "starts\|warning\|error\|info\|fail|abort" \
             | grep -vi "[0-9]\s*warning\|[0-9]\s*error\|[0-9]\s*info\|info.f90\|information\|--warning\|--error" \
             | grep -v "interpolation error" \
             | grep -v "WARNING --  When --chk x is specified" \
@@ -43,9 +44,11 @@ for COMPILER in $COMPILER_LIST; do
             | grep -v "^- \|^| \|^\* \|^+ \|^X \|\# " \
             )"
         if [[ "$COMPILER" == "9" ]] ; then
-            INFO="$(echo "$INFO" | grep -v "MODULE PROCEDURE 'calfun' USEd at (1) is not referenced" \
-                | grep -v "Implicit interface 'calcfc' called at (1)" \
-                | grep -v "Implicit interface 'calfun' called at (1)" \
+            INFO="$(echo "$INFO" \
+                | grep -v "Warning (165): Implicit interface 'calcfc' called at (1)" \
+                | grep -v "Warning (165): Implicit interface 'calfun' called at (1)" \
+                | grep -v "Warning (102): MODULE PROCEDURE 'calfun' USEd at (1) is not referenced" \
+                | grep -v "Warning (102): MODULE PROCEDURE 'inv' USEd at (1) is not referenced" \
                 )"
         elif [[ "$COMPILER" == "n" ]] ; then
             INFO="$(echo "$INFO" | grep -vi "Expression in IF construct is constant")"
