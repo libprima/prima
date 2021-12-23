@@ -449,7 +449,7 @@ do iter = 1, maxiter
             taumax = tau
             isav = i
             taua = tauold
-        else if (i == isav + 1) then
+        elseif (i == isav + 1) then
             taub = tau
         end if
         tauold = tau
@@ -804,7 +804,7 @@ do iter = 1, n
             denmax = denom
             isav = i
             dena = denomold
-        else if (i == isav + 1) then
+        elseif (i == isav + 1) then
             denb = denom
         end if
     end do

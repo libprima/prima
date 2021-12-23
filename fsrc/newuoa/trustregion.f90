@@ -341,7 +341,7 @@ do iter = 1, itermax
             qmin = qnew
             isav = i
             quada = qsav
-        else if (i == isav + 1) then
+        elseif (i == isav + 1) then
             quadb = qnew
         end if
         qsav = qnew
@@ -444,7 +444,7 @@ end if
 
 if (ratio <= eta1) then
     delta = gamma1 * dnorm
-else if (ratio <= eta2) then
+elseif (ratio <= eta2) then
     delta = max(HALF * delta0, dnorm)
 else
     delta = max(HALF * delta0, gamma2 * dnorm)
@@ -453,7 +453,7 @@ end if
 ! For noisy problems, the following may work better.
 !!if (ratio <= eta1) then
 !!    delta = gamma1 * dnorm
-!!else if (ratio <= eta2) then  ! Ensure DELTA >= DELTA0
+!!elseif (ratio <= eta2) then  ! Ensure DELTA >= DELTA0
 !!    delta = delta0
 !!else  ! Ensure DELTA > DELTA0 with a constant factor
 !!    delta = max(delta0 * (1.0_RP + gamma2) / 2.0_RP, gamma2 * dnorm)

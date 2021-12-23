@@ -76,17 +76,17 @@ end if
 
 if (info == FTARGET_ACHIEVED) then
     mssg = 'the target function value is achieved.'
-else if (info == MAXFUN_REACHED) then
+elseif (info == MAXFUN_REACHED) then
     mssg = 'the objective function has been evaluated MAXFUN times.'
-else if (info == SMALL_TR_RADIUS) then
+elseif (info == SMALL_TR_RADIUS) then
     mssg = 'the trust region radius reaches its lower bound.'
-else if (info == TRSUBP_FAILED) then
+elseif (info == TRSUBP_FAILED) then
     mssg = 'a trust region step has failed to reduce the quadratic model.'
-else if (info == NAN_INF_X) then
+elseif (info == NAN_INF_X) then
     mssg = 'NaN or Inf occurs in x.'
-else if (info == NAN_INF_F) then
+elseif (info == NAN_INF_F) then
     mssg = 'the objective function returns NaN/+Inf.'
-else if (info == NAN_MODEL) then
+elseif (info == NAN_MODEL) then
     mssg = 'NaN occurs in the models.'
 end if
 

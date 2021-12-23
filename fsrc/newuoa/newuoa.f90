@@ -221,7 +221,7 @@ end where
 ! it is present and it is VALID (i.e., finite and positive). The other inputs are read similarly.
 if (present(rhobeg)) then
     rhobeg_loc = rhobeg
-else if (present(rhoend)) then
+elseif (present(rhoend)) then
     ! Fortran does not take short-circuit evaluation of logic expressions. Thus it is WRONG to
     ! combine the evaluation of PRESENT(RHOEND) and the evaluation of IS_FINITE(RHOEND) as
     ! "if (present(rhoend) .and. is_finite(rhoend))". The compiler may choose the evaluate the
@@ -237,7 +237,7 @@ end if
 
 if (present(rhoend)) then
     rhoend_loc = rhoend
-else if (rhobeg_loc > 0) then
+elseif (rhobeg_loc > 0) then
     rhoend_loc = max(EPS, min(TENTH * rhobeg_loc, RHOEND_DFT))
 else
     rhoend_loc = RHOEND_DFT
@@ -257,7 +257,7 @@ end if
 
 if (present(npt)) then
     npt_loc = npt
-else if (maxfun_loc >= 1) then
+elseif (maxfun_loc >= 1) then
     npt_loc = int(max(n + 2, min(maxfun_loc - 1, 2 * n + 1)), kind(npt_loc))
 else
     npt_loc = int(2 * n + 1, kind(npt_loc))
@@ -271,7 +271,7 @@ end if
 
 if (present(eta1)) then
     eta1_loc = eta1
-else if (present(eta2)) then
+elseif (present(eta2)) then
     if (eta2 > ZERO .and. eta2 < ONE) then
         eta1_loc = max(EPS, eta2 / 7.0_RP)
     end if
@@ -281,7 +281,7 @@ end if
 
 if (present(eta2)) then
     eta2_loc = eta2
-else if (eta1_loc > ZERO .and. eta1_loc < ONE) then
+elseif (eta1_loc > ZERO .and. eta1_loc < ONE) then
     eta2_loc = (eta1_loc + TWO) / 3.0_RP
 else
     eta2_loc = 0.7_RP

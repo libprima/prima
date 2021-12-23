@@ -218,7 +218,7 @@ end where
 ! it is present and it is VALID (i.e., finite and positive). The other inputs are read similarly.
 if (present(rhobeg)) then
     rhobeg_loc = rhobeg
-else if (present(rhoend)) then
+elseif (present(rhoend)) then
     ! Fortran does not take short-circuit evaluation of logic expressions. Thus it is WRONG to
     ! combine the evaluation of PRESENT(RHOEND) and the evaluation of IS_FINITE(RHOEND) as
     ! "if (present(rhoend) .and. is_finite(rhoend))". The compiler may choose the evaluate the
@@ -234,7 +234,7 @@ end if
 
 if (present(rhoend)) then
     rhoend_loc = rhoend
-else if (rhobeg_loc > 0) then
+elseif (rhobeg_loc > 0) then
     rhoend_loc = max(EPS, min(TENTH * rhobeg_loc, RHOEND_DFT))
 else
     rhoend_loc = RHOEND_DFT
