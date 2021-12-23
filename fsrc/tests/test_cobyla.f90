@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, December 21, 2021 AM12:12:52
+! Last Modified: Thursday, December 23, 2021 PM03:06:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -107,9 +107,9 @@ do iprob = 1, nprobs
         if (rand() <= 0.2_RP) then
             maxfun = 0
         end if
-        maxhist = int(floor(TWO * rand() * real(maxfun, RP)), kind(maxhist))
+        maxhist = int(floor(TWO * rand() * real(max(10_IK * n, maxfun), RP)), kind(maxhist))
         if (rand() <= 0.2_RP) then
-            maxhist = 0
+            maxhist = -maxhist
         end if
         maxfilt = int(floor(TWO * rand() * real(maxfun, RP)), kind(maxfilt))
         if (rand() <= 0.2_RP) then
