@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, December 21, 2021 AM01:59:12
+! Last Modified: Thursday, December 23, 2021 PM03:29:29
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: If all the inputs are valid, then PREPROC should do nothing.
@@ -63,6 +63,7 @@ character(len=100) :: min_maxfun_str
 integer(IK) :: m_loc
 integer(IK) :: maxfilt_in
 integer(IK) :: min_maxfun
+integer(IK) :: unit_memo
 real(RP) :: eta1_loc
 real(RP) :: eta2_loc
 
@@ -92,16 +93,17 @@ if (abs(iprint) > 3) then
 end if
 
 ! Validate MAXFUN
-if (lower(solver) == 'newuoa' .or. lower(solver) == 'bobyqa' .or. lower(solver) == 'lincoa') then
+select case (lower(solver))
+case ('newuoa', 'bobyqa', 'lincoa')
     min_maxfun = n + 3_IK
     min_maxfun_str = 'N + 3'
-elseif (lower(solver) == 'uobyqa') then
+case ('uobyqa')
     min_maxfun = (n + 1_IK) * (n + 2_IK) / 2_IK + 1_IK
     min_maxfun_str = '(N+1)(N+2)/2 + 1'
-else
+case ('cobyla')
     min_maxfun = n + 2_IK
     min_maxfun_str = 'N + 2'
-end if
+end select
 if (maxfun < min_maxfun) then
     maxfun = min_maxfun
     print '(/1A, I8, 1A)', solver//': invalid MAXFUN; it should be at least '//trim(min_maxfun_str)//'; it is set to ', maxfun, '.'
@@ -136,16 +138,17 @@ if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cob
     if (maxfilt < 1) then
         maxfilt = MAXFILT_DFT
     end if
-    if (lower(solver) == 'lincoa') then
-        ! We cannot simply set MAXFILT = MIN(MAXFILT, MAXMEMORY/...), as they may not have
-        ! the same kind, and compilers may complain. We may convert them, but overflow may occur.
-        if (maxfilt > MAXMEMORY / (cstyle_sizeof(0.0_RP) * (n + 2_IK))) then
-            maxfilt = int(MAXMEMORY / (cstyle_sizeof(0.0_RP) * (n + 2_IK)), kind(maxfilt))
-        end if
-    elseif (lower(solver) == 'cobyla') then
-        if (maxfilt > MAXMEMORY / (cstyle_sizeof(0.0_RP) * (m_loc + n + 2_IK))) then
-            maxfilt = int(MAXMEMORY / (cstyle_sizeof(0.0_RP) * (m_loc + n + 2_IK)), kind(maxfilt))
-        end if
+    ! Further revise MAXFILT according to MAXMEMORY.
+    select case (lower(solver))
+    case ('lincoa')
+        unit_memo = (n + 2_IK) * cstyle_sizeof(0.0_RP)
+    case ('cobyla')
+        unit_memo = (m_loc + n + 2_IK) * cstyle_sizeof(0.0_RP)
+    end select
+    ! We cannot simply set MAXFILT = MIN(MAXFILT, MAXMEMORY/...), as they may not have
+    ! the same kind, and compilers may complain. We may convert them, but overflow may occur.
+    if (maxfilt > MAXMEMORY / unit_memo) then
+        maxfilt = int(MAXMEMORY / unit_memo, kind(maxfilt))
     end if
     maxfilt = min(maxfun, max(1_IK, maxfilt))
     if (maxfilt_in < 1) then
