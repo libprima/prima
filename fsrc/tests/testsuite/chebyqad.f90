@@ -1,5 +1,5 @@
 subroutine construct_chebyqad(prob, n)
-use, non_intrinsic :: consts_mod, only : RP, IK
+use, non_intrinsic :: consts_mod, only : RP, IK, HUGENUM
 use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 
@@ -12,14 +12,38 @@ type(problem_t), intent(out) :: prob
 ! Local variables
 integer(IK) :: i
 
-prob % probname = 'chebyqad'
+! Code shared by all unconstrained problems.
 prob % probtype = 'u'
+prob % m = 0
 prob % n = n
+call safealloc(prob % lb, n)
+prob % lb = -HUGENUM
+call safealloc(prob % ub, n)
+prob % ub = HUGENUM
+call safealloc(prob % Aeq, 0_IK, n)
+call safealloc(prob % beq, 0_IK)
+call safealloc(prob % Aineq, 0_IK, n)
+call safealloc(prob % bineq, 0_IK)
+
+! Problem-specific code
+prob % probname = 'chebyqad'
 call safealloc(prob % x0, n)  ! Not needed if F2003 is fully supported. Needed by Absoft 22.0.
 prob % x0 = real([(i, i=1, n)], RP) / real(n + 1, RP)
 prob % Delta0 = 0.2_RP / real(n + 1, RP)
 prob % calfun => calfun_chebyqad
+prob % calcfc => calcfc_chebyqad
 end subroutine construct_chebyqad
+
+
+subroutine calcfc_chebyqad(x, f, constr)
+use, non_intrinsic :: consts_mod, only : RP, ZERO
+implicit none
+real(RP), intent(in) :: x(:)
+real(RP), intent(out) :: f
+real(RP), intent(out) :: constr(:)
+call calfun_chebyqad(x, f)
+constr = ZERO
+end subroutine calcfc_chebyqad
 
 
 subroutine calfun_chebyqad(x, f)

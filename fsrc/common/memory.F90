@@ -8,7 +8,7 @@ module memory_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, December 22, 2021 PM10:45:00
+! Last Modified: Thursday, December 23, 2021 PM06:46:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -128,6 +128,7 @@ call assert(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)',
 x = -HUGENUM
 
 ! Postconditions (checked even not debugging)
+call assert(allocated(x), 'X is allocated', srname)
 call assert(size(x) == n, 'SIZE(X) == N', srname)
 end subroutine alloc_rvector
 
@@ -160,6 +161,7 @@ call assert(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)',
 x = -HUGENUM
 
 ! Postconditions (checked even not debugging)
+call assert(allocated(x), 'X is allocated', srname)
 call assert(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname)
 end subroutine alloc_rmatrix
 
@@ -192,6 +194,7 @@ call assert(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)',
 x = -huge(0_IK)
 
 ! Postconditions (checked even not debugging)
+call assert(allocated(x), 'X is allocated', srname)
 call assert(size(x) == n, 'SIZE(X) == N', srname)
 end subroutine alloc_ivector
 
@@ -224,6 +227,7 @@ call assert(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)',
 x = -huge(0_IK)
 
 ! Postconditions (checked even not debugging)
+call assert(allocated(x), 'X is allocated', srname)
 call assert(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname)
 end subroutine alloc_imatrix
 

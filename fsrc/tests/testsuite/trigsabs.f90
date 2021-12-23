@@ -1,5 +1,5 @@
 subroutine construct_trigsabs(prob, n)
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, TENTH, PI
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, TENTH, PI, HUGENUM
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: rand_mod, only : getseed, setseed, rand
 implicit none
@@ -15,9 +15,21 @@ integer, allocatable :: seedsav(:)
 real(RP) :: xstar(n)
 real(RP) :: ystar(n)
 
-prob % probname = 'trigsabs'
+! Code shared by all unconstrained problems.
 prob % probtype = 'u'
+prob % m = 0
 prob % n = n
+call safealloc(prob % lb, n)
+prob % lb = -HUGENUM
+call safealloc(prob % ub, n)
+prob % ub = HUGENUM
+call safealloc(prob % Aeq, 0_IK, n)
+call safealloc(prob % beq, 0_IK)
+call safealloc(prob % Aineq, 0_IK, n)
+call safealloc(prob % bineq, 0_IK)
+
+! Problem-specific code
+prob % probname = 'trigsabs'
 
 call getseed(seedsav)  ! Backup the current random seed in SEEDSAV.
 call setseed(SEED_DFT)  ! Set the random seed by SETSEED(SEED_DFT).
@@ -30,7 +42,19 @@ prob % x0 = xstar + TENTH * ystar
 
 prob % Delta0 = TENTH
 prob % calfun => calfun_trigsabs
+prob % calcfc => calcfc_trigsabs
 end subroutine construct_trigsabs
+
+
+subroutine calcfc_trigsabs(x, f, constr)
+use, non_intrinsic :: consts_mod, only : RP, ZERO
+implicit none
+real(RP), intent(in) :: x(:)
+real(RP), intent(out) :: f
+real(RP), intent(out) :: constr(:)
+call calfun_trigsabs(x, f)
+constr = ZERO
+end subroutine calcfc_trigsabs
 
 
 subroutine calfun_trigsabs(x, f)

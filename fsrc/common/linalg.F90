@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, December 22, 2021 PM09:50:58
+! Last Modified: Thursday, December 23, 2021 PM10:21:07
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1285,6 +1285,7 @@ subroutine qradd(c, Q, Rdiag, n)
 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite
 implicit none
 
 ! Inputs
@@ -1364,13 +1365,12 @@ if (DEBUGGING) then
     call assert(n >= nsav .and. n <= min(nsav + 1_IK, m), 'NSAV <= N <= min(NSAV + 1, M)', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [m, m]', srname)
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  !! Costly!
-    if (n < m) then
-        call assert(norm(matprod(c, Q(:, n + 1:m))) <= max(tol, tol * norm(c)), 'C^T*Q(:, N+1:M)=0', srname)
+    if (n < m .and. is_finite(norm(c))) then
+        call assert(norm(matprod(c, Q(:, n + 1:m))) <= max(tol, tol * norm(c)), 'C^T*Q(:, N+1:M) == 0', srname)
     end if
-    ! The following test may fail.
     if (n >= 1) then
-        call assert(abs(inprod(c, Q(:, n)) - Rdiag(n)) <= max(tol, tol * inprod(abs(c), abs(Q(:, n)))), &
-            & 'C^T*Q(:, N) = Rdiag(N)', srname)
+        call assert(abs(inprod(c, Q(:, n)) - Rdiag(n)) <= max(tol, tol * inprod(abs(c), abs(Q(:, n)))) &
+            & .or. .not. is_finite(Rdiag(n)), 'C^T*Q(:, N) == Rdiag(N)', srname)
     end if
 end if
 end subroutine qradd

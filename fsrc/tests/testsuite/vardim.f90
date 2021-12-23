@@ -1,5 +1,5 @@
 subroutine construct_vardim(prob, n)
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HUGENUM
 use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 
@@ -12,14 +12,38 @@ type(problem_t), intent(out) :: prob
 ! Local variables
 integer(IK) :: i
 
-prob % probname = 'vardim'
+! Code shared by all unconstrained problems.
 prob % probtype = 'u'
+prob % m = 0
 prob % n = n
+call safealloc(prob % lb, n)
+prob % lb = -HUGENUM
+call safealloc(prob % ub, n)
+prob % ub = HUGENUM
+call safealloc(prob % Aeq, 0_IK, n)
+call safealloc(prob % beq, 0_IK)
+call safealloc(prob % Aineq, 0_IK, n)
+call safealloc(prob % bineq, 0_IK)
+
+! Problem-specific code
+prob % probname = 'vardim'
 call safealloc(prob % x0, n)  ! Not needed if F2003 is fully supported. Needed by Absoft 22.0.
 prob % x0 = ONE - real([(i, i=1, n)]) / real(n, RP)
 prob % Delta0 = ONE / real(2 * n, RP)
 prob % calfun => calfun_vardim
+prob % calcfc => calcfc_vardim
 end subroutine construct_vardim
+
+
+subroutine calcfc_vardim(x, f, constr)
+use, non_intrinsic :: consts_mod, only : RP, ZERO
+implicit none
+real(RP), intent(in) :: x(:)
+real(RP), intent(out) :: f
+real(RP), intent(out) :: constr(:)
+call calfun_vardim(x, f)
+constr = ZERO
+end subroutine calcfc_vardim
 
 
 subroutine calfun_vardim(x, f)
