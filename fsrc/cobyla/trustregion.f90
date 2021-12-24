@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Friday, December 24, 2021 PM01:43:12
+! Last Modified: Friday, December 24, 2021 PM03:42:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -126,7 +126,7 @@ subroutine trstlp_sub(iact, nact, stage, A, b, rho, d, vmultc, z)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, EPS, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, isminor, lsqr, qradd, qrexc, norm
@@ -406,30 +406,45 @@ do iter = 1, maxiter
         end if
     end if
 
-    ! Calculate the step to the boundary of the trust region or take the step that reduces CSTRV to
-    ! zero. The two statements below that include the factor EPS prevent some harmless underflows
-    ! that occurred in a test calculation (here, EPS is the machine epsilon; Powell's original code
-    ! used 1.0E-6, and Powell's code was written in SINGLE PRECISION). Further, we skip the step if
-    ! it could be zero within a reasonable tolerance for computer rounding errors.
-    dd = rho**2 - sum(d**2, mask=(abs(d) >= EPS * rho))
+    ! Calculate the step to the trust region boundary or take the step that reduces CSTRV to 0.
+
+    !----------------------------------------------------------------------------------------------!
+    ! The following calculation of STEP is simpler than Powell's approach and seems to improve the
+    ! performance of COBYLA. In our test, SQRT(SS * DD + SD**2) + SD can become 0 due to a tiny SS
+    ! or DD or due to a negative SD; hence we reformulated STEP as below and exit when SS becomes 0.
+    ! We also found that removing the precaution about underflows is beneficial to the overall
+    ! performance of COBYLA --- the underflows are harmless anyway.
+    !----------------------------------------------------------------!
+    dd = rho**2 - inprod(d, d)
     ss = inprod(sdirn, sdirn)
-
-    !!if (dd  <= 0) then
-    !if (dd * ss <= 0) then
-    !    exit
-    !end if
-    !sd = inprod(sdirn, d)
-    !!if (abs(sd) >= EPS * sqrt(ss * dd)) then
-    !!    step = dd / (sqrt(ss * dd + sd**2) + sd)
-    !!else
-    !!    step = dd / (sqrt(ss * dd) + sd)
-    !!end if
-
     if (dd <= 0 .or. ss <= 0) then
         exit
     end if
     sd = inprod(sdirn, d)
     step = (sqrt(ss * dd + sd**2) - sd) / ss
+    !----------------------------------------------------------------!
+    ! Powell's approach and comments are as follows.
+    !----------------------------------------------------------------!
+    ! The two statements below that include the factor EPS prevent
+    ! some harmless underflows that occurred in a test calculation
+    ! (Zaikun: here, EPS is the machine epsilon; Powell's original
+    ! code used 1.0E-6, and Powell's code was written in SINGLE
+    ! PRECISION). Further, we skip the step if it could be zero within
+    ! a reasonable tolerance for computer rounding errors.
+    !
+    !!dd = rho**2 - sum(d**2, mask=(abs(d) >= EPS * rho))
+    !!ss = inprod(sdirn, sdirn)
+    !!if (dd  <= 0) then
+    !!    exit
+    !!end if
+    !!sd = inprod(sdirn, d)
+    !!if (abs(sd) >= EPS * sqrt(ss * dd)) then
+    !!    step = dd / (sqrt(ss * dd + sd**2) + sd)
+    !!else
+    !!    step = dd / (sqrt(ss * dd) + sd)
+    !!end if
+    !----------------------------------------------------------------!
+    !----------------------------------------------------------------------------------------------!
 
     if (stage == 1) then
         if (isminor(cstrv, step)) then

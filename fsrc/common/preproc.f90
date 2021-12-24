@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, December 24, 2021 AM10:09:57
+! Last Modified: Friday, December 24, 2021 PM03:13:31
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: If all the inputs are valid, then PREPROC should do nothing.
@@ -135,8 +135,10 @@ end if
 ! Validate MAXFILT
 if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cobyla')) then
     maxfilt_in = maxfilt
-    if (maxfilt < MIN_MAXFILT) then
-        maxfilt = MAXFILT_DFT
+    if (maxfilt < 1) then
+        maxfilt = MAXFILT_DFT  ! The inputted MAXFILT is obviously wrong.
+    else
+        maxfilt = max(MIN_MAXFILT, maxfilt)  ! The inputted MAXFILT is too small.
     end if
     ! Further revise MAXFILT according to MAXMEMORY.
     select case (lower(solver))
@@ -151,10 +153,12 @@ if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cob
         maxfilt = int(MAXMEMORY / unit_memo, kind(maxfilt))
     end if
     maxfilt = min(maxfun, max(MIN_MAXFILT, maxfilt))
-    if (maxfilt_in < min(maxfun, MIN_MAXFILT)) then
+    if (maxfilt_in < 1) then
+        print '(/1A, I8, 1A)', solver//': invalid MAXFILT; it should be a positive integer; it is set to ', maxfilt, '.'
+    elseif (maxfilt_in < min(maxfun, MIN_MAXFILT)) then
         print '(/1A, I8, 1A)', solver//': MAXFILT is too small; it is set to ', maxfilt, '.'
     elseif (maxfilt < min(maxfilt_in, maxfun)) then
-        print '(/1A, I8, 1A)', solver//': WARNING: MAXFILT is reset to ', maxfilt, '.'
+        print '(/1A, I8, 1A)', solver//': WARNING: MAXFILT is reset to ', maxfilt, 'due to memory limit.'
     end if
 end if
 

@@ -497,6 +497,7 @@ $(TESTS_C) $(TESTS_INT_C):
 		| grep -v 'NAG Fortran Compiler normal termination' \
 		| grep -v 'NAG Fortran Compiler normal termination, [0-9]* info message' \
 		| grep -v 'Loading...' \
+		| grep -v 'Linking:' \
 		| grep -v 'f90comp: [0-9]* SOURCE LINES' \
 		| grep -v 'f90comp: [0-9]* ERRORS, [0-9]* WARNINGS' \
 		| grep -v 'ANSI: PROCEDURE is a Fortran 2003 feature' \
