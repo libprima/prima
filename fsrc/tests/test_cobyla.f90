@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Friday, December 24, 2021 AM11:19:40
+! Last Modified: Saturday, December 25, 2021 AM01:29:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -42,6 +42,7 @@ character(len=PNLEN) :: fix_dim_probs(size(probs_loc))  ! Problems with fixed di
 integer(IK) :: dimlist(100)  ! Maximal number of dimensions to test: 100
 integer(IK) :: dimstride_loc
 integer(IK) :: idim
+integer(IK) :: iprint
 integer(IK) :: iprob
 integer(IK) :: irand
 integer(IK) :: m
@@ -122,15 +123,16 @@ do iprob = 1, nprobs
         n = prob % n
         do irand = 1, max(1_IK, nrand_loc)
             call setseed(int(sum(istr(probname)) + n + irand + IK + RP))  ! Initialize the random seed.
-            maxfun = int(floor(2.0E2_RP * rand() * real(n, RP)), kind(maxfun))
+            iprint = int(sign(4.0_RP * rand(), randn()), kind(iprint))
+            maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))
             if (rand() <= 0.2_RP) then
                 maxfun = 0
             end if
-            maxhist = int(floor(TWO * rand() * real(max(10_IK * n, maxfun), RP)), kind(maxhist))
+            maxhist = int(TWO * rand() * real(max(10_IK * n, maxfun), RP), kind(maxhist))
             if (rand() <= 0.2_RP) then
                 maxhist = -maxhist
             end if
-            maxfilt = int(floor(TWO * rand() * real(maxfun, RP)), kind(maxfilt))
+            maxfilt = int(TWO * rand() * real(maxfun, RP), kind(maxfilt))
             if (rand() <= 0.2_RP) then
                 maxfilt = 0
             end if
@@ -163,10 +165,10 @@ do iprob = 1, nprobs
             print '(/1A, I3, 1A, I3)', trimstr(probname)//': N = ', n, ', Random test ', irand
             call cobyla(noisy_calcfc, x, f, m=m, cstrv=cstrv, constr=constr, rhobeg=rhobeg, rhoend=rhoend, &
                 & maxfun=maxfun, maxhist=maxhist, fhist=fhist, xhist=xhist, conhist=conhist, chist=chist, &
-                & ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=1_IK)
+                & ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
             if (m == 0) then  ! Run the test without constraints
                 call cobyla(noisy_calcfc, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, &
-                    & fhist=fhist, xhist=xhist, ftarget=ftarget, maxfilt=maxfilt, iprint=1_IK)
+                    & fhist=fhist, xhist=xhist, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
             end if
 
             deallocate (x)

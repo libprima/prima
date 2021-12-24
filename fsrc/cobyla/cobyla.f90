@@ -24,7 +24,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, December 22, 2021 PM11:30:18
+! Last Modified: Friday, December 24, 2021 PM10:51:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -105,7 +105,7 @@ subroutine cobyla(calcfc, x, f, &
 use, non_intrinsic :: consts_mod, only : DEBUGGING
 use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, FTARGET_DFT, IPRINT_DFT
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TEN, TENTH, EPS
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TEN, TENTH, EPS, MSSGLEN
 use, non_intrinsic :: debug_mod, only : assert, errstop, warning
 use, non_intrinsic :: evaluate_mod, only : eval_count, f_x0, constr_x0
 use, non_intrinsic :: history_mod, only : prehist
@@ -149,8 +149,10 @@ real(RP), intent(out), allocatable, optional :: xhist(:, :)
 real(RP), intent(out), optional :: cstrv
 
 ! Local variables
+character(len=*), parameter :: ifmt = '(I0)'  ! I0: use the minimum number of digits needed to print
 character(len=*), parameter :: solver = 'COBYLA'
 character(len=*), parameter :: srname = 'COBYLA'
+character(len=MSSGLEN) :: wmssg
 integer(IK) :: i
 integer(IK) :: info_loc
 integer(IK) :: iprint_loc
@@ -373,8 +375,8 @@ deallocate (chist_loc)
 
 ! If NF_LOC > MAXHIST_LOC, warn that not all history is recorded.
 if ((present(xhist) .or. present(fhist) .or. present(conhist) .or. present(chist)) .and. maxhist_loc < nf_loc) then
-    print '(/1A, I7, 1A)', 'WARNING: '//solver//': Only the history of the last ', &
-        & maxhist_loc, ' iterations is recoreded.'
+    write (wmssg, ifmt) maxhist_loc
+    call warning(solver, 'Only the history of the last '//trim(wmssg)//' iteration(s) is recoreded')
 end if
 
 ! Postconditions

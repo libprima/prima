@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thursday, December 23, 2021 PM03:08:03
+! Last Modified: Saturday, December 25, 2021 AM01:29:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -39,6 +39,7 @@ integer(IK), intent(in), optional :: nrand
 character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)
 integer(IK) :: dimstride_loc
+integer(IK) :: iprint
 integer(IK) :: iprob
 integer(IK) :: irand
 integer(IK) :: maxdim_loc
@@ -105,16 +106,17 @@ do iprob = 1, nprobs
             if (irand <= size(npt_list)) then
                 npt = npt_list(irand)
             else
-                npt = int(floor(TEN * rand() * real(n, RP)), kind(npt))
+                npt = int(TEN * rand() * real(n, RP), kind(npt))
             end if
             if (rand() <= 0.2_RP) then
                 npt = 0
             end if
-            maxfun = int(floor(2.0E2_RP * rand() * real(n, RP)), kind(maxfun))
+            iprint = int(sign(4.0_RP * rand(), randn()), kind(iprint))
+            maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))
             if (rand() <= 0.2_RP) then
                 maxfun = 0
             end if
-            maxhist = int(floor(TWO * rand() * real(max(10_IK * n, maxfun), RP)), kind(maxhist))
+            maxhist = int(TWO * rand() * real(max(10_IK * n, maxfun), RP), kind(maxhist))
             if (rand() <= 0.2_RP) then
                 maxhist = 0
             end if
@@ -141,7 +143,7 @@ do iprob = 1, nprobs
 
             print '(/1A, I3, 1A, I3)', trimstr(probname)//': N = ', n, ', Random test ', irand
             call newuoa(noisy_calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, npt=npt, maxfun=maxfun, &
-                & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, iprint=1_IK)
+                & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, iprint=iprint)
 
             call destruct(prob)  ! Destruct the testing problem.
             ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.

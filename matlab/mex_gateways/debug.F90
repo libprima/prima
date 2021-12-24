@@ -5,7 +5,7 @@
 !
 ! Started: July 2020.
 !
-! Last Modified: Saturday, December 18, 2021 PM01:13:20
+! Last Modified: Friday, December 24, 2021 PM11:07:37
 
 
 #include "fintrf.h"
@@ -59,7 +59,7 @@ end subroutine assert
 
 
 subroutine warning(srname, mssg)
-use, non_intrinsic :: consts_mod, only : MSSGLEN
+use, non_intrinsic :: consts_mod, only : MSSGLEN, DEBUGGING
 implicit none
 character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: mssg
@@ -67,7 +67,9 @@ character(len=*), intent(in) :: mssg
 character(len=MSSGLEN) :: wid
 character(len=MSSGLEN) :: wmssg
 
-call backtr()
+if (DEBUGGING) then
+    call backtr()
+end if
 wid = 'FMXAPI:'//trim(srname)
 wmssg = trim(srname)//': '//trim(mssg)//'.'
 call mexWarnMsgIdAndTxt(trim(wid), trim(wmssg))
@@ -86,7 +88,7 @@ character(len=MSSGLEN) :: emssg
 
 call backtr()
 eid = 'FMXAPI:'//trim(srname)
-emssg = trim(srname)//': '//trim(mssg)//'.'
+emssg = trim(srname)//': '//trim(mssg)//'!'
 call mexErrMsgIdAndTxt(trim(eid), trim(emssg))
 end subroutine errstop
 

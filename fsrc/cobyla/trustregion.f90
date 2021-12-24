@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Friday, December 24, 2021 PM03:42:31
+! Last Modified: Friday, December 24, 2021 PM04:41:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -407,7 +407,6 @@ do iter = 1, maxiter
     end if
 
     ! Calculate the step to the trust region boundary or take the step that reduces CSTRV to 0.
-
     !----------------------------------------------------------------------------------------------!
     ! The following calculation of STEP is simpler than Powell's approach and seems to improve the
     ! performance of COBYLA. In our test, SQRT(SS * DD + SD**2) + SD can become 0 due to a tiny SS

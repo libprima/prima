@@ -14,7 +14,11 @@ case "$1" in
 	-w|--warning)
         WARNINGS="$(grep -i "warning" "$LOGFILE" \
             | grep -vi "WARNING --  When --chk x is specified" \
-            | grep -vi "[0-9]\s*warning")"
+            | grep -vi "[0-9]\s*warning" \
+            | grep -vi "in __debug_mod_MOD_warning" \
+            | grep -vi "MAXFILT is too small" \
+            | grep -vi "Only the history of the last [0-9]* iteration(s) is recorede" \
+            | grep -vi "invalid maxfun\|invalid maxhist\|invalid npt\|invalid rhobeg\|invalid rhoend\|invalid ftarget\|invalid ctol\|invalid maxfilt\|errstop")"
         if [ -n "$WARNINGS" ]; then
             printf "\n\n-----------------------------------------------------------------------\n"
             printf "| Warnings have been found in %s:\n\n" "$LOGFILE"
