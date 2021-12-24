@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Friday, December 24, 2021 AM12:53:58
+! Last Modified: Friday, December 24, 2021 PM01:43:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -413,16 +413,24 @@ do iter = 1, maxiter
     ! it could be zero within a reasonable tolerance for computer rounding errors.
     dd = rho**2 - sum(d**2, mask=(abs(d) >= EPS * rho))
     ss = inprod(sdirn, sdirn)
-    !if (dd  <= 0) then
-    if (dd * ss <= 0) then
+
+    !!if (dd  <= 0) then
+    !if (dd * ss <= 0) then
+    !    exit
+    !end if
+    !sd = inprod(sdirn, d)
+    !!if (abs(sd) >= EPS * sqrt(ss * dd)) then
+    !!    step = dd / (sqrt(ss * dd + sd**2) + sd)
+    !!else
+    !!    step = dd / (sqrt(ss * dd) + sd)
+    !!end if
+
+    if (dd <= 0 .or. ss <= 0) then
         exit
     end if
     sd = inprod(sdirn, d)
-    if (abs(sd) >= EPS * sqrt(ss * dd)) then
-        step = dd / (sqrt(ss * dd + sd**2) + sd)
-    else
-        step = dd / (sqrt(ss * dd) + sd)
-    end if
+    step = (sqrt(ss * dd + sd**2) - sd) / ss
+
     if (stage == 1) then
         if (isminor(cstrv, step)) then
             exit

@@ -629,14 +629,16 @@
 !      TEMP=SQRT(SS*DD)
 !      IF (ABS(SD) .GE. 1.0E-6*TEMP) TEMP=SQRT(SS*DD+SD*SD)
       !IF (DD <= 0.0D0) GOTO 490
-      IF (DD*SS <= 0.0D0) GOTO 490
+      !IF (DD*SS <= 0.0D0) GOTO 490
+      IF (DD <= 0.0D0 .or. SS <= 0.0D0) GOTO 490
       TEMP=DSQRT(SS*DD)
       !IF (DABS(SD) >= 1.0D-6*TEMP) TEMP=DSQRT(SS*DD+SD*SD)
 !      IF (DABS(SD) >= EPS*TEMP) TEMP=DSQRT(SS*DD+SD*SD)
       IF (DABS(SD) >= EPS*TEMP) TEMP=DSQRT(SS*DD+SD**2)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      STPFUL=DD/(TEMP+SD)
-      STEP=STPFUL
+      !STPFUL=DD/(TEMP+SD)
+      !STEP=STPFUL
+      step = (sqrt(ss * dd + sd**2) - sd) / ss
       IF (MCON == M) THEN
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !          ACCA=STEP+0.1*RESMAX
