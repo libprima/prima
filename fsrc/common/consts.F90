@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, December 24, 2021 AM12:38:56
+! Last Modified: Friday, December 24, 2021 PM08:14:10
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -65,9 +65,13 @@ use, intrinsic :: iso_fortran_env, only : INT32
 use, intrinsic :: iso_fortran_env, only : INT64
 #endif
 
-
 use, intrinsic :: iso_fortran_env, only : REAL32, REAL64, REAL128
-! The unsupported kind parameter will be negative.
+! Unsupported kinds will be negative.
+
+! Standard IO units
+use, intrinsic :: iso_fortran_env, only : STDIN => INPUT_UNIT, &
+                                        & STDOUT => OUTPUT_UNIT, &
+                                        & STDERR => ERROR_UNIT
 #endif
 
 implicit none
@@ -78,7 +82,7 @@ public :: RP, DP, SP, QP, RP_DFT
 public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
 public :: REALMIN, EPS, HUGENUM, ALMOST_INFINITY, HUGEFUN, HUGECON
 public :: MSSGLEN, FNAMELEN
-public :: OUTUNIT
+public :: OUTUNIT, STDIN, STDOUT, STDERR
 public :: RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, CTOL_DFT, IPRINT_DFT
 public :: ETA1_DFT, ETA2_DFT, GAMMA1_DFT, GAMMA2_DFT
 public :: MAXFUN_DIM_DFT, MAXMEMORY, MIN_MAXFILT, MAXFILT_DFT
@@ -172,6 +176,12 @@ integer, parameter :: FNAMELEN = 1000
 
 ! Output unit, can be any integer between 9 and 99; used in output.f90
 integer, parameter :: OUTUNIT = 9
+! Standard IO units
+#if __USE_ISO_FORTRAN_ENV_INTREAL__ != 1
+integer, parameter :: STDIN = 5
+integer, parameter :: STDOUT = 6
+integer, parameter :: STDERR = 0
+#endif
 
 ! Some default values
 real(RP), parameter :: RHOBEG_DFT = ONE

@@ -7,7 +7,7 @@ module history_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, December 23, 2021 AM11:05:09
+! Last Modified: Friday, December 24, 2021 PM10:58:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -97,15 +97,15 @@ if (DEBUGGING) then
     call assert(maxhist == max(size(fhist), size(xhist, 2)), &
         & 'MAXHIST == MAX(SIZE(CHIST), SIZE(CONHIST, 2), SIZE(FHIST), SIZE(XHIST, 2))', srname)
     call assert(int(maxhist, kind(MAXMEMORY)) * int(unit_memo, kind(MAXMEMORY)) <= MAXMEMORY, &
-        & 'the history will not take more memory than MAXMEMORY', srname)
-    call assert(allocated(fhist) .and. allocated(xhist), 'the history is allocated', srname)
+        & 'The history will not take more memory than MAXMEMORY', srname)
+    call assert(allocated(fhist) .and. allocated(xhist), 'The history is allocated', srname)
     call assert(size(fhist) == maxhist * int(output_fhist), &
         & 'if FHIST is requested, then SIZE(FHIST) == MAXHIST; otherwise, SIZE(FHIST) == 0', srname)
     call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxhist * int(output_xhist), &
         & 'if XHIST is requested, then SIZE(XHIST) == [N, MAXHIST]; otherwise, SIZE(XHIST) == [N, 0]', srname)
     call assert(int(size(fhist) + size(xhist), kind(MAXMEMORY)) * &
        & int(cstyle_sizeof(0.0_RP), kind(MAXMEMORY)) <= MAXMEMORY, &
-        & 'the history will not take more memory than MAXMEMORY', srname)
+        & 'The history will not take more memory than MAXMEMORY', srname)
 end if
 end subroutine prehist_unc
 
@@ -184,9 +184,9 @@ if (DEBUGGING) then
     call assert(maxhist == max(size(chist), size(conhist, 2), size(fhist), size(xhist, 2)), &
         & 'MAXHIST == MAX(SIZE(CHIST), SIZE(CONHIST, 2), SIZE(FHIST), SIZE(XHIST, 2))', srname)
     call assert(int(maxhist, kind(MAXMEMORY)) * int(unit_memo, kind(MAXMEMORY)) <= MAXMEMORY, &
-        & 'the history will not take more memory than MAXMEMORY', srname)
+        & 'The history will not take more memory than MAXMEMORY', srname)
     call assert(allocated(chist) .and. allocated(conhist) .and. allocated(fhist) .and. allocated(xhist), &
-        & 'the history is allocated', srname)
+        & 'The history is allocated', srname)
     call assert(size(chist) == maxhist * int(output_chist), &
         & 'if CHIST is requested, then SIZE(CHIST) == MAXHIST; otherwise, SIZE(CHIST) == 0', srname)
     call assert(size(conhist, 1) == m .and. size(conhist, 2) == maxhist * int(output_conhist), &
@@ -197,7 +197,7 @@ if (DEBUGGING) then
         & 'if XHIST is requested, then SIZE(XHIST) == [N, MAXHIST]; otherwise, SIZE(XHIST) == [N, 0]', srname)
     call assert(int(size(chist) + size(conhist) + size(fhist) + size(xhist), kind(MAXMEMORY)) * &
        & int(cstyle_sizeof(0.0_RP), kind(MAXMEMORY)) <= MAXMEMORY, &
-        & 'the history will not take more memory than MAXMEMORY', srname)
+        & 'The history will not take more memory than MAXMEMORY', srname)
 end if
 end subroutine prehist_nlc
 

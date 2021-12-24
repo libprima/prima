@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 19, 2021 PM03:18:49
+! Last Modified: Friday, December 24, 2021 PM11:40:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -174,7 +174,7 @@ if (subinfo /= INFO_DFT) then
     info = subinfo
     ! Arrange FHIST and XHIST so that they are in the chronological order.
     call rangehist(nf, fhist, xhist)
-    call retmssg(info, iprint, nf, f, x, solver)
+    call retmssg(solver, info, iprint, nf, f, x)
     ! Postconditions
     if (DEBUGGING) then
         call assert(nf <= maxfun, 'NF <= MAXFUN', srname)
@@ -261,7 +261,7 @@ do tr = 1, maxtr
         x = xbase + (xopt + d)
         call evalf(calfun, x, f)
         nf = nf + 1_IK
-        call fmssg(iprint, nf, f, x, solver)
+        call fmssg(solver, iprint, nf, f, x)
         ! Save X and F into the history.
         call savehist(nf, f, x, fhist, xhist)
         ! Check whether to exit
@@ -433,7 +433,7 @@ do tr = 1, maxtr
         x = xbase + (xopt + d)
         call evalf(calfun, x, f)
         nf = nf + 1_IK
-        call fmssg(iprint, nf, f, x, solver)
+        call fmssg(solver, iprint, nf, f, x)
         ! Save X and F into the history.
         call savehist(nf, f, x, fhist, xhist)
         ! Check whether to exit
@@ -465,7 +465,7 @@ do tr = 1, maxtr
             exit
         else
             call resenhance(rhoend, delta, rho)
-            call rhomssg(iprint, nf, fopt, rho, xbase + xopt, solver)
+            call rhomssg(solver, iprint, nf, fopt, rho, xbase + xopt)
             ! DNORMSAVE and MODERRSAVE are corresponding to the latest 3 function evaluations with
             ! the current RHO. Update them after reducing RHO.
             dnormsav = HUGENUM
@@ -481,7 +481,7 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     x = xbase + (xopt + d)
     call evalf(calfun, x, f)
     nf = nf + 1_IK
-    call fmssg(iprint, nf, f, x, solver)
+    call fmssg(solver, iprint, nf, f, x)
     ! Save X and F into the history.
     call savehist(nf, f, x, fhist, xhist)
 end if
@@ -495,7 +495,7 @@ end if
 ! Arrange FHIST and XHIST so that they are in the chronological order.
 call rangehist(nf, fhist, xhist)
 
-call retmssg(info, iprint, nf, f, x, solver)
+call retmssg(solver, info, iprint, nf, f, x)
 
 !====================!
 !  Calculation ends  !

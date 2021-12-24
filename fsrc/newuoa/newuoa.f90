@@ -14,7 +14,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, December 21, 2021 PM12:01:33
+! Last Modified: Friday, December 24, 2021 PM10:51:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -151,8 +151,8 @@ subroutine newuoa(calfun, x, f, &
 use, non_intrinsic :: consts_mod, only : DEBUGGING
 use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS, MSSGLEN
+use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite
 use, non_intrinsic :: memory_mod, only : safealloc
@@ -186,8 +186,10 @@ integer(IK), intent(in), optional :: maxhist
 integer(IK), intent(out), optional :: info
 
 ! Local variables
+character(len=*), parameter :: ifmt = '(I0)'  ! I0: use the minimum number of digits needed to print
 character(len=*), parameter :: solver = 'NEWUOA'
 character(len=*), parameter :: srname = 'NEWUOA'
+character(len=MSSGLEN) :: wmssg
 integer(IK) :: info_loc
 integer(IK) :: iprint_loc
 integer(IK) :: maxfun_loc
@@ -365,8 +367,8 @@ deallocate (fhist_loc)
 
 ! If MAXFHIST_IN >= NF_LOC > MAXFHIST_LOC, warn that not all history is recorded.
 if ((present(xhist) .or. present(fhist)) .and. maxhist_loc < nf_loc) then
-    print '(/1A, I7, 1A)', 'WARNING: '//solver//': Only the history of the last ', &
-        & maxhist_loc, ' iterations is recoreded.'
+    write (wmssg, ifmt) maxhist_loc
+    call warning(solver, 'Only the history of the last '//trim(wmssg)//' iteration(s) is recoreded')
 end if
 
 ! Postconditions

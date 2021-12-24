@@ -6,7 +6,7 @@ module initialize_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, November 05, 2021 PM08:42:33
+! Last Modified: Friday, December 24, 2021 PM11:56:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -143,7 +143,7 @@ do k = 1, min(npt, int(2 * n + 1, kind(npt)))
     call evalf(calfun, x, f)
     evaluated(k) = .true.
     fval(k) = f
-    call fmssg(iprint, k, f, x, solver)
+    call fmssg(solver, iprint, k, f, x)
     ! Save X and F into the history.
     call savehist(k, f, x, fhist, xhist)
     ! Check whether to exit.
@@ -195,9 +195,9 @@ if (info == INFO_DFT) then
     do k = int(2 * n + 2, kind(k)), npt
         x = xpt(:, k) + xbase
         call evalf(calfun, x, f)
+        call fmssg(solver, iprint, k, f, x)
         evaluated(k) = .true.
         fval(k) = f
-        call fmssg(iprint, k, f, x, solver)
         ! Save X and F into the history.
         call savehist(k, f, x, fhist, xhist)
         ! Check whether to exit.
