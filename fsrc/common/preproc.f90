@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, December 24, 2021 AM12:45:13
+! Last Modified: Friday, December 24, 2021 AM10:09:57
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: If all the inputs are valid, then PREPROC should do nothing.
@@ -151,7 +151,7 @@ if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cob
         maxfilt = int(MAXMEMORY / unit_memo, kind(maxfilt))
     end if
     maxfilt = min(maxfun, max(MIN_MAXFILT, maxfilt))
-    if (maxfilt_in < MIN_MAXFILT) then
+    if (maxfilt_in < min(maxfun, MIN_MAXFILT)) then
         print '(/1A, I8, 1A)', solver//': MAXFILT is too small; it is set to ', maxfilt, '.'
     elseif (maxfilt < min(maxfilt_in, maxfun)) then
         print '(/1A, I8, 1A)', solver//': WARNING: MAXFILT is reset to ', maxfilt, '.'

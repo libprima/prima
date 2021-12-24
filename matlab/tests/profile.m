@@ -10,7 +10,7 @@ function profile(varargin)
 % - `solver` is the name of the solver to test
 % - `dimrange` is the vector [mindim, maxdim], or "small", or "big", or "large"
 % - `nocompile_flag` is either 'nocompile' or 'ncp', indicating not to compile the solves
-% - `reload_flag` is either 'reload' or 'load', indicating not load the data directly from the .mat
+% - `reload_flag` is either 'reload' or 'load', indicating to load the data directly from the .mat
 % file corresponding to `solver` and `dimrange`
 %
 % Coded by Zaikun ZHANG (www.zhangzk.net).

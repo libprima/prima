@@ -25,7 +25,7 @@ function [solver, options] = parse_input(argin)
 %   profile(solver, dimrange, reload_flag)
 %
 % where
-% - `reload_flag` is either 'reload' or 'load', indicating not load the data directly from the .mat
+% - `reload_flag` is either 'reload' or 'load', indicating to load the data directly from the .mat
 % file corresponding to `solver` and `dimrange`
 %
 % Coded by Zaikun ZHANG (www.zhangzk.net).
