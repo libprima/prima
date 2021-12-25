@@ -24,7 +24,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, December 24, 2021 PM10:51:43
+! Last Modified: Saturday, December 25, 2021 AM10:43:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -332,7 +332,7 @@ if (present(xhist)) then
     ! illegal to enquire XHIST after exit.
     ! 1. Even though Fortran 2003 supports automatic (re)allocation of allocatable arrays upon
     ! intrinsic assignment, we keep the line of SAFEALLOC, because some very new compilers (Absoft
-    ! Fortran 20.0) are still not standard-compliant in this respect.
+    ! Fortran 21.0) are still not standard-compliant in this respect.
     ! 2. NF may not be present. Hence we should NOT use NF but NF_LOC.
     ! 3. When SIZE(XHIST_LOC, 2) > NF_LOC, which is the normal case in practice, XHIST_LOC contains
     ! GARBAGE in XHIST_LOC(:, NF_LOC + 1 : END). Therefore, we MUST cap XHIST at NF_LOC so that

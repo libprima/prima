@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, December 23, 2021 PM10:21:07
+! Last Modified: Saturday, December 25, 2021 AM10:09:38
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -720,7 +720,7 @@ if (DEBUGGING) then
     call assert(istril(T, tol), 'R is upper triangular', srname)
     if (pivote) then
         call assert(all(abs(matprod(Q_loc, transpose(T)) - A(:, P)) <= &
-                        max(tol, tol * maxval(abs(A)))), 'A(:, P) = Q*R', srname)
+                        max(tol, tol * maxval(abs(A)))), 'A(:, P) == Q*R', srname)
         do j = 1, min(m, n) - 1_IK
             call assert(abs(T(j, j)) + max(tol, tol * abs(T(j, j))) >= &
                 & abs(T(j + 1, j + 1)), '|R(J, J)| >= |R(J + 1, J + 1)|', srname)
@@ -730,7 +730,7 @@ if (DEBUGGING) then
         end do
     else
         call assert(all(abs(matprod(Q_loc, transpose(T)) - A) <= max(tol, tol * maxval(abs(A)))), &
-            & 'A = Q*R', srname)
+            & 'A == Q*R', srname)
     end if
 end if
 end subroutine qr
@@ -1459,7 +1459,7 @@ if (DEBUGGING) then
     call assert(istriu(QA_test, tol), 'QA_test is upper triangular', srname)
     ! The following test may fail.
     call assert(norm(diag(QA_test) - Rdiag) <= max(tol, tol * norm([(inprod(abs(Q(:, k)), &
-        & abs(A_test(:, k))), k=1, n)])), 'Rdiag = diag(QA_test)', srname)
+        & abs(A_test(:, k))), k=1, n)])), 'Rdiag == diag(QA_test)', srname)
 end if
 end subroutine qrexc
 
@@ -1531,7 +1531,7 @@ integer(IK) :: j
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(size(x) == size(A, 2) .and. size(y) == size(A, 1), 'SIZE(A) = [SIZE(Y), SIZE(X)]', &
+    call assert(size(x) == size(A, 2) .and. size(y) == size(A, 1), 'SIZE(A) == [SIZE(Y), SIZE(X)]', &
         & srname)
 end if
 
@@ -1693,11 +1693,11 @@ npt = int(size(xpt, 2), kind(npt))
 if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= n + 2, 'NPT >= N + 2', srname)
-    call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
+    call assert(size(gq) == n, 'SIZE(GQ) == N', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
-    call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
+    call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
-    call assert(size(fval) == npt, 'SIZE(FVAL) = NPT', srname)
+    call assert(size(fval) == npt, 'SIZE(FVAL) == NPT', srname)
     call assert(.not. any(is_nan(fval) .or. is_posinf(fval)), 'FVAL is not NaN/+Inf', srname)
 end if
 
@@ -1755,9 +1755,9 @@ if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= n + 2, 'NPT >= N + 2', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
-    call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
+    call assert(size(pq) == npt, 'SIZE(PQ) == NPT', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
-    call assert(size(x) == n, 'SIZE(Y) = N', srname)
+    call assert(size(x) == n, 'SIZE(Y) == N', srname)
 end if
 
 !====================!
