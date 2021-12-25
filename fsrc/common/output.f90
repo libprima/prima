@@ -8,7 +8,7 @@ module output_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, December 25, 2021 AM12:56:01
+! Last Modified: Saturday, December 25, 2021 PM05:14:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -77,8 +77,8 @@ character(len=*), parameter :: srname = 'RETMSSG'
 character(len=3) :: fstat  ! 'OLD' or 'NEW'
 character(len=FNAMELEN) :: fout
 character(len=MSSGLEN) :: mssg
-integer :: ios  ! Should be an integer of default kind
-integer :: wunit ! Should be an integer of default kind
+integer :: ios  ! IO status of the writing. Should be an integer of default kind.
+integer :: wunit ! Logical unit for the writing. Should be an integer of default kind.
 integer(IK), parameter :: valid_exit_flags(7) = [FTARGET_ACHIEVED, MAXFUN_REACHED, SMALL_TR_RADIUS, &
     & TRSUBP_FAILED, NAN_INF_F, NAN_INF_X, NAN_MODEL]
 logical :: fexist
@@ -100,16 +100,12 @@ elseif (iprint > 0) then
     wunit = STDOUT  ! Print the message to the standard out.
 else  ! Print the message to a file named FOUT with the writing unit being OUTUNIT.
     wunit = OUTUNIT
-    fout = solver//'_output.txt'
-    inquire (file=trim(fout), exist=fexist)
-    if (fexist) then
-        fstat = 'old'
-    else
-        fstat = 'new'
-    end if
-    open (unit=wunit, file=trim(fout), status=fstat, position='append', iostat=ios, action='write')
+    fout = trim(solver)//'_output.txt'
+    inquire (file=fout, exist=fexist)
+    fstat = merge(tsource='old', fsource='new', mask=fexist)
+    open (unit=wunit, file=fout, status=fstat, position='append', iostat=ios, action='write')
     if (ios /= 0) then
-        call warning(srname, 'Failed to open file '//trim(fout))
+        call warning(srname, 'Failed to open file '//fout)
         return
     end if
 end if
@@ -201,8 +197,8 @@ real(RP), intent(in), optional :: cpen
 character(len=*), parameter :: srname = 'RHOMSSG'
 character(len=3) :: fstat  ! 'OLD' or 'NEW'
 character(len=FNAMELEN) :: fout
-integer :: ios  ! Should be an integer of default kind
-integer :: wunit ! Should be an integer of default kind
+integer :: ios  ! IO status of the writing. Should be an integer of default kind.
+integer :: wunit ! Logical unit for the writing. Should be an integer of default kind.
 logical :: fexist
 logical :: is_constrained
 real(RP) :: cstrv_loc
@@ -217,16 +213,12 @@ elseif (iprint > 0) then
     wunit = STDOUT  ! Print the message to the standard out.
 else  ! Print the message to a file named FOUT with the writing unit being OUTUNIT.
     wunit = OUTUNIT
-    fout = solver//'_output.txt'
-    inquire (file=trim(fout), exist=fexist)
-    if (fexist) then
-        fstat = 'old'
-    else
-        fstat = 'new'
-    end if
-    open (unit=wunit, file=trim(fout), status=fstat, position='append', iostat=ios, action='write')
+    fout = trim(solver)//'_output.txt'
+    inquire (file=fout, exist=fexist)
+    fstat = merge(tsource='old', fsource='new', mask=fexist)
+    open (unit=wunit, file=fout, status=fstat, position='append', iostat=ios, action='write')
     if (ios /= 0) then
-        call warning(srname, 'Failed to open file '//trim(fout))
+        call warning(srname, 'Failed to open file '//fout)
         return
     end if
 end if
@@ -296,8 +288,8 @@ real(RP), intent(in), optional :: constr(:)
 character(len=*), parameter :: srname = 'FMSSG'
 character(len=3) :: fstat  ! 'OLD' or 'NEW'
 character(len=FNAMELEN) :: fout
-integer :: ios  ! Should be an integer of default kind
-integer :: wunit ! Should be an integer of default kind
+integer :: ios  ! IO status of the writing. Should be an integer of default kind.
+integer :: wunit ! Logical unit for the writing. Should be an integer of default kind.
 logical :: fexist
 logical :: is_constrained
 real(RP) :: cstrv_loc
@@ -312,16 +304,12 @@ elseif (iprint > 0) then
     wunit = STDOUT  ! Print the message to the standard out.
 else  ! Print the message to a file named FOUT with the writing unit being OUTUNIT.
     wunit = OUTUNIT
-    fout = solver//'_output.txt'
-    inquire (file=trim(fout), exist=fexist)
-    if (fexist) then
-        fstat = 'old'
-    else
-        fstat = 'new'
-    end if
-    open (unit=wunit, file=trim(fout), status=fstat, position='append', iostat=ios, action='write')
+    fout = trim(solver)//'_output.txt'
+    inquire (file=fout, exist=fexist)
+    fstat = merge(tsource='old', fsource='new', mask=fexist)
+    open (unit=wunit, file=fout, status=fstat, position='append', iostat=ios, action='write')
     if (ios /= 0) then
-        call warning(srname, 'Failed to open file '//trim(fout))
+        call warning(srname, 'Failed to open file '//fout)
         return
     end if
 end if

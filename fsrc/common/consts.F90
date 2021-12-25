@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, December 24, 2021 PM08:14:10
+! Last Modified: Saturday, December 25, 2021 PM04:48:04
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -173,9 +173,8 @@ integer, parameter :: MSSGLEN = 1000
 
 ! The maximal length of output file names; used in output.f90
 integer, parameter :: FNAMELEN = 1000
-
 ! Output unit, can be any integer between 9 and 99; used in output.f90
-integer, parameter :: OUTUNIT = 9
+integer, parameter :: OUTUNIT = 42
 ! Standard IO units
 #if __USE_ISO_FORTRAN_ENV_INTREAL__ != 1
 integer, parameter :: STDIN = 5
