@@ -33,7 +33,9 @@ case "$1" in
 		;;
 	-e|--error)
         ERRORS="$(grep -i "err\|fail\|exception\|invalid\|bad\|overflow\|backtrace\|segmentation\|fault" "$LOGFILE" \
+            | grep -vi "libbacktrac" \
             | grep -vi "[0-9]\s*error" \
+            | grep -vi "Warning: FMS*G: Failed to open file" \
             | grep -vi "Warning:\ Floating\ overflow\ occurred" \
             | grep -vi "Warning:\ Floating\ invalid\ operation\ occurred" \
             | grep -vi "flist:.*: Invalid format" \

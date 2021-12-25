@@ -8,7 +8,7 @@ module debug_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Friday, December 24, 2021 PM10:04:05
+! Last Modified: Saturday, December 25, 2021 AM09:25:55
 !--------------------------------------------------------------------------------------------------!
 implicit none
 private
@@ -46,16 +46,13 @@ end subroutine assert
 
 subroutine warning(srname, mssg)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine prints a backtrace if debugging and 'Warning: '//TRIM(SRNAME)//': '//TRIM(MSSG)//'.'
+! This subroutine prints 'Warning: '//TRIM(SRNAME)//': '//TRIM(MSSG)//'.'
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : STDERR, DEBUGGING
 implicit none
 character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: mssg
 
-if (DEBUGGING) then
-    call backtr()
-end if
 write (STDERR, '(/1A/)') 'Warning: '//trim(srname)//': '//trim(mssg)//'.'
 end subroutine warning
 
