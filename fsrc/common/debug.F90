@@ -8,7 +8,7 @@ module debug_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Saturday, December 25, 2021 AM09:25:55
+! Last Modified: Saturday, December 25, 2021 AM11:45:46
 !--------------------------------------------------------------------------------------------------!
 implicit none
 private
@@ -48,7 +48,7 @@ subroutine warning(srname, mssg)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine prints 'Warning: '//TRIM(SRNAME)//': '//TRIM(MSSG)//'.'
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : STDERR, DEBUGGING
+use, non_intrinsic :: consts_mod, only : STDERR
 implicit none
 character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: mssg
