@@ -8,7 +8,7 @@ module selectx_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Friday, December 24, 2021 AM12:55:33
+! Last Modified: Saturday, December 25, 2021 PM06:43:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -311,9 +311,12 @@ is_better = .false.
 is_better = is_better .or. (any(is_nan(fc2)) .and. .not. any(is_nan(fc2)))
 is_better = is_better .or. (fc1(1) < fc2(1) .and. fc1(2) <= fc2(2))
 is_better = is_better .or. (fc1(1) <= fc2(1) .and. fc1(2) < fc2(2))
+! If FC1(2) <= CTOL and FC2(2) is significantly larger/worse than CTOL, i.e., FC(2) > MAX(CTOL,CREF),
+! then FC1 is better than FC2 as long as FC(1) < HUGENUM. Normally CREF >= CTOL so MAX(CTOL, CREF)
+! is indeed CREF. However, this may not be true if CTOL > 1E-1*HUGECON.
 cref = TEN * max(EPS, min(ctol, 1.0E-2_RP * HUGECON))  ! The MIN avoids overflow.
 is_better = is_better .or. (fc1(1) < HUGENUM .and. fc1(2) <= ctol .and. &
-    & ((fc2(2) > cref) .or. is_nan(fc2(2))))
+    & (fc2(2) > max(ctol, cref) .or. is_nan(fc2(2))))
 
 !====================!
 !  Calculation ends  !

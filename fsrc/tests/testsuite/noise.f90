@@ -6,7 +6,7 @@ module noise_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Saturday, December 18, 2021 PM03:15:41
+! Last Modified: Saturday, December 25, 2021 PM06:15:18
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: pintrf_mod, only : FUN, FUNCON
@@ -313,7 +313,10 @@ real(RP), intent(out) :: f
 real(RP), intent(out) :: constr(:)
 call orig_calcfc(x, f, constr)
 f = noisyfun(x, f, noise_level=NOISE_LEVEL_DFT, noise_type=NOISE_TYPE_DFT)
-constr = noisyfun(x, constr, noise_level=NOISE_LEVEL_DFT, noise_type=NOISE_TYPE_DFT)
+! N.B.: the constraints are CONSTR >= 0. In other words, we are "maximizing" CONSTR. Thus we impose
+! noise to -CONSTR and then take the negative. Otherwise, NOISYFUN tends to introduce +Inf into
+! CONSTR, which is not intended.
+constr = -noisyfun(x, -constr, noise_level=NOISE_LEVEL_DFT, noise_type=NOISE_TYPE_DFT)
 end subroutine noisy_calcfc
 
 
