@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, December 24, 2021 PM11:20:16
+! Last Modified: Saturday, December 25, 2021 PM09:20:56
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: If all the inputs are valid, then PREPROC should do nothing.
@@ -20,7 +20,7 @@ contains
 
 
 subroutine preproc(solver, n, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend, m, npt, maxfilt, &
-        & ctol, eta1, eta2, gamma1, gamma2)
+        & ctol, eta1, eta2, gamma1, gamma2, is_constrained)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine preprocesses the inputs. It does nothing to the inputs that are valid.
 !--------------------------------------------------------------------------------------------------!
@@ -51,6 +51,7 @@ real(RP), intent(inout) :: rhoend
 ! Optional in-outputs
 integer(IK), intent(inout), optional :: npt
 integer(IK), intent(inout), optional :: maxfilt
+logical, intent(in), optional :: is_constrained
 real(RP), intent(inout), optional :: ctol
 real(RP), intent(inout), optional :: eta1
 real(RP), intent(inout), optional :: eta2
@@ -67,14 +68,19 @@ integer(IK) :: m_loc
 integer(IK) :: maxfilt_in
 integer(IK) :: min_maxfun
 integer(IK) :: unit_memo
+logical :: is_constrained_loc
 real(RP) :: eta1_loc
 real(RP) :: eta2_loc
 
 ! Preconditions
 if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
-    if (lower(solver) == 'cobyla' .and. present(m)) then
+    if (present(m)) then
         call assert(m >= 0, 'M >= 0', srname)
+        call assert(m == 0 .or. lower(solver) == 'cobyla', 'M == 0 unless the solver is COBYLA', srname)
+    end if
+    if (lower(solver) == 'cobyla' .and. present(m) .and. present(is_constrained)) then
+        call assert(m == 0 .or. is_constrained, 'For COBYLA, M == 0 unless the problem is constrained', srname)
     end if
 end if
 
@@ -88,6 +94,14 @@ if (lower(solver) == 'cobyla' .and. present(m)) then
 else
     m_loc = 0_IK
 end if
+
+! Decide whether the problem is truly constrained
+if (present(is_constrained)) then
+    is_constrained_loc = is_constrained
+else
+    is_constrained_loc = (m_loc > 0)
+end if
+
 
 ! Validate IPRINT
 if (abs(iprint) > 3) then
@@ -161,13 +175,16 @@ if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cob
         maxfilt = int(MAXMEMORY / unit_memo, kind(maxfilt))
     end if
     maxfilt = min(maxfun, max(MIN_MAXFILT, maxfilt))
-    write (wmssg, ifmt) maxfilt
-    if (maxfilt_in < 1) then
-        call warning(solver, 'Invalid MAXFILT; it should be a positive integer; it is set to '//trimstr(wmssg))
-    elseif (maxfilt_in < min(maxfun, MIN_MAXFILT)) then
-        call warning(solver, 'MAXFILT is too small; it is set to '//trimstr(wmssg))
-    elseif (maxfilt < min(maxfilt_in, maxfun)) then
-        call warning(solver, 'MAXFILT is set to '//trimstr(wmssg)//' due to memory limit.')
+    if (is_constrained_loc) then
+        write (wmssg, ifmt) maxfilt
+        if (maxfilt_in < 1) then
+            call warning(solver, 'Invalid MAXFILT; it should be a positive integer; it is set to ' &
+                & //trimstr(wmssg))
+        elseif (maxfilt_in < min(maxfun, MIN_MAXFILT)) then
+            call warning(solver, 'MAXFILT is too small; it is set to '//trimstr(wmssg))
+        elseif (maxfilt < min(maxfilt_in, maxfun)) then
+            call warning(solver, 'MAXFILT is set to '//trimstr(wmssg)//' due to memory limit.')
+        end if
     end if
 end if
 
@@ -279,8 +296,10 @@ end if
 if (present(ctol)) then
     if (is_nan(ctol) .or. ctol < 0) then
         ctol = CTOL_DFT
-        write (wmssg, rfmt) ctol
-        call warning(solver, 'Invalid CTOL; it should be a positive number; it is set to '//trimstr(wmssg))
+        if (is_constrained_loc) then
+            write (wmssg, rfmt) ctol
+            call warning(solver, 'Invalid CTOL; it should be a positive number; it is set to '//trimstr(wmssg))
+        end if
     end if
 end if
 

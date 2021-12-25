@@ -8,7 +8,7 @@ module output_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, December 25, 2021 PM05:14:04
+! Last Modified: Saturday, December 25, 2021 PM10:06:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,30 +19,23 @@ public :: retmssg, rhomssg, fmssg
 ! Formats.
 ! Format for F at return: 16 digits for base, 4 digits for exponent.
 character(len=*), parameter :: ffmt = '1PE25.16E4'
-! Format for intermediate F: 10 digits for base, 4 digits for exponent.
-character(len=*), parameter :: ffmt_intermediate = '1PE19.10E4'
+character(len=*), parameter :: f_fmt = '(1A, '//ffmt//')'
 ! Format for X: 8 digits for base, 4 digits for exponent, 4 components in each line.
 character(len=*), parameter :: xfmt = '/(1P, 4E19.8E4)'
+character(len=*), parameter :: x_fmt = '(1A, '//xfmt//')'
 ! Format for RHO: 4 digits for base, 2 digits for exponent.
 character(len=*), parameter :: rfmt = '1PE11.4E2'
-! Format for integers: 10 digits.
-character(len=*), parameter :: ifmt = 'I0'  ! Use the minimum number of digits needed to print integers
+! Format for integers: Use the minimum number of digits needed to print integers.
+character(len=*), parameter :: ifmt = 'I0'
 ! Separating spaces: 3 spaces.
 character(len=*), parameter :: spaces = '3X'
+! Format for NF during the iterations.
+character(len=*), parameter :: nf_fmt = '(/1A, '//ifmt//')'
 ! Format for NF at return.
-character(len=*), parameter :: nf_fmt = '(1A, '//spaces//', 1A, '//ifmt//')'
-! Format for F and X at return and when RHO is updated.
-character(len=*), parameter :: fx_fmt = '(1A, '//ffmt//', '//spaces//', 1A, '//xfmt//')'
-character(len=*), parameter :: fcx_fmt = '(1A, '//ffmt//', '//spaces//', 1A, '//ffmt//', '//spaces//', 1A, '//xfmt//')'
-! Format for constraint violation and constraint value at return and when RHO is updated.
-character(len=*), parameter :: cc_fmt = fx_fmt
-character(len=*), parameter :: cv_fmt = '(1A, '//ffmt//')'
+character(len=*), parameter :: retnf_fmt = '(1A, '//spaces//', 1A, '//ifmt//')'
 ! Format for RHO and NF when RHO is updated.
-character(len=*), parameter :: rnf_fmt = '(/1A, '//rfmt//', '//spaces//', 1A, '//ifmt//')'
-character(len=*), parameter :: rpnf_fmt = '(/1A, '//rfmt//', '//spaces//', 1A, '//rfmt//', '//spaces//', 1A, '//ifmt//')'
-! Format for NF, F, and X during iterations.
-character(len=*), parameter :: nffx_fmt = &
-    & '(/1A, '//ifmt//', '//spaces//', 1A, '//ffmt_intermediate//', '//spaces//', 1A, '//xfmt//')'
+character(len=*), parameter :: rnf_fmt = '(/1A, '//rfmt//', '//spaces//', /1A, '//ifmt//')'
+character(len=*), parameter :: rpnf_fmt = '(/1A, '//rfmt//', '//spaces//', 1A, '//rfmt//', '//spaces//', /1A, '//ifmt//')'
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -55,9 +48,8 @@ subroutine retmssg(solver, info, iprint, nf, f, x, cstrv, constr)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, MSSGLEN, FNAMELEN, OUTUNIT, STDOUT, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, warning
-use, non_intrinsic :: info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED
-use, non_intrinsic :: info_mod, only : SMALL_TR_RADIUS, TRSUBP_FAILED
-use, non_intrinsic :: info_mod, only : NAN_INF_X, NAN_INF_F, NAN_MODEL
+use, non_intrinsic :: info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, SMALL_TR_RADIUS
+use, non_intrinsic :: info_mod, only : TRSUBP_FAILED, NAN_INF_X, NAN_INF_F, NAN_MODEL, DAMAGING_ROUNDING
 implicit none
 
 ! Compulsory inputs
@@ -79,8 +71,8 @@ character(len=FNAMELEN) :: fout
 character(len=MSSGLEN) :: mssg
 integer :: ios  ! IO status of the writing. Should be an integer of default kind.
 integer :: wunit ! Logical unit for the writing. Should be an integer of default kind.
-integer(IK), parameter :: valid_exit_flags(7) = [FTARGET_ACHIEVED, MAXFUN_REACHED, SMALL_TR_RADIUS, &
-    & TRSUBP_FAILED, NAN_INF_F, NAN_INF_X, NAN_MODEL]
+integer(IK), parameter :: valid_exit_flags(9) = [FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, &
+    & SMALL_TR_RADIUS, TRSUBP_FAILED, NAN_INF_F, NAN_INF_X, NAN_MODEL, DAMAGING_ROUNDING]
 logical :: fexist
 logical :: is_constrained
 real(RP) :: cstrv_loc
@@ -121,7 +113,7 @@ end if
 if (present(cstrv)) then
     cstrv_loc = cstrv
 elseif (present(constr)) then
-    cstrv_loc = maxval([ZERO, -constr])
+    cstrv_loc = maxval([ZERO, -constr])  ! Constraints: CONSTR >= 0
 else
     cstrv_loc = ZERO
 end if
@@ -132,6 +124,8 @@ case (FTARGET_ACHIEVED)
     mssg = 'the target function value is achieved.'
 case (MAXFUN_REACHED)
     mssg = 'the objective function has been evaluated MAXFUN times.'
+case (MAXTR_REACHED)
+    mssg = 'the maximal number of trust region iterations has been reached.'
 case (SMALL_TR_RADIUS)
     mssg = 'the trust region radius reaches its lower bound.'
 case (TRSUBP_FAILED)
@@ -142,6 +136,8 @@ case (NAN_INF_F)
     mssg = 'the objective function returns NaN/+Inf.'
 case (NAN_MODEL)
     mssg = 'NaN occurs in the models.'
+case (DAMAGING_ROUNDING)
+    mssg = 'rounding errors are becoming damaging.'
 case default
     mssg = 'UNKNOWN EXIT FLAG'
 end select
@@ -151,14 +147,14 @@ if (abs(iprint) >= 3) then
     write (wunit, '(1X)')
 end if
 write (wunit, '(/1A)') 'Return from '//solver//' because '//trim(mssg)
-write (wunit, nf_fmt) 'At the return from '//solver, 'Number of function evaluations = ', nf
-write (wunit, fx_fmt) 'Least function value = ', f, 'The corresponding X is:', x
+write (wunit, retnf_fmt) 'At the return from '//solver, 'Number of function evaluations = ', nf
+write (wunit, f_fmt) 'Least function value = ', f
 if (is_constrained) then
-    if (present(constr)) then
-        write (wunit, cc_fmt) 'Constraint violation = ', cstrv_loc, 'The constraint value is:', constr
-    else
-        write (wunit, cv_fmt) 'Constraint violation = ', cstrv_loc
-    end if
+    write (wunit, f_fmt) 'Constraint violation = ', cstrv_loc
+end if
+write (wunit, x_fmt) 'The corresponding X is:', x
+if (is_constrained .and. present(constr)) then
+    write (wunit, x_fmt) 'The constraint value is:', constr
 end if
 write (wunit, '(1X)')
 
@@ -234,7 +230,7 @@ end if
 if (present(cstrv)) then
     cstrv_loc = cstrv
 elseif (present(constr)) then
-    cstrv_loc = maxval([ZERO, -constr])
+    cstrv_loc = maxval([ZERO, -constr])  ! Constraints: CONSTR >= 0
 else
     cstrv_loc = ZERO
 end if
@@ -248,11 +244,13 @@ if (present(cpen)) then
 else
     write (wunit, rnf_fmt) 'New RHO = ', rho, 'Number of function evaluations = ', nf
 end if
+write (wunit, f_fmt) 'Least function value = ', f
 if (is_constrained) then
-    write (wunit, fcx_fmt) 'Least function value = ', f, 'Constraint violation = ', cstrv_loc, &
-        & 'The corresponding X is:', x
-else
-    write (wunit, fx_fmt) 'Least function value = ', f, 'The corresponding X is:', x
+    write (wunit, f_fmt) 'Constraint violation = ', cstrv_loc
+end if
+write (wunit, x_fmt) 'The corresponding X is:', x
+if (is_constrained .and. present(constr)) then
+    write (wunit, x_fmt) 'The constraint value is:', constr
 end if
 
 if (iprint < 0) then
@@ -325,19 +323,28 @@ end if
 if (present(cstrv)) then
     cstrv_loc = cstrv
 elseif (present(constr)) then
-    cstrv_loc = maxval([ZERO, -constr])
+    cstrv_loc = maxval([ZERO, -constr])  ! Constraints: CONSTR >= 0
 else
     cstrv_loc = ZERO
 end if
 
 ! Print the message.
-write (wunit, nffx_fmt) 'Function number ', nf, 'F = ', f, 'The corresponding X is:', x
+!write (wunit, nffx_fmt) 'Function number ', nf, 'F = ', f, 'The corresponding X is:', x
+write (wunit, nf_fmt) 'Function number ', nf
+!if (is_constrained) then
+!    if (present(constr)) then
+!        write (wunit, cc_fmt) 'Constraint violation = ', cstrv_loc, 'The constraint value is:', constr
+!    else
+!        write (wunit, cv_fmt) 'Constraint violation = ', cstrv_loc
+!    end if
+!end if
+write (wunit, f_fmt) 'Function value = ', f
 if (is_constrained) then
-    if (present(constr)) then
-        write (wunit, cc_fmt) 'Constraint violation = ', cstrv_loc, 'The constraint value is:', constr
-    else
-        write (wunit, cv_fmt) 'Constraint violation = ', cstrv_loc
-    end if
+    write (wunit, f_fmt) 'Constraint violation = ', cstrv_loc
+end if
+write (wunit, x_fmt) 'The corresponding X is:', x
+if (is_constrained .and. present(constr)) then
+    write (wunit, x_fmt) 'The constraint value is:', constr
 end if
 
 if (iprint < 0) then
