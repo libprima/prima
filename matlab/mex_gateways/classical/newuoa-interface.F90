@@ -52,7 +52,7 @@ subroutine mexFunction(nargout, poutput, nargin, pinput)
 ! [xopt, fopt, info, nf, xhist, fhist] = FUNCTION_NAME(fun, x0, rhobeg, rhoend, ftarget, maxfun, npt, iprint, maxhist, output_xhist)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : MSSGLEN
+use, non_intrinsic :: consts_mod, only : MSGLEN
 use, non_intrinsic :: memory_mod, only : cstyle_sizeof
 use, non_intrinsic :: fmxapi_mod, only : mexErrMsgIdAndTxt
 use, non_intrinsic :: fmxapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
@@ -92,7 +92,7 @@ real(RP_CL) :: rhobeg
 real(RP_CL) :: rhoend
 real(RP_CL), allocatable :: w(:)
 real(RP_CL), allocatable :: x(:)
-character(len=MSSGLEN) :: eid, mssg
+character(len=MSGLEN) :: eid, msg
 
 ! Validate number of arguments
 call fmxVerifyNArgin(nargin, 10)
@@ -125,8 +125,8 @@ if (nw > MAXMEMORY_CL / cstyle_sizeof(0.0_RP_CL)) then
     ! Without this checking, W may take too much memory,
     ! or, more seriously, NW may overflow and cause a Segmentation Falt!
     eid = solver//':WorkspaceTooLarge'
-    mssg = solver//': Workspace exceeds the largest memory allowed.'
-    call mexErrMsgIdAndTxt(eid, mssg)
+    msg = solver//': Workspace exceeds the largest memory allowed.'
+    call mexErrMsgIdAndTxt(eid, msg)
 end if
 call fmxAllocate(w, int(nw, IK_CL)) ! Not removable
 
@@ -197,7 +197,7 @@ end subroutine mexFunction
 subroutine calfun(n, x, funval)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : MSSGLEN
+use, non_intrinsic :: consts_mod, only : MSGLEN
 use, non_intrinsic :: fmxapi_mod, only : mxDestroyArray
 use, non_intrinsic :: fmxapi_mod, only : mexErrMsgIdAndTxt
 use, non_intrinsic :: fmxapi_mod, only : fmxCallMATLAB, fmxIsDoubleScalar
@@ -219,7 +219,7 @@ real(RP_CL), intent(out) :: funval
 ! Local variables
 mwPointer :: pinput(1), poutput(1)
 integer(IK_CL) :: maxfhist, maxxhist, khist
-character(len=MSSGLEN) :: eid, mssg
+character(len=MSGLEN) :: eid, msg
 
 ! Associate X with INPUT(1)
 call fmxWriteMPtr(x, pinput(1))
@@ -230,8 +230,8 @@ call fmxCallMATLAB(fun_ptr, pinput, poutput)
 ! Verify the class and shape of outputs.
 if (.not. fmxIsDoubleScalar(poutput(1))) then
     eid = solver//':ObjectiveNotScalar'
-    mssg = solver//': Objective function does not return a scalar.'
-    call mexErrMsgIdAndTxt(eid, mssg)
+    msg = solver//': Objective function does not return a scalar.'
+    call mexErrMsgIdAndTxt(eid, msg)
 end if
 
 ! Read the data in OUTPUT

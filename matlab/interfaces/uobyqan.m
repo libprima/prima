@@ -221,9 +221,9 @@ else
     n = length(x0);
     if (n <= 1)
         wid = sprintf('%s:UnivariateProblem', funname);
-        wmessage = sprintf('%s: a univariate problem received; %s may fail. Try other solvers.', funname, funname);
-        warning(wid, '%s', wmessage);
-        output.warnings = [output.warnings, wmessage];
+        wmsg = sprintf('%s: a univariate problem received; %s may fail. Try other solvers.', funname, funname);
+        warning(wid, '%s', wmsg);
+        output.warnings = [output.warnings, wmsg];
     end
 
     % Check whether the problem is too large for the Fortran code
@@ -260,9 +260,9 @@ else
         % Obviously, nw >= (n+1)(n+2)/2. If nw < maxint,
         % then maxint > (n+1)(n+2)/2, and hence maxfun > (n+1)(n+2)/2 is guaranteed
         wid = sprintf('%s:MaxfunTooLarge', funname);
-        wmessage = sprintf('%s: maxfun exceeds the upper limit of Fortran integers; it is set to %d.', funname, maxfun);
-        warning(wid, '%s', wmessage);
-        output.warnings = [output.warnings, wmessage];
+        wmsg = sprintf('%s: maxfun exceeds the upper limit of Fortran integers; it is set to %d.', funname, maxfun);
+        warning(wid, '%s', wmsg);
+        output.warnings = [output.warnings, wmsg];
     end
 
     try

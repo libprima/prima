@@ -286,9 +286,9 @@ else
         maxfun = maxint;
         maxhist = min(maxfun, maxhist);
         wid = sprintf('%s:MaxfunTooLarge', funname);
-        wmessage = sprintf('%s: maxfun exceeds the upper limit of Fortran integers; it is set to %d.', funname, maxfun);
-        warning(wid, '%s', wmessage);
-        output.warnings = [output.warnings, wmessage];
+        wmsg = sprintf('%s: maxfun exceeds the upper limit of Fortran integers; it is set to %d.', funname, maxfun);
+        warning(wid, '%s', wmsg);
+        output.warnings = [output.warnings, wmsg];
     end
 
     try

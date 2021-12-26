@@ -253,9 +253,9 @@ if ~options.classical && ~probinfo.infeasible && ~probinfo.nofreex
              '%s: UNEXPECTED ERROR: %s returns an fhist with NaN or values larger than hugefun=%1.2e; this is impossible except in the classical mode.', invoker, solver, hugefun);
     elseif ~isempty(fhist) && max(fhist) == hugefun
         wid = sprintf('%s:ExtremeBarrier', invoker);
-        wmessage = sprintf('%s: the moderated extreme barrier is invoked; function values that are NaN or larger than hugefun=%1.2e are replaced by hugefun.', invoker, hugefun);
-        warning(wid, '%s', wmessage);
-        output.warnings = [output.warnings, wmessage];
+        wmsg = sprintf('%s: the moderated extreme barrier is invoked; function values that are NaN or larger than hugefun=%1.2e are replaced by hugefun.', invoker, hugefun);
+        warning(wid, '%s', wmsg);
+        output.warnings = [output.warnings, wmsg];
     end
 end
 
@@ -299,9 +299,9 @@ if ~options.classical && ~probinfo.infeasible && ~probinfo.nofreex
              '%s: UNEXPECTED ERROR: %s returns a chist with NaN or values larger than hugecon=%1.2e; this is impossible except in the classical mode.', invoker, solver, hugecon);
     elseif ~isempty(chist) && max(chist) == hugecon
         wid = sprintf('%s:ExtremeBarrier', invoker);
-        wmessage = sprintf('%s: the moderated extreme barrier is invoked; constraint values that are NaN or larger than hugecon=%1.2e are replaced by hugecon.', invoker, hugecon);
-        warning(wid, '%s', wmessage);
-        output.warnings = [output.warnings, wmessage];
+        wmsg = sprintf('%s: the moderated extreme barrier is invoked; constraint values that are NaN or larger than hugecon=%1.2e are replaced by hugecon.', invoker, hugecon);
+        warning(wid, '%s', wmsg);
+        output.warnings = [output.warnings, wmsg];
     end
 end
 

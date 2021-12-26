@@ -303,17 +303,17 @@ else % The problem turns out 'normal' during prepdfo
     if npt > maxnpt
         npt = maxnpt;
         wid = sprintf('%s:NptTooLarge', funname);
-        wmessage = sprintf('%s: npt is so large that it is unable to allocate the workspace; it is set to %d.', funname, npt);
-        warning(wid, '%s', wmessage);
-        output.warnings = [output.warnings, wmessage];
+        wmsg = sprintf('%s: npt is so large that it is unable to allocate the workspace; it is set to %d.', funname, npt);
+        warning(wid, '%s', wmsg);
+        output.warnings = [output.warnings, wmsg];
     end
     if maxfun > maxint
         % maxfun would suffer from overflow in the Fortran code 
         maxfun = maxint;
         wid = sprintf('%s:MaxfunTooLarge', funname);
-        wmessage = sprintf('%s: maxfun exceeds the upper limit of Fortran integers; it is set to %d.', funname, maxfun);
-        warning(wid, '%s', wmessage);
-        output.warnings = [output.warnings, wmessage];
+        wmsg = sprintf('%s: maxfun exceeds the upper limit of Fortran integers; it is set to %d.', funname, maxfun);
+        warning(wid, '%s', wmsg);
+        output.warnings = [output.warnings, wmsg];
     end
 
 

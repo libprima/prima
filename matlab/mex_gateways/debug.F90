@@ -58,38 +58,38 @@ end if
 end subroutine assert
 
 
-subroutine warning(srname, mssg)
-use, non_intrinsic :: consts_mod, only : MSSGLEN, DEBUGGING
+subroutine warning(srname, msg)
+use, non_intrinsic :: consts_mod, only : MSGLEN, DEBUGGING
 implicit none
 character(len=*), intent(in) :: srname
-character(len=*), intent(in) :: mssg
+character(len=*), intent(in) :: msg
 
-character(len=MSSGLEN) :: wid
-character(len=MSSGLEN) :: wmssg
+character(len=MSGLEN) :: wid
+character(len=MSGLEN) :: wmsg
 
 if (DEBUGGING) then
     call backtr()
 end if
 wid = 'FMXAPI:'//trim(srname)
-wmssg = trim(srname)//': '//trim(mssg)//'.'
-call mexWarnMsgIdAndTxt(trim(wid), trim(wmssg))
+wmsg = trim(srname)//': '//trim(msg)//'.'
+call mexWarnMsgIdAndTxt(trim(wid), trim(wmsg))
 end subroutine warning
 
 
-subroutine errstop(srname, mssg)
-use, non_intrinsic :: consts_mod, only : MSSGLEN
+subroutine errstop(srname, msg)
+use, non_intrinsic :: consts_mod, only : MSGLEN
 implicit none
 
 character(len=*), intent(in) :: srname
-character(len=*), intent(in) :: mssg
+character(len=*), intent(in) :: msg
 
-character(len=MSSGLEN) :: eid
-character(len=MSSGLEN) :: emssg
+character(len=MSGLEN) :: eid
+character(len=MSGLEN) :: emsg
 
 call backtr()
 eid = 'FMXAPI:'//trim(srname)
-emssg = trim(srname)//': '//trim(mssg)//'!'
-call mexErrMsgIdAndTxt(trim(eid), trim(emssg))
+emsg = trim(srname)//': '//trim(msg)//'!'
+call mexErrMsgIdAndTxt(trim(eid), trim(emsg))
 end subroutine errstop
 
 
