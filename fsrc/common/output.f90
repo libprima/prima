@@ -8,34 +8,42 @@ module output_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, December 25, 2021 PM10:06:31
+! Last Modified: Sunday, December 26, 2021 PM03:09:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
-public :: retmssg, rhomssg, fmssg
+public :: retmssg, rhomssg, fmssg, cpenmssg
 
 !--------------------------------------------------------------------------------------------------!
 ! Formats.
-! Format for F at return: 16 digits for base, 4 digits for exponent.
+! Separating spaces: 3 spaces.
+character(len=*), parameter :: spaces = '3X'
+! Format for F: 16 digits for base, 4 digits for exponent.
 character(len=*), parameter :: ffmt = '1PE25.16E4'
 character(len=*), parameter :: f_fmt = '(1A, '//ffmt//')'
+! Format for CSTRV: the same as F.
+character(len=*), parameter :: cstrv_fmt = f_fmt
 ! Format for X: 8 digits for base, 4 digits for exponent, 4 components in each line.
 character(len=*), parameter :: xfmt = '/(1P, 4E19.8E4)'
 character(len=*), parameter :: x_fmt = '(1A, '//xfmt//')'
-! Format for RHO: 4 digits for base, 2 digits for exponent.
-character(len=*), parameter :: rfmt = '1PE11.4E2'
+! Format for CONSTR: the same as X.
+character(len=*), parameter :: constr_fmt = x_fmt
 ! Format for integers: Use the minimum number of digits needed to print integers.
 character(len=*), parameter :: ifmt = 'I0'
-! Separating spaces: 3 spaces.
-character(len=*), parameter :: spaces = '3X'
 ! Format for NF during the iterations.
 character(len=*), parameter :: nf_fmt = '(/1A, '//ifmt//')'
 ! Format for NF at return.
 character(len=*), parameter :: retnf_fmt = '(1A, '//spaces//', 1A, '//ifmt//')'
-! Format for RHO and NF when RHO is updated.
+! Format for RHO: 8 digits for base, 4 digits for exponent.
+character(len=*), parameter :: rfmt = '1PE16.8E4'
+! Format for RHO and NF when RHO is updated, with or without CPEN.
 character(len=*), parameter :: rnf_fmt = '(/1A, '//rfmt//', '//spaces//', /1A, '//ifmt//')'
 character(len=*), parameter :: rpnf_fmt = '(/1A, '//rfmt//', '//spaces//', 1A, '//rfmt//', '//spaces//', /1A, '//ifmt//')'
+! Format for the constraint penalty parameter: the same as RHO.
+character(len=*), parameter :: pfmt = rfmt
+! Format for the constraint penalty parameter when it is updated.
+character(len=*), parameter :: p_fmt = '(/1A, '//pfmt//')'
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -150,11 +158,11 @@ write (wunit, '(/1A)') 'Return from '//solver//' because '//trim(mssg)
 write (wunit, retnf_fmt) 'At the return from '//solver, 'Number of function evaluations = ', nf
 write (wunit, f_fmt) 'Least function value = ', f
 if (is_constrained) then
-    write (wunit, f_fmt) 'Constraint violation = ', cstrv_loc
+    write (wunit, cstrv_fmt) 'Constraint violation = ', cstrv_loc
 end if
 write (wunit, x_fmt) 'The corresponding X is:', x
 if (is_constrained .and. present(constr)) then
-    write (wunit, x_fmt) 'The constraint value is:', constr
+    write (wunit, constr_fmt) 'The constraint value is:', constr
 end if
 write (wunit, '(1X)')
 
@@ -246,11 +254,11 @@ else
 end if
 write (wunit, f_fmt) 'Least function value = ', f
 if (is_constrained) then
-    write (wunit, f_fmt) 'Constraint violation = ', cstrv_loc
+    write (wunit, cstrv_fmt) 'Constraint violation = ', cstrv_loc
 end if
 write (wunit, x_fmt) 'The corresponding X is:', x
 if (is_constrained .and. present(constr)) then
-    write (wunit, x_fmt) 'The constraint value is:', constr
+    write (wunit, constr_fmt) 'The constraint value is:', constr
 end if
 
 if (iprint < 0) then
@@ -261,6 +269,52 @@ end if
 !  Calculation ends  !
 !====================!
 end subroutine rhomssg
+
+
+subroutine cpenmssg(solver, iprint, cpen)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine prints a message when CPEN is updated.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, IK, FNAMELEN, OUTUNIT, STDOUT
+use, non_intrinsic :: debug_mod, only : warning
+implicit none
+
+! Compulsory inputs
+character(len=*), intent(in) :: solver
+integer(IK), intent(in) :: iprint
+
+! Optional inputs
+real(RP), intent(in), optional :: cpen
+
+! Local variables
+character(len=*), parameter :: srname = 'CPENMSSG'
+character(len=3) :: fstat  ! 'OLD' or 'NEW'
+character(len=FNAMELEN) :: fout
+integer :: ios  ! IO status of the writing. Should be an integer of default kind.
+integer :: wunit ! Logical unit for the writing. Should be an integer of default kind.
+logical :: fexist
+
+if (abs(iprint) < 2) then
+    return  ! No printing
+elseif (iprint > 0) then
+    wunit = STDOUT  ! Print the message to the standard out.
+else  ! Print the message to a file named FOUT with the writing unit being OUTUNIT.
+    wunit = OUTUNIT
+    fout = trim(solver)//'_output.txt'
+    inquire (file=fout, exist=fexist)
+    fstat = merge(tsource='old', fsource='new', mask=fexist)
+    open (unit=wunit, file=fout, status=fstat, position='append', iostat=ios, action='write')
+    if (ios /= 0) then
+        call warning(srname, 'Failed to open file '//fout)
+        return
+    end if
+end if
+! Print the message.
+write (wunit, p_fmt) 'Increase CPEN to ', cpen
+if (iprint < 0) then
+    close (wunit)
+end if
+end subroutine cpenmssg
 
 
 subroutine fmssg(solver, iprint, nf, f, x, cstrv, constr)
@@ -329,22 +383,14 @@ else
 end if
 
 ! Print the message.
-!write (wunit, nffx_fmt) 'Function number ', nf, 'F = ', f, 'The corresponding X is:', x
 write (wunit, nf_fmt) 'Function number ', nf
-!if (is_constrained) then
-!    if (present(constr)) then
-!        write (wunit, cc_fmt) 'Constraint violation = ', cstrv_loc, 'The constraint value is:', constr
-!    else
-!        write (wunit, cv_fmt) 'Constraint violation = ', cstrv_loc
-!    end if
-!end if
 write (wunit, f_fmt) 'Function value = ', f
 if (is_constrained) then
-    write (wunit, f_fmt) 'Constraint violation = ', cstrv_loc
+    write (wunit, cstrv_fmt) 'Constraint violation = ', cstrv_loc
 end if
 write (wunit, x_fmt) 'The corresponding X is:', x
 if (is_constrained .and. present(constr)) then
-    write (wunit, x_fmt) 'The constraint value is:', constr
+    write (wunit, constr_fmt) 'The constraint value is:', constr
 end if
 
 if (iprint < 0) then
