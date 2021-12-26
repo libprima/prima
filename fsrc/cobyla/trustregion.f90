@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Friday, December 24, 2021 PM04:41:19
+! Last Modified: Monday, December 27, 2021 AM01:35:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -501,7 +501,8 @@ do iter = 1, maxiter
 
     vmultc = max(ZERO, (ONE - frac) * vmultc + frac * vmultd)
     if (stage == 1) then
-        cstrv = (ONE - frac) * cvold + frac * cstrv
+        !cstrv = (ONE - frac) * cvold + frac * cstrv
+        cstrv = maxval([b(1:m) - matprod(d, a(:, 1:m)), ZERO])
         ! In theory, CSTRV = MAXVAL([B(1:M) - MATPROD(D, A(:, 1:M)), ZERO]), yet the CSTRV updated
         ! as above can be quite different from this value if A has huge entries (e.g., > 1E20).
     end if
