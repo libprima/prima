@@ -38,7 +38,7 @@ subroutine mexFunction(nargout, poutput, nargin, pinput)
 ! Instead of 'mwSize' and 'mwIndex', we now use 'mwSI' to get the
 ! smaller value between huge(msZero) and huge(miZero).
 
-use, non_intrinsic :: consts_mod, only : IK, SP, DP, RP, HUGEFUN, HUGECON, MSSGLEN
+use, non_intrinsic :: consts_mod, only : IK, SP, DP, RP, HUGEFUN, HUGECON, MSGLEN
 use, non_intrinsic :: fmxapi_mod, only : mxGetN, mxGetString
 use, non_intrinsic :: fmxapi_mod, only : mexErrMsgIdAndTxt
 use, non_intrinsic :: fmxapi_mod, only : mxCreateDoubleScalar
@@ -66,7 +66,7 @@ mwSize, parameter :: msZero = 0
 mwIndex, parameter :: miZero = 0
 ! The huge value that will be returned
 real(DP) :: hugeValue
-character(len=MSSGLEN) :: eid, mssg
+character(len=MSGLEN) :: eid, msg
 
 ! Check inputs
 call fmxVerifyNArgin(nargin, 1)
@@ -77,13 +77,13 @@ call fmxVerifyClassShape(pinput(1), 'char', 'row')
 cols = int(mxGetN(pinput(1)), kind(cols))
 if (cols > maxlen) then
     eid = 'gethuge:InvalidInput'
-    mssg = 'gethuge: The input is too long.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+    msg = 'gethuge: The input is too long.'
+    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
 end if
 if (mxGetString(pinput(1), data_type, cols) /= 0) then
     eid = 'gethuge:GetInputFail'
-    mssg = 'Fail to get the input.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+    msg = 'Fail to get the input.'
+    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
 end if
 
 ! Define hugeValue.
@@ -122,8 +122,8 @@ else if (data_type == 'con' .or. data_type == 'Con' .or. data_type == 'CON' .or.
     hugeValue = real(HUGECON, DP)
 else
     eid = 'GETHUGE:WrongInput'
-    mssg = 'GETHUGE: Unrecognized input.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+    msg = 'GETHUGE: Unrecognized input.'
+    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
 end if
 
 ! Write output.

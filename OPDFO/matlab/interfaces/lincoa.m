@@ -353,17 +353,17 @@ else % The problem turns out 'normal' during prepdfo
     if npt > maxnpt
         npt = maxnpt;
         wid = sprintf('%s:NptTooLarge', funname); 
-        wmessage = sprintf('%s: npt is so large that it is unable to allocate the workspace; it is set to %d.', funname, npt);
-        warning(wid, '%s', wmessage);
-        output.warnings = [output.warnings, wmessage];
+        wmsg = sprintf('%s: npt is so large that it is unable to allocate the workspace; it is set to %d.', funname, npt);
+        warning(wid, '%s', wmsg);
+        output.warnings = [output.warnings, wmsg];
     end
     if maxfun > maxint
         % maxfun would suffer from overflow in the Fortran code 
         maxfun = maxint;
         wid = sprintf('%s:MaxfunTooLarge', funname);
-        wmessage = sprintf('%s: maxfun exceeds the upper limit of Fortran integers; it is set to %d.', funname, maxfun);
-        warning(wid, '%s', wmessage);
-        output.warnings = [output.warnings, wmessage];
+        wmsg = sprintf('%s: maxfun exceeds the upper limit of Fortran integers; it is set to %d.', funname, maxfun);
+        warning(wid, '%s', wmsg);
+        output.warnings = [output.warnings, wmsg];
     end
 
     % If x0 is not feasible, LINCOA will modify the constraints to make
@@ -373,9 +373,9 @@ else % The problem turns out 'normal' during prepdfo
     if ~isempty(A_aug) && any(A_aug'*x0 > b_aug + 1e-10*max(1, abs(b_aug)))
         output.constr_modified = true;
         wid = sprintf('%s:InfeasibleX0', funname);
-        wmessage = sprintf('%s: preprocessing code did not find a feasible x0; problem is likely infeasible; %s will modify the right-hand side of the constraints to make x0 feasible.', funname, funname);
-        warning(wid, '%s', wmessage);
-        output.warnings = [output.warnings, wmessage];
+        wmsg = sprintf('%s: preprocessing code did not find a feasible x0; problem is likely infeasible; %s will modify the right-hand side of the constraints to make x0 feasible.', funname, funname);
+        warning(wid, '%s', wmsg);
+        output.warnings = [output.warnings, wmsg];
     else
         output.constr_modified = false;
     end

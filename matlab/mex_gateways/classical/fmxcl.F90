@@ -96,7 +96,7 @@ contains
 subroutine alloc_rvector_cl_sp(x, n)
 ! ALLOC_RVECTOR_CL_SP allocates the space for an allocatable single-precision vector X, whose size
 ! is N after allocation.
-use, non_intrinsic :: consts_mod, only : SP, MSSGLEN
+use, non_intrinsic :: consts_mod, only : SP, MSGLEN
 implicit none
 
 ! Input
@@ -107,7 +107,7 @@ real(SP), allocatable, intent(out) :: x(:)
 
 ! Local variable
 integer :: alloc_status
-character(len=MSSGLEN) :: eid, mssg
+character(len=MSGLEN) :: eid, msg
 
 ! According to the Fortran 2003 standard, when a procedure is invoked, any allocated ALLOCATABLE
 ! object that is an actual argument associated with an INTENT(OUT) ALLOCATABLE dummy argument is
@@ -118,8 +118,8 @@ character(len=MSSGLEN) :: eid, mssg
 allocate (x(n), stat=alloc_status)
 if (alloc_status /= 0) then
     eid = 'FMXAPI:AllocateFailed'
-    mssg = 'ALLOC_RVECTOR_CL: Memory allocation fails.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+    msg = 'ALLOC_RVECTOR_CL: Memory allocation fails.'
+    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
 end if
 
 ! Use X; otherwise, compilers may complain.
@@ -132,7 +132,7 @@ end subroutine alloc_rvector_cl_sp
 subroutine alloc_rmatrix_cl_sp(x, m, n)
 ! ALLOC_RMATRIX_CL_SP allocates the space for a single-precision matrix X, whose size is (M, N)
 ! after allocation.
-use, non_intrinsic :: consts_mod, only : SP, MSSGLEN
+use, non_intrinsic :: consts_mod, only : SP, MSGLEN
 implicit none
 
 ! Input
@@ -143,7 +143,7 @@ real(SP), allocatable, intent(out) :: x(:, :)
 
 ! Local variable
 integer :: alloc_status
-character(len=MSSGLEN) :: eid, mssg
+character(len=MSGLEN) :: eid, msg
 
 ! Unnecessary to write the following line in F2003 since X is INTENT(OUT):
 !!if (allocated(x)) deallocate (x)
@@ -152,8 +152,8 @@ character(len=MSSGLEN) :: eid, mssg
 allocate (x(m, n), stat=alloc_status)
 if (alloc_status /= 0) then
     eid = 'FMXAPI:AllocateFailed'
-    mssg = 'ALLOC_RMATRIX_CL: Memory allocation fails.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+    msg = 'ALLOC_RMATRIX_CL: Memory allocation fails.'
+    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
 end if
 
 ! Use X; otherwise, compilers may complain.
@@ -166,7 +166,7 @@ end subroutine alloc_rmatrix_cl_sp
 subroutine alloc_rvector_cl_dp(x, n)
 ! ALLOC_RVECTOR_CL_DP allocates the space for an allocatable single-precision vector X, whose size
 ! is N after allocation.
-use, non_intrinsic :: consts_mod, only : DP, MSSGLEN
+use, non_intrinsic :: consts_mod, only : DP, MSGLEN
 implicit none
 
 ! Input
@@ -177,7 +177,7 @@ real(DP), allocatable, intent(out) :: x(:)
 
 ! Local variable
 integer :: alloc_status
-character(len=MSSGLEN) :: eid, mssg
+character(len=MSGLEN) :: eid, msg
 
 ! Unnecessary to write the following line in F2003 since X is INTENT(OUT):
 !!if (allocated(x)) deallocate (x)
@@ -186,8 +186,8 @@ character(len=MSSGLEN) :: eid, mssg
 allocate (x(n), stat=alloc_status)
 if (alloc_status /= 0) then
     eid = 'FMXAPI:AllocateFailed'
-    mssg = 'ALLOC_RVECTOR_CL: Memory allocation fails.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+    msg = 'ALLOC_RVECTOR_CL: Memory allocation fails.'
+    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
 end if
 
 ! Use X; otherwise, compilers may complain.
@@ -200,7 +200,7 @@ end subroutine alloc_rvector_cl_dp
 subroutine alloc_rmatrix_cl_dp(x, m, n)
 ! ALLOC_RMATRIX_CL_DP allocates the space for a single-precision matrix X, whose size is (M, N)
 ! after allocation.
-use, non_intrinsic :: consts_mod, only : DP, MSSGLEN
+use, non_intrinsic :: consts_mod, only : DP, MSGLEN
 implicit none
 
 ! Input
@@ -211,7 +211,7 @@ real(DP), allocatable, intent(out) :: x(:, :)
 
 ! Local variable
 integer :: alloc_status
-character(len=MSSGLEN) :: eid, mssg
+character(len=MSGLEN) :: eid, msg
 
 ! Unnecessary to write the following line in F2003 since X is INTENT(OUT):
 !!if (allocated(x)) deallocate (x)
@@ -220,8 +220,8 @@ character(len=MSSGLEN) :: eid, mssg
 allocate (x(m, n), stat=alloc_status)
 if (alloc_status /= 0) then
     eid = 'FMXAPI:AllocateFailed'
-    mssg = 'ALLOC_RMATRIX_CL: Memory allocation fails.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+    msg = 'ALLOC_RMATRIX_CL: Memory allocation fails.'
+    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
 end if
 
 ! Use X; otherwise, compilers may complain.
@@ -234,7 +234,7 @@ end subroutine alloc_rmatrix_cl_dp
 subroutine read_rscalar_cl(px, x)
 ! READ_RSCALAR_CL reads the double scalar associated with an mwPointer PX and saves the data in X,
 ! which is a REAL(RP_CL) scalar.
-use, non_intrinsic :: consts_mod, only : DP, MSSGLEN
+use, non_intrinsic :: consts_mod, only : DP, MSGLEN
 implicit none
 
 ! Input
@@ -245,7 +245,7 @@ real(RP_CL), intent(out) :: x
 
 ! Local variable
 real(DP) :: x_dp(1)
-character(len=MSSGLEN) :: eid, mssg
+character(len=MSGLEN) :: eid, msg
 
 ! Check input type and size
 call fmxVerifyClassShape(px, 'double', 'scalar')
@@ -259,8 +259,8 @@ x = real(x_dp(1), kind(x))
 if (kind(x) /= kind(x_dp)) then
     if (abs(x - x_dp(1)) > cvsnTol * max(abs(x), ONE)) then
         eid = 'FMXAPI:ConversionError'
-        mssg = 'READ_RSCALAR_CL: Large error occurs when converting REAL(DP) to REAL(RP_CL) (maybe due to overflow).'
-        call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+        msg = 'READ_RSCALAR_CL: Large error occurs when converting REAL(DP) to REAL(RP_CL) (maybe due to overflow).'
+        call mexErrMsgIdAndTxt(trim(eid), trim(msg))
     end if
 end if
 end subroutine read_rscalar_cl
@@ -269,7 +269,7 @@ end subroutine read_rscalar_cl
 subroutine read_rvector_cl(px, x)
 ! READ_RVECTOR_CL reads the double vector associated with an mwPointer PX and saves the data in X,
 ! which is a REAL(RP_CL) vector.
-use, non_intrinsic :: consts_mod, only : DP, MSSGLEN
+use, non_intrinsic :: consts_mod, only : DP, MSGLEN
 implicit none
 
 ! Input
@@ -282,7 +282,7 @@ real(RP_CL), allocatable, intent(out) :: x(:)
 real(DP), allocatable :: x_dp(:)
 integer(IK_CL) :: n
 mwSize :: n_mw
-character(len=MSSGLEN) :: eid, mssg
+character(len=MSGLEN) :: eid, msg
 
 ! Check input type and size
 call fmxVerifyClassShape(px, 'double', 'vector')
@@ -302,8 +302,8 @@ x = real(x_dp, kind(x))
 if (kind(x) /= kind(x_dp)) then
     if (maxval(abs(x - x_dp)) > cvsnTol * max(maxval(abs(x)), ONE)) then
         eid = 'FMXAPI:ConversionError'
-        mssg = 'READ_RVECTOR_CL: Large error occurs when converting REAL(DP) to REAL(RP_CL) (maybe due to overflow).'
-        call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+        msg = 'READ_RVECTOR_CL: Large error occurs when converting REAL(DP) to REAL(RP_CL) (maybe due to overflow).'
+        call mexErrMsgIdAndTxt(trim(eid), trim(msg))
     end if
 end if
 
@@ -315,7 +315,7 @@ end subroutine read_rvector_cl
 subroutine read_rmatrix_cl(px, x)
 ! READ_MATRIX_CL reads the double matrix associated with an mwPointer PX and saves the data in X,
 ! which is a REAL(RP_CL) matrix.
-use, non_intrinsic :: consts_mod, only : DP, MSSGLEN
+use, non_intrinsic :: consts_mod, only : DP, MSGLEN
 implicit none
 
 ! Input
@@ -328,7 +328,7 @@ real(RP_CL), allocatable, intent(out) :: x(:, :)
 real(DP), allocatable :: x_dp(:, :)
 integer(IK_CL) :: m, n
 mwSize :: xsize
-character(len=MSSGLEN) :: eid, mssg
+character(len=MSGLEN) :: eid, msg
 
 ! Check input type and size
 call fmxVerifyClassShape(px, 'double', 'matrix')
@@ -350,8 +350,8 @@ x = real(x_dp, kind(x))
 if (kind(x) /= kind(x_dp)) then
     if (maxval(abs(x - x_dp)) > cvsnTol * max(maxval(abs(x)), ONE)) then
         eid = 'FMXAPI:ConversionError'
-        mssg = 'READ_MATRIX_CL: Large error occurs when converting REAL(DP) to REAL(RP_CL) (maybe due to overflow).'
-        call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+        msg = 'READ_MATRIX_CL: Large error occurs when converting REAL(DP) to REAL(RP_CL) (maybe due to overflow).'
+        call mexErrMsgIdAndTxt(trim(eid), trim(msg))
     end if
 end if
 
@@ -363,7 +363,7 @@ end subroutine read_rmatrix_cl
 subroutine read_iscalar_cl(px, x)
 ! READ_ISCALAR_CL reads a MEX input X that is a double scalar with an integer value. Such a value
 ! will be passed to the Fortran code as an integer but passed by MEX as a double.
-use, non_intrinsic :: consts_mod, only : DP, MSSGLEN
+use, non_intrinsic :: consts_mod, only : DP, MSGLEN
 implicit none
 
 ! Input
@@ -374,7 +374,7 @@ integer(IK_CL), intent(out) :: x
 
 ! Local variable
 real(DP) :: x_dp(1)
-character(len=MSSGLEN) :: eid, mssg
+character(len=MSGLEN) :: eid, msg
 
 ! Check input type and size
 call fmxVerifyClassShape(px, 'double', 'scalar')
@@ -388,8 +388,8 @@ x = int(x_dp(1), kind(x))
 ! Check whether the type conversion is proper
 if (abs(x - x_dp(1)) > 0.5_DP) then
     eid = 'FMXAPI:ConversionError'
-    mssg = 'READ_ISCALAR_CL: Large error occurs when converting REAL(DP) to INTEGER(IK_CL) (maybe due to overflow).'
-    call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+    msg = 'READ_ISCALAR_CL: Large error occurs when converting REAL(DP) to INTEGER(IK_CL) (maybe due to overflow).'
+    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
 end if
 end subroutine read_iscalar_cl
 
@@ -397,7 +397,7 @@ end subroutine read_iscalar_cl
 subroutine write_rscalar_cl(x, px)
 ! WRITE_RSCALAR_CL associates a REAL(RP_CL) scalar X with an mwPointer PX, after which X can be
 ! passed to MATLAB either as an output of mexFunction or an input of mexCallMATLAB.
-use, non_intrinsic :: consts_mod, only : DP, MSSGLEN
+use, non_intrinsic :: consts_mod, only : DP, MSGLEN
 implicit none
 
 ! Input
@@ -408,7 +408,7 @@ mwPointer, intent(out) :: px
 
 ! Local variable
 real(DP) :: x_dp
-character(len=MSSGLEN) :: eid, mssg
+character(len=MSGLEN) :: eid, msg
 
 ! Convert X to REAL(DP), which is expected by mxCopyReal8ToPtr
 x_dp = real(x, kind(x_dp))
@@ -416,8 +416,8 @@ if (kind(x_dp) /= kind(x)) then
     ! Check whether the type conversion is proper
     if (abs(x - x_dp) > cvsnTol * max(abs(x), ONE)) then
         eid = 'FMXAPI:ConversionError'
-        mssg = 'WRITE_RSCALAR_CL: Large error occurs when converting REAL(RP_CL) to REAL(DP) (maybe due to overflow).'
-        call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+        msg = 'WRITE_RSCALAR_CL: Large error occurs when converting REAL(RP_CL) to REAL(DP) (maybe due to overflow).'
+        call mexErrMsgIdAndTxt(trim(eid), trim(msg))
     end if
 end if
 
@@ -430,7 +430,7 @@ subroutine write_rvector_cl(x, px, rowcol)
 ! WRITE_RVECTOR_CL associates a REAL(RP_CL) vector X with an mwPointer PX, after which X can be
 ! passed to MATLAB either as an output of mexFunction or an input of mexCallMATLAB. If
 ! ROWCOL = 'row', then the vector is passed as a row vector, otherwise, it will be a column vector.
-use, non_intrinsic :: consts_mod, only : DP, MSSGLEN
+use, non_intrinsic :: consts_mod, only : DP, MSGLEN
 implicit none
 
 ! Input
@@ -445,7 +445,7 @@ real(DP) :: x_dp(size(x))
 integer(IK_CL) :: n
 mwSize :: n_mw
 logical :: row
-character(len=MSSGLEN) :: eid, mssg
+character(len=MSGLEN) :: eid, msg
 
 ! Get size of X
 n_mw = int(size(x), kind(n_mw))
@@ -457,8 +457,8 @@ x_dp = real(x, kind(x_dp))
 if (kind(x) /= kind(x_dp)) then
     if (maxval(abs(x - x_dp)) > cvsnTol * max(maxval(abs(x)), ONE)) then
         eid = 'FMXAPI:ConversionError'
-        mssg = 'WRITE_RVECTOR_CL: Large error occurs when converting REAL(RP_CL) to REAL(DP) (maybe due to overflow).'
-        call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+        msg = 'WRITE_RVECTOR_CL: Large error occurs when converting REAL(RP_CL) to REAL(DP) (maybe due to overflow).'
+        call mexErrMsgIdAndTxt(trim(eid), trim(msg))
     end if
 end if
 
@@ -482,7 +482,7 @@ end subroutine write_rvector_cl
 subroutine write_rmatrix_cl(x, px)
 ! WRITE_MATRIX_CL associates a REAL(RP_CL) matrix X with an mwPointer PX, after which X can be
 ! passed to MATLAB either as an output of mexFunction or an input of mexCallMATLAB.
-use, non_intrinsic :: consts_mod, only : DP, MSSGLEN
+use, non_intrinsic :: consts_mod, only : DP, MSGLEN
 implicit none
 
 ! Input
@@ -495,7 +495,7 @@ mwPointer, intent(out) :: px
 real(DP) :: x_dp(size(x, 1), size(x, 2))
 integer(IK_CL) :: m, n
 mwSize :: m_mw, n_mw
-character(len=MSSGLEN) :: eid, mssg
+character(len=MSGLEN) :: eid, msg
 
 ! Get size of X
 m = int(size(x, 1), kind(m))
@@ -509,8 +509,8 @@ x_dp = real(x, kind(x_dp))
 if (kind(x) /= kind(x_dp)) then
     if (maxval(abs(x - x_dp)) > cvsnTol * max(maxval(abs(x)), ONE)) then
         eid = 'FMXAPI:ConversionError'
-        mssg = 'WRITE_MATRIX_CL: Large error occurs when converting REAL(RP_CL) to REAL(DP) (maybe due to overflow).'
-        call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+        msg = 'WRITE_MATRIX_CL: Large error occurs when converting REAL(RP_CL) to REAL(DP) (maybe due to overflow).'
+        call mexErrMsgIdAndTxt(trim(eid), trim(msg))
     end if
 end if
 
@@ -524,7 +524,7 @@ end subroutine write_rmatrix_cl
 subroutine write_iscalar_cl(x, px)
 ! WRITE_RSCALAR_CL associates an INTEGER(IK_CL) scalar X with an mwPointer PX, after which X can be
 ! passed to MATLAB either as an output of mexFunction or an input of mexCallMATLAB.
-use, non_intrinsic :: consts_mod, only : DP, MSSGLEN
+use, non_intrinsic :: consts_mod, only : DP, MSGLEN
 implicit none
 
 ! Input
@@ -535,14 +535,14 @@ mwPointer, intent(out) :: px
 
 ! Local variable
 real(DP) :: x_dp
-character(len=MSSGLEN) :: eid, mssg
+character(len=MSGLEN) :: eid, msg
 
 x_dp = real(x, kind(x_dp))
 
 if (abs(x - x_dp) > 0.5_DP) then
     eid = 'FMXAPI:ConversionError'
-    mssg = 'WRITE_ISCALAR_CL: Large error occurs when converting INTEGER(IK_CL) to REAL(DP) (maybe due to overflow).'
-    call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+    msg = 'WRITE_ISCALAR_CL: Large error occurs when converting INTEGER(IK_CL) to REAL(DP) (maybe due to overflow).'
+    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
 end if
 
 px = mxCreateDoubleScalar(x_dp)

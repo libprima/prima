@@ -26,7 +26,7 @@ contains
 subroutine calfun(x, f)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, HUGEFUN, MSSGLEN
+use, non_intrinsic :: consts_mod, only : RP, HUGEFUN, MSGLEN
 use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: fmxapi_mod, only : mxDestroyArray
 use, non_intrinsic :: fmxapi_mod, only : mexErrMsgIdAndTxt
@@ -43,7 +43,7 @@ real(RP), intent(out) :: f
 
 ! Local variables
 mwPointer :: pinput(1), poutput(1)
-character(len=MSSGLEN) :: eid, mssg
+character(len=MSGLEN) :: eid, msg
 
 ! Associate X with INPUT(1)
 call fmxWriteMPtr(x, pinput(1))
@@ -55,8 +55,8 @@ call fmxCallMATLAB(fun_ptr, pinput, poutput)
 ! here in order to print a more informative error message when the verification fails.
 if (.not. fmxIsDoubleScalar(poutput(1))) then
     eid = 'PROBLEM:ObjectiveNotScalar'
-    mssg = 'PROBLEM: Objective function does not return a scalar.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(mssg))
+    msg = 'PROBLEM: Objective function does not return a scalar.'
+    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
 end if
 
 ! Read the data in OUTPUT
