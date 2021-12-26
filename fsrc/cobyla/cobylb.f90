@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, December 25, 2021 PM06:15:59
+! Last Modified: Sunday, December 26, 2021 PM02:32:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -30,7 +30,7 @@ use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
 use, non_intrinsic :: info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, NAN_MODEL, DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, inv
-use, non_intrinsic :: output_mod, only : retmssg, rhomssg, fmssg
+use, non_intrinsic :: output_mod, only : retmssg, rhomssg, fmssg, cpenmssg
 use, non_intrinsic :: pintrf_mod, only : FUNCON
 use, non_intrinsic :: resolution_mod, only : resenhance
 use, non_intrinsic :: selectx_mod, only : savefilt, selectx, isbetter
@@ -289,6 +289,7 @@ do tr = 1, maxtr
             barmu = -preref / prerec   ! PREREF + BARMU * PREREC = 0
             if (cpen < 1.5E0_RP * barmu) then
                 cpen = min(TWO * barmu, HUGENUM)
+                call cpenmssg(solver, iprint, cpen)
                 if (findpole(cpen, cval, fval) <= n) then
                     ! Zaikun 20211111: Can this lead to infinite cycling?
                     !!-----------------------------------------------------------------------!

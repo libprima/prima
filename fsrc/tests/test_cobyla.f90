@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, December 26, 2021 AM05:01:43
+! Last Modified: Sunday, December 26, 2021 PM03:00:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -103,7 +103,7 @@ else
     nrand_loc = NRAND_DFT
 end if
 
-do iprob = 1, nprobs
+do iprob = 1, 6!nprobs
     probname = probs_loc(iprob)
     if (any(probname == fix_dim_probs)) then
         call construct(prob, probname)  ! Construct the testing problem.

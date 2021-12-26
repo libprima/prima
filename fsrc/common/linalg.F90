@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, December 26, 2021 AM05:02:23
+! Last Modified: Sunday, December 26, 2021 AM11:33:08
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1401,7 +1401,7 @@ integer(IK) :: m
 integer(IK) :: n
 real(RP) :: A_test(size(A, 1), size(A, 2))
 real(RP) :: G(2, 2)
-real(RP) :: hypt
+!real(RP) :: hypt
 real(RP) :: QA_test(size(A, 1), size(A, 2))
 real(RP) :: tol
 
@@ -1433,15 +1433,22 @@ end if
 ! are exhanged. After this is done for each K = 1, ..., N-1, we obtain the QR factorization of
 ! A when its [I, I+1, ..., N] columns are reordered as [I+1, ..., N, I].
 do k = i, n - 1_IK
-    hypt = hypotenuse(Rdiag(k + 1), inprod(Q(:, k), A(:, k + 1)))
+    !hypt = hypotenuse(Rdiag(k + 1), inprod(Q(:, k), A(:, k + 1)))
     !hypt = sqrt(Rdiag(k + 1)**2 + inprod(Q(:, k), A(:, k + 1))**2)
     G = planerot([Rdiag(k + 1), inprod(Q(:, k), A(:, k + 1))])
     Q(:, [k, k + 1_IK]) = matprod(Q(:, [k + 1_IK, k]), transpose(G))
-    ! Powell's code updates RDIAG in the following way. Note that RDIAG(N) inherits all rounding in
-    ! RDIAG(I:N-1) and Q(:, I:N-1) and hence contain significant errors. Thus we modify the code,
-    ! only calculate RDIAG(K) here, and then calculate RDIAG(N) by an inner product after the loop.
-    !Rdiag([k, k + 1_IK]) = [hypt, (Rdiag(k + 1) / hypt) * Rdiag(k)]
-    Rdiag(k) = hypt
+    ! Powell's code updates RDIAG in the following way.
+    !----------------------------------------------------------------!
+    !!Rdiag([k, k + 1_IK]) = [hypt, (Rdiag(k + 1) / hypt) * Rdiag(k)]!
+    !----------------------------------------------------------------!
+    ! Note that RDIAG(N) inherits all rounding in RDIAG(I:N-1) and Q(:, I:N-1) and hence contain
+    ! significant errors. Thus we may modify the code as follows, only calculating RDIAG(K) here and
+    ! calculating RDIAG(N) by an inner product after the loop.
+    !----------------!
+    !!Rdiag(k) = hypt!
+    !----------------!
+    ! Or we simply calculate RDIAG from scratch as follows.
+    Rdiag(k) = inprod(Q(:, k), A(:, k + 1))
 end do
 
 Rdiag(n) = inprod(Q(:, n), A(:, i))  ! Calculate RDIAG(N) from scratch. See the comments above.
@@ -1457,9 +1464,9 @@ if (DEBUGGING) then
     A_test = reshape([A(:, 1:i - 1), A(:, i + 1:n), A(:, i)], shape(A))
     QA_test = matprod(transpose(Q), A_test)
     call assert(istriu(QA_test, tol), 'QA_test is upper triangular', srname)
-    ! The following test may fail.
-    !call assert(norm(diag(QA_test) - Rdiag) <= max(tol, tol * norm([(inprod(abs(Q(:, k)), &
-    !    & abs(A_test(:, k))), k=1, n)])), 'Rdiag == diag(QA_test)', srname)
+    ! The following test may fail if RDIAG is not calculated from scratch.
+    call assert(norm(diag(QA_test) - Rdiag) <= max(tol, tol * norm([(inprod(abs(Q(:, k)), &
+        & abs(A_test(:, k))), k=1, n)])), 'Rdiag == diag(QA_test)', srname)
 end if
 end subroutine qrexc
 

@@ -475,14 +475,17 @@
           G = planerot([zdota(nact), sp]); alpha = G(1,1); beta =G(1,2)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           ZDOTA(NACT)=ALPHA*ZDOTA(K)
-          ZDOTA(K)=TEMP
+          !!!!!!!!!!!!!!!!!!20211226!!!!!!!!!!!!!!!
+          !ZDOTA(K)=TEMP
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           DO I=1,N
               TEMP=ALPHA*Z(I,NACT)+BETA*Z(I,K)
               Z(I,NACT)=ALPHA*Z(I,K)-BETA*Z(I,NACT)
               Z(I,K)=TEMP
           END DO
           !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          ! Zaikun 20211118:
+          ! Zaikun 20211118/21211226
+          zdota(k) = inprod(z(:, k), A(:, iact(nact)))
           zdota(nact) = inprod(Z(:, nact), A(:, iact(k)))
           !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           IACT(NACT)=IACT(K)
@@ -553,6 +556,10 @@
               Z(I,KP)=ALPHA*Z(I,K)-BETA*Z(I,KP)
               Z(I,K)=TEMP
           END DO
+          !!!!!!!!!! 20211226 !!!!!!!!!!!!!!!!!!!!!!!
+          ! Calculate ZDOT(K) from scratch
+          zdota(k) = inprod(z(:, k), A(:, iact(kp)))
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           IACT(K)=KK
           VMULTC(K)=VMULTC(KP)
           K=KP
