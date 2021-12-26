@@ -15,7 +15,7 @@ public :: logging
 contains
 
 
-subroutine logging(logfile, srname, lnnum, nf, f, x, constr, conv, mssg)
+subroutine logging(logfile, srname, lnnum, nf, f, x, constr, conv, msg)
 use, non_intrinsic :: consts_mod, only : RP, IK
 implicit none
 
@@ -28,7 +28,7 @@ real(RP), optional, intent(in) :: constr(:)
 real(RP), optional, intent(in) :: conv
 character(len=*), intent(in) :: logfile
 character(len=*), intent(in) :: srname
-character(len=*), optional, intent(in) :: mssg
+character(len=*), optional, intent(in) :: msg
 
 ! Local variables
 integer, parameter :: LOGUNIT = 11
@@ -52,8 +52,8 @@ else
     if (present(constr)) then
         write (LOGUNIT, '(1A, 1PD23.15)') 'The constraint violation is:', conv
     end if
-    if (present(mssg)) then
-        write (LOGUNIT, '(1A)') 'Message: '//mssg
+    if (present(msg)) then
+        write (LOGUNIT, '(1A)') 'Message: '//msg
     end if
     if (present(x)) then
         write (LOGUNIT, '(1A, /(1P, 5D23.15))') 'The corresponding X is:', x

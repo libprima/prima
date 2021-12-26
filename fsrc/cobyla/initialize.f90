@@ -32,7 +32,7 @@ use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf, is_finite
 use, non_intrinsic :: info_mod, only : INFO_DFT
 use, non_intrinsic :: linalg_mod, only : eye
-use, non_intrinsic :: output_mod, only : fmssg
+use, non_intrinsic :: output_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : FUNCON
 
 implicit none
@@ -132,7 +132,7 @@ do k = 1, n + 1_IK
         x(j) = x(j) + rhobeg
     end if
     call evalfc(calcfc, x, f, constr, cstrv)
-    call fmssg(solver, iprint, k, f, x, cstrv, constr)
+    call fmsg(solver, iprint, k, f, x, cstrv, constr)
     evaluated(j) = .true.
     ! Save X, F, CONSTR, CSTRV into the history.
     call savehist(k, constr, cstrv, f, x, chist, conhist, fhist, xhist)

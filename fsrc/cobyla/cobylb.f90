@@ -30,7 +30,7 @@ use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
 use, non_intrinsic :: info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, NAN_MODEL, DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, inv
-use, non_intrinsic :: output_mod, only : retmssg, rhomssg, fmssg, cpenmssg
+use, non_intrinsic :: output_mod, only : retmsg, rhomsg, fmsg, cpenmsg
 use, non_intrinsic :: pintrf_mod, only : FUNCON
 use, non_intrinsic :: resolution_mod, only : resenhance
 use, non_intrinsic :: selectx_mod, only : savefilt, selectx, isbetter
@@ -176,7 +176,7 @@ if (subinfo /= INFO_DFT) then
     cstrv = cfilt(kopt)
     ! Arrange CHIST, CONHIST, FHIST, and XHIST so that they are in the chronological order.
     call rangehist(nf, chist, conhist, fhist, xhist)
-    call retmssg(solver, info, iprint, nf, f, x, cstrv, constr)
+    call retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
     ! Postconditions
     if (DEBUGGING) then
         call assert(nf <= maxfun, 'NF <= MAXFUN', srname)
@@ -289,7 +289,7 @@ do tr = 1, maxtr
             barmu = -preref / prerec   ! PREREF + BARMU * PREREC = 0
             if (cpen < 1.5E0_RP * barmu) then
                 cpen = min(TWO * barmu, HUGENUM)
-                call cpenmssg(solver, iprint, cpen)
+                call cpenmsg(solver, iprint, cpen)
                 if (findpole(cpen, cval, fval) <= n) then
                     ! Zaikun 20211111: Can this lead to infinite cycling?
                     !!-----------------------------------------------------------------------!
@@ -308,7 +308,7 @@ do tr = 1, maxtr
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
         call evalfc(calcfc, x, f, constr, cstrv)
         nf = nf + 1_IK
-        call fmssg(solver, iprint, nf, f, x, cstrv, constr)
+        call fmsg(solver, iprint, nf, f, x, cstrv, constr)
         ! Save X, F, CONSTR, CSTRV into the history.
         call savehist(nf, constr, cstrv, f, x, chist, conhist, fhist, xhist)
         ! Save X, F, CONSTR, CSTRV into the filter.
@@ -410,7 +410,7 @@ do tr = 1, maxtr
             ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
             call evalfc(calcfc, x, f, constr, cstrv)
             nf = nf + 1_IK
-            call fmssg(solver, iprint, nf, f, x, cstrv, constr)
+            call fmsg(solver, iprint, nf, f, x, cstrv, constr)
             ! Save X, F, CONSTR, CSTRV into the history.
             call savehist(nf, constr, cstrv, f, x, chist, conhist, fhist, xhist)
             ! Save X, F, CONSTR, CSTRV into the filter.
@@ -443,7 +443,7 @@ do tr = 1, maxtr
             exit
         end if
         call resenhance(conmat, fval, rhoend, cpen, rho)
-        call rhomssg(solver, iprint, nf, fval(n + 1), rho, sim(:, n + 1), cval(n + 1), conmat(:, n + 1), cpen)
+        call rhomsg(solver, iprint, nf, fval(n + 1), rho, sim(:, n + 1), cval(n + 1), conmat(:, n + 1), cpen)
         !!-----------------------------------------------------------------------!
         !call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
         !if (subinfo == DAMAGING_ROUNDING) then
@@ -466,7 +466,7 @@ cstrv = cfilt(kopt)
 ! Arrange CHIST, CONHIST, FHIST, and XHIST so that they are in the chronological order.
 call rangehist(nf, chist, conhist, fhist, xhist)
 
-call retmssg(solver, info, iprint, nf, f, x, cstrv, constr)
+call retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
 
 !====================!
 !  Calculation ends  !

@@ -24,7 +24,7 @@ subroutine preproc(solver, n, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend, 
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine preprocesses the inputs. It does nothing to the inputs that are valid.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, TEN, TENTH, EPS, MAXMEMORY, MSSGLEN, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, TEN, TENTH, EPS, MAXMEMORY, MSGLEN, DEBUGGING
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, ETA1_DFT, ETA2_DFT, GAMMA1_DFT, GAMMA2_DFT
 use, non_intrinsic :: consts_mod, only : CTOL_DFT, FTARGET_DFT, IPRINT_DFT, MIN_MAXFILT, MAXFILT_DFT
 use, non_intrinsic :: debug_mod, only : assert, warning
@@ -62,8 +62,8 @@ real(RP), intent(inout), optional :: gamma2
 character(len=*), parameter :: ifmt = '(I0)'  ! Format of integers; use the minimum number of digits
 character(len=*), parameter :: rfmt = '(1PD15.6)'  ! Format of reals
 character(len=*), parameter :: srname = 'PREPROC'
-character(len=MSSGLEN) :: min_maxfun_str
-character(len=MSSGLEN) :: wmssg
+character(len=MSGLEN) :: min_maxfun_str
+character(len=MSGLEN) :: wmsg
 integer(IK) :: m_loc
 integer(IK) :: maxfilt_in
 integer(IK) :: min_maxfun
@@ -106,8 +106,8 @@ end if
 ! Validate IPRINT
 if (abs(iprint) > 3) then
     iprint = IPRINT_DFT
-    write (wmssg, ifmt) iprint
-    call warning(solver, 'Invalid IPRINT; it should be 0, 1, -1, 2, -2, 3, or -3; it is set to '//trimstr(wmssg))
+    write (wmsg, ifmt) iprint
+    call warning(solver, 'Invalid IPRINT; it should be 0, 1, -1, 2, -2, 3, or -3; it is set to '//trimstr(wmsg))
 end if
 
 ! Validate MAXFUN
@@ -124,23 +124,23 @@ case ('cobyla')
 end select
 if (maxfun < min_maxfun) then
     maxfun = min_maxfun
-    write (wmssg, ifmt) maxfun
-    call warning(solver, 'Invalid MAXFUN; it should be at least '//trimstr(min_maxfun_str)//'; it is set to '//trimstr(wmssg))
+    write (wmsg, ifmt) maxfun
+    call warning(solver, 'Invalid MAXFUN; it should be at least '//trimstr(min_maxfun_str)//'; it is set to '//trimstr(wmsg))
 end if
 
 ! Validate MAXHIST
 if (maxhist < 0) then
     maxhist = maxfun
-    write (wmssg, ifmt) maxhist
-    call warning(solver, 'Invalid MAXHIST; it should be a nonnegative integer; it is set to '//trimstr(wmssg))
+    write (wmsg, ifmt) maxhist
+    call warning(solver, 'Invalid MAXHIST; it should be a nonnegative integer; it is set to '//trimstr(wmsg))
 end if
 maxhist = min(maxhist, maxfun)  ! MAXHIST > MAXFUN is never needed.
 
 ! Validate FTARGET
 if (is_nan(ftarget)) then
     ftarget = FTARGET_DFT
-    write (wmssg, rfmt) ftarget
-    call warning(solver, 'Invalid FTARGET; it should be a real number; it is set to '//trimstr(wmssg))
+    write (wmsg, rfmt) ftarget
+    call warning(solver, 'Invalid FTARGET; it should be a real number; it is set to '//trimstr(wmsg))
 end if
 
 ! Validate NPT
@@ -148,9 +148,9 @@ if ((lower(solver) == 'newuoa' .or. lower(solver) == 'bobyqa' .or. lower(solver)
     & .and. present(npt)) then
     if (npt < n + 2 .or. npt > min(maxfun - 1, ((n + 2) * (n + 1)) / 2)) then
         npt = int(min(maxfun - 1, 2 * n + 1), kind(npt))
-        write (wmssg, ifmt) npt
+        write (wmsg, ifmt) npt
         call warning(solver, 'Invalid NPT; it should be an integer in the interval [N+2, (N+1)(N+2)/2], '// &
-            & 'and it should be less than MAXFUN; it is set to '//trimstr(wmssg))
+            & 'and it should be less than MAXFUN; it is set to '//trimstr(wmsg))
     end if
 end if
 
@@ -176,14 +176,14 @@ if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cob
     end if
     maxfilt = min(maxfun, max(MIN_MAXFILT, maxfilt))
     if (is_constrained_loc) then
-        write (wmssg, ifmt) maxfilt
+        write (wmsg, ifmt) maxfilt
         if (maxfilt_in < 1) then
             call warning(solver, 'Invalid MAXFILT; it should be a positive integer; it is set to ' &
-                & //trimstr(wmssg))
+                & //trimstr(wmsg))
         elseif (maxfilt_in < min(maxfun, MIN_MAXFILT)) then
-            call warning(solver, 'MAXFILT is too small; it is set to '//trimstr(wmssg))
+            call warning(solver, 'MAXFILT is too small; it is set to '//trimstr(wmsg))
         elseif (maxfilt < min(maxfilt_in, maxfun)) then
-            call warning(solver, 'MAXFILT is set to '//trimstr(wmssg)//' due to memory limit.')
+            call warning(solver, 'MAXFILT is set to '//trimstr(wmsg)//' due to memory limit.')
         end if
     end if
 end if
@@ -220,9 +220,9 @@ if (present(eta1)) then
         else
             eta1 = ETA1_DFT
         end if
-        write (wmssg, rfmt) eta1
+        write (wmsg, rfmt) eta1
         call warning(solver, 'Invalid ETA1; it should be in the interval [0, 1) and not more than ETA2;'// &
-            & ' it is set to '//trimstr(wmssg))
+            & ' it is set to '//trimstr(wmsg))
     end if
 end if
 
@@ -233,9 +233,9 @@ if (present(eta2)) then
         eta2 = ETA2_DFT
     elseif (present(eta1) .and. (eta2 < eta1_loc .or. eta2 > 1)) then
         eta2 = (eta1 + TWO) / 3.0_RP
-        write (wmssg, rfmt) eta2
+        write (wmsg, rfmt) eta2
         call warning(solver, 'Invalid ETA2; it should be in the interval [0, 1) and not less than ETA1;'// &
-            & ' it is set to '//trimstr(wmssg))
+            & ' it is set to '//trimstr(wmsg))
     end if
 end if
 
@@ -247,8 +247,8 @@ if (present(gamma1)) then
         gamma1 = GAMMA1_DFT
     elseif (gamma1 <= 0 .or. gamma1 >= 1) then
         gamma1 = GAMMA1_DFT
-        write (wmssg, rfmt) gamma1
-        call warning(solver, 'Invalid GAMMA1; it should in the interval (0, 1); it is set to '//trimstr(wmssg))
+        write (wmsg, rfmt) gamma1
+        call warning(solver, 'Invalid GAMMA1; it should in the interval (0, 1); it is set to '//trimstr(wmsg))
     end if
 end if
 
@@ -259,8 +259,8 @@ if (present(gamma2)) then
         gamma2 = GAMMA2_DFT
     elseif (gamma2 < 1 .or. is_inf(gamma2)) then
         gamma2 = GAMMA2_DFT
-        write (wmssg, rfmt) gamma2
-        call warning(solver, 'Invalid GAMMA2; it should be a real number not less than 1; it is set to '//trimstr(wmssg))
+        write (wmsg, rfmt) gamma2
+        call warning(solver, 'Invalid GAMMA2; it should be a real number not less than 1; it is set to '//trimstr(wmsg))
     end if
 end if
 
@@ -281,15 +281,15 @@ if (rhobeg <= 0 .or. is_nan(rhobeg) .or. is_inf(rhobeg)) then
     else
         rhobeg = RHOBEG_DFT
     end if
-    write (wmssg, rfmt) rhobeg
-    call warning(solver, 'Invalid RHOBEG; it should be a positive number; it is set to '//trimstr(wmssg))
+    write (wmsg, rfmt) rhobeg
+    call warning(solver, 'Invalid RHOBEG; it should be a positive number; it is set to '//trimstr(wmsg))
 end if
 
 if (rhoend <= 0 .or. rhobeg < rhoend .or. is_nan(rhoend) .or. is_inf(rhoend)) then
     rhoend = max(EPS, min(TENTH * rhobeg, RHOEND_DFT))
-    write (wmssg, rfmt) rhoend
+    write (wmsg, rfmt) rhoend
     call warning(solver, 'Invalid RHOEND; it should be a positive number and RHOEND <= RHOBEG; '// &
-        & 'it is set to '//trimstr(wmssg))
+        & 'it is set to '//trimstr(wmsg))
 end if
 
 ! Validate CTOL
@@ -297,8 +297,8 @@ if (present(ctol)) then
     if (is_nan(ctol) .or. ctol < 0) then
         ctol = CTOL_DFT
         if (is_constrained_loc) then
-            write (wmssg, rfmt) ctol
-            call warning(solver, 'Invalid CTOL; it should be a positive number; it is set to '//trimstr(wmssg))
+            write (wmsg, rfmt) ctol
+            call warning(solver, 'Invalid CTOL; it should be a positive number; it is set to '//trimstr(wmsg))
         end if
     end if
 end if

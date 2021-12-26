@@ -81,7 +81,7 @@ public :: IK, IK_DFT
 public :: RP, DP, SP, QP, RP_DFT
 public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
 public :: REALMIN, EPS, HUGENUM, ALMOST_INFINITY, HUGEFUN, HUGECON
-public :: MSSGLEN, FNAMELEN
+public :: MSGLEN, FNAMELEN
 public :: OUTUNIT, STDIN, STDOUT, STDERR
 public :: RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, CTOL_DFT, IPRINT_DFT
 public :: ETA1_DFT, ETA2_DFT, GAMMA1_DFT, GAMMA2_DFT
@@ -169,7 +169,7 @@ real(RP), parameter :: HUGEFUN = TWO**min(100, MAXE / 2)
 real(RP), parameter :: HUGECON = HUGEFUN
 
 ! The maximal length of messages; used in output.f90 and fmexapi.F90
-integer, parameter :: MSSGLEN = 1000
+integer, parameter :: MSGLEN = 1000
 
 ! The maximal length of output file names; used in output.f90
 integer, parameter :: FNAMELEN = 1000
