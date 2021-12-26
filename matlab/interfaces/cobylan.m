@@ -325,6 +325,7 @@ else % The problem turns out 'normal' during prepdfo
     % m_nlceq = number of nonlinear equality constraints
     m = length(constr_x0); % number of constraints
     % Extract the options
+    iprint = options.iprint;
     maxfun = options.maxfun;
     rhobeg = options.rhobeg;
     rhoend = options.rhoend;
@@ -375,7 +376,7 @@ else % The problem turns out 'normal' during prepdfo
             f_x0 = fun(x0);
             ctol = eps;
             maxfilt = 2000;
-            [x, fx, exitflag, nf, fhist, constr, constrviolation, chist] = fcobylan(fun, con, x0, rhobeg, rhoend, maxfun, m, ftarget, constr_x0, f_x0, ctol, maxfilt);
+            [x, fx, exitflag, nf, fhist, constr, constrviolation, chist] = fcobylan(fun, con, x0, rhobeg, rhoend, maxfun, m, iprint, ftarget, constr_x0, f_x0, ctol, maxfilt);
         end
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
