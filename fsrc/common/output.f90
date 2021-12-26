@@ -8,7 +8,7 @@ module output_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, December 26, 2021 PM03:09:59
+! Last Modified: Sunday, December 26, 2021 PM08:59:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -36,7 +36,7 @@ character(len=*), parameter :: nf_fmt = '(/1A, '//ifmt//')'
 ! Format for NF at return.
 character(len=*), parameter :: retnf_fmt = '(1A, '//spaces//', 1A, '//ifmt//')'
 ! Format for RHO: 8 digits for base, 4 digits for exponent.
-character(len=*), parameter :: rfmt = '1PE16.8E4'
+character(len=*), parameter :: rfmt = '1PE17.8E4'
 ! Format for RHO and NF when RHO is updated, with or without CPEN.
 character(len=*), parameter :: rnf_fmt = '(/1A, '//rfmt//', '//spaces//', /1A, '//ifmt//')'
 character(len=*), parameter :: rpnf_fmt = '(/1A, '//rfmt//', '//spaces//', 1A, '//rfmt//', '//spaces//', /1A, '//ifmt//')'

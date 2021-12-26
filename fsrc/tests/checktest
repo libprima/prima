@@ -12,7 +12,7 @@ LOGFILE="$2"
 
 case "$1" in
 	-w|--warning)
-        WARNINGS="$(grep -i "warning" "$LOGFILE" \
+        WARNINGS="$(grep -i "warning\|remark" "$LOGFILE" \
             | grep -vi "WARNING --  When --chk x is specified" \
             | grep -vi "[0-9]\s*warning" \
             | grep -vi "in __debug_mod_MOD_warning" \
@@ -35,6 +35,7 @@ case "$1" in
         ERRORS="$(grep -i "err\|fail\|exception\|invalid\|bad\|overflow\|backtrace\|segmentation\|fault" "$LOGFILE" \
             | grep -vi "libbacktrac" \
             | grep -vi "[0-9]\s*error" \
+            | grep -vi "[0-9a-z]bad\|bad[0-9a-z]" \
             | grep -vi "Warning: [A-Z]*MS.*G: Failed to open file .*_output" \
             | grep -vi "Warning:\ Floating\ overflow\ occurred" \
             | grep -vi "Warning:\ Floating\ invalid\ operation\ occurred" \
