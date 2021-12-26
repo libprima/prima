@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, December 26, 2021 AM11:33:08
+! Last Modified: Sunday, December 26, 2021 PM09:57:17
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -1109,7 +1109,7 @@ end function project2
 
 function hypotenuse(x1, x2) result(r)
 ! HYPOTENUSE(X1, X2) returns SQRT(X1^2 + X2^2), handling over/underflow.
-use, non_intrinsic :: consts_mod, only : RP, ONE, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, ONE, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 implicit none
@@ -1123,7 +1123,7 @@ real(RP) :: r
 
 ! Local variables
 character(len=*), parameter :: srname = 'HYPOTENUSE'
-real(RP) :: x(2)
+real(RP) :: y(2)
 
 !====================!
 ! Calculation starts !
@@ -1134,15 +1134,21 @@ if (.not. is_finite(x1)) then
 elseif (.not. is_finite(x2)) then
     r = abs(x2)
 else
-    x = abs([x1, x2])
-    x = [minval(x), maxval(x)]
-    !if (x(1) > sqrt(REALMIN) .and. x(2) < sqrt(HUGENUM / 2.1_RP)) then
-    !    r = sqrt(sum(x**2))
+    y = abs([x1, x2])
+    y = [minval(y), maxval(y)]
+    !if (y(1) > sqrt(REALMIN) .and. y(2) < sqrt(HUGENUM / 2.1_RP)) then
+    !    r = sqrt(sum(y**2))
+    !elseif (y(2) > 0) then
+    !    r = y(2) * sqrt((y(1) / y(2))**2 + ONE)
     !else
-    !    r = x(2) * sqrt((x(1) / x(2))**2 + ONE)
+    !    r = ZERO
     !end if
-    ! It seems better in general to scale X before taking the hypotenuse.
-    r = x(2) * sqrt((x(1) / x(2))**2 + ONE)
+    ! Scaling seems to improve the precision in general.
+    if (y(2) > 0) then
+        r = y(2) * sqrt((y(1) / y(2))**2 + ONE)
+    else
+        r = ZERO
+    end if
 end if
 
 !====================!
