@@ -329,14 +329,17 @@ else
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 test_options.classical = 0;
-test_options.iprint = 0;
-test_options.quiet = true;
+%test_options.iprint = 0;
+%test_options.quiet = true;
 %test_options.classical = (randn < -1.2);
-%test_options.iprint = floor(3*rand);
-%test_options.quiet = (rand > 0.5);
+test_options.iprint = floor(3*rand);
+test_options.quiet = (rand > 0.5);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if mod(ir, 50) == 0 && exist('NEWUOA_output.txt', 'file')
     delete('NEWUOA_output.txt');
+end
+if mod(ir, 50) == 0 && exist('COBYLA_output.txt', 'file')
+    delete('COBYLA_output.txt');
 end
 if ir == 1
     test_options.npt = (n+2)*(n+1)/2;

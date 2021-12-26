@@ -114,7 +114,7 @@ C needed (e.g., when calling COBYLA).
       real(rp) :: f_x0, ctol
       real(rp), allocatable :: x(:), conval(:)
       real(rp) :: f, rhobeg, rhoend, maxfun_r, maxfilt_r, m_r, ftarget,
-     & resmax
+     & resmax, iprint_r
       integer :: info, iprint, allocate_status
 C info and iprint are inputs to COBYLA, which requires them to be
 C INTEGERs (not necessarily the same as mwSize)
@@ -136,9 +136,9 @@ C large problems.
        procedure(FUNCON) :: calcfc
 
 C Validate number of arguments.
-      if (nrhs .ne. 12) then
+      if (nrhs .ne. 13) then
          call mexErrMsgIdAndTxt ('fcobyla:nInput',
-     &   'fcobyla: 12 input argument required.')
+     &   'fcobyla: 13 input argument required.')
 C subroutine mexErrMsgIdAndTxt(character*(*) errorid, character*(*) errormsg)
       end if
       if (nlhs .gt. 8) then
@@ -202,38 +202,45 @@ C define maxfun = 1000, the class of maxfun is double! To get an
 C integer maxfun, we would have to define maxfun = int32(1000) or
 C maxfun = int64(1000)!
 
-C Input 8: ftarget (double scalar)
+C Input 8: iprint (double scalar)
       if (mxIsDouble(prhs(8)) .ne. 1 .or. mxGetM(prhs(8)) .ne. 1
      &    .or. mxGetN(prhs(8)) .ne. 1) then
           call mexErrMsgIdAndTxt('fcobyla:WrongInput',
-     &    'fcobyla: Input 8 should be a double.')
+     & 'fcobyla: Input 8 should be a double (with an integer value).')
       end if
-C Input 9: conval_x0 (double column, can be empty)
-      if (mxIsDouble(prhs(9)) .ne. 1 .or.
-     &(mxGetM(prhs(9)) .gt. 0 .and. mxGetN(prhs(9)) .gt. 1)) then
+C Input 9: ftarget (double scalar)
+      if (mxIsDouble(prhs(9)) .ne. 1 .or. mxGetM(prhs(9)) .ne. 1
+     &    .or. mxGetN(prhs(9)) .ne. 1) then
           call mexErrMsgIdAndTxt('fcobyla:WrongInput',
-     &    'fcobyla: Input 9 should be a column vector of doubles.')
+     &    'fcobyla: Input 9 should be a double.')
       end if
-C Input 10: f_x0 (double scalar)
-      if (mxIsDouble(prhs(10)) .ne. 1 .or. mxGetM(prhs(10)) .ne. 1
-     &    .or. mxGetN(prhs(10)) .ne. 1) then
+!C Input 10: conval_x0 (double column, can be empty)
+      if (mxIsDouble(prhs(10)) .ne. 1 .or.
+     &(mxGetM(prhs(10)) .gt. 0 .and.
+     &mxGetN(prhs(10)) .gt. 1)) then
           call mexErrMsgIdAndTxt('fcobyla:WrongInput',
-     &    'fcobyla: Input 10 should be a double.')
+     &    'fcobyla: Input 10 should be a column vector of doubles.')
       end if
-C Input 11: ctol (double scalar)
+C Input 11: f_x0 (double scalar)
       if (mxIsDouble(prhs(11)) .ne. 1 .or. mxGetM(prhs(11)) .ne. 1
      &    .or. mxGetN(prhs(11)) .ne. 1) then
           call mexErrMsgIdAndTxt('fcobyla:WrongInput',
      &    'fcobyla: Input 11 should be a double.')
       end if
-C Input 12: maxfilt (double scalar)
+C Input 12: ctol (double scalar)
       if (mxIsDouble(prhs(12)) .ne. 1 .or. mxGetM(prhs(12)) .ne. 1
      &    .or. mxGetN(prhs(12)) .ne. 1) then
           call mexErrMsgIdAndTxt('fcobyla:WrongInput',
-     & 'fcobyla: Input 12 should be a double (with an integer value).')
+     &    'fcobyla: Input 12 should be a double.')
+      end if
+C Input 13: maxfilt (double scalar)
+      if (mxIsDouble(prhs(13)) .ne. 1 .or. mxGetM(prhs(13)) .ne. 1
+     &    .or. mxGetN(prhs(13)) .ne. 1) then
+          call mexErrMsgIdAndTxt('fcobyla:WrongInput',
+     & 'fcobyla: Input 13 should be a double (with an integer value).')
       end if
 
-C Read the inputs (there are 11)
+C Read the inputs (there are 13)
       fun_ptr = prhs(1)
       constr_ptr = prhs(2)
       n = mxGetM(prhs(3)) ! This is why n should be of type mwSize
@@ -278,21 +285,23 @@ C an INTEGER (not necessary the same as mwSize)
           call mexErrMsgIdAndTxt('fcobyla:IntError',
      &    'fcobyla: m does not equal m_int.')
       end if
+      call mxCopyPtrToReal8(_MGETDB(prhs(8)), iprint_r, mwOne)
+      iprint = int(iprint_r, kind(iprint))
 C m will be used in mxCopyPtrToReal8, requiring it to be of type mwSize
 C m_int will be an input to COBYLA, which requires it to be
 C an INTEGER (not necessary the same as mwSize)
-      call mxCopyPtrToReal8(_MGETDB(prhs(8)), ftarget, mwOne)
-      call mxCopyPtrToReal8(_MGETDB(prhs(10)), f_x0, mwOne)
-      call mxCopyPtrToReal8(_MGETDB(prhs(11)), ctol, mwOne)
+      call mxCopyPtrToReal8(_MGETDB(prhs(9)), ftarget, mwOne)
+      call mxCopyPtrToReal8(_MGETDB(prhs(11)), f_x0, mwOne)
+      call mxCopyPtrToReal8(_MGETDB(prhs(12)), ctol, mwOne)
 
-      call mxCopyPtrToReal8(_MGETDB(prhs(12)),
+      call mxCopyPtrToReal8(_MGETDB(prhs(13)),
      &     maxfilt_r, mwOne)
       maxfilt = int(maxfilt_r, kind(maxfilt))
 
-      if (m .gt. 0 .and. m .ne. mxGetM(prhs(9))) then
+      if (m .gt. 0 .and. m .ne. mxGetM(prhs(10))) then
 C m is number of constraints
           call mexErrMsgIdAndTxt('fcobyla:WrongInput',
-     &    'fcobyla: Length of input 9 should be m (input 7).')
+     &    'fcobyla: Length of input 10 should be m (input 10).')
       end if
       if (allocated(conval_x0)) deallocate (conval_x0)
       allocate (conval_x0(m_int), stat=allocate_status)
@@ -300,7 +309,7 @@ C m is number of constraints
           call mexErrMsgIdAndTxt('fcobyla:InsufficientMemory',
      &    'fcobyla: allocate(conval_x0) failed.')
       end if
-      call mxCopyPtrToReal8(_MGETDB(prhs(9)),
+      call mxCopyPtrToReal8(_MGETDB(prhs(10)),
      &     conval_x0(1:m), m)
 C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
 
@@ -324,7 +333,6 @@ C     Initialize global variables
       chist = huge(0.0_DP)
 
 C     Call COBYLA
-      iprint = 0
       ctol = epsilon(0.0_DP)
       maxhist = maxfun
 !      call COBYLA(calcfc, n_int, m_int, x, rhobeg, rhoend, iprint,
