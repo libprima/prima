@@ -9,16 +9,16 @@ The pre-2003 features include the following.
 
 For example,
 
-integer, parameter :: MSSGLEN = 200
-character(len = MSSGLEN) :: mssg
-mssg = 'ABC'
-print *, trim(mssg)
+integer, parameter :: MSGLEN = 200
+character(len = MSGLEN) :: msg
+msg = 'ABC'
+print *, trim(msg)
 
 In Fortran 2003, this can be replaced by
 
-character(len=:), allocatable :: mssg
-mssg = 'ABC'  ! Automatic allocation upon intrinsic assignment.
-print *, mssg
+character(len=:), allocatable :: msg
+msg = 'ABC'  ! Automatic allocation upon intrinsic assignment.
+print *, msg
 
 HOW TO FIND: search for 'character' or 'character(len' or 'len = ',
 and also 'trim('.

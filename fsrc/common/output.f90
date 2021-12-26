@@ -13,7 +13,7 @@ module output_mod
 
 implicit none
 private
-public :: retmssg, rhomssg, fmssg, cpenmssg
+public :: retmsg, rhomsg, fmsg, cpenmsg
 
 !--------------------------------------------------------------------------------------------------!
 ! Formats.
@@ -50,11 +50,11 @@ character(len=*), parameter :: p_fmt = '(/1A, '//pfmt//')'
 contains
 
 
-subroutine retmssg(solver, info, iprint, nf, f, x, cstrv, constr)
+subroutine retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine prints messages at return.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, MSSGLEN, FNAMELEN, OUTUNIT, STDOUT, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, MSGLEN, FNAMELEN, OUTUNIT, STDOUT, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: info_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, SMALL_TR_RADIUS
 use, non_intrinsic :: info_mod, only : TRSUBP_FAILED, NAN_INF_X, NAN_INF_F, NAN_MODEL, DAMAGING_ROUNDING
@@ -73,10 +73,10 @@ real(RP), intent(in), optional :: cstrv
 real(RP), intent(in), optional :: constr(:)
 
 ! Local variables
-character(len=*), parameter :: srname = 'RETMSSG'
+character(len=*), parameter :: srname = 'RETMSG'
 character(len=3) :: fstat  ! 'OLD' or 'NEW'
 character(len=FNAMELEN) :: fout
-character(len=MSSGLEN) :: mssg
+character(len=MSGLEN) :: msg
 integer :: ios  ! IO status of the writing. Should be an integer of default kind.
 integer :: wunit ! Logical unit for the writing. Should be an integer of default kind.
 integer(IK), parameter :: valid_exit_flags(9) = [FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, &
@@ -129,32 +129,32 @@ end if
 ! Decide the exit message.
 select case (info)
 case (FTARGET_ACHIEVED)
-    mssg = 'the target function value is achieved.'
+    msg = 'the target function value is achieved.'
 case (MAXFUN_REACHED)
-    mssg = 'the objective function has been evaluated MAXFUN times.'
+    msg = 'the objective function has been evaluated MAXFUN times.'
 case (MAXTR_REACHED)
-    mssg = 'the maximal number of trust region iterations has been reached.'
+    msg = 'the maximal number of trust region iterations has been reached.'
 case (SMALL_TR_RADIUS)
-    mssg = 'the trust region radius reaches its lower bound.'
+    msg = 'the trust region radius reaches its lower bound.'
 case (TRSUBP_FAILED)
-    mssg = 'a trust region step has failed to reduce the quadratic model.'
+    msg = 'a trust region step has failed to reduce the quadratic model.'
 case (NAN_INF_X)
-    mssg = 'NaN or Inf occurs in x.'
+    msg = 'NaN or Inf occurs in x.'
 case (NAN_INF_F)
-    mssg = 'the objective function returns NaN/+Inf.'
+    msg = 'the objective function returns NaN/+Inf.'
 case (NAN_MODEL)
-    mssg = 'NaN occurs in the models.'
+    msg = 'NaN occurs in the models.'
 case (DAMAGING_ROUNDING)
-    mssg = 'rounding errors are becoming damaging.'
+    msg = 'rounding errors are becoming damaging.'
 case default
-    mssg = 'UNKNOWN EXIT FLAG'
+    msg = 'UNKNOWN EXIT FLAG'
 end select
 
 ! Print the message.
 if (abs(iprint) >= 3) then
     write (wunit, '(1X)')
 end if
-write (wunit, '(/1A)') 'Return from '//solver//' because '//trim(mssg)
+write (wunit, '(/1A)') 'Return from '//solver//' because '//trim(msg)
 write (wunit, retnf_fmt) 'At the return from '//solver, 'Number of function evaluations = ', nf
 write (wunit, f_fmt) 'Least function value = ', f
 if (is_constrained) then
@@ -173,10 +173,10 @@ end if
 !====================!
 !  Calculation ends  !
 !====================!
-end subroutine retmssg
+end subroutine retmsg
 
 
-subroutine rhomssg(solver, iprint, nf, f, rho, x, cstrv, constr, cpen)
+subroutine rhomsg(solver, iprint, nf, f, rho, x, cstrv, constr, cpen)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine prints messages when RHO is updated.
 !--------------------------------------------------------------------------------------------------!
@@ -198,7 +198,7 @@ real(RP), intent(in), optional :: constr(:)
 real(RP), intent(in), optional :: cpen
 
 ! Local variables
-character(len=*), parameter :: srname = 'RHOMSSG'
+character(len=*), parameter :: srname = 'RHOMSG'
 character(len=3) :: fstat  ! 'OLD' or 'NEW'
 character(len=FNAMELEN) :: fout
 integer :: ios  ! IO status of the writing. Should be an integer of default kind.
@@ -268,10 +268,10 @@ end if
 !====================!
 !  Calculation ends  !
 !====================!
-end subroutine rhomssg
+end subroutine rhomsg
 
 
-subroutine cpenmssg(solver, iprint, cpen)
+subroutine cpenmsg(solver, iprint, cpen)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine prints a message when CPEN is updated.
 !--------------------------------------------------------------------------------------------------!
@@ -287,7 +287,7 @@ integer(IK), intent(in) :: iprint
 real(RP), intent(in), optional :: cpen
 
 ! Local variables
-character(len=*), parameter :: srname = 'CPENMSSG'
+character(len=*), parameter :: srname = 'CPENMSG'
 character(len=3) :: fstat  ! 'OLD' or 'NEW'
 character(len=FNAMELEN) :: fout
 integer :: ios  ! IO status of the writing. Should be an integer of default kind.
@@ -314,10 +314,10 @@ write (wunit, p_fmt) 'Increase CPEN to ', cpen
 if (iprint < 0) then
     close (wunit)
 end if
-end subroutine cpenmssg
+end subroutine cpenmsg
 
 
-subroutine fmssg(solver, iprint, nf, f, x, cstrv, constr)
+subroutine fmsg(solver, iprint, nf, f, x, cstrv, constr)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine prints messages at each iteration.
 !--------------------------------------------------------------------------------------------------!
@@ -337,7 +337,7 @@ real(RP), intent(in), optional :: cstrv
 real(RP), intent(in), optional :: constr(:)
 
 ! Local variables
-character(len=*), parameter :: srname = 'FMSSG'
+character(len=*), parameter :: srname = 'FMSG'
 character(len=3) :: fstat  ! 'OLD' or 'NEW'
 character(len=FNAMELEN) :: fout
 integer :: ios  ! IO status of the writing. Should be an integer of default kind.
@@ -400,7 +400,7 @@ end if
 !====================!
 !  Calculation ends  !
 !====================!
-end subroutine fmssg
+end subroutine fmsg
 
 
 end module output_mod

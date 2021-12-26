@@ -105,7 +105,7 @@ subroutine cobyla(calcfc, x, f, &
 use, non_intrinsic :: consts_mod, only : DEBUGGING
 use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, FTARGET_DFT, IPRINT_DFT
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TEN, TENTH, EPS, MSSGLEN
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TEN, TENTH, EPS, MSGLEN
 use, non_intrinsic :: debug_mod, only : assert, errstop, warning
 use, non_intrinsic :: evaluate_mod, only : eval_count, f_x0, constr_x0
 use, non_intrinsic :: history_mod, only : prehist
@@ -152,7 +152,7 @@ real(RP), intent(out), optional :: cstrv
 character(len=*), parameter :: ifmt = '(I0)'  ! I0: use the minimum number of digits needed to print
 character(len=*), parameter :: solver = 'COBYLA'
 character(len=*), parameter :: srname = 'COBYLA'
-character(len=MSSGLEN) :: wmssg
+character(len=MSGLEN) :: wmsg
 integer(IK) :: i
 integer(IK) :: info_loc
 integer(IK) :: iprint_loc
@@ -375,8 +375,8 @@ deallocate (chist_loc)
 
 ! If NF_LOC > MAXHIST_LOC, warn that not all history is recorded.
 if ((present(xhist) .or. present(fhist) .or. present(conhist) .or. present(chist)) .and. maxhist_loc < nf_loc) then
-    write (wmssg, ifmt) maxhist_loc
-    call warning(solver, 'Only the history of the last '//trim(wmssg)//' iteration(s) is recoreded')
+    write (wmsg, ifmt) maxhist_loc
+    call warning(solver, 'Only the history of the last '//trim(wmsg)//' iteration(s) is recoreded')
 end if
 
 ! Postconditions

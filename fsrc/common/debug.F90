@@ -44,30 +44,30 @@ end if
 end subroutine assert
 
 
-subroutine warning(srname, mssg)
+subroutine warning(srname, msg)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine prints 'Warning: '//TRIM(SRNAME)//': '//TRIM(MSSG)//'.'
+! This subroutine prints 'Warning: '//TRIM(SRNAME)//': '//TRIM(MSG)//'.'
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : STDERR
 implicit none
 character(len=*), intent(in) :: srname
-character(len=*), intent(in) :: mssg
+character(len=*), intent(in) :: msg
 
-write (STDERR, '(/1A/)') 'Warning: '//trim(srname)//': '//trim(mssg)//'.'
+write (STDERR, '(/1A/)') 'Warning: '//trim(srname)//': '//trim(msg)//'.'
 end subroutine warning
 
 
-subroutine errstop(srname, mssg)
+subroutine errstop(srname, msg)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine prints a backtrace and 'ERROR: '//TRIM(SRNAME)//': '//TRIM(MSSG)//'!', then stop.
+! This subroutine prints a backtrace and 'ERROR: '//TRIM(SRNAME)//': '//TRIM(MSG)//'!', then stop.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : STDERR
 implicit none
 character(len=*), intent(in) :: srname
-character(len=*), intent(in) :: mssg
+character(len=*), intent(in) :: msg
 
 call backtr()
-write (STDERR, '(/1A/)') 'ERROR: '//trim(srname)//': '//trim(mssg)//'!'
+write (STDERR, '(/1A/)') 'ERROR: '//trim(srname)//': '//trim(msg)//'!'
 stop  ! This means to stop the whole program.
 end subroutine errstop
 

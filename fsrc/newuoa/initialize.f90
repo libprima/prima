@@ -47,7 +47,7 @@ use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : INFO_DFT
 use, non_intrinsic :: linalg_mod, only : eye, sort
-use, non_intrinsic :: output_mod, only : fmssg
+use, non_intrinsic :: output_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : FUN
 
 implicit none
@@ -137,13 +137,13 @@ xpt(:, 1) = ZERO
 xpt(:, 2:n + 1) = rhobeg * eye(n)
 xpt(:, n + 2:npt) = -rhobeg * eye(n, npt - n - 1_IK)  ! XPT(:, 2*N+2 : NPT) = ZERO if it is nonempty.
 
-! Set FVAL(1 : 2*N + 1) by evaluating F. Totally parallelizable except for FMSSG.
+! Set FVAL(1 : 2*N + 1) by evaluating F. Totally parallelizable except for FMSG.
 do k = 1, min(npt, int(2 * n + 1, kind(npt)))
     x = xpt(:, k) + xbase
     call evalf(calfun, x, f)
     evaluated(k) = .true.
     fval(k) = f
-    call fmssg(solver, iprint, k, f, x)
+    call fmsg(solver, iprint, k, f, x)
     ! Save X and F into the history.
     call savehist(k, f, x, fhist, xhist)
     ! Check whether to exit.
@@ -190,12 +190,12 @@ end where
 ! Set XPT(:, 2*N + 2 : NPT). It depends on IJ and hence on FVAL(2 : 2*N + 1).
 xpt(:, 2 * n + 2:npt) = xpt(:, ij(:, 1)) + xpt(:, ij(:, 2))
 
-! Set FVAL(2*N + 2 : NPT) by evaluating F. Totally parallelizable except for FMSSG.
+! Set FVAL(2*N + 2 : NPT) by evaluating F. Totally parallelizable except for FMSG.
 if (info == INFO_DFT) then
     do k = int(2 * n + 2, kind(k)), npt
         x = xpt(:, k) + xbase
         call evalf(calfun, x, f)
-        call fmssg(solver, iprint, k, f, x)
+        call fmsg(solver, iprint, k, f, x)
         evaluated(k) = .true.
         fval(k) = f
         ! Save X and F into the history.
