@@ -103,7 +103,7 @@ else
     nrand_loc = NRAND_DFT
 end if
 
-do iprob = 1, 6!nprobs
+do iprob = 1, nprobs
     probname = probs_loc(iprob)
     if (any(probname == fix_dim_probs)) then
         call construct(prob, probname)  ! Construct the testing problem.
