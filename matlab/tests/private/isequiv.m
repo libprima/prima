@@ -306,7 +306,9 @@ x0 = prob.x0;
 n = length(x0);
 
 % Some randomization
-rng(ceil(1e5*abs(cos(1e5*sin(1e5*(sum(double(pname))*n*ir))))));
+% Set seed using pname, n, and ir. We ALTER THE SEED monthly to test the solvers as much as possible.
+ym = 100*mod(year(date), 10) + month(date);
+rng(ym+ceil(1e5*abs(cos(1e5*sin(1e5*(sum(double(pname))*n*ir))))));
 prob.x0 = x0 + 0.5*randn(size(x0));
 test_options = struct();
 test_options.debug = true;
