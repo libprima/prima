@@ -99,20 +99,14 @@ integer :: w
 
 ! Local variables
 integer :: jan1
-integer :: dom
-integer :: moy
 integer :: values(8)
 integer :: y
 
 if (present(ymd)) then
     y = ymd(1)
-    moy = ymd(2)
-    dom = ymd(3)
 else
     call date_and_time(values=values)
     y = values(1)
-    moy = values(2)
-    dom = values(3)
 end if
 
 jan1 = whatday([y, 1, 1])
@@ -158,20 +152,14 @@ integer, intent(in), optional :: ymd(3)
 ! Outputs
 integer :: d
 
-integer :: dom
-integer :: moy
 integer :: values(12)
 integer :: y
 
 if (present(ymd)) then
     y = ymd(1)
-    moy = ymd(2)
-    dom = ymd(3)
 else
     call date_and_time(values=values)
     y = values(1)
-    moy = values(2)
-    dom = values(3)
 end if
 
 d = 0

@@ -221,6 +221,7 @@ solv_options.rhobeg = options.rhobeg;
 solv_options.rhoend = options.rhoend;
 solv_options.maxfun = min(options.maxfun_dim*n, options.maxfun);
 solv_options.ftarget = options.ftarget;
+solv_options.iprint = 0;
 solv_options.quiet = true;
 solv_options.debug = false;
 solv_options.chkfunval = false;
