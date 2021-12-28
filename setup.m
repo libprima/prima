@@ -144,7 +144,8 @@ if isempty(options)
     options = struct();
 end
 opt_option = '-O';  % Optimize the object code; this is the default
-if isfield(options, 'debug') && options.debug
+debug_flag = (isfield(options, 'debug') && options.debug);
+if debug_flag
     opt_option = '-g';  % Debug mode; -g disables MEX's behavior of optimizing built object code
 end
 % N.B.: -O and -g may lead to (slightly) different behaviors of the mexified code. This was observed
@@ -246,6 +247,16 @@ try
     % Compilation of the common files
     % gateways_intersection_form/debug.F contains debugging subroutines tailored for MEX.
     copyfile(fullfile(gateways_intersection_form, 'debug.F'), fsrc_common);
+    % ppf.h contains preprocessing directives. Set __DEBUGGING__ according to debug_flag.
+    header_file = fullfile(fsrc_common, 'ppf.h');
+    header_file_bak = fullfile(fsrc_common, 'ppf.h.bak');
+    copyfile(header_file, header_file_bak);
+    if debug_flag
+        rep_str(header_file, '#define __DEBUGGING__ 0', '#define __DEBUGGING__ 1');
+    else
+        rep_str(header_file, '#define __DEBUGGING__ 1', '#define __DEBUGGING__ 0');
+    end
+    % Common Fortran source files.
     common_files = regexp(fileread(fullfile(fsrc_common, filelist)), '\n', 'split');
     common_files = strtrim(common_files(~cellfun(@isempty, common_files)));
     common_files = fullfile(fsrc_common, common_files);
@@ -318,10 +329,16 @@ try
     cellfun(@(filename) delete(filename), files_with_wildcard(interfaces_private, '*.mod'));
 
 catch exception % NOTE: Everything above 'catch' is conducted in interfaces_private.
+    if exist(header_file_bak, 'file')  % Restore header_file
+        movefile(header_file_bak, header_file);
+    end
     cd(cpwd); % In case of an error, change directory back to cpwd
     rethrow(exception)
 end
 
+if exist(header_file_bak, 'file')  % Restore header_file
+    movefile(header_file_bak, header_file);
+end
 cd(cpwd); % Compilation completes successfully; change directory back to cpwd
 
 % Compilation ends
@@ -576,12 +593,39 @@ if fid == -1
     error('Cannot open file %s.', filename);
 end
 
-% Read the file into a cell of strings of strings
+% Read the file into a cell of strings
 data = textscan(fid, '%s', 'delimiter', '\n', 'whitespace', '');
 fclose(fid);
 cstr = data{1};
 % Remove the rows containing string
 cstr(strcmp(cstr, string)) = [];
+
+% Save the file again
+fid = fopen(filename, 'w');
+if fid == -1
+    error('Cannot open file %s.', filename);
+end
+fprintf(fid, '%s\n', cstr{:});
+fclose(fid);
+return
+
+
+%% Function for replacing all the string `old_str` with the string `new_str` in a file.
+function rep_str(filename, old_str, new_str)
+%REP_STR replaces all `old_str` in filename with `new_str`.
+fid = fopen(filename, 'r');
+if fid == -1
+    error('Cannot open file %s.', filename);
+end
+
+% Read the file into a cell of strings
+data = textscan(fid, '%s', 'delimiter', '\n', 'whitespace', '');
+fclose(fid);
+cstr = data{1};
+% Replace `old_str` with `new_str`.
+for i = 1 : length(cstr)
+    cstr{i} = strrep(cstr{i}, old_str, new_str);
+end
 
 % Save the file again
 fid = fopen(filename, 'w');
