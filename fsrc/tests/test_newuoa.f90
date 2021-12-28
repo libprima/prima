@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, December 28, 2021 AM12:54:02
+! Last Modified: Tuesday, December 28, 2021 AM11:46:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -20,6 +20,7 @@ contains
 subroutine test_solver(probs, mindim, maxdim, dimstride, nrand)
 
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN, ZERO, HUGENUM
+use, non_intrinsic :: datetime_mod, only : year, week
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: newuoa_mod, only : newuoa
 use, non_intrinsic :: noise_mod, only : noisy, noisy_calfun, orig_calfun
@@ -38,8 +39,7 @@ integer(IK), intent(in), optional :: nrand
 
 character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)
-integer :: values(8)
-integer :: ym
+integer :: yw
 integer(IK) :: dimstride_loc
 integer(IK) :: iprint
 integer(IK) :: iprob
@@ -105,10 +105,9 @@ do iprob = 1, nprobs
             & (n + 1_IK) * (n + 2_IK) / 2_IK + 1_IK]
         do irand = 1, int(size(npt_list) + max(0_IK, nrand_loc), kind(irand))
             ! Initialize the random seed using N, IRAND, IK, and RP.
-            ! We ALTER THE SEED monthly to test the solvers as much as possible.
-            call date_and_time(values=values)
-            ym = 100 * mod(values(1), 10) + values(2)
-            call setseed(int(sum(istr(probname)) + n + irand + IK + RP + ym))
+            ! We ALTER THE SEED weekly to test the solvers as much as possible.
+            yw = 100 * mod(year(), 100) + week()
+            call setseed(int(sum(istr(probname)) + n + irand + IK + RP + yw))
             if (irand <= size(npt_list)) then
                 npt = npt_list(irand)
             else
