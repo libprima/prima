@@ -307,6 +307,8 @@ n = length(x0);
 
 % Some randomization
 % Set seed using pname, n, and ir. We ALTER THE SEED weekly to test the solvers as much as possible.
+% N.B.: The weeknum function considers the week containing January 1 to be the first week of the
+% year, and increments the number every SUNDAY.
 yw = 100*mod(year(date), 100) + weeknum(date);
 rng(yw+ceil(1e5*abs(cos(1e5*sin(1e5*(sum(double(pname))*n*ir))))));
 prob.x0 = x0 + 0.5*randn(size(x0));
