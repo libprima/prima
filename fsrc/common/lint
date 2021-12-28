@@ -36,7 +36,7 @@ for COMPILER in $COMPILER_LIST; do
     fi
     for TEST in $TESTS ; do
         INFO="$(make "$COMPILER"test_"$TEST"_tst_c."$SOLVER" \
-            | grep -i "starts\|warning\|error\|info\|fail|abort" \
+            | grep -i "starts\|warning\|error\|info\|fail\|abort\|questionable" \
             | grep -vi "[0-9]\s*warning\|[0-9]\s*error\|[0-9]\s*info\|info.f90\|information\|--warning\|--error" \
             | grep -v "interpolation error" \
             | grep -v "WARNING --  When --chk x is specified" \
@@ -53,7 +53,7 @@ for COMPILER in $COMPILER_LIST; do
         elif [[ "$COMPILER" == "n" ]] ; then
             INFO="$(echo "$INFO" | grep -vi "Expression in IF construct is constant")"
         fi
-        echo "$INFO" | grep -i --color "starts\|warning\|error\|info\|fail|abort"
+        echo "$INFO" | grep -i --color "starts\|warning\|error\|info\|fail\||abort\|questionable"
         if echo "$INFO" | grep -iq "error\|fail\|abort" ; then
             if [[ -f "$TEST_LOG_DIR"/"$COMPILER"test_"$TEST"_tst_c.log ]] ; then
                 LOGFILE="$COMPILER"test_"$TEST"_tst_c.log

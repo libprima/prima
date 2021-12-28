@@ -12,7 +12,7 @@ LOGFILE="$2"
 
 case "$1" in
 	-w|--warning)
-        WARNINGS="$(grep -i "warning\|remark" "$LOGFILE" \
+        WARNINGS="$(grep -i "warning\|Remark\|Questionable" "$LOGFILE" \
             | grep -vi "WARNING --  When --chk x is specified" \
             | grep -vi "[0-9]\s*warning" \
             | grep -vi "in __debug_mod_MOD_warning" \
