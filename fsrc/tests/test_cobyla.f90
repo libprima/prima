@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, December 28, 2021 PM12:06:46
+! Last Modified: Tuesday, December 28, 2021 PM04:00:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -102,7 +102,7 @@ end if
 if (present(nrand)) then
     nrand_loc = nrand
 else
-    nrand_loc = NRAND_DFT
+    nrand_loc = NRAND_DFT * 5_IK  ! More tests since we cannot vary NPT as other solvers.
 end if
 
 do iprob = 1, nprobs
