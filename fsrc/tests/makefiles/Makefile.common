@@ -463,7 +463,9 @@ $(TESTS_C) $(TESTS_INT_C):
 	@if echo $@ | grep -q "9test\|ltest" ; then \
 		printf "\n$@ is skipped!\n\n" | tee -a "$(LOG_DIR)/$@.log" ; \
 	elif [[ -x $@_c ]] ; then \
-		set -o pipefail && ./$@_c 2>&1 | tee -a "$(LOG_DIR)/$@.log" ; \
+		set -o pipefail && ./$@_c 2>&1 \
+		| grep -v "forrtl: warning (406): fort: (1): In call to WHATDAY, an array temporary was created for argument #1" \
+		| tee -a "$(LOG_DIR)/$@.log" ; \
 	else \
 		@printf "\n$@_c is not executable!\n\n" | tee -a "$(LOG_DIR)/$@.log" ; \
 		exit 126 ; \
