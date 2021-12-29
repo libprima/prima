@@ -1,8 +1,7 @@
 module datetime_mod
 implicit none
 private
-public :: year
-public :: week
+public :: year, week
 
 
 contains
@@ -152,7 +151,10 @@ integer, intent(in), optional :: ymd(3)
 ! Outputs
 integer :: d
 
-integer :: values(12)
+integer :: ending
+integer :: i
+integer :: starting
+integer :: values(8)
 integer :: y
 
 if (present(ymd)) then
@@ -163,24 +165,12 @@ else
 end if
 
 d = 0
-if (y > 2000) then
-    do y = 2000, y - 1
-        if (isleap(y)) then
-            d = d + 366
-        else
-            d = d + 365
-        end if
-    end do
-elseif (y < 2000) then
-    do y = y, 1999
-        if (isleap(y)) then
-            d = d - 366
-        else
-            d = d - 365
-        end if
-    end do
-end if
-d = d + day(ymd) - 1
+starting = min(2000, y)
+ending = max(2000, y)
+do i = starting, ending - 1
+    d = d + merge(tsource=366, fsource=365, mask=isleap(i))
+end do
+d = sign(d, y - 2000) + day(ymd) - 1
 end function days_since_20000101
 
 
