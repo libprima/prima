@@ -50,4 +50,4 @@ MAKEFILE_DIR = ./makefiles
 	@cd test.$(SOLVER)/ && $(MAKE) $(subst .$(SOLVER),,$@) --no-print-directory
 
 clean:
-	@rm -rf log test.cobyla test.uobyqa test.newuoa test.bobyqa test.lincoa
+	@rm -rf log test.cobyla test.uobyqa test.newuoa test.bobyqa test.lincoa || :
