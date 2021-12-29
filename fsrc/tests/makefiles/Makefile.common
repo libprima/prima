@@ -298,9 +298,20 @@ gtest_i2_r16_d1_tst_c gtest_i4_r16_d1_tst_c gtest_i8_r16_d1_tst_c gtest_i2_r16_d
 	FC = $(GFORT) -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
 
 # Intel ifort
+# -standard-semantics: enforce the compiler to behave according to the current standard (F2018 as of Dec 2021).
+#  See https://www.intel.com/content/www/us/en/develop/documentation/fortran-compiler-oneapi-dev-guide-and-reference/top/compiler-reference/compiler-options/compiler-option-details/language-options/standard-semantics.html
+#  Option standard-semantics enables option fpscomp logicals and the following settings for option
+#  assume: byterecl, failed_images, fpe_summary, ieee_compares, ieee_fpe_flags (if the fp-model
+#  option setting is strict or precise), minus0, nan_compares, noold_inquire_recl,
+#  noold_ldout_format, noold_ldout_zero, noold_maxminloc, noold_unit_star, noold_xor,
+#  protect_parens, realloc_lhs1, recursion, std_intent_in, std_minus0_rounding1, std_mod_proc_name,
+#  and std_value1.
+#  We impose -assume norecursion, because -standard-semantics will enable -assume recursion, which
+#  will cause a warning; due to -warn errors, the compilation will abort. See
+#  https://www.intel.com/content/www/us/en/develop/documentation/fortran-compiler-oneapi-dev-guide-and-reference/top/language-reference/a-to-z-reference/q-to-r/recursive-and-non-recursive.html
 IFORT := ifort
-IFORT := $(IFORT) -warn errors
-IFORT := $(IFORT) -stand f$(FS) -warn all -check all -debug extended -fimplicit-none \
+IFORT := $(IFORT) -warn errors #-diag-error-limit 1
+IFORT := $(IFORT) -stand f$(FS) -standard-semantics -assume norecursion -warn all -check all -debug extended -fimplicit-none \
 	-traceback -debug-parameters all -fp-stack-check
 itest_i2_r4_d1_tst_c itest_i4_r4_d1_tst_c itest_i8_r4_d1_tst_c itest_i2_r4_d0_tst_c itest_i4_r4_d0_tst_c itest_i8_r4_d0_tst_c: \
 	FC = $(IFORT) -fp-trap=divzero
