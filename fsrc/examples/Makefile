@@ -22,11 +22,12 @@ FSTD = 20$(FS)
 # Default options for all the compilers.
 FFLAGS = -O3
 # Common directories.
-COMMON = ../common/
+COMMON = ../common
 # Headers.
 HEADERS = $(COMMON)/*.h
 # Solver directories.
-NEWUOA = ../newuoa/
+NEWUOA = ../newuoa
+SOLVER := $(NEWUOA)
 
 ####################################################################################################
 # All the tests
@@ -45,31 +46,31 @@ test_newuoa:
 # Here are the compilers to test.
 
 # Absoft af95
-atest_newuoa: FC = af95 -no-pie
+ates%: FC = af95 -no-pie
 
 # AMD AOCC Flang
-dtest_newuoa: FC = /opt/AMD/aocc-compiler-3.1.0/bin/flang
+dtes%: FC = /opt/AMD/aocc-compiler-3.1.0/bin/flang
 
 # LLVM Flang
-ftest_newuoa: FC = flang
+ftes%: FC = flang
 
 # GNU gfortran
-gtest_newuoa: FC = gfortran
+gtes%: FC = gfortran
 
 # Intel ifort
-itest_newuoa: FC = ifort
+ites%: FC = ifort
 
 # NAG nagfor
-ntest_newuoa: FC = nagfor
+ntes%: FC = nagfor
 
 # NVIDIA nvfortran (aka, pgfortran)
-vtest_newuoa: FC = nvfortran
+vtes%: FC = nvfortran
 
 # Oracle sunf95
-stest_newuoa: FC = sunf95
+stes%: FC = sunf95
 
 # Intel ifx
-xtest_newuoa: FC = ifx
+xtes%: FC = ifx
 
 ####################################################################################################
 # Making a compiler-specific test
@@ -77,11 +78,21 @@ xtest_newuoa: FC = ifx
 	./$<
 	make clean
 
+%_cobyla: %_cobyla_exmp
+	./$<
+	make clean
+
 ####################################################################################################
 # Compile the binary needed for a compiler-specific test
 %_newuoa_exmp: newuoa_exmp.f90 \
 	consts.o info.o debug.o memory.o infnan.o linalg.o \
-	ratio.o resolution.o history.o selectx.o checkexit.o output.o preproc.o pintrf.o evaluate.o \
+	ratio.o resolution.o history.o selectx.o checkexit.o output.o string.o preproc.o pintrf.o evaluate.o \
+	initialize.o trustregion.o vlagbeta.o geometry.o shiftbase.o update.o newuob.o newuoa.o
+	$(FC) $(FFLAGS) -o $@ newuoa_exmp.f90 *.o
+
+%_cobyla_exmp: cobyla_exmp.f90 \
+	consts.o info.o debug.o memory.o infnan.o linalg.o \
+	ratio.o resolution.o history.o selectx.o checkexit.o output.o string.o preproc.o pintrf.o evaluate.o \
 	initialize.o trustregion.o vlagbeta.o geometry.o shiftbase.o update.o newuob.o newuoa.o
 	$(FC) $(FFLAGS) -o $@ newuoa_exmp.f90 *.o
 
@@ -90,11 +101,11 @@ xtest_newuoa: FC = ifx
 	$(FC) $(FFLAGS) -c -o $@ $<
 
 # Compile the Fortran code providing solver-specific modules
-%.o: $(NEWUOA)/%.f90 $(HEADERS)
+%.o: $(SOLVER)/%.f90 $(HEADERS)
 	$(FC) $(FFLAGS) -c -o $@ $<
 
 ####################################################################################################
 # Cleaning up.
 clean:
 	rm -f *.o *.mod *.dbg
-	rm -f *_newuoa_exmp
+	rm -f *_*_exmp

@@ -5,16 +5,21 @@ module newuoa_mod
 ! M. J. D. Powell, The NEWUOA software for unconstrained optimization without derivatives, In Large-
 ! Scale Nonlinear Optimization, eds. G. Di Pillo and M. Roma, 255--297, Springer, New York, 2006
 !
-! NEWUOA seeks the least value of a function of many variables, by a trust region method that forms
-! quadratic models by interpolation. There can be some freedom in the interpolation conditions,
-! which is taken up by minimizing the Frobenius norm of the change to the second derivative of the
-! quadratic model, beginning with a zero matrix.
+! NEWUOA approximately solves
+!
+!   min F(X),
+!
+! where X is a vector of variables that has N components and F is a real-valued objective function.
+! It tackles the problem by a trust region method that forms quadratic models by interpolation.
+! There can be some freedom in the interpolation conditions, which is taken up by minimizing the
+! Frobenius norm of the change to the second derivative of the quadratic model, beginning with a
+! zero matrix.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, December 25, 2021 AM10:44:32
+! Last Modified: Wednesday, December 29, 2021 PM10:00:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -30,9 +35,8 @@ subroutine newuoa(calfun, x, f, &
     & eta1, eta2, gamma1, gamma2, xhist, fhist, maxhist, info)
 !--------------------------------------------------------------------------------------------------!
 ! Among all the arguments, only CALFUN, X, and F are obligatory. The others are OPTIONAL and you can
-! neglect them unless you are familiar with the algorithm. If you do not specify an optional
-! argument, it will be assigned the default value  as will be explained later. For example, it is
-! valid to call NEWUOA by
+! neglect them unless you are familiar with the algorithm. If you do not specify an optional input,
+! it will be assigned the default value detailed below. For instance, we may write
 !
 ! call newuoa(calfun, x, f)
 !
@@ -40,7 +44,7 @@ subroutine newuoa(calfun, x, f, &
 !
 ! call newuoa(calfun, x, f, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
 !
-! See example.f90 for a concrete example.
+! See examples/newuoa_exmp.f90 for a concrete example.
 !
 ! A detailed introduction to the arguments is as follows.
 ! N.B.: RP and IK are defined in the module CONSTS_MOD. See consts.F90 under the directory name
@@ -51,20 +55,27 @@ subroutine newuoa(calfun, x, f, &
 ! CALFUN
 !   Input, subroutine.
 !   CALFUN(X, F) should evaluate the objective function at the given REAL(RP) vector X and set the
-!   value to the REAL(RP) scalar F. It must be provided by the user.
+!   value to the REAL(RP) scalar F. It must be provided by the user, and its definition must conform
+!   to the following interface:
+!   !-------------------------------------------------------------------------!
+!   !subroutine calfun(x, f)
+!   !real(RP), intent(in) :: x(:)
+!   !real(RP), intent(out) :: f
+!   !end subroutine calfun
+!   !-------------------------------------------------------------------------!
 !
 ! X
-!   Input and outout, REAL(RP) vector.
+!   Input and output, REAL(RP) vector.
 !   As an input, X should be an N dimensional vector that contains the starting point, N being the
 !   dimension of the problem. As an output, X will be set to an approximate minimizer.
 !
 ! F
 !   Output, REAL(RP) scalar.
-!   F will be set to the objective function value of the X at exit.
+!   F will be set to the objective function value of X at exit.
 !
 ! NF
 !   Output, INTEGER(IK) scalar.
-!   NF will be set to the number of function evaluations at exit.
+!   NF will be set to the number of calls of CALFUN at exit.
 !
 ! RHOBEG, RHOEND
 !   Inputs, REAL(RP) scalars, default: RHOBEG = 1, RHOEND = 10^-6. RHOBEG and RHOEND must be set to
@@ -73,13 +84,13 @@ subroutine newuoa(calfun, x, f, &
 !   RHOEND should indicate the accuracy that is required in the final values of the variables.
 !
 ! FTARGET
-!   Input, REAL(RP) scalar, default: - Inf.
+!   Input, REAL(RP) scalar, default: -Inf.
 !   FTARGET is the target function value. The algorithm will terminate when a point with a function
 !   value <= FTARGET is found.
 !
 ! MAXFUN
 !   Input, INTEGER(IK) scalar, default: MAXFUN_DIM_DFT*N with MAXFUN_DIM_DFT defined in the module
-!   CONSTS_MOD (see common/consts.F90). MAXFUN is the maximal number of function evaluations.
+!   CONSTS_MOD (see common/consts.F90). MAXFUN is the maximal number of calls of CALFUN.
 !
 ! NPT
 !   Input, INTEGER(IK) scalar, default: 2N + 1.
@@ -115,17 +126,17 @@ subroutine newuoa(calfun, x, f, &
 !   MAXHIST: Input, INTEGER(IK) scalar, default: MAXFUN
 !   XHIST, if present, will output the history of iterates, while FHIST, if present, will output the
 !   history function values. MAXHIST should be a nonnegative integer, and XHIST/FHIST will output
-!   only the last MAXHIST iterates and/or the corresponding function values. Therefore, MAXHIST
-!   = 0 means XHIST/FHIST will output nothing, while setting MAXHIST = MAXFUN ensures that
-!   XHIST/FHIST will output all the history. If XHIST is present, its size at exit will be (N,
-!   min(NF, MAXHIST)); if FHIST is present, its size at exit will be min(NF, MAXHIST).
+!   only the history of the last MAXHIST iterations. Therefore, MAXHIST = 0 means XHIST/FHIST will
+!   output nothing, while setting MAXHIST = MAXFUN requests XHIST/FHIST to output all the history.
+!   If XHIST is present, its size at exit will be (N, min(NF, MAXHIST)); if FHIST is present, its
+!   size at exit will be min(NF, MAXHIST).
 !
 !   Important Notice:
-!   Setting MAXHIST to a large value can be costly in terms of memory for problems with a large N.
+!   Setting MAXHIST to a large value can be costly in terms of memory for large problems.
 !   For instance, if N = 1000 and MAXHIST = 100, 000, XHIST will take up to 1 GB if we use double
 !   precision. MAXHIST will be  reset to a smaller value if the memory needed for XHIST and/or FHIST
 !   exceeds MAXMEMORY defined in CONSTS_MOD (see consts.F90 under the directory named "common";
-!   default: 2GB). Use XHIST, FHIST, and MAXHIST with caution!!! (Fortunately, the algorithm is NOT
+!   default: 2GB). Use XHIST, FHIST, and MAXHIST with caution!!! (N.B.: the algorithm is NOT
 !   designed for large problems).
 !
 ! INFO
@@ -136,7 +147,7 @@ subroutine newuoa(calfun, x, f, &
 !   FTARGET_ACHIEVED: the target function value is reached;
 !   MAXFUN_REACHED: the objective function has been evaluated MAXFUN times;
 !   MAXTR_REACHED: the trust region iteration has been performed MAXTR times,
-!       the value of MAXTR being 10*MAXFUN, which is UNLIKELY to reach;
+!       the value of MAXTR being 2*MAXFUN, which is UNLIKELY to reach;
 !   NAN_INF_X: NaN or Inf occurs in x;
 !   !--------------------------------------------------------------------------!
 !   The following cases should NEVER occur unless there is a bug, because the

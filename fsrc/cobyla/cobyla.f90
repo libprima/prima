@@ -6,10 +6,14 @@ module cobyla_mod
 ! functions by linear interpolation, In Advances in Optimization and Numerical Analysis, eds. S.
 ! Gomez and J. P. Hennart, pages 51--67, Springer Verlag, Dordrecht, Netherlands, 1994
 !
-! COBYLA minimizes an objective function F(X) subject to M inequality constraints on X, where X is
-! a vector of variables that has N components. The algorithm employs linear approximations to the
-! objective and constraint functions, the approximations being formed by linear interpolation at N+1
-! points in the space of the variables. We regard these interpolation points as vertices of
+! COBYLA approximately solves
+!
+!   min F(X) subject to CONSTR(X) >= 0,
+!
+! where X is a vector of variables that has N components, F is a real-valued objective function, and
+! CONSTR(X) is an M-dimensional vector-valued mapping. The algorithm employs linear approximations
+! to the objective and constraint functions, the approximations being formed by linear interpolation
+! at N + 1 points in the space of the variables. We regard these interpolation points as vertices of
 ! a simplex. The parameter RHO controls the size of the simplex and it is reduced automatically from
 ! RHOBEG to RHOEND. For each RHO the subroutine tries to achieve a good vector of variables for the
 ! current size, and then RHO is reduced until the value RHOEND is reached. Therefore RHOBEG and
@@ -24,7 +28,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, December 28, 2021 PM06:40:37
+! Last Modified: Wednesday, December 29, 2021 PM09:59:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -40,66 +44,169 @@ subroutine cobyla(calcfc, x, f, &
     & m, f0, constr0, &
     & nf, rhobeg, rhoend, ftarget, ctol, maxfun, iprint, &
     & xhist, fhist, conhist, chist, maxhist, maxfilt, info)
-!& eta1, eta2, gamma1, gamma2, xhist, fhist, conhist, chist, maxhist, info)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!    & eta1, eta2, gamma1, gamma2, xhist, fhist, conhist, chist, maxhist, info)
+!--------------------------------------------------------------------------------------------------!
+! Among all the arguments, only CALCFC, X, and F are obligatory. The others are OPTIONAL and you can
+! neglect them unless you are familiar with the algorithm. If you do not specify an optional input,
+! it will be assigned the default value detailed below. For instance, we may write
 !
-!     The user must set the values of N, M, RHOBEG and RHOEND, and must
-!     provide an initial vector of variables in X. Further, the value of
-!     IPRINT should be set to 0, 1, 2 or 3, which controls the amount of
-!     printing during the calculation. Specifically, there is no output if
-!     IPRINT=0 and there is output only at the end of the calculation if
-!     IPRINT=1. Otherwise each new value of RHO and SIGMA is printed.
-!     Further, the vector of variables and some function information are
-!     given either when RHO is reduced or when each new value of F(X) is
-!     computed in the cases IPRINT=2 or IPRINT=3 respectively. Here SIGMA
-!     is a penalty parameter, it being assumed that a change to X is an
-!     improvement if it reduces the merit function
-!                F(X)+SIGMA*MAX(0.0,-C1(X),-C2(X),...,-CM(X)),
-!     where C1,C2,...,CM denote the constraint functions that should become
-!     nonnegative eventually, at least to the precision of RHOEND. In the
-!     printed output the displayed term that is multiplied by SIGMA is
-!     called MAXCV, which stands for 'MAXimum Constraint Violation'. The
-!     argument MAXFUN is an integer variable that must be set by the user to a
-!     limit on the number of calls of CALCFC, the purpose of this routine being
-!     given below. The value of MAXFUN will be altered to the number of calls
-!     of CALCFC that are made. The arguments W and IACT provide real and
-!     integer arrays that are used as working space. Their lengths must be at
-!     least N*(3*N+2*M+11)+4*M+6 and M+1 respectively.
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!     F is the objective function value when the algorithm exit.
-!     INFO is the exit flag, which can be set to:
-!       0: the lower bound for the trust region radius is reached.
-!       1: the target function value is reached.
-!       2: a trust region step has failed to reduce the quadratic model.
-!       3: the objective function has been evaluated MAXFUN times.
-!       4: much cancellation in a denominator.
-!       5: NPT is not in the required interval.
-!       6: one of the difference XU(I)-XL(I) is less than 2*RHOBEG.
-!       7: rounding errors are becoming damaging.
-!       8: rounding errors prevent reasonable changes to X.
-!       9: the denominator of the updating formule is zero.
-!       10: N should not be less than 2.
-!       11: MAXFUN is less than NPT+1.
-!       12: the gradient of constraint is zero.
-!       -1: NaN occurs in x.
-!       -2: the objective function returns a NaN or nearly infinite
-!           value.
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! call cobyla(calcfc, x, f)
 !
-!     In order to define the objective and constraint functions, we require
-!     a subroutine that has the name and arguments
-!                SUBROUTINE CALCFC (N,M,X,F,CONSTR)
-!                DIMENSION X(*),CONSTR(*)  .
-!     The values of N and M are fixed and have been defined already, while
-!     X is now the current vector of variables. The subroutine should return
-!     the objective and constraint functions at X in F and CONSTR(1),CONSTR(2),
-!     ...,CONSTR(M). Note that we are trying to adjust X so that F(X) is as
-!     small as possible subject to the constraint functions being nonnegative.
+! or
 !
-!     Partition the working space array W to provide the storage that is needed
-!     for the main calculation.
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+! call cobyla(calcfc, x, f, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
+!
+! See examples/cobyla_exmp.f90 for a concrete example.
+!
+! A detailed introduction to the arguments is as follows.
+! N.B.: RP and IK are defined in the module CONSTS_MOD. See consts.F90 under the directory name
+! "common". By default, RP = kind(0.0D0) and IK = kind(0), with REAL(RP) being the double-precision
+! real, and INTEGER(IK) being the default integer. For ADVANCED USERS, RP and IK can be defined by
+! setting __REAL_PRECISION__ and __INTEGER_KIND__ in common/ppf.h. Use the default if unsure.
+!
+! CALCFC
+!   Input, subroutine.
+!   CALCFC(X, F, CONSTR) should evaluate the objective function and constraints at the given
+!   REAL(RP) vector X; it should set the objective function value to the REAL(RP) scalar F and the
+!   constraint value to the REAL(RP) vector CONSTR. It must be provided by the user, and its
+!   definition must conform to the following interface:
+!   !-------------------------------------------------------------------------!
+!   !subroutine calcfc(x, f, constr)
+!   !real(RP), intent(in) :: x(:)
+!   !real(RP), intent(out) :: f
+!   !real(RP), intent(out) :: constr(:)
+!   !end subroutine calcfc
+!   !-------------------------------------------------------------------------!
+!
+! X
+!   Input and output, REAL(RP) vector.
+!   As an input, X should be an N dimensional vector that contains the starting point, N being the
+!   dimension of the problem. As an output, X will be set to an approximate minimizer.
+!
+! F
+!   Output, REAL(RP) scalar.
+!   F will be set to the objective function value of X at exit.
+!
+! CSTRV
+!   Output, REAL(RP) scalar.
+!   CSTRV will be set to the constraint violation of X at exit, i.e., MAXVAL([-CONSTR(X), 0]).
+!
+! CONSTR
+!   Output, ALLOCATABLE REAL(RP) vector.
+!   CONSTR will be set to the constraint value of X at exit.
+!
+! M
+!   Input, INTEGER(IK) scalar.
+!   M, if present, should be set to the number of constraints, namely the size (length) of CONSTR.
+!
+! F0
+!   Input, REAL(RP) scalar.
+!   F0, if present, should be set to the objective function value of the starting X.
+!
+! CONSTR0
+!   Input, REAL(RP) vector.
+!   CONSTR0, if present, should be set to the constraint value of the starting X.
+!
+!   Important Notice:
+!   COBYLA uses M or CONSTR0 to infer the number of constraints. If neither of them is present, then
+!   the solver is told that there is no constraint; if both of them is present, then they should be
+!   consistent in the sense that M == SIZE(CONSTR0), or the solver will abort.
+!
+! NF
+!   Output, INTEGER(IK) scalar.
+!   NF will be set to the number of calls of CALCFC at exit.
+!
+! RHOBEG, RHOEND
+!   Inputs, REAL(RP) scalars, default: RHOBEG = 1, RHOEND = 10^-6. RHOBEG and RHOEND must be set to
+!   the initial and final values of a trust-region radius, both being positive and RHOEND <= RHOBEG.
+!   Typically RHOBEG should be about one tenth of the greatest expected change to a variable, and
+!   RHOEND should indicate the accuracy that is required in the final values of the variables.
+!
+! FTARGET
+!   Input, REAL(RP) scalar, default: -Inf.
+!   FTARGET is the target function value. The algorithm will terminate when a feasible point with a
+!   function value <= FTARGET is found.
+!
+! CTOL
+!   Input, REAL(RP) scalar, default: machine epsilon.
+!   CTOL is the tolerance of constraint violation. Any X with MAXVAL(-CONSTR(X)) <= CTOL is
+!   considered as feasible.
+!
+! MAXFUN
+!   Input, INTEGER(IK) scalar, default: MAXFUN_DIM_DFT*N with MAXFUN_DIM_DFT defined in the module
+!   CONSTS_MOD (see common/consts.F90). MAXFUN is the maximal number of calls of CALCFC.
+!
+! NPT
+!   Input, INTEGER(IK) scalar, default: 2N + 1.
+!   NPT is the number of interpolation conditions for each trust region model. Its value must be in
+!   the interval [N+2, (N+1)(N+2)/2].
+!
+! IPRINT
+!   Input, INTEGER(IK) scalar, default: 0.
+!   The value of IPRINT should be set to 0, 1, -1, 2, -2, 3, or -3, which controls how much
+!   information will be printed during the computation:
+!   0: there will be no printing;
+!   1: a message will be printed to the screen at the return, showing the best vector of variables
+!      found and its objective function value;
+!   2: in addition to 1, each new value of RHO is printed to the screen, with the best vector of
+!      variables so far and its objective function value; each new value of CPEN is also printed;
+!   3: in addition to 2, each function evaluation with its variables will be printed to the screen;
+!   -1, -2, -3: the same information as 1, 2, 3 will be printed, not to the screen but to a file
+!      named COBYLA_output.txt; the file will be created if it does not exist; the new output will
+!      be appended to the end of this file if it already exists. Note that IPRINT = -3 can be costly
+!      in terms of time and space.
+!
+! ETA1, ETA2, GAMMA1, GAMMA2
+!   Input, REAL(RP) scalars, default: ETA1 = 0.1, ETA2 = 0.7, GAMMA1 = 0.5, and GAMMA2 = 2.
+!   ETA1, ETA2, GAMMA1, and GAMMA2 are parameters in the updating scheme of the trust-region radius
+!   detailed in the subroutine TRRAD in trustregion.f90. Roughly speaking, the trust-region radius
+!   is contracted by a factor of GAMMA1 when the reduction ratio is below ETA1, and enlarged by a
+!   factor of GAMMA2 when the reduction ratio is above ETA2. It is required that 0 < ETA1 <= ETA2
+!   < 1 and 0 < GAMMA1 < 1 < GAMMA2. Normally, ETA1 <= 0.25. It is NOT advised to set ETA1 >= 0.5.
+!
+! XHIST, FHIST, CONHIST, CHIST, MAXHIST
+!   XHIST: Output, ALLOCATABLE rank 2 REAL(RP) array;
+!   FHIST: Output, ALLOCATABLE rank 1 REAL(RP) array;
+!   CONHIST: Output, ALLOCATABLE rank 2 REAL(RP) array;
+!   CHIST: Output, ALLOCATABLE rank 1 REAL(RP) array;
+!   MAXHIST: Input, INTEGER(IK) scalar, default: MAXFUN
+!   XHIST, if present, will output the history of iterates; FHIST, if present, will output the
+!   history function values; CONHIST, if present, will output the history of constraint values;
+!   CHIST, if present, will output the history of constraint violations. MAXHIST should be a
+!   nonnegative integer, and XHIST/FHIST/CONHIST/CHIST will output only the history of the last
+!   MAXHIST iterations. Therefore, MAXHIST= 0 means XHIST/FHIST/CONHIST/CHIST will output nothing,
+!   while setting MAXHIST = MAXFUN requests XHIST/FHIST/CONHIST/CHIST to output all the history.
+!   If XHIST is present, its size at exit will be (N, min(NF, MAXHIST)); if FHIST is present, its
+!   size at exit will be min(NF, MAXHIST); if CONHIST is present, its size at exit will be
+!   (M, min(NF, MAXHIST)); if CHIST is present, its size at exit will be min(NF, MAXHIST).
+!
+!   Important Notice:
+!   Setting MAXHIST to a large value can be costly in terms of memory for large problems.
+!   For instance, if N = 1000 and MAXHIST = 100, 000, XHIST will take up to 1 GB if we use double
+!   precision. MAXHIST will be  reset to a smaller value if the memory needed for XHIST and/or FHIST
+!   exceeds MAXMEMORY defined in CONSTS_MOD (see consts.F90 under the directory named "common";
+!   default: 2GB). Use XHIST, FHIST, CONHIST, CHIST, and MAXHIST with caution!!! (N.B.: the
+!   algorithm is NOT designed for large problems).
+!
+! INFO
+!   Output, INTEGER(IK) scalar.
+!   INFO is the exit flag. It will be set to one of the following values defined in the module
+!   INFO_MOD (see common/info.F90):
+!   SMALL_TR_RADIUS: the lower bound for the trust region radius is reached;
+!   FTARGET_ACHIEVED: the target function value is reached;
+!   MAXFUN_REACHED: the objective function has been evaluated MAXFUN times;
+!   MAXTR_REACHED: the trust region iteration has been performed MAXTR times,
+!       the value of MAXTR being 4*MAXFUN, which is UNLIKELY to reach;
+!   NAN_INF_X: NaN or Inf occurs in x;
+!   NAN_MODEL: NaN occurs in the model;
+!   DAMAGING_ROUNDING: rounding errors are becoming damaging.
+!   !--------------------------------------------------------------------------!
+!   The following cases should NEVER occur unless there is a bug, because the
+!   code will try to continue in the corresponding scenarios.
+!   NAN_INF_F: the objective function returns NaN or +Inf
+!   TRSUBP_FAILED: a trust region step failed to reduce the quadratic model
+!   !--------------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : DEBUGGING
