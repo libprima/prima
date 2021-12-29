@@ -166,6 +166,9 @@ if isempty(prob)
             options.maxdim = 50;
             options.maxcon = 1000;
         end
+        if options.mindim == 101
+            options.mindim = 51;
+        end
         if options.maxdim == 200
             options.maxdim = 100;
             options.maxcon = 2000;

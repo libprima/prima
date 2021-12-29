@@ -34,6 +34,7 @@ case "$1" in
 	-e|--error)
         ERRORS="$(grep -i "err\|fail\|exception\|invalid\|bad\|overflow\|backtrace\|segmentation\|fault" "$LOGFILE" \
             | grep -vi "libbacktrac" \
+            | grep -vi "default" \
             | grep -vi "[0-9]\s*error" \
             | grep -vi "[0-9a-z]bad\|bad[0-9a-z]" \
             | grep -vi "Warning: [A-Z]*MS.*G: Failed to open file .*_output" \
