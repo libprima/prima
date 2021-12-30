@@ -3,8 +3,8 @@ function profile(varargin)
 %
 % Usage:
 %
-%   profile(solver, dimrange, nocompile_flag, options)
-%   profile(solver, dimrange, reload_flag, options)
+%   profile(solver, dimrange, nocompile_flag, problem_type, options)
+%   profile(solver, dimrange, reload_flag, problem_type, options)
 %
 % where
 % - `solver` is the name of the solver to test
@@ -12,6 +12,8 @@ function profile(varargin)
 % - `nocompile_flag` is either 'nocompile' or 'ncp', indicating not to compile the solves
 % - `reload_flag` is either 'reload' or 'load', indicating to load the data directly from the .mat
 % file corresponding to `solver` and `dimrange`
+% - `problem_type` can be any of {'u', 'b', 'l', 'n', 'ub', 'ubl', 'ubln', 'bl', 'bln', 'ln'},
+%   indicating the problem type to test
 %
 % Coded by Zaikun ZHANG (www.zhangzk.net).
 %

@@ -1,7 +1,7 @@
 function perfdata(solvers, options)
 
 time = datestr(datetime(), 'yymmdd_HHMM');
-stamp = strcat(strjoin(solvers, '_'), '.', int2str(options.mindim), '_', int2str(options.maxdim));
+stamp = strcat(strjoin(solvers, '_'), '.', int2str(options.mindim), '_', int2str(options.maxdim), '.', options.type);
 datadir = options.datadir;
 matfile = fullfile(datadir, strcat(stamp, '.perfdate', '.mat'));
 

@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Monday, December 27, 2021 AM07:26:16
+! Last Modified: Thursday, December 30, 2021 AM06:09:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -158,7 +158,7 @@ integer(IK) :: nactold
 integer(IK) :: nactsav
 integer(IK) :: nfail
 real(RP) :: cstrv
-real(RP) :: cvold
+!real(RP) :: cvold
 real(RP) :: cvsabs(size(b))
 real(RP) :: cvshift(size(b))
 real(RP) :: dd
@@ -456,7 +456,7 @@ do iter = 1, maxiter
     ! maximum residual if stage 1 is being done.
     dnew = d + step * sdirn
     if (stage == 1) then
-        cvold = cstrv
+        !cvold = cstrv
         cstrv = maxval([b(iact(1:nact)) - matprod(dnew, A(:, iact(1:nact))), ZERO])
         ! N.B.: CSTRV will be used when calculating VMULTD(NACT+1 : MCON).
     end if
@@ -501,7 +501,8 @@ do iter = 1, maxiter
 
     vmultc = max(ZERO, (ONE - frac) * vmultc + frac * vmultd)
     if (stage == 1) then
-        cstrv = (ONE - frac) * cvold + frac * cstrv
+        !cstrv = (ONE - frac) * cvold + frac * cstrv
+        cstrv = maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
         ! In theory, CSTRV = MAXVAL([B(1:M) - MATPROD(D, A(:, 1:M)), ZERO]), yet the CSTRV updated
         ! as above can be quite different from this value if A has huge entries (e.g., > 1E20).
     end if
