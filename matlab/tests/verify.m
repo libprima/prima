@@ -4,9 +4,9 @@ function verify(varargin)
 %
 % Usage:
 %
-%   verify(solver, dimrange, nocompile_flag, options)
-%   verify(solver, problem, nocompile_flag, options)
-%   verify(solve, problem, ir, nocompile_flag, options)
+%   verify(solver, dimrange, nocompile_flag, problem_type, options)
+%   verify(solver, problem, nocompile_flag, problem_type, options)
+%   verify(solve, problem, ir, nocompile_flag, problem_type, options)
 %
 % where
 % - `solver` is the name of the solver to test
@@ -14,6 +14,8 @@ function verify(varargin)
 % - `problem` is the name of the problem to test
 % - `ir` is the index of the random run in `isequiv`.
 % - `nocompile_flag` is either 'nocompile' or 'ncp', indicating not to compile the solves
+% - `problem_type` can be any of {'u', 'b', 'l', 'n', 'ub', 'ubl', 'ubln', 'bl', 'bln', 'ln'},
+%   indicating the problem type to test
 %
 % Coded by Zaikun ZHANG (www.zhangzk.net).
 %

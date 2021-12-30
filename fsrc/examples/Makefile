@@ -1,5 +1,5 @@
 # This Makefile illustrates how to use the modern-Fortran version of Powell's solvers. We intend to
-# try as  many compilers as possible.
+# try as many compilers as possible.
 #
 # Coded by Zaikun Zhang (www.zhangzk.net).
 #
@@ -26,8 +26,16 @@ COMMON = ../common
 # Headers.
 HEADERS = $(COMMON)/*.h
 # Solver directories.
+UOBYQA = ../uobyqa
 NEWUOA = ../newuoa
-SOLVER := $(NEWUOA)
+BOBYQA = ../bobyqa
+LINCOA = ../lincoa
+COBYLA = ../cobyla
+
+TESTS = test_uobyqa test_newuoa test_bobyqa test_lincoa test_cobyla
+
+$(foreach TST, $(TESTS), $(eval $(TST): SOLVER := $(shell echo $(TST) | sed "s/test_/\.\.\//")))
+
 
 ####################################################################################################
 # All the tests
@@ -94,7 +102,7 @@ xtes%: FC = ifx
 	consts.o info.o debug.o memory.o infnan.o linalg.o \
 	ratio.o resolution.o history.o selectx.o checkexit.o output.o string.o preproc.o pintrf.o evaluate.o \
 	initialize.o trustregion.o vlagbeta.o geometry.o shiftbase.o update.o newuob.o newuoa.o
-	$(FC) $(FFLAGS) -o $@ newuoa_exmp.f90 *.o
+	$(FC) $(FFLAGS) -o $@ cobyla_exmp.f90 *.o
 
 # Compile the Fortran code providing generic modules
 %.o: $(COMMON)/%.*90 $(HEADERS)

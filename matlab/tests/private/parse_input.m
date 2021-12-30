@@ -2,19 +2,21 @@ function [solver, options] = parse_input(argin)
 %This function parses the input to a testing function, returning the name of the solver to test and
 % the testing options. The testing function can have the signature
 %
-%   test(solver, dimrange, nocompile_flag, sequential_flag, options)
+%   test(solver, dimrange, nocompile_flag, sequential_flag, problem_type, options)
 %
 % where
 % - `solver` is the name of solver to test
 % - `dimrange` (optional) is the vector [mindim, maxdim], or "small", or "big", or "large", or "all"
 % - `nocompile_flag` (optional) is either 'nocompile' or 'ncp', which means not to compile the solvers
 % - `sequential_flag` (optional) is either 'sequential' or 'seq', which means to test the problems sequentially
+% - `problem_type` can be any of {'u', 'b', 'l', 'n', 'ub', 'ubl', 'ubln', 'bl', 'bln', 'ln'},
+%   indicating the problem type to test
 % - `options` (optional) is a structure containing options to pass to `isequiv`, `perfdata`, etc.
 %
 % If the testing function is `verify`, then the following signatures are also supported:
 %
-%   verify(solver, problem, nocompile_flag, sequential_flag, options)
-%   verify(solver, problem, ir, nocompile_flag, sequential_flag, options)
+%   verify(solver, problem, nocompile_flag, sequential_flag, problem_type, options)
+%   verify(solver, problem, ir, nocompile_flag, sequential_flag, problem_type, options)
 %
 % where
 % - `problem` is a problem to test
@@ -22,11 +24,12 @@ function [solver, options] = parse_input(argin)
 %
 % If the testing function is `profile`, then the following signature is also supported
 %
-%   profile(solver, dimrange, reload_flag)
+%   profile(solver, dimrange, problem_type, reload_flag)
 %
 % where
 % - `reload_flag` is either 'reload' or 'load', indicating to load the data directly from the .mat
-% file corresponding to `solver` and `dimrange`
+% file corresponding to `solver`, `dimrange`, and `problem_type`; in this case, both `solver` and
+% `problem_type` must be specified
 %
 % Coded by Zaikun ZHANG (www.zhangzk.net).
 %
@@ -42,6 +45,7 @@ known_sizes = {'small', 'big', 'large', 'all'};
 nocomplie_flags = {'nocompile', 'ncp'};
 sequential_flags = {'sequential', 'seq'};
 reload_flags = {'reload', 'load'};
+problem_types = {'u', 'b', 'l', 'n', 'ub', 'ubl', 'ubln', 'bl', 'bln', 'ln'};
 
 % Default values.
 solver = '';
@@ -52,6 +56,7 @@ maxdim = 50;
 compile = true;
 sequential = false;
 reload = false;
+problem_type = '';
 
 if any(cellfun(@isstruct, argin))
     options = argin{find(cellfun(@isstruct, argin), 1)};
@@ -69,6 +74,12 @@ end
 fun = @(x) ischstr(x) && ismember(x, sequential_flags);
 if any(cellfun(fun, argin))
     sequential = true;
+    argin = argin(~cellfun(fun, argin));
+end
+
+fun = @(x) ischstr(x) && ismember(x, problem_types);
+if any(cellfun(fun, argin))
+    problem_type = argin{find(cellfun(fun, argin), 1, 'first')};
     argin = argin(~cellfun(fun, argin));
 end
 
@@ -137,9 +148,9 @@ wrong_input = wrong_input || ~(ismember(solver, known_solvers) && (mindim <= max
 
 if wrong_input
     if (strcmp(invoker, 'verify'))
-        errmsg = sprintf('\nUsage:\n\n\t%s(solver, dimrange, nocomplie_flag, options), or %s(solver, problem, ir, nocomplie_flag, options).\n', invoker, invoker);
+        errmsg = sprintf('\nUsage:\n\n\t%s(solver, dimrange, nocomplie_flag, problem_type, options), or %s(solver, problem, ir, nocomplie_flag, problem_type, options).\n', invoker, invoker);
     elseif (strcmp(invoker, 'profile'))
-        errmsg = sprintf('\nUsage:\n\n\t%s(solver, dimrange, nocompile_flag, sequential_flag, options), or %s(solver, dimrange, reload_flag, options).\n', invoker, invoker);
+        errmsg = sprintf('\nUsage:\n\n\t%s(solver, dimrange, nocompile_flag, sequential_flag, problem_type, options), or %s(solver, dimrange, reload_flag, problem_type, options).\n', invoker, invoker);
     else
         errmsg = sprintf('\nUsage:\n\n\t%s(solver, dimrange, nocompile_flag, sequential_flag, options).\n', invoker);
     end
@@ -181,15 +192,19 @@ if isempty(prob)
     end
 
     % Define the problem type(s) to test.
-    switch solver
-    case {'uobyqa', 'newuoa'}
-        options.type = 'u';
-    case 'bobyqa'
-        options.type = 'bu';
-    case 'lincoa'
-        options.type = 'lbu';
-    otherwise
-        options.type = 'nlbu';
+    if ~isempty(problem_type)
+        options.type = problem_type;
+    else
+        switch solver
+        case {'uobyqa', 'newuoa'}
+            options.type = 'u';
+        case 'bobyqa'
+            options.type = 'bu';
+        case 'lincoa'
+            options.type = 'lbu';
+        otherwise
+            options.type = 'nlbu';
+        end
     end
 else
     options.list = {prob};

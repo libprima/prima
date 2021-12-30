@@ -851,10 +851,12 @@
       END DO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !IF (MCON == M) RESMAX=RESOLD+RATIO*(RESMAX-RESOLD)
-      IF (MCON == M) RESMAX=TEMP*RESOLD+RATIO*RESMAX
-      !if (mcon == m)  then
-      !    resmax = maxval([b(1:m) - matprod(dx(1:n), A(:, 1:m)), 0.0D0])
-      !end if
+      !!!!!!!!!!!!!!!!!!! 20211230: Calculate RESMAX/CSTRV from scratch
+      !IF (MCON == M) RESMAX=TEMP*RESOLD+RATIO*RESMAX
+      if (mcon == m)  then
+          resmax = maxval([b(1:m) - matprod(dx(1:n), A(:, 1:m)), 0.0D0])
+      end if
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     If the full step is not acceptable then begin another iteration.
 !     Otherwise switch to stage two or end the calculation.
