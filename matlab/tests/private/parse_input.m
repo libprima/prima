@@ -199,11 +199,11 @@ if isempty(prob)
         case {'uobyqa', 'newuoa'}
             options.type = 'u';
         case 'bobyqa'
-            options.type = 'bu';
+            options.type = 'ub';
         case 'lincoa'
-            options.type = 'lbu';
+            options.type = 'ubl';
         otherwise
-            options.type = 'nlbu';
+            options.type = 'ubln';
         end
     end
 else

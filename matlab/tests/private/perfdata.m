@@ -3,13 +3,29 @@ function perfdata(solvers, options)
 time = datestr(datetime(), 'yymmdd_HHMM');
 stamp = strcat(strjoin(solvers, '_'), '.', int2str(options.mindim), '_', int2str(options.maxdim), '.', options.type);
 datadir = options.datadir;
-matfile = fullfile(datadir, strcat(stamp, '.perfdate', '.mat'));
+matfile = fullfile(datadir, strcat(stamp, '.perfdata.mat'));
 
+loaded = false;
 % Check whether to reload data or calculate everything from scratch.
 if (isfield(options, 'reload') && options.reload == true)
     % Use directly the data of the last computation for the same solvers and dimensions.
+    stamp_with_wildcard = strcat(strjoin(solvers, '_'), '.', int2str(options.mindim), '_', int2str(options.maxdim), '.*', options.type, '*');
+    matfile_with_wildcard = fullfile(datadir, strcat(stamp_with_wildcard, '.perfdata.mat'));
+    mlist = dir(matfile_with_wildcard);
+    if ~isempty(mlist)
+        matfile = fullfile(mlist(1).folder, mlist(1).name);
+    end
     load(matfile, 'frec', 'fmin', 'pdim', 'plist');
-else
+    loaded = true;
+    qlist = secup(options);
+    fun = @(p) ismember(p, qlist);
+    pind = find(cellfun(fun, plist));
+    frec = frec(pind, :, :, :);
+    fmin = fmin(pind);
+    %pdim = pdim(pind);
+    plist = plist(pind);
+end
+if ~loaded
     [frec, output] = testcu(solvers, options);
     fmin = min(min(min(frec, [], 4), [], 3), [], 2);
     pdim = output.pdim;
