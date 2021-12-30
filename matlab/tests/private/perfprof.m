@@ -105,7 +105,7 @@ for is = 1:ns
     xs = [0; xs(1); xs; penalty_ratio];
     ys = [0; 0; ys; ys(end)];
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    plot(xs, ys, lines{is}, 'Color', colors{is},  'Linewidth',linewidth);
+    plot(xs, ys, lines{is}, 'Color', colors{is},  'Linewidth', linewidth);
     hold on;
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
