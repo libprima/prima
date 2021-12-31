@@ -1,0 +1,97 @@
+# This Makefile illustrates how to use the modern-Fortran version of Powell's solvers. We intend to
+# try as many compilers as possible.
+#
+# Coded by Zaikun Zhang (www.zhangzk.net).
+#
+# Started: July 2020
+#
+# Last Modified: September 13, 2021
+#
+# N.B.:
+# The .F90 and .f90 files will be compiled in the enumeration order of the .o files. The order
+# matters, because the compilation of each .o file depends on the .o files (and the corresponding
+# .mod files) preceding it.
+
+.PHONY: test clean
+
+####################################################################################################
+# Variables
+SOLVER = newuoa
+# Fortran standard to follow. We aim to make the code compatible with F2003, F2008, and F2018.
+FS = 03
+FSTD = 20$(FS)
+# Default options for all the compilers.
+FFLAGS = -O3
+# Common directories.
+COMMON = ../../common
+# Headers.
+HEADERS = $(COMMON)/*.h
+# Solver source files.
+SOLVER_SRC = ../../$(SOLVER)
+
+####################################################################################################
+# All the tests
+test:
+	$(MAKE) atest
+	$(MAKE) dtest
+	$(MAKE) ftest
+	$(MAKE) gtest
+	$(MAKE) itest
+	$(MAKE) ntest
+	$(MAKE) stest
+	$(MAKE) vtest
+	$(MAKE) xtest
+
+####################################################################################################
+# Here are the compilers to test.
+
+# Absoft af95
+atest: FC = af95 -no-pie
+
+# AMD AOCC Flang
+dtest: FC = /opt/AMD/aocc-compiler-3.1.0/bin/flang
+
+# LLVM Flang
+ftest: FC = flang
+
+# GNU gfortran
+gtest: FC = gfortran
+
+# Intel ifort
+itest: FC = ifort
+
+# NAG nagfor
+ntest: FC = nagfor
+
+# NVIDIA nvfortran (aka, pgfortran)
+vtest: FC = nvfortran
+
+# Oracle sunf95
+stest: FC = sunf95
+
+# Intel ifx
+xtest: FC = ifx
+
+####################################################################################################
+# Compile the binary needed for a compiler-specific test
+%test: $(SOLVER)_exmp.f90 \
+	consts.o info.o debug.o memory.o infnan.o linalg.o \
+	ratio.o resolution.o history.o selectx.o checkexit.o output.o string.o preproc.o pintrf.o evaluate.o \
+	initialize.o trustregion.o vlagbeta.o geometry.o shiftbase.o update.o newuob.o newuoa.o
+	$(FC) $(FFLAGS) -o $@ $(SOLVER)_exmp.f90 *.o
+	./$@
+	@$(MAKE) clean
+
+# Compile the Fortran code providing generic modules
+%.o: $(COMMON)/%.*90 $(HEADERS)
+	$(FC) $(FFLAGS) -c -o $@ $<
+
+# Compile the Fortran code providing solver-specific modules
+%.o: $(SOLVER_SRC)/%.f90 $(HEADERS)
+	$(FC) $(FFLAGS) -c -o $@ $<
+
+####################################################################################################
+# Cleaning up.
+clean:
+	rm -f *.o *.mod *.dbg
+	rm -f *test
