@@ -12,108 +12,86 @@
 # matters, because the compilation of each .o file depends on the .o files (and the corresponding
 # .mod files) preceding it.
 
-.PHONY: test_newuoa clean
+.PHONY: test clean
 
 ####################################################################################################
 # Variables
+SOLVER = newuoa
 # Fortran standard to follow. We aim to make the code compatible with F2003, F2008, and F2018.
 FS = 03
 FSTD = 20$(FS)
 # Default options for all the compilers.
 FFLAGS = -O3
 # Common directories.
-COMMON = ../common
+COMMON = ../../common
 # Headers.
 HEADERS = $(COMMON)/*.h
-# Solver directories.
-UOBYQA = ../uobyqa
-NEWUOA = ../newuoa
-BOBYQA = ../bobyqa
-LINCOA = ../lincoa
-COBYLA = ../cobyla
-
-TESTS = test_uobyqa test_newuoa test_bobyqa test_lincoa test_cobyla
-
-$(foreach TST, $(TESTS), $(eval $(TST): SOLVER := $(shell echo $(TST) | sed "s/test_/\.\.\//")))
-
+# Solver source files.
+SOLVER_SRC = ../../$(SOLVER)
 
 ####################################################################################################
 # All the tests
-test_newuoa:
-	make atest_newuoa
-	make dtest_newuoa
-	make ftest_newuoa
-	make gtest_newuoa
-	make itest_newuoa
-	make ntest_newuoa
-	make stest_newuoa
-	make vtest_newuoa
-	make xtest_newuoa
+test:
+	$(MAKE) atest
+	$(MAKE) dtest
+	$(MAKE) ftest
+	$(MAKE) gtest
+	$(MAKE) itest
+	$(MAKE) ntest
+	$(MAKE) stest
+	$(MAKE) vtest
+	$(MAKE) xtest
 
 ####################################################################################################
 # Here are the compilers to test.
 
 # Absoft af95
-ates%: FC = af95 -no-pie
+atest: FC = af95 -no-pie
 
 # AMD AOCC Flang
-dtes%: FC = /opt/AMD/aocc-compiler-3.1.0/bin/flang
+dtest: FC = /opt/AMD/aocc-compiler-3.1.0/bin/flang
 
 # LLVM Flang
-ftes%: FC = flang
+ftest: FC = flang
 
 # GNU gfortran
-gtes%: FC = gfortran
+gtest: FC = gfortran
 
 # Intel ifort
-ites%: FC = ifort
+itest: FC = ifort
 
 # NAG nagfor
-ntes%: FC = nagfor
+ntest: FC = nagfor
 
 # NVIDIA nvfortran (aka, pgfortran)
-vtes%: FC = nvfortran
+vtest: FC = nvfortran
 
 # Oracle sunf95
-stes%: FC = sunf95
+stest: FC = sunf95
 
 # Intel ifx
-xtes%: FC = ifx
-
-####################################################################################################
-# Making a compiler-specific test
-%_newuoa: %_newuoa_exmp
-	./$<
-	make clean
-
-%_cobyla: %_cobyla_exmp
-	./$<
-	make clean
+xtest: FC = ifx
 
 ####################################################################################################
 # Compile the binary needed for a compiler-specific test
-%_newuoa_exmp: newuoa_exmp.f90 \
+%test: $(SOLVER)_exmp.f90 \
 	consts.o info.o debug.o memory.o infnan.o linalg.o \
 	ratio.o resolution.o history.o selectx.o checkexit.o output.o string.o preproc.o pintrf.o evaluate.o \
 	initialize.o trustregion.o vlagbeta.o geometry.o shiftbase.o update.o newuob.o newuoa.o
-	$(FC) $(FFLAGS) -o $@ newuoa_exmp.f90 *.o
-
-%_cobyla_exmp: cobyla_exmp.f90 \
-	consts.o info.o debug.o memory.o infnan.o linalg.o \
-	ratio.o resolution.o history.o selectx.o checkexit.o output.o string.o preproc.o pintrf.o evaluate.o \
-	initialize.o trustregion.o vlagbeta.o geometry.o shiftbase.o update.o newuob.o newuoa.o
-	$(FC) $(FFLAGS) -o $@ cobyla_exmp.f90 *.o
+	$(FC) $(FFLAGS) -o $@ $(SOLVER)_exmp.f90 *.o
+	./$@
+	@$(MAKE) clean
 
 # Compile the Fortran code providing generic modules
 %.o: $(COMMON)/%.*90 $(HEADERS)
 	$(FC) $(FFLAGS) -c -o $@ $<
 
 # Compile the Fortran code providing solver-specific modules
-%.o: $(SOLVER)/%.f90 $(HEADERS)
+%.o: $(SOLVER_SRC)/%.f90 $(HEADERS)
 	$(FC) $(FFLAGS) -c -o $@ $<
 
 ####################################################################################################
 # Cleaning up.
 clean:
 	rm -f *.o *.mod *.dbg
-	rm -f *_*_exmp
+	rm -f *test

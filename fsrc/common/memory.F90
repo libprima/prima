@@ -8,7 +8,7 @@ module memory_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, December 23, 2021 PM06:46:40
+! Last Modified: Friday, December 31, 2021 AM01:25:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -126,7 +126,6 @@ call assert(n >= 0, 'N >= 0', srname)
 allocate (x(n), stat=alloc_status)
 call assert(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
 x = -HUGENUM
-
 ! Postconditions (checked even not debugging)
 call assert(allocated(x), 'X is allocated', srname)
 call assert(size(x) == n, 'SIZE(X) == N', srname)
