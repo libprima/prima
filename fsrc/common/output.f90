@@ -8,7 +8,7 @@ module output_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, December 26, 2021 PM08:59:03
+! Last Modified: Saturday, January 01, 2022 AM10:42:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -310,7 +310,7 @@ else  ! Print the message to a file named FOUT with the writing unit being OUTUN
     end if
 end if
 ! Print the message.
-write (wunit, p_fmt) 'Increase CPEN to ', cpen
+write (wunit, p_fmt) 'Set CPEN to ', cpen
 if (iprint < 0) then
     close (wunit)
 end if

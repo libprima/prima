@@ -1,11 +1,11 @@
 !--------------------------------------------------------------------------------------------------!
-! This is an example to illustrate the usage of NEWUOA.
+! This is an example to illustrate the usage of the solver.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code.
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, September 22, 2021 PM12:09:49
+! Last Modified: Saturday, January 01, 2022 PM12:41:42
 !--------------------------------------------------------------------------------------------------!
 
 !!!!!! THE MODULE THAT IMPLEMENTS CALFUN !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -51,7 +51,7 @@ end module calfun_mod
 !!!!!!! THE MAIN PROGRAM !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 program newuoa_exmp
 
-! The following line makes NEWUOA available.
+! The following line makes the solver available.
 !--------------------------------------------------------------------------------------------------!
 use newuoa_mod, only : newuoa
 !--------------------------------------------------------------------------------------------------!
@@ -64,9 +64,10 @@ use calfun_mod, only : calfun
 
 implicit none
 
-integer :: i, n, alloc_stat
+integer :: i
+integer, parameter :: n = 6
+real(kind(0.0D0)) :: x(n)
 real(kind(0.0D0)) :: f
-real(kind(0.0D0)), allocatable :: x(:)
 
 ! If CALFUN is an external subroutine, then remove the line of  "use calfun_mod, only : calfun", and
 ! uncomment the following line.
@@ -74,28 +75,16 @@ real(kind(0.0D0)), allocatable :: x(:)
 !external calfun
 !--------------------------------------------------------------------------------------------------!
 
-do n = 2, 10, 2
-    ! Set up the initial X for the Chebyquad problem.
-    if (allocated(x)) deallocate (x)
-    allocate (x(n), stat=alloc_stat)
-    if (alloc_stat /= 0) print *, 'Memory allocation failed.'
-    do i = 1, n
-        x(i) = real(i, kind(0.0D0)) / real(n + 1, kind(0.0D0))
-    end do
-
-    print '(/1A, I2)', 'Result with N = ', n
-
-    ! The following line illustrates how to call NEWUOA.
-    !----------------------------------------------------------------------------------------------!
-    call newuoa(calfun, x, f, rhobeg=0.2D0 * x(1), iprint=2)
-    !----------------------------------------------------------------------------------------------!
-    ! In additon to the required arguments CALFUN, X, and F, the above illustration specifies also
-    ! RHOBEG and IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN,
-    ! etc.) will take their default values coded in NEWUOA. You can also ignore all the optional
-    ! arguments and invoke NEWUOA by the following line.
-    !----------------------------------------------------------------------------------------------!
-    ! call newuoa(calfun, x, f)
-    !----------------------------------------------------------------------------------------------!
-end do
+! The following lines illustrates how to call the solver to solve the Chebyquad problem.
+!----------------------------------------------------------------------------------------------!
+x = [(real(i, kind(0.0D0)) / real(n + 1, kind(0.0D0)), i=1, n)]
+call newuoa(calfun, x, f)  ! This call will not print anything.
+!----------------------------------------------------------------------------------------------!
+! In addition to the compulsory argument, and M, the following illustration specifies also
+! RHOBEG and IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN,
+! etc.) will take their default values coded in the solver.
+!----------------------------------------------------------------------------------------------!
+call newuoa(calfun, x, f, rhobeg=0.2D0 * x(1), iprint=1)
+!----------------------------------------------------------------------------------------------!
 
 end program newuoa_exmp

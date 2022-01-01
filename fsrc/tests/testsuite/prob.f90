@@ -3,7 +3,7 @@ module prob_mod
 ! This module implements the following testing problems.
 !
 ! Unconstrained:
-! chebyqad
+! chebyquad
 ! chrosen
 ! trigsabs
 ! trigssqs
@@ -75,8 +75,8 @@ else
 end if
 
 select case (lower(trimstr(probname)))
-case ('chebyqad')
-    call construct_chebyqad(prob, n_loc)
+case ('chebyquad')
+    call construct_chebyquad(prob, n_loc)
 case ('chrosen')
     call construct_chrosen(prob, n_loc)
 case ('circle')
@@ -145,7 +145,7 @@ nullify (prob % calcfc)
 end subroutine destruct
 
 
-include 'chebyqad.f90'
+include 'chebyquad.f90'
 
 include 'chrosen.f90'
 

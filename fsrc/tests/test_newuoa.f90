@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, December 28, 2021 AM11:46:57
+! Last Modified: Saturday, January 01, 2022 AM11:43:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -67,7 +67,7 @@ if (present(probs)) then
     probs_loc(1:nprobs) = probs
 else
     nprobs = 5_IK
-    probs_loc(1:nprobs) = ['chebyqad', 'chrosen ', 'trigsabs', 'trigssqs', 'vardim  ']
+    probs_loc(1:nprobs) = ['chebyquad', 'chrosen  ', 'trigsabs ', 'trigssqs ', 'vardim   ']
 end if
 
 if (present(mindim)) then
@@ -116,7 +116,7 @@ do iprob = 1, nprobs
             if (rand() <= 0.2_RP) then
                 npt = 0
             end if
-            iprint = int(sign(4.0_RP * rand(), randn()), kind(iprint))
+            iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
             maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))
             if (rand() <= 0.2_RP) then
                 maxfun = 0

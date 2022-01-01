@@ -39,7 +39,7 @@ real(RP), intent(in) :: x(:)
 real(RP), intent(out) :: f
 real(RP), intent(out) :: constr(:)
 call calfun_chrosen(x, f)
-constr = ZERO
+constr = ZERO  ! Without this line, compilers may complain that CONSTR is not set.
 end subroutine calcfc_chrosen
 
 

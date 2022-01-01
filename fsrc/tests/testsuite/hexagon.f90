@@ -30,7 +30,7 @@ call safealloc(prob % bineq, 0_IK)
 end subroutine construct_hexagon
 
 
-subroutine calcfc_hexagon(x, f, con)
+subroutine calcfc_hexagon(x, f, constr)
 ! Test problem 10 (Hexagon area) in Powell's original COBYLA package.
 use, non_intrinsic :: consts_mod, only : RP, ONE, HALF
 use, non_intrinsic :: debug_mod, only : assert
@@ -38,24 +38,24 @@ implicit none
 
 character(len=*), parameter :: srname = 'CALCFC_HEXAGON'
 real(RP), intent(in) :: x(:)
-real(RP), intent(out) :: con(:)
+real(RP), intent(out) :: constr(:)
 real(RP), intent(out) :: f
 
-call assert(size(x) == 9 .and. size(con) == 14, 'SIZE(X) == 9, SIZE(CON) == 14', srname)
+call assert(size(x) == 9 .and. size(constr) == 14, 'SIZE(X) == 9, SIZE(CONSTR) == 14', srname)
 
 f = -HALF * (x(1) * x(4) - x(2) * x(3) + x(3) * x(9) - x(5) * x(9) + x(5) * x(8) - x(6) * x(7))
-con(1) = ONE - x(3)**2 - x(4)**2
-con(2) = ONE - x(9)**2
-con(3) = ONE - x(5)**2 - x(6)**2
-con(4) = ONE - x(1)**2 - (x(2) - x(9))**2
-con(5) = ONE - (x(1) - x(5))**2 - (x(2) - x(6))**2
-con(6) = ONE - (x(1) - x(7))**2 - (x(2) - x(8))**2
-con(7) = ONE - (x(3) - x(5))**2 - (x(4) - x(6))**2
-con(8) = ONE - (x(3) - x(7))**2 - (x(4) - x(8))**2
-con(9) = ONE - x(7)**2 - (x(8) - x(9))**2
-con(10) = x(1) * x(4) - x(2) * x(3)
-con(11) = x(3) * x(9)
-con(12) = -x(5) * x(9)
-con(13) = x(5) * x(8) - x(6) * x(7)
-con(14) = x(9)
+constr(1) = ONE - x(3)**2 - x(4)**2
+constr(2) = ONE - x(9)**2
+constr(3) = ONE - x(5)**2 - x(6)**2
+constr(4) = ONE - x(1)**2 - (x(2) - x(9))**2
+constr(5) = ONE - (x(1) - x(5))**2 - (x(2) - x(6))**2
+constr(6) = ONE - (x(1) - x(7))**2 - (x(2) - x(8))**2
+constr(7) = ONE - (x(3) - x(5))**2 - (x(4) - x(6))**2
+constr(8) = ONE - (x(3) - x(7))**2 - (x(4) - x(8))**2
+constr(9) = ONE - x(7)**2 - (x(8) - x(9))**2
+constr(10) = x(1) * x(4) - x(2) * x(3)
+constr(11) = x(3) * x(9)
+constr(12) = -x(5) * x(9)
+constr(13) = x(5) * x(8) - x(6) * x(7)
+constr(14) = x(9)
 end subroutine calcfc_hexagon
