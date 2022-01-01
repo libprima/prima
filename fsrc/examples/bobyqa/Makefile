@@ -46,31 +46,31 @@ test:
 # Here are the compilers to test.
 
 # Absoft af95
-atest: FC = af95 -no-pie
+atest: FC = af95 -no-pie -m3
 
 # AMD AOCC Flang
-dtest: FC = /opt/AMD/aocc-compiler-3.1.0/bin/flang
+dtest: FC = /opt/AMD/aocc-compiler-3.1.0/bin/flang -Wall -Wextra
 
 # LLVM Flang
-ftest: FC = flang
+ftest: FC = flang -Wall -Wextra
 
 # GNU gfortran
-gtest: FC = gfortran
+gtest: FC = gfortran -Wall -Wextra
 
 # Intel ifort
-itest: FC = ifort
+itest: FC = ifort -warn all
 
 # NAG nagfor
-ntest: FC = nagfor
+ntest: FC = nagfor -C
 
 # NVIDIA nvfortran (aka, pgfortran)
-vtest: FC = nvfortran
+vtest: FC = nvfortran -C -Wall -Wextra
 
 # Oracle sunf95
-stest: FC = sunf95
+stest: FC = sunf95 -w3 -u -U
 
 # Intel ifx
-xtest: FC = ifx
+xtest: FC = ifx -warn all
 
 ####################################################################################################
 # Compile the binary needed for a compiler-specific test
@@ -93,5 +93,5 @@ xtest: FC = ifx
 ####################################################################################################
 # Cleaning up.
 clean:
-	rm -f *.o *.mod *.dbg
-	rm -f *test
+	@rm -f *.o *.mod *.dbg
+	@rm -f *test

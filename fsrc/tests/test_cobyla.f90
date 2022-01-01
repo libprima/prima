@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, December 28, 2021 PM04:00:03
+! Last Modified: Saturday, January 01, 2022 AM11:45:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -77,7 +77,7 @@ if (present(probs)) then
 else
     nprobs = 12_IK
     probs_loc(1:nprobs) = ['circle   ', 'ellipsoid', 'fletcheq1', 'fletcheq2', 'hs100    ', 'hexagon  ', 'rsnszk   ', &
-        & 'chebyqad ', 'chrosen  ', 'trigsabs ', 'trigssqs ', 'vardim   ']
+        & 'chebyquad', 'chrosen  ', 'trigsabs ', 'trigssqs ', 'vardim   ']
 end if
 fix_dim_probs(1:7) = ['circle   ', 'ellipsoid', 'fletcheq1', 'fletcheq2', 'hs100    ', 'hexagon  ', 'rsnszk   ']
 
@@ -128,7 +128,7 @@ do iprob = 1, nprobs
             ! We ALTER THE SEED weekly to test the solvers as much as possible.
             yw = 100 * mod(year(), 100) + week()
             call setseed(int(sum(istr(probname)) + n + irand + IK + RP + yw))
-            iprint = int(sign(4.0_RP * rand(), randn()), kind(iprint))
+            iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
             maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))
             if (rand() <= 0.2_RP) then
                 maxfun = 0
@@ -168,11 +168,11 @@ do iprob = 1, nprobs
             orig_calcfc => prob % calcfc
 
             print '(/1A, I3, 1A, I3)', trimstr(probname)//': N = ', n, ', Random test ', irand
-            call cobyla(noisy_calcfc, x, f, m=m, cstrv=cstrv, constr=constr, rhobeg=rhobeg, rhoend=rhoend, &
+            call cobyla(noisy_calcfc, x, f, m, cstrv=cstrv, constr=constr, rhobeg=rhobeg, rhoend=rhoend, &
                 & maxfun=maxfun, maxhist=maxhist, fhist=fhist, xhist=xhist, conhist=conhist, chist=chist, &
                 & ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
             if (m == 0) then  ! Run the test without constraints
-                call cobyla(noisy_calcfc, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, &
+                call cobyla(noisy_calcfc, x, f, m, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, &
                     & fhist=fhist, xhist=xhist, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
             end if
 

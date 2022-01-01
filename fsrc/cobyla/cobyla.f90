@@ -28,7 +28,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, December 31, 2021 AM01:25:02
+! Last Modified: Saturday, January 01, 2022 AM10:13:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -39,9 +39,9 @@ public :: cobyla
 contains
 
 
-subroutine cobyla(calcfc, x, f, &
+subroutine cobyla(calcfc, x, f, m, &
     & cstrv, constr, &
-    & m, f0, constr0, &
+    & f0, constr0, &
     & nf, rhobeg, rhoend, ftarget, ctol, maxfun, iprint, &
     & xhist, fhist, conhist, chist, maxhist, maxfilt, info)
 !    & eta1, eta2, gamma1, gamma2, xhist, fhist, conhist, chist, maxhist, info)
@@ -87,6 +87,10 @@ subroutine cobyla(calcfc, x, f, &
 !   Output, REAL(RP) scalar.
 !   F will be set to the objective function value of X at exit.
 !
+! M
+!   Input, INTEGER(IK) scalar.
+!   M must be set to the number of constraints, namely the size (length) of CONSTR(X).
+!
 ! CSTRV
 !   Output, REAL(RP) scalar.
 !   CSTRV will be set to the constraint violation of X at exit, i.e., MAXVAL([-CONSTR(X), 0]).
@@ -94,10 +98,6 @@ subroutine cobyla(calcfc, x, f, &
 ! CONSTR
 !   Output, ALLOCATABLE REAL(RP) vector.
 !   CONSTR will be set to the constraint value of X at exit.
-!
-! M
-!   Input, INTEGER(IK) scalar.
-!   M, if present, should be set to the number of constraints, namely the size (length) of CONSTR.
 !
 ! F0
 !   Input, REAL(RP) scalar.
@@ -231,10 +231,10 @@ implicit none
 procedure(FUNCON) :: calcfc
 real(RP), intent(inout) :: x(:)
 real(RP), intent(out) :: f
+integer(IK), intent(in) :: m
 
 ! Optional inputs
 integer(IK), intent(in), optional :: iprint
-integer(IK), intent(in), optional :: m
 integer(IK), intent(in), optional :: maxfilt
 integer(IK), intent(in), optional :: maxfun
 integer(IK), intent(in), optional :: maxhist
@@ -263,7 +263,6 @@ character(len=MSGLEN) :: wmsg
 integer(IK) :: i
 integer(IK) :: info_loc
 integer(IK) :: iprint_loc
-integer(IK) :: m_loc
 integer(IK) :: maxfilt_loc
 integer(IK) :: maxfun_loc
 integer(IK) :: maxhist_loc
@@ -283,23 +282,6 @@ real(RP), allocatable :: xhist_loc(:, :)
 
 ! Sizes
 n = int(size(x), kind(n))
-if (present(m) .and. present(constr0)) then
-    if (size(constr0) /= m) then
-        if (DEBUGGING) then
-            call errstop(srname, 'SIZE(CONSTR0) /= M. Exiting')
-        else
-            call warning(srname, 'SIZE(CONSTR0) /= M. Exiting')
-            return
-        end if
-    end if
-end if
-if (present(m)) then
-    m_loc = m
-elseif (present(constr0)) then
-    m_loc = int(size(constr0), kind(m_loc))
-else
-    m_loc = 0_IK
-end if
 
 ! The user may provide the function/constraint value at X0. Set up F_X0 and CONSTR_X0 accordingly.
 ! EVAL_COUNT is only used to indicate whether we are at X0 when calling EVALFC. We do not use it to
@@ -313,9 +295,20 @@ end if
 if (present(constr0)) then
     constr_x0 => constr0
 end if
+! Exit if the size of CONSTR0 is inconsistent with M.
+if (present(constr0)) then
+    if (size(constr0) /= m) then
+        if (DEBUGGING) then
+            call errstop(srname, 'SIZE(CONSTR0) /= M. Exiting')
+        else
+            call warning(srname, 'SIZE(CONSTR0) /= M. Exiting')
+            return
+        end if
+    end if
+end if
 
 ! Allocate memory for CONSTR_LOC
-call safealloc(constr_loc, m_loc)
+call safealloc(constr_loc, m)
 
 ! Replace any NaN or Inf in X by ZERO.
 where (is_nan(x) .or. is_inf(x))
@@ -387,13 +380,13 @@ end if
 
 ! Preprocess the inputs in case some of them are invalid. It does nothing if all inputs are valid.
 call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
-    & m=m_loc, ctol=ctol_loc, maxfilt=maxfilt_loc)
+    & m=m, ctol=ctol_loc, maxfilt=maxfilt_loc)
 
 ! Further revise MAXHIST_LOC according to MAXMEMORY, and allocate memory for the history.
 ! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
 ! CHIST = NaN(1, MAXFUN), CONHIST = NaN(M, MAXFUN), FHIST = NaN(1, MAXFUN), XHIST = NaN(N, MAXFUN)
 ! if they are requested; replace MAXFUN with 0 for the history that is not requested.
-call prehist(maxhist_loc, m_loc, n, present(chist), chist_loc, present(conhist), conhist_loc, &
+call prehist(maxhist_loc, m, n, present(chist), chist_loc, present(conhist), conhist_loc, &
     & present(fhist), fhist_loc, present(xhist), xhist_loc)
 
 !-------------------- Call COBYLB, which performs the real calculations. --------------------------!
@@ -409,7 +402,7 @@ nullify (constr_x0)
 ! Copy CONSTR_LOC to CONSTR if needed.
 if (present(constr)) then
     !--------------------------------------------------!
-    call safealloc(constr, m_loc)  ! Removable in F2003.
+    call safealloc(constr, m)  ! Removable in F2003.
     !--------------------------------------------------!
     constr = constr_loc
 end if
@@ -464,7 +457,7 @@ deallocate (fhist_loc)
 if (present(conhist)) then
     nhist = min(nf_loc, int(size(conhist_loc, 2), IK))
     !----------------------------------------------------------!
-    call safealloc(conhist, m_loc, nhist)  ! Removable in F2003.
+    call safealloc(conhist, m, nhist)  ! Removable in F2003.
     !----------------------------------------------------------!
     conhist = conhist_loc(:, 1:nhist)  ! The same as XHIST, we must cap CONHIST at NF_LOC.
 end if
@@ -501,7 +494,7 @@ if (DEBUGGING) then
         call assert(.not. any(is_nan(fhist) .or. is_posinf(fhist)), 'FHIST does not contain NaN/+Inf', srname)
     end if
     if (present(conhist)) then
-        call assert(size(conhist, 1) == m_loc .and. size(conhist, 2) == nhist, 'SIZE(CONHIST) == [M, NHIST]', srname)
+        call assert(size(conhist, 1) == m .and. size(conhist, 2) == nhist, 'SIZE(CONHIST) == [M, NHIST]', srname)
         call assert(.not. any(is_nan(conhist) .or. is_neginf(conhist)), 'CONHIST does not contain NaN/-Inf', srname)
     end if
     if (present(chist)) then

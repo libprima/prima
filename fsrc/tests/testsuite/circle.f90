@@ -30,7 +30,7 @@ call safealloc(prob % bineq, 0_IK)
 end subroutine construct_circle
 
 
-subroutine calcfc_circle(x, f, con)
+subroutine calcfc_circle(x, f, constr)
 ! Test problem 2 (2D unit circle calculation) in Powell's original COBYLA package.
 use, non_intrinsic :: consts_mod, only : RP, ONE
 use, non_intrinsic :: debug_mod, only : assert
@@ -38,11 +38,11 @@ implicit none
 
 character(len=*), parameter :: srname = 'CALCFC_CIRCLE'
 real(RP), intent(in) :: x(:)
-real(RP), intent(out) :: con(:)
+real(RP), intent(out) :: constr(:)
 real(RP), intent(out) :: f
 
-call assert(size(x) == 2 .and. size(con) == 1, 'SIZE(X) == 2, SIZE(CON) == 1', srname)
+call assert(size(x) == 2 .and. size(constr) == 1, 'SIZE(X) == 2, SIZE(CONSTR) == 1', srname)
 
 f = x(1) * x(2)
-con(1) = ONE - x(1)**2 - x(2)**2
+constr(1) = ONE - x(1)**2 - x(2)**2
 end subroutine calcfc_circle

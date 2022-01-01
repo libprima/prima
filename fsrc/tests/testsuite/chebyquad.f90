@@ -1,4 +1,4 @@
-subroutine construct_chebyqad(prob, n)
+subroutine construct_chebyquad(prob, n)
 use, non_intrinsic :: consts_mod, only : RP, IK, HUGENUM
 use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
@@ -26,27 +26,27 @@ call safealloc(prob % Aineq, 0_IK, n)
 call safealloc(prob % bineq, 0_IK)
 
 ! Problem-specific code
-prob % probname = 'chebyqad'
+prob % probname = 'chebyquad'
 call safealloc(prob % x0, n)  ! Not needed if F2003 is fully supported. Needed by Absoft 22.0.
 prob % x0 = real([(i, i=1, n)], RP) / real(n + 1, RP)
 prob % Delta0 = 0.2_RP / real(n + 1, RP)
-prob % calfun => calfun_chebyqad
-prob % calcfc => calcfc_chebyqad
-end subroutine construct_chebyqad
+prob % calfun => calfun_chebyquad
+prob % calcfc => calcfc_chebyquad
+end subroutine construct_chebyquad
 
 
-subroutine calcfc_chebyqad(x, f, constr)
+subroutine calcfc_chebyquad(x, f, constr)
 use, non_intrinsic :: consts_mod, only : RP, ZERO
 implicit none
 real(RP), intent(in) :: x(:)
 real(RP), intent(out) :: f
 real(RP), intent(out) :: constr(:)
-call calfun_chebyqad(x, f)
-constr = ZERO
-end subroutine calcfc_chebyqad
+call calfun_chebyquad(x, f)
+constr = ZERO  ! Without this line, compilers may complain that CONSTR is not set.
+end subroutine calcfc_chebyquad
 
 
-subroutine calfun_chebyqad(x, f)
+subroutine calfun_chebyquad(x, f)
 ! Chebyquad function (Fletcher, 1965)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO
 implicit none
@@ -79,4 +79,4 @@ do i = 1, n + 1_IK
     f = f + tmp**2
 end do
 
-end subroutine calfun_chebyqad
+end subroutine calfun_chebyquad

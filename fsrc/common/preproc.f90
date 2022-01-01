@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, December 25, 2021 PM09:20:56
+! Last Modified: Saturday, January 01, 2022 PM12:56:55
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: If all the inputs are valid, then PREPROC should do nothing.
@@ -112,15 +112,15 @@ end if
 
 ! Validate MAXFUN
 select case (lower(solver))
-case ('newuoa', 'bobyqa', 'lincoa')
-    min_maxfun = n + 3_IK
-    min_maxfun_str = 'N + 3'
 case ('uobyqa')
     min_maxfun = (n + 1_IK) * (n + 2_IK) / 2_IK + 1_IK
     min_maxfun_str = '(N+1)(N+2)/2 + 1'
 case ('cobyla')
     min_maxfun = n + 2_IK
     min_maxfun_str = 'N + 2'
+case default  ! CASE ('NEWUOA', 'BOBYQA', 'LINCOA')
+    min_maxfun = n + 3_IK
+    min_maxfun_str = 'N + 3'
 end select
 if (maxfun < min_maxfun) then
     maxfun = min_maxfun
@@ -168,6 +168,8 @@ if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cob
         unit_memo = (n + 2_IK) * cstyle_sizeof(0.0_RP)
     case ('cobyla')
         unit_memo = (m_loc + n + 2_IK) * cstyle_sizeof(0.0_RP)
+    case default
+        unit_memo = 1_IK
     end select
     ! We cannot simply set MAXFILT = MIN(MAXFILT, MAXMEMORY/...), as they may not have
     ! the same kind, and compilers may complain. We may convert them, but overflow may occur.

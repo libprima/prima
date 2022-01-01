@@ -337,9 +337,9 @@ C     Call COBYLA
       maxhist = maxfun
 !      call COBYLA(calcfc, n_int, m_int, x, rhobeg, rhoend, iprint,
 !     & maxfun, f, info, ftarget, resmax, conval)
-      call COBYLA(calcfc, x, f,
+      call COBYLA(calcfc, x, f, m_int,
      & resmax, conval,
-     & m_int, f_x0, conval_x0,
+     & f_x0, conval_x0,
      & nf_loc, rhobeg, rhoend, ftarget, ctol, maxfun, iprint,
      & fhist = fhist_loc, chist = chist_loc, maxhist=maxhist,
      & maxfilt = maxfilt, info=info)

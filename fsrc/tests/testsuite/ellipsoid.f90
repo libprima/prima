@@ -30,7 +30,7 @@ call safealloc(prob % bineq, 0_IK)
 end subroutine construct_ellipsoid
 
 
-subroutine calcfc_ellipsoid(x, f, con)
+subroutine calcfc_ellipsoid(x, f, constr)
 ! Test problem 3 (3D ellipsoid calculation) in Powell's original COBYLA package.
 use, non_intrinsic :: consts_mod, only : RP, ONE
 use, non_intrinsic :: debug_mod, only : assert
@@ -38,11 +38,11 @@ implicit none
 
 character(len=*), parameter :: srname = 'CALCFC_ELLIPSOID'
 real(RP), intent(in) :: x(:)
-real(RP), intent(out) :: con(:)
+real(RP), intent(out) :: constr(:)
 real(RP), intent(out) :: f
 
-call assert(size(x) == 3 .and. size(con) == 1, 'SIZE(X) == 3, SIZE(CON) == 1', srname)
+call assert(size(x) == 3 .and. size(constr) == 1, 'SIZE(X) == 3, SIZE(CONSTR) == 1', srname)
 
 f = x(1) * x(2) * x(3)
-con(1) = ONE - x(1)**2 - 2.0_RP * x(2)**2 - 3.0_RP * x(3)**2
+constr(1) = ONE - x(1)**2 - 2.0_RP * x(2)**2 - 3.0_RP * x(3)**2
 end subroutine calcfc_ellipsoid

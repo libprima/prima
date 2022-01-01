@@ -30,7 +30,7 @@ call safealloc(prob % bineq, 0_IK)
 end subroutine construct_fletcheq2
 
 
-subroutine calcfc_fletcheq2(x, f, con)
+subroutine calcfc_fletcheq2(x, f, constr)
 ! Test problem 7 (Equation (14.2.2) in Fletcher's book) in Powell's original COBYLA package.
 use, non_intrinsic :: consts_mod, only : RP
 use, non_intrinsic :: debug_mod, only : assert
@@ -38,13 +38,13 @@ implicit none
 
 character(len=*), parameter :: srname = 'CALCFC_FLETCHEQ2'
 real(RP), intent(in) :: x(:)
-real(RP), intent(out) :: con(:)
+real(RP), intent(out) :: constr(:)
 real(RP), intent(out) :: f
 
-call assert(size(x) == 3 .and. size(con) == 3, 'SIZE(X) == 3, SIZE(CON) == 3', srname)
+call assert(size(x) == 3 .and. size(constr) == 3, 'SIZE(X) == 3, SIZE(CONSTR) == 3', srname)
 
 f = x(3)
-con(1) = 5.0_RP * x(1) - x(2) + x(3)
-con(2) = x(3) - x(1)**2 - x(2)**2 - 4.0 * x(2)
-con(3) = x(3) - 5.0 * x(1) - x(2)
+constr(1) = 5.0_RP * x(1) - x(2) + x(3)
+constr(2) = x(3) - x(1)**2 - x(2)**2 - 4.0 * x(2)
+constr(3) = x(3) - 5.0 * x(1) - x(2)
 end subroutine calcfc_fletcheq2
