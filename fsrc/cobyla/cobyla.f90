@@ -28,7 +28,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, January 01, 2022 AM10:13:49
+! Last Modified: Monday, January 03, 2022 AM12:04:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -77,6 +77,7 @@ subroutine cobyla(calcfc, x, f, m, &
 !   !real(RP), intent(out) :: constr(:)
 !   !end subroutine calcfc
 !   !-------------------------------------------------------------------------!
+!   Besides, CONSTR must be an M-dimensional vector, M being the 4th compulsory argument (see below)
 !
 ! X
 !   Input and output, REAL(RP) vector.
@@ -105,12 +106,8 @@ subroutine cobyla(calcfc, x, f, m, &
 !
 ! CONSTR0
 !   Input, REAL(RP) vector.
-!   CONSTR0, if present, should be set to the constraint value of the starting X.
-!
-!   Important Notice:
-!   COBYLA uses M or CONSTR0 to infer the number of constraints. If neither of them is present, then
-!   the solver is told that there is no constraint; if both of them is present, then they should be
-!   consistent in the sense that M == SIZE(CONSTR0), or the solver will abort.
+!   CONSTR0, if present, should be set to the constraint value of the starting X; in addition,
+!   SIZE(CONSTR0) must be M, or the solver will abort.
 !
 ! NF
 !   Output, INTEGER(IK) scalar.
