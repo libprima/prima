@@ -192,7 +192,8 @@ C
 C     Seek the value of the angle that minimizes Q.
 C
       CF=HALF*(SHS-DHD)
-      QBEG=SG+CF
+      !QBEG=SG+CF
+      QBEG=(SG+CF*cos(0.0D0))*cos(0.0D0)+(DG+DHS*cos(0.0D0))*SIN(0.0D0)
       QSAV=QBEG
       QMIN=QBEG
       ISAVE=0
