@@ -293,7 +293,13 @@ C
 C
 C     Seek the value of the angle that maximizes the modulus of DENOM.
 C
-      SUMM=DENEX(1)+DENEX(2)+DENEX(4)+DENEX(6)+DENEX(8)
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !SUMM=DENEX(1)+DENEX(2)+DENEX(4)+DENEX(6)+DENEX(8)
+      angle = 0.0D0
+      par(2:8:2) = cos(angle * [1.0D0, 2.0D0, 3.0D0, 4.0D0])
+      par(3:9:2) = sin(angle * [1.0D0, 2.0D0, 3.0D0, 4.0D0])
+      SUMM = inprod(denex(1:9), par(1:9))
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DENOLD=SUMM
       DENMAX=SUMM
       ISAVE=0
@@ -302,12 +308,16 @@ C
       PAR(1)=ONE
       DO I=1,IU
           ANGLE=DFLOAT(I)*TEMP
-          PAR(2)=DCOS(ANGLE)
-          PAR(3)=DSIN(ANGLE)
-          DO J=4,8,2
-              PAR(J)=PAR(2)*PAR(J-2)-PAR(3)*PAR(J-1)
-              PAR(J+1)=PAR(2)*PAR(J-1)+PAR(3)*PAR(J-2)
-          END DO
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          !PAR(2)=DCOS(ANGLE)
+          !PAR(3)=DSIN(ANGLE)
+          !DO J=4,8,2
+          !    PAR(J)=PAR(2)*PAR(J-2)-PAR(3)*PAR(J-1)
+          !    PAR(J+1)=PAR(2)*PAR(J-1)+PAR(3)*PAR(J-2)
+          !END DO
+          par(2:8:2) = cos(angle * [1.0D0, 2.0D0, 3.0D0, 4.0D0])
+          par(3:9:2) = sin(angle * [1.0D0, 2.0D0, 3.0D0, 4.0D0])
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           SUMMOLD=SUMM
           SUMM=ZERO
           DO J=1,9
@@ -334,12 +344,16 @@ C
 C     Calculate the new parameters of the denominator, the new VLAG vector
 C     and the new D. Then test for convergence.
 C
-      PAR(2)=DCOS(ANGLE)
-      PAR(3)=DSIN(ANGLE)
-      DO J=4,8,2
-          PAR(J)=PAR(2)*PAR(J-2)-PAR(3)*PAR(J-1)
-          PAR(J+1)=PAR(2)*PAR(J-1)+PAR(3)*PAR(J-2)
-      END DO
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !PAR(2)=DCOS(ANGLE)
+      !PAR(3)=DSIN(ANGLE)
+      !DO J=4,8,2
+      !    PAR(J)=PAR(2)*PAR(J-2)-PAR(3)*PAR(J-1)
+      !    PAR(J+1)=PAR(2)*PAR(J-1)+PAR(3)*PAR(J-2)
+      !END DO
+      par(2:8:2) = cos(angle * [1.0D0, 2.0D0, 3.0D0, 4.0D0])
+      par(3:9:2) = sin(angle * [1.0D0, 2.0D0, 3.0D0, 4.0D0])
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       BETA=ZERO
       DENMAX=ZERO
       DO J=1,9
