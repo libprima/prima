@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, January 02, 2022 PM07:17:10
+! Last Modified: Sunday, January 02, 2022 PM11:08:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -263,7 +263,7 @@ function biglag(idz, knew, bmat, delbar, x, xpt, zmat) result(d)
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, PI, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 use, non_intrinsic :: linalg_mod, only : Ax_plus_y, inprod, matprod, issymmetric, norm, project, omega_col
 
 implicit none
@@ -438,7 +438,10 @@ do iter = 1, maxiter
     coss = cos(angles)
     sins = sin(angles)
     taus = cf(1) + (cf(2) + cf(4) * coss) * coss + (cf(3) + cf(5) * coss) * sins
-    imax = int(maxloc(abs(taus), dim=1) - 1, IK)
+    if (all(is_nan(taus))) then
+        exit
+    end if
+    imax = int(maxloc(abs(taus), mask=(.not. (is_nan(taus))), dim=1) - 1, IK)
     taumax = taus(imax + 1)
     taua = taus(modulo(imax - 1_IK, iu) + 1)
     taub = taus(modulo(imax + 1_IK, iu) + 1)
@@ -505,7 +508,7 @@ function bigden(idz, knew, kopt, bmat, d0, xpt, zmat) result(d)
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, QUART, PI, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric, norm, project, omega_col, omega_mul
 
 implicit none
@@ -525,24 +528,24 @@ real(RP) :: d(size(xpt, 1))     ! D(N)
 ! Local variable
 character(len=*), parameter :: srname = 'BIGDEN'
 integer(IK) :: i
+integer(IK) :: imax
 integer(IK) :: iter
-integer(IK), parameter :: iu = 50_IK
 integer(IK) :: j
 integer(IK) :: k
 integer(IK) :: n
 integer(IK) :: npt
 integer(IK) :: nw
+integer(IK), parameter :: iu = 50_IK
 real(RP) :: alpha
 real(RP) :: angle
+real(RP) :: angles(iu)
 real(RP) :: dd
 real(RP) :: den(9)
 real(RP) :: dena
 real(RP) :: denb
 real(RP) :: denex(9)
 real(RP) :: denmax
-!real(RP) :: denold
-!real(RP) :: denom
-!real(RP) :: denomold
+real(RP) :: denoms(size(angles))
 real(RP) :: densav
 real(RP) :: dold(size(xpt, 1))
 real(RP) :: ds
@@ -550,6 +553,7 @@ real(RP) :: dstemp(size(xpt, 2))
 real(RP) :: dtest
 real(RP) :: dxn
 real(RP) :: hcol(size(xpt, 2))
+real(RP) :: istep
 real(RP) :: par(9)
 real(RP) :: prod(size(xpt, 2) + size(xpt, 1), 5)
 real(RP) :: s(size(xpt, 1))
@@ -571,10 +575,6 @@ real(RP) :: xnsq
 real(RP) :: xptemp(size(xpt, 1), size(xpt, 2))
 real(RP) :: xs
 real(RP) :: xsq
-real(RP) :: angles(iu)
-real(RP) :: denoms(size(angles))
-integer(IK) :: imax
-real(RP) :: istep
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -768,12 +768,16 @@ do iter = 1, n
     ! Seek the value of the angle that maximizes the |DENOM|.
     unitang = (TWO * PI) / real(iu, RP)
     angles = unitang * real([(i, i=0, iu - 1)], RP)
+    par(1) = ONE
     do i = 1, iu
         par(2:8:2) = cos(angles(i)*[1.0_RP, 2.0_RP, 3.0_RP, 4.0_RP])
         par(3:9:2) = sin(angles(i)*[1.0_RP, 2.0_RP, 3.0_RP, 4.0_RP])
         denoms(i) = inprod(denex, par)
     end do
-    imax = int(maxloc(abs(denoms), dim=1) - 1, IK)
+    if (all(is_nan(denoms))) then
+        exit
+    end if
+    imax = int(maxloc(abs(denoms), mask=(.not. is_nan(denoms)), dim=1) - 1, IK)
     denmax = denoms(imax + 1)
     dena = denoms(modulo(imax - 1_IK, iu) + 1)
     denb = denoms(modulo(imax + 1_IK, iu) + 1)
@@ -795,7 +799,7 @@ do iter = 1, n
     tau = vlag(knew)
 
     dold = d
-    d = par(2) * d + par(3) * s
+    d = cos(angle) * d + sin(angle)* s
     ! Exit in case of Inf/NaN in D.
     if (.not. is_finite(sum(abs(d)))) then
         d = dold

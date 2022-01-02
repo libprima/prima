@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, January 02, 2022 PM06:53:41
+! Last Modified: Sunday, January 02, 2022 PM10:33:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -332,7 +332,10 @@ do iter = 1, itermax
     coss = cos(angles)
     sins = sin(angles)
     quads = (sg + cf * coss) * coss + (dg + dhs * coss) * sins
-    imin = int(minloc(quads, dim=1) - 1, IK)
+    if (all(is_nan(quads))) then
+        exit
+    end if
+    imin = int(minloc(quads, mask=(.not. is_nan(quads)), dim=1) - 1, IK)
     qmin = quads(imin + 1)
     quada = quads(modulo(imin - 1_IK, iu) + 1)
     quadb = quads(modulo(imin + 1_IK, iu) + 1)
