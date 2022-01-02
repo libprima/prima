@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, December 08, 2021 PM10:26:23
+! Last Modified: Sunday, January 02, 2022 PM04:46:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -424,13 +424,12 @@ do iter = 1, maxiter
 
     ! Calculate the coefficients of the objective function on the circle, beginning with the
     ! multiplication of S by the second derivative matrix.
-    cf(1) = inprod(s, w)
+    cf(1) = HALF * inprod(s, w)
     cf(2) = inprod(d, gc)
     cf(3) = inprod(s, gc)
-    cf(4) = inprod(d, gd)
+    cf(4) = HALF * inprod(d, gd) - cf(1)
     cf(5) = inprod(s, gd)
-    cf(1) = HALF * cf(1)
-    cf(4) = HALF * cf(4) - cf(1)
+    !cf(4) = HALF * cf(4) - cf(1)
 
     ! Seek the value of the angle that maximizes |TAU|.
     taubeg = cf(1) + cf(2) + cf(4)

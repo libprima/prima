@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, December 08, 2021 PM10:26:34
+! Last Modified: Sunday, January 02, 2022 PM05:12:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -68,17 +68,19 @@ real(RP), intent(out) :: s(:)   ! S(N)
 ! Local variables
 character(len=*), parameter :: srname = 'TRSAPP'
 integer(IK) :: i
-integer(IK) :: isav
+integer(IK) :: imin
 integer(IK) :: iter
 integer(IK) :: itermax
-integer(IK) :: iu
 integer(IK) :: n
 integer(IK) :: npt
+integer(IK), parameter :: iu = 50_IK
 logical :: twod_search
 real(RP) :: alpha
 real(RP) :: angle
+real(RP) :: angles(iu)
 real(RP) :: bstep
 real(RP) :: cf
+real(RP) :: coss(size(angles))
 real(RP) :: cth
 real(RP) :: d(size(x))
 real(RP) :: dd
@@ -96,16 +98,15 @@ real(RP) :: hs(size(x))
 real(RP) :: hx(size(x))
 real(RP) :: hypt
 real(RP) :: qadd
-real(RP) :: qbeg
 real(RP) :: qmin
-real(RP) :: qnew
 real(RP) :: qred
-real(RP) :: qsav
 real(RP) :: quada
 real(RP) :: quadb
+real(RP) :: qvals(size(angles))
 real(RP) :: reduc
 real(RP) :: sg
 real(RP) :: shs
+real(RP) :: sins(size(angles))
 real(RP) :: sold(size(x))
 real(RP) :: ss
 real(RP) :: sth
@@ -325,34 +326,15 @@ do iter = 1, itermax
 
     ! Seek the value of the angle that minimizes Q.
     cf = HALF * (shs - dhd)
-    qbeg = sg + cf
-    qsav = qbeg
-    qmin = qbeg
-    isav = 0_IK
-    iu = 49_IK
-    unitang = (TWO * PI) / real(iu + 1, RP)
-
-    do i = 1, iu
-        angle = real(i, RP) * unitang
-        cth = cos(angle)
-        sth = sin(angle)
-        qnew = (sg + cf * cth) * cth + (dg + dhs * cth) * sth
-        if (qnew < qmin) then
-            qmin = qnew
-            isav = i
-            quada = qsav
-        elseif (i == isav + 1) then
-            quadb = qnew
-        end if
-        qsav = qnew
-    end do
-
-    if (isav == 0) then
-        quada = qnew
-    end if
-    if (isav == iu) then
-        quadb = qbeg
-    end if
+    unitang = (TWO * PI) / real(iu, RP)
+    angles = unitang*[(real(i - 1, RP), i=1, iu)]
+    coss = cos(angles)
+    sins = sin(angles)
+    qvals = (sg + cf * coss) * coss + (dg + dhs * coss) * sins
+    qmin = minval(qvals)
+    imin = int(minloc(qvals, dim=1) - 1, IK)
+    quada = qvals(modulo(imin - 1_IK, iu) + 1)
+    quadb = qvals(modulo(imin + 1_IK, iu) + 1)
     if (abs(quada - quadb) > ZERO) then
         quada = quada - qmin
         quadb = quadb - qmin
@@ -360,12 +342,12 @@ do iter = 1, itermax
     else
         angle = ZERO
     end if
-    angle = unitang * (real(isav, RP) + angle)
+    angle = unitang * (real(imin, RP) + angle)
 
     ! Calculate the new S.
     cth = cos(angle)
     sth = sin(angle)
-    reduc = qbeg - (sg + cf * cth) * cth - (dg + dhs * cth) * sth
+    reduc = qvals(1) - (sg + cf * cth) * cth - (dg + dhs * cth) * sth
     sold = s
     s = cth * s + sth * d
 
