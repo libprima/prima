@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, January 02, 2022 PM04:46:24
+! Last Modified: Sunday, January 02, 2022 PM06:16:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -283,14 +283,16 @@ real(RP) :: d(size(xpt, 1))       ! D(N)
 ! Local variables
 character(len=*), parameter :: srname = 'BIGLAG'
 integer(IK) :: i
-integer(IK) :: isav
+integer(IK) :: imax
 integer(IK) :: iter
-integer(IK) :: iu
 integer(IK) :: maxiter
 integer(IK) :: n
 integer(IK) :: npt
+integer(IK), parameter :: iu = 50_IK
 real(RP) :: angle
+real(RP) :: angles(iu)
 real(RP) :: cf(5)
+real(RP) :: coss(size(angles))
 real(RP) :: cth
 real(RP) :: dd
 real(RP) :: dhd
@@ -299,19 +301,19 @@ real(RP) :: gc(size(x))
 real(RP) :: gd(size(x))
 real(RP) :: gg
 real(RP) :: hcol(size(xpt, 2))
+real(RP) :: istep
 real(RP) :: s(size(x))
 real(RP) :: scaling
+real(RP) :: sins(size(angles))
 real(RP) :: sp
 real(RP) :: ss
-real(RP) :: step
 real(RP) :: sth
 real(RP) :: t
 real(RP) :: tau
 real(RP) :: taua
 real(RP) :: taub
-real(RP) :: taubeg
 real(RP) :: taumax
-real(RP) :: tauold
+real(RP) :: taus(size(angles))
 real(RP) :: tol
 real(RP) :: unitang
 real(RP) :: w(size(x))
@@ -429,45 +431,25 @@ do iter = 1, maxiter
     cf(3) = inprod(s, gc)
     cf(4) = HALF * inprod(d, gd) - cf(1)
     cf(5) = inprod(s, gd)
-    !cf(4) = HALF * cf(4) - cf(1)
 
     ! Seek the value of the angle that maximizes |TAU|.
-    taubeg = cf(1) + cf(2) + cf(4)
-    taumax = taubeg
-    tauold = taubeg
-    isav = 0_IK
-    iu = 49_IK
-    unitang = (TWO * PI) / real(iu + 1, RP)
-
-    do i = 1, iu
-        angle = real(i, RP) * unitang
-        cth = cos(angle)
-        sth = sin(angle)
-        tau = cf(1) + (cf(2) + cf(4) * cth) * cth + (cf(3) + cf(5) * cth) * sth
-        if (abs(tau) > abs(taumax)) then
-            taumax = tau
-            isav = i
-            taua = tauold
-        elseif (i == isav + 1) then
-            taub = tau
-        end if
-        tauold = tau
-    end do
-
-    if (isav == 0) then
-        taua = tau
-    end if
-    if (isav == iu) then
-        taub = taubeg
-    end if
+    unitang = (TWO * PI) / real(iu, RP)
+    angles = unitang*[(real(i - 1, RP), i=1, iu)]
+    coss = cos(angles)
+    sins = sin(angles)
+    taus = cf(1) + (cf(2) + cf(4) * coss) * coss + (cf(3) + cf(5) * coss) * sins
+    imax = int(maxloc(abs(taus), dim=1) - 1, IK)
+    taumax = taus(imax + 1)
+    taua = taus(modulo(imax - 1_IK, iu) + 1)
+    taub = taus(modulo(imax + 1_IK, iu) + 1)
     if (abs(taua - taub) > ZERO) then
         taua = taua - taumax
         taub = taub - taumax
-        step = HALF * (taua - taub) / (taua + taub)
+        istep = HALF * (taua - taub) / (taua + taub)
     else
-        step = ZERO
+        istep = ZERO
     end if
-    angle = unitang * (real(isav, RP) + step)
+    angle = unitang * (real(imax, RP) + istep)
 
     ! Calculate the new D and GD. Then test for convergence.
     cth = cos(angle)
@@ -484,7 +466,7 @@ do iter = 1, maxiter
 
     gd = cth * gd + sth * w
     s = gc + gd
-    if (abs(tau) <= 1.1_RP * abs(taubeg)) then
+    if (abs(tau) <= 1.1_RP * abs(taus(1))) then
         exit
     end if
 end do

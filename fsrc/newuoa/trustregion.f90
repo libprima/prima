@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, January 02, 2022 PM05:12:57
+! Last Modified: Sunday, January 02, 2022 PM06:17:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -97,6 +97,7 @@ real(RP) :: hd(size(x))
 real(RP) :: hs(size(x))
 real(RP) :: hx(size(x))
 real(RP) :: hypt
+real(RP) :: istep
 real(RP) :: qadd
 real(RP) :: qmin
 real(RP) :: qred
@@ -331,18 +332,18 @@ do iter = 1, itermax
     coss = cos(angles)
     sins = sin(angles)
     qvals = (sg + cf * coss) * coss + (dg + dhs * coss) * sins
-    qmin = minval(qvals)
     imin = int(minloc(qvals, dim=1) - 1, IK)
+    qmin = qvals(imin + 1)
     quada = qvals(modulo(imin - 1_IK, iu) + 1)
     quadb = qvals(modulo(imin + 1_IK, iu) + 1)
     if (abs(quada - quadb) > ZERO) then
         quada = quada - qmin
         quadb = quadb - qmin
-        angle = HALF * (quada - quadb) / (quada + quadb)
+        istep = HALF * (quada - quadb) / (quada + quadb)
     else
-        angle = ZERO
+        istep = ZERO
     end if
-    angle = unitang * (real(imin, RP) + angle)
+    angle = unitang * (real(imin, RP) + istep)
 
     ! Calculate the new S.
     cth = cos(angle)

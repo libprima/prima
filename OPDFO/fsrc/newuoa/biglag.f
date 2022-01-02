@@ -172,7 +172,12 @@ C
 C
 C     Seek the value of the angle that maximizes the modulus of TAU.
 C
-      TAUBEG=CF1+CF2+CF4
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !TAUBEG=CF1+CF2+CF4
+      CTH = COS(0.0D0)
+      STH = SIN(0.0D0)
+      TAUBEG=CF1+(CF2+CF4*CTH)*CTH+(CF3+CF5*CTH)*STH
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       TAUMAX=TAUBEG
       TAUOLD=TAUBEG
       ISAVE=0
