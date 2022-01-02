@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Thursday, December 30, 2021 PM10:11:32
+! Last Modified: Sunday, January 02, 2022 PM11:16:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -216,8 +216,12 @@ if (stage == 1) then
         return
     end if
 
+    if (all(is_nan(b))) then
+        return
+    else
+        icon = int(maxloc(b, mask=(.not. is_nan(b)), dim=1), kind(icon))
+    end if
     m = mcon
-    icon = int(maxloc(b, dim=1), kind(icon))
     sdirn = ZERO
 else
     if (inprod(d, d) >= rho**2) then

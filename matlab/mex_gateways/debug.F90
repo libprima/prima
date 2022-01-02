@@ -59,7 +59,7 @@ end subroutine assert
 
 
 subroutine warning(srname, msg)
-use, non_intrinsic :: consts_mod, only : MSGLEN, DEBUGGING
+use, non_intrinsic :: consts_mod, only : MSGLEN
 implicit none
 character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: msg
@@ -67,9 +67,6 @@ character(len=*), intent(in) :: msg
 character(len=MSGLEN) :: wid
 character(len=MSGLEN) :: wmsg
 
-if (DEBUGGING) then
-    call backtr()
-end if
 wid = 'FMXAPI:'//trim(srname)
 wmsg = trim(srname)//': '//trim(msg)//'.'
 call mexWarnMsgIdAndTxt(trim(wid), trim(wmsg))

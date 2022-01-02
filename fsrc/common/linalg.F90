@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, December 26, 2021 PM09:57:17
+! Last Modified: Sunday, January 02, 2022 PM11:43:28
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -691,7 +691,7 @@ end if
 do j = 1, n
     if (pivote) then
         k = int(maxloc(sum(T(j:n, j:m)**2, dim=2), dim=1), kind(k))
-        if (k > 1) then
+        if (k > 1 .and. k <= n - j + 1) then
             k = k + j - 1_IK
             P([j, k]) = P([k, j])
             T([j, k], :) = T([k, j], :)

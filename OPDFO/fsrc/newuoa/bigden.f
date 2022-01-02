@@ -293,9 +293,10 @@ C
 C
 C     Seek the value of the angle that maximizes the modulus of DENOM.
 C
+      PAR(1)=ONE
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !SUMM=DENEX(1)+DENEX(2)+DENEX(4)+DENEX(6)+DENEX(8)
-      angle = 0.0D0
+      angle = 0.0D0 *((TWO*PI)/DFLOAT(50))
       par(2:8:2) = cos(angle * [1.0D0, 2.0D0, 3.0D0, 4.0D0])
       par(3:9:2) = sin(angle * [1.0D0, 2.0D0, 3.0D0, 4.0D0])
       SUMM = inprod(denex(1:9), par(1:9))
@@ -305,7 +306,6 @@ C
       ISAVE=0
       IU=49
       TEMP=(TWO*PI)/DFLOAT(IU+1)
-      PAR(1)=ONE
       DO I=1,IU
           ANGLE=DFLOAT(I)*TEMP
           !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -372,7 +372,8 @@ C
       TEMPB=ZERO
       dold(1:n) = d(1:n)
       DO I=1,N
-          D(I)=PAR(2)*D(I)+PAR(3)*S(I)
+          !D(I)=PAR(2)*D(I)+PAR(3)*S(I)
+          D(I)=cos(angle)*D(I)+sin(angle)*S(I)
           W(I)=XOPT(I)+D(I)
           DD=DD+D(I)**2
           TEMPA=TEMPA+D(I)*W(I)
