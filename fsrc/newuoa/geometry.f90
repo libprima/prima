@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, January 02, 2022 PM06:16:55
+! Last Modified: Sunday, January 02, 2022 PM07:17:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -434,7 +434,7 @@ do iter = 1, maxiter
 
     ! Seek the value of the angle that maximizes |TAU|.
     unitang = (TWO * PI) / real(iu, RP)
-    angles = unitang*[(real(i - 1, RP), i=1, iu)]
+    angles = unitang * real([(i, i=0, iu - 1)], RP)
     coss = cos(angles)
     sins = sin(angles)
     taus = cf(1) + (cf(2) + cf(4) * coss) * coss + (cf(3) + cf(5) * coss) * sins
@@ -451,7 +451,7 @@ do iter = 1, maxiter
     end if
     angle = unitang * (real(imax, RP) + istep)
 
-    ! Calculate the new D and GD. Then test for convergence.
+    ! Calculate the new D and GD.
     cth = cos(angle)
     sth = sin(angle)
     tau = cf(1) + (cf(2) + cf(4) * cth) * cth + (cf(3) + cf(5) * cth) * sth
@@ -464,6 +464,7 @@ do iter = 1, maxiter
         exit
     end if
 
+    ! Test for convergence.
     gd = cth * gd + sth * w
     s = gc + gd
     if (abs(tau) <= 1.1_RP * abs(taus(1))) then
@@ -524,11 +525,9 @@ real(RP) :: d(size(xpt, 1))     ! D(N)
 ! Local variable
 character(len=*), parameter :: srname = 'BIGDEN'
 integer(IK) :: i
-integer(IK) :: isav
 integer(IK) :: iter
-integer(IK) :: iu
+integer(IK), parameter :: iu = 50_IK
 integer(IK) :: j
-integer(IK) :: jc
 integer(IK) :: k
 integer(IK) :: n
 integer(IK) :: npt
@@ -541,9 +540,9 @@ real(RP) :: dena
 real(RP) :: denb
 real(RP) :: denex(9)
 real(RP) :: denmax
-real(RP) :: denold
-real(RP) :: denom
-real(RP) :: denomold
+!real(RP) :: denold
+!real(RP) :: denom
+!real(RP) :: denomold
 real(RP) :: densav
 real(RP) :: dold(size(xpt, 1))
 real(RP) :: ds
@@ -556,7 +555,6 @@ real(RP) :: prod(size(xpt, 2) + size(xpt, 1), 5)
 real(RP) :: s(size(xpt, 1))
 real(RP) :: ss
 real(RP) :: sstemp(size(xpt, 2))
-real(RP) :: step
 real(RP) :: tau
 real(RP) :: tempa
 real(RP) :: tempb
@@ -573,6 +571,10 @@ real(RP) :: xnsq
 real(RP) :: xptemp(size(xpt, 1), size(xpt, 2))
 real(RP) :: xs
 real(RP) :: xsq
+real(RP) :: angles(iu)
+real(RP) :: denoms(size(angles))
+integer(IK) :: imax
+real(RP) :: istep
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -708,16 +710,16 @@ do iter = 1, n
     w(npt + 1:npt + n, 2) = d
     w(npt + 1:npt + n, 3) = s
 
-    ! Put the coefficents of THETA*WCHECK in PROD.
-    do jc = 1, 5
-        prod(1:npt, jc) = omega_mul(idz, zmat, w(1:npt, jc))
+    ! Put the coefficients of THETA*WCHECK in PROD.
+    do j = 1, 5
+        prod(1:npt, j) = omega_mul(idz, zmat, w(1:npt, j))
 
         nw = npt
-        if (jc == 2 .or. jc == 3) then
-            prod(1:npt, jc) = prod(1:npt, jc) + matprod(w(npt + 1:npt + n, jc), bmat(:, 1:npt))
+        if (j == 2 .or. j == 3) then
+            prod(1:npt, j) = prod(1:npt, j) + matprod(w(npt + 1:npt + n, j), bmat(:, 1:npt))
             nw = npt + n
         end if
-        prod(npt + 1:npt + n, jc) = matprod(bmat(:, 1:nw), w(1:nw, jc))
+        prod(npt + 1:npt + n, j) = matprod(bmat(:, 1:nw), w(1:nw, j))
     end do
 
     ! Include in DEN the part of BETA that depends on THETA.
@@ -764,61 +766,32 @@ do iter = 1, n
     denex(9) = alpha * den(9) + prod(knew, 4) * prod(knew, 5)
 
     ! Seek the value of the angle that maximizes the |DENOM|.
-    denom = denex(1) + denex(2) + denex(4) + denex(6) + denex(8)
-    denold = denom
-    denmax = denom
-    isav = 0_IK
-    iu = 49_IK
-    unitang = (TWO * PI) / real(iu + 1, RP)
-    par(1) = ONE
+    unitang = (TWO * PI) / real(iu, RP)
+    angles = unitang * real([(i, i=0, iu - 1)], RP)
     do i = 1, iu
-        angle = real(i, RP) * unitang
-        par(2) = cos(angle)
-        par(3) = sin(angle)
-        do j = 4, 8, 2
-            par(j) = par(2) * par(j - 2) - par(3) * par(j - 1)
-            par(j + 1) = par(2) * par(j - 1) + par(3) * par(j - 2)
-        end do
-        denomold = denom
-        denom = inprod(denex(1:9), par(1:9))
-        if (abs(denom) > abs(denmax)) then
-            denmax = denom
-            isav = i
-            dena = denomold
-        elseif (i == isav + 1) then
-            denb = denom
-        end if
+        par(2:8:2) = cos(angles(i)*[1.0_RP, 2.0_RP, 3.0_RP, 4.0_RP])
+        par(3:9:2) = sin(angles(i)*[1.0_RP, 2.0_RP, 3.0_RP, 4.0_RP])
+        denoms(i) = inprod(denex, par)
     end do
-    if (isav == 0) then
-        dena = denom
-    end if
-    if (isav == iu) then
-        denb = denold
-    end if
+    imax = int(maxloc(abs(denoms), dim=1) - 1, IK)
+    denmax = denoms(imax + 1)
+    dena = denoms(modulo(imax - 1_IK, iu) + 1)
+    denb = denoms(modulo(imax + 1_IK, iu) + 1)
     if (abs(dena - denb) > ZERO) then
         dena = dena - denmax
         denb = denb - denmax
-        step = HALF * (dena - denb) / (dena + denb)
+        istep = HALF * (dena - denb) / (dena + denb)
     else
-        step = ZERO
+        istep = ZERO
     end if
-    angle = unitang * (real(isav, RP) + step)
+    angle = unitang * (real(imax, RP) + istep)
 
-    ! Calculate the new parameters of the denominator, the new VLAG vector and the new D. Then test
-    ! for convergence.
-    par(2) = cos(angle)
-    par(3) = sin(angle)
-    do j = 4, 8, 2
-        par(j) = par(2) * par(j - 2) - par(3) * par(j - 1)
-        par(j + 1) = par(2) * par(j - 1) + par(3) * par(j - 2)
-    end do
-
-    !beta = inprod(den(1:9), par(1:9))  ! Not needed since we do not return BETA.
-
-    denmax = inprod(denex(1:9), par(1:9))
-
+    ! Calculate the new parameters of the denominator, the new VLAG and the new D.
+    par(2:8:2) = cos(angle*[1.0_RP, 2.0_RP, 3.0_RP, 4.0_RP])
+    par(3:9:2) = sin(angle*[1.0_RP, 2.0_RP, 3.0_RP, 4.0_RP])
+    !beta = inprod(den, par)  ! Not needed since we do not return BETA.
+    denmax = inprod(denex, par)
     vlag = matprod(prod(:, 1:5), par(1:5))
-
     tau = vlag(knew)
 
     dold = d
@@ -834,8 +807,9 @@ do iter = 1, n
     dxn = inprod(d, xnew)
     xnsq = inprod(xnew, xnew)
 
+    ! Test for convergence.
     if (iter > 1) then
-        densav = max(densav, denold)
+        densav = max(densav, denoms(1))
     end if
     if (abs(denmax) <= 1.1_RP * abs(densav)) then
         exit

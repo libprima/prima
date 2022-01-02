@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, January 02, 2022 PM06:17:01
+! Last Modified: Sunday, January 02, 2022 PM06:53:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -103,7 +103,7 @@ real(RP) :: qmin
 real(RP) :: qred
 real(RP) :: quada
 real(RP) :: quadb
-real(RP) :: qvals(size(angles))
+real(RP) :: quads(size(angles))
 real(RP) :: reduc
 real(RP) :: sg
 real(RP) :: shs
@@ -328,14 +328,14 @@ do iter = 1, itermax
     ! Seek the value of the angle that minimizes Q.
     cf = HALF * (shs - dhd)
     unitang = (TWO * PI) / real(iu, RP)
-    angles = unitang*[(real(i - 1, RP), i=1, iu)]
+    angles = unitang * real([(i, i=0, iu - 1)], RP)
     coss = cos(angles)
     sins = sin(angles)
-    qvals = (sg + cf * coss) * coss + (dg + dhs * coss) * sins
-    imin = int(minloc(qvals, dim=1) - 1, IK)
-    qmin = qvals(imin + 1)
-    quada = qvals(modulo(imin - 1_IK, iu) + 1)
-    quadb = qvals(modulo(imin + 1_IK, iu) + 1)
+    quads = (sg + cf * coss) * coss + (dg + dhs * coss) * sins
+    imin = int(minloc(quads, dim=1) - 1, IK)
+    qmin = quads(imin + 1)
+    quada = quads(modulo(imin - 1_IK, iu) + 1)
+    quadb = quads(modulo(imin + 1_IK, iu) + 1)
     if (abs(quada - quadb) > ZERO) then
         quada = quada - qmin
         quadb = quadb - qmin
@@ -348,7 +348,7 @@ do iter = 1, itermax
     ! Calculate the new S.
     cth = cos(angle)
     sth = sin(angle)
-    reduc = qvals(1) - (sg + cf * cth) * cth - (dg + dhs * cth) * sth
+    reduc = quads(1) - (sg + cf * cth) * cth - (dg + dhs * cth) * sth
     sold = s
     s = cth * s + sth * d
 
