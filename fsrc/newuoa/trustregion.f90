@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, January 02, 2022 PM10:33:05
+! Last Modified: Tuesday, January 04, 2022 AM12:16:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -44,7 +44,8 @@ subroutine trsapp(delta, gq, hq, pq, tol, x, xpt, crvmin, s, info)
 ! INFO = -1: too much rounding error to continue
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, ZERO, TENTH, PI, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, ZERO, TENTH, DEBUGGING
+use, non_intrinsic :: circle_mod, only : circle_search
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, norm, project, hess_mul
@@ -67,20 +68,16 @@ real(RP), intent(out) :: s(:)   ! S(N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'TRSAPP'
-integer(IK) :: i
-integer(IK) :: imin
 integer(IK) :: iter
 integer(IK) :: itermax
 integer(IK) :: n
 integer(IK) :: npt
-integer(IK), parameter :: iu = 50_IK
 logical :: twod_search
 real(RP) :: alpha
 real(RP) :: angle
-real(RP) :: angles(iu)
+real(RP) :: args(4)
 real(RP) :: bstep
 real(RP) :: cf
-real(RP) :: coss(size(angles))
 real(RP) :: cth
 real(RP) :: d(size(x))
 real(RP) :: dd
@@ -97,21 +94,14 @@ real(RP) :: hd(size(x))
 real(RP) :: hs(size(x))
 real(RP) :: hx(size(x))
 real(RP) :: hypt
-real(RP) :: istep
 real(RP) :: qadd
-real(RP) :: qmin
 real(RP) :: qred
-real(RP) :: quada
-real(RP) :: quadb
-real(RP) :: quads(size(angles))
 real(RP) :: reduc
 real(RP) :: sg
 real(RP) :: shs
-real(RP) :: sins(size(angles))
 real(RP) :: sold(size(x))
 real(RP) :: ss
 real(RP) :: sth
-real(RP) :: unitang
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -183,7 +173,7 @@ do iter = 1, itermax
         hypt = sqrt(ds**2 + dd * (delsq - ss))
         ! Powell's code does not distinguish the following two cases, which have no difference in
         ! precise arithmetic. The following scheme stabilizes the calculation. Copied from LINCOA.
-        if (ds <= ZERO) then
+        if (ds <= 0) then
             bstep = (hypt - ds) / dd
         else
             bstep = (delsq - ss) / (ds + hypt)
@@ -193,7 +183,7 @@ do iter = 1, itermax
     dhd = inprod(d, hd)
 
     ! Set the step-length ALPHA and update CRVMIN.
-    if (dhd <= ZERO) then
+    if (dhd <= 0) then
         alpha = bstep
     else
         alpha = min(bstep, gg / dhd)
@@ -248,14 +238,14 @@ do iter = 1, itermax
     d = (gg / ggsav) * d - g - hs  ! CG direction
     dd = inprod(d, d)
     ds = inprod(d, s)
-    if (ds <= ZERO) then
+    if (ds <= 0) then
         ! DS is positive in theory.
         info = -1_IK
         exit
     end if
 end do
 
-if (ss <= ZERO .or. is_nan(ss)) then
+if (ss <= 0 .or. is_nan(ss)) then
     ! This may occur for ill-conditioned problems due to rounding.
     info = -1_IK
     twod_search = .false.
@@ -327,31 +317,12 @@ do iter = 1, itermax
 
     ! Seek the value of the angle that minimizes Q.
     cf = HALF * (shs - dhd)
-    unitang = (TWO * PI) / real(iu, RP)
-    angles = unitang * real([(i, i=0, iu - 1)], RP)
-    coss = cos(angles)
-    sins = sin(angles)
-    quads = (sg + cf * coss) * coss + (dg + dhs * coss) * sins
-    if (all(is_nan(quads))) then
-        exit
-    end if
-    imin = int(minloc(quads, mask=(.not. is_nan(quads)), dim=1) - 1, IK)
-    qmin = quads(imin + 1)
-    quada = quads(modulo(imin - 1_IK, iu) + 1)
-    quadb = quads(modulo(imin + 1_IK, iu) + 1)
-    if (abs(quada - quadb) > ZERO) then
-        quada = quada - qmin
-        quadb = quadb - qmin
-        istep = HALF * (quada - quadb) / (quada + quadb)
-    else
-        istep = ZERO
-    end if
-    angle = unitang * (real(imin, RP) + istep)
+    args = [sg, cf, dg, dhs]
+    angle = circle_search(circle_fun_trsapp, args, 50_IK)
 
     ! Calculate the new S.
     cth = cos(angle)
     sth = sin(angle)
-    reduc = quads(1) - (sg + cf * cth) * cth - (dg + dhs * cth) * sth
     sold = s
     s = cth * s + sth * d
 
@@ -362,14 +333,17 @@ do iter = 1, itermax
         exit
     end if
 
-    ! Calculate HS. Then test for convergence.
-    hs = cth * hs + sth * hd
-    gg = inprod(g + hs, g + hs)
+    ! Test for convergence.
+    reduc = circle_fun_trsapp(ZERO, args) - circle_fun_trsapp(angle, args)
     qred = qred + reduc
     if (reduc / qred <= tol) then
         info = 1_IK
         exit
     end if
+
+    ! Calculate HS.
+    hs = cth * hs + sth * hd
+    gg = inprod(g + hs, g + hs)
 end do
 
 !====================!
@@ -386,13 +360,52 @@ end if
 end subroutine trsapp
 
 
+function circle_fun_trsapp(theta, args) result(f)
+use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+implicit none
+! Inputs
+real(RP), intent(in) :: theta
+real(RP), intent(in) :: args(:)
+
+! Outputs
+real(RP) :: f
+
+! Local variables
+character(len=*), parameter :: srname = 'CIRCLE_FUN_TRSAPP'
+real(RP) :: cth
+real(RP) :: sth
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(size(args) == 4, 'SIZE(ARGS) == 4', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+if (abs(theta) > 0) then
+    cth = cos(theta)
+    sth = sin(theta)
+    f = (args(1) + args(2) * cth) * cth + (args(3) + args(4) * cth) * sth
+else
+    f = args(1) + args(2)
+end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+end function circle_fun_trsapp
+
+
 function trrad(delta0, dnorm, eta1, eta2, gamma1, gamma2, ratio) result(delta)
 !--------------------------------------------------------------------------------------------------!
 ! This function updates the trust region radius according to RATIO and DNORM.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic module
-use, non_intrinsic :: consts_mod, only : RP, ZERO, ONE, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, HALF, DEBUGGING
 use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: debug_mod, only : assert
 
@@ -416,7 +429,7 @@ character(len=*), parameter :: srname = 'TRRAD'
 ! Preconditions
 if (DEBUGGING) then
     call assert(delta0 >= dnorm .and. dnorm > 0, 'DELTA0 >= DNORM > 0', srname)
-    call assert(eta1 >= ZERO .and. eta1 <= eta2 .and. eta2 < ONE, '0 <= ETA1 <= ETA2 < 1', srname)
+    call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
     call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
     call assert(gamma1 > 0 .and. gamma1 < 1 .and. gamma2 > 1, '0 < GAMMA1 < 1 < GAMMA2', srname)
     ! By the definition of RATIO in ratio.f90, RATIO cannot be NaN unless the actual reduction is

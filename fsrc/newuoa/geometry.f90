@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, January 02, 2022 PM11:08:24
+! Last Modified: Monday, January 03, 2022 PM02:08:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -799,7 +799,7 @@ do iter = 1, n
     tau = vlag(knew)
 
     dold = d
-    d = cos(angle) * d + sin(angle)* s
+    d = cos(angle) * d + sin(angle) * s
     ! Exit in case of Inf/NaN in D.
     if (.not. is_finite(sum(abs(d)))) then
         d = dold

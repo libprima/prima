@@ -4,6 +4,7 @@ infnan.F90
 debug.F90
 memory.F90
 linalg.F90
+circle.f90
 string.f90
 rand.f90
 ratio.f90

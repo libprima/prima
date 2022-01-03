@@ -192,8 +192,7 @@ C
 C     Seek the value of the angle that minimizes Q.
 C
       CF=HALF*(SHS-DHD)
-      !QBEG=SG+CF
-      QBEG=(SG+CF*cos(0.0D0))*cos(0.0D0)+(DG+DHS*cos(0.0D0))*SIN(0.0D0)
+      QBEG=SG+CF
       QSAV=QBEG
       QMIN=QBEG
       ISAVE=0
@@ -227,7 +226,8 @@ C     Calculate the new STEP and HS. Then test for convergence.
 C
       CTH=DCOS(ANGLE)
       STH=DSIN(ANGLE)
-      REDUC=QBEG-(SG+CF*CTH)*CTH-(DG+DHS*CTH)*STH
+      !REDUC=QBEG-(SG+CF*CTH)*CTH-(DG+DHS*CTH)*STH
+      REDUC=QBEG-((SG+CF*CTH)*CTH+(DG+DHS*CTH)*STH)
       GG=ZERO
 
       sold(1:n) = step(1:n)
