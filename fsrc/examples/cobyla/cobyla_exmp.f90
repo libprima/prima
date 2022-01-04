@@ -5,10 +5,11 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, January 01, 2022 PM12:41:29
+! Last Modified: Tuesday, January 04, 2022 AM10:02:00
 !--------------------------------------------------------------------------------------------------!
 
-!!!!!! THE MODULE THAT IMPLEMENTS CALCFC !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!-------------------------------- THE MODULE THAT IMPLEMENTS CALCFC -------------------------------!
 module calcfc_mod
 
 implicit none
@@ -79,19 +80,15 @@ end subroutine calcfc_hexagon
 end module calcfc_mod
 
 
-!!!!!!! THE MAIN PROGRAM !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!---------------------------------------- THE MAIN PROGRAM ----------------------------------------!
 program cobyla_exmp
 
 ! The following line makes the solver available.
-!--------------------------------------------------------------------------------------------------!
 use cobyla_mod, only : cobyla
-!--------------------------------------------------------------------------------------------------!
 
 ! The following line specifies which module provides CALCFC. If CALCFC is given by an external
 ! subroutine instead of a module, remove this line and uncomment the "external" line below.
-!--------------------------------------------------------------------------------------------------!
 use calcfc_mod, only : calcfc_chebyquad, calcfc_hexagon
-!--------------------------------------------------------------------------------------------------!
 
 implicit none
 
@@ -106,34 +103,28 @@ integer :: m, i
 ! If CALCFC is an external subroutine, then remove the line of  "use calcfc_mod", and uncomment the
 ! following line.
 !--------------------------------------------------------------------------------------------------!
-!external calcfc_chebyquad, calcfc_hexagon
+!!external calcfc_chebyquad, calcfc_hexagon
 !--------------------------------------------------------------------------------------------------!
 
 ! The following lines illustrates how to call the solver to solve the Chebyquad problem.
-!----------------------------------------------------------------------------------------------!
 x_chebyquad = [(real(i, kind(0.0D0)) / real(n_chebyquad + 1, kind(0.0D0)), i=1, n_chebyquad)]
 m = 0  ! Dimension of constraints defined by CALCFC_CHEBYQUAD (there is none).
 call cobyla(calcfc_chebyquad, x_chebyquad, f, m)  ! This call will not print anything.
-!----------------------------------------------------------------------------------------------!
-! In addition to the compulsory arguments, the following illustration specifies also CONSTR,
-! RHOBEG and IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN,
-! etc.) will take their default values coded in the solver.
-!----------------------------------------------------------------------------------------------!
+
+! In addition to the compulsory arguments, the following illustration specifies also CONSTR, RHOBEG,
+! and IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will
+! take their default values coded in the solver.
 call cobyla(calcfc_chebyquad, x_chebyquad, f, m, rhobeg=0.2D0 * x_chebyquad(1), iprint=1)
-!----------------------------------------------------------------------------------------------!
 
 ! The following lines illustrates how to call the solver to solve the Hexagon problem.
-!----------------------------------------------------------------------------------------------!
 x_hexagon = 1.0D0
 m = 14  ! Dimension of constraints defined by CALCFC_HEXAGON.
 call cobyla(calcfc_hexagon, x_hexagon, f, m)  ! This call will not print anything.
-!----------------------------------------------------------------------------------------------!
-! In addition to the compulsory arguments, the following illustration specifies also CONSTR,
-! RHOBEG and IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN,
-! etc.) will take their default values coded in the solver. Note that CONSTR is an output, which
-! will be set to the value of CONSTR(X_HEXAGON) when the solver returns.
-!----------------------------------------------------------------------------------------------!
+
+! In addition to the compulsory arguments, the following illustration specifies also CONSTR, RHOBEG,
+! and IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will
+! take their default values coded in the solver. Note that CONSTR is an output, which will be set to
+! the value of CONSTR(X_HEXAGON) when the solver returns.
 call cobyla(calcfc_hexagon, x_hexagon, f, m, constr=constr, rhobeg=1.0D0, iprint=1)
-!----------------------------------------------------------------------------------------------!
 
 end program cobyla_exmp
