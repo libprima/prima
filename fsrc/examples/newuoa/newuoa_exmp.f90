@@ -5,10 +5,11 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, January 01, 2022 PM12:41:42
+! Last Modified: Tuesday, January 04, 2022 AM10:01:12
 !--------------------------------------------------------------------------------------------------!
 
-!!!!!! THE MODULE THAT IMPLEMENTS CALFUN !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!-------------------------------- THE MODULE THAT IMPLEMENTS CALFUN -------------------------------!
 module calfun_mod
 
 implicit none
@@ -48,19 +49,15 @@ end subroutine calfun
 end module calfun_mod
 
 
-!!!!!!! THE MAIN PROGRAM !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!---------------------------------------- THE MAIN PROGRAM ----------------------------------------!
 program newuoa_exmp
 
 ! The following line makes the solver available.
-!--------------------------------------------------------------------------------------------------!
 use newuoa_mod, only : newuoa
-!--------------------------------------------------------------------------------------------------!
 
 ! The following line specifies which module provides CALFUN. If CALFUN is given by an external
 ! subroutine instead of a module, remove this line and uncomment the "external calfun" line below.
-!--------------------------------------------------------------------------------------------------!
 use calfun_mod, only : calfun
-!--------------------------------------------------------------------------------------------------!
 
 implicit none
 
@@ -72,19 +69,16 @@ real(kind(0.0D0)) :: f
 ! If CALFUN is an external subroutine, then remove the line of  "use calfun_mod, only : calfun", and
 ! uncomment the following line.
 !--------------------------------------------------------------------------------------------------!
-!external calfun
+!!external calfun
 !--------------------------------------------------------------------------------------------------!
 
 ! The following lines illustrates how to call the solver to solve the Chebyquad problem.
-!----------------------------------------------------------------------------------------------!
-x = [(real(i, kind(0.0D0)) / real(n + 1, kind(0.0D0)), i=1, n)]
+x = [(real(i, kind(0.0D0)) / real(n + 1, kind(0.0D0)), i=1, n)]  ! Define the starting point.
 call newuoa(calfun, x, f)  ! This call will not print anything.
-!----------------------------------------------------------------------------------------------!
-! In addition to the compulsory argument, and M, the following illustration specifies also
-! RHOBEG and IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN,
-! etc.) will take their default values coded in the solver.
-!----------------------------------------------------------------------------------------------!
+
+! In addition to the compulsory arguments, the following illustration specifies also RHOBEG and
+! IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will
+! take their default values coded in the solver.
 call newuoa(calfun, x, f, rhobeg=0.2D0 * x(1), iprint=1)
-!----------------------------------------------------------------------------------------------!
 
 end program newuoa_exmp
