@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, January 05, 2022 PM11:01:16
+! Last Modified: Wednesday, January 05, 2022 PM11:58:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -420,7 +420,7 @@ do iter = 1, maxiter
     cf(3) = inprod(s, gc)
     cf(4) = HALF * inprod(d, gd) - cf(1)
     cf(5) = inprod(s, gd)
-    ! The 50 in the line below was chosen by Powell. It works the best in tests, magically. Larger 
+    ! The 50 in the line below was chosen by Powell. It works the best in tests, MAGICALLY. Larger
     ! (e.g., 60, 100) or smaller (e.g., 20, 40) values will worsen the performance of NEWUOA. Why??
     angle = circle_maxabs(circle_fun_biglag, cf, 50_IK)
 

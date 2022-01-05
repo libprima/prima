@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, January 05, 2022 PM11:16:05
+! Last Modified: Wednesday, January 05, 2022 PM11:58:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -317,7 +317,7 @@ do iter = 1, itermax
     dhd = inprod(hd, d)
     dhs = inprod(hd, s)
     args = [sg, HALF * (shs - dhd), dg, dhs]
-    ! The 50 in the line below was chosen by Powell. It works the best in tests, magically. Larger
+    ! The 50 in the line below was chosen by Powell. It works the best in tests, MAGICALLY. Larger
     ! (e.g., 60, 100) or smaller (e.g., 20, 40) values will worsen the performance of NEWUOA. Why??
     angle = circle_min(circle_fun_trsapp, args, 50_IK)
 

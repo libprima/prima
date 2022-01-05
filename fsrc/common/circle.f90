@@ -1,4 +1,20 @@
 module circle_mod
+!--------------------------------------------------------------------------------------------------!
+! This module implements functions that approximately optimizes functions on circles (equivalently,
+! 2*PI-periodic functions). They are used in TRSAPP, BIGLAG, and BIGDEN of NEWUOA.
+!
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
+!
+! Started: January 2021
+!
+! Last Modified: Thursday, January 06, 2022 AM12:01:38
+!
+! N.B.: Both CIRCLE_MIN and CIRCLE_MAXABS require an input GRID_SIZE, the size of the grid used in
+! the search. Powell chose GRID_SIZE = 50 in NEWUOA. MAGICALLY, this number works the best for
+! NEWUOA in tests on CUTest problems. Larger (e.g., 60, 100) or smaller (e.g., 20, 40) values will
+! worsen the performance of NEWUOA. Why?
+!--------------------------------------------------------------------------------------------------!
+
 implicit none
 private
 public :: circle_min, circle_maxabs
@@ -18,6 +34,13 @@ contains
 
 
 function circle_min(fun, args, grid_size) result(angle)
+!--------------------------------------------------------------------------------------------------!
+! This function seeks an approximate minimizer of a 2*PI-periodic function FUN(X, ARGS), where the
+! scalar X is the decision variable, and ARGS is a given vector of parameters. It evaluates the
+! function at an evenly distributed "grid" on [0, 2*PI], GRID_SIZE being the number of grid points.
+! Then it takes the grid point with the least value of FUN, and improves the point by a step that
+! minimizes the quadratic that interpolates FUN on this point and its two nearest neighbours.
+!--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, HALF, PI, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan
@@ -28,7 +51,7 @@ procedure(FUNC_WITH_ARGS) :: fun
 real(RP), intent(in) :: args(:)
 integer(IK), intent(in) :: grid_size
 
-! Output
+! Outputs
 real(RP) :: angle
 
 ! Local variables
@@ -87,6 +110,14 @@ end function circle_min
 
 
 function circle_maxabs(fun, args, grid_size) result(angle)
+!--------------------------------------------------------------------------------------------------!
+! This function seeks an approximate maximizer of the absolute value of a 2*PI-periodic function
+! FUN(X, ARGS), where the scalar X is the decision variable, and ARGS is a given vector of parameters.
+! It evaluates the function at an evenly distributed "grid" on [0, 2*PI], GRID_SIZE being the number
+! of grid points. It takes the grid point with the largest value of |FUN|, and then improves the
+! point by a step that maximizes the absolute value of the quadratic that interpolates FUN on this
+! point and its two nearest neighbours.
+!--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, HALF, PI, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan
@@ -97,7 +128,7 @@ procedure(FUNC_WITH_ARGS) :: fun
 real(RP), intent(in) :: args(:)
 integer(IK), intent(in) :: grid_size
 
-! Output
+! Outputs
 real(RP) :: angle
 
 ! Local variables
@@ -149,5 +180,6 @@ if (DEBUGGING) then
 end if
 
 end function circle_maxabs
+
 
 end module circle_mod
