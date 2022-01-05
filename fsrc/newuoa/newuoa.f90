@@ -19,7 +19,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, January 02, 2022 PM11:08:05
+! Last Modified: Wednesday, January 05, 2022 PM04:06:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

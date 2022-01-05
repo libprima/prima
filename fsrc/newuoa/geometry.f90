@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, January 05, 2022 PM12:10:06
+! Last Modified: Wednesday, January 05, 2022 PM05:30:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -413,43 +413,18 @@ do iter = 1, maxiter
 
     w = matprod(xpt, hcol * matprod(s, xpt))
 
-    ! Calculate the coefficients of the objective function on the circle, beginning with the
-    ! multiplication of S by the second derivative matrix.
+    ! Seek the value of the angle that maximizes |TAU|.
+    ! First, calculate the coefficients of the objective function on the circle.
     cf(1) = HALF * inprod(s, w)
     cf(2) = inprod(d, gc)
     cf(3) = inprod(s, gc)
     cf(4) = HALF * inprod(d, gd) - cf(1)
     cf(5) = inprod(s, gd)
-
-    ! Seek the value of the angle that maximizes |TAU|.
-    !unitang = (TWO * PI) / real(iu, RP)
-    !angles = unitang * real([(i, i=0, iu - 1)], RP)
-    !coss = cos(angles)
-    !sins = sin(angles)
-    !taus = abs(cf(1) + (cf(2) + cf(4) * coss) * coss + (cf(3) + cf(5) * coss) * sins)
-    !if (all(is_nan(taus))) then
-    !    exit
-    !end if
-    !imax = int(maxloc(abs(taus), mask=(.not. (is_nan(taus))), dim=1) - 1, IK)
-    !taumax = taus(imax + 1)
-    !taua = taus(modulo(imax - 1_IK, iu) + 1)
-    !taub = taus(modulo(imax + 1_IK, iu) + 1)
-    !if (abs(taua - taub) > ZERO) then
-    !    taua = taua - taumax
-    !    taub = taub - taumax
-    !    istep = HALF * (taua - taub) / (taua + taub)
-    !else
-    !    istep = ZERO
-    !end if
-    !angle = unitang * (real(imax, RP) + istep)
-
     angle = circle_maxabs(circle_fun_biglag, cf, 50_IK)
 
     ! Calculate the new D and GD.
-    !tau = circle_fun_biglag(angle, cf)
     cth = cos(angle)
     sth = sin(angle)
-    !tau = cf(1) + (cf(2) + cf(4) * cth) * cth + (cf(3) + cf(5) * cth) * sth
     dold = d
     d = cth * d + sth * s
 
@@ -460,12 +435,13 @@ do iter = 1, maxiter
     end if
 
     ! Test for convergence.
-    gd = cth * gd + sth * w
-    s = gc + gd
-    !if (abs(tau) <= 1.1_RP * abs(taus(1))) then
     if (abs(circle_fun_biglag(angle, cf)) <= 1.1_RP * abs(circle_fun_biglag(ZERO, cf))) then
         exit
     end if
+
+    ! Calculate GD and S.
+    gd = cth * gd + sth * w
+    s = gc + gd
 end do
 
 !====================!
@@ -499,9 +475,10 @@ function bigden(idz, knew, kopt, bmat, d0, xpt, zmat) result(d)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, QUART, PI, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, QUART, EPS, DEBUGGING
+use, non_intrinsic :: circle_mod, only : circle_maxabs
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
+use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, issymmetric, norm, project, omega_col, omega_mul
 
 implicit none
@@ -520,25 +497,18 @@ real(RP) :: d(size(xpt, 1))     ! D(N)
 
 ! Local variable
 character(len=*), parameter :: srname = 'BIGDEN'
-integer(IK) :: i
-integer(IK) :: imax
 integer(IK) :: iter
 integer(IK) :: j
 integer(IK) :: k
 integer(IK) :: n
 integer(IK) :: npt
 integer(IK) :: nw
-integer(IK), parameter :: iu = 50_IK
 real(RP) :: alpha
 real(RP) :: angle
-real(RP) :: angles(iu)
 real(RP) :: dd
 real(RP) :: den(9)
-real(RP) :: dena
-real(RP) :: denb
 real(RP) :: denex(9)
 real(RP) :: denmax
-real(RP) :: denoms(size(angles))
 real(RP) :: densav
 real(RP) :: dold(size(xpt, 1))
 real(RP) :: ds
@@ -546,8 +516,7 @@ real(RP) :: dstemp(size(xpt, 2))
 real(RP) :: dtest
 real(RP) :: dxn
 real(RP) :: hcol(size(xpt, 2))
-real(RP) :: istep
-real(RP) :: par(9)
+real(RP) :: par(5)
 real(RP) :: prod(size(xpt, 2) + size(xpt, 1), 5)
 real(RP) :: s(size(xpt, 1))
 real(RP) :: ss
@@ -557,7 +526,6 @@ real(RP) :: tempa
 real(RP) :: tempb
 real(RP) :: tempc
 real(RP) :: tol
-real(RP) :: unitang
 real(RP) :: v(size(xpt, 2))
 real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
 real(RP) :: w(size(xpt, 2) + size(xpt, 1), 5)
@@ -675,10 +643,10 @@ do iter = 1, n
         exit
     end if
 
+    ! Set the coefficients of the first two terms of BETA.
     xd = inprod(x, d)
     xs = inprod(x, s)
-
-    ! Set the coefficients of the first two terms of BETA.
+    dd = inprod(d, d)
     tempa = HALF * xd * xd
     tempb = HALF * xs * xs
     den(1) = dd * (xsq + HALF * dd) + tempa + tempb
@@ -706,7 +674,6 @@ do iter = 1, n
     ! Put the coefficients of THETA*WCHECK in PROD.
     do j = 1, 5
         prod(1:npt, j) = omega_mul(idz, zmat, w(1:npt, j))
-
         nw = npt
         if (j == 2 .or. j == 3) then
             prod(1:npt, j) = prod(1:npt, j) + matprod(w(npt + 1:npt + n, j), bmat(:, 1:npt))
@@ -759,68 +726,39 @@ do iter = 1, n
     denex(9) = alpha * den(9) + prod(knew, 4) * prod(knew, 5)
 
     ! Seek the value of the angle that maximizes the |DENOM|.
-    unitang = (TWO * PI) / real(iu, RP)
-    angles = unitang * real([(i, i=0, iu - 1)], RP)
-    par(1) = ONE
-    do i = 1, iu
-        par(2:8:2) = cos(angles(i)*[1.0_RP, 2.0_RP, 3.0_RP, 4.0_RP])
-        par(3:9:2) = sin(angles(i)*[1.0_RP, 2.0_RP, 3.0_RP, 4.0_RP])
-        denoms(i) = abs(inprod(denex, par))
-    end do
-    if (all(is_nan(denoms))) then
-        exit
-    end if
-    imax = int(maxloc(abs(denoms), mask=(.not. is_nan(denoms)), dim=1) - 1, IK)
-    denmax = denoms(imax + 1)
-    dena = denoms(modulo(imax - 1_IK, iu) + 1)
-    denb = denoms(modulo(imax + 1_IK, iu) + 1)
-    if (abs(dena - denb) > ZERO) then
-        dena = dena - denmax
-        denb = denb - denmax
-        istep = HALF * (dena - denb) / (dena + denb)
-    else
-        istep = ZERO
-    end if
-    angle = unitang * (real(imax, RP) + istep)
+    angle = circle_maxabs(circle_fun_bigden, denex, 50_IK)
 
-    ! Calculate the new parameters of the denominator, the new VLAG and the new D.
-    par(2:8:2) = cos(angle*[1.0_RP, 2.0_RP, 3.0_RP, 4.0_RP])
-    par(3:9:2) = sin(angle*[1.0_RP, 2.0_RP, 3.0_RP, 4.0_RP])
-    !beta = inprod(den, par)  ! Not needed since we do not return BETA.
-    denmax = inprod(denex, par)
-    vlag = matprod(prod(:, 1:5), par(1:5))
-    tau = vlag(knew)
-
+    ! Calculate the new D.
     dold = d
     d = cos(angle) * d + sin(angle) * s
+
     ! Exit in case of Inf/NaN in D.
     if (.not. is_finite(sum(abs(d)))) then
         d = dold
         exit
     end if
 
-    dd = inprod(d, d)
-    xnew = x + d
-    dxn = inprod(d, xnew)
-    xnsq = inprod(xnew, xnew)
-
     ! Test for convergence.
     if (iter > 1) then
-        densav = max(densav, denoms(1))
+        densav = max(densav, circle_fun_bigden(ZERO, denex))
     end if
+    denmax = circle_fun_bigden(angle, denex)
     if (abs(denmax) <= 1.1_RP * abs(densav)) then
         exit
     end if
     densav = denmax
 
-    ! Set S to HALF the gradient of the denominator with respect to D.
+    ! Set S to HALF the gradient of the denominator with respect to D. First, calculate the new VLAG.
+    par = [ONE, cos(angle), sin(angle), cos(2.0_RP * angle), sin(2.0_RP * angle)]
+    vlag = matprod(prod, par)
+    tau = vlag(knew)
+    xnew = x + d
+    dxn = inprod(d, xnew)
+    xnsq = inprod(xnew, xnew)
+    v = (tau * hcol - alpha * vlag(1:npt)) * matprod(xnew, xpt)
     s = tau * bmat(:, knew) + alpha * (dxn * x + xnsq * d - vlag(npt + 1:npt + n))
-    v = matprod(xnew, xpt)
-    v = (tau * hcol - alpha * vlag(1:npt)) * v
     s = s + matprod(xpt, v)
 end do
-
-!vlag(kopt) = vlag(kopt) + ONE  ! Not needed since we do not return VLAG.
 
 !====================!
 !  Calculation ends  !
@@ -873,6 +811,46 @@ end if
 !  Calculation ends  !
 !====================!
 end function circle_fun_biglag
+
+
+function circle_fun_bigden(theta, args) result(f)
+use, non_intrinsic :: consts_mod, only : RP, ONE, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: linalg_mod, only : inprod
+implicit none
+! Inputs
+real(RP), intent(in) :: theta
+real(RP), intent(in) :: args(:)
+
+! Outputs
+real(RP) :: f
+
+! Local variables
+character(len=*), parameter :: srname = 'CIRCLE_FUN_BIGDEN'
+real(RP) :: par(size(args))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(size(args) == 9, 'SIZE(ARGS) == 9', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+if (abs(theta) > 0) then
+    par(1) = ONE
+    par(2:8:2) = cos(theta*[1.0_RP, 2.0_RP, 3.0_RP, 4.0_RP])
+    par(3:9:2) = sin(theta*[1.0_RP, 2.0_RP, 3.0_RP, 4.0_RP])
+    f = inprod(args, par)
+else
+    f = args(1) + args(2) + args(4) + args(6) + args(8)
+end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+end function circle_fun_bigden
 
 
 end module geometry_mod

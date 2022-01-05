@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, January 05, 2022 AM10:47:05
+! Last Modified: Wednesday, January 05, 2022 PM05:46:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -77,7 +77,6 @@ real(RP) :: alpha
 real(RP) :: angle
 real(RP) :: args(4)
 real(RP) :: bstep
-real(RP) :: cf
 real(RP) :: cth
 real(RP) :: d(size(x))
 real(RP) :: dd
@@ -311,13 +310,13 @@ do iter = 1, itermax
     end if
 
     hd = hess_mul(hq, pq, xpt, d)
+
+    ! Seek the value of the angle that minimizes Q.
+    ! First, calculate the coefficients of the objective function on the circle.
     dg = inprod(d, g)
     dhd = inprod(hd, d)
     dhs = inprod(hd, s)
-
-    ! Seek the value of the angle that minimizes Q.
-    cf = HALF * (shs - dhd)
-    args = [sg, cf, dg, dhs]
+    args = [sg, HALF * (shs - dhd), dg, dhs]
     angle = circle_min(circle_fun_trsapp, args, 50_IK)
 
     ! Calculate the new S.
