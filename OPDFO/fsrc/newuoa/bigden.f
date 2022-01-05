@@ -294,12 +294,12 @@ C
 C     Seek the value of the angle that maximizes the modulus of DENOM.
 C
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      !SUMM=DENEX(1)+DENEX(2)+DENEX(4)+DENEX(6)+DENEX(8)
-      angle = 0.0D0 *((TWO*PI)/DFLOAT(50))
+      SUMM=DENEX(1)+DENEX(2)+DENEX(4)+DENEX(6)+DENEX(8)
+      !angle = 0.0D0 *((TWO*PI)/DFLOAT(50))
       PAR(1)=ONE
-      par(2:8:2) = cos(angle * [1.0D0, 2.0D0, 3.0D0, 4.0D0])
-      par(3:9:2) = sin(angle * [1.0D0, 2.0D0, 3.0D0, 4.0D0])
-      SUMM = inprod(denex(1:9), par(1:9))
+      !par(2:8:2) = cos(angle * [1.0D0, 2.0D0, 3.0D0, 4.0D0])
+      !par(3:9:2) = sin(angle * [1.0D0, 2.0D0, 3.0D0, 4.0D0])
+      !SUMM = inprod(denex(1:9), par(1:9))
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DENOLD=SUMM
       DENMAX=SUMM
@@ -351,8 +351,11 @@ C
       !    PAR(J)=PAR(2)*PAR(J-2)-PAR(3)*PAR(J-1)
       !    PAR(J+1)=PAR(2)*PAR(J-1)+PAR(3)*PAR(J-2)
       !END DO
+      par(1) = ONE
       par(2:8:2) = cos(angle * [1.0D0, 2.0D0, 3.0D0, 4.0D0])
       par(3:9:2) = sin(angle * [1.0D0, 2.0D0, 3.0D0, 4.0D0])
+      !par([2,4]) = cos([angle, 2.0D0*angle])
+      !par([3,5]) = sin([angle, 2.0D0*angle])
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       BETA=ZERO
       DENMAX=ZERO
@@ -361,10 +364,13 @@ C
           DENMAX=DENMAX+DENEX(J)*PAR(J)
       END DO
       DO K=1,NDIM
-          VLAG(K)=ZERO
-          DO J=1,5
-              VLAG(K)=VLAG(K)+PROD(K,J)*PAR(J)
-          END DO
+          !VLAG(K)=ZERO
+          !DO J=1,5
+          !    VLAG(K)=VLAG(K)+PROD(K,J)*PAR(J)
+          !END DO
+          VLAG(K) = PROD(K, 1) +
+     1     PROD(K, 2)*cos(angle) + PROD(K, 3)*sin(angle) +
+     1     PROD(K, 4)*cos(2.0D0*angle) + PROD(K, 5)*sin(2.0D0*angle)
       END DO
       TAU=VLAG(KNEW)
       DD=ZERO
