@@ -1,7 +1,7 @@
 module circle_mod
 implicit none
 private
-public :: circle_search
+public :: circle_min, circle_maxabs
 
 abstract interface
     function FUNC_WITH_ARGS(x, args) result(f)
@@ -17,7 +17,7 @@ end interface
 contains
 
 
-function circle_search(fun, args, gridsize) result(angle)
+function circle_min(fun, args, grid_size) result(angle)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, HALF, PI!, DEBUGGING
 use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
@@ -25,43 +25,89 @@ implicit none
 ! Inputs
 procedure(FUNC_WITH_ARGS) :: fun
 real(RP), intent(in) :: args(:)
-integer(IK), intent(in) :: gridsize
+integer(IK), intent(in) :: grid_size
 
 ! Output
 real(RP) :: angle
 
 ! Local variables
-!character(len=*), parameter :: srname = 'CIRCLE_SEARCH'
+!character(len=*), parameter :: srname = 'CIRCLE_MIN'
 integer(IK) :: i
-integer(IK) :: imin
-real(RP) :: angles(gridsize)
-real(RP) :: funa
-real(RP) :: funb
-real(RP) :: funmin
-real(RP) :: funvals(gridsize)
-real(RP) :: istep
-real(RP) :: unitang
+integer(IK) :: iopt
+real(RP) :: angles(grid_size)
+real(RP) :: fa
+real(RP) :: fb
+real(RP) :: fopt
+real(RP) :: fval(grid_size)
+real(RP) :: step
+real(RP) :: unit_angle
 
-unitang = (TWO * PI) / real(gridsize, RP)
-angles = unitang * real([(i, i=1, gridsize)] - 1, RP)
-funvals = [(fun(angles(i), args), i=1, gridsize)]
-if (all(is_nan(funvals))) then
+unit_angle = (TWO * PI) / real(grid_size, RP)
+angles = unit_angle * real([(i, i=1, grid_size)] - 1, RP)
+fval = [(fun(angles(i), args), i=1, grid_size)]
+if (all(is_nan(fval))) then
     angle = ZERO
     return
 end if
-imin = int(minloc(funvals, mask=(.not. is_nan(funvals)), dim=1) - 1, IK)
-funmin = funvals(imin + 1)
-funa = funvals(modulo(imin - 1_IK, gridsize) + 1)
-funb = funvals(modulo(imin + 1_IK, gridsize) + 1)
-if (abs(funa - funb) > ZERO) then
-    funa = funa - funmin
-    funb = funb - funmin
-    istep = HALF * (funa - funb) / (funa + funb)
+iopt = int(minloc(fval, mask=(.not. is_nan(fval)), dim=1) - 1, IK)
+fopt = fval(iopt + 1)
+fa = fval(modulo(iopt - 1_IK, grid_size) + 1)
+fb = fval(modulo(iopt + 1_IK, grid_size) + 1)
+if (abs(fa - fb) > ZERO) then
+    fa = fa - fopt
+    fb = fb - fopt
+    step = HALF * (fa - fb) / (fa + fb)
 else
-    istep = ZERO
+    step = ZERO
 end if
-angle = unitang * (real(imin, RP) + istep)
-end function circle_search
+angle = unit_angle * (real(iopt, RP) + step)  ! It may not be in [0, 2*PI].
+end function circle_min
 
+
+function circle_maxabs(fun, args, grid_size) result(angle)
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, HALF, PI!, DEBUGGING
+use, non_intrinsic :: infnan_mod, only : is_nan
+implicit none
+
+! Inputs
+procedure(FUNC_WITH_ARGS) :: fun
+real(RP), intent(in) :: args(:)
+integer(IK), intent(in) :: grid_size
+
+! Output
+real(RP) :: angle
+
+! Local variables
+!character(len=*), parameter :: srname = 'CIRCLE_MAXABS'
+integer(IK) :: i
+integer(IK) :: iopt
+real(RP) :: angles(grid_size)
+real(RP) :: fa
+real(RP) :: fb
+real(RP) :: fopt
+real(RP) :: fval(grid_size)
+real(RP) :: step
+real(RP) :: unit_angle
+
+unit_angle = (TWO * PI) / real(grid_size, RP)
+angles = unit_angle * real([(i, i=1, grid_size)] - 1, RP)
+fval = [(fun(angles(i), args), i=1, grid_size)]
+if (all(is_nan(fval))) then
+    angle = ZERO
+    return
+end if
+iopt = int(maxloc(abs(fval), mask=(.not. is_nan(fval)), dim=1) - 1, IK)
+fopt = fval(iopt + 1)
+fa = fval(modulo(iopt - 1_IK, grid_size) + 1)
+fb = fval(modulo(iopt + 1_IK, grid_size) + 1)
+if (abs(fa - fb) > ZERO) then
+    fa = fa - fopt
+    fb = fb - fopt
+    step = HALF * (fa - fb) / (fa + fb)
+else
+    step = ZERO
+end if
+angle = unit_angle * (real(iopt, RP) + step)  ! It may not be in [0, 2*PI].
+end function circle_maxabs
 
 end module circle_mod

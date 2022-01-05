@@ -23,9 +23,11 @@ cd "$TEST_DIR" || exit 1
 make cleanall."$SOLVER" > /dev/null
 
 if lf95 --version  &> /dev/null ; then
-    COMPILER_LIST="g n 9 a s i v f d x l"
+    #COMPILER_LIST="g n 9 a s i v f d x l"
+    COMPILER_LIST="g n 9 s i v f d x l"
 else
-    COMPILER_LIST="g n 9 a s i v f d x"
+    #COMPILER_LIST="g n 9 a s i v f d x"
+    COMPILER_LIST="g n 9 s i v f d x"
 fi
 
 for COMPILER in $COMPILER_LIST; do

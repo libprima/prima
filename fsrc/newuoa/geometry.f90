@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, January 03, 2022 PM02:08:39
+! Last Modified: Wednesday, January 05, 2022 PM12:10:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -261,9 +261,10 @@ function biglag(idz, knew, bmat, delbar, x, xpt, zmat) result(d)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, PI, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, EPS, DEBUGGING
+use, non_intrinsic :: circle_mod, only : circle_maxabs
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
+use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : Ax_plus_y, inprod, matprod, issymmetric, norm, project, omega_col
 
 implicit none
@@ -282,17 +283,12 @@ real(RP) :: d(size(xpt, 1))       ! D(N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'BIGLAG'
-integer(IK) :: i
-integer(IK) :: imax
 integer(IK) :: iter
 integer(IK) :: maxiter
 integer(IK) :: n
 integer(IK) :: npt
-integer(IK), parameter :: iu = 50_IK
 real(RP) :: angle
-real(RP) :: angles(iu)
 real(RP) :: cf(5)
-real(RP) :: coss(size(angles))
 real(RP) :: cth
 real(RP) :: dd
 real(RP) :: dhd
@@ -301,21 +297,14 @@ real(RP) :: gc(size(x))
 real(RP) :: gd(size(x))
 real(RP) :: gg
 real(RP) :: hcol(size(xpt, 2))
-real(RP) :: istep
 real(RP) :: s(size(x))
 real(RP) :: scaling
-real(RP) :: sins(size(angles))
 real(RP) :: sp
 real(RP) :: ss
 real(RP) :: sth
 real(RP) :: t
 real(RP) :: tau
-real(RP) :: taua
-real(RP) :: taub
-real(RP) :: taumax
-real(RP) :: taus(size(angles))
 real(RP) :: tol
-real(RP) :: unitang
 real(RP) :: w(size(x))
 
 ! Sizes
@@ -433,31 +422,34 @@ do iter = 1, maxiter
     cf(5) = inprod(s, gd)
 
     ! Seek the value of the angle that maximizes |TAU|.
-    unitang = (TWO * PI) / real(iu, RP)
-    angles = unitang * real([(i, i=0, iu - 1)], RP)
-    coss = cos(angles)
-    sins = sin(angles)
-    taus = cf(1) + (cf(2) + cf(4) * coss) * coss + (cf(3) + cf(5) * coss) * sins
-    if (all(is_nan(taus))) then
-        exit
-    end if
-    imax = int(maxloc(abs(taus), mask=(.not. (is_nan(taus))), dim=1) - 1, IK)
-    taumax = taus(imax + 1)
-    taua = taus(modulo(imax - 1_IK, iu) + 1)
-    taub = taus(modulo(imax + 1_IK, iu) + 1)
-    if (abs(taua - taub) > ZERO) then
-        taua = taua - taumax
-        taub = taub - taumax
-        istep = HALF * (taua - taub) / (taua + taub)
-    else
-        istep = ZERO
-    end if
-    angle = unitang * (real(imax, RP) + istep)
+    !unitang = (TWO * PI) / real(iu, RP)
+    !angles = unitang * real([(i, i=0, iu - 1)], RP)
+    !coss = cos(angles)
+    !sins = sin(angles)
+    !taus = abs(cf(1) + (cf(2) + cf(4) * coss) * coss + (cf(3) + cf(5) * coss) * sins)
+    !if (all(is_nan(taus))) then
+    !    exit
+    !end if
+    !imax = int(maxloc(abs(taus), mask=(.not. (is_nan(taus))), dim=1) - 1, IK)
+    !taumax = taus(imax + 1)
+    !taua = taus(modulo(imax - 1_IK, iu) + 1)
+    !taub = taus(modulo(imax + 1_IK, iu) + 1)
+    !if (abs(taua - taub) > ZERO) then
+    !    taua = taua - taumax
+    !    taub = taub - taumax
+    !    istep = HALF * (taua - taub) / (taua + taub)
+    !else
+    !    istep = ZERO
+    !end if
+    !angle = unitang * (real(imax, RP) + istep)
+
+    angle = circle_maxabs(circle_fun_biglag, cf, 50_IK)
 
     ! Calculate the new D and GD.
+    !tau = circle_fun_biglag(angle, cf)
     cth = cos(angle)
     sth = sin(angle)
-    tau = cf(1) + (cf(2) + cf(4) * cth) * cth + (cf(3) + cf(5) * cth) * sth
+    !tau = cf(1) + (cf(2) + cf(4) * cth) * cth + (cf(3) + cf(5) * cth) * sth
     dold = d
     d = cth * d + sth * s
 
@@ -470,7 +462,8 @@ do iter = 1, maxiter
     ! Test for convergence.
     gd = cth * gd + sth * w
     s = gc + gd
-    if (abs(tau) <= 1.1_RP * abs(taus(1))) then
+    !if (abs(tau) <= 1.1_RP * abs(taus(1))) then
+    if (abs(circle_fun_biglag(angle, cf)) <= 1.1_RP * abs(circle_fun_biglag(ZERO, cf))) then
         exit
     end if
 end do
@@ -772,7 +765,7 @@ do iter = 1, n
     do i = 1, iu
         par(2:8:2) = cos(angles(i)*[1.0_RP, 2.0_RP, 3.0_RP, 4.0_RP])
         par(3:9:2) = sin(angles(i)*[1.0_RP, 2.0_RP, 3.0_RP, 4.0_RP])
-        denoms(i) = inprod(denex, par)
+        denoms(i) = abs(inprod(denex, par))
     end do
     if (all(is_nan(denoms))) then
         exit
@@ -841,6 +834,45 @@ if (DEBUGGING) then
 end if
 
 end function bigden
+
+
+function circle_fun_biglag(theta, args) result(f)
+use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+implicit none
+! Inputs
+real(RP), intent(in) :: theta
+real(RP), intent(in) :: args(:)
+
+! Outputs
+real(RP) :: f
+
+! Local variables
+character(len=*), parameter :: srname = 'CIRCLE_FUN_BIGLAG'
+real(RP) :: cth
+real(RP) :: sth
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(size(args) == 5, 'SIZE(ARGS) == 5', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+if (abs(theta) > 0) then
+    cth = cos(theta)
+    sth = sin(theta)
+    f = args(1) + (args(2) + args(4) * cth) * cth + (args(3) + args(5) * cth) * sth
+else
+    f = args(1) + args(2) + args(4)
+end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+end function circle_fun_biglag
 
 
 end module geometry_mod
