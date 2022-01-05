@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, January 04, 2022 AM12:16:34
+! Last Modified: Wednesday, January 05, 2022 AM10:47:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -45,7 +45,7 @@ subroutine trsapp(delta, gq, hq, pq, tol, x, xpt, crvmin, s, info)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, ZERO, TENTH, DEBUGGING
-use, non_intrinsic :: circle_mod, only : circle_search
+use, non_intrinsic :: circle_mod, only : circle_min
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : inprod, issymmetric, norm, project, hess_mul
@@ -318,7 +318,7 @@ do iter = 1, itermax
     ! Seek the value of the angle that minimizes Q.
     cf = HALF * (shs - dhd)
     args = [sg, cf, dg, dhs]
-    angle = circle_search(circle_fun_trsapp, args, 50_IK)
+    angle = circle_min(circle_fun_trsapp, args, 50_IK)
 
     ! Calculate the new S.
     cth = cos(angle)
