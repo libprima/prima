@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, January 05, 2022 PM05:46:57
+! Last Modified: Wednesday, January 05, 2022 PM11:16:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -317,6 +317,8 @@ do iter = 1, itermax
     dhd = inprod(hd, d)
     dhs = inprod(hd, s)
     args = [sg, HALF * (shs - dhd), dg, dhs]
+    ! The 50 in the line below was chosen by Powell. It works the best in tests, magically. Larger
+    ! (e.g., 60, 100) or smaller (e.g., 20, 40) values will worsen the performance of NEWUOA. Why??
     angle = circle_min(circle_fun_trsapp, args, 50_IK)
 
     ! Calculate the new S.
@@ -384,13 +386,9 @@ end if
 ! Calculation starts !
 !====================!
 
-if (abs(theta) > 0) then
-    cth = cos(theta)
-    sth = sin(theta)
-    f = (args(1) + args(2) * cth) * cth + (args(3) + args(4) * cth) * sth
-else
-    f = args(1) + args(2)
-end if
+cth = cos(theta)
+sth = sin(theta)
+f = (args(1) + args(2) * cth) * cth + (args(3) + args(4) * cth) * sth
 
 !====================!
 !  Calculation ends  !

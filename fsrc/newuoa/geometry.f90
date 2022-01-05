@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, January 05, 2022 PM05:30:18
+! Last Modified: Wednesday, January 05, 2022 PM11:01:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -420,6 +420,8 @@ do iter = 1, maxiter
     cf(3) = inprod(s, gc)
     cf(4) = HALF * inprod(d, gd) - cf(1)
     cf(5) = inprod(s, gd)
+    ! The 50 in the line below was chosen by Powell. It works the best in tests, magically. Larger 
+    ! (e.g., 60, 100) or smaller (e.g., 20, 40) values will worsen the performance of NEWUOA. Why??
     angle = circle_maxabs(circle_fun_biglag, cf, 50_IK)
 
     ! Calculate the new D and GD.
@@ -799,13 +801,9 @@ end if
 ! Calculation starts !
 !====================!
 
-if (abs(theta) > 0) then
-    cth = cos(theta)
-    sth = sin(theta)
-    f = args(1) + (args(2) + args(4) * cth) * cth + (args(3) + args(5) * cth) * sth
-else
-    f = args(1) + args(2) + args(4)
-end if
+cth = cos(theta)
+sth = sin(theta)
+f = args(1) + (args(2) + args(4) * cth) * cth + (args(3) + args(5) * cth) * sth
 
 !====================!
 !  Calculation ends  !
@@ -838,14 +836,10 @@ end if
 ! Calculation starts !
 !====================!
 
-if (abs(theta) > 0) then
-    par(1) = ONE
-    par(2:8:2) = cos(theta*[1.0_RP, 2.0_RP, 3.0_RP, 4.0_RP])
-    par(3:9:2) = sin(theta*[1.0_RP, 2.0_RP, 3.0_RP, 4.0_RP])
-    f = inprod(args, par)
-else
-    f = args(1) + args(2) + args(4) + args(6) + args(8)
-end if
+par(1) = ONE
+par(2:8:2) = cos(theta*[1.0_RP, 2.0_RP, 3.0_RP, 4.0_RP])
+par(3:9:2) = sin(theta*[1.0_RP, 2.0_RP, 3.0_RP, 4.0_RP])
+f = inprod(args, par)
 
 !====================!
 !  Calculation ends  !
