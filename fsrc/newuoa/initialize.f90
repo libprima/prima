@@ -6,7 +6,7 @@ module initialize_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, January 06, 2022 PM12:16:48
+! Last Modified: Thursday, January 06, 2022 PM08:47:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -160,7 +160,7 @@ end do
 ! NPT - (2*N + 1) elements of such a permutation. Powell took the following permutation.
 ij(:, 1) = int(([(k, k=2_IK * n + 2_IK, npt)] - n - 2) / n, IK) ! [(K, K=1, NPT)] = [1, 2, ..., NPT]
 ij(:, 2) = int([(k, k=2_IK * n + 2_IK, npt)] - (ij(:, 1) + 1) * n - 1, IK)
-ij(:, 1) = modulo(ij(:, 1) + ij(:, 2) - 1_IK, n) + 1_IK  ! MOD(K-1, N) + 1 = K-N for K in [N+1, 2N]
+ij(:, 1) = modulo(ij(:, 1) + ij(:, 2) - 1_IK, n) + 1_IK  ! MODULO(K-1,N) + 1 = K-N for K in [N+1,2N]
 ! The next line ensures IJ(:, 1) > IJ(:, 2).
 ij = sort(ij, 2, 'descend')
 ! Increment IJ by 1. This 1 comes from the fact that XPT(:, 1) corresponds to the base point XBASE.
@@ -223,7 +223,7 @@ if (DEBUGGING) then
         & 'SIZE(IJ) == [NPT - 2*N - 1, 2]', srname)
     call assert(all(ij >= 2 .and. ij <= 2 * n + 1), '1 <= IJ <= N', srname)
     call assert(all(modulo(ij(:, 1) - 2_IK, n) > modulo(ij(:, 2) - 2_IK, n)), &
-        & 'MOD(IJ(:, 1) - 2, N) > MOD(IJ(:, 2) - 2, N)', srname)
+        & 'MODULO(IJ(:, 1) - 2, N) > MODULO(IJ(:, 2) - 2, N)', srname)
     call assert(nf <= npt, 'NF <= NPT', srname)
     call assert(kopt >= 1 .and. kopt <= nf, '1 <= KOPT <= NF', srname)
     call assert(size(xbase) == n .and. all(is_finite(xbase)), 'SIZE(XBASE) == N, XBASE is finite', srname)
@@ -290,7 +290,7 @@ if (DEBUGGING) then
         & 'SIZE(IJ) == [NPT - 2*N - 1, 2]', srname)
     call assert(all(ij >= 2 .and. ij <= 2 * n + 1), '1 <= IJ <= N', srname)
     call assert(all(modulo(ij(:, 1) - 2_IK, n) > modulo(ij(:, 2) - 2_IK, n)), &
-        & 'MOD(IJ(:, 1) - 2, N) > MOD(IJ(:, 2) - 2, N)', srname)
+        & 'MODULO(IJ(:, 1) - 2, N) > MODULO(IJ(:, 2) - 2, N)', srname)
     call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
     call assert(size(hq, 1) == n .and. size(hq, 2) == n, 'SIZE(HQ) = [N, N]', srname)
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
@@ -398,7 +398,7 @@ if (DEBUGGING) then
         & 'SIZE(IJ) == [NPT - 2*N - 1, 2]', srname)
     call assert(all(ij >= 2 .and. ij <= 2 * n + 1), '1 <= IJ <= N', srname)
     call assert(all(modulo(ij(:, 1) - 2_IK, n) > modulo(ij(:, 2) - 2_IK, n)), &
-        & 'MOD(IJ(:, 1) - 2, N) > MOD(IJ(:, 2) - 2, N)', srname)
+        & 'MODULO(IJ(:, 1) - 2, N) > MODULO(IJ(:, 2) - 2, N)', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &

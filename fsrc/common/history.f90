@@ -7,7 +7,7 @@ module history_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, December 24, 2021 PM10:58:29
+! Last Modified: Thursday, January 06, 2022 PM08:46:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -258,11 +258,11 @@ end if
 !====================!
 
 ! Save the history. Note that NF may exceed the maximal amount of history to save. We save X and F
-! at the position indexed by MOD(NF - 1, MAXHIST) + 1. When the solver terminates, the history
+! at the position indexed by MODULO(NF - 1, MAXHIST) + 1. When the solver terminates, the history
 ! will be re-ordered so that the information is in the chronological order.
 if (maxxhist > 0) then
-    ! We could replace MOD(NF - 1_IK, MAXXHIST) + 1_IK) with MOD(NF - 1_IK, MAXHIST) + 1_IK) based
-    ! on the assumption that MAXXHIST == 0 or MAXHIST. For robustness, we do not do that.
+    ! We could replace MODULO(NF - 1_IK, MAXXHIST) + 1_IK) with MODULO(NF - 1_IK, MAXHIST) + 1_IK)
+    ! based on the assumption that MAXXHIST == 0 or MAXHIST. For robustness, we do not do that.
     xhist(:, modulo(nf - 1_IK, maxxhist) + 1_IK) = x
 end if
 if (maxfhist > 0) then
@@ -364,11 +364,11 @@ end if
 !====================!
 
 ! Save the history. Note that NF may exceed the maximal amount of history to save. We save X, F,
-! CONSTR, and CSTRV at the position indexed by MOD(NF - 1, MAXHIST) + 1. When the solver terminates,
-! the history will be re-ordered so that the information is in the chronological order.
+! CONSTR, and CSTRV at the position indexed by MODULO(NF - 1, MAXHIST) + 1. When the solver
+! terminates, the history will be re-ordered so that the information is in the chronological order.
 if (maxxhist > 0) then
-    ! We could replace MOD(NF - 1_IK, MAXXHIST) + 1_IK) with MOD(NF - 1_IK, MAXHIST) + 1_IK) based
-    ! on the assumption that MAXXHIST == 0 or MAXHIST. For robustness, we do not do that.
+    ! We could replace MODULO(NF - 1_IK, MAXXHIST) + 1_IK) with MODULO(NF - 1_IK, MAXHIST) + 1_IK)
+    ! based on the assumption that MAXXHIST == 0 or MAXHIST. For robustness, we do not do that.
     xhist(:, modulo(nf - 1_IK, maxxhist) + 1_IK) = x
 end if
 if (maxfhist > 0) then
@@ -454,8 +454,8 @@ end if
 
 ! The ranging should be done only if 0 < MAXXHIST < NF. Otherwise, it leads to errors/wrong results.
 if (maxxhist > 0 .and. maxxhist < nf) then
-    ! We could replace MOD(NF - 1_IK, MAXXHIST) + 1_IK) with MOD(NF - 1_IK, MAXHIST) + 1_IK) based
-    ! on the assumption that MAXXHIST == 0 or MAXHIST. For robustness, we do not do that.
+    ! We could replace MODULO(NF - 1_IK, MAXXHIST) + 1_IK) with MODULO(NF - 1_IK, MAXHIST) + 1_IK)
+    ! based on the assumption that MAXXHIST == 0 or MAXHIST. For robustness, we do not do that.
     khist = modulo(nf - 1_IK, maxxhist) + 1_IK
     xhist = reshape([xhist(:, khist + 1:maxxhist), xhist(:, 1:khist)], shape(xhist))
     ! N.B.:
@@ -549,8 +549,8 @@ end if
 
 ! The ranging should be done only if 0 < MAXXHIST < NF. Otherwise, it leads to errors/wrong results.
 if (maxxhist > 0 .and. maxxhist < nf) then
-    ! We could replace MOD(NF - 1_IK, MAXXHIST) + 1_IK) with MOD(NF - 1_IK, MAXHIST) + 1_IK) based
-    ! on the assumption that MAXXHIST == 0 or MAXHIST. For robustness, we do not do that.
+    ! We could replace MODULO(NF - 1_IK, MAXXHIST) + 1_IK) with MODULO(NF - 1_IK, MAXHIST) + 1_IK)
+    ! based on the assumption that MAXXHIST == 0 or MAXHIST. For robustness, we do not do that.
     khist = modulo(nf - 1_IK, maxxhist) + 1_IK
     xhist = reshape([xhist(:, khist + 1:maxxhist), xhist(:, 1:khist)], shape(xhist))
     ! N.B.:
