@@ -159,11 +159,11 @@ call newuoa(n, npt, x, rhobeg, rhoend, iprint, maxfun, w, f, info, ftarget)
 ! If necessary, rearrange XHIST and FHIST so that they are in the
 ! chronological order.
 if (maxxhist >= 1 .and. maxxhist < nf) then
-    khist = mod(nf - 1_IK_CL, maxxhist) + 1_IK_CL
+    khist = modulo(nf - 1_IK_CL, maxxhist) + 1_IK_CL
     xhist = reshape([xhist(:, khist + 1:maxxhist), xhist(:, 1:khist)], shape(xhist))
 end if
 if (maxfhist >= 1 .and. maxfhist < nf) then
-    khist = mod(nf - 1_IK_CL, maxfhist) + 1_IK_CL
+    khist = modulo(nf - 1_IK_CL, maxfhist) + 1_IK_CL
     fhist = [fhist(khist + 1:maxfhist), fhist(1:khist)]
 end if
 
@@ -245,13 +245,13 @@ nf = nf + int(1, kind(nf))
 
 maxxhist = int(size(xhist, 2), kind(maxxhist))
 if (maxxhist >= 1) then
-    khist = mod(nf - 1_IK_CL, maxxhist) + 1_IK_CL
+    khist = modulo(nf - 1_IK_CL, maxxhist) + 1_IK_CL
     xhist(:, khist) = x
 end if
 
 maxfhist = int(size(fhist), kind(maxfhist))
 if (maxfhist >= 1) then
-    khist = mod(nf - 1_IK_CL, maxfhist) + 1_IK_CL
+    khist = modulo(nf - 1_IK_CL, maxfhist) + 1_IK_CL
     fhist(khist) = funval
 end if
 

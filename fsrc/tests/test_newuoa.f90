@@ -106,7 +106,7 @@ do iprob = 1, nprobs
         do irand = 1, int(size(npt_list) + max(0_IK, nrand_loc), kind(irand))
             ! Initialize the random seed using N, IRAND, IK, and RP.
             ! We ALTER THE SEED weekly to test the solvers as much as possible.
-            yw = 100 * mod(year(), 100) + week()
+            yw = 100 * modulo(year(), 100) + week()
             call setseed(int(sum(istr(probname)) + n + irand + IK + RP + yw))
             if (irand <= size(npt_list)) then
                 npt = npt_list(irand)
