@@ -6,7 +6,7 @@ module rand_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Saturday, October 09, 2021 PM11:04:00
+! Last Modified: Thursday, January 06, 2022 PM08:42:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -99,7 +99,7 @@ cos_seed = min(max(cos(real([(i, i=seed - n + 1, seed)], DP)), -1.0_DP), 1.0_DP)
 seed_to_put = ceiling(0.9_DP * real(huge(0), DP) * cos_seed)
 ! P takes a `+1` at the end, so that it is guarantee to be positive.
 p = int(real(huge(0), DP) / 1.0E2_DP) + 1
-seed_to_put = abs(modulo(seed_to_put, p)) + 1
+seed_to_put = modulo(seed_to_put, p) + 1
 
 call random_seed(put=seed_to_put)
 
