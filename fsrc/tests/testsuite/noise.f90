@@ -6,10 +6,10 @@ module noise_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Saturday, December 25, 2021 PM06:15:18
+! Last Modified: Thursday, January 06, 2022 PM12:27:02
 !--------------------------------------------------------------------------------------------------!
 
-use, non_intrinsic :: pintrf_mod, only : FUN, FUNCON
+use, non_intrinsic :: pintrf_mod, only : OBJ, OBJCON
 implicit none
 
 private
@@ -25,8 +25,8 @@ interface noisyfun
     module procedure noisyfun0, noisyfun1
 end interface noisyfun
 
-procedure(FUN), pointer :: orig_calfun
-procedure(FUNCON), pointer :: orig_calcfc
+procedure(OBJ), pointer :: orig_calfun
+procedure(OBJCON), pointer :: orig_calcfc
 integer, parameter :: NOISE_TYPE_LEN = 64
 
 

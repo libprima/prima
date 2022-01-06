@@ -28,7 +28,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, January 03, 2022 AM12:04:41
+! Last Modified: Thursday, January 06, 2022 PM12:21:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -215,7 +215,7 @@ use, non_intrinsic :: evaluate_mod, only : eval_count, f_x0, constr_x0
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite, is_neginf, is_posinf
 use, non_intrinsic :: memory_mod, only : safealloc
-use, non_intrinsic :: pintrf_mod, only : FUNCON
+use, non_intrinsic :: pintrf_mod, only : OBJCON
 use, non_intrinsic :: selectx_mod, only : isbetter
 use, non_intrinsic :: preproc_mod, only : preproc
 
@@ -225,7 +225,7 @@ use, non_intrinsic :: cobylb_mod, only : cobylb
 implicit none
 
 ! Compulsory arguments
-procedure(FUNCON) :: calcfc
+procedure(OBJCON) :: calcfc
 real(RP), intent(inout) :: x(:)
 real(RP), intent(out) :: f
 integer(IK), intent(in) :: m

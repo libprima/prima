@@ -6,7 +6,7 @@ module initialize_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, December 25, 2021 AM12:10:53
+! Last Modified: Thursday, January 06, 2022 PM12:21:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -33,12 +33,12 @@ use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf, is_finite
 use, non_intrinsic :: info_mod, only : INFO_DFT
 use, non_intrinsic :: linalg_mod, only : eye
 use, non_intrinsic :: output_mod, only : fmsg
-use, non_intrinsic :: pintrf_mod, only : FUNCON
+use, non_intrinsic :: pintrf_mod, only : OBJCON
 
 implicit none
 
 ! Inputs
-procedure(FUNCON) :: calcfc
+procedure(OBJCON) :: calcfc
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
 real(RP), intent(in) :: ctol
