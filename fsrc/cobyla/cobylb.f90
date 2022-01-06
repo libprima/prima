@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, December 26, 2021 PM02:32:05
+! Last Modified: Thursday, January 06, 2022 PM12:21:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -31,7 +31,7 @@ use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
 use, non_intrinsic :: info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, NAN_MODEL, DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, inv
 use, non_intrinsic :: output_mod, only : retmsg, rhomsg, fmsg, cpenmsg
-use, non_intrinsic :: pintrf_mod, only : FUNCON
+use, non_intrinsic :: pintrf_mod, only : OBJCON
 use, non_intrinsic :: resolution_mod, only : resenhance
 use, non_intrinsic :: selectx_mod, only : savefilt, selectx, isbetter
 
@@ -44,7 +44,7 @@ use, non_intrinsic :: update_mod, only : updatexfc, updatepole, findpole
 implicit none
 
 ! Inputs
-procedure(FUNCON) :: calcfc
+procedure(OBJCON) :: calcfc
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfilt
 integer(IK), intent(in) :: maxfun

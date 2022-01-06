@@ -13,7 +13,7 @@ module prob_mod
 ! hexagon
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK
-use, non_intrinsic :: pintrf_mod, only : FUN, FUNCON
+use, non_intrinsic :: pintrf_mod, only : OBJ, OBJCON
 implicit none
 
 private
@@ -38,8 +38,8 @@ type problem_t
     real(RP), allocatable :: Aineq(:, :)
     real(RP), allocatable :: bineq(:)
     real(RP) :: Delta0
-    procedure(FUN), nopass, pointer :: calfun => null()
-    procedure(FUNCON), nopass, pointer :: calcfc => null()
+    procedure(OBJ), nopass, pointer :: calfun => null()
+    procedure(OBJCON), nopass, pointer :: calcfc => null()
 end type problem_t
 
 

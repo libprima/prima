@@ -6,7 +6,7 @@ module evaluate_mod
 !
 ! Started: August 2021
 !
-! Last Modified: Friday, December 17, 2021 PM04:54:04
+! Last Modified: Thursday, January 06, 2022 PM12:14:55
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : RP, IK
@@ -36,12 +36,12 @@ subroutine evalf(calfun, x, f)
 use, non_intrinsic :: consts_mod, only : RP, HUGEFUN, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: pintrf_mod, only : FUN
+use, non_intrinsic :: pintrf_mod, only : OBJ
 
 implicit none
 
 ! Inputs
-procedure(FUN) :: calfun
+procedure(OBJ) :: calfun
 real(RP), intent(in) :: x(:)
 
 ! Output
@@ -97,12 +97,12 @@ subroutine evalfc(calcfc, x, f, constr, cstrv)
 use, non_intrinsic :: consts_mod, only : RP, ZERO, HUGEFUN, HUGECON, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
-use, non_intrinsic :: pintrf_mod, only : FUNCON
+use, non_intrinsic :: pintrf_mod, only : OBJCON
 
 implicit none
 
 ! Inputs
-procedure(FUNCON) :: calcfc
+procedure(OBJCON) :: calcfc
 real(RP), intent(in) :: x(:)
 
 ! Outputs

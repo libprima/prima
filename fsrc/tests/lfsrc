@@ -18,12 +18,19 @@ fi
 if grep -q  "^\s*public ::" "$PINTRF" ; then
     sed -i '0,/^\s*public ::/d' "$PINTRF"
 fi
-sed -i '/^\s*end module/d ; s/abstract interface/interface/ ; s/FUNCON/calcfc/g ; s/FUN/calfun/g' "$PINTRF"
+sed -i '/^\s*end module/d ; s/abstract interface/interface/ ; s/OBJCON/calcfc/g ; s/OBJ/calfun/g' "$PINTRF"
 
 find "$DIR" -type f \( -name "*.f90" -o -name "*.F90" \) -print0 \
     | xargs -0 sed -i "s/, non_intrinsic ::// ; s/\[/\(\//g ; s/\]/\/\)/g ; /^\s*use pintrf_mod/d ; \
-    s|^procedure(FUN) :: calfun$|include \"$PINTRF\"| ; s|^procedure(FUNCON) :: calcfc$|include \"$PINTRF\"|"
+    s|^procedure(OBJ) :: calfun$|include \"$PINTRF\"| ; s|^procedure(OBJCON) :: calcfc$|include \"$PINTRF\"|"
 
 find "$DIR" -type f  -name "ffiles.txt" -print0 | xargs -0 sed -i "/^$PINTRFF90$/d"
+
+
+#CIRCLEF90="circle.f90"
+#CIRCLE="$DIR/common/$CIRCLEF90"
+
+
+
 
 exit 0

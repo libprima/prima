@@ -1,39 +1,39 @@
 module pintrf_mod
 !--------------------------------------------------------------------------------------------------!
-! This is a module specifying the abstract interfaces FUN and FUNCON. FUN evaluates the objective
-! function for unconstrained, bound constrained, and linearly constrained problems; FUNCON evaluates
+! This is a module specifying the abstract interfaces OBJ and OBJCON. OBJ evaluates the objective
+! function for unconstrained, bound constrained, and linearly constrained problems; OBJCON evaluates
 ! the objective and constraint functions for nonlinearly constrained problems.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
 ! Started: July 2020.
 !
-! Last Modified: Saturday, October 09, 2021 PM11:01:46
+! Last Modified: Thursday, January 06, 2022 PM12:15:55
 !--------------------------------------------------------------------------------------------------!
 
-!!!!!! Users must provide the implementation of FUN or FUNCON. !!!!!!
+!!!!!! Users must provide the implementation of OBJ or OBJCON. !!!!!!
 
 implicit none
 private
-public :: FUN, FUNCON
+public :: OBJ, OBJCON
 
 abstract interface
-    subroutine FUN(x, f)
+    subroutine OBJ(x, f)
     use consts_mod, only : RP
     implicit none
     real(RP), intent(in) :: x(:)
     real(RP), intent(out) :: f
-    end subroutine FUN
+    end subroutine OBJ
 end interface
 
 abstract interface
-    subroutine FUNCON(x, f, constr)
+    subroutine OBJCON(x, f, constr)
     use consts_mod, only : RP
     implicit none
     real(RP), intent(in) :: x(:)
     real(RP), intent(out) :: f
     real(RP), intent(out) :: constr(:)
-    end subroutine FUNCON
+    end subroutine OBJCON
 end interface
 
 end module pintrf_mod

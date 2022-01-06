@@ -6,7 +6,7 @@ module initialize_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, December 24, 2021 PM11:56:31
+! Last Modified: Thursday, January 06, 2022 PM12:16:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -48,12 +48,12 @@ use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : INFO_DFT
 use, non_intrinsic :: linalg_mod, only : eye, sort
 use, non_intrinsic :: output_mod, only : fmsg
-use, non_intrinsic :: pintrf_mod, only : FUN
+use, non_intrinsic :: pintrf_mod, only : OBJ
 
 implicit none
 
 ! Inputs
-procedure(FUN) :: calfun
+procedure(OBJ) :: calfun
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
 real(RP), intent(in) :: ftarget

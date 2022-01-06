@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, December 24, 2021 PM11:40:43
+! Last Modified: Thursday, January 06, 2022 PM12:17:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -57,7 +57,7 @@ use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS
 use, non_intrinsic :: linalg_mod, only : calquad, inprod, norm
 use, non_intrinsic :: output_mod, only : retmsg, rhomsg, fmsg
-use, non_intrinsic :: pintrf_mod, only : FUN
+use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: ratio_mod, only : redrat
 use, non_intrinsic :: resolution_mod, only : resenhance
 
@@ -71,7 +71,7 @@ use, non_intrinsic :: update_mod, only : updateh, updateq, updatexf, tryqalt
 implicit none
 
 ! Inputs
-procedure(FUN) :: calfun
+procedure(OBJ) :: calfun
 ! N.B.: The INTENT attribute cannot be specified for a dummy procedure without the POINTER attribute
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun

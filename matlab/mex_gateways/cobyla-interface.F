@@ -40,7 +40,7 @@ C Fortran code starts
 
       use consts_mod, only : DP, rp, hugecon, hugefun, zero
       use infnan_mod
-      use pintrf_mod, only : FUNCON
+      use pintrf_mod, only : OBJCON
       implicit none
 
       integer*4, parameter :: int32_0 =  0
@@ -133,7 +133,7 @@ C kind 4, and ~9E18 for kind 8). This imposes an upper limit on the size
 C of problem solvable by this code. If nw is INTEGER*4, assuming that
 C m=10n, the largest value of n is ~9600. COBYLA is not designed for so
 C large problems.
-       procedure(FUNCON) :: calcfc
+       procedure(OBJCON) :: calcfc
 
 C Validate number of arguments.
       if (nrhs .ne. 13) then

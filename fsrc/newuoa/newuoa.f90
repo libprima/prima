@@ -19,7 +19,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, January 05, 2022 PM04:06:56
+! Last Modified: Thursday, January 06, 2022 PM12:17:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -167,7 +167,7 @@ use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite
 use, non_intrinsic :: memory_mod, only : safealloc
-use, non_intrinsic :: pintrf_mod, only : FUN
+use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: preproc_mod, only : preproc
 
 ! Solver-specific modules
@@ -176,7 +176,7 @@ use, non_intrinsic :: newuob_mod, only : newuob
 implicit none
 
 ! Arguments
-procedure(FUN) :: calfun
+procedure(OBJ) :: calfun
 ! N.B.: The INTENT attribute cannot be specified for a dummy procedure without the POINTER attribute
 real(RP), intent(inout) :: x(:)
 real(RP), intent(out) :: f
