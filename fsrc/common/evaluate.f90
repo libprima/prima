@@ -6,7 +6,7 @@ module evaluate_mod
 !
 ! Started: August 2021
 !
-! Last Modified: Thursday, January 06, 2022 PM12:14:55
+! Last Modified: Thursday, January 06, 2022 PM08:16:57
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : RP, IK
@@ -31,13 +31,15 @@ contains
 
 
 subroutine evalf(calfun, x, f)
-
+!--------------------------------------------------------------------------------------------------!
+! This function evaluates CALFUN at X, setting F to the objective function value. Nan/Inf are
+! handled by a moderated extreme barrier.
+!--------------------------------------------------------------------------------------------------!
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, HUGEFUN, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: pintrf_mod, only : OBJ
-
 implicit none
 
 ! Inputs
@@ -92,13 +94,16 @@ end subroutine evalf
 
 
 subroutine evalfc(calcfc, x, f, constr, cstrv)
-
+!--------------------------------------------------------------------------------------------------!
+! This function evaluates CALCFC at X, setting F to the objective function value, CONSTR to the
+! constraint value, and CSTRV to the constraint violation. Nan/Inf are handled by a moderated
+! extreme barrier.
+!--------------------------------------------------------------------------------------------------!
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, ZERO, HUGEFUN, HUGECON, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
 use, non_intrinsic :: pintrf_mod, only : OBJCON
-
 implicit none
 
 ! Inputs
