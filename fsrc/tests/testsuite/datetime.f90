@@ -137,7 +137,7 @@ else
     y_loc = year()
 end if
 
-is_leap = (mod(y_loc, 4) == 0 .and. mod(y_loc, 100) /= 0) .or. (mod(y_loc, 400) == 0)
+is_leap = (modulo(y_loc, 4) == 0 .and. modulo(y_loc, 100) /= 0) .or. (modulo(y_loc, 400) == 0)
 end function isleap
 
 
@@ -187,12 +187,9 @@ integer, intent(in), optional :: ymd(3)
 integer :: d
 
 if (present(ymd)) then
-    d = mod(5 + days_since_20000101(ymd), 7) + 1
+    d = modulo(5 + days_since_20000101(ymd), 7) + 1
 else
-    d = mod(5 + days_since_20000101(), 7) + 1
-end if
-if (d <= 0) then
-    d = d + 7
+    d = modulo(5 + days_since_20000101(), 7) + 1
 end if
 end function whatday
 

@@ -126,7 +126,7 @@ do iprob = 1, nprobs
         do irand = 1, max(1_IK, nrand_loc)
             ! Initialize the random seed using N, IRAND, IK, and RP.
             ! We ALTER THE SEED weekly to test the solvers as much as possible.
-            yw = 100 * mod(year(), 100) + week()
+            yw = 100 * modulo(year(), 100) + week()
             call setseed(int(sum(istr(probname)) + n + irand + IK + RP + yw))
             iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
             maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))

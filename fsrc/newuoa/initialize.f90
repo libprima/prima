@@ -160,7 +160,7 @@ end do
 ! NPT - (2*N + 1) elements of such a permutation. Powell took the following permutation.
 ij(:, 1) = int(([(k, k=2_IK * n + 2_IK, npt)] - n - 2) / n, IK) ! [(K, K=1, NPT)] = [1, 2, ..., NPT]
 ij(:, 2) = int([(k, k=2_IK * n + 2_IK, npt)] - (ij(:, 1) + 1) * n - 1, IK)
-ij(:, 1) = mod(ij(:, 1) + ij(:, 2) - 1_IK, n) + 1_IK  ! MOD(K-1, N) + 1 = K-N for K in [N+1, 2N]
+ij(:, 1) = modulo(ij(:, 1) + ij(:, 2) - 1_IK, n) + 1_IK  ! MOD(K-1, N) + 1 = K-N for K in [N+1, 2N]
 ! The next line ensures IJ(:, 1) > IJ(:, 2).
 ij = sort(ij, 2, 'descend')
 ! Increment IJ by 1. This 1 comes from the fact that XPT(:, 1) corresponds to the base point XBASE.
@@ -222,7 +222,7 @@ if (DEBUGGING) then
     call assert(size(ij, 1) == max(0_IK, npt - 2_IK * n - 1_IK) .and. size(ij, 2) == 2, &
         & 'SIZE(IJ) == [NPT - 2*N - 1, 2]', srname)
     call assert(all(ij >= 2 .and. ij <= 2 * n + 1), '1 <= IJ <= N', srname)
-    call assert(all(mod(ij(:, 1) - 2_IK, n) > mod(ij(:, 2) - 2_IK, n)), &
+    call assert(all(modulo(ij(:, 1) - 2_IK, n) > modulo(ij(:, 2) - 2_IK, n)), &
         & 'MOD(IJ(:, 1) - 2, N) > MOD(IJ(:, 2) - 2, N)', srname)
     call assert(nf <= npt, 'NF <= NPT', srname)
     call assert(kopt >= 1 .and. kopt <= nf, '1 <= KOPT <= NF', srname)
@@ -289,7 +289,7 @@ if (DEBUGGING) then
     call assert(size(ij, 1) == max(0_IK, npt - 2_IK * n - 1_IK) .and. size(ij, 2) == 2, &
         & 'SIZE(IJ) == [NPT - 2*N - 1, 2]', srname)
     call assert(all(ij >= 2 .and. ij <= 2 * n + 1), '1 <= IJ <= N', srname)
-    call assert(all(mod(ij(:, 1) - 2_IK, n) > mod(ij(:, 2) - 2_IK, n)), &
+    call assert(all(modulo(ij(:, 1) - 2_IK, n) > modulo(ij(:, 2) - 2_IK, n)), &
         & 'MOD(IJ(:, 1) - 2, N) > MOD(IJ(:, 2) - 2, N)', srname)
     call assert(size(gq) == n, 'SIZE(GQ) = N', srname)
     call assert(size(hq, 1) == n .and. size(hq, 2) == n, 'SIZE(HQ) = [N, N]', srname)
@@ -325,8 +325,8 @@ do k = 1, npt - 2_IK * n - 1_IK
     ! FVAL(IJ(K, 1)) = F(XBASE + XI*e_I),
     ! FVAL(IJ(K, 2)) = F(XBASE + XJ*e_J).
     ! Thus the HQ(I,J) defined below approximates frac{partial^2}{partial X_I partial X_J} F(XBASE).
-    i = mod(ij(k, 1) - 2_IK, n) + 1_IK
-    j = mod(ij(k, 2) - 2_IK, n) + 1_IK
+    i = modulo(ij(k, 1) - 2_IK, n) + 1_IK
+    j = modulo(ij(k, 2) - 2_IK, n) + 1_IK
     xi = xpt(i, k + 2 * n + 1)
     xj = xpt(j, k + 2 * n + 1)
     hq(i, j) = (fbeg - fval(ij(k, 1)) - fval(ij(k, 2)) + fval(k + 2 * n + 1)) / (xi * xj)
@@ -397,7 +397,7 @@ if (DEBUGGING) then
     call assert(size(ij, 1) == max(0_IK, npt - 2_IK * n - 1_IK) .and. size(ij, 2) == 2, &
         & 'SIZE(IJ) == [NPT - 2*N - 1, 2]', srname)
     call assert(all(ij >= 2 .and. ij <= 2 * n + 1), '1 <= IJ <= N', srname)
-    call assert(all(mod(ij(:, 1) - 2_IK, n) > mod(ij(:, 2) - 2_IK, n)), &
+    call assert(all(modulo(ij(:, 1) - 2_IK, n) > modulo(ij(:, 2) - 2_IK, n)), &
         & 'MOD(IJ(:, 1) - 2, N) > MOD(IJ(:, 2) - 2, N)', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)

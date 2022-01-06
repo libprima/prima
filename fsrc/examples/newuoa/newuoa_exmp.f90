@@ -39,7 +39,7 @@ end do
 f = 0.0D0
 do i = 1, n + 1
     tmp = sum(y(1:n, i)) / real(n, kind(0.0D0))
-    if (mod(i, 2) /= 0) then
+    if (modulo(i, 2) /= 0) then
         tmp = tmp + 1.0D0 / real(i * i - 2 * i, kind(0.0D0))
     end if
     f = f + tmp * tmp
