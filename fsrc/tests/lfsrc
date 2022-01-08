@@ -22,7 +22,7 @@ PINTRFF90="pintrf.f90"
 PINTRF="$DIR/common/$PINTRFF90"
 
 # Exit if DIR is not a testing directory.
-if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
+if ! basename "$DIR" | grep -q "\.test\|test\.\|\.tst\|tst\." || ! [[ -d "$DIR" ]] ; then
     printf "\n%s is not a testing directory.\n\nExit.\n\n" "$DIR"
     exit 1
 fi

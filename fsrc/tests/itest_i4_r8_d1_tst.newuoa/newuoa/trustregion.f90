@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, January 08, 2022 PM07:59:45
+! Last Modified: Saturday, January 08, 2022 PM07:44:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -179,6 +179,9 @@ do iter = 1, itermax
         end if
     end if
     hd = hess_mul(hq, pq, xpt, d)
+    write (*, *) iter
+    write (*, *) 'hd', hd
+    write (*, *) 'd', d
     dhd = inprod(d, hd)
 
     ! Set the step-length ALPHA and update CRVMIN.
