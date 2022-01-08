@@ -284,7 +284,7 @@ ftest_i2_r16_d1_tst_c ftest_i4_r16_d1_tst_c ftest_i8_r16_d1_tst_c ftest_i2_r16_d
 # makes the code not standard-conforming. So -std=f$(FSTD) is excluded for the following options.
 # As of 2022, -Wextra implies -Wcompare-reals, -Wunused-parameter, and -Wdo-subscript.
 GFORT := gfortran
-GFORT := $(GFORT) -Werror
+GFORT := $(GFORT) -Werror -Wno-function-elimination
 GFORT := $(GFORT) -Wall -Wextra -pedantic -Wampersand -Wconversion  -Wuninitialized \
 	-Wmaybe-uninitialized -Wsurprising -Waliasing  -Wimplicit-interface -Wimplicit-procedure \
 	-Wintrinsics-std -Wunderflow -Wuse-without-only -Wunused-parameter \
@@ -485,6 +485,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
 	@if echo $@ | grep -q "9test"; then \
+		$(FC) -g -O3 -c $(shell echo $(SRC_NO_TEST)) 2>&1 && \
 		$(FC) $(FFLAGS) -c $(shell echo $(SRC_NO_TEST)) 2>&1 \
 		| grep -v "Warning (165): Implicit interface 'calfun' called at (1)" \
 		| grep -v "Warning (165): Implicit interface 'calcfc' called at (1)" \
@@ -493,6 +494,7 @@ $(TESTS_C) $(TESTS_INT_C):
 		| grep -v "Warning (102): MODULE PROCEDURE 'calcfc' USEd at (1) is not referenced" \
 		| tee -a "$(LOG_DIR)/$@.log" ; \
 	elif echo $@ | grep -q "ltest"; then \
+		$(FC) -g -O3 -c $(shell echo $(SRC_NO_TEST) | sed 's|./common/pintrf.f90||') 2>&1 && \
 		$(FC) $(FFLAGS) -c $(shell echo $(SRC_NO_TEST) | sed 's|./common/pintrf.f90||') 2>&1 \
 		| grep -v "Encountered 0 errors, 0 warnings, [0-9]* information.* in file" \
 		| grep -v "Compiling file\|Module subprogram name" \
@@ -501,6 +503,7 @@ $(TESTS_C) $(TESTS_INT_C):
 		| grep -v "WARNING --  When --chk x is specified, it must be used to compile all source files of a program" \
 		| tee -a "$(LOG_DIR)/$@.log" ; \
 	else \
+		$(FC) -g -O3 -o $@ $(SRC) 2>&1 && \
 		$(FC) $(FFLAGS) -o $@ $(SRC) 2>&1 \
 		| grep -v '^\s*$$' \
 		| grep -v 'Absoft ANSI 1610:' \

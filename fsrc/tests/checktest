@@ -42,7 +42,7 @@ case "$1" in
             | grep -vi "Warning: [A-Z]*MS.*G: Failed to open file .*_output" \
             | grep -vi "Warning:\ Floating\ overflow\ occurred" \
             | grep -vi "Warning:\ Floating\ invalid\ operation\ occurred" \
-            | grep -vi "Warning! Processor does not support trapping of floating-point exceptions." \
+            | grep -vi "Processor does not support trapping of floating-point exceptions" \
             | grep -vi "flist:.*: Invalid format" \
             | grep -vi "BAD_TRSTEP" \
             | grep -vi "invalid maxfun\|invalid maxhist\|invalid npt\|invalid rhobeg\|invalid rhoend\|invalid ftarget\|invalid ctol\|invalid maxfilt\|errstop")"
