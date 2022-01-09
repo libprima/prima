@@ -48,9 +48,9 @@ for COMPILER in $COMPILER_LIST; do
         make  "$COMPILER"test_c."$SOLVER"
     else
         if [[ $COMPILER == 'f' || $COMPILER == 'v' || $COMPILER == 'x' ]] ; then
-            TESTS="i2_r4_d1 i4_r8_d1"
+            TESTS="i2_r4_d1 i8_r4_d1"
         else
-            TESTS="i2_r16_d1 i2_r4_d1 i4_r8_d1"
+            TESTS="i2_r16_d1 i8_r4_d1"
         fi
         for TEST in $TESTS ; do
             INFO="$(make "$COMPILER"test_"$TEST"_tst_c."$SOLVER" \
