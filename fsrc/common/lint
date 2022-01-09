@@ -1,4 +1,17 @@
 #!/bin/bash
+# This script checks the Fortran code of the solver corresponding to this directory.
+# Usage: lint [-a|--all]
+
+# Parse inputs.
+if ! [[ $# -eq 0 || $# -eq 1 ]] ; then
+    printf "Usage: lint [-a|--all]\n"
+    exit 2
+fi
+if [[ $# -eq 1 ]] && [[ $1 == "-a" || $1 == "--all" ]] ; then
+    TEST_ALL="Y"
+else
+    TEST_ALL="N"
+fi
 
 # The directory where this script resides. It is the solver's directory.
 SOLVER_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -31,67 +44,71 @@ else
 fi
 
 for COMPILER in $COMPILER_LIST; do
-    if [[ $COMPILER == 'f' || $COMPILER == 'v' || $COMPILER == 'x' ]] ; then
-        TESTS="i4_r8_d1 i4_r8_d0 i2_r4_d1 i8_r4_d1"
+    if [[ $TEST_ALL == 'Y' ]] ; then
+        make  "$COMPILER"test_c."$SOLVER"
     else
-        TESTS="i4_r8_d1 i4_r8_d0 i2_r16_d1 i8_r4_d1"
-    fi
-    for TEST in $TESTS ; do
-        INFO="$(make "$COMPILER"test_"$TEST"_tst_c."$SOLVER" \
-            | grep -i "starts\|warning\|error\|info\|fail\|abort\|questionable\|remark" \
-            | grep -vi "[0-9]\s*warning\|[0-9]\s*error\|[0-9]\s*info\|info.f90\|information\|--warning\|--error" \
-            | grep -v "interpolation error" \
-            | grep -v "WARNING --  When --chk x is specified" \
-            | grep -v "warning #10182: disabling optimization" \
-            | grep -v "^- \|^| \|^\* \|^+ \|^X \|\# " \
-            )"
-        if [[ "$COMPILER" == "9" ]] ; then
-            INFO="$(echo "$INFO" \
-                | grep -v "Warning (165): Implicit interface 'calcfc' called at (1)" \
-                | grep -v "Warning (165): Implicit interface 'calfun' called at (1)" \
-                | grep -v "Warning (102): MODULE PROCEDURE 'calfun' USEd at (1) is not referenced" \
-                | grep -v "Warning (102): MODULE PROCEDURE 'inv' USEd at (1) is not referenced" \
+        if [[ $COMPILER == 'f' || $COMPILER == 'v' || $COMPILER == 'x' ]] ; then
+            TESTS="i2_r4_d1 i4_r8_d1"
+        else
+            TESTS="i2_r16_d1 i2_r4_d1 i4_r8_d1"
+        fi
+        for TEST in $TESTS ; do
+            INFO="$(make "$COMPILER"test_"$TEST"_tst_c."$SOLVER" \
+                | grep -i "starts\|warning\|error\|info\|fail\|abort\|questionable\|remark" \
+                | grep -vi "[0-9]\s*warning\|[0-9]\s*error\|[0-9]\s*info\|info.f90\|information\|--warning\|--error" \
+                | grep -v "^- \|^| \|^\* \|^+ \|^X \|\# " \
                 )"
-        elif [[ "$COMPILER" == "n" ]] ; then
-            INFO="$(echo "$INFO" | grep -vi "Expression in IF construct is constant")"
-        elif [[ "$COMPILER" == "x" || "$COMPILER" == "i" ]] ; then
-            INFO="$(echo "$INFO" | grep -v "circle\.f90(36): remark #7712: This variable has not been used\.\s*\[ANGLE\]")"
-        fi
-        echo "$INFO" | grep -i --color "starts\|warning\|error\|info\|fail\||abort\|questionable\|remark"
-        if echo "$INFO" | grep -iq "error\|fail\|abort" ; then
-            if [[ -f "$TEST_LOG_DIR"/"$COMPILER"test_"$TEST"_tst_c.log ]] ; then
-                LOGFILE="$COMPILER"test_"$TEST"_tst_c.log
-            else
-                LOGFILE="$COMPILER"test_c.log
+            echo "$INFO" | grep -i --color "starts\|warning\|error\|info\|fail\||abort\|questionable\|remark"
+            if echo "$INFO" | grep -iq "error\|fail\|abort" ; then
+                if [[ -f "$TEST_LOG_DIR"/"$COMPILER"test_"$TEST"_tst_c.log ]] ; then
+                    LOGFILE="$COMPILER"test_"$TEST"_tst_c.log
+                else
+                    LOGFILE="$COMPILER"test_c.log
+                fi
+                mv "$TEST_LOG_DIR"/"$LOGFILE" "$SOLVER_LOG_DIR"
+                cat "$SOLVER_LOG_DIR"/"$LOGFILE"
+                exit 2
             fi
-            mv "$TEST_LOG_DIR"/"$LOGFILE" "$SOLVER_LOG_DIR"
-            cat "$SOLVER_LOG_DIR"/"$LOGFILE"
-            exit 2
-        fi
-    done
-    mv "$TEST_LOG_DIR"/"$COMPILER"test*_c.log "$SOLVER_LOG_DIR"
+        done
+    fi
+    mv "$TEST_LOG_DIR"/"$COMPILER"test*.log "$SOLVER_LOG_DIR"
 done
 
 make clean."$SOLVER"
 
 # Check the logfiles
-LOGFILES=("$SOLVER_LOG_DIR"/*test*_c.log)
-for LOGFILE in "${LOGFILES[@]::${#LOGFILES[@]}-1}" ; do
-    printf "\nChecking %s ...\n" "$LOGFILE"
-    INFO="$(bash "$TEST_DIR"/checktest --warning "$LOGFILE")"
-    printf "%s" "$INFO"
-    printf "\nDone!\n"
-    if [[ -n "$INFO" ]] ; then
-        read -n1 -s -r -p $'Continue? [Y/n] ' KEY
-        printf "\n"
-        if ! [[ "$KEY" == 'Y' || "$KEY" == 'y' || "$KEY" == "" ]]; then
-            exit 0
+LOGFILES=("$SOLVER_LOG_DIR"/*test*.log)
+if [[ "$TEST_ALL" == "Y" ]] ; then
+    for LOGFILE in "${LOGFILES[@]::${#LOGFILES[@]}}" ; do
+        printf "\nChecking %s ...\n" "$LOGFILE"
+        INFO="$(bash "$TEST_DIR"/checktest --warnerror "$LOGFILE")"
+        printf "%s" "$INFO"
+        printf "\nDone!\n"
+        if [[ -n "$INFO" ]] ; then
+            printf "\nWarning or error found in log file.\n"
+            exit 1
         fi
-    fi
-done
-# No pause needed for the last logfile.
-LOGFILE="${LOGFILES[-1]}"  # The last logfile; it needs Bash 4.x.
-printf "\nChecking %s ...\n" "$LOGFILE"
-bash "$TEST_DIR"/checktest --warning "$LOGFILE"
-printf "%s" "$INFO"
-printf "\nDone!\n\n"
+    done
+else
+    for LOGFILE in "${LOGFILES[@]::${#LOGFILES[@]}-1}" ; do
+        printf "\nChecking %s ...\n" "$LOGFILE"
+        INFO="$(bash "$TEST_DIR"/checktest --warning "$LOGFILE")"
+        printf "%s" "$INFO"
+        printf "\nDone!\n"
+        if [[ -n "$INFO" ]] ; then
+            read -n1 -s -r -p $'Continue? [Y/n] ' KEY
+            printf "\n"
+            if ! [[ "$KEY" == 'Y' || "$KEY" == 'y' || "$KEY" == "" ]]; then
+                exit 0
+            fi
+        fi
+    done
+    # No pause needed for the last logfile.
+    LOGFILE="${LOGFILES[-1]}"  # The last logfile; it needs Bash 4.x.
+    printf "\nChecking %s ...\n" "$LOGFILE"
+    bash "$TEST_DIR"/checktest --warning "$LOGFILE"
+    printf "%s" "$INFO"
+    printf "\nDone!\n\n"
+fi
+
+exit 0
