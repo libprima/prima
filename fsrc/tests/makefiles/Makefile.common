@@ -619,7 +619,7 @@ $(TESTS_C) $(TESTS_INT_C):
 		($(FC1) -o $@ $(SRC) && $(FC2) -o $@ $(SRC)) 2>&1 \
 		| grep -v '^\s*$$' \
 		| grep -v 'Absoft ANSI 1610:' \
-		| grep -v 'Absoft Pro Fortran 22.0: 0 Errors, 0 Warnings, 0 Other messages,' \
+		| grep -v 'Absoft Pro Fortran.*: 0 Errors, 0 Warnings, 0 Other messages,' \
 		| grep -v 'after the END INTERFACE keywords is only legal in Fortran 95 and beyond' \
 		| grep -v 'NAG Fortran Compiler Release [0-9]*.* Build [0-9]*' \
 		| grep -v 'Expression in IF construct is constant' \

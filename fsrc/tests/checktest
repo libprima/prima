@@ -18,6 +18,7 @@ WARNINGS="$(grep -i "warning\|Remark\|Questionable\|attention" "$LOGFILE" \
     | grep -vi "MAXFILT is too small" \
     | grep -vi "Only the history of the last [0-9]* iteration(s) is recorede" \
     | grep -v "circle\.f90(36): remark #7712: This variable has not been used\.\s*\[ANGLE\]" \
+	| grep -vi "Warining: UOBYQA: \|Warning: NEWUOA: \|Warning: BOBYQA: \|Warning: LINCOA: \|Warning: COBYLA: " \
     | grep -vi "invalid maxfun\|invalid maxhist\|invalid npt\|invalid rhobeg\|invalid rhoend\|invalid ftarget\|invalid ctol\|invalid maxfilt\|errstop")"
 
 ERRORS="$(grep -i "err\|fail\|exception\|invalid\|bad\|overflow\|backtrace\|segmentation\|fault" "$LOGFILE" \
@@ -31,6 +32,7 @@ ERRORS="$(grep -i "err\|fail\|exception\|invalid\|bad\|overflow\|backtrace\|segm
     | grep -vi "Processor does not support trapping of floating-point exceptions" \
     | grep -vi "flist:.*: Invalid format" \
     | grep -vi "BAD_TRSTEP" \
+	| grep -vi "Warining: UOBYQA: Invalid\|Warning: NEWUOA: Invalid\|Warning: BOBYQA: Invalid\|Warning: LINCOA: Invalid\|Warning: COBYLA: Invalid" \
     | grep -vi "invalid maxfun\|invalid maxhist\|invalid npt\|invalid rhobeg\|invalid rhoend\|invalid ftarget\|invalid ctol\|invalid maxfilt\|errstop")"
 
 case "$1" in
