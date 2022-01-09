@@ -41,7 +41,8 @@ FS = 03
 FSTD = 20$(FS)
 
 # Default options for all the compilers.
-FFLAGS = -g -O0
+FFLAGS1 := -O3
+FFLAGS2 := -g -O0
 
 # Log file stamp.
 RANDNUM := $(shell awk 'BEGIN{srand();printf("%d", 65536*rand())}')
@@ -248,55 +249,92 @@ else
 	AFORT = af95
 endif
 AFORT := $(AFORT) -m1 -en -et -Rb -Rc -Rs -Rp
+
 atest_i2_r4_d1_tst_c atest_i4_r4_d1_tst_c atest_i8_r4_d1_tst_c atest_i2_r4_d0_tst_c atest_i4_r4_d0_tst_c atest_i8_r4_d0_tst_c: \
-	FC = $(AFORT) -TENV:simd_zmask=off
+	FC1 := $(AFORT) $(FFLAGS1) -TENV:simd_zmask=off
+atest_i2_r4_d1_tst_c atest_i4_r4_d1_tst_c atest_i8_r4_d1_tst_c atest_i2_r4_d0_tst_c atest_i4_r4_d0_tst_c atest_i8_r4_d0_tst_c: \
+	FC2 := $(AFORT) $(FFLAGS2) -TENV:simd_zmask=off
+
 atest_i2_r8_d1_tst_c atest_i4_r8_d1_tst_c atest_i8_r8_d1_tst_c atest_i2_r8_d0_tst_c atest_i4_r8_d0_tst_c atest_i8_r8_d0_tst_c: \
-	FC = $(AFORT) \
+	FC1 := $(AFORT) $(FFLAGS1) \
 	-TENV:simd_zmask=off -TENV:simd_omask=off -TENV:simd_imask=off #-TENV:simd_dmask=off -TENV:simd_umask=off
+atest_i2_r8_d1_tst_c atest_i4_r8_d1_tst_c atest_i8_r8_d1_tst_c atest_i2_r8_d0_tst_c atest_i4_r8_d0_tst_c atest_i8_r8_d0_tst_c: \
+	FC2 := $(AFORT) $(FFLAGS2) \
+	-TENV:simd_zmask=off -TENV:simd_omask=off -TENV:simd_imask=off #-TENV:simd_dmask=off -TENV:simd_umask=off
+
 atest_i2_r16_d1_tst_c atest_i4_r16_d1_tst_c atest_i8_r16_d1_tst_c atest_i2_r16_d0_tst_c atest_i4_r16_d0_tst_c atest_i8_r16_d0_tst_c: \
-	FC = $(AFORT) -TENV:simd_zmask=off
+	FC1 := $(AFORT) $(FFLAGS1) -TENV:simd_zmask=off
+atest_i2_r16_d1_tst_c atest_i4_r16_d1_tst_c atest_i8_r16_d1_tst_c atest_i2_r16_d0_tst_c atest_i4_r16_d0_tst_c atest_i8_r16_d0_tst_c: \
+	FC2 := $(AFORT) $(FFLAGS2) -TENV:simd_zmask=off
 
 # AMD AOCC Flang
 AFLANG := $(shell find /opt/AMD \( -type l -o -type f \) -executable -name flang -print | sort | tail -n 1 2> /dev/null || echo AFLANG_NOT_FOUND)
 AFLANG := $(AFLANG) -pedantic-errors -Werror
 # Strangely, with `-Mchkptr`, the compiler may not print the error message of `-Mbounds` anymore.
 DFORT := $(AFLANG) -std=f$(FSTD) -pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Kieee #-Mchkptr
+
 dtest_i2_r4_d1_tst_c dtest_i4_r4_d1_tst_c dtest_i8_r4_d1_tst_c dtest_i2_r4_d0_tst_c dtest_i4_r4_d0_tst_c dtest_i8_r4_d0_tst_c: \
-	FC = $(DFORT)
+	FC1 := $(DFORT) $(FFLAGS1)
+dtest_i2_r4_d1_tst_c dtest_i4_r4_d1_tst_c dtest_i8_r4_d1_tst_c dtest_i2_r4_d0_tst_c dtest_i4_r4_d0_tst_c dtest_i8_r4_d0_tst_c: \
+	FC2 := $(DFORT) $(FFLAGS2)
+
 dtest_i2_r8_d1_tst_c dtest_i4_r8_d1_tst_c dtest_i8_r8_d1_tst_c dtest_i2_r8_d0_tst_c dtest_i4_r8_d0_tst_c dtest_i8_r8_d0_tst_c: \
-	FC = $(DFORT) -ffp-exception-behavior=strict
+	FC1 := $(DFORT) $(FFLAGS1) -ffp-exception-behavior=strict
+dtest_i2_r8_d1_tst_c dtest_i4_r8_d1_tst_c dtest_i8_r8_d1_tst_c dtest_i2_r8_d0_tst_c dtest_i4_r8_d0_tst_c dtest_i8_r8_d0_tst_c: \
+	FC2 := $(DFORT) $(FFLAGS2) -ffp-exception-behavior=strict
+
 dtest_i2_r16_d1_tst_c dtest_i4_r16_d1_tst_c dtest_i8_r16_d1_tst_c dtest_i2_r16_d0_tst_c dtest_i4_r16_d0_tst_c dtest_i8_r16_d0_tst_c: \
-	FC = $(DFORT) -ffp-exception-behavior=strict
+	FC1 := $(DFORT) $(FFLAGS1) -ffp-exception-behavior=strict
+dtest_i2_r16_d1_tst_c dtest_i4_r16_d1_tst_c dtest_i8_r16_d1_tst_c dtest_i2_r16_d0_tst_c dtest_i4_r16_d0_tst_c dtest_i8_r16_d0_tst_c: \
+	FC2 := $(DFORT) $(FFLAGS2) -ffp-exception-behavior=strict
 
 # LLVM Flang
 FFORT := flang
 FFORT := $(FFORT) -pedantic-errors -Werror
 FFORT := $(FFORT) -std=f$(FSTD) -pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkptr -Kieee
+
 ftest_i2_r4_d1_tst_c ftest_i4_r4_d1_tst_c ftest_i8_r4_d1_tst_c ftest_i2_r4_d0_tst_c ftest_i4_r4_d0_tst_c ftest_i8_r4_d0_tst_c: \
-	FC = $(FFORT)
+	FC1 := $(FFORT) $(FFLAGS1)
+ftest_i2_r4_d1_tst_c ftest_i4_r4_d1_tst_c ftest_i8_r4_d1_tst_c ftest_i2_r4_d0_tst_c ftest_i4_r4_d0_tst_c ftest_i8_r4_d0_tst_c: \
+	FC2 := $(FFORT) $(FFLAGS2)
+
 ftest_i2_r8_d1_tst_c ftest_i4_r8_d1_tst_c ftest_i8_r8_d1_tst_c ftest_i2_r8_d0_tst_c ftest_i4_r8_d0_tst_c ftest_i8_r8_d0_tst_c: \
-	FC = $(FFORT)
+	FC1 := $(FFORT) $(FFLAGS1)
+ftest_i2_r8_d1_tst_c ftest_i4_r8_d1_tst_c ftest_i8_r8_d1_tst_c ftest_i2_r8_d0_tst_c ftest_i4_r8_d0_tst_c ftest_i8_r8_d0_tst_c: \
+	FC2 := $(FFORT) $(FFLAGS2)
+
 ftest_i2_r16_d1_tst_c ftest_i4_r16_d1_tst_c ftest_i8_r16_d1_tst_c ftest_i2_r16_d0_tst_c ftest_i4_r16_d0_tst_c ftest_i8_r16_d0_tst_c: \
-	FC = $(FFORT)
+	FC1 := $(FFORT) $(FFLAGS1)
+ftest_i2_r16_d1_tst_c ftest_i4_r16_d1_tst_c ftest_i8_r16_d1_tst_c ftest_i2_r16_d0_tst_c ftest_i4_r16_d0_tst_c ftest_i8_r16_d0_tst_c: \
+	FC2 := $(FFORT) $(FFLAGS2)
 
 # GNU gfortran
 # In the debug mode, our code includes the BACKTRACE function if the compiler is gfortran. This
 # makes the code not standard-conforming. So -std=f$(FSTD) is excluded for the following options.
 # As of 2022, -Wextra implies -Wcompare-reals, -Wunused-parameter, and -Wdo-subscript.
 GFORT := gfortran
-GFORT := $(GFORT) -Werror -Wno-function-elimination
+GFORT := $(GFORT) -Werror
 GFORT := $(GFORT) -Wall -Wextra -pedantic -Wampersand -Wconversion  -Wuninitialized \
 	-Wmaybe-uninitialized -Wsurprising -Waliasing  -Wimplicit-interface -Wimplicit-procedure \
 	-Wintrinsics-std -Wunderflow -Wuse-without-only -Wunused-parameter \
 	-fPIC -fimplicit-none -fbacktrace -fcheck=all \
 	-finit-real=nan -finit-integer=-9999999
 	#-Wrealloc-lhs -Wrealloc-lhs-all
+
 gtest_i2_r4_d1_tst_c gtest_i4_r4_d1_tst_c gtest_i8_r4_d1_tst_c gtest_i2_r4_d0_tst_c gtest_i4_r4_d0_tst_c gtest_i8_r4_d0_tst_c: \
-	FC = $(GFORT) -ffpe-trap=zero
+	FC1 := $(GFORT) $(FFLAGS1) -Wno-function-elimination -ffpe-trap=zero
+gtest_i2_r4_d1_tst_c gtest_i4_r4_d1_tst_c gtest_i8_r4_d1_tst_c gtest_i2_r4_d0_tst_c gtest_i4_r4_d0_tst_c gtest_i8_r4_d0_tst_c: \
+	FC2 := $(GFORT) $(FFLAGS2) -ffpe-trap=zero
+
 gtest_i2_r8_d1_tst_c gtest_i4_r8_d1_tst_c gtest_i8_r8_d1_tst_c gtest_i2_r8_d0_tst_c gtest_i4_r8_d0_tst_c gtest_i8_r8_d0_tst_c: \
-	FC = $(GFORT) -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
+	FC1 := $(GFORT) $(FFLAGS1) -Wno-function-elimination -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
+gtest_i2_r8_d1_tst_c gtest_i4_r8_d1_tst_c gtest_i8_r8_d1_tst_c gtest_i2_r8_d0_tst_c gtest_i4_r8_d0_tst_c gtest_i8_r8_d0_tst_c: \
+	FC2 := $(GFORT) $(FFLAGS2) -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
+
 gtest_i2_r16_d1_tst_c gtest_i4_r16_d1_tst_c gtest_i8_r16_d1_tst_c gtest_i2_r16_d0_tst_c gtest_i4_r16_d0_tst_c gtest_i8_r16_d0_tst_c: \
-	FC = $(GFORT) -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
+	FC1 := $(GFORT) $(FFLAGS1) -Wno-function-elimination -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
+gtest_i2_r16_d1_tst_c gtest_i4_r16_d1_tst_c gtest_i8_r16_d1_tst_c gtest_i2_r16_d0_tst_c gtest_i4_r16_d0_tst_c gtest_i8_r16_d0_tst_c: \
+	FC2 := $(GFORT) $(FFLAGS2) -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
 
 # Intel ifort
 # -standard-semantics: enforce the compiler to behave according to the current standard (F2018 as of Dec 2021).
@@ -312,16 +350,29 @@ gtest_i2_r16_d1_tst_c gtest_i4_r16_d1_tst_c gtest_i8_r16_d1_tst_c gtest_i2_r16_d
 #  https://www.intel.com/content/www/us/en/develop/documentation/fortran-compiler-oneapi-dev-guide-and-reference/top/language-reference/a-to-z-reference/q-to-r/recursive-and-non-recursive.html
 IFORT := ifort
 IFORT := $(IFORT) -warn errors #-diag-error-limit 1
-IFORT := $(IFORT) -stand f$(FS) -standard-semantics -assume norecursion -warn all -check all -debug extended -fimplicit-none \
+IFORT := $(IFORT) -stand f$(FS) -standard-semantics -assume norecursion -warn all -debug extended -fimplicit-none \
 	-traceback -debug-parameters all -fp-stack-check
+
 itest_i2_r4_d1_tst_c itest_i4_r4_d1_tst_c itest_i8_r4_d1_tst_c itest_i2_r4_d0_tst_c itest_i4_r4_d0_tst_c itest_i8_r4_d0_tst_c: \
-	FC = $(IFORT) -fp-trap=divzero
+	FC1 := $(IFORT) $(FFLAGS1) -fp-trap=divzero
+itest_i2_r4_d1_tst_c itest_i4_r4_d1_tst_c itest_i8_r4_d1_tst_c itest_i2_r4_d0_tst_c itest_i4_r4_d0_tst_c itest_i8_r4_d0_tst_c: \
+	FC2 := $(IFORT) $(FFLAGS2) -check all -fp-trap=divzero
+
 itest_i2_r8_d1_tst_c itest_i4_r8_d1_tst_c itest_i8_r8_d1_tst_c itest_i2_r8_d0_tst_c itest_i4_r8_d0_tst_c itest_i8_r8_d0_tst_c: \
-	FC = $(IFORT) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	FC1 := $(IFORT) $(FFLAGS1) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	-fp-trap=divzero,invalid,overflow#,underflow,denormal
+	#-no-ftz -fp-model strict
+itest_i2_r8_d1_tst_c itest_i4_r8_d1_tst_c itest_i8_r8_d1_tst_c itest_i2_r8_d0_tst_c itest_i4_r8_d0_tst_c itest_i8_r8_d0_tst_c: \
+	FC2 := $(IFORT) $(FFLAGS2) -check all -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	-fp-trap=divzero,invalid,overflow#,underflow,denormal
+	#-no-ftz -fp-model strict
+
+itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d0_tst_c itest_i4_r16_d0_tst_c itest_i8_r16_d0_tst_c: \
+	FC1 := $(IFORT) $(FFLAGS1) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,invalid,overflow#,underflow,denormal
 	#-no-ftz -fp-model strict
 itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d0_tst_c itest_i4_r16_d0_tst_c itest_i8_r16_d0_tst_c: \
-	FC = $(IFORT) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	FC2 := $(IFORT) $(FFLAGS2) -check all -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,invalid,overflow#,underflow,denormal
 	#-no-ftz -fp-model strict
 
@@ -334,12 +385,21 @@ itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d
 LFORT := lf95
 LFORT := $(LFORT) --f95 -v95s -v95o -AU --ap --chkglobal --lst --sav --xref --in --info --nswm --trace \
 		-w --warn --wo --chk a,e,f,o,s,u,x
+
 ltest_i2_r4_d1_tst_c ltest_i4_r4_d1_tst_c ltest_i8_r4_d1_tst_c ltest_i2_r4_d0_tst_c ltest_i4_r4_d0_tst_c ltest_i8_r4_d0_tst_c: \
-	FC = $(LFORT) #--trap
+	FC1 := $(LFORT) $(FFLAGS1) #--trap
+ltest_i2_r4_d1_tst_c ltest_i4_r4_d1_tst_c ltest_i8_r4_d1_tst_c ltest_i2_r4_d0_tst_c ltest_i4_r4_d0_tst_c ltest_i8_r4_d0_tst_c: \
+	FC2 := $(LFORT) $(FFLAGS2) #--trap
+
 ltest_i2_r8_d1_tst_c ltest_i4_r8_d1_tst_c ltest_i8_r8_d1_tst_c ltest_i2_r8_d0_tst_c ltest_i4_r8_d0_tst_c ltest_i8_r8_d0_tst_c: \
-	FC = $(LFORT) --trap
+	FC1 := $(LFORT) $(FFLAGS1) --trap
+ltest_i2_r8_d1_tst_c ltest_i4_r8_d1_tst_c ltest_i8_r8_d1_tst_c ltest_i2_r8_d0_tst_c ltest_i4_r8_d0_tst_c ltest_i8_r8_d0_tst_c: \
+	FC2 := $(LFORT) $(FFLAGS2) --trap
+
 ltest_i2_r16_d1_tst_c ltest_i4_r16_d1_tst_c ltest_i8_r16_d1_tst_c ltest_i2_r16_d0_tst_c ltest_i4_r16_d0_tst_c ltest_i8_r16_d0_tst_c: \
-	FC = $(LFORT) --trap
+	FC1 := $(LFORT) $(FFLAGS1) --trap
+ltest_i2_r16_d1_tst_c ltest_i4_r16_d1_tst_c ltest_i8_r16_d1_tst_c ltest_i2_r16_d0_tst_c ltest_i4_r16_d0_tst_c ltest_i8_r16_d0_tst_c: \
+	FC2 := $(LFORT) $(FFLAGS2) --trap
 
 # NAG nagfor
 # In massive tests, we skip the useful -mtrace option (print memory allocation trace), as its output is enormous.
@@ -352,49 +412,87 @@ NFORT := $(NFORT) -f$(FSTD) -info -gline -u -C -C=alias -C=dangling -C=intovf -k
 # 20211221: for the moment, -C=undefined may cause SEGFAULT in SAFEALLOC due to a bug of nagfor; has been reported to NAG.
 #NFORT := $(NFORT) -f$(FSTD) -info -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique \
 	-Warn=constant_coindexing -Warn=subnormal #-Warn=allocation
+
 ntest_i2_r4_d1_tst_c ntest_i4_r4_d1_tst_c ntest_i8_r4_d1_tst_c ntest_i2_r4_d0_tst_c ntest_i4_r4_d0_tst_c ntest_i8_r4_d0_tst_c: \
-	FC = $(NFORT) -nan -ieee=full
+	FC1 := $(NFORT) $(FFLAGS1) -nan -ieee=full
+ntest_i2_r4_d1_tst_c ntest_i4_r4_d1_tst_c ntest_i8_r4_d1_tst_c ntest_i2_r4_d0_tst_c ntest_i4_r4_d0_tst_c ntest_i8_r4_d0_tst_c: \
+	FC2 := $(NFORT) $(FFLAGS2) -nan -ieee=full
+
 ntest_i2_r8_d1_tst_c ntest_i4_r8_d1_tst_c ntest_i8_r8_d1_tst_c ntest_i2_r8_d0_tst_c ntest_i4_r8_d0_tst_c ntest_i8_r8_d0_tst_c: \
-	FC = $(NFORT) -nan -ieee=stop
+	FC1 := $(NFORT) $(FFLAGS1) -nan -ieee=stop
+ntest_i2_r8_d1_tst_c ntest_i4_r8_d1_tst_c ntest_i8_r8_d1_tst_c ntest_i2_r8_d0_tst_c ntest_i4_r8_d0_tst_c ntest_i8_r8_d0_tst_c: \
+	FC2 := $(NFORT) $(FFLAGS2) -nan -ieee=stop
+
 ntest_i2_r16_d1_tst_c ntest_i4_r16_d1_tst_c ntest_i8_r16_d1_tst_c ntest_i2_r16_d0_tst_c ntest_i4_r16_d0_tst_c ntest_i8_r16_d0_tst_c: \
-	FC = $(NFORT) -nan -ieee=stop
+	FC1 := $(NFORT) $(FFLAGS1) -nan -ieee=stop
+ntest_i2_r16_d1_tst_c ntest_i4_r16_d1_tst_c ntest_i8_r16_d1_tst_c ntest_i2_r16_d0_tst_c ntest_i4_r16_d0_tst_c ntest_i8_r16_d0_tst_c: \
+	FC2 := $(NFORT) $(FFLAGS2) -nan -ieee=stop
 
 # NVIDIA nvfortran (aka, pgfortran)
 VFORT := $(shell find /opt/nvidia \( -type l -o -type f \) -executable -name nvfortran -print | sort | tail -n 1 2> /dev/null || echo NVFORTRAN_NOT_FOUND)
 VFORT := $(VFORT) -Werror
 VFORT := $(VFORT) -C -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkstk -Mchkptr
+
 vtest_i2_r4_d1_tst_c vtest_i4_r4_d1_tst_c vtest_i8_r4_d1_tst_c vtest_i2_r4_d0_tst_c vtest_i4_r4_d0_tst_c vtest_i8_r4_d0_tst_c: \
-	FC = $(VFORT) -Kieee -Ktrap=divz
+	FC1 := $(VFORT) $(FFLAGS1) -Kieee -Ktrap=divz
+vtest_i2_r4_d1_tst_c vtest_i4_r4_d1_tst_c vtest_i8_r4_d1_tst_c vtest_i2_r4_d0_tst_c vtest_i4_r4_d0_tst_c vtest_i8_r4_d0_tst_c: \
+	FC2 := $(VFORT) $(FFLAGS2) -Kieee -Ktrap=divz
+
 vtest_i2_r8_d1_tst_c vtest_i4_r8_d1_tst_c vtest_i8_r8_d1_tst_c vtest_i2_r8_d0_tst_c vtest_i4_r8_d0_tst_c vtest_i8_r8_d0_tst_c: \
-	FC = $(VFORT) -Kieee -Ktrap=divz,ovf,inv#,unf,denorm
+	FC1 := $(VFORT) $(FFLAGS1) -Kieee -Ktrap=divz,ovf,inv#,unf,denorm
+vtest_i2_r8_d1_tst_c vtest_i4_r8_d1_tst_c vtest_i8_r8_d1_tst_c vtest_i2_r8_d0_tst_c vtest_i4_r8_d0_tst_c vtest_i8_r8_d0_tst_c: \
+	FC2 := $(VFORT) $(FFLAGS2) -Kieee -Ktrap=divz,ovf,inv#,unf,denorm
+
 vtest_i2_r16_d1_tst_c vtest_i4_r16_d1_tst_c vtest_i8_r16_d1_tst_c vtest_i2_r16_d0_tst_c vtest_i4_r16_d0_tst_c vtest_i8_r16_d0_tst_c: \
-	FC = $(VFORT) -Kieee -Ktrap=divz,ovf,inv#,unf,denorm
+	FC1 := $(VFORT) $(FFLAGS1) -Kieee -Ktrap=divz,ovf,inv#,unf,denorm
+vtest_i2_r16_d1_tst_c vtest_i4_r16_d1_tst_c vtest_i8_r16_d1_tst_c vtest_i2_r16_d0_tst_c vtest_i4_r16_d0_tst_c vtest_i8_r16_d0_tst_c: \
+	FC2 := $(VFORT) $(FFLAGS2) -Kieee -Ktrap=divz,ovf,inv#,unf,denorm
 
 # Oracle sunf95
 SFORT := sunf95
 SFORT := $(SFORT) -w3 -u -U -ansi -xcheck=%all -C
+
 stest_i2_r4_d1_tst_c stest_i4_r4_d1_tst_c stest_i8_r4_d1_tst_c stest_i2_r4_d0_tst_c stest_i4_r4_d0_tst_c stest_i8_r4_d0_tst_c: \
-	FC = $(SFORT) -fnonstd -ftrap=division
+	FC1 := $(SFORT) $(FFLAGS1) -fnonstd -ftrap=division
+stest_i2_r4_d1_tst_c stest_i4_r4_d1_tst_c stest_i8_r4_d1_tst_c stest_i2_r4_d0_tst_c stest_i4_r4_d0_tst_c stest_i8_r4_d0_tst_c: \
+	FC2 := $(SFORT) $(FFLAGS2) -fnonstd -ftrap=division
+
 stest_i2_r8_d1_tst_c stest_i4_r8_d1_tst_c stest_i8_r8_d1_tst_c stest_i2_r8_d0_tst_c stest_i4_r8_d0_tst_c stest_i8_r8_d0_tst_c: \
-	FC = $(SFORT) \
-	-fnonstd -ftrap=overflow,division,invalid#,underflow
+	FC1 := $(SFORT) $(FFLAGS1) -fnonstd -ftrap=overflow,division,invalid#,underflow
+stest_i2_r8_d1_tst_c stest_i4_r8_d1_tst_c stest_i8_r8_d1_tst_c stest_i2_r8_d0_tst_c stest_i4_r8_d0_tst_c stest_i8_r8_d0_tst_c: \
+	FC2 := $(SFORT) $(FFLAGS2) -fnonstd -ftrap=overflow,division,invalid#,underflow
+
 stest_i2_r16_d1_tst_c stest_i4_r16_d1_tst_c stest_i8_r16_d1_tst_c stest_i2_r16_d0_tst_c stest_i4_r16_d0_tst_c stest_i8_r16_d0_tst_c: \
-	FC = $(SFORT) \
-	-fnonstd -ftrap=overflow,division,invalid#,underflow
+	FC1 := $(SFORT) $(FFLAGS1) -fnonstd -ftrap=overflow,division,invalid#,underflow
+stest_i2_r16_d1_tst_c stest_i4_r16_d1_tst_c stest_i8_r16_d1_tst_c stest_i2_r16_d0_tst_c stest_i4_r16_d0_tst_c stest_i8_r16_d0_tst_c: \
+	FC2 := $(SFORT) $(FFLAGS2) -fnonstd -ftrap=overflow,division,invalid#,underflow
 
 # Intel ifx
 XFORT := ifx
 XFORT := $(XFORT) -warn errors
-XFORT := $(XFORT) -stand f$(FS) -warn all -check all -debug extended -fimplicit-none \
+XFORT := $(XFORT) -stand f$(FS) -warn all -debug extended -fimplicit-none \
 	-traceback -debug-parameters all -fp-stack-check
+
 xtest_i2_r4_d1_tst_c xtest_i4_r4_d1_tst_c xtest_i8_r4_d1_tst_c xtest_i2_r4_d0_tst_c xtest_i4_r4_d0_tst_c xtest_i8_r4_d0_tst_c: \
-	FC = $(XFORT) -fp-trap=divzero
+	FC1 := $(XFORT) $(FFLAGS1) -fp-trap=divzero
+xtest_i2_r4_d1_tst_c xtest_i4_r4_d1_tst_c xtest_i8_r4_d1_tst_c xtest_i2_r4_d0_tst_c xtest_i4_r4_d0_tst_c xtest_i8_r4_d0_tst_c: \
+	FC2 := $(XFORT) $(FFLAGS2) -check all -fp-trap=divzero
+
 xtest_i2_r8_d1_tst_c xtest_i4_r8_d1_tst_c xtest_i8_r8_d1_tst_c xtest_i2_r8_d0_tst_c xtest_i4_r8_d0_tst_c xtest_i8_r8_d0_tst_c: \
-	FC = $(XFORT) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	FC1 := $(XFORT) $(FFLAGS1) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	-fp-trap=divzero,invalid,overflow#,underflow,denormal
+	#-no-ftz -fp-model strict
+xtest_i2_r8_d1_tst_c xtest_i4_r8_d1_tst_c xtest_i8_r8_d1_tst_c xtest_i2_r8_d0_tst_c xtest_i4_r8_d0_tst_c xtest_i8_r8_d0_tst_c: \
+	FC2 := $(XFORT) $(FFLAGS2) -check all -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	-fp-trap=divzero,invalid,overflow#,underflow,denormal
+	#-no-ftz -fp-model strict
+
+xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d0_tst_c xtest_i4_r16_d0_tst_c xtest_i8_r16_d0_tst_c: \
+	FC1 := $(XFORT) $(FFLAGS1) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,invalid,overflow#,underflow,denormal
 	#-no-ftz -fp-model strict
 xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d0_tst_c xtest_i4_r16_d0_tst_c xtest_i8_r16_d0_tst_c: \
-	FC = $(XFORT) -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	FC2 := $(XFORT) $(FFLAGS2) -check all -ftrapuv -init=snan,array -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,invalid,overflow#,underflow,denormal
 	#-no-ftz -fp-model strict
 
@@ -403,12 +501,21 @@ xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d
 9FORT := $(9FORT) -std=f$(FSTD) -pedantic -Wall -Wextra \
 	-Wimplicit-none -Wline-truncation -Wprecision-loss -Wunused-module-vars -Wunused-vars -Wunset-vars \
 	-fimplicit-none -fbounds-check -ftrace=full
+
 9test_i2_r4_d1_tst_c 9test_i4_r4_d1_tst_c 9test_i8_r4_d1_tst_c 9test_i2_r4_d0_tst_c 9test_i4_r4_d0_tst_c 9test_i8_r4_d0_tst_c: \
-	FC = $(9FORT)
+	FC1 := $(9FORT) $(FFLAGS1)
+9test_i2_r4_d1_tst_c 9test_i4_r4_d1_tst_c 9test_i8_r4_d1_tst_c 9test_i2_r4_d0_tst_c 9test_i4_r4_d0_tst_c 9test_i8_r4_d0_tst_c: \
+	FC2 := $(9FORT) $(FFLAGS2)
+
 9test_i2_r8_d1_tst_c 9test_i4_r8_d1_tst_c 9test_i8_r8_d1_tst_c 9test_i2_r8_d0_tst_c 9test_i4_r8_d0_tst_c 9test_i8_r8_d0_tst_c: \
-	FC = $(9FORT)
+	FC1 := $(9FORT) $(FFLAGS1)
+9test_i2_r8_d1_tst_c 9test_i4_r8_d1_tst_c 9test_i8_r8_d1_tst_c 9test_i2_r8_d0_tst_c 9test_i4_r8_d0_tst_c 9test_i8_r8_d0_tst_c: \
+	FC2 := $(9FORT) $(FFLAGS2)
+
 9test_i2_r16_d1_tst_c 9test_i4_r16_d1_tst_c 9test_i8_r16_d1_tst_c 9test_i2_r16_d0_tst_c 9test_i4_r16_d0_tst_c 9test_i8_r16_d0_tst_c: \
-	FC = $(9FORT)
+	FC1 := $(9FORT) $(FFLAGS1)
+9test_i2_r16_d1_tst_c 9test_i4_r16_d1_tst_c 9test_i8_r16_d1_tst_c 9test_i2_r16_d0_tst_c 9test_i4_r16_d0_tst_c 9test_i8_r16_d0_tst_c: \
+	FC2 := $(9FORT) $(FFLAGS2)
 
 ####################################################################################################
 # All the tests.
@@ -433,6 +540,7 @@ $(TESTS) $(TESTS_INT):
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
 	@$(MAKE) $(TST_C)
 	@$(MAKE) $(SUBTESTS) --jobs $(NPROCS)
+	@bash $(CHCKTST) --error "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
 	@printf "\n\n$@ ends!\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
 	@mv "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log" "$(LOG_DIR)/$@_$(STAMP).log"
@@ -444,6 +552,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log"
 	@$(MAKE) $(SUBTESTS_C)
+	@bash $(CHCKTST) --error "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log"
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log"
 	@printf "\n\n$@ ends!\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log"
 	@mv "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log" "$(LOG_DIR)/$@_$(STAMP).log"
@@ -485,8 +594,8 @@ $(TESTS_C) $(TESTS_INT_C):
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
 	@if echo $@ | grep -q "9test"; then \
-		$(FC) -g -O3 -c $(shell echo $(SRC_NO_TEST)) 2>&1 && \
-		$(FC) $(FFLAGS) -c $(shell echo $(SRC_NO_TEST)) 2>&1 \
+		($(FC1) -c $(shell echo $(SRC_NO_TEST)) && \
+		$(FC2) -c $(shell echo $(SRC_NO_TEST))) 2>&1 \
 		| grep -v "Warning (165): Implicit interface 'calfun' called at (1)" \
 		| grep -v "Warning (165): Implicit interface 'calcfc' called at (1)" \
 		| grep -v "Warning (102): MODULE PROCEDURE 'inv' USEd at (1) is not referenced" \
@@ -494,8 +603,8 @@ $(TESTS_C) $(TESTS_INT_C):
 		| grep -v "Warning (102): MODULE PROCEDURE 'calcfc' USEd at (1) is not referenced" \
 		| tee -a "$(LOG_DIR)/$@.log" ; \
 	elif echo $@ | grep -q "ltest"; then \
-		$(FC) -g -O3 -c $(shell echo $(SRC_NO_TEST) | sed 's|./common/pintrf.f90||') 2>&1 && \
-		$(FC) $(FFLAGS) -c $(shell echo $(SRC_NO_TEST) | sed 's|./common/pintrf.f90||') 2>&1 \
+		($(FC1) -c $(shell echo $(SRC_NO_TEST) | sed 's|./common/pintrf.f90||') && \
+		$(FC2)  -c $(shell echo $(SRC_NO_TEST) | sed 's|./common/pintrf.f90||')) 2>&1 \
 		| grep -v "Encountered 0 errors, 0 warnings, [0-9]* information.* in file" \
 		| grep -v "Compiling file\|Module subprogram name" \
 		| grep -v "An allocatable array function '.*' is an extended feature." \
@@ -503,8 +612,7 @@ $(TESTS_C) $(TESTS_INT_C):
 		| grep -v "WARNING --  When --chk x is specified, it must be used to compile all source files of a program" \
 		| tee -a "$(LOG_DIR)/$@.log" ; \
 	else \
-		$(FC) -g -O3 -o $@ $(SRC) 2>&1 && \
-		$(FC) $(FFLAGS) -o $@ $(SRC) 2>&1 \
+		($(FC1) -o $@ $(SRC) && $(FC2) -o $@ $(SRC)) 2>&1 \
 		| grep -v '^\s*$$' \
 		| grep -v 'Absoft ANSI 1610:' \
 		| grep -v 'Absoft Pro Fortran 22.0: 0 Errors, 0 Warnings, 0 Other messages,' \
@@ -520,6 +628,8 @@ $(TESTS_C) $(TESTS_INT_C):
 		| grep -v 'f90comp: [0-9]* ERRORS, [0-9]* WARNINGS' \
 		| grep -v 'ANSI: PROCEDURE is a Fortran 2003 feature' \
 		| grep -v 'remark #5415: Feature not yet implemented' \
+		| grep -v "interpolation error" \
+	    | grep -v "WARNING --  When --chk x is specified" \
 		| tee -a "$(LOG_DIR)/$@.log" ; \
 	fi
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
