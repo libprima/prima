@@ -10,7 +10,7 @@ fi
 
 LOGFILE="$2"
 
-WARNINGS="$(grep -i "warning\|Remark\|Questionable" "$LOGFILE" \
+WARNINGS="$(grep -i "warning\|Remark\|Questionable\|attention" "$LOGFILE" \
     | grep -vi "WARNING --  When --chk x is specified" \
     | grep -vi "[0-9]\s*warning" \
     | grep -vi "in __debug_mod_MOD_warning" \

@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, January 06, 2022 PM12:17:46
+! Last Modified: Sunday, January 09, 2022 PM08:10:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -215,6 +215,8 @@ tr_tol = 1.0E-2_RP  ! Tolerance used in trsapp.
 ! Similar for KNEW_TR.
 ratio = -ONE
 knew_tr = 0_IK
+! No need to initialize SHORTD unless MAXTR < 1, but some compilers may complain if we do not do it.
+shortd = .false.
 
 ! Each trust-region iteration takes at most two function evaluation. The following setting imposes
 ! no constraint on the maximal number of trust-region iterations.
