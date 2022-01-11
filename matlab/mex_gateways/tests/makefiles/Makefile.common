@@ -1,4 +1,4 @@
-# This Makefile tests the MEX gateway of the modern-Fortran version of Powell's solvers on multiple compilers.
+# This Makefile tests the MEX gateways of the modern-Fortran version of Powell's solvers on multiple compilers.
 #
 # The following compilers are tested:
 # 9: G95
@@ -272,7 +272,7 @@ gtest_i2_r16_d1_tst gtest_i4_r16_d1_tst gtest_i8_r16_d1_tst gtest_i2_r16_d0_tst 
 	FC2 := $(GFORT) $(FFLAGS2) -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
 
 # Intel ifort
-# The compilation of the MEX gateway fails if -stand f03 or higher is imposed.
+# The compilation of the MEX gateways fails if -stand f03 or higher is imposed.
 # -standard-semantics: enforce the compiler to behave according to the current standard (F2018 as of Dec 2021).
 #  See https://www.intel.com/content/www/us/en/develop/documentation/fortran-compiler-oneapi-dev-guide-and-reference/top/compiler-reference/compiler-options/compiler-option-details/language-options/standard-semantics.html
 #  Option standard-semantics enables option fpscomp logicals and the following settings for option
@@ -407,7 +407,7 @@ xtest_i2_r16_d1_tst xtest_i4_r16_d1_tst xtest_i8_r16_d1_tst xtest_i2_r16_d0_tst 
 	#-no-ftz -fp-model strict
 
 # G95
-# The compilation of MEX gateway will fail if -std is imposed.
+# The compilation of MEX gateways will fail if -std is imposed.
 9FORT := g95
 9FORT := $(9FORT) -pedantic -Wall -Wextra \
 	-Wimplicit-none -Wline-truncation -Wprecision-loss -Wunused-module-vars -Wunused-vars -Wunset-vars \
@@ -476,12 +476,28 @@ $(TESTS) $(TESTS_INT):
 	| grep -v 'Expression in IF construct is constant' \
 	| grep -v 'NAG Fortran Compiler normal termination' \
 	| grep -v 'NAG Fortran Compiler normal termination, [0-9]* info message' \
+	| grep -v 'Warning: Change of value in conversion from ‘INTEGER(8)’ to ‘REAL(8)’ at (1) \[-Wconversion\]' \
+	| grep -v 'Warning: Change of value in conversion from ‘REAL(16)’ to ‘REAL(8)’ at (1) \[-Wconversion\]' \
+	| grep -v 'Extension: fmxapi\.F90, line [0-9]*: Byte count on numeric data type' \
+	| grep -v 'Extension: gethuge\.F90, line [0-9]*: Byte count on numeric data type' \
+	| grep -v 'Extension: prob\.F90, line [0-9]*: Byte count on numeric data type' \
+	| grep -v 'Extension: \./classical/fmxcl\.F90, line [0-9]*: Byte count on numeric data type' \
+	| grep -v 'Extension: .*newuoa_mex\.F90, line [0-9]*: Byte count on numeric data type' \
+	| grep -v 'Extension: newuoa_mex\.F90, line 14: Line longer than 132 characters' \
+	| grep -v 'detected at \*@[0-9]*' \
+	| grep -v 'Info: fmxapi\.F90, line [0-9]*: Possibly discontiguous POUT passed to old style dummy' \
+	| grep -v 'Info: No licences currently available for product' \
+	| grep -v 'Info: Licence received, continuing' \
 	| grep -v 'Loading...' \
 	| grep -v 'Linking:' \
 	| grep -v "circle\.f90(36): remark #7712: This variable has not been used\.\s*\[ANGLE\]" \
 	| grep -v 'f90comp: [0-9]* SOURCE LINES' \
 	| grep -v 'f90comp: [0-9]* ERRORS, [0-9]* WARNINGS' \
 	| grep -v 'ANSI: PROCEDURE is a Fortran 2003 feature' \
+	| grep -v 'ANSI: Use of INTEGER\*[0-9]* is an extension to the Fortran standard' \
+	| grep -v 'ANSI: Use of REAL\*[0-9]* is an extension to the Fortran standard' \
+	| grep -v 'ANSI: Fortran requires all intrinsic procedure actual arguments to be type integer or character for restricted expressions' \
+	| grep -v 'common/history\.f90.*Line = 162, Column = 133: ANSI: Free source form line contains more than 132 characters.' \
 	| grep -v 'remark #5415: Feature not yet implemented' \
 	| grep -v "interpolation error" \
 	| grep -v "WARNING --  When --chk x is specified" \
@@ -494,6 +510,18 @@ $(TESTS) $(TESTS_INT):
 	| grep -v "common/linalg.F90:740:.*rank.*may be used uninitialized in this function" \
 	| grep -v "common/preproc.f90:22:.*min_maxfun.*may be used uninitialized in this function" \
 	| grep -v "common/preproc.f90:22:.*unit_memo.*may be used uninitialized in this function" \
+	| grep -v "W-0173-PGI Fortran extension: nonstandard use of data type length specifier" \
+	| grep -v "[0-9]\s*inform,\s*[0-9]*\s*warnings,\s*[0-9]\s*severes,\s*[0-9]\s*fatal for" \
+	| grep -v "Warning: GNU Extension: Nonstandard type declaration INTEGER\*[1-9].*" \
+	| grep -v "Warning: GNU Extension: Nonstandard type declaration REAL\*[1-9].*" \
+	| grep -v "warning #7893: Allocatable dummy arguments is an extension of Standard F95" \
+	| grep -v "warning #7894: Allocatable function results is an extension of Standard F95" \
+	| grep -v "warning #8192: A procedure declaration statement is not standard Fortran 95" \
+	| grep -v "warning #5196: Fortran [0-9]* does not allow array constructors in square brackets" \
+	| grep -v "warning #6916: Fortran [0-9]* does not allow this length specification\.\s*\[[0-9]*\]" \
+	| grep -v "warning #7346: The CHARACTER\* form of a CHARACTER declaration is an obsolescent feature in Fortran [0-9]*" \
+	| grep -v "warning #6009: Fortran [0-9]* specifies that an elemental intrinsic function here be of type integer or character" \
+	| grep -v "warning #5268: Extension to standard: The text exceeds right hand column allowed on the line" \
 	| tee -a "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$@.log"

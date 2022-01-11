@@ -5,7 +5,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020.
 !
-! Last Modified: Tuesday, January 11, 2022 PM05:31:50
+! Last Modified: Tuesday, January 11, 2022 PM10:39:48
 
 
 #include "fintrf.h"
@@ -26,8 +26,7 @@ contains
 subroutine calfun(x, f)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, HUGEFUN, MSGLEN
-use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: consts_mod, only : RP, MSGLEN
 use, non_intrinsic :: fmxapi_mod, only : mxDestroyArray
 use, non_intrinsic :: fmxapi_mod, only : mexErrMsgIdAndTxt
 use, non_intrinsic :: fmxapi_mod, only : fmxIsDoubleScalar
