@@ -1,0 +1,110 @@
+#!/bin/bash
+# This script checks the Fortran code of the solver corresponding to this directory.
+# Usage: mlint [-a|--all]
+
+# Parse inputs.
+if ! [[ $# -eq 0 || $# -eq 1 ]] ; then
+    printf "Usage: mlint [-a|--all]\n"
+    exit 2
+fi
+if [[ $# -eq 1 ]] && [[ $1 == "-a" || $1 == "--all" ]] ; then
+    TEST_ALL="Y"
+else
+    TEST_ALL="N"
+fi
+
+# The directory where this script resides. It is the solver's directory.
+SOLVER_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+# The log directory in the solver's directory.
+SOLVER_LOG_DIR="$SOLVER_DIR"/mlog
+
+# The solver's name.
+SOLVER=$(basename "$SOLVER_DIR")
+
+# The testing directory.
+TEST_DIR="$SOLVER_DIR"/../../matlab/mex_gateways/tests
+# The log directory in the testing directory.
+TEST_LOG_DIR="$TEST_DIR"/test."$SOLVER"/log
+
+# Remove the old logs.
+mkdir -p "$SOLVER_LOG_DIR"
+rm -f "$SOLVER_LOG_DIR"/*test*.log
+
+# Conduct the test.
+cd "$TEST_DIR" || exit 1
+
+make cleanall."$SOLVER" > /dev/null
+
+COMPILER_LIST="g n 9 s i v f d x"
+
+for COMPILER in $COMPILER_LIST; do
+    if [[ $TEST_ALL == 'Y' ]] ; then
+        make  "$COMPILER"test."$SOLVER"
+    else
+        if [[ $COMPILER == 'f' || $COMPILER == 'v' || $COMPILER == 'x' ]] ; then
+            TESTS="i2_r4_d1 i8_r4_d1"
+        else
+            TESTS="i2_r16_d1 i8_r4_d1"
+        fi
+        for TEST in $TESTS ; do
+            INFO="$(make "$COMPILER"test_"$TEST"_tst."$SOLVER" \
+                | grep -i "starts\|warning\|error\|info\|fail\|abort\|questionable\|remark\|attention" \
+                | grep -vi "[0-9]\s*warning\|[0-9]\s*error\|[0-9]\s*info\|info.f90\|information\|--warning\|--error" \
+                | grep -vi "INFO_DFT\|==\s*info\|errorid\|errormsg" \
+                | grep -vi "\[xopt, fopt, info, nf, xhist, fhist\] = FUNCTION_NAME" \
+                | grep -v "^- \|^| \|^\* \|^+ \|^X \|\# " \
+                )"
+            echo "$INFO" | grep -i --color "starts\|warning\|error\|info\|fail\||abort\|questionable\|remark\|attention"
+            if echo "$INFO" | grep -iq "error\|fail\|abort" ; then
+                if [[ -f "$TEST_LOG_DIR"/"$COMPILER"test_"$TEST"_tst.log ]] ; then
+                    LOGFILE="$COMPILER"test_"$TEST"_tst.log
+                else
+                    LOGFILE="$COMPILER"test.log
+                fi
+                mv "$TEST_LOG_DIR"/"$LOGFILE" "$SOLVER_LOG_DIR"
+                cat "$SOLVER_LOG_DIR"/"$LOGFILE"
+                exit 2
+            fi
+        done
+    fi
+    mv "$TEST_LOG_DIR"/"$COMPILER"test*.log "$SOLVER_LOG_DIR"
+done
+
+make clean."$SOLVER"
+
+# Check the logfiles
+LOGFILES=("$SOLVER_LOG_DIR"/*test*.log)
+if [[ "$TEST_ALL" == "Y" ]] ; then
+    for LOGFILE in "${LOGFILES[@]::${#LOGFILES[@]}}" ; do
+        printf "\nChecking %s ...\n" "$LOGFILE"
+        INFO="$(bash "$TEST_DIR"/checktest --warnerror "$LOGFILE")"
+        printf "%s" "$INFO"
+        printf "\nDone!\n"
+        if [[ -n "$INFO" ]] ; then
+            printf "\nWarning or error found in log file.\n"
+            exit 1
+        fi
+    done
+else
+    for LOGFILE in "${LOGFILES[@]::${#LOGFILES[@]}-1}" ; do
+        printf "\nChecking %s ...\n" "$LOGFILE"
+        INFO="$(bash "$TEST_DIR"/checktest --warning "$LOGFILE")"
+        printf "%s" "$INFO"
+        printf "\nDone!\n"
+        if [[ -n "$INFO" ]] ; then
+            read -n1 -s -r -p $'Continue? [Y/n] ' KEY
+            printf "\n"
+            if ! [[ "$KEY" == 'Y' || "$KEY" == 'y' || "$KEY" == "" ]]; then
+                exit 0
+            fi
+        fi
+    done
+    # No pause needed for the last logfile.
+    LOGFILE="${LOGFILES[-1]}"  # The last logfile; it needs Bash 4.x.
+    printf "\nChecking %s ...\n" "$LOGFILE"
+    bash "$TEST_DIR"/checktest --warning "$LOGFILE"
+    printf "%s" "$INFO"
+    printf "\nDone!\n\n"
+fi
+
+exit 0

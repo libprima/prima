@@ -1,10 +1,10 @@
 #!/bin/bash
 # This script checks the Fortran code of the solver corresponding to this directory.
-# Usage: lint [-a|--all]
+# Usage: flint [-a|--all]
 
 # Parse inputs.
 if ! [[ $# -eq 0 || $# -eq 1 ]] ; then
-    printf "Usage: lint [-a|--all]\n"
+    printf "Usage: flint [-a|--all]\n"
     exit 2
 fi
 if [[ $# -eq 1 ]] && [[ $1 == "-a" || $1 == "--all" ]] ; then
@@ -16,7 +16,7 @@ fi
 # The directory where this script resides. It is the solver's directory.
 SOLVER_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # The log directory in the solver's directory.
-SOLVER_LOG_DIR="$SOLVER_DIR"/log
+SOLVER_LOG_DIR="$SOLVER_DIR"/flog
 
 # The solver's name.
 SOLVER=$(basename "$SOLVER_DIR")
@@ -24,7 +24,7 @@ SOLVER=$(basename "$SOLVER_DIR")
 # The testing directory.
 TEST_DIR="$SOLVER_DIR"/../tests
 # The log directory in the testing directory.
-TEST_LOG_DIR="$TEST_DIR"/test."$SOLVER"/log
+TEST_LOG_DIR="$TEST_DIR"/test."$SOLVER"/flog
 
 # Remove the old logs.
 mkdir -p "$SOLVER_LOG_DIR"
