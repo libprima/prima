@@ -4,7 +4,7 @@
 # 9: G95 (compilation only; no compilation of the testing code, which contains F03 constructs unsupported by G95)
 # a: Absoft af95
 # d: AOCC flang
-# f: LLVM flang
+# f: Classic flang
 # g: GNU gfortran
 # l: Lahey lf95 (compilation only; no compilation of the testing code, which contains F03 constructs unsupported by lf95)
 # n: NAG nagfor
@@ -23,15 +23,12 @@
 #
 # Started: September 2021
 #
-# Last Modified: December 16, 2021
+# Last Modified: January 2022
 ####################################################################################################
-
 
 #$(VERBOSE).SILENT:  # Order make to work quietly. Not desirable in this case.
 
-
 SHELL = /bin/bash
-
 
 ####################################################################################################
 # Variables
@@ -49,44 +46,44 @@ RANDNUM := $(shell awk 'BEGIN{srand();printf("%d", 65536*rand())}')
 TIME := $(shell date +%Y.%m.%d_%H.%M.%S)
 STAMP := $(TIME)_$(RANDNUM)
 
+# Test directory.
+TEST_DIR := $(PWD)
 # Log directory.
-LOG_DIR := ./log
+LOG_DIR := $(TEST_DIR)/log
 # Trash directory.
-TRASH_DIR := ./trash
-
+TRASH_DIR := $(TEST_DIR)/trash
 # Common directory.
-COMMON = common
-COMMON_DIR = ../../$(COMMON)
+COMMON := common
+COMMON_DIR := $(TEST_DIR)/../../$(COMMON)
 # Solver directory.
-SOLVER_DIR = ../../$(SOLVER)
+SOLVER_DIR := $(TEST_DIR)/../../$(SOLVER)
 # Test suite directory.
 TESTSUITE = testsuite
-TESTSUITE_DIR = ../$(TESTSUITE)
+TESTSUITE_DIR := $(TEST_DIR)/../$(TESTSUITE)
 # Source directories.
-SRC_DIRS = $(COMMON_DIR) $(SOLVER_DIR) $(TESTSUITE_DIR)
+SRC_DIRS := $(COMMON_DIR) $(SOLVER_DIR) $(TESTSUITE_DIR)
 # Driver directory.
-DRIVER_DIR = ..
+DRIVER_DIR := $(TEST_DIR)/..
 
 # Sources.
-COMMON_SRC = $(shell sed "s/^/\.\/common\//" $(COMMON_DIR)/ffiles.txt)
-SOLVER_SRC = $(shell sed "s/^/\.\/$(SOLVER)\//" $(SOLVER_DIR)/ffiles.txt)
-TESTSUITE_SRC = $(shell sed "s/^/\.\/$(TESTSUITE)\//" $(TESTSUITE_DIR)/ffiles.txt)
-DRIVER_SRC = test_$(SOLVER).f90 test.f90
-SRC = $(COMMON_SRC) $(SOLVER_SRC) $(TESTSUITE_SRC) $(DRIVER_SRC)
-SRC_NO_TEST = $(COMMON_SRC) $(SOLVER_SRC)
+COMMON_SRC := $(shell sed "s/^/\.\/common\//" $(COMMON_DIR)/ffiles.txt)
+SOLVER_SRC := $(shell sed "s/^/\.\/$(SOLVER)\//" $(SOLVER_DIR)/ffiles.txt)
+TESTSUITE_SRC := $(shell sed "s/^/\.\/$(TESTSUITE)\//" $(TESTSUITE_DIR)/ffiles.txt)
+DRIVER_SRC := test_$(SOLVER).f90 test.f90
+SRC := $(COMMON_SRC) $(SOLVER_SRC) $(TESTSUITE_SRC) $(DRIVER_SRC)
+SRC_NO_TEST := $(COMMON_SRC) $(SOLVER_SRC)
 
 # Headers.
 # N.B.: If we define COMMON as "./common/", then, when adapting the header, sed will complain
 # that"./common//*.h" cannot be found on macOS.
-HEADERS = ./$(COMMON)/*.h
+HEADERS := $(TEST_DIR)/$(COMMON)/*.h
 
 # The checktest script.
-CHCKTST = ../checktest
+CHCKTST := $(TEST_DIR)/../checktest
 
 # Define the tests.
 ######################################################################################
 # Decide whether to test QP, e.g., REAL128.
-# Absoft 21.0 is buggy concerning REAL128 (but we can still test the compilation without running);
 # Flang and nvfortran do not support REAL128;
 # AOCC Flang complains about a symbol lookup error: undefined symbol: "fort_rnumq_i8";
 # ifx encounters an internal error when compiling with REAL128.
@@ -112,8 +109,8 @@ $(foreach TST, $(TESTS_NO_QP), $(eval $(TST): SUBTESTS := \
 	))
 $(foreach TST, $(TESTS), $(eval $(TST): TST_C := $(TST)_c))
 
-# The following tests compiles the code but do not run the binary. This is useful if we want to
-# check whether the code can compile
+# The following tests compile the code but do not run the binary. This is useful if we want to
+# check whether the code can compile.
 TESTS_C_QP = atest_c gtest_c ltest_c ntest_c itest_c stest_c 9test_c
 TESTS_C_NO_QP = dtest_c ftest_c vtest_c xtest_c
 TESTS_C = $(TESTS_C_QP) $(TESTS_C_NO_QP)
@@ -134,17 +131,7 @@ $(foreach TST, $(TESTS_C_NO_QP), $(eval $(TST): SUBTESTS_C := \
 	$(subst _c,,$(TST))_i8_r4_d0_tst_c $(subst _c,,$(TST))_i8_r8_d0_tst_c \
 	))
 
-# Duration of one test by GitHub Actions:
-# atest: < 1 hour
-# dtest: ~30 minutes
-# ftest: ~30 minutes
-# gtest: 4~5 hours
-# itest: > 6 hours (killed by GitHub after that)
-# ntest: 3~4 hours
-# stest: 4~5 hours
-# vtest: 3~4 hours
-# xtest: > 6 hours
-# The tests with ifort, ifx, etc are slow due to the intensive runtime checks. To save time, we
+# The tests with ifort, ifx, etc are slow due to the extensive runtime checks. To save time, we
 # define the following tests. If itest_i2 succeeds, then itest_i4 and itest_i8 are likely (but not
 # surely) to be OK, because the only difference in the code is the integer kind. Similar for others.
 TESTS_INT_QP = atest_i2 atest_i4 atest_i8 \
@@ -169,8 +156,8 @@ $(foreach TST, $(TESTS_INT_NO_QP), $(eval $(TST): SUBTESTS := \
 	))
 $(foreach TST, $(TESTS_INT), $(eval $(TST): TST_C := $(TST)_c))
 
-# The following tests compiles the code but do not run the binary. This is useful if we want to
-# check whether the code can compile
+# The following tests compile the code but do not run the binary. This is useful if we want to
+# check whether the code can compile.
 TESTS_INT_C_QP = atest_i2_c atest_i4_c atest_i8_c \
 				 gtest_i2_c gtest_i4_c gtest_i8_c \
 				 ltest_i2_c ltest_i4_c ltest_i8_c \
@@ -288,7 +275,7 @@ dtest_i2_r16_d1_tst_c dtest_i4_r16_d1_tst_c dtest_i8_r16_d1_tst_c dtest_i2_r16_d
 dtest_i2_r16_d1_tst_c dtest_i4_r16_d1_tst_c dtest_i8_r16_d1_tst_c dtest_i2_r16_d0_tst_c dtest_i4_r16_d0_tst_c dtest_i8_r16_d0_tst_c: \
 	FC2 := $(DFORT) $(FFLAGS2) -ffp-exception-behavior=strict
 
-# LLVM Flang
+# Classic Flang
 FFORT := flang
 FFORT := $(FFORT) -pedantic-errors -Werror
 FFORT := $(FFORT) -std=f$(FSTD) -pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkptr -Kieee
@@ -577,7 +564,7 @@ $(TESTS_C) $(TESTS_INT_C):
 		| grep -v "forrtl: warning (406): fort: (1): In call to WHATDAY, an array temporary was created for argument #1" \
 		| tee -a "$(LOG_DIR)/$@.log" ; \
 	else \
-		@printf "\n$@_c is not executable!\n\n" | tee -a "$(LOG_DIR)/$@.log" ; \
+		printf "\n$@_c is not executable!\n\n" | tee -a "$(LOG_DIR)/$@.log" ; \
 		exit 126 ; \
 	fi
 	@set +o pipefail  # Restore the original pipe setting
@@ -594,8 +581,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
 	@if echo $@ | grep -q "9test"; then \
-		($(FC1) -c $(shell echo $(SRC_NO_TEST)) && \
-		$(FC2) -c $(shell echo $(SRC_NO_TEST))) 2>&1 \
+		($(FC1) -c $(SRC_NO_TEST) && $(FC2) -c $(SRC_NO_TEST)) 2>&1 \
 		| grep -v "Warning (165): Implicit interface 'calfun' called at (1)" \
 		| grep -v "Warning (165): Implicit interface 'calcfc' called at (1)" \
 		| grep -v "Warning (102): MODULE PROCEDURE 'inv' USEd at (1) is not referenced" \
