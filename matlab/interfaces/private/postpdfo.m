@@ -369,6 +369,8 @@ if probinfo.scaled
 
     % Scale x back
     x = probinfo.scaling_factor.*x + probinfo.shift;
+    % Scale xhist back
+    xhist = probinfo.scaling_factor.*xhist + probinfo.shift;
 
     % Scale bounds back
     lb = probinfo.scaling_factor.*probinfo.refined_data.lb + probinfo.shift;
@@ -395,12 +397,17 @@ if probinfo.scaled
     end
 end
 
-% The problem was (possibly) reduced. Get the full x.
+% The problem was (possibly) reduced. Get the full x and xhist.
 if probinfo.reduced
     freex_value = x;
     x = NaN(length(x)+length(probinfo.fixedx_value), 1);
     x(probinfo.fixedx) = probinfo.fixedx_value;
     x(~probinfo.fixedx) = freex_value;
+
+    freexhist = xhist;
+    xhist= NaN(length(x), size(xhist, 2));  % x is already recovered.
+    xhist(probinfo.fixedx, :) = probinfo.fixedx_value*ones(1,size(xhist, 2));
+    xhist(~probinfo.fixedx, :) = freexhist;
 end
 
 % Set output.constrviolation to the revised constraint violation

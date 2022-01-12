@@ -24,7 +24,7 @@ SOLVER=$(basename "$SOLVER_DIR")
 # The testing directory.
 TEST_DIR="$SOLVER_DIR"/../tests
 # The log directory in the testing directory.
-TEST_LOG_DIR="$TEST_DIR"/test."$SOLVER"/flog
+TEST_LOG_DIR="$TEST_DIR"/test."$SOLVER"/log
 
 # Remove the old logs.
 mkdir -p "$SOLVER_LOG_DIR"

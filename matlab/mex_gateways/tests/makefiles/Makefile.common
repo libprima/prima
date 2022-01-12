@@ -65,7 +65,7 @@ SRC_DIRS := $(COMMON_DIR) $(SOLVER_DIR)
 # Sources.
 COMMON_SRC := $(shell sed "s/^/\.\/common\//" $(COMMON_DIR)/ffiles.txt)
 SOLVER_SRC := $(shell sed "s/^/\.\/$(SOLVER)\//" $(SOLVER_DIR)/ffiles.txt)
-MEXGATE_SRC := fmxapi.F90 prob.F90 ./classical/fmxcl.F90 ./classical/$(SOLVER)_mex.F90 gethuge.F90 $(SOLVER)_mex.F90
+MEXGATE_SRC := fmxapi.F90 prob.F90 gethuge.F90 $(SOLVER)_mex.F90 ./classical/fmxcl.F90 #./classical/$(SOLVER)_mex.F90
 SRC := $(COMMON_SRC) $(SOLVER_SRC) $(MEXGATE_SRC)
 
 # Headers.

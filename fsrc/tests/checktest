@@ -32,7 +32,8 @@ ERRORS="$(grep -i "err\|fail\|exception\|invalid\|bad\|overflow\|backtrace\|segm
     | grep -vi "Processor does not support trapping of floating-point exceptions" \
     | grep -vi "flist:.*: Invalid format" \
     | grep -vi "BAD_TRSTEP" \
-    | grep -vi "moderr\|errorid\|errormsg\|errstop\|Numberr\|correrres" \
+    | grep -vi "moderr\|errorid\|errormsg\|errstop" \
+    | grep -vi "berr\|erres" \
 	| grep -vi "Warining: UOBYQA: Invalid\|Warning: NEWUOA: Invalid\|Warning: BOBYQA: Invalid\|Warning: LINCOA: Invalid\|Warning: COBYLA: Invalid" \
     | grep -vi "invalid maxfun\|invalid maxhist\|invalid npt\|invalid rhobeg\|invalid rhoend\|invalid ftarget\|invalid ctol\|invalid maxfilt\|errstop")"
 

@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, January 06, 2022 PM04:03:59
+! Last Modified: Wednesday, January 12, 2022 PM07:45:56
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -109,22 +109,22 @@ integer :: m, i
 ! The following lines illustrates how to call the solver to solve the Chebyquad problem.
 x_chebyquad = [(real(i, kind(0.0D0)) / real(n_chebyquad + 1, kind(0.0D0)), i=1, n_chebyquad)]
 m = 0  ! Dimension of constraints defined by CALCFC_CHEBYQUAD (there is none).
-call cobyla(calcfc_chebyquad, x_chebyquad, f, m)  ! This call will not print anything.
+call cobyla(calcfc_chebyquad, m, x_chebyquad, f)  ! This call will not print anything.
 
 ! In addition to the compulsory arguments, the following illustration specifies also CONSTR, RHOBEG,
 ! and IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will
 ! take their default values coded in the solver.
-call cobyla(calcfc_chebyquad, x_chebyquad, f, m, rhobeg=0.2D0 * x_chebyquad(1), iprint=1)
+call cobyla(calcfc_chebyquad, m, x_chebyquad, f, rhobeg=0.2D0 * x_chebyquad(1), iprint=1)
 
 ! The following lines illustrates how to call the solver to solve the Hexagon problem.
 x_hexagon = 1.0D0
 m = 14  ! Dimension of constraints defined by CALCFC_HEXAGON.
-call cobyla(calcfc_hexagon, x_hexagon, f, m)  ! This call will not print anything.
+call cobyla(calcfc_hexagon, m, x_hexagon, f)  ! This call will not print anything.
 
 ! In addition to the compulsory arguments, the following illustration specifies also CONSTR, RHOBEG,
 ! and IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will
 ! take their default values coded in the solver. Note that CONSTR is an output, which will be set to
 ! the value of CONSTR(X_HEXAGON) when the solver returns.
-call cobyla(calcfc_hexagon, x_hexagon, f, m, constr=constr, rhobeg=1.0D0, iprint=1)
+call cobyla(calcfc_hexagon, m, x_hexagon, f, constr=constr, rhobeg=1.0D0, iprint=1)
 
 end program cobyla_exmp
