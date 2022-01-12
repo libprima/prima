@@ -1,12 +1,4 @@
 function [x, fx, exitflag, output] = newuoan(varargin)
-
-    %if isnumeric(varargin{end}) && varargin{end} == 1
-    %    flag = 1;
-    %    varargin = varargin{1:end-1};
-    %else
-    %    flag = 0;
-    %end
-
 %NEWUOA is a solver for solving the following unconstrained continuous
 %   optimization problem without using derivatives:
 %
@@ -301,11 +293,7 @@ else
             % output_xhist to a scalar (0 or 1) and read it as an integer in the MEX gateway.
             % In C MEX, however, we have mxGetLogicals.
         else
-            if flag == 1
-                [x, fx, exitflag, nf, xhist, fhist] = fnewuoan1(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, iprint, maxhist, double(output_xhist));
-            else
-                [x, fx, exitflag, nf, xhist, fhist] = fnewuoan(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, iprint, maxhist, double(output_xhist));
-            end
+            [x, fx, exitflag, nf, xhist, fhist] = fnewuoan(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, iprint, maxhist, double(output_xhist));
         end
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly

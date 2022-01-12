@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Saturday, January 08, 2022 PM10:53:17
+! Last Modified: Wednesday, January 12, 2022 PM07:46:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -168,11 +168,11 @@ do iprob = 1, nprobs
             orig_calcfc => prob % calcfc
 
             print '(/1A, I3, 1A, I3)', trimstr(probname)//': N = ', n, ', Random test ', irand
-            call cobyla(noisy_calcfc, x, f, m, cstrv=cstrv, constr=constr, rhobeg=rhobeg, rhoend=rhoend, &
+            call cobyla(noisy_calcfc, m, x, f, cstrv=cstrv, constr=constr, rhobeg=rhobeg, rhoend=rhoend, &
                 & maxfun=maxfun, maxhist=maxhist, fhist=fhist, xhist=xhist, conhist=conhist, chist=chist, &
                 & ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
             if (m == 0) then  ! Run the test without constraints
-                call cobyla(noisy_calcfc, x, f, m, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, &
+                call cobyla(noisy_calcfc, m, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, &
                     & fhist=fhist, xhist=xhist, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
             end if
 

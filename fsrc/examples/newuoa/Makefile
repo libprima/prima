@@ -55,7 +55,7 @@ dtest: FC = /opt/AMD/aocc-compiler-3.1.0/bin/flang -Wall -Wextra
 ftest: FC = flang -Wall -Wextra
 
 # GNU gfortran
-gtest: FC = gfortran -Wall -Wextra
+gtest: FC = gfortran -Wall -Wextra -Wno-function-elimination
 
 # Intel ifort
 itest: FC = ifort -warn all

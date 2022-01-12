@@ -199,8 +199,8 @@ return
 function eq = iseq(x, f, exitflag, output, xx, ff, ee, oo, prec)
 eq = true;
 
-if ~isempty(setdiff(fieldnames(output), [fieldnames(oo); 'fhist'; 'xhist'])) ...
-        || ~isempty(setdiff(fieldnames(oo), [fieldnames(output); 'fhist'; 'xhist']))
+if ~isempty(setdiff(fieldnames(output), [fieldnames(oo); 'fhist'; 'xhist'; 'chist'; 'conhist'])) ...
+        || ~isempty(setdiff(fieldnames(oo), [fieldnames(output); 'fhist'; 'xhist'; 'chist'; 'conhist']))
     eq = false;
 end
 
@@ -237,11 +237,13 @@ nhist = min(length(output.fhist), length(oo.fhist));
 output.fhist = output.fhist(end - nhist + 1: end);
 oo.fhist = oo.fhist(end - nhist + 1: end);
 
-if norm(output.fhist(1:nhist)-oo.fhist(1:nhist))/(1+norm(output.fhist(1:nhist))) > prec
+minfhist = min(length(output.fhist), length(oo.fhist));
+if norm(output.fhist(end-minfhist+1:end) - oo.fhist(end-minfhist+1:end))/(1+norm(output.fhist(end-minfhist+1:end))) > prec
     eq = false;
 end
 
-if norm(output.chist(1:nhist)-oo.chist(1:nhist))/(1+norm(output.chist(1:nhist))) > prec
+minchist = min(length(output.chist), length(oo.chist));
+if norm(output.chist(end-minchist+1:end) - oo.chist(end-minchist+1:end))/(1+norm(output.chist(end-minchist+1:end))) > prec
     eq = false;
 end
 
@@ -471,18 +473,18 @@ if ~equiv
     fprintf('\nf: fx1 = %.16e, fx2 = %.16e', fx1, fx2)
     fprintf('\nexitflag: exitflag1 = %d, exitflag2 = %d', exitflag1, exitflag2)
     nhist = min(length(output1.fhist), length(output2.fhist));
-    fprintf('\nfhist (only the first %d evaluations):', nhist);
-    output1.fhist = output1.fhist(1: nhist);
-    output2.fhist = output2.fhist(1: nhist);
+    fprintf('\nfhist (only the last %d evaluations):', nhist);
+    output1.fhist = output1.fhist(end-nhist+1: end);
+    output2.fhist = output2.fhist(end-nhist+1: end);
     output1.fhist
     output2.fhist
     output1.fhist == output2.fhist
     if (isfield(output1, 'constrviolation'))
         fprintf('\nconstrviolation: constrviolation1 = %.16e, constrviolation2 = %.16e', ...
             output1.constrviolation, output2.constrviolation)
-        fprintf('\nchist (only the first %d evaluations):', nhist);
-        output1.chist = output1.chist(1 : nhist);
-        output2.chist = output2.chist(1 : nhist);
+        fprintf('\nchist (only the last %d evaluations):', nhist);
+        output1.chist = output1.chist(end-nhist+1:end);
+        output2.chist = output2.chist(end-nhist+1:end);
         output1.chist
         output2.chist
         output1.chist == output2.chist

@@ -39,7 +39,7 @@ C Fortran code starts
       module fcobyla ! Some global variables
 
       use consts_mod, only : DP, rp, zero
-      use infnan_mod
+      use infnan_mod, only : is_nan
       implicit none
 
       integer*4, parameter :: int32_0 =  0
@@ -77,7 +77,9 @@ C extension depends on the platform), then the following function is
 C callable in matlab:
 C [xopt, fopt, info, nf, fhist, convalopt, constrviolation, chist] = FUNCTION_NAME(fun, con, x0, rhobeg, rhoend, maxfun, m, ftarget, conval_x0)
 
-      use fcobyla
+      use fcobyla, only : int32_0, int32, notComplex, mwOne,
+     & fun_ptr, con_ptr, nf, fhist, chist, conval_x0,
+     & DP, rp, zero, is_nan
       implicit none
 
 C mexFunction arguments (dummy variables):

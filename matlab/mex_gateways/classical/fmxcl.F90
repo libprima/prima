@@ -35,7 +35,7 @@
 
 ! Coded by Zaikun ZHANG in July 2020.
 !
-! Last Modified: Sunday, September 12, 2021 PM03:31:52
+! Last Modified: Wednesday, January 12, 2022 PM10:42:53
 
 
 #include "fintrf.h"
@@ -431,6 +431,7 @@ subroutine write_rvector_cl(x, px, rowcol)
 ! passed to MATLAB either as an output of mexFunction or an input of mexCallMATLAB. If
 ! ROWCOL = 'row', then the vector is passed as a row vector, otherwise, it will be a column vector.
 use, non_intrinsic :: consts_mod, only : DP, MSGLEN
+use, non_intrinsic :: string_mod, only : lower
 implicit none
 
 ! Input
@@ -464,9 +465,7 @@ end if
 
 row = .false.
 if (present(rowcol)) then
-    if (rowcol == 'row' .or. rowcol == 'ROW' .or. rowcol == 'Row') then
-        row = .true.
-    end if
+    row = (lower(rowcol) == 'row')
 end if
 ! Create a MATLAB matrix using the data in X_DP
 if (row) then

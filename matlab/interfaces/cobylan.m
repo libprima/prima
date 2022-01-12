@@ -318,9 +318,9 @@ elseif ~strcmp(invoker, 'pdfon') && probinfo.feasibility_problem && ~strcmp(prob
     end
 else % The problem turns out 'normal' during prepdfo
     % Include all the constraints into one single 'nonlinear constraint'
-    con = @(x) cobylan_con(x, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
+    funcon = @(x) cobylan_funcon(x, fun, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
     % Detect the number of the constraints (required by the Fortran code)
-    [constr_x0, m_nlcineq, m_nlceq] = con(x0);
+    [f_x0, constr_x0, m_nlcineq, m_nlceq] = funcon(x0);
     % m_nlcineq = number of nonlinear inequality constraints
     % m_nlceq = number of nonlinear equality constraints
     m = length(constr_x0); % number of constraints
@@ -330,6 +330,9 @@ else % The problem turns out 'normal' during prepdfo
     rhobeg = options.rhobeg;
     rhoend = options.rhoend;
     ftarget = options.ftarget;
+    maxhist = options.maxhist;
+    output_xhist = options.output_xhist;
+    %output_conhist = options.output_conhist;
 
     % Check whether the problem is too large for the Fortran code.
     % In the mex gateway, a workspace of size
@@ -371,12 +374,14 @@ else % The problem turns out 'normal' during prepdfo
     % Call the Fortran code
     try % The mexified Fortran function is a private function generating only private errors; however, public errors can occur due to, e.g., evalobj and evalcon; error handling needed
         if options.classical
+            con = @(x) cobylan_con(x, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
             [x, fx, exitflag, nf, fhist, constr, constrviolation, chist] = fcobylan_classical(fun, con, x0, rhobeg, rhoend, maxfun, m, ftarget, constr_x0);
         else
-            f_x0 = fun(x0);
             ctol = eps;
             maxfilt = 2000;
-            [x, fx, exitflag, nf, fhist, constr, constrviolation, chist] = fcobylan(fun, con, x0, rhobeg, rhoend, maxfun, m, iprint, ftarget, constr_x0, f_x0, ctol, maxfilt);
+            output_conhist = true;
+            [x, fx, constrviolation, constr, exitflag, nf, xhist, fhist, chist, conhist] = ...
+                fcobylan(funcon, m, x0, f_x0, constr_x0, rhobeg, rhoend, ftarget, ctol, maxfun, iprint, maxhist, double(output_xhist), double(output_conhist), maxfilt);
         end
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
@@ -390,9 +395,15 @@ else % The problem turns out 'normal' during prepdfo
     output.fx = fx;
     output.exitflag = exitflag;
     output.funcCount = nf;
+    if (output_xhist)
+        output.xhist = xhist;
+    end
     output.fhist = fhist;
     output.constrviolation = constrviolation;
     output.chist = chist;
+    if (~options.classical && output_conhist)
+        output.conhist = conhist;
+    end
     % OUTPUT should also include nonlinear constraint values, if any
     output.nlcineq = [];
     output.nlceq = [];
@@ -423,6 +434,11 @@ end
 return
 
 %%%%%%%%%%%%%%%%%%%%%%%%% Auxiliary functions %%%%%%%%%%%%%%%%%%%%%
+function [f, constr, m_nlcineq, m_nlceq] = cobylan_funcon(x, fun, Aineq, bineq, Aeq, beq, lb, ub, nonlcon)
+f = fun(x);
+[constr, m_nlcineq, m_nlceq] = cobylan_con(x, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
+return
+
 function [constr, m_nlcineq, m_nlceq] = cobylan_con(x, Aineq, bineq, Aeq, beq, lb, ub, nonlcon)
 % The Fortran backend takes at input a constraint: constr(x) >= 0
 % m_nlcineq = number of nonlinear inequality constraints

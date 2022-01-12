@@ -28,7 +28,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, January 06, 2022 PM12:21:12
+! Last Modified: Wednesday, January 12, 2022 PM07:30:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -39,12 +39,12 @@ public :: cobyla
 contains
 
 
-subroutine cobyla(calcfc, x, f, m, &
+subroutine cobyla(calcfc, m, x, f, &
     & cstrv, constr, &
     & f0, constr0, &
     & nf, rhobeg, rhoend, ftarget, ctol, maxfun, iprint, &
-    & xhist, fhist, conhist, chist, maxhist, maxfilt, info)
-!    & eta1, eta2, gamma1, gamma2, xhist, fhist, conhist, chist, maxhist, info)
+    & xhist, fhist, chist, conhist, maxhist, maxfilt, info)
+!    & eta1, eta2, gamma1, gamma2, xhist, fhist, chist, conhist, maxhist, info)
 !--------------------------------------------------------------------------------------------------!
 ! Among all the arguments, only CALCFC, X, and F are obligatory. The others are OPTIONAL and you can
 ! neglect them unless you are familiar with the algorithm. If you do not specify an optional input,
@@ -79,6 +79,10 @@ subroutine cobyla(calcfc, x, f, m, &
 !   !-------------------------------------------------------------------------!
 !   Besides, CONSTR must be an M-dimensional vector, M being the 4th compulsory argument (see below)
 !
+! M
+!   Input, INTEGER(IK) scalar.
+!   M must be set to the number of constraints, namely the size (length) of CONSTR(X).
+!
 ! X
 !   Input and output, REAL(RP) vector.
 !   As an input, X should be an N dimensional vector that contains the starting point, N being the
@@ -87,10 +91,6 @@ subroutine cobyla(calcfc, x, f, m, &
 ! F
 !   Output, REAL(RP) scalar.
 !   F will be set to the objective function value of X at exit.
-!
-! M
-!   Input, INTEGER(IK) scalar.
-!   M must be set to the number of constraints, namely the size (length) of CONSTR(X).
 !
 ! CSTRV
 !   Output, REAL(RP) scalar.
@@ -161,28 +161,28 @@ subroutine cobyla(calcfc, x, f, m, &
 !   factor of GAMMA2 when the reduction ratio is above ETA2. It is required that 0 < ETA1 <= ETA2
 !   < 1 and 0 < GAMMA1 < 1 < GAMMA2. Normally, ETA1 <= 0.25. It is NOT advised to set ETA1 >= 0.5.
 !
-! XHIST, FHIST, CONHIST, CHIST, MAXHIST
+! XHIST, FHIST, CHIST, CONHIST, MAXHIST
 !   XHIST: Output, ALLOCATABLE rank 2 REAL(RP) array;
 !   FHIST: Output, ALLOCATABLE rank 1 REAL(RP) array;
-!   CONHIST: Output, ALLOCATABLE rank 2 REAL(RP) array;
 !   CHIST: Output, ALLOCATABLE rank 1 REAL(RP) array;
+!   CONHIST: Output, ALLOCATABLE rank 2 REAL(RP) array;
 !   MAXHIST: Input, INTEGER(IK) scalar, default: MAXFUN
 !   XHIST, if present, will output the history of iterates; FHIST, if present, will output the
-!   history function values; CONHIST, if present, will output the history of constraint values;
-!   CHIST, if present, will output the history of constraint violations. MAXHIST should be a
-!   nonnegative integer, and XHIST/FHIST/CONHIST/CHIST will output only the history of the last
+!   history function values; CHIST, if present, will output the history of constraint violations;
+!   CONHIST, if present, will output the history of constraint values; MAXHIST should be a
+!   nonnegative integer, and XHIST/FHIST/CHIST/CONHIST will output only the history of the last
 !   MAXHIST iterations. Therefore, MAXHIST= 0 means XHIST/FHIST/CONHIST/CHIST will output nothing,
-!   while setting MAXHIST = MAXFUN requests XHIST/FHIST/CONHIST/CHIST to output all the history.
+!   while setting MAXHIST = MAXFUN requests XHIST/FHIST/CHIST/CONHIST to output all the history.
 !   If XHIST is present, its size at exit will be (N, min(NF, MAXHIST)); if FHIST is present, its
-!   size at exit will be min(NF, MAXHIST); if CONHIST is present, its size at exit will be
-!   (M, min(NF, MAXHIST)); if CHIST is present, its size at exit will be min(NF, MAXHIST).
+!   size at exit will be min(NF, MAXHIST); if CHIST is present, its size at exit will be
+!   min(NF, MAXHIST); if CONHIST is present, its size at exit will be (M, min(NF, MAXHIST)).
 !
 !   Important Notice:
 !   Setting MAXHIST to a large value can be costly in terms of memory for large problems.
 !   For instance, if N = 1000 and MAXHIST = 100, 000, XHIST will take up to 1 GB if we use double
 !   precision. MAXHIST will be  reset to a smaller value if the memory needed for XHIST and/or FHIST
 !   exceeds MAXMEMORY defined in CONSTS_MOD (see consts.F90 under the directory named "common";
-!   default: 2GB). Use XHIST, FHIST, CONHIST, CHIST, and MAXHIST with caution!!! (N.B.: the
+!   default: 2GB). Use XHIST, FHIST, CHIST, CONHIST, and MAXHIST with caution!!! (N.B.: the
 !   algorithm is NOT designed for large problems).
 !
 ! INFO
@@ -450,16 +450,6 @@ if (present(fhist)) then
 end if
 deallocate (fhist_loc)
 
-! Copy CONHIST_LOC to CONHIST if needed.
-if (present(conhist)) then
-    nhist = min(nf_loc, int(size(conhist_loc, 2), IK))
-    !----------------------------------------------------------!
-    call safealloc(conhist, m, nhist)  ! Removable in F2003.
-    !----------------------------------------------------------!
-    conhist = conhist_loc(:, 1:nhist)  ! The same as XHIST, we must cap CONHIST at NF_LOC.
-end if
-deallocate (conhist_loc)
-
 ! Copy CHIST_LOC to CHIST if needed.
 if (present(chist)) then
     nhist = min(nf_loc, int(size(chist_loc), IK))
@@ -469,6 +459,16 @@ if (present(chist)) then
     chist = chist_loc(1:nhist)  ! The same as XHIST, we must cap CHIST at NF_LOC.
 end if
 deallocate (chist_loc)
+
+! Copy CONHIST_LOC to CONHIST if needed.
+if (present(conhist)) then
+    nhist = min(nf_loc, int(size(conhist_loc, 2), IK))
+    !----------------------------------------------------------!
+    call safealloc(conhist, m, nhist)  ! Removable in F2003.
+    !----------------------------------------------------------!
+    conhist = conhist_loc(:, 1:nhist)  ! The same as XHIST, we must cap CONHIST at NF_LOC.
+end if
+deallocate (conhist_loc)
 
 ! If NF_LOC > MAXHIST_LOC, warn that not all history is recorded.
 if ((present(xhist) .or. present(fhist) .or. present(conhist) .or. present(chist)) .and. maxhist_loc < nf_loc) then
@@ -490,13 +490,13 @@ if (DEBUGGING) then
         call assert(size(fhist) == nhist, 'SIZE(FHIST) == NHIST', srname)
         call assert(.not. any(is_nan(fhist) .or. is_posinf(fhist)), 'FHIST does not contain NaN/+Inf', srname)
     end if
-    if (present(conhist)) then
-        call assert(size(conhist, 1) == m .and. size(conhist, 2) == nhist, 'SIZE(CONHIST) == [M, NHIST]', srname)
-        call assert(.not. any(is_nan(conhist) .or. is_neginf(conhist)), 'CONHIST does not contain NaN/-Inf', srname)
-    end if
     if (present(chist)) then
         call assert(size(chist) == nhist, 'SIZE(CHIST) == NHIST', srname)
         call assert(.not. any(is_nan(chist) .or. is_posinf(chist)), 'CHIST does not contain NaN/+Inf', srname)
+    end if
+    if (present(conhist)) then
+        call assert(size(conhist, 1) == m .and. size(conhist, 2) == nhist, 'SIZE(CONHIST) == [M, NHIST]', srname)
+        call assert(.not. any(is_nan(conhist) .or. is_neginf(conhist)), 'CONHIST does not contain NaN/-Inf', srname)
     end if
     if (present(fhist) .and. present(chist)) then
         call assert(.not. any([(isbetter([fhist(i), chist(i)], [f, cstrv_loc], ctol_loc), i=1, nhist)]),&

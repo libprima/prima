@@ -1,8 +1,8 @@
-! The mex gateway for NEWUOA
+! The MEX gateway for NEWUOA
 !
 ! Coded by Zaikun Zhang in July 2020.
 !
-! Last Modified: Friday, June 25, 2021 PM07:39:47
+! Last Modified: Wednesday, January 12, 2022 PM06:42:51
 
 
 #include "fintrf.h"
@@ -11,7 +11,8 @@
 subroutine mexFunction(nargout, poutput, nargin, pinput)
 ! If the binary MEX file is named as FUNCTION_NAME.mex*** (file-name extension depends on the
 ! platform), then the following function is callable in matlab:
-! [xopt, fopt, info, nf, xhist, fhist] = FUNCTION_NAME(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, iprint, maxhist, output_xhist)
+! [xopt, fopt, info, nf, xhist, fhist] = ...
+! FUNCTION_NAME(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, iprint, maxhist, output_xhist)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK
