@@ -16,18 +16,18 @@
 
 ####################################################################################################
 # Variables
-SOLVER = newuoa
+SOLVER := $(shell basename $(PWD))
 # Fortran standard to follow. We aim to make the code compatible with F2003, F2008, and F2018.
-FS = 03
-FSTD = 20$(FS)
+FS := 18
+FSTD := 20$(FS)
 # Default options for all the compilers.
-FFLAGS = -O3
+FFLAGS := -O3
 # Common directories.
-COMMON = ../../common
+COMMON := ../../common
 # Headers.
-HEADERS = $(COMMON)/*.h
+HEADERS := $(COMMON)/*.h
 # Solver source files.
-SOLVER_SRC = ../../$(SOLVER)
+SOLVER_SRC := ../../$(SOLVER)
 
 ####################################################################################################
 # All the tests
@@ -46,31 +46,41 @@ test:
 # Here are the compilers to test.
 
 # Absoft af95
-atest: FC = af95 -no-pie -m3
+AFORT :=
+ifneq ("$(wildcard /etc/debian_version)","")
+	AFORT := af95 -no-pie
+else
+	AFORT := af95
+endif
+atest: FC := $(AFORT) -m3
 
 # AMD AOCC Flang
-dtest: FC = /opt/AMD/aocc-compiler-3.1.0/bin/flang -Wall -Wextra
+AFLANG := $(shell find /opt/AMD \( -type l -o -type f \) -executable -name flang -print \
+	| sort | tail -n 1 2> /dev/null || echo AFLANG_NOT_FOUND)
+dtest: FC := $(AFLANG) -Wall -Wextra -std=f$(FSTD)
 
-# LLVM Flang
-ftest: FC = flang -Wall -Wextra
+# Flang
+ftest: FC := flang -Wall -Wextra -std=f$(FSTD)
 
 # GNU gfortran
-gtest: FC = gfortran -Wall -Wextra -Wno-function-elimination
+gtest: FC := gfortran -Wall -Wextra -Wno-function-elimination -std=f$(FSTD) -fall-intrinsics
 
 # Intel ifort
-itest: FC = ifort -warn all
+itest: FC := ifort -warn all -stand f$(FS)
 
 # NAG nagfor
-ntest: FC = nagfor -C
+ntest: FC := nagfor -C -f$(FSTD)
 
 # NVIDIA nvfortran (aka, pgfortran)
-vtest: FC = nvfortran -C -Wall -Wextra
+VFORT := $(shell find /opt/nvidia \( -type l -o -type f \) -executable -name nvfortran -print \
+	| sort | tail -n 1 2> /dev/null || echo NVFORTRAN_NOT_FOUND)
+vtest: FC := $(VFORT) -C -Wall -Wextra -Mstandard
 
 # Oracle sunf95
-stest: FC = sunf95 -w3 -u -U
+stest: FC := sunf95 -w3 -u -U
 
 # Intel ifx
-xtest: FC = ifx -warn all
+xtest: FC := ifx -warn all -stand f$(FS)
 
 ####################################################################################################
 # Compile the binary needed for a compiler-specific test
