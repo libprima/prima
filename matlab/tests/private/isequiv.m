@@ -199,8 +199,8 @@ return
 function eq = iseq(x, f, exitflag, output, xx, ff, ee, oo, prec)
 eq = true;
 
-if ~isempty(setdiff(fieldnames(output), [fieldnames(oo); 'fhist'; 'xhist'; 'chist'; 'conhist'])) ...
-        || ~isempty(setdiff(fieldnames(oo), [fieldnames(output); 'fhist'; 'xhist'; 'chist'; 'conhist']))
+if ~isempty(setdiff(fieldnames(output), [fieldnames(oo); 'fhist'; 'xhist'; 'chist'; 'nlcihist'; 'nlcehist'])) ...
+        || ~isempty(setdiff(fieldnames(oo), [fieldnames(output); 'fhist'; 'xhist'; 'chist'; 'nlcihist', 'nlcehist']))
     eq = false;
 end
 
@@ -328,6 +328,7 @@ end
 test_options.ftarget = objective(x0) - 10*abs(randn)*max(1, objective(x0));
 test_options.fortran = (rand > 0.5);
 test_options.output_xhist = (rand > 0.5);
+test_options.output_nlchist = (rand > 0.5);
 if single_test
     test_options.maxhist = test_options.maxfun;
 else
