@@ -34,8 +34,8 @@ SHELL = /bin/bash
 # Variables
 
 # Fortran standard to follow. We aim to make the code compatible with F2003, F2008, and F2018.
-FS = 03
-FSTD = 20$(FS)
+FS := 03
+FSTD := 20$(FS)
 
 # Default options for all the compilers.
 FFLAGS1 := -O3
@@ -47,7 +47,7 @@ TIME := $(shell date +%Y.%m.%d_%H.%M.%S)
 STAMP := $(TIME)_$(RANDNUM)
 
 # Test directory.
-TEST_DIR := $(PWD)
+TEST_DIR := $(CURDIR)
 # Log directory.
 LOG_DIR := $(TEST_DIR)/log
 # Trash directory.
@@ -297,13 +297,14 @@ ftest_i2_r16_d1_tst_c ftest_i4_r16_d1_tst_c ftest_i8_r16_d1_tst_c ftest_i2_r16_d
 
 # GNU gfortran
 # In the debug mode, our code includes the BACKTRACE function if the compiler is gfortran. This
-# makes the code not standard-conforming. So -std=f$(FSTD) is excluded for the following options.
+# makes the code not standard-conforming. So -std=f$(FSTD) cannot be imposed without -fall-intrinsics.
 # As of 2022, -Wextra implies -Wcompare-reals, -Wunused-parameter, and -Wdo-subscript.
 GFORT := gfortran
 GFORT := $(GFORT) -Werror
-GFORT := $(GFORT) -Wall -Wextra -pedantic -Wampersand -Wconversion  -Wuninitialized \
-	-Wmaybe-uninitialized -Wsurprising -Waliasing  -Wimplicit-interface -Wimplicit-procedure \
-	-Wintrinsics-std -Wunderflow -Wuse-without-only -Wunused-parameter \
+GFORT := $(GFORT) -std=f$(FSTD) -fall-intrinsics \
+	-Wall -Wextra -pedantic -Wampersand -Wconversion  -Wuninitialized -Wmaybe-uninitialized \
+	-Wsurprising -Waliasing -Wimplicit-interface -Wimplicit-procedure -Wintrinsics-std -Wunderflow \
+	-Wuse-without-only -Wunused-parameter \
 	-fPIC -fimplicit-none -fbacktrace -fcheck=all \
 	-finit-real=nan -finit-integer=-9999999
 	#-Wrealloc-lhs -Wrealloc-lhs-all
@@ -484,8 +485,9 @@ xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d
 	#-no-ftz -fp-model strict
 
 # G95
+# G95 supports f2003, but not higher.
 9FORT := g95
-9FORT := $(9FORT) -std=f$(FSTD) -pedantic -Wall -Wextra \
+9FORT := $(9FORT) -std=f2003 -pedantic -Wall -Wextra \
 	-Wimplicit-none -Wline-truncation -Wprecision-loss -Wunused-module-vars -Wunused-vars -Wunset-vars \
 	-fimplicit-none -fbounds-check -ftrace=full
 

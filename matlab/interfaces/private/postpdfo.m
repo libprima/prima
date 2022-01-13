@@ -332,6 +332,30 @@ if (isfield(output, 'nlcineq') && ~isfield(output, 'nlceq')) || (~isfield(output
 end
 
 % Read and verify nlcihist and nlcehist
+if isfield(output, 'nlcihist')
+    output_has_nlcihist = true;
+    nlcihist = output.nlcihist;
+else
+    output_has_nlcihist = false;
+    nlcihist = [];
+end
+if isfield(output, 'nlcehist')
+    output_has_nlcehist = true;
+    nlcehist = output.nlcehist;
+else
+    output_has_nlcehist = false;
+    nlcehist = [];
+end
+if ~strcmp(probinfo.refined_type, 'nonlinearly-constrained') && (isfield(output, 'nlcihist') && ~isempty(output.nlcihist) || isfield(output, 'nlcehist') && ~isempty(output.nlcehist))
+    % Public/unexpected error
+    error(sprintf('%s:InvalidNonlinearConstraint', invoker), ...
+    '%s: UNEXPECTED ERROR: %s returns history of nonlinear constraints for a problem without such constraints.', invoker, solver);
+end
+if (isfield(output, 'nlcihist') && ~isfield(output, 'nlcehist')) || (~isfield(output, 'nlcihist') && isfield(output, 'nlcehist'))
+    % Public/unexpected error
+    error(sprintf('%s:InvalidNonlinearConstraint', invoker), ...
+    '%s: UNEXPECTED ERROR: %s returns only one of nlcihist and nlcehist; it should return both of them or neither of them.', invoker, solver);
+end
 
 
 % After verification, extract and process the data.
@@ -703,6 +727,34 @@ if options.debug && ~options.classical
         end
 
         % Check whether [output.nlcihist, output.nlcehist] = nonlcon(xhist) and chist = constrviolation(xhist).
+        if ~(isempty(nlcihist) && isempty(nlcehist)) && ~isempty(xhist)
+            nonlcon = probinfo.raw_data.nonlcon;
+            nlcihist = [];
+            nlcehist = [];
+            if ~isempty(nonlcon)
+                m_nlcineq =
+                m_nlceq =
+                nlcihist = NaN(m_nlcineq, size(xhist, 2));
+                nlcehist = NaN(m_nlceq, size(xhist, 2));
+                for k = 1 : size(xhist, 2)
+                    [nlcihistx(:, k), nlcehistx(:, k)] = feval(nonlcon, xhist(:, k));
+                end
+                % Due to the moderated extreme barrier (implemented when options.classical=false),
+                % all constraint values that are NaN or above hugecon are replaced by hugecon.
+                nlcihistx(nlcihistx ~= nlcihistx | nlcihistx > hugecon) = hugecon;
+                % All constraint values below -hugecon are replaced by -hugecon to avoid numerical difficulties.
+                nlcihistx(nlcihistx < -hugecon) = -hugecon;
+                nlcehistx(nlcehistx ~= nlcehistx | nlcehistx > hugecon) = hugecon;
+                nlcehistx(nlcehistx < -hugecon) = -hugecon;
+            end
+            if any(size([nlcihist; nlcehist]) ~= size([nlcihistx; nlcehistx])) || any(isnan([nlcihist; nlcehist]) ~= isnan([nlcihistx; nlcehistx])) || (~any(isnan([nlcihist; nlcehist; nlcihistx; nlcehistx])) && any(abs([0; nlcihist; nlcehist] - [0; nlcihistx; nlcehistx]) > cobylan_prec*max(1,abs([0; nlcihistx; nlcehistx]))))
+            % In the last few max of the above line, we put a 0 to avoid an empty result
+                % Public/unexpected error
+                error(sprintf('%s:InvalidConx', invoker), ...
+                    '%s: UNEXPECTED ERROR: %s returns nlcihist and nlcehist that does not match xhist.', invoker, solver);
+            end
+        end
+
     end
 end
 

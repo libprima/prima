@@ -31,8 +31,8 @@ SHELL = /bin/bash
 # Variables
 
 # Fortran standard to follow. We aim to make the code compatible with F2003, F2008, and F2018.
-FS = 03
-FSTD = 20$(FS)
+FS := 03
+FSTD := 20$(FS)
 
 # Test directory.
 TEST_DIR := $(PWD)

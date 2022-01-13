@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, January 06, 2022 PM12:21:28
+! Last Modified: Thursday, January 13, 2022 PM11:54:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -198,7 +198,6 @@ if (subinfo /= INFO_DFT) then
         call assert(.not. any([(isbetter([fhist(k), chist(k)], [f, cstrv], ctol), &
             & k=1, minval([nf, maxfhist, maxchist]))]), 'No point in the history is better than X', srname)
     end if
-    !close (16)
     return
 end if
 
