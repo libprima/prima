@@ -5,7 +5,7 @@
 !
 ! Coded by Zaikun Zhang in July 2020.
 !
-! Last Modified: Wednesday, January 12, 2022 PM08:35:53
+! Last Modified: Thursday, January 13, 2022 AM11:46:42
 
 
 #include "fintrf.h"
@@ -68,6 +68,13 @@ call fmxReadMPtr(poutput(1), f)
 ! thousands of times before that.
 call mxDestroyArray(pinput(1))
 
+! Destroy POUTPUT(:).
+! MATLAB allocates dynamic memory to store the arrays in plhs (i.e., poutput) for mexCallMATLAB.
+! MATLAB automatically deallocates the dynamic memory when you exit the MEX file. However, this
+! subroutine will be called maybe thousands of times before that.
+! See https://www.mathworks.com/help/matlab/apiref/mexcallmatlab_fortran.html
+call mxDestroyArray(poutput(1))  ! Destroy it even though it is a scalar
+
 end subroutine calfun
 
 
@@ -127,12 +134,13 @@ constr = constr_loc
 ! thousands of times before that.
 call mxDestroyArray(pinput(1))
 
-! Should we destroy POUTPUT(2)?
+! Destroy POUTPUT(:).
+! MATLAB allocates dynamic memory to store the arrays in plhs (i.e., poutput) for mexCallMATLAB.
+! MATLAB automatically deallocates the dynamic memory when you exit the MEX file. However, this
+! subroutine will be called maybe thousands of times before that.
+! See https://www.mathworks.com/help/matlab/apiref/mexcallmatlab_fortran.html
+call mxDestroyArray(poutput(1))  ! Destroy it even though it is a scalar
 call mxDestroyArray(poutput(2))
-!MATLAB allocates dynamic memory to store the arrays in plhs for mexCallMATLAB. MATLAB automatically
-!deallocates the dynamic memory when you exit the MEX file. However, if heap space is at a premium,
-!call mxDestroyArray when you are finished with the arrays in plhs.
-!https://www.mathworks.com/help/matlab/apiref/mexcallmatlab_fortran.html
 
 end subroutine calcfc
 

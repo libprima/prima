@@ -1,24 +1,37 @@
+!--------------------------------------------------------------------------------------------------!
 ! The MEX gateway for NEWUOA
 !
-! Coded by Zaikun Zhang in July 2020.
+! **********************************************************************
+!   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
+!               and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
+!               Department of Applied Mathematics,
+!               The Hong Kong Polytechnic University
+! **********************************************************************
+!
+! Started in March 2020
 !
 ! Last Modified: Wednesday, January 12, 2022 PM06:42:51
-
+!--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
 
-! Entry point to Fortran MEX function
 subroutine mexFunction(nargout, poutput, nargin, pinput)
-! If the binary MEX file is named as FUNCTION_NAME.mex*** (file-name extension depends on the
-! platform), then the following function is callable in matlab:
+!--------------------------------------------------------------------------------------------------!
+! This is the entry point to Fortran MEX function. If the compiled MEX file is named as
+! FUNCTION_NAME.mex*** (extension depends on the platform), then in MATLAB we can call:
 ! [xopt, fopt, info, nf, xhist, fhist] = ...
-! FUNCTION_NAME(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, iprint, maxhist, output_xhist)
+!   FUNCTION_NAME(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, ...
+!   iprint, maxhist, output_xhist)
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK
+!use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: memory_mod, only : safealloc
+
+! Fortran MEX API modules
 use, non_intrinsic :: fmxapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
 use, non_intrinsic :: fmxapi_mod, only : fmxVerifyClassShape
-use, non_intrinsic :: fmxapi_mod, only : fmxAllocate
 use, non_intrinsic :: fmxapi_mod, only : fmxReadMPtr, fmxWriteMPtr
 
 ! Solver-specific module
@@ -59,7 +72,7 @@ call fmxVerifyNArgout(nargout, 6)
 ! Verify that input 1 is a function handle; the other inputs will be verified when read.
 call fmxVerifyClassShape(pinput(1), 'function_handle', 'rank0')
 
-! Read inputs (there are 14)
+! Read inputs
 fun_ptr = pinput(1)  ! FUN_PTR is a pointer to the function handle
 call fmxReadMPtr(pinput(2), x)
 call fmxReadMPtr(pinput(3), rhobeg)
@@ -88,7 +101,7 @@ end if
 ! After the Fortran code, XHIST may not be allocated, because it may not have been passed to the
 ! Fortran code. We allocate it here. Otherwise, fmxWriteMPtr will fail.
 if (.not. allocated(xhist)) then
-    call fmxAllocate(xhist, int(size(x), IK), 0_IK)
+    call safealloc(xhist, int(size(x), IK), 0_IK)
 end if
 
 ! Write outputs
@@ -108,5 +121,4 @@ deallocate (x) ! Allocated by fmxReadMPtr.
 deallocate (xhist)
 deallocate (fhist)
 
-return
 end subroutine mexFunction

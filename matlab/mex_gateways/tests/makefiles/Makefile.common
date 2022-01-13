@@ -561,7 +561,6 @@ header_%: QPAVLB = $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 1
 header_%: source_%
 	@printf "\nPreparing the header file for the test.\n"
 	$(SEDI) "0,/^#define __QP_AVAILABLE__ [0-9]*/s//#define __QP_AVAILABLE__ $(QPAVLB)/" $(HEADERS)
-	$(SEDI) "0,/^#define __USE_QP__ [0-9]*/s//#define __USE_QP__ $(QPAVLB)/" fmxapi.F90
 	$(SEDI) "0,/^#define __INTEGER_KIND__ [0-9]*/s//#define __INTEGER_KIND__ $(IK)/" $(HEADERS)
 	$(SEDI) "0,/^#define __REAL_PRECISION__ [0-9]*/s//#define __REAL_PRECISION__ $(RP)/" $(HEADERS)
 	$(SEDI) "0,/^#define __DEBUGGING__ [0-9]*/s//#define __DEBUGGING__ $(DBG)/" $(HEADERS)

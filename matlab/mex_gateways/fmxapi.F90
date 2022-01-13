@@ -22,39 +22,25 @@
 ! is why, for example, we define EID and MSG in the ubroutines to avoid line continuation involving
 ! mexErrMsgIdAndTxt.
 !
-! Coded by Zaikun ZHANG 
+! Coded by Zaikun ZHANG
 !
 ! Started in July 2020
 !
-! Last Modified: Thursday, January 13, 2022 AM12:08:18
+! Last Modified: Thursday, January 13, 2022 AM11:44:43
 !--------------------------------------------------------------------------------------------------!
-
-
-! Do we intend to use quadruple precision in the Fortran code (1) or not (0)?
-! 1. It is rarely a good idea to use REAL128 as the working precision, which is probably inefficient
-! and unnecessary.
-! 2. Do NOT change __USE_QP__ to 1 unless you are sure that you intend to use quadruple precision and
-! such a precision is available on the current platform.
-! 3. To use quadruple precision, you also need to modify ppf.h to set __QP_AVAILABLE__ to 1 and
-! __REAL_PRECISION__ to 128. Otherwise, it will not work.
-! 4. __USE_QP__ affects only subroutines alloc_rvector_qp and alloc_rmatrix_qp.
-#if defined __USE_QP__
-#undef __USE_QP__
-#endif
-#define __USE_QP__ 0
-
 
 #include "fintrf.h"
 
 
+module int32_mex_mod
 !--------------------------------------------------------------------------------------------------!
 ! INT32_MEX_MOD does nothing but defines INT32_MEX, which is indeed INT32, i.e., the kind of
-! INTEGER*4. It is needed when using some MEX API subroutines provided by Mathworks, e.g.,
+! INTEGER*4. It is needed when using some MEX API subroutines provided by MathWorks, e.g.,
 ! mexCallMATLAB. We wanted to define INT32_MEX in FMXAPI_MOD, but in that case INT32_MEX
 ! will not be visible to the interface blocks like mexCallMATLAB, even though it will be visible
 ! to the subroutines like fmxCallMATLAB. Therefore, we can only define it in a separate module and
 ! then use it when needed.
-module int32_mex_mod
+!--------------------------------------------------------------------------------------------------!
 implicit none
 private
 public :: INT32_MEX
@@ -63,7 +49,6 @@ public :: INT32_MEX
 !!use, intrinsic :: iso_fortran_env, only : INT32
 integer, parameter :: INT32_MEX = selected_int_kind(7)
 end module int32_mex_mod
-!--------------------------------------------------------------------------------------------------!
 
 
 module fmxapi_mod
@@ -99,13 +84,11 @@ public :: fmxGetDble
 public :: fmxVerifyNArgin
 public :: fmxVerifyNArgout
 public :: fmxVerifyClassShape
-public :: fmxAllocate
 public :: fmxReadMPtr
 public :: fmxWriteMPtr
 public :: fmxCallMATLAB
 public :: fmxIsDoubleScalar
 public :: fmxIsDoubleVector
-
 
 ! notComplex is used in mxCreateDoubleMatrix
 integer(INT32_MEX), parameter :: notComplex = 0
@@ -115,15 +98,6 @@ integer(INT32_MEX), parameter :: intOne = 1, intTwo = 2
 mwSize, parameter :: mwOne = 1 ! Integer 1 with type mwSize
 ! cvsnTol is the tolerance of difference due to conversion between REAL(RP) and REAL(DP)
 real(DP), parameter :: cvsnTol = 1.0E1_DP * max(epsilon(0.0_DP), real(epsilon(0.0_RP), DP))
-
-interface fmxAllocate
-    ! fmxAllocate allocates the space for a vector/matrix
-    module procedure alloc_rvector_sp, alloc_rmatrix_sp
-    module procedure alloc_rvector_dp, alloc_rmatrix_dp
-#if __USE_QP__
-    module procedure alloc_rvector_qp, alloc_rmatrix_qp
-#endif
-end interface fmxAllocate
 
 interface fmxReadMPtr
     ! fmxReadMPtr reads the numeric data associated with an mwPointer. It verifies the class and
@@ -418,215 +392,6 @@ end select
 end subroutine fmxVerifyClassShape
 
 
-subroutine alloc_rvector_sp(x, n)
-! ALLOC_RVECTOR_SP allocates the space for an allocatable single-precision vector X, whose size is N
-! after allocation.
-use, non_intrinsic :: consts_mod, only : SP, IK, MSGLEN
-implicit none
-
-! Input
-integer(IK), intent(in) :: n
-
-! Output
-real(SP), allocatable, intent(out) :: x(:)
-
-! Local variables
-integer :: alloc_status
-character(len=MSGLEN) :: eid, msg
-
-! According to the Fortran 2003 standard, when a procedure is invoked, any allocated ALLOCATABLE
-! object that is an actual argument associated with an INTENT(OUT) ALLOCATABLE dummy argument is
-! deallocated. So it is unnecessary to write the following line in F2003 since X is INTENT(OUT):
-!!if (allocated(x)) deallocate (x)
-
-! Allocate memory for X
-allocate (x(n), stat=alloc_status)
-if (alloc_status /= 0) then
-    eid = 'FMXAPI:AllocateFailed'
-    msg = 'ALLOC_RVECTOR_SP: Memory allocation fails.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
-end if
-
-! Use X; otherwise, compilers may complain.
-if (n >= 1) then
-    x(1) = 0.0_SP
-end if
-
-end subroutine alloc_rvector_sp
-
-
-subroutine alloc_rmatrix_sp(x, m, n)
-! ALLOC_RMATRIX_SP allocates the space for a single-precision matrix X, whose size is (M, N) after
-! allocation.
-use, non_intrinsic :: consts_mod, only : SP, IK, MSGLEN
-implicit none
-
-! Input
-integer(IK), intent(in) :: m, n
-
-! Output
-real(SP), allocatable, intent(out) :: x(:, :)
-
-! Local variables
-integer :: alloc_status
-character(len=MSGLEN) :: eid, msg
-
-! Unnecessary to write the following line in F2003 since X is INTENT(OUT):
-!!if (allocated(x)) deallocate (x)
-
-! Allocate memory for X
-allocate (x(m, n), stat=alloc_status)
-if (alloc_status /= 0) then
-    eid = 'FMXAPI:AllocateFailed'
-    msg = 'ALLOC_RMATRIX_SP: Memory allocation fails.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
-end if
-
-! Use X; otherwise, compilers may complain.
-if (m * n >= 1) then
-    x(1, 1) = 0.0_SP
-end if
-end subroutine alloc_rmatrix_sp
-
-
-subroutine alloc_rvector_dp(x, n)
-! ALLOC_RVECTOR_DP allocates the space for an allocatable double-precision vector X, whose size is N
-! after allocation.
-use, non_intrinsic :: consts_mod, only : DP, IK, MSGLEN
-implicit none
-
-! Input
-integer(IK), intent(in) :: n
-
-! Output
-real(DP), allocatable, intent(out) :: x(:)
-
-! Local variables
-integer :: alloc_status
-character(len=MSGLEN) :: eid, msg
-
-! Unnecessary to write the following line in F2003 since X is INTENT(OUT):
-!!if (allocated(x)) deallocate (x)
-
-! Allocate memory for X
-allocate (x(n), stat=alloc_status)
-if (alloc_status /= 0) then
-    eid = 'FMXAPI:AllocateFailed'
-    msg = 'ALLOC_RVECTOR_DP: Memory allocation fails.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
-end if
-
-! Use X; otherwise, compilers may complain.
-if (n >= 1) then
-    x(1) = 0.0_DP
-end if
-end subroutine alloc_rvector_dp
-
-
-subroutine alloc_rmatrix_dp(x, m, n)
-! ALLOC_RMATRIX_DP allocates the space for a double-precision matrix X, whose size is (M, N) after
-! allocation.
-use, non_intrinsic :: consts_mod, only : DP, IK, MSGLEN
-implicit none
-
-! Input
-integer(IK), intent(in) :: m, n
-
-! Output
-real(DP), allocatable, intent(out) :: x(:, :)
-
-! Local variables
-integer :: alloc_status
-character(len=MSGLEN) :: eid, msg
-
-! Unnecessary to write the following line in F2003 since X is INTENT(OUT):
-!!if (allocated(x)) deallocate (x)
-
-! Allocate memory for X
-allocate (x(m, n), stat=alloc_status)
-if (alloc_status /= 0) then
-    eid = 'FMXAPI:AllocateFailed'
-    msg = 'ALLOC_RMATRIX_DP: Memory allocation fails.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
-end if
-
-! Use X; otherwise, compilers may complain.
-if (m * n >= 1) then
-    x(1, 1) = 0.0_DP
-end if
-end subroutine alloc_rmatrix_dp
-
-
-#if __USE_QP__ == 1
-subroutine alloc_rvector_qp(x, n)
-! ALLOC_RVECTOR_QP allocates the space for an allocatable quadruple-precision vector X, whose size
-! is N after allocation.
-use, non_intrinsic :: consts_mod, only : QP, IK, MSGLEN
-implicit none
-
-! Input
-integer(IK), intent(in) :: n
-
-! Output
-real(QP), allocatable, intent(out) :: x(:)
-
-! Local variables
-integer :: alloc_status
-character(len=MSGLEN) :: eid, msg
-
-! Unnecessary to write the following line in F2003 since X is INTENT(OUT):
-!!if (allocated(x)) deallocate (x)
-
-! Allocate memory for X
-allocate (x(n), stat=alloc_status)
-if (alloc_status /= 0) then
-    eid = 'FMXAPI:AllocateFailed'
-    msg = 'ALLOC_RVECTOR_QP: Memory allocation fails.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
-end if
-
-! Use X; otherwise, compilers may complain.
-if (n >= 1) then
-    x(1) = 0.0_QP
-end if
-end subroutine alloc_rvector_qp
-
-
-subroutine alloc_rmatrix_qp(x, m, n)
-! ALLOC_RMATRIX_DP allocates the space for a quadruple-precision matrix X, whose size is (M, N)
-! after allocation.
-use, non_intrinsic :: consts_mod, only : QP, IK, MSGLEN
-implicit none
-
-! Input
-integer(IK), intent(in) :: m, n
-
-! Output
-real(QP), allocatable, intent(out) :: x(:, :)
-
-! Local variables
-integer :: alloc_status
-character(len=MSGLEN) :: eid, msg
-
-! Unnecessary to write the following line in F2003 since X is INTENT(OUT):
-!!if (allocated(x)) deallocate (x)
-
-! Allocate memory for X
-allocate (x(m, n), stat=alloc_status)
-if (alloc_status /= 0) then
-    eid = 'FMXAPI:AllocateFailed'
-    msg = 'ALLOC_RMATRIX_QP: Memory allocation fails.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
-end if
-
-! Use X; otherwise, compilers may complain.
-if (m * n >= 1) then
-    x(1, 1) = 0.0_QP
-end if
-end subroutine alloc_rmatrix_qp
-#endif
-
-
 subroutine read_rscalar(px, x)
 ! READ_RSCALAR reads the double scalar associated with an mwPointer PX and saves the data in X,
 ! which is a REAL(RP) scalar.
@@ -666,6 +431,7 @@ subroutine read_rvector(px, x)
 ! READ_RVECTOR reads the double vector associated with an mwPointer PX and saves the data in X,
 ! which is a REAL(RP) vector.
 use, non_intrinsic :: consts_mod, only : RP, DP, IK, ONE, MSGLEN
+use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 
 ! Input
@@ -688,11 +454,11 @@ n_mw = int(mxGetM(px) * mxGetN(px), kind(n_mw))
 n = int(n_mw, kind(n))
 
 ! Copy input to X_DP
-call fmxAllocate(x_dp, n) ! NOT removable
+call safealloc(x_dp, n) ! NOT removable
 call mxCopyPtrToReal8(fmxGetDble(px), x_dp, n_mw)
 
 ! Convert X_DP to the type expected by the Fortran code
-call fmxAllocate(x, n) ! Removable in F2003
+call safealloc(x, n) ! Removable in F2003
 x = real(x_dp, kind(x))
 ! Check whether the type conversion is proper
 if (kind(x) /= kind(x_dp)) then
@@ -712,6 +478,7 @@ subroutine read_rmatrix(px, x)
 ! READ_RMATRIX reads the double matrix associated with an mwPointer PX and saves the data in X,
 ! which is a REAL(RP) matrix.
 use, non_intrinsic :: consts_mod, only : RP, DP, IK, ONE, MSGLEN
+use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 
 ! Input
@@ -736,11 +503,11 @@ xsize = int(m * n, kind(xsize))
 
 
 ! Copy input to X_DP
-call fmxAllocate(x_dp, m, n) ! NOT removable
+call safealloc(x_dp, m, n) ! NOT removable
 call mxCopyPtrToReal8(fmxGetDble(px), x_dp, xsize)
 
 ! Convert X_DP to the type expected by the Fortran code
-call fmxAllocate(x, m, n) ! Removable in F2003
+call safealloc(x, m, n) ! Removable in F2003
 x = real(x_dp, kind(x))
 ! Check whether the type conversion is proper
 if (kind(x) /= kind(x_dp)) then
