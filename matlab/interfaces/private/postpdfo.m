@@ -331,6 +331,9 @@ if (isfield(output, 'nlcineq') && ~isfield(output, 'nlceq')) || (~isfield(output
     '%s: UNEXPECTED ERROR: %s returns only one of nlcineq and nlceq; it should return both of them or neither of them.', invoker, solver);
 end
 
+% Read and verify nlcihist and nlcehist
+
+
 % After verification, extract and process the data.
 
 % The problem was (possibly) scaled. Scale it back.
@@ -699,9 +702,7 @@ if options.debug && ~options.classical
             end
         end
 
-        % Should check also whether nlcineqhist = nlcineq(xhist), nlceqhist = nlceq(xhist), and
-        % chist = constrviolation(xhist). To be implemented.
-
+        % Check whether [output.nlcihist, output.nlcehist] = nonlcon(xhist) and chist = constrviolation(xhist).
     end
 end
 

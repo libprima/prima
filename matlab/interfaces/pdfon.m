@@ -203,7 +203,7 @@ function [x, fx, exitflag, output] = pdfon(varargin)
 %       history of the iterates; if it is set to true, then the output
 %       structure will include a field "xhist", which contains the last
 %       maxhist iterates of the algorithm; default: false;
-%   *** output_nlcchist: a boolean value indicating whether to output the
+%   *** output_nlchist: a boolean value indicating whether to output the
 %       history of the function values; if it is set to true; then the
 %       output structure will include fields "nlcihist" and "nlcehist",
 %       which respectively contain the inequality and equality constraint

@@ -332,7 +332,7 @@ else % The problem turns out 'normal' during prepdfo
     ftarget = options.ftarget;
     maxhist = options.maxhist;
     output_xhist = options.output_xhist;
-    %output_conhist = options.output_conhist;
+    output_nlchist = options.output_nlchist;
 
     % Check whether the problem is too large for the Fortran code.
     % In the mex gateway, a workspace of size
@@ -379,9 +379,8 @@ else % The problem turns out 'normal' during prepdfo
         else
             ctol = eps;
             maxfilt = 2000;
-            output_conhist = true;
             [x, fx, constrviolation, constr, exitflag, nf, xhist, fhist, chist, conhist] = ...
-                fcobylan(funcon, m, x0, f_x0, constr_x0, rhobeg, rhoend, ftarget, ctol, maxfun, iprint, maxhist, double(output_xhist), double(output_conhist), maxfilt);
+                fcobylan(funcon, m, x0, f_x0, constr_x0, rhobeg, rhoend, ftarget, ctol, maxfun, iprint, maxhist, double(output_xhist), double(output_nlchist), maxfilt);
         end
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
@@ -401,8 +400,15 @@ else % The problem turns out 'normal' during prepdfo
     output.fhist = fhist;
     output.constrviolation = constrviolation;
     output.chist = chist;
-    if (~options.classical && output_conhist)
-        output.conhist = conhist;
+    if (~options.classical && output_nlchist)  %!!!!
+        output.nlcihist = -conhist(end-m_nlcineq-2*m_nlceq+1 : end-2*m_nlceq, :);
+        if isempty(output.nlcihist)
+            output.nlcihist = []; % We uniformly use [] to represent empty objects
+        end
+        output.nlcehist = -conhist(end-m_nlceq+1 : end, :);
+        if isempty(output.nlcehist)
+            output.nlcehist = []; % We uniformly use [] to represent empty objects
+        end
     end
     % OUTPUT should also include nonlinear constraint values, if any
     output.nlcineq = [];
