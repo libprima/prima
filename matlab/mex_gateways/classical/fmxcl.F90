@@ -6,7 +6,6 @@
 !
 ! and the following procedures:
 !
-! fmxAllocate
 ! fmxReadMPtr
 ! fmxWriteMPtr
 !
@@ -35,7 +34,7 @@
 
 ! Coded by Zaikun ZHANG in July 2020.
 !
-! Last Modified: Wednesday, January 12, 2022 PM10:42:53
+! Last Modified: Thursday, January 13, 2022 AM11:32:41
 
 
 #include "fintrf.h"
@@ -58,20 +57,12 @@ private
 public :: IK_CL
 public :: RP_CL
 public :: MAXMEMORY_CL
-public :: fmxAllocate
 public :: fmxReadMPtr
 public :: fmxWriteMPtr
 
 real(RP_CL), parameter :: ONE = 1.0_RP_CL
 real(DP), parameter :: cvsnTol = 1.0E1_DP * max(epsilon(0.0_DP), real(epsilon(0.0_RP_CL), DP))
 integer, parameter :: MAXMEMORY_CL = min(21 * (10**8), int(huge(0_IK_CL)))
-
-
-interface fmxAllocate
-    ! fmxAllocate allocates the space for a vector/matrix
-    module procedure alloc_rvector_cl_sp, alloc_rmatrix_cl_sp
-    module procedure alloc_rvector_cl_dp, alloc_rmatrix_cl_dp
-end interface fmxAllocate
 
 interface fmxReadMPtr
     ! fmxReadMPtr reads the numeric data associated with an mwPointer.
@@ -91,144 +82,6 @@ end interface fmxWriteMPtr
 
 
 contains
-
-
-subroutine alloc_rvector_cl_sp(x, n)
-! ALLOC_RVECTOR_CL_SP allocates the space for an allocatable single-precision vector X, whose size
-! is N after allocation.
-use, non_intrinsic :: consts_mod, only : SP, MSGLEN
-implicit none
-
-! Input
-integer(IK_CL), intent(in) :: n
-
-! Output
-real(SP), allocatable, intent(out) :: x(:)
-
-! Local variable
-integer :: alloc_status
-character(len=MSGLEN) :: eid, msg
-
-! According to the Fortran 2003 standard, when a procedure is invoked, any allocated ALLOCATABLE
-! object that is an actual argument associated with an INTENT(OUT) ALLOCATABLE dummy argument is
-! deallocated. So it is unnecessary to write the following line in F2003 since X is INTENT(OUT):
-!!if (allocated(x)) deallocate (x)
-
-! Allocate memory for X
-allocate (x(n), stat=alloc_status)
-if (alloc_status /= 0) then
-    eid = 'FMXAPI:AllocateFailed'
-    msg = 'ALLOC_RVECTOR_CL: Memory allocation fails.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
-end if
-
-! Use X; otherwise, compilers may complain.
-if (n >= 1) then
-    x(1) = 0.0_SP
-end if
-end subroutine alloc_rvector_cl_sp
-
-
-subroutine alloc_rmatrix_cl_sp(x, m, n)
-! ALLOC_RMATRIX_CL_SP allocates the space for a single-precision matrix X, whose size is (M, N)
-! after allocation.
-use, non_intrinsic :: consts_mod, only : SP, MSGLEN
-implicit none
-
-! Input
-integer(IK_CL), intent(in) :: m, n
-
-! Output
-real(SP), allocatable, intent(out) :: x(:, :)
-
-! Local variable
-integer :: alloc_status
-character(len=MSGLEN) :: eid, msg
-
-! Unnecessary to write the following line in F2003 since X is INTENT(OUT):
-!!if (allocated(x)) deallocate (x)
-
-! Allocate memory for X
-allocate (x(m, n), stat=alloc_status)
-if (alloc_status /= 0) then
-    eid = 'FMXAPI:AllocateFailed'
-    msg = 'ALLOC_RMATRIX_CL: Memory allocation fails.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
-end if
-
-! Use X; otherwise, compilers may complain.
-if (m * n >= 1) then
-    x(1, 1) = 0.0_SP
-end if
-end subroutine alloc_rmatrix_cl_sp
-
-
-subroutine alloc_rvector_cl_dp(x, n)
-! ALLOC_RVECTOR_CL_DP allocates the space for an allocatable single-precision vector X, whose size
-! is N after allocation.
-use, non_intrinsic :: consts_mod, only : DP, MSGLEN
-implicit none
-
-! Input
-integer(IK_CL), intent(in) :: n
-
-! Output
-real(DP), allocatable, intent(out) :: x(:)
-
-! Local variable
-integer :: alloc_status
-character(len=MSGLEN) :: eid, msg
-
-! Unnecessary to write the following line in F2003 since X is INTENT(OUT):
-!!if (allocated(x)) deallocate (x)
-
-! Allocate memory for X
-allocate (x(n), stat=alloc_status)
-if (alloc_status /= 0) then
-    eid = 'FMXAPI:AllocateFailed'
-    msg = 'ALLOC_RVECTOR_CL: Memory allocation fails.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
-end if
-
-! Use X; otherwise, compilers may complain.
-if (n >= 1) then
-    x(1) = 0.0_DP
-end if
-end subroutine alloc_rvector_cl_dp
-
-
-subroutine alloc_rmatrix_cl_dp(x, m, n)
-! ALLOC_RMATRIX_CL_DP allocates the space for a single-precision matrix X, whose size is (M, N)
-! after allocation.
-use, non_intrinsic :: consts_mod, only : DP, MSGLEN
-implicit none
-
-! Input
-integer(IK_CL), intent(in) :: m, n
-
-! Output
-real(DP), allocatable, intent(out) :: x(:, :)
-
-! Local variable
-integer :: alloc_status
-character(len=MSGLEN) :: eid, msg
-
-! Unnecessary to write the following line in F2003 since X is INTENT(OUT):
-!!if (allocated(x)) deallocate (x)
-
-! Allocate memory for X
-allocate (x(m, n), stat=alloc_status)
-if (alloc_status /= 0) then
-    eid = 'FMXAPI:AllocateFailed'
-    msg = 'ALLOC_RMATRIX_CL: Memory allocation fails.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
-end if
-
-! Use X; otherwise, compilers may complain.
-if (m * n >= 1) then
-    x(1, 1) = 0.0_DP
-end if
-end subroutine alloc_rmatrix_cl_dp
 
 
 subroutine read_rscalar_cl(px, x)
@@ -269,7 +122,8 @@ end subroutine read_rscalar_cl
 subroutine read_rvector_cl(px, x)
 ! READ_RVECTOR_CL reads the double vector associated with an mwPointer PX and saves the data in X,
 ! which is a REAL(RP_CL) vector.
-use, non_intrinsic :: consts_mod, only : DP, MSGLEN
+use, non_intrinsic :: consts_mod, only : DP, IK, MSGLEN
+use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 
 ! Input
@@ -292,11 +146,11 @@ n_mw = int(mxGetM(px) * mxGetN(px), kind(n_mw))
 n = int(n_mw, kind(n))
 
 ! Copy input to X_DP
-call fmxAllocate(x_dp, n) ! NOT removable
+call safealloc(x_dp, int(n, IK)) ! NOT removable
 call mxCopyPtrToReal8(fmxGetDble(px), x_dp, n_mw)
 
 ! Convert X_DP to the type expected by the Fortran code
-call fmxAllocate(x, n) ! Removable in F2003
+call safealloc(x, int(n, IK)) ! Removable in F2003
 x = real(x_dp, kind(x))
 ! Check whether the type conversion is proper
 if (kind(x) /= kind(x_dp)) then
@@ -315,7 +169,8 @@ end subroutine read_rvector_cl
 subroutine read_rmatrix_cl(px, x)
 ! READ_MATRIX_CL reads the double matrix associated with an mwPointer PX and saves the data in X,
 ! which is a REAL(RP_CL) matrix.
-use, non_intrinsic :: consts_mod, only : DP, MSGLEN
+use, non_intrinsic :: consts_mod, only : DP, IK, MSGLEN
+use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 
 ! Input
@@ -340,11 +195,11 @@ xsize = int(m * n, kind(xsize))
 
 
 ! Copy input to X_DP
-call fmxAllocate(x_dp, m, n) ! NOT removable
+call safealloc(x_dp, int(m, IK), int(n, IK)) ! NOT removable
 call mxCopyPtrToReal8(fmxGetDble(px), x_dp, xsize)
 
 ! Convert X_DP to the type expected by the Fortran code
-call fmxAllocate(x, m, n) ! Removable in F2003
+call safealloc(x, int(m, IK), int(n, IK)) ! Removable in F2003
 x = real(x_dp, kind(x))
 ! Check whether the type conversion is proper
 if (kind(x) /= kind(x_dp)) then

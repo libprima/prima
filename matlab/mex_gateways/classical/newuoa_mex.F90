@@ -1,9 +1,17 @@
-! The mex gateway for NEWUOA (classical version)
+!--------------------------------------------------------------------------------------------------!
+! The MEX gateway for NEWUOA (classical version)
 !
-! Coded by Zaikun Zhang in July 2020.
+! **********************************************************************
+!   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
+!               and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
+!               Department of Applied Mathematics,
+!               The Hong Kong Polytechnic University
+! **********************************************************************
 !
-! Last Modified: Friday, August 27, 2021 PM02:24:52
-
+! Started in March 2020
+!
+! Last Modified: Thursday, January 13, 2022 AM11:47:13
+!--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
 
@@ -17,7 +25,7 @@ public :: newuoa
 public :: solver
 
 ! Some global veriables
-! Pointer to bjective function
+! Pointer to objective function
 mwPointer :: fun_ptr
 ! Number of function evaluations
 integer(IK_CL) :: nf
@@ -42,23 +50,25 @@ end interface
 end module newuoacl_mod
 
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-! Entry point to Fortran MEX function
 subroutine mexFunction(nargout, poutput, nargin, pinput)
-! If the binary MEX file is named as FUNCTION_NAME.mex*** (file-name
-! extension depends on the platform), then the following function is
-! callable in matlab:
-! [xopt, fopt, info, nf, xhist, fhist] = FUNCTION_NAME(fun, x0, rhobeg, rhoend, ftarget, maxfun, npt, iprint, maxhist, output_xhist)
+!--------------------------------------------------------------------------------------------------!
+! This is the entry point to Fortran MEX function. If the compiled MEX file is named as
+! FUNCTION_NAME.mex*** (extension depends on the platform), then in MATLAB we can call:
+! [xopt, fopt, info, nf, xhist, fhist] = ...
+!   FUNCTION_NAME(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, ...
+!   iprint, maxhist, output_xhist)
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : MSGLEN
-use, non_intrinsic :: memory_mod, only : cstyle_sizeof
+use, non_intrinsic :: memory_mod, only : safealloc, cstyle_sizeof
+
+! Fortran MEX API modules
 use, non_intrinsic :: fmxapi_mod, only : mexErrMsgIdAndTxt
 use, non_intrinsic :: fmxapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
 use, non_intrinsic :: fmxapi_mod, only : fmxVerifyClassShape
 use, non_intrinsic :: fmxcl_mod, only : IK_CL, RP_CL, MAXMEMORY_CL
-use, non_intrinsic :: fmxcl_mod, only : fmxAllocate, fmxReadMPtr, fmxWriteMPtr
+use, non_intrinsic :: fmxcl_mod, only : fmxReadMPtr, fmxWriteMPtr
 
 ! Solver-specific module
 use, non_intrinsic :: newuoacl_mod, only : fun_ptr, nf, xhist, fhist, newuoa, solver
@@ -128,7 +138,7 @@ if (nw > MAXMEMORY_CL / cstyle_sizeof(0.0_RP_CL)) then
     msg = solver//': Workspace exceeds the largest memory allowed.'
     call mexErrMsgIdAndTxt(eid, msg)
 end if
-call fmxAllocate(w, int(nw, IK_CL)) ! Not removable
+call safealloc(w, int(nw, IK_CL)) ! Not removable
 
 ! Decide the maximal length of history according to MEXMEMORY in CONSTS_MOD
 if (output_xhist > 0) then
@@ -151,8 +161,8 @@ end if
 
 ! Initialize global variables
 nf = 0
-call fmxAllocate(xhist, n, maxxhist) ! Not removable
-call fmxAllocate(fhist, maxfhist) ! Not removable
+call safealloc(xhist, n, maxxhist) ! Not removable
+call safealloc(fhist, maxfhist) ! Not removable
 
 ! Call NEWUOA
 call newuoa(n, npt, x, rhobeg, rhoend, iprint, maxfun, w, f, info, ftarget)
@@ -191,13 +201,16 @@ deallocate (fhist)
 return
 end subroutine mexFunction
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-! The Fortran subroutine that evaluates the objective function
 subroutine calfun(n, x, funval)
+!--------------------------------------------------------------------------------------------------!
+! This is the Fortran subroutine that evaluates the objective function.
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : MSGLEN
+
+! Fortran MEX API modules
 use, non_intrinsic :: fmxapi_mod, only : mxDestroyArray
 use, non_intrinsic :: fmxapi_mod, only : mexErrMsgIdAndTxt
 use, non_intrinsic :: fmxapi_mod, only : fmxCallMATLAB, fmxIsDoubleScalar
@@ -213,7 +226,7 @@ implicit none
 integer(IK_CL), intent(in) :: n
 real(RP_CL), intent(in) :: x(n)
 
-! Output
+! Outputs
 real(RP_CL), intent(out) :: funval
 
 ! Local variables
@@ -239,6 +252,12 @@ call fmxReadMPtr(poutput(1), funval)
 
 ! Destroy the matrix created by fmxWriteMPtr for X. This must be done.
 call mxDestroyArray(pinput(1))
+! Destroy POUTPUT(:).
+! MATLAB allocates dynamic memory to store the arrays in plhs (i.e., poutput) for mexCallMATLAB.
+! MATLAB automatically deallocates the dynamic memory when you exit the MEX file. However, this
+! subroutine will be called maybe thousands of times before that.
+! See https://www.mathworks.com/help/matlab/apiref/mexcallmatlab_fortran.html
+call mxDestroyArray(poutput(1))  ! Destroy it even though it is a scalar
 
 ! Update global variables
 nf = nf + int(1, kind(nf))
