@@ -333,17 +333,13 @@ end
 
 % Read and verify nlcihist and nlcehist
 if isfield(output, 'nlcihist')
-    output_has_nlcihist = true;
     nlcihist = output.nlcihist;
 else
-    output_has_nlcihist = false;
     nlcihist = [];
 end
 if isfield(output, 'nlcehist')
-    output_has_nlcehist = true;
     nlcehist = output.nlcehist;
 else
-    output_has_nlcehist = false;
     nlcehist = [];
 end
 if ~strcmp(probinfo.refined_type, 'nonlinearly-constrained') && (isfield(output, 'nlcihist') && ~isempty(output.nlcihist) || isfield(output, 'nlcehist') && ~isempty(output.nlcehist))
@@ -729,13 +725,13 @@ if options.debug && ~options.classical
         % Check whether [output.nlcihist, output.nlcehist] = nonlcon(xhist) and chist = constrviolation(xhist).
         if ~(isempty(nlcihist) && isempty(nlcehist)) && ~isempty(xhist)
             nonlcon = probinfo.raw_data.nonlcon;
-            nlcihist = [];
-            nlcehist = [];
+            nlcihistx = [];
+            nlcehistx = [];
             if ~isempty(nonlcon)
-                m_nlcineq =
-                m_nlceq =
-                nlcihist = NaN(m_nlcineq, size(xhist, 2));
-                nlcehist = NaN(m_nlceq, size(xhist, 2));
+                m_nlcineq = length(nlcineqx);
+                m_nlceq = length(nlceqx);
+                nlcihistx = NaN(m_nlcineq, size(xhist, 2));
+                nlcehistx = NaN(m_nlceq, size(xhist, 2));
                 for k = 1 : size(xhist, 2)
                     [nlcihistx(:, k), nlcehistx(:, k)] = feval(nonlcon, xhist(:, k));
                 end
@@ -747,15 +743,19 @@ if options.debug && ~options.classical
                 nlcehistx(nlcehistx ~= nlcehistx | nlcehistx > hugecon) = hugecon;
                 nlcehistx(nlcehistx < -hugecon) = -hugecon;
             end
-            if any(size([nlcihist; nlcehist]) ~= size([nlcihistx; nlcehistx])) || any(isnan([nlcihist; nlcehist]) ~= isnan([nlcihistx; nlcehistx])) || (~any(isnan([nlcihist; nlcehist; nlcihistx; nlcehistx])) && any(abs([0; nlcihist; nlcehist] - [0; nlcihistx; nlcehistx]) > cobylan_prec*max(1,abs([0; nlcihistx; nlcehistx]))))
+            if any(size([nlcihist; nlcehist]) ~= size([nlcihistx; nlcehistx])) || ...
+                    any(isnan([nlcihist; nlcehist]) ~= isnan([nlcihistx; nlcehistx]), 'all') || ...
+                    (~any(isnan([nlcihist; nlcehist; nlcihistx; nlcehistx]), 'all') && ...
+                    any(abs([zeros(1, size(xhist, 2)); nlcihist; nlcehist] - [zeros(1, size(xhist, 2)); nlcihistx; nlcehistx]) ...
+                    > cobylan_prec*max(1,abs([zeros(1, size(xhist, 2)); nlcihistx; nlcehistx])), 'all'))
             % In the last few max of the above line, we put a 0 to avoid an empty result
                 % Public/unexpected error
+                keyboard
                 error(sprintf('%s:InvalidConx', invoker), ...
-                    '%s: UNEXPECTED ERROR: %s returns nlcihist and nlcehist that does not match xhist.', invoker, solver);
+                    '%s: UNEXPECTED ERROR: %s returns an nlcihist or nlcehist that does not match xhist.', invoker, solver);
             end
         end
-
-    end
+    end % chkfunval ends
 end
 
 % postpdfo ends
