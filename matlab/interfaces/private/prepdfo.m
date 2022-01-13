@@ -897,7 +897,7 @@ end
 if isempty(solver) || strcmpi(solver, 'bobyqan')
     known_fields = [known_fields, 'honour_x0'];
 end
-if isempty(solver) || strcmpi(solver, 'cobyla')
+if isempty(solver) || strcmpi(solver, 'cobylan')
     known_fields = [known_fields, 'output_nlchist'];
 end
 unknown_fields = setdiff(options_fields, known_fields);
