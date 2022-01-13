@@ -92,6 +92,7 @@ if [[ "$TEST_ALL" == "Y" ]] ; then
 else
     for LOGFILE in "${LOGFILES[@]::${#LOGFILES[@]}-1}" ; do
         printf "\nChecking %s ...\n" "$LOGFILE"
+        bash "$TEST_DIR"/checktest --error "$LOGFILE"  # Will lead to failure in case of error logged
         INFO="$(bash "$TEST_DIR"/checktest --warning "$LOGFILE")"
         printf "%s" "$INFO"
         printf "\nDone!\n"
@@ -106,6 +107,7 @@ else
     # No pause needed for the last logfile.
     LOGFILE="${LOGFILES[-1]}"  # The last logfile; it needs Bash 4.x.
     printf "\nChecking %s ...\n" "$LOGFILE"
+    bash "$TEST_DIR"/checktest --error "$LOGFILE"
     bash "$TEST_DIR"/checktest --warning "$LOGFILE"
     printf "%s" "$INFO"
     printf "\nDone!\n\n"

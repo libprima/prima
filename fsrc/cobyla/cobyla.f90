@@ -364,10 +364,8 @@ end if
 
 if (present(maxhist)) then
     maxhist_loc = maxhist
-    write (16, *) maxhist
 else
     maxhist_loc = maxval([maxfun_loc, n + 2_IK, MAXFUN_DIM_DFT * n])
-    write (16, *) maxfun_loc, n + 2_IK, MAXFUN_DIM_DFT * n
 end if
 
 if (present(maxfilt)) then
