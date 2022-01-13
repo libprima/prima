@@ -808,7 +808,6 @@ quiet = true;
 debugflag = false; % Do not use 'debug' as the name, which is a MATLAB function
 chkfunval = false;
 
-maxhist = maxfun;
 output_xhist = false; %!!!
 output_nlchist = false; %!!!
 
@@ -1356,7 +1355,7 @@ if isfield(options, 'maxhist')
     end
 end
 if ~validated  % options.maxhist has not got a valid value
-    options.maxhist = min(maxhist, options.maxfun);  % options.maxfun has been validated
+    options.maxhist = options.maxfun;  % options.maxfun has been validated
 end
 
 % Validate options.output_xhist

@@ -105,8 +105,6 @@ output.pdim = pdim;
 return
 
 
-
-
 function [fval_history, cv_history] = testsolv(solver, prob, options)
 
 prob.options = setsolvopt(solver, length(prob.x0), options); % Set the options for the solver
@@ -143,9 +141,6 @@ else
 end
 
 return
-
-
-
 
 
 function options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, randomizex0, ...
