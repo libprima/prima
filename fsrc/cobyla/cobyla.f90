@@ -28,7 +28,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, January 12, 2022 PM07:30:01
+! Last Modified: Thursday, January 13, 2022 AM09:29:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -365,8 +365,10 @@ end if
 
 if (present(maxhist)) then
     maxhist_loc = maxhist
+    write (16, *) maxhist
 else
     maxhist_loc = maxval([maxfun_loc, n + 2_IK, MAXFUN_DIM_DFT * n])
+    write (16, *) maxfun_loc, n + 2_IK, MAXFUN_DIM_DFT * n
 end if
 
 if (present(maxfilt)) then
@@ -471,7 +473,7 @@ end if
 deallocate (conhist_loc)
 
 ! If NF_LOC > MAXHIST_LOC, warn that not all history is recorded.
-if ((present(xhist) .or. present(fhist) .or. present(conhist) .or. present(chist)) .and. maxhist_loc < nf_loc) then
+if ((present(xhist) .or. present(fhist) .or. present(chist) .or. present(conhist)) .and. maxhist_loc < nf_loc) then
     write (wmsg, ifmt) maxhist_loc
     call warning(solver, 'Only the history of the last '//trim(wmsg)//' iteration(s) is recoreded')
 end if
