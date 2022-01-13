@@ -180,10 +180,9 @@ subroutine cobyla(calcfc, m, x, f, &
 !   Important Notice:
 !   Setting MAXHIST to a large value can be costly in terms of memory for large problems.
 !   For instance, if N = 1000 and MAXHIST = 100, 000, XHIST will take up to 1 GB if we use double
-!   precision. MAXHIST will be  reset to a smaller value if the memory needed for XHIST and/or FHIST
-!   exceeds MAXMEMORY defined in CONSTS_MOD (see consts.F90 under the directory named "common";
-!   default: 2GB). Use XHIST, FHIST, CHIST, CONHIST, and MAXHIST with caution!!! (N.B.: the
-!   algorithm is NOT designed for large problems).
+!   precision. MAXHIST will be reset to a smaller value if the memory needed exceeds MAXMEMORY 
+!   defined in CONSTS_MOD (see consts.F90 under the directory named "common"; default: 2GB). 
+!   Use *HIST with caution!!! (N.B.: the algorithm is NOT designed for large problems).
 !
 ! INFO
 !   Output, INTEGER(IK) scalar.
