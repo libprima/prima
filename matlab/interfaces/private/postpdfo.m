@@ -61,17 +61,16 @@ else
 end
 
 % With the moderated extreme barrier (implemented when options.classical=false), all
-% the function values that are NaN or larger than hugefun are replaced
-% by hugefun; all the constraint values that are NaN or larger than
-% hugecon are replaced by hugecon. hugefun and hugecon are defined in
-% const.F, and can be obtained by gethuge.
+% the function values that are NaN or larger than hugefun are replaced by hugefun;
+% all the constraint values that are NaN or larger than hugecon are replaced by hugecon.
+% hugefun and hugecon are defined in consts.F90, and can be obtained by gethuge.
 hugefun = gethuge('fun');
 hugecon = gethuge('con');
 
 % Verify the input before starting the real business
 % Verify probinfo
 if (length(callstack) >= 3) && strcmp(callstack(3).name, 'pdfon')
-% In this case, prepdfo sets probinfo to empty.
+    % In this case, prepdfo sets probinfo to empty.
     if ~isempty(probinfo)
         % Public/unexpected error
         error(sprintf('%s:InvalidProbinfo', invoker),...
@@ -105,7 +104,7 @@ else
     end
 end
 
-% The solver that did the computation (needed for verifying output below)
+% Decide the solver that did the computation (needed for verifying output below).
 if strcmp(invoker, 'pdfon')
     % In this case, the invoker is pdfo rather than a solver called by pdfo.
     % Thus probinfo is nonempty, and options has been read and verified as above.
@@ -145,7 +144,7 @@ if ~isempty(missing_fields)
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% If the invoker is a solver called by pdfo, then let pdfo do the postprecessing
+% If the invoker is a solver called by pdfo, then let pdfo do the postprocessing.
 % Put this after verifying output, because we will use the information in it.
 if (length(callstack) >= 3) && strcmp(callstack(3).name, 'pdfon')
     x = output.x;
@@ -155,8 +154,7 @@ if (length(callstack) >= 3) && strcmp(callstack(3).name, 'pdfon')
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Record solver name in output (should be done after verifying that
-% output is a structure.
+% Record solver name in output (do it after verifying that output is a structure).
 output.algorithm = solver;
 
 % Read information in output
@@ -184,24 +182,24 @@ if ~isnumeric(x) || ~isreal(x) || ~isvector(x) || size(x,2)~=1
 end
 
 % Verify fx
-if ~isnumeric(fx) || ~isreal(fx) || ~isscalar(fx)
+if ~isrealscalar(fx)
     % Public/unexpcted error
     error(sprintf('%s:InvalidFx', invoker), ...
         '%s: UNEXPECTED ERROR: %s returns an fx that is not a real number.', invoker, solver);
 end
 
 % Verify exitflag
-if ~isnumeric(exitflag) || ~isscalar(exitflag) || ~isreal(exitflag) || rem(exitflag, 1)~=0
+if ~isintegerscalar(exitflag)
     % Public/unexpcted error
     error(sprintf('%s:InvalidExitFlag', invoker), ...
         '%s: UNEXPECTED ERROR: %s returns an exitflag that is not an integer', invoker, solver);
 end
 
 % Verify nf
-if ~isnumeric(nf) || ~isscalar(nf) || ~isreal(nf) || rem(nf, 1)~=0 || nf < 0
+if ~isintegerscalar(nf)
     % Public/unexpcted error
     error(sprintf('%s:InvalidNF', invoker), ...
-        '%s: UNEXPECTED ERROR: %s returns an nf that is not a nonnegative integer.', invoker, solver);
+        '%s: UNEXPECTED ERROR: %s returns an nf that is not an integer.', invoker, solver);
 end
 if nf <= 0
     % If prepdfo works properly, then nf<=0 should never happen.
@@ -224,12 +222,13 @@ else
 end
 
 % Read and verify xhist
+output_has_xhist = isfield(output, 'xhist');
 if isfield(output, 'xhist')
     xhist = output.xhist;
 else
     xhist = [];
 end
-if ~isempty(xhist) && (~isnumeric(xhist) || ~isreal(xhist) || ~ismatrix(xhist) || length(x) ~= size(xhist, 1) || nhist ~= size(xhist, 2))
+if ~isempty(xhist) && (~isrealmatrix(xhist) || any(size(xhist) ~= [length(x), nhist]))
     % Public/unexpected error
     error(sprintf('%s:InvalidXhist', invoker), ...
         '%s: UNEXPECTED ERROR: %s returns an xhist that is not a real matrix of size (n, min(nf, maxhist)).', invoker, solver);
@@ -241,7 +240,7 @@ if isfield(output, 'fhist')
 else % External solvers may not return fhist
     fhist = [];
 end
-if ~isempty(fhist) && (~isnumeric(fhist) || ~isreal(fhist) || ~isvector(fhist) || (nhist ~= length(fhist)))
+if ~isempty(fhist) && ~(isrealvector(fhist) && length(fhist) == nhist)
     % Public/unexpected error
     error(sprintf('%s:InvalidFhist', invoker), ...
         '%s: UNEXPECTED ERROR: %s returns an fhist that is not a real vector of length min(nf, maxhist).', invoker, solver);
@@ -273,21 +272,20 @@ if probinfo.feasibility_problem
 end
 
 % Verify constrviolation
-if ~isnumeric(constrviolation) || ~isscalar(constrviolation) || ~isreal(constrviolation)
+if ~isrealscalar(constrviolation)
     % Public/unexpected error
     error(sprintf('%s:InvalidConstrViolation', invoker), ...
         '%s: UNEXPECTED ERROR: %s returns a constrviolation that is not a real number.', invoker, solver)
 end
 
 % Read and verify chist
+output_has_chist = isfield(output, 'chist');
 if isfield(output, 'chist')
-    output_has_chist = true;
     chist = output.chist;
 else % External solvers may not return chist
-    output_has_chist = false;
     chist = constrviolation + zeros(1, nhist);
 end
-if ~(isempty(chist) && ismember(solver, unconstrained_solver_list)) && (~isnumeric(chist) || ~isreal(chist) || ~isvector(chist) || (nhist ~= length(chist)))
+if ~(isempty(chist) && ismember(solver, unconstrained_solver_list)) && (~isrealvector(chist) || (length(chist) ~= nhist))
     % Public/unexpected error
     error(sprintf('%s:InvalidChist', invoker), ...
         '%s: UNEXPECTED ERROR: %s returns a chist that is not a real vector of length min(nf, maxfhist).', invoker, solver);
@@ -307,25 +305,21 @@ end
 
 % Read and verify nlcineq and nlceq
 if isfield(output, 'nlcineq')
-    output_has_nlcineq = true;
     nlcineq = output.nlcineq;
 else
-    output_has_nlcineq = false;
-    nlcineq = [];
+    nlcineq = [];  % Needed later, e.g., to decide cstrv.
 end
 if isfield(output, 'nlceq')
-    output_has_nlceq = true;
     nlceq = output.nlceq;
 else
-    output_has_nlceq = false;
-    nlceq = [];
+    nlceq = [];  % Needed later, e.g., to decide cstrv.
 end
-if ~strcmp(probinfo.refined_type, 'nonlinearly-constrained') && (isfield(output, 'nlcineq') && ~isempty(output.nlcineq) || isfield(output, 'nlceq') && ~isempty(output.nlceq))
+if ~strcmp(probinfo.refined_type, 'nonlinearly-constrained') && ~(isempty(nlcineq) && isempty(nlceq))
     % Public/unexpected error
     error(sprintf('%s:InvalidNonlinearConstraint', invoker), ...
     '%s: UNEXPECTED ERROR: %s returns values of nonlinear constraints for a problem without such constraints.', invoker, solver);
 end
-if (isfield(output, 'nlcineq') && ~isfield(output, 'nlceq')) || (~isfield(output, 'nlcineq') && isfield(output, 'nlceq'))
+if (isfield(output, 'nlcineq') && ~isfield(output, 'nlcineq')) || (~isfield(output, 'nlcineq') && isfield(output, 'nlceq'))
     % Public/unexpected error
     error(sprintf('%s:InvalidNonlinearConstraint', invoker), ...
     '%s: UNEXPECTED ERROR: %s returns only one of nlcineq and nlceq; it should return both of them or neither of them.', invoker, solver);
@@ -335,14 +329,14 @@ end
 if isfield(output, 'nlcihist')
     nlcihist = output.nlcihist;
 else
-    nlcihist = [];
+    nlcihist = [];  % Must be defined.
 end
 if isfield(output, 'nlcehist')
     nlcehist = output.nlcehist;
 else
-    nlcehist = [];
+    nlcehist = [];  % Must be defined.
 end
-if ~strcmp(probinfo.refined_type, 'nonlinearly-constrained') && (isfield(output, 'nlcihist') && ~isempty(output.nlcihist) || isfield(output, 'nlcehist') && ~isempty(output.nlcehist))
+if ~strcmp(probinfo.refined_type, 'nonlinearly-constrained') && ~(isempty(nlcihist) && isempty(nlcehist))
     % Public/unexpected error
     error(sprintf('%s:InvalidNonlinearConstraint', invoker), ...
     '%s: UNEXPECTED ERROR: %s returns history of nonlinear constraints for a problem without such constraints.', invoker, solver);
@@ -351,6 +345,16 @@ if (isfield(output, 'nlcihist') && ~isfield(output, 'nlcehist')) || (~isfield(ou
     % Public/unexpected error
     error(sprintf('%s:InvalidNonlinearConstraint', invoker), ...
     '%s: UNEXPECTED ERROR: %s returns only one of nlcihist and nlcehist; it should return both of them or neither of them.', invoker, solver);
+end
+if ~isempty(nlcihist) && (~isrealmatrix(nlcihist) || any(size(nlcihist) ~= [length(nlcineq), nhist]))
+    % Public/unexpected error
+    error(sprintf('%s:InvalidNlcihist', invoker), ...
+        '%s: UNEXPECTED ERROR: %s returns a nlcihist that is not a real matrix of min(nf, maxfhist) rows or empty.', invoker, solver);
+end
+if ~isempty(nlcehist) && (~isrealmatrix(nlcehist) || any(size(nlcehist) ~= [length(nlceq), nhist]))
+    % Public/unexpected error
+    error(sprintf('%s:InvalidNlcehist', invoker), ...
+        '%s: UNEXPECTED ERROR: %s returns a nlcehist that is not a real matrix of min(nf, maxfhist) rows or empty.', invoker, solver);
 end
 
 
@@ -381,14 +385,6 @@ if probinfo.scaled
     bineq = probinfo.refined_data.bineq;
     Aeq = probinfo.refined_data.Aeq;
     beq = probinfo.refined_data.beq;
-    rineq = [];
-    req = [];
-    if ~isempty(Aineq)
-        rineq = Aineq*x-bineq;
-    end
-    if ~isempty(Aeq)
-        req = Aeq*x-beq;
-    end
 
     % Scale x back
     x = probinfo.scaling_factor.*x + probinfo.shift;
@@ -398,26 +394,9 @@ if probinfo.scaled
     % Scale bounds back
     lb = probinfo.scaling_factor.*probinfo.refined_data.lb + probinfo.shift;
     ub = probinfo.scaling_factor.*probinfo.refined_data.ub + probinfo.shift;
-    if isempty(lb)
-        lb = -inf(size(x));
-    end
-    if isempty(ub)
-        ub = inf(size(x));
-    end
 
-    % We only need to calculate constrviolation for lincoan and cobylan,
-    % because uobyqan and newuoan do not handle constrained problems,
-    % while bobyqan is a feasible method and should return constrviolation=0
-    % regardless of the scaling unless something goes wrong.
-    if strcmp(solver, 'lincoan')
-        constrviolation = max([0; rineq; abs(req); lb-x; x-ub], [], 'includenan');
-        % max(X, [], 'includenan') returns NaN if X contains NaN, and
-        % maximum of X otherwise
-    else
-        constrviolation = max([0; rineq; abs(req); lb-x; x-ub; nlcineq; abs(nlceq)], [], 'includenan');
-        % max(X, [], 'includenan') returns NaN if X contains NaN, and
-        % maximum of X otherwise
-    end
+    % Calculate the constrviolation for the unscaled problem.
+    constrviolation = get_cstrv(x, Aineq, bineq, Aeq, beq, lb, ub, nlcineq, nlceq);
 end
 
 % The problem was (possibly) reduced. Get the full x and xhist.
@@ -429,11 +408,16 @@ if probinfo.reduced
 
     freexhist = xhist;
     xhist= NaN(length(x), size(xhist, 2));  % x is already recovered.
-    xhist(probinfo.fixedx, :) = probinfo.fixedx_value*ones(1,size(xhist, 2));
+    xhist(probinfo.fixedx, :) = probinfo.fixedx_value*ones(1, size(xhist, 2));
     xhist(~probinfo.fixedx, :) = freexhist;
 end
 
-% Set output.constrviolation to the revised constraint violation
+% Include the possibly revised xhist to output if necessary.if
+if output_has_xhist
+    output.xhist = xhist;
+end
+
+% Set output.constrviolation to the revised constraint violation.
 output.constrviolation = constrviolation;
 
 % Revise output.constrviolation and output.chist according to problem type
@@ -573,8 +557,8 @@ if options.debug && ~options.classical
         fhistf = fhistf(chist <= max(cstrv_returned, 0));
     end
     minf = min([fhistf,fx]);
-%% Zaikun 2021-05-26: The following test is disabled for lincoa for the moment. lincoa may not pass it.
-%%    if (fx ~= minf) && ~(isnan(fx) && isnan(minf)) && ~(strcmp(solver, 'lincoan') && constr_modified)
+%%%% Zaikun 2021-05-26: The following test is disabled for lincoa for the moment. lincoa may not pass it.
+%%%%    if (fx ~= minf) && ~(isnan(fx) && isnan(minf)) && ~(strcmp(solver, 'lincoan') && constr_modified)
     if (fx ~= minf) && ~(isnan(fx) && isnan(minf)) && ~strcmp(solver, 'lincoan')
         % Public/unexpected error
         error(sprintf('%s:InvalidFhist', invoker), ...
@@ -605,43 +589,13 @@ if options.debug && ~options.classical
         beq = probinfo.raw_data.beq;
         lb = probinfo.raw_data.lb(:);
         ub = probinfo.raw_data.ub(:);
-        lb(isnan(lb)) = -inf; % Replace the NaN in lb with -inf
-        ub(isnan(ub)) = inf; % Replace the NaN in ub with inf
-        bineq(isnan(bineq)) = inf; % Replace the NaN in bineq with inf
-        if ~isempty(Aeq)
-            nan_eq = isnan(sum(abs(Aeq), 2)) & isnan(beq); % NaN equality constraints
-            Aeq = Aeq(~nan_eq, :); % Remove NaN equality constraints
-            beq = beq(~nan_eq);
-        end
-        if isempty(lb)
-            lb = -inf(size(x));
-        end
-        if isempty(ub)
-            ub = inf(size(x));
-        end
-        rineq = [];
-        req = [];
-        if ~isempty(Aineq)
-            rineq = Aineq*x-bineq;
-        end
-        if ~isempty(Aeq)
-            req = Aeq*x-beq;
-        end
-        if strcmp(solver, 'lincoan')
-            cstrv = max([0; rineq; abs(req); lb-x; x-ub], [], 'includenan');
-            % max(X, [], 'includenan') returns NaN if X contains NaN, and
-            % maximum of X otherwise
-        else
-            cstrv = max([0; rineq; abs(req); lb-x; x-ub; nlcineq; abs(nlceq)], [], 'includenan');
-            % max(X, [], 'includenan') returns NaN if X contains NaN, and
-            % maximum of X otherwise
-        end
-
+        cstrv = get_cstrv(x, Aineq, bineq, Aeq, beq, lb, ub, nlcineq, nlceq);
         if ~(isnan(cstrv) && isnan(constrviolation)) && ~(cstrv == inf && constrviolation == inf) && ~(abs(constrviolation-cstrv) <= lincoan_prec*max(1,abs(cstrv)) && strcmp(solver, 'lincoan')) && ~(abs(constrviolation-cstrv) <= cobylan_prec*max(1,abs(cstrv)) && strcmp(solver, 'cobylan'))
             % Public/unexpected error
             error(sprintf('%s:InvalidChist', invoker), ...
               '%s: UNEXPECTED ERROR: %s returns a constrviolation that does not match x.', invoker, solver);
         end
+
         if isnan(fx)
             cf = chist(isnan(fhist));
         else
@@ -685,14 +639,14 @@ if options.debug && ~options.classical
 
         % Check whether fhist = fun(xhist)
         if ~isempty(fhist) && ~isempty(xhist)
-            funhist = zeros(1, nhist);  % When the objective is empty, the objective function used in computation was 0.
+            fhistx = zeros(1, nhist);  % When the objective is empty, the objective function used in computation was 0.
             if ~isempty(objective)
                 for k = 1 : nhist
-                    funhist(k) = objective(xhist(:, k));
+                    fhistx(k) = objective(xhist(:, k));
                 end
             end
-            funhist(funhist ~= funhist | funhist > hugefun) = hugefun;
-            if any(~(isnan(fhist) & isnan(funhist)) & ~((fhist==funhist) | (abs(funhist-fhist) <= cobylan_prec*max(1, abs(fhist)) & strcmp(solver, 'cobylan'))))
+            fhistx(fhistx ~= fhistx | fhistx > hugefun) = hugefun;
+            if any(~(isnan(fhist) & isnan(fhistx)) & ~((fhist==fhistx) | (abs(fhistx-fhist) <= cobylan_prec*max(1, abs(fhist)) & strcmp(solver, 'cobylan'))))
                 % Public/unexpected error
                 error(sprintf('%s:InvalidFx', invoker), ...
                     '%s: UNEXPECTED ERROR: %s returns an fhist that does not match xhist.', invoker, solver);
@@ -700,39 +654,35 @@ if options.debug && ~options.classical
         end
 
         % Check whether [output.nlcineq,  output.nlceq] = nonlcon(x)
-        if output_has_nlcineq && output_has_nlceq
-            nlcineqx = [];
-            nlceqx = [];
-            nonlcon = probinfo.raw_data.nonlcon;
-            if ~isempty(nonlcon)
-                [nlcineqx, nlceqx] = feval(nonlcon, x);
-                % Due to the moderated extreme barrier (implemented when options.classical=false),
-                % all constraint values that are NaN or above hugecon are replaced by hugecon.
-                nlcineqx(nlcineqx ~= nlcineqx | nlcineqx > hugecon) = hugecon;
-                % All constraint values below -hugecon are replaced by -hugecon to avoid numerical difficulties.
-                nlcineqx(nlcineqx < -hugecon) = -hugecon;
-                nlceqx(nlceqx ~= nlceqx | nlceqx > hugecon) = hugecon;
-                nlceqx(nlceqx < -hugecon) = -hugecon;
-            end
-            if any(size([nlcineq; nlceq]) ~= size([nlcineqx; nlceqx])) || any(isnan([nlcineq; nlceq]) ~= isnan([nlcineqx; nlceqx])) || (~any(isnan([nlcineq; nlceq; nlcineqx; nlceqx])) && any(abs([0; nlcineq; nlceq] - [0; nlcineqx; nlceqx]) > cobylan_prec*max(1,abs([0; nlcineqx; nlceqx]))))
-            % In the last few max of the above line, we put a 0 to avoid an empty result
-                % Public/unexpected error
-                error(sprintf('%s:InvalidConx', invoker), ...
-                    '%s: UNEXPECTED ERROR: %s returns a con(x) that does not match x.', invoker, solver);
-            end
+        nlcineqx = [];
+        nlceqx = [];
+        nonlcon = probinfo.raw_data.nonlcon;
+        if ~isempty(nonlcon)
+            [nlcineqx, nlceqx] = feval(nonlcon, x);
+            % Due to the moderated extreme barrier (implemented when options.classical=false),
+            % all constraint values that are NaN or above hugecon are replaced by hugecon.
+            nlcineqx(nlcineqx ~= nlcineqx | nlcineqx > hugecon) = hugecon;
+            % All constraint values below -hugecon are replaced by -hugecon to avoid numerical difficulties.
+            nlcineqx(nlcineqx < -hugecon) = -hugecon;
+            nlceqx(nlceqx ~= nlceqx | nlceqx > hugecon) = hugecon;
+            nlceqx(nlceqx < -hugecon) = -hugecon;
+        end
+        if any(size([nlcineq; nlceq]) ~= size([nlcineqx; nlceqx])) || any(isnan([nlcineq; nlceq]) ~= isnan([nlcineqx; nlceqx])) || (~any(isnan([nlcineq; nlceq; nlcineqx; nlceqx])) && any(abs([0; nlcineq; nlceq] - [0; nlcineqx; nlceqx]) > cobylan_prec*max(1,abs([0; nlcineqx; nlceqx]))))
+        % In the last few max of the above line, we put a 0 to avoid an empty result
+            % Public/unexpected error
+            error(sprintf('%s:InvalidConx', invoker), ...
+                '%s: UNEXPECTED ERROR: %s returns a con(x) that does not match x.', invoker, solver);
         end
 
-        % Check whether [output.nlcihist, output.nlcehist] = nonlcon(xhist) and chist = constrviolation(xhist).
-        if ~(isempty(nlcihist) && isempty(nlcehist)) && ~isempty(xhist)
-            nonlcon = probinfo.raw_data.nonlcon;
+        if ~isempty(xhist) && (isfield(output, 'nlcihist') || isfield(output, 'nlcehist') || isfield(output, 'chist'))
+            % Calculate nlcihistx and nlcehistx according to xhist.
             nlcihistx = [];
             nlcehistx = [];
+            nonlcon = probinfo.raw_data.nonlcon;
             if ~isempty(nonlcon)
-                m_nlcineq = length(nlcineqx);
-                m_nlceq = length(nlceqx);
-                nlcihistx = NaN(m_nlcineq, size(xhist, 2));
-                nlcehistx = NaN(m_nlceq, size(xhist, 2));
-                for k = 1 : size(xhist, 2)
+                nlcihistx = NaN(length(nlcineq), nhist);
+                nlcehistx = NaN(length(nlceq), nhist);
+                for k = 1 : nhist
                     [nlcihistx(:, k), nlcehistx(:, k)] = feval(nonlcon, xhist(:, k));
                 end
                 % Due to the moderated extreme barrier (implemented when options.classical=false),
@@ -743,20 +693,73 @@ if options.debug && ~options.classical
                 nlcehistx(nlcehistx ~= nlcehistx | nlcehistx > hugecon) = hugecon;
                 nlcehistx(nlcehistx < -hugecon) = -hugecon;
             end
-            if any(size([nlcihist; nlcehist]) ~= size([nlcihistx; nlcehistx])) || ...
-                    any(isnan([nlcihist; nlcehist]) ~= isnan([nlcihistx; nlcehistx]), 'all') || ...
-                    (~any(isnan([nlcihist; nlcehist; nlcihistx; nlcehistx]), 'all') && ...
-                    any(abs([zeros(1, size(xhist, 2)); nlcihist; nlcehist] - [zeros(1, size(xhist, 2)); nlcihistx; nlcehistx]) ...
-                    > cobylan_prec*max(1,abs([zeros(1, size(xhist, 2)); nlcihistx; nlcehistx])), 'all'))
-            % In the last few max of the above line, we put a 0 to avoid an empty result
-                % Public/unexpected error
-                keyboard
-                error(sprintf('%s:InvalidConx', invoker), ...
-                    '%s: UNEXPECTED ERROR: %s returns an nlcihist or nlcehist that does not match xhist.', invoker, solver);
+
+            % Check whether [output.nlcihist, output.nlcehist] = nonlcon(xhist).
+            % Do not replace the condition by isempty([nlcihist; nlcehist]), as it may hold when it should not!
+            if isfield(output, 'nlcihist') || isfield(output, 'nlcehist')
+                if any(size([nlcihist; nlcehist]) ~= size([nlcihistx; nlcehistx])) || ...
+                        any(isnan([nlcihist; nlcehist]) ~= isnan([nlcihistx; nlcehistx]), 'all') || ...
+                        (~any(isnan([nlcihist; nlcehist; nlcihistx; nlcehistx]), 'all') && ...
+                        any(abs([zeros(1, nhist); nlcihist; nlcehist] - [zeros(1, nhist); nlcihistx; nlcehistx]) ...
+                        > cobylan_prec*max(1,abs([zeros(1, nhist); nlcihistx; nlcehistx])), 'all'))
+                    % In the last few max of the above line, we put a 0 to avoid an empty result
+                    % Public/unexpected error
+                    error(sprintf('%s:InvalidConx', invoker), ...
+                        '%s: UNEXPECTED ERROR: %s returns an nlcihist or nlcehist that does not match xhist.', invoker, solver);
+                end
+            end
+
+            % Check whether chist = constrviolation(xhist).
+            if (strcmp(solver, 'lincoan') && ~constr_modified) || strcmp(solver, 'cobylan')
+                % In this case, chist has been set to output.chist, but output.chist has been
+                % removed if the problem is unconstrained.
+                chistx = NaN(1, nhist);
+                for k = 1 : nhist
+                    if isempty(nonlcon)
+                        chistx(k) = get_cstrv(xhist(:, k), Aineq, bineq, Aeq, beq, lb, ub, [], []);
+                    else
+                        chistx(k) = get_cstrv(xhist(:, k), Aineq, bineq, Aeq, beq, lb, ub, nlcihistx(:, k), nlcehistx(:, k));
+                    end
+                end
+                if any(~(isnan(chist) & isnan(chistx)) & ~((chist==chistx) | (abs(chistx-chist) <= cobylan_prec*max(1, abs(chist)) & strcmp(solver, 'cobylan'))))
+                    % Public/unexpected error
+                    keyboard
+                    error(sprintf('%s:InvalidFx', invoker), ...
+                        '%s: UNEXPECTED ERROR: %s returns an chist that does not match xhist.', invoker, solver);
+                end
             end
         end
     end % chkfunval ends
 end
 
 % postpdfo ends
+return
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Auxiliary functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function cstrv = get_cstrv(x, Aineq, bineq, Aeq, beq, lb, ub, nlcineq, nlceq)
+lb(isnan(lb)) = -inf; % Replace the NaN in lb with -inf
+ub(isnan(ub)) = inf; % Replace the NaN in ub with inf
+bineq(isnan(bineq)) = inf; % Replace the NaN in bineq with inf
+if ~isempty(Aeq)
+    nan_eq = isnan(sum(abs(Aeq), 2)) & isnan(beq); % NaN equality constraints
+    Aeq = Aeq(~nan_eq, :); % Remove NaN equality constraints
+    beq = beq(~nan_eq);
+end
+if isempty(lb)
+    lb = -inf(size(x));
+end
+if isempty(ub)
+    ub = inf(size(x));
+end
+rineq = [];
+req = [];
+if ~isempty(Aineq)
+    rineq = Aineq*x-bineq;
+end
+if ~isempty(Aeq)
+    req = Aeq*x-beq;
+end
+cstrv = max([0; rineq; abs(req); lb-x; x-ub; nlcineq; abs(nlceq)], [], 'includenan');
+% max(X, [], 'includenan') returns NaN if X contains NaN, and maximum of X otherwise
 return
