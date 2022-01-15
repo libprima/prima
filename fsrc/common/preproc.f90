@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, January 01, 2022 PM12:56:55
+! Last Modified: Saturday, January 15, 2022 PM11:36:30
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: If all the inputs are valid, then PREPROC should do nothing.
@@ -300,7 +300,7 @@ if (present(ctol)) then
         ctol = CTOL_DFT
         if (is_constrained_loc) then
             write (wmsg, rfmt) ctol
-            call warning(solver, 'Invalid CTOL; it should be a positive number; it is set to '//trimstr(wmsg))
+            call warning(solver, 'Invalid CTOL; it should be a nonnegative number; it is set to '//trimstr(wmsg))
         end if
     end if
 end if

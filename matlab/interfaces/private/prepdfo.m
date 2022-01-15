@@ -103,8 +103,8 @@ probinfo = struct();
 % time and space, matrices Aineq and Aeq being the major concern.
 % However, fortunately, this package is not intended for large problems.
 % It is designed for problems with at most ~1000 variables and several
-% thousands of constriants, tens/hundreds of variables and tens/hundreds
-% of constriants being typical. Therefore, making several copies (<10) of
+% thousands of constraints, tens/hundreds of variables and tens/hundreds
+% of constraints being typical. Therefore, making several copies (<10) of
 % the data does not do much harm, especially when we solve problems with
 % expensive (temporally or monetarily) function evaluations.
 probinfo.raw_data = struct('objective', fun, 'x0', x0, 'Aineq', Aineq, 'bineq', bineq, ...
@@ -128,7 +128,7 @@ probinfo.fixedx = fixedx; % A vector of true/false
 fixedx_value_save = fixedx_value; % Values of fixed variables
 % Since fixedx_value may be revised in pre_lcon, we will record it in
 % probinfo only after that. We save its current value in
-% fixedx_value_save, which will be used when calculating the constriant
+% fixedx_value_save, which will be used when calculating the constraint
 % violation at x0.
 
 % Problem type before reduction
@@ -773,7 +773,7 @@ solver_list = {'uobyqan', 'newuoan', 'bobyqan', 'lincoan', 'cobylan'};
 % We may add other solvers in the future!
 % If a new solver is included, we should do the following.
 % 0. Include it into the invoker_list (in this and other functions).
-% 1. What options does it expect? Set known_fields accoridngly.
+% 1. What options does it expect? Set known_fields accordingly.
 % 2. Set default options accordingly.
 % 3. Check other functions (especially decode_problem, whose behavior
 %    depends on the invoker/solver. See known_fields there).
@@ -792,7 +792,6 @@ if ~ismember(invoker, invoker_list)
 end
 
 % Default values of the options.
-
 % npt = ! LATER ! % The default npt depends on solver and will be set later in this function
 maxfun = 500*lenx0;
 rhobeg = 1; % The default rhobeg and rhoend will be revised if solver = 'bobyqan'
@@ -807,9 +806,11 @@ iprint = 0;
 quiet = true;
 debugflag = false; % Do not use 'debug' as the name, which is a MATLAB function
 chkfunval = false;
-
-output_xhist = false; %!!!
-output_nlchist = false; %!!!
+ctol = eps; % Tolerance for constraint violation; a point with a constraint violation at most ctol is considered feasible
+output_xhist = false; % Output the history of x?
+output_nlchist = false; % Output the history of the nonlinear constraints?
+maxfilt = 2000; % Length of the filter used for selecting the returned x in constrained problems
+min_maxfilt = 200; % The smallest value of maxfilt; if maxfilt is too small, the returned x may not be the best one visited
 
 if ~(isa(options, 'struct') || isempty(options))
     % Public/normal error
@@ -896,6 +897,9 @@ if isempty(solver) || any(strcmpi(solver, {'bobyqan', 'lincoan', 'cobylan'}))
 end
 if isempty(solver) || strcmpi(solver, 'bobyqan')
     known_fields = [known_fields, 'honour_x0'];
+end
+if isempty(solver) || any(strcmpi(solver, {'lincoan', 'cobylan'}))
+    known_fields = [known_fields, {'ctol', 'maxfilt'}];
 end
 if isempty(solver) || strcmpi(solver, 'cobylan')
     known_fields = [known_fields, 'output_nlchist'];
@@ -1141,6 +1145,22 @@ if ~validated % options.ftarget has not got a valid value yet
     options.ftarget = ftarget;
 end
 options.ftarget = double(options.ftarget);
+
+% Validate options.ctol
+validated = false;
+if isfield(options, 'ctol')
+    if ~isrealscalar(options.ctol) || options.ctol < 0 || isnan(options.ctol)
+        wid = sprintf('%s:InvalidCtol', invoker);
+        wmsg = sprintf('%s: invalid ctol; it should be a nonnegative number; it is set to %f.', invoker, ctol);
+        warning(wid, '%s', wmsg);
+        warnings = [warnings, wmsg];
+    else
+        validated = true;
+    end
+end
+if ~validated
+    options.ctol = ctol;
+end
 
 % Validate options.classical
 validated = false;
@@ -1390,6 +1410,27 @@ if ~validated
     options.output_nlchist = output_nlchist;
 end
 
+% Validate options.maxfilt
+validated = false;
+if isfield(options, 'maxfilt')
+    if ~isintegerscalar(options.maxfilt) || options.maxfilt < 1
+        wid = sprintf('%s:InvalidMaxfilt', invoker);
+        wmsg = sprintf('%s: invalid maxfilt; it should be a positive integer; it is set to %d.', invoker, maxfilt);
+        warning(wid, '%s', wmsg);
+        warnings = [warnings, wmsg];
+    elseif options.maxfilt < min_maxfilt
+        wid = sprintf('%s:MaxfiltTooSmall', invoker);
+        wmsg = sprintf('%s: maxfilt is too small; it should be an integer at least %d; it is set to %d.', invoker, min_maxfilt, maxfilt);
+        warning(wid, '%s', wmsg);
+        warnings = [warnings, wmsg];
+    else
+        validated = true;
+    end
+end
+if ~validated  % options.maxfilt has not got a valid value
+    options.maxfilt = maxfilt;  % options.maxfun has been validated
+end
+
 % Validate options.eta1
 user_eta1_correct = false;  % Does the user provide a correct eta1? Needed when validating eta2.
 validated = false;
@@ -1416,6 +1457,7 @@ if ~validated
     options.eta1 = NaN;  % NaN means that Fortran will take the hard-coded default value.
 end
 
+% Validate options.eta2
 validated = false;
 if isfield(options, 'eta2')
     if ~isrealscalar(options.eta2) || (isnan(options.eta1) && options.eta2 < 0) || options.eta2 < options.eta1 || options.eta2 > 1
@@ -1439,11 +1481,12 @@ if ~validated
     options.eta2 = NaN;  % NaN means that Fortran will take the hard-coded default value.
 end
 
+% Validate options.gamma1
 validated = false;
 if isfield(options, 'gamma1')
     if ~isrealscalar(options.gamma1) || options.gamma1 <= 0 || options.gamma1 >= 1
         wid = sprintf('%s:InvalidGamma1', invoker);
-        wmsg = sprintf('%s: invalid gamma1; it should be in the interval (0, 1); it wll be set to the default value.', invoker);
+        wmsg = sprintf('%s: invalid gamma1; it should be in the interval (0, 1); it will be set to the default value.', invoker);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     else
@@ -1454,11 +1497,12 @@ if ~validated
     options.gamma1 = NaN;  % NaN means that Fortran will take the hard-coded default value.
 end
 
+% Validate options.gamma2
 validated = false;
 if isfield(options, 'gamma2')
     if ~isrealscalar(options.gamma2) || options.gamma2 < 1 || options.gamma2 >= inf
         wid = sprintf('%s:InvalidGamma2', invoker);
-        wmsg = sprintf('%s: invalid gamma2; it should be a real number not less than 1; it wll be set to the default value.', invoker);
+        wmsg = sprintf('%s: invalid gamma2; it should be a real number not less than 1; it will be set to the default value.', invoker);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     else
