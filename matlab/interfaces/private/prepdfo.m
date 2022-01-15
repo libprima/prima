@@ -744,11 +744,11 @@ cineq = double(real(cineq(:))); % Some functions like 'asin' can return complex 
 ceq = double(real(ceq(:)));
 % Use extreme barrier to cope with 'hidden constraints'
 hugecon = gethuge('con');
-cineq(cineq > hugecon) = hugecon;
 cineq(cineq ~= cineq) = hugecon;
+cineq(cineq > hugecon) = hugecon;
+ceq(ceq ~= ceq) = hugecon;
 ceq(ceq > hugecon) = hugecon;
 ceq(ceq < -hugecon) = -hugecon;
-ceq(ceq ~= ceq) = hugecon;
 
 % This part is NOT extreme barrier. We replace extremely negative values of
 % cineq (which leads to no constraint violation) by -hugecon. Otherwise,

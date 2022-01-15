@@ -482,8 +482,9 @@ $(TESTS) $(TESTS_INT):
 	| grep -v 'Extension: gethuge\.F90, line [0-9]*: Byte count on numeric data type' \
 	| grep -v 'Extension: prob\.F90, line [0-9]*: Byte count on numeric data type' \
 	| grep -v 'Extension: \./classical/fmxcl\.F90, line [0-9]*: Byte count on numeric data type' \
-	| grep -v 'Extension: .*newuoa_mex\.F90, line [0-9]*: Byte count on numeric data type' \
-	| grep -v 'Extension: newuoa_mex\.F90, line 14: Line longer than 132 characters' \
+	| grep -v 'Extension: \./classical/fmxcl\.F90, line [0-9]*: Line longer than 132 characters' \
+	| grep -v 'Extension: .*_mex\.F90, line [0-9]*: Byte count on numeric data type' \
+	| grep -v 'Extension: .*_mex\.F90, line [0-9]*: Line longer than 132 characters' \
 	| grep -v 'detected at \*@[0-9]*' \
 	| grep -v 'Info: fmxapi\.F90, line [0-9]*: Possibly discontiguous POUT passed to old style dummy' \
 	| grep -v 'Info: No licences currently available for product' \
