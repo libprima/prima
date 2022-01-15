@@ -158,7 +158,7 @@ end
 output.algorithm = solver;
 
 % Read information in output
-x = output.x;
+x = output.x;  % x will be used later, for example, in length(x)
 output = rmfield(output, 'x'); % output does not include x at return
 fx = output.fx;
 output = rmfield(output, 'fx'); % output does not include fx at return
@@ -228,7 +228,7 @@ if isfield(output, 'xhist')
 else
     xhist = [];
 end
-if ~isempty(xhist) && (~isrealmatrix(xhist) || any(size(xhist) ~= [length(x), nhist]))
+if ~isempty(xhist) && (~isrealmatrix(xhist) || any(size(xhist) ~= [length(x), nhist]))  % x is set before
     % Public/unexpected error
     error(sprintf('%s:InvalidXhist', invoker), ...
         '%s: UNEXPECTED ERROR: %s returns an xhist that is not a real matrix of size (n, min(nf, maxhist)).', invoker, solver);
@@ -319,7 +319,7 @@ if ~strcmp(probinfo.refined_type, 'nonlinearly-constrained') && ~(isempty(nlcine
     error(sprintf('%s:InvalidNonlinearConstraint', invoker), ...
     '%s: UNEXPECTED ERROR: %s returns values of nonlinear constraints for a problem without such constraints.', invoker, solver);
 end
-if (isfield(output, 'nlcineq') && ~isfield(output, 'nlcineq')) || (~isfield(output, 'nlcineq') && isfield(output, 'nlceq'))
+if (isfield(output, 'nlcineq') && ~isfield(output, 'nlceq')) || (~isfield(output, 'nlcineq') && isfield(output, 'nlceq'))
     % Public/unexpected error
     error(sprintf('%s:InvalidNonlinearConstraint', invoker), ...
     '%s: UNEXPECTED ERROR: %s returns only one of nlcineq and nlceq; it should return both of them or neither of them.', invoker, solver);
@@ -407,7 +407,7 @@ if probinfo.reduced
     x(~probinfo.fixedx) = freex_value;
 
     freexhist = xhist;
-    xhist= NaN(length(x), size(xhist, 2));  % x is already recovered.
+    xhist= NaN(length(x), size(xhist, 2));  % x has been recovered; size(xhist,2) may not be nhist but 0.
     xhist(probinfo.fixedx, :) = probinfo.fixedx_value*ones(1, size(xhist, 2));
     xhist(~probinfo.fixedx, :) = freexhist;
 end
@@ -556,7 +556,7 @@ if options.debug && ~options.classical
     if ismember(solver, constrained_solver_list)
         fhistf = fhistf(chist <= max(cstrv_returned, 0));
     end
-    minf = min([fhistf,fx]);
+    minf = min([fhistf, fx]);
 %%%% Zaikun 2021-05-26: The following test is disabled for lincoa for the moment. lincoa may not pass it.
 %%%%    if (fx ~= minf) && ~(isnan(fx) && isnan(minf)) && ~(strcmp(solver, 'lincoan') && constr_modified)
     if (fx ~= minf) && ~(isnan(fx) && isnan(minf)) && ~strcmp(solver, 'lincoan')
@@ -645,6 +645,8 @@ if options.debug && ~options.classical
                     fhistx(k) = objective(xhist(:, k));
                 end
             end
+            % Due to the moderated extreme barrier (implemented when options.classical=false),
+            % all function values that are NaN or above hugefun are replaced by hugefun.
             fhistx(fhistx ~= fhistx | fhistx > hugefun) = hugefun;
             if any(~(isnan(fhist) & isnan(fhistx)) & ~((fhist==fhistx) | (abs(fhistx-fhist) <= cobylan_prec*max(1, abs(fhist)) & strcmp(solver, 'cobylan'))))
                 % Public/unexpected error
