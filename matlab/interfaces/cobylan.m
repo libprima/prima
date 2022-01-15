@@ -118,6 +118,7 @@ function [x, fx, exitflag, output] = cobylan(varargin)
 %   The options include
 %   *** maxfun: maximal number of function evaluations; default: 500*length(x0)
 %   *** ftarget: target function value; default: -Inf
+%   *** ctol: tolerance for the constraint validation; default: machine epsilon
 %   *** rhobeg: initial trust region radius; typically, rhobeg should in the
 %       order of one tenth of the greatest expected change to a variable;
 %       rhobeg should be positive; default: 1 if the problem is not scaled,
@@ -330,9 +331,11 @@ else % The problem turns out 'normal' during prepdfo
     rhobeg = options.rhobeg;
     rhoend = options.rhoend;
     ftarget = options.ftarget;
+    ctol = options.ctol;
     maxhist = options.maxhist;
     output_xhist = options.output_xhist;
     output_nlchist = options.output_nlchist;
+    maxfilt = options.maxfilt;
 
     % Check whether the problem is too large for the Fortran code.
     % In the mex gateway, a workspace of size
@@ -377,8 +380,6 @@ else % The problem turns out 'normal' during prepdfo
             con = @(x) cobylan_con(x, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
             [x, fx, exitflag, nf, fhist, constr, constrviolation, chist] = fcobylan_classical(fun, con, x0, rhobeg, rhoend, maxfun, m, ftarget, constr_x0);
         else
-            ctol = eps;
-            maxfilt = 2000;
             [x, fx, constrviolation, constr, exitflag, nf, xhist, fhist, chist, conhist] = ...
                 fcobylan(funcon, m, x0, f_x0, constr_x0, rhobeg, rhoend, ftarget, ctol, maxfun, iprint, maxhist, double(output_xhist), double(output_nlchist), maxfilt);
         end

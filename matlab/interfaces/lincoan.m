@@ -94,6 +94,7 @@ function [x, fx, exitflag, output] = lincoan(varargin)
 %   The options include
 %   *** maxfun: maximal number of function evaluations; default: 500*length(x0)
 %   *** ftarget: target function value; default: -Inf
+%   *** ctol: tolerance for the constraint validation; default: machine epsilon
 %   *** rhobeg: initial trust region radius; typically, rhobeg should be in
 %       the order of one tenth of the greatest expected change to a variable;
 %       rhobeg should be positive; default: 1 if the problem is not scaled,

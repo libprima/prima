@@ -334,6 +334,7 @@ if single_test
 else
     test_options.maxhist = ceil(randn*1.5*test_options.maxfun);
 end
+test_options.maxfilt = ceil(randn*500);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 test_options.classical = 0;
 %test_options.iprint = 0;
