@@ -10,16 +10,16 @@
 !
 ! Started in March 2020
 !
-! Last Modified: Wednesday, January 12, 2022 PM06:42:51
+! Last Modified: Sunday, January 16, 2022 PM11:39:00
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
 
 subroutine mexFunction(nargout, poutput, nargin, pinput)
 !--------------------------------------------------------------------------------------------------!
-! This is the entry point to Fortran MEX function. If the compiled MEX file is named as
+! This is the entry point to the Fortran MEX function. If the compiled MEX file is named as
 ! FUNCTION_NAME.mex*** (extension depends on the platform), then in MATLAB we can call:
-! [xopt, fopt, info, nf, xhist, fhist] = ...
+! [x, f, info, nf, xhist, fhist] = ...
 !   FUNCTION_NAME(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, ...
 !   iprint, maxhist, output_xhist)
 !--------------------------------------------------------------------------------------------------!
@@ -34,7 +34,7 @@ use, non_intrinsic :: fmxapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
 use, non_intrinsic :: fmxapi_mod, only : fmxVerifyClassShape
 use, non_intrinsic :: fmxapi_mod, only : fmxReadMPtr, fmxWriteMPtr
 
-! Solver-specific module
+! Solver-specific modules
 use, non_intrinsic :: newuoa_mod, only : newuoa
 use, non_intrinsic :: prob_mod, only : fun_ptr, calfun
 
@@ -65,14 +65,14 @@ real(RP), allocatable :: fhist(:)
 real(RP), allocatable :: x(:)
 real(RP), allocatable :: xhist(:, :)
 
-! Validate number of arguments
+! Validate the number of arguments
 call fmxVerifyNArgin(nargin, 14)
 call fmxVerifyNArgout(nargout, 6)
 
 ! Verify that input 1 is a function handle; the other inputs will be verified when read.
 call fmxVerifyClassShape(pinput(1), 'function_handle', 'rank0')
 
-! Read inputs
+! Read the inputs
 fun_ptr = pinput(1)  ! FUN_PTR is a pointer to the function handle
 call fmxReadMPtr(pinput(2), x)
 call fmxReadMPtr(pinput(3), rhobeg)
@@ -88,7 +88,7 @@ call fmxReadMPtr(pinput(12), iprint)
 call fmxReadMPtr(pinput(13), maxhist)
 call fmxReadMPtr(pinput(14), output_xhist)
 
-! Call the Fortran code.
+! Call the Fortran code
 ! There are different cases because XHIST may or may not be passed to the Fortran code.
 if (output_xhist > 0) then
     call newuoa(calfun, x, f, nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, &
@@ -104,7 +104,7 @@ if (.not. allocated(xhist)) then
     call safealloc(xhist, int(size(x), IK), 0_IK)
 end if
 
-! Write outputs
+! Write the outputs
 call fmxWriteMPtr(x, poutput(1))
 call fmxWriteMPtr(f, poutput(2))
 call fmxWriteMPtr(info, poutput(3))
@@ -120,5 +120,4 @@ call fmxWriteMPtr(fhist(1:min(int(nf), size(fhist))), poutput(6), 'row')
 deallocate (x) ! Allocated by fmxReadMPtr.
 deallocate (xhist)
 deallocate (fhist)
-
 end subroutine mexFunction

@@ -29,12 +29,12 @@
 ! (write_rscalar_sp, write_rscalar_dp, write_rscalar_qp, write_iscalar_int16_sp,
 ! write_iscalar_int16_dp, ...), but there are too many combinations! The same applies to fmxWriteMPtr.
 ! 3. We decide to name the procedures in exactly the same way as in FMXAPI_MOD so that the classical
-! and normal modes of the MEX gateways can have exactly the same I/O code, although they use
-! fmxReadMPtr/fmxWriteMPtr from different modules.
+! and normal modes of the MEX gateways can have almost the same I/O code except for some inputs that
+! do not appear in the classical mode, although they use fmxReadMPtr/fmxWriteMPtr from different modules.
 
 ! Coded by Zaikun ZHANG in July 2020.
 !
-! Last Modified: Thursday, January 13, 2022 AM11:32:41
+! Last Modified: Monday, January 17, 2022 AM12:57:02
 
 
 #include "fintrf.h"
@@ -76,7 +76,7 @@ interface fmxWriteMPtr
     ! fmxWriteMPtr associates numeric data with an mwPointer. It converts the data to REAL(DP) if
     ! necessary, and allocates space if the data is a vector or matrix. Therefore, it is necessary
     ! to call mxDestroyArray when the usage of the vector/matrix terminates.
-    module procedure write_rscalar_cl, write_rmatrix_cl, write_rvector_cl
+    module procedure write_rscalar_cl, write_rvector_cl, write_rmatrix_cl
     module procedure write_iscalar_cl
 end interface fmxWriteMPtr
 
@@ -121,7 +121,7 @@ end subroutine read_rscalar_cl
 
 subroutine read_rvector_cl(px, x)
 ! READ_RVECTOR_CL reads the double vector associated with an mwPointer PX and saves the data in X,
-! which is a REAL(RP_CL) vector.
+! which is a REAL(RP_CL) allocatable vector and should have size mxGetM(PX)*mxGetN(PX) at return.
 use, non_intrinsic :: consts_mod, only : DP, IK, MSGLEN
 use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
@@ -168,7 +168,7 @@ end subroutine read_rvector_cl
 
 subroutine read_rmatrix_cl(px, x)
 ! READ_MATRIX_CL reads the double matrix associated with an mwPointer PX and saves the data in X,
-! which is a REAL(RP_CL) matrix.
+! which is a REAL(RP_CL) allocatable matrix and should have size [mxGetM(PX), mxGetN(PX)] at return.
 use, non_intrinsic :: consts_mod, only : DP, IK, MSGLEN
 use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
@@ -192,7 +192,6 @@ call fmxVerifyClassShape(px, 'double', 'matrix')
 m = int(mxGetM(px), kind(m))
 n = int(mxGetN(px), kind(n))
 xsize = int(m * n, kind(xsize))
-
 
 ! Copy input to X_DP
 call safealloc(x_dp, int(m, IK), int(n, IK)) ! NOT removable

@@ -10,17 +10,17 @@
 !
 ! Started in March 2020
 !
-! Last Modified: Thursday, January 13, 2022 AM11:44:27
+! Last Modified: Monday, January 17, 2022 AM12:39:11
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
 
 subroutine mexFunction(nargout, poutput, nargin, pinput)
 !--------------------------------------------------------------------------------------------------!
-! This is the entry point to Fortran MEX function. If the compiled MEX file is named as
+! This is the entry point to the Fortran MEX function. If the compiled MEX file is named as
 ! FUNCTION_NAME.mex*** (extension depends on the platform), then in MATLAB we can call:
-! [xopt, fopt, cstrvopt, constropt, info, nf, xhist, fhist, chist, conhist] = ...
-!   FUNCTION_NAME(funcon, m, x0, f0, constr0, rhobeg, rhoend, ftarget, ctol, maxfun, iprint, ...
+! [x, f, cstrv, constr, info, nf, xhist, fhist, chist, conhist] = ...
+!   FUNCTION_NAME(funcon, x0, f0, constr0, rhobeg, rhoend, ftarget, ctol, maxfun, iprint, ...
 !   maxhist, output_xhist, output_conhist, maxfilt)
 !--------------------------------------------------------------------------------------------------!
 
@@ -34,7 +34,7 @@ use, non_intrinsic :: fmxapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
 use, non_intrinsic :: fmxapi_mod, only : fmxVerifyClassShape
 use, non_intrinsic :: fmxapi_mod, only : fmxReadMPtr, fmxWriteMPtr
 
-! Solver-specific module
+! Solver-specific modules
 use, non_intrinsic :: cobyla_mod, only : cobyla
 use, non_intrinsic :: prob_mod, only : funcon_ptr, calcfc
 
@@ -74,31 +74,33 @@ real(RP), allocatable :: fhist(:)
 real(RP), allocatable :: x(:)
 real(RP), allocatable :: xhist(:, :)
 
-! Validate number of arguments
-call fmxVerifyNArgin(nargin, 15)
+! Validate the number of arguments
+call fmxVerifyNArgin(nargin, 14)
 call fmxVerifyNArgout(nargout, 10)
 
 ! Verify that input 1 is a function handle; the other inputs will be verified when read.
 call fmxVerifyClassShape(pinput(1), 'function_handle', 'rank0')
 
-! Read inputs
+! Read the inputs
 funcon_ptr = pinput(1)  ! FUNCON_PTR is a pointer to the function handle
-call fmxReadMPtr(pinput(2), m)
-call fmxReadMPtr(pinput(3), x)
-call fmxReadMPtr(pinput(4), f0)
-call fmxReadMPtr(pinput(5), constr0)
-call fmxReadMPtr(pinput(6), rhobeg)
-call fmxReadMPtr(pinput(7), rhoend)
-call fmxReadMPtr(pinput(8), ftarget)
-call fmxReadMPtr(pinput(9), ctol)
-call fmxReadMPtr(pinput(10), maxfun)
-call fmxReadMPtr(pinput(11), iprint)
-call fmxReadMPtr(pinput(12), maxhist)
-call fmxReadMPtr(pinput(13), output_xhist)
-call fmxReadMPtr(pinput(14), output_conhist)
-call fmxReadMPtr(pinput(15), maxfilt)
+call fmxReadMPtr(pinput(2), x)
+call fmxReadMPtr(pinput(3), f0)
+call fmxReadMPtr(pinput(4), constr0)
+call fmxReadMPtr(pinput(5), rhobeg)
+call fmxReadMPtr(pinput(6), rhoend)
+call fmxReadMPtr(pinput(7), ftarget)
+call fmxReadMPtr(pinput(8), ctol)
+call fmxReadMPtr(pinput(9), maxfun)
+call fmxReadMPtr(pinput(10), iprint)
+call fmxReadMPtr(pinput(11), maxhist)
+call fmxReadMPtr(pinput(12), output_xhist)
+call fmxReadMPtr(pinput(13), output_conhist)
+call fmxReadMPtr(pinput(14), maxfilt)
 
-! Call the Fortran code.
+! Get the sizes
+m = int(size(constr0), kind(m))  ! M is a compulsory input of the Fortran code.
+
+! Call the Fortran code
 ! There are different cases because XHIST/CONHIST may or may not be passed to the Fortran code.
 if (output_xhist > 0 .and. output_conhist > 0) then
     call cobyla(calcfc, m, x, f, cstrv, constr, f0, constr0, nf, rhobeg, rhoend, ftarget, ctol, &
@@ -123,7 +125,7 @@ if (.not. allocated(conhist)) then
     call safealloc(conhist, int(size(constr), IK), 0_IK)
 end if
 
-! Write outputs
+! Write the outputs
 call fmxWriteMPtr(x, poutput(1))
 call fmxWriteMPtr(f, poutput(2))
 call fmxWriteMPtr(cstrv, poutput(3))
@@ -147,5 +149,4 @@ deallocate (xhist)
 deallocate (fhist)
 deallocate (chist)
 deallocate (conhist)
-
 end subroutine mexFunction

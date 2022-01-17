@@ -327,7 +327,7 @@ C          CVMAXP=AMAX1(CVMAXP,-SUM-TEMP)
 C          CVMAXM=AMAX1(CVMAXM,SUM-TEMP)
               CVMAXP=DMAX1(CVMAXP,-SUM-TEMP)
               CVMAXM=DMAX1(CVMAXM,SUM-TEMP)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!          
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           END IF
       END DO
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -335,7 +335,7 @@ C      DXSIGN=1.0
 C      IF (PARMU*(CVMAXP-CVMAXM) .GT. SUM+SUM) DXSIGN=-1.0
       DXSIGN=1.0D0
       IF (PARMU*(CVMAXP-CVMAXM) > SUM+SUM) DXSIGN=-1.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!          
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
 C     Update the elements of SIM and SIMI, and set the next X.
 C
@@ -403,7 +403,7 @@ C      RESNEW=0.0
 C      CON(MP)=0.0
       RESNEW=0.0D0
       CON(MP)=0.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!      
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DO K=1,MP
           SUM=CON(K)
           DO I=1,N
@@ -412,7 +412,7 @@ C      CON(MP)=0.0
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IF (K .LT. MP) RESNEW=AMAX1(RESNEW,SUM)
           IF (K < MP) RESNEW=DMAX1(RESNEW,SUM)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!      
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       END DO
 C
 C     Increase PARMU if necessary and branch back if this change alters the

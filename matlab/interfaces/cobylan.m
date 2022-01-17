@@ -377,11 +377,11 @@ else % The problem turns out 'normal' during prepdfo
     % Call the Fortran code
     try % The mexified Fortran function is a private function generating only private errors; however, public errors can occur due to, e.g., evalobj and evalcon; error handling needed
         if options.classical
-            con = @(x) cobylan_con(x, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
-            [x, fx, exitflag, nf, fhist, constr, constrviolation, chist] = fcobylan_classical(fun, con, x0, rhobeg, rhoend, maxfun, m, ftarget, constr_x0);
+            [x, fx, constrviolation, constr, exitflag, nf, xhist, fhist, chist, conhist] = ...
+                fcobylan_classical(funcon, x0, f_x0, constr_x0, rhobeg, rhoend, ftarget, maxfun, iprint, maxhist, double(output_xhist), double(output_nlchist));
         else
             [x, fx, constrviolation, constr, exitflag, nf, xhist, fhist, chist, conhist] = ...
-                fcobylan(funcon, m, x0, f_x0, constr_x0, rhobeg, rhoend, ftarget, ctol, maxfun, iprint, maxhist, double(output_xhist), double(output_nlchist), maxfilt);
+                fcobylan(funcon, x0, f_x0, constr_x0, rhobeg, rhoend, ftarget, ctol, maxfun, iprint, maxhist, double(output_xhist), double(output_nlchist), maxfilt);
         end
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly

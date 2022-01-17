@@ -16,8 +16,7 @@ implicit none
 integer, intent(in), optional :: ymd(3)
 ! Outputs
 integer :: y
-
-! Local values
+! Local variables
 integer :: values(8)
 
 if (present(ymd)) then
@@ -38,8 +37,7 @@ end function year
 !integer, intent(in), optional :: ymd(3)
 !! Outputs
 !integer :: m
-
-!! Local values
+!! Local variables
 !integer :: values(8)
 
 !if (present(ymd)) then
@@ -61,8 +59,7 @@ implicit none
 integer, intent(in), optional :: ymd(3)
 ! Outputs
 integer :: d
-
-! Local values
+! Local variables
 integer :: dom
 integer :: monlens(12)
 integer :: moy
@@ -95,7 +92,6 @@ implicit none
 integer, intent(in), optional :: ymd(3)
 ! Outputs
 integer :: w
-
 ! Local variables
 integer :: jan1
 integer :: values(8)
@@ -127,7 +123,6 @@ implicit none
 integer, intent(in), optional :: y
 ! Outputs
 logical :: is_leap
-
 ! Local variables
 integer :: y_loc
 
