@@ -10,8 +10,12 @@
 !
 ! Started in March 2020
 !
-! Last Modified: Tuesday, January 18, 2022 AM12:57:35
+! Last Modified: Tuesday, January 18, 2022 AM01:15:53
 !--------------------------------------------------------------------------------------------------!
+
+#include "fintrf.h"
+
+module cobylacl_mod
 
 use, non_intrinsic :: fmxcl_mod, only : RP_CL, IK_CL
 implicit none
