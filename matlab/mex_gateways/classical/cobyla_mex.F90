@@ -10,7 +10,7 @@
 !
 ! Started in March 2020
 !
-! Last Modified: Monday, January 17, 2022 PM06:28:32
+! Last Modified: Tuesday, January 18, 2022 AM12:18:26
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -131,7 +131,7 @@ n = int(size(x), kind(n))
 m = int(size(constr0), kind(m))
 
 ! Decide the maximal amount of history to record
-unit_memo = (int(output_xhist) * n + int(output_conhist) * m + 2_IK_CL) * cstyle_sizeof(0.0_RP_CL)
+unit_memo = int((int(output_xhist) * n + int(output_conhist) * m + 2) * cstyle_sizeof(0.0_RP_CL), kind(unit_memo))
 maximal_hist = int(MAXMEMORY_CL / unit_memo, kind(maximal_hist))
 maxhist_in = maxhist
 maxhist = max(0_IK_CL, min(maxfun, maxhist))
@@ -212,14 +212,13 @@ subroutine calcfc(n, m, x, f, constr)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : MSGLEN, HUGEFUN, HUGECON
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : HUGEFUN, HUGECON
+use, non_intrinsic :: debug_mod, only : validate
 use, non_intrinsic :: infnan_mod, only : is_nan
 
 ! Fortran MEX API modules
 use, non_intrinsic :: fmxapi_mod, only : mxDestroyArray
-use, non_intrinsic :: fmxapi_mod, only : mexErrMsgIdAndTxt
-use, non_intrinsic :: fmxapi_mod, only : fmxCallMATLAB, fmxIsDoubleScalar
+use, non_intrinsic :: fmxapi_mod, only : fmxCallMATLAB, fmxIsDoubleScalar, fmxIsDoubleVector
 use, non_intrinsic :: fmxcl_mod, only : RP_CL, IK_CL
 use, non_intrinsic :: fmxcl_mod, only : fmxReadMPtr, fmxWriteMPtr
 
@@ -239,7 +238,6 @@ real(RP_CL), intent(out) :: constr(m)
 
 ! Local variables
 character(len=*), parameter :: srname = 'CALCFC'
-character(len=MSGLEN) :: eid, msg
 integer(IK_CL) :: maxchist, maxconhist, maxfhist, maxxhist, khist
 mwPointer :: pinput(1), poutput(2)
 real(RP_CL) :: cstrv
@@ -251,17 +249,15 @@ call fmxWriteMPtr(x, pinput(1))
 ! Call the MATLAB function that evaluates the objective function
 call fmxCallMATLAB(funcon_ptr, pinput, poutput)
 
-! Verify the class and shape of outputs.
-if (.not. fmxIsDoubleScalar(poutput(1))) then
-    eid = solver//':ObjectiveNotScalar'
-    msg = solver//': Objective function does not return a scalar.'
-    call mexErrMsgIdAndTxt(eid, msg)
-end if
+! Verify the class and shape of outputs (even if not debugging).
+call validate(fmxIsDoubleScalar(poutput(1)), 'Objective function returns a real scalar', solver)
+call validate(fmxIsDoubleVector(poutput(2)), 'Constriant function returns a real vector', solver)
 
 ! Read the data in OUTPUT
 call fmxReadMPtr(poutput(1), f)
 call fmxReadMPtr(poutput(2), constr_loc)
-call assert(size(constr_loc) == size(constr), 'SIZE(CONSTR_LOC) == SIZE(CONSTR)', srname)
+! Check that the size of CONSTR_LOC is correct (even if not debugging)
+call validate(size(constr_loc) == size(constr), 'SIZE(CONSTR_LOC) == SIZE(CONSTR)', srname)
 constr = constr_loc
 
 ! Destroy the matrix created by fmxWriteMPtr for X. This must be done.

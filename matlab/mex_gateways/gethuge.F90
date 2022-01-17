@@ -1,3 +1,4 @@
+!--------------------------------------------------------------------------------------------------!
 ! GETHUGE subroutine
 !
 ! **********************************************************************
@@ -7,40 +8,44 @@
 !               The Hong Kong Polytechnic University
 ! **********************************************************************
 !
-! Last Modified: Sunday, August 29, 2021 AM07:51:12
-
-! Remarks:
+! Started in March 2020
 !
-! 1. Be careful with the "kind" and storage size for integer-type
-! (integer, mwSize, mwIndex) variables/functions. Some of them may be
-! 32bit, while the others may be 64bit, depending on the machine, the
-! version of matlab, and the compilation option of mex. Do NOT assume
-! any two of them to be the same.
-! If ever a Segmentation Fault occurs, check these variables first.
-!
-! 2. Be careful with the line width limit. After preprocessing (macro
-! substitution), some lines may become too long and hence get truncated.
+! Last Modified: Tuesday, January 18, 2022 AM12:19:50
+!--------------------------------------------------------------------------------------------------!
 
+! N.B.:
+!
+! 1. Be careful with the "kind" and storage size for integer-type (integer, mwSize, mwIndex)
+! variables/functions. Some of them may be 32bit, while the others may be 64bit, depending on the
+! machine, the version of matlab, and the compilation option of mex. Do NOT assume any two of them
+! to be the same. If ever a Segmentation Fault occurs, check these variables first.
+!
+! 2. Be careful with the line width limit. After preprocessing (macro substitution), some lines may
+! become too long and hence get truncated.
 
 #include "fintrf.h"
 
-subroutine mexFunction(nargout, poutput, nargin, pinput)
-! Usage: data_huge = gethuge(data_type)
-! This function returns the largest value of data_type on the
-! current platform, the possible values of data_type being
-! 'integer', 'float', 'real', 'single', 'double', 'mwSI',
-! 'fun', 'function', 'con', 'constraint'.
-!
-! In previous versions, GETHUGE accepted 'mwSize' or 'mwIndex' as
-! inputs, but it is not the case anymore. This is because mwSize
-! and mwIndex are macros defined in fintrf.h, and they will be
-! replaced by other strings after preprocessing.
-! Instead of 'mwSize' and 'mwIndex', we now use 'mwSI' to get the
-! smaller value between huge(msZero) and huge(miZero).
 
-use, non_intrinsic :: consts_mod, only : IK, SP, DP, RP, HUGEFUN, HUGECON, MSGLEN
+subroutine mexFunction(nargout, poutput, nargin, pinput)
+!--------------------------------------------------------------------------------------------------!
+! Usage: data_huge = gethuge(data_type)
+! This function returns the largest value of data_type on the current platform, the possible values
+! of data_type being 'integer', 'float', 'real', 'single', 'double', 'mwSI', 'fun', 'function',
+! 'con', 'constraint'.
+!
+! In previous versions, GETHUGE accepted 'mwSize' or 'mwIndex' as inputs, but it is not the case
+! anymore. This is because mwSize and mwIndex are macros defined in fintrf.h, and they will be
+! replaced by other strings after preprocessing. Instead of 'mwSize' and 'mwIndex', we now use
+! 'mwSI' to get the smaller value between huge(msZero) and huge(miZero).
+!--------------------------------------------------------------------------------------------------!
+
+! Generic modules
+use, non_intrinsic :: consts_mod, only : IK, SP, DP, RP, HUGEFUN, HUGECON, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert, validate
+use, non_intrinsic :: string_mod, only : lower
+
+! Fortran MEX API modules
 use, non_intrinsic :: fmxapi_mod, only : mxGetN, mxGetString
-use, non_intrinsic :: fmxapi_mod, only : mexErrMsgIdAndTxt
 use, non_intrinsic :: fmxapi_mod, only : mxCreateDoubleScalar
 use, non_intrinsic :: fmxapi_mod, only : fmxVerifyNArgin, fmxVerifyNArgout
 use, non_intrinsic :: fmxapi_mod, only : fmxVerifyClassShape
@@ -52,7 +57,7 @@ integer, intent(in) :: nargout, nargin
 mwPointer, intent(in) :: pinput(nargin)
 mwPointer, intent(out) :: poutput(nargout)
 
-! Variables
+! Local variables
 mwSize :: cols  ! Size of the input
 ! The largest length of the input string.
 integer, parameter :: maxlen = 50
@@ -66,70 +71,63 @@ mwSize, parameter :: msZero = 0
 mwIndex, parameter :: miZero = 0
 ! The huge value that will be returned
 real(DP) :: hugeValue
-character(len=MSGLEN) :: eid, msg
+! The success indicator of mxGetString
+logical :: success
+! The validity indicator of the input
+logical :: valid_input
+! Name of the current subroutine.
+character(len=*), parameter :: srname = 'GETHUGE'
 
 ! Check inputs
 call fmxVerifyNArgin(nargin, 1)
 call fmxVerifyNArgout(nargout, 1)
 call fmxVerifyClassShape(pinput(1), 'char', 'row')
 
-! Get the input string.
+! Get the input string. Perform validation even if not debugging.
 cols = int(mxGetN(pinput(1)), kind(cols))
-if (cols > maxlen) then
-    eid = 'gethuge:InvalidInput'
-    msg = 'gethuge: The input is too long.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
-end if
-if (mxGetString(pinput(1), data_type, cols) /= 0) then
-    eid = 'gethuge:GetInputFail'
-    msg = 'Fail to get the input.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
-end if
+call validate(cols <= maxlen, 'COLS <= MAXLEN', srname)
+success = (mxGetString(pinput(1), data_type, cols) == 0)
+call validate(success, 'Get the input successfully', srname)
 
 ! Define hugeValue.
-! Note that the REAL values passed to MATLAB via MEX can only be
-! doubles. Therefore, we may need to cap the huge values by taking
-! min to ensure that they will not overflow when cast to doubles.
-if (data_type == 'float' .or. data_type == 'Float' .or. data_type == 'FLOAT') then
-    ! No overflow in this case
+! Note that the REAL values passed to MATLAB via MEX can only be doubles. Therefore, we may need to
+! cap the huge values by taking min to ensure that they will not overflow when cast to doubles.
+hugeValue = -real(1.0, kind(hugeValue))
+valid_input = .true.
+select case (lower(data_type))
+case ('float')  ! No overflow in this case
     hugeValue = real(huge(0.0), DP)
-else if (data_type == 'single' .or. data_type == 'Single' .or. data_type == 'SINGLE') then
-    ! No overflow in this case
+case ('single')  ! No overflow in this case
     hugeValue = real(huge(0.0_SP), DP)
-else if (data_type == 'double' .or. data_type == 'Double' .or. data_type == 'DOUBLE') then
-    ! No overflow in this case
+case ('double')  ! No overflow in this case
     hugeValue = huge(0.0_DP)
-else if (data_type == 'real' .or. data_type == 'Real' .or. data_type == 'REAL') then
-    ! HUGE(0.0_RP) may be bigger thant HUGE(0.0_DP) in this case
+case ('real')  ! HUGE(0.0_RP) may be bigger than HUGE(0.0_DP) in this case
     if (RP == DP) then
         hugeValue = huge(0.0_DP)
     else
         hugeValue = 10.0_DP**(min(real(log10(huge(0.0_RP)), DP), log10(huge(0.0_DP))) - 1.0_DP)
     end if
-else if (data_type == 'integer' .or. data_type == 'Integer' .or. data_type == 'INTEGER') then
-    ! No overflow in this case
+case ('integer')  ! No overflow in this case
     hugeValue = real(huge(intZero), DP)
-else if (data_type == 'mwSI' .or. data_type == 'mwsi' .or. data_type == 'MWSI') then
-    ! No overflow in this case
+case ('mwsi')  ! No overflow in this case
     hugeValue = min(real(huge(msZero), DP), real(huge(miZero), DP))
-else if (data_type == 'fun' .or. data_type == 'Fun' .or. data_type == 'FUN' .or. data_type == 'function' &
-    & .or. data_type == 'Function' .or. data_type == 'FUNCTION') then
-    ! HUGEFUN < huge(0.0_DP) according to the definition in CONSTS_MOD.
+case ('fun', 'function')  ! HUGEFUN < huge(0.0_DP) according to the definition in CONSTS_MOD.
     hugeValue = real(HUGEFUN, DP)
-else if (data_type == 'con' .or. data_type == 'Con' .or. data_type == 'CON' .or. data_type == 'constraint' &
-    & .or. data_type == 'Constraint' .or. data_type == 'CONSTRAINT') then
-    ! HUGECON < huge(0.0_DP) according to the definition in CONSTS_MOD.
+case ('con', 'constraint')  ! HUGECON < huge(0.0_DP) according to the definition in CONSTS_MOD.
     hugeValue = real(HUGECON, DP)
-else
-    eid = 'GETHUGE:WrongInput'
-    msg = 'GETHUGE: Unrecognized input.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
-end if
+case default
+    valid_input = .false.
+end select
+
+! Check that the input is valid (even if not debugging).
+call validate(valid_input, 'Input is valid', srname)
 
 ! Write output.
-! Do NOT use fmxWriteMPtr; when DP /= RP, there is no proper
-! implementation of fmxWriteMPtr available in FMXAPI_MOD.
+! Do NOT use fmxWriteMPtr; when DP /= RP, there is no version of fmxWriteMPtr available in FMXAPI_MOD.
 poutput(1) = mxCreateDoubleScalar(hugeValue)
 
-return
+! Postconditions
+if (DEBUGGING) then
+    call assert(hugeValue > 0, 'HUGEVALUE > 0', srname)
+end if
 end subroutine mexFunction

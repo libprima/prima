@@ -842,12 +842,12 @@ end do
 !  Calculation ends  !
 !====================!
 
-! Postconditions
-if (DEBUGGING) then
-    ! The following test cannot be passed.
-    !call assert(norm(matprod(b - matprod(A, x), A)) <= max(tol, tol * norm(matprod(b, A))), &
-    !    & 'A*X is the projection of B to the column space of A', srname)
-end if
+!! Postconditions
+!if (DEBUGGING) then
+!    ! The following test cannot be passed.
+!    !call assert(norm(matprod(b - matprod(A, x), A)) <= max(tol, tol * norm(matprod(b, A))), &
+!    !    & 'A*X is the projection of B to the column space of A', srname)
+!end if
 end function lsqr
 
 

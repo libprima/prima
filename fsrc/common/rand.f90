@@ -6,7 +6,7 @@ module rand_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Saturday, January 08, 2022 PM07:43:53
+! Last Modified: Monday, January 17, 2022 PM11:55:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -52,6 +52,10 @@ call random_seed(size=n)
 
 ! Unnecessary to write the following line since F2003 as X is INTENT(OUT):
 !!if (allocated(seed)) deallocate (seed)
+
+! 1. The following allocation is NOT removable even in F2003.
+! 2. Why not using SAFEALLOC? Because the kind of SEED is the default integer, while SAFEALLOC is
+!    only implemented for INTEGER(IK), which may not be the default integer.
 allocate (seed(n), stat=alloc_status)
 if (alloc_status /= 0) then
     call errstop(srname, 'Memory allocation fails.')

@@ -190,7 +190,7 @@ function [x, fx, exitflag, output] = pdfon(varargin)
 %   *** quiet: a boolean value indicating whether to keep quiet or not;
 %       if this flag is set to false or not set, then it affects nothing;
 %       if it is set to true and iprint = 1, 2, or 3, the effect is the
-%       same as setting iprint to -1, -2, or -3, respectively;
+%       same as setting iprint to -1, -2, or -3, respectively; default: true;
 %   *** maxhist: a nonnegative integer controlling how much history will
 %       be included in the output structure; default: maxfun;
 %       *******************************************************************

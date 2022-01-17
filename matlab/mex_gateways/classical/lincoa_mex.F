@@ -93,7 +93,6 @@ C that REAL(KIND=8) will be of double precision.
 
       use pdfoconst
 
-      return
       end subroutine use_pdfoconst
       module flincoa ! Some global variables
       use pdfoconst ! See pdfoconst.F, which defines dp, int4, HUGENUM
@@ -448,7 +447,6 @@ C Free memory
       deallocate (Aresmax)
       deallocate (bresmax)
 
-      return
       end subroutine mexFunction
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
