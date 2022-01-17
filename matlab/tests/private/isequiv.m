@@ -336,10 +336,11 @@ else
 end
 test_options.maxfilt = ceil(randn*500);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-test_options.classical = 0;
+%test_options.classical = 0;
+%test_options.classical = 1;
 %test_options.iprint = 0;
 %test_options.quiet = true;
-%test_options.classical = (randn < -1.2);
+test_options.classical = (randn < -1.2);
 test_options.iprint = floor(3*rand);
 test_options.quiet = (rand > 0.5);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

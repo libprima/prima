@@ -7,7 +7,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       DIMENSION A(N,*),B(*),DX(*),IACT(*),Z(N,*),ZDOTA(*),
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C     1  VMULTC(*),SDIRN(*),DXNEW(*),VMULTD(*)
-     1  VMULTC(*),SDIRN(*),DXNEW(*),VMULTD(*),DSAV(N)
+     1  VMULTC(*),SDIRN(*),DXNEW(*),VMULTD(*)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
 C     This subroutine calculates an N-component vector DX by applying the

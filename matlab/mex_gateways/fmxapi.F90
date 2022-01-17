@@ -26,7 +26,7 @@
 !
 ! Started in July 2020
 !
-! Last Modified: Thursday, January 13, 2022 AM11:44:43
+! Last Modified: Monday, January 17, 2022 AM12:57:39
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -110,7 +110,7 @@ interface fmxWriteMPtr
     ! fmxWriteMPtr associates numeric data with an mwPointer. It converts the data to REAL(DP), and
     ! allocates space if the data is a vector or matrix. Therefore, it is necessary to call
     ! mxDestroyArray when the usage of the vector/matrix terminates.
-    module procedure write_rscalar, write_rmatrix, write_rvector
+    module procedure write_rscalar, write_rvector, write_rmatrix
     module procedure write_iscalar
 end interface fmxWriteMPtr
 
@@ -429,7 +429,7 @@ end subroutine read_rscalar
 
 subroutine read_rvector(px, x)
 ! READ_RVECTOR reads the double vector associated with an mwPointer PX and saves the data in X,
-! which is a REAL(RP) vector.
+! which is a REAL(RP) allocatable vector and should have size mxGetM(PX)*mxGetN(PX) at return.
 use, non_intrinsic :: consts_mod, only : RP, DP, IK, ONE, MSGLEN
 use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
@@ -476,7 +476,7 @@ end subroutine read_rvector
 
 subroutine read_rmatrix(px, x)
 ! READ_RMATRIX reads the double matrix associated with an mwPointer PX and saves the data in X,
-! which is a REAL(RP) matrix.
+! which is a REAL(RP) allocatable matrix and should have size [mxGetM(PX), mxGetN(PX)] at return.
 use, non_intrinsic :: consts_mod, only : RP, DP, IK, ONE, MSGLEN
 use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
@@ -500,7 +500,6 @@ call fmxVerifyClassShape(px, 'double', 'matrix')
 m = int(mxGetM(px), kind(m))
 n = int(mxGetN(px), kind(n))
 xsize = int(m * n, kind(xsize))
-
 
 ! Copy input to X_DP
 call safealloc(x_dp, m, n) ! NOT removable

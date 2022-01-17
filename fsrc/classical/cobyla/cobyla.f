@@ -1,11 +1,14 @@
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      SUBROUTINE COBYLA (N,M,X,RHOBEG,RHOEND,IPRINT,MAXFUN,W,IACT)
 C      DIMENSION X(*),W(*),IACT(*)
-      SUBROUTINE COBYLA (N,M,X,RHOBEG,RHOEND,IPRINT,MAXFUN,W,IACT,F,
+      SUBROUTINE COBYLA (N,M,X,RHOBEG,RHOEND,IPRINT,MAXFUN,F,
      1  INFO,FTARGET,RESMAX,CON)
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
-      DIMENSION X(*),W(*),IACT(*),CON(*)
+      REAL(KIND(0.0D0)) :: X(N)
+      REAL(KIND(0.0D0)) :: CON(M)
+      REAL(KIND(0.0D0)) :: W(N*(3*N+2*M+11)+4*M+7)
+      INTEGER :: IACT(M+1)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
 C     This subroutine minimizes an objective function F(X) subject to M
@@ -18,7 +21,7 @@ C     parameter RHO controls the size of the simplex and it is reduced
 C     automatically from RHOBEG to RHOEND. For each RHO the subroutine tries
 C     to achieve a good vector of variables for the current size, and then
 C     RHO is reduced until the value RHOEND is reached. Therefore RHOBEG and
-C     RHOEND should be set to reasonable initial changes to and the required   
+C     RHOEND should be set to reasonable initial changes to and the required
 C     accuracy in the variables respectively, but this accuracy should be
 C     viewed as a subject for experimentation because it is not guaranteed.
 C     The subroutine has an advantage over many of its competitors, however,
@@ -99,9 +102,7 @@ C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C     2  W(IDX),W(IWORK),IACT)
      2  W(IDX),W(IWORK),IACT,F,INFO,FTARGET,RESMAX)
-      DO K = 1, M
-          CON(K) = W(ICON+K-1)
-      END DO
+      CON(1:M) = W(ICON:ICON+M-1)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       RETURN
       END

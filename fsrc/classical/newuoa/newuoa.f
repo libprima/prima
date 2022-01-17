@@ -1,14 +1,16 @@
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      SUBROUTINE NEWUOA (N,NPT,X,RHOBEG,RHOEND,IPRINT,MAXFUN,W)
-      SUBROUTINE NEWUOA (N,NPT,X,RHOBEG,RHOEND,IPRINT,MAXFUN,W,F,INFO,
+C      DIMENSION X(*),W(*)
+      SUBROUTINE NEWUOA (N,NPT,X,RHOBEG,RHOEND,IPRINT,MAXFUN,F,INFO,
      1  FTARGET)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IMPLICIT REAL*8 (A-H,O-Z)
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
+      REAL(KIND(0.0D0)) :: X(N)
+      REAL(KIND(0.0D0)) :: W((NPT+13)*(NPT+N)+3*N*(N+3)/2+1)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DIMENSION X(*),W(*)
 C
 C     This subroutine seeks the least value of a function of many variables,
 C     by a trust region method that forms quadratic models by interpolation.
