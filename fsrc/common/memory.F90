@@ -8,7 +8,7 @@ module memory_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, January 13, 2022 AM11:28:25
+! Last Modified: Monday, January 17, 2022 PM11:40:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -107,7 +107,7 @@ subroutine alloc_rvector_sp(x, n)
 ! Allocate space for an allocatable REAL(SP) vector X, whose size is N after allocation.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : SP, IK
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: debug_mod, only : validate
 implicit none
 
 ! Inputs
@@ -121,7 +121,7 @@ integer :: alloc_status
 character(len=*), parameter :: srname = 'ALLOC_RVECTOR_SP'
 
 ! Preconditions (checked even not debugging)
-call assert(n >= 0, 'N >= 0', srname)
+call validate(n >= 0, 'N >= 0', srname)
 
 ! According to the Fortran 2003 standard, when a procedure is invoked, any allocated ALLOCATABLE
 ! object that is an actual argument associated with an INTENT(OUT) ALLOCATABLE dummy argument is
@@ -129,12 +129,12 @@ call assert(n >= 0, 'N >= 0', srname)
 !!if (allocated(x)) deallocate (x)
 ! Allocate memory for X
 allocate (x(n), stat=alloc_status)
-call assert(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
 x = -huge(x)
 
 ! Postconditions (checked even not debugging)
-call assert(allocated(x), 'X is allocated', srname)
-call assert(size(x) == n, 'SIZE(X) == N', srname)
+call validate(allocated(x), 'X is allocated', srname)
+call validate(size(x) == n, 'SIZE(X) == N', srname)
 end subroutine alloc_rvector_sp
 
 
@@ -143,7 +143,7 @@ subroutine alloc_rmatrix_sp(x, m, n)
 ! Allocate space for an allocatable REAL(SP) matrix X, whose size is (M, N) after allocation.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : SP, IK
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: debug_mod, only : validate
 implicit none
 
 ! Inputs
@@ -157,17 +157,17 @@ integer :: alloc_status
 character(len=*), parameter :: srname = 'ALLOC_RMATRIX_SP'
 
 ! Preconditions (checked even not debugging)
-call assert(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
+call validate(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
 
 !!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
 ! Allocate memory for X
 allocate (x(m, n), stat=alloc_status)
-call assert(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
 x = -huge(x)
 
 ! Postconditions (checked even not debugging)
-call assert(allocated(x), 'X is allocated', srname)
-call assert(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname)
+call validate(allocated(x), 'X is allocated', srname)
+call validate(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname)
 end subroutine alloc_rmatrix_sp
 
 
@@ -176,7 +176,7 @@ subroutine alloc_rvector_dp(x, n)
 ! Allocate space for an allocatable REAL(DP) vector X, whose size is N after allocation.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : DP, IK
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: debug_mod, only : validate
 implicit none
 
 ! Inputs
@@ -190,7 +190,7 @@ integer :: alloc_status
 character(len=*), parameter :: srname = 'ALLOC_RVECTOR_DP'
 
 ! Preconditions (checked even not debugging)
-call assert(n >= 0, 'N >= 0', srname)
+call validate(n >= 0, 'N >= 0', srname)
 
 ! According to the Fortran 2003 standard, when a procedure is invoked, any allocated ALLOCATABLE
 ! object that is an actual argument associated with an INTENT(OUT) ALLOCATABLE dummy argument is
@@ -198,12 +198,12 @@ call assert(n >= 0, 'N >= 0', srname)
 !!if (allocated(x)) deallocate (x)
 ! Allocate memory for X
 allocate (x(n), stat=alloc_status)
-call assert(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
 x = -huge(x)
 
 ! Postconditions (checked even not debugging)
-call assert(allocated(x), 'X is allocated', srname)
-call assert(size(x) == n, 'SIZE(X) == N', srname)
+call validate(allocated(x), 'X is allocated', srname)
+call validate(size(x) == n, 'SIZE(X) == N', srname)
 end subroutine alloc_rvector_dp
 
 
@@ -212,7 +212,7 @@ subroutine alloc_rmatrix_dp(x, m, n)
 ! Allocate space for an allocatable REAL(DP) matrix X, whose size is (M, N) after allocation.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : DP, IK
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: debug_mod, only : validate
 implicit none
 
 ! Inputs
@@ -226,17 +226,17 @@ integer :: alloc_status
 character(len=*), parameter :: srname = 'ALLOC_RMATRIX_DP'
 
 ! Preconditions (checked even not debugging)
-call assert(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
+call validate(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
 
 !!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
 ! Allocate memory for X
 allocate (x(m, n), stat=alloc_status)
-call assert(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
 x = -huge(x)
 
 ! Postconditions (checked even not debugging)
-call assert(allocated(x), 'X is allocated', srname)
-call assert(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname)
+call validate(allocated(x), 'X is allocated', srname)
+call validate(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname)
 end subroutine alloc_rmatrix_dp
 
 
@@ -247,7 +247,7 @@ subroutine alloc_rvector_qp(x, n)
 ! Allocate space for an allocatable REAL(QP) vector X, whose size is N after allocation.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : QP, IK
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: debug_mod, only : validate
 implicit none
 
 ! Inputs
@@ -261,7 +261,7 @@ integer :: alloc_status
 character(len=*), parameter :: srname = 'ALLOC_RVECTOR_QP'
 
 ! Preconditions (checked even not debugging)
-call assert(n >= 0, 'N >= 0', srname)
+call validate(n >= 0, 'N >= 0', srname)
 
 ! According to the Fortran 2003 standard, when a procedure is invoked, any allocated ALLOCATABLE
 ! object that is an actual argument associated with an INTENT(OUT) ALLOCATABLE dummy argument is
@@ -269,12 +269,12 @@ call assert(n >= 0, 'N >= 0', srname)
 !!if (allocated(x)) deallocate (x)
 ! Allocate memory for X
 allocate (x(n), stat=alloc_status)
-call assert(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
 x = -huge(x)
 
 ! Postconditions (checked even not debugging)
-call assert(allocated(x), 'X is allocated', srname)
-call assert(size(x) == n, 'SIZE(X) == N', srname)
+call validate(allocated(x), 'X is allocated', srname)
+call validate(size(x) == n, 'SIZE(X) == N', srname)
 end subroutine alloc_rvector_qp
 
 
@@ -283,7 +283,7 @@ subroutine alloc_rmatrix_qp(x, m, n)
 ! Allocate space for an allocatable REAL(QP) matrix X, whose size is (M, N) after allocation.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : QP, IK
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: debug_mod, only : validate
 implicit none
 
 ! Inputs
@@ -297,17 +297,17 @@ integer :: alloc_status
 character(len=*), parameter :: srname = 'ALLOC_RMATRIX_QP'
 
 ! Preconditions (checked even not debugging)
-call assert(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
+call validate(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
 
 !!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
 ! Allocate memory for X
 allocate (x(m, n), stat=alloc_status)
-call assert(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
 x = -huge(x)
 
 ! Postconditions (checked even not debugging)
-call assert(allocated(x), 'X is allocated', srname)
-call assert(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname)
+call validate(allocated(x), 'X is allocated', srname)
+call validate(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname)
 end subroutine alloc_rmatrix_qp
 
 #endif
@@ -318,7 +318,7 @@ subroutine alloc_ivector(x, n)
 ! Allocate space for an allocatable INTEGER(IK) vector X, whose size is N after allocation.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : IK
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: debug_mod, only : validate
 implicit none
 
 ! Inputs
@@ -332,17 +332,17 @@ integer :: alloc_status
 character(len=*), parameter :: srname = 'ALLOC_IVECTOR'
 
 ! Preconditions (checked even not debugging)
-call assert(n >= 0, 'N >= 0', srname)
+call validate(n >= 0, 'N >= 0', srname)
 
 !!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
 ! Allocate memory for X
 allocate (x(n), stat=alloc_status)
-call assert(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
 x = -huge(x)
 
 ! Postconditions (checked even not debugging)
-call assert(allocated(x), 'X is allocated', srname)
-call assert(size(x) == n, 'SIZE(X) == N', srname)
+call validate(allocated(x), 'X is allocated', srname)
+call validate(size(x) == n, 'SIZE(X) == N', srname)
 end subroutine alloc_ivector
 
 
@@ -351,7 +351,7 @@ subroutine alloc_imatrix(x, m, n)
 ! Allocate space for a INTEGER(IK) matrix X, whose size is (M, N) after allocation.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : IK
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: debug_mod, only : validate
 implicit none
 
 ! Inputs
@@ -365,17 +365,17 @@ integer :: alloc_status
 character(len=*), parameter :: srname = 'ALLOC_IMATRIX'
 
 ! Preconditions (checked even not debugging)
-call assert(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
+call validate(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
 
 !!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
 ! Allocate memory for X
 allocate (x(m, n), stat=alloc_status)
-call assert(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
 x = -huge(x)
 
 ! Postconditions (checked even not debugging)
-call assert(allocated(x), 'X is allocated', srname)
-call assert(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname)
+call validate(allocated(x), 'X is allocated', srname)
+call validate(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname)
 end subroutine alloc_imatrix
 
 

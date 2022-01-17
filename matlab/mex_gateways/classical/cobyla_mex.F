@@ -351,7 +351,6 @@ C     Free memory
       deallocate (chist)
       deallocate (conval)
 
-      return
       end subroutine mexFunction
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -485,5 +484,4 @@ C written as nf = nf+1
       fhist(nf) = funval
       chist(nf) = resmax
 
-      return
       end subroutine calcfc

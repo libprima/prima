@@ -10,7 +10,7 @@
 !
 ! Started in March 2020
 !
-! Last Modified: Monday, January 17, 2022 PM04:59:03
+! Last Modified: Tuesday, January 18, 2022 AM12:13:00
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -182,11 +182,10 @@ subroutine calfun(n, x, f)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : MSGLEN
+use, non_intrinsic :: debug_mod, only : validate
 
 ! Fortran MEX API modules
 use, non_intrinsic :: fmxapi_mod, only : mxDestroyArray
-use, non_intrinsic :: fmxapi_mod, only : mexErrMsgIdAndTxt
 use, non_intrinsic :: fmxapi_mod, only : fmxCallMATLAB, fmxIsDoubleScalar
 use, non_intrinsic :: fmxcl_mod, only : RP_CL, IK_CL
 use, non_intrinsic :: fmxcl_mod, only : fmxReadMPtr, fmxWriteMPtr
@@ -204,7 +203,6 @@ real(RP_CL), intent(in) :: x(n)
 real(RP_CL), intent(out) :: f
 
 ! Local variables
-character(len=MSGLEN) :: eid, msg
 integer(IK_CL) :: maxfhist, maxxhist, khist
 mwPointer :: pinput(1), poutput(1)
 
@@ -214,12 +212,8 @@ call fmxWriteMPtr(x, pinput(1))
 ! Call the MATLAB function that evaluates the objective function
 call fmxCallMATLAB(fun_ptr, pinput, poutput)
 
-! Verify the class and shape of outputs.
-if (.not. fmxIsDoubleScalar(poutput(1))) then
-    eid = solver//':ObjectiveNotScalar'
-    msg = solver//': Objective function does not return a scalar.'
-    call mexErrMsgIdAndTxt(eid, msg)
-end if
+! Verify the class and shape of outputs (even if not debugging)
+call validate(fmxIsDoubleScalar(poutput(1)), 'Objective function returns a scalar', solver)
 
 ! Read the data in OUTPUT
 call fmxReadMPtr(poutput(1), f)

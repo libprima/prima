@@ -271,7 +271,6 @@ C Free memory
       deallocate (w)
       deallocate (fhist)
 
-      return
       end subroutine mexFunction
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -364,5 +363,4 @@ C Update global variables
 C Some compiler (e.g., g95) may complain about implicit conversion if
 C written as nf = nf+1
       fhist(nf) = funval
-      return
       end subroutine calfun
