@@ -4,7 +4,7 @@ function [x, fx, exitflag, output] = uobyqan(varargin)
 %
 %   minimize    fun(x).
 %
-%   In the backend, UOBYQA calls late Professor M.J.D. Powell's Fotran code
+%   In the backend, UOBYQA calls late Professor M.J.D. Powell's algorithm
 %   with the same name. The algorithm is described in [M. J. D. Powell,
 %   UOBYQA: unconstrained optimization by quadratic approximation. Math.
 %   Program., 92(B):555--582, 2002].
@@ -65,11 +65,50 @@ function [x, fx, exitflag, output] = uobyqan(varargin)
 %   *** rhoend: final trust-region radius; rhoend reflects the precision
 %       of the approximate solution obtained by UOBYQA; rhoend should be
 %       positive and not larger than rhobeg; default: 1e-6
+%   *** fortran: a boolean value indicating whether to call Fortran code or
+%       not; default: true
 %   *** classical: a boolean value indicating whether to call the classical
-%       Powell code or not; default: false
+%       version of Powell's Fortran code or not; default: false
+%   *** iprint: a flag deciding how much information will be printed during
+%       the computation; possible values are value 0 (default), 1, -1, 2,
+%       -2, 3, or -3:
+%       0: there will be no printing;
+%       1: a message will be printed to the screen at the return, showing
+%          the best vector of variables found and its objective function value;
+%       2: in addition to 1, at each "new stage" of the computation, a message
+%          is printed to the screen with the best vector of variables so far
+%          and its objective function value;
+%       3: in addition to 2, each function evaluation with its variables will
+%          be printed to the screen;
+%       -1, -2, -3: the same information as 1, 2, 3 will be printed, not to
+%          the screen but to a file named SOLVER_output.txt; the file will be
+%          created if it does not exist; the new output will be appended to
+%          the end of this file if it already exists. Note that iprint = -3
+%          can be costly in terms of time and space.
+%       When quiet = true (see below), setting iprint = 1, 2, or 3 is
+%       the same as setting it to -1, -2, or -3, respectively.
+%       Note:
+%       When classical = true, only iprint = 0 is supported;
+%       When fortran = true, only iprint = 0, -1, -2, -3 are supported
+%       (due to I/O confliction between Fortran and MATLAB);
+%       When quiet = true (see below), setting iprint = 1, 2, or 3 is
+%       the same as setting it to -1, -2, or -3, respectively.
 %   *** quiet: a boolean value indicating whether to keep quiet or not;
-%       default: true (if it is false, UOBYQA will print the return message of
-%       the Fortran code)
+%       if this flag is set to false or not set, then it affects nothing;
+%       if it is set to true and iprint = 1, 2, or 3, the effect is the
+%       same as setting iprint to -1, -2, or -3, respectively;
+%   *** maxhist: a nonnegative integer controlling how much history will
+%       be included in the output structure; default: maxfun;
+%       *******************************************************************
+%       IMPORTANT NOTICE:
+%       If maxhist is so large that recording the history takes too much memory,
+%       the Fortran code will reset maxhist to a smaller value. The maximal
+%       amount of memory defined the Fortran code is 2GB.
+%       *******************************************************************
+%   *** output_xhist: a boolean value indicating whether to output the
+%       history of the iterates; if it is set to true, then the output
+%       structure will include a field "xhist", which contains the last
+%       maxhist iterates of the algorithm; default: false;
 %   *** debug: a boolean value indicating whether to debug or not; default: false
 %   *** chkfunval: a boolean value indicating whether to verify the returned
 %       function value or not; default: false

@@ -9,7 +9,7 @@ function [x, fx, exitflag, output] = pdfon(varargin)
 %               cineq(x) <= 0,
 %               ceq(x) = 0.
 %
-%   In the backend, PDFO calls late Professor M.J.D. Powell's Fotran code
+%   In the backend, PDFO calls late Professor M.J.D. Powell's algorithms
 %   UOBYQA, NEWUOA, BOBYQA, LINCOA, and COBYLA.
 %
 %   The interface of PDFO is the same as that of function FMINCON included
@@ -29,10 +29,10 @@ function [x, fx, exitflag, output] = pdfon(varargin)
 %       there is no objective function (i.e., we have a feasibility problem),
 %       then set fun = []
 %   *** x0 is the starting point; x0 CANNOT be []
-%   *** Aineq and bineq are the coeffcient matrix and right-hand side of
+%   *** Aineq and bineq are the coefficient matrix and right-hand side of
 %       the linear inequality constraint Aineq * x <= bineq; if there is
 %       no such constraint, set Aineq = [], bineq = []
-%   *** Aeq and beq are the coeffcient matrix and right-hand side of the
+%   *** Aeq and beq are the coefficient matrix and right-hand side of the
 %       linear equality constraint Aeq * x = beq; if there is no such
 %       constraint, set Aeq = [], beq = []
 %   *** lb and ub, which are vectors of the same length as x, are the
@@ -126,8 +126,8 @@ function [x, fx, exitflag, output] = pdfon(varargin)
 %   The options include
 %   *** maxfun: maximal number of function evaluations; default: 500*length(x0)
 %   *** ftarget: target function value; default: -Inf
-%   *** ctol: tolerance for the constraint validation for constrained problems;
-%       default: machine epsilon
+%   *** ctol (only if classical = false; see below): tolerance for the constraint
+%       validation for constrained problems; default: machine epsilon
 %   *** rhobeg: initial trust region radius; typically, rhobeg should be in
 %       the order of one tenth of the greatest expected change to a variable;
 %       rhobeg should be positive; default: 1 if the problem is not scaled
@@ -144,10 +144,10 @@ function [x, fx, exitflag, output] = pdfon(varargin)
 %       'lincoan' (for linearly-constrained or bound-constrained or
 %       unconstrained problems),
 %       'cobylan' (for general constrained or unconstrained problems)
-%   *** classical: a boolean value indicating whether to call the classical
-%       version of Powell's Fortran code or not; default: false
 %   *** fortran: a boolean value indicating whether to call Fortran code or
 %       not; default: true
+%   *** classical: a boolean value indicating whether to call the classical
+%       version of Powell's Fortran code or not; default: false
 %   *** eta1, eta2, gamma1, gamma2 (only if classical = false)
 %       eta1, eta2, gamma1, and gamma2 are parameters in the updating scheme
 %       of the trust region radius. Roughly speaking, the trust region radius
@@ -165,17 +165,17 @@ function [x, fx, exitflag, output] = pdfon(varargin)
 %       respect the user-defined x0; default: false
 %   *** iprint: a flag deciding how much information will be printed during
 %       the computation; possible values are value 0 (default), 1, -1, 2,
-%       -2, 3, or -3.
-%       0: there will be no printing; this is the default;
+%       -2, 3, or -3:
+%       0: there will be no printing;
 %       1: a message will be printed to the screen at the return, showing
-%          the best vector of veriables found and its objective function value;
+%          the best vector of variables found and its objective function value;
 %       2: in addition to 1, at each "new stage" of the computation, a message
 %          is printed to the screen with the best vector of variables so far
 %          and its objective function value;
 %       3: in addition to 2, each function evaluation with its variables will
 %          be printed to the screen;
 %       -1, -2, -3: the same information as 1, 2, 3 will be printed, not to
-%          the screen but to a file named NEWUOA_output.txt; the file will be
+%          the screen but to a file named SOLVER_output.txt; the file will be
 %          created if it does not exist; the new output will be appended to
 %          the end of this file if it already exists. Note that iprint = -3
 %          can be costly in terms of time and space.
@@ -190,18 +190,18 @@ function [x, fx, exitflag, output] = pdfon(varargin)
 %   *** quiet: a boolean value indicating whether to keep quiet or not;
 %       if this flag is set to false or not set, then it affects nothing;
 %       if it is set to true and iprint = 1, 2, or 3, the effect is the
-%       same as setting iprint to -1, -2, or -3, repectively.
+%       same as setting iprint to -1, -2, or -3, respectively;
 %   *** maxhist: a nonnegative integer controlling how much history will
 %       be included in the output structure; default: maxfun;
 %       *******************************************************************
 %       IMPORTANT NOTICE:
-%       If maxhist is so large that saving the history takes too much memory,
+%       If maxhist is so large that recording the history takes too much memory,
 %       the Fortran code will reset maxhist to a smaller value. The maximal
 %       amount of memory defined the Fortran code is 2GB.
 %       Let L = length(x) + 2*(number of nonlinear constraints). Assuming
-%       that maxfun <= 500*L, then any probelm with L <= 400 is not affected.
+%       that maxfun <= 500*L, then any problem with L <= 400 is not affected.
 %       *******************************************************************
-%   *** output_xhist: a boolean value inidicating whether to output the
+%   *** output_xhist: a boolean value indicating whether to output the
 %       history of the iterates; if it is set to true, then the output
 %       structure will include a field "xhist", which contains the last
 %       maxhist iterates of the algorithm; default: false;
@@ -214,8 +214,8 @@ function [x, fx, exitflag, output] = pdfon(varargin)
 %   *** chkfunval: a boolean value indicating whether to verify the returned
 %       function and constraint (if applicable) values or not; default: false
 %       (if it is true, PDFO will check whether the returned values of fun and
-%       nonlcon matche fun(x) and nonlcon(x), which costs a function/constraint
-%       evaluation; designed only for debugging)
+%       nonlcon match fun(x) and nonlcon(x), which costs function/constraint
+%       evaluations; designed only for debugging)
 %
 %   For example, the following code
 %
