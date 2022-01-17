@@ -4,7 +4,7 @@ function [x, fx, exitflag, output] = newuoan(varargin)
 %
 %   minimize    fun(x).
 %
-%   In the backend, NEWUOA calls late Professor M.J.D. Powell's Fotran code
+%   In the backend, NEWUOA calls late Professor M.J.D. Powell's algorithm
 %   with the same name. The algorithm is described in [M. J. D. Powell,
 %   The NEWUOA software for unconstrained optimization without derivatives,
 %   In Large-Scale Nonlinear Optimization, eds. G. Di Pillo and M. Roma,
@@ -64,10 +64,10 @@ function [x, fx, exitflag, output] = newuoan(varargin)
 %       positive and not larger than rhobeg; default: 1e-6
 %   *** npt: number of interpolation points for constructing a model
 %       default: 2*length(x0)+1
-%   *** classical: a boolean value indicating whether to call the classical
-%       version of Powell's Fortran code or not; default: false
 %   *** fortran: a boolean value indicating whether to call Fortran code or
 %       not; default: true
+%   *** classical: a boolean value indicating whether to call the classical
+%       version of Powell's Fortran code or not; default: false
 %   *** eta1, eta2, gamma1, gamma2 (only if classical = false)
 %       eta1, eta2, gamma1, and gamma2 are parameters in the updating scheme
 %       of the trust region radius. Roughly speaking, the trust region radius
@@ -82,7 +82,7 @@ function [x, fx, exitflag, output] = newuoan(varargin)
 %       -2, 3, or -3.
 %       0: there will be no printing; this is the default;
 %       1: a message will be printed to the screen at the return, showing
-%          the best vector of veriables found and its objective function value;
+%          the best vector of variables found and its objective function value;
 %       2: in addition to 1, at each "new stage" of the computation, a message
 %          is printed to the screen with the best vector of variables so far
 %          and its objective function value;
@@ -102,18 +102,16 @@ function [x, fx, exitflag, output] = newuoan(varargin)
 %   *** quiet: a boolean value indicating whether to keep quiet or not;
 %       if this flag is set to false or not set, then it affects nothing;
 %       if it is set to true and iprint = 1, 2, or 3, the effect is the
-%       same as setting iprint to -1, -2, or -3, repectively.
+%       same as setting iprint to -1, -2, or -3, respectively.
 %   *** maxhist: a nonnegative integer controlling how much history will
 %       be included in the output structure; default: maxfun;
 %       *******************************************************************
 %       IMPORTANT NOTICE:
-%       If maxhist is so large that saving the history takes too much memory,
+%       If maxhist is so large that recording the history takes too much memory,
 %       the Fortran code will reset maxhist to a smaller value. The maximal
-%       amount of memory defined the Fortran code is 2GB. Assuming that
-%       maxfun = 500*length(x0), this does not affect problems with not
-%       more than 400 variables.
+%       amount of memory defined the Fortran code is 2GB.
 %       *******************************************************************
-%   *** output_xhist: a boolean value inidicating whether to output the
+%   *** output_xhist: a boolean value indicating whether to output the
 %       history of the iterates; if it is set to true, then the output
 %       structure will include a field "xhist", which contains the last
 %       maxhist iterates of the algorithm; default: false

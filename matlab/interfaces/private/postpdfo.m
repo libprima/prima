@@ -451,7 +451,7 @@ if ~strcmp(probinfo.raw_type, 'nonlinearly-constrained')
     end
 end
 
-% Record the retrun message in output.message according to exitflag
+% Record the return message in output.message according to exitflag
 switch exitflag % If prepdfo works properly, then 5, 6, 10, 11, 12 should never happen
 case 0
     output.message = sprintf('Return from %s because the trust region radius reaches its lower bound.', solver);
