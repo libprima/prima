@@ -1,3 +1,7 @@
+#include "fintrf.h"
+
+module fmxcl_mod
+!--------------------------------------------------------------------------------------------------!
 ! FMXCL_MOD is a module that provides the following constants
 !
 ! IK_CL
@@ -29,18 +33,13 @@
 ! (write_rscalar_sp, write_rscalar_dp, write_rscalar_qp, write_iscalar_int16_sp,
 ! write_iscalar_int16_dp, ...), but there are too many combinations! The same applies to fmxWriteMPtr.
 ! 3. We decide to name the procedures in exactly the same way as in FMXAPI_MOD so that the classical
-! and normal modes of the MEX gateways can have almost the same I/O code except for some inputs that
-! do not appear in the classical mode, although they use fmxReadMPtr/fmxWriteMPtr from different modules.
+! and normal modes of the MEX gateways can have almost the same I/O code except for inputs that do 
+! not appear in the classical mode, although they use fmxReadMPtr/fmxWriteMPtr from different modules.
 
 ! Coded by Zaikun ZHANG in July 2020.
 !
 ! Last Modified: Monday, January 17, 2022 AM12:57:02
-
-
-#include "fintrf.h"
-
-
-module fmxcl_mod
+!--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : DP, IK_CL => IK_DFT, RP_CL => DP
 use, non_intrinsic :: fmxapi_mod, only : mwOne, notComplex

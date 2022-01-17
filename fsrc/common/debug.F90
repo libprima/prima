@@ -8,7 +8,7 @@ module debug_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Monday, January 17, 2022 PM11:00:45
+! Last Modified: Tuesday, January 18, 2022 AM01:01:41
 !--------------------------------------------------------------------------------------------------!
 implicit none
 private
@@ -39,10 +39,10 @@ subroutine assert(condition, description, srname)
 !! (python -O), assert will also be ignored.
 !--------------------------------------------------------------------------------------------------!
 implicit none
-#if __DEBUGGING__ == 1
 logical, intent(in) :: condition  ! A condition that is expected to be true
 character(len=*), intent(in) :: description  ! Description of the condition in human language
 character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure
+#if __DEBUGGING__ == 1
 if (.not. condition) then
     call errstop(trim(srname), 'Assertion failed: '//trim(description))
 end if
