@@ -1,3 +1,7 @@
+#include "fintrf.h"
+
+module prob_mod
+!--------------------------------------------------------------------------------------------------!
 ! PROB_MOD is a module defining the optimization problem. In particular, it implements CALFUN and
 ! CALCFC.  CALFUN evaluates the objective function for unconstrained, bound constrained, and
 ! linearly constrained problems; CALCFC evaluates the objective function and constraint for
@@ -6,11 +10,7 @@
 ! Coded by Zaikun Zhang in July 2020.
 !
 ! Last Modified: Tuesday, January 18, 2022 AM12:14:54
-
-
-#include "fintrf.h"
-
-module prob_mod
+!--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
