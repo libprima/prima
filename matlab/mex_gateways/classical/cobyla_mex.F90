@@ -10,7 +10,7 @@
 !
 ! Started in March 2020
 !
-! Last Modified: Tuesday, January 18, 2022 PM10:42:31
+! Last Modified: Wednesday, January 19, 2022 AM01:08:52
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -132,7 +132,7 @@ m = int(size(constr0), kind(m))
 
 ! Decide the maximal amount of history to record
 ! MERGE(TSOURCE, FSOURCE, MASK) = TSOURCE if MASK is .TRUE., or FSOURCE if MASK is .FALSE.
-unit_memo = int((n * merge(1, 0, output_xhist) + m * merge(1, 0, output_conhist) + 2) * cstyle_sizeof(0.0_RP_CL), kind(unit_memo))
+unit_memo = int((n*merge(1, 0, output_xhist) + m*merge(1, 0, output_conhist) + 2) * cstyle_sizeof(0.0_RP_CL), kind(unit_memo))
 maximal_hist = int(MAXMEMORY_CL / unit_memo, kind(maximal_hist))
 maxhist_in = maxhist
 maxhist = max(0_IK_CL, min(maxfun, maxhist))
@@ -208,7 +208,7 @@ end subroutine mexFunction
 
 subroutine calcfc(n, m, x, f, constr)
 !--------------------------------------------------------------------------------------------------!
-! The Fortran subroutine that evaluates the objective&constraint functions in COBYLA.
+! This is the Fortran subroutine that evaluates the objective & constraint function.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules

@@ -10,7 +10,7 @@
 !
 ! Started in March 2020
 !
-! Last Modified: Tuesday, January 18, 2022 PM10:43:16
+! Last Modified: Wednesday, January 19, 2022 AM01:09:14
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -175,7 +175,7 @@ end subroutine mexFunction
 
 subroutine calfun(n, x, f)
 !--------------------------------------------------------------------------------------------------!
-! The Fortran subroutine that evaluates the objective function in UOBYQA, NEWUOA, BOBYQA, and LINCOA
+! This is the Fortran subroutine that evaluates the objective function.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
