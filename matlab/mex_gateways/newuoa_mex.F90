@@ -10,7 +10,7 @@
 !
 ! Started in March 2020
 !
-! Last Modified: Sunday, January 16, 2022 PM11:39:00
+! Last Modified: Tuesday, January 18, 2022 PM09:08:30
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -52,7 +52,7 @@ integer(IK) :: maxfun
 integer(IK) :: maxhist
 integer(IK) :: nf
 integer(IK) :: npt
-integer(IK) :: output_xhist
+logical :: output_xhist
 real(RP) :: eta1
 real(RP) :: eta2
 real(RP) :: f
@@ -90,7 +90,7 @@ call fmxReadMPtr(pinput(14), output_xhist)
 
 ! Call the Fortran code
 ! There are different cases because XHIST may or may not be passed to the Fortran code.
-if (output_xhist > 0) then
+if (output_xhist) then
     call newuoa(calfun, x, f, nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, &
         & eta1, eta2, gamma1, gamma2, xhist=xhist, fhist=fhist, maxhist=maxhist, info=info)
 else

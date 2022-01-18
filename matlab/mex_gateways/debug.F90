@@ -9,7 +9,10 @@ module debug_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Tuesday, January 18, 2022 AM01:02:06
+! Last Modified: Tuesday, January 18, 2022 PM08:29:00
+!--------------------------------------------------------------------------------------------------!
+!! N.B.: When interfacing Fortran code with MATLAB, we use this module to replace the one defined in
+!! fsrc/common/debug.F90, in order to generate errors or warnings that are native to MATLAB.
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -25,7 +28,7 @@ end interface verisize
 interface
     subroutine mexWarnMsgIdAndTxt(warningid, warningmsg)
     implicit none
-    character * (*) warningid, warningmsg
+    character*(*), intent(in) :: warningid, warningmsg
     end subroutine mexWarnMsgIdAndTxt
     subroutine mexErrMsgIdAndTxt(errorid, errormsg)
     implicit none
@@ -49,17 +52,18 @@ subroutine assert(condition, description, srname)
 !! N.B.: As in C, we design ASSERT to operate only in the debug mode, i.e., when __DEBUGGING__ == 1;
 !! when __DEBUGGING__ == 0, ASSERT does nothing. For the checking that should take effect in both
 !! the debug and release modes, use VALIDATE (see below) instead. In the optimized mode of Python
-!! (python -O), assert will also be ignored.
+!! (python -O), the Python `assert` will also be ignored. MATLAB does not behave in this way.
 !--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : DEBUGGING
 implicit none
 logical, intent(in) :: condition  ! A condition that is expected to be true
 character(len=*), intent(in) :: description  ! Description of the condition in human language
 character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure
-#if __DEBUGGING__ == 1
-if (.not. condition) then
-    call errstop(trim(srname), 'Assertion failed: '//trim(description))
+if (DEBUGGING) then
+    if (.not. condition) then
+        call errstop(trim(srname), 'Assertion failed: '//trim(description))
+    end if
 end if
-#endif
 end subroutine assert
 
 

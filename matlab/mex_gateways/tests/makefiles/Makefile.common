@@ -67,6 +67,9 @@ COMMON_SRC := $(shell sed "s/^/\.\/common\//" $(COMMON_DIR)/ffiles.txt)
 SOLVER_SRC := $(shell sed "s/^/\.\/$(SOLVER)\//" $(SOLVER_DIR)/ffiles.txt)
 MEXGATE_SRC := fmxapi.F90 prob.F90 gethuge.F90 $(SOLVER)_mex.F90 ./classical/fmxcl.F90 ./classical/$(SOLVER)_mex.F90
 SRC := $(COMMON_SRC) $(SOLVER_SRC) $(MEXGATE_SRC)
+# DEBUGF90 is the name of the Fortran file that defines `debug_mod`, which has a Fortran version and
+# a MEX version. We should use the MEX version in place of the Fortran one when testing the MEX gateways.
+DEBUGF90 := debug.F90
 
 # Headers.
 # N.B.: If we define COMMON as "./common/", then, when adapting the header, sed will complain
@@ -536,6 +539,7 @@ source_%: $(SRC_DIRS)
 	@printf "\nMaking a copy of the source code for the test.\n"
 	@for DIR in $(SRC_DIRS); do cp -r "$$DIR" ./; done
 	@find $(MEXGATE_DIR) -maxdepth 1 \( -type f -o \( -type d -a -name 'classical' \) \) -exec cp -r {} ./ \;
+	@mv ./$(DEBUGF90) ./$(COMMON)  # Use the MEX version of debug.F90 instead of the Fortran version.
 	@cp $(TEST_DIR)/../fintrf.h $(FINTRFH)
 	@find ./ -type f  \
 		\( -name '*.mod' \

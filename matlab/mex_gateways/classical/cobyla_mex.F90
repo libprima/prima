@@ -10,7 +10,7 @@
 !
 ! Started in March 2020
 !
-! Last Modified: Tuesday, January 18, 2022 AM01:15:53
+! Last Modified: Tuesday, January 18, 2022 PM09:11:31
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -59,6 +59,7 @@ subroutine mexFunction(nargout, poutput, nargin, pinput)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : IK
+use, non_intrinsic :: linalg_mod, only : int
 use, non_intrinsic :: memory_mod, only : safealloc, cstyle_sizeof
 
 ! Fortran MEX API modules
@@ -92,9 +93,9 @@ integer(IK_CL) :: maxhist
 integer(IK_CL) :: maxhist_in
 integer(IK_CL) :: maxxhist
 integer(IK_CL) :: n
-integer(IK_CL) :: output_conhist
-integer(IK_CL) :: output_xhist
 integer(IK_CL) :: unit_memo
+logical :: output_conhist
+logical :: output_xhist
 real(RP_CL) :: cstrv
 real(RP_CL) :: f
 real(RP_CL) :: f0

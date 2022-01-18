@@ -89,7 +89,7 @@ integer(IK_CL) :: maxhist
 integer(IK_CL) :: maxxhist
 integer(IK_CL) :: n
 integer(IK_CL) :: npt
-integer(IK_CL) :: output_xhist
+logical :: output_xhist
 real(RP_CL) :: f
 real(RP_CL) :: ftarget
 real(RP_CL) :: rhobeg
@@ -119,7 +119,7 @@ call fmxReadMPtr(pinput(10), output_xhist)
 n = int(size(x), kind(n))
 
 ! Decide the maximal length of history according to MEXMEMORY in CONSTS_MOD
-if (output_xhist > 0) then
+if (output_xhist) then
     maximal_hist = int(MAXMEMORY_CL / ((n + 1) * cstyle_sizeof(0.0_RP_CL)), kind(maximal_hist))
     maxxhist = max(0_IK_CL, min(maxfun, maxhist))
     ! We cannot simply take MAXXHIST = MIN(MAXXHIST, MAXIMAL_HIST),
