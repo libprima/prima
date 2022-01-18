@@ -9,7 +9,7 @@ module debug_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Tuesday, January 18, 2022 PM08:29:00
+! Last Modified: Tuesday, January 18, 2022 PM10:34:12
 !--------------------------------------------------------------------------------------------------!
 !! N.B.: When interfacing Fortran code with MATLAB, we use this module to replace the one defined in
 !! fsrc/common/debug.F90, in order to generate errors or warnings that are native to MATLAB.
@@ -25,14 +25,17 @@ interface verisize
     module procedure verisize_logical_1, verisize_logical_2
 end interface verisize
 
+! Specify the interfaces of mexWarnMsgIdAndTxt and mexErrMsgIdAndTxt.
+! We may use those specified in fmxapi_mod. However, that would make debug.F90 depend on fmxapi.F90,
+! and make it impossible to use debug_mod in fmxapi.F90.
 interface
-    subroutine mexWarnMsgIdAndTxt(warningid, warningmsg)
+    subroutine mexWarnMsgIdAndTxt(wid, wmsg)
     implicit none
-    character*(*), intent(in) :: warningid, warningmsg
+    character*(*), intent(in) :: wid, wmsg
     end subroutine mexWarnMsgIdAndTxt
-    subroutine mexErrMsgIdAndTxt(errorid, errormsg)
+    subroutine mexErrMsgIdAndTxt(eid, emsg)
     implicit none
-    character*(*), intent(in) :: errorid, errormsg
+    character*(*), intent(in) :: eid, emsg
     end subroutine mexErrMsgIdAndTxt
 end interface
 

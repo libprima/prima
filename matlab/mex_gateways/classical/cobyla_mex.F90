@@ -10,7 +10,7 @@
 !
 ! Started in March 2020
 !
-! Last Modified: Tuesday, January 18, 2022 PM09:11:31
+! Last Modified: Tuesday, January 18, 2022 PM10:22:33
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -59,7 +59,6 @@ subroutine mexFunction(nargout, poutput, nargin, pinput)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : IK
-use, non_intrinsic :: linalg_mod, only : int
 use, non_intrinsic :: memory_mod, only : safealloc, cstyle_sizeof
 
 ! Fortran MEX API modules
@@ -132,20 +131,20 @@ n = int(size(x), kind(n))
 m = int(size(constr0), kind(m))
 
 ! Decide the maximal amount of history to record
-unit_memo = int((int(output_xhist) * n + int(output_conhist) * m + 2) * cstyle_sizeof(0.0_RP_CL), kind(unit_memo))
+! MERGE(TSOURCE, FSOURCE, MASK) = TSOURCE if MASK is .TRUE., or FSOURCE if MASK is .FALSE.
+unit_memo = int((n*merge(1, 0, output_xhist) + m*merge(1, 0, output_conhist) + 2) * cstyle_sizeof(0.0_RP_CL), kind(unit_memo))
 maximal_hist = int(MAXMEMORY_CL / unit_memo, kind(maximal_hist))
 maxhist_in = maxhist
 maxhist = max(0_IK_CL, min(maxfun, maxhist))
 if (maxhist > maximal_hist) then
-    ! We cannot simply take MAXXHIST = MIN(MAXXHIST, MAXIMAL_HIST),
-    ! as they may not be the same kind, and compilers may complain.
-    ! We may convert them to the same kind, but overflow may occur.
+    ! We cannot simply take MAXXHIST = MIN(MAXXHIST, MAXIMAL_HIST), as they may not be of the same
+    ! kind, and compilers may complain. We may convert them to the same kind, but overflow may occur.
     maxhist = int(maximal_hist, kind(maxhist))
 end if
 maxfhist = maxhist
-maxxhist = int(output_xhist) * maxhist
+maxxhist = merge(maxhist, 0_IK_CL, output_xhist)
 maxchist = maxhist
-maxconhist = int(output_conhist) * maxhist
+maxconhist = merge(maxhist, 0_IK_CL, output_conhist)
 
 ! Initialize NF and the history
 nf = 0
