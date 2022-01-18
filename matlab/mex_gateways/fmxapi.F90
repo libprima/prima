@@ -26,7 +26,7 @@
 !
 ! Started in July 2020
 !
-! Last Modified: Tuesday, January 18, 2022 PM09:07:17
+! Last Modified: Tuesday, January 18, 2022 PM10:19:03
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -151,9 +151,9 @@ interface
 ! INTEGER(INT32_MEX) by INTEGER.
 
 ! MEX subroutines
-    subroutine mexErrMsgIdAndTxt(errorid, errormsg)
+    subroutine mexErrMsgIdAndTxt(eid, emsg)
     implicit none
-    character*(*), intent(in) :: errorid, errormsg
+    character*(*), intent(in) :: eid, emsg
     end subroutine mexErrMsgIdAndTxt
 
     subroutine mxCopyPtrToReal8(px, y, n)
@@ -557,10 +557,10 @@ call mxCopyPtrToReal8(fmxGetDble(px), x_dp, mwOne)
 x = int(x_dp(1), kind(x))
 
 ! Check whether the type conversion is proper
-if (abs(x - x_dp(1)) > epsilon(x_dp)) then
+if (abs(x - x_dp(1)) > epsilon(x_dp) * max(abs(x), 1_IK)) then
     eid = 'FMXAPI:ConversionError'
-    msg = 'READ_ISCALAR: Large error occurs when converting REAL(DP) to INTEGER(IK) '&
-        & \\'(maybe due to overflow, or the input is not an integer).'
+    msg = 'READ_ISCALAR: Large error occurs when converting REAL(DP) to INTEGER(IK) ' &
+        & //'(maybe due to overflow, or the input is not an integer).'
     call mexErrMsgIdAndTxt(trim(eid), trim(msg))
 end if
 end subroutine read_iscalar
@@ -582,7 +582,6 @@ mwPointer, intent(in) :: px
 logical, intent(out) :: x
 
 ! Local variables
-character(len=*), parameter :: srname = 'READ_LSCALAR'
 character(len=MSGLEN) :: eid, msg
 integer :: x_int
 real(DP) :: x_dp(1)
@@ -597,10 +596,10 @@ call mxCopyPtrToReal8(fmxGetDble(px), x_dp, mwOne)
 x_int = int(x_dp(1))
 
 ! Check whether the type conversion is proper
-if (abs(x_int - x_dp(1)) > epsilon(x_dp)) then
+if (abs(x_int - x_dp(1)) > epsilon(x_dp) * max(abs(x_int), 1)) then
     eid = 'FMXAPI:ConversionError'
-    msg = 'READ_LSCALAR: Large error occurs when converting REAL(DP) to INTEGER '&
-        & \\'(maybe due to overflow, or the input is not an integer).'
+    msg = 'READ_LSCALAR: Large error occurs when converting REAL(DP) to INTEGER ' &
+        & //'(maybe due to overflow, or the input is not an integer).'
     call mexErrMsgIdAndTxt(trim(eid), trim(msg))
 end if
 if (x_int /= 0 .and. x_int /= 1) then
@@ -758,7 +757,7 @@ character(len=MSGLEN) :: eid, msg
 
 ! Convert X to REAL(DP), which is expected by mxCopyReal8ToPtr
 x_dp = real(x, kind(x_dp))
-if (abs(x - x_dp) > epsilon(x_dp)) then
+if (abs(x - x_dp) > epsilon(x_dp) * max(abs(x), 1_IK)) then
     eid = 'FMXAPI:ConversionError'
     msg = 'WRITE_ISCALAR: Large error occurs when converting INTEGER(IK) to REAL(DP) (maybe due to overflow).'
     call mexErrMsgIdAndTxt(trim(eid), trim(msg))

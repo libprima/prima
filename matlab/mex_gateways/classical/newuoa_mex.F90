@@ -10,7 +10,7 @@
 !
 ! Started in March 2020
 !
-! Last Modified: Tuesday, January 18, 2022 AM12:13:00
+! Last Modified: Tuesday, January 18, 2022 PM10:13:38
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -86,9 +86,11 @@ integer(IK_CL) :: khist
 integer(IK_CL) :: maxfhist
 integer(IK_CL) :: maxfun
 integer(IK_CL) :: maxhist
+integer(IK_CL) :: maxhist_in
 integer(IK_CL) :: maxxhist
 integer(IK_CL) :: n
 integer(IK_CL) :: npt
+integer(IK_CL) :: unit_memo
 logical :: output_xhist
 real(RP_CL) :: f
 real(RP_CL) :: ftarget
@@ -115,27 +117,22 @@ call fmxReadMPtr(pinput(8), iprint)
 call fmxReadMPtr(pinput(9), maxhist)
 call fmxReadMPtr(pinput(10), output_xhist)
 
-! Get the size
+! Get the sizes
 n = int(size(x), kind(n))
 
-! Decide the maximal length of history according to MEXMEMORY in CONSTS_MOD
-if (output_xhist) then
-    maximal_hist = int(MAXMEMORY_CL / ((n + 1) * cstyle_sizeof(0.0_RP_CL)), kind(maximal_hist))
-    maxxhist = max(0_IK_CL, min(maxfun, maxhist))
-    ! We cannot simply take MAXXHIST = MIN(MAXXHIST, MAXIMAL_HIST),
-    ! as they may not be the same kind, and compilers may complain.
-    ! We may convert them to the same kind, but overflow may occur.
-    if (maxxhist > maximal_hist) then
-        maxxhist = int(maximal_hist, kind(maxxhist))
-    end if
-else
-    maximal_hist = int(MAXMEMORY_CL / (cstyle_sizeof(0.0_RP_CL)), kind(maximal_hist))
-    maxxhist = 0
+! Decide the maximal amount of history to record
+! MERGE(TSOURCE, FSOURCE, MASK) = TSOURCE if MASK is .TRUE., or FSOURCE if MASK is .FALSE.
+unit_memo = int((n * merge(1, 0, output_xhist) + 1) * cstyle_sizeof(0.0_RP_CL), kind(unit_memo))
+maximal_hist = int(MAXMEMORY_CL / unit_memo, kind(maximal_hist))
+maxhist_in = maxhist
+maxhist = max(0_IK_CL, min(maxfun, maxhist))
+if (maxhist > maximal_hist) then
+    ! We cannot simply take MAXXHIST = MIN(MAXXHIST, MAXIMAL_HIST), as they may not be of the same
+    ! kind, and compilers may complain. We may convert them to the same kind, but overflow may occur.
+    maxhist = int(maximal_hist, kind(maxhist))
 end if
-maxfhist = max(0_IK_CL, min(maxfun, maxhist))
-if (maxfhist > maximal_hist) then
-    maxfhist = int(maximal_hist, kind(maxfhist))
-end if
+maxfhist = maxhist
+maxxhist = merge(maxhist, 0_IK_CL, output_xhist)
 
 ! Initialize NF and the history
 nf = 0
@@ -155,8 +152,8 @@ if (maxfhist >= 1 .and. maxfhist < nf) then
     fhist = [fhist(khist + 1:maxfhist), fhist(1:khist)]
 end if
 
-! If MAXFHIST_IN >= NF_C > MAXFHIST_C, warn that not all history is recorded.
-if (maxfhist < min(nf, maxhist)) then
+! If MAXHIST_IN >= NF > MAXHIST, warn that not all history is recorded.
+if (maxhist < min(nf, maxhist_in)) then
     print '(/1A, I7, 1A)', 'WARNING: '//solver//': due to memory limit, MAXHIST is reset to ', maxfhist, '.'
     print '(1A/)', 'Only the history of the last MAXHIST iterations is recoreded.'
 end if
