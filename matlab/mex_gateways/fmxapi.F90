@@ -26,7 +26,7 @@
 !
 ! Started in July 2020
 !
-! Last Modified: Monday, January 17, 2022 AM12:57:39
+! Last Modified: Tuesday, January 18, 2022 PM09:07:17
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -104,6 +104,7 @@ interface fmxReadMPtr
     ! shape of the data and converts it to REAL(RP) or INTEGER(IK).
     module procedure read_rscalar, read_rvector, read_rmatrix
     module procedure read_iscalar
+    module procedure read_lscalar
 end interface fmxReadMPtr
 
 interface fmxWriteMPtr
@@ -530,7 +531,7 @@ subroutine read_iscalar(px, x)
 ! mxCopyInteger2ToPtr, mxCopyPtrToInteger4, mxCopyInteger4ToPtr; no function for INTEGER*8). This
 ! makes it impossible to pass integer data properly unless we know the kind of the integer.
 ! Therefore, in general, it is recommended to pass integers as double variables and then cast them
-! back to integers befor using them in the Fortran code. Indeed, in MATLAB, even if we define
+! back to integers before using them in the Fortran code. Indeed, in MATLAB, even if we define
 ! X = 1000, the class of X is double! To get an integer X, we would have to define convert it to an
 ! integer explicitly!
 use, non_intrinsic :: consts_mod, only : DP, IK, MSGLEN
@@ -556,12 +557,61 @@ call mxCopyPtrToReal8(fmxGetDble(px), x_dp, mwOne)
 x = int(x_dp(1), kind(x))
 
 ! Check whether the type conversion is proper
-if (abs(x - x_dp(1)) > 0.5_DP) then
+if (abs(x - x_dp(1)) > epsilon(x_dp)) then
     eid = 'FMXAPI:ConversionError'
-    msg = 'READ_ISCALAR: Large error occurs when converting REAL(DP) to INTEGER(IK) (maybe due to overflow).'
+    msg = 'READ_ISCALAR: Large error occurs when converting REAL(DP) to INTEGER(IK) '&
+        & \\'(maybe due to overflow, or the input is not an integer).'
     call mexErrMsgIdAndTxt(trim(eid), trim(msg))
 end if
 end subroutine read_iscalar
+
+
+subroutine read_lscalar(px, x)
+! READ_LSCALAR reads a MEX input X that is a double scalar with a boolean value. Such a value will
+! be passed to the Fortran code as a logical. In MEX, data is passed by pointers, but there is no
+! functions that can read a boolean value from a pointer. Therefore, in general, it is recommended
+! to pass logicals as double variables and then cast them back to logicals before using them in the
+! Fortran code.
+use, non_intrinsic :: consts_mod, only : DP, MSGLEN
+implicit none
+
+! Input
+mwPointer, intent(in) :: px
+
+! Output
+logical, intent(out) :: x
+
+! Local variables
+character(len=*), parameter :: srname = 'READ_LSCALAR'
+character(len=MSGLEN) :: eid, msg
+integer :: x_int
+real(DP) :: x_dp(1)
+
+! Check input type and size
+call fmxVerifyClassShape(px, 'double', 'scalar')
+
+! Read the input
+call mxCopyPtrToReal8(fmxGetDble(px), x_dp, mwOne)
+
+! Convert the input to the type expected by the Fortran code
+x_int = int(x_dp(1))
+
+! Check whether the type conversion is proper
+if (abs(x_int - x_dp(1)) > epsilon(x_dp)) then
+    eid = 'FMXAPI:ConversionError'
+    msg = 'READ_LSCALAR: Large error occurs when converting REAL(DP) to INTEGER '&
+        & \\'(maybe due to overflow, or the input is not an integer).'
+    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
+end if
+if (x_int /= 0 .and. x_int /= 1) then
+    eid = 'FMXAPI:InputNotBoolean'
+    msg = 'READ_LSCALAR: The input should be boolean, either 0 or 1.'
+    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
+end if
+
+x = (x_int == 1)
+
+end subroutine read_lscalar
 
 
 subroutine write_rscalar(x, px)
@@ -708,7 +758,7 @@ character(len=MSGLEN) :: eid, msg
 
 ! Convert X to REAL(DP), which is expected by mxCopyReal8ToPtr
 x_dp = real(x, kind(x_dp))
-if (abs(x - x_dp) > 0.5_DP) then
+if (abs(x - x_dp) > epsilon(x_dp)) then
     eid = 'FMXAPI:ConversionError'
     msg = 'WRITE_ISCALAR: Large error occurs when converting INTEGER(IK) to REAL(DP) (maybe due to overflow).'
     call mexErrMsgIdAndTxt(trim(eid), trim(msg))

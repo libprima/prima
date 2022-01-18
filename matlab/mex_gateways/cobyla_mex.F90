@@ -10,7 +10,7 @@
 !
 ! Started in March 2020
 !
-! Last Modified: Monday, January 17, 2022 AM12:39:11
+! Last Modified: Tuesday, January 18, 2022 PM09:09:13
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -57,8 +57,8 @@ integer(IK) :: maxfilt
 integer(IK) :: maxfun
 integer(IK) :: maxhist
 integer(IK) :: nf
-integer(IK) :: output_conhist
-integer(IK) :: output_xhist
+logical :: output_conhist
+logical :: output_xhist
 real(RP) :: cstrv
 real(RP) :: ctol
 real(RP) :: f
@@ -102,13 +102,13 @@ m = int(size(constr0), kind(m))  ! M is a compulsory input of the Fortran code.
 
 ! Call the Fortran code
 ! There are different cases because XHIST/CONHIST may or may not be passed to the Fortran code.
-if (output_xhist > 0 .and. output_conhist > 0) then
+if (output_xhist .and. output_conhist) then
     call cobyla(calcfc, m, x, f, cstrv, constr, f0, constr0, nf, rhobeg, rhoend, ftarget, ctol, &
         & maxfun, iprint, xhist=xhist, fhist=fhist, chist=chist, conhist=conhist, maxhist=maxhist, maxfilt=maxfilt, info=info)
-elseif (output_xhist > 0) then
+elseif (output_xhist) then
     call cobyla(calcfc, m, x, f, cstrv, constr, f0, constr0, nf, rhobeg, rhoend, ftarget, ctol, &
         & maxfun, iprint, xhist=xhist, fhist=fhist, chist=chist, maxhist=maxhist, maxfilt=maxfilt, info=info)
-elseif (output_conhist > 0) then
+elseif (output_conhist) then
     call cobyla(calcfc, m, x, f, cstrv, constr, f0, constr0, nf, rhobeg, rhoend, ftarget, ctol, &
         & maxfun, iprint, fhist=fhist, chist=chist, conhist=conhist, maxhist=maxhist, maxfilt=maxfilt, info=info)
 else
