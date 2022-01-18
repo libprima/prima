@@ -28,7 +28,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, January 13, 2022 AM09:29:59
+! Last Modified: Wednesday, January 19, 2022 AM12:44:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -180,8 +180,8 @@ subroutine cobyla(calcfc, m, x, f, &
 !   Important Notice:
 !   Setting MAXHIST to a large value can be costly in terms of memory for large problems.
 !   For instance, if N = 1000 and MAXHIST = 100, 000, XHIST will take up to 1 GB if we use double
-!   precision. MAXHIST will be reset to a smaller value if the memory needed exceeds MAXMEMORY 
-!   defined in CONSTS_MOD (see consts.F90 under the directory named "common"; default: 2GB). 
+!   precision. MAXHIST will be reset to a smaller value if the memory needed exceeds MAXMEMORY
+!   defined in CONSTS_MOD (see consts.F90 under the directory named "common"; default: 2GB).
 !   Use *HIST with caution!!! (N.B.: the algorithm is NOT designed for large problems).
 !
 ! INFO
@@ -210,7 +210,7 @@ use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, FTARGET_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TEN, TENTH, EPS, MSGLEN
 use, non_intrinsic :: debug_mod, only : assert, errstop, warning
-use, non_intrinsic :: evaluate_mod, only : eval_count, f_x0, constr_x0
+use, non_intrinsic :: evaluate_mod, only : fc_x0_provided, x0, f_x0, constr_x0
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite, is_neginf, is_posinf
 use, non_intrinsic :: memory_mod, only : safealloc
@@ -234,9 +234,9 @@ integer(IK), intent(in), optional :: iprint
 integer(IK), intent(in), optional :: maxfilt
 integer(IK), intent(in), optional :: maxfun
 integer(IK), intent(in), optional :: maxhist
-real(RP), intent(in), target, optional :: constr0(:)
+real(RP), intent(in), optional :: constr0(:)
 real(RP), intent(in), optional :: ctol
-real(RP), intent(in), target, optional :: f0
+real(RP), intent(in), optional :: f0
 real(RP), intent(in), optional :: ftarget
 real(RP), intent(in), optional :: rhobeg
 real(RP), intent(in), optional :: rhoend
@@ -276,21 +276,14 @@ real(RP), allocatable :: constr_loc(:)
 real(RP), allocatable :: fhist_loc(:)
 real(RP), allocatable :: xhist_loc(:, :)
 
+! Preconditions
+if (DEBUGGING) then
+    call assert(present(f0) .eqv. present(constr0), 'F0 and CONSTR0 are both present or both absent', srname)
+end if
+
 ! Sizes
 n = int(size(x), kind(n))
 
-! The user may provide the function/constraint value at X0. Set up F_X0 and CONSTR_X0 accordingly.
-! EVAL_COUNT is only used to indicate whether we are at X0 when calling EVALFC. We do not use it to
-! define NF. COBYLB will count NF even though NF = EVAL_COUNT.
-eval_count = 0
-nullify (f_x0)
-nullify (constr_x0)
-if (present(f0)) then
-    f_x0 => f0
-end if
-if (present(constr0)) then
-    constr_x0 => constr0
-end if
 ! Exit if the size of CONSTR0 is inconsistent with M.
 if (present(constr0)) then
     if (size(constr0) /= m) then
@@ -303,13 +296,25 @@ if (present(constr0)) then
     end if
 end if
 
-! Allocate memory for CONSTR_LOC
+! Allocate memory for CONSTR_LOC, since M is now available.
 call safealloc(constr_loc, m)
 
 ! Replace any NaN or Inf in X by ZERO.
 where (is_nan(x) .or. is_inf(x))
     x = ZERO
 end where
+
+! If the user provides the function & constraint value at X0, then set up F_X0 and CONSTR_X0.
+if (present(f0) .and. present(constr0)) then
+    fc_x0_provided = .true.
+    !--------------------------------------------------!
+    call safealloc(x0, n)  ! Removable in F2003.
+    call safealloc(constr_x0, m)  ! Removable in F2003.
+    !--------------------------------------------------!
+    x0 = x
+    f_x0 = f0
+    constr_x0 = constr0
+end if
 
 ! If RHOBEG is present, then RHOBEG_LOC is a copy of RHOBEG; otherwise, RHOBEG_LOC takes the default
 ! value for RHOBEG, taking the value of RHOEND into account. Note that RHOEND is considered only if
@@ -390,8 +395,11 @@ call cobylb(calcfc, iprint_loc, maxfilt_loc, maxfun_loc, ctol_loc, ftarget_loc, 
     & constr_loc, x, nf_loc, chist_loc, conhist_loc, cstrv_loc, f, fhist_loc, xhist_loc, info_loc)
 !--------------------------------------------------------------------------------------------------!
 
-nullify (f_x0)
-nullify (constr_x0)
+! Deallocate X0 and CONSTR_X0 (although automatic deallocation would happen when the subroutine ends).
+if (fc_x0_provided) then
+    deallocate (x0)
+    deallocate (constr_x0)
+end if
 
 ! Write the outputs.
 
@@ -478,7 +486,6 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(nf_loc <= maxfun_loc, 'NF <= MAXFUN', srname)
-    call assert(nf_loc == eval_count, 'NF == EVAL_COUNT', srname)
     call assert(size(x) == n .and. .not. any(is_nan(x)), 'SIZE(X) == N, X does not contain NaN', srname)
     nhist = min(nf_loc, maxhist_loc)
     if (present(xhist)) then

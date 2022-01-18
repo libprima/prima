@@ -6,25 +6,22 @@ module evaluate_mod
 !
 ! Started: August 2021
 !
-! Last Modified: Thursday, January 06, 2022 PM08:16:57
+! Last Modified: Wednesday, January 19, 2022 AM12:43:22
 !--------------------------------------------------------------------------------------------------!
 
-use, non_intrinsic :: consts_mod, only : RP, IK
+use, non_intrinsic :: consts_mod, only : RP
 implicit none
 private
 public :: evalf
 public :: evalfc
-public :: eval_count, f_x0, constr_x0
+public :: fc_x0_provided, x0, f_x0, constr_x0
 
-! Remarks on EVAL_COUNT, F_X0, and CONSTR_X0:
-! 1. Currently (20211217), EVAL_COUNT, F_X0, and CONSTR_X0 are only used in nonlinear constrained
-! problems, where the user may provide the function/constraint value of the starting point X0.
-! 2. EVAL_COUNT is only used to indicate whether the current evaluation is for the starting point.
-! Even though it equals the number of function/constrained evaluation, it is not used to define NF.
-! The solvers will count NF themselves.
-integer(IK), save :: eval_count = 0_IK
-real(RP), pointer, save :: f_x0 => null()
-real(RP), pointer, save :: constr_x0(:) => null()
+! N.B.: FC_X0_PROVIDED, X0, F_X0 and CONSTR_X0 are only used in nonlinear constrained problems,
+! where the user may provide the function & constraint values of the starting point X0.
+logical :: fc_x0_provided
+real(RP), allocatable :: x0(:)
+real(RP) :: f_x0
+real(RP), allocatable :: constr_x0(:)
 
 
 contains
@@ -103,6 +100,7 @@ subroutine evalfc(calcfc, x, f, constr, cstrv)
 use, non_intrinsic :: consts_mod, only : RP, ZERO, HUGEFUN, HUGECON, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
+use, non_intrinsic :: linalg_mod, only : norm
 use, non_intrinsic :: pintrf_mod, only : OBJCON
 implicit none
 
@@ -117,12 +115,15 @@ real(RP), intent(out) :: cstrv
 
 ! Local variables
 character(len=*), parameter :: srname = 'EVALFC'
+logical :: evaluated
 
 ! Preconditions
 if (DEBUGGING) then
     ! X should not contain NaN if the initial X does not contain NaN and the subroutines generating
     ! trust-region/geometry steps work properly so that they never produce a step containing NaN/Inf.
     call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
+    call assert((allocated(x0) .and. allocated(constr_x0)) .or. .not. fc_x0_provided, &
+        & 'X0 and CONSTR_X0 are allocated if FC_X0_PROVIDED is true', srname)
 end if
 
 !====================!
@@ -136,15 +137,17 @@ if (any(is_nan(x))) then
     constr = f
     cstrv = f
 else
-    if (eval_count == 0 .and. associated(f_x0) .and. associated(constr_x0)) then
-        f = f_x0
-        nullify (f_x0)
-        constr = constr_x0
-        nullify (constr_x0)
-    else
+    evaluated = .false.
+    if (fc_x0_provided .and. allocated(x0) .and. allocated(constr_x0)) then
+        if (norm(x - x0) <= 0) then
+            f = f_x0
+            constr = constr_x0
+            evaluated = .true.
+        end if
+    end if
+    if (.not. evaluated) then
         call calcfc(x, f, constr)  ! Evaluate F and CONSTR.
     end if
-    eval_count = eval_count + 1_IK
 
     ! Moderated extreme barrier: replace NaN/huge objective or constraint values with a large but
     ! finite value. This is naive, and better approaches surely exist.
