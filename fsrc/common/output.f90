@@ -77,7 +77,7 @@ character(len=*), parameter :: srname = 'RETMSG'
 character(len=3) :: fstat  ! 'OLD' or 'NEW'
 character(len=FNAMELEN) :: fout
 character(len=MSGLEN) :: msg
-integer :: ios  ! IO status of the writing. Should be an integer of default kind.
+integer :: iostat  ! IO status of the writing. Should be an integer of default kind.
 integer :: wunit ! Logical unit for the writing. Should be an integer of default kind.
 integer(IK), parameter :: valid_exit_flags(9) = [FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, &
     & SMALL_TR_RADIUS, TRSUBP_FAILED, NAN_INF_F, NAN_INF_X, NAN_MODEL, DAMAGING_ROUNDING]
@@ -103,8 +103,8 @@ else  ! Print the message to a file named FOUT with the writing unit being OUTUN
     fout = trim(solver)//'_output.txt'
     inquire (file=fout, exist=fexist)
     fstat = merge(tsource='old', fsource='new', mask=fexist)
-    open (unit=wunit, file=fout, status=fstat, position='append', iostat=ios, action='write')
-    if (ios /= 0) then
+    open (unit=wunit, file=fout, status=fstat, position='append', iostat=iostat, action='write')
+    if (iostat /= 0) then
         call warning(srname, 'Failed to open file '//fout)
         return
     end if
@@ -201,7 +201,7 @@ real(RP), intent(in), optional :: cpen
 character(len=*), parameter :: srname = 'RHOMSG'
 character(len=3) :: fstat  ! 'OLD' or 'NEW'
 character(len=FNAMELEN) :: fout
-integer :: ios  ! IO status of the writing. Should be an integer of default kind.
+integer :: iostat  ! IO status of the writing. Should be an integer of default kind.
 integer :: wunit ! Logical unit for the writing. Should be an integer of default kind.
 logical :: fexist
 logical :: is_constrained
@@ -220,8 +220,8 @@ else  ! Print the message to a file named FOUT with the writing unit being OUTUN
     fout = trim(solver)//'_output.txt'
     inquire (file=fout, exist=fexist)
     fstat = merge(tsource='old', fsource='new', mask=fexist)
-    open (unit=wunit, file=fout, status=fstat, position='append', iostat=ios, action='write')
-    if (ios /= 0) then
+    open (unit=wunit, file=fout, status=fstat, position='append', iostat=iostat, action='write')
+    if (iostat /= 0) then
         call warning(srname, 'Failed to open file '//fout)
         return
     end if
@@ -290,7 +290,7 @@ real(RP), intent(in), optional :: cpen
 character(len=*), parameter :: srname = 'CPENMSG'
 character(len=3) :: fstat  ! 'OLD' or 'NEW'
 character(len=FNAMELEN) :: fout
-integer :: ios  ! IO status of the writing. Should be an integer of default kind.
+integer :: iostat  ! IO status of the writing. Should be an integer of default kind.
 integer :: wunit ! Logical unit for the writing. Should be an integer of default kind.
 logical :: fexist
 
@@ -303,8 +303,8 @@ else  ! Print the message to a file named FOUT with the writing unit being OUTUN
     fout = trim(solver)//'_output.txt'
     inquire (file=fout, exist=fexist)
     fstat = merge(tsource='old', fsource='new', mask=fexist)
-    open (unit=wunit, file=fout, status=fstat, position='append', iostat=ios, action='write')
-    if (ios /= 0) then
+    open (unit=wunit, file=fout, status=fstat, position='append', iostat=iostat, action='write')
+    if (iostat /= 0) then
         call warning(srname, 'Failed to open file '//fout)
         return
     end if
@@ -340,7 +340,7 @@ real(RP), intent(in), optional :: constr(:)
 character(len=*), parameter :: srname = 'FMSG'
 character(len=3) :: fstat  ! 'OLD' or 'NEW'
 character(len=FNAMELEN) :: fout
-integer :: ios  ! IO status of the writing. Should be an integer of default kind.
+integer :: iostat  ! IO status of the writing. Should be an integer of default kind.
 integer :: wunit ! Logical unit for the writing. Should be an integer of default kind.
 logical :: fexist
 logical :: is_constrained
@@ -359,8 +359,8 @@ else  ! Print the message to a file named FOUT with the writing unit being OUTUN
     fout = trim(solver)//'_output.txt'
     inquire (file=fout, exist=fexist)
     fstat = merge(tsource='old', fsource='new', mask=fexist)
-    open (unit=wunit, file=fout, status=fstat, position='append', iostat=ios, action='write')
-    if (ios /= 0) then
+    open (unit=wunit, file=fout, status=fstat, position='append', iostat=iostat, action='write')
+    if (iostat /= 0) then
         call warning(srname, 'Failed to open file '//fout)
         return
     end if

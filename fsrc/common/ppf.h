@@ -33,7 +33,12 @@
  * __USE_STORAGE_SIZE__ (Fortran 2008),
  * __USE_ISO_FORTRAN_ENV_INTREAL__ (Fortran 2008).
  *
- * 3. Why not define these flags as parameters in the Fortran code, e.g.,
+ * 3. Later, when Fortran 2008 is more widely supported by the compilers (e.g.,
+ * in 2025?), we will default __FORTRAN_STANDARD__ to 2008. In addition, we will
+ * remove __USE_STORAGE_SIZE__ and __USE_ISO_FORTRAN_ENV_INTREAL__ and modify
+ * the package so that everything behaves as if the flags are both 1.
+ *
+ * 4. Why not define these flags as parameters in the Fortran code, e.g.,
  *
  * logical, parameter :: __DEBUGGING__ == .false. ?
  *
@@ -68,13 +73,13 @@
 #if defined __FORTRAN_STANDARD__
 #undef __FORTRAN_STANDARD__
 #endif
-#define __FORTRAN_STANDARD__ 2003
+#define __FORTRAN_STANDARD__ 2003 /* Will be default to 2008 later (in 2025?).*/
 /******************************************************************************/
 
 
 /******************************************************************************/
 /* Do we use Powell's linear algebra procedures? */
-/* If not, some algebraic calculations will be implemented with matrix/vector
+/* If not, some basic algebraic functions will be implemented with matrix/vector
  * operations instead of loops. This does not change Powell's algorithms, but
  * it may not produce exactly the same results as Powell's code due to properties
  * of floating-point arithmetic, e.g., the non-associativity of floating-point
@@ -150,11 +155,7 @@
 #undef __QP_AVAILABLE__
 #endif
 /* Change the following line to set __QP_AVAILABLE__ to 1 if REAL128 is
- * available and if you intend to use it.
- * Note:
- * 1. Do NOT change is unless you are really sure.
- * 2. If the code is interfaced with MATLAB, then you still need to modify
- *    mexapi.F to set __USE_QP__ to 1. */
+ * available and if you intend to use it. DO NOT CHANGE IT UNLESS REALLY SURE. */
 #define __QP_AVAILABLE__ 0
 
 /* Revise __REAL_PRECISION__ according to __QP_AVAILABLE__ . */
@@ -168,7 +169,8 @@
 /******************************************************************************/
 /* Do we use the STORAGE_SIZE intrinsic? (Fortran 2008) */
 /* We prefer STORAGE_SIZE to C_SIZEOF, because the former is intrinsic while the
- * later requires the intrinsic module ISO_C_BINDING. */
+ * later requires the intrinsic module ISO_C_BINDING.
+ * The flag will be removed later (in 2025?). */
 #if defined __USE_STORAGE_SIZE__
 #undef __USE_STORAGE_SIZE__
 #endif
@@ -218,7 +220,7 @@
 
 /******************************************************************************/
 /* Do we use INT16, INT32, INT64, REAL32, REAL64, REAL128 from ISO_FORTRAN_ENV?
- * (Fortran 2008) */
+ * (Fortran 2008). This flag will be removed later (in 2025?). */
 #if defined __USE_ISO_FORTRAN_ENV_INTREAL__
 #undef __USE_ISO_FORTRAN_ENV_INTREAL__
 #endif

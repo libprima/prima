@@ -9,16 +9,21 @@ module prob_mod
 !
 ! Coded by Zaikun Zhang in July 2020.
 !
-! Last Modified: Friday, January 21, 2022 AM01:58:09
+! Last Modified: Friday, January 21, 2022 AM11:50:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
-public :: fun_ptr, calfun
-public :: funcon_ptr, calcfc
+public :: calfun
+public :: calcfc
 
+!--------------------------------------------------------------------------------------------------!
+! The following module variables are NOT thread safe. They should be removed later by replacing the
+! current module with two derived types, one fore CALFUN, another for CALFUN.
+public :: fun_ptr, funcon_ptr
 mwPointer :: fun_ptr ! Pointer to objective function, used by UOBYQA, NEWUOA, BOBYQA, and LINCOA
 mwPointer :: funcon_ptr ! Pointer to objective&constraint functions, used by COBYLA
+!--------------------------------------------------------------------------------------------------!
 
 
 contains

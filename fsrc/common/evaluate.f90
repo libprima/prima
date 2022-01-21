@@ -6,7 +6,7 @@ module evaluate_mod
 !
 ! Started: August 2021
 !
-! Last Modified: Wednesday, January 19, 2022 AM12:43:22
+! Last Modified: Friday, January 21, 2022 AM11:50:15
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : RP
@@ -14,14 +14,18 @@ implicit none
 private
 public :: evalf
 public :: evalfc
-public :: fc_x0_provided, x0, f_x0, constr_x0
 
+!--------------------------------------------------------------------------------------------------!
 ! N.B.: FC_X0_PROVIDED, X0, F_X0 and CONSTR_X0 are only used in nonlinear constrained problems,
 ! where the user may provide the function & constraint values of the starting point X0.
+! They are NOT thread safe. They should be removed by a different implementation, e.g., passing
+! F_X0 and CONSTR_X0 to COBYLB explicitly.
+public :: fc_x0_provided, x0, f_x0, constr_x0
 logical :: fc_x0_provided
 real(RP), allocatable :: x0(:)
 real(RP) :: f_x0
 real(RP), allocatable :: constr_x0(:)
+!--------------------------------------------------------------------------------------------------!
 
 
 contains
