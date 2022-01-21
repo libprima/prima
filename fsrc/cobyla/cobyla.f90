@@ -28,7 +28,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, January 21, 2022 AM03:58:42
+! Last Modified: Friday, January 21, 2022 AM10:24:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -305,6 +305,7 @@ where (is_nan(x) .or. is_inf(x))
 end where
 
 ! If the user provides the function & constraint value at X0, then set up F_X0 and CONSTR_X0.
+fc_x0_provided = .false.  ! Must be done. Otherwise, FC_X0_PROVIDED may be undefined.
 if (present(f0) .and. present(constr0)) then
     fc_x0_provided = .true.
     !--------------------------------------------------!

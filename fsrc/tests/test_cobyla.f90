@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wednesday, January 12, 2022 PM07:46:31
+! Last Modified: Friday, January 21, 2022 AM10:17:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -79,6 +79,7 @@ else
     probs_loc(1:nprobs) = ['circle   ', 'ellipsoid', 'fletcheq1', 'fletcheq2', 'hs100    ', 'hexagon  ', 'rsnszk   ', &
         & 'chebyquad', 'chrosen  ', 'trigsabs ', 'trigssqs ', 'vardim   ']
 end if
+fix_dim_probs = '         '   ! Initialization, or compilers complain that the array is not (completely) defined.
 fix_dim_probs(1:7) = ['circle   ', 'ellipsoid', 'fletcheq1', 'fletcheq2', 'hs100    ', 'hexagon  ', 'rsnszk   ']
 
 if (present(mindim)) then
