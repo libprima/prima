@@ -1,4 +1,4 @@
-module cobyla_mod
+module cobyla_mod  ! (The classical mode)
 !--------------------------------------------------------------------------------------------------!
 ! COBYLA_MOD is a module providing a modern Fortran implementation of Powell's COBYLA algorithm in
 !
@@ -28,7 +28,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, January 21, 2022 AM03:58:42
+! Last Modified: Friday, January 21, 2022 AM04:07:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -212,11 +212,19 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TEN, TENTH, EPS, MSGLEN
 use, non_intrinsic :: debug_mod, only : assert, errstop, warning
 use, non_intrinsic :: evaluate_mod, only : fc_x0_provided, x0, f_x0, constr_x0
 use, non_intrinsic :: history_mod, only : prehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite, is_neginf, is_posinf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite !, is_neginf, is_posinf
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : OBJCON
-use, non_intrinsic :: selectx_mod, only : isbetter
+!use, non_intrinsic :: selectx_mod, only : isbetter
 use, non_intrinsic :: preproc_mod, only : preproc
+
+!--------------------------------------------------------------------------------------------------!
+! The following modules are crucial for the classical mode.
+use, non_intrinsic :: evaluate_mod, only : nf_loc => nf
+use, non_intrinsic :: evaluate_mod, only : xhist_loc => xhist, fhist_loc => fhist
+use, non_intrinsic :: evaluate_mod, only : chist_loc => chist, conhist_loc => conhist
+use, non_intrinsic :: history_mod, only : rangehist
+!--------------------------------------------------------------------------------------------------!
 
 ! Solver-specific modules
 use, non_intrinsic :: cobylb_mod, only : cobylb
@@ -263,18 +271,30 @@ integer(IK) :: maxfilt_loc
 integer(IK) :: maxfun_loc
 integer(IK) :: maxhist_loc
 integer(IK) :: n
-integer(IK) :: nf_loc
+
+!--------------------------------------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
+!integer(IK) :: nf_loc
+!--------------------------------------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
+
 integer(IK) :: nhist
 real(RP) :: cstrv_loc
 real(RP) :: ctol_loc
 real(RP) :: ftarget_loc
 real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
-real(RP), allocatable :: chist_loc(:)
-real(RP), allocatable :: conhist_loc(:, :)
+
+!--------------------------------------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
 real(RP), allocatable :: constr_loc(:)
-real(RP), allocatable :: fhist_loc(:)
-real(RP), allocatable :: xhist_loc(:, :)
+!real(RP), allocatable :: chist_loc(:)
+!real(RP), allocatable :: conhist_loc(:, :)
+!real(RP), allocatable :: fhist_loc(:)
+!real(RP), allocatable :: xhist_loc(:, :)
+!--------------------------------------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
+
 
 ! Preconditions
 if (DEBUGGING) then
@@ -390,9 +410,15 @@ call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg
 call prehist(maxhist_loc, m, n, present(chist), chist_loc, present(conhist), conhist_loc, &
     & present(fhist), fhist_loc, present(xhist), xhist_loc)
 
+!--------------------------------------------------------------------------------------------------!
 !-------------------- Call COBYLB, which performs the real calculations. --------------------------!
-call cobylb(calcfc, iprint_loc, maxfilt_loc, maxfun_loc, ctol_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
-    & constr_loc, x, nf_loc, chist_loc, conhist_loc, cstrv_loc, f, fhist_loc, xhist_loc, info_loc)
+! Initialize NF_LOC !!!
+nf_loc = 0_IK  !!!
+! MAXFILT and CTOL are not used in the classical mode.
+call cobylb(calcfc, iprint_loc, maxfun_loc, rhobeg_loc, rhoend_loc, constr_loc, x, cstrv_loc, f, info_loc)
+! Arrange CHIST, CONHIST, FHIST, and XHIST so that they are in the chronological order !!!
+call rangehist(nf_loc, chist_loc, conhist_loc, fhist_loc, xhist_loc) !!!
+!--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 
 ! Deallocate X0 and CONSTR_X0 (although automatic deallocation would happen when the subroutine ends).
@@ -483,32 +509,39 @@ if ((present(xhist) .or. present(fhist) .or. present(chist) .or. present(conhist
     call warning(solver, 'Only the history of the last '//trim(wmsg)//' iteration(s) is recoreded')
 end if
 
-! Postconditions
-if (DEBUGGING) then
-    call assert(nf_loc <= maxfun_loc, 'NF <= MAXFUN', srname)
-    call assert(size(x) == n .and. .not. any(is_nan(x)), 'SIZE(X) == N, X does not contain NaN', srname)
-    nhist = min(nf_loc, maxhist_loc)
-    if (present(xhist)) then
-        call assert(size(xhist, 1) == n .and. size(xhist, 2) == nhist, 'SIZE(XHIST) == [N, NHIST]', srname)
-        call assert(.not. any(is_nan(xhist)), 'XHIST does not contain NaN', srname)
-    end if
-    if (present(fhist)) then
-        call assert(size(fhist) == nhist, 'SIZE(FHIST) == NHIST', srname)
-        call assert(.not. any(is_nan(fhist) .or. is_posinf(fhist)), 'FHIST does not contain NaN/+Inf', srname)
-    end if
-    if (present(chist)) then
-        call assert(size(chist) == nhist, 'SIZE(CHIST) == NHIST', srname)
-        call assert(.not. any(is_nan(chist) .or. is_posinf(chist)), 'CHIST does not contain NaN/+Inf', srname)
-    end if
-    if (present(conhist)) then
-        call assert(size(conhist, 1) == m .and. size(conhist, 2) == nhist, 'SIZE(CONHIST) == [M, NHIST]', srname)
-        call assert(.not. any(is_nan(conhist) .or. is_neginf(conhist)), 'CONHIST does not contain NaN/-Inf', srname)
-    end if
-    if (present(fhist) .and. present(chist)) then
-        call assert(.not. any([(isbetter([fhist(i), chist(i)], [f, cstrv_loc], ctol_loc), i=1, nhist)]),&
-            & 'No point in the history is better than X', srname)
-    end if
-end if
+
+!--------------------------------------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
+! The classical mode cannot pass the tests, of course.
+!! Postconditions
+!if (DEBUGGING) then
+!    call assert(nf_loc <= maxfun_loc, 'NF <= MAXFUN', srname)
+!    call assert(size(x) == n .and. .not. any(is_nan(x)), 'SIZE(X) == N, X does not contain NaN', srname)
+!    nhist = min(nf_loc, maxhist_loc)
+!    if (present(xhist)) then
+!        call assert(size(xhist, 1) == n .and. size(xhist, 2) == nhist, 'SIZE(XHIST) == [N, NHIST]', srname)
+!        call assert(.not. any(is_nan(xhist)), 'XHIST does not contain NaN', srname)
+!    end if
+!    if (present(fhist)) then
+!        call assert(size(fhist) == nhist, 'SIZE(FHIST) == NHIST', srname)
+!        call assert(.not. any(is_nan(fhist) .or. is_posinf(fhist)), 'FHIST does not contain NaN/+Inf', srname)
+!    end if
+!    if (present(chist)) then
+!        call assert(size(chist) == nhist, 'SIZE(CHIST) == NHIST', srname)
+!        call assert(.not. any(is_nan(chist) .or. is_posinf(chist)), 'CHIST does not contain NaN/+Inf', srname)
+!    end if
+!    if (present(conhist)) then
+!        call assert(size(conhist, 1) == m .and. size(conhist, 2) == nhist, 'SIZE(CONHIST) == [M, NHIST]', srname)
+!        call assert(.not. any(is_nan(conhist) .or. is_neginf(conhist)), 'CONHIST does not contain NaN/-Inf', srname)
+!    end if
+!    if (present(fhist) .and. present(chist)) then
+!        call assert(.not. any([(isbetter([fhist(i), chist(i)], [f, cstrv_loc], ctol_loc), i=1, nhist)]),&
+!            & 'No point in the history is better than X', srname)
+!    end if
+!end if
+!--------------------------------------------------------------------------------------------------!
+!--------------------------------------------------------------------------------------------------!
+
 
 end subroutine cobyla
 

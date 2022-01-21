@@ -1,13 +1,56 @@
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C      SUBROUTINE COBYLB (N,M,MPP,X,RHOBEG,RHOEND,IPRINT,MAXFUN,
-C     1  CON,SIM,SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT)
-      SUBROUTINE COBYLB (N,M,MPP,X,RHOBEG,RHOEND,IPRINT,MAXFUN,CON,SIM,
-     1  SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT,F,INFO,FTARGET,RESMAX)
-      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
-      IMPLICIT INTEGER (I-N)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DIMENSION X(*),CON(*),SIM(N,*),SIMI(N,*),DATMAT(MPP,*),
-     1  A(N,*),VSIG(*),VETA(*),SIGBAR(*),DX(*),W(*),IACT(*),CONSAV(M)
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!C      SUBROUTINE COBYLB (N,M,MPP,X,RHOBEG,RHOEND,IPRINT,MAXFUN,
+!C     1  CON,SIM,SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT)
+!      SUBROUTINE COBYLB (N,M,MPP,X,RHOBEG,RHOEND,IPRINT,MAXFUN,CON,SIM,
+!     1  SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT,F,INFO,FTARGET,RESMAX)
+!      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
+!      IMPLICIT INTEGER (I-N)
+!      DIMENSION X(*),CON(*),SIM(N,*),SIMI(N,*),DATMAT(MPP,*),
+!     1  A(N,*),VSIG(*),VETA(*),SIGBAR(*),DX(*),W(*),IACT(*),CONSAV(M)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+      module cobylb_mod
+
+      contains
+      subroutine cobylb(calcfc, iprint, maxfun, rhobeg, rhoend, constr,
+     &     x, resmax, f, info)
+
+      use, non_intrinsic :: consts_mod, only : RP, IK
+      use, non_intrinsic :: pintrf_mod, only : OBJCON
+      use, non_intrinsic :: evaluate_mod, only : evalfc
+
+      implicit real(RP) (A-H,O-Z)
+      implicit integer(IK) (I-N)
+
+      procedure(OBJCON) :: calcfc
+      real(RP), intent(inout) :: x(:)
+      real(RP), intent(out) :: f
+      integer(IK), intent(in) :: iprint
+      integer(IK), intent(in) :: maxfun
+      real(RP), intent(in) :: rhobeg
+      real(RP), intent(in) :: rhoend
+      real(RP), intent(out) :: constr(:)
+      real(RP), intent(out) :: resmax
+      integer(IK), intent(out) :: info
+
+      integer(IK) :: IACT(size(constr)+1)
+      real(rp) :: sim(size(x),size(x)+1), simi(size(x),size(x)),
+     1 datmat(size(constr)+2,size(x)+1),
+     1 a(size(x),size(constr)+1),vsig(size(x)),veta(size(x)),
+     1 sigbar(size(x)),dx(size(x)),
+     1 w(size(x)*(3*size(x)+2*size(constr)+11)+4*size(constr)+7),
+     1 con(size(constr)+2), consav(size(constr))
+      !N.B.: SIZE(CON) == M+2 /= M!!! This took a whole day of debugging!
+
+      ! READ THE SIZES, since they are not passed!!!!
+      n = size(x)  !!!
+      m = size(constr)  !!!
+      mpp = m + 2  !!!
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+
 C
 C     Set the initial values of some parameters. The last column of SIM holds
 C     the optimal vertex of the current simplex, and the preceding N columns
@@ -72,7 +115,14 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
           GOTO 600
       END IF
       NFVALS=NFVALS+1
-      CALL CALCFC (N,M,X,F,CON)
+
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+      !CALL CALCFC (N,M,X,F,CON)
+      call evalfc (calcfc, x, f, constr, resmax); con(1:m) = constr !!!!
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      RESMAX=0.0
       RESMAX=0.0D0
@@ -657,6 +707,15 @@ C     CONSAV are dumped into CON to be returned by COBYLA.
           CON(K)=CONSAV(K)
       END DO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      MAXFUN=NFVALS
+
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+!      RETURN
+!      END
+      constr = con(1:m)
       RETURN
-      END
+      end subroutine cobylb
+
+      end module cobylb_mod
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!

@@ -10,7 +10,7 @@
 !
 ! Started in March 2020
 !
-! Last Modified: Tuesday, January 18, 2022 PM09:08:30
+! Last Modified: Friday, January 21, 2022 AM01:48:12
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -118,6 +118,6 @@ call fmxWriteMPtr(fhist(1:min(int(nf), size(fhist))), poutput(6), 'row')
 
 ! Free memory. Indeed, automatic deallocation would take place.
 deallocate (x) ! Allocated by fmxReadMPtr.
-deallocate (xhist)
-deallocate (fhist)
+deallocate (xhist)  ! Allocated by the solver
+deallocate (fhist)  ! Allocated by the solver
 end subroutine mexFunction
