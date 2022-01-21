@@ -12,8 +12,11 @@
 !----------------------------------------------------------------------!
 !----------------------------------------------------------------------!
       module cobylb_mod
+      private
+      public :: cobylb
 
       contains
+
       subroutine cobylb(calcfc, iprint, maxfun, rhobeg, rhoend, constr,
      &     x, resmax, f, info)
 
@@ -35,8 +38,8 @@
       real(RP), intent(out) :: resmax
       integer(IK), intent(out) :: info
 
-      integer(IK) :: IACT(size(constr)+1)
-      real(rp) :: sim(size(x),size(x)+1), simi(size(x),size(x)),
+      integer(IK) :: iact(size(constr)+1)
+      real(RP) :: sim(size(x),size(x)+1), simi(size(x),size(x)),
      1 datmat(size(constr)+2,size(x)+1),
      1 a(size(x),size(constr)+1),vsig(size(x)),veta(size(x)),
      1 sigbar(size(x)),dx(size(x)),

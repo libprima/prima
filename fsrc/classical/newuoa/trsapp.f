@@ -2,9 +2,18 @@
      1  D,G,HD,HS,CRVMIN)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IMPLICIT REAL*8 (A-H,O-Z)
-      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
-      IMPLICIT INTEGER (I-N)
+!      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
+!      IMPLICIT INTEGER (I-N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+      use, non_intrinsic :: consts_mod, only : RP, IK
+      implicit real(RP) (A-H,O-Z)
+      implicit integer(IK) (I-N)
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+
       DIMENSION XOPT(*),XPT(NPT,*),GQ(*),HQ(*),PQ(*),STEP(*),
      1  D(*),G(*),HD(*),HS(*)
 C

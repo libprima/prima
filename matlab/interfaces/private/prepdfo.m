@@ -1253,14 +1253,14 @@ if isfield(options, 'iprint')
         wmsg = sprintf('%s: invalid iprint; it should be 0, 1, -1, 2, -2, 3, or -3; it is set to %d.', invoker, options.iprint);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
-    elseif options.iprint ~= 0 && options.classical
-        % iprint ~= 0 is not supported in the classical mode.
-        wid = sprintf('%s:IprintContradictClassical', invoker);
-        wmsg = sprintf('%s: iprint = %d is not supported by the classical mode; it is reset to 0.', invoker, options.iprint);
-        options.iprint = 0;
-        warning(wid, '%s', wmsg);
-        warnings = [warnings, wmsg];
-        validated = true;
+    %elseif options.iprint ~= 0 && options.classical
+    %    % iprint ~= 0 is not supported in the classical mode.
+    %    wid = sprintf('%s:IprintContradictClassical', invoker);
+    %    wmsg = sprintf('%s: iprint = %d is not supported by the classical mode; it is reset to 0.', invoker, options.iprint);
+    %    options.iprint = 0;
+    %    warning(wid, '%s', wmsg);
+    %    warnings = [warnings, wmsg];
+    %    validated = true;
     elseif options.iprint > 0 && user_says_quiet
         % The user says "quiet!" but still asks for information. Let's compromise.
         wid = sprintf('%s:IprintContradictQuiet', invoker);

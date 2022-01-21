@@ -79,7 +79,7 @@
 
 /******************************************************************************/
 /* Do we use Powell's linear algebra procedures? */
-/* If not, some basic algebraic functions will be implemented with matrix/vector
+/* If not, some basic algebraic procedures will be implemented with matrix/vector
  * operations instead of loops. This does not change Powell's algorithms, but
  * it may not produce exactly the same results as Powell's code due to properties
  * of floating-point arithmetic, e.g., the non-associativity of floating-point

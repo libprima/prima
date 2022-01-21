@@ -395,9 +395,6 @@ ltest_i2_r16_d1_tst_c ltest_i4_r16_d1_tst_c ltest_i8_r16_d1_tst_c ltest_i2_r16_d
 NFORT := nagfor
 NFORT := $(NFORT) -I $(TESTSUITE_DIR)
 NFORT := $(NFORT) -colour=error:red,warn:magenta,info:cyan
-#NFORT := $(NFORT) -f$(FSTD) -info -gline -u -C -C=alias -C=dangling -C=intovf -kind=unique \
-	-Warn=constant_coindexing -Warn=subnormal #-Warn=allocation
-# 20211221: for the moment, -C=undefined may cause SEGFAULT in SAFEALLOC due to a bug of nagfor; has been reported to NAG.
 NFORT := $(NFORT) -f$(FSTD) -info -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique \
 	-Warn=constant_coindexing -Warn=subnormal #-Warn=allocation
 
