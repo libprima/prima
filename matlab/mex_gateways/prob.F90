@@ -9,7 +9,7 @@ module prob_mod
 !
 ! Coded by Zaikun Zhang in July 2020.
 !
-! Last Modified: Tuesday, January 18, 2022 PM10:42:08
+! Last Modified: Friday, January 21, 2022 AM01:58:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -48,32 +48,36 @@ real(RP), intent(out) :: f
 
 ! Local variables
 character(len=*), parameter :: srname = 'CALFUN'
+integer :: i
 mwPointer :: pinput(1), poutput(1)
 
-! Associate X with INPUT(1)
+! Associate the input with INPUT.
 call fmxWriteMPtr(x, pinput(1))
 
-! Call the MATLAB function that evaluates the objective function
+! Call the MATLAB function.
 call fmxCallMATLAB(fun_ptr, pinput, poutput)
 
-! Verify the class and shape of outputs. Indeed, fmxReadMPtr does also the verification. We do it
-! here in order to print a more informative error message when the verification fails.
+! Destroy the arrays in PINPUT(:).
+! This must be done. Otherwise, the array created for X by fmxWriteMPtr will be destroyed only when
+! the MEX function terminates, but this subroutine will be called maybe thousands of times before that.
+do i = 1, size(pinput)
+    call mxDestroyArray(pinput(i))
+end do
+
+! Read the data in POUTPUT.
+! First, verify the class & shape of outputs (even not debugging). Indeed, fmxReadMPtr does also the
+! verification. We do it here in order to print a more informative error message in case of failure.
 call validate(fmxIsDoubleScalar(poutput(1)), 'Objective function returns a scalar', srname)
-
-! Read the data in OUTPUT
+! Second, copy the data.
 call fmxReadMPtr(poutput(1), f)
-
-! Destroy the matrix created by fmxWriteMPtr for X. This must be done. Otherwise, the matrix will be
-! destroyed only when the MEX function terminates. However, this subroutine will be called maybe
-! thousands of times before that.
-call mxDestroyArray(pinput(1))
-
-! Destroy POUTPUT(:).
+! Third, destroy the arrays in POUTPUT.
 ! MATLAB allocates dynamic memory to store the arrays in plhs (i.e., poutput) for mexCallMATLAB.
 ! MATLAB automatically deallocates the dynamic memory when you exit the MEX file. However, this
 ! subroutine will be called maybe thousands of times before that.
 ! See https://www.mathworks.com/help/matlab/apiref/mexcallmatlab_fortran.html
-call mxDestroyArray(poutput(1))  ! Destroy it even though it is a scalar
+do i = 1, size(poutput)
+    call mxDestroyArray(poutput(i))
+end do
 
 end subroutine calfun
 
@@ -102,40 +106,47 @@ real(RP), intent(out) :: f
 real(RP), intent(out) :: constr(:)
 
 ! Local variables
-mwPointer :: pinput(1), poutput(2)
 character(len=*), parameter :: srname = 'CALCFC'
+integer :: i
+mwPointer :: pinput(1), poutput(2)
 real(RP), allocatable :: constr_loc(:)
 
-! Associate X with INPUT(1)
+! Associate the input with PINPUT.
 call fmxWriteMPtr(x, pinput(1))
 
-! Call the MATLAB function that evaluates the objective&constraint functions
+! Call the MATLAB function.
 call fmxCallMATLAB(funcon_ptr, pinput, poutput)
 
-! Verify the class and shape of outputs (even not debugging). Indeed, fmxReadMPtr does also the
+! Destroy the arrays in PINPUT.
+! This must be done. Otherwise, the array created for X by fmxWriteMPtr will be destroyed only when
+! the MEX function terminates, but this subroutine will be called maybe thousands of times before that.
+do i = 1, size(pinput)
+    call mxDestroyArray(pinput(i))
+end do
+
+! Read the data in POUTPUT.
+! First, verify the class & shape of outputs (even not debugging). Indeed, fmxReadMPtr does also the
 ! verification. We do it here in order to print a more informative error message in case of failure.
 call validate(fmxIsDoubleScalar(poutput(1)), 'Objective function returns a real scalar', srname)
 call validate(fmxIsDoubleVector(poutput(2)), 'Constriant function returns a real vector', srname)
-
-! Read the data in OUTPUT
+! Second, copy the data.
 call fmxReadMPtr(poutput(1), f)
 call fmxReadMPtr(poutput(2), constr_loc)
-! Check that the size of CONSTR_LOC is correct (even if not debugging)
-call validate(size(constr_loc) == size(constr), 'SIZE(CONSTR_LOC) == SIZE(CONSTR)', srname)
-constr = constr_loc
-
-! Destroy the matrix created by fmxWriteMPtr for X. This must be done. Otherwise, the matrix will be
-! destroyed only when the MEX function terminates. However, this subroutine will be called maybe
-! thousands of times before that.
-call mxDestroyArray(pinput(1))
-
-! Destroy POUTPUT(:).
+! Third, destroy the arrays in POUTPUT.
 ! MATLAB allocates dynamic memory to store the arrays in plhs (i.e., poutput) for mexCallMATLAB.
 ! MATLAB automatically deallocates the dynamic memory when you exit the MEX file. However, this
 ! subroutine will be called maybe thousands of times before that.
 ! See https://www.mathworks.com/help/matlab/apiref/mexcallmatlab_fortran.html
-call mxDestroyArray(poutput(1))  ! Destroy it even though it is a scalar
-call mxDestroyArray(poutput(2))
+do i = 1, size(poutput)
+    call mxDestroyArray(poutput(i))
+end do
+
+! Copy CONSTR_LOC to CONSTR.
+! Before copying, check that the size of CONSTR_LOC is correct (even if not debugging).
+call validate(size(constr_loc) == size(constr), 'SIZE(CONSTR_LOC) == SIZE(CONSTR)', srname)
+constr = constr_loc
+! Deallocate CONSTR_LOC, allocated by fmxReadMPtr. Indeed, it would be deallocated automatically.
+deallocate (constr_loc)
 
 end subroutine calcfc
 

@@ -1,8 +1,15 @@
       SUBROUTINE TRSTLP (N,M,A,B,RHO,DX,IFULL,IACT,Z,ZDOTA,VMULTC,
      1  SDIRN,DXNEW,VMULTD)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
-      IMPLICIT INTEGER (I-N)
+
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+      use, non_intrinsic :: consts_mod, only : RP, IK
+      implicit real(RP) (A-H,O-Z)
+      implicit integer(IK) (I-N)
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DIMENSION A(N,*),B(*),DX(*),IACT(*),Z(N,*),ZDOTA(*),
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC

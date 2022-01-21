@@ -19,7 +19,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, January 13, 2022 PM02:38:51
+! Last Modified: Wednesday, January 19, 2022 AM10:26:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -236,7 +236,7 @@ if (present(rhobeg)) then
 elseif (present(rhoend)) then
     ! Fortran does not take short-circuit evaluation of logic expressions. Thus it is WRONG to
     ! combine the evaluation of PRESENT(RHOEND) and the evaluation of IS_FINITE(RHOEND) as
-    ! "if (present(rhoend) .and. is_finite(rhoend))". The compiler may choose the evaluate the
+    ! "if (present(rhoend) .and. is_finite(rhoend))". The compiler may choose to evaluate the
     ! IS_FINITE(RHOEND) even if PRESENT(RHOEND) is false!
     if (is_finite(rhoend) .and. rhoend > ZERO) then
         rhobeg_loc = max(TEN * rhoend, RHOBEG_DFT)
