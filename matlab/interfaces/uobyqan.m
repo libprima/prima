@@ -304,9 +304,10 @@ else
         output.warnings = [output.warnings, wmsg];
     end
 
-    try
     % Call the Fortran code
-    % The mexified Fortran Function is a private function generating only private errors; however, public errors can occur due to, e.g., evalobj; error handling needed
+    try
+        % The mexified Fortran Function is a private function generating only private errors;
+        % however, public errors can occur due to, e.g., evalobj; error handling needed
         if options.classical
             [x, fx, exitflag, nf, fhist] = fuobyqan_classical(fun, x0, rhobeg, rhoend, maxfun, ftarget);
         else

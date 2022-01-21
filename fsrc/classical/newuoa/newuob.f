@@ -1,16 +1,60 @@
-      SUBROUTINE NEWUOB (N,NPT,X,RHOBEG,RHOEND,IPRINT,MAXFUN,XBASE,
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C     1  XOPT,XNEW,XPT,FVAL,GQ,HQ,PQ,BMAT,ZMAT,NDIM,D,VLAG,W)
-     1  XOPT,XNEW,XPT,FVAL,GQ,HQ,PQ,BMAT,ZMAT,NDIM,D,VLAG,W,F,INFO,
-     2  FTARGET)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C      IMPLICIT REAL*8 (A-H,O-Z)
-      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
-      IMPLICIT INTEGER (I-N)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DIMENSION X(*),XBASE(*),XOPT(*),XNEW(*),XPT(NPT,*),FVAL(*),
-     1  GQ(*),HQ(*),PQ(*),BMAT(NDIM,*),ZMAT(NPT,*),D(*),VLAG(*),W(*)
+!      SUBROUTINE NEWUOB (N,NPT,X,RHOBEG,RHOEND,IPRINT,MAXFUN,XBASE,
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!C     1  XOPT,XNEW,XPT,FVAL,GQ,HQ,PQ,BMAT,ZMAT,NDIM,D,VLAG,W)
+!     1  XOPT,XNEW,XPT,FVAL,GQ,HQ,PQ,BMAT,ZMAT,NDIM,D,VLAG,W,F,INFO,
+!     2  FTARGET)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!C      IMPLICIT REAL*8 (A-H,O-Z)
+!      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
+!      IMPLICIT INTEGER (I-N)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!      DIMENSION X(*),XBASE(*),XOPT(*),XNEW(*),XPT(NPT,*),FVAL(*),
+!     1  GQ(*),HQ(*),PQ(*),BMAT(NDIM,*),ZMAT(NPT,*),D(*),VLAG(*),W(*)
+
+
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+      module newuob_mod
+      private
+      public :: newuob
+
+      contains
+
+      subroutine newuob(calfun, iprint, maxfun, npt,
+     &  ftarget, rhobeg, rhoend, x, f, info)
+
+      use, non_intrinsic :: consts_mod, only : RP, IK
+      use, non_intrinsic :: pintrf_mod, only : OBJ
+      use, non_intrinsic :: evaluate_mod, only : evalf
+
+      implicit real(RP) (A-H,O-Z)
+      implicit integer(IK) (I-N)
+
+      procedure(OBJ) :: calfun
+      real(RP), intent(inout) :: x(:)
+      real(RP), intent(out) :: f
+      integer(IK), intent(in) :: iprint
+      integer(IK), intent(in) :: maxfun
+      integer(IK), intent(in) :: npt
+      real(RP), intent(in) :: ftarget
+      real(RP), intent(in) :: rhobeg
+      real(RP), intent(in) :: rhoend
+      integer(IK), intent(out) :: info
+
+      real(RP) :: xbase(size(x)),xopt(size(x)),xnew(size(x)),
+     1 xpt(npt,size(x)),fval(npt),gq(size(x)),
+     1 hq(((size(x)+1)*size(x))/2),
+     1 pq(npt), bmat(npt+size(x),size(x)),zmat(npt,npt-size(x)-1),
+     1 d(size(x)),vlag(npt+size(x)),
+     1 w((npt+13)*(npt+size(x))+3*size(x)*(size(x)+3)/2+1)
+
+      ! READ THE SIZES, since they are not passed!!!!
+      n = size(x)  !!!
+      ndim = n + npt !!!
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+
 C
 C     The arguments N, NPT, X, RHOBEG, RHOEND, IPRINT and MAXFUN are identical
 C       to the corresponding arguments in SUBROUTINE NEWUOA.
@@ -363,7 +407,15 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           GOTO 530
       END IF
-      CALL CALFUN (N,X,F)
+
+
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+      !CALL CALFUN (N,X,F)
+      call evalf(calfun, x, f)
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C     By Zaikun (commented on 02-06-2019; implemented in 2016):
@@ -634,11 +686,21 @@ C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IF (IPRINT .GE. 1) THEN
   546 IF (IPRINT >= 1) THEN
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!      
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           PRINT 550, NF
   550     FORMAT (/4X,'At the return from NEWUOA',5X,
      1      'Number of function values =',I6)
           PRINT 520, F,(X(I),I=1,N)
       END IF
-      RETURN
-      END
+
+
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+      !RETURN
+      !END
+
+      end subroutine newuob
+
+      end module newuob_mod
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!

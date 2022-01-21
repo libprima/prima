@@ -423,7 +423,9 @@ else % The problem turns out 'normal' during prepdfo
     end
 
     % Call the Fortran code
-    try % The mexified Fortran function is a private function generating only private errors; however, public errors can occur due to, e.g., evalobj; error handling needed
+    try
+        % The mexified Fortran function is a private function generating only private errors;
+        % however, public errors can occur due to, e.g., evalobj; error handling needed
         if options.classical
             [x, fx, exitflag, nf, fhist, constrviolation, chist] = flincoan_classical(fun, x0, A_aug, b_aug, rhobeg, rhoend, maxfun, npt, ftarget);
         else

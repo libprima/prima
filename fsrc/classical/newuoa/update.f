@@ -1,9 +1,18 @@
       SUBROUTINE UPDATE (N,NPT,BMAT,ZMAT,IDZ,NDIM,VLAG,BETA,KNEW,W)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IMPLICIT REAL*8 (A-H,O-Z)
-      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
-      IMPLICIT INTEGER (I-N)
+!      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
+!      IMPLICIT INTEGER (I-N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+      use, non_intrinsic :: consts_mod, only : RP, IK
+      implicit real(RP) (A-H,O-Z)
+      implicit integer(IK) (I-N)
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+
       DIMENSION BMAT(NDIM,*),ZMAT(NPT,*),VLAG(*),W(*)
 C
 C     The arrays BMAT and ZMAT with IDZ are updated, in order to shift the

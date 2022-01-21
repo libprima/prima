@@ -367,9 +367,8 @@ else % The problem turns out 'normal' during prepdfo
     funcon = @(x) cobylan_funcon(x, fun, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
     % Detect the number of the constraints (required by the Fortran code)
     [f_x0, constr_x0, m_nlcineq, m_nlceq] = funcon(x0);
-    % m_nlcineq = number of nonlinear inequality constraints
-    % m_nlceq = number of nonlinear equality constraints
-    m = length(constr_x0); % number of constraints
+    % m_nlcineq: number of nonlinear inequality constraints
+    % m_nlceq: number of nonlinear equality constraints
     % Extract the options
     iprint = options.iprint;
     maxfun = options.maxfun;
@@ -382,34 +381,8 @@ else % The problem turns out 'normal' during prepdfo
     output_nlchist = options.output_nlchist;
     maxfilt = options.maxfilt;
 
-    % Check whether the problem is too large for the Fortran code.
-    % In the mex gateway, a workspace of size
-    % nw = n*(3*n+2*m+11)+4*m+6
-    % will be allocated, which is the largest memory allocated by
-    % COBYLA. If the value assigned to nw is so large that overflow
-    % occurs, then there will be a Segmentation Fault!!!
-    % The largest possible value of nw depends on the type of nw in the
-    % mex file, which is the default INTEGER type (~2E9 for integer*4,
-    % and ~9E18 for integer*8). This imposes an upper limit on the size
-    % of problem solvable by this code. If nw is INTEGER*4, assuming
-    % that m=10n, the largest value of n is ~9600. COBYLA is not
-    % designed for so large problems.
-    % In the following code, gethuge returns the largest possible value
-    % of the given data type in the mex environment.
-
     % The largest integer in the mex functions; the factor 0.99 provides a buffer
     maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSI')]));
-    n = length(x0);
-    nw = n*(3*n+2*m+11)+4*m+6;
-    if nw >= maxint
-        % nw would suffer from overflow in the Fortran code; exit immediately
-        % Public/normal error
-        if strcmp(invoker, 'pdfon')
-            error(sprintf('%s:ProblemTooLarge', invoker), '%s: problem too large for %s. Try other solvers.', invoker, funname);
-        else
-            error(sprintf('%s:ProblemTooLarge', funname), '%s: problem too large for %s. Try other solvers.', funname, funname);
-        end
-    end
     if maxfun > maxint
         % maxfun would suffer from overflow in the Fortran code
         maxfun = maxint;
@@ -420,7 +393,9 @@ else % The problem turns out 'normal' during prepdfo
     end
 
     % Call the Fortran code
-    try % The mexified Fortran function is a private function generating only private errors; however, public errors can occur due to, e.g., evalobj and evalcon; error handling needed
+    try
+        % The mexified Fortran function is a private function generating only private errors;
+        % however, public errors can occur due to, e.g., evalobj and evalcon; error handling needed
         if options.classical
             [x, fx, constrviolation, constr, exitflag, nf, xhist, fhist, chist, conhist] = ...
                 fcobylan_classical(funcon, x0, f_x0, constr_x0, rhobeg, rhoend, ftarget, ctol, maxfun, iprint, maxhist, double(output_xhist), double(output_nlchist), maxfilt);

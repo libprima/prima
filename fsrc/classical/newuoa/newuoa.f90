@@ -1,62 +1,50 @@
-module cobyla_mod  ! (The classical mode)
+module newuoa_mod  ! (The classical mode)
 !--------------------------------------------------------------------------------------------------!
-! COBYLA_MOD is a module providing a modern Fortran implementation of Powell's COBYLA algorithm in
+! NEWUOA_MOD is a module providing a modern Fortran implementation of Powell's NEWUOA algorithm in
 !
-! M. J. D. Powell, A direct search optimization method that models the objective and constraint
-! functions by linear interpolation, In Advances in Optimization and Numerical Analysis, eds. S.
-! Gomez and J. P. Hennart, pages 51--67, Springer Verlag, Dordrecht, Netherlands, 1994
+! M. J. D. Powell, The NEWUOA software for unconstrained optimization without derivatives, In Large-
+! Scale Nonlinear Optimization, eds. G. Di Pillo and M. Roma, 255--297, Springer, New York, 2006
 !
-! COBYLA approximately solves
+! NEWUOA approximately solves
 !
-!   min F(X) subject to CONSTR(X) >= 0,
+!   min F(X),
 !
-! where X is a vector of variables that has N components, F is a real-valued objective function, and
-! CONSTR(X) is an M-dimensional vector-valued mapping. The algorithm employs linear approximations
-! to the objective and constraint functions, the approximations being formed by linear interpolation
-! at N + 1 points in the space of the variables. We regard these interpolation points as vertices of
-! a simplex. The parameter RHO controls the size of the simplex and it is reduced automatically from
-! RHOBEG to RHOEND. For each RHO the subroutine tries to achieve a good vector of variables for the
-! current size, and then RHO is reduced until the value RHOEND is reached. Therefore RHOBEG and
-! RHOEND should be set to reasonable initial changes to and the required accuracy in the variables
-! respectively, but this accuracy should be viewed as a subject for experimentation because it is
-! not guaranteed.  The subroutine has an advantage over many of its competitors, however, which is
-! that it treats each constraint individually when calculating a change to the variables, instead of
-! lumping the constraints together into a single penalty function. The name of the subroutine is
-! derived from the phrase Constrained Optimization BY Linear Approximations.
+! where X is a vector of variables that has N components and F is a real-valued objective function.
+! It tackles the problem by a trust region method that forms quadratic models by interpolation.
+! There can be some freedom in the interpolation conditions, which is taken up by minimizing the
+! Frobenius norm of the change to the second derivative of the quadratic model, beginning with a
+! zero matrix.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the COBYLA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
 !
-! Started: July 2021
+! Started: July 2020
 !
-! Last Modified: Friday, January 21, 2022 PM09:59:00
+! Last Modified: Friday, January 21, 2022 PM09:58:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
-public :: cobyla
+public :: newuoa
 
 
 contains
 
 
-subroutine cobyla(calcfc, m, x, f, &
-    & cstrv, constr, &
-    & f0, constr0, &
-    & nf, rhobeg, rhoend, ftarget, ctol, maxfun, iprint, &
-    & xhist, fhist, chist, conhist, maxhist, maxfilt, info)
-!    & eta1, eta2, gamma1, gamma2, xhist, fhist, chist, conhist, maxhist, info)
+subroutine newuoa(calfun, x, f, &
+    & nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, &
+    & eta1, eta2, gamma1, gamma2, xhist, fhist, maxhist, info)
 !--------------------------------------------------------------------------------------------------!
-! Among all the arguments, only CALCFC, X, and F are obligatory. The others are OPTIONAL and you can
+! Among all the arguments, only CALFUN, X, and F are obligatory. The others are OPTIONAL and you can
 ! neglect them unless you are familiar with the algorithm. If you do not specify an optional input,
 ! it will be assigned the default value detailed below. For instance, we may write
 !
-! call cobyla(calcfc, x, f)
+! call newuoa(calfun, x, f)
 !
 ! or
 !
-! call cobyla(calcfc, x, f, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
+! call newuoa(calfun, x, f, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
 !
-! See examples/cobyla_exmp.f90 for a concrete example.
+! See examples/newuoa_exmp.f90 for a concrete example.
 !
 ! A detailed introduction to the arguments is as follows.
 ! N.B.: RP and IK are defined in the module CONSTS_MOD. See consts.F90 under the directory name
@@ -64,24 +52,17 @@ subroutine cobyla(calcfc, m, x, f, &
 ! real, and INTEGER(IK) being the default integer. For ADVANCED USERS, RP and IK can be defined by
 ! setting __REAL_PRECISION__ and __INTEGER_KIND__ in common/ppf.h. Use the default if unsure.
 !
-! CALCFC
+! CALFUN
 !   Input, subroutine.
-!   CALCFC(X, F, CONSTR) should evaluate the objective function and constraints at the given
-!   REAL(RP) vector X; it should set the objective function value to the REAL(RP) scalar F and the
-!   constraint value to the REAL(RP) vector CONSTR. It must be provided by the user, and its
-!   definition must conform to the following interface:
+!   CALFUN(X, F) should evaluate the objective function at the given REAL(RP) vector X and set the
+!   value to the REAL(RP) scalar F. It must be provided by the user, and its definition must conform
+!   to the following interface:
 !   !-------------------------------------------------------------------------!
-!   !subroutine calcfc(x, f, constr)
+!   !subroutine calfun(x, f)
 !   !real(RP), intent(in) :: x(:)
 !   !real(RP), intent(out) :: f
-!   !real(RP), intent(out) :: constr(:)
-!   !end subroutine calcfc
+!   !end subroutine calfun
 !   !-------------------------------------------------------------------------!
-!   Besides, CONSTR must be an M-dimensional vector, M being the 4th compulsory argument (see below)
-!
-! M
-!   Input, INTEGER(IK) scalar.
-!   M must be set to the number of constraints, namely the size (length) of CONSTR(X).
 !
 ! X
 !   Input and output, REAL(RP) vector.
@@ -92,26 +73,9 @@ subroutine cobyla(calcfc, m, x, f, &
 !   Output, REAL(RP) scalar.
 !   F will be set to the objective function value of X at exit.
 !
-! CSTRV
-!   Output, REAL(RP) scalar.
-!   CSTRV will be set to the constraint violation of X at exit, i.e., MAXVAL([-CONSTR(X), 0]).
-!
-! CONSTR
-!   Output, ALLOCATABLE REAL(RP) vector.
-!   CONSTR will be set to the constraint value of X at exit.
-!
-! F0
-!   Input, REAL(RP) scalar.
-!   F0, if present, should be set to the objective function value of the starting X.
-!
-! CONSTR0
-!   Input, REAL(RP) vector.
-!   CONSTR0, if present, should be set to the constraint value of the starting X; in addition,
-!   SIZE(CONSTR0) must be M, or the solver will abort.
-!
 ! NF
 !   Output, INTEGER(IK) scalar.
-!   NF will be set to the number of calls of CALCFC at exit.
+!   NF will be set to the number of calls of CALFUN at exit.
 !
 ! RHOBEG, RHOEND
 !   Inputs, REAL(RP) scalars, default: RHOBEG = 1, RHOEND = 10^-6. RHOBEG and RHOEND must be set to
@@ -121,17 +85,12 @@ subroutine cobyla(calcfc, m, x, f, &
 !
 ! FTARGET
 !   Input, REAL(RP) scalar, default: -Inf.
-!   FTARGET is the target function value. The algorithm will terminate when a feasible point with a
-!   function value <= FTARGET is found.
-!
-! CTOL
-!   Input, REAL(RP) scalar, default: machine epsilon.
-!   CTOL is the tolerance of constraint violation. Any X with MAXVAL(-CONSTR(X)) <= CTOL is
-!   considered as feasible.
+!   FTARGET is the target function value. The algorithm will terminate when a point with a function
+!   value <= FTARGET is found.
 !
 ! MAXFUN
 !   Input, INTEGER(IK) scalar, default: MAXFUN_DIM_DFT*N with MAXFUN_DIM_DFT defined in the module
-!   CONSTS_MOD (see common/consts.F90). MAXFUN is the maximal number of calls of CALCFC.
+!   CONSTS_MOD (see common/consts.F90). MAXFUN is the maximal number of calls of CALFUN.
 !
 ! NPT
 !   Input, INTEGER(IK) scalar, default: 2N + 1.
@@ -146,10 +105,10 @@ subroutine cobyla(calcfc, m, x, f, &
 !   1: a message will be printed to the screen at the return, showing the best vector of variables
 !      found and its objective function value;
 !   2: in addition to 1, each new value of RHO is printed to the screen, with the best vector of
-!      variables so far and its objective function value; each new value of CPEN is also printed;
+!      variables so far and its objective function value;
 !   3: in addition to 2, each function evaluation with its variables will be printed to the screen;
 !   -1, -2, -3: the same information as 1, 2, 3 will be printed, not to the screen but to a file
-!      named COBYLA_output.txt; the file will be created if it does not exist; the new output will
+!      named NEWUOA_output.txt; the file will be created if it does not exist; the new output will
 !      be appended to the end of this file if it already exists. Note that IPRINT = -3 can be costly
 !      in terms of time and space.
 !
@@ -161,21 +120,16 @@ subroutine cobyla(calcfc, m, x, f, &
 !   factor of GAMMA2 when the reduction ratio is above ETA2. It is required that 0 < ETA1 <= ETA2
 !   < 1 and 0 < GAMMA1 < 1 < GAMMA2. Normally, ETA1 <= 0.25. It is NOT advised to set ETA1 >= 0.5.
 !
-! XHIST, FHIST, CHIST, CONHIST, MAXHIST
+! XHIST, FHIST, MAXHIST
 !   XHIST: Output, ALLOCATABLE rank 2 REAL(RP) array;
 !   FHIST: Output, ALLOCATABLE rank 1 REAL(RP) array;
-!   CHIST: Output, ALLOCATABLE rank 1 REAL(RP) array;
-!   CONHIST: Output, ALLOCATABLE rank 2 REAL(RP) array;
 !   MAXHIST: Input, INTEGER(IK) scalar, default: MAXFUN
-!   XHIST, if present, will output the history of iterates; FHIST, if present, will output the
-!   history function values; CHIST, if present, will output the history of constraint violations;
-!   CONHIST, if present, will output the history of constraint values; MAXHIST should be a
-!   nonnegative integer, and XHIST/FHIST/CHIST/CONHIST will output only the history of the last
-!   MAXHIST iterations. Therefore, MAXHIST= 0 means XHIST/FHIST/CONHIST/CHIST will output nothing,
-!   while setting MAXHIST = MAXFUN requests XHIST/FHIST/CHIST/CONHIST to output all the history.
+!   XHIST, if present, will output the history of iterates, while FHIST, if present, will output the
+!   history function values. MAXHIST should be a nonnegative integer, and XHIST/FHIST will output
+!   only the history of the last MAXHIST iterations. Therefore, MAXHIST = 0 means XHIST/FHIST will
+!   output nothing, while setting MAXHIST = MAXFUN requests XHIST/FHIST to output all the history.
 !   If XHIST is present, its size at exit will be (N, min(NF, MAXHIST)); if FHIST is present, its
-!   size at exit will be min(NF, MAXHIST); if CHIST is present, its size at exit will be
-!   min(NF, MAXHIST); if CONHIST is present, its size at exit will be (M, min(NF, MAXHIST)).
+!   size at exit will be min(NF, MAXHIST).
 !
 !   Important Notice:
 !   Setting MAXHIST to a large value can be costly in terms of memory for large problems.
@@ -192,30 +146,27 @@ subroutine cobyla(calcfc, m, x, f, &
 !   FTARGET_ACHIEVED: the target function value is reached;
 !   MAXFUN_REACHED: the objective function has been evaluated MAXFUN times;
 !   MAXTR_REACHED: the trust region iteration has been performed MAXTR times,
-!       the value of MAXTR being 4*MAXFUN, which is UNLIKELY to reach;
+!       the value of MAXTR being 2*MAXFUN, which is UNLIKELY to reach;
 !   NAN_INF_X: NaN or Inf occurs in x;
-!   NAN_MODEL: NaN occurs in the model;
-!   DAMAGING_ROUNDING: rounding errors are becoming damaging.
 !   !--------------------------------------------------------------------------!
 !   The following cases should NEVER occur unless there is a bug, because the
 !   code will try to continue in the corresponding scenarios.
 !   NAN_INF_F: the objective function returns NaN or +Inf
+!   NAN_MODEL: NaN occurs in the model;
 !   TRSUBP_FAILED: a trust region step failed to reduce the quadratic model
 !   !--------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : DEBUGGING
-use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT
-use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, FTARGET_DFT, IPRINT_DFT
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TEN, TENTH, EPS, MSGLEN
-use, non_intrinsic :: debug_mod, only : assert, errstop, warning
-use, non_intrinsic :: evaluate_mod, only : fc_x0_provided, x0, f_x0, constr_x0
+!use, non_intrinsic :: consts_mod, only : DEBUGGING
+use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT
+use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS, MSGLEN
+use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: history_mod, only : prehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite !, is_neginf, is_posinf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite
 use, non_intrinsic :: memory_mod, only : safealloc
-use, non_intrinsic :: pintrf_mod, only : OBJCON
-!use, non_intrinsic :: selectx_mod, only : isbetter
+use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: preproc_mod, only : preproc
 
 !--------------------------------------------------------------------------------------------------!
@@ -223,53 +174,43 @@ use, non_intrinsic :: preproc_mod, only : preproc
 ! The following modules are crucial for the classical mode.
 use, non_intrinsic :: evaluate_mod, only : nf_loc => nf
 use, non_intrinsic :: evaluate_mod, only : xhist_loc => xhist, fhist_loc => fhist
-use, non_intrinsic :: evaluate_mod, only : chist_loc => chist, conhist_loc => conhist
 use, non_intrinsic :: evaluate_mod, only : rangehist
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 
 ! Solver-specific modules
-use, non_intrinsic :: cobylb_mod, only : cobylb
+use, non_intrinsic :: newuob_mod, only : newuob
 
 implicit none
 
-! Compulsory arguments
-procedure(OBJCON) :: calcfc
+! Arguments
+procedure(OBJ) :: calfun
+! N.B.: The INTENT attribute cannot be specified for a dummy procedure without the POINTER attribute
 real(RP), intent(inout) :: x(:)
 real(RP), intent(out) :: f
-integer(IK), intent(in) :: m
-
-! Optional inputs
-integer(IK), intent(in), optional :: iprint
-integer(IK), intent(in), optional :: maxfilt
-integer(IK), intent(in), optional :: maxfun
-integer(IK), intent(in), optional :: maxhist
-real(RP), intent(in), optional :: constr0(:)
-real(RP), intent(in), optional :: ctol
-real(RP), intent(in), optional :: f0
-real(RP), intent(in), optional :: ftarget
+integer(IK), intent(out), optional :: nf
 real(RP), intent(in), optional :: rhobeg
 real(RP), intent(in), optional :: rhoend
-
-! Optional outputs
+real(RP), intent(in), optional :: ftarget
+integer(IK), intent(in), optional :: maxfun
+integer(IK), intent(in), optional :: npt
+integer(IK), intent(in), optional :: iprint
+real(RP), intent(in), optional :: eta1
+real(RP), intent(in), optional :: eta2
+real(RP), intent(in), optional :: gamma1
+real(RP), intent(in), optional :: gamma2
+real(RP), intent(out), optional, allocatable :: fhist(:)
+real(RP), intent(out), optional, allocatable :: xhist(:, :)
+integer(IK), intent(in), optional :: maxhist
 integer(IK), intent(out), optional :: info
-integer(IK), intent(out), optional :: nf
-real(RP), intent(out), allocatable, optional :: chist(:)
-real(RP), intent(out), allocatable, optional :: conhist(:, :)
-real(RP), intent(out), allocatable, optional :: constr(:)
-real(RP), intent(out), allocatable, optional :: fhist(:)
-real(RP), intent(out), allocatable, optional :: xhist(:, :)
-real(RP), intent(out), optional :: cstrv
 
 ! Local variables
 character(len=*), parameter :: ifmt = '(I0)'  ! I0: use the minimum number of digits needed to print
-character(len=*), parameter :: solver = 'COBYLA'
-character(len=*), parameter :: srname = 'COBYLA'
+character(len=*), parameter :: solver = 'NEWUOA'
+!character(len=*), parameter :: srname = 'NEWUOA'
 character(len=MSGLEN) :: wmsg
-integer(IK) :: i
 integer(IK) :: info_loc
 integer(IK) :: iprint_loc
-integer(IK) :: maxfilt_loc
 integer(IK) :: maxfun_loc
 integer(IK) :: maxhist_loc
 integer(IK) :: n
@@ -281,62 +222,31 @@ integer(IK) :: n
 !--------------------------------------------------------------------------------------------------!
 
 integer(IK) :: nhist
-real(RP) :: cstrv_loc
-real(RP) :: ctol_loc
+integer(IK) :: npt_loc
+real(RP) :: eta1_loc
+real(RP) :: eta2_loc
 real(RP) :: ftarget_loc
+real(RP) :: gamma1_loc
+real(RP) :: gamma2_loc
 real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
 
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
-real(RP), allocatable :: constr_loc(:)
-!real(RP), allocatable :: chist_loc(:)
-!real(RP), allocatable :: conhist_loc(:, :)
 !real(RP), allocatable :: fhist_loc(:)
 !real(RP), allocatable :: xhist_loc(:, :)
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 
-
-! Preconditions
-if (DEBUGGING) then
-    call assert(present(f0) .eqv. present(constr0), 'F0 and CONSTR0 are both present or both absent', srname)
-end if
-
 ! Sizes
 n = int(size(x), kind(n))
-
-! Exit if the size of CONSTR0 is inconsistent with M.
-if (present(constr0)) then
-    if (size(constr0) /= m) then
-        if (DEBUGGING) then
-            call errstop(srname, 'SIZE(CONSTR0) /= M. Exiting')
-        else
-            call warning(srname, 'SIZE(CONSTR0) /= M. Exiting')
-            return
-        end if
-    end if
-end if
-
-! Allocate memory for CONSTR_LOC, since M is now available.
-call safealloc(constr_loc, m)  ! NOT removable even in F2003!
 
 ! Replace any NaN or Inf in X by ZERO.
 where (is_nan(x) .or. is_inf(x))
     x = ZERO
 end where
 
-! If the user provides the function & constraint value at X0, then set up F_X0 and CONSTR_X0.
-if (present(f0) .and. present(constr0)) then
-    fc_x0_provided = .true.
-    !--------------------------------------------------!
-    call safealloc(x0, n)  ! Removable in F2003.
-    call safealloc(constr_x0, m)  ! Removable in F2003.
-    !--------------------------------------------------!
-    x0 = x
-    f_x0 = f0
-    constr_x0 = constr0
-end if
+! Read the inputs.
 
 ! If RHOBEG is present, then RHOBEG_LOC is a copy of RHOBEG; otherwise, RHOBEG_LOC takes the default
 ! value for RHOBEG, taking the value of RHOEND into account. Note that RHOEND is considered only if
@@ -365,12 +275,6 @@ else
     rhoend_loc = RHOEND_DFT
 end if
 
-if (present(ctol)) then
-    ctol_loc = ctol
-else
-    ctol_loc = CTOL_DFT
-end if
-
 if (present(ftarget)) then
     ftarget_loc = ftarget
 else
@@ -383,66 +287,77 @@ else
     maxfun_loc = MAXFUN_DIM_DFT * n
 end if
 
+if (present(npt)) then
+    npt_loc = npt
+elseif (maxfun_loc >= 1) then
+    npt_loc = int(max(n + 2, min(maxfun_loc - 1, 2 * n + 1)), kind(npt_loc))
+else
+    npt_loc = int(2 * n + 1, kind(npt_loc))
+end if
+
 if (present(iprint)) then
     iprint_loc = iprint
 else
     iprint_loc = IPRINT_DFT
 end if
 
+if (present(eta1)) then
+    eta1_loc = eta1
+elseif (present(eta2)) then
+    if (eta2 > ZERO .and. eta2 < ONE) then
+        eta1_loc = max(EPS, eta2 / 7.0_RP)
+    end if
+else
+    eta1_loc = TENTH
+end if
+
+if (present(eta2)) then
+    eta2_loc = eta2
+elseif (eta1_loc > ZERO .and. eta1_loc < ONE) then
+    eta2_loc = (eta1_loc + TWO) / 3.0_RP
+else
+    eta2_loc = 0.7_RP
+end if
+
+if (present(gamma1)) then
+    gamma1_loc = gamma1
+else
+    gamma1_loc = HALF
+end if
+
+if (present(gamma2)) then
+    gamma2_loc = gamma2
+else
+    gamma2_loc = TWO
+end if
+
 if (present(maxhist)) then
     maxhist_loc = maxhist
 else
-    maxhist_loc = maxval([maxfun_loc, n + 2_IK, MAXFUN_DIM_DFT * n])
+    maxhist_loc = maxval([maxfun_loc, n + 3_IK, MAXFUN_DIM_DFT * n])
 end if
 
-if (present(maxfilt)) then
-    maxfilt_loc = maxfilt
-else
-    maxfilt_loc = MAXFILT_DFT
-end if
-
-! Preprocess the inputs in case some of them are invalid. It does nothing if all inputs are valid.
+! Preprocess the inputs in case some of them are invalid.
 call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
-    & m=m, ctol=ctol_loc, maxfilt=maxfilt_loc)
+    & npt=npt_loc, eta1=eta1_loc, eta2=eta2_loc, gamma1=gamma1_loc, gamma2=gamma2_loc)
 
 ! Further revise MAXHIST_LOC according to MAXMEMORY, and allocate memory for the history.
 ! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
-! CHIST = NaN(1, MAXFUN), CONHIST = NaN(M, MAXFUN), FHIST = NaN(1, MAXFUN), XHIST = NaN(N, MAXFUN)
-! if they are requested; replace MAXFUN with 0 for the history that is not requested.
-call prehist(maxhist_loc, m, n, present(chist), chist_loc, present(conhist), conhist_loc, &
-    & present(fhist), fhist_loc, present(xhist), xhist_loc)
+! FHIST = NaN(1, MAXFUN), XHIST = NaN(N, MAXFUN) if they are requested; replace MAXFUN with 0 for
+! the history that is not requested.
+call prehist(maxhist_loc, n, present(fhist), fhist_loc, present(xhist), xhist_loc)
 
 !--------------------------------------------------------------------------------------------------!
-!-------------------- Call COBYLB, which performs the real calculations. --------------------------!
+!-------------------- Call NEWUOB, which performs the real calculations. --------------------------!
 ! Initialize NF_LOC !!!
 nf_loc = 0_IK  !!!
-! MAXFILT and CTOL are not used in the classical mode.
-call cobylb(calcfc, iprint_loc, maxfun_loc, rhobeg_loc, rhoend_loc, constr_loc, x, cstrv_loc, f, info_loc)
+call newuob(calfun, iprint_loc, maxfun_loc, npt_loc, ftarget_loc, rhobeg_loc, rhoend_loc, x, f, info_loc)
 ! Arrange the history so that they are in the chronological order !!!
-call rangehist(nf_loc, chist_loc, conhist_loc, fhist_loc, xhist_loc) !!!
+call rangehist(nf_loc, fhist_loc, xhist_loc) !!!
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
-
-! Deallocate X0 and CONSTR_X0 (although automatic deallocation would happen when the subroutine ends).
-if (fc_x0_provided) then
-    deallocate (x0)
-    deallocate (constr_x0)
-end if
 
 ! Write the outputs.
-
-! Copy CONSTR_LOC to CONSTR if needed.
-if (present(constr)) then
-    !--------------------------------------------------!
-    call safealloc(constr, m)  ! Removable in F2003.
-    !--------------------------------------------------!
-    constr = constr_loc
-end if
-deallocate (constr_loc)
-
-if (present(cstrv)) then
-    cstrv = cstrv_loc
-end if
 
 if (present(nf)) then
     nf = nf_loc
@@ -485,32 +400,11 @@ if (present(fhist)) then
 end if
 deallocate (fhist_loc)
 
-! Copy CHIST_LOC to CHIST if needed.
-if (present(chist)) then
-    nhist = min(nf_loc, int(size(chist_loc), IK))
-    !--------------------------------------------------!
-    call safealloc(chist, nhist)  ! Removable in F2003.
-    !--------------------------------------------------!
-    chist = chist_loc(1:nhist)  ! The same as XHIST, we must cap CHIST at NF_LOC.
-end if
-deallocate (chist_loc)
-
-! Copy CONHIST_LOC to CONHIST if needed.
-if (present(conhist)) then
-    nhist = min(nf_loc, int(size(conhist_loc, 2), IK))
-    !----------------------------------------------------------!
-    call safealloc(conhist, m, nhist)  ! Removable in F2003.
-    !----------------------------------------------------------!
-    conhist = conhist_loc(:, 1:nhist)  ! The same as XHIST, we must cap CONHIST at NF_LOC.
-end if
-deallocate (conhist_loc)
-
-! If NF_LOC > MAXHIST_LOC, warn that not all history is recorded.
-if ((present(xhist) .or. present(fhist) .or. present(chist) .or. present(conhist)) .and. maxhist_loc < nf_loc) then
+! If MAXFHIST_IN >= NF_LOC > MAXFHIST_LOC, warn that not all history is recorded.
+if ((present(xhist) .or. present(fhist)) .and. maxhist_loc < nf_loc) then
     write (wmsg, ifmt) maxhist_loc
     call warning(solver, 'Only the history of the last '//trim(wmsg)//' iteration(s) is recoreded')
 end if
-
 
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
@@ -526,26 +420,14 @@ end if
 !    end if
 !    if (present(fhist)) then
 !        call assert(size(fhist) == nhist, 'SIZE(FHIST) == NHIST', srname)
-!        call assert(.not. any(is_nan(fhist) .or. is_posinf(fhist)), 'FHIST does not contain NaN/+Inf', srname)
-!    end if
-!    if (present(chist)) then
-!        call assert(size(chist) == nhist, 'SIZE(CHIST) == NHIST', srname)
-!        call assert(.not. any(is_nan(chist) .or. is_posinf(chist)), 'CHIST does not contain NaN/+Inf', srname)
-!    end if
-!    if (present(conhist)) then
-!        call assert(size(conhist, 1) == m .and. size(conhist, 2) == nhist, 'SIZE(CONHIST) == [M, NHIST]', srname)
-!        call assert(.not. any(is_nan(conhist) .or. is_neginf(conhist)), 'CONHIST does not contain NaN/-Inf', srname)
-!    end if
-!    if (present(fhist) .and. present(chist)) then
-!        call assert(.not. any([(isbetter([fhist(i), chist(i)], [f, cstrv_loc], ctol_loc), i=1, nhist)]),&
-!            & 'No point in the history is better than X', srname)
+!        call assert(.not. any(fhist < f), 'F is the smallest in FHIST', srname)
 !    end if
 !end if
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 
 
-end subroutine cobyla
+end subroutine newuoa
 
 
-end module cobyla_mod
+end module newuoa_mod
