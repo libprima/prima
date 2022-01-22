@@ -335,15 +335,13 @@ else
     test_options.maxhist = ceil(randn*1.5*test_options.maxfun);
 end
 test_options.maxfilt = ceil(randn*500);
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%test_options.classical = 0;
-%test_options.classical = 1;
-%test_options.iprint = 0;
-%test_options.quiet = true;
-test_options.classical = (randn < -1.2);
-test_options.iprint = floor(3*rand);
-test_options.quiet = (rand > 0.5);
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ready_solvers = {'newuoa', 'cobyla'};  % Solvers whose development is (almost) finished.
+test_ready_solvers = ~isempty(intersect(lower(solvers), ready_solvers));
+test_options.classical = (rand < 0.2) && test_ready_solvers;
+test_options.iprint = floor(3*rand) * double(test_ready_solvers);
+test_options.quiet = (rand < 0.8) && test_ready_solvers;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if mod(ir, 50) == 0 && exist('NEWUOA_output.txt', 'file')
     delete('NEWUOA_output.txt');
 end

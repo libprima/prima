@@ -15,9 +15,9 @@ function [x, fx, exitflag, output] = postpdfo(probinfo, output)
 % Attribute: private (not supposed to be called by users)
 %
 % Remarks
-% 1. All errors in this function are unexpcted errors, which means they
+% 1. All errors in this function are unexpected errors, which means they
 % should not occur unless there is a bug in the code.
-% 2. Some unexpcted errors are external.
+% 2. Some unexpected errors are public/external.
 %
 % TODO: None
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -53,7 +53,7 @@ invoker_list = ['pdfon', solver_list];
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
 if (length(callstack) == 1) || ~ismember(callstack(2).name, invoker_list)
-    % Private/unexpcted error
+    % Private/unexpected error
     error(sprintf('%s:InvalidInvoker', funname), ...
     '%s: UNEXPECTED ERROR: %s should only be called by %s.', funname, funname, mystrjoin(invoker_list, ', '));
 else
@@ -119,7 +119,7 @@ end
 
 % Verify output
 if ~isa(output, 'struct')
-    % Public/unexpcted error
+    % Public/unexpected error
     error(sprintf('%s:InvalidOutput', invoker), ...
         '%s: UNEXPECTED ERROR: %s returns an output that is not a structure', invoker, solver);
 end
@@ -176,34 +176,34 @@ end
 
 % Verify x
 if ~isnumeric(x) || ~isreal(x) || ~isvector(x) || size(x,2)~=1
-    % Public/unexpcted error
+    % Public/unexpected error
     error(sprintf('%s:InvalidX', invoker), ...
         '%s: UNEXPECTED ERROR: %s returns an x that is not a real column or scalar.', invoker, solver);
 end
 
 % Verify fx
 if ~isrealscalar(fx)
-    % Public/unexpcted error
+    % Public/unexpected error
     error(sprintf('%s:InvalidFx', invoker), ...
         '%s: UNEXPECTED ERROR: %s returns an fx that is not a real number.', invoker, solver);
 end
 
 % Verify exitflag
 if ~isintegerscalar(exitflag)
-    % Public/unexpcted error
+    % Public/unexpected error
     error(sprintf('%s:InvalidExitFlag', invoker), ...
         '%s: UNEXPECTED ERROR: %s returns an exitflag that is not an integer', invoker, solver);
 end
 
 % Verify nf
 if ~isintegerscalar(nf)
-    % Public/unexpcted error
+    % Public/unexpected error
     error(sprintf('%s:InvalidNF', invoker), ...
         '%s: UNEXPECTED ERROR: %s returns an nf that is not an integer.', invoker, solver);
 end
 if nf <= 0
     % If prepdfo works properly, then nf<=0 should never happen.
-    % Public/unexpcted error
+    % Public/unexpected error
     error(sprintf('%s:InvalidNF', invoker), ...
     '%s: UNEXPECTED ERROR: %s returns nf=0 unexpectedly with exitflag %d.', invoker, solver, exitflag);
 end
@@ -486,7 +486,7 @@ case 14
 case 15
     output.message = sprintf('%s receives a linear feasibility problem but does not find a feasible point.', invoker);
 case 20
-    output.message = sprintf('Return from %s because the trust-region iteration has been performed maxtr (= 10*maxfun) times.', invoker);
+    output.message = sprintf('Return from %s because the trust-region iteration has been performed maxtr (= 2*maxfun) times.', invoker);
 case -1
     output.message = sprintf('Return from %s because NaN occurs in x.', solver);
 case -2  % This cannot happen if the moderated extreme barrier is implemented, which is the case when options.classical=false.

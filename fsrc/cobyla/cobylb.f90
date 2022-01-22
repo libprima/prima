@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, January 13, 2022 PM11:54:11
+! Last Modified: Saturday, January 22, 2022 PM08:47:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -214,7 +214,8 @@ jdrop_geo = 0_IK
 
 ! In most cases, each trust-region iteration takes at most two function evaluation. The following
 ! setting essentially imposes no constraint on the maximal number of trust-region iterations.
-maxtr = 4_IK * maxfun
+! The MAX is a precaution against overflow, where 4*maxfun will be negative.
+maxtr = max(maxfun, 4_IK * maxfun)
 ! MAXTR is unlikely to be reached, but we define the following default value for INFO for safety.
 info = MAXTR_REACHED
 

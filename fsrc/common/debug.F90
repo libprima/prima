@@ -8,7 +8,7 @@ module debug_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Tuesday, January 18, 2022 PM03:47:19
+! Last Modified: Saturday, January 22, 2022 PM07:48:54
 !--------------------------------------------------------------------------------------------------!
 implicit none
 private
@@ -28,7 +28,7 @@ subroutine assert(condition, description, srname)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine checks whether ASSERTION is true.
 ! If no, print SRNAME // 'Assertion failed: ' // DESCRIPTION
-! and then stop the program by calling ERRSTOP.
+! to STDERR and then stop the program by calling ERRSTOP.
 ! MATLAB analogue: assert(condition, sprintf('%s: Assertion failed: %s', srname, description))
 ! Python analogue: assert condition, srname + ': Assertion failed: ' + description
 ! C analogue: assert(condition)  /* An error message will be produced by the compiler */
@@ -36,7 +36,7 @@ subroutine assert(condition, description, srname)
 !! N.B.: As in C, we design ASSERT to operate only in the debug mode, i.e., when __DEBUGGING__ == 1;
 !! when __DEBUGGING__ == 0, ASSERT does nothing. For the checking that should take effect in both
 !! the debug and release modes, use VALIDATE (see below) instead. In the optimized mode of Python
-!! (python -O), assert will also be ignored.
+!! (python -O), the Python `assert` will also be ignored. MATLAB does not behave in this way.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : DEBUGGING
 implicit none
@@ -55,7 +55,7 @@ subroutine validate(condition, description, srname)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine checks whether CONDITION is true.
 ! If no, print SRNAME // 'Validation failed: ' // DESCRIPTION
-! and then stop the program by calling ERRSTOP.
+! to STDERR and then stop the program by calling ERRSTOP.
 ! MATLAB analogue: assert(condition, sprintf('%s: Validation failed: %s', srname, description))
 ! In Python or C, VALIDATE can be implemented following the Fortran implementation below.
 !--------------------------------------------------------------------------------------------------!
@@ -71,14 +71,18 @@ end subroutine validate
 
 subroutine errstop(srname, msg)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine prints a backtrace and 'ERROR: '//TRIM(SRNAME)//': '//TRIM(MSG)//'!', then stop.
+! This subroutine prints 'ERROR: '//TRIM(SRNAME)//': '//TRIM(MSG)//'!' to STDERR, then stop. In the
+! debug mode, it also calls BACKTR to print the backtrace.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : STDERR
+use, non_intrinsic :: consts_mod, only : STDERR, DEBUGGING
 implicit none
 character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: msg
 
-call backtr()
+if (DEBUGGING) then
+    call backtr()
+end if
+
 write (STDERR, '(/1A/)') 'ERROR: '//trim(srname)//': '//trim(msg)//'!'
 stop  ! This means to stop the whole program.
 end subroutine errstop
@@ -117,7 +121,7 @@ end subroutine backtr
 
 subroutine warning(srname, msg)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine prints 'Warning: '//TRIM(SRNAME)//': '//TRIM(MSG)//'.'
+! This subroutine prints 'Warning: '//TRIM(SRNAME)//': '//TRIM(MSG)//'.' to STDERR.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : STDERR
 implicit none

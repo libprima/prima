@@ -490,12 +490,22 @@ if ~(isrv && (lenx0 > 0))
     % Public/normal error
     error(sprintf('%s:InvalidX0', invoker), '%s: X0 should be a real vector/scalar.', invoker);
 end
+% maxint is the largest integer in the mex functions; the factor 0.99 provides a buffer. We do not
+% pass any integer larger than maxint to the mexified Fortran code. Otherwise, errors include
+% SEGFAULT may occur. The value of maxint is about 10^9 on a 32-bit platform and 10^18 on a 64-bit one.
+maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSI')]));
+if (lenx0 > maxint)
+    % Public/normal error
+    error(sprintf('%s:ProblemTooLarge', invoker), '%s: The problem is too large; at most %d variables are allowed.', invoker, maxint);
+end
 x0 = double(x0(:));
 abnormal_x0 = isnan(x0) | (abs(x0) >= inf);
 if any(abnormal_x0)
-    x0(abnormal_x0) = 0;
+    x0(isnan(x0)) = 0;
+    x0(isinf(x0) & x0 > 0) = gethuge('real');
+    x0(isinf(x0) & x0 < 0) = -gethuge('real');
     wid = sprintf('%s:AbnormalX0', invoker);
-    wmsg = sprintf('%s: X0 contains NaN or inifinite values; they are replaced by 0.', invoker);
+    wmsg = sprintf('%s: X0 contains NaN or infinite values; NaN is replaced by 0 and Inf by the largest real number.', invoker);
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
 end
@@ -687,6 +697,15 @@ if isempty(Aineq)
     Aineq = [];
     bineq = [];
 end
+
+% maxint is the largest integer in the mex functions; the factor 0.99 provides a buffer. We do not
+% pass any integer larger than maxint to the mexified Fortran code. Otherwise, errors include
+% SEGFAULT may occur. The value of maxint is about 10^9 on a 32-bit platform and 10^18 on a 64-bit one.
+maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSI')]));
+if (max([length(beq), length(bineq)]) > maxint)
+    % Public/normal error
+    error(sprintf('%s:ProblemTooLarge', invoker), '%s: The problem is too large; at most %d constraints are allowed.', invoker, maxint);
+end
 return
 
 %%%%%%%%%%%%%%%%% Function for nonlinear constraint preprocessing %%%%%%%%%%
@@ -797,6 +816,7 @@ maxfun = 500*lenx0;
 rhobeg = 1; % The default rhobeg and rhoend will be revised if solver = 'bobyqan'
 rhoend = 1e-6;
 ftarget = -inf;
+ctol = eps; % Tolerance for constraint violation; a point with a constraint violation at most ctol is considered feasible
 classical = false; % Call the classical Powell code? Classical mode recommended only for research purpose
 fortran = true; % Call the Fortran code?
 scale = false; % Scale the problem according to bounds? Scale only if the bounds reflect well the scale of the problem
@@ -806,11 +826,17 @@ iprint = 0;
 quiet = true;
 debugflag = false; % Do not use 'debug' as the name, which is a MATLAB function
 chkfunval = false;
-ctol = eps; % Tolerance for constraint violation; a point with a constraint violation at most ctol is considered feasible
 output_xhist = false; % Output the history of x?
 output_nlchist = false; % Output the history of the nonlinear constraints?
 maxfilt = 2000; % Length of the filter used for selecting the returned x in constrained problems
 min_maxfilt = 200; % The smallest value of maxfilt; if maxfilt is too small, the returned x may not be the best one visited
+
+% maxint is the largest integer in the mex functions; the factor 0.99 provides a buffer. We do not
+% pass any integer larger than maxint to the mexified Fortran code. Otherwise, errors include
+% SEGFAULT may occur. The value of maxint is about 10^9 on a 32-bit platform and 10^18 on a 64-bit one.
+% In the sequel, we ensure that options.maxfun <= maxint, and all the other integers <= options.maxfun,
+% including options.npt, options.maxhist and options.maxfilt.
+maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSI')]));
 
 if ~(isa(options, 'struct') || isempty(options))
     % Public/normal error
@@ -849,7 +875,7 @@ if isfield(options, 'solver') && ~isa(options.solver, 'char') && ~isa(options.so
     % all the empty fields have been removed from options.
 end
 if strcmp(invoker, 'pdfon')
-    % We se the default value of solver to '', an empty char array.
+    % We set the default value of solver to '', an empty char array.
     % 1. DO NOT change this default value! It will affect known_fields
     % and select_solver.
     % 2. DO NOT use [], which is an empty double array and may cause some
@@ -1017,32 +1043,33 @@ if ~validated  % options.npt has not got a valid value yet
     % For uobyqan and cobylan, we also adopt the 'default npt' defined above,
     % although it will NOT be used by the solver
 end
-options.npt = double(options.npt);
-% Although npt and maxfun are integers logically, they have to be
-% passed to the mexified code as double variables. In mex, data is
-% passed by pointers, but there are only very limited functions that
-% can read an integer value from a pointer or write an interger
-% value to a pointer (mxCopyPtrToInteger1, mxCopyInteger1ToPtr,
-% mxCopyPtrToInteger2, mxCopyInteger2ToPtr, mxCopyPtrToInteger4,
-% mxCopyInteger4ToPtr; no function for integer*8). This makes it
-% impossible to pass integer data properly unless we know the kind
-% of the integer. Therefore, in general, it is recommended to pass
-% integers as double variables and then cast them back to integers
-% when needed.
-% Indeed, in matlab, even if we define npt = 1000,
-% the class of npt is double! To get an integer npt, we would
-% have to define npt = int32(1000) or npt = int64(1000)!
+options.npt = double(options.npt);  % All integers will be passed as doubles to the Fortran MEX.
+% Although npt and maxfun are integers logically, they have to be passed to the mexified code as
+% double variables. In mex, data is passed by pointers, but there are only very limited functions
+% that can read an integer value from a pointer or write an integer value to a pointer
+% (mxCopyPtrToInteger1, mxCopyInteger1ToPtr, mxCopyPtrToInteger2, mxCopyInteger2ToPtr,
+% mxCopyPtrToInteger4, mxCopyInteger4ToPtr; no function for integer*8). This makes it impossible to
+% pass integer data properly unless we know the kind of the integer. Therefore, in general, it is
+% recommended to pass integers as double variables and then cast them back to integers when needed.
+% Indeed, in MATLAB, even if we define npt = 1000, the class of npt is double! To get an integer
+% npt, we would have to define npt = int32(1000) or npt = int64(1000)!
 
 % Validate options.maxfun
 validated = false;
 if isfield(options, 'maxfun')
-    if ~isintegerscalar(options.maxfun) || options.maxfun <= 0 || isnan(options.maxfun) || options.maxfun == inf
-        % Here, we do not revise excessively large maxfun (e.g., maxfun = 10^100),
-        % which should be handled by each solver case by case.
+    if ~isintegerscalar(options.maxfun) || options.maxfun <= 0 || isnan(options.maxfun)
         wid = sprintf('%s:InvalidMaxfun', invoker);
         wmsg = sprintf('%s: invalid maxfun; it should be a positive integer; it is set to %d.', invoker, maxfun);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
+    elseif options.maxfun > maxint
+        % maxfun would suffer from overflow in the Fortran code
+        wid = sprintf('%s:MaxfunTooLarge', funname);
+        wmsg = sprintf('%s: maxfun exceeds the upper limit of integers in Fortran MEX; it is set to %d.', funname, options.maxfun);
+        warning(wid, '%s', wmsg);
+        warnings = [warnings, wmsg];
+        options.maxfun = maxint;
+        validated = true;  % We have set options.maxfun to a valid value in the last line.
     elseif isempty(solver) && options.maxfun <= lenx0+1  % Here, options.maxfun cannot be NaN. No worry about the comparison.
         options.maxfun = lenx0+2; % Here we take lenx0+2 (the smallest possible value for npt)
         validated = true; %!!! % Set validated=true so that options.maxfun will not be set to the default value later
@@ -1071,7 +1098,7 @@ end
 if ~validated % options.maxfun has not got a valid value yet
     options.maxfun = max(maxfun, options.npt+1);
 end
-options.maxfun = double(options.maxfun); % maxfun will be passed as a double
+options.maxfun = double(options.maxfun);   % All integers will be passed as doubles to the Fortran MEX.
 % One can check that options.maxfun >= n+2;
 
 % Validate options.rhobeg
@@ -1161,6 +1188,7 @@ end
 if ~validated
     options.ctol = ctol;
 end
+options.ctol = double(options.ctol);
 
 % Validate options.classical
 validated = false;
@@ -1300,6 +1328,7 @@ if ~validated % options.iprint has not got a valid value yet
         options.iprint = iprint;
     end
 end
+options.iprint = double(iprint);   % All integers will be passed as doubles to the Fortran MEX.
 
 % Validate options.debug
 validated = false;
@@ -1371,12 +1400,14 @@ if isfield(options, 'maxhist')
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     else
+        options.maxhist = min(options.maxhist, options.maxfun);
         validated = true;
     end
 end
 if ~validated  % options.maxhist has not got a valid value
     options.maxhist = options.maxfun;  % options.maxfun has been validated
 end
+options.maxhist = double(options.maxhist);   % All integers will be passed as doubles to the Fortran MEX.
 
 % Validate options.output_xhist
 validated = false;
@@ -1393,6 +1424,7 @@ end
 if ~validated
     options.output_xhist = output_xhist;
 end
+options.output_xhist = logical(output_xhist);
 
 % Validate options.output_nlchist
 validated = false;
@@ -1409,6 +1441,7 @@ end
 if ~validated
     options.output_nlchist = output_nlchist;
 end
+options.output_nlchist = logical(output_nlchist);
 
 % Validate options.maxfilt
 validated = false;
@@ -1424,12 +1457,14 @@ if isfield(options, 'maxfilt')
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     else
+        options.maxfilt = min(options.maxfilt, options.maxfun);
         validated = true;
     end
 end
 if ~validated  % options.maxfilt has not got a valid value
     options.maxfilt = maxfilt;  % options.maxfun has been validated
 end
+options.maxfilt = double(options.maxfilt);  % All integers will be passed as doubles to the Fortran MEX.
 
 % Validate options.eta1
 user_eta1_correct = false;  % Does the user provide a correct eta1? Needed when validating eta2.
@@ -1456,6 +1491,7 @@ end
 if ~validated
     options.eta1 = NaN;  % NaN means that Fortran will take the hard-coded default value.
 end
+options.eta1 = double(options.eta1);
 
 % Validate options.eta2
 validated = false;
@@ -1480,6 +1516,7 @@ end
 if ~validated
     options.eta2 = NaN;  % NaN means that Fortran will take the hard-coded default value.
 end
+options.eta2 = double(options.eta2);
 
 % Validate options.gamma1
 validated = false;
@@ -1496,6 +1533,7 @@ end
 if ~validated
     options.gamma1 = NaN;  % NaN means that Fortran will take the hard-coded default value.
 end
+options.gamma1 = double(options.gamma1);
 
 % Validate options.gamma2
 validated = false;
@@ -1512,6 +1550,7 @@ end
 if ~validated
     options.gamma2 = NaN;  % NaN means that Fortran will take the hard-coded default value.
 end
+options.gamma2 = double(options.gamma2);
 
 % pre_options finished
 return

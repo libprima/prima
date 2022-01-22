@@ -19,14 +19,14 @@
 ! 5. Be careful with the line width limit. After preprocessing (macro expansion), some lines may
 ! become too long and hence get truncated. For the same reason, do NOT have any continued line
 ! involving macros, because the & may not appear at the correct position after macro expansion. This
-! is why, for example, we define EID and MSG in the ubroutines to avoid line continuation involving
+! is why, for example, we define EID and MSG in the subroutines to avoid line continuation involving
 ! mexErrMsgIdAndTxt.
 !
 ! Coded by Zaikun ZHANG
 !
 ! Started in July 2020
 !
-! Last Modified: Friday, January 21, 2022 AM01:21:00
+! Last Modified: Saturday, January 22, 2022 PM09:03:34
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -155,6 +155,11 @@ interface
     implicit none
     character*(*), intent(in) :: eid, emsg
     end subroutine mexErrMsgIdAndTxt
+
+    subroutine mexWarnMsgIdAndTxt(wid, wmsg)
+    implicit none
+    character*(*), intent(in) :: wid, wmsg
+    end subroutine mexWarnMsgIdAndTxt
 
     subroutine mxCopyPtrToReal8(px, y, n)
     use, non_intrinsic :: consts_mod, only : DP
@@ -407,7 +412,7 @@ real(RP), intent(out) :: x
 
 ! Local variables
 real(DP) :: x_dp(1)
-character(len=MSGLEN) :: eid, msg
+character(len=MSGLEN) :: wid, msg
 
 ! Check input type and size
 call fmxVerifyClassShape(px, 'double', 'scalar')
@@ -420,9 +425,9 @@ x = real(x_dp(1), kind(x))
 ! Check whether the type conversion is proper
 if (kind(x) /= kind(x_dp)) then
     if (abs(x - x_dp(1)) > cvsnTol * max(abs(x), ONE)) then
-        eid = 'FMXAPI:ConversionError'
+        wid = 'FMXAPI:LargeConversionError'
         msg = 'READ_RSCALAR: Large error occurs when converting REAL(DP) to REAL(RP) (maybe due to overflow).'
-        call mexErrMsgIdAndTxt(trim(eid), trim(msg))
+        call mexWarnMsgIdAndTxt(trim(wid), trim(msg))
     end if
 end if
 end subroutine read_rscalar
@@ -445,7 +450,7 @@ real(RP), allocatable, intent(out) :: x(:)
 real(DP), allocatable :: x_dp(:)
 integer(IK) :: n
 mwSize :: n_mw
-character(len=MSGLEN) :: eid, msg
+character(len=MSGLEN) :: wid, msg
 
 ! Check input type and size
 call fmxVerifyClassShape(px, 'double', 'vector')
@@ -464,9 +469,9 @@ x = real(x_dp, kind(x))
 ! Check whether the type conversion is proper
 if (kind(x) /= kind(x_dp)) then
     if (maxval(abs(x - x_dp)) > cvsnTol * max(maxval(abs(x)), ONE)) then
-        eid = 'FMXAPI:ConversionError'
+        wid = 'FMXAPI:LargeConversionError'
         msg = 'READ_RVECTOR: Large error occurs when converting REAL(DP) to REAL(RP) (maybe due to overflow).'
-        call mexErrMsgIdAndTxt(trim(eid), trim(msg))
+        call mexWarnMsgIdAndTxt(trim(wid), trim(msg))
     end if
 end if
 
@@ -492,7 +497,7 @@ real(RP), allocatable, intent(out) :: x(:, :)
 real(DP), allocatable :: x_dp(:, :)
 integer(IK) :: m, n
 mwSize :: xsize
-character(len=MSGLEN) :: eid, msg
+character(len=MSGLEN) :: wid, msg
 
 ! Check input type and size
 call fmxVerifyClassShape(px, 'double', 'matrix')
@@ -512,9 +517,9 @@ x = real(x_dp, kind(x))
 ! Check whether the type conversion is proper
 if (kind(x) /= kind(x_dp)) then
     if (maxval(abs(x - x_dp)) > cvsnTol * max(maxval(abs(x)), ONE)) then
-        eid = 'FMXAPI:ConversionError'
+        wid = 'FMXAPI:LargeConversionError'
         msg = 'READ_RMATRIX: Large error occurs when converting REAL(DP) to REAL(RP) (maybe due to overflow).'
-        call mexErrMsgIdAndTxt(trim(eid), trim(msg))
+        call mexWarnMsgIdAndTxt(trim(wid), trim(msg))
     end if
 end if
 
@@ -545,7 +550,7 @@ integer(IK), intent(out) :: x
 
 ! Local variables
 real(DP) :: x_dp(1)
-character(len=MSGLEN) :: eid, msg
+character(len=MSGLEN) :: wid, msg
 
 ! Check input type and size
 call fmxVerifyClassShape(px, 'double', 'scalar')
@@ -558,10 +563,10 @@ x = int(x_dp(1), kind(x))
 
 ! Check whether the type conversion is proper
 if (abs(x - x_dp(1)) > epsilon(x_dp) * max(abs(x), 1_IK)) then
-    eid = 'FMXAPI:ConversionError'
+    wid = 'FMXAPI:LargeConversionError'
     msg = 'READ_ISCALAR: Large error occurs when converting REAL(DP) to INTEGER(IK) ' &
         & //'(maybe due to overflow, or the input is not an integer).'
-    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
+    call mexWarnMsgIdAndTxt(trim(wid), trim(msg))
 end if
 end subroutine read_iscalar
 
@@ -582,7 +587,7 @@ mwPointer, intent(in) :: px
 logical, intent(out) :: x
 
 ! Local variables
-character(len=MSGLEN) :: eid, msg
+character(len=MSGLEN) :: wid, msg
 integer :: x_int
 real(DP) :: x_dp(1)
 
@@ -597,18 +602,18 @@ x_int = int(x_dp(1))
 
 ! Check whether the type conversion is proper
 if (abs(x_int - x_dp(1)) > epsilon(x_dp) * max(abs(x_int), 1)) then
-    eid = 'FMXAPI:ConversionError'
+    wid = 'FMXAPI:LargeConversionError'
     msg = 'READ_LSCALAR: Large error occurs when converting REAL(DP) to INTEGER ' &
         & //'(maybe due to overflow, or the input is not an integer).'
-    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
+    call mexWarnMsgIdAndTxt(trim(wid), trim(msg))
 end if
 if (x_int /= 0 .and. x_int /= 1) then
-    eid = 'FMXAPI:InputNotBoolean'
+    wid = 'FMXAPI:InputNotBoolean'
     msg = 'READ_LSCALAR: The input should be boolean, either 0 or 1.'
-    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
+    call mexWarnMsgIdAndTxt(trim(wid), trim(msg))
 end if
 
-x = (x_int == 1)
+x = (x_int /= 0)
 
 end subroutine read_lscalar
 
@@ -627,16 +632,16 @@ mwPointer, intent(out) :: px
 
 ! Local variables
 real(DP) :: x_dp
-character(len=MSGLEN) :: eid, msg
+character(len=MSGLEN) :: wid, msg
 
 ! Convert X to REAL(DP), which is expected by mxCopyReal8ToPtr
 x_dp = real(x, kind(x_dp))
 ! Check whether the type conversion is proper
 if (kind(x_dp) /= kind(x)) then
     if (abs(x - x_dp) > cvsnTol * max(abs(x), ONE)) then
-        eid = 'FMXAPI:ConversionError'
+        wid = 'FMXAPI:LargeConversionError'
         msg = 'WRITE_RSCALAR: Large error occurs when converting REAL(RP) to REAL(DP) (maybe due to overflow).'
-        call mexErrMsgIdAndTxt(trim(eid), trim(msg))
+        call mexWarnMsgIdAndTxt(trim(wid), trim(msg))
     end if
 end if
 
@@ -665,7 +670,7 @@ real(DP) :: x_dp(size(x))
 integer(IK) :: n
 mwSize :: n_mw
 logical :: row
-character(len=MSGLEN) :: eid, msg
+character(len=MSGLEN) :: wid, msg
 
 ! Get size of X
 n_mw = int(size(x), kind(n_mw))
@@ -676,9 +681,9 @@ x_dp = real(x, kind(x_dp))
 ! Check whether the type conversion is proper
 if (kind(x) /= kind(x_dp)) then
     if (maxval(abs(x - x_dp)) > cvsnTol * max(maxval(abs(x)), ONE)) then
-        eid = 'FMXAPI:ConversionError'
+        wid = 'FMXAPI:LargeConversionError'
         msg = 'WRITE_RVECTOR: Large error occurs when converting REAL(RP) to REAL(DP) (maybe due to overflow).'
-        call mexErrMsgIdAndTxt(trim(eid), trim(msg))
+        call mexWarnMsgIdAndTxt(trim(wid), trim(msg))
     end if
 end if
 
@@ -713,7 +718,7 @@ mwPointer, intent(out) :: px
 real(DP) :: x_dp(size(x, 1), size(x, 2))
 integer(IK) :: m, n
 mwSize :: m_mw, n_mw
-character(len=MSGLEN) :: eid, msg
+character(len=MSGLEN) :: wid, msg
 
 ! Get size of X
 m = int(size(x, 1), kind(m))
@@ -726,9 +731,9 @@ x_dp = real(x, kind(x_dp))
 ! Check whether the type conversion is proper
 if (kind(x) /= kind(x_dp)) then
     if (maxval(abs(x - x_dp)) > cvsnTol * max(maxval(abs(x)), ONE)) then
-        eid = 'FMXAPI:ConversionError'
+        wid = 'FMXAPI:LargeConversionError'
         msg = 'WRITE_RMATRIX: Large error occurs when converting REAL(RP) to REAL(DP) (maybe due to overflow).'
-        call mexErrMsgIdAndTxt(trim(eid), trim(msg))
+        call mexWarnMsgIdAndTxt(trim(wid), trim(msg))
     end if
 end if
 
@@ -753,14 +758,14 @@ mwPointer, intent(out) :: px
 
 ! Local variables
 real(DP) :: x_dp
-character(len=MSGLEN) :: eid, msg
+character(len=MSGLEN) :: wid, msg
 
 ! Convert X to REAL(DP), which is expected by mxCopyReal8ToPtr
 x_dp = real(x, kind(x_dp))
 if (abs(x - x_dp) > epsilon(x_dp) * max(abs(x), 1_IK)) then
-    eid = 'FMXAPI:ConversionError'
+    wid = 'FMXAPI:LargeConversionError'
     msg = 'WRITE_ISCALAR: Large error occurs when converting INTEGER(IK) to REAL(DP) (maybe due to overflow).'
-    call mexErrMsgIdAndTxt(trim(eid), trim(msg))
+    call mexWarnMsgIdAndTxt(trim(wid), trim(msg))
 end if
 
 px = mxCreateDoubleScalar(x_dp)

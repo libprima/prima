@@ -349,64 +349,22 @@ else % The problem turns out 'normal' during prepdfo
         A_aug = [];
         b_aug = [];
     end
+
+    % maxint is the largest integer in the mex functions; the factor 0.99 provides a buffer. We do not
+    % pass any integer larger than maxint to the mexified Fortran code. Otherwise, errors include
+    % SEGFAULT may occur. The value of maxint is about 10^9 on a 32-bit platform and 10^18 on a 64-bit one.
+    maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSI')]));
+    if (length(b_aug) > maxint)
+        % Public/normal error
+        error(sprintf('%s:ProblemTooLarge', funname), '%s: The problem is too large; at most %d constraints are allowed.', funname, maxint);
+    end
+
     % Extract the options
     npt = options.npt;
     maxfun = options.maxfun;
     rhobeg = options.rhobeg;
     rhoend = options.rhoend;
     ftarget = options.ftarget;
-
-    % Check whether the problem is too large for the Fortran code
-    % In the mex gateway, a workspace of size
-    % nw = m*(2+n)+npt*(4+n+npt)+n*(9+3*n)+max(m+3*n,max(2*m+n,2*npt))
-    % will be allocated, which is the largest memory allocated by
-    % LINCOA. If the value assigned to nw is so large that overflow
-    % occurs, then there will be a Segmentation Fault!!!
-    % The largest possible value of nw depends on the type of nw in the
-    % mex file, which is the default INTEGER type (~2E9 for integer*4,
-    % and ~9E18 for integer*8). This imposes an upper limit on the size
-    % of problem solvable by this code. If nw is INTEGER*4, assuming
-    % that m=10n and npt=2n+1, the largest value of n is ~10000. LINCOA
-    % is not designed for so large problems.
-    % In the following code, gethuge returns the largest possible value
-    % of the given data type in the mex environment.
-
-    % The largest integer in the mex functions; the factor 0.99 provides a buffer
-    maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSI')]));
-    m = length(b_aug); % Linear constraints: (A_aug)'*x <= b_aug;
-    minnw = m*(2+n)+(n+2)*(2*n+6)+n*(9+3*n)+max([m+3*n, 2*m+n, 2*n+4]);
-    % minnw is the smallest possible velue of nw, i.e., nw with the smallest npt, i.e., npt=n+2
-    if minnw >= maxint
-        % nw would suffer from overflow in the Fortran code; exit immediately
-        % Public/normal error
-        if strcmp(invoker, 'pdfon')
-            error(sprintf('%s:ProblemTooLarge', invoker), '%s: problem too large for %s. Try other solvers.', invoker, funname);
-        else
-            error(sprintf('%s:ProblemTooLarge', funname), '%s: problem too large for %s. Try other solvers.', funname, funname);
-        end
-    end
-    alpha = n+7;
-    beta = 2*m + m*(2+n) + n*(9+3*n) - maxint;
-    maxnpt = max(n+2, floor(0.5*(-alpha+sqrt(alpha*alpha - 4*beta))));
-    % Noting that max([m+3*n,2*m+n,2*npt]) <= 2*m + 3*npt when npt >= n,
-    % we know nw <= maxint can be guaranteed by npt >= n and
-    % npt^2 + alpha*npt + beta <= 0 with the alpha and beta defined above.
-    % Consistently, npt <= maxnpt guarantes nw <= maxint.
-    if npt > maxnpt
-        npt = maxnpt;
-        wid = sprintf('%s:NptTooLarge', funname);
-        wmsg = sprintf('%s: npt is so large that it is unable to allocate the workspace; it is set to %d.', funname, npt);
-        warning(wid, '%s', wmsg);
-        output.warnings = [output.warnings, wmsg];
-    end
-    if maxfun > maxint
-        % maxfun would suffer from overflow in the Fortran code
-        maxfun = maxint;
-        wid = sprintf('%s:MaxfunTooLarge', funname);
-        wmsg = sprintf('%s: maxfun exceeds the upper limit of Fortran integers; it is set to %d.', funname, maxfun);
-        warning(wid, '%s', wmsg);
-        output.warnings = [output.warnings, wmsg];
-    end
 
     % If x0 is not feasible, LINCOA will modify the constraints to make
     % it feasible (which is a bit strange).
