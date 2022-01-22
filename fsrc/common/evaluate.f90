@@ -6,29 +6,89 @@ module evaluate_mod
 !
 ! Started: August 2021
 !
-! Last Modified: Friday, January 21, 2022 AM11:50:15
+! Last Modified: Sunday, January 23, 2022 AM01:27:13
 !--------------------------------------------------------------------------------------------------!
 
-use, non_intrinsic :: consts_mod, only : RP
 implicit none
 private
+public :: moderatex
+public :: moderatef
+public :: moderatec
 public :: evalf
 public :: evalfc
 
-!--------------------------------------------------------------------------------------------------!
-! N.B.: FC_X0_PROVIDED, X0, F_X0 and CONSTR_X0 are only used in nonlinear constrained problems,
-! where the user may provide the function & constraint values of the starting point X0.
-! They are NOT thread safe. They should be removed by a different implementation, e.g., passing
-! F_X0 and CONSTR_X0 to COBYLB explicitly.
-public :: fc_x0_provided, x0, f_x0, constr_x0
-logical :: fc_x0_provided
-real(RP), allocatable :: x0(:)
-real(RP) :: f_x0
-real(RP), allocatable :: constr_x0(:)
-!--------------------------------------------------------------------------------------------------!
-
 
 contains
+
+
+pure elemental function moderatex(x) result(y)
+!--------------------------------------------------------------------------------------------------!
+! This function moderates a decision variable. It replaces NaN by 0 and Inf/-Inf by HUGENUM/-HUGENUM.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, ZERO, HUGENUM
+use, non_intrinsic :: infnan_mod, only : is_nan
+implicit none
+
+! Inputs
+real(RP), intent(in) :: x
+! Outputs
+real(RP) :: y
+
+if (is_nan(x)) then
+    y = ZERO
+else
+    y = x
+end if
+y = max(-HUGENUM, min(HUGENUM, y))
+end function moderatex
+
+
+pure elemental function moderatef(x) result(y)
+!--------------------------------------------------------------------------------------------------!
+! This function moderates the function value of a minimization problem. It replaces NaN and any
+! value above HUGEFUN by HUGEFUN
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, HUGEFUN
+use, non_intrinsic :: infnan_mod, only : is_nan
+implicit none
+
+! Inputs
+real(RP), intent(in) :: x
+! Outputs
+real(RP) :: y
+
+if (is_nan(x)) then
+    y = HUGEFUN
+else
+    y = x
+end if
+y = min(HUGEFUN, y)
+!! We may moderate huge negative function values, but we decide not to.
+!!y = max(-HUGEFUN, min(HUGEFUN, y))
+end function moderatef
+
+
+pure elemental function moderatec(x) result(y)
+!--------------------------------------------------------------------------------------------------!
+! This function moderates the constraint value, the constraint demanding this value to be nonnegative.
+! It replaces NaN and any value below -HUGECON by -HUGECON, and any value above HUGECON by HUGECON.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, HUGECON
+use, non_intrinsic :: infnan_mod, only : is_nan
+implicit none
+
+! Inputs
+real(RP), intent(in) :: x
+! Outputs
+real(RP) :: y
+
+if (is_nan(x)) then
+    y = -HUGECON
+else
+    y = x
+end if
+y = max(-HUGECON, min(HUGECON, y))
+end function moderatec
 
 
 subroutine evalf(calfun, x, f)
@@ -37,7 +97,7 @@ subroutine evalf(calfun, x, f)
 ! handled by a moderated extreme barrier.
 !--------------------------------------------------------------------------------------------------!
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, HUGEFUN, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: pintrf_mod, only : OBJ
@@ -68,13 +128,11 @@ if (any(is_nan(x))) then
     ! Although this should not happen unless there is a bug, we include this case for security.
     f = sum(x)  ! Set F to NaN
 else
-    call calfun(x, f)  ! Evaluate F.
+    call calfun(moderatex(x), f)  ! Evaluate F; We moderate X before doing so.
 
     ! Moderated extreme barrier: replace NaN/huge objective or constraint values with a large but
     ! finite value. This is naive. Better approaches surely exist.
-    if (f > HUGEFUN .or. is_nan(f)) then
-        f = HUGEFUN
-    end if
+    f = moderatef(f)
 
     !! We may moderate huge negative values of F (NOT an extreme barrier), but we decide not to.
     !!f = max(-HUGEFUN, f)
@@ -101,10 +159,9 @@ subroutine evalfc(calcfc, x, f, constr, cstrv)
 ! extreme barrier.
 !--------------------------------------------------------------------------------------------------!
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, ZERO, HUGEFUN, HUGECON, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
-use, non_intrinsic :: linalg_mod, only : norm
 use, non_intrinsic :: pintrf_mod, only : OBJCON
 implicit none
 
@@ -119,15 +176,12 @@ real(RP), intent(out) :: cstrv
 
 ! Local variables
 character(len=*), parameter :: srname = 'EVALFC'
-logical :: evaluated
 
 ! Preconditions
 if (DEBUGGING) then
     ! X should not contain NaN if the initial X does not contain NaN and the subroutines generating
     ! trust-region/geometry steps work properly so that they never produce a step containing NaN/Inf.
     call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
-    call assert((allocated(x0) .and. allocated(constr_x0)) .or. .not. fc_x0_provided, &
-        & 'X0 and CONSTR_X0 are allocated if FC_X0_PROVIDED is true', srname)
 end if
 
 !====================!
@@ -141,32 +195,13 @@ if (any(is_nan(x))) then
     constr = f
     cstrv = f
 else
-    evaluated = .false.
-    if (fc_x0_provided .and. allocated(x0) .and. allocated(constr_x0)) then
-        if (norm(x - x0) <= 0) then
-            f = f_x0
-            constr = constr_x0
-            evaluated = .true.
-        end if
-    end if
-    if (.not. evaluated) then
-        call calcfc(x, f, constr)  ! Evaluate F and CONSTR.
-    end if
+    call calcfc(moderatex(x), f, constr)  ! Evaluate F and CONSTR; We moderate X before doing so.
 
     ! Moderated extreme barrier: replace NaN/huge objective or constraint values with a large but
     ! finite value. This is naive, and better approaches surely exist.
-    if (f > HUGEFUN .or. is_nan(f)) then
-        f = HUGEFUN
-    end if
-    where (constr < -HUGECON .or. is_nan(constr))
-        ! The constraint is CONSTR(X) >= 0, so NaN should be replaced with a large negative value.
-        constr = -HUGECON  ! MATLAB code: constr(constr < -HUGECON | isnan(constr)) = -HUGECON
-    end where
-
-    ! Moderate huge positive values of CONSTR, or they may lead to Inf/NaN in subsequent calculations.
-    ! This is NOT an extreme barrier.
-    constr = min(HUGECON, constr)
-    !! We may moderate F similarly, but we decide not to.
+    f = moderatef(f)
+    constr = moderatec(constr)
+    !! We may moderate huge negative values of F (NOT an extreme barrier), but we decide not to.
     !!f = max(-HUGEFUN, f)
 
     ! Evaluate the constraint violation for constraints CONSTR(X) >= 0.

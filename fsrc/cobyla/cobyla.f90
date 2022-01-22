@@ -28,7 +28,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, January 21, 2022 AM10:24:35
+! Last Modified: Sunday, January 23, 2022 AM01:25:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -210,9 +210,9 @@ use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, FTARGET_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TEN, TENTH, EPS, MSGLEN
 use, non_intrinsic :: debug_mod, only : assert, errstop, warning
-use, non_intrinsic :: evaluate_mod, only : fc_x0_provided, x0, f_x0, constr_x0
+use, non_intrinsic :: evaluate_mod, only : evalfc, moderatex
 use, non_intrinsic :: history_mod, only : prehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite, is_neginf, is_posinf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_neginf, is_posinf
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : OBJCON
 use, non_intrinsic :: selectx_mod, only : isbetter
@@ -299,22 +299,15 @@ end if
 ! Allocate memory for CONSTR_LOC, since M is now available.
 call safealloc(constr_loc, m)  ! NOT removable even in F2003!
 
-! Replace any NaN or Inf in X by ZERO.
-where (is_nan(x) .or. is_inf(x))
-    x = ZERO
-end where
-
-! If the user provides the function & constraint value at X0, then set up F_X0 and CONSTR_X0.
-fc_x0_provided = .false.  ! Must be done. Otherwise, FC_X0_PROVIDED may be undefined.
-if (present(f0) .and. present(constr0)) then
-    fc_x0_provided = .true.
-    !--------------------------------------------------!
-    call safealloc(x0, n)  ! Removable in F2003.
-    call safealloc(constr_x0, m)  ! Removable in F2003.
-    !--------------------------------------------------!
-    x0 = x
-    f_x0 = f0
-    constr_x0 = constr0
+! If the user provides the function & constraint value at X0, then set up [F, CONSTR_LOC] to them.
+! Otherwise, set [F, CONSTR_LOC] = [F(X0), CONSTR(X0)], so that COBYLB only needs a single interface.
+if (present(f0) .and. present(constr0) .and. all(is_finite(x))) then
+    f = f0
+    constr_loc = constr0
+else
+    ! Replace any NaN in X by ZERO and Inf/-Inf in X by HUGENUM/-HUGENUM.
+    x = moderatex(x)
+    call evalfc(calcfc, x, f, constr_loc, cstrv_loc)
 end if
 
 ! If RHOBEG is present, then RHOBEG_LOC is a copy of RHOBEG; otherwise, RHOBEG_LOC takes the default
@@ -325,7 +318,7 @@ if (present(rhobeg)) then
 elseif (present(rhoend)) then
     ! Fortran does not take short-circuit evaluation of logic expressions. Thus it is WRONG to
     ! combine the evaluation of PRESENT(RHOEND) and the evaluation of IS_FINITE(RHOEND) as
-    ! "if (present(rhoend) .and. is_finite(rhoend))". The compiler may choose to evaluate the
+    ! "IF (PRESENT(RHOEND) .AND. IS_FINITE(RHOEND))". The compiler may choose to evaluate the
     ! IS_FINITE(RHOEND) even if PRESENT(RHOEND) is false!
     if (is_finite(rhoend) .and. rhoend > ZERO) then
         rhobeg_loc = max(TEN * rhoend, RHOBEG_DFT)
@@ -393,14 +386,8 @@ call prehist(maxhist_loc, m, n, present(chist), chist_loc, present(conhist), con
 
 !-------------------- Call COBYLB, which performs the real calculations. --------------------------!
 call cobylb(calcfc, iprint_loc, maxfilt_loc, maxfun_loc, ctol_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
-    & constr_loc, x, nf_loc, chist_loc, conhist_loc, cstrv_loc, f, fhist_loc, xhist_loc, info_loc)
+    & constr_loc, f, x, nf_loc, chist_loc, conhist_loc, cstrv_loc, fhist_loc, xhist_loc, info_loc)
 !--------------------------------------------------------------------------------------------------!
-
-! Deallocate X0 and CONSTR_X0 (although automatic deallocation would happen when the subroutine ends).
-if (fc_x0_provided) then
-    deallocate (x0)
-    deallocate (constr_x0)
-end if
 
 ! Write the outputs.
 

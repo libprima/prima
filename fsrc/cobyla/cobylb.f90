@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, January 22, 2022 PM08:47:14
+! Last Modified: Sunday, January 23, 2022 AM12:00:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -17,8 +17,8 @@ public :: cobylb
 contains
 
 
-subroutine cobylb(calcfc, iprint, maxfilt, maxfun, ctol, ftarget, rhobeg, rhoend, constr, x, nf, &
-        & chist, conhist, cstrv, f, fhist, xhist, info)
+subroutine cobylb(calcfc, iprint, maxfilt, maxfun, ctol, ftarget, rhobeg, rhoend, constr, f, x, nf, &
+        & chist, conhist, cstrv, fhist, xhist, info)
 
 ! Generic modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
@@ -54,7 +54,9 @@ real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: rhoend
 
 ! In-outputs
-real(RP), intent(out) :: constr(:) ! M
+! On entry, [X, F, CONSTR] = [X0, F(X0), CONSTR(X0)]
+real(RP), intent(inout) :: constr(:) ! M
+real(RP), intent(inout) :: f
 real(RP), intent(inout) :: x(:)  ! N
 
 ! Outputs
@@ -63,7 +65,6 @@ integer(IK), intent(out) :: nf
 real(RP), intent(out) :: chist(:)
 real(RP), intent(out) :: conhist(:, :)
 real(RP), intent(out) :: cstrv
-real(RP), intent(out) :: f
 real(RP), intent(out) :: fhist(:)
 real(RP), intent(out) :: xhist(:, :)
 
@@ -160,8 +161,8 @@ factor_gamma = HALF
 rho = rhobeg
 cpen = ZERO
 
-call initxfc(calcfc, iprint, maxfun, ctol, ftarget, rhobeg, x, nf, chist, conhist, conmat, cval, fhist,&
-   & fval, sim, xhist, evaluated, subinfo)
+call initxfc(calcfc, iprint, maxfun, constr, ctol, f, ftarget, rhobeg, x, nf, chist, conhist, &
+   & conmat, cval, fhist, fval, sim, xhist, evaluated, subinfo)
 call initfilt(conmat, ctol, cval, fval, sim, evaluated, nfilt, cfilt, confilt, ffilt, xfilt)
 
 if (subinfo /= INFO_DFT) then
