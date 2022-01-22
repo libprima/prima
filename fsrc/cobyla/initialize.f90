@@ -6,7 +6,7 @@ module initialize_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, January 06, 2022 PM12:21:43
+! Last Modified: Sunday, January 23, 2022 AM01:22:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -17,17 +17,17 @@ public :: initxfc, initfilt
 contains
 
 
-subroutine initxfc(calcfc, iprint, maxfun, ctol, ftarget, rhobeg, x0, nf, chist, conhist, conmat, &
-    & cval, fhist, fval, sim, xhist, evaluated, info)
+subroutine initxfc(calcfc, iprint, maxfun, constr0, ctol, f0, ftarget, rhobeg, x0, nf, chist, &
+    & conhist, conmat, cval, fhist, fval, sim, xhist, evaluated, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine does the initialization concerning X, function values, and constraints.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
-use, non_intrinsic :: consts_mod, only : RP, IK, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: evaluate_mod, only : evalfc
+use, non_intrinsic :: evaluate_mod, only : evalfc, moderatef, moderatec
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf, is_finite
 use, non_intrinsic :: info_mod, only : INFO_DFT
@@ -41,7 +41,9 @@ implicit none
 procedure(OBJCON) :: calcfc
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
+real(RP), intent(in) :: constr0(:)
 real(RP), intent(in) :: ctol
+real(RP), intent(in) :: f0
 real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: x0(:)
@@ -111,27 +113,30 @@ end if
 
 sim = rhobeg * eye(n, n + 1_IK)
 sim(:, n + 1) = x0
-fval = HUGENUM
-cval = HUGENUM
-info = INFO_DFT
+
 ! EVALUATED(J) = TRUE iff the function/constraint of SIM(:, J) has been evaluated.
 evaluated = .false.
+
 ! Initialize FVAL, CVAL, and CONMAT. Otherwise, compilers may complain that they are not (completely)
 ! initialized if the initialization aborts due to abnormality (see CHECKEXIT).
 fval = HUGENUM
 cval = HUGENUM
 conmat = -HUGENUM
+info = INFO_DFT
 
 do k = 1, n + 1_IK
     x = sim(:, n + 1)
     ! We will evaluate F corresponding to SIM(:, J).
     if (k == 1) then
         j = n + 1_IK
+        f = moderatef(f0)
+        constr = moderatec(constr0)
+        cstrv = maxval([-constr, ZERO])
     else
         j = k - 1_IK
         x(j) = x(j) + rhobeg
+        call evalfc(calcfc, x, f, constr, cstrv)
     end if
-    call evalfc(calcfc, x, f, constr, cstrv)
     call fmsg(solver, iprint, k, f, x, cstrv, constr)
     evaluated(j) = .true.
     ! Save X, F, CONSTR, CSTRV into the history.

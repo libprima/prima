@@ -19,7 +19,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, January 19, 2022 AM10:26:49
+! Last Modified: Sunday, January 23, 2022 AM12:38:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -163,6 +163,7 @@ use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS, MSGLEN
 use, non_intrinsic :: debug_mod, only : assert, warning
+use, non_intrinsic :: evaluate_mod, only : moderatex
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite
 use, non_intrinsic :: memory_mod, only : safealloc
@@ -221,10 +222,8 @@ real(RP), allocatable :: xhist_loc(:, :)
 ! Sizes
 n = int(size(x), kind(n))
 
-! Replace any NaN or Inf in X by ZERO.
-where (is_nan(x) .or. is_inf(x))
-    x = ZERO
-end where
+! Replace any NaN in X by ZERO and Inf/-Inf in X by HUGENUM/-HUGENUM.
+x = moderatex(x)
 
 ! Read the inputs.
 
@@ -236,7 +235,7 @@ if (present(rhobeg)) then
 elseif (present(rhoend)) then
     ! Fortran does not take short-circuit evaluation of logic expressions. Thus it is WRONG to
     ! combine the evaluation of PRESENT(RHOEND) and the evaluation of IS_FINITE(RHOEND) as
-    ! "if (present(rhoend) .and. is_finite(rhoend))". The compiler may choose to evaluate the
+    ! "IF (PRESENT(RHOEND) .AND. IS_FINITE(RHOEND))". The compiler may choose to evaluate the
     ! IS_FINITE(RHOEND) even if PRESENT(RHOEND) is false!
     if (is_finite(rhoend) .and. rhoend > ZERO) then
         rhobeg_loc = max(TEN * rhoend, RHOBEG_DFT)
