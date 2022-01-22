@@ -282,19 +282,19 @@ else
     end
 
     % Call the Fortran code
+    if options.classical
+        fsolver = @fnewuoan_classical;
+    else
+        fsolver = @fnewuoan;
+    end
+    % The mexified Fortran Function is a private function generating only private errors;
+    % however, public errors can occur due to, e.g., evalobj; error handling needed.
     try
-        % The mexified Fortran Function is a private function generating only private errors;
-        % however, public errors can occur due to, e.g., evalobj; error handling needed.
-        if options.classical
-            [x, fx, exitflag, nf, xhist, fhist] = ...
-                fnewuoan_classical(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, iprint, maxhist, double(output_xhist));
-            % Fortran MEX does not provide an API for reading Boolean variables. So we convert
-            % output_xhist to a scalar (0 or 1) and read it as an integer in the MEX gateway.
-            % In C MEX, however, we have mxGetLogicals.
-        else
-            [x, fx, exitflag, nf, xhist, fhist] = ...
-                fnewuoan(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, iprint, maxhist, double(output_xhist));
-        end
+        [x, fx, exitflag, nf, xhist, fhist] = ...
+            fsolver(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, iprint, maxhist, double(output_xhist));
+        %    % Fortran MEX does not provide an API for reading Boolean variables. So we convert
+        %    % output_xhist to a scalar (0 or 1) and read it as an integer in the MEX gateway.
+        %    % In C MEX, however, we have mxGetLogicals.
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
             error(exception.identifier, '%s\n(error generated in %s, line %d)', exception.message, exception.stack(1).file, exception.stack(1).line);

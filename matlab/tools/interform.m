@@ -3,7 +3,7 @@ function interform(directory)
 % form" and save them in outputdir under directory.
 % See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 %
-% Coded by Zaikun Zhang in August, 2020.
+% Coded by Zaikun ZHANG in August, 2020.
 
 % Output directory
 outputdir = 'intersection_form';
@@ -23,7 +23,7 @@ origdir = cd();
 cd(directory);
 inputdir = cd();  % Full path of the given directory, which is the current directory now.
 cd(origdir);
-% Revise ignoredir accoridng to inputdir
+% Revise ignoredir according to inputdir
 [~, inputdirname]  = fileparts(inputdir);
 if ~strcmp(inputdirname, 'mex_gateways')
     ignoredir = [ignoredir, 'classical'];
@@ -56,7 +56,7 @@ fprintf(fid, 'in such a form can be compiled both as fixed form and as free form
 fprintf(fid, '\n');
 fprintf(fid, 'See http://fortranwiki.org/fortran/show/Continuation+lines for details.\n');
 fprintf(fid, '\n');
-fprintf(fid, 'Zaikun Zhang (www.zhangzk.net), %s', date);
+fprintf(fid, 'Zaikun ZHANG (www.zhangzk.net), %s', date);
 fclose(fid);
 
 % The following lines perform the refactoring in the current directory
@@ -124,7 +124,7 @@ function refactor_file(filename)
 % The new file has the same name as the original file, but the extension
 % ".f90" will be changed to ".f", and ".F90" will be changed to ".F". If
 % the new file has the same name as the original one, then the original
-% file will be backuped in "ORIGINAL_FILE_NAME.bak".
+% file will be backed up in "ORIGINAL_FILE_NAME.bak".
 
 fid = fopen(filename, 'r');
 if fid == -1
@@ -189,7 +189,7 @@ fprintf(fid, '! file in such a form can be compiled both as fixed form and as fr
 fprintf(fid, '!\n');
 fprintf(fid, '! See http://fortranwiki.org/fortran/show/Continuation+lines for details.\n');
 fprintf(fid, '!\n');
-fprintf(fid, '! Generated using the %s.m script by Zaikun Zhang (www.zhangzk.net)\n! on %s.\n', mfilename, date);
+fprintf(fid, '! Generated using the %s.m script by Zaikun ZHANG (www.zhangzk.net)\n! on %s.\n', mfilename, date);
 fprintf(fid, '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n\n');
 
 for i = 1 : length(strs)

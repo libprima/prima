@@ -19,7 +19,7 @@ module newuoa_mod  ! (The classical mode)
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, January 21, 2022 PM09:58:32
+! Last Modified: Saturday, January 22, 2022 PM01:46:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -172,9 +172,9 @@ use, non_intrinsic :: preproc_mod, only : preproc
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 ! The following modules are crucial for the classical mode.
-use, non_intrinsic :: evaluate_mod, only : nf_loc => nf
-use, non_intrinsic :: evaluate_mod, only : xhist_loc => xhist, fhist_loc => fhist
-use, non_intrinsic :: evaluate_mod, only : rangehist
+use, non_intrinsic :: evalcl_mod, only : nf_loc => nf
+use, non_intrinsic :: evalcl_mod, only : xhist_loc => xhist, fhist_loc => fhist
+use, non_intrinsic :: evalcl_mod, only : rangehist
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 

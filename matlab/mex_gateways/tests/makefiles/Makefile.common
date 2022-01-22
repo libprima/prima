@@ -65,7 +65,7 @@ SRC_DIRS := $(COMMON_DIR) $(SOLVER_DIR)
 # Sources.
 COMMON_SRC := $(shell sed "s/^/\.\/common\//" $(COMMON_DIR)/ffiles.txt)
 SOLVER_SRC := $(shell sed "s/^/\.\/$(SOLVER)\//" $(SOLVER_DIR)/ffiles.txt)
-MEXGATE_SRC := fmxapi.F90 prob.F90 gethuge.F90 $(SOLVER)_mex.F90 ./classical/fmxcl.F90 ./classical/$(SOLVER)_mex.F90
+MEXGATE_SRC := fmxapi.F90 prob.F90 gethuge.F90 $(SOLVER)_mex.F90
 SRC := $(COMMON_SRC) $(SOLVER_SRC) $(MEXGATE_SRC)
 # DEBUGF90 is the name of the Fortran file that defines `debug_mod`, which has a Fortran version and
 # a MEX version. We should use the MEX version in place of the Fortran one when testing the MEX gateways.

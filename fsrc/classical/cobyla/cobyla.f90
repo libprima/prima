@@ -28,7 +28,7 @@ module cobyla_mod  ! (The classical mode)
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, January 21, 2022 PM09:59:00
+! Last Modified: Saturday, January 22, 2022 PM01:45:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -210,7 +210,6 @@ use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, FTARGET_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TEN, TENTH, EPS, MSGLEN
 use, non_intrinsic :: debug_mod, only : assert, errstop, warning
-use, non_intrinsic :: evaluate_mod, only : fc_x0_provided, x0, f_x0, constr_x0
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite !, is_neginf, is_posinf
 use, non_intrinsic :: memory_mod, only : safealloc
@@ -221,10 +220,11 @@ use, non_intrinsic :: preproc_mod, only : preproc
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 ! The following modules are crucial for the classical mode.
-use, non_intrinsic :: evaluate_mod, only : nf_loc => nf
-use, non_intrinsic :: evaluate_mod, only : xhist_loc => xhist, fhist_loc => fhist
-use, non_intrinsic :: evaluate_mod, only : chist_loc => chist, conhist_loc => conhist
-use, non_intrinsic :: evaluate_mod, only : rangehist
+use, non_intrinsic :: evalcl_mod, only : fc_x0_provided, x0, f_x0, constr_x0
+use, non_intrinsic :: evalcl_mod, only : nf_loc => nf
+use, non_intrinsic :: evalcl_mod, only : xhist_loc => xhist, fhist_loc => fhist
+use, non_intrinsic :: evalcl_mod, only : chist_loc => chist, conhist_loc => conhist
+use, non_intrinsic :: evalcl_mod, only : rangehist
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 
