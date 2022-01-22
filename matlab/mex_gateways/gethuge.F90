@@ -10,7 +10,7 @@
 !
 ! Started in March 2020
 !
-! Last Modified: Tuesday, January 18, 2022 AM12:58:14
+! Last Modified: Saturday, January 22, 2022 PM08:16:50
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -28,8 +28,8 @@
 subroutine mexFunction(nargout, poutput, nargin, pinput)
 !--------------------------------------------------------------------------------------------------!
 ! Usage: data_huge = gethuge(data_type)
-! This function returns the largest value of data_type on the current platform, the possible values
-! of data_type being 'integer', 'float', 'real', 'single', 'double', 'mwSI', 'fun', 'function',
+! This function returns the largest value of data_type on the current platform. The possible values
+! of data_type are 'integer',  'int', 'float', 'real', 'single', 'double', 'mwSI', 'fun', 'function',
 ! 'con', 'constraint'.
 !
 ! In previous versions, GETHUGE accepted 'mwSize' or 'mwIndex' as inputs, but it is not the case
@@ -106,7 +106,7 @@ case ('real')  ! HUGE(0.0_RP) may be bigger than HUGE(0.0_DP) in this case
     else
         hugeValue = 10.0_DP**(min(real(log10(huge(0.0_RP)), DP), log10(huge(0.0_DP))) - 1.0_DP)
     end if
-case ('integer')  ! No overflow in this case
+case ('integer', 'int')  ! No overflow in this case
     hugeValue = real(huge(intZero), DP)
 case ('mwsi')  ! No overflow in this case
     hugeValue = min(real(huge(msZero), DP), real(huge(miZero), DP))

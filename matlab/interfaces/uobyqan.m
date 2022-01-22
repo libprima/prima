@@ -257,49 +257,9 @@ if ~strcmp(invoker, 'pdfon') && probinfo.feasibility_problem
     output.constrviolation = 0; % Unconstrained problem; set output.constrviolation to 0
     output.chist = []; % Unconstrained problem; set output.chist to []
 else
-    n = length(x0);
-    if (n <= 1)
+    if (length(x0) <= 1)
         wid = sprintf('%s:UnivariateProblem', funname);
         wmsg = sprintf('%s: a univariate problem received; %s may fail. Try other solvers.', funname, funname);
-        warning(wid, '%s', wmsg);
-        output.warnings = [output.warnings, wmsg];
-    end
-
-    % Check whether the problem is too large for the Fortran code
-    % In the mex gateway, a workspace of size
-    % nw = (n*(42+n*(23+n*(8+n)))+max(2*n*n+4,18*n))/4 + 1 (see below).
-    % will be allocated, which is the largest memory allocated by
-    % UOBYQA. If the value assigned to nw is so large that overflow
-    % occurs, then there will be a Segmentation Fault!!!
-    % The largest possible value of nw depends on the type of nw in the
-    % mex file, which is the default INTEGER type (~2E9 for integer*4,
-    % and ~9E18 for integer*8). This imposes an upper limit on the size the
-    % size of problem solvable by this code. If nw is INTEGER*4, the largest
-    % value of n is ~300. UOBYQA is not designed for so large problems.
-    % Indeed, when n > 10, NEWUOA/BOBYQA/LINCOA can solve unconstrained
-    % problems much more efficiently.
-    % In the following code, gethuge returns the largest possible value of
-    % the given data type in the mex environment.
-
-    % The largest integer in the mex functions; the factor 0.99 provides a buffer
-    maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSI')]));
-    nw = (n*(42+n*(23+n*(8+n)))+max(2*n*n+4,18*n))/4 + 1;
-    if nw >= maxint
-        % nw would suffer from overflow in the Fortran code; exit immediately
-        % Public/normal error
-        if strcmp(invoker, 'pdfon')
-            error(sprintf('%s:ProblemTooLarge', invoker), '%s: problem too large for %s. Try other solvers.', invoker, funname);
-        else
-            error(sprintf('%s:ProblemTooLarge', funname), '%s: problem too large for %s. Try other solvers.', funname, funname);
-        end
-    end
-    if maxfun > maxint
-        % maxfun would suffer from overflow in the Fortran code
-        maxfun = maxint;
-        % Obviously, nw >= (n+1)(n+2)/2. If nw < maxint,
-        % then maxint > (n+1)(n+2)/2, and hence maxfun > (n+1)(n+2)/2 is guaranteed
-        wid = sprintf('%s:MaxfunTooLarge', funname);
-        wmsg = sprintf('%s: maxfun exceeds the upper limit of Fortran integers; it is set to %d.', funname, maxfun);
         warning(wid, '%s', wmsg);
         output.warnings = [output.warnings, wmsg];
     end

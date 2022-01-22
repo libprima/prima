@@ -270,17 +270,6 @@ if ~strcmp(invoker, 'pdfon') && probinfo.feasibility_problem
     output.constrviolation = 0; % Unconstrained problem; set output.constrviolation to 0
     output.chist = []; % Unconstrained problem; set output.chist to []
 else
-    maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSI')]));
-    if maxfun > maxint
-        % maxfun would suffer from overflow in the Fortran code
-        maxfun = maxint;
-        maxhist = min(maxfun, maxhist);
-        wid = sprintf('%s:MaxfunTooLarge', funname);
-        wmsg = sprintf('%s: maxfun exceeds the upper limit of Fortran integers; it is set to %d.', funname, maxfun);
-        warning(wid, '%s', wmsg);
-        output.warnings = [output.warnings, wmsg];
-    end
-
     % Call the Fortran code
     if options.classical
         fsolver = @fnewuoan_classical;

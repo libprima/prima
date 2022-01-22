@@ -9,7 +9,7 @@ module debug_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Tuesday, January 18, 2022 PM10:34:12
+! Last Modified: Saturday, January 22, 2022 PM08:13:22
 !--------------------------------------------------------------------------------------------------!
 !! N.B.: When interfacing Fortran code with MATLAB, we use this module to replace the one defined in
 !! fsrc/common/debug.F90, in order to generate errors or warnings that are native to MATLAB.
@@ -29,14 +29,14 @@ end interface verisize
 ! We may use those specified in fmxapi_mod. However, that would make debug.F90 depend on fmxapi.F90,
 ! and make it impossible to use debug_mod in fmxapi.F90.
 interface
-    subroutine mexWarnMsgIdAndTxt(wid, wmsg)
-    implicit none
-    character*(*), intent(in) :: wid, wmsg
-    end subroutine mexWarnMsgIdAndTxt
     subroutine mexErrMsgIdAndTxt(eid, emsg)
     implicit none
     character*(*), intent(in) :: eid, emsg
     end subroutine mexErrMsgIdAndTxt
+    subroutine mexWarnMsgIdAndTxt(wid, wmsg)
+    implicit none
+    character*(*), intent(in) :: wid, wmsg
+    end subroutine mexWarnMsgIdAndTxt
 end interface
 
 
@@ -90,18 +90,20 @@ end subroutine validate
 
 subroutine errstop(srname, msg)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine prints a backtrace and 'ERROR: '//TRIM(SRNAME)//': '//TRIM(MSG)//'!', then stop.
+! This subroutine prints 'ERROR: '//TRIM(SRNAME)//': '//TRIM(MSG)//'!', then stop. In the
+! debug mode, it also calls BACKTR to print the backtrace.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : MSGLEN
+use, non_intrinsic :: consts_mod, only : MSGLEN, DEBUGGING
 implicit none
-
 character(len=*), intent(in) :: srname
 character(len=*), intent(in) :: msg
 
 character(len=MSGLEN) :: eid
 character(len=MSGLEN) :: emsg
 
-call backtr()
+if (DEBUGGING) then
+    call backtr()
+end if
 eid = 'FMXAPI:'//trim(srname)
 emsg = trim(srname)//': '//trim(msg)//'!'
 call mexErrMsgIdAndTxt(trim(eid), trim(emsg))

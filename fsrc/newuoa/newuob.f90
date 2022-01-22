@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, January 09, 2022 PM08:10:33
+! Last Modified: Saturday, January 22, 2022 PM08:35:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -220,7 +220,8 @@ shortd = .false.
 
 ! Each trust-region iteration takes at most two function evaluation. The following setting imposes
 ! no constraint on the maximal number of trust-region iterations.
-maxtr = 2_IK * maxfun
+! The MAX is a precaution against overflow, where 4*maxfun will be negative.
+maxtr = max(maxfun, 4_IK * maxfun)
 ! MAXTR is unlikely to be reached, but we define the following default value for INFO for safety.
 info = MAXTR_REACHED
 

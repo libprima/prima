@@ -369,6 +369,16 @@ else % The problem turns out 'normal' during prepdfo
     [f_x0, constr_x0, m_nlcineq, m_nlceq] = funcon(x0);
     % m_nlcineq: number of nonlinear inequality constraints
     % m_nlceq: number of nonlinear equality constraints
+
+    % maxint is the largest integer in the mex functions; the factor 0.99 provides a buffer. We do not
+    % pass any integer larger than maxint to the mexified Fortran code. Otherwise, errors include
+    % SEGFAULT may occur. The value of maxint is about 10^9 on a 32-bit platform and 10^18 on a 64-bit one.
+    maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSI')]));
+    if (length(constr_x0) > maxint)
+        % Public/normal error
+        error(sprintf('%s:ProblemTooLarge', funname), '%s: The problem is too large; at most %d constraints are allowed.', funname, maxint);
+    end
+
     % Extract the options
     iprint = options.iprint;
     maxfun = options.maxfun;
@@ -380,17 +390,6 @@ else % The problem turns out 'normal' during prepdfo
     output_xhist = options.output_xhist;
     output_nlchist = options.output_nlchist;
     maxfilt = options.maxfilt;
-
-    % The largest integer in the mex functions; the factor 0.99 provides a buffer
-    maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSI')]));
-    if maxfun > maxint
-        % maxfun would suffer from overflow in the Fortran code
-        maxfun = maxint;
-        wid = sprintf('%s:MaxfunTooLarge', funname);
-        wmsg = sprintf('%s: maxfun exceeds the upper limit of Fortran integers; it is set to %d.', funname, maxfun);
-        warning(wid, '%s', wmsg);
-        output.warnings = [output.warnings, wmsg];
-    end
 
     % Call the Fortran code
     if options.classical
