@@ -1,12 +1,20 @@
-module evaluate_mod
+module evalcl_mod
 !--------------------------------------------------------------------------------------------------!
-! This is a module evaluating the objective/constraint function with Nan/Inf handling.
+! This is a module evaluating the objective/constraint functions for the classical mode of Powell's
+! solvers. It does the following in addition to the function evaluations.
+! 1. Handle Nan/Inf with moderated extreme barriers.
+! 2. Record the number of function evaluations (NF) and the history of evaluations.
+!
+! Note that we provide only limited support for the classical mode, which is reflected in the
+! following way in the current module.
+! 1. The implementation of this module is not thread safe due to the module variables XHIST etc.
+! 2. The preconditions and postconditions are only enforced minimally compared to the modern version.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
 ! Started: August 2021
 !
-! Last Modified: Friday, January 21, 2022 PM09:26:27
+! Last Modified: Saturday, January 22, 2022 PM02:01:15
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : RP, IK
@@ -325,4 +333,4 @@ end if
 end subroutine rangehist_nlc
 
 
-end module evaluate_mod
+end module evalcl_mod

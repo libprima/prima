@@ -393,16 +393,16 @@ else % The problem turns out 'normal' during prepdfo
     end
 
     % Call the Fortran code
+    if options.classical
+        fsolver = @fcobylan_classical;
+    else
+        fsolver = @fcobylan;
+    end
+    % The mexified Fortran Function is a private function generating only private errors;
+    % however, public errors can occur due to, e.g., evalobj; error handling needed.
     try
-        % The mexified Fortran function is a private function generating only private errors;
-        % however, public errors can occur due to, e.g., evalobj and evalcon; error handling needed
-        if options.classical
-            [x, fx, constrviolation, constr, exitflag, nf, xhist, fhist, chist, conhist] = ...
-                fcobylan_classical(funcon, x0, f_x0, constr_x0, rhobeg, rhoend, ftarget, ctol, maxfun, iprint, maxhist, double(output_xhist), double(output_nlchist), maxfilt);
-        else
-            [x, fx, constrviolation, constr, exitflag, nf, xhist, fhist, chist, conhist] = ...
-                fcobylan(funcon, x0, f_x0, constr_x0, rhobeg, rhoend, ftarget, ctol, maxfun, iprint, maxhist, double(output_xhist), double(output_nlchist), maxfilt);
-        end
+        [x, fx, constrviolation, constr, exitflag, nf, xhist, fhist, chist, conhist] = ...
+            fsolver(funcon, x0, f_x0, constr_x0, rhobeg, rhoend, ftarget, ctol, maxfun, iprint, maxhist, double(output_xhist), double(output_nlchist), maxfilt);
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
             error(exception.identifier, '%s\n(error generated in %s, line %d)', exception.message, exception.stack(1).file, exception.stack(1).line);

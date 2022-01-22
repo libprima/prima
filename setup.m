@@ -155,9 +155,8 @@ end
 % Bizarrely, if we write a short Fortran program to evaluate only COS(0.59843577329095299_DP),
 % then the result is always 0.82621783366991364, regardless of -O or -g. No idea why.
 
-% Detect whether we are running a 32-bit MATLAB, where maxArrayDim = 2^31-1,
-% and then set ad_option accordingly. On a 64-bit MATLAB, maxArrayDim = 2^48-1
-% according to the document of MATLAB R2019a.
+% Detect whether we are running a 32-bit MATLAB, where maxArrayDim = 2^31-1, and then set ad_option
+% accordingly. On a 64-bit MATLAB, maxArrayDim = 2^48-1 according to the document of MATLAB R2019a.
 % !!! Make sure that everything is compiled with the SAME ad_option !!!
 % !!! Otherwise, Segmentation Fault may occur !!!
 [Architecture, maxArrayDim] = computer;
@@ -190,8 +189,9 @@ end
 cpwd = fileparts(mfilename('fullpath')); % Current directory
 fsrc = fullfile(cpwd, 'fsrc'); % Directory of the Fortran source code
 fsrc_intersection_form = fullfile(cpwd, 'fsrc/intersection_form'); % Directory of the intersection-form Fortran source code
-fsrc_common = fullfile(fsrc_intersection_form, 'common'); % Directory of the common files
+fsrc_common_intersection_form = fullfile(fsrc_intersection_form, 'common'); % Directory of the common files
 fsrc_classical = fullfile(cpwd, 'fsrc/classical'); % Directory of the classical Fortran source code
+fsrc_classical_intersection_form = fullfile(cpwd, 'fsrc/classical/intersection_form'); % Directory of the intersection-form Fortran source code
 matd = fullfile(cpwd, 'matlab'); % Matlab directory
 gateways = fullfile(matd, 'mex_gateways'); % Directory of the MEX gateway files
 gateways_intersection_form = fullfile(gateways, 'intersection_form');  % Directory of the intersection-form MEX gateway files
@@ -201,19 +201,18 @@ interfaces_private = fullfile(interfaces, 'private'); % The private subdirectory
 tests = fullfile(matd, 'tests'); % Directory containing some tests
 tools = fullfile(matd, 'tools'); % Directory containing some tools, e.g., interform.m
 
-% Name of the file that contains the list of Fortran files. There should
-% be such a file in each Fortran source code directory, and the list
-% should indicate the dependence among the files.
+% Name of the file that contains the list of Fortran files. There should be such a file in each
+% Fortran source code directory, and the list should indicate the dependence among the files.
 filelist = 'ffiles.txt';
 
 % Generate the intersection-form Fortran source code
-% We need to do this because MEX accepts only the (obselescent) fixed-form
-% Fortran code on Windows. Intersection-form Fortran code can be compiled
-% both as free form and as fixed form.
+% We need to do this because MEX accepts only the (obselescent) fixed-form Fortran code on Windows.
+% Intersection-form Fortran code can be compiled both as free form and as fixed form.
 fprintf('Refactoring the Fortran code ... ');
 addpath(tools);
 if strcmp('newuoa', solver) || strcmp('cobyla', solver)
     interform(fsrc);
+    interform(fsrc_classical);
     interform(gateways);
 else
     copyfile(fsrc, fsrc_intersection_form);
@@ -227,7 +226,7 @@ fprintf('Done.\n\n');
 % compilation with a different ad_option. Without cleaning-up, the MEX
 % files may be linked with wrong .mod or .o files, which can lead to
 % serious errors including Segmentation Fault!
-dir_list = {fsrc_common, gateways_intersection_form, gateways_classical, interfaces_private};
+dir_list = {fsrc_common_intersection_form, gateways_intersection_form, gateways_classical, interfaces_private};
 for idir = 1 : length(dir_list)
     mod_files = files_with_wildcard(dir_list{idir}, '*.mod');
     obj_files = [files_with_wildcard(dir_list{idir}, '*.o'), files_with_wildcard(dir_list{idir}, '*.obj')];
@@ -244,12 +243,12 @@ try
 % case of an error.
 
 
-    % Compilation of the common files
+    % Compilation of the common files. They are shared by all solvers. We compile them only once.
     % gateways_intersection_form/debug.F contains debugging subroutines tailored for MEX.
-    copyfile(fullfile(gateways_intersection_form, 'debug.F'), fsrc_common);
+    copyfile(fullfile(gateways_intersection_form, 'debug.F'), fsrc_common_intersection_form);
     % ppf.h contains preprocessing directives. Set __DEBUGGING__ according to debug_flag.
-    header_file = fullfile(fsrc_common, 'ppf.h');
-    header_file_bak = fullfile(fsrc_common, 'ppf.h.bak');
+    header_file = fullfile(fsrc_common_intersection_form, 'ppf.h');
+    header_file_bak = fullfile(fsrc_common_intersection_form, 'ppf.h.bak');
     copyfile(header_file, header_file_bak);
     if debug_flag
         rep_str(header_file, '#define __DEBUGGING__ 0', '#define __DEBUGGING__ 1');
@@ -257,24 +256,23 @@ try
         rep_str(header_file, '#define __DEBUGGING__ 1', '#define __DEBUGGING__ 0');
     end
     % Common Fortran source files.
-    common_files = regexp(fileread(fullfile(fsrc_common, filelist)), '\n', 'split');
+    common_files = regexp(fileread(fullfile(fsrc_common_intersection_form, filelist)), '\n', 'split');
     common_files = strtrim(common_files(~cellfun(@isempty, common_files)));
-    common_files = fullfile(fsrc_common, common_files);
+    common_files = fullfile(fsrc_common_intersection_form, common_files);
     common_files = [common_files, fullfile(gateways_intersection_form, 'fmxapi.F'), fullfile(gateways_intersection_form, 'prob.F'), fullfile(gateways_classical, 'fmxcl.F')];
     % The loop below may be written in one line as follows:
-    %mex(mex_options{:}, '-c', common_files{:}, '-outdir', fsrc_common);
+    %mex(mex_options{:}, '-c', common_files{:}, '-outdir', fsrc_common_intersection_form);
     % But it does not work for some versions of MATLAB. This may be because the compilation above does
     % not respect the order of common_files{:}, which is critical due to the dependence among modules.
     for icf = 1 : length(common_files)
-        mex(mex_options{:}, '-c', common_files{icf}, '-outdir', fsrc_common);
+        mex(mex_options{:}, '-c', common_files{icf}, '-outdir', fsrc_common_intersection_form);
     end
-    common_obj_files = [files_with_wildcard(fsrc_common, '*.o'), files_with_wildcard(fsrc_common, '*.obj')];
+    common_obj_files = [files_with_wildcard(fsrc_common_intersection_form, '*.o'), files_with_wildcard(fsrc_common_intersection_form, '*.obj')];
 
     % Compilation of function gethuge
     mex(mex_options{:}, '-output', 'gethuge', common_obj_files{:}, fullfile(gateways_intersection_form, 'gethuge.F'), '-outdir', interfaces_private);
 
     for isol = 1 : length(solver_list)
-
 
         solver = solver_list{isol};
 
@@ -313,7 +311,7 @@ try
             mex(mex_options{:}, '-c', src_files{isf}, '-outdir', fullfile(fsrc_classical, solver));
         end
         obj_files = [common_obj_files, files_with_wildcard(fullfile(fsrc_classical, solver), '*.o'), files_with_wildcard(fullfile(fsrc_classical,solver), '*.obj')];
-        mex(mex_options{:}, '-output', ['f', solver, 'n_classical'], obj_files{:}, fullfile(gateways_classical, [solver, '_mex.F']), '-outdir', interfaces_private);
+        mex(mex_options{:}, '-output', ['f', solver, 'n_classical'], obj_files{:}, fullfile(gateways_intersection_form, [solver, '_mex.F']), '-outdir', interfaces_private);
         % Clean up the source file directory
         mod_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.mod');
         obj_files = [files_with_wildcard(fullfile(fsrc_classical, solver), '*.o'), files_with_wildcard(fullfile(fsrc_classical, solver), '*.obj')];
@@ -323,10 +321,17 @@ try
         fprintf('Done.\n');
     end
 
-    % Clean up the .mod and .o files in fsrc_common.
-    cellfun(@(filename) delete(filename), [common_obj_files, files_with_wildcard(fsrc_common, '*.mod')]);
+    % Clean up the .mod and .o files in fsrc_common_intersection_form.
+    cellfun(@(filename) delete(filename), [common_obj_files, files_with_wildcard(fsrc_common_intersection_form, '*.mod')]);
     % Clean up the .mod files in interfaces_private.
     cellfun(@(filename) delete(filename), files_with_wildcard(interfaces_private, '*.mod'));
+
+    % Remove the intersection-form Fortran files if we are not debugging.
+    if (debug_flag)
+        rmdir(fsrc_intersection_form, 's');
+        rmdir(fsrc_classical_intersection_form, 's');
+        rmdir(gateways_intersection_form, 's');
+    end
 
 catch exception % NOTE: Everything above 'catch' is conducted in interfaces_private.
     if exist(header_file_bak, 'file')  % Restore header_file

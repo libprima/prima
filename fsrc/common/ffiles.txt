@@ -16,5 +16,6 @@ output.f90
 preproc.f90
 pintrf.f90
 evaluate.f90
+evalcl.f90
 logging.F90
 dirty_temporary_mod4powell.f90

@@ -148,7 +148,8 @@ if isempty(options)
     options = struct();
 end
 opt_option = '-O';  % Optimize the object code; this is the default
-if isfield(options, 'debug') && options.debug
+debug_flag = (isfield(options, 'debug') && options.debug);
+if debug_flag
     opt_option = '-g';  % Debug mode; -g disables MEX's behavior of optimizing built object code
 end
 
@@ -187,7 +188,6 @@ end
 cpwd = fileparts(mfilename('fullpath')); % Current directory
 fsrc = fullfile(cpwd, 'fsrc'); % Directory of the Fortran source code
 fsrc_intersection_form = fullfile(fileparts(cpwd), 'fsrc/intersection_form'); % Directory of the intersection-form Fortran source code
-filelist = 'ffiles.txt';
 fsrc_common = fullfile(fsrc_intersection_form, 'common'); % Directory of the common files
 fsrc_classical = fullfile(fsrc, 'classical'); % Directory of the classical Fortran source code
 matd = fullfile(cpwd, 'matlab'); % Matlab directory
@@ -197,6 +197,21 @@ gateways_classical = fullfile(gateways, 'classical'); % Directory of the MEX gat
 interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
 interfaces_private = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
 examples = fullfile(matd, 'examples'); % Directory containing some test examples
+tools = fullfile(fileparts(cpwd), 'matlab', 'tools'); % Directory containing some tools, e.g., interform.m
+
+% Name of the file that contains the list of Fortran files. There should be such a file in each
+% Fortran source code directory, and the list should indicate the dependence among the files.
+filelist = 'ffiles.txt';
+
+% Generate the intersection-form Fortran source code
+% We need to do this because MEX accepts only the (obselescent) fixed-form Fortran code on Windows.
+% Intersection-form Fortran code can be compiled both as free form and as fixed form.
+fprintf('Refactoring the Fortran code ... ');
+addpath(tools);
+interform(fullfile(fileparts(cpwd), 'fsrc'));
+interform(fullfile(fileparts(cpwd), 'matlab', 'mex_gateways'));
+rmpath(tools);
+fprintf('Done.\n\n');
 
 % Clean up the directories fsrc and gateways before compilation.
 % This is important especially if there was previously another
@@ -259,6 +274,12 @@ try
     % Clean up the .mod and .o files
     modo_files = [files_with_wildcard(fullfile(interfaces_private), '*.mod'), files_with_wildcard(fullfile(interfaces_private), '*.o')];
     cellfun(@(filename) delete(filename), modo_files);
+
+    % Remove the intersection-form Fortran files if we are not debugging.
+    if (debug_flag)
+        rmdir(fsrc_intersection_form, 's');
+        rmdir(gateways_intersection_form, 's');
+    end
 
 catch exception % NOTE: Everything above 'catch' is conducted in interfaces_private.
     cd(cpwd); % In case of an error, change directory back to cpwd

@@ -26,7 +26,7 @@
 
       use, non_intrinsic :: consts_mod, only : RP, IK
       use, non_intrinsic :: pintrf_mod, only : OBJ
-      use, non_intrinsic :: evaluate_mod, only : evalf
+      use, non_intrinsic :: evalcl_mod, only : evalf
 
       implicit real(RP) (A-H,O-Z)
       implicit integer(IK) (I-N)
