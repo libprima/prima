@@ -35,35 +35,41 @@ cd "$TEST_DIR" || exit 1
 
 make cleanall."$SOLVER" > /dev/null
 
-if lf95 --version  &> /dev/null ; then
-    #COMPILER_LIST="g n 9 a s i v f d x l"  # atest does not work due to a bug in af95
-    COMPILER_LIST="g n 9 s i v f d x l"
-else
-    #COMPILER_LIST="g n 9 a s i v f d x"  # atest does not work due to a bug in af95
-    COMPILER_LIST="g n 9 s i v f d x"
-fi
+#CLIST=(gfortran nagfor g95 af95 sunf95 ifort nvfortran flang aflang ifx lf95)
+#TLIST=(g n 9 a s i v f d x l)  # atest does not work due to a bug in af95
+COMPILER_LIST=(gfortran nagfor g95 sunf95 ifort nvfortran flang aflang ifx lf95)
+CLIST=(g n 9 s i v f d x l)
+COMP_LIST=""
+for i in "${!COMPILER_LIST[@]}"; do
+   if  type "${COMPILER_LIST[$i]}" &> /dev/null ; then
+       COMP_LIST="$COMP_LIST ${CLIST[$i]}"
+   fi
+done
 
-for COMPILER in $COMPILER_LIST; do
+echo "Tests to make:$COMP_LIST"
+
+for COMP in $COMP_LIST; do
     if [[ $TEST_ALL == 'Y' ]] ; then
-        make  "$COMPILER"test_c."$SOLVER"
+        make  "$COMP"test_c."$SOLVER"
     else
-        if [[ $COMPILER == 'f' || $COMPILER == 'v' || $COMPILER == 'x' ]] ; then
+        if [[ $COMP == 'f' || $COMP == 'v' || $COMP == 'x' ]] ; then
             TESTS="i2_r4_d1 i8_r4_d0"
         else
             TESTS="i2_r16_d1 i8_r4_d0"
         fi
         for TEST in $TESTS ; do
-            INFO="$(make "$COMPILER"test_"$TEST"_tst_c."$SOLVER" \
+            INFO="$(make "$COMP"test_"$TEST"_tst_c."$SOLVER" \
                 | grep -i "starts\|warning\|error\|info\|fail\|abort\|questionable\|remark\|attention" \
                 | grep -vi "[0-9]\s*warning\|[0-9]\s*error\|[0-9]\s*info\|info.f90\|information\|--warning\|--error" \
+                | grep -vi "pedantic-errors\|Werror\|warn\ errors\|diag-error-limit\|colour=error" \
                 | grep -v "^- \|^| \|^\* \|^+ \|^X \|\# " \
                 )"
             echo "$INFO" | grep -i --color "starts\|warning\|error\|info\|fail\||abort\|questionable\|remark\|attention"
             if echo "$INFO" | grep -iq "error\|fail\|abort" ; then
-                if [[ -f "$TEST_LOG_DIR"/"$COMPILER"test_"$TEST"_tst_c.log ]] ; then
-                    LOGFILE="$COMPILER"test_"$TEST"_tst_c.log
+                if [[ -f "$TEST_LOG_DIR"/"$COMP"test_"$TEST"_tst_c.log ]] ; then
+                    LOGFILE="$COMP"test_"$TEST"_tst_c.log
                 else
-                    LOGFILE="$COMPILER"test_c.log
+                    LOGFILE="$COMP"test_c.log
                 fi
                 mv "$TEST_LOG_DIR"/"$LOGFILE" "$SOLVER_LOG_DIR"
                 cat "$SOLVER_LOG_DIR"/"$LOGFILE"
@@ -71,7 +77,7 @@ for COMPILER in $COMPILER_LIST; do
             fi
         done
     fi
-    mv "$TEST_LOG_DIR"/"$COMPILER"test*.log "$SOLVER_LOG_DIR"
+    mv "$TEST_LOG_DIR"/"$COMP"test*.log "$SOLVER_LOG_DIR"
 done
 
 make clean."$SOLVER"
