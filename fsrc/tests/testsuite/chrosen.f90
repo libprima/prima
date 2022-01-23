@@ -7,7 +7,7 @@ implicit none
 integer(IK), intent(in) :: n
 
 ! Outputs
-type(problem_t), intent(out) :: prob
+type(PROB_T), intent(out) :: prob
 
 ! Code shared by all unconstrained problems.
 prob % probtype = 'u'

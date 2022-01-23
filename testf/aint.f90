@@ -1,9 +1,9 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! FINTERFACE_MOD provides the abstract interface for FUNC.
-module finterface_mod 
+module finterface_mod
 
 implicit none
-private 
+private
 public :: func
 
 abstract interface
@@ -41,7 +41,7 @@ procedure(func) :: f
 call f(x, y)
 y = y + 1.0
 
-end subroutine proc 
+end subroutine proc
 
 
 end module proc_mod
@@ -53,18 +53,18 @@ module fun_mod
 ! FUN_MOD provides a subroutine FUN(X, Y) that sets Y = SUM(X**2).
 
 implicit none
-private 
-public :: fun 
+private
+public :: fun
 
 
-contains 
+contains
 
 
 subroutine fun(x, y)
 
 implicit none
 real, intent(in) :: x(:)
-real, intent(out)  :: y 
+real, intent(out) :: y
 
 y = sum(x**2)
 
@@ -76,22 +76,22 @@ end module fun_mod
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-program main 
+program main
 ! MAIN tests PROC(X, Y, FUN) with PROC from PROC_MOD and FUN from FUN_MOD.
 
-use proc_mod, only : proc
-use fun_mod, only : fun
+use, non_intrinsic :: proc_mod, only : proc
+!use fun_mod, only : fun
 implicit none
 
 real :: x(3), y
 
-call random_number(x)
+!call random_number(x)
 print *, x
 
-call proc(x, y, fun)
-print *, y
+!call proc(x, y, fun)
+!print *, y
 
-print *, sum(x**2) + 1.0
+!print *, sum(x**2) + 1.0
 
-end program main 
+end program main
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

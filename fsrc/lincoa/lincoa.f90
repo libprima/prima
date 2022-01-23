@@ -1,39 +1,39 @@
 !*==lincoa.f90  processed by SPAG 7.50RE at 17:53 on 31 May 2021
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !     1  MAXFUN,W)
-      SUBROUTINE LINCOA(N,Npt,M,A,Ia,B,X,Rhobeg,Rhoend,Iprint,Maxfun,W, &
-     &                  F,Info,Ftarget)
+      subroutine LINCOA(N, Npt, M, A, Ia, B, X, Rhobeg, Rhoend, Iprint, Maxfun, W, &
+     &                  F, Info, Ftarget)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IMPLICIT REAL*8*8 (A-H,O-Z)
-      IMPLICIT NONE
+      implicit none
 !*--LINCOA12
 !*++
 !*++ Dummy argument declarations rewritten by SPAG
 !*++
-      INTEGER :: N
-      INTEGER :: Npt
-      INTEGER :: M
-      REAL*8 , INTENT(IN) , DIMENSION(Ia,*) :: A
-      INTEGER , INTENT(IN) :: Ia
-      REAL*8 , INTENT(IN) , DIMENSION(*) :: B
-      REAL*8 , DIMENSION(*) :: X
-      REAL*8 :: Rhobeg
-      REAL*8 , INTENT(INOUT) :: Rhoend
-      INTEGER :: Iprint
-      INTEGER :: Maxfun
-      REAL*8 , DIMENSION(*) :: W
-      REAL*8 :: F
-      INTEGER :: Info
-      REAL*8 :: Ftarget
+      integer :: N
+      integer :: Npt
+      integer :: M
+      real*8, intent(IN), dimension(Ia, *) :: A
+      integer, intent(IN) :: Ia
+      real*8, intent(IN), dimension(*) :: B
+      real*8, dimension(*) :: X
+      real*8 :: Rhobeg
+      real*8, intent(INOUT) :: Rhoend
+      integer :: Iprint
+      integer :: Maxfun
+      real*8, dimension(*) :: W
+      real*8 :: F
+      integer :: Info
+      real*8 :: Ftarget
 !*++
 !*++ Local variable declarations rewritten by SPAG
 !*++
-      INTEGER :: i , iac , iamat , ib , ibmat , iflag , ifv , igo ,     &
-     &           ihq , ipq , ipqw , iqf , irc , irf , isp , istp , iw , &
-     &           ixb , ixn , ixo , ixp , ixs , izmat , j , ndim , np ,  &
+      integer :: i, iac, iamat, ib, ibmat, iflag, ifv, igo,     &
+     &           ihq, ipq, ipqw, iqf, irc, irf, isp, istp, iw, &
+     &           ixb, ixn, ixo, ixp, ixs, izmat, j, ndim, np,  &
      &           nptm
-      REAL*8 :: smallx , sum , temp , zero
+      real*8 :: smallx, sum, temp, zero
 !*++
 !*++ End of declarations rewritten by SPAG
 !*++
@@ -119,7 +119,7 @@
 !     Check that N, NPT and MAXFUN are acceptable.
 !
       zero = 0.0D0
-      smallx = 1.0D-6*Rhoend
+      smallx = 1.0D-6 * Rhoend
       np = N + 1
       nptm = Npt - np
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -130,64 +130,64 @@
 !          GOTO 80
 !      END IF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      IF ( Npt<N+2 .OR. Npt>((N+2)*np)/2 ) THEN
-         IF ( Iprint>0 ) PRINT 99001
-99001    FORMAT (/4X,'Return from LINCOA because NPT is not in',        &
-     &           ' the required interval.')
+      if (Npt < N + 2 .or. Npt > ((N + 2) * np) / 2) then
+          if (Iprint > 0) print 99001
+99001     format(/4X, 'Return from LINCOA because NPT is not in',        &
+      &           ' the required interval.')
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-         Info = 5
+          Info = 5
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-         GOTO 99999
-      ENDIF
-      IF ( Maxfun<=Npt ) THEN
-         IF ( Iprint>0 ) PRINT 99002
-99002    FORMAT (/4X,'Return from LINCOA because MAXFUN is less',       &
-     &           ' than NPT+1.')
+          goto 99999
+      end if
+      if (Maxfun <= Npt) then
+          if (Iprint > 0) print 99002
+99002     format(/4X, 'Return from LINCOA because MAXFUN is less',       &
+      &           ' than NPT+1.')
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-         Info = 11
+          Info = 11
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-         GOTO 99999
-      ENDIF
+          goto 99999
+      end if
 !
 !     Normalize the constraints, and copy the resultant constraint matrix
 !       and right hand sides into working space, after increasing the right
 !       hand sides if necessary so that the starting point is feasible.
 !
-      iamat = MAX0(M+3*N,2*M+N,2*Npt) + 1
-      ib = iamat + M*N
+      iamat = MAX0(M + 3 * N, 2 * M + N, 2 * Npt) + 1
+      ib = iamat + M * N
       iflag = 0
-      IF ( M>0 ) THEN
-         iw = iamat - 1
-         DO j = 1 , M
-            sum = zero
-            temp = zero
-            DO i = 1 , N
-               sum = sum + A(i,j)*X(i)
-               temp = temp + A(i,j)**2
-            ENDDO
-            IF ( temp==zero ) THEN
-               IF ( Iprint>0 ) PRINT 99003
-99003          FORMAT (/4X,'Return from LINCOA because the gradient',   &
-     &                 ' of a constraint is zero.')
+      if (M > 0) then
+          iw = iamat - 1
+          do j = 1, M
+              sum = zero
+              temp = zero
+              do i = 1, N
+                  sum = sum + A(i, j) * X(i)
+                  temp = temp + A(i, j)**2
+              end do
+              if (temp == zero) then
+                  if (Iprint > 0) print 99003
+99003             format(/4X, 'Return from LINCOA because the gradient',   &
+        &                 ' of a constraint is zero.')
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-               Info = 12
+                  Info = 12
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               GOTO 99999
-            ENDIF
-            temp = DSQRT(temp)
-            IF ( sum-B(j)>smallx*temp ) iflag = 1
-            W(ib+j-1) = DMAX1(B(j),sum)/temp
-            DO i = 1 , N
-               iw = iw + 1
-               W(iw) = A(i,j)/temp
-            ENDDO
-         ENDDO
-      ENDIF
-      IF ( iflag==1 ) THEN
-         IF ( Iprint>0 ) PRINT 99004
-99004    FORMAT (/4X,'LINCOA has made the initial X feasible by',       &
-     &           ' increasing part(s) of B.')
-      ENDIF
+                  goto 99999
+              end if
+              temp = DSQRT(temp)
+              if (sum - B(j) > smallx * temp) iflag = 1
+              W(ib + j - 1) = DMAX1(B(j), sum) / temp
+              do i = 1, N
+                  iw = iw + 1
+                  W(iw) = A(i, j) / temp
+              end do
+          end do
+      end if
+      if (iflag == 1) then
+          if (Iprint > 0) print 99004
+99004     format(/4X, 'LINCOA has made the initial X feasible by',       &
+      &           ' increasing part(s) of B.')
+      end if
 !
 !     Partition the working space array, so that different parts of it can be
 !     treated separately by the subroutine that performs the main calculation.
@@ -195,22 +195,22 @@
       ndim = Npt + N
       ixb = ib + M
       ixp = ixb + N
-      ifv = ixp + N*Npt
+      ifv = ixp + N * Npt
       ixs = ifv + Npt
       ixo = ixs + N
       igo = ixo + N
       ihq = igo + N
-      ipq = ihq + (N*np)/2
+      ipq = ihq + (N * np) / 2
       ibmat = ipq + Npt
-      izmat = ibmat + ndim*N
-      istp = izmat + Npt*nptm
+      izmat = ibmat + ndim * N
+      istp = izmat + Npt * nptm
       isp = istp + N
       ixn = isp + Npt + Npt
       iac = ixn + N
       irc = iac + N
       iqf = irc + M
-      irf = iqf + N*N
-      ipqw = irf + (N*np)/2
+      irf = iqf + N * N
+      ipqw = irf + (N * np) / 2
 !
 !     The above settings provide a partition of W for subroutine LINCOB.
 !
@@ -221,13 +221,13 @@
 ! a MATLAB test that MEX passed 1 to Fortran as 0.99999999999999978.
 ! If we set RHOEND = RHOBEG in the interfaces, then it may happen
 ! that RHOEND > RHOBEG. That is why we do the following.
-      Rhoend = MIN(Rhobeg,Rhoend)
+      Rhoend = min(Rhobeg, Rhoend)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !     3  W(IRC),W(IQF),W(IRF),W(IPQW),W)
-      CALL LINCOB(N,Npt,M,W(iamat),W(ib),X,Rhobeg,Rhoend,Iprint,Maxfun, &
-     &            W(ixb),W(ixp),W(ifv),W(ixs),W(ixo),W(igo),W(ihq),     &
-     &            W(ipq),W(ibmat),W(izmat),ndim,W(istp),W(isp),W(ixn),  &
-     &            W(iac),W(irc),W(iqf),W(irf),W(ipqw),W,F,Info,Ftarget)
+      call LINCOB(N, Npt, M, W(iamat), W(ib), X, Rhobeg, Rhoend, Iprint, Maxfun, &
+     &            W(ixb), W(ixp), W(ifv), W(ixs), W(ixo), W(igo), W(ihq),     &
+     &            W(ipq), W(ibmat), W(izmat), ndim, W(istp), W(isp), W(ixn),  &
+     &            W(iac), W(irc), W(iqf), W(irf), W(ipqw), W, F, Info, Ftarget)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-99999 END SUBROUTINE LINCOA
+99999 end subroutine LINCOA

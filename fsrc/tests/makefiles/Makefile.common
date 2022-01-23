@@ -33,7 +33,7 @@ SHELL = /bin/bash
 ####################################################################################################
 # Variables
 
-# Fortran standard to follow. We aim to make the code compatible with F2003, F2008, and F2018.
+# Fortran standard to follow. We aim to make the code compatible with F2003 and above.
 FS := 03
 FSTD := 20$(FS)
 

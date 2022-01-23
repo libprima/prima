@@ -6,7 +6,7 @@ module evaluate_mod
 !
 ! Started: August 2021
 !
-! Last Modified: Sunday, January 23, 2022 AM01:27:13
+! Last Modified: Sunday, January 23, 2022 PM06:18:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -14,8 +14,11 @@ private
 public :: moderatex
 public :: moderatef
 public :: moderatec
-public :: evalf
-public :: evalfc
+public :: evaluate
+
+interface evaluate
+    module procedure evaluatef, evaluatefc
+end interface evaluate
 
 
 contains
@@ -91,7 +94,7 @@ y = max(-HUGECON, min(HUGECON, y))
 end function moderatec
 
 
-subroutine evalf(calfun, x, f)
+subroutine evaluatef(calfun, x, f)
 !--------------------------------------------------------------------------------------------------!
 ! This function evaluates CALFUN at X, setting F to the objective function value. Nan/Inf are
 ! handled by a moderated extreme barrier.
@@ -149,10 +152,10 @@ if (DEBUGGING) then
     call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN/+Inf', srname)
 end if
 
-end subroutine evalf
+end subroutine evaluatef
 
 
-subroutine evalfc(calcfc, x, f, constr, cstrv)
+subroutine evaluatefc(calcfc, x, f, constr, cstrv)
 !--------------------------------------------------------------------------------------------------!
 ! This function evaluates CALCFC at X, setting F to the objective function value, CONSTR to the
 ! constraint value, and CSTRV to the constraint violation. Nan/Inf are handled by a moderated
@@ -222,7 +225,7 @@ if (DEBUGGING) then
         & 'CSTRV is nonnegative and not NaN/+Inf', srname)
 end if
 
-end subroutine evalfc
+end subroutine evaluatefc
 
 
 end module evaluate_mod

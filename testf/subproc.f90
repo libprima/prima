@@ -1,7 +1,7 @@
-module subproc_mod 
+module subproc_mod
 
 implicit none
-private 
+private
 public :: subproc
 
 
@@ -15,12 +15,12 @@ implicit none
 
 real, intent(in) :: x(:)
 real, intent(out) :: y
-procedure (func) :: f
+procedure(func) :: f
 
 
 call f(x, y)
 
-end subroutine subproc 
+end subroutine subproc
 
 
 end module subproc_mod

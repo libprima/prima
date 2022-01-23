@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, January 02, 2022 PM11:43:28
+! Last Modified: Sunday, January 23, 2022 PM12:46:27
 !--------------------------------------------------------------------------------------------------
 
 implicit none

@@ -4,7 +4,7 @@ use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 
 ! Outputs
-type(problem_t), intent(out) :: prob
+type(PROB_T), intent(out) :: prob
 
 ! Local variables
 integer(IK) :: n

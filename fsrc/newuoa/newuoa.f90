@@ -19,7 +19,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, January 23, 2022 AM12:38:39
+! Last Modified: Sunday, January 23, 2022 PM04:00:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -165,7 +165,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENT
 use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: evaluate_mod, only : moderatex
 use, non_intrinsic :: history_mod, only : prehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: preproc_mod, only : preproc

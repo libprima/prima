@@ -25,7 +25,7 @@ use, non_intrinsic :: datetime_mod, only : year, week
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: noise_mod, only : noisy, noisy_calcfc, orig_calcfc
 use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, DIMSTRIDE_DFT, NRAND_DFT
-use, non_intrinsic :: prob_mod, only : PNLEN, problem_t, construct, destruct
+use, non_intrinsic :: prob_mod, only : PNLEN, PROB_T, construct, destruct
 use, non_intrinsic :: rand_mod, only : setseed, rand, randn
 use, non_intrinsic :: string_mod, only : trimstr, istr
 
@@ -69,7 +69,7 @@ real(RP), allocatable :: constr(:)
 real(RP), allocatable :: fhist(:)
 real(RP), allocatable :: x(:)
 real(RP), allocatable :: xhist(:, :)
-type(problem_t) :: prob
+type(PROB_T) :: prob
 
 if (present(probs)) then
     nprobs = int(size(probs), kind(nprobs))

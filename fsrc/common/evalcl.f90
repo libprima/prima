@@ -5,27 +5,32 @@ module evalcl_mod
 ! 1. Handle Nan/Inf with moderated extreme barriers.
 ! 2. Record the number of function evaluations (NF) and the history of evaluations.
 !
-! Note that we provide only limited support for the classical mode, which is reflected in the
-! following way in the current module.
-! 1. The implementation of this module is not thread safe due to the module variables XHIST etc.
+! Note that we provide only limited support for the classical mode. Regarding the current module,
+! the limitation is reflected in the following aspects, which will unlikely be improved.
+! 1. The implementation of this module is NOT thread safe due to the module variables NF, XHIST etc.
 ! 2. The preconditions and postconditions are only enforced minimally compared to the modern version.
+! 3. The argument NF in RANGEHIST mask the module variables with the same name, which is not good
+! practice. Similar things can be said about XHIST etc.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
 ! Started: August 2021
 !
-! Last Modified: Saturday, January 22, 2022 PM02:01:15
+! Last Modified: Sunday, January 23, 2022 PM09:13:21
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : RP, IK
 implicit none
 private
-public :: evalf
-public :: evalfc
+public :: evaluate
 public :: rangehist
 public :: nf
 public :: xhist, fhist, chist, conhist
 public :: fc_x0_provided, x0, f_x0, constr_x0
+
+interface evaluate
+    module procedure evaluatef, evaluatefc
+end interface evaluate
 
 interface rangehist
     module procedure rangehist_unc, rangehist_nlc
@@ -45,7 +50,7 @@ real(RP), allocatable :: constr_x0(:)
 contains
 
 
-subroutine evalf(calfun, x, f)
+subroutine evaluatef(calfun, x, f)
 !--------------------------------------------------------------------------------------------------!
 ! This function evaluates CALFUN at X, setting F to the objective function value. Nan/Inf are
 ! handled by a moderated extreme barrier.
@@ -98,10 +103,10 @@ if (maxfhist >= 1) then
     fhist(khist) = f
 end if
 
-end subroutine evalf
+end subroutine evaluatef
 
 
-subroutine evalfc(calcfc, x, f, constr, cstrv)
+subroutine evaluatefc(calcfc, x, f, constr, cstrv)
 !--------------------------------------------------------------------------------------------------!
 ! This function evaluates CALCFC at X, setting F to the objective function value, CONSTR to the
 ! constraint value, and CSTRV to the constraint violation. Nan/Inf are handled by a moderated
@@ -194,7 +199,7 @@ if (maxconhist >= 1) then
     conhist(:, khist) = constr
 end if
 
-end subroutine evalfc
+end subroutine evaluatefc
 
 
 subroutine rangehist_unc(nf, fhist, xhist)

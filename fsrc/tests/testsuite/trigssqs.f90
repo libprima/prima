@@ -8,7 +8,7 @@ implicit none
 integer(IK), intent(in) :: n
 
 ! Outputs
-type(problem_t), intent(out) :: prob
+type(PROB_T), intent(out) :: prob
 
 ! Local variables
 integer, allocatable :: seedsav(:)

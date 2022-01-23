@@ -1,18 +1,18 @@
 module fun_mod
 
 implicit none
-private 
-public :: calfun 
+private
+public :: calfun
 
 
-contains 
+contains
 
 
 subroutine calfun(x, y)
 
 implicit none
 real, intent(in) :: x(:)
-real, intent(out)  :: y
+real, intent(out) :: y
 
 y = sum(x**2)
 

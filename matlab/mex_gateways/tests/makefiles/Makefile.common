@@ -30,8 +30,8 @@ SHELL = /bin/bash
 ####################################################################################################
 # Variables
 
-# Fortran standard to follow. We aim to make the code compatible with F2003, F2008, and F2018.
-FS := 03
+# Fortran standard to follow. We aim to make the code compatible with F2008 and above.
+FS := 08
 FSTD := 20$(FS)
 
 # Test directory.
@@ -65,7 +65,7 @@ SRC_DIRS := $(COMMON_DIR) $(SOLVER_DIR)
 # Sources.
 COMMON_SRC := $(shell sed "s/^/\.\/common\//" $(COMMON_DIR)/ffiles.txt)
 SOLVER_SRC := $(shell sed "s/^/\.\/$(SOLVER)\//" $(SOLVER_DIR)/ffiles.txt)
-MEXGATE_SRC := fmxapi.F90 prob.F90 gethuge.F90 $(SOLVER)_mex.F90
+MEXGATE_SRC := fmxapi.F90 cbfun.F90 gethuge.F90 $(SOLVER)_mex.F90
 SRC := $(COMMON_SRC) $(SOLVER_SRC) $(MEXGATE_SRC)
 # DEBUGF90 is the name of the Fortran file that defines `debug_mod`, which has a Fortran version and
 # a MEX version. We should use the MEX version in place of the Fortran one when testing the MEX gateways.
@@ -275,7 +275,7 @@ gtest_i2_r16_d1_tst gtest_i4_r16_d1_tst gtest_i8_r16_d1_tst gtest_i2_r16_d0_tst 
 	FC2 := $(GFORT) $(FFLAGS2) -ffpe-trap=zero,invalid,overflow,#,underflow,denorm
 
 # Intel ifort
-# The compilation of the MEX gateways fails if -stand f03 or higher is imposed.
+# The compilation of the MEX gateways fails if `-stand f03` or higher is imposed. Thus we use `-stand f95`.
 # -standard-semantics: enforce the compiler to behave according to the current standard (F2018 as of Dec 2021).
 #  See https://www.intel.com/content/www/us/en/develop/documentation/fortran-compiler-oneapi-dev-guide-and-reference/top/compiler-reference/compiler-options/compiler-option-details/language-options/standard-semantics.html
 #  Option standard-semantics enables option fpscomp logicals and the following settings for option
@@ -470,7 +470,7 @@ $(TESTS) $(TESTS_INT):
 %_tst: source_% header_%
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
-	@($(FC1) -c $(SRC) && $(FC2) -c $(SRC)) 2>&1 \
+	($(FC1) -c $(SRC) && $(FC2) -c $(SRC)) 2>&1 \
 	| grep -v '^\s*$$' \
 	| grep -v 'Absoft ANSI 1610:' \
 	| grep -v 'Absoft Pro Fortran.*: 0 Errors, 0 Warnings, 0 Other messages,' \
@@ -518,6 +518,7 @@ $(TESTS) $(TESTS_INT):
 	| grep -v "[0-9]\s*inform,\s*[0-9]*\s*warnings,\s*[0-9]\s*severes,\s*[0-9]\s*fatal for" \
 	| grep -v "Warning: GNU Extension: Nonstandard type declaration INTEGER\*[1-9].*" \
 	| grep -v "Warning: GNU Extension: Nonstandard type declaration REAL\*[1-9].*" \
+	| grep -v "warning #7601: F[0-9]* standard does not allow an internal procedure to be an actual argument procedure name" \
 	| grep -v "warning #7893: Allocatable dummy arguments is an extension of Standard F95" \
 	| grep -v "warning #7894: Allocatable function results is an extension of Standard F95" \
 	| grep -v "warning #8192: A procedure declaration statement is not standard Fortran 95" \
@@ -555,6 +556,10 @@ source_%: $(SRC_DIRS)
 	@if echo $@ | grep -q "stest"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash ../sunsrc ./ ; \
+	fi
+	@if echo $@ | grep -q "stest\|9test"; then \
+		printf "\nPreparing the source code for $@.\n" ; \
+		bash ../s9src ./ ; \
 	fi
 	@printf "Done.\n"
 

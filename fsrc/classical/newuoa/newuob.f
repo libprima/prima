@@ -26,7 +26,7 @@
 
       use, non_intrinsic :: consts_mod, only : RP, IK
       use, non_intrinsic :: pintrf_mod, only : OBJ
-      use, non_intrinsic :: evalcl_mod, only : evalf
+      use, non_intrinsic :: evalcl_mod, only : evaluate
 
       implicit real(RP) (A-H,O-Z)
       implicit integer(IK) (I-N)
@@ -412,7 +412,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !----------------------------------------------------------------------!
 !----------------------------------------------------------------------!
       !CALL CALFUN (N,X,F)
-      call evalf(calfun, x, f)
+      call evaluate(calfun, x, f)
 !----------------------------------------------------------------------!
 !----------------------------------------------------------------------!
 
