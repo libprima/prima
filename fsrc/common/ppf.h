@@ -10,7 +10,7 @@
  *
  * __RELEASED__                released or not: 1, 0
  * __DEBUGGING__               debug or not: 0, 1
- * __FORTRAN_STANDARD__        which Fortran standard to follow: 2003, 2008
+ * __FORTRAN_STANDARD__        which Fortran standard to follow: 2003, 2008, 2018
  * __USE_POWELL_ALGEBRA__      use Powell's linear algebra procedures or not: 1, 0
  * __USE_INTRINSIC_ALGEBRA__   use intrinsic procedures like matmul or not: 0, 1
  * __INTEGER_KIND__            the integer kind to be used: 0, 32, 64, 16

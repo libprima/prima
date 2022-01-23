@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, January 23, 2022 AM12:00:04
+! Last Modified: Sunday, January 23, 2022 PM06:24:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -25,7 +25,7 @@ use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, HUGENUM, DEBUGGING
 use, non_intrinsic :: consts_mod, only : MIN_MAXFILT
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: evaluate_mod, only : evalfc
+use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
 use, non_intrinsic :: info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, NAN_MODEL, DAMAGING_ROUNDING
@@ -307,7 +307,7 @@ do tr = 1, maxtr
 
         x = sim(:, n + 1) + d
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
-        call evalfc(calcfc, x, f, constr, cstrv)
+        call evaluate(calcfc, x, f, constr, cstrv)
         nf = nf + 1_IK
         call fmsg(solver, iprint, nf, f, x, cstrv, constr)
         ! Save X, F, CONSTR, CSTRV into the history.
@@ -409,7 +409,7 @@ do tr = 1, maxtr
             d = geostep(jdrop_geo, cpen, conmat, cval, fval, factor_gamma, rho, simi)
             x = sim(:, n + 1) + d
             ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
-            call evalfc(calcfc, x, f, constr, cstrv)
+            call evaluate(calcfc, x, f, constr, cstrv)
             nf = nf + 1_IK
             call fmsg(solver, iprint, nf, f, x, cstrv, constr)
             ! Save X, F, CONSTR, CSTRV into the history.
@@ -515,7 +515,7 @@ end module cobylb_mod
 !
 ! 0. In COBYLA, check what should we do with JDROP = 0, both TR and GEO
 !    If ACTREM > 0 ===> JDROP > 0, why can COBYLA return sub-optimal points???
-! 1. evalfc, extreme barrier, moderate excessively negative objective, which has not been done in
+! 1. evaluate, extreme barrier, moderate excessively negative objective, which has not been done in
 !    NEWUOA. Shouldn't we remove the extreme barrier in the MATLAB/Python interface after it is
 !    implemented in FORTRAN?
 ! 3. merge UPDATEPOLE and UPDATEXFC

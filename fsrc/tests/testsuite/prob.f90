@@ -10,6 +10,12 @@ module prob_mod
 ! vardim
 !
 ! Nonlinearly constrained:
+! circle
+! ellipsoid
+! fletcheq1
+! fletcheq2
+! hs100
+! rsnszk
 ! hexagon
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK
@@ -18,14 +24,14 @@ implicit none
 
 private
 public :: PNLEN
-public :: problem_t
+public :: PROB_T
 public :: construct
 public :: destruct
 
 integer, parameter :: PNLEN = 64
 integer, parameter :: SEED_DFT = 42  ! Default random seed used in trigsabs and trigssqs
 
-type problem_t
+type PROB_T
     character(len=PNLEN) :: probname  ! Should be allocatable, which is not supported by Absoft 22.0
     character :: probtype
     integer(IK) :: m
@@ -40,7 +46,7 @@ type problem_t
     real(RP) :: Delta0
     procedure(OBJ), nopass, pointer :: calfun => null()
     procedure(OBJCON), nopass, pointer :: calcfc => null()
-end type problem_t
+end type PROB_T
 
 
 contains
@@ -48,9 +54,10 @@ contains
 
 subroutine construct(prob, probname, n)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine constructs a derived type PROB of type PROBLEM_T.
-! In F2003, this subroutine can be contained in the definition of PROBLEM_T, but the declaration of
-! PROB must be changed to CLASS(PROBLEM_T).
+! This subroutine constructs a derived type PROB of type PROB_T.
+! In F2003, this subroutine can be contained in the definition of PROB_T, but the declaration of
+! PROB must be changed to CLASS(PROB_T). See:
+! https://fortran-lang.discourse.group/t/a-derived-type-containing-a-callback-function-as-a-member/2364/13
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : IK
 use, non_intrinsic :: debug_mod, only : errstop
@@ -62,7 +69,7 @@ character(len=*), intent(in) :: probname
 integer(IK), intent(in), optional :: n
 
 ! Outputs
-type(problem_t), intent(out) :: prob
+type(PROB_T), intent(out) :: prob
 
 ! Local variables
 character(len=*), parameter :: srname = 'CONSTRUCT'
@@ -107,14 +114,14 @@ end subroutine construct
 
 subroutine destruct(prob)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine destructs a derived type PROB of type PROBLEM_T.
+! This subroutine destructs a derived type PROB of type PROB_T.
 ! F2003 has the FINALIZATION mechanism for derived types, but not yet supported by all compilers.
 ! Here we code an explicit destructor. It must be called when PROB is not used anymore.
-! In F2003, this subroutine can be contained in the definition of PROBLEM_T as a FINAL subroutine.
+! In F2003, this subroutine can be contained in the definition of PROB_T as a FINAL subroutine.
 !--------------------------------------------------------------------------------------------------!
 implicit none
 ! Inputs
-type(problem_t), intent(inout) :: prob
+type(PROB_T), intent(inout) :: prob
 
 !if (allocated(prob % probname)) then
 !    deallocate (prob % probname)

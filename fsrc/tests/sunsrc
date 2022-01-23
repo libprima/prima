@@ -1,5 +1,5 @@
 #!/bin/bash
-# This script prepares the Fortran source code for sunf95. It does not recognize overloaded
+# This script pre-processes the Fortran source code for sunf95. It does not recognize overloaded
 # intrinsic functions (particularly, their returning type/kind) correctly, e.g., INT in LINALG_MOD.
 
 DIR="$(realpath "$1")"

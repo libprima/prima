@@ -42,7 +42,7 @@ subroutine initxf(calfun, iprint, maxfun, ftarget, rhobeg, x0, ij, kopt, nf, fhi
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: evaluate_mod, only : evalf
+use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : INFO_DFT
@@ -140,7 +140,7 @@ xpt(:, n + 2:npt) = -rhobeg * eye(n, npt - n - 1_IK)  ! XPT(:, 2*N+2 : NPT) = ZE
 ! Set FVAL(1 : 2*N + 1) by evaluating F. Totally parallelizable except for FMSG.
 do k = 1, min(npt, int(2 * n + 1, kind(npt)))
     x = xpt(:, k) + xbase
-    call evalf(calfun, x, f)
+    call evaluate(calfun, x, f)
     evaluated(k) = .true.
     fval(k) = f
     call fmsg(solver, iprint, k, f, x)
@@ -194,7 +194,7 @@ xpt(:, 2 * n + 2:npt) = xpt(:, ij(:, 1)) + xpt(:, ij(:, 2))
 if (info == INFO_DFT) then
     do k = int(2 * n + 2, kind(k)), npt
         x = xpt(:, k) + xbase
-        call evalf(calfun, x, f)
+        call evaluate(calfun, x, f)
         call fmsg(solver, iprint, k, f, x)
         evaluated(k) = .true.
         fval(k) = f

@@ -10,7 +10,7 @@
 !
 ! Started in March 2020
 !
-! Last Modified: Friday, January 21, 2022 PM11:16:15
+! Last Modified: Sunday, January 23, 2022 PM07:51:53
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -36,7 +36,6 @@ use, non_intrinsic :: fmxapi_mod, only : fmxReadMPtr, fmxWriteMPtr
 
 ! Solver-specific modules
 use, non_intrinsic :: newuoa_mod, only : newuoa
-use, non_intrinsic :: prob_mod, only : fun_ptr, calfun
 
 implicit none
 
@@ -53,6 +52,7 @@ integer(IK) :: maxhist
 integer(IK) :: nf
 integer(IK) :: npt
 logical :: output_xhist
+mwPointer :: fun_ptr
 real(RP) :: eta1
 real(RP) :: eta2
 real(RP) :: f
@@ -120,4 +120,19 @@ call fmxWriteMPtr(fhist(1:min(int(nf), size(fhist))), poutput(6), 'row')
 deallocate (x) ! Allocated by fmxReadMPtr.
 deallocate (xhist)  ! Allocated by the solver
 deallocate (fhist)  ! Allocated by the solver
+
+!------------------------------------------------------------------!
+contains
+
+subroutine calfun(x_sub, f_sub)
+! This is an internal procedure that defines CALFUN.
+! Since F2008, we can pass internal procedures as actual arguments.
+! See Note 12.18 of J3/10-007r1 (F2008 Working Document, page 290).
+use, non_intrinsic :: cbfun_mod, only : evalcb
+implicit none
+real(RP), intent(in) :: x_sub(:)
+real(RP), intent(out) :: f_sub
+call evalcb(fun_ptr, x_sub, f_sub)
+end subroutine calfun
+!------------------------------------------------------------------!
 end subroutine mexFunction

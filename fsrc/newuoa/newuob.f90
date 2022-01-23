@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, January 22, 2022 PM08:35:37
+! Last Modified: Sunday, January 23, 2022 PM06:22:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -51,7 +51,7 @@ subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: evaluate_mod, only : evalf
+use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS
@@ -262,7 +262,7 @@ do tr = 1, maxtr
 
         ! Calculate the next value of the objective function.
         x = xbase + (xopt + d)
-        call evalf(calfun, x, f)
+        call evaluate(calfun, x, f)
         nf = nf + 1_IK
         call fmsg(solver, iprint, nf, f, x)
         ! Save X and F into the history.
@@ -434,7 +434,7 @@ do tr = 1, maxtr
 
         ! Calculate the next value of the objective function.
         x = xbase + (xopt + d)
-        call evalf(calfun, x, f)
+        call evaluate(calfun, x, f)
         nf = nf + 1_IK
         call fmsg(solver, iprint, nf, f, x)
         ! Save X and F into the history.
@@ -482,7 +482,7 @@ end do  ! The iterative procedure ends.
 ! tried before.
 if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     x = xbase + (xopt + d)
-    call evalf(calfun, x, f)
+    call evaluate(calfun, x, f)
     nf = nf + 1_IK
     call fmsg(solver, iprint, nf, f, x)
     ! Save X and F into the history.

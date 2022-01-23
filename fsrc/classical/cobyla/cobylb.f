@@ -22,7 +22,7 @@
 
       use, non_intrinsic :: consts_mod, only : RP, IK
       use, non_intrinsic :: pintrf_mod, only : OBJCON
-      use, non_intrinsic :: evalcl_mod, only : evalfc
+      use, non_intrinsic :: evalcl_mod, only : evaluate
 
       implicit real(RP) (A-H,O-Z)
       implicit integer(IK) (I-N)
@@ -122,7 +122,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !----------------------------------------------------------------------!
 !----------------------------------------------------------------------!
       !CALL CALCFC (N,M,X,F,CON)
-      call evalfc (calcfc, x, f, constr, resmax); con(1:m) = constr !!!!
+      call evaluate(calcfc, x, f, constr, resmax); con(1:m) = constr !!!
 !----------------------------------------------------------------------!
 !----------------------------------------------------------------------!
 

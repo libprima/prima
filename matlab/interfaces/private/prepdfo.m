@@ -1065,7 +1065,7 @@ if isfield(options, 'maxfun')
     elseif options.maxfun > maxint
         % maxfun would suffer from overflow in the Fortran code
         wid = sprintf('%s:MaxfunTooLarge', funname);
-        wmsg = sprintf('%s: maxfun exceeds the upper limit of integers in Fortran MEX; it is set to %d.', funname, options.maxfun);
+        wmsg = sprintf('%s: maxfun exceeds the upper limit of integers in Fortran MEX; it is set to %d.', funname, maxint);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
         options.maxfun = maxint;

@@ -10,7 +10,7 @@
 !
 ! Started in March 2020
 !
-! Last Modified: Friday, January 21, 2022 AM01:47:40
+! Last Modified: Sunday, January 23, 2022 PM07:50:59
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -36,7 +36,6 @@ use, non_intrinsic :: fmxapi_mod, only : fmxReadMPtr, fmxWriteMPtr
 
 ! Solver-specific modules
 use, non_intrinsic :: cobyla_mod, only : cobyla
-use, non_intrinsic :: prob_mod, only : funcon_ptr, calcfc
 
 implicit none
 
@@ -59,6 +58,7 @@ integer(IK) :: maxhist
 integer(IK) :: nf
 logical :: output_conhist
 logical :: output_xhist
+mwPointer :: funcon_ptr
 real(RP) :: cstrv
 real(RP) :: ctol
 real(RP) :: f
@@ -149,4 +149,20 @@ deallocate (xhist)  ! Allocated by the solver
 deallocate (fhist)  ! Allocated by the solver
 deallocate (chist)  ! Allocated by the solver
 deallocate (conhist)  ! Allocated by the solver
+
+!------------------------------------------------------------------!
+contains
+
+subroutine calcfc(x_sub, f_sub, constr_sub)
+! This is an internal procedure that defines CALCFC.
+! Since F2008, we can pass internal procedures as actual arguments.
+! See Note 12.18 of J3/10-007r1 (F2008 Working Document, page 290).
+use, non_intrinsic :: cbfun_mod, only : evalcb
+implicit none
+real(RP), intent(in) :: x_sub(:)
+real(RP), intent(out) :: f_sub
+real(RP), intent(out) :: constr_sub(:)
+call evalcb(funcon_ptr, x_sub, f_sub, constr_sub)
+end subroutine calcfc
+!------------------------------------------------------------------!
 end subroutine mexFunction

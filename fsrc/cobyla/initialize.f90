@@ -6,7 +6,7 @@ module initialize_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, January 23, 2022 AM01:22:37
+! Last Modified: Sunday, January 23, 2022 PM06:25:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -27,7 +27,7 @@ subroutine initxfc(calcfc, iprint, maxfun, constr0, ctol, f0, ftarget, rhobeg, x
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: evaluate_mod, only : evalfc, moderatef, moderatec
+use, non_intrinsic :: evaluate_mod, only : evaluate, moderatef, moderatec
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf, is_finite
 use, non_intrinsic :: info_mod, only : INFO_DFT
@@ -135,7 +135,7 @@ do k = 1, n + 1_IK
     else
         j = k - 1_IK
         x(j) = x(j) + rhobeg
-        call evalfc(calcfc, x, f, constr, cstrv)
+        call evaluate(calcfc, x, f, constr, cstrv)
     end if
     call fmsg(solver, iprint, k, f, x, cstrv, constr)
     evaluated(j) = .true.

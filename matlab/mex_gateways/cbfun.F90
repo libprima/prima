@@ -1,37 +1,30 @@
 #include "fintrf.h"
 
-module prob_mod
+module cbfun_mod
 !--------------------------------------------------------------------------------------------------!
-! PROB_MOD is a module defining the optimization problem. In particular, it implements CALFUN and
-! CALCFC.  CALFUN evaluates the objective function for unconstrained, bound constrained, and
-! linearly constrained problems; CALCFC evaluates the objective function and constraint for
-! nonlinearly constrained prolems.
+! This module evaluates callback functions received from MATLAB.
 !
 ! Coded by Zaikun Zhang in July 2020.
 !
-! Last Modified: Friday, January 21, 2022 AM11:50:38
+! Last Modified: Sunday, January 23, 2022 PM05:42:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
-public :: calfun
-public :: calcfc
+public :: evalcb
 
-!--------------------------------------------------------------------------------------------------!
-! The following module variables are NOT thread safe. They should be removed later by replacing the
-! current module with two derived types, one fore CALFUN, another for CALFUN.
-public :: fun_ptr, funcon_ptr
-mwPointer :: fun_ptr ! Pointer to objective function, used by UOBYQA, NEWUOA, BOBYQA, and LINCOA
-mwPointer :: funcon_ptr ! Pointer to objective&constraint functions, used by COBYLA
-!--------------------------------------------------------------------------------------------------!
+interface evalcb
+    module procedure evalcb_f, evalcb_fc
+end interface evalcb
 
 
 contains
 
 
-subroutine calfun(x, f)
+subroutine evalcb_f(fun_ptr, x, f)
 !--------------------------------------------------------------------------------------------------!
-! The Fortran subroutine that evaluates the objective function in UOBYQA, NEWUOA, BOBYQA, and LINCOA
+! This subroutine evaluates a MATLAB function F = FUN(X). Here, FUN is represented by a mwPointer
+! FUN_PTR pointing to FUN, with mwPointer being a type defined in fintrf.h.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -46,13 +39,14 @@ use, non_intrinsic :: fmxapi_mod, only : fmxReadMPtr, fmxWriteMPtr, fmxCallMATLA
 implicit none
 
 ! Inputs
+mwPointer, intent(in) :: fun_ptr
 real(RP), intent(in) :: x(:)
 
 ! Outputs
 real(RP), intent(out) :: f
 
 ! Local variables
-character(len=*), parameter :: srname = 'CALFUN'
+character(len=*), parameter :: srname = 'EVALCB_F'
 integer :: i
 mwPointer :: pinput(1), poutput(1)
 
@@ -84,12 +78,13 @@ do i = 1, size(poutput)
     call mxDestroyArray(poutput(i))
 end do
 
-end subroutine calfun
+end subroutine evalcb_f
 
 
-subroutine calcfc(x, f, constr)
+subroutine evalcb_fc(funcon_ptr, x, f, constr)
 !--------------------------------------------------------------------------------------------------!
-! The Fortran subroutine that evaluates the objective&constraint functions in COBYLA.
+! This subroutine evaluates a MATLAB function [F, CONSTR] = FUNCON(X). Here, FUN is represented by
+! a mwPointer FUNCON_PTR pointing to FUN, with mwPointer being a type defined in fintrf.h.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -104,6 +99,7 @@ use, non_intrinsic :: fmxapi_mod, only : fmxReadMPtr, fmxWriteMPtr, fmxCallMATLA
 implicit none
 
 ! Inputs
+mwPointer, intent(in) :: funcon_ptr
 real(RP), intent(in) :: x(:)
 
 ! Outputs
@@ -111,7 +107,7 @@ real(RP), intent(out) :: f
 real(RP), intent(out) :: constr(:)
 
 ! Local variables
-character(len=*), parameter :: srname = 'CALCFC'
+character(len=*), parameter :: srname = 'EVALCB_FC'
 integer :: i
 mwPointer :: pinput(1), poutput(2)
 real(RP), allocatable :: constr_loc(:)
@@ -153,7 +149,7 @@ constr = constr_loc
 ! Deallocate CONSTR_LOC, allocated by fmxReadMPtr. Indeed, it would be deallocated automatically.
 deallocate (constr_loc)
 
-end subroutine calcfc
+end subroutine evalcb_fc
 
 
-end module prob_mod
+end module cbfun_mod

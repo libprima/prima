@@ -28,7 +28,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, January 23, 2022 AM01:25:31
+! Last Modified: Sunday, January 23, 2022 PM06:24:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -210,7 +210,7 @@ use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, FTARGET_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TEN, TENTH, EPS, MSGLEN
 use, non_intrinsic :: debug_mod, only : assert, errstop, warning
-use, non_intrinsic :: evaluate_mod, only : evalfc, moderatex
+use, non_intrinsic :: evaluate_mod, only : evaluate, moderatex
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_neginf, is_posinf
 use, non_intrinsic :: memory_mod, only : safealloc
@@ -307,7 +307,7 @@ if (present(f0) .and. present(constr0) .and. all(is_finite(x))) then
 else
     ! Replace any NaN in X by ZERO and Inf/-Inf in X by HUGENUM/-HUGENUM.
     x = moderatex(x)
-    call evalfc(calcfc, x, f, constr_loc, cstrv_loc)
+    call evaluate(calcfc, x, f, constr_loc, cstrv_loc)
 end if
 
 ! If RHOBEG is present, then RHOBEG_LOC is a copy of RHOBEG; otherwise, RHOBEG_LOC takes the default

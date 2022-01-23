@@ -35,6 +35,7 @@ cd "$TEST_DIR" || exit 1
 
 make cleanall."$SOLVER" > /dev/null
 
+#COMPILER_LIST="g n 9 a s i v f d x"  # atest does not work due to a bug in af95
 COMPILER_LIST="g n 9 s i v f d x"
 
 for COMPILER in $COMPILER_LIST; do
