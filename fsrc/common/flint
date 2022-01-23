@@ -35,16 +35,20 @@ cd "$TEST_DIR" || exit 1
 
 make cleanall."$SOLVER" > /dev/null
 
-#CLIST=(gfortran nagfor g95 af95 sunf95 ifort nvfortran flang aflang ifx lf95)
-#TLIST=(g n 9 a s i v f d x l)  # atest does not work due to a bug in af95
-COMPILER_LIST=(gfortran nagfor g95 sunf95 ifort nvfortran flang aflang ifx lf95)
-CLIST=(g n 9 s i v f d x l)
+#CLIST=(gfortran nagfor g95 af95 sunf95 ifort nvfortran flang aflang ifx)
+#TLIST=(g n 9 a s i v f d x)  # atest does not work due to a bug in af95
+COMPILER_LIST=(gfortran nagfor g95 sunf95 ifort nvfortran flang aflang ifx)
+CLIST=(g n 9 s i v f d x)
 COMP_LIST=""
 for i in "${!COMPILER_LIST[@]}"; do
    if  type "${COMPILER_LIST[$i]}" &> /dev/null ; then
        COMP_LIST="$COMP_LIST ${CLIST[$i]}"
    fi
 done
+
+if lf95 --version &> /dev/null; then  # `lf95` may not work even if `type lf95` succeeds, as a license is needed.
+    COMP_LIST="$COMP_LIST l"
+fi
 
 echo "Tests to make:$COMP_LIST"
 
