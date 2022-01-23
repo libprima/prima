@@ -207,7 +207,7 @@ atest_i2_r16_d1_tst atest_i4_r16_d1_tst atest_i8_r16_d1_tst atest_i2_r16_d0_tst 
 	FC2 := $(AFORT) $(FFLAGS2) -TENV:simd_zmask=off
 
 # AMD AOCC Flang
-AFLANG := $(shell find /opt/AMD \( -type l -o -type f \) -executable -name flang -print 2> /dev/null | sort | tail -n 1)
+AFLANG := $(shell find -L /opt/AMD -type f -executable -name flang -print 2> /dev/null | sort | tail -n 1)
 AFLANG := $(AFLANG) -pedantic-errors -Werror
 # Strangely, with `-Mchkptr`, the compiler may not print the error message of `-Mbounds` anymore.
 DFORT := $(AFLANG) -std=f$(FSTD) -pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Kieee #-Mchkptr
@@ -342,7 +342,7 @@ ntest_i2_r16_d1_tst ntest_i4_r16_d1_tst ntest_i8_r16_d1_tst ntest_i2_r16_d0_tst 
 	FC2 := $(NFORT) $(FFLAGS2) -nan -ieee=stop
 
 # NVIDIA nvfortran (aka, pgfortran)
-VFORT := $(shell find /opt/nvidia \( -type l -o -type f \) -executable -name nvfortran -print 2> /dev/null | sort | tail -n 1)
+VFORT := $(shell find -L /opt/nvidia -type f -executable -name nvfortran -print 2> /dev/null | sort | tail -n 1)
 VFORT := $(VFORT) -Werror
 VFORT := $(VFORT) -C -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkstk -Mchkptr
 
@@ -433,7 +433,8 @@ xtest_i2_r16_d1_tst xtest_i4_r16_d1_tst xtest_i8_r16_d1_tst xtest_i2_r16_d0_tst 
 
 ####################################################################################################
 # All the tests.
-# GNU make manual: Recursive make commands should always use the variable MAKE, not the explicit command name ‘make’.
+# GNU make manual: Recursive make commands should always use the variable MAKE, not the explicit
+# command name `make`.
 test:
 	$(MAKE) $(TESTS)
 
@@ -470,7 +471,7 @@ $(TESTS) $(TESTS_INT):
 %_tst: source_% header_%
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
-	($(FC1) -c $(SRC) && $(FC2) -c $(SRC)) 2>&1 \
+	@($(FC1) -c $(SRC) && $(FC2) -c $(SRC)) 2>&1 \
 	| grep -v '^\s*$$' \
 	| grep -v 'Absoft ANSI 1610:' \
 	| grep -v 'Absoft Pro Fortran.*: 0 Errors, 0 Warnings, 0 Other messages,' \
@@ -479,8 +480,8 @@ $(TESTS) $(TESTS_INT):
 	| grep -v 'Expression in IF construct is constant' \
 	| grep -v 'NAG Fortran Compiler normal termination' \
 	| grep -v 'NAG Fortran Compiler normal termination, [0-9]* info message' \
-	| grep -v 'Warning: Change of value in conversion from ‘INTEGER(8)’ to ‘REAL(8)’ at (1) \[-Wconversion\]' \
-	| grep -v 'Warning: Change of value in conversion from ‘REAL(16)’ to ‘REAL(8)’ at (1) \[-Wconversion\]' \
+	| grep -v 'Warning: Change of value in conversion from .INTEGER(8). to .REAL(8). at (1) \[-Wconversion\]' \
+	| grep -v 'Warning: Change of value in conversion from .REAL(16). to .REAL(8). at (1) \[-Wconversion\]' \
 	| grep -v 'Extension: fmxapi\.F90, line [0-9]*: Byte count on numeric data type' \
 	| grep -v 'Extension: gethuge\.F90, line [0-9]*: Byte count on numeric data type' \
 	| grep -v 'Extension: prob\.F90, line [0-9]*: Byte count on numeric data type' \
