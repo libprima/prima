@@ -11,12 +11,14 @@ module evalcl_mod
 ! 2. The preconditions and postconditions are only enforced minimally compared to the modern version.
 ! 3. The argument NF in RANGEHIST mask the module variables with the same name, which is not good
 ! practice. Similar things can be said about XHIST etc.
+! 4. The definition of EVALUATE relies on a procedure of the same name from the module evaluate_mod.
+! Even though we rename the latter as EVAL, some may find it not perfect practice.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
 ! Started: August 2021
 !
-! Last Modified: Sunday, January 23, 2022 PM09:13:21
+! Last Modified: Sunday, January 23, 2022 PM11:33:49
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : RP, IK
@@ -53,10 +55,11 @@ contains
 subroutine evaluatef(calfun, x, f)
 !--------------------------------------------------------------------------------------------------!
 ! This function evaluates CALFUN at X, setting F to the objective function value. Nan/Inf are
-! handled by a moderated extreme barrier.
+! handled by a moderated extreme barrier. In addition, the function updates NF and the history.
 !--------------------------------------------------------------------------------------------------!
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, HUGEFUN
+use, non_intrinsic :: consts_mod, only : RP, IK
+use, non_intrinsic :: evaluate_mod, only : eval => evaluate
 use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: pintrf_mod, only : OBJ
 implicit none
@@ -69,25 +72,14 @@ real(RP), intent(in) :: x(:)
 real(RP), intent(out) :: f
 
 ! Local variables
-!character(len=*), parameter :: srname = 'EVALF'
 integer(IK) :: khist
 integer(IK) :: maxfhist
 integer(IK) :: maxxhist
 
-if (any(is_nan(x))) then
-    ! Although this should not happen unless there is a bug, we include this case for security.
-    f = sum(x)  ! Set F to NaN
+if (any(is_nan(x))) then   ! Set F to NaN
+    f = sum(x)
 else
-    call calfun(x, f)  ! Evaluate F.
-
-    ! Moderated extreme barrier: replace NaN/huge objective or constraint values with a large but
-    ! finite value. This is naive. Better approaches surely exist.
-    if (f > HUGEFUN .or. is_nan(f)) then
-        f = HUGEFUN
-    end if
-
-    !! We may moderate huge negative values of F (NOT an extreme barrier), but we decide not to.
-    !!f = max(-HUGEFUN, f)
+    call eval(calfun, x, f)
 end if
 
 ! Update NF and the history.
@@ -110,10 +102,11 @@ subroutine evaluatefc(calcfc, x, f, constr, cstrv)
 !--------------------------------------------------------------------------------------------------!
 ! This function evaluates CALCFC at X, setting F to the objective function value, CONSTR to the
 ! constraint value, and CSTRV to the constraint violation. Nan/Inf are handled by a moderated
-! extreme barrier.
+! extreme barrier. In addition, the function updates NF and the history.
 !--------------------------------------------------------------------------------------------------!
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HUGEFUN, HUGECON
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO
+use, non_intrinsic :: evaluate_mod, only : moderatef, moderatec, eval => evaluate
 use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: linalg_mod, only : norm
 use, non_intrinsic :: pintrf_mod, only : OBJCON
@@ -129,7 +122,6 @@ real(RP), intent(out) :: constr(:)
 real(RP), intent(out) :: cstrv
 
 ! Local variables
-!character(len=*), parameter :: srname = 'EVALFC'
 integer(IK) :: khist
 integer(IK) :: maxchist
 integer(IK) :: maxconhist
@@ -137,9 +129,7 @@ integer(IK) :: maxfhist
 integer(IK) :: maxxhist
 logical :: evaluated
 
-if (any(is_nan(x))) then
-    ! Although this should not happen unless there is a bug, we include this case for security.
-    ! Set F, CONSTR, and CSTRV to NaN.
+if (any(is_nan(x))) then  ! Set F, CONSTR, and CSTRV to NaN.
     f = sum(x)
     constr = f
     cstrv = f
@@ -147,33 +137,15 @@ else
     evaluated = .false.
     if (fc_x0_provided .and. allocated(x0) .and. allocated(constr_x0)) then
         if (norm(x - x0) <= 0) then
-            f = f_x0
-            constr = constr_x0
+            f = moderatef(f_x0)
+            constr = moderatec(constr_x0)
+            cstrv = maxval([-constr, ZERO])
             evaluated = .true.
         end if
     end if
     if (.not. evaluated) then
-        call calcfc(x, f, constr)  ! Evaluate F and CONSTR.
+        call eval(calcfc, x, f, constr, cstrv)
     end if
-
-    ! Moderated extreme barrier: replace NaN/huge objective or constraint values with a large but
-    ! finite value. This is naive, and better approaches surely exist.
-    if (f > HUGEFUN .or. is_nan(f)) then
-        f = HUGEFUN
-    end if
-    where (constr < -HUGECON .or. is_nan(constr))
-        ! The constraint is CONSTR(X) >= 0, so NaN should be replaced with a large negative value.
-        constr = -HUGECON  ! MATLAB code: constr(constr < -HUGECON | isnan(constr)) = -HUGECON
-    end where
-
-    ! Moderate huge positive values of CONSTR, or they may lead to Inf/NaN in subsequent calculations.
-    ! This is NOT an extreme barrier.
-    constr = min(HUGECON, constr)
-    !! We may moderate F similarly, but we decide not to.
-    !!f = max(-HUGEFUN, f)
-
-    ! Evaluate the constraint violation for constraints CONSTR(X) >= 0.
-    cstrv = maxval([-constr, ZERO])
 end if
 
 ! Update NF and the history.

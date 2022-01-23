@@ -28,7 +28,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, January 23, 2022 PM06:24:55
+! Last Modified: Sunday, January 23, 2022 PM09:49:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -307,7 +307,7 @@ if (present(f0) .and. present(constr0) .and. all(is_finite(x))) then
 else
     ! Replace any NaN in X by ZERO and Inf/-Inf in X by HUGENUM/-HUGENUM.
     x = moderatex(x)
-    call evaluate(calcfc, x, f, constr_loc, cstrv_loc)
+    call evaluate(calcfc, x, f, constr_loc, cstrv_loc) ! Indeed, CSTRV_LOC needs not to be evaluated.
 end if
 
 ! If RHOBEG is present, then RHOBEG_LOC is a copy of RHOBEG; otherwise, RHOBEG_LOC takes the default
