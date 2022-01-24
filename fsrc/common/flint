@@ -74,13 +74,13 @@ for COMP in $COMP_LIST; do
         fi
         for TEST in $TESTS ; do
             INFO="$(make "$COMP"test_"$TEST"_tst_c."$SOLVER" \
-                | grep -i "starts\|warning\|error\|info\|fail\|abort\|questionable\|remark\|attention" \
+                | grep -i "starts\|warning\|error\|info\|abort\|invalid\|violation\|fault\|illegal\|fail\|questionable\|remark\|attention\|Could\ not\ resolve\|not\ defined\|not\ public\ entity" \
                 | grep -vi "[0-9]\s*warning\|[0-9]\s*error\|[0-9]\s*info\|info.f90\|information\|--warning\|--error" \
                 | grep -vi "pedantic-errors\|Werror\|warn\ errors\|diag-error-limit\|colour=error" \
                 | grep -v "^- \|^| \|^\* \|^+ \|^X \|\# " \
                 )"
-            echo "$INFO" | grep -i --color "starts\|warning\|error\|info\|fail\||abort\|questionable\|remark\|attention"
-            if echo "$INFO" | grep -iq "error\|fail\|abort" ; then
+            echo "$INFO" | grep -i --color "starts\|warning\|error\|info\|abort\|invalid\|violation\|fault\|illegal\|fail\|questionable\|remark\|attention\|Could\ not\ resolve\|not\ defined\|not\ public\ entity"
+            if echo "$INFO" | grep -iq "error\|abort\|invalid\|violation\|fault\|illegal\|fail\|Could\ not\ resolve\|not\ defined\|not\ public\ entity" ; then
                 if [[ -f "$TEST_LOG_DIR"/"$COMP"test_"$TEST"_tst_c.log ]] ; then
                     LOGFILE="$COMP"test_"$TEST"_tst_c.log
                 else

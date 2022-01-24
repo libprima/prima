@@ -6,7 +6,7 @@
 # abstract interface
 # [] as array constructor
 # ```
-# Usage: lf95 DIR
+# Usage: lfsrc DIR
 
 # The full path of the directory to proceed
 DIR="$(realpath "$1")"
@@ -14,7 +14,7 @@ DIR="$(realpath "$1")"
 # Temporary file
 TMP="/tmp/tmp.$(date +%s)"
 
-# The files the contain abstract interfaces
+# The files that contain abstract interfaces.
 CIRCLEF90="circle.f90"
 CIRCLE="$DIR/common/$CIRCLEF90"
 INTRF_CIRCLE="$DIR/common/intrf_$CIRCLEF90"

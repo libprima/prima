@@ -484,7 +484,7 @@ $(TESTS) $(TESTS_INT):
 	| grep -v 'Warning: Change of value in conversion from .REAL(16). to .REAL(8). at (1) \[-Wconversion\]' \
 	| grep -v 'Extension: fmxapi\.F90, line [0-9]*: Byte count on numeric data type' \
 	| grep -v 'Extension: gethuge\.F90, line [0-9]*: Byte count on numeric data type' \
-	| grep -v 'Extension: prob\.F90, line [0-9]*: Byte count on numeric data type' \
+	| grep -v 'Extension: cbfun\.F90, line [0-9]*: Byte count on numeric data type' \
 	| grep -v 'Extension: \./classical/fmxcl\.F90, line [0-9]*: Byte count on numeric data type' \
 	| grep -v 'Extension: \./classical/fmxcl\.F90, line [0-9]*: Line longer than 132 characters' \
 	| grep -v 'Extension: .*_mex\.F90, line [0-9]*: Byte count on numeric data type' \
@@ -561,6 +561,10 @@ source_%: $(SRC_DIRS)
 	@if echo $@ | grep -q "stest\|9test"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash ../s9src ./ ; \
+	fi
+	@if echo $@ | grep -q "ftest" && ! type flang | grep -iq "bisheng\|AMD" ; then \
+		printf "\nPreparing the source code for $@.\n" ; \
+		bash ../flsrc ./ ; \
 	fi
 	@printf "Done.\n"
 

@@ -660,6 +660,10 @@ source_%: $(SRC_DIRS)
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash ../sunsrc ./ ; \
 	fi
+	@if echo $@ | grep -q "ftest" && ! type flang | grep -iq "bisheng\|AMD" ; then \
+		printf "\nPreparing the source code for $@.\n" ; \
+		bash ../flsrc ./ ; \
+	fi
 	@printf "Done.\n"
 
 # Adapt the header file for the test.
