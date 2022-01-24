@@ -4,13 +4,17 @@
 
 # Parse inputs.
 if ! [[ $# -eq 0 || $# -eq 1 ]] ; then
-    printf "Usage: mlint [-a|--all]\n"
+    printf "Usage: mlint [-a|--all] or mlint -c|--clean\n"
     exit 2
 fi
-if [[ $# -eq 1 ]] && [[ $1 == "-a" || $1 == "--all" ]] ; then
-    TEST_ALL="Y"
-else
-    TEST_ALL="N"
+TEST_ALL="N"
+CLEAN="N"
+if [[ $# -eq 1 ]] ; then
+    if [[ $1 == "-a" || $1 == "--all" ]] ; then
+        TEST_ALL="Y"
+    elif [[ $1 == "-c" || $1 == "--clean" ]] ; then
+        CLEAN="Y"
+    fi
 fi
 
 # The directory where this script resides. It is the solver's directory.
@@ -33,7 +37,14 @@ rm -f "$SOLVER_LOG_DIR"/*test*.log
 # Conduct the test.
 cd "$TEST_DIR" || exit 1
 
+# Make clean (old logs in $SOLVER_LOG_DIR have been cleaned up in the above).
+printf "\nCleaning up ... "
 make cleanall."$SOLVER" > /dev/null
+printf "Done.\n\n"
+
+if [[ "$CLEAN" == "Y" ]] ; then
+    exit 0
+fi
 
 #CLIST=(gfortran nagfor g95 af95 sunf95 ifort nvfortran flang aflang ifx)
 #TLIST=(g n 9 a s i v f d x)  # atest does not work due to a bug in af95
@@ -46,7 +57,7 @@ for i in "${!COMPILER_LIST[@]}"; do
    fi
 done
 
-echo "Tests to make:$COMP_LIST"
+printf "Tests to make:%s\n\n" "$COMP_LIST"
 
 for COMP in $COMP_LIST; do
     if [[ $TEST_ALL == 'Y' ]] ; then
