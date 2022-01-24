@@ -10,7 +10,7 @@
 !
 ! Started in March 2020
 !
-! Last Modified: Sunday, January 23, 2022 PM07:51:53
+! Last Modified: Monday, January 24, 2022 PM11:55:08
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -26,7 +26,6 @@ subroutine mexFunction(nargout, poutput, nargin, pinput)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK
-!use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: memory_mod, only : safealloc
 
 ! Fortran MEX API modules
@@ -125,7 +124,9 @@ deallocate (fhist)  ! Allocated by the solver
 contains
 
 subroutine calfun(x_sub, f_sub)
-! This is an internal procedure that defines CALFUN.
+! This is an internal procedure that defines CALFUN. We implement
+! CALFUN internally so that FUN_PTR is visible to it. Do NOT pass
+! FUN_PTR through a module variable, which is thread-unsafe.
 ! Since F2008, we can pass internal procedures as actual arguments.
 ! See Note 12.18 of J3/10-007r1 (F2008 Working Document, page 290).
 use, non_intrinsic :: cbfun_mod, only : evalcb

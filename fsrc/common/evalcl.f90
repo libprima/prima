@@ -1,25 +1,27 @@
 module evalcl_mod
 !--------------------------------------------------------------------------------------------------!
-! This is a module evaluating the objective/constraint functions for the classical mode of Powell's
+! This is a module evaluating the objective/constraint functions for the CLASSICAL MODE of Powell's
 ! solvers. It does the following in addition to the function evaluations.
 ! 1. Handle Nan/Inf with moderated extreme barriers.
 ! 2. Record the number of function evaluations (NF) and the history of evaluations.
 !
-! Note that we provide only limited support for the classical mode. Regarding the current module,
-! the limitation is reflected in the following aspects, which will unlikely be improved.
+! Coded by Zaikun ZHANG (www.zhangzk.net).
+!
+! Started: August 2021
+!
+! Last Modified: Tuesday, January 25, 2022 AM05:29:26
+!--------------------------------------------------------------------------------------------------!
+
+! N.B.: The module is NOT used by the modernized version of Powell's solvers. It is used only when we
+! invoke Powell's Fortran 77 code, i.e., when we call the solvers in the CLASSICAL MODE. We provide
+! only limited support for the classical mode. Regarding the current module, the limitation is
+! reflected in the following aspects.
 ! 1. The implementation of this module is NOT thread safe due to the module variables NF, XHIST etc.
 ! 2. The preconditions and postconditions are only enforced minimally compared to the modern version.
 ! 3. The argument NF in RANGEHIST mask the module variables with the same name, which is not good
 ! practice. Similar things can be said about XHIST etc.
 ! 4. The definition of EVALUATE relies on a procedure of the same name from the module evaluate_mod.
 ! Even though we rename the latter as EVAL, some may find it not perfect practice.
-!
-! Coded by Zaikun ZHANG (www.zhangzk.net).
-!
-! Started: August 2021
-!
-! Last Modified: Sunday, January 23, 2022 PM11:33:49
-!--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : RP, IK
 implicit none

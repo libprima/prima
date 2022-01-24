@@ -57,8 +57,7 @@ endif
 atest: FC := $(AFORT) -m3
 
 # AMD AOCC Flang
-AFLANG := $(shell find /opt/AMD \( -type l -o -type f \) -executable -name flang -print \
-	| sort | tail -n 1 2> /dev/null || echo AFLANG_NOT_FOUND)
+AFLANG := $(shell find -L /opt/AMD -type f -executable -name flang -print 2> /dev/null | sort | tail -n 1)
 dtest: FC := $(AFLANG) -Wall -Wextra -std=f$(FSTD)
 
 # Flang
@@ -74,8 +73,7 @@ itest: FC := ifort -warn all -stand f$(FS)
 ntest: FC := nagfor -C -f$(FSTD)
 
 # NVIDIA nvfortran (aka, pgfortran)
-VFORT := $(shell find /opt/nvidia \( -type l -o -type f \) -executable -name nvfortran -print \
-	| sort | tail -n 1 2> /dev/null || echo NVFORTRAN_NOT_FOUND)
+VFORT := $(shell find -L /opt/nvidia -type f -executable -name nvfortran -print 2> /dev/null | sort | tail -n 1)
 vtest: FC := $(VFORT) -C -Wall -Wextra -Mstandard
 
 # Oracle sunf95
