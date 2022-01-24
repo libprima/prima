@@ -63,7 +63,7 @@ for COMP in $COMP_LIST; do
     if [[ $TEST_ALL == 'Y' ]] ; then
         make  "$COMP"test."$SOLVER"
     else
-        if [[ $COMP == 'f' || $COMP == 'v' || $COMP == 'x' ]] ; then
+        if [[ $COMP == 'f' || $COMP == 'v' || $COMP == 'd' || $COMP == 'x' ]] ; then
             TESTS="i2_r4_d1 i8_r4_d0"
         else
             TESTS="i2_r16_d1 i8_r4_d0"
