@@ -8,7 +8,7 @@ module memory_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, January 19, 2022 AM12:23:20
+! Last Modified: Tuesday, January 25, 2022 PM01:54:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -130,10 +130,12 @@ call validate(n >= 0, 'N >= 0', srname)
 ! Allocate memory for X
 allocate (x(n), stat=alloc_status)
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(allocated(x), 'X is allocated', srname)
+
+! Initialize X to a strange value independent of the compiler; it can be costly for a large size.
 x = -huge(x)
 
 ! Postconditions (checked even not debugging)
-call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x) == n, 'SIZE(X) == N', srname)
 end subroutine alloc_rvector_sp
 
@@ -163,10 +165,12 @@ call validate(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
 ! Allocate memory for X
 allocate (x(m, n), stat=alloc_status)
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(allocated(x), 'X is allocated', srname)
+
+! Initialize X to a strange value independent of the compiler; it can be costly for a large size.
 x = -huge(x)
 
 ! Postconditions (checked even not debugging)
-call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname)
 end subroutine alloc_rmatrix_sp
 
@@ -199,10 +203,12 @@ call validate(n >= 0, 'N >= 0', srname)
 ! Allocate memory for X
 allocate (x(n), stat=alloc_status)
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(allocated(x), 'X is allocated', srname)
+
+! Initialize X to a strange value independent of the compiler; it can be costly for a large size.
 x = -huge(x)
 
 ! Postconditions (checked even not debugging)
-call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x) == n, 'SIZE(X) == N', srname)
 end subroutine alloc_rvector_dp
 
@@ -232,10 +238,12 @@ call validate(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
 ! Allocate memory for X
 allocate (x(m, n), stat=alloc_status)
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(allocated(x), 'X is allocated', srname)
+
+! Initialize X to a strange value independent of the compiler; it can be costly for a large size.
 x = -huge(x)
 
 ! Postconditions (checked even not debugging)
-call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname)
 end subroutine alloc_rmatrix_dp
 
@@ -270,10 +278,12 @@ call validate(n >= 0, 'N >= 0', srname)
 ! Allocate memory for X
 allocate (x(n), stat=alloc_status)
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(allocated(x), 'X is allocated', srname)
+
+! Initialize X to a strange value independent of the compiler; it can be costly for a large size.
 x = -huge(x)
 
 ! Postconditions (checked even not debugging)
-call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x) == n, 'SIZE(X) == N', srname)
 end subroutine alloc_rvector_qp
 
@@ -303,10 +313,12 @@ call validate(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
 ! Allocate memory for X
 allocate (x(m, n), stat=alloc_status)
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(allocated(x), 'X is allocated', srname)
+
+! Initialize X to a strange value independent of the compiler; it can be costly for a large size.
 x = -huge(x)
 
 ! Postconditions (checked even not debugging)
-call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname)
 end subroutine alloc_rmatrix_qp
 
@@ -338,10 +350,12 @@ call validate(n >= 0, 'N >= 0', srname)
 ! Allocate memory for X
 allocate (x(n), stat=alloc_status)
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(allocated(x), 'X is allocated', srname)
+
+! Initialize X to a strange value independent of the compiler; it can be costly for a large size.
 x = -huge(x)
 
 ! Postconditions (checked even not debugging)
-call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x) == n, 'SIZE(X) == N', srname)
 end subroutine alloc_ivector
 
@@ -371,10 +385,12 @@ call validate(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
 ! Allocate memory for X
 allocate (x(m, n), stat=alloc_status)
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(allocated(x), 'X is allocated', srname)
+
+! Initialize X to a strange value independent of the compiler; it can be costly for a large size.
 x = -huge(x)
 
 ! Postconditions (checked even not debugging)
-call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname)
 end subroutine alloc_imatrix
 
