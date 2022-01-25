@@ -87,7 +87,7 @@ xtest: FC := ifx -warn all -stand f$(FS)
 %test: $(SOLVER)_exmp.f90 \
 	consts.o info.o debug.o memory.o infnan.o linalg.o \
 	ratio.o resolution.o history.o selectx.o checkexit.o output.o string.o preproc.o pintrf.o evaluate.o \
-	initialize.o trustregion.o geometry.o update.o cobylb.o cobyla.o
+	update.o initialize.o trustregion.o geometry.o cobylb.o cobyla.o
 	$(FC) $(FFLAGS) -o $@ $(SOLVER)_exmp.f90 *.o
 	./$@
 	@$(MAKE) clean

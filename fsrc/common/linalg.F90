@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, January 23, 2022 PM12:46:27
+! Last Modified: Tuesday, January 25, 2022 PM09:36:13
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -506,6 +506,9 @@ function inv(A) result(B)
 ! This function calculates the inverse of a matrix A, which is ASSUMED TO BE SMALL AND INVERTIBLE.
 ! The function is implemented NAIVELY. It is NOT coded for general purposes but only for the usage
 ! in this project. Indeed, only the lower triangular case is used.
+! TODO: extend this function to calculate the pseudo inverse of any matrix of full rank. Better to
+! implement it into several subfunctions: triu with M >= N, tril with M <= N; general with M >= N,
+! general with M <= N, etc.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -518,11 +521,11 @@ real(RP), intent(in) :: A(:, :)
 real(RP) :: B(size(A, 1), size(A, 1))
 
 ! Local variables
-integer(IK) :: i
-integer(IK) :: n
+character(len=*), parameter :: srname = 'INV'
 integer(IK) :: P(size(A, 1))
 integer(IK) :: PI(size(A, 1))
-character(len=*), parameter :: srname = 'INV'
+integer(IK) :: i
+integer(IK) :: n
 real(RP) :: Q(size(A, 1), size(A, 1))
 real(RP) :: R(size(A, 1), size(A, 1))
 real(RP) :: tol
