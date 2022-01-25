@@ -124,7 +124,7 @@ C     By Zaikun (02-06-2019):
       if (F /= F) F = HUGEFUN
       where (CON(1:M) /= CON(1:M)) CON(1:M) = HUGECON
       F = MIN(F, HUGEFUN)
-      CON(1:M) = MAX(CON(1:M), -HUGECON)
+      CON(1:M) = MAX(MIN(HUGECON, CON(1:M)), -HUGECON)
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       NFVALS=NFVALS+1
 
@@ -350,7 +350,7 @@ C          TEMPA=0.0
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 2021-05-30
-      IF (INFO == 3) GOTO 600
+      IF (INFO == 3) GOTO 600  ! MAXFUN is reached
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 C

@@ -6,7 +6,7 @@ module evaluate_mod
 !
 ! Started: August 2021
 !
-! Last Modified: Sunday, January 23, 2022 PM09:43:00
+! Last Modified: Tuesday, January 25, 2022 PM09:45:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -49,7 +49,7 @@ end function moderatex
 pure elemental function moderatef(x) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! This function moderates the function value of a minimization problem. It replaces NaN and any
-! value above HUGEFUN by HUGEFUN
+! value above HUGEFUN by HUGEFUN.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, HUGEFUN
 use, non_intrinsic :: infnan_mod, only : is_nan
