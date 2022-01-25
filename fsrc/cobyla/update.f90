@@ -6,7 +6,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, December 18, 2021 AM01:29:37
+! Last Modified: Tuesday, January 25, 2022 PM05:15:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -189,9 +189,9 @@ info = 0_IK
 ! Identify the optimal vertex of the current simplex.
 jopt = findpole(cpen, cval, fval)
 
-! Switch the best vertex into SIM(:, N+1) if it is not there already. Then update CONMAT etc.
-! Before the update, save a copy of CONMAT etc. If the update is unsuccessful due to damaging
-! rounding errors, we restore them for COBYLA to extract X/F/C from the data before the damage.
+! Switch the best vertex to the pole position SIM(:, N+1) if it is not there already. Then update
+! CONMAT etc. Before the update, save a copy of CONMAT etc. If the update is unsuccessful due to
+! damaging rounding errors, we restore them for COBYLA to extract X/F/C from the undamaged data.
 fval_old = fval
 conmat_old = conmat
 cval_old = cval
@@ -216,11 +216,14 @@ end if
 
 ! Check whether SIMI is a poor approximation to the inverse of SIM(:, 1:N).
 erri = matprod(simi, sim(:, 1:n)) - eye(n)
-! Recalculate SIMI if the updated one is damaged by rounding errors.
+
+! Calculate SIMI from scratch if the updated one is damaged by rounding errors.
 if (any(is_nan(erri)) .or. any(abs(erri) > itol)) then
     simi = inv(sim(:, 1:n))
     erri = matprod(simi, sim(:, 1:n)) - eye(n)
 end if
+
+! If the recalculated SIMI is still damaged, then restore the data to the version before the update.
 if (any(is_nan(erri)) .or. any(abs(erri) > itol)) then
     info = DAMAGING_ROUNDING
     fval = fval_old

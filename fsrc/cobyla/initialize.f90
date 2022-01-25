@@ -6,7 +6,7 @@ module initialize_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, January 23, 2022 PM06:25:27
+! Last Modified: Tuesday, January 25, 2022 PM05:52:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -18,7 +18,7 @@ contains
 
 
 subroutine initxfc(calcfc, iprint, maxfun, constr0, ctol, f0, ftarget, rhobeg, x0, nf, chist, &
-    & conhist, conmat, cval, fhist, fval, sim, xhist, evaluated, info)
+    & conhist, conmat, cval, fhist, fval, sim, simi, xhist, evaluated, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine does the initialization concerning X, function values, and constraints.
 !--------------------------------------------------------------------------------------------------!
@@ -30,10 +30,13 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate, moderatef, moderatec
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf, is_finite
-use, non_intrinsic :: info_mod, only : INFO_DFT
-use, non_intrinsic :: linalg_mod, only : eye
+use, non_intrinsic :: info_mod, only : INFO_DFT, DAMAGING_ROUNDING
+use, non_intrinsic :: linalg_mod, only : eye, inv
 use, non_intrinsic :: output_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJCON
+
+! Solver-specific modules
+use, non_intrinsic :: update_mod, only : updatepole
 
 implicit none
 
@@ -59,6 +62,7 @@ real(RP), intent(out) :: cval(:)
 real(RP), intent(out) :: fhist(:)
 real(RP), intent(out) :: fval(:)
 real(RP), intent(out) :: sim(:, :)
+real(RP), intent(out) :: simi(:, :)
 real(RP), intent(out) :: xhist(:, :)
 
 ! Local variables
@@ -96,6 +100,7 @@ if (DEBUGGING) then
     call assert(size(cval) == n + 1, 'SIZE(CVAL) == N+1', srname)
     call assert(size(fval) == n + 1, 'SIZE(FVAL) == N+1', srname)
     call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
+    call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(size(evaluated) == n + 1, 'SIZE(EVALUATED) == N + 1', srname)
     call assert(maxchist * (maxchist - maxhist) == 0, 'SIZE(CHIST) == 0 or MAXHIST', srname)
     call assert(size(conhist, 1) == m .and. maxconhist * (maxconhist - maxhist) == 0, &
@@ -111,8 +116,9 @@ end if
 ! Calculation starts !
 !====================!
 
-sim = rhobeg * eye(n, n + 1_IK)
+sim = eye(n, n + 1_IK) * rhobeg
 sim(:, n + 1) = x0
+simi = eye(n, n) / rhobeg
 
 ! EVALUATED(J) = TRUE iff the function/constraint of SIM(:, J) has been evaluated.
 evaluated = .false.
@@ -163,8 +169,15 @@ do k = 1, n + 1_IK
         sim(:, n + 1) = x
         sim(j, 1:j) = -rhobeg  ! SIM(:, 1:N) is lower triangular.
     end if
-
 end do
+
+if (all(evaluated)) then
+    ! Initialize SIMI to the inverse of SIM(:, 1:N).
+    simi = inv(sim)
+    ! Switch the optimal vertex (located by FINDPOLE) to SIM(:, N+1), which is the "pole position"
+    ! as per Powell. We call UPDATEPOLE with CPEN = ZERO, which is the initial value of CPEN.
+    call updatepole(ZERO, conmat, cval, fval, sim, simi, subinfo)
+end if
 
 nf = int(count(evaluated), kind(nf))
 
@@ -192,12 +205,9 @@ if (DEBUGGING) then
     call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
     call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
     call assert(all(is_finite(sim)), 'SIM is finite', srname)
+    call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
+    call assert(all(is_finite(simi)) .or. subinfo == DAMAGING_ROUNDING, 'SIMI is finite', srname)
 end if
-
-! It is unnecessary to call UPDATEPOLE in the end, as long as we ensure the following.
-! 1. UPDATEPOLE is called at the beginning of a trust-region iteration.
-! 2. SELECTX is called before the possible exit after initialization (due to errors like NAN_INF_X).
-!!if (all(evaluated)) updatepole
 
 end subroutine initxfc
 

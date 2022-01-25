@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, January 25, 2022 PM04:02:08
+! Last Modified: Tuesday, January 25, 2022 PM05:55:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,14 +22,14 @@ subroutine cobylb(calcfc, iprint, maxfilt, maxfun, ctol, ftarget, rhobeg, rhoend
 
 ! Generic modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, TENTH, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, HALF, QUART, TENTH, HUGENUM, DEBUGGING
 use, non_intrinsic :: consts_mod, only : MIN_MAXFILT
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
 use, non_intrinsic :: info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, NAN_MODEL, DAMAGING_ROUNDING
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, inv
+use, non_intrinsic :: linalg_mod, only : inprod, matprod
 use, non_intrinsic :: output_mod, only : retmsg, rhomsg, fmsg, cpenmsg
 use, non_intrinsic :: pintrf_mod, only : OBJCON
 use, non_intrinsic :: resolution_mod, only : resenhance
@@ -104,10 +104,6 @@ real(RP) :: conmat(size(constr), size(x) + 1)
 real(RP) :: cpen  ! Penalty parameter for constraint in merit function (PARMU in Powell's code)
 real(RP) :: cval(size(x) + 1)
 real(RP) :: d(size(x))
-real(RP) :: factor_alpha
-real(RP) :: factor_beta
-real(RP) :: factor_delta
-real(RP) :: factor_gamma
 real(RP) :: ffilt(size(cfilt))
 real(RP) :: fval(size(x) + 1)
 real(RP) :: prerec  ! Predicted reduction in Constraint violation
@@ -117,6 +113,10 @@ real(RP) :: rho
 real(RP) :: sim(size(x), size(x) + 1)  ! (n, )
 real(RP) :: simi(size(x), size(x))  ! (n, )
 real(RP) :: xfilt(size(x), size(cfilt))
+real(RP), parameter :: factor_alpha = QUART
+real(RP), parameter :: factor_beta = 2.1_RP
+real(RP), parameter :: factor_delta = 1.1_RP
+real(RP), parameter :: factor_gamma = HALF
 
 ! Sizes
 m = int(size(constr), kind(m))
@@ -150,21 +150,18 @@ end if
 ! Calculation starts !
 !====================!
 
-! Set the initial values of some parameters. The last column of SIM holds the optimal vertex of the
-! current simplex, and the preceding N columns hold the displacements from the optimal vertex to the
-! other vertices.  Further, SIMI holds the inverse of the matrix that is contained in the first N
-! columns of SIM.
-factor_alpha = QUART
-factor_beta = 2.1E0_RP
-factor_delta = 1.1E0_RP
-factor_gamma = HALF
-rho = rhobeg
-cpen = ZERO
-
+! Initialize SIM, FVAL, CONMAT, and CVAL, together with the history.
+! After the initialization, SIM(:, N+1) holds the vertex of the initial simplex with the smallest
+! function value (regardless of the constraint violation), and SIM(:, 1:N) holds the displacements
+! from the other vertices to SIM(:, N+1). FVAL, CONMAT, and CVAL hold the function values,
+! constraint values, and constraint violations on the vertices in the order corresponding to SIM.
 call initxfc(calcfc, iprint, maxfun, constr, ctol, f, ftarget, rhobeg, x, nf, chist, conhist, &
-   & conmat, cval, fhist, fval, sim, xhist, evaluated, subinfo)
+   & conmat, cval, fhist, fval, sim, simi, xhist, evaluated, subinfo)
+
+! Initialize the filter, including XFILT, FFILT, CONFILT, CFILT, and NFILT.
 call initfilt(conmat, ctol, cval, fval, sim, evaluated, nfilt, cfilt, confilt, ffilt, xfilt)
 
+! Check exit due to abnormal cases that may occur during the initialization.
 if (subinfo /= INFO_DFT) then
     info = subinfo
     ! Return the best calculated values of the variables.
@@ -202,14 +199,16 @@ if (subinfo /= INFO_DFT) then
     return
 end if
 
-! SIMI is the inverse of SIM(:, 1:N), which is lower triangular by Powell's initialization.
-simi = inv(sim(:, 1:n))
+! Initialize RHO and CPEN.
+rho = rhobeg
+cpen = ZERO
 
-! Initialize PREREM, ACTREM, JDROP_TR, and JDROP_GEO, or some compilers will complain that they are
-! uninitialized when setting BAD_TRSTEP. Indeed, these values will not be used, because they will be
-! overwritten when SHORTD = FALSE.
-prerem = ONE
-actrem = -ONE
+! We must initialize ACTREM and PREREM. Otherwise, when SHORTD = TRUE, compilers may raise a
+! run-time error that they are undefined. The values will not be used: when SHORTD = FALSE, they
+! will be overwritten; when SHORTD = TRUE, the values are used only in BAD_TRSTEP, which is TRUE
+! regardless of ACTREM or PREREM. Similar for JDROP_TR.
+actrem = -HUGENUM
+prerem = HUGENUM
 jdrop_tr = 0_IK
 jdrop_geo = 0_IK
 
@@ -220,14 +219,6 @@ maxtr = max(maxfun, 4_IK * maxfun)
 ! MAXTR is unlikely to be reached, but we define the following default value for INFO for safety.
 info = MAXTR_REACHED
 
-! We must initialize ACTREM and PREREM. Otherwise, when SHORTD = TRUE, compilers may raise a
-! run-time error that they are undefined. The values will not be used: when SHORTD = FALSE, they
-! will be overwritten; when SHORTD = TRUE, the values are used only in BAD_TRSTEP, which is TRUE
-! regardless of ACTREM or PREREM. Similar for JDROP_TR.
-actrem = -HUGENUM
-prerem = HUGENUM
-jdrop_tr = 0_IK
-
 ! Begin the iterative procedure.
 ! After solving a trust-region subproblem, COBYLA uses 3 boolean variables to control the work flow.
 ! SHORTD - Is the trust-region trial step too short to invoke a function evaluation?
@@ -236,16 +227,16 @@ jdrop_tr = 0_IK
 ! REDUCE_RHO - Will we reduce rho after the trust-region iteration?
 ! COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
-    ! Before the trust-region step, call UPDATEPOLE so that SIM(:, N + 1) is the optimal vertex.
-    !-----------------------------------------------------------------------!
-    call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
-    if (subinfo == DAMAGING_ROUNDING) then
-        info = subinfo
-        exit
-        ! Instead of exiting, what about setting GOOD_GEO to FALSE in order to activate a
-        ! geometry step of enhance_resolut?
-    end if
-    !-----------------------------------------------------------------------!
+    !! Before the trust-region step, call UPDATEPOLE so that SIM(:, N + 1) is the optimal vertex.
+    !!-----------------------------------------------------------------------!
+    !call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
+    !if (subinfo == DAMAGING_ROUNDING) then
+    !    info = subinfo
+    !    exit
+    !    ! Instead of exiting, what about setting GOOD_GEO to FALSE in order to activate a
+    !    ! geometry step of enhance_resolut?
+    !end if
+    !!-----------------------------------------------------------------------!
 
     ! Does the current interpolation set has good geometry? It affects IMPROVE_GEO and REDUCE_RHO.
     good_geo = goodgeo(factor_alpha, factor_beta, rho, sim, simi)
@@ -288,18 +279,18 @@ do tr = 1, maxtr
         ! See the discussions around equation (9) of the COBYLA paper.
         if (prerec > ZERO) then  ! When and why will we have PREREC <= 0?
             barmu = -preref / prerec   ! PREREF + BARMU * PREREC = 0
-            if (cpen < 1.5E0_RP * barmu) then
+            if (cpen < 1.5_RP * barmu) then
                 cpen = min(TWO * barmu, HUGENUM)
                 call cpenmsg(solver, iprint, cpen)
                 if (findpole(cpen, cval, fval) <= n) then
                     ! Zaikun 20211111: Can this lead to infinite cycling?
-                    !!-----------------------------------------------------------------------!
-                    !call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
-                    !if (subinfo == DAMAGING_ROUNDING) then
-                    !    info = subinfo
-                    !    exit
-                    !end if
-                    !!-----------------------------------------------------------------------!
+                    !-----------------------------------------------------------------------!
+                    call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
+                    if (subinfo == DAMAGING_ROUNDING) then
+                        info = subinfo
+                        exit
+                    end if
+                    !-----------------------------------------------------------------------!
                     cycle
                 end if
             end if
@@ -340,13 +331,13 @@ do tr = 1, maxtr
         ! that is the job of UPDATEPOLE, which is called before each trust-region/geometry step.
         ! 2. UPDATEXFC does nothing when JDROP_TR == 0.
         call updatexfc(jdrop_tr, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
-        !!-----------------------------------------------------------------------!
-        !call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
-        !if (subinfo == DAMAGING_ROUNDING) then
-        !    info = subinfo
-        !    exit
-        !end if
-        !!-----------------------------------------------------------------------!
+        !-----------------------------------------------------------------------!
+        call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
+        if (subinfo == DAMAGING_ROUNDING) then
+            info = subinfo
+            exit
+        end if
+        !-----------------------------------------------------------------------!
 
         ! Check whether to exit.
         subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
@@ -368,14 +359,14 @@ do tr = 1, maxtr
     enhance_resolut = bad_trstep .and. good_geo
 
     if (improve_geo) then
-        ! Before the geometry step, call UPDATEPOLE so that SIM(:, N + 1) is the optimal vertex.
-        !-----------------------------------------------------------------------!
-        call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
-        if (subinfo == DAMAGING_ROUNDING) then
-            info = subinfo
-            exit
-        end if
-        !-----------------------------------------------------------------------!
+        !! Before the geometry step, call UPDATEPOLE so that SIM(:, N + 1) is the optimal vertex.
+        !!-----------------------------------------------------------------------!
+        !call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
+        !if (subinfo == DAMAGING_ROUNDING) then
+        !    info = subinfo
+        !    exit
+        !end if
+        !!-----------------------------------------------------------------------!
 
         ! If the current interpolation set has good geometry, then we skip the geometry step.
         ! The code has a small difference from Powell's original code here: If the current geometry
@@ -422,13 +413,13 @@ do tr = 1, maxtr
             ! that is the job of UPDATEPOLE, which is called before each trust-region/geometry step.
             !--------------------------------------------------------------------------------------!
             call updatexfc(jdrop_geo, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
-            !!-----------------------------------------------------------------------!
-            !call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
-            !if (subinfo == DAMAGING_ROUNDING) then
-            !    info = subinfo
-            !    exit
-            !end if
-            !!-----------------------------------------------------------------------!
+            !-----------------------------------------------------------------------!
+            call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
+            if (subinfo == DAMAGING_ROUNDING) then
+                info = subinfo
+                exit
+            end if
+            !-----------------------------------------------------------------------!
             ! Check whether to exit.
             subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
             if (subinfo /= INFO_DFT) then
@@ -445,13 +436,13 @@ do tr = 1, maxtr
         end if
         call resenhance(conmat, fval, rhoend, cpen, rho)
         call rhomsg(solver, iprint, nf, fval(n + 1), rho, sim(:, n + 1), cval(n + 1), conmat(:, n + 1), cpen)
-        !!-----------------------------------------------------------------------!
-        !call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
-        !if (subinfo == DAMAGING_ROUNDING) then
-        !    info = subinfo
-        !    exit
-        !end if
-        !!-----------------------------------------------------------------------!
+        !-----------------------------------------------------------------------!
+        call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
+        if (subinfo == DAMAGING_ROUNDING) then
+            info = subinfo
+            exit
+        end if
+        !-----------------------------------------------------------------------!
     end if
 end do
 
