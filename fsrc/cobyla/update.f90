@@ -6,7 +6,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, January 25, 2022 PM05:15:29
+! Last Modified: Tuesday, January 25, 2022 PM06:40:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -127,7 +127,7 @@ subroutine updatepole(cpen, conmat, cval, fval, sim, simi, info)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, TENTH, DEBUGGING
-use, non_intrinsic :: info_mod, only : DAMAGING_ROUNDING
+use, non_intrinsic :: info_mod, only : DAMAGING_ROUNDING, INFO_DFT
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_neginf, is_posinf, is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, eye, inv
@@ -138,12 +138,14 @@ implicit none
 real(RP), intent(in) :: cpen
 
 ! In-outputs
-integer(IK), intent(inout) :: info
 real(RP), intent(inout) :: conmat(:, :)
 real(RP), intent(inout) :: cval(:)
 real(RP), intent(inout) :: fval(:)
 real(RP), intent(inout) :: sim(:, :)
 real(RP), intent(inout) :: simi(:, :)
+
+! Outputs
+integer(IK), intent(out) :: info
 
 ! Local variables
 character(len=*), parameter :: srname = 'UPDATEPOLE'
@@ -184,10 +186,15 @@ end if
 ! Calculation starts !
 !====================!
 
-info = 0_IK
+info = INFO_DFT
 
 ! Identify the optimal vertex of the current simplex.
 jopt = findpole(cpen, cval, fval)
+
+! Return if JOPT > N (indeed, JOPT == N+1). INFO has to be set beforehand, as it is an output.
+if (jopt > n) then
+    return
+end if
 
 ! Switch the best vertex to the pole position SIM(:, N+1) if it is not there already. Then update
 ! CONMAT etc. Before the update, save a copy of CONMAT etc. If the update is unsuccessful due to
@@ -197,22 +204,20 @@ conmat_old = conmat
 cval_old = cval
 sim_old = sim
 simi_old = simi
-if (jopt <= n) then
-    fval([jopt, n + 1_IK]) = fval([n + 1_IK, jopt])
-    conmat(:, [jopt, n + 1_IK]) = conmat(:, [n + 1_IK, jopt]) ! Exchange CONMAT(:, JOPT) AND CONMAT(:, N+1)
-    cval([jopt, n + 1_IK]) = cval([n + 1_IK, jopt])
-    sim(:, n + 1) = sim(:, n + 1) + sim(:, jopt)
-    sim_jopt = sim(:, jopt)
-    sim(:, jopt) = ZERO
-    sim(:, 1:n) = sim(:, 1:n) - spread(sim_jopt, dim=2, ncopies=n)
-    ! The above update is equivalent to multiply SIM(:, 1:N) from the right side by a matrix whose
-    ! JOPT-th row is [-1, -1, ..., -1], while all the other rows are the same as those of the
-    ! identity matrix. It is easy to check that the inverse of this matrix is itself. Therefore,
-    ! SIMI should be updated by a multiplication with this matrix (i.e., its inverse) from the left
-    ! side, as is done in the following line. The JOPT-th row of the updated SIMI is minus the sum
-    ! of all rows of the original SIMI, whereas all the other rows remain unchanged.
-    simi(jopt, :) = -sum(simi, dim=1)
-end if
+fval([jopt, n + 1_IK]) = fval([n + 1_IK, jopt])
+conmat(:, [jopt, n + 1_IK]) = conmat(:, [n + 1_IK, jopt]) ! Exchange CONMAT(:, JOPT) AND CONMAT(:, N+1)
+cval([jopt, n + 1_IK]) = cval([n + 1_IK, jopt])
+sim(:, n + 1) = sim(:, n + 1) + sim(:, jopt)
+sim_jopt = sim(:, jopt)
+sim(:, jopt) = ZERO
+sim(:, 1:n) = sim(:, 1:n) - spread(sim_jopt, dim=2, ncopies=n)
+! The above update is equivalent to multiply SIM(:, 1:N) from the right side by a matrix whose
+! JOPT-th row is [-1, -1, ..., -1], while all the other rows are the same as those of the
+! identity matrix. It is easy to check that the inverse of this matrix is itself. Therefore,
+! SIMI should be updated by a multiplication with this matrix (i.e., its inverse) from the left
+! side, as is done in the following line. The JOPT-th row of the updated SIMI is minus the sum
+! of all rows of the original SIMI, whereas all the other rows remain unchanged.
+simi(jopt, :) = -sum(simi, dim=1)
 
 ! Check whether SIMI is a poor approximation to the inverse of SIM(:, 1:N).
 erri = matprod(simi, sim(:, 1:n)) - eye(n)
