@@ -7,7 +7,7 @@ module resolution_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, October 10, 2021 AM03:18:58
+! Last Modified: Tuesday, January 25, 2022 PM04:26:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -124,7 +124,7 @@ cpen_old = cpen
 
 ! See equation (11) in Section 3 of the COBYLA paper for the update of RHO.
 rho = HALF * rho
-if (rho <= 1.5E0_RP * rhoend) then
+if (rho <= 1.5_RP * rhoend) then
     rho = rhoend
 end if
 

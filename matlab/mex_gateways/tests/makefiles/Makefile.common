@@ -528,6 +528,7 @@ $(TESTS) $(TESTS_INT):
 	| grep -v "warning #7346: The CHARACTER\* form of a CHARACTER declaration is an obsolescent feature in Fortran [0-9]*" \
 	| grep -v "warning #6009: Fortran [0-9]* specifies that an elemental intrinsic function here be of type integer or character" \
 	| grep -v "warning #5268: Extension to standard: The text exceeds right hand column allowed on the line" \
+	| grep -v "all warnings being treated as errors" \
 	| tee -a "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$@.log"
