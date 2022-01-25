@@ -6,7 +6,7 @@ module initialize_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, January 25, 2022 PM05:52:21
+! Last Modified: Tuesday, January 25, 2022 PM07:37:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -173,7 +173,7 @@ end do
 
 if (all(evaluated)) then
     ! Initialize SIMI to the inverse of SIM(:, 1:N).
-    simi = inv(sim)
+    simi = inv(sim(:, 1:n))
     ! Switch the optimal vertex (located by FINDPOLE) to SIM(:, N+1), which is the "pole position"
     ! as per Powell. We call UPDATEPOLE with CPEN = ZERO, which is the initial value of CPEN.
     call updatepole(ZERO, conmat, cval, fval, sim, simi, subinfo)
