@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, December 18, 2021 PM10:01:27
+! Last Modified: Wednesday, January 26, 2022 PM08:16:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -344,6 +344,7 @@ A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, n
 A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
 cvmaxp = maxval([ZERO, -matprod(d, A(:, 1:m)) - conmat(:, n + 1)])
 cvmaxn = maxval([ZERO, matprod(d, A(:, 1:m)) - conmat(:, n + 1)])
+!write (16, *) 'ic', inprod(d, A(:, m + 1)), cpen * (cvmaxp - cvmaxn)
 if (TWO * inprod(d, A(:, m + 1)) < cpen * (cvmaxp - cvmaxn)) then
     d = -d
 end if

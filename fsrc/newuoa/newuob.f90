@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, January 23, 2022 PM06:22:00
+! Last Modified: Wednesday, January 26, 2022 AM10:27:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -132,12 +132,12 @@ real(RP) :: pq(npt)
 real(RP) :: qred
 real(RP) :: ratio
 real(RP) :: rho
-real(RP) :: tr_tol
 real(RP) :: xbase(size(x))
 real(RP) :: xdist(npt)
 real(RP) :: xopt(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
+real(RP), parameter :: tr_tol = 1.0E-2_RP  ! Tolerance used in TRSAPP.
 
 ! Sizes
 n = int(size(x), kind(n))
@@ -208,7 +208,6 @@ delta = rho
 moderrsav = HUGENUM
 dnormsav = HUGENUM
 itest = 0_IK
-tr_tol = 1.0E-2_RP  ! Tolerance used in trsapp.
 ! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers may raise a run-time error that
 ! RATIO is undefined. The value will not be used: when SHORTD = FALSE, its value will be overwritten;
 ! when SHORTD = TRUE, its value is used only in BAD_TRSTEP, which is TRUE regardless of RATIO.
@@ -218,11 +217,10 @@ knew_tr = 0_IK
 ! No need to initialize SHORTD unless MAXTR < 1, but some compilers may complain if we do not do it.
 shortd = .false.
 
-! Each trust-region iteration takes at most two function evaluation. The following setting imposes
-! no constraint on the maximal number of trust-region iterations.
-! The MAX is a precaution against overflow, where 4*maxfun will be negative.
-maxtr = max(maxfun, 4_IK * maxfun)
-! MAXTR is unlikely to be reached, but we define the following default value for INFO for safety.
+! MAXTR is the maximal number of trust-region iterations. In most cases, each trust-region iteration
+! takes at most two function evaluations. Thus the following MAXTR essentially imposes no constraint
+! and is unlikely to reach. Nevertheless, we set INFO to MAXTR_REACHED before starting for safety.
+maxtr = max(maxfun, 4_IK * maxfun)  ! MAX: precaution against overflow, which will make 4*MAXFUN < 0.
 info = MAXTR_REACHED
 
 ! Begin the iterative procedure.
