@@ -6,7 +6,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, January 26, 2022 PM08:28:46
+! Last Modified: Thursday, January 27, 2022 AM06:33:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -17,7 +17,7 @@ public :: updatexfc, updatepole, findpole
 contains
 
 
-subroutine updatexfc(jdrop, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
+subroutine updatexfc(jdrop, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine revises the simplex by updating the elements of SIM, SIMI, FVAL, CONMAT, and CVAL.
 ! N.B.: UPDATEXFC does NOT manipulate the simplex so that SIM(:, N+1) is the best vertex;
@@ -35,6 +35,7 @@ implicit none
 ! Inputs
 integer(IK), intent(in) :: jdrop
 real(RP), intent(in) :: constr(:)
+real(RP), intent(in) :: cpen
 real(RP), intent(in) :: cstrv
 real(RP), intent(in) :: d(:)
 real(RP), intent(in) :: f
@@ -45,6 +46,9 @@ real(RP), intent(inout) :: cval(:)
 real(RP), intent(inout) :: fval(:)
 real(RP), intent(inout) :: sim(:, :)
 real(RP), intent(inout) :: simi(:, :)
+
+! Outputs
+integer(IK), intent(out) :: info
 
 ! Local variables
 character(len=*), parameter :: srname = 'UPDATEXFC'
@@ -81,9 +85,6 @@ end if
 ! Calculation starts !
 !====================!
 
-!write (16, *) 'simiin', simi
-!write (16, *) 'jdrop, d', jdrop, d
-
 ! Do nothing when JDROP is 0. This can only happen after a trust-region step.
 if (jdrop <= 0) then  ! JDROP < 0 is impossible if the input is correct.
     return
@@ -97,7 +98,8 @@ fval(jdrop) = f
 conmat(:, jdrop) = constr
 cval(jdrop) = cstrv
 
-!write (16, *) 'simiout', simi
+! Switch the best vertex to the pole position SIM(:, N+1) if it is not there already.
+call updatepole(cpen, conmat, cval, fval, sim, simi, info)
 
 !====================!
 !  Calculation ends  !
@@ -114,7 +116,8 @@ if (DEBUGGING) then
     call assert(all(is_finite(sim)), 'SIM is finite', srname)
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)), 'SIMI is finite', srname)
-    !!!call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
+    !call assert(isinv(sim(:, 1:n), simi, itol) .or. .or. info == DAMAGING_ROUNDING, &
+    !   & 'SIMI = SIM(:, 1:N)^{-1} unless the rounding is damaging', srname)
 end if
 end subroutine updatexfc
 
@@ -268,7 +271,8 @@ if (DEBUGGING) then
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)), 'SIMI is finite', srname)
     ! Do not check SIMI = SIM(:, 1:N)^{-1}, as it may not be true due to damaging rounding.
-    !call assert(isinv(sim(:, 1:n), simi, itol) .or. , 'SIMI = SIM(:, 1:N)^{-1}', srname)
+    !call assert(isinv(sim(:, 1:n), simi, itol) .or. .or. info == DAMAGING_ROUNDING, &
+    !   & 'SIMI = SIM(:, 1:N)^{-1} unless the rounding is damaging', srname)
 end if
 
 end subroutine updatepole

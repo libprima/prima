@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, January 26, 2022 PM11:35:34
+! Last Modified: Thursday, January 27, 2022 AM06:29:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -335,13 +335,13 @@ do tr = 1, maxtr
         ! 1. UPDATEXFC does NOT manipulate the simplex so that SIM(:, N+1) is the best vertex;
         ! that is the job of UPDATEPOLE, which is called before each trust-region/geometry step.
         ! 2. UPDATEXFC does nothing when JDROP_TR == 0.
-        call updatexfc(jdrop_tr, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
+        call updatexfc(jdrop_tr, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
         !-----------------------------------------------------------------------!
 !write (16, *) 'jdrop_tr', jdrop_tr
 !write (16, *) 'in findpole, 340'
 !write (16, *) 'in updatepole, 339'
 !        write (16, *) 'geoupdate'
-        call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
+        !call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
         if (subinfo == DAMAGING_ROUNDING) then
             info = subinfo
             exit
@@ -425,12 +425,12 @@ do tr = 1, maxtr
             ! N.B.: UPDATEXFC does NOT manipulate the simplex so that SIM(:, N+1) is the best vertex;
             ! that is the job of UPDATEPOLE, which is called before each trust-region/geometry step.
             !--------------------------------------------------------------------------------------!
-            call updatexfc(jdrop_geo, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
+            call updatexfc(jdrop_geo, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
             !-----------------------------------------------------------------------!
 !write (16, *) 'jdrop_geo', jdrop_geo
 !write (16, *) 'in findpole, 425'
 !write (16, *) 'in updatepole, 424'
-            call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
+            !call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
             if (subinfo == DAMAGING_ROUNDING) then
                 info = subinfo
                 exit
