@@ -6,7 +6,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, January 25, 2022 PM06:40:58
+! Last Modified: Wednesday, January 26, 2022 PM08:28:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -81,6 +81,9 @@ end if
 ! Calculation starts !
 !====================!
 
+!write (16, *) 'simiin', simi
+!write (16, *) 'jdrop, d', jdrop, d
+
 ! Do nothing when JDROP is 0. This can only happen after a trust-region step.
 if (jdrop <= 0) then  ! JDROP < 0 is impossible if the input is correct.
     return
@@ -93,6 +96,8 @@ simi(jdrop, :) = simi_jdrop
 fval(jdrop) = f
 conmat(:, jdrop) = constr
 cval(jdrop) = cstrv
+
+!write (16, *) 'simiout', simi
 
 !====================!
 !  Calculation ends  !
@@ -188,13 +193,15 @@ end if
 
 info = INFO_DFT
 
+!write (16, *) 'simi1', simi(:, :)
 ! Identify the optimal vertex of the current simplex.
 jopt = findpole(cpen, cval, fval)
-
+!write (16, *) 'jopt', jopt
 ! Return if JOPT > N (indeed, JOPT == N+1). INFO has to be set beforehand, as it is an output.
-if (jopt > n) then
-    return
-end if
+!if (jopt > n) then
+!    return  ! Should we return immediately or return after checking/updating SIMI even though SIM
+!    will not be changed?
+!end if
 
 ! Switch the best vertex to the pole position SIM(:, N+1) if it is not there already. Then update
 ! CONMAT etc. Before the update, save a copy of CONMAT etc. If the update is unsuccessful due to
@@ -204,20 +211,22 @@ conmat_old = conmat
 cval_old = cval
 sim_old = sim
 simi_old = simi
-fval([jopt, n + 1_IK]) = fval([n + 1_IK, jopt])
-conmat(:, [jopt, n + 1_IK]) = conmat(:, [n + 1_IK, jopt]) ! Exchange CONMAT(:, JOPT) AND CONMAT(:, N+1)
-cval([jopt, n + 1_IK]) = cval([n + 1_IK, jopt])
-sim(:, n + 1) = sim(:, n + 1) + sim(:, jopt)
-sim_jopt = sim(:, jopt)
-sim(:, jopt) = ZERO
-sim(:, 1:n) = sim(:, 1:n) - spread(sim_jopt, dim=2, ncopies=n)
+if (jopt <= n) then
+    fval([jopt, n + 1_IK]) = fval([n + 1_IK, jopt])
+    conmat(:, [jopt, n + 1_IK]) = conmat(:, [n + 1_IK, jopt]) ! Exchange CONMAT(:, JOPT) AND CONMAT(:, N+1)
+    cval([jopt, n + 1_IK]) = cval([n + 1_IK, jopt])
+    sim(:, n + 1) = sim(:, n + 1) + sim(:, jopt)
+    sim_jopt = sim(:, jopt)
+    sim(:, jopt) = ZERO
+    sim(:, 1:n) = sim(:, 1:n) - spread(sim_jopt, dim=2, ncopies=n)
 ! The above update is equivalent to multiply SIM(:, 1:N) from the right side by a matrix whose
 ! JOPT-th row is [-1, -1, ..., -1], while all the other rows are the same as those of the
 ! identity matrix. It is easy to check that the inverse of this matrix is itself. Therefore,
 ! SIMI should be updated by a multiplication with this matrix (i.e., its inverse) from the left
 ! side, as is done in the following line. The JOPT-th row of the updated SIMI is minus the sum
 ! of all rows of the original SIMI, whereas all the other rows remain unchanged.
-simi(jopt, :) = -sum(simi, dim=1)
+    simi(jopt, :) = -sum(simi, dim=1)
+end if
 
 ! Check whether SIMI is a poor approximation to the inverse of SIM(:, 1:N).
 erri = matprod(simi, sim(:, 1:n)) - eye(n)
@@ -237,6 +246,8 @@ if (any(is_nan(erri)) .or. any(abs(erri) > itol)) then
     sim = sim_old
     simi = simi_old
 end if
+
+!write (16, *) 'simi2', simi(:, :)
 
 !====================!
 !  Calculation ends  !

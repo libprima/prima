@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, January 25, 2022 PM05:55:28
+! Last Modified: Wednesday, January 26, 2022 PM08:28:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -212,11 +212,10 @@ prerem = HUGENUM
 jdrop_tr = 0_IK
 jdrop_geo = 0_IK
 
-! In most cases, each trust-region iteration takes at most two function evaluation. The following
-! setting essentially imposes no constraint on the maximal number of trust-region iterations.
-! The MAX is a precaution against overflow, where 4*maxfun will be negative.
-maxtr = max(maxfun, 4_IK * maxfun)
-! MAXTR is unlikely to be reached, but we define the following default value for INFO for safety.
+! MAXTR is the maximal number of trust-region iterations. In most cases, each trust-region iteration
+! takes at most two function evaluations. Thus the following MAXTR essentially imposes no constraint
+! and is unlikely to reach. Nevertheless, we set INFO to MAXTR_REACHED before starting for safety.
+maxtr = max(maxfun, 4_IK * maxfun)  ! MAX: precaution against overflow, which will make 4*MAXFUN < 0.
 info = MAXTR_REACHED
 
 ! Begin the iterative procedure.
@@ -248,6 +247,7 @@ do tr = 1, maxtr
     ! as Powell's, because the intrinsic MATMUL behaves differently from a naive triple loop in
     ! finite-precision arithmetic.
     ! 2. TRSTLP accesses A mostly by columns, so it is not more reasonable to save A^T instead of A.
+!write (16, *) 'update model'
     A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
     A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
 
@@ -266,6 +266,7 @@ do tr = 1, maxtr
     b = [-conmat(:, n + 1), -fval(n + 1)]
     ! Calculate the trust-region trial step D.
     d = trstlp(A, b, rho)
+    !write (16, *) 'tr', nf + 1, A, d
 
     ! Is the trust-region trial step short?
     shortd = (inprod(d, d) < QUART * rho**2)
@@ -280,11 +281,14 @@ do tr = 1, maxtr
         if (prerec > ZERO) then  ! When and why will we have PREREC <= 0?
             barmu = -preref / prerec   ! PREREF + BARMU * PREREC = 0
             if (cpen < 1.5_RP * barmu) then
+!write (16, *) 'update cpen'
                 cpen = min(TWO * barmu, HUGENUM)
                 call cpenmsg(solver, iprint, cpen)
                 if (findpole(cpen, cval, fval) <= n) then
                     ! Zaikun 20211111: Can this lead to infinite cycling?
                     !-----------------------------------------------------------------------!
+!write (16, *) 'in findpole, 290'
+!write (16, *) 'in pdatepole, 289'
                     call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
                     if (subinfo == DAMAGING_ROUNDING) then
                         info = subinfo
@@ -300,6 +304,7 @@ do tr = 1, maxtr
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
         call evaluate(calcfc, x, f, constr, cstrv)
         nf = nf + 1_IK
+!        write (16, *) nf, 'tr'
         call fmsg(solver, iprint, nf, f, x, cstrv, constr)
         ! Save X, F, CONSTR, CSTRV into the history.
         call savehist(nf, constr, cstrv, f, x, chist, conhist, fhist, xhist)
@@ -332,6 +337,10 @@ do tr = 1, maxtr
         ! 2. UPDATEXFC does nothing when JDROP_TR == 0.
         call updatexfc(jdrop_tr, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
         !-----------------------------------------------------------------------!
+!write (16, *) 'jdrop_tr', jdrop_tr
+!write (16, *) 'in findpole, 340'
+!write (16, *) 'in updatepole, 339'
+!        write (16, *) 'geoupdate'
         call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
         if (subinfo == DAMAGING_ROUNDING) then
             info = subinfo
@@ -347,6 +356,7 @@ do tr = 1, maxtr
         end if
     end if
 
+!write (16, *) actrem, prerem
     ! Should we take a geometry step to improve the geometry of the interpolation set?
     ! N.B.: THEORETICALLY, JDROP_TR > 0 when ACTREM > 0, and hence the definition of BAD_TRSTEP is
     ! mathematically equivalent to (SHORTD .OR. ACTREM <= ZERO .OR. ACTREM < TENTH * PREREM).
@@ -357,6 +367,8 @@ do tr = 1, maxtr
 
     ! Should we enhance the resolution by reducing RHO?
     enhance_resolut = bad_trstep .and. good_geo
+
+!write (16, *) shortd, bad_trstep, good_geo, improve_geo, enhance_resolut
 
     if (improve_geo) then
         !! Before the geometry step, call UPDATEPOLE so that SIM(:, N + 1) is the optimal vertex.
@@ -402,6 +414,7 @@ do tr = 1, maxtr
             ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
             call evaluate(calcfc, x, f, constr, cstrv)
             nf = nf + 1_IK
+!            write (16, *) nf, 'geo'
             call fmsg(solver, iprint, nf, f, x, cstrv, constr)
             ! Save X, F, CONSTR, CSTRV into the history.
             call savehist(nf, constr, cstrv, f, x, chist, conhist, fhist, xhist)
@@ -414,6 +427,9 @@ do tr = 1, maxtr
             !--------------------------------------------------------------------------------------!
             call updatexfc(jdrop_geo, constr, cstrv, d, f, conmat, cval, fval, sim, simi)
             !-----------------------------------------------------------------------!
+!write (16, *) 'jdrop_geo', jdrop_geo
+!write (16, *) 'in findpole, 425'
+!write (16, *) 'in updatepole, 424'
             call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
             if (subinfo == DAMAGING_ROUNDING) then
                 info = subinfo
@@ -437,6 +453,8 @@ do tr = 1, maxtr
         call resenhance(conmat, fval, rhoend, cpen, rho)
         call rhomsg(solver, iprint, nf, fval(n + 1), rho, sim(:, n + 1), cval(n + 1), conmat(:, n + 1), cpen)
         !-----------------------------------------------------------------------!
+!write (16, *) 'in findpole, 450'
+!write (16, *) 'in updatepole, 449'
         call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
         if (subinfo == DAMAGING_ROUNDING) then
             info = subinfo
@@ -486,6 +504,7 @@ if (DEBUGGING) then
         & k=1, minval([nf, maxfhist, maxchist]))]), 'No point in the history is better than X', srname)
 end if
 
+close (16)
 end subroutine cobylb
 
 

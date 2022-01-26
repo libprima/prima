@@ -6,7 +6,7 @@ module initialize_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, January 25, 2022 PM09:55:39
+! Last Modified: Wednesday, January 26, 2022 AM11:17:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -173,6 +173,8 @@ do k = 1, n + 1_IK
     end if
 end do
 
+nf = int(count(evaluated), kind(nf))
+
 if (all(evaluated)) then
     ! Initialize SIMI to the inverse of SIM(:, 1:N).
     simi = inv(sim(:, 1:n))
@@ -180,8 +182,6 @@ if (all(evaluated)) then
     ! as per Powell. We call UPDATEPOLE with CPEN = ZERO, which is the initial value of CPEN.
     call updatepole(ZERO, conmat, cval, fval, sim, simi, subinfo)
 end if
-
-nf = int(count(evaluated), kind(nf))
 
 !====================!
 !  Calculation ends  !

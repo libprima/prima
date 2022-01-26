@@ -338,7 +338,7 @@ test_options.maxfilt = ceil(randn*500);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ready_solvers = {'newuoa', 'cobyla'};  % Solvers whose development is (almost) finished.
 test_ready_solvers = ~isempty(intersect(lower(solvers), ready_solvers));
-%test_ready_solvers = false;
+test_ready_solvers = false;
 test_options.classical = (rand < 0.2) && test_ready_solvers;
 test_options.iprint = floor(3*rand) * double(test_ready_solvers);
 test_options.quiet = (rand < 0.8) && test_ready_solvers;
@@ -475,21 +475,21 @@ if ~equiv
     fprintf('\nf: fx1 = %.16e, fx2 = %.16e', fx1, fx2)
     fprintf('\nexitflag: exitflag1 = %d, exitflag2 = %d', exitflag1, exitflag2)
     nhist = min(length(output1.fhist), length(output2.fhist));
-    fprintf('\nfhist (only the last %d evaluations):', nhist);
-    output1.fhist = output1.fhist(end-nhist+1: end);
-    output2.fhist = output2.fhist(end-nhist+1: end);
+    fprintf('\nfhist (compare only the last %d evaluations):', nhist);
     output1.fhist
     output2.fhist
-    output1.fhist == output2.fhist
+    fhist2 = output1.fhist(end-nhist+1: end);
+    fhist1 = output2.fhist(end-nhist+1: end);
+    fhist1 == fhist2
     if (isfield(output1, 'constrviolation'))
         fprintf('\nconstrviolation: constrviolation1 = %.16e, constrviolation2 = %.16e', ...
             output1.constrviolation, output2.constrviolation)
-        fprintf('\nchist (only the last %d evaluations):', nhist);
-        output1.chist = output1.chist(end-nhist+1:end);
-        output2.chist = output2.chist(end-nhist+1:end);
+        fprintf('\nchist (compare only the last %d evaluations):', nhist);
         output1.chist
         output2.chist
-        output1.chist == output2.chist
+        chist1 = output1.chist(end-nhist+1:end);
+        chist2 = output2.chist(end-nhist+1:end);
+        chist1 == chist2
     end
     if single_test
         keyboard

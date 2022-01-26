@@ -28,7 +28,6 @@ C CTOL is the tolerance for consraint violation. A point X is considered
 C to be feasible if its constraint violation (RESMAX) is less than CTOL.
 C EPSILON(1.0D0) returns the machine epsilon corresponding to 1.0D0,
 C which is expected to be about 2.0D-16.
-      integer :: from_tr
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !      DIMENSION X(*),CON(*),SIM(N,*),SIMI(N,*),DATMAT(MPP,*),
 !     1  A(N,*),VSIG(*),VETA(*),SIGBAR(*),DX(*),W(*),IACT(*)
@@ -51,7 +50,6 @@ C
       IPTEMP=IPTEM+1
       NP=N+1
       MP=M+1
-      from_tr = 0
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      ALPHA=0.25
 C      BETA=2.1
@@ -129,9 +127,6 @@ C     By Zaikun (02-06-2019):
       CON(1:M) = MAX(MIN(HUGECON, CON(1:M)), -HUGECON)
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       NFVALS=NFVALS+1
-!      if (nfvals > n+1) then
-!      write(17,*)  NFVALS , merge('geo', 'tr ', ibrnch == 0)
-!      end if
 
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -290,12 +285,10 @@ C              TEMP=0.0
           GOTO 40
       END IF
   130 IBRNCH=1
-
 C
 C     Identify the optimal vertex of the current simplex.
 C
   140 PHIMIN=DATMAT(MP,NP)+PARMU*DATMAT(MPP,NP)
-!write(17,*) 'in findpole'
       NBEST=NP
       DO J=1,N
           TEMP=DATMAT(MP,J)+PARMU*DATMAT(MPP,J)
@@ -314,12 +307,11 @@ C
 C     Switch the best vertex into pole position if it is not there already,
 C     and also update SIM, SIMI and DATMAT.
 C
-!        write(17,*) 'nfvals', nfvals
-!write(17,*) 'in updatepole'
-!write(17,*) 'jopt', nbest
-!        write(17,*) 'cf', parmu, datmat(m+2, 1:n+1), datmat(m+1, 1:n+1)
-!        write(17,*) 'sim', sim(1:n, 1:n+1)
-!write(17,*) 'simi1', simi(1:n, 1:n)
+!        write(16,*) 'nfvals', nfvals
+!        write(16,*) 'in updatepole'
+!        write(16,*) 'cf', parmu, datmat(m+2, 1:n+1), datmat(m+1, 1:n+1)
+!        write(16,*) 'sim', sim(1:n, 1:n+1)
+!        write(16,*) 'simi', simi(1:n, 1:n)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DATMAT_OLD = DATMAT(1:M+2,1:N+1)
@@ -351,10 +343,10 @@ C          TEMPA=0.0
           END DO
       END IF
 
-!        write(17,*) 'out updatepole'
-!        write(17,*) 'cf', parmu, datmat(m+2, 1:n+1), datmat(m+1, 1:n+1)
-!        write(17,*) 'sim', sim(1:n, 1:n+1)
-!write(17,*) 'simi2', simi(1:n, 1:n)
+!        write(16,*) 'out updatepole'
+!        write(16,*) 'cf', parmu, datmat(m+2, 1:n+1), datmat(m+1, 1:n+1)
+!        write(16,*) 'sim', sim(1:n, 1:n+1)
+!        write(16,*) 'simi', simi(1:n, 1:n)
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 2021-05-30
@@ -415,24 +407,14 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           GOTO 600
       END IF
-
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      if (from_tr == 1) then
-          from_tr = 0
-          goto 545
-      end if
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
-
 C
 C     Calculate the coefficients of the linear approximations to the objective
 C     and constraint functions, placing minus the objective function gradient
 C     after the constraint gradients in the array A. The vector W is used for
 C     working space.
 C
- 220  DO K=1,MP
+! 220
+      DO K=1,MP
           CON(K)=-DATMAT(K,NP)
           DO J=1,N
               W(J)=DATMAT(K,J)+CON(K)
@@ -453,7 +435,7 @@ C
 C     Calculate the values of sigma and eta, and set IFLAG=0 if the current
 C     simplex is not acceptable.
 C
-  285 IFLAG=1
+      IFLAG=1
       PARSIG=ALPHA*RHO
       PARETA=BETA*RHO
       DO J=1,N
@@ -504,7 +486,6 @@ C
               END IF
           END DO
       END IF
-!write(17,*) 'jdrop', jdrop
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 20190822: If VETA or VSIG become NaN due to rounding errors,
 C JDROP may end up being 0. If we continue, then a Segmentation Fault
@@ -566,14 +547,13 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      DXSIGN=1.0
 C      IF (PARMU*(CVMAXP-CVMAXM) .GT. SUMM+SUMM) DXSIGN=-1.0
       DXSIGN=1.0D0
-!      write(17,*) 'ic', SUMM, PARMU*(CVMAXP-CVMAXM)
       IF (PARMU*(CVMAXP-CVMAXM) > 2.0D0*SUMM) DXSIGN=-1.0D0
       !DXSIGN=SIGN(1.0D0, 2.0D0*SUMM-PARMU*(CVMAXP-CVMAXM))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-!        write(17,*) 'in updatexfc', jdrop
-!        write(17,*) 'sim', sim(1:n, 1:n+1)
-!        write(17,*) 'simi', simi(1:n, 1:n)
+!        write(16,*) 'in updatexfc', jdrop
+!        write(16,*) 'sim', sim(1:n, 1:n+1)
+!        write(16,*) 'simi', simi(1:n, 1:n)
 
 C
 C     Update the elements of SIM and SIMI, and set the next X.
@@ -581,9 +561,6 @@ C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      TEMP=0.0
       TEMP=0.0D0
-!      write(17,*) 'geoupdate'
-!      write(17,*) 'simiin', simi(1:n,1:n)
-!      write(17,*) 'jdrop, d', jdrop, DXSIGN*DX(1:N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DO I=1,N
           !DX(I)=SIGN(1.0D0, 2.0D0*SUMM-PARMU*(CVMAXP-CVMAXM))*DX(I)
@@ -609,11 +586,9 @@ C          TEMP=0.0
           END IF
           X(J)=SIM(J,NP)+DX(J)
       END DO
-!        write(17,*) 'out updatexfc'
-!        write(17,*) 'sim', sim(1:n, 1:n+1)
-!        write(17,*) 'simi', simi(1:n, 1:n)
-!      write(17,*) 'simiout', simi(1:n,1:n)
-!write(17,*) iflag, ibrnch
+!        write(16,*) 'out updatexfc'
+!        write(16,*) 'sim', sim(1:n, 1:n+1)
+!        write(16,*) 'simi', simi(1:n, 1:n)
       GOTO 40
 C
 C     Calculate DX=x(*)-x(0). Branch if the length of DX is less than 0.5*RHO.
@@ -651,7 +626,7 @@ C the code, including uninitialized indices.
           END DO
       END DO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!       write(17,*) NFVALS
+!       write(16,*) NFVALS
 !       write (16, *) 'simi', simi(1:n, 1:n)
 !       write (16, *) 'conmat', datmat(1:m, 1:n+1)
 !       write (16, *) 'fval', datmat(m+1, 1:n+1)
@@ -660,8 +635,7 @@ C the code, including uninitialized indices.
       CALL TRSTLP (N,M,A,CON,RHO,DX,IFULL,IACT,W(IZ),W(IZDOTA),
      1  W(IVMC),W(ISDIRN),W(IDXNEW),W(IVMD))
 
-       !write (17, *) RHO, A(1:n, 1:m + 1), w(1:m+1), dx(1:n)
-        !write (17, *) 'tr', nfvals+1, A(1:n, 1:m + 1),dx(1:n)
+!        write (16, *) 'tr', nfvals, dx(1:n)
 
       !IF (IFULL == 0) THEN
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -718,7 +692,6 @@ C      IF (PARMU .LT. 1.5*BARMU) THEN
 C          PARMU=2.0*BARMU
       IF (PREREC > 0.0D0) BARMU=SUMM/PREREC
       IF (PARMU < 1.5D0*BARMU) THEN
-!write(17,*) 'update cpen'
           !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           ! Zaikun 20211108
           !PARMU=2.0D0*BARMU
@@ -779,7 +752,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      RATIO=0.0
 C      IF (TRURED .LE. 0.0) RATIO=1.0
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      !Zaikun 20211108: The follow two versions differ when TRURED=NaN
+      !Zaikun 20211108: The follow two versions differ when TRUERED=NaN
       !RATIO=0.0D0
       !IF (TRURED <= 0.0D0) RATIO=1.0D0
       RATIO = 1.0D0
@@ -906,9 +879,9 @@ C
       end if
 C
 C     Revise the simplex by updating the elements of SIM, SIMI and DATMAT.
-!        write(17,*) 'in updatexfc', jdrop
-!        write(17,*) 'sim', sim(1:n, 1:n+1)
-!        write(17,*) 'simi', simi(1:n, 1:n)
+!        write(16,*) 'in updatexfc', jdrop
+!        write(16,*) 'sim', sim(1:n, 1:n+1)
+!        write(16,*) 'simi', simi(1:n, 1:n)
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      TEMP=0.0
@@ -938,34 +911,19 @@ C          TEMP=0.0
       DO K=1,MPP
           DATMAT(K,JDROP)=CON(K)
       END DO
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-      from_tr = 1
-      goto 140
-  545 continue
-
-!write(17,*) TRURED, PREREM
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-!        write(17,*) 'out updatexfc'
-!        write(17,*) 'sim', sim(1:n, 1:n+1)
-!        write(17,*) 'simi', simi(1:n, 1:n)
+!        write(16,*) 'out updatexfc'
+!        write(16,*) 'sim', sim(1:n, 1:n+1)
+!        write(16,*) 'simi', simi(1:n, 1:n)
 C
 C     Branch back for further iterations with the current RHO.
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IF (TRURED .GT. 0.0 .AND. TRURED .GE. 0.1*PREREM) GOTO 140
-!      IF (TRURED > 0.0D0 .AND. TRURED >= 0.1D0*PREREM) GOTO 140
-      IF (TRURED > 0.0D0 .AND. TRURED >= 0.1D0*PREREM) GOTO  220  !TR
+      IF (TRURED > 0.0D0 .AND. TRURED >= 0.1D0*PREREM) GOTO 140
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   550 IF (IFLAG == 0) THEN
           IBRNCH=0
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!
-          !GOTO 140
-          goto 220  ! GEO
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!
+          GOTO 140
       END IF
 C
 C     Otherwise reduce RHO if it is not at its least value and reset PARMU.
