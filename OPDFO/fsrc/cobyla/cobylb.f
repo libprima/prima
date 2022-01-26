@@ -129,9 +129,8 @@ C     By Zaikun (02-06-2019):
       CON(1:M) = MAX(MIN(HUGECON, CON(1:M)), -HUGECON)
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       NFVALS=NFVALS+1
-!      if (nfvals > n+1) then
-!      write(17,*)  NFVALS , merge('geo', 'tr ', ibrnch == 0)
-!      end if
+!      write(17,*) nfvals, merge('geo', 'tr ', ibrnch==0)
+
 
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -210,8 +209,10 @@ C     at X). Similar thing can be said about RESMAX.
    50     FORMAT (/3X,'Return from subroutine COBYLA because the ',
      1      'MAXFUN limit has been reached.')
           INFO = 3
+          GOTO 600
       END IF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
       IF (IBRNCH == 1) GOTO 440
 C
 C     Set the recently calculated function values in a column of DATMAT. This
@@ -295,7 +296,6 @@ C
 C     Identify the optimal vertex of the current simplex.
 C
   140 PHIMIN=DATMAT(MP,NP)+PARMU*DATMAT(MPP,NP)
-!write(17,*) 'in findpole'
       NBEST=NP
       DO J=1,N
           TEMP=DATMAT(MP,J)+PARMU*DATMAT(MPP,J)
@@ -315,11 +315,11 @@ C     Switch the best vertex into pole position if it is not there already,
 C     and also update SIM, SIMI and DATMAT.
 C
 !        write(17,*) 'nfvals', nfvals
-!write(17,*) 'in updatepole'
-!write(17,*) 'jopt', nbest
+!        write(17,*) 'in updatepole'
+!        write(17,*) 'jopt', nbest
 !        write(17,*) 'cf', parmu, datmat(m+2, 1:n+1), datmat(m+1, 1:n+1)
 !        write(17,*) 'sim', sim(1:n, 1:n+1)
-!write(17,*) 'simi1', simi(1:n, 1:n)
+!        write(17,*) 'simi1', simi(1:n, 1:n)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DATMAT_OLD = DATMAT(1:M+2,1:N+1)
@@ -354,7 +354,7 @@ C          TEMPA=0.0
 !        write(17,*) 'out updatepole'
 !        write(17,*) 'cf', parmu, datmat(m+2, 1:n+1), datmat(m+1, 1:n+1)
 !        write(17,*) 'sim', sim(1:n, 1:n+1)
-!write(17,*) 'simi2', simi(1:n, 1:n)
+!        write(17,*) 'simi2', simi(1:n, 1:n)
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 2021-05-30
@@ -453,7 +453,7 @@ C
 C     Calculate the values of sigma and eta, and set IFLAG=0 if the current
 C     simplex is not acceptable.
 C
-  285 IFLAG=1
+      IFLAG=1
       PARSIG=ALPHA*RHO
       PARETA=BETA*RHO
       DO J=1,N
@@ -504,7 +504,6 @@ C
               END IF
           END DO
       END IF
-!write(17,*) 'jdrop', jdrop
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C Zaikun 20190822: If VETA or VSIG become NaN due to rounding errors,
 C JDROP may end up being 0. If we continue, then a Segmentation Fault
@@ -566,7 +565,6 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      DXSIGN=1.0
 C      IF (PARMU*(CVMAXP-CVMAXM) .GT. SUMM+SUMM) DXSIGN=-1.0
       DXSIGN=1.0D0
-!      write(17,*) 'ic', SUMM, PARMU*(CVMAXP-CVMAXM)
       IF (PARMU*(CVMAXP-CVMAXM) > 2.0D0*SUMM) DXSIGN=-1.0D0
       !DXSIGN=SIGN(1.0D0, 2.0D0*SUMM-PARMU*(CVMAXP-CVMAXM))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -581,9 +579,6 @@ C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      TEMP=0.0
       TEMP=0.0D0
-!      write(17,*) 'geoupdate'
-!      write(17,*) 'simiin', simi(1:n,1:n)
-!      write(17,*) 'jdrop, d', jdrop, DXSIGN*DX(1:N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DO I=1,N
           !DX(I)=SIGN(1.0D0, 2.0D0*SUMM-PARMU*(CVMAXP-CVMAXM))*DX(I)
@@ -612,8 +607,6 @@ C          TEMP=0.0
 !        write(17,*) 'out updatexfc'
 !        write(17,*) 'sim', sim(1:n, 1:n+1)
 !        write(17,*) 'simi', simi(1:n, 1:n)
-!      write(17,*) 'simiout', simi(1:n,1:n)
-!write(17,*) iflag, ibrnch
       GOTO 40
 C
 C     Calculate DX=x(*)-x(0). Branch if the length of DX is less than 0.5*RHO.
@@ -660,7 +653,6 @@ C the code, including uninitialized indices.
       CALL TRSTLP (N,M,A,CON,RHO,DX,IFULL,IACT,W(IZ),W(IZDOTA),
      1  W(IVMC),W(ISDIRN),W(IDXNEW),W(IVMD))
 
-       !write (17, *) RHO, A(1:n, 1:m + 1), w(1:m+1), dx(1:n)
         !write (17, *) 'tr', nfvals+1, A(1:n, 1:m + 1),dx(1:n)
 
       !IF (IFULL == 0) THEN
@@ -718,7 +710,7 @@ C      IF (PARMU .LT. 1.5*BARMU) THEN
 C          PARMU=2.0*BARMU
       IF (PREREC > 0.0D0) BARMU=SUMM/PREREC
       IF (PARMU < 1.5D0*BARMU) THEN
-!write(17,*) 'update cpen'
+      !write(17,*) 'update cpen'
           !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           ! Zaikun 20211108
           !PARMU=2.0D0*BARMU
@@ -942,8 +934,9 @@ C          TEMP=0.0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       from_tr = 1
+      !write(17,*) nfvals, maxfun
       goto 140
-  545 continue
+  545 IF (NFVALS >= MAXFUN) GOTO 600
 
 !write(17,*) TRURED, PREREM
 
