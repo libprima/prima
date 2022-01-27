@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, January 27, 2022 PM05:29:30
+! Last Modified: Thursday, January 27, 2022 PM07:41:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -161,7 +161,7 @@ call initxfc(calcfc, iprint, maxfun, constr, ctol, f, ftarget, rhobeg, x, nf, ch
 ! Initialize the filter, including XFILT, FFILT, CONFILT, CFILT, and NFILT.
 call initfilt(conmat, ctol, cval, fval, sim, evaluated, nfilt, cfilt, confilt, ffilt, xfilt)
 
-! Check exit due to abnormal cases that may occur during the initialization.
+! Check whether to exit due to abnormal cases that may occur during the initialization.
 if (subinfo /= INFO_DFT) then
     info = subinfo
     ! Return the best calculated values of the variables.
@@ -277,6 +277,7 @@ do tr = 1, maxtr
                     ! Zaikun 20211111: Can this lead to infinite cycling?
                     !-----------------------------------------------------------------------!
                     call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
+                    ! Check whether to exit due to damaging rounding detected in UPDATEPOLE.
                     if (subinfo == DAMAGING_ROUNDING) then
                         info = subinfo
                         exit  ! Better action to take? Geometry step?
@@ -322,12 +323,11 @@ do tr = 1, maxtr
         ! that is the job of UPDATEPOLE, which is called before each trust-region/geometry step.
         ! 2. UPDATEXFC does nothing when JDROP_TR == 0.
         call updatexfc(jdrop_tr, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
-        !-----------------------------------------------------------------------!
+        ! Check whether to exit due to damaging rounding detected in UPDATEPOLE (called by UPDATEXFC).
         if (subinfo == DAMAGING_ROUNDING) then
             info = subinfo
             exit  ! Better action to take? Geometry step?
         end if
-        !-----------------------------------------------------------------------!
 
         ! Check whether to exit.
         subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
@@ -397,12 +397,11 @@ do tr = 1, maxtr
             ! that is the job of UPDATEPOLE, which is called before each trust-region/geometry step.
             !--------------------------------------------------------------------------------------!
             call updatexfc(jdrop_geo, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
-            !-----------------------------------------------------------------------!
+            ! Check whether to exit due to damaging rounding detected in UPDATEPOLE (called by UPDATEXFC).
             if (subinfo == DAMAGING_ROUNDING) then
                 info = subinfo
                 exit  ! Better action to take? Geometry step?
             end if
-            !-----------------------------------------------------------------------!
             ! Check whether to exit.
             subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
             if (subinfo /= INFO_DFT) then
@@ -421,6 +420,7 @@ do tr = 1, maxtr
         call rhomsg(solver, iprint, nf, fval(n + 1), rho, sim(:, n + 1), cval(n + 1), conmat(:, n + 1), cpen)
         !-----------------------------------------------------------------------!
         call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
+        ! Check whether to exit due to damaging rounding detected in UPDATEPOLE.
         if (subinfo == DAMAGING_ROUNDING) then
             info = subinfo
             exit  ! Better action to take? Geometry step?
