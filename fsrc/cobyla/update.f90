@@ -6,7 +6,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, January 27, 2022 AM06:33:47
+! Last Modified: Thursday, January 27, 2022 PM01:57:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -27,6 +27,7 @@ subroutine updatexfc(jdrop, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : IK, RP, DEBUGGING
 use, non_intrinsic :: infnan_mod, only : is_nan, is_neginf, is_posinf, is_finite
+use, non_intrinsic :: info_mod, only : INFO_DFT
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, outprod
 use, non_intrinsic :: debug_mod, only : assert
 
@@ -87,6 +88,7 @@ end if
 
 ! Do nothing when JDROP is 0. This can only happen after a trust-region step.
 if (jdrop <= 0) then  ! JDROP < 0 is impossible if the input is correct.
+    info = INFO_DFT  ! INFO must be set!!!
     return
 end if
 

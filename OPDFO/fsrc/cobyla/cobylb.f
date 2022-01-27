@@ -1262,7 +1262,7 @@ C      NFVALS-2 instead of NFVALS-1.
       END IF
       MAXFUN=NFVALS
 
-      close(17)
+!      close(17)
 
       RETURN
       END
