@@ -6,7 +6,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, January 27, 2022 PM05:15:54
+! Last Modified: Thursday, January 27, 2022 PM07:34:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -20,15 +20,13 @@ contains
 subroutine updatexfc(jdrop, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine revises the simplex by updating the elements of SIM, SIMI, FVAL, CONMAT, and CVAL.
-! N.B.: UPDATEXFC does NOT manipulate the simplex so that SIM(:, N+1) is the best vertex;
-! that is the job of UPDATEPOLE, which is called before each trust-region/geometry step.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : IK, RP, DEBUGGING
+use, non_intrinsic :: consts_mod, only : IK, RP, TENTH, DEBUGGING
 use, non_intrinsic :: infnan_mod, only : is_nan, is_neginf, is_posinf, is_finite
-use, non_intrinsic :: info_mod, only : INFO_DFT
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, outprod
+use, non_intrinsic :: info_mod, only : INFO_DFT, DAMAGING_ROUNDING
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, outprod, isinv
 use, non_intrinsic :: debug_mod, only : assert
 
 implicit none
@@ -55,7 +53,7 @@ integer(IK), intent(out) :: info
 character(len=*), parameter :: srname = 'UPDATEXFC'
 integer(IK) :: m
 integer(IK) :: n
-!real(RP), parameter :: itol = TENTH
+real(RP), parameter :: itol = TENTH
 real(RP) :: simi_jdrop(size(simi, 2))
 
 ! Sizes
@@ -79,7 +77,7 @@ if (DEBUGGING) then
     call assert(all(is_finite(sim)), 'SIM is finite', srname)
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)), 'SIMI is finite', srname)
-    !!!call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
+    call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
 end if
 
 !====================!
@@ -118,8 +116,8 @@ if (DEBUGGING) then
     call assert(all(is_finite(sim)), 'SIM is finite', srname)
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)), 'SIMI is finite', srname)
-    !call assert(isinv(sim(:, 1:n), simi, itol) .or. .or. info == DAMAGING_ROUNDING, &
-    !   & 'SIMI = SIM(:, 1:N)^{-1} unless the rounding is damaging', srname)
+    call assert(isinv(sim(:, 1:n), simi, itol) .or. info == DAMAGING_ROUNDING, &
+       & 'SIMI = SIM(:, 1:N)^{-1} unless the rounding is damaging', srname)
 end if
 end subroutine updatexfc
 
@@ -128,11 +126,27 @@ subroutine updatepole(cpen, conmat, cval, fval, sim, simi, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine identifies the best vertex of the current simplex with respect to the merit
 ! function PHI = F + CPEN * CSTRV, and then switch this vertex to SIM(:, N + 1), namely the
-! "Pole Position" as per Powell's code. CONMAT, CVAL, FVAL, and SIMI are updated accordingly.
-! N.B.: In precise arithmetic, the following two procedures produce the same results:
-! 1. apply UPDATEPOLE to SIM twice the first time with CPEN = CPEN1 and the second with CPEN = CPEN2;
-! 2. apply UPDATEPOLE to SIM with CPEN = CPEN2.
+! "Pole Position" as per Powell. CONMAT, CVAL, FVAL, and SIMI are updated accordingly.
+!
+! N.B. 1: In precise arithmetic, the following two procedures produce the same results:
+! 1) apply UPDATEPOLE to SIM twice the first time with CPEN = CPEN1 and the second with CPEN = CPEN2;
+! 2) apply UPDATEPOLE to SIM with CPEN = CPEN2.
 ! In finite-precision arithmetic, however, they may produce different results unless CPEN1 = CPEN2.
+!
+! N.B. 2: When JOPT == N+1, the best vertex is already at the pole position, so there is nothing to
+! switch. However, as in Powell's code, the code below will check whether SIMI is good enough to
+! work as the inverse of SIM(:, 1:N) or not. If not, Powell's code would invoke an error return of
+! COBYLB; our implementation, however, will try calculating SIMI from scratch; if the recalculated
+! SIMI is still of poor quality, then UPDATEPOLE will return with INFO = DAMAGING_ROUNDING,
+! informing COBYLB that SIMI is poor due to damaging rounding errors.
+!
+! N.B. 3: UPDATEPOLE should be called when and only when FINDPOLE can potentially returns a value
+! other than N+1. The value of FINDPOLE is determined by CPEN, CVAL, and FVAL, the latter two being
+! decided by SIM. Thus UPDATEPOLE should be called after CPEN or SIM changes. COBYLA updates CPEN at
+! only two places: the beginning of each trust-region iteration, and when RESENHANCE is called;
+! SIM is updated only by UPDATEXFC, which itself calls UPDATEPOLE internally. Therefore, we only
+! need to call UPDATEPOLE after updating CPEN at the beginning of each trust-region iteration and
+! after each invocation of RESENHANCE.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -140,7 +154,7 @@ use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, TENTH, DEBUGGING
 use, non_intrinsic :: info_mod, only : DAMAGING_ROUNDING, INFO_DFT
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_neginf, is_posinf, is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, eye, inv
+use, non_intrinsic :: linalg_mod, only : matprod, eye, inv, isinv
 
 implicit none
 
@@ -189,7 +203,7 @@ if (DEBUGGING) then
     call assert(all(is_finite(sim)), 'SIM is finite', srname)
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)), 'SIMI is finite', srname)
-    !!!call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
+    call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
 end if
 
 !====================!
@@ -212,7 +226,7 @@ sim_old = sim
 simi_old = simi
 if (jopt >= 1 .and. jopt <= n) then
     ! Unless there is a bug in FINDPOLE, it is guaranteed that JOPT >= 1.
-    ! When JOPT == N + 1, there is nothing to switch. In addition, SIMI(JOPT, :) will be illegal.
+    ! When JOPT == N + 1, there is nothing to switch; in addition, SIMI(JOPT, :) will be illegal.
     fval([jopt, n + 1_IK]) = fval([n + 1_IK, jopt])
     conmat(:, [jopt, n + 1_IK]) = conmat(:, [n + 1_IK, jopt]) ! Exchange CONMAT(:, JOPT) AND CONMAT(:, N+1)
     cval([jopt, n + 1_IK]) = cval([n + 1_IK, jopt])
@@ -226,7 +240,7 @@ if (jopt >= 1 .and. jopt <= n) then
     ! SIMI should be updated by a multiplication with this matrix (i.e., its inverse) from the left
     ! side, as is done in the following line. The JOPT-th row of the updated SIMI is minus the sum
     ! of all rows of the original SIMI, whereas all the other rows remain unchanged.
-    simi(jopt, :) = -sum(simi, dim=1)  ! Must ensure that JOPT <= N!
+    simi(jopt, :) = -sum(simi, dim=1)  ! Must ensure that 1 <= JOPT <= N!
 end if
 
 ! Check whether SIMI is a poor approximation to the inverse of SIM(:, 1:N).
@@ -267,8 +281,8 @@ if (DEBUGGING) then
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)), 'SIMI is finite', srname)
     ! Do not check SIMI = SIM(:, 1:N)^{-1}, as it may not be true due to damaging rounding.
-    !call assert(isinv(sim(:, 1:n), simi, itol) .or. .or. info == DAMAGING_ROUNDING, &
-    !   & 'SIMI = SIM(:, 1:N)^{-1} unless the rounding is damaging', srname)
+    call assert(isinv(sim(:, 1:n), simi, itol) .or. info == DAMAGING_ROUNDING, &
+       & 'SIMI = SIM(:, 1:N)^{-1} unless the rounding is damaging', srname)
 end if
 
 end subroutine updatepole

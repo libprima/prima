@@ -6,7 +6,7 @@ module initialize_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, January 26, 2022 AM11:17:53
+! Last Modified: Thursday, January 27, 2022 PM07:10:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -25,13 +25,13 @@ subroutine initxfc(calcfc, iprint, maxfun, constr0, ctol, f0, ftarget, rhobeg, x
 
 ! Generic modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TENTH, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate, moderatef, moderatec
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf, is_finite
 use, non_intrinsic :: info_mod, only : INFO_DFT, DAMAGING_ROUNDING
-use, non_intrinsic :: linalg_mod, only : eye, inv
+use, non_intrinsic :: linalg_mod, only : eye, inv, isinv
 use, non_intrinsic :: output_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJCON
 
@@ -82,6 +82,7 @@ real(RP) :: constr(size(conmat, 1))
 real(RP) :: cstrv
 real(RP) :: f
 real(RP) :: x(size(x0))
+real(RP), parameter :: itol = TENTH
 
 ! Sizes
 m = int(size(conmat, 1), kind(m))
@@ -209,6 +210,8 @@ if (DEBUGGING) then
     call assert(all(is_finite(sim)), 'SIM is finite', srname)
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)) .or. subinfo == DAMAGING_ROUNDING, 'SIMI is finite', srname)
+    call assert(isinv(sim(:, 1:n), simi, itol) .or. any(.not. evaluated) .or. &
+        & info == DAMAGING_ROUNDING, 'SIMI = SIM(:, 1:N)^{-1} unless the rounding is damaging', srname)
 end if
 
 end subroutine initxfc
