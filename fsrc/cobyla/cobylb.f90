@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, January 27, 2022 PM07:41:29
+! Last Modified: Thursday, January 27, 2022 PM07:54:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -318,10 +318,7 @@ do tr = 1, maxtr
         jdrop_tr = setdrop_tr(actrem, d, factor_alpha, factor_delta, rho, sim, simi)
         ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_TR) is replaced by D.
         ! When JDROP_TR == 0, the algorithm decides not to include X into the simplex.
-        ! N.B.:
-        ! 1. UPDATEXFC does NOT manipulate the simplex so that SIM(:, N+1) is the best vertex;
-        ! that is the job of UPDATEPOLE, which is called before each trust-region/geometry step.
-        ! 2. UPDATEXFC does nothing when JDROP_TR == 0.
+        ! N.B.: UPDATEXFC does nothing when JDROP_TR == 0.
         call updatexfc(jdrop_tr, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
         ! Check whether to exit due to damaging rounding detected in UPDATEPOLE (called by UPDATEXFC).
         if (subinfo == DAMAGING_ROUNDING) then
@@ -392,10 +389,6 @@ do tr = 1, maxtr
             ! Save X, F, CONSTR, CSTRV into the filter.
             call savefilt(constr, cstrv, ctol, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
             ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_GEO) is replaced by D.
-            !--------------------------------------------------------------------------------------!
-            ! N.B.: UPDATEXFC does NOT manipulate the simplex so that SIM(:, N+1) is the best vertex;
-            ! that is the job of UPDATEPOLE, which is called before each trust-region/geometry step.
-            !--------------------------------------------------------------------------------------!
             call updatexfc(jdrop_geo, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
             ! Check whether to exit due to damaging rounding detected in UPDATEPOLE (called by UPDATEXFC).
             if (subinfo == DAMAGING_ROUNDING) then
@@ -473,33 +466,3 @@ end subroutine cobylb
 
 
 end module cobylb_mod
-
-! TODO:
-! BTW, write a projection function to be used in TRSAPP, BIGLAG, BIGDEN in NEWUOA. See lines 305-306
-! of trustregion.f90 and 391-392, 675-676 of geometry.f90 of NEWUOA.
-!
-! HYPOT is used  in trustregion.f90 for updating ZDOTA. A robust version should be written (avoid
-! under/overflow in particular). This version may also be used in PLANEROT. This has been done
-! previously, but it
-! worsened a bit the performance of NEWUOA so it was discarded. Find it back, and test NEWUOA again.
-!
-! Try calculating ZDOTA from scratch (only the elements that change; there are 1 or 2 of them) instead of
-! updating it. Is it more stable? Will it improve (at least not worsen) the performance of COBYLA?
-! Needs tests. If it is accepted, then HYPOT is not needed.
-!
-! 0. In COBYLA, check what should we do with JDROP = 0, both TR and GEO
-!    If ACTREM > 0 ===> JDROP > 0, why can COBYLA return sub-optimal points???
-! 1. evaluate, extreme barrier, moderate excessively negative objective, which has not been done in
-!    NEWUOA. Shouldn't we remove the extreme barrier in the MATLAB/Python interface after it is
-!    implemented in FORTRAN?
-! 3. merge UPDATEPOLE and UPDATEXFC
-! 6. Do the same for NEWUOA
-! 8. knew ===> jdrop
-! 11.
-! Enforcing programming contracts
-! Programming can be thought of as requirements for correct execution of a procedure and assurances
-! for the result of correct execution. The requirements and assurances might be constraints of three
-! kinds:
-! Preconditions (requirements): logical expressions that must evaluate to .true. when a procedure starts execution,
-! Postconditions (assurances): expressions that must evaluate to .true. when a procedure finishes execution, and
-! Invariants: universal pre- and postconditions that must always be true when all procedures in a class start or finish executing.
