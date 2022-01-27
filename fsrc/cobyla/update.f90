@@ -6,7 +6,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, January 27, 2022 PM01:57:31
+! Last Modified: Thursday, January 27, 2022 PM05:15:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -88,7 +88,7 @@ end if
 
 ! Do nothing when JDROP is 0. This can only happen after a trust-region step.
 if (jdrop <= 0) then  ! JDROP < 0 is impossible if the input is correct.
-    info = INFO_DFT  ! INFO must be set!!!
+    info = INFO_DFT  ! INFO must be set, as it is an output!!!
     return
 end if
 
@@ -196,17 +196,11 @@ end if
 ! Calculation starts !
 !====================!
 
+! INFO must be set, as it is an output.
 info = INFO_DFT
 
-!write (16, *) 'simi1', simi(:, :)
 ! Identify the optimal vertex of the current simplex.
 jopt = findpole(cpen, cval, fval)
-!write (16, *) 'jopt', jopt
-! Return if JOPT > N (indeed, JOPT == N+1). INFO has to be set beforehand, as it is an output.
-!if (jopt > n) then
-!    return  ! Should we return immediately or return after checking/updating SIMI even though SIM
-!    will not be changed?
-!end if
 
 ! Switch the best vertex to the pole position SIM(:, N+1) if it is not there already. Then update
 ! CONMAT etc. Before the update, save a copy of CONMAT etc. If the update is unsuccessful due to
@@ -216,7 +210,9 @@ conmat_old = conmat
 cval_old = cval
 sim_old = sim
 simi_old = simi
-if (jopt <= n) then
+if (jopt >= 1 .and. jopt <= n) then
+    ! Unless there is a bug in FINDPOLE, it is guaranteed that JOPT >= 1.
+    ! When JOPT == N + 1, there is nothing to switch. In addition, SIMI(JOPT, :) will be illegal.
     fval([jopt, n + 1_IK]) = fval([n + 1_IK, jopt])
     conmat(:, [jopt, n + 1_IK]) = conmat(:, [n + 1_IK, jopt]) ! Exchange CONMAT(:, JOPT) AND CONMAT(:, N+1)
     cval([jopt, n + 1_IK]) = cval([n + 1_IK, jopt])
@@ -224,19 +220,19 @@ if (jopt <= n) then
     sim_jopt = sim(:, jopt)
     sim(:, jopt) = ZERO
     sim(:, 1:n) = sim(:, 1:n) - spread(sim_jopt, dim=2, ncopies=n)
-! The above update is equivalent to multiply SIM(:, 1:N) from the right side by a matrix whose
-! JOPT-th row is [-1, -1, ..., -1], while all the other rows are the same as those of the
-! identity matrix. It is easy to check that the inverse of this matrix is itself. Therefore,
-! SIMI should be updated by a multiplication with this matrix (i.e., its inverse) from the left
-! side, as is done in the following line. The JOPT-th row of the updated SIMI is minus the sum
-! of all rows of the original SIMI, whereas all the other rows remain unchanged.
-    simi(jopt, :) = -sum(simi, dim=1)
+    ! The above update is equivalent to multiply SIM(:, 1:N) from the right side by a matrix whose
+    ! JOPT-th row is [-1, -1, ..., -1], while all the other rows are the same as those of the
+    ! identity matrix. It is easy to check that the inverse of this matrix is itself. Therefore,
+    ! SIMI should be updated by a multiplication with this matrix (i.e., its inverse) from the left
+    ! side, as is done in the following line. The JOPT-th row of the updated SIMI is minus the sum
+    ! of all rows of the original SIMI, whereas all the other rows remain unchanged.
+    simi(jopt, :) = -sum(simi, dim=1)  ! Must ensure that JOPT <= N!
 end if
 
 ! Check whether SIMI is a poor approximation to the inverse of SIM(:, 1:N).
 erri = matprod(simi, sim(:, 1:n)) - eye(n)
 
-! Calculate SIMI from scratch if the updated one is damaged by rounding errors.
+! Calculate SIMI from scratch if the current one is damaged by rounding errors.
 if (any(is_nan(erri)) .or. any(abs(erri) > itol)) then
     simi = inv(sim(:, 1:n))
     erri = matprod(simi, sim(:, 1:n)) - eye(n)
@@ -251,8 +247,6 @@ if (any(is_nan(erri)) .or. any(abs(erri) > itol)) then
     sim = sim_old
     simi = simi_old
 end if
-
-!write (16, *) 'simi2', simi(:, :)
 
 !====================!
 !  Calculation ends  !
@@ -331,8 +325,8 @@ if (phimin < phi(jopt)) then  ! We keep JOPT = N + 1 unless there is a strictly 
     jopt = int(minloc(phi, dim=1), kind(jopt))
 end if
 if (cpen <= ZERO .and. any(cval < cval(jopt) .and. phi <= phimin)) then
-    ! (CPEN <= ZERO) is indeed (CPEN == ZERO), and (PHI <= PHIMIN) is indeed (PHI == PHIMIN). We
-    ! write them in this way to avoid equality comparison of real numbers.
+    ! (CPEN <= ZERO) is indeed (CPEN == ZERO), and (PHI <= PHIMIN) is indeed (PHI == PHIMIN).
+    ! We write them in this way to avoid equality comparison of real numbers.
     jopt = int(minloc(cval, mask=(phi <= phimin), dim=1), kind(jopt))
 end if
 
@@ -345,5 +339,6 @@ if (DEBUGGING) then
     call assert(jopt >= 1 .and. jopt <= n + 1, '1 <= JOPT <= N+1', srname)
 end if
 end function findpole
+
 
 end module update_mod
