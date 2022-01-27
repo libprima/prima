@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, January 27, 2022 AM11:24:17
+! Last Modified: Thursday, January 27, 2022 PM05:29:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -226,16 +226,8 @@ info = MAXTR_REACHED
 ! REDUCE_RHO - Will we reduce rho after the trust-region iteration?
 ! COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
-    !! Before the trust-region step, call UPDATEPOLE so that SIM(:, N + 1) is the optimal vertex.
-    !!-----------------------------------------------------------------------!
-    !call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
-    !if (subinfo == DAMAGING_ROUNDING) then
-    !    info = subinfo
-    !    exit
-    !    ! Instead of exiting, what about setting GOOD_GEO to FALSE in order to activate a
-    !    ! geometry step of enhance_resolut?
-    !end if
-    !!-----------------------------------------------------------------------!
+    ! Before the trust-region step, UPDATEPOLE has been called either implicitly by INITXFC/UPDATEXFC
+    ! or explicitly after CPEN is updated, so that SIM(:, N + 1) is the optimal vertex.
 
     ! Does the current interpolation set has good geometry? It affects IMPROVE_GEO and REDUCE_RHO.
     good_geo = goodgeo(factor_alpha, factor_beta, rho, sim, simi)
@@ -247,7 +239,6 @@ do tr = 1, maxtr
     ! as Powell's, because the intrinsic MATMUL behaves differently from a naive triple loop in
     ! finite-precision arithmetic.
     ! 2. TRSTLP accesses A mostly by columns, so it is not more reasonable to save A^T instead of A.
-!write (16, *) 'update model'
     A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
     A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
 
@@ -258,7 +249,7 @@ do tr = 1, maxtr
     !----------------------------------------------------------------------------------------------!
     if (any(is_nan(A))) then
         info = NAN_MODEL
-        exit
+        exit  ! Better action to take? Geometry step?
     end if
 
     ! Theoretically (but not numerically), the last entry of B does not affect the result of TRSTLP.
@@ -266,7 +257,6 @@ do tr = 1, maxtr
     b = [-conmat(:, n + 1), -fval(n + 1)]
     ! Calculate the trust-region trial step D.
     d = trstlp(A, b, rho)
-    !write (16, *) 'tr', nf + 1, A, d
 
     ! Is the trust-region trial step short?
     shortd = (inprod(d, d) < QUART * rho**2)
@@ -281,18 +271,15 @@ do tr = 1, maxtr
         if (prerec > ZERO) then  ! When and why will we have PREREC <= 0?
             barmu = -preref / prerec   ! PREREF + BARMU * PREREC = 0
             if (cpen < 1.5_RP * barmu) then
-!write (16, *) 'update cpen'
                 cpen = min(TWO * barmu, HUGENUM)
                 call cpenmsg(solver, iprint, cpen)
                 if (findpole(cpen, cval, fval) <= n) then
                     ! Zaikun 20211111: Can this lead to infinite cycling?
                     !-----------------------------------------------------------------------!
-!write (16, *) 'in findpole, 290'
-!write (16, *) 'in pdatepole, 289'
                     call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
                     if (subinfo == DAMAGING_ROUNDING) then
                         info = subinfo
-                        exit
+                        exit  ! Better action to take? Geometry step?
                     end if
                     !-----------------------------------------------------------------------!
                     cycle
@@ -304,7 +291,6 @@ do tr = 1, maxtr
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
         call evaluate(calcfc, x, f, constr, cstrv)
         nf = nf + 1_IK
-!        write (16, *) nf, 'tr'
         call fmsg(solver, iprint, nf, f, x, cstrv, constr)
         ! Save X, F, CONSTR, CSTRV into the history.
         call savehist(nf, constr, cstrv, f, x, chist, conhist, fhist, xhist)
@@ -337,14 +323,9 @@ do tr = 1, maxtr
         ! 2. UPDATEXFC does nothing when JDROP_TR == 0.
         call updatexfc(jdrop_tr, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
         !-----------------------------------------------------------------------!
-!write (16, *) 'jdrop_tr', jdrop_tr
-!write (16, *) 'in findpole, 340'
-!write (16, *) 'in updatepole, 339'
-!        write (16, *) 'geoupdate'
-        !call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
         if (subinfo == DAMAGING_ROUNDING) then
             info = subinfo
-            exit
+            exit  ! Better action to take? Geometry step?
         end if
         !-----------------------------------------------------------------------!
 
@@ -352,11 +333,10 @@ do tr = 1, maxtr
         subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
         if (subinfo /= INFO_DFT) then
             info = subinfo
-            exit
+            exit  ! Better action to take? Geometry step?
         end if
     end if
 
-!write (16, *) actrem, prerem
     ! Should we take a geometry step to improve the geometry of the interpolation set?
     ! N.B.: THEORETICALLY, JDROP_TR > 0 when ACTREM > 0, and hence the definition of BAD_TRSTEP is
     ! mathematically equivalent to (SHORTD .OR. ACTREM <= ZERO .OR. ACTREM < TENTH * PREREM).
@@ -368,27 +348,19 @@ do tr = 1, maxtr
     ! Should we enhance the resolution by reducing RHO?
     enhance_resolut = bad_trstep .and. good_geo
 
-!write (16, *) shortd, bad_trstep, good_geo, improve_geo, enhance_resolut
-
     if (improve_geo) then
-        !! Before the geometry step, call UPDATEPOLE so that SIM(:, N + 1) is the optimal vertex.
-        !!-----------------------------------------------------------------------!
-        !call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
-        !if (subinfo == DAMAGING_ROUNDING) then
-        !    info = subinfo
-        !    exit
-        !end if
-        !!-----------------------------------------------------------------------!
+        ! Before the trust-region step, UPDATEPOLE has been called either implicitly by UPDATEXFC or
+        ! explicitly after CPEN is updated, so that SIM(:, N + 1) is the optimal vertex.
 
         ! If the current interpolation set has good geometry, then we skip the geometry step.
         ! The code has a small difference from Powell's original code here: If the current geometry
-        ! is good, then we will continue with a new trust-region iteration; at the beginning of the
-        ! iteration, CPEN may be updated, which may alter the pole point SIM(:, N + 1) by UPDATEPOLE;
-        ! the quality of the interpolation point depends on SIM(:, N + 1), meaning that the same
-        ! interpolation set may have good or bad geometry with respect to different "poles"; if the
-        ! geometry turns out bad with the new pole, the original COBYLA code will take a geometry
-        ! step, but our code here will NOT do it but continue to take a trust-region step.
-        ! The argument is this: even if the geometry step is not skipped at the first place, the
+        ! is good, then we will continue with a new trust-region iteration; however, at the
+        ! beginning of the iteration, CPEN may be updated, which may alter the pole point SIM(:, N+1)
+        ! by UPDATEPOLE; the quality of the interpolation point depends on SIM(:, N + 1), meaning
+        ! that the same interpolation set may have good or bad geometry with respect to different
+        ! "poles"; if the geometry turns out bad with the new pole, the original COBYLA code will
+        ! take a geometry step, but our code here will NOT do it but continue to take a trust-region
+        ! step. The argument is this: even if the geometry step is not skipped in the first place, the
         ! geometry may turn out bad again after the pole is altered due to an update to CPEN; should
         ! we take another geometry step in that case? If no, why should we do it here? Indeed, this
         ! distinction makes no practical difference for CUTEst problems with at most 100 variables
@@ -414,7 +386,6 @@ do tr = 1, maxtr
             ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
             call evaluate(calcfc, x, f, constr, cstrv)
             nf = nf + 1_IK
-!            write (16, *) nf, 'geo'
             call fmsg(solver, iprint, nf, f, x, cstrv, constr)
             ! Save X, F, CONSTR, CSTRV into the history.
             call savehist(nf, constr, cstrv, f, x, chist, conhist, fhist, xhist)
@@ -427,13 +398,9 @@ do tr = 1, maxtr
             !--------------------------------------------------------------------------------------!
             call updatexfc(jdrop_geo, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
             !-----------------------------------------------------------------------!
-!write (16, *) 'jdrop_geo', jdrop_geo
-!write (16, *) 'in findpole, 425'
-!write (16, *) 'in updatepole, 424'
-            !call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
             if (subinfo == DAMAGING_ROUNDING) then
                 info = subinfo
-                exit
+                exit  ! Better action to take? Geometry step?
             end if
             !-----------------------------------------------------------------------!
             ! Check whether to exit.
@@ -453,12 +420,10 @@ do tr = 1, maxtr
         call resenhance(conmat, fval, rhoend, cpen, rho)
         call rhomsg(solver, iprint, nf, fval(n + 1), rho, sim(:, n + 1), cval(n + 1), conmat(:, n + 1), cpen)
         !-----------------------------------------------------------------------!
-!write (16, *) 'in findpole, 450'
-!write (16, *) 'in updatepole, 449'
         call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
         if (subinfo == DAMAGING_ROUNDING) then
             info = subinfo
-            exit
+            exit  ! Better action to take? Geometry step?
         end if
         !-----------------------------------------------------------------------!
     end if
