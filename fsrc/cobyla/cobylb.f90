@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, January 27, 2022 AM06:29:23
+! Last Modified: Thursday, January 27, 2022 AM11:24:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -504,7 +504,6 @@ if (DEBUGGING) then
         & k=1, minval([nf, maxfhist, maxchist]))]), 'No point in the history is better than X', srname)
 end if
 
-close (16)
 end subroutine cobylb
 
 
