@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, January 27, 2022 PM07:54:49
+! Last Modified: Thursday, January 27, 2022 PM11:07:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -29,16 +29,17 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
 use, non_intrinsic :: info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, NAN_MODEL, DAMAGING_ROUNDING
-use, non_intrinsic :: linalg_mod, only : inprod, matprod
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: output_mod, only : retmsg, rhomsg, fmsg, cpenmsg
 use, non_intrinsic :: pintrf_mod, only : OBJCON
+use, non_intrinsic :: ratio_mod, only : redrat
 use, non_intrinsic :: resolution_mod, only : resenhance
 use, non_intrinsic :: selectx_mod, only : savefilt, selectx, isbetter
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_mod, only : goodgeo, setdrop_geo, setdrop_tr, geostep
 use, non_intrinsic :: initialize_mod, only : initxfc, initfilt
-use, non_intrinsic :: trustregion_mod, only : trstlp
+use, non_intrinsic :: trustregion_mod, only : trstlp, trrad
 use, non_intrinsic :: update_mod, only : updatexfc, updatepole, findpole
 
 implicit none
@@ -88,6 +89,7 @@ integer(IK) :: subinfo
 integer(IK) :: tr
 logical :: bad_trstep
 logical :: enhance_resolut
+logical :: enhance_resolut_1
 logical :: evaluated(size(x) + 1)
 logical :: good_geo
 logical :: improve_geo
@@ -104,6 +106,10 @@ real(RP) :: conmat(size(constr), size(x) + 1)
 real(RP) :: cpen  ! Penalty parameter for constraint in merit function (PARMU in Powell's code)
 real(RP) :: cval(size(x) + 1)
 real(RP) :: d(size(x))
+real(RP) :: delbar
+real(RP) :: delta
+real(RP) :: dnorm
+real(RP) :: dnormsav(3)
 real(RP) :: ffilt(size(cfilt))
 real(RP) :: fval(size(x) + 1)
 real(RP) :: prerec  ! Predicted reduction in Constraint violation
@@ -117,6 +123,12 @@ real(RP), parameter :: factor_alpha = QUART
 real(RP), parameter :: factor_beta = 2.1_RP
 real(RP), parameter :: factor_delta = 1.1_RP
 real(RP), parameter :: factor_gamma = HALF
+real(RP) :: veta(size(x))
+real(RP) :: ratio
+real(RP) :: eta1 = 0.1_RP
+real(RP) :: eta2 = 0.7_RP
+real(RP) :: gamma1 = 0.5_RP
+real(RP) :: gamma2 = 2.0_RP
 
 ! Sizes
 m = int(size(constr), kind(m))
@@ -201,6 +213,7 @@ end if
 
 ! Initialize RHO and CPEN.
 rho = rhobeg
+delta = rho
 cpen = ZERO
 
 ! We must initialize ACTREM and PREREM. Otherwise, when SHORTD = TRUE, compilers may raise a
@@ -230,7 +243,10 @@ do tr = 1, maxtr
     ! or explicitly after CPEN is updated, so that SIM(:, N + 1) is the optimal vertex.
 
     ! Does the current interpolation set has good geometry? It affects IMPROVE_GEO and REDUCE_RHO.
-    good_geo = goodgeo(factor_alpha, factor_beta, rho, sim, simi)
+    !!----------------------------------------------------------------------------------!
+    !good_geo = goodgeo(factor_alpha, factor_beta, rho, sim, simi)
+    good_geo = goodgeo(factor_alpha, factor_beta, delta, sim, simi) !???
+    !!----------------------------------------------------------------------------------!
 
     ! Calculate the linear approximations to the objective and constraint functions, placing minus
     ! the objective function gradient after the constraint gradients in the array A.
@@ -255,13 +271,29 @@ do tr = 1, maxtr
     ! Theoretically (but not numerically), the last entry of B does not affect the result of TRSTLP.
     ! We set it to -FVAL(N + 1) following Powell's code.
     b = [-conmat(:, n + 1), -fval(n + 1)]
-    ! Calculate the trust-region trial step D.
-    d = trstlp(A, b, rho)
+    ! Calculate the trust-region trial step D. Note that D does NOT depend on CPEN.
+    d = trstlp(A, b, delta)
+
+    dnorm = min(delta, norm(d))
 
     ! Is the trust-region trial step short?
-    shortd = (inprod(d, d) < QUART * rho**2)
+    !shortd = (inprod(d, d) < QUART * rho**2)
+    shortd = (dnorm < HALF * rho)
+
+    enhance_resolut_1 = shortd .and. (maxval(dnormsav) <= rho)  !!! Seems quite important for performance
+    if (shortd .and. (.not. enhance_resolut_1)) then
+        ! Reduce DELTA. After this, DELTA < DNORM may hold.
+        delta = TENTH * delta
+        if (delta <= 1.5_RP * rho) then
+            delta = rho  ! Set DELTA to RHO when it is close.
+        end if
+    end if
+
 
     if (.not. shortd) then
+        ! DNORMSAVE constains the DNORM of the latest 3 function evaluations with the current RHO.
+        dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
+
         ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
         preref = inprod(d, A(:, m + 1))
         prerec = cval(n + 1) - maxval([-matprod(d, A(:, 1:m)) - conmat(:, n + 1), ZERO])
@@ -313,9 +345,21 @@ do tr = 1, maxtr
         if (is_nan(actrem)) then
             actrem = -HUGENUM  ! Signify a bad trust-region step.
         end if
+
+        ratio = redrat(actrem, prerem, eta1)
+        ! Update DELTA. After this, DELTA < DNORM may hold.
+        delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
+        if (delta <= 1.5_RP * rho) then
+            delta = rho
+        end if
+
         ! Set JDROP_TR to the index of the vertex that is to be replaced by X.
         ! N.B.: COBYLA never sets JDROP_TR = N + 1.
-        jdrop_tr = setdrop_tr(actrem, d, factor_alpha, factor_delta, rho, sim, simi)
+        !!----------------------------------------------------------------------------------!
+        !jdrop_tr = setdrop_tr(actrem, d, factor_alpha, factor_delta, rho, sim, simi)
+        jdrop_tr = setdrop_tr(actrem, d, factor_alpha, factor_delta, delta, sim, simi) !???
+        !!----------------------------------------------------------------------------------!
+
         ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_TR) is replaced by D.
         ! When JDROP_TR == 0, the algorithm decides not to include X into the simplex.
         ! N.B.: UPDATEXFC does nothing when JDROP_TR == 0.
@@ -332,6 +376,7 @@ do tr = 1, maxtr
             info = subinfo
             exit  ! Better action to take? Geometry step?
         end if
+
     end if
 
     ! Should we take a geometry step to improve the geometry of the interpolation set?
@@ -343,7 +388,9 @@ do tr = 1, maxtr
     improve_geo = bad_trstep .and. .not. good_geo
 
     ! Should we enhance the resolution by reducing RHO?
-    enhance_resolut = bad_trstep .and. good_geo
+    !enhance_resolut = bad_trstep .and. good_geo
+    bad_trstep = (shortd .or. actrem <= ZERO .or. jdrop_tr == 0)  ! Should we use the same BAD_TRSTEP as above?
+    enhance_resolut = bad_trstep .and. good_geo .and. (max(delta, dnorm) <= rho)
 
     if (improve_geo) then
         ! Before the trust-region step, UPDATEPOLE has been called either implicitly by UPDATEXFC or
@@ -362,11 +409,18 @@ do tr = 1, maxtr
         ! we take another geometry step in that case? If no, why should we do it here? Indeed, this
         ! distinction makes no practical difference for CUTEst problems with at most 100 variables
         ! and 5000 constraints, while the algorithm framework is simplified.
-        if (.not. goodgeo(factor_alpha, factor_beta, rho, sim, simi)) then
+        !!--------------------------------------------------------------------------!
+        !if (.not. goodgeo(factor_alpha, factor_beta, rho, sim, simi)) then
+        if (.not. goodgeo(factor_alpha, factor_beta, delta, sim, simi)) then !???
+        !!--------------------------------------------------------------------------!
+
             ! Decide a vertex to drop from the simplex. It will be replaced by SIM(:, N + 1) + D to
             ! improve acceptability of the simplex. See equations (15) and (16) of the COBYLA paper.
             ! N.B.: COBYLA never sets JDROP_GEO = N + 1.
-            jdrop_geo = setdrop_geo(factor_alpha, factor_beta, rho, sim, simi)
+            !!------------------------------------------------------------------!
+            !jdrop_geo = setdrop_geo(factor_alpha, factor_beta, rho, sim, simi)
+            jdrop_geo = setdrop_geo(factor_alpha, factor_beta, delta, sim, simi) !???
+            !!------------------------------------------------------------------!
 
             ! JDROP_GEO is between 1 and N unless SIM and SIMI contains NaN, which should not happen
             ! at this point unless there is a bug. Nevertheless, for robustness, we include the
@@ -378,7 +432,18 @@ do tr = 1, maxtr
             end if
 
             ! Calculate the geometry step D.
-            d = geostep(jdrop_geo, cpen, conmat, cval, fval, factor_gamma, rho, simi)
+            veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
+            delbar = max(min(TENTH * maxval(veta), HALF * delta), rho)
+            !!----------------------------------------------------------------------!
+            d = geostep(jdrop_geo, cpen, conmat, cval, fval, factor_gamma, delbar, simi)
+            !d = geostep(jdrop_geo, cpen, conmat, cval, fval, factor_gamma, rho, simi) !???
+            !!----------------------------------------------------------------------!
+
+            dnorm = min(delbar, norm(d))  ! In theory, DNORM = DELBAR in this case.
+            !------------------------------------------------------------------------------------------!
+            ! DNORMSAVE constains the DNORM of the latest 3 function evaluations with the current RHO.
+            dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
+
             x = sim(:, n + 1) + d
             ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
             call evaluate(calcfc, x, f, constr, cstrv)
@@ -404,12 +469,16 @@ do tr = 1, maxtr
         end if
     end if
 
-    if (enhance_resolut) then  ! Enhance the resolution of the algorithm, updating RHO and CPEN.
+    if (enhance_resolut_1 .or. enhance_resolut) then  ! Enhance the resolution of the algorithm, updating RHO and CPEN.
         if (rho <= rhoend) then
             info = SMALL_TR_RADIUS
             exit
         end if
+
+        delta = HALF * rho
         call resenhance(conmat, fval, rhoend, cpen, rho)
+        delta = max(delta, rho)
+
         call rhomsg(solver, iprint, nf, fval(n + 1), rho, sim(:, n + 1), cval(n + 1), conmat(:, n + 1), cpen)
         !-----------------------------------------------------------------------!
         call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
@@ -419,6 +488,10 @@ do tr = 1, maxtr
             exit  ! Better action to take? Geometry step?
         end if
         !-----------------------------------------------------------------------!
+
+        ! DNORMSAVE and MODERRSAVE are corresponding to the latest 3 function evaluations with
+        ! the current RHO. Update them after reducing RHO.
+        dnormsav = HUGENUM
     end if
 end do
 
