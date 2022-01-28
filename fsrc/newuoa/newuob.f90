@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, January 26, 2022 AM10:27:44
+! Last Modified: Friday, January 28, 2022 PM02:29:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -249,7 +249,7 @@ do tr = 1, maxtr
     end if
 
     if (.not. shortd) then  ! D is long enough.
-        ! DNORMSAVE constains the DNORM of the latest 3 function evaluations with the current RHO.
+        ! DNORMSAVE contains the DNORM of the latest 3 function evaluations with the current RHO.
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
         ! Shift XBASE if XOPT may be too far from XBASE.
@@ -427,7 +427,7 @@ do tr = 1, maxtr
         ! saved in DNORMSAVE will be used when defining REDUCE_RHO_1.
         dnorm = min(delbar, norm(d))  ! In theory, DNORM = DELBAR in this case.
         !------------------------------------------------------------------------------------------!
-        ! DNORMSAVE constains the DNORM of the latest 3 function evaluations with the current RHO.
+        ! DNORMSAVE contains the DNORM of the latest 3 function evaluations with the current RHO.
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
         ! Calculate the next value of the objective function.

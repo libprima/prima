@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, January 28, 2022 AM08:24:51
+! Last Modified: Friday, January 28, 2022 PM04:55:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -216,6 +216,7 @@ rho = rhobeg
 delta = rho
 cpen = ZERO
 
+! Initialize DNORMSAVE. It contains the DNORM of the latest 3 function evaluations with the current RHO.
 dnormsav = HUGENUM
 
 ! We must initialize ACTREM and PREREM. Otherwise, when SHORTD = TRUE, compilers may raise a
@@ -282,7 +283,8 @@ do tr = 1, maxtr
     !shortd = (inprod(d, d) < QUART * rho**2)
     shortd = (dnorm < HALF * rho)
 
-    enhance_resolut_1 = shortd .and. (maxval(dnormsav) <= rho)  !!! Seems quite important for performance
+    !enhance_resolut_1 = shortd .and. (maxval(dnormsav) <= rho)  !!! Seems quite important for performance
+    enhance_resolut_1 = .false.
     if (shortd .and. (.not. enhance_resolut_1)) then
         ! Reduce DELTA. After this, DELTA < DNORM may hold.
         delta = TENTH * delta
@@ -293,7 +295,7 @@ do tr = 1, maxtr
 
 
     if (.not. shortd) then
-        ! DNORMSAVE constains the DNORM of the latest 3 function evaluations with the current RHO.
+        ! DNORMSAVE contains the DNORM of the latest 3 function evaluations with the current RHO.
         dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
         ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
@@ -442,7 +444,7 @@ do tr = 1, maxtr
 
             dnorm = min(delbar, norm(d))  ! In theory, DNORM = DELBAR in this case.
             !------------------------------------------------------------------------------------------!
-            ! DNORMSAVE constains the DNORM of the latest 3 function evaluations with the current RHO.
+            ! DNORMSAVE contains the DNORM of the latest 3 function evaluations with the current RHO.
             dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
             x = sim(:, n + 1) + d

@@ -1,7 +1,7 @@
 !        This is file : testalloc
 ! Author= zaikunzhang
 ! Started at: 21.12.2021
-! Last Modified: Tuesday, December 21, 2021 PM03:21:42
+! Last Modified: Friday, January 28, 2022 PM12:18:51
 
 module alloc_mod
 implicit none
@@ -22,12 +22,13 @@ program testalloc
 use, non_intrinsic :: alloc_mod, only : alloc
 implicit none
 integer, allocatable :: x(:)
-integer :: n
 
-n = 0
+print *, 'Test ALLOCATE(X(0))'
+if (allocated(x)) deallocate (x); allocate (x(0))
+print *, 'Finished with SIZE(X) = ', size(x)
 
-call alloc(x, n)
-
-print *, x, size(x)
+print *, 'Test ALLOCATE(X(-1))'
+if (allocated(x)) deallocate (x); allocate (x(-1))
+print *, 'Finished with SIZE(X) = ', size(x)
 
 end program testalloc

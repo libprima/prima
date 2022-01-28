@@ -7,7 +7,7 @@ module resolution_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, January 25, 2022 PM04:26:31
+! Last Modified: Friday, January 28, 2022 PM04:56:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -85,7 +85,7 @@ subroutine resenhance_nlc(conmat, fval, rhoend, cpen, rho)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine enhances the resolution of the solver in the nonlinearly constrained case.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, ZERO, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, ZERO, HALF, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
@@ -104,6 +104,7 @@ real(RP) :: cmin(size(conmat, 1))
 real(RP) :: cpen_old
 real(RP) :: denom
 real(RP) :: rho_old
+real(RP) :: rho_ratio
 character(len=*), parameter :: srname = 'RESENHANCE_NLC'
 
 ! Preconditions
@@ -123,9 +124,17 @@ rho_old = rho
 cpen_old = cpen
 
 ! See equation (11) in Section 3 of the COBYLA paper for the update of RHO.
-rho = HALF * rho
-if (rho <= 1.5_RP * rhoend) then
+!rho = HALF * rho
+!if (rho <= 1.5_RP * rhoend) then
+!    rho = rhoend
+!end if
+rho_ratio = rho / rhoend
+if (rho_ratio <= 16.0_RP) then
     rho = rhoend
+elseif (rho_ratio <= 250.0_RP) then
+    rho = sqrt(rho_ratio) * rhoend
+else
+    rho = TENTH * rho
 end if
 
 ! See equations (12)--(13) in Section 3 of the COBYLA paper for the update of CPEN.
