@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, January 27, 2022 PM11:07:33
+! Last Modified: Friday, January 28, 2022 AM08:24:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -216,6 +216,8 @@ rho = rhobeg
 delta = rho
 cpen = ZERO
 
+dnormsav = HUGENUM
+
 ! We must initialize ACTREM and PREREM. Otherwise, when SHORTD = TRUE, compilers may raise a
 ! run-time error that they are undefined. The values will not be used: when SHORTD = FALSE, they
 ! will be overwritten; when SHORTD = TRUE, the values are used only in BAD_TRSTEP, which is TRUE
@@ -376,7 +378,6 @@ do tr = 1, maxtr
             info = subinfo
             exit  ! Better action to take? Geometry step?
         end if
-
     end if
 
     ! Should we take a geometry step to improve the geometry of the interpolation set?
