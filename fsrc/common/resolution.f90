@@ -7,7 +7,7 @@ module resolution_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Friday, January 28, 2022 PM04:56:23
+! Last Modified: Friday, January 28, 2022 PM06:58:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -128,6 +128,7 @@ cpen_old = cpen
 !if (rho <= 1.5_RP * rhoend) then
 !    rho = rhoend
 !end if
+! The following scheme is taken from NEWUOA. It seems to work better than the one above.
 rho_ratio = rho / rhoend
 if (rho_ratio <= 16.0_RP) then
     rho = rhoend

@@ -8,7 +8,7 @@ module memory_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, January 25, 2022 PM01:54:09
+! Last Modified: Saturday, January 29, 2022 PM04:06:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -128,7 +128,7 @@ call validate(n >= 0, 'N >= 0', srname)
 ! deallocated. So it is unnecessary to write the following line since F2003 as X is INTENT(OUT):
 !!if (allocated(x)) deallocate (x)
 ! Allocate memory for X
-allocate (x(n), stat=alloc_status)
+allocate (x(1:n), stat=alloc_status)
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
 call validate(allocated(x), 'X is allocated', srname)
 
@@ -163,7 +163,7 @@ call validate(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
 
 !!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
 ! Allocate memory for X
-allocate (x(m, n), stat=alloc_status)
+allocate (x(1:m, 1:n), stat=alloc_status)
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
 call validate(allocated(x), 'X is allocated', srname)
 
@@ -201,7 +201,7 @@ call validate(n >= 0, 'N >= 0', srname)
 ! deallocated. So it is unnecessary to write the following line since F2003 as X is INTENT(OUT):
 !!if (allocated(x)) deallocate (x)
 ! Allocate memory for X
-allocate (x(n), stat=alloc_status)
+allocate (x(1:n), stat=alloc_status)
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
 call validate(allocated(x), 'X is allocated', srname)
 
@@ -236,7 +236,7 @@ call validate(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
 
 !!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
 ! Allocate memory for X
-allocate (x(m, n), stat=alloc_status)
+allocate (x(1:m, 1:n), stat=alloc_status)
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
 call validate(allocated(x), 'X is allocated', srname)
 
@@ -276,7 +276,7 @@ call validate(n >= 0, 'N >= 0', srname)
 ! deallocated. So it is unnecessary to write the following line since F2003 as X is INTENT(OUT):
 !!if (allocated(x)) deallocate (x)
 ! Allocate memory for X
-allocate (x(n), stat=alloc_status)
+allocate (x(1:n), stat=alloc_status)
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
 call validate(allocated(x), 'X is allocated', srname)
 
@@ -311,7 +311,7 @@ call validate(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
 
 !!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
 ! Allocate memory for X
-allocate (x(m, n), stat=alloc_status)
+allocate (x(1:m, 1:n), stat=alloc_status)
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
 call validate(allocated(x), 'X is allocated', srname)
 
@@ -348,7 +348,7 @@ call validate(n >= 0, 'N >= 0', srname)
 
 !!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
 ! Allocate memory for X
-allocate (x(n), stat=alloc_status)
+allocate (x(1:n), stat=alloc_status)
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
 call validate(allocated(x), 'X is allocated', srname)
 
@@ -383,7 +383,7 @@ call validate(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
 
 !!if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
 ! Allocate memory for X
-allocate (x(m, n), stat=alloc_status)
+allocate (x(1:m, 1:n), stat=alloc_status)
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
 call validate(allocated(x), 'X is allocated', srname)
 
