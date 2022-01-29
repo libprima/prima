@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, January 28, 2022 PM04:55:12
+! Last Modified: Friday, January 28, 2022 PM09:40:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -283,9 +283,10 @@ do tr = 1, maxtr
     !shortd = (inprod(d, d) < QUART * rho**2)
     shortd = (dnorm < HALF * rho)
 
-    !enhance_resolut_1 = shortd .and. (maxval(dnormsav) <= rho)  !!! Seems quite important for performance
-    enhance_resolut_1 = .false.
-    if (shortd .and. (.not. enhance_resolut_1)) then
+    enhance_resolut_1 = shortd .and. (maxval(dnormsav) <= rho)  
+    !enhance_resolut_1 = .false.
+    !if (shortd .and. (.not. enhance_resolut_1)) then
+    if (shortd) then !!! Seems quite important for performance
         ! Reduce DELTA. After this, DELTA < DNORM may hold.
         delta = TENTH * delta
         if (delta <= 1.5_RP * rho) then
@@ -472,6 +473,7 @@ do tr = 1, maxtr
         end if
     end if
 
+    ! It seems to be a bad idea for constrained problems to include enhance_resolut_1 here.!!!
     if (enhance_resolut_1 .or. enhance_resolut) then  ! Enhance the resolution of the algorithm, updating RHO and CPEN.
         if (rho <= rhoend) then
             info = SMALL_TR_RADIUS

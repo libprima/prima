@@ -6,7 +6,7 @@ module rand_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, January 18, 2022 PM04:35:37
+! Last Modified: Saturday, January 29, 2022 PM04:12:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -56,8 +56,8 @@ call random_seed(size=n)
 ! 1. The following allocation is NOT removable even in F2003.
 ! 2. Why not using SAFEALLOC? Because the kind of SEED is the default integer, while SAFEALLOC is
 !    only implemented for INTEGER(IK), which may differ from the default integer.
-allocate (seed(n), stat=alloc_status)
-if (alloc_status /= 0) then
+allocate (seed(1:n), stat=alloc_status)
+if (.not. (alloc_status == 0 .and. allocated(seed))) then
     call errstop(srname, 'Memory allocation fails.')
 end if
 
@@ -87,13 +87,13 @@ real(DP), allocatable :: cos_seed(:)
 call random_seed(size=n)
 
 if (allocated(seed_to_put)) deallocate (seed_to_put)
-allocate (seed_to_put(n), stat=alloc_status)
-if (alloc_status /= 0) then
+allocate (seed_to_put(1:n), stat=alloc_status)
+if (.not. (alloc_status == 0 .and. allocated(seed_to_put))) then
     call errstop(srname, 'Memory allocation fails.')
 end if
 if (allocated(cos_seed)) deallocate (cos_seed)
-allocate (cos_seed(n), stat=alloc_status)
-if (alloc_status /= 0) then
+allocate (cos_seed(1:n), stat=alloc_status)
+if (.not. (alloc_status == 0 .and. allocated(cos_seed))) then
     call errstop(srname, 'Memory allocation fails.')
 end if
 
@@ -133,8 +133,8 @@ if (present(seed)) then
     call random_seed(size=n)
 
     if (allocated(seed_to_put)) deallocate (seed_to_put)
-    allocate (seed_to_put(n), stat=alloc_status)
-    if (alloc_status /= 0) then
+    allocate (seed_to_put(1:n), stat=alloc_status)
+    if (.not. (alloc_status == 0 .and. allocated(seed_to_put))) then
         call errstop(srname, 'Memory allocation fails.')
     end if
 
