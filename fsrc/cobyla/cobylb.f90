@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, January 28, 2022 PM09:40:53
+! Last Modified: Sunday, January 30, 2022 AM12:28:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -89,7 +89,7 @@ integer(IK) :: subinfo
 integer(IK) :: tr
 logical :: bad_trstep
 logical :: enhance_resolut
-logical :: enhance_resolut_1
+!logical :: enhance_resolut_1
 logical :: evaluated(size(x) + 1)
 logical :: good_geo
 logical :: improve_geo
@@ -109,7 +109,7 @@ real(RP) :: d(size(x))
 real(RP) :: delbar
 real(RP) :: delta
 real(RP) :: dnorm
-real(RP) :: dnormsav(3)
+!real(RP) :: dnormsav(3)
 real(RP) :: ffilt(size(cfilt))
 real(RP) :: fval(size(x) + 1)
 real(RP) :: prerec  ! Predicted reduction in Constraint violation
@@ -217,7 +217,7 @@ delta = rho
 cpen = ZERO
 
 ! Initialize DNORMSAVE. It contains the DNORM of the latest 3 function evaluations with the current RHO.
-dnormsav = HUGENUM
+!dnormsav = HUGENUM
 
 ! We must initialize ACTREM and PREREM. Otherwise, when SHORTD = TRUE, compilers may raise a
 ! run-time error that they are undefined. The values will not be used: when SHORTD = FALSE, they
@@ -245,7 +245,7 @@ do tr = 1, maxtr
     ! Before the trust-region step, UPDATEPOLE has been called either implicitly by INITXFC/UPDATEXFC
     ! or explicitly after CPEN is updated, so that SIM(:, N + 1) is the optimal vertex.
 
-    ! Does the current interpolation set has good geometry? It affects IMPROVE_GEO and REDUCE_RHO.
+    ! Does the current interpolation set have good geometry? It affects IMPROVE_GEO and REDUCE_RHO.
     !!----------------------------------------------------------------------------------!
     !good_geo = goodgeo(factor_alpha, factor_beta, rho, sim, simi)
     good_geo = goodgeo(factor_alpha, factor_beta, delta, sim, simi) !???
@@ -262,9 +262,9 @@ do tr = 1, maxtr
     A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
 
     ! Exit if A contains NaN. Otherwise, TRSTLP may encounter memory errors or infinite loops.
-    ! HOW EXACTLY?????
+    ! (HOW EXACTLY?????)
     !----------------------------------------------------------------------------------------------!
-    ! POSSIBLE IMPROVEMENT: INSTEAD OF EXITING, SKIP A TRUST-REGION STEP AND PERFORM A GEOMETRY ONE!
+    ! Possible improvement: Instead of exiting, skip a trust-region step and perform a geometry one!
     !----------------------------------------------------------------------------------------------!
     if (any(is_nan(A))) then
         info = NAN_MODEL
@@ -281,12 +281,15 @@ do tr = 1, maxtr
 
     ! Is the trust-region trial step short?
     !shortd = (inprod(d, d) < QUART * rho**2)
-    shortd = (dnorm < HALF * rho)
+    !shortd = (dnorm < HALF * rho)
+    !shortd = (dnorm < QUART * rho) ! Seems better than the above setting
+    shortd = (dnorm < TENTH * rho) ! Seems better than the above setting, especially for linearly constrained problems
 
-    enhance_resolut_1 = shortd .and. (maxval(dnormsav) <= rho)  
+    !enhance_resolut_1 = shortd .and. (maxval(dnormsav) <= rho)
     !enhance_resolut_1 = .false.
     !if (shortd .and. (.not. enhance_resolut_1)) then
-    if (shortd) then !!! Seems quite important for performance
+    !if (shortd .and. good_geo) then !!! Seems quite important for performance
+    if (shortd) then !!! Seems quite important for performance; seems better than the above settings
         ! Reduce DELTA. After this, DELTA < DNORM may hold.
         delta = TENTH * delta
         if (delta <= 1.5_RP * rho) then
@@ -294,10 +297,9 @@ do tr = 1, maxtr
         end if
     end if
 
-
     if (.not. shortd) then
         ! DNORMSAVE contains the DNORM of the latest 3 function evaluations with the current RHO.
-        dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
+        !dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
         ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
         preref = inprod(d, A(:, m + 1))
@@ -312,14 +314,12 @@ do tr = 1, maxtr
                 call cpenmsg(solver, iprint, cpen)
                 if (findpole(cpen, cval, fval) <= n) then
                     ! Zaikun 20211111: Can this lead to infinite cycling?
-                    !-----------------------------------------------------------------------!
                     call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
                     ! Check whether to exit due to damaging rounding detected in UPDATEPOLE.
                     if (subinfo == DAMAGING_ROUNDING) then
                         info = subinfo
                         exit  ! Better action to take? Geometry step?
                     end if
-                    !-----------------------------------------------------------------------!
                     cycle
                 end if
             end if
@@ -385,10 +385,12 @@ do tr = 1, maxtr
 
     ! Should we take a geometry step to improve the geometry of the interpolation set?
     ! N.B.: THEORETICALLY, JDROP_TR > 0 when ACTREM > 0, and hence the definition of BAD_TRSTEP is
-    ! mathematically equivalent to (SHORTD .OR. ACTREM <= ZERO .OR. ACTREM < TENTH * PREREM).
-    ! However, Powell's code can set JDROP_TR = 0 when ACTREM >0 due to NaN. This has been rectified
-    ! in the subroutine SETDROP_TR. Nevertheless, we still keep JDROP_TR == 0 for robustness.
-    bad_trstep = (shortd .or. actrem <= ZERO .or. actrem < TENTH * prerem .or. jdrop_tr == 0)
+    ! mathematically equivalent to (SHORTD .OR. ACTREM <= ZERO .OR. ACTREM < TENTH * PREREM). Yet
+    ! Powell's code can set JDROP_TR = 0 when ACTREM > 0 due to NaN. This has been rectified in the
+    ! subroutine SETDROP_TR. Nevertheless, we still keep JDROP_TR == 0 for robustness.
+    !bad_trstep = (shortd .or. actrem <= ZERO .or. actrem < TENTH * prerem .or. jdrop_tr == 0)
+    ! The following seems work better than the above, especially for linearly constrained problems
+    bad_trstep = (shortd .or. actrem <= ZERO .or. jdrop_tr == 0)
     improve_geo = bad_trstep .and. .not. good_geo
 
     ! Should we enhance the resolution by reducing RHO?
@@ -446,7 +448,7 @@ do tr = 1, maxtr
             dnorm = min(delbar, norm(d))  ! In theory, DNORM = DELBAR in this case.
             !------------------------------------------------------------------------------------------!
             ! DNORMSAVE contains the DNORM of the latest 3 function evaluations with the current RHO.
-            dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
+            !dnormsav = [dnormsav(2:size(dnormsav)), dnorm]
 
             x = sim(:, n + 1) + d
             ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
@@ -474,7 +476,8 @@ do tr = 1, maxtr
     end if
 
     ! It seems to be a bad idea for constrained problems to include enhance_resolut_1 here.!!!
-    if (enhance_resolut_1 .or. enhance_resolut) then  ! Enhance the resolution of the algorithm, updating RHO and CPEN.
+    !if (enhance_resolut_1 .or. enhance_resolut) then  ! Enhance the resolution of the algorithm, updating RHO and CPEN.
+    if (enhance_resolut) then  ! Enhance the resolution of the algorithm, updating RHO and CPEN.
         if (rho <= rhoend) then
             info = SMALL_TR_RADIUS
             exit
@@ -485,18 +488,16 @@ do tr = 1, maxtr
         delta = max(delta, rho)
 
         call rhomsg(solver, iprint, nf, fval(n + 1), rho, sim(:, n + 1), cval(n + 1), conmat(:, n + 1), cpen)
-        !-----------------------------------------------------------------------!
         call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
         ! Check whether to exit due to damaging rounding detected in UPDATEPOLE.
         if (subinfo == DAMAGING_ROUNDING) then
             info = subinfo
             exit  ! Better action to take? Geometry step?
         end if
-        !-----------------------------------------------------------------------!
 
-        ! DNORMSAVE and MODERRSAVE are corresponding to the latest 3 function evaluations with
-        ! the current RHO. Update them after reducing RHO.
-        dnormsav = HUGENUM
+        ! DNORMSAVE corresponds to the latest 3 function evaluations with the current RHO. Update
+        ! it after reducing RHO.
+        !dnormsav = HUGENUM
     end if
 end do
 
