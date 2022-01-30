@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, January 30, 2022 PM11:12:22
+! Last Modified: Monday, January 31, 2022 AM01:57:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -17,7 +17,7 @@ public :: goodgeo, setdrop_geo, setdrop_tr, geostep
 contains
 
 
-function goodgeo(factor_alpha, factor_beta, rho, sim, simi) result(good_geo)
+function goodgeo(delta, factor_alpha, factor_beta, sim, simi) result(good_geo)
 !--------------------------------------------------------------------------------------------------!
 ! This function checks whether an interpolation set has good geometry as (14) of the COBYLA paper.
 !--------------------------------------------------------------------------------------------------!
@@ -31,9 +31,9 @@ use, non_intrinsic :: linalg_mod, only : isinv
 implicit none
 
 ! Inputs
+real(RP), intent(in) :: delta
 real(RP), intent(in) :: factor_alpha
 real(RP), intent(in) :: factor_beta
-real(RP), intent(in) :: rho
 real(RP), intent(in) :: sim(:, :)
 real(RP), intent(in) :: simi(:, :)
 
@@ -60,7 +60,7 @@ if (DEBUGGING) then
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)), 'SIMI is finite', srname)
     call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
-    call assert(rho > 0, 'RHO > 0', srname)
+    call assert(delta > 0, 'DELTA > 0', srname)
     call assert(factor_alpha > 0 .and. factor_alpha < 1, '0 < FACTOR_ALPHA < 1', srname)
     call assert(factor_beta > 1, 'FACTOR_BETA > 1', srname)
 end if
@@ -70,8 +70,8 @@ end if
 !====================!
 
 ! Calculate the values of sigma and eta.
-parsig = factor_alpha * rho
-pareta = factor_beta * rho
+parsig = factor_alpha * delta
+pareta = factor_beta * delta
 ! VETA(J) (1 <= J <= N) is the distance between vertices J and 0 (the best vertex) of the simplex.
 ! VSIG(J) is the distance from vertex J to the opposite face of the simplex. Thus VSIG <= VETA.
 ! But what about vertex N+1?
@@ -85,7 +85,7 @@ good_geo = all(vsig >= parsig) .and. all(veta <= pareta)
 end function goodgeo
 
 
-function setdrop_tr(actrem, d, factor_alpha, factor_delta, rho, sim, simi) result(jdrop)
+function setdrop_tr(actrem, d, delta, factor_alpha, factor_delta, sim, simi) result(jdrop)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine finds (the index) of a current interpolation point to be replaced by the
 ! trust-region trial point. See (19)--(22) of the COBYLA paper.
@@ -105,9 +105,9 @@ implicit none
 ! Inputs
 real(RP), intent(in) :: actrem
 real(RP), intent(in) :: d(:)
+real(RP), intent(in) :: delta
 real(RP), intent(in) :: factor_alpha
 real(RP), intent(in) :: factor_delta
-real(RP), intent(in) :: rho
 real(RP), intent(in) :: sim(:, :)
 real(RP), intent(in) :: simi(:, :)
 
@@ -158,8 +158,8 @@ if (actrem > ZERO) then
 else
     veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
 end if
-edgmax = factor_delta * rho
-parsig = factor_alpha * rho
+edgmax = factor_delta * delta
+parsig = factor_alpha * delta
 vsig = ONE / sqrt(sum(simi**2, dim=2))
 sigbar = abs(simid) * vsig
 ! The following JDROP will overwrite the previous one if its premise holds.
@@ -190,7 +190,7 @@ end if
 end function setdrop_tr
 
 
-function setdrop_geo(factor_alpha, factor_beta, rho, sim, simi) result(jdrop)
+function setdrop_geo(delta, factor_alpha, factor_beta, sim, simi) result(jdrop)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine finds (the index) of a current interpolation point to be replaced by
 ! a geometry-improving point. See (15)--(16) of the COBYLA paper.
@@ -206,11 +206,11 @@ use, non_intrinsic :: linalg_mod, only : isinv
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: sim(:, :)
-real(RP), intent(in) :: simi(:, :)
+real(RP), intent(in) :: delta
 real(RP), intent(in) :: factor_alpha
 real(RP), intent(in) :: factor_beta
-real(RP), intent(in) :: rho
+real(RP), intent(in) :: sim(:, :)
+real(RP), intent(in) :: simi(:, :)
 
 ! Outputs
 integer(IK) :: jdrop
@@ -242,8 +242,8 @@ end if
 !====================!
 
 ! Calculate the values of sigma and eta.
-parsig = factor_alpha * rho
-pareta = factor_beta * rho
+parsig = factor_alpha * delta
+pareta = factor_beta * delta
 ! VSIG(J) (J=1, .., N) is The Euclidean distance from vertex J to the opposite face of
 ! the current simplex. But what about vertex N+1?
 vsig = ONE / sqrt(sum(simi**2, dim=2))
@@ -272,7 +272,7 @@ end if
 end function setdrop_geo
 
 
-function geostep(jdrop, cpen, conmat, cval, fval, factor_gamma, rho, simi) result(d)
+function geostep(jdrop, cpen, conmat, cval, delta, fval, factor_gamma, simi) result(d)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates a geometry step so that the geometry of the interpolation set is improved
 ! when SIM(:, JDRO_GEO) is replaced by SIM(:, N+1) + D.
@@ -291,9 +291,9 @@ integer(IK), intent(in) :: jdrop
 real(RP), intent(in) :: conmat(:, :)
 real(RP), intent(in) :: cpen
 real(RP), intent(in) :: cval(:)
+real(RP), intent(in) :: delta
 real(RP), intent(in) :: factor_gamma
 real(RP), intent(in) :: fval(:)
-real(RP), intent(in) :: rho
 real(RP), intent(in) :: simi(:, :)
 
 ! Outputs
@@ -335,9 +335,9 @@ end if
 ! JDROP. Thus VSIGJ * SIMI(JDROP, :) is the unit vector in this direction.
 vsigj = ONE / sqrt(sum(simi(jdrop, :)**2))
 
-! Set D to the vector in the above-mentioned direction and with length FACTOR_GAMMA * RHO. Since
+! Set D to the vector in the above-mentioned direction and with length FACTOR_GAMMA * DELTA. Since
 ! FACTOR_ALPHA < FACTOR_GAMMA < FACTOR_BETA, D improves the geometry of the simplex as per GOODGEO.
-d = factor_gamma * rho * (vsigj * simi(jdrop, :))
+d = factor_gamma * delta * (vsigj * simi(jdrop, :))
 
 ! Calculate the coefficients of the linear approximations to the objective and constraint functions,
 ! placing minus the objective function gradient after the constraint gradients in the array A.
@@ -359,7 +359,7 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
-    call assert(norm(d) <= TWO * factor_gamma * rho, '|D| <= 2*FACTOR_GAMMA*RHO', srname)
+    call assert(norm(d) <= TWO * factor_gamma * delta, '|D| <= 2*FACTOR_GAMMA*DELTA', srname)
 end if
 end function geostep
 

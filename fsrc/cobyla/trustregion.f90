@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Monday, January 31, 2022 AM01:10:07
+! Last Modified: Monday, January 31, 2022 AM01:59:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -18,19 +18,19 @@ public :: trrad
 contains
 
 
-function trstlp(A, b, rho) result(d)
+function trstlp(A, b, delta) result(d)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine calculates an N-component vector D by the following two stages. In the first
 ! stage, D is set to the shortest vector that minimizes the greatest violation of the constraints
 !       dot_product(A(1:N, K), D) >= B(K),  K = 1, 2, 3, ..., M,
-! subject to the Euclidean length of D being at most RHO. If its length is strictly less than RHO,
+! subject to the Euclidean length of D being at most DELTA. If its length is strictly less than DELTA,
 ! then we use the resultant freedom in D to minimize the objective function
 !       dot_product(-A(1:N, M+1), D)
 ! subject to no increase in any greatest constraint violation. This notation allows the gradient of
 ! the objective function to be regarded as the gradient of a constraint. Therefore the two stages
 ! are distinguished by MCON == M and MCON > M respectively.
 !
-! It is possible but rare that a degeneracy may prevent D from attaining the target length RHO.
+! It is possible but rare that a degeneracy may prevent D from attaining the target length DELTA.
 !
 ! CSTRV is the largest constraint violation of the current D: MAXVAL([B(1:M)-A(:,1:M)^T*D), ZERO]).
 ! ICON is the index of a most violated constraint if CSTRV is positive.
@@ -63,7 +63,7 @@ implicit none
 ! Inputs
 real(RP), intent(in) :: A(:, :)  ! (N, M+1)
 real(RP), intent(in) :: b(:)  ! M+1
-real(RP), intent(in) :: rho
+real(RP), intent(in) :: delta
 
 ! Outputs
 real(RP) :: d(size(A, 1))  ! N
@@ -89,8 +89,8 @@ end if
 ! Calculation starts !
 !====================!
 
-call trstlp_sub(iact(1:m), nact, 1_IK, A(:, 1:m), b(1:m), rho, d, vmultc(1:m), z)
-call trstlp_sub(iact, nact, 2_IK, A, b, rho, d, vmultc, z)
+call trstlp_sub(iact(1:m), nact, 1_IK, A(:, 1:m), b(1:m), delta, d, vmultc(1:m), z)
+call trstlp_sub(iact, nact, 2_IK, A, b, delta, d, vmultc, z)
 
 !====================!
 !  Calculation ends  !
@@ -100,7 +100,7 @@ call trstlp_sub(iact, nact, 2_IK, A, b, rho, d, vmultc, z)
 if (DEBUGGING) then
     call assert(size(d) == size(A, 1), 'SIZE(D) == SIZE(A, 1)', srname)
     call assert(all(is_finite(d)), 'D is finite', srname)
-    call assert(norm(d) <= TWO * rho, '|D| <= 2*RHO', srname)
+    call assert(norm(d) <= TWO * delta, '|D| <= 2*DELTA', srname)
 end if
 end function trstlp
 
@@ -114,7 +114,7 @@ end function trstlp
 !--------------------------------------------------------------------------------------------------!
 
 
-subroutine trstlp_sub(iact, nact, stage, A, b, rho, d, vmultc, z)
+subroutine trstlp_sub(iact, nact, stage, A, b, delta, d, vmultc, z)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine does the real calculations for TRSTLP, both stage 1 and stage 2.
 ! Major differences between stage 1 and stage 2:
@@ -137,7 +137,7 @@ implicit none
 integer(IK), intent(in) :: stage
 real(RP), intent(in) :: A(:, :)  ! (N, MCON)
 real(RP), intent(in) :: b(:)  ! MCON
-real(RP), intent(in) :: rho
+real(RP), intent(in) :: delta
 
 ! In-outputs
 integer(IK), intent(inout) :: iact(:)  ! MCON
@@ -189,10 +189,10 @@ if (DEBUGGING) then
     call assert(size(vmultc) == mcon, 'SIZE(VMULTC) == MCON', srname)
     call assert(size(d) == n, 'SIZE(D) == N', srname)
     call assert(size(z, 1) == n .and. size(z, 2) == n, 'SIZE(Z) == [N, N]', srname)
-    call assert(rho > 0, 'RHO > 0', srname)
+    call assert(delta > 0, 'DELTA > 0', srname)
     if (stage == 2) then
-        call assert(all(is_finite(d)) .and. norm(d) <= TWO * rho, &
-            & 'D is finite and |D| <= 2*RHO at the beginning of stage 2', srname)
+        call assert(all(is_finite(d)) .and. norm(d) <= TWO * delta, &
+            & 'D is finite and |D| <= 2*DELTA at the beginning of stage 2', srname)
         call assert((nact >= 0 .and. nact <= min(mcon, n)), &
             & '0 <= NACT <= MIN(MCON, N) at the beginning of stage 2', srname)
         call assert(all(vmultc(1:mcon - 1) >= 0), 'VMULTC >= 0 at the beginning of stage 2', srname)
@@ -225,7 +225,7 @@ if (stage == 1) then
     m = mcon
     sdirn = ZERO
 else
-    if (inprod(d, d) >= rho**2) then
+    if (inprod(d, d) >= delta**2) then
         ! Check whether a quick return is possible.
         return
     end if
@@ -419,7 +419,7 @@ do iter = 1, maxiter
     ! We also found that removing the precaution about underflows is beneficial to the overall
     ! performance of COBYLA --- the underflows are harmless anyway.
     !----------------------------------------------------------------!
-    dd = rho**2 - inprod(d, d)
+    dd = delta**2 - inprod(d, d)
     ss = inprod(sdirn, sdirn)
     if (dd <= 0 .or. ss <= 0) then
         exit
@@ -436,7 +436,7 @@ do iter = 1, maxiter
     ! PRECISION). Further, we skip the step if it could be zero within
     ! a reasonable tolerance for computer rounding errors.
     !
-    !!dd = rho**2 - sum(d**2, mask=(abs(d) >= EPS * rho))
+    !!dd = delta**2 - sum(d**2, mask=(abs(d) >= EPS * delta))
     !!ss = inprod(sdirn, sdirn)
     !!if (dd  <= 0) then
     !!    exit
@@ -528,7 +528,7 @@ if (DEBUGGING) then
     call assert(all(vmultc >= 0), 'VMULTC >= 0', srname)
     call assert(size(d) == n, 'SIZE(D) == N', srname)
     call assert(all(is_finite(d)), 'D is finite', srname)
-    call assert(norm(d) <= TWO * rho, '|D| <= 2*RHO', srname)
+    call assert(norm(d) <= TWO * delta, '|D| <= 2*DELTA', srname)
     call assert(size(z, 1) == n .and. size(z, 2) == n, 'SIZE(Z) == [N, N]', srname)
     call assert(nact >= 0 .and. nact <= min(mcon, n), '0 <= NACT <= MIN(MCON, N)', srname)
 end if

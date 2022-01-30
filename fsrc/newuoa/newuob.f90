@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, January 31, 2022 AM01:29:02
+! Last Modified: Monday, January 31, 2022 AM02:00:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -241,7 +241,7 @@ do tr = 1, maxtr
     reduce_rho_1 = shortd .and. (maxval(abs(moderrsav)) <= 0.125_RP * crvmin * rho**2) .and. &
         & (maxval(dnormsav) <= rho)
     if (shortd .and. (.not. reduce_rho_1)) then
-        ! Reduce DELTA. After this, DELTA < DNORM may hold.
+        ! Reduce DELTA. After this, DELTA < DNORM may happen.
         delta = TENTH * delta
         if (delta <= 1.5_RP * rho) then
             delta = rho  ! Set DELTA to RHO when it is close.
