@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, January 28, 2022 PM09:17:19
+! Last Modified: Sunday, January 30, 2022 PM10:13:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -306,7 +306,7 @@ integer(IK) :: n
 real(RP) :: A(size(simi, 1), size(conmat, 1) + 1)
 real(RP) :: cvmaxn
 real(RP) :: cvmaxp
-real(RP) :: vsig(size(simi, 1))
+real(RP) :: vsigj
 
 ! Sizes
 m = int(size(conmat, 1), kind(m))
@@ -331,10 +331,10 @@ end if
 ! Calculation starts !
 !====================!
 
-! VSIG(J) (J=1, .., N) is The Euclidean distance from vertex J to the opposite face of
-! the current simplex. But what about vertex N+1?
-vsig = ONE / sqrt(sum(simi**2, dim=2))
-d = factor_gamma * rho * vsig(jdrop) * simi(jdrop, :)
+! SIMI(JDROP, :) is a vector perpendicular to the face of the simplex to the opposite of vertex
+! JDROP. Thus VSIGJ * SIMI(JDROP, :) is the unit vector in this direction.
+vsigj = ONE / sqrt(sum(simi(jdrop, :)**2))
+d = factor_gamma * rho * (vsigj * simi(jdrop, :))  ! |D| = FACTOR_GAMMA * RHO
 ! Calculate the coefficients of the linear approximations to the objective and constraint functions,
 ! placing minus the objective function gradient after the constraint gradients in the array A.
 ! When __USE_INTRINSIC_ALGEBRA__ = 1, the following code may not produce the same result as
@@ -355,7 +355,7 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
-    call assert(norm(d) <= TWO * rho, '|D| <= 2*RHO', srname)
+    call assert(norm(d) <= TWO * factor_gamma * rho, '|D| <= 2*FACTOR_GAMMA*RHO', srname)
 end if
 end function geostep
 

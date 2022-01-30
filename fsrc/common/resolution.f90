@@ -7,7 +7,7 @@ module resolution_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Friday, January 28, 2022 PM06:58:34
+! Last Modified: Sunday, January 30, 2022 PM10:41:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -81,7 +81,7 @@ end if
 end subroutine resenhance_unc
 
 
-subroutine resenhance_nlc(conmat, fval, rhoend, cpen, rho)
+subroutine resenhance_nlc(conmat, fval, rhoend, cpen, delta, rho)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine enhances the resolution of the solver in the nonlinearly constrained case.
 !--------------------------------------------------------------------------------------------------!
@@ -96,12 +96,14 @@ real(RP), intent(in) :: rhoend
 
 ! In-outputs
 real(RP), intent(inout) :: cpen
+real(RP), intent(inout) :: delta
 real(RP), intent(inout) :: rho
 
 ! Local variables
 real(RP) :: cmax(size(conmat, 1))
 real(RP) :: cmin(size(conmat, 1))
 real(RP) :: cpen_old
+real(RP) :: delta_old
 real(RP) :: denom
 real(RP) :: rho_old
 real(RP) :: rho_ratio
@@ -121,6 +123,7 @@ end if
 
 ! Record the values of RHO and CPEN for checking.
 rho_old = rho
+delta_old = delta
 cpen_old = cpen
 
 ! See equation (11) in Section 3 of the COBYLA paper for the update of RHO.
@@ -129,6 +132,7 @@ cpen_old = cpen
 !    rho = rhoend
 !end if
 ! The following scheme is taken from NEWUOA. It seems to work better than the one above.
+delta = HALF * rho
 rho_ratio = rho / rhoend
 if (rho_ratio <= 16.0_RP) then
     rho = rhoend
@@ -137,6 +141,7 @@ elseif (rho_ratio <= 250.0_RP) then
 else
     rho = TENTH * rho
 end if
+delta = max(delta, rho)
 
 ! See equations (12)--(13) in Section 3 of the COBYLA paper for the update of CPEN.
 ! If the original CPEN = 0, then the updated CPEN is also 0.
@@ -156,6 +161,7 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(rho < rho_old .and. rho >= rhoend, 'RHEND <= RHO < RHO_OLD', srname)
+    call assert(delta < delta_old .and. delta >= rho, 'RHO <= DELTA < DELTA_OLD', srname)
     call assert(cpen <= cpen_old .and. cpen >= ZERO, '0 <= CPEN <= CPEN_OLD', srname)
 end if
 end subroutine resenhance_nlc
