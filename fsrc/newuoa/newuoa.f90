@@ -19,7 +19,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, January 23, 2022 PM04:00:22
+! Last Modified: Sunday, January 30, 2022 PM12:26:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -58,10 +58,10 @@ subroutine newuoa(calfun, x, f, &
 !   value to the REAL(RP) scalar F. It must be provided by the user, and its definition must conform
 !   to the following interface:
 !   !-------------------------------------------------------------------------!
-!   !subroutine calfun(x, f)
-!   !real(RP), intent(in) :: x(:)
-!   !real(RP), intent(out) :: f
-!   !end subroutine calfun
+!    subroutine calfun(x, f)
+!    real(RP), intent(in) :: x(:)
+!    real(RP), intent(out) :: f
+!    end subroutine calfun
 !   !-------------------------------------------------------------------------!
 !
 ! X
