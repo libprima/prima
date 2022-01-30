@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, January 28, 2022 PM02:29:58
+! Last Modified: Monday, January 31, 2022 AM01:29:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -59,7 +59,7 @@ use, non_intrinsic :: linalg_mod, only : calquad, inprod, norm
 use, non_intrinsic :: output_mod, only : retmsg, rhomsg, fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: ratio_mod, only : redrat
-use, non_intrinsic :: resolution_mod, only : resenhance
+use, non_intrinsic :: redrho_mod, only : redrho
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_mod, only : setdrop_tr, geostep
@@ -465,7 +465,9 @@ do tr = 1, maxtr
             info = SMALL_TR_RADIUS
             exit
         else
-            call resenhance(rhoend, delta, rho)
+            delta = HALF * rho
+            rho = redrho(rho, rhoend)
+            delta = max(delta, rho)
             call rhomsg(solver, iprint, nf, fopt, rho, xbase + xopt)
             ! DNORMSAVE and MODERRSAVE are corresponding to the latest 3 function evaluations with
             ! the current RHO. Update them after reducing RHO.

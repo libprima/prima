@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Sunday, January 30, 2022 AM01:30:51
+! Last Modified: Monday, January 31, 2022 AM01:10:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -536,7 +536,7 @@ end if
 end subroutine trstlp_sub
 
 
-function trrad(delta0, dnorm, eta1, eta2, gamma1, gamma2, ratio) result(delta)
+function trrad(delta_in, dnorm, eta1, eta2, gamma1, gamma2, ratio) result(delta)
 !--------------------------------------------------------------------------------------------------!
 ! This function updates the trust region radius according to RATIO and DNORM.
 !--------------------------------------------------------------------------------------------------!
@@ -549,7 +549,7 @@ use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Input
-real(RP), intent(in) :: delta0   ! Current trust-region radius
+real(RP), intent(in) :: delta_in   ! Current trust-region radius
 real(RP), intent(in) :: dnorm   ! Norm of current trust-region step
 real(RP), intent(in) :: eta1    ! Ratio threshold for contraction
 real(RP), intent(in) :: eta2    ! Ratio threshold for expansion
@@ -565,7 +565,7 @@ character(len=*), parameter :: srname = 'TRRAD'
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(delta0 >= dnorm .and. dnorm > 0, 'DELTA0 >= DNORM > 0', srname)
+    call assert(delta_in >= dnorm .and. dnorm > 0, 'DELTA_IN >= DNORM > 0', srname)
     call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
     call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
     call assert(gamma1 > 0 .and. gamma1 < 1 .and. gamma2 > 1, '0 < GAMMA1 < 1 < GAMMA2', srname)
@@ -581,19 +581,19 @@ end if
 if (ratio <= eta1) then
     delta = gamma1 * dnorm
 elseif (ratio <= eta2) then
-    delta = max(HALF * delta0, dnorm)
+    delta = max(HALF * delta_in, dnorm)
 else
-    !delta = max(HALF * delta0, gamma2 * dnorm)
-    delta = max(delta0, gamma2 * dnorm)
+    !delta = max(HALF * delta_in, gamma2 * dnorm)
+    delta = max(delta_in, gamma2 * dnorm)
 end if
 
 ! For noisy problems, the following may work better.
 !!if (ratio <= eta1) then
 !!    delta = gamma1 * dnorm
-!!elseif (ratio <= eta2) then  ! Ensure DELTA >= DELTA0
-!!    delta = delta0
-!!else  ! Ensure DELTA > DELTA0 with a constant factor
-!!    delta = max(delta0 * (1.0_RP + gamma2) / 2.0_RP, gamma2 * dnorm)
+!!elseif (ratio <= eta2) then  ! Ensure DELTA >= DELTA_IN
+!!    delta = delta_in
+!!else  ! Ensure DELTA > DELTA_IN with a constant factor
+!!    delta = max(delta_in * (1.0_RP + gamma2) / 2.0_RP, gamma2 * dnorm)
 !!end if
 
 !====================!

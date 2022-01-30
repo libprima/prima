@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, January 30, 2022 PM10:13:48
+! Last Modified: Sunday, January 30, 2022 PM11:12:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -334,7 +334,11 @@ end if
 ! SIMI(JDROP, :) is a vector perpendicular to the face of the simplex to the opposite of vertex
 ! JDROP. Thus VSIGJ * SIMI(JDROP, :) is the unit vector in this direction.
 vsigj = ONE / sqrt(sum(simi(jdrop, :)**2))
-d = factor_gamma * rho * (vsigj * simi(jdrop, :))  ! |D| = FACTOR_GAMMA * RHO
+
+! Set D to the vector in the above-mentioned direction and with length FACTOR_GAMMA * RHO. Since
+! FACTOR_ALPHA < FACTOR_GAMMA < FACTOR_BETA, D improves the geometry of the simplex as per GOODGEO.
+d = factor_gamma * rho * (vsigj * simi(jdrop, :))
+
 ! Calculate the coefficients of the linear approximations to the objective and constraint functions,
 ! placing minus the objective function gradient after the constraint gradients in the array A.
 ! When __USE_INTRINSIC_ALGEBRA__ = 1, the following code may not produce the same result as

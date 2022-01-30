@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, January 30, 2022 PM10:39:52
+! Last Modified: Monday, January 31, 2022 AM01:19:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -33,7 +33,7 @@ use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: output_mod, only : retmsg, rhomsg, fmsg, cpenmsg
 use, non_intrinsic :: pintrf_mod, only : OBJCON
 use, non_intrinsic :: ratio_mod, only : redrat
-use, non_intrinsic :: resolution_mod, only : resenhance
+use, non_intrinsic :: redrho_mod, only : redrho
 use, non_intrinsic :: selectx_mod, only : savefilt, selectx, isbetter
 
 ! Solver-specific modules
@@ -88,8 +88,7 @@ integer(IK) :: nfilt
 integer(IK) :: subinfo
 integer(IK) :: tr
 logical :: bad_trstep
-logical :: enhance_resolut
-!logical :: enhance_resolut_1
+logical :: reduce_rho
 logical :: evaluated(size(x) + 1)
 logical :: good_geo
 logical :: improve_geo
@@ -277,7 +276,7 @@ do tr = 1, maxtr
 
     if (shortd) then
         ! Reduce DELTA if D is short. It seems quite important for performance.
-        delta = TENTH * delta 
+        delta = TENTH * delta
         if (delta <= 1.5_RP * rho) then
             delta = rho  ! Set DELTA to RHO when it is close.
         end if
@@ -376,7 +375,7 @@ do tr = 1, maxtr
     improve_geo = bad_trstep .and. .not. good_geo
 
     ! Should we enhance the resolution by reducing RHO?
-    enhance_resolut = bad_trstep .and. good_geo .and. (max(delta, dnorm) <= rho)
+    reduce_rho = bad_trstep .and. good_geo .and. (max(delta, dnorm) <= rho)
 
     ! Improve the geometry of the simplex by removing a point and adding a new one.
     if (improve_geo) then
@@ -439,14 +438,16 @@ do tr = 1, maxtr
         end if
     end if
 
-    ! Enhance the resolution of the algorithm by shrinking RHO; update DELTA, CPEN at the same time.
-    if (enhance_resolut) then
+    ! Enhance the resolution of the algorithm by reducing RHO; update DELTA and CPEN at the same time.
+    if (reduce_rho) then
         if (rho <= rhoend) then
             info = SMALL_TR_RADIUS
             exit
         end if
-
-        call resenhance(conmat, fval, rhoend, cpen, delta, rho)
+        delta = HALF * rho
+        rho = redrho(rho, rhoend)
+        delta = max(delta, rho)
+        cpen = min(cpen, fcratio(fval, conmat))
         call rhomsg(solver, iprint, nf, fval(n + 1), rho, sim(:, n + 1), cval(n + 1), conmat(:, n + 1), cpen)
         call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
         ! Check whether to exit due to damaging rounding detected in UPDATEPOLE.
@@ -498,6 +499,58 @@ if (DEBUGGING) then
 end if
 
 end subroutine cobylb
+
+
+function fcratio(fval, conmat) result(r)
+!--------------------------------------------------------------------------------------------------!
+! This function calculates the ratio between the "typical change" of F and that of CONSTR.
+! See equations (12)--(13) in Section 3 of the COBYLA paper for the definition of the ratio.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP, ZERO, HALF, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+implicit none
+
+! Inputs
+real(RP), intent(in) :: fval(:)
+real(RP), intent(in) :: conmat(:, :)
+
+! Outputs
+real(RP) :: r
+
+! Local variables
+real(RP) :: cmax(size(conmat, 1))
+real(RP) :: cmin(size(conmat, 1))
+real(RP) :: denom
+character(len=*), parameter :: srname = 'FCRATIO'
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(size(fval) >= 1, 'SIZE(FVAL) >= 1', srname)
+    call assert(size(conmat, 2) == size(fval), 'SIZE(CONMAT, 2) == SIZE(FVAL)', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+cmin = minval(conmat, dim=2)
+cmax = maxval(conmat, dim=2)
+if (any(cmin < HALF * cmax)) then
+    denom = minval(max(cmax, ZERO) - cmin, mask=(cmin < HALF * cmax))
+    r = (maxval(fval) - minval(fval)) / denom
+else
+    r = ZERO
+end if
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(r >= 0, 'R >= 0', srname)
+end if
+end function fcratio
 
 
 end module cobylb_mod

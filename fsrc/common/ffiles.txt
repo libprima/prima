@@ -8,7 +8,7 @@ circle.f90
 string.f90
 rand.f90
 ratio.f90
-resolution.f90
+redrho.f90
 history.f90
 selectx.f90
 checkexit.f90
