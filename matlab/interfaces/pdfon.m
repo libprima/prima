@@ -210,6 +210,8 @@ function [x, fx, exitflag, output] = pdfon(varargin)
 %       output structure will include fields "nlcihist" and "nlcehist",
 %       which respectively contain the inequality and equality constraint
 %       values of the last maxhist iterates of the algorithm; default: false
+%   *** maxfilt: a nonnegative integer indicating the maximal length of the
+%       "filter" used for selecting the returned solution; default: 2000
 %   *** debug: a boolean value indicating whether to debug or not; default: false
 %   *** chkfunval: a boolean value indicating whether to verify the returned
 %       function and constraint (if applicable) values or not; default: false

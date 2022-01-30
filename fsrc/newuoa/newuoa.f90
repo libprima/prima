@@ -149,11 +149,11 @@ subroutine newuoa(calfun, x, f, &
 !       the value of MAXTR being 2*MAXFUN, which is UNLIKELY to reach;
 !   NAN_INF_X: NaN or Inf occurs in x;
 !   !--------------------------------------------------------------------------!
-!   The following cases should NEVER occur unless there is a bug, because the
-!   code will try to continue in the corresponding scenarios.
-!   NAN_INF_F: the objective function returns NaN or +Inf
+!   The following case(s) should NEVER occur unless there is a bug, because the
+!   modernized code will try to continue in the corresponding scenario(s).
+!   NAN_INF_F: the objective function returns NaN or +Inf;
 !   NAN_MODEL: NaN occurs in the model;
-!   TRSUBP_FAILED: a trust region step failed to reduce the quadratic model
+!   TRSUBP_FAILED: a trust region step failed to reduce the model
 !   !--------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 

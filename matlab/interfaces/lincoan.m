@@ -153,6 +153,8 @@ function [x, fx, exitflag, output] = lincoan(varargin)
 %       history of the iterates; if it is set to true, then the output
 %       structure will include a field "xhist", which contains the last
 %       maxhist iterates of the algorithm; default: false;
+%   *** maxfilt: a nonnegative integer indicating the maximal length of the
+%       "filter" used for selecting the returned solution; default: 2000
 %   *** debug: a boolean value indicating whether to debug or not; default: false
 %   *** chkfunvsl: a boolean value indicating whether to verify the returned
 %       function value or not; default: false
