@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, January 31, 2022 AM01:19:34
+! Last Modified: Monday, January 31, 2022 AM02:01:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -239,7 +239,7 @@ do tr = 1, maxtr
     ! or explicitly after CPEN is updated, so that SIM(:, N + 1) is the optimal vertex.
 
     ! Does the current interpolation set have good geometry? It affects IMPROVE_GEO and REDUCE_RHO.
-    good_geo = goodgeo(factor_alpha, factor_beta, delta, sim, simi)
+    good_geo = goodgeo(delta, factor_alpha, factor_beta, sim, simi)
 
     ! Calculate the linear approximations to the objective and constraint functions, placing minus
     ! the objective function gradient after the constraint gradients in the array A.
@@ -340,7 +340,7 @@ do tr = 1, maxtr
 
         ! Set JDROP_TR to the index of the vertex that is to be replaced by X.
         ! N.B.: COBYLA never sets JDROP_TR = N + 1.
-        jdrop_tr = setdrop_tr(actrem, d, factor_alpha, factor_delta, delta, sim, simi)
+        jdrop_tr = setdrop_tr(actrem, d, delta, factor_alpha, factor_delta, sim, simi)
 
         ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_TR) is replaced by D.
         ! When JDROP_TR == 0, the algorithm decides not to include X into the simplex.
@@ -395,11 +395,11 @@ do tr = 1, maxtr
         ! we take another geometry step in that case? If no, why should we do it here? Indeed, this
         ! distinction makes no practical difference for CUTEst problems with at most 100 variables
         ! and 5000 constraints, while the algorithm framework is simplified.
-        if (.not. goodgeo(factor_alpha, factor_beta, delta, sim, simi)) then
+        if (.not. goodgeo(delta, factor_alpha, factor_beta, sim, simi)) then
             ! Decide a vertex to drop from the simplex. It will be replaced by SIM(:, N + 1) + D to
             ! improve acceptability of the simplex. See equations (15) and (16) of the COBYLA paper.
             ! N.B.: COBYLA never sets JDROP_GEO = N + 1.
-            jdrop_geo = setdrop_geo(factor_alpha, factor_beta, delta, sim, simi)
+            jdrop_geo = setdrop_geo(delta, factor_alpha, factor_beta, sim, simi)
 
             ! JDROP_GEO is between 1 and N unless SIM and SIMI contains NaN, which should not happen
             ! at this point unless there is a bug. Nevertheless, for robustness, we include the
@@ -411,7 +411,7 @@ do tr = 1, maxtr
             end if
 
             ! Calculate the geometry step D.
-            d = geostep(jdrop_geo, cpen, conmat, cval, fval, factor_gamma, delta, simi)
+            d = geostep(jdrop_geo, cpen, conmat, cval, delta, fval, factor_gamma, simi)
 
             x = sim(:, n + 1) + d
             ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.

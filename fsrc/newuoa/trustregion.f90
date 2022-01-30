@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, January 31, 2022 AM01:11:30
+! Last Modified: Monday, January 31, 2022 AM01:41:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -444,6 +444,7 @@ elseif (ratio <= eta2) then
     delta = max(HALF * delta_in, dnorm)
 else
     delta = max(HALF * delta_in, gamma2 * dnorm)
+    !delta = max(delta_in, gamma2 * dnorm)
 end if
 
 ! For noisy problems, the following may work better.
