@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, January 12, 2022 PM07:45:56
+! Last Modified: Monday, January 31, 2022 AM02:18:26
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -117,7 +117,7 @@ call cobyla(calcfc_chebyquad, m, x_chebyquad, f)  ! This call will not print any
 call cobyla(calcfc_chebyquad, m, x_chebyquad, f, rhobeg=0.2D0 * x_chebyquad(1), iprint=1)
 
 ! The following lines illustrates how to call the solver to solve the Hexagon problem.
-x_hexagon = 1.0D0
+x_hexagon = 0.5D0
 m = 14  ! Dimension of constraints defined by CALCFC_HEXAGON.
 call cobyla(calcfc_hexagon, m, x_hexagon, f)  ! This call will not print anything.
 
