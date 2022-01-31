@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, January 31, 2022 AM02:01:38
+! Last Modified: Monday, January 31, 2022 AM11:40:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -268,7 +268,7 @@ do tr = 1, maxtr
     d = trstlp(A, b, delta)
     dnorm = min(delta, norm(d))
 
-    ! Is the trust-region trial step short?
+    ! Is the trust-region trial step short? N.B.: we compare DNORM with RHO, not DELTA.
     !shortd = (dnorm < HALF * rho)
     !shortd = (dnorm < QUART * rho)
     ! TENTH seems to work better than HALF or QUART, especially for linearly constrained problems.

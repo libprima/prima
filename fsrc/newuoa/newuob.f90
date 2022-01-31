@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, January 31, 2022 AM02:00:47
+! Last Modified: Monday, January 31, 2022 AM11:40:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -235,7 +235,7 @@ do tr = 1, maxtr
     call trsapp(delta, gq, hq, pq, tr_tol, xopt, xpt, crvmin, d, subinfo)
     dnorm = min(delta, norm(d))
 
-    ! SHORTD corresponds to Box 3 of the NEWUOA paper.
+    ! SHORTD corresponds to Box 3 of the NEWUOA paper. N.B.: we compare DNORM with RHO, not DELTA.
     shortd = (dnorm < HALF * rho)
     ! REDUCE_RHO_1 corresponds to Box 14 of the NEWUOA paper.
     reduce_rho_1 = shortd .and. (maxval(abs(moderrsav)) <= 0.125_RP * crvmin * rho**2) .and. &
