@@ -1328,7 +1328,7 @@ if ~validated % options.iprint has not got a valid value yet
         options.iprint = iprint;
     end
 end
-options.iprint = double(iprint);   % All integers will be passed as doubles to the Fortran MEX.
+options.iprint = double(options.iprint);   % All integers will be passed as doubles to the Fortran MEX.
 
 % Validate options.debug
 validated = false;
@@ -1424,7 +1424,7 @@ end
 if ~validated
     options.output_xhist = output_xhist;
 end
-options.output_xhist = logical(output_xhist);
+options.output_xhist = logical(options.output_xhist);
 
 % Validate options.output_nlchist
 validated = false;
@@ -1441,7 +1441,7 @@ end
 if ~validated
     options.output_nlchist = output_nlchist;
 end
-options.output_nlchist = logical(output_nlchist);
+options.output_nlchist = logical(options.output_nlchist);
 
 % Validate options.maxfilt
 validated = false;

@@ -1,6 +1,7 @@
 module cobyla_mod
 !--------------------------------------------------------------------------------------------------!
-! COBYLA_MOD is a module providing a modern Fortran implementation of Powell's COBYLA algorithm in
+! COBYLA_MOD is a module providing a modernized and improved Fortran implementation of Powell's
+! COBYLA algorithm in
 !
 ! M. J. D. Powell, A direct search optimization method that models the objective and constraint
 ! functions by linear interpolation, In Advances in Optimization and Numerical Analysis, eds. S.
@@ -28,7 +29,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, February 02, 2022 AM11:25:52
+! Last Modified: Wednesday, February 02, 2022 PM08:04:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -47,7 +48,7 @@ subroutine cobyla(calcfc, m, x, f, &
 !--------------------------------------------------------------------------------------------------!
 ! Among all the arguments, only CALCFC, X, and F are obligatory. The others are OPTIONAL and you can
 ! neglect them unless you are familiar with the algorithm. If you do not specify an optional input,
-! it will be assigned the default value detailed below. For instance, we may write
+! it will be assigned the default value detailed below. For instance, we may invoke the solver by
 !
 ! call cobyla(calcfc, x, f)
 !

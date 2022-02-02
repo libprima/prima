@@ -11,7 +11,7 @@ module linalg_mod
 ! When implementing the code by MATLAB, Python, ..., note the following.
 ! 1. We should follow the implementation with __USE_POWELL_ALGEBRA__ == 0, which uses matrix/vector
 ! operations instead of loops.
-! 2. Most of the subroutines/functions here are better written inline, because the code is short
+! 2. Most of the subroutines/functions here are better coded inline, because the code is short
 ! using matrix/vector operations, and because the overhead of subroutine/function calling can be
 ! high in these languages. Here we implement them as subroutines/functions in order to align with
 ! Powell's original code, which cannot be translated directly to matrix/vector operations that
@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, January 25, 2022 PM09:36:13
+! Last Modified: Wednesday, February 02, 2022 PM08:01:37
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -577,7 +577,7 @@ if (DEBUGGING) then
     call assert(size(B, 1) == n .and. size(B, 2) == n, 'SIZE(B) == [N, N]', srname)
     call assert(istril(B) .or. .not. istril(A), 'If A is lower triangular, then so is B', srname)
     call assert(istriu(B) .or. .not. istriu(A), 'If A is upper triangular, then so is B', srname)
-    tol = max(1.0E-10_RP, min(1.0E-3_RP, 1.0E2_RP * EPS * real(n + 1_IK, RP)))
+    tol = max(1.0E-10_RP, min(1.0E-3_RP, 1.0E6_RP * EPS * real(n + 1_IK, RP)))
     call assert(isinv(A, B, tol), 'B = A^{-1}', srname)
 end if
 
@@ -620,7 +620,7 @@ end if
 tol_loc = maxval([tol_loc, tol_loc * maxval(abs(A)), tol_loc * maxval(abs(B))])
 
 is_inv = all(abs(matprod(A, B) - eye(n)) <= tol_loc) .or. all(abs(matprod(B, A) - eye(n)) <= tol_loc)
-end function
+end function isinv
 
 
 subroutine qr(A, Q, R, P)
@@ -969,7 +969,7 @@ else
         is_orth = all(abs(matprod(transpose(A), A) - eye(n)) <= 0)
     end if
 end if
-end function
+end function isorth
 
 
 function project1(x, v) result(y)

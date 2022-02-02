@@ -8,7 +8,7 @@ module memory_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, January 29, 2022 PM04:06:42
+! Last Modified: Wednesday, February 02, 2022 PM08:07:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -125,7 +125,7 @@ call validate(n >= 0, 'N >= 0', srname)
 
 ! According to the Fortran 2003 standard, when a procedure is invoked, any allocated ALLOCATABLE
 ! object that is an actual argument associated with an INTENT(OUT) ALLOCATABLE dummy argument is
-! deallocated. So it is unnecessary to write the following line since F2003 as X is INTENT(OUT):
+! deallocated. So the following line is unnecessary since F2003 as X is INTENT(OUT):
 !!if (allocated(x)) deallocate (x)
 ! Allocate memory for X
 allocate (x(1:n), stat=alloc_status)
@@ -198,7 +198,7 @@ call validate(n >= 0, 'N >= 0', srname)
 
 ! According to the Fortran 2003 standard, when a procedure is invoked, any allocated ALLOCATABLE
 ! object that is an actual argument associated with an INTENT(OUT) ALLOCATABLE dummy argument is
-! deallocated. So it is unnecessary to write the following line since F2003 as X is INTENT(OUT):
+! deallocated. So the following line is unnecessary since F2003 as X is INTENT(OUT):
 !!if (allocated(x)) deallocate (x)
 ! Allocate memory for X
 allocate (x(1:n), stat=alloc_status)
@@ -273,7 +273,7 @@ call validate(n >= 0, 'N >= 0', srname)
 
 ! According to the Fortran 2003 standard, when a procedure is invoked, any allocated ALLOCATABLE
 ! object that is an actual argument associated with an INTENT(OUT) ALLOCATABLE dummy argument is
-! deallocated. So it is unnecessary to write the following line since F2003 as X is INTENT(OUT):
+! deallocated. So the following line is unnecessary since F2003 as X is INTENT(OUT):
 !!if (allocated(x)) deallocate (x)
 ! Allocate memory for X
 allocate (x(1:n), stat=alloc_status)

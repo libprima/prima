@@ -1,6 +1,7 @@
 module newuoa_mod
 !--------------------------------------------------------------------------------------------------!
-! NEWUOA_MOD is a module providing a modern Fortran implementation of Powell's NEWUOA algorithm in
+! NEWUOA_MOD is a module providing a modernized and improved Fortran implementation of Powell's
+! NEWUOA algorithm in
 !
 ! M. J. D. Powell, The NEWUOA software for unconstrained optimization without derivatives, In Large-
 ! Scale Nonlinear Optimization, eds. G. Di Pillo and M. Roma, 255--297, Springer, New York, 2006
@@ -19,7 +20,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, January 30, 2022 PM12:26:28
+! Last Modified: Wednesday, February 02, 2022 PM08:05:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -36,7 +37,7 @@ subroutine newuoa(calfun, x, f, &
 !--------------------------------------------------------------------------------------------------!
 ! Among all the arguments, only CALFUN, X, and F are obligatory. The others are OPTIONAL and you can
 ! neglect them unless you are familiar with the algorithm. If you do not specify an optional input,
-! it will be assigned the default value detailed below. For instance, we may write
+! it will be assigned the default value detailed below. For instance, we may invoke the solver by
 !
 ! call newuoa(calfun, x, f)
 !
