@@ -124,7 +124,7 @@ function [x, fx, exitflag, output] = uobyqan(varargin)
 %
 %   solves
 %       min cos(x)
-%   starting from x0=2 with at most 50 function evaluations.
+%   starting from x0=-1 with at most 50 function evaluations.
 %
 %   4. Problem defined by a structure
 %

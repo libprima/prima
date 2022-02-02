@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, January 31, 2022 AM11:40:33
+! Last Modified: Monday, January 31, 2022 PM04:40:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -17,8 +17,8 @@ public :: cobylb
 contains
 
 
-subroutine cobylb(calcfc, iprint, maxfilt, maxfun, ctol, ftarget, rhobeg, rhoend, constr, f, x, nf, &
-        & chist, conhist, cstrv, fhist, xhist, info)
+subroutine cobylb(calcfc, iprint, maxfilt, maxfun, ctol, eta1, eta2, ftarget, gamma1, gamma2, &
+    & rhobeg, rhoend, constr, f, x, nf, chist, conhist, cstrv, fhist, xhist, info)
 
 ! Generic modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
@@ -50,7 +50,11 @@ integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfilt
 integer(IK), intent(in) :: maxfun
 real(RP), intent(in) :: ctol
+real(RP), intent(in) :: eta1
+real(RP), intent(in) :: eta2
 real(RP), intent(in) :: ftarget
+real(RP), intent(in) :: gamma1
+real(RP), intent(in) :: gamma2
 real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: rhoend
 
@@ -116,15 +120,17 @@ real(RP) :: rho
 real(RP) :: sim(size(x), size(x) + 1)  ! (n, )
 real(RP) :: simi(size(x), size(x))  ! (n, )
 real(RP) :: xfilt(size(x), size(cfilt))
-real(RP), parameter :: factor_alpha = QUART
-real(RP), parameter :: factor_beta = 2.1_RP
-real(RP), parameter :: factor_delta = 1.1_RP
-real(RP), parameter :: factor_gamma = HALF
-real(RP) :: ratio
-real(RP) :: eta1 = 0.1_RP
-real(RP) :: eta2 = 0.7_RP
-real(RP) :: gamma1 = 0.5_RP
-real(RP) :: gamma2 = 2.0_RP
+! N.B.: FACTOR_ALPHA, FACTOR_BETA, FACTOR_GAMMA, and FACTOR_DELTA are four factors the COBYLB uses
+! when managing the simplex. Note the following
+! 1. FACTOR_ALPHA < FACTOR_GAMMA < 1 < FACTOR_DELTA <= FACTOR_BETA
+! 2. FACTOR_DELTA has nothing to do with DELTA, which is the trust-region radius
+! 3. FACTOR_GAMMA has nothing to do with GAMMA1 and GAMMA2, which are the contracting/expanding
+!    factors for updating the trust-region radius DELTA.
+real(RP), parameter :: factor_alpha = QUART  ! The factor alpha in the COBYLA paper
+real(RP), parameter :: factor_beta = 2.1_RP  ! The factor better in the COBYLA paper
+real(RP), parameter :: factor_delta = 1.1_RP  ! The factor delta in the COBYLA paper
+real(RP), parameter :: factor_gamma = HALF  ! The factor gamma in the COBYLA paper
+real(RP) :: ratio  ! Reduction ratio: ACTREM/PREREM
 
 ! Sizes
 m = int(size(constr), kind(m))
@@ -275,7 +281,7 @@ do tr = 1, maxtr
     shortd = (dnorm < TENTH * rho)
 
     if (shortd) then
-        ! Reduce DELTA if D is short. It seems quite important for performance.
+        ! Reduce DELTA if D is short. This seems quite important for performance.
         delta = TENTH * delta
         if (delta <= 1.5_RP * rho) then
             delta = rho  ! Set DELTA to RHO when it is close.
@@ -368,7 +374,7 @@ do tr = 1, maxtr
     ! removing (JDROP_TR == 0), but we retain (JDROP_TR == 0) for robustness.
     ! 2. Powell's definition of BAD_TRSTEP is
     !!bad_trstep = (shortd .or. actrem <= ZERO .or. actrem < TENTH * prerem .or. jdrop_tr == 0)
-    ! The following one seems to work better, especially for linearly constrained problems.
+    ! But the following one seems to work better, especially for linearly constrained problems.
     bad_trstep = (shortd .or. actrem <= ZERO .or. jdrop_tr == 0)
 
     ! Should we take a geometry step to improve the geometry of the interpolation set?
