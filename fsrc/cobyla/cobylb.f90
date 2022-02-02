@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, January 31, 2022 PM04:40:51
+! Last Modified: Wednesday, February 02, 2022 AM11:13:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -122,8 +122,8 @@ real(RP) :: simi(size(x), size(x))  ! (n, )
 real(RP) :: xfilt(size(x), size(cfilt))
 ! N.B.: FACTOR_ALPHA, FACTOR_BETA, FACTOR_GAMMA, and FACTOR_DELTA are four factors the COBYLB uses
 ! when managing the simplex. Note the following
-! 1. FACTOR_ALPHA < FACTOR_GAMMA < 1 < FACTOR_DELTA <= FACTOR_BETA
-! 2. FACTOR_DELTA has nothing to do with DELTA, which is the trust-region radius
+! 1. FACTOR_ALPHA < FACTOR_GAMMA < 1 < FACTOR_DELTA <= FACTOR_BETA.
+! 2. FACTOR_DELTA has nothing to do with DELTA, which is the trust-region radius.
 ! 3. FACTOR_GAMMA has nothing to do with GAMMA1 and GAMMA2, which are the contracting/expanding
 !    factors for updating the trust-region radius DELTA.
 real(RP), parameter :: factor_alpha = QUART  ! The factor alpha in the COBYLA paper
