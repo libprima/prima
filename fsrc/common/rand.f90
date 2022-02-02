@@ -6,7 +6,7 @@ module rand_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Saturday, January 29, 2022 PM04:12:16
+! Last Modified: Wednesday, February 02, 2022 PM08:06:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -50,7 +50,7 @@ integer :: n  ! Should be a default INTEGER according to F2018.
 
 call random_seed(size=n)
 
-! Unnecessary to write the following line since F2003 as X is INTENT(OUT):
+! The following line is unnecessary since F2003 as X is INTENT(OUT):
 !!if (allocated(seed)) deallocate (seed)
 
 ! 1. The following allocation is NOT removable even in F2003.

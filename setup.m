@@ -327,7 +327,7 @@ try
     cellfun(@(filename) delete(filename), files_with_wildcard(interfaces_private, '*.mod'));
 
     % Remove the intersection-form Fortran files if we are not debugging.
-    if (debug_flag)
+    if ~debug_flag
         rmdir(fsrc_intersection_form, 's');
         rmdir(fsrc_classical_intersection_form, 's');
         rmdir(gateways_intersection_form, 's');

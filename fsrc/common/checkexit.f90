@@ -6,7 +6,7 @@ module checkexit_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Friday, November 19, 2021 PM03:20:24
+! Last Modified: Wednesday, February 02, 2022 PM08:07:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -64,7 +64,7 @@ end if
 
 info = INFO_DFT  ! Default info, indicating that the solver should not exit.
 
-! Although X should not contain NaN unless there is a bug, we write the following for security.
+! Although X should not contain NaN unless there is a bug, we include the following for security.
 ! X can be Inf, as finite + finite can be Inf numerically.
 if (any(is_nan(x) .or. is_inf(x))) then
     info = NAN_INF_X
@@ -142,7 +142,7 @@ end if
 
 info = INFO_DFT   ! Default info, indicating that the solver should not exit.
 
-! Although X should not contain NaN unless there is a bug, we write the following for security.
+! Although X should not contain NaN unless there is a bug, we include the following for security.
 ! X can be Inf, as finite + finite can be Inf numerically.
 if (any(is_nan(x) .or. is_inf(x))) then
     info = NAN_INF_X

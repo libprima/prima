@@ -6,7 +6,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, January 27, 2022 PM07:34:57
+! Last Modified: Wednesday, February 02, 2022 PM07:55:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -340,7 +340,7 @@ if (phimin < phi(jopt)) then  ! We keep JOPT = N + 1 unless there is a strictly 
 end if
 if (cpen <= ZERO .and. any(cval < cval(jopt) .and. phi <= phimin)) then
     ! (CPEN <= ZERO) is indeed (CPEN == ZERO), and (PHI <= PHIMIN) is indeed (PHI == PHIMIN).
-    ! We write them in this way to avoid equality comparison of real numbers.
+    ! We code in this way to avoid equality comparison of real numbers.
     jopt = int(minloc(cval, mask=(phi <= phimin), dim=1), kind(jopt))
 end if
 

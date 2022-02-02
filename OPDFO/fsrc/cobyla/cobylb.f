@@ -24,6 +24,9 @@ C     1  CON,SIM,SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT)
 C NSMAX is the maximal number of "dropped X" to save (see comments below
 C line number 480)
       PARAMETER (CTOL = EPSILON(1.0D0))
+      real(kind(0.0D0)), parameter :: eta1 = 0.1D0, eta2=0.7D0,
+     & gamma1=0.5D0, gamma2=2.0D0
+      real(kind(0.0D0)) :: delta
 C CTOL is the tolerance for consraint violation. A point X is considered
 C to be feasible if its constraint violation (RESMAX) is less than CTOL.
 C EPSILON(1.0D0) returns the machine epsilon corresponding to 1.0D0,
@@ -56,13 +59,14 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      ALPHA=0.25
 C      BETA=2.1
 C      GAMMA=0.5
-C      DELTA=1.1
+C      factor_delta=1.1
       ALPHA=0.25D0
       BETA=2.1D0
       GAMMA=0.5D0
-      DELTA=1.1D0
+      factor_delta=1.1D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       RHO=RHOBEG
+      delta=rhobeg
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      PARMU=0.0
       PARMU=0.0D0
@@ -129,7 +133,6 @@ C     By Zaikun (02-06-2019):
       CON(1:M) = MAX(MIN(HUGECON, CON(1:M)), -HUGECON)
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       NFVALS=NFVALS+1
-!      write(17,*) nfvals, merge('geo', 'tr ', ibrnch==0)
 
 
 
@@ -145,6 +148,11 @@ C   60     RESMAX=AMAX1(RESMAX,-CON(K))
           END DO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       END IF
+
+!      if (nfvals > np) then
+!write(17,*) nfvals, merge('geo', 'tr ', ibrnch==0), x(1:n),
+!     1 resmax
+!      end if
 
 
       IF (NFVALS == IPRINT-1 .OR. IPRINT == 3) THEN
@@ -353,8 +361,8 @@ C          TEMPA=0.0
 
 !        write(17,*) 'out updatepole'
 !        write(17,*) 'cf', parmu, datmat(m+2, 1:n+1), datmat(m+1, 1:n+1)
-!        write(17,*) 'sim', sim(1:n, 1:n+1)
-!        write(17,*) 'simi2', simi(1:n, 1:n)
+!write(17,*) 'sim', sim(1:n, 1:n+1)
+!write(17,*) 'simi', simi(1:n, 1:n)
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 2021-05-30
@@ -454,8 +462,10 @@ C     Calculate the values of sigma and eta, and set IFLAG=0 if the current
 C     simplex is not acceptable.
 C
       IFLAG=1
-      PARSIG=ALPHA*RHO
-      PARETA=BETA*RHO
+      !PARSIG=ALPHA*RHO
+      !PARETA=BETA*RHO
+      parsig=alpha*delta
+      pareta=beta*delta
       DO J=1,N
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      WSIG=0.0
@@ -530,13 +540,21 @@ C Zaikun 20190820: See the comments below line number 480
 !      CALL SAVEX (XDROP(1:N), DATDROP(1:MPP), XSAV(1:N, 1:NSMAX),
 !     1     DATSAV(1:MPP, 1:NSMAX), N, M, NSAV, NSMAX, CTOL)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!write (17, *) 'jdrop_geo', nfvals, jdrop, delta, alpha, beta
+!write(17,*) 'sim', sim(1:n,1:n+1)
+!write(17,*) 'simi', simi(1:n,1:n)
 C
 C     Calculate the step to the new vertex and its sign.
 C
-      TEMP=GAMMA*RHO*VSIG(JDROP)
+      !TEMP=GAMMA*RHO*VSIG(JDROP)
+      temp=gamma*delta*vsig(jdrop)
       DO I=1,N
-          DX(I)=TEMP*SIMI(JDROP,I)
+          !DX(I)=TEMP*SIMI(JDROP,I)
+          dx(i) = gamma*delta*(vsig(jdrop)*simi(jdrop, i))
       END DO
+!write(17,*) '--', nfvals, delta, jdrop
+!write(17,*) 'sim', sim(1:n,1:n+1)
+!write(17,*) 'simi', simi(1:n,1:n)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      CVMAXP=0.0
 C      CVMAXM=0.0
@@ -650,7 +668,9 @@ C the code, including uninitialized indices.
 !       write (16, *) 'fval', datmat(m+1, 1:n+1)
 !       write (16, *) 'A', A(1:n, 1:m + 1)
 
-      CALL TRSTLP (N,M,A,CON,RHO,DX,IFULL,IACT,W(IZ),W(IZDOTA),
+    !  CALL TRSTLP (N,M,A,CON,RHO,DX,IFULL,IACT,W(IZ),W(IZDOTA),
+    ! 1  W(IVMC),W(ISDIRN),W(IDXNEW),W(IVMD))
+      CALL TRSTLP (N,M,A,CON,delta,DX,IFULL,IACT,W(IZ),W(IZDOTA),
      1  W(IVMC),W(ISDIRN),W(IDXNEW),W(IVMD))
 
         !write (17, *) 'tr', nfvals+1, A(1:n, 1:m + 1),dx(1:n)
@@ -666,8 +686,14 @@ C          TEMP=0.0
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C          IF (TEMP .LT. 0.25*RHO*RHO) THEN
 !          IF (TEMP < 0.25D0*RHO*RHO) THEN
-          IF (TEMP < 0.25D0*RHO**2) THEN
+!          IF (TEMP < 0.25D0*RHO**2) THEN
+         dnorm = min(delta, norm(dx(1:n)))
+          IF (dnorm < 0.1D0*RHO) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+              delta = 0.1D0*delta
+              if (delta <= 1.5D0*rho) then
+                  delta = rho
+              end if
               IBRNCH=1
               GOTO 550
           END IF
@@ -709,7 +735,7 @@ C      IF (PREREC .GT. 0.0) BARMU=SUMM/PREREC
 C      IF (PARMU .LT. 1.5*BARMU) THEN
 C          PARMU=2.0*BARMU
       IF (PREREC > 0.0D0) BARMU=SUMM/PREREC
-      IF (PARMU < 1.5D0*BARMU) THEN
+      IF (PARMU < 1.5D0*BARMU) THEN  ! This implies PREREC > 0
       !write(17,*) 'update cpen'
           !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           ! Zaikun 20211108
@@ -761,6 +787,23 @@ C      IF (PARMU .EQ. 0.0 .AND. F .EQ. DATMAT(MP,NP)) THEN
       if (is_nan(trured)) then trured = -hugenum
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+!----------------------------------------------------------------------!
+! Zaikun 20220202
+        ratio = redrat(trured, prerem, eta1)
+        if (ratio <= eta1) then
+            delta = gamma1 * dnorm
+        elseif (ratio <= eta2) then
+            delta = max(HALF * delta, dnorm)
+        else
+            delta = max(HALF * delta, gamma2 * dnorm)  ! Powell' version (taken from NEWUOA)
+            !delta = max(delta, gamma2 * dnorm)  ! Modified version
+            ! For noise-free CUTEst problems, Powell's version works slightly better than the modified one.
+        end if
+        if (delta <= 1.5_RP * rho) then
+            delta = rho
+        end if
+!----------------------------------------------------------------------!
+
 C
 C     Begin the operations that decide whether x(*) should replace one of the
 C     vertices of the current simplex, the change being mandatory if TRURED is
@@ -800,7 +843,10 @@ C      TEMP=ABS(TEMP)
 C
 C     Calculate the value of ell.
 C
-      EDGMAX=DELTA*RHO
+      parsig=alpha*delta
+      pareta=beta*delta
+      !EDGMAX=factor_delta*RHO
+      edgmax=factor_delta*delta
       L=0
       DO J=1,N
           IF (SIGBAR(J) >= PARSIG .OR. SIGBAR(J) >= VSIG(J)) THEN
@@ -951,13 +997,17 @@ C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IF (TRURED .GT. 0.0 .AND. TRURED .GE. 0.1*PREREM) GOTO 140
 !      IF (TRURED > 0.0D0 .AND. TRURED >= 0.1D0*PREREM) GOTO 140
-      IF (TRURED > 0.0D0 .AND. TRURED >= 0.1D0*PREREM) GOTO  220  !TR
+!      IF (TRURED > 0.0D0 .AND. TRURED >= 0.1D0*PREREM) GOTO  220  !TR
+      IF (TRURED > 0.0D0) GOTO  220  !TR
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   550 IF (IFLAG == 0) THEN
           IBRNCH=0
       !!!!!!!!!!!!!!!!!!!!!!!!!!!
           !GOTO 140
+!write(17,*) nfvals, 'improve_geo'
           goto 220  ! GEO
+      elseif (max(delta,dnorm) > rho) then
+          goto 220  ! TR
       !!!!!!!!!!!!!!!!!!!!!!!!!!!
       END IF
 C
@@ -965,13 +1015,21 @@ C     Otherwise reduce RHO if it is not at its least value and reset PARMU.
 C
       IF (NFVALS >= MAXFUN) GOTO 600
       IF (RHO > RHOEND) THEN
+!write(17,*) nfvals, 'reduce_rho'
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C          RHO=0.5*RHO
 C          IF (RHO .LE. 1.5*RHOEND) RHO=RHOEND
 C          IF (PARMU .GT. 0.0) THEN
 C              DENOM=0.0
-          RHO=0.5D0*RHO
-          IF (RHO <= 1.5D0*RHOEND) RHO=RHOEND
+
+!----------------------------------------------------------------------!
+!          RHO=0.5D0*RHO
+!          IF (RHO <= 1.5D0*RHOEND) RHO=RHOEND
+          delta = HALF * rho
+          rho = redrho(rho, rhoend)
+          delta = max(delta, rho)
+!----------------------------------------------------------------------!
+
           IF (PARMU > 0.0D0) THEN
               DENOM=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1262,7 +1320,7 @@ C      NFVALS-2 instead of NFVALS-1.
       END IF
       MAXFUN=NFVALS
 
-!      close(17)
+      close(17)
 
       RETURN
       END

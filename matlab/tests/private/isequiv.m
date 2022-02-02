@@ -331,6 +331,8 @@ test_options.output_xhist = (rand > 0.5);
 test_options.output_nlchist = (rand > 0.5);
 if single_test
     test_options.maxhist = test_options.maxfun;
+    test_options.output_xhist = true;
+    test_options.output_nlchist = true;
 else
     test_options.maxhist = ceil(randn*1.5*test_options.maxfun);
 end
@@ -338,6 +340,7 @@ test_options.maxfilt = ceil(randn*500);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ready_solvers = {'newuoa', 'cobyla'};  % Solvers whose development is (almost) finished.
 test_ready_solvers = ~isempty(intersect(lower(solvers), ready_solvers));
+%test_ready_solvers = false;
 test_options.classical = (rand < 0.2) && test_ready_solvers;
 test_options.iprint = floor(3*rand) * double(test_ready_solvers);
 test_options.quiet = (rand < 0.8) && test_ready_solvers;

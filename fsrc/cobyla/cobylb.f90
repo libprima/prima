@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, February 02, 2022 AM11:13:39
+! Last Modified: Wednesday, February 02, 2022 PM07:55:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -213,9 +213,9 @@ if (subinfo /= INFO_DFT) then
     return
 end if
 
-! Initialize RHO and CPEN.
+! Initialize RHO, DELTA, and CPEN.
 rho = rhobeg
-delta = rho
+delta = rhobeg
 cpen = ZERO
 
 ! We must initialize ACTREM and PREREM. Otherwise, when SHORTD = TRUE, compilers may raise a
@@ -293,7 +293,8 @@ do tr = 1, maxtr
 
         ! Increase CPEN if necessary and branch back if this change alters the optimal vertex.
         ! See the discussions around equation (9) of the COBYLA paper.
-        if (prerec > ZERO) then  ! When and why will we have PREREC <= 0?
+        ! QUESTION: When and why will we have PREREC <= 0? What if PREREC <= 0?
+        if (prerec > ZERO) then
             barmu = -preref / prerec   ! PREREF + BARMU * PREREC = 0
             if (cpen < 1.5_RP * barmu) then
                 cpen = min(TWO * barmu, HUGENUM)
@@ -328,7 +329,7 @@ do tr = 1, maxtr
         actrem = (fval(n + 1) + cpen * cval(n + 1)) - (f + cpen * cstrv)
         if (cpen <= ZERO .and. f <= fval(n + 1) .and. f >= fval(n + 1)) then
             ! CPEN <= ZERO indeed means CPEN == ZERO, while A <= B .and. A >= B indeed mean A == B.
-            ! We write them in this way to avoid compilers complaining about equality comparison
+            ! We code in this way to avoid compilers complaining about equality comparison
             ! between reals, which appears in the original code of Powell.
             prerem = prerec   ! Is it positive?????
             actrem = cval(n + 1) - cstrv
