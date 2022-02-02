@@ -143,6 +143,7 @@ function [x, fx, exitflag, output] = cobylan(varargin)
 %       above eta2. It is required that 0 < eta1 <= eta2 < 1 and
 %       0 < gamma1 < 1 < gamma2. Normally, eta1 <= 0.25. It is not recommended
 %       to set eta1 >= 0.5. Default: eta1 = 0.1, eta2 = 0.7, gamma1 = 0.5,
+%       and gamma2 = 2.
 %   *** iprint: a flag deciding how much information will be printed during
 %       the computation; possible values are value 0 (default), 1, -1, 2,
 %       -2, 3, or -3:

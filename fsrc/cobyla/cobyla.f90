@@ -28,7 +28,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, January 31, 2022 PM12:24:06
+! Last Modified: Wednesday, February 02, 2022 AM11:25:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -76,7 +76,7 @@ subroutine cobyla(calcfc, m, x, f, &
 !    real(RP), intent(out) :: constr(:)
 !    end subroutine calcfc
 !   !-------------------------------------------------------------------------!
-!   Besides, the size of CONSTR must be an M, which is the second compulsory argument (see below).
+!   Besides, the size of CONSTR must be M, which is the second compulsory argument (see below).
 !
 ! M
 !   Input, INTEGER(IK) scalar.
@@ -84,7 +84,7 @@ subroutine cobyla(calcfc, m, x, f, &
 !
 ! X
 !   Input and output, REAL(RP) vector.
-!   As an input, X should be an N dimensional vector that contains the starting point, N being the
+!   As an input, X should be an N-dimensional vector that contains the starting point, N being the
 !   dimension of the problem. As an output, X will be set to an approximate minimizer.
 !
 ! F

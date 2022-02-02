@@ -70,13 +70,13 @@ subroutine cobyla(calcfc, m, x, f, &
 !   constraint value to the REAL(RP) vector CONSTR. It must be provided by the user, and its
 !   definition must conform to the following interface:
 !   !-------------------------------------------------------------------------!
-!   !subroutine calcfc(x, f, constr)
-!   !real(RP), intent(in) :: x(:)
-!   !real(RP), intent(out) :: f
-!   !real(RP), intent(out) :: constr(:)
-!   !end subroutine calcfc
+!    subroutine calcfc(x, f, constr)
+!    real(RP), intent(in) :: x(:)
+!    real(RP), intent(out) :: f
+!    real(RP), intent(out) :: constr(:)
+!    end subroutine calcfc
 !   !-------------------------------------------------------------------------!
-!   Besides, CONSTR must be an M-dimensional vector, M being the 4th compulsory argument (see below)
+!   Besides, the size of CONSTR must be M, which is the second compulsory argument (see below).
 !
 ! M
 !   Input, INTEGER(IK) scalar.
@@ -84,7 +84,7 @@ subroutine cobyla(calcfc, m, x, f, &
 !
 ! X
 !   Input and output, REAL(RP) vector.
-!   As an input, X should be an N dimensional vector that contains the starting point, N being the
+!   As an input, X should be an N-dimensional vector that contains the starting point, N being the
 !   dimension of the problem. As an output, X will be set to an approximate minimizer.
 !
 ! F
@@ -183,6 +183,11 @@ subroutine cobyla(calcfc, m, x, f, &
 !   defined in CONSTS_MOD (see consts.F90 under the directory named "common"; default: 2GB).
 !   Use *HIST with caution!!! (N.B.: the algorithm is NOT designed for large problems).
 !
+! MAXFILT
+!   Input, INTEGER(IK) scalar.
+!   MAXFILT is a nonnegative integer indicating the maximal length of the "filter" used for
+!   selecting the returned solution; default: 2000 (a value lower than 200 is not recommended)
+!
 ! INFO
 !   Output, INTEGER(IK) scalar.
 !   INFO is the exit flag. It will be set to one of the following values defined in the module
@@ -196,10 +201,10 @@ subroutine cobyla(calcfc, m, x, f, &
 !   NAN_MODEL: NaN occurs in the model;
 !   DAMAGING_ROUNDING: rounding errors are becoming damaging.
 !   !--------------------------------------------------------------------------!
-!   The following cases should NEVER occur unless there is a bug, because the
-!   code will try to continue in the corresponding scenarios.
-!   NAN_INF_F: the objective function returns NaN or +Inf
-!   TRSUBP_FAILED: a trust region step failed to reduce the quadratic model
+!   The following case(s) should NEVER occur unless there is a bug, because the
+!   modernized code will try to continue in the corresponding scenario(s).
+!   NAN_INF_F: the objective function returns NaN or +Inf;
+!   TRSUBP_FAILED: a trust region step failed to reduce the model
 !   !--------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 
@@ -353,7 +358,7 @@ if (present(rhobeg)) then
 elseif (present(rhoend)) then
     ! Fortran does not take short-circuit evaluation of logic expressions. Thus it is WRONG to
     ! combine the evaluation of PRESENT(RHOEND) and the evaluation of IS_FINITE(RHOEND) as
-    ! "if (present(rhoend) .and. is_finite(rhoend))". The compiler may choose to evaluate the
+    ! "IF (PRESENT(RHOEND) .AND. IS_FINITE(RHOEND))". The compiler may choose to evaluate the
     ! IS_FINITE(RHOEND) even if PRESENT(RHOEND) is false!
     if (is_finite(rhoend) .and. rhoend > ZERO) then
         rhobeg_loc = max(TEN * rhoend, RHOBEG_DFT)
