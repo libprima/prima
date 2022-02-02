@@ -170,7 +170,7 @@ function [x, fx, exitflag, output] = lincoan(varargin)
 %
 %   solves
 %       min cos(x) s.t. 2 * x <= 3
-%   starting from x0=2 with at most 50 function evaluations.
+%   starting from x0=-1 with at most 50 function evaluations.
 %
 %   5. Problem defined by a structure
 %

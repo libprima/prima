@@ -28,7 +28,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, January 30, 2022 PM12:09:33
+! Last Modified: Monday, January 31, 2022 PM12:24:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -43,8 +43,7 @@ subroutine cobyla(calcfc, m, x, f, &
     & cstrv, constr, &
     & f0, constr0, &
     & nf, rhobeg, rhoend, ftarget, ctol, maxfun, iprint, &
-    & xhist, fhist, chist, conhist, maxhist, maxfilt, info)
-!    & eta1, eta2, gamma1, gamma2, xhist, fhist, chist, conhist, maxhist, info)
+    & eta1, eta2, gamma1, gamma2, xhist, fhist, chist, conhist, maxhist, maxfilt, info)
 !--------------------------------------------------------------------------------------------------!
 ! Among all the arguments, only CALCFC, X, and F are obligatory. The others are OPTIONAL and you can
 ! neglect them unless you are familiar with the algorithm. If you do not specify an optional input,
@@ -213,7 +212,7 @@ subroutine cobyla(calcfc, m, x, f, &
 use, non_intrinsic :: consts_mod, only : DEBUGGING
 use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, FTARGET_DFT, IPRINT_DFT
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TEN, TENTH, EPS, MSGLEN
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS, MSGLEN
 use, non_intrinsic :: debug_mod, only : assert, errstop, warning
 use, non_intrinsic :: evaluate_mod, only : evaluate, moderatex
 use, non_intrinsic :: history_mod, only : prehist
@@ -241,8 +240,12 @@ integer(IK), intent(in), optional :: maxfun
 integer(IK), intent(in), optional :: maxhist
 real(RP), intent(in), optional :: constr0(:)
 real(RP), intent(in), optional :: ctol
+real(RP), intent(in), optional :: eta1
+real(RP), intent(in), optional :: eta2
 real(RP), intent(in), optional :: f0
 real(RP), intent(in), optional :: ftarget
+real(RP), intent(in), optional :: gamma1
+real(RP), intent(in), optional :: gamma2
 real(RP), intent(in), optional :: rhobeg
 real(RP), intent(in), optional :: rhoend
 
@@ -272,7 +275,11 @@ integer(IK) :: nf_loc
 integer(IK) :: nhist
 real(RP) :: cstrv_loc
 real(RP) :: ctol_loc
+real(RP) :: eta1_loc
+real(RP) :: eta2_loc
 real(RP) :: ftarget_loc
+real(RP) :: gamma1_loc
+real(RP) :: gamma2_loc
 real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
 real(RP), allocatable :: chist_loc(:)
@@ -366,6 +373,36 @@ else
     iprint_loc = IPRINT_DFT
 end if
 
+if (present(eta1)) then
+    eta1_loc = eta1
+elseif (present(eta2)) then
+    if (eta2 > ZERO .and. eta2 < ONE) then
+        eta1_loc = max(EPS, eta2 / 7.0_RP)
+    end if
+else
+    eta1_loc = TENTH
+end if
+
+if (present(eta2)) then
+    eta2_loc = eta2
+elseif (eta1_loc > ZERO .and. eta1_loc < ONE) then
+    eta2_loc = (eta1_loc + TWO) / 3.0_RP
+else
+    eta2_loc = 0.7_RP
+end if
+
+if (present(gamma1)) then
+    gamma1_loc = gamma1
+else
+    gamma1_loc = HALF
+end if
+
+if (present(gamma2)) then
+    gamma2_loc = gamma2
+else
+    gamma2_loc = TWO
+end if
+
 if (present(maxhist)) then
     maxhist_loc = maxhist
 else
@@ -380,7 +417,7 @@ end if
 
 ! Preprocess the inputs in case some of them are invalid. It does nothing if all inputs are valid.
 call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
-    & m=m, ctol=ctol_loc, maxfilt=maxfilt_loc)
+    & m=m, ctol=ctol_loc, eta1=eta1_loc, eta2=eta2_loc, gamma1=gamma1_loc, gamma2=gamma2_loc, maxfilt=maxfilt_loc)
 
 ! Further revise MAXHIST_LOC according to MAXMEMORY, and allocate memory for the history.
 ! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
@@ -390,8 +427,9 @@ call prehist(maxhist_loc, m, n, present(chist), chist_loc, present(conhist), con
     & present(fhist), fhist_loc, present(xhist), xhist_loc)
 
 !-------------------- Call COBYLB, which performs the real calculations. --------------------------!
-call cobylb(calcfc, iprint_loc, maxfilt_loc, maxfun_loc, ctol_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
-    & constr_loc, f, x, nf_loc, chist_loc, conhist_loc, cstrv_loc, fhist_loc, xhist_loc, info_loc)
+call cobylb(calcfc, iprint_loc, maxfilt_loc, maxfun_loc, ctol_loc, eta1_loc, eta2_loc, &
+    & ftarget_loc, gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc, constr_loc, f, x, nf_loc, &
+    & chist_loc, conhist_loc, cstrv_loc, fhist_loc, xhist_loc, info_loc)
 !--------------------------------------------------------------------------------------------------!
 
 ! Write the outputs.

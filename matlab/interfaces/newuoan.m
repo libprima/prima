@@ -130,7 +130,7 @@ function [x, fx, exitflag, output] = newuoan(varargin)
 %
 %   solves
 %       min cos(x)
-%   starting from x0=2 with at most 50 function evaluations.
+%   starting from x0=-1 with at most 50 function evaluations.
 %
 %   4. Problem defined by a structure
 %
@@ -243,6 +243,8 @@ catch exception
 end
 
 % Extract the options
+npt = options.npt;
+maxfun = options.maxfun;
 rhobeg = options.rhobeg;
 rhoend = options.rhoend;
 eta1 = options.eta1;
@@ -250,11 +252,9 @@ eta2 = options.eta2;
 gamma1 = options.gamma1;
 gamma2 = options.gamma2;
 ftarget = options.ftarget;
-npt = options.npt;
-iprint = options.iprint;
-maxfun = options.maxfun;
 maxhist = options.maxhist;
 output_xhist = options.output_xhist;
+iprint = options.iprint;
 
 if ~strcmp(invoker, 'pdfon') && probinfo.feasibility_problem
     % An "unconstrained feasibility problem" is rediculous, yet nothing wrong mathematically.

@@ -10,7 +10,7 @@
 !
 ! Started in March 2020
 !
-! Last Modified: Monday, January 24, 2022 PM11:55:54
+! Last Modified: Monday, January 31, 2022 PM12:20:14
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -44,10 +44,10 @@ mwPointer, intent(in) :: pinput(nargin)
 mwPointer, intent(out) :: poutput(nargout)
 
 ! Local variables
-!real(RP) :: eta1
-!real(RP) :: eta2
-!real(RP) :: gamma1
-!real(RP) :: gamma2
+real(RP) :: eta1
+real(RP) :: eta2
+real(RP) :: gamma1
+real(RP) :: gamma2
 integer(IK) :: info
 integer(IK) :: iprint
 integer(IK) :: m
@@ -74,7 +74,7 @@ real(RP), allocatable :: x(:)
 real(RP), allocatable :: xhist(:, :)
 
 ! Validate the number of arguments
-call fmxVerifyNArgin(nargin, 14)
+call fmxVerifyNArgin(nargin, 18)
 call fmxVerifyNArgout(nargout, 10)
 
 ! Verify that input 1 is a function handle; the other inputs will be verified when read.
@@ -87,14 +87,18 @@ call fmxReadMPtr(pinput(3), f0)
 call fmxReadMPtr(pinput(4), constr0)
 call fmxReadMPtr(pinput(5), rhobeg)
 call fmxReadMPtr(pinput(6), rhoend)
-call fmxReadMPtr(pinput(7), ftarget)
-call fmxReadMPtr(pinput(8), ctol)
-call fmxReadMPtr(pinput(9), maxfun)
-call fmxReadMPtr(pinput(10), iprint)
-call fmxReadMPtr(pinput(11), maxhist)
-call fmxReadMPtr(pinput(12), output_xhist)
-call fmxReadMPtr(pinput(13), output_conhist)
-call fmxReadMPtr(pinput(14), maxfilt)
+call fmxReadMPtr(pinput(7), eta1)
+call fmxReadMPtr(pinput(8), eta2)
+call fmxReadMPtr(pinput(9), gamma1)
+call fmxReadMPtr(pinput(10), gamma2)
+call fmxReadMPtr(pinput(11), ftarget)
+call fmxReadMPtr(pinput(12), ctol)
+call fmxReadMPtr(pinput(13), maxfun)
+call fmxReadMPtr(pinput(14), iprint)
+call fmxReadMPtr(pinput(15), maxhist)
+call fmxReadMPtr(pinput(16), output_xhist)
+call fmxReadMPtr(pinput(17), output_conhist)
+call fmxReadMPtr(pinput(18), maxfilt)
 
 ! Get the sizes
 m = int(size(constr0), kind(m))  ! M is a compulsory input of the Fortran code.
@@ -103,17 +107,21 @@ m = int(size(constr0), kind(m))  ! M is a compulsory input of the Fortran code.
 ! There are different cases because XHIST/CONHIST may or may not be passed to the Fortran code.
 if (output_xhist .and. output_conhist) then
     call cobyla(calcfc, m, x, f, cstrv, constr, f0, constr0, nf, rhobeg, rhoend, ftarget, ctol, &
-        & maxfun, iprint, xhist=xhist, fhist=fhist, chist=chist, conhist=conhist, maxhist=maxhist, &
+        & maxfun, iprint, eta1, eta2, gamma1, gamma2, &
+        & xhist=xhist, fhist=fhist, chist=chist, conhist=conhist, maxhist=maxhist, &
         & maxfilt=maxfilt, info=info)
 elseif (output_xhist) then
     call cobyla(calcfc, m, x, f, cstrv, constr, f0, constr0, nf, rhobeg, rhoend, ftarget, ctol, &
-        & maxfun, iprint, xhist=xhist, fhist=fhist, chist=chist, maxhist=maxhist, maxfilt=maxfilt, info=info)
+        & maxfun, iprint, eta1, eta2, gamma1, gamma2, &
+        & xhist=xhist, fhist=fhist, chist=chist, maxhist=maxhist, maxfilt=maxfilt, info=info)
 elseif (output_conhist) then
     call cobyla(calcfc, m, x, f, cstrv, constr, f0, constr0, nf, rhobeg, rhoend, ftarget, ctol, &
-        & maxfun, iprint, fhist=fhist, chist=chist, conhist=conhist, maxhist=maxhist, maxfilt=maxfilt, info=info)
+        & maxfun, iprint, eta1, eta2, gamma1, gamma2, &
+        & fhist=fhist, chist=chist, conhist=conhist, maxhist=maxhist, maxfilt=maxfilt, info=info)
 else
     call cobyla(calcfc, m, x, f, cstrv, constr, f0, constr0, nf, rhobeg, rhoend, ftarget, ctol, &
-        & maxfun, iprint, fhist=fhist, chist=chist, maxhist=maxhist, maxfilt=maxfilt, info=info)
+        & maxfun, iprint, eta1, eta2, gamma1, gamma2, &
+        & fhist=fhist, chist=chist, maxhist=maxhist, maxfilt=maxfilt, info=info)
 end if
 
 ! After the Fortran code, XHIST or CONHIST may not be allocated, because it may not have been passed

@@ -135,6 +135,14 @@ function [x, fx, exitflag, output] = cobylan(varargin)
 %       according to bounds or not; default: false; if the problem is to
 %       be scaled, then rhobeg and rhoend mentioned above will be used as
 %       the initial and final trust region radii for the scaled  problem
+%   *** eta1, eta2, gamma1, gamma2 (only if classical = false)
+%       eta1, eta2, gamma1, and gamma2 are parameters in the updating scheme
+%       of the trust region radius. Roughly speaking, the trust region radius
+%       is contracted by a factor of gamma1 when the reduction ratio is below
+%       eta1, and  enlarged by a factor of gamma2 when the reduction ratio is
+%       above eta2. It is required that 0 < eta1 <= eta2 < 1 and
+%       0 < gamma1 < 1 < gamma2. Normally, eta1 <= 0.25. It is not recommended
+%       to set eta1 >= 0.5. Default: eta1 = 0.1, eta2 = 0.7, gamma1 = 0.5,
 %   *** iprint: a flag deciding how much information will be printed during
 %       the computation; possible values are value 0 (default), 1, -1, 2,
 %       -2, 3, or -3:
@@ -180,8 +188,8 @@ function [x, fx, exitflag, output] = cobylan(varargin)
 %       output structure will include fields "nlcihist" and "nlcehist",
 %       which respectively contain the inequality and equality constraint
 %       values of the last maxhist iterates of the algorithm; default: false
-%   *** maxfilt: a nonnegative integer indicating the maximal length of the 
-%       "filter" used for selecting the returned solution; default: 2000 
+%   *** maxfilt: a nonnegative integer indicating the maximal length of the
+%       "filter" used for selecting the returned solution; default: 2000
 %   *** debug: a boolean value indicating whether to debug or not; default: false
 %   *** chkfunval: a boolean value indicating whether to verify the returned
 %       function and constraint (if applicable) value or not; default: false
@@ -197,7 +205,7 @@ function [x, fx, exitflag, output] = cobylan(varargin)
 %
 %   solves
 %       min cos(x) s.t. 2 * x <= 3
-%   starting from x0=2 with at most 50 function evaluations.
+%   starting from x0=-1 with at most 50 function evaluations.
 %
 %   5. Problem defined by a structure
 %
@@ -382,16 +390,20 @@ else % The problem turns out 'normal' during prepdfo
     end
 
     % Extract the options
-    iprint = options.iprint;
     maxfun = options.maxfun;
     rhobeg = options.rhobeg;
     rhoend = options.rhoend;
+    eta1 = options.eta1;
+    eta2 = options.eta2;
+    gamma1 = options.gamma1;
+    gamma2 = options.gamma2;
     ftarget = options.ftarget;
     ctol = options.ctol;
     maxhist = options.maxhist;
     output_xhist = options.output_xhist;
     output_nlchist = options.output_nlchist;
     maxfilt = options.maxfilt;
+    iprint = options.iprint;
 
     % Call the Fortran code
     if options.classical
@@ -403,7 +415,7 @@ else % The problem turns out 'normal' during prepdfo
     % however, public errors can occur due to, e.g., evalobj; error handling needed.
     try
         [x, fx, constrviolation, constr, exitflag, nf, xhist, fhist, chist, conhist] = ...
-            fsolver(funcon, x0, f_x0, constr_x0, rhobeg, rhoend, ftarget, ctol, maxfun, iprint, maxhist, double(output_xhist), double(output_nlchist), maxfilt);
+            fsolver(funcon, x0, f_x0, constr_x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, ctol, maxfun, iprint, maxhist, double(output_xhist), double(output_nlchist), maxfilt);
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
             error(exception.identifier, '%s\n(error generated in %s, line %d)', exception.message, exception.stack(1).file, exception.stack(1).line);
