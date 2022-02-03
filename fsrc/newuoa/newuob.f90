@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, February 03, 2022 PM01:26:06
+! Last Modified: Friday, February 04, 2022 AM02:41:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -372,7 +372,8 @@ do tr = 1, maxtr
     xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1))
     ! KNEW_TR == 0 implies RATIO <= 0. Therefore, we can remove KNEW_TR == 0 from the definition
     ! of BAD_TRSTEP. Nevertheless, we keep it for robustness.
-    bad_trstep = (shortd .or. ratio < TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
+    !bad_trstep = (shortd .or. ratio < TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
+    bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
     improve_geo = (.not. reduce_rho_1) .and. (maxval(xdist) > TWO * delta) .and. bad_trstep
 
     ! If all the interpolation points are close to XOPT and the trust-region is small, but the
@@ -387,7 +388,7 @@ do tr = 1, maxtr
     ! Even though DNORM gets a new value after the geometry step when IMPROVE_GEO = TRUE, this
     ! value does not affect REDUCE_RHO_2, because DNORM comes into play only if IMPROVE_GEO = FALSE.
     ! 3. DELTA < DNORM may hold due to the update of DELTA.
-    bad_trstep = (shortd .or. ratio <= ZERO .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO_2
+    bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO_2
     reduce_rho_2 = (maxval(xdist) <= TWO * delta) .and. (max(delta, dnorm) <= rho) .and. bad_trstep
 
     ! Comments on BAD_TRSTEP:
