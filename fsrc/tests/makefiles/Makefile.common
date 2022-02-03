@@ -23,7 +23,7 @@
 #
 # Started: September 2021
 #
-# Last Modified: January 2022
+# Last Modified: February 2022
 ####################################################################################################
 
 #$(VERBOSE).SILENT:  # Order make to work quietly. Not desirable in this case.
@@ -47,23 +47,24 @@ TIME := $(shell date +%Y.%m.%d_%H.%M.%S)
 STAMP := $(TIME)_$(RANDNUM)
 
 # Test directory.
-TEST_DIR := $(CURDIR)
+TEST_SOLVER_DIR := $(CURDIR)
+TEST_DIR := $(TEST_SOLVER_DIR)/..
 # Log directory.
-LOG_DIR := $(TEST_DIR)/log
+LOG_DIR := $(TEST_SOLVER_DIR)/log
 # Trash directory.
-TRASH_DIR := $(TEST_DIR)/trash
+TRASH_DIR := $(TEST_SOLVER_DIR)/trash
 # Common directory.
 COMMON := common
-COMMON_DIR := $(TEST_DIR)/../../$(COMMON)
+COMMON_DIR := $(TEST_DIR)/../$(COMMON)
 # Solver directory.
-SOLVER_DIR := $(TEST_DIR)/../../$(SOLVER)
+SOLVER_DIR := $(TEST_DIR)/../$(SOLVER)
 # Test suite directory.
 TESTSUITE = testsuite
-TESTSUITE_DIR := $(TEST_DIR)/../$(TESTSUITE)
+TESTSUITE_DIR := $(TEST_DIR)/$(TESTSUITE)
 # Source directories.
 SRC_DIRS := $(COMMON_DIR) $(SOLVER_DIR) $(TESTSUITE_DIR)
 # Driver directory.
-DRIVER_DIR := $(TEST_DIR)/..
+DRIVER_DIR := $(TEST_DIR)
 
 # Sources.
 COMMON_SRC := $(shell sed "s/^/\.\/common\//" $(COMMON_DIR)/ffiles.txt)
@@ -76,10 +77,10 @@ SRC_NO_TEST := $(COMMON_SRC) $(SOLVER_SRC)
 # Headers.
 # N.B.: If we define COMMON as "./common/", then, when adapting the header, sed will complain
 # that"./common//*.h" cannot be found on macOS.
-HEADERS := $(TEST_DIR)/$(COMMON)/*.h
+HEADERS := $(TEST_SOLVER_DIR)/$(COMMON)/*.h
 
 # The checktest script.
-CHCKTST := $(TEST_DIR)/../checktest
+CHCKTST := $(TEST_DIR)/checktest
 
 # Define the tests.
 ######################################################################################
@@ -185,13 +186,13 @@ $(foreach TST, $(TESTS_INT_C_NO_QP), $(eval $(TST): SUBTESTS_C := \
 # Operating system.
 OSTYPE :=
 ifeq ($(OS),Windows_NT)
-	OSTYPE = WINDOWS
+	OSTYPE := WINDOWS
 else
 	UNAME_S := $(shell uname -s)
 	ifeq ($(UNAME_S),Darwin)
-		OSTYPE = MAC
-	else  # We assume the OS is LINUX by default.
-		OSTYPE = LINUX
+		OSTYPE := MAC
+	else # We assume the OS is LINUX by default.
+		OSTYPE := LINUX
 	endif
 endif
 
@@ -201,19 +202,19 @@ endif
 # specified, then an error will be raised, saying "invalid command code".
 SEDI :=
 ifeq ($(OSTYPE), MAC)
-	SEDI = @sed -i ""
+	SEDI := @sed -i ""
 else
-	SEDI = @sed -i
+	SEDI := @sed -i
 endif
 
 # Define NPROCS to be the number of processors available to make tests in parallel.
 NPROCS :=
 ifeq ($(OSTYPE), LINUX)
-	NPROCS = $(shell grep -c 'processor' /proc/cpuinfo 2>/dev/null || echo 1)
+	NPROCS := $(shell grep -c 'processor' /proc/cpuinfo 2>/dev/null || echo 1)
 else ifeq ($(OSTYPE), MAC)
-	NPROCS = $(shell sysctl hw.ncpu | grep -o '[0-9]\+' || echo 1)
+	NPROCS := $(shell sysctl hw.ncpu | grep -o '[0-9]\+' || echo 1)
 else
-	NPROCS = $(shell echo $(NUMBER_OF_PROCESSORS) || echo 1)
+	NPROCS := $(shell echo $(NUMBER_OF_PROCESSORS) || echo 1)
 endif
 
 
@@ -712,4 +713,6 @@ cleansrc:
 clean: cleanbin cleanmisc cleansrc
 
 cleanall: clean
-	rm -rf $(TRASH_DIR) $(LOG_DIR) || :
+	@printf "\nRemoving the contents of $(TEST_SOLVER_DIR) ...\n"
+	@rm -rf $(TEST_SOLVER_DIR)/* &> /dev/null || :
+	@printf "Done.\n"

@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, January 31, 2022 AM11:40:17
+! Last Modified: Thursday, February 03, 2022 PM01:26:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -217,10 +217,10 @@ knew_tr = 0_IK
 ! No need to initialize SHORTD unless MAXTR < 1, but some compilers may complain if we do not do it.
 shortd = .false.
 
-! MAXTR is the maximal number of trust-region iterations. In most cases, each trust-region iteration
-! takes at most two function evaluations. Thus the following MAXTR essentially imposes no constraint
-! and is unlikely to reach. Nevertheless, we set INFO to MAXTR_REACHED before starting for safety.
-maxtr = max(maxfun, 4_IK * maxfun)  ! MAX: precaution against overflow, which will make 4*MAXFUN < 0.
+! MAXTR is the maximal number of trust-region iterations. Each trust-region iteration takes at most
+! 2 function evaluations. Thus the following MAXTR imposes no constraint and should not be reached.
+! Nevertheless, we set INFO to MAXTR_REACHED before starting for safety.
+maxtr = max(maxfun, 2_IK * maxfun)  ! MAX: precaution against overflow, which will make 2*MAXFUN < 0.
 info = MAXTR_REACHED
 
 ! Begin the iterative procedure.

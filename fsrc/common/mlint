@@ -19,23 +19,34 @@ fi
 
 # The directory where this script resides. It is the solver's directory.
 SOLVER_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-# The log directory in the solver's directory.
-SOLVER_LOG_DIR="$SOLVER_DIR"/mlog
 
 # The solver's name.
 SOLVER=$(basename "$SOLVER_DIR")
 
+# The log directory in the solver's directory.
+SOLVER_LOG_DIR="$SOLVER_DIR"/mlog
+
+# Root directory of this project.
+ROOT_DIR=../..
+
 # The testing directory.
-TEST_DIR="$SOLVER_DIR"/../../matlab/mex_gateways/tests
+TMP_DIR=/tmp
+TEST_ROOT="$TMP_DIR"/neupdfo
+TEST_DIR="$TEST_ROOT"/matlab/mex_gateways/tests
+TEST_SOLVER_DIR="$TEST_DIR"/test."$SOLVER"
+
 # The log directory in the testing directory.
-TEST_LOG_DIR="$TEST_DIR"/test."$SOLVER"/log
+TEST_LOG_DIR="$TEST_SOLVER_DIR"/log
+
+# The checktest script
+CHCKTST="$TEST_DIR"/checktest
 
 # Remove the old logs.
 mkdir -p "$SOLVER_LOG_DIR"
 rm -f "$SOLVER_LOG_DIR"/*test*.log
 
 # Conduct the test.
-cd "$TEST_DIR" || exit 1
+cd "$ROOT_DIR"/matlab/mex_gateways/tests || exit 1
 
 # Make clean (old logs in $SOLVER_LOG_DIR have been cleaned up in the above).
 printf "\nCleaning up ... "
