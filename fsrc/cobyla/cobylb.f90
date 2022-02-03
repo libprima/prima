@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, February 03, 2022 PM09:21:26
+! Last Modified: Friday, February 04, 2022 AM02:36:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -293,22 +293,22 @@ do tr = 1, maxtr
 
         ! Increase CPEN if necessary and branch back if this change alters the optimal vertex.
         ! See the discussions around equation (9) of the COBYLA paper.
-        ! QUESTION: When and why will we have PREREC <= 0? What if PREREC <= 0?
-        if (prerec > ZERO) then
+        if (prerec > 0) then
             barmu = -preref / prerec   ! PREREF + BARMU * PREREC = 0
-            if (cpen < 1.5_RP * barmu) then
-                cpen = min(TWO * barmu, HUGENUM)
-                call cpenmsg(solver, iprint, cpen)
-                if (findpole(cpen, cval, fval) <= n) then
-                    ! Zaikun 20211111: Can this lead to infinite cycling?
-                    call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
-                    ! Check whether to exit due to damaging rounding detected in UPDATEPOLE.
-                    if (subinfo == DAMAGING_ROUNDING) then
-                        info = subinfo
-                        exit  ! Better action to take? Geometry step?
-                    end if
-                    cycle
+        else  ! PREREC == 0 can happen when there is no constraint. Any other possibility?
+            barmu = ZERO
+        end if
+        if (cpen < 1.5_RP * barmu) then  ! This can happen only if BARMU > 0, and hence PREREC > 0.
+            cpen = min(TWO * barmu, HUGENUM)
+            call cpenmsg(solver, iprint, cpen)
+            if (findpole(cpen, cval, fval) <= n) then
+                call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
+                ! Check whether to exit due to damaging rounding detected in UPDATEPOLE.
+                if (subinfo == DAMAGING_ROUNDING) then
+                    info = subinfo
+                    exit  ! Better action to take? Geometry step?
                 end if
+                cycle  ! Zaikun 20211111: Can this lead to infinite cycling?
             end if
         end if
 
