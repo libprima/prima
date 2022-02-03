@@ -1130,6 +1130,7 @@ C      NFVALS-2 instead of NFVALS-1.
 
       !fhist(1:n+2+nsav) = [datmat(mp, 1:np), DATSAV(mp, 1:nsav), f]
       !chist(1:n+2+nsav) = [datmat(mpp, 1:np),DATSAV(mpp,1:nsav),resmax]
+      DATSAV(mp, 1:nsav) = max(DATSAV(mp, 1:nsav), -huge(0.0D0))
       fhist(1:nsav) = DATSAV(mp, 1:nsav)
       chist(1:nsav) = DATSAV(mpp,1:nsav)
       if (any(fhist(1:nsav)< HUGEFUN .and. chist(1:nsav)

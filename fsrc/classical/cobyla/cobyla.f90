@@ -28,7 +28,7 @@ module cobyla_mod  ! (The classical mode)
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, January 31, 2022 PM03:27:48
+! Last Modified: Thursday, February 03, 2022 PM10:06:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -42,7 +42,7 @@ contains
 subroutine cobyla(calcfc, m, x, f, &
     & cstrv, constr, &
     & f0, constr0, &
-    & nf, rhobeg, rhoend, ftarget, ctol, maxfun, iprint, &
+    & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, &
     & eta1, eta2, gamma1, gamma2, xhist, fhist, chist, conhist, maxhist, maxfilt, info)
 !--------------------------------------------------------------------------------------------------!
 ! Among all the arguments, only CALCFC, X, and F are obligatory. The others are OPTIONAL and you can
@@ -210,8 +210,8 @@ subroutine cobyla(calcfc, m, x, f, &
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : DEBUGGING
-use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT
-use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, FTARGET_DFT, IPRINT_DFT
+use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT, IPRINT_DFT
+use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, CWEIGHT_DFT, FTARGET_DFT
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS, MSGLEN
 use, non_intrinsic :: debug_mod, only : assert, errstop, warning
 use, non_intrinsic :: history_mod, only : prehist
@@ -250,6 +250,7 @@ integer(IK), intent(in), optional :: maxfun
 integer(IK), intent(in), optional :: maxhist
 real(RP), intent(in), optional :: constr0(:)
 real(RP), intent(in), optional :: ctol
+real(RP), intent(in), optional :: cweight
 real(RP), intent(in), optional :: eta1
 real(RP), intent(in), optional :: eta2
 real(RP), intent(in), optional :: f0
@@ -291,6 +292,7 @@ integer(IK) :: n
 integer(IK) :: nhist
 real(RP) :: cstrv_loc
 real(RP) :: ctol_loc
+real(RP) :: cweight_loc
 real(RP) :: eta1_loc
 real(RP) :: eta2_loc
 real(RP) :: ftarget_loc
@@ -383,6 +385,12 @@ else
     ctol_loc = CTOL_DFT
 end if
 
+if (present(cweight)) then
+    cweight_loc = cweight
+else
+    cweight_loc = CWEIGHT_DFT
+end if
+
 if (present(ftarget)) then
     ftarget_loc = ftarget
 else
@@ -445,7 +453,8 @@ end if
 
 ! Preprocess the inputs in case some of them are invalid. It does nothing if all inputs are valid.
 call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
-    & m=m, ctol=ctol_loc, eta1=eta1_loc, eta2=eta2_loc, gamma1=gamma1_loc, gamma2=gamma2_loc, maxfilt=maxfilt_loc)
+    & m=m, ctol=ctol_loc, cweight=cweight_loc, eta1=eta1_loc, eta2=eta2_loc, gamma1=gamma1_loc, &
+    & gamma2=gamma2_loc, maxfilt=maxfilt_loc)
 
 ! Further revise MAXHIST_LOC according to MAXMEMORY, and allocate memory for the history.
 ! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
@@ -458,7 +467,7 @@ call prehist(maxhist_loc, m, n, present(chist), chist_loc, present(conhist), con
 !-------------------- Call COBYLB, which performs the real calculations. --------------------------!
 ! Initialize NF_LOC !!!
 nf_loc = 0_IK  !!!
-!!!! ETA1, ETA2, GAMAA1, GAMMA2, MAXFILT, and CTOL are not used in the classical mode. !!!!
+!!!! ETA1, ETA2, GAMAA1, GAMMA2, MAXFILT, CTOL, CWEIGHT are not used in the classical mode. !!!!
 call cobylb(calcfc, iprint_loc, maxfun_loc, rhobeg_loc, rhoend_loc, constr_loc, x, cstrv_loc, f, info_loc)
 ! Arrange the history so that they are in the chronological order !!!
 call rangehist(nf_loc, chist_loc, conhist_loc, fhist_loc, xhist_loc) !!!

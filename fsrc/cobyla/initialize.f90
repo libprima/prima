@@ -6,7 +6,7 @@ module initialize_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, February 02, 2022 PM03:26:11
+! Last Modified: Thursday, February 03, 2022 PM10:40:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -217,7 +217,7 @@ end if
 end subroutine initxfc
 
 
-subroutine initfilt(conmat, ctol, cval, fval, sim, evaluated, nfilt, cfilt, confilt, ffilt, xfilt)
+subroutine initfilt(conmat, ctol, cweight, cval, fval, sim, evaluated, nfilt, cfilt, confilt, ffilt, xfilt)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine initializes the filters (XFILT, etc) that will be used when selecting X at the
 ! end of the solver.
@@ -237,6 +237,7 @@ implicit none
 ! Inputs
 real(RP), intent(in) :: conmat(:, :)
 real(RP), intent(in) :: ctol
+real(RP), intent(in) :: cweight
 real(RP), intent(in) :: cval(:)
 real(RP), intent(in) :: fval(:)
 real(RP), intent(in) :: sim(:, :)
@@ -293,7 +294,7 @@ do i = 1, n + 1_IK
         else
             x = sim(:, i)  ! I == N+1
         end if
-        call savefilt(conmat(:, i), cval(i), ctol, fval(i), x, nfilt, cfilt, confilt, ffilt, xfilt)
+        call savefilt(conmat(:, i), cval(i), ctol, cweight, fval(i), x, nfilt, cfilt, confilt, ffilt, xfilt)
     end if
 end do
 

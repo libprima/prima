@@ -8,7 +8,7 @@ module selectx_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thursday, February 03, 2022 PM01:06:56
+! Last Modified: Friday, February 04, 2022 AM12:31:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,19 +19,19 @@ public :: savefilt, selectx, isbetter
 contains
 
 
-subroutine savefilt(constr, cstrv, ctol, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
+subroutine savefilt(constr, cstrv, ctol, cweight, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine saves X, F, CONSTR, and CSTRV in XFILT, FFILT, CONFILT, and CFILT, unless a vector
 ! in XFILT(:, 1:NFILT) is better than X. If X is better than some vectors in XFILT(:, 1:NFILT), then
 ! these vectors will be removed. If X is not better than any of XFILT(:, 1:NFILT) but NFILT=MAXFILT,
-! then we remove XFILT(:,1), which is the oldest vector in XFILT(:, 1:NFILT).
+! then we remove a column from XFILT according to PHI = FFILT + CWEIGHT * MAX(CFILT - CTOL, ZERO).
 ! N.B.:
 ! 1. Only XFILT(:, 1:NFILT) and FFILT(:, 1:NFILT) etc contains valid information, while
 ! XFILT(:, NFILT+1:MAXFILT) and FFILT(:, NFILT+1:MAXFILT) etc are not initialized yet.
 ! 2. We decide whether an X is better than another by the ISBETTER function.
 !--------------------------------------------------------------------------------------------------!
 
-use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
 use, non_intrinsic :: linalg_mod, only : trueloc
@@ -42,6 +42,7 @@ implicit none
 real(RP), intent(in) :: constr(:)  ! M
 real(RP), intent(in) :: cstrv
 real(RP), intent(in) :: ctol
+real(RP), intent(in) :: cweight
 real(RP), intent(in) :: f
 real(RP), intent(in) :: x(:)  ! N
 
@@ -59,6 +60,7 @@ integer(IK) :: index_to_keep(size(ffilt))
 integer(IK) :: m
 integer(IK) :: maxfilt
 integer(IK) :: n
+integer(IK) :: remove
 logical :: better(nfilt)
 logical :: keep(nfilt)
 
@@ -111,9 +113,21 @@ end if
 ! Decide which columns of XFILT to keep. We use again an array constructor with an implied do loop.
 keep = [(.not. isbetter([f, cstrv], [ffilt(i), cfilt(i)], ctol), i=1, nfilt)]
 ! If NFILT == MAXFILT and X is not better than any column of XFILT, then we remove the column of
-! XFILT corresponding to the largest constraint violation.
+! XFILT corresponding to the largest value of PHI = FFILT + CWEIGHT * MAX(CFILT - CTOL, ZERO).
 if (count(keep) == maxfilt) then
-    keep(maxloc(cfilt)) = .false.
+    if (cweight <= 0) then
+        remove = int(maxloc(ffilt, dim=1), kind(remove))
+    elseif (is_posinf(cweight)) then
+        remove = int(maxloc(cfilt, dim=1), kind(remove))
+    else
+        remove = int(maxloc(max(ffilt, -HUGENUM) + cweight * max(cfilt - ctol, ZERO), dim=1), kind(remove))
+        ! MAX(FFILT, -HUGENUM) makes sure that PHI will not contain NaN (unless there is a bug);
+        ! this is important, or else the value of REMOVE may not be between 1 and NFILT.
+    end if
+    if (remove < 1 .or. remove > size(keep)) then  ! For security. Should not happen.
+        remove = 1_IK
+    end if
+    keep(remove) = .false.
 end if
 
 nfilt = int(count(keep), kind(nfilt))
@@ -159,7 +173,7 @@ end if
 end subroutine savefilt
 
 
-function selectx(fhist, chist, cpen, ctol) result(kopt)
+function selectx(fhist, chist, cweight, ctol) result(kopt)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine selects X according to the FHIST and CHIST, which represents (a piece of) history
 ! of F and CSTRV. Normally, FHIST and CHIST are not the full history but only a filter, e.g., FFILT
@@ -174,7 +188,7 @@ use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: cpen
+real(RP), intent(in) :: cweight
 real(RP), intent(in) :: chist(:)
 real(RP), intent(in) :: ctol
 real(RP), intent(in) :: fhist(:)
@@ -204,7 +218,7 @@ if (DEBUGGING) then
         & 'FHIST does not contain NaN/+Inf', srname)
     call assert(.not. any(chist < 0 .or. is_nan(chist) .or. is_posinf(chist)), &
         & 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
-    call assert(cpen >= 0, 'CPEN >= 0', srname)
+    call assert(cweight >= 0, 'CWEIGHT >= 0', srname)
     call assert(ctol >= 0, 'CTOL >= 0', srname)
 end if
 
@@ -238,18 +252,29 @@ else
     ! CMIN is the minimal shifted constraint violation attained in the history.
     cmin = minval(chist_shifted, mask=(fhist < fref))
     ! We select X among the points whose shifted constraint violations are at most CREF.
-    cref = TWO * cmin  ! CREF = 0 if CMIN = 0; thus asking for CSTRV_SHIFTED < CREF is unreasonable.
+    cref = TWO * cmin  ! CREF = 0 if CMIN = 0; thus asking for CSTRV_SHIFTED < CREF is WRONG!
     ! We use the following PHI as our merit function to select X.
-    phi = fhist + cpen * chist_shifted
+    if (cweight <= 0) then
+        phi = fhist
+    elseif (is_posinf(cweight)) then
+        phi = chist_shifted
+        ! We should not use CHIST here; if MIN(CHIST_SHIFTED) is attained at multiple indices, then
+        ! we will check FHIST to exhaust the remaining degree of freedom.
+    else
+        phi = max(fhist, -HUGENUM) + cweight * chist_shifted
+        ! MAX(FHIST, -HUGENUM) makes sure that PHI will not contain NaN (unless there is a bug).
+    end if
     ! We select X to minimize PHI subject to F < FREF and CSTRV_SHIFTED <= CREF. In case there are
-    ! multiple minimizers, we take the one with the least CSTRV; if there are still more than one
-    ! choices, we take the one with the least F; if the last comparison still leads to more than
-    ! one possibilities, then they are all equally good, and we choose the first one of them.
-    ! N.B.: In finite-precision arithmetic, PHI_1 = PHI_2 and CSTRV_SHIFTED_1 = CSTRV_SHIFTED_2 do
-    ! not ensure that F_1 = F_2!!!
+    ! multiple minimizers, we take the one with the least CSTRV_SHIFTED; if there are more than one
+    ! choices, we take the one with the least F; if there are several candidates, we take the one
+    ! with the least CSTRV; if the last comparison still leads to more than one possibilities, then
+    ! they are all equally good, and we choose the first one of them.
+    ! N.B.: In finite-precision arithmetic, PHI_1 == PHI_2 and CSTRV_SHIFTED_1 == CSTRV_SHIFTED_2 do
+    ! not ensure that F_1 == F_2!!!
     phimin = minval(phi, mask=(fhist < fref .and. chist_shifted <= cref))
-    cref = minval(chist, mask=(fhist < fref .and. phi <= phimin))
-    kopt = int(minloc(fhist, mask=(chist <= cref), dim=1), kind(kopt))
+    cref = minval(chist_shifted, mask=(fhist < fref .and. phi <= phimin))
+    fref = minval(fhist, mask=(chist_shifted <= cref))
+    kopt = int(minloc(chist, mask=(fhist <= fref), dim=1), kind(kopt))
 end if
 
 !====================!

@@ -30,16 +30,19 @@ SOLVER_LOG_DIR="$SOLVER_DIR"/mlog
 ROOT_DIR=../..
 
 # The testing directory.
-TMP_DIR=/tmp
-TEST_ROOT="$TMP_DIR"/neupdfo
-TEST_DIR="$TEST_ROOT"/matlab/mex_gateways/tests
-TEST_SOLVER_DIR="$TEST_DIR"/test."$SOLVER"
+TIME=$(date +%s)
+TEST_DIR=/tmp/"$(basename -- "$0")"_"$TIME"
+# We export TEST_DIR, which will be referred to by the Makefiles.
+export TEST_DIR
+TEST_ROOT="$TEST_DIR"/neupdfo
+MTEST_DIR="$TEST_ROOT"/matlab/mex_gateways/tests
+MTEST_SOLVER_DIR="$MTEST_DIR"/test."$SOLVER"
 
 # The log directory in the testing directory.
-TEST_LOG_DIR="$TEST_SOLVER_DIR"/log
+TEST_LOG_DIR="$MTEST_SOLVER_DIR"/log
 
 # The checktest script
-CHCKTST="$TEST_DIR"/checktest
+CHCKTST="$MTEST_DIR"/checktest
 
 # Remove the old logs.
 mkdir -p "$SOLVER_LOG_DIR"
@@ -104,14 +107,12 @@ for COMP in $COMP_LIST; do
     mv "$TEST_LOG_DIR"/"$COMP"test*.log "$SOLVER_LOG_DIR"
 done
 
-make clean."$SOLVER"
-
 # Check the logfiles
 LOGFILES=("$SOLVER_LOG_DIR"/*test*.log)
 if [[ "$TEST_ALL" == "Y" ]] ; then
     for LOGFILE in "${LOGFILES[@]::${#LOGFILES[@]}}" ; do
         printf "\nChecking %s ...\n" "$LOGFILE"
-        INFO="$(bash "$TEST_DIR"/checktest --warnerror "$LOGFILE")"
+        INFO="$(bash "$CHCKTST" --warnerror "$LOGFILE")"
         printf "%s" "$INFO"
         printf "\nDone!\n"
         if [[ -n "$INFO" ]] ; then
@@ -122,7 +123,7 @@ if [[ "$TEST_ALL" == "Y" ]] ; then
 else
     for LOGFILE in "${LOGFILES[@]::${#LOGFILES[@]}-1}" ; do
         printf "\nChecking %s ...\n" "$LOGFILE"
-        INFO="$(bash "$TEST_DIR"/checktest --warning "$LOGFILE")"
+        INFO="$(bash "$CHCKTST" --warning "$LOGFILE")"
         printf "%s" "$INFO"
         printf "\nDone!\n"
         if [[ -n "$INFO" ]] ; then
@@ -136,9 +137,11 @@ else
     # No pause needed for the last logfile.
     LOGFILE="${LOGFILES[-1]}"  # The last logfile; it needs Bash 4.x.
     printf "\nChecking %s ...\n" "$LOGFILE"
-    bash "$TEST_DIR"/checktest --warning "$LOGFILE"
+    bash "$CHCKTST" --warning "$LOGFILE"
     printf "%s" "$INFO"
     printf "\nDone!\n\n"
 fi
+
+rm -rf "$TEST_DIR"
 
 exit 0

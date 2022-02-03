@@ -34,7 +34,7 @@ SHELL = /bin/bash
 FS := 08
 FSTD := 20$(FS)
 
-# Test directory.
+# Test directory. Needed by FFLAGS1/2.
 TEST_SOLVER_DIR := $(CURDIR)
 TEST_DIR := $(TEST_SOLVER_DIR)/..
 
@@ -456,15 +456,6 @@ $(TESTS) $(TESTS_INT):
 	@mv "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log" "$(LOG_DIR)/$@_$(STAMP).log"
 	@$(MAKE) clean
 
-#$(TESTS_C) $(TESTS_INT_C):
-#	@mkdir -p $(LOG_DIR)
-#	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log"
-#	@$(MAKE) $(SUBTESTS_C)
-#	@bash $(CHCKTST) --error "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log"
-#	@bash $(CHCKTST) --warning "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log"
-#	@printf "\n\n$@ ends!\n\n" | tee -a "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log"
-#	@mv "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*/_c/").log" "$(LOG_DIR)/$@_$(STAMP).log"
-#	@$(MAKE) cleanmisc
 
 # Make a compiler-specific subtest.
 # N.B.: The prerequisite should NOT include files that may not exist, e.g., $(SRC), because
@@ -590,10 +581,6 @@ header_%: source_%
 ####################################################################################################
 # Cleaning up.
 # ":" means to do nothing in bash. We can use "COMMAND || :" to avoid errors when COMMAND fails.
-cleanbin:
-	@printf "\nCleaning up the binaries ...\n"
-	@printf "Done.\n"
-
 cleanmisc:
 	@printf "\nCleaning up miscellaneous files ...\n"
 	@rm -f *.o *.mod *.dbg *.cmdx *.cmod *.ilm *.stb *.out *__genmod.f90 || :
@@ -610,7 +597,7 @@ cleansrc:
 	done
 	@printf "Done.\n"
 
-clean: cleanbin cleanmisc cleansrc
+clean: cleanmisc cleansrc
 
 cleanall: clean
 	@printf "\nRemoving the contents of $(TEST_SOLVER_DIR) ...\n"

@@ -10,7 +10,7 @@
 !
 ! Started in March 2020
 !
-! Last Modified: Monday, January 31, 2022 PM12:20:14
+! Last Modified: Thursday, February 03, 2022 PM09:06:58
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -60,6 +60,7 @@ logical :: output_xhist
 mwPointer :: funcon_ptr
 real(RP) :: cstrv
 real(RP) :: ctol
+real(RP) :: cweight
 real(RP) :: f
 real(RP) :: f0
 real(RP) :: ftarget
@@ -74,7 +75,7 @@ real(RP), allocatable :: x(:)
 real(RP), allocatable :: xhist(:, :)
 
 ! Validate the number of arguments
-call fmxVerifyNArgin(nargin, 18)
+call fmxVerifyNArgin(nargin, 19)
 call fmxVerifyNArgout(nargout, 10)
 
 ! Verify that input 1 is a function handle; the other inputs will be verified when read.
@@ -93,12 +94,13 @@ call fmxReadMPtr(pinput(9), gamma1)
 call fmxReadMPtr(pinput(10), gamma2)
 call fmxReadMPtr(pinput(11), ftarget)
 call fmxReadMPtr(pinput(12), ctol)
-call fmxReadMPtr(pinput(13), maxfun)
-call fmxReadMPtr(pinput(14), iprint)
-call fmxReadMPtr(pinput(15), maxhist)
-call fmxReadMPtr(pinput(16), output_xhist)
-call fmxReadMPtr(pinput(17), output_conhist)
-call fmxReadMPtr(pinput(18), maxfilt)
+call fmxReadMPtr(pinput(13), cweight)
+call fmxReadMPtr(pinput(14), maxfun)
+call fmxReadMPtr(pinput(15), iprint)
+call fmxReadMPtr(pinput(16), maxhist)
+call fmxReadMPtr(pinput(17), output_xhist)
+call fmxReadMPtr(pinput(18), output_conhist)
+call fmxReadMPtr(pinput(19), maxfilt)
 
 ! Get the sizes
 m = int(size(constr0), kind(m))  ! M is a compulsory input of the Fortran code.
@@ -107,20 +109,20 @@ m = int(size(constr0), kind(m))  ! M is a compulsory input of the Fortran code.
 ! There are different cases because XHIST/CONHIST may or may not be passed to the Fortran code.
 if (output_xhist .and. output_conhist) then
     call cobyla(calcfc, m, x, f, cstrv, constr, f0, constr0, nf, rhobeg, rhoend, ftarget, ctol, &
-        & maxfun, iprint, eta1, eta2, gamma1, gamma2, &
+        & cweight, maxfun, iprint, eta1, eta2, gamma1, gamma2, &
         & xhist=xhist, fhist=fhist, chist=chist, conhist=conhist, maxhist=maxhist, &
         & maxfilt=maxfilt, info=info)
 elseif (output_xhist) then
     call cobyla(calcfc, m, x, f, cstrv, constr, f0, constr0, nf, rhobeg, rhoend, ftarget, ctol, &
-        & maxfun, iprint, eta1, eta2, gamma1, gamma2, &
+        & cweight, maxfun, iprint, eta1, eta2, gamma1, gamma2, &
         & xhist=xhist, fhist=fhist, chist=chist, maxhist=maxhist, maxfilt=maxfilt, info=info)
 elseif (output_conhist) then
     call cobyla(calcfc, m, x, f, cstrv, constr, f0, constr0, nf, rhobeg, rhoend, ftarget, ctol, &
-        & maxfun, iprint, eta1, eta2, gamma1, gamma2, &
+        & cweight, maxfun, iprint, eta1, eta2, gamma1, gamma2, &
         & fhist=fhist, chist=chist, conhist=conhist, maxhist=maxhist, maxfilt=maxfilt, info=info)
 else
     call cobyla(calcfc, m, x, f, cstrv, constr, f0, constr0, nf, rhobeg, rhoend, ftarget, ctol, &
-        & maxfun, iprint, eta1, eta2, gamma1, gamma2, &
+        & cweight, maxfun, iprint, eta1, eta2, gamma1, gamma2, &
         & fhist=fhist, chist=chist, maxhist=maxhist, maxfilt=maxfilt, info=info)
 end if
 

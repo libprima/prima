@@ -59,7 +59,7 @@ COMMON_DIR := $(TEST_DIR)/../$(COMMON)
 # Solver directory.
 SOLVER_DIR := $(TEST_DIR)/../$(SOLVER)
 # Test suite directory.
-TESTSUITE = testsuite
+TESTSUITE := testsuite
 TESTSUITE_DIR := $(TEST_DIR)/$(TESTSUITE)
 # Source directories.
 SRC_DIRS := $(COMMON_DIR) $(SOLVER_DIR) $(TESTSUITE_DIR)
@@ -84,7 +84,7 @@ CHCKTST := $(TEST_DIR)/checktest
 
 # Define the tests.
 ######################################################################################
-# Decide whether to test QP, e.g., REAL128.
+# Decide whether to test QP, i.e., REAL128.
 # Flang and nvfortran do not support REAL128;
 # AOCC Flang complains about a symbol lookup error: undefined symbol: "fort_rnumq_i8";
 # ifx encounters an internal error when compiling with REAL128.
@@ -687,7 +687,7 @@ header_%: source_%
 
 ####################################################################################################
 # Cleaning up.
-# ":" means do nothing in bash. We can use "COMMAND || :" to avoid errors when COMMAND fails.
+# ":" means to do nothing in bash. We can use "COMMAND || :" to avoid errors when COMMAND fails.
 cleanbin:
 	@printf "\nCleaning up the binaries ...\n"
 	@rm -f *_tst_c || :

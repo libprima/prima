@@ -817,6 +817,7 @@ rhobeg = 1; % The default rhobeg and rhoend will be revised if solver = 'bobyqan
 rhoend = 1e-6;
 ftarget = -inf;
 ctol = eps; % Tolerance for constraint violation; a point with a constraint violation at most ctol is considered feasible
+cweight = 1e8;  % The weight of constraint violation in the selection of the returned x
 classical = false; % Call the classical Powell code? Classical mode recommended only for research purpose
 fortran = true; % Call the Fortran code?
 scale = false; % Scale the problem according to bounds? Scale only if the bounds reflect well the scale of the problem
@@ -925,7 +926,7 @@ if isempty(solver) || strcmpi(solver, 'bobyqan')
     known_fields = [known_fields, 'honour_x0'];
 end
 if isempty(solver) || any(strcmpi(solver, {'lincoan', 'cobylan'}))
-    known_fields = [known_fields, {'ctol', 'maxfilt'}];
+    known_fields = [known_fields, {'ctol', 'cweight', 'maxfilt'}];
 end
 if isempty(solver) || strcmpi(solver, 'cobylan')
     known_fields = [known_fields, 'output_nlchist'];
@@ -1188,7 +1189,24 @@ end
 if ~validated
     options.ctol = ctol;
 end
-options.ctol = double(options.ctol);
+options.ctol = double(options.ctol);  % ctol can be 0
+
+% Validate options.cweight
+validated = false;
+if isfield(options, 'cweight')
+    if ~isrealscalar(options.cweight) || options.cweight < 0 || isnan(options.cweight)
+        wid = sprintf('%s:InvalidCweight', invoker);
+        wmsg = sprintf('%s: invalid cweight; it should be a nonnegative number; it is set to %f.', invoker, cweight);
+        warning(wid, '%s', wmsg);
+        warnings = [warnings, wmsg];
+    else
+        validated = true;
+    end
+end
+if ~validated
+    options.cweight = cweight;
+end
+options.cweight = double(options.cweight);  % cweight can be +Inf
 
 % Validate options.classical
 validated = false;

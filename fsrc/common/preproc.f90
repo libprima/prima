@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, January 23, 2022 PM04:05:54
+! Last Modified: Thursday, February 03, 2022 PM11:01:08
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: If all the inputs are valid, then PREPROC should do nothing.
@@ -20,13 +20,13 @@ contains
 
 
 subroutine preproc(solver, n, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend, m, npt, maxfilt, &
-        & ctol, eta1, eta2, gamma1, gamma2, is_constrained)
+        & ctol, cweight, eta1, eta2, gamma1, gamma2, is_constrained)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine preprocesses the inputs. It does nothing to the inputs that are valid.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, TEN, TENTH, EPS, MAXMEMORY, MSGLEN, DEBUGGING
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, ETA1_DFT, ETA2_DFT, GAMMA1_DFT, GAMMA2_DFT
-use, non_intrinsic :: consts_mod, only : CTOL_DFT, FTARGET_DFT, IPRINT_DFT, MIN_MAXFILT, MAXFILT_DFT
+use, non_intrinsic :: consts_mod, only : CTOL_DFT, CWEIGHT_DFT, FTARGET_DFT, IPRINT_DFT, MIN_MAXFILT, MAXFILT_DFT
 use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite
 use, non_intrinsic :: memory_mod, only : cstyle_sizeof
@@ -53,6 +53,7 @@ integer(IK), intent(inout), optional :: npt
 integer(IK), intent(inout), optional :: maxfilt
 logical, intent(in), optional :: is_constrained
 real(RP), intent(inout), optional :: ctol
+real(RP), intent(inout), optional :: cweight
 real(RP), intent(inout), optional :: eta1
 real(RP), intent(inout), optional :: eta2
 real(RP), intent(inout), optional :: gamma1
@@ -294,13 +295,24 @@ if (rhoend <= 0 .or. rhobeg < rhoend .or. is_nan(rhoend) .or. is_inf(rhoend)) th
         & 'it is set to '//trimstr(wmsg))
 end if
 
-! Validate CTOL
+! Validate CTOL (it can be 0)
 if (present(ctol)) then
     if (is_nan(ctol) .or. ctol < 0) then
         ctol = CTOL_DFT
         if (is_constrained_loc) then
             write (wmsg, rfmt) ctol
             call warning(solver, 'Invalid CTOL; it should be a nonnegative number; it is set to '//trimstr(wmsg))
+        end if
+    end if
+end if
+
+! Validate CWEIGHT (it can be +Inf)
+if (present(cweight)) then
+    if (is_nan(cweight) .or. cweight < 0) then
+        cweight = CWEIGHT_DFT
+        if (is_constrained_loc) then
+            write (wmsg, rfmt) cweight
+            call warning(solver, 'Invalid CWEIGHT; it should be a nonnegative number; it is set to '//trimstr(wmsg))
         end if
     end if
 end if
