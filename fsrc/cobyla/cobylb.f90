@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, February 04, 2022 AM02:36:14
+! Last Modified: Friday, February 04, 2022 AM03:00:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -93,11 +93,12 @@ integer(IK) :: nfilt
 integer(IK) :: subinfo
 integer(IK) :: tr
 logical :: bad_trstep
-logical :: reduce_rho
 logical :: evaluated(size(x) + 1)
 logical :: good_geo
 logical :: improve_geo
+logical :: reduce_rho
 logical :: shortd
+logical :: tr_success
 real(RP) :: A(size(x), size(constr) + 1)
 ! A(:, 1:M) contains the approximate gradient for the constraints, and A(:, M+1) is minus the
 ! approximate gradient for the objective function.
@@ -327,8 +328,8 @@ do tr = 1, maxtr
         ! PREREM and ACTREM are the predicted and actual reductions in the merit function respectively.
         prerem = preref + cpen * prerec   ! Is it positive????
         actrem = (fval(n + 1) + cpen * cval(n + 1)) - (f + cpen * cstrv)
-        if (cpen <= ZERO .and. f <= fval(n + 1) .and. f >= fval(n + 1)) then
-            ! CPEN <= ZERO indeed means CPEN == ZERO, while A <= B .and. A >= B indeed mean A == B.
+        if (cpen <= 0 .and. f <= fval(n + 1) .and. f >= fval(n + 1)) then
+            ! CPEN <= 0 indeed means CPEN == 0, while A <= B .and. A >= B indeed mean A == B.
             ! We code in this way to avoid compilers complaining about equality comparison
             ! between reals, which appears in the original code of Powell.
             prerem = prerec   ! Is it positive?????
@@ -347,7 +348,8 @@ do tr = 1, maxtr
 
         ! Set JDROP_TR to the index of the vertex that is to be replaced by X.
         ! N.B.: COBYLA never sets JDROP_TR = N + 1.
-        jdrop_tr = setdrop_tr(actrem, d, delta, factor_alpha, factor_delta, sim, simi)
+        tr_success = (actrem > 0)
+        jdrop_tr = setdrop_tr(tr_success, d, delta, factor_alpha, factor_delta, sim, simi)
 
         ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_TR) is replaced by D.
         ! When JDROP_TR == 0, the algorithm decides not to include X into the simplex.
@@ -374,9 +376,9 @@ do tr = 1, maxtr
     ! After this rectification, we can  indeed simplify the definition of BAD_TRSTEP below by
     ! removing (JDROP_TR == 0), but we retain (JDROP_TR == 0) for robustness.
     ! 2. Powell's definition of BAD_TRSTEP is
-    !!bad_trstep = (shortd .or. actrem <= ZERO .or. actrem < TENTH * prerem .or. jdrop_tr == 0)
+    !!bad_trstep = (shortd .or. actrem <= 0 .or. actrem < TENTH * prerem .or. jdrop_tr == 0)
     ! But the following one seems to work better, especially for linearly constrained problems.
-    bad_trstep = (shortd .or. actrem <= ZERO .or. jdrop_tr == 0)
+    bad_trstep = (shortd .or. actrem <= 0 .or. jdrop_tr == 0)  !!!??? Replace ACTREM <= 0 by RATIO <= 0????
 
     ! Should we take a geometry step to improve the geometry of the interpolation set?
     improve_geo = bad_trstep .and. .not. good_geo
