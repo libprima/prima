@@ -6,7 +6,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, February 02, 2022 PM05:07:48
+! Last Modified: Friday, February 04, 2022 AM02:56:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -85,17 +85,17 @@ good_geo = all(vsig >= parsig) .and. all(veta <= pareta)
 end function goodgeo
 
 
-function setdrop_tr(actrem, d, delta, factor_alpha, factor_delta, sim, simi) result(jdrop)
+function setdrop_tr(tr_success, d, delta, factor_alpha, factor_delta, sim, simi) result(jdrop)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine finds (the index) of a current interpolation point to be replaced by the
 ! trust-region trial point. See (19)--(22) of the COBYLA paper.
 ! N.B.:
-! 1. If ACTREM > 0, then JDROP > 0 so that D is included into XPT. Otherwise, it is a bug.
+! 1. If TR_SUCCESS == TRUE, then JDROP > 0 so that D is included into XPT. Otherwise, it is a bug.
 ! 2. COBYLA never sets JDROP = N + 1.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, ONE, TENTH, DEBUGGING
+use, non_intrinsic :: consts_mod, only : IK, RP, ONE, TENTH, DEBUGGING
 use, non_intrinsic :: linalg_mod, only : matprod, isinv
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: debug_mod, only : assert
@@ -103,7 +103,7 @@ use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: actrem
+logical, intent(in) :: tr_success
 real(RP), intent(in) :: d(:)
 real(RP), intent(in) :: delta
 real(RP), intent(in) :: factor_alpha
@@ -137,7 +137,6 @@ if (DEBUGGING) then
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)), 'SIMI is finite', srname)
     call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
-    call assert(.not. is_nan(actrem), 'ACTREM is not NaN', srname)
 end if
 
 !====================!
@@ -145,15 +144,15 @@ end if
 !====================!
 
 ! JDROP = 0 by default. It cannot be removed, as JDROP may not be set below in some cases (e.g.,
-! when ACTREM <= 0, MAXVAL(ABS(SIMID)) <= 1, and MAXVAL(VETA) <= EDGMAX).
+! when TR_SUCCESS == FALSE, MAXVAL(ABS(SIMID)) <= 1, and MAXVAL(VETA) <= EDGMAX).
 jdrop = 0_IK
 
 simid = matprod(simi, d)
-if (any(abs(simid) > ONE) .or. (actrem > ZERO .and. any(.not. is_nan(simid)))) then
+if (any(abs(simid) > ONE) .or. (tr_success .and. any(.not. is_nan(simid)))) then
     jdrop = int(maxloc(abs(simid), mask=(.not. is_nan(simid)), dim=1), kind(jdrop))
 end if
 
-if (actrem > ZERO) then
+if (tr_success) then
     veta = sqrt(sum((sim(:, 1:n) - spread(d, dim=2, ncopies=n))**2, dim=1))
 else
     veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
@@ -169,11 +168,11 @@ if (any(veta > edgmax .and. (sigbar >= parsig .or. sigbar >= vsig))) then
 end if
 
 ! Powell's code does not include the following instructions. With Powell's code, if SIMID consists
-! of only NaN, then JDROP can be 0 even when ACTREM > 0 (i.e., D reduces the merit function).
-! With the following code, JDROP cannot be 0 when ACTREM > 0, unless VETA is all NaN, which should
-! not happen if X0 does not contain NaN, the trust-region/geometry steps never contain NaN, and we
-! exit once encountering an iterate containing Inf (due to overflow).
-if (actrem > ZERO .and. jdrop <= 0) then  ! Write JDROP <= 0 instead of JDROP == 0 for robustness.
+! of only NaN, then JDROP can be 0 even when TR_SUCCESS == TRUE (i.e., D reduces the merit function).
+! With the following code, JDROP cannot be 0 when TR_SUCCESS == TRUE, unless VETA is all NaN, which
+! should not happen if X0 does not contain NaN, the trust-region/geometry steps never contain NaN,
+! and we exit once encountering an iterate containing Inf (due to overflow).
+if (tr_success .and. jdrop <= 0) then  ! Write JDROP <= 0 instead of JDROP == 0 for robustness.
     jdrop = int(maxloc(veta, mask=(.not. is_nan(veta)), dim=1), kind(jdrop))
 end if
 
@@ -184,7 +183,7 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(jdrop >= 0 .and. jdrop <= n, '0 <= JDROP <= N', srname)
-    call assert(jdrop >= 1 .or. .not. actrem > 0, 'JDROP >= 1 unless ACTREM <= 0', srname)
+    call assert(jdrop >= 1 .or. .not. tr_success, 'JDROP >= 1 unless the trust-region step failed', srname)
 end if
 
 end function setdrop_tr
