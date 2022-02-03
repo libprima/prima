@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, December 25, 2021 PM04:48:04
+! Last Modified: Thursday, February 03, 2022 PM03:35:28
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -200,7 +200,7 @@ integer, parameter :: MXMMY = 21 * (10**8)   ! 21*10**8 = 2G.
 integer, parameter :: MAXMEMORY = min(MXMMY, huge(0))
 
 ! Maximal length of the filter used in constrained solvers.
-integer(IK), parameter :: MIN_MAXFILT = 200_IK  ! Should be positive; < 100 is not recommended.
+integer(IK), parameter :: MIN_MAXFILT = 200_IK  ! Should be positive; < 200 is not recommended.
 integer(IK), parameter :: MAXFILT_DFT = 10_IK * MIN_MAXFILT
 
 end module consts_mod

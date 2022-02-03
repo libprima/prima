@@ -828,8 +828,8 @@ debugflag = false; % Do not use 'debug' as the name, which is a MATLAB function
 chkfunval = false;
 output_xhist = false; % Output the history of x?
 output_nlchist = false; % Output the history of the nonlinear constraints?
-maxfilt = 2000; % Length of the filter used for selecting the returned x in constrained problems
 min_maxfilt = 200; % The smallest value of maxfilt; if maxfilt is too small, the returned x may not be the best one visited
+maxfilt = 10*min_maxfilt; % Length of the filter used for selecting the returned x in constrained problems
 
 % maxint is the largest integer in the mex functions; the factor 0.99 provides a buffer. We do not
 % pass any integer larger than maxint to the mexified Fortran code. Otherwise, errors include

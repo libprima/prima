@@ -28,15 +28,25 @@
 
 .PHONY: all test clean *.cobyla *.uobyqa *.newuoa *.bobyqa *.lincoa
 
-MAKEFILE_DIR = ./makefiles
+%.cobyla: SOLVER := cobyla
+%.uobyqa: SOLVER := uobyqa
+%.newuoa: SOLVER := newuoa
+%.bobyqa: SOLVER := bobyqa
+%.lincoa: SOLVER := lincoa
 
-%.cobyla: SOLVER = cobyla
-%.uobyqa: SOLVER = uobyqa
-%.newuoa: SOLVER = newuoa
-%.bobyqa: SOLVER = bobyqa
-%.lincoa: SOLVER = lincoa
+# Root directory of this project.
+ROOT_DIR := $(CURDIR)/../..
+# Temporary directory. It should not be a subdirectory of $(ROOT_DIR).
+TMP_DIR := /tmp
+# Root directory of this test. It is a subdirectory of $(TMP_DIR) and a partial copy of $(ROOT_DIR).
+TEST_ROOT := $(TMP_DIR)/neupdfo
+# The test directory
+TEST_DIR := $(TEST_ROOT)/fsrc/tests
+# The makefile directory
+MAKEFILE_DIR := $(TEST_DIR)/makefiles
 
-# GNU make manual: Recursive make commands should always use the variable MAKE, not the explicit command name ‘make’.
+# GNU make manual: Recursive make commands should always use the variable MAKE, not the explicit
+# command name 'make'.
 %test:
 	@$(MAKE) $@.cobyla $@.uobyqa $@.newuoa $@.bobyqa $@.lincoa
 
@@ -44,10 +54,13 @@ MAKEFILE_DIR = ./makefiles
 	@$(MAKE) $@.cobyla $@.uobyqa $@.newuoa $@.bobyqa $@.lincoa
 
 %.cobyla %.uobyqa %.newuoa %.bobyqa %.lincoa:
-	@mkdir -p test.$(SOLVER)
-	@cp $(MAKEFILE_DIR)/Makefile.common test.$(SOLVER)/
-	@cp $(MAKEFILE_DIR)/Makefile.$(SOLVER) test.$(SOLVER)/Makefile
-	@cd test.$(SOLVER)/ && $(MAKE) $(subst .$(SOLVER),,$@) --no-print-directory
+	@$(eval SOLVER_TEST_DIR := $(TEST_DIR)/test.$(SOLVER))  # The test directory for the tested solver
+	@mkdir -p $(TEST_ROOT)
+	@cp -r $(ROOT_DIR)/fsrc $(TEST_ROOT)/
+	@mkdir -p $(SOLVER_TEST_DIR)
+	@cp $(MAKEFILE_DIR)/Makefile.common $(SOLVER_TEST_DIR)/
+	@cp $(MAKEFILE_DIR)/Makefile.$(SOLVER) $(SOLVER_TEST_DIR)/Makefile
+	@cd $(SOLVER_TEST_DIR)/ && $(MAKE) $(subst .$(SOLVER),,$@) --no-print-directory
 
 clean:
-	@rm -rf log test.cobyla test.uobyqa test.newuoa test.bobyqa test.lincoa || :
+	@rm -rf $(TEST_ROOT) || :

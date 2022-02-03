@@ -20,7 +20,7 @@
 #
 # Started: January 2021
 #
-# Last Modified: January 2022
+# Last Modified: February 2022
 ####################################################################################################
 
 #$(VERBOSE).SILENT:  # Order make to work quietly. Not desirable in this case.
@@ -35,11 +35,12 @@ FS := 08
 FSTD := 20$(FS)
 
 # Test directory.
-TEST_DIR := $(PWD)
+TEST_SOLVER_DIR := $(CURDIR)
+TEST_DIR := $(TEST_SOLVER_DIR)/..
 
 # Default options for all the compilers.
-FFLAGS1 := -O3 -I$(TEST_DIR)
-FFLAGS2 := -g -O0 -I$(TEST_DIR)
+FFLAGS1 := -O3 -I$(TEST_SOLVER_DIR)
+FFLAGS2 := -g -O0 -I$(TEST_SOLVER_DIR)
 
 # Log file stamp.
 RANDNUM := $(shell awk 'BEGIN{srand();printf("%d", 65536*rand())}')
@@ -47,18 +48,18 @@ TIME := $(shell date +%Y.%m.%d_%H.%M.%S)
 STAMP := $(TIME)_$(RANDNUM)
 
 # Log directory.
-LOG_DIR := $(TEST_DIR)/log
+LOG_DIR := $(TEST_SOLVER_DIR)/log
 # Trash directory.
-TRASH_DIR := $(TEST_DIR)/trash
+TRASH_DIR := $(TEST_SOLVER_DIR)/trash
 # Fortran source directory.
-FSRC_DIR := $(TEST_DIR)/../../../../fsrc
+FSRC_DIR := $(TEST_DIR)/../../../fsrc
 # Common directory.
 COMMON := common
 COMMON_DIR := $(FSRC_DIR)/$(COMMON)
 # Solver directory.
 SOLVER_DIR := $(FSRC_DIR)/$(SOLVER)
 # Mex gateway directory.
-MEXGATE_DIR := $(TEST_DIR)/../..
+MEXGATE_DIR := $(TEST_DIR)/..
 # Source directories.
 SRC_DIRS := $(COMMON_DIR) $(SOLVER_DIR)
 
@@ -74,11 +75,11 @@ DEBUGF90 := debug.F90
 # Headers.
 # N.B.: If we define COMMON as "./common/", then, when adapting the header, sed will complain
 # that"./common//*.h" cannot be found on macOS.
-HEADERS := $(TEST_DIR)/$(COMMON)/*.h
-FINTRFH := $(TEST_DIR)/fintrf.h
+HEADERS := $(TEST_SOLVER_DIR)/$(COMMON)/*.h
+FINTRFH := $(TEST_SOLVER_DIR)/fintrf.h
 
 # The checktest script.
-CHCKTST := $(TEST_DIR)/../checktest
+CHCKTST := $(TEST_DIR)/checktest
 
 # Define the tests.
 ######################################################################################
@@ -546,7 +547,7 @@ source_%: $(SRC_DIRS)
 	@for DIR in $(SRC_DIRS); do cp -r "$$DIR" ./; done
 	@find $(MEXGATE_DIR) -maxdepth 1 \( -type f -o \( -type d -a -name 'classical' \) \) -exec cp -r {} ./ \;
 	@mv ./$(DEBUGF90) ./$(COMMON)  # Use the MEX version of debug.F90 instead of the Fortran version.
-	@cp $(TEST_DIR)/../fintrf.h $(FINTRFH)
+	@cp $(TEST_DIR)/fintrf.h $(FINTRFH)
 	@find ./ -type f  \
 		\( -name '*.mod' \
 		-o -name '*.o' \
@@ -601,7 +602,7 @@ cleanmisc:
 
 cleansrc:
 	@printf "\nCleaning up the source code ...\n"
-	@for ITEM in $(COMMON) $(SOLVER) $(DRIVER_SRC) ; do  \
+	@for ITEM in $(COMMON) $(SOLVER) ; do  \
 		if [ `ls -1 "$$ITEM" 2>/dev/null | wc -l ` -gt 0 ] ; \
 			then mkdir -p $(TRASH_DIR) && rm -rf $(TRASH_DIR)/"$$ITEM" || : ; \
 			mv "$$ITEM" $(TRASH_DIR) > /dev/null 2>&1 || : ; \
@@ -612,4 +613,6 @@ cleansrc:
 clean: cleanbin cleanmisc cleansrc
 
 cleanall: clean
-	rm -rf $(TRASH_DIR) $(LOG_DIR) || :
+	@printf "\nRemoving the contents of $(TEST_SOLVER_DIR) ...\n"
+	@rm -rf $(TEST_SOLVER_DIR)/* &> /dev/null || :
+	@printf "Done.\n"

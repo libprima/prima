@@ -8,7 +8,7 @@ module selectx_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thursday, January 06, 2022 PM03:57:19
+! Last Modified: Thursday, February 03, 2022 PM01:06:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -102,17 +102,18 @@ end if
 !====================!
 
 ! Return immediately if any column of XFILT is better than X.
-! BETTER is defined by the array constructor with an implied do loop.
+! BETTER is defined by an array constructor with an implied do loop.
 better = [(isbetter([ffilt(i), cfilt(i)], [f, cstrv], ctol), i=1, nfilt)]
 if (any(better)) then
     return
 end if
 
-! Decide which columns of XFILT to keep. We use again the array constructor with an implied do loop.
+! Decide which columns of XFILT to keep. We use again an array constructor with an implied do loop.
 keep = [(.not. isbetter([f, cstrv], [ffilt(i), cfilt(i)], ctol), i=1, nfilt)]
-! If X is not better than any column of XFILT, then we remove the first (oldest) column of XFILT.
-if (count(keep) == maxfilt .and. size(keep) > 0) then  ! SIZE(KEEP)==MAXFILT>0 unless bug occurs.
-    keep(1) = .false.
+! If NFILT == MAXFILT and X is not better than any column of XFILT, then we remove the column of
+! XFILT corresponding to the largest constraint violation.
+if (count(keep) == maxfilt) then
+    keep(maxloc(cfilt)) = .false.
 end if
 
 nfilt = int(count(keep), kind(nfilt))
@@ -134,7 +135,7 @@ cfilt(nfilt) = cstrv
 
 ! Postconditions
 if (DEBUGGING) then
-    ! Check NFILT and the sizes of XFILT, FFILT, CONFILT, CFILT
+    ! Check NFILT and the sizes of XFILT, FFILT, CONFILT, CFILT.
     call assert(nfilt >= 1 .and. nfilt <= maxfilt, '1 <= NFILT <= MAXFILT', srname)
     call assert(size(xfilt, 1) == n .and. size(xfilt, 2) == maxfilt, 'SIZE(XFILT) == [N, MAXFILT]', srname)
     call assert(size(ffilt) == maxfilt, 'SIZE(FFILT) = MAXFILT', srname)
