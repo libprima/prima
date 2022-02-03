@@ -400,6 +400,7 @@ else % The problem turns out 'normal' during prepdfo
     gamma2 = options.gamma2;
     ftarget = options.ftarget;
     ctol = options.ctol;
+    cweight = options.cweight;
     maxhist = options.maxhist;
     output_xhist = options.output_xhist;
     output_nlchist = options.output_nlchist;
@@ -416,7 +417,7 @@ else % The problem turns out 'normal' during prepdfo
     % however, public errors can occur due to, e.g., evalobj; error handling needed.
     try
         [x, fx, constrviolation, constr, exitflag, nf, xhist, fhist, chist, conhist] = ...
-            fsolver(funcon, x0, f_x0, constr_x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, ctol, maxfun, iprint, maxhist, double(output_xhist), double(output_nlchist), maxfilt);
+            fsolver(funcon, x0, f_x0, constr_x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, ctol, cweight, maxfun, iprint, maxhist, double(output_xhist), double(output_nlchist), maxfilt);
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
             error(exception.identifier, '%s\n(error generated in %s, line %d)', exception.message, exception.stack(1).file, exception.stack(1).line);

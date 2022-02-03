@@ -30,16 +30,19 @@ SOLVER_LOG_DIR="$SOLVER_DIR"/flog
 ROOT_DIR=../..
 
 # The testing directory.
-TMP_DIR=/tmp
-TEST_ROOT="$TMP_DIR"/neupdfo
-TEST_DIR="$TEST_ROOT"/fsrc/tests
-TEST_SOLVER_DIR="$TEST_DIR"/test."$SOLVER"
+TIME=$(date +%s)
+TEST_DIR=/tmp/"$(basename -- "$0")"_"$TIME"
+# We export TEST_DIR, which will be referred to by the Makefiles.
+export TEST_DIR
+TEST_ROOT="$TEST_DIR"/neupdfo
+FTEST_DIR="$TEST_ROOT"/fsrc/tests
+FTEST_SOLVER_DIR="$FTEST_DIR"/test."$SOLVER"
 
 # The log directory in the testing directory.
-TEST_LOG_DIR="$TEST_SOLVER_DIR"/log
+TEST_LOG_DIR="$FTEST_SOLVER_DIR"/log
 
 # The checktest script
-CHCKTST="$TEST_DIR"/checktest
+CHCKTST="$FTEST_DIR"/checktest
 
 # Remove the old logs.
 mkdir -p "$SOLVER_LOG_DIR"
@@ -106,8 +109,6 @@ for COMP in $COMP_LIST; do
     mv "$TEST_LOG_DIR"/"$COMP"test*.log "$SOLVER_LOG_DIR"
 done
 
-make cleanall."$SOLVER"
-
 # Check the logfiles
 LOGFILES=("$SOLVER_LOG_DIR"/*test*.log)
 if [[ "$TEST_ALL" == "Y" ]] ; then
@@ -144,5 +145,7 @@ else
     printf "%s" "$INFO"
     printf "\nDone!\n\n"
 fi
+
+rm -rf "$TEST_DIR"
 
 exit 0

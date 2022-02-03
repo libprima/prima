@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, February 03, 2022 PM02:50:52
+! Last Modified: Thursday, February 03, 2022 PM09:21:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -17,8 +17,8 @@ public :: cobylb
 contains
 
 
-subroutine cobylb(calcfc, iprint, maxfilt, maxfun, ctol, eta1, eta2, ftarget, gamma1, gamma2, &
-    & rhobeg, rhoend, constr, f, x, nf, chist, conhist, cstrv, fhist, xhist, info)
+subroutine cobylb(calcfc, iprint, maxfilt, maxfun, ctol, cweight, eta1, eta2, ftarget, &
+    & gamma1, gamma2, rhobeg, rhoend, constr, f, x, nf, chist, conhist, cstrv, fhist, xhist, info)
 
 ! Generic modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
@@ -50,6 +50,7 @@ integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfilt
 integer(IK), intent(in) :: maxfun
 real(RP), intent(in) :: ctol
+real(RP), intent(in) :: cweight
 real(RP), intent(in) :: eta1
 real(RP), intent(in) :: eta2
 real(RP), intent(in) :: ftarget
@@ -173,15 +174,14 @@ call initxfc(calcfc, iprint, maxfun, constr, ctol, f, ftarget, rhobeg, x, nf, ch
    & conmat, cval, fhist, fval, sim, simi, xhist, evaluated, subinfo)
 
 ! Initialize the filter, including XFILT, FFILT, CONFILT, CFILT, and NFILT.
-call initfilt(conmat, ctol, cval, fval, sim, evaluated, nfilt, cfilt, confilt, ffilt, xfilt)
+call initfilt(conmat, ctol, cweight, cval, fval, sim, evaluated, nfilt, cfilt, confilt, ffilt, xfilt)
 
 ! Check whether to exit due to abnormal cases that may occur during the initialization.
 if (subinfo /= INFO_DFT) then
     info = subinfo
     ! Return the best calculated values of the variables.
     ! N.B. SELECTX and FINDPOLE choose X by different standards. One cannot replace the other.
-    cpen = min(1.0E8_RP, HUGENUM)
-    kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), cpen, ctol)
+    kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), cweight, ctol)
     x = xfilt(:, kopt)
     f = ffilt(kopt)
     constr = confilt(:, kopt)
@@ -320,7 +320,7 @@ do tr = 1, maxtr
         ! Save X, F, CONSTR, CSTRV into the history.
         call savehist(nf, constr, cstrv, f, x, chist, conhist, fhist, xhist)
         ! Save X, F, CONSTR, CSTRV into the filter.
-        call savefilt(constr, cstrv, ctol, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
+        call savefilt(constr, cstrv, ctol, cweight, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
 
         ! Begin the operations that decide whether X should replace one of the vertices of the
         ! current simplex, the change being mandatory if ACTREM is positive.
@@ -428,7 +428,7 @@ do tr = 1, maxtr
             ! Save X, F, CONSTR, CSTRV into the history.
             call savehist(nf, constr, cstrv, f, x, chist, conhist, fhist, xhist)
             ! Save X, F, CONSTR, CSTRV into the filter.
-            call savefilt(constr, cstrv, ctol, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
+            call savefilt(constr, cstrv, ctol, cweight, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
             ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_GEO) is replaced by D.
             call updatexfc(jdrop_geo, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
             ! Check whether to exit due to damaging rounding detected in UPDATEPOLE (called by UPDATEXFC).
@@ -467,8 +467,7 @@ end do
 
 ! Return the best calculated values of the variables.
 ! N.B. SELECTX and FINDPOLE choose X by different standards. One cannot replace the other.
-cpen = max(cpen, min(1.0E8_RP, HUGENUM))
-kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), cpen, ctol)
+kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), max(cpen, cweight), ctol)
 x = xfilt(:, kopt)
 f = ffilt(kopt)
 constr = confilt(:, kopt)

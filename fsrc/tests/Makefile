@@ -36,14 +36,15 @@
 
 # Root directory of this project.
 ROOT_DIR := $(CURDIR)/../..
-# Temporary directory. It should not be a subdirectory of $(ROOT_DIR).
-TMP_DIR := /tmp
-# Root directory of this test. It is a subdirectory of $(TMP_DIR) and a partial copy of $(ROOT_DIR).
-TEST_ROOT := $(TMP_DIR)/neupdfo
+# Temporary directory. It should not be a subdirectory of $(ROOT_DIR). The ?= assignment assigns the
+# value to TEST_DIR if TEST_DIR is not an exported environment variable of the shell.
+TEST_DIR ?= /tmp
+# Root directory of this test. It is a subdirectory of $(TEST_DIR) and a partial copy of $(ROOT_DIR).
+TEST_ROOT := $(TEST_DIR)/neupdfo
 # The test directory
-TEST_DIR := $(TEST_ROOT)/fsrc/tests
+FTEST_DIR := $(TEST_ROOT)/fsrc/tests
 # The makefile directory
-MAKEFILE_DIR := $(TEST_DIR)/makefiles
+MAKEFILE_DIR := $(FTEST_DIR)/makefiles
 
 # GNU make manual: Recursive make commands should always use the variable MAKE, not the explicit
 # command name 'make'.
@@ -54,13 +55,13 @@ MAKEFILE_DIR := $(TEST_DIR)/makefiles
 	@$(MAKE) $@.cobyla $@.uobyqa $@.newuoa $@.bobyqa $@.lincoa
 
 %.cobyla %.uobyqa %.newuoa %.bobyqa %.lincoa:
-	@$(eval SOLVER_TEST_DIR := $(TEST_DIR)/test.$(SOLVER))  # The test directory for the tested solver
+	@$(eval SOLVER_FTEST_DIR := $(FTEST_DIR)/test.$(SOLVER))  # The test directory for the tested solver
 	@mkdir -p $(TEST_ROOT)
 	@cp -r $(ROOT_DIR)/fsrc $(TEST_ROOT)/
-	@mkdir -p $(SOLVER_TEST_DIR)
-	@cp $(MAKEFILE_DIR)/Makefile.common $(SOLVER_TEST_DIR)/
-	@cp $(MAKEFILE_DIR)/Makefile.$(SOLVER) $(SOLVER_TEST_DIR)/Makefile
-	@cd $(SOLVER_TEST_DIR)/ && $(MAKE) $(subst .$(SOLVER),,$@) --no-print-directory
+	@mkdir -p $(SOLVER_FTEST_DIR)
+	@cp $(MAKEFILE_DIR)/Makefile.common $(SOLVER_FTEST_DIR)/
+	@cp $(MAKEFILE_DIR)/Makefile.$(SOLVER) $(SOLVER_FTEST_DIR)/Makefile
+	@cd $(SOLVER_FTEST_DIR) && $(MAKE) $(subst .$(SOLVER),,$@) --no-print-directory
 
 clean:
 	@rm -rf $(TEST_ROOT) || :

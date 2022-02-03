@@ -29,7 +29,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, February 03, 2022 PM01:24:36
+! Last Modified: Thursday, February 03, 2022 PM09:13:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -43,7 +43,7 @@ contains
 subroutine cobyla(calcfc, m, x, f, &
     & cstrv, constr, &
     & f0, constr0, &
-    & nf, rhobeg, rhoend, ftarget, ctol, maxfun, iprint, &
+    & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, &
     & eta1, eta2, gamma1, gamma2, xhist, fhist, chist, conhist, maxhist, maxfilt, info)
 !--------------------------------------------------------------------------------------------------!
 ! Among all the arguments, only CALCFC, X, and F are obligatory. The others are OPTIONAL and you can
@@ -129,6 +129,10 @@ subroutine cobyla(calcfc, m, x, f, &
 !   CTOL is the tolerance of constraint violation. Any X with MAXVAL(-CONSTR(X)) <= CTOL is
 !   considered as feasible.
 !
+! CWEIGHT
+!   Input, REAL(RP) scalar, default: CWEIGHT_DFT.
+!   CWEIGHT is the weight that the constraint violation takes in the selection of the returned X.
+!
 ! MAXFUN
 !   Input, INTEGER(IK) scalar, default: MAXFUN_DIM_DFT*N with MAXFUN_DIM_DFT defined in the module
 !   CONSTS_MOD (see common/consts.F90). MAXFUN is the maximal number of calls of CALCFC.
@@ -211,8 +215,8 @@ subroutine cobyla(calcfc, m, x, f, &
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : DEBUGGING
-use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT
-use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, FTARGET_DFT, IPRINT_DFT
+use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT, IPRINT_DFT
+use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, CWEIGHT_DFT, FTARGET_DFT
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS, MSGLEN
 use, non_intrinsic :: debug_mod, only : assert, errstop, warning
 use, non_intrinsic :: evaluate_mod, only : evaluate, moderatex
@@ -241,6 +245,7 @@ integer(IK), intent(in), optional :: maxfun
 integer(IK), intent(in), optional :: maxhist
 real(RP), intent(in), optional :: constr0(:)
 real(RP), intent(in), optional :: ctol
+real(RP), intent(in), optional :: cweight
 real(RP), intent(in), optional :: eta1
 real(RP), intent(in), optional :: eta2
 real(RP), intent(in), optional :: f0
@@ -276,6 +281,7 @@ integer(IK) :: nf_loc
 integer(IK) :: nhist
 real(RP) :: cstrv_loc
 real(RP) :: ctol_loc
+real(RP) :: cweight_loc
 real(RP) :: eta1_loc
 real(RP) :: eta2_loc
 real(RP) :: ftarget_loc
@@ -356,6 +362,12 @@ else
     ctol_loc = CTOL_DFT
 end if
 
+if (present(cweight)) then
+    cweight_loc = cweight
+else
+    cweight_loc = CWEIGHT_DFT
+end if
+
 if (present(ftarget)) then
     ftarget_loc = ftarget
 else
@@ -418,7 +430,8 @@ end if
 
 ! Preprocess the inputs in case some of them are invalid. It does nothing if all inputs are valid.
 call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
-    & m=m, ctol=ctol_loc, eta1=eta1_loc, eta2=eta2_loc, gamma1=gamma1_loc, gamma2=gamma2_loc, maxfilt=maxfilt_loc)
+    & m=m, ctol=ctol_loc, cweight=cweight_loc, eta1=eta1_loc, eta2=eta2_loc, gamma1=gamma1_loc, &
+    & gamma2=gamma2_loc, maxfilt=maxfilt_loc)
 
 ! Further revise MAXHIST_LOC according to MAXMEMORY, and allocate memory for the history.
 ! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
@@ -428,7 +441,7 @@ call prehist(maxhist_loc, m, n, present(chist), chist_loc, present(conhist), con
     & present(fhist), fhist_loc, present(xhist), xhist_loc)
 
 !-------------------- Call COBYLB, which performs the real calculations. --------------------------!
-call cobylb(calcfc, iprint_loc, maxfilt_loc, maxfun_loc, ctol_loc, eta1_loc, eta2_loc, &
+call cobylb(calcfc, iprint_loc, maxfilt_loc, maxfun_loc, ctol_loc, cweight_loc, eta1_loc, eta2_loc, &
     & ftarget_loc, gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc, constr_loc, f, x, nf_loc, &
     & chist_loc, conhist_loc, cstrv_loc, fhist_loc, xhist_loc, info_loc)
 !--------------------------------------------------------------------------------------------------!
