@@ -263,7 +263,7 @@ do tr = 1, maxtr
     !----------------------------------------------------------------------------------------------!
     ! Possible improvement: Instead of exiting, skip a trust-region step and perform a geometry one!
     !----------------------------------------------------------------------------------------------!
-    call assert(.not. any(is_nan(A)), 'ERROR: model NaN', 'COBYLA')
+    !call assert(.not. any(is_nan(A)), 'ERROR: model NaN', 'COBYLA')
     !if (any(is_nan(A))) then
     !    info = NAN_MODEL
     !    exit  ! Better action to take? Geometry step?
