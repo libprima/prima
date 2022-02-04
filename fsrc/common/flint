@@ -31,7 +31,7 @@ ROOT_DIR=../..
 
 # The testing directory.
 TIME=$(date +%s)
-RANDNUM="$(awk 'BEGIN{srand();printf("%d", 65536*rand())}')"
+RANDNUM="$((RANDOM*RANDOM))"
 TEST_DIR=/tmp/"$(basename -- "$0")"_"$TIME"_"$RANDNUM"
 # We export TEST_DIR, which will be referred to by the Makefiles.
 export TEST_DIR

@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Friday, February 04, 2022 PM12:27:51
+! Last Modified: Saturday, February 05, 2022 AM12:02:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -251,11 +251,10 @@ nfail = 0_IK
 !----------------------------------------------------------------------------------------------!
 
 ! Powell's code can encounter infinite cycling, which did happen when testing the following CUTEst
-! problems: DANWOODLS, GAUSS1LS, GAUSS2LS, GAUSS3LS, KOEBHELB, TAX13322, TAXR13322.
-! Indeed, in all these cases, Inf/NaN appear in D due to extremely large values in A (up to 10^219).
-! To resolve this, we set the maximal number of iterations to MAXITER, and terminate in case
-! Inf/NaN occurs in D.
-! In MATLAB or Python: MAXITER = MIN(10000, 100*MAX(M,N))
+! problems: DANWOODLS, GAUSS1LS, GAUSS2LS, GAUSS3LS, KOEBHELB, TAX13322, TAXR13322. Indeed, in all
+! these cases, Inf/NaN appear in D due to extremely large values in A (up to 10^219). To resolve
+! this, we set the maximal number of iterations to MAXITER, and terminate if Inf/NaN occurs in D.
+! In MATLAB or Python: MAXITER = MIN(10000, 100*MAX(M, N))
 maxiter = int(min(int(10_IK**min(4, range(0_IK)), IK), 100_IK * max(m, n)), kind(maxiter))
 do iter = 1, maxiter
     if (DEBUGGING) then
@@ -309,7 +308,9 @@ do iter = 1, maxiter
             ! Powell did, we should use the UNUPDATED version, namely ZDASAV.
             vmultd(1:nact) = lsqr(A(:, iact(1:nact)), A(:, iact(icon)), z(:, 1:nact), zdasav(1:nact))
             if (.not. any(vmultd(1:nact) > ZERO .and. iact(1:nact) <= m)) then
-                exit  ! This can be triggered by NACT == 0, among other possibilities.
+                ! N.B.: This can be triggered by NACT == 0 (among other possibilities)! This is
+                ! important, because NACT will be used as an index in the sequel.
+                exit
             end if
             ! VMULTD(NACT+1:MCON) is not used, but we have to initialize it in Fortran, or compilers
             ! complain about the WHERE construct below (another solution: restrict WHERE to 1:NACT).
@@ -342,6 +343,7 @@ do iter = 1, maxiter
             ! Reorder the active constraints so that the one to be replaced is at the end of the list.
             ! Exit if the new value of ZDOTA(NACT) is not acceptable. Note that the opposite of
             ! 'ABS(ZDOTA(NACT)) > 0' is not 'ABS(ZDOTA(NACT) <= 0)', as ZDOTA(NACT) can be NaN.
+            ! N.B.: We cannot arrive here with NACT == 0, which should have triggered an exit above.
             if (abs(zdota(nact)) <= 0 .or. is_nan(zdota(nact))) then
                 exit
             end if
@@ -506,13 +508,15 @@ do iter = 1, maxiter
 
     vmultc = max(ZERO, (ONE - frac) * vmultc + frac * vmultd)
     if (stage == 1) then
-        !cstrv = (ONE - frac) * cvold + frac * cstrv
+        !cstrv = (ONE - frac) * cvold + frac * cstrv  ! Powell's version
         ! In theory, CSTRV = MAXVAL([B(1:M) - MATPROD(D, A(:, 1:M)), ZERO]), yet the CSTRV updated
         ! as above can be quite different from this value if A has huge entries (e.g., > 1E20).
         cstrv = maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
     end if
 
-    if (icon == 0) then
+    if (icon < 1 .or. icon > mcon) then
+        ! In Powell's code, the condition is ICON == 0. Indeed, ICON < 0 cannot hold unless
+        ! FRACMULT contains only NaN, which should not happen; ICON > MCON can never occur.
         exit
     end if
 end do

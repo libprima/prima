@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, February 04, 2022 AM03:00:19
+! Last Modified: Saturday, February 05, 2022 AM12:05:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -263,10 +263,11 @@ do tr = 1, maxtr
     !----------------------------------------------------------------------------------------------!
     ! Possible improvement: Instead of exiting, skip a trust-region step and perform a geometry one!
     !----------------------------------------------------------------------------------------------!
-    if (any(is_nan(A))) then
-        info = NAN_MODEL
-        exit  ! Better action to take? Geometry step?
-    end if
+    call assert(.not. any(is_nan(A)), 'ERROR: model NaN', 'COBYLA')
+    !if (any(is_nan(A))) then
+    !    info = NAN_MODEL
+    !    exit  ! Better action to take? Geometry step?
+    !end if
 
     ! Theoretically (but not numerically), the last entry of B does not affect the result of TRSTLP.
     ! We set it to -FVAL(N + 1) following Powell's code.
