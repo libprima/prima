@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, February 04, 2022 AM10:58:54
+! Last Modified: Friday, February 04, 2022 AM11:37:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -49,7 +49,7 @@ subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 
 ! Generic modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TENTH, HUGENUM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, HALF, TENTH, HUGENUM, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
