@@ -31,7 +31,8 @@ ROOT_DIR=../..
 
 # The testing directory.
 TIME=$(date +%s)
-TEST_DIR=/tmp/"$(basename -- "$0")"_"$TIME"
+RANDNUM="$(awk 'BEGIN{srand();printf("%d", 65536*rand())}')"
+TEST_DIR=/tmp/"$(basename -- "$0")"_"$TIME"_"$RANDNUM"
 # We export TEST_DIR, which will be referred to by the Makefiles.
 export TEST_DIR
 TEST_ROOT="$TEST_DIR"/neupdfo
@@ -147,5 +148,6 @@ else
 fi
 
 rm -rf "$TEST_DIR"
+export -n TEST_DIR && unset TEST_DIR  # De-export and unset TEST_DIR
 
 exit 0

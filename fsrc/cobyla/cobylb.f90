@@ -276,8 +276,7 @@ do tr = 1, maxtr
     dnorm = min(delta, norm(d))
 
     ! Is the trust-region trial step short? N.B.: we compare DNORM with RHO, not DELTA.
-    !shortd = (dnorm < HALF * rho)
-    !shortd = (dnorm < QUART * rho)
+    !!shortd = (dnorm < HALF * rho)  ! Powell's version
     ! TENTH seems to work better than HALF or QUART, especially for linearly constrained problems.
     shortd = (dnorm < TENTH * rho)
 
