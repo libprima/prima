@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, February 04, 2022 AM02:41:32
+! Last Modified: Friday, February 04, 2022 AM10:58:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -372,8 +372,7 @@ do tr = 1, maxtr
     xdist = sqrt(sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1))
     ! KNEW_TR == 0 implies RATIO <= 0. Therefore, we can remove KNEW_TR == 0 from the definition
     ! of BAD_TRSTEP. Nevertheless, we keep it for robustness.
-    !bad_trstep = (shortd .or. ratio < TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
-    bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
+    bad_trstep = (shortd .or. ratio < TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
     improve_geo = (.not. reduce_rho_1) .and. (maxval(xdist) > TWO * delta) .and. bad_trstep
 
     ! If all the interpolation points are close to XOPT and the trust-region is small, but the
