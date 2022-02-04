@@ -29,7 +29,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, February 03, 2022 PM09:13:57
+! Last Modified: Friday, February 04, 2022 PM01:19:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -130,7 +130,7 @@ subroutine cobyla(calcfc, m, x, f, &
 !   considered as feasible.
 !
 ! CWEIGHT
-!   Input, REAL(RP) scalar, default: CWEIGHT_DFT.
+!   Input, REAL(RP) scalar, default: CWEIGHT_DFT defined in the module CONSTS_MOD in common/consts.F90.
 !   CWEIGHT is the weight that the constraint violation takes in the selection of the returned X.
 !
 ! MAXFUN
