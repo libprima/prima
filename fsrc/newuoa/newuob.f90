@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, February 04, 2022 AM11:37:31
+! Last Modified: Friday, February 04, 2022 PM12:21:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -395,6 +395,8 @@ do tr = 1, maxtr
     ! above. Unifying them to <= 0 makes little difference to the performance, sometimes worsening,
     ! sometimes improving, but never substantially; unifying them to 0.1 makes little difference to
     ! the performance either.
+    ! Update 20220204: In the current version, unifying the two thresholds to 0 seems to worsen the
+    ! performance on noise-free CUTEst problems with at most 200 variables.
     ! 2. KNEW_TR == 0 implies RATIO <= 0, and hence BAD_TRSTEP = TRUE. Otherwise, SETDROP_TR is buggy.
     ! Indeed, we can remove KNEW_TR == 0 from the definition of BAD_TRSTEP. It is kept for robustness.
 

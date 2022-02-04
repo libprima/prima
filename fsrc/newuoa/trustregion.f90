@@ -445,7 +445,8 @@ elseif (ratio <= eta2) then
 else
     delta = max(HALF * delta_in, gamma2 * dnorm)  ! Powell's version
     !delta = max(delta_in, gamma2 * dnorm)  ! Modified version
-    ! For noise-free CUTEst problems, Powell's version works slightly better than the modified one.
+    ! For noise-free CUTEst problems of <= 200 variables, Powell's version works slightly better 
+    ! than the modified one.
 end if
 
 ! For noisy problems, the following may work better.
