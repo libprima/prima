@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Wednesday, February 02, 2022 AM10:35:16
+! Last Modified: Friday, February 04, 2022 PM12:27:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -585,7 +585,8 @@ elseif (ratio <= eta2) then
 else
     delta = max(HALF * delta_in, gamma2 * dnorm)  ! Powell' version (taken from NEWUOA)
     !delta = max(delta_in, gamma2 * dnorm)  ! Modified version
-    ! For noise-free CUTEst problems, Powell's version works slightly better than the modified one.
+    ! For noise-free CUTEst problems of <= 100 variables, Powell's version works slightly better
+    ! than the modified one.
 end if
 
 ! For noisy problems, the following may work better.

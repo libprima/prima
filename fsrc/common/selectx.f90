@@ -8,7 +8,7 @@ module selectx_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Friday, February 04, 2022 AM12:31:29
+! Last Modified: Friday, February 04, 2022 PM01:14:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -60,9 +60,14 @@ integer(IK) :: index_to_keep(size(ffilt))
 integer(IK) :: m
 integer(IK) :: maxfilt
 integer(IK) :: n
-integer(IK) :: remove
+integer(IK) :: kworst
 logical :: better(nfilt)
 logical :: keep(nfilt)
+real(RP) :: cfilt_shifted(size(ffilt))
+real(RP) :: cref
+real(RP) :: fref
+real(RP) :: phi(size(ffilt))
+real(RP) :: phimax
 
 ! Sizes
 m = int(size(constr), kind(m))
@@ -112,22 +117,37 @@ end if
 
 ! Decide which columns of XFILT to keep. We use again an array constructor with an implied do loop.
 keep = [(.not. isbetter([f, cstrv], [ffilt(i), cfilt(i)], ctol), i=1, nfilt)]
-! If NFILT == MAXFILT and X is not better than any column of XFILT, then we remove the column of
-! XFILT corresponding to the largest value of PHI = FFILT + CWEIGHT * MAX(CFILT - CTOL, ZERO).
-if (count(keep) == maxfilt) then
+
+! If NFILT == MAXFILT and X is not better than any column of XFILT, then we remove the worst column
+! of XFILT according to the merit function PHI = FFILT + CWEIGHT * MAX(CFILT - CTOL, ZERO).
+if (count(keep) == maxfilt) then  ! In this case, NFILT = SIZE(KEEP) = COUNT(KEEP) = MAXFILT > 0.
+    cfilt_shifted = max(cfilt - ctol, ZERO)
     if (cweight <= 0) then
-        remove = int(maxloc(ffilt, dim=1), kind(remove))
+        phi = ffilt
     elseif (is_posinf(cweight)) then
-        remove = int(maxloc(cfilt, dim=1), kind(remove))
+        phi = cfilt_shifted
+        ! We should not use CFILT here; if MAX(CFILT_SHIFTED) is attained at multiple indices, then
+        ! we will check FFILT to exhaust the remaining degree of freedom.
     else
-        remove = int(maxloc(max(ffilt, -HUGENUM) + cweight * max(cfilt - ctol, ZERO), dim=1), kind(remove))
-        ! MAX(FFILT, -HUGENUM) makes sure that PHI will not contain NaN (unless there is a bug);
-        ! this is important, or else the value of REMOVE may not be between 1 and NFILT.
+        phi = max(ffilt, -HUGENUM) + cweight * cfilt_shifted
+        ! MAX(FFILT, -HUGENUM) makes sure that PHI will not contain NaN (unless there is a bug).
     end if
-    if (remove < 1 .or. remove > size(keep)) then  ! For security. Should not happen.
-        remove = 1_IK
+    ! We select X to maximize PHI. In case there are multiple maximizers, we take the one with the
+    ! largest CSTRV_SHIFTED; if there are more than one choices, we take the one with the largest F;
+    ! if there are several candidates, we take the one with the largest CSTRV; if the last comparison
+    ! still leads to more than one possibilities, then they are equally bad and we choose the first.
+    ! N.B.:
+    ! 1. This process is the opposite of selecting KOPT in SELECTX.
+    ! 2. In finite-precision arithmetic, PHI_1 == PHI_2 and CSTRV_SHIFTED_1 == CSTRV_SHIFTED_2 do
+    ! not ensure that F_1 == F_2!!!
+    phimax = maxval(phi)
+    cref = maxval(cfilt_shifted, mask=(phi >= phimax))
+    fref = maxval(ffilt, mask=(cfilt_shifted >= cref))
+    kworst = int(maxloc(cfilt, mask=(ffilt >= fref), dim=1), kind(kworst))
+    if (kworst < 1 .or. kworst > size(keep)) then  ! For security. Should not happen.
+        kworst = 1_IK
     end if
-    keep(remove) = .false.
+    keep(kworst) = .false.
 end if
 
 nfilt = int(count(keep), kind(nfilt))
@@ -268,8 +288,10 @@ else
     ! multiple minimizers, we take the one with the least CSTRV_SHIFTED; if there are more than one
     ! choices, we take the one with the least F; if there are several candidates, we take the one
     ! with the least CSTRV; if the last comparison still leads to more than one possibilities, then
-    ! they are all equally good, and we choose the first one of them.
-    ! N.B.: In finite-precision arithmetic, PHI_1 == PHI_2 and CSTRV_SHIFTED_1 == CSTRV_SHIFTED_2 do
+    ! they are equally good and we choose the first.
+    ! N.B.:
+    ! 1. This process is the opposite of selecting KWORST in SAVEFILT.
+    ! 2. In finite-precision arithmetic, PHI_1 == PHI_2 and CSTRV_SHIFTED_1 == CSTRV_SHIFTED_2 do
     ! not ensure that F_1 == F_2!!!
     phimin = minval(phi, mask=(fhist < fref .and. chist_shifted <= cref))
     cref = minval(chist_shifted, mask=(fhist < fref .and. phi <= phimin))
