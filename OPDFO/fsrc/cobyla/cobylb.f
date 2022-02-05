@@ -635,32 +635,32 @@ C
       ISDIRN=IVMC+MP
       IDXNEW=ISDIRN+N
       IVMD=IDXNEW+N
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C Zaikun 2019-08-29: For ill-conditioned problems, NaN may occur in the
-C models. In such a case, we terminate the code. Otherwise, the behavior
-C of TRSTLP is not predictable, and Segmentation Fault or infinite
-C cycling may happen. This is because any equality/inequality comparison
-C involving NaN returns FALSE, which can lead to unintended behavior of
-C the code, including uninitialized indices.
-      DO J = 1, N
-          DO I = 1, N
-              IF (SIMI(I, J) /= SIMI(I, J)) THEN
-                  IF (IPRINT >= 1) PRINT 376
-  376             FORMAT (/3X,'Return from subroutine COBYLA because ',
-     1            'rounding errors are becoming damaging.')
-                  INFO = 7
-                  GOTO 600
-              END IF
-          END DO
-      END DO
-      DO J = 1, MP
-          DO I = 1, N
-              IF (A(I, J) /= A(I, J)) THEN
-                  INFO = -3
-                  GOTO 600
-              END IF
-          END DO
-      END DO
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!C Zaikun 2019-08-29: For ill-conditioned problems, NaN may occur in the
+!C models. In such a case, we terminate the code. Otherwise, the behavior
+!C of TRSTLP is not predictable, and Segmentation Fault or infinite
+!C cycling may happen. This is because any equality/inequality comparison
+!C involving NaN returns FALSE, which can lead to unintended behavior of
+!C the code, including uninitialized indices.
+!      DO J = 1, N
+!          DO I = 1, N
+!              IF (SIMI(I, J) /= SIMI(I, J)) THEN
+!                  IF (IPRINT >= 1) PRINT 376
+!  376             FORMAT (/3X,'Return from subroutine COBYLA because ',
+!     1            'rounding errors are becoming damaging.')
+!                  INFO = 7
+!                  GOTO 600
+!              END IF
+!          END DO
+!      END DO
+!      DO J = 1, MP
+!          DO I = 1, N
+!              IF (A(I, J) /= A(I, J)) THEN
+!                  INFO = -3
+!                  GOTO 600
+!              END IF
+!          END DO
+!      END DO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !       write(17,*) NFVALS
 !       write (16, *) 'simi', simi(1:n, 1:n)
