@@ -29,7 +29,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, February 04, 2022 PM01:19:26
+! Last Modified: Sunday, February 06, 2022 AM12:47:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -202,11 +202,11 @@ subroutine cobyla(calcfc, m, x, f, &
 !   FTARGET_ACHIEVED: the target function value is reached;
 !   MAXFUN_REACHED: the objective function has been evaluated MAXFUN times;
 !   NAN_INF_X: NaN or Inf occurs in X;
-!   NAN_MODEL: NaN occurs in the model;
 !   DAMAGING_ROUNDING: rounding errors are becoming damaging.
 !   !--------------------------------------------------------------------------!
-!   The following case(s) should NEVER occur unless there is a bug
+!   The following case(s) should NEVER occur unless there is a bug.
 !   NAN_INF_F: the objective function returns NaN or +Inf;
+!   NAN_MODEL: NaN occurs in the model;
 !   TRSUBP_FAILED: a trust region step failed to reduce the model;
 !   MAXTR_REACHED: the trust region iteration has been performed MAXTR times,
 !       the value of MAXTR being 2*MAXFUN.

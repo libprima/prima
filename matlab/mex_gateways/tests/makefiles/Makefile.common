@@ -465,38 +465,38 @@ $(TESTS) $(TESTS_INT):
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
 	@($(FC1) -c $(SRC) && $(FC2) -c $(SRC)) 2>&1 \
-	| grep -v '^\s*$$' \
-	| grep -v 'Absoft ANSI 1610:' \
-	| grep -v 'Absoft Pro Fortran.*: 0 Errors, 0 Warnings, 0 Other messages,' \
-	| grep -v 'after the END INTERFACE keywords is only legal in Fortran 95 and beyond' \
-	| grep -v 'NAG Fortran Compiler Release [0-9]*.* Build [0-9]*' \
-	| grep -v 'Expression in IF construct is constant' \
-	| grep -v 'NAG Fortran Compiler normal termination' \
-	| grep -v 'NAG Fortran Compiler normal termination, [0-9]* info message' \
-	| grep -v 'Warning: Change of value in conversion from .INTEGER(8). to .REAL(8). at (1) \[-Wconversion\]' \
-	| grep -v 'Warning: Change of value in conversion from .REAL(16). to .REAL(8). at (1) \[-Wconversion\]' \
-	| grep -v 'Extension: fmxapi\.F90, line [0-9]*: Byte count on numeric data type' \
-	| grep -v 'Extension: gethuge\.F90, line [0-9]*: Byte count on numeric data type' \
-	| grep -v 'Extension: cbfun\.F90, line [0-9]*: Byte count on numeric data type' \
-	| grep -v 'Extension: \./classical/fmxcl\.F90, line [0-9]*: Byte count on numeric data type' \
-	| grep -v 'Extension: \./classical/fmxcl\.F90, line [0-9]*: Line longer than 132 characters' \
-	| grep -v 'Extension: .*_mex\.F90, line [0-9]*: Byte count on numeric data type' \
-	| grep -v 'Extension: .*_mex\.F90, line [0-9]*: Line longer than 132 characters' \
-	| grep -v 'detected at \*@[0-9]*' \
-	| grep -v 'Info: fmxapi\.F90, line [0-9]*: Possibly discontiguous POUT passed to old style dummy' \
-	| grep -v 'Info: No licences currently available for product' \
-	| grep -v 'Info: Licence received, continuing' \
-	| grep -v 'Loading...' \
-	| grep -v 'Linking:' \
+	| grep -v "^\s*$$" \
+	| grep -v "Absoft ANSI 1610:" \
+	| grep -v "Absoft Pro Fortran.*: 0 Errors, 0 Warnings, 0 Other messages," \
+	| grep -v "after the END INTERFACE keywords is only legal in Fortran 95 and beyond" \
+	| grep -v "NAG Fortran Compiler Release [0-9]*.* Build [0-9]*" \
+	| grep -v "Expression in IF construct is constant" \
+	| grep -v "NAG Fortran Compiler normal termination" \
+	| grep -v "NAG Fortran Compiler normal termination, [0-9]* info message" \
+	| grep -v "Warning: Change of value in conversion from .INTEGER(8). to .REAL(8). at (1) \[-Wconversion\]" \
+	| grep -v "Warning: Change of value in conversion from .REAL(16). to .REAL(8). at (1) \[-Wconversion\]" \
+	| grep -v "Extension: fmxapi\.F90, line [0-9]*: Byte count on numeric data type" \
+	| grep -v "Extension: gethuge\.F90, line [0-9]*: Byte count on numeric data type" \
+	| grep -v "Extension: cbfun\.F90, line [0-9]*: Byte count on numeric data type" \
+	| grep -v "Extension: \./classical/fmxcl\.F90, line [0-9]*: Byte count on numeric data type" \
+	| grep -v "Extension: \./classical/fmxcl\.F90, line [0-9]*: Line longer than 132 characters" \
+	| grep -v "Extension: .*_mex\.F90, line [0-9]*: Byte count on numeric data type" \
+	| grep -v "Extension: .*_mex\.F90, line [0-9]*: Line longer than 132 characters" \
+	| grep -v "detected at \*@[0-9]*" \
+	| grep -v "Info: fmxapi\.F90, line [0-9]*: Possibly discontiguous POUT passed to old style dummy" \
+	| grep -v "Info: No licences currently available for product" \
+	| grep -v "Info: Licence received, continuing" \
+	| grep -v "Loading..." \
+	| grep -v "Linking:" \
 	| grep -v "circle\.f90(36): remark #7712: This variable has not been used\.\s*\[ANGLE\]" \
-	| grep -v 'f90comp: [0-9]* SOURCE LINES' \
-	| grep -v 'f90comp: [0-9]* ERRORS, [0-9]* WARNINGS' \
-	| grep -v 'ANSI: PROCEDURE is a Fortran 2003 feature' \
-	| grep -v 'ANSI: Use of INTEGER\*[0-9]* is an extension to the Fortran standard' \
-	| grep -v 'ANSI: Use of REAL\*[0-9]* is an extension to the Fortran standard' \
-	| grep -v 'ANSI: Fortran requires all intrinsic procedure actual arguments to be type integer or character for restricted expressions' \
-	| grep -v 'common/history\.f90.*Line = 162, Column = 133: ANSI: Free source form line contains more than 132 characters.' \
-	| grep -v 'remark #5415: Feature not yet implemented' \
+	| grep -v "f90comp: [0-9]* SOURCE LINES" \
+	| grep -v "f90comp: [0-9]* ERRORS, [0-9]* WARNINGS" \
+	| grep -v "ANSI: PROCEDURE is a Fortran 2003 feature" \
+	| grep -v "ANSI: Use of INTEGER\*[0-9]* is an extension to the Fortran standard" \
+	| grep -v "ANSI: Use of REAL\*[0-9]* is an extension to the Fortran standard" \
+	| grep -v "ANSI: Fortran requires all intrinsic procedure actual arguments to be type integer or character for restricted expressions" \
+	| grep -v "common/history\.f90.*Line = 162, Column = 133: ANSI: Free source form line contains more than 132 characters." \
+	| grep -v "remark #5415: Feature not yet implemented" \
 	| grep -v "interpolation error" \
 	| grep -v "WARNING --  When --chk x is specified" \
 	| grep -v "Warning (165): Implicit interface 'calfun' called at (1)" \

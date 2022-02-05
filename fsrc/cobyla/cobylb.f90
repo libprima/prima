@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, February 05, 2022 PM01:32:16
+! Last Modified: Sunday, February 06, 2022 AM12:41:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -258,17 +258,6 @@ do tr = 1, maxtr
     A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
     A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
 
-    ! Exit if A contains NaN. Otherwise, TRSTLP may encounter memory errors or infinite loops.
-    ! (HOW EXACTLY?????)
-    !----------------------------------------------------------------------------------------------!
-    ! Possible improvement: Instead of exiting, skip a trust-region step and perform a geometry one!
-    !----------------------------------------------------------------------------------------------!
-    call assert(.not. any(is_nan(A)), 'ERROR: model NaN', 'COBYLA')
-    !if (any(is_nan(A))) then
-    !    info = NAN_MODEL
-    !    exit  ! Better action to take? Geometry step?
-    !end if
-
     ! Theoretically (but not numerically), the last entry of B does not affect the result of TRSTLP.
     ! We set it to -FVAL(N + 1) following Powell's code.
     b = [-conmat(:, n + 1), -fval(n + 1)]
@@ -289,17 +278,23 @@ do tr = 1, maxtr
         end if
     else
         ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
-        preref = inprod(d, A(:, m + 1))
+        ! We have the following in precise arithmetic. They may fail to hold due to rounding errors.
+        ! 1. PREREC >= 0; PREREC == 0 iff B <= 0.
+        ! 2. PREREM >= 0 because of the update of CPEN detailed in the following lines; PREREM == 0
+        ! iff PREREF and CPEN are both 0.
+        preref = inprod(d, A(:, m + 1))  ! Can be negative.
         prerec = cval(n + 1) - maxval([-matprod(d, A(:, 1:m)) - conmat(:, n + 1), ZERO])
 
         ! Increase CPEN if necessary and branch back if this change alters the optimal vertex.
         ! See the discussions around equation (9) of the COBYLA paper.
         if (prerec > 0) then
             barmu = -preref / prerec   ! PREREF + BARMU * PREREC = 0
-        else  ! PREREC == 0 can happen when there is no constraint. Any other possibility?
+        else  ! PREREC == 0 can happen if B <= 0.
             barmu = ZERO
         end if
-        if (cpen < 1.5_RP * barmu) then  ! This can happen only if BARMU > 0, and hence PREREC > 0.
+        if (cpen < 1.5_RP * barmu) then
+            ! This can happen only if BARMU > 0, and hence PREREC > 0 > PREREF.
+            ! If CPEN == 0 and PREREC > 0 > PREREF, then CPEN will be updated to 2*BARMU > 0.
             cpen = min(TWO * barmu, HUGENUM)
             call cpenmsg(solver, iprint, cpen)
             if (findpole(cpen, cval, fval) <= n) then
@@ -324,20 +319,22 @@ do tr = 1, maxtr
         call savefilt(constr, cstrv, ctol, cweight, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
 
         ! Begin the operations that decide whether X should replace one of the vertices of the
-        ! current simplex, the change being mandatory if ACTREM is positive.
-        ! PREREM and ACTREM are the predicted and actual reductions in the merit function respectively.
-        prerem = preref + cpen * prerec   ! Is it positive????
+        ! current simplex, the change being mandatory if ACTREM is positive. PREREM and ACTREM are 
+        ! the predicted and actual reductions in the merit function respectively.
+        prerem = preref + cpen * prerec   ! Theoretically nonnegative; possibly, CPEN = 0 = PREREF.
         actrem = (fval(n + 1) + cpen * cval(n + 1)) - (f + cpen * cstrv)
         if (cpen <= 0 .and. f <= fval(n + 1) .and. f >= fval(n + 1)) then
             ! CPEN <= 0 indeed means CPEN == 0, while A <= B .and. A >= B indeed mean A == B.
-            ! We code in this way to avoid compilers complaining about equality comparison
-            ! between reals, which appears in the original code of Powell.
-            prerem = prerec   ! Is it positive?????
+            ! We code in this way to avoid compilers complaining about equality comparison of reals.
+            prerem = prerec
             actrem = cval(n + 1) - cstrv
         end if
         if (is_nan(actrem)) then
             actrem = -HUGENUM  ! Signify a bad trust-region step.
         end if
+
+        !call assert(prerem >= 0, 'PREREM >= 0', 'COBYLA')
+        !prerem = max(prerem, tiny(prerem))
 
         ratio = redrat(actrem, prerem, eta1)
         ! Update DELTA. After this, DELTA < DNORM may hold.

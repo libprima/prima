@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Saturday, February 05, 2022 AM12:02:22
+! Last Modified: Saturday, February 05, 2022 PM10:12:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -106,11 +106,13 @@ end function trstlp
 
 
 !--------------------------------------------------------------------------------------------------!
-! The algorithm was NOT documented in the COBYLA paper. A note should be written to introduce it!
-! As a major part of the algorithm, the code maintains and updates the QR factorization of
+! N.B.:
+! 1. The algorithm was NOT documented in the COBYLA paper. A note should be written to introduce it!
+! 2. As a major part of the algorithm, the code maintains and updates the QR factorization of
 ! A(IACT(1:NACT)), i.e., the gradients of all the active (linear) constraints. The matrix Z is
 ! indeed Q, and the vector ZDOTA is the diagonal of R. The factorization is updated by Givens
 ! rotations when an index is added in or removed from IACT.
+! 3. There are probably better algorithms available for this trust-region linear programming problem.
 !--------------------------------------------------------------------------------------------------!
 
 
