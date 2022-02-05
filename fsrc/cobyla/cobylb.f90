@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, February 06, 2022 AM12:41:18
+! Last Modified: Sunday, February 06, 2022 AM12:51:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -319,9 +319,9 @@ do tr = 1, maxtr
         call savefilt(constr, cstrv, ctol, cweight, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
 
         ! Begin the operations that decide whether X should replace one of the vertices of the
-        ! current simplex, the change being mandatory if ACTREM is positive. PREREM and ACTREM are 
+        ! current simplex, the change being mandatory if ACTREM is positive. PREREM and ACTREM are
         ! the predicted and actual reductions in the merit function respectively.
-        prerem = preref + cpen * prerec   ! Theoretically nonnegative; possibly, CPEN = 0 = PREREF.
+        prerem = preref + cpen * prerec  ! Theoretically nonnegative; can be 0 if CPEN = 0 = PREREF.
         actrem = (fval(n + 1) + cpen * cval(n + 1)) - (f + cpen * cstrv)
         if (cpen <= 0 .and. f <= fval(n + 1) .and. f >= fval(n + 1)) then
             ! CPEN <= 0 indeed means CPEN == 0, while A <= B .and. A >= B indeed mean A == B.
