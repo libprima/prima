@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, February 05, 2022 AM12:05:31
+! Last Modified: Saturday, February 05, 2022 PM01:32:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -28,7 +28,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
-use, non_intrinsic :: info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, NAN_MODEL, DAMAGING_ROUNDING
+use, non_intrinsic :: info_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: output_mod, only : retmsg, rhomsg, fmsg, cpenmsg
 use, non_intrinsic :: pintrf_mod, only : OBJCON
@@ -238,7 +238,7 @@ info = MAXTR_REACHED
 ! After solving a trust-region subproblem, COBYLA uses 3 boolean variables to control the work flow.
 ! SHORTD - Is the trust-region trial step too short to invoke a function evaluation?
 ! IMPROVE_GEO - Will we improve the model after the trust-region iteration? If yes, a geometry step
-! will be taken, corresponding to the Branch (Delta) in the COBYLA paper.
+! will be taken, corresponding to the "Branch (Delta)" in the COBYLA paper.
 ! REDUCE_RHO - Will we reduce rho after the trust-region iteration?
 ! COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
 do tr = 1, maxtr
@@ -263,7 +263,7 @@ do tr = 1, maxtr
     !----------------------------------------------------------------------------------------------!
     ! Possible improvement: Instead of exiting, skip a trust-region step and perform a geometry one!
     !----------------------------------------------------------------------------------------------!
-    !call assert(.not. any(is_nan(A)), 'ERROR: model NaN', 'COBYLA')
+    call assert(.not. any(is_nan(A)), 'ERROR: model NaN', 'COBYLA')
     !if (any(is_nan(A))) then
     !    info = NAN_MODEL
     !    exit  ! Better action to take? Geometry step?
