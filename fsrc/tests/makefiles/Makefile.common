@@ -590,7 +590,7 @@ $(TESTS_C) $(TESTS_INT_C):
 		$(FC1) -o $@ $(SRC) && $(FC2) -o $@ $(SRC) ; \
 	fi) 2>&1 \
 	| grep -v "^[[:blank:]]*$$" \
-	| grep -v "Encountered 0 errors, 0 warnings, [0-9]* information.* in file" \
+	| grep -v "Encountered 0 errors, 0 warnings" \
 	| grep -v "Compiling file\|Module subprogram name" \
 	| grep -v "An allocatable array function '.*' is an extended feature" \
 	| grep -v "An allocatable dummy array\ '.*' is an extended feature" \
