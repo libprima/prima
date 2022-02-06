@@ -581,6 +581,8 @@ $(TESTS_C) $(TESTS_INT_C):
 %_tst_c: source_% header_%
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
+	$(eval SRC := $(shell if echo $@ | grep -q "9test"; then echo $(SRC_NO_TEST) ; else echo $(SRC) ; fi))
+	$(eval SRC := $(shell if echo $@ | grep -q "ltest"; then echo $(SRC_NO_TEST) | sed 's|./common/pintrf.f90||' ; else echo $(SRC) ; fi))
 	@(if echo $@ | grep -q "9test\|ltest"; then \
 		$(FC1) -c $(SRC) && $(FC2) -c $(SRC) ; \
 	else \
