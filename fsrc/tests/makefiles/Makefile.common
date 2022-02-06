@@ -581,15 +581,11 @@ $(TESTS_C) $(TESTS_INT_C):
 %_tst_c: source_% header_%
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
-	#@(if echo $@ | grep -q "9test"; then \
-	#	$(FC1) -c $(SRC_NO_TEST) && $(FC2) -c $(SRC_NO_TEST) ; \
-	#elif echo $@ | grep -q "ltest"; then \
-	#	$(FC1) -c $(shell echo $(SRC_NO_TEST) | sed 's|./common/pintrf.f90||') && \
-	#	$(FC2) -c $(shell echo $(SRC_NO_TEST) | sed 's|./common/pintrf.f90||') ; \
-	#else \
-	#	$(FC1) -o $@ $(SRC) && $(FC2) -o $@ $(SRC) ; \
-	#fi) 2>&1
-	@($(FC1) -o $@ $(SRC) && $(FC2) -o $@ $(SRC)) 2>&1  \
+	@(if echo $@ | grep -q "9test\|ltest"; then \
+		$(FC1) -c $(SRC) && $(FC2) -c $(SRC) ; \
+	else \
+		$(FC1) -o $@ $(SRC) && $(FC2) -o $@ $(SRC) ; \
+	fi) 2>&1 \
 	| grep -v "^[[:blank:]]*$$" \
 	| grep -v "Warning (165): Implicit interface 'calfun' called at (1)" \
 	| grep -v "Warning (165): Implicit interface 'calcfc' called at (1)" \
