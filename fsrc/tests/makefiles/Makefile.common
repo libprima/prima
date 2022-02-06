@@ -587,6 +587,18 @@ $(TESTS_C) $(TESTS_INT_C):
 		echo $@ ; \
 	else \
 		($(FC1) -o $@ $(SRC) && $(FC2) -o $@ $(SRC)) 2>&1 \
+		| grep -v "^$$" \
+		| grep -v "^[[:blank:]]*$$" \
+		| grep -v "Absoft ANSI 1610:" \
+		| grep -v "Absoft Pro Fortran.*: 0 Errors, 0 Warnings, 0 Other messages," \
+		| grep -v "after the END INTERFACE keywords is only legal in Fortran 95 and beyond" \
+		| grep -v "NAG Fortran Compiler Release [0-9]*.* Build [0-9]*" \
+		| grep -v "Expression in IF construct is constant" \
+		| grep -v "NAG Fortran Compiler normal termination" \
+		| grep -v "NAG Fortran Compiler normal termination, [0-9]* info message" \
+		| grep -v "Info: No licences currently available for product" \
+		| grep -v "Info: Licence received, continuing" \
+		| grep -v "Loading..." \
 		| grep -v "Linking:" \
 		| grep -v "circle\.f90(36): remark #7712: This variable has not been used\.\s*\[ANGLE\]" \
 		| grep -v "f90comp: [0-9]* SOURCE LINES" \
