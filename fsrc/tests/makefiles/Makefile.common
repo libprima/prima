@@ -588,8 +588,24 @@ $(TESTS_C) $(TESTS_INT_C):
 		$(FC2)  -c $(shell echo $(SRC_NO_TEST) | sed 's|./common/pintrf.f90||') ; \
 	else \
 		$(FC1) -o $@ $(SRC) && $(FC2) -o $@ $(SRC) ; \
-	fi) \
+	fi) 2>&1 \
 	| grep -v "^[[:blank:]]*$$" \
+	| grep -v "Warning (165): Implicit interface 'calfun' called at (1)" \
+	| grep -v "Warning (165): Implicit interface 'calcfc' called at (1)" \
+	| grep -v "Warning (102): MODULE PROCEDURE 'inv' USEd at (1) is not referenced" \
+	| grep -v "Warning (102): MODULE PROCEDURE 'calfun' USEd at (1) is not referenced" \
+	| grep -v "Warning (102): MODULE PROCEDURE 'calcfc' USEd at (1) is not referenced" \
+	| grep -v "Warning (102): MODULE PROCEDURE 'redrat' USEd at (1) is not referenced" \
+	| grep -v "Warning (102): MODULE PROCEDURE 'redrho' USEd at (1) is not referenced" \
+	| grep -v "common/linalg.F90:7[0-9]*:.*pivote.*may be used uninitialized in this function" \
+	| grep -v "common/linalg.F90:7[0-9]*:.*rank.*may be used uninitialized in this function" \
+	| grep -v "common/preproc.f90:22:.*min_maxfun.*may be used uninitialized in this function" \
+	| grep -v "common/preproc.f90:22:.*unit_memo.*may be used uninitialized in this function" \
+	| grep -v "Encountered 0 errors, 0 warnings, [0-9]* information.* in file" \
+	| grep -v "Compiling file\|Module subprogram name" \
+	| grep -v "An allocatable array function '.*' is an extended feature." \
+	| grep -v "An allocatable dummy array\ '.*' is an extended feature" \
+	| grep -v "WARNING --  When --chk x is specified, it must be used to compile all source files of a program" \
 	| grep -v "Absoft ANSI 1610:" \
 	| grep -v "Absoft Pro Fortran.*: 0 Errors, 0 Warnings, 0 Other messages," \
 	| grep -v "after the END INTERFACE keywords is only legal in Fortran 95 and beyond" \
