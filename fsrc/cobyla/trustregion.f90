@@ -6,7 +6,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Sunday, February 06, 2022 AM11:13:54
+! Last Modified: Sunday, February 06, 2022 PM11:53:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -356,7 +356,7 @@ do iter = 1, maxiter
         ! Ensure that the objective function continues to be treated as the last active constraint
         ! if stage 2 is in progress.
         ! Zaikun 20211011, 20211111: Is it guaranteed for stage 2 that IACT(NACT-1) = MCON when
-        ! IACT(NACT) /= MCON???? If not, then how does the following procedure ensure that MCON is
+        ! IACT(NACT) /= MCON??? If not, then how does the following procedure ensure that MCON is
         ! the last of IACT(1:NACT)?
         if (stage == 2 .and. iact(nact) /= mcon) then
             call qrexc(A(:, iact(1:nact)), z, zdota(1:nact), nact - 1_IK)

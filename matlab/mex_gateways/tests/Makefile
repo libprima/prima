@@ -58,7 +58,8 @@ MAKEFILE_DIR := $(MTEST_DIR)/makefiles
 	@$(eval SOLVER_MTEST_DIR := $(MTEST_DIR)/test.$(SOLVER))  # The test directory for the tested solver
 	@mkdir -p $(TEST_ROOT)
 	@cp -r $(ROOT_DIR)/fsrc $(TEST_ROOT)/
-	@cp -r $(ROOT_DIR)/matlab $(TEST_ROOT)/
+	@mkdir -p $(TEST_ROOT)/matlab/
+	@cp -r $(ROOT_DIR)/matlab/mex_gateways $(TEST_ROOT)/matlab/
 	@mkdir -p $(SOLVER_MTEST_DIR)
 	@cp $(MAKEFILE_DIR)/Makefile.common $(SOLVER_MTEST_DIR)/
 	@cp $(MAKEFILE_DIR)/Makefile.$(SOLVER) $(SOLVER_MTEST_DIR)/Makefile
