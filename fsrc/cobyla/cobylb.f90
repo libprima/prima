@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, February 06, 2022 AM12:51:38
+! Last Modified: Monday, February 07, 2022 AM12:00:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -375,7 +375,7 @@ do tr = 1, maxtr
     ! 2. Powell's definition of BAD_TRSTEP is
     !!bad_trstep = (shortd .or. actrem <= 0 .or. actrem < TENTH * prerem .or. jdrop_tr == 0)
     ! But the following one seems to work better, especially for linearly constrained problems.
-    bad_trstep = (shortd .or. actrem <= 0 .or. jdrop_tr == 0)  !!!??? Replace ACTREM <= 0 by RATIO <= 0????
+    bad_trstep = (shortd .or. actrem <= 0 .or. jdrop_tr == 0)
 
     ! Should we take a geometry step to improve the geometry of the interpolation set?
     improve_geo = bad_trstep .and. .not. good_geo

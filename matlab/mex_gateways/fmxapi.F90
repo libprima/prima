@@ -1,3 +1,6 @@
+#include "fintrf.h"
+
+module fmxapi_mod
 !--------------------------------------------------------------------------------------------------!
 ! FMXAPI_MOD is a module that does the following.
 ! 1. Define some constants to be used in MEX gateways.
@@ -26,34 +29,9 @@
 !
 ! Started in July 2020
 !
-! Last Modified: Saturday, January 22, 2022 PM09:03:34
+! Last Modified: Monday, February 07, 2022 AM12:23:23
 !--------------------------------------------------------------------------------------------------!
 
-#include "fintrf.h"
-
-
-module int32_mex_mod
-!--------------------------------------------------------------------------------------------------!
-! INT32_MEX_MOD does nothing but defines INT32_MEX, which is indeed INT32, i.e., the kind of
-! INTEGER*4. It is needed when using some MEX API subroutines provided by MathWorks, e.g.,
-! mexCallMATLAB. We wanted to define INT32_MEX in FMXAPI_MOD, but in that case INT32_MEX
-! will not be visible to the interface blocks like mexCallMATLAB, even though it will be visible
-! to the subroutines like fmxCallMATLAB. Therefore, we can only define it in a separate module and
-! then use it when needed.
-!--------------------------------------------------------------------------------------------------!
-implicit none
-private
-public :: INT32_MEX
-! For gfortran, SELECTED_REAL_KIND(K) returns INT32 with K = 5--9. In Fortran 2008, INT32 can be
-! obtained by the following:
-!!use, intrinsic :: iso_fortran_env, only : INT32
-integer, parameter :: INT32_MEX = selected_int_kind(7)
-end module int32_mex_mod
-
-
-module fmxapi_mod
-
-use, non_intrinsic :: int32_mex_mod, only : INT32_MEX
 use, non_intrinsic :: consts_mod, only : DP, RP
 implicit none
 private
@@ -89,6 +67,16 @@ public :: fmxWriteMPtr
 public :: fmxCallMATLAB
 public :: fmxIsDoubleScalar
 public :: fmxIsDoubleVector
+
+! Comments on INT32_MEX:
+! 1. INT32_MEX is indeed INT32, i.e., the kind of INTEGER*4. It is needed when using some MEX API
+! subroutines of MathWorks, e.g., mexCallMATLAB. We do not define it elsewhere (e.g., in consts_mod)
+! since it is needed only here. We name it INT32_MEX instead of INT32 so that it is easily locatable.
+! 2. For gfortran, SELECTED_REAL_KIND(K) returns INT32 with K = 5--9.
+! 3. In F2008, INT32 can be obtained by:
+!!use, intrinsic :: iso_fortran_env, only : INT32_MEX => INT32
+! 4. Do not write `use consts_mod, only : INT32_MEX => INT32`, as INT32 may not be defined.
+integer, parameter :: INT32_MEX = selected_int_kind(7)
 
 ! notComplex is used in mxCreateDoubleMatrix
 integer(INT32_MEX), parameter :: notComplex = 0
@@ -185,7 +173,7 @@ interface
 
 ! MEX functions
     function mexCallMATLAB(nout, pout, nin, pin, f)
-    use, non_intrinsic :: int32_mex_mod, only : INT32_MEX
+    import :: INT32_MEX  ! Without IMPORT, INT32_MEX will not be available in this interface.
     implicit none
     integer(INT32_MEX) :: mexCallMATLAB
     integer(INT32_MEX), intent(in) :: nout, nin
@@ -196,7 +184,7 @@ interface
     end function mexCallMATLAB
 
     function mxCreateDoubleMatrix(m, n, ComplexFlag)
-    use, non_intrinsic :: int32_mex_mod, only : INT32_MEX
+    import :: INT32_MEX  ! Without IMPORT, INT32_MEX will not be available in this interface.
     implicit none
     mwPointer :: mxCreateDoubleMatrix
     mwSize, intent(in) :: m, n
@@ -236,7 +224,7 @@ interface
     end function mxGetPr
 
     function mxGetString(pm, str, strlen)
-    use, non_intrinsic :: int32_mex_mod, only : INT32_MEX
+    import :: INT32_MEX  ! Without IMPORT, INT32_MEX will not be available in this interface.
     implicit none
     integer(INT32_MEX) :: mxGetString
     mwPointer, intent(in) :: pm
@@ -245,7 +233,7 @@ interface
     end function mxGetString
 
     function mxIsClass(pm, classname)
-    use, non_intrinsic :: int32_mex_mod, only : INT32_MEX
+    import :: INT32_MEX  ! Without IMPORT, INT32_MEX will not be available in this interface.
     implicit none
     integer(INT32_MEX) :: mxIsClass
     mwPointer, intent(in) :: pm
@@ -253,14 +241,14 @@ interface
     end function mxIsClass
 
     function mxIsChar(pm)
-    use, non_intrinsic :: int32_mex_mod, only : INT32_MEX
+    import :: INT32_MEX  ! Without IMPORT, INT32_MEX will not be available in this interface.
     implicit none
     integer(INT32_MEX) :: mxIsChar
     mwPointer, intent(in) :: pm
     end function mxIsChar
 
     function mxIsDouble(pm)
-    use, non_intrinsic :: int32_mex_mod, only : INT32_MEX
+    import :: INT32_MEX  ! Without IMPORT, INT32_MEX will not be available in this interface.
     implicit none
     integer(INT32_MEX) :: mxIsDouble
     mwPointer, intent(in) :: pm
@@ -778,7 +766,6 @@ subroutine fmxCallMATLAB(fun_ptr, pin, pout)
 ! output = feval(fun, input),
 ! where fun_ptr is an mwPointer pointing to the function handle of fun, while pin/pout are mwPointer
 ! arrays associated with the inputs/outputs
-use, non_intrinsic :: int32_mex_mod, only : INT32_MEX
 use, non_intrinsic :: consts_mod, only : MSGLEN
 implicit none
 
