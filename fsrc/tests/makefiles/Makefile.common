@@ -594,8 +594,8 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "An allocatable array function '.*' is an extended feature" \
 	| grep -v "An allocatable dummy array\ '.*' is an extended feature" \
 	| grep -v "WARNING --  When --chk x is specified, it must be used to compile all source files of a program" \
+	| grep -v "0 Errors, 0 Warnings" \
 	| grep -v "Absoft ANSI 1610:" \
-	| grep -v "Absoft Pro Fortran.*: 0 Errors, 0 Warnings, 0 Other messages," \
 	| grep -v "after the END INTERFACE keywords is only legal in Fortran 95 and beyond" \
 	| grep -v "NAG Fortran Compiler Release [0-9]*.* Build [0-9]*" \
 	| grep -v "Expression in IF construct is constant" \
@@ -614,7 +614,6 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "WARNING --  When --chk x is specified" \
 	| grep -v "bin/ld.*bisheng.*unsupported GNU_PROPERTY_TYPE (5) type: 0xc0000000" \
 	| grep -v "all warnings being treated as errors" \
-	| grep -v "preproc.f90:22:.*unit_memo.*may be used uninitialized in this function" \
 	| tee -a "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$@.log"
