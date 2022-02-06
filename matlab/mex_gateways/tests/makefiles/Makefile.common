@@ -464,7 +464,7 @@ $(TESTS) $(TESTS_INT):
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
 	@($(FC1) -c $(SRC) && $(FC2) -c $(SRC)) 2>&1 \
-	| grep -v "^\s*$$" \
+	| grep -v "^[[:blank:]]*$$" \
 	| grep -v "Absoft ANSI 1610:" \
 	| grep -v "Absoft Pro Fortran.*: 0 Errors, 0 Warnings, 0 Other messages," \
 	| grep -v "after the END INTERFACE keywords is only legal in Fortran 95 and beyond" \

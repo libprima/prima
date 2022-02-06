@@ -578,8 +578,6 @@ $(TESTS_C) $(TESTS_INT_C):
 
 # Make the binary corresponding to %_tst_c, but do not execute it.
 # This is useful if we want to check whether the code can compile.
-# N.B.: For grepping blank lines, we use `| grep -v "^$$" | grep -v "^[[:blank:]]*$$"`, where `$$`
-# will be expanded to `$` by Make; `grep -v "^\s*$$"` may not work on Windows.
 %_tst_c: source_% header_%
 	@mkdir -p $(LOG_DIR)
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
@@ -628,7 +626,6 @@ $(TESTS_C) $(TESTS_INT_C):
 		| grep -v "interpolation error" \
 	    | grep -v "WARNING --  When --chk x is specified" \
 	    | grep -v "bin/ld.*bisheng.*unsupported GNU_PROPERTY_TYPE (5) type: 0xc0000000" \
-		| grep -v "all warnings being treated as errors" \
 		| tee -a "$(LOG_DIR)/$@.log" ; \
 	fi
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
