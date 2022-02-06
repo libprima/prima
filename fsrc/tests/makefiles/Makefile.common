@@ -590,6 +590,7 @@ $(TESTS_C) $(TESTS_INT_C):
 		$(FC1) -o $@ $(SRC) && $(FC2) -o $@ $(SRC) ; \
 	fi) 2>&1 \
 	| grep -v "^[[:blank:]]*$$" \
+	| grep -v "preproc.f90:22:.*unit_memo.*may be used uninitialized in this function" \
 	| grep -v "Compiling file\|Module subprogram name" \
 	| grep -v "An allocatable array function '.*' is an extended feature" \
 	| grep -v "An allocatable dummy array\ '.*' is an extended feature" \
