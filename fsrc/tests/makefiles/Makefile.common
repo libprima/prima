@@ -608,7 +608,7 @@ $(TESTS_C) $(TESTS_INT_C):
 		| tee -a "$(LOG_DIR)/$@.log" ; \
 	else \
 		($(FC1) -o $@ $(SRC) && $(FC2) -o $@ $(SRC)) 2>&1 \
-		| grep -v "^$$" | grep -v "^[[:blank:]]*$$" \
+		| grep -v "^$$" \
 		| grep -v "Absoft ANSI 1610:" \
 		| grep -v "Absoft Pro Fortran.*: 0 Errors, 0 Warnings, 0 Other messages," \
 		| grep -v "after the END INTERFACE keywords is only legal in Fortran 95 and beyond" \
