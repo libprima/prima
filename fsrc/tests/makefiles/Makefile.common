@@ -645,18 +645,8 @@ $(TESTS_C) $(TESTS_INT_C):
 source_%: $(SRC_DIRS)
 	@printf "\nMaking a copy of the source code for the test.\n"
 	@for DIR in $(SRC_DIRS); do cp -r "$$DIR" ./; done
-	@for FILE in $(DRIVER_SRC); do cp $(DRIVER_DIR)/"$$FILE" ./; done
-	@find ./ -type f  \
-		\( -name '*.mod' \
-		-o -name '*.o' \
-		-o -name '*.dbg' \
-		-o -name '*.cmdx' \
-		-o -name '*.cmod' \
-		-o -name '*.ilm' \
-		-o -name '*.stb' \
-		-o -name '*.out' \
-		-o -name '*__genmod.f90' \
-		\)  -exec rm "{}" +  # Cleaning up; important!!!
+	@for SRC in $(DRIVER_SRC); do cp $(DRIVER_DIR)/"$$SRC" ./; done
+	@rm -f *.mod *.o *.dbg *.cmdx *.cmod *.ilm *.stb *.out *__genmod.f90  # Cleaning up; important!!!
 	@if echo $@ | grep -q "ltest"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash ../lfsrc ./ ; \

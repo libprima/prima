@@ -76,7 +76,6 @@ DEBUGF90 := debug.F90
 # N.B.: If we define COMMON as "./common/", then, when adapting the header, sed will complain
 # that"./common//*.h" cannot be found on macOS.
 HEADERS := $(TEST_SOLVER_DIR)/$(COMMON)/*.h
-FINTRFH := $(TEST_SOLVER_DIR)/fintrf.h
 
 # The checktest script.
 CHCKTST := $(TEST_DIR)/checktest
@@ -536,20 +535,10 @@ $(TESTS) $(TESTS_INT):
 source_%: $(SRC_DIRS)
 	@printf "\nMaking a copy of the source code for the test.\n"
 	@for DIR in $(SRC_DIRS); do cp -r "$$DIR" ./; done
-	@find $(MEXGATE_DIR) -maxdepth 1 \( -type f -o \( -type d -a -name 'classical' \) \) -exec cp -r {} ./ \;
-	@mv ./$(DEBUGF90) ./$(COMMON)  # Use the MEX version of debug.F90 instead of the Fortran version.
-	@cp $(TEST_DIR)/fintrf.h $(FINTRFH)
-	@find ./ -type f  \
-		\( -name '*.mod' \
-		-o -name '*.o' \
-		-o -name '*.dbg' \
-		-o -name '*.cmdx' \
-		-o -name '*.cmod' \
-		-o -name '*.ilm' \
-		-o -name '*.stb' \
-		-o -name '*.out' \
-		-o -name '*__genmod.f90' \
-		\)  -exec rm "{}" +  # Cleaning up; important!!!
+	@for SRC in $(MEXGATE_SRC); do cp $(MEXGATE_DIR)/"$$SRC" ./; done
+	@cp $(MEXGATE_DIR)/$(DEBUGF90) ./$(COMMON)  # Use the MEX version of debug.F90 instead of the Fortran version.
+	@cp $(TEST_DIR)/fintrf.h ./  # The MathWorks header file for Fortran MEX
+	@rm -f *.mod *.o *.dbg *.cmdx *.cmod *.ilm *.stb *.out *__genmod.f90  # Cleaning up; important!!!
 	@if echo $@ | grep -q "stest"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash ../sunsrc ./ ; \
