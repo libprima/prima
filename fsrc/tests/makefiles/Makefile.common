@@ -583,10 +583,22 @@ $(TESTS_C) $(TESTS_INT_C):
 	@printf "\n$@ starts.\n\n" | tee -a "$(LOG_DIR)/$@.log"
 	@if echo $@ | grep -q "9test"; then \
 		($(FC1) -c $(SRC_NO_TEST) && $(FC2) -c $(SRC_NO_TEST)) 2>&1 \
+		| grep -v "Warning (165): Implicit interface 'calfun' called at (1)" \
+		| grep -v "Warning (165): Implicit interface 'calcfc' called at (1)" \
+		| grep -v "Warning (102): MODULE PROCEDURE 'inv' USEd at (1) is not referenced" \
+		| grep -v "Warning (102): MODULE PROCEDURE 'calfun' USEd at (1) is not referenced" \
+		| grep -v "Warning (102): MODULE PROCEDURE 'calcfc' USEd at (1) is not referenced" \
+		| grep -v "Warning (102): MODULE PROCEDURE 'redrat' USEd at (1) is not referenced" \
+		| grep -v "Warning (102): MODULE PROCEDURE 'redrho' USEd at (1) is not referenced" \
 		| tee -a "$(LOG_DIR)/$@.log" ; \
 	elif echo $@ | grep -q "ltest"; then \
 		($(FC1) -c $(shell echo $(SRC_NO_TEST) | sed 's|./common/pintrf.f90||') && \
 		$(FC2)  -c $(shell echo $(SRC_NO_TEST) | sed 's|./common/pintrf.f90||')) 2>&1 \
+		| grep -v "Encountered 0 errors, 0 warnings, [0-9]* information.* in file" \
+		| grep -v "Compiling file\|Module subprogram name" \
+		| grep -v "An allocatable array function '.*' is an extended feature." \
+		| grep -v "An allocatable dummy array\ '.*' is an extended feature" \
+		| grep -v "WARNING --  When --chk x is specified, it must be used to compile all source files of a program" \
 		| tee -a "$(LOG_DIR)/$@.log" ; \
 	else \
 		($(FC1) -o $@ $(SRC) && $(FC2) -o $@ $(SRC)) 2>&1 \
