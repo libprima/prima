@@ -606,7 +606,6 @@ $(TESTS_C) $(TESTS_INT_C):
 		| tee -a "$(LOG_DIR)/$@.log" ; \
 	else \
 		($(FC1) -o $@ $(SRC) && $(FC2) -o $@ $(SRC)) 2>&1 \
-		| grep -v "^[[:blank:]]*$$" \
 		| grep -v "Absoft ANSI 1610:" \
 		| grep -v "Absoft Pro Fortran.*: 0 Errors, 0 Warnings, 0 Other messages," \
 		| grep -v "after the END INTERFACE keywords is only legal in Fortran 95 and beyond" \
@@ -626,6 +625,7 @@ $(TESTS_C) $(TESTS_INT_C):
 		| grep -v "interpolation error" \
 	    | grep -v "WARNING --  When --chk x is specified" \
 	    | grep -v "bin/ld.*bisheng.*unsupported GNU_PROPERTY_TYPE (5) type: 0xc0000000" \
+		| grep -v "all warnings being treated as errors" \
 		| tee -a "$(LOG_DIR)/$@.log" ; \
 	fi
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
