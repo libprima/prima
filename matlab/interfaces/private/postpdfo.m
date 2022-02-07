@@ -567,7 +567,7 @@ if options.debug && ~options.classical
 
     % Check whether constrviolation is correct
     cobylan_prec = 1e-6;
-    lincoan_prec = 1e-12;
+    lincoan_prec = 1e-11;
     % COBYLA cannot ensure fx=fun(x) or constr=con(x) due to rounding
     % errors. Instead of checking the equality, we check whether the
     % relative error is within cobylan_prec.
@@ -725,7 +725,6 @@ if options.debug && ~options.classical
                 end
                 if any(~(isnan(chist) & isnan(chistx)) & ~((chist==chistx) | (abs(chistx-chist) <= cobylan_prec*max(1, abs(chist)) & strcmp(solver, 'cobylan'))))
                     % Public/unexpected error
-                    keyboard
                     error(sprintf('%s:InvalidFx', invoker), ...
                         '%s: UNEXPECTED ERROR: %s returns an chist that does not match xhist.', invoker, solver);
                 end

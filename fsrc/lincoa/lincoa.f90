@@ -87,14 +87,6 @@ zero = 0.0D0
 smallx = 1.0D-6 * rhoend
 np = n + 1
 nptm = npt - np
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!      IF (N .LE. 1) THEN
-!          IF (IPRINT .GT. 0) PRINT 10
-!   10     FORMAT (/4X,'Return from LINCOA because N is less than 2.')
-!          INFO=10
-!          GOTO 80
-!      END IF
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 if (npt < n + 2 .or. npt > ((n + 2) * np) / 2) then
     info = 5
     goto 80
