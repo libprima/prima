@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, February 07, 2022 PM02:22:06
+! Last Modified: Monday, February 07, 2022 PM02:47:54
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -815,11 +815,7 @@ end if
 if (.not. present(Q)) then
     call qr(A, Q=Q_loc, P=P)
     Rdiag_loc = [(inprod(Q_loc(:, i), A(:, P(i))), i=1, min(m, n))]
-    if (any(abs(Rdiag_loc) > 0)) then
-        rank = maxval(trueloc(abs(Rdiag_loc) > 0))
-    else
-        rank = 0_IK
-    end if
+    rank = maxval([0_IK, trueloc(abs(Rdiag_loc) > 0)])
     pivote = .true.
 end if
 
