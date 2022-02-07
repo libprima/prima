@@ -1,12 +1,40 @@
-subroutine bobyqa(n, npt, x, xl, xu, rhobeg, rhoend, iprint, maxfun, w, f, info, ftarget)
-
+!*==bobyqa.f90  processed by SPAG 7.50RE at 17:55 on 25 May 2021
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!     1  MAXFUN,W)
+      subroutine BOBYQA(N, Npt, X, Xl, Xu, Rhobeg, Rhoend, Iprint, Maxfun, W, F,  &
+     &                  Info, Ftarget)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!      IMPLICIT REAL*8*8 (A-H,O-Z)
+      implicit none
+!*--BOBYQA12
+!*++
+!*++ Dummy argument declarations rewritten by SPAG
+!*++
+      integer :: N
+      integer :: Npt
+      real*8, intent(INOUT), dimension(*) :: X
+      real*8, dimension(*) :: Xl
+      real*8, dimension(*) :: Xu
+      real*8, intent(INOUT) :: Rhobeg
+      real*8, intent(INOUT) :: Rhoend
+      integer :: Iprint
+      integer :: Maxfun
+      real*8, intent(INOUT), dimension(*) :: W
+      real*8 :: F
+      integer :: Info
+      real*8 :: Ftarget
+!*++
+!*++ Local variable declarations rewritten by SPAG
+!*++
+      integer :: ibmat, id, ifv, igo, ihq, ipq, isl, isu, ivl, &
+     &           iw, ixa, ixb, ixn, ixo, ixp, izmat, j, jsl,   &
+     &           jsu, ndim, np
+      real*8 :: temp, zero
+!*++
+!*++ End of declarations rewritten by SPAG
+!*++
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!      IMPLICIT REAL*8 (A-H,O-Z)
-implicit real(kind(0.0D0)) (a - h, o - z)
-implicit integer(i - n)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-dimension x(*), xl(*), xu(*), w(*)
 !
 !     This subroutine seeks the least value of a function of many variables,
 !     by applying a trust region method that forms quadratic models by
@@ -43,7 +71,7 @@ dimension x(*), xl(*), xu(*), w(*)
 !     MAXFUN must be set to an upper bound on the number of calls of CALFUN.
 !     The array W will be used for working space. Its length must be at least
 !       (NPT+5)*(NPT+N)+3*N*(N+5)/2.
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !     F is the objective function value when the algorithm exit.
 !     INFO is the exit flag, which can be set to:
 !       0: the lower bound for the trust region radius is reached.
@@ -71,34 +99,39 @@ dimension x(*), xl(*), xu(*), w(*)
 !
 !     Return if the value of NPT is unacceptable.
 !
-np = n + 1
-if (npt < n + 2 .or. npt > ((n + 2) * np) / 2) then
-    info = 5
-    go to 40
-end if
+      np = N + 1
+      if (Npt < N + 2 .or. Npt > ((N + 2) * np) / 2) then
+          if (Iprint > 0) print 99001
+99001     format(/4X, 'Return from BOBYQA because NPT is not in',        &
+      &           ' the required interval')
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+          Info = 5
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          goto 99999
+      end if
 !
 !     Partition the working space array, so that different parts of it can
 !     be treated separately during the calculation of BOBYQB. The partition
 !     requires the first (NPT+2)*(NPT+N)+3*N*(N+5)/2 elements of W plus the
 !     space that is taken by the last array in the argument list of BOBYQB.
 !
-ndim = npt + n
-ixb = 1
-ixp = ixb + n
-ifv = ixp + n * npt
-ixo = ifv + npt
-igo = ixo + n
-ihq = igo + n
-ipq = ihq + (n * np) / 2
-ibmat = ipq + npt
-izmat = ibmat + ndim * n
-isl = izmat + npt * (npt - np)
-isu = isl + n
-ixn = isu + n
-ixa = ixn + n
-id = ixa + n
-ivl = id + n
-iw = ivl + ndim
+      ndim = Npt + N
+      ixb = 1
+      ixp = ixb + N
+      ifv = ixp + N * Npt
+      ixo = ifv + Npt
+      igo = ixo + N
+      ihq = igo + N
+      ipq = ihq + (N * np) / 2
+      ibmat = ipq + Npt
+      izmat = ibmat + ndim * N
+      isl = izmat + Npt * (Npt - np)
+      isu = isl + N
+      ixn = isu + N
+      ixa = ixn + N
+      id = ixa + N
+      ivl = id + N
+      iw = ivl + ndim
 !
 !     Return if there is insufficient space between the bounds. Modify the
 !     initial X if necessary in order to avoid conflicts between the bounds
@@ -107,7 +140,7 @@ iw = ivl + ndim
 !     partitions of W, in order to provide useful and exact information about
 !     components of X that become within distance RHOBEG from their bounds.
 !
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun, 2020-05-05
 ! When the data is passed from the interfaces to the Fortran code, RHOBEG,
 ! XU and XL may change a bit (due to rounding ???). It was oberved in
@@ -115,49 +148,57 @@ iw = ivl + ndim
 ! If we set RHOBEG = MIN(XU-XL)/2 in the interfaces, then it may happen
 ! that RHOBEG > MIN(XU-XL)/2. That is why we do the following. After
 ! this, INFO=6 should never occur.
-rhobeg = min(0.5D0 * (1.0D0 - 1.0D-5) * minval(xu(1:n) - xl(1:n)), rhobeg)
+      Rhobeg = min(0.5D0 * (1.0D0 - 1.0D-5) * minval(Xu(1:N) - Xl(1:N)), Rhobeg)
 ! For the same reason, we ensure RHOEND <= RHOBEG by the following.
-rhoend = min(rhobeg, rhoend)
+      Rhoend = min(Rhobeg, Rhoend)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-zero = 0.0D0
-do j = 1, n
-    temp = xu(j) - xl(j)
-    if (temp < rhobeg + rhobeg) then
-        info = 6
-        go to 40
-    end if
-    jsl = isl + j - 1
-    jsu = jsl + n
-    w(jsl) = xl(j) - x(j)
-    w(jsu) = xu(j) - x(j)
-    if (w(jsl) >= -rhobeg) then
-        if (w(jsl) >= zero) then
-            x(j) = xl(j)
-            w(jsl) = zero
-            w(jsu) = temp
-        else
-            x(j) = xl(j) + rhobeg
-            w(jsl) = -rhobeg
-            w(jsu) = dmax1(xu(j) - x(j), rhobeg)
-        end if
-    else if (w(jsu) <= rhobeg) then
-        if (w(jsu) <= zero) then
-            x(j) = xu(j)
-            w(jsl) = -temp
-            w(jsu) = zero
-        else
-            x(j) = xu(j) - rhobeg
-            w(jsl) = dmin1(xl(j) - x(j), -rhobeg)
-            w(jsu) = rhobeg
-        end if
-    end if
-end do
+      zero = 0.0D0
+      do j = 1, N
+          temp = Xu(j) - Xl(j)
+          if (temp < Rhobeg + Rhobeg) then
+              if (Iprint > 0) print 99002
+99002         format(/4X, 'Return from BOBYQA because one of the',        &
+       &              ' differences XU(I)-XL(I)'/6X,                      &
+       &              ' is less than 2*RHOBEG.')
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+              Info = 6
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+              goto 99999
+          end if
+          jsl = isl + j - 1
+          jsu = jsl + N
+          W(jsl) = Xl(j) - X(j)
+          W(jsu) = Xu(j) - X(j)
+          if (W(jsl) >= -Rhobeg) then
+              if (W(jsl) >= zero) then
+                  X(j) = Xl(j)
+                  W(jsl) = zero
+                  W(jsu) = temp
+              else
+                  X(j) = Xl(j) + Rhobeg
+                  W(jsl) = -Rhobeg
+                  W(jsu) = DMAX1(Xu(j) - X(j), Rhobeg)
+              end if
+          elseif (W(jsu) <= Rhobeg) then
+              if (W(jsu) <= zero) then
+                  X(j) = Xu(j)
+                  W(jsl) = -temp
+                  W(jsu) = zero
+              else
+                  X(j) = Xu(j) - Rhobeg
+                  W(jsl) = DMIN1(Xl(j) - X(j), -Rhobeg)
+                  W(jsu) = Rhobeg
+              end if
+          end if
+      end do
 !
 !     Make the call of BOBYQB.
 !
-call bobyqb(n, npt, x, xl, xu, rhobeg, rhoend, iprint, maxfun, w(ixb), w(ixp), w(ifv), w(ixo), &
-& w(igo), w(ihq), w(ipq), w(ibmat), w(izmat), &
-& ndim, w(isl), w(isu), w(ixn), w(ixa), w(id), w(ivl), w(iw), f, info, &
-& ftarget)
-40 return
-end
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!     2  NDIM,W(ISL),W(ISU),W(IXN),W(IXA),W(ID),W(IVL),W(IW))
+      call BOBYQB(N, Npt, X, Xl, Xu, Rhobeg, Rhoend, Iprint, Maxfun, W(ixb),     &
+     &            W(ixp), W(ifv), W(ixo), W(igo), W(ihq), W(ipq), W(ibmat),   &
+     &            W(izmat), ndim, W(isl), W(isu), W(ixn), W(ixa), W(id), W(ivl)&
+     &            , W(iw), F, Info, Ftarget)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+99999 end subroutine BOBYQA

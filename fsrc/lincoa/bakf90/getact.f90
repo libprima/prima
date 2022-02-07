@@ -1,4 +1,4 @@
-!*==getact.f90  processed by SPAG 7.50RE at 00:12 on 26 May 2021
+!*==getact.f90  processed by SPAG 7.50RE at 17:53 on 31 May 2021
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 2019-08-29: B is never used
 !      SUBROUTINE GETACT (N,M,AMAT,B,NACT,IACT,QFAC,RFAC,SNORM,
@@ -282,6 +282,8 @@
           ic = Nact
           exit
       end do
+      !!!! If NACT=0, then IC = 0, and hence IACT(IC) is undefined, which leads to memory error when
+      !RESNEW(IACT(IC)) is accessed.
 600   if (Vlam(ic) >= zero) then
           Resnew(Iact(ic)) = DMAX1(Resact(ic), tiny)
           goto 900

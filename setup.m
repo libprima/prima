@@ -210,14 +210,9 @@ filelist = 'ffiles.txt';
 % Intersection-form Fortran code can be compiled both as free form and as fixed form.
 fprintf('Refactoring the Fortran code ... ');
 addpath(tools);
-if strcmp('newuoa', solver) || strcmp('cobyla', solver)
-    interform(fsrc);
-    interform(fsrc_classical);
-    interform(gateways);
-else
-    copyfile(fsrc, fsrc_intersection_form);
-    copyfile(gateways, gateways_intersection_form);
-end
+interform(fsrc);
+interform(fsrc_classical);
+interform(gateways);
 rmpath(tools);
 fprintf('Done.\n\n');
 

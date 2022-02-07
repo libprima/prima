@@ -1,44 +1,11 @@
-!*==altmov.f90  processed by SPAG 7.50RE at 17:55 on 25 May 2021
-      subroutine ALTMOV(N, Npt, Xpt, Xopt, Bmat, Zmat, Ndim, Sl, Su, Kopt, Knew,  &
-     &                  Adelt, Xnew, Xalt, Alpha, Cauchy, Glag, Hcol, W)
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IMPLICIT REAL*8*8 (A-H,O-Z)
-      implicit none
-!*--ALTMOV8
-!*++
-!*++ Dummy argument declarations rewritten by SPAG
-!*++
-      integer, intent(IN) :: N
-      integer, intent(IN) :: Npt
-      real*8, intent(IN), dimension(Npt, *) :: Xpt
-      real*8, intent(IN), dimension(*) :: Xopt
-      real*8, intent(IN), dimension(Ndim, *) :: Bmat
-      real*8, intent(IN), dimension(Npt, *) :: Zmat
-      integer, intent(IN) :: Ndim
-      real*8, intent(IN), dimension(*) :: Sl
-      real*8, intent(IN), dimension(*) :: Su
-      integer, intent(IN) :: Kopt
-      integer, intent(IN) :: Knew
-      real*8, intent(IN) :: Adelt
-      real*8, intent(OUT), dimension(*) :: Xnew
-      real*8, intent(INOUT), dimension(*) :: Xalt
-      real*8, intent(INOUT) :: Alpha
-      real*8, intent(INOUT) :: Cauchy
-      real*8, intent(INOUT), dimension(*) :: Glag
-      real*8, intent(INOUT), dimension(*) :: Hcol
-      real*8, intent(INOUT), dimension(*) :: W
-!*++
-!*++ Local variable declarations rewritten by SPAG
-!*++
-      real*8 :: bigstp, const, csave, curv, dderiv, diff, distsq,  &
-     &        ggfree, gw, ha, half, one, predsq, presav, scale, &
-     &        slbd, step, stpsav, subd, sumin, temp, tempa,      &
-     &        tempb, tempd, vlag, wfixsq, wsqsav, zero
-      integer :: i, ibdsav, iflag, ilbd, isbd, iubd, j, k, ksav
-!*++
-!*++ End of declarations rewritten by SPAG
-!*++
+subroutine altmov(n, npt, xpt, xopt, bmat, zmat, ndim, sl, su, kopt, knew, adelt, xnew, xalt, alpha, cauchy, glag, hcol, w)
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!      IMPLICIT REAL*8 (A-H,O-Z)
+implicit real(kind(0.0D0)) (a - h, o - z)
+implicit integer(i - n)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+dimension xpt(npt, *), xopt(*), bmat(ndim, *), zmat(npt, *), sl(*), su(*), xnew(*), xalt(*), glag(*), hcol(*), w(*)
 !
 !     The arguments N, NPT, XPT, XOPT, BMAT, ZMAT, NDIM, SL and SU all have
 !       the same meanings as the corresponding arguments of BOBYQB.
@@ -70,37 +37,37 @@
 !     Set the first NPT components of W to the leading elements of the
 !     KNEW-th column of the H matrix.
 !
-      half = 0.5D0
-      one = 1.0D0
-      zero = 0.0D0
-      const = one + DSQRT(2.0D0)
-      do k = 1, Npt
-          Hcol(k) = zero
-      end do
-      do j = 1, Npt - N - 1
-          temp = Zmat(Knew, j)
-          do k = 1, Npt
-              Hcol(k) = Hcol(k) + temp * Zmat(k, j)
-          end do
-      end do
-      Alpha = Hcol(Knew)
-      ha = half * Alpha
+half = 0.5D0
+one = 1.0D0
+zero = 0.0D0
+const = one + dsqrt(2.0D0)
+do k = 1, npt
+    hcol(k) = zero
+end do
+do j = 1, npt - n - 1
+    temp = zmat(knew, j)
+    do k = 1, npt
+        hcol(k) = hcol(k) + temp * zmat(k, j)
+    end do
+end do
+alpha = hcol(knew)
+ha = half * alpha
 !
 !     Calculate the gradient of the KNEW-th Lagrange function at XOPT.
 !
-      do i = 1, N
-          Glag(i) = Bmat(Knew, i)
-      end do
-      do k = 1, Npt
-          temp = zero
-          do j = 1, N
-              temp = temp + Xpt(k, j) * Xopt(j)
-          end do
-          temp = Hcol(k) * temp
-          do i = 1, N
-              Glag(i) = Glag(i) + temp * Xpt(k, i)
-          end do
-      end do
+do i = 1, n
+    glag(i) = bmat(knew, i)
+end do
+do k = 1, npt
+    temp = zero
+    do j = 1, n
+        temp = temp + xpt(k, j) * xopt(j)
+    end do
+    temp = hcol(k) * temp
+    do i = 1, n
+        glag(i) = glag(i) + temp * xpt(k, i)
+    end do
+end do
 !
 !     Search for a large denominator along the straight lines through XOPT
 !     and another interpolation point. SLBD and SUBD will be lower and upper
@@ -108,231 +75,229 @@
 !     set to the square of the predicted denominator for each line. PRESAV
 !     will be set to the largest admissible value of PREDSQ that occurs.
 !
-      presav = zero
-      do k = 1, Npt
-          if (k == Kopt) cycle
-          dderiv = zero
-          distsq = zero
-          do i = 1, N
-              temp = Xpt(k, i) - Xopt(i)
-              dderiv = dderiv + Glag(i) * temp
-              distsq = distsq + temp * temp
-          end do
-          subd = Adelt / DSQRT(distsq)
-          slbd = -subd
-          ilbd = 0
-          iubd = 0
-          sumin = DMIN1(one, subd)
+presav = zero
+do k = 1, npt
+    if (k == kopt) cycle
+    dderiv = zero
+    distsq = zero
+    do i = 1, n
+        temp = xpt(k, i) - xopt(i)
+        dderiv = dderiv + glag(i) * temp
+        distsq = distsq + temp * temp
+    end do
+    subd = adelt / dsqrt(distsq)
+    slbd = -subd
+    ilbd = 0
+    iubd = 0
+    sumin = dmin1(one, subd)
 !
 !     Revise SLBD and SUBD if necessary because of the bounds in SL and SU.
 !
-          do i = 1, N
-              temp = Xpt(k, i) - Xopt(i)
-              if (temp > zero) then
-                  if (slbd * temp < Sl(i) - Xopt(i)) then
-                      slbd = (Sl(i) - Xopt(i)) / temp
-                      ilbd = -i
-                  end if
-                  if (subd * temp > Su(i) - Xopt(i)) then
-                      subd = DMAX1(sumin, (Su(i) - Xopt(i)) / temp)
-                      iubd = i
-                  end if
-              elseif (temp < zero) then
-                  if (slbd * temp > Su(i) - Xopt(i)) then
-                      slbd = (Su(i) - Xopt(i)) / temp
-                      ilbd = i
-                  end if
-                  if (subd * temp < Sl(i) - Xopt(i)) then
-                      subd = DMAX1(sumin, (Sl(i) - Xopt(i)) / temp)
-                      iubd = -i
-                  end if
-              end if
-          end do
+    do i = 1, n
+        temp = xpt(k, i) - xopt(i)
+        if (temp > zero) then
+            if (slbd * temp < sl(i) - xopt(i)) then
+                slbd = (sl(i) - xopt(i)) / temp
+                ilbd = -i
+            end if
+            if (subd * temp > su(i) - xopt(i)) then
+                subd = dmax1(sumin, (su(i) - xopt(i)) / temp)
+                iubd = i
+            end if
+        else if (temp < zero) then
+            if (slbd * temp > su(i) - xopt(i)) then
+                slbd = (su(i) - xopt(i)) / temp
+                ilbd = i
+            end if
+            if (subd * temp < sl(i) - xopt(i)) then
+                subd = dmax1(sumin, (sl(i) - xopt(i)) / temp)
+                iubd = -i
+            end if
+        end if
+    end do
 !
 !     Seek a large modulus of the KNEW-th Lagrange function when the index
 !     of the other interpolation point on the line through XOPT is KNEW.
 !
-          if (k == Knew) then
-              diff = dderiv - one
-              step = slbd
-              vlag = slbd * (dderiv - slbd * diff)
-              isbd = ilbd
-              temp = subd * (dderiv - subd * diff)
-              if (DABS(temp) > DABS(vlag)) then
-                  step = subd
-                  vlag = temp
-                  isbd = iubd
-              end if
-              tempd = half * dderiv
-              tempa = tempd - diff * slbd
-              tempb = tempd - diff * subd
-              if (tempa * tempb < zero) then
-                  temp = tempd * tempd / diff
-                  if (DABS(temp) > DABS(vlag)) then
-                      step = tempd / diff
-                      vlag = temp
-                      isbd = 0
-                  end if
-              end if
+    if (k == knew) then
+        diff = dderiv - one
+        step = slbd
+        vlag = slbd * (dderiv - slbd * diff)
+        isbd = ilbd
+        temp = subd * (dderiv - subd * diff)
+        if (dabs(temp) > dabs(vlag)) then
+            step = subd
+            vlag = temp
+            isbd = iubd
+        end if
+        tempd = half * dderiv
+        tempa = tempd - diff * slbd
+        tempb = tempd - diff * subd
+        if (tempa * tempb < zero) then
+            temp = tempd * tempd / diff
+            if (dabs(temp) > dabs(vlag)) then
+                step = tempd / diff
+                vlag = temp
+                isbd = 0
+            end if
+        end if
 !
 !     Search along each of the other lines through XOPT and another point.
 !
-          else
-              step = slbd
-              vlag = slbd * (one - slbd)
-              isbd = ilbd
-              temp = subd * (one - subd)
-              if (DABS(temp) > DABS(vlag)) then
-                  step = subd
-                  vlag = temp
-                  isbd = iubd
-              end if
-              if (subd > half) then
-                  if (DABS(vlag) < 0.25D0) then
-                      step = half
-                      vlag = 0.25D0
-                      isbd = 0
-                  end if
-              end if
-              vlag = vlag * dderiv
-          end if
+    else
+        step = slbd
+        vlag = slbd * (one - slbd)
+        isbd = ilbd
+        temp = subd * (one - subd)
+        if (dabs(temp) > dabs(vlag)) then
+            step = subd
+            vlag = temp
+            isbd = iubd
+        end if
+        if (subd > half) then
+            if (dabs(vlag) < 0.25D0) then
+                step = half
+                vlag = 0.25D0
+                isbd = 0
+            end if
+        end if
+        vlag = vlag * dderiv
+    end if
 !
 !     Calculate PREDSQ for the current line search and maintain PRESAV.
 !
-          temp = step * (one - step) * distsq
-          predsq = vlag * vlag * (vlag * vlag + ha * temp * temp)
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+    temp = step * (one - step) * distsq
+    predsq = vlag * vlag * (vlag * vlag + ha * temp * temp)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29: With the original code, if either PREDSQ or PRESAV
 ! is NaN, KSAV/STPSAV/IBDSAV will not get a value. This may cause
 ! Segmentation Fault.
 !      IF (PREDSQ .GT. PRESAV) THEN
-          if (predsq > presav) then
+    if (.not. (predsq <= presav)) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              presav = predsq
-              ksav = k
-              stpsav = step
-              ibdsav = isbd
-          end if
-      end do
+        presav = predsq
+        ksav = k
+        stpsav = step
+        ibdsav = isbd
+    end if
+end do
 !
 !     Construct XNEW in a way that satisfies the bound constraints exactly.
 !
-      do i = 1, N
-          temp = Xopt(i) + stpsav * (Xpt(ksav, i) - Xopt(i))
-          Xnew(i) = DMAX1(Sl(i), DMIN1(Su(i), temp))
-      end do
-      if (ibdsav < 0) Xnew(-ibdsav) = Sl(-ibdsav)
-      if (ibdsav > 0) Xnew(ibdsav) = Su(ibdsav)
+do i = 1, n
+    temp = xopt(i) + stpsav * (xpt(ksav, i) - xopt(i))
+    xnew(i) = dmax1(sl(i), dmin1(su(i), temp))
+end do
+if (ibdsav < 0) xnew(-ibdsav) = sl(-ibdsav)
+if (ibdsav > 0) xnew(ibdsav) = su(ibdsav)
 !
 !     Prepare for the iterative method that assembles the constrained Cauchy
 !     step in W. The sum of squares of the fixed components of W is formed in
 !     WFIXSQ, and the free components of W are set to BIGSTP.
 !
-      bigstp = Adelt + Adelt
-      iflag = 0
-100   wfixsq = zero
-      ggfree = zero
-      do i = 1, N
-          W(i) = zero
-          tempa = DMIN1(Xopt(i) - Sl(i), Glag(i))
-          tempb = DMAX1(Xopt(i) - Su(i), Glag(i))
-          if (tempa > zero .or. tempb < zero) then
-              W(i) = bigstp
-              ggfree = ggfree + Glag(i)**2
-          end if
-      end do
-      if (ggfree == zero) then
-          Cauchy = zero
-          goto 99999
-      end if
-      do
+bigstp = adelt + adelt
+iflag = 0
+100 wfixsq = zero
+ggfree = zero
+do i = 1, n
+    w(i) = zero
+    tempa = dmin1(xopt(i) - sl(i), glag(i))
+    tempb = dmax1(xopt(i) - su(i), glag(i))
+    if (tempa > zero .or. tempb < zero) then
+        w(i) = bigstp
+        ggfree = ggfree + glag(i)**2
+    end if
+end do
+if (ggfree == zero) then
+    cauchy = zero
+    goto 200
+end if
 !
 !     Investigate whether more components of W can be fixed.
 !
-          temp = Adelt * Adelt - wfixsq
-          if (temp > zero) then
-              wsqsav = wfixsq
-              step = DSQRT(temp / ggfree)
-              ggfree = zero
-              do i = 1, N
-                  if (W(i) == bigstp) then
-                      temp = Xopt(i) - step * Glag(i)
-                      if (temp <= Sl(i)) then
-                          W(i) = Sl(i) - Xopt(i)
-                          wfixsq = wfixsq + W(i)**2
-                      elseif (temp >= Su(i)) then
-                          W(i) = Su(i) - Xopt(i)
-                          wfixsq = wfixsq + W(i)**2
-                      else
-                          ggfree = ggfree + Glag(i)**2
-                      end if
-                  end if
-              end do
-              if (wfixsq > wsqsav .and. ggfree > zero) cycle
-          end if
-          exit
-      end do
+120 temp = adelt * adelt - wfixsq
+if (temp > zero) then
+    wsqsav = wfixsq
+    step = dsqrt(temp / ggfree)
+    ggfree = zero
+    do i = 1, n
+        if (w(i) == bigstp) then
+            temp = xopt(i) - step * glag(i)
+            if (temp <= sl(i)) then
+                w(i) = sl(i) - xopt(i)
+                wfixsq = wfixsq + w(i)**2
+            else if (temp >= su(i)) then
+                w(i) = su(i) - xopt(i)
+                wfixsq = wfixsq + w(i)**2
+            else
+                ggfree = ggfree + glag(i)**2
+            end if
+        end if
+    end do
+    if (wfixsq > wsqsav .and. ggfree > zero) goto 120
+end if
 !
 !     Set the remaining free components of W and all components of XALT,
 !     except that W may be scaled later.
 !
-      gw = zero
-      do i = 1, N
-          if (W(i) == bigstp) then
-              W(i) = -step * Glag(i)
-              Xalt(i) = DMAX1(Sl(i), DMIN1(Su(i), Xopt(i) + W(i)))
-          elseif (W(i) == zero) then
-              Xalt(i) = Xopt(i)
-          elseif (Glag(i) > zero) then
-              Xalt(i) = Sl(i)
-          else
-              Xalt(i) = Su(i)
-          end if
-          gw = gw + Glag(i) * W(i)
-      end do
+gw = zero
+do i = 1, n
+    if (w(i) == bigstp) then
+        w(i) = -step * glag(i)
+        xalt(i) = dmax1(sl(i), dmin1(su(i), xopt(i) + w(i)))
+    else if (w(i) == zero) then
+        xalt(i) = xopt(i)
+    else if (glag(i) > zero) then
+        xalt(i) = sl(i)
+    else
+        xalt(i) = su(i)
+    end if
+    gw = gw + glag(i) * w(i)
+end do
 !
 !     Set CURV to the curvature of the KNEW-th Lagrange function along W.
 !     Scale W by a factor less than one if that can reduce the modulus of
 !     the Lagrange function at XOPT+W. Set CAUCHY to the final value of
 !     the square of this function.
 !
-      curv = zero
-      do k = 1, Npt
-          temp = zero
-          do j = 1, N
-              temp = temp + Xpt(k, j) * W(j)
-          end do
-          curv = curv + Hcol(k) * temp * temp
-      end do
-      if (iflag == 1) curv = -curv
-      if (curv > -gw .and. curv < -const * gw) then
-          scale = -gw / curv
-          do i = 1, N
-              temp = Xopt(i) + scale * W(i)
-              Xalt(i) = DMAX1(Sl(i), DMIN1(Su(i), temp))
-          end do
-          Cauchy = (half * gw * scale)**2
-      else
-          Cauchy = (gw + half * curv)**2
-      end if
+curv = zero
+do k = 1, npt
+    temp = zero
+    do j = 1, n
+        temp = temp + xpt(k, j) * w(j)
+    end do
+    curv = curv + hcol(k) * temp * temp
+end do
+if (iflag == 1) curv = -curv
+if (curv > -gw .and. curv < -const * gw) then
+    scale = -gw / curv
+    do i = 1, n
+        temp = xopt(i) + scale * w(i)
+        xalt(i) = dmax1(sl(i), dmin1(su(i), temp))
+    end do
+    cauchy = (half * gw * scale)**2
+else
+    cauchy = (gw + half * curv)**2
+end if
 !
 !     If IFLAG is zero, then XALT is calculated as before after reversing
 !     the sign of GLAG. Thus two XALT vectors become available. The one that
 !     is chosen is the one that gives the larger value of CAUCHY.
 !
-      if (iflag == 0) then
-          do i = 1, N
-              Glag(i) = -Glag(i)
-              W(N + i) = Xalt(i)
-          end do
-          csave = Cauchy
-          iflag = 1
-          goto 100
-      end if
-      if (csave > Cauchy) then
-          do i = 1, N
-              Xalt(i) = W(N + i)
-          end do
-          Cauchy = csave
-      end if
-99999 end subroutine ALTMOV
+if (iflag == 0) then
+    do i = 1, n
+        glag(i) = -glag(i)
+        w(n + i) = xalt(i)
+    end do
+    csave = cauchy
+    iflag = 1
+    goto 100
+end if
+if (csave > cauchy) then
+    do i = 1, n
+        xalt(i) = w(n + i)
+    end do
+    cauchy = csave
+end if
+200 return
+end

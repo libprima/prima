@@ -1,11 +1,35 @@
-subroutine uobyqa(n, x, rhobeg, rhoend, iprint, maxfun, w, f, info, ftarget)
+!*==uobyqa.f90  processed by SPAG 7.50RE at 00:28 on 26 May 2021
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!      SUBROUTINE UOBYQA (N,X,RHOBEG,RHOEND,IPRINT,MAXFUN,W)
+      SUBROUTINE UOBYQA(N,X,Rhobeg,Rhoend,Iprint,Maxfun,W,F,Info,       &
+     &                  Ftarget)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!      IMPLICIT REAL*8*8 (A-H,O-Z)
+      IMPLICIT NONE
+!*--UOBYQA11
+!*++
+!*++ Dummy argument declarations rewritten by SPAG
+!*++
+      INTEGER :: N
+      REAL*8 , DIMENSION(*) :: X
+      REAL*8 :: Rhobeg
+      REAL*8 , INTENT(INOUT) :: Rhoend
+      INTEGER :: Iprint
+      INTEGER :: Maxfun
+      REAL*8 , DIMENSION(*) :: W
+      REAL*8 :: F
+      INTEGER :: Info
+      REAL*8 :: Ftarget
+!*++
+!*++ Local variable declarations rewritten by SPAG
+!*++
+      INTEGER :: id , ig , ih , ipl , ipq , ivl , iw , ixb , ixn , ixo ,&
+     &           ixp , npt
+!*++
+!*++ End of declarations rewritten by SPAG
+!*++
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!      IMPLICIT REAL*8 (A-H,O-Z)
-implicit real(kind(0.0D0)) (a - h, o - z)
-implicit integer(i - n)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-dimension x(*), w(*)
 !
 !     This subroutine seeks the least value of a function of many variables,
 !     by a trust region method that forms quadratic models by interpolation.
@@ -30,7 +54,7 @@ dimension x(*), w(*)
 !     MAXFUN must be set to an upper bound on the number of calls of CALFUN.
 !     The array W will be used for working space. Its length must be at least
 !       ( N**4 + 8*N**3 + 23*N**2 + 42*N + max [ 2*N**2 + 4, 18*N ] ) / 4.
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !     F is the objective function value when the algorithm exit.
 !     INFO is the exit flag, which can be set to:
 !       0: the lower bound for the trust region radius is reached.
@@ -57,30 +81,31 @@ dimension x(*), w(*)
 !     Partition the working space array, so that different parts of it can be
 !     treated separately by the subroutine that performs the main calculation.
 !
-npt = (n * n + 3 * n + 2) / 2
-ixb = 1
-ixo = ixb + n
-ixn = ixo + n
-ixp = ixn + n
-ipq = ixp + n * npt
-ipl = ipq + npt - 1
-ih = ipl + (npt - 1) * npt
-ig = ih + n * n
-id = ig + n
-ivl = ih
-iw = id + n
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      npt = (N*N+3*N+2)/2
+      ixb = 1
+      ixo = ixb + N
+      ixn = ixo + N
+      ixp = ixn + N
+      ipq = ixp + N*npt
+      ipl = ipq + npt - 1
+      ih = ipl + (npt-1)*npt
+      ig = ih + N*N
+      id = ig + N
+      ivl = ih
+      iw = id + N
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun, 2020-05-05
 ! When the data is passed from the interfaces to the Fortran code, RHOBEG,
 ! and RHOEND may change a bit (due to rounding ???). It was oberved in
 ! a MATLAB test that MEX passed 1 to Fortran as 0.99999999999999978.
 ! If we set RHOEND = RHOBEG in the interfaces, then it may happen
 ! that RHOEND > RHOBEG. That is why we do the following.
-rhoend = min(rhobeg, rhoend)
+      Rhoend = MIN(Rhobeg,Rhoend)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-call uobyqb(n, x, rhobeg, rhoend, iprint, maxfun, npt, w(ixb), w(ixo), &
-     &  w(ixn), w(ixp), w(ipq), w(ipl), w(ih), w(ig), w(id), w(ivl), w(iw), f, &
-     &  info, ftarget)
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!     1  W(IXN),W(IXP),W(IPQ),W(IPL),W(IH),W(IG),W(ID),W(IVL),W(IW))
+      CALL UOBYQB(N,X,Rhobeg,Rhoend,Iprint,Maxfun,npt,W(ixb),W(ixo),    &
+     &            W(ixn),W(ixp),W(ipq),W(ipl),W(ih),W(ig),W(id),W(ivl), &
+     &            W(iw),F,Info,Ftarget)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-return
-end
+      END SUBROUTINE UOBYQA

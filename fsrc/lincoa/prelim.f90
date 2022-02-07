@@ -1,56 +1,12 @@
-!*==prelim.f90  processed by SPAG 7.50RE at 17:53 on 31 May 2021
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!     2  SP,RESCON,STEP,PQW,W)
-      SUBROUTINE PRELIM(N,Npt,M,Amat,B,X,Rhobeg,Iprint,Xbase,Xpt,Fval,  &
-     &                  Xsav,Xopt,Gopt,Kopt,Hq,Pq,Bmat,Zmat,Idz,Ndim,Sp,&
-     &                  Rescon,Step,Pqw,W,F,Ftarget)
+subroutine prelim(n, npt, m, amat, b, x, rhobeg, iprint, xbase, &
+     &  xpt, fval, xsav, xopt, gopt, kopt, hq, pq, bmat, zmat, idz, ndim, &
+     &  sp, rescon, step, pqw, w, f, ftarget)
+implicit real(kind(0.0D0)) (a - h, o - z)
+implicit integer(i - n)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IMPLICIT REAL*8*8 (A-H,O-Z)
-      IMPLICIT NONE
-!*--PRELIM14
-!*++
-!*++ Dummy argument declarations rewritten by SPAG
-!*++
-      INTEGER :: N
-      INTEGER :: Npt
-      INTEGER , INTENT(IN) :: M
-      REAL*8 , INTENT(IN) , DIMENSION(N,*) :: Amat
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: B
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: X
-      REAL*8 , INTENT(IN) :: Rhobeg
-      INTEGER , INTENT(IN) :: Iprint
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Xbase
-      REAL*8 , INTENT(INOUT) , DIMENSION(Npt,*) :: Xpt
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Fval
-      REAL*8 , INTENT(OUT) , DIMENSION(*) :: Xsav
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Xopt
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Gopt
-      INTEGER , INTENT(INOUT) :: Kopt
-      REAL*8 , INTENT(OUT) , DIMENSION(*) :: Hq
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Pq
-      REAL*8 , INTENT(INOUT) , DIMENSION(Ndim,*) :: Bmat
-      REAL*8 , INTENT(INOUT) , DIMENSION(Npt,*) :: Zmat
-      INTEGER :: Idz
-      INTEGER :: Ndim
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Sp
-      REAL*8 , INTENT(OUT) , DIMENSION(*) :: Rescon
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: Step
-      REAL*8 , DIMENSION(*) :: Pqw
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: W
-      REAL*8 , INTENT(INOUT) :: F
-      REAL*8 , INTENT(IN) :: Ftarget
-!*++
-!*++ Local variable declarations rewritten by SPAG
-!*++
-      REAL*8 :: almost_infinity , bigv , feas , half , one , recip ,      &
-     &        reciq , resid , rhosq , temp , test , zero
-      INTEGER :: i , ipt , itemp , j , jp , jpt , jsav , k , kbase ,    &
-     &           nf , nptm
-!*++
-!*++ End of declarations rewritten by SPAG
-!*++
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+dimension amat(n, *), b(*), x(*), xbase(*), xpt(npt, *), fval(*), &
+& xsav(*), xopt(*), gopt(*), hq(*), pq(*), bmat(ndim, *), zmat(npt, *), &
+& sp(*), rescon(*), step(*), pqw(*), w(*)
 !
 !     The arguments N, NPT, M, AMAT, B, X, RHOBEG, IPRINT, XBASE, XPT, FVAL,
 !       XSAV, XOPT, GOPT, HQ, PQ, BMAT, ZMAT, NDIM, SP and RESCON are the
@@ -71,213 +27,206 @@
 !
 !     Set some constants.
 !
-      half = 0.5D0
-      one = 1.0D0
-      zero = 0.0D0
-      nptm = Npt - N - 1
-      rhosq = Rhobeg*Rhobeg
-      recip = one/rhosq
-      reciq = DSQRT(half)/rhosq
-      test = 0.2D0*Rhobeg
-      Idz = 1
-      kbase = 1
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      almost_infinity = HUGE(0.0D0)/2.0D0
+half = 0.5D0
+one = 1.0D0
+zero = 0.0D0
+nptm = npt - n - 1
+rhosq = rhobeg * rhobeg
+recip = one / rhosq
+reciq = dsqrt(half) / rhosq
+test = 0.2D0 * rhobeg
+idz = 1
+kbase = 1
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+almost_infinity = huge(0.0D0) / 2.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     Set the initial elements of XPT, BMAT, SP and ZMAT to zero.
 !
-      DO j = 1 , N
-         Xbase(j) = X(j)
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-         Xopt(j) = zero
-         Xsav(j) = Xbase(j)
+do j = 1, n
+    xbase(j) = x(j)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-         DO k = 1 , Npt
-            Xpt(k,j) = zero
-         ENDDO
-         DO i = 1 , Ndim
-            Bmat(i,j) = zero
-         ENDDO
-      ENDDO
-      DO k = 1 , Npt
-         Sp(k) = zero
-         DO j = 1 , Npt - N - 1
-            Zmat(k,j) = zero
-         ENDDO
-      ENDDO
+    xopt(j) = zero
+    xsav(j) = xbase(j)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    do k = 1, npt
+        xpt(k, j) = zero
+    end do
+    do i = 1, ndim
+        bmat(i, j) = zero
+    end do
+end do
+do k = 1, npt
+    sp(k) = zero
+    do j = 1, npt - n - 1
+        zmat(k, j) = zero
+    end do
+end do
 !
 !     Set the nonzero coordinates of XPT(K,.), K=1,2,...,min[2*N+1,NPT],
 !       but they may be altered later to make a constraint violation
 !       sufficiently large. The initial nonzero elements of BMAT and of
 !       the first min[N,NPT-N-1] columns of ZMAT are set also.
 !
-      DO j = 1 , N
-         Xpt(j+1,j) = Rhobeg
-         IF ( j<Npt-N ) THEN
-            jp = N + j + 1
-            Xpt(jp,j) = -Rhobeg
-            Bmat(j+1,j) = half/Rhobeg
-            Bmat(jp,j) = -half/Rhobeg
-            Zmat(1,j) = -reciq - reciq
-            Zmat(j+1,j) = reciq
-            Zmat(jp,j) = reciq
-         ELSE
-            Bmat(1,j) = -one/Rhobeg
-            Bmat(j+1,j) = one/Rhobeg
-            Bmat(Npt+j,j) = -half*rhosq
-         ENDIF
-      ENDDO
+do j = 1, n
+    xpt(j + 1, j) = rhobeg
+    if (j < npt - n) then
+        jp = n + j + 1
+        xpt(jp, j) = -rhobeg
+        bmat(j + 1, j) = half / rhobeg
+        bmat(jp, j) = -half / rhobeg
+        zmat(1, j) = -reciq - reciq
+        zmat(j + 1, j) = reciq
+        zmat(jp, j) = reciq
+    else
+        bmat(1, j) = -one / rhobeg
+        bmat(j + 1, j) = one / rhobeg
+        bmat(npt + j, j) = -half * rhosq
+    end if
+end do
 !
 !     Set the remaining initial nonzero elements of XPT and ZMAT when the
 !       number of interpolation points exceeds 2*N+1.
 !
-      IF ( Npt>2*N+1 ) THEN
-         DO k = N + 1 , Npt - N - 1
-            itemp = (k-1)/N
-            ipt = k - itemp*N
-            jpt = ipt + itemp
-            IF ( jpt>N ) jpt = jpt - N
-            Xpt(N+k+1,ipt) = Rhobeg
-            Xpt(N+k+1,jpt) = Rhobeg
-            Zmat(1,k) = recip
-            Zmat(ipt+1,k) = -recip
-            Zmat(jpt+1,k) = -recip
-            Zmat(N+k+1,k) = recip
-         ENDDO
-      ENDIF
+if (npt > 2 * n + 1) then
+    do k = n + 1, npt - n - 1
+        itemp = (k - 1) / n
+        ipt = k - itemp * n
+        jpt = ipt + itemp
+        if (jpt > n) jpt = jpt - n
+        xpt(n + k + 1, ipt) = rhobeg
+        xpt(n + k + 1, jpt) = rhobeg
+        zmat(1, k) = recip
+        zmat(ipt + 1, k) = -recip
+        zmat(jpt + 1, k) = -recip
+        zmat(n + k + 1, k) = recip
+    end do
+end if
 !
 !     Update the constraint right hand sides to allow for the shift XBASE.
 !
-      IF ( M>0 ) THEN
-         DO j = 1 , M
-            temp = zero
-            DO i = 1 , N
-               temp = temp + Amat(i,j)*Xbase(i)
-            ENDDO
-            B(j) = B(j) - temp
-         ENDDO
-      ENDIF
+if (m > 0) then
+    do j = 1, m
+        temp = zero
+        do i = 1, n
+            temp = temp + amat(i, j) * xbase(i)
+        end do
+        b(j) = b(j) - temp
+    end do
+end if
 !
 !     Go through the initial points, shifting every infeasible point if
 !       necessary so that its constraint violation is at least 0.2*RHOBEG.
 !
-      DO nf = 1 , Npt
-         feas = one
-         bigv = zero
-         j = 0
-         DO
-            j = j + 1
-            IF ( j<=M .AND. nf>=2 ) THEN
-               resid = -B(j)
-               DO i = 1 , N
-                  resid = resid + Xpt(nf,i)*Amat(i,j)
-               ENDDO
-               IF ( resid<=bigv ) CYCLE
-               bigv = resid
-               jsav = j
-               IF ( resid<=test ) THEN
-                  feas = -one
-                  CYCLE
-               ENDIF
-               feas = zero
-            ENDIF
-            IF ( feas<zero ) THEN
-               DO i = 1 , N
-                  Step(i) = Xpt(nf,i) + (test-bigv)*Amat(i,jsav)
-               ENDDO
-               DO k = 1 , Npt
-                  Sp(Npt+k) = zero
-                  DO j = 1 , N
-                     Sp(Npt+k) = Sp(Npt+k) + Xpt(k,j)*Step(j)
-                  ENDDO
-               ENDDO
-               CALL UPDATE(N,Npt,Xpt,Bmat,Zmat,Idz,Ndim,Sp,Step,kbase,  &
-     &                     nf,Pqw,W)
-               DO i = 1 , N
-                  Xpt(nf,i) = Step(i)
-               ENDDO
-            ENDIF
+do nf = 1, npt
+    feas = one
+    bigv = zero
+    j = 0
+80  j = j + 1
+    if (j <= m .and. nf >= 2) then
+        resid = -b(j)
+        do i = 1, n
+            resid = resid + xpt(nf, i) * amat(i, j)
+        end do
+        if (resid <= bigv) goto 80
+        bigv = resid
+        jsav = j
+        if (resid <= test) then
+            feas = -one
+            goto 80
+        end if
+        feas = zero
+    end if
+    if (feas < zero) then
+        do i = 1, n
+            step(i) = xpt(nf, i) + (test - bigv) * amat(i, jsav)
+        end do
+        do k = 1, npt
+            sp(npt + k) = zero
+            do j = 1, n
+                sp(npt + k) = sp(npt + k) + xpt(k, j) * step(j)
+            end do
+        end do
+        call update(n, npt, xpt, bmat, zmat, idz, ndim, sp, step, kbase, nf, pqw, w)
+        do i = 1, n
+            xpt(nf, i) = step(i)
+        end do
+    end if
 !
 !     Calculate the objective function at the current interpolation point,
 !       and set KOPT to the index of the first trust region centre.
 !
-            DO j = 1 , N
-               X(j) = Xbase(j) + Xpt(nf,j)
-            ENDDO
-            F = feas
-            CALL CALFUN(N,X,F)
-            IF ( Iprint==3 ) THEN
-               PRINT 99001 , nf , F , (X(i),i=1,N)
-99001          FORMAT (/4X,'Function number',I6,'    F =',1PD18.10,     &
-     &                 '    The corresponding X is:'/(2X,5D15.6))
-            ENDIF
-            IF ( nf==1 ) THEN
-               Kopt = 1
-            ELSEIF ( F<Fval(Kopt) .AND. feas>zero ) THEN
-               Kopt = nf
-            ENDIF
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+    do j = 1, n
+        x(j) = xbase(j) + xpt(nf, j)
+    end do
+    f = feas
+    call calfun(n, x, f)
+    if (nf == 1) then
+        kopt = 1
+    else if (f < fval(kopt) .and. feas > zero) then
+        kopt = nf
+    end if
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !  150 FVAL(NF)=F
-            Fval(nf) = F
+    fval(nf) = f
 !     By Tom/Zaikun (on 03-06-2019/07-06-2019):
 !     If the objective function reached a NaN or infinite value, or if
 !     the value is under the target value, the algorithm go back to
 !     LINCOB with updated KOPT and XSAV.
 !     Note that we should NOT compare F and FTARGET, because X may not
 !     be feasible.
-            IF ( F/=F .OR. F>almost_infinity .OR. Fval(Kopt)<=Ftarget ) &
-     &           GOTO 100
-            EXIT
-         ENDDO
-      ENDDO
+    if (f /= f .or. f > almost_infinity .or. fval(kopt) <= ftarget) then
+        exit
+    end if
+end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     Set PQ for the first quadratic model.
 !
- 100  DO j = 1 , nptm
-         W(j) = zero
-         DO k = 1 , Npt
-            W(j) = W(j) + Zmat(k,j)*Fval(k)
-         ENDDO
-      ENDDO
-      DO k = 1 , Npt
-         Pq(k) = zero
-         DO j = 1 , nptm
-            Pq(k) = Pq(k) + Zmat(k,j)*W(j)
-         ENDDO
-      ENDDO
+do j = 1, nptm
+    w(j) = zero
+    do k = 1, npt
+        w(j) = w(j) + zmat(k, j) * fval(k)
+    end do
+end do
+do k = 1, npt
+    pq(k) = zero
+    do j = 1, nptm
+        pq(k) = pq(k) + zmat(k, j) * w(j)
+    end do
+end do
 !
 !     Set XOPT, SP, GOPT and HQ for the first quadratic model.
 !
-      DO j = 1 , N
-         Xopt(j) = Xpt(Kopt,j)
-         Xsav(j) = Xbase(j) + Xopt(j)
-         Gopt(j) = zero
-      ENDDO
-      DO k = 1 , Npt
-         Sp(k) = zero
-         DO j = 1 , N
-            Sp(k) = Sp(k) + Xpt(k,j)*Xopt(j)
-         ENDDO
-         temp = Pq(k)*Sp(k)
-         DO j = 1 , N
-            Gopt(j) = Gopt(j) + Fval(k)*Bmat(k,j) + temp*Xpt(k,j)
-         ENDDO
-      ENDDO
-      DO i = 1 , (N*N+N)/2
-         Hq(i) = zero
-      ENDDO
+do j = 1, n
+    xopt(j) = xpt(kopt, j)
+    xsav(j) = xbase(j) + xopt(j)
+    gopt(j) = zero
+end do
+do k = 1, npt
+    sp(k) = zero
+    do j = 1, n
+        sp(k) = sp(k) + xpt(k, j) * xopt(j)
+    end do
+    temp = pq(k) * sp(k)
+    do j = 1, n
+        gopt(j) = gopt(j) + fval(k) * bmat(k, j) + temp * xpt(k, j)
+    end do
+end do
+do i = 1, (n * n + n) / 2
+    hq(i) = zero
+end do
 !
 !     Set the initial elements of RESCON.
 !
-      DO j = 1 , M
-         temp = B(j)
-         DO i = 1 , N
-            temp = temp - Xopt(i)*Amat(i,j)
-         ENDDO
-         temp = DMAX1(temp,zero)
-         IF ( temp>=Rhobeg ) temp = -temp
-         Rescon(j) = temp
-      ENDDO
-      END SUBROUTINE PRELIM
+do j = 1, m
+    temp = b(j)
+    do i = 1, n
+        temp = temp - xopt(i) * amat(i, j)
+    end do
+    temp = dmax1(temp, zero)
+    if (temp >= rhobeg) temp = -temp
+    rescon(j) = temp
+end do
+return
+end

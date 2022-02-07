@@ -1,50 +1,10 @@
-!*==prelim.f90  processed by SPAG 7.50RE at 17:55 on 25 May 2021
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!     1  XPT,FVAL,GOPT,HQ,PQ,BMAT,ZMAT,NDIM,SL,SU,NF,KOPT)
-      subroutine PRELIM(N, Npt, X, Xl, Xu, Rhobeg, Iprint, Maxfun, Xbase, Xpt,   &
-     &                  Fval, Gopt, Hq, Pq, Bmat, Zmat, Ndim, Sl, Su, Nf, Kopt, F, &
-     &                  Ftarget)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IMPLICIT REAL*8*8 (A-H,O-Z)
-      implicit none
-!*--PRELIM13
-!*++
-!*++ Dummy argument declarations rewritten by SPAG
-!*++
-      integer :: N
-      integer, intent(IN) :: Npt
-      real*8, intent(INOUT), dimension(*) :: X
-      real*8, intent(IN), dimension(*) :: Xl
-      real*8, intent(IN), dimension(*) :: Xu
-      real*8, intent(IN) :: Rhobeg
-      integer, intent(IN) :: Iprint
-      integer, intent(IN) :: Maxfun
-      real*8, intent(INOUT), dimension(*) :: Xbase
-      real*8, intent(INOUT), dimension(Npt, *) :: Xpt
-      real*8, intent(INOUT), dimension(*) :: Fval
-      real*8, intent(INOUT), dimension(*) :: Gopt
-      real*8, intent(OUT), dimension(*) :: Hq
-      real*8, intent(OUT), dimension(*) :: Pq
-      real*8, intent(INOUT), dimension(Ndim, *) :: Bmat
-      real*8, intent(INOUT), dimension(Npt, *) :: Zmat
-      integer, intent(IN) :: Ndim
-      real*8, intent(IN), dimension(*) :: Sl
-      real*8, intent(IN), dimension(*) :: Su
-      integer, intent(INOUT) :: Nf
-      integer, intent(INOUT) :: Kopt
-      real*8 :: F
-      real*8, intent(IN) :: Ftarget
-!*++
-!*++ Local variable declarations rewritten by SPAG
-!*++
-      real*8 :: almost_infinity, diff, fbeg, half, one, recip,      &
-     &        rhosq, stepa, stepb, temp, two, zero
-      integer :: i, ih, ipt, itemp, j, jpt, k, nfm, nfx, np
-!*++
-!*++ End of declarations rewritten by SPAG
-!*++
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+subroutine prelim(n, npt, x, xl, xu, rhobeg, iprint, maxfun, xbase, &
+& xpt, fval, gopt, hq, pq, bmat, zmat, ndim, sl, su, nf, kopt, f, ftarget)
+
+implicit real(kind(0.0D0)) (a - h, o - z)
+implicit integer(i - n)
+dimension x(*), xl(*), xu(*), xbase(*), xpt(npt, *), fval(*), gopt(*), &
+& hq(*), pq(*), bmat(ndim, *), zmat(npt, *), sl(*), su(*)
 !
 !     The arguments N, NPT, X, XL, XU, RHOBEG, IPRINT and MAXFUN are the
 !       same as the corresponding arguments in SUBROUTINE BOBYQA.
@@ -64,92 +24,88 @@
 !
 !     Set some constants.
 !
-      half = 0.5D0
-      one = 1.0D0
-      two = 2.0D0
-      zero = 0.0D0
-      rhosq = Rhobeg * Rhobeg
-      recip = one / rhosq
-      np = N + 1
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      almost_infinity = huge(0.0D0) / 2.0D0
+half = 0.5D0
+one = 1.0D0
+two = 2.0D0
+zero = 0.0D0
+rhosq = rhobeg * rhobeg
+recip = one / rhosq
+np = n + 1
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+almost_infinity = huge(0.0D0) / 2.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     Set XBASE to the initial vector of variables, and set the initial
 !     elements of XPT, BMAT, HQ, PQ and ZMAT to zero.
 !
-      do j = 1, N
-          Xbase(j) = X(j)
-          do k = 1, Npt
-              Xpt(k, j) = zero
-          end do
-          do i = 1, Ndim
-              Bmat(i, j) = zero
-          end do
-      end do
-      do ih = 1, (N * np) / 2
-          Hq(ih) = zero
-      end do
-      do k = 1, Npt
-          Pq(k) = zero
-          do j = 1, Npt - np
-              Zmat(k, j) = zero
-          end do
-      end do
+do j = 1, n
+    xbase(j) = x(j)
+    do k = 1, npt
+        xpt(k, j) = zero
+    end do
+    do i = 1, ndim
+        bmat(i, j) = zero
+    end do
+end do
+do ih = 1, (n * np) / 2
+    hq(ih) = zero
+end do
+do k = 1, npt
+    pq(k) = zero
+    do j = 1, npt - np
+        zmat(k, j) = zero
+    end do
+end do
 !
 !     Begin the initialization procedure. NF becomes one more than the number
 !     of function values so far. The coordinates of the displacement of the
 !     next initial interpolation point from XBASE are set in XPT(NF+1,.).
 !
-      Nf = 0
-      do
-          nfm = Nf
-          nfx = Nf - N
-          Nf = Nf + 1
-          if (nfm > 2 * N) then
-              itemp = (nfm - np) / N
-              jpt = nfm - itemp * N - N
-              ipt = jpt + itemp
-              if (ipt > N) then
-                  itemp = jpt
-                  jpt = ipt - N
-                  ipt = itemp
-              end if
-              Xpt(Nf, ipt) = Xpt(ipt + 1, ipt)
-              Xpt(Nf, jpt) = Xpt(jpt + 1, jpt)
-          elseif (nfm >= 1 .and. nfm <= N) then
-              stepa = Rhobeg
-              if (Su(nfm) == zero) stepa = -stepa
-              Xpt(Nf, nfm) = stepa
-          elseif (nfm > N) then
-              stepa = Xpt(Nf - N, nfx)
-              stepb = -Rhobeg
-              if (Sl(nfx) == zero) stepb = DMIN1(two * Rhobeg, Su(nfx))
-              if (Su(nfx) == zero) stepb = DMAX1(-two * Rhobeg, Sl(nfx))
-              Xpt(Nf, nfx) = stepb
-          end if
+nf = 0
+50 nfm = nf
+nfx = nf - n
+nf = nf + 1
+if (nfm <= 2 * n) then
+    if (nfm >= 1 .and. nfm <= n) then
+        stepa = rhobeg
+        if (su(nfm) == zero) stepa = -stepa
+        xpt(nf, nfm) = stepa
+    else if (nfm > n) then
+        stepa = xpt(nf - n, nfx)
+        stepb = -rhobeg
+        if (sl(nfx) == zero) stepb = dmin1(two * rhobeg, su(nfx))
+        if (su(nfx) == zero) stepb = dmax1(-two * rhobeg, sl(nfx))
+        xpt(nf, nfx) = stepb
+    end if
+else
+    itemp = (nfm - np) / n
+    jpt = nfm - itemp * n - n
+    ipt = jpt + itemp
+    if (ipt > n) then
+        itemp = jpt
+        jpt = ipt - n
+        ipt = itemp
+    end if
+    xpt(nf, ipt) = xpt(ipt + 1, ipt)
+    xpt(nf, jpt) = xpt(jpt + 1, jpt)
+end if
 !
 !     Calculate the next value of F. The least function value so far and
 !     its index are required.
 !
-          do j = 1, N
-              X(j) = DMIN1(DMAX1(Xl(j), Xbase(j) + Xpt(Nf, j)), Xu(j))
-              if (Xpt(Nf, j) == Sl(j)) X(j) = Xl(j)
-              if (Xpt(Nf, j) == Su(j)) X(j) = Xu(j)
-          end do
-          call CALFUN(N, X, F)
-          if (Iprint == 3) then
-              print 99001, Nf, F, (X(i), i=1, N)
-99001         format(/4X, 'Function number', I6, '    F =', 1PD18.10,        &
-       &              '    The corresponding X is:'/(2X, 5D15.6))
-          end if
-          Fval(Nf) = F
-          if (Nf == 1) then
-              fbeg = F
-              Kopt = 1
-          elseif (F < Fval(Kopt)) then
-              Kopt = Nf
-          end if
+do j = 1, n
+    x(j) = dmin1(dmax1(xl(j), xbase(j) + xpt(nf, j)), xu(j))
+    if (xpt(nf, j) == sl(j)) x(j) = xl(j)
+    if (xpt(nf, j) == su(j)) x(j) = xu(j)
+end do
+call calfun(n, x, f)
+fval(nf) = f
+if (nf == 1) then
+    fbeg = f
+    kopt = 1
+else if (f < fval(kopt)) then
+    kopt = nf
+end if
 !
 !     Set the nonzero initial elements of BMAT and the quadratic model in the
 !     cases when NF is at most 2*N+1. If NF exceeds N+1, then the positions
@@ -157,57 +113,59 @@
 !     order that the function value at the first of them contributes to the
 !     off-diagonal second derivative terms of the initial quadratic model.
 !
-          if (Nf > 2 * N + 1) then
-              ih = (ipt * (ipt - 1)) / 2 + jpt
-              Zmat(1, nfx) = recip
-              Zmat(Nf, nfx) = recip
-              Zmat(ipt + 1, nfx) = -recip
-              Zmat(jpt + 1, nfx) = -recip
-              temp = Xpt(Nf, ipt) * Xpt(Nf, jpt)
-              Hq(ih) = (fbeg - Fval(ipt + 1) - Fval(jpt + 1) + F) / temp
-          elseif (Nf >= 2 .and. Nf <= N + 1) then
-              Gopt(nfm) = (F - fbeg) / stepa
-              if (Npt < Nf + N) then
-                  Bmat(1, nfm) = -one / stepa
-                  Bmat(Nf, nfm) = one / stepa
-                  Bmat(Npt + nfm, nfm) = -half * rhosq
-              end if
-          elseif (Nf >= N + 2) then
-              ih = (nfx * (nfx + 1)) / 2
-              temp = (F - fbeg) / stepb
-              diff = stepb - stepa
-              Hq(ih) = two * (temp - Gopt(nfx)) / diff
-              Gopt(nfx) = (Gopt(nfx) * stepb - temp * stepa) / diff
-              if (stepa * stepb < zero) then
-                  if (F < Fval(Nf - N)) then
-                      Fval(Nf) = Fval(Nf - N)
-                      Fval(Nf - N) = F
-                      if (Kopt == Nf) Kopt = Nf - N
-                      Xpt(Nf - N, nfx) = stepb
-                      Xpt(Nf, nfx) = stepa
-                  end if
-              end if
-              Bmat(1, nfx) = -(stepa + stepb) / (stepa * stepb)
-              Bmat(Nf, nfx) = -half / Xpt(Nf - N, nfx)
-              Bmat(Nf - N, nfx) = -Bmat(1, nfx) - Bmat(Nf, nfx)
-              Zmat(1, nfx) = DSQRT(two) / (stepa * stepb)
-              Zmat(Nf, nfx) = DSQRT(half) / rhosq
-              Zmat(Nf - N, nfx) = -Zmat(1, nfx) - Zmat(Nf, nfx)
+if (nf <= 2 * n + 1) then
+    if (nf >= 2 .and. nf <= n + 1) then
+        gopt(nfm) = (f - fbeg) / stepa
+        if (npt < nf + n) then
+            bmat(1, nfm) = -one / stepa
+            bmat(nf, nfm) = one / stepa
+            bmat(npt + nfm, nfm) = -half * rhosq
+        end if
+    else if (nf >= n + 2) then
+        ih = (nfx * (nfx + 1)) / 2
+        temp = (f - fbeg) / stepb
+        diff = stepb - stepa
+        hq(ih) = two * (temp - gopt(nfx)) / diff
+        gopt(nfx) = (gopt(nfx) * stepb - temp * stepa) / diff
+        if (stepa * stepb < zero) then
+            if (f < fval(nf - n)) then
+                fval(nf) = fval(nf - n)
+                fval(nf - n) = f
+                if (kopt == nf) kopt = nf - n
+                xpt(nf - n, nfx) = stepb
+                xpt(nf, nfx) = stepa
+            end if
+        end if
+        bmat(1, nfx) = -(stepa + stepb) / (stepa * stepb)
+        bmat(nf, nfx) = -half / xpt(nf - n, nfx)
+        bmat(nf - n, nfx) = -bmat(1, nfx) - bmat(nf, nfx)
+        zmat(1, nfx) = dsqrt(two) / (stepa * stepb)
+        zmat(nf, nfx) = dsqrt(half) / rhosq
+        zmat(nf - n, nfx) = -zmat(1, nfx) - zmat(nf, nfx)
+    end if
 !
 !     Set the off-diagonal second derivatives of the Lagrange functions and
 !     the initial quadratic model.
 !
-          end if
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+else
+    ih = (ipt * (ipt - 1)) / 2 + jpt
+    zmat(1, nfx) = recip
+    zmat(nf, nfx) = recip
+    zmat(ipt + 1, nfx) = -recip
+    zmat(jpt + 1, nfx) = -recip
+    temp = xpt(nf, ipt) * xpt(nf, jpt)
+    hq(ih) = (fbeg - fval(ipt + 1) - fval(jpt + 1) + f) / temp
+end if
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     By Tom (on 04-06-2019):
 !     If the evaluation returns an NaN or an infinity value, this
 !     subroutine is stopped.
-          if (F /= F .or. F > almost_infinity) exit
+if (f /= f .or. f > almost_infinity) goto 80
 !     By Tom (on 04-06-2019):
 !     If the target value is reached, stop the algorithm.
-          if (F <= Ftarget) exit
+if (f <= ftarget) goto 80
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-          if (Nf >= Npt .or. Nf >= Maxfun) exit
-      end do
-      end subroutine PRELIM
+if (nf < npt .and. nf < maxfun) goto 50
+80 return
+end
