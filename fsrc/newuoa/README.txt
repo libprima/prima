@@ -6,12 +6,12 @@ New York, US, 2006
 
 Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the paper.
 
-Started in July 2020.
-
 Due to the dependency among the modules, the files must be compiled in the order indicated in
 ffiles.txt. Before that, one must compile the Fotran files in the directory "common" according
 to the ffiles.txt therein.
 
-See the directory "examples" for an illustration about how to call NEWUOA.
+See the directory "examples" for an illustration about how to call the solver.
 
 Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+
+Started in July 2020.
