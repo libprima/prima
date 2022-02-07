@@ -34,7 +34,7 @@ SHELL = /bin/bash
 # Variables
 
 # Fortran standard to follow. We aim to make the code compatible with F2003 and above.
-FS := 03
+FS ?= 03
 FSTD := 20$(FS)
 
 # Default options for all the compilers.

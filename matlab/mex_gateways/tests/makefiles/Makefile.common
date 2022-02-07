@@ -31,7 +31,7 @@ SHELL = /bin/bash
 # Variables
 
 # Fortran standard to follow. We aim to make the code compatible with F2008 and above.
-FS := 08
+FS ?= 08
 FSTD := 20$(FS)
 
 # Test directory. Needed by FFLAGS1/2.
