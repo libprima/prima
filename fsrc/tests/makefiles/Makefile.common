@@ -605,6 +605,8 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "An allocatable dummy array\ '.*' is an extended feature" \
 	| grep -v "WARNING --  When --chk x is specified, it must be used to compile all source files of a program" \
 	| grep -v "0 Errors, 0 Warnings" \
+	| grep -v "Encountered 0 errors, 0 warnings, [0-9]* information.* in file" \
+	| grep -v 'Absoft Pro Fortran.*: 0 Errors, 0 Warnings, 0 Other messages,' \
 	| grep -v "Absoft ANSI 1610:" \
 	| grep -v "after the END INTERFACE keywords is only legal in Fortran 95 and beyond" \
 	| grep -v "NAG Fortran Compiler Release [0-9]*.* Build [0-9]*" \
