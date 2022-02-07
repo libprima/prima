@@ -1,4 +1,4 @@
-This is a modern Fortran implementation of the COBYLA algorithm described in
+This is a modernized and improved Fortran implementation of the COBYLA algorithm described in
 
 M. J. D. Powell, A direct search optimization method that models the objective and constraint
 functions by linear interpolation, In Advances in Optimization and Numerical Analysis, eds. S. Gomez

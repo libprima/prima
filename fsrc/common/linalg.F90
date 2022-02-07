@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, February 02, 2022 PM08:01:37
+! Last Modified: Monday, February 07, 2022 PM02:22:06
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -744,7 +744,7 @@ function lsqr(A, b, Q, Rdiag) result(x)
 ! This function solves the linear least squares problem min ||A*x - b||_2 by the QR factorization.
 ! This function is used in COBYLA, where,
 ! 1. Q is supplied externally (called Z);
-! 2. Rdiag (the diagonal of R) is supplied externally (called zdota);
+! 2. Rdiag (the diagonal of R) is supplied externally (called ZDOTA);
 ! 3. A HAS FULL COLUMN RANK;
 ! 4. It seems that b (CGRAD and DNEW) is in the column space of A (not sure yet).
 !--------------------------------------------------------------------------------------------------!
@@ -800,7 +800,6 @@ end if
 ! Calculation starts !
 !====================!
 
-Rdiag_loc = ZERO
 if (present(Q)) then
     Q_loc = Q(:, 1:size(Q_loc, 2))
     if (present(Rdiag)) then
@@ -816,12 +815,16 @@ end if
 if (.not. present(Q)) then
     call qr(A, Q=Q_loc, P=P)
     Rdiag_loc = [(inprod(Q_loc(:, i), A(:, P(i))), i=1, min(m, n))]
-    rank = maxval([(i, i=1, min(m, n))], mask=(abs(Rdiag_loc) > 0))
+    if (any(abs(Rdiag_loc) > 0)) then
+        rank = maxval(trueloc(abs(Rdiag_loc) > 0))
+    else
+        rank = 0_IK
+    end if
     pivote = .true.
 end if
 
-y = b  ! Local copy of B; B is INTENT(IN) and should not be modified.
 x = ZERO
+y = b  ! Local copy of B; B is INTENT(IN) and should not be modified.
 
 do i = rank, 1, -1
     if (pivote) then
@@ -829,7 +832,7 @@ do i = rank, 1, -1
     else
         j = i
     end if
-    ! The following IF comes from Powell. It forces X(J)=ZERO if deviations from this value can be
+    ! The following IF comes from Powell. It forces X(J) = 0 if deviations from this value can be
     ! attributed to computer rounding errors. This is a favorable choice in the context of COBYLA.
     yq = inprod(y, Q_loc(:, i))
     yqa = inprod(abs(y), abs(Q_loc(:, i)))
