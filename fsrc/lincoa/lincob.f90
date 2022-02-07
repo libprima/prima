@@ -1,5 +1,5 @@
-subroutine lincob(n, npt, m, amat, b, x, rhobeg, rhoend, iprint, &
-     &  maxfun, xbase, xpt, fval, xsav, xopt, gopt, hq, pq, bmat, zmat, ndim, &
+subroutine lincob(n, npt, m, amat, b, x, rhobeg, rhoend, iprint, maxfun, &
+    & xbase, xpt, fval, xsav, xopt, gopt, hq, pq, bmat, zmat, ndim, &
      &  step, sp, xnew, iact, rescon, qfac, rfac, pqw, w, f, info, ftarget)
 
 implicit real(kind(0.0D0)) (a - h, o - z)
