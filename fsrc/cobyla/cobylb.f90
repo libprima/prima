@@ -321,7 +321,7 @@ do tr = 1, maxtr
         ! Begin the operations that decide whether X should replace one of the vertices of the
         ! current simplex, the change being mandatory if ACTREM is positive. PREREM and ACTREM are
         ! the predicted and actual reductions in the merit function respectively.
-        prerem = preref + cpen * prerec  ! Theoretically nonnegative; can be 0 if CPEN = 0 = PREREF.
+        prerem = preref + cpen * prerec  ! Theoretically nonnegative; equals 0 if CPEN = 0 = PREREF.
         actrem = (fval(n + 1) + cpen * cval(n + 1)) - (f + cpen * cstrv)
         if (cpen <= 0 .and. f <= fval(n + 1) .and. f >= fval(n + 1)) then
             ! CPEN <= 0 indeed means CPEN == 0, while A <= B .and. A >= B indeed mean A == B.
@@ -435,6 +435,7 @@ do tr = 1, maxtr
                 info = subinfo
                 exit  ! Better action to take? Geometry step?
             end if
+
             ! Check whether to exit.
             subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
             if (subinfo /= INFO_DFT) then
@@ -453,7 +454,7 @@ do tr = 1, maxtr
         delta = HALF * rho
         rho = redrho(rho, rhoend)
         delta = max(delta, rho)
-        cpen = min(cpen, fcratio(fval, conmat))
+        cpen = min(cpen, fcratio(fval, conmat))  ! It may set CPEN to 0. 
         call rhomsg(solver, iprint, nf, fval(n + 1), rho, sim(:, n + 1), cval(n + 1), conmat(:, n + 1), cpen)
         call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
         ! Check whether to exit due to damaging rounding detected in UPDATEPOLE.

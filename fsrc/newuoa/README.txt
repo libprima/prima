@@ -1,4 +1,4 @@
-This is a modern Fortran implementation of the NEWUOA algorithm described in
+This is a modernized and improved Fortran implementation of the NEWUOA algorithm described in
 
 M. J. D. Powell, The NEWUOA software for unconstrained optimization without derivatives,
 In Large-Scale Nonlinear Optimization, eds. G. Di Pillo and M. Roma, pages 255--297, Springer,
