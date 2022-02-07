@@ -1,55 +1,46 @@
-!*==lincob.f90  processed by SPAG 7.50RE at 00:12 on 26 May 2021
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!     2  STEP,SP,XNEW,IACT,RESCON,QFAC,RFAC,PQW,W)
-subroutine LINCOB(N, Npt, M, Amat, B, X, Rhobeg, Rhoend, Iprint, Maxfun,   &
-&                  Xbase, Xpt, Fval, Xsav, Xopt, Gopt, Hq, Pq, Bmat, Zmat,  &
-&                  Ndim, Step, Sp, Xnew, Iact, Rescon, Qfac, Rfac, Pqw, W, F,&
-&                  Info, Ftarget)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IMPLICIT REAL*8*8 (A-H,O-Z)
+subroutine lincob(n, npt, m, amat, b, x, rhobeg, rhoend, iprint, maxfun,   &
+     &                  xbase, xpt, fval, xsav, xopt, gopt, hq, pq, bmat, zmat,  &
+     &                  ndim, step, sp, xnew, iact, rescon, qfac, rfac, pqw, w, f,&
+     &                  info, ftarget)
+
+! Dummy variables
+use consts_mod, only : IK, RP
 implicit none
-!*--LINCOB18
-!*++
-!*++ Dummy argument declarations rewritten by SPAG
-!*++
-integer :: N
-integer :: Npt
-integer :: M
-real*8, dimension(N, *) :: Amat
-real*8, intent(INOUT), dimension(*) :: B
-real*8, intent(INOUT), dimension(*) :: X
-real*8 :: Rhobeg
-real*8, intent(IN) :: Rhoend
-integer :: Iprint
-integer, intent(IN) :: Maxfun
-real*8, intent(INOUT), dimension(*) :: Xbase
-real*8, intent(INOUT), dimension(Npt, *) :: Xpt
-real*8, intent(INOUT), dimension(*) :: Fval
-real*8, intent(INOUT), dimension(*) :: Xsav
-real*8, intent(INOUT), dimension(*) :: Xopt
-real*8, intent(INOUT), dimension(*) :: Gopt
-real*8, intent(INOUT), dimension(*) :: Hq
-real*8, intent(INOUT), dimension(*) :: Pq
-real*8, intent(INOUT), dimension(Ndim, *) :: Bmat
-real*8, dimension(Npt, *) :: Zmat
-integer :: Ndim
-real*8, intent(INOUT), dimension(*) :: Step
-real*8, intent(INOUT), dimension(*) :: Sp
-real*8, intent(INOUT), dimension(*) :: Xnew
-integer, dimension(*) :: Iact
-real*8, intent(INOUT), dimension(*) :: Rescon
-real*8, dimension(N, *) :: Qfac
-real*8, dimension(*) :: Rfac
-real*8, intent(INOUT), dimension(*) :: Pqw
-real*8, intent(INOUT), dimension(*) :: W
-real*8, intent(INOUT) :: F
-integer, intent(OUT) :: Info
-real*8 :: Ftarget
-!*++
-!*++ Local variable declarations rewritten by SPAG
-!*++
-real*8 :: almost_infinity, del, delsav, delta, dffalt, diff,  &
+integer(IK), intent(in) :: iprint
+integer(IK), intent(in) :: m
+integer(IK), intent(in) :: n
+integer(IK), intent(in) :: ndim
+integer(IK), intent(in) :: npt
+integer(IK), intent(out) :: iact(:)
+integer(IK), intent(in) :: maxfun
+integer(IK), intent(out) :: info
+real(RP), intent(in) :: ftarget
+real(RP), intent(in) :: rhobeg
+real(RP), intent(out) :: rfac
+real(RP), intent(inout) :: amat(n, m)
+real(RP), intent(out) :: qfac(n, n)
+real(RP), dimension(npt, *) :: zmat
+real(RP), intent(in) :: rhoend
+real(RP), intent(inout) :: f
+real(RP), intent(inout), dimension(*) :: b
+real(RP), intent(inout), dimension(*) :: fval
+real(RP), intent(inout), dimension(*) :: gopt
+real(RP), intent(inout), dimension(*) :: hq
+real(RP), intent(inout), dimension(*) :: pq
+real(RP), intent(inout), dimension(*) :: pqw
+real(RP), intent(inout), dimension(*) :: rescon
+real(RP), intent(inout), dimension(*) :: sp
+real(RP), intent(inout), dimension(*) :: step
+real(RP), intent(inout), dimension(*) :: w
+real(RP), intent(inout), dimension(*) :: x
+real(RP), intent(inout), dimension(*) :: xbase
+real(RP), intent(inout), dimension(*) :: xnew
+real(RP), intent(inout), dimension(*) :: xopt
+real(RP), intent(inout), dimension(*) :: xsav
+real(RP), intent(inout), dimension(ndim, *) :: bmat
+real(RP), intent(inout), dimension(npt, *) :: xpt
+! Local variables
+real(RP) :: almost_infinity, del, delsav, delta, dffalt, diff,  &
 &        distsq, fopt, fsave, half, one, qoptsq, ratio,     &
 &        rho, snorm, ssq, sum, sumz, temp, tenth, vqalt,   &
 &        vquad, xdiff, xoptsq, zero
@@ -57,7 +48,7 @@ integer :: i, idz, ifeas, ih, imprv, ip, itest, j, k,    &
 &           knew, kopt, ksave, nact, nf, nh, np, nptm,     &
 &           nvala, nvalb
 !*++
-!*++ End of declarations rewritten by SPAG
+!*++ end of declarations rewritten by spag
 !*++
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !

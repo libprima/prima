@@ -1,31 +1,10 @@
-!*==update.f90  processed by SPAG 7.50RE at 17:55 on 25 May 2021
-      subroutine UPDATE(N, Npt, Bmat, Zmat, Ndim, Vlag, Beta, Denom, Knew, W)
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IMPLICIT REAL*8*8 (A-H,O-Z)
-      implicit none
-!*--UPDATE7
-!*++
-!*++ Dummy argument declarations rewritten by SPAG
-!*++
-      integer, intent(IN) :: N
-      integer, intent(IN) :: Npt
-      real*8, intent(INOUT), dimension(Ndim, *) :: Bmat
-      real*8, intent(INOUT), dimension(Npt, *) :: Zmat
-      integer, intent(IN) :: Ndim
-      real*8, intent(INOUT), dimension(*) :: Vlag
-      real*8, intent(IN) :: Beta
-      real*8, intent(IN) :: Denom
-      integer, intent(IN) :: Knew
-      real*8, intent(INOUT), dimension(*) :: W
-!*++
-!*++ Local variable declarations rewritten by SPAG
-!*++
-      real*8 :: alpha, one, tau, temp, tempa, tempb, zero, ztest
-      integer :: i, j, jp, k, nptm
-!*++
-!*++ End of declarations rewritten by SPAG
-!*++
+subroutine update(n, npt, bmat, zmat, ndim, vlag, beta, denom, knew, w)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!      IMPLICIT REAL*8 (A-H,O-Z)
+implicit real(kind(0.0D0)) (a - h, o - z)
+implicit integer(i - n)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+dimension bmat(ndim, *), zmat(npt, *), vlag(*), w(*)
 !
 !     The arrays BMAT and ZMAT are updated, as required by the new position
 !     of the interpolation point that has the index KNEW. The vector VLAG has
@@ -38,66 +17,66 @@
 !
 !     Set some constants.
 !
-      one = 1.0D0
-      zero = 0.0D0
-      nptm = Npt - N - 1
-      ztest = zero
-      do k = 1, Npt
-          do j = 1, nptm
-              ztest = DMAX1(ztest, DABS(Zmat(k, j)))
-          end do
-      end do
-      ztest = 1.0D-20 * ztest
+one = 1.0D0
+zero = 0.0D0
+nptm = npt - n - 1
+ztest = zero
+do k = 1, npt
+    do j = 1, nptm
+        ztest = dmax1(ztest, dabs(zmat(k, j)))
+    end do
+end do
+ztest = 1.0D-20 * ztest
 !
 !     Apply the rotations that put zeros in the KNEW-th row of ZMAT.
 !
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Zaikun 2019-08-15: JL is never used
 !      JL=1
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      do j = 2, nptm
-          if (DABS(Zmat(Knew, j)) > ztest) then
-              temp = DSQRT(Zmat(Knew, 1)**2 + Zmat(Knew, j)**2)
-              tempa = Zmat(Knew, 1) / temp
-              tempb = Zmat(Knew, j) / temp
-              do i = 1, Npt
-                  temp = tempa * Zmat(i, 1) + tempb * Zmat(i, j)
-                  Zmat(i, j) = tempa * Zmat(i, j) - tempb * Zmat(i, 1)
-                  Zmat(i, 1) = temp
-              end do
-          end if
-          Zmat(Knew, j) = zero
-      end do
+do j = 2, nptm
+    if (dabs(zmat(knew, j)) > ztest) then
+        temp = dsqrt(zmat(knew, 1)**2 + zmat(knew, j)**2)
+        tempa = zmat(knew, 1) / temp
+        tempb = zmat(knew, j) / temp
+        do i = 1, npt
+            temp = tempa * zmat(i, 1) + tempb * zmat(i, j)
+            zmat(i, j) = tempa * zmat(i, j) - tempb * zmat(i, 1)
+            zmat(i, 1) = temp
+        end do
+    end if
+    zmat(knew, j) = zero
+end do
 !
 !     Put the first NPT components of the KNEW-th column of HLAG into W,
 !     and calculate the parameters of the updating formula.
 !
-      do i = 1, Npt
-          W(i) = Zmat(Knew, 1) * Zmat(i, 1)
-      end do
-      alpha = W(Knew)
-      tau = Vlag(Knew)
-      Vlag(Knew) = Vlag(Knew) - one
+do i = 1, npt
+    w(i) = zmat(knew, 1) * zmat(i, 1)
+end do
+alpha = w(knew)
+tau = vlag(knew)
+vlag(knew) = vlag(knew) - one
 !
 !     Complete the updating of ZMAT.
 !
-      temp = DSQRT(Denom)
-      tempb = Zmat(Knew, 1) / temp
-      tempa = tau / temp
-      do i = 1, Npt
-          Zmat(i, 1) = tempa * Zmat(i, 1) - tempb * Vlag(i)
-      end do
+temp = dsqrt(denom)
+tempb = zmat(knew, 1) / temp
+tempa = tau / temp
+do i = 1, npt
+    zmat(i, 1) = tempa * zmat(i, 1) - tempb * vlag(i)
+end do
 !
 !     Finally, update the matrix BMAT.
 !
-      do j = 1, N
-          jp = Npt + j
-          W(jp) = Bmat(Knew, j)
-          tempa = (alpha * Vlag(jp) - tau * W(jp)) / Denom
-          tempb = (-Beta * W(jp) - tau * Vlag(jp)) / Denom
-          do i = 1, jp
-              Bmat(i, j) = Bmat(i, j) + tempa * Vlag(i) + tempb * W(i)
-              if (i > Npt) Bmat(jp, i - Npt) = Bmat(i, j)
-          end do
-      end do
-      end subroutine UPDATE
+do j = 1, n
+    jp = npt + j
+    w(jp) = bmat(knew, j)
+    tempa = (alpha * vlag(jp) - tau * w(jp)) / denom
+    tempb = (-beta * w(jp) - tau * vlag(jp)) / denom
+    do i = 1, jp
+        bmat(i, j) = bmat(i, j) + tempa * vlag(i) + tempb * w(i)
+        if (i > npt) bmat(jp, i - npt) = bmat(i, j)
+    end do
+end do
+return
+end

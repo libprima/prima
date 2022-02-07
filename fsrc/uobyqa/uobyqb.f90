@@ -1,52 +1,10 @@
-!*==uobyqb.f90  processed by SPAG 7.50RE at 00:28 on 26 May 2021
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!     1  XOPT,XNEW,XPT,PQ,PL,H,G,D,VLAG,W)
-      SUBROUTINE UOBYQB(N,X,Rhobeg,Rhoend,Iprint,Maxfun,Npt,Xbase,Xopt, &
-     &                  Xnew,Xpt,Pq,Pl,H,G,D,Vlag,W,F,Info,Ftarget)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IMPLICIT REAL*8*8 (A-H,O-Z)
-      IMPLICIT NONE
-!*--UOBYQB14
-!*++
-!*++ Dummy argument declarations rewritten by SPAG
-!*++
-      INTEGER :: N
-      REAL*8 , INTENT(INOUT) , DIMENSION(N) :: X
-      REAL*8 , INTENT(IN) :: Rhobeg
-      REAL*8 , INTENT(IN) :: Rhoend
-      INTEGER , INTENT(IN) :: Iprint
-      INTEGER , INTENT(IN) :: Maxfun
-      INTEGER , INTENT(IN) :: Npt
-      REAL*8 , INTENT(INOUT) , DIMENSION(N) :: Xbase
-      REAL*8 , INTENT(INOUT) , DIMENSION(N) :: Xopt
-      REAL*8 , INTENT(INOUT) , DIMENSION(N) :: Xnew
-      REAL*8 , INTENT(INOUT) , DIMENSION(Npt,N) :: Xpt
-      REAL*8 , INTENT(INOUT) , DIMENSION(Npt-1) :: Pq
-      REAL*8 , INTENT(INOUT) , DIMENSION(Npt,Npt-1) :: Pl
-      REAL*8 , INTENT(INOUT) , DIMENSION(N,N*N) :: H
-      REAL*8 , INTENT(INOUT) , DIMENSION(N) :: G
-      REAL*8 , INTENT(INOUT) , DIMENSION(N) :: D
-      REAL*8 , INTENT(INOUT) , DIMENSION(Npt) :: Vlag
-      REAL*8 , INTENT(INOUT) , DIMENSION(MAX(6*N,(N**2+3*N+2)/2)) :: W
-      REAL*8 , INTENT(INOUT) :: F
-      INTEGER , INTENT(OUT) :: Info
-      REAL*8 , INTENT(IN) :: Ftarget
-!*++
-!*++ Local variable declarations rewritten by SPAG
-!*++
-      REAL*8 :: almost_infinity , ddknew , delta , detrat , diff ,        &
-     &        distest , dnorm , errtol , estim , evalue , fbase , fopt ,&
-     &        fsave , half , one , ratio , rho , rhosq , sixthm , sum , &
-     &        sumg , sumh , temp , tempa , tol , two , tworsq , vmax ,  &
-     &        vquad , wmult , zero
-      INTEGER :: i , ih , ip , iq , iw , j , jswitch , k , knew , kopt ,&
-     &           ksave , ktemp , nf , nftest , nnp , nptm
-!*++
-!*++ End of declarations rewritten by SPAG
-!*++
-!      DIMENSION X(*),XBASE(*),XOPT(*),XNEW(*),XPT(NPT,*),PQ(*),
-!     1  PL(NPT,*),H(N,*),G(*),D(*),VLAG(*),W(*)
+subroutine uobyqb(n, x, rhobeg, rhoend, iprint, maxfun, npt, xbase, &
+     &  xopt, xnew, xpt, pq, pl, h, g, d, vlag, w, f, info, ftarget)
+implicit real(kind(0.0D0)) (a - h, o - z)
+implicit integer(i - n)
+dimension x(n), xbase(n), xopt(n), xnew(n), xpt(npt, n), pq(npt - 1), &
+     &  pl(npt, npt - 1), h(n, n * n), g(n), d(n), vlag(npt), &
+     &  w(max(6 * n, (n**2 + 3 * n + 2) / 2))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     The arguments N, X, RHOBEG, RHOEND, IPRINT and MAXFUN are identical to
@@ -71,59 +29,167 @@
 !
 !     Set some constants.
 !
-      one = 1.0D0
-      two = 2.0D0
-      zero = 0.0D0
-      half = 0.5D0
-      tol = 0.01D0
-      nnp = N + N + 1
-      nptm = Npt - 1
-      nftest = MAX0(Maxfun,1)
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      almost_infinity = HUGE(0.0D0)/2.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+one = 1.0D0
+two = 2.0D0
+zero = 0.0D0
+half = 0.5D0
+tol = 0.01D0
+nnp = n + n + 1
+nptm = npt - 1
+nftest = max0(maxfun, 1)
+almost_infinity = huge(0.0D0) / 2.0D0
 !
 !     Initialization. NF is the number of function calculations so far.
 !
-      rho = Rhobeg
-      rhosq = rho*rho
-      nf = 0
-      DO i = 1 , N
-         Xbase(i) = X(i)
-         DO k = 1 , Npt
-            Xpt(k,i) = zero
-         ENDDO
-      ENDDO
-      DO k = 1 , Npt
-         DO j = 1 , nptm
-            Pl(k,j) = zero
-         ENDDO
-      ENDDO
+rho = rhobeg
+rhosq = rho * rho
+nf = 0
+do i = 1, n
+    xbase(i) = x(i)
+    do k = 1, npt
+        xpt(k, i) = zero
+    end do
+end do
+do k = 1, npt
+    do j = 1, nptm
+        pl(k, j) = zero
+    end do
+end do
 !
 !     The branch to label 120 obtains a new value of the objective function
 !     and then there is a branch back to label 50, because the new function
 !     value is needed to form the initial quadratic model. The least function
 !     value so far and its index are noted below.
 !
- 100  DO i = 1 , N
-         X(i) = Xbase(i) + Xpt(nf+1,i)
-      ENDDO
-      GOTO 500
- 200  tworsq = (two*rho)**2
-      rhosq = rho*rho
+30 do i = 1, n
+    x(i) = xbase(i) + xpt(nf + 1, i)
+end do
+goto 120
+50 if (nf == 1) then
+    fopt = f
+    kopt = nf
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    do i = 1, n
+        xopt(i) = xpt(1, i)
+    end do
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    fbase = f
+    j = 0
+    jswitch = -1
+    ih = n
+else
+    if (f < fopt) then
+        fopt = f
+        kopt = nf
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        do i = 1, n
+            xopt(i) = xpt(nf, i)
+        end do
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    end if
+end if
+!
+!     Form the gradient and diagonal second derivatives of the initial
+!     quadratic model and Lagrange functions.
+!
+if (nf <= nnp) then
+    jswitch = -jswitch
+    if (jswitch > 0) then
+        if (j >= 1) then
+            ih = ih + j
+            if (w(j) < zero) then
+                d(j) = (fsave + f - two * fbase) / rhosq
+                pq(j) = (fsave - f) / (two * rho)
+                pl(1, ih) = -two / rhosq
+                pl(nf - 1, j) = half / rho
+                pl(nf - 1, ih) = one / rhosq
+            else
+                pq(j) = (4.0D0 * fsave - 3.0D0 * fbase - f) / (two * rho)
+                d(j) = (fbase + f - two * fsave) / rhosq
+                pl(1, j) = -1.5D0 / rho
+                pl(1, ih) = one / rhosq
+                pl(nf - 1, j) = two / rho
+                pl(nf - 1, ih) = -two / rhosq
+            end if
+            pq(ih) = d(j)
+            pl(nf, j) = -half / rho
+            pl(nf, ih) = one / rhosq
+        end if
+!
+!     Pick the shift from XBASE to the next initial interpolation point
+!     that provides diagonal second derivatives.
+!
+        if (j < n) then
+            j = j + 1
+            xpt(nf + 1, j) = rho
+        end if
+    else
+        fsave = f
+        if (f < fbase) then
+            w(j) = rho
+            xpt(nf + 1, j) = two * rho
+        else
+            w(j) = -rho
+            xpt(nf + 1, j) = -rho
+        end if
+    end if
+    if (nf < nnp) goto 30
+!
+!     Form the off-diagonal second derivatives of the initial quadratic model.
+!
+    ih = n
+    ip = 1
+    iq = 2
+end if
+ih = ih + 1
+if (nf > nnp) then
+    temp = one / (w(ip) * w(iq))
+    tempa = f - fbase - w(ip) * pq(ip) - w(iq) * pq(iq)
+    pq(ih) = (tempa - half * rhosq * (d(ip) + d(iq))) * temp
+    pl(1, ih) = temp
+    iw = ip + ip
+    if (w(ip) < zero) iw = iw + 1
+    pl(iw, ih) = -temp
+    iw = iq + iq
+    if (w(iq) < zero) iw = iw + 1
+    pl(iw, ih) = -temp
+    pl(nf, ih) = temp
+!
+!     Pick the shift from XBASE to the next initial interpolation point
+!     that provides off-diagonal second derivatives.
+!
+    ip = ip + 1
+end if
+if (ip == iq) then
+    ih = ih + 1
+    ip = 1
+    iq = iq + 1
+end if
+if (nf < npt) then
+    xpt(nf + 1, ip) = w(ip)
+    xpt(nf + 1, iq) = w(iq)
+    goto 30
+end if
+!
+!     Set parameters to begin the iterations for the current RHO.
+!
+sixthm = zero
+delta = rho
+60 tworsq = (two * rho)**2
+rhosq = rho * rho
 !
 !     Form the gradient of the quadratic model at the trust region centre.
 !
- 300  knew = 0
-      ih = N
-      DO j = 1 , N
-         Xopt(j) = Xpt(kopt,j)
-         G(j) = Pq(j)
-         DO i = 1 , j
-            ih = ih + 1
-            G(i) = G(i) + Pq(ih)*Xopt(j)
-            IF ( i<j ) G(j) = G(j) + Pq(ih)*Xopt(i)
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+70 knew = 0
+ih = n
+do j = 1, n
+    xopt(j) = xpt(kopt, j)
+    g(j) = pq(j)
+    do i = 1, j
+        ih = ih + 1
+        g(i) = g(i) + pq(ih) * xopt(j)
+        if (i < j) g(j) = g(j) + pq(ih) * xopt(i)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29: For ill-conditioned problems, NaN may occur in the
 ! models. In such a case, we terminate the code. Otherwise, the behavior
 ! of TRSTEM or LAGMAX is not predictable, and Segmentation Fault or
@@ -131,517 +197,368 @@
 ! comparison involving NaN returns FALSE, which can lead to unintended
 ! behavior of the code, including uninitialized indices.
 !   80 H(I,J)=PQ(IH)
-            H(i,j) = Pq(ih)
-            IF ( H(i,j)/=H(i,j) ) THEN
-               Info = -3
-               GOTO 700
-            ENDIF
-         ENDDO
-      ENDDO
-      DO i = 1 , N
-         IF ( G(i)/=G(i) ) THEN
-            Info = -3
-            GOTO 700
-         ENDIF
-      ENDDO
+        h(i, j) = pq(ih)
+        if (h(i, j) /= h(i, j)) then
+            info = -3
+            goto 420
+        end if
+    end do
+end do
+do i = 1, n
+    if (g(i) /= g(i)) then
+        info = -3
+        goto 420
+    end if
+end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     Generate the next trust region step and test its length. Set KNEW
 !     to -1 if the purpose of the next F will be to improve conditioning,
 !     and also calculate a lower bound on the Hessian term of the model Q.
 !
-      CALL TRSTEP(N,G,H,delta,tol,D,W(1),W(N+1),W(2*N+1),W(3*N+1),      &
-     &            W(4*N+1),W(5*N+1),evalue)
-      temp = zero
-      DO i = 1 , N
-         temp = temp + D(i)**2
-      ENDDO
-      dnorm = DMIN1(delta,DSQRT(temp))
-      errtol = -one
-      IF ( dnorm<half*rho ) THEN
-         knew = -1
-         errtol = half*evalue*rho*rho
-         IF ( nf<=Npt+9 ) errtol = zero
-         GOTO 600
-      ENDIF
+call trstep(n, g, h, delta, tol, d, w(1), w(n + 1), w(2 * n + 1), w(3 * n + 1), &
+& w(4 * n + 1), w(5 * n + 1), evalue)
+temp = zero
+do i = 1, n
+    temp = temp + d(i)**2
+end do
+dnorm = dmin1(delta, dsqrt(temp))
+errtol = -one
+if (dnorm < half * rho) then
+    knew = -1
+    errtol = half * evalue * rho * rho
+    if (nf <= npt + 9) errtol = zero
+    goto 290
+end if
 !
 !     Calculate the next value of the objective function.
 !
- 400  DO i = 1 , N
-         Xnew(i) = Xopt(i) + D(i)
-         X(i) = Xbase(i) + Xnew(i)
-      ENDDO
- 500  IF ( nf>=nftest ) THEN
-         IF ( Iprint>0 ) PRINT 99001
-99001    FORMAT (/4X,'Return from UOBYQA because CALFUN has been',      &
-     &           ' called MAXFUN times')
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-         Info = 3
+100 do i = 1, n
+    xnew(i) = xopt(i) + d(i)
+    x(i) = xbase(i) + xnew(i)
+end do
+120 if (nf >= nftest) then
+    info = 3
+    goto 420
+end if
+nf = nf + 1
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-         GOTO 700
-      ENDIF
-      nf = nf + 1
- 
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      DO i = 1 , N
-         IF ( X(i)/=X(i) ) THEN
-            F = X(i) ! Set F to NaN
-            IF ( nf==1 ) THEN
-               fopt = F
-               DO j = 1 , N
-                  Xopt(j) = zero
-               ENDDO
-            ENDIF
-            Info = -1
-            GOTO 700
-         ENDIF
-      ENDDO
+do i = 1, n
+    if (x(i) /= x(i)) then
+        f = x(i) ! set f to nan
+        if (nf == 1) then
+            fopt = f
+            do j = 1, n
+                xopt(j) = zero
+            end do
+        end if
+        info = -1
+        goto 420
+    end if
+end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- 
-      CALL CALFUN(N,X,F)
- 
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+
+call calfun(n, x, f)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     By Zaikun (commented on 02-06-2019; implemented in 2016):
 !     Exit if F has an NaN or almost infinite value.
 !     If this happends at the very first function evaluation (i.e.,
 !     NF=1), then it is necessary to set FOPT and XOPT before going to
 !     530, because these two variables have not been set yet.
-      IF ( F/=F .OR. F>almost_infinity ) THEN
-         IF ( nf==1 ) THEN
-            fopt = F
-            DO i = 1 , N
-               Xopt(i) = zero
-            ENDDO
-         ENDIF
-         Info = -2
-         GOTO 700
-      ENDIF
+if (f /= f .or. f > almost_infinity) then
+    if (nf == 1) then
+        fopt = f
+        do i = 1, n
+            xopt(i) = zero
+        end do
+    end if
+    info = -2
+    goto 420
+end if
 !     By Zaikun (commented on 02-06-2019; implemented in 2016):
 !     Exit if F .LE. FTARGET.
-      IF ( F<=Ftarget ) THEN
-         Info = 1
-         GOTO 800
-      ENDIF
+if (f <= ftarget) then
+    info = 1
+    return
+end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- 
-      IF ( Iprint==3 ) THEN
-         PRINT 99002 , nf , F , (X(i),i=1,N)
-99002    FORMAT (/4X,'Function number',I6,'    F =',1PD18.10,           &
-     &           '    The corresponding X is:'/(2X,5D15.6))
-      ENDIF
-      IF ( nf<=Npt ) THEN
-         IF ( nf==1 ) THEN
-            fopt = F
-            kopt = nf
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-            DO i = 1 , N
-               Xopt(i) = Xpt(1,i)
-            ENDDO
+
+if (nf <= npt) goto 50
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            fbase = F
-            j = 0
-            jswitch = -1
-            ih = N
-         ELSEIF ( F<fopt ) THEN
-            fopt = F
-            kopt = nf
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-            DO i = 1 , N
-               Xopt(i) = Xpt(nf,i)
-            ENDDO
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-         ENDIF
-!
-!     Form the gradient and diagonal second derivatives of the initial
-!     quadratic model and Lagrange functions.
-!
-         IF ( nf<=nnp ) THEN
-            jswitch = -jswitch
-            IF ( jswitch>0 ) THEN
-               IF ( j>=1 ) THEN
-                  ih = ih + j
-                  IF ( W(j)<zero ) THEN
-                     D(j) = (fsave+F-two*fbase)/rhosq
-                     Pq(j) = (fsave-F)/(two*rho)
-                     Pl(1,ih) = -two/rhosq
-                     Pl(nf-1,j) = half/rho
-                     Pl(nf-1,ih) = one/rhosq
-                  ELSE
-                     Pq(j) = (4.0D0*fsave-3.0D0*fbase-F)/(two*rho)
-                     D(j) = (fbase+F-two*fsave)/rhosq
-                     Pl(1,j) = -1.5D0/rho
-                     Pl(1,ih) = one/rhosq
-                     Pl(nf-1,j) = two/rho
-                     Pl(nf-1,ih) = -two/rhosq
-                  ENDIF
-                  Pq(ih) = D(j)
-                  Pl(nf,j) = -half/rho
-                  Pl(nf,ih) = one/rhosq
-               ENDIF
-!
-!     Pick the shift from XBASE to the next initial interpolation point
-!     that provides diagonal second derivatives.
-!
-               IF ( j<N ) THEN
-                  j = j + 1
-                  Xpt(nf+1,j) = rho
-               ENDIF
-            ELSE
-               fsave = F
-               IF ( F<fbase ) THEN
-                  W(j) = rho
-                  Xpt(nf+1,j) = two*rho
-               ELSE
-                  W(j) = -rho
-                  Xpt(nf+1,j) = -rho
-               ENDIF
-            ENDIF
-            IF ( nf<nnp ) GOTO 100
-!
-!     Form the off-diagonal second derivatives of the initial quadratic model.
-!
-            ih = N
-            ip = 1
-            iq = 2
-         ENDIF
-         ih = ih + 1
-         IF ( nf>nnp ) THEN
-            temp = one/(W(ip)*W(iq))
-            tempa = F - fbase - W(ip)*Pq(ip) - W(iq)*Pq(iq)
-            Pq(ih) = (tempa-half*rhosq*(D(ip)+D(iq)))*temp
-            Pl(1,ih) = temp
-            iw = ip + ip
-            IF ( W(ip)<zero ) iw = iw + 1
-            Pl(iw,ih) = -temp
-            iw = iq + iq
-            IF ( W(iq)<zero ) iw = iw + 1
-            Pl(iw,ih) = -temp
-            Pl(nf,ih) = temp
-!
-!     Pick the shift from XBASE to the next initial interpolation point
-!     that provides off-diagonal second derivatives.
-!
-            ip = ip + 1
-         ENDIF
-         IF ( ip==iq ) THEN
-            ih = ih + 1
-            ip = 1
-            iq = iq + 1
-         ENDIF
-         IF ( nf<Npt ) THEN
-            Xpt(nf+1,ip) = W(ip)
-            Xpt(nf+1,iq) = W(iq)
-            GOTO 100
-         ENDIF
-!
-!     Set parameters to begin the iterations for the current RHO.
-!
-         sixthm = zero
-         delta = rho
-         GOTO 200
-      ELSE
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      IF (KNEW .EQ. -1) GOTO 420
-         IF ( knew==-1 ) THEN
-            Info = 0
-            GOTO 700
-         ENDIF
+if (knew == -1) then
+    info = 0
+    goto 420
+end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     Use the quadratic model to predict the change in F due to the step D,
 !     and find the values of the Lagrange functions at the new point.
 !
-         vquad = zero
-         ih = N
-         DO j = 1 , N
-            W(j) = D(j)
-            vquad = vquad + W(j)*Pq(j)
-            DO i = 1 , j
-               ih = ih + 1
-               W(ih) = D(i)*Xnew(j) + D(j)*Xopt(i)
-               IF ( i==j ) W(ih) = half*W(ih)
-               vquad = vquad + W(ih)*Pq(ih)
-            ENDDO
-         ENDDO
-         DO k = 1 , Npt
-            temp = zero
-            DO j = 1 , nptm
-               temp = temp + W(j)*Pl(k,j)
-            ENDDO
-            Vlag(k) = temp
-         ENDDO
-         Vlag(kopt) = Vlag(kopt) + one
+vquad = zero
+ih = n
+do j = 1, n
+    w(j) = d(j)
+    vquad = vquad + w(j) * pq(j)
+    do i = 1, j
+        ih = ih + 1
+        w(ih) = d(i) * xnew(j) + d(j) * xopt(i)
+        if (i == j) w(ih) = half * w(ih)
+        vquad = vquad + w(ih) * pq(ih)
+    end do
+end do
+do k = 1, npt
+    temp = zero
+    do j = 1, nptm
+        temp = temp + w(j) * pl(k, j)
+    end do
+    vlag(k) = temp
+end do
+vlag(kopt) = vlag(kopt) + one
 !
 !     Update SIXTHM, which is a lower bound on one sixth of the greatest
 !     third derivative of F.
 !
-         diff = F - fopt - vquad
-         sum = zero
-         DO k = 1 , Npt
-            temp = zero
-            DO i = 1 , N
-               temp = temp + (Xpt(k,i)-Xnew(i))**2
-            ENDDO
-            temp = DSQRT(temp)
-            sum = sum + DABS(temp*temp*temp*Vlag(k))
-         ENDDO
-         sixthm = DMAX1(sixthm,DABS(diff)/sum)
+diff = f - fopt - vquad
+sum = zero
+do k = 1, npt
+    temp = zero
+    do i = 1, n
+        temp = temp + (xpt(k, i) - xnew(i))**2
+    end do
+    temp = dsqrt(temp)
+    sum = sum + dabs(temp * temp * temp * vlag(k))
+end do
+sixthm = dmax1(sixthm, dabs(diff) / sum)
 !
 !     Update FOPT and XOPT if the new F is the least value of the objective
 !     function so far. Then branch if D is not a trust region step.
 !
-         fsave = fopt
-         IF ( F<fopt ) THEN
-            fopt = F
-            DO i = 1 , N
-               Xopt(i) = Xnew(i)
-            ENDDO
-         ENDIF
-         ksave = knew
-         IF ( knew<=0 ) THEN
+fsave = fopt
+if (f < fopt) then
+    fopt = f
+    do i = 1, n
+        xopt(i) = xnew(i)
+    end do
+end if
+ksave = knew
+if (knew > 0) goto 240
 !
 !     Pick the next value of DELTA after a trust region step.
 !
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !      IF (VQUAD .GE. ZERO) THEN
-            IF ( vquad>=zero ) THEN
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               IF ( Iprint>0 ) PRINT 99003
-99003          FORMAT (/4X,'Return from UOBYQA because a trust',        &
-     &                 ' region step has failed to reduce Q')
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-               Info = 2
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               GOTO 700
-            ENDIF
-            ratio = (F-fsave)/vquad
-            IF ( ratio<=0.1D0 ) THEN
-               delta = half*dnorm
-            ELSEIF ( ratio<=0.7D0 ) THEN
-               delta = DMAX1(half*delta,dnorm)
-            ELSE
-               delta = DMAX1(delta,1.25D0*dnorm,dnorm+rho)
-            ENDIF
-            IF ( delta<=1.5D0*rho ) delta = rho
+if (.not. (vquad < zero)) then
+    info = 2
+    goto 420
+end if
+ratio = (f - fsave) / vquad
+if (ratio <= 0.1D0) then
+    delta = half * dnorm
+else if (ratio <= 0.7D0) then
+    delta = dmax1(half * delta, dnorm)
+else
+    delta = dmax1(delta, 1.25D0 * dnorm, dnorm + rho)
+end if
+if (delta <= 1.5D0 * rho) delta = rho
 !
 !     Set KNEW to the index of the next interpolation point to be deleted.
 !
-            ktemp = 0
-            detrat = zero
-            IF ( F>=fsave ) THEN
-               ktemp = kopt
-               detrat = one
-            ENDIF
-            DO k = 1 , Npt
-               sum = zero
-               DO i = 1 , N
-                  sum = sum + (Xpt(k,i)-Xopt(i))**2
-               ENDDO
-               temp = DABS(Vlag(k))
-               IF ( sum>rhosq ) temp = temp*(sum/rhosq)**1.5D0
-               IF ( temp>detrat .AND. k/=ktemp ) THEN
-                  detrat = temp
-                  ddknew = sum
-                  knew = k
-               ENDIF
-            ENDDO
-            IF ( knew==0 ) GOTO 600
-         ENDIF
+ktemp = 0
+detrat = zero
+if (f >= fsave) then
+    ktemp = kopt
+    detrat = one
+end if
+do k = 1, npt
+    sum = zero
+    do i = 1, n
+        sum = sum + (xpt(k, i) - xopt(i))**2
+    end do
+    temp = dabs(vlag(k))
+    if (sum > rhosq) temp = temp * (sum / rhosq)**1.5D0
+    if (temp > detrat .and. k /= ktemp) then
+        detrat = temp
+        ddknew = sum
+        knew = k
+    end if
+end do
+if (knew == 0) goto 290
 !
 !     Replace the interpolation point that has index KNEW by the point XNEW,
 !     and also update the Lagrange functions and the quadratic model.
 !
-         DO i = 1 , N
-            Xpt(knew,i) = Xnew(i)
-         ENDDO
-         temp = one/Vlag(knew)
-         DO j = 1 , nptm
-            Pl(knew,j) = temp*Pl(knew,j)
-            Pq(j) = Pq(j) + diff*Pl(knew,j)
-         ENDDO
-         DO k = 1 , Npt
-            IF ( k/=knew ) THEN
-               temp = Vlag(k)
-               DO j = 1 , nptm
-                  Pl(k,j) = Pl(k,j) - temp*Pl(knew,j)
-               ENDDO
-            ENDIF
-         ENDDO
+240 do i = 1, n
+    xpt(knew, i) = xnew(i)
+end do
+temp = one / vlag(knew)
+do j = 1, nptm
+    pl(knew, j) = temp * pl(knew, j)
+    pq(j) = pq(j) + diff * pl(knew, j)
+end do
+do k = 1, npt
+    if (k /= knew) then
+        temp = vlag(k)
+        do j = 1, nptm
+            pl(k, j) = pl(k, j) - temp * pl(knew, j)
+        end do
+    end if
+end do
 !
 !     Update KOPT if F is the least calculated value of the objective
 !     function. Then branch for another trust region calculation. The
 !     case KSAVE>0 indicates that a model step has just been taken.
 !
-         IF ( F<fsave ) THEN
-            kopt = knew
-            GOTO 300
-         ENDIF
-         IF ( ksave>0 ) GOTO 300
-         IF ( dnorm>two*rho ) GOTO 300
-         IF ( ddknew>tworsq ) GOTO 300
-      ENDIF
+if (f < fsave) then
+    kopt = knew
+    goto 70
+end if
+if (ksave > 0) goto 70
+if (dnorm > two * rho) goto 70
+if (ddknew > tworsq) goto 70
 !
 !     Alternatively, find out if the interpolation points are close
 !     enough to the best point so far.
 !
- 600  DO k = 1 , Npt
-         W(k) = zero
-         DO i = 1 , N
-            W(k) = W(k) + (Xpt(k,i)-Xopt(i))**2
-         ENDDO
-      ENDDO
-      DO
-         knew = -1
-         distest = tworsq
-         DO k = 1 , Npt
-            IF ( W(k)>distest ) THEN
-               knew = k
-               distest = W(k)
-            ENDIF
-         ENDDO
+290 do k = 1, npt
+    w(k) = zero
+    do i = 1, n
+        w(k) = w(k) + (xpt(k, i) - xopt(i))**2
+    end do
+end do
+310 knew = -1
+distest = tworsq
+do k = 1, npt
+    if (w(k) > distest) then
+        knew = k
+        distest = w(k)
+    end if
+end do
 !
 !     If a point is sufficiently far away, then set the gradient and Hessian
 !     of its Lagrange function at the centre of the trust region, and find
 !     half the sum of squares of components of the Hessian.
 !
-         IF ( knew>0 ) THEN
-            ih = N
-            sumh = zero
-            DO j = 1 , N
-               G(j) = Pl(knew,j)
-               DO i = 1 , j
-                  ih = ih + 1
-                  temp = Pl(knew,ih)
-                  G(j) = G(j) + temp*Xopt(i)
-                  IF ( i<j ) THEN
-                     G(i) = G(i) + temp*Xopt(j)
-                     sumh = sumh + temp*temp
-                  ENDIF
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+if (knew > 0) then
+    ih = n
+    sumh = zero
+    do j = 1, n
+        g(j) = pl(knew, j)
+        do i = 1, j
+            ih = ih + 1
+            temp = pl(knew, ih)
+            g(j) = g(j) + temp * xopt(i)
+            if (i < j) then
+                g(i) = g(i) + temp * xopt(j)
+                sumh = sumh + temp * temp
+            end if
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29: See the comments below line number 70
 !  330     H(I,J)=TEMP
-                  H(i,j) = temp
-                  IF ( H(i,j)/=H(i,j) ) THEN
-                     Info = -3
-                     GOTO 700
-                  ENDIF
-               ENDDO
+            h(i, j) = temp
+            if (h(i, j) /= h(i, j)) then
+                info = -3
+                goto 420
+            end if
+        end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               sumh = sumh + half*temp*temp
-            ENDDO
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+        sumh = sumh + half * temp * temp
+    end do
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29: See the comments below line number 70
-            DO i = 1 , N
-               IF ( G(i)/=G(i) ) THEN
-                  Info = -3
-                  GOTO 700
-               ENDIF
-            ENDDO
+    do i = 1, n
+        if (g(i) /= g(i)) then
+            info = -3
+            goto 420
+        end if
+    end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     If ERRTOL is positive, test whether to replace the interpolation point
 !     with index KNEW, using a bound on the maximum modulus of its Lagrange
 !     function in the trust region.
 !
-            IF ( errtol>zero ) THEN
-               W(knew) = zero
-               sumg = zero
-               DO i = 1 , N
-                  sumg = sumg + G(i)**2
-               ENDDO
-               estim = rho*(DSQRT(sumg)+rho*DSQRT(half*sumh))
-               wmult = sixthm*distest**1.5D0
-               IF ( wmult*estim<=errtol ) CYCLE
-            ENDIF
+    if (errtol > zero) then
+        w(knew) = zero
+        sumg = zero
+        do i = 1, n
+            sumg = sumg + g(i)**2
+        end do
+        estim = rho * (dsqrt(sumg) + rho * dsqrt(half * sumh))
+        wmult = sixthm * distest**1.5D0
+        if (wmult * estim <= errtol) goto 310
+    end if
 !
 !     If the KNEW-th point may be replaced, then pick a D that gives a large
 !     value of the modulus of its Lagrange function within the trust region.
 !     Here the vector XNEW is used as temporary working space.
 !
-            CALL LAGMAX(N,G,H,rho,D,Xnew,vmax)
-            IF ( errtol>zero ) THEN
-               IF ( wmult*vmax<=errtol ) CYCLE
-            ENDIF
-            GOTO 400
-         ENDIF
-         IF ( dnorm>rho ) GOTO 300
+    call lagmax(n, g, h, rho, d, xnew, vmax)
+    if (errtol > zero) then
+        if (wmult * vmax <= errtol) goto 310
+    end if
+    goto 100
+end if
+if (dnorm > rho) goto 70
 !
 !     Prepare to reduce RHO by shifting XBASE to the best point so far,
 !     and make the corresponding changes to the gradients of the Lagrange
 !     functions and the quadratic model.
 !
-         IF ( rho>Rhoend ) THEN
-            ih = N
-            DO j = 1 , N
-               Xbase(j) = Xbase(j) + Xopt(j)
-               DO k = 1 , Npt
-                  Xpt(k,j) = Xpt(k,j) - Xopt(j)
-               ENDDO
-               DO i = 1 , j
-                  ih = ih + 1
-                  Pq(i) = Pq(i) + Pq(ih)*Xopt(j)
-                  IF ( i<j ) THEN
-                     Pq(j) = Pq(j) + Pq(ih)*Xopt(i)
-                     DO k = 1 , Npt
-                        Pl(k,j) = Pl(k,j) + Pl(k,ih)*Xopt(i)
-                     ENDDO
-                  ENDIF
-                  DO k = 1 , Npt
-                     Pl(k,i) = Pl(k,i) + Pl(k,ih)*Xopt(j)
-                  ENDDO
-               ENDDO
-            ENDDO
+if (rho > rhoend) then
+    ih = n
+    do j = 1, n
+        xbase(j) = xbase(j) + xopt(j)
+        do k = 1, npt
+            xpt(k, j) = xpt(k, j) - xopt(j)
+        end do
+        do i = 1, j
+            ih = ih + 1
+            pq(i) = pq(i) + pq(ih) * xopt(j)
+            if (i < j) then
+                pq(j) = pq(j) + pq(ih) * xopt(i)
+                do k = 1, npt
+                    pl(k, j) = pl(k, j) + pl(k, ih) * xopt(i)
+                end do
+            end if
+            do k = 1, npt
+                pl(k, i) = pl(k, i) + pl(k, ih) * xopt(j)
+            end do
+        end do
+    end do
 !
 !     Pick the next values of RHO and DELTA.
 !
-            delta = half*rho
-            ratio = rho/Rhoend
-            IF ( ratio<=16.0D0 ) THEN
-               rho = Rhoend
-            ELSEIF ( ratio<=250.0D0 ) THEN
-               rho = DSQRT(ratio)*Rhoend
-            ELSE
-               rho = 0.1D0*rho
-            ENDIF
-            delta = DMAX1(delta,rho)
-            IF ( Iprint>=2 ) THEN
-               IF ( Iprint>=3 ) PRINT 99004
-99004          FORMAT (5X)
-               PRINT 99005 , rho , nf
-99005          FORMAT (/4X,'New RHO =',1PD11.4,5X,'Number of',          &
-     &                 ' function values =',I6)
-               PRINT 99007 , fopt , (Xbase(i),i=1,N)
-            ENDIF
-            GOTO 200
-         ENDIF
+    delta = half * rho
+    ratio = rho / rhoend
+    if (ratio <= 16.0D0) then
+        rho = rhoend
+    else if (ratio <= 250.0D0) then
+        rho = dsqrt(ratio) * rhoend
+    else
+        rho = 0.1D0 * rho
+    end if
+    delta = dmax1(delta, rho)
+    goto 60
+end if
 !
 !     Return from the calculation, after another Newton-Raphson step, if
 !     it is too short to have been tried before.
 !
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-         Info = 0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-         IF ( errtol<zero ) EXIT
-         GOTO 400
-      ENDDO
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+info = 0
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+if (errtol >= zero) goto 100
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !  420 IF (FOPT .LE. F) THEN
- 700  IF ( fopt<=F .OR. F/=F ) THEN
+420 if (fopt <= f .or. f /= f) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-         DO i = 1 , N
-            X(i) = Xbase(i) + Xopt(i)
-         ENDDO
-         F = fopt
-      ENDIF
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IF (IPRINT .GE. 1) THEN
- 800  IF ( Iprint>=1 ) THEN
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-         PRINT 99006 , nf
-99006    FORMAT (/4X,'At the return from UOBYQA',5X,                    &
-     &           'Number of function values =',I6)
-         PRINT 99007 , F , (X(i),i=1,N)
-      ENDIF
-99007 FORMAT (4X,'Least value of F =',1PD23.15,9X,                      &
-     &        'The corresponding X is:'/(2X,5D15.6))
-      END SUBROUTINE UOBYQB
+    do i = 1, n
+        x(i) = xbase(i) + xopt(i)
+    end do
+    f = fopt
+end if
+return
+end

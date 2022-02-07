@@ -1,32 +1,8 @@
-!*==lagmax.f90  processed by SPAG 7.50RE at 00:28 on 26 May 2021
-      SUBROUTINE LAGMAX(N,G,H,Rho,D,V,Vmax)
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IMPLICIT REAL*8*8 (A-H,O-Z)
-      IMPLICIT NONE
-!*--LAGMAX7
-!*++
-!*++ Dummy argument declarations rewritten by SPAG
-!*++
-      INTEGER , INTENT(IN) :: N
-      REAL*8 , INTENT(IN) , DIMENSION(*) :: G
-      REAL*8 , INTENT(INOUT) , DIMENSION(N,*) :: H
-      REAL*8 , INTENT(IN) :: Rho
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: D
-      REAL*8 , INTENT(INOUT) , DIMENSION(*) :: V
-      REAL*8 , INTENT(OUT) :: Vmax
-!*++
-!*++ Local variable declarations rewritten by SPAG
-!*++
-      REAL*8 :: dd , dhd , dlin , dsq , gd , gg , ghg , gnorm , half ,    &
-     &        halfrt , hmax , one , ratio , scale , sum , sumv , temp , &
-     &        tempa , tempb , tempc , tempd , tempv , vhg , vhv , vhw , &
-     &        vlin , vmu , vnorm , vsq , vv , wcos , whw , wsin , wsq , &
-     &        zero
-      INTEGER :: i , j , k
-!*++
-!*++ End of declarations rewritten by SPAG
-!*++
+subroutine lagmax(n, g, h, rho, d, v, vmax)
+implicit real(kind(0.0D0)) (a - h, o - z)
+implicit integer(i - n)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+dimension g(*), h(n, *), d(*), v(*)
 !
 !     N is the number of variables of a quadratic objective function, Q say.
 !     G is the gradient of Q at the origin.
@@ -45,164 +21,165 @@
 !
 !     Preliminary calculations.
 !
-      half = 0.5D0
-      halfrt = DSQRT(half)
-      one = 1.0D0
-      zero = 0.0D0
+half = 0.5D0
+halfrt = dsqrt(half)
+one = 1.0D0
+zero = 0.0D0
 !
 !     Pick V such that ||HV|| / ||V|| is large.
 !
-      hmax = zero
-      DO i = 1 , N
-         sum = zero
-         DO j = 1 , N
-            H(j,i) = H(i,j)
-            sum = sum + H(i,j)**2
-         ENDDO
-         IF ( sum>hmax ) THEN
-            hmax = sum
-            k = i
-         ENDIF
-      ENDDO
-      DO j = 1 , N
-         V(j) = H(k,j)
-      ENDDO
+hmax = zero
+do i = 1, n
+    sum = zero
+    do j = 1, n
+        h(j, i) = h(i, j)
+        sum = sum + h(i, j)**2
+    end do
+    if (sum > hmax) then
+        hmax = sum
+        k = i
+    end if
+end do
+do j = 1, n
+    v(j) = h(k, j)
+end do
 !
 !     Set D to a vector in the subspace spanned by V and HV that maximizes
 !     |(D,HD)|/(D,D), except that we set D=HV if V and HV are nearly parallel.
 !     The vector that has the name D at label 60 used to be the vector W.
 !
-      vsq = zero
-      vhv = zero
-      dsq = zero
-      DO i = 1 , N
-         vsq = vsq + V(i)**2
-         D(i) = zero
-         DO j = 1 , N
-            D(i) = D(i) + H(i,j)*V(j)
-         ENDDO
-         vhv = vhv + V(i)*D(i)
-         dsq = dsq + D(i)**2
-      ENDDO
-      IF ( vhv*vhv<=0.9999D0*dsq*vsq ) THEN
-         temp = vhv/vsq
-         wsq = zero
-         DO i = 1 , N
-            D(i) = D(i) - temp*V(i)
-            wsq = wsq + D(i)**2
-         ENDDO
-         whw = zero
-         ratio = DSQRT(wsq/vsq)
-         DO i = 1 , N
-            temp = zero
-            DO j = 1 , N
-               temp = temp + H(i,j)*D(j)
-            ENDDO
-            whw = whw + temp*D(i)
-            V(i) = ratio*V(i)
-         ENDDO
-         vhv = ratio*ratio*vhv
-         vhw = ratio*wsq
-         temp = half*(whw-vhv)
-         temp = temp + DSIGN(DSQRT(temp**2+vhw**2),whw+vhv)
-         DO i = 1 , N
-            D(i) = vhw*V(i) + temp*D(i)
-         ENDDO
-      ENDIF
+vsq = zero
+vhv = zero
+dsq = zero
+do i = 1, n
+    vsq = vsq + v(i)**2
+    d(i) = zero
+    do j = 1, n
+        d(i) = d(i) + h(i, j) * v(j)
+    end do
+    vhv = vhv + v(i) * d(i)
+    dsq = dsq + d(i)**2
+end do
+if (vhv * vhv <= 0.9999D0 * dsq * vsq) then
+    temp = vhv / vsq
+    wsq = zero
+    do i = 1, n
+        d(i) = d(i) - temp * v(i)
+        wsq = wsq + d(i)**2
+    end do
+    whw = zero
+    ratio = dsqrt(wsq / vsq)
+    do i = 1, n
+        temp = zero
+        do j = 1, n
+            temp = temp + h(i, j) * d(j)
+        end do
+        whw = whw + temp * d(i)
+        v(i) = ratio * v(i)
+    end do
+    vhv = ratio * ratio * vhv
+    vhw = ratio * wsq
+    temp = half * (whw - vhv)
+    temp = temp + dsign(dsqrt(temp**2 + vhw**2), whw + vhv)
+    do i = 1, n
+        d(i) = vhw * v(i) + temp * d(i)
+    end do
+end if
 !
 !     We now turn our attention to the subspace spanned by G and D. A multiple
 !     of the current D is returned if that choice seems to be adequate.
 !
-      gg = zero
-      gd = zero
-      dd = zero
-      dhd = zero
-      DO i = 1 , N
-         gg = gg + G(i)**2
-         gd = gd + G(i)*D(i)
-         dd = dd + D(i)**2
-         sum = zero
-         DO j = 1 , N
-            sum = sum + H(i,j)*D(j)
-         ENDDO
-         dhd = dhd + sum*D(i)
-      ENDDO
-      temp = gd/gg
-      vv = zero
-      scale = DSIGN(Rho/DSQRT(dd),gd*dhd)
-      DO i = 1 , N
-         V(i) = D(i) - temp*G(i)
-         vv = vv + V(i)**2
-         D(i) = scale*D(i)
-      ENDDO
-      gnorm = DSQRT(gg)
-      IF ( gnorm*dd<=0.5D-2*Rho*DABS(dhd) .OR. vv/dd<=1.0D-4 ) THEN
-         Vmax = DABS(scale*(gd+half*scale*dhd))
-         GOTO 99999
-      ENDIF
+gg = zero
+gd = zero
+dd = zero
+dhd = zero
+do i = 1, n
+    gg = gg + g(i)**2
+    gd = gd + g(i) * d(i)
+    dd = dd + d(i)**2
+    sum = zero
+    do j = 1, n
+        sum = sum + h(i, j) * d(j)
+    end do
+    dhd = dhd + sum * d(i)
+end do
+temp = gd / gg
+vv = zero
+scale = dsign(rho / dsqrt(dd), gd * dhd)
+do i = 1, n
+    v(i) = d(i) - temp * g(i)
+    vv = vv + v(i)**2
+    d(i) = scale * d(i)
+end do
+gnorm = dsqrt(gg)
+if (gnorm * dd <= 0.5D-2 * rho * dabs(dhd) .or. vv / dd <= 1.0D-4) then
+    vmax = dabs(scale * (gd + half * scale * dhd))
+    goto 170
+end if
 !
 !     G and V are now orthogonal in the subspace spanned by G and D. Hence
 !     we generate an orthonormal basis of this subspace such that (D,HV) is
 !     negligible or zero, where D and V will be the basis vectors.
 !
-      ghg = zero
-      vhg = zero
-      vhv = zero
-      DO i = 1 , N
-         sum = zero
-         sumv = zero
-         DO j = 1 , N
-            sum = sum + H(i,j)*G(j)
-            sumv = sumv + H(i,j)*V(j)
-         ENDDO
-         ghg = ghg + sum*G(i)
-         vhg = vhg + sumv*G(i)
-         vhv = vhv + sumv*V(i)
-      ENDDO
-      vnorm = DSQRT(vv)
-      ghg = ghg/gg
-      vhg = vhg/(vnorm*gnorm)
-      vhv = vhv/vv
-      IF ( DABS(vhg)<=0.01D0*DMAX1(DABS(ghg),DABS(vhv)) ) THEN
-         vmu = ghg - vhv
-         wcos = one
-         wsin = zero
-      ELSE
-         temp = half*(ghg-vhv)
-         vmu = temp + DSIGN(DSQRT(temp**2+vhg**2),temp)
-         temp = DSQRT(vmu**2+vhg**2)
-         wcos = vmu/temp
-         wsin = vhg/temp
-      ENDIF
-      tempa = wcos/gnorm
-      tempb = wsin/vnorm
-      tempc = wcos/vnorm
-      tempd = wsin/gnorm
-      DO i = 1 , N
-         D(i) = tempa*G(i) + tempb*V(i)
-         V(i) = tempc*V(i) - tempd*G(i)
-      ENDDO
+ghg = zero
+vhg = zero
+vhv = zero
+do i = 1, n
+    sum = zero
+    sumv = zero
+    do j = 1, n
+        sum = sum + h(i, j) * g(j)
+        sumv = sumv + h(i, j) * v(j)
+    end do
+    ghg = ghg + sum * g(i)
+    vhg = vhg + sumv * g(i)
+    vhv = vhv + sumv * v(i)
+end do
+vnorm = dsqrt(vv)
+ghg = ghg / gg
+vhg = vhg / (vnorm * gnorm)
+vhv = vhv / vv
+if (dabs(vhg) <= 0.01D0 * dmax1(dabs(ghg), dabs(vhv))) then
+    vmu = ghg - vhv
+    wcos = one
+    wsin = zero
+else
+    temp = half * (ghg - vhv)
+    vmu = temp + dsign(dsqrt(temp**2 + vhg**2), temp)
+    temp = dsqrt(vmu**2 + vhg**2)
+    wcos = vmu / temp
+    wsin = vhg / temp
+end if
+tempa = wcos / gnorm
+tempb = wsin / vnorm
+tempc = wcos / vnorm
+tempd = wsin / gnorm
+do i = 1, n
+    d(i) = tempa * g(i) + tempb * v(i)
+    v(i) = tempc * v(i) - tempd * g(i)
+end do
 !
 !     The final D is a multiple of the current D, V, D+V or D-V. We make the
 !     choice from these possibilities that is optimal.
 !
-      dlin = wcos*gnorm/Rho
-      vlin = -wsin*gnorm/Rho
-      tempa = DABS(dlin) + half*DABS(vmu+vhv)
-      tempb = DABS(vlin) + half*DABS(ghg-vmu)
-      tempc = halfrt*(DABS(dlin)+DABS(vlin)) + 0.25D0*DABS(ghg+vhv)
-      IF ( tempa>=tempb .AND. tempa>=tempc ) THEN
-         tempd = DSIGN(Rho,dlin*(vmu+vhv))
-         tempv = zero
-      ELSEIF ( tempb>=tempc ) THEN
-         tempd = zero
-         tempv = DSIGN(Rho,vlin*(ghg-vmu))
-      ELSE
-         tempd = DSIGN(halfrt*Rho,dlin*(ghg+vhv))
-         tempv = DSIGN(halfrt*Rho,vlin*(ghg+vhv))
-      ENDIF
-      DO i = 1 , N
-         D(i) = tempd*D(i) + tempv*V(i)
-      ENDDO
-      Vmax = Rho*Rho*DMAX1(tempa,tempb,tempc)
-99999 END SUBROUTINE LAGMAX
+dlin = wcos * gnorm / rho
+vlin = -wsin * gnorm / rho
+tempa = dabs(dlin) + half * dabs(vmu + vhv)
+tempb = dabs(vlin) + half * dabs(ghg - vmu)
+tempc = halfrt * (dabs(dlin) + dabs(vlin)) + 0.25D0 * dabs(ghg + vhv)
+if (tempa >= tempb .and. tempa >= tempc) then
+    tempd = dsign(rho, dlin * (vmu + vhv))
+    tempv = zero
+else if (tempb >= tempc) then
+    tempd = zero
+    tempv = dsign(rho, vlin * (ghg - vmu))
+else
+    tempd = dsign(halfrt * rho, dlin * (ghg + vhv))
+    tempv = dsign(halfrt * rho, vlin * (ghg + vhv))
+end if
+do i = 1, n
+    d(i) = tempd * d(i) + tempv * v(i)
+end do
+vmax = rho * rho * dmax1(tempa, tempb, tempc)
+170 return
+end

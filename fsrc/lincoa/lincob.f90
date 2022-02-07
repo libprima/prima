@@ -1,56 +1,14 @@
-subroutine lincob(n, npt, m, amat, b, x, rhobeg, rhoend, iprint, maxfun,   &
-     &                  xbase, xpt, fval, xsav, xopt, gopt, hq, pq, bmat, zmat,  &
-     &                  ndim, step, sp, xnew, iact, rescon, qfac, rfac, pqw, w, f,&
-     &                  info, ftarget)
+subroutine lincob(n, npt, m, amat, b, x, rhobeg, rhoend, iprint, &
+     &  maxfun, xbase, xpt, fval, xsav, xopt, gopt, hq, pq, bmat, zmat, ndim, &
+     &  step, sp, xnew, iact, rescon, qfac, rfac, pqw, w, f, info, ftarget)
 
-! Dummy variables
-use consts_mod, only : IK, RP
-implicit none
-integer(IK), intent(in) :: iprint
-integer(IK), intent(in) :: m
-integer(IK), intent(in) :: n
-integer(IK), intent(in) :: ndim
-integer(IK), intent(in) :: npt
-integer(IK), intent(out) :: iact(:)
-integer(IK), intent(in) :: maxfun
-integer(IK), intent(out) :: info
-real(RP), intent(in) :: ftarget
-real(RP), intent(in) :: rhobeg
-real(RP), intent(out) :: rfac
-real(RP), intent(inout) :: amat(n, m)
-real(RP), intent(out) :: qfac(n, n)
-real(RP), dimension(npt, *) :: zmat
-real(RP), intent(in) :: rhoend
-real(RP), intent(inout) :: f
-real(RP), intent(inout), dimension(*) :: b
-real(RP), intent(inout), dimension(*) :: fval
-real(RP), intent(inout), dimension(*) :: gopt
-real(RP), intent(inout), dimension(*) :: hq
-real(RP), intent(inout), dimension(*) :: pq
-real(RP), intent(inout), dimension(*) :: pqw
-real(RP), intent(inout), dimension(*) :: rescon
-real(RP), intent(inout), dimension(*) :: sp
-real(RP), intent(inout), dimension(*) :: step
-real(RP), intent(inout), dimension(*) :: w
-real(RP), intent(inout), dimension(*) :: x
-real(RP), intent(inout), dimension(*) :: xbase
-real(RP), intent(inout), dimension(*) :: xnew
-real(RP), intent(inout), dimension(*) :: xopt
-real(RP), intent(inout), dimension(*) :: xsav
-real(RP), intent(inout), dimension(ndim, *) :: bmat
-real(RP), intent(inout), dimension(npt, *) :: xpt
-! Local variables
-real(RP) :: almost_infinity, del, delsav, delta, dffalt, diff,  &
-&        distsq, fopt, fsave, half, one, qoptsq, ratio,     &
-&        rho, snorm, ssq, sum, sumz, temp, tenth, vqalt,   &
-&        vquad, xdiff, xoptsq, zero
-integer :: i, idz, ifeas, ih, imprv, ip, itest, j, k,    &
-&           knew, kopt, ksave, nact, nf, nh, np, nptm,     &
-&           nvala, nvalb
-!*++
-!*++ end of declarations rewritten by spag
-!*++
+implicit real(kind(0.0D0)) (a - h, o - z)
+implicit integer(i - n)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+dimension amat(n, *), b(*), x(*), xbase(*), xpt(npt, *), fval(*), &
+     &  xsav(*), xopt(*), gopt(*), hq(*), pq(*), bmat(ndim, *), &
+     &  zmat(npt, *), step(*), sp(*), xnew(*), iact(*), rescon(*), &
+     &  qfac(n, *), rfac(*), pqw(*), w(*)
 !
 !     The arguments N, NPT, M, X, RHOBEG, RHOEND, IPRINT and MAXFUN are
 !       identical to the corresponding arguments in SUBROUTINE LINCOA.
@@ -110,13 +68,13 @@ half = 0.5D0
 one = 1.0D0
 tenth = 0.1D0
 zero = 0.0D0
-np = N + 1
-nh = (N * np) / 2
-nptm = Npt - np
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+np = n + 1
+nh = (n * np) / 2
+nptm = npt - np
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 almost_infinity = huge(0.0D0) / 2.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 15-08-2019
 ! See the comments below line number 210
 imprv = 0
@@ -129,69 +87,67 @@ imprv = 0
 !       so that the constraint violation is at least 0.2*RHOBEG. Also KOPT
 !       is set so that XPT(KOPT,.) is the initial trust region centre.
 !
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!     2  STEP,PQW,W)
-call PRELIM(N, Npt, M, Amat, B, X, Rhobeg, Iprint, Xbase, Xpt, Fval, Xsav,   &
-&            Xopt, Gopt, kopt, Hq, Pq, Bmat, Zmat, idz, Ndim, Sp, Rescon,    &
-&            Step, Pqw, W, F, Ftarget)
+call prelim(n, npt, m, amat, b, x, rhobeg, iprint, xbase, xpt, fval, &
+& xsav, xopt, gopt, kopt, hq, pq, bmat, zmat, idz, ndim, sp, rescon, &
+& step, pqw, w, f, ftarget)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     By Tom (on 04-06-2019):
-if (F /= F .or. F > almost_infinity) then
-    fopt = Fval(kopt)
-    Info = -2
+if (f /= f .or. f > almost_infinity) then
+    fopt = fval(kopt)
+    info = -2
     goto 600
 end if
 !     By Tom/Zaikun (on 04-06-2019/07-06-2019):
 !     Note that we should NOT compare F and FTARGET, because X may not
 !     be feasible at the exit of PRELIM.
-if (Fval(kopt) <= Ftarget) then
-    F = Fval(kopt)
-    X(1:N) = Xsav(1:N)
-    Info = 1
-    goto 700
+if (fval(kopt) <= ftarget) then
+    f = fval(kopt)
+    x(1:n) = xsav(1:n)
+    info = 1
+    goto 616
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     Begin the iterative procedure.
 !
-nf = Npt
-fopt = Fval(kopt)
-rho = Rhobeg
+nf = npt
+fopt = fval(kopt)
+rho = rhobeg
 delta = rho
 ifeas = 0
 nact = 0
 itest = 3
-100 knew = 0
+10 knew = 0
 nvala = 0
 nvalb = 0
 !
 !     Shift XBASE if XOPT may be too far from XBASE. First make the changes
 !       to BMAT that do not depend on ZMAT.
 !
-200 fsave = fopt
+20 fsave = fopt
 xoptsq = zero
-do i = 1, N
-    xoptsq = xoptsq + Xopt(i)**2
+do i = 1, n
+    xoptsq = xoptsq + xopt(i)**2
 end do
 if (xoptsq >= 1.0D4 * delta * delta) then
     qoptsq = 0.25D0 * xoptsq
-    do k = 1, Npt
+    do k = 1, npt
         sum = zero
-        do i = 1, N
-            sum = sum + Xpt(k, i) * Xopt(i)
+        do i = 1, n
+            sum = sum + xpt(k, i) * xopt(i)
         end do
         sum = sum - half * xoptsq
-        W(Npt + k) = sum
-        Sp(k) = zero
-        do i = 1, N
-            Xpt(k, i) = Xpt(k, i) - half * Xopt(i)
-            Step(i) = Bmat(k, i)
-            W(i) = sum * Xpt(k, i) + qoptsq * Xopt(i)
-            ip = Npt + i
+        w(npt + k) = sum
+        sp(k) = zero
+        do i = 1, n
+            xpt(k, i) = xpt(k, i) - half * xopt(i)
+            step(i) = bmat(k, i)
+            w(i) = sum * xpt(k, i) + qoptsq * xopt(i)
+            ip = npt + i
             do j = 1, i
-                Bmat(ip, j) = Bmat(ip, j) + Step(i) * W(j) + W(i) * Step(j)
+                bmat(ip, j) = bmat(ip, j) + step(i) * w(j) + w(i) * step(j)
             end do
         end do
     end do
@@ -200,40 +156,40 @@ if (xoptsq >= 1.0D4 * delta * delta) then
 !
     do k = 1, nptm
         sumz = zero
-        do i = 1, Npt
-            sumz = sumz + Zmat(i, k)
-            W(i) = W(Npt + i) * Zmat(i, k)
+        do i = 1, npt
+            sumz = sumz + zmat(i, k)
+            w(i) = w(npt + i) * zmat(i, k)
         end do
-        do j = 1, N
-            sum = qoptsq * sumz * Xopt(j)
-            do i = 1, Npt
-                sum = sum + W(i) * Xpt(i, j)
+        do j = 1, n
+            sum = qoptsq * sumz * xopt(j)
+            do i = 1, npt
+                sum = sum + w(i) * xpt(i, j)
             end do
-            Step(j) = sum
+            step(j) = sum
             if (k < idz) sum = -sum
-            do i = 1, Npt
-                Bmat(i, j) = Bmat(i, j) + sum * Zmat(i, k)
+            do i = 1, npt
+                bmat(i, j) = bmat(i, j) + sum * zmat(i, k)
             end do
         end do
-        do i = 1, N
-            ip = i + Npt
-            temp = Step(i)
+        do i = 1, n
+            ip = i + npt
+            temp = step(i)
             if (k < idz) temp = -temp
             do j = 1, i
-                Bmat(ip, j) = Bmat(ip, j) + temp * Step(j)
+                bmat(ip, j) = bmat(ip, j) + temp * step(j)
             end do
         end do
     end do
 !
 !     Update the right hand sides of the constraints.
 !
-    if (M > 0) then
-        do j = 1, M
+    if (m > 0) then
+        do j = 1, m
             temp = zero
-            do i = 1, N
-                temp = temp + Amat(i, j) * Xopt(i)
+            do i = 1, n
+                temp = temp + amat(i, j) * xopt(i)
             end do
-            B(j) = B(j) - temp
+            b(j) = b(j) - temp
         end do
     end if
 !
@@ -241,40 +197,40 @@ if (xoptsq >= 1.0D4 * delta * delta) then
 !       changes to the parameters of the quadratic model.
 !
     ih = 0
-    do j = 1, N
-        W(j) = zero
-        do k = 1, Npt
-            W(j) = W(j) + Pq(k) * Xpt(k, j)
-            Xpt(k, j) = Xpt(k, j) - half * Xopt(j)
+    do j = 1, n
+        w(j) = zero
+        do k = 1, npt
+            w(j) = w(j) + pq(k) * xpt(k, j)
+            xpt(k, j) = xpt(k, j) - half * xopt(j)
         end do
         do i = 1, j
             ih = ih + 1
-            Hq(ih) = Hq(ih) + W(i) * Xopt(j) + Xopt(i) * W(j)
-            Bmat(Npt + i, j) = Bmat(Npt + j, i)
+            hq(ih) = hq(ih) + w(i) * xopt(j) + xopt(i) * w(j)
+            bmat(npt + i, j) = bmat(npt + j, i)
         end do
     end do
-    do j = 1, N
-        Xbase(j) = Xbase(j) + Xopt(j)
-        Xopt(j) = zero
-        Xpt(kopt, j) = zero
+    do j = 1, n
+        xbase(j) = xbase(j) + xopt(j)
+        xopt(j) = zero
+        xpt(kopt, j) = zero
     end do
 end if
 
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 21-03-2020
 ! Exit if BMAT or ZMAT contians NaN
-do j = 1, N
-    do i = 1, Ndim
-        if (Bmat(i, j) /= Bmat(i, j)) then
-            Info = -3
+do j = 1, n
+    do i = 1, ndim
+        if (bmat(i, j) /= bmat(i, j)) then
+            info = -3
             goto 600
         end if
     end do
 end do
 do j = 1, nptm
-    do i = 1, Npt
-        if (Zmat(i, j) /= Zmat(i, j)) then
-            Info = -3
+    do i = 1, npt
+        if (zmat(i, j) /= zmat(i, j)) then
+            info = -3
             goto 600
         end if
     end do
@@ -288,7 +244,7 @@ end do
 !       except that SNORM is zero on return if the projected gradient is
 !       unsuitable for starting the conjugate gradient iterations.
 !
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29: For ill-conditioned problems, NaN may occur in the
 ! models. In such a case, we terminate the code. Otherwise, the behavior
 ! of TRSTEP or QMSTEP is not predictable, and Segmentation Fault or
@@ -296,21 +252,21 @@ end do
 ! comparison involving NaN returns FALSE, which can lead to unintended
 ! behavior of the code, including uninitialized indices, which can lead
 ! to segmentation faults.
-do j = 1, N
-    if (Gopt(j) /= Gopt(j)) then
-        Info = -3
+do j = 1, n
+    if (gopt(j) /= gopt(j)) then
+        info = -3
         goto 600
     end if
 end do
 do i = 1, nh
-    if (Hq(i) /= Hq(i)) then
-        Info = -3
+    if (hq(i) /= hq(i)) then
+        info = -3
         goto 600
     end if
 end do
-do i = 1, Npt
-    if (Pq(i) /= Pq(i)) then
-        Info = -3
+do i = 1, npt
+    if (pq(i) /= pq(i)) then
+        info = -3
         goto 600
     end if
 end do
@@ -319,15 +275,12 @@ delsav = delta
 ksave = knew
 if (knew == 0) then
     snorm = delta
-    do i = 1, N
-        Xnew(i) = Gopt(i)
+    do i = 1, n
+        xnew(i) = gopt(i)
     end do
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-! Zaikun 19-03-2020: B is never used in TRSTEP
-!          CALL TRSTEP (N,NPT,M,AMAT,B,XPT,HQ,PQ,NACT,IACT,RESCON,
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    call TRSTEP(N, Npt, M, Amat, Xpt, Hq, Pq, nact, Iact, Rescon, Qfac, Rfac, &
-&               snorm, Step, Xnew, W, W(M + 1), Pqw, Pqw(np), W(M + np))
+    call trstep(n, npt, m, amat, xpt, hq, pq, nact, iact, rescon, &
+   & qfac, rfac, snorm, step, xnew, w, w(m + 1), pqw, pqw(np), w(m + np))
 !
 !     A trust region step is applied whenever its length, namely SNORM, is at
 !       least HALF*DELTA. It is also applied if its length is at least 0.1999
@@ -335,7 +288,7 @@ if (knew == 0) then
 !       active set. Otherwise there is a branch below to label 530 or 560.
 !
     temp = half * delta
-    if (Xnew(1) >= half) temp = 0.1999D0 * delta
+    if (xnew(1) >= half) temp = 0.1999D0 * delta
     if (snorm <= temp) then
         delta = half * delta
         if (delta <= 1.4D0 * rho) delta = rho
@@ -343,19 +296,19 @@ if (knew == 0) then
         nvalb = nvalb + 1
         temp = snorm / rho
         if (delsav > rho) temp = one
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 24-07-2019
 !              IF (TEMP .GE. HALF) NVALA=ZERO
 !              IF (TEMP .GE. TENTH) NVALB=ZERO
         if (temp >= half) nvala = 0
         if (temp >= tenth) nvalb = 0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        if (delsav > rho) goto 400
-        if (nvala < 5 .and. nvalb < 3) goto 400
+        if (delsav > rho) goto 530
+        if (nvala < 5 .and. nvalb < 3) goto 530
         if (snorm > zero) ksave = -1
-        goto 500
+        goto 560
     end if
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 24-07-2019
 !          NVALA=ZERO
 !          NVALB=ZERO
@@ -369,45 +322,44 @@ if (knew == 0) then
 !       function in W(1) to W(N) and in PQW(1) to PQW(NPT), respectively.
 !
 else
-    del = DMAX1(tenth * delta, rho)
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+    del = dmax1(tenth * delta, rho)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29: See the comments below line number 140
 !          DO 160 I=1,N
 !  160     W(I)=BMAT(KNEW,I)
-    do i = 1, N
-        W(i) = Bmat(knew, i)
-        if (W(i) /= W(i)) then
-            Info = -3
+    do i = 1, n
+        w(i) = bmat(knew, i)
+        if (w(i) /= w(i)) then
+            info = -3
             goto 600
         end if
     end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    do k = 1, Npt
-        Pqw(k) = zero
+    do k = 1, npt
+        pqw(k) = zero
     end do
     do j = 1, nptm
-        temp = Zmat(knew, j)
+        temp = zmat(knew, j)
         if (j < idz) temp = -temp
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29: See the comments below line number 140
 ! Note that the data in PQW is used in QMSTEP below
 !          DO 180 K=1,NPT
 !  180     PQW(K)=PQW(K)+TEMP*ZMAT(K,J)
-        do k = 1, Npt
-            Pqw(k) = Pqw(k) + temp * Zmat(k, j)
-            if (Pqw(k) /= Pqw(k)) then
-                Info = -3
+        do k = 1, npt
+            pqw(k) = pqw(k) + temp * zmat(k, j)
+            if (pqw(k) /= pqw(k)) then
+                info = -3
                 goto 600
             end if
         end do
     end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29: B is never used in QMSTEP
 !          CALL QMSTEP (N,NPT,M,AMAT,B,XPT,XOPT,NACT,IACT,RESCON,
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    call QMSTEP(N, Npt, M, Amat, Xpt, Xopt, nact, Iact, Rescon, Qfac, kopt,  &
-&               knew, del, Step, W, Pqw, W(np), W(np + M), ifeas)
+    call qmstep(n, npt, m, amat, xpt, xopt, nact, iact, rescon, &
+&   qfac, kopt, knew, del, step, w, pqw, w(np), w(np + m), ifeas)
 end if
 !
 !     Set VQUAD to the change to the quadratic model when the move STEP is
@@ -417,24 +369,24 @@ end if
 !
 vquad = zero
 ih = 0
-do j = 1, N
-    vquad = vquad + Step(j) * Gopt(j)
+do j = 1, n
+    vquad = vquad + step(j) * gopt(j)
     do i = 1, j
         ih = ih + 1
-        temp = Step(i) * Step(j)
+        temp = step(i) * step(j)
         if (i == j) temp = half * temp
-        vquad = vquad + temp * Hq(ih)
+        vquad = vquad + temp * hq(ih)
     end do
 end do
-do k = 1, Npt
+do k = 1, npt
     temp = zero
-    do j = 1, N
-        temp = temp + Xpt(k, j) * Step(j)
-        Sp(Npt + k) = temp
+    do j = 1, n
+        temp = temp + xpt(k, j) * step(j)
+        sp(npt + k) = temp
     end do
-    vquad = vquad + half * Pq(k) * temp * temp
+    vquad = vquad + half * pq(k) * temp * temp
 end do
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 15-08-2019
 ! Although very rarely, with the original code, an infinite loop can occur
 ! in the following scenario.
@@ -467,9 +419,12 @@ end do
 ! set to 0 and DELTA will be reduced. Otherwise, an infinite loop would happen.
 !      IF (KSAVE .EQ. 0 .AND. VQUAD .GE. ZERO) GOTO 530
 if (ksave == 0 .and. .not. (vquad < zero)) then
-    if (imprv == 1) goto 500
-    imprv = 1
-    goto 400
+    if (imprv == 1) then
+        goto 560
+    else
+        imprv = 1
+        goto 530
+    end if
 else
     imprv = 0
 end if
@@ -479,107 +434,90 @@ end if
 !       between the actual new value of F and the value predicted by the
 !       model is recorded in DIFF.
 !
-300 nf = nf + 1
-if (nf > Maxfun) then
+220 nf = nf + 1
+if (nf > maxfun) then
     nf = nf - 1
-    if (Iprint > 0) print 99001
-99001 format(/4X, 'Return from LINCOA because CALFUN has been',      &
-  &           ' called MAXFUN times.')
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-    Info = 3
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    info = 3
     goto 600
 end if
 xdiff = zero
-do i = 1, N
-    Xnew(i) = Xopt(i) + Step(i)
-    X(i) = Xbase(i) + Xnew(i)
-    xdiff = xdiff + (X(i) - Xsav(i))**2
+do i = 1, n
+    xnew(i) = xopt(i) + step(i)
+    x(i) = xbase(i) + xnew(i)
+    xdiff = xdiff + (x(i) - xsav(i))**2
 end do
-xdiff = DSQRT(xdiff)
+xdiff = dsqrt(xdiff)
 if (ksave == -1) xdiff = rho
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !      IF (XDIFF .LE. TENTH*RHO .OR. XDIFF .GE. DELTA+DELTA) THEN
 if (.not. (xdiff > tenth * rho .and. xdiff < delta + delta)) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ifeas = 0
-    if (Iprint > 0) print 99002
-99002 format(/4X, 'Return from LINCOA because rounding errors',      &
-  &           ' prevent reasonable changes to X.')
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-    Info = 8
+    info = 8
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     goto 600
 end if
 if (ksave <= 0) ifeas = 1
-F = DFLOAT(ifeas)
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-do i = 1, N
-    if (X(i) /= X(i)) then
-        F = X(i)   ! Set F to NaN
+f = dfloat(ifeas)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+do i = 1, n
+    if (x(i) /= x(i)) then
+        f = x(i) ! set f to nan
         if (nf == 1) then
-            fopt = F
-            Xopt(1:N) = zero
+            fopt = f
+            xopt(1:n) = zero
         end if
-        Info = -1
+        info = -1
         goto 600
     end if
 end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-call CALFUN(N, X, F)
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+call calfun(n, x, f)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     By Tom (on 04-06-2019):
-if (F /= F .or. F > almost_infinity) then
+if (f /= f .or. f > almost_infinity) then
     if (nf == 1) then
-        fopt = F
-        Xopt(1:N) = zero
+        fopt = f
+        xopt(1:n) = zero
     end if
-    Info = -2
+    info = -2
     goto 600
 end if
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-if (Iprint == 3) then
-    print 99003, nf, F, (X(i), i=1, N)
-99003 format(/4X, 'Function number', I6, '    F =', 1PD18.10,           &
-  &           '    The corresponding X is:'/(2X, 5D15.6))
-end if
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IF (KSAVE .EQ. -1) GOTO 600
 if (ksave == -1) then
-    Info = 0
+    info = 0
     goto 600
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-diff = F - fopt - vquad
+diff = f - fopt - vquad
 !
 !     If X is feasible, then set DFFALT to the difference between the new
 !       value of F and the value predicted by the alternative model.
 !
 if (ifeas == 1 .and. itest < 3) then
-    do k = 1, Npt
-        Pqw(k) = zero
-        W(k) = Fval(k) - Fval(kopt)
+    do k = 1, npt
+        pqw(k) = zero
+        w(k) = fval(k) - fval(kopt)
     end do
     do j = 1, nptm
         sum = zero
-        do i = 1, Npt
-            sum = sum + W(i) * Zmat(i, j)
+        do i = 1, npt
+            sum = sum + w(i) * zmat(i, j)
         end do
         if (j < idz) sum = -sum
-        do k = 1, Npt
-            Pqw(k) = Pqw(k) + sum * Zmat(k, j)
+        do k = 1, npt
+            pqw(k) = pqw(k) + sum * zmat(k, j)
         end do
     end do
     vqalt = zero
-    do k = 1, Npt
+    do k = 1, npt
         sum = zero
-        do j = 1, N
-            sum = sum + Bmat(k, j) * Step(j)
+        do j = 1, n
+            sum = sum + bmat(k, j) * step(j)
         end do
-        vqalt = vqalt + sum * W(k)
-        vqalt = vqalt + Pqw(k) * Sp(Npt + k) * (half * Sp(Npt + k) + Sp(k))
+        vqalt = vqalt + sum * w(k)
+        vqalt = vqalt + pqw(k) * sp(npt + k) * (half * sp(npt + k) + sp(k))
     end do
-    dffalt = F - fopt - vqalt
+    dffalt = f - fopt - vqalt
 end if
 if (itest == 3) then
     dffalt = diff
@@ -589,15 +527,15 @@ end if
 !     Pick the next value of DELTA after a trust region step.
 !
 if (ksave == 0) then
-    ratio = (F - fopt) / vquad
+    ratio = (f - fopt) / vquad
     if (ratio <= tenth) then
         delta = half * delta
-    elseif (ratio <= 0.7D0) then
-        delta = DMAX1(half * delta, snorm)
+    else if (ratio <= 0.7D0) then
+        delta = dmax1(half * delta, snorm)
     else
-        temp = DSQRT(2.0D0) * delta
-        delta = DMAX1(half * delta, snorm + snorm)
-        delta = DMIN1(delta, temp)
+        temp = dsqrt(2.0D0) * delta
+        delta = dmax1(half * delta, snorm + snorm)
+        delta = dmin1(delta, temp)
     end if
     if (delta <= 1.4D0 * rho) delta = rho
 end if
@@ -606,33 +544,27 @@ end if
 !       can be moved. If STEP is a trust region step, then KNEW is zero at
 !       present, but a positive value is picked by subroutine UPDATE.
 !
-call UPDATE(N, Npt, Xpt, Bmat, Zmat, idz, Ndim, Sp, Step, kopt, knew, Pqw, W)
+call update(n, npt, xpt, bmat, zmat, idz, ndim, sp, step, kopt, knew, pqw, w)
 if (knew == 0) then
-    if (Iprint > 0) print 99004
-99004 format(/4X,                                                   &
-  &'Return from LINCOA because the denominator'' of the updating form&
-  &ula is zero.')
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-    Info = 9
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    info = 9
     goto 600
 end if
 
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 19-03-2020
 ! Exit if BMAT or ZMAT contians NaN
-do j = 1, N
-    do i = 1, Ndim
-        if (Bmat(i, j) /= Bmat(i, j)) then
-            Info = -3
+do j = 1, n
+    do i = 1, ndim
+        if (bmat(i, j) /= bmat(i, j)) then
+            info = -3
             goto 600
         end if
     end do
 end do
 do j = 1, nptm
-    do i = 1, Npt
-        if (Zmat(i, j) /= Zmat(i, j)) then
-            Info = -3
+    do i = 1, npt
+        if (zmat(i, j) /= zmat(i, j)) then
+            info = -3
             goto 600
         end if
     end do
@@ -647,7 +579,7 @@ end do
 !
 if (ifeas == 1) then
     itest = itest + 1
-    if (DABS(dffalt) >= tenth * DABS(diff)) itest = 0
+    if (dabs(dffalt) >= tenth * dabs(diff)) itest = 0
 end if
 !
 !     Update the second derivatives of the model by the symmetric Broyden
@@ -657,30 +589,30 @@ end if
 !       later for the gradient of the new KNEW-th Lagrange function.
 !
 if (itest < 3) then
-    do k = 1, Npt
-        Pqw(k) = zero
+    do k = 1, npt
+        pqw(k) = zero
     end do
     do j = 1, nptm
-        temp = Zmat(knew, j)
+        temp = zmat(knew, j)
         if (temp /= zero) then
             if (j < idz) temp = -temp
-            do k = 1, Npt
-                Pqw(k) = Pqw(k) + temp * Zmat(k, j)
+            do k = 1, npt
+                pqw(k) = pqw(k) + temp * zmat(k, j)
             end do
         end if
     end do
     ih = 0
-    do i = 1, N
-        W(i) = Bmat(knew, i)
-        temp = Pq(knew) * Xpt(knew, i)
+    do i = 1, n
+        w(i) = bmat(knew, i)
+        temp = pq(knew) * xpt(knew, i)
         do j = 1, i
             ih = ih + 1
-            Hq(ih) = Hq(ih) + temp * Xpt(knew, j)
+            hq(ih) = hq(ih) + temp * xpt(knew, j)
         end do
     end do
-    Pq(knew) = zero
-    do k = 1, Npt
-        Pq(k) = Pq(k) + diff * Pqw(k)
+    pq(knew) = zero
+    do k = 1, npt
+        pq(k) = pq(k) + diff * pqw(k)
     end do
 end if
 !
@@ -688,79 +620,79 @@ end if
 !       SP. Also make the changes of the symmetric Broyden method to GOPT at
 !       the old XOPT if ITEST is less than 3.
 !
-Fval(knew) = F
-Sp(knew) = Sp(kopt) + Sp(Npt + kopt)
+fval(knew) = f
+sp(knew) = sp(kopt) + sp(npt + kopt)
 ssq = zero
-do i = 1, N
-    Xpt(knew, i) = Xnew(i)
-    ssq = ssq + Step(i)**2
+do i = 1, n
+    xpt(knew, i) = xnew(i)
+    ssq = ssq + step(i)**2
 end do
-Sp(Npt + knew) = Sp(Npt + kopt) + ssq
+sp(npt + knew) = sp(npt + kopt) + ssq
 if (itest < 3) then
-    do k = 1, Npt
-        temp = Pqw(k) * Sp(k)
-        do i = 1, N
-            W(i) = W(i) + temp * Xpt(k, i)
+    do k = 1, npt
+        temp = pqw(k) * sp(k)
+        do i = 1, n
+            w(i) = w(i) + temp * xpt(k, i)
         end do
     end do
-    do i = 1, N
-        Gopt(i) = Gopt(i) + diff * W(i)
+    do i = 1, n
+        gopt(i) = gopt(i) + diff * w(i)
     end do
 end if
 !
 !     Update FOPT, XSAV, XOPT, KOPT, RESCON and SP if the new F is the
 !       least calculated value so far with a feasible vector of variables.
 !
-if (F < fopt .and. ifeas == 1) then
-    fopt = F
-    do j = 1, N
-        Xsav(j) = X(j)
-        Xopt(j) = Xnew(j)
+if (f < fopt .and. ifeas == 1) then
+    fopt = f
+    do j = 1, n
+        xsav(j) = x(j)
+        xopt(j) = xnew(j)
     end do
     kopt = knew
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !         By Tom (on 04-06-2019):
-    if (fopt <= Ftarget) then
-        Info = 1
-        goto 700
+    if (fopt <= ftarget) then
+        info = 1
+        goto 616
     end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    snorm = DSQRT(ssq)
-    do j = 1, M
-        if (Rescon(j) >= delta + snorm) then
-            Rescon(j) = snorm - Rescon(j)
+    snorm = dsqrt(ssq)
+    do j = 1, m
+        if (rescon(j) >= delta + snorm) then
+            rescon(j) = snorm - rescon(j)
         else
-            Rescon(j) = Rescon(j) + snorm
-            if (Rescon(j) + delta > zero) then
-                temp = B(j)
-                do i = 1, N
-                    temp = temp - Xopt(i) * Amat(i, j)
+            rescon(j) = rescon(j) + snorm
+            if (rescon(j) + delta > zero) then
+                temp = b(j)
+                do i = 1, n
+                    temp = temp - xopt(i) * amat(i, j)
                 end do
-                temp = DMAX1(temp, zero)
+                temp = dmax1(temp, zero)
                 if (temp >= delta) temp = -temp
-                Rescon(j) = temp
+                rescon(j) = temp
             end if
         end if
     end do
-    do k = 1, Npt
-        Sp(k) = Sp(k) + Sp(Npt + k)
+    do k = 1, npt
+        sp(k) = sp(k) + sp(npt + k)
     end do
 !
 !     Also revise GOPT when symmetric Broyden updating is applied.
 !
     if (itest < 3) then
         ih = 0
-        do j = 1, N
+        do j = 1, n
             do i = 1, j
                 ih = ih + 1
-                if (i < j) Gopt(j) = Gopt(j) + Hq(ih) * Step(i)
-                Gopt(i) = Gopt(i) + Hq(ih) * Step(j)
+                if (i < j) gopt(j) = gopt(j) + hq(ih) * step(i)
+                gopt(i) = gopt(i) + hq(ih) * step(j)
             end do
         end do
-        do k = 1, Npt
-            temp = Pq(k) * Sp(Npt + k)
-            do i = 1, N
-                Gopt(i) = Gopt(i) + temp * Xpt(k, i)
+        do k = 1, npt
+            temp = pq(k) * sp(npt + k)
+            do i = 1, n
+                gopt(i) = gopt(i) + temp * xpt(k, i)
             end do
         end do
     end if
@@ -771,34 +703,34 @@ end if
 !       of values of F at feasible points.
 !
 if (itest == 3) then
-    do k = 1, Npt
-        Pq(k) = zero
-        W(k) = Fval(k) - Fval(kopt)
+    do k = 1, npt
+        pq(k) = zero
+        w(k) = fval(k) - fval(kopt)
     end do
     do j = 1, nptm
         sum = zero
-        do i = 1, Npt
-            sum = sum + W(i) * Zmat(i, j)
+        do i = 1, npt
+            sum = sum + w(i) * zmat(i, j)
         end do
         if (j < idz) sum = -sum
-        do k = 1, Npt
-            Pq(k) = Pq(k) + sum * Zmat(k, j)
+        do k = 1, npt
+            pq(k) = pq(k) + sum * zmat(k, j)
         end do
     end do
-    do j = 1, N
-        Gopt(j) = zero
-        do i = 1, Npt
-            Gopt(j) = Gopt(j) + W(i) * Bmat(i, j)
+    do j = 1, n
+        gopt(j) = zero
+        do i = 1, npt
+            gopt(j) = gopt(j) + w(i) * bmat(i, j)
         end do
     end do
-    do k = 1, Npt
-        temp = Pq(k) * Sp(k)
-        do i = 1, N
-            Gopt(i) = Gopt(i) + temp * Xpt(k, i)
+    do k = 1, npt
+        temp = pq(k) * sp(k)
+        do i = 1, n
+            gopt(i) = gopt(i) + temp * xpt(k, i)
         end do
     end do
     do ih = 1, nh
-        Hq(ih) = zero
+        hq(ih) = zero
     end do
 end if
 !
@@ -808,17 +740,17 @@ end if
 !       step.
 !
 knew = 0
-if (ksave > 0) goto 200
-if (ratio >= tenth) goto 200
+if (ksave > 0) goto 20
+if (ratio >= tenth) goto 20
 !
 !     Alternatively, find out if the interpolation points are close enough
 !       to the best point so far.
 !
-400 distsq = DMAX1(delta * delta, 4.0D0 * rho * rho)
-do k = 1, Npt
+530 distsq = dmax1(delta * delta, 4.0D0 * rho * rho)
+do k = 1, npt
     sum = zero
-    do j = 1, N
-        sum = sum + (Xpt(k, j) - Xopt(j))**2
+    do j = 1, n
+        sum = sum + (xpt(k, j) - xopt(j))**2
     end do
     if (sum > distsq) then
         knew = k
@@ -832,68 +764,50 @@ end do
 !       trust region step was calculated, then try a "trust region" step
 !       instead.
 !
-if (knew > 0) goto 200
+if (knew > 0) goto 20
 knew = 0
-if (fopt < fsave) goto 200
-if (delsav > rho) goto 200
+if (fopt < fsave) goto 20
+if (delsav > rho) goto 20
 !
 !     The calculations with the current value of RHO are complete.
 !       Pick the next value of RHO.
 !
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 15-08-2019
 ! See the comments below line number 210
 !  560 IF (RHO .GT. RHOEND) THEN
-500 imprv = 0
-if (rho > Rhoend) then
+560 imprv = 0
+if (rho > rhoend) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     delta = half * rho
-    if (rho > 250.0D0 * Rhoend) then
+    if (rho > 250.0D0 * rhoend) then
         rho = tenth * rho
-    elseif (rho <= 16.0D0 * Rhoend) then
-        rho = Rhoend
+    else if (rho <= 16.0D0 * rhoend) then
+        rho = rhoend
     else
-        rho = DSQRT(rho * Rhoend)
+        rho = dsqrt(rho * rhoend)
     end if
-    delta = DMAX1(delta, rho)
-    if (Iprint >= 2) then
-        if (Iprint >= 3) print 99005
-99005   format(5X)
-        print 99006, rho, nf
-99006   format(/4X, 'New RHO =', 1PD11.4, 5X, 'Number of',             &
- &              ' function values =', I6)
-        print 99008, fopt, (Xbase(i) + Xopt(i), i=1, N)
-    end if
-    goto 100
+    delta = dmax1(delta, rho)
+    goto 10
 end if
 !
 !     Return from the calculation, after branching to label 220 for another
 !       Newton-Raphson step if it has not been tried before.
 !
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-Info = 0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-if (ksave == -1) goto 300
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+info = 0
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+if (ksave == -1) goto 220
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !  600 IF (FOPT .LE. F .OR. IFEAS .EQ. 0) THEN
-600 if (fopt <= F .or. ifeas == 0 .or. F /= F) then
+600 if (fopt <= f .or. ifeas == 0 .or. f /= f) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    do i = 1, N
-        X(i) = Xsav(i)
+    do i = 1, n
+        x(i) = xsav(i)
     end do
-    F = fopt
+    f = fopt
 end if
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!      IF (IPRINT .GE. 1) THEN
-700 if (Iprint >= 1) then
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    print 99007, nf
-99007 format(/4X, 'At the return from LINCOA', 5X,                    &
-  &           'Number of function values =', I6)
-    print 99008, F, (X(i), i=1, N)
-end if
-W(1) = F
-W(2) = DFLOAT(nf) + half
-99008 format(4X, 'Least value of F =', 1PD23.15, 9X,                      &
-     &        'The corresponding X is:'/(2X, 5D15.6))
-end subroutine LINCOB
+616 w(1) = f
+w(2) = dfloat(nf) + half
+return
+end

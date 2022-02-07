@@ -1,15 +1,16 @@
-This folder contains a modified version of Powell's UOBYQA code. For the
-original code, see pdfo/fsrc/original/uobyqa.
+This is a modernized and improved Fortran implementation of the UOBYQA algorithm described in
 
-***********************************************************************
-Modified by:Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
-            and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
-            Department of Applied Mathematics,
-            The Hong Kong Polytechnic University
+M. J. D. Powell, UOBYQA: unconstrained optimization by quadratic approximation, Math. Program.,
+92(B):555--582, 2002
+
+Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the paper.
+
+Due to the dependency among the modules, the files must be compiled in the order indicated in
+ffiles.txt. Before that, one must compile the Fotran files in the directory "common" according
+to the ffiles.txt therein.
+
+See the directory "examples" for an illustration about how to call the solver.
 
 Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 
-We look forward to your feedback! Thank you very much!
-
-March 2020, Hong Kong
-***********************************************************************
+Started in February 2022.
