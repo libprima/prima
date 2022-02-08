@@ -6,7 +6,7 @@ module initialize_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, February 03, 2022 PM10:40:14
+! Last Modified: Wednesday, February 09, 2022 AM12:31:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -149,7 +149,7 @@ do k = 1, n + 1_IK
     call fmsg(solver, iprint, k, f, x, cstrv, constr)
     evaluated(j) = .true.
     ! Save X, F, CONSTR, CSTRV into the history.
-    call savehist(k, constr, cstrv, f, x, chist, conhist, fhist, xhist)
+    call savehist(k, x, xhist, f, fhist, cstrv, chist, constr, conhist)
     ! Save F, CONSTR, and CSTRV to FVAL, CONMAT, and CVAL respectively. This must be done before
     ! checking whether to exit. If exit, FVAL, CONMAT, and CVAL will define FFILT, CONFILT, and
     ! CFILT, which will define the returned X, F, CONSTR, and CSTRV.

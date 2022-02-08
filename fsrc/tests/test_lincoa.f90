@@ -1,12 +1,12 @@
 module test_solver_mod
 !--------------------------------------------------------------------------------------------------!
-! This module tests COBYLA on a few simple problems.
+! This module tests LINCOA on a few simple problems.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, February 08, 2022 PM06:03:23
+! Last Modified: Wednesday, February 09, 2022 AM01:21:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,7 +19,7 @@ contains
 
 subroutine test_solver(probs, mindim, maxdim, dimstride, nrand)
 
-use, non_intrinsic :: cobyla_mod, only : cobyla
+!use, non_intrinsic :: lincoa_mod, only : lincoa
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN, ZERO, HUGENUM
 use, non_intrinsic :: datetime_mod, only : year, week
 use, non_intrinsic :: memory_mod, only : safealloc
@@ -57,18 +57,17 @@ integer(IK) :: n
 integer(IK) :: ndim
 integer(IK) :: nprobs
 integer(IK) :: nrand_loc
-real(RP) :: cstrv
+!real(RP) :: cstrv
 real(RP) :: ctol
-real(RP) :: f
+!real(RP) :: f
 real(RP) :: ftarget
 real(RP) :: rhobeg
 real(RP) :: rhoend
-real(RP), allocatable :: chist(:)
-real(RP), allocatable :: conhist(:, :)
-real(RP), allocatable :: constr(:)
-real(RP), allocatable :: fhist(:)
+!real(RP), allocatable :: chist(:)
+!real(RP), allocatable :: conhist(:, :)
+!real(RP), allocatable :: fhist(:)
 real(RP), allocatable :: x(:)
-real(RP), allocatable :: xhist(:, :)
+!real(RP), allocatable :: xhist(:, :)
 type(PROB_T) :: prob
 
 if (present(probs)) then
@@ -169,13 +168,13 @@ do iprob = 1, nprobs
             orig_calcfc => prob % calcfc
 
             print '(/1A, I3, 1A, I3)', trimstr(probname)//': N = ', n, ', Random test ', irand
-            call cobyla(noisy_calcfc, m, x, f, cstrv=cstrv, constr=constr, rhobeg=rhobeg, rhoend=rhoend, &
-                & maxfun=maxfun, maxhist=maxhist, fhist=fhist, xhist=xhist, conhist=conhist, chist=chist, &
-                & ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
-            if (m == 0) then  ! Run the test without constraints
-                call cobyla(noisy_calcfc, m, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, &
-                    & fhist=fhist, xhist=xhist, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
-            end if
+            !call lincoa(noisy_calcfc, m, x, f, cstrv=cstrv, constr=constr, rhobeg=rhobeg, rhoend=rhoend, &
+            !    & maxfun=maxfun, maxhist=maxhist, fhist=fhist, xhist=xhist, conhist=conhist, chist=chist, &
+            !    & ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
+            !if (m == 0) then  ! Run the test without constraints
+            !    call lincoa(noisy_calcfc, m, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, &
+            !        & fhist=fhist, xhist=xhist, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
+            !end if
 
             deallocate (x)
             nullify (orig_calcfc)

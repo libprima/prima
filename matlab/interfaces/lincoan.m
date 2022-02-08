@@ -366,7 +366,17 @@ else % The problem turns out 'normal' during prepdfo
     maxfun = options.maxfun;
     rhobeg = options.rhobeg;
     rhoend = options.rhoend;
+    eta1 = options.eta1;
+    eta2 = options.eta2;
+    gamma1 = options.gamma1;
+    gamma2 = options.gamma2;
     ftarget = options.ftarget;
+    ctol = options.ctol;
+    cweight = options.cweight;
+    maxhist = options.maxhist;
+    output_xhist = options.output_xhist;
+    maxfilt = options.maxfilt;
+    iprint = options.iprint;
 
     % If x0 is not feasible, LINCOA will modify the constraints to make
     % it feasible (which is a bit strange).
@@ -390,6 +400,9 @@ else % The problem turns out 'normal' during prepdfo
             [x, fx, exitflag, nf, fhist, constrviolation, chist] = flincoan_classical(fun, x0, A_aug, b_aug, rhobeg, rhoend, maxfun, npt, ftarget);
         else
             [x, fx, exitflag, nf, fhist, constrviolation, chist] = flincoan(fun, x0, A_aug, b_aug, rhobeg, rhoend, maxfun, npt, ftarget);
+            [x, fx, constrviolation, exitflag, nf, xhist, fhist, chist] = ...
+                flincoan(fun, x0, A_aug, b_aug, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ...
+                ftarget, ctol, cweight, maxfun, iprint, maxhist, double(output_xhist), maxfilt);
         end
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
@@ -403,6 +416,9 @@ else % The problem turns out 'normal' during prepdfo
     output.fx = fx;
     output.exitflag = exitflag;
     output.funcCount = nf;
+    if (output_xhist)
+        output.xhist = xhist;
+    end
     output.fhist = fhist;
     output.constrviolation = constrviolation;
     output.chist = chist;

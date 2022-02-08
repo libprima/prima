@@ -365,10 +365,11 @@ C Constraint violation (named 'RESMAX' in Powell's COBYLA code)
 C zero is defined in module 'consts'.
 C Linear constraints: A'*x <= b (NOTE the transpose)
       do j = 1, m
-          cval = -b(j)
+          cval = 0.0D0
           do i = 1, ia
               cval = cval + A(i,j)*x(i)
           end do
+          cval = cval - b(j)
           if (is_nan(cval)) then
               resmax = cval ! Set resmax=NaN if constraint contains NaN
               exit

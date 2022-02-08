@@ -29,7 +29,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, February 06, 2022 AM12:47:27
+! Last Modified: Wednesday, February 09, 2022 AM12:27:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -437,8 +437,8 @@ call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg
 ! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
 ! CHIST = NaN(1, MAXFUN), CONHIST = NaN(M, MAXFUN), FHIST = NaN(1, MAXFUN), XHIST = NaN(N, MAXFUN)
 ! if they are requested; replace MAXFUN with 0 for the history that is not requested.
-call prehist(maxhist_loc, m, n, present(chist), chist_loc, present(conhist), conhist_loc, &
-    & present(fhist), fhist_loc, present(xhist), xhist_loc)
+call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_loc, &
+    & present(chist), chist_loc, m, present(conhist), conhist_loc)
 
 !-------------------- Call COBYLB, which performs the real calculations. --------------------------!
 call cobylb(calcfc, iprint_loc, maxfilt_loc, maxfun_loc, ctol_loc, cweight_loc, eta1_loc, eta2_loc, &

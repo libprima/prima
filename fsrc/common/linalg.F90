@@ -21,7 +21,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, February 07, 2022 PM02:47:54
+! Last Modified: Tuesday, February 08, 2022 PM09:58:37
 !--------------------------------------------------------------------------------------------------
 
 implicit none
@@ -44,6 +44,7 @@ public :: norm
 public :: sort
 public :: int
 public :: trueloc, falseloc
+public :: minimum, maximum
 
 interface matprod
 ! N.B.:
@@ -2313,6 +2314,44 @@ integer(IK), allocatable :: loc(:)  ! INTEGER(IK) :: LOC(COUNT(.NOT.X)) does not
 call safealloc(loc, int(count(.not. x), IK))  ! Removable in F03.
 loc = trueloc(.not. x)
 end function falseloc
+
+
+function minimum(x) result(y)
+!--------------------------------------------------------------------------------------------------!
+! This function returns NaN if X contains NaN; otherwise, it returns MINVAL(X).
+! F2018 does not specify MINVAL(X) when X contain NaN, which motivates this function.
+! Regarding NaN, the behavior of MINIMUM is the same as the following functions in various languages:
+! MATLAB: min(x, [], 'includenan')
+! Python: numpy.min(x)
+! Julia: minimum(x)
+! R: min(x)
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP
+use, non_intrinsic :: infnan_mod, only : is_nan
+implicit none
+real(RP), intent(in) :: x(:)
+real(RP) :: y
+y = merge(tsource=sum(x), fsource=minval(x), mask=any(is_nan(x)))
+end function minimum
+
+
+function maximum(x) result(y)
+!--------------------------------------------------------------------------------------------------!
+! This function returns NaN if X contains NaN; otherwise, it returns MAXVAL(X).
+! F2018 does not specify MAXVAL(X) when X contain NaN, which motivates this function.
+! Regarding NaN, the behavior of MAXIMUM is the same as the following functions in various languages:
+! MATLAB: max(x, [], 'includenan')
+! Python: numpy.max(x)
+! Julia: maximum(x)
+! R: max(x)
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : RP
+use, non_intrinsic :: infnan_mod, only : is_nan
+implicit none
+real(RP), intent(in) :: x(:)
+real(RP) :: y
+y = merge(tsource=sum(x), fsource=maxval(x), mask=any(is_nan(x)))
+end function maximum
 
 
 end module linalg_mod

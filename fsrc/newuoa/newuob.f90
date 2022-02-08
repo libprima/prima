@@ -6,7 +6,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, February 06, 2022 PM11:32:05
+! Last Modified: Wednesday, February 09, 2022 AM12:37:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -173,7 +173,7 @@ f = fopt  ! Set F.
 if (subinfo /= INFO_DFT) then
     info = subinfo
     ! Arrange FHIST and XHIST so that they are in the chronological order.
-    call rangehist(nf, fhist, xhist)
+    call rangehist(nf, xhist, fhist)
     call retmsg(solver, info, iprint, nf, f, x)
     ! Postconditions
     if (DEBUGGING) then
@@ -264,7 +264,7 @@ do tr = 1, maxtr
         nf = nf + 1_IK
         call fmsg(solver, iprint, nf, f, x)
         ! Save X and F into the history.
-        call savehist(nf, f, x, fhist, xhist)
+        call savehist(nf, x, xhist, f, fhist)
         ! Check whether to exit
         subinfo = checkexit(maxfun, nf, f, ftarget, x)
         if (subinfo /= INFO_DFT) then
@@ -439,7 +439,7 @@ do tr = 1, maxtr
         nf = nf + 1_IK
         call fmsg(solver, iprint, nf, f, x)
         ! Save X and F into the history.
-        call savehist(nf, f, x, fhist, xhist)
+        call savehist(nf, x, xhist, f, fhist)
         ! Check whether to exit
         subinfo = checkexit(maxfun, nf, f, ftarget, x)
         if (subinfo /= INFO_DFT) then
@@ -489,7 +489,7 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     nf = nf + 1_IK
     call fmsg(solver, iprint, nf, f, x)
     ! Save X and F into the history.
-    call savehist(nf, f, x, fhist, xhist)
+    call savehist(nf, x, xhist, f, fhist)
 end if
 
 ! Choose the [X, F] to return: either the current [X, F] or [XBASE+XOPT, FOPT].
@@ -499,7 +499,7 @@ if (is_nan(f) .or. fopt < f) then
 end if
 
 ! Arrange FHIST and XHIST so that they are in the chronological order.
-call rangehist(nf, fhist, xhist)
+call rangehist(nf, xhist, fhist)
 
 call retmsg(solver, info, iprint, nf, f, x)
 

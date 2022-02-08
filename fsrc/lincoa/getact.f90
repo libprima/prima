@@ -291,5 +291,11 @@ jc = ic
     goto 810
 end if
 nact = nact - 1
-goto(50, 60, 280), iflag
-end
+if (iflag == 1) then
+    goto 50
+elseif (iflag == 2) then
+    goto 60
+elseif (iflag == 3) then
+    goto 280
+end if
+end subroutine getact
