@@ -312,7 +312,7 @@ n = length(x0);
 % N.B.: The weeknum function considers the week containing January 1 to be the first week of the
 % year, and increments the number every SUNDAY.
 yw = 10*mod(year(datetime), 10) + week(datetime);
-rng(yw+ceil(1e6*abs(cos(1e5*sin(1e5*(sum(double(pname))*n*ir))))));
+rng(yw+ceil(1e5*abs(cos(1e5*sin(1e5*(sum(double(pname))*n*ir))))));
 prob.x0 = x0 + 0.5*randn(size(x0));
 test_options = struct();
 test_options.debug = true;

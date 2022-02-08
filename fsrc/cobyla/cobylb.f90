@@ -6,7 +6,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, February 07, 2022 AM12:00:33
+! Last Modified: Wednesday, February 09, 2022 AM12:30:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -188,7 +188,7 @@ if (subinfo /= INFO_DFT) then
     constr = confilt(:, kopt)
     cstrv = cfilt(kopt)
     ! Arrange CHIST, CONHIST, FHIST, and XHIST so that they are in the chronological order.
-    call rangehist(nf, chist, conhist, fhist, xhist)
+    call rangehist(nf, xhist, fhist, chist, conhist)
     call retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
     ! Postconditions
     if (DEBUGGING) then
@@ -314,7 +314,7 @@ do tr = 1, maxtr
         nf = nf + 1_IK
         call fmsg(solver, iprint, nf, f, x, cstrv, constr)
         ! Save X, F, CONSTR, CSTRV into the history.
-        call savehist(nf, constr, cstrv, f, x, chist, conhist, fhist, xhist)
+        call savehist(nf, x, xhist, f, fhist, cstrv, chist, constr, conhist)
         ! Save X, F, CONSTR, CSTRV into the filter.
         call savefilt(constr, cstrv, ctol, cweight, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
 
@@ -425,7 +425,7 @@ do tr = 1, maxtr
             nf = nf + 1_IK
             call fmsg(solver, iprint, nf, f, x, cstrv, constr)
             ! Save X, F, CONSTR, CSTRV into the history.
-            call savehist(nf, constr, cstrv, f, x, chist, conhist, fhist, xhist)
+            call savehist(nf, x, xhist, f, fhist, cstrv, chist, constr, conhist)
             ! Save X, F, CONSTR, CSTRV into the filter.
             call savefilt(constr, cstrv, ctol, cweight, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
             ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_GEO) is replaced by D.
@@ -454,7 +454,7 @@ do tr = 1, maxtr
         delta = HALF * rho
         rho = redrho(rho, rhoend)
         delta = max(delta, rho)
-        cpen = min(cpen, fcratio(fval, conmat))  ! It may set CPEN to 0. 
+        cpen = min(cpen, fcratio(fval, conmat))  ! It may set CPEN to 0.
         call rhomsg(solver, iprint, nf, fval(n + 1), rho, sim(:, n + 1), cval(n + 1), conmat(:, n + 1), cpen)
         call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
         ! Check whether to exit due to damaging rounding detected in UPDATEPOLE.
@@ -474,7 +474,7 @@ constr = confilt(:, kopt)
 cstrv = cfilt(kopt)
 
 ! Arrange CHIST, CONHIST, FHIST, and XHIST so that they are in the chronological order.
-call rangehist(nf, chist, conhist, fhist, xhist)
+call rangehist(nf, xhist, fhist, chist, conhist)
 
 call retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
 

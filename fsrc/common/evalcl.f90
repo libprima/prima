@@ -9,7 +9,7 @@ module evalcl_mod
 !
 ! Started: August 2021
 !
-! Last Modified: Tuesday, January 25, 2022 AM05:29:26
+! Last Modified: Wednesday, February 09, 2022 AM12:50:03
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.: The module is NOT used by the modernized version of Powell's solvers. It is used only when we
@@ -35,10 +35,6 @@ public :: fc_x0_provided, x0, f_x0, constr_x0
 interface evaluate
     module procedure evaluatef, evaluatefc
 end interface evaluate
-
-interface rangehist
-    module procedure rangehist_unc, rangehist_nlc
-end interface rangehist
 
 integer(IK) :: nf
 real(RP), allocatable :: xhist(:, :), fhist(:), chist(:), conhist(:, :)
@@ -176,9 +172,9 @@ end if
 end subroutine evaluatefc
 
 
-subroutine rangehist_unc(nf, fhist, xhist)
+subroutine rangehist(nf, xhist, fhist, chist, conhist)
 !--------------------------------------------------------------------------------------------------!
-! This subroutine arranges FHIST and XHIST in the chronological order.
+! This subroutine arranges FHIST, XHIST, CHIST, and CONHIST in the chronological order.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -190,95 +186,45 @@ integer(IK), intent(in) :: nf
 ! In-outputs
 real(RP), intent(inout) :: fhist(:)
 real(RP), intent(inout) :: xhist(:, :)
+real(RP), intent(inout), optional :: chist(:)
+real(RP), intent(inout), optional :: conhist(:, :)
 
 ! Local variables
 integer(IK) :: khist
-integer(IK) :: maxfhist
-integer(IK) :: maxhist
-integer(IK) :: maxxhist
-integer(IK) :: n
-character(len=*), parameter :: srname = 'RANGEHIST_UNC'
-
-! Sizes
-n = int(size(xhist, 1), kind(n))
-maxxhist = int(size(xhist, 2), kind(maxxhist))
-maxfhist = int(size(fhist), kind(maxfhist))
-maxhist = int(max(maxxhist, maxfhist), kind(maxhist))
-
-! Preconditions
-if (DEBUGGING) then
-    ! Check the sizes of XHIST, FHIST.
-    call assert(n >= 1, 'N >= 1', srname)
-    call assert(maxxhist * (maxxhist - maxhist) == 0, 'SIZE(XHIST, 2) == 0 or MAXHIST', srname)
-    call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
-end if
-
-! The ranging should be done only if 0 < MAXXHIST < NF. Otherwise, it leads to errors/wrong results.
-if (maxxhist > 0 .and. maxxhist < nf) then
-    ! We could replace MODULO(NF - 1_IK, MAXXHIST) + 1_IK) with MODULO(NF - 1_IK, MAXHIST) + 1_IK)
-    ! based on the assumption that MAXXHIST == 0 or MAXHIST. For robustness, we do not do that.
-    khist = modulo(nf - 1_IK, maxxhist) + 1_IK
-    xhist = reshape([xhist(:, khist + 1:maxxhist), xhist(:, 1:khist)], shape(xhist))
-    ! N.B.:
-    ! 1. The result of the array constructor is always a rank-1 array (e.g., vector), no matter what
-    ! elements are used to construct the array.
-    ! 2. The above combination of SHAPE and RESHAPE fulfills our desire thanks to the COLUMN-MAJOR
-    ! order of Fortran arrays.
-    ! 3. In MATLAB, `xhist = [xhist(:, khist + 1:maxxhist), xhist(:, 1:khist)]` does the same thing.
-end if
-! The ranging should be done only if 0 < MAXFHIST < NF. Otherwise, it leads to errors/wrong results.
-if (maxfhist > 0 .and. maxfhist < nf) then
-    khist = modulo(nf - 1_IK, maxfhist) + 1_IK
-    fhist = [fhist(khist + 1:maxfhist), fhist(1:khist)]
-end if
-
-end subroutine rangehist_unc
-
-
-subroutine rangehist_nlc(nf, chist, conhist, fhist, xhist)
-! This subroutine arranges FHIST and XHIST, CONHIST, and CHIST in the chronological order.
-use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-implicit none
-
-! Inputs
-integer(IK), intent(in) :: nf
-
-! In-outputs
-real(RP), intent(inout) :: chist(:)
-real(RP), intent(inout) :: conhist(:, :)
-real(RP), intent(inout) :: fhist(:)
-real(RP), intent(inout) :: xhist(:, :)
-
-! Local variables
-integer(IK) :: khist
-integer(IK) :: m
 integer(IK) :: maxchist
 integer(IK) :: maxconhist
 integer(IK) :: maxfhist
 integer(IK) :: maxhist
 integer(IK) :: maxxhist
-integer(IK) :: n
-character(len=*), parameter :: srname = 'RANGEHIST_NLC'
+character(len=*), parameter :: srname = 'RANGEHIST'
 
 ! Sizes
-n = int(size(xhist, 1), kind(n))
-m = int(size(conhist, 1), kind(m))
 maxxhist = int(size(xhist, 2), kind(maxxhist))
 maxfhist = int(size(fhist), kind(maxfhist))
-maxconhist = int(size(conhist, 2), kind(maxconhist))
-maxchist = int(size(chist), kind(maxchist))
+if (present(chist)) then
+    maxchist = int(size(chist), kind(maxchist))
+else
+    maxchist = 0_IK
+end if
+if (present(conhist)) then
+    maxconhist = int(size(conhist, 2), kind(maxconhist))
+else
+    maxconhist = 0_IK
+end if
 maxhist = max(maxxhist, maxfhist, maxconhist, maxchist)
 
 ! Preconditions
 if (DEBUGGING) then
-    ! Check the sizes of XHIST, FHIST, CONHIST, CHIST.
-    call assert(n >= 1, 'N >= 1', srname)
+    ! Check the sizes of XHIST, FHIST, CHIST, CONHIST.
     call assert(maxxhist * (maxxhist - maxhist) == 0, 'SIZE(XHIST, 2) == 0 or MAXHIST', srname)
     call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
-    call assert(maxconhist * (maxconhist - maxhist) == 0, 'SIZE(CONHIST, 2) == 0 or MAXHIST', srname)
     call assert(maxchist * (maxchist - maxhist) == 0, 'SIZE(CHIST) == 0 or MAXHIST', srname)
+    call assert(maxconhist * (maxconhist - maxhist) == 0, 'SIZE(CONHIST, 2) == 0 or MAXHIST', srname)
 end if
+
+!====================!
+! Calculation starts !
+!====================!
 
 ! The ranging should be done only if 0 < MAXXHIST < NF. Otherwise, it leads to errors/wrong results.
 if (maxxhist > 0 .and. maxxhist < nf) then
@@ -309,7 +255,7 @@ if (maxchist > 0 .and. maxchist < nf) then
     chist = [chist(khist + 1:maxchist), chist(1:khist)]
 end if
 
-end subroutine rangehist_nlc
+end subroutine rangehist
 
 
 end module evalcl_mod

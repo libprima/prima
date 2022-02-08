@@ -19,7 +19,7 @@ module newuoa_mod  ! (The classical mode)
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, January 22, 2022 PM01:46:55
+! Last Modified: Wednesday, February 09, 2022 AM12:36:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -345,7 +345,7 @@ call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg
 ! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
 ! FHIST = NaN(1, MAXFUN), XHIST = NaN(N, MAXFUN) if they are requested; replace MAXFUN with 0 for
 ! the history that is not requested.
-call prehist(maxhist_loc, n, present(fhist), fhist_loc, present(xhist), xhist_loc)
+call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_loc)
 
 !--------------------------------------------------------------------------------------------------!
 !-------------------- Call NEWUOB, which performs the real calculations. --------------------------!
@@ -353,7 +353,7 @@ call prehist(maxhist_loc, n, present(fhist), fhist_loc, present(xhist), xhist_lo
 nf_loc = 0_IK  !!!
 call newuob(calfun, iprint_loc, maxfun_loc, npt_loc, ftarget_loc, rhobeg_loc, rhoend_loc, x, f, info_loc)
 ! Arrange the history so that they are in the chronological order !!!
-call rangehist(nf_loc, fhist_loc, xhist_loc) !!!
+call rangehist(nf_loc, xhist_loc, fhist_loc) !!!
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 

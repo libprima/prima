@@ -1,10 +1,21 @@
 subroutine prelim(n, npt, m, amat, b, x, rhobeg, iprint, xbase, &
      &  xpt, fval, xsav, xopt, gopt, kopt, hq, pq, bmat, zmat, idz, ndim, &
-     &  sp, rescon, step, pqw, w, f, ftarget)
-implicit real(kind(0.0D0)) (a - h, o - z)
-implicit integer(i - n)
+     &  sp, rescon, step, pqw, w, f, ftarget, &
+     & xhist, fhist, chist)
+
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO
+use, non_intrinsic :: history_mod, only : savehist
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm, maximum
+
+implicit real(RP) (a - h, o - z)
+implicit integer(IK) (i - n)
+
+real(RP) :: cstrv
+real(RP) :: xhist(n, *)
+real(RP) :: fhist(*)
+real(RP) :: chist(*)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-dimension amat(n, *), b(*), x(*), xbase(*), xpt(npt, *), fval(*), &
+dimension amat(n, m), b(m), x(n), xbase(*), xpt(npt, *), fval(*), &
 & xsav(*), xopt(*), gopt(*), hq(*), pq(*), bmat(ndim, *), zmat(npt, *), &
 & sp(*), rescon(*), step(*), pqw(*), w(*)
 !
@@ -29,7 +40,6 @@ dimension amat(n, *), b(*), x(*), xbase(*), xpt(npt, *), fval(*), &
 !
 half = 0.5D0
 one = 1.0D0
-zero = 0.0D0
 nptm = npt - n - 1
 rhosq = rhobeg * rhobeg
 recip = one / rhosq
@@ -160,7 +170,11 @@ do nf = 1, npt
         x(j) = xbase(j) + xpt(nf, j)
     end do
     f = feas
+    !---------------------------------------------------!
     call calfun(n, x, f)
+    cstrv = maximum([ZERO, matprod(x, Amat) - b])
+    call savehist(nf, x, xhist, f, fhist, cstrv, chist)
+    !---------------------------------------------------!
     if (nf == 1) then
         kopt = 1
     else if (f < fval(kopt) .and. feas > zero) then

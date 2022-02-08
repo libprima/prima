@@ -6,7 +6,7 @@ module initialize_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, January 06, 2022 PM08:47:00
+! Last Modified: Wednesday, February 09, 2022 AM12:38:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -145,7 +145,7 @@ do k = 1, min(npt, int(2 * n + 1, kind(npt)))
     fval(k) = f
     call fmsg(solver, iprint, k, f, x)
     ! Save X and F into the history.
-    call savehist(k, f, x, fhist, xhist)
+    call savehist(k, x, xhist, f, fhist)
     ! Check whether to exit.
     subinfo = checkexit(maxfun, k, f, ftarget, x)
     if (subinfo /= INFO_DFT) then
@@ -199,7 +199,7 @@ if (info == INFO_DFT) then
         evaluated(k) = .true.
         fval(k) = f
         ! Save X and F into the history.
-        call savehist(k, f, x, fhist, xhist)
+        call savehist(k, x, xhist, f, fhist)
         ! Check whether to exit.
         subinfo = checkexit(maxfun, k, f, ftarget, x)
         if (subinfo /= INFO_DFT) then

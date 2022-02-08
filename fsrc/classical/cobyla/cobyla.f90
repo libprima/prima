@@ -28,7 +28,7 @@ module cobyla_mod  ! (The classical mode)
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, February 03, 2022 PM10:06:10
+! Last Modified: Wednesday, February 09, 2022 AM12:28:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -460,8 +460,8 @@ call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg
 ! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
 ! CHIST = NaN(1, MAXFUN), CONHIST = NaN(M, MAXFUN), FHIST = NaN(1, MAXFUN), XHIST = NaN(N, MAXFUN)
 ! if they are requested; replace MAXFUN with 0 for the history that is not requested.
-call prehist(maxhist_loc, m, n, present(chist), chist_loc, present(conhist), conhist_loc, &
-    & present(fhist), fhist_loc, present(xhist), xhist_loc)
+call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_loc, &
+    & present(chist), chist_loc, m, present(conhist), conhist_loc)
 
 !--------------------------------------------------------------------------------------------------!
 !-------------------- Call COBYLB, which performs the real calculations. --------------------------!
@@ -470,7 +470,7 @@ nf_loc = 0_IK  !!!
 !!!! ETA1, ETA2, GAMAA1, GAMMA2, MAXFILT, CTOL, CWEIGHT are not used in the classical mode. !!!!
 call cobylb(calcfc, iprint_loc, maxfun_loc, rhobeg_loc, rhoend_loc, constr_loc, x, cstrv_loc, f, info_loc)
 ! Arrange the history so that they are in the chronological order !!!
-call rangehist(nf_loc, chist_loc, conhist_loc, fhist_loc, xhist_loc) !!!
+call rangehist(nf_loc, xhist_loc, fhist_loc, chist_loc, conhist_loc) !!!
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 

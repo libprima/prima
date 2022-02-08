@@ -1,11 +1,21 @@
 subroutine lincob(n, npt, m, amat, b, x, rhobeg, rhoend, iprint, maxfun, &
     & xbase, xpt, fval, xsav, xopt, gopt, hq, pq, bmat, zmat, ndim, &
-     &  step, sp, xnew, iact, rescon, qfac, rfac, pqw, w, f, info, ftarget)
+     &  step, sp, xnew, iact, rescon, qfac, rfac, pqw, w, f, info, ftarget, &
+     & xhist, fhist, chist)
 
-implicit real(kind(0.0D0)) (a - h, o - z)
-implicit integer(i - n)
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO
+use, non_intrinsic :: history_mod, only : savehist, rangehist
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm, maximum
+
+implicit real(RP) (a - h, o - z)
+implicit integer(IK) (i - n)
+
+real(RP) :: cstrv
+real(RP) :: xhist(n, *)
+real(RP) :: fhist(*)
+real(RP) :: chist(*)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-dimension amat(n, *), b(*), x(*), xbase(*), xpt(npt, *), fval(*), &
+dimension amat(n, m), b(m), x(n), xbase(*), xpt(npt, *), fval(*), &
      &  xsav(*), xopt(*), gopt(*), hq(*), pq(*), bmat(ndim, *), &
      &  zmat(npt, *), step(*), sp(*), xnew(*), iact(*), rescon(*), &
      &  qfac(n, *), rfac(*), pqw(*), w(*)
@@ -67,7 +77,6 @@ dimension amat(n, *), b(*), x(*), xbase(*), xpt(npt, *), fval(*), &
 half = 0.5D0
 one = 1.0D0
 tenth = 0.1D0
-zero = 0.0D0
 np = n + 1
 nh = (n * np) / 2
 nptm = npt - np
@@ -89,7 +98,8 @@ imprv = 0
 !
 call prelim(n, npt, m, amat, b, x, rhobeg, iprint, xbase, xpt, fval, &
 & xsav, xopt, gopt, kopt, hq, pq, bmat, zmat, idz, ndim, sp, rescon, &
-& step, pqw, w, f, ftarget)
+& step, pqw, w, f, ftarget, &
+& xhist, fhist, chist)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -473,6 +483,8 @@ do i = 1, n
 end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 call calfun(n, x, f)
+cstrv = maximum([ZERO, matprod(x, Amat) - b])
+call savehist(nf, x, xhist, f, fhist, cstrv, chist)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     By Tom (on 04-06-2019):
 if (f /= f .or. f > almost_infinity) then
@@ -809,5 +821,10 @@ if (ksave == -1) goto 220
 end if
 616 w(1) = f
 w(2) = dfloat(nf) + half
+
+
+! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.
+call rangehist(nf, xhist, fhist, chist)
+
 return
-end
+end subroutine lincob
