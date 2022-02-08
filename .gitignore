@@ -12,6 +12,8 @@ matlab/tests/testdata/
 *.ilm
 *.log
 *.mod
+*__genmod.f90
+flang_unparsed_file*.*90
 *.o
 *.out
 *.output
@@ -20,8 +22,13 @@ matlab/tests/testdata/
 *.stb
 *NSConflict*
 *_output.txt
-fsrc/tests/newuoa/
-fsrc/tests/common/
+test.newuoa/
+test.cobyla/
+test.bobyqa/
+test.uobyqa/
+test.lincoa/
+testdata/
+bak/
 *_test
 *_tst
 *_tst_bobyqa
@@ -33,7 +40,11 @@ fsrc/tests/common/
 NEWUOA_output.txt
 fort.*
 log*
+!logging.F90 # Exception
+!logging.f90 # Exceptiong
 log/
+mlog/
+flog/
 test_data/
 
 # automatically generated intersection-form files
