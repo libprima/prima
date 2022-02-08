@@ -9,7 +9,7 @@ function [x, fx, exitflag, output] = cobyla(varargin)
 %               cineq(x) <= 0,
 %               ceq(x) = 0.
 %
-%   In the backend, COBYLA calls late Professor M.J.D. Powell's Fotran code
+%   In the backend, COBYLA calls late Professor M.J.D. Powell's algorithm
 %   with the same name. The algorithm is described in [M. J. D. Powell,
 %   A direct search optimization method that models the objective and
 %   constraint functions by linear interpolation, In Advances in Optimization
@@ -32,10 +32,10 @@ function [x, fx, exitflag, output] = cobyla(varargin)
 %       there is no objective function (i.e., we have a feasibility problem),
 %       then set fun = []
 %   *** x0 is the starting point; x0 CANNOT be []
-%   *** Aineq and bineq are the coeffcient matrix and right-hand side of
+%   *** Aineq and bineq are the coefficient matrix and right-hand side of
 %       the linear inequality constraint Aineq * x <= bineq; if there is
 %       no such constraint, set Aineq = [], bineq = []
-%   *** Aeq and beq are the coeffcient matrix and right-hand side of the
+%   *** Aeq and beq are the coefficient matrix and right-hand side of the
 %       linear equality constraint Aeq * x = beq; if there is no such
 %       constraint, set Aeq = [], beq = []
 %   *** lb and ub, which are vectors of the same length as x, are the
@@ -89,6 +89,7 @@ function [x, fx, exitflag, output] = cobyla(varargin)
 %       13: all variables are fixed by the constraints
 %       14: a linear feasibility problem received and solved
 %       15: a linear feasibility problem received but not solved
+%       20: the trust-region iteration has been performed for 10*maxfun times
 %       -1: NaN occurs in x
 %       -2: the objective/constraint function returns NaN or nearly
 %       infinite values (only in the classical mode)
@@ -117,6 +118,8 @@ function [x, fx, exitflag, output] = cobyla(varargin)
 %   The options include
 %   *** maxfun: maximal number of function evaluations; default: 500*length(x0)
 %   *** ftarget: target function value; default: -Inf
+%   *** ctol (only if classical = false; see below): tolerance for the constraint
+%       validation; default: machine epsilon
 %   *** rhobeg: initial trust region radius; typically, rhobeg should in the
 %       order of one tenth of the greatest expected change to a variable;
 %       rhobeg should be positive; default: 1 if the problem is not scaled,
@@ -124,21 +127,76 @@ function [x, fx, exitflag, output] = cobyla(varargin)
 %   *** rhoend: final trust region radius; rhoend reflects the precision
 %       of the approximate solution obtained by COBYLA; rhoend should be
 %       positive and not larger than rhobeg; default: 1e-6
+%   *** fortran: a boolean value indicating whether to call Fortran code or
+%       not; default: true
 %   *** classical: a boolean value indicating whether to call the classical
-%       Powell code or not; default: false
+%       version of Powell's Fortran code or not; default: false
 %   *** scale: a boolean value indicating whether to scale the problem
-%       according to bounds or not; default: false; if the problem is to 
-%       be scaled, then rhobeg and rhoend mentioned above will be used as 
+%       according to bounds or not; default: false; if the problem is to
+%       be scaled, then rhobeg and rhoend mentioned above will be used as
 %       the initial and final trust region radii for the scaled  problem
+%   *** eta1, eta2, gamma1, gamma2 (only if classical = false)
+%       eta1, eta2, gamma1, and gamma2 are parameters in the updating scheme
+%       of the trust region radius. Roughly speaking, the trust region radius
+%       is contracted by a factor of gamma1 when the reduction ratio is below
+%       eta1, and  enlarged by a factor of gamma2 when the reduction ratio is
+%       above eta2. It is required that 0 < eta1 <= eta2 < 1 and
+%       0 < gamma1 < 1 < gamma2. Normally, eta1 <= 0.25. It is not recommended
+%       to set eta1 >= 0.5. Default: eta1 = 0.1, eta2 = 0.7, gamma1 = 0.5,
+%       and gamma2 = 2.
+%   *** iprint: a flag deciding how much information will be printed during
+%       the computation; possible values are value 0 (default), 1, -1, 2,
+%       -2, 3, or -3:
+%       0: there will be no printing;
+%       1: a message will be printed to the screen at the return, showing
+%          the best vector of variables found and its objective function value;
+%       2: in addition to 1, at each "new stage" of the computation, a message
+%          is printed to the screen with the best vector of variables so far
+%          and its objective function value;
+%       3: in addition to 2, each function evaluation with its variables will
+%          be printed to the screen;
+%       -1, -2, -3: the same information as 1, 2, 3 will be printed, not to
+%          the screen but to a file named SOLVER_output.txt; the file will be
+%          created if it does not exist; the new output will be appended to
+%          the end of this file if it already exists. Note that iprint = -3
+%          can be costly in terms of time and space.
+%       When quiet = true (see below), setting iprint = 1, 2, or 3 is
+%       the same as setting it to -1, -2, or -3, respectively.
+%       Note:
+%       When classical = true, only iprint = 0 is supported;
+%       When fortran = true, only iprint = 0, -1, -2, -3 are supported
+%       (due to I/O confliction between Fortran and MATLAB);
+%       When quiet = true (see below), setting iprint = 1, 2, or 3 is
+%       the same as setting it to -1, -2, or -3, respectively.
 %   *** quiet: a boolean value indicating whether to keep quiet or not;
-%       default: true (if it is false COBYLA will print the return message 
-%       of the Fortran code)
+%       if this flag is set to false or not set, then it affects nothing;
+%       if it is set to true and iprint = 1, 2, or 3, the effect is the
+%       same as setting iprint to -1, -2, or -3, respectively; default: true
+%   *** maxhist: a nonnegative integer controlling how much history will
+%       be included in the output structure; default: maxfun;
+%       *******************************************************************
+%       IMPORTANT NOTICE:
+%       If maxhist is so large that recording the history takes too much memory,
+%       the Fortran code will reset maxhist to a smaller value. The maximal
+%       amount of memory defined the Fortran code is 2GB.
+%       *******************************************************************
+%   *** output_xhist: a boolean value indicating whether to output the
+%       history of the iterates; if it is set to true, then the output
+%       structure will include a field "xhist", which contains the last
+%       maxhist iterates of the algorithm; default: false;
+%   *** output_nlchist: a boolean value indicating whether to output the
+%       history of the function values; if it is set to true; then the
+%       output structure will include fields "nlcihist" and "nlcehist",
+%       which respectively contain the inequality and equality constraint
+%       values of the last maxhist iterates of the algorithm; default: false
+%   *** maxfilt: a nonnegative integer indicating the maximal length of the
+%       "filter" used for selecting the returned solution; default: 2000
 %   *** debug: a boolean value indicating whether to debug or not; default: false
 %   *** chkfunval: a boolean value indicating whether to verify the returned
 %       function and constraint (if applicable) value or not; default: false
-%       (if it is true, COBYLA will check whether the returned values of fun 
-%       and nonlcon matches fun(x) and nonlcon(x) or not, which costs a 
-%       function/constraint evaluation; designed only for debugging)
+%       (if it is true, COBYLA will check whether the returned values of fun
+%       and nonlcon matches fun(x) and nonlcon(x) or not, which costs
+%       function/constraint evaluations; designed only for debugging)
 %
 %   For example, the following code
 %
@@ -148,7 +206,7 @@ function [x, fx, exitflag, output] = cobyla(varargin)
 %
 %   solves
 %       min cos(x) s.t. 2 * x <= 3
-%   starting from x0=2 with at most 50 function evaluations.
+%   starting from x0=-1 with at most 50 function evaluations.
 %
 %   5. Problem defined by a structure
 %
@@ -299,9 +357,9 @@ elseif ~strcmp(invoker, 'pdfo') && probinfo.nofreex % x was fixed by the bound c
     output.nlceq = probinfo.nlceq_fixedx;
 elseif ~strcmp(invoker, 'pdfo') && probinfo.feasibility_problem && ~strcmp(probinfo.refined_type, 'nonlinearly-constrained')
     output.x = x0;  % prepdfo has tried to set x0 to a feasible point (but may have failed)
-    % We could set fx=[], funcCount=0, and fhist=[] since no function evaluation 
-    % occured. But then we will have to modify the validation of fx, funcCount, 
-    % and fhist in postpdfo. To avoid such a modification, we set fx, funcCount, 
+    % We could set fx=[], funcCount=0, and fhist=[] since no function evaluation
+    % occured. But then we will have to modify the validation of fx, funcCount,
+    % and fhist in postpdfo. To avoid such a modification, we set fx, funcCount,
     % and fhist as below and then revise them in postpdfo.
     output.fx = fun(output.x);  % prepdfo has defined a fake objective function
     output.funcCount = 1;
@@ -317,62 +375,49 @@ elseif ~strcmp(invoker, 'pdfo') && probinfo.feasibility_problem && ~strcmp(probi
     end
 else % The problem turns out 'normal' during prepdfo
     % Include all the constraints into one single 'nonlinear constraint'
-    con = @(x) cobyla_con(x, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
+    funcon = @(x) cobyla_funcon(x, fun, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
     % Detect the number of the constraints (required by the Fortran code)
-    [conval_x0, m_nlcineq, m_nlceq] = con(x0);
-    % m_nlcineq = number of nonlinear inequality constraints
-    % m_nlceq = number of nonlinear equality constraints
-    m = length(conval_x0); % number of constraints
+    [f_x0, constr_x0, m_nlcineq, m_nlceq] = funcon(x0);
+    % m_nlcineq: number of nonlinear inequality constraints
+    % m_nlceq: number of nonlinear equality constraints
+
+    % maxint is the largest integer in the mex functions; the factor 0.99 provides a buffer. We do not
+    % pass any integer larger than maxint to the mexified Fortran code. Otherwise, errors include
+    % SEGFAULT may occur. The value of maxint is about 10^9 on a 32-bit platform and 10^18 on a 64-bit one.
+    maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSI')]));
+    if (length(constr_x0) > maxint)
+        % Public/normal error
+        error(sprintf('%s:ProblemTooLarge', funname), '%s: The problem is too large; at most %d constraints are allowed.', funname, maxint);
+    end
+
     % Extract the options
     maxfun = options.maxfun;
     rhobeg = options.rhobeg;
     rhoend = options.rhoend;
+    eta1 = options.eta1;
+    eta2 = options.eta2;
+    gamma1 = options.gamma1;
+    gamma2 = options.gamma2;
     ftarget = options.ftarget;
-
-    % Check whether the problem is too large for the Fortran code.
-    % In the mex gateway, a workspace of size
-    % nw = n*(3*n+2*m+11)+4*m+6
-    % will be allocated, which is the largest memory allocated by
-    % COBYLA. If the value assigned to nw is so large that overflow
-    % occurs, then there will be a Segmentation Fault!!!
-    % The largest possible value of nw depends on the type of nw in the
-    % mex file, which is the default INTEGER type (~2E9 for integer*4,
-    % and ~9E18 for integer*8). This imposes an upper limit on the size
-    % of problem solvable by this code. If nw is INTEGER*4, assuming
-    % that m=10n, the largest value of n is ~9600. COBYLA is not
-    % designed for so large problems.
-    % In the following code, gethuge returns the largest possible value
-    % of the given data type in the mex environment.
-
-    % The largest integer in the mex functions; the factor 0.99 provides a buffer
-    maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSize'), gethuge('mwIndex')]));
-    n = length(x0);
-    nw = n*(3*n+2*m+11)+4*m+6;
-    if nw >= maxint
-        % nw would suffer from overflow in the Fortran code; exit immediately
-        % Public/normal error
-        if strcmp(invoker, 'pdfo')
-            error(sprintf('%s:ProblemTooLarge', invoker), '%s: problem too large for %s. Try other solvers.', invoker, funname);
-        else
-            error(sprintf('%s:ProblemTooLarge', funname), '%s: problem too large for %s. Try other solvers.', funname, funname);
-        end
-    end
-    if maxfun > maxint
-        % maxfun would suffer from overflow in the Fortran code
-        maxfun = maxint;
-        wid = sprintf('%s:MaxfunTooLarge', funname);
-        wmsg = sprintf('%s: maxfun exceeds the upper limit of Fortran integers; it is set to %d.', funname, maxfun);
-        warning(wid, '%s', wmsg);
-        output.warnings = [output.warnings, wmsg];
-    end
+    ctol = options.ctol;
+    cweight = options.cweight;
+    maxhist = options.maxhist;
+    output_xhist = options.output_xhist;
+    output_nlchist = options.output_nlchist;
+    maxfilt = options.maxfilt;
+    iprint = options.iprint;
 
     % Call the Fortran code
-    try % The mexified Fortran function is a private function generating only private errors; however, public errors can occur due to, e.g., evalobj and evalcon; error handling needed
-        if options.classical
-            [x, fx, exitflag, nf, fhist, conval, constrviolation, chist] = fcobyla_classical(fun, con, x0, rhobeg, rhoend, maxfun, m, ftarget, conval_x0);
-        else
-            [x, fx, exitflag, nf, fhist, conval, constrviolation, chist] = fcobyla(fun, con, x0, rhobeg, rhoend, maxfun, m, ftarget, conval_x0);
-        end
+    if options.classical
+        fsolver = @fcobyla_classical;
+    else
+        fsolver = @fcobyla;
+    end
+    % The mexified Fortran Function is a private function generating only private errors;
+    % however, public errors can occur due to, e.g., evalobj; error handling needed.
+    try
+        [x, fx, constrviolation, constr, exitflag, nf, xhist, fhist, chist, conhist] = ...
+            fsolver(funcon, x0, f_x0, constr_x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, ctol, cweight, maxfun, iprint, maxhist, double(output_xhist), double(output_nlchist), maxfilt);
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
             error(exception.identifier, '%s\n(error generated in %s, line %d)', exception.message, exception.stack(1).file, exception.stack(1).line);
@@ -385,18 +430,31 @@ else % The problem turns out 'normal' during prepdfo
     output.fx = fx;
     output.exitflag = exitflag;
     output.funcCount = nf;
+    if (output_xhist)
+        output.xhist = xhist;
+    end
     output.fhist = fhist;
     output.constrviolation = constrviolation;
     output.chist = chist;
+    if (~options.classical && output_nlchist)  %!!!!
+        output.nlcihist = -conhist(end-m_nlcineq-2*m_nlceq+1 : end-2*m_nlceq, :);
+        if isempty(output.nlcihist)
+            output.nlcihist = []; % We uniformly use [] to represent empty objects
+        end
+        output.nlcehist = -conhist(end-m_nlceq+1 : end, :);
+        if isempty(output.nlcehist)
+            output.nlcehist = []; % We uniformly use [] to represent empty objects
+        end
+    end
     % OUTPUT should also include nonlinear constraint values, if any
     output.nlcineq = [];
     output.nlceq = [];
     if ~isempty(nonlcon)
-        output.nlcineq = -conval(end-m_nlcineq-2*m_nlceq+1 : end-2*m_nlceq);
+        output.nlcineq = -constr(end-m_nlcineq-2*m_nlceq+1 : end-2*m_nlceq);
         if isempty(output.nlcineq)
             output.nlcineq = []; % We uniformly use [] to represent empty objects
         end
-        output.nlceq = -conval(end-m_nlceq+1 : end);
+        output.nlceq = -constr(end-m_nlceq+1 : end);
         if isempty(output.nlceq)
             output.nlceq = []; % We uniformly use [] to represent empty objects
         end
@@ -418,8 +476,13 @@ end
 return
 
 %%%%%%%%%%%%%%%%%%%%%%%%% Auxiliary functions %%%%%%%%%%%%%%%%%%%%%
-function [conval, m_nlcineq, m_nlceq] = cobyla_con(x, Aineq, bineq, Aeq, beq, lb, ub, nonlcon)
-% The Fortran backend takes at input a constraint: conval(x) >= 0
+function [f, constr, m_nlcineq, m_nlceq] = cobyla_funcon(x, fun, Aineq, bineq, Aeq, beq, lb, ub, nonlcon)
+f = fun(x);
+[constr, m_nlcineq, m_nlceq] = cobyla_con(x, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
+return
+
+function [constr, m_nlcineq, m_nlceq] = cobyla_con(x, Aineq, bineq, Aeq, beq, lb, ub, nonlcon)
+% The Fortran backend takes at input a constraint: constr(x) >= 0
 % m_nlcineq = number of nonlinear inequality constraints
 % m_nlceq = number of nonlinear equality constraints
 cineq = [lb(lb>-inf) - x(lb>-inf); x(ub<inf) - ub(ub<inf)];
@@ -430,12 +493,12 @@ end
 if ~isempty(Aeq)
     ceq = [ceq; Aeq*x - beq];
 end
-conval = [-cineq; ceq; -ceq];
+constr = [-cineq; ceq; -ceq];
 if ~isempty(nonlcon)
     [nlcineq, nlceq] = nonlcon(x); % Nonlinear constraints: nlcineq <= 0, nlceq = 0
     m_nlcineq = length(nlcineq);
     m_nlceq = length(nlceq);
-    conval = [conval; -nlcineq; nlceq; -nlceq];
+    constr = [constr; -nlcineq; nlceq; -nlceq];
 else
     m_nlcineq = 0;
     m_nlceq = 0;

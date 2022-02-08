@@ -4,17 +4,17 @@ function [x, fx, exitflag, output] = newuoa(varargin)
 %
 %   minimize    fun(x).
 %
-%   In the backend, NEWUOA calls late Professor M.J.D. Powell's Fotran code 
+%   In the backend, NEWUOA calls late Professor M.J.D. Powell's algorithm
 %   with the same name. The algorithm is described in [M. J. D. Powell,
-%   The NEWUOA software for unconstrained optimization without derivatives, 
-%   In Large-Scale Nonlinear Optimization, eds. G. Di Pillo and M. Roma, 
+%   The NEWUOA software for unconstrained optimization without derivatives,
+%   In Large-Scale Nonlinear Optimization, eds. G. Di Pillo and M. Roma,
 %   pages 255--297, Springer, New York, US, 2006].
 %
 %   1. Basic syntax
-%     
+%
 %   The command
 %
-%   x = newuoa(fun, x0) 
+%   x = newuoa(fun, x0)
 %
 %   solves the problem formulated above, where
 %   *** fun is the name or function handle of the objective function
@@ -28,29 +28,26 @@ function [x, fx, exitflag, output] = newuoa(varargin)
 %
 %   *** x is the approximate solution to the optimization problem
 %   *** fx is fun(x)
-%   *** exitflag is an integer indicating why NEWUOA returns; the
-%       possible values are 
+%   *** exitflag is an integer indicating why NEWUOA returns; the possible values are
 %       0: the lower bound for the trust region radius is reached
 %       1: the target function value is achieved
-%       2: a trust region step failed to reduce the quadratic model
+%       2: a trust region step failed to reduce the quadratic model (possible only in classical mode)
 %       3: the objective function has been evaluated maxfun times
-%       4, 7, 8, 9: rounding errors become severe in the Fortran code 
 %       14: a linear feasibility problem received and solved
-%       -1: NaN occurs in x
-%       -2: the objective function returns an NaN or nearly infinite
-%       value (only in the classical mode)
-%       -3: NaN occurs in the models
-%       exitflag = 5, 10, 11, 12 are possible exitflags of the Fortran
-%       code but cannot be returned by NEWUOA 
+%       20: the trust-region iteration has been performed for 10*maxfun times
+%       -1: NaN occurs in x (possible only in the classical mode)
+%       -2: the objective function returns an Inf/NaN value (possible only in classical mode)
+%       -3: NaN occurs in the models (possible only in classical mode)
 %   *** output is a structure with the following fields:
 %       funcCount: number of function evaluations
+%       xhist: history of iterates (if options.output_xhist = true)
 %       fhist: history of function values
 %       solver: backend solver that does the computation, i.e., 'newuoa'
 %       message: return message
 %       warnings: a cell array that records all the  warnings raised
 %       during the computation
-%   
-%   3. Options 
+%
+%   3. Options
 %
 %   The same as FMINCON, NEWUOA accepts options passed by a structure.
 %   Such a structure should be passed as an additional input appended to
@@ -61,54 +58,100 @@ function [x, fx, exitflag, output] = newuoa(varargin)
 %   *** ftarget: target function value; default: -Inf
 %   *** rhobeg: initial trust region radius; typically, rhobeg should be in
 %       the order of one tenth of the greatest expected change to a variable;
-%       rhobeg should be positive; default: 1 
+%       rhobeg should be positive; default: 1
 %   *** rhoend: final trust region radius; rhoend reflects the precision
 %       of the approximate solution obtained by NEWUOA; rhoend should be
 %       positive and not larger than rhobeg; default: 1e-6
 %   *** npt: number of interpolation points for constructing a model
 %       default: 2*length(x0)+1
-%   *** classical: a boolean value indicating whether to call the classical 
-%       Powell code or not; default: false
+%   *** fortran: a boolean value indicating whether to call Fortran code or
+%       not; default: true
+%   *** classical: a boolean value indicating whether to call the classical
+%       version of Powell's Fortran code or not; default: false
+%   *** eta1, eta2, gamma1, gamma2 (only if classical = false)
+%       eta1, eta2, gamma1, and gamma2 are parameters in the updating scheme
+%       of the trust region radius. Roughly speaking, the trust region radius
+%       is contracted by a factor of gamma1 when the reduction ratio is below
+%       eta1, and  enlarged by a factor of gamma2 when the reduction ratio is
+%       above eta2. It is required that 0 < eta1 <= eta2 < 1 and
+%       0 < gamma1 < 1 < gamma2. Normally, eta1 <= 0.25. It is not recommended
+%       to set eta1 >= 0.5. Default: eta1 = 0.1, eta2 = 0.7, gamma1 = 0.5,
+%       and gamma2 = 2.
+%   *** iprint: a flag deciding how much information will be printed during
+%       the computation; possible values are value 0 (default), 1, -1, 2,
+%       -2, 3, or -3.
+%       0: there will be no printing; this is the default;
+%       1: a message will be printed to the screen at the return, showing
+%          the best vector of variables found and its objective function value;
+%       2: in addition to 1, at each "new stage" of the computation, a message
+%          is printed to the screen with the best vector of variables so far
+%          and its objective function value;
+%       3: in addition to 2, each function evaluation with its variables will
+%          be printed to the screen;
+%       -1, -2, -3: the same information as 1, 2, 3 will be printed, not to
+%          the screen but to a file named NEWUOA_output.txt; the file will be
+%          created if it does not exist; the new output will be appended to
+%          the end of this file if it already exists. Note that iprint = -3
+%          can be costly in terms of time and space.
+%       Note:
+%       When classical = true, only iprint = 0 is supported;
+%       When fortran = true, only iprint = 0, -1, -2, -3 are supported
+%       (due to I/O confliction between Fortran and MATLAB);
+%       When quiet = true (see below), setting iprint = 1, 2, or 3 is
+%       the same as setting it to -1, -2, or -3, respectively.
 %   *** quiet: a boolean value indicating whether to keep quiet or not;
-%       default: true (if it is false, NEWUOA will print the return message of
-%       the Fortran code)
+%       if this flag is set to false or not set, then it affects nothing;
+%       if it is set to true and iprint = 1, 2, or 3, the effect is the
+%       same as setting iprint to -1, -2, or -3, respectively; default: true
+%   *** maxhist: a nonnegative integer controlling how much history will
+%       be included in the output structure; default: maxfun;
+%       *******************************************************************
+%       IMPORTANT NOTICE:
+%       If maxhist is so large that recording the history takes too much memory,
+%       the Fortran code will reset maxhist to a smaller value. The maximal
+%       amount of memory defined the Fortran code is 2GB.
+%       *******************************************************************
+%   *** output_xhist: a boolean value indicating whether to output the
+%       history of the iterates; if it is set to true, then the output
+%       structure will include a field "xhist", which contains the last
+%       maxhist iterates of the algorithm; default: false
 %   *** debug: a boolean value indicating whether to debug or not; default: false
-%   *** chkfunval: a boolean value indicating whether to verify the returned 
+%   *** chkfunval: a boolean value indicating whether to verify the returned
 %       function value or not; default: false
 %       (if it is true, NEWUOA will check whether the returned value of fx
 %       matches fun(x) or not, which costs a function evaluation;
-%       designed only for debugging) 
+%       designed only for debugging)
 %
-%   For example, the following code 
-%   
+%   For example, the following code
+%
 %   options = struct();
 %   options.maxfun = 50;
 %   x = newuoa(@cos, -1, options);
 %
-%   solves 
-%       min cos(x) 
-%   starting from x0=2 with at most 50 function evaluations.
+%   solves
+%       min cos(x)
+%   starting from x0=-1 with at most 50 function evaluations.
 %
 %   4. Problem defined by a structure
 %
 %   The same as FMINCON, a problem can be passed to NEWUOA by a structure
-%   PROBLEM containing the following fields: 
+%   PROBLEM containing the following fields:
 %   PROBLEM.objective, PROBLEM.x0, PROBLEM.options, where
 %   PROBLEM.objective is the function name or function handle of the
-%   objective function (corresponding to the input 'fun' mentioned above), 
+%   objective function (corresponding to the input 'fun' mentioned above),
 %   and all the other fields correspond to the inputs introduced above with
-%   the same names. 
+%   the same names.
 %
-%   For example, the following code 
+%   For example, the following code
 %
 %   problem = struct();
 %   problem.objective = @cos;
 %   problem.x0 = -1;
 %   problem.options.maxfun = 50;
 %   x = newuoa(problem);
-%   
-%   solves 
-%       min cos(x) 
+%
+%   solves
+%       min cos(x)
 %   starting from x0=-1 with at most 50 function evaluations.
 %
 %   See also PDFO, UOBYQA, BOBYQA, LINCOA, COBYLA.
@@ -116,7 +159,7 @@ function [x, fx, exitflag, output] = newuoa(varargin)
 %   See https://www.pdfo.net for more information.
 %
 %   ***********************************************************************
-%   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk) 
+%   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
 %               and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
 %               Department of Applied Mathematics,
 %               The Hong Kong Polytechnic University.
@@ -126,19 +169,19 @@ function [x, fx, exitflag, output] = newuoa(varargin)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Attribute: public (can  be called directly by users)
-% 
-% Remarks: 
+%
+% Remarks:
 % !!! TREAT probinfo AS A READONLY VARIABLE AFTER PREPDFO !!!
-% !!! DO NOT CHANGE probinfo AFTER PREPDFO !!! 
+% !!! DO NOT CHANGE probinfo AFTER PREPDFO !!!
 %
 % TODO: None
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % newuoa starts
 callstack = dbstack;
-funname = callstack(1).name; % Name of the current function 
+funname = callstack(1).name; % Name of the current function
 if length(callstack) >= 2
-    invoker = callstack(2).name; % Name of the function who calls this function 
+    invoker = callstack(2).name; % Name of the function who calls this function
 else
     invoker = '';
 end
@@ -146,15 +189,15 @@ internal_invokers = {'pdfo'}; % Invokers from this package; may have others in t
 
 % OUTPUT records the information that is produced by the solver and
 % intended to pass to postpdfo.
-% OUTPUT should contain at least x, fx, exitflag, funcCount, and constrviolation; 
+% OUTPUT should contain at least x, fx, exitflag, funcCount, and constrviolation;
 % for internal solvers (solvers from PDFO), it should also contain fhist, chist, warnings;
-% for lincoa, it should also contain constr_modified; 
-% for nonlinearly constrained internal solvers, it should also contain nlcineq and nlceq. 
+% for lincoa, it should also contain constr_modified;
+% for nonlinearly constrained internal solvers, it should also contain nlcineq and nlceq.
 output = struct();
-% N.B.: DO NOT record anything in PROBINFO. If the solver is called by pdfo, 
-% then postpdfo will do nothing; the real postprocessing will be done when 
-% pdfo calls postpdfo using the OUTPUT returned by solver together with the 
-% PROBINFO in pdfo; that said, in such a senario, the PROBINFO of this solver 
+% N.B.: DO NOT record anything in PROBINFO. If the solver is called by pdfo,
+% then postpdfo will do nothing; the real postprocessing will be done when
+% pdfo calls postpdfo using the OUTPUT returned by solver together with the
+% PROBINFO in pdfo; that said, in such a senario, the PROBINFO of this solver
 % will NOT be passed to the real postprocessing. Indeed, the PROBINFO of
 % this solver is set to empty in prepdfo.
 
@@ -174,9 +217,9 @@ if (nvararg < 1)
     end
 elseif (nvararg == 1)
     args = varargin; % If there is only 1 input, then it is a structure specifying the problem
-elseif (nvararg >= 2 && nvararg <= maxarg) 
+elseif (nvararg >= 2 && nvararg <= maxarg)
     varargin = [varargin, cell(1, maxarg-nvararg)]; % 'augment' the inputs to maxarg by adding []
-    % cell(m,n) returns an mxn array of [] 
+    % cell(m,n) returns an mxn array of []
     args = [varargin(1:2), cell(1, 7), varargin(end)]; % args{:} (should have 10 entries) will be the inputs for prepdfo
 else
     if ismember(invoker, internal_invokers) % Private/unexpected error
@@ -186,16 +229,16 @@ else
     end
 end
 
-% Preprocess the input 
-% Even if invoker='pdfo', we still need to call prepdfo, which will assign 
+% Preprocess the input
+% Even if invoker='pdfo', we still need to call prepdfo, which will assign
 % values to fun, x0, ..., options.
 try % prepdfo is a private function that may generate public errors; error-handling needed
-    [fun, x0, ~, ~, ~, ~, ~, ~, ~, options, probinfo] = prepdfo(args{:}); 
+    [fun, x0, ~, ~, ~, ~, ~, ~, ~, options, probinfo] = prepdfo(args{:});
 catch exception
-    if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly 
+    if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
         error(exception.identifier, '%s\n(error generated in %s, line %d)', exception.message, exception.stack(1).file, exception.stack(1).line);
     else % Private error; displayed as is
-        rethrow(exception); 
+        rethrow(exception);
     end
 end
 
@@ -204,14 +247,21 @@ npt = options.npt;
 maxfun = options.maxfun;
 rhobeg = options.rhobeg;
 rhoend = options.rhoend;
+eta1 = options.eta1;
+eta2 = options.eta2;
+gamma1 = options.gamma1;
+gamma2 = options.gamma2;
 ftarget = options.ftarget;
+maxhist = options.maxhist;
+output_xhist = options.output_xhist;
+iprint = options.iprint;
 
 if ~strcmp(invoker, 'pdfo') && probinfo.feasibility_problem
     % An "unconstrained feasibility problem" is rediculous, yet nothing wrong mathematically.
     output.x = x0;
-    % We could set fx=[], funcCount=0, and fhist=[] since no function evaluation 
-    % occured. But then we will have to modify the validation of fx, funcCount, 
-    % and fhist in postpdfo. To avoid such a modification, we set fx, funcCount, 
+    % We could set fx=[], funcCount=0, and fhist=[] since no function evaluation
+    % occured. But then we will have to modify the validation of fx, funcCount,
+    % and fhist in postpdfo. To avoid such a modification, we set fx, funcCount,
     % and fhist as below and then revise them in postpdfo.
     output.fx = fun(output.x);  % prepdfo has defined a fake objective function
     output.exitflag = 14;
@@ -220,63 +270,22 @@ if ~strcmp(invoker, 'pdfo') && probinfo.feasibility_problem
     output.constrviolation = 0; % Unconstrained problem; set output.constrviolation to 0
     output.chist = []; % Unconstrained problem; set output.chist to []
 else
-    % Check whether the problem is too large for the Fortran code
-    % In the mex gateway, a workspace of size 
-    % nw = (npt+13)*(npt+n)+3*n*(n+3)/2 + 1 (see below).
-    % will be allocated, which is the largest memory allocated by
-    % NEWUOA. If the value assigned to nw is so large that overflow
-    % occurs, then there will be a Segmentation Fault!!! 
-    % The largest possible value of nw depends on the type of nw in the
-    % mex file, which is the default INTEGER type (~2E9 for integer*4, 
-    % and ~9E18 for integer*8). This imposes an upper limit on the size the
-    % size of problem solvable by this code. If nw is INTEGER*4, assuming
-    % that npt=2n+1, the largest value of n is ~16000. NEWUOA is not
-    % designed for so large problems.
-    % In the following code, gethuge returns the largest possible value of
-    % the given data type in the mex environment.
-    
-    % The largest integer in the mex functions; the factor 0.99 provides a buffer
-    maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSize'), gethuge('mwIndex')]));
-    n = length(x0);
-    minnw = (n+15)*(2*n+2)+3*n*(n+3)/2 + 1;
-    % minnw is the smallest possible nw, i.e., nw with the smallest npt, i.e., npt=n+2 
-    if minnw >= maxint  
-        % nw would suffer from overflow in the Fortran code; exit immediately 
-        % Public/normal error
-        if strcmp(invoker, 'pdfo')
-            error(sprintf('%s:ProblemTooLarge', invoker), '%s: problem too large for %s. Try other solvers.', invoker, funname);
-        else
-            error(sprintf('%s:ProblemTooLarge', funname), '%s: problem too large for %s. Try other solvers.', funname, funname);
-        end
-    end
-    maxnpt = max(n+2, floor(0.5*(-(n+13)+sqrt((n-13)^2+4*(maxint-3*n*(n+3)/2-1)))));
-    % maxnpt is the largest possible value of npt given that nw <= maxint
-    if npt > maxnpt
-        npt = maxnpt;
-        wid = sprintf('%s:NptTooLarge', funname);
-        wmsg = sprintf('%s: npt is so large that it is unable to allocate the workspace; it is set to %d.', funname, npt);
-        warning(wid, '%s', wmsg);
-        output.warnings = [output.warnings, wmsg];
-    end
-    if maxfun > maxint
-        % maxfun would suffer from overflow in the Fortran code 
-        maxfun = maxint;
-        wid = sprintf('%s:MaxfunTooLarge', funname);
-        wmsg = sprintf('%s: maxfun exceeds the upper limit of Fortran integers; it is set to %d.', funname, maxfun);
-        warning(wid, '%s', wmsg);
-        output.warnings = [output.warnings, wmsg];
-    end
-
-    try
     % Call the Fortran code
-    % The mexified Fortran Function is a private function generating only private errors; however, public errors can occur due to, e.g., evalobj; error handling needed 
-        if options.classical
-            [x, fx, exitflag, nf, fhist] = fnewuoa_classical(fun, x0, rhobeg, rhoend, maxfun, npt, ftarget);
-        else
-            [x, fx, exitflag, nf, fhist] = fnewuoa(fun, x0, rhobeg, rhoend, maxfun, npt, ftarget);
-        end
+    if options.classical
+        fsolver = @fnewuoa_classical;
+    else
+        fsolver = @fnewuoa;
+    end
+    % The mexified Fortran Function is a private function generating only private errors;
+    % however, public errors can occur due to, e.g., evalobj; error handling needed.
+    try
+        [x, fx, exitflag, nf, xhist, fhist] = ...
+            fsolver(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, iprint, maxhist, double(output_xhist));
+        %    % Fortran MEX does not provide an API for reading Boolean variables. So we convert
+        %    % output_xhist to a scalar (0 or 1) and read it as an integer in the MEX gateway.
+        %    % In C MEX, however, we have mxGetLogicals.
     catch exception
-        if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly 
+        if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
             error(exception.identifier, '%s\n(error generated in %s, line %d)', exception.message, exception.stack(1).file, exception.stack(1).line);
         else % Private error; displayed as is
             rethrow(exception);
@@ -287,19 +296,22 @@ else
     output.fx = fx;
     output.exitflag = exitflag;
     output.funcCount = nf;
+    if output_xhist
+        output.xhist = xhist;
+    end
     output.fhist = fhist;
     output.constrviolation = 0; % Unconstrained problem; set output.constrviolation to 0
     output.chist = []; % Unconstrained problem; set output.chist to []
 end
 
-% Postprocess the result 
+% Postprocess the result
 try % postpdfo is a private function that may generate public errors; error-handling needed
     [x, fx, exitflag, output] = postpdfo(probinfo, output);
 catch exception
-    if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly 
+    if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
         error(exception.identifier, '%s\n(error generated in %s, line %d)', exception.message, exception.stack(1).file, exception.stack(1).line);
     else % Private error; displayed as is
-        rethrow(exception); 
+        rethrow(exception);
     end
 end
 
