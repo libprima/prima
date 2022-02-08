@@ -1,0 +1,49 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+!
+! Authors:
+!     Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
+!     and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
+!     Department of Applied Mathematics,
+!     The Hong Kong Polytechnic University.
+!
+! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+
+python module calfun__user__routines
+    interface calfun_user_routines
+        function fun(n,x) result (f)
+            integer :: n
+            double precision, dimension(n) :: x
+            double precision :: f
+            intent(callback,hide) fun
+        end function fun
+    end interface calfun_user_routines
+end python module calfun__user__routines
+
+python module fnewuoa
+    interface
+        module fnewuoa
+            use pdfoconst
+            integer :: nf
+            double precision, allocatable, dimension(:) :: fhist
+        end module fnewuoa
+        subroutine mnewuoa(n,npt,x,rhobeg,rhoend,iprint,maxfun,w,f,info,funhist,ftarget)
+            use fnewuoa
+            use calfun__user__routines
+            intent(callback) fun
+            external fun
+            integer, intent(in) :: n
+            integer, intent(in) :: npt
+            double precision, dimension(n), intent(in,out,copy) :: x
+            double precision, intent(in) :: rhobeg
+            double precision, intent(in) :: rhoend
+            integer, intent(in) :: iprint
+            integer, intent(in) :: maxfun
+            double precision, dimension((npt+13)*(npt+n)+3*n*(n+3)/2+1), intent(in,hide) :: w
+            double precision, intent(out) :: f
+            integer, intent(out) :: info
+            double precision, dimension(maxfun), intent(out) :: funhist
+            double precision, intent(in) :: ftarget
+        end subroutine mnewuoa
+    end interface
+end python module fnewuoa

@@ -4,16 +4,16 @@ function [x, fx, exitflag, output] = uobyqa(varargin)
 %
 %   minimize    fun(x).
 %
-%   In the backend, UOBYQA calls late Professor M.J.D. Powell's Fotran code 
+%   In the backend, UOBYQA calls late Professor M.J.D. Powell's algorithm
 %   with the same name. The algorithm is described in [M. J. D. Powell,
 %   UOBYQA: unconstrained optimization by quadratic approximation. Math.
 %   Program., 92(B):555--582, 2002].
 %
 %   1. Basic syntax
-%   
+%
 %   The command
 %
-%   x = uobyqa(fun, x0) 
+%   x = uobyqa(fun, x0)
 %
 %   solves the problem formulated above, where
 %   *** fun is the name or function handle of the objective function
@@ -28,19 +28,20 @@ function [x, fx, exitflag, output] = uobyqa(varargin)
 %   *** x is the approximate solution to the optimization problem
 %   *** fx is fun(x)
 %   *** exitflag is an integer indicating why UOBYQA returns; the
-%       possible values are 
+%       possible values are
 %       0: the lower bound for the trust-region radius is reached
 %       1: the target function value is achieved
 %       2: a trust-region step failed to reduce the quadratic model
 %       3: the objective function has been evaluated maxfun times
-%       4, 7, 8, 9: rounding errors become severe in the Fortran code 
+%       4, 7, 8, 9: rounding errors become severe in the Fortran code
 %       14: a linear feasibility problem received and solved
+%       20: the trust-region iteration has been performed for 10*maxfun times
 %       -1: NaN occurs in x
 %       -2: the objective function returns and NaN or nearly infinite
 %       value (only in the classical mode)
 %       -3: NaN occurs in the models
 %       exitflag = 5, 10, 11, 12 are possible exitflags of the Fortran
-%       code but cannot be returned by UOBYQA 
+%       code but cannot be returned by UOBYQA
 %   *** output is a structure with the following fields:
 %       funcCount: number of function evaluations
 %       fhist: history of function values
@@ -48,8 +49,8 @@ function [x, fx, exitflag, output] = uobyqa(varargin)
 %       message: return message
 %       warnings: a cell array that records all the  warnings raised
 %       during the computation
-%   
-%   3. Options 
+%
+%   3. Options
 %
 %   The same as FMINCON, UOBYQA accepts options passed by a structure.
 %   Such a structure should be passed as an additional input appended to
@@ -60,52 +61,91 @@ function [x, fx, exitflag, output] = uobyqa(varargin)
 %   *** ftarget: target function value; default: -Inf
 %   *** rhobeg: initial trust-region radius; typically, rhobeg should be in
 %       the order of one tenth of the greatest expected change to a variable;
-%       rhobeg should be positive; default: 1 
+%       rhobeg should be positive; default: 1
 %   *** rhoend: final trust-region radius; rhoend reflects the precision
 %       of the approximate solution obtained by UOBYQA; rhoend should be
 %       positive and not larger than rhobeg; default: 1e-6
-%   *** classical: a boolean value indicating whether to call the classical 
-%       Powell code or not; default: false
+%   *** fortran: a boolean value indicating whether to call Fortran code or
+%       not; default: true
+%   *** classical: a boolean value indicating whether to call the classical
+%       version of Powell's Fortran code or not; default: false
+%   *** iprint: a flag deciding how much information will be printed during
+%       the computation; possible values are value 0 (default), 1, -1, 2,
+%       -2, 3, or -3:
+%       0: there will be no printing;
+%       1: a message will be printed to the screen at the return, showing
+%          the best vector of variables found and its objective function value;
+%       2: in addition to 1, at each "new stage" of the computation, a message
+%          is printed to the screen with the best vector of variables so far
+%          and its objective function value;
+%       3: in addition to 2, each function evaluation with its variables will
+%          be printed to the screen;
+%       -1, -2, -3: the same information as 1, 2, 3 will be printed, not to
+%          the screen but to a file named SOLVER_output.txt; the file will be
+%          created if it does not exist; the new output will be appended to
+%          the end of this file if it already exists. Note that iprint = -3
+%          can be costly in terms of time and space.
+%       When quiet = true (see below), setting iprint = 1, 2, or 3 is
+%       the same as setting it to -1, -2, or -3, respectively.
+%       Note:
+%       When classical = true, only iprint = 0 is supported;
+%       When fortran = true, only iprint = 0, -1, -2, -3 are supported
+%       (due to I/O confliction between Fortran and MATLAB);
+%       When quiet = true (see below), setting iprint = 1, 2, or 3 is
+%       the same as setting it to -1, -2, or -3, respectively.
 %   *** quiet: a boolean value indicating whether to keep quiet or not;
-%       default: true (if it is false, UOBYQA will print the return message of
-%       the Fortran code)
+%       if this flag is set to false or not set, then it affects nothing;
+%       if it is set to true and iprint = 1, 2, or 3, the effect is the
+%       same as setting iprint to -1, -2, or -3, respectively; default: true
+%   *** maxhist: a nonnegative integer controlling how much history will
+%       be included in the output structure; default: maxfun;
+%       *******************************************************************
+%       IMPORTANT NOTICE:
+%       If maxhist is so large that recording the history takes too much memory,
+%       the Fortran code will reset maxhist to a smaller value. The maximal
+%       amount of memory defined the Fortran code is 2GB.
+%       *******************************************************************
+%   *** output_xhist: a boolean value indicating whether to output the
+%       history of the iterates; if it is set to true, then the output
+%       structure will include a field "xhist", which contains the last
+%       maxhist iterates of the algorithm; default: false;
 %   *** debug: a boolean value indicating whether to debug or not; default: false
-%   *** chkfunval: a boolean value indicating whether to verify the returned 
+%   *** chkfunval: a boolean value indicating whether to verify the returned
 %       function value or not; default: false
 %       (if it is true, UOBYQA will check whether the returned value of fx
-%       matches fun(x) or not, which costs a function evaluation; designed 
-%       only for debugging) 
+%       matches fun(x) or not, which costs a function evaluation; designed
+%       only for debugging)
 %
-%   For example, the following code 
-%   
+%   For example, the following code
+%
 %   options = struct();
 %   options.maxfun = 50;
 %   x = uobyqa(@cos, -1, options);
 %
-%   solves 
-%       min cos(x) 
-%   starting from x0=2 with at most 50 function evaluations.
+%   solves
+%       min cos(x)
+%   starting from x0=-1 with at most 50 function evaluations.
 %
 %   4. Problem defined by a structure
 %
 %   The same as FMINCON, a problem can be passed to UOBYQA by a structure
-%   PROBLEM containing the following fields: 
+%   PROBLEM containing the following fields:
 %   PROBLEM.objective, PROBLEM.x0, PROBLEM.options, where
 %   PROBLEM.objective is the function name or function handle of the
-%   objective function (corresponding to the input 'fun' mentioned above), 
+%   objective function (corresponding to the input 'fun' mentioned above),
 %   and all the other fields correspond to the inputs introduced above with
 %   the same names.
 %
-%   For example, the following code 
+%   For example, the following code
 %
 %   problem = struct();
 %   problem.objective = @cos;
 %   problem.x0 = -1;
 %   problem.options.maxfun = 50;
 %   x = uobyqa(problem);
-%   
-%   solves 
-%       min cos(x) 
+%
+%   solves
+%       min cos(x)
 %   starting from x0=-1 with at most 50 function evaluations.
 %
 %   See also PDFO, NEWUOA, BOBYQA, LINCOA, COBYLA.
@@ -113,7 +153,7 @@ function [x, fx, exitflag, output] = uobyqa(varargin)
 %   See https://www.pdfo.net for more information.
 %
 %   ***********************************************************************
-%   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk) 
+%   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
 %               and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
 %               Department of Applied Mathematics,
 %               The Hong Kong Polytechnic University.
@@ -123,10 +163,10 @@ function [x, fx, exitflag, output] = uobyqa(varargin)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Attribute: public (can  be called directly by users)
-% 
-% Remarks: 
+%
+% Remarks:
 % !!! TREAT probinfo AS A READONLY VARIABLE AFTER PREPDFO !!!
-% !!! DO NOT CHANGE probinfo AFTER PREPDFO !!! 
+% !!! DO NOT CHANGE probinfo AFTER PREPDFO !!!
 %
 % TODO: None
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -134,9 +174,9 @@ function [x, fx, exitflag, output] = uobyqa(varargin)
 % uobyqa starts
 
 callstack = dbstack;
-funname = callstack(1).name; % Name of the current function 
+funname = callstack(1).name; % Name of the current function
 if length(callstack) >= 2
-    invoker = callstack(2).name; % Name of the function who calls this function 
+    invoker = callstack(2).name; % Name of the function who calls this function
 else
     invoker = '';
 end
@@ -144,15 +184,15 @@ internal_invokers = {'pdfo'}; % Invokers from this package; may have others in t
 
 % OUTPUT records the information that is produced by the solver and
 % intended to pass to postpdfo.
-% OUTPUT should contain at least x, fx, exitflag, funcCount, and constrviolation; 
+% OUTPUT should contain at least x, fx, exitflag, funcCount, and constrviolation;
 % for internal solvers (solvers from PDFO), it should also contain fhist, chist, warnings;
-% for lincoa, it should also contain constr_modified; 
-% for nonlinearly constrained internal solvers, it should also contain nlcineq and nlceq. 
+% for lincoa, it should also contain constr_modified;
+% for nonlinearly constrained internal solvers, it should also contain nlcineq and nlceq.
 output = struct();
-% N.B.: DO NOT record anything in PROBINFO. If the solver is called by pdfo, 
-% then postpdfo will do nothing; the real postprocessing will be done when 
-% pdfo calls postpdfo using the OUTPUT returned by solver together with the 
-% PROBINFO in pdfo; that said, in such a senario, the PROBINFO of this solver 
+% N.B.: DO NOT record anything in PROBINFO. If the solver is called by pdfo,
+% then postpdfo will do nothing; the real postprocessing will be done when
+% pdfo calls postpdfo using the OUTPUT returned by solver together with the
+% PROBINFO in pdfo; that said, in such a senario, the PROBINFO of this solver
 % will NOT be passed to the real postprocessing. Indeed, the PROBINFO of
 % this solver is set to empty in prepdfo.
 
@@ -172,9 +212,9 @@ if (nvararg < 1)
     end
 elseif (nvararg == 1)
     args = varargin; % If there is only 1 input, then it is a structure specifying the problem
-elseif (nvararg >= 2 && nvararg <= maxarg) 
+elseif (nvararg >= 2 && nvararg <= maxarg)
     varargin = [varargin, cell(1, maxarg-nvararg)]; % 'augment' the inputs to maxarg by adding []
-    % cell(m,n) returns an mxn array of [] 
+    % cell(m,n) returns an mxn array of []
     args = [varargin(1:2), cell(1, 7), varargin(end)]; % args{:} (should have 10 entries) will be the inputs for prepdfo
 else
     if ismember(invoker, internal_invokers) % Private/unexpected error
@@ -184,16 +224,16 @@ else
     end
 end
 
-% Preprocess the input 
-% Even if invoker='pdfo', we still need to call prepdfo, which will assign 
+% Preprocess the input
+% Even if invoker='pdfo', we still need to call prepdfo, which will assign
 % values to fun, x0, ..., options.
 try % prepdfo is a private function that may generate public errors; error-handling needed
-    [fun, x0, ~, ~, ~, ~, ~, ~, ~, options, probinfo] = prepdfo(args{:}); 
+    [fun, x0, ~, ~, ~, ~, ~, ~, ~, options, probinfo] = prepdfo(args{:});
 catch exception
-    if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly 
+    if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
         error(exception.identifier, '%s\n(error generated in %s, line %d)', exception.message, exception.stack(1).file, exception.stack(1).line);
     else % Private error; displayed as is
-        rethrow(exception); 
+        rethrow(exception);
     end
 end
 
@@ -206,9 +246,9 @@ ftarget = options.ftarget;
 if ~strcmp(invoker, 'pdfo') && probinfo.feasibility_problem
     % An "unconstrained feasibility problem" is rediculous, yet nothing wrong mathematically.
     output.x = x0;
-    % We could set fx=[], funcCount=0, and fhist=[] since no function evaluation 
-    % occured. But then we will have to modify the validation of fx, funcCount, 
-    % and fhist in postpdfo. To avoid such a modification, we set fx, funcCount, 
+    % We could set fx=[], funcCount=0, and fhist=[] since no function evaluation
+    % occured. But then we will have to modify the validation of fx, funcCount,
+    % and fhist in postpdfo. To avoid such a modification, we set fx, funcCount,
     % and fhist as below and then revise them in postpdfo.
     output.fx = fun(output.x);  % prepdfo has defined a fake objective function
     output.exitflag = 14;
@@ -217,63 +257,24 @@ if ~strcmp(invoker, 'pdfo') && probinfo.feasibility_problem
     output.constrviolation = 0; % Unconstrained problem; set output.constrviolation to 0
     output.chist = []; % Unconstrained problem; set output.chist to []
 else
-    n = length(x0);
-    if (n <= 1)
+    if (length(x0) <= 1)
         wid = sprintf('%s:UnivariateProblem', funname);
         wmsg = sprintf('%s: a univariate problem received; %s may fail. Try other solvers.', funname, funname);
         warning(wid, '%s', wmsg);
         output.warnings = [output.warnings, wmsg];
     end
 
-    % Check whether the problem is too large for the Fortran code
-    % In the mex gateway, a workspace of size 
-    % nw = (n*(42+n*(23+n*(8+n)))+max(2*n*n+4,18*n))/4 + 1 (see below).
-    % will be allocated, which is the largest memory allocated by
-    % UOBYQA. If the value assigned to nw is so large that overflow
-    % occurs, then there will be a Segmentation Fault!!! 
-    % The largest possible value of nw depends on the type of nw in the
-    % mex file, which is the default INTEGER type (~2E9 for integer*4, 
-    % and ~9E18 for integer*8). This imposes an upper limit on the size the
-    % size of problem solvable by this code. If nw is INTEGER*4, the largest
-    % value of n is ~300. UOBYQA is not designed for so large problems.
-    % Indeed, when n > 10, NEWUOA/BOBYQA/LINCOA can solve unconstrained
-    % problems much more efficiently. 
-    % In the following code, gethuge returns the largest possible value of
-    % the given data type in the mex environment.
-    
-    % The largest integer in the mex functions; the factor 0.99 provides a buffer
-    maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSize'), gethuge('mwIndex')]));
-    nw = (n*(42+n*(23+n*(8+n)))+max(2*n*n+4,18*n))/4 + 1;
-    if nw >= maxint 
-        % nw would suffer from overflow in the Fortran code; exit immediately 
-        % Public/normal error
-        if strcmp(invoker, 'pdfo')
-            error(sprintf('%s:ProblemTooLarge', invoker), '%s: problem too large for %s. Try other solvers.', invoker, funname);
-        else
-            error(sprintf('%s:ProblemTooLarge', funname), '%s: problem too large for %s. Try other solvers.', funname, funname);
-        end
-    end
-    if maxfun > maxint
-        % maxfun would suffer from overflow in the Fortran code 
-        maxfun = maxint;
-        % Obviously, nw >= (n+1)(n+2)/2. If nw < maxint, 
-        % then maxint > (n+1)(n+2)/2, and hence maxfun > (n+1)(n+2)/2 is guaranteed
-        wid = sprintf('%s:MaxfunTooLarge', funname);
-        wmsg = sprintf('%s: maxfun exceeds the upper limit of Fortran integers; it is set to %d.', funname, maxfun);
-        warning(wid, '%s', wmsg);
-        output.warnings = [output.warnings, wmsg];
-    end
-
-    try
     % Call the Fortran code
-    % The mexified Fortran Function is a private function generating only private errors; however, public errors can occur due to, e.g., evalobj; error handling needed 
+    try
+        % The mexified Fortran Function is a private function generating only private errors;
+        % however, public errors can occur due to, e.g., evalobj; error handling needed
         if options.classical
             [x, fx, exitflag, nf, fhist] = fuobyqa_classical(fun, x0, rhobeg, rhoend, maxfun, ftarget);
         else
             [x, fx, exitflag, nf, fhist] = fuobyqa(fun, x0, rhobeg, rhoend, maxfun, ftarget);
         end
     catch exception
-        if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly 
+        if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
             error(exception.identifier, '%s\n(error generated in %s, line %d)', exception.message, exception.stack(1).file, exception.stack(1).line);
         else % Private error; displayed as is
             rethrow(exception);
@@ -289,14 +290,14 @@ else
     output.chist = []; % Unconstrained problem; set output.chist to []
 end
 
-% Postprocess the result 
+% Postprocess the result
 try % postpdfo are private functions that may generate public errors; error-handling needed
     [x, fx, exitflag, output] = postpdfo(probinfo, output);
 catch exception
-    if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly 
+    if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
         error(exception.identifier, '%s\n(error generated in %s, line %d)', exception.message, exception.stack(1).file, exception.stack(1).line);
     else % Private error; displayed as is
-        rethrow(exception); 
+        rethrow(exception);
     end
 end
 

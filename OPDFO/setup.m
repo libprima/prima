@@ -66,17 +66,12 @@ function setup(varargin)
 % by dirname, then the following would workd for MATLAB later than R2016a:
 % delete(fullfile(dirname, '*.mod'));
 % However, MATLAB R2015b would complain that it cannot find '*.mod'.
-% Similarly, to compile solver (see the code between 'try' and 'catch'),
-% for MATLAB later than R2016a (but not 2015b), the following code would work:
-% mex(mex_options, '-output', ['f', solver], fullfile(fsrc, 'pdfoconst.F'), ...
-%   fullfile(fsrc, solver, '*.f'), fullfile(gateways, [solver, '-interface.F']));
-% However, MATLAB R2015b would run into an error due to the wildcard.
 % The 'files_with_wildcard' function provides a workaround.
 %
 % TODO: None
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-COMPILE_CLASSICAL = true; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+COMPILE_CLASSICAL = true; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % setup starts
 
@@ -140,7 +135,7 @@ end
 
 % Exit if wrong input detected.
 if wrong_input
-    return;
+    return
 end
 
 % Extract compilation options.
@@ -152,11 +147,16 @@ debug_flag = (isfield(options, 'debug') && options.debug);
 if debug_flag
     opt_option = '-g';  % Debug mode; -g disables MEX's behavior of optimizing built object code
 end
+% N.B.: -O and -g may lead to (slightly) different behaviors of the mexified code. This was observed
+% on 2021-09-09 in a test of NEWUOA on the AKIVA problem of CUTEst. It was because the mexified code
+% produced different results when it was supposed to evaluate COS(0.59843577329095299_DP) amid OTHER
+% CALCULATIONS: with -O, the result was 0.82621783366991353; with -g, it became 0.82621783366991364.
+% Bizarrely, if we write a short Fortran program to evaluate only COS(0.59843577329095299_DP),
+% then the result is always 0.82621783366991364, regardless of -O or -g. No idea why.
 
-% Detect whether we are running a 32-bit MATLAB, where maxArrayDim = 2^31-1,
-% and then set ad_option accordingly. On a 64-bit MATLAB, maxArrayDim = 2^48-1
-% according to the document of MATLAB R2019a.
-% !!! Make sure that eveything is compiled with the SAME ad_option !!!
+% Detect whether we are running a 32-bit MATLAB, where maxArrayDim = 2^31-1, and then set ad_option
+% accordingly. On a 64-bit MATLAB, maxArrayDim = 2^48-1 according to the document of MATLAB R2019a.
+% !!! Make sure that everything is compiled with the SAME ad_option !!!
 % !!! Otherwise, Segmentation Fault may occur !!!
 [Architecture, maxArrayDim] = computer;
 if any(strfind(Architecture, '64')) && log2(maxArrayDim) > 31
@@ -187,17 +187,18 @@ end
 % The full path of several directories.
 cpwd = fileparts(mfilename('fullpath')); % Current directory
 fsrc = fullfile(cpwd, 'fsrc'); % Directory of the Fortran source code
-fsrc_intersection_form = fullfile(fileparts(cpwd), 'fsrc/intersection_form'); % Directory of the intersection-form Fortran source code
-fsrc_common = fullfile(fsrc_intersection_form, 'common'); % Directory of the common files
-fsrc_classical = fullfile(fsrc, 'classical'); % Directory of the classical Fortran source code
+fsrc_intersection_form = fullfile(cpwd, 'fsrc/intersection_form'); % Directory of the intersection-form Fortran source code
+fsrc_common_intersection_form = fullfile(fsrc_intersection_form, 'common'); % Directory of the common files
+fsrc_classical = fullfile(cpwd, 'fsrc/classical'); % Directory of the classical Fortran source code
+fsrc_classical_intersection_form = fullfile(cpwd, 'fsrc/classical/intersection_form'); % Directory of the intersection-form Fortran source code
 matd = fullfile(cpwd, 'matlab'); % Matlab directory
 gateways = fullfile(matd, 'mex_gateways'); % Directory of the MEX gateway files
-gateways_intersection_form = fullfile(fullfile(fileparts(cpwd), 'matlab', 'mex_gateways'), 'intersection_form');  % Directory of the intersection-form MEX gateway files
-gateways_classical = fullfile(gateways, 'classical'); % Directory of the MEX gateways for the classical Fortran source code
+gateways_intersection_form = fullfile(gateways, 'intersection_form');  % Directory of the intersection-form MEX gateway files
+gateways_classical = fullfile(gateways_intersection_form, 'classical'); % Directory of the MEX gateway files for the classical Fortran code
 interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
 interfaces_private = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
-examples = fullfile(matd, 'examples'); % Directory containing some test examples
-tools = fullfile(fileparts(cpwd), 'matlab', 'tools'); % Directory containing some tools, e.g., interform.m
+tests = fullfile(matd, 'tests'); % Directory containing some tests
+tools = fullfile(matd, 'tools'); % Directory containing some tools, e.g., interform.m
 
 % Name of the file that contains the list of Fortran files. There should be such a file in each
 % Fortran source code directory, and the list should indicate the dependence among the files.
@@ -208,8 +209,9 @@ filelist = 'ffiles.txt';
 % Intersection-form Fortran code can be compiled both as free form and as fixed form.
 fprintf('Refactoring the Fortran code ... ');
 addpath(tools);
-interform(fullfile(fileparts(cpwd), 'fsrc'));
-interform(fullfile(fileparts(cpwd), 'matlab', 'mex_gateways'));
+interform(fsrc);
+interform(fsrc_classical);
+interform(gateways);
 rmpath(tools);
 fprintf('Done.\n\n');
 
@@ -218,10 +220,11 @@ fprintf('Done.\n\n');
 % compilation with a different ad_option. Without cleaning-up, the MEX
 % files may be linked with wrong .mod or .o files, which can lead to
 % serious errors including Segmentation Fault!
-dir_list = {fsrc, fsrc_common, fsrc_classical, gateways, gateways_classical, interfaces_private};
+dir_list = {fsrc_common_intersection_form, gateways_intersection_form, gateways_classical, interfaces_private};
 for idir = 1 : length(dir_list)
-    modo_files = [files_with_wildcard(dir_list{idir}, '*.mod'), files_with_wildcard(dir_list{idir}, '*.o')];
-    cellfun(@(filename) delete(filename), modo_files);
+    mod_files = files_with_wildcard(dir_list{idir}, '*.mod');
+    obj_files = [files_with_wildcard(dir_list{idir}, '*.o'), files_with_wildcard(dir_list{idir}, '*.obj')];
+    cellfun(@(filename) delete(filename), [mod_files, obj_files]);
 end
 
 % Compilation starts
@@ -233,59 +236,108 @@ try
 % We use try ... catch so that we can change directory back to cpwd in
 % case of an error.
 
-    % Compilation of the common files
-    common_files = regexp(fileread(fullfile(fsrc_common, filelist)), '\n', 'split');
-    common_files = strtrim(common_files(~cellfun(@isempty, common_files)));
-    common_files = fullfile(fsrc_common, common_files);
-    %common_files = [common_files, fullfile(gateways_intersection_form, 'fmxapi.F'), fullfile(gateways_intersection_form, 'prob.F')];
-    for ifc = 1 : length(common_files)
-        mex(mex_options{:}, '-c', common_files{ifc}, '-outdir', fsrc_common);
+
+    % Compilation of the common files. They are shared by all solvers. We compile them only once.
+    % gateways_intersection_form/debug.F contains debugging subroutines tailored for MEX.
+    copyfile(fullfile(gateways_intersection_form, 'debug.F'), fsrc_common_intersection_form);
+    % ppf.h contains preprocessing directives. Set __DEBUGGING__ according to debug_flag.
+    header_file = fullfile(fsrc_common_intersection_form, 'ppf.h');
+    header_file_bak = fullfile(fsrc_common_intersection_form, 'ppf.h.bak');
+    copyfile(header_file, header_file_bak);
+    if debug_flag
+        rep_str(header_file, '#define __DEBUGGING__ 0', '#define __DEBUGGING__ 1');
+    else
+        rep_str(header_file, '#define __DEBUGGING__ 1', '#define __DEBUGGING__ 0');
     end
-    common_obj_files = [files_with_wildcard(fsrc_common, '*.o'), files_with_wildcard(fsrc_common, '*.obj')];
+    % Common Fortran source files.
+    common_files = regexp(fileread(fullfile(fsrc_common_intersection_form, filelist)), '\n', 'split');
+    common_files = strtrim(common_files(~cellfun(@isempty, common_files)));
+    common_files = fullfile(fsrc_common_intersection_form, common_files);
+    common_files = [common_files, fullfile(gateways_intersection_form, 'fmxapi.F'), fullfile(gateways_intersection_form, 'cbfun.F'), fullfile(gateways_classical, 'fmxcl.F')];
+    % The loop below may be written in one line as follows:
+    %mex(mex_options{:}, '-c', common_files{:}, '-outdir', fsrc_common_intersection_form);
+    % But it does not work for some versions of MATLAB. This may be because the compilation above does
+    % not respect the order of common_files{:}, which is critical due to the dependence among modules.
+    for icf = 1 : length(common_files)
+        mex(mex_options{:}, '-c', common_files{icf}, '-outdir', fsrc_common_intersection_form);
+    end
+    common_obj_files = [files_with_wildcard(fsrc_common_intersection_form, '*.o'), files_with_wildcard(fsrc_common_intersection_form, '*.obj')];
 
     % Compilation of function gethuge
-    mex(mex_options{:}, '-output', 'gethuge', fullfile(fsrc, 'pdfoconst.F'), fullfile(gateways, 'gethuge.F'));
+    mex(mex_options{:}, '-output', 'gethuge', common_obj_files{:}, fullfile(gateways_intersection_form, 'gethuge.F'), '-outdir', interfaces_private);
 
     for isol = 1 : length(solver_list)
+
         solver = solver_list{isol};
 
         % Compilation of solver
         fprintf('Compiling %s ... ', solver);
-        % Clean up the source file directory
-        modo_files = [files_with_wildcard(fullfile(fsrc, solver), '*.mod'), files_with_wildcard(fullfile(fsrc, solver), '*.o')];
-        cellfun(@(filename) delete(filename), modo_files);
-        % Compile
-        src_files = [common_obj_files, files_with_wildcard(fullfile(fsrc, solver), '*.f'), files_with_wildcard(fullfile(fsrc, solver), '*.f90')];
-        mex(mex_options{:}, '-output', ['f', solver], fullfile(fsrc, 'pdfoconst.F'), src_files{:}, fullfile(gateways, [solver, '-interface.F']));
 
- if (COMPILE_CLASSICAL)  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Clean up the source file directory
+        mod_files = files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.mod');
+        obj_files = [files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.o'), files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.obj')];
+        cellfun(@(filename) delete(filename), [mod_files, obj_files]);
+        % Compile
+        src_files = regexp(fileread(fullfile(fsrc_intersection_form, solver, filelist)), '\n', 'split');
+        src_files = strtrim(src_files(~cellfun(@isempty, src_files)));
+        src_files = fullfile(fsrc_intersection_form, solver, src_files);
+        %mex(mex_options{:}, '-c', src_files{:}, '-outdir', fullfile(fsrc_intersection_form, solver));
+        for isf = 1 : length(src_files)
+            mex(mex_options{:}, '-c', src_files{isf}, '-outdir', fullfile(fsrc_intersection_form, solver));
+        end
+        obj_files = [common_obj_files, files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.o'), files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.obj')];
+        mex(mex_options{:}, '-output', ['f', solver], obj_files{:}, fullfile(gateways_intersection_form, [solver, '_mex.F']), '-outdir', interfaces_private);
+        % Clean up the source file directory
+        mod_files = files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.mod');
+        obj_files = [files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.o'), files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.obj')];
+        cellfun(@(filename) delete(filename), [mod_files, obj_files]);
+
+  if (COMPILE_CLASSICAL) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Compilation of the 'classical' version of solver
         % Clean up the source file directory
-        modo_files = [files_with_wildcard(fullfile(fsrc_classical, solver), '*.mod'), files_with_wildcard(fullfile(fsrc_classical, solver), '*.o')];
-        cellfun(@(filename) delete(filename), modo_files);
+        mod_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.mod');
+        obj_files = [files_with_wildcard(fullfile(fsrc_classical, solver), '*.o'), files_with_wildcard(fullfile(fsrc_classical, solver), '*.obj')];
+        cellfun(@(filename) delete(filename), [mod_files, obj_files]);
         % Compile
         src_files = [files_with_wildcard(fullfile(fsrc_classical, solver), '*.f'), files_with_wildcard(fullfile(fsrc_classical, solver), '*.f90')];
-        mex(mex_options{:}, '-output', ['f', solver, '_classical'], fullfile(fsrc, 'pdfoconst.F'), src_files{:}, fullfile(gateways_classical, [solver, '-interface.F']));
+        %mex(mex_options{:}, '-c', src_files{:}, '-outdir', fullfile(fsrc_classical, solver));
+        for isf = 1 : length(src_files)
+            mex(mex_options{:}, '-c', src_files{isf}, '-outdir', fullfile(fsrc_classical, solver));
+        end
+        obj_files = [common_obj_files, files_with_wildcard(fullfile(fsrc_classical, solver), '*.o'), files_with_wildcard(fullfile(fsrc_classical,solver), '*.obj')];
+        mex(mex_options{:}, '-output', ['f', solver, '_classical'], obj_files{:}, fullfile(gateways_intersection_form, [solver, '_mex.F']), '-outdir', interfaces_private);
+        % Clean up the source file directory
+        mod_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.mod');
+        obj_files = [files_with_wildcard(fullfile(fsrc_classical, solver), '*.o'), files_with_wildcard(fullfile(fsrc_classical, solver), '*.obj')];
+        cellfun(@(filename) delete(filename), [mod_files, obj_files]);
   end
 
         fprintf('Done.\n');
     end
 
-    % Clean up the .mod and .o files
-    modo_files = [files_with_wildcard(fullfile(interfaces_private), '*.mod'), files_with_wildcard(fullfile(interfaces_private), '*.o')];
-    cellfun(@(filename) delete(filename), modo_files);
+    % Clean up the .mod and .o files in fsrc_common_intersection_form.
+    cellfun(@(filename) delete(filename), [common_obj_files, files_with_wildcard(fsrc_common_intersection_form, '*.mod')]);
+    % Clean up the .mod files in interfaces_private.
+    cellfun(@(filename) delete(filename), files_with_wildcard(interfaces_private, '*.mod'));
 
     % Remove the intersection-form Fortran files if we are not debugging.
     if ~debug_flag
         rmdir(fsrc_intersection_form, 's');
+        rmdir(fsrc_classical_intersection_form, 's');
         rmdir(gateways_intersection_form, 's');
     end
 
 catch exception % NOTE: Everything above 'catch' is conducted in interfaces_private.
+    if exist(header_file_bak, 'file')  % Restore header_file
+        movefile(header_file_bak, header_file);
+    end
     cd(cpwd); % In case of an error, change directory back to cpwd
     rethrow(exception)
 end
 
+if exist(header_file_bak, 'file')  % Restore header_file
+    movefile(header_file_bak, header_file);
+end
 cd(cpwd); % Compilation completes successfully; change directory back to cpwd
 
 % Compilation ends
@@ -362,7 +414,7 @@ else
 end
 
 fprintf('\nYou may now try ''help pdfo'' for information on the usage of the package.\n');
-addpath(examples);
+addpath(tests);
 fprintf('\nYou may also run ''testpdfo'' to test the package on a few examples.\n\n');
 
 if ~path_saved % All the path-saving attempts failed
@@ -474,11 +526,11 @@ cellfun(@(filename) delete(filename), trash_files);
 warning(orig_warning_state); % Restore the behavior of displaying warnings
 return
 
-%%%%%%%%%%%%% Function for removing the compliled MEX files  %%%%%%%%%%%%
+%%%%%%%%%%%%% Function for removing the compiled MEX files  %%%%%%%%%%%%
 function clean_mex
-%CLEAN_MEX removes the compliled MEX files.
+%CLEAN_MEX removes the compiled MEX files.
 
-fprintf('\nRemoving the compliled MEX files (if any) ... ');
+fprintf('\nRemoving the compiled MEX files (if any) ... ');
 % The full path of several directories.
 cpwd = fileparts(mfilename('fullpath')); % Current directory
 matd = fullfile(cpwd, 'matlab'); % Matlab directory
@@ -503,7 +555,7 @@ cpwd = fileparts(mfilename('fullpath')); % Current directory
 matd = fullfile(cpwd, 'matlab'); % Matlab directory
 interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
 interfaces_private = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
-examples = fullfile(matd, 'examples'); % Directory containing some test examples
+tests = fullfile(matd, 'tests'); % Directory containing some tests
 
 % Remove the compiled MEX files
 mex_files = files_with_wildcard(interfaces_private, '*.mex*');
@@ -513,7 +565,7 @@ cellfun(@(filename) delete(filename), mex_files);
 orig_warning_state = warning;
 warning('off', 'MATLAB:rmpath:DirNotFound'); % Maybe the paths were not added. We do not want to see this warning.
 warning('off', 'MATLAB:SavePath:PathNotSaved'); % Maybe we do not have the permission to save path.
-rmpath(interfaces, examples);
+rmpath(interfaces, tests);
 savepath;
 warning(orig_warning_state); % Restore the behavior of displaying warnings
 
@@ -540,12 +592,39 @@ if fid == -1
     error('Cannot open file %s.', filename);
 end
 
-% Read the file into a cell of strings of strings
+% Read the file into a cell of strings
 data = textscan(fid, '%s', 'delimiter', '\n', 'whitespace', '');
 fclose(fid);
 cstr = data{1};
 % Remove the rows containing string
 cstr(strcmp(cstr, string)) = [];
+
+% Save the file again
+fid = fopen(filename, 'w');
+if fid == -1
+    error('Cannot open file %s.', filename);
+end
+fprintf(fid, '%s\n', cstr{:});
+fclose(fid);
+return
+
+
+%% Function for replacing all the string `old_str` with the string `new_str` in a file.
+function rep_str(filename, old_str, new_str)
+%REP_STR replaces all `old_str` in filename with `new_str`.
+fid = fopen(filename, 'r');
+if fid == -1
+    error('Cannot open file %s.', filename);
+end
+
+% Read the file into a cell of strings
+data = textscan(fid, '%s', 'delimiter', '\n', 'whitespace', '');
+fclose(fid);
+cstr = data{1};
+% Replace `old_str` with `new_str`.
+for i = 1 : length(cstr)
+    cstr{i} = strrep(cstr{i}, old_str, new_str);
+end
 
 % Save the file again
 fid = fopen(filename, 'w');
