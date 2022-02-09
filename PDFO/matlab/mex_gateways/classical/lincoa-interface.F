@@ -1,19 +1,19 @@
 C The mex gateway for LINCOA
 C
 C **********************************************************************
-C   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk) 
+C   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
 C               and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
 C               Department of Applied Mathematics,
 C               The Hong Kong Polytechnic University
 C **********************************************************************
 
-C Remarks: 
+C Remarks:
 C
 C 1. Be careful with the "kind" and storage size for integer-type
 C (integer, mwSize, mwIndex) variables/functions. Some of them may be
 C 32bit, while they others may be 64bit, depending on the machine, the
 C version of matlab, and the compilation option of mex. Do NOT assume
-C any two of them to be the same. 
+C any two of them to be the same.
 C If ever a Segmentation Fault occurs, check these variables first.
 C
 C 2. Be careful with the line width limit. After preprocessing (macro
@@ -28,13 +28,13 @@ C defined in it. MX_GET_DBLE gets the pointer pointing to a real array.
 #ifdef MX_GET_DBLE
 #undef MX_GET_DBLE
 #endif
-#ifdef mxGetDoubles 
+#ifdef mxGetDoubles
 #define MX_GET_DBLE mxGetDoubles
 #else
-#define MX_GET_DBLE mxGetPr 
+#define MX_GET_DBLE mxGetPr
 #endif
 
-C Fortran code starts 
+C Fortran code starts
 
       module flincoa ! Some global variables
       use pdfoconst ! See pdfoconst.F, which defines dp, int4, HUGENUM
@@ -50,19 +50,19 @@ C mwPointer mxCreateDoubleMatrix(mwSize m, mwSize n, integer*4 ComplexFlag)
 C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
 
 C Some global variables
-      mwPointer, save :: fun_ptr ! Objective function 
-      mwSize, save :: nf ! Number of function evaluations 
+      mwPointer, save :: fun_ptr ! Objective function
+      mwSize, save :: nf ! Number of function evaluations
 C nf should be of type mwSize, because it will be later used as an
 C argument of mxCreateDoubleMatrix
-      real(dp), allocatable, save :: fhist(:) 
+      real(dp), allocatable, save :: fhist(:)
 C History of function evaluation
-      real(dp), allocatable, save :: chist(:) 
+      real(dp), allocatable, save :: chist(:)
 C History of constraint violation
-      integer, save :: mresmax, iaresmax 
+      integer, save :: mresmax, iaresmax
 C Size of linear constraint matrix (there are mresmax linear
 C constraints, the gradient of each has size iaresmax, which should be
 C the same as problem dimension n);
-      real(dp), allocatable, save :: Aresmax(:,:), bresmax(:) 
+      real(dp), allocatable, save :: Aresmax(:,:), bresmax(:)
 C Linear constraint matrix and right-hand side; will be used when calculating constraint violation
       end module flincoa
 
@@ -71,9 +71,9 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine mexFunction(nlhs, plhs, nrhs, prhs)
 C subroutine mexFunction(integer nlhs, mwPointer plhs, integer nrhs, mwPointer prhs)
 C Entry point to Fortran MEX function
-C If the binary MEX file is named as FUNCTION_NAME.mex*** (file-name 
+C If the binary MEX file is named as FUNCTION_NAME.mex*** (file-name
 C extension depends on the platform), then the following function is
-C callable in matlab: 
+C callable in matlab:
 C [xopt, fopt, info, nf, fhist, constrviolation, chist] = FUNCTION_NAME(fun, x0, A, b, rhobeg, rhoend, maxfun, npt, ftarget)
 
       use flincoa ! module 'pdfoconst' is used by 'flincoa'
@@ -81,7 +81,7 @@ C [xopt, fopt, info, nf, fhist, constrviolation, chist] = FUNCTION_NAME(fun, x0,
 
 C mexFunction arguments (dummy variables):
       integer, intent(in) :: nlhs, nrhs
-C nlhs and nrhs are of type INTEGER according to the documents of MATLAB R2019a 
+C nlhs and nrhs are of type INTEGER according to the documents of MATLAB R2019a
       mwPointer, intent(in) :: prhs(nrhs)
       mwPointer, intent(inout) :: plhs(nlhs)
 
@@ -91,34 +91,34 @@ C mwPointer mxCreateDoubleMatrix(mwSize m, mwSize n, integer*4 ComplexFlag)
       mwPointer, external :: mxCreateDoubleScalar
 C mwPointer mxCreateDoubleScalar(real*8 value)
       mwPointer, external :: MX_GET_DBLE
-C mwPointer MX_GET_DBLE(mwPointer pm); 
+C mwPointer MX_GET_DBLE(mwPointer pm);
 C can be replaced by mxGetDoubles since MATLAB R2018b
       mwSize, external :: mxGetM, mxGetN
 C mwPointer mxGetM(mwPointer pm), mxGetN(mwPointer pm)
       integer(int4), external :: mxIsDouble, mxIsClass
-C integer*4 mxIsDouble(mwPointer pm); 
+C integer*4 mxIsDouble(mwPointer pm);
 C integer*4 mxIsClass(mwPointer pm, character*(*) classname)
 
 C workspace and intermediate variables
       mwSize :: n, m, ia
 C n is the problem dimension; m is the number of linear constraints, and
 C ia is the length of the gradient of each constraint, which should be n
-C they are of type mwSize because they are obtained by mxGetM/mxGetN 
+C they are of type mwSize because they are obtained by mxGetM/mxGetN
       integer :: n_int, m_int, ia_int
-C n_int is the INTEGER cast of n, i.e., n_int = int(n); used when a 
+C n_int is the INTEGER cast of n, i.e., n_int = int(n); used when a
 C variable of type INTEGER is needed (e.g., when calling LINCOA).
-      mwIndex :: i, j 
-C i and j are the index for the entries of A; since m and ia are of type 
+      mwIndex :: i, j
+C i and j are the index for the entries of A; since m and ia are of type
 C mwSize, i and j are of the type mwIndex; see the do loop below
       real(dp), allocatable :: x(:), A(:, :), b(:), w(:)
       real(dp) :: f, rhobeg, rhoend,maxfun_r,npt_r,ftarget,resmax,cval
       integer :: info, iprint, allocate_status
 C info and iprint are inputs to LINCOA, which requires them to be
-C INTEGERs (not necessarily the same as mwSize) 
+C INTEGERs (not necessarily the same as mwSize)
       integer :: npt, maxfun, nw
-C npt and maxfun will also be inputs to LINCOA, which requires 
+C npt and maxfun will also be inputs to LINCOA, which requires
 C npt and maxfun to be INTEGERs (not necessarily the same as mwSize).
-C nw is the size of workspace. 
+C nw is the size of workspace.
 C nw = m*(2+n)+npt*(4+n+npt)+n*(9+3*n)+max(m+3*n,max(2*m+n,2*npt)) (see
 C below) nw is the largest size of memory allocated by this code. If the
 C value assigned to nw is so large that overflow occurs, then there will
@@ -147,25 +147,25 @@ C Input 1: fun (function handle)
      &    'flincoa: Input 1 should be a function handle.')
       end if
 C Input 2: x0 (double column)
-      if (mxIsDouble(prhs(2)) .ne. 1 .or. mxGetM(prhs(2)) .lt. 1 
+      if (mxIsDouble(prhs(2)) .ne. 1 .or. mxGetM(prhs(2)) .lt. 1
      &    .or. mxGetN(prhs(2)) .ne. 1) then
           call mexErrMsgIdAndTxt('flincoa:WrongInput',
      &    'flincoa: Input 2 should be a column vector of doubles.')
       end if
 C Input 3: A (double matrix; empty or size(A, 1)=length(x0); different
-C from MATLAB by a transpose) 
-      if (mxIsDouble(prhs(3)) .ne. 1 .or. 
+C from MATLAB by a transpose)
+      if (mxIsDouble(prhs(3)) .ne. 1 .or.
      & (mxGetM(prhs(3))*mxGetN(prhs(3)) .gt. 0 .and.
      & mxGetM(prhs(3)) .ne. mxGetM(prhs(2)))) then
           call mexErrMsgIdAndTxt('flincoa:WrongInput',
-     &    'flincoa: Input 3 should be a matrix of doubles; it is either 
+     &    'flincoa: Input 3 should be a matrix of doubles; it is either
      &empty or its number of rows equals the length of input 2.')
       end if
-C Input 4: b (double column) 
-      if (mxIsDouble(prhs(4)) .ne. 1 .or. mxGetM(prhs(4)) .ne. 
+C Input 4: b (double column)
+      if (mxIsDouble(prhs(4)) .ne. 1 .or. mxGetM(prhs(4)) .ne.
      &    mxGetN(prhs(3)) .or. mxGetN(prhs(4)) .gt. 1) then
           call mexErrMsgIdAndTxt('flincoa:WrongInput',
-     &      'flincoa: Input 4 should be a column of doubles; its length 
+     &      'flincoa: Input 4 should be a column of doubles; its length
      &equals the number of columns of input 3.')
       end if
 C Input 5: rhobeg (double scalar)
@@ -205,7 +205,7 @@ C is recommended to pass integers as double variables and then cast
 C them back to integers when needed. Indeed, in MATLAB, even if we
 C define maxfun = 1000, the class of maxfun is double! To get an
 C integer maxfun, we would have to define maxfun = int32(1000) or
-C maxfun = int64(1000)! 
+C maxfun = int64(1000)!
 
 C Input 9: ftarget (double scalar)
       if (mxIsDouble(prhs(9)) .ne. 1 .or. mxGetM(prhs(9)) .ne. 1
@@ -217,23 +217,23 @@ C Input 9: ftarget (double scalar)
 C Read inputs (there are 9)
       fun_ptr = prhs(1)
       n = mxGetM(prhs(2)) ! This is why n should be mwSize
-      n_int = int(n, kind(n_int)) 
+      n_int = int(n, kind(n_int))
 C n_int is used when a variable of type INTEGER is needed
       m = mxGetN(prhs(3)) ! This is why m should be mwSize
-      m_int = int(m, kind(m_int)) 
+      m_int = int(m, kind(m_int))
 C m_int is used when a variable of type INTEGER is needed
       ia = mxGetM(prhs(3)) ! This is why ia should be mwSize
-      ia_int = int(ia, kind(ia_int)) 
+      ia_int = int(ia, kind(ia_int))
 C ia_int is used when a variable of type INTEGER is needed
-      if (n .ne. n_int) then 
+      if (n .ne. n_int) then
           call mexErrMsgIdAndTxt('flincoa:IntError',
      &    'flincoa: n does not equal n_int.')
       end if
-      if (m .ne. m_int) then 
+      if (m .ne. m_int) then
           call mexErrMsgIdAndTxt('flincoa:IntError',
      &    'flincoa: m does not equal m_int.')
       end if
-      if (ia .ne. ia_int) then 
+      if (ia .ne. ia_int) then
           call mexErrMsgIdAndTxt('flincoa:IntError',
      &    'flincoa: ia does not equal ia_int.')
       end if
@@ -268,33 +268,33 @@ C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
       call mxCopyPtrToReal8(MX_GET_DBLE(prhs(6)), rhoend, mwOne)
 C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
 C Note the mwOne is of type mwSize; should not use literal constant 1
-C NEVER use literal constants in Fortran mex. 
+C NEVER use literal constants in Fortran mex.
 
 C Check the values of rhobeg and rhoend. We do not check the values of
-C other inputs (e.g., n, maxfun, npt) because the Fortran code does it 
-      if (rhobeg .le. ZERO .or. rhobeg .lt. rhoend .or. 
+C other inputs (e.g., n, maxfun, npt) because the Fortran code does it
+      if (rhobeg .le. ZERO .or. rhobeg .lt. rhoend .or.
      &rhoend .lt. ZERO) then
           call mexErrMsgIdAndTxt('flincoa:InvalidRhobegRhoend',
      &'flincoa: rhobeg and rhoend do not satisfy rhobeg >= rhobeg > 0.')
       end if
 
-      call mxCopyPtrToReal8(MX_GET_DBLE(prhs(7)), 
+      call mxCopyPtrToReal8(MX_GET_DBLE(prhs(7)),
      &     maxfun_r, mwOne)
-      maxfun = int(maxfun_r, kind(maxfun)) 
+      maxfun = int(maxfun_r, kind(maxfun))
 C maxfun will be an input to LINCOA, which requires maxfun to be
 C an INTEGER (not necessary the same as mwSize)
-      call mxCopyPtrToReal8(MX_GET_DBLE(prhs(8)), 
+      call mxCopyPtrToReal8(MX_GET_DBLE(prhs(8)),
      &     npt_r, mwOne)
       npt = int(npt_r, kind(npt))
 C npt will be an input to LINCOA, which requires maxfun to be
 C an INTEGER (not necessary the same as mwSize)
-      call mxCopyPtrToReal8(MX_GET_DBLE(prhs(9)), 
+      call mxCopyPtrToReal8(MX_GET_DBLE(prhs(9)),
      &     ftarget, mwOne)
 
 C Allocate workspace
       if (allocated(w)) deallocate (w)
 C      nw = m*(2+n)+npt*(4+n+npt)+n*(9+3*n)+max(m+3*n,max(2*m+n,2*npt))
-C nw is of type INTEGER 
+C nw is of type INTEGER
       nw = m_int*(2+n_int)+npt*(4+n_int+npt)+n_int*(9+3*n_int)+
      &      max(m_int+3*n_int,max(2*m_int+n_int,2*npt))
       allocate (w(nw), stat=allocate_status)
@@ -321,8 +321,8 @@ C Initialize global variables
       end if
       chist = HUGENUM
 
-      mresmax = m_int 
-      iaresmax = ia_int 
+      mresmax = m_int
+      iaresmax = ia_int
       if (allocated(Aresmax)) deallocate (Aresmax)
       allocate (Aresmax(ia_int, m_int), stat=allocate_status)
       if (allocate_status .ne. 0) then
@@ -341,11 +341,11 @@ C Initialize global variables
 
 C Call LINCOA
       iprint = 0
-      call LINCOA(n_int, npt, m_int, A, ia_int, b, x, rhobeg, rhoend, 
+      call LINCOA(n_int, npt, m_int, A, ia_int, b, x, rhobeg, rhoend,
      &     iprint, maxfun, w, f, info, ftarget)
 C Note that n, m, and ia are of type mwSize, yet LINCOA expects input 1,
 C 3, and 5 to be of type INTEGER. Therefore, we should use n_int, m_int,
-C and ia_int instead.  
+C and ia_int instead.
 
 C Write outputs
       plhs(1) = mxCreateDoubleMatrix(n, mwOne, notComplex)
@@ -355,18 +355,19 @@ C Although info and nf are integers logically, they are passed as double
       plhs(3) = mxCreateDoubleScalar(real(info, dp))
       plhs(4) = mxCreateDoubleScalar(real(nf, dp))
       plhs(5) = mxCreateDoubleMatrix(mwOne, nf, notComplex)
-      call mxCopyReal8ToPtr(fhist(1:nf), 
+      call mxCopyReal8ToPtr(fhist(1:nf),
      &     MX_GET_DBLE(plhs(5)), nf)
 
-      resmax = ZERO 
+      resmax = ZERO
 C Constraint violation (named 'RESMAX' in Powell's COBYLA code)
 C ZERO is defined in module 'pdfoconst'.
 C Linear constraints: A'*x <= b (NOTE the transpose)
       do j = 1, m
-          cval = -b(j)
+          cval = 0.0D0
           do i = 1, ia
-              cval = cval + A(i,j)*x(i)
+              cval = cval + Aresmax(i,j)*x(i)
           end do
+          cval = cval - bresmax(j)
           if (cval .ne. cval) then
               resmax = cval ! Set resmax=NaN if constraint contains NaN
               exit
@@ -376,7 +377,7 @@ C Linear constraints: A'*x <= b (NOTE the transpose)
       end do
       plhs(6) = mxCreateDoubleScalar(resmax)
       plhs(7) = mxCreateDoubleMatrix(mwOne, nf, notComplex)
-      call mxCopyReal8ToPtr(chist(1:nf), 
+      call mxCopyReal8ToPtr(chist(1:nf),
      &     MX_GET_DBLE(plhs(7)), nf)
 
 C Free memory
@@ -401,12 +402,12 @@ C The Fortran subroutine that evaluates the objective function
 
 C dummy variables
       integer, intent(in) :: n
-C The type of n is derived from the code of LINCOA. Thus n should 
+C The type of n is derived from the code of LINCOA. Thus n should
 C be of type INTEGER instead of mwSize
       real(dp), intent(in) :: x(n)
       real(dp), intent(out) :: funval
 
-C function declarations 
+C function declarations
       integer(int4), external :: mexCallMATLAB
 C integer*4 mexCallMATLAB(integer*4 nlhs, mwPointer plhs, integer*4 nrhs, mwPointer prhs, character*(*) functionName)
       mwPointer, external :: mxCreateDoubleMatrix
@@ -417,31 +418,31 @@ C mwPointer mxCreateDoubleScalar(real*8 value)
 C mwPointer MX_GET_DBLE(mwPointer pm)
 
 C intermediate variables
-      mwSize :: n_mw 
+      mwSize :: n_mw
 C n_mw is the mwSize cast of n: n_mw = int(n, kind(n_mw));
 C used when a variable of type mwSize is needed
       integer :: i, j
 C i and j are the index for the entries of Aresmax; since mresmax and
-C iaresmax are of type INTEGER, i and j are of type INTEGER. See the do 
+C iaresmax are of type INTEGER, i and j are of type INTEGER. See the do
 C loop below
       mwPointer :: plhs(1), prhs(2) ! used in mexCallMATLAB
-      integer(int4), parameter :: intOne=1, intTwo=2 
-      character(5), parameter :: funFeval = 'feval' 
-C intOne, intTwo, and funFeval are used when calling mexCallMATLAB 
+      integer(int4), parameter :: intOne=1, intTwo=2
+      character(5), parameter :: funFeval = 'feval'
+C intOne, intTwo, and funFeval are used when calling mexCallMATLAB
       real(dp) :: resmax, cval ! constraint violation/value
- 
-C Start the real business 
+
+C Start the real business
       n_mw = int(n, kind(n_mw)) ! cast n to type mwSize
-      if (n .ne. n_mw) then 
+      if (n .ne. n_mw) then
           call mexErrMsgIdAndTxt('flincoa:IntError',
      &    'flincoa: n does not equal n_mw.')
       end if
 
-      plhs(1) = mxCreateDoubleScalar(HUGENUM) 
+      plhs(1) = mxCreateDoubleScalar(HUGENUM)
 C First output of f_value = feval(fun, x); see below
-      prhs(1) = fun_ptr 
+      prhs(1) = fun_ptr
 C First input of f_value = feval(fun, x); see below; fun_ptr is a global variable
-      prhs(2) = mxCreateDoubleMatrix(n_mw, mwOne, notComplex) 
+      prhs(2) = mxCreateDoubleMatrix(n_mw, mwOne, notComplex)
 C Second input of f_value = feval(fun, x); see below
       call mxCopyReal8ToPtr(x(1:n), MX_GET_DBLE(prhs(2)), n_mw)
 C subroutine mxCopyReal8ToPtr(real*8 y(n), mwPointer px, mwSize n)
@@ -458,25 +459,26 @@ C integer*4 mexCallMATLAB(integer*4 nlhs, mwPointer plhs, integer*4 nrhs, mwPoin
           call mexErrMsgIdAndTxt('flincoa:UnsuccessfulCall',
      &    'flincoa: NULL pointer returned when mex calls fun.')
       else
-          call mxCopyPtrToReal8(MX_GET_DBLE(plhs(1)), 
+          call mxCopyPtrToReal8(MX_GET_DBLE(plhs(1)),
      &         funval, mwOne)
 C subroutine mxCopyPtrToReal8(mwPointer px, real*8 y(n), mwSize n)
       end if
 
-      resmax = ZERO 
+      resmax = ZERO
 C Constraint violation (named 'RESMAX' in Powell's COBYLA code)
 C ZERO is defined in module 'pdfoconst'.
 C Linear constraints: Aresmax'*x <= bresmax (NOTE the transpose)
       do j = 1, mresmax
-          cval = -bresmax(j)
+          cval = 0.0D0
           do i = 1, iaresmax
               cval = cval + aresmax(i,j)*x(i)
           end do
+          cval = cval - bresmax(j)
           if (cval .ne. cval) then
-              resmax = cval ! Set resmax=NaN if constraint contains NaN 
+              resmax = cval ! Set resmax=NaN if constraint contains NaN
               exit
           else
-              resmax = max(resmax, cval) !Absolute constraint violation 
+              resmax = max(resmax, cval) !Absolute constraint violation
           end if
       end do
 
@@ -487,7 +489,7 @@ C this subroutine. We are NOT in mexFunction!
 C subroutine mxDestroyArray(mwPointer pm)
 
 C Update global variables
-      nf = nf + int(1, kind(nf)) 
+      nf = nf + int(1, kind(nf))
 C Some compiler (e.g., g95) may complain about implicit conversion if
 C written as nf = nf+1
       fhist(nf) = funval

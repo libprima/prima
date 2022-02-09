@@ -133,7 +133,7 @@ C
       IF (SHS > ZERO) THEN
           STPLEN=DMIN1(BLEN,GREDSQ/SHS)
       END IF
-      
+
 C
 C     Reduce STPLEN if necessary in order to preserve the simple bounds,
 C     letting IACT be the index of the new constrained variable.
@@ -163,7 +163,7 @@ C
           IF (IACT == 0 .AND. TEMP > ZERO) THEN
               CRVMIN=DMIN1(CRVMIN,TEMP)
               IF (CRVMIN == ONEMIN) CRVMIN=TEMP
-          END IF 
+          END IF
           GGSAV=GREDSQ
           GREDSQ=ZERO
           DO I=1,N
@@ -368,7 +368,7 @@ C
           DSQ=DSQ+D(I)**2
       END DO
       RETURN
- 
+
 C     The following instructions multiply the current S-vector by the second
 C     derivative matrix of the quadratic model, putting the product in HS.
 C     They are reached from three different parts of the software above and
