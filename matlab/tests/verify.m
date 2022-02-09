@@ -51,9 +51,9 @@ try
 
     % Conduct the verification.
     if isfield(options, 'reverse') && options.reverse
-        solvers = {[solver, 'n'], solver};
-    else
         solvers = {solver, [solver, 'n']};
+    else
+        solvers = {[solver, 'n'], solver};
     end
     isequiv(solvers, options);  % `isequiv` raises an error in case the solver behave differently.
 
