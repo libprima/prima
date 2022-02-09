@@ -100,7 +100,14 @@ end
 if isempty(requirements.list)
     blacklist = {};
     %blacklist={'gauss2', 'gauss3','HS25NE', 'cubene'};  % Memory error
-    if strcmpi(solvers{1}, 'cobyla') || strcmpi(solvers{2}, 'cobyla')
+    switch lower(solvers{1})
+    case {'uobyqa', 'uobyqan'}
+    case {'newuoa', 'newuoan'}
+    case {'lincoa', 'lincoan'}
+        blacklist = [blacklist, {'LSNNODOC'}]; % possible reason for a segfault
+    case {'bobyqa', 'bobyqan'}
+        blacklist = [blacklist, {'STREG'}]; % bobyqa returns an fx that does not match x.
+    case {'cobyla', 'cobylan'}
         if requirements.maxdim <= 50  % This means we intend to have a quick test with small problems
             blacklist=[blacklist, {'BLEACHNG'}];  % A 17 dimensional bound-constrained problem that
                                                   % takes too much time for a small problem
