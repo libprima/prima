@@ -24,6 +24,7 @@ function profile(varargin)
 
 olddir = cd();  % Record the current path.
 oldpath = path();  % Record the current dir.
+restoredefaultpath; % Restore the "right out of the box" path of MATLAB
 
 try
 

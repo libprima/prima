@@ -527,7 +527,6 @@ if options.debug && ~options.classical
 %% Zaikun 2021-05-26: The following test is disabled for lincoa for them moment. lincoa may not pass it.
 %%    if (fx ~= minf) && ~(isnan(fx) && isnan(minf)) && ~(strcmp(solver, 'lincoa') && constr_modified)
     if (fx ~= minf) && ~(isnan(fx) && isnan(minf)) && ~strcmp(solver, 'lincoa')
-        keyboard
         % Public/unexpected error
         error(sprintf('%s:InvalidFhist', invoker), ...
              '%s: UNEXPECTED ERROR: %s returns an fhist that does not match nf or fx.', invoker, solver);
@@ -631,7 +630,6 @@ if options.debug && ~options.classical
         % errors. Therefore, we cannot use "fx~=funx" to check COBYLA
         if ~(isnan(fx) && isnan(funx)) && ~((fx==funx) || (abs(funx-fx) <= cobyla_prec*max(1, abs(fx)) && strcmp(solver, 'cobyla')))
             % Public/unexpected error
-			keyboard
             error(sprintf('%s:InvalidFx', invoker), ...
                 '%s: UNEXPECTED ERROR: %s returns an fx that does not match x.', invoker, solver);
         end

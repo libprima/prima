@@ -1,0 +1,24 @@
+LINCOA
+
+1. SEGFAULT
+Version: base 2202.113954
+Date: 20220209
+YW: 27
+%%%%%%
+cd('base/2202.113954/matlab/tests');
+???
+%%%%%%
+Fix: blacklist 'LSNNODOC'
+
+BOBYQA
+
+1. bobyqa returns an fx that does not match x.
+Version: base 2202.113954
+Date: 20220209
+YW: 27
+Reproduce:
+%%%%%%
+cd('base/2202.113954/matlab/tests');
+verify('bobyqa', 'STREG', 27);
+%%%%%%
+Fix: blacklist 'STREG'
