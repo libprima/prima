@@ -175,8 +175,8 @@ if isempty(prob)
     % Define the dimension range.
     options.mindim = mindim;
     options.maxdim = maxdim;
-    % Revise the dimension range for COBYLA.
-    if strcmpi(solver, 'cobyla')
+    % Revise the dimension range for COBYLA and UOBYQA.
+    if strcmpi(solver, 'cobyla') || strcmpi(solver, 'uobyqa')
         if options.maxdim == 50
             options.maxdim = 20;
         end
