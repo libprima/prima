@@ -4,9 +4,9 @@ function verify(varargin)
 %
 % Usage:
 %
-%   verify(solver, dimrange, nocompile_flag, problem_type, options)
-%   verify(solver, problem, nocompile_flag, problem_type, options)
-%   verify(solve, problem, ir, nocompile_flag, problem_type, options)
+%   verify(solver, dimrange, nocompile_flag, sequential_flag, reverse_flag, problem_type, options)
+%   verify(solver, problem, nocompile_flag, reverse_flag, problem_type, options)
+%   verify(solve, problem, ir, nocompile_flag, reverse_flag, problem_type, options)
 %
 % where
 % - `solver` is the name of the solver to test
@@ -14,6 +14,8 @@ function verify(varargin)
 % - `problem` is the name of the problem to test
 % - `ir` is the index of the random run in `isequiv`.
 % - `nocompile_flag` is either 'nocompile' or 'ncp', indicating not to compile the solves
+% - `sequential_flag` (optional) is either 'sequential' or 'seq', which means to test the problems sequentially
+% - `reverse_flag` (optional) is either 'reverse' or 'rev', which means to test the solvers in the reverse order
 % - `problem_type` can be any of {'u', 'b', 'l', 'n', 'ub', 'ubl', 'ubln', 'bl', 'bln', 'ln'},
 %   indicating the problem type to test
 %
@@ -48,7 +50,11 @@ try
     showpath();
 
     % Conduct the verification.
-    solvers = {[solver, 'n'], solver};
+    if isfield(options, 'reverse') && options.reverse
+        solvers = {[solver, 'n'], solver};
+    else
+        solvers = {solver, [solver, 'n']};
+    end
     isequiv(solvers, options);  % `isequiv` raises an error in case the solver behave differently.
 
 catch exception

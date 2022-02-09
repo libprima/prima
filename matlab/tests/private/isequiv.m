@@ -104,9 +104,9 @@ if isempty(requirements.list)
     case {'uobyqa', 'uobyqan'}
     case {'newuoa', 'newuoan'}
     case {'bobyqa', 'bobyqan'}
-        %blacklist = [blacklist, {'STREG'}]; % bobyqa returns an fx that does not match x.
+        blacklist = [blacklist, {'STREG'}]; % bobyqa returns an fx that does not match x; should test it after the modernization.
     case {'lincoa', 'lincoan'}
-        %blacklist = [blacklist, {'LSNNODOC'}]; % possible reason for a segfault
+        blacklist = [blacklist, {'LSNNODOC'}]; % possible reason for a segfault; should test it after the modernization.
     case {'cobyla', 'cobylan'}
         if requirements.maxdim <= 50  % This means we intend to have a quick test with small problems
             blacklist=[blacklist, {'BLEACHNG'}];  % A 17 dimensional bound-constrained problem that
@@ -318,8 +318,14 @@ n = length(x0);
 % Set seed using pname, n, and ir. We ALTER THE SEED weekly to test the solvers as much as possible.
 % N.B.: The weeknum function considers the week containing January 1 to be the first week of the
 % year, and increments the number every SUNDAY.
-yw = 10*mod(year(datetime), 10) + week(datetime);
-rng(yw+ceil(1e5*abs(cos(1e5*sin(1e5*(sum(double(pname))*n*ir))))));
+if isfield(options, 'yw')
+    yw = options.yw;
+elseif isfield(options, 'seed')
+    yw = options.seed;
+else
+    yw = 100*mod(year(datetime), 10) + week(datetime);
+end
+rng(max(0, min(2^32, yw+ceil(1e5*abs(cos(1e5*sin(1e5*(sum(double(pname))*n*ir))))))));
 prob.x0 = x0 + 0.5*randn(size(x0));
 test_options = struct();
 test_options.debug = true;

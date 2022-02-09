@@ -3,15 +3,17 @@ function profile(varargin)
 %
 % Usage:
 %
-%   profile(solver, dimrange, nocompile_flag, problem_type, options)
-%   profile(solver, dimrange, reload_flag, problem_type, options)
+%   profile(solver, dimrange, nocompile_flag, sequential_flag, reverse_flag, problem_type, options)
+%   profile(solver, dimrange, reload_flag, reverse_flag, problem_type, options)
 %
 % where
 % - `solver` is the name of the solver to test
 % - `dimrange` is the vector [mindim, maxdim], or "small", or "big", or "large"
 % - `nocompile_flag` is either 'nocompile' or 'ncp', indicating not to compile the solves
 % - `reload_flag` is either 'reload' or 'load', indicating to load the data directly from the .mat
-% file corresponding to `solver` and `dimrange`
+%   file corresponding to `solver` and `dimrange`
+% - `sequential_flag` (optional) is either 'sequential' or 'seq', which means to test the problems sequentially
+% - `reverse_flag` (optional) is either 'reverse' or 'rev', which means to test the solvers in the reverse order
 % - `problem_type` can be any of {'u', 'b', 'l', 'n', 'ub', 'ubl', 'ubln', 'bl', 'bln', 'ln'},
 %   indicating the problem type to test
 %
@@ -54,7 +56,11 @@ try
     showpath();
 
     % Profile the solvers.
-    solvers = {[solver, 'n'], solver};
+    if isfield(options, 'reverse') && options.reverse
+        solvers = {[solver, 'n'], solver};
+    else
+        solvers = {solver, [solver, 'n']};
+    end
     tic;
     perfdata(solvers, options);
     toc;
