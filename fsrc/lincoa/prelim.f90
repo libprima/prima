@@ -1,21 +1,35 @@
-subroutine prelim(n, npt, m, amat, b, x, rhobeg, iprint, xbase, &
+subroutine prelim(calfun, n, npt, m, amat, b, x, rhobeg, iprint, xbase, &
      &  xpt, fval, xsav, xopt, gopt, kopt, hq, pq, bmat, zmat, idz, ndim, &
      &  sp, rescon, step, pqw, w, f, ftarget, &
-     & xhist, fhist, chist)
+     &  A_orig, b_orig, &
+     & cstrv, nf, xhist, maxxhist, fhist, maxfhist, chist, maxchist)
 
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm, maximum
+use, non_intrinsic :: pintrf_mod, only : OBJ
 
 implicit real(RP) (a - h, o - z)
 implicit integer(IK) (i - n)
 
-real(RP) :: cstrv
-real(RP) :: xhist(n, *)
-real(RP) :: fhist(*)
-real(RP) :: chist(*)
+procedure(OBJ) :: calfun
+integer(IK), intent(in) :: maxxhist
+integer(IK), intent(in) :: maxfhist
+integer(IK), intent(in) :: maxchist
+integer(IK), intent(out) :: nf
+real(RP), intent(in) :: amat(n, m)
+real(RP), intent(in) :: A_orig(n, m)
+real(RP), intent(in) :: b_orig(m)
+real(RP), intent(inout) :: b(m)
+real(RP), intent(inout) :: x(n)
+real(RP), intent(out) :: xhist(n, maxxhist)
+real(RP), intent(out) :: fhist(maxfhist)
+real(RP), intent(out) :: chist(maxchist)
+real(RP), intent(out) :: cstrv
+
+! Local variables
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-dimension amat(n, m), b(m), x(n), xbase(*), xpt(npt, *), fval(*), &
+dimension xbase(*), xpt(npt, *), fval(*), &
 & xsav(*), xopt(*), gopt(*), hq(*), pq(*), bmat(ndim, *), zmat(npt, *), &
 & sp(*), rescon(*), step(*), pqw(*), w(*)
 !
@@ -24,8 +38,8 @@ dimension amat(n, m), b(m), x(n), xbase(*), xpt(npt, *), fval(*), &
 !       same as the corresponding arguments in SUBROUTINE LINCOB.
 !     KOPT is set to the integer such that XPT(KOPT,.) is the initial trust
 !       region centre.
-!     IDZ is going to be set to one, so that every element of Diag(DZ) is
-!       one in the product ZMAT times Diag(DZ) times ZMAT^T, which is the
+!     IDZ is going to be set to ONE, so that every element of Diag(DZ) is
+!       ONE in the product ZMAT times Diag(DZ) times ZMAT^T, which is the
 !       factorization of the leading NPT by NPT submatrix of H.
 !     STEP, PQW and W are used for working space, the arrays STEP and PQW
 !       being taken from LINCOB. The length of W must be at least N+NPT.
@@ -38,12 +52,10 @@ dimension amat(n, m), b(m), x(n), xbase(*), xpt(npt, *), fval(*), &
 !
 !     Set some constants.
 !
-half = 0.5D0
-one = 1.0D0
 nptm = npt - n - 1
 rhosq = rhobeg * rhobeg
-recip = one / rhosq
-reciq = dsqrt(half) / rhosq
+recip = ONE / rhosq
+reciq = dsqrt(HALF) / rhosq
 test = 0.2D0 * rhobeg
 idz = 1
 kbase = 1
@@ -83,15 +95,15 @@ do j = 1, n
     if (j < npt - n) then
         jp = n + j + 1
         xpt(jp, j) = -rhobeg
-        bmat(j + 1, j) = half / rhobeg
-        bmat(jp, j) = -half / rhobeg
+        bmat(j + 1, j) = HALF / rhobeg
+        bmat(jp, j) = -HALF / rhobeg
         zmat(1, j) = -reciq - reciq
         zmat(j + 1, j) = reciq
         zmat(jp, j) = reciq
     else
-        bmat(1, j) = -one / rhobeg
-        bmat(j + 1, j) = one / rhobeg
-        bmat(npt + j, j) = -half * rhosq
+        bmat(1, j) = -ONE / rhobeg
+        bmat(j + 1, j) = ONE / rhobeg
+        bmat(npt + j, j) = -HALF * rhosq
     end if
 end do
 !
@@ -129,7 +141,7 @@ end if
 !       necessary so that its constraint violation is at least 0.2*RHOBEG.
 !
 do nf = 1, npt
-    feas = one
+    feas = ONE
     bigv = zero
     j = 0
 80  j = j + 1
@@ -142,7 +154,7 @@ do nf = 1, npt
         bigv = resid
         jsav = j
         if (resid <= test) then
-            feas = -one
+            feas = -ONE
             goto 80
         end if
         feas = zero
@@ -171,8 +183,8 @@ do nf = 1, npt
     end do
     f = feas
     !---------------------------------------------------!
-    call calfun(n, x, f)
-    cstrv = maximum([ZERO, matprod(x, Amat) - b])
+    call calfun(x, f)
+    cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
     call savehist(nf, x, xhist, f, fhist, cstrv, chist)
     !---------------------------------------------------!
     if (nf == 1) then

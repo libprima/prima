@@ -399,10 +399,9 @@ else % The problem turns out 'normal' during prepdfo
         if options.classical
             [x, fx, exitflag, nf, fhist, constrviolation, chist] = flincoan_classical(fun, x0, A_aug, b_aug, rhobeg, rhoend, maxfun, npt, ftarget);
         else
-            [x, fx, exitflag, nf, fhist, constrviolation, chist] = flincoan(fun, x0, A_aug, b_aug, rhobeg, rhoend, maxfun, npt, ftarget);
             [x, fx, constrviolation, exitflag, nf, xhist, fhist, chist] = ...
                 flincoan(fun, x0, A_aug, b_aug, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ...
-                ftarget, ctol, cweight, maxfun, iprint, maxhist, double(output_xhist), maxfilt);
+                ftarget, ctol, cweight, maxfun, npt, iprint, maxhist, double(output_xhist), maxfilt);
         end
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly

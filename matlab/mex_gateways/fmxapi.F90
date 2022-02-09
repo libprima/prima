@@ -29,7 +29,7 @@ module fmxapi_mod
 !
 ! Started in July 2020
 !
-! Last Modified: Monday, February 07, 2022 AM12:23:23
+! Last Modified: Wednesday, February 09, 2022 PM08:06:06
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : DP, RP
@@ -355,7 +355,7 @@ case ('rank0', 'scalar')
         call mexErrMsgIdAndTxt(trim(eid), trim(msg))
     end if
 case ('rank1', 'vector')
-    if ((m /= 1 .or. n < 0) .and. (m < 0 .or. n /= 1)) then
+    if ((m /= 1 .or. n < 0) .and. (m < 0 .or. n /= 1) .and. (m /= 0 .or. n /= 0)) then
         eid = 'FMXAPI:WrongInput'
         msg = 'fmxVerifyClassShape: A variable of invalid shape received when an array of rank 1 (vector) is expected.'
         call mexErrMsgIdAndTxt(trim(eid), trim(msg))

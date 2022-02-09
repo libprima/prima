@@ -228,9 +228,10 @@ prerem = HUGENUM
 jdrop_tr = 0_IK
 jdrop_geo = 0_IK
 
-! MAXTR is the maximal number of trust-region iterations. Each trust-region iteration takes at most
-! 2 function evaluations. Thus the following MAXTR imposes no constraint and should not be reached.
-! Nevertheless, we set INFO to MAXTR_REACHED before starting for safety.
+! MAXTR is the maximal number of trust-region iterations. Normally, each trust-region iteration 
+! takes 1 or 2 function evaluations unless the update of CPEN alters the optimal vertex or the
+! trust-region step is short but the geometry step is not invoked. Thus the following MAXTR is 
+! unlikely to be reached.
 maxtr = max(maxfun, 2_IK * maxfun)  ! MAX: precaution against overflow, which will make 2*MAXFUN < 0.
 info = MAXTR_REACHED
 

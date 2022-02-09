@@ -10,7 +10,7 @@
 !
 ! Started in March 2020
 !
-! Last Modified: Tuesday, February 08, 2022 PM08:35:50
+! Last Modified: Wednesday, February 09, 2022 PM04:18:02
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -21,7 +21,7 @@ subroutine mexFunction(nargout, poutput, nargin, pinput)
 ! FUNCTION_NAME.mex*** (extension depends on the platform), then in MATLAB we can call:
 ! [x, f, cstrv, info, nf, xhist, fhist, chist] = ...
 !   FUNCTION_NAME(fun, x0, A, b, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, ctol, ...
-!   cweight, maxfun, iprint, maxhist, output_xhist, maxfilt)
+!   cweight, maxfun, npt, iprint, maxhist, output_xhist, maxfilt)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -44,35 +44,35 @@ mwPointer, intent(in) :: pinput(nargin)
 mwPointer, intent(out) :: poutput(nargout)
 
 ! Local variables
-real(RP) :: A(:, :)
-real(RP) :: b(:)
-real(RP) :: eta1
-real(RP) :: eta2
-real(RP) :: gamma1
-real(RP) :: gamma2
 integer(IK) :: info
 integer(IK) :: iprint
-integer(IK) :: m
 integer(IK) :: maxfilt
 integer(IK) :: maxfun
 integer(IK) :: maxhist
 integer(IK) :: nf
+integer(IK) :: npt
 logical :: output_xhist
 mwPointer :: fun_ptr
 real(RP) :: cstrv
 real(RP) :: ctol
 real(RP) :: cweight
+real(RP) :: eta1
+real(RP) :: eta2
 real(RP) :: f
 real(RP) :: ftarget
+real(RP) :: gamma1
+real(RP) :: gamma2
 real(RP) :: rhobeg
 real(RP) :: rhoend
+real(RP), allocatable :: A(:, :)
+real(RP), allocatable :: b(:)
 real(RP), allocatable :: chist(:)
 real(RP), allocatable :: fhist(:)
 real(RP), allocatable :: x(:)
 real(RP), allocatable :: xhist(:, :)
 
 ! Validate the number of arguments
-call fmxVerifyNArgin(nargin, 18)
+call fmxVerifyNArgin(nargin, 19)
 call fmxVerifyNArgout(nargout, 8)
 
 ! Verify that input 1 is a function handle; the other inputs will be verified when read.
@@ -93,20 +93,22 @@ call fmxReadMPtr(pinput(11), ftarget)
 call fmxReadMPtr(pinput(12), ctol)
 call fmxReadMPtr(pinput(13), cweight)
 call fmxReadMPtr(pinput(14), maxfun)
-call fmxReadMPtr(pinput(15), iprint)
-call fmxReadMPtr(pinput(16), maxhist)
-call fmxReadMPtr(pinput(17), output_xhist)
-call fmxReadMPtr(pinput(18), maxfilt)
+call fmxReadMPtr(pinput(15), npt)
+call fmxReadMPtr(pinput(16), iprint)
+call fmxReadMPtr(pinput(17), maxhist)
+call fmxReadMPtr(pinput(18), output_xhist)
+call fmxReadMPtr(pinput(19), maxfilt)
 
 ! Call the Fortran code
 ! There are different cases because XHIST/CONHIST may or may not be passed to the Fortran code.
 if (output_xhist) then
-    call lincoa(calfun, x, f, cstrv, A, b, nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, &
-        & eta1, eta2, gamma1, gamma2, xhist=xhist, fhist=fhist, chist=chist, maxhist=maxhist, &
+    call lincoa(calfun, x, f, cstrv, A, b, nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, npt, &
+        & iprint, eta1, eta2, gamma1, gamma2, xhist=xhist, fhist=fhist, chist=chist, maxhist=maxhist, &
         & maxfilt=maxfilt, info=info)
 else
-    call lincoa(calfun, x, f, cstrv, A, b, nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, &
-        & eta1, eta2, gamma1, gamma2, fhist=fhist, chist=chist, maxhist=maxhist, maxfilt=maxfilt, info=info)
+    call lincoa(calfun, x, f, cstrv, A, b, nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, npt, &
+        & iprint, eta1, eta2, gamma1, gamma2, fhist=fhist, chist=chist, maxhist=maxhist, &
+        & maxfilt=maxfilt, info=info)
 end if
 
 ! After the Fortran code, XHIST may not be allocated, because it may not have been passed to the

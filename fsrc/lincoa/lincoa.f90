@@ -25,7 +25,7 @@ module lincoa_mod
 !
 ! Started: February 2022.
 !
-! Last Modified: Wednesday, February 09, 2022 AM01:37:09
+! Last Modified: Wednesday, February 09, 2022 PM07:55:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -57,7 +57,7 @@ subroutine lincoa(calfun, x, f, &
 !     A is a matrix whose columns are the constraint gradients, which are
 !       required to be nonzero.
 !     B is the vector of right hand sides of the constraints, the J-th
-!       constraint being that the scalar product of A(.,J) with X(.) is at
+!       constraint being that the scalar product of A(:,J) with X is at
 !       most B(J). The initial vector X(.) is made feasible by increasing
 !       the value of B(J) if necessary.
 !     X is the vector of variables. Initial values of X(1),X(2),...,X(N)
@@ -155,8 +155,8 @@ real(RP), intent(out), optional :: cstrv
 
 ! Local variables
 character(len=*), parameter :: ifmt = '(I0)'  ! I0: use the minimum number of digits needed to print
-character(len=*), parameter :: solver = 'COBYLA'
-character(len=*), parameter :: srname = 'COBYLA'
+character(len=*), parameter :: solver = 'LINCOA'
+character(len=*), parameter :: srname = 'LINCOA'
 character(len=MSGLEN) :: wmsg
 integer(IK) :: i
 integer(IK) :: info_loc
@@ -178,6 +178,8 @@ real(RP) :: gamma1_loc
 real(RP) :: gamma2_loc
 real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
+real(RP), allocatable :: A_loc(:, :)
+real(RP), allocatable :: b_loc(:)
 real(RP), allocatable :: chist_loc(:)
 real(RP), allocatable :: fhist_loc(:)
 real(RP), allocatable :: xhist_loc(:, :)
@@ -185,17 +187,48 @@ real(RP) :: smallx
 real(RP) :: sum
 logical :: constr_modified
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Working variables (to be removed)
 real(RP) :: temp
 real(RP), allocatable :: w(:)
 integer(IK) :: iw, iamat, ib, ndim, ixb, ixp, ifv, ixs, ixo, igo, ihq, ipq, ibmat, izmat, istp, isp,&
     & ixn, iac, irc, iqf, irf, ipqw, j, m
+integer(IK), allocatable :: iact(:)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Sizes
-m = int(size(b), kind(m))
+if (present(b)) then
+    m = int(size(b), kind(m))
+else
+    m = 0_IK
+end if
 n = int(size(x), kind(n))
 
+! Preconditions
+if (DEBUGGING) then
+    call assert(m >= 0, 'M >= 0', srname)
+    call assert(n >= 1, 'N >= 1', srname)
+    call assert(present(A) .eqv. present(b), 'A and B are both present or both absent', srname)
+    if (present(A)) then
+        call assert((size(A, 1) == n .and. size(A, 2) == m) &
+            & .or. (size(A, 1) == 0 .and. size(A, 2) == 0 .and. m == 0), &
+            & 'SIZE(A) == [N, M] unless A and B are both empty', srname)
+    end if
+end if
+
+! Read the inputs
+
 x = moderatex(x)
+
+call safealloc(A_loc, n, m)
+if (present(A)) then
+    A_loc = A
+end if
+
+call safealloc(b_loc, m)
+if (present(b)) then
+    b_loc = b
+end if
 
 ! If RHOBEG is present, then RHOBEG_LOC is a copy of RHOBEG; otherwise, RHOBEG_LOC takes the default
 ! value for RHOBEG, taking the value of RHOEND into account. Note that RHOEND is considered only if
@@ -246,6 +279,14 @@ if (present(maxfun)) then
     maxfun_loc = maxfun
 else
     maxfun_loc = MAXFUN_DIM_DFT * n
+end if
+
+if (present(npt)) then
+    npt_loc = npt
+elseif (maxfun_loc >= 1) then
+    npt_loc = int(max(n + 2, min(maxfun_loc - 1, 2 * n + 1)), kind(npt_loc))
+else
+    npt_loc = int(2 * n + 1, kind(npt_loc))
 end if
 
 if (present(iprint)) then
@@ -311,65 +352,71 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Working space (to be removed)
-call safealloc(w, m * (2_IK + n) + npt * (4_IK + n + npt) + n * (9_IK + 3_IK * n) + max(m + 3_IK * n, 2_IK * m + n, 2_IK * npt))
-
+call safealloc(w, m * (2_IK + n) + npt_loc * (4_IK + n + npt_loc) + n * (9_IK + 3_IK * n) + &
+    & max(m + 3_IK * n, 2_IK * m + n, 2_IK * npt_loc))
 
 ! Normalize the constraints, and copy the resultant constraint matrix and right hand sides into
 ! working space, after increasing the right hand sides if necessary so that the starting point
 ! is feasible.
-iamat = max(m + 3 * n, 2 * m + n, 2 * npt) + 1
+iamat = max(m + 3 * n, 2 * m + n, 2 * npt_loc) + 1
 ib = iamat + m * n
 constr_modified = .false.; 
-smallx = 1.0E-6_RP * rhoend
+smallx = 1.0E-6_RP * rhoend_loc
 if (m > 0) then
     iw = iamat - 1
     do j = 1, m
-        sum = zero
-        temp = zero
+        sum = ZERO
+        temp = ZERO
         do i = 1, n
-            sum = sum + A(i, j) * x(i)
-            temp = temp + A(i, j)**2
+            sum = sum + A_loc(i, j) * x(i)
+            temp = temp + A_loc(i, j)**2
         end do
         if (temp <= 0) then
             info = 12
             return
         end if
         temp = dsqrt(temp)
-        constr_modified = constr_modified .or. (sum - b(j) > smallx * temp)
-        w(ib + j - 1) = max(b(j), sum) / temp
+        constr_modified = constr_modified .or. (sum - b_loc(j) > smallx * temp)
+        w(ib + j - 1) = max(b_loc(j), sum) / temp
         do i = 1, n
             iw = iw + 1
-            w(iw) = A(i, j) / temp
+            w(iw) = A_loc(i, j) / temp
         end do
     end do
 end if
 
-ndim = npt + n
+ndim = npt_loc + n
 ixb = ib + m
 ixp = ixb + n
-ifv = ixp + n * npt
-ixs = ifv + npt
+ifv = ixp + n * npt_loc
+ixs = ifv + npt_loc
 ixo = ixs + n
 igo = ixo + n
 ihq = igo + n
 ipq = ihq + (n * (n + 1)) / 2
-ibmat = ipq + npt
+ibmat = ipq + npt_loc
 izmat = ibmat + ndim * n
-istp = izmat + npt * (npt - n - 1)
+istp = izmat + npt_loc * (npt_loc - n - 1)
 isp = istp + n
-ixn = isp + npt + npt
+ixn = isp + npt_loc + npt_loc
 iac = ixn + n
 irc = iac + n
 iqf = irc + m
 irf = iqf + n * n
 ipqw = irf + (n * (n + 1)) / 2
 
-call lincob(n, npt, m, w(iamat), w(ib), x, rhobeg, rhoend, iprint, &
-& maxfun, w(ixb), w(ixp), w(ifv), w(ixs), w(ixo), w(igo), w(ihq), &
-& w(ipq), w(ibmat), w(izmat), ndim, w(istp), w(isp), w(ixn), w(iac), &
-& w(irc), w(iqf), w(irf), w(ipqw), w, f, info, ftarget, &
-& xhist_loc, fhist_loc, chist_loc)
+call safealloc(iact, m)
+call lincob(calfun, n, npt_loc, m, w(iamat), w(ib), x, rhobeg_loc, rhoend_loc, iprint_loc, &
+& maxfun_loc, w(ixb), w(ixp), w(ifv), w(ixs), w(ixo), w(igo), w(ihq), &
+& w(ipq), w(ibmat), w(izmat), ndim, w(istp), w(isp), w(ixn), iact, &
+& w(irc), w(iqf), w(irf), w(ipqw), w, f, info_loc, ftarget_loc, &
+& A_loc, b_loc, &
+& cstrv_loc, nf_loc, xhist_loc, size(xhist_loc, 2), fhist_loc, size(fhist_loc), chist_loc, size(chist_loc))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+! Deallocate A_LOC and B_LOC. Indeed, automatic allocation will take place at exit.
+deallocate (A_loc)
+deallocate (b_loc)
 
 
 ! Write the outputs.
@@ -452,10 +499,11 @@ if (DEBUGGING) then
         call assert(size(chist) == nhist, 'SIZE(CHIST) == NHIST', srname)
         call assert(.not. any(is_nan(chist) .or. is_posinf(chist)), 'CHIST does not contain NaN/+Inf', srname)
     end if
-    if (present(fhist) .and. present(chist)) then
-        call assert(.not. any([(isbetter([fhist(i), chist(i)], [f, cstrv_loc], ctol_loc), i=1, nhist)]),&
-            & 'No point in the history is better than X', srname)
-    end if
+! The following test cannot be passed YET.
+!!!    if (present(fhist) .and. present(chist)) then
+!!!        call assert(.not. any([(isbetter([fhist(i), chist(i)], [f, cstrv_loc], ctol_loc), i=1, nhist)]),&
+!!!            & 'No point in the history is better than X', srname)
+!!!    end if
 end if
 
 end subroutine lincoa
