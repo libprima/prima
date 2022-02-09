@@ -57,9 +57,9 @@ try
 
     % Profile the solvers.
     if isfield(options, 'reverse') && options.reverse
-        solvers = {[solver, 'n'], solver};
-    else
         solvers = {solver, [solver, 'n']};
+    else
+        solvers = {[solver, 'n'], solver};
     end
     tic;
     perfdata(solvers, options);
