@@ -33,8 +33,9 @@ try
     % Parse the inputs.
     [solver, options] = parse_input(varargin);
 
-    % Mexify the solvers.
+    % Make the solvers available.
     if options.compile
+        % Mexify the solvers.
         mex_solvers(solver);
     else
         % Tell MATLAB where to find the solvers.
@@ -75,17 +76,3 @@ end
 
 setpath(oldpath);  % Restore the path to oldpath.
 cd(olddir);  % Go back to olddir.
-
-
-%%%%%%%%%%%%%%%%%%%%%%%% Auxiliary functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function spaths = locate_solvers()
-
-curdir = cd();
-
-solver_dir = fullfile(fileparts(fileparts(curdir)), 'PDFO', 'matlab', 'interfaces');
-addpath(solver_dir);
-
-solvern_dir = fullfile(fileparts(curdir), 'interfaces');
-addpath(solvern_dir);
-
-spaths={solver_dir, solvern_dir};
