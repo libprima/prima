@@ -34,6 +34,9 @@ try
     % Mexify the solvers.
     if options.compile
         mex_solvers(solver);
+    else
+        % Tell MATLAB where to find the solvers.
+        locate_solvers();
     end
 
     % Tell MATLAB where to find CUTEST.
@@ -46,6 +49,9 @@ try
         mkdir(datadir);
     end
     options.datadir = datadir;
+
+    % Show current path information.
+    showpath();
 
     % Profile the solvers.
     solvers = {[solver, 'n'], solver};
@@ -63,3 +69,17 @@ end
 
 setpath(oldpath);  % Restore the path to oldpath.
 cd(olddir);  % Go back to olddir.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%% Auxiliary functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function spaths = locate_solvers()
+
+curdir = cd();
+
+solver_dir = fullfile(fileparts(fileparts(curdir)), 'PDFO', 'matlab', 'interfaces');
+addpath(solver_dir);
+
+solvern_dir = fullfile(fileparts(curdir), 'interfaces');
+addpath(solvern_dir);
+
+spaths={solver_dir, solvern_dir};
