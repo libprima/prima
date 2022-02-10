@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, February 08, 2022 PM06:03:23
+! Last Modified: Thursday, February 10, 2022 PM02:08:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -40,6 +40,7 @@ integer(IK), intent(in), optional :: nrand
 character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)  ! Maximal number of problems to test: 100
 character(len=PNLEN) :: fix_dim_probs(size(probs_loc))  ! Problems with fixed dimensions
+integer :: rseed
 integer :: yw
 integer(IK) :: dimlist(100)  ! Maximal number of dimensions to test: 100
 integer(IK) :: dimstride_loc
@@ -127,8 +128,9 @@ do iprob = 1, nprobs
         do irand = 1, max(1_IK, nrand_loc)
             ! Initialize the random seed using N, IRAND, IK, and RP.
             ! We ALTER THE SEED weekly to test the solvers as much as possible.
-            yw = 10 * modulo(year(), 10) + week()
-            call setseed(int(sum(istr(probname)) + n + irand + IK + RP + yw))
+            yw = 100 * modulo(year(), 100) + week()
+            rseed = int(sum(istr(probname)) + n + irand + IK + RP + yw)
+            call setseed(rseed)
             iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
             maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))
             if (rand() <= 0.2_RP) then

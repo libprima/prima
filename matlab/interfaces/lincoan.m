@@ -393,16 +393,17 @@ else % The problem turns out 'normal' during prepdfo
     end
 
     % Call the Fortran code
+    if options.classical
+        fsolver = @flincoan_classical;
+    else
+        fsolver = @flincoan;
+    end
+    % The mexified Fortran function is a private function generating only private errors;
+    % however, public errors can occur due to, e.g., evalobj; error handling needed
     try
-        % The mexified Fortran function is a private function generating only private errors;
-        % however, public errors can occur due to, e.g., evalobj; error handling needed
-        if options.classical
-            [x, fx, exitflag, nf, fhist, constrviolation, chist] = flincoan_classical(fun, x0, A_aug, b_aug, rhobeg, rhoend, maxfun, npt, ftarget);
-        else
-            [x, fx, constrviolation, exitflag, nf, xhist, fhist, chist] = ...
-                flincoan(fun, x0, A_aug, b_aug, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ...
-                ftarget, ctol, cweight, maxfun, npt, iprint, maxhist, double(output_xhist), maxfilt);
-        end
+        [x, fx, constrviolation, exitflag, nf, xhist, fhist, chist] = ...
+            fsolver(fun, x0, A_aug, b_aug, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ...
+            ftarget, ctol, cweight, maxfun, npt, iprint, maxhist, double(output_xhist), maxfilt);
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
             error(exception.identifier, '%s\n(error generated in %s, line %d)', exception.message, exception.stack(1).file, exception.stack(1).line);

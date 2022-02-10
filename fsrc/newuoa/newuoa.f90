@@ -20,7 +20,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, February 09, 2022 PM08:23:16
+! Last Modified: Thursday, February 10, 2022 PM01:20:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -268,9 +268,9 @@ end if
 if (present(npt)) then
     npt_loc = npt
 elseif (maxfun_loc >= 1) then
-    npt_loc = int(max(n + 2, min(maxfun_loc - 1, 2 * n + 1)), kind(npt_loc))
+    npt_loc = max(n + 2_IK, min(maxfun_loc - 1_IK, 2_IK * n + 1_IK))
 else
-    npt_loc = int(2 * n + 1, kind(npt_loc))
+    npt_loc = 2_IK * n + 1_IK
 end if
 
 if (present(iprint)) then

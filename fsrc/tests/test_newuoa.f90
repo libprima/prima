@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, January 24, 2022 AM01:22:44
+! Last Modified: Thursday, February 10, 2022 PM02:22:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -39,6 +39,7 @@ integer(IK), intent(in), optional :: nrand
 
 character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)
+integer :: rseed
 integer :: yw
 integer(IK) :: dimstride_loc
 integer(IK) :: iprint
@@ -106,8 +107,9 @@ do iprob = 1, nprobs
         do irand = 1, int(size(npt_list) + max(0_IK, nrand_loc), kind(irand))
             ! Initialize the random seed using N, IRAND, IK, and RP.
             ! We ALTER THE SEED weekly to test the solvers as much as possible.
-            yw = 10 * modulo(year(), 10) + week()
-            call setseed(int(sum(istr(probname)) + n + irand + IK + RP + yw))
+            yw = 100 * modulo(year(), 100) + week()
+            rseed = int(sum(istr(probname)) + n + irand + IK + RP + yw)
+            call setseed(rseed)
             if (irand <= size(npt_list)) then
                 npt = npt_list(irand)
             else
