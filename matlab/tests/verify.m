@@ -36,13 +36,7 @@ try
     [solver, options] = parse_input(varargin);
 
     % Make the solvers available.
-    if options.compile
-        % Mexify the solvers.
-        mex_solvers(solver);
-    else
-        % Tell MATLAB where to find the solvers.
-        locate_solvers();
-    end
+    get_solvers(solver, options.compile);
 
     % Tell MATLAB where to find CUTEST.
     locate_cutest();

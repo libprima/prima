@@ -131,10 +131,12 @@ C
       END DO
       IF (RESID <= ZERO) GOTO 90
       TEMP=DSQRT(STEPSQ*RESID+DS*DS)
-!      IF (DS < ZERO) THEN
-      IF (DS <= ZERO) THEN  ! Zaikun 20210925
-          ! Zaikun 20210925
-          ! What if we are at the first iteration? BLEN = DELTA/|D|? See TRSAPP.F90 of NEWUOA.
+      IF (DS < ZERO) THEN
+! Zaikun 20220210: the above line is the original code of Powell. Surprisingly, it works quite
+! differently from the following line. Are they different even in precise arithmetic?
+! When DS = 0, what should be the simplest (and potentially the stablest) formulation?
+! What if we are at the first iteration? BLEN = DELTA/|D|? See TRSAPP.F90 of NEWUOA.
+!      IF (DS <= ZERO) THEN  ! Zaikun 20210925
           BLEN=(TEMP-DS)/STEPSQ
       ELSE
           BLEN=RESID/(TEMP+DS)
