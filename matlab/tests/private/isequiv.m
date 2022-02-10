@@ -325,7 +325,8 @@ elseif isfield(options, 'seed')
 else
     yw = 100*mod(year(datetime), 10) + week(datetime);
 end
-rng(max(0, min(2^32, yw+ceil(1e5*abs(cos(1e5*sin(1e5*(sum(double(pname))*n*ir))))))));
+rseed = max(0, min(2^32, yw+ceil(1e5*abs(cos(1e5*sin(1e5*(sum(double(pname))*n*ir)))))));
+rng(rseed);
 prob.x0 = x0 + 0.5*randn(size(x0));
 test_options = struct();
 test_options.debug = true;
@@ -333,7 +334,7 @@ test_options.chkfunval = true;
 test_options.rhobeg = 1 + 0.5*(2*rand-1);
 test_options.rhoend = 1e-3*(1 + 0.5*(2*rand-1));
 test_options.npt = max(min(floor(6*rand*n), (n+2)*(n+1)/2), n+2);
-if (isfield(options, 'maxfun'))
+if isfield(options, 'maxfun')
     test_options.maxfun = options.maxfun;
 else
     test_options.maxfun = max(ceil(20*n*(1+rand)), n+3);
@@ -342,18 +343,19 @@ test_options.ftarget = objective(x0) - 10*abs(randn)*max(1, objective(x0));
 test_options.fortran = (rand > 0.5);
 test_options.output_xhist = (rand > 0.5);
 test_options.output_nlchist = (rand > 0.5);
+test_options.maxhist = ceil(randn*1.5*test_options.maxfun);
 if single_test
+    % DO NOT INVOKE ANY RANDOMIZATION HERE. Otherwise, a single test cannot reproduce the
+    % corresponding test in a multiple one.
     test_options.maxhist = test_options.maxfun;
     test_options.output_xhist = true;
     test_options.output_nlchist = true;
-else
-    test_options.maxhist = ceil(randn*1.5*test_options.maxfun);
 end
 test_options.maxfilt = ceil(randn*500);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-ready_solvers = {'newuoa', 'cobyla'};  % Solvers whose development is (almost) finished.
+ready_solvers = {'newuoa', 'cobyla', 'lincoa'};  % Solvers whose development is (almost) finished.
 test_ready_solvers = ~isempty(intersect(lower(solvers), ready_solvers));
-test_options.classical = (rand < 0.2) && test_ready_solvers;
+test_options.classical = (rand < 0.4) && test_ready_solvers;
 test_options.iprint = floor(3*rand) * double(test_ready_solvers);
 test_options.quiet = (rand < 0.8) && test_ready_solvers;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -503,6 +505,7 @@ if ~equiv
         chist1 == chist2
     end
     if single_test
+        fprintf('\nThe solvers produce different results on %s at the %dth run.\n\n', pname, ir);
         keyboard
     end
     error('\nThe solvers produce different results on %s at the %dth run.\n', pname, ir);

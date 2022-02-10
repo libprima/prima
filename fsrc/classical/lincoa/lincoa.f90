@@ -1,31 +1,14 @@
 module lincoa_mod
 !--------------------------------------------------------------------------------------------------!
-! LINCOA_MOD is a module providing a modernized and improved Fortran implementation of Powell's
-! LINCOA algorithm. The algorithm approximately solves
+! Classical mode. Not maintained. Not recommended. Please use the modernized version instead.
 !
-!   min F(X) subject to A'*X <= b,
+! The usage is the same as the modernized version.
 !
-! where X is a vector of variables that has N components, F is a real-valued objective function,
-! A is an N-by-M matrix, and b is an M-dimensional real vector. It tackles the problem by a trust
-! region method that forms quadratic models by interpolation. Usually there is much freedom in each
-! new model after satisfying the interpolation conditions, which is taken up by minimizing the
-! Frobenius norm of the change to the second derivative matrix of the model. One new function value
-! is calculated on each iteration, usually at a point where the current model predicts a reduction
-! in the least value so far of the objective function subject to the linear constraints.
-! Alternatively, a new vector of variables may be chosen to replace an interpolation point that may
-! be too far away for reliability, and then the new point does not have to satisfy the constraints.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the paper
+! Started: February 2022
 !
-! M. J. D. Powell, On fast trust region methods for quadratic models with linear constraints,
-! Math. Program. Comput., 7:237--267, 2015
-!
-! Powell did not publish a paper to introduce the algorithm. The above paper does not describe
-! LINCOA but discusses how to solve linearly-constrained trust-region subproblems.
-!
-! Started: February 2022.
-!
-! Last Modified: Thursday, February 10, 2022 PM01:49:49
+! Last Modified: Thursday, February 10, 2022 PM01:51:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -41,68 +24,7 @@ subroutine lincoa(calfun, x, f, &
     & A, b, &
     & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, npt, iprint, &
     & eta1, eta2, gamma1, gamma2, xhist, fhist, chist, maxhist, maxfilt, info)
-!--------------------------------------------------------------------------------------------------!
-!
-!     SUBROUTINE CALFUN (N,X,F) has to be provided by the user. It must set
-!       F to the value of the objective function for the variables X(1),
-!       X(2),...,X(N).
-!
-!     N must be set to the number of variables and must be at least two.
-!     NPT must be set to the number of interpolation conditions, which is
-!       required to be in the interval [N+2,(N+1)(N+2)/2]. Typical choices
-!       of the author are NPT=N+6 and NPT=2*N+1. Larger values tend to be
-!       highly inefficent when the number of variables is substantial, due
-!       to the amount of work and extra difficulty of adjusting more points.
-!     M must be set to the number of linear inequality constraints.
-!     A is a matrix whose columns are the constraint gradients, which are
-!       required to be nonzero.
-!     B is the vector of right hand sides of the constraints, the J-th
-!       constraint being that the scalar product of A(:,J) with X is at
-!       most B(J). The initial vector X(.) is made feasible by increasing
-!       the value of B(J) if necessary.
-!     X is the vector of variables. Initial values of X(1),X(2),...,X(N)
-!       must be supplied. If they do not satisfy the constraints, then B
-!       is increased as mentioned above. X contains on return the variables
-!       that have given the least calculated F subject to the constraints.
-!     RHOBEG and RHOEND must be set to the initial and final values of a
-!       trust region radius, so both must be positive with RHOEND<=RHOBEG.
-!       Typically, RHOBEG should be about one tenth of the greatest expected
-!       change to a variable, and RHOEND should indicate the accuracy that
-!       is required in the final values of the variables.
-!     The value of IPRINT should be set to 0, 1, 2 or 3, which controls the
-!       amount of printing. Specifically, there is no output if IPRINT=0 and
-!       there is output only at the return if IPRINT=1. Otherwise, the best
-!       feasible vector of variables so far and the corresponding value of
-!       the objective function are printed whenever RHO is reduced, where
-!       RHO is the current lower bound on the trust region radius. Further,
-!       each new value of F with its variables are output if IPRINT=3.
-!     MAXFUN must be set to an upper bound on the number of calls of CALFUN,
-!       its value being at least NPT+1.
-!     W is an array used for working space. Its length must be at least
-!       M*(2+N) + NPT*(4+N+NPT) + N*(9+3*N) + MAX [ M+3*N, 2*M+N, 2*NPT ].
-!       On return, W(1) is set to the final value of F, and W(2) is set to
-!       the total number of function evaluations plus 0.5.
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!     F is the objective function value when the algorithm exit.
-!     INFO is the exit flag, which can be set to:
-!       0: the lower bound for the trust region radius is reached.
-!       1: the target function value is reached.
-!       2: a trust region step has failed to reduce the quadratic model.
-!       3: the objective function has been evaluated MAXFUN times.
-!       4: much cancellation in a denominator.
-!       5: NPT is not in the required interval.
-!       6: one of the difference XU(I)-XL(I) is less than 2*RHOBEG.
-!       7: rounding errors are becoming damaging.
-!       8: rounding errors prevent reasonable changes to X.
-!       9: the denominator of the updating formule is zero.
-!       10: N should not be less than 2.
-!       11: MAXFUN is less than NPT+1.
-!       12: the gradient of constraint is zero.
-!       -1: NaN occurs in x.
-!       -2: the objective function returns a NaN or nearly infinite
-!           value.
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!--------------------------------------------------------------------------------------------------!
+
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : DEBUGGING
 use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT, IPRINT_DFT
@@ -188,7 +110,7 @@ real(RP) :: sum
 logical :: constr_modified
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Working variables (to be removed)
+! Working variables
 real(RP) :: temp
 real(RP), allocatable :: w(:)
 integer(IK) :: iw, iamat, ib, ndim, ixb, ixp, ifv, ixs, ixo, igo, ihq, ipq, ibmat, izmat, istp, isp,&
@@ -351,7 +273,7 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-! Working space (to be removed)
+! Working space
 call safealloc(w, m * (2_IK + n) + npt_loc * (4_IK + n + npt_loc) + n * (9_IK + 3_IK * n) + &
     & max(m + 3_IK * n, 2_IK * m + n, 2_IK * npt_loc))
 

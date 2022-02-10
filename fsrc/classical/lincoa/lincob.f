@@ -1,18 +1,49 @@
-      SUBROUTINE LINCOB (N,NPT,M,AMAT,B,X,RHOBEG,RHOEND,IPRINT,
-     1  MAXFUN,XBASE,XPT,FVAL,XSAV,XOPT,GOPT,HQ,PQ,BMAT,ZMAT,NDIM,
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C     2  STEP,SP,XNEW,IACT,RESCON,QFAC,RFAC,PQW,W)
-     2  STEP,SP,XNEW,IACT,RESCON,QFAC,RFAC,PQW,W,F,INFO,FTARGET)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C      IMPLICIT REAL*8 (A-H,O-Z)
-      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
-      IMPLICIT INTEGER (I-N)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DIMENSION AMAT(N,*),B(*),X(*),XBASE(*),XPT(NPT,*),FVAL(*),
-     1  XSAV(*),XOPT(*),GOPT(*),HQ(*),PQ(*),BMAT(NDIM,*),
-     2  ZMAT(NPT,*),STEP(*),SP(*),XNEW(*),IACT(*),RESCON(*),
-     3  QFAC(N,*),RFAC(*),PQW(*),W(*)
+!      SUBROUTINE LINCOB (N,NPT,M,AMAT,B,X,RHOBEG,RHOEND,IPRINT,
+!     1  MAXFUN,XBASE,XPT,FVAL,XSAV,XOPT,GOPT,HQ,PQ,BMAT,ZMAT,NDIM,
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!C     2  STEP,SP,XNEW,IACT,RESCON,QFAC,RFAC,PQW,W)
+!     2  STEP,SP,XNEW,IACT,RESCON,QFAC,RFAC,PQW,W,F,INFO,FTARGET)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!C      IMPLICIT REAL*8 (A-H,O-Z)
+!      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
+!      IMPLICIT INTEGER (I-N)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!      DIMENSION AMAT(N,*),B(*),X(*),XBASE(*),XPT(NPT,*),FVAL(*),
+!     1  XSAV(*),XOPT(*),GOPT(*),HQ(*),PQ(*),BMAT(NDIM,*),
+!     2  ZMAT(NPT,*),STEP(*),SP(*),XNEW(*),IACT(*),RESCON(*),
+!     3  QFAC(N,*),RFAC(*),PQW(*),W(*)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+      subroutine lincob (calfun, n,npt,m,amat,b,x,rhobeg,rhoend,iprint,
+     &  maxfun,xbase,xpt,fval,xsav,xopt,gopt,hq,pq,bmat,zmat,ndim,
+     &  step,sp,xnew,iact,rescon,qfac,rfac,pqw,w,f,info,ftarget,
+     & A_orig, b_orig,
+     & cstrv, nf, xhist, maxxhist, fhist, maxfhist, chist, maxchist)
+
+      use, non_intrinsic :: consts_mod, only : RP, IK
+      use, non_intrinsic :: evaluate_mod, only : evaluate
+      use, non_intrinsic :: history_mod, only : savehist, rangehist
+      use, non_intrinsic :: linalg_mod, only: matprod, maximum
+      use, non_intrinsic :: pintrf_mod, only : OBJ
+
+      implicit real(RP) (A-H,O-Z)
+      implicit integer(IK) (I-N)
+
+      procedure(OBJ) :: calfun
+      dimension amat(n,m),b(m),x(n),xbase(*),xpt(npt,*),fval(*),
+     &  xsav(*),xopt(*),gopt(*),hq(*),pq(*),bmat(ndim,*),
+     &  zmat(npt,*),step(*),sp(*),xnew(*),iact(*),rescon(*),
+     &  qfac(n,*),rfac(*),pqw(*),w(*),
+     &  A_orig(n, m), b_orig(m),
+     &  xhist(n, maxxhist), fhist(maxfhist), chist(maxchist)
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+
+
 C
 C     The arguments N, NPT, M, X, RHOBEG, RHOEND, IPRINT and MAXFUN are
 C       identical to the corresponding arguments in SUBROUTINE LINCOA.
@@ -83,17 +114,29 @@ C       integer from [1,NPT], then a change is made to XPT(K,.) if necessary
 C       so that the constraint violation is at least 0.2*RHOBEG. Also KOPT
 C       is set so that XPT(KOPT,.) is the initial trust region centre.
 C
-      CALL PRELIM (N,NPT,M,AMAT,B,X,RHOBEG,IPRINT,XBASE,XPT,FVAL,
-     1  XSAV,XOPT,GOPT,KOPT,HQ,PQ,BMAT,ZMAT,IDZ,NDIM,SP,RESCON,
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C     2  STEP,PQW,W)
-     2  STEP,PQW,W,F,FTARGET)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!      CALL PRELIM (N,NPT,M,AMAT,B,X,RHOBEG,IPRINT,XBASE,XPT,FVAL,
+!     1  XSAV,XOPT,GOPT,KOPT,HQ,PQ,BMAT,ZMAT,IDZ,NDIM,SP,RESCON,
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!C     2  STEP,PQW,W)
+!     2  STEP,PQW,W,F,FTARGET)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+      call prelim (calfun,n,npt,m,amat,b,x,rhobeg,iprint,xbase,xpt,fval,
+     &  xsav,xopt,gopt,kopt,hq,pq,bmat,zmat,idz,ndim,sp,rescon,
+     &  step,pqw,w,f,ftarget,
+     & A_orig, b_orig,
+     & cstrv, nf, xhist, maxxhist, fhist, maxfhist, chist, maxchist)
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C     By Tom/Zaikun (on 04-06-2019/07-06-2019):
 C     Note that we should NOT compare F and FTARGET, because X may not
-C     be feasible at the exit of PRELIM.  
+C     be feasible at the exit of PRELIM.
       IF (FVAL(KOPT) <= FTARGET) THEN
           F=FVAL(KOPT)
           X(1:N)=XSAV(1:N)
@@ -343,7 +386,18 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       END IF
       IF (KSAVE <= 0) IFEAS=1
       F=DFLOAT(IFEAS)
-      CALL CALFUN (N,X,F)
+
+
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+      !CALL CALFUN (N,X,F)
+      call evaluate(calfun, x, f)
+      cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
+      call savehist(nf, x, xhist, f, fhist, cstrv, chist)
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+
+
       IF (IPRINT == 3) THEN
           PRINT 260, NF,F,(X(I),I=1,N)
   260     FORMAT (/4X,'Function number',I6,'    F =',1PD18.10,
@@ -400,7 +454,7 @@ C
               DELTA=HALF*DELTA
           ELSE IF (RATIO <= 0.7D0) THEN
               DELTA=DMAX1(HALF*DELTA,SNORM)
-          ELSE 
+          ELSE
               TEMP=DSQRT(2.0D0)*DELTA
               DELTA=DMAX1(HALF*DELTA,SNORM+SNORM)
               DELTA=DMIN1(DELTA,TEMP)
@@ -438,7 +492,7 @@ C     Update the second derivatives of the model by the symmetric Broyden
 C       method, using PQW for the second derivative parameters of the new
 C       KNEW-th Lagrange function. The contribution from the old parameter
 C       PQ(KNEW) is included in the second derivative matrix HQ. W is used
-C       later for the gradient of the new KNEW-th Lagrange function.       
+C       later for the gradient of the new KNEW-th Lagrange function.
 C
       IF (ITEST < 3) THEN
           DO K=1,NPT
@@ -632,7 +686,7 @@ C
               RHO=RHOEND
           ELSE
               RHO=DSQRT(RHO*RHOEND)
-          END IF 
+          END IF
           DELTA=DMAX1(DELTA,RHO)
           IF (IPRINT >= 2) THEN
               IF (IPRINT >= 3) PRINT 570
@@ -671,5 +725,14 @@ C      IF (IPRINT .GE. 1) THEN
       END IF
       W(1)=F
       W(2)=DFLOAT(NF)+HALF
+
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+      cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
+! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.
+      call rangehist(nf, xhist, fhist, chist)
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+
       RETURN
       END

@@ -1,17 +1,46 @@
-      SUBROUTINE PRELIM (N,NPT,M,AMAT,B,X,RHOBEG,IPRINT,XBASE,
-     1  XPT,FVAL,XSAV,XOPT,GOPT,KOPT,HQ,PQ,BMAT,ZMAT,IDZ,NDIM,
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C     2  SP,RESCON,STEP,PQW,W)
-     2  SP,RESCON,STEP,PQW,W,F,FTARGET)
+!      SUBROUTINE PRELIM (N,NPT,M,AMAT,B,X,RHOBEG,IPRINT,XBASE,
+!     1  XPT,FVAL,XSAV,XOPT,GOPT,KOPT,HQ,PQ,BMAT,ZMAT,IDZ,NDIM,
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!C     2  SP,RESCON,STEP,PQW,W)
+!     2  SP,RESCON,STEP,PQW,W,F,FTARGET)
+!C      IMPLICIT REAL*8 (A-H,O-Z)
+!      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
+!      IMPLICIT INTEGER (I-N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C      IMPLICIT REAL*8 (A-H,O-Z)
-      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
-      IMPLICIT INTEGER (I-N)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DIMENSION AMAT(N,*),B(*),X(*),XBASE(*),XPT(NPT,*),FVAL(*),
-     1  XSAV(*),XOPT(*),GOPT(*),HQ(*),PQ(*),BMAT(NDIM,*),ZMAT(NPT,*),
-     2  SP(*),RESCON(*),STEP(*),PQW(*),W(*)
+!      DIMENSION AMAT(N,*),B(*),X(*),XBASE(*),XPT(NPT,*),FVAL(*),
+!     1  XSAV(*),XOPT(*),GOPT(*),HQ(*),PQ(*),BMAT(NDIM,*),ZMAT(NPT,*),
+!     2  SP(*),RESCON(*),STEP(*),PQW(*),W(*)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+      subroutine prelim (calfun, n,npt,m,amat,b,x,rhobeg,iprint,xbase,
+     &  xpt,fval,xsav,xopt,gopt,kopt,hq,pq,bmat,zmat,idz,ndim,
+     &  sp,rescon,step,pqw,w,f,ftarget,
+     &  A_orig, b_orig,
+     & cstrv, nf, xhist, maxxhist, fhist, maxfhist, chist, maxchist)
+
+      use, non_intrinsic :: consts_mod, only : RP, IK
+      use, non_intrinsic :: evaluate_mod, only : evaluate
+      use, non_intrinsic :: history_mod, only : savehist
+      use, non_intrinsic :: linalg_mod, only: matprod, maximum
+      use, non_intrinsic :: pintrf_mod, only : OBJ
+
+      implicit real(RP) (A-H,O-Z)
+      implicit integer(IK) (I-N)
+
+      procedure(OBJ) :: calfun
+
+      dimension amat(n,m),b(m),x(n),xbase(*),xpt(npt,*),fval(*),
+     &  xsav(*),xopt(*),gopt(*),hq(*),pq(*),bmat(ndim,*),zmat(npt,*),
+     &  sp(*),rescon(*),step(*),pqw(*),w(*),
+     &  A_orig(n, m), b_orig(m),
+     &  xhist(n, maxxhist), fhist(maxfhist), chist(maxchist)
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+
+
 C
 C     The arguments N, NPT, M, AMAT, B, X, RHOBEG, IPRINT, XBASE, XPT, FVAL,
 C       XSAV, XOPT, GOPT, HQ, PQ, BMAT, ZMAT, NDIM, SP and RESCON are the
@@ -159,7 +188,18 @@ C
               X(J)=XBASE(J)+XPT(NF,J)
           END DO
           F=FEAS
-          CALL CALFUN (N,X,F)
+
+
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+      !CALL CALFUN (N,X,F)
+      call evaluate(calfun, x, f)
+      cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
+      call savehist(nf, x, xhist, f, fhist, cstrv, chist)
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+
+
           IF (IPRINT == 3) THEN
               PRINT 140, NF,F,(X(I),I=1,N)
   140         FORMAT (/4X,'Function number',I6,'    F =',1PD18.10,
@@ -220,5 +260,13 @@ C
           IF (TEMP >= RHOBEG) TEMP=-TEMP
           RESCON(J)=TEMP
       END DO
+
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+! When the loop terminates, NF = NPT + 1 !!!
+      nf = min(nf, npt)
+!----------------------------------------------------------------------!
+!----------------------------------------------------------------------!
+
       RETURN
       END
