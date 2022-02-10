@@ -18,25 +18,31 @@
       contains
 
       subroutine cobylb(calcfc, iprint, maxfun, rhobeg, rhoend, constr,
-     &     x, resmax, f, info)
+     &     x, cstrv, f, info, nfvals, xhist, fhist, chist, conhist)
 
       use, non_intrinsic :: consts_mod, only : RP, IK
+      use, non_intrinsic :: evaluate_mod, only : evaluate
+      use, non_intrinsic :: history_mod, only: savehist, rangehist
       use, non_intrinsic :: pintrf_mod, only : OBJCON
-      use, non_intrinsic :: evalcl_mod, only : evaluate
 
       implicit real(RP) (A-H,O-Z)
       implicit integer(IK) (I-N)
 
       procedure(OBJCON) :: calcfc
       real(RP), intent(inout) :: x(:)
-      real(RP), intent(out) :: f
+      real(RP), intent(inout) :: f
       integer(IK), intent(in) :: iprint
       integer(IK), intent(in) :: maxfun
       real(RP), intent(in) :: rhobeg
       real(RP), intent(in) :: rhoend
-      real(RP), intent(out) :: constr(:)
-      real(RP), intent(out) :: resmax
+      real(RP), intent(inout) :: constr(:)
+      real(RP), intent(inout) :: cstrv
       integer(IK), intent(out) :: info
+      integer(IK), intent(out) :: nfvals
+      real(RP), intent(out) :: xhist(:, :)
+      real(RP), intent(out) :: fhist(:)
+      real(RP), intent(out) :: chist(:)
+      real(RP), intent(out) :: conhist(:, :)
 
       integer(IK) :: iact(size(constr)+1)
       real(RP) :: sim(size(x),size(x)+1), simi(size(x),size(x)),
@@ -122,7 +128,12 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !----------------------------------------------------------------------!
 !----------------------------------------------------------------------!
       !CALL CALCFC (N,M,X,F,CON)
-      call evaluate(calcfc, x, f, constr, resmax); con(1:m) = constr !!!
+      if (nfvals > 1) then
+      call evaluate(calcfc, x, f, constr, cstrv)
+      end if
+      con(1:m) = constr !!!
+      call savehist(nfvals, x, xhist, f, fhist, cstrv, chist,
+     & constr, conhist)
 !----------------------------------------------------------------------!
 !----------------------------------------------------------------------!
 
@@ -716,6 +727,8 @@ C     CONSAV are dumped into CON to be returned by COBYLA.
 !      RETURN
 !      END
       constr = con(1:m)
+      cstrv = maxval([0.0D0, -constr])
+      call rangehist(nfvals, xhist, fhist, chist, conhist)
       RETURN
       end subroutine cobylb
 
