@@ -191,7 +191,11 @@ if isempty(prob)
             options.mindim = 51;
         end
         if options.maxdim == 200
-            options.maxdim = 100;
+            if strcmpi(solver, 'uobyqa')
+                options.maxdim = 90;
+            else
+                options.maxdim = 100;
+            end if
             options.maxcon = 2000;
         end
     end
