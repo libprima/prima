@@ -191,7 +191,7 @@ if isempty(prob)
             options.mindim = 51;
         end
         if options.maxdim == 200
-            if strcmpi(solver, 'uobyqa')
+            if strcmpi(solver, 'uobyqa') && strcmpi(invoker, 'profile')
                 options.maxdim = 90;
             else
                 options.maxdim = 100;
