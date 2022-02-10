@@ -5,6 +5,7 @@ subroutine prelim(calfun, n, npt, m, amat, b, x, rhobeg, iprint, xbase, &
      & cstrv, nf, xhist, maxxhist, fhist, maxfhist, chist, maxchist)
 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF
+use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm, maximum
 use, non_intrinsic :: pintrf_mod, only : OBJ
@@ -183,7 +184,7 @@ do nf = 1, npt
     end do
     f = feas
     !---------------------------------------------------!
-    call calfun(x, f)
+    call evaluate(calfun, x, f)
     cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
     call savehist(nf, x, xhist, f, fhist, cstrv, chist)
     !---------------------------------------------------!
