@@ -2,7 +2,6 @@ function cpaths = locate_cutest()
 %This function tells MATLAB where to find CUTEst. The following lines should be written according to
 % the installation of CUTEst on this machine.
 
-homedir = fileparts(fileparts(userpath));
 cdir_dft = fullfile(homedir, 'local', 'cutesif', 'cutest');
 
 cdir = getenv('CUTEST');
