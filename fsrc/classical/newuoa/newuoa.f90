@@ -8,7 +8,7 @@ module newuoa_mod
 !
 ! Started: January 2022
 !
-! Last Modified: Thursday, February 10, 2022 AM10:57:55
+! Last Modified: Thursday, February 10, 2022 PM05:19:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -29,20 +29,12 @@ use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS, MSGLEN
 use, non_intrinsic :: debug_mod, only : assert, warning
+use, non_intrinsic :: evaluate_mod, only : moderatex
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: preproc_mod, only : preproc
-
-!--------------------------------------------------------------------------------------------------!
-!--------------------------------------------------------------------------------------------------!
-! The following modules are crucial for the classical mode.
-use, non_intrinsic :: evalcl_mod, only : nf_loc => nf
-use, non_intrinsic :: evalcl_mod, only : xhist_loc => xhist, fhist_loc => fhist
-use, non_intrinsic :: evalcl_mod, only : rangehist
-!--------------------------------------------------------------------------------------------------!
-!--------------------------------------------------------------------------------------------------!
 
 ! Solver-specific modules
 use, non_intrinsic :: newuob_mod, only : newuob
@@ -80,13 +72,7 @@ integer(IK) :: iprint_loc
 integer(IK) :: maxfun_loc
 integer(IK) :: maxhist_loc
 integer(IK) :: n
-
-!--------------------------------------------------------------------------------------------------!
-!--------------------------------------------------------------------------------------------------!
-!integer(IK) :: nf_loc
-!--------------------------------------------------------------------------------------------------!
-!--------------------------------------------------------------------------------------------------!
-
+integer(IK) :: nf_loc
 integer(IK) :: nhist
 integer(IK) :: npt_loc
 real(RP) :: eta1_loc
@@ -96,21 +82,14 @@ real(RP) :: gamma1_loc
 real(RP) :: gamma2_loc
 real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
-
-!--------------------------------------------------------------------------------------------------!
-!--------------------------------------------------------------------------------------------------!
-!real(RP), allocatable :: fhist_loc(:)
-!real(RP), allocatable :: xhist_loc(:, :)
-!--------------------------------------------------------------------------------------------------!
-!--------------------------------------------------------------------------------------------------!
+real(RP), allocatable :: fhist_loc(:)
+real(RP), allocatable :: xhist_loc(:, :)
 
 ! Sizes
 n = int(size(x), kind(n))
 
-! Replace any NaN or Inf in X by ZERO.
-where (is_nan(x) .or. is_inf(x))
-    x = ZERO
-end where
+! Replace any NaN in X by ZERO and Inf/-Inf in X by HUGENUM/-HUGENUM.
+x = moderatex(x)
 
 ! Read the inputs.
 
@@ -215,11 +194,8 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 
 !--------------------------------------------------------------------------------------------------!
 !-------------------- Call NEWUOB, which performs the real calculations. --------------------------!
-! Initialize NF_LOC !!!
-nf_loc = 0_IK  !!!
-call newuob(calfun, iprint_loc, maxfun_loc, npt_loc, ftarget_loc, rhobeg_loc, rhoend_loc, x, f, info_loc)
-! Arrange the history so that they are in the chronological order !!!
-call rangehist(nf_loc, xhist_loc, fhist_loc) !!!
+call newuob(calfun, iprint_loc, maxfun_loc, npt_loc, ftarget_loc, rhobeg_loc, rhoend_loc, x, f, info_loc, &
+    & nf_loc, xhist_loc, fhist_loc)
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
 

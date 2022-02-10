@@ -716,6 +716,7 @@ C     CONSAV are dumped into CON to be returned by COBYLA.
 !      RETURN
 !      END
       constr = con(1:m)
+      resmax = maxval([0.0D0, -constr])
       RETURN
       end subroutine cobylb
 

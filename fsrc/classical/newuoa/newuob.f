@@ -22,11 +22,12 @@
       contains
 
       subroutine newuob(calfun, iprint, maxfun, npt,
-     &  ftarget, rhobeg, rhoend, x, f, info)
+     &  ftarget, rhobeg, rhoend, x, f, info, nf, xhist, fhist)
 
       use, non_intrinsic :: consts_mod, only : RP, IK
+      use, non_intrinsic :: evaluate_mod, only : evaluate
+      use, non_intrinsic :: history_mod, only : savehist, rangehist
       use, non_intrinsic :: pintrf_mod, only : OBJ
-      use, non_intrinsic :: evalcl_mod, only : evaluate
 
       implicit real(RP) (A-H,O-Z)
       implicit integer(IK) (I-N)
@@ -41,6 +42,9 @@
       real(RP), intent(in) :: rhobeg
       real(RP), intent(in) :: rhoend
       integer(IK), intent(out) :: info
+      integer(IK), intent(out) :: nf
+      real(RP), intent(out) :: xhist(:, :)
+      real(RP), intent(out) :: fhist(:)
 
       real(RP) :: xbase(size(x)),xopt(size(x)),xnew(size(x)),
      1 xpt(npt,size(x)),fval(npt),gq(size(x)),
@@ -413,6 +417,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !----------------------------------------------------------------------!
       !CALL CALFUN (N,X,F)
       call evaluate(calfun, x, f)
+      call savehist(nf, x, xhist, f, fhist)
 !----------------------------------------------------------------------!
 !----------------------------------------------------------------------!
 
@@ -698,7 +703,7 @@ C      IF (IPRINT .GE. 1) THEN
 !----------------------------------------------------------------------!
       !RETURN
       !END
-
+      call rangehist(nf, xhist, fhist)
       end subroutine newuob
 
       end module newuob_mod

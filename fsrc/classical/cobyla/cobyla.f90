@@ -1,4 +1,4 @@
-module cobyla_mod  
+module cobyla_mod
 !--------------------------------------------------------------------------------------------------!
 ! Classical mode. Not maintained. Not recommended. Please use the modernized version instead.
 !
@@ -6,9 +6,9 @@ module cobyla_mod
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code.
 !
-! Started: January 2022 
+! Started: January 2022
 !
-! Last Modified: Thursday, February 10, 2022 AM10:43:42
+! Last Modified: Thursday, February 10, 2022 PM05:40:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -31,23 +31,13 @@ use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, CWEIGHT_DFT, FTARGET_DFT
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS, MSGLEN
 use, non_intrinsic :: debug_mod, only : assert, errstop, warning
+use, non_intrinsic :: evaluate_mod, only : evaluate, moderatex
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite !, is_neginf, is_posinf
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : OBJCON
 !use, non_intrinsic :: selectx_mod, only : isbetter
 use, non_intrinsic :: preproc_mod, only : preproc
-
-!--------------------------------------------------------------------------------------------------!
-!--------------------------------------------------------------------------------------------------!
-! The following modules are crucial for the classical mode.
-use, non_intrinsic :: evalcl_mod, only : fc_x0_provided, x0, f_x0, constr_x0
-use, non_intrinsic :: evalcl_mod, only : nf_loc => nf
-use, non_intrinsic :: evalcl_mod, only : xhist_loc => xhist, fhist_loc => fhist
-use, non_intrinsic :: evalcl_mod, only : chist_loc => chist, conhist_loc => conhist
-use, non_intrinsic :: evalcl_mod, only : rangehist
-!--------------------------------------------------------------------------------------------------!
-!--------------------------------------------------------------------------------------------------!
 
 ! Solver-specific modules
 use, non_intrinsic :: cobylb_mod, only : cobylb
@@ -99,13 +89,7 @@ integer(IK) :: maxfilt_loc
 integer(IK) :: maxfun_loc
 integer(IK) :: maxhist_loc
 integer(IK) :: n
-
-!--------------------------------------------------------------------------------------------------!
-!--------------------------------------------------------------------------------------------------!
-!integer(IK) :: nf_loc
-!--------------------------------------------------------------------------------------------------!
-!--------------------------------------------------------------------------------------------------!
-
+integer(IK) :: nf_loc
 integer(IK) :: nhist
 real(RP) :: cstrv_loc
 real(RP) :: ctol_loc
@@ -117,17 +101,11 @@ real(RP) :: gamma1_loc
 real(RP) :: gamma2_loc
 real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
-
-!--------------------------------------------------------------------------------------------------!
-!--------------------------------------------------------------------------------------------------!
 real(RP), allocatable :: constr_loc(:)
-!real(RP), allocatable :: chist_loc(:)
-!real(RP), allocatable :: conhist_loc(:, :)
-!real(RP), allocatable :: fhist_loc(:)
-!real(RP), allocatable :: xhist_loc(:, :)
-!--------------------------------------------------------------------------------------------------!
-!--------------------------------------------------------------------------------------------------!
-
+real(RP), allocatable :: chist_loc(:)
+real(RP), allocatable :: conhist_loc(:, :)
+real(RP), allocatable :: fhist_loc(:)
+real(RP), allocatable :: xhist_loc(:, :)
 
 ! Preconditions
 if (DEBUGGING) then
@@ -152,21 +130,28 @@ end if
 ! Allocate memory for CONSTR_LOC, since M is now available.
 call safealloc(constr_loc, m)  ! NOT removable even in F2003!
 
-! Replace any NaN or Inf in X by ZERO.
-where (is_nan(x) .or. is_inf(x))
-    x = ZERO
-end where
+!! If the user provides the function & constraint value at X0, then set up F_X0 and CONSTR_X0.
+!if (present(f0) .and. present(constr0)) then
+!    fc_x0_provided = .true.
+!    !--------------------------------------------------!
+!    call safealloc(x0, n)  ! Removable in F2003.
+!    call safealloc(constr_x0, m)  ! Removable in F2003.
+!    !--------------------------------------------------!
+!    x0 = x
+!    f_x0 = f0
+!    constr_x0 = constr0
+!else
+!    call evaluate(calcfc, x, f_x0, constr_x0)
+!end if
 
-! If the user provides the function & constraint value at X0, then set up F_X0 and CONSTR_X0.
-if (present(f0) .and. present(constr0)) then
-    fc_x0_provided = .true.
-    !--------------------------------------------------!
-    call safealloc(x0, n)  ! Removable in F2003.
-    call safealloc(constr_x0, m)  ! Removable in F2003.
-    !--------------------------------------------------!
-    x0 = x
-    f_x0 = f0
-    constr_x0 = constr0
+if (present(f0) .and. present(constr0) .and. all(is_finite(x))) then
+    f = f0
+    constr_loc = constr0
+    cstrv_loc = maxval([ZERO, -constr_loc])
+else
+    ! Replace any NaN in X by ZERO and Inf/-Inf in X by HUGENUM/-HUGENUM.
+    x = moderatex(x)
+    call evaluate(calcfc, x, f, constr_loc, cstrv_loc)
 end if
 
 ! If RHOBEG is present, then RHOBEG_LOC is a copy of RHOBEG; otherwise, RHOBEG_LOC takes the default
@@ -282,20 +267,11 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 
 !--------------------------------------------------------------------------------------------------!
 !-------------------- Call COBYLB, which performs the real calculations. --------------------------!
-! Initialize NF_LOC !!!
-nf_loc = 0_IK  !!!
 !!!! ETA1, ETA2, GAMAA1, GAMMA2, MAXFILT, CTOL, CWEIGHT are not used in the classical mode. !!!!
-call cobylb(calcfc, iprint_loc, maxfun_loc, rhobeg_loc, rhoend_loc, constr_loc, x, cstrv_loc, f, info_loc)
-! Arrange the history so that they are in the chronological order !!!
-call rangehist(nf_loc, xhist_loc, fhist_loc, chist_loc, conhist_loc) !!!
+call cobylb(calcfc, iprint_loc, maxfun_loc, rhobeg_loc, rhoend_loc, constr_loc, x, cstrv_loc, f, info_loc, &
+    & nf_loc, xhist_loc, fhist_loc, chist_loc, conhist_loc)
 !--------------------------------------------------------------------------------------------------!
 !--------------------------------------------------------------------------------------------------!
-
-! Deallocate X0 and CONSTR_X0 (although automatic deallocation would happen when the subroutine ends).
-if (fc_x0_provided) then
-    deallocate (x0)
-    deallocate (constr_x0)
-end if
 
 ! Write the outputs.
 

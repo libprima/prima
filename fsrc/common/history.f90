@@ -194,12 +194,12 @@ if (DEBUGGING) then  ! Called after each function evaluation when debugging; can
             & 'SIZE(CONHIST, 1) == SIZE(CONSTR), SIZE(CONHIST, 2) == 0 or MAXNHIST', srname)
     end if
     ! Check the values of XHIST, FHIST, CHIST, CONHIST, up to the (NF - 1)th position.
-    ! As long as this subroutine is called, XHIST contain only finite values.
+    ! As long as this subroutine is called, XHIST contains only finite values.
     call assert(all(is_finite(xhist(:, 1:min(nf - 1_IK, maxxhist)))), 'XHIST is finite', srname)
     call assert(.not. any(is_nan(fhist(1:min(nf - 1_IK, maxfhist))) .or. &
         & is_posinf(fhist(1:min(nf - 1_IK, maxfhist)))), 'FHIST does not contain NaN/+Inf', srname)
     !----------------------------------------------------------------------------------------------!
-    ! The follow test is not applicable to LINCOA.
+    ! The following test is not applicable to LINCOA.
     !!if (present(chist)) then
     !!    call assert(.not. any(chist(1:min(nf - 1_IK, maxchist)) < 0 .or. &
     !!        & is_nan(chist(1:min(nf - 1_IK, maxchist))) .or. is_posinf(chist(1:min(nf - 1_IK, maxchist)))), &
@@ -216,7 +216,7 @@ if (DEBUGGING) then  ! Called after each function evaluation when debugging; can
     ! F cannot be NaN/+Inf due to the moderated extreme barrier.
     call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN/+Inf', srname)
     !----------------------------------------------------------------------------------------------!
-    ! The follow test is not applicable to LINCOA.
+    ! The following test is not applicable to LINCOA.
     !!if (present(cstrv)) then
     !!    ! CSTRV cannot be NaN/+Inf due to the moderated extreme barrier.
     !!    call assert(.not. (cstrv < 0 .or. is_nan(cstrv) .or. is_posinf(cstrv)), &
@@ -264,7 +264,7 @@ if (DEBUGGING) then  ! Called after each function evaluation when debugging; can
     call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. is_posinf(fhist(1:min(nf, maxfhist)))), &
         & 'FHIST does not contain NaN/+Inf', srname)
     !----------------------------------------------------------------------------------------------!
-    ! The follow test is not applicable to LINCOA.
+    ! The following test is not applicable to LINCOA.
     !!if (present(chist)) then
     !!    call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
     !!    call assert(.not. any(chist(1:min(nf, maxchist)) < 0 .or. is_nan(chist(1:min(nf, maxchist))) .or. &
@@ -343,7 +343,7 @@ if (DEBUGGING) then
     call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. &
         & is_posinf(fhist(1:min(nf, maxfhist)))), 'FHIST does not contain NaN/+Inf', srname)
     !----------------------------------------------------------------------------------------------!
-    ! The follow test is not applicable to LINCOA
+    ! The following test is not applicable to LINCOA
     !!if (present(chist)) then
     !!call assert(.not. any(chist(1:min(nf, maxchist)) < 0 .or. is_nan(chist(1:min(nf, maxchist))) .or. &
     !!    & is_posinf(chist(1:min(nf, maxchist)))), 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
@@ -367,7 +367,7 @@ if (maxxhist > 0 .and. maxxhist < nf) then
     xhist = reshape([xhist(:, khist + 1:maxxhist), xhist(:, 1:khist)], shape(xhist))
     ! N.B.:
     ! 1. The result of the array constructor is always a rank-1 array (e.g., vector), no matter what
-    ! elements are used to construct the array.
+    ! elements are used for the construction.
     ! 2. The above combination of SHAPE and RESHAPE fulfills our desire thanks to the COLUMN-MAJOR
     ! order of Fortran arrays.
     ! 3. In MATLAB, `xhist = [xhist(:, khist + 1:maxxhist), xhist(:, 1:khist)]` does the same thing.
@@ -403,7 +403,7 @@ if (DEBUGGING) then
     if (present(chist)) then
         call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
         !------------------------------------------------------------------------------------------!
-        ! The follow test is not applicable to LINCOA
+        ! The following test is not applicable to LINCOA
         !!call assert(.not. any(chist(1:min(nf, maxchist)) < 0 .or. is_nan(chist(1:min(nf, maxchist))) .or. &
         !!    & is_posinf(chist(1:min(nf, maxchist)))), 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
         !------------------------------------------------------------------------------------------!
