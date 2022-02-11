@@ -1,8 +1,0 @@
-initialize.f
-trustregion.f
-vlagbeta.f
-geometry.f
-shiftbase.f
-update.f
-newuob.f
-newuoa.f

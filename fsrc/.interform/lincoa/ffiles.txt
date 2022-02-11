@@ -1,7 +1,0 @@
-getact.f
-prelim.f
-qmstep.f
-trstep.f
-update.f
-lincob.f
-lincoa.f

@@ -1,6 +1,0 @@
-bigden.f
-biglag.f
-trsapp.f
-update.f
-newuob.f
-newuoa.f
