@@ -195,7 +195,6 @@ fsrc_classical_intersection_form = fullfile(cpwd, 'fsrc', 'classical', 'intersec
 matd = fullfile(cpwd, 'matlab'); % Matlab directory
 gateways = fullfile(matd, 'mex_gateways'); % Directory of the MEX gateway files
 gateways_intersection_form = fullfile(gateways, 'intersection_form');  % Directory of the intersection-form MEX gateway files
-gateways_classical = fullfile(gateways_intersection_form, 'classical'); % Directory of the MEX gateway files for the classical Fortran code
 interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
 interfaces_private = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
 tests = fullfile(matd, 'tests'); % Directory containing some tests
@@ -221,7 +220,7 @@ fprintf('Done.\n\n');
 % compilation with a different ad_option. Without cleaning-up, the MEX
 % files may be linked with wrong .mod or .o files, which can lead to
 % serious errors including Segmentation Fault!
-dir_list = {fsrc_common_intersection_form, gateways_intersection_form, gateways_classical, interfaces_private};
+dir_list = {fsrc_common_intersection_form, gateways_intersection_form, interfaces_private};
 for idir = 1 : length(dir_list)
     mod_files = files_with_wildcard(dir_list{idir}, '*.mod');
     obj_files = [files_with_wildcard(dir_list{idir}, '*.o'), files_with_wildcard(dir_list{idir}, '*.obj')];
@@ -254,7 +253,7 @@ try
     common_files = regexp(fileread(fullfile(fsrc_common_intersection_form, filelist)), '\n', 'split');
     common_files = strtrim(common_files(~cellfun(@isempty, common_files)));
     common_files = fullfile(fsrc_common_intersection_form, common_files);
-    common_files = [common_files, fullfile(gateways_intersection_form, 'fmxapi.F'), fullfile(gateways_intersection_form, 'cbfun.F'), fullfile(gateways_classical, 'fmxcl.F')];
+    common_files = [common_files, fullfile(gateways_intersection_form, 'fmxapi.F'), fullfile(gateways_intersection_form, 'cbfun.F')];
     % The loop below may be written in one line as follows:
     %mex(mex_options{:}, '-c', common_files{:}, '-outdir', fsrc_common_intersection_form);
     % But it does not work for some versions of MATLAB. This may be because the compilation above does
