@@ -170,7 +170,7 @@ function [x, fx, exitflag, output] = lincoan(varargin)
 %
 %   solves
 %       min cos(x) s.t. 2 * x <= 3
-%   starting from x0=-1 with at most 50 function evaluations.
+%   starting from x0 = -1 with at most 50 function evaluations.
 %
 %   5. Problem defined by a structure
 %
@@ -195,7 +195,7 @@ function [x, fx, exitflag, output] = lincoan(varargin)
 %
 %   solves
 %       min cos(x) s.t. 2 * x <= 3
-%   starting from x0=-1 with at most 50 function evaluations.
+%   starting from x0 = -1 with at most 50 function evaluations.
 %
 %   See also PDFO, UOBYQA, NEWUOA, BOBYQA, COBYLA.
 %
@@ -263,7 +263,7 @@ if (nvararg < 1)
 elseif (nvararg == 1)
     args = varargin; % If there is only 1 input, then it is a structure specifying the problem
 elseif (nvararg >= 2 && nvararg <= maxarg)
-    % If 2<=nvararg<=9 and the last input is a structure (or []), then it is the 'options'
+    % If 2 <= nvararg <= 9 and the last input is a structure (or []), then it is the 'options'
     if isa(varargin{end}, 'struct')
         varargin = [varargin(1:end-1), cell(1, maxarg-nvararg), varargin(end)]; % 'augment' the inputs to maxarg by adding []
         % cell(m,n) returns an mxn array of []
@@ -280,7 +280,7 @@ else
 end
 
 % Preprocess the input
-% Even if invoker='pdfon', we still need to call prepdfo, which will assign
+% Even if invoker = 'pdfon', we still need to call prepdfo, which will assign
 % values to fun, x0, ..., options.
 try % prepdfo is a private function that may generate public errors; error-handling needed
     [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, ~, options, probinfo] = prepdfo(args{:});
@@ -312,7 +312,7 @@ elseif ~strcmp(invoker, 'pdfon') && probinfo.nofreex % x was fixed by the bound 
     output.constr_modified = false;
 elseif ~strcmp(invoker, 'pdfon') &&  probinfo.feasibility_problem
     output.x = x0;  % prepdfo has tried to set x0 to a feasible point (but may have failed)
-    % We could set fx=[], funcCount=0, and fhist=[] since no function evaluation
+    % We could set fx = [], funcCount = 0, and fhist = [] since no function evaluation
     % occured. But then we will have to modify the validation of fx, funcCount,
     % and fhist in postpdfo. To avoid such a modification, we set fx, funcCount,
     % and fhist as below and then revise them in postpdfo.
@@ -341,7 +341,7 @@ else % The problem turns out 'normal' during prepdfo
     % [Aineq, bineq] and [Aeq, beq].
     A_aug = [Aineq; Aeq; -Aeq; -Alb; Aub]';
     b_aug = [bineq(:); beq(:); -beq(:); -lb(:); ub(:)];
-    if ~(isempty(A_aug) && isempty(b_aug)) && ~(size(A_aug,1)==n && size(A_aug,2)==length(b_aug))
+    if ~(isempty(A_aug) && isempty(b_aug)) && ~(size(A_aug,1) == n && size(A_aug,2) == length(b_aug))
         % Private/unexpected error
         error(sprintf('%s:InvalidAugLinCon', funname), '%s: UNEXPECTED ERROR: invalid augmented linear constraints.', funname);
     end

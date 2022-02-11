@@ -27,13 +27,13 @@ end
 hugefun = gethuge('fun');
 if isnan(f) || ~isreal(f) || f > hugefun
     wid = sprintf('%s:ObjectiveFailure', invoker);
-    xstr = sprintf('%f  ', x);
+    xstr = sprintf('%g    ', x);
     if ~isreal(f)
-        fstr = sprintf('%f%+fi', real(f), imag(f));
+        fstr = sprintf('%g%+gi', real(f), imag(f));
     else
-        fstr = sprintf('%f', f);
+        fstr = sprintf('%g', f);
     end
-    wmsg = sprintf('%s: Objective function returns %s, which is replaced by hugefun = %1.2e.\nThe value of x is:\n%s\n', invoker, fstr, hugefun, xstr);
+    wmsg = sprintf('%s: Objective function returns %s, which is replaced by hugefun = %g.\nThe value of x is:\n%s\n', invoker, fstr, hugefun, xstr);
     warning(wid, '%s', wmsg);
     %warnings = [warnings, wmsg];  % We do not record this warning in the output.
 

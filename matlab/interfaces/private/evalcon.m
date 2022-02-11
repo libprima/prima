@@ -28,13 +28,13 @@ hugecon = gethuge('con');
 
 if any(isnan(cineq) | ~isreal(cineq) | cineq > hugecon)
     wid = sprintf('%s:ConstraintFailure', invoker);
-    xstr = sprintf('%f  ', x);
+    xstr = sprintf('%g    ', x);
     if any(~isreal(cineq))
-        cstr = sprintf('%f%+fi  ', [real(cineq(:)), imag(cineq(:))].');
+        cstr = sprintf('%g%+gi    ', [real(cineq(:)), imag(cineq(:))].');
     else
-        cstr = sprintf('%f  ', cineq);
+        cstr = sprintf('%g    ', cineq);
     end
-    wmsg = sprintf('%s: Constraint function returns cineq =\n%s\nAny value that is not real or above hugecon = %1.2e is replaced by hugecon.\nThe value of x is:\n%s\n', invoker, cstr, hugecon, xstr);
+    wmsg = sprintf('%s: Constraint function returns cineq =\n%s\nAny value that is not real or above hugecon = %g is replaced by hugecon.\nThe value of x is:\n%s\n', invoker, cstr, hugecon, xstr);
     warning(wid, '%s', wmsg);
     %warnings = [warnings, wmsg];  % We do not record this warning in the output.
 
@@ -44,13 +44,13 @@ end
 
 if any(isnan(ceq) | ~isreal(ceq) | abs(ceq) > hugecon)
     wid = sprintf('%s:ConstraintFailure', invoker);
-    xstr = sprintf('%f  ', x);
+    xstr = sprintf('%g    ', x);
     if any(~isreal(ceq))
-        cstr = sprintf('%f%+fi  ', [real(ceq(:)), imag(ceq(:))].');
+        cstr = sprintf('%g%+gi    ', [real(ceq(:)), imag(ceq(:))].');
     else
-        cstr = sprintf('%f  ', ceq);
+        cstr = sprintf('%g    ', ceq);
     end
-    wmsg = sprintf('%s: Constraint function returns ceq =\n%s\nAny value that is not real or with an absolute value above hugecon = %1.2e is replaced by hugecon.\nThe value of x is:\n%s\n', invoker, cstr, hugecon, xstr);
+    wmsg = sprintf('%s: Constraint function returns ceq =\n%s\nAny value that is not real or with an absolute value above hugecon = %g is replaced by hugecon.\nThe value of x is:\n%s\n', invoker, cstr, hugecon, xstr);
     warning(wid, '%s', wmsg);
     %warnings = [warnings, wmsg];  % We do not record this warning in the output.
 
