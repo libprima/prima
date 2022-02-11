@@ -386,7 +386,7 @@ else % The problem turns out 'normal' during prepdfo
     % constraints, which is needed by the Fortran code.
     if (isnan(m_nlcineq) || isnan(m_nlceq))
         % Public/normal error
-        error(sprintf('%s:ConstraintFailureAtX0', funname), '%s: The constraint evaluation fails at x0.', funname);
+        error(sprintf('%s:ConstraintFailureAtX0', funname), '%s: The constraint evaluation fails at x0. %s cannot continue.', funname, funname);
     end
 
     % maxint is the largest integer in the mex functions; the factor 0.99 provides a buffer. We do not
