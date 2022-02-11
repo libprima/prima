@@ -21,17 +21,10 @@ SOLVER="$(basename "$DIR" | sed 's/test\.//' | sed 's/\.test//')"
 # The files that need preprocessing.
 EVALUATEF90="evaluate.f90"
 EVALUATE="$DIR/common/$EVALUATEF90"
-EVALCLF90="evalcl.f90"
-EVALCL="$DIR/common/$EVALCLF90"
 
 sed -e '/^\s*interface evaluate\s*$/,+4d' "$EVALUATE" > "$TMPF"
 cat "$TMPF" > "$EVALUATE"
 sed -i 's/^\s*public :: evaluate\s*$/public :: evaluatef, evaluatefc/' "$EVALUATE"
-
-sed -i 's/evaluate_mod, only : eval => evaluate/evaluate_mod, only : evalf => evaluatef/' "$EVALCL"
-sed -i 's/call eval(calfun, x, f)/call evalf(calfun, x, f)/g' "$EVALCL"
-sed -i 's/evaluate_mod, only : moderatef, moderatec, eval => evaluate/evaluate_mod, only : moderatef, moderatec, evalfc => evaluatefc/' "$EVALCL"
-sed -i 's/call eval(calcfc, x, f, constr, cstrv)/call evalfc(calcfc, x, f, constr, cstrv)/g' "$EVALCL"
 
 if [[ "$SOLVER" = "cobyla" ]] ; then
     sed -i 's/evaluate_mod, only : evaluate/evaluate_mod, only : evaluatefc/' "$SOLVER"/*.f90

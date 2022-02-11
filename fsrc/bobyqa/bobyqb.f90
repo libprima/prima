@@ -1,19 +1,39 @@
-subroutine bobyqb(n, npt, x, xl, xu, rhobeg, rhoend, iprint, &
+subroutine bobyqb(calfun, n, npt, x, xl, xu, rhobeg, rhoend, iprint, &
     & maxfun, xbase, xpt, fval, xopt, gopt, hq, pq, bmat, zmat, ndim, &
-    & sl, su, xnew, xalt, d, vlag, w, f, info, ftarget)
+    & sl, su, xnew, xalt, d, vlag, w, f, info, ftarget, &
+    & nf, xhist, maxxhist, fhist, maxfhist)
 
-implicit real(kind(0.0D0)) (a - h, o - z)
-implicit integer(i - n)
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH
+use, non_intrinsic :: evaluate_mod, only : evaluate
+use, non_intrinsic :: history_mod, only : savehist, rangehist
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm, maximum
+use, non_intrinsic :: pintrf_mod, only : OBJ
+
+implicit real(RP) (a - h, o - z)
+implicit integer(IK) (i - n)
+
+procedure(OBJ) :: calfun
+integer(IK), intent(in) :: maxxhist
+integer(IK), intent(in) :: maxfhist
+integer(IK), intent(in) :: npt
+integer(IK), intent(out) :: nf
+
+real(RP), intent(in) :: xl(n)
+real(RP), intent(in) :: xu(n)
+real(RP), intent(inout) :: x(n)
+real(RP), intent(out) :: xhist(n, maxxhist)
+real(RP), intent(out) :: fhist(maxfhist)
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-dimension x(*), xl(*), xu(*), xbase(*), xpt(npt, *), fval(*), &
-& xopt(*), gopt(*), hq(*), pq(*), bmat(ndim, *), zmat(npt, *), &
-& sl(*), su(*), xnew(*), xalt(*), d(*), vlag(*), w(*)
+dimension xbase(n), xpt(npt, n), fval(npt), &
+& xopt(n), gopt(n), hq(n * (n + 1) / 2), pq(npt), bmat(ndim, *), zmat(npt, *), &
+& sl(*), su(*), xnew(n), xalt(n), d(n), vlag(*), w(*)
 !
 !     The arguments N, NPT, X, XL, XU, RHOBEG, RHOEND, IPRINT and MAXFUN
 !       are identical to the corresponding arguments in SUBROUTINE BOBYQA.
 !     XBASE holds a shift of origin that should reduce the contributions
 !       from rounding errors to values of the model and Lagrange functions.
-!     XPT is a two-dimensional array that holds the coordinates of the
+!     XPT is a TWO-dimensional array that holds the coordinates of the
 !       interpolation points relative to XBASE.
 !     FVAL holds the values of F at the interpolation points.
 !     XOPT is set to the displacement from XBASE of the trust region centre.
@@ -24,31 +44,25 @@ dimension x(*), xl(*), xu(*), xbase(*), xpt(npt, *), fval(*), &
 !     BMAT holds the last N columns of H.
 !     ZMAT holds the factorization of the leading NPT by NPT submatrix of H,
 !       this factorization being ZMAT times ZMAT^T, which provides both the
-!       correct rank and positive semi-definiteness.
+!       correct rank and positive semi-definiTENess.
 !     NDIM is the first dimension of BMAT and has the value NPT+N.
 !     SL and SU hold the differences XL-XBASE and XU-XBASE, respectively.
-!       All the components of every XOPT are going to satisfy the bounds
+!       All the compONEnts of every XOPT are going to satisfy the bounds
 !       SL(I) .LEQ. XOPT(I) .LEQ. SU(I), with appropriate equalities when
 !       XOPT is on a constraint boundary.
 !     XNEW is chosen by SUBROUTINE TRSBOX or ALTMOV. Usually XBASE+XNEW is the
 !       vector of variables for the next call of CALFUN. XNEW also satisfies
-!       the SL and SU constraints in the way that has just been mentioned.
+!       the SL and SU constraints in the way that has just been mentiONEd.
 !     XALT is an alternative to XNEW, chosen by ALTMOV, that may replace XNEW
 !       in order to increase the denominator in the updating of UPDATE.
 !     D is reserved for a trial step from XOPT, which is usually XNEW-XOPT.
 !     VLAG contains the values of the Lagrange functions at a new point X.
 !       They are part of a product that requires VLAG to be of length NDIM.
-!     W is a one-dimensional array that is used for working space. Its length
+!     W is a ONE-dimensional array that is used for working space. Its length
 !       must be at least 3*NDIM = 3*(NPT+N).
 !
 !     Set some constants.
 !
-half = 0.5D0
-one = 1.0D0
-ten = 10.0D0
-tenth = 0.1D0
-two = 2.0D0
-zero = 0.0D0
 np = n + 1
 nptm = npt - np
 nh = (n * np) / 2
@@ -62,11 +76,12 @@ almost_infinity = huge(0.0D0) / 2.D0
 !     initial XOPT is set too. The branch to label 720 occurs if MAXFUN is
 !     less than NPT. GOPT will be updated if KOPT is different from KBASE.
 !
-call prelim(n, npt, x, xl, xu, rhobeg, iprint, maxfun, xbase, xpt, &
-& fval, gopt, hq, pq, bmat, zmat, ndim, sl, su, nf, kopt, f, ftarget)
+call prelim(calfun, n, npt, x, xl, xu, rhobeg, iprint, maxfun, xbase, xpt, &
+& fval, gopt, hq, pq, bmat, zmat, ndim, sl, su, nf, kopt, f, ftarget, &
+& xhist, maxxhist, fhist, maxfhist)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-xoptsq = zero
+xoptsq = ZERO
 do i = 1, n
     xopt(i) = xpt(kopt, i)
     xoptsq = xoptsq + xopt(i)**2
@@ -101,8 +116,8 @@ rho = rhobeg
 delta = rho
 nresc = nf
 ntrits = 0
-diffa = zero
-diffb = zero
+diffa = ZERO
+diffb = ZERO
 itest = 0
 nfsav = nf
 !
@@ -120,7 +135,7 @@ nfsav = nf
     end do
     if (nf > npt) then
         do k = 1, npt
-            temp = zero
+            temp = ZERO
             do j = 1, n
                 temp = temp + xpt(k, j) * xopt(j)
             end do
@@ -140,11 +155,11 @@ end if
 !     label 650 or 680 with NTRITS=-1, instead of calculating F at XNEW.
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 2019-08-29: For ill-conditioned problems, NaN may occur in the
+! Zaikun 2019-08-29: For ill-conditiONEd problems, NaN may occur in the
 ! models. In such a case, we terminate the code. Otherwise, the behavior
 ! of TRBOX, ALTMOV, or RESCUE is not predictable, and Segmentation Fault or
 ! infinite cycling may happen. This is because any equality/inequality
-! comparison involving NaN returns FALSE, which can lead to unintended
+! comparison involving NaN returns FALSE, which can lead to uninTENded
 ! behavior of the code, including uninitialized indices.
 !
 !   60 CALL TRSBOX (N,NPT,XPT,XOPT,GOPT,HQ,PQ,SL,SU,DELTA,XNEW,D,
@@ -168,10 +183,10 @@ do i = 1, npt
 end do
 call trsbox(n, npt, xpt, xopt, gopt, hq, pq, sl, su, delta, xnew, d, &
 & w, w(np), w(np + n), w(np + 2 * n), w(np + 3 * n), dsq, crvmin)
-dnorm = dmin1(delta, dsqrt(dsq))
-if (dnorm < half * rho) then
+dnorm = min(delta, sqrt(dsq))
+if (dnorm < HALF * rho) then
     ntrits = -1
-    distsq = (ten * rho)**2
+    distsq = (TEN * rho)**2
     if (nf <= nfsav + 2) goto 650
 !
 !     The following choice between labels 650 and 680 depends on whether or
@@ -180,9 +195,9 @@ if (dnorm < half * rho) then
 !     the last three interpolation points compare favourably with predictions
 !     of likely improvements to the model within distance HALF*RHO of XOPT.
 !
-    errbig = dmax1(diffa, diffb, diffc)
+    errbig = max(diffa, diffb, diffc)
     frhosq = 0.125D0 * rho * rho
-    if (crvmin > zero .and. errbig > frhosq * crvmin) goto 650
+    if (crvmin > ZERO .and. errbig > frhosq * crvmin) goto 650
     bdtol = errbig / rho
     do j = 1, n
         bdtest = bdtol
@@ -193,7 +208,7 @@ if (dnorm < half * rho) then
             do k = 1, npt
                 curv = curv + pq(k) * xpt(k, j)**2
             end do
-            bdtest = bdtest + half * curv * rho
+            bdtest = bdtest + HALF * curv * rho
             if (bdtest < bdtol) goto 650
         end if
     end do
@@ -203,21 +218,21 @@ ntrits = ntrits + 1
 !
 !     Severe cancellation is likely to occur if XOPT is too far from XBASE.
 !     If the following test holds, then XBASE is shifted so that XOPT becomes
-!     zero. The appropriate changes are made to BMAT and to the second
+!     ZERO. The appropriate changes are made to BMAT and to the second
 !     derivatives of the current model, beginning with the changes to BMAT
 !     that do not depend on ZMAT. VLAG is used temporarily for working space.
 !
 90 if (dsq <= 1.0D-3 * xoptsq) then
     fracsq = 0.25D0 * xoptsq
-    sumpq = zero
+    sumpq = ZERO
     do k = 1, npt
         sumpq = sumpq + pq(k)
-        sum = -half * xoptsq
+        sum = -HALF * xoptsq
         do i = 1, n
             sum = sum + xpt(k, i) * xopt(i)
         end do
         w(npt + k) = sum
-        temp = fracsq - half * sum
+        temp = fracsq - HALF * sum
         do i = 1, n
             w(i) = bmat(k, i)
             vlag(i) = sum * xpt(k, i) + temp * xopt(i)
@@ -231,15 +246,15 @@ ntrits = ntrits + 1
 !     Then the revisions of BMAT that depend on ZMAT are calculated.
 !
     do jj = 1, nptm
-        sumz = zero
-        sumw = zero
+        sumz = ZERO
+        sumw = ZERO
         do k = 1, npt
             sumz = sumz + zmat(k, jj)
             vlag(k) = w(npt + k) * zmat(k, jj)
             sumw = sumw + vlag(k)
         end do
         do j = 1, n
-            sum = (fracsq * sumz - half * sumw) * xopt(j)
+            sum = (fracsq * sumz - HALF * sumw) * xopt(j)
             do k = 1, npt
                 sum = sum + vlag(k) * xpt(k, j)
             end do
@@ -262,7 +277,7 @@ ntrits = ntrits + 1
 !
     ih = 0
     do j = 1, n
-        w(j) = -half * sumpq * xopt(j)
+        w(j) = -HALF * sumpq * xopt(j)
         do k = 1, npt
             w(j) = w(j) + pq(k) * xpt(k, j)
             xpt(k, j) = xpt(k, j) - xopt(j)
@@ -278,9 +293,9 @@ ntrits = ntrits + 1
         xnew(i) = xnew(i) - xopt(i)
         sl(i) = sl(i) - xopt(i)
         su(i) = su(i) - xopt(i)
-        xopt(i) = zero
+        xopt(i) = ZERO
     end do
-    xoptsq = zero
+    xoptsq = ZERO
 end if
 if (ntrits == 0) goto 210
 goto 230
@@ -290,7 +305,7 @@ goto 230
 !     ZMAT are generated from scratch, which may include the replacement of
 !     interpolation points whose positions seem to be causing near linear
 !     dependence in the interpolation conditions. Therefore RESCUE is called
-!     only if rounding errors have reduced by at least a factor of two the
+!     only if rounding errors have reduced by at least a factor of TWO the
 !     denominator of the formula for updating the H matrix. It provides a
 !     useful safeguard, but is not invoked in most applications of BOBYQA.
 !
@@ -343,7 +358,7 @@ call rescue(n, npt, xl, xu, iprint, maxfun, xbase, xpt, fval, &
 !     Any updating of GOPT occurs after the branch below to label 20, which
 !     leads to a trust region iteration as does the branch to label 60.
 !
-xoptsq = zero
+xoptsq = ZERO
 if (kopt /= kbase) then
     do i = 1, n
         xopt(i) = xpt(kopt, i)
@@ -377,7 +392,7 @@ if (nfsav < nf) then
 end if
 if (ntrits > 0) goto 60
 !
-!     Pick two alternative vectors of variables, relative to XBASE, that
+!     Pick TWO alternative vectors of variables, relative to XBASE, that
 !     are suitable as new positions of the KNEW-th interpolation point.
 !     Firstly, XNEW is set to the point on a line through XOPT and another
 !     interpolation point that minimizes the predicted value of the next
@@ -436,21 +451,21 @@ end do
 !     use when VQUAD is calculated.
 !
 230 do k = 1, npt
-    suma = zero
-    sumb = zero
-    sum = zero
+    suma = ZERO
+    sumb = ZERO
+    sum = ZERO
     do j = 1, n
         suma = suma + xpt(k, j) * d(j)
         sumb = sumb + xpt(k, j) * xopt(j)
         sum = sum + bmat(k, j) * d(j)
     end do
-    w(k) = suma * (half * suma + sumb)
+    w(k) = suma * (HALF * suma + sumb)
     vlag(k) = sum
     w(npt + k) = suma
 end do
-beta = zero
+beta = ZERO
 do jj = 1, nptm
-    sum = zero
+    sum = ZERO
     do k = 1, npt
         sum = sum + zmat(k, jj) * w(k)
     end do
@@ -459,12 +474,12 @@ do jj = 1, nptm
         vlag(k) = vlag(k) + sum * zmat(k, jj)
     end do
 end do
-dsq = zero
-bsum = zero
-dx = zero
+dsq = ZERO
+bsum = ZERO
+dx = ZERO
 do j = 1, n
     dsq = dsq + d(j)**2
-    sum = zero
+    sum = ZERO
     do k = 1, npt
         sum = sum + w(k) * bmat(k, j)
     end do
@@ -477,26 +492,26 @@ do j = 1, n
     bsum = bsum + sum * d(j)
     dx = dx + d(j) * xopt(j)
 end do
-beta = dx * dx + dsq * (xoptsq + dx + dx + half * dsq) + beta - bsum
-vlag(kopt) = vlag(kopt) + one
+beta = dx * dx + dsq * (xoptsq + dx + dx + HALF * dsq) + beta - bsum
+vlag(kopt) = vlag(kopt) + ONE
 !
-!     If NTRITS is zero, the denominator may be increased by replacing
+!     If NTRITS is ZERO, the denominator may be increased by replacing
 !     the step D of ALTMOV by a Cauchy step. Then RESCUE may be called if
 !     rounding errors have damaged the chosen denominator.
 !
 if (ntrits == 0) then
     denom = vlag(knew)**2 + alpha * beta
-    if (denom < cauchy .and. cauchy > zero) then
+    if (denom < cauchy .and. cauchy > ZERO) then
         do i = 1, n
             xnew(i) = xalt(i)
             d(i) = xnew(i) - xopt(i)
         end do
-        cauchy = zero
+        cauchy = ZERO
         go to 230
     end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !          IF (DENOM .LE. HALF*VLAG(KNEW)**2) THEN
-    if (.not. (denom > half * vlag(knew)**2)) then
+    if (.not. (denom > HALF * vlag(knew)**2)) then
 !111111111111111111111!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         if (nf > nresc) goto 190
         info = 4
@@ -511,29 +526,29 @@ if (ntrits == 0) then
 !
 else
     delsq = delta * delta
-    scaden = zero
-    biglsq = zero
+    scaden = ZERO
+    biglsq = ZERO
     knew = 0
     do k = 1, npt
         if (k == kopt) cycle
-        hdiag = zero
+        hdiag = ZERO
         do jj = 1, nptm
             hdiag = hdiag + zmat(k, jj)**2
         end do
         den = beta * hdiag + vlag(k)**2
-        distsq = zero
+        distsq = ZERO
         do j = 1, n
             distsq = distsq + (xpt(k, j) - xopt(j))**2
         end do
-        temp = dmax1(one, (distsq / delsq)**2)
+        temp = max(ONE, (distsq / delsq)**2)
         if (temp * den > scaden) then
             scaden = temp * den
             knew = k
             denom = den
         end if
-        biglsq = dmax1(biglsq, temp * vlag(k)**2)
+        biglsq = max(biglsq, temp * vlag(k)**2)
     end do
-    if (scaden <= half * biglsq) then
+    if (scaden <= HALF * biglsq) then
         if (nf > nresc) goto 190
         info = 4
         goto 720
@@ -548,7 +563,7 @@ end if
 !       the limit on the number of calculations of F has been reached.
 !
 360 do i = 1, n
-    x(i) = dmin1(dmax1(xl(i), xbase(i) + xnew(i)), xu(i))
+    x(i) = min(max(xl(i), xbase(i) + xnew(i)), xu(i))
     if (xnew(i) == sl(i)) x(i) = xl(i)
     if (xnew(i) == su(i)) x(i) = xu(i)
 end do
@@ -563,7 +578,7 @@ do i = 1, n
         f = x(i) ! set f to nan
         if (nf == 1) then
             fopt = f
-            xopt(1:n) = zero
+            xopt(1:n) = ZERO
         end if
         info = -1
         goto 720
@@ -571,14 +586,17 @@ do i = 1, n
 end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-call calfun(n, x, f)
+!------------------------------------------------------------------------!
+call evaluate(calfun, x, f)
+call savehist(nf, x, xhist, f, fhist)
+!------------------------------------------------------------------------!
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     By Tom (on 04-06-2019):
 if (f /= f .or. f > almost_infinity) then
     if (nf == 1) then
         fopt = f
-        xopt(1:n) = zero
+        xopt(1:n) = ZERO
     end if
     info = -2
     goto 720
@@ -606,24 +624,24 @@ end if
 !       and set DIFF to the error of this prediction.
 !
 fopt = fval(kopt)
-vquad = zero
+vquad = ZERO
 ih = 0
 do j = 1, n
     vquad = vquad + d(j) * gopt(j)
     do i = 1, j
         ih = ih + 1
         temp = d(i) * d(j)
-        if (i == j) temp = half * temp
+        if (i == j) temp = HALF * temp
         vquad = vquad + hq(ih) * temp
     end do
 end do
 do k = 1, npt
-    vquad = vquad + half * pq(k) * w(npt + k)**2
+    vquad = vquad + HALF * pq(k) * w(npt + k)**2
 end do
 diff = f - fopt - vquad
 diffc = diffb
 diffb = diffa
-diffa = dabs(diff)
+diffa = abs(diff)
 if (dnorm > rho) nfsav = nf
 !
 !     Pick the next value of DELTA after a trust region step.
@@ -631,17 +649,17 @@ if (dnorm > rho) nfsav = nf
 if (ntrits > 0) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !          IF (VQUAD .GE. ZERO) THEN
-    if (.not. (vquad < zero)) then
+    if (.not. (vquad < ZERO)) then
         info = 2
         goto 720
     end if
     ratio = (f - fopt) / vquad
-    if (ratio <= tenth) then
-        delta = dmin1(half * delta, dnorm)
+    if (ratio <= TENTH) then
+        delta = min(HALF * delta, dnorm)
     else if (ratio <= 0.7D0) then
-        delta = dmax1(half * delta, dnorm)
+        delta = max(HALF * delta, dnorm)
     else
-        delta = dmax1(half * delta, dnorm + dnorm)
+        delta = max(HALF * delta, dnorm + dnorm)
     end if
     if (delta <= 1.5D0 * rho) delta = rho
 !
@@ -651,28 +669,28 @@ if (ntrits > 0) then
         ksav = knew
         densav = denom
         delsq = delta * delta
-        scaden = zero
-        biglsq = zero
+        scaden = ZERO
+        biglsq = ZERO
         knew = 0
         do k = 1, npt
-            hdiag = zero
+            hdiag = ZERO
             do jj = 1, nptm
                 hdiag = hdiag + zmat(k, jj)**2
             end do
             den = beta * hdiag + vlag(k)**2
-            distsq = zero
+            distsq = ZERO
             do j = 1, n
                 distsq = distsq + (xpt(k, j) - xnew(j))**2
             end do
-            temp = dmax1(one, (distsq / delsq)**2)
+            temp = max(ONE, (distsq / delsq)**2)
             if (temp * den > scaden) then
                 scaden = temp * den
                 knew = k
                 denom = den
             end if
-            biglsq = dmax1(biglsq, temp * vlag(k)**2)
+            biglsq = max(biglsq, temp * vlag(k)**2)
         end do
-        if (scaden <= half * biglsq) then
+        if (scaden <= HALF * biglsq) then
             knew = ksav
             denom = densav
         end if
@@ -685,7 +703,7 @@ end if
 call update(n, npt, bmat, zmat, ndim, vlag, beta, denom, knew, w)
 ih = 0
 pqold = pq(knew)
-pq(knew) = zero
+pq(knew) = ZERO
 do i = 1, n
     temp = pqold * xpt(knew, i)
     do j = 1, i
@@ -709,11 +727,11 @@ do i = 1, n
     w(i) = bmat(knew, i)
 end do
 do k = 1, npt
-    suma = zero
+    suma = ZERO
     do jj = 1, nptm
         suma = suma + zmat(knew, jj) * zmat(k, jj)
     end do
-    sumb = zero
+    sumb = ZERO
     do j = 1, n
         sumb = sumb + xpt(k, j) * xopt(j)
     end do
@@ -730,7 +748,7 @@ end do
 !
 if (f < fopt) then
     kopt = knew
-    xoptsq = zero
+    xoptsq = ZERO
     ih = 0
     do j = 1, n
         xopt(j) = xnew(j)
@@ -742,7 +760,7 @@ if (f < fopt) then
         end do
     end do
     do k = 1, npt
-        temp = zero
+        temp = ZERO
         do j = 1, n
             temp = temp + xpt(k, j) * d(j)
         end do
@@ -760,10 +778,10 @@ end if
 if (ntrits > 0) then
     do k = 1, npt
         vlag(k) = fval(k) - fval(kopt)
-        w(k) = zero
+        w(k) = ZERO
     end do
     do j = 1, nptm
-        sum = zero
+        sum = ZERO
         do k = 1, npt
             sum = sum + zmat(k, j) * vlag(k)
         end do
@@ -772,26 +790,26 @@ if (ntrits > 0) then
         end do
     end do
     do k = 1, npt
-        sum = zero
+        sum = ZERO
         do j = 1, n
             sum = sum + xpt(k, j) * xopt(j)
         end do
         w(k + npt) = w(k)
         w(k) = sum * w(k)
     end do
-    gqsq = zero
-    gisq = zero
+    gqsq = ZERO
+    gisq = ZERO
     do i = 1, n
-        sum = zero
+        sum = ZERO
         do k = 1, npt
             sum = sum + bmat(k, i) * vlag(k) + xpt(k, i) * w(k)
         end do
         if (xopt(i) == sl(i)) then
-            gqsq = gqsq + dmin1(zero, gopt(i))**2
-            gisq = gisq + dmin1(zero, sum)**2
+            gqsq = gqsq + min(ZERO, gopt(i))**2
+            gisq = gisq + min(ZERO, sum)**2
         else if (xopt(i) == su(i)) then
-            gqsq = gqsq + dmax1(zero, gopt(i))**2
-            gisq = gisq + dmax1(zero, sum)**2
+            gqsq = gqsq + max(ZERO, gopt(i))**2
+            gisq = gisq + max(ZERO, sum)**2
         else
             gqsq = gqsq + gopt(i)**2
             gisq = gisq + sum * sum
@@ -803,12 +821,12 @@ if (ntrits > 0) then
 !     norm interpolant, making the replacement if the test is satisfied.
 !
     itest = itest + 1
-    if (gqsq < ten * gisq) itest = 0
+    if (gqsq < TEN * gisq) itest = 0
     if (itest >= 3) then
         do i = 1, max0(npt, nh)
             if (i <= n) gopt(i) = vlag(npt + i)
             if (i <= npt) pq(i) = w(npt + i)
-            if (i <= nh) hq(i) = zero
+            if (i <= nh) hq(i) = ZERO
             itest = 0
         end do
     end if
@@ -819,15 +837,15 @@ end if
 !     when the new interpolation point was reached by an alternative step.
 !
 if (ntrits == 0) goto 60
-if (f <= fopt + tenth * vquad) goto 60
+if (f <= fopt + TENTH * vquad) goto 60
 !
 !     Alternatively, find out if the interpolation points are close enough
 !       to the best point so far.
 !
-distsq = dmax1((two * delta)**2, (ten * rho)**2)
+distsq = max((TWO * delta)**2, (TEN * rho)**2)
 650 knew = 0
 do k = 1, npt
-    sum = zero
+    sum = ZERO
     do j = 1, n
         sum = sum + (xpt(k, j) - xopt(j))**2
     end do
@@ -844,34 +862,34 @@ end do
 !     current RHO are complete.
 !
 if (knew > 0) then
-    dist = dsqrt(distsq)
+    dist = sqrt(distsq)
     if (ntrits == -1) then
-        delta = dmin1(tenth * delta, half * dist)
+        delta = min(TENTH * delta, HALF * dist)
         if (delta <= 1.5D0 * rho) delta = rho
     end if
     ntrits = 0
-    adelt = dmax1(dmin1(tenth * dist, delta), rho)
+    adelt = max(min(TENTH * dist, delta), rho)
     dsq = adelt * adelt
     goto 90
 end if
 if (ntrits == -1) goto 680
-if (ratio > zero) goto 60
-if (dmax1(delta, dnorm) > rho) goto 60
+if (ratio > ZERO) goto 60
+if (max(delta, dnorm) > rho) goto 60
 !
 !     The calculations with the current value of RHO are complete. Pick the
 !       next values of RHO and DELTA.
 !
 680 if (rho > rhoend) then
-    delta = half * rho
+    delta = HALF * rho
     ratio = rho / rhoend
     if (ratio <= 16.0D0) then
         rho = rhoend
     else if (ratio <= 250.0D0) then
-        rho = dsqrt(ratio) * rhoend
+        rho = sqrt(ratio) * rhoend
     else
-        rho = tenth * rho
+        rho = TENTH * rho
     end if
-    delta = dmax1(delta, rho)
+    delta = max(delta, rho)
     ntrits = 0
     nfsav = nf
     goto 60
@@ -893,11 +911,13 @@ if (ntrits == -1) goto 360
 720 if (fval(kopt) <= f .or. f /= f) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     do i = 1, n
-        x(i) = dmin1(dmax1(xl(i), xbase(i) + xopt(i)), xu(i))
+        x(i) = min(max(xl(i), xbase(i) + xopt(i)), xu(i))
         if (xopt(i) == sl(i)) x(i) = xl(i)
         if (xopt(i) == su(i)) x(i) = xu(i)
     end do
     f = fval(kopt)
 end if
-736 return
-end
+
+736 call rangehist(nf, xhist, fhist)
+
+end subroutine bobyqb
