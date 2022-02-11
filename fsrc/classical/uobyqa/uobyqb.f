@@ -1,14 +1,39 @@
-      SUBROUTINE UOBYQB (N,X,RHOBEG,RHOEND,IPRINT,MAXFUN,NPT,XBASE,
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C     1  XOPT,XNEW,XPT,PQ,PL,H,G,D,VLAG,W)
-     1  XOPT,XNEW,XPT,PQ,PL,H,G,D,VLAG,W,F,INFO,FTARGET)
+!----------------------------------------------------------------------!
+!      SUBROUTINE UOBYQB (N,X,RHOBEG,RHOEND,IPRINT,MAXFUN,NPT,XBASE,
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!C     1  XOPT,XNEW,XPT,PQ,PL,H,G,D,VLAG,W)
+!     1  XOPT,XNEW,XPT,PQ,PL,H,G,D,VLAG,W,F,INFO,FTARGET)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!C      IMPLICIT REAL*8 (A-H,O-Z)
+!      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
+!      IMPLICIT INTEGER (I-N)
+!----------------------------------------------------------------------!
+
+      subroutine uobyqb(calfun, n, x, rhobeg, rhoend, iprint, maxfun,
+     & npt, xbase, xopt, xnew, xpt, pq, pl, h, g, d, vlag, w, f, info,
+     & ftarget, nf, xhist, maxxhist, fhist, maxfhist)
+
+      use, non_intrinsic :: consts_mod, only : RP, IK
+      use, non_intrinsic :: evaluate_mod, only : evaluate
+      use, non_intrinsic :: history_mod, only : savehist, rangehist
+      use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
+      use, non_intrinsic :: pintrf_mod, only : OBJ
+
+      implicit real(RP) (a - h, o - z)
+      implicit integer(IK) (i - n)
+
+      procedure(OBJ) :: calfun
+      integer(IK), intent(in) :: maxxhist
+      integer(IK), intent(in) :: maxfhist
+      integer(IK), intent(in) :: npt
+      integer(IK), intent(out) :: nf
+      real(RP), intent(inout) :: x(n)
+      real(RP), intent(out) :: xhist(n, maxxhist)
+      real(RP), intent(out) :: fhist(maxfhist)
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C      IMPLICIT REAL*8 (A-H,O-Z)
-      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
-      IMPLICIT INTEGER (I-N)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DIMENSION X(*),XBASE(*),XOPT(*),XNEW(*),XPT(NPT,*),PQ(*),
+      DIMENSION XBASE(*),XOPT(*),XNEW(*),XPT(NPT,*),PQ(*),
      1  PL(NPT,*),H(N,*),G(*),D(*),VLAG(*),W(*)
 C
 C     The arguments N, X, RHOBEG, RHOEND, IPRINT and MAXFUN are identical to
@@ -215,22 +240,26 @@ C
           IF (IPRINT > 0) PRINT 130
   130     FORMAT (/4X,'Return from UOBYQA because CALFUN has been',
      1      ' called MAXFUN times')
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC      
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
           INFO=3
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!      
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           GOTO 420
       END IF
       NF=NF+1
-      CALL CALFUN (N,X,F)
+!------------------------------------------------------------------------!
+      !CALL CALFUN (N,X,F)
+      call evaluate(calfun, x, f)
+      call savehist(nf, x, xhist, f, fhist)
+!------------------------------------------------------------------------!
 
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC      
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C     By Zaikun (commented on 02-06-2019; implemented in 2016):
 C     Exit if F .LE. FTARGET.
       IF (F <= FTARGET) THEN
           INFO=1
           GOTO 436
       END IF
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!      
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       IF (IPRINT == 3) THEN
           PRINT 140, NF,F,(X(I),I=1,N)
@@ -238,13 +267,13 @@ C     Exit if F .LE. FTARGET.
      1       '    The corresponding X is:'/(2X,5D15.6))
       END IF
       IF (NF <= NPT) GOTO 50
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC      
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IF (KNEW .EQ. -1) GOTO 420
       IF (KNEW == -1) THEN
           INFO=0
           GOTO 420
       END IF
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!      
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
 C     Use the quadratic model to predict the change in F due to the step D,
 C     and find the values of the Lagrange functions at the new point.
@@ -514,5 +543,10 @@ C      IF (IPRINT .GE. 1) THEN
      1      'Number of function values =',I6)
           PRINT 410, F,(X(I),I=1,N)
       END IF
+
+!---------------------------------------------!
+      call rangehist(nf, xhist, fhist)
+!---------------------------------------------!
+
       RETURN
       END

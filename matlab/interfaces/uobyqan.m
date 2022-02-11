@@ -280,13 +280,9 @@ else
     % The mexified Fortran Function is a private function generating only private errors;
     % however, public errors can occur due to, e.g., evalobj; error handling needed.
     try
-        if options.classical
-            [x, fx, exitflag, nf, fhist] = fuobyqan_classical(fun, x0, rhobeg, rhoend, maxfun, ftarget);
-        else
-            [x, fx, exitflag, nf, xhist, fhist] = ...
-                fsolver(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, ...
-                iprint, maxhist, double(output_xhist));
-        end
+        [x, fx, exitflag, nf, xhist, fhist] = ...
+            fsolver(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, ...
+            iprint, maxhist, double(output_xhist));
         % Fortran MEX does not provide an API for reading Boolean variables. So we convert
         % output_xhist to a double (0 or 1) before passing it to the MEX gateway.
         % In C MEX, however, we have mxGetLogicals.

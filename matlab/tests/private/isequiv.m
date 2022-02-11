@@ -508,7 +508,6 @@ if ~equiv
         fprintf('\nThe solvers produce different results on %s at the %dth run.\n\n', pname, ir);
         keyboard
     end
-        keyboard
     error('\nThe solvers produce different results on %s at the %dth run.\n', pname, ir);
 end
 
