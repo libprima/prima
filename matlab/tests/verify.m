@@ -23,12 +23,14 @@ function verify(varargin)
 %
 % Started: July 2020
 %
-% Last Modified: Monday, October 04, 2021 PM09:19:19
+% Last Modified: Monday, February 12, 2022 PM09:19:19
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 olddir = cd();  % Record the current path.
 oldpath = path();  % Record the current dir.
 restoredefaultpath; % Restore the "right out of the box" path of MATLAB
+
+exception = [];
 
 try
 
@@ -54,11 +56,13 @@ try
 
 catch exception
 
-    setpath(oldpath);  % Restore the path to oldpath.
-    cd(olddir);  % Go back to olddir.
-    rethrow(exception);
+    % Do nothing for the moment.
 
 end
 
 setpath(oldpath);  % Restore the path to oldpath.
 cd(olddir);  % Go back to olddir.
+
+if ~isempty(exception)  % Rethrow any exception caught above.
+    rethrow(exception);
+end

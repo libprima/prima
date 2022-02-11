@@ -6,10 +6,10 @@ function interform(directory)
 % Coded by Zaikun ZHANG in August, 2020.
 
 % Output directory
-outputdir = '.intersection_form';  % The leading dot makes the directory hidden on Linux systems.
+outputdir = '.interform';  % The leading dot makes the directory hidden on Linux systems.
 
 % Do not perform refactoring in these subdirectories (if exist)
-ignoredir = {'original', 'backup', '.intersection_form', 'trash', 'test', 'tests', 'results', 'test_data'};
+ignoredir = {'original', 'backup', '.interform', 'trash', 'test', 'tests', 'results', 'test_data'};
 
 % Ignore the following files
 ignorefiles = {'calfun__genmod.f90', 'mexfunction__genmod.f90', 'test.f'};
@@ -34,7 +34,7 @@ if exist(outputdir, 'dir')
     rmdir(outputdir, 's');  % Every time we run this script, the content in outputdir is rebuilt
 end
 mkdir(outputdir);  % Make the output directory
-copyfile([mfilename('fullpath'), '.m'], outputdir);  % Save the current script in the output directory
+%copyfile([mfilename('fullpath'), '.m'], outputdir);  % Save the current script in the output directory
 
 % The following lies generate a README.txt file under outputdir
 readme = 'README.txt';

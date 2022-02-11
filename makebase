@@ -25,6 +25,7 @@ cp "$NEUPDFODIR"/setup.m OPDFO
 sed -i '/solver = solver(1:end-1)/d' OPDFO/setup.m
 sed -i "s/\['f', solver, 'n'\]/\['f', solver\]/" OPDFO/setup.m
 sed -i "s/\['f', solver, 'n_classical'\]/\['f', solver, '_classical'\]/" OPDFO/setup.m
+sed -i "s/ALLn/ALL/g" OPDFO/setup.m
 
 cp -r "$NEUPDFODIR"/matlab OPDFO
 rm -r OPDFO/matlab/tests/testdata
