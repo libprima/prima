@@ -60,7 +60,7 @@ else
     invoker = callstack(2).name; % Name of the function who calls this function
 end
 
-% With the moderated extreme barrier (implemented when options.classical=false), all
+% With the moderated extreme barrier (implemented when options.classical is false), all
 % the function values that are NaN or larger than hugefun are replaced by hugefun;
 % all the constraint values that are NaN or larger than hugecon are replaced by hugecon.
 % hugefun and hugecon are defined in consts.F90, and can be obtained by gethuge.
@@ -175,7 +175,7 @@ if ~isfield(output, 'warnings') || isempty(output.warnings)
 end
 
 % Verify x
-if ~isnumeric(x) || ~isreal(x) || ~isvector(x) || size(x,2)~=1
+if ~isnumeric(x) || ~isreal(x) || ~isvector(x) || size(x,2) ~= 1
     % Public/unexpected error
     error(sprintf('%s:InvalidX', invoker), ...
         '%s: UNEXPECTED ERROR: %s returns an x that is not a real column or scalar.', invoker, solver);
@@ -202,10 +202,10 @@ if ~isintegerscalar(nf)
         '%s: UNEXPECTED ERROR: %s returns an nf that is not an integer.', invoker, solver);
 end
 if nf <= 0
-    % If prepdfo works properly, then nf<=0 should never happen.
+    % If prepdfo works properly, then nf <= 0 should never happen.
     % Public/unexpected error
     error(sprintf('%s:InvalidNF', invoker), ...
-    '%s: UNEXPECTED ERROR: %s returns nf=0 unexpectedly with exitflag %d.', invoker, solver, exitflag);
+    '%s: UNEXPECTED ERROR: %s returns nf = 0 unexpectedly with exitflag %d.', invoker, solver, exitflag);
 end
 
 % For internal solvers:
@@ -249,10 +249,10 @@ if ~options.classical && ~probinfo.infeasible && ~probinfo.nofreex
     if any(fhist > hugefun) || any(isnan(fhist))
         % Public/unexpected error
         error(sprintf('%s:InvalidFhist', invoker), ...
-             '%s: UNEXPECTED ERROR: %s returns an fhist with NaN or values larger than hugefun=%1.2e; this is impossible except in the classical mode.', invoker, solver, hugefun);
+             '%s: UNEXPECTED ERROR: %s returns an fhist with NaN or values larger than hugefun = %g; this is impossible except in the classical mode.', invoker, solver, hugefun);
     elseif ~isempty(fhist) && max(fhist) == hugefun
         wid = sprintf('%s:ExtremeBarrier', invoker);
-        wmsg = sprintf('%s: the moderated extreme barrier is invoked; function values that are NaN or larger than hugefun=%1.2e are replaced by hugefun.', invoker, hugefun);
+        wmsg = sprintf('%s: the moderated extreme barrier is invoked; function values that are NaN or larger than hugefun = %g are replaced by hugefun.', invoker, hugefun);
         warning(wid, '%s', wmsg);
         output.warnings = [output.warnings, wmsg];
     end
@@ -294,10 +294,10 @@ if ~options.classical && ~probinfo.infeasible && ~probinfo.nofreex
     if strcmp(solver, 'cobylan') && (any(chist > hugecon) || any(isnan(chist)))
         % Public/unexpected error
         error(sprintf('%s:InvalidChist', invoker), ...
-             '%s: UNEXPECTED ERROR: %s returns a chist with NaN or values larger than hugecon=%1.2e; this is impossible except in the classical mode.', invoker, solver, hugecon);
+             '%s: UNEXPECTED ERROR: %s returns a chist with NaN or values larger than hugecon = %g; this is impossible except in the classical mode.', invoker, solver, hugecon);
     elseif ~isempty(chist) && max(chist) == hugecon
         wid = sprintf('%s:ExtremeBarrier', invoker);
-        wmsg = sprintf('%s: the moderated extreme barrier is invoked; constraint values that are NaN or larger than hugecon=%1.2e are replaced by hugecon.', invoker, hugecon);
+        wmsg = sprintf('%s: the moderated extreme barrier is invoked; constraint values that are NaN or larger than hugecon = %g are replaced by hugecon.', invoker, hugecon);
         warning(wid, '%s', wmsg);
         output.warnings = [output.warnings, wmsg];
     end
@@ -366,7 +366,7 @@ end
 % constraint violation of the returned x with respect to the original problem.
 % Ideally, chist should also be recalculated. However, it is impossible
 % because we do not save the history of x. Therefore, when
-% probinfo.scaled=true, chist is not the history of constraint violation
+% probinfo.scaled is true, chist is not the history of constraint violation
 % of the original problem but the scaled one. It it not consistent with
 % constrviolation. Without saving of history of x, we cannot do better.
 %
@@ -407,7 +407,7 @@ if probinfo.reduced
     x(~probinfo.fixedx) = freex_value;
 
     freexhist = xhist;
-    xhist= NaN(length(x), size(xhist, 2));  % x has been recovered; size(xhist,2) may not be nhist but 0.
+    xhist = NaN(length(x), size(xhist, 2));  % x has been recovered; size(xhist,2) may not be nhist but 0.
     xhist(probinfo.fixedx, :) = probinfo.fixedx_value*ones(1, size(xhist, 2));
     xhist(~probinfo.fixedx, :) = freexhist;
 end
@@ -489,7 +489,7 @@ case 20
     output.message = sprintf('Return from %s because the trust-region iteration has been performed maxtr (= 2*maxfun) times.', invoker);
 case -1
     output.message = sprintf('Return from %s because NaN occurs in x.', solver);
-case -2  % This cannot happen if the moderated extreme barrier is implemented, which is the case when options.classical=false.
+case -2  % This cannot happen if the moderated extreme barrier is implemented, which is the case when options.classical is false.
     if strcmp(solver, 'cobylan')
         output.message = sprintf('Return from %s because the objective function returns an NaN or nearly infinite value, or the constraints return a NaN.', solver);
     else
@@ -568,7 +568,7 @@ if options.debug && ~options.classical
     % Check whether constrviolation is correct
     cobylan_prec = 1e-6;
     lincoan_prec = 1e-11;
-    % COBYLA cannot ensure fx=fun(x) or constr=con(x) due to rounding
+    % COBYLA cannot ensure fx == fun(x) or constr == con(x) due to rounding
     % errors. Instead of checking the equality, we check whether the
     % relative error is within cobylan_prec.
     % There can also be a difference between constrviolation and cstrv due
@@ -623,15 +623,15 @@ if options.debug && ~options.classical
         else
             funx = feval(objective, x);
         end
-        % Due to the moderated extreme barrier (implemented when options.classical=false),
+        % Due to the moderated extreme barrier (implemented when options.classical is false),
         % all function values that are NaN or larger than hugefun are replaced by hugefun.
         if (funx ~= funx) || (funx > hugefun)
             funx = hugefun;
         end
         %if (funx ~= fx) && ~(isnan(fx) && isnan(funx))
-        % it seems that COBYLA can return fx~=fun(x) due to rounding
-        % errors. Therefore, we cannot use "fx~=funx" to check COBYLA
-        if ~(isnan(fx) && isnan(funx)) && ~((fx==funx) || (abs(funx-fx) <= cobylan_prec*max(1, abs(fx)) && strcmp(solver, 'cobylan')))
+        % it seems that COBYLA can return fx ~= fun(x) due to rounding
+        % errors. Therefore, we cannot use "fx ~= funx" to check COBYLA
+        if ~(isnan(fx) && isnan(funx)) && ~((fx == funx) || (abs(funx-fx) <= cobylan_prec*max(1, abs(fx)) && strcmp(solver, 'cobylan')))
             % Public/unexpected error
             error(sprintf('%s:InvalidFx', invoker), ...
                 '%s: UNEXPECTED ERROR: %s returns an fx that does not match x.', invoker, solver);
@@ -645,10 +645,10 @@ if options.debug && ~options.classical
                     fhistx(k) = objective(xhist(:, k));
                 end
             end
-            % Due to the moderated extreme barrier (implemented when options.classical=false),
+            % Due to the moderated extreme barrier (implemented when options.classical is false),
             % all function values that are NaN or above hugefun are replaced by hugefun.
             fhistx(fhistx ~= fhistx | fhistx > hugefun) = hugefun;
-            if any(~(isnan(fhist) & isnan(fhistx)) & ~((fhist==fhistx) | (abs(fhistx-fhist) <= cobylan_prec*max(1, abs(fhist)) & strcmp(solver, 'cobylan'))))
+            if any(~(isnan(fhist) & isnan(fhistx)) & ~((fhist == fhistx) | (abs(fhistx-fhist) <= cobylan_prec*max(1, abs(fhist)) & strcmp(solver, 'cobylan'))))
                 % Public/unexpected error
                 error(sprintf('%s:InvalidFx', invoker), ...
                     '%s: UNEXPECTED ERROR: %s returns an fhist that does not match xhist.', invoker, solver);
@@ -661,7 +661,7 @@ if options.debug && ~options.classical
         nonlcon = probinfo.raw_data.nonlcon;
         if ~isempty(nonlcon)
             [nlcineqx, nlceqx] = feval(nonlcon, x);
-            % Due to the moderated extreme barrier (implemented when options.classical=false),
+            % Due to the moderated extreme barrier (implemented when options.classical is false),
             % all constraint values that are NaN or above hugecon are replaced by hugecon.
             nlcineqx(nlcineqx ~= nlcineqx | nlcineqx > hugecon) = hugecon;
             % All constraint values below -hugecon are replaced by -hugecon to avoid numerical difficulties.
@@ -687,7 +687,7 @@ if options.debug && ~options.classical
                 for k = 1 : nhist
                     [nlcihistx(:, k), nlcehistx(:, k)] = feval(nonlcon, xhist(:, k));
                 end
-                % Due to the moderated extreme barrier (implemented when options.classical=false),
+                % Due to the moderated extreme barrier (implemented when options.classical is false),
                 % all constraint values that are NaN or above hugecon are replaced by hugecon.
                 nlcihistx(nlcihistx ~= nlcihistx | nlcihistx > hugecon) = hugecon;
                 % All constraint values below -hugecon are replaced by -hugecon to avoid numerical difficulties.
@@ -723,7 +723,7 @@ if options.debug && ~options.classical
                         chistx(k) = get_cstrv(xhist(:, k), Aineq, bineq, Aeq, beq, lb, ub, nlcihistx(:, k), nlcehistx(:, k));
                     end
                 end
-                if any(~(isnan(chist) & isnan(chistx)) & ~((chist==chistx) | abs(chistx-chist) <= lincoan_prec*max(1, abs(chist)) & strcmp(solver, 'lincoan') | (abs(chistx-chist) <= cobylan_prec*max(1, abs(chist)) & strcmp(solver, 'cobylan'))))
+                if any(~(isnan(chist) & isnan(chistx)) & ~((chist == chistx) | abs(chistx-chist) <= lincoan_prec*max(1, abs(chist)) & strcmp(solver, 'lincoan') | (abs(chistx-chist) <= cobylan_prec*max(1, abs(chist)) & strcmp(solver, 'cobylan'))))
                     % Public/unexpected error
                     keyboard
                     error(sprintf('%s:InvalidFx', invoker), ...

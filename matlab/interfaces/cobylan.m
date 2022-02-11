@@ -65,7 +65,7 @@ function [x, fx, exitflag, output] = cobylan(varargin)
 %   x = cobylan(fun, x0, Aineq, bineq, Aeq, beq, lb) solves
 %       minimize fun(x) s.t. Aineq * x <= bineq, Aeq * x = beq, lb <= x
 %   x = cobylan(fun, x0, Aineq, bineq, Aeq, beq, lb, ub) solves
-%       minimize fun(x) s.t. Aineq * x <= bineq, Aeq * x = beq, lb <=x<= ub
+%       minimize fun(x) s.t. Aineq * x <= bineq, Aeq * x = beq, lb <= x <= ub
 %   x = cobylan(fun, x0, nonlcon) solves
 %       minimize fun(x) s.t. cineq(x) <= 0, ceq(x) = 0
 %   x = cobylan(fun, x0, Aineq, bineq, nonlcon) solves
@@ -206,7 +206,7 @@ function [x, fx, exitflag, output] = cobylan(varargin)
 %
 %   solves
 %       min cos(x) s.t. 2 * x <= 3
-%   starting from x0=-1 with at most 50 function evaluations.
+%   starting from x0 = -1 with at most 50 function evaluations.
 %
 %   5. Problem defined by a structure
 %
@@ -231,7 +231,7 @@ function [x, fx, exitflag, output] = cobylan(varargin)
 %
 %   solves
 %       min cos(x) s.t. 2 * x <= 3
-%   starting from x0=-1 with at most 50 function evaluations.
+%   starting from x0 = -1 with at most 50 function evaluations.
 %
 %   See also PDFO, UOBYQA, NEWUOA, BOBYQA, LINCOA.
 %
@@ -299,7 +299,7 @@ if (nvararg < 1)
 elseif (nvararg == 1)
     args = varargin; % If there is only 1 input, then it is a structure specifying the problem
 elseif (nvararg >= 2 && nvararg <= maxarg)
-    % If 2<=nvararg<=10 and the last input is a structure or [], then it is the 'options'
+    % If 2 <= nvararg <= 10 and the last input is a structure or [], then it is the 'options'
     if isempty(varargin{end}) || isa(varargin{end}, 'struct')
         % If nvararg >= 4 and the second last input is a function, then it is the 'nonlcon'
         if (nvararg >= 4) && (isa(varargin{end-1}, 'char') || isa(varargin{end-1}, 'string') || isa(varargin{end-1}, 'function_handle'))
@@ -323,7 +323,7 @@ else
 end
 
 % Preprocess the input
-% Even if invoker='pdfon', we still need to call prepdfo, which will assign
+% Even if invoker = 'pdfon', we still need to call prepdfo, which will assign
 % values to fun, x0, ..., options.
 try % prepdfo is a private function that may generate public errors; error-handling needed
     [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, options, probinfo] = prepdfo(args{:});
@@ -357,7 +357,7 @@ elseif ~strcmp(invoker, 'pdfon') && probinfo.nofreex % x was fixed by the bound 
     output.nlceq = probinfo.nlceq_fixedx;
 elseif ~strcmp(invoker, 'pdfon') && probinfo.feasibility_problem && ~strcmp(probinfo.refined_type, 'nonlinearly-constrained')
     output.x = x0;  % prepdfo has tried to set x0 to a feasible point (but may have failed)
-    % We could set fx=[], funcCount=0, and fhist=[] since no function evaluation
+    % We could set fx = [], funcCount = 0, and fhist = [] since no function evaluation
     % occured. But then we will have to modify the validation of fx, funcCount,
     % and fhist in postpdfo. To avoid such a modification, we set fx, funcCount,
     % and fhist as below and then revise them in postpdfo.
@@ -380,6 +380,14 @@ else % The problem turns out 'normal' during prepdfo
     [f_x0, constr_x0, m_nlcineq, m_nlceq] = funcon(x0);
     % m_nlcineq: number of nonlinear inequality constraints
     % m_nlceq: number of nonlinear equality constraints
+
+    % If the constraint evaluation fails at x0, then m_nlcineq and m_nlceq are set to NaN by
+    % funcon(x0). We have to raise an error and stop, because we do not know the number of
+    % constraints, which is needed by the Fortran code.
+    if (isnan(m_nlcineq) || isnan(m_nlceq))
+        % Public/normal error
+        error(sprintf('%s:ConstraintFailureAtX0', funname), '%s: The constraint evaluation fails at x0.', funname);
+    end
 
     % maxint is the largest integer in the mex functions; the factor 0.99 provides a buffer. We do not
     % pass any integer larger than maxint to the mexified Fortran code. Otherwise, errors include

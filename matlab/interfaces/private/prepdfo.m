@@ -266,7 +266,7 @@ end
 probinfo.refined_data = struct('objective', fun, 'x0', x0, 'Aineq', Aineq, 'bineq', bineq, ...
     'Aeq', Aeq, 'beq', beq, 'lb', lb, 'ub', ub, 'nonlcon', nonlcon);
 
-% Select a solver if invoker='pdfon'; record the solver in options.solver.
+% Select a solver if invoker = 'pdfon'; record the solver in options.solver.
 % Some options will be revised accordingly, including npt, rhobeg, rhoend.
 % Of course, if the user-defined options.solver is valid, we accept it.
 if strcmp(invoker, 'pdfon')
@@ -366,12 +366,12 @@ end
 % Are there unknown fields?
 known_fields = {'objective', 'x0', 'Aineq', 'bineq', 'Aeq', 'beq', 'lb', 'ub', 'nonlcon', 'options', 'solver'};
 % 1. When invoker is in {uobyqan, ..., cobylan}, we will not complain that
-%    a solver is specified unless invoker~=solver. See function pre_options.
+%    a solver is specified unless invoker ~= solver. See function pre_options.
 % 2. When invoker is in {uobyqan, ..., cobylan}, if the problem turns out
 %    unsolvable for the invoker, then we will raise an error in prepdfo.
 %    We do not do it here because the problem has not been validated/preprocessed
 %    yet. Maybe some constraints are trivial and hence can be removed
-%    (e.g., bineq=inf, lb=-inf), which can change the problem type.
+%    (e.g., bineq = inf, lb = -inf), which can change the problem type.
 
 unknown_fields = setdiff(problem_fields, known_fields);
 problem = rmfield(problem, unknown_fields);  % Remove the unknown fields
@@ -392,7 +392,7 @@ Aineq = [];
 bineq = [];
 Aeq = [];
 beq = [];
-lb= [];
+lb = [];
 ub = [];
 nonlcon = [];
 options = struct();
@@ -505,7 +505,7 @@ function [lb, ub, infeasible_bound, fixedx, fixedx_value, warnings] = pre_bcon(i
 if ~(isrvlb && (lenlb == lenx0 || lenlb == 0))
     % Public/normal error
     error(sprintf('%s:InvalidBound', invoker), ...
-    '%s: lb should be a real vector and length(lb)=length(x0) unless lb=[].', invoker);
+    '%s: lb should be a real vector and length(lb) = length(x0) unless lb = [].', invoker);
 end
 if (lenlb == 0)
     lb = -inf(lenx0,1); % After pre_bcon, length(lb) = length(x0)
@@ -524,7 +524,7 @@ end
 if ~(isrvub && (lenub == lenx0 || lenub == 0))
     % Public/normal error
     error(sprintf('%s:InvalidBound', invoker), ...
-    '%s: ub should be a real vector and length(ub)=length(x0) unless ub=[].', invoker);
+    '%s: ub should be a real vector and length(ub) = length(x0) unless ub = [].', invoker);
 end
 if (lenub == 0)
     ub = inf(lenx0,1); % After pre_bcon, length(ub) = length(x0)
@@ -559,7 +559,7 @@ freex = ~fixedx; % A vector of true/false indicating whether the variable is fre
 if ~(isrm && isrc && (mA == lenb) && (nA == lenx0 || nA == 0))
     % Public/normal error
     error(sprintf('%s:InvalidLinIneq', invoker), ...
-    '%s: Aineq should be a real matrix, bineq should be a real column, and size(Aineq)=[length(bineq), length(X0)] unless Aineq=bineq=[].', invoker);
+    '%s: Aineq should be a real matrix, bineq should be a real column, and size(Aineq) = [length(bineq), length(X0)] unless Aineq = bineq = [].', invoker);
 end
 if any(isnan(bineq))
     bineq(isnan(bineq)) = inf; % Replace the NaN in bineq by inf
@@ -608,7 +608,7 @@ end
 if ~(isrm && isrc && (mA == lenb) && (nA == lenx0 || nA == 0))
     % Public/normal error
     error(sprintf('%s:InvalidLinEq', invoker), ...
-    '%s: Aeq should be a real matrix, beq should be a real column, and size(Aeq)=[length(beq), length(X0)] unless Aeq=beq=[].', invoker);
+    '%s: Aeq should be a real matrix, beq should be a real column, and size(Aeq) = [length(beq), length(X0)] unless Aeq = beq = [].', invoker);
 end
 % Are there equality constraints whose both sides contain NaN?
 % This should be detected before reducing the constraints;
@@ -726,7 +726,7 @@ else
         if (nout == 0) || (nout == 1)
             % Public/normal error
             error(sprintf('%s:InvalidCon', invoker), ...
-            '%s: nonlcon has too few outputs; it should return [cineq, ceq], the constraints being cineq(x)<=0, ceq(x)=0.', invoker);
+            '%s: nonlcon has too few outputs; it should return [cineq, ceq], the constraints being cineq(x) <= 0, ceq(x) = 0.', invoker);
         end
     end
     if any(fixedx) && any(~fixedx)
@@ -821,18 +821,18 @@ user_options_fields = options_fields;
 % We need to know what is the solver in order to decide which fields
 % are 'known' (e.g., expected), and also to set npt, rhobeg, rhoend.
 % We do the following:
-% 1. If invoker='pdfon':
-% 1.1 If no solver is specified or solver='pdfon', we do not complain
-% and set options.solver=solver='', i.e., an empty char array;
+% 1. If invoker = 'pdfon':
+% 1.1 If no solver is specified or solver = 'pdfon', we do not complain
+% and set options.solver = solver = '', i.e., an empty char array;
 % 1.2 Else if solver is not in solver_list, we warn about 'unknown solver'
-% and set options.solver=solver='', i.e., an empty char array;
-% 1.3 Else, we set solver=options.solver.
+% and set options.solver = solver = '', i.e., an empty char array;
+% 1.3 Else, we set solver = options.solver.
 % 2. If invoker is in solver_list:
-% 2.1 If options.solver exists but options.solver~=invoker, we warn
-% about 'invalid solver' and set options.solver=solver=invoker;
-% 2.2 Else, we do not complain and set options.solver=solver=invoker.
+% 2.1 If options.solver exists but options.solver ~= invoker, we warn
+% about 'invalid solver' and set options.solver = solver = invoker;
+% 2.2 Else, we do not complain and set options.solver = solver = invoker.
 % In this way, options.solver and solver either end up with a member of
-% solver_list or ''. The second case is possible only if invoker='pdfon',
+% solver_list or ''. The second case is possible only if invoker = 'pdfon',
 % and solver will be selected later.
 if isfield(options, 'solver') && ~isa(options.solver, 'char') && ~isa(options.solver, 'string')
     options.solver = 'UNKNOWN_SOLVER';
@@ -851,7 +851,7 @@ if strcmp(invoker, 'pdfon')
         if any(strcmpi(options.solver, solver_list))
             solver = lower(options.solver);
         elseif ~strcmpi(options.solver, 'pdfon')
-        % We should not complain about 'unknown solver' if invoker=options.solver='pdfon'
+        % We should not complain about 'unknown solver' if invoker = options.solver = 'pdfon'
             wid = sprintf('%s:UnknownSolver', invoker);
             wmsg = sprintf('%s: unknown solver specified; %s will select one automatically.', invoker, invoker);
             warning(wid, '%s', wmsg);
@@ -870,7 +870,7 @@ else % invoker is in {'uobyqan', ..., 'cobylan'}
     solver = invoker;
 end
 options.solver = solver; % Record solver in options.solver; will be used in postpdfo
-% When the invoker is pdfo, options.solver=solver='' unless the user defines
+% When the invoker is pdfo, options.solver = solver = '' unless the user defines
 % an options.solver in solver_list. Here, '' is an empty char array to signify
 % that the solver is yet to decide.
 
@@ -913,7 +913,7 @@ if ~isempty(unknown_fields)
 end
 
 % Set default npt according to solver
-% If solver='' (empty char array), then invoker must be pdfo, and a solver
+% If solver = '' (empty char array), then invoker must be pdfo, and a solver
 % will be selected later; when the solver is chosen, a valid npt will be defined.
 % Note we have to take maxfun into consideration when selecting the solver,
 % because npt < maxfun-1 is needed! See function select_solver for details.
@@ -972,13 +972,13 @@ end
 % Validate options.npt
 % There are the following possibilities.
 % 1. The user specifies options.npt
-% 1.1. The solver is yet to decide (solver=''): we keep options.npt if it is
+% 1.1. The solver is yet to decide (solver = ''): we keep options.npt if it is
 % a positive integer; otherwise, raise a warning and set options.npt to NaN;
 % 1.2. The user has chosen a valid solver: we keep options.npt if it is
 % compatible with the solver; otherwise, raise a warning and set options.npt
 % to the default value according to the solver.
 % 2. The user does not specify options.npt
-% 1.1. The solver is yet to decide (solver=''): we set options.npt to NaN.
+% 1.1. The solver is yet to decide (solver = ''): we set options.npt to NaN.
 % 1.2. The user has chosen a valid solver: we set options.npt to the default
 % value accoring to the solver.
 % After this process, options.npt is either a positive integer (compatible
@@ -993,7 +993,7 @@ if isfield(options, 'npt')
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     elseif any(strcmpi(solver, {'newuoan', 'bobyqan', 'lincoan'})) && (~isintegerscalar(options.npt) || isnan(options.npt) || options.npt < lenx0+2 || options.npt > (lenx0+1)*(lenx0+2)/2)
-        % newuoan, bobyqan and lincoan requires n+2<=npt<=(n+1)*)(n+2)/2;
+        % newuoan, bobyqan and lincoan requires n+2 <= npt <= (n+1)*)(n+2)/2;
         % uobyqan and cobylan do not use npt.
         wid = sprintf('%s:InvalidNpt', invoker);
         wmsg = sprintf('%s: invalid npt; %s requires it to be an integer and n+2 <= npt <= (n+1)*(n+2)/2; it is set to 2n+1.', invoker, solver);
@@ -1005,7 +1005,7 @@ if isfield(options, 'npt')
 end
 if ~validated  % options.npt has not got a valid value yet
     options.npt = npt;
-    % When solver='' (empty char array), the default npt is NaN.
+    % When solver = '' (empty char array), the default npt is NaN.
     % For uobyqan and cobylan, we also adopt the 'default npt' defined above,
     % although it will NOT be used by the solver
 end
@@ -1038,14 +1038,14 @@ if isfield(options, 'maxfun')
         validated = true;  % We have set options.maxfun to a valid value in the last line.
     elseif isempty(solver) && options.maxfun <= lenx0+1  % Here, options.maxfun cannot be NaN. No worry about the comparison.
         options.maxfun = lenx0+2; % Here we take lenx0+2 (the smallest possible value for npt)
-        validated = true; %!!! % Set validated=true so that options.maxfun will not be set to the default value later
+        validated = true; %!!! % Set validated = true so that options.maxfun will not be set to the default value later
         wid = sprintf('%s:InvalidMaxfun', invoker);
         wmsg = sprintf('%s: invalid maxfun; it should be a positive integer at least n+2; it is set to n+2.', invoker);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     elseif ~isempty(solver) && options.maxfun <= options.npt  % Here, options.maxfun or options.npt cannot be NaN. No worry about the comparison.
         options.maxfun = options.npt+1; % Here we take npt+1 instead of the default maxfun
-        validated = true; %!!! % Set validated=true so that options.maxfun will not be set to the default value later
+        validated = true; %!!! % Set validated = true so that options.maxfun will not be set to the default value later
         wid =  sprintf('%s:InvalidMaxfun', invoker);
         switch lower(solver) % The warning message depends on solver
         case {'newuoan', 'lincoan', 'bobyqan'}
@@ -1074,7 +1074,7 @@ validated = false;
 if isfield(options, 'rhobeg')
     if ~isrealscalar(options.rhobeg) || options.rhobeg <= 0 || isnan(options.rhobeg) || options.rhobeg == inf
         wid = sprintf('%s:InvalidRhobeg', invoker);
-        wmsg = sprintf('%s: invalid rhobeg; it should be a positive number; it is set to max(%f, rhoend).', invoker, rhobeg);
+        wmsg = sprintf('%s: invalid rhobeg; it should be a positive number; it is set to max(%g, rhoend).', invoker, rhobeg);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     elseif strcmpi(solver, 'bobyqan')  % Validate options.rhobeg for bobyqan
@@ -1091,13 +1091,13 @@ if isfield(options, 'rhobeg')
             warnings = [warnings, wmsg];
             options.rhobeg = min(ub-lb)/4; % Here we do not take the default rhobeg
         end
-        validated = true; %!!! % Set validated=true so that options.rhobeg will not be set to the default value later
+        validated = true; %!!! % Set validated = true so that options.rhobeg will not be set to the default value later
     else
         validated = true;
     end
 end
 if ~validated % options.rhobeg has not got a valid value yet
-    if isfield(options, 'rhoend') && isrealscalar(options.rhoend) && options.rhoend >=0 && options.rhoend < inf
+    if isfield(options, 'rhoend') && isrealscalar(options.rhoend) && options.rhoend >= 0 && options.rhoend < inf
         options.rhobeg = max(rhobeg, 10*options.rhoend);
     else
         options.rhobeg = rhobeg;
@@ -1110,7 +1110,7 @@ validated = false;
 if isfield(options, 'rhoend')
     if ~isrealscalar(options.rhoend) || options.rhoend > options.rhobeg || isnan(options.rhoend)
         wid = sprintf('%s:InvalidRhoend', invoker);
-        wmsg = sprintf('%s: invalid rhoend; we should have rhobeg >= rhoend > 0; it is set to min(0.1*rhobeg, %f).', invoker, rhoend);
+        wmsg = sprintf('%s: invalid rhoend; we should have rhobeg >= rhoend > 0; it is set to min(0.1*rhobeg, %g).', invoker, rhoend);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     else
@@ -1127,7 +1127,7 @@ validated = false;
 if isfield(options, 'ftarget')
     if ~isrealscalar(options.ftarget) || isnan(options.ftarget)
         wid = sprintf('%s:InvalidFtarget', invoker);
-        wmsg = sprintf('%s: invalid ftarget; it should be a real number; it is set to %f.', invoker, ftarget);
+        wmsg = sprintf('%s: invalid ftarget; it should be a real number; it is set to %g.', invoker, ftarget);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     else
@@ -1144,7 +1144,7 @@ validated = false;
 if isfield(options, 'ctol')
     if ~isrealscalar(options.ctol) || options.ctol < 0 || isnan(options.ctol)
         wid = sprintf('%s:InvalidCtol', invoker);
-        wmsg = sprintf('%s: invalid ctol; it should be a nonnegative number; it is set to %f.', invoker, ctol);
+        wmsg = sprintf('%s: invalid ctol; it should be a nonnegative number; it is set to %g.', invoker, ctol);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     else
@@ -1161,7 +1161,7 @@ validated = false;
 if isfield(options, 'cweight')
     if ~isrealscalar(options.cweight) || options.cweight < 0 || isnan(options.cweight)
         wid = sprintf('%s:InvalidCweight', invoker);
-        wmsg = sprintf('%s: invalid cweight; it should be a nonnegative number; it is set to %f.', invoker, cweight);
+        wmsg = sprintf('%s: invalid cweight; it should be a nonnegative number; it is set to %g.', invoker, cweight);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     else
@@ -1191,7 +1191,7 @@ end
 options.classical = logical(options.classical);
 if options.classical
     wid = sprintf('%s:Classical', invoker);
-    wmsg = sprintf('%s: in classical mode, which is recommended only for research purpose; set options.classical=false to disable classical mode.', invoker);
+    wmsg = sprintf('%s: in classical mode, which is recommended only for research purpose; set options.classical to false to disable classical mode.', invoker);
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
 end
@@ -1259,7 +1259,7 @@ options.quiet = logical(options.quiet);
 % Validate options.iprint.
 validated = false;
 if isfield(options, 'iprint')
-    if ~isintegerscalar(options.iprint) || (options.iprint ~= 0 && abs(options.iprint) ~= 1 && abs(options.iprint) ~=2 && abs(options.iprint) ~= 3)
+    if ~isintegerscalar(options.iprint) || abs(options.iprint) > 3
         wid = sprintf('%s:InvalidIprint', invoker);
         wmsg = sprintf('%s: invalid iprint; it should be 0, 1, -1, 2, -2, 3, or -3; it is set to %d.', invoker, options.iprint);
         warning(wid, '%s', wmsg);
@@ -1323,13 +1323,13 @@ end
 options.debug = logical(options.debug);
 if options.debug
     wid = sprintf('%s:Debug', invoker);
-    wmsg = sprintf('%s: in debug mode; set options.debug=false to disable debug.', invoker);
+    wmsg = sprintf('%s: in debug mode; set options.debug to false to disable debug.', invoker);
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
 %    if options.quiet
 %        options.quiet = false;
 %        wid = sprintf('%s:Debug', invoker);
-%        wmsg = sprintf('%s: options.quiet is set to false because options.debug=true.', invoker);
+%        wmsg = sprintf('%s: options.quiet is set to false because options.debug = true.', invoker);
 %        warning(wid, '%s', wmsg);
 %        warnings = [warnings, wmsg];
 %    end
@@ -1345,7 +1345,7 @@ if isfield(options, 'chkfunval')
         warnings = [warnings, wmsg];
     elseif logical(options.chkfunval) && ~options.debug
         wid = sprintf('%s:InvalidChkfunval', invoker);
-        wmsg = sprintf('%s: chkfunval=true but debug=false; chkfunval is set to false; set both flags to true to check function values.', invoker);
+        wmsg = sprintf('%s: chkfunval = true but debug = false; chkfunval is set to false; set both flags to true to check function values.', invoker);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     else
@@ -1358,9 +1358,9 @@ end
 if options.chkfunval
     wid = sprintf('%s:Chkfunval', invoker);
     if strcmp(solver, 'cobylan')
-        wmsg = sprintf('%s: checking whether fx=fun(x) and constr=con(x) at exit, which costs an extra function/constraint evaluation; set options.chkfunval=false to disable the check.', invoker);
+        wmsg = sprintf('%s: checking whether fx = fun(x) and constr = con(x) at exit, which costs an extra function/constraint evaluation; set options.chkfunval to false to disable the check.', invoker);
     else
-        wmsg = sprintf('%s: checking whether fx=fun(x) at exit, which costs an extra function evaluation; set options.chkfunval=false to disable the check.', invoker);
+        wmsg = sprintf('%s: checking whether fx = fun(x) at exit, which costs an extra function evaluation; set options.chkfunval to false to disable the check.', invoker);
     end
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
@@ -1450,7 +1450,7 @@ if isfield(options, 'eta1')
         if isfield(options, 'eta2') && isrealscalar(options.eta2) && options.eta2 > 0 && options.eta2 <= 1
         % The user provides a correct eta2; we define eta1 as follows.
             options.eta1 = max(eps, options.eta2/7);
-            wmsg = sprintf('%s: invalid eta1; it should be in the interval [0, 1) and not more than eta2; it is set to %f.', invoker, options.eta1);
+            wmsg = sprintf('%s: invalid eta1; it should be in the interval [0, 1) and not more than eta2; it is set to %g.', invoker, options.eta1);
             validated = true;
         else
         % The user does not provide a correct eta2; we take the default eta1 hard coded in Powell's code.
@@ -1477,7 +1477,7 @@ if isfield(options, 'eta2')
         % The user provides a correct eta1; we define eta2 as follows.
             options.eta2 = (options.eta1 + 2)/3;
             validated = true;
-            wmsg = sprintf('%s: invalid eta2; it should be in the interval [0, 1] and not less than eta1; it is set to %f.', invoker, options.eta2);
+            wmsg = sprintf('%s: invalid eta2; it should be in the interval [0, 1] and not less than eta1; it is set to %g.', invoker, options.eta2);
         else
         % The user does not provide a correct eta1; we take the default eta2 hard coded in Powell's code.
             wmsg = sprintf('%s: invalid eta2; it should be in the interval [0, 1] and not less than eta1; it will be set to the default value.', invoker);
@@ -1541,7 +1541,7 @@ function [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, scaling_factor, shif
 % Otherwise, it may be a bad idea.
 
 callstack = dbstack;
-funname =callstack(1).name; % Name of the current function
+funname = callstack(1).name; % Name of the current function
 
 substantially_scaled_threshold = 2;
 % We consider the problem substantially scaled_threshold if
@@ -1596,7 +1596,7 @@ end
 % well in several real problems.
 %if any(scaling_factor ~= 1)
 %    wid = sprintf('%s:ProblemScaled', invoker);
-%    wmsg = sprintf('%s: problem scaled according to bound constraints; do this only if the bounds reflect the scaling of variables; if not, set options.scale=false to disable scaling.', invoker);
+%    wmsg = sprintf('%s: problem scaled according to bound constraints; do this only if the bounds reflect the scaling of variables; if not, set options.scale to false to disable scaling.', invoker);
 %    warning(wid, '%s', wmsg);
 %    warnings = [warnings, wmsg];
 %end
@@ -1622,7 +1622,7 @@ solver_list = {'uobyqan', 'newuoan', 'bobyqan', 'lincoan', 'cobylan'};
 % We may add other solvers in the future!
 % Note that pdfo is not a possible solver here!
 callstack = dbstack;
-funname =callstack(1).name; % Name of the current function
+funname = callstack(1).name; % Name of the current function
 
 if ~ismember(invoker, invoker_list)
     % Private/unexpected error
@@ -1633,7 +1633,7 @@ end
 % or '' (i.e., an empty char array), the second signifying the solver
 % is yet to decide.
 % 1. If options.solver is in solver_list, we check whether it can solve the
-% problem. If yes, we set solver=options.solver; otherwise, we warn about
+% problem. If yes, we set solver = options.solver; otherwise, we warn about
 % 'invalid solver' and select a solver.
 % 2. If options.solver is '', we do not complain but select a solver. We
 % should not complain because either the user does not specify a solver, which
@@ -1658,14 +1658,14 @@ if ~solver_correct
     case 'unconstrained'
         if (n >= 2 && n <= 8 && options.maxfun >= (n+1)*(n+2)/2 + 1)
             solver = 'uobyqan';
-        elseif (options.maxfun <= n+2) % After prepdfo, options.maxfun>=n+2 is ensured. Thus options.maxfun<=n+2 indeed means options.maxfun=n+2
+        elseif (options.maxfun <= n+2) % After prepdfo, options.maxfun >= n+2 is ensured. Thus options.maxfun <= n+2 indeed means options.maxfun = n+2
             solver = 'cobylan';
         else
             solver = 'newuoan';  % options.npt will be set later
             % Interestingly, we note in our test that lincoan outperformed
             % newuoan on unconstrained CUTEst problems when the dimension
-            % was not large (i.e., <=50) or the precision requirement
-            % was not high (i.e., >=1e-5). Therefore, it is worthwhile to
+            % was not large (i.e., <= 50) or the precision requirement
+            % was not high (i.e., >= 1e-5). Therefore, it is worthwhile to
             % try lincoan when an unconstrained problem is given.
             % Nevertheless, for the moment, we set the default solver
             % for unconstrained problems to be newuoan.
@@ -1709,7 +1709,7 @@ if strcmp(solver, 'bobyqan') && options.rhobeg > min(probinfo.refined_data.ub-pr
     options.rhoend = max(eps, min(0.1*options.rhobeg, options.rhoend));
     if ismember('rhobeg', probinfo.user_options_fields) || ismember('rhoend', probinfo.user_options_fields)
         wid = sprintf('%s:InvalidRhobeg', invoker);
-        wmsg = sprintf('%s: rhobeg is set to %f and rhoend to %f acccording to the selected solver bobyqan, which requires rhoend <= rhobeg <= min(ub-lb)/2.', invoker, options.rhobeg, options.rhoend);
+        wmsg = sprintf('%s: rhobeg is set to %g and rhoend to %g acccording to the selected solver bobyqan, which requires rhoend <= rhobeg <= min(ub-lb)/2.', invoker, options.rhobeg, options.rhoend);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     end
@@ -1785,7 +1785,7 @@ end
 return
 
 %%%%%%%%%%%%%%% Function for calculating constraint violation %%%%%%%%%%
-function [constrviolation, nlcineq, nlceq]= constrv(x, Aineq, bineq, Aeq, beq, lb, ub, nonlcon)
+function [constrviolation, nlcineq, nlceq] = constrv(x, Aineq, bineq, Aeq, beq, lb, ub, nonlcon)
 % CONSTRV calculates the absolute constraint violation at x.
 rineq = [];
 req = [];
@@ -1835,7 +1835,7 @@ if isfield(options, 'honour_x0') && options.honour_x0  % In this case, we respec
         options.rhoend = max(eps, min(0.1*options.rhobeg, options.rhoend));  % We do not revise rhoend unless rhobeg is revised
         if ismember('rhobeg', user_options_fields) || ismember('rhoend', user_options_fields)
             wid = sprintf('%s:ReviseRhobeg', invoker);
-            wmsg = sprintf('%s: rhobeg is revised to %f and rhoend to %f so that the distance between x0 and the inactive bounds is at least rhobeg.', invoker, options.rhobeg, options.rhoend);
+            wmsg = sprintf('%s: rhobeg is revised to %g and rhoend to %g so that the distance between x0 and the inactive bounds is at least rhobeg.', invoker, options.rhobeg, options.rhoend);
             warning(wid, '%s', wmsg);
             warnings = [warnings, wmsg];
         end
@@ -1852,7 +1852,7 @@ else
     x0(ubx) = ub(ubx);
     if norm(x0_old-x0) > eps*max(1, norm(x0_old))
         wid = sprintf('%s:ReviseX0', invoker);
-        wmsg = sprintf('%s: x0 is revised so that the distance between x0 and the inactive bounds is at least rhobeg; set options.honour_x0=true if you prefer to keep x0.', invoker);
+        wmsg = sprintf('%s: x0 is revised so that the distance between x0 and the inactive bounds is at least rhobeg; set options.honour_x0 to true if you prefer to keep x0.', invoker);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     end

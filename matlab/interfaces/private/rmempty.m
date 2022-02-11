@@ -1,6 +1,6 @@
 function T = rmempty(S) % Remove empty fields in a structure
 callstack = dbstack;
-funname =callstack(1).name; % Name of the current function
+funname = callstack(1).name; % Name of the current function
 if isempty(S)
     S = struct(); % Here we do not distinguish empty objects. It is fine in this package, but may not be in others
 end

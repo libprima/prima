@@ -1,17 +1,17 @@
 function [x, fx, exitflag, output] = project (Ai, bi, Ae, be, lb, ub, x0, options)
-%PROJECT is a (naive) semismooth-Newton method for solving 
-%   min f(x) = 0.5*||x-x0||^2 
+%PROJECT is a (naive) semismooth-Newton method for solving
+%   min f(x) = 0.5*||x-x0||^2
 %   s.t. Ai*x <= bi
 %   Ae*x = be
 %   lb <= x <= ub
-%   The method minimizes 
-%   Fp(x) = f(x) + 0.5*sigma*(||Ae*x-be||^2+||(Ai*x-bi)_+||^2+||(lb-x)_+||^2+||(x-ub)_+||^2)  
+%   The method minimizes
+%   Fp(x) = f(x) + 0.5*sigma*(||Ae*x-be||^2+||(Ai*x-bi)_+||^2+||(lb-x)_+||^2+||(x-ub)_+||^2)
 %   by semismooth-Newton. Sigma is adaptively chosen. In theory, sigma
 %   needs to tend to infinity in order to solve the problem (which is
-%   a drawback of the Courant penalty function). 
+%   a drawback of the Courant penalty function).
 %
 %   ***********************************************************************
-%   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk) 
+%   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
 %               and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
 %               Department of Applied Mathematics,
 %               The Hong Kong Polytechnic University
@@ -32,21 +32,21 @@ function [x, fx, exitflag, output] = project (Ai, bi, Ae, be, lb, ub, x0, option
 % 2. exitflag:
 % If output.algorithm = 'semismooth-newton':
 % 0: optimal point found up to prescribed tolerance
-% -1: non-optimal feasible point found 
+% -1: non-optimal feasible point found
 % -2: no feasible point found (according to the prescribed tolerance, which may be very restrictive)
-% If output.algorithm = 'quadprog' or 'fmincon', then the exitflag is the 
+% If output.algorithm = 'quadprog' or 'fmincon', then the exitflag is the
 % exitflag of these MATLAB functions.
 %
 % 3. Although the code may be used to solve the above mentioned problem for
 % general purposes, it was written to provide a feasilble starting point for
 % Powell's LINCOA code, where the problem size is normally not big
 % (typically tens of variables/constraints; at most thousands of them),
-% and a feasible point is adequate. 
+% and a feasible point is adequate.
 %
 % 4. Testing results (without using 'quadprog' or 'fmincon'):
-% For all the 235 bound/linearly constrained CUTEst problems with at 
-% most 5,000 variables and 50,000 linear constraints, the code can find a 
-% point with relative constration violation (RCV) at most 10^(-6) except the 
+% For all the 235 bound/linearly constrained CUTEst problems with at
+% most 5,000 variables and 50,000 linear constraints, the code can find a
+% point with relative constration violation (RCV) at most 10^(-6) except the
 % following problems:
 % a. BLOWEYA, BLOWEYB: final RCV between 10^(-5) and 10^(-6);
 % b. DTOC3: final RCV between 10^(-5) and 10^(-4);
@@ -55,12 +55,12 @@ function [x, fx, exitflag, output] = project (Ai, bi, Ae, be, lb, ub, x0, option
 % e. LINCONT: quadprog and fmincon of MATLAB cannot find a feasible point either
 % f. ARGLALE, ARGLBLE, ARGLCLE, MODEL, NASH: problems infeasible accoring to quadprog
 %
-% 5. If no feasible point is found and TryMatlab=1, then we check whether the
+% 5. If no feasible point is found and TryMatlab = 1, then we check whether the
 % MATLAB on this machine has 'quadprog' or 'fmincon'. If yes, we use them to
 % solve the problem. Be realistic. Our objective here is more to solve the
-% problem than to develope a new algorithm! 
+% problem than to develope a new algorithm!
 %
-% TODO: Better algorithm/implemention for solving this projection problem 
+% TODO: Better algorithm/implemention for solving this projection problem
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % project starts
@@ -80,7 +80,7 @@ ainc = 1.5;
 adec = 0.75;
 cdec = 0.5;
 cdecs = 0.05;
-sinc = 1.2; % 1.2~1.5 seems good; 2 seems too big 
+sinc = 1.2; % 1.2~1.5 seems good; 2 seems too big
 sdec = 0.6;
 sigma = 10;
 maxsigma = 1e15;
@@ -100,13 +100,13 @@ if (nargin == 8 && isa(options, 'struct')) % Adopt user-defined options.
     if (isfield(options,'StepTolerance'))
         StepTol = options.StepTolerance;
     end
-    if (isfield(options,'MaxIterations')) 
+    if (isfield(options,'MaxIterations'))
         maxit = int32(options.MaxIterations);
     end
-    if (isfield(options,'TryMatlab')) 
+    if (isfield(options,'TryMatlab'))
         TryMatlab = options.TryMatlab;
     end
-    if (isfield(options,'Warnings')) 
+    if (isfield(options,'Warnings'))
         Warnings = options.Warnings;
     end
 end
@@ -129,12 +129,12 @@ if((isempty(Ai) || min(bi) >= norm(Ai, inf)*maxcon) && max(lb) <= -maxcon && min
         if ~isempty(which('lsqminnorm'))
             x = lsqminnorm(Ae, be-Ae*x0) + x0;
         else
-            x = Ae\(be-Ae*x0) + x0; 
+            x = Ae\(be-Ae*x0) + x0;
         end
         x = min(max(x, lb), ub);
         fx = 0.5*(x-x0)'*(x-x0);
         output.penalty = 0;
-        output.iterations = 0; 
+        output.iterations = 0;
         if(isempty(Ae))
             re = 0;
             be = 0;
@@ -147,7 +147,7 @@ if((isempty(Ai) || min(bi) >= norm(Ai, inf)*maxcon) && max(lb) <= -maxcon && min
         else
             ri = max(Ai*x-bi, 0);
         end
-        output.constrviolation = norm([re; ri])/(1+ norm([be; bi])); 
+        output.constrviolation = norm([re; ri])/(1+ norm([be; bi]));
         if (output.constrviolation > CTol)
             exitflag = -2;
         else
@@ -161,7 +161,7 @@ x = min(max(x0, lb), ub);
 if((isempty(Ai) || min(bi) >= norm(Ai, inf)*maxcon) && isempty(Ae)) % There are only bounds
     fx = 0.5*(x-x0)'*(x-x0);
     output.penalty = 0;
-    output.iterations = 0; 
+    output.iterations = 0;
     if(~isempty(Ai))
         output.constrviolation = norm([0; max(Ai*x-bi,0)])/(1+norm([0; bi]));
     else
@@ -188,7 +188,7 @@ I = speye(n,n);
 b = -x0;
 cv = NaN;
 befin = [0; be(abs(be)<inf)]; % Put a zero to avoid empty array
-bifin = [0; bi(abs(bi)<inf)]; 
+bifin = [0; bi(abs(bi)<inf)];
 ubfin = [0; ub(abs(ub)<inf)];
 lbfin = [0; lb(abs(lb)<inf)];
 denomc = 1 + norm(befin) + norm(bifin) + norm(ubfin) + norm(lbfin);
@@ -226,7 +226,7 @@ for k = 1 : maxit
         J = I + sigma*(Ae'*Ae + Ji + double(diag(rlb>0)) + double(diag(rub>0)));
     end
     % There should be much better ways to solve the linear equation J*d = -g !
-    % We are lazy here. 
+    % We are lazy here.
     d = -J\Pg;
     if (norm(J*d+Pg)/norm(Pg) >= 1e-1) && ~isempty(which('lsqminnorm'))
         d = lsqminnorm(-J, Pg);
@@ -241,18 +241,18 @@ for k = 1 : maxit
     normd = norm(d);
     alpha = 1;
     if (F(x+alpha*d)- Fx <= mu*alpha*dPg)
-        while (F(x+ainc*alpha*d) - Fx <= mu*ainc*alpha*dPg) 
+        while (F(x+ainc*alpha*d) - Fx <= mu*ainc*alpha*dPg)
             alpha = ainc*alpha;
         end
     else
-        while (F(x+alpha*d) - Fx > mu*alpha*dPg && alpha > minalpha && alpha*normd > StepTol*normx && -alpha*dPg > FunTol*max(abs(Fx),1)) 
+        while (F(x+alpha*d) - Fx > mu*alpha*dPg && alpha > minalpha && alpha*normd > StepTol*normx && -alpha*dPg > FunTol*max(abs(Fx),1))
             alpha = adec*alpha;
         end
     end
     if (alpha > minalpha && alpha*normd > StepTol*normx && -alpha*dPg > FunTol*max(abs(Fx),1))
         x = x + alpha*d;
     elseif (sigma == maxsigma)
-        break;            
+        break;
     end
 end
 
@@ -272,8 +272,8 @@ else
 end
 fx = 0.5*(x-x0)'*(x-x0);
 output.algorithm = 'semismooth-newton';
-output.penalty = sigma; 
-output.iterations = k; 
+output.penalty = sigma;
+output.iterations = k;
 output.firstorderopt = norm(Pg)/denomg + cv/denomc;
 output.constrviolation = cv/denomc;
 
@@ -284,10 +284,10 @@ exitflag_save = exitflag;
 
 MatlabVersion = ver;
 TryMatlab = TryMatlab && any(strcmp({MatlabVersion.Name}, 'Optimization Toolbox')); % Do not try matlab unless Optimization Toolbox is available
-if output.constrviolation > 10*CTol && TryMatlab % No feasible ponit was found. Try quadprog or fmincon. 
+if output.constrviolation > 10*CTol && TryMatlab % No feasible ponit was found. Try quadprog or fmincon.
     if ~isempty(which('quadprog'))
-        options = optimoptions('quadprog'); 
-        options.Display = 'off'; % No talking 
+        options = optimoptions('quadprog');
+        options.Display = 'off'; % No talking
         options.ConstraintTolerance = CTol;
         options.MaxIterations = maxit;
 %        [~, x, fx, exitflag, output] = evalc('quadprog (speye(n,n), -x0, Ai, bi, Ae, be, lb, ub, x0, options)'); % We do not want any message printed by quadprog
@@ -295,14 +295,14 @@ if output.constrviolation > 10*CTol && TryMatlab % No feasible ponit was found. 
         fx = fx + 0.5*(x0'*x0);
         output.algorithm = 'quadprog (MATLAB)';
     elseif ~isempty(which('fmincon'))
-        options = optimoptions('fmincon'); 
+        options = optimoptions('fmincon');
         options.Display = 'off'; % No talking
         options.SpecifyObjectiveGradient = true;
         options.Algorithm = 'sqp';
         options.ConstraintTolerance = CTol;
         options.MaxIterations = maxit;
-%        [~, x, ~, exitflag, output] = evalc('fmincon(@(x) dist_sq(x, x0), x0, Ai, bi, Ae, be, lb, ub, [], options)'); % We do not want any message printed by fmincon   
-%        fx = dist_sq(x, x0); % We may return fx when calling fmincon. However, without this line, checkcode will complain that dist_sq is unused due to evalc. 
+%        [~, x, ~, exitflag, output] = evalc('fmincon(@(x) dist_sq(x, x0), x0, Ai, bi, Ae, be, lb, ub, [], options)'); % We do not want any message printed by fmincon
+%        fx = dist_sq(x, x0); % We may return fx when calling fmincon. However, without this line, checkcode will complain that dist_sq is unused due to evalc.
         [x, fx, exitflag, output] = fmincon(@(x) dist_sq(x, x0), x0, Ai, bi, Ae, be, lb, ub, [], options); % fmincon is silent with the Display set to 'off'
         output.algorithm = 'fmincon (MATLAB)';
     end
@@ -322,7 +322,7 @@ end
 % project ends
 return
 
-function Fval = Fp(x, sigma, b, Ai, bi, Ae, be, lb, ub) 
+function Fval = Fp(x, sigma, b, Ai, bi, Ae, be, lb, ub)
 re = Ae*x-be;
 ri = Ai*x-bi;
 rlb = -x+lb;

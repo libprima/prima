@@ -124,7 +124,7 @@ function [x, fx, exitflag, output] = uobyqan(varargin)
 %
 %   solves
 %       min cos(x)
-%   starting from x0=-1 with at most 50 function evaluations.
+%   starting from x0 = -1 with at most 50 function evaluations.
 %
 %   4. Problem defined by a structure
 %
@@ -146,7 +146,7 @@ function [x, fx, exitflag, output] = uobyqan(varargin)
 %
 %   solves
 %       min cos(x)
-%   starting from x0=-1 with at most 50 function evaluations.
+%   starting from x0 = -1 with at most 50 function evaluations.
 %
 %   See also PDFO, NEWUOA, BOBYQA, LINCOA, COBYLA.
 %
@@ -225,7 +225,7 @@ else
 end
 
 % Preprocess the input
-% Even if invoker='pdfon', we still need to call prepdfo, which will assign
+% Even if invoker = 'pdfon', we still need to call prepdfo, which will assign
 % values to fun, x0, ..., options.
 try % prepdfo is a private function that may generate public errors; error-handling needed
     [fun, x0, ~, ~, ~, ~, ~, ~, ~, options, probinfo] = prepdfo(args{:});
@@ -246,7 +246,7 @@ ftarget = options.ftarget;
 if ~strcmp(invoker, 'pdfon') && probinfo.feasibility_problem
     % An "unconstrained feasibility problem" is rediculous, yet nothing wrong mathematically.
     output.x = x0;
-    % We could set fx=[], funcCount=0, and fhist=[] since no function evaluation
+    % We could set fx = [], funcCount = 0, and fhist = [] since no function evaluation
     % occured. But then we will have to modify the validation of fx, funcCount,
     % and fhist in postpdfo. To avoid such a modification, we set fx, funcCount,
     % and fhist as below and then revise them in postpdfo.
