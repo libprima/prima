@@ -6,10 +6,10 @@ function interform(directory)
 % Coded by Zaikun ZHANG in August, 2020.
 
 % Output directory
-outputdir = 'intersection_form';
+outputdir = '.intersection_form';  % The leading dot makes the directory hidden on Linux systems.
 
 % Do not perform refactoring in these subdirectories (if exist)
-ignoredir = {'original', 'backup', 'intersection_form', 'trash', 'test', 'results', 'test_data'};
+ignoredir = {'original', 'backup', '.intersection_form', 'trash', 'test', 'tests', 'results', 'test_data'};
 
 % Ignore the following files
 ignorefiles = {'calfun__genmod.f90', 'mexfunction__genmod.f90', 'test.f'};

@@ -188,13 +188,13 @@ end
 % The full path of several directories.
 cpwd = fileparts(mfilename('fullpath')); % Current directory
 fsrc = fullfile(cpwd, 'fsrc'); % Directory of the Fortran source code
-fsrc_intersection_form = fullfile(cpwd, 'fsrc', 'intersection_form'); % Directory of the intersection-form Fortran source code
+fsrc_intersection_form = fullfile(cpwd, 'fsrc', '.intersection_form'); % Directory of the intersection-form Fortran source code
 fsrc_common_intersection_form = fullfile(fsrc_intersection_form, 'common'); % Directory of the common files
 fsrc_classical = fullfile(cpwd, 'fsrc', 'classical'); % Directory of the classical Fortran source code
-fsrc_classical_intersection_form = fullfile(cpwd, 'fsrc', 'classical', 'intersection_form'); % Directory of the intersection-form Fortran source code
+fsrc_classical_intersection_form = fullfile(cpwd, 'fsrc', 'classical', '.intersection_form'); % Directory of the intersection-form Fortran source code
 matd = fullfile(cpwd, 'matlab'); % Matlab directory
 gateways = fullfile(matd, 'mex_gateways'); % Directory of the MEX gateway files
-gateways_intersection_form = fullfile(gateways, 'intersection_form');  % Directory of the intersection-form MEX gateway files
+gateways_intersection_form = fullfile(gateways, '.intersection_form');  % Directory of the intersection-form MEX gateway files
 interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
 interfaces_private = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
 tests = fullfile(matd, 'tests'); % Directory containing some tests
