@@ -25,7 +25,7 @@ module lincoa_mod
 !
 ! Started: February 2022.
 !
-! Last Modified: Friday, February 11, 2022 AM12:19:55
+! Last Modified: Friday, February 11, 2022 PM07:03:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -39,8 +39,8 @@ contains
 subroutine lincoa(calfun, x, f, &
     & cstrv, &
     & A, b, &
-    & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, npt, iprint, &
-    & eta1, eta2, gamma1, gamma2, xhist, fhist, chist, maxhist, maxfilt, info)
+    & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, npt, iprint, eta1, eta2, gamma1, gamma2, &
+    & xhist, fhist, chist, maxhist, maxfilt, info)
 !--------------------------------------------------------------------------------------------------!
 !
 !     SUBROUTINE CALFUN (N,X,F) has to be provided by the user. It must set
@@ -94,7 +94,7 @@ subroutine lincoa(calfun, x, f, &
 !       6: one of the difference XU(I)-XL(I) is less than 2*RHOBEG.
 !       7: rounding errors are becoming damaging.
 !       8: rounding errors prevent reasonable changes to X.
-!       9: the denominator of the updating formule is zero.
+!       9: the denominator of the updating formula is zero.
 !       10: N should not be less than 2.
 !       11: MAXFUN is less than NPT+1.
 !       12: the gradient of constraint is zero.

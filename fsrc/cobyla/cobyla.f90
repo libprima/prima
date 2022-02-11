@@ -29,7 +29,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, February 09, 2022 PM08:25:46
+! Last Modified: Friday, February 11, 2022 PM06:45:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -43,8 +43,8 @@ contains
 subroutine cobyla(calcfc, m, x, f, &
     & cstrv, constr, &
     & f0, constr0, &
-    & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, &
-    & eta1, eta2, gamma1, gamma2, xhist, fhist, chist, conhist, maxhist, maxfilt, info)
+    & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, eta1, eta2, gamma1, gamma2, &
+    & xhist, fhist, chist, conhist, maxhist, maxfilt, info)
 !--------------------------------------------------------------------------------------------------!
 ! Among all the arguments, only CALCFC, X, and F are obligatory. The others are OPTIONAL and you can
 ! neglect them unless you are familiar with the algorithm. If you do not specify an optional input,

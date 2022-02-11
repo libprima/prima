@@ -1,8 +1,27 @@
-subroutine uobyqb(n, x, rhobeg, rhoend, iprint, maxfun, npt, xbase, &
-     &  xopt, xnew, xpt, pq, pl, h, g, d, vlag, w, f, info, ftarget)
-implicit real(kind(0.0D0)) (a - h, o - z)
-implicit integer(i - n)
-dimension x(n), xbase(n), xopt(n), xnew(n), xpt(npt, n), pq(npt - 1), &
+subroutine uobyqb(calfun, n, x, rhobeg, rhoend, iprint, maxfun, npt, xbase, &
+     &  xopt, xnew, xpt, pq, pl, h, g, d, vlag, w, f, info, ftarget, &
+    & nf, xhist, maxxhist, fhist, maxfhist)
+
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF
+use, non_intrinsic :: evaluate_mod, only : evaluate
+use, non_intrinsic :: history_mod, only : savehist, rangehist
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
+use, non_intrinsic :: pintrf_mod, only : OBJ
+
+implicit real(RP) (a - h, o - z)
+implicit integer(IK) (i - n)
+
+procedure(OBJ) :: calfun
+integer(IK), intent(in) :: maxxhist
+integer(IK), intent(in) :: maxfhist
+integer(IK), intent(in) :: npt
+integer(IK), intent(out) :: nf
+real(RP), intent(inout) :: x(n)
+real(RP), intent(out) :: xhist(n, maxxhist)
+real(RP), intent(out) :: fhist(maxfhist)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+dimension xbase(n), xopt(n), xnew(n), xpt(npt, n), pq(npt - 1), &
      &  pl(npt, npt - 1), h(n, n * n), g(n), d(n), vlag(npt), &
      &  w(max(6 * n, (n**2 + 3 * n + 2) / 2))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -29,10 +48,6 @@ dimension x(n), xbase(n), xopt(n), xnew(n), xpt(npt, n), pq(npt - 1), &
 !
 !     Set some constants.
 !
-one = 1.0D0
-two = 2.0D0
-zero = 0.0D0
-half = 0.5D0
 tol = 0.01D0
 nnp = n + n + 1
 nptm = npt - 1
@@ -47,12 +62,12 @@ nf = 0
 do i = 1, n
     xbase(i) = x(i)
     do k = 1, npt
-        xpt(k, i) = zero
+        xpt(k, i) = ZERO
     end do
 end do
 do k = 1, npt
     do j = 1, nptm
-        pl(k, j) = zero
+        pl(k, j) = ZERO
     end do
 end do
 !
@@ -97,23 +112,23 @@ if (nf <= nnp) then
     if (jswitch > 0) then
         if (j >= 1) then
             ih = ih + j
-            if (w(j) < zero) then
-                d(j) = (fsave + f - two * fbase) / rhosq
-                pq(j) = (fsave - f) / (two * rho)
-                pl(1, ih) = -two / rhosq
-                pl(nf - 1, j) = half / rho
-                pl(nf - 1, ih) = one / rhosq
+            if (w(j) < ZERO) then
+                d(j) = (fsave + f - TWO * fbase) / rhosq
+                pq(j) = (fsave - f) / (TWO * rho)
+                pl(1, ih) = -TWO / rhosq
+                pl(nf - 1, j) = HALF / rho
+                pl(nf - 1, ih) = ONE / rhosq
             else
-                pq(j) = (4.0D0 * fsave - 3.0D0 * fbase - f) / (two * rho)
-                d(j) = (fbase + f - two * fsave) / rhosq
+                pq(j) = (4.0D0 * fsave - 3.0D0 * fbase - f) / (TWO * rho)
+                d(j) = (fbase + f - TWO * fsave) / rhosq
                 pl(1, j) = -1.5D0 / rho
-                pl(1, ih) = one / rhosq
-                pl(nf - 1, j) = two / rho
-                pl(nf - 1, ih) = -two / rhosq
+                pl(1, ih) = ONE / rhosq
+                pl(nf - 1, j) = TWO / rho
+                pl(nf - 1, ih) = -TWO / rhosq
             end if
             pq(ih) = d(j)
-            pl(nf, j) = -half / rho
-            pl(nf, ih) = one / rhosq
+            pl(nf, j) = -HALF / rho
+            pl(nf, ih) = ONE / rhosq
         end if
 !
 !     Pick the shift from XBASE to the next initial interpolation point
@@ -127,7 +142,7 @@ if (nf <= nnp) then
         fsave = f
         if (f < fbase) then
             w(j) = rho
-            xpt(nf + 1, j) = two * rho
+            xpt(nf + 1, j) = TWO * rho
         else
             w(j) = -rho
             xpt(nf + 1, j) = -rho
@@ -143,15 +158,15 @@ if (nf <= nnp) then
 end if
 ih = ih + 1
 if (nf > nnp) then
-    temp = one / (w(ip) * w(iq))
+    temp = ONE / (w(ip) * w(iq))
     tempa = f - fbase - w(ip) * pq(ip) - w(iq) * pq(iq)
-    pq(ih) = (tempa - half * rhosq * (d(ip) + d(iq))) * temp
+    pq(ih) = (tempa - HALF * rhosq * (d(ip) + d(iq))) * temp
     pl(1, ih) = temp
     iw = ip + ip
-    if (w(ip) < zero) iw = iw + 1
+    if (w(ip) < ZERO) iw = iw + 1
     pl(iw, ih) = -temp
     iw = iq + iq
-    if (w(iq) < zero) iw = iw + 1
+    if (w(iq) < ZERO) iw = iw + 1
     pl(iw, ih) = -temp
     pl(nf, ih) = temp
 !
@@ -173,9 +188,9 @@ end if
 !
 !     Set parameters to begin the iterations for the current RHO.
 !
-sixthm = zero
+sixthm = ZERO
 delta = rho
-60 tworsq = (two * rho)**2
+60 tworsq = (TWO * rho)**2
 rhosq = rho * rho
 !
 !     Form the gradient of the quadratic model at the trust region centre.
@@ -190,7 +205,7 @@ do j = 1, n
         g(i) = g(i) + pq(ih) * xopt(j)
         if (i < j) g(j) = g(j) + pq(ih) * xopt(i)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 2019-08-29: For ill-conditioned problems, NaN may occur in the
+! Zaikun 2019-08-29: For ill-conditiONEd problems, NaN may occur in the
 ! models. In such a case, we terminate the code. Otherwise, the behavior
 ! of TRSTEM or LAGMAX is not predictable, and Segmentation Fault or
 ! infinite cycling may happen. This is because any equality/inequality
@@ -218,16 +233,16 @@ end do
 !
 call trstep(n, g, h, delta, tol, d, w(1), w(n + 1), w(2 * n + 1), w(3 * n + 1), &
 & w(4 * n + 1), w(5 * n + 1), evalue)
-temp = zero
+temp = ZERO
 do i = 1, n
     temp = temp + d(i)**2
 end do
 dnorm = dmin1(delta, dsqrt(temp))
-errtol = -one
-if (dnorm < half * rho) then
+errtol = -ONE
+if (dnorm < HALF * rho) then
     knew = -1
-    errtol = half * evalue * rho * rho
-    if (nf <= npt + 9) errtol = zero
+    errtol = HALF * evalue * rho * rho
+    if (nf <= npt + 9) errtol = ZERO
     goto 290
 end if
 !
@@ -250,7 +265,7 @@ do i = 1, n
         if (nf == 1) then
             fopt = f
             do j = 1, n
-                xopt(j) = zero
+                xopt(j) = ZERO
             end do
         end if
         info = -1
@@ -259,19 +274,22 @@ do i = 1, n
 end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-call calfun(n, x, f)
+!------------------------------------------------------------------------!
+call evaluate(calfun, x, f)
+call savehist(nf, x, xhist, f, fhist)
+!------------------------------------------------------------------------!
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     By Zaikun (commented on 02-06-2019; implemented in 2016):
 !     Exit if F has an NaN or almost infinite value.
 !     If this happends at the very first function evaluation (i.e.,
 !     NF=1), then it is necessary to set FOPT and XOPT before going to
-!     530, because these two variables have not been set yet.
+!     530, because these TWO variables have not been set yet.
 if (f /= f .or. f > almost_infinity) then
     if (nf == 1) then
         fopt = f
         do i = 1, n
-            xopt(i) = zero
+            xopt(i) = ZERO
         end do
     end if
     info = -2
@@ -281,7 +299,7 @@ end if
 !     Exit if F .LE. FTARGET.
 if (f <= ftarget) then
     info = 1
-    return
+    goto 430  ! Should not goto 420. fopt may not be defined yet
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -297,7 +315,7 @@ end if
 !     Use the quadratic model to predict the change in F due to the step D,
 !     and find the values of the Lagrange functions at the new point.
 !
-vquad = zero
+vquad = ZERO
 ih = n
 do j = 1, n
     w(j) = d(j)
@@ -305,26 +323,26 @@ do j = 1, n
     do i = 1, j
         ih = ih + 1
         w(ih) = d(i) * xnew(j) + d(j) * xopt(i)
-        if (i == j) w(ih) = half * w(ih)
+        if (i == j) w(ih) = HALF * w(ih)
         vquad = vquad + w(ih) * pq(ih)
     end do
 end do
 do k = 1, npt
-    temp = zero
+    temp = ZERO
     do j = 1, nptm
         temp = temp + w(j) * pl(k, j)
     end do
     vlag(k) = temp
 end do
-vlag(kopt) = vlag(kopt) + one
+vlag(kopt) = vlag(kopt) + ONE
 !
-!     Update SIXTHM, which is a lower bound on one sixth of the greatest
+!     Update SIXTHM, which is a lower bound on ONE sixth of the greatest
 !     third derivative of F.
 !
 diff = f - fopt - vquad
-sum = zero
+sum = ZERO
 do k = 1, npt
-    temp = zero
+    temp = ZERO
     do i = 1, n
         temp = temp + (xpt(k, i) - xnew(i))**2
     end do
@@ -350,15 +368,15 @@ if (knew > 0) goto 240
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !      IF (VQUAD .GE. ZERO) THEN
-if (.not. (vquad < zero)) then
+if (.not. (vquad < ZERO)) then
     info = 2
     goto 420
 end if
 ratio = (f - fsave) / vquad
 if (ratio <= 0.1D0) then
-    delta = half * dnorm
+    delta = HALF * dnorm
 else if (ratio <= 0.7D0) then
-    delta = dmax1(half * delta, dnorm)
+    delta = dmax1(HALF * delta, dnorm)
 else
     delta = dmax1(delta, 1.25D0 * dnorm, dnorm + rho)
 end if
@@ -367,13 +385,13 @@ if (delta <= 1.5D0 * rho) delta = rho
 !     Set KNEW to the index of the next interpolation point to be deleted.
 !
 ktemp = 0
-detrat = zero
+detrat = ZERO
 if (f >= fsave) then
     ktemp = kopt
-    detrat = one
+    detrat = ONE
 end if
 do k = 1, npt
-    sum = zero
+    sum = ZERO
     do i = 1, n
         sum = sum + (xpt(k, i) - xopt(i))**2
     end do
@@ -393,7 +411,7 @@ if (knew == 0) goto 290
 240 do i = 1, n
     xpt(knew, i) = xnew(i)
 end do
-temp = one / vlag(knew)
+temp = ONE / vlag(knew)
 do j = 1, nptm
     pl(knew, j) = temp * pl(knew, j)
     pq(j) = pq(j) + diff * pl(knew, j)
@@ -416,14 +434,14 @@ if (f < fsave) then
     goto 70
 end if
 if (ksave > 0) goto 70
-if (dnorm > two * rho) goto 70
+if (dnorm > TWO * rho) goto 70
 if (ddknew > tworsq) goto 70
 !
 !     Alternatively, find out if the interpolation points are close
 !     enough to the best point so far.
 !
 290 do k = 1, npt
-    w(k) = zero
+    w(k) = ZERO
     do i = 1, n
         w(k) = w(k) + (xpt(k, i) - xopt(i))**2
     end do
@@ -439,11 +457,11 @@ end do
 !
 !     If a point is sufficiently far away, then set the gradient and Hessian
 !     of its Lagrange function at the centre of the trust region, and find
-!     half the sum of squares of components of the Hessian.
+!     HALF the sum of squares of compONEnts of the Hessian.
 !
 if (knew > 0) then
     ih = n
-    sumh = zero
+    sumh = ZERO
     do j = 1, n
         g(j) = pl(knew, j)
         do i = 1, j
@@ -464,7 +482,7 @@ if (knew > 0) then
             end if
         end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        sumh = sumh + half * temp * temp
+        sumh = sumh + HALF * temp * temp
     end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29: See the comments below line number 70
@@ -480,13 +498,13 @@ if (knew > 0) then
 !     with index KNEW, using a bound on the maximum modulus of its Lagrange
 !     function in the trust region.
 !
-    if (errtol > zero) then
-        w(knew) = zero
-        sumg = zero
+    if (errtol > ZERO) then
+        w(knew) = ZERO
+        sumg = ZERO
         do i = 1, n
             sumg = sumg + g(i)**2
         end do
-        estim = rho * (dsqrt(sumg) + rho * dsqrt(half * sumh))
+        estim = rho * (dsqrt(sumg) + rho * dsqrt(HALF * sumh))
         wmult = sixthm * distest**1.5D0
         if (wmult * estim <= errtol) goto 310
     end if
@@ -496,7 +514,7 @@ if (knew > 0) then
 !     Here the vector XNEW is used as temporary working space.
 !
     call lagmax(n, g, h, rho, d, xnew, vmax)
-    if (errtol > zero) then
+    if (errtol > ZERO) then
         if (wmult * vmax <= errtol) goto 310
     end if
     goto 100
@@ -531,7 +549,7 @@ if (rho > rhoend) then
 !
 !     Pick the next values of RHO and DELTA.
 !
-    delta = half * rho
+    delta = HALF * rho
     ratio = rho / rhoend
     if (ratio <= 16.0D0) then
         rho = rhoend
@@ -550,7 +568,7 @@ end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 info = 0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-if (errtol >= zero) goto 100
+if (errtol >= ZERO) goto 100
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !  420 IF (FOPT .LE. F) THEN
 420 if (fopt <= f .or. f /= f) then
@@ -560,5 +578,9 @@ if (errtol >= zero) goto 100
     end do
     f = fopt
 end if
-return
-end
+
+!---------------------------------------------!
+430 call rangehist(nf, xhist, fhist)
+!---------------------------------------------!
+
+end subroutine uobyqb

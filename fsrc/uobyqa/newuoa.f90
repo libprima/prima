@@ -1,48 +1,51 @@
-module uobyqa_mod
+module newuoa_mod
 !--------------------------------------------------------------------------------------------------!
-! UOBYQA_MOD is a module providing a modernized and improved Fortran implementation of Powell's
-! UOBYQA algorithm in
+! NEWUOA_MOD is a module providing a modernized and improved Fortran implementation of Powell's
+! NEWUOA algorithm in
 !
-! M. J. D. Powell, UOBYQA: unconstrained optimization by quadratic approximation, Math. Program.,
-! 92(B):555--582, 2002
+! M. J. D. Powell, The NEWUOA software for unconstrained optimization without derivatives, In Large-
+! Scale Nonlinear Optimization, eds. G. Di Pillo and M. Roma, 255--297, Springer, New York, 2006
 !
-! UOBYQA approximately solves
+! NEWUOA approximately solves
 !
 !   min F(X),
 !
 ! where X is a vector of variables that has N components and F is a real-valued objective function.
 ! It tackles the problem by a trust region method that forms quadratic models by interpolation.
+! There can be some freedom in the interpolation conditions, which is taken up by minimizing the
+! Frobenius norm of the change to the second derivative of the quadratic model, beginning with a
+! zero matrix.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the UOBYQA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, February 11, 2022 PM07:23:55
+! Last Modified: Thursday, February 10, 2022 PM01:20:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
-public :: uobyqa
+public :: newuoa
 
 
 contains
 
 
-subroutine uobyqa(calfun, x, f, &
-    & nf, rhobeg, rhoend, ftarget, maxfun, iprint, eta1, eta2, gamma1, gamma2, &
+subroutine newuoa(calfun, x, f, &
+    & nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, eta1, eta2, gamma1, gamma2, &
     & xhist, fhist, maxhist, info)
 !--------------------------------------------------------------------------------------------------!
 ! Among all the arguments, only CALFUN, X, and F are obligatory. The others are OPTIONAL and you can
 ! neglect them unless you are familiar with the algorithm. If you do not specify an optional input,
 ! it will be assigned the default value detailed below. For instance, we may invoke the solver by
 !
-! call uobyqa(calfun, x, f)
+! call newuoa(calfun, x, f)
 !
 ! or
 !
-! call uobyqa(calfun, x, f, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
+! call newuoa(calfun, x, f, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
 !
-! See examples/uobyqa_exmp.f90 for a concrete example.
+! See examples/newuoa_exmp.f90 for a concrete example.
 !
 ! A detailed introduction to the arguments is as follows.
 ! N.B.: RP and IK are defined in the module CONSTS_MOD. See consts.F90 under the directory name
@@ -106,7 +109,7 @@ subroutine uobyqa(calfun, x, f, &
 !      variables so far and its objective function value;
 !   3: in addition to 2, each function evaluation with its variables will be printed to the screen;
 !   -1, -2, -3: the same information as 1, 2, 3 will be printed, not to the screen but to a file
-!      named UOBYQA_output.txt; the file will be created if it does not exist; the new output will
+!      named NEWUOA_output.txt; the file will be created if it does not exist; the new output will
 !      be appended to the end of this file if it already exists. Note that IPRINT = -3 can be costly
 !      in terms of time and space.
 !
@@ -167,7 +170,7 @@ use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: preproc_mod, only : preproc
 
 ! Solver-specific modules
-!use, non_intrinsic :: uobyqb_mod, only : uobyqb
+use, non_intrinsic :: newuob_mod, only : newuob
 
 implicit none
 
@@ -181,6 +184,7 @@ real(RP), intent(in), optional :: rhobeg
 real(RP), intent(in), optional :: rhoend
 real(RP), intent(in), optional :: ftarget
 integer(IK), intent(in), optional :: maxfun
+integer(IK), intent(in), optional :: npt
 integer(IK), intent(in), optional :: iprint
 real(RP), intent(in), optional :: eta1
 real(RP), intent(in), optional :: eta2
@@ -193,8 +197,8 @@ integer(IK), intent(out), optional :: info
 
 ! Local variables
 character(len=*), parameter :: ifmt = '(I0)'  ! I0: use the minimum number of digits needed to print
-character(len=*), parameter :: solver = 'UOBYQA'
-character(len=*), parameter :: srname = 'UOBYQA'
+character(len=*), parameter :: solver = 'NEWUOA'
+character(len=*), parameter :: srname = 'NEWUOA'
 character(len=MSGLEN) :: wmsg
 integer(IK) :: info_loc
 integer(IK) :: iprint_loc
@@ -203,6 +207,7 @@ integer(IK) :: maxhist_loc
 integer(IK) :: n
 integer(IK) :: nf_loc
 integer(IK) :: nhist
+integer(IK) :: npt_loc
 real(RP) :: eta1_loc
 real(RP) :: eta2_loc
 real(RP) :: ftarget_loc
@@ -212,14 +217,6 @@ real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
 real(RP), allocatable :: fhist_loc(:)
 real(RP), allocatable :: xhist_loc(:, :)
-
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Working variables (to be removed)
-real(RP), allocatable :: w(:)
-integer(IK) :: npt, ixb, ixo, ixn, ixp, ipq, ipl, ih, ig, id, ivl, iw
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 
 ! Sizes
 n = int(size(x), kind(n))
@@ -268,6 +265,14 @@ else
     maxfun_loc = MAXFUN_DIM_DFT * n
 end if
 
+if (present(npt)) then
+    npt_loc = npt
+elseif (maxfun_loc >= 1) then
+    npt_loc = max(n + 2_IK, min(maxfun_loc - 1_IK, 2_IK * n + 1_IK))
+else
+    npt_loc = 2_IK * n + 1_IK
+end if
+
 if (present(iprint)) then
     iprint_loc = iprint
 else
@@ -307,12 +312,12 @@ end if
 if (present(maxhist)) then
     maxhist_loc = maxhist
 else
-    maxhist_loc = maxval([maxfun_loc, 1_IK + (n + 1_IK) * (n + 2_IK) / 2_IK, MAXFUN_DIM_DFT * n])
+    maxhist_loc = maxval([maxfun_loc, n + 3_IK, MAXFUN_DIM_DFT * n])
 end if
 
 ! Preprocess the inputs in case some of them are invalid.
 call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
-    & eta1=eta1_loc, eta2=eta2_loc, gamma1=gamma1_loc, gamma2=gamma2_loc)
+    & npt=npt_loc, eta1=eta1_loc, eta2=eta2_loc, gamma1=gamma1_loc, gamma2=gamma2_loc)
 
 ! Further revise MAXHIST_LOC according to MAXMEMORY, and allocate memory for the history.
 ! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
@@ -321,35 +326,9 @@ call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg
 call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_loc)
 
 !-------------------- Call NEWUOB, which performs the real calculations. --------------------------!
-!call newuob(calfun, iprint_loc, maxfun_loc, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, &
-!    & gamma2_loc, rhobeg_loc, rhoend_loc, x, nf_loc, f, fhist_loc, xhist_loc, info_loc)
+call newuob(calfun, iprint_loc, maxfun_loc, npt_loc, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, &
+    & gamma2_loc, rhobeg_loc, rhoend_loc, x, nf_loc, f, fhist_loc, xhist_loc, info_loc)
 !--------------------------------------------------------------------------------------------------!
-
-
-!--------------------------------------------------------------------------------------------------!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Working space (to be removed)
-call safealloc(w, int(n**4 + 8 * n**3 + 23 * n**2 + 42 * n + max(2 * n**2 + 4, 18 * n) / 4, IK))
-npt = (n * n + 3 * n + 2) / 2
-ixb = 1
-ixo = ixb + n
-ixn = ixo + n
-ixp = ixn + n
-ipq = ixp + n * npt
-ipl = ipq + npt - 1
-ih = ipl + (npt - 1) * npt
-ig = ih + n * n
-id = ig + n
-ivl = ih
-iw = id + n
-call uobyqb(calfun, n, x, rhobeg_loc, rhoend_loc, iprint_loc, maxfun_loc, npt, w(ixb), w(ixo), &
-     &  w(ixn), w(ixp), w(ipq), w(ipl), w(ih), w(ig), w(id), w(ivl), w(iw), f, &
-     &  info_loc, ftarget_loc, &
-     &  nf_loc, xhist_loc, size(xhist_loc, 2, kind=IK), fhist_loc, size(fhist_loc, kind=IK))
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!--------------------------------------------------------------------------------------------------!
-
-
 
 ! Write the outputs.
 
@@ -415,7 +394,7 @@ if (DEBUGGING) then
     end if
 end if
 
-end subroutine uobyqa
+end subroutine newuoa
 
 
-end module uobyqa_mod
+end module newuoa_mod

@@ -425,7 +425,12 @@ else % The problem turns out 'normal' during prepdfo
     % however, public errors can occur due to, e.g., evalobj; error handling needed.
     try
         [x, fx, constrviolation, constr, exitflag, nf, xhist, fhist, chist, conhist] = ...
-            fsolver(funcon, x0, f_x0, constr_x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, ctol, cweight, maxfun, iprint, maxhist, double(output_xhist), double(output_nlchist), maxfilt);
+            fsolver(funcon, x0, f_x0, constr_x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ...
+            ftarget, ctol, cweight, maxfun, iprint, maxhist, double(output_xhist), ...
+            double(output_nlchist), maxfilt);
+        % Fortran MEX does not provide an API for reading Boolean variables. So we convert 
+        % output_xhist and output_nlchist to doubles (0 or 1) before passing them to the MEX gateway.
+        % In C MEX, however, we have mxGetLogicals.
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
             error(exception.identifier, '%s\n(error generated in %s, line %d)', exception.message, exception.stack(1).file, exception.stack(1).line);
@@ -433,6 +438,7 @@ else % The problem turns out 'normal' during prepdfo
             rethrow(exception);
         end
     end
+
     % Record the results of the solver in OUTPUT
     output.x = x;
     output.fx = fx;
