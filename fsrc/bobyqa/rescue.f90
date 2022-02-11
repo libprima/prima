@@ -6,7 +6,7 @@ subroutine rescue(calfun, n, npt, xl, xu, iprint, maxfun, xbase, xpt, &
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm, maximum
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 implicit real(RP) (a - h, o - z)

@@ -323,15 +323,9 @@ else % The problem turns out 'normal' during prepdfo
         fsolver = @fbobyqan;
     end
     try
-        % The mexified Fortran function is a private function generating only private errors;
-        % however, public errors can occur due to, e.g., evalobj; error handling needed
-        if options.classical
-            [x, fx, exitflag, nf, fhist] = fsolver(fun, x0, lb, ub, rhobeg, rhoend, maxfun, npt, ftarget);
-        else
-            [x, fx, exitflag, nf, xhist, fhist] = ...
-                fsolver(fun, x0, lb, ub, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, ...
-                maxfun, npt, iprint, maxhist, double(output_xhist));
-        end
+        [x, fx, exitflag, nf, xhist, fhist] = ...
+            fsolver(fun, x0, lb, ub, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, ...
+            maxfun, npt, iprint, maxhist, double(output_xhist));
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
             error(exception.identifier, '%s\n(error generated in %s, line %d)', exception.message, exception.stack(1).file, exception.stack(1).line);
