@@ -10,7 +10,7 @@
 !
 ! Started in March 2020
 !
-! Last Modified: Wednesday, February 09, 2022 PM04:18:02
+! Last Modified: Friday, February 11, 2022 PM03:52:45
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -100,7 +100,7 @@ call fmxReadMPtr(pinput(18), output_xhist)
 call fmxReadMPtr(pinput(19), maxfilt)
 
 ! Call the Fortran code
-! There are different cases because XHIST/CONHIST may or may not be passed to the Fortran code.
+! There are different cases because XHIST may or may not be passed to the Fortran code.
 if (output_xhist) then
     call lincoa(calfun, x, f, cstrv, A, b, nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, npt, &
         & iprint, eta1, eta2, gamma1, gamma2, xhist=xhist, fhist=fhist, chist=chist, maxhist=maxhist, &

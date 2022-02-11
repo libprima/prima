@@ -330,7 +330,7 @@ else % The problem turns out 'normal' during prepdfo
         else
             [x, fx, exitflag, nf, xhist, fhist] = ...
                 fsolver(fun, x0, lb, ub, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, ...
-                maxfun, npt, iprint, maxhist, output_xhist)
+                maxfun, npt, iprint, maxhist, double(output_xhist));
         end
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
@@ -350,7 +350,7 @@ else % The problem turns out 'normal' during prepdfo
     output.fhist = fhist;
     % BOBYQA is a feasible method. All iterates respect the bound constraints.
     output.constrviolation = 0;
-    output.chist = zeros(1, maxhist);
+    output.chist = zeros(1, min(nf, maxhist));
 end
 
 % Postprocess the result

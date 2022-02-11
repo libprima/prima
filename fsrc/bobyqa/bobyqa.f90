@@ -23,7 +23,7 @@ module bobyqa_mod
 !
 ! Started: February 2022.
 !
-! Last Modified: Friday, February 11, 2022 AM09:53:16
+! Last Modified: Friday, February 11, 2022 PM04:34:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -299,9 +299,9 @@ else
 end if
 
 if (present(honour_x0)) then
-    honour_x0_loc = .false.
-else
     honour_x0_loc = honour_x0
+else
+    honour_x0_loc = .false.
 end if
 
 ! Preprocess the inputs in case some of them are invalid. It does nothing if all inputs are valid.

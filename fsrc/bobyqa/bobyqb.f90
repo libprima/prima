@@ -348,11 +348,16 @@ do j = 1, nptm
         end if
     end do
 end do
+
+!------------------------------------------------------------------------------------------------!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-call rescue(n, npt, xl, xu, iprint, maxfun, xbase, xpt, fval, &
+call rescue(calfun, n, npt, xl, xu, iprint, maxfun, xbase, xpt, fval, &
 & xopt, gopt, hq, pq, bmat, zmat, ndim, sl, su, nf, delta, kopt, &
-& vlag, w, w(n + np), w(ndim + np), f, ftarget)
+& vlag, w, w(n + np), w(ndim + np), f, ftarget, &
+& xhist, maxxhist, fhist, maxfhist)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!------------------------------------------------------------------------------------------------!
+
 !
 !     XOPT is updated now in case the branch below to label 720 is taken.
 !     Any updating of GOPT occurs after the branch below to label 20, which

@@ -92,7 +92,7 @@ call fmxReadMPtr(pinput(15), maxhist)
 call fmxReadMPtr(pinput(16), output_xhist)
 
 ! Call the Fortran code
-! There are different cases because XHIST/CONHIST may or may not be passed to the Fortran code.
+! There are different cases because XHIST may or may not be passed to the Fortran code.
 if (output_xhist) then
     call bobyqa(calfun, x, f, lb, ub, nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, eta1, eta2, &
         & gamma1, gamma2, xhist=xhist, fhist=fhist, maxhist=maxhist, info=info)

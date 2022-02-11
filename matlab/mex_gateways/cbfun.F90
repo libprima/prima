@@ -144,9 +144,11 @@ end do
 
 ! Copy CONSTR_LOC to CONSTR.
 ! Before copying, check that the size of CONSTR_LOC is correct (even if not debugging).
+!--------------------------------------------------------------------------------------------------!
 ! N.B.: We allow SIZE(CONSTR_LOC) == 1 < SIZE(CONSTR). In this case, we set CONSTR = CONSTR_LOC(1).
 ! The motivation is to allow the MATLAB function to return a scalar when the evaluation fails, where
 ! the scalar indicates the failure (e.g., NaN, Inf, or a value with an extremely large magnitude).
+!--------------------------------------------------------------------------------------------------!
 call validate(size(constr_loc) == size(constr) .or. (size(constr_loc) == 1 .and. size(constr) > 1), &
     & 'SIZE(CONSTR_LOC) == SIZE(CONSTR), or SIZE(CONSTR_LOC) == 1 and SIZE(CONSTR) > 0', srname)
 if (size(constr_loc) == size(constr)) then
