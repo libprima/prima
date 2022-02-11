@@ -78,11 +78,7 @@ for COMP in $COMP_LIST; do
     if [[ $TEST_ALL == 'Y' ]] ; then
         make  "$COMP"test."$SOLVER"
     else
-        if [[ $COMP == 'f' || $COMP == 'v' || $COMP == 'd' || $COMP == 'x' ]] ; then
-            TESTS="i2_r4_d1 i8_r4_d0"
-        else
-            TESTS="i2_r16_d1 i8_r4_d0"
-        fi
+        TESTS="i4_r8_d1"
         for TEST in $TESTS ; do
             INFO="$(make "$COMP"test_"$TEST"_tst."$SOLVER" \
                 | grep -i "starts\|warning\|error\|info\|abort\|invalid\|violation\|fault\|illegal\|fail\|questionable\|remark\|attention\|Could\ not\ resolve" \

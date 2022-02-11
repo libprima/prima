@@ -206,6 +206,9 @@ do nf = 1, npt
         exit
     end if
 end do
+!----------------------------------------------------------!
+nf = min(nf, npt)  ! At exit of the loop, nf = npt + 1
+!----------------------------------------------------------!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     Set PQ for the first quadratic model.
@@ -255,5 +258,7 @@ do j = 1, m
     if (temp >= rhobeg) temp = -temp
     rescon(j) = temp
 end do
+
+
 return
 end

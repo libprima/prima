@@ -495,10 +495,19 @@ if ~isempty(Aeq)
 end
 constr = [-cineq; ceq; -ceq];
 if ~isempty(nonlcon)
-    [nlcineq, nlceq] = nonlcon(x); % Nonlinear constraints: nlcineq <= 0, nlceq = 0
-    m_nlcineq = length(nlcineq);
-    m_nlceq = length(nlceq);
-    constr = [constr; -nlcineq; nlceq; -nlceq];
+    [nlcineq, nlceq, succ] = nonlcon(x); % Nonlinear constraints: nlcineq <= 0, nlceq = 0
+    if succ
+        m_nlcineq = length(nlcineq);
+        m_nlceq = length(nlceq);
+        constr = [constr; -nlcineq; nlceq; -nlceq];
+    else
+        % Evaluation of nonlcon fails.
+        % In this case, we pass a SCALAR NaN to the MEX gateway, which will handle it properly.
+        % Ideally, we should return an NaN vector with proper size, but the size is unknown here.
+        m_nlcineq = NaN;
+        m_nlceq = NaN;
+        constr = NaN;
+    end
 else
     m_nlcineq = 0;
     m_nlceq = 0;

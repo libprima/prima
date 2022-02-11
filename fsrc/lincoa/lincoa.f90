@@ -3,10 +3,10 @@ module lincoa_mod
 ! LINCOA_MOD is a module providing a modernized and improved Fortran implementation of Powell's
 ! LINCOA algorithm. The algorithm approximately solves
 !
-!   min F(X) subject to A'*X <= b,
+!   min F(X) subject to A'*X <= B,
 !
 ! where X is a vector of variables that has N components, F is a real-valued objective function,
-! A is an N-by-M matrix, and b is an M-dimensional real vector. It tackles the problem by a trust
+! A is an N-by-M matrix, and B is an M-dimensional real vector. It tackles the problem by a trust
 ! region method that forms quadratic models by interpolation. Usually there is much freedom in each
 ! new model after satisfying the interpolation conditions, which is taken up by minimizing the
 ! Frobenius norm of the change to the second derivative matrix of the model. One new function value
@@ -25,7 +25,7 @@ module lincoa_mod
 !
 ! Started: February 2022.
 !
-! Last Modified: Thursday, February 10, 2022 PM01:49:49
+! Last Modified: Friday, February 11, 2022 AM12:19:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -103,6 +103,7 @@ subroutine lincoa(calfun, x, f, &
 !           value.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !--------------------------------------------------------------------------------------------------!
+
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : DEBUGGING
 use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT, IPRINT_DFT
@@ -350,7 +351,6 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 ! Working space (to be removed)
 call safealloc(w, m * (2_IK + n) + npt_loc * (4_IK + n + npt_loc) + n * (9_IK + 3_IK * n) + &
     & max(m + 3_IK * n, 2_IK * m + n, 2_IK * npt_loc))

@@ -279,6 +279,7 @@ if strcmpi(options.solver, 'bobyqan') && ~probinfo.nofreex && ~probinfo.infeasib
 % to raise a warning when such a revision occurs. After this, the
 % Fortran code will not revise x0 again. If the options.honour_x0 = true,
 % then we keep x0 unchanged and revise rhobeg if necessary.
+% N.B.: If x0 violates the bounds, then it is always revised by `project` to respect the bounds.
     [x0, options, warnings] = pre_rhobeg_x0(invoker, x0, lb, ub, probinfo.user_options_fields, options, warnings);
     probinfo.refined_data.x0 = x0;  % x0 may have been revised.
 end
@@ -466,21 +467,7 @@ if ~exist('OCTAVE_VERSION', 'builtin')
         '%s: FUN has no output; it should return the objective function value.', invoker);
     end
 end
-fun = @(x) evalobj(invoker, fun, x);
-return
-
-function f = evalobj(invoker, fun, x)
-f = fun(x);
-if ~isnumeric(f) || numel(f) ~= 1
-    % Public/normal error
-    error(sprintf('%s:ObjectiveNotScalar', invoker), '%s: objective function should return a scalar value.', invoker);
-end
-f = double(real(f)); % Some functions like 'asin' can return complex values even when it is not intended
-% Use extreme barrier to cope with 'hidden constraints'
-hugefun = gethuge('fun');
-if (f ~= f) || (f > hugefun)
-    f = hugefun;
-end
+fun = @(x) evalobj(invoker, fun, x);  % See evalobj.m
 return
 
 %%%%%%%%%%%%%%%%%%%%%%%% Function for x0 preprocessing %%%%%%%%%%%%%%%%%
@@ -749,30 +736,8 @@ else
         freex = ~fixedx; % A vector of true/false indicating whether the variable is free or not
         nonlcon = @(freex_value) nonlcon(fullx(freex_value, fixedx_value, freex, fixedx));
     end
-    nonlcon = @(x) evalcon(invoker, nonlcon, x);
+    nonlcon = @(x) evalcon(invoker, nonlcon, x);  % See evalcon.m
 end
-return
-
-function [cineq, ceq] = evalcon(invoker, nonlcon, x)
-[cineq, ceq] = nonlcon(x);
-if ~(isempty(cineq) || isnumeric(cineq)) || ~(isempty(ceq) || isnumeric(ceq))
-    % Public/normal error
-    error(sprintf('%s:ConstrNotNumeric', invoker), '%s: constraint function should return two numeric vectors.', invoker);
-end
-cineq = double(real(cineq(:))); % Some functions like 'asin' can return complex values even when it is not intended
-ceq = double(real(ceq(:)));
-% Use extreme barrier to cope with 'hidden constraints'
-hugecon = gethuge('con');
-cineq(cineq ~= cineq) = hugecon;
-cineq(cineq > hugecon) = hugecon;
-ceq(ceq ~= ceq) = hugecon;
-ceq(ceq > hugecon) = hugecon;
-ceq(ceq < -hugecon) = -hugecon;
-
-% This part is NOT extreme barrier. We replace extremely negative values of
-% cineq (which leads to no constraint violation) by -hugecon. Otherwise,
-% NaN or Inf may occur in the interpolation models.
-cineq(cineq < -hugecon) = -hugecon;
 return
 
 %%%%%%%%%%%%%%%%% Function fullx used when reducing the problem %%%%%%%%

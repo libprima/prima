@@ -307,16 +307,30 @@ else % The problem turns out 'normal' during prepdfo
     maxfun = options.maxfun;
     rhobeg = options.rhobeg;
     rhoend = options.rhoend;
+    eta1 = options.eta1;
+    eta2 = options.eta2;
+    gamma1 = options.gamma1;
+    gamma2 = options.gamma2;
     ftarget = options.ftarget;
+    maxhist = options.maxhist;
+    output_xhist = options.output_xhist;
+    iprint = options.iprint;
 
     % Call the Fortran code
+    if options.classical
+        fsolver = @fbobyqan_classical;
+    else
+        fsolver = @fbobyqan;
+    end
     try
         % The mexified Fortran function is a private function generating only private errors;
         % however, public errors can occur due to, e.g., evalobj; error handling needed
         if options.classical
-            [x, fx, exitflag, nf, fhist, constrviolation, chist] = fbobyqan_classical(fun, x0, lb, ub, rhobeg, rhoend, maxfun, npt, ftarget);
+            [x, fx, exitflag, nf, fhist] = fsolver(fun, x0, lb, ub, rhobeg, rhoend, maxfun, npt, ftarget);
         else
-            [x, fx, exitflag, nf, fhist, constrviolation, chist] = fbobyqan(fun, x0, lb, ub, rhobeg, rhoend, maxfun, npt, ftarget);
+            [x, fx, exitflag, nf, xhist, fhist] = ...
+                fsolver(fun, x0, lb, ub, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, ...
+                maxfun, npt, iprint, maxhist, output_xhist)
         end
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
@@ -330,9 +344,13 @@ else % The problem turns out 'normal' during prepdfo
     output.fx = fx;
     output.exitflag = exitflag;
     output.funcCount = nf;
+    if output_xhist
+        output.xhist = xhist;
+    end
     output.fhist = fhist;
-    output.constrviolation = constrviolation;
-    output.chist = chist;
+    % BOBYQA is a feasible method. All iterates respect the bound constraints.
+    output.constrviolation = 0;
+    output.chist = zeros(1, maxhist);
 end
 
 % Postprocess the result
