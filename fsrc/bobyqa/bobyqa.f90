@@ -23,7 +23,7 @@ module bobyqa_mod
 !
 ! Started: February 2022.
 !
-! Last Modified: Friday, February 11, 2022 PM04:34:41
+! Last Modified: Friday, February 11, 2022 PM06:53:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -83,7 +83,7 @@ subroutine bobyqa(calfun, x, f, &
 !       6: one of the difference XU(I)-XL(I) is less than 2*RHOBEG.
 !       7: rounding errors are becoming damaging.
 !       8: rounding errors prevent reasonable changes to X.
-!       9: the denominator of the updating formule is ZERO.
+!       9: the denominator of the updating formula is ZERO.
 !       10: N should not be less than 2.
 !       11: MAXFUN is less than NPT+1.
 !       12: the gradient of constraint is ZERO.

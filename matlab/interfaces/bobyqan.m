@@ -326,6 +326,9 @@ else % The problem turns out 'normal' during prepdfo
         [x, fx, exitflag, nf, xhist, fhist] = ...
             fsolver(fun, x0, lb, ub, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, ...
             maxfun, npt, iprint, maxhist, double(output_xhist));
+        % Fortran MEX does not provide an API for reading Boolean variables. So we convert
+        % output_xhist to a double (0 or 1) before passing it to the MEX gateway.
+        % In C MEX, however, we have mxGetLogicals.
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
             error(exception.identifier, '%s\n(error generated in %s, line %d)', exception.message, exception.stack(1).file, exception.stack(1).line);
@@ -333,6 +336,7 @@ else % The problem turns out 'normal' during prepdfo
             rethrow(exception);
         end
     end
+
     % Record the results of the solver in OUTPUT
     output.x = x;
     output.fx = fx;
