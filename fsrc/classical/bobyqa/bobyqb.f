@@ -1,17 +1,50 @@
-      SUBROUTINE BOBYQB (N,NPT,X,XL,XU,RHOBEG,RHOEND,IPRINT,
-     1  MAXFUN,XBASE,XPT,FVAL,XOPT,GOPT,HQ,PQ,BMAT,ZMAT,NDIM,
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C     2  SL,SU,XNEW,XALT,D,VLAG,W)
-     2  SL,SU,XNEW,XALT,D,VLAG,W,F,INFO,FTARGET)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C      IMPLICIT REAL*8 (A-H,O-Z)
-      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
-      IMPLICIT INTEGER (I-N)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DIMENSION X(*),XL(*),XU(*),XBASE(*),XPT(NPT,*),FVAL(*),
-     1  XOPT(*),GOPT(*),HQ(*),PQ(*),BMAT(NDIM,*),ZMAT(NPT,*),
-     2  SL(*),SU(*),XNEW(*),XALT(*),D(*),VLAG(*),W(*)
+!----------------------------------------------------------------------------!
+!      SUBROUTINE BOBYQB (N,NPT,X,XL,XU,RHOBEG,RHOEND,IPRINT,
+!     1  MAXFUN,XBASE,XPT,FVAL,XOPT,GOPT,HQ,PQ,BMAT,ZMAT,NDIM,
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!C     2  SL,SU,XNEW,XALT,D,VLAG,W)
+!     2  SL,SU,XNEW,XALT,D,VLAG,W,F,INFO,FTARGET)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!C      IMPLICIT REAL*8 (A-H,O-Z)
+!      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
+!      IMPLICIT INTEGER (I-N)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!      DIMENSION X(*),XL(*),XU(*),XBASE(*),XPT(NPT,*),FVAL(*),
+!     1  XOPT(*),GOPT(*),HQ(*),PQ(*),BMAT(NDIM,*),ZMAT(NPT,*),
+!     2  SL(*),SU(*),XNEW(*),XALT(*),D(*),VLAG(*),W(*)
+!----------------------------------------------------------------------------!
+
+      subroutine bobyqb(calfun, n, npt, x, xl, xu, rhobeg,rhoend,iprint,
+     & maxfun, xbase, xpt, fval, xopt, gopt, hq, pq, bmat, zmat, ndim,
+     & sl, su, xnew, xalt, d, vlag, w, f, info, ftarget,
+     & nf, xhist, maxxhist, fhist, maxfhist)
+
+      use, non_intrinsic :: consts_mod, only : RP, IK
+      use, non_intrinsic :: evaluate_mod, only : evaluate
+      use, non_intrinsic :: history_mod, only : savehist, rangehist
+      use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
+      use, non_intrinsic :: pintrf_mod, only : OBJ
+
+      implicit real(RP) (a - h, o - z)
+      implicit integer(IK) (i - n)
+
+      procedure(OBJ) :: calfun
+      integer(IK), intent(in) :: maxxhist
+      integer(IK), intent(in) :: maxfhist
+      integer(IK), intent(in) :: npt
+      integer(IK), intent(out) :: nf
+
+      real(RP), intent(in) :: xl(n)
+      real(RP), intent(in) :: xu(n)
+      real(RP), intent(inout) :: x(n)
+      real(RP), intent(out) :: xhist(n, maxxhist)
+      real(RP), intent(out) :: fhist(maxfhist)
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      dimension xbase(n), xpt(npt, n), fval(npt),
+     & xopt(n), gopt(n), hq(n * (n + 1) / 2), pq(npt), bmat(ndim, *),
+     & zmat(npt, *), sl(*), su(*), xnew(n), xalt(n), d(n), vlag(*), w(*)
 C
 C     The arguments N, NPT, X, XL, XU, RHOBEG, RHOEND, IPRINT and MAXFUN
 C       are identical to the corresponding arguments in SUBROUTINE BOBYQA.
@@ -64,11 +97,14 @@ C     index of the interpolation point at the trust region centre. Then the
 C     initial XOPT is set too. The branch to label 720 occurs if MAXFUN is
 C     less than NPT. GOPT will be updated if KOPT is different from KBASE.
 C
-      CALL PRELIM (N,NPT,X,XL,XU,RHOBEG,IPRINT,MAXFUN,XBASE,XPT,
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C     1  FVAL,GOPT,HQ,PQ,BMAT,ZMAT,NDIM,SL,SU,NF,KOPT)
-     1  FVAL,GOPT,HQ,PQ,BMAT,ZMAT,NDIM,SL,SU,NF,KOPT,F,FTARGET)
+!      CALL PRELIM (N,NPT,X,XL,XU,RHOBEG,IPRINT,MAXFUN,XBASE,XPT,
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!C     1  FVAL,GOPT,HQ,PQ,BMAT,ZMAT,NDIM,SL,SU,NF,KOPT)
+!     1  FVAL,GOPT,HQ,PQ,BMAT,ZMAT,NDIM,SL,SU,NF,KOPT,F,FTARGET)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      call prelim(calfun, n, npt, x, xl, xu, rhobeg, iprint, maxfun,
+     & xbase, xpt, fval, gopt, hq, pq, bmat, zmat, ndim, sl, su, nf,
+     & kopt, f, ftarget, xhist, maxxhist, fhist, maxfhist)
 
       XOPTSQ=ZERO
       DO I=1,N
@@ -269,11 +305,21 @@ C     useful safeguard, but is not invoked in most applications of BOBYQA.
 C
   190 NFSAV=NF
       KBASE=KOPT
-      CALL RESCUE (N,NPT,XL,XU,IPRINT,MAXFUN,XBASE,XPT,FVAL,
-     1  XOPT,GOPT,HQ,PQ,BMAT,ZMAT,NDIM,SL,SU,NF,DELTA,KOPT,
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C     2  VLAG,W,W(N+NP),W(NDIM+NP))
-     2  VLAG,W,W(N+NP),W(NDIM+NP),F,FTARGET)
+!      CALL RESCUE (N,NPT,XL,XU,IPRINT,MAXFUN,XBASE,XPT,FVAL,
+!     1  XOPT,GOPT,HQ,PQ,BMAT,ZMAT,NDIM,SL,SU,NF,DELTA,KOPT,
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!C     2  VLAG,W,W(N+NP),W(NDIM+NP))
+!     2  VLAG,W,W(N+NP),W(NDIM+NP),F,FTARGET)
+
+!------------------------------------------------------------------------------------------------!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      call rescue(calfun, n, npt, xl, xu, iprint, maxfun,xbase,xpt,fval,
+     & xopt, gopt, hq, pq, bmat, zmat, ndim, sl, su, nf, delta, kopt,
+     & vlag, w, w(n + np), w(ndim + np), f, ftarget,
+     & xhist, maxxhist, fhist, maxfhist)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!------------------------------------------------------------------------------------------------!
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
 C     XOPT is updated now in case the branch below to label 720 is taken.
@@ -415,7 +461,7 @@ C
           BIGLSQ=ZERO
           KNEW=0
           DO K=1,NPT
-              IF (K == KOPT) CYCLE 
+              IF (K == KOPT) CYCLE
               HDIAG=ZERO
               DO JJ=1,NPTM
                   HDIAG=HDIAG+ZMAT(K,JJ)**2
@@ -465,7 +511,16 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
           GOTO 720
       END IF
       NF=NF+1
-      CALL CALFUN (N,X,F)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!------------------------------------------------------------------------!
+      !CALL CALFUN (N,X,F)
+      call evaluate(calfun, x, f)
+      call savehist(nf, x, xhist, f, fhist)
+!------------------------------------------------------------------------!
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C     By Tom (on 04-06-2019):
@@ -802,5 +857,8 @@ C      IF (IPRINT .GE. 1) THEN
      1      'Number of function values =',I6)
           PRINT 710, F,(X(I),I=1,N)
       END IF
+!----------------------------------------------------------------------!
+      call rangehist(nf, xhist, fhist)
+!----------------------------------------------------------------------!
       RETURN
       END

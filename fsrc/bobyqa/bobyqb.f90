@@ -6,7 +6,7 @@ subroutine bobyqb(calfun, n, npt, x, xl, xu, rhobeg, rhoend, iprint, &
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm, maximum
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 implicit real(RP) (a - h, o - z)

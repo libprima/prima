@@ -1,15 +1,47 @@
-      SUBROUTINE PRELIM (N,NPT,X,XL,XU,RHOBEG,IPRINT,MAXFUN,XBASE,
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C     1  XPT,FVAL,GOPT,HQ,PQ,BMAT,ZMAT,NDIM,SL,SU,NF,KOPT)
-     1  XPT,FVAL,GOPT,HQ,PQ,BMAT,ZMAT,NDIM,SL,SU,NF,KOPT,F,FTARGET)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C      IMPLICIT REAL*8 (A-H,O-Z)
-      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
-      IMPLICIT INTEGER (I-N)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DIMENSION X(*),XL(*),XU(*),XBASE(*),XPT(NPT,*),FVAL(*),GOPT(*),
-     1  HQ(*),PQ(*),BMAT(NDIM,*),ZMAT(NPT,*),SL(*),SU(*)
+!----------------------------------------------------------------------!
+!      SUBROUTINE PRELIM (N,NPT,X,XL,XU,RHOBEG,IPRINT,MAXFUN,XBASE,
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!C     1  XPT,FVAL,GOPT,HQ,PQ,BMAT,ZMAT,NDIM,SL,SU,NF,KOPT)
+!     1  XPT,FVAL,GOPT,HQ,PQ,BMAT,ZMAT,NDIM,SL,SU,NF,KOPT,F,FTARGET)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!C      IMPLICIT REAL*8 (A-H,O-Z)
+!      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
+!      IMPLICIT INTEGER (I-N)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!      DIMENSION X(*),XL(*),XU(*),XBASE(*),XPT(NPT,*),FVAL(*),GOPT(*),
+!     1  HQ(*),PQ(*),BMAT(NDIM,*),ZMAT(NPT,*),SL(*),SU(*)
+!----------------------------------------------------------------------!
+
+      subroutine prelim(calfun, n, npt, x, xl, xu, rhobeg, iprint,
+     & maxfun, xbase, xpt, fval, gopt, hq, pq, bmat, zmat, ndim, sl, su,
+     & nf, kopt, f, ftarget,
+     & xhist, maxxhist, fhist, maxfhist)
+
+      use, non_intrinsic :: consts_mod, only : RP, IK
+      use, non_intrinsic :: evaluate_mod, only : evaluate
+      use, non_intrinsic :: history_mod, only : savehist
+      use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
+      use, non_intrinsic :: pintrf_mod, only : OBJ
+
+      implicit real(RP) (a - h, o - z)
+      implicit integer(IK) (i - n)
+
+      procedure(OBJ) :: calfun
+      integer(IK), intent(in) :: maxxhist
+      integer(IK), intent(in) :: maxfhist
+      integer(IK), intent(in) :: npt
+      integer(IK), intent(out) :: nf
+      real(RP), intent(in) :: xl(n)
+      real(RP), intent(in) :: xu(n)
+      real(RP), intent(inout) :: x(n)
+      real(RP), intent(out) :: xhist(n, maxxhist)
+      real(RP), intent(out) :: fhist(maxfhist)
+
+      ! Local variables
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      dimension xbase(n), xpt(npt, n), fval(npt), gopt(n),
+     & hq(n * (n + 1) / 2), pq(npt),bmat(ndim,*),zmat(npt,*),sl(*),su(*)
 C
 C     The arguments N, NPT, X, XL, XU, RHOBEG, IPRINT and MAXFUN are the
 C       same as the corresponding arguments in SUBROUTINE BOBYQA.
@@ -100,7 +132,13 @@ C
           IF (XPT(NF,J) == SL(J)) X(J)=XL(J)
           IF (XPT(NF,J) == SU(J)) X(J)=XU(J)
       END DO
-      CALL CALFUN (N,X,F)
+
+!-------------------------------------------------------------------!
+      !CALL CALFUN (N,X,F)
+       call evaluate(calfun, x, f)
+       call savehist(nf, x, xhist, f, fhist)
+!-------------------------------------------------------------------!
+
       IF (IPRINT == 3) THEN
           PRINT 70, NF,F,(X(I),I=1,N)
    70      FORMAT (/4X,'Function number',I6,'    F =',1PD18.10,

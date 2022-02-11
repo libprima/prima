@@ -1,17 +1,51 @@
-      SUBROUTINE RESCUE (N,NPT,XL,XU,IPRINT,MAXFUN,XBASE,XPT,
-     1  FVAL,XOPT,GOPT,HQ,PQ,BMAT,ZMAT,NDIM,SL,SU,NF,DELTA,
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C     2  KOPT,VLAG,PTSAUX,PTSID,W)
-     2  KOPT,VLAG,PTSAUX,PTSID,W,F,FTARGET)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C      IMPLICIT REAL*8 (A-H,O-Z)
-      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
-      IMPLICIT INTEGER (I-N)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DIMENSION XL(*),XU(*),XBASE(*),XPT(NPT,*),FVAL(*),XOPT(*),
-     1  GOPT(*),HQ(*),PQ(*),BMAT(NDIM,*),ZMAT(NPT,*),SL(*),SU(*),
-     2  VLAG(*),PTSAUX(2,*),PTSID(*),W(*)
+!----------------------------------------------------------------------!
+!      SUBROUTINE RESCUE (N,NPT,XL,XU,IPRINT,MAXFUN,XBASE,XPT,
+!     1  FVAL,XOPT,GOPT,HQ,PQ,BMAT,ZMAT,NDIM,SL,SU,NF,DELTA,
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!C     2  KOPT,VLAG,PTSAUX,PTSID,W)
+!     2  KOPT,VLAG,PTSAUX,PTSID,W,F,FTARGET)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!C      IMPLICIT REAL*8 (A-H,O-Z)
+!      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
+!      IMPLICIT INTEGER (I-N)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!      DIMENSION XL(*),XU(*),XBASE(*),XPT(NPT,*),FVAL(*),XOPT(*),
+!     1  GOPT(*),HQ(*),PQ(*),BMAT(NDIM,*),ZMAT(NPT,*),SL(*),SU(*),
+!     2  VLAG(*),PTSAUX(2,*),PTSID(*),W(*)
+!----------------------------------------------------------------------!
+
+      subroutine rescue(calfun, n, npt, xl, xu, iprint,maxfun,xbase,xpt,
+     &  fval, xopt, gopt, hq, pq, bmat, zmat, ndim, sl, su, nf, delta,
+     &  kopt, vlag, ptsaux, ptsid, w, f, ftarget,
+     & xhist, maxxhist, fhist, maxfhist)
+
+      use, non_intrinsic :: consts_mod, only : RP, IK
+      use, non_intrinsic :: evaluate_mod, only : evaluate
+      use, non_intrinsic :: history_mod, only : savehist
+      use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
+      use, non_intrinsic :: pintrf_mod, only : OBJ
+
+      implicit real(RP) (a - h, o - z)
+      implicit integer(IK) (i - n)
+
+      procedure(OBJ) :: calfun
+      integer(IK), intent(in) :: maxxhist
+      integer(IK), intent(in) :: maxfhist
+      integer(IK), intent(in) :: npt
+      integer(IK), intent(inout) :: nf
+      real(RP), intent(in) :: xl(n)
+      real(RP), intent(in) :: xu(n)
+      real(RP), intent(out) :: xhist(n, maxxhist)
+      real(RP), intent(out) :: fhist(maxfhist)
+
+      ! Local variables
+      real(RP) :: x(n)
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+      dimension xbase(*), xpt(npt, *), fval(*), xopt(*),
+     & gopt(*), hq(*), pq(*), bmat(ndim, *), zmat(npt, *), sl(*), su(*),
+     & vlag(*), ptsaux(2, *), ptsid(*), w(*)
 C
 C     The arguments N, NPT, XL, XU, IPRINT, MAXFUN, XBASE, XPT, FVAL, XOPT,
 C       GOPT, HQ, PQ, BMAT, ZMAT, NDIM, SL and SU have the same meanings as
@@ -42,7 +76,7 @@ C       and q are both positive, the step from XBASE+XOPT to the new K-th
 C       interpolation point is PTSAUX(1,p)*e_p + PTSAUX(1,q)*e_q. Otherwise
 C       the step is PTSAUX(1,p)*e_p or PTSAUX(2,q)*e_q in the cases q=0 or
 C       p=0, respectively.
-C     The first NDIM+NPT elements of the array W are used for working space. 
+C     The first NDIM+NPT elements of the array W are used for working space.
 C     The final elements of BMAT and ZMAT are set in a well-conditioned way
 C       to the values that are appropriate for the new interpolation points.
 C     The elements of GOPT, HQ and PQ are also revised to the values that are
@@ -324,7 +358,7 @@ C     by putting the new point in XPT(KPT,.) and by setting PQ(KPT) to zero,
 C     except that a RETURN occurs if MAXFUN prohibits another value of F.
 C
   260 DO KPT=1,NPT
-          IF (PTSID(KPT) == ZERO) CYCLE 
+          IF (PTSID(KPT) == ZERO) CYCLE
           IF (NF >= MAXFUN) THEN
               NF=-1
               GOTO 350
@@ -388,7 +422,14 @@ C
               IF (XPT(KPT,I) == SU(I)) W(I)=XU(I)
           END DO
           NF=NF+1
-          CALL CALFUN (N,W,F)
+
+!-------------------------------------------------------------------!
+          !CALL CALFUN (N,W,F)
+          x = w(1:n)
+          call evaluate(calfun, x, f)
+          call savehist(nf, x, xhist, f, fhist)
+!-------------------------------------------------------------------!
+
           IF (IPRINT == 3) THEN
               PRINT 300, NF,F,(W(I),I=1,N)
   300         FORMAT (/4X,'Function number',I6,'    F =',1PD18.10,

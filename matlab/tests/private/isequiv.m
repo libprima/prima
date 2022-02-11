@@ -353,7 +353,7 @@ if single_test
 end
 test_options.maxfilt = ceil(randn*500);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-ready_solvers = {'newuoa', 'cobyla', 'lincoa'};  % Solvers whose development is (almost) finished.
+ready_solvers = {'newuoa', 'cobyla', 'lincoa', 'bobyqa'};  % Solvers whose development is (almost) finished.
 test_ready_solvers = ~isempty(intersect(lower(solvers), ready_solvers));
 test_options.classical = (rand < 0.3) && test_ready_solvers;
 test_options.iprint = floor(3*rand) * double(test_ready_solvers);
