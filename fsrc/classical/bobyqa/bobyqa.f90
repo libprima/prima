@@ -20,20 +20,16 @@ subroutine bobyqa(calfun, x, f, &
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : DEBUGGING
-use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT, IPRINT_DFT
-use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, CWEIGHT_DFT, FTARGET_DFT
+use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, IPRINT_DFT
+use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS, HUGENUM, MSGLEN
-use, non_intrinsic :: debug_mod, only : assert, errstop, warning
-use, non_intrinsic :: evaluate_mod, only : evaluate, moderatex
+use, non_intrinsic :: debug_mod, only : assert, warning
+use, non_intrinsic :: evaluate_mod, only : moderatex
 use, non_intrinsic :: history_mod, only : prehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_neginf, is_posinf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : OBJ
-use, non_intrinsic :: selectx_mod, only : isbetter
 use, non_intrinsic :: preproc_mod, only : preproc
-
-! Solver-specific modules
-!use, non_intrinsic :: bobyqb_mod, only : bobyqb
 
 implicit none
 
@@ -77,7 +73,6 @@ integer(IK) :: n
 integer(IK) :: nf_loc
 integer(IK) :: npt_loc
 integer(IK) :: nhist
-logical :: honour_x0_loc
 real(RP) :: eta1_loc
 real(RP) :: eta2_loc
 real(RP) :: ftarget_loc
@@ -223,12 +218,6 @@ else
     maxhist_loc = maxval([maxfun_loc, n + 3_IK, MAXFUN_DIM_DFT * n])
 end if
 
-if (present(honour_x0)) then
-    honour_x0_loc = honour_x0
-else
-    honour_x0_loc = .false.
-end if
-
 ! Preprocess the inputs in case some of them are invalid. It does nothing if all inputs are valid.
 call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
     & npt=npt_loc, eta1=eta1_loc, eta2=eta2_loc, gamma1=gamma1_loc, gamma2=gamma2_loc)
@@ -326,7 +315,7 @@ end do
 call bobyqb(calfun, n, npt_loc, x, xl_loc, xu_loc, rhobeg_loc, rhoend_loc, iprint_loc, maxfun_loc, &
     & w(ixb), w(ixp), w(ifv), w(ixo), w(igo), w(ihq), w(ipq), w(ibmat), w(izmat), &
 & ndim, w(isl), w(isu), w(ixn), w(ixa), w(id), w(ivl), w(iw), f, info_loc, ftarget_loc, &
-& nf_loc, xhist_loc, size(xhist_loc, 2, kind=IK), fhist_loc, size(fhist_loc, kind=IK))
+& nf_loc, xhist_loc, int(size(xhist_loc, 2), kind=IK), fhist_loc, int(size(fhist_loc), kind=IK))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -377,22 +366,6 @@ deallocate (fhist_loc)
 if ((present(xhist) .or. present(fhist)) .and. maxhist_loc < nf_loc) then
     write (wmsg, ifmt) maxhist_loc
     call warning(solver, 'Only the history of the last '//trim(wmsg)//' iteration(s) is recoreded')
-end if
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(nf_loc <= maxfun_loc, 'NF <= MAXFUN', srname)
-    call assert(size(x) == n .and. .not. any(is_nan(x)), 'SIZE(X) == N, X does not contain NaN', srname)
-    nhist = min(nf_loc, maxhist_loc)
-    if (present(xhist)) then
-        call assert(size(xhist, 1) == n .and. size(xhist, 2) == nhist, 'SIZE(XHIST) == [N, NHIST]', srname)
-        call assert(.not. any(is_nan(xhist)), 'XHIST does not contain NaN', srname)
-    end if
-    if (present(fhist)) then
-        call assert(size(fhist) == nhist, 'SIZE(FHIST) == NHIST', srname)
-        call assert(.not. any(is_nan(fhist) .or. is_posinf(fhist)), 'FHIST does not contain NaN/+Inf', srname)
-        call assert(.not. any(fhist < f), 'F is the smallest in FHIST', srname)
-    end if
 end if
 
 end subroutine bobyqa

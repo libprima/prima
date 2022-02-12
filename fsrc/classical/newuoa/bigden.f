@@ -1,11 +1,5 @@
       SUBROUTINE BIGDEN (N,NPT,XOPT,XPT,BMAT,ZMAT,IDZ,NDIM,KOPT,
      1  KNEW,D,W,VLAG,BETA,S,WVEC,PROD)
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C      IMPLICIT REAL*8 (A-H,O-Z)
-!      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
-!      IMPLICIT INTEGER (I-N)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!----------------------------------------------------------------------!
 !----------------------------------------------------------------------!
       use, non_intrinsic :: consts_mod, only : RP, IK
       implicit real(RP) (A-H,O-Z)

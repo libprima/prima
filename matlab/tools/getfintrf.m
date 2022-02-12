@@ -13,14 +13,16 @@ cd(directory);
 directory = cd();  % Full path of the given directory, which is the current directory now.
 cd(origdir);
 
+% Copy `fintrf.h` to `directory`.
 fintrf = fullfile(directory, 'fintrf.h');
 copyfile(fullfile(matlabroot, 'extern', 'include', 'fintrf.h'), fintrf);
 fileattrib(fintrf, '+w')
 
+% Add time stamp to fintrf.
 time = datestr(datetime(), 'HH.MM.SS, yyyy-mm-dd');
 matv = [version, ', ', computer];
 S = fileread(fintrf);
-S = ['/* MATLAB version', matv, ' */', newline, '/* Retrived at ', time, ' */', newline, S];
+S = ['/* MATLAB version: ', matv, ' */', newline, '/* Retrieved at ', time, ' */', newline, S];
 fid = fopen(fintrf, 'w+');
 if fid == -1
     error('Cannot open file %s', fintrf);

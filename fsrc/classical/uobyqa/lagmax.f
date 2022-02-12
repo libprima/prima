@@ -1,8 +1,8 @@
       SUBROUTINE LAGMAX (N,G,H,RHO,D,V,VMAX)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C      IMPLICIT REAL*8 (A-H,O-Z)
-      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
-      IMPLICIT INTEGER (I-N)
+      use, non_intrinsic :: consts_mod, only : RP, IK
+      implicit real(RP) (a - h, o - z)
+      implicit integer(IK) (i - n)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DIMENSION G(*),H(N,*),D(*),V(*)
 C

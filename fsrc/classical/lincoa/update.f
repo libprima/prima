@@ -1,9 +1,9 @@
       SUBROUTINE UPDATE (N,NPT,XPT,BMAT,ZMAT,IDZ,NDIM,SP,STEP,
      1  KOPT,KNEW,VLAG,W)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C      IMPLICIT REAL*8 (A-H,O-Z)
-      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
-      IMPLICIT INTEGER (I-N)
+      use, non_intrinsic :: consts_mod, only : RP, IK
+      implicit real(RP) (A-H,O-Z)
+      implicit integer(IK) (I-N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DIMENSION XPT(NPT,*),BMAT(NDIM,*),ZMAT(NPT,*),SP(*),STEP(*),
      2  VLAG(*),W(*)
@@ -85,7 +85,7 @@ C
 C     If KNEW is zero initially, then pick the index of the interpolation
 C       point to be deleted, by maximizing the absolute value of the
 C       denominator of the updating formula times a weighting factor.
-C       
+C
 C
       IF (KNEW == 0) THEN
           DENMAX=ZERO

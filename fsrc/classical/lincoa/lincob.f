@@ -470,7 +470,7 @@ C
      1  KNEW,PQW,W)
       IF (KNEW == 0) THEN
           IF (IPRINT > 0) PRINT 320
-  320     FORMAT (/4X,'Return from LINCOA because the denominator'
+  320     FORMAT (/4X,'Return from LINCOA because the denominator',
      1      ' of the updating formula is zero.')
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
           INFO=9

@@ -1,9 +1,9 @@
       SUBROUTINE TRSBOX (N,NPT,XPT,XOPT,GOPT,HQ,PQ,SL,SU,DELTA,
      1  XNEW,D,GNEW,XBDI,S,HS,HRED,DSQ,CRVMIN)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C      IMPLICIT REAL*8 (A-H,O-Z)
-      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
-      IMPLICIT INTEGER (I-N)
+      use, non_intrinsic :: consts_mod, only : RP, IK
+      IMPLICIT REAL(RP) (A-H,O-Z)
+      IMPLICIT INTEGER(IK) (I-N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DIMENSION XPT(NPT,*),XOPT(*),GOPT(*),HQ(*),PQ(*),SL(*),SU(*),
      1  XNEW(*),D(*),GNEW(*),XBDI(*),S(*),HS(*),HRED(*)
@@ -130,7 +130,7 @@ C
       IF (SHS > ZERO) THEN
           STPLEN=DMIN1(BLEN,GREDSQ/SHS)
       END IF
-      
+
 C
 C     Reduce STPLEN if necessary in order to preserve the simple bounds,
 C     letting IACT be the index of the new constrained variable.
@@ -160,7 +160,7 @@ C
           IF (IACT == 0 .AND. TEMP > ZERO) THEN
               CRVMIN=DMIN1(CRVMIN,TEMP)
               IF (CRVMIN == ONEMIN) CRVMIN=TEMP
-          END IF 
+          END IF
           GGSAV=GREDSQ
           GREDSQ=ZERO
           DO I=1,N
@@ -362,7 +362,7 @@ C
           DSQ=DSQ+D(I)**2
       END DO
       RETURN
- 
+
 C     The following instructions multiply the current S-vector by the second
 C     derivative matrix of the quadratic model, putting the product in HS.
 C     They are reached from three different parts of the software above and

@@ -27,7 +27,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENT
 use, non_intrinsic :: debug_mod, only : assert, errstop, warning
 use, non_intrinsic :: evaluate_mod, only : evaluate, moderatex
 use, non_intrinsic :: history_mod, only : prehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite !, is_neginf, is_posinf
+use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : OBJCON
 !use, non_intrinsic :: selectx_mod, only : isbetter
@@ -76,7 +76,6 @@ character(len=*), parameter :: ifmt = '(I0)'  ! I0: use the minimum number of di
 character(len=*), parameter :: solver = 'COBYLA'
 character(len=*), parameter :: srname = 'COBYLA'
 character(len=MSGLEN) :: wmsg
-integer(IK) :: i
 integer(IK) :: info_loc
 integer(IK) :: iprint_loc
 integer(IK) :: maxfilt_loc
@@ -348,40 +347,6 @@ if ((present(xhist) .or. present(fhist) .or. present(chist) .or. present(conhist
     write (wmsg, ifmt) maxhist_loc
     call warning(solver, 'Only the history of the last '//trim(wmsg)//' iteration(s) is recoreded')
 end if
-
-
-!--------------------------------------------------------------------------------------------------!
-!--------------------------------------------------------------------------------------------------!
-! The classical mode cannot pass the tests, of course.
-!! Postconditions
-!if (DEBUGGING) then
-!    call assert(nf_loc <= maxfun_loc, 'NF <= MAXFUN', srname)
-!    call assert(size(x) == n .and. .not. any(is_nan(x)), 'SIZE(X) == N, X does not contain NaN', srname)
-!    nhist = min(nf_loc, maxhist_loc)
-!    if (present(xhist)) then
-!        call assert(size(xhist, 1) == n .and. size(xhist, 2) == nhist, 'SIZE(XHIST) == [N, NHIST]', srname)
-!        call assert(.not. any(is_nan(xhist)), 'XHIST does not contain NaN', srname)
-!    end if
-!    if (present(fhist)) then
-!        call assert(size(fhist) == nhist, 'SIZE(FHIST) == NHIST', srname)
-!        call assert(.not. any(is_nan(fhist) .or. is_posinf(fhist)), 'FHIST does not contain NaN/+Inf', srname)
-!    end if
-!    if (present(chist)) then
-!        call assert(size(chist) == nhist, 'SIZE(CHIST) == NHIST', srname)
-!        call assert(.not. any(is_nan(chist) .or. is_posinf(chist)), 'CHIST does not contain NaN/+Inf', srname)
-!    end if
-!    if (present(conhist)) then
-!        call assert(size(conhist, 1) == m .and. size(conhist, 2) == nhist, 'SIZE(CONHIST) == [M, NHIST]', srname)
-!        call assert(.not. any(is_nan(conhist) .or. is_neginf(conhist)), 'CONHIST does not contain NaN/-Inf', srname)
-!    end if
-!    if (present(fhist) .and. present(chist)) then
-!        call assert(.not. any([(isbetter([fhist(i), chist(i)], [f, cstrv_loc], ctol_loc), i=1, nhist)]),&
-!            & 'No point in the history is better than X', srname)
-!    end if
-!end if
-!--------------------------------------------------------------------------------------------------!
-!--------------------------------------------------------------------------------------------------!
-
 
 end subroutine cobyla
 

@@ -1,9 +1,9 @@
       SUBROUTINE ALTMOV (N,NPT,XPT,XOPT,BMAT,ZMAT,NDIM,SL,SU,KOPT,
      1  KNEW,ADELT,XNEW,XALT,ALPHA,CAUCHY,GLAG,HCOL,W)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C      IMPLICIT REAL*8 (A-H,O-Z)
-      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
-      IMPLICIT INTEGER (I-N)
+      use, non_intrinsic :: consts_mod, only : RP, IK
+      IMPLICIT REAL(RP) (A-H,O-Z)
+      IMPLICIT INTEGER(IK) (I-N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DIMENSION XPT(NPT,*),XOPT(*),BMAT(NDIM,*),ZMAT(NPT,*),SL(*),
      1  SU(*),XNEW(*),XALT(*),GLAG(*),HCOL(*),W(*)
@@ -78,7 +78,7 @@ C     will be set to the largest admissible value of PREDSQ that occurs.
 C
       PRESAV=ZERO
       DO K=1,NPT
-          IF (K == KOPT) CYCLE 
+          IF (K == KOPT) CYCLE
           DDERIV=ZERO
           DISTSQ=ZERO
           DO I=1,N

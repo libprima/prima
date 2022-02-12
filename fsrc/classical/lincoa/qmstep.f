@@ -1,10 +1,11 @@
       SUBROUTINE QMSTEP (N,NPT,M,AMAT,B,XPT,XOPT,NACT,IACT,
      1  RESCON,QFAC,KOPT,KNEW,DEL,STEP,GL,PQW,RSTAT,W,IFEAS)
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C      IMPLICIT REAL*8 (A-H,O-Z)
-      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
-      IMPLICIT INTEGER (I-N)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!---------------------------------------------------------------!
+      use, non_intrinsic :: consts_mod, only : RP, IK
+      implicit real(RP) (A-H,O-Z)
+      implicit integer(IK) (I-N)
+!---------------------------------------------------------------!
+
       DIMENSION AMAT(N,*),B(*),XPT(NPT,*),XOPT(*),IACT(*),
      1  RESCON(*),QFAC(N,*),STEP(*),GL(*),PQW(*),RSTAT(*),W(*)
 C
@@ -72,7 +73,7 @@ C
       IFLAG=0
       VBIG=ZERO
       DO K=1,NPT
-          IF (K == KOPT) CYCLE 
+          IF (K == KOPT) CYCLE
           SS=ZERO
           SP=ZERO
           DO I=1,N

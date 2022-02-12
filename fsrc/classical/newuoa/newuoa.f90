@@ -22,10 +22,10 @@ subroutine newuoa(calfun, x, f, &
 use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS, MSGLEN
-use, non_intrinsic :: debug_mod, only : assert, warning
+use, non_intrinsic :: debug_mod, only : warning
 use, non_intrinsic :: evaluate_mod, only : moderatex
 use, non_intrinsic :: history_mod, only : prehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite
+use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: preproc_mod, only : preproc
@@ -241,27 +241,6 @@ if ((present(xhist) .or. present(fhist)) .and. maxhist_loc < nf_loc) then
     write (wmsg, ifmt) maxhist_loc
     call warning(solver, 'Only the history of the last '//trim(wmsg)//' iteration(s) is recoreded')
 end if
-
-!--------------------------------------------------------------------------------------------------!
-!--------------------------------------------------------------------------------------------------!
-! The classical mode cannot pass the tests, of course.
-!! Postconditions
-!if (DEBUGGING) then
-!    call assert(nf_loc <= maxfun_loc, 'NF <= MAXFUN', srname)
-!    call assert(size(x) == n .and. .not. any(is_nan(x)), 'SIZE(X) == N, X does not contain NaN', srname)
-!    nhist = min(nf_loc, maxhist_loc)
-!    if (present(xhist)) then
-!        call assert(size(xhist, 1) == n .and. size(xhist, 2) == nhist, 'SIZE(XHIST) == [N, NHIST]', srname)
-!        call assert(.not. any(is_nan(xhist)), 'XHIST does not contain NaN', srname)
-!    end if
-!    if (present(fhist)) then
-!        call assert(size(fhist) == nhist, 'SIZE(FHIST) == NHIST', srname)
-!        call assert(.not. any(fhist < f), 'F is the smallest in FHIST', srname)
-!    end if
-!end if
-!--------------------------------------------------------------------------------------------------!
-!--------------------------------------------------------------------------------------------------!
-
 
 end subroutine newuoa
 
