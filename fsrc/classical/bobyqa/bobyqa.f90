@@ -3,12 +3,6 @@ module bobyqa_mod
 ! Classical mode. Not maintained. Not recommended. Please use the modernized version instead.
 !
 ! The usage is the same as the modernized version.
-!
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code.
-!
-! Started: February 2022
-!
-! Last Modified: Friday, February 11, 2022 PM06:08:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

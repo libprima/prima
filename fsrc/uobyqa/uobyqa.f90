@@ -15,6 +15,8 @@ module uobyqa_mod
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the UOBYQA paper.
 !
+! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+!
 ! Started: July 2020
 !
 ! Last Modified: Friday, February 11, 2022 PM07:23:55

@@ -4,9 +4,11 @@ module cobylb_mod
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the COBYLA paper.
 !
+! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+!
 ! Started: July 2021
 !
-! Last Modified: Wednesday, February 09, 2022 AM12:30:21
+! Last Modified: Saturday, February 12, 2022 PM02:51:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -228,9 +230,9 @@ prerem = HUGENUM
 jdrop_tr = 0_IK
 jdrop_geo = 0_IK
 
-! MAXTR is the maximal number of trust-region iterations. Normally, each trust-region iteration 
+! MAXTR is the maximal number of trust-region iterations. Normally, each trust-region iteration
 ! takes 1 or 2 function evaluations unless the update of CPEN alters the optimal vertex or the
-! trust-region step is short but the geometry step is not invoked. Thus the following MAXTR is 
+! trust-region step is short but the geometry step is not invoked. Thus the following MAXTR is
 ! unlikely to be reached.
 maxtr = max(maxfun, 2_IK * maxfun)  ! MAX: precaution against overflow, which will make 2*MAXFUN < 0.
 info = MAXTR_REACHED

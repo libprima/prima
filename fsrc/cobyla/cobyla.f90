@@ -27,9 +27,11 @@ module cobyla_mod
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the COBYLA paper.
 !
+! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+!
 ! Started: July 2021
 !
-! Last Modified: Friday, February 11, 2022 PM06:45:31
+! Last Modified: Saturday, February 12, 2022 PM02:53:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

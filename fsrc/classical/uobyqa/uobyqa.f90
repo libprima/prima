@@ -3,12 +3,6 @@ module uobyqa_mod
 ! Classical mode. Not maintained. Not recommended. Please use the modernized version instead.
 !
 ! The usage is the same as the modernized version.
-!
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code.
-!
-! Started: February 2022
-!
-! Last Modified: Friday, February 11, 2022 PM08:16:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -85,7 +79,7 @@ real(RP), allocatable :: xhist_loc(:, :)
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Working variables 
+! Working variables
 real(RP), allocatable :: w(:)
 integer(IK) :: npt, ixb, ixo, ixn, ixp, ipq, ipl, ih, ig, id, ivl, iw
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -193,7 +187,7 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 
 !--------------------------------------------------------------------------------------------------!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Working space 
+! Working space
 call safealloc(w, int(n**4 + 8 * n**3 + 23 * n**2 + 42 * n + max(2 * n**2 + 4, 18 * n) / 4, IK))
 npt = (n * n + 3 * n + 2) / 2
 ixb = 1
