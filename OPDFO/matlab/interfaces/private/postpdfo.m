@@ -567,7 +567,7 @@ if options.debug && ~options.classical
 
     % Check whether constrviolation is correct
     cobyla_prec = 1e-6;
-    lincoa_prec = 1e-11;
+    lincoa_prec = 1e-9;
     % COBYLA cannot ensure fx=fun(x) or constr=con(x) due to rounding
     % errors. Instead of checking the equality, we check whether the
     % relative error is within cobyla_prec.
