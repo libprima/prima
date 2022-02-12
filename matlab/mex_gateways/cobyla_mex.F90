@@ -10,7 +10,7 @@
 !
 ! Started in March 2020
 !
-! Last Modified: Tuesday, February 08, 2022 PM07:21:44
+! Last Modified: Saturday, February 12, 2022 AM11:27:49
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -160,15 +160,15 @@ deallocate (fhist)  ! Allocated by the solver
 deallocate (chist)  ! Allocated by the solver
 deallocate (conhist)  ! Allocated by the solver
 
-!------------------------------------------------------------------!
+!--------------------------------------------------------------------!
 contains
 
 subroutine calcfc(x_sub, f_sub, constr_sub)
-! This is an internal procedure that defines CALCFC. We implement
-! CALCFC internally so that FUNCON_PTR is visible to it. Do NOT pass
-! FUNCON_PTR through a module variable, which is thread-unsafe.
-! Since F2008, we can pass internal procedures as actual arguments.
-! See Note 12.18 of J3/10-007r1 (F2008 Working Document, page 290).
+! This is an internal procedure that defines CALCFC. Since F2008, we
+! can pass internal procedures as actual arguments. See Note 12.18
+! on page 290 of WD 1539-1 J3/10-007r1 (F2008 Working Document).
+! We implement CALCFC internally so that FUNCON_PTR is visible to it.
+! Do NOT pass FUNCON_PTR by a module variable, which is thread-unsafe.
 use, non_intrinsic :: cbfun_mod, only : evalcb
 implicit none
 real(RP), intent(in) :: x_sub(:)
@@ -176,5 +176,5 @@ real(RP), intent(out) :: f_sub
 real(RP), intent(out) :: constr_sub(:)
 call evalcb(funcon_ptr, x_sub, f_sub, constr_sub)
 end subroutine calcfc
-!------------------------------------------------------------------!
+!--------------------------------------------------------------------!
 end subroutine mexFunction
