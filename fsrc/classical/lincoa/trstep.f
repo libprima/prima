@@ -1,9 +1,9 @@
       SUBROUTINE TRSTEP (N,NPT,M,AMAT,B,XPT,HQ,PQ,NACT,IACT,RESCON,
      1  QFAC,RFAC,SNORM,STEP,G,RESNEW,RESACT,D,DW,W)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C      IMPLICIT REAL*8 (A-H,O-Z)
-      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
-      IMPLICIT INTEGER (I-N)
+      use, non_intrinsic :: consts_mod, only : RP, IK
+      implicit real(RP) (A-H,O-Z)
+      implicit integer(IK) (I-N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DIMENSION AMAT(N,*),B(*),XPT(NPT,*),HQ(*),PQ(*),IACT(*),
      1  RESCON(*),QFAC(N,*),RFAC(*),STEP(*),G(*),RESNEW(*),RESACT(*),

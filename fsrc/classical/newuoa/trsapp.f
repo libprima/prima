@@ -1,11 +1,5 @@
       SUBROUTINE TRSAPP (N,NPT,XOPT,XPT,GQ,HQ,PQ,DELTA,STEP,
      1  D,G,HD,HS,CRVMIN)
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C      IMPLICIT REAL*8 (A-H,O-Z)
-!      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
-!      IMPLICIT INTEGER (I-N)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 !----------------------------------------------------------------------!
 !----------------------------------------------------------------------!
       use, non_intrinsic :: consts_mod, only : RP, IK

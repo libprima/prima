@@ -21,17 +21,12 @@
       use, non_intrinsic :: consts_mod, only : RP, IK
       use, non_intrinsic :: evaluate_mod, only : evaluate
       use, non_intrinsic :: history_mod, only : savehist
-      use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
       use, non_intrinsic :: pintrf_mod, only : OBJ
 
       implicit real(RP) (a - h, o - z)
       implicit integer(IK) (i - n)
 
       procedure(OBJ) :: calfun
-      integer(IK), intent(in) :: maxxhist
-      integer(IK), intent(in) :: maxfhist
-      integer(IK), intent(in) :: npt
-      integer(IK), intent(out) :: nf
       real(RP), intent(in) :: xl(n)
       real(RP), intent(in) :: xu(n)
       real(RP), intent(inout) :: x(n)

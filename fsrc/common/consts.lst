@@ -1,5 +1,5 @@
 
- Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Fri Feb 11 22:03:17 2022
+ Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Sat Feb 12 17:36:58 2022
  Copyright (C) 1994-2008 Lahey Computer Systems.  All rights reserved.
  Copyright (C) 1998-2008 FUJITSU LIMITED. All rights reserved.
 
@@ -576,7 +576,7 @@
    Total statements : 61
 
 
- Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Fri Feb 11 22:03:17 2022
+ Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Sat Feb 12 17:36:58 2022
  Copyright (C) 1994-2008 Lahey Computer Systems.  All rights reserved.
  Copyright (C) 1998-2008 FUJITSU LIMITED. All rights reserved.
 
@@ -917,7 +917,7 @@
    Total statements : 124
 
 
- Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Fri Feb 11 22:03:17 2022
+ Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Sat Feb 12 17:36:58 2022
  Copyright (C) 1994-2008 Lahey Computer Systems.  All rights reserved.
  Copyright (C) 1998-2008 FUJITSU LIMITED. All rights reserved.
 
@@ -1250,7 +1250,7 @@
    Total statements : 91
 
 
- Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Fri Feb 11 22:03:17 2022
+ Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Sat Feb 12 17:36:58 2022
  Copyright (C) 1994-2008 Lahey Computer Systems.  All rights reserved.
  Copyright (C) 1998-2008 FUJITSU LIMITED. All rights reserved.
 
@@ -1739,7 +1739,7 @@
    Total statements : 121
 
 
- Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Fri Feb 11 22:03:17 2022
+ Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Sat Feb 12 17:36:58 2022
  Copyright (C) 1994-2008 Lahey Computer Systems.  All rights reserved.
  Copyright (C) 1998-2008 FUJITSU LIMITED. All rights reserved.
 
@@ -2068,7 +2068,7 @@
    Total statements : 46
 
 
- Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Fri Feb 11 22:03:17 2022
+ Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Sat Feb 12 17:36:58 2022
  Copyright (C) 1994-2008 Lahey Computer Systems.  All rights reserved.
  Copyright (C) 1998-2008 FUJITSU LIMITED. All rights reserved.
 
@@ -4512,7 +4512,7 @@
    Total statements : 1282
 
 
- Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Fri Feb 11 22:03:17 2022
+ Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Sat Feb 12 17:36:58 2022
  Copyright (C) 1994-2008 Lahey Computer Systems.  All rights reserved.
  Copyright (C) 1998-2008 FUJITSU LIMITED. All rights reserved.
 
@@ -4684,7 +4684,7 @@
    Total statements : 20
 
 
- Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Fri Feb 11 22:03:17 2022
+ Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Sat Feb 12 17:36:58 2022
  Copyright (C) 1994-2008 Lahey Computer Systems.  All rights reserved.
  Copyright (C) 1998-2008 FUJITSU LIMITED. All rights reserved.
 
@@ -5003,7 +5003,7 @@
    Total statements : 105
 
 
- Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Fri Feb 11 22:03:17 2022
+ Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Sat Feb 12 17:36:58 2022
  Copyright (C) 1994-2008 Lahey Computer Systems.  All rights reserved.
  Copyright (C) 1998-2008 FUJITSU LIMITED. All rights reserved.
 
@@ -5509,7 +5509,7 @@
    Total statements : 230
 
 
- Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Fri Feb 11 22:03:17 2022
+ Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Sat Feb 12 17:36:58 2022
  Copyright (C) 1994-2008 Lahey Computer Systems.  All rights reserved.
  Copyright (C) 1998-2008 FUJITSU LIMITED. All rights reserved.
 
@@ -5943,7 +5943,7 @@
    Total statements : 246
 
 
- Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Fri Feb 11 22:03:17 2022
+ Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Sat Feb 12 17:36:58 2022
  Copyright (C) 1994-2008 Lahey Computer Systems.  All rights reserved.
  Copyright (C) 1998-2008 FUJITSU LIMITED. All rights reserved.
 
@@ -6519,7 +6519,7 @@
    Total statements : 145
 
 
- Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Fri Feb 11 22:03:17 2022
+ Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Sat Feb 12 17:36:58 2022
  Copyright (C) 1994-2008 Lahey Computer Systems.  All rights reserved.
  Copyright (C) 1998-2008 FUJITSU LIMITED. All rights reserved.
 
@@ -7511,7 +7511,7 @@
    Total statements : 310
 
 
- Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Fri Feb 11 22:03:17 2022
+ Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Sat Feb 12 17:36:58 2022
  Copyright (C) 1994-2008 Lahey Computer Systems.  All rights reserved.
  Copyright (C) 1998-2008 FUJITSU LIMITED. All rights reserved.
 
@@ -7549,539 +7549,538 @@
          17              use, non_intrinsic :: consts_mod, only : RP, IK
          18              use, non_intrinsic :: evaluate_mod, only : evaluate
          19              use, non_intrinsic :: history_mod, only : savehist, rangehist
-         20              use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
-         21              use, non_intrinsic :: pintrf_mod, only : OBJ
-         22        
-         23              implicit real(RP) (a - h, o - z)
-         24              implicit integer(IK) (i - n)
-         25        
-         26              procedure(OBJ) :: calfun
-         27              integer(IK), intent(in) :: maxxhist
-         28              integer(IK), intent(in) :: maxfhist
-         29              integer(IK), intent(in) :: npt
-         30              integer(IK), intent(out) :: nf
-         31              real(RP), intent(inout) :: x(n)
-         32              real(RP), intent(out) :: xhist(n, maxxhist)
-         33              real(RP), intent(out) :: fhist(maxfhist)
-         34        
-         35        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-         36              DIMENSION XBASE(*),XOPT(*),XNEW(*),XPT(NPT,*),PQ(*),
-         37             1  PL(NPT,*),H(N,*),G(*),D(*),VLAG(*),W(*)
-         38        C
-         39        C     The arguments N, X, RHOBEG, RHOEND, IPRINT and MAXFUN are identical to
-         40        C       the corresponding arguments in SUBROUTINE UOBYQA.
-         41        C     NPT is set by UOBYQA to (N*N+3*N+2)/2 for the above dimension statement.
-         42        C     XBASE will contain a shift of origin that reduces the contributions from
-         43        C       rounding errors to values of the model and Lagrange functions.
-         44        C     XOPT will be set to the displacement from XBASE of the vector of
-         45        C       variables that provides the least calculated F so far.
-         46        C     XNEW will be set to the displacement from XBASE of the vector of
-         47        C       variables for the current calculation of F.
-         48        C     XPT will contain the interpolation point coordinates relative to XBASE.
-         49        C     PQ will contain the parameters of the quadratic model.
-         50        C     PL will contain the parameters of the Lagrange functions.
-         51        C     H will provide the second derivatives that TRSTEP and LAGMAX require.
-         52        C     G will provide the first derivatives that TRSTEP and LAGMAX require.
-         53        C     D is reserved for trial steps from XOPT, except that it will contain
-         54        C       diagonal second derivatives during the initialization procedure.
-         55        C     VLAG will contain the values of the Lagrange functions at a new point X.
-         56        C     The array W will be used for working space. Its length must be at least
-         57        C     max [ 6*N, ( N**2 + 3*N + 2 ) / 2 ].
-         58        C
-         59        C     Set some constants.
-         60        C
-         61              ONE=1.0D0
-         62              TWO=2.0D0
-         63              ZERO=0.0D0
-         64              HALF=0.5D0
-         65              TOL=0.01D0
-         66              NNP=N+N+1
-         67              NPTM=NPT-1
-         68              NFTEST=MAX0(MAXFUN,1)
-         69        C
-         70        C     Initialization. NF is the number of function calculations so far.
-         71        C
-         72              RHO=RHOBEG
-         73              RHOSQ=RHO*RHO
-         74              NF=0
-         75     1        DO I=1,N
-         76     1            XBASE(I)=X(I)
-         77     2            DO K=1,NPT
-         78     2                XPT(K,I)=ZERO
-         79     2            END DO
-         80     1        END DO
-         81     1        DO K=1,NPT
-         82     2            DO J=1,NPTM
-         83     2                PL(K,J)=ZERO
-         84     2            END DO
-         85     1        END DO
-         86        C
-         87        C     The branch to label 120 obtains a new value of the objective function
-         88        C     and then there is a branch back to label 50, because the new function
-         89        C     value is needed to form the initial quadratic model. The least function
-         90        C     value so far and its index are noted below.
-         91        C
-         92     1     30 DO I=1,N
-         93     1            X(I)=XBASE(I)+XPT(NF+1,I)
-         94     1        END DO
-         95              GOTO 120
-         96     1     50 IF (NF == 1) THEN
-         97     1            FOPT=F
-         98     1            KOPT=NF
-         99     1            FBASE=F
-        100     1            J=0
-        101     1            JSWITCH=-1
-        102     1            IH=N
-        103     1        ELSE
-        104     2            IF (F < FOPT) THEN
-        105     2                FOPT=F
-        106     2                KOPT=NF
-        107     2            END IF
-        108     1        END IF
-        109        C
-        110        C     Form the gradient and diagonal second derivatives of the initial
-        111        C     quadratic model and Lagrange functions.
-        112        C
-        113     1        IF (NF <= NNP) THEN
-        114     1            JSWITCH=-JSWITCH
-        115     2            IF (JSWITCH > 0) THEN
-        116     3                IF (J >= 1) THEN
-        117     3                    IH=IH+J
-        118     4                    IF (W(J) < ZERO) THEN
-        119     4                        D(J)=(FSAVE+F-TWO*FBASE)/RHOSQ
-        120     4                        PQ(J)=(FSAVE-F)/(TWO*RHO)
-        121     4                        PL(1,IH)=-TWO/RHOSQ
-        122     4                        PL(NF-1,J)=HALF/RHO
-        123     4                        PL(NF-1,IH)=ONE/RHOSQ
-        124     4                    ELSE
-        125     4                        PQ(J)=(4.0D0*FSAVE-3.0D0*FBASE-F)/(TWO*RHO)
-        126     4                        D(J)=(FBASE+F-TWO*FSAVE)/RHOSQ
-        127     4                        PL(1,J)=-1.5D0/RHO
-        128     4                        PL(1,IH)=ONE/RHOSQ
-        129     4                        PL(NF-1,J)=TWO/RHO
-        130     4                        PL(NF-1,IH)=-TWO/RHOSQ
-        131     4                    END IF
-        132     3                    PQ(IH)=D(J)
-        133     3                    PL(NF,J)=-HALF/RHO
-        134     3                    PL(NF,IH)=ONE/RHOSQ
-        135     3                END IF
-        136     2  C
-        137     2  C     Pick the shift from XBASE to the next initial interpolation point
-        138     2  C     that provides diagonal second derivatives.
-        139     2  C
-        140     3                IF (J < N) THEN
-        141     3                    J=J+1
-        142     3                    XPT(NF+1,J)=RHO
-        143     3                END IF
-        144     2            ELSE
-        145     2                FSAVE=F
-        146     3                IF (F < FBASE) THEN
-        147     3                    W(J)=RHO
-        148     3                    XPT(NF+1,J)=TWO*RHO
-        149     3                ELSE
-        150     3                    W(J)=-RHO
-        151     3                    XPT(NF+1,J)=-RHO
-        152     3                END IF
-        153     2            END IF
-        154     1            IF (NF < NNP) GOTO 30
-        155     1  C
-        156     1  C     Form the off-diagonal second derivatives of the initial quadratic model.
-        157     1  C
-        158     1            IH=N
-        159     1            IP=1
-        160     1            IQ=2
-        161     1        END IF
-        162              IH=IH+1
-        163     1        IF (NF > NNP) THEN
-        164     1            TEMP=ONE/(W(IP)*W(IQ))
-        165     1            TEMPA=F-FBASE-W(IP)*PQ(IP)-W(IQ)*PQ(IQ)
-        166     1            PQ(IH)=(TEMPA-HALF*RHOSQ*(D(IP)+D(IQ)))*TEMP
-        167     1            PL(1,IH)=TEMP
-        168     1            IW=IP+IP
-        169     1            IF (W(IP) < ZERO) IW=IW+1
-        170     1            PL(IW,IH)=-TEMP
-        171     1            IW=IQ+IQ
-        172     1            IF (W(IQ) < ZERO) IW=IW+1
-        173     1            PL(IW,IH)=-TEMP
-        174     1            PL(NF,IH)=TEMP
-        175     1  C
-        176     1  C     Pick the shift from XBASE to the next initial interpolation point
-        177     1  C     that provides off-diagonal second derivatives.
-        178     1  C
-        179     1            IP=IP+1
-        180     1        END IF
-        181     1        IF (IP == IQ) THEN
-        182     1            IH=IH+1
-        183     1            IP=1
-        184     1            IQ=IQ+1
-        185     1        END IF
-        186     1        IF (NF < NPT) THEN
-        187     1            XPT(NF+1,IP)=W(IP)
-        188     1            XPT(NF+1,IQ)=W(IQ)
-        189     1            GOTO 30
-        190     1        END IF
-        191        C
-        192        C     Set parameters to begin the iterations for the current RHO.
-        193        C
-        194              SIXTHM=ZERO
-        195              DELTA=RHO
-        196           60 TWORSQ=(TWO*RHO)**2
-        197              RHOSQ=RHO*RHO
-        198        C
-        199        C     Form the gradient of the quadratic model at the trust region centre.
-        200        C
-        201           70 KNEW=0
-        202              IH=N
-        203     1        DO J=1,N
-        204     1            XOPT(J)=XPT(KOPT,J)
-        205     1            G(J)=PQ(J)
-        206     2            DO I=1,J
-        207     2                IH=IH+1
-        208     2                G(I)=G(I)+PQ(IH)*XOPT(J)
-        209     2                IF (I < J) G(J)=G(J)+PQ(IH)*XOPT(I)
-        210     2                H(I,J)=PQ(IH)
-        211     2            END DO
-        212     1        END DO
-        213        C
-        214        C     Generate the next trust region step and test its length. Set KNEW
-        215        C     to -1 if the purpose of the next F will be to improve conditioning,
-        216        C     and also calculate a lower bound on the Hessian term of the model Q.
-        217        C
-        218              CALL TRSTEP (N,G,H,DELTA,TOL,D,W(1),W(N+1),W(2*N+1),W(3*N+1),
-        219             1  W(4*N+1),W(5*N+1),EVALUE)
-        220              TEMP=ZERO
-        221     1        DO I=1,N
-        222     1            TEMP=TEMP+D(I)**2
-        223     1        END DO
-        224              DNORM=DMIN1(DELTA,DSQRT(TEMP))
-        225              ERRTOL=-ONE
-        226     1        IF (DNORM < HALF*RHO) THEN
-        227     1            KNEW=-1
-        228     1            ERRTOL=HALF*EVALUE*RHO*RHO
-        229     1            IF (NF <= NPT+9) ERRTOL=ZERO
-        230     1            GOTO 290
-        231     1        END IF
-        232        C
-        233        C     Calculate the next value of the objective function.
-        234        C
-        235     1    100 DO I=1,N
-        236     1            XNEW(I)=XOPT(I)+D(I)
-        237     1            X(I)=XBASE(I)+XNEW(I)
-        238     1        END DO
-        239     1    120 IF (NF >= NFTEST) THEN
-        240     1            IF (IPRINT > 0) PRINT 130
-        241     1    130     FORMAT (/4X,'Return from UOBYQA because CALFUN has been',
-        242     1       1      ' called MAXFUN times')
-        243     1  CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-        244     1            INFO=3
-        245     1  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        246     1            GOTO 420
-        247     1        END IF
-        248              NF=NF+1
-        249        !------------------------------------------------------------------------!
-        250              !CALL CALFUN (N,X,F)
-        251              call evaluate(calfun, x, f)
-        252              call savehist(nf, x, xhist, f, fhist)
-        253        !------------------------------------------------------------------------!
-        254        
-        255        CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-        256        C     By Zaikun (commented on 02-06-2019; implemented in 2016):
-        257        C     Exit if F .LE. FTARGET.
-        258     1        IF (F <= FTARGET) THEN
-        259     1            INFO=1
-        260     1            GOTO 436
-        261     1        END IF
-        262        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        263        
-        264     1        IF (IPRINT == 3) THEN
-        265     1            PRINT 140, NF,F,(X(I),I=1,N)
-        266     1    140      FORMAT (/4X,'Function number',I6,'    F =',1PD18.10,
-        267     1       1       '    The corresponding X is:'/(2X,5D15.6))
-        268     1        END IF
-        269              IF (NF <= NPT) GOTO 50
-        270        CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-        271        C      IF (KNEW .EQ. -1) GOTO 420
-        272     1        IF (KNEW == -1) THEN
-        273     1            INFO=0
-        274     1            GOTO 420
-        275     1        END IF
-        276        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        277        C
-        278        C     Use the quadratic model to predict the change in F due to the step D,
-        279        C     and find the values of the Lagrange functions at the new point.
-        280        C
-        281              VQUAD=ZERO
-        282              IH=N
-        283     1        DO J=1,N
-        284     1            W(J)=D(J)
-        285     1            VQUAD=VQUAD+W(J)*PQ(J)
-        286     2            DO I=1,J
-        287     2                IH=IH+1
-        288     2                W(IH)=D(I)*XNEW(J)+D(J)*XOPT(I)
-        289     2                IF (I == J) W(IH)=HALF*W(IH)
-        290     2                VQUAD=VQUAD+W(IH)*PQ(IH)
-        291     2            END DO
-        292     1        END DO
-        293     1        DO K=1,NPT
-        294     1            TEMP=ZERO
-        295     2            DO J=1,NPTM
-        296     2                TEMP=TEMP+W(J)*PL(K,J)
-        297     2            END DO
-        298     1            VLAG(K)=TEMP
-        299     1        END DO
-        300              VLAG(KOPT)=VLAG(KOPT)+ONE
-        301        C
-        302        C     Update SIXTHM, which is a lower bound on one sixth of the greatest
-        303        C     third derivative of F.
-        304        C
-        305              DIFF=F-FOPT-VQUAD
-        306              SUM=ZERO
-        307     1        DO K=1,NPT
-        308     1            TEMP=ZERO
-        309     2            DO I=1,N
-        310     2                TEMP=TEMP+(XPT(K,I)-XNEW(I))**2
-        311     2            END DO
-        312     1            TEMP=DSQRT(TEMP)
-        313     1            SUM=SUM+DABS(TEMP*TEMP*TEMP*VLAG(K))
-        314     1        END DO
-        315              SIXTHM=DMAX1(SIXTHM,DABS(DIFF)/SUM)
-        316        C
-        317        C     Update FOPT and XOPT if the new F is the least value of the objective
-        318        C     function so far. Then branch if D is not a trust region step.
-        319        C
-        320              FSAVE=FOPT
-        321     1        IF (F < FOPT) THEN
-        322     1            FOPT=F
-        323     2            DO I=1,N
-        324     2                XOPT(I)=XNEW(I)
-        325     2            END DO
-        326     1        END IF
-        327              KSAVE=KNEW
-        328              IF (KNEW > 0) GOTO 240
-        329        C
-        330        C     Pick the next value of DELTA after a trust region step.
-        331        C
-        332     1        IF (VQUAD >= ZERO) THEN
-        333     1            IF (IPRINT > 0) PRINT 210
-        334     1    210     FORMAT (/4X,'Return from UOBYQA because a trust',
-        335     1       1      ' region step has failed to reduce Q')
-        336     1  CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-        337     1            INFO=2
-        338     1  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        339     1            GOTO 420
-        340     1        END IF
-        341              RATIO=(F-FSAVE)/VQUAD
-        342     1        IF (RATIO <= 0.1D0) THEN
-        343     1            DELTA=HALF*DNORM
-        344     1        ELSE IF (RATIO. LE. 0.7D0) THEN
-        345     1            DELTA=DMAX1(HALF*DELTA,DNORM)
-        346     1        ELSE
-        347     1            DELTA=DMAX1(DELTA,1.25D0*DNORM,DNORM+RHO)
-        348     1        END IF
-        349              IF (DELTA <= 1.5D0*RHO) DELTA=RHO
-        350        C
-        351        C     Set KNEW to the index of the next interpolation point to be deleted.
-        352        C
-        353              KTEMP=0
-        354              DETRAT=ZERO
-        355     1        IF (F >= FSAVE) THEN
-        356     1            KTEMP=KOPT
-        357     1            DETRAT=ONE
-        358     1        END IF
-        359     1        DO K=1,NPT
-        360     1            SUM=ZERO
-        361     2            DO I=1,N
-        362     2                SUM=SUM+(XPT(K,I)-XOPT(I))**2
-        363     2            END DO
-        364     1            TEMP=DABS(VLAG(K))
-        365     1            IF (SUM > RHOSQ) TEMP=TEMP*(SUM/RHOSQ)**1.5D0
-        366     2            IF (TEMP > DETRAT .AND. K /= KTEMP) THEN
-        367     2                DETRAT=TEMP
-        368     2                DDKNEW=SUM
-        369     2                KNEW=K
-        370     2            END IF
-        371     1        END DO
-        372              IF (KNEW == 0) GOTO 290
-        373        C
-        374        C     Replace the interpolation point that has index KNEW by the point XNEW,
-        375        C     and also update the Lagrange functions and the quadratic model.
-        376        C
-        377     1    240 DO I=1,N
-        378     1            XPT(KNEW,I)=XNEW(I)
-        379     1        END DO
-        380              TEMP=ONE/VLAG(KNEW)
-        381     1        DO J=1,NPTM
-        382     1            PL(KNEW,J)=TEMP*PL(KNEW,J)
-        383     1            PQ(J)=PQ(J)+DIFF*PL(KNEW,J)
-        384     1        END DO
-        385     1        DO K=1,NPT
-        386     2            IF (K /= KNEW) THEN
-        387     2                TEMP=VLAG(K)
-        388     3                DO J=1,NPTM
-        389     3                    PL(K,J)=PL(K,J)-TEMP*PL(KNEW,J)
-        390     3                END DO
-        391     2            END IF
-        392     1        END DO
-        393        C
-        394        C     Update KOPT if F is the least calculated value of the objective
-        395        C     function. Then branch for another trust region calculation. The
-        396        C     case KSAVE>0 indicates that a model step has just been taken.
-        397        C
-        398     1        IF (F < FSAVE) THEN
-        399     1            KOPT=KNEW
-        400     1            GOTO 70
-        401     1        END IF
-        402              IF (KSAVE > 0) GOTO 70
-        403              IF (DNORM > TWO*RHO) GOTO 70
-        404              IF (DDKNEW > TWORSQ) GOTO 70
-        405        C
-        406        C     Alternatively, find out if the interpolation points are close
-        407        C     enough to the best point so far.
-        408        C
-        409     1    290 DO K=1,NPT
-        410     1            W(K)=ZERO
-        411     2            DO I=1,N
-        412     2                W(K)=W(K)+(XPT(K,I)-XOPT(I))**2
-        413     2            END DO
-        414     1        END DO
-        415          310 KNEW=-1
-        416              DISTEST=TWORSQ
-        417     1        DO K=1,NPT
-        418     2            IF (W(K) > DISTEST) THEN
-        419     2                KNEW=K
-        420     2                DISTEST=W(K)
-        421     2            END IF
-        422     1        END DO
-        423        C
-        424        C     If a point is sufficiently far away, then set the gradient and Hessian
-        425        C     of its Lagrange function at the centre of the trust region, and find
-        426        C     half the sum of squares of components of the Hessian.
-        427        C
-        428     1        IF (KNEW > 0) THEN
-        429     1            IH=N
-        430     1            SUMH=ZERO
-        431     2            DO J=1,N
-        432     2                G(J)=PL(KNEW,J)
-        433     3                DO I=1,J
-        434     3                    IH=IH+1
-        435     3                    TEMP=PL(KNEW,IH)
-        436     3                    G(J)=G(J)+TEMP*XOPT(I)
-        437     4                    IF (I < J) THEN
-        438     4                        G(I)=G(I)+TEMP*XOPT(J)
-        439     4                        SUMH=SUMH+TEMP*TEMP
-        440     4                    END IF
-        441     3                    H(I,J)=TEMP
-        442     3                END DO
-        443     2                SUMH=SUMH+HALF*TEMP*TEMP
-        444     2            END DO
-        445     1  C
-        446     1  C     If ERRTOL is positive, test whether to replace the interpolation point
-        447     1  C     with index KNEW, using a bound on the maximum modulus of its Lagrange
-        448     1  C     function in the trust region.
-        449     1  C
-        450     2            IF (ERRTOL > ZERO) THEN
-        451     2                W(KNEW)=ZERO
-        452     2                SUMG=ZERO
-        453     3                DO I=1,N
-        454     3                    SUMG=SUMG+G(I)**2
-        455     3                END DO
-        456     2                ESTIM=RHO*(DSQRT(SUMG)+RHO*DSQRT(HALF*SUMH))
-        457     2                WMULT=SIXTHM*DISTEST**1.5D0
-        458     2                IF (WMULT*ESTIM <= ERRTOL) GOTO 310
-        459     2            END IF
-        460     1  C
-        461     1  C     If the KNEW-th point may be replaced, then pick a D that gives a large
-        462     1  C     value of the modulus of its Lagrange function within the trust region.
-        463     1  C     Here the vector XNEW is used as temporary working space.
-        464     1  C
-        465     1            CALL LAGMAX (N,G,H,RHO,D,XNEW,VMAX)
-        466     2            IF (ERRTOL > ZERO) THEN
-        467     2                IF (WMULT*VMAX <= ERRTOL) GOTO 310
-        468     2            END IF
-        469     1            GOTO 100
-        470     1        END IF
-        471              IF (DNORM > RHO) GOTO 70
-        472        C
-        473        C     Prepare to reduce RHO by shifting XBASE to the best point so far,
-        474        C     and make the corresponding changes to the gradients of the Lagrange
-        475        C     functions and the quadratic model.
-        476        C
-        477     1        IF (RHO > RHOEND) THEN
-        478     1            IH=N
-        479     2            DO J=1,N
-        480     2                XBASE(J)=XBASE(J)+XOPT(J)
-        481     3                DO K=1,NPT
-        482     3                    XPT(K,J)=XPT(K,J)-XOPT(J)
-        483     3                END DO
-        484     3                DO I=1,J
-        485     3                    IH=IH+1
-        486     3                    PQ(I)=PQ(I)+PQ(IH)*XOPT(J)
-        487     4                    IF (I < J) THEN
-        488     4                        PQ(J)=PQ(J)+PQ(IH)*XOPT(I)
-        489     5                        DO K=1,NPT
-        490     5                            PL(K,J)=PL(K,J)+PL(K,IH)*XOPT(I)
-        491     5                        END DO
-        492     4                    END IF
-        493     4                    DO K=1,NPT
-        494     4                        PL(K,I)=PL(K,I)+PL(K,IH)*XOPT(J)
-        495     4                    END DO
-        496     3                END DO
-        497     2            END DO
-        498     1  C
-        499     1  C     Pick the next values of RHO and DELTA.
-        500     1  C
-        501     1            DELTA=HALF*RHO
-        502     1            RATIO=RHO/RHOEND
-        503     2            IF (RATIO <= 16.0D0) THEN
-        504     2                RHO=RHOEND
-        505     2            ELSE IF (RATIO <= 250.0D0) THEN
-        506     2                RHO=DSQRT(RATIO)*RHOEND
-        507     2            ELSE
-        508     2                RHO=0.1D0*RHO
-        509     2            END IF
-        510     1            DELTA=DMAX1(DELTA,RHO)
-        511     2            IF (IPRINT >= 2) THEN
-        512     2                IF (IPRINT >= 3) PRINT 390
-        513     2    390         FORMAT (5X)
-        514     2                PRINT 400, RHO,NF
-        515     2    400         FORMAT (/4X,'New RHO =',1PD11.4,5X,'Number of',
-        516     2       1          ' function values =',I6)
-        517     2                PRINT 410, FOPT,(XBASE(I),I=1,N)
-        518     2    410         FORMAT (4X,'Least value of F =',1PD23.15,9X,
-        519     2       1          'The corresponding X is:'/(2X,5D15.6))
-        520     2            END IF
-        521     1            GOTO 60
-        522     1        END IF
-        523        C
-        524        C     Return from the calculation, after another Newton-Raphson step, if
-        525        C     it is too short to have been tried before.
-        526        C
-        527        CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-        528              INFO=0
-        529        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        530              IF (ERRTOL >= ZERO) GOTO 100
-        531     1    420 IF (FOPT <= F) THEN
-        532     2            DO I=1,N
-        533     2                X(I)=XBASE(I)+XOPT(I)
-        534     2            END DO
-        535     1            F=FOPT
-        536     1        END IF
-        537        CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-        538        C      IF (IPRINT .GE. 1) THEN
-        539     1    436 IF (IPRINT >= 1) THEN
-        540     1  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        541     1            PRINT 440, NF
-        542     1    440     FORMAT (/4X,'At the return from UOBYQA',5X,
-        543     1       1      'Number of function values =',I6)
-        544     1            PRINT 410, F,(X(I),I=1,N)
-        545     1        END IF
-        546        
-        547        !---------------------------------------------!
-        548              call rangehist(nf, xhist, fhist)
-        549        !---------------------------------------------!
-        550        
-        551              RETURN
-        552              END
+         20              use, non_intrinsic :: pintrf_mod, only : OBJ
+         21        
+         22              implicit real(RP) (a - h, o - z)
+         23              implicit integer(IK) (i - n)
+         24        
+         25              procedure(OBJ) :: calfun
+         26              integer(IK), intent(in) :: maxxhist
+         27              integer(IK), intent(in) :: maxfhist
+         28              integer(IK), intent(in) :: npt
+         29              integer(IK), intent(out) :: nf
+         30              real(RP), intent(inout) :: x(n)
+         31              real(RP), intent(out) :: xhist(n, maxxhist)
+         32              real(RP), intent(out) :: fhist(maxfhist)
+         33        
+         34        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+         35              DIMENSION XBASE(*),XOPT(*),XNEW(*),XPT(NPT,*),PQ(*),
+         36             1  PL(NPT,*),H(N,*),G(*),D(*),VLAG(*),W(*)
+         37        C
+         38        C     The arguments N, X, RHOBEG, RHOEND, IPRINT and MAXFUN are identical to
+         39        C       the corresponding arguments in SUBROUTINE UOBYQA.
+         40        C     NPT is set by UOBYQA to (N*N+3*N+2)/2 for the above dimension statement.
+         41        C     XBASE will contain a shift of origin that reduces the contributions from
+         42        C       rounding errors to values of the model and Lagrange functions.
+         43        C     XOPT will be set to the displacement from XBASE of the vector of
+         44        C       variables that provides the least calculated F so far.
+         45        C     XNEW will be set to the displacement from XBASE of the vector of
+         46        C       variables for the current calculation of F.
+         47        C     XPT will contain the interpolation point coordinates relative to XBASE.
+         48        C     PQ will contain the parameters of the quadratic model.
+         49        C     PL will contain the parameters of the Lagrange functions.
+         50        C     H will provide the second derivatives that TRSTEP and LAGMAX require.
+         51        C     G will provide the first derivatives that TRSTEP and LAGMAX require.
+         52        C     D is reserved for trial steps from XOPT, except that it will contain
+         53        C       diagonal second derivatives during the initialization procedure.
+         54        C     VLAG will contain the values of the Lagrange functions at a new point X.
+         55        C     The array W will be used for working space. Its length must be at least
+         56        C     max [ 6*N, ( N**2 + 3*N + 2 ) / 2 ].
+         57        C
+         58        C     Set some constants.
+         59        C
+         60              ONE=1.0D0
+         61              TWO=2.0D0
+         62              ZERO=0.0D0
+         63              HALF=0.5D0
+         64              TOL=0.01D0
+         65              NNP=N+N+1
+         66              NPTM=NPT-1
+         67              NFTEST=MAX0(MAXFUN,1)
+         68        C
+         69        C     Initialization. NF is the number of function calculations so far.
+         70        C
+         71              RHO=RHOBEG
+         72              RHOSQ=RHO*RHO
+         73              NF=0
+         74     1        DO I=1,N
+         75     1            XBASE(I)=X(I)
+         76     2            DO K=1,NPT
+         77     2                XPT(K,I)=ZERO
+         78     2            END DO
+         79     1        END DO
+         80     1        DO K=1,NPT
+         81     2            DO J=1,NPTM
+         82     2                PL(K,J)=ZERO
+         83     2            END DO
+         84     1        END DO
+         85        C
+         86        C     The branch to label 120 obtains a new value of the objective function
+         87        C     and then there is a branch back to label 50, because the new function
+         88        C     value is needed to form the initial quadratic model. The least function
+         89        C     value so far and its index are noted below.
+         90        C
+         91     1     30 DO I=1,N
+         92     1            X(I)=XBASE(I)+XPT(NF+1,I)
+         93     1        END DO
+         94              GOTO 120
+         95     1     50 IF (NF == 1) THEN
+         96     1            FOPT=F
+         97     1            KOPT=NF
+         98     1            FBASE=F
+         99     1            J=0
+        100     1            JSWITCH=-1
+        101     1            IH=N
+        102     1        ELSE
+        103     2            IF (F < FOPT) THEN
+        104     2                FOPT=F
+        105     2                KOPT=NF
+        106     2            END IF
+        107     1        END IF
+        108        C
+        109        C     Form the gradient and diagonal second derivatives of the initial
+        110        C     quadratic model and Lagrange functions.
+        111        C
+        112     1        IF (NF <= NNP) THEN
+        113     1            JSWITCH=-JSWITCH
+        114     2            IF (JSWITCH > 0) THEN
+        115     3                IF (J >= 1) THEN
+        116     3                    IH=IH+J
+        117     4                    IF (W(J) < ZERO) THEN
+        118     4                        D(J)=(FSAVE+F-TWO*FBASE)/RHOSQ
+        119     4                        PQ(J)=(FSAVE-F)/(TWO*RHO)
+        120     4                        PL(1,IH)=-TWO/RHOSQ
+        121     4                        PL(NF-1,J)=HALF/RHO
+        122     4                        PL(NF-1,IH)=ONE/RHOSQ
+        123     4                    ELSE
+        124     4                        PQ(J)=(4.0D0*FSAVE-3.0D0*FBASE-F)/(TWO*RHO)
+        125     4                        D(J)=(FBASE+F-TWO*FSAVE)/RHOSQ
+        126     4                        PL(1,J)=-1.5D0/RHO
+        127     4                        PL(1,IH)=ONE/RHOSQ
+        128     4                        PL(NF-1,J)=TWO/RHO
+        129     4                        PL(NF-1,IH)=-TWO/RHOSQ
+        130     4                    END IF
+        131     3                    PQ(IH)=D(J)
+        132     3                    PL(NF,J)=-HALF/RHO
+        133     3                    PL(NF,IH)=ONE/RHOSQ
+        134     3                END IF
+        135     2  C
+        136     2  C     Pick the shift from XBASE to the next initial interpolation point
+        137     2  C     that provides diagonal second derivatives.
+        138     2  C
+        139     3                IF (J < N) THEN
+        140     3                    J=J+1
+        141     3                    XPT(NF+1,J)=RHO
+        142     3                END IF
+        143     2            ELSE
+        144     2                FSAVE=F
+        145     3                IF (F < FBASE) THEN
+        146     3                    W(J)=RHO
+        147     3                    XPT(NF+1,J)=TWO*RHO
+        148     3                ELSE
+        149     3                    W(J)=-RHO
+        150     3                    XPT(NF+1,J)=-RHO
+        151     3                END IF
+        152     2            END IF
+        153     1            IF (NF < NNP) GOTO 30
+        154     1  C
+        155     1  C     Form the off-diagonal second derivatives of the initial quadratic model.
+        156     1  C
+        157     1            IH=N
+        158     1            IP=1
+        159     1            IQ=2
+        160     1        END IF
+        161              IH=IH+1
+        162     1        IF (NF > NNP) THEN
+        163     1            TEMP=ONE/(W(IP)*W(IQ))
+        164     1            TEMPA=F-FBASE-W(IP)*PQ(IP)-W(IQ)*PQ(IQ)
+        165     1            PQ(IH)=(TEMPA-HALF*RHOSQ*(D(IP)+D(IQ)))*TEMP
+        166     1            PL(1,IH)=TEMP
+        167     1            IW=IP+IP
+        168     1            IF (W(IP) < ZERO) IW=IW+1
+        169     1            PL(IW,IH)=-TEMP
+        170     1            IW=IQ+IQ
+        171     1            IF (W(IQ) < ZERO) IW=IW+1
+        172     1            PL(IW,IH)=-TEMP
+        173     1            PL(NF,IH)=TEMP
+        174     1  C
+        175     1  C     Pick the shift from XBASE to the next initial interpolation point
+        176     1  C     that provides off-diagonal second derivatives.
+        177     1  C
+        178     1            IP=IP+1
+        179     1        END IF
+        180     1        IF (IP == IQ) THEN
+        181     1            IH=IH+1
+        182     1            IP=1
+        183     1            IQ=IQ+1
+        184     1        END IF
+        185     1        IF (NF < NPT) THEN
+        186     1            XPT(NF+1,IP)=W(IP)
+        187     1            XPT(NF+1,IQ)=W(IQ)
+        188     1            GOTO 30
+        189     1        END IF
+        190        C
+        191        C     Set parameters to begin the iterations for the current RHO.
+        192        C
+        193              SIXTHM=ZERO
+        194              DELTA=RHO
+        195           60 TWORSQ=(TWO*RHO)**2
+        196              RHOSQ=RHO*RHO
+        197        C
+        198        C     Form the gradient of the quadratic model at the trust region centre.
+        199        C
+        200           70 KNEW=0
+        201              IH=N
+        202     1        DO J=1,N
+        203     1            XOPT(J)=XPT(KOPT,J)
+        204     1            G(J)=PQ(J)
+        205     2            DO I=1,J
+        206     2                IH=IH+1
+        207     2                G(I)=G(I)+PQ(IH)*XOPT(J)
+        208     2                IF (I < J) G(J)=G(J)+PQ(IH)*XOPT(I)
+        209     2                H(I,J)=PQ(IH)
+        210     2            END DO
+        211     1        END DO
+        212        C
+        213        C     Generate the next trust region step and test its length. Set KNEW
+        214        C     to -1 if the purpose of the next F will be to improve conditioning,
+        215        C     and also calculate a lower bound on the Hessian term of the model Q.
+        216        C
+        217              CALL TRSTEP (N,G,H,DELTA,TOL,D,W(1),W(N+1),W(2*N+1),W(3*N+1),
+        218             1  W(4*N+1),W(5*N+1),EVALUE)
+        219              TEMP=ZERO
+        220     1        DO I=1,N
+        221     1            TEMP=TEMP+D(I)**2
+        222     1        END DO
+        223              DNORM=DMIN1(DELTA,DSQRT(TEMP))
+        224              ERRTOL=-ONE
+        225     1        IF (DNORM < HALF*RHO) THEN
+        226     1            KNEW=-1
+        227     1            ERRTOL=HALF*EVALUE*RHO*RHO
+        228     1            IF (NF <= NPT+9) ERRTOL=ZERO
+        229     1            GOTO 290
+        230     1        END IF
+        231        C
+        232        C     Calculate the next value of the objective function.
+        233        C
+        234     1    100 DO I=1,N
+        235     1            XNEW(I)=XOPT(I)+D(I)
+        236     1            X(I)=XBASE(I)+XNEW(I)
+        237     1        END DO
+        238     1    120 IF (NF >= NFTEST) THEN
+        239     1            IF (IPRINT > 0) PRINT 130
+        240     1    130     FORMAT (/4X,'Return from UOBYQA because CALFUN has been',
+        241     1       1      ' called MAXFUN times')
+        242     1  CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+        243     1            INFO=3
+        244     1  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        245     1            GOTO 420
+        246     1        END IF
+        247              NF=NF+1
+        248        !------------------------------------------------------------------------!
+        249              !CALL CALFUN (N,X,F)
+        250              call evaluate(calfun, x, f)
+        251              call savehist(nf, x, xhist, f, fhist)
+        252        !------------------------------------------------------------------------!
+        253        
+        254        CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+        255        C     By Zaikun (commented on 02-06-2019; implemented in 2016):
+        256        C     Exit if F .LE. FTARGET.
+        257     1        IF (F <= FTARGET) THEN
+        258     1            INFO=1
+        259     1            GOTO 436
+        260     1        END IF
+        261        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        262        
+        263     1        IF (IPRINT == 3) THEN
+        264     1            PRINT 140, NF,F,(X(I),I=1,N)
+        265     1    140      FORMAT (/4X,'Function number',I6,'    F =',1PD18.10,
+        266     1       1       '    The corresponding X is:'/(2X,5D15.6))
+        267     1        END IF
+        268              IF (NF <= NPT) GOTO 50
+        269        CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+        270        C      IF (KNEW .EQ. -1) GOTO 420
+        271     1        IF (KNEW == -1) THEN
+        272     1            INFO=0
+        273     1            GOTO 420
+        274     1        END IF
+        275        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        276        C
+        277        C     Use the quadratic model to predict the change in F due to the step D,
+        278        C     and find the values of the Lagrange functions at the new point.
+        279        C
+        280              VQUAD=ZERO
+        281              IH=N
+        282     1        DO J=1,N
+        283     1            W(J)=D(J)
+        284     1            VQUAD=VQUAD+W(J)*PQ(J)
+        285     2            DO I=1,J
+        286     2                IH=IH+1
+        287     2                W(IH)=D(I)*XNEW(J)+D(J)*XOPT(I)
+        288     2                IF (I == J) W(IH)=HALF*W(IH)
+        289     2                VQUAD=VQUAD+W(IH)*PQ(IH)
+        290     2            END DO
+        291     1        END DO
+        292     1        DO K=1,NPT
+        293     1            TEMP=ZERO
+        294     2            DO J=1,NPTM
+        295     2                TEMP=TEMP+W(J)*PL(K,J)
+        296     2            END DO
+        297     1            VLAG(K)=TEMP
+        298     1        END DO
+        299              VLAG(KOPT)=VLAG(KOPT)+ONE
+        300        C
+        301        C     Update SIXTHM, which is a lower bound on one sixth of the greatest
+        302        C     third derivative of F.
+        303        C
+        304              DIFF=F-FOPT-VQUAD
+        305              SUM=ZERO
+        306     1        DO K=1,NPT
+        307     1            TEMP=ZERO
+        308     2            DO I=1,N
+        309     2                TEMP=TEMP+(XPT(K,I)-XNEW(I))**2
+        310     2            END DO
+        311     1            TEMP=DSQRT(TEMP)
+        312     1            SUM=SUM+DABS(TEMP*TEMP*TEMP*VLAG(K))
+        313     1        END DO
+        314              SIXTHM=DMAX1(SIXTHM,DABS(DIFF)/SUM)
+        315        C
+        316        C     Update FOPT and XOPT if the new F is the least value of the objective
+        317        C     function so far. Then branch if D is not a trust region step.
+        318        C
+        319              FSAVE=FOPT
+        320     1        IF (F < FOPT) THEN
+        321     1            FOPT=F
+        322     2            DO I=1,N
+        323     2                XOPT(I)=XNEW(I)
+        324     2            END DO
+        325     1        END IF
+        326              KSAVE=KNEW
+        327              IF (KNEW > 0) GOTO 240
+        328        C
+        329        C     Pick the next value of DELTA after a trust region step.
+        330        C
+        331     1        IF (VQUAD >= ZERO) THEN
+        332     1            IF (IPRINT > 0) PRINT 210
+        333     1    210     FORMAT (/4X,'Return from UOBYQA because a trust',
+        334     1       1      ' region step has failed to reduce Q')
+        335     1  CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+        336     1            INFO=2
+        337     1  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        338     1            GOTO 420
+        339     1        END IF
+        340              RATIO=(F-FSAVE)/VQUAD
+        341     1        IF (RATIO <= 0.1D0) THEN
+        342     1            DELTA=HALF*DNORM
+        343     1        ELSE IF (RATIO. LE. 0.7D0) THEN
+        344     1            DELTA=DMAX1(HALF*DELTA,DNORM)
+        345     1        ELSE
+        346     1            DELTA=DMAX1(DELTA,1.25D0*DNORM,DNORM+RHO)
+        347     1        END IF
+        348              IF (DELTA <= 1.5D0*RHO) DELTA=RHO
+        349        C
+        350        C     Set KNEW to the index of the next interpolation point to be deleted.
+        351        C
+        352              KTEMP=0
+        353              DETRAT=ZERO
+        354     1        IF (F >= FSAVE) THEN
+        355     1            KTEMP=KOPT
+        356     1            DETRAT=ONE
+        357     1        END IF
+        358     1        DO K=1,NPT
+        359     1            SUM=ZERO
+        360     2            DO I=1,N
+        361     2                SUM=SUM+(XPT(K,I)-XOPT(I))**2
+        362     2            END DO
+        363     1            TEMP=DABS(VLAG(K))
+        364     1            IF (SUM > RHOSQ) TEMP=TEMP*(SUM/RHOSQ)**1.5D0
+        365     2            IF (TEMP > DETRAT .AND. K /= KTEMP) THEN
+        366     2                DETRAT=TEMP
+        367     2                DDKNEW=SUM
+        368     2                KNEW=K
+        369     2            END IF
+        370     1        END DO
+        371              IF (KNEW == 0) GOTO 290
+        372        C
+        373        C     Replace the interpolation point that has index KNEW by the point XNEW,
+        374        C     and also update the Lagrange functions and the quadratic model.
+        375        C
+        376     1    240 DO I=1,N
+        377     1            XPT(KNEW,I)=XNEW(I)
+        378     1        END DO
+        379              TEMP=ONE/VLAG(KNEW)
+        380     1        DO J=1,NPTM
+        381     1            PL(KNEW,J)=TEMP*PL(KNEW,J)
+        382     1            PQ(J)=PQ(J)+DIFF*PL(KNEW,J)
+        383     1        END DO
+        384     1        DO K=1,NPT
+        385     2            IF (K /= KNEW) THEN
+        386     2                TEMP=VLAG(K)
+        387     3                DO J=1,NPTM
+        388     3                    PL(K,J)=PL(K,J)-TEMP*PL(KNEW,J)
+        389     3                END DO
+        390     2            END IF
+        391     1        END DO
+        392        C
+        393        C     Update KOPT if F is the least calculated value of the objective
+        394        C     function. Then branch for another trust region calculation. The
+        395        C     case KSAVE>0 indicates that a model step has just been taken.
+        396        C
+        397     1        IF (F < FSAVE) THEN
+        398     1            KOPT=KNEW
+        399     1            GOTO 70
+        400     1        END IF
+        401              IF (KSAVE > 0) GOTO 70
+        402              IF (DNORM > TWO*RHO) GOTO 70
+        403              IF (DDKNEW > TWORSQ) GOTO 70
+        404        C
+        405        C     Alternatively, find out if the interpolation points are close
+        406        C     enough to the best point so far.
+        407        C
+        408     1    290 DO K=1,NPT
+        409     1            W(K)=ZERO
+        410     2            DO I=1,N
+        411     2                W(K)=W(K)+(XPT(K,I)-XOPT(I))**2
+        412     2            END DO
+        413     1        END DO
+        414          310 KNEW=-1
+        415              DISTEST=TWORSQ
+        416     1        DO K=1,NPT
+        417     2            IF (W(K) > DISTEST) THEN
+        418     2                KNEW=K
+        419     2                DISTEST=W(K)
+        420     2            END IF
+        421     1        END DO
+        422        C
+        423        C     If a point is sufficiently far away, then set the gradient and Hessian
+        424        C     of its Lagrange function at the centre of the trust region, and find
+        425        C     half the sum of squares of components of the Hessian.
+        426        C
+        427     1        IF (KNEW > 0) THEN
+        428     1            IH=N
+        429     1            SUMH=ZERO
+        430     2            DO J=1,N
+        431     2                G(J)=PL(KNEW,J)
+        432     3                DO I=1,J
+        433     3                    IH=IH+1
+        434     3                    TEMP=PL(KNEW,IH)
+        435     3                    G(J)=G(J)+TEMP*XOPT(I)
+        436     4                    IF (I < J) THEN
+        437     4                        G(I)=G(I)+TEMP*XOPT(J)
+        438     4                        SUMH=SUMH+TEMP*TEMP
+        439     4                    END IF
+        440     3                    H(I,J)=TEMP
+        441     3                END DO
+        442     2                SUMH=SUMH+HALF*TEMP*TEMP
+        443     2            END DO
+        444     1  C
+        445     1  C     If ERRTOL is positive, test whether to replace the interpolation point
+        446     1  C     with index KNEW, using a bound on the maximum modulus of its Lagrange
+        447     1  C     function in the trust region.
+        448     1  C
+        449     2            IF (ERRTOL > ZERO) THEN
+        450     2                W(KNEW)=ZERO
+        451     2                SUMG=ZERO
+        452     3                DO I=1,N
+        453     3                    SUMG=SUMG+G(I)**2
+        454     3                END DO
+        455     2                ESTIM=RHO*(DSQRT(SUMG)+RHO*DSQRT(HALF*SUMH))
+        456     2                WMULT=SIXTHM*DISTEST**1.5D0
+        457     2                IF (WMULT*ESTIM <= ERRTOL) GOTO 310
+        458     2            END IF
+        459     1  C
+        460     1  C     If the KNEW-th point may be replaced, then pick a D that gives a large
+        461     1  C     value of the modulus of its Lagrange function within the trust region.
+        462     1  C     Here the vector XNEW is used as temporary working space.
+        463     1  C
+        464     1            CALL LAGMAX (N,G,H,RHO,D,XNEW,VMAX)
+        465     2            IF (ERRTOL > ZERO) THEN
+        466     2                IF (WMULT*VMAX <= ERRTOL) GOTO 310
+        467     2            END IF
+        468     1            GOTO 100
+        469     1        END IF
+        470              IF (DNORM > RHO) GOTO 70
+        471        C
+        472        C     Prepare to reduce RHO by shifting XBASE to the best point so far,
+        473        C     and make the corresponding changes to the gradients of the Lagrange
+        474        C     functions and the quadratic model.
+        475        C
+        476     1        IF (RHO > RHOEND) THEN
+        477     1            IH=N
+        478     2            DO J=1,N
+        479     2                XBASE(J)=XBASE(J)+XOPT(J)
+        480     3                DO K=1,NPT
+        481     3                    XPT(K,J)=XPT(K,J)-XOPT(J)
+        482     3                END DO
+        483     3                DO I=1,J
+        484     3                    IH=IH+1
+        485     3                    PQ(I)=PQ(I)+PQ(IH)*XOPT(J)
+        486     4                    IF (I < J) THEN
+        487     4                        PQ(J)=PQ(J)+PQ(IH)*XOPT(I)
+        488     5                        DO K=1,NPT
+        489     5                            PL(K,J)=PL(K,J)+PL(K,IH)*XOPT(I)
+        490     5                        END DO
+        491     4                    END IF
+        492     4                    DO K=1,NPT
+        493     4                        PL(K,I)=PL(K,I)+PL(K,IH)*XOPT(J)
+        494     4                    END DO
+        495     3                END DO
+        496     2            END DO
+        497     1  C
+        498     1  C     Pick the next values of RHO and DELTA.
+        499     1  C
+        500     1            DELTA=HALF*RHO
+        501     1            RATIO=RHO/RHOEND
+        502     2            IF (RATIO <= 16.0D0) THEN
+        503     2                RHO=RHOEND
+        504     2            ELSE IF (RATIO <= 250.0D0) THEN
+        505     2                RHO=DSQRT(RATIO)*RHOEND
+        506     2            ELSE
+        507     2                RHO=0.1D0*RHO
+        508     2            END IF
+        509     1            DELTA=DMAX1(DELTA,RHO)
+        510     2            IF (IPRINT >= 2) THEN
+        511     2                IF (IPRINT >= 3) PRINT 390
+        512     2    390         FORMAT (5X)
+        513     2                PRINT 400, RHO,NF
+        514     2    400         FORMAT (/4X,'New RHO =',1PD11.4,5X,'Number of',
+        515     2       1          ' function values =',I6)
+        516     2                PRINT 410, FOPT,(XBASE(I),I=1,N)
+        517     2    410         FORMAT (4X,'Least value of F =',1PD23.15,9X,
+        518     2       1          'The corresponding X is:'/(2X,5D15.6))
+        519     2            END IF
+        520     1            GOTO 60
+        521     1        END IF
+        522        C
+        523        C     Return from the calculation, after another Newton-Raphson step, if
+        524        C     it is too short to have been tried before.
+        525        C
+        526        CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+        527              INFO=0
+        528        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        529              IF (ERRTOL >= ZERO) GOTO 100
+        530     1    420 IF (FOPT <= F) THEN
+        531     2            DO I=1,N
+        532     2                X(I)=XBASE(I)+XOPT(I)
+        533     2            END DO
+        534     1            F=FOPT
+        535     1        END IF
+        536        CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+        537        C      IF (IPRINT .GE. 1) THEN
+        538     1    436 IF (IPRINT >= 1) THEN
+        539     1  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        540     1            PRINT 440, NF
+        541     1    440     FORMAT (/4X,'At the return from UOBYQA',5X,
+        542     1       1      'Number of function values =',I6)
+        543     1            PRINT 410, F,(X(I),I=1,N)
+        544     1        END IF
+        545        
+        546        !---------------------------------------------!
+        547              call rangehist(nf, xhist, fhist)
+        548        !---------------------------------------------!
+        549        
+        550              RETURN
+        551              END
 
  Diagnostic messages: program name(uobyqb)
    3909-W: "uobyqb.f", line 14: Fixed form source is an obsolescent feature.
@@ -8090,31 +8089,31 @@
    1333-S: "uobyqb.f", line 18, column 10: Name expected.
    1333-S: "uobyqb.f", line 19, column 10: Name expected.
    1333-S: "uobyqb.f", line 20, column 10: Name expected.
-   1333-S: "uobyqb.f", line 21, column 10: Name expected.
-   1185-S: "uobyqb.f", line 23: In an initialization or specification expression, 'RP' must be a named constant.
-   1326-S: "uobyqb.f", line 23, column 21: Type specification or length specification invalid.
-   1185-S: "uobyqb.f", line 24: In an initialization or specification expression, 'IK' must be a named constant.
-   1326-S: "uobyqb.f", line 24, column 24: Type specification or length specification invalid.
-   1302-S: "uobyqb.f", line 26: Not a valid Fortran statement.
+   1185-S: "uobyqb.f", line 22: In an initialization or specification expression, 'RP' must be a named constant.
+   1326-S: "uobyqb.f", line 22, column 21: Type specification or length specification invalid.
+   1185-S: "uobyqb.f", line 23: In an initialization or specification expression, 'IK' must be a named constant.
+   1326-S: "uobyqb.f", line 23, column 24: Type specification or length specification invalid.
+   1302-S: "uobyqb.f", line 25: Not a valid Fortran statement.
+   1185-S: "uobyqb.f", line 26: In an initialization or specification expression, 'IK' must be a named constant.
+   1326-S: "uobyqb.f", line 26, column 15: Type specification or length specification invalid.
    1185-S: "uobyqb.f", line 27: In an initialization or specification expression, 'IK' must be a named constant.
    1326-S: "uobyqb.f", line 27, column 15: Type specification or length specification invalid.
    1185-S: "uobyqb.f", line 28: In an initialization or specification expression, 'IK' must be a named constant.
    1326-S: "uobyqb.f", line 28, column 15: Type specification or length specification invalid.
    1185-S: "uobyqb.f", line 29: In an initialization or specification expression, 'IK' must be a named constant.
    1326-S: "uobyqb.f", line 29, column 15: Type specification or length specification invalid.
-   1185-S: "uobyqb.f", line 30: In an initialization or specification expression, 'IK' must be a named constant.
-   1326-S: "uobyqb.f", line 30, column 15: Type specification or length specification invalid.
+   1185-S: "uobyqb.f", line 30: In an initialization or specification expression, 'RP' must be a named constant.
+   1326-S: "uobyqb.f", line 30, column 12: Type specification or length specification invalid.
    1185-S: "uobyqb.f", line 31: In an initialization or specification expression, 'RP' must be a named constant.
    1326-S: "uobyqb.f", line 31, column 12: Type specification or length specification invalid.
    1185-S: "uobyqb.f", line 32: In an initialization or specification expression, 'RP' must be a named constant.
    1326-S: "uobyqb.f", line 32, column 12: Type specification or length specification invalid.
-   1185-S: "uobyqb.f", line 33: In an initialization or specification expression, 'RP' must be a named constant.
-   1326-S: "uobyqb.f", line 33, column 12: Type specification or length specification invalid.
-   2018-S: "uobyqb.f", line 36: When IMPLICIT NONE is specified, 'NPT' must be declared in a type declaration statement.
-   2018-S: "uobyqb.f", line 36: When IMPLICIT NONE is specified, 'XPT' must be declared in a type declaration statement.
-   2018-S: "uobyqb.f", line 36: When IMPLICIT NONE is specified, 'PL' must be declared in a type declaration statement.
-   2018-S: "uobyqb.f", line 36: When IMPLICIT NONE is specified, 'N' must be declared in a type declaration statement.
-   2018-S: "uobyqb.f", line 36: When IMPLICIT NONE is specified, 'H' must be declared in a type declaration statement.
+   2018-S: "uobyqb.f", line 35: When IMPLICIT NONE is specified, 'NPT' must be declared in a type declaration statement.
+   2018-S: "uobyqb.f", line 35: When IMPLICIT NONE is specified, 'XPT' must be declared in a type declaration statement.
+   2018-S: "uobyqb.f", line 35: When IMPLICIT NONE is specified, 'PL' must be declared in a type declaration statement.
+   2018-S: "uobyqb.f", line 35: When IMPLICIT NONE is specified, 'N' must be declared in a type declaration statement.
+   2018-S: "uobyqb.f", line 35: When IMPLICIT NONE is specified, 'H' must be declared in a type declaration statement.
+   3909-W: "uobyqb.f", line 36: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 37: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 38: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 39: Fixed form source is an obsolescent feature.
@@ -8138,153 +8137,153 @@
    3909-W: "uobyqb.f", line 57: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 58: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 59: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 60: Fixed form source is an obsolescent feature.
+   3909-W: "uobyqb.f", line 68: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 69: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 70: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 71: Fixed form source is an obsolescent feature.
+   3909-W: "uobyqb.f", line 85: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 86: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 87: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 88: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 89: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 90: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 91: Fixed form source is an obsolescent feature.
-   1719-S: "uobyqb.f", line 93, column 11: 'X' already used as a function name.
+   1719-S: "uobyqb.f", line 92, column 11: 'X' already used as a function name.
+   3909-W: "uobyqb.f", line 108: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 109: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 110: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 111: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 112: Fixed form source is an obsolescent feature.
+   3909-W: "uobyqb.f", line 135: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 136: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 137: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 138: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 139: Fixed form source is an obsolescent feature.
+   3909-W: "uobyqb.f", line 154: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 155: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 156: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 157: Fixed form source is an obsolescent feature.
+   3909-W: "uobyqb.f", line 174: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 175: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 176: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 177: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 178: Fixed form source is an obsolescent feature.
+   3909-W: "uobyqb.f", line 190: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 191: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 192: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 193: Fixed form source is an obsolescent feature.
+   3909-W: "uobyqb.f", line 197: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 198: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 199: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 200: Fixed form source is an obsolescent feature.
+   3909-W: "uobyqb.f", line 212: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 213: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 214: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 215: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 216: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 217: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 219: Fixed form source is an obsolescent feature.
+   3909-W: "uobyqb.f", line 218: Fixed form source is an obsolescent feature.
+   2018-S: "uobyqb.f", line 224: When IMPLICIT NONE is specified, 'ERRTOL' must be declared in a type declaration statement.
+   3909-W: "uobyqb.f", line 231: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 232: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 233: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 234: Fixed form source is an obsolescent feature.
-   1719-S: "uobyqb.f", line 237, column 11: 'X' already used as a function name.
-   2018-S: "uobyqb.f", line 240: When IMPLICIT NONE is specified, 'IPRINT' must be declared in a type declaration statement.
+   1719-S: "uobyqb.f", line 236, column 11: 'X' already used as a function name.
+   2018-S: "uobyqb.f", line 239: When IMPLICIT NONE is specified, 'IPRINT' must be declared in a type declaration statement.
+   3909-W: "uobyqb.f", line 241: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 242: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 243: Fixed form source is an obsolescent feature.
-   2018-S: "uobyqb.f", line 244: When IMPLICIT NONE is specified, 'INFO' must be declared in a type declaration statement.
+   2018-S: "uobyqb.f", line 243: When IMPLICIT NONE is specified, 'INFO' must be declared in a type declaration statement.
+   3909-W: "uobyqb.f", line 254: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 255: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 256: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 257: Fixed form source is an obsolescent feature.
-   2018-S: "uobyqb.f", line 258: When IMPLICIT NONE is specified, 'FTARGET' must be declared in a type declaration statement.
-   3909-W: "uobyqb.f", line 267: Fixed form source is an obsolescent feature.
+   2018-S: "uobyqb.f", line 257: When IMPLICIT NONE is specified, 'FTARGET' must be declared in a type declaration statement.
+   3909-W: "uobyqb.f", line 266: Fixed form source is an obsolescent feature.
+   3909-W: "uobyqb.f", line 269: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 270: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 271: Fixed form source is an obsolescent feature.
+   3909-W: "uobyqb.f", line 276: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 277: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 278: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 279: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 280: Fixed form source is an obsolescent feature.
-   2018-S: "uobyqb.f", line 281: When IMPLICIT NONE is specified, 'VQUAD' must be declared in a type declaration statement.
+   2018-S: "uobyqb.f", line 280: When IMPLICIT NONE is specified, 'VQUAD' must be declared in a type declaration statement.
+   3909-W: "uobyqb.f", line 300: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 301: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 302: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 303: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 304: Fixed form source is an obsolescent feature.
-   2018-S: "uobyqb.f", line 305: When IMPLICIT NONE is specified, 'DIFF' must be declared in a type declaration statement.
-   2018-S: "uobyqb.f", line 306: When IMPLICIT NONE is specified, 'SUM' must be declared in a type declaration statement.
+   2018-S: "uobyqb.f", line 304: When IMPLICIT NONE is specified, 'DIFF' must be declared in a type declaration statement.
+   2018-S: "uobyqb.f", line 305: When IMPLICIT NONE is specified, 'SUM' must be declared in a type declaration statement.
+   3909-W: "uobyqb.f", line 315: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 316: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 317: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 318: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 319: Fixed form source is an obsolescent feature.
-   2018-S: "uobyqb.f", line 327: When IMPLICIT NONE is specified, 'KSAVE' must be declared in a type declaration statement.
+   2018-S: "uobyqb.f", line 326: When IMPLICIT NONE is specified, 'KSAVE' must be declared in a type declaration statement.
+   3909-W: "uobyqb.f", line 328: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 329: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 330: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 331: Fixed form source is an obsolescent feature.
+   3909-W: "uobyqb.f", line 334: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 335: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 336: Fixed form source is an obsolescent feature.
-   2018-S: "uobyqb.f", line 341: When IMPLICIT NONE is specified, 'RATIO' must be declared in a type declaration statement.
+   2018-S: "uobyqb.f", line 340: When IMPLICIT NONE is specified, 'RATIO' must be declared in a type declaration statement.
+   3909-W: "uobyqb.f", line 349: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 350: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 351: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 352: Fixed form source is an obsolescent feature.
-   2018-S: "uobyqb.f", line 353: When IMPLICIT NONE is specified, 'KTEMP' must be declared in a type declaration statement.
-   2018-S: "uobyqb.f", line 354: When IMPLICIT NONE is specified, 'DETRAT' must be declared in a type declaration statement.
-   2018-S: "uobyqb.f", line 368: When IMPLICIT NONE is specified, 'DDKNEW' must be declared in a type declaration statement.
+   2018-S: "uobyqb.f", line 352: When IMPLICIT NONE is specified, 'KTEMP' must be declared in a type declaration statement.
+   2018-S: "uobyqb.f", line 353: When IMPLICIT NONE is specified, 'DETRAT' must be declared in a type declaration statement.
+   2018-S: "uobyqb.f", line 367: When IMPLICIT NONE is specified, 'DDKNEW' must be declared in a type declaration statement.
+   3909-W: "uobyqb.f", line 372: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 373: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 374: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 375: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 376: Fixed form source is an obsolescent feature.
+   3909-W: "uobyqb.f", line 392: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 393: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 394: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 395: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 396: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 397: Fixed form source is an obsolescent feature.
+   3909-W: "uobyqb.f", line 404: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 405: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 406: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 407: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 408: Fixed form source is an obsolescent feature.
-   2018-S: "uobyqb.f", line 416: When IMPLICIT NONE is specified, 'DISTEST' must be declared in a type declaration statement.
+   2018-S: "uobyqb.f", line 415: When IMPLICIT NONE is specified, 'DISTEST' must be declared in a type declaration statement.
+   3909-W: "uobyqb.f", line 422: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 423: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 424: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 425: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 426: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 427: Fixed form source is an obsolescent feature.
-   2018-S: "uobyqb.f", line 430: When IMPLICIT NONE is specified, 'SUMH' must be declared in a type declaration statement.
+   2018-S: "uobyqb.f", line 429: When IMPLICIT NONE is specified, 'SUMH' must be declared in a type declaration statement.
+   3909-W: "uobyqb.f", line 444: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 445: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 446: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 447: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 448: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 449: Fixed form source is an obsolescent feature.
-   2018-S: "uobyqb.f", line 452: When IMPLICIT NONE is specified, 'SUMG' must be declared in a type declaration statement.
-   2018-S: "uobyqb.f", line 456: When IMPLICIT NONE is specified, 'ESTIM' must be declared in a type declaration statement.
-   2018-S: "uobyqb.f", line 457: When IMPLICIT NONE is specified, 'WMULT' must be declared in a type declaration statement.
+   2018-S: "uobyqb.f", line 451: When IMPLICIT NONE is specified, 'SUMG' must be declared in a type declaration statement.
+   2018-S: "uobyqb.f", line 455: When IMPLICIT NONE is specified, 'ESTIM' must be declared in a type declaration statement.
+   2018-S: "uobyqb.f", line 456: When IMPLICIT NONE is specified, 'WMULT' must be declared in a type declaration statement.
+   3909-W: "uobyqb.f", line 459: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 460: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 461: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 462: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 463: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 464: Fixed form source is an obsolescent feature.
-   2018-S: "uobyqb.f", line 465: When IMPLICIT NONE is specified, 'VMAX' must be declared in a type declaration statement.
+   2018-S: "uobyqb.f", line 464: When IMPLICIT NONE is specified, 'VMAX' must be declared in a type declaration statement.
+   3909-W: "uobyqb.f", line 471: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 472: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 473: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 474: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 475: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 476: Fixed form source is an obsolescent feature.
-   2018-S: "uobyqb.f", line 477: When IMPLICIT NONE is specified, 'RHOEND' must be declared in a type declaration statement.
+   2018-S: "uobyqb.f", line 476: When IMPLICIT NONE is specified, 'RHOEND' must be declared in a type declaration statement.
+   3909-W: "uobyqb.f", line 497: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 498: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 499: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 500: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 516: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 519: Fixed form source is an obsolescent feature.
+   3909-W: "uobyqb.f", line 515: Fixed form source is an obsolescent feature.
+   3909-W: "uobyqb.f", line 518: Fixed form source is an obsolescent feature.
+   3909-W: "uobyqb.f", line 522: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 523: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 524: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 525: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 526: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 527: Fixed form source is an obsolescent feature.
-   1719-S: "uobyqb.f", line 533, column 15: 'X' already used as a function name.
+   1719-S: "uobyqb.f", line 532, column 15: 'X' already used as a function name.
+   3909-W: "uobyqb.f", line 536: Fixed form source is an obsolescent feature.
    3909-W: "uobyqb.f", line 537: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 538: Fixed form source is an obsolescent feature.
-   3909-W: "uobyqb.f", line 543: Fixed form source is an obsolescent feature.
+   3909-W: "uobyqb.f", line 542: Fixed form source is an obsolescent feature.
 
  Procedure information
-   Lines      : 552
-   Statements : 381
+   Lines      : 551
+   Statements : 380
 
  Total information
    Procedures       : 1
-   Total lines      : 552
-   Total statements : 381
+   Total lines      : 551
+   Total statements : 380
 
 
- Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Fri Feb 11 22:03:17 2022
+ Lahey/Fujitsu Fortran 95 Compiler Release L8.10b  Sat Feb 12 17:36:58 2022
  Copyright (C) 1994-2008 Lahey Computer Systems.  All rights reserved.
  Copyright (C) 1998-2008 FUJITSU LIMITED. All rights reserved.
 
@@ -8308,347 +8307,341 @@
           3        ! Classical mode. Not maintained. Not recommended. Please use the modernized version instead.
           4        !
           5        ! The usage is the same as the modernized version.
-          6        !
-          7        ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code.
-          8        !
-          9        ! Started: February 2022
-         10        !
-         11        ! Last Modified: Friday, February 11, 2022 PM08:16:46
-         12        !--------------------------------------------------------------------------------------------------!
-         13        
-         14        implicit none
-         15        private
-         16        public :: uobyqa
-         17        
-         18        
-         19        contains
-         20        
-         21        
-         22        subroutine uobyqa(calfun, x, f, &
-         23            & nf, rhobeg, rhoend, ftarget, maxfun, iprint, eta1, eta2, gamma1, gamma2, &
-         24            & xhist, fhist, maxhist, info)
-         25        
-         26        ! Generic modules
-         27        use, non_intrinsic :: consts_mod, only : DEBUGGING
-         28        use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT
-         29        use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT
-         30        use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS, MSGLEN
-         31        use, non_intrinsic :: debug_mod, only : assert, warning
-         32        use, non_intrinsic :: evaluate_mod, only : moderatex
-         33        use, non_intrinsic :: history_mod, only : prehist
-         34        use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-         35        use, non_intrinsic :: memory_mod, only : safealloc
-         36        use, non_intrinsic :: pintrf_mod, only : OBJ
-         37        use, non_intrinsic :: preproc_mod, only : preproc
-         38        
-         39        ! Solver-specific modules
-         40        !use, non_intrinsic :: uobyqb_mod, only : uobyqb
-         41        
-         42        implicit none
-         43        
-         44        ! Arguments
-         45        procedure(OBJ) :: calfun
-         46        ! N.B.: The INTENT attribute cannot be specified for a dummy procedure without the POINTER attribute
-         47        real(RP), intent(inout) :: x(:)
-         48        real(RP), intent(out) :: f
-         49        integer(IK), intent(out), optional :: nf
-         50        real(RP), intent(in), optional :: rhobeg
-         51        real(RP), intent(in), optional :: rhoend
-         52        real(RP), intent(in), optional :: ftarget
-         53        integer(IK), intent(in), optional :: maxfun
-         54        integer(IK), intent(in), optional :: iprint
-         55        real(RP), intent(in), optional :: eta1
-         56        real(RP), intent(in), optional :: eta2
-         57        real(RP), intent(in), optional :: gamma1
-         58        real(RP), intent(in), optional :: gamma2
-         59        real(RP), intent(out), optional, allocatable :: fhist(:)
-         60        real(RP), intent(out), optional, allocatable :: xhist(:, :)
-         61        integer(IK), intent(in), optional :: maxhist
-         62        integer(IK), intent(out), optional :: info
-         63        
-         64        ! Local variables
-         65        character(len=*), parameter :: ifmt = '(I0)'  ! I0: use the minimum number of digits needed to print
-         66        character(len=*), parameter :: solver = 'UOBYQA'
-         67        character(len=*), parameter :: srname = 'UOBYQA'
-         68        character(len=MSGLEN) :: wmsg
-         69        integer(IK) :: info_loc
-         70        integer(IK) :: iprint_loc
-         71        integer(IK) :: maxfun_loc
-         72        integer(IK) :: maxhist_loc
-         73        integer(IK) :: n
-         74        integer(IK) :: nf_loc
-         75        integer(IK) :: nhist
-         76        real(RP) :: eta1_loc
-         77        real(RP) :: eta2_loc
-         78        real(RP) :: ftarget_loc
-         79        real(RP) :: gamma1_loc
-         80        real(RP) :: gamma2_loc
-         81        real(RP) :: rhobeg_loc
-         82        real(RP) :: rhoend_loc
-         83        real(RP), allocatable :: fhist_loc(:)
-         84        real(RP), allocatable :: xhist_loc(:, :)
-         85        
+          6        !--------------------------------------------------------------------------------------------------!
+          7        
+          8        implicit none
+          9        private
+         10        public :: uobyqa
+         11        
+         12        
+         13        contains
+         14        
+         15        
+         16        subroutine uobyqa(calfun, x, f, &
+         17            & nf, rhobeg, rhoend, ftarget, maxfun, iprint, eta1, eta2, gamma1, gamma2, &
+         18            & xhist, fhist, maxhist, info)
+         19        
+         20        ! Generic modules
+         21        use, non_intrinsic :: consts_mod, only : DEBUGGING
+         22        use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT
+         23        use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT
+         24        use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS, MSGLEN
+         25        use, non_intrinsic :: debug_mod, only : assert, warning
+         26        use, non_intrinsic :: evaluate_mod, only : moderatex
+         27        use, non_intrinsic :: history_mod, only : prehist
+         28        use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
+         29        use, non_intrinsic :: memory_mod, only : safealloc
+         30        use, non_intrinsic :: pintrf_mod, only : OBJ
+         31        use, non_intrinsic :: preproc_mod, only : preproc
+         32        
+         33        ! Solver-specific modules
+         34        !use, non_intrinsic :: uobyqb_mod, only : uobyqb
+         35        
+         36        implicit none
+         37        
+         38        ! Arguments
+         39        procedure(OBJ) :: calfun
+         40        ! N.B.: The INTENT attribute cannot be specified for a dummy procedure without the POINTER attribute
+         41        real(RP), intent(inout) :: x(:)
+         42        real(RP), intent(out) :: f
+         43        integer(IK), intent(out), optional :: nf
+         44        real(RP), intent(in), optional :: rhobeg
+         45        real(RP), intent(in), optional :: rhoend
+         46        real(RP), intent(in), optional :: ftarget
+         47        integer(IK), intent(in), optional :: maxfun
+         48        integer(IK), intent(in), optional :: iprint
+         49        real(RP), intent(in), optional :: eta1
+         50        real(RP), intent(in), optional :: eta2
+         51        real(RP), intent(in), optional :: gamma1
+         52        real(RP), intent(in), optional :: gamma2
+         53        real(RP), intent(out), optional, allocatable :: fhist(:)
+         54        real(RP), intent(out), optional, allocatable :: xhist(:, :)
+         55        integer(IK), intent(in), optional :: maxhist
+         56        integer(IK), intent(out), optional :: info
+         57        
+         58        ! Local variables
+         59        character(len=*), parameter :: ifmt = '(I0)'  ! I0: use the minimum number of digits needed to print
+         60        character(len=*), parameter :: solver = 'UOBYQA'
+         61        character(len=*), parameter :: srname = 'UOBYQA'
+         62        character(len=MSGLEN) :: wmsg
+         63        integer(IK) :: info_loc
+         64        integer(IK) :: iprint_loc
+         65        integer(IK) :: maxfun_loc
+         66        integer(IK) :: maxhist_loc
+         67        integer(IK) :: n
+         68        integer(IK) :: nf_loc
+         69        integer(IK) :: nhist
+         70        real(RP) :: eta1_loc
+         71        real(RP) :: eta2_loc
+         72        real(RP) :: ftarget_loc
+         73        real(RP) :: gamma1_loc
+         74        real(RP) :: gamma2_loc
+         75        real(RP) :: rhobeg_loc
+         76        real(RP) :: rhoend_loc
+         77        real(RP), allocatable :: fhist_loc(:)
+         78        real(RP), allocatable :: xhist_loc(:, :)
+         79        
+         80        
+         81        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+         82        ! Working variables
+         83        real(RP), allocatable :: w(:)
+         84        integer(IK) :: npt, ixb, ixo, ixn, ixp, ipq, ipl, ih, ig, id, ivl, iw
+         85        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
          86        
-         87        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-         88        ! Working variables
-         89        real(RP), allocatable :: w(:)
-         90        integer(IK) :: npt, ixb, ixo, ixn, ixp, ipq, ipl, ih, ig, id, ivl, iw
-         91        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-         92        
+         87        
+         88        ! Sizes
+         89        n = int(size(x), kind(n))
+         90        
+         91        ! Replace any NaN in X by ZERO and Inf/-Inf in X by HUGENUM/-HUGENUM.
+         92        x = moderatex(x)
          93        
-         94        ! Sizes
-         95        n = int(size(x), kind(n))
-         96        
-         97        ! Replace any NaN in X by ZERO and Inf/-Inf in X by HUGENUM/-HUGENUM.
-         98        x = moderatex(x)
-         99        
-        100        ! Read the inputs.
-        101        
-        102        ! If RHOBEG is present, then RHOBEG_LOC is a copy of RHOBEG; otherwise, RHOBEG_LOC takes the default
-        103        ! value for RHOBEG, taking the value of RHOEND into account. Note that RHOEND is considered only if
-        104        ! it is present and it is VALID (i.e., finite and positive). The other inputs are read similarly.
-        105     1  if (present(rhobeg)) then
-        106     1      rhobeg_loc = rhobeg
-        107     1  elseif (present(rhoend)) then
-        108     1      ! Fortran does not take short-circuit evaluation of logic expressions. Thus it is WRONG to
-        109     1      ! combine the evaluation of PRESENT(RHOEND) and the evaluation of IS_FINITE(RHOEND) as
-        110     1      ! "IF (PRESENT(RHOEND) .AND. IS_FINITE(RHOEND))". The compiler may choose to evaluate the
-        111     1      ! IS_FINITE(RHOEND) even if PRESENT(RHOEND) is false!
-        112     2      if (is_finite(rhoend) .and. rhoend > ZERO) then
-        113     2          rhobeg_loc = max(TEN * rhoend, RHOBEG_DFT)
-        114     2      else
-        115     2          rhobeg_loc = RHOBEG_DFT
-        116     2      end if
-        117     1  else
-        118     1      rhobeg_loc = RHOBEG_DFT
-        119     1  end if
-        120        
-        121     1  if (present(rhoend)) then
-        122     1      rhoend_loc = rhoend
-        123     1  elseif (rhobeg_loc > 0) then
-        124     1      rhoend_loc = max(EPS, min(TENTH * rhobeg_loc, RHOEND_DFT))
+         94        ! Read the inputs.
+         95        
+         96        ! If RHOBEG is present, then RHOBEG_LOC is a copy of RHOBEG; otherwise, RHOBEG_LOC takes the default
+         97        ! value for RHOBEG, taking the value of RHOEND into account. Note that RHOEND is considered only if
+         98        ! it is present and it is VALID (i.e., finite and positive). The other inputs are read similarly.
+         99     1  if (present(rhobeg)) then
+        100     1      rhobeg_loc = rhobeg
+        101     1  elseif (present(rhoend)) then
+        102     1      ! Fortran does not take short-circuit evaluation of logic expressions. Thus it is WRONG to
+        103     1      ! combine the evaluation of PRESENT(RHOEND) and the evaluation of IS_FINITE(RHOEND) as
+        104     1      ! "IF (PRESENT(RHOEND) .AND. IS_FINITE(RHOEND))". The compiler may choose to evaluate the
+        105     1      ! IS_FINITE(RHOEND) even if PRESENT(RHOEND) is false!
+        106     2      if (is_finite(rhoend) .and. rhoend > ZERO) then
+        107     2          rhobeg_loc = max(TEN * rhoend, RHOBEG_DFT)
+        108     2      else
+        109     2          rhobeg_loc = RHOBEG_DFT
+        110     2      end if
+        111     1  else
+        112     1      rhobeg_loc = RHOBEG_DFT
+        113     1  end if
+        114        
+        115     1  if (present(rhoend)) then
+        116     1      rhoend_loc = rhoend
+        117     1  elseif (rhobeg_loc > 0) then
+        118     1      rhoend_loc = max(EPS, min(TENTH * rhobeg_loc, RHOEND_DFT))
+        119     1  else
+        120     1      rhoend_loc = RHOEND_DFT
+        121     1  end if
+        122        
+        123     1  if (present(ftarget)) then
+        124     1      ftarget_loc = ftarget
         125     1  else
-        126     1      rhoend_loc = RHOEND_DFT
+        126     1      ftarget_loc = FTARGET_DFT
         127     1  end if
         128        
-        129     1  if (present(ftarget)) then
-        130     1      ftarget_loc = ftarget
+        129     1  if (present(maxfun)) then
+        130     1      maxfun_loc = maxfun
         131     1  else
-        132     1      ftarget_loc = FTARGET_DFT
+        132     1      maxfun_loc = MAXFUN_DIM_DFT * n
         133     1  end if
         134        
-        135     1  if (present(maxfun)) then
-        136     1      maxfun_loc = maxfun
+        135     1  if (present(iprint)) then
+        136     1      iprint_loc = iprint
         137     1  else
-        138     1      maxfun_loc = MAXFUN_DIM_DFT * n
+        138     1      iprint_loc = IPRINT_DFT
         139     1  end if
         140        
-        141     1  if (present(iprint)) then
-        142     1      iprint_loc = iprint
-        143     1  else
-        144     1      iprint_loc = IPRINT_DFT
-        145     1  end if
-        146        
-        147     1  if (present(eta1)) then
-        148     1      eta1_loc = eta1
-        149     1  elseif (present(eta2)) then
-        150     2      if (eta2 > ZERO .and. eta2 < ONE) then
-        151     2          eta1_loc = max(EPS, eta2 / 7.0_RP)
-        152     2      end if
-        153     1  else
-        154     1      eta1_loc = TENTH
-        155     1  end if
-        156        
-        157     1  if (present(eta2)) then
-        158     1      eta2_loc = eta2
-        159     1  elseif (eta1_loc > ZERO .and. eta1_loc < ONE) then
-        160     1      eta2_loc = (eta1_loc + TWO) / 3.0_RP
+        141     1  if (present(eta1)) then
+        142     1      eta1_loc = eta1
+        143     1  elseif (present(eta2)) then
+        144     2      if (eta2 > ZERO .and. eta2 < ONE) then
+        145     2          eta1_loc = max(EPS, eta2 / 7.0_RP)
+        146     2      end if
+        147     1  else
+        148     1      eta1_loc = TENTH
+        149     1  end if
+        150        
+        151     1  if (present(eta2)) then
+        152     1      eta2_loc = eta2
+        153     1  elseif (eta1_loc > ZERO .and. eta1_loc < ONE) then
+        154     1      eta2_loc = (eta1_loc + TWO) / 3.0_RP
+        155     1  else
+        156     1      eta2_loc = 0.7_RP
+        157     1  end if
+        158        
+        159     1  if (present(gamma1)) then
+        160     1      gamma1_loc = gamma1
         161     1  else
-        162     1      eta2_loc = 0.7_RP
+        162     1      gamma1_loc = HALF
         163     1  end if
         164        
-        165     1  if (present(gamma1)) then
-        166     1      gamma1_loc = gamma1
+        165     1  if (present(gamma2)) then
+        166     1      gamma2_loc = gamma2
         167     1  else
-        168     1      gamma1_loc = HALF
+        168     1      gamma2_loc = TWO
         169     1  end if
         170        
-        171     1  if (present(gamma2)) then
-        172     1      gamma2_loc = gamma2
+        171     1  if (present(maxhist)) then
+        172     1      maxhist_loc = maxhist
         173     1  else
-        174     1      gamma2_loc = TWO
+        174     1      maxhist_loc = maxval([maxfun_loc, 1_IK + (n + 1_IK) * (n + 2_IK) / 2_IK, MAXFUN_DIM_DFT * n])
         175     1  end if
         176        
-        177     1  if (present(maxhist)) then
-        178     1      maxhist_loc = maxhist
-        179     1  else
-        180     1      maxhist_loc = maxval([maxfun_loc, 1_IK + (n + 1_IK) * (n + 2_IK) / 2_IK, MAXFUN_DIM_DFT * n])
-        181     1  end if
-        182        
-        183        ! Preprocess the inputs in case some of them are invalid.
-        184        call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
-        185            & eta1=eta1_loc, eta2=eta2_loc, gamma1=gamma1_loc, gamma2=gamma2_loc)
+        177        ! Preprocess the inputs in case some of them are invalid.
+        178        call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
+        179            & eta1=eta1_loc, eta2=eta2_loc, gamma1=gamma1_loc, gamma2=gamma2_loc)
+        180        
+        181        ! Further revise MAXHIST_LOC according to MAXMEMORY, and allocate memory for the history.
+        182        ! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
+        183        ! FHIST = NaN(1, MAXFUN), XHIST = NaN(N, MAXFUN) if they are requested; replace MAXFUN with 0 for
+        184        ! the history that is not requested.
+        185        call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_loc)
         186        
-        187        ! Further revise MAXHIST_LOC according to MAXMEMORY, and allocate memory for the history.
-        188        ! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
-        189        ! FHIST = NaN(1, MAXFUN), XHIST = NaN(N, MAXFUN) if they are requested; replace MAXFUN with 0 for
-        190        ! the history that is not requested.
-        191        call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_loc)
-        192        
-        193        
-        194        !--------------------------------------------------------------------------------------------------!
-        195        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        196        ! Working space
-        197        call safealloc(w, int(n**4 + 8 * n**3 + 23 * n**2 + 42 * n + max(2 * n**2 + 4, 18 * n) / 4, IK))
-        198        npt = (n * n + 3 * n + 2) / 2
-        199        ixb = 1
-        200        ixo = ixb + n
-        201        ixn = ixo + n
-        202        ixp = ixn + n
-        203        ipq = ixp + n * npt
-        204        ipl = ipq + npt - 1
-        205        ih = ipl + (npt - 1) * npt
-        206        ig = ih + n * n
-        207        id = ig + n
-        208        ivl = ih
-        209        iw = id + n
-        210        call uobyqb(calfun, n, x, rhobeg_loc, rhoend_loc, iprint_loc, maxfun_loc, npt, w(ixb), w(ixo), &
-        211             &  w(ixn), w(ixp), w(ipq), w(ipl), w(ih), w(ig), w(id), w(ivl), w(iw), f, &
-        212             &  info_loc, ftarget_loc, &
-        213             &  nf_loc, xhist_loc, size(xhist_loc, 2, kind=IK), fhist_loc, size(fhist_loc, kind=IK))
-        214        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        215        !--------------------------------------------------------------------------------------------------!
-        216        
-        217        
+        187        
+        188        !--------------------------------------------------------------------------------------------------!
+        189        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        190        ! Working space
+        191        call safealloc(w, int(n**4 + 8 * n**3 + 23 * n**2 + 42 * n + max(2 * n**2 + 4, 18 * n) / 4, IK))
+        192        npt = (n * n + 3 * n + 2) / 2
+        193        ixb = 1
+        194        ixo = ixb + n
+        195        ixn = ixo + n
+        196        ixp = ixn + n
+        197        ipq = ixp + n * npt
+        198        ipl = ipq + npt - 1
+        199        ih = ipl + (npt - 1) * npt
+        200        ig = ih + n * n
+        201        id = ig + n
+        202        ivl = ih
+        203        iw = id + n
+        204        call uobyqb(calfun, n, x, rhobeg_loc, rhoend_loc, iprint_loc, maxfun_loc, npt, w(ixb), w(ixo), &
+        205             &  w(ixn), w(ixp), w(ipq), w(ipl), w(ih), w(ig), w(id), w(ivl), w(iw), f, &
+        206             &  info_loc, ftarget_loc, &
+        207             &  nf_loc, xhist_loc, int(size(xhist_loc, 2), IK), fhist_loc, int(size(fhist_loc), IK))
+        208        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        209        !--------------------------------------------------------------------------------------------------!
+        210        
+        211        
+        212        
+        213        ! Write the outputs.
+        214        
+        215     1  if (present(nf)) then
+        216     1      nf = nf_loc
+        217     1  end if
         218        
-        219        ! Write the outputs.
-        220        
-        221     1  if (present(nf)) then
-        222     1      nf = nf_loc
-        223     1  end if
-        224        
-        225     1  if (present(info)) then
-        226     1      info = info_loc
-        227     1  end if
-        228        
-        229        ! Copy XHIST_LOC to XHIST if needed.
-        230     1  if (present(xhist)) then
-        231     1      nhist = min(nf_loc, int(size(xhist_loc, 2), IK))
-        232     1      !----------------------------------------------------!
-        233     1      call safealloc(xhist, n, nhist)  ! Removable in F2003.
-        234     1      !----------------------------------------------------!
-        235     1      xhist = xhist_loc(:, 1:nhist)
-        236     1      ! N.B.:
-        237     1      ! 0. Allocate XHIST as long as it is present, even if the size is 0; otherwise, it will be
-        238     1      ! illegal to enquire XHIST after exit.
-        239     1      ! 1. Even though Fortran 2003 supports automatic (re)allocation of allocatable arrays upon
-        240     1      ! intrinsic assignment, we keep the line of SAFEALLOC, because some very new compilers (Absoft
-        241     1      ! Fortran 21.0) are still not standard-compliant in this respect.
-        242     1      ! 2. NF may not be present. Hence we should NOT use NF but NF_LOC.
-        243     1      ! 3. When SIZE(XHIST_LOC, 2) > NF_LOC, which is the normal case in practice, XHIST_LOC contains
-        244     1      ! GARBAGE in XHIST_LOC(:, NF_LOC + 1 : END). Therefore, we MUST cap XHIST at NF_LOC so that
-        245     1      ! XHIST cointains only valid history. For this reason, there is no way to avoid allocating
-        246     1      ! two copies of memory for XHIST unless we declare it to be a POINTER instead of ALLOCATABLE.
-        247     1  end if
-        248        ! F2003 automatically deallocate local ALLOCATABLE variables at exit, yet we prefer to deallocate
-        249        ! them immediately when they finish their jobs.
-        250        deallocate (xhist_loc)
-        251        
-        252        ! Copy FHIST_LOC to FHIST if needed.
-        253     1  if (present(fhist)) then
-        254     1      nhist = min(nf_loc, int(size(fhist_loc), IK))
-        255     1      !--------------------------------------------------!
-        256     1      call safealloc(fhist, nhist)  ! Removable in F2003.
-        257     1      !--------------------------------------------------!
-        258     1      fhist = fhist_loc(1:nhist)  ! The same as XHIST, we must cap FHIST at NF_LOC.
-        259     1  end if
-        260        deallocate (fhist_loc)
+        219     1  if (present(info)) then
+        220     1      info = info_loc
+        221     1  end if
+        222        
+        223        ! Copy XHIST_LOC to XHIST if needed.
+        224     1  if (present(xhist)) then
+        225     1      nhist = min(nf_loc, int(size(xhist_loc, 2), IK))
+        226     1      !----------------------------------------------------!
+        227     1      call safealloc(xhist, n, nhist)  ! Removable in F2003.
+        228     1      !----------------------------------------------------!
+        229     1      xhist = xhist_loc(:, 1:nhist)
+        230     1      ! N.B.:
+        231     1      ! 0. Allocate XHIST as long as it is present, even if the size is 0; otherwise, it will be
+        232     1      ! illegal to enquire XHIST after exit.
+        233     1      ! 1. Even though Fortran 2003 supports automatic (re)allocation of allocatable arrays upon
+        234     1      ! intrinsic assignment, we keep the line of SAFEALLOC, because some very new compilers (Absoft
+        235     1      ! Fortran 21.0) are still not standard-compliant in this respect.
+        236     1      ! 2. NF may not be present. Hence we should NOT use NF but NF_LOC.
+        237     1      ! 3. When SIZE(XHIST_LOC, 2) > NF_LOC, which is the normal case in practice, XHIST_LOC contains
+        238     1      ! GARBAGE in XHIST_LOC(:, NF_LOC + 1 : END). Therefore, we MUST cap XHIST at NF_LOC so that
+        239     1      ! XHIST cointains only valid history. For this reason, there is no way to avoid allocating
+        240     1      ! two copies of memory for XHIST unless we declare it to be a POINTER instead of ALLOCATABLE.
+        241     1  end if
+        242        ! F2003 automatically deallocate local ALLOCATABLE variables at exit, yet we prefer to deallocate
+        243        ! them immediately when they finish their jobs.
+        244        deallocate (xhist_loc)
+        245        
+        246        ! Copy FHIST_LOC to FHIST if needed.
+        247     1  if (present(fhist)) then
+        248     1      nhist = min(nf_loc, int(size(fhist_loc), IK))
+        249     1      !--------------------------------------------------!
+        250     1      call safealloc(fhist, nhist)  ! Removable in F2003.
+        251     1      !--------------------------------------------------!
+        252     1      fhist = fhist_loc(1:nhist)  ! The same as XHIST, we must cap FHIST at NF_LOC.
+        253     1  end if
+        254        deallocate (fhist_loc)
+        255        
+        256        ! If MAXFHIST_IN >= NF_LOC > MAXFHIST_LOC, warn that not all history is recorded.
+        257     1  if ((present(xhist) .or. present(fhist)) .and. maxhist_loc < nf_loc) then
+        258     1      write (wmsg, ifmt) maxhist_loc
+        259     1      call warning(solver, 'Only the history of the last '//trim(wmsg)//' iteration(s) is recoreded')
+        260     1  end if
         261        
-        262        ! If MAXFHIST_IN >= NF_LOC > MAXFHIST_LOC, warn that not all history is recorded.
-        263     1  if ((present(xhist) .or. present(fhist)) .and. maxhist_loc < nf_loc) then
-        264     1      write (wmsg, ifmt) maxhist_loc
-        265     1      call warning(solver, 'Only the history of the last '//trim(wmsg)//' iteration(s) is recoreded')
-        266     1  end if
-        267        
-        268        ! Postconditions
-        269     1  if (DEBUGGING) then
-        270     1      call assert(nf_loc <= maxfun_loc, 'NF <= MAXFUN', srname)
-        271     1      call assert(size(x) == n .and. .not. any(is_nan(x)), 'SIZE(X) == N, X does not contain NaN', srname)
-        272     1      nhist = min(nf_loc, maxhist_loc)
-        273     2      if (present(xhist)) then
-        274     2          call assert(size(xhist, 1) == n .and. size(xhist, 2) == nhist, 'SIZE(XHIST) == [N, NHIST]', srname)
-        275     2          call assert(.not. any(is_nan(xhist)), 'XHIST does not contain NaN', srname)
-        276     2      end if
-        277     2      if (present(fhist)) then
-        278     2          call assert(size(fhist) == nhist, 'SIZE(FHIST) == NHIST', srname)
-        279     2          call assert(.not. any(fhist < f), 'F is the smallest in FHIST', srname)
-        280     2      end if
-        281     1  end if
-        282        
-        283        end subroutine uobyqa
-        284        
-        285        
-        286        end module uobyqa_mod
+        262        ! Postconditions
+        263     1  if (DEBUGGING) then
+        264     1      call assert(nf_loc <= maxfun_loc, 'NF <= MAXFUN', srname)
+        265     1      call assert(size(x) == n .and. .not. any(is_nan(x)), 'SIZE(X) == N, X does not contain NaN', srname)
+        266     1      nhist = min(nf_loc, maxhist_loc)
+        267     2      if (present(xhist)) then
+        268     2          call assert(size(xhist, 1) == n .and. size(xhist, 2) == nhist, 'SIZE(XHIST) == [N, NHIST]', srname)
+        269     2          call assert(.not. any(is_nan(xhist)), 'XHIST does not contain NaN', srname)
+        270     2      end if
+        271     2      if (present(fhist)) then
+        272     2          call assert(size(fhist) == nhist, 'SIZE(FHIST) == NHIST', srname)
+        273     2          call assert(.not. any(fhist < f), 'F is the smallest in FHIST', srname)
+        274     2      end if
+        275     1  end if
+        276        
+        277        end subroutine uobyqa
+        278        
+        279        
+        280        end module uobyqa_mod
 
  Diagnostic messages: program name(uobyqa_mod)
   Module subprogram name(uobyqa)
+   1333-S: "uobyqa.f90", line 21, column 4: Name expected.
+   1333-S: "uobyqa.f90", line 22, column 4: Name expected.
+   1333-S: "uobyqa.f90", line 23, column 4: Name expected.
+   1333-S: "uobyqa.f90", line 24, column 4: Name expected.
+   1333-S: "uobyqa.f90", line 25, column 4: Name expected.
+   1333-S: "uobyqa.f90", line 26, column 4: Name expected.
    1333-S: "uobyqa.f90", line 27, column 4: Name expected.
    1333-S: "uobyqa.f90", line 28, column 4: Name expected.
    1333-S: "uobyqa.f90", line 29, column 4: Name expected.
    1333-S: "uobyqa.f90", line 30, column 4: Name expected.
    1333-S: "uobyqa.f90", line 31, column 4: Name expected.
-   1333-S: "uobyqa.f90", line 32, column 4: Name expected.
-   1333-S: "uobyqa.f90", line 33, column 4: Name expected.
-   1333-S: "uobyqa.f90", line 34, column 4: Name expected.
-   1333-S: "uobyqa.f90", line 35, column 4: Name expected.
-   1333-S: "uobyqa.f90", line 36, column 4: Name expected.
-   1333-S: "uobyqa.f90", line 37, column 4: Name expected.
-   1302-S: "uobyqa.f90", line 45: Not a valid Fortran statement.
-   1185-S: "uobyqa.f90", line 47: In an initialization or specification expression, 'RP' must be a named constant.
-   1326-S: "uobyqa.f90", line 47, column 6: Type specification or length specification invalid.
-   1185-S: "uobyqa.f90", line 48: In an initialization or specification expression, 'RP' must be a named constant.
-   1326-S: "uobyqa.f90", line 48, column 6: Type specification or length specification invalid.
-   1185-S: "uobyqa.f90", line 49: In an initialization or specification expression, 'IK' must be a named constant.
-   1326-S: "uobyqa.f90", line 49, column 9: Type specification or length specification invalid.
+   1302-S: "uobyqa.f90", line 39: Not a valid Fortran statement.
+   1185-S: "uobyqa.f90", line 41: In an initialization or specification expression, 'RP' must be a named constant.
+   1326-S: "uobyqa.f90", line 41, column 6: Type specification or length specification invalid.
+   1185-S: "uobyqa.f90", line 42: In an initialization or specification expression, 'RP' must be a named constant.
+   1326-S: "uobyqa.f90", line 42, column 6: Type specification or length specification invalid.
+   1185-S: "uobyqa.f90", line 43: In an initialization or specification expression, 'IK' must be a named constant.
+   1326-S: "uobyqa.f90", line 43, column 9: Type specification or length specification invalid.
+   1185-S: "uobyqa.f90", line 44: In an initialization or specification expression, 'RP' must be a named constant.
+   1326-S: "uobyqa.f90", line 44, column 6: Type specification or length specification invalid.
+   1185-S: "uobyqa.f90", line 45: In an initialization or specification expression, 'RP' must be a named constant.
+   1326-S: "uobyqa.f90", line 45, column 6: Type specification or length specification invalid.
+   1185-S: "uobyqa.f90", line 46: In an initialization or specification expression, 'RP' must be a named constant.
+   1326-S: "uobyqa.f90", line 46, column 6: Type specification or length specification invalid.
+   1185-S: "uobyqa.f90", line 47: In an initialization or specification expression, 'IK' must be a named constant.
+   1326-S: "uobyqa.f90", line 47, column 9: Type specification or length specification invalid.
+   1185-S: "uobyqa.f90", line 48: In an initialization or specification expression, 'IK' must be a named constant.
+   1326-S: "uobyqa.f90", line 48, column 9: Type specification or length specification invalid.
+   1185-S: "uobyqa.f90", line 49: In an initialization or specification expression, 'RP' must be a named constant.
+   1326-S: "uobyqa.f90", line 49, column 6: Type specification or length specification invalid.
    1185-S: "uobyqa.f90", line 50: In an initialization or specification expression, 'RP' must be a named constant.
    1326-S: "uobyqa.f90", line 50, column 6: Type specification or length specification invalid.
    1185-S: "uobyqa.f90", line 51: In an initialization or specification expression, 'RP' must be a named constant.
    1326-S: "uobyqa.f90", line 51, column 6: Type specification or length specification invalid.
    1185-S: "uobyqa.f90", line 52: In an initialization or specification expression, 'RP' must be a named constant.
    1326-S: "uobyqa.f90", line 52, column 6: Type specification or length specification invalid.
-   1185-S: "uobyqa.f90", line 53: In an initialization or specification expression, 'IK' must be a named constant.
-   1326-S: "uobyqa.f90", line 53, column 9: Type specification or length specification invalid.
-   1185-S: "uobyqa.f90", line 54: In an initialization or specification expression, 'IK' must be a named constant.
-   1326-S: "uobyqa.f90", line 54, column 9: Type specification or length specification invalid.
-   1185-S: "uobyqa.f90", line 55: In an initialization or specification expression, 'RP' must be a named constant.
-   1326-S: "uobyqa.f90", line 55, column 6: Type specification or length specification invalid.
-   1185-S: "uobyqa.f90", line 56: In an initialization or specification expression, 'RP' must be a named constant.
-   1326-S: "uobyqa.f90", line 56, column 6: Type specification or length specification invalid.
-   1185-S: "uobyqa.f90", line 57: In an initialization or specification expression, 'RP' must be a named constant.
-   1326-S: "uobyqa.f90", line 57, column 6: Type specification or length specification invalid.
-   1185-S: "uobyqa.f90", line 58: In an initialization or specification expression, 'RP' must be a named constant.
-   1326-S: "uobyqa.f90", line 58, column 6: Type specification or length specification invalid.
-   1185-S: "uobyqa.f90", line 59: In an initialization or specification expression, 'RP' must be a named constant.
-   1326-S: "uobyqa.f90", line 59, column 6: Type specification or length specification invalid.
-   1185-S: "uobyqa.f90", line 60: In an initialization or specification expression, 'RP' must be a named constant.
-   1326-S: "uobyqa.f90", line 60, column 6: Type specification or length specification invalid.
-   1185-S: "uobyqa.f90", line 61: In an initialization or specification expression, 'IK' must be a named constant.
-   1326-S: "uobyqa.f90", line 61, column 9: Type specification or length specification invalid.
-   1185-S: "uobyqa.f90", line 62: In an initialization or specification expression, 'IK' must be a named constant.
-   1326-S: "uobyqa.f90", line 62, column 9: Type specification or length specification invalid.
-   1185-S: "uobyqa.f90", line 69: In an initialization or specification expression, 'IK' must be a named constant.
-   1326-S: "uobyqa.f90", line 69, column 9: Type specification or length specification invalid.
-   1185-S: "uobyqa.f90", line 70: In an initialization or specification expression, 'IK' must be a named constant.
-   1326-S: "uobyqa.f90", line 70, column 9: Type specification or length specification invalid.
-   1185-S: "uobyqa.f90", line 71: In an initialization or specification expression, 'IK' must be a named constant.
-   1326-S: "uobyqa.f90", line 71, column 9: Type specification or length specification invalid.
+   1185-S: "uobyqa.f90", line 53: In an initialization or specification expression, 'RP' must be a named constant.
+   1326-S: "uobyqa.f90", line 53, column 6: Type specification or length specification invalid.
+   1185-S: "uobyqa.f90", line 54: In an initialization or specification expression, 'RP' must be a named constant.
+   1326-S: "uobyqa.f90", line 54, column 6: Type specification or length specification invalid.
+   1185-S: "uobyqa.f90", line 55: In an initialization or specification expression, 'IK' must be a named constant.
+   1326-S: "uobyqa.f90", line 55, column 9: Type specification or length specification invalid.
+   1185-S: "uobyqa.f90", line 56: In an initialization or specification expression, 'IK' must be a named constant.
+   1326-S: "uobyqa.f90", line 56, column 9: Type specification or length specification invalid.
+   1185-S: "uobyqa.f90", line 63: In an initialization or specification expression, 'IK' must be a named constant.
+   1326-S: "uobyqa.f90", line 63, column 9: Type specification or length specification invalid.
+   1185-S: "uobyqa.f90", line 64: In an initialization or specification expression, 'IK' must be a named constant.
+   1326-S: "uobyqa.f90", line 64, column 9: Type specification or length specification invalid.
+   1185-S: "uobyqa.f90", line 65: In an initialization or specification expression, 'IK' must be a named constant.
+   1326-S: "uobyqa.f90", line 65, column 9: Type specification or length specification invalid.
 
  Procedure information
-   Lines      : 286
+   Lines      : 280
    Statements : 176
 
  Total information
    Procedures       : 1
-   Total lines      : 286
+   Total lines      : 280
    Total statements : 176
 

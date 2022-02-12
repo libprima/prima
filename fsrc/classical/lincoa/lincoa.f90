@@ -27,14 +27,10 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENT
 use, non_intrinsic :: debug_mod, only : assert, errstop, warning
 use, non_intrinsic :: evaluate_mod, only : evaluate, moderatex
 use, non_intrinsic :: history_mod, only : prehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_neginf, is_posinf
+use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : OBJ
-use, non_intrinsic :: selectx_mod, only : isbetter
 use, non_intrinsic :: preproc_mod, only : preproc
-
-! Solver-specific modules
-!use, non_intrinsic :: lincob_mod, only : lincob
 
 implicit none
 
@@ -327,7 +323,8 @@ call lincob(calfun, n, npt_loc, m, w(iamat), w(ib), x, rhobeg_loc, rhoend_loc, i
 & w(ipq), w(ibmat), w(izmat), ndim, w(istp), w(isp), w(ixn), iact, &
 & w(irc), w(iqf), w(irf), w(ipqw), w, f, info_loc, ftarget_loc, &
 & A_loc, b_loc, cstrv_loc, nf_loc, &
-& xhist_loc, size(xhist_loc, 2, kind=IK), fhist_loc, size(fhist_loc, kind=IK), chist_loc, size(chist_loc, kind=IK))
+& xhist_loc, int(size(xhist_loc, 2), kind=IK), fhist_loc, int(size(fhist_loc), kind=IK), chist_loc, &
+& int(size(chist_loc), kind=IK))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Deallocate A_LOC and B_LOC. Indeed, automatic allocation will take place at exit.
@@ -396,30 +393,6 @@ deallocate (chist_loc)
 if ((present(xhist) .or. present(fhist) .or. present(chist)) .and. maxhist_loc < nf_loc) then
     write (wmsg, ifmt) maxhist_loc
     call warning(solver, 'Only the history of the last '//trim(wmsg)//' iteration(s) is recoreded')
-end if
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(nf_loc <= maxfun_loc, 'NF <= MAXFUN', srname)
-    call assert(size(x) == n .and. .not. any(is_nan(x)), 'SIZE(X) == N, X does not contain NaN', srname)
-    nhist = min(nf_loc, maxhist_loc)
-    if (present(xhist)) then
-        call assert(size(xhist, 1) == n .and. size(xhist, 2) == nhist, 'SIZE(XHIST) == [N, NHIST]', srname)
-        call assert(.not. any(is_nan(xhist)), 'XHIST does not contain NaN', srname)
-    end if
-    if (present(fhist)) then
-        call assert(size(fhist) == nhist, 'SIZE(FHIST) == NHIST', srname)
-        call assert(.not. any(is_nan(fhist) .or. is_posinf(fhist)), 'FHIST does not contain NaN/+Inf', srname)
-    end if
-    if (present(chist)) then
-        call assert(size(chist) == nhist, 'SIZE(CHIST) == NHIST', srname)
-        call assert(.not. any(is_nan(chist) .or. is_posinf(chist)), 'CHIST does not contain NaN/+Inf', srname)
-    end if
-! The following test cannot be passed YET.
-!!!    if (present(fhist) .and. present(chist)) then
-!!!        call assert(.not. any([(isbetter([fhist(i), chist(i)], [f, cstrv_loc], ctol_loc), i=1, nhist)]),&
-!!!            & 'No point in the history is better than X', srname)
-!!!    end if
 end if
 
 end subroutine lincoa

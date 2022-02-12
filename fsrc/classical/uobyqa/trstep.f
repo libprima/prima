@@ -1,10 +1,10 @@
       SUBROUTINE TRSTEP (N,G,H,DELTA,TOL,D,GG,TD,TN,W,PIV,Z,EVALUE)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C      IMPLICIT REAL*8 (A-H,O-Z)
-      IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
-      IMPLICIT INTEGER (I-N)
+      use, non_intrinsic :: consts_mod, only : RP, IK
+      implicit real(RP) (a - h, o - z)
+      implicit integer(IK) (i - n)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      DIMENSION G(*),H(N,*),D(*),GG(*),TD(*),TN(*),W(*),PIV(*),Z(*) 
+      DIMENSION G(*),H(N,*),D(*),GG(*),TD(*),TN(*),W(*),PIV(*),Z(*)
 C
 C     N is the number of variables of a quadratic objective function, Q say.
 C     G is the gradient of Q at the origin.
