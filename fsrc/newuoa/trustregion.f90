@@ -4,9 +4,11 @@ module trustregion_mod
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
 !
+! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+!
 ! Started: July 2020
 !
-! Last Modified: Wednesday, February 02, 2022 AM10:35:08
+! Last Modified: Saturday, February 12, 2022 PM02:45:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -445,7 +447,7 @@ elseif (ratio <= eta2) then
 else
     delta = max(HALF * delta_in, gamma2 * dnorm)  ! Powell's version
     !delta = max(delta_in, gamma2 * dnorm)  ! Modified version
-    ! For noise-free CUTEst problems of <= 200 variables, Powell's version works slightly better 
+    ! For noise-free CUTEst problems of <= 200 variables, Powell's version works slightly better
     ! than the modified one.
 end if
 

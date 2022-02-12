@@ -1,13 +1,13 @@
-The code was sent by Professor Powell to Zaikun Zhang on April 6th, 2015.  
+The code was sent by Professor Powell to Zaikun Zhang on April 6th, 2015.
 The file "email.txt" is the original email. For more information on
 UOBYQA, you might contact Professor Powell (mjdp@cam.ac.uk).
 
-April 6th, 2015                   Zaikun Zhang (www.zhangzk.net) 
+April 6th, 2015                   Zaikun Zhang (www.zhangzk.net)
 
 
 Below are the remarks from Professor Powell.
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
      The Fortran version of UOBYQA, written by M.J.D. Powell, is attached.
 Its purpose is to seek the least value of a function F of several variables,

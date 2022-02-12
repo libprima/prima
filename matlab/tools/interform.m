@@ -1,9 +1,9 @@
 function interform(directory)
-%INTERFORM refactors the Fortran files in directory into the "intersection
+%INTERFORM refactors the Fortran files in `directory` into the "intersection
 % form" and save them in outputdir under directory.
 % See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 %
-% Coded by Zaikun ZHANG in August, 2020.
+% Coded by Zaikun ZHANG (www.zhangzk.net) in August, 2020.
 
 % Output directory
 outputdir = '.interform';  % The leading dot makes the directory hidden on Linux systems.

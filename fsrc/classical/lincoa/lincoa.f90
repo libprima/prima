@@ -3,12 +3,6 @@ module lincoa_mod
 ! Classical mode. Not maintained. Not recommended. Please use the modernized version instead.
 !
 ! The usage is the same as the modernized version.
-!
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code.
-!
-! Started: February 2022
-!
-! Last Modified: Thursday, February 10, 2022 PM01:51:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

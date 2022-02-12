@@ -4,9 +4,11 @@ module newuob_mod
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
 !
+! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+!
 ! Started: July 2020
 !
-! Last Modified: Wednesday, February 09, 2022 PM08:22:13
+! Last Modified: Saturday, February 12, 2022 PM02:43:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

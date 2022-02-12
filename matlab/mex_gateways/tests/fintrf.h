@@ -20,6 +20,8 @@
 #define R201eb 800
 #define R201fa 800
 #define R201fb 800
+#define R2020a 800
+#define R2020b 800
 #define MW_LATEST_API_VERSION 800
 
 

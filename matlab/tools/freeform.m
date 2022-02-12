@@ -1,4 +1,7 @@
-function f77to90(files)
+function freeform(files)
+%FREEFORM refactors the Fortran code in `files` from the fixed form to the free form.
+%
+% Coded by Zaikun ZHANG (www.zhangzk.net) in August, 2020.
 
 if nargin < 1 || isempty(files) || strcmpi(files, 'ALL')
     listing = dir();

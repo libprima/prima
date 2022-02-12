@@ -1,16 +1,17 @@
 !--------------------------------------------------------------------------------------------------!
 ! GETHUGE gets some huge numbers defined in the Fortran code.
 !
-! **********************************************************************
-!   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
-!               and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
-!               Department of Applied Mathematics,
-!               The Hong Kong Polytechnic University
-! **********************************************************************
+! Authors:
+!   Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
+!   and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
+!   Department of Applied Mathematics,
+!   The Hong Kong Polytechnic University
+!
+! Dedicated to late Professor M. J. D. Powell FRS (1936--2015)
 !
 ! Started in March 2020
 !
-! Last Modified: Saturday, February 12, 2022 PM02:17:12
+! Last Modified: Saturday, February 12, 2022 PM02:41:05
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -29,7 +30,7 @@ subroutine mexFunction(nargout, poutput, nargin, pinput)
 !--------------------------------------------------------------------------------------------------!
 ! Usage: data_huge = gethuge(data_type)
 ! This function returns the largest value of data_type on the current platform. The possible values
-! of data_type are 'integer',  'int', 'float', 'real', 'single', 'double', 'mwSI', 'fun', 'function',
+! of data_type are 'integer', 'int', 'float', 'real', 'single', 'double', 'mwSI', 'fun', 'function',
 ! 'con', 'constraint'.
 !
 ! In previous versions, GETHUGE accepted 'mwSize' or 'mwIndex' as inputs, but it is not the case

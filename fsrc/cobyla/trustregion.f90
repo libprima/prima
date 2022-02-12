@@ -4,9 +4,11 @@ module trustregion_mod
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
 !
+! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+!
 ! Started: June 2021
 !
-! Last Modified: Sunday, February 06, 2022 PM11:53:10
+! Last Modified: Saturday, February 12, 2022 PM02:52:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
