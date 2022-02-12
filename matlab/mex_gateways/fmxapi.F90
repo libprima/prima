@@ -8,6 +8,18 @@ module fmxapi_mod
 ! 3. Define some user-friendly subroutines for interfacing Fortran with MATLAB. Note that we suppose
 ! that the REAL type used in the Fortran code is REAL(RP), and the INTEGER type is INTEGER(IK).
 !
+! **********************************************************************
+!   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
+!               and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
+!               Department of Applied Mathematics,
+!               The Hong Kong Polytechnic University
+! **********************************************************************
+!
+! Started in March 2020
+!
+! Last Modified: Saturday, February 12, 2022 PM02:17:06
+!--------------------------------------------------------------------------------------------------!
+
 ! N.B.:
 ! 1. MathWorks may change its APIs in the future!!!
 ! 2. Make sure that everything is identical to the description in the official documentation of
@@ -24,13 +36,6 @@ module fmxapi_mod
 ! involving macros, because the & may not appear at the correct position after macro expansion. This
 ! is why, for example, we define EID and MSG in the subroutines to avoid line continuation involving
 ! mexErrMsgIdAndTxt.
-!
-! Coded by Zaikun ZHANG
-!
-! Started in July 2020
-!
-! Last Modified: Friday, February 11, 2022 PM12:26:47
-!--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : DP, RP
 implicit none

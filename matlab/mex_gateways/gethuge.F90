@@ -1,5 +1,5 @@
 !--------------------------------------------------------------------------------------------------!
-! GETHUGE subroutine
+! GETHUGE gets some huge numbers defined in the Fortran code.
 !
 ! **********************************************************************
 !   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
@@ -10,12 +10,12 @@
 !
 ! Started in March 2020
 !
-! Last Modified: Saturday, January 22, 2022 PM08:16:50
+! Last Modified: Saturday, February 12, 2022 PM02:17:12
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
 !
-! 1. Be careful with the "kind" and storage size for integer-type (integer, mwSize, mwIndex)
+! 1. Be careful with the "KIND" and storage size for integer-type (integer, mwSize, mwIndex)
 ! variables/functions. Some of them may be 32bit, while the others may be 64bit, depending on the
 ! machine, the version of matlab, and the compilation option of mex. Do NOT assume any two of them
 ! to be the same. If ever a Segmentation Fault occurs, check these variables first.

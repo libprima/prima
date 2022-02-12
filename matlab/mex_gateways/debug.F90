@@ -4,15 +4,19 @@
 module debug_mod
 !--------------------------------------------------------------------------------------------------!
 ! This is a module defining some procedures concerning debugging, errors, and warnings.
+! When interfacing Fortran code with MATLAB, we use this module to replace the one defined in
+! fsrc/common/debug.F90, in order to generate errors or warnings that are native to MATLAB.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net).
+! **********************************************************************
+!   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
+!               and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
+!               Department of Applied Mathematics,
+!               The Hong Kong Polytechnic University
+! **********************************************************************
 !
-! Started: July 2020.
+! Started in March 2020
 !
-! Last Modified: Saturday, January 22, 2022 PM08:13:22
-!--------------------------------------------------------------------------------------------------!
-!! N.B.: When interfacing Fortran code with MATLAB, we use this module to replace the one defined in
-!! fsrc/common/debug.F90, in order to generate errors or warnings that are native to MATLAB.
+! Last Modified: Saturday, February 12, 2022 PM02:20:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
