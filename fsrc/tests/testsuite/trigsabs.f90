@@ -32,7 +32,7 @@ call safealloc(prob % bineq, 0_IK)
 prob % probname = 'trigsabs'
 
 call getseed(seedsav)  ! Backup the current random seed in SEEDSAV.
-call setseed(SEED_DFT)  ! Set the random seed by SETSEED(SEED_DFT).
+call setseed(RANDSEED_DFT)  ! Set the random seed by SETSEED(RANDSEED_DFT).
 xstar = PI * (TWO * rand(n) - ONE)  ! This is the \hat{x}^* in the NEWUOA paper.
 ystar = PI * (TWO * rand(n) - ONE)  ! This is the \hat{y}^* in the NEWUOA paper.
 call setseed(seedsav)  ! Recover the random seed by SEEDSAV.
@@ -75,7 +75,7 @@ real(RP) :: xstar(size(x))
 n = int(size(x), kind(n))
 
 call getseed(seedsav)  ! Backup the current random seed in SEEDSAV.
-call setseed(SEED_DFT)  ! Set the random seed by SETSEED(SEED_DFT).
+call setseed(RANDSEED_DFT)  ! Set the random seed by SETSEED(RANDSEED_DFT).
 C = 1.0E2_RP * (TWO * rand(2_IK * n, n) - ONE)
 S = 1.0E2_RP * (TWO * rand(2_IK * n, n) - ONE)
 xstar = PI * (TWO * rand(n) - ONE)  ! This is the \hat{x}^* in the NEWUOA paper.

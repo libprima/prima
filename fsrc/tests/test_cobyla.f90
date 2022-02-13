@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thursday, February 10, 2022 PM02:08:27
+! Last Modified: Sunday, February 13, 2022 PM04:51:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -17,14 +17,13 @@ public :: test_solver
 contains
 
 
-subroutine test_solver(probs, mindim, maxdim, dimstride, nrand)
+subroutine test_solver(probs, mindim, maxdim, dimstride, nrand, randseed)
 
 use, non_intrinsic :: cobyla_mod, only : cobyla
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN, ZERO, HUGENUM
-use, non_intrinsic :: datetime_mod, only : year, week
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: noise_mod, only : noisy, noisy_calcfc, orig_calcfc
-use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, DIMSTRIDE_DFT, NRAND_DFT
+use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, DIMSTRIDE_DFT, NRAND_DFT, RANDSEED_DFT
 use, non_intrinsic :: prob_mod, only : PNLEN, PROB_T, construct, destruct
 use, non_intrinsic :: rand_mod, only : setseed, rand, randn
 use, non_intrinsic :: string_mod, only : trimstr, istr
@@ -36,12 +35,13 @@ integer(IK), intent(in), optional :: dimstride
 integer(IK), intent(in), optional :: maxdim
 integer(IK), intent(in), optional :: mindim
 integer(IK), intent(in), optional :: nrand
+integer, intent(in), optional :: randseed
 
 character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)  ! Maximal number of problems to test: 100
 character(len=PNLEN) :: fix_dim_probs(size(probs_loc))  ! Problems with fixed dimensions
+integer :: randseed_loc
 integer :: rseed
-integer :: yw
 integer(IK) :: dimlist(100)  ! Maximal number of dimensions to test: 100
 integer(IK) :: dimstride_loc
 integer(IK) :: idim
@@ -107,6 +107,12 @@ else
     nrand_loc = NRAND_DFT * 5_IK  ! More tests since we cannot vary NPT as other solvers.
 end if
 
+if (present(randseed)) then
+    randseed_loc = randseed
+else
+    randseed_loc = RANDSEED_DFT
+end if
+
 do iprob = 1, nprobs
     probname = probs_loc(iprob)
     if (any(probname == fix_dim_probs)) then
@@ -126,10 +132,8 @@ do iprob = 1, nprobs
         m = prob % m
         n = prob % n
         do irand = 1, max(1_IK, nrand_loc)
-            ! Initialize the random seed using N, IRAND, IK, and RP.
-            ! We ALTER THE SEED weekly to test the solvers as much as possible.
-            yw = 100 * modulo(year(), 100) + week()
-            rseed = int(sum(istr(probname)) + n + irand + IK + RP + yw)
+            ! Initialize the random seed using N, IRAND, IK, RP, and RANDSEED_LOC.
+            rseed = int(sum(istr(probname)) + n + irand + IK + RP + randseed_loc)
             call setseed(rseed)
             iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
             maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))

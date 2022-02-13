@@ -19,6 +19,7 @@ module prob_mod
 ! hexagon
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK
+use, non_intrinsic :: param_mod, only : RANDSEED_DFT
 use, non_intrinsic :: pintrf_mod, only : OBJ, OBJCON
 implicit none
 
@@ -29,7 +30,6 @@ public :: construct
 public :: destruct
 
 integer, parameter :: PNLEN = 64
-integer, parameter :: SEED_DFT = 42  ! Default random seed used in trigsabs and trigssqs
 
 type PROB_T
     character(len=PNLEN) :: probname  ! Should be allocatable, which is not supported by Absoft 22.0

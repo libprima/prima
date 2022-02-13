@@ -6,13 +6,13 @@ module param_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, December 05, 2021 PM07:12:34
+! Last Modified: Sunday, February 13, 2022 PM05:04:16
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : RP, IK, TENTH
 implicit none
 private
-public :: DIMSTRIDE_DFT, MINDIM_DFT, MAXDIM_DFT, NRAND_DFT, NOISE_LEVEL_DFT, NOISE_TYPE_DFT
+public :: DIMSTRIDE_DFT, MINDIM_DFT, MAXDIM_DFT, NRAND_DFT, NOISE_LEVEL_DFT, RANDSEED_DFT, NOISE_TYPE_DFT
 
 ! Use an odd stride so that both odd and even dimensional problems will be tested.
 integer(IK), parameter :: DIMSTRIDE_DFT = 3
@@ -20,6 +20,7 @@ integer(IK), parameter :: DIMSTRIDE_DFT = 3
 integer(IK), parameter :: MINDIM_DFT = 1
 integer(IK), parameter :: MAXDIM_DFT = 20
 integer(IK), parameter :: NRAND_DFT = 5
+integer, parameter :: RANDSEED_DFT = 42
 real(RP), parameter :: NOISE_LEVEL_DFT = TENTH
 character(len=*), parameter :: NOISE_TYPE_DFT = 'gaussian'
 
