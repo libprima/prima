@@ -7,6 +7,7 @@ action = '';
 wrong_input = false;
 
 % Start the parsing.
+input_string = 'ALLn';
 if length(argin) > 2
     fprintf('\nSetup accepts at most two inputs.\n\n');
     wrong_input = true;
@@ -30,8 +31,6 @@ elseif length(argin) == 2
         fprintf('\nThe input to setup should be a string and/or a structure.\n\n');
         wrong_input = true;
     end
-else
-    input_string = 'ALLn';
 end
 
 % Cast input_string to a character array in case it is a MATLAB string.
