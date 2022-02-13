@@ -188,116 +188,29 @@ interform(fsrc_classical);
 interform(gateways);
 fprintf('Done.\n\n');
 
-% Clean up the directories fsrc and gateways before compilation.
-% This is important especially if there was previously another compilation with a different ad_option.
-% Without cleaning-up, the MEX files may be linked with wrong .mod or .o files, which can lead to
-% serious errors including Segmentation Fault!
-dir_list = {fsrc_common_interform, gateways_interform, mexdir};
-for idir = 1 : length(dir_list)
-    cellfun(@(filename) delete(filename), list_modo_files(dir_list{idir}));
-end
-
-% Name of the file that contains the list of Fortran files. There should be such a file in each
-% Fortran source code directory, and the list should indicate the dependence among the files.
-filelist = 'ffiles.txt';
-
 % Compilation starts
 fprintf('Compilation starts. It may take some time ...\n');
 % Change directory to mexdir. All the intermediate files produced by the compilation (e.g., .mod)
 % will be dumped to this directory. They will be removed when the compilation finishes.
 cd(mexdir);
-
 exception = [];
 try
-    % Compilation of the common files. They are shared by all solvers. We compile them only once.
-    % gateways_interform/debug.F contains debugging subroutines tailored for MEX.
-    copyfile(fullfile(gateways_interform, 'debug.F'), fsrc_common_interform);
-    % ppf.h contains preprocessing directives. Set __DEBUGGING__ according to debug_flag.
-    header_file = fullfile(fsrc_common_interform, 'ppf.h');
-    header_file_bak = fullfile(fsrc_common_interform, 'ppf.h.bak');
-    copyfile(header_file, header_file_bak);
-    if debug_flag
-        rep_str(header_file, '#define __DEBUGGING__ 0', '#define __DEBUGGING__ 1');
-    else
-        rep_str(header_file, '#define __DEBUGGING__ 1', '#define __DEBUGGING__ 0');
-    end
-    % Common Fortran source files.
-    common_files = regexp(fileread(fullfile(fsrc_common_interform, filelist)), '\n', 'split');
-    common_files = strtrim(common_files(~cellfun(@isempty, common_files)));
-    common_files = fullfile(fsrc_common_interform, common_files);
-    common_files = [common_files, fullfile(gateways_interform, 'fmxapi.F'), fullfile(gateways_interform, 'cbfun.F')];
-    % The loop below may be written in one line as follows:
-    %mex(mex_options{:}, '-c', common_files{:}, '-outdir', fsrc_common_interform);
-    % But it does not work for some versions of MATLAB. This may be because the compilation above does
-    % not respect the order of common_files{:}, which is critical due to the dependence among modules.
-    for icf = 1 : length(common_files)
-        mex(mex_options{:}, '-c', common_files{icf}, '-outdir', fsrc_common_interform);
-    end
-    common_obj_files = list_obj_files(fsrc_common_interform);
-
-    % Compilation of function gethuge
-    gateway = fullfile(gateways_interform, 'gethuge.F');
-    mexname = 'gethuge';
-    mex(mex_options{:}, common_obj_files{:}, gateway, '-output', mexname, '-outdir', mexdir);
-
-    version_list = {'m', 'c'};  % m - modernized, c - classical
-    for isol = 1 : length(solver_list)
-
-        solver = solver_list{isol};
-        fprintf('Compiling %s ... ', solver);
-
-        gateway = fullfile(gateways_interform, [solver, '_mex.F']);
-
-        for iver = 1 : length(version_list)
-            switch version_list{iver}
-            case 'm'
-                srcdir = fullfile(fsrc_interform, solver);
-                mexname = ['f', solver, 'n'];
-            case 'c'
-                srcdir = fullfile(fsrc_classical_interform, solver);
-                mexname = ['f', solver, 'n_classical'];
-            end
-
-            % Clean up the source file directory
-            cellfun(@(filename) delete(filename), list_modo_files(srcdir));
-            % Compile
-            src_files = regexp(fileread(fullfile(srcdir, filelist)), '\n', 'split');
-            src_files = strtrim(src_files(~cellfun(@isempty, src_files)));
-            src_files = fullfile(srcdir, src_files);
-            for isf = 1 : length(src_files)
-                mex(mex_options{:}, '-c', src_files{isf}, '-outdir', srcdir);
-            end
-            obj_files = [common_obj_files, list_obj_files(srcdir)];
-            mex(mex_options{:}, obj_files{:}, gateway, '-output', mexname, '-outdir', mexdir);
-            % Clean up the source file directory
-            cellfun(@(filename) delete(filename), list_modo_files(srcdir));
-        end
-        fprintf('Done.\n');
-    end
-
-    % Clean up fsrc_common_interform.
-    cellfun(@(filename) delete(filename), list_modo_files(fsrc_common_interform));
-    % Clean up mexdir.
-    cellfun(@(filename) delete(filename), list_modo_files(mexdir));
-
-    % Remove the intersection-form Fortran files unless we are debugging.
-    if ~debug_flag
-        rmdir(fsrc_interform, 's');
-        rmdir(fsrc_classical_interform, 's');
-        rmdir(gateways_interform, 's');
-    end
-
+    compile(solver_list, mex_options, mexdir, fsrc_interform, fsrc_classical_interform, ...
+        fsrc_common_interform, gateways_interform);
 catch exception
     % Do nothing for the moment.
 end
 
-if exist(header_file_bak, 'file')  % Restore header_file
-    movefile(header_file_bak, header_file);
+% Remove the intersection-form Fortran files unless we are debugging.
+if ~debug_flag
+    rmdir(fsrc_interform, 's');
+    rmdir(fsrc_classical_interform, 's');
+    rmdir(gateways_interform, 's');
 end
 cd(cpwd); % Change directory back to cpwd
 
-if ~isempty(exception)  % Rethrow any exception caught above.
-    rethrow(exception);
+if ~isempty(exception)
+    rethrow(exception);  % Rethrow any exception caught during the compilation.
 end
 
 % Compilation ends successfully if we arrive here.
