@@ -24,9 +24,6 @@ function setup(varargin)
 %   the package. It is out of the scope of this package to help the users
 %   to configure MEX.
 %
-%   If MEX is correctly configured, then the compilation will be done
-%   automatically by this script.
-%
 %   2. At the end of this script, we will try saving the path of this package
 %   to the search path. This can be done only if you have the permission to
 %   write the following path-defining file:
@@ -53,11 +50,11 @@ function setup(varargin)
 %
 % Remarks
 %
-% 1. Remarks on the directory interfaces_private.
-% Functions and MEX files in the directory interfaces_private are
+% 1. Remarks on the directory mexdir.
+% Functions and MEX files in the directory mexdir are
 % automatically available to functions in the directory interfaces, and
 % to scripts called by the functions that reside in interfaces. They are
-% not available to other functions/scripts unless interfaces_private is
+% not available to other functions/scripts unless mexdir is
 % added to the search path.
 %
 % 2. Remarks on the 'files_with_wildcard' function.
@@ -71,9 +68,9 @@ function setup(varargin)
 % TODO: None
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-COMPILE_CLASSICAL = true; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % setup starts
+
+all_solvers = {'cobyla', 'uobyqa', 'newuoa', 'bobyqa', 'lincoa'};
 
 % Check the version of MATLAB.
 if verLessThan('matlab', '8.3') % MATLAB R2014a = MATLAB 8.3
@@ -81,61 +78,31 @@ if verLessThan('matlab', '8.3') % MATLAB R2014a = MATLAB 8.3
     return
 end
 
-% Parse the input.
-solver_list = {'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla'}; % Solvers to compile; by default, it contains all solvers
-options = struct(); % Compilation options
-wrong_input = false;
-solver = 'ALLn'; % The solver to compile specified by the user; by default, it is 'ALL', meaning all solvers
-if nargin == 1
-    if isa(varargin{1}, 'char') || isa(varargin{1}, 'string')
-        solver = varargin{1};
-    elseif isa(varargin{1}, 'struct') || isempty(varargin{1})
-        options = varargin{1};
-    else
-        fprintf('\nThe input to setup should be a string and/or a structure.\n\n');
-        wrong_input = true;
-    end
-elseif nargin == 2
-    if (isa(varargin{1}, 'char') || isa(varargin{1}, 'string')) && (isa(varargin{2}, 'struct') || isempty(varargin{2}))
-        solver = varargin{1};
-        options = varargin{2};
-    elseif (isa(varargin{2}, 'char') || isa(varargin{2}, 'string')) && (isa(varargin{1}, 'struct') || isempty(varargin{1}))
-        solver = varargin{2};
-        options = varargin{1};
-    else
-        fprintf('\nThe input to setup should be a string and/or a structure.\n\n');
-        wrong_input = true;
-    end
-elseif nargin > 0
-    fprintf('\nSetup accepts at most two inputs.\n\n');
-    wrong_input = true;
+[solver_list, options, action, wrong_input] = parse_input(varargin);
+
+% Exit if wrong input detected. Error messages have been printed during the parsing.
+if wrong_input
+    return
 end
 
-solver = char(solver); % Cast solver to a character array; this is necessary if solver is a matlab string
-
 % Remove the compiled MEX files if requested.
-if strcmp(solver, 'clean')
+if strcmp(action, 'clean')
     clean_mex;
-    return;
+    return
 end
 
 % Uninstall the package if requested.
-if strcmp(solver, 'uninstall')
+if strcmp(action, 'uninstall')
     uninstall_pdfo;
-    return;
+    return
 end
 
-% Decide which solver(s) to compile.
-solver = solver(1:end-1);  % We expect to receive 'uobyqan', 'newuoan', ...; here we remove the 'n'
-if ismember(solver, solver_list)
-    solver_list = {solver};
-elseif ~strcmpi(solver, 'ALL')
-    fprintf('Unknown solver ''%s'' to compile.\n\n', solver);
-    wrong_input = true;
-end
-
-% Exit if wrong input detected.
-if wrong_input
+% Add the path and return if requested.
+if strcmp(action, 'path')
+    cpwd = fileparts(mfilename('fullpath')); % Current directory
+    path_string = fullfile(cpwd, 'matlab', 'interfaces');
+    addpath(path_string);
+    savepath;
     return
 end
 
@@ -196,7 +163,7 @@ matd = fullfile(cpwd, 'matlab'); % Matlab directory
 gateways = fullfile(matd, 'mex_gateways'); % Directory of the MEX gateway files
 gateways_interform = fullfile(gateways, '.interform');  % Directory of the intersection-form MEX gateway files
 interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
-interfaces_private = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
+mexdir = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
 tests = fullfile(matd, 'tests'); % Directory containing some tests
 tools = fullfile(matd, 'tools'); % Directory containing some tools, e.g., interform.m
 
@@ -220,21 +187,19 @@ fprintf('Done.\n\n');
 % compilation with a different ad_option. Without cleaning-up, the MEX
 % files may be linked with wrong .mod or .o files, which can lead to
 % serious errors including Segmentation Fault!
-dir_list = {fsrc_common_interform, gateways_interform, interfaces_private};
+dir_list = {fsrc_common_interform, gateways_interform, mexdir};
 for idir = 1 : length(dir_list)
     cellfun(@(filename) delete(filename), list_modo_files(dir_list{idir}));
 end
 
 % Compilation starts
 fprintf('Compilation starts. It may take some time ...\n');
-cd(interfaces_private); % Change directory to interfaces_private; all the MEX files will output to this directory
+% Change directory to mexdir. All the intermediate files produced by the compilation (e.g., .mod)
+% will be dumped to this directory. They will be removed when the compilation finishes.
+cd(mexdir);
 
 exception = [];
 try
-% NOTE: Everything until 'catch' is conducted in interfaces_private.
-% We use try ... catch so that we can change directory back to cpwd in
-% case of an error.
-
     % Compilation of the common files. They are shared by all solvers. We compile them only once.
     % gateways_interform/debug.F contains debugging subroutines tailored for MEX.
     copyfile(fullfile(gateways_interform, 'debug.F'), fsrc_common_interform);
@@ -262,7 +227,9 @@ try
     common_obj_files = list_obj_files(fsrc_common_interform);
 
     % Compilation of function gethuge
-    mex(mex_options{:}, '-output', 'gethuge', common_obj_files{:}, fullfile(gateways_interform, 'gethuge.F'), '-outdir', interfaces_private);
+    gateway = fullfile(gateways_interform, 'gethuge.F');
+    mexname = 'gethuge';
+    mex(mex_options{:}, common_obj_files{:}, gateway, '-output', mexname, '-outdir', mexdir);
 
     version_list = {'m', 'c'};  % m - modernized, c - classical
 
@@ -271,7 +238,7 @@ try
         solver = solver_list{isol};
         fprintf('Compiling %s ... ', solver);
 
-        mexfile = fullfile(gateways_interform, [solver, '_mex.F']);
+        gateway = fullfile(gateways_interform, [solver, '_mex.F']);
 
         for iver = 1 : length(version_list)
             switch version_list{iver}
@@ -294,7 +261,7 @@ try
                 mex(mex_options{:}, '-c', src_files{isf}, '-outdir', srcdir);
             end
             obj_files = [common_obj_files, list_obj_files(srcdir)];
-            mex(mex_options{:}, obj_files{:}, mexfile, '-output', mexname, '-outdir', interfaces_private);
+            mex(mex_options{:}, obj_files{:}, gateway, '-output', mexname, '-outdir', mexdir);
             % Clean up the source file directory
             cellfun(@(filename) delete(filename), list_modo_files(srcdir));
         end
@@ -304,17 +271,17 @@ try
 
     % Clean up fsrc_common_interform.
     cellfun(@(filename) delete(filename), list_modo_files(fsrc_common_interform));
-    % Clean up interfaces_private.
-    cellfun(@(filename) delete(filename), list_modo_files(interfaces_private));
+    % Clean up mexdir.
+    cellfun(@(filename) delete(filename), list_modo_files(mexdir));
 
-    % Remove the intersection-form Fortran files if we are not debugging.
+    % Remove the intersection-form Fortran files unless we are debugging.
     if ~debug_flag
         rmdir(fsrc_interform, 's');
         rmdir(fsrc_classical_interform, 's');
         rmdir(gateways_interform, 's');
     end
 
-catch exception % NOTE: Everything above 'catch' is conducted in interfaces_private.
+catch exception
     % Do nothing for the moment.
 end
 
@@ -330,7 +297,7 @@ end
 % Compilation ends successfully if we arrive here.
 fprintf('Package compiled successfully!\n');
 
-% Add interface (but not interfaces_private) to the search path
+% Add interface (but not mexdir) to the search path
 addpath(interfaces);
 
 % Try saving path
@@ -371,7 +338,8 @@ if ~path_saved && numel(userpath) > 0
     % If yes, we do not need to put a line break before the path adding string.
     if exist(user_startup, 'file')
         startup_text_cells = regexp(fileread(user_startup), '\n', 'split');
-        last_line_empty = isempty(startup_text_cells) || (isempty(startup_text_cells{end}) && isempty(startup_text_cells{max(1, end-1)}));
+        last_line_empty = isempty(startup_text_cells) || (isempty(startup_text_cells{end}) && ...
+            isempty(startup_text_cells{max(1, end-1)}));
     else
         last_line_empty = true;
     end
@@ -401,8 +369,13 @@ else
 end
 
 fprintf('\nYou may now try ''help pdfo'' for information on the usage of the package.\n');
-addpath(tests);
-fprintf('\nYou may also run ''testpdfo'' to test the package on a few examples.\n\n');
+
+if isempty(setdiff(all_solvers, solver_list))
+    addpath(tests);
+    fprintf('\nYou may also run ''testpdfo'' to test the package on a few examples.\n\n');
+else
+    fprintf('\n');
+end
 
 if ~path_saved % All the path-saving attempts failed
     fprintf('*** To use the pacakge in other MATLAB sessions, do one of the following. ***\n\n');
@@ -415,7 +388,73 @@ end
 % setup ends
 return
 
-%%%%%%%%%%%%%%% Function for file names with handling wildcard %%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Function for parsing the input %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [solver_list, options, action, wrong_input] = parse_input(argin)
+%PARSE_INPUT parses the input to the setup script.
+
+% Compilation options.
+options = [];
+action = '';
+wrong_input = false;
+
+% Start the parsing.
+if length(argin) > 2
+    fprintf('\nSetup accepts at most two inputs.\n\n');
+    wrong_input = true;
+elseif length(argin) == 1
+    if is_str(argin{1})
+        input_string = argin{1};
+    elseif isa(argin{1}, 'struct') || isempty(argin{1})
+        options = argin{1};
+    else
+        fprintf('\nThe input to setup should be a string and/or a structure.\n\n');
+        wrong_input = true;
+    end
+elseif length(argin) == 2
+    if (is_str(argin{1})) && (isa(argin{2}, 'struct') || isempty(argin{2}))
+        input_string = argin{1};
+        options = argin{2};
+    elseif (is_str(argin{2})) && (isa(argin{1}, 'struct') || isempty(argin{1}))
+        input_string = argin{2};
+        options = argin{1};
+    else
+        fprintf('\nThe input to setup should be a string and/or a structure.\n\n');
+        wrong_input = true;
+    end
+else
+    input_string = 'ALLn';
+end
+
+% Cast input_string to a character array in case it is a MATLAB string.
+input_string = lower(char(input_string));
+
+action_list = {'uninstall', 'clean', 'path'};
+if ismember(input_string, action_list)
+    solver_list = {};
+    action = input_string;
+    if ~isempty(options)
+        fprintf('\nOptions are ignored since an action (''%s'') is specified.\n', input_string)
+    end
+else
+    solver = input_string;
+    solver = solver(1:end-1);  % We expect to receive 'uobyqan', 'newuoan', ...; here we remove the 'n'
+    % Decide which solver(s) to compile.
+    solver_list = {'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla'};
+    if ismember(solver, solver_list)
+        solver_list = {solver};
+    elseif ~strcmpi(solver, 'ALL')
+        fprintf('Unknown solver ''%s'' to compile.\n\n', solver);
+        solver_list = {};
+        wrong_input = true;
+    end
+end
+return
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%% Function for handling file names with wildcards %%%%%%%%%%%%%%%%%%%%%%%
 function full_files = files_with_wildcard(dir_name, wildcard_string)
 %FULL_FILES returns a cell array of files that match the wildcard_string
 % under dir_name.
@@ -423,24 +462,27 @@ function full_files = files_with_wildcard(dir_name, wildcard_string)
 % delete(*.o)
 % or
 % mex(*.f)
-% This function enables a workaround.
+% This function provides a workaround.
 files = dir(fullfile(dir_name, wildcard_string));
 full_files = cellfun(@(s)fullfile(dir_name, s), {files.name}, 'uniformoutput', false);
 return
 
+%%%%%%%%%%%%%%%% Function for listing all module files (*.mod) in a directory %%%%%%%%%%%%%%%%%%%%%%
 function mod_files = list_mod_files(dir_name)
 mod_files = files_with_wildcard(dir_name, '*.mod');
 return
 
+%%%% Function for listing all object files (*.o, *.obj) in a directory %%%%
 function obj_files = list_obj_files(dir_name)
 obj_files = [files_with_wildcard(dir_name, '*.o'), files_with_wildcard(dir_name, '*.obj')];
 return
 
+%%%%%%%%%%%%%%%%%% Function for listing all module or object files in a directory %%%%%%%%%%%%%%%%%%
 function modo_files = list_modo_files(dir_name)
 modo_files = [list_mod_files(dir_name), list_obj_files(dir_name)];
 return
 
-%%%%%%%%%%%%%%%%%% Function for verifying the set-up of MEX %%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Function for verifying the set-up of MEX %%%%%%%%%%%%%%%%%%%%%%%%%%%
 function success = mex_well_configured(language)
 %MEX_WELL_CONFIGURED verifies the set-up of MEX for compiling language
 orig_warning_state = warning;
@@ -525,7 +567,7 @@ cellfun(@(filename) delete(filename), trash_files);
 warning(orig_warning_state); % Restore the behavior of displaying warnings
 return
 
-%%%%%%%%%%%%% Function for removing the compiled MEX files  %%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%% Function for removing the compiled MEX files  %%%%%%%%%%%%%%%%%%%%%%%%%%
 function clean_mex
 %CLEAN_MEX removes the compiled MEX files.
 
@@ -534,16 +576,16 @@ fprintf('\nRemoving the compiled MEX files (if any) ... ');
 cpwd = fileparts(mfilename('fullpath')); % Current directory
 matd = fullfile(cpwd, 'matlab'); % Matlab directory
 interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
-interfaces_private = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
+mexdir = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
 
 % Remove the compiled MEX files
-mex_files = files_with_wildcard(interfaces_private, '*.mex*');
+mex_files = files_with_wildcard(mexdir, '*.mex*');
 cellfun(@(filename) delete(filename), mex_files);
 
 fprintf('Done.\n\n');
 return
 
-%%%%%%%%%%%%%%%%%%%%% Function for uninstalling pdfo %%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Function for uninstalling pdfo %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function uninstall_pdfo
 %UNINSTALL_PDFO uninstalls PDFO.
 
@@ -553,11 +595,11 @@ fprintf('\nUninstalling PDFO (if it is installed) ... ');
 cpwd = fileparts(mfilename('fullpath')); % Current directory
 matd = fullfile(cpwd, 'matlab'); % Matlab directory
 interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
-interfaces_private = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
+mexdir = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
 tests = fullfile(matd, 'tests'); % Directory containing some tests
 
 % Remove the compiled MEX files
-mex_files = files_with_wildcard(interfaces_private, '*.mex*');
+mex_files = files_with_wildcard(mexdir, '*.mex*');
 cellfun(@(filename) delete(filename), mex_files);
 
 % Try removing the paths possibly added by PDFO
@@ -583,7 +625,7 @@ end
 fprintf('Done.\nYou may now remove the current directory if it contains nothing you want to keep.\n\n');
 return
 
-%% Function for deleting from a file all the lines containing a string %%
+%%%%%%%%%%%%%%%%%% Function for deleting from a file all the lines containing a string %%%%%%%%%%%%%
 function del_str_ln(filename, string)
 %DEL_STR_LN deletes from filename all the lines that are identical to string
 fid = fopen(filename, 'r');
@@ -607,8 +649,7 @@ fprintf(fid, '%s\n', cstr{:});
 fclose(fid);
 return
 
-
-%% Function for replacing all the string `old_str` with the string `new_str` in a file.
+%%%%%%% Function for replacing all the string `old_str` with the string `new_str` in a file %%%%%%%%
 function rep_str(filename, old_str, new_str)
 %REP_STR replaces all `old_str` in filename with `new_str`.
 fid = fopen(filename, 'r');
@@ -633,3 +674,7 @@ end
 fprintf(fid, '%s\n', cstr{:});
 fclose(fid);
 return
+
+%%%%%%%%%%%%%%%% Function for checking whether an input is a `char` or `string` %%%%%%%%%%%%%%%%%%%%
+function iss = is_str(x)
+iss = (isa(x, 'char') || isa(x, 'string'));
