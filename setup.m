@@ -70,43 +70,81 @@ function setup(varargin)
 
 % setup starts
 
-all_solvers = {'cobyla', 'uobyqa', 'newuoa', 'bobyqa', 'lincoa'};
-
 % Check the version of MATLAB.
 if verLessThan('matlab', '8.3') % MATLAB R2014a = MATLAB 8.3
     fprintf('\nSorry, this package does not support MATLAB R2013b or earlier releases.\n\n');
     return
 end
 
+% All solvers to compile.
+all_solvers = {'cobyla', 'uobyqa', 'newuoa', 'bobyqa', 'lincoa'};
+
+% The stamp to be included in the path_string. Needed only if `savepath` fails.
+path_string_stamp = 'PDFO';
+
+% The full path of several directories.
+cpwd = fileparts(mfilename('fullpath')); % Current directory
+fsrc = fullfile(cpwd, 'fsrc'); % Directory of the Fortran source code
+fsrc_interform = fullfile(cpwd, 'fsrc', '.interform'); % Directory of the intersection-form Fortran source code
+fsrc_common_interform = fullfile(fsrc_interform, 'common'); % Directory of the common files
+fsrc_classical = fullfile(cpwd, 'fsrc', 'classical'); % Directory of the classical Fortran source code
+fsrc_classical_interform = fullfile(cpwd, 'fsrc', 'classical', '.interform'); % Directory of the intersection-form Fortran source code
+matd = fullfile(cpwd, 'matlab'); % Matlab directory
+gateways = fullfile(matd, 'mex_gateways'); % Directory of the MEX gateway files
+gateways_interform = fullfile(gateways, '.interform');  % Directory of the intersection-form MEX gateway files
+interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
+mexdir = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
+tests = fullfile(matd, 'tests'); % Directory containing some tests
+tools = fullfile(matd, 'tools'); % Directory containing some tools, e.g., interform.m
+
+% `tools` contains some functions needed below.
+addpath(tools);
+
+% Parse the input.
 [solver_list, options, action, wrong_input] = parse_input(varargin);
 
 % Exit if wrong input detected. Error messages have been printed during the parsing.
 if wrong_input
+    rmpath(tools);
     return
 end
 
 % Remove the compiled MEX files if requested.
 if strcmp(action, 'clean')
     clean_mex;
+    rmpath(tools);
     return
 end
 
 % Uninstall the package if requested.
 if strcmp(action, 'uninstall')
-    uninstall_pdfo;
+    uninstall_pdfo(path_string_stamp);
+    rmpath(tools);
     return
 end
 
 % Add the path and return if requested.
 if strcmp(action, 'path')
-    cpwd = fileparts(mfilename('fullpath')); % Current directory
-    path_string = fullfile(cpwd, 'matlab', 'interfaces');
-    addpath(path_string);
-    savepath;
+    try
+        add_save_path(interfaces, path_string_stamp);
+    catch exception
+        rmpath(tools);
+        rethrow(exception);
+    end
+    rmpath(tools);
+    fprintf('\nPath added.\n\n')
     return
 end
 
-% Extract compilation options.
+% If we arrive here, then the user requests us to compile the solvers.
+
+% Decide whether to compile with -O (optimize, the default) or with -g (debug).
+% N.B.: -O and -g may lead to (slightly) different behaviors of the mexified code. This was observed
+% on 2021-09-09 in a test of NEWUOA on the AKIVA problem of CUTEst. It was because the mexified code
+% produced different results when it was supposed to evaluate COS(0.59843577329095299_DP) amid OTHER
+% CALCULATIONS: with -O, the result was 0.82621783366991353; with -g, it became 0.82621783366991364.
+% Bizarrely, if we write a short Fortran program to evaluate only COS(0.59843577329095299_DP),
+% then the result is always 0.82621783366991364, regardless of -O or -g. No idea why.
 if isempty(options)
     options = struct();
 end
@@ -115,12 +153,6 @@ debug_flag = (isfield(options, 'debug') && options.debug);
 if debug_flag
     opt_option = '-g';  % Debug mode; -g disables MEX's behavior of optimizing built object code
 end
-% N.B.: -O and -g may lead to (slightly) different behaviors of the mexified code. This was observed
-% on 2021-09-09 in a test of NEWUOA on the AKIVA problem of CUTEst. It was because the mexified code
-% produced different results when it was supposed to evaluate COS(0.59843577329095299_DP) amid OTHER
-% CALCULATIONS: with -O, the result was 0.82621783366991353; with -g, it became 0.82621783366991364.
-% Bizarrely, if we write a short Fortran program to evaluate only COS(0.59843577329095299_DP),
-% then the result is always 0.82621783366991364, regardless of -O or -g. No idea why.
 
 % Detect whether we are running a 32-bit MATLAB, where maxArrayDim = 2^31-1, and then set ad_option
 % accordingly. On a 64-bit MATLAB, maxArrayDim = 2^48-1 according to the document of MATLAB R2019a.
@@ -152,45 +184,27 @@ else
     fprintf('\nMEX is correctly set up.\n\n');
 end
 
-% The full path of several directories.
-cpwd = fileparts(mfilename('fullpath')); % Current directory
-fsrc = fullfile(cpwd, 'fsrc'); % Directory of the Fortran source code
-fsrc_interform = fullfile(cpwd, 'fsrc', '.interform'); % Directory of the intersection-form Fortran source code
-fsrc_common_interform = fullfile(fsrc_interform, 'common'); % Directory of the common files
-fsrc_classical = fullfile(cpwd, 'fsrc', 'classical'); % Directory of the classical Fortran source code
-fsrc_classical_interform = fullfile(cpwd, 'fsrc', 'classical', '.interform'); % Directory of the intersection-form Fortran source code
-matd = fullfile(cpwd, 'matlab'); % Matlab directory
-gateways = fullfile(matd, 'mex_gateways'); % Directory of the MEX gateway files
-gateways_interform = fullfile(gateways, '.interform');  % Directory of the intersection-form MEX gateway files
-interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
-mexdir = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
-tests = fullfile(matd, 'tests'); % Directory containing some tests
-tools = fullfile(matd, 'tools'); % Directory containing some tools, e.g., interform.m
-
-% Name of the file that contains the list of Fortran files. There should be such a file in each
-% Fortran source code directory, and the list should indicate the dependence among the files.
-filelist = 'ffiles.txt';
-
 % Generate the intersection-form Fortran source code
 % We need to do this because MEX accepts only the (obselescent) fixed-form Fortran code on Windows.
 % Intersection-form Fortran code can be compiled both as free form and as fixed form.
 fprintf('Refactoring the Fortran code ... ');
-addpath(tools);
 interform(fsrc);
 interform(fsrc_classical);
 interform(gateways);
-rmpath(tools);
 fprintf('Done.\n\n');
 
 % Clean up the directories fsrc and gateways before compilation.
-% This is important especially if there was previously another
-% compilation with a different ad_option. Without cleaning-up, the MEX
-% files may be linked with wrong .mod or .o files, which can lead to
+% This is important especially if there was previously another compilation with a different ad_option.
+% Without cleaning-up, the MEX files may be linked with wrong .mod or .o files, which can lead to
 % serious errors including Segmentation Fault!
 dir_list = {fsrc_common_interform, gateways_interform, mexdir};
 for idir = 1 : length(dir_list)
     cellfun(@(filename) delete(filename), list_modo_files(dir_list{idir}));
 end
+
+% Name of the file that contains the list of Fortran files. There should be such a file in each
+% Fortran source code directory, and the list should indicate the dependence among the files.
+filelist = 'ffiles.txt';
 
 % Compilation starts
 fprintf('Compilation starts. It may take some time ...\n');
@@ -232,7 +246,6 @@ try
     mex(mex_options{:}, common_obj_files{:}, gateway, '-output', mexname, '-outdir', mexdir);
 
     version_list = {'m', 'c'};  % m - modernized, c - classical
-
     for isol = 1 : length(solver_list)
 
         solver = solver_list{isol};
@@ -256,7 +269,6 @@ try
             src_files = regexp(fileread(fullfile(srcdir, filelist)), '\n', 'split');
             src_files = strtrim(src_files(~cellfun(@isempty, src_files)));
             src_files = fullfile(srcdir, src_files);
-            %mex(mex_options{:}, '-c', src_files{:}, '-outdir', srcdir);
             for isf = 1 : length(src_files)
                 mex(mex_options{:}, '-c', src_files{isf}, '-outdir', srcdir);
             end
@@ -265,7 +277,6 @@ try
             % Clean up the source file directory
             cellfun(@(filename) delete(filename), list_modo_files(srcdir));
         end
-
         fprintf('Done.\n');
     end
 
@@ -297,77 +308,10 @@ end
 % Compilation ends successfully if we arrive here.
 fprintf('Package compiled successfully!\n');
 
-% Add interface (but not mexdir) to the search path
-addpath(interfaces);
+% Add `interfaces` to the MATLAB path, and then try saving the path.
+path_saved = add_save_path(interfaces, path_string_stamp);
 
-% Try saving path
-path_saved = false;
-orig_warning_state = warning;
-warning('off', 'MATLAB:SavePath:PathNotSaved'); % Maybe we do not have the permission to save path.
-if savepath == 0
-    % SAVEPATH saves the current MATLABPATH in the path-defining file,
-    % which is by default located at:
-    % fullfile(matlabroot, 'toolbox', 'local', 'pathdef.m')
-    % 0 if the file was saved successfully; 1 otherwise
-    path_saved = true;
-end
-warning(orig_warning_state); % Restore the behavior of displaying warnings
-
-% If path not saved, try editing the startup.m of this user
-edit_startup_failed = false;
-user_startup = fullfile(userpath,'startup.m');
-add_path_string = sprintf('addpath(''%s'');', interfaces);
-full_add_path_string = sprintf('%s\t%s Added by PDFO', add_path_string, '%');
-% First, check whether full_add_path_string already exists in user_startup or not
-if exist(user_startup, 'file')
-    startup_text_cells = regexp(fileread(user_startup), '\n', 'split');
-    if any(strcmp(startup_text_cells, full_add_path_string))
-        path_saved = true;
-    end
-end
-
-if ~path_saved && numel(userpath) > 0
-    % Administrators may set userpath to empty for certain users, especially
-    % on servers. In that case, userpath = [], and user_startup = 'startup.m'.
-    % We will not use user_startup. Otherwise, we will only get a startup.m
-    % in the current directory, which will not be executed when MATLAB starts
-    % from other directories.
-
-    % We first check whether the last line of the user startup script is an
-    % empty line (or the file is empty or even does not exist at all).
-    % If yes, we do not need to put a line break before the path adding string.
-    if exist(user_startup, 'file')
-        startup_text_cells = regexp(fileread(user_startup), '\n', 'split');
-        last_line_empty = isempty(startup_text_cells) || (isempty(startup_text_cells{end}) && ...
-            isempty(startup_text_cells{max(1, end-1)}));
-    else
-        last_line_empty = true;
-    end
-    file_id = fopen(user_startup, 'a');
-    if file_id ~= -1 % If FOPEN cannot open the file, it returns -1
-        if ~last_line_empty  % The last line of user_startup is not empty
-            fprintf(file_id, '\n');  % Add a new empty line
-        end
-        fprintf(file_id, '%s', full_add_path_string);
-        fclose(file_id);
-        if exist(user_startup, 'file')
-            startup_text_cells = regexp(fileread(user_startup), '\n', 'split');
-            if any(strcmp(startup_text_cells, full_add_path_string))
-                path_saved = true;
-            end
-        end
-    end
-    if ~path_saved
-        edit_startup_failed = true;
-    end
-end
-
-if edit_startup_failed
-    fprintf('\nFailed to edit your startup script. However, you CAN still use the package without any problem.\n');
-else
-    fprintf('\nThe package is ready to use.\n');
-end
-
+fprintf('\nThe package is ready to use.\n');
 fprintf('\nYou may now try ''help pdfo'' for information on the usage of the package.\n');
 
 if isempty(setdiff(all_solvers, solver_list))
@@ -385,296 +329,6 @@ if ~path_saved % All the path-saving attempts failed
     fprintf('  %s\n\n', add_path_string);
 end
 
+rmpath(tools);
 % setup ends
 return
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Function for parsing the input %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [solver_list, options, action, wrong_input] = parse_input(argin)
-%PARSE_INPUT parses the input to the setup script.
-
-% Compilation options.
-options = [];
-action = '';
-wrong_input = false;
-
-% Start the parsing.
-if length(argin) > 2
-    fprintf('\nSetup accepts at most two inputs.\n\n');
-    wrong_input = true;
-elseif length(argin) == 1
-    if is_str(argin{1})
-        input_string = argin{1};
-    elseif isa(argin{1}, 'struct') || isempty(argin{1})
-        options = argin{1};
-    else
-        fprintf('\nThe input to setup should be a string and/or a structure.\n\n');
-        wrong_input = true;
-    end
-elseif length(argin) == 2
-    if (is_str(argin{1})) && (isa(argin{2}, 'struct') || isempty(argin{2}))
-        input_string = argin{1};
-        options = argin{2};
-    elseif (is_str(argin{2})) && (isa(argin{1}, 'struct') || isempty(argin{1}))
-        input_string = argin{2};
-        options = argin{1};
-    else
-        fprintf('\nThe input to setup should be a string and/or a structure.\n\n');
-        wrong_input = true;
-    end
-else
-    input_string = 'ALLn';
-end
-
-% Cast input_string to a character array in case it is a MATLAB string.
-input_string = lower(char(input_string));
-
-action_list = {'uninstall', 'clean', 'path'};
-if ismember(input_string, action_list)
-    solver_list = {};
-    action = input_string;
-    if ~isempty(options)
-        fprintf('\nOptions are ignored since an action (''%s'') is specified.\n', input_string)
-    end
-else
-    solver = input_string;
-    solver = solver(1:end-1);  % We expect to receive 'uobyqan', 'newuoan', ...; here we remove the 'n'
-    % Decide which solver(s) to compile.
-    solver_list = {'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla'};
-    if ismember(solver, solver_list)
-        solver_list = {solver};
-    elseif ~strcmpi(solver, 'ALL')
-        fprintf('Unknown solver ''%s'' to compile.\n\n', solver);
-        solver_list = {};
-        wrong_input = true;
-    end
-end
-return
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%% Function for handling file names with wildcards %%%%%%%%%%%%%%%%%%%%%%%
-function full_files = files_with_wildcard(dir_name, wildcard_string)
-%FULL_FILES returns a cell array of files that match the wildcard_string
-% under dir_name.
-% MATLAB R2015b does not handle commands with wildcards like
-% delete(*.o)
-% or
-% mex(*.f)
-% This function provides a workaround.
-files = dir(fullfile(dir_name, wildcard_string));
-full_files = cellfun(@(s)fullfile(dir_name, s), {files.name}, 'uniformoutput', false);
-return
-
-%%%%%%%%%%%%%%%% Function for listing all module files (*.mod) in a directory %%%%%%%%%%%%%%%%%%%%%%
-function mod_files = list_mod_files(dir_name)
-mod_files = files_with_wildcard(dir_name, '*.mod');
-return
-
-%%%% Function for listing all object files (*.o, *.obj) in a directory %%%%
-function obj_files = list_obj_files(dir_name)
-obj_files = [files_with_wildcard(dir_name, '*.o'), files_with_wildcard(dir_name, '*.obj')];
-return
-
-%%%%%%%%%%%%%%%%%% Function for listing all module or object files in a directory %%%%%%%%%%%%%%%%%%
-function modo_files = list_modo_files(dir_name)
-modo_files = [list_mod_files(dir_name), list_obj_files(dir_name)];
-return
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Function for verifying the set-up of MEX %%%%%%%%%%%%%%%%%%%%%%%%%%%
-function success = mex_well_configured(language)
-%MEX_WELL_CONFIGURED verifies the set-up of MEX for compiling language
-orig_warning_state = warning;
-warning('off','all'); % We do not want to see warnings when verifying MEX
-
-callstack = dbstack;
-funname = callstack(1).name; % Name of the current function
-
-ulang = upper(language);
-
-success = 1;
-% At return,
-% success = 1 means MEX is well configured,
-% success = 0 means MEX is not well configured,
-% success = -1 means "mex -setup" runs successfully, but either we cannot try
-% it on the example file because such a file is not found, or the MEX file of
-% the example file does not work as expected.
-
-% Locate example_file, which is an example provided by MATLAB for trying MEX.
-% NOTE: MATLAB MAY CHANGE THE LOCATION OF THIS FILE IN THE FUTURE.
-switch ulang
-case 'FORTRAN'
-    example_file = fullfile(matlabroot, 'extern', 'examples', 'refbook', 'timestwo.F');
-case {'C', 'C++', 'CPP'}
-    example_file = fullfile(matlabroot, 'extern', 'examples', 'refbook', 'timestwo.c');
-otherwise
-    error(sprintf('%s:UnsupportedLang', funname), '%s: Language ''%s'' is not supported by %s.', funname, language, funname);
-end
-
-try
-    %[~, mex_setup] = evalc('mex(''-setup'', ulang)'); % Use evalc so that no output will be displayed
-    mex_setup = mex('-setup', ulang); % mex -setup may be interactive. So it is not good to mute it completely!!!
-    if mex_setup ~= 0
-        error(sprintf('%s:MexNotSetup', funname), '%s: MATLAB has not got MEX configured for compiling %s.', funname, language);
-    end
-catch
-    fprintf('\nYour MATLAB failed to run mex(''-setup'', ''%s'').\n', language);
-    success = 0;
-end
-
-if success == 1 && ~exist(example_file, 'file')
-    fprintf('\n')
-    wid = sprintf('%s:ExampleFileNotExist', funname);
-    warning('on', wid);
-    warning(wid, 'We cannot find\n%s,\nwhich is a MATLAB built-in example for trying MEX on %s. It will be ignored.\n', example_file, language);
-    success = -1;
-end
-
-if success == 1
-    try
-        [~, mex_status] = evalc('mex(example_file)'); % Use evalc so that no output will be displayed
-        if mex_status ~= 0
-            error(sprintf('%s:MexFailed', funname), '%s: MATLAB failed to compile %s.', funname, example_file);
-        end
-    catch
-        fprintf('\nThe MEX of your MATLAB failed to compile\n%s,\nwhich is a MATLAB built-in example for trying MEX on %s.\n', example_file, language);
-        success = 0;
-    end
-end
-
-if success == 1
-    try
-        [~, timestwo_out] = evalc('timestwo(1)'); % Try whether timestwo works correctly
-    catch
-        fprintf('\nThe MEX of your MATLAB compiled\n%s,\nbut the resultant MEX file does not work.\n', example_file);
-        success = 0;
-    end
-end
-
-if success == 1 && abs(timestwo_out - 2)/2 >= 10*eps
-    fprintf('\n')
-    wid = sprintf('%s:ExampleFileWorksIncorrectly', funname);
-    warning('on', wid);
-    warning(wid, 'The MEX of your MATLAB compiled\n%s,\nbut the resultant MEX file returns %.16f when calculating 2 times 1.', example_file, timestwo_out);
-    success = -1;
-end
-
-cpwd = fileparts(mfilename('fullpath')); % Current directory
-trash_files = files_with_wildcard(cpwd, 'timestwo.*');
-cellfun(@(filename) delete(filename), trash_files);
-
-warning(orig_warning_state); % Restore the behavior of displaying warnings
-return
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%% Function for removing the compiled MEX files  %%%%%%%%%%%%%%%%%%%%%%%%%%
-function clean_mex
-%CLEAN_MEX removes the compiled MEX files.
-
-fprintf('\nRemoving the compiled MEX files (if any) ... ');
-% The full path of several directories.
-cpwd = fileparts(mfilename('fullpath')); % Current directory
-matd = fullfile(cpwd, 'matlab'); % Matlab directory
-interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
-mexdir = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
-
-% Remove the compiled MEX files
-mex_files = files_with_wildcard(mexdir, '*.mex*');
-cellfun(@(filename) delete(filename), mex_files);
-
-fprintf('Done.\n\n');
-return
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Function for uninstalling pdfo %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function uninstall_pdfo
-%UNINSTALL_PDFO uninstalls PDFO.
-
-fprintf('\nUninstalling PDFO (if it is installed) ... ');
-
-% The full path of several directories.
-cpwd = fileparts(mfilename('fullpath')); % Current directory
-matd = fullfile(cpwd, 'matlab'); % Matlab directory
-interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
-mexdir = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
-tests = fullfile(matd, 'tests'); % Directory containing some tests
-
-% Remove the compiled MEX files
-mex_files = files_with_wildcard(mexdir, '*.mex*');
-cellfun(@(filename) delete(filename), mex_files);
-
-% Try removing the paths possibly added by PDFO
-orig_warning_state = warning;
-warning('off', 'MATLAB:rmpath:DirNotFound'); % Maybe the paths were not added. We do not want to see this warning.
-warning('off', 'MATLAB:SavePath:PathNotSaved'); % Maybe we do not have the permission to save path.
-rmpath(interfaces, tests);
-savepath;
-warning(orig_warning_state); % Restore the behavior of displaying warnings
-
-% Removing the line possibly added to the user startup script
-user_startup = fullfile(userpath,'startup.m');
-if exist(user_startup, 'file')
-    add_path_string = sprintf('addpath(''%s'');', interfaces);
-    full_add_path_string = sprintf('%s\t%s Added by PDFO', add_path_string, '%');
-    try
-        del_str_ln(user_startup, full_add_path_string);
-    catch
-        % Do nothing.
-    end
-end
-
-fprintf('Done.\nYou may now remove the current directory if it contains nothing you want to keep.\n\n');
-return
-
-%%%%%%%%%%%%%%%%%% Function for deleting from a file all the lines containing a string %%%%%%%%%%%%%
-function del_str_ln(filename, string)
-%DEL_STR_LN deletes from filename all the lines that are identical to string
-fid = fopen(filename, 'r');
-if fid == -1
-    error('Cannot open file %s.', filename);
-end
-
-% Read the file into a cell of strings
-data = textscan(fid, '%s', 'delimiter', '\n', 'whitespace', '');
-fclose(fid);
-cstr = data{1};
-% Remove the rows containing string
-cstr(strcmp(cstr, string)) = [];
-
-% Save the file again
-fid = fopen(filename, 'w');
-if fid == -1
-    error('Cannot open file %s.', filename);
-end
-fprintf(fid, '%s\n', cstr{:});
-fclose(fid);
-return
-
-%%%%%%% Function for replacing all the string `old_str` with the string `new_str` in a file %%%%%%%%
-function rep_str(filename, old_str, new_str)
-%REP_STR replaces all `old_str` in filename with `new_str`.
-fid = fopen(filename, 'r');
-if fid == -1
-    error('Cannot open file %s.', filename);
-end
-
-% Read the file into a cell of strings
-data = textscan(fid, '%s', 'delimiter', '\n', 'whitespace', '');
-fclose(fid);
-cstr = data{1};
-% Replace `old_str` with `new_str`.
-for i = 1 : length(cstr)
-    cstr{i} = strrep(cstr{i}, old_str, new_str);
-end
-
-% Save the file again
-fid = fopen(filename, 'w');
-if fid == -1
-    error('Cannot open file %s.', filename);
-end
-fprintf(fid, '%s\n', cstr{:});
-fclose(fid);
-return
-
-%%%%%%%%%%%%%%%% Function for checking whether an input is a `char` or `string` %%%%%%%%%%%%%%%%%%%%
-function iss = is_str(x)
-iss = (isa(x, 'char') || isa(x, 'string'));
