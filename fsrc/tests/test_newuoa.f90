@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thursday, February 10, 2022 PM02:22:14
+! Last Modified: Sunday, February 13, 2022 PM04:49:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -17,14 +17,13 @@ public :: test_solver
 contains
 
 
-subroutine test_solver(probs, mindim, maxdim, dimstride, nrand)
+subroutine test_solver(probs, mindim, maxdim, dimstride, nrand, randseed)
 
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN, ZERO, HUGENUM
-use, non_intrinsic :: datetime_mod, only : year, week
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: newuoa_mod, only : newuoa
 use, non_intrinsic :: noise_mod, only : noisy, noisy_calfun, orig_calfun
-use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, DIMSTRIDE_DFT, NRAND_DFT
+use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, DIMSTRIDE_DFT, NRAND_DFT, RANDSEED_DFT
 use, non_intrinsic :: prob_mod, only : PNLEN, PROB_T, construct, destruct
 use, non_intrinsic :: rand_mod, only : setseed, rand, randn
 use, non_intrinsic :: string_mod, only : trimstr, istr
@@ -36,11 +35,12 @@ integer(IK), intent(in), optional :: mindim
 integer(IK), intent(in), optional :: maxdim
 integer(IK), intent(in), optional :: dimstride
 integer(IK), intent(in), optional :: nrand
+integer, intent(in), optional :: randseed
 
 character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)
+integer :: randseed_loc
 integer :: rseed
-integer :: yw
 integer(IK) :: dimstride_loc
 integer(IK) :: iprint
 integer(IK) :: iprob
@@ -95,6 +95,12 @@ else
     nrand_loc = NRAND_DFT
 end if
 
+if (present(randseed)) then
+    randseed_loc = randseed
+else
+    randseed_loc = RANDSEED_DFT
+end if
+
 do iprob = 1, nprobs
     probname = probs_loc(iprob)
     do n = mindim_loc, maxdim_loc, dimstride_loc
@@ -105,10 +111,8 @@ do iprob = 1, nprobs
             & (n + 1_IK) * (n + 2_IK) / 2_IK - 1_IK, (n + 1_IK) * (n + 2_IK) / 2_IK, &
             & (n + 1_IK) * (n + 2_IK) / 2_IK + 1_IK]
         do irand = 1, int(size(npt_list) + max(0_IK, nrand_loc), kind(irand))
-            ! Initialize the random seed using N, IRAND, IK, and RP.
-            ! We ALTER THE SEED weekly to test the solvers as much as possible.
-            yw = 100 * modulo(year(), 100) + week()
-            rseed = int(sum(istr(probname)) + n + irand + IK + RP + yw)
+            ! Initialize the random seed using N, IRAND, IK, RP, and RANDSEED_LOC.
+            rseed = int(sum(istr(probname)) + n + irand + IK + RP + randseed_loc)
             call setseed(rseed)
             if (irand <= size(npt_list)) then
                 npt = npt_list(irand)
