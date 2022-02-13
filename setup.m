@@ -5,17 +5,12 @@ function setup(varargin)
 %   a structure indicating compilation options. Then setup can be called
 %   in the following ways:
 %
-%   setup(solvername, options) compiles the solver specified by solvername with options
-%   setup(solvername) compiles the solver specified by solvername
-%   setup(options) compiles all the solvers with options
-%
-%   In addition, one can uninstall the package by calling
-%
-%   setup uninstall
-%
-%   or remove the compiled MEX files by calling
-%
-%   setup clean
+%   setup(solvername, options)  % Compile a solver with options
+%   setup(solvername)  % Compile a solver
+%   setup(options)  % Compile all the solvers with options
+%   setup path  % Add the paths needed to use the package
+%   setup clean  % Remove all the compiled MEX files
+%   setup uninstall  % Uninstall the package
 %
 %   REMARKS:
 %
@@ -321,12 +316,14 @@ else
     fprintf('\n');
 end
 
-if ~path_saved % All the path-saving attempts failed
-    fprintf('*** To use the pacakge in other MATLAB sessions, do one of the following. ***\n\n');
-    fprintf('- EITHER run ''savepath'' right now if you have the permission to do so.\n\n');
+if ~path_saved  %  `add_save_path` failed to save the path.
+    add_path_string = sprintf('addpath(''%s'');', interfaces);
+    fprintf('***** To use the pacakge in other MATLAB sessions, do one of the following. *****\n\n');
+    fprintf('- run ''savepath'' right now if you have the permission to do so.\n\n');
     fprintf('- OR add the following line to your startup script\n');
     fprintf('  (see https://www.mathworks.com/help/matlab/ref/startup.html for information):\n\n');
     fprintf('  %s\n\n', add_path_string);
+    fprintf('- OR come to the current directory and run ''setup path'' when you need the package.\n\n');
 end
 
 rmpath(tools);
