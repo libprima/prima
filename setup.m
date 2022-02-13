@@ -90,7 +90,7 @@ gateways_interform = fullfile(gateways, '.interform');  % Directory of the inter
 interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
 mexdir = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
 tests = fullfile(matd, 'tests'); % Directory containing some tests
-tools = fullfile(matd, 'tools'); % Directory containing some tools, e.g., interform.m
+tools = fullfile(matd, 'setup_tools'); % Directory containing some tools, e.g., interform.m
 
 % `tools` contains some functions needed below.
 addpath(tools);
