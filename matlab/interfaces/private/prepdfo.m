@@ -123,7 +123,7 @@ probinfo.raw_data = struct('objective', fun, 'x0', x0, 'Aineq', Aineq, 'bineq', 
 precision = 'double';
 % Since `options` is not validated yet, validations are needed before inquiring options.precision.
 if isa(options, 'struct') && isfield(options, 'precision') && ischarstr(options.precision) && ...
-        ismember(lower(options), all_precisions())
+        ismember(lower(options.precision), all_precisions())
     precision = lower(options.precision);
 end
 probinfo.hugenum = gethuge('real', precision);
