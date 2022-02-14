@@ -11,7 +11,7 @@
 !
 ! Started in March 2020
 !
-! Last Modified: Saturday, February 12, 2022 PM02:41:05
+! Last Modified: Monday, February 14, 2022 AM10:51:53
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -33,10 +33,12 @@ subroutine mexFunction(nargout, poutput, nargin, pinput)
 ! of data_type are 'integer', 'int', 'float', 'real', 'single', 'double', 'mwSI', 'fun', 'function',
 ! 'con', 'constraint'.
 !
-! In previous versions, GETHUGE accepted 'mwSize' or 'mwIndex' as inputs, but it is not the case
+! N.B.:
+! 1. In previous versions, GETHUGE accepted 'mwSize' or 'mwIndex' as inputs, but it is not the case
 ! anymore. This is because mwSize and mwIndex are macros defined in fintrf.h, and they will be
 ! replaced by other strings after preprocessing. Instead of 'mwSize' and 'mwIndex', we now use
 ! 'mwSI' to get the smaller value between huge(msZero) and huge(miZero).
+! 2. The result relies on RP only when data_type is 'real', 'fun'/'function', 'con'/'constraint'.
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -95,6 +97,10 @@ call validate(success, 'Get the input successfully', srname)
 hugeValue = -real(1.0, kind(hugeValue))
 valid_input = .true.
 select case (lower(data_type))
+case ('integer', 'int')  ! No overflow in this case
+    hugeValue = real(huge(intZero), DP)
+case ('mwsi')  ! No overflow in this case
+    hugeValue = min(real(huge(msZero), DP), real(huge(miZero), DP))
 case ('float')  ! No overflow in this case
     hugeValue = real(huge(0.0), DP)
 case ('single')  ! No overflow in this case
@@ -107,13 +113,9 @@ case ('real')  ! HUGE(0.0_RP) may be bigger than HUGE(0.0_DP) in this case
     else
         hugeValue = 10.0_DP**(min(real(log10(huge(0.0_RP)), DP), log10(huge(0.0_DP))) - 1.0_DP)
     end if
-case ('integer', 'int')  ! No overflow in this case
-    hugeValue = real(huge(intZero), DP)
-case ('mwsi')  ! No overflow in this case
-    hugeValue = min(real(huge(msZero), DP), real(huge(miZero), DP))
-case ('fun', 'function')  ! HUGEFUN < huge(0.0_DP) according to the definition in CONSTS_MOD.
+case ('fun', 'function')  ! HUGEFUN < HUGE(0.0_DP) according to the definition in CONSTS_MOD.
     hugeValue = real(HUGEFUN, DP)
-case ('con', 'constraint')  ! HUGECON < huge(0.0_DP) according to the definition in CONSTS_MOD.
+case ('con', 'constraint')  ! HUGECON < HUGE(0.0_DP) according to the definition in CONSTS_MOD.
     hugeValue = real(HUGECON, DP)
 case default
     valid_input = .false.

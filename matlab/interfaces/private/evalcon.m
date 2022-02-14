@@ -1,4 +1,4 @@
-function [cineq, ceq, succ] = evalcon(invoker, nonlcon, x)
+function [cineq, ceq, succ] = evalcon(invoker, nonlcon, x, hugecon)
 %EVALCON evaluates a constraint function `[cineq, ceq] = nonlcon(x)`.
 % In particular, it uses a 'moderated extreme barrier' to cope with 'hidden constraints' or
 % evaluation failures.
@@ -24,8 +24,6 @@ if ~(isempty(ceq) || isnumeric(ceq))
 end
 
 % Use a 'moderated extreme barrier' to cope with 'hidden constraints' or evaluation failures.
-hugecon = gethuge('con');
-
 if any(isnan(cineq) | ~isreal(cineq) | cineq > hugecon)
     wid = sprintf('%s:ConstraintFailure', invoker);
     xstr = sprintf('%g    ', x);

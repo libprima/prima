@@ -1,4 +1,4 @@
-function [f, succ] = evalobj(invoker, fun, x)
+function [f, succ] = evalobj(invoker, fun, x, hugefun)
 %EVALOBJ evaluates an objective function `f = fun(x)`.
 % In particular, it uses a 'moderated extreme barrier' to cope with 'hidden constraints' or
 % evaluation failures.
@@ -24,7 +24,6 @@ if ~isnumeric(f)
 end
 
 % Use a 'moderated extreme barrier' to cope with 'hidden constraints' or evaluation failures.
-hugefun = gethuge('fun');
 if isnan(f) || ~isreal(f) || f > hugefun
     wid = sprintf('%s:ObjectiveFailure', invoker);
     xstr = sprintf('%g    ', x);

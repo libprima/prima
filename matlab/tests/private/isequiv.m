@@ -348,16 +348,27 @@ test_options.output_xhist = (rand > 0.5);
 test_options.output_nlchist = (rand > 0.5);
 test_options.maxhist = ceil(randn*1.5*test_options.maxfun);
 if single_test
-    % DO NOT INVOKE ANY RANDOMIZATION HERE. Otherwise, a single test cannot reproduce the
+    % DO NOT INVOKE ANY RANDOMIZATION WITHIN THIS IF. Otherwise, a single test cannot reproduce the
     % corresponding test in a multiple one.
     test_options.maxhist = test_options.maxfun;
     test_options.output_xhist = true;
     test_options.output_nlchist = true;
 end
 test_options.maxfilt = ceil(randn*500);
-test_options.classical = (rand < 0.2);
+%test_options.classical = (rand < 0.2);
+test_options.classical = false;
 test_options.iprint = floor(3*rand);
 test_options.quiet = (rand < 0.8);
+%if rand < 0.5
+%    test_options.precision = 'double';
+%elseif rand < 0.5
+%    test_options.precision = 'single';
+%else
+%    test_options.precision = 'quadruple';
+%end
+test_options.precision = 'double';
+call_by_package = (rand < 0.5);  % Call by the package instead of the solver
+call_by_structure = (rand < 0.5);  % Pass the problem by a structure
 if mod(ir, 50) == 0 && ~isempty(dir('*_output.txt'))
     delete('*_output.txt');
 end
@@ -406,18 +417,68 @@ else
     prob.objective  = objective;
     prob.nonlcon = nonlcon;
 end
-
 prob.options = test_options;
 
-%tic;
-solver = str2func(solvers{1});  % Use function handle to avoid `feval`.
-[x1, fx1, exitflag1, output1] = solver(prob);
-%T = toc; fprintf('\nRunning time for %s:\t %f\n', solvers{1}, T);
 
-%tic;
-solver = str2func(solvers{2});  % Use function handle to avoid `feval`.
-[x2, fx2, exitflag2, output2] = solver(prob);
-%T = toc; fprintf('\nRunning time for %s:\t %f\n', solvers{2}, T);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Call the solvers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+solver1 = str2func(solvers{1});  % Use function handle to avoid `feval`.
+solver2 = str2func(solvers{2});  % Use function handle to avoid `feval`.
+if length(solvers{1}) > length(solvers{2})
+    package1 = @pdfon;
+    package2 = @pdfo;
+    tested_solver_name = solvers{2};
+else
+    package1 = @pdfo;
+    package2 = @pdfon;
+    tested_solver_name = solvers{1};
+end
+if call_by_package
+    if call_by_structure
+        prob.options.solver = solvers{1};
+        %tic;
+        [x1, fx1, exitflag1, output1] = package1(prob);
+        %T = toc; fprintf('\nRunning time for %s:\t %f\n', solvers{1}, T);
+        prob.options.solver = solvers{2};
+        %tic;
+        [x2, fx2, exitflag2, output2] = package2(prob);
+        %T = toc; fprintf('\nRunning time for %s:\t %f\n', solvers{2}, T);
+    else
+        prob.options.solver = solvers{1};
+        [x1, fx1, exitflag1, output1] = package1(prob.objective, prob.x0, prob.Aineq, ...
+            prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.nonlcon, prob.options);
+        prob.options.solver = solvers{2};
+        [x2, fx2, exitflag2, output2] = package2(prob.objective, prob.x0, prob.Aineq, ...
+            prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.nonlcon, prob.options);
+    end
+else
+    if call_by_structure
+        [x1, fx1, exitflag1, output1] = solver1(prob);
+        [x2, fx2, exitflag2, output2] = solver2(prob);
+    else
+        switch lower(tested_solver_name)
+        case {'uobyqa', 'newuoa'}
+            [x1, fx1, exitflag1, output1] = solver1(prob.objective, prob.x0, prob.options);
+            [x2, fx2, exitflag2, output2] = solver2(prob.objective, prob.x0, prob.options);
+        case {'bobyqa'}
+            [x1, fx1, exitflag1, output1] = solver1(prob.objective, prob.x0, prob.lb, prob.ub, prob.options);
+            [x2, fx2, exitflag2, output2] = solver2(prob.objective, prob.x0, prob.lb, prob.ub, prob.options);
+        case {'lincoa'}
+            [x1, fx1, exitflag1, output1] = solver1(prob.objective, prob.x0, ...
+                prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.options);
+            [x2, fx2, exitflag2, output2] = solver2(prob.objective, prob.x0, ...
+                prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.options);
+        case {'cobyla'}
+            [x1, fx1, exitflag1, output1] = solver1(prob.objective, prob.x0, ...
+                prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.nonlcon, prob.options);
+            [x2, fx2, exitflag2, output2] = solver2(prob.objective, prob.x0, ...
+                prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.nonlcon, prob.options);
+        otherwise
+            error('Wrong solver tested: %s', tested_solver_name);
+        end
+    end
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Call the solvers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 if output1.funcCount == test_options.maxfun && (exitflag1 == 0 || exitflag1 == 2) && exitflag2 == 3
     exitflag1 = 3;

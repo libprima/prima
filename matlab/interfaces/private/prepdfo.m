@@ -25,7 +25,7 @@ function [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, options, probinfo] =
 warnings = {}; % A cell that records all the warnings, will be recorded in probinfo
 
 % Who is calling this function? Is it a correct invoker?
-invoker_list = {'pdfon', 'uobyqan', 'newuoan', 'bobyqan', 'lincoan', 'cobylan'};
+invoker_list = [all_solvers(), 'pdfon'];
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
 if (length(callstack) == 1 || ~ismember(callstack(2).name, invoker_list))
@@ -79,7 +79,7 @@ end
 % 8. infeasible_leq: a true/false vector indicating which linear equality
 %    constraints are infeasible (up to naive tests)
 % 9. trivial_lineq
-% 10. trivial_leq: a true/false vector indicating which linea equality
+% 10. trivial_leq: a true/false vector indicating which linear equality
 %     constraints are trivial (up to naive tests)
 % 11. infeasible: whether the problem is infeasible (up to naive tests)
 % 12. scaled: whether the problem is scaled
@@ -94,6 +94,9 @@ end
 % 21. user_options_fields: the fields in the user-specified options
 % 22. options: (refined) options for calling the solvers
 % 23. warnings: warnings during the preprocessing/validation
+% 24. hugenum: the large possible absolute value of the variables
+% 25. hugefun: the largest value of the objective function
+% 26. hugecon: the largest possible absolute value of the constraints
 probinfo = struct();
 
 % Save the raw data (date before validation/preprocessing) in probinfo.
@@ -110,16 +113,33 @@ probinfo = struct();
 probinfo.raw_data = struct('objective', fun, 'x0', x0, 'Aineq', Aineq, 'bineq', bineq, ...
     'Aeq', Aeq, 'beq', beq, 'lb', lb, 'ub', ub, 'nonlcon', nonlcon, 'options', options);
 
+% Decide the precision ('single', 'double', or 'quadruple') of the real calculation within the
+% Fortran solvers. This is needed ONLY by `hugenum`, `hugefun`, and `hugecon` defined below by
+% calling `gethuge`. These three numbers will be used in `pre_x0`, `pre_fun`, and `pre_con`
+% respectively in the sequel. Note the following.
+% 1. `precision` takes effect only if Fortran solvers are called (i.e., when options.fortran = true).
+% 2. `precision` is passed only to `gethuge`, which defines huge values (e.g., `hugenum`, `hugefun`).
+% 3. `precision` does not affect integer-type huge values (e.g., `maxint`).
+precision = 'double';
+% Since `options` is not validated yet, validations are needed before inquiring options.precision.
+if isa(options, 'struct') && isfield(options, 'precision') && ischarstr(options.precision) && ...
+        ismember(lower(options), all_precisions())
+    precision = lower(options.precision);
+end
+probinfo.hugenum = gethuge('real', precision);
+probinfo.hugefun = gethuge('fun', precision);
+probinfo.hugecon = gethuge('con', precision);
+
 % Validate and preprocess fun
-[fun, probinfo.feasibility_problem, warnings] = pre_fun(invoker, fun, warnings);
+[fun, probinfo.feasibility_problem, warnings] = pre_fun(invoker, fun, probinfo.hugefun, warnings);
 
 % Validate and preprocess x0
-[x0, warnings] = pre_x0(invoker, x0, warnings);
+[x0, warnings] = pre_x0(invoker, x0, probinfo.hugenum, warnings);
 lenx0 = length(x0); % Within this file, for clarity, we denote length(x0) by lenx0 instead of n
 
 % Validate and preprocess the bound constraints
 % In addition, get the indices of infeasible bounds and 'fixed variables'
-% such that ub-lb < 2eps (if any) and save the information in probinfo.
+% such that ub-lb < 2*eps (if any) and save the information in probinfo.
 % If there is any infeasible bound, the problem is infeasible, and we define
 % that there is no fixed variable.
 [lb, ub, infeasible_bound, fixedx, fixedx_value, warnings] = pre_bcon(invoker, lb, ub, lenx0, warnings);
@@ -159,7 +179,7 @@ probinfo.trivial_leq = trivial_leq; % A vector of true/false
 % The constraints will be reduced if some but not all variables are fixed by the bound
 % constraints. See pre_lcon for why we do not reduce the problem when all variables
 % are fixed.
-nonlcon = pre_nonlcon(invoker, nonlcon, fixedx, fixedx_value);
+nonlcon = pre_nonlcon(invoker, nonlcon, fixedx, fixedx_value, probinfo.hugecon);
 
 % Reduce fun, x0, lb, and ub if some but not all variables are fixed by
 % the bound constraints. See pre_lcon for why we do not reduce the
@@ -167,7 +187,7 @@ nonlcon = pre_nonlcon(invoker, nonlcon, fixedx, fixedx_value);
 probinfo.raw_dim = lenx0; % Problem dimension before reduction
 if any(fixedx) && any(~fixedx)
     freex = ~fixedx; % A vector of true/false indicating whether the variable is free or not
-    fun = @(freex_value) fun(fullx(freex_value, fixedx_value, freex, fixedx)); % Objective funp after reduction
+    fun = @(freex_value) fun(fullx(freex_value, fixedx_value, freex, fixedx)); % Objective fun after reduction
     x0 = x0(freex); % x0 after reduction
     lenx0 = length(x0);
     lb = lb(freex); % lb after reduction
@@ -326,7 +346,7 @@ function [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, options, warnings] =
 % NOTE: We treat field names case-sensitively.
 
 % Possible invokers
-invoker_list = {'pdfon', 'uobyqan', 'newuoan', 'bobyqan', 'lincoan', 'cobylan'};
+invoker_list = [all_solvers(), 'pdfon'];
 
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
@@ -429,8 +449,8 @@ end
 return
 
 %%%%%%%%%%%%%%%%%%%%%%%% Function for fun preprocessing %%%%%%%%%%%%%%%%%
-function [fun, feasibility_problem, warnings] = pre_fun(invoker, fun, warnings)
-if ~(isempty(fun) || isa(fun, 'char') || isa(fun, 'string') || isa(fun, 'function_handle'))
+function [fun, feasibility_problem, warnings] = pre_fun(invoker, fun, hugefun, warnings)
+if ~(isempty(fun) || ischarstr(fun) || isa(fun, 'function_handle'))
     % Public/normal error
     error(sprintf('%s:InvalidFun', invoker), ...
         '%s: FUN should be a function handle or a function name.', invoker);
@@ -443,9 +463,9 @@ if isempty(fun)
     wmsg = sprintf('%s: there is no objective function. A feasibility problem will be solved.', invoker);
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
-elseif isa(fun, 'char') || isa(fun, 'string')
+elseif ischarstr(fun)
     fun = str2func(fun);
-    % Work with function handles instread of function names to avoid using 'feval'
+    % Work with function handles instead of function names to avoid using 'feval'
 end
 if ~exist('OCTAVE_VERSION', 'builtin')
     % Check whether fun has at least 1 output.
@@ -467,30 +487,26 @@ if ~exist('OCTAVE_VERSION', 'builtin')
         '%s: FUN has no output; it should return the objective function value.', invoker);
     end
 end
-fun = @(x) evalobj(invoker, fun, x);  % See evalobj.m
+fun = @(x) evalobj(invoker, fun, x, hugefun);  % See evalobj.m
 return
 
 %%%%%%%%%%%%%%%%%%%%%%%% Function for x0 preprocessing %%%%%%%%%%%%%%%%%
-function [x0, warnings] = pre_x0(invoker, x0, warnings)
+function [x0, warnings] = pre_x0(invoker, x0, hugenum, warnings)
 [isrv, lenx0]  = isrealvector(x0);
 if ~(isrv && (lenx0 > 0))
     % Public/normal error
     error(sprintf('%s:InvalidX0', invoker), '%s: X0 should be a real vector/scalar.', invoker);
 end
-% maxint is the largest integer in the mex functions; the factor 0.99 provides a buffer. We do not
-% pass any integer larger than maxint to the mexified Fortran code. Otherwise, errors include
-% SEGFAULT may occur. The value of maxint is about 10^9 on a 32-bit platform and 10^18 on a 64-bit one.
-maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSI')]));
-if (lenx0 > maxint)
+if (lenx0 > maxint())
     % Public/normal error
-    error(sprintf('%s:ProblemTooLarge', invoker), '%s: The problem is too large; at most %d variables are allowed.', invoker, maxint);
+    error(sprintf('%s:ProblemTooLarge', invoker), '%s: The problem is too large; at most %d variables are allowed.', invoker, maxint());
 end
 x0 = double(x0(:));
 abnormal_x0 = isnan(x0) | (abs(x0) >= inf);
 if any(abnormal_x0)
     x0(isnan(x0)) = 0;
-    x0(isinf(x0) & x0 > 0) = gethuge('real');
-    x0(isinf(x0) & x0 < 0) = -gethuge('real');
+    x0(isinf(x0) & x0 > 0) = hugenum;
+    x0(isinf(x0) & x0 < 0) = -hugenum;
     wid = sprintf('%s:AbnormalX0', invoker);
     wmsg = sprintf('%s: X0 contains NaN or infinite values; NaN is replaced by 0 and Inf by the largest real number.', invoker);
     warning(wid, '%s', wmsg);
@@ -685,19 +701,15 @@ if isempty(Aineq)
     bineq = [];
 end
 
-% maxint is the largest integer in the mex functions; the factor 0.99 provides a buffer. We do not
-% pass any integer larger than maxint to the mexified Fortran code. Otherwise, errors include
-% SEGFAULT may occur. The value of maxint is about 10^9 on a 32-bit platform and 10^18 on a 64-bit one.
-maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSI')]));
-if (max([length(beq), length(bineq)]) > maxint)
+if (max([length(beq), length(bineq)]) > maxint())
     % Public/normal error
-    error(sprintf('%s:ProblemTooLarge', invoker), '%s: The problem is too large; at most %d constraints are allowed.', invoker, maxint);
+    error(sprintf('%s:ProblemTooLarge', invoker), '%s: The problem is too large; at most %d constraints are allowed.', invoker, maxint());
 end
 return
 
 %%%%%%%%%%%%%%%%% Function for nonlinear constraint preprocessing %%%%%%%%%%
-function nonlcon = pre_nonlcon(invoker, nonlcon, fixedx, fixedx_value)
-if ~(isempty(nonlcon) || isa(nonlcon, 'function_handle') || isa(nonlcon, 'char') || isa(nonlcon, 'string'))
+function nonlcon = pre_nonlcon(invoker, nonlcon, fixedx, fixedx_value, hugecon)
+if ~(isempty(nonlcon) || isa(nonlcon, 'function_handle') || ischarstr(nonlcon))
     % Public/normal error
     error(sprintf('%s:InvalidCon', invoker), ...
     '%s: nonlcon should be a function handle or a function name.', invoker);
@@ -705,7 +717,7 @@ end
 if isempty(nonlcon)
     nonlcon = []; % We use [] to signify that nonlcon is not specified; its size is 0x0
 else
-    if isa(nonlcon, 'char') || isa(nonlcon, 'string')
+    if ischarstr(nonlcon)
         nonlcon = str2func(nonlcon);
         % work with function handles instead of function names to avoid using 'feval'
     end
@@ -713,7 +725,7 @@ else
         % Check whether nonlcon has at least 2 outputs.
         % nargout(fun) = #outputs in the definition of fun.
         % If fun includes varargout in definition, nargout(fun) = -#outputs.
-        % Octave does not support nargout for built-in function (as of 2019-08-16)!
+        % Octave does not support nargout for built-in functions (as of 2019-08-16)!
         try
         % If nonlcon is not a properly defined function, then nargout
         % can encounter an error. Wrap the error as a public error.
@@ -736,7 +748,7 @@ else
         freex = ~fixedx; % A vector of true/false indicating whether the variable is free or not
         nonlcon = @(freex_value) nonlcon(fullx(freex_value, fixedx_value, freex, fixedx));
     end
-    nonlcon = @(x) evalcon(invoker, nonlcon, x);  % See evalcon.m
+    nonlcon = @(x) evalcon(invoker, nonlcon, x, hugecon);  % See evalcon.m
 end
 return
 
@@ -753,7 +765,7 @@ function [options, user_options_fields, warnings] = pre_options(invoker, options
 % NOTE: We treat field names case-sensitively.
 
 % Possible solvers
-solver_list = {'uobyqan', 'newuoan', 'bobyqan', 'lincoan', 'cobylan'};
+solver_list = all_solvers();
 % We may add other solvers in the future!
 % If a new solver is included, we should do the following.
 % 0. Include it into the invoker_list (in this and other functions).
@@ -763,7 +775,7 @@ solver_list = {'uobyqan', 'newuoan', 'bobyqan', 'lincoan', 'cobylan'};
 %    depends on the invoker/solver. See known_fields there).
 
 % Possible invokers
-invoker_list = ['pdfon', solver_list];
+invoker_list = [solver_list, 'pdfon'];
 
 callstack = dbstack;
 funname = callstack(1).name;
@@ -785,6 +797,7 @@ ctol = eps; % Tolerance for constraint violation; a point with a constraint viol
 cweight = 1e8;  % The weight of constraint violation in the selection of the returned x
 classical = false; % Call the classical Powell code? Classical mode recommended only for research purpose
 fortran = true; % Call the Fortran code?
+precision = 'double'; % The precision of the real calculation within the solver.
 scale = false; % Scale the problem according to bounds? Scale only if the bounds reflect well the scale of the problem
 scale = (scale && max(ub-lb)<inf); % ! NEVER remove this ! Scale only if all variables are with finite lower and upper bounds
 honour_x0 = false; % Respect the user-defined x0? Needed by BOBYQA
@@ -796,13 +809,6 @@ output_xhist = false; % Output the history of x?
 output_nlchist = false; % Output the history of the nonlinear constraints?
 min_maxfilt = 200; % The smallest value of maxfilt; if maxfilt is too small, the returned x may not be the best one visited
 maxfilt = 10*min_maxfilt; % Length of the filter used for selecting the returned x in constrained problems
-
-% maxint is the largest integer in the mex functions; the factor 0.99 provides a buffer. We do not
-% pass any integer larger than maxint to the mexified Fortran code. Otherwise, errors include
-% SEGFAULT may occur. The value of maxint is about 10^9 on a 32-bit platform and 10^18 on a 64-bit one.
-% In the sequel, we ensure that options.maxfun <= maxint, and all the other integers <= options.maxfun,
-% including options.npt, options.maxhist and options.maxfilt.
-maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSI')]));
 
 if ~(isa(options, 'struct') || isempty(options))
     % Public/normal error
@@ -834,7 +840,7 @@ user_options_fields = options_fields;
 % In this way, options.solver and solver either end up with a member of
 % solver_list or ''. The second case is possible only if invoker = 'pdfon',
 % and solver will be selected later.
-if isfield(options, 'solver') && ~isa(options.solver, 'char') && ~isa(options.solver, 'string')
+if isfield(options, 'solver') && ~ischarstr(options.solver)
     options.solver = 'UNKNOWN_SOLVER';
     % We have to change options.solver to a char/string so that we can use strcmpi
     % We do not need to worry about the case where solver is empty, because
@@ -869,7 +875,7 @@ else % invoker is in {'uobyqan', ..., 'cobylan'}
     end
     solver = invoker;
 end
-options.solver = solver; % Record solver in options.solver; will be used in postpdfo
+options.solver = char(solver); % Record solver in options.solver; will be used in postpdfo
 % When the invoker is pdfo, options.solver = solver = '' unless the user defines
 % an options.solver in solver_list. Here, '' is an empty char array to signify
 % that the solver is yet to decide.
@@ -877,7 +883,7 @@ options.solver = solver; % Record solver in options.solver; will be used in post
 % Check unknown fields according to solver
 % solver is '' if it has not been decided yet; in that case, we suppose (for
 % simplicity) that all possible fields are known.
-known_fields = {'iprint', 'maxfun', 'rhobeg', 'rhoend', 'ftarget', 'classical', 'quiet', 'debug', 'chkfunval', 'solver', 'maxhist', 'output_xhist', 'fortran'};
+known_fields = {'iprint', 'maxfun', 'rhobeg', 'rhoend', 'ftarget', 'classical', 'quiet', 'debug', 'chkfunval', 'solver', 'maxhist', 'output_xhist', 'fortran', 'precision'};
 if ~isfield(options, 'classical') || (islogicalscalar(options.classical) && ~options.classical)
     known_fields = [known_fields, 'eta1', 'eta2', 'gamma1', 'gamma2'];
 end
@@ -1028,13 +1034,13 @@ if isfield(options, 'maxfun')
         wmsg = sprintf('%s: invalid maxfun; it should be a positive integer; it is set to %d.', invoker, maxfun);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
-    elseif options.maxfun > maxint
+    elseif options.maxfun > maxint()
         % maxfun would suffer from overflow in the Fortran code
         wid = sprintf('%s:MaxfunTooLarge', funname);
-        wmsg = sprintf('%s: maxfun exceeds the upper limit of integers in Fortran MEX; it is set to %d.', funname, maxint);
+        wmsg = sprintf('%s: maxfun exceeds the upper limit of integers in Fortran MEX; it is set to %d.', funname, maxint());
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
-        options.maxfun = maxint;
+        options.maxfun = maxint();
         validated = true;  % We have set options.maxfun to a valid value in the last line.
     elseif isempty(solver) && options.maxfun <= lenx0+1  % Here, options.maxfun cannot be NaN. No worry about the comparison.
         options.maxfun = lenx0+2; % Here we take lenx0+2 (the smallest possible value for npt)
@@ -1218,6 +1224,23 @@ end
 if ~validated % options.fortran has not got a validated value yet
     options.fortran = fortran;
 end
+
+% Validate options.precision
+validated = false;
+if isfield(options, 'precision')
+    if ~ischarstr(options.precision) || ~ismember(lower(options.precision), all_precisions())
+        wid = sprintf('%s:InvalidPrecision', invoker);
+        wmsg = sprintf('%s: invalid precision; it should be ''single'', ''double'', or ''quadruple''; it is set to %s.', invoker, precision);
+        warning(wid, '%s', wmsg);
+        warnings = [warnings, wmsg];
+    else
+        validated = true;
+    end
+end
+if ~validated  % options.precision has not got a validated value yet
+    options.precision = precision;
+end
+options.precision = lower(char(options.precision));
 
 % Validate options.honour_x0
 validated = false;
@@ -1618,7 +1641,7 @@ function [options, warnings] = select_solver(invoker, options, probinfo, warning
 
 invoker_list = {'pdfon'};
 % Only pdfo needs select_solver. We may have other invokers in the future!
-solver_list = {'uobyqan', 'newuoan', 'bobyqan', 'lincoan', 'cobylan'};
+solver_list = all_solvers();
 % We may add other solvers in the future!
 % Note that pdfo is not a possible solver here!
 callstack = dbstack;
@@ -1751,37 +1774,34 @@ function match = prob_solv_match(ptype, solver)
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
 
-solver_list = {'uobyqan', 'newuoan', 'bobyqan', 'lincoan', 'cobylan', 'pdfon'};
+solver_list = [all_solvers(), 'pdfon'];
 % Note: pdfo is also a possible solver when prob_solv_match is called in
 % prepdfo to check whether the invoker can handle the problem.
+
 if ~ismember(solver, solver_list)
     % Private/unexpected error
     error(sprintf('%s:InvalidSolver', funname), ...
     '%s: UNEXPECTED ERROR: unknown solver ''%s'' received.', funname, solver);
 end
 
-match = true;
 switch ptype
 case 'unconstrained'
     match = true;
     % Essentially do nothing. DO NOT remove this case. Otherwise, the
     % case would be included in 'otherwise', which is not correct.
 case 'bound-constrained'
-    if any(strcmp(solver, {'uobyqan', 'newuoan'}))
-        match = false;
-    end
+    match = ismember(solver, all_solvers('bound_constrained_solvers'));
 case 'linearly-constrained'
-    if any(strcmp(solver, {'uobyqan', 'newuoan', 'bobyqan'}))
-        match = false;
-    end
+    match = ismember(solver, all_solvers('linearly_constrained_solvers'));
 case 'nonlinearly-constrained'
-    if any(strcmp(solver, {'uobyqan', 'newuoan', 'bobyqan', 'lincoan'}))
-        match = false;
-    end
+    match = ismember(solver, all_solvers('nonlinearly_constrained_solvers'));
 otherwise
     % Private/unexpected error
     error(sprintf('%s:InvalidProbType', funname), '%s: UNEXPECTED ERROR: unknown problem type ''%s'' received.', funname, ptype);
 end
+
+match = match || strcmp(solver, 'pdfon');  % pdfo matches all types of problems.
+
 return
 
 %%%%%%%%%%%%%%% Function for calculating constraint violation %%%%%%%%%%

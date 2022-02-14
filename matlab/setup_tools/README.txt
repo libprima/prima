@@ -1,6 +1,6 @@
 This directory contains some tools for setting up the MATLAB version of the package.
 
-N.B.: The tools are NOT needed after the setup finishes.
+N.B.: This directory is NOT needed after the setup finishes.
 
 Authors:
   Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)

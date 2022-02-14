@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 12, 2022 PM03:22:32
+! Last Modified: Tuesday, February 15, 2022 AM12:23:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -143,8 +143,8 @@ real(RP), intent(out), allocatable, optional :: xhist(:, :)
 
 ! Local variables
 character(len=*), parameter :: ifmt = '(I0)'  ! I0: use the minimum number of digits needed to print
-character(len=*), parameter :: solver = 'LINCOA'
-character(len=*), parameter :: srname = 'LINCOA'
+character(len=*), parameter :: solver = 'BOBYQA'
+character(len=*), parameter :: srname = 'BOBYQA'
 character(len=MSGLEN) :: wmsg
 integer(IK) :: info_loc
 integer(IK) :: iprint_loc

@@ -32,24 +32,19 @@ obligatory_output_fields = {'x', 'fx', 'exitflag', 'funcCount', 'constrviolation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Obligatory fields in probinfo and options
+% N.B.: probinfo = [] if the invoker is a solver called by pdfo. In that case, postpdfo will return
+% after verifying `output`, and then pdfo will call postpdfo again (after assigning `probinfo`) to
+% do the postprocessing.
 obligatory_probinfo_fields = {'raw_data', 'refined_data', 'fixedx', 'fixedx_value', ...
     'nofreex', 'infeasible_bound', 'infeasible_lineq', 'infeasible_leq', ...
     'trivial_lineq', 'trivial_leq', 'infeasible', 'scaled', 'scaling_factor', ...
     'shift', 'reduced', 'raw_type', 'raw_dim', 'refined_type', 'refined_dim', ...
-    'feasibility_problem', 'user_options_fields', 'options', 'warnings'};
+    'feasibility_problem', 'user_options_fields', 'options', 'warnings', ...
+    'hugefun', 'hugecon'};
 obligatory_options_fields = {'classical', 'debug', 'chkfunval'};
 
-% All possible solvers
-unconstrained_solver_list = {'uobyqan', 'newuoan'};
-constrained_solver_list = {'bobyqan', 'lincoan', 'cobylan'};
-nonlinearly_constrained_solver_list = {'cobylan'};
-solver_list = [unconstrained_solver_list, constrained_solver_list];
-
-% Solvers from PDFO; there may be external solvers added later.
-internal_solver_list = {'uobyqan', 'newuoan', 'bobyqan', 'lincoan', 'cobylan'};
-
 % Who is calling this function? Is it a correct invoker?
-invoker_list = ['pdfon', solver_list];
+invoker_list = ['pdfon', all_solvers()];
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
 if (length(callstack) == 1) || ~ismember(callstack(2).name, invoker_list)
@@ -59,13 +54,6 @@ if (length(callstack) == 1) || ~ismember(callstack(2).name, invoker_list)
 else
     invoker = callstack(2).name; % Name of the function who calls this function
 end
-
-% With the moderated extreme barrier (implemented when options.classical is false), all
-% the function values that are NaN or larger than hugefun are replaced by hugefun;
-% all the constraint values that are NaN or larger than hugecon are replaced by hugecon.
-% hugefun and hugecon are defined in consts.F90, and can be obtained by gethuge.
-hugefun = gethuge('fun');
-hugecon = gethuge('con');
 
 % Verify the input before starting the real business
 % Verify probinfo
@@ -112,7 +100,7 @@ if strcmp(invoker, 'pdfon')
 else
     solver = invoker;
 end
-if isempty(solver) || (~isa(solver, 'char') && ~isa(solver, 'string')) || ~ismember(solver, solver_list)
+if isempty(solver) || (~isa(solver, 'char') && ~isa(solver, 'string')) || ~ismember(solver, all_solvers())
     % Public/unexpected error
     error(sprintf('%s:InvalidSolver', invoker), '%s: UNEXPECTED ERROR: invalid solver passed to %s.', invoker, funname);
 end
@@ -123,7 +111,7 @@ if ~isa(output, 'struct')
     error(sprintf('%s:InvalidOutput', invoker), ...
         '%s: UNEXPECTED ERROR: %s returns an output that is not a structure', invoker, solver);
 end
-if ismember(solver, internal_solver_list)
+if ismember(solver, all_solvers('internal'))
     % For internal solvers, output should contain fhist, chist, and warnings
     obligatory_output_fields = [obligatory_output_fields, 'fhist', 'chist', 'warnings'];
 end
@@ -131,10 +119,9 @@ if strcmp(solver, 'lincoan')
     % For lincoan, output should contain constr_modified
     obligatory_output_fields = [obligatory_output_fields, 'constr_modified'];
 end
-if ismember(solver, nonlinearly_constrained_solver_list) && ismember(solver, internal_solver_list)
+if ismember(solver, all_solvers('nonlinearly_constrained_solvers')) && ismember(solver, all_solvers('internal'))
     % For nonlinearly constrained internal solvers, output should contain nlinceq and nlceq
     obligatory_output_fields = [obligatory_output_fields, 'nlcineq', 'nlceq'];
-    %obligatory_output_fields = [obligatory_output_fields, 'nlcineq', 'nlceq', 'nlcihist', 'nlcehist'];
 end
 missing_fields = setdiff(obligatory_output_fields, fieldnames(output));
 if ~isempty(missing_fields)
@@ -153,6 +140,16 @@ if (length(callstack) >= 3) && strcmp(callstack(3).name, 'pdfon')
     return
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%% !!!!!! No reading of `probinfo` should happen before this line !!!!! %%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% With the moderated extreme barrier (implemented when options.classical is false), all
+% the function values that are NaN or larger than hugefun are replaced by hugefun;
+% all the constraint values that are NaN or larger than hugecon are replaced by hugecon.
+hugefun = probinfo.hugefun;
+hugecon = probinfo.hugecon;
 
 % Record solver name in output (do it after verifying that output is a structure).
 output.algorithm = solver;
@@ -285,7 +282,7 @@ if isfield(output, 'chist')
 else % External solvers may not return chist
     chist = constrviolation + zeros(1, nhist);
 end
-if ~(isempty(chist) && ismember(solver, unconstrained_solver_list)) && (~isrealvector(chist) || (length(chist) ~= nhist))
+if ~(isempty(chist) && ismember(solver, all_solvers('without_constraints'))) && (~isrealvector(chist) || (length(chist) ~= nhist))
     % Public/unexpected error
     error(sprintf('%s:InvalidChist', invoker), ...
         '%s: UNEXPECTED ERROR: %s returns a chist that is not a real vector of length min(nf, maxfhist).', invoker, solver);
@@ -553,7 +550,7 @@ warning('on', 'backtrace');
 if options.debug && ~options.classical
     % Check whether fx is 'optimal'
     fhistf = fhist;
-    if ismember(solver, constrained_solver_list)
+    if ismember(solver, all_solvers('with_constraints'))
         fhistf = fhistf(chist <= max(cstrv_returned, 0));
     end
     minf = min([fhistf, fx]);

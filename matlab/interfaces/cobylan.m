@@ -389,13 +389,9 @@ else % The problem turns out 'normal' during prepdfo
         error(sprintf('%s:ConstraintFailureAtX0', funname), '%s: The constraint evaluation fails at x0. %s cannot continue.', funname, funname);
     end
 
-    % maxint is the largest integer in the mex functions; the factor 0.99 provides a buffer. We do not
-    % pass any integer larger than maxint to the mexified Fortran code. Otherwise, errors include
-    % SEGFAULT may occur. The value of maxint is about 10^9 on a 32-bit platform and 10^18 on a 64-bit one.
-    maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSI')]));
-    if (length(constr_x0) > maxint)
+    if (length(constr_x0) > maxint())
         % Public/normal error
-        error(sprintf('%s:ProblemTooLarge', funname), '%s: The problem is too large; at most %d constraints are allowed.', funname, maxint);
+        error(sprintf('%s:ProblemTooLarge', funname), '%s: The problem is too large; at most %d constraints are allowed.', funname, maxint());
     end
 
     % Extract the options
@@ -414,13 +410,17 @@ else % The problem turns out 'normal' during prepdfo
     output_nlchist = options.output_nlchist;
     maxfilt = options.maxfilt;
     iprint = options.iprint;
+    precision = options.precision;
+    debug_flag = options.debug;
+    if options.classical
+        variant = 'classical';
+    else
+        variant = 'modern';
+    end
 
     % Call the Fortran code
-    if options.classical
-        fsolver = @fcobylan_classical;
-    else
-        fsolver = @fcobylan;
-    end
+    solver = 'cobyla';
+    fsolver = str2func(get_mexname(solver, precision, debug_flag, variant));
     % The mexified Fortran Function is a private function generating only private errors;
     % however, public errors can occur due to, e.g., evalobj; error handling needed.
     try
@@ -428,7 +428,7 @@ else % The problem turns out 'normal' during prepdfo
             fsolver(funcon, x0, f_x0, constr_x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ...
             ftarget, ctol, cweight, maxfun, iprint, maxhist, double(output_xhist), ...
             double(output_nlchist), maxfilt);
-        % Fortran MEX does not provide an API for reading Boolean variables. So we convert 
+        % Fortran MEX does not provide an API for reading Boolean variables. So we convert
         % output_xhist and output_nlchist to doubles (0 or 1) before passing them to the MEX gateway.
         % In C MEX, however, we have mxGetLogicals.
     catch exception
