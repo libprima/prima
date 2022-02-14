@@ -7,7 +7,7 @@ action = '';
 wrong_input = false;
 
 % Start the parsing.
-input_string = 'ALLn';
+input_string = 'ALL';
 if length(argin) > 2
     fprintf('\nSetup accepts at most two inputs.\n\n');
     wrong_input = true;
