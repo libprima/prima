@@ -1,90 +1,231 @@
-function compile(solver_list, mex_options, mexdir, src, classical, common, gateways)
+function compile(solvers, mexdir, modern_src, classical_src, common, gateways, options)
+%COMPILE mexifies the Fortran solvers.
+% solvers: list of the solvers to mexify
+% mexdir: the directory that will contain the mexified solvers
+% modern_src: the directory containing the modernized source files of the Fortran solvers
+% classical_src: the directory containing the classical source files of the Fortran solvers
+% common: the directory that contains some common source files shared by all the Fortran solvers
+% gateways: the directory containing the MEX gateways of the Fortran solvers
+% options: some options
 
-% Clean up the directories before compilation.
-% This is important especially if there was previously another compilation with different options.
-% Without cleaning-up, the MEX files may be linked with wrong files, which can lead to serious
-% errors including Segmentation Fault!
-dir_list = {mexdir, src, classical, common, gateways};
-for idir = 1 : length(dir_list)
-    cellfun(@(filename) delete(filename), list_modo_files(dir_list{idir}));
-end
+% Remarks on the working directory:
+% During the compilation, it is important to work in the correct directory. Otherwise, the files can
+% be linked mistakenly, leading to runtime errors such as SEGFAULT.
+% 1. Each [precision, debug_flag] specifies a version of the common files; they are compiled in
+% workdir = fullfile(common, pdstr(precision, debug_flag));
+% 2. Each [variant, precision, debug_flag] specifies a version of the solver; it is compiled in
+% workdir = fullfile(directory_of_solver_variant, pdstr(precision, debug_flag));
+% 3. When compiling the solver corresponding to [variant, precision, debug_flag], we need the
+% module and object files in
+% commondir = fullfile(common, pdstr(precision, debug_flag)).
+% 4. All the working directories (i.e., `workdir`) should be sanitized (i.e., removing the existing
+% module and object files) before the compilation.
+%
+% Remarks on the compilation options -O and -g:
+% -O and -g may lead to (slightly) different behaviors of the mexified code. This was observed
+% on 2021-09-09 in a test of NEWUOA on the AKIVA problem of CUTEst. It was because the mexified code
+% produced different results when it was supposed to evaluate COS(0.59843577329095299_DP) amid OTHER
+% CALCULATIONS: with -O, the result was 0.82621783366991353; with -g, it became 0.82621783366991364.
+% Bizarrely, if we write a short Fortran program to evaluate only COS(0.59843577329095299_DP),
+% then the result is always 0.82621783366991364, regardless of -O or -g. No idea why.
+
+% COMPILE starts
+
+olddir = cd();
+
+debug_flags = {true, false};
+precisions = all_precisions();
+%variants = {'modern', 'classical'};
+variants = {'modern'};
+ready_solvers = {'cobyla', 'newuoa'};
 
 % Name of the file that contains the list of Fortran files. There should be such a file in each
 % Fortran source code directory, and the list should indicate the dependence among the files.
 filelist = 'ffiles.txt';
 
-% Compilation of the common files. They are shared by all solvers. We compile them only once.
-% gateways/debug.F contains debugging subroutines tailored for MEX.
+% Detect whether we are running a 32-bit MATLAB, where maxArrayDim = 2^31-1, and then set ad_option
+% accordingly. On a 64-bit MATLAB, maxArrayDim = 2^48-1 according to the document of MATLAB R2019a.
+% !!! Make sure that everything is compiled with the SAME ad_option !!!
+% !!! Otherwise, Segmentation Fault may occur !!!
+[Architecture, maxArrayDim] = computer;
+if any(strfind(Architecture, '64')) && log2(maxArrayDim) > 31
+    ad_option = '-largeArrayDims';
+else
+    ad_option = '-compatibleArrayDims'; % This will also work in a 64-bit MATLAB
+end
+
+% Compile the common files. They are shared by all solvers. We compile them only once.
+
+% debug.F contains debugging subroutines tailored for MEX.
 copyfile(fullfile(gateways, 'debug.F'), common);
-% ppf.h contains preprocessing directives. Set __DEBUGGING__ according to mex_options.
+% ppf.h contains preprocessing directives. It is needed only when compiling the common files.
 header_file = fullfile(common, 'ppf.h');
 header_file_bak = fullfile(common, 'ppf.h.bak');
 copyfile(header_file, header_file_bak);
-if ismember('-g', mex_options)
-    rep_str(header_file, '#define __DEBUGGING__ 0', '#define __DEBUGGING__ 1');
-else
-    rep_str(header_file, '#define __DEBUGGING__ 1', '#define __DEBUGGING__ 0');
-end
 % Common Fortran source files.
-common_files = regexp(fileread(fullfile(common, filelist)), '\n', 'split');
-common_files = strtrim(common_files(~cellfun(@isempty, common_files)));
-common_files = fullfile(common, common_files);
-common_files = [common_files, fullfile(gateways, 'fmxapi.F'), fullfile(gateways, 'cbfun.F')];
-% The loop below may be written in one line as follows:
-%mex(mex_options{:}, '-c', common_files{:}, '-outdir', common);
-% But it does not work for some versions of MATLAB. This may be because the compilation above does
-% not respect the order of common_files{:}, which is critical due to the dependence among modules.
-for icf = 1 : length(common_files)
-    mex(mex_options{:}, '-c', common_files{icf}, '-outdir', common);
+common_files = [list_files(common, filelist), fullfile(gateways, 'fmxapi.F'), fullfile(gateways, 'cbfun.F')];
+
+fprintf('Compiling the common files ... ');
+for idbg = 1 : length(debug_flags)
+    if debug_flags{idbg}
+        mex_options = {ad_option, '-silent', '-g'};
+    else
+        mex_options = {ad_option, '-silent', '-O'};
+    end
+    for iprc = 1 : length(precisions)
+        prepare_header(header_file, precisions{iprc}, debug_flags{idbg});
+        workdir = fullfile(common, pdstr(precisions{iprc}, debug_flags{idbg}));
+        prepare_workdir(workdir);
+        cd(workdir);
+        % One may write the loop below as
+        %%mex(mex_options{:}, '-c', common_files{:});
+        % But it does not work for some variants of MATLAB. This may be because the compilation above does
+        % not respect the order of common_files{:}, which is critical due to the dependence among modules.
+        for icf = 1 : length(common_files)
+            mex(mex_options{:}, '-c', common_files{icf});
+            % The module/object files are dumped to the current directory, namely `workdir`.
+        end
+        common_obj_files = list_obj_files(workdir);
+        % Compile `gethuge`. We use the non-debug version of `gethuge` regardless of the debug flags.
+        if ~debug_flags{idbg}
+            gateway = fullfile(gateways, 'gethuge.F');
+            mexname = get_mexname('gethuge', precisions{iprc});
+            mex(mex_options{:}, common_obj_files{:}, gateway, '-output', mexname, '-outdir', mexdir);
+        end
+    end
 end
-common_obj_files = list_obj_files(common);
+fprintf('Done.\n');
 
-% Compilation of function gethuge
-gateway = fullfile(gateways, 'gethuge.F');
-mexname = 'gethuge';
-mex(mex_options{:}, common_obj_files{:}, gateway, '-output', mexname, '-outdir', mexdir);
 
-version_list = {'m', 'c'};  % m - modernized, c - classical
-for isol = 1 : length(solver_list)
-
-    solver = solver_list{isol};
+% Compile the solvers.
+for isol = 1 : length(solvers)
+    solver = solvers{isol};
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    solver = solver(1:end-1);
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     fprintf('Compiling %s ... ', solver);
-
     gateway = fullfile(gateways, [solver, '_mex.F']);
-
-    for iver = 1 : length(version_list)
-        switch version_list{iver}
-        case 'm'
-            srcdir = fullfile(src, solver);
-            mexname = ['f', solver, 'n'];
-        case 'c'
-            srcdir = fullfile(classical, solver);
-            mexname = ['f', solver, 'n_classical'];
+    for ivar = 1 : length(variants)
+        if strcmp(variants{ivar}, 'classical')
+            soldir = fullfile(classical_src, solver);
+        else
+            soldir = fullfile(modern_src, solver);
         end
-
-        % Clean up the source file directory
-        cellfun(@(filename) delete(filename), list_modo_files(srcdir));
-        % Compile
-        src_files = regexp(fileread(fullfile(srcdir, filelist)), '\n', 'split');
-        src_files = strtrim(src_files(~cellfun(@isempty, src_files)));
-        src_files = fullfile(srcdir, src_files);
-        for isf = 1 : length(src_files)
-            mex(mex_options{:}, '-c', src_files{isf}, '-outdir', srcdir);
+        for idbg = 1 : length(debug_flags)
+            if strcmp(variants{ivar}, 'classical') && debug_flags{idbg}
+                continue
+            end
+            if debug_flags{idbg}
+                mex_options = {ad_option, '-silent', '-g'};
+            else
+                mex_options = {ad_option, '-silent', '-O'};
+            end
+            for iprc = 1 : length(precisions)
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                if ~ismember(solver, ready_solvers) && ~strcmp(precisions{iprc}, 'double')
+                    continue
+                end
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                workdir = fullfile(soldir, pdstr(precisions{iprc}, debug_flags{idbg}));
+                prepare_workdir(workdir);
+                commondir = fullfile(common, pdstr(precisions{iprc}, debug_flags{idbg}));
+                copyfiles(list_mod_files(commondir), workdir);
+                cd(workdir);
+                src_files = list_files(soldir, filelist);
+                for isf = 1 : length(src_files)
+                    mex(mex_options{:}, '-c', src_files{isf});
+                    % The module/object files are dumped to the current directory, namely `workdir`.
+                end
+                obj_files = [list_obj_files(commondir), list_obj_files(workdir)];
+                mexname = get_mexname(solver, precisions{iprc}, debug_flags{idbg}, variants{ivar});
+                mex(mex_options{:}, obj_files{:}, gateway, '-output', mexname, '-outdir', mexdir);
+            end
         end
-        obj_files = [common_obj_files, list_obj_files(srcdir)];
-        mex(mex_options{:}, obj_files{:}, gateway, '-output', mexname, '-outdir', mexdir);
-        % Clean up the source file directory
-        cellfun(@(filename) delete(filename), list_modo_files(srcdir));
     end
     fprintf('Done.\n');
 end
 
-% Clean up common.
-cellfun(@(filename) delete(filename), list_modo_files(common));
-% Clean up mexdir.
-cellfun(@(filename) delete(filename), list_modo_files(mexdir));
-
-% Restore header_file
+% Restore header_file.
 if exist(header_file_bak, 'file')
     movefile(header_file_bak, header_file);
 end
+
+cd(olddir);  % Go back to `olddir`.
+
+% COMPILE ends
+return
+
+
+function files = list_files(directory, filelist)
+%LIST_FILES lists the files in `directory` according to `filelist`, which should be a plain text
+% file under `directory`.
+
+files = regexp(fileread(fullfile(directory, filelist)), '\n', 'split');
+files = strtrim(files(~cellfun(@isempty, files)));
+files = fullfile(directory, files);
+
+% LIST_FILES ends
+return
+
+
+function prepare_header(header_file, precision, debug_flag)
+%PREPARE_HEADER prepares `header_file` for the compilation according to `precision` and `debug_flag`.
+
+switch precision
+case {'s', 'single'}
+    rep_str(header_file, '#define __REAL_PRECISION__ 64', '#define __REAL_PRECISION__ 32');
+    rep_str(header_file, '#define __REAL_PRECISION__ 128', '#define __REAL_PRECISION__ 32');
+    rep_str(header_file, '#define __QP_AVAILABLE__ 1', '#define __QP_AVAILABLE__ 0');
+case {'q', 'quadruple'}
+    rep_str(header_file, '#define __REAL_PRECISION__ 32', '#define __REAL_PRECISION__ 128');
+    rep_str(header_file, '#define __REAL_PRECISION__ 64', '#define __REAL_PRECISION__ 128');
+    rep_str(header_file, '#define __QP_AVAILABLE__ 0', '#define __QP_AVAILABLE__ 1');
+otherwise
+    rep_str(header_file, '#define __REAL_PRECISION__ 32', '#define __REAL_PRECISION__ 64');
+    rep_str(header_file, '#define __REAL_PRECISION__ 128', '#define __REAL_PRECISION__ 64');
+    rep_str(header_file, '#define __QP_AVAILABLE__ 1', '#define __QP_AVAILABLE__ 0');
+end
+
+if debug_flag
+    rep_str(header_file, '#define __DEBUGGING__ 0', '#define __DEBUGGING__ 1');
+else
+    rep_str(header_file, '#define __DEBUGGING__ 1', '#define __DEBUGGING__ 0');
+end
+
+% PREPARE_HEADER ends
+return
+
+function s = dbgstr(debug_flag)
+%DBGSTR returns a string according to `debug_flag`: 'g' for true and 'O' for false.
+if (debug_flag)
+    s = 'g';
+else
+    s = 'O';
+end
+% DBGSTR ends
+return
+
+function s = pdstr(precision, debug_flag)
+%PDSTR returns a string according to `precision` and `debug_flag`.
+s = [precision(1), dbgstr(debug_flag)];
+% PDSTR ends
+return
+
+function prepare_workdir(directory)
+%PREPARE_WORKDIR prepares `directory` for the compilation: if it does not exist, create it;
+% otherwise, clean it up.
+if exist(directory, 'dir')
+    sanitize(directory);
+else
+    mkdir(directory);
+end
+% PREPARE_WORKDIR ends
+return

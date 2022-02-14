@@ -22,7 +22,8 @@ mkdir OPDFO
 cp -r "$NEUPDFODIR"/fsrc OPDFO
 
 cp "$NEUPDFODIR"/setup.m OPDFO
-sed -i '/solver = solver(1:end-1)/d' OPDFO/setup.m
+#sed -i '/solver = solver(1:end-1)/d' OPDFO/setup.m
+sed -i '/solver = solver(1:end-1)/d' OPDFO/matlab/setup_tools/compile.m
 sed -i "s/\['f', solver, 'n'\]/\['f', solver\]/" OPDFO/setup.m
 sed -i "s/\['f', solver, 'n_classical'\]/\['f', solver, '_classical'\]/" OPDFO/setup.m
 sed -i "s/ALLn/ALL/g" OPDFO/setup.m

@@ -71,13 +71,10 @@ if verLessThan('matlab', '8.3') % MATLAB R2014a = MATLAB 8.3
     return
 end
 
-% All solvers to compile.
-all_solvers = {'cobyla', 'uobyqa', 'newuoa', 'bobyqa', 'lincoa'};
-
 % The stamp to be included in the path_string. Needed only if `savepath` fails.
-path_string_stamp = 'PDFO';
+package_name = 'PDFO';
 
-% The full path of several directories.
+% The full paths to several directories needed for the setup.
 cpwd = fileparts(mfilename('fullpath')); % Current directory
 fsrc = fullfile(cpwd, 'fsrc'); % Directory of the Fortran source code
 fsrc_interform = fullfile(cpwd, 'fsrc', '.interform'); % Directory of the intersection-form Fortran source code
@@ -92,8 +89,12 @@ mexdir = fullfile(interfaces, 'private'); % The private subdirectory of the inte
 tests = fullfile(matd, 'tests'); % Directory containing some tests
 tools = fullfile(matd, 'setup_tools'); % Directory containing some tools, e.g., interform.m
 
-% `tools` contains some functions needed below.
+% `tools` contains some functions needed in the sequel.
 addpath(tools);
+% The following files are needed after the setup. Copy them to `mexdir`.
+copyfile(fullfile(tools, 'all_solvers.m'), mexdir);
+copyfile(fullfile(tools, 'all_precisions.m'), mexdir);
+copyfile(fullfile(tools, 'get_mexname.m'), mexdir);
 
 % Parse the input.
 [solver_list, options, action, wrong_input] = parse_input(varargin);
@@ -113,7 +114,7 @@ end
 
 % Uninstall the package if requested.
 if strcmp(action, 'uninstall')
-    uninstall_pdfo(path_string_stamp);
+    uninstall_pdfo(package_name);
     rmpath(tools);
     return
 end
@@ -121,7 +122,7 @@ end
 % Add the path and return if requested.
 if strcmp(action, 'path')
     try
-        add_save_path(interfaces, path_string_stamp);
+        add_save_path(interfaces, package_name);
     catch exception
         rmpath(tools);
         rethrow(exception);
@@ -132,36 +133,6 @@ if strcmp(action, 'path')
 end
 
 % If we arrive here, then the user requests us to compile the solvers.
-
-% Decide whether to compile with -O (optimize, the default) or with -g (debug).
-% N.B.: -O and -g may lead to (slightly) different behaviors of the mexified code. This was observed
-% on 2021-09-09 in a test of NEWUOA on the AKIVA problem of CUTEst. It was because the mexified code
-% produced different results when it was supposed to evaluate COS(0.59843577329095299_DP) amid OTHER
-% CALCULATIONS: with -O, the result was 0.82621783366991353; with -g, it became 0.82621783366991364.
-% Bizarrely, if we write a short Fortran program to evaluate only COS(0.59843577329095299_DP),
-% then the result is always 0.82621783366991364, regardless of -O or -g. No idea why.
-if isempty(options)
-    options = struct();
-end
-opt_option = '-O';  % Optimize the object code; this is the default
-debug_flag = (isfield(options, 'debug') && options.debug);
-if debug_flag
-    opt_option = '-g';  % Debug mode; -g disables MEX's behavior of optimizing built object code
-end
-
-% Detect whether we are running a 32-bit MATLAB, where maxArrayDim = 2^31-1, and then set ad_option
-% accordingly. On a 64-bit MATLAB, maxArrayDim = 2^48-1 according to the document of MATLAB R2019a.
-% !!! Make sure that everything is compiled with the SAME ad_option !!!
-% !!! Otherwise, Segmentation Fault may occur !!!
-[Architecture, maxArrayDim] = computer;
-if any(strfind(Architecture, '64')) && log2(maxArrayDim) > 31
-    ad_option = '-largeArrayDims';
-else
-    ad_option = '-compatibleArrayDims'; % This will also work in a 64-bit MATLAB
-end
-
-% Set MEX options.
-mex_options = [{opt_option}, {ad_option}, '-silent'];
 
 % Check whether MEX is properly configured.
 fprintf('\nVerifying the set-up of MEX ... \n\n');
@@ -195,18 +166,17 @@ fprintf('Compilation starts. It may take some time ...\n');
 cd(mexdir);
 exception = [];
 try
-    compile(solver_list, mex_options, mexdir, fsrc_interform, fsrc_classical_interform, ...
-        fsrc_common_interform, gateways_interform);
+    compile(solver_list, mexdir, fsrc_interform, fsrc_classical_interform, fsrc_common_interform, gateways_interform, options);
 catch exception
     % Do nothing for the moment.
 end
 
-% Remove the intersection-form Fortran files unless we are debugging.
-if ~debug_flag
-    rmdir(fsrc_interform, 's');
-    rmdir(fsrc_classical_interform, 's');
-    rmdir(gateways_interform, 's');
-end
+%% Remove the intersection-form Fortran files unless we are debugging.
+%if ~debug_flag
+%    rmdir(fsrc_interform, 's');
+%    rmdir(fsrc_classical_interform, 's');
+%    rmdir(gateways_interform, 's');
+%end
 cd(cpwd); % Change directory back to cpwd
 
 if ~isempty(exception)
@@ -217,12 +187,12 @@ end
 fprintf('Package compiled successfully!\n');
 
 % Add `interfaces` to the MATLAB path, and then try saving the path.
-path_saved = add_save_path(interfaces, path_string_stamp);
+path_saved = add_save_path(interfaces, package_name);
 
 fprintf('\nThe package is ready to use.\n');
 fprintf('\nYou may now try ''help pdfo'' for information on the usage of the package.\n');
 
-if isempty(setdiff(all_solvers, solver_list))
+if isempty(setdiff(all_solvers(), solver_list))
     addpath(tests);
     fprintf('\nYou may also run ''testpdfo'' to test the package on a few examples.\n\n');
 else
@@ -231,7 +201,7 @@ end
 
 if ~path_saved  %  `add_save_path` failed to save the path.
     add_path_string = sprintf('addpath(''%s'');', interfaces);
-    fprintf('***** To use the pacakge in other MATLAB sessions, do one of the following. *****\n\n');
+    fprintf('***** To use the package in other MATLAB sessions, do ONE of the following. *****\n\n');
     fprintf('- run ''savepath'' right now if you have the permission to do so.\n\n');
     fprintf('- OR add the following line to your startup script\n');
     fprintf('  (see https://www.mathworks.com/help/matlab/ref/startup.html for information):\n\n');
@@ -240,5 +210,6 @@ if ~path_saved  %  `add_save_path` failed to save the path.
 end
 
 rmpath(tools);
+
 % setup ends
 return

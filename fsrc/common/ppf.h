@@ -135,8 +135,9 @@
 /******************************************************************************/
 /* Which real kind to use?
  * 0 = default REAL (SINGLE PRECISION), 32 = REAL*4, 64 = REAL*8, 128 = REAL*16.
- * Make sure that your compiler supports the selected kind.
- * Note: The default REAL (i.e., 0) is the single-precision REAL. */
+ * Make sure that your compiler supports the selected kind.  Note the following:
+ * 1. The default REAL (i.e., 0) is the single-precision REAL.
+ * 2. If you set __REAL_PRECISION__ to 128, you must set __QP_AVAILABLE__ to 1. */
 #if defined __REAL_PRECISION__
 #undef __REAL_PRECISION__
 #endif

@@ -315,13 +315,17 @@ else % The problem turns out 'normal' during prepdfo
     maxhist = options.maxhist;
     output_xhist = options.output_xhist;
     iprint = options.iprint;
+    precision = options.precision;
+    debug_flag = options.debug;
+    if options.classical
+        variant = 'classical';
+    else
+        variant = 'modern';
+    end
 
     % Call the Fortran code
-    if options.classical
-        fsolver = @fbobyqan_classical;
-    else
-        fsolver = @fbobyqan;
-    end
+    solver = 'bobyqa';
+    fsolver = str2func(get_mexname(solver, precision, debug_flag, variant));
     try
         [x, fx, exitflag, nf, xhist, fhist] = ...
             fsolver(fun, x0, lb, ub, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, ...

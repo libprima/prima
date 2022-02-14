@@ -249,6 +249,13 @@ ftarget = options.ftarget;
 maxhist = options.maxhist;
 output_xhist = options.output_xhist;
 iprint = options.iprint;
+precision = options.precision;
+debug_flag = options.debug;
+if options.classical
+    variant = 'classical';
+else
+    variant = 'modern';
+end
 
 if ~strcmp(invoker, 'pdfon') && probinfo.feasibility_problem
     % An "unconstrained feasibility problem" is rediculous, yet nothing wrong mathematically.
@@ -272,11 +279,8 @@ else
     end
 
     % Call the Fortran code
-    if options.classical
-        fsolver = @fuobyqan_classical;
-    else
-        fsolver = @fuobyqan;
-    end
+    solver = 'uobyqa';
+    fsolver = str2func(get_mexname(solver, precision, debug_flag, variant));
     % The mexified Fortran Function is a private function generating only private errors;
     % however, public errors can occur due to, e.g., evalobj; error handling needed.
     try

@@ -352,13 +352,9 @@ else % The problem turns out 'normal' during prepdfo
         b_aug = [];
     end
 
-    % maxint is the largest integer in the mex functions; the factor 0.99 provides a buffer. We do not
-    % pass any integer larger than maxint to the mexified Fortran code. Otherwise, errors include
-    % SEGFAULT may occur. The value of maxint is about 10^9 on a 32-bit platform and 10^18 on a 64-bit one.
-    maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSI')]));
-    if (length(b_aug) > maxint)
+    if (length(b_aug) > maxint())
         % Public/normal error
-        error(sprintf('%s:ProblemTooLarge', funname), '%s: The problem is too large; at most %d constraints are allowed.', funname, maxint);
+        error(sprintf('%s:ProblemTooLarge', funname), '%s: The problem is too large; at most %d constraints are allowed.', funname, maxint());
     end
 
     % Extract the options
@@ -377,6 +373,13 @@ else % The problem turns out 'normal' during prepdfo
     output_xhist = options.output_xhist;
     maxfilt = options.maxfilt;
     iprint = options.iprint;
+    precision = options.precision;
+    debug_flag = options.debug;
+    if options.classical
+        variant = 'classical';
+    else
+        variant = 'modern';
+    end
 
     % If x0 is not feasible, LINCOA will modify the constraints to make
     % it feasible (which is a bit strange).
@@ -393,11 +396,8 @@ else % The problem turns out 'normal' during prepdfo
     end
 
     % Call the Fortran code
-    if options.classical
-        fsolver = @flincoan_classical;
-    else
-        fsolver = @flincoan;
-    end
+    solver = 'lincoa';
+    fsolver = str2func(get_mexname(solver, precision, debug_flag, variant));
     % The mexified Fortran function is a private function generating only private errors;
     % however, public errors can occur due to, e.g., evalobj; error handling needed
     try
