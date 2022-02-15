@@ -1212,7 +1212,7 @@ validated = false;
 if isfield(options, 'precision')
     if ~ischarstr(options.precision) || ~ismember(lower(options.precision), all_precisions())
         wid = sprintf('%s:InvalidPrecision', invoker);
-        wmsg = sprintf('%s: invalid precision; it should be among %s; it is set to %s.', invoker, mystrjoin(all_precisions()), precision);
+        wmsg = sprintf('%s: invalid or unavailable precision; it is set to ''%s''.', invoker, precision);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     else

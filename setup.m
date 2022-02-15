@@ -1,16 +1,21 @@
 function setup(varargin)
 %SETUP compiles the package and try adding the package into the search path.
 %
-%   Let solvername be a string indicating a solver name, and options be
-%   a structure indicating compilation options. Then setup can be called
-%   in the following ways:
+%   This script can be called in the following ways.
 %
-%   setup(solvername, options)  % Compile a solver with options
-%   setup(solvername)  % Compile a solver
-%   setup(options)  % Compile all the solvers with options
+%   setup  % Compile all the solvers with the default options
+%   setup(options)  % Compile all the solvers with `options`
 %   setup path  % Add the paths needed to use the package
 %   setup clean  % Remove all the compiled MEX files
 %   setup uninstall  % Uninstall the package
+%
+%   In addition, the script can also be used as follows to compile a solver
+%   specified by a string `solver_name`. Note, however, this is only intended
+%   for developers. End users should NEVER do it. After doing this, any solver
+%   other than the one being compiled WILL BECOME UNUSABLE.
+%
+%   setup(solver_name)  % Compile a solver with the default options
+%   setup(solver_name, options)  % Compile a solver with `options`
 %
 %   REMARKS:
 %
@@ -31,6 +36,10 @@ function setup(varargin)
 %   MATLAB session that needs the package. startup.m will not re-compile
 %   the package but only add it into the search path.
 %
+%   3. This script needs you to have write access to the current directory
+%   (the directory where this script resides) and its subdirectories.
+%   Otherwise, it will fail.
+%
 %   ***********************************************************************
 %   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
 %               and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
@@ -38,6 +47,8 @@ function setup(varargin)
 %               The Hong Kong Polytechnic University.
 %
 %   Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+%
+%   Started in March 2020.
 %   ***********************************************************************
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -65,14 +76,15 @@ function setup(varargin)
 
 % setup starts
 
+% Name of the package. It will be used as a stamp to be included in the path_string. Needed only
+% if `savepath` fails.
+package_name = 'PDFO';
+
 % Check the version of MATLAB.
 if verLessThan('matlab', '8.3') % MATLAB R2014a = MATLAB 8.3
     fprintf('\nSorry, this package does not support MATLAB R2013b or earlier releases.\n\n');
     return
 end
-
-% The stamp to be included in the path_string. Needed only if `savepath` fails.
-package_name = 'PDFO';
 
 % The full paths to several directories needed for the setup.
 cpwd = fileparts(mfilename('fullpath')); % Current directory
@@ -89,14 +101,19 @@ mexdir = fullfile(interfaces, 'private'); % The private subdirectory of the inte
 tests = fullfile(matd, 'tests'); % Directory containing some tests
 tools = fullfile(matd, 'setup_tools'); % Directory containing some tools, e.g., interform.m
 
+% We need write access to `cpwd` (and its subdirectories). Return if we do not have it.
+% N.B.: This checking is NOT perfect because of the following --- but it is better than nothing.
+% 1. `fileattrib` may not reflect the attributes correctly, particularly on Windows. See
+% https://www.mathworks.com/matlabcentral/answers/296657-how-can-i-check-if-i-have-read-or-write-access-to-a-directory
+% 2. Even if we have write access to `cpwd`, we may not have the same access to its subdirectories.
+[~, attribute] = fileattrib(cpwd);
+if ~attribute.UserWrite
+    fprintf('\nSorry, we cannot continue because we do not have write access to\n\n%s\n\n', cpwd);
+    return
+end
+
 % `tools` contains some functions needed in the sequel.
 addpath(tools);
-
-% The following files are shared between `tools` (namely matlab/setup_tools) and `mexdir`
-% (namely matlab/interfaces/private). We maintain them in `tools` and copy them to `mexdir`.
-shared_files = {'all_solvers.m', 'all_precisions.m', 'all_variants.m', ...
-                'dbgstr.m', 'get_mexname.m', 'ischarstr.m', 'islogicalscalar.m'};
-cellfun(@(filename) copyfile(fullfile(tools, filename), mexdir), shared_files);
 
 % Parse the input.
 [solver_list, options, action, wrong_input] = parse_input(varargin);
@@ -109,7 +126,7 @@ end
 
 % Remove the compiled MEX files if requested.
 if strcmp(action, 'clean')
-    clean_mex;
+    clean_mex();
     rmpath(tools);
     return
 end
@@ -121,16 +138,31 @@ if strcmp(action, 'uninstall')
     return
 end
 
-% Add the path and return if requested.
 if strcmp(action, 'path')
-    try
-        add_save_path(interfaces, package_name);
-    catch exception
-        rmpath(tools);
-        rethrow(exception);
-    end
-    rmpath(tools);
+    % Add the path and return if requested.
+    add_save_path(interfaces, package_name);
+    % Decide the precisions ('double', 'single', 'quadruple') and variants ('modern', 'classical')
+    % available; create `all_precisions.m` and `all_variants.m` under `tools` accordingly.
+    create_all_precisions(mexdir);
+    create_all_variants(mexdir);
     fprintf('\nPath added.\n\n')
+else
+    % Decide the precisions ('double', 'single', 'quadruple') and variants ('modern', 'classical') to
+    % compile; create `all_precisions.m` and `all_variants.m` under `tools` accordingly.
+    create_all_precisions(options);
+    create_all_variants(options);
+end
+
+% The following files are shared between `tools` (namely matlab/setup_tools) and `mexdir`
+% (namely matlab/interfaces/private). We maintain them in `tools` and copy them to `mexdir`.
+% This should be done after calling `create_all_variants` and `create_all_precisions`.
+shared_files = {'all_solvers.m', 'all_precisions.m', 'all_variants.m', ...
+                'dbgstr.m', 'get_mexname.m', 'ischarstr.m', 'islogicalscalar.m'};
+cellfun(@(filename) copyfile(fullfile(tools, filename), mexdir), shared_files);
+
+if isempty(solver_list)
+    % We arrive here if and only if `action` = 'path'.
+    rmpath(tools);
     return
 end
 
