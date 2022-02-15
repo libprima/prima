@@ -1,8 +1,8 @@
-function str = mystrjoin(C, delimiter) 
+function str = mystrjoin(C, delimiter)
 % MYSTRJOIN replaces strjoin, which was introduced only after R2013a.
 %
 %   ***********************************************************************
-%   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk) 
+%   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
 %               and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
 %               Department of Applied Mathematics,
 %               The Hong Kong Polytechnic University
@@ -19,10 +19,10 @@ function str = mystrjoin(C, delimiter)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % mystrjoin starts
-callstack = dbstack; 
+callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
 
-if nargin < 1 
+if nargin < 1
     % Private/unexpected error
     error(sprintf('%s:InvalidInput', funname), '%s: UNEXPECTED ERROR: at least 1 input.', funname);
 elseif nargin == 1
@@ -34,7 +34,7 @@ if ~isa(C, 'cell') || ~isvector(C) || any(~cellfun(@ischarstr, C))
     error(sprintf('%s:InvalidInput', funname), ...
     '%s: UNEXPECTED ERROR: input 1 should be a cell array of character vectors or strings.', funname);
 end
-    
+
 len = length(C);
 if (len == 0)
     str = '';
@@ -48,8 +48,4 @@ else
 end
 
 % mystrjoin ends
-return
-
-function ics = ischarstr(x) 
-ics = isa(x,'char') || isa(x, 'string') || isempty(x);
 return
