@@ -3,8 +3,7 @@ all_precisions.m
 all_variants.m
 dbgstr.m
 get_mexname.m
-ischarstr.m
-islogicalscalar.m
+.signature
 
 *.mexa64*
 *.mod

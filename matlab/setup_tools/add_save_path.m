@@ -46,8 +46,8 @@ if ~path_saved && numel(userpath) > 0
             last_line_empty = true;
         end
 
-        file_id = fopen(user_startup, 'a');
-        if file_id ~= -1 % If FOPEN cannot open the file, it returns -1
+        file_id = fopen(user_startup, 'a');  % Open/create file for writing. Append data to the end.
+        if file_id ~= -1 % If FOPEN cannot open the file, it returns -1; We keep silent if it fails.
             if ~last_line_empty  % The last line of user_startup is not empty
                 fprintf(file_id, '\n');  % Add a new empty line
             end

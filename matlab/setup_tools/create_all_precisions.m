@@ -73,7 +73,7 @@ try  % We use `try ... catch ...` in order to restore `allprec_file` in case of 
     precision_list_string = sprintf('precision_list = {%s};', precision_list_string);
 
     % Create the file.
-    fid = fopen(allprec_file, 'w+');
+    fid = fopen(allprec_file, 'w');  % Open/create file for writing. Discard existing contents.
     if fid == -1
         error('Cannot create file %s.', allprec_file);
     end
@@ -82,11 +82,12 @@ try  % We use `try ... catch ...` in order to restore `allprec_file` in case of 
     fprintf(fid, '%% returns a cell array containing the names of all the precisions available for the\n');
     fprintf(fid, '%% Fortran solvers in this package.\n');
     fprintf(fid, '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n');
-    fprintf(fid, '%% This file is created automatically by \n%% %s.m at %s.\n', mfilename, datestr(datetime(), 'yymmdd-HH:MM:SS'));
+    fprintf(fid, '%% This file is created automatically by \n%% %s.m at %s.\n', mfilename, datestr(datetime(), 'yymmdd.HH:MM:SS'));
     fprintf(fid, '%% NEVER EDIT IT, OR THE EARTH WILL EXPLODE.\n');
     fprintf(fid, '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n');
     fprintf(fid, '%s', precision_list_string);
     fprintf(fid, '\n\nreturn');
+    fclose(fid);
 
 catch exception
     if exist(allprec_file_bak, 'file')

@@ -13,7 +13,10 @@ end
 for ifile = 1 : length(files)
     filename = files{ifile};
     if endsWith(filename, '.f') || endsWith(filename, '.f90')
-        fid = fopen(filename, 'r');
+        fid = fopen(filename, 'r');  % Open file for reading.
+        if fid == -1
+            error('Cannot open file %s', filename);
+        end
         data = textscan(fid, '%s', 'delimiter', '\n', 'whitespace', '');
         fclose(fid);
         cstr = data{1};
@@ -31,7 +34,10 @@ for ifile = 1 : length(files)
             end
         end
         cstr(~startsWith(strtrim(cstr), '!') & ~contains(cstr, 'FORMAT')) = lower(cstr(~startsWith(strtrim(cstr), '!') & ~contains(cstr, 'FORMAT')));
-        fid = fopen(filename, 'w');
+        fid = fopen(filename, 'w');  % Open/create file for writing. Discard existing contents, if any.
+        if fid == -1
+            error('Cannot open file %s', filename);
+        end
         fprintf(fid, '%s\n', cstr{:});
         fclose(fid);
     end

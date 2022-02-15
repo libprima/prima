@@ -38,7 +38,7 @@ mkdir(outputdir);  % Make the output directory
 
 % The following lies generate a README.txt file under outputdir
 readme = 'README.txt';
-fid = fopen(fullfile(outputdir, readme), 'w');
+fid = fopen(fullfile(outputdir, readme), 'w');  % Open/create file for writing. Discard existing contents.
 if fid == -1
     error('Cannot open file %s.', readme);
 end
@@ -126,7 +126,7 @@ function refactor_file(filename)
 % the new file has the same name as the original one, then the original
 % file will be backed up in "ORIGINAL_FILE_NAME.bak".
 
-fid = fopen(filename, 'r');
+fid = fopen(filename, 'r');  % Open file for reading.
 if fid == -1
     error('Cannot open file %s.', filename);
 end
@@ -167,13 +167,13 @@ while(j <= length(cstr))
     end
 end
 
-% Save the refactored file
+% Save the refactored file. It may be different from the original file, so we need to call open it again.
 refactored_filename = regexprep(filename, '.f90$', '.f');
 refactored_filename = regexprep(refactored_filename, '.F90$', '.F');
 if strcmp(refactored_filename, filename)
     copyfile(filename, [filename, '.bak']);
 end
-fid = fopen(refactored_filename, 'wt');
+fid = fopen(refactored_filename, 'w');  % Open/create new file for writing. Discard existing contents.
 if fid == -1
     error('Cannot open file %s.', refactored_filename);
 end
@@ -258,9 +258,10 @@ end
 function isd = isdigit(c)
 isd = ischar(c) & (double(c) >= double('0')) & (double(c) <= double('9'));
 
+
 function refactor_filelist(filename)
 
-fid = fopen(filename, 'r');
+fid = fopen(filename, 'r');  % Open file for reading.
 if fid == -1
     error('Cannot open file %s.', filename);
 end
@@ -277,7 +278,7 @@ for i = 1 : length(cstr)
 end
 
 % Save the file again
-fid = fopen(filename, 'w');
+fid = fopen(filename, 'w');  %Open/create new file for writing. Discard existing contents, if any.
 if fid == -1
     error('Cannot open file %s.', filename);
 end
