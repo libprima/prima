@@ -1,5 +1,6 @@
 all_precisions.m
 all_variants.m
+.signature
 *.mexa64*
 *.mod
 *.o

@@ -22,6 +22,15 @@ function [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, options, probinfo] =
 
 % prepdfo starts
 
+% Has the package been set up?
+if ~called_setup()
+    % Public/normal error
+    cpwd = fileparts(mfilename('fullpath'));  % The directory where this script resides.
+    rootdir = fileparts(fileparts(fileparts(cpwd)));  % Root directory of this package.
+    error(sprintf('%s:PackageNotSetup', package_info('name')), ...
+       '%s: The package has not been set up; please execute the following before using it:\n\ncd(''%s''); setup\n', package_info('name'), rootdir);
+end
+
 warnings = {}; % A cell that records all the warnings, will be recorded in probinfo
 
 % Who is calling this function? Is it a correct invoker?
@@ -40,6 +49,7 @@ if (nargin ~= 1) && (nargin ~= 10)
     % Private/unexpected error
     error(sprintf('%s:InvalidInput', funname), '%s: UNEXPECTED ERROR: 1 or 10 inputs.', funname);
 end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % If invoker is a solver called by pdfo, then prepdfo should have been called in pdfo.

@@ -78,7 +78,7 @@ function setup(varargin)
 
 % Name of the package. It will be used as a stamp to be included in the path_string. Needed only
 % if `savepath` fails.
-package_name = 'PDFO';
+package_name = 'pdfo';
 
 % Check the version of MATLAB.
 if verLessThan('matlab', '8.3') % MATLAB R2014a = MATLAB 8.3
@@ -126,7 +126,8 @@ end
 
 % Remove the compiled MEX files if requested.
 if strcmp(action, 'clean')
-    clean_mex();
+    clean_mex(mexdir);
+    clean_signature_file(mexdir);
     rmpath(tools);
     return
 end
@@ -134,6 +135,7 @@ end
 % Uninstall the package if requested.
 if strcmp(action, 'uninstall')
     uninstall_pdfo(package_name);
+    clean_signature_file(mexdir);
     rmpath(tools);
     return
 end
@@ -145,6 +147,7 @@ if strcmp(action, 'path')
     % available; create `all_precisions.m` and `all_variants.m` under `tools` accordingly.
     create_all_precisions(mexdir);
     create_all_variants(mexdir);
+    create_signature_file(mexdir);
     fprintf('\nPath added.\n\n')
 else
     % Decide the precisions ('double', 'single', 'quadruple') and variants ('modern', 'classical') to
@@ -156,8 +159,7 @@ end
 % The following files are shared between `tools` (namely matlab/setup_tools) and `mexdir`
 % (namely matlab/interfaces/private). We maintain them in `tools` and copy them to `mexdir`.
 % This should be done after calling `create_all_variants` and `create_all_precisions`.
-shared_tools = {'all_solvers.m', 'all_precisions.m', 'all_variants.m', ...
-                'dbgstr.m', 'get_mexname.m', 'ischarstr.m', 'islogicalscalar.m'};
+shared_tools = {'all_solvers.m', 'all_precisions.m', 'all_variants.m', 'dbgstr.m', 'get_mexname.m'};
 cellfun(@(filename) copyfile(fullfile(tools, filename), mexdir), shared_tools);
 
 if isempty(solver_list)
@@ -243,6 +245,7 @@ if ~path_saved  %  `add_save_path` failed to save the path.
     fprintf('- OR come to the current directory and run ''setup path'' when you need the package.\n\n');
 end
 
+create_signature_file(mexdir);
 rmpath(tools);
 
 % setup ends

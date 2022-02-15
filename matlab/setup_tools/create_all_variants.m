@@ -28,7 +28,7 @@ cpwd = fileparts(mfilename('fullpath'));  % The directory where this file reside
 allvar = 'all_variants';
 allvar_file = fullfile(cpwd, [allvar, '.m']);
 allvar_file_bak = fullfile(cpwd, [allvar, '.bak']);
-if exist(allvar_file_bak, 'file')  
+if exist(allvar_file_bak, 'file')
     % Remove `allvar_file_bak` if it exists. This is necessary. Otherwise, `allvar_file` may be
     % restored incorrectly in case of failure in the sequel.
     delete(allvar_file_bak);
@@ -66,7 +66,7 @@ try  % We use `try ... catch ...` in order to restore `allvar_file` in case of a
     variant_list_string = sprintf('variant_list = {%s};', variant_list_string);
 
     % Create the file.
-    fid = fopen(allvar_file, 'w+');
+    fid = fopen(allvar_file, 'w');  % Open/create file for writing. Discard existing contents.
     if fid == -1
         error('Cannot create file %s.', allvar_file);
     end
@@ -75,11 +75,12 @@ try  % We use `try ... catch ...` in order to restore `allvar_file` in case of a
     fprintf(fid, '%% returns a cell array containing the names of all the variants available for the\n');
     fprintf(fid, '%% Fortran solvers in this package.\n');
     fprintf(fid, '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n');
-    fprintf(fid, '%% This file is created automatically by \n%% %s.m at %s.\n', mfilename, datestr(datetime(), 'yymmdd-HH:MM:SS'));
+    fprintf(fid, '%% This file is created automatically by \n%% %s.m at %s.\n', mfilename, datestr(datetime(), 'yymmdd.HH:MM:SS'));
     fprintf(fid, '%% NEVER EDIT IT, OR THE EARTH WILL EXPLODE.\n');
     fprintf(fid, '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n');
     fprintf(fid, '%s', variant_list_string);
     fprintf(fid, '\n\nreturn');
+    fclose(fid);
 
 catch exception
     if exist(allvar_file_bak, 'file')
