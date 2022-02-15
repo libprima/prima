@@ -322,9 +322,9 @@ else % The problem turns out 'normal' during prepdfo
     else
         variant = 'modern';
     end
+    solver = options.solver;
 
     % Call the Fortran code
-    solver = 'bobyqa';
     fsolver = str2func(get_mexname(solver, precision, debug_flag, variant));
     try
         [x, fx, exitflag, nf, xhist, fhist] = ...

@@ -262,6 +262,7 @@ if options.classical
 else
     variant = 'modern';
 end
+solver = options.solver;
 
 if ~strcmp(invoker, 'pdfon') && probinfo.feasibility_problem
     % An "unconstrained feasibility problem" is rediculous, yet nothing wrong mathematically.
@@ -278,7 +279,6 @@ if ~strcmp(invoker, 'pdfon') && probinfo.feasibility_problem
     output.chist = []; % Unconstrained problem; set output.chist to []
 else
     % Call the Fortran code
-    solver = 'newuoa';
     fsolver = str2func(get_mexname(solver, precision, debug_flag, variant));
     % The mexified Fortran Function is a private function generating only private errors;
     % however, public errors can occur due to, e.g., evalobj; error handling needed.

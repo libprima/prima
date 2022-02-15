@@ -796,14 +796,14 @@ ftarget = -inf;
 ctol = eps; % Tolerance for constraint violation; a point with a constraint violation at most ctol is considered feasible
 cweight = 1e8;  % The weight of constraint violation in the selection of the returned x
 classical = false; % Call the classical Powell code? Classical mode recommended only for research purpose
+precision = 'double'; % The precision of the real calculation within the solver
 fortran = true; % Call the Fortran code?
-precision = 'double'; % The precision of the real calculation within the solver.
 scale = false; % Scale the problem according to bounds? Scale only if the bounds reflect well the scale of the problem
 scale = (scale && max(ub-lb)<inf); % ! NEVER remove this ! Scale only if all variables are with finite lower and upper bounds
 honour_x0 = false; % Respect the user-defined x0? Needed by BOBYQA
 iprint = 0;
 quiet = true;
-debugflag = false; % Do not use 'debug' as the name, which is a MATLAB function
+debug_flag = false; % Do not use 'debug' as the name, which is a MATLAB function
 chkfunval = false;
 output_xhist = false; % Output the history of x?
 output_nlchist = false; % Output the history of the nonlinear constraints?
@@ -1187,6 +1187,11 @@ if isfield(options, 'classical')
         wmsg = sprintf('%s: invalid classical flag; it should be true(1) or false(0); it is set to %s.', invoker, mat2str(classical));
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
+    elseif options.classical && ~ismember('classical', all_variants())
+        wid = sprintf('%s:ClassicalNotAvailable', invoker);
+        wmsg = sprintf('%s: classical = true but the classical version is not available; classical is set to false.', invoker);
+        warning(wid, '%s', wmsg);
+        warnings = [warnings, wmsg];
     else
         validated = true;
     end
@@ -1201,6 +1206,23 @@ if options.classical
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
 end
+
+% Validate options.precision
+validated = false;
+if isfield(options, 'precision')
+    if ~ischarstr(options.precision) || ~ismember(lower(options.precision), all_precisions())
+        wid = sprintf('%s:InvalidPrecision', invoker);
+        wmsg = sprintf('%s: invalid precision; it should be among %s; it is set to %s.', invoker, mystrjoin(all_precisions()), precision);
+        warning(wid, '%s', wmsg);
+        warnings = [warnings, wmsg];
+    else
+        validated = true;
+    end
+end
+if ~validated  % options.precision has not got a validated value yet
+    options.precision = precision;
+end
+options.precision = lower(char(options.precision));
 
 % Validate options.fortran
 validated = false;
@@ -1217,6 +1239,17 @@ if isfield(options, 'fortran')
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
         validated = true;
+    elseif ~options.fortran && ~strcmp(options.precision, 'double')
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % In this version, we support precision ~= 'double' only when calling the Fortran solvers!
+        wid = sprintf('%s:FortranContradictPrecision', invoker);
+        wmsg = sprintf('%s: fortran = false but precision = %s; fortran is reset to true.', ...
+            invoker, options.precision);
+        options.fortran = false;
+        warning(wid, '%s', wmsg);
+        warnings = [warnings, wmsg];
+        validated = true;
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     else
         validated = true;
     end
@@ -1224,23 +1257,6 @@ end
 if ~validated % options.fortran has not got a validated value yet
     options.fortran = fortran;
 end
-
-% Validate options.precision
-validated = false;
-if isfield(options, 'precision')
-    if ~ischarstr(options.precision) || ~ismember(lower(options.precision), all_precisions())
-        wid = sprintf('%s:InvalidPrecision', invoker);
-        wmsg = sprintf('%s: invalid precision; it should be ''single'', ''double'', or ''quadruple''; it is set to %s.', invoker, precision);
-        warning(wid, '%s', wmsg);
-        warnings = [warnings, wmsg];
-    else
-        validated = true;
-    end
-end
-if ~validated  % options.precision has not got a validated value yet
-    options.precision = precision;
-end
-options.precision = lower(char(options.precision));
 
 % Validate options.honour_x0
 validated = false;
@@ -1333,7 +1349,7 @@ validated = false;
 if isfield(options, 'debug')
     if ~islogicalscalar(options.debug)
         wid = sprintf('%s:InvalidDebugflag', invoker);
-        wmsg = sprintf('%s: invalid debug flag; it should be true(1) or false(0); it is set to %s.', invoker, mat2str(debugflag));
+        wmsg = sprintf('%s: invalid debugging flag; it should be true(1) or false(0); it is set to %s.', invoker, mat2str(debug_flag));
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     else
@@ -1341,7 +1357,7 @@ if isfield(options, 'debug')
     end
 end
 if ~validated % options.debug has not got a valid value yet
-    options.debug = debugflag;
+    options.debug = debug_flag;
 end
 options.debug = logical(options.debug);
 if options.debug
