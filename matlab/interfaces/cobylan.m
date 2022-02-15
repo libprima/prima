@@ -417,9 +417,9 @@ else % The problem turns out 'normal' during prepdfo
     else
         variant = 'modern';
     end
+    solver = options.solver;
 
     % Call the Fortran code
-    solver = 'cobyla';
     fsolver = str2func(get_mexname(solver, precision, debug_flag, variant));
     % The mexified Fortran Function is a private function generating only private errors;
     % however, public errors can occur due to, e.g., evalobj; error handling needed.

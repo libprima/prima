@@ -35,9 +35,15 @@ olddir = cd();
 
 debug_flags = {true, false};
 precisions = all_precisions();
-%variants = {'modern', 'classical'};
-variants = {'modern'};
-ready_solvers = {'cobyla', 'newuoa'};
+variants = all_variants();
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ready_solvers = {'cobyla', 'newuoa'};  % To be removed
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Name of the file that contains the list of Fortran files. There should be such a file in each
 % Fortran source code directory, and the list should indicate the dependence among the files.
@@ -51,7 +57,7 @@ filelist = 'ffiles.txt';
 if any(strfind(Architecture, '64')) && log2(maxArrayDim) > 31
     ad_option = '-largeArrayDims';
 else
-    ad_option = '-compatibleArrayDims'; % This will also work in a 64-bit MATLAB
+    ad_option = '-compatibleArrayDims'; % This will work for both 32-bit and 64-bit MATLAB
 end
 
 % Compile the common files. They are shared by all solvers. We compile them only once.
@@ -86,7 +92,7 @@ for idbg = 1 : length(debug_flags)
             % The module/object files are dumped to the current directory, namely `workdir`.
         end
         common_obj_files = list_obj_files(workdir);
-        % Compile `gethuge`. We use the non-debug version of `gethuge` regardless of the debug flags.
+        % Compile `gethuge`. We only provide a non-debugging version of `gethuge`.
         if ~debug_flags{idbg}
             gateway = fullfile(gateways, 'gethuge.F');
             mexname = get_mexname('gethuge', precisions{iprc});
@@ -100,23 +106,17 @@ fprintf('Done.\n');
 % Compile the solvers.
 for isol = 1 : length(solvers)
     solver = solvers{isol};
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    solver = solver(1:end-1);
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     fprintf('Compiling %s ... ', solver);
-    gateway = fullfile(gateways, [solver, '_mex.F']);
+    gateway = fullfile(gateways, [solver(1:end-1), '_mex.F']);
     for ivar = 1 : length(variants)
         if strcmp(variants{ivar}, 'classical')
-            soldir = fullfile(classical_src, solver);
+            soldir = fullfile(classical_src, solver(1:end-1));
         else
-            soldir = fullfile(modern_src, solver);
+            soldir = fullfile(modern_src, solver(1:end-1));
         end
         for idbg = 1 : length(debug_flags)
             if strcmp(variants{ivar}, 'classical') && debug_flags{idbg}
+                % The support for the classical variant is limited. No debugging version.
                 continue
             end
             if debug_flags{idbg}
@@ -129,7 +129,7 @@ for isol = 1 : length(solvers)
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 if ~ismember(solver, ready_solvers) && ~strcmp(precisions{iprc}, 'double')
-                    continue
+                    continue  % To be removed
                 end
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -203,16 +203,6 @@ end
 % PREPARE_HEADER ends
 return
 
-function s = dbgstr(debug_flag)
-%DBGSTR returns a string according to `debug_flag`: 'g' for true and 'O' for false.
-if (debug_flag)
-    s = 'g';
-else
-    s = 'O';
-end
-% DBGSTR ends
-return
-
 function s = pdstr(precision, debug_flag)
 %PDSTR returns a string according to `precision` and `debug_flag`.
 s = [precision(1), dbgstr(debug_flag)];
@@ -223,7 +213,9 @@ function prepare_workdir(directory)
 %PREPARE_WORKDIR prepares `directory` for the compilation: if it does not exist, create it;
 % otherwise, clean it up.
 if exist(directory, 'dir')
-    sanitize(directory);
+    % Clean up `directory` so that it is proper for the compilation. Without doing this, files may
+    % be linked mistakenly, leading to runtime errors such as SEGFAULT.
+    cellfun(@(filename) delete(filename), list_modo_files(directory));
 else
     mkdir(directory);
 end

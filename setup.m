@@ -91,10 +91,12 @@ tools = fullfile(matd, 'setup_tools'); % Directory containing some tools, e.g., 
 
 % `tools` contains some functions needed in the sequel.
 addpath(tools);
-% The following files are needed after the setup. Copy them to `mexdir`.
-copyfile(fullfile(tools, 'all_solvers.m'), mexdir);
-copyfile(fullfile(tools, 'all_precisions.m'), mexdir);
-copyfile(fullfile(tools, 'get_mexname.m'), mexdir);
+
+% The following files are shared between `tools` (namely matlab/setup_tools) and `mexdir`
+% (namely matlab/interfaces/private). We maintain them in `tools` and copy them to `mexdir`.
+shared_files = {'all_solvers.m', 'all_precisions.m', 'all_variants.m', ...
+                'dbgstr.m', 'get_mexname.m', 'ischarstr.m', 'islogicalscalar.m'};
+cellfun(@(filename) copyfile(fullfile(tools, filename), mexdir), shared_files);
 
 % Parse the input.
 [solver_list, options, action, wrong_input] = parse_input(varargin);

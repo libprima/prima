@@ -380,6 +380,7 @@ else % The problem turns out 'normal' during prepdfo
     else
         variant = 'modern';
     end
+    solver = options.solver;
 
     % If x0 is not feasible, LINCOA will modify the constraints to make
     % it feasible (which is a bit strange).
@@ -396,7 +397,6 @@ else % The problem turns out 'normal' during prepdfo
     end
 
     % Call the Fortran code
-    solver = 'lincoa';
     fsolver = str2func(get_mexname(solver, precision, debug_flag, variant));
     % The mexified Fortran function is a private function generating only private errors;
     % however, public errors can occur due to, e.g., evalobj; error handling needed

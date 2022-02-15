@@ -1,4 +1,7 @@
-function [isrm, m, n] = isrealmatrix(x)  % isrealmatrix([]) = true
+function [isrm, m, n] = isrealmatrix(x)
+%ISREALMATRIX checks whether x is a real matrix.
+% N.B.: isrealmatrix([]) = true
+
 if isempty(x)
     isrm = true;
     m = 0;
