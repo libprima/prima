@@ -156,9 +156,9 @@ end
 % The following files are shared between `tools` (namely matlab/setup_tools) and `mexdir`
 % (namely matlab/interfaces/private). We maintain them in `tools` and copy them to `mexdir`.
 % This should be done after calling `create_all_variants` and `create_all_precisions`.
-shared_files = {'all_solvers.m', 'all_precisions.m', 'all_variants.m', ...
+shared_tools = {'all_solvers.m', 'all_precisions.m', 'all_variants.m', ...
                 'dbgstr.m', 'get_mexname.m', 'ischarstr.m', 'islogicalscalar.m'};
-cellfun(@(filename) copyfile(fullfile(tools, filename), mexdir), shared_files);
+cellfun(@(filename) copyfile(fullfile(tools, filename), mexdir), shared_tools);
 
 if isempty(solver_list)
     % We arrive here if and only if `action` = 'path'.
