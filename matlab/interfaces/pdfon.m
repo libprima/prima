@@ -377,14 +377,14 @@ elseif (nvararg >= 2 && nvararg <= maxarg)
     % If 2 <= nvararg <= 10 and the last input is a structure or [], then it is the 'options'
     if isempty(varargin{end}) || isa(varargin{end}, 'struct')
         % If nvararg >= 4 and the second last input is a function, then it is the 'nonlcon'
-        if (nvararg >= 4) && (isa(varargin{end-1}, 'char') || isa(varargin{end-1}, 'string') || isa(varargin{end-1}, 'function_handle'))
+        if (nvararg >= 4) && (ischarstr(varargin{end-1}) || isa(varargin{end-1}, 'function_handle'))
             args = [varargin(1:end-2), cell(1, maxarg-nvararg), varargin(end-1:end)]; % 'augment' the inputs to 10 by adding []; args{:} (should have 10 entries) will be the inputs for prepdfo
             % cell(m,n) returns an mxn array of []
         else
             args = [varargin(1:end-1), cell(1, maxarg-nvararg), varargin(end)];
         end
     % if nvararg >= 3 and the last input is a function, then it is the 'nonlcon'
-    elseif (nvararg >= 3) && (isa(varargin{end}, 'char') || isa(varargin{end}, 'string') || isa(varargin{end}, 'function_handle'))
+    elseif (nvararg >= 3) && (ischarstr(varargin{end}) || isa(varargin{end}, 'function_handle'))
         args = [varargin(1:end-1), cell(1, maxarg-nvararg-1), varargin(end), {[]}];
     else
         args = [varargin, cell(1, maxarg-nvararg)];
@@ -395,7 +395,7 @@ end
 
 % Preprocess the input
 try % prepdfo and package_info are private functions that may generate public errors; error-handling needed
-    if (nvararg == 1) && (isa(varargin{1}, 'char') || isa(varargin{1}, 'string'))
+    if (nvararg == 1) && ischarstr(varargin{1})
         % If there is only 1 input and it is a string, then it should be
         % a string requesting information about the pacakge.
         x = package_info(varargin{1});

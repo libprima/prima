@@ -10,13 +10,22 @@ if nargin > 1 || (nargin == 1 && ~ischarstr(solver_type))
     error(sprintf('%s:InvalidInput', funname), '%s: UNEXPECTED ERROR: invalid input received', funname);
 end
 
+% All solvers available
 all_solvers_available = {'uobyqan', 'newuoan', 'bobyqan', 'lincoan', 'cobylan'};
+% Solvers without the capability of dealing constraints
 solvers_without_constraints = {'uobyqan', 'newuoan'};
+% Solvers capable of dealing constraints
 solvers_with_constraints = setdiff(all_solvers_available, solvers_without_constraints);
-unconstrained_solvers = solvers_without_constraints;
+% Solvers capable of solving unconstrained problems
+unconstrained_solvers = all_solvers_available;
+% Solvers capable of solving bound constrained problems
 bound_constrained_solvers = {'bobyqan', 'lincoan', 'cobylan'};
+% Solvers capable of solving linearly constrained problems
 linearly_constrained_solvers = {'lincoan', 'cobylan'};
+% Solvers capable of solving nonlinearly constrained problems
 nonlinearly_constrained_solvers = {'cobylan'};
+% Solvers that are native to this package. The package may also be used to provide interfaces for
+% external solvers
 internal_solvers = {'uobyqan', 'newuoan', 'bobyqan', 'lincoan', 'cobylan'};
 
 if nargin < 1

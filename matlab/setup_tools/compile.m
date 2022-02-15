@@ -33,7 +33,11 @@ function compile(solvers, mexdir, modern_src, classical_src, common, gateways, o
 
 olddir = cd();
 
-debug_flags = {true, false};
+if options.debug
+    debug_flags = {true, false};
+else
+    debug_flags = {false};
+end
 precisions = all_precisions();
 variants = all_variants();
 
@@ -57,7 +61,7 @@ filelist = 'ffiles.txt';
 if any(strfind(Architecture, '64')) && log2(maxArrayDim) > 31
     ad_option = '-largeArrayDims';
 else
-    ad_option = '-compatibleArrayDims'; % This will work for both 32-bit and 64-bit MATLAB
+    ad_option = '-compatibleArrayDims'; % This works for both 32-bit and 64-bit MATLAB
 end
 
 % Compile the common files. They are shared by all solvers. We compile them only once.

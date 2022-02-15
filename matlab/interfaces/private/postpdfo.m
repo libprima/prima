@@ -40,7 +40,7 @@ obligatory_probinfo_fields = {'raw_data', 'refined_data', 'fixedx', 'fixedx_valu
     'trivial_lineq', 'trivial_leq', 'infeasible', 'scaled', 'scaling_factor', ...
     'shift', 'reduced', 'raw_type', 'raw_dim', 'refined_type', 'refined_dim', ...
     'feasibility_problem', 'user_options_fields', 'options', 'warnings', ...
-    'hugefun', 'hugecon'};
+    'hugenum', 'hugefun', 'hugecon'};
 obligatory_options_fields = {'classical', 'debug', 'chkfunval'};
 
 % Who is calling this function? Is it a correct invoker?
@@ -100,7 +100,7 @@ if strcmp(invoker, 'pdfon')
 else
     solver = invoker;
 end
-if isempty(solver) || (~isa(solver, 'char') && ~isa(solver, 'string')) || ~ismember(solver, all_solvers())
+if isempty(solver) || ~ischarstr(solver) || ~ismember(solver, all_solvers())
     % Public/unexpected error
     error(sprintf('%s:InvalidSolver', invoker), '%s: UNEXPECTED ERROR: invalid solver passed to %s.', invoker, funname);
 end
@@ -282,7 +282,7 @@ if isfield(output, 'chist')
 else % External solvers may not return chist
     chist = constrviolation + zeros(1, nhist);
 end
-if ~(isempty(chist) && ismember(solver, all_solvers('without_constraints'))) && (~isrealvector(chist) || (length(chist) ~= nhist))
+if ~(isempty(chist) && ismember(solver, all_solvers('without_constraints'))) && ~(isrealvector(chist) && length(chist) == nhist)
     % Public/unexpected error
     error(sprintf('%s:InvalidChist', invoker), ...
         '%s: UNEXPECTED ERROR: %s returns a chist that is not a real vector of length min(nf, maxfhist).', invoker, solver);

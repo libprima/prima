@@ -187,7 +187,7 @@ nonlcon = pre_nonlcon(invoker, nonlcon, fixedx, fixedx_value, probinfo.hugecon);
 probinfo.raw_dim = lenx0; % Problem dimension before reduction
 if any(fixedx) && any(~fixedx)
     freex = ~fixedx; % A vector of true/false indicating whether the variable is free or not
-    fun = @(freex_value) fun(fullx(freex_value, fixedx_value, freex, fixedx)); % Objective fun after reduction
+    fun = @(freex_value) fun(fullx(freex_value, fixedx_value, freex, fixedx)); % Objective function after reduction
     x0 = x0(freex); % x0 after reduction
     lenx0 = length(x0);
     lb = lb(freex); % lb after reduction
