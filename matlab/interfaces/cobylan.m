@@ -450,7 +450,7 @@ else % The problem turns out 'normal' during prepdfo
     output.fhist = fhist;
     output.constrviolation = constrviolation;
     output.chist = chist;
-    if (~options.classical && output_nlchist)  %!!!!
+    if output_nlchist
         output.nlcihist = -conhist(end-m_nlcineq-2*m_nlceq+1 : end-2*m_nlceq, :);
         if isempty(output.nlcihist)
             output.nlcihist = []; % We uniformly use [] to represent empty objects
