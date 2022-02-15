@@ -33,7 +33,8 @@ function compile(solvers, mexdir, modern_src, classical_src, common, gateways, o
 
 olddir = cd();
 
-if options.debug
+% `options.debug` indicates whether to compile the debugging version of the solvers.
+if isfield(options, 'debug') && islogicalscalar(options.debug) && options.debug
     debug_flags = {true, false};
 else
     debug_flags = {false};
@@ -44,7 +45,7 @@ variants = all_variants();
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-ready_solvers = {'cobyla', 'newuoa'};  % To be removed
+ready_solvers = {'cobylan', 'newuoan'};  % To be removed
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
