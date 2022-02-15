@@ -127,7 +127,6 @@ end
 % Remove the compiled MEX files if requested.
 if strcmp(action, 'clean')
     clean_mex(mexdir);
-    clean_signature_file(mexdir);
     rmpath(tools);
     return
 end
@@ -135,7 +134,6 @@ end
 % Uninstall the package if requested.
 if strcmp(action, 'uninstall')
     uninstall_pdfo(package_name);
-    clean_signature_file(mexdir);
     rmpath(tools);
     return
 end
@@ -147,7 +145,6 @@ if strcmp(action, 'path')
     % available; create `all_precisions.m` and `all_variants.m` under `tools` accordingly.
     create_all_precisions(mexdir);
     create_all_variants(mexdir);
-    create_signature_file(mexdir);
     fprintf('\nPath added.\n\n')
 else
     % Decide the precisions ('double', 'single', 'quadruple') and variants ('modern', 'classical') to
@@ -245,7 +242,6 @@ if ~path_saved  %  `add_save_path` failed to save the path.
     fprintf('- OR come to the current directory and run ''setup path'' when you need the package.\n\n');
 end
 
-create_signature_file(mexdir);
 rmpath(tools);
 
 % setup ends

@@ -36,7 +36,7 @@ end
 mkdir(outputdir);  % Make the output directory
 %copyfile([mfilename('fullpath'), '.m'], outputdir);  % Save the current script in the output directory
 
-% The following lies generate a README.txt file under outputdir
+% The following lines generate a README.txt file under outputdir
 readme = 'README.txt';
 fid = fopen(fullfile(outputdir, readme), 'w');  % Open/create file for writing. Discard existing contents.
 if fid == -1
@@ -67,7 +67,7 @@ refactor_dir(inputdir, outputdir, ignorefiles);
 d = dir(inputdir);
 isub = [d(:).isdir];
 subdir = {d(isub).name};
-subdir = setdiff(subdir, [{'.','..'}, ignoredir]);  % Exclude the ignored directories
+subdir = setdiff(subdir, [{'.', '..'}, ignoredir]);  % Exclude the ignored directories
 
 % The following lines perform the refactoring in the subdirectories of
 % the current directory.
