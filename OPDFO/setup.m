@@ -125,6 +125,14 @@ if strcmp(solver, 'uninstall')
     return;
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+if strcmp(solver, 'path')
+    cpwd = fileparts(mfilename('fullpath')); % Current directory
+    addpath(fullfile(cpwd, 'matlab', 'interfaces'))
+    return;
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % Decide which solver(s) to compile.
 if ismember(solver, solver_list)
     solver_list = {solver};

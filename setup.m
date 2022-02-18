@@ -126,7 +126,7 @@ end
 
 % Remove the compiled MEX files if requested.
 if strcmp(action, 'clean')
-    clean_mex(mexdir);
+    clean_mex(mexdir, 'verbose');
     rmpath(tools);
     return
 end
@@ -138,34 +138,37 @@ if strcmp(action, 'uninstall')
     return
 end
 
+% Add the path and return if requested.
 if strcmp(action, 'path')
-    % Add the path and return if requested.
     add_save_path(interfaces, package_name);
-    % Decide the precisions ('double', 'single', 'quadruple') and variants ('modern', 'classical')
-    % available; create `all_precisions.m` and `all_variants.m` under `tools` accordingly.
+    % Create `all_precisions.m` and `all_variants.m` under `tools` according to the content of
+    % `mexdir`. They reflect the precisions ('double', 'single', 'quadruple') and variants
+    % ('modern', 'classical') of the solvers available under `mexdir`.
     create_all_precisions(mexdir);
     create_all_variants(mexdir);
-    fprintf('\nPath added.\n\n')
-else
-    % Decide the precisions ('double', 'single', 'quadruple') and variants ('modern', 'classical') to
-    % compile; create `all_precisions.m` and `all_variants.m` under `tools` accordingly.
-    create_all_precisions(options);
-    create_all_variants(options);
-end
-
-% The following files are shared between `tools` (namely matlab/setup_tools) and `mexdir`
-% (namely matlab/interfaces/private). We maintain them in `tools` and copy them to `mexdir`.
-% This should be done after calling `create_all_variants` and `create_all_precisions`.
-shared_tools = {'all_solvers.m', 'all_precisions.m', 'all_variants.m', 'dbgstr.m', 'get_mexname.m'};
-cellfun(@(filename) copyfile(fullfile(tools, filename), mexdir), shared_tools);
-
-if isempty(solver_list)
-    % We arrive here if and only if `action` = 'path'.
+    % Some tools are shared between the setup and the runtime. They are all ready now. Copy them
+    % from `tools` (the setup directory) to `mexdir` (the runtime directory).
+    copy_shared_tools(tools, mexdir);
     rmpath(tools);
+    fprintf('\nPath added.\n\n')
     return
 end
 
-% If we arrive here, then the user requests us to compile the solvers.
+
+%%%%%%%%%%%%%%% If we arrive here, then the user requests us to compile the solvers. %%%%%%%%%%%%%%%
+
+
+clean_mex(mexdir);   % All previously compiled solvers are removed by this line.
+
+
+% Create `all_precisions.m` and `all_variants.m` under `tools` according to `options`.
+% They reflect the precisions ('double', 'single', 'quadruple') and variants ('modern','classical')
+% of the solvers available after the compilation.
+create_all_precisions(options);
+create_all_variants(options);
+% Some tools are shared between the setup and the runtime. They are all ready now. Copy them from
+% from `tools` (the setup directory) to `mexdir` (the runtime directory).
+copy_shared_tools(tools, mexdir);
 
 % Check whether MEX is properly configured.
 fprintf('\nVerifying the set-up of MEX ... \n\n');
@@ -184,7 +187,7 @@ else
 end
 
 % Generate the intersection-form Fortran source code
-% We need to do this because MEX accepts only the (obselescent) fixed-form Fortran code on Windows.
+% We need to do this because MEX accepts only the (obsolescent) fixed-form Fortran code on Windows.
 % Intersection-form Fortran code can be compiled both as free form and as fixed form.
 fprintf('Refactoring the Fortran code ... ');
 interform(fsrc);

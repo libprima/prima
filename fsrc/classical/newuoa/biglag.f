@@ -31,7 +31,7 @@ C
       HALF=0.5D0
       ONE=1.0D0
       ZERO=0.0D0
-      TWOPI=8.0D0*DATAN(ONE)
+      TWOPI=8.0D0*ATAN(ONE)
       DELSQ=DELTA*DELTA
       NPTM=NPT-N-1
 C
@@ -87,11 +87,11 @@ C
           SP=SP+D(I)*GC(I)
           DHD=DHD+D(I)*GD(I)
       END DO
-      SCALE=DELTA/DSQRT(DD)
+      SCALE=DELTA/SQRT(DD)
       IF (SP*DHD < ZERO) SCALE=-SCALE
       TEMP=ZERO
       IF (SP*SP > 0.99D0*DD*GG) TEMP=ONE
-      TAU=SCALE*(DABS(SP)+HALF*SCALE*DABS(DHD))
+      TAU=SCALE*(ABS(SP)+HALF*SCALE*ABS(DHD))
       IF (GG*DELSQ < 0.01D0*TAU*TAU) TEMP=ONE
       DO I=1,N
           D(I)=SCALE*D(I)
@@ -114,7 +114,7 @@ C
       END DO
       TEMP=DD*SS-SP*SP
       IF (TEMP <= 1.0D-8*DD*SS) GOTO 160
-      DENOM=DSQRT(TEMP)
+      DENOM=SQRT(TEMP)
       DO I=1,N
           S(I)=(DD*S(I)-SP*D(I))/DENOM
           W(I)=ZERO
@@ -158,10 +158,10 @@ C
       TEMP=TWOPI/DFLOAT(IU+1)
       DO I=1,IU
           ANGLE=DFLOAT(I)*TEMP
-          CTH=DCOS(ANGLE)
-          STH=DSIN(ANGLE)
+          CTH=COS(ANGLE)
+          STH=SIN(ANGLE)
           TAU=CF1+(CF2+CF4*CTH)*CTH+(CF3+CF5*CTH)*STH
-          IF (DABS(TAU) > DABS(TAUMAX)) THEN
+          IF (ABS(TAU) > ABS(TAUMAX)) THEN
               TAUMAX=TAU
               ISAVE=I
               TEMPA=TAUOLD
@@ -182,15 +182,15 @@ C
 C
 C     Calculate the new D and GD. Then test for convergence.
 C
-      CTH=DCOS(ANGLE)
-      STH=DSIN(ANGLE)
+      CTH=COS(ANGLE)
+      STH=SIN(ANGLE)
       TAU=CF1+(CF2+CF4*CTH)*CTH+(CF3+CF5*CTH)*STH
       DO I=1,N
           D(I)=CTH*D(I)+STH*S(I)
           GD(I)=CTH*GD(I)+STH*W(I)
           S(I)=GC(I)+GD(I)
       END DO
-      IF (DABS(TAU) <= 1.1D0*DABS(TAUBEG)) GOTO 160
+      IF (ABS(TAU) <= 1.1D0*ABS(TAUBEG)) GOTO 160
       IF (ITERC < N) GOTO 80
   160 RETURN
       END

@@ -10,9 +10,8 @@ interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
 mexdir = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
 tests = fullfile(matd, 'tests'); % Directory containing some tests
 
-% Remove the compiled MEX files. Do not call `clean_mex`, which is not silent.
-mex_files = files_with_wildcard(mexdir, '*.mex*');
-cellfun(@(filename) delete(filename), mex_files);
+% Remove the compiled MEX files.
+clean_mex(mexdir);
 
 % Try removing the paths possibly added by PDFO
 orig_warning_state = warning;

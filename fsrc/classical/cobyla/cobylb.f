@@ -280,7 +280,7 @@ C      IF (I .EQ. J) TEMP=TEMP-1.0
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C  200 ERROR=AMAX1(ERROR,ABS(TEMP))
 C      IF (ERROR .GT. 0.1) THEN
-              ERROR=DMAX1(ERROR,DABS(TEMP))
+              ERROR=DMAX1(ERROR,ABS(TEMP))
           END DO
       END DO
       IF (ERROR > 0.1D0) THEN
@@ -337,8 +337,8 @@ C      WETA=0.0
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      VSIG(J)=1.0/SQRT(WSIG)
 C      VETA(J)=SQRT(WETA)
-          VSIG(J)=1.0D0/DSQRT(WSIG)
-          VETA(J)=DSQRT(WETA)
+          VSIG(J)=1.0D0/SQRT(WSIG)
+          VETA(J)=SQRT(WETA)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           IF (VSIG(J) < PARSIG .OR. VETA(J) > PARETA) IFLAG=0
       END DO
@@ -554,7 +554,7 @@ C      TEMP=0.0
           END DO
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      TEMP=ABS(TEMP)
-          TEMP=DABS(TEMP)
+          TEMP=ABS(TEMP)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           IF (TEMP > RATIO) THEN
               JDROP=J
@@ -581,7 +581,7 @@ C              TEMP=0.0
                   END DO
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C              TEMP=SQRT(TEMP)
-                  TEMP=DSQRT(TEMP)
+                  TEMP=SQRT(TEMP)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               END IF
               IF (TEMP > EDGMAX) THEN
@@ -727,7 +727,7 @@ C     CONSAV are dumped into CON to be returned by COBYLA.
 !      RETURN
 !      END
       constr = con(1:m)
-      cstrv = maxval([0.0D0, -constr])
+      cstrv = maxval([0.0_RP, -constr])
       call rangehist(nfvals, xhist, fhist, chist, conhist)
       RETURN
       end subroutine cobylb

@@ -28,7 +28,7 @@ C
           IF (J == IDZ) THEN
               JL=IDZ
           ELSE IF (ZMAT(KNEW,J) /= ZERO) THEN
-              TEMP=DSQRT(ZMAT(KNEW,JL)**2+ZMAT(KNEW,J)**2)
+              TEMP=SQRT(ZMAT(KNEW,JL)**2+ZMAT(KNEW,J)**2)
               TEMPA=ZMAT(KNEW,JL)/TEMP
               TEMPB=ZMAT(KNEW,J)/TEMP
               DO I=1,NPT
@@ -62,7 +62,7 @@ C     then the first column of ZMAT will be exchanged with another one later.
 C
       IFLAG=0
       IF (JL == 1) THEN
-          TEMP=DSQRT(DABS(DENOM))
+          TEMP=SQRT(ABS(DENOM))
           TEMPB=TEMPA/TEMP
           TEMPA=TAU/TEMP
           DO I=1,NPT
@@ -81,8 +81,8 @@ C
           TEMPA=TEMP*BETA
           TEMPB=TEMP*TAU
           TEMP=ZMAT(KNEW,JA)
-          SCALA=ONE/DSQRT(DABS(BETA)*TEMP*TEMP+TAUSQ)
-          SCALB=SCALA*DSQRT(DABS(DENOM))
+          SCALA=ONE/SQRT(ABS(BETA)*TEMP*TEMP+TAUSQ)
+          SCALB=SCALA*SQRT(ABS(DENOM))
           DO I=1,NPT
               ZMAT(I,JA)=SCALA*(TAU*ZMAT(I,JA)-TEMP*VLAG(I))
               ZMAT(I,JB)=SCALB*(ZMAT(I,JB)-TEMPA*W(I)-TEMPB*VLAG(I))

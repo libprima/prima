@@ -18,7 +18,7 @@ module fmxapi_mod
 !
 ! Started in March 2020
 !
-! Last Modified: Saturday, February 12, 2022 PM02:36:44
+! Last Modified: Wednesday, February 16, 2022 PM10:19:30
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -42,7 +42,7 @@ use, non_intrinsic :: consts_mod, only : DP, RP
 implicit none
 private
 
-public :: notComplex, mwOne, intOne, intTwo, cvsnTol
+public :: notComplex, mwOne, cvsnTol
 
 ! MEX API subroutines
 public :: mexErrMsgIdAndTxt
@@ -86,8 +86,6 @@ integer, parameter :: INT32_MEX = selected_int_kind(7)
 
 ! notComplex is used in mxCreateDoubleMatrix
 integer(INT32_MEX), parameter :: notComplex = 0
-! intOne and intTwo may be used when calling mexCallMATLAB
-integer(INT32_MEX), parameter :: intOne = 1, intTwo = 2
 ! mwOne may be used in mxCreateDoubleMatrix and mxCopyPtrToReal8
 mwSize, parameter :: mwOne = 1 ! Integer 1 with type mwSize
 ! cvsnTol is the tolerance of difference due to conversion between REAL(RP) and REAL(DP)
@@ -617,7 +615,7 @@ end subroutine read_lscalar
 
 
 subroutine write_rscalar(x, px)
-! WRITE_RSCALAR associates a REAL(RP) scalar X with an mwPointer PX, after which X can be passed to
+! WRITE_RSCALAR associates a REAL(RP) scalar X with an mwPointer PX, after which PX can be passed to
 ! MATLAB either as an output of mexFunction or an input of mexCallMATLAB.
 use, non_intrinsic :: consts_mod, only : RP, DP, ONE, MSGLEN
 implicit none
@@ -649,7 +647,7 @@ end subroutine write_rscalar
 
 
 subroutine write_rvector(x, px, shape_type)
-! WRITE_RVECTOR associates a REAL(RP) vector X with an mwPointer PX, after which X can be passed to
+! WRITE_RVECTOR associates a REAL(RP) vector X with an mwPointer PX, after which PX can be passed to
 ! MATLAB either as an output of mexFunction or an input of mexCallMATLAB. If ROWCOL = 'row', then
 ! the vector is passed as a row vector, otherwise, it will be a column vector.
 use, non_intrinsic :: consts_mod, only : DP, RP, IK, ONE, MSGLEN
@@ -701,7 +699,7 @@ end subroutine write_rvector
 
 
 subroutine write_rmatrix(x, px)
-! WRITE_RMATRIX associates a REAL(RP) matrix X with an mwPointer PX, after which X can be passed to
+! WRITE_RMATRIX associates a REAL(RP) matrix X with an mwPointer PX, after which PX can be passed to
 ! MATLAB either as an output of mexFunction or an input of mexCallMATLAB.
 use, non_intrinsic :: consts_mod, only : DP, RP, IK, ONE, MSGLEN
 implicit none
@@ -743,7 +741,7 @@ end subroutine write_rmatrix
 
 
 subroutine write_iscalar(x, px)
-! WRITE_RSCALAR associates an INTEGER(IK) scalar X with an mwPointer PX, after which X can be passed
+! WRITE_RSCALAR associates an INTEGER(IK) scalar X with an mwPointer PX, after which PX can be passed
 ! to MATLAB either as an output of mexFunction or an input of mexCallMATLAB.
 use, non_intrinsic :: consts_mod, only : DP, IK, MSGLEN
 implicit none

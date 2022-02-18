@@ -1,7 +1,9 @@
 all_precisions.m
 all_variants.m
 .signature
-*.mexa64*
+*.mexa*
+*.mexmac*
+*.mexw*
 *.mod
 *.o
 *.obj

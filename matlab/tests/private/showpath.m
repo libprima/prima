@@ -1,7 +1,7 @@
 function ndftpath = showpath()
 
 fprintf('\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n');
-fprintf('\nCurrently in %s\n', cd());
+fprintf('\nCurrently in %s\n', pwd());
 
 fprintf('\nNon-default paths:\n');
 oldpath = path();

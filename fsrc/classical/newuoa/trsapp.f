@@ -31,7 +31,7 @@ C     Initialization, which includes setting HD to H times XOPT.
 C
       HALF=0.5D0
       ZERO=0.0D0
-      TWOPI=8.0D0*DATAN(1.0D0)
+      TWOPI=8.0D0*ATAN(1.0D0)
       DELSQ=DELTA*DELTA
       ITERC=0
       ITERMAX=N
@@ -63,7 +63,7 @@ C     Calculate the step to the trust region boundary and the product HD.
 C
    40 ITERC=ITERC+1
       TEMP=DELSQ-SS
-      BSTEP=TEMP/(DS+DSQRT(DS*DS+DD*TEMP))
+      BSTEP=TEMP/(DS+SQRT(DS*DS+DD*TEMP))
       GOTO 170
    50 DHD=ZERO
       DO J=1,N
@@ -124,14 +124,14 @@ C
           SHS=SHS+STEP(I)*HS(I)
       END DO
       SGK=SG+SHS
-      ANGTEST=SGK/DSQRT(GG*DELSQ)
+      ANGTEST=SGK/SQRT(GG*DELSQ)
       IF (ANGTEST <= -0.99D0) GOTO 160
 C
 C     Begin the alternative iteration by calculating D and HD and some
 C     scalar products.
 C
       ITERC=ITERC+1
-      TEMP=DSQRT(DELSQ*GG-SGK*SGK)
+      TEMP=SQRT(DELSQ*GG-SGK*SGK)
       TEMPA=DELSQ/TEMP
       TEMPB=SGK/TEMP
       DO I=1,N
@@ -158,8 +158,8 @@ C
       TEMP=TWOPI/DFLOAT(IU+1)
       DO I=1,IU
           ANGLE=DFLOAT(I)*TEMP
-          CTH=DCOS(ANGLE)
-          STH=DSIN(ANGLE)
+          CTH=COS(ANGLE)
+          STH=SIN(ANGLE)
           QNEW=(SG+CF*CTH)*CTH+(DG+DHS*CTH)*STH
           IF (QNEW < QMIN) THEN
               QMIN=QNEW
@@ -182,8 +182,8 @@ C
 C
 C     Calculate the new STEP and HS. Then test for convergence.
 C
-      CTH=DCOS(ANGLE)
-      STH=DSIN(ANGLE)
+      CTH=COS(ANGLE)
+      STH=SIN(ANGLE)
       REDUC=QBEG-(SG+CF*CTH)*CTH-(DG+DHS*CTH)*STH
       GG=ZERO
       DO I=1,N

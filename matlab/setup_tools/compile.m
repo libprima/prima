@@ -12,13 +12,13 @@ function compile(solvers, mexdir, modern_src, classical_src, common, gateways, o
 % During the compilation, it is important to work in the correct directory. Otherwise, the files can
 % be linked mistakenly, leading to runtime errors such as SEGFAULT.
 % 1. Each [precision, debug_flag] specifies a version of the common files; they are compiled in
-% workdir = fullfile(common, pdstr(precision, debug_flag));
+% work_dir = fullfile(common, pdstr(precision, debug_flag));
 % 2. Each [variant, precision, debug_flag] specifies a version of the solver; it is compiled in
-% workdir = fullfile(directory_of_solver_variant, pdstr(precision, debug_flag));
+% work_dir = fullfile(directory_of_solver_variant, pdstr(precision, debug_flag));
 % 3. When compiling the solver corresponding to [variant, precision, debug_flag], we need the
 % module and object files in
-% commondir = fullfile(common, pdstr(precision, debug_flag)).
-% 4. All the working directories (i.e., `workdir`) should be sanitized (i.e., removing the existing
+% common_dir = fullfile(common, pdstr(precision, debug_flag)).
+% 4. All the working directories (i.e., `work_dir`) should be sanitized (i.e., removing the existing
 % module and object files) before the compilation.
 %
 % Remarks on the compilation options -O and -g:
@@ -31,7 +31,7 @@ function compile(solvers, mexdir, modern_src, classical_src, common, gateways, o
 
 % COMPILE starts
 
-olddir = cd();
+cpwd = pwd();
 
 % `options.debug` indicates whether to compile the debugging version of the solvers.
 if isfield(options, 'debug') && islogicalscalar(options.debug) && options.debug
@@ -71,7 +71,7 @@ end
 copyfile(fullfile(gateways, 'debug.F'), common);
 % ppf.h contains preprocessing directives. It is needed only when compiling the common files.
 header_file = fullfile(common, 'ppf.h');
-header_file_bak = fullfile(common, 'ppf.h.bak');
+header_file_bak = fullfile(common, 'ppf.bak');
 copyfile(header_file, header_file_bak);
 % Common Fortran source files.
 common_files = [list_files(common, filelist), fullfile(gateways, 'fmxapi.F'), fullfile(gateways, 'cbfun.F')];
@@ -85,18 +85,18 @@ for idbg = 1 : length(debug_flags)
     end
     for iprc = 1 : length(precisions)
         prepare_header(header_file, precisions{iprc}, debug_flags{idbg});
-        workdir = fullfile(common, pdstr(precisions{iprc}, debug_flags{idbg}));
-        prepare_workdir(workdir);
-        cd(workdir);
+        work_dir = fullfile(common, pdstr(precisions{iprc}, debug_flags{idbg}));
+        prepare_work_dir(work_dir);
+        cd(work_dir);
         % One may write the loop below as
         %%mex(mex_options{:}, '-c', common_files{:});
         % But it does not work for some variants of MATLAB. This may be because the compilation above does
         % not respect the order of common_files{:}, which is critical due to the dependence among modules.
         for icf = 1 : length(common_files)
             mex(mex_options{:}, '-c', common_files{icf});
-            % The module/object files are dumped to the current directory, namely `workdir`.
+            % The module/object files are dumped to the current directory, namely `work_dir`.
         end
-        common_obj_files = list_obj_files(workdir);
+        common_obj_files = list_obj_files(work_dir);
         % Compile `gethuge`. We only provide a non-debugging version of `gethuge`.
         if ~debug_flags{idbg}
             gateway = fullfile(gateways, 'gethuge.F');
@@ -139,17 +139,17 @@ for isol = 1 : length(solvers)
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                workdir = fullfile(soldir, pdstr(precisions{iprc}, debug_flags{idbg}));
-                prepare_workdir(workdir);
-                commondir = fullfile(common, pdstr(precisions{iprc}, debug_flags{idbg}));
-                copyfiles(list_mod_files(commondir), workdir);
-                cd(workdir);
+                work_dir = fullfile(soldir, pdstr(precisions{iprc}, debug_flags{idbg}));
+                prepare_work_dir(work_dir);
+                common_dir = fullfile(common, pdstr(precisions{iprc}, debug_flags{idbg}));
+                copyfiles(list_mod_files(common_dir), work_dir);
+                cd(work_dir);
                 src_files = list_files(soldir, filelist);
                 for isf = 1 : length(src_files)
                     mex(mex_options{:}, '-c', src_files{isf});
-                    % The module/object files are dumped to the current directory, namely `workdir`.
+                    % The module/object files are dumped to the current directory, namely `work_dir`.
                 end
-                obj_files = [list_obj_files(commondir), list_obj_files(workdir)];
+                obj_files = [list_obj_files(common_dir), list_obj_files(work_dir)];
                 mexname = get_mexname(solver, precisions{iprc}, debug_flags{idbg}, variants{ivar});
                 mex(mex_options{:}, obj_files{:}, gateway, '-output', mexname, '-outdir', mexdir);
             end
@@ -163,7 +163,7 @@ if exist(header_file_bak, 'file')
     movefile(header_file_bak, header_file);
 end
 
-cd(olddir);  % Go back to `olddir`.
+cd(cpwd);  % Go back to `cpwd`.
 
 % COMPILE ends
 return
@@ -214,7 +214,7 @@ s = [precision(1), dbgstr(debug_flag)];
 % PDSTR ends
 return
 
-function prepare_workdir(directory)
+function prepare_work_dir(directory)
 %PREPARE_WORKDIR prepares `directory` for the compilation: if it does not exist, create it;
 % otherwise, clean it up.
 if exist(directory, 'dir')

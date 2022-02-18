@@ -1,8 +1,9 @@
 subroutine getact(n, m, amat, nact, iact, qfac, rfac, snorm, resnew, resact, g, dw, vlam, w)
 use, non_intrinsic :: linalg_mod, only : inprod
-!      IMPLICIT REAL*8 (A-H,O-Z)
-implicit real(kind(0.0D0)) (a - h, o - z)
-implicit integer(i - n)
+
+use, non_intrinsic :: consts_mod, only : RP, IK
+implicit real(RP) (a - h, o - z)
+implicit integer(IK) (i - n)
 !      DIMENSION AMAT(N,*),B(*),IACT(*),QFAC(N,*),RFAC(*),
 dimension amat(n, m), iact(m), qfac(n, n), rfac(n * (n + 1) / 2), resnew(m), resact(m), g(n), dw(n), vlam(n), w(n)
 !

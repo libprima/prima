@@ -7,24 +7,22 @@ funname = callstack(1).name; % Name of the current function
 
 cpwd = fileparts(mfilename('fullpath'));  % The directory where this file resides.
 
-% `precision_list` is a cell array containing all the precisions possible. It takes either the
-% following default value or the return of `all_precisions()`.
-% N.B.: we call this function during the setup of the package, when `all_precisions.m` does not exist.
-precision_list = {'double', 'single', 'quadruple'};
-allprec = 'all_precisions';
-allprec_file = fullfile(cpwd, [allprec, '.m']);
+% `precision_list` is a cell array containing all the precisions of the Fortran solvers.
+% N.B.: we may call this function during the setup of the package, when `all_precisions.m` does not exist.
+allprec_file = fullfile(cpwd, 'all_precisions.m');
 if exist(allprec_file, 'file')
     precision_list = all_precisions();
+else  % `all_precisions.m` has not been created yet.
+    precision_list = all_precisions_possible();
 end
 
-% `variant_list` is a cell array containing all the variants possible. It takes either the
-% following default value or the return of `all_variants()`.
-% N.B.: we call this script during the setup of this package, when `all_variants.m` does not exist.
-variant_list = {'modern', 'classical'};
-allvar = 'all_variants';
-allvar_file = fullfile(cpwd, [allvar, '.m']);
+% `variant_list` is a cell array containing all the variants of the Fortran solvers.
+% N.B.: we may call this function during the setup of the package, when `all_variants.m` does not exist.
+allvar_file = fullfile(cpwd, 'all_variants.m');
 if exist(allvar_file, 'file')
     variant_list = all_variants();
+else  % `all_variants.m` has not been created yet.
+    variant_list = all_variants_possible();
 end
 
 if nargin ~= 2 && nargin ~= 4

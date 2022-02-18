@@ -123,7 +123,7 @@ C     next initial interpolation point from XBASE are set in XPT(NF,.).
 C
       RHOSQ=RHOBEG*RHOBEG
       RECIP=ONE/RHOSQ
-      RECIQ=DSQRT(HALF)/RHOSQ
+      RECIQ=SQRT(HALF)/RHOSQ
       NF=0
    50 NFM=NF
       NFMM=NF-N
@@ -232,7 +232,7 @@ C
       DO I=1,N
           DSQ=DSQ+D(I)**2
       END DO
-      DNORM=DMIN1(DELTA,DSQRT(DSQ))
+      DNORM=DMIN1(DELTA,SQRT(DSQ))
       IF (DNORM < HALF*RHO) THEN
           KNEW=-1
           DELTA=TENTH*DELTA
@@ -388,7 +388,7 @@ C     working space.
 C
       IF (KNEW > 0) THEN
           TEMP=ONE+ALPHA*BETA/VLAG(KNEW)**2
-          IF (DABS(TEMP) <= 0.8D0) THEN
+          IF (ABS(TEMP) <= 0.8D0) THEN
               CALL BIGDEN (N,NPT,XOPT,XPT,BMAT,ZMAT,IDZ,NDIM,KOPT,
      1          KNEW,D,W,VLAG,BETA,XNEW,W(NDIM+1),W(6*NDIM+1))
           END IF
@@ -459,7 +459,7 @@ C
       DIFF=F-FOPT-VQUAD
       DIFFC=DIFFB
       DIFFB=DIFFA
-      DIFFA=DABS(DIFF)
+      DIFFA=ABS(DIFF)
       IF (DNORM > RHO) NFSAV=NF
 C
 C     Update FOPT and XOPT if the new F is the least value of the objective
@@ -515,7 +515,7 @@ C
               IF (J < IDZ) TEMP=-ONE
               HDIAG=HDIAG+TEMP*ZMAT(K,J)**2
           END DO
-          TEMP=DABS(BETA*HDIAG+VLAG(K)**2)
+          TEMP=ABS(BETA*HDIAG+VLAG(K)**2)
           DISTSQ=ZERO
           DO J=1,N
               DISTSQ=DISTSQ+(XPT(K,J)-XOPT(J))**2
@@ -566,7 +566,7 @@ C     then calculate the gradient of the least Frobenius norm interpolant at
 C     XBASE, and store it in W, using VLAG for a vector of right hand sides.
 C
       IF (KSAVE == 0 .AND. DELTA == RHO) THEN
-          IF (DABS(RATIO) > 1.0D-2) THEN
+          IF (ABS(RATIO) > 1.0D-2) THEN
               ITEST=0
           ELSE
               DO K=1,NPT
@@ -640,7 +640,7 @@ C     If KNEW is positive, then set DSTEP, and branch back for the next
 C     iteration, which will generate a "model step".
 C
       IF (KNEW > 0) THEN
-          DSTEP=DMAX1(DMIN1(TENTH*DSQRT(DISTSQ),HALF*DELTA),RHO)
+          DSTEP=DMAX1(DMIN1(TENTH*SQRT(DISTSQ),HALF*DELTA),RHO)
           DSQ=DSTEP*DSTEP
           GOTO 120
       END IF
@@ -656,7 +656,7 @@ C
           IF (RATIO <= 16.0D0) THEN
               RHO=RHOEND
           ELSE IF (RATIO <= 250.0D0) THEN
-              RHO=DSQRT(RATIO)*RHOEND
+              RHO=SQRT(RATIO)*RHOEND
           ELSE
               RHO=TENTH*RHO
           END IF

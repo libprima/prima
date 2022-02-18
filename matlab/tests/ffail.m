@@ -1,4 +1,4 @@
-function f = failf(x)
+function f = ffail(x)
 
 f = sin(x);
 
