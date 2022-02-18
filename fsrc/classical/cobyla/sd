@@ -1,0 +1,7 @@
+#!/bin/bash
+
+sed -i 's/DABS/ABS/g' *.f*
+sed -i 's/DSQRT/SQRT/g' *.f*
+sed -i 's/DSIN/SIN/g' *.f*
+sed -i 's/DCOS/COS/g' *.f*
+sed -i 's/DATAN/ATAN/g' *.f*

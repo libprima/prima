@@ -24,9 +24,21 @@ function profile(varargin)
 % Last Modified: Monday, February 12, 2022 PM09:19:19
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-olddir = cd();  % Record the current path.
+olddir = pwd();  % Record the current path.
 oldpath = path();  % Record the current dir.
-restoredefaultpath; % Restore the "right out of the box" path of MATLAB
+restoredefaultpath;  % Restore the "right out of the box" path of MATLAB
+
+% Set up the directory to save the testing data, i.e., `data_dir`.
+cpwd = fileparts(mfilename('fullpath')); % Directory where this .m file resides.
+data_dir = fullfile(cpwd, 'testdata');
+if ~exist(data_dir, 'dir')
+    mkdir(data_dir);
+end
+
+% Prepare the test directory, i.e., `test_dir`.
+callstack = dbstack;
+funname = callstack(1).name; % Name of the current function
+test_dir = prepare_test_dir(funname);
 
 exception = [];
 
@@ -35,19 +47,18 @@ try
     % Parse the inputs.
     [solver, options] = parse_input(varargin);
 
-    % Make the solvers available.
-    get_solvers(solver, options.compile);
+    % Specify where to store the test data.
+    options.data_dir = data_dir;
+
+    % Make the solvers available. Note that the solvers are under `test_dir`.
+    get_solvers(solver, test_dir, options.compile);
 
     % Tell MATLAB where to find CUTEST.
     locate_cutest();
 
-    % Set up the directory to save the testing data.
-    testdir = fileparts(mfilename('fullpath')); % Directory where this .m file resides.
-    datadir = fullfile(testdir, 'testdata');
-    if ~exist(datadir, 'dir')
-        mkdir(datadir);
-    end
-    options.datadir = datadir;
+    % Go to the test directory. This is not really necessary. It will not affect the test, but any
+    % output (e.g., NEWUOA_output.txt, fort.6) will be dumped to `test_dir`.
+    cd(test_dir);
 
     % Show current path information.
     showpath();

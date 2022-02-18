@@ -2,15 +2,15 @@ function perfdata(solvers, options)
 
 time = datestr(datetime(), 'yymmdd_HHMM');
 stamp = strcat(strjoin(solvers, '_'), '.', int2str(options.mindim), '_', int2str(options.maxdim), '.', options.type);
-datadir = options.datadir;
-matfile = fullfile(datadir, strcat(stamp, '.perfdata.mat'));
+data_dir = options.data_dir;
+matfile = fullfile(data_dir, strcat(stamp, '.perfdata.mat'));
 
 loaded = false;
 % Check whether to reload data or calculate everything from scratch.
 if (isfield(options, 'reload') && options.reload == true)
     % Use directly the data of the last computation for the same solvers and dimensions.
     stamp_with_wildcard = strcat(strjoin(solvers, '_'), '.', int2str(options.mindim), '_', int2str(options.maxdim), '.*', options.type, '*');
-    matfile_with_wildcard = fullfile(datadir, strcat(stamp_with_wildcard, '.perfdata.mat'));
+    matfile_with_wildcard = fullfile(data_dir, strcat(stamp_with_wildcard, '.perfdata.mat'));
     mlist = dir(matfile_with_wildcard);
     if ~isempty(mlist)
         matfile = fullfile(mlist(1).folder, mlist(1).name);
@@ -34,7 +34,7 @@ if ~loaded
 end
 
 % `outdir` is the directory to contain the figures (.eps, .pdf) and problem list (problem.txt).
-outdir = fullfile(datadir, strcat(stamp, '.', time));
+outdir = fullfile(data_dir, strcat(stamp, '.', time));
 if ~exist(outdir, 'dir')
     mkdir(outdir);
 end
@@ -62,16 +62,16 @@ for tau = 10.^(-1:-1:-10)
     %dataprof(frec, fmin, pdim, prof_options);
 end
 
-% For convenience, save a copy of `problems.txt` and the figures in datadir. They will be
+% For convenience, save a copy of `problems.txt` and the figures in data_dir. They will be
 % overwritten in next test with the same `solvers` and `dimrange`.
-copyfile(fprob, datadir);
+copyfile(fprob, data_dir);
 epsfiles = dir(fullfile(outdir, '*.eps'));
 for k = 1 : length(epsfiles)
     epsname = epsfiles(k).name;
     pdfname = strrep(epsname, '.eps', '.pdf');
     if exist(fullfile(outdir, pdfname), 'file')
-        copyfile(fullfile(outdir, pdfname), datadir);
+        copyfile(fullfile(outdir, pdfname), data_dir);
     else
-        copyfile(fullfile(outdir, epsname), datadir);
+        copyfile(fullfile(outdir, epsname), data_dir);
     end
 end

@@ -40,7 +40,7 @@ C
       QUART=0.25D0
       TWO=2.0D0
       ZERO=0.0D0
-      TWOPI=8.0D0*DATAN(ONE)
+      TWOPI=8.0D0*ATAN(ONE)
       NPTM=NPT-N-1
 C
 C     Store the first NPT elements of the KNEW-th column of H in W(N+1)
@@ -106,7 +106,7 @@ C     Begin the iteration by overwriting S with a vector that has the
 C     required length and direction.
 C
    70 ITERC=ITERC+1
-      TEMP=ONE/DSQRT(SSDEN)
+      TEMP=ONE/SQRT(SSDEN)
       XOPTD=ZERO
       XOPTS=ZERO
       DO I=1,N
@@ -255,8 +255,8 @@ C
       PAR(1)=ONE
       DO I=1,IU
           ANGLE=DFLOAT(I)*TEMP
-          PAR(2)=DCOS(ANGLE)
-          PAR(3)=DSIN(ANGLE)
+          PAR(2)=COS(ANGLE)
+          PAR(3)=SIN(ANGLE)
           DO J=4,8,2
               PAR(J)=PAR(2)*PAR(J-2)-PAR(3)*PAR(J-1)
               PAR(J+1)=PAR(2)*PAR(J-1)+PAR(3)*PAR(J-2)
@@ -266,7 +266,7 @@ C
           DO J=1,9
               SUM=SUM+DENEX(J)*PAR(J)
           END DO
-          IF (DABS(SUM) > DABS(DENMAX)) THEN
+          IF (ABS(SUM) > ABS(DENMAX)) THEN
               DENMAX=SUM
               ISAVE=I
               TEMPA=SUMOLD
@@ -287,8 +287,8 @@ C
 C     Calculate the new parameters of the denominator, the new VLAG vector
 C     and the new D. Then test for convergence.
 C
-      PAR(2)=DCOS(ANGLE)
-      PAR(3)=DSIN(ANGLE)
+      PAR(2)=COS(ANGLE)
+      PAR(3)=SIN(ANGLE)
       DO J=4,8,2
           PAR(J)=PAR(2)*PAR(J-2)-PAR(3)*PAR(J-1)
           PAR(J+1)=PAR(2)*PAR(J-1)+PAR(3)*PAR(J-2)
@@ -318,7 +318,7 @@ C
       END DO
       IF (ITERC >= N) GOTO 340
       IF (ITERC > 1) DENSAV=DMAX1(DENSAV,DENOLD)
-      IF (DABS(DENMAX) <= 1.1D0*DABS(DENSAV)) GOTO 340
+      IF (ABS(DENMAX) <= 1.1D0*ABS(DENSAV)) GOTO 340
       DENSAV=DENMAX
 C
 C     Set S to half the gradient of the denominator with respect to D.

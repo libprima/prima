@@ -1,26 +1,18 @@
-function spaths = get_solvers(solvers, compile_flag)
+function spaths = get_solvers(solvers, test_dir, compile_flag)
 
-% All possible solvers.
-known_solvers = {'cobyla', 'uobyqa', 'newuoa', 'bobyqa', 'lincoa'};
+olddir = pwd();  % Record the current path.
+oldpath = path();  % Record the current dir.
 
-% Parse the input.
-if nargin == 0
-    solvers = known_solvers;
-    compile_flag = true;
-elseif nargin == 1
-    compile_flag = 'true';
-    if isa(solvers, 'logical') && numel(solvers) == 1
-        compile_flag = solvers;
-        solvers = known_solvers;
-    end
-end
+%% All possible solvers.
+%known_solvers = {'cobyla', 'uobyqa', 'newuoa', 'bobyqa', 'lincoa'};
+
+% We allow `solvers` to be the name of a particular solver.
 if isa(solvers, 'char') || isa(solvers, 'string')
     solvers = {solvers};
 end
 
 % Directories.
-test_dir = fileparts(fileparts(mfilename('fullpath'))); % Parent of the directory where this .m file resides.
-neupdfo_dir = fileparts(fileparts(test_dir));
+neupdfo_dir = test_dir;  % `test_dir` is the root directly of a copy of the package made for the test.
 callstack = dbstack;
 invoker = callstack(2).name;  % The function that calls this function.
 if strcmp(invoker, 'verify')
@@ -29,41 +21,56 @@ else
     pdfo_dir = fullfile(neupdfo_dir, 'PDFO');
 end
 
-% Get the solver paths, and add them to the MATLAB path.
+% Get the solver paths.
 solver_dir = fullfile(pdfo_dir, 'matlab', 'interfaces');
 solvern_dir = fullfile(neupdfo_dir, 'matlab', 'interfaces');
 spaths={solver_dir, solvern_dir};
-for ip = 1 : length(spaths)
-    addpath(spaths{ip});
-end
 
-% Compile the solvers if needed.
-if compile_flag
+% Set up the solvers, taking particularly `compile_flag` (true/false) into account.
+
+try
     for is = 1 : length(solvers)
+
         if strcmp(solvers{is}(end), 'n')
-            solver = solvers{is}(1:end-1);
+            tested_solver_name = solvers{is}(1:end-1);
         else
-            solver = solvers{is};
+            tested_solver_name = solvers{is};
         end
 
-        mexopt = struct();
+        if compile_flag  % Compilation requested.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        mexopt.classical = false;  % Should be removed when the classical variant is ready
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            mexopt = struct();
 
-        mexopt.debug = strcmp(invoker, 'verify');
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            mexopt.classical = false;  % Should be removed when the classical variant is ready
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-        cd(neupdfo_dir);
-        setup([solver, 'n'], mexopt);
+            mexopt.debug = strcmp(invoker, 'verify');
 
-        cd(pdfo_dir);
-        setup(solver, mexopt)
+            cd(neupdfo_dir);
+            setup([tested_solver_name, 'n'], mexopt);
 
-        cd(test_dir);
+            cd(pdfo_dir);
+            setup(tested_solver_name, mexopt)
+
+        else  % No compilation. Set up the path only.
+
+            cd(neupdfo_dir);
+            setup('path');
+            cd(pdfo_dir);
+            setup('path');
+
+        end
+
     end
+catch exception
+    cd(olddir);  % Go back to olddir.
+    setpath(oldpath);  % Restore the path to oldpath.
+    rethrow(exception);
 end
+
+cd(olddir);

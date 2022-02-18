@@ -162,10 +162,10 @@ C          ACCA=SPABS+0.1*ABS(SP)
 C          ACCB=SPABS+0.2*ABS(SP)
 C          IF (SPABS .GE. ACCA .OR. ACCA .GE. ACCB) SP=0.0
 C          IF (TOT .EQ. 0.0) THEN
-              SPABS=SPABS+DABS(TEMP)
+              SPABS=SPABS+ABS(TEMP)
           END DO
-          ACCA=SPABS+0.1D0*DABS(SP)
-          ACCB=SPABS+0.2D0*DABS(SP)
+          ACCA=SPABS+0.1D0*ABS(SP)
+          ACCB=SPABS+0.2D0*ABS(SP)
           IF (SPABS >= ACCA .OR. ACCA >= ACCB) SP=0.0D0
           IF (TOT == 0.0D0) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -174,7 +174,7 @@ C          IF (TOT .EQ. 0.0) THEN
               KP=K+1
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C              TEMP=SQRT(SP*SP+TOT*TOT)
-              TEMP=DSQRT(SP*SP+TOT*TOT)
+              TEMP=SQRT(SP*SP+TOT*TOT)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               ALPHA=SP/TEMP
               BETA=TOT/TEMP
@@ -231,10 +231,10 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C  140 ZDVABS=ZDVABS+ABS(TEMP)
 C      ACCA=ZDVABS+0.1*ABS(ZDOTV)
 C      ACCB=ZDVABS+0.2*ABS(ZDOTV)
-          ZDVABS=ZDVABS+DABS(TEMP)
+          ZDVABS=ZDVABS+ABS(TEMP)
       END DO
-      ACCA=ZDVABS+0.1D0*DABS(ZDOTV)
-      ACCB=ZDVABS+0.2D0*DABS(ZDOTV)
+      ACCA=ZDVABS+0.1D0*ABS(ZDOTV)
+      ACCB=ZDVABS+0.2D0*ABS(ZDOTV)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       IF (ZDVABS < ACCA .AND. ACCA < ACCB) THEN
           TEMP=ZDOTV/ZDOTA(K)
@@ -296,7 +296,7 @@ C          SP=0.0
           END DO
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C          TEMP=SQRT(SP*SP+ZDOTA(KP)**2)
-          TEMP=DSQRT(SP*SP+ZDOTA(KP)**2)
+          TEMP=SQRT(SP*SP+ZDOTA(KP)**2)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           ALPHA=ZDOTA(KP)/TEMP
           BETA=SP/TEMP
@@ -348,7 +348,7 @@ C          SP=0.0
           END DO
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C          TEMP=SQRT(SP*SP+ZDOTA(NACT)**2)
-          TEMP=DSQRT(SP*SP+ZDOTA(NACT)**2)
+          TEMP=SQRT(SP*SP+ZDOTA(NACT)**2)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           ALPHA=ZDOTA(NACT)/TEMP
           BETA=SP/TEMP
@@ -405,7 +405,7 @@ C          SP=0.0
           END DO
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C          TEMP=SQRT(SP*SP+ZDOTA(KP)**2)
-          TEMP=DSQRT(SP*SP+ZDOTA(KP)**2)
+          TEMP=SQRT(SP*SP+ZDOTA(KP)**2)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           ALPHA=ZDOTA(KP)/TEMP
           BETA=SP/TEMP
@@ -467,7 +467,7 @@ C      SS=0.0
       DO I=1,N
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IF (ABS(DX(I)) .GE. 1.0E-6*RHO) DD=DD-DX(I)**2
-          IF (DABS(DX(I)) >= 1.0D-6*RHO) DD=DD-DX(I)**2
+          IF (ABS(DX(I)) >= 1.0D-6*RHO) DD=DD-DX(I)**2
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           SD=SD+DX(I)*SDIRN(I)
           SS=SS+SDIRN(I)**2
@@ -477,8 +477,8 @@ C      IF (DD .LE. 0.0) GOTO 490
 C      TEMP=SQRT(SS*DD)
 C      IF (ABS(SD) .GE. 1.0E-6*TEMP) TEMP=SQRT(SS*DD+SD*SD)
       IF (DD <= 0.0D0) GOTO 490
-      TEMP=DSQRT(SS*DD)
-      IF (DABS(SD) >= 1.0D-6*TEMP) TEMP=DSQRT(SS*DD+SD*SD)
+      TEMP=SQRT(SS*DD)
+      IF (ABS(SD) >= 1.0D-6*TEMP) TEMP=SQRT(SS*DD+SD*SD)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       STPFUL=DD/(TEMP+SD)
       STEP=STPFUL
@@ -543,10 +543,10 @@ C  400 ZDWABS=ZDWABS+ABS(TEMP)
 C      ACCA=ZDWABS+0.1*ABS(ZDOTW)
 C      ACCB=ZDWABS+0.2*ABS(ZDOTW)
 C      IF (ZDWABS .GE. ACCA .OR. ACCA .GE. ACCB) ZDOTW=0.0
-          ZDWABS=ZDWABS+DABS(TEMP)
+          ZDWABS=ZDWABS+ABS(TEMP)
       END DO
-      ACCA=ZDWABS+0.1D0*DABS(ZDOTW)
-      ACCB=ZDWABS+0.2D0*DABS(ZDOTW)
+      ACCA=ZDWABS+0.1D0*ABS(ZDOTW)
+      ACCB=ZDWABS+0.2D0*ABS(ZDOTW)
       IF (ZDWABS >= ACCA .OR. ACCA >= ACCB) ZDOTW=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       VMULTD(K)=ZDOTW/ZDOTA(K)
@@ -575,7 +575,7 @@ C
               SUM=RESMAX-B(KK)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C          SUMABS=RESMAX+ABS(B(KK))
-              SUMABS=RESMAX+DABS(B(KK))
+              SUMABS=RESMAX+ABS(B(KK))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               DO I=1,N
                   TEMP=A(I,KK)*DXNEW(I)
@@ -585,10 +585,10 @@ C  430     SUMABS=SUMABS+ABS(TEMP)
 C          ACCA=SUMABS+0.1*ABS(SUM)
 C          ACCB=SUMABS+0.2*ABS(SUM)
 C          IF (SUMABS .GE. ACCA .OR. ACCA .GE. ACCB) SUM=0.0
-                  SUMABS=SUMABS+DABS(TEMP)
+                  SUMABS=SUMABS+ABS(TEMP)
               END DO
-              ACCA=SUMABS+0.1D0*DABS(SUM)
-              ACCB=SUMABS+0.2D0*DABS(SUM)
+              ACCA=SUMABS+0.1D0*ABS(SUM)
+              ACCB=SUMABS+0.2D0*ABS(SUM)
               IF (SUMABS >= ACCA .OR. ACCA >= ACCB) SUM=0.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               VMULTD(K)=SUM

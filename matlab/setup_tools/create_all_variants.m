@@ -72,7 +72,7 @@ try  % We use `try ... catch ...` in order to restore `allvar_file` in case of a
     end
     fprintf(fid, 'function variant_list = %s()\n', allvar);
     fprintf(fid, '%%%s ', upper(allvar));
-    fprintf(fid, '%% returns a cell array containing the names of all the variants available for the\n');
+    fprintf(fid, ' returns a cell array containing the names of all the variants available for the\n');
     fprintf(fid, '%% Fortran solvers in this package.\n');
     fprintf(fid, '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n');
     fprintf(fid, '%% This file is created automatically by \n%% %s.m at %s.\n', mfilename, datestr(datetime(), 'yymmdd.HH:MM:SS'));
