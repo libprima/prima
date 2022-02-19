@@ -560,7 +560,7 @@ if ~equiv
     end
     if single_test
         fprintf('\nThe solvers produce different results on %s at the %dth run.\n\n', pname, ir);
-        %keyboard
+        keyboard
     end
     error('\nThe solvers produce different results on %s at the %dth run.\n', pname, ir);
 end

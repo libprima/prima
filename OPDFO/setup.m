@@ -71,7 +71,6 @@ function setup(varargin)
 % TODO: None
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
 COMPILE_CLASSICAL = true; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % setup starts
@@ -426,10 +425,6 @@ fprintf('\nYou may now try ''help pdfo'' for information on the usage of the pac
 addpath(tests);
 fprintf('\nYou may also run ''testpdfo'' to test the package on a few examples.\n\n');
 
-11
-return
-
-
 if ~path_saved % All the path-saving attempts failed
     fprintf('*** To use the pacakge in other MATLAB sessions, do one of the following. ***\n\n');
     fprintf('- EITHER run ''savepath'' right now if you have the permission to do so.\n\n');
@@ -437,7 +432,6 @@ if ~path_saved % All the path-saving attempts failed
     fprintf('  (see https://www.mathworks.com/help/matlab/ref/startup.html for information):\n\n');
     fprintf('  %s\n\n', add_path_string);
 end
-
 
 % setup ends
 return
