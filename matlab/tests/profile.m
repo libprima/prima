@@ -24,9 +24,10 @@ function profile(varargin)
 % Last Modified: Monday, February 12, 2022 PM09:19:19
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-olddir = pwd();  % Record the current path.
-oldpath = path();  % Record the current dir.
+oldpath = path();  % Record the current path.
 restoredefaultpath;  % Restore the "right out of the box" path of MATLAB
+
+olddir = pwd();  % Record the current directory.
 
 % Set up the directory to save the testing data, i.e., `data_dir`.
 cpwd = fileparts(mfilename('fullpath')); % Directory where this .m file resides.

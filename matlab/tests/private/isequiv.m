@@ -147,12 +147,7 @@ else
 end
 
 single_test = (length(plist) <= 1);
-
-if isfield(options, 'sequential')
-    sequential = options.sequential || single_test;
-else
-    sequential = single_test;
-end
+sequential = (isfield(options, 'sequential') && options.sequential) || single_test;
 
 if sequential
     for ip = minip : length(plist)
@@ -176,7 +171,6 @@ if sequential
     end
 else
     parfor ip = minip : length(plist)
-    %for ip = minip : length(plist)
         orig_warning_state = warnoff(solvers);
 
         pname = upper(plist{ip});
@@ -325,7 +319,7 @@ elseif isfield(options, 'seed')
     yw = options.seed;
 else
     dt = datetime('now', 'TimeZone', timezone);
-    yw = 100*mod(year(datetime), 10) + week(datetime);
+    yw = 100*mod(year(dt), 10) + week(dt);
 end
 fprintf('\nYW = %d\n', yw);
 rseed = max(0, min(2^32, yw+ceil(1e5*abs(cos(1e5*sin(1e5*(sum(double(pname))*n*ir)))))));
@@ -566,7 +560,7 @@ if ~equiv
     end
     if single_test
         fprintf('\nThe solvers produce different results on %s at the %dth run.\n\n', pname, ir);
-        keyboard
+        %keyboard
     end
     error('\nThe solvers produce different results on %s at the %dth run.\n', pname, ir);
 end

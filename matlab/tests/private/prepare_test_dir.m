@@ -35,7 +35,7 @@ assert(~contains(s_root_dir, d_root_dir));
 
 %%%!!!----------------------------------------------------------------------------------------!!!%%%
 % Remove the existing compiled MEX files in the source directories. This is IMPORTANT!
-% Without doing this, MATLAB will crash due to a bug of MATLAB under Linux. This was observed on
+% Without, MATLAB will crash due to a bug of MATLAB under Linux. This was observed on
 % 2022-02-16 and took two days to fix. See https://github.com/zaikunzhang/test_matlab .
 % It must be done BEFORE copying the files from `s_matlab_dir` to `d_matlab_dir`.
 setup_tools = fullfile(s_root_dir, 'matlab', 'setup_tools');
@@ -54,6 +54,21 @@ root_sub_list = {'fsrc', 'PDFO', 'OPDFO', 'setup.m'};
 for il = 1 : length(root_sub_list)
     copyfile(fullfile(s_root_dir, root_sub_list{il}), fullfile(d_root_dir, root_sub_list{il}));
 end
+%!------------------------------------------------------------------------------------------------!%
+% Remove the (O)PDFO/matlab/tests directories under d_root_dir. This is IMPORTANT! Without this, the
+% test will mistakenly call scripts from there, because (O)PDFO/matlab/tests may be added to the path
+% by the corresponding setup.m. This problem occurred on 2022-02-18 and took two days to debug.
+d_pdfo_matlab_test = fullfile(d_root_dir, 'PDFO', 'matlab', 'tests');
+if exist(d_pdfo_matlab_test, 'dir')
+    rmdir(d_pdfo_matlab_test, 's');
+    mkdir(d_pdfo_matlab_test);
+end
+d_opdfo_matlab_test = fullfile(d_root_dir, 'OPDFO', 'matlab', 'tests');
+if exist(d_opdfo_matlab_test, 'dir')
+    rmdir(d_opdfo_matlab_test, 's');
+    mkdir(d_opdfo_matlab_test);
+end
+%!------------------------------------------------------------------------------------------------!%
 
 % `matlab_sub_list`: directories/files to be copied under `matlab_dir`
 matlab_sub_list = {'setup_tools', 'mex_gateways', 'interfaces'};
