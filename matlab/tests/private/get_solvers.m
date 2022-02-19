@@ -52,16 +52,21 @@ try
             mexopt.debug = strcmp(invoker, 'verify');
 
             cd(neupdfo_dir);
+            clear('setup');  % Without this, the next line may not call the latest version of `setup`
             setup([tested_solver_name, 'n'], mexopt);
 
             cd(pdfo_dir);
-            setup(tested_solver_name, mexopt)
+            clear('setup');  % Without this, the next line may not call the latest version of `setup`
+            setup(tested_solver_name, mexopt);
 
         else  % No compilation. Set up the path only.
 
             cd(neupdfo_dir);
+            clear('setup');  % Without this, the next line may not call the latest version of `setup`
             setup('path');
+
             cd(pdfo_dir);
+            clear('setup');  % Without this, the next line may not call the latest version of `setup`
             setup('path');
 
         end
