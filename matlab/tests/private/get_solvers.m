@@ -1,7 +1,7 @@
 function spaths = get_solvers(solvers, test_dir, compile_flag)
 
-olddir = pwd();  % Record the current path.
-oldpath = path();  % Record the current dir.
+olddir = pwd();  % Record the current directory
+oldpath = path();  % Record the current path.
 
 %% All possible solvers.
 %known_solvers = {'cobyla', 'uobyqa', 'newuoa', 'bobyqa', 'lincoa'};
