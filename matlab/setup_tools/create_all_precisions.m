@@ -25,10 +25,10 @@ funname = callstack(1).name; % Name of the current function
 % Move the existing version of `all_precisions.m` to `all_precisions.bak`. This MUST be done first,
 % because `isavailable` will call `all_precisions()` if it exists, which would lead to incorrect
 % output of  `isavailable`.
-cpwd = fileparts(mfilename('fullpath'));  % The directory where this file resides.
+mfiledir = fileparts(mfilename('fullpath'));  % The directory where this file resides.
 allprec = 'all_precisions';
-allprec_file = fullfile(cpwd, [allprec, '.m']);
-allprec_file_bak = fullfile(cpwd, [allprec, '.bak']);
+allprec_file = fullfile(mfiledir, [allprec, '.m']);
+allprec_file_bak = fullfile(mfiledir, [allprec, '.bak']);
 if exist(allprec_file_bak, 'file')
     % Remove `allprec_file_bak` if it exists. This is necessary. Otherwise, `allprec_file` may be
     % restored incorrectly in case of failure in the sequel.

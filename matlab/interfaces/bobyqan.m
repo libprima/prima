@@ -325,7 +325,9 @@ else % The problem turns out 'normal' during prepdfo
     solver = options.solver;
 
     % Call the Fortran code
-    fsolver = str2func(get_mexname(solver, precision, debug_flag, variant));
+    mfiledir = fileparts(mfilename('fullpath'));  % The directory where this .m file resides.
+    mexdir = fullfile(mfiledir, 'private');
+    fsolver = str2func(get_mexname(solver, precision, debug_flag, variant, mexdir));
     try
         [x, fx, exitflag, nf, xhist, fhist] = ...
             fsolver(fun, x0, lb, ub, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, ...

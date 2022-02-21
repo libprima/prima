@@ -87,13 +87,14 @@ if verLessThan('matlab', '8.3') % MATLAB R2014a = MATLAB 8.3
 end
 
 % The full paths to several directories needed for the setup.
-cpwd = fileparts(mfilename('fullpath')); % Current directory
-fsrc = fullfile(cpwd, 'fsrc'); % Directory of the Fortran source code
-fsrc_interform = fullfile(cpwd, 'fsrc', '.interform'); % Directory of the intersection-form Fortran source code
+cpwd = pwd();  % Current directory
+setup_dir = fileparts(mfilename('fullpath')); % The directory containing this setup script
+fsrc = fullfile(setup_dir, 'fsrc'); % Directory of the Fortran source code
+fsrc_interform = fullfile(setup_dir, 'fsrc', '.interform'); % Directory of the intersection-form Fortran source code
 fsrc_common_interform = fullfile(fsrc_interform, 'common'); % Directory of the common files
-fsrc_classical = fullfile(cpwd, 'fsrc', 'classical'); % Directory of the classical Fortran source code
-fsrc_classical_interform = fullfile(cpwd, 'fsrc', 'classical', '.interform'); % Directory of the intersection-form Fortran source code
-matd = fullfile(cpwd, 'matlab'); % Matlab directory
+fsrc_classical = fullfile(setup_dir, 'fsrc', 'classical'); % Directory of the classical Fortran source code
+fsrc_classical_interform = fullfile(setup_dir, 'fsrc', 'classical', '.interform'); % Directory of the intersection-form Fortran source code
+matd = fullfile(setup_dir, 'matlab'); % Matlab directory
 gateways = fullfile(matd, 'mex_gateways'); % Directory of the MEX gateway files
 gateways_interform = fullfile(gateways, '.interform');  % Directory of the intersection-form MEX gateway files
 interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
@@ -101,14 +102,14 @@ mexdir = fullfile(interfaces, 'private'); % The private subdirectory of the inte
 tests = fullfile(matd, 'tests'); % Directory containing some tests
 tools = fullfile(matd, 'setup_tools'); % Directory containing some tools, e.g., interform.m
 
-% We need write access to `cpwd` (and its subdirectories). Return if we do not have it.
+% We need write access to `setup_dir` (and its subdirectories). Return if we do not have it.
 % N.B.: This checking is NOT perfect because of the following --- but it is better than nothing.
 % 1. `fileattrib` may not reflect the attributes correctly, particularly on Windows. See
 % https://www.mathworks.com/matlabcentral/answers/296657-how-can-i-check-if-i-have-read-or-write-access-to-a-directory
-% 2. Even if we have write access to `cpwd`, we may not have the same access to its subdirectories.
-[~, attribute] = fileattrib(cpwd);
+% 2. Even if we have write access to `setup_dir`, we may not have the same access to its subdirectories.
+[~, attribute] = fileattrib(setup_dir);
 if ~attribute.UserWrite
-    fprintf('\nSorry, we cannot continue because we do not have write access to\n\n%s\n\n', cpwd);
+    fprintf('\nSorry, we cannot continue because we do not have write access to\n\n%s\n\n', setup_dir);
     return
 end
 
@@ -213,6 +214,7 @@ end
 %    rmdir(fsrc_classical_interform, 's');
 %    rmdir(gateways_interform, 's');
 %end
+
 cd(cpwd); % Change directory back to cpwd
 
 if ~isempty(exception)

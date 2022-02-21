@@ -24,10 +24,10 @@ funname = callstack(1).name; % Name of the current function
 % Move the existing version of `all_variants.m` to `all_variants.bak`. This MUST be done first,
 % because `isavailable` will call `all_variants()` if it exists, which would lead to incorrect
 % output of  `isavailable`.
-cpwd = fileparts(mfilename('fullpath'));  % The directory where this file resides.
+mfiledir = fileparts(mfilename('fullpath'));  % The directory where this file resides.
 allvar = 'all_variants';
-allvar_file = fullfile(cpwd, [allvar, '.m']);
-allvar_file_bak = fullfile(cpwd, [allvar, '.bak']);
+allvar_file = fullfile(mfiledir, [allvar, '.m']);
+allvar_file_bak = fullfile(mfiledir, [allvar, '.bak']);
 if exist(allvar_file_bak, 'file')
     % Remove `allvar_file_bak` if it exists. This is necessary. Otherwise, `allvar_file` may be
     % restored incorrectly in case of failure in the sequel.

@@ -17,11 +17,11 @@ ignorefiles = {'calfun__genmod.f90', 'mexfunction__genmod.f90', 'test.f'};
 % "directory" can be given by a full path or a path relative to the
 % current directory. The following lines get its full path.
 if nargin < 1
-    directory = cd();  % When "directory" is not given, we default it to the current directory
+    directory = pwd();  % When "directory" is not given, we default it to the current directory
 end
-origdir = cd();
+origdir = pwd();
 cd(directory);
-inputdir = cd();  % Full path of the given directory, which is the current directory now.
+inputdir = pwd();  % Full path of the given directory, which is the current directory now.
 cd(origdir);
 % Revise ignoredir according to inputdir
 [~, inputdirname]  = fileparts(inputdir);
