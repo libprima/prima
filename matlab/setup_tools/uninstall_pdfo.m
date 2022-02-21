@@ -4,8 +4,8 @@ function uninstall_pdfo(path_string_stamp)
 fprintf('\nUninstalling PDFO (if it is installed) ... ');
 
 % The full path of several directories.
-cpwd = fileparts(mfilename('fullpath')); % Current directory
-matd = fileparts(cpwd); % Matlab directory
+mfiledir = fileparts(mfilename('fullpath'));  % The directory where this .m file resides
+matd = fileparts(mfiledir); % Matlab directory
 interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
 mexdir = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
 tests = fullfile(matd, 'tests'); % Directory containing some tests

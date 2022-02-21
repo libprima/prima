@@ -420,7 +420,9 @@ else % The problem turns out 'normal' during prepdfo
     solver = options.solver;
 
     % Call the Fortran code
-    fsolver = str2func(get_mexname(solver, precision, debug_flag, variant));
+    mfiledir = fileparts(mfilename('fullpath'));  % The directory where this .m file resides.
+    mexdir = fullfile(mfiledir, 'private');
+    fsolver = str2func(get_mexname(solver, precision, debug_flag, variant, mexdir));
     % The mexified Fortran Function is a private function generating only private errors;
     % however, public errors can occur due to, e.g., evalobj; error handling needed.
     try

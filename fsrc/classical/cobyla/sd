@@ -5,3 +5,5 @@ sed -i 's/DSQRT/SQRT/g' *.f*
 sed -i 's/DSIN/SIN/g' *.f*
 sed -i 's/DCOS/COS/g' *.f*
 sed -i 's/DATAN/ATAN/g' *.f*
+sed -i 's/DMIN1/MIN/g'
+sed -i 's/DMAX1/MAX/g'

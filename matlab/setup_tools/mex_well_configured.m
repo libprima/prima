@@ -53,19 +53,17 @@ if ~exist(example_file, 'file')
     return
 end
 
-% The current directory is needed when cleaning up the files produced by compiling example_file.
-cpwd = fileparts(mfilename('fullpath'));
-
 % Try `mex(example_file)`
+temp_mexdir = tempdir();
 mex_status = -1;
 exception = [];
 try
-    [~, mex_status] = evalc('mex(example_file, ''-outdir'', cpwd)'); % Use evalc so that no output will be displayed
+    [~, mex_status] = evalc('mex(example_file, ''-outdir'', temp_mexdir)'); % Use evalc so that no output will be displayed
 catch exception
     % Do nothing
 end
 
-trash_files = files_with_wildcard(cpwd, 'timestwo.*');
+trash_files = files_with_wildcard(temp_mexdir, 'timestwo.*');
 
 if ~isempty(exception) || mex_status ~= 0
     cellfun(@(filename) delete(filename), trash_files);  % Clean up the trash before returning
@@ -75,6 +73,7 @@ if ~isempty(exception) || mex_status ~= 0
 end
 
 % Check whether the mexified example_file works
+addpath(temp_mexdir);  % Make `timestwo` available on path
 exception = [];
 try
     [~, timestwo_out] = evalc('timestwo(1)'); % Try whether timestwo works correctly
@@ -82,6 +81,7 @@ catch exception
     % Do nothing
 end
 
+rmpath(temp_mexdir);  % Clean up the path before returning.
 cellfun(@(filename) delete(filename), trash_files);  % Clean up the trash before returning
 
 if ~isempty(exception)
