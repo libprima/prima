@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, February 13, 2022 PM04:49:28
+! Last Modified: Tuesday, February 22, 2022 PM04:23:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -111,8 +111,9 @@ do iprob = 1, nprobs
             & (n + 1_IK) * (n + 2_IK) / 2_IK - 1_IK, (n + 1_IK) * (n + 2_IK) / 2_IK, &
             & (n + 1_IK) * (n + 2_IK) / 2_IK + 1_IK]
         do irand = 1, int(size(npt_list) + max(0_IK, nrand_loc), kind(irand))
-            ! Initialize the random seed using N, IRAND, IK, RP, and RANDSEED_LOC.
-            rseed = int(sum(istr(probname)) + n + irand + IK + RP + randseed_loc)
+            ! Initialize the random seed using N, IRAND, RP, and RANDSEED_LOC. Do not include IK so
+            ! that the results for different IK are the same.
+            rseed = int(sum(istr(probname)) + n + irand + RP + randseed_loc)
             call setseed(rseed)
             if (irand <= size(npt_list)) then
                 npt = npt_list(irand)
