@@ -8,7 +8,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, February 22, 2022 PM05:17:25
+! Last Modified: Tuesday, February 22, 2022 PM05:55:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -326,8 +326,8 @@ do tr = 1, maxtr
         ! the predicted and actual reductions in the merit function respectively.
         prerem = preref + cpen * prerec  ! Theoretically nonnegative; equals 0 if CPEN = 0 = PREREF.
         actrem = (fval(n + 1) + cpen * cval(n + 1)) - (f + cpen * cstrv)
-        if (cpen <= 0 .and. f <= fval(n + 1) .and. f >= fval(n + 1)) then
-            ! CPEN <= 0 indeed means CPEN == 0, while A <= B .and. A >= B indeed mean A == B.
+        if (cpen <= 0 .and. abs(f - fval(n + 1)) <= 0) then
+            ! CPEN <= 0 indeed means CPEN == 0, while ABS(A - B) <= 0 indeed means A == B.
             ! We code in this way to avoid compilers complaining about equality comparison of reals.
             prerem = prerec
             actrem = cval(n + 1) - cstrv
@@ -371,10 +371,10 @@ do tr = 1, maxtr
 
 
     !----------------------------------------------------------------------------------------------!
-    ! Before the next trust-region iteration, we possibly improves the geometry of simplex or 
-    ! reduces RHO according to IMPROVE_GEO and REDUCE_RHO. Now we decide these indicators. 
+    ! Before the next trust-region iteration, we possibly improves the geometry of simplex or
+    ! reduces RHO according to IMPROVE_GEO and REDUCE_RHO. Now we decide these indicators.
     !----------------------------------------------------------------------------------------------!
-    
+
     ! Is the trust-region step a bad one?
     ! N.B.:
     ! 1. THEORETICALLY, JDROP_TR > 0 when ACTREM > 0. Yet Powell's code may set JDROP_TR = 0 when
