@@ -1,10 +1,10 @@
 #!/bin/bash
 # This script checks the Fortran code of the solver corresponding to this directory.
-# Usage: mlint [-a|--all]
+# Usage: flint [-a|--all]
 
 # Parse inputs.
 if ! [[ $# -eq 0 || $# -eq 1 ]] ; then
-    printf "Usage: mlint [-a|--all] or mlint -c|--clean\n"
+    printf "Usage: flint [-a|--all] or flint -c|--clean\n"
     exit 2
 fi
 TEST_ALL="N"
@@ -24,7 +24,7 @@ SOLVER_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 SOLVER=$(basename "$SOLVER_DIR")
 
 # The log directory in the solver's directory.
-SOLVER_LOG_DIR="$SOLVER_DIR"/mlog
+SOLVER_LOG_DIR="$SOLVER_DIR"/flog
 
 # Root directory of this project.
 ROOT_DIR=../..
@@ -36,21 +36,21 @@ TEST_DIR=/tmp/"$(basename -- "$0")"_"$TIME"_"$RANDNUM"
 # We export TEST_DIR, which will be referred to by the Makefiles.
 export TEST_DIR
 TEST_ROOT="$TEST_DIR"/neupdfo
-MTEST_DIR="$TEST_ROOT"/matlab/mex_gateways/tests
-MTEST_SOLVER_DIR="$MTEST_DIR"/test."$SOLVER"
+FTEST_DIR="$TEST_ROOT"/fsrc/tests
+FTEST_SOLVER_DIR="$FTEST_DIR"/test."$SOLVER"
 
 # The log directory in the testing directory.
-TEST_LOG_DIR="$MTEST_SOLVER_DIR"/log
+TEST_LOG_DIR="$FTEST_SOLVER_DIR"/log
 
 # The checktest script
-CHCKTST="$MTEST_DIR"/checktest
+CHCKTST="$FTEST_DIR"/checktest
 
 # Remove the old logs.
 mkdir -p "$SOLVER_LOG_DIR"
 rm -f "$SOLVER_LOG_DIR"/*test*.log
 
 # Conduct the test.
-cd "$ROOT_DIR"/matlab/mex_gateways/tests || exit 1
+cd "$ROOT_DIR"/fsrc/tests || exit 1
 
 # Make clean (old logs in $SOLVER_LOG_DIR have been cleaned up in the above).
 printf "\nCleaning up ... "
@@ -61,10 +61,8 @@ if [[ "$CLEAN" == "Y" ]] ; then
     exit 0
 fi
 
-#CLIST=(gfortran nagfor g95 af95 sunf95 ifort nvfortran flang aflang ifx)
-#TLIST=(g n 9 a s i v f d x)  # atest does not work due to a bug in af95
-COMPILER_LIST=(gfortran nagfor g95 sunf95 ifort nvfortran flang aflang ifx)
-CLIST=(g n 9 s i v f d x)
+COMPILER_LIST=(gfortran nagfor g95 af95 sunf95 ifort nvfortran flang aflang ifx)
+CLIST=(g n 9 a s i v f d x)
 COMP_LIST=""
 for i in "${!COMPILER_LIST[@]}"; do
    if  type "${COMPILER_LIST[$i]}" &> /dev/null ; then
@@ -72,28 +70,34 @@ for i in "${!COMPILER_LIST[@]}"; do
    fi
 done
 
+if lf95 --version &> /dev/null; then  # `lf95` may not work even if `type lf95` succeeds, as a license is needed.
+    COMP_LIST="$COMP_LIST l"
+fi
+
 printf "Tests to make:%s\n\n" "$COMP_LIST"
 
 for COMP in $COMP_LIST; do
     if [[ $TEST_ALL == 'Y' ]] ; then
-        make  "$COMP"test."$SOLVER"
+        make  "$COMP"test_c."$SOLVER"
     else
-        TESTS="i4_r8_d1"
+        if [[ $COMP == 'f' || $COMP == 'v' || $COMP == 'd' || $COMP == 'x' ]] ; then
+            TESTS="i2_r4_d1 i8_r4_d0"
+        else
+            TESTS="i2_r16_d1 i8_r4_d0"
+        fi
         for TEST in $TESTS ; do
-            INFO="$(make "$COMP"test_"$TEST"_tst."$SOLVER" \
-                | grep -i "starts\|warning\|error\|info\|abort\|invalid\|violation\|fault\|illegal\|fail\|questionable\|remark\|attention\|Could\ not\ resolve" \
+            INFO="$(make "$COMP"test_"$TEST"_tst_c."$SOLVER" \
+                | grep -i "starts\|warning\|error\|info\|abort\|invalid\|violation\|fault\|illegal\|fail\|questionable\|remark\|attention\|Could\ not\ resolve\|not\ defined\|not\ public\ entity" \
                 | grep -vi "[0-9]\s*warning\|[0-9]\s*error\|[0-9]\s*info\|info.f90\|information\|--warning\|--error" \
                 | grep -vi "pedantic-errors\|Werror\|warn\ errors\|diag-error-limit\|colour=error" \
-                | grep -vi "INFO_DFT\|==\s*info\|errorid\|errormsg" \
-                | grep -vi "\[xopt, fopt, info, nf, xhist, fhist\] = FUNCTION_NAME" \
                 | grep -v "^- \|^| \|^\* \|^+ \|^X \|\# " \
                 )"
-            echo "$INFO" | grep -i --color "starts\|warning\|error\|info\|abort\|invalid\|violation\|fault\|illegal\|fail\|questionable\|remark\|attention\|Could\ not\ resolve"
-            if echo "$INFO" | grep -iq "error\|abort\|invalid\|violation\|fault\|illegal\|fail\|Could\ not\ resolve" ; then
-                if [[ -f "$TEST_LOG_DIR"/"$COMP"test_"$TEST"_tst.log ]] ; then
-                    LOGFILE="$COMP"test_"$TEST"_tst.log
+            echo "$INFO" | grep -i --color "starts\|warning\|error\|info\|abort\|invalid\|violation\|fault\|illegal\|fail\|questionable\|remark\|attention\|Could\ not\ resolve\|not\ defined\|not\ public\ entity"
+            if echo "$INFO" | grep -iq "error\|abort\|invalid\|violation\|fault\|illegal\|fail\|Could\ not\ resolve\|not\ defined\|not\ public\ entity" ; then
+                if [[ -f "$TEST_LOG_DIR"/"$COMP"test_"$TEST"_tst_c.log ]] ; then
+                    LOGFILE="$COMP"test_"$TEST"_tst_c.log
                 else
-                    LOGFILE="$COMP"test.log
+                    LOGFILE="$COMP"test_c.log
                 fi
                 mv "$TEST_LOG_DIR"/"$LOGFILE" "$SOLVER_LOG_DIR"
                 cat "$SOLVER_LOG_DIR"/"$LOGFILE"
@@ -120,6 +124,7 @@ if [[ "$TEST_ALL" == "Y" ]] ; then
 else
     for LOGFILE in "${LOGFILES[@]::${#LOGFILES[@]}-1}" ; do
         printf "\nChecking %s ...\n" "$LOGFILE"
+        bash "$CHCKTST" --error "$LOGFILE"  # Will lead to failure in case of error logged
         INFO="$(bash "$CHCKTST" --warning "$LOGFILE")"
         printf "%s" "$INFO"
         printf "\nDone!\n"
@@ -134,6 +139,7 @@ else
     # No pause needed for the last logfile.
     LOGFILE="${LOGFILES[-1]}"  # The last logfile; it needs Bash 4.x.
     printf "\nChecking %s ...\n" "$LOGFILE"
+    bash "$CHCKTST" --error "$LOGFILE"  # Will lead to failure in case of error logged
     bash "$CHCKTST" --warning "$LOGFILE"
     printf "%s" "$INFO"
     printf "\nDone!\n\n"
