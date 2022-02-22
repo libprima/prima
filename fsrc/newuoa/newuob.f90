@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, February 22, 2022 PM05:01:07
+! Last Modified: Tuesday, February 22, 2022 PM05:24:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -332,10 +332,13 @@ do tr = 1, maxtr
         if (knew_tr > 0 .and. delta <= rho) then  ! DELTA = RHO.
             call tryqalt(idz, fval - fopt, ratio, bmat, zmat, itest, gq, hq, pq)
         end if
-    end if  ! End of if (.not. shortd)
+    end if  ! End of if (.NOT. SHORTD). The normal trust-region calculation ends here.
 
-    ! Before next trust-region iteration, we may improve the geometry of XPT or reduce rho
-    ! according to IMPROVE_GEO and REDUCE_RHO. Now we decide these two indicators.
+
+    !----------------------------------------------------------------------------------------------!
+    ! Before the next trust-region iteration, we may improve the geometry of XPT or reduce RHO
+    ! according to IMPROVE_GEO and REDUCE_RHO_1/2. Now we decide these indicators.
+    !----------------------------------------------------------------------------------------------!
 
     ! First define IMPROVE_GEO, which corresponds to Box 8 of the NEWUOA paper.
     ! The geometry of XPT likely needs improvement if the trust-region step bad --- either too short
@@ -404,10 +407,8 @@ do tr = 1, maxtr
     ! Indeed, we can remove KNEW_TR == 0 from the definition of BAD_TRSTEP. It is kept for robustness.
 
     !----------------------------------------------------------------------------------------------!
-    ! Before continue with the next trust-region iteration, NEWUOA possibly improves the geometry of
-    ! the interpolation set or reduces RHO according to IMPROVE_GEO and REDUCE_RHO_1/2. Since NEWUOA
-    ! never sets IMPROVE_GEO and (REDUCE_RHO_1 .OR. REDUCE_RHO_2) to TRUE simultaneously, the
-    ! following two blocks are exchangeable:
+    ! N.B.: NEWUOA never sets IMPROVE_GEO and (REDUCE_RHO_1 .OR. REDUCE_RHO_2) to TRUE
+    ! simultaneously. Thus following two blocks are exchangeable:
     !!IF (IMPROVE_GEO) ... END IF
     !!IF (REDUCE_RHO_1 .OR. REDUCE_RHO_2) ... END IF
     !----------------------------------------------------------------------------------------------!
@@ -469,7 +470,7 @@ do tr = 1, maxtr
         call updateq(idz, knew_geo, kopt, bmat, d, f, fval, xpt, zmat, gq, hq, pq)
         ! Update XPT(:, KNEW_GEO) to XOPT + D. Then update KOPT, XOPT, and FOPT.
         call updatexf(knew_geo, d, f, kopt, fval, xpt, fopt, xopt)
-    end if  ! The procedure of improving geometry ends.
+    end if  ! End of IF (IMPROVE_GEO). The procedure of improving geometry ends.
 
     ! The calculations with the current RHO are complete. Enhance the resolution of the algorithm
     ! by reducing RHO; update DELTA at the same time.
@@ -487,9 +488,9 @@ do tr = 1, maxtr
             dnormsav = HUGENUM
             moderrsav = HUGENUM
         end if
-    end if  ! The procedure of reducing RHO ends.
+    end if  ! End of IF (REDUCE_RHO_1 .OR. REDUCE_RHO_2). The procedure of reducing RHO ends.
 
-end do  ! The iterative procedure ends.
+end do  ! End of Do TR = 1, MAXTR. The iterative procedure ends.
 
 ! Return from the calculation, after another Newton-Raphson step, if it is too short to have been
 ! tried before.
