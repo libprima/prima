@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Tuesday, February 22, 2022 PM04:21:58
+! Last Modified: Tuesday, February 22, 2022 PM08:08:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -525,7 +525,7 @@ do iter = 1, maxiter
     end if
 end do
 
-! Due to rounding errors, it can happen that |D| > DELTA.  We scale D down if |D| > 2*DELTA.
+! Due to rounding errors, it can happen that |D| > DELTA. We brutally scale D down if |D| > 2*DELTA.
 if (norm(d) > TWO * delta) then
     d = (d / norm(d)) * delta
 end if
