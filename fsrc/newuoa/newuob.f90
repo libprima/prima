@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, February 14, 2022 PM05:29:50
+! Last Modified: Tuesday, February 22, 2022 PM05:01:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -403,9 +403,16 @@ do tr = 1, maxtr
     ! 2. KNEW_TR == 0 implies RATIO <= 0, and hence BAD_TRSTEP = TRUE. Otherwise, SETDROP_TR is buggy.
     ! Indeed, we can remove KNEW_TR == 0 from the definition of BAD_TRSTEP. It is kept for robustness.
 
-    ! NEWUOA never sets IMPROVE_GEO and (REDUCE_RHO_1 .OR. REDUCE_RHO_2) to TRUE simultaneously. So
-    ! the instructions "IF (IMPROVE_GEO) ... END IF" and "IF (REDUCE_RHO_1 .OR. REDUCE_RHO_2)" can
-    ! be exchanged without changing the algorithm.
+    !----------------------------------------------------------------------------------------------!
+    ! Before continue with the next trust-region iteration, NEWUOA possibly improves the geometry of
+    ! the interpolation set or reduces RHO according to IMPROVE_GEO and REDUCE_RHO_1/2. Since NEWUOA
+    ! never sets IMPROVE_GEO and (REDUCE_RHO_1 .OR. REDUCE_RHO_2) to TRUE simultaneously, the
+    ! following two blocks are exchangeable:
+    !!IF (IMPROVE_GEO) ... END IF
+    !!IF (REDUCE_RHO_1 .OR. REDUCE_RHO_2) ... END IF
+    !----------------------------------------------------------------------------------------------!
+
+    ! Improve the geometry of the interpolation set by removing a point and adding a new one.
     if (improve_geo) then
         ! XPT(:, KNEW_GEO) will be dropped (replaced by XOPT + D below).
         ! KNEW_GEO should never be KOPT. Otherwise, it is a bug.
@@ -464,8 +471,9 @@ do tr = 1, maxtr
         call updatexf(knew_geo, d, f, kopt, fval, xpt, fopt, xopt)
     end if  ! The procedure of improving geometry ends.
 
+    ! The calculations with the current RHO are complete. Enhance the resolution of the algorithm
+    ! by reducing RHO; update DELTA at the same time.
     if (reduce_rho_1 .or. reduce_rho_2) then
-        ! The calculations with the current RHO are complete. Pick the next values of RHO and DELTA.
         if (rho <= rhoend) then
             info = SMALL_TR_RADIUS
             exit

@@ -8,7 +8,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, February 12, 2022 PM02:51:42
+! Last Modified: Tuesday, February 22, 2022 PM04:55:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -386,69 +386,76 @@ do tr = 1, maxtr
     ! Should we enhance the resolution by reducing RHO?
     reduce_rho = bad_trstep .and. good_geo .and. (max(delta, dnorm) <= rho)
 
+    !----------------------------------------------------------------------------------------------!
+    ! Before continue with the next trust-region iteration, COBYLA possibly improves the geometry of
+    ! simplex or reduces RHO according to IMPROVE_GEO and REDUCE_RHO. Since COBYLA never sets
+    ! IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously, the following two blocks are exchangeable:
+    !!IF (IMPROVE_GEO ...) THEN ... END IF
+    !!IF (REDUCE_RHO) THEN ... END IF
+    !----------------------------------------------------------------------------------------------!
+
     ! Improve the geometry of the simplex by removing a point and adding a new one.
-    if (improve_geo) then
-        ! Before the trust-region step, UPDATEPOLE has been called either implicitly by UPDATEXFC or
+    ! If the current interpolation set has good geometry, then we skip the geometry step.
+    ! The code has a small difference from Powell's original code here: If the current geometry
+    ! is good, then we will continue with a new trust-region iteration; however, at the
+    ! beginning of the iteration, CPEN may be updated, which may alter the pole point SIM(:, N+1)
+    ! by UPDATEPOLE; the quality of the interpolation point depends on SIM(:, N + 1), meaning
+    ! that the same interpolation set may have good or bad geometry with respect to different
+    ! "poles"; if the geometry turns out bad with the new pole, the original COBYLA code will
+    ! take a geometry step, but our code here will NOT do it but continue to take a trust-region
+    ! step. The argument is this: even if the geometry step is not skipped in the first place, the
+    ! geometry may turn out bad again after the pole is altered due to an update to CPEN; should
+    ! we take another geometry step in that case? If no, why should we do it here? Indeed, this
+    ! distinction makes no practical difference for CUTEst problems with at most 100 variables
+    ! and 5000 constraints, while the algorithm framework is simplified.
+    if (improve_geo .and. .not. goodgeo(delta, factor_alpha, factor_beta, sim, simi)) then
+        ! Before the geometry step, UPDATEPOLE has been called either implicitly by UPDATEXFC or
         ! explicitly after CPEN is updated, so that SIM(:, N + 1) is the optimal vertex.
 
-        ! If the current interpolation set has good geometry, then we skip the geometry step.
-        ! The code has a small difference from Powell's original code here: If the current geometry
-        ! is good, then we will continue with a new trust-region iteration; however, at the
-        ! beginning of the iteration, CPEN may be updated, which may alter the pole point SIM(:, N+1)
-        ! by UPDATEPOLE; the quality of the interpolation point depends on SIM(:, N + 1), meaning
-        ! that the same interpolation set may have good or bad geometry with respect to different
-        ! "poles"; if the geometry turns out bad with the new pole, the original COBYLA code will
-        ! take a geometry step, but our code here will NOT do it but continue to take a trust-region
-        ! step. The argument is this: even if the geometry step is not skipped in the first place, the
-        ! geometry may turn out bad again after the pole is altered due to an update to CPEN; should
-        ! we take another geometry step in that case? If no, why should we do it here? Indeed, this
-        ! distinction makes no practical difference for CUTEst problems with at most 100 variables
-        ! and 5000 constraints, while the algorithm framework is simplified.
-        if (.not. goodgeo(delta, factor_alpha, factor_beta, sim, simi)) then
-            ! Decide a vertex to drop from the simplex. It will be replaced by SIM(:, N + 1) + D to
-            ! improve acceptability of the simplex. See equations (15) and (16) of the COBYLA paper.
-            ! N.B.: COBYLA never sets JDROP_GEO = N + 1.
-            jdrop_geo = setdrop_geo(delta, factor_alpha, factor_beta, sim, simi)
+        ! Decide a vertex to drop from the simplex. It will be replaced by SIM(:, N + 1) + D to
+        ! improve acceptability of the simplex. See equations (15) and (16) of the COBYLA paper.
+        ! N.B.: COBYLA never sets JDROP_GEO = N + 1.
+        jdrop_geo = setdrop_geo(delta, factor_alpha, factor_beta, sim, simi)
 
-            ! JDROP_GEO is between 1 and N unless SIM and SIMI contains NaN, which should not happen
-            ! at this point unless there is a bug. Nevertheless, for robustness, we include the
-            ! following instruction to exit when JDROP_GEO == 0 (if JDROP_GEO does become 0, then
-            ! memory error will occur if we continue, as JDROP_GEO is used as an index of arrays.)
-            if (jdrop_geo == 0) then
-                info = DAMAGING_ROUNDING
-                exit
-            end if
+        ! JDROP_GEO is between 1 and N unless SIM and SIMI contains NaN, which should not happen
+        ! at this point unless there is a bug. Nevertheless, for robustness, we include the
+        ! following instruction to exit when JDROP_GEO == 0 (if JDROP_GEO does become 0, then
+        ! memory error will occur if we continue, as JDROP_GEO is used as an index of arrays.)
+        if (jdrop_geo == 0) then
+            info = DAMAGING_ROUNDING
+            exit
+        end if
 
-            ! Calculate the geometry step D.
-            d = geostep(jdrop_geo, cpen, conmat, cval, delta, fval, factor_gamma, simi)
+        ! Calculate the geometry step D.
+        d = geostep(jdrop_geo, cpen, conmat, cval, delta, fval, factor_gamma, simi)
 
-            x = sim(:, n + 1) + d
-            ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
-            call evaluate(calcfc, x, f, constr, cstrv)
-            nf = nf + 1_IK
-            call fmsg(solver, iprint, nf, f, x, cstrv, constr)
-            ! Save X, F, CONSTR, CSTRV into the history.
-            call savehist(nf, x, xhist, f, fhist, cstrv, chist, constr, conhist)
-            ! Save X, F, CONSTR, CSTRV into the filter.
-            call savefilt(constr, cstrv, ctol, cweight, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
-            ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_GEO) is replaced by D.
-            call updatexfc(jdrop_geo, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
-            ! Check whether to exit due to damaging rounding detected in UPDATEPOLE (called by UPDATEXFC).
-            if (subinfo == DAMAGING_ROUNDING) then
-                info = subinfo
-                exit  ! Better action to take? Geometry step?
-            end if
+        x = sim(:, n + 1) + d
+        ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
+        call evaluate(calcfc, x, f, constr, cstrv)
+        nf = nf + 1_IK
+        call fmsg(solver, iprint, nf, f, x, cstrv, constr)
+        ! Save X, F, CONSTR, CSTRV into the history.
+        call savehist(nf, x, xhist, f, fhist, cstrv, chist, constr, conhist)
+        ! Save X, F, CONSTR, CSTRV into the filter.
+        call savefilt(constr, cstrv, ctol, cweight, f, x, nfilt, cfilt, confilt, ffilt, xfilt)
+        ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_GEO) is replaced by D.
+        call updatexfc(jdrop_geo, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
+        ! Check whether to exit due to damaging rounding detected in UPDATEPOLE (called by UPDATEXFC).
+        if (subinfo == DAMAGING_ROUNDING) then
+            info = subinfo
+            exit  ! Better action to take? Geometry step?
+        end if
 
-            ! Check whether to exit.
-            subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
-            if (subinfo /= INFO_DFT) then
-                info = subinfo
-                exit
-            end if
+        ! Check whether to exit.
+        subinfo = checkexit(maxfun, nf, cstrv, ctol, f, ftarget, x)
+        if (subinfo /= INFO_DFT) then
+            info = subinfo
+            exit
         end if
     end if
 
-    ! Enhance the resolution of the algorithm by reducing RHO; update DELTA and CPEN at the same time.
+    ! The calculations with the current RHO are complete. Enhance the resolution of the algorithm 
+    ! by reducing RHO; update DELTA and CPEN at the same time.
     if (reduce_rho) then
         if (rho <= rhoend) then
             info = SMALL_TR_RADIUS
