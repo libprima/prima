@@ -8,7 +8,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, February 22, 2022 PM04:55:58
+! Last Modified: Tuesday, February 22, 2022 PM05:17:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -367,8 +367,14 @@ do tr = 1, maxtr
             info = subinfo
             exit  ! Better action to take? Geometry step?
         end if
-    end if
+    end if  ! End of IF (SHORTD). The normal trust-region calculation ends here.
 
+
+    !----------------------------------------------------------------------------------------------!
+    ! Before the next trust-region iteration, we possibly improves the geometry of simplex or 
+    ! reduces RHO according to IMPROVE_GEO and REDUCE_RHO. Now we decide these indicators. 
+    !----------------------------------------------------------------------------------------------!
+    
     ! Is the trust-region step a bad one?
     ! N.B.:
     ! 1. THEORETICALLY, JDROP_TR > 0 when ACTREM > 0. Yet Powell's code may set JDROP_TR = 0 when
@@ -387,9 +393,8 @@ do tr = 1, maxtr
     reduce_rho = bad_trstep .and. good_geo .and. (max(delta, dnorm) <= rho)
 
     !----------------------------------------------------------------------------------------------!
-    ! Before continue with the next trust-region iteration, COBYLA possibly improves the geometry of
-    ! simplex or reduces RHO according to IMPROVE_GEO and REDUCE_RHO. Since COBYLA never sets
-    ! IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously, the following two blocks are exchangeable:
+    ! N.B.: COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously. Thus the following
+    ! two blocks are exchangeable:
     !!IF (IMPROVE_GEO ...) THEN ... END IF
     !!IF (REDUCE_RHO) THEN ... END IF
     !----------------------------------------------------------------------------------------------!
@@ -452,9 +457,9 @@ do tr = 1, maxtr
             info = subinfo
             exit
         end if
-    end if
+    end if  ! End of IF (IMPROVE_GEO). The procedure of improving geometry ends.
 
-    ! The calculations with the current RHO are complete. Enhance the resolution of the algorithm 
+    ! The calculations with the current RHO are complete. Enhance the resolution of the algorithm
     ! by reducing RHO; update DELTA and CPEN at the same time.
     if (reduce_rho) then
         if (rho <= rhoend) then
@@ -472,8 +477,9 @@ do tr = 1, maxtr
             info = subinfo
             exit  ! Better action to take? Geometry step?
         end if
-    end if
-end do
+    end if  ! End of IF (REDUCE_RHO). The procedure of reducing RHO ends.
+
+end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 
 ! Return the best calculated values of the variables.
 ! N.B. SELECTX and FINDPOLE choose X by different standards. One cannot replace the other.
