@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, February 22, 2022 PM05:24:19
+! Last Modified: Tuesday, February 22, 2022 PM07:11:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -378,7 +378,7 @@ do tr = 1, maxtr
     ! KNEW_TR == 0 implies RATIO <= 0. Therefore, we can remove KNEW_TR == 0 from the definition
     ! of BAD_TRSTEP. Nevertheless, we keep it for robustness.
     bad_trstep = (shortd .or. ratio < TENTH .or. knew_tr == 0)  ! BAD_TRSTEP for IMPROVE_GEO
-    improve_geo = (.not. reduce_rho_1) .and. (maxval(xdist) > TWO * delta) .and. bad_trstep
+    improve_geo = ((.not. reduce_rho_1) .and. maxval(xdist) > TWO * delta .and. bad_trstep)
 
     ! If all the interpolation points are close to XOPT and the trust-region is small, but the
     ! trust-region step is "bad" (SHORTD or RATIO <= 0), then we shrink RHO (update the criterion
@@ -393,7 +393,7 @@ do tr = 1, maxtr
     ! value does not affect REDUCE_RHO_2, because DNORM comes into play only if IMPROVE_GEO = FALSE.
     ! 3. DELTA < DNORM may hold due to the update of DELTA.
     bad_trstep = (shortd .or. ratio <= 0 .or. knew_tr == 0)  ! BAD_TRSTEP for REDUCE_RHO_2
-    reduce_rho_2 = (maxval(xdist) <= TWO * delta) .and. (max(delta, dnorm) <= rho) .and. bad_trstep
+    reduce_rho_2 = (maxval(xdist) <= TWO * delta .and. max(delta, dnorm) <= rho .and. bad_trstep)
 
     ! Comments on BAD_TRSTEP:
     ! 1. Powell used different thresholds (<= 0 and < 0.1) for RATIO in the definitions of BAD_TRSTEP

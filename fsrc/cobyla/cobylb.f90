@@ -387,10 +387,10 @@ do tr = 1, maxtr
     bad_trstep = (shortd .or. actrem <= 0 .or. jdrop_tr == 0)
 
     ! Should we take a geometry step to improve the geometry of the interpolation set?
-    improve_geo = bad_trstep .and. .not. good_geo
+    improve_geo = (bad_trstep .and. .not. good_geo)
 
     ! Should we enhance the resolution by reducing RHO?
-    reduce_rho = bad_trstep .and. good_geo .and. (max(delta, dnorm) <= rho)
+    reduce_rho = (bad_trstep .and. good_geo .and. max(delta, dnorm) <= rho)
 
     !----------------------------------------------------------------------------------------------!
     ! N.B.: COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously. Thus the following
