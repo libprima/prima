@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, February 12, 2022 PM02:52:59
+! Last Modified: Wednesday, February 23, 2022 PM05:46:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -131,7 +131,7 @@ subroutine updatepole(cpen, conmat, cval, fval, sim, simi, info)
 ! "Pole Position" as per Powell. CONMAT, CVAL, FVAL, and SIMI are updated accordingly.
 !
 ! N.B. 1: In precise arithmetic, the following two procedures produce the same results:
-! 1) apply UPDATEPOLE to SIM twice the first time with CPEN = CPEN1 and the second with CPEN = CPEN2;
+! 1) apply UPDATEPOLE to SIM twice, first with CPEN = CPEN1 and then with CPEN = CPEN2;
 ! 2) apply UPDATEPOLE to SIM with CPEN = CPEN2.
 ! In finite-precision arithmetic, however, they may produce different results unless CPEN1 = CPEN2.
 !

@@ -8,7 +8,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, February 22, 2022 PM05:55:45
+! Last Modified: Wednesday, February 23, 2022 PM05:42:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -378,8 +378,8 @@ do tr = 1, maxtr
     ! Is the trust-region step a bad one?
     ! N.B.:
     ! 1. THEORETICALLY, JDROP_TR > 0 when ACTREM > 0. Yet Powell's code may set JDROP_TR = 0 when
-    ! ACTREM > 0 due to NaN. The modernized code has been rectified this in the function SETDROP_TR.
-    ! After this rectification, we can  indeed simplify the definition of BAD_TRSTEP below by
+    ! ACTREM > 0 due to NaN. The modernized code has rectified this in the function SETDROP_TR.
+    ! After this rectification, we can indeed simplify the definition of BAD_TRSTEP below by
     ! removing (JDROP_TR == 0), but we retain (JDROP_TR == 0) for robustness.
     ! 2. Powell's definition of BAD_TRSTEP is
     !!bad_trstep = (shortd .or. actrem <= 0 .or. actrem < TENTH * prerem .or. jdrop_tr == 0)
