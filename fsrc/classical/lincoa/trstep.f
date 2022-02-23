@@ -52,7 +52,7 @@ C
               IF (RESCON(J) >= SNORM) THEN
                   RESNEW(J)=-ONE
               ELSE IF (RESCON(J) >= ZERO) THEN
-                  RESNEW(J)=DMAX1(RESNEW(J),TINY)
+                  RESNEW(J)=MAX(RESNEW(J),TINY)
               END IF
           END DO
           IF (NACT > 0) THEN
@@ -78,7 +78,7 @@ C
       CALL GETACT (N,M,AMAT,B,NACT,IACT,QFAC,RFAC,SNORM,RESNEW,
      1  RESACT,G,DW,W,W(N+1))
       IF (W(N+1) == ZERO) GOTO 320
-      SCALE=0.2D0*SNORM/DSQRT(W(N+1))
+      SCALE=0.2D0*SNORM/SQRT(W(N+1))
       DO I=1,N
           DW(I)=SCALE*DW(I)
       END DO
@@ -90,7 +90,7 @@ C
       RESMAX=ZERO
       IF (NACT > 0) THEN
           DO K=1,NACT
-              RESMAX=DMAX1(RESMAX,RESACT(K))
+              RESMAX=MAX(RESMAX,RESACT(K))
           END DO
       END IF
       GAMMA=ZERO
@@ -129,7 +129,7 @@ C
               DD=DD+D(I)**2
           END DO
           IF (RHS > ZERO) THEN
-              TEMP=DSQRT(DS*DS+DD*RHS)
+              TEMP=SQRT(DS*DS+DD*RHS)
               IF (DS <= ZERO) THEN
                   GAMMA=(TEMP-DS)/DD
               ELSE
@@ -151,13 +151,13 @@ C
                       ADW=ADW+AMAT(I,J)*DW(I)
                   END DO
                   IF (AD > ZERO) THEN
-                      TEMP=DMAX1((RESNEW(J)-ADW)/AD,ZERO)
-                      GAMMA=DMIN1(GAMMA,TEMP)
+                      TEMP=MAX((RESNEW(J)-ADW)/AD,ZERO)
+                      GAMMA=MIN(GAMMA,TEMP)
                   END IF
               END IF
               IF (J < M) GOTO 110
           END IF
-          GAMMA=DMIN1(GAMMA,ONE)
+          GAMMA=MIN(GAMMA,ONE)
       END IF
 C
 C     Set the next direction for seeking a reduction in the model function
@@ -192,7 +192,7 @@ C
           DD=DD+D(I)**2
       END DO
       IF (DG >= ZERO) GOTO 320
-      TEMP=DSQRT(RHS*DD+DS*DS)
+      TEMP=SQRT(RHS*DD+DS*DS)
       IF (DS <= ZERO) THEN
           ALPHA=(TEMP-DS)/DD
       ELSE
@@ -254,9 +254,9 @@ C
               W(J)=AD
           END DO
       END IF
-      ALPHA=DMAX1(ALPHA,ALPBD)
-      ALPHA=DMIN1(ALPHA,ALPHM)
-      IF (ICOUNT == NACT) ALPHA=DMIN1(ALPHA,ONE)
+      ALPHA=MAX(ALPHA,ALPBD)
+      ALPHA=MIN(ALPHA,ALPHM)
+      IF (ICOUNT == NACT) ALPHA=MIN(ALPHA,ONE)
 C
 C     Update STEP, G, RESNEW, RESACT and REDUCT.
 C
@@ -269,7 +269,7 @@ C
       IF (M > 0) THEN
           DO J=1,M
               IF (RESNEW(J) > ZERO) THEN
-                  RESNEW(J)=DMAX1(RESNEW(J)-ALPHA*W(J),TINY)
+                  RESNEW(J)=MAX(RESNEW(J)-ALPHA*W(J),TINY)
               END IF
           END DO
       END IF
@@ -333,7 +333,7 @@ C
 C     Return from the subroutine.
 C
   320 SNORM=ZERO
-      IF (REDUCT > ZERO) SNORM=DSQRT(SS)
+      IF (REDUCT > ZERO) SNORM=SQRT(SS)
       G(1)=ZERO
       IF (NCALL > 1) G(1)=ONE
       RETURN

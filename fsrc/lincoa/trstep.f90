@@ -49,7 +49,7 @@ if (m > 0) then
         if (rescon(j) >= snorm) then
             resnew(j) = -one
         else if (rescon(j) >= zero) then
-            resnew(j) = dmax1(resnew(j), tiny)
+            resnew(j) = max(resnew(j), tiny)
         end if
     end do
     if (nact > 0) then
@@ -78,7 +78,7 @@ ncall = 0
 call getact(n, m, amat, nact, iact, qfac, rfac, snorm, resnew, &
 & resact, g, dw, w, w(n + 1))
 if (w(n + 1) == zero) goto 320
-scale = 0.2D0 * snorm / dsqrt(w(n + 1))
+scale = 0.2D0 * snorm / sqrt(w(n + 1))
 do i = 1, n
     dw(i) = scale * dw(i)
 end do
@@ -90,7 +90,7 @@ end do
 resmax = zero
 if (nact > 0) then
     do k = 1, nact
-        resmax = dmax1(resmax, resact(k))
+        resmax = max(resmax, resact(k))
     end do
 end if
 gamma = zero
@@ -129,7 +129,7 @@ if (resmax > 1.0D-4 * snorm) then
         dd = dd + d(i)**2
     end do
     if (rhs > zero) then
-        temp = dsqrt(ds * ds + dd * rhs)
+        temp = sqrt(ds * ds + dd * rhs)
         if (ds <= zero) then
             ! Zaikun 20210925
             ! What if we are at the first iteration? BLEN = DELTA/|D|? See TRSAPP.F90 of NEWUOA.
@@ -153,13 +153,13 @@ if (resmax > 1.0D-4 * snorm) then
                 adw = adw + amat(i, j) * dw(i)
             end do
             if (ad > zero) then
-                temp = dmax1((resnew(j) - adw) / ad, zero)
-                gamma = dmin1(gamma, temp)
+                temp = max((resnew(j) - adw) / ad, zero)
+                gamma = min(gamma, temp)
             end if
         end if
         if (j < m) goto 110
     end if
-    gamma = dmin1(gamma, one)
+    gamma = min(gamma, one)
 end if
 !
 !     Set the next direction for seeking a reduction in the model function
@@ -194,7 +194,7 @@ do i = 1, n
     dd = dd + d(i)**2
 end do
 if (dg >= zero) goto 320
-temp = dsqrt(rhs * dd + ds * ds)
+temp = sqrt(rhs * dd + ds * ds)
 if (ds <= zero) then
     alpha = (temp - ds) / dd
 else
@@ -256,9 +256,9 @@ if (m > 0) then
         w(j) = ad
     end do
 end if
-alpha = dmax1(alpha, alpbd)
-alpha = dmin1(alpha, alphm)
-if (icount == nact) alpha = dmin1(alpha, one)
+alpha = max(alpha, alpbd)
+alpha = min(alpha, alphm)
+if (icount == nact) alpha = min(alpha, one)
 !
 !     Update STEP, G, RESNEW, RESACT and REDUCT.
 !
@@ -271,7 +271,7 @@ end do
 if (m > 0) then
     do j = 1, m
         if (resnew(j) > zero) then
-            resnew(j) = dmax1(resnew(j) - alpha * w(j), tiny)
+            resnew(j) = max(resnew(j) - alpha * w(j), tiny)
         end if
     end do
 end if
@@ -344,7 +344,7 @@ goto 150
 !     Return from the subroutine.
 !
 320 snorm = zero
-if (reduct > zero) snorm = dsqrt(ss)
+if (reduct > zero) snorm = sqrt(ss)
 g(1) = zero
 if (ncall > 1) g(1) = one
 return

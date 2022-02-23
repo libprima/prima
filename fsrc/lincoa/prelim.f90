@@ -56,7 +56,7 @@ dimension xbase(*), xpt(npt, *), fval(*), &
 nptm = npt - n - 1
 rhosq = rhobeg * rhobeg
 recip = ONE / rhosq
-reciq = dsqrt(HALF) / rhosq
+reciq = sqrt(HALF) / rhosq
 test = 0.2D0 * rhobeg
 idz = 1
 kbase = 1
@@ -254,7 +254,7 @@ do j = 1, m
     do i = 1, n
         temp = temp - xopt(i) * amat(i, j)
     end do
-    temp = dmax1(temp, zero)
+    temp = max(temp, zero)
     if (temp >= rhobeg) temp = -temp
     rescon(j) = temp
 end do

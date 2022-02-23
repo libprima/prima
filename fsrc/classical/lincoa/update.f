@@ -96,7 +96,7 @@ C
                   IF (J < IDZ) TEMP=-ONE
                   HDIAG=HDIAG+TEMP*ZMAT(K,J)**2
               END DO
-              DENABS=DABS(BETA*HDIAG+VLAG(K)**2)
+              DENABS=ABS(BETA*HDIAG+VLAG(K)**2)
               DISTSQ=ZERO
               DO J=1,N
                   DISTSQ=DISTSQ+(XPT(K,J)-XPT(KOPT,J))**2
@@ -117,7 +117,7 @@ C
               IF (J == IDZ) THEN
                   JL=IDZ
               ELSE IF (ZMAT(KNEW,J) /= ZERO) THEN
-                  TEMP=DSQRT(ZMAT(KNEW,JL)**2+ZMAT(KNEW,J)**2)
+                  TEMP=SQRT(ZMAT(KNEW,JL)**2+ZMAT(KNEW,J)**2)
                   TEMPA=ZMAT(KNEW,JL)/TEMP
                   TEMPB=ZMAT(KNEW,J)/TEMP
                   DO I=1,NPT
@@ -149,7 +149,7 @@ C
           KNEW=0
           GOTO 180
       END IF
-      SQRTDN=DSQRT(DABS(DENOM))
+      SQRTDN=SQRT(ABS(DENOM))
 C
 C     Complete the updating of ZMAT when there is only one nonzero element
 C       in the KNEW-th row of the new matrix ZMAT. IFLAG is set to one when
@@ -180,7 +180,7 @@ C
           TEMPA=TEMP*BETA
           TEMPB=TEMP*TAU
           TEMP=ZMAT(KNEW,JA)
-          SCALA=ONE/DSQRT(DABS(BETA)*TEMP*TEMP+TAUSQ)
+          SCALA=ONE/SQRT(ABS(BETA)*TEMP*TEMP+TAUSQ)
           SCALB=SCALA*SQRTDN
           DO I=1,NPT
               ZMAT(I,JA)=SCALA*(TAU*ZMAT(I,JA)-TEMP*VLAG(I))

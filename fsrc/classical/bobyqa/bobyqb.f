@@ -170,7 +170,7 @@ C     label 650 or 680 with NTRITS=-1, instead of calculating F at XNEW.
 C
    60 CALL TRSBOX (N,NPT,XPT,XOPT,GOPT,HQ,PQ,SL,SU,DELTA,XNEW,D,
      1  W,W(NP),W(NP+N),W(NP+2*N),W(NP+3*N),DSQ,CRVMIN)
-      DNORM=DMIN1(DELTA,DSQRT(DSQ))
+      DNORM=MIN(DELTA,SQRT(DSQ))
       IF (DNORM < HALF*RHO) THEN
           NTRITS=-1
           DISTSQ=(TEN*RHO)**2
@@ -182,7 +182,7 @@ C     decreased or termination occurs if the errors in the quadratic model at
 C     the last three interpolation points compare favourably with predictions
 C     of likely improvements to the model within distance HALF*RHO of XOPT.
 C
-          ERRBIG=DMAX1(DIFFA,DIFFB,DIFFC)
+          ERRBIG=MAX(DIFFA,DIFFB,DIFFC)
           FRHOSQ=0.125D0*RHO*RHO
           IF (CRVMIN > ZERO .AND. ERRBIG > FRHOSQ*CRVMIN)
      1       GOTO 650
@@ -465,13 +465,13 @@ C
               DO J=1,N
                   DISTSQ=DISTSQ+(XPT(K,J)-XOPT(J))**2
               END DO
-              TEMP=DMAX1(ONE,(DISTSQ/DELSQ)**2)
+              TEMP=MAX(ONE,(DISTSQ/DELSQ)**2)
               IF (TEMP*DEN > SCADEN) THEN
                   SCADEN=TEMP*DEN
                   KNEW=K
                   DENOM=DEN
               END IF
-              BIGLSQ=DMAX1(BIGLSQ,TEMP*VLAG(K)**2)
+              BIGLSQ=MAX(BIGLSQ,TEMP*VLAG(K)**2)
           END DO
           IF (SCADEN <= HALF*BIGLSQ) THEN
               IF (NF > NRESC) GOTO 190
@@ -491,7 +491,7 @@ C     Calculate the value of the objective function at XBASE+XNEW, unless
 C       the limit on the number of calculations of F has been reached.
 C
   360 DO I=1,N
-          X(I)=DMIN1(DMAX1(XL(I),XBASE(I)+XNEW(I)),XU(I))
+          X(I)=MIN(MAX(XL(I),XBASE(I)+XNEW(I)),XU(I))
           IF (XNEW(I) == SL(I)) X(I)=XL(I)
           IF (XNEW(I) == SU(I)) X(I)=XU(I)
       END DO
@@ -559,7 +559,7 @@ C
       DIFF=F-FOPT-VQUAD
       DIFFC=DIFFB
       DIFFB=DIFFA
-      DIFFA=DABS(DIFF)
+      DIFFA=ABS(DIFF)
       IF (DNORM > RHO) NFSAV=NF
 C
 C     Pick the next value of DELTA after a trust region step.
@@ -576,11 +576,11 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
           END IF
           RATIO=(F-FOPT)/VQUAD
           IF (RATIO <= TENTH) THEN
-              DELTA=DMIN1(HALF*DELTA,DNORM)
+              DELTA=MIN(HALF*DELTA,DNORM)
           ELSE IF (RATIO <= 0.7D0) THEN
-              DELTA=DMAX1(HALF*DELTA,DNORM)
+              DELTA=MAX(HALF*DELTA,DNORM)
           ELSE
-              DELTA=DMAX1(HALF*DELTA,DNORM+DNORM)
+              DELTA=MAX(HALF*DELTA,DNORM+DNORM)
           END IF
           IF (DELTA <= 1.5D0*RHO) DELTA=RHO
 C
@@ -603,13 +603,13 @@ C
                   DO J=1,N
                       DISTSQ=DISTSQ+(XPT(K,J)-XNEW(J))**2
                   END DO
-                  TEMP=DMAX1(ONE,(DISTSQ/DELSQ)**2)
+                  TEMP=MAX(ONE,(DISTSQ/DELSQ)**2)
                   IF (TEMP*DEN > SCADEN) THEN
                       SCADEN=TEMP*DEN
                       KNEW=K
                       DENOM=DEN
                   END IF
-                  BIGLSQ=DMAX1(BIGLSQ,TEMP*VLAG(K)**2)
+                  BIGLSQ=MAX(BIGLSQ,TEMP*VLAG(K)**2)
               END DO
               IF (SCADEN <= HALF*BIGLSQ) THEN
                   KNEW=KSAV
@@ -726,11 +726,11 @@ C
                   SUM=SUM+BMAT(K,I)*VLAG(K)+XPT(K,I)*W(K)
               END DO
               IF (XOPT(I) == SL(I)) THEN
-                  GQSQ=GQSQ+DMIN1(ZERO,GOPT(I))**2
-                  GISQ=GISQ+DMIN1(ZERO,SUM)**2
+                  GQSQ=GQSQ+MIN(ZERO,GOPT(I))**2
+                  GISQ=GISQ+MIN(ZERO,SUM)**2
               ELSE IF (XOPT(I) == SU(I)) THEN
-                  GQSQ=GQSQ+DMAX1(ZERO,GOPT(I))**2
-                  GISQ=GISQ+DMAX1(ZERO,SUM)**2
+                  GQSQ=GQSQ+MAX(ZERO,GOPT(I))**2
+                  GISQ=GISQ+MAX(ZERO,SUM)**2
               ELSE
                   GQSQ=GQSQ+GOPT(I)**2
                   GISQ=GISQ+SUM*SUM
@@ -763,7 +763,7 @@ C
 C     Alternatively, find out if the interpolation points are close enough
 C       to the best point so far.
 C
-      DISTSQ=DMAX1((TWO*DELTA)**2,(TEN*RHO)**2)
+      DISTSQ=MAX((TWO*DELTA)**2,(TEN*RHO)**2)
   650 KNEW=0
       DO K=1,NPT
           SUM=ZERO
@@ -783,19 +783,19 @@ C     another trust region iteration, unless the calculations with the
 C     current RHO are complete.
 C
       IF (KNEW > 0) THEN
-          DIST=DSQRT(DISTSQ)
+          DIST=SQRT(DISTSQ)
           IF (NTRITS == -1) THEN
-              DELTA=DMIN1(TENTH*DELTA,HALF*DIST)
+              DELTA=MIN(TENTH*DELTA,HALF*DIST)
               IF (DELTA <= 1.5D0*RHO) DELTA=RHO
           END IF
           NTRITS=0
-          ADELT=DMAX1(DMIN1(TENTH*DIST,DELTA),RHO)
+          ADELT=MAX(MIN(TENTH*DIST,DELTA),RHO)
           DSQ=ADELT*ADELT
           GOTO 90
       END IF
       IF (NTRITS == -1) GOTO 680
       IF (RATIO > ZERO) GOTO 60
-      IF (DMAX1(DELTA,DNORM) > RHO) GOTO 60
+      IF (MAX(DELTA,DNORM) > RHO) GOTO 60
 C
 C     The calculations with the current value of RHO are complete. Pick the
 C       next values of RHO and DELTA.
@@ -806,11 +806,11 @@ C
           IF (RATIO <= 16.0D0) THEN
               RHO=RHOEND
           ELSE IF (RATIO <= 250.0D0) THEN
-              RHO=DSQRT(RATIO)*RHOEND
+              RHO=SQRT(RATIO)*RHOEND
           ELSE
               RHO=TENTH*RHO
           END IF
-          DELTA=DMAX1(DELTA,RHO)
+          DELTA=MAX(DELTA,RHO)
           IF (IPRINT >= 2) THEN
               IF (IPRINT >= 3) PRINT 690
   690         FORMAT (5X)
@@ -836,7 +836,7 @@ C
       IF (NTRITS == -1) GOTO 360
   720 IF (FVAL(KOPT) <= FSAVE) THEN
           DO I=1,N
-              X(I)=DMIN1(DMAX1(XL(I),XBASE(I)+XOPT(I)),XU(I))
+              X(I)=MIN(MAX(XL(I),XBASE(I)+XOPT(I)),XU(I))
               IF (XOPT(I) == SL(I)) X(I)=XL(I)
               IF (XOPT(I) == SU(I)) X(I)=XU(I)
           END DO

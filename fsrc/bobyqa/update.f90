@@ -23,7 +23,7 @@ nptm = npt - n - 1
 ztest = zero
 do k = 1, npt
     do j = 1, nptm
-        ztest = dmax1(ztest, dabs(zmat(k, j)))
+        ztest = max(ztest, abs(zmat(k, j)))
     end do
 end do
 ztest = 1.0D-20 * ztest
@@ -34,8 +34,8 @@ ztest = 1.0D-20 * ztest
 !      JL=1
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 do j = 2, nptm
-    if (dabs(zmat(knew, j)) > ztest) then
-        temp = dsqrt(zmat(knew, 1)**2 + zmat(knew, j)**2)
+    if (abs(zmat(knew, j)) > ztest) then
+        temp = sqrt(zmat(knew, 1)**2 + zmat(knew, j)**2)
         tempa = zmat(knew, 1) / temp
         tempb = zmat(knew, j) / temp
         do i = 1, npt
@@ -59,7 +59,7 @@ vlag(knew) = vlag(knew) - one
 !
 !     Complete the updating of ZMAT.
 !
-temp = dsqrt(denom)
+temp = sqrt(denom)
 tempb = zmat(knew, 1) / temp
 tempa = tau / temp
 do i = 1, npt

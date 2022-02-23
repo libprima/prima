@@ -102,7 +102,7 @@ end do
 if (dd >= ddsav) goto 290
 if (dd == zero) goto 300
 ddsav = dd
-dnorm = dsqrt(dd)
+dnorm = sqrt(dd)
 !
 !     Pick the next integer L or terminate, a positive value of L being
 !       the index of the most violated constraint. The purpose of CTOL
@@ -137,7 +137,7 @@ if (m > 0) then
                 do i = 1, n
                     sum = sum + dw(i) * amat(i, j)
                 end do
-                ctol = dmax1(ctol, dabs(sum))
+                ctol = max(ctol, abs(sum))
             end do
         end if
     end if
@@ -162,10 +162,10 @@ do j = n, 1, -1
     if (j <= nact) then
         rfac(idiag + j) = sprod
     else
-        if (dabs(rdiag) <= 1.0D-20 * dabs(sprod)) then
+        if (abs(rdiag) <= 1.0D-20 * abs(sprod)) then
             rdiag = sprod
         else
-            temp = dsqrt(sprod * sprod + rdiag * rdiag)
+            temp = sqrt(sprod * sprod + rdiag * rdiag)
             cosv = sprod / temp
             sinv = rdiag / temp
             rdiag = temp
@@ -182,7 +182,7 @@ if (rdiag < zero) then
         qfac(i, nactp) = -qfac(i, nactp)
     end do
 end if
-rfac(idiag + nactp) = dabs(rdiag)
+rfac(idiag + nactp) = abs(rdiag)
 nact = nactp
 iact(nact) = l
 resact(nact) = resnew(l)
@@ -222,7 +222,7 @@ do j = 1, nact
     vlam(j) = vlam(j) - vmult * w(j)
 end do
 if (ic > 0) vlam(ic) = zero
-violmx = dmax1(violmx - vmult, zero)
+violmx = max(violmx - vmult, zero)
 if (ic == 0) violmx = zero
 !
 !     Reduce the active set if necessary, so that all components of the
@@ -234,7 +234,7 @@ ic = nact
 !!!! If NACT=0, then IC = 0, and hence IACT(IC) is undefined, which leads to memory error when
 !RESNEW(IACT(IC)) is accessed.
 270 if (vlam(ic) < zero) goto 280
-resnew(iact(ic)) = dmax1(resact(ic), tiny)
+resnew(iact(ic)) = max(resact(ic), tiny)
 goto 800
 280 ic = ic - 1
 if (ic > 0) goto 270
@@ -254,13 +254,13 @@ return
 !       Givens rotations is applied to the current QFAC and RFAC. Then NACT
 !       is reduced by one.
 !
-800 resnew(iact(ic)) = dmax1(resact(ic), tiny)
+800 resnew(iact(ic)) = max(resact(ic), tiny)
 jc = ic
 810 if (jc < nact) then
     jcp = jc + 1
     idiag = jc * jcp / 2
     jw = idiag + jcp
-    temp = dsqrt(rfac(jw - 1)**2 + rfac(jw)**2)
+    temp = sqrt(rfac(jw - 1)**2 + rfac(jw)**2)
     cval = rfac(jw) / temp
     sval = rfac(jw - 1) / temp
     rfac(jw - 1) = sval * rfac(idiag)

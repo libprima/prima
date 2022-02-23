@@ -40,7 +40,7 @@ dimension xpt(npt, *), xopt(*), bmat(ndim, *), zmat(npt, *), sl(*), su(*), xnew(
 half = 0.5D0
 one = 1.0D0
 zero = 0.0D0
-const = one + dsqrt(2.0D0)
+const = one + sqrt(2.0D0)
 do k = 1, npt
     hcol(k) = zero
 end do
@@ -85,11 +85,11 @@ do k = 1, npt
         dderiv = dderiv + glag(i) * temp
         distsq = distsq + temp * temp
     end do
-    subd = adelt / dsqrt(distsq)
+    subd = adelt / sqrt(distsq)
     slbd = -subd
     ilbd = 0
     iubd = 0
-    sumin = dmin1(one, subd)
+    sumin = min(one, subd)
 !
 !     Revise SLBD and SUBD if necessary because of the bounds in SL and SU.
 !
@@ -101,7 +101,7 @@ do k = 1, npt
                 ilbd = -i
             end if
             if (subd * temp > su(i) - xopt(i)) then
-                subd = dmax1(sumin, (su(i) - xopt(i)) / temp)
+                subd = max(sumin, (su(i) - xopt(i)) / temp)
                 iubd = i
             end if
         else if (temp < zero) then
@@ -110,7 +110,7 @@ do k = 1, npt
                 ilbd = i
             end if
             if (subd * temp < sl(i) - xopt(i)) then
-                subd = dmax1(sumin, (sl(i) - xopt(i)) / temp)
+                subd = max(sumin, (sl(i) - xopt(i)) / temp)
                 iubd = -i
             end if
         end if
@@ -125,7 +125,7 @@ do k = 1, npt
         vlag = slbd * (dderiv - slbd * diff)
         isbd = ilbd
         temp = subd * (dderiv - subd * diff)
-        if (dabs(temp) > dabs(vlag)) then
+        if (abs(temp) > abs(vlag)) then
             step = subd
             vlag = temp
             isbd = iubd
@@ -135,7 +135,7 @@ do k = 1, npt
         tempb = tempd - diff * subd
         if (tempa * tempb < zero) then
             temp = tempd * tempd / diff
-            if (dabs(temp) > dabs(vlag)) then
+            if (abs(temp) > abs(vlag)) then
                 step = tempd / diff
                 vlag = temp
                 isbd = 0
@@ -149,13 +149,13 @@ do k = 1, npt
         vlag = slbd * (one - slbd)
         isbd = ilbd
         temp = subd * (one - subd)
-        if (dabs(temp) > dabs(vlag)) then
+        if (abs(temp) > abs(vlag)) then
             step = subd
             vlag = temp
             isbd = iubd
         end if
         if (subd > half) then
-            if (dabs(vlag) < 0.25D0) then
+            if (abs(vlag) < 0.25D0) then
                 step = half
                 vlag = 0.25D0
                 isbd = 0
@@ -186,7 +186,7 @@ end do
 !
 do i = 1, n
     temp = xopt(i) + stpsav * (xpt(ksav, i) - xopt(i))
-    xnew(i) = dmax1(sl(i), dmin1(su(i), temp))
+    xnew(i) = max(sl(i), min(su(i), temp))
 end do
 if (ibdsav < 0) xnew(-ibdsav) = sl(-ibdsav)
 if (ibdsav > 0) xnew(ibdsav) = su(ibdsav)
@@ -201,8 +201,8 @@ iflag = 0
 ggfree = zero
 do i = 1, n
     w(i) = zero
-    tempa = dmin1(xopt(i) - sl(i), glag(i))
-    tempb = dmax1(xopt(i) - su(i), glag(i))
+    tempa = min(xopt(i) - sl(i), glag(i))
+    tempb = max(xopt(i) - su(i), glag(i))
     if (tempa > zero .or. tempb < zero) then
         w(i) = bigstp
         ggfree = ggfree + glag(i)**2
@@ -218,7 +218,7 @@ end if
 120 temp = adelt * adelt - wfixsq
 if (temp > zero) then
     wsqsav = wfixsq
-    step = dsqrt(temp / ggfree)
+    step = sqrt(temp / ggfree)
     ggfree = zero
     do i = 1, n
         if (w(i) == bigstp) then
@@ -244,7 +244,7 @@ gw = zero
 do i = 1, n
     if (w(i) == bigstp) then
         w(i) = -step * glag(i)
-        xalt(i) = dmax1(sl(i), dmin1(su(i), xopt(i) + w(i)))
+        xalt(i) = max(sl(i), min(su(i), xopt(i) + w(i)))
     else if (w(i) == zero) then
         xalt(i) = xopt(i)
     else if (glag(i) > zero) then
@@ -273,7 +273,7 @@ if (curv > -gw .and. curv < -const * gw) then
     scale = -gw / curv
     do i = 1, n
         temp = xopt(i) + scale * w(i)
-        xalt(i) = dmax1(sl(i), dmin1(su(i), temp))
+        xalt(i) = max(sl(i), min(su(i), temp))
     end do
     cauchy = (half * gw * scale)**2
 else

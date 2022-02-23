@@ -109,7 +109,7 @@ C
       IF (DD >= DDSAV) GOTO 290
       IF (DD == ZERO) GOTO 300
       DDSAV=DD
-      DNORM=DSQRT(DD)
+      DNORM=SQRT(DD)
 C
 C     Pick the next integer L or terminate, a positive value of L being
 C       the index of the most violated constraint. The purpose of CTOL
@@ -144,7 +144,7 @@ C
                       DO I=1,N
                           SUM=SUM+DW(I)*AMAT(I,J)
                       END DO
-                      CTOL=DMAX1(CTOL,DABS(SUM))
+                      CTOL=MAX(CTOL,ABS(SUM))
                   END DO
               END IF
           END IF
@@ -169,10 +169,10 @@ C
           IF (J <= NACT) THEN
               RFAC(IDIAG+J)=SPROD
           ELSE
-              IF (DABS(RDIAG) <= 1.0D-20*DABS(SPROD)) THEN
+              IF (ABS(RDIAG) <= 1.0D-20*ABS(SPROD)) THEN
                   RDIAG=SPROD
               ELSE
-                  TEMP=DSQRT(SPROD*SPROD+RDIAG*RDIAG)
+                  TEMP=SQRT(SPROD*SPROD+RDIAG*RDIAG)
                   COSV=SPROD/TEMP
                   SINV=RDIAG/TEMP
                   RDIAG=TEMP
@@ -189,7 +189,7 @@ C
               QFAC(I,NACTP)=-QFAC(I,NACTP)
           END DO
       END IF
-      RFAC(IDIAG+NACTP)=DABS(RDIAG)
+      RFAC(IDIAG+NACTP)=ABS(RDIAG)
       NACT=NACTP
       IACT(NACT)=L
       RESACT(NACT)=RESNEW(L)
@@ -229,7 +229,7 @@ C
           VLAM(J)=VLAM(J)-VMULT*W(J)
       END DO
       IF (IC > 0) VLAM(IC)=ZERO
-      VIOLMX=DMAX1(VIOLMX-VMULT,ZERO)
+      VIOLMX=MAX(VIOLMX-VMULT,ZERO)
       IF (IC == 0) VIOLMX=ZERO
 C
 C     Reduce the active set if necessary, so that all components of the
@@ -239,7 +239,7 @@ C
       IFLAG=3
       IC=NACT
   270 IF (VLAM(IC) < ZERO) GOTO 280
-      RESNEW(IACT(IC))=DMAX1(RESACT(IC),TINY)
+      RESNEW(IACT(IC))=MAX(RESACT(IC),TINY)
       GOTO 800
   280 IC=IC-1
       IF (IC > 0) GOTO 270
@@ -259,13 +259,13 @@ C       value of IACT(NACT) is the old value of IACT(IC). A sequence of
 C       Givens rotations is applied to the current QFAC and RFAC. Then NACT
 C       is reduced by one.
 C
-  800 RESNEW(IACT(IC))=DMAX1(RESACT(IC),TINY)
+  800 RESNEW(IACT(IC))=MAX(RESACT(IC),TINY)
       JC=IC
   810 IF (JC < NACT) THEN
           JCP=JC+1
           IDIAG=JC*JCP/2
           JW=IDIAG+JCP
-          TEMP=DSQRT(RFAC(JW-1)**2+RFAC(JW)**2)
+          TEMP=SQRT(RFAC(JW-1)**2+RFAC(JW)**2)
           CVAL=RFAC(JW)/TEMP
           SVAL=RFAC(JW-1)/TEMP
           RFAC(JW-1)=SVAL*RFAC(IDIAG)

@@ -24,7 +24,7 @@ C
 C     Preliminary calculations.
 C
       HALF=0.5D0
-      HALFRT=DSQRT(HALF)
+      HALFRT=SQRT(HALF)
       ONE=1.0D0
       ZERO=0.0D0
 C
@@ -70,7 +70,7 @@ C
               WSQ=WSQ+D(I)**2
           END DO
           WHW=ZERO
-          RATIO=DSQRT(WSQ/VSQ)
+          RATIO=SQRT(WSQ/VSQ)
           DO I=1,N
               TEMP=ZERO
               DO J=1,N
@@ -82,7 +82,7 @@ C
           VHV=RATIO*RATIO*VHV
           VHW=RATIO*WSQ
           TEMP=HALF*(WHW-VHV)
-          TEMP=TEMP+DSIGN(DSQRT(TEMP**2+VHW**2),WHW+VHV)
+          TEMP=TEMP+DSIGN(SQRT(TEMP**2+VHW**2),WHW+VHV)
           DO I=1,N
               D(I)=VHW*V(I)+TEMP*D(I)
           END DO
@@ -107,16 +107,16 @@ C
       END DO
       TEMP=GD/GG
       VV=ZERO
-      SCALE=DSIGN(RHO/DSQRT(DD),GD*DHD)
+      SCALE=DSIGN(RHO/SQRT(DD),GD*DHD)
       DO I=1,N
           V(I)=D(I)-TEMP*G(I)
           VV=VV+V(I)**2
           D(I)=SCALE*D(I)
       END DO
-      GNORM=DSQRT(GG)
-      IF (GNORM*DD <= 0.5D-2*RHO*DABS(DHD) .OR.
+      GNORM=SQRT(GG)
+      IF (GNORM*DD <= 0.5D-2*RHO*ABS(DHD) .OR.
      1  VV/DD <= 1.0D-4) THEN
-          VMAX=DABS(SCALE*(GD+HALF*SCALE*DHD))
+          VMAX=ABS(SCALE*(GD+HALF*SCALE*DHD))
           GOTO 170
       END IF
 C
@@ -138,18 +138,18 @@ C
           VHG=VHG+SUMV*G(I)
           VHV=VHV+SUMV*V(I)
       END DO
-      VNORM=DSQRT(VV)
+      VNORM=SQRT(VV)
       GHG=GHG/GG
       VHG=VHG/(VNORM*GNORM)
       VHV=VHV/VV
-      IF (DABS(VHG) <= 0.01D0*DMAX1(DABS(GHG),DABS(VHV))) THEN
+      IF (ABS(VHG) <= 0.01D0*MAX(ABS(GHG),ABS(VHV))) THEN
           VMU=GHG-VHV
           WCOS=ONE
           WSIN=ZERO
       ELSE
           TEMP=HALF*(GHG-VHV)
-          VMU=TEMP+DSIGN(DSQRT(TEMP**2+VHG**2),TEMP)
-          TEMP=DSQRT(VMU**2+VHG**2)
+          VMU=TEMP+DSIGN(SQRT(TEMP**2+VHG**2),TEMP)
+          TEMP=SQRT(VMU**2+VHG**2)
           WCOS=VMU/TEMP
           WSIN=VHG/TEMP
       END IF
@@ -167,9 +167,9 @@ C     choice from these possibilities that is optimal.
 C
       DLIN=WCOS*GNORM/RHO
       VLIN=-WSIN*GNORM/RHO
-      TEMPA=DABS(DLIN)+HALF*DABS(VMU+VHV)
-      TEMPB=DABS(VLIN)+HALF*DABS(GHG-VMU)
-      TEMPC=HALFRT*(DABS(DLIN)+DABS(VLIN))+0.25D0*DABS(GHG+VHV)
+      TEMPA=ABS(DLIN)+HALF*ABS(VMU+VHV)
+      TEMPB=ABS(VLIN)+HALF*ABS(GHG-VMU)
+      TEMPC=HALFRT*(ABS(DLIN)+ABS(VLIN))+0.25D0*ABS(GHG+VHV)
       IF (TEMPA >= TEMPB .AND. TEMPA >= TEMPC) THEN
           TEMPD=DSIGN(RHO,DLIN*(VMU+VHV))
           TEMPV=ZERO
@@ -183,6 +183,6 @@ C
       DO I=1,N
           D(I)=TEMPD*D(I)+TEMPV*V(I)
       END DO
-      VMAX=RHO*RHO*DMAX1(TEMPA,TEMPB,TEMPC)
+      VMAX=RHO*RHO*MAX(TEMPA,TEMPB,TEMPC)
   170 RETURN
       END

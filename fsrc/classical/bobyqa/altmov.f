@@ -41,7 +41,7 @@ C
       HALF=0.5D0
       ONE=1.0D0
       ZERO=0.0D0
-      CONST=ONE+DSQRT(2.0D0)
+      CONST=ONE+SQRT(2.0D0)
       DO K=1,NPT
           HCOL(K)=ZERO
       END DO
@@ -86,11 +86,11 @@ C
               DDERIV=DDERIV+GLAG(I)*TEMP
               DISTSQ=DISTSQ+TEMP*TEMP
           END DO
-          SUBD=ADELT/DSQRT(DISTSQ)
+          SUBD=ADELT/SQRT(DISTSQ)
           SLBD=-SUBD
           ILBD=0
           IUBD=0
-          SUMIN=DMIN1(ONE,SUBD)
+          SUMIN=MIN(ONE,SUBD)
 C
 C     Revise SLBD and SUBD if necessary because of the bounds in SL and SU.
 C
@@ -102,7 +102,7 @@ C
                       ILBD=-I
                   END IF
                   IF (SUBD*TEMP > SU(I)-XOPT(I)) THEN
-                      SUBD=DMAX1(SUMIN,(SU(I)-XOPT(I))/TEMP)
+                      SUBD=MAX(SUMIN,(SU(I)-XOPT(I))/TEMP)
                       IUBD=I
                   END IF
               ELSE IF (TEMP < ZERO) THEN
@@ -111,7 +111,7 @@ C
                       ILBD=I
                   END IF
                   IF (SUBD*TEMP < SL(I)-XOPT(I)) THEN
-                      SUBD=DMAX1(SUMIN,(SL(I)-XOPT(I))/TEMP)
+                      SUBD=MAX(SUMIN,(SL(I)-XOPT(I))/TEMP)
                       IUBD=-I
                   END IF
               END IF
@@ -126,7 +126,7 @@ C
               VLAG=SLBD*(DDERIV-SLBD*DIFF)
               ISBD=ILBD
               TEMP=SUBD*(DDERIV-SUBD*DIFF)
-              IF (DABS(TEMP) > DABS(VLAG)) THEN
+              IF (ABS(TEMP) > ABS(VLAG)) THEN
                   STEP=SUBD
                   VLAG=TEMP
                   ISBD=IUBD
@@ -136,7 +136,7 @@ C
               TEMPB=TEMPD-DIFF*SUBD
               IF (TEMPA*TEMPB < ZERO) THEN
                   TEMP=TEMPD*TEMPD/DIFF
-                  IF (DABS(TEMP) > DABS(VLAG)) THEN
+                  IF (ABS(TEMP) > ABS(VLAG)) THEN
                       STEP=TEMPD/DIFF
                       VLAG=TEMP
                       ISBD=0
@@ -150,13 +150,13 @@ C
               VLAG=SLBD*(ONE-SLBD)
               ISBD=ILBD
               TEMP=SUBD*(ONE-SUBD)
-              IF (DABS(TEMP) > DABS(VLAG)) THEN
+              IF (ABS(TEMP) > ABS(VLAG)) THEN
                   STEP=SUBD
                   VLAG=TEMP
                   ISBD=IUBD
               END IF
               IF (SUBD > HALF) THEN
-                  IF (DABS(VLAG) < 0.25D0) THEN
+                  IF (ABS(VLAG) < 0.25D0) THEN
                       STEP=HALF
                       VLAG=0.25D0
                       ISBD=0
@@ -181,7 +181,7 @@ C     Construct XNEW in a way that satisfies the bound constraints exactly.
 C
       DO I=1,N
           TEMP=XOPT(I)+STPSAV*(XPT(KSAV,I)-XOPT(I))
-          XNEW(I)=DMAX1(SL(I),DMIN1(SU(I),TEMP))
+          XNEW(I)=MAX(SL(I),MIN(SU(I),TEMP))
       END DO
       IF (IBDSAV < 0) XNEW(-IBDSAV)=SL(-IBDSAV)
       IF (IBDSAV > 0) XNEW(IBDSAV)=SU(IBDSAV)
@@ -196,8 +196,8 @@ C
       GGFREE=ZERO
       DO I=1,N
           W(I)=ZERO
-          TEMPA=DMIN1(XOPT(I)-SL(I),GLAG(I))
-          TEMPB=DMAX1(XOPT(I)-SU(I),GLAG(I))
+          TEMPA=MIN(XOPT(I)-SL(I),GLAG(I))
+          TEMPB=MAX(XOPT(I)-SU(I),GLAG(I))
           IF (TEMPA > ZERO .OR. TEMPB < ZERO) THEN
               W(I)=BIGSTP
               GGFREE=GGFREE+GLAG(I)**2
@@ -213,7 +213,7 @@ C
   120 TEMP=ADELT*ADELT-WFIXSQ
       IF (TEMP > ZERO) THEN
           WSQSAV=WFIXSQ
-          STEP=DSQRT(TEMP/GGFREE)
+          STEP=SQRT(TEMP/GGFREE)
           GGFREE=ZERO
           DO I=1,N
               IF (W(I) == BIGSTP) THEN
@@ -239,7 +239,7 @@ C
       DO I=1,N
           IF (W(I) == BIGSTP) THEN
               W(I)=-STEP*GLAG(I)
-              XALT(I)=DMAX1(SL(I),DMIN1(SU(I),XOPT(I)+W(I)))
+              XALT(I)=MAX(SL(I),MIN(SU(I),XOPT(I)+W(I)))
           ELSE IF (W(I) == ZERO) THEN
               XALT(I)=XOPT(I)
           ELSE IF (GLAG(I) > ZERO) THEN
@@ -268,7 +268,7 @@ C
           SCALE=-GW/CURV
           DO I=1,N
               TEMP=XOPT(I)+SCALE*W(I)
-              XALT(I)=DMAX1(SL(I),DMIN1(SU(I),TEMP))
+              XALT(I)=MAX(SL(I),MIN(SU(I),TEMP))
           END DO
           CAUCHY=(HALF*GW*SCALE)**2
       ELSE

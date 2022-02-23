@@ -62,9 +62,9 @@ do k = 1, nm
         h(kp, k) = zero
     else
         temp = h(kp, k)
-        tn(k) = dsign(dsqrt(sum + temp * temp), temp)
+        tn(k) = dsign(sqrt(sum + temp * temp), temp)
         h(kp, k) = -sum / (temp + tn(k))
-        temp = dsqrt(two / (sum + h(kp, k)**2))
+        temp = sqrt(two / (sum + h(kp, k)**2))
         do i = kp, n
             w(i) = temp * h(i, k)
             h(i, k) = w(i)
@@ -99,7 +99,7 @@ do i = 1, n
     gg(i) = g(i)
     gsq = gsq + g(i)**2
 end do
-gnorm = dsqrt(gsq)
+gnorm = sqrt(gsq)
 do k = 1, nm
     kp = k + 1
     sum = zero
@@ -114,13 +114,13 @@ end do
 !     Begin the trust region calculation with a tridiagonal matrix by
 !     calculating the norm of H. Then treat the case when H is zero.
 !
-hnorm = dabs(td(1)) + dabs(tn(1))
+hnorm = abs(td(1)) + abs(tn(1))
 tdmin = td(1)
 tn(n) = zero
 do i = 2, n
-    temp = dabs(tn(i - 1)) + dabs(td(i)) + dabs(tn(i))
-    hnorm = dmax1(hnorm, temp)
-    tdmin = dmin1(tdmin, td(i))
+    temp = abs(tn(i - 1)) + abs(td(i)) + abs(tn(i))
+    hnorm = max(hnorm, temp)
+    tdmin = min(tdmin, td(i))
 end do
 if (hnorm == zero) then
     if (gnorm == zero) goto 400
@@ -133,7 +133,7 @@ end if
 !
 !     Set the initial values of PAR and its bounds.
 !
-parl = dmax1(zero, -tdmin, gnorm / delta - hnorm)
+parl = max(zero, -tdmin, gnorm / delta - hnorm)
 parlest = parl
 par = parl
 paru = zero
@@ -160,7 +160,7 @@ end do
 ! To avoid wasting energy, we do the following
 sumd = zero
 do i = 1, n
-    sumd = sumd + dabs(d(i))
+    sumd = sumd + abs(d(i))
 end do
 if (sumd >= 1.0D100 .or. sumd /= sumd) then
     do i = 1, n
@@ -207,14 +207,14 @@ k = ksav
 !     matrix, and thus revise PARLEST.
 !
 160 d(k) = one
-if (dabs(tn(k)) <= dabs(piv(k))) then
+if (abs(tn(k)) <= abs(piv(k))) then
     dsq = one
     dhd = piv(k)
 else
     temp = td(k + 1) + par
-    if (temp <= dabs(piv(k))) then
+    if (temp <= abs(piv(k))) then
         d(k + 1) = dsign(one, -tn(k))
-        dhd = piv(k) + temp - two * dabs(tn(k))
+        dhd = piv(k) + temp - two * abs(tn(k))
     else
         d(k + 1) = -tn(k) / temp
         dhd = piv(k) + tn(k) * d(k + 1)
@@ -245,7 +245,7 @@ if (paruest > zero .and. parlest >= temp) then
     do i = 1, n
         dtg = dtg + d(i) * gg(i)
     end do
-    scale = -dsign(delta / dsqrt(dsq), dtg)
+    scale = -dsign(delta / sqrt(dsq), dtg)
     do i = 1, n
         d(i) = scale * d(i)
     end do
@@ -258,9 +258,9 @@ end if
     par = two * parlest + gnorm / delta
 else
     par = 0.5D0 * (parl + paru)
-    par = dmax1(par, parlest)
+    par = max(par, parlest)
 end if
-if (paruest > zero) par = dmin1(par, paruest)
+if (paruest > zero) par = min(par, paruest)
 goto 140
 !
 !     Calculate D for the current PAR in the positive definite case.
@@ -286,7 +286,7 @@ if (par == zero .and. dsq <= delsq) goto 320
 !
 !     Make the usual test for acceptability of a full trust region step.
 !
-dnorm = dsqrt(dsq)
+dnorm = sqrt(dsq)
 phi = one / dnorm - one / delta
 temp = tol * (one + par * dsq / wsq) - dsq * phi * phi
 if (temp >= zero) then
@@ -311,7 +311,7 @@ if (phi < zero) then
     slope = one / gnorm
     if (paru > zero) slope = (phiu - phi) / (paru - par)
     temp = par - phi / slope
-    if (paruest > zero) temp = dmin1(temp, paruest)
+    if (paruest > zero) temp = min(temp, paruest)
     paruest = temp
     posdef = one
     parl = par
@@ -342,8 +342,8 @@ if (posdef == zero) then
 !
 !     Apply the alternative test for convergence.
 !
-    tempa = dabs(delsq - dsq)
-    tempb = dsqrt(dtz * dtz + tempa * zsq)
+    tempa = abs(delsq - dsq)
+    tempb = sqrt(dtz * dtz + tempa * zsq)
     gam = tempa / (dsign(tempb, dtz) + dtz)
     temp = tol * (wsq + par * delsq) - gam * gam * wwsq
     if (temp >= zero) then
@@ -352,7 +352,7 @@ if (posdef == zero) then
         end do
         goto 370
     end if
-    parlest = dmax1(parlest, par - wwsq / zsq)
+    parlest = max(parlest, par - wwsq / zsq)
 end if
 !
 !     Complete the iteration when PHI is positive.
@@ -362,7 +362,7 @@ if (paru > zero) then
     if (phi >= phiu) goto 370
     slope = (phiu - phi) / (paru - par)
 end if
-parlest = dmax1(parlest, par - phi / slope)
+parlest = max(parlest, par - phi / slope)
 paruest = par
 if (posdef == one) then
     slope = (phi - phil) / (par - parl)
@@ -380,7 +380,7 @@ pivot = td(1)
 shfmax = pivot
 do k = 2, n
     pivot = td(k) - tn(k - 1)**2 / pivot
-    shfmax = dmin1(shfmax, pivot)
+    shfmax = min(shfmax, pivot)
 end do
 !
 !     Find EVALUE by a bisection method, but occasionally SHFMAX may be

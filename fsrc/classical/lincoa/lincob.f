@@ -307,7 +307,7 @@ C       XBASE and the second derivative parameters of the KNEW-th Lagrange
 C       function in W(1) to W(N) and in PQW(1) to PQW(NPT), respectively.
 C
       ELSE
-          DEL=DMAX1(TENTH*DELTA,RHO)
+          DEL=MAX(TENTH*DELTA,RHO)
           DO I=1,N
               W(I)=BMAT(KNEW,I)
           END DO
@@ -372,7 +372,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
           X(I)=XBASE(I)+XNEW(I)
           XDIFF=XDIFF+(X(I)-XSAV(I))**2
       END DO
-      XDIFF=DSQRT(XDIFF)
+      XDIFF=SQRT(XDIFF)
       IF (KSAVE == -1) XDIFF=RHO
       IF (XDIFF <= TENTH*RHO .OR. XDIFF >= DELTA+DELTA) THEN
           IFEAS=0
@@ -453,11 +453,11 @@ C
           IF (RATIO <= TENTH) THEN
               DELTA=HALF*DELTA
           ELSE IF (RATIO <= 0.7D0) THEN
-              DELTA=DMAX1(HALF*DELTA,SNORM)
+              DELTA=MAX(HALF*DELTA,SNORM)
           ELSE
-              TEMP=DSQRT(2.0D0)*DELTA
-              DELTA=DMAX1(HALF*DELTA,SNORM+SNORM)
-              DELTA=DMIN1(DELTA,TEMP)
+              TEMP=SQRT(2.0D0)*DELTA
+              DELTA=MAX(HALF*DELTA,SNORM+SNORM)
+              DELTA=MIN(DELTA,TEMP)
           END IF
           IF (DELTA <= 1.4D0*RHO) DELTA=RHO
       END IF
@@ -485,7 +485,7 @@ C       by the symmetric Broyden method in the usual way.
 C
       IF (IFEAS == 1) THEN
           ITEST=ITEST+1
-          IF (DABS(DFFALT) >= TENTH*DABS(DIFF)) ITEST=0
+          IF (ABS(DFFALT) >= TENTH*ABS(DIFF)) ITEST=0
       END IF
 C
 C     Update the second derivatives of the model by the symmetric Broyden
@@ -563,7 +563,7 @@ C         By Tom (on 04-06-2019):
               GOTO 616
           END IF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          SNORM=DSQRT(SSQ)
+          SNORM=SQRT(SSQ)
           DO J=1,M
               IF (RESCON(J) >= DELTA+SNORM) THEN
                   RESCON(J)=SNORM-RESCON(J)
@@ -574,7 +574,7 @@ C         By Tom (on 04-06-2019):
                       DO I=1,N
                           TEMP=TEMP-XOPT(I)*AMAT(I,J)
                       END DO
-                      TEMP=DMAX1(TEMP,ZERO)
+                      TEMP=MAX(TEMP,ZERO)
                       IF (TEMP >= DELTA) TEMP=-TEMP
                       RESCON(J)=TEMP
                   END IF
@@ -652,7 +652,7 @@ C
 C     Alternatively, find out if the interpolation points are close enough
 C       to the best point so far.
 C
-  530 DISTSQ=DMAX1(DELTA*DELTA,4.0D0*RHO*RHO)
+  530 DISTSQ=MAX(DELTA*DELTA,4.0D0*RHO*RHO)
       DO K=1,NPT
           SUM=ZERO
           DO J=1,N
@@ -685,9 +685,9 @@ C
           ELSE IF (RHO <= 16.0D0*RHOEND) THEN
               RHO=RHOEND
           ELSE
-              RHO=DSQRT(RHO*RHOEND)
+              RHO=SQRT(RHO*RHOEND)
           END IF
-          DELTA=DMAX1(DELTA,RHO)
+          DELTA=MAX(DELTA,RHO)
           IF (IPRINT >= 2) THEN
               IF (IPRINT >= 3) PRINT 570
   570         FORMAT (5X)

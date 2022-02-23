@@ -24,7 +24,7 @@ C
       ZTEST=ZERO
       DO K=1,NPT
           DO J=1,NPTM
-              ZTEST=DMAX1(ZTEST,DABS(ZMAT(K,J)))
+              ZTEST=MAX(ZTEST,ABS(ZMAT(K,J)))
           END DO
       END DO
       ZTEST=1.0D-20*ZTEST
@@ -33,8 +33,8 @@ C     Apply the rotations that put zeros in the KNEW-th row of ZMAT.
 C
       JL=1
       DO J=2,NPTM
-          IF (DABS(ZMAT(KNEW,J)) > ZTEST) THEN
-              TEMP=DSQRT(ZMAT(KNEW,1)**2+ZMAT(KNEW,J)**2)
+          IF (ABS(ZMAT(KNEW,J)) > ZTEST) THEN
+              TEMP=SQRT(ZMAT(KNEW,1)**2+ZMAT(KNEW,J)**2)
               TEMPA=ZMAT(KNEW,1)/TEMP
               TEMPB=ZMAT(KNEW,J)/TEMP
               DO I=1,NPT
@@ -58,7 +58,7 @@ C
 C
 C     Complete the updating of ZMAT.
 C
-      TEMP=DSQRT(DENOM)
+      TEMP=SQRT(DENOM)
       TEMPB=ZMAT(KNEW,1)/TEMP
       TEMPA=TAU/TEMP
       DO I=1,NPT

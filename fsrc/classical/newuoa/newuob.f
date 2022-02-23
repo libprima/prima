@@ -232,7 +232,7 @@ C
       DO I=1,N
           DSQ=DSQ+D(I)**2
       END DO
-      DNORM=DMIN1(DELTA,SQRT(DSQ))
+      DNORM=MIN(DELTA,SQRT(DSQ))
       IF (DNORM < HALF*RHO) THEN
           KNEW=-1
           DELTA=TENTH*DELTA
@@ -240,7 +240,7 @@ C
           IF (DELTA <= 1.5D0*RHO) DELTA=RHO
           IF (NF <= NFSAV+2) GOTO 460
           TEMP=0.125D0*CRVMIN*RHO*RHO
-          IF (TEMP <= DMAX1(DIFFA,DIFFB,DIFFC)) GOTO 460
+          IF (TEMP <= MAX(DIFFA,DIFFB,DIFFC)) GOTO 460
           GOTO 490
       END IF
 C
@@ -493,15 +493,15 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       IF (RATIO <= TENTH) THEN
           DELTA=HALF*DNORM
       ELSE IF (RATIO <= 0.7D0) THEN
-          DELTA=DMAX1(HALF*DELTA,DNORM)
+          DELTA=MAX(HALF*DELTA,DNORM)
       ELSE
-          DELTA=DMAX1(HALF*DELTA,DNORM+DNORM)
+          DELTA=MAX(HALF*DELTA,DNORM+DNORM)
       END IF
       IF (DELTA <= 1.5D0*RHO) DELTA=RHO
 C
 C     Set KNEW to the index of the next interpolation point to be deleted.
 C
-      RHOSQ=DMAX1(TENTH*DELTA,RHO)**2
+      RHOSQ=MAX(TENTH*DELTA,RHO)**2
       KTEMP=0
       DETRAT=ZERO
       IF (F >= FSAVE) THEN
@@ -640,12 +640,12 @@ C     If KNEW is positive, then set DSTEP, and branch back for the next
 C     iteration, which will generate a "model step".
 C
       IF (KNEW > 0) THEN
-          DSTEP=DMAX1(DMIN1(TENTH*SQRT(DISTSQ),HALF*DELTA),RHO)
+          DSTEP=MAX(MIN(TENTH*SQRT(DISTSQ),HALF*DELTA),RHO)
           DSQ=DSTEP*DSTEP
           GOTO 120
       END IF
       IF (RATIO > ZERO) GOTO 100
-      IF (DMAX1(DELTA,DNORM) > RHO) GOTO 100
+      IF (MAX(DELTA,DNORM) > RHO) GOTO 100
 C
 C     The calculations with the current value of RHO are complete. Pick the
 C     next values of RHO and DELTA.
@@ -660,7 +660,7 @@ C
           ELSE
               RHO=TENTH*RHO
           END IF
-          DELTA=DMAX1(DELTA,RHO)
+          DELTA=MAX(DELTA,RHO)
           IF (IPRINT >= 2) THEN
               IF (IPRINT >= 3) PRINT 500
   500         FORMAT (5X)
