@@ -58,7 +58,8 @@ temp_mexdir = tempdir();
 mex_status = -1;
 exception = [];
 try
-    [~, mex_status] = evalc('mex(example_file, ''-outdir'', temp_mexdir)'); % Use evalc so that no output will be displayed
+%    [~, mex_status] = evalc('mex(example_file, ''-outdir'', temp_mexdir)'); % Use evalc so that no output will be displayed
+    mex_status = mex(example_file, '-outdir', temp_mexdir)
 catch exception
     % Do nothing
 end
@@ -76,7 +77,8 @@ end
 addpath(temp_mexdir);  % Make `timestwo` available on path
 exception = [];
 try
-    [~, timestwo_out] = evalc('timestwo(1)'); % Try whether timestwo works correctly
+    %[~, timestwo_out] = evalc('timestwo(1)'); % Try whether timestwo works correctly
+    timestwo_out = timestwo(1)
 catch exception
     % Do nothing
 end
