@@ -54,12 +54,17 @@ if ~exist(example_file, 'file')
 end
 
 % Try `mex(example_file)`
-temp_mexdir = tempdir();
+%!------------------------------------------------------------------------------------------------!%
+% In general, we should clear a MEX function before compiling it. Otherwise, it may lead to a
+% failure of even crash. See https://github.com/equipez/test_matlab
+% Without the next line, `mex(example_file)` fails on Windows if we run this script two times.
+clear('timestwo');
+%!------------------------------------------------------------------------------------------------!%
+temp_mexdir = tempdir();  % The directory to output the MEX file of `timestwo`.
 mex_status = -1;
 exception = [];
-    mex_status = mex(example_file, '-outdir', temp_mexdir)
 try
-%    [~, mex_status] = evalc('mex(example_file, ''-outdir'', temp_mexdir)'); % Use evalc so that no output will be displayed
+    [~, mex_status] = evalc('mex(example_file, ''-outdir'', temp_mexdir)'); % Use evalc so that no output will be displayed
 catch exception
     % Do nothing
 end
@@ -82,7 +87,6 @@ catch exception
     % Do nothing
 end
 
-clear('timestwo');
 rmpath(temp_mexdir);  % Clean up the path before returning.
 cellfun(@(filename) delete(filename), trash_files);  % Clean up the trash before returning
 
