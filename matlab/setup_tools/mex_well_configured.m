@@ -82,7 +82,7 @@ catch exception
     % Do nothing
 end
 
-clear(timestwo);
+clear('timestwo');
 rmpath(temp_mexdir);  % Clean up the path before returning.
 cellfun(@(filename) delete(filename), trash_files);  % Clean up the trash before returning
 
