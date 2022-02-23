@@ -145,7 +145,7 @@ C      RESMAX=0.0
           DO K=1,M
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C   60     RESMAX=AMAX1(RESMAX,-CON(K))
-              RESMAX=DMAX1(RESMAX,-CON(K))
+              RESMAX=MAX(RESMAX,-CON(K))
           END DO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       END IF
@@ -280,7 +280,7 @@ C      IF (I .EQ. J) TEMP=TEMP-1.0
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C  200 ERROR=AMAX1(ERROR,ABS(TEMP))
 C      IF (ERROR .GT. 0.1) THEN
-              ERROR=DMAX1(ERROR,ABS(TEMP))
+              ERROR=MAX(ERROR,ABS(TEMP))
           END DO
       END DO
       IF (ERROR > 0.1D0) THEN
@@ -389,8 +389,8 @@ C      SUM=0.0
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C          CVMAXP=AMAX1(CVMAXP,-SUM-TEMP)
 C          CVMAXM=AMAX1(CVMAXM,SUM-TEMP)
-              CVMAXP=DMAX1(CVMAXP,-SUM-TEMP)
-              CVMAXM=DMAX1(CVMAXM,SUM-TEMP)
+              CVMAXP=MAX(CVMAXP,-SUM-TEMP)
+              CVMAXM=MAX(CVMAXM,SUM-TEMP)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           END IF
       END DO
@@ -475,7 +475,7 @@ C      CON(MP)=0.0
           END DO
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IF (K .LT. MP) RESNEW=AMAX1(RESNEW,SUM)
-          IF (K < MP) RESNEW=DMAX1(RESNEW,SUM)
+          IF (K < MP) RESNEW=MAX(RESNEW,SUM)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       END DO
 C
@@ -658,18 +658,18 @@ C  560         CMAX=AMAX1(CMAX,DATMAT(K,I))
 C              IF (K .LE. M .AND. CMIN .LT. 0.5*CMAX) THEN
 C                  TEMP=AMAX1(CMAX,0.0)-CMIN
 C                  IF (DENOM .LE. 0.0) THEN
-                      CMIN=DMIN1(CMIN,DATMAT(K,I))
-                      CMAX=DMAX1(CMAX,DATMAT(K,I))
+                      CMIN=MIN(CMIN,DATMAT(K,I))
+                      CMAX=MAX(CMAX,DATMAT(K,I))
                   END DO
                   IF (K <= M .AND. CMIN < 0.5D0*CMAX) THEN
-                      TEMP=DMAX1(CMAX,0.0D0)-CMIN
+                      TEMP=MAX(CMAX,0.0D0)-CMIN
                       IF (DENOM <= 0.0D0) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                           DENOM=TEMP
                       ELSE
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C                      DENOM=AMIN1(DENOM,TEMP)
-                          DENOM=DMIN1(DENOM,TEMP)
+                          DENOM=MIN(DENOM,TEMP)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                       END IF
                   END IF

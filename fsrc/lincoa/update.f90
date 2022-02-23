@@ -92,7 +92,7 @@ if (knew == 0) then
             if (j < idz) temp = -one
             hdiag = hdiag + temp * zmat(k, j)**2
         end do
-        denabs = dabs(beta * hdiag + vlag(k)**2)
+        denabs = abs(beta * hdiag + vlag(k)**2)
         distsq = zero
         do j = 1, n
             distsq = distsq + (xpt(k, j) - xpt(kopt, j))**2
@@ -113,7 +113,7 @@ if (nptm >= 2) then
         if (j == idz) then
             jl = idz
         else if (zmat(knew, j) /= zero) then
-            temp = dsqrt(zmat(knew, jl)**2 + zmat(knew, j)**2)
+            temp = sqrt(zmat(knew, jl)**2 + zmat(knew, j)**2)
             tempa = zmat(knew, jl) / temp
             tempb = zmat(knew, j) / temp
             do i = 1, npt
@@ -145,7 +145,7 @@ if (denom == zero) then
     knew = 0
     goto 180
 end if
-sqrtdn = dsqrt(dabs(denom))
+sqrtdn = sqrt(abs(denom))
 !
 !     Complete the updating of ZMAT when there is only one nonzero element
 !       in the KNEW-th row of the new matrix ZMAT. IFLAG is set to one when
@@ -176,7 +176,7 @@ else
     tempa = temp * beta
     tempb = temp * tau
     temp = zmat(knew, ja)
-    scala = one / dsqrt(dabs(beta) * temp * temp + tausq)
+    scala = one / sqrt(abs(beta) * temp * temp + tausq)
     scalb = scala * sqrtdn
     do i = 1, npt
         zmat(i, ja) = scala * (tau * zmat(i, ja) - temp * vlag(i))

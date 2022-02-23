@@ -102,8 +102,8 @@ C
           ELSE IF (NFM > N) THEN
               STEPA=XPT(NF-N,NFX)
               STEPB=-RHOBEG
-              IF (SL(NFX) == ZERO) STEPB=DMIN1(TWO*RHOBEG,SU(NFX))
-              IF (SU(NFX) == ZERO) STEPB=DMAX1(-TWO*RHOBEG,SL(NFX))
+              IF (SL(NFX) == ZERO) STEPB=MIN(TWO*RHOBEG,SU(NFX))
+              IF (SU(NFX) == ZERO) STEPB=MAX(-TWO*RHOBEG,SL(NFX))
               XPT(NF,NFX)=STEPB
           END IF
       ELSE
@@ -123,7 +123,7 @@ C     Calculate the next value of F. The least function value so far and
 C     its index are required.
 C
       DO J=1,N
-          X(J)=DMIN1(DMAX1(XL(J),XBASE(J)+XPT(NF,J)),XU(J))
+          X(J)=MIN(MAX(XL(J),XBASE(J)+XPT(NF,J)),XU(J))
           IF (XPT(NF,J) == SL(J)) X(J)=XL(J)
           IF (XPT(NF,J) == SU(J)) X(J)=XU(J)
       END DO
@@ -179,8 +179,8 @@ C
               BMAT(1,NFX)=-(STEPA+STEPB)/(STEPA*STEPB)
               BMAT(NF,NFX)=-HALF/XPT(NF-N,NFX)
               BMAT(NF-N,NFX)=-BMAT(1,NFX)-BMAT(NF,NFX)
-              ZMAT(1,NFX)=DSQRT(TWO)/(STEPA*STEPB)
-              ZMAT(NF,NFX)=DSQRT(HALF)/RHOSQ
+              ZMAT(1,NFX)=SQRT(TWO)/(STEPA*STEPB)
+              ZMAT(NF,NFX)=SQRT(HALF)/RHOSQ
               ZMAT(NF-N,NFX)=-ZMAT(1,NFX)-ZMAT(NF,NFX)
           END IF
 C

@@ -58,7 +58,7 @@ end do
 if (m > 0) then
     do j = 1, m
         rstat(j) = one
-        if (dabs(rescon(j)) >= del) rstat(j) = -one
+        if (abs(rescon(j)) >= del) rstat(j) = -one
     end do
     do k = 1, nact
         rstat(iact(k)) = zero
@@ -82,12 +82,12 @@ do k = 1, npt
         ss = ss + temp * temp
         sp = sp + gl(i) * temp
     end do
-    stp = -del / dsqrt(ss)
+    stp = -del / sqrt(ss)
     if (k == knew) then
         if (sp * (sp - one) < zero) stp = -stp
-        vlag = dabs(stp * sp) + stp * stp * dabs(sp - one)
+        vlag = abs(stp * sp) + stp * stp * abs(sp - one)
     else
-        vlag = dabs(stp * (one - stp) * sp)
+        vlag = abs(stp * (one - stp) * sp)
     end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29: With the original code, if either VLAG or VBIG is
@@ -110,7 +110,7 @@ do i = 1, n
     gg = gg + gl(i)**2
     step(i) = stpsav * (xpt(ksav, i) - xopt(i))
 end do
-vgrad = del * dsqrt(gg)
+vgrad = del * sqrt(gg)
 if (vgrad <= tenth * vbig) goto 220
 !
 !     Make the replacement if it provides a larger value of VBIG.
@@ -123,10 +123,10 @@ do k = 1, npt
     end do
     ghg = ghg + pqw(k) * temp * temp
 end do
-vnew = vgrad + dabs(half * del * del * ghg / gg)
+vnew = vgrad + abs(half * del * del * ghg / gg)
 if (vnew > vbig) then
     vbig = vnew
-    stp = del / dsqrt(gg)
+    stp = del / sqrt(gg)
     if (ghg < zero) stp = -stp
     do i = 1, n
         step(i) = stp * gl(i)
@@ -153,7 +153,7 @@ do i = 1, n
     end do
     gg = gg + gl(i)**2
 end do
-vgrad = del * dsqrt(gg)
+vgrad = del * sqrt(gg)
 if (vgrad <= tenth * vbig) goto 220
 ghg = zero
 do k = 1, npt
@@ -163,11 +163,11 @@ do k = 1, npt
     end do
     ghg = ghg + pqw(k) * temp * temp
 end do
-vnew = vgrad + dabs(half * del * del * ghg / gg)
+vnew = vgrad + abs(half * del * del * ghg / gg)
 !
 !     Set W to the possible move along the projected gradient.
 !
-stp = del / dsqrt(gg)
+stp = del / sqrt(gg)
 if (ghg < zero) stp = -stp
 ww = zero
 do i = 1, n
@@ -192,13 +192,13 @@ if (vnew / vbig >= 0.2D0) then
             do i = 1, n
                 temp = temp + w(i) * amat(i, j)
             end do
-            bigv = dmax1(bigv, temp)
+            bigv = max(bigv, temp)
         end if
         if (bigv < test) goto 170
         ifeas = 0
     end if
     ctol = zero
-    temp = 0.01D0 * dsqrt(ww)
+    temp = 0.01D0 * sqrt(ww)
     if (bigv > zero .and. bigv < temp) then
         do k = 1, nact
             j = iact(k)
@@ -206,7 +206,7 @@ if (vnew / vbig >= 0.2D0) then
             do i = 1, n
                 sum = sum + w(i) * amat(i, j)
             end do
-            ctol = dmax1(ctol, dabs(sum))
+            ctol = max(ctol, abs(sum))
         end do
     end if
     if (bigv <= 10.0D0 * ctol .or. bigv >= test) then
@@ -231,7 +231,7 @@ if (j <= m) then
     do i = 1, n
         temp = temp + step(i) * amat(i, j)
     end do
-    resmax = dmax1(resmax, temp)
+    resmax = max(resmax, temp)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !          IF (TEMP .LT. TEST) THEN
     if (.not. (temp >= test)) then

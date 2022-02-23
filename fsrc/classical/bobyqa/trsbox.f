@@ -120,7 +120,7 @@ C
           END IF
       END DO
       IF (RESID <= ZERO) GOTO 90
-      TEMP=DSQRT(STEPSQ*RESID+DS*DS)
+      TEMP=SQRT(STEPSQ*RESID+DS*DS)
       IF (DS < ZERO) THEN
           BLEN=(TEMP-DS)/STEPSQ
       ELSE
@@ -128,7 +128,7 @@ C
       END IF
       STPLEN=BLEN
       IF (SHS > ZERO) THEN
-          STPLEN=DMIN1(BLEN,GREDSQ/SHS)
+          STPLEN=MIN(BLEN,GREDSQ/SHS)
       END IF
 
 C
@@ -158,7 +158,7 @@ C
           ITERC=ITERC+1
           TEMP=SHS/STEPSQ
           IF (IACT == 0 .AND. TEMP > ZERO) THEN
-              CRVMIN=DMIN1(CRVMIN,TEMP)
+              CRVMIN=MIN(CRVMIN,TEMP)
               IF (CRVMIN == ONEMIN) CRVMIN=TEMP
           END IF
           GGSAV=GREDSQ
@@ -168,7 +168,7 @@ C
               IF (XBDI(I) == ZERO) GREDSQ=GREDSQ+GNEW(I)**2
               D(I)=D(I)+STPLEN*S(I)
           END DO
-          SDEC=DMAX1(STPLEN*(GGSAV-HALF*STPLEN*SHS),ZERO)
+          SDEC=MAX(STPLEN*(GGSAV-HALF*STPLEN*SHS),ZERO)
           QRED=QRED+SDEC
       END IF
 C
@@ -220,7 +220,7 @@ C
   120 ITERC=ITERC+1
       TEMP=GREDSQ*DREDSQ-DREDG*DREDG
       IF (TEMP <= 1.0D-4*QRED*QRED) GOTO 190
-      TEMP=DSQRT(TEMP)
+      TEMP=SQRT(TEMP)
       DO I=1,N
           IF (XBDI(I) == ZERO) THEN
               S(I)=(DREDG*D(I)-DREDSQ*GNEW(I))/TEMP
@@ -254,7 +254,7 @@ C
               SSQ=D(I)**2+S(I)**2
               TEMP=SSQ-(XOPT(I)-SL(I))**2
               IF (TEMP > ZERO) THEN
-                  TEMP=DSQRT(TEMP)-S(I)
+                  TEMP=SQRT(TEMP)-S(I)
                   IF (ANGBD*TEMP > TEMPA) THEN
                       ANGBD=TEMPA/TEMP
                       IACT=I
@@ -263,7 +263,7 @@ C
               END IF
               TEMP=SSQ-(SU(I)-XOPT(I))**2
               IF (TEMP > ZERO) THEN
-                  TEMP=DSQRT(TEMP)+S(I)
+                  TEMP=SQRT(TEMP)+S(I)
                   IF (ANGBD*TEMP > TEMPB) THEN
                       ANGBD=TEMPB/TEMP
                       IACT=I
@@ -355,7 +355,7 @@ C
       IF (SDEC > 0.01D0*QRED) GOTO 120
   190 DSQ=ZERO
       DO I=1,N
-          XNEW(I)=DMAX1(DMIN1(XOPT(I)+D(I),SU(I)),SL(I))
+          XNEW(I)=MAX(MIN(XOPT(I)+D(I),SU(I)),SL(I))
           IF (XBDI(I) == ONEMIN) XNEW(I)=SL(I)
           IF (XBDI(I) == ONE) XNEW(I)=SU(I)
           D(I)=XNEW(I)-XOPT(I)

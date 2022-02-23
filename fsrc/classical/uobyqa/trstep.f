@@ -64,9 +64,9 @@ C
               H(KP,K)=ZERO
           ELSE
               TEMP=H(KP,K)
-              TN(K)=DSIGN(DSQRT(SUM+TEMP*TEMP),TEMP)
+              TN(K)=DSIGN(SQRT(SUM+TEMP*TEMP),TEMP)
               H(KP,K)=-SUM/(TEMP+TN(K))
-              TEMP=DSQRT(TWO/(SUM+H(KP,K)**2))
+              TEMP=SQRT(TWO/(SUM+H(KP,K)**2))
               DO I=KP,N
                   W(I)=TEMP*H(I,K)
                   H(I,K)=W(I)
@@ -101,7 +101,7 @@ C
           GG(I)=G(I)
           GSQ=GSQ+G(I)**2
       END DO
-      GNORM=DSQRT(GSQ)
+      GNORM=SQRT(GSQ)
       DO K=1,NM
           KP=K+1
           SUM=ZERO
@@ -116,13 +116,13 @@ C
 C     Begin the trust region calculation with a tridiagonal matrix by
 C     calculating the norm of H. Then treat the case when H is zero.
 C
-      HNORM=DABS(TD(1))+DABS(TN(1))
+      HNORM=ABS(TD(1))+ABS(TN(1))
       TDMIN=TD(1)
       TN(N)=ZERO
       DO I=2,N
-          TEMP=DABS(TN(I-1))+DABS(TD(I))+DABS(TN(I))
-          HNORM=DMAX1(HNORM,TEMP)
-          TDMIN=DMIN1(TDMIN,TD(I))
+          TEMP=ABS(TN(I-1))+ABS(TD(I))+ABS(TN(I))
+          HNORM=MAX(HNORM,TEMP)
+          TDMIN=MIN(TDMIN,TD(I))
       END DO
       IF (HNORM == ZERO) THEN
           IF (GNORM == ZERO) GOTO 400
@@ -135,7 +135,7 @@ C
 C
 C     Set the initial values of PAR and its bounds.
 C
-      PARL=DMAX1(ZERO,-TDMIN,GNORM/DELTA-HNORM)
+      PARL=MAX(ZERO,-TDMIN,GNORM/DELTA-HNORM)
       PARLEST=PARL
       PAR=PARL
       PARU=ZERO
@@ -177,14 +177,14 @@ C     Set D to a direction of nonpositive curvature of the given tridiagonal
 C     matrix, and thus revise PARLEST.
 C
   160 D(K)=ONE
-      IF (DABS(TN(K)) <= DABS(PIV(K))) THEN
+      IF (ABS(TN(K)) <= ABS(PIV(K))) THEN
           DSQ=ONE
           DHD=PIV(K)
       ELSE
           TEMP=TD(K+1)+PAR
-          IF (TEMP <= DABS(PIV(K))) THEN
+          IF (TEMP <= ABS(PIV(K))) THEN
               D(K+1)=DSIGN(ONE,-TN(K))
-              DHD=PIV(K)+TEMP-TWO*DABS(TN(K))
+              DHD=PIV(K)+TEMP-TWO*ABS(TN(K))
           ELSE
               D(K+1)=-TN(K)/TEMP
               DHD=PIV(K)+TN(K)*D(K+1)
@@ -215,7 +215,7 @@ C
           DO I=1,N
               DTG=DTG+D(I)*GG(I)
           END DO
-          SCALE=-DSIGN(DELTA/DSQRT(DSQ),DTG)
+          SCALE=-DSIGN(DELTA/SQRT(DSQ),DTG)
           DO I=1,N
               D(I)=SCALE*D(I)
           END DO
@@ -228,9 +228,9 @@ C
           PAR=TWO*PARLEST+GNORM/DELTA
       ELSE
           PAR=0.5D0*(PARL+PARU)
-          PAR=DMAX1(PAR,PARLEST)
+          PAR=MAX(PAR,PARLEST)
       END IF
-      IF (PARUEST > ZERO) PAR=DMIN1(PAR,PARUEST)
+      IF (PARUEST > ZERO) PAR=MIN(PAR,PARUEST)
       GOTO 140
 C
 C     Calculate D for the current PAR in the positive definite case.
@@ -256,7 +256,7 @@ C
 C
 C     Make the usual test for acceptability of a full trust region step.
 C
-      DNORM=DSQRT(DSQ)
+      DNORM=SQRT(DSQ)
       PHI=ONE/DNORM-ONE/DELTA
       TEMP=TOL*(ONE+PAR*DSQ/WSQ)-DSQ*PHI*PHI
       IF (TEMP >= ZERO) THEN
@@ -281,7 +281,7 @@ C
           SLOPE=ONE/GNORM
           IF (PARU > ZERO) SLOPE=(PHIU-PHI)/(PARU-PAR)
           TEMP=PAR-PHI/SLOPE
-          IF (PARUEST > ZERO) TEMP=DMIN1(TEMP,PARUEST)
+          IF (PARUEST > ZERO) TEMP=MIN(TEMP,PARUEST)
           PARUEST=TEMP
           POSDEF=ONE
           PARL=PAR
@@ -312,8 +312,8 @@ C
 C
 C     Apply the alternative test for convergence.
 C
-          TEMPA=DABS(DELSQ-DSQ)
-          TEMPB=DSQRT(DTZ*DTZ+TEMPA*ZSQ)
+          TEMPA=ABS(DELSQ-DSQ)
+          TEMPB=SQRT(DTZ*DTZ+TEMPA*ZSQ)
           GAM=TEMPA/(DSIGN(TEMPB,DTZ)+DTZ)
           TEMP=TOL*(WSQ+PAR*DELSQ)-GAM*GAM*WWSQ
           IF (TEMP >= ZERO) THEN
@@ -322,7 +322,7 @@ C
               END DO
               GOTO 370
           END IF
-          PARLEST=DMAX1(PARLEST,PAR-WWSQ/ZSQ)
+          PARLEST=MAX(PARLEST,PAR-WWSQ/ZSQ)
       END IF
 C
 C     Complete the iteration when PHI is positive.
@@ -332,7 +332,7 @@ C
           IF (PHI >= PHIU) GOTO 370
           SLOPE=(PHIU-PHI)/(PARU-PAR)
       END IF
-      PARLEST=DMAX1(PARLEST,PAR-PHI/SLOPE)
+      PARLEST=MAX(PARLEST,PAR-PHI/SLOPE)
       PARUEST=PAR
       IF (POSDEF == ONE) THEN
           SLOPE=(PHI-PHIL)/(PAR-PARL)
@@ -350,7 +350,7 @@ C
       SHFMAX=PIVOT
       DO K=2,N
           PIVOT=TD(K)-TN(K-1)**2/PIVOT
-          SHFMAX=DMIN1(SHFMAX,PIVOT)
+          SHFMAX=MIN(SHFMAX,PIVOT)
       END DO
 C
 C     Find EVALUE by a bisection method, but occasionally SHFMAX may be

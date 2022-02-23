@@ -216,7 +216,7 @@ C
       DO I=1,N
           TEMP=TEMP+D(I)**2
       END DO
-      DNORM=DMIN1(DELTA,DSQRT(TEMP))
+      DNORM=MIN(DELTA,SQRT(TEMP))
       ERRTOL=-ONE
       IF (DNORM < HALF*RHO) THEN
           KNEW=-1
@@ -304,10 +304,10 @@ C
           DO I=1,N
               TEMP=TEMP+(XPT(K,I)-XNEW(I))**2
           END DO
-          TEMP=DSQRT(TEMP)
-          SUM=SUM+DABS(TEMP*TEMP*TEMP*VLAG(K))
+          TEMP=SQRT(TEMP)
+          SUM=SUM+ABS(TEMP*TEMP*TEMP*VLAG(K))
       END DO
-      SIXTHM=DMAX1(SIXTHM,DABS(DIFF)/SUM)
+      SIXTHM=MAX(SIXTHM,ABS(DIFF)/SUM)
 C
 C     Update FOPT and XOPT if the new F is the least value of the objective
 C     function so far. Then branch if D is not a trust region step.
@@ -337,9 +337,9 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       IF (RATIO <= 0.1D0) THEN
           DELTA=HALF*DNORM
       ELSE IF (RATIO. LE. 0.7D0) THEN
-          DELTA=DMAX1(HALF*DELTA,DNORM)
+          DELTA=MAX(HALF*DELTA,DNORM)
       ELSE
-          DELTA=DMAX1(DELTA,1.25D0*DNORM,DNORM+RHO)
+          DELTA=MAX(DELTA,1.25D0*DNORM,DNORM+RHO)
       END IF
       IF (DELTA <= 1.5D0*RHO) DELTA=RHO
 C
@@ -356,7 +356,7 @@ C
           DO I=1,N
               SUM=SUM+(XPT(K,I)-XOPT(I))**2
           END DO
-          TEMP=DABS(VLAG(K))
+          TEMP=ABS(VLAG(K))
           IF (SUM > RHOSQ) TEMP=TEMP*(SUM/RHOSQ)**1.5D0
           IF (TEMP > DETRAT .AND. K /= KTEMP) THEN
               DETRAT=TEMP
@@ -448,7 +448,7 @@ C
               DO I=1,N
                   SUMG=SUMG+G(I)**2
               END DO
-              ESTIM=RHO*(DSQRT(SUMG)+RHO*DSQRT(HALF*SUMH))
+              ESTIM=RHO*(SQRT(SUMG)+RHO*SQRT(HALF*SUMH))
               WMULT=SIXTHM*DISTEST**1.5D0
               IF (WMULT*ESTIM <= ERRTOL) GOTO 310
           END IF
@@ -498,11 +498,11 @@ C
           IF (RATIO <= 16.0D0) THEN
               RHO=RHOEND
           ELSE IF (RATIO <= 250.0D0) THEN
-              RHO=DSQRT(RATIO)*RHOEND
+              RHO=SQRT(RATIO)*RHOEND
           ELSE
               RHO=0.1D0*RHO
           END IF
-          DELTA=DMAX1(DELTA,RHO)
+          DELTA=MAX(DELTA,RHO)
           IF (IPRINT >= 2) THEN
               IF (IPRINT >= 3) PRINT 390
   390         FORMAT (5X)

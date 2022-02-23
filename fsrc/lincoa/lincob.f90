@@ -349,7 +349,7 @@ if (knew == 0) then
 !       function in W(1) to W(N) and in PQW(1) to PQW(NPT), respectively.
 !
 else
-    del = dmax1(TENTH * delta, rho)
+    del = max(TENTH * delta, rho)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29: See the comments below line number 140
 !          DO 160 I=1,N
@@ -473,7 +473,7 @@ do i = 1, n
     x(i) = xbase(i) + xnew(i)
     xdiff = xdiff + (x(i) - xsav(i))**2
 end do
-xdiff = dsqrt(xdiff)
+xdiff = sqrt(xdiff)
 if (ksave == -1) xdiff = rho
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !      IF (XDIFF .LE. TENTH*RHO .OR. XDIFF .GE. DELTA+DELTA) THEN
@@ -560,11 +560,11 @@ if (ksave == 0) then
     if (ratio <= TENTH) then
         delta = HALF * delta
     else if (ratio <= 0.7D0) then
-        delta = dmax1(HALF * delta, snorm)
+        delta = max(HALF * delta, snorm)
     else
-        temp = dsqrt(2.0D0) * delta
-        delta = dmax1(HALF * delta, snorm + snorm)
-        delta = dmin1(delta, temp)
+        temp = sqrt(2.0D0) * delta
+        delta = max(HALF * delta, snorm + snorm)
+        delta = min(delta, temp)
     end if
     if (delta <= 1.4D0 * rho) delta = rho
 end if
@@ -608,7 +608,7 @@ end do
 !
 if (ifeas == 1) then
     itest = itest + 1
-    if (dabs(dffalt) >= TENTH * dabs(diff)) itest = 0
+    if (abs(dffalt) >= TENTH * abs(diff)) itest = 0
 end if
 !
 !     Update the second derivatives of the model by the symmetric Broyden
@@ -686,7 +686,7 @@ if (f < fopt .and. ifeas == 1) then
         goto 616
     end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    snorm = dsqrt(ssq)
+    snorm = sqrt(ssq)
     do j = 1, m
         if (rescon(j) >= delta + snorm) then
             rescon(j) = snorm - rescon(j)
@@ -697,7 +697,7 @@ if (f < fopt .and. ifeas == 1) then
                 do i = 1, n
                     temp = temp - xopt(i) * amat(i, j)
                 end do
-                temp = dmax1(temp, ZERO)
+                temp = max(temp, ZERO)
                 if (temp >= delta) temp = -temp
                 rescon(j) = temp
             end if
@@ -775,7 +775,7 @@ if (ratio >= TENTH) goto 20
 !     Alternatively, find out if the interpolation points are close enough
 !       to the best point so far.
 !
-530 distsq = dmax1(delta * delta, 4.0D0 * rho * rho)
+530 distsq = max(delta * delta, 4.0D0 * rho * rho)
 do k = 1, npt
     sum = ZERO
     do j = 1, n
@@ -814,9 +814,9 @@ if (rho > rhoend) then
     else if (rho <= 16.0D0 * rhoend) then
         rho = rhoend
     else
-        rho = dsqrt(rho * rhoend)
+        rho = sqrt(rho * rhoend)
     end if
-    delta = dmax1(delta, rho)
+    delta = max(delta, rho)
     goto 10
 end if
 !

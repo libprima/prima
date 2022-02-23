@@ -91,7 +91,7 @@ do k = 1, npt
     end do
     sumpq = sumpq + pq(k)
     w(ndim + k) = distsq
-    winc = dmax1(winc, distsq)
+    winc = max(winc, distsq)
     do j = 1, nptm
         zmat(k, j) = ZERO
     end do
@@ -120,14 +120,14 @@ do j = 1, n
     sl(j) = sl(j) - xopt(j)
     su(j) = su(j) - xopt(j)
     xopt(j) = ZERO
-    ptsaux(1, j) = dmin1(delta, su(j))
-    ptsaux(2, j) = dmax1(-delta, sl(j))
+    ptsaux(1, j) = min(delta, su(j))
+    ptsaux(2, j) = max(-delta, sl(j))
     if (ptsaux(1, j) + ptsaux(2, j) < ZERO) then
         temp = ptsaux(1, j)
         ptsaux(1, j) = ptsaux(2, j)
         ptsaux(2, j) = temp
     end if
-    if (dabs(ptsaux(2, j)) < HALF * dabs(ptsaux(1, j))) then
+    if (abs(ptsaux(2, j)) < HALF * abs(ptsaux(1, j))) then
         ptsaux(2, j) = HALF * ptsaux(1, j)
     end if
     do i = 1, ndim
@@ -151,7 +151,7 @@ do j = 1, n
         bmat(jp, j) = -temp + ONE / ptsaux(1, j)
         bmat(jpn, j) = temp + ONE / ptsaux(2, j)
         bmat(1, j) = -bmat(jp, j) - bmat(jpn, j)
-        zmat(1, j) = dsqrt(2.0D0) / dabs(ptsaux(1, j) * ptsaux(2, j))
+        zmat(1, j) = sqrt(2.0D0) / abs(ptsaux(1, j) * ptsaux(2, j))
         zmat(jp, j) = zmat(1, j) * ptsaux(2, j) * temp
         zmat(jpn, j) = -zmat(1, j) * ptsaux(1, j) * temp
     else
@@ -214,7 +214,7 @@ if (knew /= kopt) then
     call update(n, npt, bmat, zmat, ndim, vlag, beta, denom, knew, w)
     if (nrem == 0) goto 350
     do k = 1, npt
-        w(ndim + k) = dabs(w(ndim + k))
+        w(ndim + k) = abs(w(ndim + k))
     end do
 end if
 !
@@ -324,7 +324,7 @@ do k = 1, npt
             denom = den
         end if
     end if
-    vlmxsq = dmax1(vlmxsq, vlag(k)**2)
+    vlmxsq = max(vlmxsq, vlag(k)**2)
 end do
 if (denom <= 1.0D-2 * vlmxsq) then
     w(ndim + knew) = -w(ndim + knew) - winc
@@ -400,7 +400,7 @@ goto 80
 !     is updated to provide interpolation to the new function value.
 !
     do i = 1, n
-        w(i) = dmin1(dmax1(xl(i), xbase(i) + xpt(kpt, i)), xu(i))
+        w(i) = min(max(xl(i), xbase(i) + xpt(kpt, i)), xu(i))
         if (xpt(kpt, i) == sl(i)) w(i) = xl(i)
         if (xpt(kpt, i) == su(i)) w(i) = xu(i)
     end do

@@ -237,7 +237,7 @@ temp = ZERO
 do i = 1, n
     temp = temp + d(i)**2
 end do
-dnorm = dmin1(delta, dsqrt(temp))
+dnorm = min(delta, sqrt(temp))
 errtol = -ONE
 if (dnorm < HALF * rho) then
     knew = -1
@@ -346,10 +346,10 @@ do k = 1, npt
     do i = 1, n
         temp = temp + (xpt(k, i) - xnew(i))**2
     end do
-    temp = dsqrt(temp)
-    sum = sum + dabs(temp * temp * temp * vlag(k))
+    temp = sqrt(temp)
+    sum = sum + abs(temp * temp * temp * vlag(k))
 end do
-sixthm = dmax1(sixthm, dabs(diff) / sum)
+sixthm = max(sixthm, abs(diff) / sum)
 !
 !     Update FOPT and XOPT if the new F is the least value of the objective
 !     function so far. Then branch if D is not a trust region step.
@@ -376,9 +376,9 @@ ratio = (f - fsave) / vquad
 if (ratio <= 0.1D0) then
     delta = HALF * dnorm
 else if (ratio <= 0.7D0) then
-    delta = dmax1(HALF * delta, dnorm)
+    delta = max(HALF * delta, dnorm)
 else
-    delta = dmax1(delta, 1.25D0 * dnorm, dnorm + rho)
+    delta = max(delta, 1.25D0 * dnorm, dnorm + rho)
 end if
 if (delta <= 1.5D0 * rho) delta = rho
 !
@@ -395,7 +395,7 @@ do k = 1, npt
     do i = 1, n
         sum = sum + (xpt(k, i) - xopt(i))**2
     end do
-    temp = dabs(vlag(k))
+    temp = abs(vlag(k))
     if (sum > rhosq) temp = temp * (sum / rhosq)**1.5D0
     if (temp > detrat .and. k /= ktemp) then
         detrat = temp
@@ -504,7 +504,7 @@ if (knew > 0) then
         do i = 1, n
             sumg = sumg + g(i)**2
         end do
-        estim = rho * (dsqrt(sumg) + rho * dsqrt(HALF * sumh))
+        estim = rho * (sqrt(sumg) + rho * sqrt(HALF * sumh))
         wmult = sixthm * distest**1.5D0
         if (wmult * estim <= errtol) goto 310
     end if
@@ -554,11 +554,11 @@ if (rho > rhoend) then
     if (ratio <= 16.0D0) then
         rho = rhoend
     else if (ratio <= 250.0D0) then
-        rho = dsqrt(ratio) * rhoend
+        rho = sqrt(ratio) * rhoend
     else
         rho = 0.1D0 * rho
     end if
-    delta = dmax1(delta, rho)
+    delta = max(delta, rho)
     goto 60
 end if
 !

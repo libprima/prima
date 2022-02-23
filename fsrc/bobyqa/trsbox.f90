@@ -120,7 +120,7 @@ do i = 1, n
     end if
 end do
 if (resid <= zero) goto 90
-temp = dsqrt(stepsq * resid + ds * ds)
+temp = sqrt(stepsq * resid + ds * ds)
 if (ds < zero) then
 ! Zaikun 20220210: the above line is the original code of Powell. Surprisingly, it works quite
 ! differently from the following line. Are they different even in precise arithmetic?
@@ -133,7 +133,7 @@ else
 end if
 stplen = blen
 if (shs > zero) then
-    stplen = dmin1(blen, gredsq / shs)
+    stplen = min(blen, gredsq / shs)
 end if
 
 !
@@ -163,7 +163,7 @@ if (stplen > zero) then
     iterc = iterc + 1
     temp = shs / stepsq
     if (iact == 0 .and. temp > zero) then
-        crvmin = dmin1(crvmin, temp)
+        crvmin = min(crvmin, temp)
         if (crvmin == -one) crvmin = temp
     end if
     ggsav = gredsq
@@ -173,7 +173,7 @@ if (stplen > zero) then
         if (xbdi(i) == zero) gredsq = gredsq + gnew(i)**2
         d(i) = d(i) + stplen * s(i)
     end do
-    sdec = dmax1(stplen * (ggsav - half * stplen * shs), zero)
+    sdec = max(stplen * (ggsav - half * stplen * shs), zero)
     qred = qred + sdec
 end if
 !
@@ -225,7 +225,7 @@ goto 210
 120 iterc = iterc + 1
 temp = gredsq * dredsq - dredg * dredg
 if (temp <= 1.0D-4 * qred * qred) goto 190
-temp = dsqrt(temp)
+temp = sqrt(temp)
 do i = 1, n
     if (xbdi(i) == zero) then
         s(i) = (dredg * d(i) - dredsq * gnew(i)) / temp
@@ -269,7 +269,7 @@ do i = 1, n
         ssq = d(i)**2 + s(i)**2
         temp = ssq - (xopt(i) - sl(i))**2
         if (temp > zero) then
-            temp = dsqrt(temp) - s(i)
+            temp = sqrt(temp) - s(i)
             if (angbd * temp > tempa) then
                 angbd = tempa / temp
                 iact = i
@@ -278,7 +278,7 @@ do i = 1, n
         end if
         temp = ssq - (su(i) - xopt(i))**2
         if (temp > zero) then
-            temp = dsqrt(temp) + s(i)
+            temp = sqrt(temp) + s(i)
             if (angbd * temp > tempb) then
                 angbd = tempb / temp
                 iact = i
@@ -370,7 +370,7 @@ end if
 if (sdec > 0.01D0 * qred) goto 120
 190 dsq = zero
 do i = 1, n
-    xnew(i) = dmax1(dmin1(xopt(i) + d(i), su(i)), sl(i))
+    xnew(i) = max(min(xopt(i) + d(i), su(i)), sl(i))
     if (xbdi(i) == -one) xnew(i) = sl(i)
     if (xbdi(i) == one) xnew(i) = su(i)
     d(i) = xnew(i) - xopt(i)

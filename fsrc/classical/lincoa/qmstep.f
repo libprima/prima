@@ -60,7 +60,7 @@ C
       IF (M > 0) THEN
           DO J=1,M
               RSTAT(J)=ONE
-              IF (DABS(RESCON(J)) >= DEL) RSTAT(J)=-ONE
+              IF (ABS(RESCON(J)) >= DEL) RSTAT(J)=-ONE
           END DO
           DO K=1,NACT
               RSTAT(IACT(K))=ZERO
@@ -81,12 +81,12 @@ C
               SS=SS+TEMP*TEMP
               SP=SP+GL(I)*TEMP
           END DO
-          STP=-DEL/DSQRT(SS)
+          STP=-DEL/SQRT(SS)
           IF (K == KNEW) THEN
               IF (SP*(SP-ONE) < ZERO) STP=-STP
-              VLAG=DABS(STP*SP)+STP*STP*DABS(SP-ONE)
+              VLAG=ABS(STP*SP)+STP*STP*ABS(SP-ONE)
           ELSE
-              VLAG=DABS(STP*(ONE-STP)*SP)
+              VLAG=ABS(STP*(ONE-STP)*SP)
           END IF
           IF (VLAG > VBIG) THEN
               KSAV=K
@@ -103,7 +103,7 @@ C
           GG=GG+GL(I)**2
           STEP(I)=STPSAV*(XPT(KSAV,I)-XOPT(I))
       END DO
-      VGRAD=DEL*DSQRT(GG)
+      VGRAD=DEL*SQRT(GG)
       IF (VGRAD <= TENTH*VBIG) GOTO 220
 C
 C     Make the replacement if it provides a larger value of VBIG.
@@ -116,10 +116,10 @@ C
           END DO
           GHG=GHG+PQW(K)*TEMP*TEMP
       END DO
-      VNEW=VGRAD+DABS(HALF*DEL*DEL*GHG/GG)
+      VNEW=VGRAD+ABS(HALF*DEL*DEL*GHG/GG)
       IF (VNEW > VBIG) THEN
           VBIG=VNEW
-          STP=DEL/DSQRT(GG)
+          STP=DEL/SQRT(GG)
           IF (GHG < ZERO) STP=-STP
           DO I=1,N
               STEP(I)=STP*GL(I)
@@ -146,7 +146,7 @@ C
           END DO
           GG=GG+GL(I)**2
       END DO
-      VGRAD=DEL*DSQRT(GG)
+      VGRAD=DEL*SQRT(GG)
       IF (VGRAD <= TENTH*VBIG) GOTO 220
       GHG=ZERO
       DO K=1,NPT
@@ -156,11 +156,11 @@ C
           END DO
           GHG=GHG+PQW(K)*TEMP*TEMP
       END DO
-      VNEW=VGRAD+DABS(HALF*DEL*DEL*GHG/GG)
+      VNEW=VGRAD+ABS(HALF*DEL*DEL*GHG/GG)
 C
 C     Set W to the possible move along the projected gradient.
 C
-      STP=DEL/DSQRT(GG)
+      STP=DEL/SQRT(GG)
       IF (GHG < ZERO) STP=-STP
       WW=ZERO
       DO I=1,N
@@ -185,13 +185,13 @@ C
                   DO I=1,N
                       TEMP=TEMP+W(I)*AMAT(I,J)
                   END DO
-                  BIGV=DMAX1(BIGV,TEMP)
+                  BIGV=MAX(BIGV,TEMP)
               END IF
               IF (BIGV < TEST) GOTO 170
               IFEAS=0
           END IF
           CTOL=ZERO
-          TEMP=0.01D0*DSQRT(WW)
+          TEMP=0.01D0*SQRT(WW)
           IF (BIGV > ZERO .AND. BIGV < TEMP) THEN
               DO K=1,NACT
                   J=IACT(K)
@@ -199,7 +199,7 @@ C
                   DO I=1,N
                       SUM=SUM+W(I)*AMAT(I,J)
                   END DO
-                  CTOL=DMAX1(CTOL,DABS(SUM))
+                  CTOL=MAX(CTOL,ABS(SUM))
               END DO
           END IF
           IF (BIGV <= 10.0D0*CTOL .OR. BIGV >= TEST) THEN
@@ -224,7 +224,7 @@ C
           DO I=1,N
               TEMP=TEMP+STEP(I)*AMAT(I,J)
           END DO
-          RESMAX=DMAX1(RESMAX,TEMP)
+          RESMAX=MAX(RESMAX,TEMP)
           IF (TEMP < TEST) THEN
               IF (TEMP <= BIGV) GOTO 230
               BIGV=TEMP

@@ -67,7 +67,7 @@ C
       NPTM=NPT-N-1
       RHOSQ=RHOBEG*RHOBEG
       RECIP=ONE/RHOSQ
-      RECIQ=DSQRT(HALF)/RHOSQ
+      RECIQ=SQRT(HALF)/RHOSQ
       TEST=0.2D0*RHOBEG
       IDZ=1
       KBASE=1
@@ -256,7 +256,7 @@ C
           DO I=1,N
               TEMP=TEMP-XOPT(I)*AMAT(I,J)
           END DO
-          TEMP=DMAX1(TEMP,ZERO)
+          TEMP=MAX(TEMP,ZERO)
           IF (TEMP >= RHOBEG) TEMP=-TEMP
           RESCON(J)=TEMP
       END DO

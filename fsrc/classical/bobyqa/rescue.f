@@ -103,7 +103,7 @@ C
           END DO
           SUMPQ=SUMPQ+PQ(K)
           W(NDIM+K)=DISTSQ
-          WINC=DMAX1(WINC,DISTSQ)
+          WINC=MAX(WINC,DISTSQ)
           DO J=1,NPTM
               ZMAT(K,J)=ZERO
           END DO
@@ -132,14 +132,14 @@ C
           SL(J)=SL(J)-XOPT(J)
           SU(J)=SU(J)-XOPT(J)
           XOPT(J)=ZERO
-          PTSAUX(1,J)=DMIN1(DELTA,SU(J))
-          PTSAUX(2,J)=DMAX1(-DELTA,SL(J))
+          PTSAUX(1,J)=MIN(DELTA,SU(J))
+          PTSAUX(2,J)=MAX(-DELTA,SL(J))
           IF (PTSAUX(1,J)+PTSAUX(2,J) < ZERO) THEN
               TEMP=PTSAUX(1,J)
               PTSAUX(1,J)=PTSAUX(2,J)
               PTSAUX(2,J)=TEMP
           END IF
-          IF (DABS(PTSAUX(2,J)) < HALF*DABS(PTSAUX(1,J))) THEN
+          IF (ABS(PTSAUX(2,J)) < HALF*ABS(PTSAUX(1,J))) THEN
               PTSAUX(2,J)=HALF*PTSAUX(1,J)
           END IF
           DO I=1,NDIM
@@ -163,7 +163,7 @@ C
               BMAT(JP,J)=-TEMP+ONE/PTSAUX(1,J)
               BMAT(JPN,J)=TEMP+ONE/PTSAUX(2,J)
               BMAT(1,J)=-BMAT(JP,J)-BMAT(JPN,J)
-              ZMAT(1,J)=DSQRT(2.0D0)/DABS(PTSAUX(1,J)*PTSAUX(2,J))
+              ZMAT(1,J)=SQRT(2.0D0)/ABS(PTSAUX(1,J)*PTSAUX(2,J))
               ZMAT(JP,J)=ZMAT(1,J)*PTSAUX(2,J)*TEMP
               ZMAT(JPN,J)=-ZMAT(1,J)*PTSAUX(1,J)*TEMP
           ELSE
@@ -226,7 +226,7 @@ C
           CALL UPDATE (N,NPT,BMAT,ZMAT,NDIM,VLAG,BETA,DENOM,KNEW,W)
           IF (NREM == 0) GOTO 350
           DO K=1,NPT
-              W(NDIM+K)=DABS(W(NDIM+K))
+              W(NDIM+K)=ABS(W(NDIM+K))
           END DO
       END IF
 C
@@ -336,7 +336,7 @@ C
                   DENOM=DEN
               END IF
           END IF
-          VLMXSQ=DMAX1(VLMXSQ,VLAG(K)**2)
+          VLMXSQ=MAX(VLMXSQ,VLAG(K)**2)
       END DO
       IF (DENOM <= 1.0D-2*VLMXSQ) THEN
           W(NDIM+KNEW)=-W(NDIM+KNEW)-WINC
@@ -412,7 +412,7 @@ C     that is going to multiply the KPT-th Lagrange function when the model
 C     is updated to provide interpolation to the new function value.
 C
           DO I=1,N
-              W(I)=DMIN1(DMAX1(XL(I),XBASE(I)+XPT(KPT,I)),XU(I))
+              W(I)=MIN(MAX(XL(I),XBASE(I)+XPT(KPT,I)),XU(I))
               IF (XPT(KPT,I) == SL(I)) W(I)=XL(I)
               IF (XPT(KPT,I) == SU(I)) W(I)=XU(I)
           END DO

@@ -22,7 +22,7 @@ dimension g(*), h(n, *), d(*), v(*)
 !     Preliminary calculations.
 !
 half = 0.5D0
-halfrt = dsqrt(half)
+halfrt = sqrt(half)
 one = 1.0D0
 zero = 0.0D0
 !
@@ -68,7 +68,7 @@ if (vhv * vhv <= 0.9999D0 * dsq * vsq) then
         wsq = wsq + d(i)**2
     end do
     whw = zero
-    ratio = dsqrt(wsq / vsq)
+    ratio = sqrt(wsq / vsq)
     do i = 1, n
         temp = zero
         do j = 1, n
@@ -80,7 +80,7 @@ if (vhv * vhv <= 0.9999D0 * dsq * vsq) then
     vhv = ratio * ratio * vhv
     vhw = ratio * wsq
     temp = half * (whw - vhv)
-    temp = temp + dsign(dsqrt(temp**2 + vhw**2), whw + vhv)
+    temp = temp + dsign(sqrt(temp**2 + vhw**2), whw + vhv)
     do i = 1, n
         d(i) = vhw * v(i) + temp * d(i)
     end do
@@ -105,15 +105,15 @@ do i = 1, n
 end do
 temp = gd / gg
 vv = zero
-scale = dsign(rho / dsqrt(dd), gd * dhd)
+scale = dsign(rho / sqrt(dd), gd * dhd)
 do i = 1, n
     v(i) = d(i) - temp * g(i)
     vv = vv + v(i)**2
     d(i) = scale * d(i)
 end do
-gnorm = dsqrt(gg)
-if (gnorm * dd <= 0.5D-2 * rho * dabs(dhd) .or. vv / dd <= 1.0D-4) then
-    vmax = dabs(scale * (gd + half * scale * dhd))
+gnorm = sqrt(gg)
+if (gnorm * dd <= 0.5D-2 * rho * abs(dhd) .or. vv / dd <= 1.0D-4) then
+    vmax = abs(scale * (gd + half * scale * dhd))
     goto 170
 end if
 !
@@ -135,18 +135,18 @@ do i = 1, n
     vhg = vhg + sumv * g(i)
     vhv = vhv + sumv * v(i)
 end do
-vnorm = dsqrt(vv)
+vnorm = sqrt(vv)
 ghg = ghg / gg
 vhg = vhg / (vnorm * gnorm)
 vhv = vhv / vv
-if (dabs(vhg) <= 0.01D0 * dmax1(dabs(ghg), dabs(vhv))) then
+if (abs(vhg) <= 0.01D0 * max(abs(ghg), abs(vhv))) then
     vmu = ghg - vhv
     wcos = one
     wsin = zero
 else
     temp = half * (ghg - vhv)
-    vmu = temp + dsign(dsqrt(temp**2 + vhg**2), temp)
-    temp = dsqrt(vmu**2 + vhg**2)
+    vmu = temp + dsign(sqrt(temp**2 + vhg**2), temp)
+    temp = sqrt(vmu**2 + vhg**2)
     wcos = vmu / temp
     wsin = vhg / temp
 end if
@@ -164,9 +164,9 @@ end do
 !
 dlin = wcos * gnorm / rho
 vlin = -wsin * gnorm / rho
-tempa = dabs(dlin) + half * dabs(vmu + vhv)
-tempb = dabs(vlin) + half * dabs(ghg - vmu)
-tempc = halfrt * (dabs(dlin) + dabs(vlin)) + 0.25D0 * dabs(ghg + vhv)
+tempa = abs(dlin) + half * abs(vmu + vhv)
+tempb = abs(vlin) + half * abs(ghg - vmu)
+tempc = halfrt * (abs(dlin) + abs(vlin)) + 0.25D0 * abs(ghg + vhv)
 if (tempa >= tempb .and. tempa >= tempc) then
     tempd = dsign(rho, dlin * (vmu + vhv))
     tempv = zero
@@ -180,6 +180,6 @@ end if
 do i = 1, n
     d(i) = tempd * d(i) + tempv * v(i)
 end do
-vmax = rho * rho * dmax1(tempa, tempb, tempc)
+vmax = rho * rho * max(tempa, tempb, tempc)
 170 return
 end
