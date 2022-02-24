@@ -1,9 +1,36 @@
+module lincob_mod
+!--------------------------------------------------------------------------------------------------!
+! This module performs the major calculations of LINCOA.
+!
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the LINCOA paper.
+!
+! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+!
+! Started: July 2021
+!
+! Last Modified: Friday, February 25, 2022 AM01:06:55
+!--------------------------------------------------------------------------------------------------!
+
+implicit none
+private
+public :: lincob
+
+
+contains
+
+
 subroutine lincob(calfun, n, npt, m, amat, b_in, x, rhobeg, rhoend, iprint, maxfun, &
     & xbase, xpt, fval, xsav, xopt, gopt, hq, pq, bmat, zmat, ndim, &
-     &  step, sp, xnew, iact, rescon, qfac, rfac, pqw, w, f, info, ftarget, &
+     &  step, rsp, xnew, iact, rescon, qfac, rfac, pqw, f, info, ftarget, &
      & A_orig, b_orig, &
      & cstrv, nf, xhist, maxxhist, fhist, maxfhist, chist, maxchist)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine performs the actual calculations of LINCOA. The arguments IPRINT, MAXFILT, MAXFUN,
+! MAXHIST, NPT, CTOL, CWEIGHT, ETA1, ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG, RHOEND, X, NF, F, XHIST,
+! FHIST, CHIST, CSTRV and INFO are identical to the corresponding arguments in subroutine LINCOA.
+!--------------------------------------------------------------------------------------------------!
 
+! Generic models
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
@@ -11,33 +38,73 @@ use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm, maximum
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
-implicit real(RP) (a - h, o - z)
-implicit integer(IK) (i - n)
+! Solver-specific modules
 
+implicit none
+
+! Inputs
 procedure(OBJ) :: calfun
-integer(IK), intent(in) :: maxxhist
-integer(IK), intent(in) :: maxfhist
+integer(IK), intent(in) :: iprint
+integer(IK), intent(in) :: m
 integer(IK), intent(in) :: maxchist
-integer(IK), intent(out) :: nf
-
+integer(IK), intent(in) :: maxfhist
+integer(IK), intent(in) :: maxfun
+integer(IK), intent(in) :: maxxhist
+integer(IK), intent(in) :: n
+integer(IK), intent(in) :: ndim
+integer(IK), intent(in) :: npt
+real(RP), intent(in) :: A_orig(n, m)
 real(RP), intent(in) :: amat(n, m)
 real(RP), intent(in) :: b_in(m)
-real(RP), intent(in) :: A_orig(n, m)
 real(RP), intent(in) :: b_orig(m)
+real(RP), intent(in) :: ftarget
+real(RP), intent(in) :: rhobeg
+real(RP), intent(in) :: rhoend
+
+! In-outputs
 real(RP), intent(inout) :: x(n)
-real(RP), intent(out) :: xhist(n, maxxhist)
-real(RP), intent(out) :: fhist(maxfhist)
+
+! Outputs
+integer(IK), intent(out) :: iact(:)
+integer(IK), intent(out) :: info
+integer(IK), intent(out) :: nf
+!real(RP), intent(out) :: bmat(size(x), npt + size(x))
+real(RP), intent(out) :: bmat(npt + size(x), size(x))
 real(RP), intent(out) :: chist(maxchist)
 real(RP), intent(out) :: cstrv
-
+real(RP), intent(out) :: f
+real(RP), intent(out) :: fhist(maxfhist)
+real(RP), intent(out) :: fval(npt)
+real(RP), intent(out) :: gopt(n)
+real(RP), intent(out) :: hq(n * (n + 1_IK) / 2_IK)
+real(RP), intent(out) :: pq(npt)
+real(RP), intent(out) :: pqw(npt)
+real(RP), intent(out) :: qfac(n, n)
+real(RP), intent(out) :: rescon(m)
+real(RP), intent(out) :: rfac(n * (n + 1_IK) / 2_IK)
+real(RP), intent(out) :: rsp(2_IK * npt)
+real(RP), intent(out) :: step(n)
+real(RP), intent(out) :: xbase(n)
+real(RP), intent(out) :: xhist(n, maxxhist)
+real(RP), intent(out) :: xnew(n)
+real(RP), intent(out) :: xopt(n)
+real(RP), intent(out) :: xpt(npt, n)
+real(RP), intent(out) :: xsav(n)
+real(RP), intent(out) :: zmat(npt, npt - size(x) - 1)
 
 ! Local variables
 real(RP) :: b(size(b_in))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-dimension xbase(*), xpt(npt, *), fval(*), &
-     &  xsav(*), xopt(*), gopt(*), hq(*), pq(*), bmat(ndim, *), &
-     &  zmat(npt, *), step(*), sp(*), xnew(*), iact(*), rescon(*), &
-     &  qfac(n, *), rfac(*), pqw(*), w(*)
+real(RP) :: del, delsav, delta, dffalt, diff,  &
+&        distsq, fopt, fsave, qoptsq, ratio,     &
+&        rho, snorm, ssq, summ, summz, temp, vqalt,   &
+&        vquad, xdiff, xoptsq
+integer :: i, idz, ifeas, ih, imprv, ip, itest, j, k,    &
+&           knew, kopt, ksave, nact, nh, np, nptm,     &
+&           nvala, nvalb
+real(RP) :: w(max(m + 3_IK * n, 2_IK * m + n, 2_IK * npt))
+
+
 !
 !     The arguments N, NPT, M, X, RHOBEG, RHOEND, IPRINT and MAXFUN are
 !       identical to the corresponding arguments in SUBROUTINE LINCOA.
@@ -112,7 +179,7 @@ imprv = 0
 !       is set so that XPT(KOPT,.) is the initial trust region centre.
 !
 call prelim(calfun, n, npt, m, amat, b, x, rhobeg, iprint, xbase, xpt, fval, &
-& xsav, xopt, gopt, kopt, hq, pq, bmat, zmat, idz, ndim, sp, rescon, &
+& xsav, xopt, gopt, kopt, hq, pq, bmat, zmat, idz, ndim, rsp, rescon, &
 & step, pqw, w, f, ftarget, &
 & A_orig, b_orig, &
 & cstrv, nf, xhist, maxxhist, fhist, maxfhist, chist, maxchist)
@@ -160,17 +227,17 @@ end do
 if (xoptsq >= 1.0D4 * delta * delta) then
     qoptsq = 0.25D0 * xoptsq
     do k = 1, npt
-        sum = ZERO
+        summ = ZERO
         do i = 1, n
-            sum = sum + xpt(k, i) * xopt(i)
+            summ = summ + xpt(k, i) * xopt(i)
         end do
-        sum = sum - HALF * xoptsq
-        w(npt + k) = sum
-        sp(k) = ZERO
+        summ = summ - HALF * xoptsq
+        w(npt + k) = summ
+        rsp(k) = ZERO
         do i = 1, n
             xpt(k, i) = xpt(k, i) - HALF * xopt(i)
             step(i) = bmat(k, i)
-            w(i) = sum * xpt(k, i) + qoptsq * xopt(i)
+            w(i) = summ * xpt(k, i) + qoptsq * xopt(i)
             ip = npt + i
             do j = 1, i
                 bmat(ip, j) = bmat(ip, j) + step(i) * w(j) + w(i) * step(j)
@@ -181,20 +248,20 @@ if (xoptsq >= 1.0D4 * delta * delta) then
 !     Then the revisions of BMAT that depend on ZMAT are calculated.
 !
     do k = 1, nptm
-        sumz = ZERO
+        summz = ZERO
         do i = 1, npt
-            sumz = sumz + zmat(i, k)
+            summz = summz + zmat(i, k)
             w(i) = w(npt + i) * zmat(i, k)
         end do
         do j = 1, n
-            sum = qoptsq * sumz * xopt(j)
+            summ = qoptsq * summz * xopt(j)
             do i = 1, npt
-                sum = sum + w(i) * xpt(i, j)
+                summ = summ + w(i) * xpt(i, j)
             end do
-            step(j) = sum
-            if (k < idz) sum = -sum
+            step(j) = summ
+            if (k < idz) summ = -summ
             do i = 1, npt
-                bmat(i, j) = bmat(i, j) + sum * zmat(i, k)
+                bmat(i, j) = bmat(i, j) + summ * zmat(i, k)
             end do
         end do
         do i = 1, n
@@ -408,7 +475,7 @@ do k = 1, npt
     temp = ZERO
     do j = 1, n
         temp = temp + xpt(k, j) * step(j)
-        sp(npt + k) = temp
+        rsp(npt + k) = temp
     end do
     vquad = vquad + HALF * pq(k) * temp * temp
 end do
@@ -418,7 +485,7 @@ end do
 ! in the following scenario.
 ! Suppose that, at an certain iteration,
 ! KNEW = 0, SNORM > 0.5*DELTA > RHO, VQUAD >= 0, and
-! sum_{K=1}^NPT ||XPT(K,:)-XOPT(:)||^2 < DELTA^2
+! summ_{K=1}^NPT ||XPT(K,:)-XOPT(:)||^2 < DELTA^2
 ! (i.e., DELTA is large and SNORM is not small, yet VQUAD >= 0 due to
 ! rounding errors and XPT are not far from XOPT).
 ! Then the program will goto 530 and then goto 20, where XBASE may be
@@ -484,7 +551,7 @@ if (.not. (xdiff > TENTH * rho .and. xdiff < delta + delta)) then
     goto 600
 end if
 if (ksave <= 0) ifeas = 1
-f = dfloat(ifeas)
+f = real(ifeas, RP)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 do i = 1, n
     if (x(i) /= x(i)) then
@@ -527,23 +594,23 @@ if (ifeas == 1 .and. itest < 3) then
         w(k) = fval(k) - fval(kopt)
     end do
     do j = 1, nptm
-        sum = ZERO
+        summ = ZERO
         do i = 1, npt
-            sum = sum + w(i) * zmat(i, j)
+            summ = summ + w(i) * zmat(i, j)
         end do
-        if (j < idz) sum = -sum
+        if (j < idz) summ = -summ
         do k = 1, npt
-            pqw(k) = pqw(k) + sum * zmat(k, j)
+            pqw(k) = pqw(k) + summ * zmat(k, j)
         end do
     end do
     vqalt = ZERO
     do k = 1, npt
-        sum = ZERO
+        summ = ZERO
         do j = 1, n
-            sum = sum + bmat(k, j) * step(j)
+            summ = summ + bmat(k, j) * step(j)
         end do
-        vqalt = vqalt + sum * w(k)
-        vqalt = vqalt + pqw(k) * sp(npt + k) * (HALF * sp(npt + k) + sp(k))
+        vqalt = vqalt + summ * w(k)
+        vqalt = vqalt + pqw(k) * rsp(npt + k) * (HALF * rsp(npt + k) + rsp(k))
     end do
     dffalt = f - fopt - vqalt
 end if
@@ -572,7 +639,7 @@ end if
 !       can be moved. If STEP is a trust region step, then KNEW is ZERO at
 !       present, but a positive value is picked by subroutine UPDATE.
 !
-call update(n, npt, xpt, bmat, zmat, idz, ndim, sp, step, kopt, knew, pqw, w)
+call update(n, npt, xpt, bmat, zmat, idz, ndim, rsp, step, kopt, knew, pqw, w)
 if (knew == 0) then
     info = 9
     goto 600
@@ -649,16 +716,16 @@ end if
 !       the old XOPT if ITEST is less than 3.
 !
 fval(knew) = f
-sp(knew) = sp(kopt) + sp(npt + kopt)
+rsp(knew) = rsp(kopt) + rsp(npt + kopt)
 ssq = ZERO
 do i = 1, n
     xpt(knew, i) = xnew(i)
     ssq = ssq + step(i)**2
 end do
-sp(npt + knew) = sp(npt + kopt) + ssq
+rsp(npt + knew) = rsp(npt + kopt) + ssq
 if (itest < 3) then
     do k = 1, npt
-        temp = pqw(k) * sp(k)
+        temp = pqw(k) * rsp(k)
         do i = 1, n
             w(i) = w(i) + temp * xpt(k, i)
         end do
@@ -703,7 +770,7 @@ if (f < fopt .and. ifeas == 1) then
         end if
     end do
     do k = 1, npt
-        sp(k) = sp(k) + sp(npt + k)
+        rsp(k) = rsp(k) + rsp(npt + k)
     end do
 !
 !     Also revise GOPT when symmetric Broyden updating is applied.
@@ -718,7 +785,7 @@ if (f < fopt .and. ifeas == 1) then
             end do
         end do
         do k = 1, npt
-            temp = pq(k) * sp(npt + k)
+            temp = pq(k) * rsp(npt + k)
             do i = 1, n
                 gopt(i) = gopt(i) + temp * xpt(k, i)
             end do
@@ -736,13 +803,13 @@ if (itest == 3) then
         w(k) = fval(k) - fval(kopt)
     end do
     do j = 1, nptm
-        sum = ZERO
+        summ = ZERO
         do i = 1, npt
-            sum = sum + w(i) * zmat(i, j)
+            summ = summ + w(i) * zmat(i, j)
         end do
-        if (j < idz) sum = -sum
+        if (j < idz) summ = -summ
         do k = 1, npt
-            pq(k) = pq(k) + sum * zmat(k, j)
+            pq(k) = pq(k) + summ * zmat(k, j)
         end do
     end do
     do j = 1, n
@@ -752,7 +819,7 @@ if (itest == 3) then
         end do
     end do
     do k = 1, npt
-        temp = pq(k) * sp(k)
+        temp = pq(k) * rsp(k)
         do i = 1, n
             gopt(i) = gopt(i) + temp * xpt(k, i)
         end do
@@ -776,13 +843,13 @@ if (ratio >= TENTH) goto 20
 !
 530 distsq = max(delta * delta, 4.0D0 * rho * rho)
 do k = 1, npt
-    sum = ZERO
+    summ = ZERO
     do j = 1, n
-        sum = sum + (xpt(k, j) - xopt(j))**2
+        summ = summ + (xpt(k, j) - xopt(j))**2
     end do
-    if (sum > distsq) then
+    if (summ > distsq) then
         knew = k
-        distsq = sum
+        distsq = summ
     end if
 end do
 !
@@ -837,11 +904,13 @@ if (ksave == -1) goto 220
 end if
 616 cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
 w(1) = f
-w(2) = dfloat(nf) + HALF
+w(2) = real(nf, RP) + HALF
 
 
 ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.
 call rangehist(nf, xhist, fhist, chist)
 
-return
 end subroutine lincob
+
+
+end module lincob_mod

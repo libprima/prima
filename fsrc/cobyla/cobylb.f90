@@ -8,7 +8,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, February 24, 2022 PM12:13:37
+! Last Modified: Friday, February 25, 2022 AM12:59:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -21,6 +21,11 @@ contains
 
 subroutine cobylb(calcfc, iprint, maxfilt, maxfun, ctol, cweight, eta1, eta2, ftarget, &
     & gamma1, gamma2, rhobeg, rhoend, constr, f, x, nf, chist, conhist, cstrv, fhist, xhist, info)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine performs the actual calculations of COBYLA. The arguments IPRINT, MAXFILT, MAXFUN,
+! MAXHIST, CTOL, CWEIGHT, ETA1, ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG, RHOEND, X, NF, F, XHIST, FHIST,
+! CHIST, CONHIST, CSTRV and INFO are identical to the corresponding arguments in subroutine COBYLA.
+!--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
 use, non_intrinsic :: checkexit_mod, only : checkexit

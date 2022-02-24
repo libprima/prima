@@ -28,6 +28,7 @@ try
     opt.classical=true;
     tic
     setup(opt);
+    testpdfon
     toc
 
     % Show current path information.
