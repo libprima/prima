@@ -80,3 +80,5 @@ if exist(pdfo_matlab_test, 'dir')
     rmdir(pdfo_matlab_test, 's');
 end
 mkdir(pdfo_matlab_test);  % Necessary, because `setup.m` may try adding this directory to path
+% `testpdfon` is needed by `pdv`.
+copyfile(fullfile(s_matlab_dir, 'tests', 'testpdfon.m'), fullfile(pdfo_matlab_test, 'testpdfon.m'));
