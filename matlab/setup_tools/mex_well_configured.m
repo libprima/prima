@@ -56,7 +56,7 @@ end
 % Try `mex(example_file)`
 %!------------------------------------------------------------------------------------------------!%
 % In general, we should clear a MEX function before compiling it. Otherwise, it may lead to a
-% failure of even crash. See https://github.com/equipez/test_matlab
+% failure of even crash. See https://github.com/equipez/test_matlab/tree/master/crash
 % Without the next line, `mex(example_file)` fails on Windows if we run this script two times.
 clear('timestwo');
 %!------------------------------------------------------------------------------------------------!%

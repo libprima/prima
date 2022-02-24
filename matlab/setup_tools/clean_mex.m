@@ -19,7 +19,7 @@ end
 mex_files = files_with_wildcard(directory, ['*.', mexext]);
 
 % Unload the compiled MEX files from memory.
-% !!! Without this, MATLAB may crash in some cases! See https://github.com/zaikunzhang/test_matlab
+% !!! Without this, MATLAB may crash in some cases! See https://github.com/equipez/test_matlab/tree/master/crash
 for imf = 1 : length(mex_files)
     % Note that `mex_files` contains full path, but we only need the `mexname`, without the path or
     % extension. Thus we need to use `fileparts` to retrieve the `mexname` first. Otherwise, `clear`

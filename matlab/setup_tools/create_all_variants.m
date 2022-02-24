@@ -14,14 +14,16 @@ function create_all_variants(options_or_directory)
 % 2. If `options_or_directory` is a structure (or empty), then it will be interpreted as compilation
 % options. The return of `all_variants.m` will reflect the variants available after the compilation.
 
-classical_variant = true;  % Default value for the availability of `classical`.
+% Default value for the availability of 'classical'. It is used only if `options_or_directory` is a
+% structure (i.e., it is indeed the compilation options).
+classical_variant = true;
 
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
 
 % Parse the inputs.
 
-% Move the existing version of `all_variants.m` to `all_variants.bak`. 
+% Move the existing version of `all_variants.m` to `all_variants.bak`.
 mfiledir = fileparts(mfilename('fullpath'));  % The directory where this file resides.
 allvar = 'all_variants';
 allvar_file = fullfile(mfiledir, [allvar, '.m']);

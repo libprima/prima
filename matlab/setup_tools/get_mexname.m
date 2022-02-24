@@ -20,12 +20,10 @@ function mexname = get_mexname(solver, precision, debug_flag, variant, mexdir)
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
 
-solver_list = [all_solvers(), 'gethuge'];
-
 if nargin ~= 2 && nargin ~= 4 && nargin ~= 5
     % Private/unexpected error
     error(sprintf('%s:InvalidInput', funname), '%s: UNEXPECTED ERROR: invalid number of inputs.', funname);
-elseif ~ischarstr(solver) || ~((nargin == 2 && strcmp(solver, 'gethuge')) || ((nargin == 4 || nargin == 5) && ismember(solver, solver_list)))
+elseif ~ischarstr(solver) || ~((nargin == 2 && strcmp(solver, 'gethuge')) || ((nargin == 4 || nargin == 5) && ismember(solver, all_solvers())))
     % Private/unexpected error
     error(sprintf('%s:InvalidInput', funname), '%s: UNEXPECTED ERROR: invalid solver received', funname);
 end
@@ -60,13 +58,14 @@ end
 if strcmp(solver, 'gethuge')
     mexname = [solver, '_', precision(1)];  % `mexname` is independent of other inputs, if any.
 else
-    if strcmp(variant, 'classical')
-        % The support for the classical variant is limited. We do not provide a debugging version.
-        debug_flag = false;
-    end
+    % Modify `debug_flag` according to `variant`: we do not provide a debugging version for the
+    % classical variant, for which the support is limited,
+    debug_flag = debug_flag && ~strcmp(variant, 'classical');
     mexname = [solver, '_', precision(1), dbgstr(debug_flag), variant(1)];
 end
 
+% When nargin == 5, this function is called during runtime. If the `mexname` defined above is not
+% available under `mexdir`, then we redefine `mexname` by switching debug_flag to false.
 if nargin == 5 && ~exist(fullfile(mexdir, mexname), 'file')
     mexname = [solver, '_', precision(1), dbgstr(false), variant(1)];
 end

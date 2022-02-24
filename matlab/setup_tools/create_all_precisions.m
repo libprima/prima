@@ -14,8 +14,10 @@ function create_all_precisions(options_or_directory)
 % 2. If `options_or_directory` is a structure (or empty), then it will be interpreted as compilation
 % options. The return of `all_precisions.m` will reflect the precisions available after the compilation.
 
-single_precision = true;  % Default value for the availability of 'single'
-quadruple_precision = false;  % Default value for the availability of 'quadruple'
+% Default values for the availability of 'single' and 'quadruple'. They are used only if
+% `options_or_directory` is a structure (i.e., it is indeed the compilation options).
+single_precision = true;  
+quadruple_precision = false;  
 
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function

@@ -47,10 +47,10 @@ debug_flag = false;  % Default `debug_flag`: non-debugging.
 
 availability = true;  % Default `availability` to true, which is necessary.
 
-% First, check the availability of `gethuge` corresponding to [precision, debug_flag, variant]
-% (indeed, the availability of `gethuge` does not depend on `debug_flag` or `variant`). If it is
-% unavailable, then set `availability` to false and return.
-mexname = get_mexname('gethuge', precision, debug_flag, variant);
+% First, check the availability of `gethuge` corresponding to `precision` (note that the availability
+% of `gethuge` does not depend on `debug_flag` or `variant`). If it is unavailable, then set
+% `availability` to false and return.
+mexname = get_mexname('gethuge', precision);
 if ~exist(fullfile(directory, [mexname, '.', mexext()]), 'file')
     availability = false;
     return

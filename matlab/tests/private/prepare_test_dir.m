@@ -36,7 +36,7 @@ assert(~contains(s_root_dir, d_root_dir));
 %%%!!!----------------------------------------------------------------------------------------!!!%%%
 % Remove the existing compiled MEX files in the source directories. This is IMPORTANT!
 % Without, MATLAB will crash due to a bug of MATLAB under Linux. This was observed on
-% 2022-02-16 and took two days to fix. See https://github.com/zaikunzhang/test_matlab .
+% 2022-02-16 and took two days to fix. See https://github.com/equipez/test_matlab/tree/master/crash.
 % It must be done BEFORE copying the files from `s_matlab_dir` to `d_matlab_dir`.
 setup_tools = fullfile(s_root_dir, 'matlab', 'setup_tools');
 addpath(setup_tools);  % We use `clean_mex` from `setup_tools` to clean up the compiled MEX files.
@@ -61,12 +61,12 @@ end
 d_pdfo_matlab_test = fullfile(d_root_dir, 'PDFO', 'matlab', 'tests');
 if exist(d_pdfo_matlab_test, 'dir')
     rmdir(d_pdfo_matlab_test, 's');
-    mkdir(d_pdfo_matlab_test);
+    mkdir(d_pdfo_matlab_test);  % Necessary, because `setup.m` may try adding this directory to path
 end
 d_opdfo_matlab_test = fullfile(d_root_dir, 'OPDFO', 'matlab', 'tests');
 if exist(d_opdfo_matlab_test, 'dir')
     rmdir(d_opdfo_matlab_test, 's');
-    mkdir(d_opdfo_matlab_test);
+    mkdir(d_opdfo_matlab_test);  % Necessary, because `setup.m` may try adding this directory to path
 end
 %!------------------------------------------------------------------------------------------------!%
 
