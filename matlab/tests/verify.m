@@ -52,6 +52,9 @@ try
     % Go to the test directory. This is not really necessary. It will not affect the test, but any
     % output (e.g., NEWUOA_output.txt, fort.6) will be dumped to `test_dir`.
     cd(test_dir);
+    % Record `olddir` in `options` so that we can come back to `olddir` during `isequiv` if
+    % necessary (for example, when a single test fails).
+    options.olddir = olddir;
 
     % Show current path information.
     showpath();

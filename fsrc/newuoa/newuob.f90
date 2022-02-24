@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, February 22, 2022 PM07:11:47
+! Last Modified: Thursday, February 24, 2022 PM12:13:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -292,6 +292,7 @@ do tr = 1, maxtr
         ! N.B.:
         ! 1. KNEW_TR = 0 means it is impossible to obtain a good interpolation set by replacing any
         ! current interpolation point with XNEW. Then XNEW and its function value will be discarded.
+        ! In this case, the geometry of XPT likely needs improvement, which will be handled below.
         ! 2. If TR_SUCCESS = TRUE (i.e., RATIO > 0), then SETDROP_TR ensures KNEW_TR > 0 so that
         ! XNEW is included into XPT. Otherwise, SETDROP_TR is buggy; moreover, if TR_SUCCESS = TRUE
         ! and KNEW_TR = 0, XOPT will differ from XPT(:, KOPT), because the former is set to XNEW but
@@ -302,8 +303,8 @@ do tr = 1, maxtr
 
         ! Update BMAT, ZMAT, IDZ (corresponding to H is the NEWUOA paper), GQ, HQ, PQ (defining the
         ! quadratic model), and FVAL, XPT, KOPT, FOPT, XOPT so that XPT(:, KNEW_TR) becomes XOPT + D.
-        ! If KNEW_TR = 0, the updating subroutines will do essentially nothing; in that case, the
-        ! geometry of XPT likely needs improvement, which will be handled below.
+        ! If KNEW_TR = 0, the updating subroutines will do essentially nothing, as the algorithm
+        ! decides not to include XNEW into XPT.
         ! Update BMAT, ZMAT and IDZ.
         call updateh(knew_tr, kopt, idz, d, xpt, bmat, zmat)
         ! Update the quadratic model using the updated BMAT, ZMAT, IDZ.
