@@ -1,4 +1,4 @@
-function compile(solvers, mexdir, modern_src, classical_src, common, gateways, options)
+function compile(solvers, mexdir, fsrc, gateways, options)
 %COMPILE mexifies the Fortran solvers.
 % solvers: list of the solvers to mexify
 % mexdir: the directory that will contain the mexified solvers
@@ -31,7 +31,11 @@ function compile(solvers, mexdir, modern_src, classical_src, common, gateways, o
 
 % COMPILE starts
 
+% Directories
 cpwd = pwd();
+modern_src = fsrc;
+classical_src = fullfile(fsrc, 'classical');
+common = fullfile(fsrc, 'common');
 
 % `options.debug` indicates whether to compile the debugging version of the solvers.
 if isfield(options, 'debug') && islogicalscalar(options.debug) && options.debug
