@@ -1,6 +1,8 @@
 subroutine lagmax(n, g, h, rho, d, v, vmax)
-implicit real(kind(0.0D0)) (a - h, o - z)
-implicit integer(i - n)
+
+use, non_intrinsic :: consts_mod, only : RP, IK
+implicit real(RP) (a - h, o - z)
+implicit integer(IK) (i - n)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 dimension g(*), h(n, *), d(*), v(*)
 !
@@ -80,7 +82,7 @@ if (vhv * vhv <= 0.9999D0 * dsq * vsq) then
     vhv = ratio * ratio * vhv
     vhw = ratio * wsq
     temp = half * (whw - vhv)
-    temp = temp + dsign(sqrt(temp**2 + vhw**2), whw + vhv)
+    temp = temp + sign(sqrt(temp**2 + vhw**2), whw + vhv)
     do i = 1, n
         d(i) = vhw * v(i) + temp * d(i)
     end do
@@ -105,7 +107,7 @@ do i = 1, n
 end do
 temp = gd / gg
 vv = zero
-scale = dsign(rho / sqrt(dd), gd * dhd)
+scale = sign(rho / sqrt(dd), gd * dhd)
 do i = 1, n
     v(i) = d(i) - temp * g(i)
     vv = vv + v(i)**2
@@ -145,7 +147,7 @@ if (abs(vhg) <= 0.01D0 * max(abs(ghg), abs(vhv))) then
     wsin = zero
 else
     temp = half * (ghg - vhv)
-    vmu = temp + dsign(sqrt(temp**2 + vhg**2), temp)
+    vmu = temp + sign(sqrt(temp**2 + vhg**2), temp)
     temp = sqrt(vmu**2 + vhg**2)
     wcos = vmu / temp
     wsin = vhg / temp
@@ -168,14 +170,14 @@ tempa = abs(dlin) + half * abs(vmu + vhv)
 tempb = abs(vlin) + half * abs(ghg - vmu)
 tempc = halfrt * (abs(dlin) + abs(vlin)) + 0.25D0 * abs(ghg + vhv)
 if (tempa >= tempb .and. tempa >= tempc) then
-    tempd = dsign(rho, dlin * (vmu + vhv))
+    tempd = sign(rho, dlin * (vmu + vhv))
     tempv = zero
 else if (tempb >= tempc) then
     tempd = zero
-    tempv = dsign(rho, vlin * (ghg - vmu))
+    tempv = sign(rho, vlin * (ghg - vmu))
 else
-    tempd = dsign(halfrt * rho, dlin * (ghg + vhv))
-    tempv = dsign(halfrt * rho, vlin * (ghg + vhv))
+    tempd = sign(halfrt * rho, dlin * (ghg + vhv))
+    tempv = sign(halfrt * rho, vlin * (ghg + vhv))
 end if
 do i = 1, n
     d(i) = tempd * d(i) + tempv * v(i)

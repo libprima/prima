@@ -1,5 +1,6 @@
 subroutine getact(n, m, amat, nact, iact, qfac, rfac, snorm, resnew, resact, g, dw, vlam, w)
 use, non_intrinsic :: linalg_mod, only : inprod
+use, non_intrinsic :: dirty_temporary_mod4powell_mod
 !      IMPLICIT REAL*8 (A-H,O-Z)
 implicit real(kind(0.0D0)) (a - h, o - z)
 implicit integer(i - n)
@@ -29,9 +30,7 @@ dimension amat(n, m), iact(m), qfac(n, n), rfac(n * (n + 1) / 2), resnew(m), res
 !
 !     Set some constants and a temporary VLAM.
 !
-one = 1.0D0
-tiny = 1.0D-60
-zero = 0.0D0
+tinynum = real(tiny(0.0), kind(0.0D0))
 tdel = 0.2D0 * snorm
 ddsav = inprod(g, g) + inprod(g, g)
 vlam = 0.0D0
@@ -233,7 +232,7 @@ ic = nact
 !!!! If NACT=0, then IC = 0, and hence IACT(IC) is undefined, which leads to memory error when
 !RESNEW(IACT(IC)) is accessed.
 270 if (vlam(ic) < zero) goto 280
-resnew(iact(ic)) = dmax1(resact(ic), tiny)
+resnew(iact(ic)) = dmax1(resact(ic), tinynum)
 goto 800
 280 ic = ic - 1
 if (ic > 0) goto 270
@@ -253,7 +252,7 @@ return
 !       Givens rotations is applied to the current QFAC and RFAC. Then NACT
 !       is reduced by one.
 !
-800 resnew(iact(ic)) = dmax1(resact(ic), tiny)
+800 resnew(iact(ic)) = dmax1(resact(ic), tinynum)
 jc = ic
 810 if (jc < nact) then
     jcp = jc + 1

@@ -1,7 +1,8 @@
 subroutine trstep(n, npt, m, amat, xpt, hq, pq, nact, iact, rescon, &
      &  qfac, rfac, snorm, step, g, resnew, resact, d, dw, w)
-implicit real(kind(0.0D0)) (a - h, o - z)
-implicit integer(i - n)
+use, non_intrinsic :: consts_mod, only : RP, IK
+implicit real(RP) (a - h, o - z)
+implicit integer(IK) (i - n)
 dimension amat(n, *), xpt(npt, *), hq(*), pq(*), iact(*), &
 & rescon(*), qfac(n, *), rfac(*), step(*), g(*), resnew(*), resact(*), &
 & d(*), dw(*), w(*)
@@ -36,7 +37,7 @@ dimension amat(n, *), xpt(npt, *), hq(*), pq(*), iact(*), &
 !
 half = 0.5D0
 one = 1.0D0
-tiny = 1.0D-60
+tinynum = real(tiny(0.0), RP)
 zero = 0.0D0
 ctest = 0.01D0
 snsq = snorm * snorm
@@ -49,7 +50,7 @@ if (m > 0) then
         if (rescon(j) >= snorm) then
             resnew(j) = -one
         else if (rescon(j) >= zero) then
-            resnew(j) = max(resnew(j), tiny)
+            resnew(j) = max(resnew(j), tinynum)
         end if
     end do
     if (nact > 0) then
@@ -271,7 +272,7 @@ end do
 if (m > 0) then
     do j = 1, m
         if (resnew(j) > zero) then
-            resnew(j) = max(resnew(j) - alpha * w(j), tiny)
+            resnew(j) = max(resnew(j) - alpha * w(j), tinynum)
         end if
     end do
 end if

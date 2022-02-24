@@ -2,9 +2,7 @@ function compile(solvers, mexdir, fsrc, gateways, options)
 %COMPILE mexifies the Fortran solvers.
 % solvers: list of the solvers to mexify
 % mexdir: the directory that will contain the mexified solvers
-% modern_src: the directory containing the modernized source files of the Fortran solvers
-% classical_src: the directory containing the classical source files of the Fortran solvers
-% common: the directory that contains some common source files shared by all the Fortran solvers
+% fsrc: the directory containing the source files of the Fortran solvers
 % gateways: the directory containing the MEX gateways of the Fortran solvers
 % options: some options
 
@@ -12,12 +10,12 @@ function compile(solvers, mexdir, fsrc, gateways, options)
 % During the compilation, it is important to work in the correct directory. Otherwise, the files can
 % be linked mistakenly, leading to runtime errors such as SEGFAULT.
 % 1. Each [precision, debug_flag] specifies a version of the common files; they are compiled in
-% work_dir = fullfile(common, pdstr(precision, debug_flag));
+% work_dir = fullfile(directory_of_common_files, pdstr(precision, debug_flag));
 % 2. Each [variant, precision, debug_flag] specifies a version of the solver; it is compiled in
 % work_dir = fullfile(directory_of_solver_variant, pdstr(precision, debug_flag));
 % 3. When compiling the solver corresponding to [variant, precision, debug_flag], we need the
 % module and object files in
-% common_dir = fullfile(common, pdstr(precision, debug_flag)).
+% common_dir = fullfile(directory_of_common_files, pdstr(precision, debug_flag)).
 % 4. All the working directories (i.e., `work_dir`) should be sanitized (i.e., removing the existing
 % module and object files) before the compilation.
 %
@@ -32,9 +30,12 @@ function compile(solvers, mexdir, fsrc, gateways, options)
 % COMPILE starts
 
 % Directories
-cpwd = pwd();
+cpwd = pwd();  % The current directory, which may not be the directory containing this m file.
+% `modern_src`: the directory containing the modernized source files of the Fortran solvers
 modern_src = fsrc;
+% `classical_src`: the directory containing the classical source files of the Fortran solvers
 classical_src = fullfile(fsrc, 'classical');
+% `common`: the directory that contains some common source files shared by all the Fortran solvers
 common = fullfile(fsrc, 'common');
 
 % `options.debug` indicates whether to compile the debugging version of the solvers.
@@ -49,7 +50,7 @@ variants = all_variants();
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-ready_solvers = {'cobylan', 'newuoan'};  % To be removed !!! %%%%%%%%%%%%%%%%%%
+%ready_solvers = {'cobylan', 'newuoan'};  % To be removed !!! %%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -68,6 +69,7 @@ if any(strfind(Architecture, '64')) && log2(maxArrayDim) > 31
 else
     ad_option = '-compatibleArrayDims'; % This works for both 32-bit and 64-bit MATLAB
 end
+
 
 % Compile the common files. They are shared by all solvers. We compile them only once.
 
@@ -137,9 +139,9 @@ for isol = 1 : length(solvers)
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                if ~ismember(solver, ready_solvers) && ~strcmp(precisions{iprc}, 'double')
-                    continue  % To be removed !!! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                end
+                %if ~ismember(solver, ready_solvers) && ~strcmp(precisions{iprc}, 'double')
+                %    %continue  % To be removed !!! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %end
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -162,6 +164,7 @@ for isol = 1 : length(solvers)
     fprintf('Done.\n');
 end
 
+
 % Restore header_file.
 if exist(header_file_bak, 'file')
     movefile(header_file_bak, header_file);
@@ -169,8 +172,12 @@ end
 
 cd(cpwd);  % Go back to `cpwd`.
 
+
 % COMPILE ends
 return
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 function files = list_files(directory, filelist)
@@ -212,11 +219,13 @@ end
 % PREPARE_HEADER ends
 return
 
+
 function s = pdstr(precision, debug_flag)
 %PDSTR returns a string according to `precision` and `debug_flag`.
 s = [precision(1), dbgstr(debug_flag)];
 % PDSTR ends
 return
+
 
 function prepare_work_dir(directory)
 %PREPARE_WORKDIR prepares `directory` for the compilation: if it does not exist, create it;

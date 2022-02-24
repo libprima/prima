@@ -1,7 +1,8 @@
 subroutine update(n, npt, xpt, bmat, zmat, idz, ndim, sp, step, kopt, knew, vlag, w)
 
-implicit real(kind(0.0D0)) (a - h, o - z)
-implicit integer(i - n)
+use, non_intrinsic :: consts_mod, only : RP, IK
+implicit real(RP) (a - h, o - z)
+implicit integer(IK) (i - n)
 dimension xpt(npt, *), bmat(ndim, *), zmat(npt, *), sp(*), step(*), vlag(*), w(*)
 !
 !     The arguments N, NPT, XPT, BMAT, ZMAT, IDZ, NDIM ,SP and STEP are

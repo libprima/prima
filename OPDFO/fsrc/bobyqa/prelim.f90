@@ -1,6 +1,7 @@
 subroutine prelim(n, npt, x, xl, xu, rhobeg, iprint, maxfun, xbase, &
 & xpt, fval, gopt, hq, pq, bmat, zmat, ndim, sl, su, nf, kopt, f, ftarget)
 
+use, non_intrinsic :: dirty_temporary_mod4powell_mod
 implicit real(kind(0.0D0)) (a - h, o - z)
 implicit integer(i - n)
 dimension x(*), xl(*), xu(*), xbase(*), xpt(npt, *), fval(*), gopt(*), &
@@ -24,15 +25,9 @@ dimension x(*), xl(*), xu(*), xbase(*), xpt(npt, *), fval(*), gopt(*), &
 !
 !     Set some constants.
 !
-half = 0.5D0
-one = 1.0D0
-two = 2.0D0
-zero = 0.0D0
 rhosq = rhobeg * rhobeg
 recip = one / rhosq
 np = n + 1
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-almost_infinity = huge(0.0D0) / 2.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     Set XBASE to the initial vector of variables, and set the initial
@@ -160,7 +155,7 @@ end if
 !     By Tom (on 04-06-2019):
 !     If the evaluation returns an NaN or an infinity value, this
 !     subroutine is stopped.
-if (f /= f .or. f > almost_infinity) goto 80
+if (is_nan(f) .or. is_posinf(f)) goto 80
 !     By Tom (on 04-06-2019):
 !     If the target value is reached, stop the algorithm.
 if (f <= ftarget) goto 80

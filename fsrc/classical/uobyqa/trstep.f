@@ -64,7 +64,7 @@ C
               H(KP,K)=ZERO
           ELSE
               TEMP=H(KP,K)
-              TN(K)=DSIGN(SQRT(SUM+TEMP*TEMP),TEMP)
+              TN(K)=SIGN(SQRT(SUM+TEMP*TEMP),TEMP)
               H(KP,K)=-SUM/(TEMP+TN(K))
               TEMP=SQRT(TWO/(SUM+H(KP,K)**2))
               DO I=KP,N
@@ -183,7 +183,7 @@ C
       ELSE
           TEMP=TD(K+1)+PAR
           IF (TEMP <= ABS(PIV(K))) THEN
-              D(K+1)=DSIGN(ONE,-TN(K))
+              D(K+1)=SIGN(ONE,-TN(K))
               DHD=PIV(K)+TEMP-TWO*ABS(TN(K))
           ELSE
               D(K+1)=-TN(K)/TEMP
@@ -215,7 +215,7 @@ C
           DO I=1,N
               DTG=DTG+D(I)*GG(I)
           END DO
-          SCALE=-DSIGN(DELTA/SQRT(DSQ),DTG)
+          SCALE=-SIGN(DELTA/SQRT(DSQ),DTG)
           DO I=1,N
               D(I)=SCALE*D(I)
           END DO
@@ -295,7 +295,7 @@ C
           W(1)=ONE/PIV(1)
           DO I=2,N
               TEMP=-TN(I-1)*W(I-1)
-              W(I)=(DSIGN(ONE,TEMP)+TEMP)/PIV(I)
+              W(I)=(SIGN(ONE,TEMP)+TEMP)/PIV(I)
           END DO
           Z(N)=W(N)
           DO I=NM,1,-1
@@ -314,7 +314,7 @@ C     Apply the alternative test for convergence.
 C
           TEMPA=ABS(DELSQ-DSQ)
           TEMPB=SQRT(DTZ*DTZ+TEMPA*ZSQ)
-          GAM=TEMPA/(DSIGN(TEMPB,DTZ)+DTZ)
+          GAM=TEMPA/(SIGN(TEMPB,DTZ)+DTZ)
           TEMP=TOL*(WSQ+PAR*DELSQ)-GAM*GAM*WWSQ
           IF (TEMP >= ZERO) THEN
               DO I=1,N

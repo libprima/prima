@@ -1,8 +1,10 @@
 subroutine update(n, npt, bmat, zmat, ndim, vlag, beta, denom, knew, w)
+
+use, non_intrinsic :: consts_mod, only : RP, IK
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !      IMPLICIT REAL*8 (A-H,O-Z)
-implicit real(kind(0.0D0)) (a - h, o - z)
-implicit integer(i - n)
+implicit real(RP) (a - h, o - z)
+implicit integer(IK) (i - n)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 dimension bmat(ndim, *), zmat(npt, *), vlag(*), w(*)
 !

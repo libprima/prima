@@ -1,5 +1,6 @@
 subroutine uobyqb(n, x, rhobeg, rhoend, iprint, maxfun, npt, xbase, &
      &  xopt, xnew, xpt, pq, pl, h, g, d, vlag, w, f, info, ftarget)
+use, non_intrinsic :: dirty_temporary_mod4powell_mod
 implicit real(kind(0.0D0)) (a - h, o - z)
 implicit integer(i - n)
 dimension x(n), xbase(n), xopt(n), xnew(n), xpt(npt, n), pq(npt - 1), &
@@ -29,15 +30,10 @@ dimension x(n), xbase(n), xopt(n), xnew(n), xpt(npt, n), pq(npt - 1), &
 !
 !     Set some constants.
 !
-one = 1.0D0
-two = 2.0D0
-zero = 0.0D0
-half = 0.5D0
 tol = 0.01D0
 nnp = n + n + 1
 nptm = npt - 1
 nftest = max0(maxfun, 1)
-almost_infinity = huge(0.0D0) / 2.0D0
 !
 !     Initialization. NF is the number of function calculations so far.
 !
@@ -267,7 +263,7 @@ call calfun(n, x, f)
 !     If this happends at the very first function evaluation (i.e.,
 !     NF=1), then it is necessary to set FOPT and XOPT before going to
 !     530, because these two variables have not been set yet.
-if (f /= f .or. f > almost_infinity) then
+if (is_nan(f) .or. is_posinf(f)) then
     if (nf == 1) then
         fopt = f
         do i = 1, n

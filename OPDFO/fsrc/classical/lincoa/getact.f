@@ -2,6 +2,7 @@
      1  RESNEW,RESACT,G,DW,VLAM,W)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IMPLICIT REAL*8 (A-H,O-Z)
+      use, non_intrinsic :: dirty_temporary_mod4powell_mod
       IMPLICIT REAL(KIND(0.0D0)) (A-H,O-Z)
       IMPLICIT INTEGER (I-N)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -31,9 +32,8 @@ C       in DW, and W(1) is set to the square of the length of the direction.
 C
 C     Set some constants and a temporary VLAM.
 C
-      ONE=1.0D0
-      TINY=1.0D-60
-      ZERO=0.0D0
+      !TINYNUM=1.0D-60
+      TINYNUM=real(tiny(0.0), kind(0.0D0))
       TDEL=0.2D0*SNORM
       DDSAV=ZERO
       DO I=1,N
@@ -239,7 +239,7 @@ C
       IFLAG=3
       IC=NACT
   270 IF (VLAM(IC) < ZERO) GOTO 280
-      RESNEW(IACT(IC))=DMAX1(RESACT(IC),TINY)
+      RESNEW(IACT(IC))=DMAX1(RESACT(IC),TINYNUM)
       GOTO 800
   280 IC=IC-1
       IF (IC > 0) GOTO 270
@@ -259,7 +259,7 @@ C       value of IACT(NACT) is the old value of IACT(IC). A sequence of
 C       Givens rotations is applied to the current QFAC and RFAC. Then NACT
 C       is reduced by one.
 C
-  800 RESNEW(IACT(IC))=DMAX1(RESACT(IC),TINY)
+  800 RESNEW(IACT(IC))=DMAX1(RESACT(IC),TINYNUM)
       JC=IC
   810 IF (JC < NACT) THEN
           JCP=JC+1

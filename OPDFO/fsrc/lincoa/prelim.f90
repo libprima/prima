@@ -1,6 +1,7 @@
 subroutine prelim(n, npt, m, amat, b, x, rhobeg, iprint, xbase, &
      &  xpt, fval, xsav, xopt, gopt, kopt, hq, pq, bmat, zmat, idz, ndim, &
      &  sp, rescon, step, pqw, w, f, ftarget)
+use, non_intrinsic :: dirty_temporary_mod4powell_mod
 implicit real(kind(0.0D0)) (a - h, o - z)
 implicit integer(i - n)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -27,9 +28,6 @@ dimension amat(n, *), b(*), x(*), xbase(*), xpt(npt, *), fval(*), &
 !
 !     Set some constants.
 !
-half = 0.5D0
-one = 1.0D0
-zero = 0.0D0
 nptm = npt - n - 1
 rhosq = rhobeg * rhobeg
 recip = one / rhosq
@@ -37,8 +35,6 @@ reciq = dsqrt(half) / rhosq
 test = 0.2D0 * rhobeg
 idz = 1
 kbase = 1
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-almost_infinity = huge(0.0D0) / 2.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     Set the initial elements of XPT, BMAT, SP and ZMAT to zero.
@@ -175,7 +171,7 @@ do nf = 1, npt
 !     LINCOB with updated KOPT and XSAV.
 !     Note that we should NOT compare F and FTARGET, because X may not
 !     be feasible.
-    if (f /= f .or. f > almost_infinity .or. fval(kopt) <= ftarget) then
+    if (is_nan(f) .or. is_posinf(f) .or. fval(kopt) <= ftarget) then
         exit
     end if
 end do

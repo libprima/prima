@@ -1,6 +1,7 @@
 subroutine trstep(n, g, h, delta, tol, d, gg, td, tn, w, piv, z, evalue)
-implicit real(kind(0.0D0)) (a - h, o - z)
-implicit integer(i - n)
+use, non_intrinsic :: consts_mod, only : RP, IK
+implicit real(RP) (a - h, o - z)
+implicit integer(IK) (i - n)
 dimension g(*), h(n, *), d(*), gg(*), td(*), tn(*), w(*), piv(*), z(*), dsav(n)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
@@ -62,7 +63,7 @@ do k = 1, nm
         h(kp, k) = zero
     else
         temp = h(kp, k)
-        tn(k) = dsign(sqrt(sum + temp * temp), temp)
+        tn(k) = sign(sqrt(sum + temp * temp), temp)
         h(kp, k) = -sum / (temp + tn(k))
         temp = sqrt(two / (sum + h(kp, k)**2))
         do i = kp, n
@@ -213,7 +214,7 @@ if (abs(tn(k)) <= abs(piv(k))) then
 else
     temp = td(k + 1) + par
     if (temp <= abs(piv(k))) then
-        d(k + 1) = dsign(one, -tn(k))
+        d(k + 1) = sign(one, -tn(k))
         dhd = piv(k) + temp - two * abs(tn(k))
     else
         d(k + 1) = -tn(k) / temp
@@ -245,7 +246,7 @@ if (paruest > zero .and. parlest >= temp) then
     do i = 1, n
         dtg = dtg + d(i) * gg(i)
     end do
-    scale = -dsign(delta / sqrt(dsq), dtg)
+    scale = -sign(delta / sqrt(dsq), dtg)
     do i = 1, n
         d(i) = scale * d(i)
     end do
@@ -325,7 +326,7 @@ if (posdef == zero) then
     w(1) = one / piv(1)
     do i = 2, n
         temp = -tn(i - 1) * w(i - 1)
-        w(i) = (dsign(one, temp) + temp) / piv(i)
+        w(i) = (sign(one, temp) + temp) / piv(i)
     end do
     z(n) = w(n)
     do i = nm, 1, -1
@@ -344,7 +345,7 @@ if (posdef == zero) then
 !
     tempa = abs(delsq - dsq)
     tempb = sqrt(dtz * dtz + tempa * zsq)
-    gam = tempa / (dsign(tempb, dtz) + dtz)
+    gam = tempa / (sign(tempb, dtz) + dtz)
     temp = tol * (wsq + par * delsq) - gam * gam * wwsq
     if (temp >= zero) then
         do i = 1, n

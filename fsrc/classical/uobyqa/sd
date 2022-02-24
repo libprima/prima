@@ -7,3 +7,4 @@ sed -i 's/DCOS/COS/g' *.f*
 sed -i 's/DATAN/ATAN/g' *.f*
 sed -i 's/DMIN1/MIN/g' *.f*
 sed -i 's/DMAX1/MAX/g' *.f*
+sed -i 's/DSIGN/SIGN/g' *.f*

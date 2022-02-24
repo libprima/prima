@@ -1,8 +1,9 @@
 subroutine qmstep(n, npt, m, amat, xpt, xopt, nact, iact, &
      &  rescon, qfac, kopt, knew, del, step, gl, pqw, rstat, w, ifeas)
 !      IMPLICIT REAL*8 (A-H,O-Z)
-implicit real(kind(0.0D0)) (a - h, o - z)
-implicit integer(i - n)
+use, non_intrinsic :: consts_mod, only : RP, IK
+implicit real(RP) (a - h, o - z)
+implicit integer(IK) (i - n)
 !      DIMENSION AMAT(N,*),B(*),XPT(NPT,*),XOPT(*),IACT(*),
 dimension amat(n, *), xpt(npt, *), xopt(*), iact(*), &
      &  rescon(*), qfac(n, *), step(*), gl(*), pqw(*), rstat(*), w(*)

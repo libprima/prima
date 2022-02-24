@@ -5,6 +5,7 @@ subroutine uobyqb(calfun, n, x, rhobeg, rhoend, iprint, maxfun, npt, xbase, &
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
@@ -52,7 +53,6 @@ tol = 0.01D0
 nnp = n + n + 1
 nptm = npt - 1
 nftest = max0(maxfun, 1)
-almost_infinity = huge(0.0D0) / 2.0D0
 !
 !     Initialization. NF is the number of function calculations so far.
 !
@@ -285,7 +285,7 @@ call savehist(nf, x, xhist, f, fhist)
 !     If this happends at the very first function evaluation (i.e.,
 !     NF=1), then it is necessary to set FOPT and XOPT before going to
 !     530, because these TWO variables have not been set yet.
-if (f /= f .or. f > almost_infinity) then
+if (is_nan(f) .or. is_posinf(f)) then
     if (nf == 1) then
         fopt = f
         do i = 1, n

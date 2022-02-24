@@ -2,6 +2,7 @@ subroutine lincob(n, npt, m, amat, b, x, rhobeg, rhoend, iprint, maxfun, &
     & xbase, xpt, fval, xsav, xopt, gopt, hq, pq, bmat, zmat, ndim, &
      &  step, sp, xnew, iact, rescon, qfac, rfac, pqw, w, f, info, ftarget)
 
+use, non_intrinsic :: dirty_temporary_mod4powell_mod
 implicit real(kind(0.0D0)) (a - h, o - z)
 implicit integer(i - n)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -64,15 +65,9 @@ dimension amat(n, *), b(*), x(*), xbase(*), xpt(npt, *), fval(*), &
 !
 !     Set some constants.
 !
-half = 0.5D0
-one = 1.0D0
-tenth = 0.1D0
-zero = 0.0D0
 np = n + 1
 nh = (n * np) / 2
 nptm = npt - np
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-almost_infinity = huge(0.0D0) / 2.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 15-08-2019
@@ -94,7 +89,7 @@ call prelim(n, npt, m, amat, b, x, rhobeg, iprint, xbase, xpt, fval, &
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     By Tom (on 04-06-2019):
-if (f /= f .or. f > almost_infinity) then
+if (is_nan(f) .or. is_posinf(f)) then
     fopt = fval(kopt)
     info = -2
     goto 600
@@ -475,7 +470,7 @@ end do
 call calfun(n, x, f)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     By Tom (on 04-06-2019):
-if (f /= f .or. f > almost_infinity) then
+if (is_nan(f) .or. is_posinf(f)) then
     if (nf == 1) then
         fopt = f
         xopt(1:n) = zero

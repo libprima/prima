@@ -36,7 +36,7 @@ dimension amat(n, *), xpt(npt, *), hq(*), pq(*), iact(*), &
 !
 half = 0.5D0
 one = 1.0D0
-tiny = 1.0D-60
+tinynum = real(tiny(0.0), kind(0.0D0))
 zero = 0.0D0
 ctest = 0.01D0
 snsq = snorm * snorm
@@ -49,7 +49,7 @@ if (m > 0) then
         if (rescon(j) >= snorm) then
             resnew(j) = -one
         else if (rescon(j) >= zero) then
-            resnew(j) = dmax1(resnew(j), tiny)
+            resnew(j) = dmax1(resnew(j), tinynum)
         end if
     end do
     if (nact > 0) then
@@ -271,7 +271,7 @@ end do
 if (m > 0) then
     do j = 1, m
         if (resnew(j) > zero) then
-            resnew(j) = dmax1(resnew(j) - alpha * w(j), tiny)
+            resnew(j) = dmax1(resnew(j) - alpha * w(j), tinynum)
         end if
     end do
 end if

@@ -7,6 +7,7 @@ subroutine lincob(calfun, n, npt, m, amat, b_in, x, rhobeg, rhoend, iprint, maxf
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm, maximum
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
@@ -97,8 +98,6 @@ np = n + 1
 nh = (n * np) / 2
 nptm = npt - np
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-almost_infinity = huge(0.0D0) / 2.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 15-08-2019
 ! See the comments below line number 210
@@ -121,7 +120,7 @@ call prelim(calfun, n, npt, m, amat, b, x, rhobeg, iprint, xbase, xpt, fval, &
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     By Tom (on 04-06-2019):
-if (f /= f .or. f > almost_infinity) then
+if (is_nan(f) .or. is_posinf(f)) then
     fopt = fval(kopt)
     info = -2
     goto 600
@@ -504,7 +503,7 @@ cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
 call savehist(nf, x, xhist, f, fhist, cstrv, chist)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     By Tom (on 04-06-2019):
-if (f /= f .or. f > almost_infinity) then
+if (is_nan(f) .or. is_posinf(f)) then
     if (nf == 1) then
         fopt = f
         xopt(1:n) = ZERO
