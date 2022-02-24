@@ -35,12 +35,12 @@ end
 
 % `precision_list` is a cell array containing all the precisions of the Fortran solvers.
 % `variant_list` is a cell array containing all the variants of the Fortran solvers.
-if nargin == 4
-    precision_list = all_precisions_possible();
-    variant_list = all_variants_possible();
-else
+if nargin == 5  % In this case, we are in runtime.
     precision_list = all_precisions();
     variant_list = all_variants();
+else  % In this case, solver == 'gethuge' or we are in setup. `all_precisions/variants` may be unavailable.
+    precision_list = all_precisions_possible();
+    variant_list = all_variants_possible();
 end
 
 if ~(ischarstr(precision) && ismember(precision, precision_list))

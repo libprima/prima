@@ -45,9 +45,7 @@ if ismember(precision_or_variant, variant_list)  % `precision_or_variant` is a v
 end
 debug_flag = false;  % Default `debug_flag`: non-debugging.
 
-availability = true;  % Default `availability` to true, which is necessary.
-
-% First, check the availability of `gethuge` corresponding to `precision` (note that the availability
+% Check the availability of `gethuge` corresponding to `precision` (note that the availability
 % of `gethuge` does not depend on `debug_flag` or `variant`). If it is unavailable, then set
 % `availability` to false and return.
 mexname = get_mexname('gethuge', precision);
@@ -78,6 +76,7 @@ for isol = 1 : length(solver_list)
 end
 
 % Now set `availability` according to all the solvers that are present under `directory`.
+availability = true;  % Default `availability` to true, which is necessary.
 for isol = 1 : length(solver_list)
     if solver_present(isol)
         mexname = get_mexname(solver_list{isol}, precision, debug_flag, variant);
