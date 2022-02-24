@@ -33,25 +33,31 @@ if nargin == 5 && (~ischarstr(mexdir) || isempty(mexdir))
     error(sprintf('%s:InvalidInput', funname), '%s: UNEXPECTED ERROR: invalid mexdir received', funname);
 end
 
-% `precision_list` is a cell array containing all the precisions of the Fortran solvers.
-% `variant_list` is a cell array containing all the variants of the Fortran solvers.
-if nargin == 5  % In this case, we are in runtime.
-    precision_list = all_precisions();
-    variant_list = all_variants();
-else  % In this case, solver == 'gethuge' or we are in setup. `all_precisions/variants` may be unavailable.
+% Check the `precision`, `debug_flag`, and `variant` are valid when there are 4 or 5 inputs. We
+% should do the same when there are only 2 inputs (i.e., `solver` is 'gethuge'); however, in
+% that case, it is impossible to decide whether we are in setup or runtime, and hence we cannot
+% decide `precision_list` (a cell array containing all the precisions of the Fortran solvers)
+% in a simple way: we should call `all_precisions_possible` during setup but `all_precisions` during
+% runtime. It is possible to make a choice according to the availability of these functions, but we
+% decide not to do it for performance consideration. Similar for `variant_list`.
+if nargin == 4  % In this case, we are in setup.
     precision_list = all_precisions_possible();
     variant_list = all_variants_possible();
+elseif nargin == 5  % In this case, we are in runtime.
+    precision_list = all_precisions();
+    variant_list = all_variants();
 end
-
-if ~(ischarstr(precision) && ismember(precision, precision_list))
-    % Private/unexpected error
-    error(sprintf('%s:InvalidInput', funname), '%s: UNEXPECTED ERROR: invalid precision received', funname);
-elseif (nargin == 4 || nargin == 5) && ~islogicalscalar(debug_flag)
-    % Private/unexpected error
-    error(sprintf('%s:InvalidInput', funname), '%s: UNEXPECTED ERROR: invalid debugging flag received', funname);
-elseif (nargin == 4 || nargin == 5) && ~(ischarstr(variant) && ismember(variant, variant_list))
-    % Private/unexpected error
-    error(sprintf('%s:InvalidInput', funname), '%s: UNEXPECTED ERROR: invalid variant received', funname);
+if nargin == 4 || nargin == 5
+    if ~(ischarstr(precision) && ismember(precision, precision_list))
+        % Private/unexpected error
+        error(sprintf('%s:InvalidInput', funname), '%s: UNEXPECTED ERROR: invalid precision received', funname);
+    elseif ~islogicalscalar(debug_flag)
+        % Private/unexpected error
+        error(sprintf('%s:InvalidInput', funname), '%s: UNEXPECTED ERROR: invalid debugging flag received', funname);
+    elseif ~(ischarstr(variant) && ismember(variant, variant_list))
+        % Private/unexpected error
+        error(sprintf('%s:InvalidInput', funname), '%s: UNEXPECTED ERROR: invalid variant received', funname);
+    end
 end
 
 % Start the real business
