@@ -1,6 +1,8 @@
 function interform(directory)
-%INTERFORM refactors the Fortran files in `directory` into the "intersection
-% form" and save them in outputdir under directory.
+%INTERFORM refactors the Fortran files in `directory` into the "intersection form" and save them in
+% outputdir under directory. We also refactor the files in the subdirectories and subsubdirectories
+% of `directory`, and save the refactored files in the corresponding subdirectories and
+% subsubdirectories of `outputdir`. We do not go further down to subsubsubdirectories etc.
 % See http://fortranwiki.org/fortran/show/Continuation+lines for details.
 %
 % Coded by Zaikun ZHANG (www.zhangzk.net) in August, 2020.
@@ -9,7 +11,7 @@ function interform(directory)
 outputdir = '.interform';  % The leading dot makes the directory hidden on Linux systems.
 
 % Do not perform refactoring in these subdirectories (if exist)
-ignoredir = {'original', 'backup', '.interform', 'trash', 'test', 'tests', 'results', 'test_data'};
+ignoredir = {'original', 'backup', '.interform', 'trash', 'example', 'examples', 'test', 'tests', 'results', 'test_data', 'bak', 'bakf90'};
 
 % Ignore the following files
 ignorefiles = {'calfun__genmod.f90', 'mexfunction__genmod.f90', 'test.f'};
@@ -23,11 +25,6 @@ origdir = pwd();
 cd(directory);
 inputdir = pwd();  % Full path of the given directory, which is the current directory now.
 cd(origdir);
-% Revise ignoredir according to inputdir
-[~, inputdirname]  = fileparts(inputdir);
-if ~strcmp(inputdirname, 'mex_gateways')
-    ignoredir = [ignoredir, 'classical'];
-end
 
 outputdir = fullfile(inputdir, outputdir);  % Full path of the output directory.
 if exist(outputdir, 'dir')
@@ -62,18 +59,29 @@ fclose(fid);
 % The following lines perform the refactoring in the current directory
 refactor_dir(inputdir, outputdir, ignorefiles);
 
-% The following lines get a cell array containing the names (but not
-% full path) of all the subdirectories of the given directory.
+% The following lines get a cell array containing the names (but NOT full path) of all the
+% subdirectories of the given directory.
 d = dir(inputdir);
 isub = [d(:).isdir];
 subdir = {d(isub).name};
 subdir = setdiff(subdir, [{'.', '..'}, ignoredir]);  % Exclude the ignored directories
 
-% The following lines perform the refactoring in the subdirectories of
-% the current directory.
+% The following lines perform the refactoring in the subdirectories of the given directory and
+% their subdirectories.
 for i = 1 : length(subdir)
     mkdir(fullfile(outputdir, subdir{i}));
     refactor_dir(fullfile(inputdir, subdir{i}), fullfile(outputdir, subdir{i}), ignorefiles);
+    % The following lines get a cell array containing the names (but NOT full path) of all the
+    % subdirectories of the current directory.
+    subd = dir(fullfile(inputdir, subdir{i}));
+    isubsub = [subd(:).isdir];
+    subsubdir = {subd(isubsub).name};
+    subsubdir = setdiff(subsubdir, [{'.', '..'}, ignoredir]);  % Exclude the ignored directories
+    % The following lines perform the refactoring in the subdirectories of the current directory.
+    for subi = 1 : length(subsubdir)
+        mkdir(fullfile(outputdir, subdir{i}, subsubdir{subi}));
+        refactor_dir(fullfile(inputdir, subdir{i}, subsubdir{subi}), fullfile(outputdir, subdir{i}, subsubdir{subi}), ignorefiles);
+    end
 end
 
 

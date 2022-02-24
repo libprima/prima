@@ -24,21 +24,8 @@ function setup(varargin)
 %   the package. It is out of the scope of this package to help the users
 %   to configure MEX.
 %
-%   2. At the end of this script, we will try saving the path of this package
-%   to the search path. This can be done only if you have the permission to
-%   write the following path-defining file:
-%
-%   fullfile(matlabroot, 'toolbox', 'local', 'pathdef.m')
-%   NOTE: MATLAB MAY CHANGE THE LOCATION OF THIS FILE IN THE FUTURE
-%
-%   Otherwise, you CAN still use the package, except that you need to run
-%   the startup.m script in the current directory each time you start a new
-%   MATLAB session that needs the package. startup.m will not re-compile
-%   the package but only add it into the search path.
-%
-%   3. This script needs you to have write access to the current directory
-%   (the directory where this script resides) and its subdirectories.
-%   Otherwise, it will fail.
+%   2. To run this script, you need to have write access to the directory that
+%   contains this script and its subdirectories.
 %
 %   ***********************************************************************
 %   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
@@ -87,16 +74,11 @@ if verLessThan('matlab', '8.3') % MATLAB R2014a = MATLAB 8.3
 end
 
 % The full paths to several directories needed for the setup.
-cpwd = pwd();  % Current directory
+cpwd = pwd();  % Current directory, which may not be the directory containing this setup script
 setup_dir = fileparts(mfilename('fullpath')); % The directory containing this setup script
 fsrc = fullfile(setup_dir, 'fsrc'); % Directory of the Fortran source code
-fsrc_interform = fullfile(setup_dir, 'fsrc', '.interform'); % Directory of the intersection-form Fortran source code
-fsrc_common_interform = fullfile(fsrc_interform, 'common'); % Directory of the common files
-fsrc_classical = fullfile(setup_dir, 'fsrc', 'classical'); % Directory of the classical Fortran source code
-fsrc_classical_interform = fullfile(setup_dir, 'fsrc', 'classical', '.interform'); % Directory of the intersection-form Fortran source code
 matd = fullfile(setup_dir, 'matlab'); % Matlab directory
 gateways = fullfile(matd, 'mex_gateways'); % Directory of the MEX gateway files
-gateways_interform = fullfile(gateways, '.interform');  % Directory of the intersection-form MEX gateway files
 interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
 mexdir = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
 tests = fullfile(matd, 'tests'); % Directory containing some tests
@@ -192,8 +174,9 @@ end
 % Intersection-form Fortran code can be compiled both as free form and as fixed form.
 fprintf('Refactoring the Fortran code ... ');
 interform(fsrc);
-interform(fsrc_classical);
+fsrc_interform = fullfile(fsrc, '.interform'); % Directory of the intersection-form Fortran code
 interform(gateways);
+gateways_interform = fullfile(gateways, '.interform'); % Directory of the intersection-form MEX gateways
 fprintf('Done.\n\n');
 
 % Compilation starts
@@ -203,7 +186,7 @@ fprintf('Compilation starts. It may take some time ...\n');
 cd(mexdir);
 exception = [];
 try
-    compile(solver_list, mexdir, fsrc_interform, fsrc_classical_interform, fsrc_common_interform, gateways_interform, options);
+    compile(solver_list, mexdir, fsrc_interform, gateways_interform, options);
 catch exception
     % Do nothing for the moment.
 end
@@ -211,7 +194,6 @@ end
 %% Remove the intersection-form Fortran files unless we are debugging.
 %if ~debug_flag
 %    rmdir(fsrc_interform, 's');
-%    rmdir(fsrc_classical_interform, 's');
 %    rmdir(gateways_interform, 's');
 %end
 
