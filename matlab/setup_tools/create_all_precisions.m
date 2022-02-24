@@ -22,9 +22,7 @@ funname = callstack(1).name; % Name of the current function
 
 % Parse the inputs.
 
-% Move the existing version of `all_precisions.m` to `all_precisions.bak`. This MUST be done first,
-% because `isavailable` will call `all_precisions()` if it exists, which would lead to incorrect
-% output of  `isavailable`.
+% Move the existing version of `all_precisions.m` to `all_precisions.bak`.
 mfiledir = fileparts(mfilename('fullpath'));  % The directory where this file resides.
 allprec = 'all_precisions';
 allprec_file = fullfile(mfiledir, [allprec, '.m']);

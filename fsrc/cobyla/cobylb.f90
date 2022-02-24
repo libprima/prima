@@ -8,7 +8,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, February 23, 2022 PM05:42:40
+! Last Modified: Thursday, February 24, 2022 PM12:13:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -346,14 +346,16 @@ do tr = 1, maxtr
             delta = rho
         end if
 
-        ! Set JDROP_TR to the index of the vertex that is to be replaced by X.
+        ! Set JDROP_TR to the index of the vertex that is to be replaced by X. JDROP_TR = 0 means
+        ! there is no good point to replace, and X will not be included into the simplex; in this
+        ! case, the geometry of the simplex likely needs improvement, which will be handled below.
         ! N.B.: COBYLA never sets JDROP_TR = N + 1.
         tr_success = (actrem > 0)
         jdrop_tr = setdrop_tr(tr_success, d, delta, factor_alpha, factor_delta, sim, simi)
 
         ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_TR) is replaced by D.
-        ! When JDROP_TR == 0, the algorithm decides not to include X into the simplex.
-        ! N.B.: UPDATEXFC does nothing when JDROP_TR == 0.
+        ! N.B.: UPDATEXFC does nothing if JDROP_TR == 0, as the algorithm decides not to include X
+        ! into the simplex.
         call updatexfc(jdrop_tr, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
         ! Check whether to exit due to damaging rounding detected in UPDATEPOLE (called by UPDATEXFC).
         if (subinfo == DAMAGING_ROUNDING) then

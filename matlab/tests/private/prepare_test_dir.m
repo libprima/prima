@@ -5,7 +5,7 @@ function test_dir = prepare_test_dir(test_name)
 % reuse it easily. It is needed if we want to repeat a test without recompiling the solvers.
 %time = datestr(datetime(), 'yymmdd_HHMM');
 %test_dir_name = ['test_', test_name,'_', time];
-test_dir_name = ['neupdfo_test_', test_name];
+test_dir_name = [test_name, '_neupdfo_test'];
 test_dir = fullfile(tempdir, test_dir_name);  % Full path to the test directory
 
 mfilepath = fileparts(mfilename('fullpath'));  % Directory where this .m file resides.

@@ -21,9 +21,7 @@ funname = callstack(1).name; % Name of the current function
 
 % Parse the inputs.
 
-% Move the existing version of `all_variants.m` to `all_variants.bak`. This MUST be done first,
-% because `isavailable` will call `all_variants()` if it exists, which would lead to incorrect
-% output of  `isavailable`.
+% Move the existing version of `all_variants.m` to `all_variants.bak`. 
 mfiledir = fileparts(mfilename('fullpath'));  % The directory where this file resides.
 allvar = 'all_variants';
 allvar_file = fullfile(mfiledir, [allvar, '.m']);

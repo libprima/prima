@@ -300,28 +300,60 @@ try
         obj_files = [files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.o'), files_with_wildcard(fullfile(fsrc_intersection_form, solver), '*.obj')];
         cellfun(@(filename) delete(filename), [mod_files, obj_files]);
 
-  if (COMPILE_CLASSICAL) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % Compilation of the 'classical' version of solver
-        % Clean up the source file directory
-        mod_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.mod');
-        obj_files = [files_with_wildcard(fullfile(fsrc_classical, solver), '*.o'), files_with_wildcard(fullfile(fsrc_classical, solver), '*.obj')];
-        cellfun(@(filename) delete(filename), [mod_files, obj_files]);
-        % Compile
-        src_files = [files_with_wildcard(fullfile(fsrc_classical, solver), '*.f'), files_with_wildcard(fullfile(fsrc_classical, solver), '*.f90')];
-        %mex(mex_options{:}, '-c', src_files{:}, '-outdir', fullfile(fsrc_classical, solver));
-        for isf = 1 : length(src_files)
-            mex(mex_options{:}, '-c', src_files{isf}, '-outdir', fullfile(fsrc_classical, solver));
-        end
-        obj_files = [common_obj_files, files_with_wildcard(fullfile(fsrc_classical, solver), '*.o'), files_with_wildcard(fullfile(fsrc_classical,solver), '*.obj')];
-        mex(mex_options{:}, '-output', ['f', solver, '_classical'], obj_files{:}, fullfile(gateways_intersection_form, [solver, '_mex.F']), '-outdir', interfaces_private);
-        % Clean up the source file directory
-        mod_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.mod');
-        obj_files = [files_with_wildcard(fullfile(fsrc_classical, solver), '*.o'), files_with_wildcard(fullfile(fsrc_classical, solver), '*.obj')];
-        cellfun(@(filename) delete(filename), [mod_files, obj_files]);
-  end
-
         fprintf('Done.\n');
     end
+
+    if (COMPILE_CLASSICAL) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        debug_flag = false; mex_options = ['-O', {ad_option}, '-silent'];  % Only compile the non-debugging version, to align with the new version
+        % Compilation of the common files. They are shared by all solvers. We compile them only once.
+        copyfile(fullfile(gateways_intersection_form, 'debug.F'), fsrc_common_intersection_form);
+        % ppf.h contains preprocessing directives. Set __DEBUGGING__ according to debug_flag.
+        header_file = fullfile(fsrc_common_intersection_form, 'ppf.h');
+        header_file_bak = fullfile(fsrc_common_intersection_form, 'ppf.h.bak');
+        copyfile(header_file, header_file_bak);
+        rep_str(header_file, '#define __DEBUGGING__ 1', '#define __DEBUGGING__ 0');
+        % Common Fortran source files.
+        common_files = regexp(fileread(fullfile(fsrc_common_intersection_form, filelist)), '\n', 'split');
+        common_files = strtrim(common_files(~cellfun(@isempty, common_files)));
+        common_files = fullfile(fsrc_common_intersection_form, common_files);
+        common_files = [common_files, fullfile(gateways_intersection_form, 'fmxapi.F'), fullfile(gateways_intersection_form, 'cbfun.F'), fullfile(gateways_classical, 'fmxcl.F')];
+        % The loop below may be written in one line as follows:
+        %mex(mex_options{:}, '-c', common_files{:}, '-outdir', fsrc_common_intersection_form);
+        % But it does not work for some versions of MATLAB. This may be because the compilation above does
+        % not respect the order of common_files{:}, which is critical due to the dependence among modules.
+        for icf = 1 : length(common_files)
+            mex(mex_options{:}, '-c', common_files{icf}, '-outdir', fsrc_common_intersection_form);
+        end
+        common_obj_files = [files_with_wildcard(fsrc_common_intersection_form, '*.o'), files_with_wildcard(fsrc_common_intersection_form, '*.obj')];
+
+        for isol = 1 : length(solver_list)
+
+            solver = solver_list{isol};
+
+            % Compilation of solver
+            fprintf('Compiling the classical version of %s ... ', solver);
+            % Compilation of the 'classical' version of solver
+            % Clean up the source file directory
+            mod_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.mod');
+            obj_files = [files_with_wildcard(fullfile(fsrc_classical, solver), '*.o'), files_with_wildcard(fullfile(fsrc_classical, solver), '*.obj')];
+            cellfun(@(filename) delete(filename), [mod_files, obj_files]);
+            % Compile
+            src_files = [files_with_wildcard(fullfile(fsrc_classical, solver), '*.f'), files_with_wildcard(fullfile(fsrc_classical, solver), '*.f90')];
+            %mex(mex_options{:}, '-c', src_files{:}, '-outdir', fullfile(fsrc_classical, solver));
+            for isf = 1 : length(src_files)
+                mex(mex_options{:}, '-c', src_files{isf}, '-outdir', fullfile(fsrc_classical, solver));
+            end
+            obj_files = [common_obj_files, files_with_wildcard(fullfile(fsrc_classical, solver), '*.o'), files_with_wildcard(fullfile(fsrc_classical,solver), '*.obj')];
+            mex(mex_options{:}, '-output', ['f', solver, '_classical'], obj_files{:}, fullfile(gateways_intersection_form, [solver, '_mex.F']), '-outdir', interfaces_private);
+            % Clean up the source file directory
+            mod_files = files_with_wildcard(fullfile(fsrc_classical, solver), '*.mod');
+            obj_files = [files_with_wildcard(fullfile(fsrc_classical, solver), '*.o'), files_with_wildcard(fullfile(fsrc_classical, solver), '*.obj')];
+            cellfun(@(filename) delete(filename), [mod_files, obj_files]);
+
+            fprintf('Done.\n');
+        end
+    end %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
     % Clean up the .mod and .o files in fsrc_common_intersection_form.
     cellfun(@(filename) delete(filename), [common_obj_files, files_with_wildcard(fsrc_common_intersection_form, '*.mod')]);

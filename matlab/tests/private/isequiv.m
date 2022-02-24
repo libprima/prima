@@ -563,6 +563,7 @@ if ~equiv
     end
     if single_test
         fprintf('\nThe solvers produce different results on %s at the %dth run.\n\n', pname, ir);
+        cd(options.olddir);
         keyboard
     end
     error('\nThe solvers produce different results on %s at the %dth run.\n', pname, ir);
