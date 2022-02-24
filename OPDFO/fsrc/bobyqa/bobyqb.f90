@@ -2,6 +2,7 @@ subroutine bobyqb(n, npt, x, xl, xu, rhobeg, rhoend, iprint, &
     & maxfun, xbase, xpt, fval, xopt, gopt, hq, pq, bmat, zmat, ndim, &
     & sl, su, xnew, xalt, d, vlag, w, f, info, ftarget)
 
+use, non_intrinsic :: dirty_temporary_mod4powell_mod
 implicit real(kind(0.0D0)) (a - h, o - z)
 implicit integer(i - n)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -43,16 +44,9 @@ dimension x(*), xl(*), xu(*), xbase(*), xpt(npt, *), fval(*), &
 !
 !     Set some constants.
 !
-half = 0.5D0
-one = 1.0D0
-ten = 10.0D0
-tenth = 0.1D0
-two = 2.0D0
-zero = 0.0D0
 np = n + 1
 nptm = npt - np
 nh = (n * np) / 2
-almost_infinity = huge(0.0D0) / 2.D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     The call of PRELIM sets the elements of XBASE, XPT, FVAL, GOPT, HQ, PQ,
@@ -77,7 +71,7 @@ end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     By Tom/Zaikun (on 04-06-2019/07-06-2019):
-if (f /= f .or. f > almost_infinity) then
+if (is_nan(f) .or. is_posinf(f)) then
     info = -2
     goto 720
 end if
@@ -352,7 +346,7 @@ if (kopt /= kbase) then
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     By Tom/Zaikun (on 04-06-2019/07-06-2019):
-if (f /= f .or. f > almost_infinity) then
+if (is_nan(f) .or. is_posinf(f)) then
     info = -2
     goto 720
 end if
@@ -575,7 +569,7 @@ call calfun(n, x, f)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     By Tom (on 04-06-2019):
-if (f /= f .or. f > almost_infinity) then
+if (is_nan(f) .or. is_posinf(f)) then
     if (nf == 1) then
         fopt = f
         xopt(1:n) = zero

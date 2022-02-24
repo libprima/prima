@@ -1,7 +1,7 @@
       SUBROUTINE GETACT (N,M,AMAT,B,NACT,IACT,QFAC,RFAC,SNORM,
      1  RESNEW,RESACT,G,DW,VLAM,W)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      use, non_intrinsic :: consts_mod, only : RP, IK
+      use, non_intrinsic :: consts_mod, only : RP, IK, DP, REALMIN
       implicit real(RP) (A-H,O-Z)
       implicit integer(IK) (I-N)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -32,7 +32,8 @@ C
 C     Set some constants and a temporary VLAM.
 C
       ONE=1.0D0
-      TINY=1.0D-60
+      !TINYNUM=1.0D-60
+      TINYNUM=real(tiny(0.0), RP)
       ZERO=0.0D0
       TDEL=0.2D0*SNORM
       DDSAV=ZERO
@@ -239,7 +240,7 @@ C
       IFLAG=3
       IC=NACT
   270 IF (VLAM(IC) < ZERO) GOTO 280
-      RESNEW(IACT(IC))=MAX(RESACT(IC),TINY)
+      RESNEW(IACT(IC))=MAX(RESACT(IC),TINYNUM)
       GOTO 800
   280 IC=IC-1
       IF (IC > 0) GOTO 270
@@ -259,7 +260,7 @@ C       value of IACT(NACT) is the old value of IACT(IC). A sequence of
 C       Givens rotations is applied to the current QFAC and RFAC. Then NACT
 C       is reduced by one.
 C
-  800 RESNEW(IACT(IC))=MAX(RESACT(IC),TINY)
+  800 RESNEW(IACT(IC))=MAX(RESACT(IC),TINYNUM)
       JC=IC
   810 IF (JC < NACT) THEN
           JCP=JC+1

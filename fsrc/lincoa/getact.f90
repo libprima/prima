@@ -31,7 +31,7 @@ dimension amat(n, m), iact(m), qfac(n, n), rfac(n * (n + 1) / 2), resnew(m), res
 !     Set some constants and a temporary VLAM.
 !
 one = 1.0D0
-tiny = 1.0D-60
+tinynum=real(tiny(0.0), RP)
 zero = 0.0D0
 tdel = 0.2D0 * snorm
 ddsav = inprod(g, g) + inprod(g, g)
@@ -234,7 +234,7 @@ ic = nact
 !!!! If NACT=0, then IC = 0, and hence IACT(IC) is undefined, which leads to memory error when
 !RESNEW(IACT(IC)) is accessed.
 270 if (vlam(ic) < zero) goto 280
-resnew(iact(ic)) = max(resact(ic), tiny)
+resnew(iact(ic)) = max(resact(ic), tinynum)
 goto 800
 280 ic = ic - 1
 if (ic > 0) goto 270
@@ -254,7 +254,7 @@ return
 !       Givens rotations is applied to the current QFAC and RFAC. Then NACT
 !       is reduced by one.
 !
-800 resnew(iact(ic)) = max(resact(ic), tiny)
+800 resnew(iact(ic)) = max(resact(ic), tinynum)
 jc = ic
 810 if (jc < nact) then
     jcp = jc + 1

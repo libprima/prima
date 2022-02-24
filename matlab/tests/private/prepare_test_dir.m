@@ -61,13 +61,13 @@ end
 d_pdfo_matlab_test = fullfile(d_root_dir, 'PDFO', 'matlab', 'tests');
 if exist(d_pdfo_matlab_test, 'dir')
     rmdir(d_pdfo_matlab_test, 's');
-    mkdir(d_pdfo_matlab_test);  % Necessary, because `setup.m` may try adding this directory to path
 end
+mkdir(d_pdfo_matlab_test);  % Necessary, because `setup.m` may try adding this directory to path
 d_opdfo_matlab_test = fullfile(d_root_dir, 'OPDFO', 'matlab', 'tests');
 if exist(d_opdfo_matlab_test, 'dir')
     rmdir(d_opdfo_matlab_test, 's');
-    mkdir(d_opdfo_matlab_test);  % Necessary, because `setup.m` may try adding this directory to path
 end
+mkdir(d_opdfo_matlab_test);  % Necessary, because `setup.m` may try adding this directory to path
 %!------------------------------------------------------------------------------------------------!%
 
 % `matlab_sub_list`: directories/files to be copied under `matlab_dir`
@@ -75,3 +75,8 @@ matlab_sub_list = {'setup_tools', 'mex_gateways', 'interfaces'};
 for il = 1 : length(matlab_sub_list)
     copyfile(fullfile(s_matlab_dir, matlab_sub_list{il}), fullfile(d_matlab_dir, matlab_sub_list{il}));
 end
+pdfo_matlab_test = fullfile(d_matlab_dir, 'tests');
+if exist(pdfo_matlab_test, 'dir')
+    rmdir(pdfo_matlab_test, 's');
+end
+mkdir(pdfo_matlab_test);  % Necessary, because `setup.m` may try adding this directory to path

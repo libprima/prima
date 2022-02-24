@@ -28,7 +28,7 @@ C     RESNEW, RESACT, D, DW and W are used for working space. A negative
 C       value of RESNEW(J) indicates that the J-th constraint does not
 C       restrict the CG steps of the current trust region calculation, a
 C       zero value of RESNEW(J) indicates that the J-th constraint is active,
-C       and otherwise RESNEW(J) is set to the greater of TINY and the actual
+C       and otherwise RESNEW(J) is set to the greater of TINYNUM and the actual
 C       residual of the J-th constraint for the current STEP. RESACT holds
 C       the residuals of the active constraints, which may be positive.
 C       D is the search direction of each line search. DW is either another
@@ -39,7 +39,8 @@ C     Set some numbers for the conjugate gradient iterations.
 C
       HALF=0.5D0
       ONE=1.0D0
-      TINY=1.0D-60
+      !TINY=1.0D-60
+      TINYNUM=real(tiny(0.0), RP)
       ZERO=0.0D0
       CTEST=0.01D0
       SNSQ=SNORM*SNORM
@@ -52,7 +53,7 @@ C
               IF (RESCON(J) >= SNORM) THEN
                   RESNEW(J)=-ONE
               ELSE IF (RESCON(J) >= ZERO) THEN
-                  RESNEW(J)=MAX(RESNEW(J),TINY)
+                  RESNEW(J)=MAX(RESNEW(J),TINYNUM)
               END IF
           END DO
           IF (NACT > 0) THEN
@@ -269,7 +270,7 @@ C
       IF (M > 0) THEN
           DO J=1,M
               IF (RESNEW(J) > ZERO) THEN
-                  RESNEW(J)=MAX(RESNEW(J)-ALPHA*W(J),TINY)
+                  RESNEW(J)=MAX(RESNEW(J)-ALPHA*W(J),TINYNUM)
               END IF
           END DO
       END IF

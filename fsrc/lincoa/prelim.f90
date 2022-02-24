@@ -7,6 +7,7 @@ subroutine prelim(calfun, n, npt, m, amat, b, x, rhobeg, iprint, xbase, &
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm, maximum
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
@@ -60,8 +61,6 @@ reciq = sqrt(HALF) / rhosq
 test = 0.2D0 * rhobeg
 idz = 1
 kbase = 1
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-almost_infinity = huge(0.0D0) / 2.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     Set the initial elements of XPT, BMAT, SP and ZMAT to zero.
@@ -202,7 +201,7 @@ do nf = 1, npt
 !     LINCOB with updated KOPT and XSAV.
 !     Note that we should NOT compare F and FTARGET, because X may not
 !     be feasible.
-    if (f /= f .or. f > almost_infinity .or. fval(kopt) <= ftarget) then
+    if (is_nan(f) .or. is_posinf(f) .or. fval(kopt) <= ftarget) then
         exit
     end if
 end do

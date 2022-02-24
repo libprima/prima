@@ -82,7 +82,7 @@ C
           VHV=RATIO*RATIO*VHV
           VHW=RATIO*WSQ
           TEMP=HALF*(WHW-VHV)
-          TEMP=TEMP+DSIGN(SQRT(TEMP**2+VHW**2),WHW+VHV)
+          TEMP=TEMP+SIGN(SQRT(TEMP**2+VHW**2),WHW+VHV)
           DO I=1,N
               D(I)=VHW*V(I)+TEMP*D(I)
           END DO
@@ -107,7 +107,7 @@ C
       END DO
       TEMP=GD/GG
       VV=ZERO
-      SCALE=DSIGN(RHO/SQRT(DD),GD*DHD)
+      SCALE=SIGN(RHO/SQRT(DD),GD*DHD)
       DO I=1,N
           V(I)=D(I)-TEMP*G(I)
           VV=VV+V(I)**2
@@ -148,7 +148,7 @@ C
           WSIN=ZERO
       ELSE
           TEMP=HALF*(GHG-VHV)
-          VMU=TEMP+DSIGN(SQRT(TEMP**2+VHG**2),TEMP)
+          VMU=TEMP+SIGN(SQRT(TEMP**2+VHG**2),TEMP)
           TEMP=SQRT(VMU**2+VHG**2)
           WCOS=VMU/TEMP
           WSIN=VHG/TEMP
@@ -171,14 +171,14 @@ C
       TEMPB=ABS(VLIN)+HALF*ABS(GHG-VMU)
       TEMPC=HALFRT*(ABS(DLIN)+ABS(VLIN))+0.25D0*ABS(GHG+VHV)
       IF (TEMPA >= TEMPB .AND. TEMPA >= TEMPC) THEN
-          TEMPD=DSIGN(RHO,DLIN*(VMU+VHV))
+          TEMPD=SIGN(RHO,DLIN*(VMU+VHV))
           TEMPV=ZERO
       ELSE IF (TEMPB >= TEMPC) THEN
           TEMPD=ZERO
-          TEMPV=DSIGN(RHO,VLIN*(GHG-VMU))
+          TEMPV=SIGN(RHO,VLIN*(GHG-VMU))
       ELSE
-          TEMPD=DSIGN(HALFRT*RHO,DLIN*(GHG+VHV))
-          TEMPV=DSIGN(HALFRT*RHO,VLIN*(GHG+VHV))
+          TEMPD=SIGN(HALFRT*RHO,DLIN*(GHG+VHV))
+          TEMPV=SIGN(HALFRT*RHO,VLIN*(GHG+VHV))
       END IF
       DO I=1,N
           D(I)=TEMPD*D(I)+TEMPV*V(I)

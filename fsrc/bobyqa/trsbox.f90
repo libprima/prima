@@ -1,8 +1,9 @@
 subroutine trsbox(n, npt, xpt, xopt, gopt, hq, pq, sl, su, delta, &
      &  xnew, d, gnew, xbdi, s, hs, hred, dsq, crvmin)
 
-implicit real(kind(0.0D0)) (a - h, o - z)
-implicit integer(i - n)
+use, non_intrinsic :: consts_mod, only : RP, IK
+implicit real(RP) (a - h, o - z)
+implicit integer(IK) (i - n)
 dimension xpt(npt, *), xopt(*), gopt(*), hq(*), pq(*), sl(*), su(*), &
 & xnew(*), d(*), gnew(*), xbdi(*), s(*), hs(*), hred(*)
 !

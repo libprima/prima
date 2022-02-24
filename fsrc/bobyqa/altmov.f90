@@ -1,9 +1,11 @@
 subroutine altmov(n, npt, xpt, xopt, bmat, zmat, ndim, sl, su, kopt, knew, adelt, xnew, xalt, alpha, cauchy, glag, hcol, w)
 
+use, non_intrinsic :: consts_mod, only : RP, IK
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !      IMPLICIT REAL*8 (A-H,O-Z)
-implicit real(kind(0.0D0)) (a - h, o - z)
-implicit integer(i - n)
+implicit real(RP) (a - h, o - z)
+implicit integer(IK) (i - n)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 dimension xpt(npt, *), xopt(*), bmat(ndim, *), zmat(npt, *), sl(*), su(*), xnew(*), xalt(*), glag(*), hcol(*), w(*)
 !

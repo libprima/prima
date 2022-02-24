@@ -5,6 +5,7 @@ subroutine prelim(calfun, n, npt, x, xl, xu, rhobeg, iprint, maxfun, xbase, &
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
@@ -48,9 +49,6 @@ dimension xbase(n), xpt(npt, n), fval(npt), gopt(n), &
 rhosq = rhobeg * rhobeg
 recip = ONE / rhosq
 np = n + 1
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-almost_infinity = huge(0.0D0) / 2.0D0
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     Set XBASE to the initial vector of variables, and set the initial
 !     elements of XPT, BMAT, HQ, PQ and ZMAT to ZERO.
@@ -185,7 +183,7 @@ end if
 !     By Tom (on 04-06-2019):
 !     If the evaluation returns an NaN or an infinity value, this
 !     subroutine is stopped.
-if (f /= f .or. f > almost_infinity) goto 80
+if (is_nan(f) .or. is_posinf(f)) goto 80
 !     By Tom (on 04-06-2019):
 !     If the target value is reached, stop the algorithm.
 if (f <= ftarget) goto 80

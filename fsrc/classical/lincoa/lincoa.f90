@@ -287,7 +287,7 @@ if (m > 0) then
             info = 12
             return
         end if
-        temp = dsqrt(temp)
+        temp = sqrt(temp)
         constr_modified = constr_modified .or. (sum - b_loc(j) > smallx * temp)
         w(ib + j - 1) = max(b_loc(j), sum) / temp
         do i = 1, n

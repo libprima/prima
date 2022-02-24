@@ -2,6 +2,7 @@ subroutine rescue(n, npt, xl, xu, iprint, maxfun, xbase, xpt, &
      &  fval, xopt, gopt, hq, pq, bmat, zmat, ndim, sl, su, nf, delta, &
      &  kopt, vlag, ptsaux, ptsid, w, f, ftarget)
 
+use, non_intrinsic :: dirty_temporary_mod4powell_mod
 implicit real(kind(0.0D0)) (a - h, o - z)
 implicit integer(i - n)
 dimension xl(*), xu(*), xbase(*), xpt(npt, *), fval(*), xopt(*), &
@@ -45,14 +46,9 @@ dimension xl(*), xu(*), xbase(*), xpt(npt, *), fval(*), xopt(*), &
 !
 !     Set some constants.
 !
-half = 0.5D0
-one = 1.0D0
-zero = 0.0D0
 np = n + 1
 sfrac = half / dfloat(np)
 nptm = npt - np
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-almost_infinity = huge(0.0D0) / 2.0D0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     Shift the interpolation points so that XOPT becomes the origin, and set
@@ -434,7 +430,7 @@ goto 80
 !     all the parameters, not to raise an exception. KOPT is set to KPT
 !     to check in BOBYQB weather FVAL(KOPT) is NaN or infinite value or
 !     not.
-    if (f /= f .or. f > almost_infinity) then
+    if (is_nan(f) .or. is_posinf(f)) then
         exit
     end if
 !     By Tom (on 04-06-2019):
