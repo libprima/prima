@@ -1,9 +1,57 @@
-subroutine update(n, npt, xpt, bmat, zmat, idz, ndim, sp, step, kopt, knew, vlag, w)
+module update_mod
+!--------------------------------------------------------------------------------------------------!
+! This module contains subroutines concerning the geometry-improving of the interpolation set XPT.
+!
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the paper
+!
+! M. J. D. Powell, On fast trust region methods for quadratic models with linear constraints,
+! Math. Program. Comput., 7:237--267, 2015
+!
+! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+!
+! Started: July 2021
+!
+! Last Modified: Friday, February 25, 2022 PM11:00:06
+!--------------------------------------------------------------------------------------------------!
 
-use, non_intrinsic :: consts_mod, only : RP, IK
-implicit real(RP) (a - h, o - z)
-implicit integer(IK) (i - n)
-dimension xpt(npt, *), bmat(ndim, *), zmat(npt, *), sp(*), step(*), vlag(*), w(*)
+implicit none
+private
+public :: update
+
+
+contains
+
+
+subroutine update(n, npt, xpt, bmat, zmat, idz, ndim, rsp, step, kopt, knew, vlag, w)
+
+! Generic modules
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF
+
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: kopt
+integer(IK), intent(in) :: n
+integer(IK), intent(in) :: ndim
+integer(IK), intent(in) :: npt
+real(RP), intent(in) :: rsp(2_IK * npt)
+real(RP), intent(in) :: step(n)
+real(RP), intent(in) :: xpt(npt, n)
+
+! In-outputs
+integer(IK), intent(inout) :: idz
+integer(IK), intent(inout) :: knew
+!real(RP), intent(inout) :: bmat(n, npt + n)
+real(RP), intent(inout) :: bmat(npt + n, n)
+real(RP), intent(inout) :: vlag(npt + n)
+real(RP), intent(inout) :: w(npt + n)
+real(RP), intent(inout) :: zmat(npt, npt - n - 1)
+
+! Local variables
+real(RP) :: alpha, beta, bsumm, denabs, denmax, denom, distsq,  &
+&        dx, hdiag, scala, scalb, sqrtdn, ssq,  &
+&        summ, tau, tausq, temp, tempa, tempb
+integer(IK) :: i, iflag, j, ja, jb, jl, jp, k, nptm
 !
 !     The arguments N, NPT, XPT, BMAT, ZMAT, IDZ, NDIM ,SP and STEP are
 !       identical to the corresponding arguments in SUBROUTINE LINCOB.
@@ -17,84 +65,81 @@ dimension xpt(npt, *), bmat(ndim, *), zmat(npt, *), sp(*), step(*), vlag(*), w(*
 !       both of these vectors being required.
 !
 !     The arrays BMAT and ZMAT with IDZ are updated, the new matrices being
-!       the ones that are suitable after the shift of the KNEW-th point to
-!       the new position XPT(KOPT,.)+STEP(.). A return with KNEW set to zero
-!       occurs if the calculation fails due to a zero denominator in the
+!       the ONEs that are suitable after the shift of the KNEW-th point to
+!       the new position XPT(KOPT,.)+STEP(.). A return with KNEW set to ZERO
+!       occurs if the calculation fails due to a ZERO denominator in the
 !       updating formula, which should never happen.
 !
 !     Set some constants.
 !
-half = 0.5D0
-one = 1.0D0
-zero = 0.0D0
 nptm = npt - n - 1
 !
 !     Calculate VLAG and BETA for the current choice of STEP. The first NPT
 !       elements of VLAG are set to the values of the Lagrange functions at
-!       XPT(KOPT,.)+STEP(.). The first NPT components of W_check are held
+!       XPT(KOPT,.)+STEP(.). The first NPT compONEnts of W_check are held
 !       in W, where W_check is defined in a paper on the updating method.
 !
 do k = 1, npt
-    w(k) = sp(npt + k) * (half * sp(npt + k) + sp(k))
-    sum = zero
+    w(k) = rsp(npt + k) * (HALF * rsp(npt + k) + rsp(k))
+    summ = ZERO
     do j = 1, n
-        sum = sum + bmat(k, j) * step(j)
+        summ = summ + bmat(k, j) * step(j)
     end do
-    vlag(k) = sum
+    vlag(k) = summ
 end do
-beta = zero
+beta = ZERO
 do k = 1, nptm
-    sum = zero
+    summ = ZERO
     do i = 1, npt
-        sum = sum + zmat(i, k) * w(i)
+        summ = summ + zmat(i, k) * w(i)
     end do
     if (k < idz) then
-        beta = beta + sum * sum
-        sum = -sum
+        beta = beta + summ * summ
+        summ = -summ
     else
-        beta = beta - sum * sum
+        beta = beta - summ * summ
     end if
     do i = 1, npt
-        vlag(i) = vlag(i) + sum * zmat(i, k)
+        vlag(i) = vlag(i) + summ * zmat(i, k)
     end do
 end do
-bsum = zero
-dx = zero
-ssq = zero
+bsumm = ZERO
+dx = ZERO
+ssq = ZERO
 do j = 1, n
-    sum = zero
+    summ = ZERO
     do i = 1, npt
-        sum = sum + w(i) * bmat(i, j)
+        summ = summ + w(i) * bmat(i, j)
     end do
-    bsum = bsum + sum * step(j)
+    bsumm = bsumm + summ * step(j)
     jp = npt + j
     do k = 1, n
-        sum = sum + bmat(jp, k) * step(k)
+        summ = summ + bmat(jp, k) * step(k)
     end do
-    vlag(jp) = sum
-    bsum = bsum + sum * step(j)
+    vlag(jp) = summ
+    bsumm = bsumm + summ * step(j)
     dx = dx + step(j) * xpt(kopt, j)
     ssq = ssq + step(j)**2
 end do
-beta = dx * dx + ssq * (sp(kopt) + dx + dx + half * ssq) + beta - bsum
-vlag(kopt) = vlag(kopt) + one
+beta = dx * dx + ssq * (rsp(kopt) + dx + dx + HALF * ssq) + beta - bsumm
+vlag(kopt) = vlag(kopt) + ONE
 !
-!     If KNEW is zero initially, then pick the index of the interpolation
+!     If KNEW is ZERO initially, then pick the index of the interpolation
 !       point to be deleted, by maximizing the absolute value of the
 !       denominator of the updating formula times a weighting factor.
 !
 !
 if (knew == 0) then
-    denmax = zero
+    denmax = ZERO
     do k = 1, npt
-        hdiag = zero
+        hdiag = ZERO
         do j = 1, nptm
-            temp = one
-            if (j < idz) temp = -one
+            temp = ONE
+            if (j < idz) temp = -ONE
             hdiag = hdiag + temp * zmat(k, j)**2
         end do
         denabs = abs(beta * hdiag + vlag(k)**2)
-        distsq = zero
+        distsq = ZERO
         do j = 1, n
             distsq = distsq + (xpt(k, j) - xpt(kopt, j))**2
         end do
@@ -106,14 +151,14 @@ if (knew == 0) then
     end do
 end if
 !
-!     Apply the rotations that put zeros in the KNEW-th row of ZMAT.
+!     Apply the rotations that put ZEROs in the KNEW-th row of ZMAT.
 !
 jl = 1
 if (nptm >= 2) then
     do j = 2, nptm
         if (j == idz) then
             jl = idz
-        else if (zmat(knew, j) /= zero) then
+        else if (zmat(knew, j) /= ZERO) then
             temp = sqrt(zmat(knew, jl)**2 + zmat(knew, j)**2)
             tempa = zmat(knew, jl) / temp
             tempb = zmat(knew, j) / temp
@@ -122,12 +167,12 @@ if (nptm >= 2) then
                 zmat(i, j) = tempa * zmat(i, j) - tempb * zmat(i, jl)
                 zmat(i, jl) = temp
             end do
-            zmat(knew, j) = zero
+            zmat(knew, j) = ZERO
         end if
     end do
 end if
 !
-!     Put the first NPT components of the KNEW-th column of the Z Z^T matrix
+!     Put the first NPT compONEnts of the KNEW-th column of the Z Z^T matrix
 !       into W, and calculate the parameters of the updating formula.
 !
 tempa = zmat(knew, 1)
@@ -141,15 +186,15 @@ alpha = w(knew)
 tau = vlag(knew)
 tausq = tau * tau
 denom = alpha * beta + tausq
-vlag(knew) = vlag(knew) - one
-if (denom == zero) then
+vlag(knew) = vlag(knew) - ONE
+if (denom == ZERO) then
     knew = 0
     goto 180
 end if
 sqrtdn = sqrt(abs(denom))
 !
-!     Complete the updating of ZMAT when there is only one nonzero element
-!       in the KNEW-th row of the new matrix ZMAT. IFLAG is set to one when
+!     Complete the updating of ZMAT when there is only ONE nonZERO element
+!       in the KNEW-th row of the new matrix ZMAT. IFLAG is set to ONE when
 !       the value of IDZ is going to be reduced.
 !
 iflag = 0
@@ -159,7 +204,7 @@ if (jl == 1) then
     do i = 1, npt
         zmat(i, 1) = tempa * zmat(i, 1) - tempb * vlag(i)
     end do
-    if (denom < zero) then
+    if (denom < 0) then
         if (idz == 1) then
             idz = 2
         else
@@ -171,20 +216,20 @@ else
 !     Complete the updating of ZMAT in the alternative case.
 !
     ja = 1
-    if (beta >= zero) ja = jl
+    if (beta >= 0) ja = jl
     jb = jl + 1 - ja
     temp = zmat(knew, jb) / denom
     tempa = temp * beta
     tempb = temp * tau
     temp = zmat(knew, ja)
-    scala = one / sqrt(abs(beta) * temp * temp + tausq)
+    scala = ONE / sqrt(abs(beta) * temp * temp + tausq)
     scalb = scala * sqrtdn
     do i = 1, npt
         zmat(i, ja) = scala * (tau * zmat(i, ja) - temp * vlag(i))
         zmat(i, jb) = scalb * (zmat(i, jb) - tempa * w(i) - tempb * vlag(i))
     end do
-    if (denom <= zero) then
-        if (beta < zero) then
+    if (denom <= 0) then
+        if (beta < 0) then
             idz = idz + 1
         else
             iflag = 1
@@ -239,4 +284,7 @@ do j = 1, n
     end do
 end do
 180 return
-end
+end subroutine update
+
+
+end module update_mod
