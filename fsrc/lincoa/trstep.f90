@@ -1,6 +1,12 @@
 subroutine trstep(n, npt, m, amat, xpt, hq, pq, nact, iact, rescon, &
      &  qfac, rfac, snorm, step, g, resnew, resact, d, dw, w)
+
+! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK
+
+! Solver-specific modules
+use, non_intrinsic :: getact_mod, only : getact
+
 implicit real(RP) (a - h, o - z)
 implicit integer(IK) (i - n)
 dimension amat(n, *), xpt(npt, *), hq(*), pq(*), iact(*), &

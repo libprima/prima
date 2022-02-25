@@ -61,8 +61,7 @@ if [[ "$CLEAN" == "Y" ]] ; then
     exit 0
 fi
 
-#CLIST=(gfortran nagfor g95 af95 sunf95 ifort nvfortran flang aflang ifx)
-#TLIST=(g n 9 a s i v f d x)  # atest does not work due to a bug in af95
+# af95 does not support internal subroutine as an actual argument. So it is not included
 COMPILER_LIST=(gfortran nagfor g95 sunf95 ifort nvfortran flang aflang ifx)
 CLIST=(g n 9 s i v f d x)
 COMP_LIST=""
@@ -120,6 +119,7 @@ if [[ "$TEST_ALL" == "Y" ]] ; then
 else
     for LOGFILE in "${LOGFILES[@]::${#LOGFILES[@]}-1}" ; do
         printf "\nChecking %s ...\n" "$LOGFILE"
+        bash "$CHCKTST" --error "$LOGFILE"  # Will lead to failure in case of error logged
         INFO="$(bash "$CHCKTST" --warning "$LOGFILE")"
         printf "%s" "$INFO"
         printf "\nDone!\n"
@@ -134,6 +134,7 @@ else
     # No pause needed for the last logfile.
     LOGFILE="${LOGFILES[-1]}"  # The last logfile; it needs Bash 4.x.
     printf "\nChecking %s ...\n" "$LOGFILE"
+    bash "$CHCKTST" --error "$LOGFILE"  # Will lead to failure in case of error logged
     bash "$CHCKTST" --warning "$LOGFILE"
     printf "%s" "$INFO"
     printf "\nDone!\n\n"
