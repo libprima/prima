@@ -2,13 +2,16 @@ module getact_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module provides the GETACT subroutine of LINCOA, which picks the current active set.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the LINCOA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the paper
+!
+! M. J. D. Powell, On fast trust region methods for quadratic models with linear constraints,
+! Math. Program. Comput., 7:237--267, 2015
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, February 25, 2022 PM12:26:08
+! Last Modified: Friday, February 25, 2022 PM08:32:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

@@ -105,7 +105,7 @@ end if
 if (gredsq * delsq <= 1.0D-4 * qred * qred) go to 190
 !
 !     Multiply the search direction by the second derivative matrix of Q and
-!     calculate some scalars for the choice of steplength. Then set BLEN to
+!     calculate some scalars for the choice of steplength. Then set BSTEP to
 !     the length of the the step to the trust region boundary and STPLEN to
 !     the steplength, ignoring the simple bounds.
 !
@@ -126,15 +126,15 @@ if (ds < zero) then
 ! Zaikun 20220210: the above line is the original code of Powell. Surprisingly, it works quite
 ! differently from the following line. Are they different even in precise arithmetic?
 ! When DS = 0, what should be the simplest (and potentially the stablest) formulation?
-! What if we are at the first iteration? BLEN = DELTA/|D|? See TRSAPP.F90 of NEWUOA.
+! What if we are at the first iteration? BSTEP = DELTA/|D|? See TRSAPP.F90 of NEWUOA.
 !if (ds <= zero) then  ! zaikun 20210925
-    blen = (temp - ds) / stepsq
+    bstep = (temp - ds) / stepsq
 else
-    blen = resid / (temp + ds)
+    bstep = resid / (temp + ds)
 end if
-stplen = blen
+stplen = bstep
 if (shs > zero) then
-    stplen = min(blen, gredsq / shs)
+    stplen = min(bstep, gredsq / shs)
 end if
 
 !
@@ -189,10 +189,10 @@ if (iact > 0) then
     goto 20
 end if
 !
-!     If STPLEN is less than BLEN, then either apply another conjugate
+!     If STPLEN is less than BSTEP, then either apply another conjugate
 !     gradient iteration or RETURN.
 !
-if (stplen < blen) then
+if (stplen < bstep) then
     if (iterc == itermax) goto 190
     if (sdec <= 0.01D0 * qred) goto 190
     beta = gredsq / ggsav

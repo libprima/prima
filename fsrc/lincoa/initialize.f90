@@ -2,13 +2,16 @@ module initialize_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module performs the initialization of LINCOA.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the LINCOA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the paper
+!
+! M. J. D. Powell, On fast trust region methods for quadratic models with linear constraints,
+! Math. Program. Comput., 7:237--267, 2015
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, February 25, 2022 PM01:48:34
+! Last Modified: Friday, February 25, 2022 PM08:33:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

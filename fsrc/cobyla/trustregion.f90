@@ -1,6 +1,6 @@
 module trustregion_mod
 !--------------------------------------------------------------------------------------------------!
-! This module provides subroutines concerning the trust-region iterations.
+! This module provides subroutines concerning the trust-region calculations of COBYLA.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
 !
@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Tuesday, February 22, 2022 PM08:08:08
+! Last Modified: Friday, February 25, 2022 PM08:35:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
