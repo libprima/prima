@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, February 15, 2022 AM12:23:15
+! Last Modified: Friday, February 25, 2022 PM11:44:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -110,7 +110,7 @@ use, non_intrinsic :: selectx_mod, only : isbetter
 use, non_intrinsic :: preproc_mod, only : preproc
 
 ! Solver-specific modules
-!use, non_intrinsic :: bobyqb_mod, only : bobyqb
+use, non_intrinsic :: bobyqb_mod, only : bobyqb
 
 implicit none
 

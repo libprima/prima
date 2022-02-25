@@ -1,8 +1,30 @@
+module bobyqb_mod
+!--------------------------------------------------------------------------------------------------!
+! This module performs the major calculations of BOBYQA.
+!
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the BOBYQA paper.
+!
+! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+!
+! Started: February 2022
+!
+! Last Modified: Saturday, February 26, 2022 AM12:25:21
+!--------------------------------------------------------------------------------------------------!
+
+implicit none
+private
+public :: bobyqb
+
+
+contains
+
+
 subroutine bobyqb(calfun, n, npt, x, xl, xu, rhobeg, rhoend, iprint, &
     & maxfun, xbase, xpt, fval, xopt, gopt, hq, pq, bmat, zmat, ndim, &
     & sl, su, xnew, xalt, d, vlag, w, f, info, ftarget, &
     & nf, xhist, maxxhist, fhist, maxfhist)
 
+! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
@@ -10,26 +32,62 @@ use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
-implicit real(RP) (a - h, o - z)
-implicit integer(IK) (i - n)
+! Solver-specific modules
 
+implicit none
+
+! Inputs
 procedure(OBJ) :: calfun
-integer(IK), intent(in) :: maxxhist
+integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfhist
+integer(IK), intent(in) :: maxfun
+integer(IK), intent(in) :: maxxhist
+integer(IK), intent(in) :: n
+integer(IK), intent(in) :: ndim
 integer(IK), intent(in) :: npt
-integer(IK), intent(out) :: nf
-
+real(RP), intent(in) :: ftarget
+real(RP), intent(in) :: rhobeg
+real(RP), intent(in) :: rhoend
 real(RP), intent(in) :: xl(n)
 real(RP), intent(in) :: xu(n)
-real(RP), intent(inout) :: x(n)
-real(RP), intent(out) :: xhist(n, maxxhist)
-real(RP), intent(out) :: fhist(maxfhist)
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-dimension xbase(n), xpt(npt, n), fval(npt), &
-& xopt(n), gopt(n), hq(n * (n + 1) / 2), pq(npt), bmat(ndim, *), zmat(npt, *), &
-& sl(*), su(*), xnew(n), xalt(n), d(n), vlag(*), w(*)
-!
+! In-outputs
+real(RP), intent(inout) :: sl(n)
+real(RP), intent(inout) :: su(n)
+real(RP), intent(inout) :: x(n)
+
+! Outputs
+integer(IK), intent(out) :: info
+integer(IK), intent(out) :: nf
+real(RP), intent(out) :: bmat(npt + n, n)
+real(RP), intent(out) :: d(n)
+real(RP), intent(out) :: f
+real(RP), intent(out) :: fhist(maxfhist)
+real(RP), intent(out) :: fval(npt)
+real(RP), intent(out) :: gopt(n)
+real(RP), intent(out) :: hq(n * (n + 1_IK) / 2_IK)
+real(RP), intent(out) :: pq(npt)
+real(RP), intent(out) :: vlag(npt + n)
+real(RP), intent(out) :: w(3_IK * (npt + n))
+real(RP), intent(out) :: xalt(n)
+real(RP), intent(out) :: xbase(n)
+real(RP), intent(out) :: xhist(n, maxxhist)
+real(RP), intent(out) :: xnew(n)
+real(RP), intent(out) :: xopt(n)
+real(RP), intent(out) :: xpt(npt, n)
+real(RP), intent(out) :: zmat(npt, npt - n - 1_IK)
+
+! Local variables
+real(RP) :: adelt, alpha, bdtest, bdtol, beta, &
+&        biglsq, bsumm, cauchy, crvmin, curv, delsq, delta,  &
+&        den, denom, densav, diff, diffa, diffb, diffc,     &
+&        dist, distsq, dnorm, dsq, dx, errbig, fopt,        &
+&        fracsq, frhosq, gisq, gqsq, hdiag,      &
+&        pqold, ratio, rho, scaden, summ, summa, summb, summpq,&
+&        summw, summz, temp, vquad, xoptsq
+integer(IK) :: i, ih, ip, itest, j, jj, jp, k, kbase, knew, &
+&           kopt, ksav, nfsav, nh, np, nptm, nresc, ntrits
+
 !     The arguments N, NPT, X, XL, XU, RHOBEG, RHOEND, IPRINT and MAXFUN
 !       are identical to the corresponding arguments in SUBROUTINE BOBYQA.
 !     XBASE holds a shift of origin that should reduce the contributions
@@ -224,18 +282,18 @@ ntrits = ntrits + 1
 !
 90 if (dsq <= 1.0D-3 * xoptsq) then
     fracsq = 0.25D0 * xoptsq
-    sumpq = ZERO
+    summpq = ZERO
     do k = 1, npt
-        sumpq = sumpq + pq(k)
-        sum = -HALF * xoptsq
+        summpq = summpq + pq(k)
+        summ = -HALF * xoptsq
         do i = 1, n
-            sum = sum + xpt(k, i) * xopt(i)
+            summ = summ + xpt(k, i) * xopt(i)
         end do
-        w(npt + k) = sum
-        temp = fracsq - HALF * sum
+        w(npt + k) = summ
+        temp = fracsq - HALF * summ
         do i = 1, n
             w(i) = bmat(k, i)
-            vlag(i) = sum * xpt(k, i) + temp * xopt(i)
+            vlag(i) = summ * xpt(k, i) + temp * xopt(i)
             ip = npt + i
             do j = 1, i
                 bmat(ip, j) = bmat(ip, j) + w(i) * vlag(j) + vlag(i) * w(j)
@@ -246,21 +304,21 @@ ntrits = ntrits + 1
 !     Then the revisions of BMAT that depend on ZMAT are calculated.
 !
     do jj = 1, nptm
-        sumz = ZERO
-        sumw = ZERO
+        summz = ZERO
+        summw = ZERO
         do k = 1, npt
-            sumz = sumz + zmat(k, jj)
+            summz = summz + zmat(k, jj)
             vlag(k) = w(npt + k) * zmat(k, jj)
-            sumw = sumw + vlag(k)
+            summw = summw + vlag(k)
         end do
         do j = 1, n
-            sum = (fracsq * sumz - HALF * sumw) * xopt(j)
+            summ = (fracsq * summz - HALF * summw) * xopt(j)
             do k = 1, npt
-                sum = sum + vlag(k) * xpt(k, j)
+                summ = summ + vlag(k) * xpt(k, j)
             end do
-            w(j) = sum
+            w(j) = summ
             do k = 1, npt
-                bmat(k, j) = bmat(k, j) + sum * zmat(k, jj)
+                bmat(k, j) = bmat(k, j) + summ * zmat(k, jj)
             end do
         end do
         do i = 1, n
@@ -277,7 +335,7 @@ ntrits = ntrits + 1
 !
     ih = 0
     do j = 1, n
-        w(j) = -HALF * sumpq * xopt(j)
+        w(j) = -HALF * summpq * xopt(j)
         do k = 1, npt
             w(j) = w(j) + pq(k) * xpt(k, j)
             xpt(k, j) = xpt(k, j) - xopt(j)
@@ -456,48 +514,48 @@ end do
 !     use when VQUAD is calculated.
 !
 230 do k = 1, npt
-    suma = ZERO
-    sumb = ZERO
-    sum = ZERO
+    summa = ZERO
+    summb = ZERO
+    summ = ZERO
     do j = 1, n
-        suma = suma + xpt(k, j) * d(j)
-        sumb = sumb + xpt(k, j) * xopt(j)
-        sum = sum + bmat(k, j) * d(j)
+        summa = summa + xpt(k, j) * d(j)
+        summb = summb + xpt(k, j) * xopt(j)
+        summ = summ + bmat(k, j) * d(j)
     end do
-    w(k) = suma * (HALF * suma + sumb)
-    vlag(k) = sum
-    w(npt + k) = suma
+    w(k) = summa * (HALF * summa + summb)
+    vlag(k) = summ
+    w(npt + k) = summa
 end do
 beta = ZERO
 do jj = 1, nptm
-    sum = ZERO
+    summ = ZERO
     do k = 1, npt
-        sum = sum + zmat(k, jj) * w(k)
+        summ = summ + zmat(k, jj) * w(k)
     end do
-    beta = beta - sum * sum
+    beta = beta - summ * summ
     do k = 1, npt
-        vlag(k) = vlag(k) + sum * zmat(k, jj)
+        vlag(k) = vlag(k) + summ * zmat(k, jj)
     end do
 end do
 dsq = ZERO
-bsum = ZERO
+bsumm = ZERO
 dx = ZERO
 do j = 1, n
     dsq = dsq + d(j)**2
-    sum = ZERO
+    summ = ZERO
     do k = 1, npt
-        sum = sum + w(k) * bmat(k, j)
+        summ = summ + w(k) * bmat(k, j)
     end do
-    bsum = bsum + sum * d(j)
+    bsumm = bsumm + summ * d(j)
     jp = npt + j
     do i = 1, n
-        sum = sum + bmat(jp, i) * d(i)
+        summ = summ + bmat(jp, i) * d(i)
     end do
-    vlag(jp) = sum
-    bsum = bsum + sum * d(j)
+    vlag(jp) = summ
+    bsumm = bsumm + summ * d(j)
     dx = dx + d(j) * xopt(j)
 end do
-beta = dx * dx + dsq * (xoptsq + dx + dx + HALF * dsq) + beta - bsum
+beta = dx * dx + dsq * (xoptsq + dx + dx + HALF * dsq) + beta - bsumm
 vlag(kopt) = vlag(kopt) + ONE
 !
 !     If NTRITS is ZERO, the denominator may be increased by replacing
@@ -732,15 +790,15 @@ do i = 1, n
     w(i) = bmat(knew, i)
 end do
 do k = 1, npt
-    suma = ZERO
+    summa = ZERO
     do jj = 1, nptm
-        suma = suma + zmat(knew, jj) * zmat(k, jj)
+        summa = summa + zmat(knew, jj) * zmat(k, jj)
     end do
-    sumb = ZERO
+    summb = ZERO
     do j = 1, n
-        sumb = sumb + xpt(k, j) * xopt(j)
+        summb = summb + xpt(k, j) * xopt(j)
     end do
-    temp = suma * sumb
+    temp = summa * summb
     do i = 1, n
         w(i) = w(i) + temp * xpt(k, i)
     end do
@@ -786,40 +844,40 @@ if (ntrits > 0) then
         w(k) = ZERO
     end do
     do j = 1, nptm
-        sum = ZERO
+        summ = ZERO
         do k = 1, npt
-            sum = sum + zmat(k, j) * vlag(k)
+            summ = summ + zmat(k, j) * vlag(k)
         end do
         do k = 1, npt
-            w(k) = w(k) + sum * zmat(k, j)
+            w(k) = w(k) + summ * zmat(k, j)
         end do
     end do
     do k = 1, npt
-        sum = ZERO
+        summ = ZERO
         do j = 1, n
-            sum = sum + xpt(k, j) * xopt(j)
+            summ = summ + xpt(k, j) * xopt(j)
         end do
         w(k + npt) = w(k)
-        w(k) = sum * w(k)
+        w(k) = summ * w(k)
     end do
     gqsq = ZERO
     gisq = ZERO
     do i = 1, n
-        sum = ZERO
+        summ = ZERO
         do k = 1, npt
-            sum = sum + bmat(k, i) * vlag(k) + xpt(k, i) * w(k)
+            summ = summ + bmat(k, i) * vlag(k) + xpt(k, i) * w(k)
         end do
         if (xopt(i) == sl(i)) then
             gqsq = gqsq + min(ZERO, gopt(i))**2
-            gisq = gisq + min(ZERO, sum)**2
+            gisq = gisq + min(ZERO, summ)**2
         else if (xopt(i) == su(i)) then
             gqsq = gqsq + max(ZERO, gopt(i))**2
-            gisq = gisq + max(ZERO, sum)**2
+            gisq = gisq + max(ZERO, summ)**2
         else
             gqsq = gqsq + gopt(i)**2
-            gisq = gisq + sum * sum
+            gisq = gisq + summ * summ
         end if
-        vlag(npt + i) = sum
+        vlag(npt + i) = summ
     end do
 !
 !     Test whether to replace the new quadratic model by the least Frobenius
@@ -850,13 +908,13 @@ if (f <= fopt + TENTH * vquad) goto 60
 distsq = max((TWO * delta)**2, (TEN * rho)**2)
 650 knew = 0
 do k = 1, npt
-    sum = ZERO
+    summ = ZERO
     do j = 1, n
-        sum = sum + (xpt(k, j) - xopt(j))**2
+        summ = summ + (xpt(k, j) - xopt(j))**2
     end do
-    if (sum > distsq) then
+    if (summ > distsq) then
         knew = k
-        distsq = sum
+        distsq = summ
     end if
 end do
 !
@@ -926,3 +984,6 @@ end if
 736 call rangehist(nf, xhist, fhist)
 
 end subroutine bobyqb
+
+
+end module bobyqb_mod
