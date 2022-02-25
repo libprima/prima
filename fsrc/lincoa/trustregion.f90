@@ -1,17 +1,67 @@
+module trustregion_mod
+!--------------------------------------------------------------------------------------------------!
+! This module provides subroutines concerning the trust-region calculations of LINCOA.
+!
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the paper
+!
+! M. J. D. Powell, On fast trust region methods for quadratic models with linear constraints,
+! Math. Program. Comput., 7:237--267, 2015
+!
+! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+!
+! Started: July 2020
+!
+! Last Modified: Friday, February 25, 2022 PM08:50:38
+!--------------------------------------------------------------------------------------------------!
+
+implicit none
+private
+public :: trstep
+
+
+contains
+
+
 subroutine trstep(n, npt, m, amat, xpt, hq, pq, nact, iact, rescon, &
      &  qfac, rfac, snorm, step, g, resnew, resact, d, dw, w)
 
 ! Generic modules
-use, non_intrinsic :: consts_mod, only : RP, IK
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF
 
 ! Solver-specific modules
 use, non_intrinsic :: getact_mod, only : getact
 
-implicit real(RP) (a - h, o - z)
-implicit integer(IK) (i - n)
-dimension amat(n, *), xpt(npt, *), hq(*), pq(*), iact(*), &
-& rescon(*), qfac(n, *), rfac(*), step(*), g(*), resnew(*), resact(*), &
-& d(*), dw(*), w(*)
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: m
+integer(IK), intent(in) :: n
+integer(IK), intent(in) :: npt
+real(RP), intent(in) :: amat(n, m)
+real(RP), intent(in) :: hq(n * (n + 1_IK) / 2_IK)
+real(RP), intent(in) :: pq(npt)
+real(RP), intent(in) :: rescon(m)
+real(RP), intent(in) :: xpt(npt, n)
+
+! In-outputs
+integer(IK), intent(inout) :: iact(m)
+integer(IK), intent(inout) :: nact
+real(RP), intent(inout) :: d(n)
+real(RP), intent(inout) :: dw(n)
+real(RP), intent(inout) :: g(n)
+real(RP), intent(inout) :: qfac(n, n)
+real(RP), intent(inout) :: rfac(n * (n + 1_IK) / 2_IK)
+real(RP), intent(inout) :: resact(m)
+real(RP), intent(inout) :: resnew(m)
+real(RP), intent(inout) :: snorm
+real(RP), intent(inout) :: step(n)
+real(RP), intent(inout) :: w(max(m, 2_IK * n))
+
+! Local variables
+real(RP) :: ad, adw, alpbd, alpha, alphm, alpht, beta, ctest, &
+&        dd, dg, dgd, ds, bstep, reduct, resmax, rhs, scaling, snsq, ss, summ, temp, tinynum, wgd
+integer(IK) :: i, icount, ih, ir, j, jsav, k, ncall
+
 !
 !     N, NPT, M, AMAT, B, XPT, HQ, PQ, NACT, IACT, RESCON, QFAC and RFAC
 !       are the same as the terms with these names in LINCOB. If RESCON(J)
@@ -19,7 +69,7 @@ dimension amat(n, *), xpt(npt, *), hq(*), pq(*), iact(*), &
 !       radius, so that the J-th constraint can be ignored.
 !     SNORM is set to the trust region radius DELTA initially. On the
 !       return, however, it is the length of the calculated STEP, which is
-!       set to zero if the constraints do not allow a long enough step.
+!       set to ZERO if the constraints do not allow a long enough step.
 !     STEP is the total calculated step so far from the trust region centre,
 !       its final value being given by the sequence of CG iterations, which
 !       terminate if the trust region boundary is reached.
@@ -31,7 +81,7 @@ dimension amat(n, *), xpt(npt, *), hq(*), pq(*), iact(*), &
 !     RESNEW, RESACT, D, DW and W are used for working space. A negative
 !       value of RESNEW(J) indicates that the J-th constraint does not
 !       restrict the CG steps of the current trust region calculation, a
-!       zero value of RESNEW(J) indicates that the J-th constraint is active,
+!       ZERO value of RESNEW(J) indicates that the J-th constraint is active,
 !       and otherwise RESNEW(J) is set to the greater of TINY and the actual
 !       residual of the J-th constraint for the current STEP. RESACT holds
 !       the residuals of the active constraints, which may be positive.
@@ -41,10 +91,7 @@ dimension amat(n, *), xpt(npt, *), hq(*), pq(*), iact(*), &
 !
 !     Set some numbers for the conjugate gradient iterations.
 !
-half = 0.5D0
-one = 1.0D0
 tinynum = real(tiny(0.0), RP)
-zero = 0.0D0
 ctest = 0.01D0
 snsq = snorm * snorm
 !
@@ -54,23 +101,23 @@ if (m > 0) then
     do j = 1, m
         resnew(j) = rescon(j)
         if (rescon(j) >= snorm) then
-            resnew(j) = -one
-        else if (rescon(j) >= zero) then
+            resnew(j) = -ONE
+        else if (rescon(j) >= ZERO) then
             resnew(j) = max(resnew(j), tinynum)
         end if
     end do
     if (nact > 0) then
         do k = 1, nact
             resact(k) = rescon(iact(k))
-            resnew(iact(k)) = zero
+            resnew(iact(k)) = ZERO
         end do
     end if
 end if
 do i = 1, n
-    step(i) = zero
+    step(i) = ZERO
 end do
-ss = zero
-reduct = zero
+ss = ZERO
+reduct = ZERO
 ncall = 0
 !
 !     GETACT picks the active set for the current STEP. It also sets DW to
@@ -84,23 +131,23 @@ ncall = 0
 !      CALL GETACT (N,M,AMAT,B,NACT,IACT,QFAC,RFAC,SNORM,RESNEW,
 call getact(n, m, amat, nact, iact, qfac, rfac, snorm, resnew, &
 & resact, g, dw, w, w(n + 1))
-if (w(n + 1) == zero) goto 320
-scale = 0.2D0 * snorm / sqrt(w(n + 1))
+if (w(n + 1) == ZERO) goto 320
+scaling = 0.2D0 * snorm / sqrt(w(n + 1))
 do i = 1, n
-    dw(i) = scale * dw(i)
+    dw(i) = scaling * dw(i)
 end do
 !
 !     If the modulus of the residual of an active constraint is substantial,
 !       then set D to the shortest move from STEP to the boundaries of the
 !       active constraints.
 !
-resmax = zero
+resmax = ZERO
 if (nact > 0) then
     do k = 1, nact
         resmax = max(resmax, resact(k))
     end do
 end if
-gamma = zero
+bstep = ZERO
 if (resmax > 1.0D-4 * snorm) then
     ir = 0
     do k = 1, nact
@@ -115,75 +162,75 @@ if (resmax > 1.0D-4 * snorm) then
         w(k) = temp / rfac(ir)
     end do
     do i = 1, n
-        d(i) = zero
+        d(i) = ZERO
         do k = 1, nact
             d(i) = d(i) + w(k) * qfac(i, k)
         end do
     end do
 !
 !     The vector D that has just been calculated is also the shortest move
-!       from STEP+DW to the boundaries of the active constraints. Set GAMMA
+!       from STEP+DW to the boundaries of the active constraints. Set BSTEP
 !       to the greatest steplength of this move that satisfies the trust
 !       region bound.
 !
     rhs = snsq
-    ds = zero
-    dd = zero
+    ds = ZERO
+    dd = ZERO
     do i = 1, n
-        sum = step(i) + dw(i)
-        rhs = rhs - sum * sum
-        ds = ds + d(i) * sum
+        summ = step(i) + dw(i)
+        rhs = rhs - summ * summ
+        ds = ds + d(i) * summ
         dd = dd + d(i)**2
     end do
-    if (rhs > zero) then
+    if (rhs > ZERO) then
         temp = sqrt(ds * ds + dd * rhs)
-        if (ds <= zero) then
+        if (ds <= ZERO) then
             ! Zaikun 20210925
             ! What if we are at the first iteration? BLEN = DELTA/|D|? See TRSAPP.F90 of NEWUOA.
-            gamma = (temp - ds) / dd
+            bstep = (temp - ds) / dd
         else
-            gamma = rhs / (temp + ds)
+            bstep = rhs / (temp + ds)
         end if
     end if
 !
-!     Reduce the steplength GAMMA if necessary so that the move along D
+!     Reduce the steplength BSTEP if necessary so that the move along D
 !       also satisfies the linear constraints.
 !
     j = 0
-110 if (gamma > zero) then
+110 if (bstep > ZERO) then
         j = j + 1
-        if (resnew(j) > zero) then
-            ad = zero
-            adw = zero
+        if (resnew(j) > ZERO) then
+            ad = ZERO
+            adw = ZERO
             do i = 1, n
                 ad = ad + amat(i, j) * d(i)
                 adw = adw + amat(i, j) * dw(i)
             end do
-            if (ad > zero) then
-                temp = max((resnew(j) - adw) / ad, zero)
-                gamma = min(gamma, temp)
+            if (ad > ZERO) then
+                temp = max((resnew(j) - adw) / ad, ZERO)
+                bstep = min(bstep, temp)
             end if
         end if
         if (j < m) goto 110
     end if
-    gamma = min(gamma, one)
+    bstep = min(bstep, ONE)
 end if
 !
 !     Set the next direction for seeking a reduction in the model function
 !       subject to the trust region bound and the linear constraints.
 !
-if (gamma <= zero) then
+if (bstep <= ZERO) then
     do i = 1, n
         d(i) = dw(i)
     end do
     icount = nact
 else
     do i = 1, n
-        d(i) = dw(i) + gamma * d(i)
+        d(i) = dw(i) + bstep * d(i)
     end do
     icount = nact - 1
 end if
-alpbd = one
+alpbd = ONE
 !
 !     Set ALPHA to the steplength from STEP along D to the trust region
 !       boundary. Return if the first derivative term of this step is
@@ -191,18 +238,18 @@ alpbd = one
 !
 150 icount = icount + 1
 rhs = snsq - ss
-if (rhs <= zero) goto 320
-dg = zero
-ds = zero
-dd = zero
+if (rhs <= ZERO) goto 320
+dg = ZERO
+ds = ZERO
+dd = ZERO
 do i = 1, n
     dg = dg + d(i) * g(i)
     ds = ds + d(i) * step(i)
     dd = dd + d(i)**2
 end do
-if (dg >= zero) goto 320
+if (dg >= ZERO) goto 320
 temp = sqrt(rhs * dd + ds * ds)
-if (ds <= zero) then
+if (ds <= ZERO) then
     alpha = (temp - ds) / dd
 else
     alpha = rhs / (temp + ds)
@@ -213,7 +260,7 @@ if (-alpha * dg <= ctest * reduct) goto 320
 !
 ih = 0
 do j = 1, n
-    dw(j) = zero
+    dw(j) = ZERO
     do i = 1, j
         ih = ih + 1
         if (i < j) dw(j) = dw(j) + hq(ih) * d(i)
@@ -221,7 +268,7 @@ do j = 1, n
     end do
 end do
 do k = 1, npt
-    temp = zero
+    temp = ZERO
     do j = 1, n
         temp = temp + xpt(k, j) * d(j)
     end do
@@ -234,12 +281,12 @@ end do
 !     Set DGD to the curvature of the model along D. Then reduce ALPHA if
 !       necessary to the value that minimizes the model.
 !
-dgd = zero
+dgd = ZERO
 do i = 1, n
     dgd = dgd + d(i) * dw(i)
 end do
 alpht = alpha
-if (dg + alpha * dgd > zero) then
+if (dg + alpha * dgd > ZERO) then
     alpha = -dg / dgd
 end if
 !
@@ -250,8 +297,8 @@ alphm = alpha
 jsav = 0
 if (m > 0) then
     do j = 1, m
-        ad = zero
-        if (resnew(j) > zero) then
+        ad = ZERO
+        if (resnew(j) > ZERO) then
             do i = 1, n
                 ad = ad + amat(i, j) * d(i)
             end do
@@ -265,11 +312,11 @@ if (m > 0) then
 end if
 alpha = max(alpha, alpbd)
 alpha = min(alpha, alphm)
-if (icount == nact) alpha = min(alpha, one)
+if (icount == nact) alpha = min(alpha, ONE)
 !
 !     Update STEP, G, RESNEW, RESACT and REDUCT.
 !
-ss = zero
+ss = ZERO
 do i = 1, n
     step(i) = step(i) + alpha * d(i)
     ss = ss + step(i)**2
@@ -277,17 +324,17 @@ do i = 1, n
 end do
 if (m > 0) then
     do j = 1, m
-        if (resnew(j) > zero) then
+        if (resnew(j) > ZERO) then
             resnew(j) = max(resnew(j) - alpha * w(j), tinynum)
         end if
     end do
 end if
 if (icount == nact .and. nact > 0) then
     do k = 1, nact
-        resact(k) = (one - gamma) * resact(k)
+        resact(k) = (ONE - bstep) * resact(k)
     end do
 end if
-reduct = reduct - alpha * (dg + half * alpha * dgd)
+reduct = reduct - alpha * (dg + HALF * alpha * dgd)
 !
 !     Test for termination. Branch to label 40 if there is a new active
 !       constraint and if the distance from STEP to the trust region
@@ -303,7 +350,7 @@ if (ncall > min(10000, 100 * (m + 1) * n) .or.  &
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 if (alpha == alpht) goto 320
-temp = -alphm * (dg + half * alphm * dgd)
+temp = -alphm * (dg + HALF * alphm * dgd)
 if (temp <= ctest * reduct) goto 320
 if (jsav > 0) then
     if (ss <= 0.64D0 * snsq) goto 40
@@ -312,17 +359,17 @@ end if
 if (icount == n) goto 320
 !
 !     Calculate the next search direction, which is conjugate to the
-!       previous one except in the case ICOUNT=NACT.
+!       previous ONE except in the case ICOUNT=NACT.
 !
 if (nact > 0) then
     do j = nact + 1, n
-        w(j) = zero
+        w(j) = ZERO
         do i = 1, n
             w(j) = w(j) + g(i) * qfac(i, j)
         end do
     end do
     do i = 1, n
-        temp = zero
+        temp = ZERO
         do j = nact + 1, n
             temp = temp + qfac(i, j) * w(j)
         end do
@@ -334,9 +381,9 @@ else
     end do
 end if
 if (icount == nact) then
-    beta = zero
+    beta = ZERO
 else
-    wgd = zero
+    wgd = ZERO
     do i = 1, n
         wgd = wgd + w(n + i) * dw(i)
     end do
@@ -345,14 +392,17 @@ end if
 do i = 1, n
     d(i) = -w(n + i) + beta * d(i)
 end do
-alpbd = zero
+alpbd = ZERO
 goto 150
 !
 !     Return from the subroutine.
 !
-320 snorm = zero
-if (reduct > zero) snorm = sqrt(ss)
-g(1) = zero
-if (ncall > 1) g(1) = one
-return
-end
+320 snorm = ZERO
+if (reduct > ZERO) snorm = sqrt(ss)
+g(1) = ZERO
+if (ncall > 1) g(1) = ONE
+
+end subroutine trstep
+
+
+end module trustregion_mod

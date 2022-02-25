@@ -1,6 +1,6 @@
 module trustregion_mod
 !--------------------------------------------------------------------------------------------------!
-! This module provides subroutines concerning the trust-region iterations.
+! This module provides subroutines concerning the trust-region calculations of NEWUOA.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
 !
@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, February 12, 2022 PM02:45:55
+! Last Modified: Friday, February 25, 2022 PM08:35:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
