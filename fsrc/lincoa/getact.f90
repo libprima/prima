@@ -1,12 +1,57 @@
+module getact_mod
+!--------------------------------------------------------------------------------------------------!
+! This module provides the GETACT subroutine of LINCOA, which picks the current active set.
+!
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the LINCOA paper.
+!
+! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+!
+! Started: July 2021
+!
+! Last Modified: Friday, February 25, 2022 PM12:26:08
+!--------------------------------------------------------------------------------------------------!
+
+implicit none
+private
+public :: getact
+
+
+contains
+
+
 subroutine getact(n, m, amat, nact, iact, qfac, rfac, snorm, resnew, resact, g, dw, vlam, w)
 use, non_intrinsic :: linalg_mod, only : inprod
 
-use, non_intrinsic :: consts_mod, only : RP, IK
-implicit real(RP) (a - h, o - z)
-implicit integer(IK) (i - n)
-!      DIMENSION AMAT(N,*),B(*),IACT(*),QFAC(N,*),RFAC(*),
-dimension amat(n, m), iact(m), qfac(n, n), rfac(n * (n + 1) / 2), resnew(m), resact(m), g(n), dw(n), vlam(n), w(n)
-!
+! Generic modules
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO
+
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: m
+integer(IK), intent(in) :: n
+real(RP), intent(in) :: amat(n, m)
+real(RP), intent(in) :: g(n)
+real(RP), intent(in) :: snorm
+
+! In-outputs
+integer(IK), intent(inout) :: iact(m)
+integer(IK), intent(inout) :: nact
+real(RP), intent(inout) :: dw(n)
+real(RP), intent(inout) :: qfac(n, n)
+real(RP), intent(inout) :: resact(m)
+real(RP), intent(inout) :: resnew(m)
+real(RP), intent(inout) :: rfac(n * (n + 1_IK) / 2_IK)
+real(RP), intent(inout) :: vlam(n)
+real(RP), intent(inout) :: w(n)
+
+! Local variables
+real(RP) :: cosv, ctol, cval, dd, ddsav, dnorm, rdiag,   &
+&        sinv, sprod, summ, sval, tdel, temp, test, tinynum,   &
+&        violmx, vmult
+integer(IK) :: i, ic, idiag, iflag, j, jc, jcp, jdiag, jw,   &
+&           k, l, nactp
+
 !     N, M, AMAT, B, NACT, IACT, QFAC and RFAC are the same as the terms
 !       with these names in SUBROUTINE LINCOB. The current values must be
 !       set on entry. NACT, IACT, QFAC and RFAC are kept up to date when
@@ -24,25 +69,23 @@ dimension amat(n, m), iact(m), qfac(n, n), rfac(n * (n + 1) / 2), resnew(m), res
 !       to the boundary of every constraint whose current residual is at most
 !       0.2*SNORM. On return, the settings in NACT, IACT, QFAC and RFAC are
 !       all appropriate to this choice of active set.
-!     Occasionally this projected direction is zero, and then the final value
-!       of W(1) is set to zero. Otherwise, the direction itself is returned
+!     Occasionally this projected direction is ZERO, and then the final value
+!       of W(1) is set to ZERO. Otherwise, the direction itself is returned
 !       in DW, and W(1) is set to the square of the length of the direction.
 !
 !     Set some constants and a temporary VLAM.
 !
-one = 1.0D0
-tinynum=real(tiny(0.0), RP)
-zero = 0.0D0
+tinynum = real(tiny(0.0), RP)
 tdel = 0.2D0 * snorm
 ddsav = inprod(g, g) + inprod(g, g)
-vlam = 0.0D0
+vlam = ZERO
 !
 !     Set the initial QFAC to the identity matrix in the case NACT=0.
 !
 if (nact == 0) then
-    qfac = zero
+    qfac = ZERO
     do i = 1, n
-        qfac(i, i) = one
+        qfac(i, i) = ONE
     end do
     goto 100
 end if
@@ -62,7 +105,7 @@ if (ic > 0) goto 40
 iflag = 2
 60 if (nact == 0) goto 100
 ic = nact
-70 temp = zero
+70 temp = ZERO
 do i = 1, n
     temp = temp + qfac(i, ic) * g(i)
 end do
@@ -74,33 +117,33 @@ if (ic < nact) then
         jw = jw + j
     end do
 end if
-if (temp >= zero) goto 800
+if (temp >= ZERO) goto 800
 vlam(ic) = temp / rfac(idiag)
-ic = ic - 1
+ic = ic - 1_IK
 if (ic > 0) goto 70
 !
-!     Set the new search direction D. Terminate if the 2-norm of D is zero
+!     Set the new search direction D. Terminate if the 2-norm of D is ZERO
 !       or does not decrease, or if NACT=N holds. The situation NACT=N
 !       occurs for sufficiently large SNORM if the origin is in the convex
 !       hull of the constraint gradients.
 !
 100 if (nact == n) goto 290
 do j = nact + 1, n
-    w(j) = zero
+    w(j) = ZERO
     do i = 1, n
         w(j) = w(j) + qfac(i, j) * g(i)
     end do
 end do
-dd = zero
+dd = ZERO
 do i = 1, n
-    dw(i) = zero
+    dw(i) = ZERO
     do j = nact + 1, n
         dw(i) = dw(i) - w(j) * qfac(i, j)
     end do
     dd = dd + dw(i)**2
 end do
 if (dd >= ddsav) goto 290
-if (dd == zero) goto 300
+if (dd == ZERO) goto 300
 ddsav = dd
 dnorm = sqrt(dd)
 !
@@ -112,50 +155,50 @@ dnorm = sqrt(dd)
 l = 0
 if (m > 0) then
     test = dnorm / snorm
-    violmx = zero
+    violmx = ZERO
     do j = 1, m
-        if (resnew(j) > zero .and. resnew(j) <= tdel) then
-            sum = zero
+        if (resnew(j) > ZERO .and. resnew(j) <= tdel) then
+            summ = ZERO
             do i = 1, n
-                sum = sum + amat(i, j) * dw(i)
+                summ = summ + amat(i, j) * dw(i)
             end do
-            if (sum > test * resnew(j)) then
-                if (sum > violmx) then
+            if (summ > test * resnew(j)) then
+                if (summ > violmx) then
                     l = j
-                    violmx = sum
+                    violmx = summ
                 end if
             end if
         end if
     end do
-    ctol = zero
+    ctol = ZERO
     temp = 0.01D0 * dnorm
-    if (violmx > zero .and. violmx < temp) then
+    if (violmx > ZERO .and. violmx < temp) then
         if (nact > 0) then
             do k = 1, nact
                 j = iact(k)
-                sum = zero
+                summ = ZERO
                 do i = 1, n
-                    sum = sum + dw(i) * amat(i, j)
+                    summ = summ + dw(i) * amat(i, j)
                 end do
-                ctol = max(ctol, abs(sum))
+                ctol = max(ctol, abs(summ))
             end do
         end if
     end if
 end if
-w(1) = one
+w(1) = ONE
 if (l == 0) goto 300
 if (violmx <= 10.0D0 * ctol) goto 300
 !
 !     Apply Givens rotations to the last (N-NACT) columns of QFAC so that
-!       the first (NACT+1) columns of QFAC are the ones required for the
+!       the first (NACT+1) columns of QFAC are the ONEs required for the
 !       addition of the L-th constraint, and add the appropriate column
 !       to RFAC.
 !
 nactp = nact + 1
 idiag = (nactp * nactp - nactp) / 2
-rdiag = zero
+rdiag = ZERO
 do j = n, 1, -1
-    sprod = zero
+    sprod = ZERO
     do i = 1, n
         sprod = sprod + qfac(i, j) * amat(i, l)
     end do
@@ -177,7 +220,7 @@ do j = n, 1, -1
         end if
     end if
 end do
-if (rdiag < zero) then
+if (rdiag < ZERO) then
     do i = 1, n
         qfac(i, nactp) = -qfac(i, nactp)
     end do
@@ -186,22 +229,22 @@ rfac(idiag + nactp) = abs(rdiag)
 nact = nactp
 iact(nact) = l
 resact(nact) = resnew(l)
-vlam(nact) = zero
-resnew(l) = zero
+vlam(nact) = ZERO
+resnew(l) = ZERO
 !
-!     Set the components of the vector VMU in W.
+!     Set the compONEnts of the vector VMU in W.
 !
-220 w(nact) = one / rfac((nact * nact + nact) / 2)**2
+220 w(nact) = ONE / rfac((nact * nact + nact) / 2)**2
 if (nact > 1) then
     do i = nact - 1, 1, -1
         idiag = (i * i + i) / 2
         jw = idiag + i
-        sum = zero
+        summ = ZERO
         do j = i + 1, nact
-            sum = sum - rfac(jw) * w(j)
+            summ = summ - rfac(jw) * w(j)
             jw = jw + j
         end do
-        w(i) = sum / rfac(idiag)
+        w(i) = summ / rfac(idiag)
     end do
 end if
 !
@@ -221,11 +264,11 @@ end if
 do j = 1, nact
     vlam(j) = vlam(j) - vmult * w(j)
 end do
-if (ic > 0) vlam(ic) = zero
-violmx = max(violmx - vmult, zero)
-if (ic == 0) violmx = zero
+if (ic > 0) vlam(ic) = ZERO
+violmx = max(violmx - vmult, ZERO)
+if (ic == 0) violmx = ZERO
 !
-!     Reduce the active set if necessary, so that all components of the
+!     Reduce the active set if necessary, so that all compONEnts of the
 !       new VLAM are negative, with resetting of the residuals of the
 !       constraints that become inactive.
 !
@@ -233,7 +276,7 @@ iflag = 3
 ic = nact
 !!!! If NACT=0, then IC = 0, and hence IACT(IC) is undefined, which leads to memory error when
 !RESNEW(IACT(IC)) is accessed.
-270 if (vlam(ic) < zero) goto 280
+270 if (vlam(ic) < ZERO) goto 280
 resnew(iact(ic)) = max(resact(ic), tinynum)
 goto 800
 280 ic = ic - 1
@@ -243,16 +286,16 @@ if (ic > 0) goto 270
 !       as then the active constraints imply D=0. Otherwise, go to label
 !       100, to calculate the new D and to test for termination.
 !
-if (violmx > zero) goto 220
+if (violmx > ZERO) goto 220
 if (nact < n) goto 100
-290 dd = zero
+290 dd = ZERO
 300 w(1) = dd
 return
 !
 !     These instructions rearrange the active constraints so that the new
 !       value of IACT(NACT) is the old value of IACT(IC). A sequence of
 !       Givens rotations is applied to the current QFAC and RFAC. Then NACT
-!       is reduced by one.
+!       is reduced by ONE.
 !
 800 resnew(iact(ic)) = max(resact(ic), tinynum)
 jc = ic
@@ -300,3 +343,6 @@ elseif (iflag == 3) then
     goto 280
 end if
 end subroutine getact
+
+
+end module getact_mod

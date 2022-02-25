@@ -8,7 +8,7 @@ module lincob_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, February 25, 2022 AM01:06:55
+! Last Modified: Friday, February 25, 2022 PM12:10:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -128,7 +128,7 @@ real(RP) :: w(max(m + 3_IK * n, 2_IK * m + n, 2_IK * npt))
 !     BMAT holds the last N columns of the big inverse matrix H.
 !     ZMAT holds the factorization of the leading NPT by NPT submatrix
 !       of H, this factorization being ZMAT times Diag(DZ) times ZMAT^T,
-!       where the elements of DZ are plus or minus one, as specified by IDZ.
+!       where the elements of DZ are plus or minus ONE, as specified by IDZ.
 !     NDIM is the first dimension of BMAT and has the value NPT+N.
 !     STEP is employed for trial steps from XOPT. It is also used for working
 !       space when XBASE is shifted and in PRELIM.
@@ -338,7 +338,7 @@ end do
 !       unsuitable for starting the conjugate gradient iterations.
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 2019-08-29: For ill-conditioned problems, NaN may occur in the
+! Zaikun 2019-08-29: For ill-conditiONEd problems, NaN may occur in the
 ! models. In such a case, we terminate the code. Otherwise, the behavior
 ! of TRSTEP or QMSTEP is not predictable, and Segmentation Fault or
 ! infinite cycling may happen. This is because any equality/inequality
@@ -668,7 +668,7 @@ end do
 
 !
 !     If ITEST is increased to 3, then the next quadratic model is the
-!       one whose second derivative matrix is least subject to the new
+!       ONE whose second derivative matrix is least subject to the new
 !       interpolation conditions. Otherwise the new model is constructed
 !       by the symmetric Broyden method in the usual way.
 !
