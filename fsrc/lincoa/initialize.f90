@@ -1,39 +1,91 @@
-subroutine prelim(calfun, n, npt, m, amat, b, x, rhobeg, iprint, xbase, &
+module initialize_mod
+!--------------------------------------------------------------------------------------------------!
+! This module performs the initialization of LINCOA.
+!
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the LINCOA paper.
+!
+! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+!
+! Started: July 2021
+!
+! Last Modified: Friday, February 25, 2022 PM01:48:34
+!--------------------------------------------------------------------------------------------------!
+
+implicit none
+private
+public :: initialize
+
+
+contains
+
+
+subroutine initialize(calfun, n, npt, m, amat, b, x, rhobeg, iprint, xbase, &
      &  xpt, fval, xsav, xopt, gopt, kopt, hq, pq, bmat, zmat, idz, ndim, &
-     &  sp, rescon, step, pqw, w, f, ftarget, &
+     &  rsp, rescon, step, pqw, w, f, ftarget, &
      &  A_orig, b_orig, &
      & cstrv, nf, xhist, maxxhist, fhist, maxfhist, chist, maxchist)
 
+! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm, maximum
 use, non_intrinsic :: pintrf_mod, only : OBJ
+implicit none
 
-implicit real(RP) (a - h, o - z)
-implicit integer(IK) (i - n)
-
+! Inputs
 procedure(OBJ) :: calfun
-integer(IK), intent(in) :: maxxhist
-integer(IK), intent(in) :: maxfhist
+integer(IK), intent(in) :: iprint
+integer(IK), intent(in) :: m
 integer(IK), intent(in) :: maxchist
-integer(IK), intent(out) :: nf
-real(RP), intent(in) :: amat(n, m)
+integer(IK), intent(in) :: maxfhist
+integer(IK), intent(in) :: maxxhist
+integer(IK), intent(in) :: n
+integer(IK), intent(in) :: ndim
+integer(IK), intent(in) :: npt
 real(RP), intent(in) :: A_orig(n, m)
+real(RP), intent(in) :: amat(n, m)
 real(RP), intent(in) :: b_orig(m)
+real(RP), intent(in) :: ftarget
+real(RP), intent(in) :: rhobeg
+
+! In-outputs
+integer(IK), intent(inout) :: idz
+integer(IK), intent(inout) :: kopt
 real(RP), intent(inout) :: b(m)
+real(RP), intent(inout) :: f
+real(RP), intent(inout) :: fval(npt)
+real(RP), intent(inout) :: gopt(n)
+real(RP), intent(inout) :: pq(npt)
+real(RP), intent(inout) :: pqw(npt)
+real(RP), intent(inout) :: rsp(2_IK * npt)
+real(RP), intent(inout) :: step(n)
+real(RP), intent(inout) :: w(n + npt)
 real(RP), intent(inout) :: x(n)
-real(RP), intent(out) :: xhist(n, maxxhist)
-real(RP), intent(out) :: fhist(maxfhist)
+real(RP), intent(inout) :: xbase(n)
+real(RP), intent(inout) :: xopt(n)
+real(RP), intent(inout) :: xpt(npt, n)
+real(RP), intent(inout) :: bmat(npt + size(x), size(x))
+real(RP), intent(inout) :: zmat(npt, npt - size(x) - 1)
+
+! Outputs
+integer(IK), intent(out) :: nf
 real(RP), intent(out) :: chist(maxchist)
 real(RP), intent(out) :: cstrv
+real(RP), intent(out) :: fhist(maxfhist)
+real(RP), intent(out) :: hq(n * (n + 1_IK) / 2_IK)
+real(RP), intent(out) :: rescon(m)
+real(RP), intent(out) :: xhist(n, maxxhist)
+real(RP), intent(out) :: xsav(n)
 
 ! Local variables
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-dimension xbase(*), xpt(npt, *), fval(*), &
-& xsav(*), xopt(*), gopt(*), hq(*), pq(*), bmat(ndim, *), zmat(npt, *), &
-& sp(*), rescon(*), step(*), pqw(*), w(*)
+real(RP) :: bigv, feas, recip, reciq, resid, rhosq, temp, test
+integer(IK) :: i, ipt, itemp, j, jp, jpt, jsav, k, kbase, nptm
+
+
+!*++
+!*++ End of declarations rewritten by SPAG
 !
 !     The arguments N, NPT, M, AMAT, B, X, RHOBEG, IPRINT, XBASE, XPT, FVAL,
 !       XSAV, XOPT, GOPT, HQ, PQ, BMAT, ZMAT, NDIM, SP and RESCON are the
@@ -63,31 +115,31 @@ idz = 1
 kbase = 1
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
-!     Set the initial elements of XPT, BMAT, SP and ZMAT to zero.
+!     Set the initial elements of XPT, BMAT, SP and ZMAT to ZERO.
 !
 do j = 1, n
     xbase(j) = x(j)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    xopt(j) = zero
+    xopt(j) = ZERO
     xsav(j) = xbase(j)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     do k = 1, npt
-        xpt(k, j) = zero
+        xpt(k, j) = ZERO
     end do
     do i = 1, ndim
-        bmat(i, j) = zero
+        bmat(i, j) = ZERO
     end do
 end do
 do k = 1, npt
-    sp(k) = zero
+    rsp(k) = ZERO
     do j = 1, npt - n - 1
-        zmat(k, j) = zero
+        zmat(k, j) = ZERO
     end do
 end do
 !
-!     Set the nonzero coordinates of XPT(K,.), K=1,2,...,min[2*N+1,NPT],
+!     Set the nonZERO coordinates of XPT(K,.), K=1,2,...,min[2*N+1,NPT],
 !       but they may be altered later to make a constraint violation
-!       sufficiently large. The initial nonzero elements of BMAT and of
+!       sufficiently large. The initial nonZERO elements of BMAT and of
 !       the first min[N,NPT-N-1] columns of ZMAT are set also.
 !
 do j = 1, n
@@ -107,7 +159,7 @@ do j = 1, n
     end if
 end do
 !
-!     Set the remaining initial nonzero elements of XPT and ZMAT when the
+!     Set the remaining initial nonZERO elements of XPT and ZMAT when the
 !       number of interpolation points exceeds 2*N+1.
 !
 if (npt > 2 * n + 1) then
@@ -129,7 +181,7 @@ end if
 !
 if (m > 0) then
     do j = 1, m
-        temp = zero
+        temp = ZERO
         do i = 1, n
             temp = temp + amat(i, j) * xbase(i)
         end do
@@ -142,7 +194,7 @@ end if
 !
 do nf = 1, npt
     feas = ONE
-    bigv = zero
+    bigv = ZERO
     j = 0
 80  j = j + 1
     if (j <= m .and. nf >= 2) then
@@ -157,19 +209,19 @@ do nf = 1, npt
             feas = -ONE
             goto 80
         end if
-        feas = zero
+        feas = ZERO
     end if
-    if (feas < zero) then
+    if (feas < ZERO) then
         do i = 1, n
             step(i) = xpt(nf, i) + (test - bigv) * amat(i, jsav)
         end do
         do k = 1, npt
-            sp(npt + k) = zero
+            rsp(npt + k) = ZERO
             do j = 1, n
-                sp(npt + k) = sp(npt + k) + xpt(k, j) * step(j)
+                rsp(npt + k) = rsp(npt + k) + xpt(k, j) * step(j)
             end do
         end do
-        call update(n, npt, xpt, bmat, zmat, idz, ndim, sp, step, kbase, nf, pqw, w)
+        call update(n, npt, xpt, bmat, zmat, idz, ndim, rsp, step, kbase, nf, pqw, w)
         do i = 1, n
             xpt(nf, i) = step(i)
         end do
@@ -189,7 +241,7 @@ do nf = 1, npt
     !---------------------------------------------------!
     if (nf == 1) then
         kopt = 1
-    else if (f < fval(kopt) .and. feas > zero) then
+    else if (f < fval(kopt) .and. feas > ZERO) then
         kopt = nf
     end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -213,13 +265,13 @@ nf = min(nf, npt)  ! At exit of the loop, nf = npt + 1
 !     Set PQ for the first quadratic model.
 !
 do j = 1, nptm
-    w(j) = zero
+    w(j) = ZERO
     do k = 1, npt
         w(j) = w(j) + zmat(k, j) * fval(k)
     end do
 end do
 do k = 1, npt
-    pq(k) = zero
+    pq(k) = ZERO
     do j = 1, nptm
         pq(k) = pq(k) + zmat(k, j) * w(j)
     end do
@@ -230,20 +282,20 @@ end do
 do j = 1, n
     xopt(j) = xpt(kopt, j)
     xsav(j) = xbase(j) + xopt(j)
-    gopt(j) = zero
+    gopt(j) = ZERO
 end do
 do k = 1, npt
-    sp(k) = zero
+    rsp(k) = ZERO
     do j = 1, n
-        sp(k) = sp(k) + xpt(k, j) * xopt(j)
+        rsp(k) = rsp(k) + xpt(k, j) * xopt(j)
     end do
-    temp = pq(k) * sp(k)
+    temp = pq(k) * rsp(k)
     do j = 1, n
         gopt(j) = gopt(j) + fval(k) * bmat(k, j) + temp * xpt(k, j)
     end do
 end do
 do i = 1, (n * n + n) / 2
-    hq(i) = zero
+    hq(i) = ZERO
 end do
 !
 !     Set the initial elements of RESCON.
@@ -253,11 +305,13 @@ do j = 1, m
     do i = 1, n
         temp = temp - xopt(i) * amat(i, j)
     end do
-    temp = max(temp, zero)
+    temp = max(temp, ZERO)
     if (temp >= rhobeg) temp = -temp
     rescon(j) = temp
 end do
 
 
-return
-end
+end subroutine initialize
+
+
+end module initialize_mod

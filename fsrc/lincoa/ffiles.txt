@@ -1,5 +1,5 @@
+initialize.f90
 getact.f90
-prelim.f90
 qmstep.f90
 trstep.f90
 update.f90

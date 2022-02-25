@@ -8,7 +8,7 @@ module lincob_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, February 25, 2022 PM12:10:50
+! Last Modified: Friday, February 25, 2022 PM01:45:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -39,6 +39,7 @@ use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm, maximum
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 ! Solver-specific modules
+use, non_intrinsic :: initialize_mod, only : initialize
 
 implicit none
 
@@ -99,7 +100,7 @@ real(RP) :: del, delsav, delta, dffalt, diff,  &
 &        distsq, fopt, fsave, qoptsq, ratio,     &
 &        rho, snorm, ssq, summ, summz, temp, vqalt,   &
 &        vquad, xdiff, xoptsq
-integer :: i, idz, ifeas, ih, imprv, ip, itest, j, k,    &
+integer(IK) :: i, idz, ifeas, ih, imprv, ip, itest, j, k,    &
 &           knew, kopt, ksave, nact, nh, np, nptm,     &
 &           nvala, nvalb
 real(RP) :: w(max(m + 3_IK * n, 2_IK * m + n, 2_IK * npt))
@@ -178,7 +179,7 @@ imprv = 0
 !       so that the constraint violation is at least 0.2*RHOBEG. Also KOPT
 !       is set so that XPT(KOPT,.) is the initial trust region centre.
 !
-call prelim(calfun, n, npt, m, amat, b, x, rhobeg, iprint, xbase, xpt, fval, &
+call initialize(calfun, n, npt, m, amat, b, x, rhobeg, iprint, xbase, xpt, fval, &
 & xsav, xopt, gopt, kopt, hq, pq, bmat, zmat, idz, ndim, rsp, rescon, &
 & step, pqw, w, f, ftarget, &
 & A_orig, b_orig, &
