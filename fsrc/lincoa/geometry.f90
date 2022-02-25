@@ -1,12 +1,64 @@
-subroutine qmstep(n, npt, m, amat, xpt, xopt, nact, iact, &
+module geometry_mod
+!--------------------------------------------------------------------------------------------------!
+! This module contains subroutines concerning the geometry-improving of the interpolation set XPT.
+!
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the paper
+!
+! M. J. D. Powell, On fast trust region methods for quadratic models with linear constraints,
+! Math. Program. Comput., 7:237--267, 2015
+!
+! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+!
+! Started: July 2021
+!
+! Last Modified: Friday, February 25, 2022 PM10:35:00
+!--------------------------------------------------------------------------------------------------!
+
+implicit none
+private
+public :: geostep
+
+
+contains
+
+
+subroutine geostep(n, npt, m, amat, xpt, xopt, nact, iact, &
      &  rescon, qfac, kopt, knew, del, step, gl, pqw, rstat, w, ifeas)
-!      IMPLICIT REAL*8 (A-H,O-Z)
-use, non_intrinsic :: consts_mod, only : RP, IK
-implicit real(RP) (a - h, o - z)
-implicit integer(IK) (i - n)
-!      DIMENSION AMAT(N,*),B(*),XPT(NPT,*),XOPT(*),IACT(*),
-dimension amat(n, *), xpt(npt, *), xopt(*), iact(*), &
-     &  rescon(*), qfac(n, *), step(*), gl(*), pqw(*), rstat(*), w(*)
+
+! Generic modules
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH
+
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: iact(:)
+integer(IK), intent(in) :: knew
+integer(IK), intent(in) :: kopt
+integer(IK), intent(in) :: m
+integer(IK), intent(in) :: n
+integer(IK), intent(in) :: nact
+integer(IK), intent(in) :: npt
+real(RP), intent(in) :: amat(n, m)
+real(RP), intent(in) :: del
+real(RP), intent(in) :: pqw(npt)
+real(RP), intent(in) :: qfac(n, n)
+real(RP), intent(in) :: rescon(m)
+real(RP), intent(in) :: xopt(n)
+real(RP), intent(in) :: xpt(npt, n)
+
+! In-outputs
+integer(IK), intent(inout) :: ifeas
+real(RP), intent(inout) :: gl(n)
+real(RP), intent(inout) :: rstat(m)
+real(RP), intent(inout) :: step(n)
+real(RP), intent(inout) :: w(n)
+
+! Local variables
+real(RP) :: bigv, ctol, gg, ghg, resmax, sp, ss,  &
+&        stp, stpsav, summ, temp, test, vbig, vgrad, &
+&        vlag, vnew, ww
+integer(IK) :: i, j, jsav, k, ksav
+
 !
 !     N, NPT, M, AMAT, B, XPT, XOPT, NACT, IACT, RESCON, QFAC, KOPT are the
 !       same as the terms with these names in SUBROUTINE LINCOB.
@@ -28,8 +80,8 @@ dimension amat(n, *), xpt(npt, *), xopt(*), iact(*), &
 !       LFUNC(XOPT+STEP), subject to ||STEP|| .LE. DEL. A projected STEP is
 !       calculated too, within the trust region, that does not alter the
 !       residuals of the active constraints. The projected step is preferred
-!       if its value of | LFUNC(XOPT+STEP) | is at least one fifth of the
-!       original one, but the greatest violation of a linear constraint must
+!       if its value of | LFUNC(XOPT+STEP) | is at least ONE fifth of the
+!       original ONE, but the greatest violation of a linear constraint must
 !       be at least 0.2*DEL, in order to keep the interpolation points apart.
 !       The remedy when the maximum constraint violation is too small is to
 !       restore the original step, which is perturbed if necessary so that
@@ -37,17 +89,13 @@ dimension amat(n, *), xpt(npt, *), xopt(*), iact(*), &
 !
 !     Set some constants.
 !
-half = 0.5D0
-one = 1.0D0
-tenth = 0.1D0
-zero = 0.0D0
-test = 0.2D0 * del
+test = 0.2D0 * del  ! Is this really better than 0? According to an experiment of Tom on 20220225, NO
 !
 !     Replace GL by the gradient of LFUNC at the trust region centre, and
 !       set the elements of RSTAT.
 !
 do k = 1, npt
-    temp = zero
+    temp = ZERO
     do j = 1, n
         temp = temp + xpt(k, j) * xopt(j)
     end do
@@ -58,11 +106,11 @@ do k = 1, npt
 end do
 if (m > 0) then
     do j = 1, m
-        rstat(j) = one
-        if (abs(rescon(j)) >= del) rstat(j) = -one
+        rstat(j) = ONE
+        if (abs(rescon(j)) >= del) rstat(j) = -ONE
     end do
     do k = 1, nact
-        rstat(iact(k)) = zero
+        rstat(iact(k)) = ZERO
     end do
 end if
 !
@@ -73,11 +121,11 @@ end if
 ! Zaikun 2019-08-15: IFLAG is never used
 !      IFLAG=0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-vbig = zero
+vbig = ZERO
 do k = 1, npt
     if (k == kopt) cycle
-    ss = zero
-    sp = zero
+    ss = ZERO
+    sp = ZERO
     do i = 1, n
         temp = xpt(k, i) - xopt(i)
         ss = ss + temp * temp
@@ -85,10 +133,10 @@ do k = 1, npt
     end do
     stp = -del / sqrt(ss)
     if (k == knew) then
-        if (sp * (sp - one) < zero) stp = -stp
-        vlag = abs(stp * sp) + stp * stp * abs(sp - one)
+        if (sp * (sp - ONE) < ZERO) stp = -stp
+        vlag = abs(stp * sp) + stp * stp * abs(sp - ONE)
     else
-        vlag = abs(stp * (one - stp) * sp)
+        vlag = abs(stp * (ONE - stp) * sp)
     end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29: With the original code, if either VLAG or VBIG is
@@ -106,29 +154,29 @@ end do
 !     Set STEP to the move that gives the greatest modulus calculated above.
 !       This move may be replaced by a steepest ascent step from XOPT.
 !
-gg = zero
+gg = ZERO
 do i = 1, n
     gg = gg + gl(i)**2
     step(i) = stpsav * (xpt(ksav, i) - xopt(i))
 end do
 vgrad = del * sqrt(gg)
-if (vgrad <= tenth * vbig) goto 220
+if (vgrad <= TENTH * vbig) goto 220
 !
 !     Make the replacement if it provides a larger value of VBIG.
 !
-ghg = zero
+ghg = ZERO
 do k = 1, npt
-    temp = zero
+    temp = ZERO
     do j = 1, n
         temp = temp + xpt(k, j) * gl(j)
     end do
     ghg = ghg + pqw(k) * temp * temp
 end do
-vnew = vgrad + abs(half * del * del * ghg / gg)
+vnew = vgrad + abs(HALF * del * del * ghg / gg)
 if (vnew > vbig) then
     vbig = vnew
     stp = del / sqrt(gg)
-    if (ghg < zero) stp = -stp
+    if (ghg < ZERO) stp = -stp
     do i = 1, n
         step(i) = stp * gl(i)
     end do
@@ -141,36 +189,36 @@ if (nact == 0 .or. nact == n) goto 220
 !       may be changed to a move along the projected gradient.
 !
 do k = nact + 1, n
-    w(k) = zero
+    w(k) = ZERO
     do i = 1, n
         w(k) = w(k) + gl(i) * qfac(i, k)
     end do
 end do
-gg = zero
+gg = ZERO
 do i = 1, n
-    gl(i) = zero
+    gl(i) = ZERO
     do k = nact + 1, n
         gl(i) = gl(i) + qfac(i, k) * w(k)
     end do
     gg = gg + gl(i)**2
 end do
 vgrad = del * sqrt(gg)
-if (vgrad <= tenth * vbig) goto 220
-ghg = zero
+if (vgrad <= TENTH * vbig) goto 220
+ghg = ZERO
 do k = 1, npt
-    temp = zero
+    temp = ZERO
     do j = 1, n
         temp = temp + xpt(k, j) * gl(j)
     end do
     ghg = ghg + pqw(k) * temp * temp
 end do
-vnew = vgrad + abs(half * del * del * ghg / gg)
+vnew = vgrad + abs(HALF * del * del * ghg / gg)
 !
 !     Set W to the possible move along the projected gradient.
 !
 stp = del / sqrt(gg)
-if (ghg < zero) stp = -stp
-ww = zero
+if (ghg < ZERO) stp = -stp
+ww = ZERO
 do i = 1, n
     w(i) = stp * gl(i)
     ww = ww + w(i)**2
@@ -184,11 +232,11 @@ end do
 !
 if (vnew / vbig >= 0.2D0) then
     ifeas = 1
-    bigv = zero
+    bigv = ZERO
     j = 0
 170 j = j + 1
     if (j <= m) then
-        if (rstat(j) == one) then
+        if (rstat(j) == ONE) then
             temp = -rescon(j)
             do i = 1, n
                 temp = temp + w(i) * amat(i, j)
@@ -198,16 +246,16 @@ if (vnew / vbig >= 0.2D0) then
         if (bigv < test) goto 170
         ifeas = 0
     end if
-    ctol = zero
+    ctol = ZERO
     temp = 0.01D0 * sqrt(ww)
-    if (bigv > zero .and. bigv < temp) then
+    if (bigv > ZERO .and. bigv < temp) then
         do k = 1, nact
             j = iact(k)
-            sum = zero
+            summ = ZERO
             do i = 1, n
-                sum = sum + w(i) * amat(i, j)
+                summ = summ + w(i) * amat(i, j)
             end do
-            ctol = max(ctol, abs(sum))
+            ctol = max(ctol, abs(summ))
         end do
     end if
     if (bigv <= 10.0D0 * ctol .or. bigv >= test) then
@@ -222,12 +270,12 @@ end if
 !       its original value. Modify STEP if this violation is unacceptable.
 !
 220 ifeas = 1
-bigv = zero
-resmax = zero
+bigv = ZERO
+resmax = ZERO
 j = 0
 230 j = j + 1
 if (j <= m) then
-    if (rstat(j) < zero) goto 230
+    if (rstat(j) < 0) goto 230
     temp = -rescon(j)
     do i = 1, n
         temp = temp + step(i) * amat(i, j)
@@ -255,4 +303,7 @@ end if
 !     Return the calculated STEP and the value of IFEAS.
 !
 260 return
-end
+end subroutine geostep
+
+
+end module geometry_mod

@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, February 25, 2022 PM08:48:27
+! Last Modified: Friday, February 25, 2022 PM10:57:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -42,8 +42,10 @@ use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm, maximum
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 ! Solver-specific modules
+use, non_intrinsic :: geometry_mod, only : geostep
 use, non_intrinsic :: initialize_mod, only : initialize
 use, non_intrinsic :: trustregion_mod, only : trstep
+use, non_intrinsic :: update_mod, only : update
 
 implicit none
 
@@ -456,7 +458,7 @@ else
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29: B is never used in QMSTEP
 !          CALL QMSTEP (N,NPT,M,AMAT,B,XPT,XOPT,NACT,IACT,RESCON,
-    call qmstep(n, npt, m, amat, xpt, xopt, nact, iact, rescon, &
+    call geostep(n, npt, m, amat, xpt, xopt, nact, iact, rescon, &
 &   qfac, kopt, knew, del, step, w, pqw, w(np), w(np + m), ifeas)
 end if
 !

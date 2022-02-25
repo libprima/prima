@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, February 25, 2022 PM08:33:02
+! Last Modified: Friday, February 25, 2022 PM11:21:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -35,6 +35,10 @@ use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm, maximum
 use, non_intrinsic :: pintrf_mod, only : OBJ
+
+! Solver-specific modules
+use, non_intrinsic :: update_mod, only : update
+
 implicit none
 
 ! Inputs
@@ -84,7 +88,7 @@ real(RP), intent(out) :: xsav(n)
 
 ! Local variables
 real(RP) :: bigv, feas, recip, reciq, resid, rhosq, temp, test
-integer(IK) :: i, ipt, itemp, j, jp, jpt, jsav, k, kbase, nptm
+integer(IK) :: i, ipt, itemp, j, jp, jpt, jsav, k, kbase, knew, nptm
 
 
 !*++
@@ -224,7 +228,8 @@ do nf = 1, npt
                 rsp(npt + k) = rsp(npt + k) + xpt(k, j) * step(j)
             end do
         end do
-        call update(n, npt, xpt, bmat, zmat, idz, ndim, rsp, step, kbase, nf, pqw, w)
+        knew = nf
+        call update(n, npt, xpt, bmat, zmat, idz, ndim, rsp, step, kbase, knew, pqw, w)
         do i = 1, n
             xpt(nf, i) = step(i)
         end do
