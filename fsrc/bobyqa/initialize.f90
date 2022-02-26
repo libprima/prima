@@ -1,4 +1,25 @@
-subroutine prelim(calfun, n, npt, x, xl, xu, rhobeg, iprint, maxfun, xbase, &
+module initialize_mod
+!--------------------------------------------------------------------------------------------------!
+! This module performs the initialization of BOBYQA.
+!
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the BOBYQA paper.
+!
+! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+!
+! Started: February 2022
+!
+! Last Modified: Saturday, February 26, 2022 AM11:52:46
+!--------------------------------------------------------------------------------------------------!
+
+implicit none
+private
+public :: initialize
+
+
+contains
+
+
+subroutine initialize(calfun, n, npt, x, xl, xu, rhobeg, iprint, maxfun, xbase, &
 & xpt, fval, gopt, hq, pq, bmat, zmat, ndim, sl, su, nf, kopt, f, ftarget, &
 & xhist, maxxhist, fhist, maxfhist)
 
@@ -9,24 +30,46 @@ use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
-implicit real(RP) (a - h, o - z)
-implicit integer(IK) (i - n)
+implicit none
 
+! Inputs
 procedure(OBJ) :: calfun
-integer(IK), intent(in) :: maxxhist
+integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfhist
+integer(IK), intent(in) :: maxfun
+integer(IK), intent(in) :: maxxhist
+integer(IK), intent(in) :: n
+integer(IK), intent(in) :: ndim
 integer(IK), intent(in) :: npt
-integer(IK), intent(out) :: nf
+real(RP), intent(in) :: ftarget
+real(RP), intent(in) :: rhobeg
+real(RP), intent(in) :: sl(n)
+real(RP), intent(in) :: su(n)
 real(RP), intent(in) :: xl(n)
 real(RP), intent(in) :: xu(n)
+
+! In-outputs
 real(RP), intent(inout) :: x(n)
-real(RP), intent(out) :: xhist(n, maxxhist)
+
+! Outputs
+integer(IK), intent(out) :: kopt
+integer(IK), intent(out) :: nf
+real(RP), intent(out) :: bmat(npt + n, n)
+real(RP), intent(out) :: f
 real(RP), intent(out) :: fhist(maxfhist)
+real(RP), intent(out) :: fval(npt)
+real(RP), intent(out) :: gopt(n)
+real(RP), intent(out) :: hq(n * (n + 1_IK) / 2_IK)
+real(RP), intent(out) :: pq(npt)
+real(RP), intent(out) :: xbase(n)
+real(RP), intent(out) :: xhist(n, maxxhist)
+real(RP), intent(out) :: xpt(npt, n)
+real(RP), intent(out) :: zmat(npt, npt - n - 1_IK)
 
 ! Local variables
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-dimension xbase(n), xpt(npt, n), fval(npt), gopt(n), &
-& hq(n * (n + 1) / 2), pq(npt), bmat(ndim, *), zmat(npt, *), sl(*), su(*)
+real(RP) :: diff, fbeg, recip, rhosq, stepa, stepb, temp
+integer(IK) :: i, ih, ipt, itemp, j, jpt, k, nfm, nfx, np
+
 !
 !     The arguments N, NPT, X, XL, XU, RHOBEG, IPRINT and MAXFUN are the
 !       same as the corresponding arguments in SUBROUTINE BOBYQA.
@@ -191,4 +234,7 @@ if (f <= ftarget) goto 80
 
 if (nf < npt .and. nf < maxfun) goto 50
 80 nf = min(nf, npt)  ! nf = npt + 1 at exit of the loop
-end
+end subroutine initialize
+
+
+end module initialize_mod
