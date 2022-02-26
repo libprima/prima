@@ -17,9 +17,9 @@ module uobyqa_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Started: July 2020
+! Started: February 2022
 !
-! Last Modified: Friday, February 11, 2022 PM07:23:55
+! Last Modified: Saturday, February 26, 2022 PM07:38:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -169,7 +169,7 @@ use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: preproc_mod, only : preproc
 
 ! Solver-specific modules
-!use, non_intrinsic :: uobyqb_mod, only : uobyqb
+use, non_intrinsic :: uobyqb_mod, only : uobyqb
 
 implicit none
 

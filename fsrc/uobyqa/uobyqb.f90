@@ -1,7 +1,29 @@
+module uobyqb_mod
+!--------------------------------------------------------------------------------------------------!
+! This module performs the major calculations of NEWUOA.
+!
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
+!
+! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+!
+! Started: February 2022
+!
+! Last Modified: Saturday, February 26, 2022 PM07:37:32
+!--------------------------------------------------------------------------------------------------!
+
+implicit none
+private
+public :: uobyqb
+
+
+contains
+
+
 subroutine uobyqb(calfun, n, x, rhobeg, rhoend, iprint, maxfun, npt, xbase, &
      &  xopt, xnew, xpt, pq, pl, h, g, d, vlag, w, f, info, ftarget, &
     & nf, xhist, maxxhist, fhist, maxfhist)
 
+! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
@@ -9,22 +31,49 @@ use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
-implicit real(RP) (a - h, o - z)
-implicit integer(IK) (i - n)
+implicit none
 
+! Inputs
 procedure(OBJ) :: calfun
-integer(IK), intent(in) :: maxxhist
+integer(IK) :: n
+integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfhist
+integer(IK), intent(in) :: maxfun
+integer(IK), intent(in) :: maxxhist
 integer(IK), intent(in) :: npt
-integer(IK), intent(out) :: nf
-real(RP), intent(inout) :: x(n)
-real(RP), intent(out) :: xhist(n, maxxhist)
-real(RP), intent(out) :: fhist(maxfhist)
+real(RP), intent(in) :: ftarget
+real(RP), intent(in) :: rhobeg
+real(RP), intent(in) :: rhoend
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-dimension xbase(n), xopt(n), xnew(n), xpt(npt, n), pq(npt - 1), &
-     &  pl(npt, npt - 1), h(n, n * n), g(n), d(n), vlag(npt), &
-     &  w(max(6 * n, (n**2 + 3 * n + 2) / 2))
+! In-outputs
+real(RP), intent(inout) :: x(n)
+
+! Outputs
+integer(IK), intent(out) :: info
+integer(IK), intent(out) :: nf
+real(RP), intent(out) :: d(n)
+real(RP), intent(out) :: f
+real(RP), intent(out) :: fhist(maxfhist)
+real(RP), intent(out) :: g(n)
+real(RP), intent(out) :: h(n, n**2)
+real(RP), intent(out) :: pl(npt, npt - 1_IK)
+real(RP), intent(out) :: pq(npt - 1_IK)
+real(RP), intent(out) :: vlag(npt)
+real(RP), intent(out) :: xbase(n)
+real(RP), intent(out) :: xhist(n, maxxhist)
+real(RP), intent(out) :: xnew(n)
+real(RP), intent(out) :: xopt(n)
+real(RP), intent(out) :: xpt(npt, n)
+real(RP), intent(out) :: w(max(6_IK * n, (n**2 + 3_IK * n + 2_IK) / 2_IK))
+
+! Local variables
+real(RP) :: ddknew, delta, detrat, diff,        &
+&        distest, dnorm, errtol, estim, evalue, fbase, fopt,&
+&        fsave, ratio, rho, rhosq, sixthm, summ, &
+&        sumg, sumh, temp, tempa, tol, tworsq, vmax,  &
+&        vquad, wmult
+integer(IK) :: i, ih, ip, iq, iw, j, jswitch, k, knew, kopt,&
+&           ksave, ktemp, nftest, nnp, nptm
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !     The arguments N, X, RHOBEG, RHOEND, IPRINT and MAXFUN are identical to
@@ -52,7 +101,7 @@ dimension xbase(n), xopt(n), xnew(n), xpt(npt, n), pq(npt - 1), &
 tol = 0.01D0
 nnp = n + n + 1
 nptm = npt - 1
-nftest = max0(maxfun, 1)
+nftest = maxfun
 !
 !     Initialization. NF is the number of function calculations so far.
 !
@@ -340,16 +389,16 @@ vlag(kopt) = vlag(kopt) + ONE
 !     third derivative of F.
 !
 diff = f - fopt - vquad
-sum = ZERO
+summ = ZERO
 do k = 1, npt
     temp = ZERO
     do i = 1, n
         temp = temp + (xpt(k, i) - xnew(i))**2
     end do
     temp = sqrt(temp)
-    sum = sum + abs(temp * temp * temp * vlag(k))
+    summ = summ + abs(temp * temp * temp * vlag(k))
 end do
-sixthm = max(sixthm, abs(diff) / sum)
+sixthm = max(sixthm, abs(diff) / summ)
 !
 !     Update FOPT and XOPT if the new F is the least value of the objective
 !     function so far. Then branch if D is not a trust region step.
@@ -391,15 +440,15 @@ if (f >= fsave) then
     detrat = ONE
 end if
 do k = 1, npt
-    sum = ZERO
+    summ = ZERO
     do i = 1, n
-        sum = sum + (xpt(k, i) - xopt(i))**2
+        summ = summ + (xpt(k, i) - xopt(i))**2
     end do
     temp = abs(vlag(k))
-    if (sum > rhosq) temp = temp * (sum / rhosq)**1.5D0
+    if (summ > rhosq) temp = temp * (summ / rhosq)**1.5D0
     if (temp > detrat .and. k /= ktemp) then
         detrat = temp
-        ddknew = sum
+        ddknew = summ
         knew = k
     end if
 end do
@@ -457,7 +506,7 @@ end do
 !
 !     If a point is sufficiently far away, then set the gradient and Hessian
 !     of its Lagrange function at the centre of the trust region, and find
-!     HALF the sum of squares of compONEnts of the Hessian.
+!     HALF the summ of squares of compONEnts of the Hessian.
 !
 if (knew > 0) then
     ih = n
@@ -584,3 +633,6 @@ end if
 !---------------------------------------------!
 
 end subroutine uobyqb
+
+
+end module uobyqb_mod

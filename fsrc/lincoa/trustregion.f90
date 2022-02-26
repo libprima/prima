@@ -9,9 +9,9 @@ module trustregion_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Started: July 2020
+! Started: February 2022
 !
-! Last Modified: Friday, February 25, 2022 PM08:50:38
+! Last Modified: Saturday, February 26, 2022 PM07:39:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
