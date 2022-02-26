@@ -1,5 +1,6 @@
 function orig_warning_state = warnoff(solvers)
 orig_warning_state = warning;
+solvers = [solvers, 'pdfo', 'pdfo'];
 cellfun(@(solver) warning('off', [solver, ':Debug']), solvers);
 cellfun(@(solver) warning('off', [solver, ':ChkFunval']), solvers);
 cellfun(@(solver) warning('off', [solver, ':ReviseX0']), solvers);

@@ -25,7 +25,7 @@ function [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, options, probinfo] =
 warnings = {}; % A cell that records all the warnings, will be recorded in probinfo
 
 % Who is calling this function? Is it a correct invoker?
-invoker_list = {'pdfo', 'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla'};
+invoker_list = [all_solvers(), 'pdfo'];
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
 if (length(callstack) == 1 || ~ismember(callstack(2).name, invoker_list))
@@ -40,6 +40,7 @@ if (nargin ~= 1) && (nargin ~= 10)
     % Private/unexpected error
     error(sprintf('%s:InvalidInput', funname), '%s: UNEXPECTED ERROR: 1 or 10 inputs.', funname);
 end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % If invoker is a solver called by pdfo, then prepdfo should have been called in pdfo.
@@ -79,7 +80,7 @@ end
 % 8. infeasible_leq: a true/false vector indicating which linear equality
 %    constraints are infeasible (up to naive tests)
 % 9. trivial_lineq
-% 10. trivial_leq: a true/false vector indicating which linea equality
+% 10. trivial_leq: a true/false vector indicating which linear equality
 %     constraints are trivial (up to naive tests)
 % 11. infeasible: whether the problem is infeasible (up to naive tests)
 % 12. scaled: whether the problem is scaled
@@ -94,6 +95,9 @@ end
 % 21. user_options_fields: the fields in the user-specified options
 % 22. options: (refined) options for calling the solvers
 % 23. warnings: warnings during the preprocessing/validation
+% 24. hugenum: the large possible absolute value of the variables
+% 25. hugefun: the largest value of the objective function
+% 26. hugecon: the largest possible absolute value of the constraints
 probinfo = struct();
 
 % Save the raw data (date before validation/preprocessing) in probinfo.
@@ -110,16 +114,33 @@ probinfo = struct();
 probinfo.raw_data = struct('objective', fun, 'x0', x0, 'Aineq', Aineq, 'bineq', bineq, ...
     'Aeq', Aeq, 'beq', beq, 'lb', lb, 'ub', ub, 'nonlcon', nonlcon, 'options', options);
 
+% Decide the precision ('single', 'double', or 'quadruple') of the real calculation within the
+% Fortran solvers. This is needed ONLY by `hugenum`, `hugefun`, and `hugecon` defined below by
+% calling `gethuge`. These three numbers will be used in `pre_x0`, `pre_fun`, and `pre_con`
+% respectively in the sequel. Note the following.
+% 1. `precision` takes effect only if Fortran solvers are called (i.e., when options.fortran = true).
+% 2. `precision` is passed only to `gethuge`, which defines huge values (e.g., `hugenum`, `hugefun`).
+% 3. `precision` does not affect integer-type huge values (e.g., `maxint`).
+precision = 'double';
+% Since `options` is not validated yet, validations are needed before inquiring options.precision.
+if isa(options, 'struct') && isfield(options, 'precision') && ischarstr(options.precision) && ...
+        ismember(lower(options.precision), all_precisions())
+    precision = lower(options.precision);
+end
+probinfo.hugenum = gethuge('real', precision);
+probinfo.hugefun = gethuge('fun', precision);
+probinfo.hugecon = gethuge('con', precision);
+
 % Validate and preprocess fun
-[fun, probinfo.feasibility_problem, warnings] = pre_fun(invoker, fun, warnings);
+[fun, probinfo.feasibility_problem, warnings] = pre_fun(invoker, fun, probinfo.hugefun, warnings);
 
 % Validate and preprocess x0
-[x0, warnings] = pre_x0(invoker, x0, warnings);
+[x0, warnings] = pre_x0(invoker, x0, probinfo.hugenum, warnings);
 lenx0 = length(x0); % Within this file, for clarity, we denote length(x0) by lenx0 instead of n
 
 % Validate and preprocess the bound constraints
 % In addition, get the indices of infeasible bounds and 'fixed variables'
-% such that ub-lb < 2eps (if any) and save the information in probinfo.
+% such that ub-lb < 2*eps (if any) and save the information in probinfo.
 % If there is any infeasible bound, the problem is infeasible, and we define
 % that there is no fixed variable.
 [lb, ub, infeasible_bound, fixedx, fixedx_value, warnings] = pre_bcon(invoker, lb, ub, lenx0, warnings);
@@ -159,7 +180,7 @@ probinfo.trivial_leq = trivial_leq; % A vector of true/false
 % The constraints will be reduced if some but not all variables are fixed by the bound
 % constraints. See pre_lcon for why we do not reduce the problem when all variables
 % are fixed.
-nonlcon = pre_nonlcon(invoker, nonlcon, fixedx, fixedx_value);
+nonlcon = pre_nonlcon(invoker, nonlcon, fixedx, fixedx_value, probinfo.hugecon);
 
 % Reduce fun, x0, lb, and ub if some but not all variables are fixed by
 % the bound constraints. See pre_lcon for why we do not reduce the
@@ -167,7 +188,7 @@ nonlcon = pre_nonlcon(invoker, nonlcon, fixedx, fixedx_value);
 probinfo.raw_dim = lenx0; % Problem dimension before reduction
 if any(fixedx) && any(~fixedx)
     freex = ~fixedx; % A vector of true/false indicating whether the variable is free or not
-    fun = @(freex_value) fun(fullx(freex_value, fixedx_value, freex, fixedx)); % Objective funp after reduction
+    fun = @(freex_value) fun(fullx(freex_value, fixedx_value, freex, fixedx)); % Objective function after reduction
     x0 = x0(freex); % x0 after reduction
     lenx0 = length(x0);
     lb = lb(freex); % lb after reduction
@@ -266,7 +287,7 @@ end
 probinfo.refined_data = struct('objective', fun, 'x0', x0, 'Aineq', Aineq, 'bineq', bineq, ...
     'Aeq', Aeq, 'beq', beq, 'lb', lb, 'ub', ub, 'nonlcon', nonlcon);
 
-% Select a solver if invoker='pdfo'; record the solver in options.solver.
+% Select a solver if invoker = 'pdfo'; record the solver in options.solver.
 % Some options will be revised accordingly, including npt, rhobeg, rhoend.
 % Of course, if the user-defined options.solver is valid, we accept it.
 if strcmp(invoker, 'pdfo')
@@ -279,6 +300,7 @@ if strcmpi(options.solver, 'bobyqa') && ~probinfo.nofreex && ~probinfo.infeasibl
 % to raise a warning when such a revision occurs. After this, the
 % Fortran code will not revise x0 again. If the options.honour_x0 = true,
 % then we keep x0 unchanged and revise rhobeg if necessary.
+% N.B.: If x0 violates the bounds, then it is always revised by `project` to respect the bounds.
     [x0, options, warnings] = pre_rhobeg_x0(invoker, x0, lb, ub, probinfo.user_options_fields, options, warnings);
     probinfo.refined_data.x0 = x0;  % x0 may have been revised.
 end
@@ -325,7 +347,7 @@ function [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, options, warnings] =
 % NOTE: We treat field names case-sensitively.
 
 % Possible invokers
-invoker_list = {'pdfo', 'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla'};
+invoker_list = [all_solvers(), 'pdfo'];
 
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
@@ -365,12 +387,12 @@ end
 % Are there unknown fields?
 known_fields = {'objective', 'x0', 'Aineq', 'bineq', 'Aeq', 'beq', 'lb', 'ub', 'nonlcon', 'options', 'solver'};
 % 1. When invoker is in {uobyqa, ..., cobyla}, we will not complain that
-%    a solver is specified unless invoker~=solver. See function pre_options.
+%    a solver is specified unless invoker ~= solver. See function pre_options.
 % 2. When invoker is in {uobyqa, ..., cobyla}, if the problem turns out
 %    unsolvable for the invoker, then we will raise an error in prepdfo.
 %    We do not do it here because the problem has not been validated/preprocessed
 %    yet. Maybe some constraints are trivial and hence can be removed
-%    (e.g., bineq=inf, lb=-inf), which can change the problem type.
+%    (e.g., bineq = inf, lb = -inf), which can change the problem type.
 
 unknown_fields = setdiff(problem_fields, known_fields);
 problem = rmfield(problem, unknown_fields);  % Remove the unknown fields
@@ -391,7 +413,7 @@ Aineq = [];
 bineq = [];
 Aeq = [];
 beq = [];
-lb= [];
+lb = [];
 ub = [];
 nonlcon = [];
 options = struct();
@@ -428,8 +450,8 @@ end
 return
 
 %%%%%%%%%%%%%%%%%%%%%%%% Function for fun preprocessing %%%%%%%%%%%%%%%%%
-function [fun, feasibility_problem, warnings] = pre_fun(invoker, fun, warnings)
-if ~(isempty(fun) || isa(fun, 'char') || isa(fun, 'string') || isa(fun, 'function_handle'))
+function [fun, feasibility_problem, warnings] = pre_fun(invoker, fun, hugefun, warnings)
+if ~(isempty(fun) || ischarstr(fun) || isa(fun, 'function_handle'))
     % Public/normal error
     error(sprintf('%s:InvalidFun', invoker), ...
         '%s: FUN should be a function handle or a function name.', invoker);
@@ -442,9 +464,9 @@ if isempty(fun)
     wmsg = sprintf('%s: there is no objective function. A feasibility problem will be solved.', invoker);
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
-elseif isa(fun, 'char') || isa(fun, 'string')
+elseif ischarstr(fun)
     fun = str2func(fun);
-    % Work with function handles instread of function names to avoid using 'feval'
+    % Work with function handles instead of function names to avoid using 'feval'
 end
 if ~exist('OCTAVE_VERSION', 'builtin')
     % Check whether fun has at least 1 output.
@@ -466,44 +488,26 @@ if ~exist('OCTAVE_VERSION', 'builtin')
         '%s: FUN has no output; it should return the objective function value.', invoker);
     end
 end
-fun = @(x) evalobj(invoker, fun, x);
-return
-
-function f = evalobj(invoker, fun, x)
-f = fun(x);
-if ~isnumeric(f) || numel(f) ~= 1
-    % Public/normal error
-    error(sprintf('%s:ObjectiveNotScalar', invoker), '%s: objective function should return a scalar value.', invoker);
-end
-f = double(real(f)); % Some functions like 'asin' can return complex values even when it is not intended
-% Use extreme barrier to cope with 'hidden constraints'
-hugefun = gethuge('fun');
-if (f ~= f) || (f > hugefun)
-    f = hugefun;
-end
+fun = @(x) evalobj(invoker, fun, x, hugefun);  % See evalobj.m
 return
 
 %%%%%%%%%%%%%%%%%%%%%%%% Function for x0 preprocessing %%%%%%%%%%%%%%%%%
-function [x0, warnings] = pre_x0(invoker, x0, warnings)
+function [x0, warnings] = pre_x0(invoker, x0, hugenum, warnings)
 [isrv, lenx0]  = isrealvector(x0);
 if ~(isrv && (lenx0 > 0))
     % Public/normal error
     error(sprintf('%s:InvalidX0', invoker), '%s: X0 should be a real vector/scalar.', invoker);
 end
-% maxint is the largest integer in the mex functions; the factor 0.99 provides a buffer. We do not
-% pass any integer larger than maxint to the mexified Fortran code. Otherwise, errors include
-% SEGFAULT may occur. The value of maxint is about 10^9 on a 32-bit platform and 10^18 on a 64-bit one.
-maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSI')]));
-if (lenx0 > maxint)
+if (lenx0 > maxint())
     % Public/normal error
-    error(sprintf('%s:ProblemTooLarge', invoker), '%s: The problem is too large; at most %d variables are allowed.', invoker, maxint);
+    error(sprintf('%s:ProblemTooLarge', invoker), '%s: The problem is too large; at most %d variables are allowed.', invoker, maxint());
 end
 x0 = double(x0(:));
 abnormal_x0 = isnan(x0) | (abs(x0) >= inf);
 if any(abnormal_x0)
     x0(isnan(x0)) = 0;
-    x0(isinf(x0) & x0 > 0) = gethuge('real');
-    x0(isinf(x0) & x0 < 0) = -gethuge('real');
+    x0(isinf(x0) & x0 > 0) = hugenum;
+    x0(isinf(x0) & x0 < 0) = -hugenum;
     wid = sprintf('%s:AbnormalX0', invoker);
     wmsg = sprintf('%s: X0 contains NaN or infinite values; NaN is replaced by 0 and Inf by the largest real number.', invoker);
     warning(wid, '%s', wmsg);
@@ -518,7 +522,7 @@ function [lb, ub, infeasible_bound, fixedx, fixedx_value, warnings] = pre_bcon(i
 if ~(isrvlb && (lenlb == lenx0 || lenlb == 0))
     % Public/normal error
     error(sprintf('%s:InvalidBound', invoker), ...
-    '%s: lb should be a real vector and length(lb)=length(x0) unless lb=[].', invoker);
+    '%s: lb should be a real vector and length(lb) = length(x0) unless lb = [].', invoker);
 end
 if (lenlb == 0)
     lb = -inf(lenx0,1); % After pre_bcon, length(lb) = length(x0)
@@ -537,7 +541,7 @@ end
 if ~(isrvub && (lenub == lenx0 || lenub == 0))
     % Public/normal error
     error(sprintf('%s:InvalidBound', invoker), ...
-    '%s: ub should be a real vector and length(ub)=length(x0) unless ub=[].', invoker);
+    '%s: ub should be a real vector and length(ub) = length(x0) unless ub = [].', invoker);
 end
 if (lenub == 0)
     ub = inf(lenx0,1); % After pre_bcon, length(ub) = length(x0)
@@ -572,7 +576,7 @@ freex = ~fixedx; % A vector of true/false indicating whether the variable is fre
 if ~(isrm && isrc && (mA == lenb) && (nA == lenx0 || nA == 0))
     % Public/normal error
     error(sprintf('%s:InvalidLinIneq', invoker), ...
-    '%s: Aineq should be a real matrix, bineq should be a real column, and size(Aineq)=[length(bineq), length(X0)] unless Aineq=bineq=[].', invoker);
+    '%s: Aineq should be a real matrix, bineq should be a real column, and size(Aineq) = [length(bineq), length(X0)] unless Aineq = bineq = [].', invoker);
 end
 if any(isnan(bineq))
     bineq(isnan(bineq)) = inf; % Replace the NaN in bineq by inf
@@ -621,7 +625,7 @@ end
 if ~(isrm && isrc && (mA == lenb) && (nA == lenx0 || nA == 0))
     % Public/normal error
     error(sprintf('%s:InvalidLinEq', invoker), ...
-    '%s: Aeq should be a real matrix, beq should be a real column, and size(Aeq)=[length(beq), length(X0)] unless Aeq=beq=[].', invoker);
+    '%s: Aeq should be a real matrix, beq should be a real column, and size(Aeq) = [length(beq), length(X0)] unless Aeq = beq = [].', invoker);
 end
 % Are there equality constraints whose both sides contain NaN?
 % This should be detected before reducing the constraints;
@@ -698,19 +702,15 @@ if isempty(Aineq)
     bineq = [];
 end
 
-% maxint is the largest integer in the mex functions; the factor 0.99 provides a buffer. We do not
-% pass any integer larger than maxint to the mexified Fortran code. Otherwise, errors include
-% SEGFAULT may occur. The value of maxint is about 10^9 on a 32-bit platform and 10^18 on a 64-bit one.
-maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSI')]));
-if (max([length(beq), length(bineq)]) > maxint)
+if (max([length(beq), length(bineq)]) > maxint())
     % Public/normal error
-    error(sprintf('%s:ProblemTooLarge', invoker), '%s: The problem is too large; at most %d constraints are allowed.', invoker, maxint);
+    error(sprintf('%s:ProblemTooLarge', invoker), '%s: The problem is too large; at most %d constraints are allowed.', invoker, maxint());
 end
 return
 
 %%%%%%%%%%%%%%%%% Function for nonlinear constraint preprocessing %%%%%%%%%%
-function nonlcon = pre_nonlcon(invoker, nonlcon, fixedx, fixedx_value)
-if ~(isempty(nonlcon) || isa(nonlcon, 'function_handle') || isa(nonlcon, 'char') || isa(nonlcon, 'string'))
+function nonlcon = pre_nonlcon(invoker, nonlcon, fixedx, fixedx_value, hugecon)
+if ~(isempty(nonlcon) || isa(nonlcon, 'function_handle') || ischarstr(nonlcon))
     % Public/normal error
     error(sprintf('%s:InvalidCon', invoker), ...
     '%s: nonlcon should be a function handle or a function name.', invoker);
@@ -718,7 +718,7 @@ end
 if isempty(nonlcon)
     nonlcon = []; % We use [] to signify that nonlcon is not specified; its size is 0x0
 else
-    if isa(nonlcon, 'char') || isa(nonlcon, 'string')
+    if ischarstr(nonlcon)
         nonlcon = str2func(nonlcon);
         % work with function handles instead of function names to avoid using 'feval'
     end
@@ -726,7 +726,7 @@ else
         % Check whether nonlcon has at least 2 outputs.
         % nargout(fun) = #outputs in the definition of fun.
         % If fun includes varargout in definition, nargout(fun) = -#outputs.
-        % Octave does not support nargout for built-in function (as of 2019-08-16)!
+        % Octave does not support nargout for built-in functions (as of 2019-08-16)!
         try
         % If nonlcon is not a properly defined function, then nargout
         % can encounter an error. Wrap the error as a public error.
@@ -739,7 +739,7 @@ else
         if (nout == 0) || (nout == 1)
             % Public/normal error
             error(sprintf('%s:InvalidCon', invoker), ...
-            '%s: nonlcon has too few outputs; it should return [cineq, ceq], the constraints being cineq(x)<=0, ceq(x)=0.', invoker);
+            '%s: nonlcon has too few outputs; it should return [cineq, ceq], the constraints being cineq(x) <= 0, ceq(x) = 0.', invoker);
         end
     end
     if any(fixedx) && any(~fixedx)
@@ -749,30 +749,8 @@ else
         freex = ~fixedx; % A vector of true/false indicating whether the variable is free or not
         nonlcon = @(freex_value) nonlcon(fullx(freex_value, fixedx_value, freex, fixedx));
     end
-    nonlcon = @(x) evalcon(invoker, nonlcon, x);
+    nonlcon = @(x) evalcon(invoker, nonlcon, x, hugecon);  % See evalcon.m
 end
-return
-
-function [cineq, ceq] = evalcon(invoker, nonlcon, x)
-[cineq, ceq] = nonlcon(x);
-if ~(isempty(cineq) || isnumeric(cineq)) || ~(isempty(ceq) || isnumeric(ceq))
-    % Public/normal error
-    error(sprintf('%s:ConstrNotNumeric', invoker), '%s: constraint function should return two numeric vectors.', invoker);
-end
-cineq = double(real(cineq(:))); % Some functions like 'asin' can return complex values even when it is not intended
-ceq = double(real(ceq(:)));
-% Use extreme barrier to cope with 'hidden constraints'
-hugecon = gethuge('con');
-cineq(cineq ~= cineq) = hugecon;
-cineq(cineq > hugecon) = hugecon;
-ceq(ceq ~= ceq) = hugecon;
-ceq(ceq > hugecon) = hugecon;
-ceq(ceq < -hugecon) = -hugecon;
-
-% This part is NOT extreme barrier. We replace extremely negative values of
-% cineq (which leads to no constraint violation) by -hugecon. Otherwise,
-% NaN or Inf may occur in the interpolation models.
-cineq(cineq < -hugecon) = -hugecon;
 return
 
 %%%%%%%%%%%%%%%%% Function fullx used when reducing the problem %%%%%%%%
@@ -788,7 +766,7 @@ function [options, user_options_fields, warnings] = pre_options(invoker, options
 % NOTE: We treat field names case-sensitively.
 
 % Possible solvers
-solver_list = {'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla'};
+solver_list = all_solvers();
 % We may add other solvers in the future!
 % If a new solver is included, we should do the following.
 % 0. Include it into the invoker_list (in this and other functions).
@@ -798,7 +776,7 @@ solver_list = {'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla'};
 %    depends on the invoker/solver. See known_fields there).
 
 % Possible invokers
-invoker_list = ['pdfo', solver_list];
+invoker_list = [solver_list, 'pdfo'];
 
 callstack = dbstack;
 funname = callstack(1).name;
@@ -819,25 +797,19 @@ ftarget = -inf;
 ctol = eps; % Tolerance for constraint violation; a point with a constraint violation at most ctol is considered feasible
 cweight = 1e8;  % The weight of constraint violation in the selection of the returned x
 classical = false; % Call the classical Powell code? Classical mode recommended only for research purpose
+precision = 'double'; % The precision of the real calculation within the solver
 fortran = true; % Call the Fortran code?
 scale = false; % Scale the problem according to bounds? Scale only if the bounds reflect well the scale of the problem
 scale = (scale && max(ub-lb)<inf); % ! NEVER remove this ! Scale only if all variables are with finite lower and upper bounds
 honour_x0 = false; % Respect the user-defined x0? Needed by BOBYQA
 iprint = 0;
 quiet = true;
-debugflag = false; % Do not use 'debug' as the name, which is a MATLAB function
+debug_flag = false; % Do not use 'debug' as the name, which is a MATLAB function
 chkfunval = false;
 output_xhist = false; % Output the history of x?
 output_nlchist = false; % Output the history of the nonlinear constraints?
 min_maxfilt = 200; % The smallest value of maxfilt; if maxfilt is too small, the returned x may not be the best one visited
 maxfilt = 10*min_maxfilt; % Length of the filter used for selecting the returned x in constrained problems
-
-% maxint is the largest integer in the mex functions; the factor 0.99 provides a buffer. We do not
-% pass any integer larger than maxint to the mexified Fortran code. Otherwise, errors include
-% SEGFAULT may occur. The value of maxint is about 10^9 on a 32-bit platform and 10^18 on a 64-bit one.
-% In the sequel, we ensure that options.maxfun <= maxint, and all the other integers <= options.maxfun,
-% including options.npt, options.maxhist and options.maxfilt.
-maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSI')]));
 
 if ~(isa(options, 'struct') || isempty(options))
     % Public/normal error
@@ -856,20 +828,20 @@ user_options_fields = options_fields;
 % We need to know what is the solver in order to decide which fields
 % are 'known' (e.g., expected), and also to set npt, rhobeg, rhoend.
 % We do the following:
-% 1. If invoker='pdfo':
-% 1.1 If no solver is specified or solver='pdfo', we do not complain
-% and set options.solver=solver='', i.e., an empty char array;
+% 1. If invoker = 'pdfo':
+% 1.1 If no solver is specified or solver = 'pdfo', we do not complain
+% and set options.solver = solver = '', i.e., an empty char array;
 % 1.2 Else if solver is not in solver_list, we warn about 'unknown solver'
-% and set options.solver=solver='', i.e., an empty char array;
-% 1.3 Else, we set solver=options.solver.
+% and set options.solver = solver = '', i.e., an empty char array;
+% 1.3 Else, we set solver = options.solver.
 % 2. If invoker is in solver_list:
-% 2.1 If options.solver exists but options.solver~=invoker, we warn
-% about 'invalid solver' and set options.solver=solver=invoker;
-% 2.2 Else, we do not complain and set options.solver=solver=invoker.
+% 2.1 If options.solver exists but options.solver ~= invoker, we warn
+% about 'invalid solver' and set options.solver = solver = invoker;
+% 2.2 Else, we do not complain and set options.solver = solver = invoker.
 % In this way, options.solver and solver either end up with a member of
-% solver_list or ''. The second case is possible only if invoker='pdfo',
+% solver_list or ''. The second case is possible only if invoker = 'pdfo',
 % and solver will be selected later.
-if isfield(options, 'solver') && ~isa(options.solver, 'char') && ~isa(options.solver, 'string')
+if isfield(options, 'solver') && ~ischarstr(options.solver)
     options.solver = 'UNKNOWN_SOLVER';
     % We have to change options.solver to a char/string so that we can use strcmpi
     % We do not need to worry about the case where solver is empty, because
@@ -886,7 +858,7 @@ if strcmp(invoker, 'pdfo')
         if any(strcmpi(options.solver, solver_list))
             solver = lower(options.solver);
         elseif ~strcmpi(options.solver, 'pdfo')
-        % We should not complain about 'unknown solver' if invoker=options.solver='pdfo'
+        % We should not complain about 'unknown solver' if invoker = options.solver = 'pdfo'
             wid = sprintf('%s:UnknownSolver', invoker);
             wmsg = sprintf('%s: unknown solver specified; %s will select one automatically.', invoker, invoker);
             warning(wid, '%s', wmsg);
@@ -904,15 +876,15 @@ else % invoker is in {'uobyqa', ..., 'cobyla'}
     end
     solver = invoker;
 end
-options.solver = solver; % Record solver in options.solver; will be used in postpdfo
-% When the invoker is pdfo, options.solver=solver='' unless the user defines
+options.solver = char(solver); % Record solver in options.solver; will be used in postpdfo
+% When the invoker is pdfo, options.solver = solver = '' unless the user defines
 % an options.solver in solver_list. Here, '' is an empty char array to signify
 % that the solver is yet to decide.
 
 % Check unknown fields according to solver
 % solver is '' if it has not been decided yet; in that case, we suppose (for
 % simplicity) that all possible fields are known.
-known_fields = {'iprint', 'maxfun', 'rhobeg', 'rhoend', 'ftarget', 'classical', 'quiet', 'debug', 'chkfunval', 'solver', 'maxhist', 'output_xhist', 'fortran'};
+known_fields = {'iprint', 'maxfun', 'rhobeg', 'rhoend', 'ftarget', 'classical', 'quiet', 'debug', 'chkfunval', 'solver', 'maxhist', 'output_xhist', 'fortran', 'precision'};
 if ~isfield(options, 'classical') || (islogicalscalar(options.classical) && ~options.classical)
     known_fields = [known_fields, 'eta1', 'eta2', 'gamma1', 'gamma2'];
 end
@@ -948,7 +920,7 @@ if ~isempty(unknown_fields)
 end
 
 % Set default npt according to solver
-% If solver='' (empty char array), then invoker must be pdfo, and a solver
+% If solver = '' (empty char array), then invoker must be pdfo, and a solver
 % will be selected later; when the solver is chosen, a valid npt will be defined.
 % Note we have to take maxfun into consideration when selecting the solver,
 % because npt < maxfun-1 is needed! See function select_solver for details.
@@ -1007,13 +979,13 @@ end
 % Validate options.npt
 % There are the following possibilities.
 % 1. The user specifies options.npt
-% 1.1. The solver is yet to decide (solver=''): we keep options.npt if it is
+% 1.1. The solver is yet to decide (solver = ''): we keep options.npt if it is
 % a positive integer; otherwise, raise a warning and set options.npt to NaN;
 % 1.2. The user has chosen a valid solver: we keep options.npt if it is
 % compatible with the solver; otherwise, raise a warning and set options.npt
 % to the default value according to the solver.
 % 2. The user does not specify options.npt
-% 1.1. The solver is yet to decide (solver=''): we set options.npt to NaN.
+% 1.1. The solver is yet to decide (solver = ''): we set options.npt to NaN.
 % 1.2. The user has chosen a valid solver: we set options.npt to the default
 % value accoring to the solver.
 % After this process, options.npt is either a positive integer (compatible
@@ -1028,7 +1000,7 @@ if isfield(options, 'npt')
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     elseif any(strcmpi(solver, {'newuoa', 'bobyqa', 'lincoa'})) && (~isintegerscalar(options.npt) || isnan(options.npt) || options.npt < lenx0+2 || options.npt > (lenx0+1)*(lenx0+2)/2)
-        % newuoa, bobyqa and lincoa requires n+2<=npt<=(n+1)*)(n+2)/2;
+        % newuoa, bobyqa and lincoa requires n+2 <= npt <= (n+1)*)(n+2)/2;
         % uobyqa and cobyla do not use npt.
         wid = sprintf('%s:InvalidNpt', invoker);
         wmsg = sprintf('%s: invalid npt; %s requires it to be an integer and n+2 <= npt <= (n+1)*(n+2)/2; it is set to 2n+1.', invoker, solver);
@@ -1040,7 +1012,7 @@ if isfield(options, 'npt')
 end
 if ~validated  % options.npt has not got a valid value yet
     options.npt = npt;
-    % When solver='' (empty char array), the default npt is NaN.
+    % When solver = '' (empty char array), the default npt is NaN.
     % For uobyqa and cobyla, we also adopt the 'default npt' defined above,
     % although it will NOT be used by the solver
 end
@@ -1063,24 +1035,24 @@ if isfield(options, 'maxfun')
         wmsg = sprintf('%s: invalid maxfun; it should be a positive integer; it is set to %d.', invoker, maxfun);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
-    elseif options.maxfun > maxint
+    elseif options.maxfun > maxint()
         % maxfun would suffer from overflow in the Fortran code
         wid = sprintf('%s:MaxfunTooLarge', funname);
-        wmsg = sprintf('%s: maxfun exceeds the upper limit of integers in Fortran MEX; it is set to %d.', funname, maxint);
+        wmsg = sprintf('%s: maxfun exceeds the upper limit of integers in Fortran MEX; it is set to %d.', funname, maxint());
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
-        options.maxfun = maxint;
+        options.maxfun = maxint();
         validated = true;  % We have set options.maxfun to a valid value in the last line.
     elseif isempty(solver) && options.maxfun <= lenx0+1  % Here, options.maxfun cannot be NaN. No worry about the comparison.
         options.maxfun = lenx0+2; % Here we take lenx0+2 (the smallest possible value for npt)
-        validated = true; %!!! % Set validated=true so that options.maxfun will not be set to the default value later
+        validated = true; %!!! % Set validated = true so that options.maxfun will not be set to the default value later
         wid = sprintf('%s:InvalidMaxfun', invoker);
         wmsg = sprintf('%s: invalid maxfun; it should be a positive integer at least n+2; it is set to n+2.', invoker);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     elseif ~isempty(solver) && options.maxfun <= options.npt  % Here, options.maxfun or options.npt cannot be NaN. No worry about the comparison.
         options.maxfun = options.npt+1; % Here we take npt+1 instead of the default maxfun
-        validated = true; %!!! % Set validated=true so that options.maxfun will not be set to the default value later
+        validated = true; %!!! % Set validated = true so that options.maxfun will not be set to the default value later
         wid =  sprintf('%s:InvalidMaxfun', invoker);
         switch lower(solver) % The warning message depends on solver
         case {'newuoa', 'lincoa', 'bobyqa'}
@@ -1109,7 +1081,7 @@ validated = false;
 if isfield(options, 'rhobeg')
     if ~isrealscalar(options.rhobeg) || options.rhobeg <= 0 || isnan(options.rhobeg) || options.rhobeg == inf
         wid = sprintf('%s:InvalidRhobeg', invoker);
-        wmsg = sprintf('%s: invalid rhobeg; it should be a positive number; it is set to max(%f, rhoend).', invoker, rhobeg);
+        wmsg = sprintf('%s: invalid rhobeg; it should be a positive number; it is set to max(%g, rhoend).', invoker, rhobeg);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     elseif strcmpi(solver, 'bobyqa')  % Validate options.rhobeg for bobyqa
@@ -1126,13 +1098,13 @@ if isfield(options, 'rhobeg')
             warnings = [warnings, wmsg];
             options.rhobeg = min(ub-lb)/4; % Here we do not take the default rhobeg
         end
-        validated = true; %!!! % Set validated=true so that options.rhobeg will not be set to the default value later
+        validated = true; %!!! % Set validated = true so that options.rhobeg will not be set to the default value later
     else
         validated = true;
     end
 end
 if ~validated % options.rhobeg has not got a valid value yet
-    if isfield(options, 'rhoend') && isrealscalar(options.rhoend) && options.rhoend >=0 && options.rhoend < inf
+    if isfield(options, 'rhoend') && isrealscalar(options.rhoend) && options.rhoend >= 0 && options.rhoend < inf
         options.rhobeg = max(rhobeg, 10*options.rhoend);
     else
         options.rhobeg = rhobeg;
@@ -1145,7 +1117,7 @@ validated = false;
 if isfield(options, 'rhoend')
     if ~isrealscalar(options.rhoend) || options.rhoend > options.rhobeg || isnan(options.rhoend)
         wid = sprintf('%s:InvalidRhoend', invoker);
-        wmsg = sprintf('%s: invalid rhoend; we should have rhobeg >= rhoend > 0; it is set to min(0.1*rhobeg, %f).', invoker, rhoend);
+        wmsg = sprintf('%s: invalid rhoend; we should have rhobeg >= rhoend > 0; it is set to min(0.1*rhobeg, %g).', invoker, rhoend);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     else
@@ -1162,7 +1134,7 @@ validated = false;
 if isfield(options, 'ftarget')
     if ~isrealscalar(options.ftarget) || isnan(options.ftarget)
         wid = sprintf('%s:InvalidFtarget', invoker);
-        wmsg = sprintf('%s: invalid ftarget; it should be a real number; it is set to %f.', invoker, ftarget);
+        wmsg = sprintf('%s: invalid ftarget; it should be a real number; it is set to %g.', invoker, ftarget);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     else
@@ -1179,7 +1151,7 @@ validated = false;
 if isfield(options, 'ctol')
     if ~isrealscalar(options.ctol) || options.ctol < 0 || isnan(options.ctol)
         wid = sprintf('%s:InvalidCtol', invoker);
-        wmsg = sprintf('%s: invalid ctol; it should be a nonnegative number; it is set to %f.', invoker, ctol);
+        wmsg = sprintf('%s: invalid ctol; it should be a nonnegative number; it is set to %g.', invoker, ctol);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     else
@@ -1196,7 +1168,7 @@ validated = false;
 if isfield(options, 'cweight')
     if ~isrealscalar(options.cweight) || options.cweight < 0 || isnan(options.cweight)
         wid = sprintf('%s:InvalidCweight', invoker);
-        wmsg = sprintf('%s: invalid cweight; it should be a nonnegative number; it is set to %f.', invoker, cweight);
+        wmsg = sprintf('%s: invalid cweight; it should be a nonnegative number; it is set to %g.', invoker, cweight);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     else
@@ -1216,6 +1188,11 @@ if isfield(options, 'classical')
         wmsg = sprintf('%s: invalid classical flag; it should be true(1) or false(0); it is set to %s.', invoker, mat2str(classical));
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
+    elseif options.classical && ~ismember('classical', all_variants())
+        wid = sprintf('%s:ClassicalNotAvailable', invoker);
+        wmsg = sprintf('%s: classical = true but the classical version is unavailable; classical is set to false.', invoker);
+        warning(wid, '%s', wmsg);
+        warnings = [warnings, wmsg];
     else
         validated = true;
     end
@@ -1226,10 +1203,27 @@ end
 options.classical = logical(options.classical);
 if options.classical
     wid = sprintf('%s:Classical', invoker);
-    wmsg = sprintf('%s: in classical mode, which is recommended only for research purpose; set options.classical=false to disable classical mode.', invoker);
+    wmsg = sprintf('%s: in classical mode, which is recommended only for research purpose; set options.classical to false to disable classical mode.', invoker);
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
 end
+
+% Validate options.precision
+validated = false;
+if isfield(options, 'precision')
+    if ~ischarstr(options.precision) || ~ismember(lower(options.precision), all_precisions())
+        wid = sprintf('%s:InvalidPrecision', invoker);
+        wmsg = sprintf('%s: invalid or unavailable precision; it is set to ''%s''.', invoker, precision);
+        warning(wid, '%s', wmsg);
+        warnings = [warnings, wmsg];
+    else
+        validated = true;
+    end
+end
+if ~validated  % options.precision has not got a validated value yet
+    options.precision = precision;
+end
+options.precision = lower(char(options.precision));
 
 % Validate options.fortran
 validated = false;
@@ -1246,6 +1240,17 @@ if isfield(options, 'fortran')
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
         validated = true;
+    elseif ~options.fortran && ~strcmp(options.precision, 'double')
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % In this version, we support precision ~= 'double' only when calling the Fortran solvers!
+        wid = sprintf('%s:FortranContradictPrecision', invoker);
+        wmsg = sprintf('%s: fortran = false but precision = %s; fortran is reset to true.', ...
+            invoker, options.precision);
+        options.fortran = false;
+        warning(wid, '%s', wmsg);
+        warnings = [warnings, wmsg];
+        validated = true;
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     else
         validated = true;
     end
@@ -1294,7 +1299,7 @@ options.quiet = logical(options.quiet);
 % Validate options.iprint.
 validated = false;
 if isfield(options, 'iprint')
-    if ~isintegerscalar(options.iprint) || (options.iprint ~= 0 && abs(options.iprint) ~= 1 && abs(options.iprint) ~=2 && abs(options.iprint) ~= 3)
+    if ~isintegerscalar(options.iprint) || abs(options.iprint) > 3
         wid = sprintf('%s:InvalidIprint', invoker);
         wmsg = sprintf('%s: invalid iprint; it should be 0, 1, -1, 2, -2, 3, or -3; it is set to %d.', invoker, options.iprint);
         warning(wid, '%s', wmsg);
@@ -1345,7 +1350,7 @@ validated = false;
 if isfield(options, 'debug')
     if ~islogicalscalar(options.debug)
         wid = sprintf('%s:InvalidDebugflag', invoker);
-        wmsg = sprintf('%s: invalid debug flag; it should be true(1) or false(0); it is set to %s.', invoker, mat2str(debugflag));
+        wmsg = sprintf('%s: invalid debugging flag; it should be true(1) or false(0); it is set to %s.', invoker, mat2str(debug_flag));
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     else
@@ -1353,18 +1358,18 @@ if isfield(options, 'debug')
     end
 end
 if ~validated % options.debug has not got a valid value yet
-    options.debug = debugflag;
+    options.debug = debug_flag;
 end
 options.debug = logical(options.debug);
 if options.debug
     wid = sprintf('%s:Debug', invoker);
-    wmsg = sprintf('%s: in debug mode; set options.debug=false to disable debug.', invoker);
+    wmsg = sprintf('%s: in debug mode; set options.debug to false to disable debug.', invoker);
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
 %    if options.quiet
 %        options.quiet = false;
 %        wid = sprintf('%s:Debug', invoker);
-%        wmsg = sprintf('%s: options.quiet is set to false because options.debug=true.', invoker);
+%        wmsg = sprintf('%s: options.quiet is set to false because options.debug = true.', invoker);
 %        warning(wid, '%s', wmsg);
 %        warnings = [warnings, wmsg];
 %    end
@@ -1380,7 +1385,7 @@ if isfield(options, 'chkfunval')
         warnings = [warnings, wmsg];
     elseif logical(options.chkfunval) && ~options.debug
         wid = sprintf('%s:InvalidChkfunval', invoker);
-        wmsg = sprintf('%s: chkfunval=true but debug=false; chkfunval is set to false; set both flags to true to check function values.', invoker);
+        wmsg = sprintf('%s: chkfunval = true but debug = false; chkfunval is set to false; set both flags to true to check function values.', invoker);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     else
@@ -1393,9 +1398,9 @@ end
 if options.chkfunval
     wid = sprintf('%s:Chkfunval', invoker);
     if strcmp(solver, 'cobyla')
-        wmsg = sprintf('%s: checking whether fx=fun(x) and constr=con(x) at exit, which costs an extra function/constraint evaluation; set options.chkfunval=false to disable the check.', invoker);
+        wmsg = sprintf('%s: checking whether fx = fun(x) and constr = con(x) at exit, which costs an extra function/constraint evaluation; set options.chkfunval to false to disable the check.', invoker);
     else
-        wmsg = sprintf('%s: checking whether fx=fun(x) at exit, which costs an extra function evaluation; set options.chkfunval=false to disable the check.', invoker);
+        wmsg = sprintf('%s: checking whether fx = fun(x) at exit, which costs an extra function evaluation; set options.chkfunval to false to disable the check.', invoker);
     end
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
@@ -1485,7 +1490,7 @@ if isfield(options, 'eta1')
         if isfield(options, 'eta2') && isrealscalar(options.eta2) && options.eta2 > 0 && options.eta2 <= 1
         % The user provides a correct eta2; we define eta1 as follows.
             options.eta1 = max(eps, options.eta2/7);
-            wmsg = sprintf('%s: invalid eta1; it should be in the interval [0, 1) and not more than eta2; it is set to %f.', invoker, options.eta1);
+            wmsg = sprintf('%s: invalid eta1; it should be in the interval [0, 1) and not more than eta2; it is set to %g.', invoker, options.eta1);
             validated = true;
         else
         % The user does not provide a correct eta2; we take the default eta1 hard coded in Powell's code.
@@ -1512,7 +1517,7 @@ if isfield(options, 'eta2')
         % The user provides a correct eta1; we define eta2 as follows.
             options.eta2 = (options.eta1 + 2)/3;
             validated = true;
-            wmsg = sprintf('%s: invalid eta2; it should be in the interval [0, 1] and not less than eta1; it is set to %f.', invoker, options.eta2);
+            wmsg = sprintf('%s: invalid eta2; it should be in the interval [0, 1] and not less than eta1; it is set to %g.', invoker, options.eta2);
         else
         % The user does not provide a correct eta1; we take the default eta2 hard coded in Powell's code.
             wmsg = sprintf('%s: invalid eta2; it should be in the interval [0, 1] and not less than eta1; it will be set to the default value.', invoker);
@@ -1576,7 +1581,7 @@ function [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, scaling_factor, shif
 % Otherwise, it may be a bad idea.
 
 callstack = dbstack;
-funname =callstack(1).name; % Name of the current function
+funname = callstack(1).name; % Name of the current function
 
 substantially_scaled_threshold = 2;
 % We consider the problem substantially scaled_threshold if
@@ -1631,7 +1636,7 @@ end
 % well in several real problems.
 %if any(scaling_factor ~= 1)
 %    wid = sprintf('%s:ProblemScaled', invoker);
-%    wmsg = sprintf('%s: problem scaled according to bound constraints; do this only if the bounds reflect the scaling of variables; if not, set options.scale=false to disable scaling.', invoker);
+%    wmsg = sprintf('%s: problem scaled according to bound constraints; do this only if the bounds reflect the scaling of variables; if not, set options.scale to false to disable scaling.', invoker);
 %    warning(wid, '%s', wmsg);
 %    warnings = [warnings, wmsg];
 %end
@@ -1653,11 +1658,11 @@ function [options, warnings] = select_solver(invoker, options, probinfo, warning
 
 invoker_list = {'pdfo'};
 % Only pdfo needs select_solver. We may have other invokers in the future!
-solver_list = {'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla'};
+solver_list = all_solvers();
 % We may add other solvers in the future!
 % Note that pdfo is not a possible solver here!
 callstack = dbstack;
-funname =callstack(1).name; % Name of the current function
+funname = callstack(1).name; % Name of the current function
 
 if ~ismember(invoker, invoker_list)
     % Private/unexpected error
@@ -1668,7 +1673,7 @@ end
 % or '' (i.e., an empty char array), the second signifying the solver
 % is yet to decide.
 % 1. If options.solver is in solver_list, we check whether it can solve the
-% problem. If yes, we set solver=options.solver; otherwise, we warn about
+% problem. If yes, we set solver = options.solver; otherwise, we warn about
 % 'invalid solver' and select a solver.
 % 2. If options.solver is '', we do not complain but select a solver. We
 % should not complain because either the user does not specify a solver, which
@@ -1693,14 +1698,14 @@ if ~solver_correct
     case 'unconstrained'
         if (n >= 2 && n <= 8 && options.maxfun >= (n+1)*(n+2)/2 + 1)
             solver = 'uobyqa';
-        elseif (options.maxfun <= n+2) % After prepdfo, options.maxfun>=n+2 is ensured. Thus options.maxfun<=n+2 indeed means options.maxfun=n+2
+        elseif (options.maxfun <= n+2) % After prepdfo, options.maxfun >= n+2 is ensured. Thus options.maxfun <= n+2 indeed means options.maxfun = n+2
             solver = 'cobyla';
         else
             solver = 'newuoa';  % options.npt will be set later
             % Interestingly, we note in our test that lincoa outperformed
             % newuoa on unconstrained CUTEst problems when the dimension
-            % was not large (i.e., <=50) or the precision requirement
-            % was not high (i.e., >=1e-5). Therefore, it is worthwhile to
+            % was not large (i.e., <= 50) or the precision requirement
+            % was not high (i.e., >= 1e-5). Therefore, it is worthwhile to
             % try lincoa when an unconstrained problem is given.
             % Nevertheless, for the moment, we set the default solver
             % for unconstrained problems to be newuoa.
@@ -1744,7 +1749,7 @@ if strcmp(solver, 'bobyqa') && options.rhobeg > min(probinfo.refined_data.ub-pro
     options.rhoend = max(eps, min(0.1*options.rhobeg, options.rhoend));
     if ismember('rhobeg', probinfo.user_options_fields) || ismember('rhoend', probinfo.user_options_fields)
         wid = sprintf('%s:InvalidRhobeg', invoker);
-        wmsg = sprintf('%s: rhobeg is set to %f and rhoend to %f acccording to the selected solver bobyqa, which requires rhoend <= rhobeg <= min(ub-lb)/2.', invoker, options.rhobeg, options.rhoend);
+        wmsg = sprintf('%s: rhobeg is set to %g and rhoend to %g acccording to the selected solver bobyqa, which requires rhoend <= rhobeg <= min(ub-lb)/2.', invoker, options.rhobeg, options.rhoend);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     end
@@ -1786,41 +1791,38 @@ function match = prob_solv_match(ptype, solver)
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
 
-solver_list = {'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla', 'pdfo'};
+solver_list = [all_solvers(), 'pdfo'];
 % Note: pdfo is also a possible solver when prob_solv_match is called in
 % prepdfo to check whether the invoker can handle the problem.
+
 if ~ismember(solver, solver_list)
     % Private/unexpected error
     error(sprintf('%s:InvalidSolver', funname), ...
     '%s: UNEXPECTED ERROR: unknown solver ''%s'' received.', funname, solver);
 end
 
-match = true;
 switch ptype
 case 'unconstrained'
     match = true;
     % Essentially do nothing. DO NOT remove this case. Otherwise, the
     % case would be included in 'otherwise', which is not correct.
 case 'bound-constrained'
-    if any(strcmp(solver, {'uobyqa', 'newuoa'}))
-        match = false;
-    end
+    match = ismember(solver, all_solvers('bound_constrained_solvers'));
 case 'linearly-constrained'
-    if any(strcmp(solver, {'uobyqa', 'newuoa', 'bobyqa'}))
-        match = false;
-    end
+    match = ismember(solver, all_solvers('linearly_constrained_solvers'));
 case 'nonlinearly-constrained'
-    if any(strcmp(solver, {'uobyqa', 'newuoa', 'bobyqa', 'lincoa'}))
-        match = false;
-    end
+    match = ismember(solver, all_solvers('nonlinearly_constrained_solvers'));
 otherwise
     % Private/unexpected error
     error(sprintf('%s:InvalidProbType', funname), '%s: UNEXPECTED ERROR: unknown problem type ''%s'' received.', funname, ptype);
 end
+
+match = match || strcmp(solver, 'pdfo');  % pdfo matches all types of problems.
+
 return
 
 %%%%%%%%%%%%%%% Function for calculating constraint violation %%%%%%%%%%
-function [constrviolation, nlcineq, nlceq]= constrv(x, Aineq, bineq, Aeq, beq, lb, ub, nonlcon)
+function [constrviolation, nlcineq, nlceq] = constrv(x, Aineq, bineq, Aeq, beq, lb, ub, nonlcon)
 % CONSTRV calculates the absolute constraint violation at x.
 rineq = [];
 req = [];
@@ -1870,7 +1872,7 @@ if isfield(options, 'honour_x0') && options.honour_x0  % In this case, we respec
         options.rhoend = max(eps, min(0.1*options.rhobeg, options.rhoend));  % We do not revise rhoend unless rhobeg is revised
         if ismember('rhobeg', user_options_fields) || ismember('rhoend', user_options_fields)
             wid = sprintf('%s:ReviseRhobeg', invoker);
-            wmsg = sprintf('%s: rhobeg is revised to %f and rhoend to %f so that the distance between x0 and the inactive bounds is at least rhobeg.', invoker, options.rhobeg, options.rhoend);
+            wmsg = sprintf('%s: rhobeg is revised to %g and rhoend to %g so that the distance between x0 and the inactive bounds is at least rhobeg.', invoker, options.rhobeg, options.rhoend);
             warning(wid, '%s', wmsg);
             warnings = [warnings, wmsg];
         end
@@ -1887,7 +1889,7 @@ else
     x0(ubx) = ub(ubx);
     if norm(x0_old-x0) > eps*max(1, norm(x0_old))
         wid = sprintf('%s:ReviseX0', invoker);
-        wmsg = sprintf('%s: x0 is revised so that the distance between x0 and the inactive bounds is at least rhobeg; set options.honour_x0=true if you prefer to keep x0.', invoker);
+        wmsg = sprintf('%s: x0 is revised so that the distance between x0 and the inactive bounds is at least rhobeg; set options.honour_x0 to true if you prefer to keep x0.', invoker);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     end

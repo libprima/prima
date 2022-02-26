@@ -130,7 +130,7 @@ function [x, fx, exitflag, output] = newuoa(varargin)
 %
 %   solves
 %       min cos(x)
-%   starting from x0=-1 with at most 50 function evaluations.
+%   starting from x0 = -1 with at most 50 function evaluations.
 %
 %   4. Problem defined by a structure
 %
@@ -152,7 +152,7 @@ function [x, fx, exitflag, output] = newuoa(varargin)
 %
 %   solves
 %       min cos(x)
-%   starting from x0=-1 with at most 50 function evaluations.
+%   starting from x0 = -1 with at most 50 function evaluations.
 %
 %   See also PDFO, UOBYQA, BOBYQA, LINCOA, COBYLA.
 %
@@ -230,7 +230,7 @@ else
 end
 
 % Preprocess the input
-% Even if invoker='pdfo', we still need to call prepdfo, which will assign
+% Even if invoker = 'pdfo', we still need to call prepdfo, which will assign
 % values to fun, x0, ..., options.
 try % prepdfo is a private function that may generate public errors; error-handling needed
     [fun, x0, ~, ~, ~, ~, ~, ~, ~, options, probinfo] = prepdfo(args{:});
@@ -255,11 +255,19 @@ ftarget = options.ftarget;
 maxhist = options.maxhist;
 output_xhist = options.output_xhist;
 iprint = options.iprint;
+precision = options.precision;
+debug_flag = options.debug;
+if options.classical
+    variant = 'classical';
+else
+    variant = 'modern';
+end
+solver = options.solver;
 
 if ~strcmp(invoker, 'pdfo') && probinfo.feasibility_problem
     % An "unconstrained feasibility problem" is rediculous, yet nothing wrong mathematically.
     output.x = x0;
-    % We could set fx=[], funcCount=0, and fhist=[] since no function evaluation
+    % We could set fx = [], funcCount = 0, and fhist = [] since no function evaluation
     % occured. But then we will have to modify the validation of fx, funcCount,
     % and fhist in postpdfo. To avoid such a modification, we set fx, funcCount,
     % and fhist as below and then revise them in postpdfo.
@@ -271,19 +279,18 @@ if ~strcmp(invoker, 'pdfo') && probinfo.feasibility_problem
     output.chist = []; % Unconstrained problem; set output.chist to []
 else
     % Call the Fortran code
-    if options.classical
-        fsolver = @fnewuoa_classical;
-    else
-        fsolver = @fnewuoa;
-    end
+    mfiledir = fileparts(mfilename('fullpath'));  % The directory where this .m file resides.
+    mexdir = fullfile(mfiledir, 'private');
+    fsolver = str2func(get_mexname(solver, precision, debug_flag, variant, mexdir));
     % The mexified Fortran Function is a private function generating only private errors;
     % however, public errors can occur due to, e.g., evalobj; error handling needed.
     try
         [x, fx, exitflag, nf, xhist, fhist] = ...
-            fsolver(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, iprint, maxhist, double(output_xhist));
-        %    % Fortran MEX does not provide an API for reading Boolean variables. So we convert
-        %    % output_xhist to a scalar (0 or 1) and read it as an integer in the MEX gateway.
-        %    % In C MEX, however, we have mxGetLogicals.
+            fsolver(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, ...
+            iprint, maxhist, double(output_xhist));
+        % Fortran MEX does not provide an API for reading Boolean variables. So we convert
+        % output_xhist to a double (0 or 1) before passing it to the MEX gateway.
+        % In C MEX, however, we have mxGetLogicals.
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
             error(exception.identifier, '%s\n(error generated in %s, line %d)', exception.message, exception.stack(1).file, exception.stack(1).line);
@@ -291,6 +298,7 @@ else
             rethrow(exception);
         end
     end
+
     % Record the results of the solver in OUTPUT
     output.x = x;
     output.fx = fx;

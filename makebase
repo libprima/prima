@@ -6,7 +6,7 @@ NEUPDFODIR="$(realpath "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1
 
 # Prepare the base
 BASEDIR="$NEUPDFODIR"/base
-VERSION=$(date +%y%m.%H%M%S)
+VERSION=$(date +%y%m%d.%H%M%S)
 BDIR="$BASEDIR"/"$VERSION"
 mkdir -p "$BDIR"
 cp -r "$NEUPDFODIR"/fsrc "$BDIR"
@@ -22,14 +22,13 @@ mkdir OPDFO
 cp -r "$NEUPDFODIR"/fsrc OPDFO
 
 cp "$NEUPDFODIR"/setup.m OPDFO
-#sed -i '/solver = solver(1:end-1)/d' OPDFO/setup.m
-sed -i 's/solver(1:end-1)/solver/' OPDFO/matlab/setup_tools/compile.m
-sed -i "s/\['f', solver, 'n'\]/\['f', solver\]/" OPDFO/setup.m
-sed -i "s/\['f', solver, 'n_classical'\]/\['f', solver, '_classical'\]/" OPDFO/setup.m
 sed -i "s/ALLn/ALL/g" OPDFO/setup.m
 
 cp -r "$NEUPDFODIR"/matlab OPDFO
+sed -i 's/solver(1:end-1)/solver/' OPDFO/matlab/setup_tools/compile.m
+
 rm -r OPDFO/matlab/tests/testdata
+
 MINTRFDIR=OPDFO/matlab/interfaces
 rm -f "$MINTRFDIR"/private/*mexa64
 

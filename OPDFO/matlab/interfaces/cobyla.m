@@ -65,7 +65,7 @@ function [x, fx, exitflag, output] = cobyla(varargin)
 %   x = cobyla(fun, x0, Aineq, bineq, Aeq, beq, lb) solves
 %       minimize fun(x) s.t. Aineq * x <= bineq, Aeq * x = beq, lb <= x
 %   x = cobyla(fun, x0, Aineq, bineq, Aeq, beq, lb, ub) solves
-%       minimize fun(x) s.t. Aineq * x <= bineq, Aeq * x = beq, lb <=x<= ub
+%       minimize fun(x) s.t. Aineq * x <= bineq, Aeq * x = beq, lb <= x <= ub
 %   x = cobyla(fun, x0, nonlcon) solves
 %       minimize fun(x) s.t. cineq(x) <= 0, ceq(x) = 0
 %   x = cobyla(fun, x0, Aineq, bineq, nonlcon) solves
@@ -206,7 +206,7 @@ function [x, fx, exitflag, output] = cobyla(varargin)
 %
 %   solves
 %       min cos(x) s.t. 2 * x <= 3
-%   starting from x0=-1 with at most 50 function evaluations.
+%   starting from x0 = -1 with at most 50 function evaluations.
 %
 %   5. Problem defined by a structure
 %
@@ -231,7 +231,7 @@ function [x, fx, exitflag, output] = cobyla(varargin)
 %
 %   solves
 %       min cos(x) s.t. 2 * x <= 3
-%   starting from x0=-1 with at most 50 function evaluations.
+%   starting from x0 = -1 with at most 50 function evaluations.
 %
 %   See also PDFO, UOBYQA, NEWUOA, BOBYQA, LINCOA.
 %
@@ -289,7 +289,7 @@ nvararg = length(varargin); % Number of inputs
 
 % Interpret the input.
 % Expected inputs: [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, options],
-% yet some of them may be ommitted
+% yet some of them may be omitted
 if (nvararg < 1)
     if ismember(invoker, internal_invokers) % Private/unexpected error
         error(sprintf('%s:TooFewInputs', funname), '%s: UNEXPECTED ERROR: at least 1 input.', funname);
@@ -299,17 +299,17 @@ if (nvararg < 1)
 elseif (nvararg == 1)
     args = varargin; % If there is only 1 input, then it is a structure specifying the problem
 elseif (nvararg >= 2 && nvararg <= maxarg)
-    % If 2<=nvararg<=10 and the last input is a structure or [], then it is the 'options'
+    % If 2 <= nvararg <= 10 and the last input is a structure or [], then it is the 'options'
     if isempty(varargin{end}) || isa(varargin{end}, 'struct')
         % If nvararg >= 4 and the second last input is a function, then it is the 'nonlcon'
-        if (nvararg >= 4) && (isa(varargin{end-1}, 'char') || isa(varargin{end-1}, 'string') || isa(varargin{end-1}, 'function_handle'))
+        if (nvararg >= 4) && (ischarstr(varargin{end-1}) || isa(varargin{end-1}, 'function_handle'))
             args = [varargin(1:end-2), cell(1, maxarg-nvararg), varargin(end-1:end)]; % 'augment' the inputs to 10 by adding []; args{:} (should have 10 entries) will be the inputs for prepdfo
             % cell(m,n) returns an mxn array of []
         else
             args = [varargin(1:end-1), cell(1, maxarg-nvararg), varargin(end)];
         end
     % if nvararg >= 3 and the last input is a function, then it is the 'nonlcon'
-    elseif (nvararg >= 3) && (isa(varargin{end}, 'char') || isa(varargin{end}, 'string') || isa(varargin{end}, 'function_handle'))
+    elseif (nvararg >= 3) && (ischarstr(varargin{end}) || isa(varargin{end}, 'function_handle'))
         args = [varargin(1:end-1), cell(1, maxarg-nvararg-1), varargin(end), {[]}];
     else
         args = [varargin, cell(1, maxarg-nvararg)];
@@ -323,7 +323,7 @@ else
 end
 
 % Preprocess the input
-% Even if invoker='pdfo', we still need to call prepdfo, which will assign
+% Even if invoker = 'pdfo', we still need to call prepdfo, which will assign
 % values to fun, x0, ..., options.
 try % prepdfo is a private function that may generate public errors; error-handling needed
     [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, options, probinfo] = prepdfo(args{:});
@@ -357,7 +357,7 @@ elseif ~strcmp(invoker, 'pdfo') && probinfo.nofreex % x was fixed by the bound c
     output.nlceq = probinfo.nlceq_fixedx;
 elseif ~strcmp(invoker, 'pdfo') && probinfo.feasibility_problem && ~strcmp(probinfo.refined_type, 'nonlinearly-constrained')
     output.x = x0;  % prepdfo has tried to set x0 to a feasible point (but may have failed)
-    % We could set fx=[], funcCount=0, and fhist=[] since no function evaluation
+    % We could set fx = [], funcCount = 0, and fhist = [] since no function evaluation
     % occured. But then we will have to modify the validation of fx, funcCount,
     % and fhist in postpdfo. To avoid such a modification, we set fx, funcCount,
     % and fhist as below and then revise them in postpdfo.
@@ -381,13 +381,17 @@ else % The problem turns out 'normal' during prepdfo
     % m_nlcineq: number of nonlinear inequality constraints
     % m_nlceq: number of nonlinear equality constraints
 
-    % maxint is the largest integer in the mex functions; the factor 0.99 provides a buffer. We do not
-    % pass any integer larger than maxint to the mexified Fortran code. Otherwise, errors include
-    % SEGFAULT may occur. The value of maxint is about 10^9 on a 32-bit platform and 10^18 on a 64-bit one.
-    maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSI')]));
-    if (length(constr_x0) > maxint)
+    % If the constraint evaluation fails at x0, then m_nlcineq and m_nlceq are set to NaN by
+    % funcon(x0). We have to raise an error and stop, because we do not know the number of
+    % constraints, which is needed by the Fortran code.
+    if (isnan(m_nlcineq) || isnan(m_nlceq))
         % Public/normal error
-        error(sprintf('%s:ProblemTooLarge', funname), '%s: The problem is too large; at most %d constraints are allowed.', funname, maxint);
+        error(sprintf('%s:ConstraintFailureAtX0', funname), '%s: The constraint evaluation fails at x0. %s cannot continue.', funname, funname);
+    end
+
+    if (length(constr_x0) > maxint())
+        % Public/normal error
+        error(sprintf('%s:ProblemTooLarge', funname), '%s: The problem is too large; at most %d constraints are allowed.', funname, maxint());
     end
 
     % Extract the options
@@ -406,18 +410,29 @@ else % The problem turns out 'normal' during prepdfo
     output_nlchist = options.output_nlchist;
     maxfilt = options.maxfilt;
     iprint = options.iprint;
+    precision = options.precision;
+    debug_flag = options.debug;
+    if options.classical
+        variant = 'classical';
+    else
+        variant = 'modern';
+    end
+    solver = options.solver;
 
     % Call the Fortran code
-    if options.classical
-        fsolver = @fcobyla_classical;
-    else
-        fsolver = @fcobyla;
-    end
+    mfiledir = fileparts(mfilename('fullpath'));  % The directory where this .m file resides.
+    mexdir = fullfile(mfiledir, 'private');
+    fsolver = str2func(get_mexname(solver, precision, debug_flag, variant, mexdir));
     % The mexified Fortran Function is a private function generating only private errors;
     % however, public errors can occur due to, e.g., evalobj; error handling needed.
     try
         [x, fx, constrviolation, constr, exitflag, nf, xhist, fhist, chist, conhist] = ...
-            fsolver(funcon, x0, f_x0, constr_x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, ctol, cweight, maxfun, iprint, maxhist, double(output_xhist), double(output_nlchist), maxfilt);
+            fsolver(funcon, x0, f_x0, constr_x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ...
+            ftarget, ctol, cweight, maxfun, iprint, maxhist, double(output_xhist), ...
+            double(output_nlchist), maxfilt);
+        % Fortran MEX does not provide an API for reading Boolean variables. So we convert
+        % output_xhist and output_nlchist to doubles (0 or 1) before passing them to the MEX gateway.
+        % In C MEX, however, we have mxGetLogicals.
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
             error(exception.identifier, '%s\n(error generated in %s, line %d)', exception.message, exception.stack(1).file, exception.stack(1).line);
@@ -425,6 +440,7 @@ else % The problem turns out 'normal' during prepdfo
             rethrow(exception);
         end
     end
+
     % Record the results of the solver in OUTPUT
     output.x = x;
     output.fx = fx;
@@ -436,8 +452,7 @@ else % The problem turns out 'normal' during prepdfo
     output.fhist = fhist;
     output.constrviolation = constrviolation;
     output.chist = chist;
-    %if (~options.classical && output_nlchist)  %!!!!
-    if (output_nlchist)  %!!!!
+    if output_nlchist
         output.nlcihist = -conhist(end-m_nlcineq-2*m_nlceq+1 : end-2*m_nlceq, :);
         if isempty(output.nlcihist)
             output.nlcihist = []; % We uniformly use [] to represent empty objects
@@ -496,10 +511,19 @@ if ~isempty(Aeq)
 end
 constr = [-cineq; ceq; -ceq];
 if ~isempty(nonlcon)
-    [nlcineq, nlceq] = nonlcon(x); % Nonlinear constraints: nlcineq <= 0, nlceq = 0
-    m_nlcineq = length(nlcineq);
-    m_nlceq = length(nlceq);
-    constr = [constr; -nlcineq; nlceq; -nlceq];
+    [nlcineq, nlceq, succ] = nonlcon(x); % Nonlinear constraints: nlcineq <= 0, nlceq = 0
+    if succ
+        m_nlcineq = length(nlcineq);
+        m_nlceq = length(nlceq);
+        constr = [constr; -nlcineq; nlceq; -nlceq];
+    else
+        % Evaluation of nonlcon fails.
+        % In this case, we pass a SCALAR NaN to the MEX gateway, which will handle it properly.
+        % Ideally, we should return an NaN vector with proper size, but the size is unknown here.
+        m_nlcineq = NaN;
+        m_nlceq = NaN;
+        constr = NaN;
+    end
 else
     m_nlcineq = 0;
     m_nlceq = 0;

@@ -1,8 +1,8 @@
 function information = package_info(request)
-%PACKAGE_INFO returns information about the pacakge. 
+%PACKAGE_INFO returns information about the pacakge.
 %
 %   ***********************************************************************
-%   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk) 
+%   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
 %               and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
 %               Department of Applied Mathematics,
 %               The Hong Kong Polytechnic University
@@ -19,9 +19,9 @@ function information = package_info(request)
 % package_info starts
 
 % Who is calling this function? Is it a correct invoker?
-invoker_list = {'pdfo'};
+invoker_list = {'pdfo', 'prepdfo'};
 callstack = dbstack;
-funname = callstack(1).name; % Name of the current function 
+funname = callstack(1).name; % Name of the current function
 if (length(callstack) == 1 || ~ismember(callstack(2).name, invoker_list))
     % Private/unexpected error
     error(sprintf('%s:InvalidInvoker', funname), ...
@@ -30,11 +30,13 @@ else
     invoker = callstack(2).name; % Name of the function who calls this function
 end
 
+name = 'pdfo';
+
 about = 'PDFO (Powell''s Derivative-Free Optimization solvers) is a cross-platform package providing interfaces for using late Professor M. J. D. Powell''s derivative-free optimization solvers, including UOBYQA, NEWUOA, BOBYQA, LINCOA, and COBYLA.';
 
 author = 'Tom M. Ragonneau and Zaikun Zhang';
 
-email= 'tom.ragonneau@connect.polyu.hk and zaikun.zhang@polyu.edu.hk';
+email = 'tom.ragonneau@connect.polyu.hk and zaikun.zhang@polyu.edu.hk';
 
 url = 'www.pdfo.net';
 
@@ -59,6 +61,8 @@ else
 end
 
 switch lower(request)
+case 'name'
+    information = name;
 case 'about'
     information = about;
 case 'author'
@@ -84,7 +88,7 @@ case 'status'
 case 'message'
     information = message;
 case {'info', 'information'}
-    information = struct('about', about, 'author', author, 'email', email, 'url', url, 'maintainer', maintainer, 'credits', [], 'copyright', copyright, 'license', license, 'version', version, 'date', date, 'status', status, 'message', message);
+    information = struct('name', name, 'about', about, 'author', author, 'email', email, 'url', url, 'maintainer', maintainer, 'credits', [], 'copyright', copyright, 'license', license, 'version', version, 'date', date, 'status', status, 'message', message);
     % information = struct(..., 'credits', credits, ...) will produce
     % a cell array of size 1x2, which is not desired. Thus we fist
     % define information with information.credits = [], and then assgin
@@ -94,5 +98,5 @@ otherwise % Public/expected error
     error(sprintf('%s:UnrecogonizedString', invoker), '%s: unrecogonized string received.', invoker);
 end
 
-% package_info ends 
+% package_info ends
 return

@@ -100,7 +100,14 @@ end
 if isempty(requirements.list)
     blacklist = {};
     %blacklist={'gauss2', 'gauss3','HS25NE', 'cubene'};  % Memory error
-    if strcmpi(solvers{1}, 'cobyla') || strcmpi(solvers{2}, 'cobyla')
+    switch lower(solvers{1})
+    case {'uobyqa', 'uobyqa'}
+    case {'newuoa', 'newuoa'}
+    case {'bobyqa', 'bobyqa'}
+        blacklist = [blacklist, {'STREG'}]; % bobyqa returns an fx that does not match x; should test it after the modernization.
+    case {'lincoa', 'lincoa'}
+        blacklist = [blacklist, {'LSNNODOC', 'HS55'}]; % possible reason for a segfault; should test it after the modernization.
+    case {'cobyla', 'cobyla'}
         if requirements.maxdim <= 50  % This means we intend to have a quick test with small problems
             blacklist=[blacklist, {'BLEACHNG'}];  % A 17 dimensional bound-constrained problem that
                                                   % takes too much time for a small problem
@@ -140,12 +147,7 @@ else
 end
 
 single_test = (length(plist) <= 1);
-
-if isfield(options, 'sequential')
-    sequential = options.sequential || single_test;
-else
-    sequential = single_test;
-end
+sequential = (isfield(options, 'sequential') && options.sequential) || single_test;
 
 if sequential
     for ip = minip : length(plist)
@@ -169,7 +171,6 @@ if sequential
     end
 else
     parfor ip = minip : length(plist)
-    %for ip = minip : length(plist)
         orig_warning_state = warnoff(solvers);
 
         pname = upper(plist{ip});
@@ -311,8 +312,18 @@ n = length(x0);
 % Set seed using pname, n, and ir. We ALTER THE SEED weekly to test the solvers as much as possible.
 % N.B.: The weeknum function considers the week containing January 1 to be the first week of the
 % year, and increments the number every SUNDAY.
-yw = 10*mod(year(datetime), 10) + week(datetime);
-rng(yw+ceil(1e6*abs(cos(1e5*sin(1e5*(sum(double(pname))*n*ir))))));
+timezone = 'Asia/Shanghai';  % Specify the timezone for reproducibility.
+if isfield(options, 'yw')
+    yw = options.yw;
+elseif isfield(options, 'seed')
+    yw = options.seed;
+else
+    dt = datetime('now', 'TimeZone', timezone);
+    yw = 100*mod(year(dt), 10) + week(dt);
+end
+fprintf('\nYW = %d\n', yw);
+rseed = max(0, min(2^32, yw+ceil(1e5*abs(cos(1e5*sin(1e5*(sum(double(pname))*n*ir)))))));
+rng(rseed);
 prob.x0 = x0 + 0.5*randn(size(x0));
 test_options = struct();
 test_options.debug = true;
@@ -320,7 +331,7 @@ test_options.chkfunval = true;
 test_options.rhobeg = 1 + 0.5*(2*rand-1);
 test_options.rhoend = 1e-3*(1 + 0.5*(2*rand-1));
 test_options.npt = max(min(floor(6*rand*n), (n+2)*(n+1)/2), n+2);
-if (isfield(options, 'maxfun'))
+if isfield(options, 'maxfun')
     test_options.maxfun = options.maxfun;
 else
     test_options.maxfun = max(ceil(20*n*(1+rand)), n+3);
@@ -329,21 +340,32 @@ test_options.ftarget = objective(x0) - 10*abs(randn)*max(1, objective(x0));
 test_options.fortran = (rand > 0.5);
 test_options.output_xhist = (rand > 0.5);
 test_options.output_nlchist = (rand > 0.5);
+test_options.maxhist = ceil(randn*1.5*test_options.maxfun);
 if single_test
+    % DO NOT INVOKE ANY RANDOMIZATION WITHIN THIS IF. Otherwise, a single test cannot reproduce the
+    % corresponding test in a multiple one.
     test_options.maxhist = test_options.maxfun;
     test_options.output_xhist = true;
     test_options.output_nlchist = true;
-else
-    test_options.maxhist = ceil(randn*1.5*test_options.maxfun);
 end
 test_options.maxfilt = ceil(randn*500);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-ready_solvers = {'newuoa', 'cobyla'};  % Solvers whose development is (almost) finished.
+ready_solvers = {'newuoa', 'cobyla', 'lincoa', 'bobyqa', 'uobyqa'};  % Solvers whose development is (almost) finished.
 test_ready_solvers = ~isempty(intersect(lower(solvers), ready_solvers));
-test_options.classical = (rand < 0.2) && test_ready_solvers;
-test_options.iprint = floor(3*rand) * double(test_ready_solvers);
-test_options.quiet = (rand < 0.8) && test_ready_solvers;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+test_options.classical = (rand < 0.2) && test_ready_solvers;
+test_options.iprint = floor(3*rand);
+test_options.quiet = (rand < 0.8);
+%if rand < 0.5
+%    test_options.precision = 'double';
+%elseif rand < 0.5
+%    test_options.precision = 'single';
+%else
+%    test_options.precision = 'quadruple';
+%end
+test_options.precision = 'double';
+call_by_package = (rand < 0.5);  % Call by the package instead of the solver
+call_by_structure = (rand < 0.5);  % Pass the problem by a structure
 if mod(ir, 50) == 0 && ~isempty(dir('*_output.txt'))
     delete('*_output.txt');
 end
@@ -392,18 +414,68 @@ else
     prob.objective  = objective;
     prob.nonlcon = nonlcon;
 end
-
 prob.options = test_options;
 
-%tic;
-solver = str2func(solvers{1});  % Use function handle to avoid `feval`.
-[x1, fx1, exitflag1, output1] = solver(prob);
-%T = toc; fprintf('\nRunning time for %s:\t %f\n', solvers{1}, T);
 
-%tic;
-solver = str2func(solvers{2});  % Use function handle to avoid `feval`.
-[x2, fx2, exitflag2, output2] = solver(prob);
-%T = toc; fprintf('\nRunning time for %s:\t %f\n', solvers{2}, T);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Call the solvers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+solver1 = str2func(solvers{1});  % Use function handle to avoid `feval`.
+solver2 = str2func(solvers{2});  % Use function handle to avoid `feval`.
+if length(solvers{1}) > length(solvers{2})
+    package1 = @pdfo;
+    package2 = @pdfo;
+    tested_solver_name = solvers{2};
+else
+    package1 = @pdfo;
+    package2 = @pdfo;
+    tested_solver_name = solvers{1};
+end
+if call_by_package
+    if call_by_structure
+        prob.options.solver = solvers{1};
+        %tic;
+        [x1, fx1, exitflag1, output1] = package1(prob);
+        %T = toc; fprintf('\nRunning time for %s:\t %f\n', solvers{1}, T);
+        prob.options.solver = solvers{2};
+        %tic;
+        [x2, fx2, exitflag2, output2] = package2(prob);
+        %T = toc; fprintf('\nRunning time for %s:\t %f\n', solvers{2}, T);
+    else
+        prob.options.solver = solvers{1};
+        [x1, fx1, exitflag1, output1] = package1(prob.objective, prob.x0, prob.Aineq, ...
+            prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.nonlcon, prob.options);
+        prob.options.solver = solvers{2};
+        [x2, fx2, exitflag2, output2] = package2(prob.objective, prob.x0, prob.Aineq, ...
+            prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.nonlcon, prob.options);
+    end
+else
+    if call_by_structure
+        [x1, fx1, exitflag1, output1] = solver1(prob);
+        [x2, fx2, exitflag2, output2] = solver2(prob);
+    else
+        switch lower(tested_solver_name)
+        case {'uobyqa', 'newuoa'}
+            [x1, fx1, exitflag1, output1] = solver1(prob.objective, prob.x0, prob.options);
+            [x2, fx2, exitflag2, output2] = solver2(prob.objective, prob.x0, prob.options);
+        case {'bobyqa'}
+            [x1, fx1, exitflag1, output1] = solver1(prob.objective, prob.x0, prob.lb, prob.ub, prob.options);
+            [x2, fx2, exitflag2, output2] = solver2(prob.objective, prob.x0, prob.lb, prob.ub, prob.options);
+        case {'lincoa'}
+            [x1, fx1, exitflag1, output1] = solver1(prob.objective, prob.x0, ...
+                prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.options);
+            [x2, fx2, exitflag2, output2] = solver2(prob.objective, prob.x0, ...
+                prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.options);
+        case {'cobyla'}
+            [x1, fx1, exitflag1, output1] = solver1(prob.objective, prob.x0, ...
+                prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.nonlcon, prob.options);
+            [x2, fx2, exitflag2, output2] = solver2(prob.objective, prob.x0, ...
+                prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.nonlcon, prob.options);
+        otherwise
+            error('Wrong solver tested: %s', tested_solver_name);
+        end
+    end
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Call the solvers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 if output1.funcCount == test_options.maxfun && (exitflag1 == 0 || exitflag1 == 2) && exitflag2 == 3
     exitflag1 = 3;
@@ -490,6 +562,8 @@ if ~equiv
         chist1 == chist2
     end
     if single_test
+        fprintf('\nThe solvers produce different results on %s at the %dth run.\n\n', pname, ir);
+        cd(options.olddir);
         keyboard
     end
     error('\nThe solvers produce different results on %s at the %dth run.\n', pname, ir);

@@ -62,7 +62,7 @@ function [x, fx, exitflag, output] = pdfo(varargin)
 %   x = pdfo(fun, x0, Aineq, bineq, Aeq, beq, lb) solves
 %       minimize fun(x) s.t. Aineq * x <= bineq, Aeq * x = beq, lb <= x
 %   x = pdfo(fun, x0, Aineq, bineq, Aeq, beq, lb, ub) solves
-%       minimize fun(x) s.t. Aineq * x <= bineq, Aeq * x = beq, lb <=x<= ub
+%       minimize fun(x) s.t. Aineq * x <= bineq, Aeq * x = beq, lb <= x <= ub
 %   x = pdfo(fun, x0, nonlcon) solves
 %       minimize fun(x) s.t. cineq(x) <= 0, ceq(x) = 0
 %   x = pdfo(fun, x0, Aineq, bineq, nonlcon) solves
@@ -227,7 +227,7 @@ function [x, fx, exitflag, output] = pdfo(varargin)
 %
 %   solves
 %       min cos(x) s.t. 2 * x <= 3
-%   starting from x0=-1 with at most 50 function evaluations.
+%   starting from x0 = -1 with at most 50 function evaluations.
 %
 %   5. Problem defined by a structure
 %
@@ -254,7 +254,7 @@ function [x, fx, exitflag, output] = pdfo(varargin)
 %
 %   solves
 %       min cos(x) s.t. 2 * x <= 3
-%   starting from x0=-1 with at most 50 function evaluations.
+%   starting from x0 = -1 with at most 50 function evaluations.
 %
 %   See also UOBYQA, NEWUOA, BOBYQA, LINCOA, COBYLA.
 %
@@ -374,17 +374,17 @@ elseif (nvararg == 1)
     % a problem-defining structure.
     args = varargin;
 elseif (nvararg >= 2 && nvararg <= maxarg)
-    % If 2<=nvararg<=10 and the last input is a structure or [], then it is the 'options'
+    % If 2 <= nvararg <= 10 and the last input is a structure or [], then it is the 'options'
     if isempty(varargin{end}) || isa(varargin{end}, 'struct')
         % If nvararg >= 4 and the second last input is a function, then it is the 'nonlcon'
-        if (nvararg >= 4) && (isa(varargin{end-1}, 'char') || isa(varargin{end-1}, 'string') || isa(varargin{end-1}, 'function_handle'))
+        if (nvararg >= 4) && (ischarstr(varargin{end-1}) || isa(varargin{end-1}, 'function_handle'))
             args = [varargin(1:end-2), cell(1, maxarg-nvararg), varargin(end-1:end)]; % 'augment' the inputs to 10 by adding []; args{:} (should have 10 entries) will be the inputs for prepdfo
             % cell(m,n) returns an mxn array of []
         else
             args = [varargin(1:end-1), cell(1, maxarg-nvararg), varargin(end)];
         end
     % if nvararg >= 3 and the last input is a function, then it is the 'nonlcon'
-    elseif (nvararg >= 3) && (isa(varargin{end}, 'char') || isa(varargin{end}, 'string') || isa(varargin{end}, 'function_handle'))
+    elseif (nvararg >= 3) && (ischarstr(varargin{end}) || isa(varargin{end}, 'function_handle'))
         args = [varargin(1:end-1), cell(1, maxarg-nvararg-1), varargin(end), {[]}];
     else
         args = [varargin, cell(1, maxarg-nvararg)];
@@ -395,7 +395,7 @@ end
 
 % Preprocess the input
 try % prepdfo and package_info are private functions that may generate public errors; error-handling needed
-    if (nvararg == 1) && (isa(varargin{1}, 'char') || isa(varargin{1}, 'string'))
+    if (nvararg == 1) && ischarstr(varargin{1})
         % If there is only 1 input and it is a string, then it should be
         % a string requesting information about the pacakge.
         x = package_info(varargin{1});
@@ -439,7 +439,7 @@ elseif probinfo.nofreex % x was fixed by the bound constraints during prepdfo
     end
 elseif probinfo.feasibility_problem && ~strcmp(probinfo.refined_type, 'nonlinearly-constrained')
     output.x = x0;  % prepdfo has tried to set x0 to a feasible point (but may have failed)
-    % We could set fx=[], funcCount=0, and fhist=[] since no function evaluation
+    % We could set fx = [], funcCount = 0, and fhist = [] since no function evaluation
     % occured. But then we will have to modify the validation of fx, funcCount,
     % and fhist in postpdfo. To avoid such a modification, we set fx, funcCount,
     % and fhist as below and then revise them in postpdfo.
