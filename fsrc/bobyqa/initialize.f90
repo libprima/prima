@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM11:54:03
+! Last Modified: Sunday, February 27, 2022 AM12:51:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -54,7 +54,7 @@ real(RP), intent(inout) :: x(n)
 ! Outputs
 integer(IK), intent(out) :: kopt
 integer(IK), intent(out) :: nf
-real(RP), intent(out) :: bmat(npt + n, n)
+real(RP), intent(out) :: bmat(n, npt + n)
 real(RP), intent(out) :: f
 real(RP), intent(out) :: fhist(maxfhist)
 real(RP), intent(out) :: fval(npt)
@@ -102,7 +102,7 @@ do j = 1, n
         xpt(j, k) = ZERO
     end do
     do i = 1, ndim
-        bmat(i, j) = ZERO
+        bmat(j, i) = ZERO
     end do
 end do
 do ih = 1, (n * np) / 2
@@ -183,9 +183,9 @@ if (nf <= 2 * n + 1) then
     if (nf >= 2 .and. nf <= n + 1) then
         gopt(nfm) = (f - fbeg) / stepa
         if (npt < nf + n) then
-            bmat(1, nfm) = -ONE / stepa
-            bmat(nf, nfm) = ONE / stepa
-            bmat(npt + nfm, nfm) = -HALF * rhosq
+            bmat(nfm, 1) = -ONE / stepa
+            bmat(nfm, nf) = ONE / stepa
+            bmat(nfm, npt + nfm) = -HALF * rhosq
         end if
     else if (nf >= n + 2) then
         ih = (nfx * (nfx + 1)) / 2
@@ -202,9 +202,9 @@ if (nf <= 2 * n + 1) then
                 xpt(nfx, nf) = stepa
             end if
         end if
-        bmat(1, nfx) = -(stepa + stepb) / (stepa * stepb)
-        bmat(nf, nfx) = -HALF / xpt(nfx, nf - n)
-        bmat(nf - n, nfx) = -bmat(1, nfx) - bmat(nf, nfx)
+        bmat(nfx, 1) = -(stepa + stepb) / (stepa * stepb)
+        bmat(nfx, nf) = -HALF / xpt(nfx, nf - n)
+        bmat(nfx, nf - n) = -bmat(nfx, 1) - bmat(nfx, nf)
         zmat(1, nfx) = sqrt(TWO) / (stepa * stepb)
         zmat(nf, nfx) = sqrt(HALF) / rhosq
         zmat(nf - n, nfx) = -zmat(1, nfx) - zmat(nf, nfx)
