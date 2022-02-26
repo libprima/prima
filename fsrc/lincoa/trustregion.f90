@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM07:39:19
+! Last Modified: Saturday, February 26, 2022 PM10:40:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -41,7 +41,7 @@ real(RP), intent(in) :: amat(n, m)
 real(RP), intent(in) :: hq(n * (n + 1_IK) / 2_IK)
 real(RP), intent(in) :: pq(npt)
 real(RP), intent(in) :: rescon(m)
-real(RP), intent(in) :: xpt(npt, n)
+real(RP), intent(in) :: xpt(n, npt)
 
 ! In-outputs
 integer(IK), intent(inout) :: iact(m)
@@ -270,11 +270,11 @@ end do
 do k = 1, npt
     temp = ZERO
     do j = 1, n
-        temp = temp + xpt(k, j) * d(j)
+        temp = temp + xpt(j, k) * d(j)
     end do
     temp = pq(k) * temp
     do i = 1, n
-        dw(i) = dw(i) + temp * xpt(k, i)
+        dw(i) = dw(i) + temp * xpt(i, k)
     end do
 end do
 !

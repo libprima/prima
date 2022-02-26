@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, February 25, 2022 PM11:21:10
+! Last Modified: Saturday, February 26, 2022 PM10:55:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -72,7 +72,7 @@ real(RP), intent(inout) :: w(n + npt)
 real(RP), intent(inout) :: x(n)
 real(RP), intent(inout) :: xbase(n)
 real(RP), intent(inout) :: xopt(n)
-real(RP), intent(inout) :: xpt(npt, n)
+real(RP), intent(inout) :: xpt(n, npt)
 real(RP), intent(inout) :: bmat(npt + size(x), size(x))
 real(RP), intent(inout) :: zmat(npt, npt - size(x) - 1)
 
@@ -89,7 +89,6 @@ real(RP), intent(out) :: xsav(n)
 ! Local variables
 real(RP) :: bigv, feas, recip, reciq, resid, rhosq, temp, test
 integer(IK) :: i, ipt, itemp, j, jp, jpt, jsav, k, kbase, knew, nptm
-
 
 !*++
 !*++ End of declarations rewritten by SPAG
@@ -131,7 +130,7 @@ do j = 1, n
     xsav(j) = xbase(j)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     do k = 1, npt
-        xpt(k, j) = ZERO
+        xpt(j, k) = ZERO
     end do
     do i = 1, ndim
         bmat(i, j) = ZERO
@@ -144,16 +143,16 @@ do k = 1, npt
     end do
 end do
 !
-!     Set the nonZERO coordinates of XPT(K,.), K=1,2,...,min[2*N+1,NPT],
+!     Set the nonzero coordinates of XPT(K,.), K=1,2,...,min[2*N+1,NPT],
 !       but they may be altered later to make a constraint violation
-!       sufficiently large. The initial nonZERO elements of BMAT and of
+!       sufficiently large. The initial nonzero elements of BMAT and of
 !       the first min[N,NPT-N-1] columns of ZMAT are set also.
 !
 do j = 1, n
-    xpt(j + 1, j) = rhobeg
+    xpt(j, j + 1) = rhobeg
     if (j < npt - n) then
         jp = n + j + 1
-        xpt(jp, j) = -rhobeg
+        xpt(j, jp) = -rhobeg
         bmat(j + 1, j) = HALF / rhobeg
         bmat(jp, j) = -HALF / rhobeg
         zmat(1, j) = -reciq - reciq
@@ -175,8 +174,8 @@ if (npt > 2 * n + 1) then
         ipt = k - itemp * n
         jpt = ipt + itemp
         if (jpt > n) jpt = jpt - n
-        xpt(n + k + 1, ipt) = rhobeg
-        xpt(n + k + 1, jpt) = rhobeg
+        xpt(ipt, n + k + 1) = rhobeg
+        xpt(jpt, n + k + 1) = rhobeg
         zmat(1, k) = recip
         zmat(ipt + 1, k) = -recip
         zmat(jpt + 1, k) = -recip
@@ -207,7 +206,7 @@ do nf = 1, npt
     if (j <= m .and. nf >= 2) then
         resid = -b(j)
         do i = 1, n
-            resid = resid + xpt(nf, i) * amat(i, j)
+            resid = resid + xpt(i, nf) * amat(i, j)
         end do
         if (resid <= bigv) goto 80
         bigv = resid
@@ -220,18 +219,20 @@ do nf = 1, npt
     end if
     if (feas < ZERO) then
         do i = 1, n
-            step(i) = xpt(nf, i) + (test - bigv) * amat(i, jsav)
+            step(i) = xpt(i, nf) + (test - bigv) * amat(i, jsav)
         end do
         do k = 1, npt
             rsp(npt + k) = ZERO
             do j = 1, n
-                rsp(npt + k) = rsp(npt + k) + xpt(k, j) * step(j)
+                rsp(npt + k) = rsp(npt + k) + xpt(j, k) * step(j)
             end do
         end do
         knew = nf
+
         call update(n, npt, xpt, bmat, zmat, idz, ndim, rsp, step, kbase, knew, pqw, w)
+
         do i = 1, n
-            xpt(nf, i) = step(i)
+            xpt(i, nf) = step(i)
         end do
     end if
 !
@@ -239,7 +240,7 @@ do nf = 1, npt
 !       and set KOPT to the index of the first trust region centre.
 !
     do j = 1, n
-        x(j) = xbase(j) + xpt(nf, j)
+        x(j) = xbase(j) + xpt(j, nf)
     end do
     f = feas
     !---------------------------------------------------!
@@ -288,18 +289,18 @@ end do
 !     Set XOPT, SP, GOPT and HQ for the first quadratic model.
 !
 do j = 1, n
-    xopt(j) = xpt(kopt, j)
+    xopt(j) = xpt(j, kopt)
     xsav(j) = xbase(j) + xopt(j)
     gopt(j) = ZERO
 end do
 do k = 1, npt
     rsp(k) = ZERO
     do j = 1, n
-        rsp(k) = rsp(k) + xpt(k, j) * xopt(j)
+        rsp(k) = rsp(k) + xpt(j, k) * xopt(j)
     end do
     temp = pq(k) * rsp(k)
     do j = 1, n
-        gopt(j) = gopt(j) + fval(k) * bmat(k, j) + temp * xpt(k, j)
+        gopt(j) = gopt(j) + fval(k) * bmat(k, j) + temp * xpt(j, k)
     end do
 end do
 do i = 1, (n * n + n) / 2

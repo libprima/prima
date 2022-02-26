@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, February 25, 2022 PM10:35:00
+! Last Modified: Saturday, February 26, 2022 PM10:39:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -44,7 +44,7 @@ real(RP), intent(in) :: pqw(npt)
 real(RP), intent(in) :: qfac(n, n)
 real(RP), intent(in) :: rescon(m)
 real(RP), intent(in) :: xopt(n)
-real(RP), intent(in) :: xpt(npt, n)
+real(RP), intent(in) :: xpt(n, npt)
 
 ! In-outputs
 integer(IK), intent(inout) :: ifeas
@@ -58,6 +58,7 @@ real(RP) :: bigv, ctol, gg, ghg, resmax, sp, ss,  &
 &        stp, stpsav, summ, temp, test, vbig, vgrad, &
 &        vlag, vnew, ww
 integer(IK) :: i, j, jsav, k, ksav
+
 
 !
 !     N, NPT, M, AMAT, B, XPT, XOPT, NACT, IACT, RESCON, QFAC, KOPT are the
@@ -97,11 +98,11 @@ test = 0.2D0 * del  ! Is this really better than 0? According to an experiment o
 do k = 1, npt
     temp = ZERO
     do j = 1, n
-        temp = temp + xpt(k, j) * xopt(j)
+        temp = temp + xpt(j, k) * xopt(j)
     end do
     temp = pqw(k) * temp
     do i = 1, n
-        gl(i) = gl(i) + temp * xpt(k, i)
+        gl(i) = gl(i) + temp * xpt(i, k)
     end do
 end do
 if (m > 0) then
@@ -127,7 +128,7 @@ do k = 1, npt
     ss = ZERO
     sp = ZERO
     do i = 1, n
-        temp = xpt(k, i) - xopt(i)
+        temp = xpt(i, k) - xopt(i)
         ss = ss + temp * temp
         sp = sp + gl(i) * temp
     end do
@@ -157,7 +158,7 @@ end do
 gg = ZERO
 do i = 1, n
     gg = gg + gl(i)**2
-    step(i) = stpsav * (xpt(ksav, i) - xopt(i))
+    step(i) = stpsav * (xpt(i, ksav) - xopt(i))
 end do
 vgrad = del * sqrt(gg)
 if (vgrad <= TENTH * vbig) goto 220
@@ -168,7 +169,7 @@ ghg = ZERO
 do k = 1, npt
     temp = ZERO
     do j = 1, n
-        temp = temp + xpt(k, j) * gl(j)
+        temp = temp + xpt(j, k) * gl(j)
     end do
     ghg = ghg + pqw(k) * temp * temp
 end do
@@ -208,7 +209,7 @@ ghg = ZERO
 do k = 1, npt
     temp = ZERO
     do j = 1, n
-        temp = temp + xpt(k, j) * gl(j)
+        temp = temp + xpt(j, k) * gl(j)
     end do
     ghg = ghg + pqw(k) * temp * temp
 end do

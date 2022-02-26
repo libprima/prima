@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM05:45:13
+! Last Modified: Saturday, February 26, 2022 PM10:38:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -36,7 +36,7 @@ integer(IK), intent(in) :: ndim
 integer(IK), intent(in) :: npt
 real(RP), intent(in) :: rsp(2_IK * npt)
 real(RP), intent(in) :: step(n)
-real(RP), intent(in) :: xpt(npt, n)
+real(RP), intent(in) :: xpt(n, npt)
 
 ! In-outputs
 integer(IK), intent(inout) :: idz
@@ -52,6 +52,7 @@ real(RP) :: alpha, beta, bsumm, denabs, denmax, denom, distsq,  &
 &        dx, hdiag, scala, scalb, sqrtdn, ssq,  &
 &        summ, tau, tausq, temp, tempa, tempb
 integer(IK) :: i, iflag, j, ja, jb, jl, jp, k, nptm
+
 !
 !     The arguments N, NPT, XPT, BMAT, ZMAT, IDZ, NDIM ,SP and STEP are
 !       identical to the corresponding arguments in SUBROUTINE LINCOB.
@@ -118,7 +119,7 @@ do j = 1, n
     end do
     vlag(jp) = summ
     bsumm = bsumm + summ * step(j)
-    dx = dx + step(j) * xpt(kopt, j)
+    dx = dx + step(j) * xpt(j, kopt)
     ssq = ssq + step(j)**2
 end do
 beta = dx * dx + ssq * (rsp(kopt) + dx + dx + HALF * ssq) + beta - bsumm
@@ -141,7 +142,7 @@ if (knew == 0) then
         denabs = abs(beta * hdiag + vlag(k)**2)
         distsq = ZERO
         do j = 1, n
-            distsq = distsq + (xpt(k, j) - xpt(kopt, j))**2
+            distsq = distsq + (xpt(j, k) - xpt(j, kopt))**2
         end do
         temp = denabs * distsq * distsq
         if (temp > denmax) then
