@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM08:38:12
+! Last Modified: Saturday, February 26, 2022 PM08:44:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -32,6 +32,7 @@ use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 ! Solver-specific modules
+use, non_intrinsic :: geometry_mod, only : geostep
 use, non_intrinsic :: trustregion_mod, only : trstep
 
 implicit none
@@ -565,7 +566,7 @@ if (knew > 0) then
 !     value of the modulus of its Lagrange function within the trust region.
 !     Here the vector XNEW is used as temporary working space.
 !
-    call lagmax(n, g, h, rho, d, xnew, vmax)
+    call geostep(n, g, h, rho, d, xnew, vmax)
     if (errtol > ZERO) then
         if (wmult * vmax <= errtol) goto 310
     end if
