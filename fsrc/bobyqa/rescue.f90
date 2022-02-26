@@ -1,8 +1,30 @@
+module rescue_mod
+!--------------------------------------------------------------------------------------------------!
+! This module contains the `rescue` subroutine.
+!
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the BOBYQA paper.
+!
+! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+!
+! Started: February 2022
+!
+! Last Modified: Saturday, February 26, 2022 PM05:11:44
+!--------------------------------------------------------------------------------------------------!
+
+implicit none
+private
+public :: rescue
+
+
+contains
+
+
 subroutine rescue(calfun, n, npt, xl, xu, iprint, maxfun, xbase, xpt, &
      &  fval, xopt, gopt, hq, pq, bmat, zmat, ndim, sl, su, nf, delta, &
      &  kopt, vlag, ptsaux, ptsid, w, f, ftarget, &
      & xhist, maxxhist, fhist, maxfhist)
 
+! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
@@ -10,26 +32,54 @@ use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
-implicit real(RP) (a - h, o - z)
-implicit integer(IK) (i - n)
+implicit none
 
+! Inputs
 procedure(OBJ) :: calfun
-integer(IK), intent(in) :: maxxhist
+integer(IK) :: n
+integer(IK) :: ndim
+integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfhist
+integer(IK), intent(in) :: maxfun
+integer(IK), intent(in) :: maxxhist
 integer(IK), intent(in) :: npt
-integer(IK), intent(inout) :: nf
+real(RP), intent(in) :: delta
+real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: xl(n)
 real(RP), intent(in) :: xu(n)
-real(RP), intent(out) :: xhist(n, maxxhist)
+
+! In-outputs
+integer(IK), intent(inout) :: kopt
+integer(IK), intent(inout) :: nf
+real(RP), intent(inout) :: f
+real(RP), intent(inout) :: bmat(npt + n, n)
+real(RP), intent(inout) :: fval(npt)
+real(RP), intent(inout) :: gopt(n)
+real(RP), intent(inout) :: hq(n * (n + 1_IK) / 2_IK)
+real(RP), intent(inout) :: pq(npt)
+real(RP), intent(inout) :: ptsaux(2, n)
+real(RP), intent(inout) :: ptsid(npt)
+real(RP), intent(inout) :: sl(n)
+real(RP), intent(inout) :: su(n)
+real(RP), intent(inout) :: vlag(npt + n)
+real(RP), intent(inout) :: w(2_IK * npt + n)
+real(RP), intent(inout) :: xbase(n)
+real(RP), intent(inout) :: xopt(n)
+real(RP), intent(inout) :: xpt(npt, n)
+real(RP), intent(inout) :: zmat(npt, npt - n - 1_IK)
+
+! Outputs
 real(RP), intent(out) :: fhist(maxfhist)
+real(RP), intent(out) :: xhist(n, maxxhist)
 
 ! Local variables
 real(RP) :: x(n)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+real(RP) :: beta, bsum, den, denom, diff,      &
+&        distsq, dsqmin, fbase, hdiag, sfrac,    &
+&        summ, sumpq, temp, vlmxsq, vquad, winc, xp, xq
+integer(IK) :: i, ih, ihp, ihq, ip, iq, iw, j, jp, jpn, k, &
+&           knew, kold, kpt, np, nptm, nrem
 
-dimension xbase(*), xpt(npt, *), fval(*), xopt(*), &
-& gopt(*), hq(*), pq(*), bmat(ndim, *), zmat(npt, *), sl(*), su(*), &
-& vlag(*), ptsaux(2, *), ptsid(*), w(*)
 !
 !     The arguments N, NPT, XL, XU, IPRINT, MAXFUN, XBASE, XPT, FVAL, XOPT,
 !       GOPT, HQ, PQ, BMAT, ZMAT, NDIM, SL and SU have the same meanings as
@@ -50,7 +100,7 @@ dimension xbase(*), xpt(npt, *), fval(*), xopt(*), &
 !       direction) through XBASE+XOPT, as specified below. Usually these
 !       steps have length DELTA, but other lengths are chosen if necessary
 !       in order to satisfy the given bounds on the variables.
-!     PTSID is also a working space array. It has NPT compONEnts that denote
+!     PTSID is also a working space array. It has NPT components that denote
 !       provisional new positions of the original interpolation points, in
 !       case changes are needed to restore the linear independence of the
 !       interpolation conditions. The K-th point is a candidate for change
@@ -61,7 +111,7 @@ dimension xbase(*), xpt(npt, *), fval(*), xopt(*), &
 !       the step is PTSAUX(1,p)*e_p or PTSAUX(2,q)*e_q in the cases q=0 or
 !       p=0, respectively.
 !     The first NDIM+NPT elements of the array W are used for working space.
-!     The final elements of BMAT and ZMAT are set in a well-conditiONEd way
+!     The final elements of BMAT and ZMAT are set in a well-conditioned way
 !       to the values that are appropriate for the new interpolation points.
 !     The elements of GOPT, HQ and PQ are also revised to the values that are
 !       appropriate to the final quadratic model.
@@ -69,7 +119,7 @@ dimension xbase(*), xpt(npt, *), fval(*), xopt(*), &
 !     Set some constants.
 !
 np = n + 1
-sfrac = HALF / dfloat(np)
+sfrac = HALF / real(np, RP)
 nptm = npt - np
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
@@ -143,9 +193,9 @@ ptsid(1) = sfrac
 do j = 1, n
     jp = j + 1
     jpn = jp + n
-    ptsid(jp) = dfloat(j) + sfrac
+    ptsid(jp) = real(j, RP) + sfrac
     if (jpn <= npt) then
-        ptsid(jpn) = dfloat(j) / dfloat(np) + sfrac
+        ptsid(jpn) = real(j, RP) / real(np, RP) + sfrac
         temp = ONE / (ptsaux(1, j) - ptsaux(2, j))
         bmat(jp, j) = -temp + ONE / ptsaux(1, j)
         bmat(jpn, j) = temp + ONE / ptsaux(2, j)
@@ -166,12 +216,12 @@ if (npt >= n + np) then
     do k = 2 * np, npt
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !          IW=(DFLOAT(K-NP)-HALF)/DFLOAT(N)
-        iw = int((dfloat(k - np) - HALF) / dfloat(n))
+        iw = int((real(k - np, RP) - HALF) / real(n, RP))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         ip = k - np - iw * n
         iq = ip + iw
         if (iq > n) iq = iq - n
-        ptsid(k) = dfloat(ip) + dfloat(iq) / dfloat(np) + sfrac
+        ptsid(k) = real(ip, RP) + real(iq, RP) / real(np, RP) + sfrac
         temp = ONE / (ptsaux(1, ip) * ptsaux(1, iq))
         zmat(1, k - np) = temp
         zmat(ip + 1, k - np) = -temp
@@ -238,67 +288,67 @@ do j = 1, n
     w(npt + j) = xpt(knew, j)
 end do
 do k = 1, npt
-    sum = ZERO
+    summ = ZERO
     if (k == kopt) then
         continue
     else if (ptsid(k) == ZERO) then
         do j = 1, n
-            sum = sum + w(npt + j) * xpt(k, j)
+            summ = summ + w(npt + j) * xpt(k, j)
         end do
     else
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !          IP=PTSID(K)
         ip = int(ptsid(k))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        if (ip > 0) sum = w(npt + ip) * ptsaux(1, ip)
+        if (ip > 0) summ = w(npt + ip) * ptsaux(1, ip)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !          IQ=DFLOAT(NP)*PTSID(K)-DFLOAT(IP*NP)
-        iq = int(dfloat(np) * ptsid(k) - dfloat(ip * np))
+        iq = int(real(np, RP) * ptsid(k) - real(ip * np, RP))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         if (iq > 0) then
             iw = 1
             if (ip == 0) iw = 2
-            sum = sum + w(npt + iq) * ptsaux(iw, iq)
+            summ = summ + w(npt + iq) * ptsaux(iw, iq)
         end if
     end if
-    w(k) = HALF * sum * sum
+    w(k) = HALF * summ * summ
 end do
 !
 !     Calculate VLAG and BETA for the required updating of the H matrix if
 !     XPT(KNEW,.) is reinstated in the set of interpolation points.
 !
 do k = 1, npt
-    sum = ZERO
+    summ = ZERO
     do j = 1, n
-        sum = sum + bmat(k, j) * w(npt + j)
+        summ = summ + bmat(k, j) * w(npt + j)
     end do
-    vlag(k) = sum
+    vlag(k) = summ
 end do
 beta = ZERO
 do j = 1, nptm
-    sum = ZERO
+    summ = ZERO
     do k = 1, npt
-        sum = sum + zmat(k, j) * w(k)
+        summ = summ + zmat(k, j) * w(k)
     end do
-    beta = beta - sum * sum
+    beta = beta - summ * summ
     do k = 1, npt
-        vlag(k) = vlag(k) + sum * zmat(k, j)
+        vlag(k) = vlag(k) + summ * zmat(k, j)
     end do
 end do
 bsum = ZERO
 distsq = ZERO
 do j = 1, n
-    sum = ZERO
+    summ = ZERO
     do k = 1, npt
-        sum = sum + bmat(k, j) * w(k)
+        summ = summ + bmat(k, j) * w(k)
     end do
     jp = j + npt
-    bsum = bsum + sum * w(jp)
+    bsum = bsum + summ * w(jp)
     do ip = npt + 1, ndim
-        sum = sum + bmat(ip, j) * w(ip)
+        summ = summ + bmat(ip, j) * w(ip)
     end do
-    bsum = bsum + sum * w(jp)
-    vlag(jp) = sum
+    bsum = bsum + summ * w(jp)
+    vlag(jp) = summ
     distsq = distsq + xpt(knew, j)**2
 end do
 beta = HALF * distsq * distsq + beta - bsum
@@ -360,7 +410,7 @@ goto 80
 !      IP=PTSID(KPT)
 !      IQ=DFLOAT(NP)*PTSID(KPT)-DFLOAT(IP*NP)
     ip = int(ptsid(kpt))
-    iq = int(dfloat(np) * ptsid(kpt) - dfloat(ip * np))
+    iq = int(real(np, RP) * ptsid(kpt) - real(ip * np, RP))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     if (ip > 0) then
         xp = ptsaux(1, ip)
@@ -423,11 +473,11 @@ goto 80
         gopt(i) = gopt(i) + diff * bmat(kpt, i)
     end do
     do k = 1, npt
-        sum = ZERO
+        summ = ZERO
         do j = 1, nptm
-            sum = sum + zmat(k, j) * zmat(kpt, j)
+            summ = summ + zmat(k, j) * zmat(kpt, j)
         end do
-        temp = diff * sum
+        temp = diff * summ
         if (ptsid(k) == ZERO) then
             pq(k) = pq(k) + temp
         else
@@ -435,7 +485,7 @@ goto 80
 !          IP=PTSID(K)
 !          IQ=DFLOAT(NP)*PTSID(K)-DFLOAT(IP*NP)
             ip = int(ptsid(k))
-            iq = int(dfloat(np) * ptsid(k) - dfloat(ip * np))
+            iq = int(real(np, RP) * ptsid(k) - real(ip * np, RP))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             ihq = (iq * iq + iq) / 2
             if (ip == 0) then
@@ -471,4 +521,7 @@ goto 80
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 end do
 350 return
-end
+end subroutine rescue
+
+
+end module rescue_mod
