@@ -1,14 +1,14 @@
 module uobyqb_mod
 !--------------------------------------------------------------------------------------------------!
-! This module performs the major calculations of NEWUOA.
+! This module performs the major calculations of UOBYQA.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the NEWUOA paper.
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the UOBYQA paper.
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM07:37:32
+! Last Modified: Saturday, February 26, 2022 PM08:38:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -30,6 +30,9 @@ use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
+
+! Solver-specific modules
+use, non_intrinsic :: trustregion_mod, only : trstep
 
 implicit none
 
