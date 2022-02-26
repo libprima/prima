@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 AM11:57:49
+! Last Modified: Saturday, February 26, 2022 PM04:24:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -34,6 +34,7 @@ use, non_intrinsic :: pintrf_mod, only : OBJ
 
 ! Solver-specific modules
 use, non_intrinsic :: initialize_mod, only : initialize
+use, non_intrinsic :: geometry_mod, only : geostep
 
 implicit none
 
@@ -474,9 +475,9 @@ if (ntrits > 0) goto 60
 !
 !  Although very rare, NaN can sometimes occur in BMAT or ZMAT. If it
 !  happens, we terminate the code. See the comments above line number 60.
-!  Indeed, if ALTMOV is called with such matrices, then altmov.f will
+!  Indeed, if ALTMOV is called with such matrices, then geostep.f90 will
 !  encounter a memory error at lines 173--174. This is because the first
-!  value of PREDSQ in ALTOMOV (see line 159 of altmov.f) will be NaN, line
+!  value of PREDSQ in ALTOMOV (see line 159 of geostep.f90) will be NaN, line
 !  164 will not be reached, and hence no value will be assigned to IBDSAV.
 !
 !  Such an error was observed when BOBYQA was (mistakenly) tested on CUTEst
@@ -503,7 +504,7 @@ do j = 1, nptm
         end if
     end do
 end do
-call altmov(n, npt, xpt, xopt, bmat, zmat, ndim, sl, su, kopt, &
+call geostep(n, npt, xpt, xopt, bmat, zmat, ndim, sl, su, kopt, &
 & knew, adelt, xnew, xalt, alpha, cauchy, w, w(np), w(ndim + 1))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 do i = 1, n

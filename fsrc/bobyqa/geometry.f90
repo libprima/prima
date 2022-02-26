@@ -1,13 +1,63 @@
-subroutine altmov(n, npt, xpt, xopt, bmat, zmat, ndim, sl, su, kopt, knew, adelt, xnew, xalt, alpha, cauchy, glag, hcol, w)
+module geometry_mod
+!--------------------------------------------------------------------------------------------------!
+! This module contains subroutines concerning the geometry-improving of the interpolation set XPT.
+!
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the BOBYQA paper.
+!
+! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+!
+! Started: February 2022
+!
+! Last Modified: Saturday, February 26, 2022 PM04:23:22
+!--------------------------------------------------------------------------------------------------!
 
-use, non_intrinsic :: consts_mod, only : RP, IK
+implicit none
+private
+public :: geostep
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!      IMPLICIT REAL*8 (A-H,O-Z)
-implicit real(RP) (a - h, o - z)
-implicit integer(IK) (i - n)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-dimension xpt(npt, *), xopt(*), bmat(ndim, *), zmat(npt, *), sl(*), su(*), xnew(*), xalt(*), glag(*), hcol(*), w(*)
+
+contains
+
+
+subroutine geostep(n, npt, xpt, xopt, bmat, zmat, ndim, sl, su, kopt, knew, adelt, xnew, xalt, alpha, cauchy, glag, hcol, w)
+
+! Generic modules
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF
+
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: knew
+integer(IK), intent(in) :: kopt
+integer(IK), intent(in) :: n
+integer(IK), intent(in) :: ndim
+integer(IK), intent(in) :: npt
+real(RP), intent(in) :: adelt
+real(RP), intent(in) :: bmat(npt + n, n)
+real(RP), intent(in) :: sl(n)
+real(RP), intent(in) :: su(n)
+real(RP), intent(in) :: xopt(n)
+real(RP), intent(in) :: xpt(npt, n)
+real(RP), intent(in) :: zmat(npt, npt - n - 1_IK)
+
+! In-outputs
+real(RP), intent(inout) :: alpha
+real(RP), intent(inout) :: cauchy
+real(RP), intent(inout) :: glag(n)
+real(RP), intent(inout) :: hcol(npt)
+real(RP), intent(inout) :: w(2_IK * n)
+real(RP), intent(inout) :: xalt(n)
+
+! Outputs
+real(RP), intent(out) :: xnew(n)
+
+! Local variables
+real(RP) :: bigstp, const, csave, curv, dderiv, diff, distsq,  &
+&        ggfree, gw, ha, predsq, presav, scaling, &
+&        slbd, step, stpsav, subd, sumin, temp, tempa,      &
+&        tempb, tempd, vlag, wfixsq, wsqsav
+integer(IK) :: i, ibdsav, iflag, ilbd, isbd, iubd, j, k, ksav
+
 !
 !     The arguments N, NPT, XPT, XOPT, BMAT, ZMAT, NDIM, SL and SU all have
 !       the same meanings as the corresponding arguments of BOBYQB.
@@ -20,14 +70,14 @@ dimension xpt(npt, *), xopt(*), bmat(ndim, *), zmat(npt, *), sl(*), su(*), xnew(
 !       UPDATE. The step XNEW-XOPT from XOPT is restricted to moves along the
 !       straight lines through XOPT and another interpolation point.
 !     XALT also provides a large value of the modulus of the KNEW-th Lagrange
-!       function subject to the constraints that have been mentioned, its main
+!       function subject to the constraints that have been mentiONEd, its main
 !       difference from XNEW being that XALT-XOPT is a constrained version of
 !       the Cauchy step within the trust region. An exception is that XALT is
-!       not calculated if all components of GLAG (see below) are zero.
+!       not calculated if all compONEnts of GLAG (see below) are ZERO.
 !     ALPHA will be set to the KNEW-th diagonal element of the H matrix.
 !     CAUCHY will be set to the square of the KNEW-th Lagrange function at
 !       the step XALT-XOPT from XOPT for the vector XALT that is returned,
-!       except that CAUCHY is set to zero if XALT is not calculated.
+!       except that CAUCHY is set to ZERO if XALT is not calculated.
 !     GLAG is a working space vector of length N for the gradient of the
 !       KNEW-th Lagrange function at XOPT.
 !     HCOL is a working space vector of length NPT for the second derivative
@@ -36,15 +86,13 @@ dimension xpt(npt, *), xopt(*), bmat(ndim, *), zmat(npt, *), sl(*), su(*), xnew(
 !       constrained Cauchy step from XOPT of the Lagrange function, followed
 !       by the downhill version of XALT when the uphill step is calculated.
 !
-!     Set the first NPT components of W to the leading elements of the
+!     Set the first NPT compONEnts of W to the leading elements of the
 !     KNEW-th column of the H matrix.
 !
-half = 0.5D0
-one = 1.0D0
-zero = 0.0D0
-const = one + sqrt(2.0D0)
+
+const = ONE + sqrt(TWO)
 do k = 1, npt
-    hcol(k) = zero
+    hcol(k) = ZERO
 end do
 do j = 1, npt - n - 1
     temp = zmat(knew, j)
@@ -53,7 +101,7 @@ do j = 1, npt - n - 1
     end do
 end do
 alpha = hcol(knew)
-ha = half * alpha
+ha = HALF * alpha
 !
 !     Calculate the gradient of the KNEW-th Lagrange function at XOPT.
 !
@@ -61,7 +109,7 @@ do i = 1, n
     glag(i) = bmat(knew, i)
 end do
 do k = 1, npt
-    temp = zero
+    temp = ZERO
     do j = 1, n
         temp = temp + xpt(k, j) * xopt(j)
     end do
@@ -77,11 +125,11 @@ end do
 !     set to the square of the predicted denominator for each line. PRESAV
 !     will be set to the largest admissible value of PREDSQ that occurs.
 !
-presav = zero
+presav = ZERO
 do k = 1, npt
     if (k == kopt) cycle
-    dderiv = zero
-    distsq = zero
+    dderiv = ZERO
+    distsq = ZERO
     do i = 1, n
         temp = xpt(k, i) - xopt(i)
         dderiv = dderiv + glag(i) * temp
@@ -91,13 +139,13 @@ do k = 1, npt
     slbd = -subd
     ilbd = 0
     iubd = 0
-    sumin = min(one, subd)
+    sumin = min(ONE, subd)
 !
 !     Revise SLBD and SUBD if necessary because of the bounds in SL and SU.
 !
     do i = 1, n
         temp = xpt(k, i) - xopt(i)
-        if (temp > zero) then
+        if (temp > ZERO) then
             if (slbd * temp < sl(i) - xopt(i)) then
                 slbd = (sl(i) - xopt(i)) / temp
                 ilbd = -i
@@ -106,7 +154,7 @@ do k = 1, npt
                 subd = max(sumin, (su(i) - xopt(i)) / temp)
                 iubd = i
             end if
-        else if (temp < zero) then
+        else if (temp < ZERO) then
             if (slbd * temp > su(i) - xopt(i)) then
                 slbd = (su(i) - xopt(i)) / temp
                 ilbd = i
@@ -122,7 +170,7 @@ do k = 1, npt
 !     of the other interpolation point on the line through XOPT is KNEW.
 !
     if (k == knew) then
-        diff = dderiv - one
+        diff = dderiv - ONE
         step = slbd
         vlag = slbd * (dderiv - slbd * diff)
         isbd = ilbd
@@ -132,10 +180,10 @@ do k = 1, npt
             vlag = temp
             isbd = iubd
         end if
-        tempd = half * dderiv
+        tempd = HALF * dderiv
         tempa = tempd - diff * slbd
         tempb = tempd - diff * subd
-        if (tempa * tempb < zero) then
+        if (tempa * tempb < ZERO) then
             temp = tempd * tempd / diff
             if (abs(temp) > abs(vlag)) then
                 step = tempd / diff
@@ -148,17 +196,17 @@ do k = 1, npt
 !
     else
         step = slbd
-        vlag = slbd * (one - slbd)
+        vlag = slbd * (ONE - slbd)
         isbd = ilbd
-        temp = subd * (one - subd)
+        temp = subd * (ONE - subd)
         if (abs(temp) > abs(vlag)) then
             step = subd
             vlag = temp
             isbd = iubd
         end if
-        if (subd > half) then
+        if (subd > HALF) then
             if (abs(vlag) < 0.25D0) then
-                step = half
+                step = HALF
                 vlag = 0.25D0
                 isbd = 0
             end if
@@ -168,7 +216,7 @@ do k = 1, npt
 !
 !     Calculate PREDSQ for the current line search and maintain PRESAV.
 !
-    temp = step * (one - step) * distsq
+    temp = step * (ONE - step) * distsq
     predsq = vlag * vlag * (vlag * vlag + ha * temp * temp)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 2019-08-29: With the original code, if either PREDSQ or PRESAV
@@ -194,34 +242,34 @@ if (ibdsav < 0) xnew(-ibdsav) = sl(-ibdsav)
 if (ibdsav > 0) xnew(ibdsav) = su(ibdsav)
 !
 !     Prepare for the iterative method that assembles the constrained Cauchy
-!     step in W. The sum of squares of the fixed components of W is formed in
-!     WFIXSQ, and the free components of W are set to BIGSTP.
+!     step in W. The sum of squares of the fixed compONEnts of W is formed in
+!     WFIXSQ, and the free compONEnts of W are set to BIGSTP.
 !
 bigstp = adelt + adelt
 iflag = 0
-100 wfixsq = zero
-ggfree = zero
+100 wfixsq = ZERO
+ggfree = ZERO
 do i = 1, n
-    w(i) = zero
+    w(i) = ZERO
     tempa = min(xopt(i) - sl(i), glag(i))
     tempb = max(xopt(i) - su(i), glag(i))
-    if (tempa > zero .or. tempb < zero) then
+    if (tempa > ZERO .or. tempb < ZERO) then
         w(i) = bigstp
         ggfree = ggfree + glag(i)**2
     end if
 end do
-if (ggfree == zero) then
-    cauchy = zero
+if (ggfree == ZERO) then
+    cauchy = ZERO
     goto 200
 end if
 !
-!     Investigate whether more components of W can be fixed.
+!     Investigate whether more compONEnts of W can be fixed.
 !
 120 temp = adelt * adelt - wfixsq
-if (temp > zero) then
+if (temp > ZERO) then
     wsqsav = wfixsq
     step = sqrt(temp / ggfree)
-    ggfree = zero
+    ggfree = ZERO
     do i = 1, n
         if (w(i) == bigstp) then
             temp = xopt(i) - step * glag(i)
@@ -236,20 +284,20 @@ if (temp > zero) then
             end if
         end if
     end do
-    if (wfixsq > wsqsav .and. ggfree > zero) goto 120
+    if (wfixsq > wsqsav .and. ggfree > ZERO) goto 120
 end if
 !
-!     Set the remaining free components of W and all components of XALT,
+!     Set the remaining free compONEnts of W and all compONEnts of XALT,
 !     except that W may be scaled later.
 !
-gw = zero
+gw = ZERO
 do i = 1, n
     if (w(i) == bigstp) then
         w(i) = -step * glag(i)
         xalt(i) = max(sl(i), min(su(i), xopt(i) + w(i)))
-    else if (w(i) == zero) then
+    else if (w(i) == ZERO) then
         xalt(i) = xopt(i)
-    else if (glag(i) > zero) then
+    else if (glag(i) > ZERO) then
         xalt(i) = sl(i)
     else
         xalt(i) = su(i)
@@ -258,13 +306,13 @@ do i = 1, n
 end do
 !
 !     Set CURV to the curvature of the KNEW-th Lagrange function along W.
-!     Scale W by a factor less than one if that can reduce the modulus of
+!     Scale W by a factor less than ONE if that can reduce the modulus of
 !     the Lagrange function at XOPT+W. Set CAUCHY to the final value of
 !     the square of this function.
 !
-curv = zero
+curv = ZERO
 do k = 1, npt
-    temp = zero
+    temp = ZERO
     do j = 1, n
         temp = temp + xpt(k, j) * w(j)
     end do
@@ -272,19 +320,19 @@ do k = 1, npt
 end do
 if (iflag == 1) curv = -curv
 if (curv > -gw .and. curv < -const * gw) then
-    scale = -gw / curv
+    scaling = -gw / curv
     do i = 1, n
-        temp = xopt(i) + scale * w(i)
+        temp = xopt(i) + scaling * w(i)
         xalt(i) = max(sl(i), min(su(i), temp))
     end do
-    cauchy = (half * gw * scale)**2
+    cauchy = (HALF * gw * scaling)**2
 else
-    cauchy = (gw + half * curv)**2
+    cauchy = (gw + HALF * curv)**2
 end if
 !
-!     If IFLAG is zero, then XALT is calculated as before after reversing
-!     the sign of GLAG. Thus two XALT vectors become available. The one that
-!     is chosen is the one that gives the larger value of CAUCHY.
+!     If IFLAG is ZERO, then XALT is calculated as before after reversing
+!     the sign of GLAG. Thus two XALT vectors become available. The ONE that
+!     is chosen is the ONE that gives the larger value of CAUCHY.
 !
 if (iflag == 0) then
     do i = 1, n
@@ -302,4 +350,7 @@ if (csave > cauchy) then
     cauchy = csave
 end if
 200 return
-end
+end subroutine geostep
+
+
+end module geometry_mod
