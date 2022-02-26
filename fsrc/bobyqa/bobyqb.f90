@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 AM12:25:21
+! Last Modified: Saturday, February 26, 2022 AM11:57:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -33,6 +33,7 @@ use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
 
 ! Solver-specific modules
+use, non_intrinsic :: initialize_mod, only : initialize
 
 implicit none
 
@@ -134,7 +135,7 @@ nh = (n * np) / 2
 !     initial XOPT is set too. The branch to label 720 occurs if MAXFUN is
 !     less than NPT. GOPT will be updated if KOPT is different from KBASE.
 !
-call prelim(calfun, n, npt, x, xl, xu, rhobeg, iprint, maxfun, xbase, xpt, &
+call initialize(calfun, n, npt, x, xl, xu, rhobeg, iprint, maxfun, xbase, xpt, &
 & fval, gopt, hq, pq, bmat, zmat, ndim, sl, su, nf, kopt, f, ftarget, &
 & xhist, maxxhist, fhist, maxfhist)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
