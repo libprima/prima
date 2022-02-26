@@ -6,7 +6,7 @@ module update_mod
 !
 ! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Started: July 2020
+! Started: February 2022
 !
 ! Last Modified: Saturday, February 26, 2022 PM05:53:29
 !--------------------------------------------------------------------------------------------------!
