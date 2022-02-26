@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM08:44:36
+! Last Modified: Sunday, February 27, 2022 AM12:03:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -67,7 +67,7 @@ real(RP), intent(out) :: xbase(n)
 real(RP), intent(out) :: xhist(n, maxxhist)
 real(RP), intent(out) :: xnew(n)
 real(RP), intent(out) :: xopt(n)
-real(RP), intent(out) :: xpt(npt, n)
+real(RP), intent(out) :: xpt(n, npt)
 real(RP), intent(out) :: w(max(6_IK * n, (n**2 + 3_IK * n + 2_IK) / 2_IK))
 
 ! Local variables
@@ -115,7 +115,7 @@ nf = 0
 do i = 1, n
     xbase(i) = x(i)
     do k = 1, npt
-        xpt(k, i) = ZERO
+        xpt(i, k) = ZERO
     end do
 end do
 do k = 1, npt
@@ -130,7 +130,7 @@ end do
 !     value so far and its index are noted below.
 !
 30 do i = 1, n
-    x(i) = xbase(i) + xpt(nf + 1, i)
+    x(i) = xbase(i) + xpt(i, nf + 1)
 end do
 goto 120
 50 if (nf == 1) then
@@ -138,7 +138,7 @@ goto 120
     kopt = nf
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     do i = 1, n
-        xopt(i) = xpt(1, i)
+        xopt(i) = xpt(i, 1)
     end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     fbase = f
@@ -151,7 +151,7 @@ else
         kopt = nf
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         do i = 1, n
-            xopt(i) = xpt(nf, i)
+            xopt(i) = xpt(i, nf)
         end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     end if
@@ -189,16 +189,16 @@ if (nf <= nnp) then
 !
         if (j < n) then
             j = j + 1
-            xpt(nf + 1, j) = rho
+            xpt(j, nf + 1) = rho
         end if
     else
         fsave = f
         if (f < fbase) then
             w(j) = rho
-            xpt(nf + 1, j) = TWO * rho
+            xpt(j, nf + 1) = TWO * rho
         else
             w(j) = -rho
-            xpt(nf + 1, j) = -rho
+            xpt(j, nf + 1) = -rho
         end if
     end if
     if (nf < nnp) goto 30
@@ -234,8 +234,8 @@ if (ip == iq) then
     iq = iq + 1
 end if
 if (nf < npt) then
-    xpt(nf + 1, ip) = w(ip)
-    xpt(nf + 1, iq) = w(iq)
+    xpt(ip, nf + 1) = w(ip)
+    xpt(iq, nf + 1) = w(iq)
     goto 30
 end if
 !
@@ -251,7 +251,7 @@ rhosq = rho * rho
 70 knew = 0
 ih = n
 do j = 1, n
-    xopt(j) = xpt(kopt, j)
+    xopt(j) = xpt(j, kopt)
     g(j) = pq(j)
     do i = 1, j
         ih = ih + 1
@@ -397,7 +397,7 @@ summ = ZERO
 do k = 1, npt
     temp = ZERO
     do i = 1, n
-        temp = temp + (xpt(k, i) - xnew(i))**2
+        temp = temp + (xpt(i, k) - xnew(i))**2
     end do
     temp = sqrt(temp)
     summ = summ + abs(temp * temp * temp * vlag(k))
@@ -446,7 +446,7 @@ end if
 do k = 1, npt
     summ = ZERO
     do i = 1, n
-        summ = summ + (xpt(k, i) - xopt(i))**2
+        summ = summ + (xpt(i, k) - xopt(i))**2
     end do
     temp = abs(vlag(k))
     if (summ > rhosq) temp = temp * (summ / rhosq)**1.5D0
@@ -462,7 +462,7 @@ if (knew == 0) goto 290
 !     and also update the Lagrange functions and the quadratic model.
 !
 240 do i = 1, n
-    xpt(knew, i) = xnew(i)
+    xpt(i, knew) = xnew(i)
 end do
 temp = ONE / vlag(knew)
 do j = 1, nptm
@@ -496,7 +496,7 @@ if (ddknew > tworsq) goto 70
 290 do k = 1, npt
     w(k) = ZERO
     do i = 1, n
-        w(k) = w(k) + (xpt(k, i) - xopt(i))**2
+        w(k) = w(k) + (xpt(i, k) - xopt(i))**2
     end do
 end do
 310 knew = -1
@@ -583,7 +583,7 @@ if (rho > rhoend) then
     do j = 1, n
         xbase(j) = xbase(j) + xopt(j)
         do k = 1, npt
-            xpt(k, j) = xpt(k, j) - xopt(j)
+            xpt(j, k) = xpt(j, k) - xopt(j)
         end do
         do i = 1, j
             ih = ih + 1
