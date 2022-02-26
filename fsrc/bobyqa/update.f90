@@ -1,13 +1,47 @@
+module update_mod
+!--------------------------------------------------------------------------------------------------!
+! This module contains subroutines concerning the update of the interpolation set.
+!
+! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the BOBYQA paper.
+!
+! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+!
+! Started: July 2020
+!
+! Last Modified: Saturday, February 26, 2022 PM05:53:29
+!--------------------------------------------------------------------------------------------------!
+
+implicit none
+private
+public :: update
+
+
+contains
+
+
 subroutine update(n, npt, bmat, zmat, ndim, vlag, beta, denom, knew, w)
 
-use, non_intrinsic :: consts_mod, only : RP, IK
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!      IMPLICIT REAL*8 (A-H,O-Z)
-implicit real(RP) (a - h, o - z)
-implicit integer(IK) (i - n)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-dimension bmat(ndim, *), zmat(npt, *), vlag(*), w(*)
-!
+! Generic modules
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO
+
+implicit none
+
+integer(IK), intent(in) :: knew
+integer(IK), intent(in) :: n
+integer(IK), intent(in) :: ndim
+integer(IK), intent(in) :: npt
+real(RP), intent(in) :: beta
+real(RP), intent(in) :: denom
+real(RP), intent(inout) :: bmat(npt + n, n)
+real(RP), intent(inout) :: vlag(npt + n)
+real(RP), intent(inout) :: w(npt + n)
+real(RP), intent(inout) :: zmat(npt, npt - n - 1_IK)
+
+! local variables
+real(RP) :: alpha, tau, temp, tempa, tempb, ztest
+integer(IK) :: i, j, jp, k, nptm
+
+
 !     The arrays BMAT and ZMAT are updated, as required by the new position
 !     of the interpolation point that has the index KNEW. The vector VLAG has
 !     N+NPT components, set on entry to the first NPT and last N components
@@ -19,10 +53,8 @@ dimension bmat(ndim, *), zmat(npt, *), vlag(*), w(*)
 !
 !     Set some constants.
 !
-one = 1.0D0
-zero = 0.0D0
 nptm = npt - n - 1
-ztest = zero
+ztest = ZERO
 do k = 1, npt
     do j = 1, nptm
         ztest = max(ztest, abs(zmat(k, j)))
@@ -46,7 +78,7 @@ do j = 2, nptm
             zmat(i, 1) = temp
         end do
     end if
-    zmat(knew, j) = zero
+    zmat(knew, j) = ZERO
 end do
 !
 !     Put the first NPT components of the KNEW-th column of HLAG into W,
@@ -57,7 +89,7 @@ do i = 1, npt
 end do
 alpha = w(knew)
 tau = vlag(knew)
-vlag(knew) = vlag(knew) - one
+vlag(knew) = vlag(knew) - ONE
 !
 !     Complete the updating of ZMAT.
 !
@@ -81,4 +113,8 @@ do j = 1, n
     end do
 end do
 return
-end
+
+end subroutine update
+
+
+end module update_mod
