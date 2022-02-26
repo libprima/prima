@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM05:11:44
+! Last Modified: Saturday, February 26, 2022 PM05:58:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -31,6 +31,9 @@ use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: pintrf_mod, only : OBJ
+
+! Solver-specif modules
+use, non_intrinsic :: update_mod, only : update
 
 implicit none
 

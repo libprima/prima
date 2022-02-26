@@ -1,6 +1,6 @@
 module update_mod
 !--------------------------------------------------------------------------------------------------!
-! This module contains subroutines concerning the geometry-improving of the interpolation set XPT.
+! This module contains subroutines concerning the update of the interpolation set.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's Fortran 77 code and the paper
 !
@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, February 25, 2022 PM11:00:06
+! Last Modified: Saturday, February 26, 2022 PM05:45:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
