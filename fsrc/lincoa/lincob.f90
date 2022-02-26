@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, February 25, 2022 PM10:57:33
+! Last Modified: Saturday, February 26, 2022 PM10:56:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -95,7 +95,7 @@ real(RP), intent(out) :: xbase(n)
 real(RP), intent(out) :: xhist(n, maxxhist)
 real(RP), intent(out) :: xnew(n)
 real(RP), intent(out) :: xopt(n)
-real(RP), intent(out) :: xpt(npt, n)
+real(RP), intent(out) :: xpt(n, npt)
 real(RP), intent(out) :: xsav(n)
 real(RP), intent(out) :: zmat(npt, npt - size(x) - 1)
 
@@ -110,7 +110,6 @@ integer(IK) :: i, idz, ifeas, ih, imprv, ip, itest, j, k,    &
 &           knew, kopt, ksave, nact, nh, np, nptm,     &
 &           nvala, nvalb
 real(RP) :: w(max(m + 3_IK * n, 2_IK * m + n, 2_IK * npt))
-
 
 !
 !     The arguments N, NPT, M, X, RHOBEG, RHOEND, IPRINT and MAXFUN are
@@ -192,6 +191,7 @@ call initialize(calfun, n, npt, m, amat, b, x, rhobeg, iprint, xbase, xpt, fval,
 & cstrv, nf, xhist, maxxhist, fhist, maxfhist, chist, maxchist)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     By Tom (on 04-06-2019):
 if (is_nan(f) .or. is_posinf(f)) then
@@ -236,15 +236,15 @@ if (xoptsq >= 1.0D4 * delta * delta) then
     do k = 1, npt
         summ = ZERO
         do i = 1, n
-            summ = summ + xpt(k, i) * xopt(i)
+            summ = summ + xpt(i, k) * xopt(i)
         end do
         summ = summ - HALF * xoptsq
         w(npt + k) = summ
         rsp(k) = ZERO
         do i = 1, n
-            xpt(k, i) = xpt(k, i) - HALF * xopt(i)
+            xpt(i, k) = xpt(i, k) - HALF * xopt(i)
             step(i) = bmat(k, i)
-            w(i) = summ * xpt(k, i) + qoptsq * xopt(i)
+            w(i) = summ * xpt(i, k) + qoptsq * xopt(i)
             ip = npt + i
             do j = 1, i
                 bmat(ip, j) = bmat(ip, j) + step(i) * w(j) + w(i) * step(j)
@@ -263,7 +263,7 @@ if (xoptsq >= 1.0D4 * delta * delta) then
         do j = 1, n
             summ = qoptsq * summz * xopt(j)
             do i = 1, npt
-                summ = summ + w(i) * xpt(i, j)
+                summ = summ + w(i) * xpt(j, i)
             end do
             step(j) = summ
             if (k < idz) summ = -summ
@@ -300,8 +300,8 @@ if (xoptsq >= 1.0D4 * delta * delta) then
     do j = 1, n
         w(j) = ZERO
         do k = 1, npt
-            w(j) = w(j) + pq(k) * xpt(k, j)
-            xpt(k, j) = xpt(k, j) - HALF * xopt(j)
+            w(j) = w(j) + pq(k) * xpt(j, k)
+            xpt(j, k) = xpt(j, k) - HALF * xopt(j)
         end do
         do i = 1, j
             ih = ih + 1
@@ -312,7 +312,7 @@ if (xoptsq >= 1.0D4 * delta * delta) then
     do j = 1, n
         xbase(j) = xbase(j) + xopt(j)
         xopt(j) = ZERO
-        xpt(kopt, j) = ZERO
+        xpt(j, kopt) = ZERO
     end do
 end if
 
@@ -481,7 +481,7 @@ end do
 do k = 1, npt
     temp = ZERO
     do j = 1, n
-        temp = temp + xpt(k, j) * step(j)
+        temp = temp + xpt(j, k) * step(j)
         rsp(npt + k) = temp
     end do
     vquad = vquad + HALF * pq(k) * temp * temp
@@ -706,10 +706,10 @@ if (itest < 3) then
     ih = 0
     do i = 1, n
         w(i) = bmat(knew, i)
-        temp = pq(knew) * xpt(knew, i)
+        temp = pq(knew) * xpt(i, knew)
         do j = 1, i
             ih = ih + 1
-            hq(ih) = hq(ih) + temp * xpt(knew, j)
+            hq(ih) = hq(ih) + temp * xpt(j, knew)
         end do
     end do
     pq(knew) = ZERO
@@ -726,7 +726,7 @@ fval(knew) = f
 rsp(knew) = rsp(kopt) + rsp(npt + kopt)
 ssq = ZERO
 do i = 1, n
-    xpt(knew, i) = xnew(i)
+    xpt(i, knew) = xnew(i)
     ssq = ssq + step(i)**2
 end do
 rsp(npt + knew) = rsp(npt + kopt) + ssq
@@ -734,7 +734,7 @@ if (itest < 3) then
     do k = 1, npt
         temp = pqw(k) * rsp(k)
         do i = 1, n
-            w(i) = w(i) + temp * xpt(k, i)
+            w(i) = w(i) + temp * xpt(i, k)
         end do
     end do
     do i = 1, n
@@ -794,7 +794,7 @@ if (f < fopt .and. ifeas == 1) then
         do k = 1, npt
             temp = pq(k) * rsp(npt + k)
             do i = 1, n
-                gopt(i) = gopt(i) + temp * xpt(k, i)
+                gopt(i) = gopt(i) + temp * xpt(i, k)
             end do
         end do
     end if
@@ -828,7 +828,7 @@ if (itest == 3) then
     do k = 1, npt
         temp = pq(k) * rsp(k)
         do i = 1, n
-            gopt(i) = gopt(i) + temp * xpt(k, i)
+            gopt(i) = gopt(i) + temp * xpt(i, k)
         end do
     end do
     do ih = 1, nh
@@ -852,7 +852,7 @@ if (ratio >= TENTH) goto 20
 do k = 1, npt
     summ = ZERO
     do j = 1, n
-        summ = summ + (xpt(k, j) - xopt(j))**2
+        summ = summ + (xpt(j, k) - xopt(j))**2
     end do
     if (summ > distsq) then
         knew = k
