@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM10:55:05
+! Last Modified: Sunday, February 27, 2022 AM12:37:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -73,7 +73,7 @@ real(RP), intent(inout) :: x(n)
 real(RP), intent(inout) :: xbase(n)
 real(RP), intent(inout) :: xopt(n)
 real(RP), intent(inout) :: xpt(n, npt)
-real(RP), intent(inout) :: bmat(npt + size(x), size(x))
+real(RP), intent(inout) :: bmat(size(x), npt + size(x))
 real(RP), intent(inout) :: zmat(npt, npt - size(x) - 1)
 
 ! Outputs
@@ -133,7 +133,7 @@ do j = 1, n
         xpt(j, k) = ZERO
     end do
     do i = 1, ndim
-        bmat(i, j) = ZERO
+        bmat(j, i) = ZERO
     end do
 end do
 do k = 1, npt
@@ -153,15 +153,15 @@ do j = 1, n
     if (j < npt - n) then
         jp = n + j + 1
         xpt(j, jp) = -rhobeg
-        bmat(j + 1, j) = HALF / rhobeg
-        bmat(jp, j) = -HALF / rhobeg
+        bmat(j, j + 1) = HALF / rhobeg
+        bmat(j, jp) = -HALF / rhobeg
         zmat(1, j) = -reciq - reciq
         zmat(j + 1, j) = reciq
         zmat(jp, j) = reciq
     else
-        bmat(1, j) = -ONE / rhobeg
-        bmat(j + 1, j) = ONE / rhobeg
-        bmat(npt + j, j) = -HALF * rhosq
+        bmat(j, 1) = -ONE / rhobeg
+        bmat(j, j + 1) = ONE / rhobeg
+        bmat(j, npt + j) = -HALF * rhosq
     end if
 end do
 !
@@ -300,7 +300,7 @@ do k = 1, npt
     end do
     temp = pq(k) * rsp(k)
     do j = 1, n
-        gopt(j) = gopt(j) + fval(k) * bmat(k, j) + temp * xpt(j, k)
+        gopt(j) = gopt(j) + fval(k) * bmat(j, k) + temp * xpt(j, k)
     end do
 end do
 do i = 1, (n * n + n) / 2
@@ -318,7 +318,6 @@ do j = 1, m
     if (temp >= rhobeg) temp = -temp
     rescon(j) = temp
 end do
-
 
 end subroutine initialize
 

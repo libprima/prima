@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM10:38:58
+! Last Modified: Sunday, February 27, 2022 AM12:35:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -41,8 +41,7 @@ real(RP), intent(in) :: xpt(n, npt)
 ! In-outputs
 integer(IK), intent(inout) :: idz
 integer(IK), intent(inout) :: knew
-!real(RP), intent(inout) :: bmat(n, npt + n)
-real(RP), intent(inout) :: bmat(npt + n, n)
+real(RP), intent(inout) :: bmat(n, npt + n)
 real(RP), intent(inout) :: vlag(npt + n)
 real(RP), intent(inout) :: w(npt + n)
 real(RP), intent(inout) :: zmat(npt, npt - n - 1)
@@ -84,7 +83,7 @@ do k = 1, npt
     w(k) = rsp(npt + k) * (HALF * rsp(npt + k) + rsp(k))
     summ = ZERO
     do j = 1, n
-        summ = summ + bmat(k, j) * step(j)
+        summ = summ + bmat(j, k) * step(j)
     end do
     vlag(k) = summ
 end do
@@ -110,12 +109,12 @@ ssq = ZERO
 do j = 1, n
     summ = ZERO
     do i = 1, npt
-        summ = summ + w(i) * bmat(i, j)
+        summ = summ + w(i) * bmat(j, i)
     end do
     bsumm = bsumm + summ * step(j)
     jp = npt + j
     do k = 1, n
-        summ = summ + bmat(jp, k) * step(k)
+        summ = summ + bmat(k, jp) * step(k)
     end do
     vlag(jp) = summ
     bsumm = bsumm + summ * step(j)
@@ -276,12 +275,12 @@ end if
 !
 do j = 1, n
     jp = npt + j
-    w(jp) = bmat(knew, j)
+    w(jp) = bmat(j, knew)
     tempa = (alpha * vlag(jp) - tau * w(jp)) / denom
     tempb = (-beta * w(jp) - tau * vlag(jp)) / denom
     do i = 1, jp
-        bmat(i, j) = bmat(i, j) + tempa * vlag(i) + tempb * w(i)
-        if (i > npt) bmat(jp, i - npt) = bmat(i, j)
+        bmat(j, i) = bmat(j, i) + tempa * vlag(i) + tempb * w(i)
+        if (i > npt) bmat(i - npt, jp) = bmat(j, i)
     end do
 end do
 180 return
