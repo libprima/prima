@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM10:56:22
+! Last Modified: Sunday, February 27, 2022 AM12:33:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -75,8 +75,7 @@ real(RP), intent(inout) :: x(n)
 integer(IK), intent(out) :: iact(:)
 integer(IK), intent(out) :: info
 integer(IK), intent(out) :: nf
-!real(RP), intent(out) :: bmat(size(x), npt + size(x))
-real(RP), intent(out) :: bmat(npt + size(x), size(x))
+real(RP), intent(out) :: bmat(size(x), npt + size(x))
 real(RP), intent(out) :: chist(maxchist)
 real(RP), intent(out) :: cstrv
 real(RP), intent(out) :: f
@@ -243,11 +242,11 @@ if (xoptsq >= 1.0D4 * delta * delta) then
         rsp(k) = ZERO
         do i = 1, n
             xpt(i, k) = xpt(i, k) - HALF * xopt(i)
-            step(i) = bmat(k, i)
+            step(i) = bmat(i, k)
             w(i) = summ * xpt(i, k) + qoptsq * xopt(i)
             ip = npt + i
             do j = 1, i
-                bmat(ip, j) = bmat(ip, j) + step(i) * w(j) + w(i) * step(j)
+                bmat(j, ip) = bmat(j, ip) + step(i) * w(j) + w(i) * step(j)
             end do
         end do
     end do
@@ -268,7 +267,7 @@ if (xoptsq >= 1.0D4 * delta * delta) then
             step(j) = summ
             if (k < idz) summ = -summ
             do i = 1, npt
-                bmat(i, j) = bmat(i, j) + summ * zmat(i, k)
+                bmat(j, i) = bmat(j, i) + summ * zmat(i, k)
             end do
         end do
         do i = 1, n
@@ -276,7 +275,7 @@ if (xoptsq >= 1.0D4 * delta * delta) then
             temp = step(i)
             if (k < idz) temp = -temp
             do j = 1, i
-                bmat(ip, j) = bmat(ip, j) + temp * step(j)
+                bmat(j, ip) = bmat(j, ip) + temp * step(j)
             end do
         end do
     end do
@@ -306,7 +305,7 @@ if (xoptsq >= 1.0D4 * delta * delta) then
         do i = 1, j
             ih = ih + 1
             hq(ih) = hq(ih) + w(i) * xopt(j) + xopt(i) * w(j)
-            bmat(npt + i, j) = bmat(npt + j, i)
+            bmat(j, npt + i) = bmat(i, npt + j)
         end do
     end do
     do j = 1, n
@@ -321,7 +320,7 @@ end if
 ! Exit if BMAT or ZMAT contians NaN
 do j = 1, n
     do i = 1, ndim
-        if (bmat(i, j) /= bmat(i, j)) then
+        if (bmat(j, i) /= bmat(j, i)) then
             info = -3
             goto 600
         end if
@@ -428,7 +427,7 @@ else
 !          DO 160 I=1,N
 !  160     W(I)=BMAT(KNEW,I)
     do i = 1, n
-        w(i) = bmat(knew, i)
+        w(i) = bmat(i, knew)
         if (w(i) /= w(i)) then
             info = -3
             goto 600
@@ -614,7 +613,7 @@ if (ifeas == 1 .and. itest < 3) then
     do k = 1, npt
         summ = ZERO
         do j = 1, n
-            summ = summ + bmat(k, j) * step(j)
+            summ = summ + bmat(j, k) * step(j)
         end do
         vqalt = vqalt + summ * w(k)
         vqalt = vqalt + pqw(k) * rsp(npt + k) * (HALF * rsp(npt + k) + rsp(k))
@@ -657,7 +656,7 @@ end if
 ! Exit if BMAT or ZMAT contians NaN
 do j = 1, n
     do i = 1, ndim
-        if (bmat(i, j) /= bmat(i, j)) then
+        if (bmat(j, i) /= bmat(j, i)) then
             info = -3
             goto 600
         end if
@@ -705,7 +704,7 @@ if (itest < 3) then
     end do
     ih = 0
     do i = 1, n
-        w(i) = bmat(knew, i)
+        w(i) = bmat(i, knew)
         temp = pq(knew) * xpt(i, knew)
         do j = 1, i
             ih = ih + 1
@@ -822,7 +821,7 @@ if (itest == 3) then
     do j = 1, n
         gopt(j) = ZERO
         do i = 1, npt
-            gopt(j) = gopt(j) + w(i) * bmat(i, j)
+            gopt(j) = gopt(j) + w(i) * bmat(j, i)
         end do
     end do
     do k = 1, npt
