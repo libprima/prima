@@ -1,12 +1,12 @@
-function testpdfo(release, precision, nrun) 
+function testpdfo(release, precision, nrun)
 %TESTPDFO tests pdfo on a few VERY simple problems.
 %
-%   Note: Do NOT follow the syntax here when you use pdfo. This file is 
-%   written for testing purpose, and it uses quite atypical syntax. See 
-%   rosenbrock_example.m for an illustration about how to use pdfo. 
+%   Note: Do NOT follow the syntax here when you use pdfo. This file is
+%   written for testing purpose, and it uses quite atypical syntax. See
+%   rosenbrock_example.m for an illustration about how to use pdfo.
 %
 %   ***********************************************************************
-%   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk) 
+%   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
 %               and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
 %               Department of Applied Mathematics,
 %               The Hong Kong Polytechnic University
@@ -16,13 +16,13 @@ function testpdfo(release, precision, nrun)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Attribute: public (can be called directly by users)
-% 
+%
 % TODO: None
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 all_solvers =  {'uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla', 'pdfo'};
 
-% Supress the following warning
+% Suppress the following warnings
 cellfun(@(solver) warning('off', [solver, ':Debug']), all_solvers);
 cellfun(@(solver) warning('off', [solver, ':ChkFunval']), all_solvers);
 cellfun(@(solver) warning('off', [solver, ':Classical']), all_solvers);
@@ -36,7 +36,7 @@ if nargin < 2
 end
 if nargin < 3
     nrun = 1; % Number of runs with randomly perturbed x0
-    perturb = 0; % Magnitude of permission on x0
+    perturb = 0; % Magnitude of perturbation on x0
 else
     perturb = 1e-15;
 end
@@ -63,7 +63,7 @@ fopt_list = {{3, 3.2577598292927021e1, 600, 600,}, ... % goldp
 			 {0, 2.1272916538809911e-01,  2.9733407628744646e-01, 2.6143791089220641e-02} %chebquad
 			};
 
-%xopt_list = {{[0;-1], [-0.5; -4.9018111037601469e-01], [0; 0], [0; 0]}, ... % goldp 
+%xopt_list = {{[0;-1], [-0.5; -4.9018111037601469e-01], [0; 0], [0; 0]}, ... % goldp
 %             {[-0.547197554599523; -1.547197552199337], [-1.4849642130761465e-01; -0.5], [0.267825716190182; 0], [0.267825716190182; 0]}, ... %mcc
 %			  {[3; 2], [0.5; 0.5], [1; 0], [0.773622934941950; 0.633646237684564]}, ... %hmlb
 %             {ones(3,1), ...
@@ -71,11 +71,11 @@ fopt_list = {{3, 3.2577598292927021e1, 600, 600,}, ... % goldp
 %             [6.0367489816330211e-01; 3.6090702088918725e-01; 3.5418080947510699e-02], ...
 %             [7.5499486749647116e-01; 5.8016552326623394e-01; 3.0559894579354657e-01]}, ... %chrosen
 %             {[5.9379627877490138e-01; 4.0620384108718871e-01; 8.9732723150433336e-01; 1.0267283287701645e-01], ...
-%			  [1.0020951281679348e-01; 0.5; 1.0020960717311733e-01; 0.5], ... 
-%			  [6.3140858383707379e-02; 6.3140842748373699e-02; 3.0073419977477961e-01; 5.7298409909313941e-01], ... 
+%			  [1.0020951281679348e-01; 0.5; 1.0020960717311733e-01; 0.5], ...
+%			  [6.3140858383707379e-02; 6.3140842748373699e-02; 3.0073419977477961e-01; 5.7298409909313941e-01], ...
 %			  [3.2005844354004209e-01; 6.6425556098486729e-02; 4.9430560542604501e-01; 8.0548879983696642e-01]} %chebquad
-%            }; 
-% Note: 
+%            };
+% Note:
 % 1. chebquad is invariant with respect to permutations of the variables. Thus there is no unique xopt.
 % 2. Himmelblau's function (hmlb) has multiple minima when
 % unconstrained. They are [3; 2], [-2.805118; 3.131312], [-3.779310; -3.283186], [3.584428; -1.848126]
@@ -105,7 +105,7 @@ for irun = 1 : nrun
                         clflag = clflag_list{iclflag};
                         fun = fun_list{ifun};
                         x0 = x0_list{ifun};
-                        if ~strcmp(solver, 'cobyla') || ~strcmp(func2str(fun), 'chebquad') 
+                        if ~strcmp(solver, 'cobyla') || ~strcmp(func2str(fun), 'chebquad')
                             % The result of cobyla on chebquad is sensitive to x0, so we do not perturb x0
                             r = abs(sin(1e3*sum(double([solver, func2str(fun), type]))*irun*(1:length(x0))'));
                             % Introduce a tiny perturbation to the experiments.
@@ -116,14 +116,14 @@ for irun = 1 : nrun
                         %xopt = xopt_list{ifun}{itype};
     				    fopt = fopt_list{ifun}{itype};
                         n = length(x0);
-    
+
                         problem = struct();
                         problem.objective = fun;
                         problem.x0 = x0;
                         options.solver = solver;
                         options.classical = clflag;
                         problem.options = options;
-    
+
                         switch type
                         case 'unconstrained'
                             [x, fx] = pdfo(fun, x0, options);
@@ -133,11 +133,11 @@ for irun = 1 : nrun
                             [x, fx] = pdfo(fun, x0, [], [], [], [], lb, ub, options);
                             problem.lb = lb;
                             problem.ub = ub;
-                        case 'linearly-constrained' % simplex 
+                        case 'linearly-constrained' % simplex
                             Aineq = ones(1, n);
                             bineq = 1;
                             lb = zeros(n,1);
-                            [x, fx] = pdfo(fun, x0, Aineq, bineq, [], [], lb, [], options); 
+                            [x, fx] = pdfo(fun, x0, Aineq, bineq, [], [], lb, [], options);
                             problem.Aineq = Aineq;
                             problem.bineq = bineq;
                             problem.lb = lb;
@@ -148,20 +148,20 @@ for irun = 1 : nrun
                             problem.lb = lb;
                             problem.nonlcon = nonlcon;
                         end
-    
+
                         xs = pdfo(problem);
-    
+
                         if strcmp(solver, 'cobyla') % The precision of cobyla is lower
                             prec = max(1e3*precision, 1e-2);
                         else
                             prec = precision;
                         end
-                        if ~release 
+                        if ~release
                             fprintf('\nsolver = %s,\tfun = %s,\t\tfx = %.16e,\t\tfopt = %.16e', solver, func2str(fun), fx, fopt);
                         end
                         if (norm(x-xs) > 0) || ((fx-fopt)/max(1, abs(fopt)) > prec) || (~release && abs(fx-fopt)/max(1, abs(fopt)) > prec)
                             success = false;
-                            if clflag  
+                            if clflag
                                 fprintf('\n**** pdfo (classical mode) FAILED a test on %s problem: solver = ''%s'', objective function = ''%s''.\n', type, solver, func2str(fun));
                             else
                                 fprintf('\n**** pdfo FAILED a test on %s problem: solver = ''%s'', objective function = ''%s''.\n', type, solver, func2str(fun));
@@ -171,7 +171,7 @@ for irun = 1 : nrun
                     end
                 end
             end
-            if success 
+            if success
                 if ~release
                     fprintf('\n\n');
                 end
@@ -185,10 +185,10 @@ for irun = 1 : nrun
         fprintf('\nERROR occurred during the test:\n\n');
         rethrow(exception);
     end
-    
-    if pass 
+
+    if pass
         fprintf('All tests were successful.\n\n');
-    else    
+    else
         fprintf('Some tests FAILED.\n\n');
         break;
     end
@@ -205,7 +205,7 @@ return
 function [f, g, H]=chrosen(x)
 %CHROSEN calculates the function value, gradient, and Hessian of the
 %   Chained Rosenbrock function.
-%   See 
+%   See
 %   [1] Toint (1978), 'Some numerical results using a sparse matrix
 %   updating formula in unconstrained optimization'
 %   [2] Powell (2006), 'The NEWUOA software for unconstrained
@@ -221,10 +221,10 @@ H=zeros(n,n); % Hessian
 
 for i=1:n-1
     f = f + (x(i)-1)^2+alpha*(x(i)^2-x(i+1))^2;
-  
+
     g(i)   = g(i) + 2*(x(i)-1)+alpha*2*(x(i)^2-x(i+1))*2*x(i);
     g(i+1) = g(i+1) - alpha*2*(x(i)^2-x(i+1));
-  
+
     H(i,i)    =  H(i,i)+2+alpha*2*2*(3*x(i)^2-x(i+1));
     H(i,i+1)  =  H(i,i+1)-alpha*2*2*x(i);
     H(i+1,i)  =  H(i+1,i) -alpha*2*2*x(i);
@@ -236,7 +236,7 @@ return
 function f = chebquad(x)
 %CHEBQUAD evaluates the Chebyquad function.
 %
-%   See 
+%   See
 %   [1] Fletcher (1965), 'Function minimization without evaluating derivatives --- a review'
 
 n = length(x);
@@ -248,7 +248,7 @@ end
 f = 0;
 for i = 1 : n+1
     tmp = mean(y(i, 1:n));
-    if (mod(i, 2) == 1) 
+    if (mod(i, 2) == 1)
         tmp=tmp+1/double(i*i-2*i);
     end
     f = f + tmp*tmp;
@@ -259,7 +259,7 @@ return
 function [f, g] = hmlb(x)
 %HMLB evaluates the Himmelblau's function and its gradient
 %
-%   See 
+%   See
 %   [1]  Himmelblau (1972),  'Applied Nonlinear Programming'
 
 f = (x(1)^2+x(2)-11)^2 + (x(1)+x(2)^2-7)^2;
@@ -300,7 +300,7 @@ return
 function [cineq, ceq] = ballcon(x, centre, radius)
 % BALLCON represnts the ball constraint ||x-centre|| <= radius
 
-cineq = (x-centre)'*(x-centre) - radius^2; 
+cineq = (x-centre)'*(x-centre) - radius^2;
 ceq = [];
 
 return

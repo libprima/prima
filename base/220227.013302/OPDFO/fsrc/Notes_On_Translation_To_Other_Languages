@@ -1,0 +1,210 @@
+Here are points to note when translating the Fortran code to other languages.
+
+1. Row- and column-major order.
+
+   Fortran saves matrices in the column-major order.
+
+   Same: MATLAB, Julia, R.
+   Different: NumPy, C/C++.
+
+2. Initial index.
+
+   In the Fortran code, array indices start from 1.
+
+   Same: MATLAB, Julia, R.
+   Different: Python, C/C++.
+
+3. Argument-passing by reference, by value, or by sharing.
+
+   Fortran subroutines/functions passes augments by reference. Hence
+   changes made to an argument within a subroutine is visible to the caller.
+
+   Call by value: MATLAB, C/C++, R
+   Call by sharing: Julia, Python
+
+4. Row and column vectors.
+
+   In Fortran, there is no difference between row vectors and column vectors.
+   They are both represented as 1D arrays.
+
+   MATLAB can differentiate rows and columns because they are indeed
+   considered as matrices --- in other words, there is no real 1D array
+   or scalar in MATLAB; they are all matrices.
+
+   Consequently, Fortran and MATLAB behave differently in the following aspects.
+
+   4.1. In Fortran, when a vector x multiplies a matrix A by the intrinsic
+   function MATMUL, there are two possibilities:
+   - matmul(A, x): x is a 1D array whose length is size(A, 2); the result
+     is a 1D array whose length is size(A, 1).
+   - matmul(x, A): x is a 1D array whose length is size(A, 1); the result
+     is a 1D array whose length is size(A, 2)
+
+   In MATLAB, if x is a column vector, and A is a matrix, then A*x in is
+   similar to matmul(A, x) in Fortran if the length of x equals size(A, 2),
+   and x'*A is similar to matmul(x, A) in Fortran if the length of x equals
+   size(A, 1).
+
+   4.2. In Fortran, two arrays x and y can be added up as long as they
+   have the same size, the result being an array of the same size.
+
+   In MATLAB, if x is a column vector while y is a row vector, then x+y
+   is a matrix of size [length(x), length(y)], the (i, j) entry being
+   x(i)+y(j). In Fortran, the same matrix can be obtain in Fortran by
+   spread(x, copies=size(y), dim=2) + spread(y, copies=size(x), dim=1).
+
+5. Multiplication of arrays.
+
+   In Fortran, x*y means the entry-wise multiplication of two arrays
+   x and y, where the two arrays should have the same size. Matrix
+   multiplication is done by MATMUL. Similarly, A**n calculates the
+   entry-wise power of A.
+
+   Same: numpy
+   Different: MATLAB, Julia, where * means matrix multiplication, and A^2
+   in MATLAB is matmul(A, A).
+
+
+6. The "size" intrinsic function in Fortran.
+
+   In Fortran:
+   - size(x) returns the TOTAL number of elements in an array x, no matter
+   whether x is 1D, 2D, or multidimensional. size(x) is invalid if x is a scalar.
+   - size(x, 1) returns the size of x along the first dimension (i.e.,
+   number of rows); size(x, 2) returns the size along the second dimension (i.e.,
+   number of columns); size(x, k) is invalid if k is larger than the
+   number of dimensions that x has (hence size(x, 2) is invalid is x is
+   a vector).
+
+   In MATLAB:
+   - size(x) returns a row vector containing the size of x along
+   all its dimensions; in addition, all scalars and vectors are indeed
+   considered as matrices; therefore, for a scalar x, size(x) = [1, 1];
+   for a row vector x, size(x) = [1, length(x)]; for a column vector,
+   size(x) = [length(x), 1].
+   - The behavior of size(x, k) is the same as in Fortran, except that
+   there is no constraint on k; when k is larger than the number of
+   dimensions in x, size(x, k) = 1.
+   - For the size(x) in Fortran, the equivalent expressions in MATLAB are:
+   -- when x is a 1D array, length(x);
+   -- general arrays: numel(x).
+
+7. maxval/minval
+
+   In Fortran:
+   If A is a matrix, then maxval(A) returns the largest element of A;
+   maxval(A, DIM) operates down the dimension DIM of A. For example, any(A,1) operates down the
+   first dimension (the rows) of A, taking the maximum of each column of A.
+   max(a1, a2, a3, ...) returns the largest one among a1, a2, a3, ...
+
+
+   In MATLAB:
+   If A is a matrix, then max(A) returns a row vector, each entry being the largest element of the
+   corresponding column of A.
+   max(A, [], DIM) operates down the dimension DIM of A, which is the same as maxval(A, DIM) in
+   Fortran. For example, max(A, [], 1) operates down the first dimension (the rows) of A, taking the
+   maximum of each column of A, which is equivalent to the MATLAB version of max(A).
+   max(A, 'all') returns the maximum of all the elements of A.
+   C = MAX(X,Y) returns an array with the largest elements taken from X or Y. X and Y must have
+   compatible sizes. In the simplest cases, they can be the same size or one can be a scalar. Two
+   inputs have compatible sizes if, for every dimension, the dimension sizes of the inputs are
+   either the same or one of them is 1.
+
+
+   minval is similar.
+
+
+   maxloc/minloc:
+
+   In Fortran, minloc(A, mask=MASK) returns the location of the minimum of A subject to the MASK.
+   MASK is a boolean array of the same shape as A, and only the elements of A corresponding to
+   MASK = .TRUE. are considered. By default, the first location will be returned if there are
+   multiple.
+
+   In MATLAB, for a 1D array A, the same thing can be done by
+   minimum = min(A(MASK));
+   minloc = min(find(A<=minimum));
+   Note that A<=minimum is equivalent to A==minimum. We use <= instead of == to avoid equality
+   comparison of real numbers.
+   The min function in MATLAB can return the location of the minimum, but it does NOT support mask.
+
+   MIN/MAX involving NaN
+   The Fortran standard does not specify what the result of the MAX and MIN intrinsics are if one of
+   the arguments is a NaN. In other words, such the result is unpredictable.
+   In Fortran, MINLOC(X) may return 0 if X contains NaN; with Gfrotran, if X is a vector containing
+   only NaN, then MINLOC(X) = 0, but it needs not to be the case with other languages and/or
+   compilers. Since this value can be 0, using it as the index of an array may lead to memory errors.
+
+
+8. any/all
+
+   In Fortran:
+   If A is a boolean matrix, then any(A) returns the disjunction of all the elements of A.
+   any(A, DIM) operates down the dimension DIM of A. For example, any(A,1) operates down the first
+   dimension (the rows) of A, taking the disjunction of each column of A.
+
+   In MATLAB:
+   If A is a boolean matrix, then any(A) returns a row vector, each entry being the disjunction of
+   the corresponding column of A.
+   any(A, DIM) operates down the dimension DIM of A, which is the same as in Fortran. For example,
+   any(A,1) operates down the first dimension (the rows) of A, taking the disjunction of each column
+   of A, which is equivalent to the MATLAB version of any(A) .
+   any(A, 'all') returns the disjunction of all the elements of A (so it is the same as the Fortran
+   version of any(A)).
+
+   all (conjunction) is similar.
+
+9. sum
+
+   In Fortran:
+   If A is a matrix, then sum(A) returns the sum of all the elements in A.
+   sum(A, DIM) operates down the dimension DIM of A. For example, sum(A,1) operates down the first
+   dimension (the rows) of A, taking the sum of each column of A.
+
+   In MATLAB:
+   If A is a matrix, then sum(A) returns a row vector, each entry being the sum of the corresponding
+   column of A.
+   sum(A, DIM) operates down the dimension DIM of A, which is the same as in Fortran. For example,
+   sum(A,1) operates down the first dimension (the rows) of A, taking the sum of each column of A,
+   which is equivalent to the MATLAB version of sum(A) .
+   sum(A, 'all') returns the sum of all the elements of A (so it is the same as the Fortran version
+   of sum(A)).
+
+10. array constructor and reshape
+
+   Suppose that A is a matrix of size mXn and B of size mXk.
+
+   In Fortran:
+   [A, B] is a VECTOR of length m*n+m*k; it equals
+   [A(:, 1), A(:, 2), ..., A(:, n), B(:, 1), B(:, 2), ..., B(:, k)]
+   If we want a mX(n+k) matrix, the first n columns being A and the last k columns being B, we need
+   reshape([A, B], m, n+k)
+
+   In MATLAB:
+   [A, B] is a matrix of size mX(n+k), the first n columns being A and the last k columns being B,
+   which is the same as reshape([A, B], m, n+k) in Fortran.
+
+11. Vector subscript
+
+    A 1-D array X can be indexed by a vector of integers I (namely, A(I)) provided that
+    1) the entries in I are pairwise distinct
+    2) the entries of I all lie between the declared bounds for the indices of A.
+
+    Pay attention to 1). According to Fortran standard 2018, If a vector subscript has two or more
+    elements with the same value, an array section with that vector subscript is not definable and
+    shall not be defined or become undefined.
+
+12. WHERE ... ELSEWHERE construct
+
+    Suppose that X, Y, Z, and B are arrays of the same shape, and B is boolean. Then Fortran supports
+
+    where (B)
+        X = Y
+    elsewhere
+        X = Z
+    end where
+
+    for which the MATLAB equivalent is
+
+    X(B) = Y(B)
+    X(~B) = Z(~B)

@@ -170,7 +170,7 @@ function [x, fx, exitflag, output] = lincoa(varargin)
 %
 %   solves
 %       min cos(x) s.t. 2 * x <= 3
-%   starting from x0=-1 with at most 50 function evaluations.
+%   starting from x0 = -1 with at most 50 function evaluations.
 %
 %   5. Problem defined by a structure
 %
@@ -195,7 +195,7 @@ function [x, fx, exitflag, output] = lincoa(varargin)
 %
 %   solves
 %       min cos(x) s.t. 2 * x <= 3
-%   starting from x0=-1 with at most 50 function evaluations.
+%   starting from x0 = -1 with at most 50 function evaluations.
 %
 %   See also PDFO, UOBYQA, NEWUOA, BOBYQA, COBYLA.
 %
@@ -263,7 +263,7 @@ if (nvararg < 1)
 elseif (nvararg == 1)
     args = varargin; % If there is only 1 input, then it is a structure specifying the problem
 elseif (nvararg >= 2 && nvararg <= maxarg)
-    % If 2<=nvararg<=9 and the last input is a structure (or []), then it is the 'options'
+    % If 2 <= nvararg <= 9 and the last input is a structure (or []), then it is the 'options'
     if isa(varargin{end}, 'struct')
         varargin = [varargin(1:end-1), cell(1, maxarg-nvararg), varargin(end)]; % 'augment' the inputs to maxarg by adding []
         % cell(m,n) returns an mxn array of []
@@ -280,7 +280,7 @@ else
 end
 
 % Preprocess the input
-% Even if invoker='pdfo', we still need to call prepdfo, which will assign
+% Even if invoker = 'pdfo', we still need to call prepdfo, which will assign
 % values to fun, x0, ..., options.
 try % prepdfo is a private function that may generate public errors; error-handling needed
     [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, ~, options, probinfo] = prepdfo(args{:});
@@ -312,7 +312,7 @@ elseif ~strcmp(invoker, 'pdfo') && probinfo.nofreex % x was fixed by the bound c
     output.constr_modified = false;
 elseif ~strcmp(invoker, 'pdfo') &&  probinfo.feasibility_problem
     output.x = x0;  % prepdfo has tried to set x0 to a feasible point (but may have failed)
-    % We could set fx=[], funcCount=0, and fhist=[] since no function evaluation
+    % We could set fx = [], funcCount = 0, and fhist = [] since no function evaluation
     % occured. But then we will have to modify the validation of fx, funcCount,
     % and fhist in postpdfo. To avoid such a modification, we set fx, funcCount,
     % and fhist as below and then revise them in postpdfo.
@@ -341,7 +341,7 @@ else % The problem turns out 'normal' during prepdfo
     % [Aineq, bineq] and [Aeq, beq].
     A_aug = [Aineq; Aeq; -Aeq; -Alb; Aub]';
     b_aug = [bineq(:); beq(:); -beq(:); -lb(:); ub(:)];
-    if ~(isempty(A_aug) && isempty(b_aug)) && ~(size(A_aug,1)==n && size(A_aug,2)==length(b_aug))
+    if ~(isempty(A_aug) && isempty(b_aug)) && ~(size(A_aug,1) == n && size(A_aug,2) == length(b_aug))
         % Private/unexpected error
         error(sprintf('%s:InvalidAugLinCon', funname), '%s: UNEXPECTED ERROR: invalid augmented linear constraints.', funname);
     end
@@ -352,13 +352,9 @@ else % The problem turns out 'normal' during prepdfo
         b_aug = [];
     end
 
-    % maxint is the largest integer in the mex functions; the factor 0.99 provides a buffer. We do not
-    % pass any integer larger than maxint to the mexified Fortran code. Otherwise, errors include
-    % SEGFAULT may occur. The value of maxint is about 10^9 on a 32-bit platform and 10^18 on a 64-bit one.
-    maxint = floor(0.99*min([gethuge('integer'), gethuge('mwSI')]));
-    if (length(b_aug) > maxint)
+    if (length(b_aug) > maxint())
         % Public/normal error
-        error(sprintf('%s:ProblemTooLarge', funname), '%s: The problem is too large; at most %d constraints are allowed.', funname, maxint);
+        error(sprintf('%s:ProblemTooLarge', funname), '%s: The problem is too large; at most %d constraints are allowed.', funname, maxint());
     end
 
     % Extract the options
@@ -366,7 +362,25 @@ else % The problem turns out 'normal' during prepdfo
     maxfun = options.maxfun;
     rhobeg = options.rhobeg;
     rhoend = options.rhoend;
+    eta1 = options.eta1;
+    eta2 = options.eta2;
+    gamma1 = options.gamma1;
+    gamma2 = options.gamma2;
     ftarget = options.ftarget;
+    ctol = options.ctol;
+    cweight = options.cweight;
+    maxhist = options.maxhist;
+    output_xhist = options.output_xhist;
+    maxfilt = options.maxfilt;
+    iprint = options.iprint;
+    precision = options.precision;
+    debug_flag = options.debug;
+    if options.classical
+        variant = 'classical';
+    else
+        variant = 'modern';
+    end
+    solver = options.solver;
 
     % If x0 is not feasible, LINCOA will modify the constraints to make
     % it feasible (which is a bit strange).
@@ -383,14 +397,18 @@ else % The problem turns out 'normal' during prepdfo
     end
 
     % Call the Fortran code
+    mfiledir = fileparts(mfilename('fullpath'));  % The directory where this .m file resides.
+    mexdir = fullfile(mfiledir, 'private');
+    fsolver = str2func(get_mexname(solver, precision, debug_flag, variant, mexdir));
+    % The mexified Fortran function is a private function generating only private errors;
+    % however, public errors can occur due to, e.g., evalobj; error handling needed
     try
-        % The mexified Fortran function is a private function generating only private errors;
-        % however, public errors can occur due to, e.g., evalobj; error handling needed
-        if options.classical
-            [x, fx, exitflag, nf, fhist, constrviolation, chist] = flincoa_classical(fun, x0, A_aug, b_aug, rhobeg, rhoend, maxfun, npt, ftarget);
-        else
-            [x, fx, exitflag, nf, fhist, constrviolation, chist] = flincoa(fun, x0, A_aug, b_aug, rhobeg, rhoend, maxfun, npt, ftarget);
-        end
+        [x, fx, constrviolation, exitflag, nf, xhist, fhist, chist] = ...
+            fsolver(fun, x0, A_aug, b_aug, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ...
+            ftarget, ctol, cweight, maxfun, npt, iprint, maxhist, double(output_xhist), maxfilt);
+        % Fortran MEX does not provide an API for reading Boolean variables. So we convert
+        % output_xhist to a double (0 or 1) before passing it to the MEX gateway.
+        % In C MEX, however, we have mxGetLogicals.
     catch exception
         if ~isempty(regexp(exception.identifier, sprintf('^%s:', funname), 'once')) % Public error; displayed friendly
             error(exception.identifier, '%s\n(error generated in %s, line %d)', exception.message, exception.stack(1).file, exception.stack(1).line);
@@ -398,11 +416,15 @@ else % The problem turns out 'normal' during prepdfo
             rethrow(exception);
         end
     end
+
     % Record the results of the solver in OUTPUT
     output.x = x;
     output.fx = fx;
     output.exitflag = exitflag;
     output.funcCount = nf;
+    if (output_xhist)
+        output.xhist = xhist;
+    end
     output.fhist = fhist;
     output.constrviolation = constrviolation;
     output.chist = chist;

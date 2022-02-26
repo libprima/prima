@@ -1,0 +1,58 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+!
+! Authors:
+!     Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
+!     and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
+!     Department of Applied Mathematics,
+!     The Hong Kong Polytechnic University.
+!
+! Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
+
+python module calfun__user__routines
+    interface calfun_user_routines
+        function fun(n,x) result (f)
+            integer :: n
+            double precision, dimension(n) :: x
+            double precision :: f
+            intent(callback,hide) fun
+        end function fun
+    end interface calfun_user_routines
+end python module calfun__user__routines
+
+python module flincoa
+    interface
+        module flincoa
+            use pdfoconst
+            integer :: nf
+            double precision, allocatable, dimension(:) :: fhist
+            double precision, allocatable, dimension(:) :: chist
+            double precision, allocatable, dimension(:,:) :: aresmax
+            double precision, allocatable, dimension(:) :: bresmax
+        end module flincoa
+        subroutine mlincoa(n,npt,m,a,ia,b,x,rhobeg,rhoend,iprint,maxfun,w,f,info,funhist,conhist,ftarget,resmax)
+            use flincoa
+            use calfun__user__routines
+            intent(callback) fun
+            external fun
+            integer, intent(in) :: n
+            integer, intent(in) :: npt
+            integer, intent(in) :: m
+            double precision, dimension(ia,*), intent(in) :: a
+            integer, intent(in) :: ia
+            double precision, dimension(*), intent(in) :: b
+            double precision, dimension(n), intent(in,out,copy) :: x
+            double precision, intent(in) :: rhobeg
+            double precision, intent(in) :: rhoend
+            integer, intent(in) :: iprint
+            integer, intent(in) :: maxfun
+            double precision, dimension(m*(2+n)+npt*(4+n+npt)+n*(9+3*n)+max(m+3*n,max(2*m+n,2*npt))), intent(in,hide) :: w
+            double precision, intent(out) :: f
+            integer, intent(out) :: info
+            double precision, dimension(maxfun), intent(out) :: funhist
+            double precision, dimension(maxfun), intent(out) :: conhist
+            double precision, intent(in) :: ftarget
+            double precision, intent(out) :: resmax
+        end subroutine mlincoa
+    end interface
+end python module flincoa
