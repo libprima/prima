@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM05:53:29
+! Last Modified: Sunday, February 27, 2022 AM12:56:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -32,7 +32,7 @@ integer(IK), intent(in) :: ndim
 integer(IK), intent(in) :: npt
 real(RP), intent(in) :: beta
 real(RP), intent(in) :: denom
-real(RP), intent(inout) :: bmat(npt + n, n)
+real(RP), intent(inout) :: bmat(n, npt + n)
 real(RP), intent(inout) :: vlag(npt + n)
 real(RP), intent(inout) :: w(npt + n)
 real(RP), intent(inout) :: zmat(npt, npt - n - 1_IK)
@@ -104,12 +104,12 @@ end do
 !
 do j = 1, n
     jp = npt + j
-    w(jp) = bmat(knew, j)
+    w(jp) = bmat(j, knew)
     tempa = (alpha * vlag(jp) - tau * w(jp)) / denom
     tempb = (-beta * w(jp) - tau * vlag(jp)) / denom
     do i = 1, jp
-        bmat(i, j) = bmat(i, j) + tempa * vlag(i) + tempb * w(i)
-        if (i > npt) bmat(jp, i - npt) = bmat(i, j)
+        bmat(j, i) = bmat(j, i) + tempa * vlag(i) + tempb * w(i)
+        if (i > npt) bmat(i - npt, jp) = bmat(j, i)
     end do
 end do
 return

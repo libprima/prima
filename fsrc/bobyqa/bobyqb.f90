@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM11:51:22
+! Last Modified: Sunday, February 27, 2022 AM12:46:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -64,7 +64,7 @@ real(RP), intent(inout) :: x(n)
 ! Outputs
 integer(IK), intent(out) :: info
 integer(IK), intent(out) :: nf
-real(RP), intent(out) :: bmat(npt + n, n)
+real(RP), intent(out) :: bmat(n, npt + n)
 real(RP), intent(out) :: d(n)
 real(RP), intent(out) :: f
 real(RP), intent(out) :: fhist(maxfhist)
@@ -297,11 +297,11 @@ ntrits = ntrits + 1
         w(npt + k) = summ
         temp = fracsq - HALF * summ
         do i = 1, n
-            w(i) = bmat(k, i)
+            w(i) = bmat(i, k)
             vlag(i) = summ * xpt(i, k) + temp * xopt(i)
             ip = npt + i
             do j = 1, i
-                bmat(ip, j) = bmat(ip, j) + w(i) * vlag(j) + vlag(i) * w(j)
+                bmat(j, ip) = bmat(j, ip) + w(i) * vlag(j) + vlag(i) * w(j)
             end do
         end do
     end do
@@ -323,14 +323,14 @@ ntrits = ntrits + 1
             end do
             w(j) = summ
             do k = 1, npt
-                bmat(k, j) = bmat(k, j) + summ * zmat(k, jj)
+                bmat(j, k) = bmat(j, k) + summ * zmat(k, jj)
             end do
         end do
         do i = 1, n
             ip = i + npt
             temp = w(i)
             do j = 1, i
-                bmat(ip, j) = bmat(ip, j) + temp * w(j)
+                bmat(j, ip) = bmat(j, ip) + temp * w(j)
             end do
         end do
     end do
@@ -348,7 +348,7 @@ ntrits = ntrits + 1
         do i = 1, j
             ih = ih + 1
             hq(ih) = hq(ih) + w(i) * xopt(j) + xopt(i) * w(j)
-            bmat(npt + i, j) = bmat(npt + j, i)
+            bmat(j, npt + i) = bmat(i, npt + j)
         end do
     end do
     do i = 1, n
@@ -397,7 +397,7 @@ do i = 1, npt
 end do
 do j = 1, n
     do i = 1, ndim
-        if (bmat(i, j) /= bmat(i, j)) then
+        if (bmat(j, i) /= bmat(j, i)) then
             info = -3
             goto 720
         end if
@@ -493,7 +493,7 @@ if (ntrits > 0) goto 60
 !
 210 do j = 1, n
     do i = 1, ndim
-        if (bmat(i, j) /= bmat(i, j)) then
+        if (bmat(j, i) /= bmat(j, i)) then
             info = -3
             goto 720
         end if
@@ -525,7 +525,7 @@ end do
     do j = 1, n
         summa = summa + xpt(j, k) * d(j)
         summb = summb + xpt(j, k) * xopt(j)
-        summ = summ + bmat(k, j) * d(j)
+        summ = summ + bmat(j, k) * d(j)
     end do
     w(k) = summa * (HALF * summa + summb)
     vlag(k) = summ
@@ -549,12 +549,12 @@ do j = 1, n
     dsq = dsq + d(j)**2
     summ = ZERO
     do k = 1, npt
-        summ = summ + w(k) * bmat(k, j)
+        summ = summ + w(k) * bmat(j, k)
     end do
     bsumm = bsumm + summ * d(j)
     jp = npt + j
     do i = 1, n
-        summ = summ + bmat(jp, i) * d(i)
+        summ = summ + bmat(i, jp) * d(i)
     end do
     vlag(jp) = summ
     bsumm = bsumm + summ * d(j)
@@ -792,7 +792,7 @@ end do
 fval(knew) = f
 do i = 1, n
     xpt(i, knew) = xnew(i)
-    w(i) = bmat(knew, i)
+    w(i) = bmat(i, knew)
 end do
 do k = 1, npt
     summa = ZERO
@@ -870,7 +870,7 @@ if (ntrits > 0) then
     do i = 1, n
         summ = ZERO
         do k = 1, npt
-            summ = summ + bmat(k, i) * vlag(k) + xpt(i, k) * w(k)
+            summ = summ + bmat(i, k) * vlag(k) + xpt(i, k) * w(k)
         end do
         if (xopt(i) == sl(i)) then
             gqsq = gqsq + min(ZERO, gopt(i))**2

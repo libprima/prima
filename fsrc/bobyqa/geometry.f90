@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM11:55:18
+! Last Modified: Sunday, February 27, 2022 AM12:49:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -33,7 +33,7 @@ integer(IK), intent(in) :: n
 integer(IK), intent(in) :: ndim
 integer(IK), intent(in) :: npt
 real(RP), intent(in) :: adelt
-real(RP), intent(in) :: bmat(npt + n, n)
+real(RP), intent(in) :: bmat(n, npt + n)
 real(RP), intent(in) :: sl(n)
 real(RP), intent(in) :: su(n)
 real(RP), intent(in) :: xopt(n)
@@ -106,7 +106,7 @@ ha = HALF * alpha
 !     Calculate the gradient of the KNEW-th Lagrange function at XOPT.
 !
 do i = 1, n
-    glag(i) = bmat(knew, i)
+    glag(i) = bmat(i, knew)
 end do
 do k = 1, npt
     temp = ZERO

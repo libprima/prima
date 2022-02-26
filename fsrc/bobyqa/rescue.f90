@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM11:56:47
+! Last Modified: Sunday, February 27, 2022 AM12:54:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -55,7 +55,7 @@ real(RP), intent(in) :: xu(n)
 integer(IK), intent(inout) :: kopt
 integer(IK), intent(inout) :: nf
 real(RP), intent(inout) :: f
-real(RP), intent(inout) :: bmat(npt + n, n)
+real(RP), intent(inout) :: bmat(n, npt + n)
 real(RP), intent(inout) :: fval(npt)
 real(RP), intent(inout) :: gopt(n)
 real(RP), intent(inout) :: hq(n * (n + 1_IK) / 2_IK)
@@ -183,7 +183,7 @@ do j = 1, n
         ptsaux(2, j) = HALF * ptsaux(1, j)
     end if
     do i = 1, ndim
-        bmat(i, j) = ZERO
+        bmat(j, i) = ZERO
     end do
 end do
 fbase = fval(kopt)
@@ -200,16 +200,16 @@ do j = 1, n
     if (jpn <= npt) then
         ptsid(jpn) = real(j, RP) / real(np, RP) + sfrac
         temp = ONE / (ptsaux(1, j) - ptsaux(2, j))
-        bmat(jp, j) = -temp + ONE / ptsaux(1, j)
-        bmat(jpn, j) = temp + ONE / ptsaux(2, j)
-        bmat(1, j) = -bmat(jp, j) - bmat(jpn, j)
+        bmat(j, jp) = -temp + ONE / ptsaux(1, j)
+        bmat(j, jpn) = temp + ONE / ptsaux(2, j)
+        bmat(j, 1) = -bmat(j, jp) - bmat(j, jpn)
         zmat(1, j) = sqrt(2.0D0) / abs(ptsaux(1, j) * ptsaux(2, j))
         zmat(jp, j) = zmat(1, j) * ptsaux(2, j) * temp
         zmat(jpn, j) = -zmat(1, j) * ptsaux(1, j) * temp
     else
-        bmat(1, j) = -ONE / ptsaux(1, j)
-        bmat(jp, j) = ONE / ptsaux(1, j)
-        bmat(j + npt, j) = -HALF * ptsaux(1, j)**2
+        bmat(j, 1) = -ONE / ptsaux(1, j)
+        bmat(j, jp) = ONE / ptsaux(1, j)
+        bmat(j, j + npt) = -HALF * ptsaux(1, j)**2
     end if
 end do
 !
@@ -240,9 +240,9 @@ knew = kopt
 !     with PTSID(KNEW).
 !
 80 do j = 1, n
-    temp = bmat(kold, j)
-    bmat(kold, j) = bmat(knew, j)
-    bmat(knew, j) = temp
+    temp = bmat(j, kold)
+    bmat(j, kold) = bmat(j, knew)
+    bmat(j, knew) = temp
 end do
 do j = 1, nptm
     temp = zmat(kold, j)
@@ -323,7 +323,7 @@ end do
 do k = 1, npt
     summ = ZERO
     do j = 1, n
-        summ = summ + bmat(k, j) * w(npt + j)
+        summ = summ + bmat(j, k) * w(npt + j)
     end do
     vlag(k) = summ
 end do
@@ -343,12 +343,12 @@ distsq = ZERO
 do j = 1, n
     summ = ZERO
     do k = 1, npt
-        summ = summ + bmat(k, j) * w(k)
+        summ = summ + bmat(j, k) * w(k)
     end do
     jp = j + npt
     bsum = bsum + summ * w(jp)
     do ip = npt + 1, ndim
-        summ = summ + bmat(ip, j) * w(ip)
+        summ = summ + bmat(j, ip) * w(ip)
     end do
     bsum = bsum + summ * w(jp)
     vlag(jp) = summ
@@ -473,7 +473,7 @@ goto 80
 !     all the new interpolation points are included in the model.
 !
     do i = 1, n
-        gopt(i) = gopt(i) + diff * bmat(kpt, i)
+        gopt(i) = gopt(i) + diff * bmat(i, kpt)
     end do
     do k = 1, npt
         summ = ZERO
