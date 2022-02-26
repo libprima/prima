@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM04:24:07
+! Last Modified: Saturday, February 26, 2022 PM05:09:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -35,6 +35,7 @@ use, non_intrinsic :: pintrf_mod, only : OBJ
 ! Solver-specific modules
 use, non_intrinsic :: initialize_mod, only : initialize
 use, non_intrinsic :: geometry_mod, only : geostep
+use, non_intrinsic :: rescue_mod, only : rescue
 
 implicit none
 
