@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 AM11:52:46
+! Last Modified: Saturday, February 26, 2022 PM11:54:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -63,7 +63,7 @@ real(RP), intent(out) :: hq(n * (n + 1_IK) / 2_IK)
 real(RP), intent(out) :: pq(npt)
 real(RP), intent(out) :: xbase(n)
 real(RP), intent(out) :: xhist(n, maxxhist)
-real(RP), intent(out) :: xpt(npt, n)
+real(RP), intent(out) :: xpt(n, npt)
 real(RP), intent(out) :: zmat(npt, npt - n - 1_IK)
 
 ! Local variables
@@ -99,7 +99,7 @@ np = n + 1
 do j = 1, n
     xbase(j) = x(j)
     do k = 1, npt
-        xpt(k, j) = ZERO
+        xpt(j, k) = ZERO
     end do
     do i = 1, ndim
         bmat(i, j) = ZERO
@@ -127,13 +127,13 @@ if (nfm <= 2 * n) then
     if (nfm >= 1 .and. nfm <= n) then
         stepa = rhobeg
         if (su(nfm) == ZERO) stepa = -stepa
-        xpt(nf, nfm) = stepa
+        xpt(nfm, nf) = stepa
     else if (nfm > n) then
-        stepa = xpt(nf - n, nfx)
+        stepa = xpt(nfx, nf - n)
         stepb = -rhobeg
         if (sl(nfx) == ZERO) stepb = min(TWO * rhobeg, su(nfx))
         if (su(nfx) == ZERO) stepb = max(-TWO * rhobeg, sl(nfx))
-        xpt(nf, nfx) = stepb
+        xpt(nfx, nf) = stepb
     end if
 else
     itemp = (nfm - np) / n
@@ -144,17 +144,17 @@ else
         jpt = ipt - n
         ipt = itemp
     end if
-    xpt(nf, ipt) = xpt(ipt + 1, ipt)
-    xpt(nf, jpt) = xpt(jpt + 1, jpt)
+    xpt(ipt, nf) = xpt(ipt, ipt + 1)
+    xpt(jpt, nf) = xpt(jpt, jpt + 1)
 end if
 !
 !     Calculate the next value of F. The least function value so far and
 !     its index are required.
 !
 do j = 1, n
-    x(j) = min(max(xl(j), xbase(j) + xpt(nf, j)), xu(j))
-    if (xpt(nf, j) == sl(j)) x(j) = xl(j)
-    if (xpt(nf, j) == su(j)) x(j) = xu(j)
+    x(j) = min(max(xl(j), xbase(j) + xpt(j, nf)), xu(j))
+    if (xpt(j, nf) == sl(j)) x(j) = xl(j)
+    if (xpt(j, nf) == su(j)) x(j) = xu(j)
 end do
 
 
@@ -198,12 +198,12 @@ if (nf <= 2 * n + 1) then
                 fval(nf) = fval(nf - n)
                 fval(nf - n) = f
                 if (kopt == nf) kopt = nf - n
-                xpt(nf - n, nfx) = stepb
-                xpt(nf, nfx) = stepa
+                xpt(nfx, nf - n) = stepb
+                xpt(nfx, nf) = stepa
             end if
         end if
         bmat(1, nfx) = -(stepa + stepb) / (stepa * stepb)
-        bmat(nf, nfx) = -HALF / xpt(nf - n, nfx)
+        bmat(nf, nfx) = -HALF / xpt(nfx, nf - n)
         bmat(nf - n, nfx) = -bmat(1, nfx) - bmat(nf, nfx)
         zmat(1, nfx) = sqrt(TWO) / (stepa * stepb)
         zmat(nf, nfx) = sqrt(HALF) / rhosq
@@ -219,7 +219,7 @@ else
     zmat(nf, nfx) = recip
     zmat(ipt + 1, nfx) = -recip
     zmat(jpt + 1, nfx) = -recip
-    temp = xpt(nf, ipt) * xpt(nf, jpt)
+    temp = xpt(ipt, nf) * xpt(jpt, nf)
     hq(ih) = (fbeg - fval(ipt + 1) - fval(jpt + 1) + f) / temp
 end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -234,6 +234,7 @@ if (f <= ftarget) goto 80
 
 if (nf < npt .and. nf < maxfun) goto 50
 80 nf = min(nf, npt)  ! nf = npt + 1 at exit of the loop
+
 end subroutine initialize
 
 

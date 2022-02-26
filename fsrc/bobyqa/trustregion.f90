@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM05:40:50
+! Last Modified: Saturday, February 26, 2022 PM11:55:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -37,7 +37,7 @@ real(RP), intent(in) :: pq(npt)
 real(RP), intent(in) :: sl(n)
 real(RP), intent(in) :: su(n)
 real(RP), intent(in) :: xopt(n)
-real(RP), intent(in) :: xpt(npt, n)
+real(RP), intent(in) :: xpt(n, npt)
 
 ! In-outputs
 real(RP), intent(inout) :: crvmin
@@ -447,11 +447,11 @@ do k = 1, npt
     if (pq(k) /= ZERO) then
         temp = ZERO
         do j = 1, n
-            temp = temp + xpt(k, j) * s(j)
+            temp = temp + xpt(j, k) * s(j)
         end do
         temp = temp * pq(k)
         do i = 1, n
-            hs(i) = hs(i) + temp * xpt(k, i)
+            hs(i) = hs(i) + temp * xpt(i, k)
         end do
     end if
 end do

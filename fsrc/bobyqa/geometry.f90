@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM05:08:15
+! Last Modified: Saturday, February 26, 2022 PM11:55:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -37,7 +37,7 @@ real(RP), intent(in) :: bmat(npt + n, n)
 real(RP), intent(in) :: sl(n)
 real(RP), intent(in) :: su(n)
 real(RP), intent(in) :: xopt(n)
-real(RP), intent(in) :: xpt(npt, n)
+real(RP), intent(in) :: xpt(n, npt)
 real(RP), intent(in) :: zmat(npt, npt - n - 1_IK)
 
 ! In-outputs
@@ -111,11 +111,11 @@ end do
 do k = 1, npt
     temp = ZERO
     do j = 1, n
-        temp = temp + xpt(k, j) * xopt(j)
+        temp = temp + xpt(j, k) * xopt(j)
     end do
     temp = hcol(k) * temp
     do i = 1, n
-        glag(i) = glag(i) + temp * xpt(k, i)
+        glag(i) = glag(i) + temp * xpt(i, k)
     end do
 end do
 !
@@ -131,7 +131,7 @@ do k = 1, npt
     dderiv = ZERO
     distsq = ZERO
     do i = 1, n
-        temp = xpt(k, i) - xopt(i)
+        temp = xpt(i, k) - xopt(i)
         dderiv = dderiv + glag(i) * temp
         distsq = distsq + temp * temp
     end do
@@ -144,7 +144,7 @@ do k = 1, npt
 !     Revise SLBD and SUBD if necessary because of the bounds in SL and SU.
 !
     do i = 1, n
-        temp = xpt(k, i) - xopt(i)
+        temp = xpt(i, k) - xopt(i)
         if (temp > ZERO) then
             if (slbd * temp < sl(i) - xopt(i)) then
                 slbd = (sl(i) - xopt(i)) / temp
@@ -235,7 +235,7 @@ end do
 !     Construct XNEW in a way that satisfies the bound constraints exactly.
 !
 do i = 1, n
-    temp = xopt(i) + stpsav * (xpt(ksav, i) - xopt(i))
+    temp = xopt(i) + stpsav * (xpt(i, ksav) - xopt(i))
     xnew(i) = max(sl(i), min(su(i), temp))
 end do
 if (ibdsav < 0) xnew(-ibdsav) = sl(-ibdsav)
@@ -314,7 +314,7 @@ curv = ZERO
 do k = 1, npt
     temp = ZERO
     do j = 1, n
-        temp = temp + xpt(k, j) * w(j)
+        temp = temp + xpt(j, k) * w(j)
     end do
     curv = curv + hcol(k) * temp * temp
 end do
