@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM05:58:06
+! Last Modified: Saturday, February 26, 2022 PM11:56:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -68,7 +68,7 @@ real(RP), intent(inout) :: vlag(npt + n)
 real(RP), intent(inout) :: w(2_IK * npt + n)
 real(RP), intent(inout) :: xbase(n)
 real(RP), intent(inout) :: xopt(n)
-real(RP), intent(inout) :: xpt(npt, n)
+real(RP), intent(inout) :: xpt(n, npt)
 real(RP), intent(inout) :: zmat(npt, npt - n - 1_IK)
 
 ! Outputs
@@ -138,8 +138,8 @@ winc = ZERO
 do k = 1, npt
     distsq = ZERO
     do j = 1, n
-        xpt(k, j) = xpt(k, j) - xopt(j)
-        distsq = distsq + xpt(k, j)**2
+        xpt(j, k) = xpt(j, k) - xopt(j)
+        distsq = distsq + xpt(j, k)**2
     end do
     sumpq = sumpq + pq(k)
     w(ndim + k) = distsq
@@ -156,7 +156,7 @@ ih = 0
 do j = 1, n
     w(j) = HALF * sumpq * xopt(j)
     do k = 1, npt
-        w(j) = w(j) + pq(k) * xpt(k, j)
+        w(j) = w(j) + pq(k) * xpt(j, k)
     end do
     do i = 1, j
         ih = ih + 1
@@ -288,7 +288,7 @@ if (dsqmin == ZERO) goto 260
 !     Form the W-vector of the chosen original interpolation point.
 !
 do j = 1, n
-    w(npt + j) = xpt(knew, j)
+    w(npt + j) = xpt(j, knew)
 end do
 do k = 1, npt
     summ = ZERO
@@ -296,7 +296,7 @@ do k = 1, npt
         continue
     else if (ptsid(k) == ZERO) then
         do j = 1, n
-            summ = summ + w(npt + j) * xpt(k, j)
+            summ = summ + w(npt + j) * xpt(j, k)
         end do
     else
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -352,7 +352,7 @@ do j = 1, n
     end do
     bsum = bsum + summ * w(jp)
     vlag(jp) = summ
-    distsq = distsq + xpt(knew, j)**2
+    distsq = distsq + xpt(j, knew)**2
 end do
 beta = HALF * distsq * distsq + beta - bsum
 vlag(kopt) = vlag(kopt) + ONE
@@ -400,8 +400,8 @@ goto 80
     end if
     ih = 0
     do j = 1, n
-        w(j) = xpt(kpt, j)
-        xpt(kpt, j) = ZERO
+        w(j) = xpt(j, kpt)
+        xpt(j, kpt) = ZERO
         temp = pq(kpt) * w(j)
         do i = 1, j
             ih = ih + 1
@@ -417,12 +417,12 @@ goto 80
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     if (ip > 0) then
         xp = ptsaux(1, ip)
-        xpt(kpt, ip) = xp
+        xpt(ip, kpt) = xp
     end if
     if (iq > 0) then
         xq = ptsaux(1, iq)
         if (ip == 0) xq = ptsaux(2, iq)
-        xpt(kpt, iq) = xq
+        xpt(iq, kpt) = xq
     end if
 !
 !     Set VQUAD to the value of the current model at the new point.
@@ -442,8 +442,8 @@ goto 80
     end if
     do k = 1, npt
         temp = ZERO
-        if (ip > 0) temp = temp + xp * xpt(k, ip)
-        if (iq > 0) temp = temp + xq * xpt(k, iq)
+        if (ip > 0) temp = temp + xp * xpt(ip, k)
+        if (iq > 0) temp = temp + xq * xpt(iq, k)
         vquad = vquad + HALF * pq(k) * temp * temp
     end do
 !
@@ -452,9 +452,9 @@ goto 80
 !     is updated to provide interpolation to the new function value.
 !
     do i = 1, n
-        w(i) = min(max(xl(i), xbase(i) + xpt(kpt, i)), xu(i))
-        if (xpt(kpt, i) == sl(i)) w(i) = xl(i)
-        if (xpt(kpt, i) == su(i)) w(i) = xu(i)
+        w(i) = min(max(xl(i), xbase(i) + xpt(i, kpt)), xu(i))
+        if (xpt(i, kpt) == sl(i)) w(i) = xl(i)
+        if (xpt(i, kpt) == su(i)) w(i) = xu(i)
     end do
     nf = nf + 1
 

@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM05:54:15
+! Last Modified: Saturday, February 26, 2022 PM11:51:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -79,7 +79,7 @@ real(RP), intent(out) :: xbase(n)
 real(RP), intent(out) :: xhist(n, maxxhist)
 real(RP), intent(out) :: xnew(n)
 real(RP), intent(out) :: xopt(n)
-real(RP), intent(out) :: xpt(npt, n)
+real(RP), intent(out) :: xpt(n, npt)
 real(RP), intent(out) :: zmat(npt, npt - n - 1_IK)
 
 ! Local variables
@@ -146,7 +146,7 @@ call initialize(calfun, n, npt, x, xl, xu, rhobeg, iprint, maxfun, xbase, xpt, &
 
 xoptsq = ZERO
 do i = 1, n
-    xopt(i) = xpt(kopt, i)
+    xopt(i) = xpt(i, kopt)
     xoptsq = xoptsq + xopt(i)**2
 end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -200,11 +200,11 @@ nfsav = nf
         do k = 1, npt
             temp = ZERO
             do j = 1, n
-                temp = temp + xpt(k, j) * xopt(j)
+                temp = temp + xpt(j, k) * xopt(j)
             end do
             temp = pq(k) * temp
             do i = 1, n
-                gopt(i) = gopt(i) + temp * xpt(k, i)
+                gopt(i) = gopt(i) + temp * xpt(i, k)
             end do
         end do
     end if
@@ -269,7 +269,7 @@ if (dnorm < HALF * rho) then
         if (bdtest < bdtol) then
             curv = hq((j + j * j) / 2)
             do k = 1, npt
-                curv = curv + pq(k) * xpt(k, j)**2
+                curv = curv + pq(k) * xpt(j, k)**2
             end do
             bdtest = bdtest + HALF * curv * rho
             if (bdtest < bdtol) goto 650
@@ -292,13 +292,13 @@ ntrits = ntrits + 1
         summpq = summpq + pq(k)
         summ = -HALF * xoptsq
         do i = 1, n
-            summ = summ + xpt(k, i) * xopt(i)
+            summ = summ + xpt(i, k) * xopt(i)
         end do
         w(npt + k) = summ
         temp = fracsq - HALF * summ
         do i = 1, n
             w(i) = bmat(k, i)
-            vlag(i) = summ * xpt(k, i) + temp * xopt(i)
+            vlag(i) = summ * xpt(i, k) + temp * xopt(i)
             ip = npt + i
             do j = 1, i
                 bmat(ip, j) = bmat(ip, j) + w(i) * vlag(j) + vlag(i) * w(j)
@@ -319,7 +319,7 @@ ntrits = ntrits + 1
         do j = 1, n
             summ = (fracsq * summz - HALF * summw) * xopt(j)
             do k = 1, npt
-                summ = summ + vlag(k) * xpt(k, j)
+                summ = summ + vlag(k) * xpt(j, k)
             end do
             w(j) = summ
             do k = 1, npt
@@ -342,8 +342,8 @@ ntrits = ntrits + 1
     do j = 1, n
         w(j) = -HALF * summpq * xopt(j)
         do k = 1, npt
-            w(j) = w(j) + pq(k) * xpt(k, j)
-            xpt(k, j) = xpt(k, j) - xopt(j)
+            w(j) = w(j) + pq(k) * xpt(j, k)
+            xpt(j, k) = xpt(j, k) - xopt(j)
         end do
         do i = 1, j
             ih = ih + 1
@@ -429,7 +429,7 @@ call rescue(calfun, n, npt, xl, xu, iprint, maxfun, xbase, xpt, fval, &
 xoptsq = ZERO
 if (kopt /= kbase) then
     do i = 1, n
-        xopt(i) = xpt(kopt, i)
+        xopt(i) = xpt(i, kopt)
         xoptsq = xoptsq + xopt(i)**2
     end do
 end if
@@ -523,8 +523,8 @@ end do
     summb = ZERO
     summ = ZERO
     do j = 1, n
-        summa = summa + xpt(k, j) * d(j)
-        summb = summb + xpt(k, j) * xopt(j)
+        summa = summa + xpt(j, k) * d(j)
+        summb = summb + xpt(j, k) * xopt(j)
         summ = summ + bmat(k, j) * d(j)
     end do
     w(k) = summa * (HALF * summa + summb)
@@ -606,7 +606,7 @@ else
         den = beta * hdiag + vlag(k)**2
         distsq = ZERO
         do j = 1, n
-            distsq = distsq + (xpt(k, j) - xopt(j))**2
+            distsq = distsq + (xpt(j, k) - xopt(j))**2
         end do
         temp = max(ONE, (distsq / delsq)**2)
         if (temp * den > scaden) then
@@ -748,7 +748,7 @@ if (ntrits > 0) then
             den = beta * hdiag + vlag(k)**2
             distsq = ZERO
             do j = 1, n
-                distsq = distsq + (xpt(k, j) - xnew(j))**2
+                distsq = distsq + (xpt(j, k) - xnew(j))**2
             end do
             temp = max(ONE, (distsq / delsq)**2)
             if (temp * den > scaden) then
@@ -773,10 +773,10 @@ ih = 0
 pqold = pq(knew)
 pq(knew) = ZERO
 do i = 1, n
-    temp = pqold * xpt(knew, i)
+    temp = pqold * xpt(i, knew)
     do j = 1, i
         ih = ih + 1
-        hq(ih) = hq(ih) + temp * xpt(knew, j)
+        hq(ih) = hq(ih) + temp * xpt(j, knew)
     end do
 end do
 do jj = 1, nptm
@@ -791,7 +791,7 @@ end do
 !
 fval(knew) = f
 do i = 1, n
-    xpt(knew, i) = xnew(i)
+    xpt(i, knew) = xnew(i)
     w(i) = bmat(knew, i)
 end do
 do k = 1, npt
@@ -801,11 +801,11 @@ do k = 1, npt
     end do
     summb = ZERO
     do j = 1, n
-        summb = summb + xpt(k, j) * xopt(j)
+        summb = summb + xpt(j, k) * xopt(j)
     end do
     temp = summa * summb
     do i = 1, n
-        w(i) = w(i) + temp * xpt(k, i)
+        w(i) = w(i) + temp * xpt(i, k)
     end do
 end do
 do i = 1, n
@@ -830,11 +830,11 @@ if (f < fopt) then
     do k = 1, npt
         temp = ZERO
         do j = 1, n
-            temp = temp + xpt(k, j) * d(j)
+            temp = temp + xpt(j, k) * d(j)
         end do
         temp = pq(k) * temp
         do i = 1, n
-            gopt(i) = gopt(i) + temp * xpt(k, i)
+            gopt(i) = gopt(i) + temp * xpt(i, k)
         end do
     end do
 end if
@@ -860,7 +860,7 @@ if (ntrits > 0) then
     do k = 1, npt
         summ = ZERO
         do j = 1, n
-            summ = summ + xpt(k, j) * xopt(j)
+            summ = summ + xpt(j, k) * xopt(j)
         end do
         w(k + npt) = w(k)
         w(k) = summ * w(k)
@@ -870,7 +870,7 @@ if (ntrits > 0) then
     do i = 1, n
         summ = ZERO
         do k = 1, npt
-            summ = summ + bmat(k, i) * vlag(k) + xpt(k, i) * w(k)
+            summ = summ + bmat(k, i) * vlag(k) + xpt(i, k) * w(k)
         end do
         if (xopt(i) == sl(i)) then
             gqsq = gqsq + min(ZERO, gopt(i))**2
@@ -915,7 +915,7 @@ distsq = max((TWO * delta)**2, (TEN * rho)**2)
 do k = 1, npt
     summ = ZERO
     do j = 1, n
-        summ = summ + (xpt(k, j) - xopt(j))**2
+        summ = summ + (xpt(j, k) - xopt(j))**2
     end do
     if (summ > distsq) then
         knew = k
