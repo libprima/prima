@@ -27,7 +27,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM02:13:01
+! Last Modified: Sunday, February 27, 2022 PM10:22:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -194,7 +194,7 @@ logical :: constr_modified
 ! Working variables (to be removed)
 real(RP) :: temp
 real(RP), allocatable :: w(:)
-integer(IK) :: iw, iamat, ib, ndim, ixb, ixp, ifv, ixs, ixo, igo, ihq, ipq, ibmat, izmat, istp, isp,&
+integer(IK) :: iw, iamat, ib, ixb, ixp, ifv, ixs, ixo, igo, ihq, ipq, ibmat, izmat, istp, isp,&
     & ixn, iac, irc, iqf, irf, ipqw, j, m
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -386,7 +386,6 @@ if (m > 0) then
     end do
 end if
 
-ndim = npt_loc + n
 ixb = ib + m
 ixp = ixb + n
 ifv = ixp + n * npt_loc
@@ -396,7 +395,7 @@ igo = ixo + n
 ihq = igo + n
 ipq = ihq + (n * (n + 1)) / 2
 ibmat = ipq + npt_loc
-izmat = ibmat + ndim * n
+izmat = ibmat + (npt_loc + n) * n
 istp = izmat + npt_loc * (npt_loc - n - 1)
 isp = istp + n
 ixn = isp + npt_loc + npt_loc

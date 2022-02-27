@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM05:38:59
+! Last Modified: Sunday, February 27, 2022 PM10:38:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,10 +23,9 @@ contains
 
 
 subroutine initialize(calfun, n, npt, m, amat, b, x, rhobeg, iprint, xbase, &
-     &  xpt, fval, xsav, xopt, gopt, kopt, hq, pq, bmat, zmat, idz, ndim, &
-     &  rsp, rescon, step, vlag, w, f, ftarget, &
-     &  A_orig, b_orig, &
-     & cstrv, nf, xhist, maxxhist, fhist, maxfhist, chist, maxchist)
+     &  xpt, fval, xsav, xopt, gopt, kopt, hq, pq, bmat, zmat, idz, &
+     &  rsp, rescon, step, vlag, f, ftarget, &
+     &  A_orig, b_orig, cstrv, nf, xhist, maxxhist, fhist, maxfhist, chist, maxchist)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF
@@ -49,7 +48,6 @@ integer(IK), intent(in) :: maxchist
 integer(IK), intent(in) :: maxfhist
 integer(IK), intent(in) :: maxxhist
 integer(IK), intent(in) :: n
-integer(IK), intent(in) :: ndim
 integer(IK), intent(in) :: npt
 real(RP), intent(in) :: A_orig(n, m)
 real(RP), intent(in) :: amat(n, m)
@@ -58,37 +56,39 @@ real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: rhobeg
 
 ! In-outputs
-integer(IK), intent(inout) :: idz
-integer(IK), intent(inout) :: kopt
 real(RP), intent(inout) :: b(m)
-real(RP), intent(inout) :: f
-real(RP), intent(inout) :: fval(npt)
-real(RP), intent(inout) :: gopt(n)
-real(RP), intent(inout) :: pq(npt)
-real(RP), intent(inout) :: vlag(npt + n)  ! The size is NPT + N instead of NPT
-real(RP), intent(inout) :: rsp(2_IK * npt)
-real(RP), intent(inout) :: step(n)
-real(RP), intent(inout) :: w(n + npt)
-real(RP), intent(inout) :: x(n)
-real(RP), intent(inout) :: xbase(n)
-real(RP), intent(inout) :: xopt(n)
-real(RP), intent(inout) :: xpt(n, npt)
-real(RP), intent(inout) :: bmat(size(x), npt + size(x))
-real(RP), intent(inout) :: zmat(npt, npt - size(x) - 1)
 
 ! Outputs
+integer(IK), intent(out) :: idz
+integer(IK), intent(out) :: kopt
 integer(IK), intent(out) :: nf
+real(RP), intent(out) :: bmat(n, npt + n)
 real(RP), intent(out) :: chist(maxchist)
 real(RP), intent(out) :: cstrv
+real(RP), intent(out) :: f
 real(RP), intent(out) :: fhist(maxfhist)
+real(RP), intent(out) :: fval(npt)
+real(RP), intent(out) :: gopt(n)
 real(RP), intent(out) :: hq(n * (n + 1_IK) / 2_IK)
+real(RP), intent(out) :: pq(npt)
 real(RP), intent(out) :: rescon(m)
+real(RP), intent(out) :: rsp(2_IK * npt)
+real(RP), intent(out) :: step(n)
+real(RP), intent(out) :: vlag(npt + n)  ! The size is NPT + N instead of NPT
+real(RP), intent(out) :: x(n)
+real(RP), intent(out) :: xbase(n)
 real(RP), intent(out) :: xhist(n, maxxhist)
+real(RP), intent(out) :: xopt(n)
+real(RP), intent(out) :: xpt(n, npt)
 real(RP), intent(out) :: xsav(n)
+real(RP), intent(out) :: zmat(npt, npt - size(x) - 1)
 
 ! Local variables
+real(RP) :: w(npt - n - 1_IK)
 real(RP) :: bigv, feas, recip, reciq, resid, rhosq, temp, test
-integer(IK) :: i, ipt, itemp, j, jp, jpt, jsav, k, kbase, knew, nptm
+integer(IK) :: i, ipt, itemp, j, jp, jpt, jsav, k, kbase, knew
+
+
 
 !*++
 !*++ End of declarations rewritten by SPAG
@@ -112,7 +112,6 @@ integer(IK) :: i, ipt, itemp, j, jp, jpt, jsav, k, kbase, knew, nptm
 !
 !     Set some constants.
 !
-nptm = npt - n - 1
 rhosq = rhobeg * rhobeg
 recip = ONE / rhosq
 reciq = sqrt(HALF) / rhosq
@@ -132,7 +131,7 @@ do j = 1, n
     do k = 1, npt
         xpt(j, k) = ZERO
     end do
-    do i = 1, ndim
+    do i = 1, npt + n
         bmat(j, i) = ZERO
     end do
 end do
@@ -229,7 +228,7 @@ do nf = 1, npt
         end do
         knew = nf
 
-        call update(n, npt, xpt, bmat, zmat, idz, ndim, rsp, step, kbase, knew, vlag, w)
+        call update(n, npt, xpt, bmat, zmat, idz, rsp, step, kbase, knew, vlag)
 
         do i = 1, n
             xpt(i, nf) = step(i)
@@ -273,7 +272,7 @@ nf = min(nf, npt)  ! At exit of the loop, nf = npt + 1
 !
 !     Set PQ for the first quadratic model.
 !
-do j = 1, nptm
+do j = 1, npt - n - 1
     w(j) = ZERO
     do k = 1, npt
         w(j) = w(j) + zmat(k, j) * fval(k)
@@ -281,7 +280,7 @@ do j = 1, nptm
 end do
 do k = 1, npt
     pq(k) = ZERO
-    do j = 1, nptm
+    do j = 1, npt - n - 1
         pq(k) = pq(k) + zmat(k, j) * w(j)
     end do
 end do

@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM09:31:40
+! Last Modified: Sunday, February 27, 2022 PM10:35:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -81,7 +81,7 @@ real(RP) :: fval(npt)
 real(RP) :: gopt(n)
 real(RP) :: hq(n * (n + 1_IK) / 2_IK)
 real(RP) :: pq(npt)
-real(RP) :: pqw(npt + n)  ! Note that the size is NPT + N instead of NPT
+real(RP) :: pqw(npt + n)  ! Note that the size is NPT + N instead of NPT; Isn't it VLAG in NEWUOA???
 real(RP) :: qfac(n, n)
 real(RP) :: rescon(m)
 real(RP) :: rfac(n * (n + 1_IK) / 2_IK)
@@ -179,10 +179,8 @@ imprv = 0
 !       is set so that XPT(KOPT,.) is the initial trust region centre.
 !
 call initialize(calfun, n, npt, m, amat, b, x, rhobeg, iprint, xbase, xpt, fval, &
-& xsav, xopt, gopt, kopt, hq, pq, bmat, zmat, idz, npt + n, rsp, rescon, &
-& step, pqw, w, f, ftarget, &
-& A_orig, b_orig, &
-& cstrv, nf, xhist, maxxhist, fhist, maxfhist, chist, maxchist)
+& xsav, xopt, gopt, kopt, hq, pq, bmat, zmat, idz, rsp, rescon, step, pqw, f, ftarget, &
+& A_orig, b_orig, cstrv, nf, xhist, maxxhist, fhist, maxfhist, chist, maxchist)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -638,7 +636,7 @@ end if
 !       can be moved. If STEP is a trust region step, then KNEW is ZERO at
 !       present, but a positive value is picked by subroutine UPDATE.
 !
-call update(n, npt, xpt, bmat, zmat, idz, npt + n, rsp, step, kopt, knew, pqw, w)
+call update(n, npt, xpt, bmat, zmat, idz, rsp, step, kopt, knew, pqw)
 if (knew == 0) then
     info = 9
     goto 600
