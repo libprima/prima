@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM11:55:00
+! Last Modified: Monday, February 28, 2022 AM12:42:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,8 +19,7 @@ public :: trsbox
 contains
 
 
-subroutine trsbox(n, npt, xpt, xopt, gopt, hq, pq, sl, su, delta, &
-     &  xnew, d, gnew, xbdi, s, hs, hred, dsq, crvmin)
+subroutine trsbox(n, npt, xpt, xopt, gopt, hq, pq, sl, su, delta, xnew, d, gnew, dsq, crvmin)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF
@@ -39,18 +38,19 @@ real(RP), intent(in) :: su(n)
 real(RP), intent(in) :: xopt(n)
 real(RP), intent(in) :: xpt(n, npt)
 
-! In-outputs
-real(RP), intent(inout) :: crvmin
-real(RP), intent(inout) :: d(n)
-real(RP), intent(inout) :: dsq
-real(RP), intent(inout) :: gnew(n)
-real(RP), intent(inout) :: hred(n)
-real(RP), intent(inout) :: hs(n)
-real(RP), intent(inout) :: s(n)
-real(RP), intent(inout) :: xbdi(n)
-real(RP), intent(inout) :: xnew(n)
+! Outputs
+real(RP), intent(out) :: crvmin
+real(RP), intent(out) :: d(n)
+real(RP), intent(out) :: dsq
+real(RP), intent(out) :: gnew(n)
+real(RP), intent(out) :: xnew(n)
+
 
 ! Local variables
+real(RP) :: hred(n)
+real(RP) :: hs(n)
+real(RP) :: s(n)
+real(RP) :: xbdi(n)
 real(RP) :: angbd, angt, beta, bstep, cth, delsq, dhd, dhs,    &
 &        dredg, dredsq, ds, ggsav, gredsq,       &
 &        qred, rdnext, rdprev, redmax, rednew,       &
@@ -81,7 +81,7 @@ integer(IK) :: i, iact, ih, isav, itcsav, iterc, itermax, iu, &
 !     The arrays S, HS and HRED are also used for working space. They hold the
 !       current search direction, and the changes in the gradient of Q along S
 !       and the reduced D, respectively, where the reduced D is the same as D,
-!       except that the compONEnts of the fixed variables are ZERO.
+!       except that the components of the fixed variables are ZERO.
 !     DSQ will be set to the square of the length of XNEW-XOPT.
 !     CRVMIN is set to ZERO if D reaches the trust region boundary. Otherwise
 !       it is set to the least curvature of H that occurs in the conjugate
@@ -132,7 +132,7 @@ crvmin = -ONE
 !     Set the next search direction of the conjugate gradient method. It is
 !     the steepest descent direction initially and when the iterations are
 !     restarted because a variable has just been fixed by a bound, and of
-!     course the compONEnts of the fixed variables are ZERO. ITERMAX is an
+!     course the components of the fixed variables are ZERO. ITERMAX is an
 !     upper bound on the indices of the conjugate gradient iterations.
 !
 20 beta = ZERO
