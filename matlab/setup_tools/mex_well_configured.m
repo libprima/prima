@@ -1,5 +1,13 @@
 function success = mex_well_configured(language)
 %MEX_WELL_CONFIGURED verifies the set-up of MEX for compiling language
+% At return,
+% success = 1 means MEX is well configured,
+% success = 0 means MEX is not well configured,
+% success = -1 means "mex -setup" runs successfully, but either we cannot try
+% it on the example file because such a file is not found, or the MEX file of
+% the example file does not work as expected.
+
+success = 1;
 
 orig_warning_state = warning;
 warning('off','all'); % We do not want to see warnings when verifying MEX
@@ -8,14 +16,6 @@ callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
 
 ulang = upper(language);
-
-success = 1;
-% At return,
-% success = 1 means MEX is well configured,
-% success = 0 means MEX is not well configured,
-% success = -1 means "mex -setup" runs successfully, but either we cannot try
-% it on the example file because such a file is not found, or the MEX file of
-% the example file does not work as expected.
 
 % Locate example_file, which is an example provided by MATLAB for trying MEX.
 % NOTE: MATLAB MAY CHANGE THE LOCATION OF THIS FILE IN THE FUTURE.
