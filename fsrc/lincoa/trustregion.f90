@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM08:20:50
+! Last Modified: Sunday, February 27, 2022 PM09:05:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -62,9 +62,11 @@ real(RP) :: w(max(m, 2_IK * n))
 real(RP) :: resact(m)
 real(RP) :: resnew(m)
 real(RP) :: g(n)
+real(RP) :: vlam(n)
 real(RP) :: ad, adw, alpbd, alpha, alphm, alpht, beta, ctest, &
 &        dd, dg, dgd, ds, bstep, reduct, resmax, rhs, scaling, snsq, ss, summ, temp, tinynum, wgd
 integer(IK) :: i, icount, ih, ir, j, jsav, k
+
 
 g = g_in
 
@@ -130,13 +132,9 @@ ngetact = 0
 !       a move of DW from STEP is allowed by the linear constraints.
 !
 40 ngetact = ngetact + 1
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Zaikun 2019-08-29: B is never used in GETACT
-!      CALL GETACT (N,M,AMAT,B,NACT,IACT,QFAC,RFAC,SNORM,RESNEW,
-call getact(n, m, amat, nact, iact, qfac, rfac, snorm, resnew, &
-& resact, g, dw, w, w(n + 1))
-if (w(n + 1) == ZERO) goto 320
-scaling = 0.2D0 * snorm / sqrt(w(n + 1))
+call getact(n, m, amat, nact, iact, qfac, rfac, snorm, resnew, resact, g, dw, vlam, dd)
+if (dd == ZERO) goto 320
+scaling = 0.2D0 * snorm / sqrt(dd)
 do i = 1, n
     dw(i) = scaling * dw(i)
 end do
@@ -159,16 +157,16 @@ if (resmax > 1.0D-4 * snorm) then
         if (k >= 2) then
             do i = 1, k - 1
                 ir = ir + 1
-                temp = temp - rfac(ir) * w(i)
+                temp = temp - rfac(ir) * vlam(i)
             end do
         end if
         ir = ir + 1
-        w(k) = temp / rfac(ir)
+        vlam(k) = temp / rfac(ir)
     end do
     do i = 1, n
         d(i) = ZERO
         do k = 1, nact
-            d(i) = d(i) + w(k) * qfac(i, k)
+            d(i) = d(i) + vlam(k) * qfac(i, k)
         end do
     end do
 !
