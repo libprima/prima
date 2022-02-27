@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM11:19:33
+! Last Modified: Monday, February 28, 2022 AM01:27:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,24 +19,27 @@ public :: update
 contains
 
 
-subroutine update(n, npt, bmat, zmat, vlag, beta, denom, knew, w)
+subroutine update(n, npt, bmat, zmat, vlag, beta, denom, knew)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO
 
 implicit none
 
+! Inputs
 integer(IK), intent(in) :: knew
 integer(IK), intent(in) :: n
 integer(IK), intent(in) :: npt
 real(RP), intent(in) :: beta
 real(RP), intent(in) :: denom
+
+! In-outputs
 real(RP), intent(inout) :: bmat(n, npt + n)
 real(RP), intent(inout) :: vlag(npt + n)
-real(RP), intent(inout) :: w(npt + n)
 real(RP), intent(inout) :: zmat(npt, npt - n - 1_IK)
 
-! local variables
+! Local variables
+real(RP) :: w(npt + n)
 real(RP) :: alpha, tau, temp, tempa, tempb, ztest
 integer(IK) :: i, j, jp, k, nptm
 
