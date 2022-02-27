@@ -11,7 +11,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, February 25, 2022 PM08:32:43
+! Last Modified: Sunday, February 27, 2022 PM09:00:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ public :: getact
 contains
 
 
-subroutine getact(n, m, amat, nact, iact, qfac, rfac, snorm, resnew, resact, g, dw, vlam, w)
+subroutine getact(n, m, amat, nact, iact, qfac, rfac, snorm, resnew, resact, g, dw, vlam, dd)
 use, non_intrinsic :: linalg_mod, only : inprod
 
 ! Generic modules
@@ -40,20 +40,24 @@ real(RP), intent(in) :: snorm
 ! In-outputs
 integer(IK), intent(inout) :: iact(m)
 integer(IK), intent(inout) :: nact
-real(RP), intent(inout) :: dw(n)
 real(RP), intent(inout) :: qfac(n, n)
 real(RP), intent(inout) :: resact(m)
 real(RP), intent(inout) :: resnew(m)
 real(RP), intent(inout) :: rfac(n * (n + 1_IK) / 2_IK)
-real(RP), intent(inout) :: vlam(n)
-real(RP), intent(inout) :: w(n)
+
+! Outputs
+real(RP), intent(out) :: dd
+real(RP), intent(out) :: dw(n)
+real(RP), intent(out) :: vlam(n)
 
 ! Local variables
-real(RP) :: cosv, ctol, cval, dd, ddsav, dnorm, rdiag,   &
+real(RP) :: w(n)
+real(RP) :: cosv, ctol, cval, ddsav, dnorm, rdiag,   &
 &        sinv, sprod, summ, sval, tdel, temp, test, tinynum,   &
 &        violmx, vmult
 integer(IK) :: i, ic, idiag, iflag, j, jc, jcp, jdiag, jw,   &
 &           k, l, nactp
+
 
 !     N, M, AMAT, B, NACT, IACT, QFAC and RFAC are the same as the terms
 !       with these names in SUBROUTINE LINCOB. The current values must be
@@ -235,7 +239,7 @@ resact(nact) = resnew(l)
 vlam(nact) = ZERO
 resnew(l) = ZERO
 !
-!     Set the compONEnts of the vector VMU in W.
+!     Set the components of the vector VMU in W.
 !
 220 w(nact) = ONE / rfac((nact * nact + nact) / 2)**2
 if (nact > 1) then
@@ -292,8 +296,8 @@ if (ic > 0) goto 270
 if (violmx > ZERO) goto 220
 if (nact < n) goto 100
 290 dd = ZERO
-300 w(1) = dd
-return
+!300 w(1) = dd
+300 return
 !
 !     These instructions rearrange the active constraints so that the new
 !       value of IACT(NACT) is the old value of IACT(IC). A sequence of
