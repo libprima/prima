@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 28, 2022 AM12:56:00
+! Last Modified: Monday, February 28, 2022 AM01:05:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -417,7 +417,7 @@ end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 call rescue(calfun, n, npt, xl, xu, iprint, maxfun, xbase, xpt, fval, &
 & xopt, gopt, hq, pq, bmat, zmat, sl, su, nf, delta, kopt, &
-& vlag, w, w(n + np), w(npt + n + np), f, ftarget, xhist, fhist)
+& vlag, f, ftarget, xhist, fhist)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !------------------------------------------------------------------------------------------------!
 
