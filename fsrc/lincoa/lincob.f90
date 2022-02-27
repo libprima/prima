@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 AM12:33:39
+! Last Modified: Sunday, February 27, 2022 PM05:50:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,11 +22,8 @@ public :: lincob
 contains
 
 
-subroutine lincob(calfun, n, npt, m, amat, b_in, x, rhobeg, rhoend, iprint, maxfun, &
-    & xbase, xpt, fval, xsav, xopt, gopt, hq, pq, bmat, zmat, ndim, &
-     &  step, rsp, xnew, iact, rescon, qfac, rfac, pqw, f, info, ftarget, &
-     & A_orig, b_orig, &
-     & cstrv, nf, xhist, maxxhist, fhist, maxfhist, chist, maxchist)
+subroutine lincob(calfun, n, npt, m, amat, b_in, x, rhobeg, rhoend, iprint, maxfun, f, info, &
+    & ftarget, A_orig, b_orig, cstrv, nf, xhist, maxxhist, fhist, maxfhist, chist, maxchist)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine performs the actual calculations of LINCOA. The arguments IPRINT, MAXFILT, MAXFUN,
 ! MAXHIST, NPT, CTOL, CWEIGHT, ETA1, ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG, RHOEND, X, NF, F, XHIST,
@@ -58,12 +55,11 @@ integer(IK), intent(in) :: maxfhist
 integer(IK), intent(in) :: maxfun
 integer(IK), intent(in) :: maxxhist
 integer(IK), intent(in) :: n
-integer(IK), intent(in) :: ndim
 integer(IK), intent(in) :: npt
-real(RP), intent(in) :: A_orig(n, m)
-real(RP), intent(in) :: amat(n, m)
-real(RP), intent(in) :: b_in(m)
-real(RP), intent(in) :: b_orig(m)
+real(RP), intent(in) :: A_orig(n, m)  ! Better names? necessary?
+real(RP), intent(in) :: amat(n, m)  ! Better names? necessary?
+real(RP), intent(in) :: b_in(m)  ! Better names? necessary?
+real(RP), intent(in) :: b_orig(m) ! Better names? necessary?
 real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: rhoend
@@ -72,35 +68,36 @@ real(RP), intent(in) :: rhoend
 real(RP), intent(inout) :: x(n)
 
 ! Outputs
-integer(IK), intent(out) :: iact(:)
 integer(IK), intent(out) :: info
 integer(IK), intent(out) :: nf
-real(RP), intent(out) :: bmat(size(x), npt + size(x))
 real(RP), intent(out) :: chist(maxchist)
 real(RP), intent(out) :: cstrv
 real(RP), intent(out) :: f
 real(RP), intent(out) :: fhist(maxfhist)
-real(RP), intent(out) :: fval(npt)
-real(RP), intent(out) :: gopt(n)
-real(RP), intent(out) :: hq(n * (n + 1_IK) / 2_IK)
-real(RP), intent(out) :: pq(npt)
-real(RP), intent(out) :: pqw(npt)
-real(RP), intent(out) :: qfac(n, n)
-real(RP), intent(out) :: rescon(m)
-real(RP), intent(out) :: rfac(n * (n + 1_IK) / 2_IK)
-real(RP), intent(out) :: rsp(2_IK * npt)
-real(RP), intent(out) :: step(n)
-real(RP), intent(out) :: xbase(n)
 real(RP), intent(out) :: xhist(n, maxxhist)
-real(RP), intent(out) :: xnew(n)
-real(RP), intent(out) :: xopt(n)
-real(RP), intent(out) :: xpt(n, npt)
-real(RP), intent(out) :: xsav(n)
-real(RP), intent(out) :: zmat(npt, npt - size(x) - 1)
 
 ! Local variables
+real(RP) :: fval(npt)
+real(RP) :: gopt(n)
+real(RP) :: hq(n * (n + 1_IK) / 2_IK)
+real(RP) :: pq(npt)
+real(RP) :: pqw(npt + n)  ! Note that the size is NPT + N instead of NPT
+real(RP) :: qfac(n, n)
+real(RP) :: rescon(m)
+real(RP) :: rfac(n * (n + 1_IK) / 2_IK)
+real(RP) :: rsp(2_IK * npt)
+real(RP) :: step(n)
+real(RP) :: xbase(n)
+real(RP) :: xnew(n)
+real(RP) :: xopt(n)
+real(RP) :: xpt(n, npt)
+real(RP) :: xsav(n)
+real(RP) :: bmat(size(x), npt + size(x))
+real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: b(size(b_in))
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+real(RP) :: d(n)  ! Only used in TRSTEP as workspace for the moment
+real(RP) :: dw(n)  ! Only used in TRSTEP as workspace for the moment
+integer(IK) :: iact(m)
 real(RP) :: del, delsav, delta, dffalt, diff,  &
 &        distsq, fopt, fsave, qoptsq, ratio,     &
 &        rho, snorm, ssq, summ, summz, temp, vqalt,   &
@@ -134,7 +131,7 @@ real(RP) :: w(max(m + 3_IK * n, 2_IK * m + n, 2_IK * npt))
 !     ZMAT holds the factorization of the leading NPT by NPT submatrix
 !       of H, this factorization being ZMAT times Diag(DZ) times ZMAT^T,
 !       where the elements of DZ are plus or minus ONE, as specified by IDZ.
-!     NDIM is the first dimension of BMAT and has the value NPT+N.
+!     NDIM is the second dimension of BMAT and has the value NPT+N.
 !     STEP is employed for trial steps from XOPT. It is also used for working
 !       space when XBASE is shifted and in PRELIM.
 !     SP is reserved for the scalar products XOPT^T XPT(K,.), K=1,2,...,NPT,
@@ -184,7 +181,7 @@ imprv = 0
 !       is set so that XPT(KOPT,.) is the initial trust region centre.
 !
 call initialize(calfun, n, npt, m, amat, b, x, rhobeg, iprint, xbase, xpt, fval, &
-& xsav, xopt, gopt, kopt, hq, pq, bmat, zmat, idz, ndim, rsp, rescon, &
+& xsav, xopt, gopt, kopt, hq, pq, bmat, zmat, idz, npt + n, rsp, rescon, &
 & step, pqw, w, f, ftarget, &
 & A_orig, b_orig, &
 & cstrv, nf, xhist, maxxhist, fhist, maxfhist, chist, maxchist)
@@ -319,7 +316,7 @@ end if
 ! Zaikun 21-03-2020
 ! Exit if BMAT or ZMAT contians NaN
 do j = 1, n
-    do i = 1, ndim
+    do i = 1, npt + n
         if (bmat(j, i) /= bmat(j, i)) then
             info = -3
             goto 600
@@ -379,7 +376,7 @@ if (knew == 0) then
     end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     call trstep(n, npt, m, amat, xpt, hq, pq, nact, iact, rescon, &
-   & qfac, rfac, snorm, step, xnew, w, w(m + 1), pqw, pqw(np), w(m + np))
+   & qfac, rfac, snorm, step, xnew, w, w(m + 1), d, dw, w(m + np))
 !
 !     A trust region step is applied whenever its length, namely SNORM, is at
 !       least HALF*DELTA. It is also applied if its length is at least 0.1999
@@ -645,7 +642,7 @@ end if
 !       can be moved. If STEP is a trust region step, then KNEW is ZERO at
 !       present, but a positive value is picked by subroutine UPDATE.
 !
-call update(n, npt, xpt, bmat, zmat, idz, ndim, rsp, step, kopt, knew, pqw, w)
+call update(n, npt, xpt, bmat, zmat, idz, npt + n, rsp, step, kopt, knew, pqw, w)
 if (knew == 0) then
     info = 9
     goto 600
@@ -655,7 +652,7 @@ end if
 ! Zaikun 19-03-2020
 ! Exit if BMAT or ZMAT contians NaN
 do j = 1, n
-    do i = 1, ndim
+    do i = 1, npt + n
         if (bmat(j, i) /= bmat(j, i)) then
             info = -3
             goto 600

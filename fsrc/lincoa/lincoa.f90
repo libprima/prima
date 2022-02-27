@@ -27,7 +27,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, February 25, 2022 AM01:07:30
+! Last Modified: Sunday, February 27, 2022 PM02:13:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -196,7 +196,6 @@ real(RP) :: temp
 real(RP), allocatable :: w(:)
 integer(IK) :: iw, iamat, ib, ndim, ixb, ixp, ifv, ixs, ixo, igo, ihq, ipq, ibmat, izmat, istp, isp,&
     & ixn, iac, irc, iqf, irf, ipqw, j, m
-integer(IK), allocatable :: iact(:)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Sizes
@@ -407,12 +406,8 @@ iqf = irc + m
 irf = iqf + n * n
 ipqw = irf + (n * (n + 1)) / 2
 
-call safealloc(iact, m)
 call lincob(calfun, n, npt_loc, m, w(iamat), w(ib), x, rhobeg_loc, rhoend_loc, iprint_loc, &
-& maxfun_loc, w(ixb), w(ixp), w(ifv), w(ixs), w(ixo), w(igo), w(ihq), &
-& w(ipq), w(ibmat), w(izmat), ndim, w(istp), w(isp), w(ixn), iact, &
-& w(irc), w(iqf), w(irf), w(ipqw), f, info_loc, ftarget_loc, &
-& A_loc, b_loc, cstrv_loc, nf_loc, &
+& maxfun_loc, f, info_loc, ftarget_loc, A_loc, b_loc, cstrv_loc, nf_loc, &
 & xhist_loc, size(xhist_loc, 2, kind=IK), fhist_loc, size(fhist_loc, kind=IK), chist_loc, size(chist_loc, kind=IK))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

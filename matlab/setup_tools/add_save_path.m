@@ -1,5 +1,7 @@
 function path_saved = add_save_path(path_string, path_string_stamp)
 %ADD_SAVE_PATH adds the path indicated by PATH_STRING to the MATLAB path and then tries saving path.
+% PATH_STRING_STAMP is a stamp used when writing PATH_STRING to the user's startup.m file, which is
+% needed only if `savepath` fails.
 
 if nargin < 2
     path_string_stamp = sprintf('Added by %s', mfilename);

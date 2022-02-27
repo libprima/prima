@@ -327,10 +327,10 @@ call lincob(calfun, n, npt_loc, m, w(iamat), w(ib), x, rhobeg_loc, rhoend_loc, i
 & int(size(chist_loc), kind=IK))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-! Deallocate A_LOC and B_LOC. Indeed, automatic allocation will take place at exit.
+! Deallocate A_LOC, B_LOC, etc. Indeed, automatic allocation will take place at exit.
 deallocate (A_loc)
 deallocate (b_loc)
-
+deallocate (iact)
 
 ! Write the outputs.
 

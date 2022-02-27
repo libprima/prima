@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 AM12:37:21
+! Last Modified: Sunday, February 27, 2022 PM05:38:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -24,7 +24,7 @@ contains
 
 subroutine initialize(calfun, n, npt, m, amat, b, x, rhobeg, iprint, xbase, &
      &  xpt, fval, xsav, xopt, gopt, kopt, hq, pq, bmat, zmat, idz, ndim, &
-     &  rsp, rescon, step, pqw, w, f, ftarget, &
+     &  rsp, rescon, step, vlag, w, f, ftarget, &
      &  A_orig, b_orig, &
      & cstrv, nf, xhist, maxxhist, fhist, maxfhist, chist, maxchist)
 
@@ -65,7 +65,7 @@ real(RP), intent(inout) :: f
 real(RP), intent(inout) :: fval(npt)
 real(RP), intent(inout) :: gopt(n)
 real(RP), intent(inout) :: pq(npt)
-real(RP), intent(inout) :: pqw(npt)
+real(RP), intent(inout) :: vlag(npt + n)  ! The size is NPT + N instead of NPT
 real(RP), intent(inout) :: rsp(2_IK * npt)
 real(RP), intent(inout) :: step(n)
 real(RP), intent(inout) :: w(n + npt)
@@ -229,7 +229,7 @@ do nf = 1, npt
         end do
         knew = nf
 
-        call update(n, npt, xpt, bmat, zmat, idz, ndim, rsp, step, kbase, knew, pqw, w)
+        call update(n, npt, xpt, bmat, zmat, idz, ndim, rsp, step, kbase, knew, vlag, w)
 
         do i = 1, n
             xpt(i, nf) = step(i)
