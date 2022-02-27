@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM05:50:23
+! Last Modified: Sunday, February 27, 2022 PM08:16:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -95,8 +95,6 @@ real(RP) :: xsav(n)
 real(RP) :: bmat(size(x), npt + size(x))
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP) :: b(size(b_in))
-real(RP) :: d(n)  ! Only used in TRSTEP as workspace for the moment
-real(RP) :: dw(n)  ! Only used in TRSTEP as workspace for the moment
 integer(IK) :: iact(m)
 real(RP) :: del, delsav, delta, dffalt, diff,  &
 &        distsq, fopt, fsave, qoptsq, ratio,     &
@@ -104,7 +102,7 @@ real(RP) :: del, delsav, delta, dffalt, diff,  &
 &        vquad, xdiff, xoptsq
 integer(IK) :: i, idz, ifeas, ih, imprv, ip, itest, j, k,    &
 &           knew, kopt, ksave, nact, nh, np, nptm,     &
-&           nvala, nvalb
+&           nvala, nvalb, ngetact
 real(RP) :: w(max(m + 3_IK * n, 2_IK * m + n, 2_IK * npt))
 
 !
@@ -371,12 +369,12 @@ delsav = delta
 ksave = knew
 if (knew == 0) then
     snorm = delta
-    do i = 1, n
-        xnew(i) = gopt(i)
-    end do
+!    do i = 1, n
+!        xnew(i) = gopt(i)
+!    end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     call trstep(n, npt, m, amat, xpt, hq, pq, nact, iact, rescon, &
-   & qfac, rfac, snorm, step, xnew, w, w(m + 1), d, dw, w(m + np))
+   & qfac, rfac, snorm, step, gopt, ngetact)
 !
 !     A trust region step is applied whenever its length, namely SNORM, is at
 !       least HALF*DELTA. It is also applied if its length is at least 0.1999
@@ -384,7 +382,7 @@ if (knew == 0) then
 !       active set. Otherwise there is a branch below to label 530 or 560.
 !
     temp = HALF * delta
-    if (xnew(1) >= HALF) temp = 0.1999D0 * delta
+    if (ngetact > 1) temp = 0.1999D0 * delta
     if (snorm <= temp) then
         delta = HALF * delta
         if (delta <= 1.4D0 * rho) delta = rho
