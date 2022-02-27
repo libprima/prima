@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 AM12:49:05
+! Last Modified: Sunday, February 27, 2022 PM11:17:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,7 +19,7 @@ public :: geostep
 contains
 
 
-subroutine geostep(n, npt, xpt, xopt, bmat, zmat, ndim, sl, su, kopt, knew, adelt, xnew, xalt, alpha, cauchy, glag, hcol, w)
+subroutine geostep(n, npt, xpt, xopt, bmat, zmat, sl, su, kopt, knew, adelt, xnew, xalt, alpha, cauchy, glag, hcol, w)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF
@@ -30,7 +30,6 @@ implicit none
 integer(IK), intent(in) :: knew
 integer(IK), intent(in) :: kopt
 integer(IK), intent(in) :: n
-integer(IK), intent(in) :: ndim
 integer(IK), intent(in) :: npt
 real(RP), intent(in) :: adelt
 real(RP), intent(in) :: bmat(n, npt + n)

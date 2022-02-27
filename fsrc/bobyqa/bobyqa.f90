@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, February 25, 2022 PM11:44:52
+! Last Modified: Sunday, February 27, 2022 PM11:37:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -171,7 +171,7 @@ real(RP), allocatable :: xhist_loc(:, :)
 ! Working variables (to be removed)
 real(RP) :: temp
 real(RP), allocatable :: w(:)
-integer(IK) :: ndim, ixb, ixp, ifv, ixo, igo, ihq, ipq, ibmat, izmat, isl, isu, ixn, ixa, id, ivl, iw, &
+integer(IK) :: ixb, ixp, ifv, ixo, igo, ihq, ipq, ibmat, izmat, isl, isu, ixn, ixa, id, ivl, iw, &
     & j, jsl, jsu
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -340,7 +340,6 @@ call safealloc(w, int((npt_loc + 5) * (npt_loc + n) + 3 * n * (n + 5) / 2, IK))
 !     requires the first (NPT+2)*(NPT+N)+3*N*(N+5)/2 elements of W plus the
 !     space that is taken by the last array in the argument list of BOBYQB.
 !
-ndim = npt + n
 ixb = 1
 ixp = ixb + n
 ifv = ixp + n * npt
@@ -349,14 +348,14 @@ igo = ixo + n
 ihq = igo + n
 ipq = ihq + (n * (n + 1)) / 2
 ibmat = ipq + npt
-izmat = ibmat + ndim * n
+izmat = ibmat + (npt + n) * n
 isl = izmat + npt * (npt - n - 1)
 isu = isl + n
 ixn = isu + n
 ixa = ixn + n
 id = ixa + n
 ivl = id + n
-iw = ivl + ndim
+iw = ivl + npt + n
 !
 !     Return if there is insufficient space between the bounds. Modify the
 !     initial X if necessary in order to avoid conflicts between the bounds
@@ -401,9 +400,8 @@ end do
 !     Make the call of BOBYQB.
 !
 call bobyqb(calfun, n, npt_loc, x, xl_loc, xu_loc, rhobeg_loc, rhoend_loc, iprint_loc, maxfun_loc, &
-    & w(ixb), w(ixp), w(ifv), w(ixo), w(igo), w(ihq), w(ipq), w(ibmat), w(izmat), &
-& ndim, w(isl), w(isu), w(ixn), w(ixa), w(id), w(ivl), w(iw), f, info_loc, ftarget_loc, &
-& nf_loc, xhist_loc, size(xhist_loc, 2, kind=IK), fhist_loc, size(fhist_loc, kind=IK))
+    & w(isl), w(isu), &
+    & f, info_loc, ftarget_loc, nf_loc, xhist_loc, fhist_loc)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 

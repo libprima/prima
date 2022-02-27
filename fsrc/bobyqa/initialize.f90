@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 AM12:51:37
+! Last Modified: Sunday, February 27, 2022 PM11:18:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -20,8 +20,7 @@ contains
 
 
 subroutine initialize(calfun, n, npt, x, xl, xu, rhobeg, iprint, maxfun, xbase, &
-& xpt, fval, gopt, hq, pq, bmat, zmat, ndim, sl, su, nf, kopt, f, ftarget, &
-& xhist, maxxhist, fhist, maxfhist)
+& xpt, fval, gopt, hq, pq, bmat, zmat, sl, su, nf, kopt, f, ftarget, xhist, fhist)
 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF
 use, non_intrinsic :: evaluate_mod, only : evaluate
@@ -35,11 +34,8 @@ implicit none
 ! Inputs
 procedure(OBJ) :: calfun
 integer(IK), intent(in) :: iprint
-integer(IK), intent(in) :: maxfhist
 integer(IK), intent(in) :: maxfun
-integer(IK), intent(in) :: maxxhist
 integer(IK), intent(in) :: n
-integer(IK), intent(in) :: ndim
 integer(IK), intent(in) :: npt
 real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: rhobeg
@@ -56,13 +52,13 @@ integer(IK), intent(out) :: kopt
 integer(IK), intent(out) :: nf
 real(RP), intent(out) :: bmat(n, npt + n)
 real(RP), intent(out) :: f
-real(RP), intent(out) :: fhist(maxfhist)
+real(RP), intent(out) :: fhist(:)
 real(RP), intent(out) :: fval(npt)
 real(RP), intent(out) :: gopt(n)
 real(RP), intent(out) :: hq(n * (n + 1_IK) / 2_IK)
 real(RP), intent(out) :: pq(npt)
 real(RP), intent(out) :: xbase(n)
-real(RP), intent(out) :: xhist(n, maxxhist)
+real(RP), intent(out) :: xhist(:, :)
 real(RP), intent(out) :: xpt(n, npt)
 real(RP), intent(out) :: zmat(npt, npt - n - 1_IK)
 
@@ -101,7 +97,7 @@ do j = 1, n
     do k = 1, npt
         xpt(j, k) = ZERO
     end do
-    do i = 1, ndim
+    do i = 1, npt + n
         bmat(j, i) = ZERO
     end do
 end do
