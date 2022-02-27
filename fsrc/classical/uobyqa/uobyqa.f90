@@ -202,7 +202,7 @@ call uobyqb(calfun, n, x, rhobeg_loc, rhoend_loc, iprint_loc, maxfun_loc, npt, w
      &  nf_loc, xhist_loc, int(size(xhist_loc, 2), IK), fhist_loc, int(size(fhist_loc), IK))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !--------------------------------------------------------------------------------------------------!
-
+deallocate (w)
 
 
 ! Write the outputs.
