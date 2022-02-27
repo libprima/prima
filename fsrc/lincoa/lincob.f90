@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM08:16:04
+! Last Modified: Sunday, February 27, 2022 PM09:31:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -369,9 +369,6 @@ delsav = delta
 ksave = knew
 if (knew == 0) then
     snorm = delta
-!    do i = 1, n
-!        xnew(i) = gopt(i)
-!    end do
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     call trstep(n, npt, m, amat, xpt, hq, pq, nact, iact, rescon, &
    & qfac, rfac, snorm, step, gopt, ngetact)
@@ -421,9 +418,10 @@ else
 ! Zaikun 2019-08-29: See the comments below line number 140
 !          DO 160 I=1,N
 !  160     W(I)=BMAT(KNEW,I)
+    !w = bmat(:, knew)
     do i = 1, n
-        w(i) = bmat(i, knew)
-        if (w(i) /= w(i)) then
+        !if (w(i) /= w(i)) then
+        if (bmat(i, knew) /= bmat(i, knew)) then
             info = -3
             goto 600
         end if
@@ -453,7 +451,7 @@ else
 ! Zaikun 2019-08-29: B is never used in QMSTEP
 !          CALL QMSTEP (N,NPT,M,AMAT,B,XPT,XOPT,NACT,IACT,RESCON,
     call geostep(n, npt, m, amat, xpt, xopt, nact, iact, rescon, &
-&   qfac, kopt, knew, del, step, w, pqw, w(np), w(np + m), ifeas)
+&   qfac, kopt, knew, del, step, bmat(:, knew), pqw, ifeas)
 end if
 !
 !     Set VQUAD to the change to the quadratic model when the move STEP is

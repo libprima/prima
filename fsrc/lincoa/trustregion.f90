@@ -11,7 +11,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM09:05:34
+! Last Modified: Sunday, February 27, 2022 PM09:10:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,8 +22,7 @@ public :: trstep
 contains
 
 
-subroutine trstep(n, npt, m, amat, xpt, hq, pq, nact, iact, rescon, &
-     &  qfac, rfac, snorm, step, g_in, ngetact)
+subroutine trstep(n, npt, m, amat, xpt, hq, pq, nact, iact, rescon, qfac, rfac, snorm, step, g_in, ngetact)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF

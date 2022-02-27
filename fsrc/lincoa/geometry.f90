@@ -11,7 +11,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 26, 2022 PM10:39:35
+! Last Modified: Sunday, February 27, 2022 PM09:38:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,8 +22,7 @@ public :: geostep
 contains
 
 
-subroutine geostep(n, npt, m, amat, xpt, xopt, nact, iact, &
-     &  rescon, qfac, kopt, knew, del, step, gl, pqw, rstat, w, ifeas)
+subroutine geostep(n, npt, m, amat, xpt, xopt, nact, iact, rescon, qfac, kopt, knew, del, step, gl_in, pqw, ifeas)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH
@@ -46,19 +45,22 @@ real(RP), intent(in) :: rescon(m)
 real(RP), intent(in) :: xopt(n)
 real(RP), intent(in) :: xpt(n, npt)
 
-! In-outputs
-integer(IK), intent(inout) :: ifeas
-real(RP), intent(inout) :: gl(n)
-real(RP), intent(inout) :: rstat(m)
-real(RP), intent(inout) :: step(n)
-real(RP), intent(inout) :: w(n)
+! Outputs
+integer(IK), intent(out) :: ifeas
+real(RP), intent(out) :: step(n)
 
 ! Local variables
+real(RP) :: gl_in(n)
+real(RP) :: rstat(m)
+real(RP) :: w(n)
+real(RP) :: gl(n)
 real(RP) :: bigv, ctol, gg, ghg, resmax, sp, ss,  &
 &        stp, stpsav, summ, temp, test, vbig, vgrad, &
 &        vlag, vnew, ww
 integer(IK) :: i, j, jsav, k, ksav
 
+ifeas = 0_IK !??? Added by Zaikun 20220227
+gl = gl_in
 
 !
 !     N, NPT, M, AMAT, B, XPT, XOPT, NACT, IACT, RESCON, QFAC, KOPT are the
