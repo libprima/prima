@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM11:17:56
+! Last Modified: Monday, February 28, 2022 AM12:55:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,7 +19,7 @@ public :: geostep
 contains
 
 
-subroutine geostep(n, npt, xpt, xopt, bmat, zmat, sl, su, kopt, knew, adelt, xnew, xalt, alpha, cauchy, glag, hcol, w)
+subroutine geostep(n, npt, xpt, xopt, bmat, zmat, sl, su, kopt, knew, adelt, xnew, xalt, alpha, cauchy)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF
@@ -39,18 +39,16 @@ real(RP), intent(in) :: xopt(n)
 real(RP), intent(in) :: xpt(n, npt)
 real(RP), intent(in) :: zmat(npt, npt - n - 1_IK)
 
-! In-outputs
-real(RP), intent(inout) :: alpha
-real(RP), intent(inout) :: cauchy
-real(RP), intent(inout) :: glag(n)
-real(RP), intent(inout) :: hcol(npt)
-real(RP), intent(inout) :: w(2_IK * n)
-real(RP), intent(inout) :: xalt(n)
-
 ! Outputs
 real(RP), intent(out) :: xnew(n)
+real(RP), intent(out) :: alpha
+real(RP), intent(out) :: cauchy
+real(RP), intent(out) :: xalt(n)
 
 ! Local variables
+real(RP) :: glag(n)
+real(RP) :: hcol(npt)
+real(RP) :: w(2_IK * n)
 real(RP) :: bigstp, const, csave, curv, dderiv, diff, distsq,  &
 &        ggfree, gw, ha, predsq, presav, scaling, &
 &        slbd, step, stpsav, subd, sumin, temp, tempa,      &
@@ -259,7 +257,7 @@ do i = 1, n
 end do
 if (ggfree == ZERO) then
     cauchy = ZERO
-    goto 200
+    return
 end if
 !
 !     Investigate whether more compONEnts of W can be fixed.
@@ -348,7 +346,7 @@ if (csave > cauchy) then
     end do
     cauchy = csave
 end if
-200 return
+return
 end subroutine geostep
 
 
