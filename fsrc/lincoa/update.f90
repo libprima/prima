@@ -11,7 +11,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 AM12:35:57
+! Last Modified: Sunday, February 27, 2022 PM10:20:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ public :: update
 contains
 
 
-subroutine update(n, npt, xpt, bmat, zmat, idz, ndim, rsp, step, kopt, knew, vlag, w)
+subroutine update(n, npt, xpt, bmat, zmat, idz, rsp, step, kopt, knew, vlag)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF
@@ -32,7 +32,6 @@ implicit none
 ! Inputs
 integer(IK), intent(in) :: kopt
 integer(IK), intent(in) :: n
-integer(IK), intent(in) :: ndim
 integer(IK), intent(in) :: npt
 real(RP), intent(in) :: rsp(2_IK * npt)
 real(RP), intent(in) :: step(n)
@@ -42,11 +41,13 @@ real(RP), intent(in) :: xpt(n, npt)
 integer(IK), intent(inout) :: idz
 integer(IK), intent(inout) :: knew
 real(RP), intent(inout) :: bmat(n, npt + n)
-real(RP), intent(inout) :: vlag(npt + n)
-real(RP), intent(inout) :: w(npt + n)
 real(RP), intent(inout) :: zmat(npt, npt - n - 1)
 
+! Outputs
+real(RP), intent(out) :: vlag(npt + n)
+
 ! Local variables
+real(RP) :: w(npt + n)
 real(RP) :: alpha, beta, bsumm, denabs, denmax, denom, distsq,  &
 &        dx, hdiag, scala, scalb, sqrtdn, ssq,  &
 &        summ, tau, tausq, temp, tempa, tempb
