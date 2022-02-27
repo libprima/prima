@@ -8,7 +8,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 AM12:46:03
+! Last Modified: Sunday, February 27, 2022 PM11:42:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -20,9 +20,8 @@ contains
 
 
 subroutine bobyqb(calfun, n, npt, x, xl, xu, rhobeg, rhoend, iprint, &
-    & maxfun, xbase, xpt, fval, xopt, gopt, hq, pq, bmat, zmat, ndim, &
-    & sl, su, xnew, xalt, d, vlag, w, f, info, ftarget, &
-    & nf, xhist, maxxhist, fhist, maxfhist)
+    & maxfun, sl_in, su_in, f, info, ftarget, nf, xhist, fhist)
+
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH
@@ -44,45 +43,44 @@ implicit none
 ! Inputs
 procedure(OBJ) :: calfun
 integer(IK), intent(in) :: iprint
-integer(IK), intent(in) :: maxfhist
 integer(IK), intent(in) :: maxfun
-integer(IK), intent(in) :: maxxhist
 integer(IK), intent(in) :: n
-integer(IK), intent(in) :: ndim
 integer(IK), intent(in) :: npt
 real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: rhoend
+real(RP), intent(in) :: sl_in(n)
+real(RP), intent(in) :: su_in(n)
 real(RP), intent(in) :: xl(n)
 real(RP), intent(in) :: xu(n)
 
 ! In-outputs
-real(RP), intent(inout) :: sl(n)
-real(RP), intent(inout) :: su(n)
 real(RP), intent(inout) :: x(n)
 
 ! Outputs
 integer(IK), intent(out) :: info
 integer(IK), intent(out) :: nf
-real(RP), intent(out) :: bmat(n, npt + n)
-real(RP), intent(out) :: d(n)
 real(RP), intent(out) :: f
-real(RP), intent(out) :: fhist(maxfhist)
-real(RP), intent(out) :: fval(npt)
-real(RP), intent(out) :: gopt(n)
-real(RP), intent(out) :: hq(n * (n + 1_IK) / 2_IK)
-real(RP), intent(out) :: pq(npt)
-real(RP), intent(out) :: vlag(npt + n)
-real(RP), intent(out) :: w(3_IK * (npt + n))
-real(RP), intent(out) :: xalt(n)
-real(RP), intent(out) :: xbase(n)
-real(RP), intent(out) :: xhist(n, maxxhist)
-real(RP), intent(out) :: xnew(n)
-real(RP), intent(out) :: xopt(n)
-real(RP), intent(out) :: xpt(n, npt)
-real(RP), intent(out) :: zmat(npt, npt - n - 1_IK)
+real(RP), intent(out) :: fhist(:)
+real(RP), intent(out) :: xhist(:, :)
 
 ! Local variables
+real(RP) :: bmat(n, npt + n)
+real(RP) :: d(n)
+real(RP) :: fval(npt)
+real(RP) :: gopt(n)
+real(RP) :: hq(n * (n + 1_IK) / 2_IK)
+real(RP) :: pq(npt)
+real(RP) :: vlag(npt + n)
+real(RP) :: w(3_IK * (npt + n))
+real(RP) :: sl(n)
+real(RP) :: su(n)
+real(RP) :: xalt(n)
+real(RP) :: xbase(n)
+real(RP) :: xnew(n)
+real(RP) :: xopt(n)
+real(RP) :: xpt(n, npt)
+real(RP) :: zmat(npt, npt - n - 1_IK)
 real(RP) :: adelt, alpha, bdtest, bdtol, beta, &
 &        biglsq, bsumm, cauchy, crvmin, curv, delsq, delta,  &
 &        den, denom, densav, diff, diffa, diffb, diffc,     &
@@ -92,6 +90,9 @@ real(RP) :: adelt, alpha, bdtest, bdtol, beta, &
 &        summw, summz, temp, vquad, xoptsq
 integer(IK) :: i, ih, ip, itest, j, jj, jp, k, kbase, knew, &
 &           kopt, ksav, nfsav, nh, np, nptm, nresc, ntrits
+
+sl = sl_in
+su = su_in
 
 !     The arguments N, NPT, X, XL, XU, RHOBEG, RHOEND, IPRINT and MAXFUN
 !       are identical to the corresponding arguments in SUBROUTINE BOBYQA.
@@ -140,8 +141,7 @@ nh = (n * np) / 2
 !     less than NPT. GOPT will be updated if KOPT is different from KBASE.
 !
 call initialize(calfun, n, npt, x, xl, xu, rhobeg, iprint, maxfun, xbase, xpt, &
-& fval, gopt, hq, pq, bmat, zmat, ndim, sl, su, nf, kopt, f, ftarget, &
-& xhist, maxxhist, fhist, maxfhist)
+& fval, gopt, hq, pq, bmat, zmat, sl, su, nf, kopt, f, ftarget, xhist, fhist)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 xoptsq = ZERO
@@ -396,7 +396,7 @@ do i = 1, npt
     end if
 end do
 do j = 1, n
-    do i = 1, ndim
+    do i = 1, npt + n
         if (bmat(j, i) /= bmat(j, i)) then
             info = -3
             goto 720
@@ -415,9 +415,8 @@ end do
 !------------------------------------------------------------------------------------------------!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 call rescue(calfun, n, npt, xl, xu, iprint, maxfun, xbase, xpt, fval, &
-& xopt, gopt, hq, pq, bmat, zmat, ndim, sl, su, nf, delta, kopt, &
-& vlag, w, w(n + np), w(ndim + np), f, ftarget, &
-& xhist, maxxhist, fhist, maxfhist)
+& xopt, gopt, hq, pq, bmat, zmat, sl, su, nf, delta, kopt, &
+& vlag, w, w(n + np), w(npt + n + np), f, ftarget, xhist, fhist)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !------------------------------------------------------------------------------------------------!
 
@@ -492,7 +491,7 @@ if (ntrits > 0) goto 60
 !  lines 366--389 took NaN/infinite values).
 !
 210 do j = 1, n
-    do i = 1, ndim
+    do i = 1, npt + n
         if (bmat(j, i) /= bmat(j, i)) then
             info = -3
             goto 720
@@ -507,8 +506,8 @@ do j = 1, nptm
         end if
     end do
 end do
-call geostep(n, npt, xpt, xopt, bmat, zmat, ndim, sl, su, kopt, &
-& knew, adelt, xnew, xalt, alpha, cauchy, w, w(np), w(ndim + 1))
+call geostep(n, npt, xpt, xopt, bmat, zmat, sl, su, kopt, &
+& knew, adelt, xnew, xalt, alpha, cauchy, w, w(np), w(npt + n + 1))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 do i = 1, n
     d(i) = xnew(i) - xopt(i)
@@ -768,7 +767,7 @@ end if
 !     Update BMAT and ZMAT, so that the KNEW-th interpolation point can be
 !     moved. Also update the second derivative terms of the model.
 !
-call update(n, npt, bmat, zmat, ndim, vlag, beta, denom, knew, w)
+call update(n, npt, bmat, zmat, vlag, beta, denom, knew, w)
 ih = 0
 pqold = pq(knew)
 pq(knew) = ZERO

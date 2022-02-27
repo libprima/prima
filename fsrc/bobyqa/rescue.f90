@@ -8,7 +8,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 AM12:54:39
+! Last Modified: Sunday, February 27, 2022 PM11:19:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -20,9 +20,8 @@ contains
 
 
 subroutine rescue(calfun, n, npt, xl, xu, iprint, maxfun, xbase, xpt, &
-     &  fval, xopt, gopt, hq, pq, bmat, zmat, ndim, sl, su, nf, delta, &
-     &  kopt, vlag, ptsaux, ptsid, w, f, ftarget, &
-     & xhist, maxxhist, fhist, maxfhist)
+     &  fval, xopt, gopt, hq, pq, bmat, zmat, sl, su, nf, delta, &
+     &  kopt, vlag, ptsaux, ptsid, w, f, ftarget, xhist, fhist)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF
@@ -40,11 +39,8 @@ implicit none
 ! Inputs
 procedure(OBJ) :: calfun
 integer(IK) :: n
-integer(IK) :: ndim
 integer(IK), intent(in) :: iprint
-integer(IK), intent(in) :: maxfhist
 integer(IK), intent(in) :: maxfun
-integer(IK), intent(in) :: maxxhist
 integer(IK), intent(in) :: npt
 real(RP), intent(in) :: delta
 real(RP), intent(in) :: ftarget
@@ -72,8 +68,8 @@ real(RP), intent(inout) :: xpt(n, npt)
 real(RP), intent(inout) :: zmat(npt, npt - n - 1_IK)
 
 ! Outputs
-real(RP), intent(out) :: fhist(maxfhist)
-real(RP), intent(out) :: xhist(n, maxxhist)
+real(RP), intent(out) :: fhist(:)
+real(RP), intent(out) :: xhist(:, :)
 
 ! Local variables
 real(RP) :: x(n)
@@ -142,7 +138,7 @@ do k = 1, npt
         distsq = distsq + xpt(j, k)**2
     end do
     sumpq = sumpq + pq(k)
-    w(ndim + k) = distsq
+    w(npt + n + k) = distsq
     winc = max(winc, distsq)
     do j = 1, nptm
         zmat(k, j) = ZERO
@@ -182,7 +178,7 @@ do j = 1, n
     if (abs(ptsaux(2, j)) < HALF * abs(ptsaux(1, j))) then
         ptsaux(2, j) = HALF * ptsaux(1, j)
     end if
-    do i = 1, ndim
+    do i = 1, npt + n
         bmat(j, i) = ZERO
     end do
 end do
@@ -251,7 +247,7 @@ do j = 1, nptm
 end do
 ptsid(kold) = ptsid(knew)
 ptsid(knew) = ZERO
-w(ndim + knew) = ZERO
+w(npt + n + knew) = ZERO
 nrem = nrem - 1
 if (knew /= kopt) then
     temp = vlag(kold)
@@ -263,10 +259,10 @@ if (knew /= kopt) then
 !     branch to label 350 occurs if all the original points are reinstated.
 !     The nonnegative values of W(NDIM+K) are required in the search below.
 !
-    call update(n, npt, bmat, zmat, ndim, vlag, beta, denom, knew, w)
+    call update(n, npt, bmat, zmat, vlag, beta, denom, knew, w)
     if (nrem == 0) goto 350
     do k = 1, npt
-        w(ndim + k) = abs(w(ndim + k))
+        w(npt + n + k) = abs(w(npt + n + k))
     end do
 end if
 !
@@ -276,10 +272,10 @@ end if
 !
 120 dsqmin = ZERO
 do k = 1, npt
-    if (w(ndim + k) > ZERO) then
-        if (dsqmin == ZERO .or. w(ndim + k) < dsqmin) then
+    if (w(npt + n + k) > ZERO) then
+        if (dsqmin == ZERO .or. w(npt + n + k) < dsqmin) then
             knew = k
-            dsqmin = w(ndim + k)
+            dsqmin = w(npt + n + k)
         end if
     end if
 end do
@@ -347,7 +343,7 @@ do j = 1, n
     end do
     jp = j + npt
     bsum = bsum + summ * w(jp)
-    do ip = npt + 1, ndim
+    do ip = npt + 1, npt + n
         summ = summ + bmat(j, ip) * w(ip)
     end do
     bsum = bsum + summ * w(jp)
@@ -379,7 +375,7 @@ do k = 1, npt
     vlmxsq = max(vlmxsq, vlag(k)**2)
 end do
 if (denom <= 1.0D-2 * vlmxsq) then
-    w(ndim + knew) = -w(ndim + knew) - winc
+    w(npt + n + knew) = -w(npt + n + knew) - winc
     goto 120
 end if
 goto 80
