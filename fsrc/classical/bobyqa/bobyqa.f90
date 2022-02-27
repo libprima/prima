@@ -317,7 +317,7 @@ call bobyqb(calfun, n, npt_loc, x, xl_loc, xu_loc, rhobeg_loc, rhoend_loc, iprin
 & ndim, w(isl), w(isu), w(ixn), w(ixa), w(id), w(ivl), w(iw), f, info_loc, ftarget_loc, &
 & nf_loc, xhist_loc, int(size(xhist_loc, 2), kind=IK), fhist_loc, int(size(fhist_loc), kind=IK))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+deallocate (w)
 
 ! Write the outputs.
 

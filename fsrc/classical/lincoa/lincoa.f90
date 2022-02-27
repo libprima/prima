@@ -331,6 +331,7 @@ call lincob(calfun, n, npt_loc, m, w(iamat), w(ib), x, rhobeg_loc, rhoend_loc, i
 deallocate (A_loc)
 deallocate (b_loc)
 deallocate (iact)
+deallocate (w)
 
 ! Write the outputs.
 

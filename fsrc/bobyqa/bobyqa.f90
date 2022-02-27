@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM11:37:26
+! Last Modified: Sunday, February 27, 2022 PM11:55:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -170,9 +170,9 @@ real(RP), allocatable :: xhist_loc(:, :)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Working variables (to be removed)
 real(RP) :: temp
-real(RP), allocatable :: w(:)
-integer(IK) :: ixb, ixp, ifv, ixo, igo, ihq, ipq, ibmat, izmat, isl, isu, ixn, ixa, id, ivl, iw, &
-    & j, jsl, jsu
+real(RP), allocatable :: sl(:)
+real(RP), allocatable :: su(:)
+integer(IK) :: j
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Sizes
@@ -332,7 +332,8 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Working space (to be removed)
-call safealloc(w, int((npt_loc + 5) * (npt_loc + n) + 3 * n * (n + 5) / 2, IK))
+call safealloc(sl, n)
+call safealloc(su, n)
 
 !
 !     Partition the working space array, so that different parts of it can
@@ -340,22 +341,6 @@ call safealloc(w, int((npt_loc + 5) * (npt_loc + n) + 3 * n * (n + 5) / 2, IK))
 !     requires the first (NPT+2)*(NPT+N)+3*N*(N+5)/2 elements of W plus the
 !     space that is taken by the last array in the argument list of BOBYQB.
 !
-ixb = 1
-ixp = ixb + n
-ifv = ixp + n * npt
-ixo = ifv + npt
-igo = ixo + n
-ihq = igo + n
-ipq = ihq + (n * (n + 1)) / 2
-ibmat = ipq + npt
-izmat = ibmat + (npt + n) * n
-isl = izmat + npt * (npt - n - 1)
-isu = isl + n
-ixn = isu + n
-ixa = ixn + n
-id = ixa + n
-ivl = id + n
-iw = ivl + npt + n
 !
 !     Return if there is insufficient space between the bounds. Modify the
 !     initial X if necessary in order to avoid conflicts between the bounds
@@ -370,29 +355,27 @@ do j = 1, n
         info = 6
         return
     end if
-    jsl = isl + j - 1
-    jsu = jsl + n
-    w(jsl) = xl_loc(j) - x(j)
-    w(jsu) = xu_loc(j) - x(j)
-    if (w(jsl) >= -rhobeg_loc) then
-        if (w(jsl) >= ZERO) then
+    sl(j) = xl_loc(j) - x(j)
+    su(j) = xu_loc(j) - x(j)
+    if (sl(j) >= -rhobeg_loc) then
+        if (sl(j) >= ZERO) then
             x(j) = xl_loc(j)
-            w(jsl) = ZERO
-            w(jsu) = temp
+            sl(j) = ZERO
+            su(j) = temp
         else
             x(j) = xl_loc(j) + rhobeg_loc
-            w(jsl) = -rhobeg_loc
-            w(jsu) = max(xu_loc(j) - x(j), rhobeg_loc)
+            sl(j) = -rhobeg_loc
+            su(j) = max(xu_loc(j) - x(j), rhobeg_loc)
         end if
-    else if (w(jsu) <= rhobeg_loc) then
-        if (w(jsu) <= ZERO) then
+    else if (su(j) <= rhobeg_loc) then
+        if (su(j) <= ZERO) then
             x(j) = xu_loc(j)
-            w(jsl) = -temp
-            w(jsu) = ZERO
+            sl(j) = -temp
+            su(j) = ZERO
         else
             x(j) = xu_loc(j) - rhobeg_loc
-            w(jsl) = min(xl_loc(j) - x(j), -rhobeg_loc)
-            w(jsu) = rhobeg_loc
+            sl(j) = min(xl_loc(j) - x(j), -rhobeg_loc)
+            su(j) = rhobeg_loc
         end if
     end if
 end do
@@ -400,9 +383,11 @@ end do
 !     Make the call of BOBYQB.
 !
 call bobyqb(calfun, n, npt_loc, x, xl_loc, xu_loc, rhobeg_loc, rhoend_loc, iprint_loc, maxfun_loc, &
-    & w(isl), w(isu), &
+    & sl, su, &
     & f, info_loc, ftarget_loc, nf_loc, xhist_loc, fhist_loc)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+deallocate (sl)
+deallocate (su)
 
 
 ! Write the outputs.
