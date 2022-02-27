@@ -325,7 +325,7 @@ elseif isfield(options, 'seed')
     yw = options.seed;
 else
     dt = datetime('now', 'TimeZone', timezone);
-    yw = 10*mod(year(dt), 10) + week(dt);
+    yw = 100*mod(year(dt), 100) + week(dt);
 end
 fprintf('\nYW = %d\n', yw);
 rseed = yw+ceil(1e5*abs(cos(1e5*sin(1e5*(sum(double(pname))*n*ir)))));
