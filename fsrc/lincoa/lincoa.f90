@@ -27,7 +27,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM10:22:05
+! Last Modified: Sunday, February 27, 2022 PM10:45:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -194,8 +194,7 @@ logical :: constr_modified
 ! Working variables (to be removed)
 real(RP) :: temp
 real(RP), allocatable :: w(:)
-integer(IK) :: iw, iamat, ib, ixb, ixp, ifv, ixs, ixo, igo, ihq, ipq, ibmat, izmat, istp, isp,&
-    & ixn, iac, irc, iqf, irf, ipqw, j, m
+integer(IK) :: iw, iamat, ib, j, m
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Sizes
@@ -386,28 +385,9 @@ if (m > 0) then
     end do
 end if
 
-ixb = ib + m
-ixp = ixb + n
-ifv = ixp + n * npt_loc
-ixs = ifv + npt_loc
-ixo = ixs + n
-igo = ixo + n
-ihq = igo + n
-ipq = ihq + (n * (n + 1)) / 2
-ibmat = ipq + npt_loc
-izmat = ibmat + (npt_loc + n) * n
-istp = izmat + npt_loc * (npt_loc - n - 1)
-isp = istp + n
-ixn = isp + npt_loc + npt_loc
-iac = ixn + n
-irc = iac + n
-iqf = irc + m
-irf = iqf + n * n
-ipqw = irf + (n * (n + 1)) / 2
-
 call lincob(calfun, n, npt_loc, m, w(iamat), w(ib), x, rhobeg_loc, rhoend_loc, iprint_loc, &
 & maxfun_loc, f, info_loc, ftarget_loc, A_loc, b_loc, cstrv_loc, nf_loc, &
-& xhist_loc, size(xhist_loc, 2, kind=IK), fhist_loc, size(fhist_loc, kind=IK), chist_loc, size(chist_loc, kind=IK))
+& xhist_loc, fhist_loc, chist_loc)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Deallocate A_LOC and B_LOC. Indeed, automatic allocation will take place at exit.

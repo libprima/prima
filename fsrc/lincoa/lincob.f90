@@ -11,7 +11,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM10:35:58
+! Last Modified: Sunday, February 27, 2022 PM11:03:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,7 +23,7 @@ contains
 
 
 subroutine lincob(calfun, n, npt, m, amat, b_in, x, rhobeg, rhoend, iprint, maxfun, f, info, &
-    & ftarget, A_orig, b_orig, cstrv, nf, xhist, maxxhist, fhist, maxfhist, chist, maxchist)
+    & ftarget, A_orig, b_orig, cstrv, nf, xhist, fhist, chist)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine performs the actual calculations of LINCOA. The arguments IPRINT, MAXFILT, MAXFUN,
 ! MAXHIST, NPT, CTOL, CWEIGHT, ETA1, ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG, RHOEND, X, NF, F, XHIST,
@@ -50,10 +50,7 @@ implicit none
 procedure(OBJ) :: calfun
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: m
-integer(IK), intent(in) :: maxchist
-integer(IK), intent(in) :: maxfhist
 integer(IK), intent(in) :: maxfun
-integer(IK), intent(in) :: maxxhist
 integer(IK), intent(in) :: n
 integer(IK), intent(in) :: npt
 real(RP), intent(in) :: A_orig(n, m)  ! Better names? necessary?
@@ -70,11 +67,11 @@ real(RP), intent(inout) :: x(n)
 ! Outputs
 integer(IK), intent(out) :: info
 integer(IK), intent(out) :: nf
-real(RP), intent(out) :: chist(maxchist)
+real(RP), intent(out) :: chist(:)
 real(RP), intent(out) :: cstrv
 real(RP), intent(out) :: f
-real(RP), intent(out) :: fhist(maxfhist)
-real(RP), intent(out) :: xhist(n, maxxhist)
+real(RP), intent(out) :: fhist(:)
+real(RP), intent(out) :: xhist(:, :)
 
 ! Local variables
 real(RP) :: fval(npt)
@@ -101,7 +98,7 @@ real(RP) :: del, delsav, delta, dffalt, diff,  &
 &        rho, snorm, ssq, summ, summz, temp, vqalt,   &
 &        vquad, xdiff, xoptsq
 integer(IK) :: i, idz, ifeas, ih, imprv, ip, itest, j, k,    &
-&           knew, kopt, ksave, nact, nh, np, nptm,     &
+&           knew, kopt, ksave, nact,      &
 &           nvala, nvalb, ngetact
 real(RP) :: w(max(m + 3_IK * n, 2_IK * m + n, 2_IK * npt))
 
@@ -161,9 +158,6 @@ real(RP) :: w(max(m + 3_IK * n, 2_IK * m + n, 2_IK * npt))
 !     Set some constants.
 !
 b = b_in
-np = n + 1
-nh = (n * np) / 2
-nptm = npt - np
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Zaikun 15-08-2019
@@ -180,7 +174,7 @@ imprv = 0
 !
 call initialize(calfun, n, npt, m, amat, b, x, rhobeg, iprint, xbase, xpt, fval, &
 & xsav, xopt, gopt, kopt, hq, pq, bmat, zmat, idz, rsp, rescon, step, pqw, f, ftarget, &
-& A_orig, b_orig, cstrv, nf, xhist, maxxhist, fhist, maxfhist, chist, maxchist)
+& A_orig, b_orig, cstrv, nf, xhist, fhist, chist)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -246,7 +240,7 @@ if (xoptsq >= 1.0D4 * delta * delta) then
 !
 !     Then the revisions of BMAT that depend on ZMAT are calculated.
 !
-    do k = 1, nptm
+    do k = 1, npt - n - 1_IK
         summz = ZERO
         do i = 1, npt
             summz = summz + zmat(i, k)
@@ -319,7 +313,7 @@ do j = 1, n
         end if
     end do
 end do
-do j = 1, nptm
+do j = 1, npt - n - 1_IK
     do i = 1, npt
         if (zmat(i, j) /= zmat(i, j)) then
             info = -3
@@ -350,7 +344,7 @@ do j = 1, n
         goto 600
     end if
 end do
-do i = 1, nh
+do i = 1, (n * (n + 1_IK)) / 2_IK
     if (hq(i) /= hq(i)) then
         info = -3
         goto 600
@@ -428,7 +422,7 @@ else
     do k = 1, npt
         pqw(k) = ZERO
     end do
-    do j = 1, nptm
+    do j = 1, npt - n - 1_IK
         temp = zmat(knew, j)
         if (j < idz) temp = -temp
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -590,7 +584,7 @@ if (ifeas == 1 .and. itest < 3) then
         pqw(k) = ZERO
         w(k) = fval(k) - fval(kopt)
     end do
-    do j = 1, nptm
+    do j = 1, npt - n - 1_IK
         summ = ZERO
         do i = 1, npt
             summ = summ + w(i) * zmat(i, j)
@@ -653,7 +647,7 @@ do j = 1, n
         end if
     end do
 end do
-do j = 1, nptm
+do j = 1, npt - n - 1_IK
     do i = 1, npt
         if (zmat(i, j) /= zmat(i, j)) then
             info = -3
@@ -684,7 +678,7 @@ if (itest < 3) then
     do k = 1, npt
         pqw(k) = ZERO
     end do
-    do j = 1, nptm
+    do j = 1, npt - n - 1_IK
         temp = zmat(knew, j)
         if (temp /= ZERO) then
             if (j < idz) temp = -temp
@@ -799,7 +793,7 @@ if (itest == 3) then
         pq(k) = ZERO
         w(k) = fval(k) - fval(kopt)
     end do
-    do j = 1, nptm
+    do j = 1, npt - n - 1_IK
         summ = ZERO
         do i = 1, npt
             summ = summ + w(i) * zmat(i, j)
@@ -821,9 +815,7 @@ if (itest == 3) then
             gopt(i) = gopt(i) + temp * xpt(i, k)
         end do
     end do
-    do ih = 1, nh
-        hq(ih) = ZERO
-    end do
+    hq = ZERO
 end if
 !
 !     If a trust region step has provided a sufficient decrease in F, then

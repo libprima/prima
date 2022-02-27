@@ -11,7 +11,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 27, 2022 PM10:38:03
+! Last Modified: Sunday, February 27, 2022 PM11:02:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -25,7 +25,7 @@ contains
 subroutine initialize(calfun, n, npt, m, amat, b, x, rhobeg, iprint, xbase, &
      &  xpt, fval, xsav, xopt, gopt, kopt, hq, pq, bmat, zmat, idz, &
      &  rsp, rescon, step, vlag, f, ftarget, &
-     &  A_orig, b_orig, cstrv, nf, xhist, maxxhist, fhist, maxfhist, chist, maxchist)
+     &  A_orig, b_orig, cstrv, nf, xhist, fhist, chist)
 
 ! Generic modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF
@@ -44,9 +44,6 @@ implicit none
 procedure(OBJ) :: calfun
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: m
-integer(IK), intent(in) :: maxchist
-integer(IK), intent(in) :: maxfhist
-integer(IK), intent(in) :: maxxhist
 integer(IK), intent(in) :: n
 integer(IK), intent(in) :: npt
 real(RP), intent(in) :: A_orig(n, m)
@@ -63,10 +60,10 @@ integer(IK), intent(out) :: idz
 integer(IK), intent(out) :: kopt
 integer(IK), intent(out) :: nf
 real(RP), intent(out) :: bmat(n, npt + n)
-real(RP), intent(out) :: chist(maxchist)
+real(RP), intent(out) :: chist(:)
 real(RP), intent(out) :: cstrv
 real(RP), intent(out) :: f
-real(RP), intent(out) :: fhist(maxfhist)
+real(RP), intent(out) :: fhist(:)
 real(RP), intent(out) :: fval(npt)
 real(RP), intent(out) :: gopt(n)
 real(RP), intent(out) :: hq(n * (n + 1_IK) / 2_IK)
@@ -77,7 +74,7 @@ real(RP), intent(out) :: step(n)
 real(RP), intent(out) :: vlag(npt + n)  ! The size is NPT + N instead of NPT
 real(RP), intent(out) :: x(n)
 real(RP), intent(out) :: xbase(n)
-real(RP), intent(out) :: xhist(n, maxxhist)
+real(RP), intent(out) :: xhist(:, :)
 real(RP), intent(out) :: xopt(n)
 real(RP), intent(out) :: xpt(n, npt)
 real(RP), intent(out) :: xsav(n)
